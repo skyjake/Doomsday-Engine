@@ -46,8 +46,6 @@
 using namespace de;
 
 BEGIN_PROF_TIMERS()
-  PROF_RL_ADD_POLY,
-  PROF_RL_GET_LIST,
   PROF_RL_RENDER_ALL,
   PROF_RL_RENDER_NORMAL,
   PROF_RL_RENDER_LIGHT,
@@ -171,16 +169,16 @@ typedef struct primhdr_s {
 
     byte            flags; // PF_* primitive flags.
 
-    float           ptexOffset[2], ptexScale[2];
+    Vector2f        ptexOffset, ptexScale;
 
     // Detail texture matrix manipulations.
-    float           texOffset[2], texScale[2];
+    Vector2f        texOffset, texScale;
 
     // Some primitives are modulated with an additional texture and color
     // using multitexturing (if available), depending on the list state.
     // Example: first light affecting the primitive.
     DGLuint         modTex;
-    float           modColor[4];
+    Vector4f        modColor;
 } primhdr_t;
 
 // Helper macro for accessing rendlist texmap units.
@@ -228,7 +226,7 @@ int torchAdditive = true;
 static boolean initedOk = false;
 
 // Logical texture unit state. Used with RL_LoadDefaultRtus and RL_CopyRtu
-static rtexmapunit_t rtuDefault;
+static rtexmapunit_t const rtuDefault;
 static rtexmapunit_t rtuState[NUM_TEXMAP_UNITS];
 static rtexmapunit_t const *rtuMap[NUM_TEXMAP_UNITS];
 
@@ -371,7 +369,6 @@ void RL_Init()
     clearHash(shinyHash);
 
     std::memset(&skyMaskList, 0, sizeof(skyMaskList));
-    Rtu_Init(&rtuDefault);
     RL_LoadDefaultRtus();
     initedOk = true;
 }
@@ -509,8 +506,6 @@ void RL_DeleteLists()
     Z_CheckHeap();
 #endif
 
-PRINT_PROF( PROF_RL_ADD_POLY );
-PRINT_PROF( PROF_RL_GET_LIST );
 PRINT_PROF( PROF_RL_RENDER_ALL );
 PRINT_PROF( PROF_RL_RENDER_NORMAL );
 PRINT_PROF( PROF_RL_RENDER_LIGHT );
@@ -847,89 +842,86 @@ static void writePoly2(primtype_t type, rendpolytype_t polyType, int flags,
     DGLuint modTex, Vector4f const *modColor, Vector2f const *modCoords)
 {
     boolean const isLit = (polyType != PT_LIGHT && (modTex || !!(flags & RPF_HAS_DYNLIGHTS)));
-    uint i, base, primSize, numIndices;
-    rendlist_t *li;
-    primhdr_t *hdr;
 
     if(polyType == PT_SKY_MASK)
+    {
         rDrawSky = true;
-
-BEGIN_PROF( PROF_RL_ADD_POLY );
-
-BEGIN_PROF( PROF_RL_GET_LIST );
+    }
 
     // Find/create a rendering list for the polygon's texture.
-    li = getListFor(polyType, isLit);
+    rendlist_t *li = getListFor(polyType, isLit);
 
-END_PROF( PROF_RL_GET_LIST );
+    uint primSize = numElements;
+    uint numIndices = numElements;
+    uint base = allocateVertices(primSize);
 
-    primSize = numElements;
-    numIndices = numElements;
-    base = allocateVertices(primSize);
-
-    hdr = (primhdr_t *) allocateData(li, sizeof(primhdr_t));
+    primhdr_t *hdr = (primhdr_t *) allocateData(li, sizeof(primhdr_t));
     DENG_ASSERT(hdr);
     li->last = hdr; // This becomes the new last primitive.
 
     // Primitive-specific blending mode.
-    hdr->blendMode = texunits[TU_PRIMARY]->blendMode;
-    hdr->size = 0;
-    hdr->indices = NULL;
+    hdr->blendMode  = texunits[TU_PRIMARY]->blendMode;
+    hdr->size       = 0;
+    hdr->indices    = NULL;
     hdr->numIndices = 0;
+
     hdr->flags = 0;
     if(isLit)
     {
         if(modTex && !(flags & RPF_HAS_DYNLIGHTS))
+        {
             hdr->flags |= PF_ONE_LIGHT; // Using modulation.
+        }
         else
+        {
             hdr->flags |= PF_MANY_LIGHTS;
+        }
     }
-    hdr->modTex = modTex;
-    hdr->modColor[CR] = modColor? modColor->x : 0;
-    hdr->modColor[CG] = modColor? modColor->y : 0;
-    hdr->modColor[CB] = modColor? modColor->z : 0;
-    hdr->modColor[CA] = 0;
+    hdr->modTex   = modTex;
+    if(modColor)
+    {
+        hdr->modColor = Vector4f(modColor->x, modColor->y, modColor->z, 0);
+    }
+    else
+    {
+        hdr->modColor = Vector4f();
+    }
 
     if(polyType == PT_SHINY && texunits[TU_INTER]->hasTexture())
     {
-        hdr->ptexScale[0]  = texunits[TU_INTER]->scale[0];
-        hdr->ptexScale[1]  = texunits[TU_INTER]->scale[1];
-        hdr->ptexOffset[0] = texunits[TU_INTER]->offset[0] * texunits[TU_INTER]->scale[0];
-        hdr->ptexOffset[1] = texunits[TU_INTER]->offset[1] * texunits[TU_INTER]->scale[1];
+        hdr->ptexScale  = texunits[TU_INTER]->scale;
+        hdr->ptexOffset = texunits[TU_INTER]->offset * texunits[TU_INTER]->scale;
     }
     else if(texunits[TU_PRIMARY]->hasTexture())
     {
-        hdr->ptexScale[0]  = texunits[TU_PRIMARY]->scale[0];
-        hdr->ptexScale[1]  = texunits[TU_PRIMARY]->scale[1];
-        hdr->ptexOffset[0] = texunits[TU_PRIMARY]->offset[0] * texunits[TU_PRIMARY]->scale[0];
-        hdr->ptexOffset[1] = texunits[TU_PRIMARY]->offset[1] * texunits[TU_PRIMARY]->scale[1];
+        hdr->ptexScale  = texunits[TU_PRIMARY]->scale;
+        hdr->ptexOffset = texunits[TU_PRIMARY]->offset * texunits[TU_PRIMARY]->scale;
     }
 
     if(texunits[TU_PRIMARY_DETAIL]->hasTexture())
     {
-        hdr->texScale[0]  = texunits[TU_PRIMARY_DETAIL]->scale[0];
-        hdr->texScale[1]  = texunits[TU_PRIMARY_DETAIL]->scale[1];
-        hdr->texOffset[0] = texunits[TU_PRIMARY_DETAIL]->offset[0] * texunits[TU_PRIMARY_DETAIL]->scale[0];
-        hdr->texOffset[1] = texunits[TU_PRIMARY_DETAIL]->offset[1] * texunits[TU_PRIMARY_DETAIL]->scale[1];
+        hdr->texScale  = texunits[TU_PRIMARY_DETAIL]->scale;
+        hdr->texOffset = texunits[TU_PRIMARY_DETAIL]->offset * texunits[TU_PRIMARY_DETAIL]->scale;
     }
     else
     {
-        hdr->texScale[0]  = hdr->texScale[1]  = 1.f;
-        hdr->texOffset[0] = hdr->texOffset[1] = 1.f;
+        hdr->texScale  = Vector2f(1, 1);
+        hdr->texOffset = Vector2f(1, 1);
     }
 
     // Setup the indices.
     allocateIndices(li, numIndices);
-    for(i = 0; i < numIndices; ++i)
+    for(uint i = 0; i < numIndices; ++i)
+    {
         li->last->indices[i] = base + i;
+    }
+
     li->last->type =
         (type == PT_TRIANGLE_STRIP? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
 
     writePrimitive(li, base, vertices, primaryCoords, interCoords,
                    modCoords, colors, numElements, polyType);
     endWrite(li);
-
-END_PROF( PROF_RL_ADD_POLY );
 }
 
 /**
@@ -1048,35 +1040,37 @@ void RL_Rtu_SetScale(uint idx, Vector2f const &st)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_SetScale");
     copyMappedRtuToState(idx);
-    Rtu_SetScale(rtuState + idx, st.x, st.y);
+    rtuState[idx].scale = st;
 }
 
 void RL_Rtu_Scale(uint idx, float scalar)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_Scale");
     copyMappedRtuToState(idx);
-    Rtu_Scale(rtuState + idx, scalar);
+    rtuState[idx].scale  *= scalar;
+    rtuState[idx].offset *= scalar;
 }
 
 void RL_Rtu_ScaleST(uint idx, Vector2f const &st)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_ScaleST");
     copyMappedRtuToState(idx);
-    Rtu_ScaleST(rtuState + idx, st);
+    rtuState[idx].scale  *= st;
+    rtuState[idx].offset *= st;
 }
 
 void RL_Rtu_SetOffset(uint idx, Vector2f const &xy)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_SetOffset");
     copyMappedRtuToState(idx);
-    Rtu_SetOffset(rtuState + idx, xy);
+    rtuState[idx].offset = xy;
 }
 
 void RL_Rtu_TranslateOffset(uint idx, Vector2f const &xy)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_TranslateOffset");
     copyMappedRtuToState(idx);
-    Rtu_TranslateOffset(rtuState + idx, xy.x, xy.y);
+    rtuState[idx].offset += xy;
 }
 
 void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT)
@@ -1242,7 +1236,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 GL_BindTextureUnmanaged(!renderTextures? 0 : hdr->modTex,
                                         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
+                float modColor[4] = { hdr->modColor.x, hdr->modColor.y, hdr->modColor.z, hdr->modColor.w };
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColor);
             }
 
             if(conditions & DCF_SET_MATRIX_DTEXTURE)
@@ -1254,8 +1249,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
                     glLoadIdentity();
-                    glTranslatef(hdr->texOffset[0], hdr->texOffset[1], 1);
-                    glScalef(hdr->texScale[0], hdr->texScale[1], 1);
+                    glTranslatef(hdr->texOffset.x, hdr->texOffset.y, 1);
+                    glScalef(hdr->texScale.x, hdr->texScale.y, 1);
                 }
                 if(conditions & DCF_SET_MATRIX_DTEXTURE1)
                 {
@@ -1263,8 +1258,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
                     glLoadIdentity();
-                    glTranslatef(hdr->texOffset[0], hdr->texOffset[1], 1);
-                    glScalef(hdr->texScale[0], hdr->texScale[1], 1);
+                    glTranslatef(hdr->texOffset.x, hdr->texOffset.y, 1);
+                    glScalef(hdr->texScale.x, hdr->texScale.y, 1);
                 }
             }
 
@@ -1277,8 +1272,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
                     glLoadIdentity();
-                    glTranslatef(hdr->ptexOffset[0], hdr->ptexOffset[1], 1);
-                    glScalef(hdr->ptexScale[0], hdr->ptexScale[1], 1);
+                    glTranslatef(hdr->ptexOffset.x, hdr->ptexOffset.y, 1);
+                    glScalef(hdr->ptexScale.x, hdr->ptexScale.y, 1);
                 }
                 if(conditions & DCF_SET_MATRIX_TEXTURE1)
                 {
@@ -1286,8 +1281,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
                     glLoadIdentity();
-                    glTranslatef(hdr->ptexOffset[0], hdr->ptexOffset[1], 1);
-                    glScalef(hdr->ptexScale[0], hdr->ptexScale[1], 1);
+                    glTranslatef(hdr->ptexOffset.x, hdr->ptexOffset.y, 1);
+                    glScalef(hdr->ptexScale.x, hdr->ptexScale.y, 1);
                 }
             }
 

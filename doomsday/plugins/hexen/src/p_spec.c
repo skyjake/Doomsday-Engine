@@ -940,8 +940,8 @@ static void P_LightningFlash(void)
 
     if(foundSec)
     {
-        mobj_t*             plrmo = players[DISPLAYPLAYER].plr->mo;
-        mobj_t*             crashOrigin = NULL;
+        mobj_t *plrmo = players[DISPLAYPLAYER].plr->mo;
+        mobj_t *crashOrigin = 0;
 
         if(!IS_DEDICATED)
         {
@@ -950,8 +950,7 @@ static void P_LightningFlash(void)
             R_SkyParams(1, DD_ENABLE, NULL);
         }
 
-        // If 3D sounds are active, position the clap somewhere above
-        // the player.
+        // If 3D sounds are active, position the clap somewhere above the player.
         if(cfg.snd3D && plrmo && !IS_NETGAME)
         {
             if((crashOrigin =
@@ -959,7 +958,9 @@ static void P_LightningFlash(void)
                               plrmo->origin[VY] + (16 * (M_Random() - 127) << FRACBITS),
                               plrmo->origin[VZ] + (4000 << FRACBITS), MT_CAMERA,
                               0, 0)))
+            {
                 crashOrigin->tics = 5 * TICSPERSEC; // Five seconds will do.
+            }
         }
 
         // Make it loud!

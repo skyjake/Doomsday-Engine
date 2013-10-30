@@ -212,6 +212,29 @@ boolean P_MobjIsCamera(mobj_t const *mo)
             (mo->player->plr->flags & DDPF_CAMERA));
 }
 
+boolean Mobj_IsCrunchable(mobj_t *mobj)
+{
+    DENG_ASSERT(mobj != 0);
+
+#if __JDOOM__ || __JDOOM64__
+    return mobj->health <= 0 && (cfg.gibCrushedNonBleeders || !(mobj->flags & MF_NOBLOOD));
+#elif __JHEXEN__
+    return mobj->health <= 0 && (mobj->flags & MF_CORPSE) != 0;
+#else
+    return mobj->health <= 0;
+#endif
+}
+
+boolean Mobj_IsDroppedItem(mobj_t *mobj)
+{
+    DENG_ASSERT(mobj != 0);
+#if __JHEXEN__
+    return (mobj->flags2 & MF2_DROPPED) != 0;
+#else
+    return (mobj->flags & MF_DROPPED) != 0;
+#endif
+}
+
 terraintype_t const *P_MobjFloorTerrain(mobj_t *mobj)
 {
     return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);

@@ -89,18 +89,18 @@ deng_snowberry {
 
 deng_aptunstable {
     # Include the Unstable repository for apt.
-    INSTALLS += repo
+    #INSTALLS += repo
 
-    repo.files += ../../distrib/linux/doomsday-builds-unstable.list
-    repo.path += /etc/apt/sources.list.d
+    #repo.files += ../../distrib/linux/doomsday-builds-unstable.list
+    #repo.path += /etc/apt/sources.list.d
 }
 
 deng_aptstable {
     # Include the Stable repository for apt.
-    INSTALLS += repo
+    #INSTALLS += repo
 
-    repo.files += ../../distrib/linux/doomsday-builds-stable.list
-    repo.path += /etc/apt/sources.list.d
+    #repo.files += ../../distrib/linux/doomsday-builds-stable.list
+    #repo.path += /etc/apt/sources.list.d
 }
 
 OTHER_FILES += ../configure.py

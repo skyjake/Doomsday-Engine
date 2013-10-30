@@ -81,6 +81,18 @@ void P_MobjAngleSRVOTicker(mobj_t *mo);
 boolean P_MobjIsCamera(mobj_t const *mo);
 
 /**
+ * Returns @c true iff @a mobj is currently "crunchable", i.e., it can be turned
+ * into a pile of giblets if it no longer fits in the opening between floor and
+ * ceiling planes.
+ */
+boolean Mobj_IsCrunchable(mobj_t *mobj);
+
+/**
+ * Returns @c true iff @a mobj is a dropped item.
+ */
+boolean Mobj_IsDroppedItem(mobj_t *mobj);
+
+/**
  * Returns the terraintype_t of the floor plane at the mobj's origin.
  *
  * @param mobj  Mobj instance.

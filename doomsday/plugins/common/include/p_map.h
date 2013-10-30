@@ -24,26 +24,21 @@
 
 #include "common.h"
 
-DENG_EXTERN_C coord_t attackRange;
-
-// If "floatOk" true, move would be ok if within "tmFloorZ - tmCeilingZ".
-DENG_EXTERN_C boolean floatOk;
+DENG_EXTERN_C boolean tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
 DENG_EXTERN_C coord_t tmFloorZ;
 DENG_EXTERN_C coord_t tmCeilingZ;
-DENG_EXTERN_C Material *tmFloorMaterial;
-
-DENG_EXTERN_C Line *ceilingLine, *floorLine;
-DENG_EXTERN_C Line *blockLine;
-DENG_EXTERN_C mobj_t *lineTarget; // Who got hit (or NULL).
-DENG_EXTERN_C mobj_t *tmThing;
-
+DENG_EXTERN_C boolean tmFellDown;
+DENG_EXTERN_C Line *tmCeilingLine;
+DENG_EXTERN_C Line *tmFloorLine;
+DENG_EXTERN_C Line *tmBlockingLine;
 #if __JHEXEN__
-DENG_EXTERN_C mobj_t *puffSpawned;
-DENG_EXTERN_C mobj_t *blockingMobj;
+DENG_EXTERN_C mobj_t *tmBlockingMobj;
 #endif
 
-DENG_EXTERN_C AABoxd tmBox;
-DENG_EXTERN_C boolean fellDown;
+DENG_EXTERN_C mobj_t *lineTarget; // Who got hit (or NULL).
+#if __JHEXEN__
+DENG_EXTERN_C mobj_t *PuffSpawned;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,14 +67,9 @@ boolean P_CheckSight(mobj_t const *beholder, mobj_t const *target);
  *  special things are touched if MF_PICKUP early out on solid lines?
  *
  * out:
- *  newsubsec
- *  floorz
- *  ceilingz
- *  tmDropoffZ
- *   the lowest point contacted
- *   (monsters won't move to a drop off)
- *  speciallines[]
- *  numspeciallines
+ *  tmFloorZ
+ *  tmCeilingZ
+ *  tmDropoffZ - the lowest point contacted (monsters won't move to a drop off)
  */
 boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z);
 boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3]);
@@ -127,6 +117,14 @@ boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp)
 
 void P_TelefragMobjsTouchingPlayers(void);
 
+/**
+ * @todo The momx / momy move is bad, so try to slide along a wall.
+ * Find the first line hit, move flush to it, and slide along it
+ *
+ * This is a kludgy mess.
+ *
+ * @param mo  The mobj to attempt the slide move.
+ */
 void P_SlideMove(mobj_t *mo);
 
 /**
@@ -138,8 +136,8 @@ void P_UseLines(player_t *player);
 
 /**
  * @param sector  The sector to check.
- * @param crush  Hexen: amount of crush damage to apply.
- *               Other games: apply fixed crush damage if @c > 0.
+ * @param crush   Hexen: amount of crush damage to apply.
+ *                Other games: apply fixed crush damage if @c > 0.
  */
 boolean P_ChangeSector(Sector *sector, int crush);
 
@@ -153,7 +151,12 @@ boolean P_ChangeSector(Sector *sector, int crush);
 void P_HandleSectorHeightChange(int sectorIdx);
 
 float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance);
-void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope, int damage);
+
+/**
+ * @param damage    @c 0= Perform a test trace that will leave lineTarget set.
+ */
+void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope,
+    int damage, mobjtype_t puffType);
 
 coord_t P_GetGravity(void);
 

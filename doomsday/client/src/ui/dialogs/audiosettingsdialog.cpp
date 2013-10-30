@@ -87,7 +87,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     LabelWidget *rvbVolLabel   = LabelWidget::newWithText(tr("Reverb Volume:"), &area());
 
     d->sound3D->setText(tr("3D Effects & Reverb"));
-    d->overlapStop->setText(tr("One sound per emitter"));
+    d->overlapStop->setText(tr("One Sound per Emitter"));
     d->sound16bit->setText(tr("16-bit Resampling"));
 
     LabelWidget *rateLabel = LabelWidget::newWithText(tr("Resampling:"), &area());

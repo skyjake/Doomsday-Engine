@@ -26,6 +26,8 @@
 #include <QtAlgorithms>
 #include <QBitArray>
 
+#include <de/vector1.h>
+
 #include <de/libdeng2.h>
 
 #include "de_base.h"

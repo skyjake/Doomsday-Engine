@@ -1061,35 +1061,37 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
 #if defined(__JHERETIC__) || defined(__JHEXEN__)
 
-typedef struct {
-    coord_t pos[2], minDist;
-} unstuckmobjinlineparams_t;
-
-int unstuckMobjInLine(Line *li, void *context)
+struct unstuckmobjinline_params_t
 {
-    unstuckmobjinlineparams_t *params = (unstuckmobjinlineparams_t*) context;
+    coord_t pos[2];
+    coord_t minDist;
+};
+
+/// @return  @c false= continue iteration.
+static int unstuckMobjInLine(Line *li, void *context)
+{
+    unstuckmobjinline_params_t &parm = *static_cast<unstuckmobjinline_params_t *>(context);
 
     if(!P_GetPtrp(li, DMU_BACK_SECTOR))
     {
         /*
-         * Project the point (mo position) onto this line. If the
-         * resultant point lies on the line and the current position is
-         * in range of that point, adjust the position moving it away from
-         * the projected point.
+         * Project the point (mo position) onto this line. If the resultant point
+         * lies on the line and the current position is in range of that point,
+         * adjust the position moving it away from the projected point.
          */
 
         coord_t lineOrigin[2]; P_GetDoublepv(P_GetPtrp(li, DMU_VERTEX0), DMU_XY, lineOrigin);
         coord_t lineDirection[2]; P_GetDoublepv(li, DMU_DXY, lineDirection);
 
         coord_t result[2];
-        coord_t pos = V2d_ProjectOnLine(result, params->pos, lineOrigin, lineDirection);
+        coord_t pos = V2d_ProjectOnLine(result, parm.pos, lineOrigin, lineDirection);
 
         if(pos > 0 && pos < 1)
         {
-            coord_t dist = M_ApproxDistance(params->pos[VX] - result[VX],
-                                            params->pos[VY] - result[VY]);
+            coord_t dist = M_ApproxDistance(parm.pos[VX] - result[VX],
+                                            parm.pos[VY] - result[VY]);
 
-            if(dist >= 0 && dist < params->minDist)
+            if(dist >= 0 && dist < parm.minDist)
             {
                 // Derive the line normal.
                 coord_t len = M_ApproxDistance(lineDirection[0], lineDirection[1]);
@@ -1107,8 +1109,8 @@ int unstuckMobjInLine(Line *li, void *context)
                 normal[VY] = -unit[VX];
 
                 // Adjust the position.
-                params->pos[VX] += normal[VX] * params->minDist;
-                params->pos[VY] += normal[VY] * params->minDist;
+                parm.pos[VX] += normal[VX] * parm.minDist;
+                parm.pos[VY] += normal[VY] * parm.minDist;
             }
         }
     }
@@ -1116,50 +1118,57 @@ int unstuckMobjInLine(Line *li, void *context)
     return false; // Continue iteration.
 }
 
-typedef struct {
+struct pit_findnearestfacingline_params_t
+{
     mobj_t *mo;
     coord_t dist;
     Line *line;
-} nearestfacinglineparams_t;
+};
 
+/// @return  @c false= continue iteration.
 static int PIT_FindNearestFacingLine(Line *line, void *context)
 {
-    nearestfacinglineparams_t *params = (nearestfacinglineparams_t*) context;
+    pit_findnearestfacingline_params_t &parm = *static_cast<pit_findnearestfacingline_params_t *>(context);
 
     coord_t off;
-    coord_t dist = Line_PointDistance(line, params->mo->origin, &off);
+    coord_t dist = Line_PointDistance(line, parm.mo->origin, &off);
 
+    // Wrong way or too far?
     if(off < 0 || off > P_GetDoublep(line, DMU_LENGTH) || dist < 0)
-        return false; // Wrong way or too far.
-
-    if(!params->line || dist < params->dist)
     {
-        params->line = line;
-        params->dist = dist;
+        return false;
     }
 
-    return false; // Continue.
+    if(!parm.line || dist < parm.dist)
+    {
+        parm.line = line;
+        parm.dist = dist;
+    }
+
+    return false;
 }
 
+/// @return  @c false= continue iteration.
 static int turnMobjToNearestLine(thinker_t *th, void *context)
 {
-    mobj_t *mo = (mobj_t *) th;
-    mobjtype_t type = *((mobjtype_t *) context);
+    mobj_t *mo = reinterpret_cast<mobj_t *>(th);
+    mobjtype_t type = *static_cast<mobjtype_t *>(context);
 
-    if(mo->type != type)
-        return false; // Continue iteration.
+    // @todo Why not type-prune at an earlier point? We could specify a
+    //       custom comparison func for Thinker_Iterate...
+    if(mo->type != type) return false;
 
 #ifdef _DEBUG
     VERBOSE( Con_Message("Checking mo %i...", mo->thinker.id) );
 #endif
 
-    nearestfacinglineparams_t parm;
+    AABoxd aaBox(mo->origin[VX] - 50, mo->origin[VY] - 50,
+                 mo->origin[VX] + 50, mo->origin[VY] + 50);
+
+    pit_findnearestfacingline_params_t parm;
     parm.mo   = mo;
     parm.dist = 0;
     parm.line = 0;
-
-    AABoxd aaBox(mo->origin[VX] - 50, mo->origin[VY] - 50,
-                 mo->origin[VX] + 50, mo->origin[VY] + 50);
 
     VALIDCOUNT++;
     Line_BoxIterator(&aaBox, LIF_SECTOR, PIT_FindNearestFacingLine, &parm);
@@ -1178,43 +1187,39 @@ static int turnMobjToNearestLine(thinker_t *th, void *context)
 #endif
     }
 
-    return false; // Continue iteration.
+    return false;
 }
 
-static int moveMobjOutOfNearbyLines(thinker_t *th, void *paramaters)
+/// @return  @c false= continue iteration.
+static int moveMobjOutOfNearbyLines(thinker_t *th, void *context)
 {
-    mobj_t *mo = (mobj_t *) th;
-    mobjtype_t type = *((mobjtype_t *)paramaters);
+    mobj_t *mo = reinterpret_cast<mobj_t *>(th);
+    mobjtype_t type = *static_cast<mobjtype_t *>(context);
 
     // @todo Why not type-prune at an earlier point? We could specify a
     //       custom comparison func for Thinker_Iterate...
-    if(mo->type != type)
-        return false; // Continue iteration.
+    if(mo->type != type) return false;
 
-    AABoxd aaBox;
-    aaBox.minX = mo->origin[VX] - mo->radius;
-    aaBox.minY = mo->origin[VY] - mo->radius;
-    aaBox.maxX = mo->origin[VX] + mo->radius;
-    aaBox.maxY = mo->origin[VY] + mo->radius;
+    AABoxd aaBox(mo->origin[VX] - mo->radius, mo->origin[VY] - mo->radius,
+                 mo->origin[VX] + mo->radius, mo->origin[VY] + mo->radius);
 
-    unstuckmobjinlineparams_t params;
-    params.pos[VX] = mo->origin[VX];
-    params.pos[VY] = mo->origin[VY];
-    params.minDist = mo->radius / 2;
+    unstuckmobjinline_params_t parm;
+    parm.pos[VX] = mo->origin[VX];
+    parm.pos[VY] = mo->origin[VY];
+    parm.minDist = mo->radius / 2;
 
     VALIDCOUNT++;
+    Line_BoxIterator(&aaBox, LIF_SECTOR, unstuckMobjInLine, &parm);
 
-    Line_BoxIterator(&aaBox, LIF_SECTOR, unstuckMobjInLine, &params);
-
-    if(!FEQUAL(mo->origin[VX], params.pos[VX]) || !FEQUAL(mo->origin[VY], params.pos[VY]))
+    if(!FEQUAL(mo->origin[VX], parm.pos[VX]) || !FEQUAL(mo->origin[VY], parm.pos[VY]))
     {
         P_MobjUnlink(mo);
-        mo->origin[VX] = params.pos[VX];
-        mo->origin[VY] = params.pos[VY];
+        mo->origin[VX] = parm.pos[VX];
+        mo->origin[VY] = parm.pos[VY];
         P_MobjLink(mo);
     }
 
-    return false; // Continue iteration.
+    return false;
 }
 
 void P_MoveThingsOutOfWalls()

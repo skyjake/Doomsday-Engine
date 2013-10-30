@@ -27,6 +27,8 @@
 // Multiplicative blending for dynamic lights?
 #define IS_MUL              (dynlightBlend != 1 && !usingFog)
 
+struct rtexmapunit_t;
+
 /**
  * Types of render primitive supported by this module (polygons only).
  */

@@ -17,15 +17,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstring> // memset
-
 #include "de_base.h"
 #include "de_defs.h"
 #include "Lumobj" // Rend_LightmapTextureSpec()
 #include "render/rend_halo.h" // Rend_HaloTextureSpec()
 #include "render/rend_main.h" // detailFactor, detailScale, smoothTexAnim, etc...
+#include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-#include "gl/sys_opengl.h"
 
 #include "Material"
 #include "Texture"
@@ -49,10 +47,10 @@ struct Store {
     Vector3f shineMinColor;
 
     /// Textures used on each logical material texture unit.
-    Texture::Variant *textures[NUM_MATERIAL_TEXTURE_UNITS];
+    TextureVariant *textures[NUM_MATERIAL_TEXTURE_UNITS];
 
     /// Decoration configuration.
-    MaterialSnapshot::Decoration decorations[Material::max_decorations];
+    MaterialSnapshotDecoration decorations[Material::max_decorations];
 
     /// Prepared render texture unit configuration. These map directly
     /// to the texture units supplied to the render lists module.
@@ -67,13 +65,8 @@ struct Store {
         opaque        = true;
         glowStrength  = 0;
 
-        std::memset(textures, 0, sizeof(textures));
-        std::memset(decorations, 0, sizeof(decorations));
-
-        for(int i = 0; i < NUM_TEXMAP_UNITS; ++i)
-        {
-            Rtu_Init(&units[i]);
-        }
+        zap(textures);
+        zap(decorations);
     }
 
     void writeTexUnit(rtexmapunitid_t unit, Texture::Variant *texture,
@@ -87,8 +80,8 @@ struct Store {
         tu.texture.flags   = TUF_TEXTURE_IS_MANAGED;
         tu.opacity   = de::clamp(0.f, opacity, 1.f);
         tu.blendMode = blendMode;
-        V2f_Set(tu.scale, scale.x, scale.y);
-        V2f_Set(tu.offset, offset.x, offset.y);
+        tu.scale     = scale;
+        tu.offset    = offset;
     }
 };
 
@@ -147,19 +140,19 @@ Texture::Variant &MaterialSnapshot::texture(int index) const
     if(!hasTexture(index))
     {
         /// @throw UnknownUnitError Attempt to dereference with an invalid index.
-        throw UnknownUnitError("MaterialSnapshot::texture", QString("Invalid texture index %1").arg(index));
+        throw UnknownUnitError("MaterialSnapshot::texture", QString("Invalid texture #%1").arg(index));
     }
     return *d->stored.textures[index];
 }
 
-rtexmapunit_t const &MaterialSnapshot::unit(rtexmapunitid_t id) const
+rtexmapunit_t const &MaterialSnapshot::unit(int index) const
 {
-    if(id < 0 || id >= NUM_TEXMAP_UNITS)
+    if(index < 0 || index >= NUM_TEXMAP_UNITS)
     {
         /// @throw UnknownUnitError Attempt to obtain a reference to a unit with an invalid id.
-        throw UnknownUnitError("MaterialSnapshot::unit", QString("Invalid unit id %1").arg(id));
+        throw UnknownUnitError("MaterialSnapshot::unit", QString("Invalid unit #%1").arg(index));
     }
-    return d->stored.units[id];
+    return d->stored.units[index];
 }
 
 MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
@@ -167,7 +160,7 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
     if(index < 0 || index >= Material::max_decorations)
     {
         /// @throw UnknownDecorationError Attempt to obtain a reference to a decoration with an invalid index.
-        throw UnknownDecorationError("MaterialSnapshot::decoration", QString("Invalid decoration index %1").arg(index));
+        throw UnknownDecorationError("MaterialSnapshot::decoration", QString("Invalid decoration #%1").arg(index));
     }
     return d->stored.decorations[index];
 }

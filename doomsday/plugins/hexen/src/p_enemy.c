@@ -257,7 +257,7 @@ boolean P_Move(mobj_t* mo)
     if(!P_TryMoveXY(mo, tryPos[VX], tryPos[VY]))
     {
         // Open any specials.
-        if((mo->flags & MF_FLOAT) && floatOk)
+        if((mo->flags & MF_FLOAT) && tmFloatOk)
         {
             // Must adjust height.
             if(mo->origin[VZ] < tmFloorZ)

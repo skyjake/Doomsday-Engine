@@ -239,15 +239,40 @@ def mac_release():
     os.system('chmod -R o-w "Doomsday Engine.app"')
     os.system('chmod -R o-w "Doomsday Shell.app"')
 
+    def codesign(fn, opts=''):
+        os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" %s "%s"' % (opts, fn))
+        
+    def fw_codesign(app):
+        print 'Signing libraries in %s...' % app
+        for f in glob.glob(app + '/Contents/Frameworks/*.dylib'):
+            codesign(f)
+
+        print 'Signing Qt frameworks in %s...' % app
+        for f in glob.glob(app + '/Contents/Frameworks/Qt*.framework'):
+            name = f[f.find('/Qt'):-10]
+            codesign(f + name)
+    
+        print 'Signing Qt plugins in %s...' % app
+        for f in glob.glob(app + '/Contents/PlugIns/*/*.dylib'):
+            codesign(f)
+    
+    fw_codesign('Doomsday Engine.app/Contents/Doomsday.app')
+    fw_codesign('Doomsday Shell.app')
+
     print 'Signing Doomsday.app...'
-    os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Engine.app/Contents/Doomsday.app"')
+    codesign('Doomsday Engine.app/Contents/Doomsday.app/Contents/Frameworks/SDL.framework/SDL')
+    codesign("Doomsday Engine.app/Contents/Doomsday.app")
 
     print 'Signing Doomsday Engine.app...'
-    os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Engine.app"')
+    os.system('ln -fs Versions/2.5/Python "Doomsday Engine.app/Contents/Frameworks/Python.framework/Python"')
+    codesign("Doomsday Engine.app/Contents/Frameworks/Python.framework")
+    codesign("Doomsday Engine.app/Contents/Frameworks/libwx_macud-2.8.0.dylib")
+    codesign("Doomsday Engine.app/Contents/MacOS/python")
+    codesign("Doomsday Engine.app", opts='--resource-rules ../macx/ResourceRules-OmitCompiledPython.plist')
 
     print 'Signing Doomsday Shell.app...'
-    os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" "Doomsday Shell.app"')
-
+    codesign("Doomsday Shell.app")
+    
     print 'Creating disk:', target
     os.system('osascript /Users/jaakko/Dropbox/Doomsday/package-installer.applescript')
     

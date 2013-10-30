@@ -23,6 +23,8 @@
 
 #define DENG_NO_API_MACROS_CLIENT
 
+#include <de/vector1.h>
+
 #include "de_base.h"
 #include "de_defs.h"
 #include "de_system.h"

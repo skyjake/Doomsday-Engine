@@ -896,7 +896,7 @@ void P_BulletSlope(mobj_t *mo)
     bulletSlope = tan(LOOKDIR2RAD(mo->dPlayer->lookDir)) / 1.2;
 }
 
-void C_DECL A_BeakAttackPL1(player_t* player, pspdef_t* psp)
+void C_DECL A_BeakAttackPL1(player_t *player, pspdef_t *psp)
 {
     angle_t angle;
     int damage;
@@ -907,9 +907,7 @@ void C_DECL A_BeakAttackPL1(player_t* player, pspdef_t* psp)
     angle = player->plr->mo->angle;
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
 
-    puffType = MT_BEAKPUFF;
-
-    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
+    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage, MT_BEAKPUFF);
     if(lineTarget)
     {
         player->plr->mo->angle = M_PointToAngle2(player->plr->mo->origin, lineTarget->origin);
@@ -920,7 +918,7 @@ void C_DECL A_BeakAttackPL1(player_t* player, pspdef_t* psp)
     psp->tics -= P_Random() & 7;
 }
 
-void C_DECL A_BeakAttackPL2(player_t* player, pspdef_t* psp)
+void C_DECL A_BeakAttackPL2(player_t *player, pspdef_t *psp)
 {
     angle_t angle;
     int damage;
@@ -931,9 +929,7 @@ void C_DECL A_BeakAttackPL2(player_t* player, pspdef_t* psp)
     angle = player->plr->mo->angle;
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
 
-    puffType = MT_BEAKPUFF;
-
-    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
+    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage, MT_BEAKPUFF);
     if(lineTarget)
     {
         player->plr->mo->angle = M_PointToAngle2(player->plr->mo->origin, lineTarget->origin);
@@ -944,7 +940,7 @@ void C_DECL A_BeakAttackPL2(player_t* player, pspdef_t* psp)
     psp->tics -= P_Random() & 3;
 }
 
-void C_DECL A_StaffAttackPL1(player_t* player, pspdef_t* psp)
+void C_DECL A_StaffAttackPL1(player_t *player, pspdef_t *psp)
 {
     angle_t angle;
     int damage;
@@ -956,9 +952,7 @@ void C_DECL A_StaffAttackPL1(player_t* player, pspdef_t* psp)
     angle += (P_Random() - P_Random()) << 18;
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
 
-    puffType = MT_STAFFPUFF;
-
-    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
+    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage, MT_STAFFPUFF);
     if(lineTarget)
     {
         // Turn to face target.
@@ -966,7 +960,7 @@ void C_DECL A_StaffAttackPL1(player_t* player, pspdef_t* psp)
     }
 }
 
-void C_DECL A_StaffAttackPL2(player_t* player, pspdef_t* psp)
+void C_DECL A_StaffAttackPL2(player_t *player, pspdef_t *psp)
 {
     angle_t angle;
     int damage;
@@ -979,9 +973,7 @@ void C_DECL A_StaffAttackPL2(player_t* player, pspdef_t* psp)
 
     slope = P_AimLineAttack(player->plr->mo, angle, MELEERANGE);
 
-    puffType = MT_STAFFPUFF2;
-
-    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage);
+    P_LineAttack(player->plr->mo, angle, MELEERANGE, slope, damage, MT_STAFFPUFF2);
     if(lineTarget)
     {
         // Turn to face target.
@@ -989,9 +981,9 @@ void C_DECL A_StaffAttackPL2(player_t* player, pspdef_t* psp)
     }
 }
 
-void C_DECL A_FireBlasterPL1(player_t* player, pspdef_t* psp)
+void C_DECL A_FireBlasterPL1(player_t *player, pspdef_t *psp)
 {
-    mobj_t* mo;
+    mobj_t *mo;
     angle_t angle;
     int damage;
 
@@ -1007,50 +999,49 @@ void C_DECL A_FireBlasterPL1(player_t* player, pspdef_t* psp)
         angle += (P_Random() - P_Random()) << 18;
     }
 
-    puffType = MT_BLASTERPUFF1;
-
-    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage, MT_BLASTERPUFF1);
     S_StartSoundEx(SFX_BLSSHT, mo);
 }
 
-void C_DECL A_FireBlasterPL2(player_t* player, pspdef_t* psp)
+void C_DECL A_FireBlasterPL2(player_t *player, pspdef_t *psp)
 {
-
     P_ShotAmmo(player);
     S_StartSoundEx(SFX_BLSSHT, player->plr->mo);
-    if(IS_CLIENT)
-        return;
+
+    if(IS_CLIENT) return;
 
     P_SpawnMissile(MT_BLASTERFX1, player->plr->mo, NULL, true);
 }
 
 void C_DECL A_FireGoldWandPL1(player_t *player, pspdef_t *psp)
 {
-    mobj_t             *mo;
-    angle_t             angle;
-    int                 damage;
+    mobj_t *mo;
+    angle_t angle;
+    int damage;
 
     mo = player->plr->mo;
     P_ShotAmmo(player);
     S_StartSoundEx(SFX_GLDHIT, player->plr->mo);
-    if(IS_CLIENT)
-        return;
+
+    if(IS_CLIENT) return;
 
     P_BulletSlope(mo);
+
     damage = 7 + (P_Random() & 7);
+
     angle = mo->angle;
     if(player->refire)
     {
         angle += (P_Random() - P_Random()) << 18;
     }
-    puffType = MT_GOLDWANDPUFF1;
-    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
+
+    P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage, MT_GOLDWANDPUFF1);
 }
 
-void C_DECL A_FireGoldWandPL2(player_t* player, pspdef_t* psp)
+void C_DECL A_FireGoldWandPL2(player_t *player, pspdef_t *psp)
 {
     int i;
-    mobj_t* mo;
+    mobj_t *mo;
     angle_t angle;
     int damage;
     coord_t momZ;
@@ -1061,7 +1052,6 @@ void C_DECL A_FireGoldWandPL2(player_t* player, pspdef_t* psp)
 
     if(IS_CLIENT) return;
 
-    puffType = MT_GOLDWANDPUFF2;
     P_BulletSlope(mo);
     momZ = MOBJINFO[MT_GOLDWANDFX2].speed * bulletSlope;
 
@@ -1073,14 +1063,14 @@ void C_DECL A_FireGoldWandPL2(player_t* player, pspdef_t* psp)
     for(i = 0; i < 5; ++i)
     {
         damage = 1 + (P_Random() & 7);
-        P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage);
+        P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage, MT_GOLDWANDPUFF2);
         angle += ((ANG45 / 8) * 2) / 4;
     }
 }
 
-void C_DECL A_FireMacePL1B(player_t* player, pspdef_t* psp)
+void C_DECL A_FireMacePL1B(player_t *player, pspdef_t *psp)
 {
-    mobj_t* pmo, *ball;
+    mobj_t *pmo, *ball;
     uint an;
 
     if(!P_CheckAmmo(player)) return;
@@ -1428,31 +1418,37 @@ void C_DECL A_FireSkullRodPL1(player_t* player, pspdef_t* psp)
  * The special2 field holds the player number that shot the rain missile.
  * The special1 field is used as a counter for the sound looping.
  */
-void C_DECL A_FireSkullRodPL2(player_t* player, pspdef_t* psp)
+void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t *psp)
 {
-    mobj_t*             mo;
+    mobj_t *mo;
 
     P_ShotAmmo(player);
-    if(IS_CLIENT)
-        return;
+
+    if(IS_CLIENT) return;
 
     if((mo = P_SpawnMissile(MT_HORNRODFX2, player->plr->mo, NULL, true)))
+    {
         mo->special3 = 140;
+    }
 
     // Use MissileMobj instead of the return value from
     // P_SpawnMissile because we need to give info to the mobj
     // even if it exploded immediately.
     if(IS_NETGAME)
-    {   // Multi-player game.
+    {
+        // Multi-player game.
         missileMobj->special2 = P_GetPlayerNum(player);
     }
     else
-    {   // Always use red missiles in single player games.
+    {
+        // Always use red missiles in single player games.
         missileMobj->special2 = 2;
     }
 
     if(lineTarget)
+    {
         missileMobj->tracer = lineTarget;
+    }
 
     S_StartSound(SFX_HRNPOW, missileMobj);
 }
@@ -1697,17 +1693,19 @@ void C_DECL A_FloatPuff(mobj_t *puff)
     puff->mom[MZ] += 1.8f;
 }
 
-void C_DECL A_GauntletAttack(player_t* player, pspdef_t* psp)
+void C_DECL A_GauntletAttack(player_t *player, pspdef_t *psp)
 {
     angle_t angle;
     int damage, randVal;
     float slope;
     coord_t dist;
+    mobjtype_t puffType;
 
     P_ShotAmmo(player);
     psp->pos[VX] = ((P_Random() & 3) - 2);
     psp->pos[VY] = WEAPONTOP + (P_Random() & 3);
     angle = player->plr->mo->angle;
+
     if(player->powers[PT_WEAPONLEVEL2])
     {
         damage = HITDICE(2);
@@ -1724,7 +1722,8 @@ void C_DECL A_GauntletAttack(player_t* player, pspdef_t* psp)
     }
 
     slope = P_AimLineAttack(player->plr->mo, angle, dist);
-    P_LineAttack(player->plr->mo, angle, dist, slope, damage);
+
+    P_LineAttack(player->plr->mo, angle, dist, slope, damage, puffType);
     if(!lineTarget)
     {
         if(P_Random() > 64)
