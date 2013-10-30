@@ -470,9 +470,40 @@ DENG2_OBSERVES(App,              GameChange)
             unwarpedTexture.setFilter(gl::Linear, gl::Linear, gl::MipNone);
             unwarpedTarget.reset(new GLTarget(GLTarget::ColorDepthStencil, unwarpedTexture));
         }
-        static GLShader * vertexShader = NULL;
-        if (vertexShader == NULL) {
-            // vertexShader = new GLShader(GLShader::Vertex, "void main() {}");
+        // TODO somehow get a shader program in here.
+        static QGLShaderProgram * shaderProgram = NULL;
+        if (shaderProgram == NULL) {
+            shaderProgram = new QGLShaderProgram();
+            bool success;
+            success = shaderProgram->addShaderFromSourceCode(QGLShader::Vertex,
+                   "#version 120 \n"
+                   " \n"
+                   "void main() { \n"
+                   "   gl_Position = gl_Vertex; \n"
+                   "   gl_TexCoord[0] = gl_MultiTexCoord0; \n"
+                   "}; \n");
+            if (! success)
+            {
+                qDebug() << shaderProgram->log();
+            }
+            success = shaderProgram->addShaderFromSourceCode(QGLShader::Fragment,
+                   "#version 120 \n"
+                   " \n"
+                   "uniform sampler2D texture; \n"
+                   " \n"
+                   "void main() { \n"
+                   "   vec2 tcIn = gl_TexCoord[0].st; \n"
+                   "   gl_FragColor = vec4(texture2D(texture, tcIn).rg, 0.5, 1); \n"
+                   "}; \n");
+            if (! success)
+            {
+                qDebug() << shaderProgram->log();
+            }
+            success = shaderProgram->link();
+            if (! success)
+            {
+                qDebug() << shaderProgram->log();
+            }
         }
 
         // Set render target to offscreen temporarily.
@@ -515,12 +546,14 @@ DENG2_OBSERVES(App,              GameChange)
         // glRotatef(5, 0, 0, 1); // to make it evident (remove this)
         // if (useShader)
         //     glUseProgram(shader);
+        shaderProgram->bind();
         glBegin(GL_TRIANGLE_STRIP);
             glTexCoord2d(0, 1); glVertex3f(-1,  1, 0.5);
             glTexCoord2d(1, 1); glVertex3f( 1,  1, 0.5);
             glTexCoord2d(0, 0); glVertex3f(-1, -1, 0.5);
             glTexCoord2d(1, 0); glVertex3f( 1, -1, 0.5);
         glEnd();
+        shaderProgram->release();
         // if (useShader)
         //     glUseProgram(0);
         glMatrixMode(GL_PROJECTION);
