@@ -53,6 +53,15 @@ AttribSpecs Vertex2TexRgba::formatSpec() {
     return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
 }
 
+AttribSpec const Vertex3Tex::_spec[2] = {
+    { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3Tex), 0 },
+    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3Tex), 3 * sizeof(float) }
+};
+AttribSpecs Vertex3Tex::formatSpec() {
+    DENG2_ASSERT(sizeof(Vertex3Tex) == 5 * sizeof(float)); // sanity check
+    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
+}
+
 AttribSpec const Vertex3TexRgba::_spec[3] = {
     { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3TexRgba), 0 },
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3TexRgba), 3 * sizeof(float) },
