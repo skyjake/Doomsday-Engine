@@ -132,20 +132,25 @@ DENG2_PIMPL(VRContentTransform)
 
         GLState::pop().apply();
 
-        glEnable(GL_TEXTURE_2D); // Necessary until the legacy code uses GLState, too.
+        // Necessary until the legacy code uses GLState, too:
+        glDisable(GL_ALPHA_TEST);
+        glEnable(GL_TEXTURE_2D);
 
         // Return the drawing to the full target.
-        GLState::setActiveRect(Rectangleui()/*, true*/);
+        GLState::setActiveRect(Rectangleui(), true);
 
         canvas().renderTarget().clear(GLTarget::Color);
         GLState::push()
                 .setBlend(false)
                 .setDepthTest(false);
 
+        glDisable(GL_BLEND);
+
         // Copy contents of offscreen buffer to normal screen.
         oculusRift.draw();
 
         glBindTexture(GL_TEXTURE_2D, 0);
+        glEnable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
 
         GLState::pop().apply();
