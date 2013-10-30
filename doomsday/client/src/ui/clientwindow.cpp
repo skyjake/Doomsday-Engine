@@ -278,7 +278,7 @@ DENG2_OBSERVES(App,              GameChange)
     {
         MouseEvent ev = event;
 
-        switch(Con_GetInteger("rend-vr-mode"))
+        switch(VR::mode)
         {
         // Left-right screen split modes
         case VR::MODE_SIDE_BY_SIDE:
@@ -460,13 +460,19 @@ DENG2_OBSERVES(App,              GameChange)
      */
     void vrDrawOculusRift()
     {
+        /// @todo head tracking, image warping, shrunken hud, field of view
         // Allocate offscreen buffers
         Size size = self.canvas().size();
         if(unwarpedTexture.size() != size)
         {
             unwarpedTexture.setUndefinedImage(size, Image::RGBA_8888);
             unwarpedTexture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            unwarpedTexture.setFilter(gl::Linear, gl::Linear, gl::MipNone);
             unwarpedTarget.reset(new GLTarget(GLTarget::ColorDepthStencil, unwarpedTexture));
+        }
+        static GLShader * vertexShader = NULL;
+        if (vertexShader == NULL) {
+            // vertexShader = new GLShader(GLShader::Vertex, "void main() {}");
         }
 
         // Set render target to offscreen temporarily.
@@ -506,7 +512,7 @@ DENG2_OBSERVES(App,              GameChange)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glLoadIdentity();
-        glRotatef(5, 0, 0, 1); // to make it evident (remove this)
+        // glRotatef(5, 0, 0, 1); // to make it evident (remove this)
         // if (useShader)
         //     glUseProgram(shader);
         glBegin(GL_TRIANGLE_STRIP);
@@ -635,7 +641,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    switch(Con_GetInteger("rend-vr-mode"))
+    switch(VR::mode)
     {
     // A) Single view type stereo 3D modes here:
     case VR::MODE_MONO:
@@ -694,7 +700,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         root().draw();
         break;
 
-    case VR::MODE_OCULUS_RIFT: /// @todo head tracking, image warping, shrunken hud, field of view
+    case VR::MODE_OCULUS_RIFT:
         d->vrDrawOculusRift();
         break;
 
@@ -931,7 +937,7 @@ void ClientWindow::updateRootSize()
 {
     Canvas::Size size = canvas().size();
 
-    switch(Con_GetInteger("rend-vr-mode"))
+    switch(VR::mode)
     {
     // Left-right screen split modes
     case VR::MODE_CROSSEYE:

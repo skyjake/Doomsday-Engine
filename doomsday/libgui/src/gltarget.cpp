@@ -53,7 +53,7 @@ DENG2_OBSERVES(Asset, Deletion)
     }
 
     Instance(Public *i, Flag attachment, GLTexture &colorTexture)
-        : Base(i), fbo(0), flags(attachment), texture(&colorTexture)
+        : Base(i), fbo(0), flags(attachment), texture(&colorTexture), size(colorTexture.size())
     {
         zap(renderBufs);
     }
@@ -91,6 +91,43 @@ DENG2_OBSERVES(Asset, Deletion)
                                    flags & Depth? GL_DEPTH_ATTACHMENT :
                                                   GL_STENCIL_ATTACHMENT,
                                    GL_TEXTURE_2D, texture->glName(), 0);
+
+            // There might be other attachments needed CMB
+            if (flags & Color) { // We used texture for color, now what else do we need?
+                if( (flags & Depth) && (flags & Stencil) )
+                {
+                    // Make this look like my gzdoom Oculus Rift implementation CMB
+                    glGenRenderbuffers       (1, &renderBufs[DepthBuffer]);
+                    glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[DepthBuffer]);
+                    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, size.x, size.y);
+                    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBufs[DepthBuffer]);
+
+                }
+                else
+                {
+                    if (flags & Depth)
+                    {
+                        glGenRenderbuffers       (1, &renderBufs[DepthBuffer]);
+                        glBindRenderbuffer       (GL_RENDERBUFFER, renderBufs[DepthBuffer]);
+                        glRenderbufferStorage    (GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size.x, size.y);
+                        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                                  GL_RENDERBUFFER, renderBufs[DepthBuffer]);
+                        LIBGUI_ASSERT_GL_OK();
+                    }
+                    if(flags & Stencil)
+                    {
+                        glGenRenderbuffers       (1, &renderBufs[StencilBuffer]);
+                        glBindRenderbuffer       (GL_RENDERBUFFER, renderBufs[StencilBuffer]);
+                        glRenderbufferStorage    (GL_RENDERBUFFER, GL_STENCIL_INDEX8, size.x, size.y);
+                        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
+                                                  GL_RENDERBUFFER, renderBufs[StencilBuffer]);
+                        LIBGUI_ASSERT_GL_OK();
+                    }
+                }
+            }
+
+            // glBindTexture(GL_TEXTURE_2D, 0);
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
             LIBGUI_ASSERT_GL_OK();
         }
