@@ -59,14 +59,12 @@ class ClientWindow : public de::PersistentCanvasWindow,
     Q_OBJECT
 
 public:
-    enum Mode
-    {
+    enum Mode {
         Normal,
         Busy
     };
 
-    enum SidebarLocation
-    {
+    enum SidebarLocation {
         RightEdge
     };
 

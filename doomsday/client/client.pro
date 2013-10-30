@@ -413,6 +413,7 @@ DENG_HEADERS += \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
     include/ui/uidefs.h \
+    include/ui/vrcontenttransform.h \
     include/ui/widgets/blurwidget.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/buttonwidget.h \
@@ -447,6 +448,7 @@ DENG_HEADERS += \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/togglewidget.h \
     include/ui/widgets/variabletogglewidget.h \
+    include/ui/windowcontenttransform.h \
     include/ui/windowsystem.h \
     include/ui/zonedebug.h \
     include/updater.h \
@@ -757,6 +759,7 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
+    src/ui/vrcontenttransform.cpp \
     src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
@@ -790,6 +793,7 @@ SOURCES += \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/togglewidget.cpp \
     src/ui/widgets/variabletogglewidget.cpp \
+    src/ui/windowcontenttransform.cpp \
     src/ui/windowsystem.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
