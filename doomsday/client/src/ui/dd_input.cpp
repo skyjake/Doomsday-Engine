@@ -226,7 +226,7 @@ void I_InitVirtualInputDevices(void)
     // Allow re-init.
     I_ShutdownInputDevices();
 
-    memset(inputDevices, 0, sizeof(inputDevices));
+    de::zap(inputDevices);
 
     // The keyboard is always assumed to be present.
     // DDKEYs are used as key indices.
@@ -416,71 +416,32 @@ void I_ResetAllDevices(void)
     }
 }
 
-/**
- * Retrieve a pointer to the input device state by identifier.
- *
- * @param ident         Intput device identifier (index).
- * @param ifactive      Only return if the device is active.
- *
- * @return              Ptr to the input device state OR @c NULL,.
- */
-inputdev_t *I_GetDevice(uint ident, boolean ifactive)
+inputdev_t *I_GetDevice(uint ident, InputDeviceGetMode mode)
 {
     inputdev_t *dev = &inputDevices[ident];
 
-    if(ifactive)
+    if(mode == OnlyActiveInputDevice)
     {
-        if(dev->flags & ID_ACTIVE)
-            return dev;
-        else
-            return NULL;
+        if(!(dev->flags & ID_ACTIVE))
+            return 0;
     }
 
     return dev;
 }
 
-/**
- * Retrieve a pointer to the input device state by name.
- *
- * @param name          Input device name.
- * @param ifactive      Only return if the device is active.
- *
- * @return              Ptr to the input device state OR @c NULL,.
- */
-inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive)
+inputdev_t *I_GetDeviceByName(const char *name, InputDeviceGetMode mode)
 {
-    uint        i;
-    inputdev_t *dev = NULL;
-    boolean     found;
-
-    i = 0;
-    found = false;
-    while(i < NUM_INPUT_DEVICES && !found)
+    for(uint i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
         if(!stricmp(inputDevices[i].name, name))
         {
-            dev = &inputDevices[i];
-            found = true;
-        }
-        else
-            i++;
-    }
-
-    if(dev)
-    {
-        if(ifactive)
-        {
-            if(dev->flags & ID_ACTIVE)
-                return dev;
-            else
-                return NULL;
+            return I_GetDevice(i, mode);
         }
     }
-
-    return dev;
+    return 0;
 }
 
-const ddstring_t* I_DeviceNameStr(uint ident)
+ddstring_t const *I_DeviceNameStr(uint ident)
 {
     static const de::Str names[1 + NUM_INPUT_DEVICES] = {
         "(invalid-identifier)",
@@ -551,7 +512,7 @@ boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
     // The name of the device.
     memset(name, 0, sizeof(name));
     strncpy(name, str, ptr - str);
-    device = I_GetDeviceByName(name, false);
+    device = I_GetDeviceByName(name);
     if(device == NULL)
         return false;
     if(deviceID)
@@ -742,7 +703,7 @@ void I_TrackInput(ddevent_t *ev)
     if(ev->type == E_FOCUS || ev->type == E_SYMBOLIC)
         return; // Not a tracked device state.
 
-    if((dev = I_GetDevice(ev->device, true)) == NULL)
+    if((dev = I_GetDevice(ev->device, OnlyActiveInputDevice)) == NULL)
         return;
 
     // Track the state of Shift and Alt.
@@ -1694,7 +1655,7 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
         // Use the symbolic name.
         keyLabel = key->name;
     }
-    else if(device == I_GetDevice(IDEV_KEYBOARD, false))
+    else if(device == I_GetDevice(IDEV_KEYBOARD))
     {
         // Perhaps a printable ASCII character?
         // Apply all active modifiers to the key.
@@ -2285,19 +2246,19 @@ void Rend_AllInputDeviceStateVisuals(void)
 
     if(devRendKeyState)
     {
-        Rend_RenderInputDeviceStateVisual(I_GetDevice(IDEV_KEYBOARD, false), &keyLayout, &origin, &dimensions);
+        Rend_RenderInputDeviceStateVisual(I_GetDevice(IDEV_KEYBOARD), &keyLayout, &origin, &dimensions);
         origin.y += dimensions.height + SPACING;
     }
 
     if(devRendMouseState)
     {
-        Rend_RenderInputDeviceStateVisual(I_GetDevice(IDEV_MOUSE, false), &mouseLayout, &origin, &dimensions);
+        Rend_RenderInputDeviceStateVisual(I_GetDevice(IDEV_MOUSE), &mouseLayout, &origin, &dimensions);
         origin.y += dimensions.height + SPACING;
     }
 
     if(devRendJoyState)
     {
-        Rend_RenderInputDeviceStateVisual(I_GetDevice(IDEV_JOY1, false), &joyLayout, &origin, &dimensions);
+        Rend_RenderInputDeviceStateVisual(I_GetDevice(IDEV_JOY1), &joyLayout, &origin, &dimensions);
     }
 
     glMatrixMode(GL_PROJECTION);
@@ -2337,7 +2298,7 @@ D_CMD(AxisPrintConfig)
         return false;
     }
 
-    device = I_GetDevice(deviceID, false);
+    device = I_GetDevice(deviceID);
     axis   = I_GetAxisByID(device, axisID);
     I_PrintAxisConfig(device, axis);
 
@@ -2356,7 +2317,7 @@ D_CMD(AxisChangeOption)
         return false;
     }
 
-    device = I_GetDevice(deviceID, false);
+    device = I_GetDevice(deviceID);
     axis   = I_GetAxisByID(device, axisID);
 
     // Options:
@@ -2389,7 +2350,7 @@ D_CMD(AxisChangeValue)
         return false;
     }
 
-    device = I_GetDevice(deviceID, false);
+    device = I_GetDevice(deviceID);
     axis   = I_GetAxisByID(device, axisID);
     if(axis)
     {

@@ -628,7 +628,7 @@ boolean B_Responder(ddevent_t* ev)
         // Axis events need a bit of filtering.
         if(ev->type == E_AXIS)
         {
-            float pos = I_TransformAxis(I_GetDevice(ev->device, false), ev->axis.id, ev->axis.pos);
+            float pos = I_TransformAxis(I_GetDevice(ev->device), ev->axis.id, ev->axis.pos);
             if((ev->axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
                (ev->axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
             {

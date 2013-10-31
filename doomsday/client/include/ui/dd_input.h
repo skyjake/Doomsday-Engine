@@ -226,8 +226,30 @@ void        I_DeviceReset(uint ident);
 void        I_ResetAllDevices(void);
 boolean     I_ShiftDown(void);
 
-inputdev_t* I_GetDevice(uint ident, boolean ifactive);
-inputdev_t* I_GetDeviceByName(const char* name, boolean ifactive);
+enum InputDeviceGetMode {
+    ActiveOrInactiveInputDevice,
+    OnlyActiveInputDevice
+};
+
+/**
+ * Retrieve a pointer to the input device state by identifier.
+ *
+ * @param ident   Intput device identifier (index; @c IDEV_*).
+ * @param mode    Finding behavior.
+ *
+ * @return Ptr to the input device state OR @c NULL.
+ */
+inputdev_t* I_GetDevice(uint ident, InputDeviceGetMode mode = ActiveOrInactiveInputDevice);
+
+/**
+ * Retrieve a pointer to the input device state by name.
+ *
+ * @param name    Input device name.
+ * @param mode    Finding behavior.
+ *
+ * @return  Ptr to the input device state OR @c NULL.
+ */
+inputdev_t* I_GetDeviceByName(char const *name, InputDeviceGetMode mode = ActiveOrInactiveInputDevice);
 
 /**
  * Retrieve the user-friendly, print-ready, name for the device associated with
@@ -236,7 +258,7 @@ inputdev_t* I_GetDeviceByName(const char* name, boolean ifactive);
  * @return  String containing the name for this device. Always valid. This string
  *          should never be free'd by the caller.
  */
-const ddstring_t* I_DeviceNameStr(uint ident);
+ddstring_t const *I_DeviceNameStr(uint ident);
 
 float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
 
