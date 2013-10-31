@@ -33,6 +33,8 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 
+#include "render/vr.h"
+
 #include "ui/windowsystem.h"
 #include <de/KeyEvent>
 
@@ -1610,20 +1612,31 @@ void DD_ReadHeadTracker(void)
     /// @todo Access head tracking hardware here and post an event per axis using
     /// DD_PostEvent() (cf. above for the joystick).
 
+    if (! VR::hasHeadOrientation())
+        return;
+
     ddevent_t ev;
 
     ev.device = IDEV_HEAD_TRACKER;
     ev.type = E_AXIS;
-    ev.axis.type = EAXIS_ABSOLUTE;
+    ev.axis.type = EAXIS_RELATIVE;
+
+    static float previousYaw = 0;
+    std::vector<float> pry = VR::getHeadOrientation();
+    if (pry.size() != 3)
+        return;
 
     // Yaw.
+    float yaw = pry[2] - previousYaw; // incremental yaw
+    previousYaw = pry[2];
     ev.axis.id = 0; // Yaw.
-    ev.axis.pos = 0;
-    //DD_PostEvent(&ev);
+    ev.axis.pos = de::radianToDegree(yaw);
+    DD_PostEvent(&ev);
 
     ev.axis.id = 1; // Pitch.
-    ev.axis.pos = 0;
-    //DD_PostEvent(&ev);
+    ev.axis.pos = pry[0];
+    ev.axis.type = EAXIS_ABSOLUTE;
+    DD_PostEvent(&ev);
 
     ev.axis.id = 2; // Roll.
     ev.axis.pos = 0;
