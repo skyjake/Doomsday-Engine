@@ -113,6 +113,8 @@ void G_DefineControls(void)
     P_NewPlayerControl(CTL_ZFLY, CTLT_NUMERIC, "zfly", "game");
     P_NewPlayerControl(CTL_TURN, CTLT_NUMERIC, "turn", "game");
     P_NewPlayerControl(CTL_LOOK, CTLT_NUMERIC, "look", "game");
+    P_NewPlayerControl(CTL_LOOK_PITCH, CTLT_NUMERIC, "lookpitch", "game");
+    P_NewPlayerControl(CTL_LOOK_YAW, CTLT_NUMERIC, "lookyaw", "game");
     P_NewPlayerControl(CTL_SPEED, CTLT_NUMERIC, "speed", "game");
     P_NewPlayerControl(CTL_MODIFIER_1, CTLT_NUMERIC, "strafe", "game");
     P_NewPlayerControl(CTL_ATTACK, CTLT_NUMERIC_TRIGGERED, "attack", "game");

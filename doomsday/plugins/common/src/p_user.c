@@ -436,22 +436,6 @@ void P_MovePlayer(player_t *player)
         return;
     }
 
-    // Change the angle if possible.
-    /* $unifiedangles */
-   /*if(IS_SERVER && player != &players[0])
-    {
-        if(dp->fixCounter.angles == dp->fixAcked.angles)  // all acked?
-        {
-#ifdef _DEBUG
-            VERBOSE2( Con_Message("Server accepts client %i angle from command (ang=%i).",
-                                  player - players, cmd->angle) );
-#endif
-            // Accept the client's version of the angles.
-            plrmo->angle = cmd->angle << 16;
-            dp->lookDir = cmd->pitch / (float) DDMAXSHORT *110;
-        }
-    }*/
-
     // Slow > fast. Fast > slow.
     speed = brain->speed;
     if(cfg.alwaysRun)
@@ -547,8 +531,7 @@ void P_MovePlayer(player_t *player)
        } */
 
     // 110 corresponds 85 degrees.
-    if(dp->lookDir > 110) dp->lookDir = 110;
-    if(dp->lookDir < -110) dp->lookDir = -110;
+    dp->lookDir = MINMAX_OF(-LOOKDIRMAX, dp->lookDir, LOOKDIRMAX);
 #endif
 }
 
@@ -1677,40 +1660,48 @@ void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
 
-    // Look center requested?
-    if(P_GetImpulseControlState(playerNum, CTL_LOOK_CENTER))
-        player->centering = true;
-
-    P_GetControlState(playerNum, CTL_LOOK, &vel, &off);
-    if(player->centering)
+    // The absolute look pitch overrides CTL_LOOK.
+    if(P_IsControlBound(playerNum, CTL_LOOK_PITCH))
     {
-        // Automatic vertical look centering.
-        float step = 8 * ticLength * TICRATE;
-
-        if(plr->lookDir > step)
-        {
-            plr->lookDir -= step;
-        }
-        else if(plr->lookDir < -step)
-        {
-            plr->lookDir += step;
-        }
-        else
-        {
-            plr->lookDir = 0;
-            player->centering = false;
-        }
+        P_GetControlState(playerNum, CTL_LOOK_PITCH, &off, NULL);
+        plr->lookDir = off * LOOKDIRMAX;
     }
     else
     {
-        // Pitch as controlled by CTL_LOOK.
-        plr->lookDir += 110.f/85.f * ((640 * TICRATE)/65535.f*360 * vel * ticLength +
-                                      offsetSensitivity * off);
-        if(plr->lookDir < -110)
-            plr->lookDir = -110;
-        else if(plr->lookDir > 110)
-            plr->lookDir = 110;
+        // Look center requested?
+        if(P_GetImpulseControlState(playerNum, CTL_LOOK_CENTER))
+            player->centering = true;
+
+        // Use a delta-based control for looking.
+        P_GetControlState(playerNum, CTL_LOOK, &vel, &off);
+        if(player->centering)
+        {
+            // Automatic vertical look centering.
+            float step = 8 * ticLength * TICRATE;
+
+            if(plr->lookDir > step)
+            {
+                plr->lookDir -= step;
+            }
+            else if(plr->lookDir < -step)
+            {
+                plr->lookDir += step;
+            }
+            else
+            {
+                plr->lookDir = 0;
+                player->centering = false;
+            }
+        }
+        else
+        {
+            // Pitch as controlled by CTL_LOOK.
+            plr->lookDir += LOOKDIRMAX/85.f * ((640 * TICRATE)/65535.f*360 * vel * ticLength +
+                                               offsetSensitivity * off);
+        }
     }
+
+    plr->lookDir = MINMAX_OF(-LOOKDIRMAX, plr->lookDir, LOOKDIRMAX);
 }
 
 void P_PlayerThinkUpdateControls(player_t* player)
