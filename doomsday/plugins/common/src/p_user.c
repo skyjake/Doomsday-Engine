@@ -1611,12 +1611,17 @@ void P_PlayerThinkLookYaw(player_t* player, timespan_t ticLength)
     ddplayer_t* plr = player->plr;
     classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
     float offsetSensitivity = 100; /// @todo Should be done engine-side, mouse sensitivity!
-    float vel, off, turnSpeedPerTic;
+    float vel, off, turnSpeedPerTic, yawDelta;
+
+    static float yaws[DDMAXPLAYERS]; /// @todo Move to a more appropriate, resetable place.
 
     if(IS_DEDICATED) return;
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return;
+
+    // Turn the head?
+    P_PlayerThinkHeadTurning(playerNum, ticLength);
 
     turnSpeedPerTic = pClassInfo->turnSpeed[0];
 
@@ -1627,6 +1632,13 @@ void P_PlayerThinkLookYaw(player_t* player, timespan_t ticLength)
         // Hurry, good man!
         turnSpeedPerTic = pClassInfo->turnSpeed[1];
     }
+
+    // Check the yaw offset control (absolute value).
+    /// @todo This could be done better?
+    P_GetControlState(playerNum, CTL_BODY_YAW, &off, 0);
+    yawDelta = off - yaws[playerNum];
+    yaws[playerNum] = off;
+    plr->mo->angle += (fixed_t)(yawDelta * ANGLE_180);
 
     // Yaw.
     if(!((plr->mo->flags & MF_JUSTATTACKED) || player->brain.lunge))

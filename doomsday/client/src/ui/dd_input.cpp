@@ -1576,8 +1576,8 @@ void DD_ReadHeadTracker(void)
 
     // Yaw.
     ev.axis.id = 0; // Yaw.
-    ev.axis.pos = 0;
-    //DD_PostEvent(&ev);
+    ev.axis.pos = cos(Timer_RealSeconds());
+    DD_PostEvent(&ev);
 
     ev.axis.id = 1; // Pitch.
     ev.axis.pos = sin(Timer_RealSeconds()/2) * .5f;

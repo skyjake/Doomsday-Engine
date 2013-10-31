@@ -40,8 +40,6 @@ enum {
     CTL_MODIFIER_2 = 7,
     CTL_MODIFIER_3 = 8,
     CTL_MODIFIER_4 = 9,
-    CTL_LOOK_PITCH = 10,    ///< Determines look pitch as absolute value.
-    CTL_LOOK_YAW = 11,      ///< Additional look yaw angle.
     CTL_FIRST_GAME_CONTROL = 1000
 };
 

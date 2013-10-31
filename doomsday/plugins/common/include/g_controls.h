@@ -34,6 +34,9 @@ enum {
     CTL_SPEED = CTL_FIRST_GAME_CONTROL,
     //CTL_STRAFE,
     CTL_LOOK_CENTER,
+    CTL_LOOK_PITCH,     ///< Absolute lookdir pitch.
+    CTL_HEAD_YAW,       ///< Offset applied to viewing direction only (yaw); not body turn angle.
+    CTL_BODY_YAW,       ///< Absolute offset applied to player angle.
     CTL_FALL_DOWN,
     CTL_USE,
     CTL_ATTACK,
@@ -147,10 +150,11 @@ void        G_ControlRegister(void);
 void        G_DefineControls(void);
 void        G_DefaultBindings(void);
 void        G_RegisterBindClasses(void);
-void        G_LookAround(int pnum);
 void        G_ControlReset(int pnum);
 float       G_GetLookOffset(int pnum);
 void        G_ResetLookOffset(int pnum);
+
+void        P_PlayerThinkHeadTurning(int pnum, timespan_t ticLength);
 
 #ifdef __cplusplus
 } // extern "C"
