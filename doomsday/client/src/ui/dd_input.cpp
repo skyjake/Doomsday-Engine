@@ -325,9 +325,6 @@ void I_InitVirtualInputDevices(void)
         axis->flags |= IDA_RAW;
 
         registerAxisCvars(dev);
-
-        // If a head tracking device is connected, the device
-        // should be activated.
     }
 }
 
@@ -681,11 +678,8 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
         }
     }
 
-    // We can clear the expiration when it returns to default state.
-    if(FEQUAL(a->position, 0) || a->type == IDAT_POINTER)
-    {
-        a->assoc.flags &= ~IDAF_EXPIRED;
-    }
+    // We can clear the expiration now that an updated value is available.
+    a->assoc.flags &= ~IDAF_EXPIRED;
 }
 
 boolean I_ShiftDown(void)
@@ -1568,6 +1562,9 @@ void DD_ReadJoystick(void)
 
 void DD_ReadHeadTracker(void)
 {
+    // If a head tracking device is connected, the device is marked active.
+    I_GetDevice(IDEV_HEAD_TRACKER)->flags |= ID_ACTIVE;
+
     /// @todo Access head tracking hardware here and post an event per axis using
     /// DD_PostEvent() (cf. above for the joystick).
 
@@ -1583,8 +1580,8 @@ void DD_ReadHeadTracker(void)
     //DD_PostEvent(&ev);
 
     ev.axis.id = 1; // Pitch.
-    ev.axis.pos = 0;
-    //DD_PostEvent(&ev);
+    ev.axis.pos = sin(Timer_RealSeconds()/2) * .5f;
+    DD_PostEvent(&ev);
 
     ev.axis.id = 2; // Roll.
     ev.axis.pos = 0;
