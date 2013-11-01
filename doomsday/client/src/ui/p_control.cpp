@@ -333,6 +333,32 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
 }
 #endif // __CLIENT__
 
+#undef P_IsControlBound
+DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
+{
+#ifdef __CLIENT__
+    struct bcontext_s* bc = 0;
+    struct dbinding_s* binds = 0;
+    playercontrol_t* pc = P_PlayerControlById(control);
+
+    // Check that this is really a numeric control.
+    DENG_ASSERT(pc);
+    DENG_ASSERT(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
+
+    // Bindings are associated with the ordinal of the local player, not
+    // the actual console number (playerNum) being used. That is why
+    // P_ConsoleToLocal() is called here.
+    binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
+
+    // Is this not an empty list?
+    return binds && binds->next != binds;
+#else
+    DENG_UNUSED(playerNum);
+    DENG_UNUSED(control);
+    return 0;
+#endif
+}
+
 #undef P_GetControlState
 DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
 {
@@ -344,8 +370,8 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, flo
     playercontrol_t* pc = P_PlayerControlById(control);
 
     // Check that this is really a numeric control.
-    assert(pc);
-    assert(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
+    DENG_ASSERT(pc);
+    DENG_ASSERT(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
 
     // Ignore NULLs.
     if(!pos) pos = &tmp;

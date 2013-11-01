@@ -372,7 +372,7 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
 
     if(event->type != E_SYMBOLIC)
     {
-        dev = I_GetDevice(eb->device, true);
+        dev = I_GetDevice(eb->device, OnlyActiveInputDevice);
         if(!dev)
         {
             // The device is not active, there is no way this could get executed.
@@ -435,7 +435,7 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
 
         // Is the position as required?
         if(!B_CheckAxisPos(eb->state, eb->pos,
-                           I_TransformAxis(I_GetDevice(event->device, false),
+                           I_TransformAxis(I_GetDevice(event->device),
                                            event->axis.id, event->axis.pos)))
             return 0;
         break;

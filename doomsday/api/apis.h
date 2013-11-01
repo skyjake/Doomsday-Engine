@@ -108,7 +108,8 @@ enum {
     DE_API_MATERIAL_ARCHIVE     = DE_API_MATERIAL_ARCHIVE_v1,
 
     DE_API_PLAYER_v1            = 1500,    // 1.10
-    DE_API_PLAYER               = DE_API_PLAYER_v1,
+    DE_API_PLAYER_v2            = 1501,    // 1.13
+    DE_API_PLAYER               = DE_API_PLAYER_v2,
 
     DE_API_PLUGIN_v1            = 1600,    // 1.10
     DE_API_PLUGIN               = DE_API_PLUGIN_v1,

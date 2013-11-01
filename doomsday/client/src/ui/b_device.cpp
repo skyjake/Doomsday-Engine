@@ -277,7 +277,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
             continue;
 
         // Get the device.
-        dev = I_GetDevice(cb->device, true);
+        dev = I_GetDevice(cb->device, OnlyActiveInputDevice);
         if(!dev)
             continue; // Not available.
 
