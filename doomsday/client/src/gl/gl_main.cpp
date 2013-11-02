@@ -600,8 +600,8 @@ void GL_ProjectionMatrix()
     {
         aspect = VR::riftAspect();
         // A little trigonometry to apply aspect ratio to angles
-        float x = tan(0.5 * de::degreeToRadian(VR::riftFovX()));
-        yfov = de::radianToDegree(2.0 * atan2(x, 1.0f));
+        float x = tan(0.5 * de::degreeToRadian(Rend_FieldOfView()));
+        yfov = de::radianToDegree(2.0 * atan2(x/aspect, 1.0f));
     }
     else
     {

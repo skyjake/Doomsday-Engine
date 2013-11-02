@@ -364,9 +364,17 @@ void Rend_Reset()
 
 float Rend_FieldOfView()
 {
-    float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
-    widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
-    return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+    {
+        fieldOfView = VR::riftFovX(); // Update for culling
+        return VR::riftFovX();
+    }
+    else
+    {
+        float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
+        widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
+        return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+    }
 }
 
 void Rend_ModelViewMatrix(bool useAngles)
