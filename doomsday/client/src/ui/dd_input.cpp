@@ -1586,20 +1586,15 @@ void DD_ReadHeadTracker(void)
     // Yaw.
     // skyjake wrote:
     // > With "yawhead" and "yawbody", 1.0 means 180 degrees.
-    static float previousYaw = 0;
-    float yaw = pry[2] - previousYaw; // incremental yaw
-    previousYaw = pry[2];
     ev.axis.id = 0; // Yaw.
     // ev.axis.pos = cos(Timer_RealSeconds());
-    ev.axis.pos = de::radianToDegree(yaw) * 1.0 / 180.0;
-    ev.axis.type = EAXIS_RELATIVE;
+    ev.axis.pos = de::radianToDegree(pry[2]) * 1.0 / 180.0;
     DD_PostEvent(&ev);
 
     ev.axis.id = 1; // Pitch.
     // ev.axis.pos = sin(Timer_RealSeconds()/2) * .5f;
     // 1.0 mean 85 degrees
     ev.axis.pos = de::radianToDegree(pry[0]) * 1.0 / 85.0;
-    ev.axis.type = EAXIS_ABSOLUTE;
     DD_PostEvent(&ev);
 
     // So I'll assume that if roll ever gets used, 1.0 will mean 180 degrees there too.

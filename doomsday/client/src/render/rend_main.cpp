@@ -401,9 +401,10 @@ void Rend_ModelViewMatrix(bool useAngles)
             std::vector<float> pry = VR::getHeadOrientation();
             if (pry.size() == 3)
             {
+                // Late-scheduled update
                 glRotatef(-radianToDegree(pry[1]), 0, 0, 1); // Roll
                 glRotatef( radianToDegree(pry[0]), 1, 0, 0); // Pitch
-                glRotatef(vang, 0, 1, 0); // Yaw
+                glRotatef(vang, 0, 1, 0); // Yaw @todo
             }
             else {
                 glRotatef(vpitch, 1, 0, 0); // Pitch
