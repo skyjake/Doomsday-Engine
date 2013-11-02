@@ -106,11 +106,11 @@ DENG2_PIMPL(VRContentTransform)
         VR::applyFrustumShift = false;
 
         /// @todo head tracking, shrunken hud
-        // Allocate offscreen buffers
-        Canvas::Size size = canvas().size();
-        if(unwarpedTexture.size() != size)
+        // Allocate offscreen buffers - double Oculus Rift size, to get adequate resolution at center after warp
+        Canvas::Size textureSize(2560, 1600); // 2 * 1280x800
+        if(unwarpedTexture.size() != textureSize)
         {
-            unwarpedTexture.setUndefinedImage(size, Image::RGBA_8888);
+            unwarpedTexture.setUndefinedImage(textureSize, Image::RGBA_8888);
             unwarpedTexture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
             unwarpedTexture.setFilter(gl::Linear, gl::Linear, gl::MipNone);
             unwarpedTarget.reset(new GLTarget(unwarpedTexture, GLTarget::DepthStencil));
@@ -126,14 +126,14 @@ DENG2_PIMPL(VRContentTransform)
 
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
-        GLState::setActiveRect(Rectangleui(0, 0, size.x/2, size.y), true);
+        GLState::setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::holdViewPosition();
 
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
-        GLState::setActiveRect(Rectangleui(size.x/2, 0, size.x/2, size.y), true);
+        GLState::setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::releaseViewPosition();
