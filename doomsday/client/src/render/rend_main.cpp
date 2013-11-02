@@ -401,12 +401,20 @@ void Rend_ModelViewMatrix(bool useAngles)
             std::vector<float> pry = VR::getHeadOrientation();
             if (pry.size() == 3)
             {
-                float roll = radianToDegree(pry[1]);
-                glRotatef(-roll, 0, 0, 1); // Roll
+                glRotatef(-radianToDegree(pry[1]), 0, 0, 1); // Roll
+                glRotatef( radianToDegree(pry[0]), 1, 0, 0); // Pitch
+                glRotatef(vang, 0, 1, 0); // Yaw
+            }
+            else {
+                glRotatef(vpitch, 1, 0, 0); // Pitch
+                glRotatef(vang, 0, 1, 0); // Yaw
             }
         }
-        glRotatef(vpitch, 1, 0, 0); // Pitch
-        glRotatef(vang, 0, 1, 0); // Yaw
+        else
+        {
+            glRotatef(vpitch, 1, 0, 0); // Pitch
+            glRotatef(vang, 0, 1, 0); // Yaw
+        }
     }
     glScalef(1, 1.2f, 1);      // This is the aspect correction.
     glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
