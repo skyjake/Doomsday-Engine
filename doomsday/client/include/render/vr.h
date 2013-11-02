@@ -29,6 +29,7 @@ enum Stereo3DMode {
 // Console variables
 Stereo3DMode mode(); /// Currently active Stereo3DMode index
 float riftAspect(); /// Aspect ratio of OculusRift
+float riftFovX(); /// Horizontal field of view in Oculus Rift in degrees
 extern float ipd; /// Interpupillary distance in meters
 extern float playerHeight; /// Human player's real world height in meters
 extern float dominantEye; /// Kludge for aim-down-weapon-sight modes

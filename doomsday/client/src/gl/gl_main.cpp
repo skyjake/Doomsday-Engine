@@ -589,8 +589,6 @@ void GL_ProjectionMatrix()
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
-    if (VR::mode() == VR::MODE_OCULUS_RIFT)
-        aspect = VR::riftAspect();
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -598,8 +596,19 @@ void GL_ProjectionMatrix()
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
+    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+    {
+        aspect = VR::riftAspect();
+        // A little trigonometry to apply aspect ratio to angles
+        float x = tan(0.5 * de::degreeToRadian(VR::riftFovX()));
+        yfov = de::radianToDegree(2.0 * atan2(x, 1.0f));
+    }
+    else
+    {
+        yfov = Rend_FieldOfView() / aspect;
+    }
+
     // Replaced gluPerspective() with glFrustum() so we can do stereo 3D
-    yfov = Rend_FieldOfView() / aspect;
     // gluPerspective(yfov, aspect, glNearClip, glFarClip); // Replaced with lower-level glFrustum()
     float fH = tan(0.5 * de::degreeToRadian(yfov)) * glNearClip;
     float fW = fH*aspect;
