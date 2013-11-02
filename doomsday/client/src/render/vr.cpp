@@ -1,6 +1,23 @@
 #include "de_console.h"
 #include "render/vr.h"
 
+// Sometimes we want viewpoint to remain constant between left and right eye views
+static bool holdView = false;
+void VR::holdViewPosition()
+{
+    holdView = true;
+}
+
+void VR::releaseViewPosition()
+{
+    holdView = false;
+}
+
+bool VR::viewPositionHeld()
+{
+    return holdView;
+}
+
 // Console variables
 
 static int vrMode = (int)VR::MODE_MONO;
@@ -19,6 +36,11 @@ static float vrRiftFovX = 110.0;
 float VR::riftFovX() /// Horizontal field of view in degrees
 {
     return vrRiftFovX;
+}
+
+static float vrLatency = 0.030;
+float VR::riftLatency() {
+    return vrLatency;
 }
 
 // Interpupillary distance in meters
@@ -56,6 +78,13 @@ static void vrModeChanged()
     }
 }
 
+static void vrLatencyChanged()
+{
+    if (VR::hasHeadOrientation()) {
+        VR::setRiftLatency(vrLatency);
+    }
+}
+
 void VR::consoleRegister()
 {
     C_VAR_FLOAT ("rend-vr-ipd",              & VR::ipd,           0, 0.02f, 0.2f);
@@ -63,6 +92,7 @@ void VR::consoleRegister()
     C_VAR_FLOAT ("rend-vr-dominant-eye",     & VR::dominantEye,   0, -1.0f, 1.0f);
     C_VAR_FLOAT ("rend-vr-rift-aspect",      & vrRiftAspect,      0, 0.10f, 10.0f);
     C_VAR_FLOAT ("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f);
+    C_VAR_FLOAT ("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.250f, vrLatencyChanged);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
     C_VAR_INT2  ("rend-vr-mode",             & vrMode,            0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
 }
@@ -83,6 +113,7 @@ public:
         : pitch(0)
         , roll(0)
         , yaw(0)
+        , latency(0)
     {
         OVR::System::Init();
         pFusionResult = new OVR::SensorFusion();
@@ -123,8 +154,30 @@ public:
 
     void update()
     {
-        OVR::Quatf quaternion = pFusionResult->GetOrientation();
+
+        OVR::Quatf quaternion;
+        if (latency == 0)
+            quaternion = pFusionResult->GetOrientation();
+        else
+            quaternion = pFusionResult->GetPredictedOrientation();
         quaternion.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
+    }
+
+    void setLatency(float lat)
+    {
+        if (latency == lat)
+            return; // no change
+        latency = lat;
+        if (latency == 0)
+        {
+            pFusionResult->SetPredictionEnabled(false);
+            pFusionResult->SetPrediction(latency);
+        }
+        else
+        {
+            pFusionResult->SetPredictionEnabled(true);
+            pFusionResult->SetPrediction(latency);
+        }
     }
 
     // Head orientation state, refreshed by call to update();
@@ -137,6 +190,7 @@ private:
     OVR::SensorFusion* pFusionResult;
     OVR::HMDInfo Info;
     bool InfoLoaded;
+    float latency;
 };
 
 static OculusTracker* oculusTracker = NULL;
@@ -152,6 +206,15 @@ bool VR::hasHeadOrientation()
 #else
     // No API; No head tracking.
     return false;
+#endif
+}
+
+void VR::setRiftLatency(float latency)
+{
+#ifdef DENG_HAVE_OCULUS_API
+    if (! VR::hasHeadOrientation())
+        return;
+    oculusTracker->setLatency(latency);
 #endif
 }
 

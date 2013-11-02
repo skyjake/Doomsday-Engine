@@ -105,7 +105,7 @@ DENG2_PIMPL(VRContentTransform)
     {
         VR::applyFrustumShift = false;
 
-        /// @todo head tracking, image warping, shrunken hud, field of view
+        /// @todo head tracking, shrunken hud
         // Allocate offscreen buffers
         Canvas::Size size = canvas().size();
         if(unwarpedTexture.size() != size)
@@ -129,10 +129,14 @@ DENG2_PIMPL(VRContentTransform)
         GLState::setActiveRect(Rectangleui(0, 0, size.x/2, size.y), true);
         drawContent();
 
+        VR::holdViewPosition();
+
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
         GLState::setActiveRect(Rectangleui(size.x/2, 0, size.x/2, size.y), true);
         drawContent();
+
+        VR::releaseViewPosition();
 
         GLState::pop().apply();
 
