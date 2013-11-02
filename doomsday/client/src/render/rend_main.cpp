@@ -412,7 +412,10 @@ void Rend_ModelViewMatrix(bool useAngles)
                 if (pry.size() == 3)
                 {
                     static float previousRiftYaw = 0;
-                    static float previousVang = 0;
+                    static float previousVang2 = 0;
+
+                    // Desired view angle without interpolation?
+                    float vang2 = viewData->latest.angle / (float) ANGLE_MAX *360 - 90;
 
                     // Late-scheduled update
                     scheduledLate = true;
@@ -421,16 +424,29 @@ void Rend_ModelViewMatrix(bool useAngles)
 
                     // Yaw might have a contribution from mouse/keyboard.
                     // So only late schedule if it seems to be head tracking only.
-                    yaw = vang; // default no late schedule
+                    yaw = vang2; // default no late schedule
                     float currentRiftYaw = radianToDegree(pry[2]);
                     float dRiftYaw = currentRiftYaw - previousRiftYaw;
-                    float dVang = vang - previousVang;
-                    if ((dRiftYaw != 0) && (abs(dVang) < 2.0 * abs(dRiftYaw))) {
+                    while (dRiftYaw > 180) dRiftYaw -= 360;
+                    while (dRiftYaw < -180) dRiftYaw += 360;
+                    float dVang = vang2 - previousVang2;
+                    while (dVang > 180) dVang -= 360;
+                    while (dVang < -180) dVang += 360;
+                    if (abs(dVang) < 2.0 * abs(dRiftYaw)) // Mostly head motion
+                    {
                         yaw = storedYaw + dRiftYaw;
+                        float dy = vang2 - yaw;
+                        while (dy > 180) dy -= 360;
+                        while (dy < -180) dy += 360;
+                        yaw += 0.05 * dy; // ease slowly toward target angle
+                    }
+                    else
+                    {
+                        yaw = vang2; // No interpolation if not from head tracker
                     }
 
                     previousRiftYaw = currentRiftYaw;
-                    previousVang = vang;
+                    previousVang2 = vang2;
                 }
             }
             if (! scheduledLate)
