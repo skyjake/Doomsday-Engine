@@ -18,11 +18,7 @@
  */
 
 #include "ui/vrcontenttransform.h"
-
-#ifdef _MSC_VER
-#include "Windows.h"
-#endif
-
+#include "de_platform.h"
 #include "con_main.h"
 #include "render/vr.h"
 
