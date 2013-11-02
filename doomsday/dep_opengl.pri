@@ -18,5 +18,5 @@ else:macx {
 }
 else {
     # Generic Unix.
-    LIBS += -lGL -lGLU
+    LIBS += -lGL
 }

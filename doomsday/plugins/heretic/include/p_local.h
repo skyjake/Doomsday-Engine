@@ -44,9 +44,6 @@
 #include "p_xg.h"
 #include "info.h"
 
-#define LOOKDIR2DEG(x) ((x) * 85.0/110.0)
-#define LOOKDIR2RAD(x) (LOOKDIR2DEG(x)/180*PI)
-
 // Palette indices, for damage/bonus red-/gold-shifts.
 #define STARTREDPALS    1
 #define STARTBONUSPALS  9

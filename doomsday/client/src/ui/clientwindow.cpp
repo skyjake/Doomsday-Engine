@@ -30,6 +30,7 @@
 #include <de/NumberValue>
 #include <QGLFormat>
 #include <de/GLState>
+#include <de/Drawable>
 #include <QCloseEvent>
 
 #include "gl/sys_opengl.h"
@@ -47,6 +48,7 @@
 
 #include "dd_main.h"
 #include "con_main.h"
+#include "ui/vrcontenttransform.h"
 
 using namespace de;
 
@@ -61,6 +63,7 @@ DENG2_OBSERVES(App,              GameChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;
+    bool needRootSizeUpdate;
 
     Mode mode;
 
@@ -81,10 +84,14 @@ DENG2_OBSERVES(App,              GameChange)
     LabelWidget *fpsCounter;
     float oldFps;
 
+    /// @todo Switch dynamically between VR and plain.
+    VRContentTransform contentXf;
+
     Instance(Public *i)
         : Base(i),
           needMainInit(true),
           needRecreateCanvas(false),
+          needRootSizeUpdate(false),
           mode(Normal),
           root(thisPublic),
           legacy(0),
@@ -96,7 +103,8 @@ DENG2_OBSERVES(App,              GameChange)
           sidebar(0),
           busyRoot(thisPublic),
           fpsCounter(0),
-          oldFps(0)
+          oldFps(0),
+          contentXf(*i)
     {
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
@@ -257,6 +265,9 @@ DENG2_OBSERVES(App,              GameChange)
         self.canvas().makeCurrent();
 
         DD_FinishInitializationAfterWindowReady();
+
+        /// @todo This should be called when a VR mode is actually used.
+        contentXf.glInit();
     }
 
     void keyEvent(KeyEvent const &ev)
@@ -275,31 +286,39 @@ DENG2_OBSERVES(App,              GameChange)
 
     void mouseEvent(MouseEvent const &event)
     {
-        if(ClientApp::windowSystem().processEvent(event))
+        MouseEvent ev = event;
+
+        // Translate mouse coordinates for direct interaction.
+        if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
+        {
+            ev.setPos(contentXf.windowToLogicalCoords(event.pos()).toVector2i());
+        }
+
+        if(ClientApp::windowSystem().processEvent(ev))
         {
             // Eaten by the window system.
             return;
         }
 
         // Fall back to legacy handling.
-        switch(event.type())
+        switch(ev.type())
         {
         case Event::MouseButton:
             Mouse_Qt_SubmitButton(
-                        event.button() == MouseEvent::Left?     IMB_LEFT :
-                        event.button() == MouseEvent::Middle?   IMB_MIDDLE :
-                        event.button() == MouseEvent::Right?    IMB_RIGHT :
-                        event.button() == MouseEvent::XButton1? IMB_EXTRA1 :
-                        event.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                        event.state() == MouseEvent::Pressed);
+                        ev.button() == MouseEvent::Left?     IMB_LEFT :
+                        ev.button() == MouseEvent::Middle?   IMB_MIDDLE :
+                        ev.button() == MouseEvent::Right?    IMB_RIGHT :
+                        ev.button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                        ev.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                        ev.state() == MouseEvent::Pressed);
             break;
 
         case Event::MouseMotion:
-            Mouse_Qt_SubmitMotion(IMA_POINTER, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_POINTER, ev.pos().x, ev.pos().y);
             break;
 
         case Event::MouseWheel:
-            Mouse_Qt_SubmitMotion(IMA_WHEEL, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_WHEEL, ev.pos().x, ev.pos().y);
             break;
 
         default:
@@ -386,6 +405,19 @@ DENG2_OBSERVES(App,              GameChange)
         sidebar->deleteLater();
         sidebar = 0;
     }
+
+    void updateRootSize()
+    {
+        DENG_ASSERT_IN_MAIN_THREAD();
+
+        needRootSizeUpdate = false;
+
+        Vector2ui const size = contentXf.logicalRootSize(self.canvas().size());
+
+        // Tell the widgets.
+        root.setViewSize(size);
+        busyRoot.setViewSize(size);
+    } 
 };
 
 ClientWindow::ClientWindow(String const &id)
@@ -470,7 +502,6 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     d->root.find(LEGACY_WIDGET_NAME)->enable();
 
     // Configure a viewport immediately.
-    //glViewport(0, FLIP(0 + canvas.height() - 1), canvas.width(), canvas.height());
     GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
     LOG_DEBUG("LegacyWidget enabled");
@@ -497,7 +528,12 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    root().draw();
+    if(d->needRootSizeUpdate)
+    {
+        d->updateRootSize();
+    }
+
+    d->contentXf.drawTransformed();
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
     // swapped.
@@ -518,9 +554,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
 
     GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
 
-    // Tell the widgets.
-    d->root.setViewSize(size);
-    d->busyRoot.setViewSize(size);
+    d->updateRootSize();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static
@@ -640,6 +674,12 @@ void ClientWindow::updateCanvasFormat()
 
     // Save the relevant format settings.
     App::config().set("window.fsaa", Con_GetByte("vid-fsaa") != 0);
+}
+
+void ClientWindow::updateRootSize()
+{
+    // This will be done a bit later as the call may originate from another thread.
+    d->needRootSizeUpdate = true;
 }
 
 ClientWindow &ClientWindow::main()

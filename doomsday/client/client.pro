@@ -36,6 +36,7 @@ include(../dep_deng2.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_deng1.pri)
+include(../dep_rift.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -56,7 +57,7 @@ win32 {
 
     QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
 
-    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lopengl32 -lglu32
+    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lopengl32
 }
 else:macx {
     useFramework(Cocoa)
@@ -317,6 +318,7 @@ DENG_HEADERS += \
     include/render/vignette.h \
     include/render/vissprite.h \
     include/render/vlight.h \
+    include/render/vr.h \
     include/render/walledge.h \
     include/render/wallspec.h \
     include/resource/animgroups.h \
@@ -362,6 +364,7 @@ DENG_HEADERS += \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
     include/ui/clientwindow.h \
+    include/ui/contenttransform.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
     include/ui/dialogs/aboutdialog.h \
@@ -411,6 +414,7 @@ DENG_HEADERS += \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
     include/ui/uidefs.h \
+    include/ui/vrcontenttransform.h \
     include/ui/widgets/blurwidget.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/buttonwidget.h \
@@ -669,6 +673,7 @@ SOURCES += \
     src/render/vignette.cpp \
     src/render/vissprite.cpp \
     src/render/vlight.cpp \
+    src/render/vr.cpp \
     src/render/walledge.cpp \
     src/render/wallspec.cpp \
     src/resource/animgroups.cpp \
@@ -714,6 +719,7 @@ SOURCES += \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
     src/ui/clientwindow.cpp \
+    src/ui/contenttransform.cpp \
     src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
@@ -754,6 +760,7 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
+    src/ui/vrcontenttransform.cpp \
     src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \

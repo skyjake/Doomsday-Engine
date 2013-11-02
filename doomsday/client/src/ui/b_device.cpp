@@ -96,9 +96,10 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         }
         cb->type = EVTYPE_TO_CBDTYPE(type);
     }
-    else if(!Str_CompareIgnoreCase(str, "joy"))
+    else if(!Str_CompareIgnoreCase(str, "joy") ||
+            !Str_CompareIgnoreCase(str, "head"))
     {
-        cb->device = IDEV_JOY1;
+        cb->device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
 
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
@@ -276,7 +277,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
             continue;
 
         // Get the device.
-        dev = I_GetDevice(cb->device, true);
+        dev = I_GetDevice(cb->device, OnlyActiveInputDevice);
         if(!dev)
             continue; // Not available.
 

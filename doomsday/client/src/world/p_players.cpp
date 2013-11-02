@@ -189,6 +189,7 @@ DENG_EXTERN_C Smoother *Net_PlayerSmoother(int player);
 
 // p_control.c
 DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, char const *name, char const *bindContext);
+DENG_EXTERN_C int P_IsControlBound(int playerNum, int control);
 DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float *pos, float *relativeOffset);
 DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int control);
 DENG_EXTERN_C void P_Impulse(int playerNum, int control);
@@ -201,6 +202,7 @@ DENG_DECLARE_API(Player) =
     Net_PlayerSmoother,
     DD_GetPlayer,
     P_NewPlayerControl,
+    P_IsControlBound,
     P_GetControlState,
     P_GetImpulseControlState,
     P_Impulse

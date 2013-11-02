@@ -34,6 +34,8 @@
  */
 //#define DENG_WINDOW         (&ClientWindow::main())
 
+#define DENG_GAMEVIEW_X         ClientWindow::main().game().rule().left().valuei()
+#define DENG_GAMEVIEW_Y         ClientWindow::main().game().rule().top().valuei()
 #define DENG_GAMEVIEW_WIDTH     ClientWindow::main().game().rule().width().valuei()
 #define DENG_GAMEVIEW_HEIGHT    ClientWindow::main().game().rule().height().valuei()
 
@@ -57,14 +59,12 @@ class ClientWindow : public de::PersistentCanvasWindow,
     Q_OBJECT
 
 public:
-    enum Mode
-    {
+    enum Mode {
         Normal,
         Busy
     };
 
-    enum SidebarLocation
-    {
+    enum SidebarLocation {
         RightEdge
     };
 
@@ -133,6 +133,7 @@ public:
     void grab(image_t &image, bool halfSized = false) const;
 
     void updateCanvasFormat();
+    void updateRootSize();
 
     // Notifications.
     bool isFPSCounterVisible() const;

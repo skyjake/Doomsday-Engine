@@ -187,6 +187,7 @@ public:
     ui::Margins const &margins() const;
 
     de::Rectanglef normalizedRect() const;
+    de::Rectanglef normalizedRect(de::Rectanglei const &viewSpaceRect) const;
 
     /**
      * Normalized content rectangle. Same as normalizedRect() except margins

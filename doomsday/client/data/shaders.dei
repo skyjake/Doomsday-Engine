@@ -136,3 +136,20 @@ group fx {
         }
     }
 }
+
+group vr {
+    group oculusrift {
+        shader barrel {
+            vertex = "
+                #version 120
+                attribute highp vec4 aVertex;
+                attribute highp vec2 aUV;
+                varying highp vec2 vTexCoord;
+                void main() {
+                    gl_Position = aVertex;
+                    vTexCoord = aUV;
+                }"
+            path.fragment = "shaders/oculusrift-barrel.fsh"
+        }
+    }
+}

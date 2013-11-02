@@ -42,24 +42,31 @@ DENG2_OBSERVES(Asset, Deletion)
     GLuint fbo;
     GLuint renderBufs[MAX_BUFFERS];
     Flags flags;
+    Flags textureAttachment;    ///< Where to attach @a texture.
     GLTexture *texture;
     Vector2ui size;
     Vector4f clearColor;
 
     Instance(Public *i)
-        : Base(i), fbo(0), flags(DefaultFlags), texture(0)
+        : Base(i), fbo(0),
+          flags(DefaultFlags), textureAttachment(NoAttachments),
+          texture(0)
     {
         zap(renderBufs);
     }
 
-    Instance(Public *i, Flag attachment, GLTexture &colorTexture)
-        : Base(i), fbo(0), flags(attachment), texture(&colorTexture)
+    Instance(Public *i, Flags const &texAttachment, GLTexture &colorTexture, Flags const &otherAtm)
+        : Base(i), fbo(0),
+          flags(texAttachment | otherAtm), textureAttachment(texAttachment),
+          texture(&colorTexture), size(colorTexture.size())
     {
         zap(renderBufs);
     }
 
     Instance(Public *i, Vector2ui const &targetSize, Flags const &fboFlags)
-        : Base(i), fbo(0), flags(fboFlags), texture(0), size(targetSize)
+        : Base(i), fbo(0),
+          flags(fboFlags), textureAttachment(NoAttachments),
+          texture(0), size(targetSize)
     {
         zap(renderBufs);
     }
@@ -74,6 +81,18 @@ DENG2_OBSERVES(Asset, Deletion)
         return !texture && size == nullSize;
     }
 
+    void attachRenderbuffer(RenderBufId id, GLenum type, GLenum attachment)
+    {
+        DENG2_ASSERT(size != Vector2ui(0, 0));
+
+        glGenRenderbuffers       (1, &renderBufs[id]);
+        glBindRenderbuffer       (GL_RENDERBUFFER, renderBufs[id]);
+        glRenderbufferStorage    (GL_RENDERBUFFER, type, size.x, size.y);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER,  attachment,
+                                  GL_RENDERBUFFER, renderBufs[id]);
+        LIBGUI_ASSERT_GL_OK();
+    }
+
     void alloc()
     {
         if(isDefault() || fbo) return;
@@ -86,47 +105,49 @@ DENG2_OBSERVES(Asset, Deletion)
             // Target renders to texture.
             DENG2_ASSERT(texture->isReady());
 
-            glFramebufferTexture2D(GL_FRAMEBUFFER,
-                                   flags & Color? GL_COLOR_ATTACHMENT0 :
-                                   flags & Depth? GL_DEPTH_ATTACHMENT :
-                                                  GL_STENCIL_ATTACHMENT,
-                                   GL_TEXTURE_2D, texture->glName(), 0);
+            // The texture's attachment point must be unambiguously defined.
+            DENG2_ASSERT(textureAttachment == Color   ||
+                         textureAttachment == Depth   ||
+                         textureAttachment == Stencil ||
+                         textureAttachment == DepthStencil);
 
-            LIBGUI_ASSERT_GL_OK();
+            glFramebufferTexture2D(GL_FRAMEBUFFER,
+                                   textureAttachment == Color?   GL_COLOR_ATTACHMENT0  :
+                                   textureAttachment == Depth?   GL_DEPTH_ATTACHMENT   :
+                                   textureAttachment == Stencil? GL_STENCIL_ATTACHMENT :
+                                                                 GL_DEPTH_STENCIL_ATTACHMENT,
+                                   GL_TEXTURE_2D, texture->glName(), 0);
         }
-        else if(size != nullSize)
+
+        if(size != nullSize) // A non-default target: size must be specified.
         {
-            // Target consists of one or more renderbuffers.
-            if(flags & Color)
+            // Fill in all the other requested attachments.
+            if(flags.testFlag(Color) && !textureAttachment.testFlag(Color))
             {
-                glGenRenderbuffers       (1, &renderBufs[ColorBuffer]);
-                glBindRenderbuffer       (GL_RENDERBUFFER, renderBufs[ColorBuffer]);
-                /// @todo Note that for GLES, GL_RGBA8 is not supported.
-                glRenderbufferStorage    (GL_RENDERBUFFER, GL_RGBA8, size.x, size.y);
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                          GL_RENDERBUFFER, renderBufs[ColorBuffer]);
-                LIBGUI_ASSERT_GL_OK();
+                /// @todo Note that for GLES, GL_RGBA8 is not supported (without an extension).
+                attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
             }
-            if(flags & Depth)
+
+            if(flags.testFlag(DepthStencil) && (!texture || textureAttachment == Color))
             {
-                glGenRenderbuffers       (1, &renderBufs[DepthBuffer]);
-                glBindRenderbuffer       (GL_RENDERBUFFER, renderBufs[DepthBuffer]);
-                glRenderbufferStorage    (GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size.x, size.y);
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                                          GL_RENDERBUFFER, renderBufs[DepthBuffer]);
-                LIBGUI_ASSERT_GL_OK();
+                // We can use a combined depth/stencil buffer.
+                attachRenderbuffer(DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
             }
-            if(flags & Stencil)
+            else
             {
-                glGenRenderbuffers       (1, &renderBufs[StencilBuffer]);
-                glBindRenderbuffer       (GL_RENDERBUFFER, renderBufs[StencilBuffer]);
-                glRenderbufferStorage    (GL_RENDERBUFFER, GL_STENCIL_INDEX8, size.x, size.y);
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
-                                          GL_RENDERBUFFER, renderBufs[StencilBuffer]);
-                LIBGUI_ASSERT_GL_OK();
+                // Separate depth and stencil, then.
+                if(flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
+                {
+                    attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT16, GL_DEPTH_ATTACHMENT);
+                }
+                if(flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
+                {
+                    attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX8, GL_STENCIL_ATTACHMENT);
+                }
             }
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
         }
+
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
         validate();
     }
@@ -138,6 +159,9 @@ DENG2_OBSERVES(Asset, Deletion)
         {
             glDeleteFramebuffers(1, &fbo);
             glDeleteRenderbuffers(MAX_BUFFERS, renderBufs);
+
+            fbo = 0;
+            zap(renderBufs);
         }
         texture = 0;
         size = Vector2ui(0, 0);
@@ -161,6 +185,7 @@ DENG2_OBSERVES(Asset, Deletion)
         if(status != GL_FRAMEBUFFER_COMPLETE)
         {
             self.setState(NotReady);
+
             throw ConfigError("GLTarget::validate",
                 status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT? "Incomplete attachments" :
                 status == GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS? "Mismatch with dimensions" :
@@ -184,13 +209,14 @@ GLTarget::GLTarget() : d(new Instance(this))
     setState(Ready);
 }
 
-GLTarget::GLTarget(GLTexture &colorTarget) : d(new Instance(this, Color, colorTarget))
+GLTarget::GLTarget(GLTexture &colorTarget, Flags const &otherAttachments)
+    : d(new Instance(this, Color, colorTarget, otherAttachments))
 {
     d->alloc();
 }
 
-GLTarget::GLTarget(Flag attachment, GLTexture &texture)
-    : d(new Instance(this, attachment, texture))
+GLTarget::GLTarget(Flags const &attachment, GLTexture &texture, Flags const &otherAttachments)
+    : d(new Instance(this, attachment, texture, otherAttachments))
 {
     d->alloc();
 }
@@ -226,7 +252,7 @@ QImage GLTarget::toImage() const
         QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
         glBind();
         glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        glReadPixels(0, 0, imgSize.x, imgSize.y, GL_RGBA, GL_UNSIGNED_BYTE,
+        glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE,
                      (GLvoid *) img.constBits());
         // Restore the stack's target.
         GLState::top().target().glBind();

@@ -30,3 +30,6 @@ OPENAL_DIR = "c:/SDK/OpenAL 1.1 SDK"
 
 # Location of the cURL SDK.
 CURL_DIR = "c:/SDK/cURL"
+
+# Location of Oculus Rift SDK
+LIBOVR_DIR = "C:/SDK/OculusSDK/LibOVR"

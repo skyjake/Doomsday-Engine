@@ -222,8 +222,6 @@ typedef struct {
     int availWidth, availHeight;
     boolean alignHorizontal; /// @c false: align vertically instead.
     float scaleFactor;
-    int scissorState;
-    RectRaw scissorRegion;
 } dgl_borderedprojectionstate_t;
 
 DENG_API_TYPEDEF(GL)
@@ -232,6 +230,8 @@ DENG_API_TYPEDEF(GL)
 
     int (*Enable)(int cap);
     void (*Disable)(int cap);
+    void (*PushState)(void);
+    void (*PopState)(void);
 
     boolean (*GetIntegerv)(int name, int* vec);
     int (*GetInteger)(int name);
@@ -243,11 +243,6 @@ DENG_API_TYPEDEF(GL)
     void (*Ortho)(float left, float top, float right, float bottom, float znear, float zfar);
 
     /**
-     * Retrieve the current dimensions of the viewport scissor region.
-     */
-    void (*Scissor)(RectRaw* rect);
-
-    /**
      * Change the current viewport scissor region.
      *
      * This function only sets the geometry. To enable the scissor use
@@ -256,7 +251,7 @@ DENG_API_TYPEDEF(GL)
      * @param rect  Geometry of the new scissor region. Coordinates are
      *              in viewport space.
      */
-    void (*SetScissor)(const RectRaw* rect);
+    void (*SetScissor)(RectRaw const *rect);
     void (*SetScissor2)(int x, int y, int width, int height);
 
     void (*MatrixMode)(int mode);
@@ -349,6 +344,8 @@ DENG_API_T(GL);
 #ifndef DENG_NO_API_MACROS_GL
 #define DGL_Enable          _api_GL.Enable
 #define DGL_Disable         _api_GL.Disable
+#define DGL_PushState       _api_GL.PushState
+#define DGL_PopState        _api_GL.PopState
 #define DGL_GetIntegerv     _api_GL.GetIntegerv
 #define DGL_GetInteger      _api_GL.GetInteger
 #define DGL_SetInteger      _api_GL.SetInteger
@@ -356,7 +353,6 @@ DENG_API_T(GL);
 #define DGL_GetFloat        _api_GL.GetFloat
 #define DGL_SetFloat        _api_GL.SetFloat
 #define DGL_Ortho           _api_GL.Ortho
-#define DGL_Scissor         _api_GL.Scissor
 #define DGL_SetScissor      _api_GL.SetScissor
 #define DGL_SetScissor2     _api_GL.SetScissor2
 #define DGL_MatrixMode      _api_GL.MatrixMode
