@@ -589,6 +589,9 @@ void GL_ProjectionMatrix()
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
+    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+        aspect = VR::riftAspect();
+
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 

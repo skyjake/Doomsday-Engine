@@ -2,9 +2,17 @@
 #include "render/vr.h"
 
 // Console variables
+
 static int vrMode = (int)VR::MODE_MONO;
-VR::Stereo3DMode VR::mode() {
+VR::Stereo3DMode VR::mode()
+{
     return (VR::Stereo3DMode)vrMode;
+}
+
+static float vrRiftAspect = 640.0/800.0;
+float VR::riftAspect() /// Aspect ratio of OculusRift
+{
+    return vrRiftAspect;
 }
 
 // Interpupillary distance in meters
@@ -47,6 +55,7 @@ void VR::consoleRegister()
     C_VAR_FLOAT ("rend-vr-ipd",              & VR::ipd,           0, 0.02f, 0.2f);
     C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 3.0f);
     C_VAR_FLOAT ("rend-vr-dominant-eye",     & VR::dominantEye,   0, -1.0f, 1.0f);
+    C_VAR_FLOAT ("rend-vr-rift-aspect",      & vrRiftAspect,        0, 0.10f, 10.0f);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
     C_VAR_INT2  ("rend-vr-mode",             & vrMode,            0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
 }
