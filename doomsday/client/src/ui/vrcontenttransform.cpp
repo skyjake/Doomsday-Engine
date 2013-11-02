@@ -181,7 +181,7 @@ Vector2ui VRContentTransform::logicalRootSize(Vector2ui const &physicalCanvasSiz
 {
     Canvas::Size size = physicalCanvasSize;
 
-    switch(VR::mode)
+    switch(VR::mode())
     {
     // Left-right screen split modes
     case VR::MODE_CROSSEYE:
@@ -219,7 +219,7 @@ Vector2f VRContentTransform::windowToLogicalCoords(Vector2i const &winPos) const
     Vector2f const viewSize = Vector2f(window().root().viewWidth().value(),
                                        window().root().viewHeight().value());
 
-    switch(VR::mode)
+    switch(VR::mode())
     {
     // Left-right screen split modes
     case VR::MODE_SIDE_BY_SIDE:
@@ -260,7 +260,7 @@ Vector2f VRContentTransform::windowToLogicalCoords(Vector2i const &winPos) const
 
 void VRContentTransform::drawTransformed()
 {
-    switch(VR::mode)
+    switch(VR::mode())
     {
     // A) Single view type stereo 3D modes here:
     case VR::MODE_MONO:

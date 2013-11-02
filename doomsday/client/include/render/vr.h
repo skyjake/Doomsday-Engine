@@ -27,7 +27,7 @@ enum Stereo3DMode {
 };
 
 // Console variables
-extern int mode; /// Currently active Stereo3DMode index
+Stereo3DMode mode(); /// Currently active Stereo3DMode index
 extern float ipd; /// Interpupillary distance in meters
 extern float playerHeight; /// Human player's real world height in meters
 extern float dominantEye; /// Kludge for aim-down-weapon-sight modes

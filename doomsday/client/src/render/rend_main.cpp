@@ -388,7 +388,7 @@ void Rend_ModelViewMatrix(bool useAngles)
     {
         /// Hard code Oculus Rift roll angle directly into OpenGL ModelView matrix
         /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player model.
-        if ( (Con_GetInteger("rend-vr-mode") == VR::MODE_OCULUS_RIFT) && (VR::hasHeadOrientation()) )
+        if ( (VR::mode() == VR::MODE_OCULUS_RIFT) && (VR::hasHeadOrientation()) )
         {
             std::vector<float> pry = VR::getHeadOrientation();
             if (pry.size() == 3)
