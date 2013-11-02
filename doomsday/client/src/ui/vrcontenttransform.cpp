@@ -194,8 +194,8 @@ Vector2ui VRContentTransform::logicalRootSize(Vector2ui const &physicalCanvasSiz
     case VR::MODE_OCULUS_RIFT:
         /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
         // Adjust effective UI size for stereoscopic rendering.
-        size.y *= 2;
-        size *= 0.75f;
+        size.x = size.y * VR::riftAspect();
+        size *= 1.0f; // Use a large font in taskbar
         break;
 
     // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them
