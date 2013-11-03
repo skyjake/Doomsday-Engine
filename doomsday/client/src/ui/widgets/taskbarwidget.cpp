@@ -194,7 +194,7 @@ DENG2_OBSERVES(App, GameChange)
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 {
 #if 0
-    // LegacyWidget is presently incompatible with blurring.
+    // GameWidget is presently incompatible with blurring.
     BlurWidget *blur = new BlurWidget("taskbar_blur");
     add(blur);
     Background bg(*blur, style().colors().colorf("background"));
@@ -397,7 +397,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
         {
             if(root().focus())
             {
-                // First click will remove UI focus, allowing LegacyWidget
+                // First click will remove UI focus, allowing GameWidget
                 // to receive events.
                 root().setFocus(0);
                 return true;

@@ -25,7 +25,7 @@
 
 #include "GuiRootWidget"
 #include "resource/image.h"
-#include "ui/widgets/legacywidget.h"
+#include "ui/widgets/gamewidget.h"
 
 /**
  * Macro for conveniently accessing the current active window. There is always
@@ -75,7 +75,7 @@ public:
     TaskBarWidget &taskBar();
     ConsoleWidget &console();
     NotificationWidget &notifications();
-    LegacyWidget &game();
+    GameWidget &game();
     BusyWidget &busy();
 
     /**

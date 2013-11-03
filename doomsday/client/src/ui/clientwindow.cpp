@@ -35,7 +35,7 @@
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/widgets/legacywidget.h"
+#include "ui/widgets/gamewidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
@@ -69,7 +69,7 @@ DENG2_OBSERVES(App,              GameChange)
 
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
-    LegacyWidget *legacy;
+    GameWidget *legacy;
     TaskBarWidget *taskBar;
     NotificationWidget *notifications;
     ColorAdjustmentDialog *colorAdjust;
@@ -143,7 +143,7 @@ DENG2_OBSERVES(App,              GameChange)
                 .setInput(Rule::Bottom, root.viewBottom());
         root.add(background);
 
-        legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
+        legacy = new GameWidget(LEGACY_WIDGET_NAME);
         legacy->rule()
                 .setLeftTop    (root.viewLeft(),  root.viewTop())
                 .setRightBottom(root.viewWidth(), root.viewBottom());
@@ -456,7 +456,7 @@ NotificationWidget &ClientWindow::notifications()
     return *d->notifications;
 }
 
-LegacyWidget &ClientWindow::game()
+GameWidget &ClientWindow::game()
 {
     return *d->legacy;
 }
@@ -498,13 +498,13 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
-    // Now that the Canvas is ready for drawing we can enable the LegacyWidget.
+    // Now that the Canvas is ready for drawing we can enable the GameWidget.
     d->root.find(LEGACY_WIDGET_NAME)->enable();
 
     // Configure a viewport immediately.
     GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
-    LOG_DEBUG("LegacyWidget enabled");
+    LOG_DEBUG("GameWidget enabled");
 
     if(d->needMainInit)
     {

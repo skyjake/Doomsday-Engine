@@ -1,4 +1,4 @@
-/** @file legacywidget.cpp
+/** @file gamewidget.cpp
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_platform.h"
-#include "ui/widgets/legacywidget.h"
+#include "de_platform.h" // must be included first
+
+#include "ui/widgets/gamewidget.h"
 #include "clientapp.h"
 #include "ui/dd_input.h"
 #include "ui/ui_main.h"
@@ -54,7 +55,7 @@ boolean drawGame = true; // If false the game viewport won't be rendered
 
 using namespace de;
 
-DENG2_PIMPL(LegacyWidget)
+DENG2_PIMPL(GameWidget)
 {
     Instance(Public *i) : Base(i) {}
 
@@ -141,7 +142,7 @@ DENG2_PIMPL(LegacyWidget)
 
     void updateSize()
     {
-        LOG_AS("LegacyWidget");
+        LOG_AS("GameWidget");
         LOG_TRACE("View resized to ") << self.rule().recti().size().asText();
 
         // Update viewports.
@@ -159,20 +160,20 @@ DENG2_PIMPL(LegacyWidget)
     }
 };
 
-LegacyWidget::LegacyWidget(String const &name)
+GameWidget::GameWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
     requestGeometry(false);
 }
 
-void LegacyWidget::glApplyViewport(int x, int y, int width, int height)
+void GameWidget::glApplyViewport(int x, int y, int width, int height)
 {
     GLState::top()
             .setNormalizedViewport(normalizedRect(Rectanglei(x, y, width, height)))
             .apply();
 }
 
-void LegacyWidget::viewResized()
+void GameWidget::viewResized()
 {
     GuiWidget::viewResized();
 
@@ -186,7 +187,7 @@ void LegacyWidget::viewResized()
     d->updateSize();*/
 }
 
-void LegacyWidget::update()
+void GameWidget::update()
 {
     GuiWidget::update();
 
@@ -216,7 +217,7 @@ void LegacyWidget::update()
     //DD_CheckTimeDemo();
 }
 
-void LegacyWidget::drawContent()
+void GameWidget::drawContent()
 {
     if(isDisabled() || !GL_IsFullyInited())
         return;
@@ -262,7 +263,7 @@ void LegacyWidget::drawContent()
 #endif
 }
 
-bool LegacyWidget::handleEvent(Event const &event)
+bool GameWidget::handleEvent(Event const &event)
 {
     /**
      * @todo Event processing should occur here, not during Loop_RunTics().
@@ -282,7 +283,7 @@ bool LegacyWidget::handleEvent(Event const &event)
             return true;
         }
 
-        // If the sidebar is open, we must explicitly click on the LegacyWidget to
+        // If the sidebar is open, we must explicitly click on the GameWidget to
         // cause input to be trapped.
         switch(handleMouseClick(event))
         {
