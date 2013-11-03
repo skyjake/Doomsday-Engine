@@ -551,9 +551,7 @@ de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event,
 de::Action *B_ActionForEvent(ddevent_t const *event)
 {
     event_t ev;
-    bool validGameEvent = false;
-
-    validGameEvent = DD_ConvertEvent(event, &ev);
+    bool validGameEvent = DD_ConvertEvent(event, &ev);
 
     for(int i = 0; i < bindContextCount; ++i)
     {
