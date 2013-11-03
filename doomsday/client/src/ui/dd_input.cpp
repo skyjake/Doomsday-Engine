@@ -1003,7 +1003,7 @@ void DD_ConvertEvent(de::Event const &event, ddevent_t *ddEvent)
     }
 }
 
-void DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
+bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
 {
     // Copy the essentials into a cutdown version for the game.
     // Ensure the format stays the same for future compatibility!
@@ -1091,15 +1091,16 @@ void DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
 
         case IDEV_HEAD_TRACKER:
             // No game-side equivalent exists.
-            break;
+            return false;
 
         default:
 #if _DEBUG
             Con_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
 #endif
-            break;
+            return false;
         }
     }
+    return true;
 }
 
 static void updateDeviceAxes(timespan_t ticLength)
@@ -1125,17 +1126,16 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
 
     while((ddev = nextFromQueue(q)))
     {
-        event_t ev;
-
         // Update the state of the input device tracking table.
         I_TrackInput(ddev);
 
         if(ignoreInput && ddev->type != E_FOCUS)
             continue;
 
-        DD_ConvertEvent(ddev, &ev);
+        event_t ev;
+        bool validGameEvent = DD_ConvertEvent(ddev, &ev);
 
-        if(callGameResponders)
+        if(validGameEvent && callGameResponders)
         {
             // Does the game's special responder use this event? This is
             // intended for grabbing events when creating bindings in the
@@ -1148,7 +1148,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
         if(B_Responder(ddev)) continue;
 
         // The "fallback" responder. Gets the event if no one else is interested.
-        if(callGameResponders && gx.FallbackResponder)
+        if(validGameEvent && callGameResponders && gx.FallbackResponder)
             gx.FallbackResponder(&ev);
     }
 

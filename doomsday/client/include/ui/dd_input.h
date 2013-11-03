@@ -209,7 +209,8 @@ void        DD_ProcessSharpEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaterForKey(int ddkey, int native);
 byte        DD_ModKey(byte key);
-void        DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev);
+
+bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev);
 
 /**
  * Converts a libdeng2 Event into an old-fashioned ddevent_t.
