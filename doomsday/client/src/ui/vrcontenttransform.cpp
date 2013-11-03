@@ -101,7 +101,7 @@ DENG2_PIMPL(VRContentTransform)
     {
         VR::applyFrustumShift = false;
 
-        /// @todo head tracking, shrunken hud
+        /// @todo shrunken hud
         // Allocate offscreen buffers - double Oculus Rift size, to get adequate resolution at center after warp
         Canvas::Size textureSize(2560, 1600); // 2 * 1280x800
         if(unwarpedTexture.size() != textureSize)
@@ -125,14 +125,14 @@ DENG2_PIMPL(VRContentTransform)
         GLState::setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
-        VR::holdViewPosition();
+        VR::holdViewPosition(); // Don't (late-schedule) change view direction between eye renders
 
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
         GLState::setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
-        VR::releaseViewPosition();
+        VR::releaseViewPosition(); // OK, you can change the viewpoint henceforth
 
         GLState::pop().apply();
 
