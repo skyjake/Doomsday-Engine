@@ -1,5 +1,4 @@
-/** @file gamewidget.h  Widget for legacy UI components.
- * @ingroup gui
+/** @file gameuiwidget.h  Widget for legacy game UI elements.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -14,40 +13,26 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_GAMEWIDGET_H
-#define CLIENT_GAMEWIDGET_H
+#ifndef DENG_CLIENT_GAMEUIWIDGET_H
+#define DENG_CLIENT_GAMEUIWIDGET_H
 
 #include "GuiWidget"
 
 /**
- * Widget for drawing the game world.
- *
- * @ingroup gui
+ * Widget that encapsulates game-side UI elements.
  */
-class GameWidget : public GuiWidget
+class GameUIWidget : public GuiWidget
 {
 public:
-    GameWidget(de::String const &name = "game");
+    GameUIWidget();
 
-    /**
-     * Convenience method for changing and immediately applying a new GL
-     * viewport. The viewport is automatically normalized in relation to the
-     * root view size.
-     *
-     * This is only intended to support old graphics code that doesn't use libgui.
-     */
-    void glApplyViewport(int x, int y, int width, int height);
-
-    void viewResized();
-    void update();
-    void drawContent();
-    bool handleEvent(de::Event const &event);
+    void draw();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // CLIENT_GAMEWIDGET_H
+#endif // DENG_CLIENT_GAMEUIWIDGET_H

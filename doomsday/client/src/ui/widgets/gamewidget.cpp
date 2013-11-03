@@ -51,7 +51,7 @@
  */
 #define FRAME_DEFERRED_UPLOAD_TIMEOUT 20
 
-boolean drawGame = true; // If false the game viewport won't be rendered
+//boolean drawGame = true; // If false the game viewport won't be rendered
 
 using namespace de;
 
@@ -72,68 +72,18 @@ DENG2_PIMPL(GameWidget)
 
         if(cannotDraw) return;
 
-        if(drawGame)
+        if(App_GameLoaded())
         {
-            if(App_GameLoaded())
-            {
-                // Notify the world that a new render frame has begun.
-                App_World().beginFrame(CPP_BOOL(R_NextViewer()));
+            // Notify the world that a new render frame has begun.
+            App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
-                R_RenderViewPorts();
-            }
-            else if(titleFinale == 0)
-            {
-                // Title finale is not playing. Lets do it manually.
-                glMatrixMode(GL_PROJECTION);
-                glPushMatrix();
-                glLoadIdentity();
-                glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+            R_RenderViewPorts();
 
-                R_RenderBlankView();
-
-                glMatrixMode(GL_PROJECTION);
-                glPopMatrix();
-            }
-
-            if(!(UI_IsActive() && UI_Alpha() >= 1.0))
-            {
-                UI2_Drawer();
-
-                // Draw any full window game graphics.
-                if(App_GameLoaded() && gx.DrawWindow)
-                {
-                    Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
-                    gx.DrawWindow(&dimensions);
-                }
-            }
-        }
-
-        if(Con_TransitionInProgress())
-            Con_DrawTransition();
-
-        if(drawGame)
-        {
-            // Draw the widgets of the Shadow Bias Editor (if active).
-            SBE_DrawGui();
-
-            /*
-             * Draw debug information.
-             */
-            if(App_World().hasMap() && App_World().map().hasLightGrid())
-            {
-                App_World().map().lightGrid().drawDebugVisual();
-            }
-            Net_Drawer();
-            S_Drawer();
+            // End any open DGL sequence.
+            DGL_End();
 
             // Notify the world that we've finished rendering the frame.
             App_World().endFrame();
-        }
-
-        if(UI_IsActive())
-        {
-            // Draw user interface.
-            UI_Drawer();
         }
 
         // End any open DGL sequence.

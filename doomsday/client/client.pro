@@ -430,6 +430,7 @@ DENG_HEADERS += \
     include/ui/widgets/foldpanelwidget.h \
     include/ui/widgets/gameselectionwidget.h \
     include/ui/widgets/gamewidget.h \
+    include/ui/widgets/gameuiwidget.h \
     include/ui/widgets/gridpopupwidget.h \
     include/ui/widgets/icvarwidget.h \
     include/ui/widgets/keygrabberwidget.h \
@@ -776,6 +777,7 @@ SOURCES += \
     src/ui/widgets/foldpanelwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
     src/ui/widgets/gamewidget.cpp \
+    src/ui/widgets/gameuiwidget.cpp \
     src/ui/widgets/gridpopupwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
     src/ui/widgets/labelwidget.cpp \

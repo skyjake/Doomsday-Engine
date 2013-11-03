@@ -36,6 +36,7 @@
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
 #include "ui/widgets/gamewidget.h"
+#include "ui/widgets/gameuiwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
@@ -51,8 +52,6 @@
 #include "ui/vrcontenttransform.h"
 
 using namespace de;
-
-static String const LEGACY_WIDGET_NAME = "legacy";
 
 DENG2_PIMPL(ClientWindow),
 DENG2_OBSERVES(KeyEventSource,   KeyEvent),
@@ -70,6 +69,7 @@ DENG2_OBSERVES(App,              GameChange)
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
     GameWidget *legacy;
+    GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
     NotificationWidget *notifications;
     ColorAdjustmentDialog *colorAdjust;
@@ -95,6 +95,7 @@ DENG2_OBSERVES(App,              GameChange)
           mode(Normal),
           root(thisPublic),
           legacy(0),
+          gameUI(0),
           taskBar(0),
           notifications(0),
           colorAdjust(0),
@@ -143,14 +144,17 @@ DENG2_OBSERVES(App,              GameChange)
                 .setInput(Rule::Bottom, root.viewBottom());
         root.add(background);
 
-        legacy = new GameWidget(LEGACY_WIDGET_NAME);
-        legacy->rule()
-                .setLeftTop    (root.viewLeft(),  root.viewTop())
-                .setRightBottom(root.viewWidth(), root.viewBottom());
+        legacy = new GameWidget;
+        legacy->rule().setRect(root.viewRule());
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
         legacy->disable();
         root.add(legacy);
+
+        gameUI = new GameUIWidget;
+        gameUI->rule().setRect(root.viewRule());
+        gameUI->disable();
+        root.add(gameUI);
 
         // Game selection.
         games = new GameSelectionWidget;
@@ -383,6 +387,8 @@ DENG2_OBSERVES(App,              GameChange)
                     .setInput(Rule::Bottom, taskBar->rule().top());
             legacy->rule()
                     .setInput(Rule::Right,  widget->rule().left());
+            gameUI->rule()
+                    .setInput(Rule::Right,  widget->rule().left());
             break;
         }
 
@@ -398,6 +404,7 @@ DENG2_OBSERVES(App,              GameChange)
         {
         case RightEdge:
             legacy->rule().setInput(Rule::Right, root.viewRight());
+            gameUI->rule().setInput(Rule::Right, root.viewRight());
             break;
         }
 
@@ -499,7 +506,8 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     PersistentCanvasWindow::canvasGLReady(canvas);
 
     // Now that the Canvas is ready for drawing we can enable the GameWidget.
-    d->root.find(LEGACY_WIDGET_NAME)->enable();
+    d->legacy->enable();
+    d->gameUI->enable();
 
     // Configure a viewport immediately.
     GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
