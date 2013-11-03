@@ -172,14 +172,15 @@ static int globalContextFallback(const ddevent_t* ddev)
     if(App_GameLoaded())
     {
         event_t ev;
-        DD_ConvertEvent(ddev, &ev);
-
-        // The game's normal responder only returns true if the bindings can't
-        // be used (like when chatting). Note that if the event is eaten here,
-        // the rest of the bindings contexts won't get a chance to process the
-        // event.
-        if(gx.Responder && gx.Responder(&ev))
-            return true;
+        if(DD_ConvertEvent(ddev, &ev))
+        {
+            // The game's normal responder only returns true if the bindings can't
+            // be used (like when chatting). Note that if the event is eaten here,
+            // the rest of the bindings contexts won't get a chance to process the
+            // event.
+            if(gx.Responder && gx.Responder(&ev))
+                return true;
+        }
     }
 
     return false;
