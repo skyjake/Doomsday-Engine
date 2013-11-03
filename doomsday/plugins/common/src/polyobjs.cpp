@@ -34,6 +34,8 @@
 
 #include "polyobjs.h"
 
+#define POBJ_PERPETUAL  0xffffffffu  // -1
+
 /// @return  Tag of the found polyobj; otherwise @c 0.
 static int findMirrorPolyobj(int tag)
 {
@@ -112,7 +114,7 @@ void T_RotatePoly(void *polyThinker)
     {
         absSpeed = abs(pe->intSpeed);
 
-        if(pe->dist == -1)
+        if(pe->dist == POBJ_PERPETUAL)
         {
             // perpetual polyobj.
             return;
@@ -167,8 +169,8 @@ boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean overRide)
         if(args[2] == 255)
         {
             // Perpetual rotation.
-            pe->dist = -1;
-            po->destAngle = -1;
+            pe->dist = POBJ_PERPETUAL;
+            po->destAngle = POBJ_PERPETUAL;
         }
         else
         {
@@ -207,8 +209,8 @@ boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean overRide)
         {
             if(args[2] == 255)
             {
-                pe->dist = -1;
-                po->destAngle = -1;
+                pe->dist = POBJ_PERPETUAL;
+                po->destAngle = POBJ_PERPETUAL;
             }
             else
             {
@@ -645,7 +647,7 @@ void PO_InitForMap()
         {
             if((mapSpots[j].doomEdNum == PO_SPAWN_DOOMEDNUM ||
                 mapSpots[j].doomEdNum == PO_SPAWNCRUSH_DOOMEDNUM) &&
-               mapSpots[j].angle == po->tag)
+                mapSpots[j].angle     == angle_t(po->tag))
             {
                 // Polyobj mapspot.
                 spot = &mapSpots[j];
