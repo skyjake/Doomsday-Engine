@@ -402,6 +402,7 @@ DENG2_OBSERVES(App, GameChange)
         haloGroup->addLabel(tr("Vignette Width:"));
         haloGroup->addSlider("rend-vignette-width");
 
+#if 0
         haloGroup->addSpace();
         haloGroup->addToggle("rend-halo-realistic", tr("Realistic Halos"));
 
@@ -413,10 +414,10 @@ DENG2_OBSERVES(App, GameChange)
 
         haloGroup->addLabel(tr("Halo Size Factor:"));
         haloGroup->addSlider("rend-halo-size");
-
+#endif
         haloGroup->addLabel(tr("Occlusion Fading:"));
         haloGroup->addSlider("rend-halo-occlusion", Ranged(1, 256), 1, 0);
-
+#if 0
         haloGroup->addLabel(tr("Min Halo Radius:"));
         haloGroup->addSlider("rend-halo-radius-min", Ranged(1, 80), .1, 1);
 
@@ -431,7 +432,7 @@ DENG2_OBSERVES(App, GameChange)
 
         haloGroup->addLabel(tr("Z-Mag Divisor:"));
         haloGroup->addSlider("rend-halo-zmag-div", Ranged(1, 100), .1, 1);
-
+#endif
         haloGroup->commit();
 
         // Material settings.

@@ -476,9 +476,9 @@ void R_ProjectSprite(mobj_t *mo)
             vis->data.flare.flags = def->flags;
         }
 
-        vis->data.flare.size = flareSize * 60 * (50 + haloSize) / 100.0f;
-        if(vis->data.flare.size < 8)
-            vis->data.flare.size = 8;
+        vis->data.flare.size = 1; //flareSize * 60 * (50 + haloSize) / 100.0f;
+        /*if(vis->data.flare.size < 8)
+            vis->data.flare.size = 8;*/
 
         // Color is taken from the associated lumobj.
         V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);

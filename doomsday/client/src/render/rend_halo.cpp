@@ -17,6 +17,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_base.h"
+#include "de_console.h"
+#include "render/rend_halo.h"
+
+int     haloOccludeSpeed = 48;
+
+void H_Register(void)
+{
+    cvartemplate_t cvars[] = {
+        {"rend-halo-occlusion", CVF_NO_MAX, CVT_INT, &haloOccludeSpeed, 0, 0},
+        {NULL}
+    };
+    Con_AddVariableList(cvars);
+}
+
+#if 0
+
 #include <cmath>
 
 #include "de_base.h"
@@ -47,7 +64,6 @@ D_CMD(FlareConfig);
 
 int     haloMode = 5, haloBright = 45, haloSize = 80;
 int     haloRealistic = true;
-int     haloOccludeSpeed = 48;
 float   haloZMagDiv = 62, haloMinRadius = 20;
 float   haloDimStart = 10, haloDimEnd = 100;
 
@@ -399,3 +415,4 @@ D_CMD(FlareConfig)
 
     return true;
 }
+#endif

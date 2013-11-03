@@ -1102,11 +1102,13 @@ void GL_LoadSystemTextures()
 
     GL_PrepareSysFlaremap(FXT_ROUND);
     GL_PrepareSysFlaremap(FXT_FLARE);
+
+    /*
     if(!haloRealistic)
     {
         GL_PrepareSysFlaremap(FXT_BRFLARE);
         GL_PrepareSysFlaremap(FXT_BIGFLARE);
-    }
+    }*/
 
     Rend_ParticleLoadSystemTextures();
 }
@@ -1834,6 +1836,8 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 
 DGLuint GL_PrepareSysFlaremap(flaretexid_t which)
 {
+    DENG_UNUSED(which);
+#if 0
     if(novideo) return 0;
     if(which < 0 || which >= NUM_SYSFLARE_TEXTURES) return 0;
 
@@ -1871,10 +1875,15 @@ DGLuint GL_PrepareSysFlaremap(flaretexid_t which)
 
     DENG_ASSERT(sysFlareTextures[which] != 0);
     return sysFlareTextures[which];
+#endif
+    return 0;
 }
 
 DGLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
 {
+    DENG_UNUSED(resourceUri);
+#if 0
+    return 0;
     if(resourceUri.path().length() == 1)
     {
         // Select a system flare by numeric identifier?
@@ -1893,6 +1902,7 @@ DGLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
         }
         // Dang...
     }
+#endif
     return 0;
 }
 

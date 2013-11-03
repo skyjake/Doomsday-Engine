@@ -687,6 +687,12 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_
 
 static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
 {
+    /// @todo Rethink how to draw the 3D halo around the object. Needs to be done
+    /// in the vissprite order.
+    DENG_UNUSED(spr);
+    DENG_UNUSED(primary);
+    return false;
+#if 0
     float occlusionFactor;
 
     if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
@@ -714,6 +720,7 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
                         occlusionFactor, spr->data.flare.mul,
                         spr->data.flare.xOff, primary,
                         (spr->data.flare.flags & RFF_NO_TURN) == 0);
+#endif
 }
 
 void Rend_DrawMasked()
@@ -757,6 +764,7 @@ void Rend_DrawMasked()
             }
         }
 
+#if 0
         // Draw secondary halos?
         if(primaryHaloDrawn && haloMode > 1)
         {
@@ -774,6 +782,7 @@ void Rend_DrawMasked()
             // And we're done...
             H_SetupState(false);
         }
+#endif
     }
 }
 
