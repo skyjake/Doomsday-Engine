@@ -1,4 +1,4 @@
-/** @file legacywidget.cpp
+/** @file gamewidget.cpp
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_platform.h"
-#include "ui/widgets/legacywidget.h"
+#include "de_platform.h" // must be included first
+
+#include "ui/widgets/gamewidget.h"
 #include "clientapp.h"
 #include "ui/dd_input.h"
 #include "ui/ui_main.h"
@@ -50,11 +51,11 @@
  */
 #define FRAME_DEFERRED_UPLOAD_TIMEOUT 20
 
-boolean drawGame = true; // If false the game viewport won't be rendered
+//boolean drawGame = true; // If false the game viewport won't be rendered
 
 using namespace de;
 
-DENG2_PIMPL(LegacyWidget)
+DENG2_PIMPL(GameWidget)
 {
     Instance(Public *i) : Base(i) {}
 
@@ -71,68 +72,18 @@ DENG2_PIMPL(LegacyWidget)
 
         if(cannotDraw) return;
 
-        if(drawGame)
+        if(App_GameLoaded())
         {
-            if(App_GameLoaded())
-            {
-                // Notify the world that a new render frame has begun.
-                App_World().beginFrame(CPP_BOOL(R_NextViewer()));
+            // Notify the world that a new render frame has begun.
+            App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
-                R_RenderViewPorts();
-            }
-            else if(titleFinale == 0)
-            {
-                // Title finale is not playing. Lets do it manually.
-                glMatrixMode(GL_PROJECTION);
-                glPushMatrix();
-                glLoadIdentity();
-                glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+            R_RenderViewPorts();
 
-                R_RenderBlankView();
-
-                glMatrixMode(GL_PROJECTION);
-                glPopMatrix();
-            }
-
-            if(!(UI_IsActive() && UI_Alpha() >= 1.0))
-            {
-                UI2_Drawer();
-
-                // Draw any full window game graphics.
-                if(App_GameLoaded() && gx.DrawWindow)
-                {
-                    Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
-                    gx.DrawWindow(&dimensions);
-                }
-            }
-        }
-
-        if(Con_TransitionInProgress())
-            Con_DrawTransition();
-
-        if(drawGame)
-        {
-            // Draw the widgets of the Shadow Bias Editor (if active).
-            SBE_DrawGui();
-
-            /*
-             * Draw debug information.
-             */
-            if(App_World().hasMap() && App_World().map().hasLightGrid())
-            {
-                App_World().map().lightGrid().drawDebugVisual();
-            }
-            Net_Drawer();
-            S_Drawer();
+            // End any open DGL sequence.
+            DGL_End();
 
             // Notify the world that we've finished rendering the frame.
             App_World().endFrame();
-        }
-
-        if(UI_IsActive())
-        {
-            // Draw user interface.
-            UI_Drawer();
         }
 
         // End any open DGL sequence.
@@ -141,7 +92,7 @@ DENG2_PIMPL(LegacyWidget)
 
     void updateSize()
     {
-        LOG_AS("LegacyWidget");
+        LOG_AS("GameWidget");
         LOG_TRACE("View resized to ") << self.rule().recti().size().asText();
 
         // Update viewports.
@@ -159,20 +110,20 @@ DENG2_PIMPL(LegacyWidget)
     }
 };
 
-LegacyWidget::LegacyWidget(String const &name)
+GameWidget::GameWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
     requestGeometry(false);
 }
 
-void LegacyWidget::glApplyViewport(int x, int y, int width, int height)
+void GameWidget::glApplyViewport(int x, int y, int width, int height)
 {
     GLState::top()
             .setNormalizedViewport(normalizedRect(Rectanglei(x, y, width, height)))
             .apply();
 }
 
-void LegacyWidget::viewResized()
+void GameWidget::viewResized()
 {
     GuiWidget::viewResized();
 
@@ -186,7 +137,7 @@ void LegacyWidget::viewResized()
     d->updateSize();*/
 }
 
-void LegacyWidget::update()
+void GameWidget::update()
 {
     GuiWidget::update();
 
@@ -216,7 +167,7 @@ void LegacyWidget::update()
     //DD_CheckTimeDemo();
 }
 
-void LegacyWidget::drawContent()
+void GameWidget::drawContent()
 {
     if(isDisabled() || !GL_IsFullyInited())
         return;
@@ -262,7 +213,7 @@ void LegacyWidget::drawContent()
 #endif
 }
 
-bool LegacyWidget::handleEvent(Event const &event)
+bool GameWidget::handleEvent(Event const &event)
 {
     /**
      * @todo Event processing should occur here, not during Loop_RunTics().
@@ -282,7 +233,7 @@ bool LegacyWidget::handleEvent(Event const &event)
             return true;
         }
 
-        // If the sidebar is open, we must explicitly click on the LegacyWidget to
+        // If the sidebar is open, we must explicitly click on the GameWidget to
         // cause input to be trapped.
         switch(handleMouseClick(event))
         {

@@ -24,6 +24,7 @@
 #include <de/GLTexture>
 #include <de/GLUniform>
 #include <de/GLTarget>
+#include <de/GLState>
 
 #include <QImage>
 #include <QPainter>
@@ -196,6 +197,12 @@ ClientWindow &GuiRootWidget::window()
     return *d->window;
 }
 
+void GuiRootWidget::addOnTop(GuiWidget *widget)
+{
+    // The window knows what is the correct top to add to.
+    window().addOnTop(widget);
+}
+
 AtlasTexture &GuiRootWidget::atlas()
 {
     d->initAtlas();
@@ -299,7 +306,14 @@ void GuiRootWidget::draw()
         d->noFramesDrawnYet = false;
     }
 
+#ifdef DENG2_DEBUG
+    // Detect mistakes in GLState stack usage.
+    dsize const depthBeforeDrawing = GLState::stackDepth();
+#endif
+
     RootWidget::draw();
+
+    DENG2_ASSERT(GLState::stackDepth() == depthBeforeDrawing);
 }
 
 void GuiRootWidget::drawUntil(Widget &until)

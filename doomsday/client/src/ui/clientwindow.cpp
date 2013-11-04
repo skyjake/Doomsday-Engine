@@ -35,7 +35,9 @@
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/widgets/legacywidget.h"
+#include "ui/widgets/compositorwidget.h"
+#include "ui/widgets/gamewidget.h"
+#include "ui/widgets/gameuiwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
@@ -52,8 +54,6 @@
 
 using namespace de;
 
-static String const LEGACY_WIDGET_NAME = "legacy";
-
 DENG2_PIMPL(ClientWindow),
 DENG2_OBSERVES(KeyEventSource,   KeyEvent),
 DENG2_OBSERVES(MouseEventSource, MouseStateChange),
@@ -69,7 +69,9 @@ DENG2_OBSERVES(App,              GameChange)
 
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
-    LegacyWidget *legacy;
+    CompositorWidget *compositor;
+    GameWidget *legacy;
+    GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
     NotificationWidget *notifications;
     ColorAdjustmentDialog *colorAdjust;
@@ -94,7 +96,9 @@ DENG2_OBSERVES(App,              GameChange)
           needRootSizeUpdate(false),
           mode(Normal),
           root(thisPublic),
+          compositor(0),
           legacy(0),
+          gameUI(0),
           taskBar(0),
           notifications(0),
           colorAdjust(0),
@@ -126,31 +130,45 @@ DENG2_OBSERVES(App,              GameChange)
         self.canvas().audienceForKeyEvent -= this;
     }
 
+    Widget &container()
+    {
+        if(compositor)
+        {
+            return *compositor;
+        }
+        return root;
+    }
+
     void setupUI()
     {
         Style &style = ClientApp::windowSystem().style();
 
         // Background for Ring Zero.
-        background = new LabelWidget;
+        background = new LabelWidget("background");
         background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::FitToSize);
         background->setSizePolicy(ui::Filled, ui::Filled);
         background->margins().set("");
-        background->rule()
-                .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Top,    root.viewTop())
-                .setInput(Rule::Right,  root.viewRight())
-                .setInput(Rule::Bottom, root.viewBottom());
+        background->rule().setRect(root.viewRule());
         root.add(background);
 
-        legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
-        legacy->rule()
-                .setLeftTop    (root.viewLeft(),  root.viewTop())
-                .setRightBottom(root.viewWidth(), root.viewBottom());
+        legacy = new GameWidget;
+        legacy->rule().setRect(root.viewRule());
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
         legacy->disable();
         root.add(legacy);
+
+        /// @todo Compositor only needed in VR modes.
+
+        compositor = new CompositorWidget;
+        compositor->rule().setRect(root.viewRule());
+        root.add(compositor);
+
+        gameUI = new GameUIWidget;
+        gameUI->rule().setRect(root.viewRule());
+        gameUI->disable();
+        container().add(gameUI);
 
         // Game selection.
         games = new GameSelectionWidget;
@@ -160,14 +178,14 @@ DENG2_OBSERVES(App,              GameChange)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
-        root.add(games);
+        container().add(games);
 
         // Common notification area.
         notifications = new NotificationWidget;
         notifications->rule()
                 .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
                 .setInput(Rule::Right, legacy->rule().right() - style.rules().rule("gap"));
-        root.add(notifications);
+        container().add(notifications);
 
         // FPS counter for the notification area.
         fpsCounter = new LabelWidget;
@@ -180,13 +198,12 @@ DENG2_OBSERVES(App,              GameChange)
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
-        root.add(taskBar);
+        container().add(taskBar);
 
         // The game selection's height depends on the taskbar.
         games->rule().setInput(Rule::Height,
                                OperatorRule::minimum(root.viewHeight(),
-                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,
-                                                     style.rules().rule("gameselection.max.height")));
+                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,                                                     style.rules().rule("gameselection.max.height")));
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
@@ -383,11 +400,13 @@ DENG2_OBSERVES(App,              GameChange)
                     .setInput(Rule::Bottom, taskBar->rule().top());
             legacy->rule()
                     .setInput(Rule::Right,  widget->rule().left());
+            gameUI->rule()
+                    .setInput(Rule::Right,  widget->rule().left());
             break;
         }
 
         sidebar = widget;
-        root.insertBefore(sidebar, *notifications);
+        container().insertBefore(sidebar, *notifications);
     }
 
     void uninstallSidebar(SidebarLocation location)
@@ -398,10 +417,11 @@ DENG2_OBSERVES(App,              GameChange)
         {
         case RightEdge:
             legacy->rule().setInput(Rule::Right, root.viewRight());
+            gameUI->rule().setInput(Rule::Right, root.viewRight());
             break;
         }
 
-        root.remove(*sidebar);
+        container().remove(*sidebar);
         sidebar->deleteLater();
         sidebar = 0;
     }
@@ -456,7 +476,7 @@ NotificationWidget &ClientWindow::notifications()
     return *d->notifications;
 }
 
-LegacyWidget &ClientWindow::game()
+GameWidget &ClientWindow::game()
 {
     return *d->legacy;
 }
@@ -498,13 +518,14 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
-    // Now that the Canvas is ready for drawing we can enable the LegacyWidget.
-    d->root.find(LEGACY_WIDGET_NAME)->enable();
+    // Now that the Canvas is ready for drawing we can enable the GameWidget.
+    d->legacy->enable();
+    d->gameUI->enable();
 
     // Configure a viewport immediately.
     GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
-    LOG_DEBUG("LegacyWidget enabled");
+    LOG_DEBUG("GameWidget enabled");
 
     if(d->needMainInit)
     {
@@ -702,6 +723,11 @@ void ClientWindow::toggleFPSCounter()
 void ClientWindow::showColorAdjustments()
 {
     d->colorAdjust->open();
+}
+
+void ClientWindow::addOnTop(GuiWidget *widget)
+{
+    d->container().add(widget);
 }
 
 void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)

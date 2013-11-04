@@ -74,6 +74,11 @@ DENG2_PIMPL(VRContentTransform)
         return self.window().canvas();
     }
 
+    GLTarget &target() const
+    {
+        return canvas().renderTarget();
+    }
+
     int width() const
     {
         return canvas().width();
@@ -118,18 +123,19 @@ DENG2_PIMPL(VRContentTransform)
         GLState::push()
                 .setTarget(*unwarpedTarget)
                 .apply();
+        unwarpedTarget->unsetActiveRect(true);
         unwarpedTarget->clear(GLTarget::ColorDepth);
 
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
-        GLState::setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
+        unwarpedTarget->setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::holdViewPosition(); // Don't (late-schedule) change view direction between eye renders
 
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
-        GLState::setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
+        unwarpedTarget->setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::releaseViewPosition(); // OK, you can change the viewpoint henceforth
@@ -140,10 +146,7 @@ DENG2_PIMPL(VRContentTransform)
         glDisable(GL_ALPHA_TEST);
         glEnable(GL_TEXTURE_2D);
 
-        // Return the drawing to the full target.
-        GLState::setActiveRect(Rectangleui(), true);
-
-        canvas().renderTarget().clear(GLTarget::Color);
+        target().clear(GLTarget::Color);
         GLState::push()
                 .setBlend(false)
                 .setDepthTest(false);
@@ -284,44 +287,44 @@ void VRContentTransform::drawTransformed()
     case VR::MODE_TOP_BOTTOM: // Left goes on top
         // Left eye view on top of screen.
         VR::eyeShift = VR::getEyeShift(-1);
-        GLState::setActiveRect(Rectangleui(0, 0, d->width(), d->height()/2), true);
+        d->target().setActiveRect(Rectangleui(0, 0, d->width(), d->height()/2), true);
         d->drawContent();
         // Right eye view on bottom of screen.
         VR::eyeShift = VR::getEyeShift(+1);
-        GLState::setActiveRect(Rectangleui(0, d->height()/2, d->width(), d->height()/2), true);
+        d->target().setActiveRect(Rectangleui(0, d->height()/2, d->width(), d->height()/2), true);
         d->drawContent();
         break;
 
     case VR::MODE_SIDE_BY_SIDE: // Squished aspect
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
-        GLState::setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
+        d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
-        GLState::setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
+        d->target().setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
         d->drawContent();
         break;
 
     case VR::MODE_PARALLEL: // Normal aspect
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
-        GLState::setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
+        d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
-        GLState::setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
+        d->target().setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
         d->drawContent();
         break;
 
     case VR::MODE_CROSSEYE: // Normal aspect
         // RIght eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
-        GLState::setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
+        d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();
         // Left eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
-        GLState::setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
+        d->target().setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
         d->drawContent();
         break;
 
@@ -420,6 +423,6 @@ void VRContentTransform::drawTransformed()
     }
 
     // Restore default VR dynamic parameters
-    GLState::setActiveRect(Rectangleui(), true);
+    d->target().unsetActiveRect(true);
     VR::eyeShift = 0;
 }
