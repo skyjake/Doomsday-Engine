@@ -197,6 +197,12 @@ ClientWindow &GuiRootWidget::window()
     return *d->window;
 }
 
+void GuiRootWidget::addOnTop(GuiWidget *widget)
+{
+    // The window knows what is the correct top to add to.
+    window().addOnTop(widget);
+}
+
 AtlasTexture &GuiRootWidget::atlas()
 {
     d->initAtlas();

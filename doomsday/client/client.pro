@@ -420,6 +420,7 @@ DENG_HEADERS += \
     include/ui/widgets/buttonwidget.h \
     include/ui/widgets/choicewidget.h \
     include/ui/widgets/commandwidget.h \
+    include/ui/widgets/compositorwidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
     include/ui/widgets/cvarchoicewidget.h \
@@ -767,6 +768,7 @@ SOURCES += \
     src/ui/widgets/buttonwidget.cpp \
     src/ui/widgets/choicewidget.cpp \
     src/ui/widgets/commandwidget.cpp \
+    src/ui/widgets/compositorwidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/cvarchoicewidget.cpp \

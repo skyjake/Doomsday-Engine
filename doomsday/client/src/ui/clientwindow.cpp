@@ -35,6 +35,7 @@
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
+#include "ui/widgets/compositorwidget.h"
 #include "ui/widgets/gamewidget.h"
 #include "ui/widgets/gameuiwidget.h"
 #include "ui/widgets/busywidget.h"
@@ -68,6 +69,7 @@ DENG2_OBSERVES(App,              GameChange)
 
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
+    CompositorWidget *compositor;
     GameWidget *legacy;
     GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
@@ -94,6 +96,7 @@ DENG2_OBSERVES(App,              GameChange)
           needRootSizeUpdate(false),
           mode(Normal),
           root(thisPublic),
+          compositor(0),
           legacy(0),
           gameUI(0),
           taskBar(0),
@@ -127,21 +130,26 @@ DENG2_OBSERVES(App,              GameChange)
         self.canvas().audienceForKeyEvent -= this;
     }
 
+    Widget &container()
+    {
+        if(compositor)
+        {
+            return *compositor;
+        }
+        return root;
+    }
+
     void setupUI()
     {
         Style &style = ClientApp::windowSystem().style();
 
         // Background for Ring Zero.
-        background = new LabelWidget;
+        background = new LabelWidget("background");
         background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::FitToSize);
         background->setSizePolicy(ui::Filled, ui::Filled);
         background->margins().set("");
-        background->rule()
-                .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Top,    root.viewTop())
-                .setInput(Rule::Right,  root.viewRight())
-                .setInput(Rule::Bottom, root.viewBottom());
+        background->rule().setRect(root.viewRule());
         root.add(background);
 
         legacy = new GameWidget;
@@ -151,10 +159,16 @@ DENG2_OBSERVES(App,              GameChange)
         legacy->disable();
         root.add(legacy);
 
+        /// @todo Compositor only needed in VR modes.
+
+        compositor = new CompositorWidget;
+        compositor->rule().setRect(root.viewRule());
+        root.add(compositor);
+
         gameUI = new GameUIWidget;
         gameUI->rule().setRect(root.viewRule());
         gameUI->disable();
-        root.add(gameUI);
+        container().add(gameUI);
 
         // Game selection.
         games = new GameSelectionWidget;
@@ -164,14 +178,14 @@ DENG2_OBSERVES(App,              GameChange)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
-        root.add(games);
+        container().add(games);
 
         // Common notification area.
         notifications = new NotificationWidget;
         notifications->rule()
                 .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
                 .setInput(Rule::Right, legacy->rule().right() - style.rules().rule("gap"));
-        root.add(notifications);
+        container().add(notifications);
 
         // FPS counter for the notification area.
         fpsCounter = new LabelWidget;
@@ -184,13 +198,12 @@ DENG2_OBSERVES(App,              GameChange)
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
-        root.add(taskBar);
+        container().add(taskBar);
 
         // The game selection's height depends on the taskbar.
         games->rule().setInput(Rule::Height,
                                OperatorRule::minimum(root.viewHeight(),
-                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,
-                                                     style.rules().rule("gameselection.max.height")));
+                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,                                                     style.rules().rule("gameselection.max.height")));
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
@@ -393,7 +406,7 @@ DENG2_OBSERVES(App,              GameChange)
         }
 
         sidebar = widget;
-        root.insertBefore(sidebar, *notifications);
+        container().insertBefore(sidebar, *notifications);
     }
 
     void uninstallSidebar(SidebarLocation location)
@@ -408,7 +421,7 @@ DENG2_OBSERVES(App,              GameChange)
             break;
         }
 
-        root.remove(*sidebar);
+        container().remove(*sidebar);
         sidebar->deleteLater();
         sidebar = 0;
     }
@@ -540,6 +553,8 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     {
         d->updateRootSize();
     }
+
+    qDebug() << "ClientWindow drawing the content";
 
     d->contentXf.drawTransformed();
 
@@ -710,6 +725,11 @@ void ClientWindow::toggleFPSCounter()
 void ClientWindow::showColorAdjustments()
 {
     d->colorAdjust->open();
+}
+
+void ClientWindow::addOnTop(GuiWidget *widget)
+{
+    d->container().add(widget);
 }
 
 void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)

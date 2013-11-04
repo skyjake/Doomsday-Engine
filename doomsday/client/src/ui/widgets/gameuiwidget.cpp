@@ -95,12 +95,12 @@ DENG2_PIMPL(GameUIWidget)
 GameUIWidget::GameUIWidget() : GuiWidget("game_ui"), d(new Instance(this))
 {}
 
-void GameUIWidget::draw()
+void GameUIWidget::drawContent()
 {
     if(isDisabled() || !GL_IsFullyInited())
         return;
 
-    GLState::push();
+    GLState::push().apply();
 
     /*
     Rectanglei pos;
@@ -113,6 +113,6 @@ void GameUIWidget::draw()
     d->draw();
 
     GLState::considerNativeStateUndefined();
-    GLState::pop();
+    GLState::pop().apply();
 }
 

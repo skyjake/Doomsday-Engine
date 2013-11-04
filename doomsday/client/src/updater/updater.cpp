@@ -421,7 +421,7 @@ DENG2_OBSERVES(App, StartupComplete)
         QObject::connect(download, SIGNAL(downloadFailed(QString)), thisPublic, SLOT(downloadFailed(QString)));
         QObject::connect(download, SIGNAL(accepted(int)), thisPublic, SLOT(downloadCompleted(int)));
 
-        ClientWindow::main().root().add(download);
+        ClientWindow::main().root().addOnTop(download);
     }
 
     /**

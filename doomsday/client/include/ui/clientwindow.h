@@ -79,6 +79,15 @@ public:
     BusyWidget &busy();
 
     /**
+     * Adds a widget to the widget tree so that it will be displayed over
+     * other widgets.
+     *
+     * @param widget  Widget to add on top of others. Ownership of the
+     *                widget taken by the new parent.
+     */
+    void addOnTop(GuiWidget *widget);
+
+    /**
      * Installs a sidebar widget into the window. If there is an existing
      * sidebar, it will be deleted. Sidebar widgets are expected to control
      * their own width (on the right/left edges) or height (on the top/bottom
