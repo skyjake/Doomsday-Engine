@@ -75,10 +75,10 @@ DENG_GUI_PIMPL(CompositorWidget)
 
         Buffer *buf = buffers[nextBufIndex];
         Vector2ui const size = GLState::top().target().size();
-        qDebug() << "compositor" << nextBufIndex << "should be" << size.asText();
+        //qDebug() << "compositor" << nextBufIndex << "should be" << size.asText();
         if(buf->texture.size() != size)
         {
-            qDebug() << "buffer texture defined" << size.asText();
+            //qDebug() << "buffer texture defined" << size.asText();
             buf->texture.setUndefinedImage(size, Image::RGBA_8888);
             buf->offscreen.reset(new GLTarget(buf->texture));
         }

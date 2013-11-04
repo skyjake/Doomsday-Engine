@@ -554,8 +554,6 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         d->updateRootSize();
     }
 
-    qDebug() << "ClientWindow drawing the content";
-
     d->contentXf.drawTransformed();
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
