@@ -39,29 +39,34 @@ DENG2_PIMPL(GameUIWidget)
 
     void draw()
     {
-        if(!App_GameLoaded() && titleFinale == 0)
+        if(App_GameLoaded())
         {
-            // Title finale is not playing. Lets do it manually.
-            glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
-            glLoadIdentity();
-            glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
-
-            R_RenderBlankView();
-
-            glMatrixMode(GL_PROJECTION);
-            glPopMatrix();
-        }
-
-        if(!(UI_IsActive() && UI_Alpha() >= 1.0))
-        {
-            UI2_Drawer();
-
-            // Draw any full window game graphics.
-            if(App_GameLoaded() && gx.DrawWindow)
+            /*
+            if(titleFinale == 0)
             {
-                Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
-                gx.DrawWindow(&dimensions);
+                // Title animation is not playing. Lets do it manually.
+                glMatrixMode(GL_PROJECTION);
+                glPushMatrix();
+                glLoadIdentity();
+                glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+
+                R_RenderBlankView();
+
+                glMatrixMode(GL_PROJECTION);
+                glPopMatrix();
+            }
+            */
+
+            if(!(UI_IsActive() && UI_Alpha() >= 1.0))
+            {
+                UI2_Drawer();
+
+                // Draw any full window game graphics.
+                if(gx.DrawWindow)
+                {
+                    Size2Raw dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
+                    gx.DrawWindow(&dimensions);
+                }
             }
         }
 
