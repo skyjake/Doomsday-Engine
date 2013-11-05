@@ -28,10 +28,6 @@
 
 using namespace de;
 
-#ifdef WIN32
-#undef DrawState
-#endif
-
 DENG2_PIMPL(DrawList)
 {
     /**

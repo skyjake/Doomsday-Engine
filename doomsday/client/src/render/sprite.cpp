@@ -433,27 +433,6 @@ void Rend_Draw2DPlayerSprites(void)
 }
 
 /**
- * The first selected unit is active after this call.
- */
-static void GL_SelectTexUnits(int count)
-{
-    for(int i = numTexUnits - 1; i >= count; i--)
-    {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glDisable(GL_TEXTURE_2D);
-    }
-
-    // Enable the selected units.
-    for(int i = count - 1; i >= 0; i--)
-    {
-        if(i >= numTexUnits) continue;
-
-        glActiveTexture(GL_TEXTURE0 + i);
-        glEnable(GL_TEXTURE_2D);
-    }
-}
-
-/**
  * A sort of a sprite, I guess... Masked walls must be rendered sorted
  * with sprites, so no artifacts appear when sprites are seen behind
  * masked walls.
