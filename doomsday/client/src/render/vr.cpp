@@ -92,7 +92,7 @@ void VR::consoleRegister()
     C_VAR_FLOAT ("rend-vr-dominant-eye",     & VR::dominantEye,   0, -1.0f, 1.0f);
     C_VAR_FLOAT ("rend-vr-rift-aspect",      & vrRiftAspect,      0, 0.10f, 10.0f);
     C_VAR_FLOAT ("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f);
-    C_VAR_FLOAT ("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.250f, vrLatencyChanged);
+    C_VAR_FLOAT2("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.250f, vrLatencyChanged);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
     C_VAR_INT2  ("rend-vr-mode",             & vrMode,            0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
 }
