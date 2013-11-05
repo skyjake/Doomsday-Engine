@@ -49,6 +49,7 @@
 #include "render/r_main.h" // R_ResetViewer
 
 #ifdef __CLIENT__
+#  include "clientapp.h"
 #  include "client/cl_def.h"
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
@@ -59,7 +60,6 @@
 #  include "Lumobj"
 #  include "render/projector.h"
 #  include "render/rend_fakeradio.h"
-#  include "render/rend_list.h"
 #  include "render/rend_main.h"
 #  include "render/sky.h"
 #  include "render/vlight.h"
@@ -635,7 +635,7 @@ DENG2_PIMPL(World)
         App_Materials().processCacheQueue();
         LOG_INFO(String("Precaching completed in %1 seconds.").arg(begunPrecacheAt.since(), 0, 'g', 2));
 
-        RL_DeleteLists();
+        ClientApp::renderSystem().drawLists().clear();
         R_InitRendPolyPools();
         Rend_UpdateLightModMatrix();
 

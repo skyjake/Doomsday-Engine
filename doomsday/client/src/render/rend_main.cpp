@@ -36,6 +36,7 @@
 #include "de_resource.h"
 #include "de_graphics.h"
 #include "de_ui.h"
+#include "clientapp.h"
 
 #include "ui/editors/rendererappearanceeditor.h"
 
@@ -71,6 +72,7 @@
 #include "WallEdge"
 #include "render/blockmapvisual.h"
 #include "render/sprite.h"
+#include "render/rend_list.h"
 #include "render/vissprite.h"
 
 #include "gl/sys_opengl.h"
@@ -108,6 +110,18 @@ boolean usingFog; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
 byte smoothTexAnim = true;
+
+int renderTextures = true;
+int renderWireframe = false;
+int useMultiTexLights = true;
+int useMultiTexDetails = true;
+
+// Rendering paramaters for dynamic lights.
+int dynlightBlend = 0;
+
+Vector3f torchColor(1, 1, 1);
+int torchAdditive = true;
+
 int useShinySurfaces = true;
 
 int useDynLights = true;
@@ -259,10 +273,12 @@ void Rend_Register()
     C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, unlinkMobjLumobjs);
     C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_UpdateLightModMatrix);
     C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation,  CVF_NO_MAX, 0, 0);
+    C_VAR_INT   ("rend-light-blend",                &dynlightBlend,                 0, 0, 2);
     C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
     C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_UpdateLightModMatrix);
     C_VAR_BYTE  ("rend-light-decor",                &useLightDecorations,           0, 0, 1);
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
+    C_VAR_INT   ("rend-light-multitex",             &useMultiTexLights,             0, 0, 1);
     C_VAR_INT   ("rend-light-num",                  &rendMaxLumobjs,                CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, markLightGridForFullUpdate);
     C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, markLightGridForFullUpdate);
@@ -301,7 +317,6 @@ void Rend_Register()
 
     C_CMD("rendedit", "", OpenRendererAppearanceEditor);
 
-    RL_Register();
     BiasIllum::consoleRegister();
     BiasSurface::consoleRegister();
     LightDecoration::consoleRegister();
@@ -336,13 +351,12 @@ static void reportWallSectionDrawn(Line &line)
 void Rend_Init()
 {
     C_Init();
-    RL_Init();
     Sky_Init();
 }
 
 void Rend_Shutdown()
 {
-    RL_Shutdown();
+    ClientApp::renderSystem().drawLists().clear();
 }
 
 /// World/map renderer reset.
@@ -358,6 +372,16 @@ void Rend_Reset()
         GL_DeleteLists(dlBBox, 1);
         dlBBox = 0;
     }
+}
+
+bool Rend_IsMTexLights()
+{
+    return IS_MTEX_LIGHTS;
+}
+
+bool Rend_IsMTexDetails()
+{
+    return IS_MTEX_DETAILS;
 }
 
 float Rend_FieldOfView()
@@ -852,7 +876,8 @@ static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
 
 struct rendworldpoly_params_t
 {
-    int             flags; /// @ref rendpolyFlags
+    //int             flags; /// @ref rendpolyFlags
+    bool            skyMasked;
     blendmode_t     blendMode;
     Vector3d const *topLeft;
     Vector3d const *bottomRight;
@@ -890,18 +915,18 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     uint const realNumVertices   = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
     bool const mustSubdivide     = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
 
-    bool const skyMaskedMaterial = ((p.flags & RPF_SKYMASK) || (ms.material().isSkyMasked()));
-    bool const drawAsVisSprite   = (!p.forceOpaque && !(p.flags & RPF_SKYMASK) && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
+    bool const skyMaskedMaterial = (p.skyMasked || (ms.material().isSkyMasked()));
+    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     bool useLights = false, useShadows = false, hasDynlights = false;
 
     // Map RTU configuration from prepared MaterialSnapshot(s).
-    rtexmapunit_t const *primaryRTU       = (!(p.flags & RPF_SKYMASK))? &ms.unit(RTU_PRIMARY) : NULL;
-    rtexmapunit_t const *primaryDetailRTU = (r_detail && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_PRIMARY_DETAIL).hasTexture())? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
-    rtexmapunit_t const *interRTU         = (!(p.flags & RPF_SKYMASK) && ms.unit(RTU_INTER).hasTexture())? &ms.unit(RTU_INTER) : NULL;
-    rtexmapunit_t const *interDetailRTU   = (r_detail && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_INTER_DETAIL).hasTexture())? &ms.unit(RTU_INTER_DETAIL) : NULL;
-    rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
-    rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
+    GLTextureUnit const *primaryRTU       = (!p.skyMasked)? &ms.unit(RTU_PRIMARY) : NULL;
+    GLTextureUnit const *primaryDetailRTU = (r_detail && !p.skyMasked && ms.unit(RTU_PRIMARY_DETAIL).hasTexture())? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
+    GLTextureUnit const *interRTU         = (!p.skyMasked && ms.unit(RTU_INTER).hasTexture())? &ms.unit(RTU_INTER) : NULL;
+    GLTextureUnit const *interDetailRTU   = (r_detail && !p.skyMasked && ms.unit(RTU_INTER_DETAIL).hasTexture())? &ms.unit(RTU_INTER_DETAIL) : NULL;
+    GLTextureUnit const *shinyRTU         = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
+    GLTextureUnit const *shinyMaskRTU     = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
 
     Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
     Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
@@ -913,7 +938,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
     DGLuint modTex = 0;
     Vector2f modTexSt[2]; // [topLeft, bottomRight]
-    Vector4f modColor;
+    Vector3f modColor;
 
     if(!skyMaskedMaterial)
     {
@@ -937,7 +962,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
              * dynlight affecting this surface, grab the parameters
              * needed to draw it.
              */
-            if(useLights && RL_IsMTexLights())
+            if(useLights && Rend_IsMTexLights())
             {
                 TexProjection *dyn = 0;
                 Rend_IterateProjectionList(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
@@ -965,7 +990,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             quadShinyTexCoords(shinyTexCoords, &posCoords[1], &posCoords[2], p.wall.sectionWidth);
 
         // First light texture coordinates.
-        if(modTex && RL_IsMTexLights())
+        if(modTex && Rend_IsMTexLights())
             quadLightCoords(modCoords, modTexSt[0], modTexSt[1]);
     }
     else
@@ -994,7 +1019,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             }
 
             // First light texture coordinates.
-            if(modTex && RL_IsMTexLights())
+            if(modTex && Rend_IsMTexLights())
             {
                 float const width  = p.bottomRight->x - p.topLeft->x;
                 float const height = p.bottomRight->y - p.topLeft->y;
@@ -1311,32 +1336,70 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             R_DivVertColors(shinyColors, origShinyColors, leftEdge, rightEdge);
         }
 
-        RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-                                                 3 + rightEdge.divisionCount(),
-                                                 posCoords + 3 + leftEdge.divisionCount(),
-                                                 colorCoords? colorCoords + 3 + leftEdge.divisionCount() : 0,
-                                                 primaryCoords + 3 + leftEdge.divisionCount(),
-                                                 interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
-                                                 modTex, &modColor, modCoords? modCoords + 3 + leftEdge.divisionCount() : 0,
-                                                 shinyColors + 3 + leftEdge.divisionCount(),
-                                                 shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
-                                                 shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0);
+        if(p.skyMasked)
+        {
+            ClientApp::renderSystem().drawLists()
+                      .find(SkyMaskGeom)
+                          .write(gl::TriangleFan, 0, 3 + rightEdge.divisionCount(),
+                                 posCoords + 3 + leftEdge.divisionCount())
+                          .write(gl::TriangleFan, 0, 3 + leftEdge.divisionCount(),
+                                 posCoords);
+        }
+        else
+        {
+            ClientApp::renderSystem().drawLists()
+                      .find(NormalGeom, (modTex || hasDynlights))
+                          .write(gl::TriangleFan, hasDynlights, 3 + rightEdge.divisionCount(),
+                                 posCoords + 3 + leftEdge.divisionCount(),
+                                 colorCoords? colorCoords + 3 + leftEdge.divisionCount() : 0,
+                                 primaryCoords + 3 + leftEdge.divisionCount(),
+                                 interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
+                                 modTex, &modColor, modCoords? modCoords + 3 + leftEdge.divisionCount() : 0)
+                          .write(gl::TriangleFan, hasDynlights, 3 + leftEdge.divisionCount(),
+                                 posCoords, colorCoords, primaryCoords,
+                                 interCoords, modTex, &modColor, modCoords);
 
-        RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-                                                 3 + leftEdge.divisionCount(),
-                                                 posCoords, colorCoords, primaryCoords, interCoords,
-                                                 modTex, &modColor, modCoords,
-                                                 shinyColors, shinyTexCoords,
-                                                 shinyMaskRTU? primaryCoords : 0);
+            if(shinyRTU)
+            {
+                ClientApp::renderSystem().drawLists()
+                          .find(ShineGeom)
+                              .write(gl::TriangleFan, hasDynlights, 3 + rightEdge.divisionCount(),
+                                     posCoords + 3 + leftEdge.divisionCount(),
+                                     shinyColors + 3 + leftEdge.divisionCount(),
+                                     shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
+                                     shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
+                              .write(gl::TriangleFan, hasDynlights, 3 + leftEdge.divisionCount(),
+                                     posCoords, shinyColors, shinyTexCoords,
+                                     shinyMaskRTU? primaryCoords : 0);
+            }
+        }
     }
     else
     {
-        RL_AddPolyWithCoordsModulationReflection(p.isWall? PT_TRIANGLE_STRIP : PT_FAN,
-                                                 p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-                                                 numVertices, posCoords, colorCoords,
-                                                 primaryCoords, interCoords,
-                                                 modTex, &modColor, modCoords,
-                                                 shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
+        if(p.skyMasked)
+        {
+            ClientApp::renderSystem().drawLists()
+                      .find(SkyMaskGeom)
+                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, 0,
+                                 numVertices, posCoords);
+        }
+        else
+        {
+            ClientApp::renderSystem().drawLists()
+                      .find(NormalGeom, (modTex || hasDynlights))
+                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, hasDynlights,
+                                 numVertices, posCoords, colorCoords,
+                                 primaryCoords, interCoords, modTex, &modColor, modCoords);
+
+            if(shinyRTU)
+            {
+                ClientApp::renderSystem().drawLists()
+                          .find(ShineGeom)
+                              .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, hasDynlights,
+                                     numVertices, posCoords, shinyColors,
+                                     shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
+            }
+        }
     }
 
     R_FreeRendTexCoords(primaryCoords);
@@ -1538,7 +1601,7 @@ static void writeWallSection(HEdge &hedge, int section,
     Vector3d topLeft        = leftEdge.top().origin();
     Vector3d bottomRight    = rightEdge.bottom().origin();
 
-    parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
+    parm.skyMasked           = skyMasked;
     parm.bsuf                = &segment;
     parm.geomGroup           = wallSpec.section;
     parm.topLeft             = &topLeft;
@@ -1562,7 +1625,7 @@ static void writeWallSection(HEdge &hedge, int section,
     parm.wall.leftEdge       = &leftEdge;
     parm.wall.rightEdge      = &rightEdge;
 
-    if(!(parm.flags & RPF_SKYMASK))
+    if(!parm.skyMasked)
     {
         if(glowFactor > .0001f)
         {
@@ -1763,7 +1826,6 @@ static void writeLeafPlane(Plane &plane)
 
     rendworldpoly_params_t parm; zap(parm);
 
-    parm.flags               = RPF_DEFAULT;
     parm.bsuf                = leaf;
     parm.geomGroup           = plane.indexInSector();
     parm.topLeft             = &topLeft;
@@ -1779,17 +1841,17 @@ static void writeLeafPlane(Plane &plane)
         // skymask as regular world polys (with a few obvious properties).
         if(devRendSkyMode)
         {
-            parm.blendMode = BM_NORMAL;
+            parm.blendMode   = BM_NORMAL;
             parm.forceOpaque = true;
         }
         else
         {   // We'll mask this.
-            parm.flags |= RPF_SKYMASK;
+            parm.skyMasked = true;
         }
     }
     else if(plane.indexInSector() <= Sector::Ceiling)
     {
-        parm.blendMode = BM_NORMAL;
+        parm.blendMode   = BM_NORMAL;
         parm.forceOpaque = true;
     }
     else
@@ -1801,7 +1863,7 @@ static void writeLeafPlane(Plane &plane)
         parm.alpha = surface.opacity();
     }
 
-    if(!(parm.flags & RPF_SKYMASK))
+    if(!parm.skyMasked)
     {
         if(glowFactor > .0001f)
         {
@@ -1858,15 +1920,16 @@ static void writeLeafPlane(Plane &plane)
     R_FreeRendVertices(posCoords);
 }
 
-static void writeSkyMaskStrip(int numElements, Vector3f const *posCoords,
+static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     Vector2f const *texCoords, Material *material)
 {
     DENG_ASSERT(posCoords != 0);
 
-    int const rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
     if(!devRendSkyMode)
     {
-        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, numElements, posCoords, 0);
+        ClientApp::renderSystem().drawLists()
+                  .find(SkyMaskGeom)
+                      .write(gl::TriangleStrip, 0, vertCount, posCoords);
     }
     else
     {
@@ -1882,8 +1945,10 @@ static void writeSkyMaskStrip(int numElements, Vector3f const *posCoords,
             RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
         }
 
-        RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, numElements,
-                             posCoords, NULL, texCoords, NULL);
+        ClientApp::renderSystem().drawLists()
+                  .find(NormalGeom)
+                      .write(gl::TriangleStrip, 0, vertCount, posCoords, 0,
+                             texCoords);
     }
 }
 
@@ -2031,7 +2096,9 @@ static coord_t skyPlaneZ(int skyCap)
 
     int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!P_IsInVoid(viewPlayer))
+    {
         return leaf->map().skyFix(relPlane == Sector::Ceiling);
+    }
 
     return leaf->cluster().visPlane(relPlane).heightSmoothed();
 }
@@ -2046,10 +2113,12 @@ static void writeLeafSkyMaskCap(int skyCap)
     Vector3f *verts;
     uint numVerts;
     buildLeafPlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                           skyPlaneZ(skyCap),
-                           &verts, &numVerts);
+                           skyPlaneZ(skyCap), &verts, &numVerts);
 
-    RL_AddPoly(PT_FAN, RPF_DEFAULT | RPF_SKYMASK, numVerts, verts, 0);
+    ClientApp::renderSystem().drawLists()
+              .find(SkyMaskGeom)
+                  .write(gl::TriangleFan, 0, numVerts, verts);
+
     R_FreeRendVertices(verts);
 }
 
@@ -2061,10 +2130,16 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 
     // Any work to do?
     // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) && !cluster.visFloor().surface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_LOWER) &&
+       !cluster.visFloor().surface().hasSkyMaskedMaterial())
+    {
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !cluster.visCeiling().surface().hasSkyMaskedMaterial())
+    }
+    if((skyCap & SKYCAP_UPPER) &&
+       !cluster.visCeiling().surface().hasSkyMaskedMaterial())
+    {
         skyCap &= ~SKYCAP_UPPER;
+    }
 
     if(!skyCap) return;
 
@@ -2636,7 +2711,7 @@ void Rend_RenderMap(Map &map)
     if(!freezeRLs)
     {
         // Prepare for rendering.
-        RL_ClearLists(); // Clear the lists for new quads.
+        ClientApp::renderSystem().drawLists().reset(); // Clear the lists for new geometry.
         C_ClearRanges(); // Clear the clipper.
 
         // Recycle the vlight lists. Currently done here as the lists are

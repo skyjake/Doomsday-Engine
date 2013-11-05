@@ -21,6 +21,7 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_render.h"
+#include "clientapp.h"
 
 #include "WallEdge"
 
@@ -31,7 +32,7 @@ using namespace de;
 static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t &parm)
 {
     // If multitexturing is in use we skip the first.
-    if(!(RL_IsMTexLights() && parm.lastIdx == 0))
+    if(!(Rend_IsMTexLights() && parm.lastIdx == 0))
     {
         // Allocate enough for the divisions too.
         Vector3f *rvertices  = R_AllocRendVertices(parm.realNumVertices);
@@ -99,23 +100,24 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
 
         if(mustSubdivide)
         {
-            WallEdge const &leftEdge = *parm.wall.leftEdge;
+            WallEdge const &leftEdge  = *parm.wall.leftEdge;
             WallEdge const &rightEdge = *parm.wall.rightEdge;
 
-            RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_LIGHT,
-                                 3 + rightEdge.divisionCount(),
+            ClientApp::renderSystem().drawLists()
+                      .find(LightGeom)
+                          .write(gl::TriangleFan, 0, 3 + rightEdge.divisionCount(),
                                  rvertices  + 3 + leftEdge.divisionCount(),
                                  rcolors    + 3 + leftEdge.divisionCount(),
-                                 rtexcoords + 3 + leftEdge.divisionCount(), 0);
-
-            RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_LIGHT,
-                                 3 + leftEdge.divisionCount(),
-                                 rvertices, rcolors, rtexcoords, 0);
+                                 rtexcoords + 3 + leftEdge.divisionCount())
+                          .write(gl::TriangleFan, 0, 3 + leftEdge.divisionCount(),
+                                 rvertices, rcolors, rtexcoords);
         }
         else
         {
-            RL_AddPolyWithCoords(parm.isWall? PT_TRIANGLE_STRIP : PT_FAN, RPF_DEFAULT|RPF_LIGHT,
-                                 parm.numVertices, rvertices, rcolors, rtexcoords, 0);
+            ClientApp::renderSystem().drawLists()
+                      .find(LightGeom)
+                          .write(parm.isWall? gl::TriangleStrip : gl::TriangleFan, 0,
+                                 parm.numVertices, rvertices, rcolors, rtexcoords);
         }
 
         R_FreeRendVertices(rvertices);
@@ -139,7 +141,7 @@ uint Rend_RenderLightProjections(uint listIdx, renderlightprojectionparams_t &p)
     Rend_IterateProjectionList(listIdx, drawDynlightWorker, (void *)&p);
 
     numRendered = p.lastIdx - numRendered;
-    if(RL_IsMTexLights())
+    if(Rend_IsMTexLights())
         numRendered -= 1;
 
     return numRendered;

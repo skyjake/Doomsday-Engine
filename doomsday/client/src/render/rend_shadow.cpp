@@ -24,6 +24,7 @@
 #include "de_play.h"
 #include "de_render.h"
 #include "de_system.h"
+#include "clientapp.h"
 
 #include "world/map.h"
 #include "MaterialSnapshot"
@@ -103,20 +104,21 @@ static void drawShadow(TexProjection const &tp, rendershadowprojectionparams_t &
         WallEdge const &leftEdge = *parm.wall.leftEdge;
         WallEdge const &rightEdge = *parm.wall.rightEdge;
 
-        RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                             3 + rightEdge.divisionCount(),
+        ClientApp::renderSystem().drawLists()
+                  .find(ShadowGeom)
+                      .write(gl::TriangleFan, 0, 3 + rightEdge.divisionCount(),
                              rvertices  + 3 + leftEdge.divisionCount(),
                              rcolors    + 3 + leftEdge.divisionCount(),
-                             rtexcoords + 3 + leftEdge.divisionCount(),
-                             0);
-        RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                             3 + leftEdge.divisionCount(),
-                             rvertices, rcolors, rtexcoords, 0);
+                             rtexcoords + 3 + leftEdge.divisionCount())
+                      .write(gl::TriangleFan, 0, 3 + leftEdge.divisionCount(),
+                             rvertices, rcolors, rtexcoords);
     }
     else
     {
-        RL_AddPolyWithCoords(parm.isWall? PT_TRIANGLE_STRIP : PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                             parm.numVertices, rvertices, rcolors, rtexcoords, 0);
+        ClientApp::renderSystem().drawLists()
+                  .find(ShadowGeom)
+                      .write(parm.isWall? gl::TriangleStrip : gl::TriangleFan, 0,
+                             parm.numVertices, rvertices, rcolors, rtexcoords);
     }
 
     R_FreeRendVertices(rvertices);

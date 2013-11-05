@@ -435,7 +435,7 @@ void Rend_Draw2DPlayerSprites(void)
 /**
  * The first selected unit is active after this call.
  */
-static void selectTexUnits(int count)
+static void GL_SelectTexUnits(int count)
 {
     for(int i = numTexUnits - 1; i >= count; i--)
     {
@@ -487,7 +487,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
             dyn = 1;
         }
 
-        selectTexUnits(2);
+        GL_SelectTexUnits(2);
         GL_ModulateTexture(IS_MUL ? 4 : 5);
 
         // The dynamic light.
@@ -562,7 +562,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
         glEnd();
 
         // Restore normal GL state.
-        selectTexUnits(1);
+        GL_SelectTexUnits(1);
         GL_ModulateTexture(1);
     }
     else

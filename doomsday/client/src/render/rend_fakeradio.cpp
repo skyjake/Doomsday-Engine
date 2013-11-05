@@ -30,6 +30,7 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_play.h"
+#include "clientapp.h"
 
 #include "gl/sys_opengl.h"
 #include "MaterialSnapshot"
@@ -1056,22 +1057,22 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
             R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);
             R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
 
-            RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                                 3 + rightEdge.divisionCount(),
+            ClientApp::renderSystem().drawLists()
+                      .find(ShadowGeom)
+                          .write(gl::TriangleFan, 0, 3 + rightEdge.divisionCount(),
                                  rvertices  + 3 + leftEdge.divisionCount(),
                                  rcolors    + 3 + leftEdge.divisionCount(),
-                                 rtexcoords + 3 + leftEdge.divisionCount(),
-                                 0);
-            RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                                 3 + leftEdge.divisionCount(),
-                                 rvertices, rcolors, rtexcoords, 0);
+                                 rtexcoords + 3 + leftEdge.divisionCount())
+                          .write(gl::TriangleFan, 0, 3 + leftEdge.divisionCount(),
+                                 rvertices, rcolors, rtexcoords);
 
             R_FreeRendVertices(rvertices);
         }
         else
         {
-            RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, RPF_DEFAULT|RPF_SHADOW,
-                                 4, origVertices, rcolors, rtexcoords, 0);
+            ClientApp::renderSystem().drawLists()
+                      .find(ShadowGeom)
+                          .write(gl::TriangleStrip, 0, 4, origVertices, rcolors, rtexcoords);
         }
     }
 
@@ -1242,7 +1243,10 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     if(rendFakeRadio == 2) return;
 
     RL_LoadDefaultRtus();
-    RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
+
+    ClientApp::renderSystem().drawLists()
+              .find(renderWireframe? NormalGeom : ShadowGeom)
+                  .write(gl::TriangleFan, 0, 4, rvertices, rcolors);
 }
 
 static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
