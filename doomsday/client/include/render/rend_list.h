@@ -22,24 +22,6 @@
 
 #include <de/Vector>
 
-/// Register the console commands, variables, etc..., of this module.
-void RL_Register(void);
-
-/// Initialize this module.
-void RL_Init(void);
-
-/// Shutdown this module.
-void RL_Shutdown(void);
-
-/// @return @c true iff multitexturing is currently enabled for lights.
-boolean RL_IsMTexLights(void);
-
-/// @return @c true iff multitexturing is currently enabled for detail textures.
-boolean RL_IsMTexDetails(void);
-
-void RL_ClearLists(void);
-
-void RL_DeleteLists(void);
 /**
  * Geometry backing store (arrays).
  */
@@ -71,63 +53,6 @@ private:
     uint vertCount, vertMax;
 };
 
-/**
- * @param primType  Type of primitive being written.
- * @param flags  @ref rendpolyFlags
- * @param colors  Color data values for the primitive. If @c NULL the default
- *                value set [R:255, G:255, B:255, A:255] will be used for all
- *                vertices of the primitive.
- */
-void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
-    uint numElements, const de::Vector3f* vertices, const de::Vector4f* colors,
-    const de::Vector2f* primaryCoords, const de::Vector2f* interCoords,
-    DGLuint modTex, const de::Vector4f* modColor, const de::Vector2f* modCoords,
-    const de::Vector4f* reflectionColors, const de::Vector2f* reflectionCoords,
-    const de::Vector2f* reflectionMaskCoords);
-
-/**
- * @param primType  Type of primitive being written.
- * @param flags  @ref rendpolyFlags
- * @param colors  Color data values for the primitive. If @c NULL the default
- *                value set [R:255, G:255, B:255, A:255] will be used for all
- *                vertices of the primitive.
- */
-void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
-    uint numElements, const de::Vector3f* vertices, const de::Vector4f* colors,
-    const de::Vector2f* primaryCoords, const de::Vector2f* interCoords,
-    DGLuint modTex, const de::Vector4f* modColor, const de::Vector2f* modCoords);
-
-/**
- * @param primType  Type of primitive being written.
- * @param flags  @ref rendpolyFlags
- * @param colors  Color data values for the primitive. If @c NULL the default
- *                value set [R:255, G:255, B:255, A:255] will be used for all
- *                vertices of the primitive.
- */
-void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
-    const de::Vector3f* vertices, const de::Vector4f* colors,
-    const de::Vector2f* primaryCoords, const de::Vector2f* interCoords);
-
-/**
- * @param primType  Type of primitive being written.
- * @param flags  @ref rendpolyFlags
- * @param colors  Color data values for the primitive. If @c NULL the default
- *                value set [R:255, G:255, B:255, A:255] will be used for all
- *                vertices of the primitive.
- */
-void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
-    const de::Vector3f* vertices, const de::Vector4f* colors,
-    DGLuint modTex, const de::Vector4f* modColor, const de::Vector2f* modCoords);
-
-/**
- * @param primType  Type of primitive being written.
- * @param flags  @ref rendpolyFlags
- * @param colors  Color data values for the primitive. If @c NULL the default
- *                value set [R:255, G:255, B:255, A:255] will be used for all
- *                vertices of the primitive.
- */
-void RL_AddPoly(primtype_t primType, int flags, uint numElements,
-    const de::Vector3f* vertices, const de::Vector4f* colors);
 Store &RL_Store();
 
 void RL_RenderAllLists();
