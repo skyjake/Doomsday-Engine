@@ -107,8 +107,9 @@ DENG_GUI_PIMPL(CompositorWidget)
                          gl::Static);
 
         drawable.addBuffer(buf);
-        root().shaders().build(drawable.program(), "generic.textured.color")
-                << uMvpMatrix /*<< uColor*/ << uTex;
+        root().shaders().build(drawable.program(), "generic.textured.color") //"debug.textured.alpha"
+                << uMvpMatrix
+                << uTex;
     }
 
     void glDeinit()

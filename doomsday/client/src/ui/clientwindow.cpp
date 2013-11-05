@@ -160,10 +160,11 @@ DENG2_OBSERVES(App,              GameChange)
         root.add(legacy);
 
         /// @todo Compositor only needed in VR modes.
-
+#if 1
         compositor = new CompositorWidget;
         compositor->rule().setRect(root.viewRule());
         root.add(compositor);
+#endif
 
         gameUI = new GameUIWidget;
         gameUI->rule().setRect(root.viewRule());

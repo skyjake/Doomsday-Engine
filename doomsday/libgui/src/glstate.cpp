@@ -184,7 +184,9 @@ DENG2_PIMPL(GLState)
 
         case BlendFuncSrc:
         case BlendFuncDest:
-            glBlendFunc(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()));
+            //glBlendFunc(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()));
+            glBlendFuncSeparate(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()),
+                                GL_ONE, GL_ONE);
             break;
 
         case BlendOp:

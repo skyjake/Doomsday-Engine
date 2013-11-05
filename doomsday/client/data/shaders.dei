@@ -153,3 +153,33 @@ group vr {
         }
     }
 }
+
+group debug {
+    group textured {    
+        # Visualize alpha information.
+        shader alpha {
+            vertex = "
+                uniform highp mat4 uMvpMatrix;
+                attribute highp vec4 aVertex;
+                attribute highp vec2 aUV;
+                attribute highp vec4 aColor;
+                varying highp vec2 vUV;
+                varying highp vec4 vColor;
+            
+                void main(void) {
+                    gl_Position = uMvpMatrix * aVertex;
+                    vUV = aUV;
+                    vColor = aColor;
+                }"
+            fragment = "
+                uniform sampler2D uTex;
+                varying highp vec2 vUV;
+                varying highp vec4 vColor;
+
+                void main(void) {
+                    highp vec4 col = vColor * texture2D(uTex, vUV);
+                    gl_FragColor = vec4(col.a, col.a, col.a, 1.0);
+                }"
+        }
+    }
+}
