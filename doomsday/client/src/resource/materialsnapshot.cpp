@@ -33,18 +33,12 @@
 
 namespace de {
 
-struct Store {
-    /// @c true= this material is completely opaque.
-    bool opaque;
-
-    /// Glow strength factor.
+struct Store
+{
+    bool opaque;            ///< @c true= this material is completely opaque.
     float glowStrength;
-
-    /// Dimensions in the world coordinate space.
-    Vector2i dimensions;
-
-    /// Minimum ambient light color for shine texture.
-    Vector3f shineMinColor;
+    Vector2i dimensions;    ///< Map space dimensions.
+    Vector3f shineMinColor; ///< Minimum ambient light level/color for shine.
 
     /// Textures used on each logical material texture unit.
     TextureVariant *textures[NUM_MATERIAL_TEXTURE_UNITS];
@@ -54,7 +48,7 @@ struct Store {
 
     /// Prepared render texture unit configuration. These map directly
     /// to the texture units supplied to the render lists module.
-    rtexmapunit_t units[NUM_TEXMAP_UNITS];
+    GLTextureUnit units[NUM_TEXMAP_UNITS];
 
     Store() { initialize(); }
 
@@ -69,19 +63,18 @@ struct Store {
         zap(decorations);
     }
 
-    void writeTexUnit(rtexmapunitid_t unit, Texture::Variant *texture,
+    void writeTexUnit(rtexmapunitid_t unit, TextureVariant *texture,
                       blendmode_t blendMode, Vector2f scale, Vector2f offset,
                       float opacity)
     {
         DENG2_ASSERT(unit >= 0 && unit < NUM_TEXMAP_UNITS);
-        rtexmapunit_t &tu = units[unit];
+        GLTextureUnit &tu = units[unit];
 
-        tu.texture.variant = texture;
-        tu.texture.flags   = TUF_TEXTURE_IS_MANAGED;
-        tu.opacity   = de::clamp(0.f, opacity, 1.f);
-        tu.blendMode = blendMode;
-        tu.scale     = scale;
-        tu.offset    = offset;
+        tu.texture.variant   = texture;
+        tu.opacity           = de::clamp(0.f, opacity, 1.f);
+        tu.blendMode         = blendMode;
+        tu.scale             = scale;
+        tu.offset            = offset;
     }
 };
 
@@ -145,7 +138,7 @@ Texture::Variant &MaterialSnapshot::texture(int index) const
     return *d->stored.textures[index];
 }
 
-rtexmapunit_t const &MaterialSnapshot::unit(int index) const
+GLTextureUnit const &MaterialSnapshot::unit(int index) const
 {
     if(index < 0 || index >= NUM_TEXMAP_UNITS)
     {

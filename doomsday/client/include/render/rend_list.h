@@ -1,4 +1,4 @@
-/** @file rend_list.h Rendering Lists.
+/** @file rend_list.h Rendering draw lists.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,51 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RENDER_LIST_H
-#define CLIENT_RENDER_LIST_H
+#ifndef DENG_CLIENT_RENDER_DRAWLIST_RENDERER_H
+#define DENG_CLIENT_RENDER_DRAWLIST_RENDERER_H
 
 #include <de/Vector>
-
-#include "render/rendpoly.h"
-
-// Multiplicative blending for dynamic lights?
-#define IS_MUL              (dynlightBlend != 1 && !usingFog)
-
-struct rtexmapunit_t;
-
-/**
- * Types of render primitive supported by this module (polygons only).
- */
-typedef enum primtype_e {
-    PT_FIRST = 0,
-    PT_TRIANGLE_STRIP = PT_FIRST, // Used for most stuff.
-    PT_FAN,
-    NUM_PRIM_TYPES
-} primtype_t;
-
-/**
- * @defgroup rendpolyFlags  Rendpoly Flags
- * @ingroup flags
- * @{
- */
-#define RPF_SKYMASK                 0x1 /// This primitive is to be added to the sky mask.
-#define RPF_LIGHT                   0x2 /// This primitive is to be added to the special lists for lights.
-#define RPF_SHADOW                  0x4 /// This primitive is to be added to the special lists for shadows (either object or fakeradio edge shadow).
-#define RPF_HAS_DYNLIGHTS           0x8 /// Dynamic light primitives are to be drawn on top of this.
-
-/// Default rendpolyFlags
-#define RPF_DEFAULT                 0
-/**@}*/
-
-DENG_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
-DENG_EXTERN_C int renderWireframe;
-DENG_EXTERN_C int useMultiTexLights;
-DENG_EXTERN_C int useMultiTexDetails;
-
-DENG_EXTERN_C int dynlightBlend;
-
-DENG_EXTERN_C int torchAdditive;
-DENG_EXTERN_C de::Vector3f torchColor;
 
 /// Register the console commands, variables, etc..., of this module.
 void RL_Register(void);
@@ -81,64 +40,36 @@ boolean RL_IsMTexDetails(void);
 void RL_ClearLists(void);
 
 void RL_DeleteLists(void);
-
 /**
- * Reset the texture unit write state back to the initial default values.
- * Any mappings between logical units and preconfigured RTU states are
- * cleared at this time.
+ * Geometry backing store (arrays).
  */
-void RL_LoadDefaultRtus(void);
+struct Store
+{
+    /// Texture coordinate array indices.
+    enum
+    {
+        TCA_MAIN, // Main texture.
+        TCA_BLEND, // Blendtarget texture.
+        TCA_LIGHT, // Dynlight texture.
+        NUM_TEXCOORD_ARRAYS
+    };
 
-/**
- * Map the texture unit write state for the identified @a idx unit to
- * @a rtu. This creates a reference to @a rtu which MUST continue to
- * remain accessible until the mapping is subsequently cleared or
- * changed (explicitly by call to RL_MapRtu/RL_LoadDefaultRtus, or,
- * implicitly by customizing the unit configuration through one of the
- * RL_RTU* family of functions (at which point a copy will be performed).
- */
-void RL_MapRtu(uint idx, rtexmapunit_t const *rtu);
+    de::Vector3f *posCoords;
+    de::Vector2f *texCoords[NUM_TEXCOORD_ARRAYS];
+    de::Vector4ub *colorCoords;
 
-/**
- * Copy the configuration for the identified @a idx texture unit of
- * the primitive writer's internal state from @a rtu.
- *
- * @param idx  Logical index of the texture unit being configured.
- * @param rtu  Configured RTU state to copy the configuration from.
- */
-void RL_CopyRtu(uint idx, rtexmapunit_t const *rtu);
+    Store();
+    ~Store();
 
-/// @todo Avoid modifying the RTU write state for the purposes of primitive
-///       specific translations by implementing these as arguments to the
-///       RL_Add* family of functions.
+    void rewind();
 
-/// Change the scale property of the identified @a idx texture unit.
-void RL_Rtu_SetScale(uint idx, de::Vector2f const &st);
+    void clear();
 
-inline void RL_Rtu_SetScale(uint idx, float s, float t) {
-    RL_Rtu_SetScale(idx, de::Vector2f(s, t));
-}
+    uint allocateVertices(uint count);
 
-/// Scale the offset and scale properties of the identified @a idx texture unit.
-void RL_Rtu_Scale(uint idx, float scalar);
-void RL_Rtu_ScaleST(uint idx, de::Vector2f const &st);
-
-/// Change the offset property of the identified @a idx texture unit.
-void RL_Rtu_SetOffset(uint idx, de::Vector2f const &st);
-
-inline void RL_Rtu_SetOffset(uint idx, float s, float t) {
-    RL_Rtu_SetOffset(idx, de::Vector2f(s, t));
-}
-
-/// Translate the offset property of the identified @a idx texture unit.
-void RL_Rtu_TranslateOffset(uint idx, de::Vector2f const &st);
-
-inline void RL_Rtu_TranslateOffset(uint idx, float s, float t) {
-    RL_Rtu_TranslateOffset(idx, de::Vector2f(s, t));
-}
-
-/// Change the texture assigned to the identified @a idx texture unit.
-void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT);
+private:
+    uint vertCount, vertMax;
+};
 
 /**
  * @param primType  Type of primitive being written.
@@ -197,7 +128,8 @@ void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
  */
 void RL_AddPoly(primtype_t primType, int flags, uint numElements,
     const de::Vector3f* vertices, const de::Vector4f* colors);
+Store &RL_Store();
 
-void RL_RenderAllLists(void);
+void RL_RenderAllLists();
 
-#endif // CLIENT_RENDER_LIST_H
+#endif // DENG_CLIENT_RENDER_DRAWLIST_RENDERER_H

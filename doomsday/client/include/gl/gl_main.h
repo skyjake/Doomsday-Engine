@@ -83,62 +83,135 @@ typedef enum {
 } rtexmapunitid_t;
 
 /**
- * @defgroup textureUnitFlags  Texture Unit Flags
- * @ingroup flags
- */
-///@{
-#define TUF_TEXTURE_IS_MANAGED    0x1 ///< A managed texture is bound to this unit.
-///@}
-
-struct rtexmapunit_texture_t
-{
-    union {
-        struct {
-            DGLuint name; ///< Texture used on this layer (if any).
-            int magMode; ///< GL texture magnification filter.
-            int wrapS; ///< GL texture S axis wrap mode.
-            int wrapT; ///< GL texture T axis wrap mode.
-        } gl;
-        de::TextureVariant *variant;
-    };
-    /// @ref textureUnitFlags
-    int flags;
-
-    rtexmapunit_texture_t() : flags(0)
-    {
-        gl.name    = 0;
-        gl.magMode = GL_LINEAR;
-        gl.wrapS   = GL_REPEAT;
-        gl.wrapT   = GL_REPEAT;
-    }
-
-    inline bool hasTexture() const
-    {
-        if(flags & TUF_TEXTURE_IS_MANAGED)
-        {
-            return variant && variant->glName() != 0;
-        }
-        return gl.name != 0;
-    }
-};
-
-/**
  * GL Texture unit config.
  */
-struct rtexmapunit_t
+struct GLTextureUnit
 {
-    rtexmapunit_texture_t texture; ///< Info about the bound texture for this unit.
-    blendmode_t blendMode;         ///< Currently used only with reflection.
-    float opacity;                 ///< Opacity of this layer [0..1].
-    de::Vector2f scale;            ///< Texture-space scale multiplier.
-    de::Vector2f offset;           ///< Texture-space origin translation (unscaled).
+    struct TextureState
+    {
+        de::TextureVariant *variant;
 
-    rtexmapunit_t() : blendMode(BM_NORMAL), opacity(1), scale(1, 1)
+        /// Properties used only with @em unmanged GL textures.
+        DGLuint glName;
+        int glMagMode;
+        int glWrapS;
+        int glWrapT;
+
+        TextureState()
+            : variant(0),
+              glName(0),
+              glMagMode(GL_LINEAR),
+              glWrapS(GL_REPEAT),
+              glWrapT(GL_REPEAT)
+        {}
+
+        TextureState(TextureState const &other)
+            : variant(other.variant),
+              glName(other.glName),
+              glMagMode(other.glMagMode),
+              glWrapS(other.glWrapS),
+              glWrapT(other.glWrapT)
+        {}
+
+        TextureState &operator = (TextureState const &other) {
+            variant   = other.variant;
+            glName    = other.glName;
+            glMagMode = other.glMagMode;
+            glWrapS   = other.glWrapS;
+            glWrapT   = other.glWrapT;
+            return *this;
+        }
+
+        bool operator == (TextureState const &other) const {
+            if(variant)
+            {
+                if(variant != other.variant) return false;
+            }
+            else
+            {
+                if(glName    != other.glName)    return false;
+                if(glMagMode != other.glMagMode) return false;
+                if(glWrapS   != other.glWrapS)   return false;
+                if(glWrapT   != other.glWrapT)   return false;
+            }
+            return true;
+        }
+        bool operator != (TextureState const &other) const {
+            return !(*this == other);
+        }
+
+        bool hasTexture() const {
+            return (variant && variant->glName() != 0) || glName != 0;
+        }
+
+        DGLuint textureGLName() const {
+            return variant? variant->glName() : glName;
+        }
+    };
+    TextureState texture;  ///< Info about the bound texture for this unit.
+
+    blendmode_t blendMode; ///< Currently used only with reflection.
+    float opacity;         ///< Opacity of this layer [0..1].
+
+    de::Vector2f scale;    ///< Texture-space scale multiplier.
+    de::Vector2f offset;   ///< Texture-space origin translation (unscaled).
+
+    GLTextureUnit() : blendMode(BM_NORMAL), opacity(1), scale(1, 1)
     {}
+    GLTextureUnit(GLTextureUnit const &other)
+        : texture(other.texture),
+          blendMode(other.blendMode),
+          opacity(other.opacity),
+          scale(other.scale),
+          offset(other.offset)
+    {}
+
+    GLTextureUnit &operator = (GLTextureUnit const &other) {
+        texture   = other.texture;
+        blendMode = other.blendMode;
+        opacity   = other.opacity;
+        scale     = other.scale;
+        offset    = other.offset;
+        return *this;
+    }
+
+    bool operator == (GLTextureUnit const &other) const {
+        if(texture != other.texture) return false;
+        if(blendMode != other.blendMode) return false;
+        if(!de::fequal(opacity, other.opacity)) return false;
+        if(scale != other.scale) return false;
+        if(offset != other.offset)
+        return true;
+    }
+    bool operator != (GLTextureUnit const other) const {
+        return !(*this == other);
+    }
 
     bool hasTexture() const {
         return texture.hasTexture();
     }
+
+    DGLuint textureGLName() const {
+        return texture.textureGLName();
+    }
+
+    /**
+     * Bind the associated texture and apply the texture unit configuration to
+     * the @em active GL texture unit. If no texture is associated then nothing
+     * will happen.
+     *
+     * @see bindTo()
+     */
+    void bind() const;
+
+    /**
+     * Bind the associated texture and apply the texture unit configuration to
+     * the specified GL texture @a unit, which, is made active during this call.
+     * If no texture is associated then nothing will happen.
+     *
+     * @see bind()
+     */
+    void bindTo(int unit) const;
 };
 
 void GL_AssertContextActive();
@@ -199,6 +272,11 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t c
 void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData);
 
 void GL_ProjectionMatrix();
+
+/**
+ * The first selected unit is active after this call.
+ */
+void GL_SelectTexUnits(int count);
 
 /**
  * Swaps buffers / blits the back buffer to the front.

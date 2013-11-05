@@ -40,7 +40,7 @@ enum {
     NUM_MATERIAL_TEXTURE_UNITS
 };
 
-struct rtexmapunit_t;
+struct GLTextureUnit;
 
 namespace de {
 
@@ -135,7 +135,7 @@ public:
      * @param id  Identifier of the texture unit to lookup.
      * @return  The associated prepared texture unit.
      */
-    rtexmapunit_t const &unit(int index) const;
+    GLTextureUnit const &unit(int index) const;
 
     /**
      * Lookup a material snapshot decoration by index.

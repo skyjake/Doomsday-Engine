@@ -606,6 +606,27 @@ DENG_EXTERN_C void GL_UseFog(int yes)
     usingFog = yes;
 }
 
+void GL_SelectTexUnits(int count)
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    for(int i = numTexUnits - 1; i >= count; i--)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    // Enable the selected units.
+    for(int i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits) continue;
+
+        glActiveTexture(GL_TEXTURE0 + i);
+        glEnable(GL_TEXTURE_2D);
+    }
+}
+
 void GL_TotalReset()
 {
     if(isDedicated) return;
@@ -1157,6 +1178,37 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
                    (avgCnt? "(hi-intensity avg)" :
                     lowCnt? "(low-intensity avg)" : "(white light)")));
     */
+}
+
+void GLTextureUnit::bind() const
+{
+    if(!hasTexture()) return;
+
+    if(!renderTextures)
+    {
+        GL_SetNoTexture();
+        return;
+    }
+
+    if(texture.variant)
+    {
+        GL_BindTexture(texture.variant);
+    }
+    else
+    {
+        GL_BindTextureUnmanaged(texture.glName, texture.glWrapS,
+                                texture.glWrapT, texture.glMagMode);
+    }
+}
+
+void GLTextureUnit::bindTo(int unit) const
+{
+    if(!hasTexture()) return;
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    glActiveTexture(GL_TEXTURE0 + byte(unit));
+    bind();
 }
 
 D_CMD(SetRes)
