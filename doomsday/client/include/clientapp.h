@@ -26,6 +26,7 @@
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
+#include "render/rendersystem.h"
 #include "WidgetActions"
 #include "updater.h"
 #include "Games"
@@ -61,6 +62,7 @@ public:
     static ServerLink &serverLink();
     static InputSystem &inputSystem();
     static WindowSystem &windowSystem();
+    static RenderSystem &renderSystem();
     static WidgetActions &widgetActions();
     static de::GLShaderBank &glShaderBank();
     static de::Games &games();

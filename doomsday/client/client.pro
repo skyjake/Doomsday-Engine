@@ -123,6 +123,8 @@ DENG_CONVENIENCE_HEADERS += \
     include/ContactSpreader \
     include/Decoration \
     include/DialogContentStylist \
+    include/Drawlist \
+    include/Drawlists \
     include/EntityDatabase \
     include/Face \
     include/FontLineWrapping \
@@ -288,6 +290,8 @@ DENG_HEADERS += \
     include/render/biastracker.h \
     include/render/blockmapvisual.h \
     include/render/decoration.h \
+    include/render/drawlist.h \
+    include/render/drawlists.h \
     include/render/huecirclevisual.h \
     include/render/lightdecoration.h \
     include/render/lightgrid.h \
@@ -308,6 +312,7 @@ DENG_HEADERS += \
     include/render/rend_particle.h \
     include/render/rend_shadow.h \
     include/render/rendpoly.h \
+    include/render/rendersystem.h \
     include/render/shadowedge.h \
     include/render/sky.h \
     include/render/skyfixedge.h \
@@ -640,6 +645,8 @@ SOURCES += \
     src/render/biastracker.cpp \
     src/render/blockmapvisual.cpp \
     src/render/decoration.cpp \
+    src/render/drawlist.cpp \
+    src/render/drawlists.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightdecoration.cpp \
     src/render/lightgrid.cpp \
@@ -660,6 +667,7 @@ SOURCES += \
     src/render/rend_particle.cpp \
     src/render/rend_shadow.cpp \
     src/render/rendpoly.cpp \
+    src/render/rendersystem.cpp \
     src/render/shadowedge.cpp \
     src/render/sky.cpp \
     src/render/skyfixedge.cpp \

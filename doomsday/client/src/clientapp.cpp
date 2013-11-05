@@ -129,6 +129,7 @@ DENG2_PIMPL(ClientApp)
     InputSystem *inputSys;
     QScopedPointer<WidgetActions> widgetActions;
     WindowSystem *winSys;
+    RenderSystem *renderSys;
     ServerLink *svLink;
     GLShaderBank shaderBank;
     Games games;
@@ -139,6 +140,7 @@ DENG2_PIMPL(ClientApp)
           menuBar(0),
           inputSys(0),
           winSys(0),
+          renderSys(0),
           svLink(0)
     {
         clientAppSingleton = thisPublic;
@@ -150,6 +152,7 @@ DENG2_PIMPL(ClientApp)
         DD_Shutdown();
 
         delete svLink;
+        delete renderSys;
         delete winSys;
         delete inputSys;
         delete menuBar;
@@ -389,6 +392,10 @@ void ClientApp::initialize()
     addSystem(*d->inputSys);
     d->widgetActions.reset(new WidgetActions);
 
+    // Create the render system.
+    d->renderSys = new RenderSystem;
+    addSystem(*d->renderSys);
+
     // Finally, run the bootstrap script.
     scriptSystem().importModule("bootstrap");
 
@@ -466,6 +473,13 @@ InputSystem &ClientApp::inputSystem()
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->inputSys != 0);
     return *a.d->inputSys;
+}
+
+RenderSystem &ClientApp::renderSystem()
+{
+    ClientApp &a = ClientApp::app();
+    DENG2_ASSERT(a.d->renderSys != 0);
+    return *a.d->renderSys;
 }
 
 WindowSystem &ClientApp::windowSystem()
