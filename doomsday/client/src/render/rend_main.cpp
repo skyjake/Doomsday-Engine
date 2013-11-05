@@ -364,9 +364,17 @@ void Rend_Reset()
 
 float Rend_FieldOfView()
 {
-    float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
-    widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
-    return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+    {
+        fieldOfView = VR::riftFovX(); // Update for culling
+        return VR::riftFovX();
+    }
+    else
+    {
+        float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
+        widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
+        return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+    }
 }
 
 void Rend_ModelViewMatrix(bool useAngles)
@@ -386,19 +394,77 @@ void Rend_ModelViewMatrix(bool useAngles)
     glLoadIdentity();
     if(useAngles)
     {
-        /// Hard code Oculus Rift roll angle directly into OpenGL ModelView matrix
-        /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player model.
-        if ( (Con_GetInteger("rend-vr-mode") == VR::MODE_OCULUS_RIFT) && (VR::hasHeadOrientation()) )
-        {
-            std::vector<float> pry = VR::getHeadOrientation();
-            if (pry.size() == 3)
+        bool scheduledLate = false;
+        float pitch, roll, yaw;
+        static float storedPitch, storedRoll, storedYaw;
+
+        if (VR::viewPositionHeld()) {
+            roll = storedRoll;
+            pitch = storedPitch;
+            yaw = storedYaw;
+        }
+        else {
+            /// Hard code Oculus Rift roll angle directly into OpenGL ModelView matrix
+            /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player model.
+            if ( (VR::mode() == VR::MODE_OCULUS_RIFT) && (VR::hasHeadOrientation()) )
             {
-                float roll = radianToDegree(pry[1]);
-                glRotatef(-roll, 0, 0, 1); // Roll
+                std::vector<float> pry = VR::getHeadOrientation();
+                if (pry.size() == 3)
+                {
+                    static float previousRiftYaw = 0;
+                    static float previousVang2 = 0;
+
+                    // Desired view angle without interpolation?
+                    float vang2 = viewData->latest.angle / (float) ANGLE_MAX *360 - 90;
+
+                    // Late-scheduled update
+                    scheduledLate = true;
+                    roll = -radianToDegree(pry[1]);
+                    pitch = radianToDegree(pry[0]);
+
+                    // Yaw might have a contribution from mouse/keyboard.
+                    // So only late schedule if it seems to be head tracking only.
+                    yaw = vang2; // default no late schedule
+                    float currentRiftYaw = radianToDegree(pry[2]);
+                    float dRiftYaw = currentRiftYaw - previousRiftYaw;
+                    while (dRiftYaw > 180) dRiftYaw -= 360;
+                    while (dRiftYaw < -180) dRiftYaw += 360;
+                    float dVang = vang2 - previousVang2;
+                    while (dVang > 180) dVang -= 360;
+                    while (dVang < -180) dVang += 360;
+                    if (abs(dVang) < 2.0 * abs(dRiftYaw)) // Mostly head motion
+                    {
+                        yaw = storedYaw + dRiftYaw;
+                        float dy = vang2 - yaw;
+                        while (dy > 180) dy -= 360;
+                        while (dy < -180) dy += 360;
+                        yaw += 0.05 * dy; // ease slowly toward target angle
+                    }
+                    else
+                    {
+                        yaw = vang2; // No interpolation if not from head tracker
+                    }
+
+                    previousRiftYaw = currentRiftYaw;
+                    previousVang2 = vang2;
+                }
+            }
+            if (! scheduledLate)
+            {
+                // Vanilla angle update
+                roll = 0;
+                pitch = vpitch;
+                yaw = vang;
             }
         }
-        glRotatef(vpitch, 1, 0, 0); // Pitch
-        glRotatef(vang, 0, 1, 0); // Yaw
+
+        glRotatef(roll, 0, 0, 1); // Pitch
+        glRotatef(pitch, 1, 0, 0); // Pitch
+        glRotatef(yaw, 0, 1, 0); // Yaw
+
+        storedRoll = roll;
+        storedPitch = pitch;
+        storedYaw = yaw;
     }
     glScalef(1, 1.2f, 1);      // This is the aspect correction.
     glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);

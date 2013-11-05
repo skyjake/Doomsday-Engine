@@ -26,8 +26,17 @@ enum Stereo3DMode {
     MODE_MAX_3D_MODE_PLUS_ONE
 };
 
+// Sometimes we want viewpoint to remain constant between left and right eye views
+void holdViewPosition();
+void releaseViewPosition();
+bool viewPositionHeld();
+
 // Console variables
-extern int mode; /// Currently active Stereo3DMode index
+Stereo3DMode mode(); /// Currently active Stereo3DMode index
+float riftAspect(); /// Aspect ratio of OculusRift
+float riftFovX(); /// Horizontal field of view in Oculus Rift in degrees
+float riftLatency(); /// Estimated head-motion->photons latency, in seconds
+
 extern float ipd; /// Interpupillary distance in meters
 extern float playerHeight; /// Human player's real world height in meters
 extern float dominantEye; /// Kludge for aim-down-weapon-sight modes
@@ -63,6 +72,8 @@ std::vector<float> getHeadOrientation();
 
 // To release memory and resources when done, for tidiness.
 void deleteOculusTracker();
+
+void setRiftLatency(float latency);
 
 } // namespace VR
 
