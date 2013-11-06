@@ -599,13 +599,8 @@ bool SliderWidget::handleEvent(Event const &event)
             pop->setAnchorAndOpeningDirection(rule(),
                     rule().recti().middle().y < root().viewHeight().valuei()/2? ui::Down : ui::Up);
             pop->setDeleteAfterDismissed(true);
-            //root().add(pop);
-            //pop->open();
-            root().add(pop);
+            root().addOnTop(pop);
             pop->open();
-            //pop->viewResized();
-            //pop->notifyTree(&Widget::viewResized);
-            //root().setFocus(&pop->editor());
             return true; }
 
         case MouseClickStarted:

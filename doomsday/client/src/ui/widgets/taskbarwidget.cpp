@@ -194,7 +194,7 @@ DENG2_OBSERVES(App, GameChange)
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 {
 #if 0
-    // LegacyWidget is presently incompatible with blurring.
+    // GameWidget is presently incompatible with blurring.
     BlurWidget *blur = new BlurWidget("taskbar_blur");
     add(blur);
     Background bg(*blur, style().colors().colorf("background"));
@@ -397,7 +397,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
         {
             if(root().focus())
             {
-                // First click will remove UI focus, allowing LegacyWidget
+                // First click will remove UI focus, allowing GameWidget
                 // to receive events.
                 root().setFocus(0);
                 return true;
@@ -574,7 +574,7 @@ void TaskBarWidget::showAbout()
 {
     AboutDialog *about = new AboutDialog;
     about->setDeleteAfterDismissed(true);
-    root().add(about);
+    root().addOnTop(about);
     about->open();
 }
 
@@ -582,7 +582,7 @@ void TaskBarWidget::showUpdaterSettings()
 {
     UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
     d->setupItemSubDialog(d->configMenu, POS_UPDATER_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -590,7 +590,7 @@ void TaskBarWidget::showRendererSettings()
 {
     RendererSettingsDialog *dlg = new RendererSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_RENDERER_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -598,7 +598,7 @@ void TaskBarWidget::showVideoSettings()
 {
     VideoSettingsDialog *dlg = new VideoSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_VIDEO_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -606,7 +606,7 @@ void TaskBarWidget::showAudioSettings()
 {
     AudioSettingsDialog *dlg = new AudioSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_AUDIO_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -614,7 +614,7 @@ void TaskBarWidget::showInputSettings()
 {
     InputSettingsDialog *dlg = new InputSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_INPUT_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -622,7 +622,7 @@ void TaskBarWidget::showNetworkSettings()
 {
     NetworkSettingsDialog *dlg = new NetworkSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_NETWORK_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 

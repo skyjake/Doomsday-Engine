@@ -33,6 +33,8 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 
+#include "render/vr.h"
+
 #include "ui/windowsystem.h"
 #include <de/KeyEvent>
 
@@ -1003,7 +1005,7 @@ void DD_ConvertEvent(de::Event const &event, ddevent_t *ddEvent)
     }
 }
 
-void DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
+bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
 {
     // Copy the essentials into a cutdown version for the game.
     // Ensure the format stays the same for future compatibility!
@@ -1091,15 +1093,16 @@ void DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
 
         case IDEV_HEAD_TRACKER:
             // No game-side equivalent exists.
-            break;
+            return false;
 
         default:
 #if _DEBUG
             Con_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
 #endif
-            break;
+            return false;
         }
     }
+    return true;
 }
 
 static void updateDeviceAxes(timespan_t ticLength)
@@ -1125,17 +1128,16 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
 
     while((ddev = nextFromQueue(q)))
     {
-        event_t ev;
-
         // Update the state of the input device tracking table.
         I_TrackInput(ddev);
 
         if(ignoreInput && ddev->type != E_FOCUS)
             continue;
 
-        DD_ConvertEvent(ddev, &ev);
+        event_t ev;
+        bool validGameEvent = DD_ConvertEvent(ddev, &ev);
 
-        if(callGameResponders)
+        if(validGameEvent && callGameResponders)
         {
             // Does the game's special responder use this event? This is
             // intended for grabbing events when creating bindings in the
@@ -1148,7 +1150,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean update
         if(B_Responder(ddev)) continue;
 
         // The "fallback" responder. Gets the event if no one else is interested.
-        if(callGameResponders && gx.FallbackResponder)
+        if(validGameEvent && callGameResponders && gx.FallbackResponder)
             gx.FallbackResponder(&ev);
     }
 
@@ -1568,24 +1570,37 @@ void DD_ReadHeadTracker(void)
     /// @todo Access head tracking hardware here and post an event per axis using
     /// DD_PostEvent() (cf. above for the joystick).
 
+    if (! VR::hasHeadOrientation())
+        return;
+
     ddevent_t ev;
 
     ev.device = IDEV_HEAD_TRACKER;
     ev.type = E_AXIS;
     ev.axis.type = EAXIS_ABSOLUTE;
 
+    std::vector<float> pry = VR::getHeadOrientation();
+    if (pry.size() != 3)
+        return;
+
     // Yaw.
+    // skyjake wrote:
+    // > With "yawhead" and "yawbody", 1.0 means 180 degrees.
     ev.axis.id = 0; // Yaw.
-    ev.axis.pos = cos(Timer_RealSeconds());
+    // ev.axis.pos = cos(Timer_RealSeconds());
+    ev.axis.pos = de::radianToDegree(pry[2]) * 1.0 / 180.0;
     DD_PostEvent(&ev);
 
     ev.axis.id = 1; // Pitch.
-    ev.axis.pos = sin(Timer_RealSeconds()/2) * .5f;
+    // ev.axis.pos = sin(Timer_RealSeconds()/2) * .5f;
+    // 1.0 mean 85 degrees
+    ev.axis.pos = de::radianToDegree(pry[0]) * 1.0 / 85.0;
     DD_PostEvent(&ev);
 
+    // So I'll assume that if roll ever gets used, 1.0 will mean 180 degrees there too.
     ev.axis.id = 2; // Roll.
-    ev.axis.pos = 0;
-    //DD_PostEvent(&ev);
+    ev.axis.pos = de::radianToDegree(pry[1]) * 1.0 / 180.0;
+    DD_PostEvent(&ev);
 }
 
 #ifdef _DEBUG

@@ -721,16 +721,6 @@ void RendererAppearanceEditor::unfoldAll()
     d->foldAll(false);
 }
 
-/*
-void RendererAppearanceEditor::showRendererSettings()
-{
-    RendererSettingsDialog *dlg = new RendererSettingsDialog;
-    dlg->setDeleteAfterDismissed(true);
-    dlg->setAnchorAndOpeningDirection(d->conf->rule(), Down);
-    root().add(dlg);
-    dlg->open();
-}*/
-
 void RendererAppearanceEditor::preparePanelForOpening()
 {
     PanelWidget::preparePanelForOpening();

@@ -369,35 +369,42 @@ String Widget::uniqueName(String const &name) const
 
 Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
 {
-    if(args.preNotifyFunc)
-    {
-        (this->*args.preNotifyFunc)();
-    }
+    NotifyArgs::Result result = NotifyArgs::Continue;
+
+    bool preNotified = false;
 
     DENG2_FOR_EACH(Instance::Children, i, d->children)
     {
         if(*i == args.until)
         {
-            return NotifyArgs::Abort;
+            result = NotifyArgs::Abort;
+            break;
         }
 
         if(args.conditionFunc && !((*i)->*args.conditionFunc)())
             continue; // Skip this one.
 
+        if(args.preNotifyFunc && !preNotified)
+        {
+            preNotified = true;
+            (this->*args.preNotifyFunc)();
+        }
+
         ((*i)->*args.notifyFunc)();
 
         if((*i)->notifyTree(args) == NotifyArgs::Abort)
         {
-            return NotifyArgs::Abort;
+            result = NotifyArgs::Abort;
+            break;
         }
     }
 
-    if(args.postNotifyFunc)
+    if(args.postNotifyFunc && preNotified)
     {
         (this->*args.postNotifyFunc)();
     }
 
-    return NotifyArgs::Continue;
+    return result;
 }
 
 Widget::NotifyArgs::Result Widget::notifySelfAndTree(NotifyArgs const &args)
