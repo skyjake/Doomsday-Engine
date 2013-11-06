@@ -91,7 +91,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
             .arg(version.base())
             .arg(ver2.build)
             .arg(Time::fromText(__DATE__ " " __TIME__, Time::CompilerDateTime)
-                 .asDateTime().toString("MMMM d, yyyy HH:MM"))
+                 .asDateTime().toString(Qt::SystemLocaleShortDate))
             .arg(tr("bit"));
     info->setText(txt);
     info->setSizePolicy(ui::Fixed, ui::Expand);
