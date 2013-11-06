@@ -33,27 +33,24 @@ static GLTextureUnit rtuState[NUM_TEXMAP_UNITS];
 static GLTextureUnit const *rtuMap[NUM_TEXMAP_UNITS];
 
 // GL texture unit state used during write. Global for performance reasons.
-static GLTextureUnit const *texunits[NUM_TEXTURE_UNITS];
+static DrawListSpec currentListSpec;
 
 typedef QMultiHash<DGLuint, DrawList *> DrawListHash;
 
 DENG2_PIMPL(DrawLists)
 {
-    DrawListHash unlitHash;  ///< Unlit geometry.
-    DrawListHash litHash;    ///< Lit geometry.
-    DrawListHash dynHash;    ///< Light geometry.
-    DrawListHash shinyHash;  ///< Shine geometry.
-    DrawListHash shadowHash; ///< Shadow geometry.
-    DrawList skyMaskList;    ///< Sky-mask geometry.
+    QScopedPointer<DrawList> skyMaskList;
+    DrawListHash unlitHash;
+    DrawListHash litHash;
+    DrawListHash dynHash;
+    DrawListHash shinyHash;
+    DrawListHash shadowHash;
 
-    Instance(Public *i)
-        : Base(i),
-          skyMaskList(SkyMaskGeom)
-    {}
-
-    ~Instance()
+    Instance(Public *i) : Base(i)
     {
-        self.clear();
+        DrawListSpec newSpec;
+        newSpec.group = SkyMaskGeom;
+        skyMaskList.reset(new DrawList(newSpec));
     }
 
     /// Choose the correct draw list hash table.
@@ -70,6 +67,46 @@ DENG2_PIMPL(DrawLists)
         DENG2_ASSERT(false);
         return unlitHash;
     }
+
+    // Prepare the spec for writing "normal" polygons, filling any gaps
+    // using a default configured texture unit.
+    static DrawListSpec const &prepareListSpec()
+    {
+        DrawListSpec &spec = currentListSpec;
+
+        spec.texunits[TU_PRIMARY]        = *rtuMap[RTU_PRIMARY];
+        spec.texunits[TU_PRIMARY_DETAIL] = *rtuMap[RTU_PRIMARY_DETAIL];
+        spec.texunits[TU_INTER]          = *rtuMap[RTU_INTER];
+        spec.texunits[TU_INTER_DETAIL]   = *rtuMap[RTU_INTER_DETAIL];
+
+        return spec;
+    }
+
+    // Prepare the spec for writing "shiny" polygons, filling any gaps
+    // using a default configured texture unit.
+    static DrawListSpec const &prepareListSpecForShinyPoly()
+    {
+        DrawListSpec &spec = currentListSpec;
+
+        spec.texunits[TU_PRIMARY]        = *rtuMap[RTU_REFLECTION];
+        spec.texunits[TU_PRIMARY_DETAIL] = rtuDefault;
+        spec.texunits[TU_INTER]          = *rtuMap[RTU_REFLECTION_MASK];
+        spec.texunits[TU_INTER_DETAIL]   = rtuDefault;
+
+        return spec;
+    }
+
+    DrawListSpec const *listSpec(GeomGroup group)
+    {
+        if(group == ShineGeom)
+        {
+            return &prepareListSpecForShinyPoly();
+        }
+        else
+        {
+            return &prepareListSpec();
+        }
+    }
 };
 
 DrawLists::DrawLists() : d(new Instance(this))
@@ -77,60 +114,57 @@ DrawLists::DrawLists() : d(new Instance(this))
     RL_LoadDefaultRtus();
 }
 
-static void clearLists(DrawListHash &hash)
+static void clearAllLists(DrawListHash &hash)
 {
+    foreach(DrawList *list, hash)
+    {
+        list->clear();
+    }
     qDeleteAll(hash);
     hash.clear();
 }
 
 void DrawLists::clear()
 {
-    clearLists(d->unlitHash);
-    clearLists(d->litHash);
-    clearLists(d->dynHash);
-    clearLists(d->shadowHash);
-    clearLists(d->shinyHash);
-    d->skyMaskList.clear();
+    clearAllLists(d->unlitHash);
+    clearAllLists(d->litHash);
+    clearAllLists(d->dynHash);
+    clearAllLists(d->shadowHash);
+    clearAllLists(d->shinyHash);
+    d->skyMaskList->clear();
 }
 
-static void rewindLists(DrawListHash &hash)
+static void resetList(DrawList &list)
+{
+    list.rewind();
+
+    // Reset the list specification.
+    // The interpolation target must be explicitly set.
+    list.spec().unit(TU_INTER).texture.glName  = 0;
+    list.spec().unit(TU_INTER).texture.variant = 0;
+    list.spec().unit(TU_INTER).opacity         = 0;
+
+    list.spec().unit(TU_INTER_DETAIL).texture.glName  = 0;
+    list.spec().unit(TU_INTER_DETAIL).texture.variant = 0;
+    list.spec().unit(TU_INTER_DETAIL).opacity         = 0;
+}
+
+static void resetAllLists(DrawListHash &hash)
 {
     foreach(DrawList *list, hash)
     {
-        list->rewind();
+        resetList(*list);
     }
 }
 
 void DrawLists::reset()
 {
-    rewindLists(d->unlitHash);
-    rewindLists(d->litHash);
-    rewindLists(d->dynHash);
-    rewindLists(d->shadowHash);
-    rewindLists(d->shinyHash);
-    d->skyMaskList.rewind();
-}
-
-// Prepare the final texture unit map for writing "normal" polygons, filling
-// any gaps using a default configured texture unit.
-static void prepareTexUnitMap()
-{
-    // Map logical texture units to "real" ones known to the GL renderer.
-    texunits[TU_PRIMARY]        = rtuMap[RTU_PRIMARY];
-    texunits[TU_PRIMARY_DETAIL] = rtuMap[RTU_PRIMARY_DETAIL];
-    texunits[TU_INTER]          = rtuMap[RTU_INTER];
-    texunits[TU_INTER_DETAIL]   = rtuMap[RTU_INTER_DETAIL];
-}
-
-// Prepare the final texture unit map for writing "shiny" polygons, filling
-// any gaps using a default configured texture unit.
-static void prepareTexUnitMapForShinyPoly()
-{
-    // Map logical texture units to "real" ones known to the GL renderer.
-    texunits[TU_PRIMARY]        = rtuMap[RTU_REFLECTION];
-    texunits[TU_PRIMARY_DETAIL] = &rtuDefault;
-    texunits[TU_INTER]          = rtuMap[RTU_REFLECTION_MASK];
-    texunits[TU_INTER_DETAIL]   = &rtuDefault;
+    resetAllLists(d->unlitHash);
+    resetAllLists(d->litHash);
+    resetAllLists(d->dynHash);
+    resetAllLists(d->shadowHash);
+    resetAllLists(d->shinyHash);
+    resetList(*d->skyMaskList);
 }
 
 /**
@@ -150,47 +184,41 @@ static bool compareTexUnit(GLTextureUnit const &lhs, GLTextureUnit const &rhs)
 
 DrawList &DrawLists::find(GeomGroup group)
 {
-    if(group == ShineGeom)
-    {
-        prepareTexUnitMapForShinyPoly();
-    }
-    else
-    {
-        prepareTexUnitMap();
-    }
+    DrawListSpec const *spec = d->listSpec(group);
+    DENG2_ASSERT(spec != 0);
 
     // Sky masked geometry is never textured; therefore no draw list hash.
     if(group == SkyMaskGeom)
     {
-        d->skyMaskList.setGeomGroup(SkyMaskGeom);
-        return d->skyMaskList;
+        return *d->skyMaskList;
     }
 
     DrawList *convertable = 0;
 
     // Find/create a list in the hash.
-    DGLuint const key  = texunits[TU_PRIMARY]->textureGLName();
+    DGLuint const key  = spec->unit(TU_PRIMARY).textureGLName();
     DrawListHash &hash = d->listHash(group);
     for(DrawListHash::const_iterator it = hash.find(key);
         it != hash.end() && it.key() == key; ++it)
     {
         DrawList *list = it.value();
+        DrawListSpec const &listSpec = list->spec();
 
         if((group == ShineGeom &&
-            compareTexUnit(list->unit(TU_PRIMARY), *texunits[TU_PRIMARY])) ||
+            compareTexUnit(listSpec.unit(TU_PRIMARY), spec->unit(TU_PRIMARY))) ||
            (group != ShineGeom &&
-            compareTexUnit(list->unit(TU_PRIMARY), *texunits[TU_PRIMARY]) &&
-            compareTexUnit(list->unit(TU_PRIMARY_DETAIL), *texunits[TU_PRIMARY_DETAIL])))
+            compareTexUnit(listSpec.unit(TU_PRIMARY), spec->unit(TU_PRIMARY)) &&
+            compareTexUnit(listSpec.unit(TU_PRIMARY_DETAIL), spec->unit(TU_PRIMARY_DETAIL))))
         {
-            if(!list->unit(TU_INTER).hasTexture() &&
-               !texunits[TU_INTER]->hasTexture())
+            if(!listSpec.unit(TU_INTER).hasTexture() &&
+               !spec->unit(TU_INTER).hasTexture())
             {
                 // This will do great.
                 return *list;
             }
 
             // Is this eligible for conversion to a blended list?
-            if(list->isEmpty() && !convertable && texunits[TU_INTER]->hasTexture())
+            if(list->isEmpty() && !convertable && spec->unit(TU_INTER).hasTexture())
             {
                 // If necessary, this empty list will be selected.
                 convertable = list;
@@ -198,10 +226,10 @@ DrawList &DrawLists::find(GeomGroup group)
 
             // Possibly an exact match?
             if((group == ShineGeom &&
-                compareTexUnit(list->unit(TU_INTER), *texunits[TU_INTER])) ||
+                compareTexUnit(listSpec.unit(TU_INTER), spec->unit(TU_INTER))) ||
                (group != ShineGeom &&
-                compareTexUnit(list->unit(TU_INTER), *texunits[TU_INTER]) &&
-                compareTexUnit(list->unit(TU_INTER_DETAIL), *texunits[TU_INTER_DETAIL])))
+                compareTexUnit(listSpec.unit(TU_INTER), spec->unit(TU_INTER)) &&
+                compareTexUnit(listSpec.unit(TU_INTER_DETAIL), spec->unit(TU_INTER_DETAIL))))
             {
                 return *list;
             }
@@ -214,42 +242,42 @@ DrawList &DrawLists::find(GeomGroup group)
         // This list is currently empty.
         if(group == ShineGeom)
         {
-            convertable->unit(TU_INTER) = *texunits[TU_INTER];
+            convertable->spec().unit(TU_INTER) = spec->unit(TU_INTER);
         }
         else
         {
-            convertable->unit(TU_INTER)        = *texunits[TU_INTER];
-            convertable->unit(TU_INTER_DETAIL) = *texunits[TU_INTER_DETAIL];
+            convertable->spec().unit(TU_INTER) = spec->unit(TU_INTER);
+            convertable->spec().unit(TU_INTER_DETAIL) = spec->unit(TU_INTER_DETAIL);
         }
 
         return *convertable;
     }
 
     // Create a new list.
-    DrawList *list = hash.insert(key, new DrawList(group)).value();
-
-    // Configure the list's GL texture units.
+    DrawListSpec newSpec;
+    newSpec.group = group;
+    // Configure the list spec.
     if(group == ShineGeom)
     {
-        list->unit(TU_PRIMARY) = *texunits[TU_PRIMARY];
-        if(texunits[TU_INTER]->hasTexture())
+        newSpec.unit(TU_PRIMARY) = spec->unit(TU_PRIMARY);
+        if(spec->unit(TU_INTER).hasTexture())
         {
-            list->unit(TU_INTER) = *texunits[TU_INTER];
+            newSpec.unit(TU_INTER) = spec->unit(TU_INTER);
         }
     }
     else
     {
-        list->unit(TU_PRIMARY)        = *texunits[TU_PRIMARY];
-        list->unit(TU_PRIMARY_DETAIL) = *texunits[TU_PRIMARY_DETAIL];
+        newSpec.unit(TU_PRIMARY)        = spec->unit(TU_PRIMARY);
+        newSpec.unit(TU_PRIMARY_DETAIL) = spec->unit(TU_PRIMARY_DETAIL);
 
-        if(texunits[TU_INTER]->hasTexture())
+        if(spec->unit(TU_INTER).hasTexture())
         {
-            list->unit(TU_INTER)        = *texunits[TU_INTER];
-            list->unit(TU_INTER_DETAIL) = *texunits[TU_INTER_DETAIL];
+            newSpec.unit(TU_INTER)        = spec->unit(TU_INTER);
+            newSpec.unit(TU_INTER_DETAIL) = spec->unit(TU_INTER_DETAIL);
         }
     }
 
-    return *list;
+    return *hash.insert(key, new DrawList(newSpec)).value();
 }
 
 int DrawLists::findAll(GeomGroup group, FoundLists &found)
@@ -259,9 +287,9 @@ int DrawLists::findAll(GeomGroup group, FoundLists &found)
     found.clear();
     if(group == SkyMaskGeom)
     {
-        if(!d->skyMaskList.isEmpty())
+        if(!d->skyMaskList->isEmpty())
         {
-            found.append(&d->skyMaskList);
+            found.append(d->skyMaskList.data());
         }
     }
     else
@@ -305,9 +333,9 @@ static void copyMappedRtuToState(uint idx)
     RL_CopyRtu(idx, rtuMap[idx]);
 }
 
-GLTextureUnit const **RL_RtuState()
+DrawListSpec const &RL_CurrentListSpec()
 {
-    return texunits;
+    return currentListSpec;
 }
 
 void RL_LoadDefaultRtus()

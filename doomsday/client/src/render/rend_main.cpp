@@ -2730,6 +2730,8 @@ enum DrawMode
  */
 static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 {
+    DrawListSpec const &listSpec = list.spec();
+
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -2741,20 +2743,20 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
     case DM_ALL: // All surfaces.
         // Should we do blending?
-        if(list.unit(TU_INTER).hasTexture())
+        if(listSpec.unit(TU_INTER).hasTexture())
         {
             // Blend between two textures, modulate with primary color.
             DENG2_ASSERT(numTexUnits >= 2);
             GL_SelectTexUnits(2);
 
-            list.unit(TU_PRIMARY).bindTo(0);
-            list.unit(TU_INTER).bindTo(1);
+            listSpec.unit(TU_PRIMARY).bindTo(0);
+            listSpec.unit(TU_INTER).bindTo(1);
             GL_ModulateTexture(2);
 
-            float color[4] = { 0, 0, 0, list.unit(TU_INTER).opacity };
+            float color[4] = { 0, 0, 0, listSpec.unit(TU_INTER).opacity };
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
         }
-        else if(!list.unit(TU_PRIMARY).hasTexture())
+        else if(!listSpec.unit(TU_PRIMARY).hasTexture())
         {
             // Opaque texture-less surface.
             return 0;
@@ -2763,11 +2765,11 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
         {
             // Normal modulation.
             GL_SelectTexUnits(1);
-            list.unit(TU_PRIMARY).bind();
+            listSpec.unit(TU_PRIMARY).bind();
             GL_ModulateTexture(1);
         }
 
-        if(list.unit(TU_INTER).hasTexture())
+        if(listSpec.unit(TU_INTER).hasTexture())
         {
             return SetMatrixTexture0 | SetMatrixTexture1;
         }
@@ -2775,11 +2777,11 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
     case DM_LIGHT_MOD_TEXTURE:
         // Modulate sector light, dynamic light and regular texture.
-        list.unit(TU_PRIMARY).bindTo(1);
+        listSpec.unit(TU_PRIMARY).bindTo(1);
         return SetMatrixTexture1 | SetLightEnv0 | JustOneLight | NoBlend;
 
     case DM_TEXTURE_PLUS_LIGHT:
-        list.unit(TU_PRIMARY).bindTo(0);
+        listSpec.unit(TU_PRIMARY).bindTo(0);
         return SetMatrixTexture0 | SetLightEnv1 | NoBlend;
 
     case DM_FIRST_LIGHT:
@@ -2789,7 +2791,7 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
     case DM_BLENDED: {
         // Only render the blended surfaces.
-        if(!list.unit(TU_INTER).hasTexture())
+        if(!listSpec.unit(TU_INTER).hasTexture())
         {
             return Skip;
         }
@@ -2797,18 +2799,18 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
         DENG2_ASSERT(numTexUnits >= 2);
         GL_SelectTexUnits(2);
 
-        list.unit(TU_PRIMARY).bindTo(0);
-        list.unit(TU_INTER).bindTo(1);
+        listSpec.unit(TU_PRIMARY).bindTo(0);
+        listSpec.unit(TU_INTER).bindTo(1);
 
         GL_ModulateTexture(2);
 
-        float color[4] = { 0, 0, 0, list.unit(TU_INTER).opacity };
+        float color[4] = { 0, 0, 0, listSpec.unit(TU_INTER).opacity };
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
         return SetMatrixTexture0 | SetMatrixTexture1; }
 
     case DM_BLENDED_FIRST_LIGHT:
         // Only blended surfaces.
-        if(!list.unit(TU_INTER).hasTexture())
+        if(!listSpec.unit(TU_INTER).hasTexture())
         {
             return Skip;
         }
@@ -2820,12 +2822,12 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
     case DM_LIGHTS:
         // These lists only contain light geometries.
-        list.unit(TU_PRIMARY).bind();
+        listSpec.unit(TU_PRIMARY).bind();
         return 0;
 
     case DM_BLENDED_MOD_TEXTURE:
         // Blending required.
-        if(!list.unit(TU_INTER).hasTexture())
+        if(!listSpec.unit(TU_INTER).hasTexture())
         {
             break;
         }
@@ -2836,26 +2838,26 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
     case DM_MOD_TEXTURE_MANY_LIGHTS:
         // Texture for surfaces with (many) dynamic lights.
         // Should we do blending?
-        if(list.unit(TU_INTER).hasTexture())
+        if(listSpec.unit(TU_INTER).hasTexture())
         {
             // Mode 3 actually just disables the second texture stage,
             // which would modulate with primary color.
             DENG2_ASSERT(numTexUnits >= 2);
             GL_SelectTexUnits(2);
 
-            list.unit(TU_PRIMARY).bindTo(0);
-            list.unit(TU_INTER).bindTo(1);
+            listSpec.unit(TU_PRIMARY).bindTo(0);
+            listSpec.unit(TU_INTER).bindTo(1);
 
             GL_ModulateTexture(3);
 
-            float color[4] = { 0, 0, 0, list.unit(TU_INTER).opacity };
+            float color[4] = { 0, 0, 0, listSpec.unit(TU_INTER).opacity };
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
             // Render all geometry.
             return SetMatrixTexture0 | SetMatrixTexture1;
         }
         // No modulation at all.
         GL_SelectTexUnits(1);
-        list.unit(TU_PRIMARY).bind();
+        listSpec.unit(TU_PRIMARY).bind();
         GL_ModulateTexture(0);
         if(mode == DM_MOD_TEXTURE_MANY_LIGHTS)
         {
@@ -2865,49 +2867,49 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
         // Blending is not done now.
-        if(list.unit(TU_INTER).hasTexture())
+        if(listSpec.unit(TU_INTER).hasTexture())
         {
             break;
         }
 
-        if(list.unit(TU_PRIMARY_DETAIL).hasTexture())
+        if(listSpec.unit(TU_PRIMARY_DETAIL).hasTexture())
         {
             GL_SelectTexUnits(2);
             GL_ModulateTexture(9); // Tex+Detail, no color.
-            list.unit(TU_PRIMARY).bindTo(0);
-            list.unit(TU_PRIMARY_DETAIL).bindTo(1);
+            listSpec.unit(TU_PRIMARY).bindTo(0);
+            listSpec.unit(TU_PRIMARY_DETAIL).bindTo(1);
             return SetMatrixTexture0 | SetMatrixDTexture1;
         }
         else
         {
             GL_SelectTexUnits(1);
             GL_ModulateTexture(0);
-            list.unit(TU_PRIMARY).bind();
+            listSpec.unit(TU_PRIMARY).bind();
             return SetMatrixTexture0;
         }
         break;
 
     case DM_ALL_DETAILS:
-        if(list.unit(TU_PRIMARY_DETAIL).hasTexture())
+        if(listSpec.unit(TU_PRIMARY_DETAIL).hasTexture())
         {
-            list.unit(TU_PRIMARY_DETAIL).bind();
+            listSpec.unit(TU_PRIMARY_DETAIL).bind();
             return SetMatrixDTexture0;
         }
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
         // Only unblended. Details are optional.
-        if(list.unit(TU_INTER).hasTexture())
+        if(listSpec.unit(TU_INTER).hasTexture())
         {
             break;
         }
 
-        if(list.unit(TU_PRIMARY_DETAIL).hasTexture())
+        if(listSpec.unit(TU_PRIMARY_DETAIL).hasTexture())
         {
             GL_SelectTexUnits(2);
             GL_ModulateTexture(8);
-            list.unit(TU_PRIMARY).bindTo(0);
-            list.unit(TU_PRIMARY_DETAIL).bindTo(1);
+            listSpec.unit(TU_PRIMARY).bindTo(0);
+            listSpec.unit(TU_PRIMARY_DETAIL).bindTo(1);
             return SetMatrixTexture0 | SetMatrixDTexture1;
         }
         else
@@ -2915,42 +2917,42 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
             // Normal modulation.
             GL_SelectTexUnits(1);
             GL_ModulateTexture(1);
-            list.unit(TU_PRIMARY).bind();
+            listSpec.unit(TU_PRIMARY).bind();
             return SetMatrixTexture0;
         }
         break;
 
     case DM_BLENDED_DETAILS: {
         // We'll only render blended primitives.
-        if(!list.unit(TU_INTER).hasTexture())
+        if(!listSpec.unit(TU_INTER).hasTexture())
         {
             break;
         }
 
-        if(!list.unit(TU_PRIMARY_DETAIL).hasTexture() ||
-           !list.unit(TU_INTER_DETAIL).hasTexture())
+        if(!listSpec.unit(TU_PRIMARY_DETAIL).hasTexture() ||
+           !listSpec.unit(TU_INTER_DETAIL).hasTexture())
         {
             break;
         }
 
-        list.unit(TU_PRIMARY_DETAIL).bindTo(0);
-        list.unit(TU_INTER_DETAIL).bindTo(1);
+        listSpec.unit(TU_PRIMARY_DETAIL).bindTo(0);
+        listSpec.unit(TU_INTER_DETAIL).bindTo(1);
 
-        float color[4] = { 0, 0, 0, list.unit(TU_INTER_DETAIL).opacity };
+        float color[4] = { 0, 0, 0, listSpec.unit(TU_INTER_DETAIL).opacity };
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
         return SetMatrixDTexture0 | SetMatrixDTexture1; }
 
     case DM_SHADOW:
-        if(list.unit(TU_PRIMARY).hasTexture())
+        if(listSpec.unit(TU_PRIMARY).hasTexture())
         {
-            list.unit(TU_PRIMARY).bind();
+            listSpec.unit(TU_PRIMARY).bind();
         }
         else
         {
             GL_BindTextureUnmanaged(0);
         }
 
-        if(!list.unit(TU_PRIMARY).hasTexture())
+        if(!listSpec.unit(TU_PRIMARY).hasTexture())
         {
             // Apply a modelview shift.
             glMatrixMode(GL_MODELVIEW);
@@ -2964,11 +2966,11 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
         return 0;
 
     case DM_MASKED_SHINY:
-        if(list.unit(TU_INTER).hasTexture())
+        if(listSpec.unit(TU_INTER).hasTexture())
         {
             GL_SelectTexUnits(2);
             // The intertex holds the info for the mask texture.
-            list.unit(TU_INTER).bindTo(1);
+            listSpec.unit(TU_INTER).bindTo(1);
             float color[4] = { 0, 0, 0, 1 };
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
         }
@@ -2977,8 +2979,8 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
     case DM_ALL_SHINY:
     case DM_SHINY:
-        list.unit(TU_PRIMARY).bindTo(0);
-        if(!list.unit(TU_INTER).hasTexture())
+        listSpec.unit(TU_PRIMARY).bindTo(0);
+        if(!listSpec.unit(TU_INTER).hasTexture())
         {
             GL_SelectTexUnits(1);
         }
@@ -3008,7 +3010,7 @@ static void popGLStateForList(DrawMode mode, DrawList const &list)
     default: break;
 
     case DM_SHADOW:
-        if(!list.unit(TU_PRIMARY).hasTexture())
+        if(!list.spec().unit(TU_PRIMARY).hasTexture())
         {
             // Restore original modelview matrix.
             glMatrixMode(GL_MODELVIEW);

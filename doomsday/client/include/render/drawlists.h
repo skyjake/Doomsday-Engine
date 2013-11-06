@@ -74,16 +74,6 @@ private:
 
 struct GLTextureUnit;
 
-/// Virtual/logical texture unit indices. These map to real GL texture units.
-enum texunitid_t
-{
-    TU_PRIMARY = 0,
-    TU_PRIMARY_DETAIL,
-    TU_INTER,
-    TU_INTER_DETAIL,
-    NUM_TEXTURE_UNITS
-};
-
 /**
  * Reset the texture unit write state back to the initial default values.
  * Any mappings between logical units and preconfigured RTU states are
@@ -91,7 +81,7 @@ enum texunitid_t
  */
 void RL_LoadDefaultRtus();
 
-GLTextureUnit const **RL_RtuState();
+DrawListSpec const &RL_CurrentListSpec();
 
 /**
  * Map the texture unit write state for the identified @a idx unit to

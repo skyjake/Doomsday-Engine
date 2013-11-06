@@ -211,25 +211,19 @@ DENG2_PIMPL(DrawList)
         }
     };
 
-    /// Logical geometry group for which the list is currently configured.
-    GeomGroup group;
-
-    /// Texture unit configuration. Note that texture matrix scale and offset
-    /// factors are ignore because these values are writen to the Element.
-    GLTextureUnit texUnits[NUM_TEXTURE_UNITS];
-
+    Spec spec;        ///< List specification.
     size_t dataSize;  ///< Number of bytes allocated for the data.
     byte *data;       ///< Data for a number of polygons (The List).
     byte *cursor;     ///< Data pointer for reading/writing.
     Element *last;    ///< Last element (if any).
 
-    Instance(Public *i)
-        : Base(i),
-          group(UnlitGeom),
-          dataSize(0),
-          data(0),
-          cursor(0),
-          last(0)
+    Instance(Public *i, Spec const &spec)
+        : Base(i)
+        , spec(spec)
+        , dataSize(0)
+        , data(0)
+        , cursor(0)
+        , last(0)
     {}
 
     ~Instance()
@@ -362,20 +356,8 @@ DENG2_PIMPL(DrawList)
     }
 };
 
-DrawList::DrawList(GeomGroup initialGeomGroup) : d(new Instance(this))
-{
-    setGeomGroup(initialGeomGroup);
-}
-
-GeomGroup DrawList::geomGroup() const
-{
-    return d->group;
-}
-
-void DrawList::setGeomGroup(GeomGroup newGroup)
-{
-    d->group = newGroup;
-}
+DrawList::DrawList(Spec const &spec) : d(new Instance(this, spec))
+{}
 
 bool DrawList::isEmpty() const
 {
@@ -390,7 +372,7 @@ DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
     DENG2_ASSERT(vertCount >= 3);
 
     // Rationalize write arguments.
-    if(d->group == SkyMaskGeom || d->group == LightGeom || d->group == ShadowGeom)
+    if(spec().group == SkyMaskGeom || spec().group == LightGeom || spec().group == ShadowGeom)
     {
         isLit      = false;
         modTexture = 0;
@@ -411,9 +393,9 @@ DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
     }
 
     // Configure the GL state to be applied when this geometry is drawn later.
-    GLTextureUnit const **texunits = RL_RtuState();
+    Spec const &writeSpec = RL_CurrentListSpec();
 
-    elem->data.blendMode  = texunits[TU_PRIMARY]->blendMode;
+    elem->data.blendMode  = writeSpec.unit(TU_PRIMARY).blendMode;
     elem->data.modTexture = modTexture;
     elem->data.modColor   = modColor? *modColor : Vector3f();
     elem->data.ptexOffset = Vector2f(0, 0);
@@ -423,18 +405,18 @@ DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
 
     // GL texture translation parameters come from the tex unit map and
     // differ according to the (logical) type of primitive to be written.
-    if(d->group == ShineGeom && texunits[TU_INTER]->hasTexture())
+    if(spec().group == ShineGeom && writeSpec.unit(TU_INTER).hasTexture())
     {
-        elem->data.setFromTexUnit(*texunits[TU_INTER], true);
+        elem->data.setFromTexUnit(writeSpec.unit(TU_INTER), true);
     }
-    else if(texunits[TU_PRIMARY]->hasTexture())
+    else if(writeSpec.unit(TU_PRIMARY).hasTexture())
     {
-        elem->data.setFromTexUnit(*texunits[TU_PRIMARY], true);
+        elem->data.setFromTexUnit(writeSpec.unit(TU_PRIMARY), true);
     }
 
-    if(texunits[TU_PRIMARY_DETAIL]->hasTexture())
+    if(writeSpec.unit(TU_PRIMARY_DETAIL).hasTexture())
     {
-        elem->data.setFromTexUnit(*texunits[TU_PRIMARY_DETAIL]);
+        elem->data.setFromTexUnit(writeSpec.unit(TU_PRIMARY_DETAIL));
     }
 
     // Allocate geometry from the backing store.
@@ -448,17 +430,17 @@ DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
         elem->data.buffer->posCoords[base + i] = posCoords[i];
 
         // Sky masked polys need nothing more.
-        if(d->group == SkyMaskGeom) continue;
+        if(spec().group == SkyMaskGeom) continue;
 
         // Primary texture coordinates.
-        if(unit(TU_PRIMARY).hasTexture())
+        if(spec().unit(TU_PRIMARY).hasTexture())
         {
             DENG2_ASSERT(texCoords != 0);
             elem->data.buffer->texCoords[Store::TCA_MAIN][base + i] = texCoords[i];
         }
 
         // Secondary texture coordinates.
-        if(unit(TU_INTER).hasTexture())
+        if(spec().unit(TU_INTER).hasTexture())
         {
             DENG2_ASSERT(interTexCoords != 0);
             elem->data.buffer->texCoords[Store::TCA_BLEND][base + i] = interTexCoords[i];
@@ -502,7 +484,7 @@ void DrawList::draw(DrawConditions conditions, TexUnitMap const &texUnitMap) con
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     bool bypass = false;
-    if(unit(TU_INTER).hasTexture())
+    if(spec().unit(TU_INTER).hasTexture())
     {
         // Is blending allowed?
         if(conditions.testFlag(NoBlend))
@@ -556,37 +538,23 @@ void DrawList::draw(DrawConditions conditions, TexUnitMap const &texUnitMap) con
     }
 }
 
-GLTextureUnit &DrawList::unit(int index)
+DrawList::Spec &DrawList::spec()
 {
-    DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
-    return d->texUnits[index];
+    return d->spec;
 }
 
-GLTextureUnit const &DrawList::unit(int index) const
+DrawList::Spec const &DrawList::spec() const
 {
-    DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
-    return d->texUnits[index];
+    return d->spec;
 }
 
 void DrawList::clear()
 {
     d->clearAllData();
-
-    unit(TU_INTER_DETAIL).texture.glName  = 0;
-    unit(TU_INTER_DETAIL).texture.variant = 0;
 }
 
 void DrawList::rewind()
 {
     d->cursor = d->data;
     d->last = 0;
-
-    // The interpolation target must be explicitly set.
-    unit(TU_INTER).texture.glName  = 0;
-    unit(TU_INTER).texture.variant = 0;
-    unit(TU_INTER).opacity         = 0;
-
-    unit(TU_INTER_DETAIL).texture.glName  = 0;
-    unit(TU_INTER_DETAIL).texture.variant = 0;
-    unit(TU_INTER_DETAIL).opacity         = 0;
 }

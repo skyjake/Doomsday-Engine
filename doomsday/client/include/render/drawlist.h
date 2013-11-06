@@ -72,6 +72,16 @@ enum DrawCondition
 Q_DECLARE_FLAGS(DrawConditions, DrawCondition)
 Q_DECLARE_OPERATORS_FOR_FLAGS(DrawConditions)
 
+/// Virtual/logical texture unit indices. These map to real GL texture units.
+enum texunitid_t
+{
+    TU_PRIMARY = 0,
+    TU_PRIMARY_DETAIL,
+    TU_INTER,
+    TU_INTER_DETAIL,
+    NUM_TEXTURE_UNITS
+};
+
 typedef uint TexUnitMap[MAX_TEX_UNITS];
 
 /**
@@ -80,29 +90,29 @@ typedef uint TexUnitMap[MAX_TEX_UNITS];
 class DrawList
 {
 public:
+    struct Spec
+    {
+        GeomGroup group;
+        GLTextureUnit texunits[NUM_TEXTURE_UNITS];
+
+        inline GLTextureUnit &unit(int index) {
+            DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
+            return texunits[index];
+        }
+
+        inline GLTextureUnit const &unit(int index) const {
+            DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
+            return texunits[index];
+        }
+    };
+
+public:
     /**
      * Construct a new draw list.
      *
-     * @param geomGroup  Initial geometry group identifier (can be set later).
+     * @param spec  List specification. A copy is made.
      */
-    DrawList(GeomGroup geomGroup = UnlitGeom);
-
-    /**
-     * Returns the logical "geometry group" identifier associated with the list.
-     */
-    GeomGroup geomGroup() const;
-
-    /**
-     * Change the logical "geometry group" identifier associated with the list.
-     *
-     * @param newGroup  New geometry group identifier.
-     */
-    void setGeomGroup(GeomGroup newGroup);
-
-    /**
-     * Returns @c true iff there are no commands/geometries in the list.
-     */
-    bool isEmpty() const;
+    DrawList(Spec const &spec);
 
     /**
      * Write the given geometry primitive to the list.
@@ -132,16 +142,9 @@ public:
     void draw(DrawConditions conditions, TexUnitMap const &texUnitMap) const;
 
     /**
-     * Provides mutable access to the list's virtual texture unit configuration.
-     * Note that any changes to this configuration will affect @em all geometry
-     * in the list.
+     * Returns @c true iff there are no commands/geometries in the list.
      */
-    GLTextureUnit &unit(int index);
-
-    /**
-     * Provides immutable access to the list's virtual texture unit configuration.
-     */
-    GLTextureUnit const &unit(int index) const;
+    bool isEmpty() const;
 
     /**
      * Clear the list of all buffered GL commands, returning it to the default,
@@ -158,8 +161,21 @@ public:
      */
     void rewind();
 
+    /**
+     * Provides mutable access to the list's specification. Note that any changes
+     * to this configuration will affect @em all geometry in the list.
+     */
+    Spec &spec();
+
+    /**
+     * Provides immutable access to the list's specification.
+     */
+    Spec const &spec() const;
+
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef DrawList::Spec DrawListSpec;
 
 #endif // DENG_CLIENT_RENDER_DRAWLIST_H
