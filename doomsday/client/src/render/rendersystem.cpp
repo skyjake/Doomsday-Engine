@@ -20,7 +20,6 @@
 #include "clientapp.h"
 #include "render/rendersystem.h"
 
-#include "render/rend_list.h" // RL_Store()
 #include <de/memory.h>
 
 using namespace de;

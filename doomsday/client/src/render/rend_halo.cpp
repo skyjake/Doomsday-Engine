@@ -25,9 +25,7 @@
 #include "de_misc.h"
 
 #include "world/p_players.h"
-
 #include "render/rend_main.h"
-#include "render/rend_list.h"
 
 #include "render/rend_halo.h"
 
