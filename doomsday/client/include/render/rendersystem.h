@@ -22,6 +22,7 @@
 #include <de/System>
 #include <de/Vector>
 #include "DrawLists"
+#include "settingsregister.h"
 
 /**
  * Geometry backing store (arrays).
@@ -62,6 +63,9 @@ class RenderSystem : public de::System
 {
 public:
     RenderSystem();
+
+    SettingsRegister &settings();
+    SettingsRegister &appearanceSettings();
 
     /**
      * Provides access to the central map geometry buffer.

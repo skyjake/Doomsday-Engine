@@ -265,7 +265,7 @@ DENG2_OBSERVES(App, GameChange)
 
     Instance(Public *i)
         : Base(i),
-          settings(ClientApp::rendererAppearanceSettings()),
+          settings(ClientApp::renderSystem().appearanceSettings()),
           firstColumnWidth(new IndirectRule)
     {
         // The editor will close automatically when going to Ring Zero.
