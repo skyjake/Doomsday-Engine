@@ -128,11 +128,17 @@ void BusyWidget::drawContent()
     }
     else
     {
+        glDisable(GL_ALPHA_TEST); /// @todo get rid of these
+        glDisable(GL_BLEND);
+
         // Draw the texture.
         Rectanglei pos = rule().recti();
         d->uMvpMatrix = root().projMatrix2D() *
                 Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
         d->drawable.draw();
+
+        glEnable(GL_ALPHA_TEST);
+        glEnable(GL_BLEND);
     }
 }
 
@@ -149,6 +155,7 @@ void BusyWidget::grabTransitionScreenshot()
 
     Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
 
+    /*
     if(BusyMode_IsTransitionAnimated())
     {
         // Animation transitions are drawn only inside LegacyWidget, so just
@@ -157,9 +164,11 @@ void BusyWidget::grabTransitionScreenshot()
     }
 
     // Grab the game view's rectangle, as that's where the transition will be drawn.
-    GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);
+    GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);*/
 
-    d->transitionTex.reset(new GLTexture(grabbed, grabRect.size() / 2));
+    d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
+    d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGBA_8888);
+    root().window().drawContentToTexture(*d->transitionTex);
     d->uTex = *d->transitionTex;
 }
 

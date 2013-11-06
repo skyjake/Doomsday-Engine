@@ -53,10 +53,10 @@ void BusyVisual_PrepareResources(void)
     BusyTask* task = BusyMode_CurrentTask();
     if(!task) return;
 
-    if(!(task->mode & BUSYF_STARTUP))
+    if(task->mode & BUSYF_STARTUP)
     {
         // Not in startup, so take a copy of the current frame contents.
-        ClientWindow::main().busy().grabTransitionScreenshot();
+        releaseScreenshotTexture(); //ClientWindow::main().busy().grabTransitionScreenshot();
     }
 #endif
 }

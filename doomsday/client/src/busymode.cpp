@@ -136,6 +136,8 @@ static void beginTask(BusyTask* task)
         Con_Error("Con_Busy: Already busy.\n");
     }
 
+    BusyVisual_PrepareResources();
+
     Sys_Lock(busy_Mutex);
     busyDone = false;
     busyTaskEndedWithError = false;
@@ -143,9 +145,6 @@ static void beginTask(BusyTask* task)
     busyTask = task;
     Sys_Unlock(busy_Mutex);
     busyInited = true;
-
-    // Load any resources needed to visual this task's progress.
-    BusyVisual_PrepareResources();
 
     ProgressWidget &prog = ClientWindow::main().busy().progress();
     prog.setText(task->name);
@@ -249,6 +248,10 @@ static void preBusySetup(int initialMode)
 
     busyWasIgnoringInput = DD_IgnoreInput(true);
 
+    // Load any resources needed beforehand.
+    //BusyVisual_PrepareResources();
+    ClientWindow::main().busy().grabTransitionScreenshot();
+
     //BusyVisual_PrepareFont();
     //BusyVisual_LoadTextures();
 
@@ -270,7 +273,7 @@ static void postBusyCleanup()
     DD_IgnoreInput(busyWasIgnoringInput);
     DD_ResetTimer();
 
-    BusyVisual_ReleaseTextures();
+    //BusyVisual_ReleaseTextures();
 
     // Back to unlimited frame rate.
     ClientApp::app().loop().setRate(0);

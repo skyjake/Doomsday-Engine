@@ -668,6 +668,21 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     DENG_ASSERT(img.pixelSize != 0);
 }
 
+void ClientWindow::drawContentToTexture(GLTexture &texture)
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    GLTarget offscreen(texture);
+    GLState::push()
+            .setTarget(offscreen)
+            .setViewport(Rectangleui::fromSize(texture.size()));
+
+    root().draw();
+
+    GLState::pop();
+}
+
 void ClientWindow::updateCanvasFormat()
 {
     d->needRecreateCanvas = true;
