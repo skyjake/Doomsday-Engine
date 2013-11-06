@@ -1348,7 +1348,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         else
         {
             ClientApp::renderSystem().drawLists()
-                      .find(NormalGeom, (modTex || hasDynlights))
+                      .find((modTex || hasDynlights)? LitGeom : UnlitGeom)
                           .write(gl::TriangleFan, hasDynlights, 3 + rightEdge.divisionCount(),
                                  posCoords + 3 + leftEdge.divisionCount(),
                                  colorCoords? colorCoords + 3 + leftEdge.divisionCount() : 0,
@@ -1386,7 +1386,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         else
         {
             ClientApp::renderSystem().drawLists()
-                      .find(NormalGeom, (modTex || hasDynlights))
+                      .find((modTex || hasDynlights)? LitGeom : UnlitGeom)
                           .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, hasDynlights,
                                  numVertices, posCoords, colorCoords,
                                  primaryCoords, interCoords, modTex, &modColor, modCoords);
@@ -1946,7 +1946,7 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
         }
 
         ClientApp::renderSystem().drawLists()
-                  .find(NormalGeom)
+                  .find(UnlitGeom)
                       .write(gl::TriangleStrip, 0, vertCount, posCoords, 0,
                              texCoords);
     }

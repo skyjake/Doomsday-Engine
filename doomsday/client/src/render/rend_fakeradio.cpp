@@ -1245,7 +1245,7 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     RL_LoadDefaultRtus();
 
     ClientApp::renderSystem().drawLists()
-              .find(renderWireframe? NormalGeom : ShadowGeom)
+              .find(renderWireframe? UnlitGeom : ShadowGeom)
                   .write(gl::TriangleFan, 0, 4, rvertices, rcolors);
 }
 

@@ -224,7 +224,7 @@ DENG2_PIMPL(DrawList)
 
     Instance(Public *i)
         : Base(i),
-          group(NormalGeom),
+          group(UnlitGeom),
           dataSize(0),
           data(0),
           cursor(0),

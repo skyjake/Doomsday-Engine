@@ -42,25 +42,21 @@ public:
      * arguments comprise the "draw list specification".
      *
      * @param group  Logical geometry group identifier.
-     * @param isLit  @c true= find a list suitable for geometry lit with dynamic
-     *               lights. (These are separate for perf reasons.)
      *
      * @return  The chosen list.
      */
-    DrawList &find(GeomGroup group, bool isLit = false);
+    DrawList &find(GeomGroup group);
 
     /**
      * Finds all draw lists which match the given specification. Note that only
      * non-empty lists are collected.
      *
      * @param group  Logical geometry group identifier.
-     * @param isLit  Include only those lists suitable for geometry that is lit
-     *               with dynamic lights.
      * @param found  Set of draw lists which match the result.
      *
      * @return  Number of draw lists found.
      */
-    int findAll(GeomGroup group, bool isLit, FoundLists &found);
+    int findAll(GeomGroup group, FoundLists &found);
 
     /**
      * To be called before rendering of a new frame begins.

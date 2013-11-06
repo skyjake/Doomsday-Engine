@@ -40,7 +40,7 @@ typedef QMultiHash<DGLuint, DrawList *> DrawListHash;
 
 DENG2_PIMPL(DrawLists)
 {
-    DrawListHash plainHash;  ///< Unlit geometry.
+    DrawListHash unlitHash;  ///< Unlit geometry.
     DrawListHash litHash;    ///< Lit geometry.
     DrawListHash dynHash;    ///< Light geometry.
     DrawListHash shinyHash;  ///< Shine geometry.
@@ -58,17 +58,18 @@ DENG2_PIMPL(DrawLists)
     }
 
     /// Choose the correct draw list hash table.
-    DrawListHash &listHash(GeomGroup group, bool isLit)
+    DrawListHash &listHash(GeomGroup group)
     {
         switch(group)
         {
-        case NormalGeom: return (isLit? litHash : plainHash); /// @todo Separate groups! -ds
+        case UnlitGeom:  return unlitHash;
+        case LitGeom:    return litHash;
         case LightGeom:  return dynHash;
         case ShadowGeom: return shadowHash;
         case ShineGeom:  return shinyHash;
         }
         DENG2_ASSERT(false);
-        return plainHash;
+        return unlitHash;
     }
 };
 
@@ -85,7 +86,7 @@ static void clearLists(DrawListHash &hash)
 
 void DrawLists::clear()
 {
-    clearLists(d->plainHash);
+    clearLists(d->unlitHash);
     clearLists(d->litHash);
     clearLists(d->dynHash);
     clearLists(d->shadowHash);
@@ -106,7 +107,7 @@ static void rewindLists(DrawListHash &hash)
 
 void DrawLists::reset()
 {
-    rewindLists(d->plainHash);
+    rewindLists(d->unlitHash);
     rewindLists(d->litHash);
     rewindLists(d->dynHash);
     rewindLists(d->shadowHash);
@@ -154,7 +155,7 @@ static bool compareTexUnit(GLTextureUnit const &lhs, GLTextureUnit const &rhs)
     return true;
 }
 
-DrawList &DrawLists::find(GeomGroup group, bool isLit)
+DrawList &DrawLists::find(GeomGroup group)
 {
     if(group == ShineGeom)
     {
@@ -163,12 +164,6 @@ DrawList &DrawLists::find(GeomGroup group, bool isLit)
     else
     {
         prepareTexUnitMap();
-    }
-
-    // Rationalize the draw list specification.
-    if(group != NormalGeom && group != ShineGeom)
-    {
-        isLit = false;
     }
 
     // Sky masked geometry is never textured; therefore no draw list hash.
@@ -182,7 +177,7 @@ DrawList &DrawLists::find(GeomGroup group, bool isLit)
 
     // Find/create a list in the hash.
     DGLuint const key  = texunits[TU_PRIMARY]->textureGLName();
-    DrawListHash &hash = d->listHash(group, isLit);
+    DrawListHash &hash = d->listHash(group);
     for(DrawListHash::const_iterator it = hash.find(key);
         it != hash.end() && it.key() == key; ++it)
     {
@@ -264,7 +259,7 @@ DrawList &DrawLists::find(GeomGroup group, bool isLit)
     return *list;
 }
 
-int DrawLists::findAll(GeomGroup group, bool isLit, FoundLists &found)
+int DrawLists::findAll(GeomGroup group, FoundLists &found)
 {
     LOG_AS("DrawLists::findAll");
 
@@ -278,7 +273,7 @@ int DrawLists::findAll(GeomGroup group, bool isLit, FoundLists &found)
     }
     else
     {
-        DrawListHash const &hash = d->listHash(group, isLit);
+        DrawListHash const &hash = d->listHash(group);
         foreach(DrawList *list, hash)
         {
             if(!list->isEmpty())

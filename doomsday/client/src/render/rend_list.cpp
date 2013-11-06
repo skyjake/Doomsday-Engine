@@ -765,7 +765,7 @@ static void renderLists(DrawLists::FoundLists const &lists, DrawMode mode)
 static void drawSky()
 {
     DrawLists::FoundLists lists;
-    ClientApp::renderSystem().drawLists().findAll(SkyMaskGeom, false/*ignored*/, lists);
+    ClientApp::renderSystem().drawLists().findAll(SkyMaskGeom, lists);
     if(!devRendSkyAlways && lists.isEmpty())
     {
         return;
@@ -832,7 +832,7 @@ void RL_RenderAllLists()
      */
 
     DrawLists::FoundLists lists;
-    ClientApp::renderSystem().drawLists().findAll(NormalGeom, false/*unlit*/, lists);
+    ClientApp::renderSystem().drawLists().findAll(UnlitGeom, lists);
     if(IS_MTEX_DETAILS)
     {
         // Draw details for unblended surfaces in this pass.
@@ -851,7 +851,7 @@ void RL_RenderAllLists()
      * Pass: Lit geometries.
      */
 
-    ClientApp::renderSystem().drawLists().findAll(NormalGeom, true/*lit*/, lists);
+    ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
 
     // If multitexturing is available, we'll use it to our advantage when
     // rendering lights.
@@ -912,7 +912,7 @@ void RL_RenderAllLists()
      */
     if(dynlightBlend != 2)
     {
-        ClientApp::renderSystem().drawLists().findAll(LightGeom, false/*ignored*/, lists);
+        ClientApp::renderSystem().drawLists().findAll(LightGeom, lists);
         renderLists(lists, DM_LIGHTS);
     }
 
@@ -922,7 +922,7 @@ void RL_RenderAllLists()
     if(IS_MUL)
     {
         // Finish the lit surfaces that didn't yet get a texture.
-        ClientApp::renderSystem().drawLists().findAll(NormalGeom, true/*lit*/, lists);
+        ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
         if(IS_MTEX_DETAILS)
         {
             renderLists(lists, DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL);
@@ -951,7 +951,7 @@ void RL_RenderAllLists()
     if(r_detail)
     {
         // Render detail textures for all surfaces that need them.
-        ClientApp::renderSystem().drawLists().findAll(NormalGeom, false/*unlit*/, lists);
+        ClientApp::renderSystem().drawLists().findAll(UnlitGeom, lists);
         if(IS_MTEX_DETAILS)
         {
             // Blended detail textures.
@@ -961,7 +961,7 @@ void RL_RenderAllLists()
         {
             renderLists(lists, DM_ALL_DETAILS);
 
-            ClientApp::renderSystem().drawLists().findAll(NormalGeom, true/*lit*/, lists);
+            ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
             renderLists(lists, DM_ALL_DETAILS);
         }
     }
@@ -975,7 +975,7 @@ void RL_RenderAllLists()
      * produce areas without shine.
      */
 
-    ClientApp::renderSystem().drawLists().findAll(ShineGeom, false/*ignored*/, lists);
+    ClientApp::renderSystem().drawLists().findAll(ShineGeom, lists);
     if(numTexUnits > 1)
     {
         // Render masked shiny surfaces in a separate pass.
@@ -994,7 +994,7 @@ void RL_RenderAllLists()
 
     renderTextures = true;
 
-    ClientApp::renderSystem().drawLists().findAll(ShadowGeom, false/*ignored*/, lists);
+    ClientApp::renderSystem().drawLists().findAll(ShadowGeom, lists);
     renderLists(lists, DM_SHADOW);
 
     renderTextures = oldRenderTextures;

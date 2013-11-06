@@ -32,7 +32,8 @@ struct GLTextureUnit;
 /// Semantic geometry group identifiers.
 enum GeomGroup
 {
-    NormalGeom = 0,
+    UnlitGeom = 0,  ///< Normal, unlit geometries.
+    LitGeom,        ///< Normal, lit goemetries.
     SkyMaskGeom,    ///< Sky mask geometries.
     LightGeom,      ///< Dynamic light geometries.
     ShadowGeom,     ///< Map object and/or Fake Radio shadow geometries.
@@ -84,7 +85,7 @@ public:
      *
      * @param geomGroup  Initial geometry group identifier (can be set later).
      */
-    DrawList(GeomGroup geomGroup = NormalGeom);
+    DrawList(GeomGroup geomGroup = UnlitGeom);
 
     /**
      * Returns the logical "geometry group" identifier associated with the list.
@@ -107,7 +108,7 @@ public:
      * Write the given geometry primitive to the list.
      *
      * @param primitive       Type identifier for the GL primitive being written.
-     * @param isLit           @todo Retieve from list state.
+     * @param isLit           @todo Retrieve from list specification?
      * @param vertCount       Number of vertices being written.
      * @param posCoods        Map space position coordinates for each vertex.
      * @param colorCoords     Color coordinates for each vertex (if any).
