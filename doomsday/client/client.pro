@@ -306,7 +306,6 @@ DENG_HEADERS += \
     include/render/rend_fakeradio.h \
     include/render/rend_font.h \
     include/render/rend_halo.h \
-    include/render/rend_list.h \
     include/render/rend_main.h \
     include/render/rend_model.h \
     include/render/rend_particle.h \
@@ -661,7 +660,6 @@ SOURCES += \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.cpp \
     src/render/rend_halo.cpp \
-    src/render/rend_list.cpp \
     src/render/rend_main.cpp \
     src/render/rend_model.cpp \
     src/render/rend_particle.cpp \
