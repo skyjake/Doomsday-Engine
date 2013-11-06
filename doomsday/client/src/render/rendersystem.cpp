@@ -20,12 +20,19 @@
 #include "clientapp.h"
 #include "render/rendersystem.h"
 
+#include "render/rend_list.h" // RL_Store()
+
 using namespace de;
 
 DENG2_PIMPL(RenderSystem)
 {
     DrawLists drawLists;
     Instance(Public *i) : Base(i) {}
+
+    ~Instance()
+    {
+        self.clearDrawLists();
+    }
 };
 
 RenderSystem::RenderSystem() : d(new Instance(this))
@@ -34,6 +41,22 @@ RenderSystem::RenderSystem() : d(new Instance(this))
 void RenderSystem::timeChanged(Clock const &)
 {
     // Nothing to do.
+}
+
+void RenderSystem::clearDrawLists()
+{
+    d->drawLists.clear();
+
+    // Clear the global vertex buffer, also.
+    RL_Store().clear();
+}
+
+void RenderSystem::resetDrawLists()
+{
+    d->drawLists.reset();
+
+    // Start reallocating storage from the global vertex buffer, also.
+    RL_Store().rewind();
 }
 
 DrawLists &RenderSystem::drawLists()

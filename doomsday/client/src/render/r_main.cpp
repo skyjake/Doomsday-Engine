@@ -558,7 +558,7 @@ void R_Update()
 
     // The rendering lists have persistent data that has changed during the
     // re-initialization.
-    ClientApp::renderSystem().drawLists().clear();
+    ClientApp::renderSystem().clearDrawLists();
 
     /// @todo fixme: Update the game title and the status.
 #endif

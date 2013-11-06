@@ -356,7 +356,7 @@ void Rend_Init()
 
 void Rend_Shutdown()
 {
-    ClientApp::renderSystem().drawLists().clear();
+    ClientApp::renderSystem().clearDrawLists();
 }
 
 /// World/map renderer reset.
@@ -2711,7 +2711,7 @@ void Rend_RenderMap(Map &map)
     if(!freezeRLs)
     {
         // Prepare for rendering.
-        ClientApp::renderSystem().drawLists().reset(); // Clear the lists for new geometry.
+        ClientApp::renderSystem().resetDrawLists(); // Clear the lists for new geometry.
         C_ClearRanges(); // Clear the clipper.
 
         // Recycle the vlight lists. Currently done here as the lists are

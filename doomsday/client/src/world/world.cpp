@@ -635,7 +635,7 @@ DENG2_PIMPL(World)
         App_Materials().processCacheQueue();
         LOG_INFO(String("Precaching completed in %1 seconds.").arg(begunPrecacheAt.since(), 0, 'g', 2));
 
-        ClientApp::renderSystem().drawLists().clear();
+        ClientApp::renderSystem().clearDrawLists();
         R_InitRendPolyPools();
         Rend_UpdateLightModMatrix();
 

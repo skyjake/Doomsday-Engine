@@ -38,6 +38,7 @@ DENG2_PIMPL(DrawList)
         uint size; ///< Size of this element (zero = n/a).
 
         struct Data {
+            Store *buffer;
             gl::Primitive type;
 
             // Element indices into the global backing store for the geometry.
@@ -151,18 +152,18 @@ DENG2_PIMPL(DrawList)
                     {
                         if(texUnitMap[j])
                         {
-                            Vector2f const &tc = RL_Store().texCoords[texUnitMap[j] - 1][index];
+                            Vector2f const &tc = buffer->texCoords[texUnitMap[j] - 1][index];
                             glMultiTexCoord2f(GL_TEXTURE0 + j, tc.x, tc.y);
                         }
                     }
 
                     if(!(conditions & NoColor))
                     {
-                        Vector4ub const &color = RL_Store().colorCoords[index];
+                        Vector4ub const &color = buffer->colorCoords[index];
                         glColor4ub(color.x, color.y, color.z, color.w);
                     }
 
-                    Vector3f const &pos = RL_Store().posCoords[index];
+                    Vector3f const &pos = buffer->posCoords[index];
                     glVertex3f(pos.x, pos.z, pos.y);
                 }
                 glEnd();
@@ -204,9 +205,9 @@ DENG2_PIMPL(DrawList)
 
         Element *next() {
             if(!size) return 0;
-            Element *nextGeom = (Element *) ((byte *) (this) + size);
-            if(!nextGeom->size) return 0;
-            return nextGeom;
+            Element *elem = (Element *) ((byte *) (this) + size);
+            if(!elem->size) return 0;
+            return elem;
         }
     };
 
@@ -326,12 +327,13 @@ DENG2_PIMPL(DrawList)
         }
     }
 
-    Element *newElement(gl::Primitive primitive)
+    Element *newElement(Store &buffer, gl::Primitive primitive)
     {
         // This becomes the new last element.
         last = (Element *) allocateData(sizeof(Element));
         last->size = 0;
 
+        last->data.buffer     = &buffer;
         last->data.type       = primitive;
         last->data.indices    = 0;
         last->data.numIndices = 0;
@@ -395,7 +397,7 @@ DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
         modColor   = 0;
     }
 
-    Instance::Element *elem = d->newElement(primitive);
+    Instance::Element *elem = d->newElement(RL_Store(), primitive);
 
     // Is the geometry lit?
     if(modTexture && !isLit)
@@ -435,14 +437,14 @@ DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
     }
 
     // Allocate geometry from the backing store.
-    uint base = RL_Store().allocateVertices(vertCount);
+    uint base = elem->data.buffer->allocateVertices(vertCount);
 
     // Setup the indices.
     d->allocateIndices(vertCount, base);
 
     for(uint i = 0; i < vertCount; ++i)
     {
-        RL_Store().posCoords[base + i] = posCoords[i];
+        elem->data.buffer->posCoords[base + i] = posCoords[i];
 
         // Sky masked polys need nothing more.
         if(d->group == SkyMaskGeom) continue;
@@ -451,25 +453,25 @@ DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
         if(unit(TU_PRIMARY).hasTexture())
         {
             DENG2_ASSERT(texCoords != 0);
-            RL_Store().texCoords[Store::TCA_MAIN][base + i] = texCoords[i];
+            elem->data.buffer->texCoords[Store::TCA_MAIN][base + i] = texCoords[i];
         }
 
         // Secondary texture coordinates.
         if(unit(TU_INTER).hasTexture())
         {
             DENG2_ASSERT(interTexCoords != 0);
-            RL_Store().texCoords[Store::TCA_BLEND][base + i] = interTexCoords[i];
+            elem->data.buffer->texCoords[Store::TCA_BLEND][base + i] = interTexCoords[i];
         }
 
         // First light texture coordinates.
         if((elem->data.oneLight || elem->data.manyLights) && IS_MTEX_LIGHTS)
         {
             DENG2_ASSERT(modTexCoords != 0);
-            RL_Store().texCoords[Store::TCA_LIGHT][base + i] = modTexCoords[i];
+            elem->data.buffer->texCoords[Store::TCA_LIGHT][base + i] = modTexCoords[i];
         }
 
         // Color.
-        Vector4ub &color = RL_Store().colorCoords[base + i];
+        Vector4ub &color = elem->data.buffer->colorCoords[base + i];
         if(colorCoords)
         {
             Vector4f const &srcColor = colorCoords[i];

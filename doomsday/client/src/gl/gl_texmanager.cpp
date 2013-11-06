@@ -1120,7 +1120,7 @@ void GL_ReleaseSystemTextures()
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
-    ClientApp::renderSystem().drawLists().clear();
+    ClientApp::renderSystem().clearDrawLists();
 
     glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
     std::memset(lightingTextures, 0, sizeof(lightingTextures));
@@ -1143,7 +1143,7 @@ void GL_ReleaseRuntimeTextures()
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
-    ClientApp::renderSystem().drawLists().clear();
+    ClientApp::renderSystem().clearDrawLists();
 
     // texture-wrapped GL textures; textures, flats, sprites...
     GL_ReleaseTexturesByScheme("Flats");

@@ -30,6 +30,10 @@ class RenderSystem : public de::System
 public:
     RenderSystem();
 
+    void clearDrawLists();
+
+    void resetDrawLists();
+
     DrawLists &drawLists();
 
     // System.

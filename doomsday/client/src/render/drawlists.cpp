@@ -20,7 +20,6 @@
 
 #include "render/drawlists.h"
 
-#include "render/rend_list.h" // RL_Store()
 #include <de/Log>
 #include <de/memoryzone.h>
 #include <QMultiHash>
@@ -92,9 +91,6 @@ void DrawLists::clear()
     clearLists(d->shadowHash);
     clearLists(d->shinyHash);
     d->skyMaskList.clear();
-
-    // Clear the global vertex buffer, also.
-    RL_Store().clear();
 }
 
 static void rewindLists(DrawListHash &hash)
@@ -113,9 +109,6 @@ void DrawLists::reset()
     rewindLists(d->shadowHash);
     rewindLists(d->shinyHash);
     d->skyMaskList.rewind();
-
-    // Start reallocating storage from the global vertex buffer, also.
-    RL_Store().rewind();
 }
 
 // Prepare the final texture unit map for writing "normal" polygons, filling
