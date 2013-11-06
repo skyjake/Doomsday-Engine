@@ -21,8 +21,8 @@
 #include "render/drawlist.h"
 
 #include "DrawLists"
-#include "render/rend_list.h" // RL_Store()
 #include "render/rend_main.h"
+#include "clientapp.h"
 #include <de/concurrency.h>
 #include <de/memoryzone.h>
 
@@ -397,7 +397,8 @@ DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
         modColor   = 0;
     }
 
-    Instance::Element *elem = d->newElement(RL_Store(), primitive);
+    Instance::Element *elem =
+        d->newElement(ClientApp::renderSystem().buffer(), primitive);
 
     // Is the geometry lit?
     if(modTexture && !isLit)

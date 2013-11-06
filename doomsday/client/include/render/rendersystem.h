@@ -20,7 +20,40 @@
 #define CLIENT_RENDERSYSTEM_H
 
 #include <de/System>
+#include <de/Vector>
 #include "DrawLists"
+
+/**
+ * Geometry backing store (arrays).
+ * @todo Replace with GLBuffer -ds
+ */
+struct Store
+{
+    /// Texture coordinate array indices.
+    enum
+    {
+        TCA_MAIN, // Main texture.
+        TCA_BLEND, // Blendtarget texture.
+        TCA_LIGHT, // Dynlight texture.
+        NUM_TEXCOORD_ARRAYS
+    };
+
+    de::Vector3f *posCoords;
+    de::Vector2f *texCoords[NUM_TEXCOORD_ARRAYS];
+    de::Vector4ub *colorCoords;
+
+    Store();
+    ~Store();
+
+    void rewind();
+
+    void clear();
+
+    uint allocateVertices(uint count);
+
+private:
+    uint vertCount, vertMax;
+};
 
 /**
  * Renderer subsystems, draw lists, etc... @ingroup render
@@ -29,6 +62,11 @@ class RenderSystem : public de::System
 {
 public:
     RenderSystem();
+
+    /**
+     * Provides access to the central map geometry buffer.
+     */
+    Store &buffer();
 
     void clearDrawLists();
 

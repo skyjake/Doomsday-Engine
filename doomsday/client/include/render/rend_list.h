@@ -20,41 +20,6 @@
 #ifndef DENG_CLIENT_RENDER_DRAWLIST_RENDERER_H
 #define DENG_CLIENT_RENDER_DRAWLIST_RENDERER_H
 
-#include <de/Vector>
-
-/**
- * Geometry backing store (arrays).
- */
-struct Store
-{
-    /// Texture coordinate array indices.
-    enum
-    {
-        TCA_MAIN, // Main texture.
-        TCA_BLEND, // Blendtarget texture.
-        TCA_LIGHT, // Dynlight texture.
-        NUM_TEXCOORD_ARRAYS
-    };
-
-    de::Vector3f *posCoords;
-    de::Vector2f *texCoords[NUM_TEXCOORD_ARRAYS];
-    de::Vector4ub *colorCoords;
-
-    Store();
-    ~Store();
-
-    void rewind();
-
-    void clear();
-
-    uint allocateVertices(uint count);
-
-private:
-    uint vertCount, vertMax;
-};
-
-Store &RL_Store();
-
 void RL_RenderAllLists();
 
 #endif // DENG_CLIENT_RENDER_DRAWLIST_RENDERER_H
