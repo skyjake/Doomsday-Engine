@@ -492,7 +492,7 @@ float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
         if(real < minimum)
             real = minimum; // Clamp it.
 
-        return real;
+        return de::min(real, 1.f);
     }
 
     return lightLevel;
@@ -1175,12 +1175,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
     if(drawAsVisSprite)
     {
-        DENG_ASSERT(p.isWall);
+        DENG2_ASSERT(p.isWall);
 
-        /**
-         * Masked polys (walls) get a special treatment (=> vissprite).
-         * This is needed because all masked polys must be sorted (sprites
-         * are masked polys). Otherwise there will be artifacts.
+        /*
+         * Masked polys (walls) get a special treatment (=> vissprite). This is
+         * needed because all masked polys must be sorted (sprites are masked
+         * polys). Otherwise there will be artifacts.
          */
         Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &ms.materialVariant(),
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);

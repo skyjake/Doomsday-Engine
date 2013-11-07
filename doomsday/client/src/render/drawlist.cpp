@@ -431,6 +431,12 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
         {
             Vector4f const &srcColor = colorCoords[i];
 
+            // We should not be relying on clamping at this late stage...
+            DENG2_ASSERT(INRANGE_OF(srcColor.x, 0.f, 1.f));
+            DENG2_ASSERT(INRANGE_OF(srcColor.y, 0.f, 1.f));
+            DENG2_ASSERT(INRANGE_OF(srcColor.z, 0.f, 1.f));
+            DENG2_ASSERT(INRANGE_OF(srcColor.w, 0.f, 1.f));
+
             color = Vector4ub(dbyte(255 * de::clamp(0.f, srcColor.x, 1.f)),
                               dbyte(255 * de::clamp(0.f, srcColor.y, 1.f)),
                               dbyte(255 * de::clamp(0.f, srcColor.z, 1.f)),
