@@ -1337,37 +1337,73 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
         if(p.skyMasked)
         {
+            DrawListSpec const &spec = RL_ListSpec(SkyMaskGeom);
+
             ClientApp::renderSystem().drawLists()
-                      .find(SkyMaskGeom)
-                          .write(gl::TriangleFan, 0, 3 + rightEdge.divisionCount(),
+                      .find(spec)
+                          .write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, 3 + rightEdge.divisionCount(),
                                  posCoords + 3 + leftEdge.divisionCount())
-                          .write(gl::TriangleFan, 0, 3 + leftEdge.divisionCount(),
+                          .write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, 3 + leftEdge.divisionCount(),
                                  posCoords);
         }
         else
         {
+            DrawListSpec const &spec = RL_ListSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
+
             ClientApp::renderSystem().drawLists()
-                      .find((modTex || hasDynlights)? LitGeom : UnlitGeom)
-                          .write(gl::TriangleFan, hasDynlights, 3 + rightEdge.divisionCount(),
+                      .find(spec)
+                          .write(gl::TriangleFan,
+                                 spec.unit(TU_PRIMARY       ).blendMode,
+                                 spec.unit(TU_PRIMARY       ).scale,
+                                 spec.unit(TU_PRIMARY       ).offset,
+                                 spec.unit(TU_PRIMARY_DETAIL).scale,
+                                 spec.unit(TU_PRIMARY_DETAIL).offset,
+                                 hasDynlights, 3 + rightEdge.divisionCount(),
                                  posCoords + 3 + leftEdge.divisionCount(),
                                  colorCoords? colorCoords + 3 + leftEdge.divisionCount() : 0,
                                  primaryCoords + 3 + leftEdge.divisionCount(),
                                  interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
                                  modTex, &modColor, modCoords? modCoords + 3 + leftEdge.divisionCount() : 0)
-                          .write(gl::TriangleFan, hasDynlights, 3 + leftEdge.divisionCount(),
+                          .write(gl::TriangleFan,
+                                 spec.unit(TU_PRIMARY       ).blendMode,
+                                 spec.unit(TU_PRIMARY       ).scale,
+                                 spec.unit(TU_PRIMARY       ).offset,
+                                 spec.unit(TU_PRIMARY_DETAIL).scale,
+                                 spec.unit(TU_PRIMARY_DETAIL).offset,
+                                 hasDynlights, 3 + leftEdge.divisionCount(),
                                  posCoords, colorCoords, primaryCoords,
                                  interCoords, modTex, &modColor, modCoords);
 
             if(shinyRTU)
             {
+                DrawListSpec const &spec = RL_ListSpec(ShineGeom);
+
                 ClientApp::renderSystem().drawLists()
-                          .find(ShineGeom)
-                              .write(gl::TriangleFan, hasDynlights, 3 + rightEdge.divisionCount(),
+                          .find(spec)
+                              .write(gl::TriangleFan,
+                                     spec.unit(TU_PRIMARY       ).blendMode,
+                                     spec.unit(TU_INTER         ).scale,
+                                     spec.unit(TU_INTER         ).offset,
+                                     spec.unit(TU_PRIMARY_DETAIL).scale,
+                                     spec.unit(TU_PRIMARY_DETAIL).offset,
+                                     hasDynlights, 3 + rightEdge.divisionCount(),
                                      posCoords + 3 + leftEdge.divisionCount(),
                                      shinyColors + 3 + leftEdge.divisionCount(),
                                      shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
                                      shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
-                              .write(gl::TriangleFan, hasDynlights, 3 + leftEdge.divisionCount(),
+                              .write(gl::TriangleFan,
+                                     spec.unit(TU_PRIMARY       ).blendMode,
+                                     spec.unit(TU_INTER         ).scale,
+                                     spec.unit(TU_INTER         ).offset,
+                                     spec.unit(TU_PRIMARY_DETAIL).scale,
+                                     spec.unit(TU_PRIMARY_DETAIL).offset,
+                                     hasDynlights, 3 + leftEdge.divisionCount(),
                                      posCoords, shinyColors, shinyTexCoords,
                                      shinyMaskRTU? primaryCoords : 0);
             }
@@ -1377,26 +1413,46 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     {
         if(p.skyMasked)
         {
+            DrawListSpec const &spec = RL_ListSpec(SkyMaskGeom);
+
             ClientApp::renderSystem().drawLists()
-                      .find(SkyMaskGeom)
-                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, 0,
-                                 numVertices, posCoords);
+                      .find(spec)
+                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, numVertices,
+                                 posCoords);
         }
         else
         {
+            DrawListSpec const &spec = RL_ListSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
+
             ClientApp::renderSystem().drawLists()
-                      .find((modTex || hasDynlights)? LitGeom : UnlitGeom)
-                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, hasDynlights,
-                                 numVertices, posCoords, colorCoords,
-                                 primaryCoords, interCoords, modTex, &modColor, modCoords);
+                      .find(spec)
+                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                                 spec.unit(TU_PRIMARY       ).blendMode,
+                                 spec.unit(TU_PRIMARY       ).scale,
+                                 spec.unit(TU_PRIMARY       ).offset,
+                                 spec.unit(TU_PRIMARY_DETAIL).scale,
+                                 spec.unit(TU_PRIMARY_DETAIL).offset,
+                                 hasDynlights, numVertices,
+                                 posCoords, colorCoords, primaryCoords, interCoords,
+                                 modTex, &modColor, modCoords);
 
             if(shinyRTU)
             {
+                DrawListSpec const &spec = RL_ListSpec(ShineGeom);
+
                 ClientApp::renderSystem().drawLists()
-                          .find(ShineGeom)
-                              .write(p.isWall? gl::TriangleStrip : gl::TriangleFan, hasDynlights,
-                                     numVertices, posCoords, shinyColors,
-                                     shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
+                          .find(spec)
+                              .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                                     spec.unit(TU_PRIMARY       ).blendMode,
+                                     spec.unit(TU_INTER         ).scale,
+                                     spec.unit(TU_INTER         ).offset,
+                                     spec.unit(TU_PRIMARY_DETAIL).scale,
+                                     spec.unit(TU_PRIMARY_DETAIL).offset,
+                                     hasDynlights, numVertices,
+                                     posCoords, shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
             }
         }
     }
@@ -1927,8 +1983,12 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     if(!devRendSkyMode)
     {
         ClientApp::renderSystem().drawLists()
-                  .find(SkyMaskGeom)
-                      .write(gl::TriangleStrip, 0, vertCount, posCoords);
+                  .find(RL_ListSpec(SkyMaskGeom))
+                      .write(gl::TriangleStrip,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, vertCount,
+                             posCoords);
     }
     else
     {
@@ -1944,10 +2004,17 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
             RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
         }
 
+        DrawListSpec const &spec = RL_ListSpec(UnlitGeom);
+
         ClientApp::renderSystem().drawLists()
-                  .find(UnlitGeom)
-                      .write(gl::TriangleStrip, 0, vertCount, posCoords, 0,
-                             texCoords);
+                  .find(spec)
+                      .write(gl::TriangleStrip, spec.unit(TU_PRIMARY).blendMode,
+                             spec.unit(TU_PRIMARY       ).scale,
+                             spec.unit(TU_PRIMARY       ).offset,
+                             spec.unit(TU_PRIMARY_DETAIL).scale,
+                             spec.unit(TU_PRIMARY_DETAIL).offset,
+                             0, vertCount,
+                             posCoords, 0, texCoords);
     }
 }
 
@@ -2115,8 +2182,12 @@ static void writeLeafSkyMaskCap(int skyCap)
                            skyPlaneZ(skyCap), &verts, &numVerts);
 
     ClientApp::renderSystem().drawLists()
-              .find(SkyMaskGeom)
-                  .write(gl::TriangleFan, 0, numVerts, verts);
+              .find(RL_ListSpec(SkyMaskGeom))
+                  .write(gl::TriangleFan,
+                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                         Vector2f(1, 1), Vector2f(0, 0),
+                         0, numVerts,
+                         verts);
 
     R_FreeRendVertices(verts);
 }

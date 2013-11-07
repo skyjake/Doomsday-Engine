@@ -128,7 +128,10 @@ public:
      * @param modColor        Modulation color (if any).
      * @param modTexCoords    Modulation texture coordinates for each vertex (if any).
      */
-    DrawList &write(de::gl::Primitive primitive, bool isLit, uint vertCount,
+    DrawList &write(de::gl::Primitive primitive, blendmode_t blendMode,
+        de::Vector2f const &texScale, de::Vector2f const &texOffset,
+        de::Vector2f const &detailTexScale, de::Vector2f const &detailTexOffset,
+        bool isLit, uint vertCount,
         de::Vector3f const *posCoords, de::Vector4f const *colorCoords = 0,
         de::Vector2f const *texCoords = 0, de::Vector2f const *interTexCoords = 0,
         DGLuint modTexture = 0, de::Vector3f const *modColor = 0,

@@ -87,68 +87,13 @@ typedef enum {
  */
 struct GLTextureUnit
 {
-    struct TextureState
-    {
-        de::TextureVariant *variant;
+    de::TextureVariant *textureVariant;
 
-        /// Properties used only with @em unmanged GL textures.
-        DGLuint glName;
-        int glMagMode;
-        int glWrapS;
-        int glWrapT;
-
-        TextureState()
-            : variant(0),
-              glName(0),
-              glMagMode(GL_LINEAR),
-              glWrapS(GL_REPEAT),
-              glWrapT(GL_REPEAT)
-        {}
-
-        TextureState(TextureState const &other)
-            : variant(other.variant),
-              glName(other.glName),
-              glMagMode(other.glMagMode),
-              glWrapS(other.glWrapS),
-              glWrapT(other.glWrapT)
-        {}
-
-        TextureState &operator = (TextureState const &other) {
-            variant   = other.variant;
-            glName    = other.glName;
-            glMagMode = other.glMagMode;
-            glWrapS   = other.glWrapS;
-            glWrapT   = other.glWrapT;
-            return *this;
-        }
-
-        bool operator == (TextureState const &other) const {
-            if(variant)
-            {
-                if(variant != other.variant) return false;
-            }
-            else
-            {
-                if(glName    != other.glName)    return false;
-                if(glMagMode != other.glMagMode) return false;
-                if(glWrapS   != other.glWrapS)   return false;
-                if(glWrapT   != other.glWrapT)   return false;
-            }
-            return true;
-        }
-        bool operator != (TextureState const &other) const {
-            return !(*this == other);
-        }
-
-        bool hasTexture() const {
-            return (variant && variant->glName() != 0) || glName != 0;
-        }
-
-        DGLuint textureGLName() const {
-            return variant? variant->glName() : glName;
-        }
-    };
-    TextureState texture;  ///< Info about the bound texture for this unit.
+    /// Properties used only with @em unmanged GL textures.
+    DGLuint textureGLName;
+    int textureGLMagMode;
+    int textureGLWrapS;
+    int textureGLWrapT;
 
     blendmode_t blendMode; ///< Currently used only with reflection.
     float opacity;         ///< Opacity of this layer [0..1].
@@ -156,27 +101,53 @@ struct GLTextureUnit
     de::Vector2f scale;    ///< Texture-space scale multiplier.
     de::Vector2f offset;   ///< Texture-space origin translation (unscaled).
 
-    GLTextureUnit() : blendMode(BM_NORMAL), opacity(1), scale(1, 1)
+    GLTextureUnit()
+        : textureVariant(0)
+        , textureGLName(0)
+        , textureGLMagMode(GL_LINEAR)
+        , textureGLWrapS(GL_REPEAT)
+        , textureGLWrapT(GL_REPEAT)
+        , blendMode(BM_NORMAL)
+        , opacity(1)
+        , scale(1, 1)
     {}
     GLTextureUnit(GLTextureUnit const &other)
-        : texture(other.texture),
-          blendMode(other.blendMode),
-          opacity(other.opacity),
-          scale(other.scale),
-          offset(other.offset)
+        : textureVariant(other.textureVariant)
+        , textureGLName(other.textureGLName)
+        , textureGLMagMode(other.textureGLMagMode)
+        , textureGLWrapS(other.textureGLWrapS)
+        , textureGLWrapT(other.textureGLWrapT)
+        , blendMode(other.blendMode)
+        , opacity(other.opacity)
+        , scale(other.scale)
+        , offset(other.offset)
     {}
 
     GLTextureUnit &operator = (GLTextureUnit const &other) {
-        texture   = other.texture;
-        blendMode = other.blendMode;
-        opacity   = other.opacity;
-        scale     = other.scale;
-        offset    = other.offset;
+        textureVariant   = other.textureVariant;
+        textureGLName    = other.textureGLName;
+        textureGLMagMode = other.textureGLMagMode;
+        textureGLWrapS   = other.textureGLWrapS;
+        textureGLWrapT   = other.textureGLWrapT;
+        blendMode        = other.blendMode;
+        opacity          = other.opacity;
+        scale            = other.scale;
+        offset           = other.offset;
         return *this;
     }
 
     bool operator == (GLTextureUnit const &other) const {
-        if(texture != other.texture) return false;
+        if(textureVariant)
+        {
+            if(textureVariant != other.textureVariant) return false;
+        }
+        else
+        {
+            if(textureGLName    != other.textureGLName)    return false;
+            if(textureGLMagMode != other.textureGLMagMode) return false;
+            if(textureGLWrapS   != other.textureGLWrapS)   return false;
+            if(textureGLWrapT   != other.textureGLWrapT)   return false;
+        }
         if(blendMode != other.blendMode) return false;
         if(!de::fequal(opacity, other.opacity)) return false;
         if(scale != other.scale) return false;
@@ -188,11 +159,11 @@ struct GLTextureUnit
     }
 
     bool hasTexture() const {
-        return texture.hasTexture();
+        return (textureVariant && textureVariant->glName() != 0) || textureGLName != 0;
     }
 
-    DGLuint textureGLName() const {
-        return texture.textureGLName();
+    DGLuint getTextureGLName() const {
+        return textureVariant? textureVariant->glName() : textureGLName;
     }
 
     /**

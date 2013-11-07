@@ -1190,14 +1190,14 @@ void GLTextureUnit::bind() const
         return;
     }
 
-    if(texture.variant)
+    if(textureVariant)
     {
-        GL_BindTexture(texture.variant);
+        GL_BindTexture(textureVariant);
     }
     else
     {
-        GL_BindTextureUnmanaged(texture.glName, texture.glWrapS,
-                                texture.glWrapT, texture.glMagMode);
+        GL_BindTextureUnmanaged(textureGLName, textureGLWrapS,
+                                textureGLWrapT, textureGLMagMode);
     }
 }
 

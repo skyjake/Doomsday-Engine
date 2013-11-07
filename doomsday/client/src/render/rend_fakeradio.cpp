@@ -1058,12 +1058,18 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
             R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
 
             ClientApp::renderSystem().drawLists()
-                      .find(ShadowGeom)
-                          .write(gl::TriangleFan, 0, 3 + rightEdge.divisionCount(),
+                      .find(RL_ListSpec(ShadowGeom))
+                          .write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, 3 + rightEdge.divisionCount(),
                                  rvertices  + 3 + leftEdge.divisionCount(),
                                  rcolors    + 3 + leftEdge.divisionCount(),
                                  rtexcoords + 3 + leftEdge.divisionCount())
-                          .write(gl::TriangleFan, 0, 3 + leftEdge.divisionCount(),
+                          .write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, 3 + leftEdge.divisionCount(),
                                  rvertices, rcolors, rtexcoords);
 
             R_FreeRendVertices(rvertices);
@@ -1071,8 +1077,12 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
         else
         {
             ClientApp::renderSystem().drawLists()
-                      .find(ShadowGeom)
-                          .write(gl::TriangleStrip, 0, 4, origVertices, rcolors, rtexcoords);
+                      .find(RL_ListSpec(ShadowGeom))
+                          .write(gl::TriangleStrip,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, 4,
+                                 origVertices, rcolors, rtexcoords);
         }
     }
 
@@ -1245,8 +1255,11 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
     RL_LoadDefaultRtus();
 
     ClientApp::renderSystem().drawLists()
-              .find(renderWireframe? UnlitGeom : ShadowGeom)
-                  .write(gl::TriangleFan, 0, 4, rvertices, rcolors);
+              .find(RL_ListSpec(renderWireframe? UnlitGeom : ShadowGeom))
+                  .write(gl::TriangleFan,
+                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                         Vector2f(1, 1), Vector2f(0, 0),
+                         0, 4, rvertices, rcolors);
 }
 
 static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)

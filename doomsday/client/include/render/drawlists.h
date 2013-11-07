@@ -37,15 +37,13 @@ public:
     DrawLists();
 
     /**
-     * Locate an appropriate draw list for the specified geometry group and the
-     * currently configured, list texture unit write state. Collectively, these
-     * arguments comprise the "draw list specification".
+     * Locate an appropriate draw list for the given specification.
      *
-     * @param group  Logical geometry group identifier.
+     * @param spec  Draw list specification.
      *
      * @return  The chosen list.
      */
-    DrawList &find(GeomGroup group);
+    DrawList &find(DrawListSpec const &spec);
 
     /**
      * Finds all draw lists which match the given specification. Note that only
@@ -81,7 +79,7 @@ struct GLTextureUnit;
  */
 void RL_LoadDefaultRtus();
 
-DrawListSpec const &RL_CurrentListSpec();
+DrawListSpec const &RL_ListSpec(GeomGroup group);
 
 /**
  * Map the texture unit write state for the identified @a idx unit to

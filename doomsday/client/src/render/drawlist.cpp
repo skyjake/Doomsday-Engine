@@ -53,25 +53,11 @@ DENG2_PIMPL(DrawList)
             DGLuint  modTexture;
             Vector3f modColor;
 
-            Vector2f ptexOffset;
-            Vector2f ptexScale;
-
             Vector2f texOffset;
             Vector2f texScale;
 
-            void setFromTexUnit(GLTextureUnit const &texUnit, bool p = false)
-            {
-                if(p)
-                {
-                    ptexScale  = texUnit.scale;
-                    ptexOffset = texUnit.offset * texUnit.scale;
-                }
-                else
-                {
-                    texScale  = texUnit.scale;
-                    texOffset = texUnit.offset * texUnit.scale;
-                }
-            }
+            Vector2f dtexOffset;
+            Vector2f dtexScale;
 
             /**
              * Draw the geometry for this element.
@@ -89,30 +75,6 @@ DENG2_PIMPL(DrawList)
                     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColorV);
                 }
 
-                if(conditions & SetMatrixDTexture)
-                {
-                    // Primitive-specific texture translation & scale.
-                    if(conditions & SetMatrixDTexture0)
-                    {
-                        glActiveTexture(GL_TEXTURE0);
-                        glMatrixMode(GL_TEXTURE);
-                        glPushMatrix();
-                        glLoadIdentity();
-                        glTranslatef(texOffset.x, texOffset.y, 1);
-                        glScalef(texScale.x, texScale.y, 1);
-                    }
-
-                    if(conditions & SetMatrixDTexture1)
-                    {
-                        glActiveTexture(GL_TEXTURE1);
-                        glMatrixMode(GL_TEXTURE);
-                        glPushMatrix();
-                        glLoadIdentity();
-                        glTranslatef(texOffset.x, texOffset.y, 1);
-                        glScalef(texScale.x, texScale.y, 1);
-                    }
-                }
-
                 if(conditions & SetMatrixTexture)
                 {
                     // Primitive-specific texture translation & scale.
@@ -122,8 +84,8 @@ DENG2_PIMPL(DrawList)
                         glMatrixMode(GL_TEXTURE);
                         glPushMatrix();
                         glLoadIdentity();
-                        glTranslatef(ptexOffset.x, ptexOffset.y, 1);
-                        glScalef(ptexScale.x, ptexScale.y, 1);
+                        glTranslatef(texOffset.x * texScale.x, texOffset.y * texScale.y, 1);
+                        glScalef(texScale.x, texScale.y, 1);
                     }
 
                     if(conditions & SetMatrixTexture1)
@@ -132,8 +94,32 @@ DENG2_PIMPL(DrawList)
                         glMatrixMode(GL_TEXTURE);
                         glPushMatrix();
                         glLoadIdentity();
-                        glTranslatef(ptexOffset.x, ptexOffset.y, 1);
-                        glScalef(ptexScale.x, ptexScale.y, 1);
+                        glTranslatef(texOffset.x * texScale.x, texOffset.y * texScale.y, 1);
+                        glScalef(texScale.x, texScale.y, 1);
+                    }
+                }
+
+                if(conditions & SetMatrixDTexture)
+                {
+                    // Primitive-specific texture translation & scale.
+                    if(conditions & SetMatrixDTexture0)
+                    {
+                        glActiveTexture(GL_TEXTURE0);
+                        glMatrixMode(GL_TEXTURE);
+                        glPushMatrix();
+                        glLoadIdentity();
+                        glTranslatef(dtexOffset.x * dtexScale.x, dtexOffset.y * dtexScale.y, 1);
+                        glScalef(dtexScale.x, dtexScale.y, 1);
+                    }
+
+                    if(conditions & SetMatrixDTexture1)
+                    {
+                        glActiveTexture(GL_TEXTURE1);
+                        glMatrixMode(GL_TEXTURE);
+                        glPushMatrix();
+                        glLoadIdentity();
+                        glTranslatef(dtexOffset.x * dtexScale.x, dtexOffset.y * dtexScale.y, 1);
+                        glScalef(dtexScale.x, dtexScale.y, 1);
                     }
                 }
 
@@ -169,22 +155,6 @@ DENG2_PIMPL(DrawList)
                 glEnd();
 
                 // Restore the texture matrix if changed.
-                if(conditions & SetMatrixTexture)
-                {
-                    if(conditions & SetMatrixTexture0)
-                    {
-                        glActiveTexture(GL_TEXTURE0);
-                        glMatrixMode(GL_TEXTURE);
-                        glPopMatrix();
-                    }
-                    if(conditions & SetMatrixTexture1)
-                    {
-                        glActiveTexture(GL_TEXTURE1);
-                        glMatrixMode(GL_TEXTURE);
-                        glPopMatrix();
-                    }
-                }
-
                 if(conditions & SetMatrixDTexture)
                 {
                     if(conditions & SetMatrixDTexture0)
@@ -194,6 +164,22 @@ DENG2_PIMPL(DrawList)
                         glPopMatrix();
                     }
                     if(conditions & SetMatrixDTexture1)
+                    {
+                        glActiveTexture(GL_TEXTURE1);
+                        glMatrixMode(GL_TEXTURE);
+                        glPopMatrix();
+                    }
+                }
+
+                if(conditions & SetMatrixTexture)
+                {
+                    if(conditions & SetMatrixTexture0)
+                    {
+                        glActiveTexture(GL_TEXTURE0);
+                        glMatrixMode(GL_TEXTURE);
+                        glPopMatrix();
+                    }
+                    if(conditions & SetMatrixTexture1)
                     {
                         glActiveTexture(GL_TEXTURE1);
                         glMatrixMode(GL_TEXTURE);
@@ -364,7 +350,9 @@ bool DrawList::isEmpty() const
     return d->last == 0;
 }
 
-DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
+DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
+    Vector2f const &texScale, Vector2f const &texOffset,
+    Vector2f const &detailTexScale, Vector2f const &detailTexOffset, bool isLit, uint vertCount,
     Vector3f const *posCoords, Vector4f const *colorCoords, Vector2f const *texCoords,
     Vector2f const *interTexCoords, DGLuint modTexture, Vector3f const *modColor,
     Vector2f const *modTexCoords)
@@ -393,31 +381,15 @@ DrawList &DrawList::write(gl::Primitive primitive, bool isLit, uint vertCount,
     }
 
     // Configure the GL state to be applied when this geometry is drawn later.
-    Spec const &writeSpec = RL_CurrentListSpec();
-
-    elem->data.blendMode  = writeSpec.unit(TU_PRIMARY).blendMode;
+    elem->data.blendMode  = blendMode;
     elem->data.modTexture = modTexture;
     elem->data.modColor   = modColor? *modColor : Vector3f();
-    elem->data.ptexOffset = Vector2f(0, 0);
-    elem->data.ptexScale  = Vector2f(0, 0);
-    elem->data.texScale   = Vector2f(1, 1);
-    elem->data.texOffset  = Vector2f(1, 1);
 
-    // GL texture translation parameters come from the tex unit map and
-    // differ according to the (logical) type of primitive to be written.
-    if(spec().group == ShineGeom && writeSpec.unit(TU_INTER).hasTexture())
-    {
-        elem->data.setFromTexUnit(writeSpec.unit(TU_INTER), true);
-    }
-    else if(writeSpec.unit(TU_PRIMARY).hasTexture())
-    {
-        elem->data.setFromTexUnit(writeSpec.unit(TU_PRIMARY), true);
-    }
+    elem->data.texScale   = texScale;
+    elem->data.texOffset  = texOffset;
 
-    if(writeSpec.unit(TU_PRIMARY_DETAIL).hasTexture())
-    {
-        elem->data.setFromTexUnit(writeSpec.unit(TU_PRIMARY_DETAIL));
-    }
+    elem->data.dtexScale  = detailTexScale;
+    elem->data.dtexOffset = detailTexOffset;
 
     // Allocate geometry from the backing store.
     uint base = elem->data.buffer->allocateVertices(vertCount);

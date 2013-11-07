@@ -101,24 +101,33 @@ static void drawShadow(TexProjection const &tp, rendershadowprojectionparams_t &
 
     if(mustSubdivide)
     {
-        WallEdge const &leftEdge = *parm.wall.leftEdge;
+        WallEdge const &leftEdge  = *parm.wall.leftEdge;
         WallEdge const &rightEdge = *parm.wall.rightEdge;
 
         ClientApp::renderSystem().drawLists()
-                  .find(ShadowGeom)
-                      .write(gl::TriangleFan, 0, 3 + rightEdge.divisionCount(),
+                  .find(RL_ListSpec(ShadowGeom))
+                      .write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 3 + rightEdge.divisionCount(),
                              rvertices  + 3 + leftEdge.divisionCount(),
                              rcolors    + 3 + leftEdge.divisionCount(),
                              rtexcoords + 3 + leftEdge.divisionCount())
-                      .write(gl::TriangleFan, 0, 3 + leftEdge.divisionCount(),
+                      .write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 3 + leftEdge.divisionCount(),
                              rvertices, rcolors, rtexcoords);
     }
     else
     {
         ClientApp::renderSystem().drawLists()
-                  .find(ShadowGeom)
-                      .write(parm.isWall? gl::TriangleStrip : gl::TriangleFan, 0,
-                             parm.numVertices, rvertices, rcolors, rtexcoords);
+                  .find(RL_ListSpec(ShadowGeom))
+                      .write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, parm.numVertices,
+                             rvertices, rcolors, rtexcoords);
     }
 
     R_FreeRendVertices(rvertices);

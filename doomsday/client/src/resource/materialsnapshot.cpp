@@ -70,11 +70,11 @@ struct Store
         DENG2_ASSERT(unit >= 0 && unit < NUM_TEXMAP_UNITS);
         GLTextureUnit &tu = units[unit];
 
-        tu.texture.variant   = texture;
-        tu.opacity           = de::clamp(0.f, opacity, 1.f);
-        tu.blendMode         = blendMode;
-        tu.scale             = scale;
-        tu.offset            = offset;
+        tu.textureVariant = texture;
+        tu.opacity        = de::clamp(0.f, opacity, 1.f);
+        tu.blendMode      = blendMode;
+        tu.scale          = scale;
+        tu.offset         = offset;
     }
 };
 

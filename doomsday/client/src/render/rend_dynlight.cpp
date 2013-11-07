@@ -104,20 +104,29 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
             WallEdge const &rightEdge = *parm.wall.rightEdge;
 
             ClientApp::renderSystem().drawLists()
-                      .find(LightGeom)
-                          .write(gl::TriangleFan, 0, 3 + rightEdge.divisionCount(),
+                      .find(RL_ListSpec(LightGeom))
+                          .write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, 3 + rightEdge.divisionCount(),
                                  rvertices  + 3 + leftEdge.divisionCount(),
                                  rcolors    + 3 + leftEdge.divisionCount(),
                                  rtexcoords + 3 + leftEdge.divisionCount())
-                          .write(gl::TriangleFan, 0, 3 + leftEdge.divisionCount(),
+                          .write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, 3 + leftEdge.divisionCount(),
                                  rvertices, rcolors, rtexcoords);
         }
         else
         {
             ClientApp::renderSystem().drawLists()
-                      .find(LightGeom)
-                          .write(parm.isWall? gl::TriangleStrip : gl::TriangleFan, 0,
-                                 parm.numVertices, rvertices, rcolors, rtexcoords);
+                      .find(RL_ListSpec(LightGeom))
+                          .write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, parm.numVertices,
+                                 rvertices, rcolors, rtexcoords);
         }
 
         R_FreeRendVertices(rvertices);
