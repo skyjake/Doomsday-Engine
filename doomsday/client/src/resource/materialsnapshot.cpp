@@ -64,31 +64,16 @@ struct Store
         zap(textures);
         zap(decorations);
     }
-
-    void writeTexUnit(rtexmapunitid_t unit, TextureVariant *texture,
-                      Vector2f scale, Vector2f offset,
-                      float opacity)
-    {
-        DENG2_ASSERT(unit >= 0 && unit < NUM_TEXMAP_UNITS);
-        GLTextureUnit &tu = units[unit];
-
-        tu.textureVariant = texture;
-        tu.opacity        = de::clamp(0.f, opacity, 1.f);
-        tu.scale          = scale;
-        tu.offset         = offset;
-    }
 };
 
 DENG2_PIMPL(MaterialSnapshot)
 {
-    /// Variant material used to derive this snapshot.
     MaterialVariant *variant;
-
     Store stored;
 
-    Instance(Public *i, MaterialVariant &_variant) : Base(i),
-        variant(&_variant),
-        stored()
+    Instance(Public *i, MaterialVariant &variant)
+        : Base(i)
+        , variant(&variant)
     {}
 
     void takeSnapshot();
@@ -165,9 +150,8 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
 }
 
 /**
- * Attempt to locate and prepare a flare texture.
- * Somewhat more complicated than it needs to be due to the fact there
- * are two different selection methods.
+ * Attempt to locate and prepare a flare texture. Somewhat more complicated than
+ * it needs to be due to the fact there are two different selection methods.
  *
  * @param texture  Logical texture to prepare an variant of.
  * @param oldIdx  Old method of flare texture selection, by id.
@@ -201,17 +185,16 @@ void MaterialSnapshot::Instance::takeSnapshot()
     Material::DetailLayer const *detailLayer = material->isDetailed()? &material->detailLayer() : 0;
     Material::ShineLayer const *shineLayer   =    material->isShiny()? &material->shineLayer()  : 0;
 
-    Texture::Variant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS][2];
-    std::memset(prepTextures, 0, sizeof prepTextures);
+    TextureVariant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS][2];
+    zap(prepTextures);
 
     // Reinitialize the stored values.
     stored.initialize();
 
     /*
-     * Ensure all resources needed to visualize this have been prepared.
-     *
-     * If skymasked, we only need to update the primary tex unit (due to
-     * it being visible when skymask debug drawing is enabled).
+     * Ensure all resources needed to visualize this have been prepared. If
+     * skymasked, we only need to update the primary tex unit (due to it being
+     * visible when skymask debug drawing is enabled).
      */
     for(int i = 0; i < layers.count(); ++i)
     {
@@ -219,8 +202,10 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
         Material::Layer::Stage const *lsCur = layers[i]->stages()[l.stage];
         if(lsCur->texture)
+        {
             prepTextures[i][0] =
                 lsCur->texture->prepareVariant(*variant->spec().primarySpec);
+        }
 
         // Smooth Texture Animation?
         if(smoothTexAnim && layers[i]->stageCount() > 1)
@@ -229,7 +214,9 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 layers[i]->stages()[(l.stage + 1) % layers[i]->stageCount()];
 
             if(lsNext->texture)
+            {
                 prepTextures[i][1] = lsNext->texture->prepareVariant(*variant->spec().primarySpec);
+            }
         }
     }
 
@@ -272,15 +259,19 @@ void MaterialSnapshot::Instance::takeSnapshot()
         Material::ShineLayer::Stage const *lsCur = shineLayer->stages()[l.stage];
 
         if(lsCur->texture)
+        {
             prepTextures[MTU_REFLECTION][0] =
                 lsCur->texture->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
+        }
 
         // We are only interested in a mask if we have a shiny texture.
         if(prepTextures[MTU_REFLECTION][0])
         {
             if(lsCur->maskTexture)
+            {
                 prepTextures[MTU_REFLECTION_MASK][0] =
                     lsCur->maskTexture->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
+            }
         }
     }
 
@@ -319,10 +310,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
             offset.y = LERP(lsCur->texOrigin.y, lsNext->texOrigin.y, l.inter);
         }
 
-        stored.writeTexUnit(RTU_PRIMARY, tex,
-                            Vector2f(1.f / stored.dimensions.x,
-                                     1.f / stored.dimensions.y),
-                            offset, 1);
+        stored.units[RTU_PRIMARY] =
+            GLTextureUnit(*tex,
+                          Vector2f(1.f / stored.dimensions.x,
+                                   1.f / stored.dimensions.y),
+                          offset);
     }
 
     // Setup the inter primary texture unit.
@@ -333,12 +325,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
         // blended and unblended surfaces.
         if(!(!usingFog && l.inter == 0))
         {
-            stored.writeTexUnit(RTU_INTER, tex,
-                                Vector2f(stored.units[RTU_PRIMARY].scale[0],
-                                         stored.units[RTU_PRIMARY].scale[1]),
-                                Vector2f(stored.units[RTU_PRIMARY].offset[0],
-                                         stored.units[RTU_PRIMARY].offset[1]),
-                                l.inter);
+            stored.units[RTU_INTER] =
+                GLTextureUnit(*tex,
+                              stored.units[RTU_PRIMARY].scale,
+                              stored.units[RTU_PRIMARY].offset,
+                              de::clamp(0.f, l.inter, 1.f));
         }
     }
 
@@ -362,15 +353,16 @@ void MaterialSnapshot::Instance::takeSnapshot()
             {
                 scale = LERP(lsCur->scale, lsNext->scale, l.inter);
             }
-
             // Apply the global scale factor.
             if(detailScale > .0001f)
+            {
                 scale *= detailScale;
+            }
 
-            stored.writeTexUnit(RTU_PRIMARY_DETAIL, tex,
-                                Vector2f(1.f / tex->generalCase().width()  * scale,
-                                         1.f / tex->generalCase().height() * scale),
-                                Vector2f(), 1);
+            stored.units[RTU_PRIMARY_DETAIL] =
+                GLTextureUnit(*tex,
+                              Vector2f(1.f / tex->generalCase().width()  * scale,
+                                       1.f / tex->generalCase().height() * scale));
         }
 
         // Setup the inter detail texture unit.
@@ -381,12 +373,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
             // blended and unblended surfaces.
             if(!(!usingFog && l.inter == 0))
             {
-                stored.writeTexUnit(RTU_INTER_DETAIL, tex,
-                                    Vector2f(stored.units[RTU_PRIMARY_DETAIL].scale[0],
-                                             stored.units[RTU_PRIMARY_DETAIL].scale[1]),
-                                    Vector2f(stored.units[RTU_PRIMARY_DETAIL].offset[0],
-                                             stored.units[RTU_PRIMARY_DETAIL].offset[1]),
-                                    l.inter);
+                stored.units[RTU_INTER_DETAIL] =
+                    GLTextureUnit(*tex,
+                                  stored.units[RTU_PRIMARY_DETAIL].scale,
+                                  stored.units[RTU_PRIMARY_DETAIL].offset,
+                                  de::clamp(0.f, l.inter, 1.f));
             }
         }
     }
@@ -426,11 +417,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
             {
                 shininess = LERP(lsCur->shininess, lsNext->shininess, l.inter);
             }
-            shininess = de::clamp(0.0f, shininess, 1.0f);
 
             stored.shineBlendMode = lsCur->blendMode;
-            stored.writeTexUnit(RTU_REFLECTION, tex,
-                                Vector2f(1, 1), Vector2f(), shininess);
+            stored.units[RTU_REFLECTION] =
+                GLTextureUnit(*tex, Vector2f(1, 1), Vector2f(0, 0),
+                              de::clamp(0.0f, shininess, 1.0f));
         }
 
         // Setup the shine mask texture unit.
@@ -438,11 +429,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(TextureVariant *tex = prepTextures[MTU_REFLECTION_MASK][0])
         {
             stored.textures[MTU_REFLECTION_MASK] = tex;
-            stored.writeTexUnit(RTU_REFLECTION_MASK, tex,
-                                Vector2f(1.f / (stored.dimensions.x * tex->generalCase().width()),
-                                         1.f / (stored.dimensions.y * tex->generalCase().height())),
-                                Vector3f(stored.units[RTU_PRIMARY].offset[0],
-                                         stored.units[RTU_PRIMARY].offset[1]), 1);
+            stored.units[RTU_REFLECTION_MASK] =
+                GLTextureUnit(*tex,
+                              Vector2f(1.f / (stored.dimensions.x * tex->generalCase().width()),
+                                       1.f / (stored.dimensions.y * tex->generalCase().height())),
+                              stored.units[RTU_PRIMARY].offset);
         }
     }
 

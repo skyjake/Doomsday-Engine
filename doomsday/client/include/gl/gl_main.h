@@ -96,6 +96,19 @@ struct GLTextureUnit
         , opacity(1)
         , scale(1, 1)
     {}
+    GLTextureUnit(de::TextureVariant &textureVariant,
+                  de::Vector2f const &scale          = de::Vector2f(1, 1),
+                  de::Vector2f const &offset         = de::Vector2f(0, 0),
+                  float opacity                      = 1)
+        : textureVariant(&textureVariant)
+        , textureGLName(0)
+        , textureGLMagMode(GL_LINEAR)
+        , textureGLWrapS(GL_REPEAT)
+        , textureGLWrapT(GL_REPEAT)
+        , opacity(opacity)
+        , scale(scale)
+        , offset(offset)
+    {}
     GLTextureUnit(DGLuint textureGLName, int textureGLWrapS = GL_REPEAT,
         int textureGLWrapT = GL_REPEAT)
         : textureVariant(0)
@@ -143,7 +156,7 @@ struct GLTextureUnit
         }
         if(!de::fequal(opacity, other.opacity)) return false;
         if(scale != other.scale) return false;
-        if(offset != other.offset)
+        if(offset != other.offset) return false;
         return true;
     }
     bool operator != (GLTextureUnit const other) const {
