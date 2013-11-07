@@ -96,9 +96,8 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
 
         DrawListSpec listSpec;
         listSpec.group = LightGeom;
-        listSpec.texunits[TU_PRIMARY].textureGLName  = tp.texture;
-        listSpec.texunits[TU_PRIMARY].textureGLWrapS = GL_CLAMP_TO_EDGE;
-        listSpec.texunits[TU_PRIMARY].textureGLWrapT = GL_CLAMP_TO_EDGE;
+        listSpec.texunits[TU_PRIMARY] =
+            GLTextureUnit(tp.texture, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         DrawList &lightList = ClientApp::renderSystem().drawLists().find(listSpec);
 

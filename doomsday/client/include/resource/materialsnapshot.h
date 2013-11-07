@@ -111,6 +111,8 @@ public:
      */
     float glowStrength() const;
 
+    blendmode_t shineBlendMode() const;
+
     /**
      * Returns the interpolated, shine effect minimum ambient light color for the material snapshot.
      */

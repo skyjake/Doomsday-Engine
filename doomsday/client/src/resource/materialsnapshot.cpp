@@ -35,10 +35,11 @@ namespace de {
 
 struct Store
 {
-    bool opaque;            ///< @c true= this material is completely opaque.
+    bool opaque;                ///< @c true= this material is completely opaque.
     float glowStrength;
-    Vector2i dimensions;    ///< Map space dimensions.
-    Vector3f shineMinColor; ///< Minimum ambient light level/color for shine.
+    Vector2i dimensions;        ///< Map space dimensions.
+    blendmode_t shineBlendMode;
+    Vector3f shineMinColor;     ///< Minimum ambient light level/color for shine.
 
     /// Textures used on each logical material texture unit.
     TextureVariant *textures[NUM_MATERIAL_TEXTURE_UNITS];
@@ -54,17 +55,18 @@ struct Store
 
     void initialize()
     {
-        dimensions    = Vector2i(0, 0);
-        shineMinColor = Vector3f(0, 0, 0);
-        opaque        = true;
-        glowStrength  = 0;
+        dimensions     = Vector2i(0, 0);
+        shineBlendMode = BM_NORMAL;
+        shineMinColor  = Vector3f(0, 0, 0);
+        opaque         = true;
+        glowStrength   = 0;
 
         zap(textures);
         zap(decorations);
     }
 
     void writeTexUnit(rtexmapunitid_t unit, TextureVariant *texture,
-                      blendmode_t blendMode, Vector2f scale, Vector2f offset,
+                      Vector2f scale, Vector2f offset,
                       float opacity)
     {
         DENG2_ASSERT(unit >= 0 && unit < NUM_TEXMAP_UNITS);
@@ -72,7 +74,6 @@ struct Store
 
         tu.textureVariant = texture;
         tu.opacity        = de::clamp(0.f, opacity, 1.f);
-        tu.blendMode      = blendMode;
         tu.scale          = scale;
         tu.offset         = offset;
     }
@@ -115,6 +116,11 @@ bool MaterialSnapshot::isOpaque() const
 float MaterialSnapshot::glowStrength() const
 {
     return d->stored.glowStrength;
+}
+
+blendmode_t MaterialSnapshot::shineBlendMode() const
+{
+    return d->stored.shineBlendMode;
 }
 
 Vector3f const &MaterialSnapshot::shineMinColor() const
@@ -313,7 +319,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             offset.y = LERP(lsCur->texOrigin.y, lsNext->texOrigin.y, l.inter);
         }
 
-        stored.writeTexUnit(RTU_PRIMARY, tex, BM_NORMAL,
+        stored.writeTexUnit(RTU_PRIMARY, tex,
                             Vector2f(1.f / stored.dimensions.x,
                                      1.f / stored.dimensions.y),
                             offset, 1);
@@ -327,7 +333,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         // blended and unblended surfaces.
         if(!(!usingFog && l.inter == 0))
         {
-            stored.writeTexUnit(RTU_INTER, tex, BM_NORMAL,
+            stored.writeTexUnit(RTU_INTER, tex,
                                 Vector2f(stored.units[RTU_PRIMARY].scale[0],
                                          stored.units[RTU_PRIMARY].scale[1]),
                                 Vector2f(stored.units[RTU_PRIMARY].offset[0],
@@ -361,7 +367,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             if(detailScale > .0001f)
                 scale *= detailScale;
 
-            stored.writeTexUnit(RTU_PRIMARY_DETAIL, tex, BM_NORMAL,
+            stored.writeTexUnit(RTU_PRIMARY_DETAIL, tex,
                                 Vector2f(1.f / tex->generalCase().width()  * scale,
                                          1.f / tex->generalCase().height() * scale),
                                 Vector2f(), 1);
@@ -375,7 +381,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
             // blended and unblended surfaces.
             if(!(!usingFog && l.inter == 0))
             {
-                stored.writeTexUnit(RTU_INTER_DETAIL, tex, BM_NORMAL,
+                stored.writeTexUnit(RTU_INTER_DETAIL, tex,
                                     Vector2f(stored.units[RTU_PRIMARY_DETAIL].scale[0],
                                              stored.units[RTU_PRIMARY_DETAIL].scale[1]),
                                     Vector2f(stored.units[RTU_PRIMARY_DETAIL].offset[0],
@@ -422,7 +428,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
             }
             shininess = de::clamp(0.0f, shininess, 1.0f);
 
-            stored.writeTexUnit(RTU_REFLECTION, tex, lsCur->blendMode,
+            stored.shineBlendMode = lsCur->blendMode;
+            stored.writeTexUnit(RTU_REFLECTION, tex,
                                 Vector2f(1, 1), Vector2f(), shininess);
         }
 
@@ -431,7 +438,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(TextureVariant *tex = prepTextures[MTU_REFLECTION_MASK][0])
         {
             stored.textures[MTU_REFLECTION_MASK] = tex;
-            stored.writeTexUnit(RTU_REFLECTION_MASK, tex, BM_NORMAL,
+            stored.writeTexUnit(RTU_REFLECTION_MASK, tex,
                                 Vector2f(1.f / (stored.dimensions.x * tex->generalCase().width()),
                                          1.f / (stored.dimensions.y * tex->generalCase().height())),
                                 Vector3f(stored.units[RTU_PRIMARY].offset[0],

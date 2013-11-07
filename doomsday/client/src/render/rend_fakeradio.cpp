@@ -1035,9 +1035,8 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
         // Write multiple polys depending on rend params.
         DrawListSpec listSpec;
         listSpec.group = ShadowGeom;
-        listSpec.texunits[TU_PRIMARY].textureGLName  = GL_PrepareLSTexture(wsParms.texture);
-        listSpec.texunits[TU_PRIMARY].textureGLWrapS = GL_CLAMP_TO_EDGE;
-        listSpec.texunits[TU_PRIMARY].textureGLWrapT = GL_CLAMP_TO_EDGE;
+        listSpec.texunits[TU_PRIMARY] =
+            GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
 

@@ -1365,8 +1365,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
             ClientApp::renderSystem().drawLists()
                       .find(listSpec)
-                          .write(gl::TriangleFan,
-                                 listSpec.unit(TU_PRIMARY       ).blendMode,
+                          .write(gl::TriangleFan, BM_NORMAL,
                                  listSpec.unit(TU_PRIMARY       ).scale,
                                  listSpec.unit(TU_PRIMARY       ).offset,
                                  listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -1377,8 +1376,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  primaryCoords + 3 + leftEdge.divisionCount(),
                                  interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
                                  modTex, &modColor, modCoords? modCoords + 3 + leftEdge.divisionCount() : 0)
-                          .write(gl::TriangleFan,
-                                 listSpec.unit(TU_PRIMARY       ).blendMode,
+                          .write(gl::TriangleFan, BM_NORMAL,
                                  listSpec.unit(TU_PRIMARY       ).scale,
                                  listSpec.unit(TU_PRIMARY       ).offset,
                                  listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -1409,8 +1407,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
                 ClientApp::renderSystem().drawLists()
                           .find(listSpec)
-                              .write(gl::TriangleFan,
-                                     listSpec.unit(TU_PRIMARY).blendMode,
+                              .write(gl::TriangleFan, ms.shineBlendMode(),
                                      listSpec.unit(TU_INTER  ).scale,
                                      listSpec.unit(TU_INTER  ).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
@@ -1419,8 +1416,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                      shinyColors + 3 + leftEdge.divisionCount(),
                                      shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
                                      shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
-                              .write(gl::TriangleFan,
-                                     listSpec.unit(TU_PRIMARY).blendMode,
+                              .write(gl::TriangleFan, ms.shineBlendMode(),
                                      listSpec.unit(TU_INTER  ).scale,
                                      listSpec.unit(TU_INTER  ).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
@@ -1495,7 +1491,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             ClientApp::renderSystem().drawLists()
                       .find(listSpec)
                           .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                                 listSpec.unit(TU_PRIMARY       ).blendMode,
+                                 BM_NORMAL,
                                  listSpec.unit(TU_PRIMARY       ).scale,
                                  listSpec.unit(TU_PRIMARY       ).offset,
                                  listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -1527,7 +1523,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 ClientApp::renderSystem().drawLists()
                           .find(listSpec)
                               .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                                     listSpec.unit(TU_PRIMARY       ).blendMode,
+                                     ms.shineBlendMode(),
                                      listSpec.unit(TU_INTER         ).scale,
                                      listSpec.unit(TU_INTER         ).offset,
                                      listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -2091,7 +2087,7 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
 
         ClientApp::renderSystem().drawLists()
                   .find(listSpec)
-                      .write(gl::TriangleStrip, listSpec.unit(TU_PRIMARY).blendMode,
+                      .write(gl::TriangleStrip, BM_NORMAL,
                              listSpec.unit(TU_PRIMARY       ).scale,
                              listSpec.unit(TU_PRIMARY       ).offset,
                              listSpec.unit(TU_PRIMARY_DETAIL).scale,

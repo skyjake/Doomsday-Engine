@@ -95,7 +95,6 @@ struct GLTextureUnit
     int textureGLWrapS;
     int textureGLWrapT;
 
-    blendmode_t blendMode; ///< Currently used only with reflection.
     float opacity;         ///< Opacity of this layer [0..1].
 
     de::Vector2f scale;    ///< Texture-space scale multiplier.
@@ -107,7 +106,16 @@ struct GLTextureUnit
         , textureGLMagMode(GL_LINEAR)
         , textureGLWrapS(GL_REPEAT)
         , textureGLWrapT(GL_REPEAT)
-        , blendMode(BM_NORMAL)
+        , opacity(1)
+        , scale(1, 1)
+    {}
+    GLTextureUnit(DGLuint textureGLName, int textureGLWrapS = GL_REPEAT,
+        int textureGLWrapT = GL_REPEAT)
+        : textureVariant(0)
+        , textureGLName(textureGLName)
+        , textureGLMagMode(GL_LINEAR)
+        , textureGLWrapS(textureGLWrapS)
+        , textureGLWrapT(textureGLWrapT)
         , opacity(1)
         , scale(1, 1)
     {}
@@ -117,7 +125,6 @@ struct GLTextureUnit
         , textureGLMagMode(other.textureGLMagMode)
         , textureGLWrapS(other.textureGLWrapS)
         , textureGLWrapT(other.textureGLWrapT)
-        , blendMode(other.blendMode)
         , opacity(other.opacity)
         , scale(other.scale)
         , offset(other.offset)
@@ -129,7 +136,6 @@ struct GLTextureUnit
         textureGLMagMode = other.textureGLMagMode;
         textureGLWrapS   = other.textureGLWrapS;
         textureGLWrapT   = other.textureGLWrapT;
-        blendMode        = other.blendMode;
         opacity          = other.opacity;
         scale            = other.scale;
         offset           = other.offset;
@@ -148,7 +154,6 @@ struct GLTextureUnit
             if(textureGLWrapS   != other.textureGLWrapS)   return false;
             if(textureGLWrapT   != other.textureGLWrapT)   return false;
         }
-        if(blendMode != other.blendMode) return false;
         if(!de::fequal(opacity, other.opacity)) return false;
         if(scale != other.scale) return false;
         if(offset != other.offset)
