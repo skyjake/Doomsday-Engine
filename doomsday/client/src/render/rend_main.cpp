@@ -1238,43 +1238,6 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         Rend_RenderShadowProjections(p.shadowListIdx, parm);
     }
 
-    // Map RTU state from the prepared texture units in the MaterialSnapshot.
-    RL_LoadDefaultRtus();
-    RL_MapRtu(RTU_PRIMARY,         primaryRTU);
-    RL_MapRtu(RTU_PRIMARY_DETAIL,  primaryDetailRTU);
-    RL_MapRtu(RTU_INTER,           interRTU);
-    RL_MapRtu(RTU_INTER_DETAIL,    interDetailRTU);
-    RL_MapRtu(RTU_REFLECTION,      shinyRTU);
-    RL_MapRtu(RTU_REFLECTION_MASK, shinyMaskRTU);
-
-    if(primaryRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_PRIMARY, *p.materialOrigin);
-        if(p.materialScale)  RL_Rtu_ScaleST(RTU_PRIMARY, *p.materialScale);
-    }
-
-    if(primaryDetailRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_PRIMARY_DETAIL, *p.materialOrigin);
-    }
-
-    if(interRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_INTER, *p.materialOrigin);
-        if(p.materialScale)  RL_Rtu_ScaleST(RTU_INTER, *p.materialScale);
-    }
-
-    if(interDetailRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_INTER_DETAIL, *p.materialOrigin);
-    }
-
-    if(shinyMaskRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_REFLECTION_MASK, *p.materialOrigin);
-        if(p.materialScale)  RL_Rtu_ScaleST(RTU_REFLECTION_MASK, *p.materialScale);
-    }
-
     // Write multiple polys depending on rend params.
     if(mustSubdivide)
     {
@@ -1337,10 +1300,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
         if(p.skyMasked)
         {
-            DrawListSpec const &spec = RL_ListSpec(SkyMaskGeom);
-
             ClientApp::renderSystem().drawLists()
-                      .find(spec)
+                      .find(DrawListSpec(SkyMaskGeom))
                           .write(gl::TriangleFan,
                                  BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                                  Vector2f(1, 1), Vector2f(0, 0),
@@ -1354,16 +1315,62 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         }
         else
         {
-            DrawListSpec const &spec = RL_ListSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
+            DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
+
+            if(primaryRTU)
+            {
+                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
+                }
+                if(p.materialScale)
+                {
+                    listSpec.texunits[TU_PRIMARY].scale  *= *p.materialScale;
+                    listSpec.texunits[TU_PRIMARY].offset *= *p.materialScale;
+                }
+            }
+
+            if(primaryDetailRTU)
+            {
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
+                }
+            }
+
+            if(interRTU)
+            {
+                listSpec.texunits[TU_INTER] = *interRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
+                }
+                if(p.materialScale)
+                {
+                    listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
+                    listSpec.texunits[TU_INTER].offset *= *p.materialScale;
+                }
+            }
+
+            if(interDetailRTU)
+            {
+                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
+                }
+            }
 
             ClientApp::renderSystem().drawLists()
-                      .find(spec)
+                      .find(listSpec)
                           .write(gl::TriangleFan,
-                                 spec.unit(TU_PRIMARY       ).blendMode,
-                                 spec.unit(TU_PRIMARY       ).scale,
-                                 spec.unit(TU_PRIMARY       ).offset,
-                                 spec.unit(TU_PRIMARY_DETAIL).scale,
-                                 spec.unit(TU_PRIMARY_DETAIL).offset,
+                                 listSpec.unit(TU_PRIMARY       ).blendMode,
+                                 listSpec.unit(TU_PRIMARY       ).scale,
+                                 listSpec.unit(TU_PRIMARY       ).offset,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).offset,
                                  hasDynlights, 3 + rightEdge.divisionCount(),
                                  posCoords + 3 + leftEdge.divisionCount(),
                                  colorCoords? colorCoords + 3 + leftEdge.divisionCount() : 0,
@@ -1371,38 +1378,52 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
                                  modTex, &modColor, modCoords? modCoords + 3 + leftEdge.divisionCount() : 0)
                           .write(gl::TriangleFan,
-                                 spec.unit(TU_PRIMARY       ).blendMode,
-                                 spec.unit(TU_PRIMARY       ).scale,
-                                 spec.unit(TU_PRIMARY       ).offset,
-                                 spec.unit(TU_PRIMARY_DETAIL).scale,
-                                 spec.unit(TU_PRIMARY_DETAIL).offset,
+                                 listSpec.unit(TU_PRIMARY       ).blendMode,
+                                 listSpec.unit(TU_PRIMARY       ).scale,
+                                 listSpec.unit(TU_PRIMARY       ).offset,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).offset,
                                  hasDynlights, 3 + leftEdge.divisionCount(),
                                  posCoords, colorCoords, primaryCoords,
                                  interCoords, modTex, &modColor, modCoords);
 
             if(shinyRTU)
             {
-                DrawListSpec const &spec = RL_ListSpec(ShineGeom);
+                DrawListSpec listSpec(ShineGeom);
+
+                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+
+                if(shinyMaskRTU)
+                {
+                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    if(p.materialOrigin)
+                    {
+                        listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
+                    }
+                    if(p.materialScale)
+                    {
+                        listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
+                        listSpec.texunits[TU_INTER].offset *= *p.materialScale;
+                    }
+                }
 
                 ClientApp::renderSystem().drawLists()
-                          .find(spec)
+                          .find(listSpec)
                               .write(gl::TriangleFan,
-                                     spec.unit(TU_PRIMARY       ).blendMode,
-                                     spec.unit(TU_INTER         ).scale,
-                                     spec.unit(TU_INTER         ).offset,
-                                     spec.unit(TU_PRIMARY_DETAIL).scale,
-                                     spec.unit(TU_PRIMARY_DETAIL).offset,
+                                     listSpec.unit(TU_PRIMARY).blendMode,
+                                     listSpec.unit(TU_INTER  ).scale,
+                                     listSpec.unit(TU_INTER  ).offset,
+                                     Vector2f(1, 1), Vector2f(0, 0),
                                      hasDynlights, 3 + rightEdge.divisionCount(),
                                      posCoords + 3 + leftEdge.divisionCount(),
                                      shinyColors + 3 + leftEdge.divisionCount(),
                                      shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
                                      shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
                               .write(gl::TriangleFan,
-                                     spec.unit(TU_PRIMARY       ).blendMode,
-                                     spec.unit(TU_INTER         ).scale,
-                                     spec.unit(TU_INTER         ).offset,
-                                     spec.unit(TU_PRIMARY_DETAIL).scale,
-                                     spec.unit(TU_PRIMARY_DETAIL).offset,
+                                     listSpec.unit(TU_PRIMARY).blendMode,
+                                     listSpec.unit(TU_INTER  ).scale,
+                                     listSpec.unit(TU_INTER  ).offset,
+                                     Vector2f(1, 1), Vector2f(0, 0),
                                      hasDynlights, 3 + leftEdge.divisionCount(),
                                      posCoords, shinyColors, shinyTexCoords,
                                      shinyMaskRTU? primaryCoords : 0);
@@ -1413,10 +1434,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     {
         if(p.skyMasked)
         {
-            DrawListSpec const &spec = RL_ListSpec(SkyMaskGeom);
-
             ClientApp::renderSystem().drawLists()
-                      .find(spec)
+                      .find(DrawListSpec(SkyMaskGeom))
                           .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
                                  BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                                  Vector2f(1, 1), Vector2f(0, 0),
@@ -1425,32 +1444,94 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         }
         else
         {
-            DrawListSpec const &spec = RL_ListSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
+            DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
+
+            if(primaryRTU)
+            {
+                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
+                }
+                if(p.materialScale)
+                {
+                    listSpec.texunits[TU_PRIMARY].scale  *= *p.materialScale;
+                    listSpec.texunits[TU_PRIMARY].offset *= *p.materialScale;
+                }
+            }
+
+            if(primaryDetailRTU)
+            {
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
+                }
+            }
+
+            if(interRTU)
+            {
+                listSpec.texunits[TU_INTER] = *interRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
+                }
+                if(p.materialScale)
+                {
+                    listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
+                    listSpec.texunits[TU_INTER].offset *= *p.materialScale;
+                }
+            }
+
+            if(interDetailRTU)
+            {
+                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
+                }
+            }
 
             ClientApp::renderSystem().drawLists()
-                      .find(spec)
+                      .find(listSpec)
                           .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                                 spec.unit(TU_PRIMARY       ).blendMode,
-                                 spec.unit(TU_PRIMARY       ).scale,
-                                 spec.unit(TU_PRIMARY       ).offset,
-                                 spec.unit(TU_PRIMARY_DETAIL).scale,
-                                 spec.unit(TU_PRIMARY_DETAIL).offset,
+                                 listSpec.unit(TU_PRIMARY       ).blendMode,
+                                 listSpec.unit(TU_PRIMARY       ).scale,
+                                 listSpec.unit(TU_PRIMARY       ).offset,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).offset,
                                  hasDynlights, numVertices,
                                  posCoords, colorCoords, primaryCoords, interCoords,
                                  modTex, &modColor, modCoords);
 
             if(shinyRTU)
             {
-                DrawListSpec const &spec = RL_ListSpec(ShineGeom);
+                DrawListSpec listSpec(ShineGeom);
+
+                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+
+                if(shinyMaskRTU)
+                {
+                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    if(p.materialOrigin)
+                    {
+                        listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
+                    }
+                    if(p.materialScale)
+                    {
+                        listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
+                        listSpec.texunits[TU_INTER].offset *= *p.materialScale;
+                    }
+                }
 
                 ClientApp::renderSystem().drawLists()
-                          .find(spec)
+                          .find(listSpec)
                               .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                                     spec.unit(TU_PRIMARY       ).blendMode,
-                                     spec.unit(TU_INTER         ).scale,
-                                     spec.unit(TU_INTER         ).offset,
-                                     spec.unit(TU_PRIMARY_DETAIL).scale,
-                                     spec.unit(TU_PRIMARY_DETAIL).offset,
+                                     listSpec.unit(TU_PRIMARY       ).blendMode,
+                                     listSpec.unit(TU_INTER         ).scale,
+                                     listSpec.unit(TU_INTER         ).offset,
+                                     listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                     listSpec.unit(TU_PRIMARY_DETAIL).offset,
                                      hasDynlights, numVertices,
                                      posCoords, shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
             }
@@ -1983,7 +2064,7 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     if(!devRendSkyMode)
     {
         ClientApp::renderSystem().drawLists()
-                  .find(RL_ListSpec(SkyMaskGeom))
+                  .find(DrawListSpec(SkyMaskGeom))
                       .write(gl::TriangleStrip,
                              BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                              Vector2f(1, 1), Vector2f(0, 0),
@@ -1994,25 +2075,27 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     {
         DENG_ASSERT(texCoords != 0);
 
+        DrawListSpec listSpec;
+        listSpec.group = UnlitGeom;
         if(renderTextures != 2)
         {
             DENG_ASSERT(material != 0);
 
             // Map RTU configuration from the sky surface material.
             MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-            RL_LoadDefaultRtus();
-            RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
+            listSpec.texunits[TU_PRIMARY]        = ms.unit(RTU_PRIMARY);
+            listSpec.texunits[TU_PRIMARY_DETAIL] = ms.unit(RTU_PRIMARY_DETAIL);
+            listSpec.texunits[TU_INTER]          = ms.unit(RTU_INTER);
+            listSpec.texunits[TU_INTER_DETAIL]   = ms.unit(RTU_INTER_DETAIL);
         }
 
-        DrawListSpec const &spec = RL_ListSpec(UnlitGeom);
-
         ClientApp::renderSystem().drawLists()
-                  .find(spec)
-                      .write(gl::TriangleStrip, spec.unit(TU_PRIMARY).blendMode,
-                             spec.unit(TU_PRIMARY       ).scale,
-                             spec.unit(TU_PRIMARY       ).offset,
-                             spec.unit(TU_PRIMARY_DETAIL).scale,
-                             spec.unit(TU_PRIMARY_DETAIL).offset,
+                  .find(listSpec)
+                      .write(gl::TriangleStrip, listSpec.unit(TU_PRIMARY).blendMode,
+                             listSpec.unit(TU_PRIMARY       ).scale,
+                             listSpec.unit(TU_PRIMARY       ).offset,
+                             listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                             listSpec.unit(TU_PRIMARY_DETAIL).offset,
                              0, vertCount,
                              posCoords, 0, texCoords);
     }
@@ -2182,7 +2265,7 @@ static void writeLeafSkyMaskCap(int skyCap)
                            skyPlaneZ(skyCap), &verts, &numVerts);
 
     ClientApp::renderSystem().drawLists()
-              .find(RL_ListSpec(SkyMaskGeom))
+              .find(DrawListSpec(SkyMaskGeom))
                   .write(gl::TriangleFan,
                          BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                          Vector2f(1, 1), Vector2f(0, 0),
@@ -2212,20 +2295,6 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
     }
 
     if(!skyCap) return;
-
-    if(!devRendSkyMode || renderTextures == 2)
-    {
-        // All geometry uses the same RTU write state.
-        RL_LoadDefaultRtus();
-        if(renderTextures == 2)
-        {
-            // Map RTU configuration from the special "gray" material.
-            MaterialSnapshot const &ms =
-                App_Materials().find(de::Uri("System", Path("gray")))
-                    .material().prepare(Rend_MapSurfaceMaterialSpec());
-            RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
-        }
-    }
 
     // Lower?
     if(skyCap & SKYCAP_LOWER)

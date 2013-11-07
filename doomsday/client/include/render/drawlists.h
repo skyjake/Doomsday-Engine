@@ -21,9 +21,6 @@
 #ifndef DENG_CLIENT_RENDER_DRAWLISTS_H
 #define DENG_CLIENT_RENDER_DRAWLISTS_H
 
-#include "de_platform.h"
-#include "api_gl.h" // DGLuint
-
 #include "DrawList"
 #include <de/Vector>
 #include <QVarLengthArray>
@@ -69,55 +66,5 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-struct GLTextureUnit;
-
-/**
- * Reset the texture unit write state back to the initial default values.
- * Any mappings between logical units and preconfigured RTU states are
- * cleared at this time.
- */
-void RL_LoadDefaultRtus();
-
-DrawListSpec const &RL_ListSpec(GeomGroup group);
-
-/**
- * Map the texture unit write state for the identified @a idx unit to
- * @a rtu. This creates a reference to @a rtu which MUST continue to
- * remain accessible until the mapping is subsequently cleared or
- * changed (explicitly by call to RL_MapRtu/RL_LoadDefaultRtus, or,
- * implicitly by customizing the unit configuration through one of the
- * RL_RTU* family of functions (at which point a copy will be performed).
- */
-void RL_MapRtu(uint idx, GLTextureUnit const *rtu);
-
-/**
- * Copy the configuration for the identified @a idx texture unit of
- * the primitive writer's internal state from @a rtu.
- *
- * @param idx  Logical index of the texture unit being configured.
- * @param rtu  Configured RTU state to copy the configuration from.
- */
-void RL_CopyRtu(uint idx, GLTextureUnit const *rtu);
-
-/// @todo Avoid modifying the RTU write state for the purposes of primitive
-///       specific translations by implementing these as arguments to the
-///       RL_Add* family of functions.
-
-/// Change the scale property of the identified @a idx texture unit.
-void RL_Rtu_SetScale(uint idx, de::Vector2f const &st);
-
-/// Scale the offset and scale properties of the identified @a idx texture unit.
-void RL_Rtu_Scale(uint idx, float scalar);
-void RL_Rtu_ScaleST(uint idx, de::Vector2f const &st);
-
-/// Change the offset property of the identified @a idx texture unit.
-void RL_Rtu_SetOffset(uint idx, de::Vector2f const &st);
-
-/// Translate the offset property of the identified @a idx texture unit.
-void RL_Rtu_TranslateOffset(uint idx, de::Vector2f const &st);
-
-/// Change the texture assigned to the identified @a idx texture unit.
-void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT);
 
 #endif // DENG_CLIENT_RENDER_DRAWLISTS_H

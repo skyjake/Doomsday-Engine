@@ -27,14 +27,6 @@
 
 using namespace de;
 
-// Logical texture unit state. Used with RL_LoadDefaultRtus and RL_CopyRtu
-static GLTextureUnit const rtuDefault;
-static GLTextureUnit rtuState[NUM_TEXMAP_UNITS];
-static GLTextureUnit const *rtuMap[NUM_TEXMAP_UNITS];
-
-// GL texture unit state used during write. Global for performance reasons.
-static DrawListSpec currentListSpec;
-
 typedef QMultiHash<DGLuint, DrawList *> DrawListHash;
 
 DENG2_PIMPL(DrawLists)
@@ -70,9 +62,7 @@ DENG2_PIMPL(DrawLists)
 };
 
 DrawLists::DrawLists() : d(new Instance(this))
-{
-    RL_LoadDefaultRtus();
-}
+{}
 
 static void clearAllLists(DrawListHash &hash)
 {
@@ -250,129 +240,4 @@ int DrawLists::findAll(GeomGroup group, FoundLists &found)
     }
 
     return found.count();
-}
-
-static bool isWriteStateRTU(GLTextureUnit const *ptr)
-{
-    // Note that the default texture unit is not considered to be part of the
-    // writeable state.
-    for(int i = 0; i < NUM_TEXMAP_UNITS; ++i)
-    {
-        if(ptr == &rtuState[i])
-            return true;
-    }
-    return false;
-}
-
-/**
- * If the identified @a idx texture unit of the primitive writer has been mapped
- * to an external address, insert a copy of it into our internal write state.
- *
- * To be called before customizing a texture unit begins to ensure we are
- * modifying data we have ownership of!
- */
-static void copyMappedRtuToState(uint idx)
-{
-    DENG2_ASSERT(idx < NUM_TEXMAP_UNITS);
-    if(isWriteStateRTU(rtuMap[idx])) return;
-    RL_CopyRtu(idx, rtuMap[idx]);
-}
-
-DrawListSpec const &RL_ListSpec(GeomGroup group)
-{
-    DrawListSpec &spec = currentListSpec;
-
-    spec.group = group;
-    if(group == ShineGeom)
-    {
-        spec.texunits[TU_PRIMARY]        = *rtuMap[RTU_REFLECTION];
-        spec.texunits[TU_PRIMARY_DETAIL] = rtuDefault;
-        spec.texunits[TU_INTER]          = *rtuMap[RTU_REFLECTION_MASK];
-        spec.texunits[TU_INTER_DETAIL]   = rtuDefault;
-    }
-    else
-    {
-        spec.texunits[TU_PRIMARY]        = *rtuMap[RTU_PRIMARY];
-        spec.texunits[TU_PRIMARY_DETAIL] = *rtuMap[RTU_PRIMARY_DETAIL];
-        spec.texunits[TU_INTER]          = *rtuMap[RTU_INTER];
-        spec.texunits[TU_INTER_DETAIL]   = *rtuMap[RTU_INTER_DETAIL];
-    }
-
-    return spec;
-}
-
-void RL_LoadDefaultRtus()
-{
-    for(int i = 0; i < NUM_TEXMAP_UNITS; ++i)
-    {
-        rtuMap[i] = &rtuDefault;
-    }
-}
-
-void RL_MapRtu(uint idx, GLTextureUnit const *rtu)
-{
-    DENG2_ASSERT(idx < NUM_TEXMAP_UNITS);
-    rtuMap[idx] = (rtu? rtu : &rtuDefault);
-}
-
-void RL_CopyRtu(uint idx, GLTextureUnit const *rtu)
-{
-    DENG2_ASSERT(idx < NUM_TEXMAP_UNITS);
-    if(!rtu)
-    {
-        // Restore defaults.
-        rtuMap[idx] = &rtuDefault;
-        return;
-    }
-
-    rtuState[idx] = *rtu;
-    // Map this unit to that owned by the write state.
-    rtuMap[idx] = rtuState + idx;
-}
-
-void RL_Rtu_SetScale(uint idx, Vector2f const &st)
-{
-    DENG2_ASSERT(idx < NUM_TEXMAP_UNITS);
-    copyMappedRtuToState(idx);
-    rtuState[idx].scale = st;
-}
-
-void RL_Rtu_Scale(uint idx, float scalar)
-{
-    DENG2_ASSERT(idx < NUM_TEXMAP_UNITS);
-    copyMappedRtuToState(idx);
-    rtuState[idx].scale  *= scalar;
-    rtuState[idx].offset *= scalar;
-}
-
-void RL_Rtu_ScaleST(uint idx, Vector2f const &st)
-{
-    DENG2_ASSERT(idx < NUM_TEXMAP_UNITS);
-    copyMappedRtuToState(idx);
-    rtuState[idx].scale  *= st;
-    rtuState[idx].offset *= st;
-}
-
-void RL_Rtu_SetOffset(uint idx, Vector2f const &xy)
-{
-    DENG2_ASSERT(idx < NUM_TEXMAP_UNITS);
-    copyMappedRtuToState(idx);
-    rtuState[idx].offset = xy;
-}
-
-void RL_Rtu_TranslateOffset(uint idx, Vector2f const &xy)
-{
-    DENG2_ASSERT(idx < NUM_TEXMAP_UNITS);
-    copyMappedRtuToState(idx);
-    rtuState[idx].offset += xy;
-}
-
-void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName, int wrapS, int wrapT)
-{
-    DENG2_ASSERT(idx < NUM_TEXMAP_UNITS);
-    copyMappedRtuToState(idx);
-    rtuState[idx].textureGLName  = glName;
-    rtuState[idx].textureGLWrapS = wrapS;
-    rtuState[idx].textureGLWrapT = wrapT;
-    rtuState[idx].textureVariant = 0;
 }

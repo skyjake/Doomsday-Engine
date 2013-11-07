@@ -1033,9 +1033,13 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
     if(rendFakeRadio != 2)
     {
         // Write multiple polys depending on rend params.
-        RL_LoadDefaultRtus();
-        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(wsParms.texture),
-                                   GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+        DrawListSpec listSpec;
+        listSpec.group = ShadowGeom;
+        listSpec.texunits[TU_PRIMARY].textureGLName  = GL_PrepareLSTexture(wsParms.texture);
+        listSpec.texunits[TU_PRIMARY].textureGLWrapS = GL_CLAMP_TO_EDGE;
+        listSpec.texunits[TU_PRIMARY].textureGLWrapT = GL_CLAMP_TO_EDGE;
+
+        DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
 
         if(mustSubdivide)
         {
@@ -1057,32 +1061,28 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
             R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);
             R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
 
-            ClientApp::renderSystem().drawLists()
-                      .find(RL_ListSpec(ShadowGeom))
-                          .write(gl::TriangleFan,
-                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 0, 3 + rightEdge.divisionCount(),
-                                 rvertices  + 3 + leftEdge.divisionCount(),
-                                 rcolors    + 3 + leftEdge.divisionCount(),
-                                 rtexcoords + 3 + leftEdge.divisionCount())
-                          .write(gl::TriangleFan,
-                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 0, 3 + leftEdge.divisionCount(),
-                                 rvertices, rcolors, rtexcoords);
+            shadowList.write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 3 + rightEdge.divisionCount(),
+                             rvertices  + 3 + leftEdge.divisionCount(),
+                             rcolors    + 3 + leftEdge.divisionCount(),
+                             rtexcoords + 3 + leftEdge.divisionCount())
+                      .write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 3 + leftEdge.divisionCount(),
+                             rvertices, rcolors, rtexcoords);
 
             R_FreeRendVertices(rvertices);
         }
         else
         {
-            ClientApp::renderSystem().drawLists()
-                      .find(RL_ListSpec(ShadowGeom))
-                          .write(gl::TriangleStrip,
-                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 0, 4,
-                                 origVertices, rcolors, rtexcoords);
+            shadowList.write(gl::TriangleStrip,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 4,
+                             origVertices, rcolors, rtexcoords);
         }
     }
 
@@ -1252,10 +1252,8 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 
     if(rendFakeRadio == 2) return;
 
-    RL_LoadDefaultRtus();
-
     ClientApp::renderSystem().drawLists()
-              .find(RL_ListSpec(renderWireframe? UnlitGeom : ShadowGeom))
+              .find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
                   .write(gl::TriangleFan,
                          BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
                          Vector2f(1, 1), Vector2f(0, 0),

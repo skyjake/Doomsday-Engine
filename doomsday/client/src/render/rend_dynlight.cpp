@@ -94,39 +94,39 @@ static void drawDynlight(TexProjection const &tp, renderlightprojectionparams_t 
             std::memcpy(rvertices, parm.rvertices, sizeof(Vector3f) * parm.numVertices);
         }
 
-        RL_LoadDefaultRtus();
-        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, tp.texture,
-                                   GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+        DrawListSpec listSpec;
+        listSpec.group = LightGeom;
+        listSpec.texunits[TU_PRIMARY].textureGLName  = tp.texture;
+        listSpec.texunits[TU_PRIMARY].textureGLWrapS = GL_CLAMP_TO_EDGE;
+        listSpec.texunits[TU_PRIMARY].textureGLWrapT = GL_CLAMP_TO_EDGE;
+
+        DrawList &lightList = ClientApp::renderSystem().drawLists().find(listSpec);
 
         if(mustSubdivide)
         {
             WallEdge const &leftEdge  = *parm.wall.leftEdge;
             WallEdge const &rightEdge = *parm.wall.rightEdge;
 
-            ClientApp::renderSystem().drawLists()
-                      .find(RL_ListSpec(LightGeom))
-                          .write(gl::TriangleFan,
-                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 0, 3 + rightEdge.divisionCount(),
-                                 rvertices  + 3 + leftEdge.divisionCount(),
-                                 rcolors    + 3 + leftEdge.divisionCount(),
-                                 rtexcoords + 3 + leftEdge.divisionCount())
-                          .write(gl::TriangleFan,
-                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 0, 3 + leftEdge.divisionCount(),
-                                 rvertices, rcolors, rtexcoords);
+            lightList.write(gl::TriangleFan,
+                            BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                            Vector2f(1, 1), Vector2f(0, 0),
+                            0, 3 + rightEdge.divisionCount(),
+                            rvertices  + 3 + leftEdge.divisionCount(),
+                            rcolors    + 3 + leftEdge.divisionCount(),
+                            rtexcoords + 3 + leftEdge.divisionCount())
+                     .write(gl::TriangleFan,
+                            BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                            Vector2f(1, 1), Vector2f(0, 0),
+                            0, 3 + leftEdge.divisionCount(),
+                            rvertices, rcolors, rtexcoords);
         }
         else
         {
-            ClientApp::renderSystem().drawLists()
-                      .find(RL_ListSpec(LightGeom))
-                          .write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
-                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                                 Vector2f(1, 1), Vector2f(0, 0),
-                                 0, parm.numVertices,
-                                 rvertices, rcolors, rtexcoords);
+            lightList.write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
+                            BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                            Vector2f(1, 1), Vector2f(0, 0),
+                            0, parm.numVertices,
+                            rvertices, rcolors, rtexcoords);
         }
 
         R_FreeRendVertices(rvertices);

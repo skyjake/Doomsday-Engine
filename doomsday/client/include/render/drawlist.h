@@ -95,6 +95,9 @@ public:
         GeomGroup group;
         GLTextureUnit texunits[NUM_TEXTURE_UNITS];
 
+        Spec(GeomGroup group = UnlitGeom) : group(group)
+        {}
+
         inline GLTextureUnit &unit(int index) {
             DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
             return texunits[index];

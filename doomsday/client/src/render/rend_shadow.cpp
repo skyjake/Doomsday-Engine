@@ -36,8 +36,13 @@ using namespace de;
 
 /**
  * Generates a new primitive for the shadow projection.
+ *
+ * @param shadowList  Draw list to write the projected geometry to.
+ * @param tp          The projected texture.
+ * @param parm        Shadow drawer parameters.
  */
-static void drawShadow(TexProjection const &tp, rendershadowprojectionparams_t &parm)
+static void drawShadow(DrawList &shadowList, TexProjection const &tp,
+    rendershadowprojectionparams_t &parm)
 {
     // Allocate enough for the divisions too.
     Vector3f *rvertices  = R_AllocRendVertices(parm.realNumVertices);
@@ -104,30 +109,26 @@ static void drawShadow(TexProjection const &tp, rendershadowprojectionparams_t &
         WallEdge const &leftEdge  = *parm.wall.leftEdge;
         WallEdge const &rightEdge = *parm.wall.rightEdge;
 
-        ClientApp::renderSystem().drawLists()
-                  .find(RL_ListSpec(ShadowGeom))
-                      .write(gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, 3 + rightEdge.divisionCount(),
-                             rvertices  + 3 + leftEdge.divisionCount(),
-                             rcolors    + 3 + leftEdge.divisionCount(),
-                             rtexcoords + 3 + leftEdge.divisionCount())
-                      .write(gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, 3 + leftEdge.divisionCount(),
-                             rvertices, rcolors, rtexcoords);
+        shadowList.write(gl::TriangleFan,
+                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                         Vector2f(1, 1), Vector2f(0, 0),
+                         0, 3 + rightEdge.divisionCount(),
+                         rvertices  + 3 + leftEdge.divisionCount(),
+                         rcolors    + 3 + leftEdge.divisionCount(),
+                         rtexcoords + 3 + leftEdge.divisionCount())
+                  .write(gl::TriangleFan,
+                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                         Vector2f(1, 1), Vector2f(0, 0),
+                         0, 3 + leftEdge.divisionCount(),
+                         rvertices, rcolors, rtexcoords);
     }
     else
     {
-        ClientApp::renderSystem().drawLists()
-                  .find(RL_ListSpec(ShadowGeom))
-                      .write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
-                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                             Vector2f(1, 1), Vector2f(0, 0),
-                             0, parm.numVertices,
-                             rvertices, rcolors, rtexcoords);
+        shadowList.write(parm.isWall? gl::TriangleStrip : gl::TriangleFan,
+                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                         Vector2f(1, 1), Vector2f(0, 0),
+                         0, parm.numVertices,
+                         rvertices, rcolors, rtexcoords);
     }
 
     R_FreeRendVertices(rvertices);
@@ -135,19 +136,31 @@ static void drawShadow(TexProjection const &tp, rendershadowprojectionparams_t &
     R_FreeRendColors(rcolors);
 }
 
+struct drawshadowworker_params_t
+{
+    DrawList *shadowList;
+    rendershadowprojectionparams_t *drawShadowParms;
+};
+
 static int drawShadowWorker(TexProjection const *tp, void *context)
 {
-    drawShadow(*tp, *static_cast<rendershadowprojectionparams_t *>(context));
+    drawshadowworker_params_t &p = *static_cast<drawshadowworker_params_t *>(context);
+    drawShadow(*p.shadowList, *tp, *p.drawShadowParms);
     return 0; // Continue iteration.
 }
 
 void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t &p)
 {
-    // Configure the render list primitive writer's texture unit state now.
-    RL_LoadDefaultRtus();
-    RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC),
-                               GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    DrawListSpec listSpec;
+    listSpec.group = ShadowGeom;
+    listSpec.texunits[TU_PRIMARY].textureGLName  = GL_PrepareLSTexture(LST_DYNAMIC);
+    listSpec.texunits[TU_PRIMARY].textureGLWrapS = GL_CLAMP_TO_EDGE;
+    listSpec.texunits[TU_PRIMARY].textureGLWrapT = GL_CLAMP_TO_EDGE;
 
     // Write shadows to the render lists.
-    Rend_IterateProjectionList(listIdx, drawShadowWorker, &p);
+    drawshadowworker_params_t parm; zap(parm);
+    parm.shadowList      = &ClientApp::renderSystem().drawLists().find(listSpec);
+    parm.drawShadowParms = &p;
+
+    Rend_IterateProjectionList(listIdx, drawShadowWorker, &parm);
 }
