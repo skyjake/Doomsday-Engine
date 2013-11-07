@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_MATERIALSNAPSHOT_H
-#define DENG_RESOURCE_MATERIALSNAPSHOT_H
+#ifndef DENG_CLIENT_RESOURCE_MATERIALSNAPSHOT_H
+#define DENG_CLIENT_RESOURCE_MATERIALSNAPSHOT_H
 
 #ifndef __CLIENT__
 #  error "resource/materialsnapshot.h only exists in the Client"
@@ -29,7 +29,6 @@
 
 #include "Material"
 #include "Texture"
-#include "render/rendpoly.h"
 
 // Material texture unit idents:
 enum {
@@ -41,6 +40,19 @@ enum {
 };
 
 struct GLTextureUnit;
+
+/**
+ * Symbolic identifiers for (virtual) texture units.
+ */
+typedef enum {
+    RTU_PRIMARY = 0,
+    RTU_PRIMARY_DETAIL,
+    RTU_INTER,
+    RTU_INTER_DETAIL,
+    RTU_REFLECTION,
+    RTU_REFLECTION_MASK,
+    NUM_TEXMAP_UNITS
+} rtexmapunitid_t;
 
 namespace de {
 
@@ -160,4 +172,4 @@ typedef MaterialSnapshot::Decoration MaterialSnapshotDecoration;
 
 } // namespace de
 
-#endif // DENG_RESOURCE_MATERIALSNAPSHOT_H
+#endif // DENG_CLIENT_RESOURCE_MATERIALSNAPSHOT_H

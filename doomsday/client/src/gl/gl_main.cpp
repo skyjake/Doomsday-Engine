@@ -868,7 +868,40 @@ void GL_BindTextureUnmanaged(DGLuint glName, int wrapS, int wrapT, int magMode)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
     if(GL_state.features.texFilterAniso)
+    {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+    }
+}
+
+void GL_Bind(GLTextureUnit const &glTU)
+{
+    if(!glTU.hasTexture()) return;
+
+    if(!renderTextures)
+    {
+        GL_SetNoTexture();
+        return;
+    }
+
+    if(glTU.textureVariant)
+    {
+        GL_BindTexture(glTU.textureVariant);
+    }
+    else
+    {
+        GL_BindTextureUnmanaged(glTU.textureGLName, glTU.textureGLWrapS,
+                                glTU.textureGLWrapT, glTU.textureGLMagMode);
+    }
+}
+
+void GL_BindTo(GLTextureUnit const &glTU, int unit)
+{
+    if(!glTU.hasTexture()) return;
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    glActiveTexture(GL_TEXTURE0 + byte(unit));
+    GL_Bind(glTU);
 }
 
 void GL_SetNoTexture()
@@ -1178,37 +1211,6 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
                    (avgCnt? "(hi-intensity avg)" :
                     lowCnt? "(low-intensity avg)" : "(white light)")));
     */
-}
-
-void GLTextureUnit::bind() const
-{
-    if(!hasTexture()) return;
-
-    if(!renderTextures)
-    {
-        GL_SetNoTexture();
-        return;
-    }
-
-    if(textureVariant)
-    {
-        GL_BindTexture(textureVariant);
-    }
-    else
-    {
-        GL_BindTextureUnmanaged(textureGLName, textureGLWrapS,
-                                textureGLWrapT, textureGLMagMode);
-    }
-}
-
-void GLTextureUnit::bindTo(int unit) const
-{
-    if(!hasTexture()) return;
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    glActiveTexture(GL_TEXTURE0 + byte(unit));
-    bind();
 }
 
 D_CMD(SetRes)

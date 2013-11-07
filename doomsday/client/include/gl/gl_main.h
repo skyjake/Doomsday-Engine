@@ -70,19 +70,6 @@ DENG_EXTERN_C int r_detail;
 #endif
 
 /**
- * Symbolic identifiers for (virtual) texture units.
- */
-typedef enum {
-    RTU_PRIMARY = 0,
-    RTU_PRIMARY_DETAIL,
-    RTU_INTER,
-    RTU_INTER_DETAIL,
-    RTU_REFLECTION,
-    RTU_REFLECTION_MASK,
-    NUM_TEXMAP_UNITS
-} rtexmapunitid_t;
-
-/**
  * GL Texture unit config.
  */
 struct GLTextureUnit
@@ -170,24 +157,6 @@ struct GLTextureUnit
     DGLuint getTextureGLName() const {
         return textureVariant? textureVariant->glName() : textureGLName;
     }
-
-    /**
-     * Bind the associated texture and apply the texture unit configuration to
-     * the @em active GL texture unit. If no texture is associated then nothing
-     * will happen.
-     *
-     * @see bindTo()
-     */
-    void bind() const;
-
-    /**
-     * Bind the associated texture and apply the texture unit configuration to
-     * the specified GL texture @a unit, which, is made active during this call.
-     * If no texture is associated then nothing will happen.
-     *
-     * @see bind()
-     */
-    void bindTo(int unit) const;
 };
 
 void GL_AssertContextActive();
@@ -327,6 +296,20 @@ void GL_BindTexture(de::Texture::Variant *tex);
 
 void GL_BindTextureUnmanaged(DGLuint texname, int wrapS = GL_REPEAT, int wrapT = GL_REPEAT,
                              int magMode = GL_LINEAR);
+
+/**
+ * Bind the associated texture and apply the texture unit configuration to
+ * the @em active GL texture unit. If no texture is associated then nothing
+ * will happen.
+ */
+void GL_Bind(GLTextureUnit const &glTU);
+
+/**
+ * Bind the associated texture and apply the texture unit configuration to
+ * the specified GL texture @a unit, which, is made active during this call.
+ * If no texture is associated then nothing will happen.
+ */
+void GL_BindTo(GLTextureUnit const &glTU, int unit);
 
 void GL_SetNoTexture();
 

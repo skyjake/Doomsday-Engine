@@ -20,7 +20,7 @@
 
 #include "render/drawlist.h"
 
-#include "DrawLists"
+#include "gl/gl_main.h"
 #include "render/rend_main.h"
 #include "clientapp.h"
 #include <de/concurrency.h>

@@ -2885,8 +2885,8 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
             DENG2_ASSERT(numTexUnits >= 2);
             GL_SelectTexUnits(2);
 
-            listSpec.unit(TU_PRIMARY).bindTo(0);
-            listSpec.unit(TU_INTER).bindTo(1);
+            GL_BindTo(listSpec.unit(TU_PRIMARY), 0);
+            GL_BindTo(listSpec.unit(TU_INTER), 1);
             GL_ModulateTexture(2);
 
             float color[4] = { 0, 0, 0, listSpec.unit(TU_INTER).opacity };
@@ -2901,7 +2901,7 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
         {
             // Normal modulation.
             GL_SelectTexUnits(1);
-            listSpec.unit(TU_PRIMARY).bind();
+            GL_Bind(listSpec.unit(TU_PRIMARY));
             GL_ModulateTexture(1);
         }
 
@@ -2913,11 +2913,11 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
     case DM_LIGHT_MOD_TEXTURE:
         // Modulate sector light, dynamic light and regular texture.
-        listSpec.unit(TU_PRIMARY).bindTo(1);
+        GL_BindTo(listSpec.unit(TU_PRIMARY), 1);
         return SetMatrixTexture1 | SetLightEnv0 | JustOneLight | NoBlend;
 
     case DM_TEXTURE_PLUS_LIGHT:
-        listSpec.unit(TU_PRIMARY).bindTo(0);
+        GL_BindTo(listSpec.unit(TU_PRIMARY), 0);
         return SetMatrixTexture0 | SetLightEnv1 | NoBlend;
 
     case DM_FIRST_LIGHT:
@@ -2934,10 +2934,8 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
         DENG2_ASSERT(numTexUnits >= 2);
         GL_SelectTexUnits(2);
-
-        listSpec.unit(TU_PRIMARY).bindTo(0);
-        listSpec.unit(TU_INTER).bindTo(1);
-
+        GL_BindTo(listSpec.unit(TU_PRIMARY), 0);
+        GL_BindTo(listSpec.unit(TU_INTER), 1);
         GL_ModulateTexture(2);
 
         float color[4] = { 0, 0, 0, listSpec.unit(TU_INTER).opacity };
@@ -2958,7 +2956,7 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
     case DM_LIGHTS:
         // These lists only contain light geometries.
-        listSpec.unit(TU_PRIMARY).bind();
+        GL_Bind(listSpec.unit(TU_PRIMARY));
         return 0;
 
     case DM_BLENDED_MOD_TEXTURE:
@@ -2980,10 +2978,8 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
             // which would modulate with primary color.
             DENG2_ASSERT(numTexUnits >= 2);
             GL_SelectTexUnits(2);
-
-            listSpec.unit(TU_PRIMARY).bindTo(0);
-            listSpec.unit(TU_INTER).bindTo(1);
-
+            GL_BindTo(listSpec.unit(TU_PRIMARY), 0);
+            GL_BindTo(listSpec.unit(TU_INTER), 1);
             GL_ModulateTexture(3);
 
             float color[4] = { 0, 0, 0, listSpec.unit(TU_INTER).opacity };
@@ -2993,7 +2989,7 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
         }
         // No modulation at all.
         GL_SelectTexUnits(1);
-        listSpec.unit(TU_PRIMARY).bind();
+        GL_Bind(listSpec.unit(TU_PRIMARY));
         GL_ModulateTexture(0);
         if(mode == DM_MOD_TEXTURE_MANY_LIGHTS)
         {
@@ -3012,15 +3008,15 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
         {
             GL_SelectTexUnits(2);
             GL_ModulateTexture(9); // Tex+Detail, no color.
-            listSpec.unit(TU_PRIMARY).bindTo(0);
-            listSpec.unit(TU_PRIMARY_DETAIL).bindTo(1);
+            GL_BindTo(listSpec.unit(TU_PRIMARY), 0);
+            GL_BindTo(listSpec.unit(TU_PRIMARY_DETAIL), 1);
             return SetMatrixTexture0 | SetMatrixDTexture1;
         }
         else
         {
             GL_SelectTexUnits(1);
             GL_ModulateTexture(0);
-            listSpec.unit(TU_PRIMARY).bind();
+            GL_Bind(listSpec.unit(TU_PRIMARY));
             return SetMatrixTexture0;
         }
         break;
@@ -3028,7 +3024,7 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
     case DM_ALL_DETAILS:
         if(listSpec.unit(TU_PRIMARY_DETAIL).hasTexture())
         {
-            listSpec.unit(TU_PRIMARY_DETAIL).bind();
+            GL_Bind(listSpec.unit(TU_PRIMARY_DETAIL));
             return SetMatrixDTexture0;
         }
         break;
@@ -3044,8 +3040,8 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
         {
             GL_SelectTexUnits(2);
             GL_ModulateTexture(8);
-            listSpec.unit(TU_PRIMARY).bindTo(0);
-            listSpec.unit(TU_PRIMARY_DETAIL).bindTo(1);
+            GL_BindTo(listSpec.unit(TU_PRIMARY), 0);
+            GL_BindTo(listSpec.unit(TU_PRIMARY_DETAIL), 1);
             return SetMatrixTexture0 | SetMatrixDTexture1;
         }
         else
@@ -3053,7 +3049,7 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
             // Normal modulation.
             GL_SelectTexUnits(1);
             GL_ModulateTexture(1);
-            listSpec.unit(TU_PRIMARY).bind();
+            GL_Bind(listSpec.unit(TU_PRIMARY));
             return SetMatrixTexture0;
         }
         break;
@@ -3071,8 +3067,8 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
             break;
         }
 
-        listSpec.unit(TU_PRIMARY_DETAIL).bindTo(0);
-        listSpec.unit(TU_INTER_DETAIL).bindTo(1);
+        GL_BindTo(listSpec.unit(TU_PRIMARY_DETAIL), 0);
+        GL_BindTo(listSpec.unit(TU_INTER_DETAIL), 1);
 
         float color[4] = { 0, 0, 0, listSpec.unit(TU_INTER_DETAIL).opacity };
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
@@ -3081,7 +3077,7 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
     case DM_SHADOW:
         if(listSpec.unit(TU_PRIMARY).hasTexture())
         {
-            listSpec.unit(TU_PRIMARY).bind();
+            GL_Bind(listSpec.unit(TU_PRIMARY));
         }
         else
         {
@@ -3106,7 +3102,7 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
         {
             GL_SelectTexUnits(2);
             // The intertex holds the info for the mask texture.
-            listSpec.unit(TU_INTER).bindTo(1);
+            GL_BindTo(listSpec.unit(TU_INTER), 1);
             float color[4] = { 0, 0, 0, 1 };
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
         }
@@ -3115,7 +3111,7 @@ static DrawConditions pushGLStateForList(DrawList const &list, DrawMode mode)
 
     case DM_ALL_SHINY:
     case DM_SHINY:
-        listSpec.unit(TU_PRIMARY).bindTo(0);
+        GL_BindTo(listSpec.unit(TU_PRIMARY), 0);
         if(!listSpec.unit(TU_INTER).hasTexture())
         {
             GL_SelectTexUnits(1);
