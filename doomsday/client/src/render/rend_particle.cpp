@@ -477,7 +477,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
             lightLevel = Rend_AttenuateLightLevel(params->distance, lightLevel);
 
             // Add extra light.
-            lightLevel += Rend_ExtraLightDelta();
+            lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
 
             Rend_ApplyLightAdaptation(lightLevel);
 

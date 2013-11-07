@@ -643,17 +643,19 @@ static void lightVertex(Vector4f &color, Vector3f const &vtx, float lightLevel,
                         Vector3f const &ambientColor)
 {
     float const dist = Rend_PointDist2D(vtx);
-    float lightVal = Rend_AttenuateLightLevel(dist, lightLevel);
+
+    // Apply distance attenuation.
+    lightLevel = Rend_AttenuateLightLevel(dist, lightLevel);
 
     // Add extra light.
-    lightVal += Rend_ExtraLightDelta();
+    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
 
-    Rend_ApplyLightAdaptation(lightVal);
+    Rend_ApplyLightAdaptation(lightLevel);
 
     // Mix with the surface color.
     for(int i = 0; i < 3; ++i)
     {
-        color[i] = lightVal * ambientColor[i];
+        color[i] = lightLevel * ambientColor[i];
     }
 }
 
@@ -1245,9 +1247,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         WallEdge const &rightEdge = *p.wall.rightEdge;
 
         /*
-         * Need to swap indices around into fans set the position
-         * of the division vertices, interpolate texcoords and
-         * color.
+         * Need to swap indices around into fans set the position of the division
+         * vertices, interpolate texcoords and color.
          */
 
         Vector3f origVerts[4];
@@ -1864,28 +1865,29 @@ static void writeWallSection(HEdge &hedge, int section,
  *
  * @param direction  Vertex winding direction.
  * @param height     Z map space height coordinate to be set for each vertex.
- * @param verts      Built vertices are written here.
- * @param vertsSize  Number of built vertices is written here. Can be @c NULL.
+ * @param verts      Built position coordinates are written here. It is the
+ *                   responsibility of the caller to release this storage with
+ *                   @ref R_FreeRendVertices() when done.
  *
- * @return  Number of built vertices (same as written to @a vertsSize).
+ * @return  Number of built vertices.
  */
 static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
-    Vector3f **verts, uint *vertsSize)
+    Vector3f **verts)
 {
-    DENG_ASSERT(verts != 0);
+    DENG2_ASSERT(verts != 0);
 
     BspLeaf const *leaf = currentBspLeaf;
-    Face const &face = leaf->poly();
+    Face const &face    = leaf->poly();
 
     HEdge *fanBase  = leaf->fanBase();
     uint totalVerts = face.hedgeCount() + (!fanBase? 2 : 0);
 
     *verts = R_AllocRendVertices(totalVerts);
 
-    int n = 0;
+    uint n = 0;
     if(!fanBase)
     {
-        (*verts)[n] = Vector3f(face.center().x, face.center().y, height);
+        (*verts)[n] = Vector3f(face.center(), height);
         n++;
     }
 
@@ -1894,44 +1896,43 @@ static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
     HEdge *node = baseNode;
     do
     {
-        (*verts)[n] = Vector3f(node->origin().x, node->origin().y, height);
+        (*verts)[n] = Vector3f(node->origin(), height);
         n++;
     } while((node = &node->neighbor(direction)) != baseNode);
 
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        (*verts)[n] = Vector3f(face.hedge()->origin().x, face.hedge()->origin().y, height);
+        (*verts)[n] = Vector3f(face.hedge()->origin(), height);
     }
 
-    if(vertsSize) *vertsSize = totalVerts;
     return totalVerts;
 }
 
 static void writeLeafPlane(Plane &plane)
 {
-    BspLeaf *leaf = currentBspLeaf;
-
-    Face const &poly = leaf->poly();
+    BspLeaf *leaf          = currentBspLeaf;
+    Face const &poly       = leaf->poly();
     Surface const &surface = plane.surface();
 
     // Skip nearly transparent surfaces.
-    float opacity = surface.opacity();
-    if(opacity < .001f)
-        return;
+    float const opacity = surface.opacity();
+    if(opacity < .001f) return;
 
     // Determine which Material to use.
     Material *material = Rend_ChooseMapSurfaceMaterial(surface);
 
     // A drawable material is required.
-    if(!material || !material->isDrawable())
-        return;
+    if(!material) return;
+    if(!material->isDrawable()) return;
 
     // Skip planes with a sky-masked material?
     if(!devRendSkyMode)
     {
         if(surface.hasSkyMaskedMaterial() && plane.indexInSector() <= Sector::Ceiling)
+        {
             return; // Not handled here (drawn with the mask geometry).
+        }
     }
 
     MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
@@ -1942,7 +1943,9 @@ static void writeLeafPlane(Plane &plane)
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
     if(plane.isSectorCeiling())
+    {
         materialOrigin.y -= poly.aaBox().maxY - poly.aaBox().minY;
+    }
     materialOrigin.y = -materialOrigin.y;
 
     Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
@@ -1977,7 +1980,8 @@ static void writeLeafPlane(Plane &plane)
             parm.forceOpaque = true;
         }
         else
-        {   // We'll mask this.
+        {
+            // We'll mask this.
             parm.skyMasked = true;
         }
     }
@@ -1990,7 +1994,9 @@ static void writeLeafPlane(Plane &plane)
     {
         parm.blendMode = surface.blendMode();
         if(parm.blendMode == BM_NORMAL && noSpriteTrans)
+        {
             parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+        }
 
         parm.alpha = surface.opacity();
     }
@@ -2033,14 +2039,12 @@ static void writeLeafPlane(Plane &plane)
     }
 
     // Allocate position coordinates.
-    uint numVertices;
     Vector3f *posCoords;
-    buildLeafPlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
-                           plane.heightSmoothed(),
-                           &posCoords, &numVertices);
+    uint vertCount = buildLeafPlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
+                                            plane.heightSmoothed(), &posCoords);
 
     // Draw this section.
-    renderWorldPoly(posCoords, numVertices, parm, ms);
+    renderWorldPoly(posCoords, vertCount, parm, ms);
 
     if(&plane.sector() != leaf->sectorPtr())
     {
@@ -2055,7 +2059,7 @@ static void writeLeafPlane(Plane &plane)
 static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     Vector2f const *texCoords, Material *material)
 {
-    DENG_ASSERT(posCoords != 0);
+    DENG2_ASSERT(posCoords != 0);
 
     if(!devRendSkyMode)
     {
@@ -2069,13 +2073,13 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     }
     else
     {
-        DENG_ASSERT(texCoords != 0);
+        DENG2_ASSERT(texCoords != 0);
 
         DrawListSpec listSpec;
         listSpec.group = UnlitGeom;
         if(renderTextures != 2)
         {
-            DENG_ASSERT(material != 0);
+            DENG2_ASSERT(material != 0);
 
             // Map RTU configuration from the sky surface material.
             MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
@@ -2255,20 +2259,18 @@ static void writeLeafSkyMaskCap(int skyCap)
     if(devRendSkyMode) return;
     if(!skyCap) return;
 
-    Vector3f *verts;
-    uint numVerts;
-    buildLeafPlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                           skyPlaneZ(skyCap), &verts, &numVerts);
+    Vector3f *posCoords;
+    uint vertCount = buildLeafPlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
+                                            skyPlaneZ(skyCap), &posCoords);
 
     ClientApp::renderSystem().drawLists()
               .find(DrawListSpec(SkyMaskGeom))
                   .write(gl::TriangleFan,
                          BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
-                         Vector2f(1, 1), Vector2f(0, 0),
-                         0, numVerts,
-                         verts);
+                         Vector2f(1, 1), Vector2f(0, 0), 0,
+                         vertCount, posCoords);
 
-    R_FreeRendVertices(verts);
+    R_FreeRendVertices(posCoords);
 }
 
 /// @param skyCap  @ref skyCapFlags
