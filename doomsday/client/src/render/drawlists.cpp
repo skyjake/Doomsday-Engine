@@ -27,7 +27,7 @@
 
 using namespace de;
 
-typedef QMultiHash<DGLuint, DrawList *> DrawListHash;
+typedef QMultiHash<GLuint, DrawList *> DrawListHash;
 
 DENG2_PIMPL(DrawLists)
 {
@@ -91,13 +91,13 @@ static void resetList(DrawList &list)
     // Reset the list specification.
     // The interpolation target must be explicitly set.
     DrawListSpec &listSpec = list.spec();
-    listSpec.unit(TU_INTER).textureGLName  = 0;
-    listSpec.unit(TU_INTER).textureVariant = 0;
-    listSpec.unit(TU_INTER).opacity        = 0;
+    listSpec.unit(TU_INTER).unmanaged.glName = 0;
+    listSpec.unit(TU_INTER).texture          = 0;
+    listSpec.unit(TU_INTER).opacity          = 0;
 
-    listSpec.unit(TU_INTER_DETAIL).textureGLName  = 0;
-    listSpec.unit(TU_INTER_DETAIL).textureVariant = 0;
-    listSpec.unit(TU_INTER_DETAIL).opacity        = 0;
+    listSpec.unit(TU_INTER_DETAIL).unmanaged.glName = 0;
+    listSpec.unit(TU_INTER_DETAIL).texture          = 0;
+    listSpec.unit(TU_INTER_DETAIL).opacity          = 0;
 }
 
 static void resetAllLists(DrawListHash &hash)
@@ -127,16 +127,13 @@ void DrawLists::reset()
  */
 static bool compareTexUnit(GLTextureUnit const &lhs, GLTextureUnit const &rhs)
 {
-    if(lhs.textureVariant)
+    if(lhs.texture)
     {
-        if(lhs.textureVariant != rhs.textureVariant) return false;
+        if(lhs.texture != rhs.texture) return false;
     }
     else
     {
-        if(lhs.textureGLName    != rhs.textureGLName)    return false;
-        if(lhs.textureGLMagMode != rhs.textureGLMagMode) return false;
-        if(lhs.textureGLWrapS   != rhs.textureGLWrapS)   return false;
-        if(lhs.textureGLWrapT   != rhs.textureGLWrapT)   return false;
+        if(lhs.unmanaged != rhs.unmanaged) return false;
     }
     if(!de::fequal(lhs.opacity, rhs.opacity)) return false;
     // Other properties are applied per-primitive and should not affect the outcome.
@@ -155,7 +152,7 @@ DrawList &DrawLists::find(DrawListSpec const &spec)
     DrawList *convertable = 0;
 
     // Find/create a list in the hash.
-    DGLuint const key  = spec.unit(TU_PRIMARY).getTextureGLName();
+    GLuint const key  = spec.unit(TU_PRIMARY).getTextureGLName();
     DrawListHash &hash = d->listHash(spec.group);
     for(DrawListHash::const_iterator it = hash.find(key);
         it != hash.end() && it.key() == key; ++it)

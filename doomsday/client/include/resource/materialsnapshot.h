@@ -24,11 +24,10 @@
 #  error "resource/materialsnapshot.h only exists in the Client"
 #endif
 
-#include <de/Error>
-#include <de/Vector>
-
 #include "Material"
 #include "Texture"
+#include <de/Error>
+#include <de/Vector>
 
 // Material texture unit idents:
 enum {
@@ -38,8 +37,6 @@ enum {
     MTU_REFLECTION_MASK,
     NUM_MATERIAL_TEXTURE_UNITS
 };
-
-struct GLTextureUnit;
 
 /**
  * Symbolic identifiers for (virtual) texture units.
@@ -55,6 +52,8 @@ typedef enum {
 } rtexmapunitid_t;
 
 namespace de {
+
+class GLTextureUnit;
 
 /**
  * Logical material state snapshot.

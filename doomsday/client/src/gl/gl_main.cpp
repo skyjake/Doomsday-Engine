@@ -883,6 +883,27 @@ void GL_BindTextureUnmanaged(DGLuint glName, int wrapS, int wrapT, int magMode)
     }
 }
 
+static GLenum glFilter(gl::Filter f)
+{
+    switch(f)
+    {
+    case gl::Nearest: return GL_NEAREST;
+    case gl::Linear:  return GL_LINEAR;
+    }
+    return GL_REPEAT;
+}
+
+static GLenum glWrap(gl::Wrapping w)
+{
+    switch(w)
+    {
+    case gl::Repeat:         return GL_REPEAT;
+    case gl::RepeatMirrored: return GL_MIRRORED_REPEAT;
+    case gl::ClampToEdge:    return GL_CLAMP_TO_EDGE;
+    }
+    return GL_REPEAT;
+}
+
 void GL_Bind(GLTextureUnit const &glTU)
 {
     if(!glTU.hasTexture()) return;
@@ -893,14 +914,16 @@ void GL_Bind(GLTextureUnit const &glTU)
         return;
     }
 
-    if(glTU.textureVariant)
+    if(glTU.texture)
     {
-        GL_BindTexture(glTU.textureVariant);
+        GL_BindTexture(glTU.texture);
     }
     else
     {
-        GL_BindTextureUnmanaged(glTU.textureGLName, glTU.textureGLWrapS,
-                                glTU.textureGLWrapT, glTU.textureGLMagMode);
+        GL_BindTextureUnmanaged(DGLuint(glTU.unmanaged.glName),
+                                glWrap(glTU.unmanaged.wrapS),
+                                glWrap(glTU.unmanaged.wrapT),
+                                glFilter(glTU.unmanaged.filter));
     }
 }
 

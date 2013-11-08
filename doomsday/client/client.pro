@@ -259,6 +259,7 @@ DENG_HEADERS += \
     include/gl/gl_model.h \
     include/gl/gl_tex.h \
     include/gl/gl_texmanager.h \
+    include/gl/gltextureunit.h \
     include/gl/svg.h \
     include/gl/sys_opengl.h \
     include/gl/texturecontent.h \

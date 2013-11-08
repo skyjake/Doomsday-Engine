@@ -154,7 +154,7 @@ void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t &
     DrawListSpec listSpec;
     listSpec.group = ShadowGeom;
     listSpec.texunits[TU_PRIMARY] =
-        GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+        GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC), gl::ClampToEdge, gl::ClampToEdge);
 
     // Write shadows to the render lists.
     drawshadowworker_params_t parm; zap(parm);

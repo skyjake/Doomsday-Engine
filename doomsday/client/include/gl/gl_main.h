@@ -33,6 +33,7 @@
 #include "api_gl.h"
 #include "sys_opengl.h"
 
+#include "gl/gltextureunit.h"
 #include "render/r_main.h"
 #include "Texture"
 
@@ -42,8 +43,6 @@ struct material_s;
 struct texturevariant_s;
 
 class Material;
-
-#define MAX_TEX_UNITS           2 // More aren't currently used.
 
 DENG_EXTERN_C int numTexUnits;
 DENG_EXTERN_C boolean  envModAdd;
@@ -68,109 +67,6 @@ DENG_EXTERN_C int r_detail;
 #else
 #  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex)
 #endif
-
-/**
- * GL Texture unit config.
- */
-struct GLTextureUnit
-{
-    de::TextureVariant *textureVariant;
-
-    /// Properties used only with @em unmanged GL textures.
-    DGLuint textureGLName;
-    int textureGLMagMode;
-    int textureGLWrapS;
-    int textureGLWrapT;
-
-    float opacity;         ///< Opacity of this layer [0..1].
-
-    de::Vector2f scale;    ///< Texture-space scale multiplier.
-    de::Vector2f offset;   ///< Texture-space origin translation (unscaled).
-
-    GLTextureUnit()
-        : textureVariant(0)
-        , textureGLName(0)
-        , textureGLMagMode(GL_LINEAR)
-        , textureGLWrapS(GL_REPEAT)
-        , textureGLWrapT(GL_REPEAT)
-        , opacity(1)
-        , scale(1, 1)
-    {}
-    GLTextureUnit(de::TextureVariant &textureVariant,
-                  de::Vector2f const &scale          = de::Vector2f(1, 1),
-                  de::Vector2f const &offset         = de::Vector2f(0, 0),
-                  float opacity                      = 1)
-        : textureVariant(&textureVariant)
-        , textureGLName(0)
-        , textureGLMagMode(GL_LINEAR)
-        , textureGLWrapS(GL_REPEAT)
-        , textureGLWrapT(GL_REPEAT)
-        , opacity(opacity)
-        , scale(scale)
-        , offset(offset)
-    {}
-    GLTextureUnit(DGLuint textureGLName, int textureGLWrapS = GL_REPEAT,
-        int textureGLWrapT = GL_REPEAT)
-        : textureVariant(0)
-        , textureGLName(textureGLName)
-        , textureGLMagMode(GL_LINEAR)
-        , textureGLWrapS(textureGLWrapS)
-        , textureGLWrapT(textureGLWrapT)
-        , opacity(1)
-        , scale(1, 1)
-    {}
-    GLTextureUnit(GLTextureUnit const &other)
-        : textureVariant(other.textureVariant)
-        , textureGLName(other.textureGLName)
-        , textureGLMagMode(other.textureGLMagMode)
-        , textureGLWrapS(other.textureGLWrapS)
-        , textureGLWrapT(other.textureGLWrapT)
-        , opacity(other.opacity)
-        , scale(other.scale)
-        , offset(other.offset)
-    {}
-
-    GLTextureUnit &operator = (GLTextureUnit const &other) {
-        textureVariant   = other.textureVariant;
-        textureGLName    = other.textureGLName;
-        textureGLMagMode = other.textureGLMagMode;
-        textureGLWrapS   = other.textureGLWrapS;
-        textureGLWrapT   = other.textureGLWrapT;
-        opacity          = other.opacity;
-        scale            = other.scale;
-        offset           = other.offset;
-        return *this;
-    }
-
-    bool operator == (GLTextureUnit const &other) const {
-        if(textureVariant)
-        {
-            if(textureVariant != other.textureVariant) return false;
-        }
-        else
-        {
-            if(textureGLName    != other.textureGLName)    return false;
-            if(textureGLMagMode != other.textureGLMagMode) return false;
-            if(textureGLWrapS   != other.textureGLWrapS)   return false;
-            if(textureGLWrapT   != other.textureGLWrapT)   return false;
-        }
-        if(!de::fequal(opacity, other.opacity)) return false;
-        if(scale != other.scale) return false;
-        if(offset != other.offset) return false;
-        return true;
-    }
-    bool operator != (GLTextureUnit const other) const {
-        return !(*this == other);
-    }
-
-    bool hasTexture() const {
-        return (textureVariant && textureVariant->glName() != 0) || textureGLName != 0;
-    }
-
-    DGLuint getTextureGLName() const {
-        return textureVariant? textureVariant->glName() : textureGLName;
-    }
-};
 
 void GL_AssertContextActive();
 
@@ -315,14 +211,14 @@ void GL_BindTextureUnmanaged(DGLuint texname, int wrapS = GL_REPEAT, int wrapT =
  * the @em active GL texture unit. If no texture is associated then nothing
  * will happen.
  */
-void GL_Bind(GLTextureUnit const &glTU);
+void GL_Bind(de::GLTextureUnit const &glTU);
 
 /**
  * Bind the associated texture and apply the texture unit configuration to
  * the specified GL texture @a unit, which, is made active during this call.
  * If no texture is associated then nothing will happen.
  */
-void GL_BindTo(GLTextureUnit const &glTU, int unit);
+void GL_BindTo(de::GLTextureUnit const &glTU, int unit);
 
 void GL_SetNoTexture();
 

@@ -17,29 +17,28 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_defs.h"
-#include "Lumobj" // Rend_LightmapTextureSpec()
+#include "resource/materialsnapshot.h"
+#include "gl/gl_texmanager.h"
+#include "gl/gltextureunit.h"
 #include "render/rend_halo.h" // Rend_HaloTextureSpec()
 #include "render/rend_main.h" // detailFactor, detailScale, smoothTexAnim, etc...
-#include "gl/gl_main.h"
-#include "gl/gl_texmanager.h"
-
+#include "resource/r_data.h" // NUM_SYSFLARE_TEXTURES
+#include "Lumobj" // Rend_LightmapTextureSpec()
 #include "Material"
 #include "Texture"
 #include <de/Log>
 
-#include "MaterialSnapshot"
-
 namespace de {
 
-struct Store
+DENG2_PIMPL_NOREF(MaterialSnapshot)
 {
-    bool opaque;                ///< @c true= this material is completely opaque.
+    MaterialVariant *variant;
+
+    bool opaque;
     float glowStrength;
-    Vector2i dimensions;        ///< Map space dimensions.
+    Vector2i dimensions;
     blendmode_t shineBlendMode;
-    Vector3f shineMinColor;     ///< Minimum ambient light level/color for shine.
+    Vector3f shineMinColor;
 
     /// Textures used on each logical material texture unit.
     TextureVariant *textures[NUM_MATERIAL_TEXTURE_UNITS];
@@ -51,7 +50,10 @@ struct Store
     /// to the texture units supplied to the render lists module.
     GLTextureUnit units[NUM_TEXMAP_UNITS];
 
-    Store() { initialize(); }
+    Instance(MaterialVariant &variant) : variant(&variant)
+    {
+        initialize();
+    }
 
     void initialize()
     {
@@ -66,21 +68,8 @@ struct Store
     }
 };
 
-DENG2_PIMPL(MaterialSnapshot)
-{
-    MaterialVariant *variant;
-    Store stored;
-
-    Instance(Public *i, MaterialVariant &variant)
-        : Base(i)
-        , variant(&variant)
-    {}
-
-    void takeSnapshot();
-};
-
 MaterialSnapshot::MaterialSnapshot(MaterialVariant &materialVariant)
-    : d(new Instance(this, materialVariant))
+    : d(new Instance(materialVariant))
 {}
 
 MaterialVariant &MaterialSnapshot::materialVariant() const
@@ -90,33 +79,33 @@ MaterialVariant &MaterialSnapshot::materialVariant() const
 
 Vector2i const &MaterialSnapshot::dimensions() const
 {
-    return d->stored.dimensions;
+    return d->dimensions;
 }
 
 bool MaterialSnapshot::isOpaque() const
 {
-    return d->stored.opaque;
+    return d->opaque;
 }
 
 float MaterialSnapshot::glowStrength() const
 {
-    return d->stored.glowStrength;
+    return d->glowStrength;
 }
 
 blendmode_t MaterialSnapshot::shineBlendMode() const
 {
-    return d->stored.shineBlendMode;
+    return d->shineBlendMode;
 }
 
 Vector3f const &MaterialSnapshot::shineMinColor() const
 {
-    return d->stored.shineMinColor;
+    return d->shineMinColor;
 }
 
 bool MaterialSnapshot::hasTexture(int index) const
 {
     if(index < 0 || index >= NUM_MATERIAL_TEXTURE_UNITS) return false;
-    return d->stored.textures[index] != 0;
+    return d->textures[index] != 0;
 }
 
 Texture::Variant &MaterialSnapshot::texture(int index) const
@@ -126,7 +115,7 @@ Texture::Variant &MaterialSnapshot::texture(int index) const
         /// @throw UnknownUnitError Attempt to dereference with an invalid index.
         throw UnknownUnitError("MaterialSnapshot::texture", QString("Invalid texture #%1").arg(index));
     }
-    return *d->stored.textures[index];
+    return *d->textures[index];
 }
 
 GLTextureUnit const &MaterialSnapshot::unit(int index) const
@@ -136,7 +125,7 @@ GLTextureUnit const &MaterialSnapshot::unit(int index) const
         /// @throw UnknownUnitError Attempt to obtain a reference to a unit with an invalid id.
         throw UnknownUnitError("MaterialSnapshot::unit", QString("Invalid unit #%1").arg(index));
     }
-    return d->stored.units[index];
+    return d->units[index];
 }
 
 MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
@@ -146,7 +135,7 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
         /// @throw UnknownDecorationError Attempt to obtain a reference to a decoration with an invalid index.
         throw UnknownDecorationError("MaterialSnapshot::decoration", QString("Invalid decoration #%1").arg(index));
     }
-    return d->stored.decorations[index];
+    return d->decorations[index];
 }
 
 /**
@@ -176,11 +165,11 @@ static DGLuint prepareFlaremap(Texture *texture, int oldIdx)
 }
 
 /// @todo Implement more useful methods of interpolation. (What do we want/need here?)
-void MaterialSnapshot::Instance::takeSnapshot()
+void MaterialSnapshot::update()
 {
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
-    Material *material = &variant->generalCase();
+    Material *material = &d->variant->generalCase();
     Material::Layers const &layers = material->layers();
     Material::DetailLayer const *detailLayer = material->isDetailed()? &material->detailLayer() : 0;
     Material::ShineLayer const *shineLayer   =    material->isShiny()? &material->shineLayer()  : 0;
@@ -189,7 +178,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     zap(prepTextures);
 
     // Reinitialize the stored values.
-    stored.initialize();
+    d->initialize();
 
     /*
      * Ensure all resources needed to visualize this have been prepared. If
@@ -198,13 +187,13 @@ void MaterialSnapshot::Instance::takeSnapshot()
      */
     for(int i = 0; i < layers.count(); ++i)
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).layer(i);
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).layer(i);
 
         Material::Layer::Stage const *lsCur = layers[i]->stages()[l.stage];
         if(lsCur->texture)
         {
             prepTextures[i][0] =
-                lsCur->texture->prepareVariant(*variant->spec().primarySpec);
+                lsCur->texture->prepareVariant(*d->variant->spec().primarySpec);
         }
 
         // Smooth Texture Animation?
@@ -215,7 +204,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
             if(lsNext->texture)
             {
-                prepTextures[i][1] = lsNext->texture->prepareVariant(*variant->spec().primarySpec);
+                prepTextures[i][1] = lsNext->texture->prepareVariant(*d->variant->spec().primarySpec);
             }
         }
     }
@@ -223,7 +212,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare detail texture(s)?
     if(!material->isSkyMasked() && material->isDetailed())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).detailLayer();
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).detailLayer();
         Material::DetailLayer::Stage const *lsCur = detailLayer->stages()[l.stage];
 
         if(lsCur->texture)
@@ -255,7 +244,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare a shiny texture (and possibly a mask)?
     if(!material->isSkyMasked() && material->isShiny())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).shineLayer();
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).shineLayer();
         Material::ShineLayer::Stage const *lsCur = shineLayer->stages()[l.stage];
 
         if(lsCur->texture)
@@ -275,30 +264,30 @@ void MaterialSnapshot::Instance::takeSnapshot()
         }
     }
 
-    stored.dimensions = material->dimensions();
+    d->dimensions = material->dimensions();
 
-    stored.opaque = (prepTextures[MTU_PRIMARY][0] && !prepTextures[MTU_PRIMARY][0]->isMasked());
+    d->opaque = (prepTextures[MTU_PRIMARY][0] && !prepTextures[MTU_PRIMARY][0]->isMasked());
 
-    if(stored.dimensions.x == 0 && stored.dimensions.y == 0) return;
+    if(d->dimensions.x == 0 && d->dimensions.y == 0) return;
 
-    MaterialAnimation::LayerState const &l = material->animation(variant->context()).layer(0);
+    MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).layer(0);
     Material::Layer::Stage const *lsCur  = layers[0]->stages()[l.stage];
     Material::Layer::Stage const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
 
     // Glow strength is presently taken from layer #0.
     if(l.inter == 0)
     {
-        stored.glowStrength = lsCur->glowStrength;
+        d->glowStrength = lsCur->glowStrength;
     }
     else // Interpolate.
     {
-        stored.glowStrength = LERP(lsCur->glowStrength, lsNext->glowStrength, l.inter);
+        d->glowStrength = LERP(lsCur->glowStrength, lsNext->glowStrength, l.inter);
     }
 
     // Setup the primary texture unit.
     if(TextureVariant *tex = prepTextures[MTU_PRIMARY][0])
     {
-        stored.textures[MTU_PRIMARY] = tex;
+        d->textures[MTU_PRIMARY] = tex;
         Vector2f offset;
         if(l.inter == 0)
         {
@@ -310,10 +299,10 @@ void MaterialSnapshot::Instance::takeSnapshot()
             offset.y = LERP(lsCur->texOrigin.y, lsNext->texOrigin.y, l.inter);
         }
 
-        stored.units[RTU_PRIMARY] =
+        d->units[RTU_PRIMARY] =
             GLTextureUnit(*tex,
-                          Vector2f(1.f / stored.dimensions.x,
-                                   1.f / stored.dimensions.y),
+                          Vector2f(1.f / d->dimensions.x,
+                                   1.f / d->dimensions.y),
                           offset);
     }
 
@@ -325,24 +314,24 @@ void MaterialSnapshot::Instance::takeSnapshot()
         // blended and unblended surfaces.
         if(!(!usingFog && l.inter == 0))
         {
-            stored.units[RTU_INTER] =
+            d->units[RTU_INTER] =
                 GLTextureUnit(*tex,
-                              stored.units[RTU_PRIMARY].scale,
-                              stored.units[RTU_PRIMARY].offset,
+                              d->units[RTU_PRIMARY].scale,
+                              d->units[RTU_PRIMARY].offset,
                               de::clamp(0.f, l.inter, 1.f));
         }
     }
 
     if(!material->isSkyMasked() && material->isDetailed())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).detailLayer();
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).detailLayer();
         Material::DetailLayer::Stage const *lsCur  = detailLayer->stages()[l.stage];
         Material::DetailLayer::Stage const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
 
         // Setup the detail texture unit.
         if(TextureVariant *tex = prepTextures[MTU_DETAIL][0])
         {
-            stored.textures[MTU_DETAIL] = tex;
+            d->textures[MTU_DETAIL] = tex;
 
             float scale;
             if(l.inter == 0)
@@ -359,7 +348,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 scale *= detailScale;
             }
 
-            stored.units[RTU_PRIMARY_DETAIL] =
+            d->units[RTU_PRIMARY_DETAIL] =
                 GLTextureUnit(*tex,
                               Vector2f(1.f / tex->generalCase().width()  * scale,
                                        1.f / tex->generalCase().height() * scale));
@@ -373,10 +362,10 @@ void MaterialSnapshot::Instance::takeSnapshot()
             // blended and unblended surfaces.
             if(!(!usingFog && l.inter == 0))
             {
-                stored.units[RTU_INTER_DETAIL] =
+                d->units[RTU_INTER_DETAIL] =
                     GLTextureUnit(*tex,
-                                  stored.units[RTU_PRIMARY_DETAIL].scale,
-                                  stored.units[RTU_PRIMARY_DETAIL].offset,
+                                  d->units[RTU_PRIMARY_DETAIL].scale,
+                                  d->units[RTU_PRIMARY_DETAIL].offset,
                                   de::clamp(0.f, l.inter, 1.f));
             }
         }
@@ -384,14 +373,14 @@ void MaterialSnapshot::Instance::takeSnapshot()
 
     if(!material->isSkyMasked() && material->isShiny())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).shineLayer();
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).shineLayer();
         Material::ShineLayer::Stage const *lsCur  = shineLayer->stages()[l.stage];
         Material::ShineLayer::Stage const *lsNext = shineLayer->stages()[(l.stage + 1) % shineLayer->stageCount()];
 
         // Setup the shine texture unit.
         if(TextureVariant *tex = prepTextures[MTU_REFLECTION][0])
         {
-            stored.textures[MTU_REFLECTION] = tex;
+            d->textures[MTU_REFLECTION] = tex;
 
             Vector3f minColor;
             for(int i = 0; i < 3; ++i)
@@ -406,7 +395,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 }
                 minColor[i] = de::clamp(0.0f, minColor[i], 1.0f);
             }
-            stored.shineMinColor = minColor;
+            d->shineMinColor = minColor;
 
             float shininess;
             if(l.inter == 0)
@@ -418,8 +407,8 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 shininess = LERP(lsCur->shininess, lsNext->shininess, l.inter);
             }
 
-            stored.shineBlendMode = lsCur->blendMode;
-            stored.units[RTU_REFLECTION] =
+            d->shineBlendMode = lsCur->blendMode;
+            d->units[RTU_REFLECTION] =
                 GLTextureUnit(*tex, Vector2f(1, 1), Vector2f(0, 0),
                               de::clamp(0.0f, shininess, 1.0f));
         }
@@ -428,12 +417,12 @@ void MaterialSnapshot::Instance::takeSnapshot()
         if(prepTextures[MTU_REFLECTION][0])
         if(TextureVariant *tex = prepTextures[MTU_REFLECTION_MASK][0])
         {
-            stored.textures[MTU_REFLECTION_MASK] = tex;
-            stored.units[RTU_REFLECTION_MASK] =
+            d->textures[MTU_REFLECTION_MASK] = tex;
+            d->units[RTU_REFLECTION_MASK] =
                 GLTextureUnit(*tex,
-                              Vector2f(1.f / (stored.dimensions.x * tex->generalCase().width()),
-                                       1.f / (stored.dimensions.y * tex->generalCase().height())),
-                              stored.units[RTU_PRIMARY].offset);
+                              Vector2f(1.f / (d->dimensions.x * tex->generalCase().width()),
+                                       1.f / (d->dimensions.y * tex->generalCase().height())),
+                              d->units[RTU_PRIMARY].offset);
         }
     }
 
@@ -442,12 +431,12 @@ void MaterialSnapshot::Instance::takeSnapshot()
     for(Material::Decorations::const_iterator it = decorations.begin();
         it != decorations.end(); ++it, ++idx)
     {
-        MaterialAnimation::DecorationState const &l = material->animation(variant->context()).decoration(idx);
+        MaterialAnimation::DecorationState const &l = material->animation(d->variant->context()).decoration(idx);
         MaterialDecoration const *lDef = *it;
         MaterialDecoration::Stage const *lsCur  = lDef->stages()[l.stage];
         MaterialDecoration::Stage const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];
 
-        MaterialSnapshot::Decoration &decor = stored.decorations[idx];
+        MaterialSnapshot::Decoration &decor = d->decorations[idx];
 
         if(l.inter == 0)
         {
@@ -483,11 +472,6 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
 #undef LERP
-}
-
-void MaterialSnapshot::update()
-{
-    d->takeSnapshot();
 }
 
 } // namespace de

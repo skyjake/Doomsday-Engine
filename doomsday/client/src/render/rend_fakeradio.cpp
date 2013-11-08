@@ -1036,7 +1036,7 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
         DrawListSpec listSpec;
         listSpec.group = ShadowGeom;
         listSpec.texunits[TU_PRIMARY] =
-            GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+            GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge);
 
         DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
 

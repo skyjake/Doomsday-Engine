@@ -21,11 +21,12 @@
 #ifndef DENG_CLIENT_RENDER_DRAWLIST_H
 #define DENG_CLIENT_RENDER_DRAWLIST_H
 
-#include "de_platform.h"
-#include "gl/gl_main.h"
+#include "gl/gltextureunit.h"
 #include <de/GLBuffer>
 #include <de/Vector>
 #include <QFlags>
+
+enum blendmode_e;
 
 /// Semantic geometry group identifiers.
 enum GeomGroup
@@ -85,17 +86,17 @@ public:
     struct Spec
     {
         GeomGroup group;
-        GLTextureUnit texunits[NUM_TEXTURE_UNITS];
+        de::GLTextureUnit texunits[NUM_TEXTURE_UNITS];
 
         Spec(GeomGroup group = UnlitGeom) : group(group)
         {}
 
-        inline GLTextureUnit &unit(int index) {
+        inline de::GLTextureUnit &unit(int index) {
             DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
             return texunits[index];
         }
 
-        inline GLTextureUnit const &unit(int index) const {
+        inline de::GLTextureUnit const &unit(int index) const {
             DENG2_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
             return texunits[index];
         }
@@ -123,13 +124,13 @@ public:
      * @param modColor        Modulation color (if any).
      * @param modTexCoords    Modulation texture coordinates for each vertex (if any).
      */
-    DrawList &write(de::gl::Primitive primitive, blendmode_t blendMode,
+    DrawList &write(de::gl::Primitive primitive, blendmode_e blendMode,
         de::Vector2f const &texScale, de::Vector2f const &texOffset,
         de::Vector2f const &detailTexScale, de::Vector2f const &detailTexOffset,
         bool isLit, uint vertCount,
         de::Vector3f const *posCoords, de::Vector4f const *colorCoords = 0,
         de::Vector2f const *texCoords = 0, de::Vector2f const *interTexCoords = 0,
-        DGLuint modTexture = 0, de::Vector3f const *modColor = 0,
+        GLuint modTexture = 0, de::Vector3f const *modColor = 0,
         de::Vector2f const *modTexCoords = 0);
 
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;

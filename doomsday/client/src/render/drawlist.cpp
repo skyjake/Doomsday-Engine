@@ -777,7 +777,7 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
     Vector2f const &texScale, Vector2f const &texOffset,
     Vector2f const &detailTexScale, Vector2f const &detailTexOffset, bool isLit, uint vertCount,
     Vector3f const *posCoords, Vector4f const *colorCoords, Vector2f const *texCoords,
-    Vector2f const *interTexCoords, DGLuint modTexture, Vector3f const *modColor,
+    Vector2f const *interTexCoords, GLuint modTexture, Vector3f const *modColor,
     Vector2f const *modTexCoords)
 {
     DENG2_ASSERT(vertCount >= 3);
