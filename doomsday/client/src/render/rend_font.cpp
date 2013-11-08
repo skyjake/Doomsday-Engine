@@ -40,6 +40,10 @@
 #include "resource/bitmapfont.h"
 #include "m_misc.h"
 
+#include <de/GLState>
+
+using namespace de;
+
 /**
  * @ingroup drawTextFlags
  * @{
@@ -100,7 +104,7 @@ static __inline fr_state_attributes_t* currentAttribs(void);
 static int topToAscent(font_t* font);
 static int lineHeight(font_t* font, unsigned char ch);
 static void drawChar(unsigned char ch, int posX, int posY, font_t* font, int alignFlags, short textFlags);
-static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright);
+static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright);
 
 static int inited = false;
 
@@ -697,16 +701,16 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }}
 
     // Restore previous GL-state.
+    if(Font_Type(font) == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
+    {
+        glMatrixMode(GL_TEXTURE);
+        glPopMatrix();
+    }
     if(renderWireframe > 1)
     {
         /// @todo do not assume previous state.
         glEnable(GL_TEXTURE_2D);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-    if(Font_Type(font) == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
-    {
-        glMatrixMode(GL_TEXTURE);
-        glPopMatrix();
     }
     }
 }
@@ -786,7 +790,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     glTranslatef(-x, -y, 0);
 }
 
-static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright)
+static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright)
 {
     float fsize = 4.f + bright;
     float fw = fsize * size->width  / 2.0f;
@@ -804,10 +808,9 @@ static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright)
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-    if(bright)
-        GL_BlendMode(BM_ADD);
-    else
-        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+    GLState::top().setBlendFunc(bright? gl::SrcAlpha : gl::Zero,
+                                bright? gl::One : gl::OneMinusSrcAlpha)
+                  .apply();
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
@@ -820,7 +823,8 @@ static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright)
         glVertex2f(x, y + h);
     glEnd();
 
-    GL_BlendMode(BM_NORMAL);
+    GLState::top().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
+                  .apply();
 }
 
 /**
@@ -1012,7 +1016,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                 (*strPtr) += 4;
                 if(parseString(&(*strPtr), buf, 80))
                 {
-                    Uri* uri = Uri_NewWithPath2(buf, RC_NULL);
+                    uri_s *uri = Uri_NewWithPath2(buf, RC_NULL);
 
                     fontId = Fonts_ResolveUri2(uri, true/*quiet please*/);
                     Uri_Delete(uri);
@@ -1514,7 +1518,7 @@ void FR_Init(void)
 }
 
 // fonts.cpp
-DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri); /*quiet=!(verbose >= 1)*/
+DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri); /*quiet=!(verbose >= 1)*/
 
 DENG_DECLARE_API(FR) =
 {

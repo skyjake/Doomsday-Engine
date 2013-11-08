@@ -281,7 +281,7 @@ void GL_SetVSync(boolean on);
  */
 void GL_SetMultisample(boolean on);
 
-void GL_BlendOp(int op);
+//void GL_BlendOp(int op);
 
 boolean GL_NewList(DGLuint list, int mode);
 

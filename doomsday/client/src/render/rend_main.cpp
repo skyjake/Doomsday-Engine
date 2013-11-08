@@ -3117,28 +3117,152 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     }
 }
 
+#include <de/GLState>
+
 static void popGLStateForPass(DrawMode mode)
 {
     switch(mode)
     {
     default: break;
 
-    case DM_ALL:
-    case DM_SHADOW:
+    case DM_SKYMASK:
+        GL_SelectTexUnits(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        break;
+
     case DM_BLENDED:
-    case DM_LIGHT_MOD_TEXTURE:
-    case DM_TEXTURE_PLUS_LIGHT:
-    case DM_LIGHTS:
-    case DM_UNBLENDED_TEXTURE_AND_DETAIL:
-    case DM_ALL_DETAILS:
-    case DM_BLENDED_DETAILS:
-    case DM_SHINY:
-    case DM_MASKED_SHINY:
-    case DM_ALL_SHINY:
+        GL_SelectTexUnits(1);
+
+        // Intentional fall-through.
+    case DM_ALL:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
         if(usingFog)
         {
             glDisable(GL_FOG);
         }
+        glEnable(GL_BLEND);
+        break;
+
+    case DM_LIGHT_MOD_TEXTURE:
+    case DM_TEXTURE_PLUS_LIGHT:
+        GL_SelectTexUnits(1);
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        glEnable(GL_BLEND);
+        break;
+
+    case DM_FIRST_LIGHT:
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        break;
+
+    case DM_BLENDED_FIRST_LIGHT:
+        GL_ModulateTexture(1);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        break;
+
+    case DM_WITHOUT_TEXTURE:
+        GL_SelectTexUnits(1);
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        break;
+
+    case DM_LIGHTS:
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        GL_BlendMode(BM_NORMAL);
+        break;
+
+    case DM_MOD_TEXTURE:
+    case DM_MOD_TEXTURE_MANY_LIGHTS:
+    case DM_BLENDED_MOD_TEXTURE:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        break;
+
+    case DM_UNBLENDED_TEXTURE_AND_DETAIL:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        break;
+
+    case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        break;
+
+    case DM_ALL_DETAILS:
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        break;
+
+    case DM_BLENDED_DETAILS:
+        GL_SelectTexUnits(1);
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        break;
+
+    case DM_SHADOW:
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        break;
+
+    case DM_SHINY:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        GL_BlendMode(BM_NORMAL);
+        break;
+
+    case DM_MASKED_SHINY:
+        GL_SelectTexUnits(1);
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        GL_BlendMode(BM_NORMAL);
         break;
     }
 }
