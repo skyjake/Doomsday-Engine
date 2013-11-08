@@ -90,13 +90,14 @@ static void resetList(DrawList &list)
 
     // Reset the list specification.
     // The interpolation target must be explicitly set.
-    list.spec().unit(TU_INTER).textureGLName  = 0;
-    list.spec().unit(TU_INTER).textureVariant = 0;
-    list.spec().unit(TU_INTER).opacity         = 0;
+    DrawListSpec &listSpec = list.spec();
+    listSpec.unit(TU_INTER).textureGLName  = 0;
+    listSpec.unit(TU_INTER).textureVariant = 0;
+    listSpec.unit(TU_INTER).opacity        = 0;
 
-    list.spec().unit(TU_INTER_DETAIL).textureGLName  = 0;
-    list.spec().unit(TU_INTER_DETAIL).textureVariant = 0;
-    list.spec().unit(TU_INTER_DETAIL).opacity         = 0;
+    listSpec.unit(TU_INTER_DETAIL).textureGLName  = 0;
+    listSpec.unit(TU_INTER_DETAIL).textureVariant = 0;
+    listSpec.unit(TU_INTER_DETAIL).opacity        = 0;
 }
 
 static void resetAllLists(DrawListHash &hash)

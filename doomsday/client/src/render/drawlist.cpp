@@ -383,10 +383,14 @@ DENG2_PIMPL(DrawList)
         switch(mode)
         {
         case DM_SKYMASK:
+            DENG2_ASSERT(spec.group == SkyMaskGeom);
+
             // Render all primitives on the list without discrimination.
             return NoColor;
 
         case DM_ALL: // All surfaces.
+            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+
             // Should we do blending?
             if(spec.unit(TU_INTER).hasTexture())
             {
@@ -421,20 +425,28 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture0;
 
         case DM_LIGHT_MOD_TEXTURE:
+            DENG2_ASSERT(spec.group == LitGeom);
+
             // Modulate sector light, dynamic light and regular texture.
             GL_BindTo(spec.unit(TU_PRIMARY), 1);
             return SetMatrixTexture1 | SetLightEnv0 | JustOneLight | NoBlend;
 
         case DM_TEXTURE_PLUS_LIGHT:
+            DENG2_ASSERT(spec.group == LitGeom);
+
             GL_BindTo(spec.unit(TU_PRIMARY), 0);
             return SetMatrixTexture0 | SetLightEnv1 | NoBlend;
 
         case DM_FIRST_LIGHT:
+            DENG2_ASSERT(spec.group == LitGeom);
+
             // Draw all primitives with more than one light
             // and all primitives which will have a blended texture.
             return SetLightEnv0 | ManyLights | Blend;
 
         case DM_BLENDED: {
+            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+
             // Only render the blended surfaces.
             if(!spec.unit(TU_INTER).hasTexture())
             {
@@ -452,6 +464,8 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture0 | SetMatrixTexture1; }
 
         case DM_BLENDED_FIRST_LIGHT:
+            DENG2_ASSERT(spec.group == LitGeom);
+
             // Only blended surfaces.
             if(!spec.unit(TU_INTER).hasTexture())
             {
@@ -460,15 +474,21 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture1 | SetLightEnv0;
 
         case DM_WITHOUT_TEXTURE:
+            DENG2_ASSERT(spec.group == LitGeom);
+
             // Only render geometries affected by dynlights.
             return 0;
 
         case DM_LIGHTS:
+            DENG2_ASSERT(spec.group == LightGeom);
+
             // These lists only contain light geometries.
             GL_Bind(spec.unit(TU_PRIMARY));
             return 0;
 
         case DM_BLENDED_MOD_TEXTURE:
+            DENG2_ASSERT(spec.group == LitGeom);
+
             // Blending required.
             if(!spec.unit(TU_INTER).hasTexture())
             {
@@ -479,6 +499,8 @@ DENG2_PIMPL(DrawList)
 
         case DM_MOD_TEXTURE:
         case DM_MOD_TEXTURE_MANY_LIGHTS:
+            DENG2_ASSERT(spec.group == LitGeom);
+
             // Texture for surfaces with (many) dynamic lights.
             // Should we do blending?
             if(spec.unit(TU_INTER).hasTexture())
@@ -507,6 +529,8 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture0;
 
         case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
+            DENG2_ASSERT(spec.group == LitGeom);
+
             // Blending is not done now.
             if(spec.unit(TU_INTER).hasTexture())
             {
@@ -531,6 +555,8 @@ DENG2_PIMPL(DrawList)
             break;
 
         case DM_ALL_DETAILS:
+            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+
             if(spec.unit(TU_PRIMARY_DETAIL).hasTexture())
             {
                 GL_Bind(spec.unit(TU_PRIMARY_DETAIL));
@@ -539,6 +565,8 @@ DENG2_PIMPL(DrawList)
             break;
 
         case DM_UNBLENDED_TEXTURE_AND_DETAIL:
+            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+
             // Only unblended. Details are optional.
             if(spec.unit(TU_INTER).hasTexture())
             {
@@ -564,6 +592,8 @@ DENG2_PIMPL(DrawList)
             break;
 
         case DM_BLENDED_DETAILS: {
+            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+
             // We'll only render blended primitives.
             if(!spec.unit(TU_INTER).hasTexture())
             {
@@ -584,6 +614,8 @@ DENG2_PIMPL(DrawList)
             return SetMatrixDTexture0 | SetMatrixDTexture1; }
 
         case DM_SHADOW:
+            DENG2_ASSERT(spec.group == ShadowGeom);
+
             if(spec.unit(TU_PRIMARY).hasTexture())
             {
                 GL_Bind(spec.unit(TU_PRIMARY));
@@ -607,6 +639,8 @@ DENG2_PIMPL(DrawList)
             return 0;
 
         case DM_MASKED_SHINY:
+            DENG2_ASSERT(spec.group == ShineGeom);
+
             if(spec.unit(TU_INTER).hasTexture())
             {
                 GL_SelectTexUnits(2);
@@ -620,6 +654,8 @@ DENG2_PIMPL(DrawList)
 
         case DM_ALL_SHINY:
         case DM_SHINY:
+            DENG2_ASSERT(spec.group == ShineGeom);
+
             GL_BindTo(spec.unit(TU_PRIMARY), 0);
             if(!spec.unit(TU_INTER).hasTexture())
             {
@@ -689,7 +725,7 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
     DENG2_ASSERT(vertCount >= 3);
 
     // Rationalize write arguments.
-    if(spec().group == SkyMaskGeom || spec().group == LightGeom || spec().group == ShadowGeom)
+    if(d->spec.group == SkyMaskGeom || d->spec.group == LightGeom || d->spec.group == ShadowGeom)
     {
         isLit      = false;
         modTexture = 0;
@@ -731,17 +767,17 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
         elem->data.buffer->posCoords[base + i] = posCoords[i];
 
         // Sky masked polys need nothing more.
-        if(spec().group == SkyMaskGeom) continue;
+        if(d->spec.group == SkyMaskGeom) continue;
 
         // Primary texture coordinates.
-        if(spec().unit(TU_PRIMARY).hasTexture())
+        if(d->spec.unit(TU_PRIMARY).hasTexture())
         {
             DENG2_ASSERT(texCoords != 0);
             elem->data.buffer->texCoords[Store::TCA_MAIN][base + i] = texCoords[i];
         }
 
         // Secondary texture coordinates.
-        if(spec().unit(TU_INTER).hasTexture())
+        if(d->spec.unit(TU_INTER).hasTexture())
         {
             DENG2_ASSERT(interTexCoords != 0);
             elem->data.buffer->texCoords[Store::TCA_BLEND][base + i] = interTexCoords[i];
@@ -794,7 +830,7 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
     if(conditions & Skip) return; // Assume no state changes were made.
 
     bool bypass = false;
-    if(spec().unit(TU_INTER).hasTexture())
+    if(d->spec.unit(TU_INTER).hasTexture())
     {
         // Is blending allowed?
         if(conditions.testFlag(NoBlend))
