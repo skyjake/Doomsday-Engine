@@ -28,6 +28,38 @@
 
 using namespace de;
 
+/**
+ * Drawing condition flags.
+ *
+ * @todo Most of these are actually list specification parameters. Rather than
+ * set them each time an identified list is drawn it would be better to record
+ * in the list itself. -ds
+ */
+enum DrawCondition
+{
+    NoBlend            = 0x00000001,
+    Blend              = 0x00000002,
+    SetLightEnv0       = 0x00000004,
+    SetLightEnv1       = 0x00000008,
+    JustOneLight       = 0x00000010,
+    ManyLights         = 0x00000020,
+    SetBlendMode       = 0x00000040, // Primitive-specific blending.
+    SetMatrixDTexture0 = 0x00000080,
+    SetMatrixDTexture1 = 0x00000100,
+    SetMatrixTexture0  = 0x00000200,
+    SetMatrixTexture1  = 0x00000400,
+    NoColor            = 0x00000800,
+
+    Skip               = 0x80000000,
+
+    SetLightEnv        = SetLightEnv0 | SetLightEnv1,
+    SetMatrixDTexture  = SetMatrixDTexture0 | SetMatrixDTexture1,
+    SetMatrixTexture   = SetMatrixTexture0 | SetMatrixTexture1
+};
+
+Q_DECLARE_FLAGS(DrawConditions, DrawCondition)
+Q_DECLARE_OPERATORS_FOR_FLAGS(DrawConditions)
+
 DENG2_PIMPL(DrawList)
 {
     /**
@@ -340,6 +372,303 @@ DENG2_PIMPL(DrawList)
         if(!elem->size) return 0;
         return elem;
     }
+
+    /**
+     * Configure GL state for drawing in this @a mode.
+     *
+     * @return  The conditions to select primitives.
+     */
+    DrawConditions pushGLState(DrawMode mode)
+    {
+        switch(mode)
+        {
+        case DM_SKYMASK:
+            // Render all primitives on the list without discrimination.
+            return NoColor;
+
+        case DM_ALL: // All surfaces.
+            // Should we do blending?
+            if(spec.unit(TU_INTER).hasTexture())
+            {
+                // Blend between two textures, modulate with primary color.
+                DENG2_ASSERT(numTexUnits >= 2);
+                GL_SelectTexUnits(2);
+
+                GL_BindTo(spec.unit(TU_PRIMARY), 0);
+                GL_BindTo(spec.unit(TU_INTER), 1);
+                GL_ModulateTexture(2);
+
+                float color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+            }
+            else if(!spec.unit(TU_PRIMARY).hasTexture())
+            {
+                // Opaque texture-less surface.
+                return 0;
+            }
+            else
+            {
+                // Normal modulation.
+                GL_SelectTexUnits(1);
+                GL_Bind(spec.unit(TU_PRIMARY));
+                GL_ModulateTexture(1);
+            }
+
+            if(spec.unit(TU_INTER).hasTexture())
+            {
+                return SetMatrixTexture0 | SetMatrixTexture1;
+            }
+            return SetMatrixTexture0;
+
+        case DM_LIGHT_MOD_TEXTURE:
+            // Modulate sector light, dynamic light and regular texture.
+            GL_BindTo(spec.unit(TU_PRIMARY), 1);
+            return SetMatrixTexture1 | SetLightEnv0 | JustOneLight | NoBlend;
+
+        case DM_TEXTURE_PLUS_LIGHT:
+            GL_BindTo(spec.unit(TU_PRIMARY), 0);
+            return SetMatrixTexture0 | SetLightEnv1 | NoBlend;
+
+        case DM_FIRST_LIGHT:
+            // Draw all primitives with more than one light
+            // and all primitives which will have a blended texture.
+            return SetLightEnv0 | ManyLights | Blend;
+
+        case DM_BLENDED: {
+            // Only render the blended surfaces.
+            if(!spec.unit(TU_INTER).hasTexture())
+            {
+                return Skip;
+            }
+
+            DENG2_ASSERT(numTexUnits >= 2);
+            GL_SelectTexUnits(2);
+            GL_BindTo(spec.unit(TU_PRIMARY), 0);
+            GL_BindTo(spec.unit(TU_INTER), 1);
+            GL_ModulateTexture(2);
+
+            float color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+            return SetMatrixTexture0 | SetMatrixTexture1; }
+
+        case DM_BLENDED_FIRST_LIGHT:
+            // Only blended surfaces.
+            if(!spec.unit(TU_INTER).hasTexture())
+            {
+                return Skip;
+            }
+            return SetMatrixTexture1 | SetLightEnv0;
+
+        case DM_WITHOUT_TEXTURE:
+            // Only render geometries affected by dynlights.
+            return 0;
+
+        case DM_LIGHTS:
+            // These lists only contain light geometries.
+            GL_Bind(spec.unit(TU_PRIMARY));
+            return 0;
+
+        case DM_BLENDED_MOD_TEXTURE:
+            // Blending required.
+            if(!spec.unit(TU_INTER).hasTexture())
+            {
+                break;
+            }
+
+            // Intentional fall-through.
+
+        case DM_MOD_TEXTURE:
+        case DM_MOD_TEXTURE_MANY_LIGHTS:
+            // Texture for surfaces with (many) dynamic lights.
+            // Should we do blending?
+            if(spec.unit(TU_INTER).hasTexture())
+            {
+                // Mode 3 actually just disables the second texture stage,
+                // which would modulate with primary color.
+                DENG2_ASSERT(numTexUnits >= 2);
+                GL_SelectTexUnits(2);
+                GL_BindTo(spec.unit(TU_PRIMARY), 0);
+                GL_BindTo(spec.unit(TU_INTER), 1);
+                GL_ModulateTexture(3);
+
+                float color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+                // Render all geometry.
+                return SetMatrixTexture0 | SetMatrixTexture1;
+            }
+            // No modulation at all.
+            GL_SelectTexUnits(1);
+            GL_Bind(spec.unit(TU_PRIMARY));
+            GL_ModulateTexture(0);
+            if(mode == DM_MOD_TEXTURE_MANY_LIGHTS)
+            {
+                return SetMatrixTexture0 | ManyLights;
+            }
+            return SetMatrixTexture0;
+
+        case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
+            // Blending is not done now.
+            if(spec.unit(TU_INTER).hasTexture())
+            {
+                break;
+            }
+
+            if(spec.unit(TU_PRIMARY_DETAIL).hasTexture())
+            {
+                GL_SelectTexUnits(2);
+                GL_ModulateTexture(9); // Tex+Detail, no color.
+                GL_BindTo(spec.unit(TU_PRIMARY), 0);
+                GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 1);
+                return SetMatrixTexture0 | SetMatrixDTexture1;
+            }
+            else
+            {
+                GL_SelectTexUnits(1);
+                GL_ModulateTexture(0);
+                GL_Bind(spec.unit(TU_PRIMARY));
+                return SetMatrixTexture0;
+            }
+            break;
+
+        case DM_ALL_DETAILS:
+            if(spec.unit(TU_PRIMARY_DETAIL).hasTexture())
+            {
+                GL_Bind(spec.unit(TU_PRIMARY_DETAIL));
+                return SetMatrixDTexture0;
+            }
+            break;
+
+        case DM_UNBLENDED_TEXTURE_AND_DETAIL:
+            // Only unblended. Details are optional.
+            if(spec.unit(TU_INTER).hasTexture())
+            {
+                break;
+            }
+
+            if(spec.unit(TU_PRIMARY_DETAIL).hasTexture())
+            {
+                GL_SelectTexUnits(2);
+                GL_ModulateTexture(8);
+                GL_BindTo(spec.unit(TU_PRIMARY), 0);
+                GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 1);
+                return SetMatrixTexture0 | SetMatrixDTexture1;
+            }
+            else
+            {
+                // Normal modulation.
+                GL_SelectTexUnits(1);
+                GL_ModulateTexture(1);
+                GL_Bind(spec.unit(TU_PRIMARY));
+                return SetMatrixTexture0;
+            }
+            break;
+
+        case DM_BLENDED_DETAILS: {
+            // We'll only render blended primitives.
+            if(!spec.unit(TU_INTER).hasTexture())
+            {
+                break;
+            }
+
+            if(!spec.unit(TU_PRIMARY_DETAIL).hasTexture() ||
+               !spec.unit(TU_INTER_DETAIL).hasTexture())
+            {
+                break;
+            }
+
+            GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 0);
+            GL_BindTo(spec.unit(TU_INTER_DETAIL), 1);
+
+            float color[4] = { 0, 0, 0, spec.unit(TU_INTER_DETAIL).opacity };
+            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+            return SetMatrixDTexture0 | SetMatrixDTexture1; }
+
+        case DM_SHADOW:
+            if(spec.unit(TU_PRIMARY).hasTexture())
+            {
+                GL_Bind(spec.unit(TU_PRIMARY));
+            }
+            else
+            {
+                GL_BindTextureUnmanaged(0);
+            }
+
+            if(!spec.unit(TU_PRIMARY).hasTexture())
+            {
+                // Apply a modelview shift.
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+
+                // Scale towards the viewpoint to avoid Z-fighting.
+                glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
+                glScalef(.99f, .99f, .99f);
+                glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
+            }
+            return 0;
+
+        case DM_MASKED_SHINY:
+            if(spec.unit(TU_INTER).hasTexture())
+            {
+                GL_SelectTexUnits(2);
+                // The intertex holds the info for the mask texture.
+                GL_BindTo(spec.unit(TU_INTER), 1);
+                float color[4] = { 0, 0, 0, 1 };
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+            }
+
+            // Intentional fall-through.
+
+        case DM_ALL_SHINY:
+        case DM_SHINY:
+            GL_BindTo(spec.unit(TU_PRIMARY), 0);
+            if(!spec.unit(TU_INTER).hasTexture())
+            {
+                GL_SelectTexUnits(1);
+            }
+
+            // Render all primitives.
+            if(mode == DM_ALL_SHINY)
+            {
+                return SetBlendMode;
+            }
+            if(mode == DM_MASKED_SHINY)
+            {
+                return SetBlendMode | SetMatrixTexture1;
+            }
+            return SetBlendMode | NoBlend;
+
+        default: break;
+        }
+
+        // Draw nothing for the specified mode.
+        return Skip;
+    }
+
+    /**
+     * Restore GL state after drawing in the specified @a mode.
+     */
+    void popGLState(DrawMode mode)
+    {
+        switch(mode)
+        {
+        default: break;
+
+        case DM_SHADOW:
+            if(!spec.unit(TU_PRIMARY).hasTexture())
+            {
+                // Restore original modelview matrix.
+                glMatrixMode(GL_MODELVIEW);
+                glPopMatrix();
+            }
+            break;
+
+        case DM_SHINY:
+        case DM_ALL_SHINY:
+        case DM_MASKED_SHINY:
+            GL_BlendMode(BM_NORMAL);
+            break;
+        }
+    }
 };
 
 DrawList::DrawList(Spec const &spec) : d(new Instance(this, spec))
@@ -453,13 +782,16 @@ DrawList &DrawList::write(gl::Primitive primitive, blendmode_t blendMode,
     return *this;
 }
 
-void DrawList::draw(DrawConditions conditions, TexUnitMap const &texUnitMap) const
+void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
 {
-    // Should we just skip all this?
-    if(conditions & Skip) return;
-
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Setup GL state for this list.
+    DrawConditions conditions = d->pushGLState(mode);
+
+    // Should we just skip all this?
+    if(conditions & Skip) return; // Assume no state changes were made.
 
     bool bypass = false;
     if(spec().unit(TU_INTER).hasTexture())
@@ -514,6 +846,9 @@ void DrawList::draw(DrawConditions conditions, TexUnitMap const &texUnitMap) con
             DENG2_ASSERT(!Sys_GLCheckError());
         }
     }
+
+    // Some modes require cleanup.
+    d->popGLState(mode);
 }
 
 DrawList::Spec &DrawList::spec()

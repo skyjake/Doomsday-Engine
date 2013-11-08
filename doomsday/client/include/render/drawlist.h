@@ -27,8 +27,6 @@
 #include <de/Vector>
 #include <QFlags>
 
-struct GLTextureUnit;
-
 /// Semantic geometry group identifiers.
 enum GeomGroup
 {
@@ -40,37 +38,31 @@ enum GeomGroup
     ShineGeom       ///< Surface reflection geometries.
 };
 
-/**
- * Drawing condition flags.
- *
- * @todo Most of these are actually list specification parameters. Rather than
- * set them each time an identified list is drawn it would be better to record
- * in the list itself. -ds
- */
-enum DrawCondition
+/// Logical drawing modes.
+enum DrawMode
 {
-    NoBlend            = 0x00000001,
-    Blend              = 0x00000002,
-    SetLightEnv0       = 0x00000004,
-    SetLightEnv1       = 0x00000008,
-    JustOneLight       = 0x00000010,
-    ManyLights         = 0x00000020,
-    SetBlendMode       = 0x00000040, // Primitive-specific blending.
-    SetMatrixDTexture0 = 0x00000080,
-    SetMatrixDTexture1 = 0x00000100,
-    SetMatrixTexture0  = 0x00000200,
-    SetMatrixTexture1  = 0x00000400,
-    NoColor            = 0x00000800,
-
-    Skip               = 0x80000000,
-
-    SetLightEnv        = SetLightEnv0 | SetLightEnv1,
-    SetMatrixDTexture  = SetMatrixDTexture0 | SetMatrixDTexture1,
-    SetMatrixTexture   = SetMatrixTexture0 | SetMatrixTexture1
+    DM_SKYMASK,
+    DM_ALL,
+    DM_LIGHT_MOD_TEXTURE,
+    DM_FIRST_LIGHT,
+    DM_TEXTURE_PLUS_LIGHT,
+    DM_UNBLENDED_TEXTURE_AND_DETAIL,
+    DM_BLENDED,
+    DM_BLENDED_FIRST_LIGHT,
+    DM_NO_LIGHTS,
+    DM_WITHOUT_TEXTURE,
+    DM_LIGHTS,
+    DM_MOD_TEXTURE,
+    DM_MOD_TEXTURE_MANY_LIGHTS,
+    DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL,
+    DM_BLENDED_MOD_TEXTURE,
+    DM_ALL_DETAILS,
+    DM_BLENDED_DETAILS,
+    DM_SHADOW,
+    DM_SHINY,
+    DM_MASKED_SHINY,
+    DM_ALL_SHINY
 };
-
-Q_DECLARE_FLAGS(DrawConditions, DrawCondition)
-Q_DECLARE_OPERATORS_FOR_FLAGS(DrawConditions)
 
 /// Virtual/logical texture unit indices. These map to real GL texture units.
 enum texunitid_t
@@ -140,12 +132,7 @@ public:
         DGLuint modTexture = 0, de::Vector3f const *modColor = 0,
         de::Vector2f const *modTexCoords = 0);
 
-    /**
-     * Draws all geometries in the list, in write order, which pass the supplied
-     * draw @a conditions. If no conditions are specified then all geometry is
-     * considered eligible and will be drawn.
-     */
-    void draw(DrawConditions conditions, TexUnitMap const &texUnitMap) const;
+    void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 
     /**
      * Returns @c true iff there are no commands/geometries in the list.
