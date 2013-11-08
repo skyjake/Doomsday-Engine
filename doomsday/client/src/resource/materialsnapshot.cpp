@@ -17,6 +17,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include "resource/materialsnapshot.h"
 #include "gl/gl_texmanager.h"
 #include "gl/gltextureunit.h"

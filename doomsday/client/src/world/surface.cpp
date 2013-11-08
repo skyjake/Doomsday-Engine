@@ -37,6 +37,8 @@
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
+#  include "MaterialSnapshot"
+#  include "Decoration"
 
 #  include "render/rend_main.h"
 #endif
