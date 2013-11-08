@@ -3117,8 +3117,6 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     }
 }
 
-#include <de/GLState>
-
 static void popGLStateForPass(DrawMode mode)
 {
     switch(mode)
