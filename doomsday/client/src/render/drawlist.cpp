@@ -689,6 +689,60 @@ DENG2_PIMPL(DrawList)
         {
         default: break;
 
+        case DM_ALL:
+            if(spec.unit(TU_INTER).hasTexture())
+            {
+                GL_SelectTexUnits(1);
+                GL_ModulateTexture(1);
+            }
+            break;
+
+        case DM_BLENDED:
+            if(spec.unit(TU_INTER).hasTexture())
+            {
+                GL_SelectTexUnits(1);
+                GL_ModulateTexture(1);
+            }
+            break;
+
+        case DM_BLENDED_MOD_TEXTURE:
+        case DM_MOD_TEXTURE:
+        case DM_MOD_TEXTURE_MANY_LIGHTS:
+            if(spec.unit(TU_INTER).hasTexture())
+            {
+                GL_SelectTexUnits(1);
+                GL_ModulateTexture(1);
+            }
+            else if(mode != DM_BLENDED_MOD_TEXTURE)
+            {
+                GL_ModulateTexture(1);
+            }
+            break;
+
+        case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
+            if(!spec.unit(TU_INTER).hasTexture())
+            {
+                if(spec.unit(TU_PRIMARY_DETAIL).hasTexture())
+                {
+                    GL_SelectTexUnits(1);
+                    GL_ModulateTexture(1);
+                }
+                else
+                {
+                    GL_ModulateTexture(1);
+                }
+            }
+            break;
+
+        case DM_UNBLENDED_TEXTURE_AND_DETAIL:
+            if(!spec.unit(TU_INTER).hasTexture() &&
+               spec.unit(TU_PRIMARY_DETAIL).hasTexture())
+            {
+                GL_SelectTexUnits(1);
+                GL_ModulateTexture(1);
+            }
+            break;
+
         case DM_SHADOW:
             if(!spec.unit(TU_PRIMARY).hasTexture())
             {
@@ -702,6 +756,10 @@ DENG2_PIMPL(DrawList)
         case DM_ALL_SHINY:
         case DM_MASKED_SHINY:
             GL_BlendMode(BM_NORMAL);
+            if(mode == DM_MASKED_SHINY && spec.unit(TU_INTER).hasTexture())
+            {
+                GL_SelectTexUnits(1);
+            }
             break;
         }
     }

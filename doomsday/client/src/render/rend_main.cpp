@@ -3399,17 +3399,15 @@ static void drawAllLists()
 
     renderTextures = oldRenderTextures;
 
-    // Return to the normal GL state.
-    GL_SelectTexUnits(1);
-    GL_ModulateTexture(1);
     glDisable(GL_TEXTURE_2D);
+
+    // The draw lists do not modify these states -ds
+    glEnable(GL_BLEND);
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0);
-    glEnable(GL_BLEND);
-    GL_BlendMode(BM_NORMAL);
     if(usingFog)
     {
         glEnable(GL_FOG);
