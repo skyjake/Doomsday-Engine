@@ -1,7 +1,4 @@
-/**
- * @file fonts.h
- *
- * Font Resources. @ingroup resource
+/** @file fonts.h Font resource collection. @ingroup resource
  *
  * 'Runtime' fonts are not loaded until precached or actually needed. They may
  * be cleared, in which case they will be reloaded when needed.
@@ -22,8 +19,8 @@
  *   1) Declared but not defined.
  *   2) Declared and defined.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -40,15 +37,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_FONTS_H
-#define LIBDENG_RESOURCE_FONTS_H
+#ifndef DENG_RESOURCE_FONTS_H
+#define DENG_RESOURCE_FONTS_H
 
 #include "api_uri.h"
 #include "def_data.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /// Special value used to signify an invalid font id.
 #define NOFONTID                    0
@@ -57,19 +50,19 @@ enum fontschemeid_e; // Defined in dd_share.h
 struct font_s;
 
 /// Register the console commands, variables, etc..., of this module.
-void Fonts_Register(void);
+void Fonts_Register();
 
 /// Determines whether the fonts collection has been initialized.
-boolean Fonts_IsInitialized(void);
+boolean Fonts_IsInitialized();
 
 /// Initialize this module.
-void Fonts_Init(void);
+void Fonts_Init();
 
 /// Shutdown this module.
-void Fonts_Shutdown(void);
+void Fonts_Shutdown();
 
 /// To be called during a definition database reset to clear all links to defs.
-void Fonts_ClearDefinitionLinks(void);
+void Fonts_ClearDefinitionLinks();
 
 /**
  * Try to interpret a font scheme identifier from @a str.
@@ -78,25 +71,25 @@ void Fonts_ClearDefinitionLinks(void);
  * then the special identifier @c FS_ANY is returned.
  * Otherwise @c FS_INVALID.
  */
-fontschemeid_t Fonts_ParseScheme(const char* str);
+fontschemeid_t Fonts_ParseScheme(char const *str);
 
 /// @return  Name associated with the identified @a schemeId else a zero-length string.
-const ddstring_t* Fonts_SchemeName(fontschemeid_t schemeId);
+ddstring_t const *Fonts_SchemeName(fontschemeid_t schemeId);
 
 /// @return  Total number of unique Fonts in the collection.
-uint Fonts_Size(void);
+uint Fonts_Size();
 
 /// @return  Number of unique Fonts in the identified @a schemeId.
 uint Fonts_Count(fontschemeid_t schemeId);
 
 /// Clear all fonts in all schemes (and release any acquired GL-textures).
-void Fonts_Clear(void);
+void Fonts_Clear();
 
 /// Clear all fonts flagged 'runtime' (and release any acquired GL-textures).
-void Fonts_ClearRuntime(void);
+void Fonts_ClearRuntime();
 
 /// Clear all fonts flagged 'system' (and release any acquired GL-textures).
-void Fonts_ClearSystem(void);
+void Fonts_ClearSystem();
 
 /**
  * Clear all fonts in the identified scheme(s) (and release any acquired GL-textures).
@@ -107,10 +100,10 @@ void Fonts_ClearSystem(void);
 void Fonts_ClearScheme(fontschemeid_t schemeId);
 
 /// @return  Unique identifier of the primary name for @a font else @c NOFONTID.
-fontid_t Fonts_Id(struct font_s* font);
+fontid_t Fonts_Id(struct font_s *font);
 
 /// @return  Font associated with unique identifier @a fontId else @c NULL.
-struct font_s* Fonts_ToFont(fontid_t fontId);
+struct font_s *Fonts_ToFont(fontid_t fontId);
 
 /// @return  Font associated with the scheme-unique identifier @a index else @c NOFONTID.
 fontid_t Fonts_FontForUniqueId(fontschemeid_t schemeId, int uniqueId);
@@ -122,13 +115,13 @@ int Fonts_UniqueId(fontid_t fontId);
 fontschemeid_t Fonts_Scheme(fontid_t fontId);
 
 /// @return  Symbolic name/path-to this font as a string.
-AutoStr* Fonts_ComposePath(fontid_t fontId);
+AutoStr *Fonts_ComposePath(fontid_t fontId);
 
 /// @return  URI to this font. Must be destroyed with Uri_Delete().
-Uri* Fonts_ComposeUri(fontid_t fontid);
+Uri *Fonts_ComposeUri(fontid_t fontid);
 
 /// @return  Unique URN to this font. Must be destroyed with Uri_Delete().
-Uri* Fonts_ComposeUrn(fontid_t fontId);
+Uri *Fonts_ComposeUrn(fontid_t fontId);
 
 /**
  * Update the Font according to the supplied definition.
@@ -137,9 +130,9 @@ Uri* Fonts_ComposeUrn(fontid_t fontId);
  * @param font  Font to be updated.
  * @param def  font definition to update using.
  */
-void Fonts_RebuildFromDef(struct font_s* font, ded_compositefont_t* def);
+void Fonts_RebuildFromDef(struct font_s *font, ded_compositefont_t *def);
 
-void Fonts_RebuildFromFile(struct font_s* font, const char* resourcePath);
+void Fonts_RebuildFromFile(struct font_s *font, char const *resourcePath);
 
 /**
  * Search the Fonts collection for a font associated with @a uri.
@@ -149,11 +142,11 @@ void Fonts_RebuildFromFile(struct font_s* font, const char* resourcePath);
  *
  * @return  Unique identifier of the found texture else @c NOFONTID.
  */
-fontid_t Fonts_ResolveUri2(Uri const* uri, boolean quiet);
+fontid_t Fonts_ResolveUri2(Uri const *uri, boolean quiet);
 
 /// Same as Fonts::ResolveUri except @a uri is a C-string.
-fontid_t Fonts_ResolveUriCString2(const char* uri, boolean quiet);
-fontid_t Fonts_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
+fontid_t Fonts_ResolveUriCString2(char const *uri, boolean quiet);
+fontid_t Fonts_ResolveUriCString(char const *uri); /*quiet=!(verbose >= 1)*/
 
 /**
  * Declare a font in the collection. If a font with the specified @a uri
@@ -164,13 +157,13 @@ fontid_t Fonts_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
  * @return  Unique identifier for this font unless @a uri is invalid, in
  *     which case @c NOFONTID is returned.
  */
-fontid_t Fonts_Declare(Uri* uri, int uniqueId);
+fontid_t Fonts_Declare(Uri *uri, int uniqueId);
 
 /// Load an external font from a local file.
-struct font_s* Fonts_CreateFromFile(fontid_t id, const char* filePath);
+struct font_s *Fonts_CreateFromFile(fontid_t id, char const *filePath);
 
 /// Create a bitmap composite font from @a def.
-struct font_s* Fonts_CreateFromDef(fontid_t id, ded_compositefont_t* def);
+struct font_s *Fonts_CreateFromDef(fontid_t id, ded_compositefont_t *def);
 
 /**
  * Iterate over defined Fonts in the collection making a callback for
@@ -184,8 +177,8 @@ struct font_s* Fonts_CreateFromDef(fontid_t id, ded_compositefont_t* def);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Fonts_Iterate2(fontschemeid_t schemeId, int (*callback)(struct font_s* font, void* paramaters), void* paramaters);
-int Fonts_Iterate(fontschemeid_t schemeId, int (*callback)(struct font_s* font, void* paramaters)); /*paramaters=NULL*/
+int Fonts_Iterate2(fontschemeid_t schemeId, int (*callback)(struct font_s *font, void *paramaters), void *paramaters);
+int Fonts_Iterate(fontschemeid_t schemeId, int (*callback)(struct font_s *font, void *paramaters)); /*paramaters=NULL*/
 
 /**
  * Iterate over declared fonts in the collection making a callback for
@@ -199,8 +192,8 @@ int Fonts_Iterate(fontschemeid_t schemeId, int (*callback)(struct font_s* font, 
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Fonts_IterateDeclared2(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void* paramaters), void* paramaters);
-int Fonts_IterateDeclared(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void* paramaters)); /*paramaters=NULL*/
+int Fonts_IterateDeclared2(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void *paramaters), void *paramaters);
+int Fonts_IterateDeclared(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void *paramaters)); /*paramaters=NULL*/
 
 struct font_s *R_CreateFontFromFile(Uri *uri, char const *resourcePath);
 struct font_s *R_CreateFontFromDef(ded_compositefont_t *def);
@@ -218,25 +211,21 @@ struct font_s *R_CreateFontFromDef(ded_compositefont_t *def);
  * @note Called automatically prior to module shutdown.
  * @todo Define new texture schemes for font textures and refactor away.
  */
-void Fonts_ReleaseRuntimeTextures(void);
-void Fonts_ReleaseSystemTextures(void);
+void Fonts_ReleaseRuntimeTextures();
+void Fonts_ReleaseSystemTextures();
 
 /// @return  List of collected font names.
-ddstring_t** Fonts_CollectNames(int* count);
+ddstring_t **Fonts_CollectNames(int *count);
 
-int Fonts_Ascent(struct font_s* font);
-int Fonts_Descent(struct font_s* font);
-int Fonts_Leading(struct font_s* font);
+int Fonts_Ascent(struct font_s *font);
+int Fonts_Descent(struct font_s *font);
+int Fonts_Leading(struct font_s *font);
 
 /**
  * Query the visible dimensions of a character in this font.
  */
-void Fonts_CharSize(struct font_s* font, Size2Raw* size, unsigned char ch);
-int Fonts_CharHeight(struct font_s* font, unsigned char ch);
-int Fonts_CharWidth(struct font_s* font, unsigned char ch);
+void Fonts_CharSize(struct font_s *font, Size2Raw *size, unsigned char ch);
+int Fonts_CharHeight(struct font_s *font, unsigned char ch);
+int Fonts_CharWidth(struct font_s *font, unsigned char ch);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_RESOURCE_FONTS_H */
+#endif // DENG_RESOURCE_FONTS_H
