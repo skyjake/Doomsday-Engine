@@ -26,6 +26,7 @@
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
+#include "render/rendersystem.h"
 #include "WidgetActions"
 #include "updater.h"
 #include "Games"
@@ -55,12 +56,11 @@ public:
     static bool haveApp();
     static ClientApp &app();
     static Updater &updater();
-    static SettingsRegister &rendererSettings(); ///< @todo Belongs in a subsystem.
-    static SettingsRegister &rendererAppearanceSettings(); ///< @todo Belongs in a subsystem.
     static SettingsRegister &audioSettings();    ///< @todo Belongs in AudioSystem.
     static ServerLink &serverLink();
     static InputSystem &inputSystem();
     static WindowSystem &windowSystem();
+    static RenderSystem &renderSystem();
     static WidgetActions &widgetActions();
     static de::GLShaderBank &glShaderBank();
     static de::Games &games();

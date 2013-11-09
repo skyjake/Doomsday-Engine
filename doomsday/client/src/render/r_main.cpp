@@ -38,6 +38,7 @@
 #include "de_ui.h"
 
 #ifdef __CLIENT__
+#  include "clientapp.h"
 #  include "edit_bias.h"
 #  include "api_render.h"
 #  include "render/r_main.h"
@@ -555,9 +556,9 @@ void R_Update()
     // Recalculate the light range mod matrix.
     Rend_UpdateLightModMatrix();
 
-    // The rendering lists have persistent data that has changed during
-    // the re-initialization.
-    RL_DeleteLists();
+    // The rendering lists have persistent data that has changed during the
+    // re-initialization.
+    ClientApp::renderSystem().clearDrawLists();
 
     /// @todo fixme: Update the game title and the status.
 #endif

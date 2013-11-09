@@ -19,9 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#include "Surface"
-
 #include "render/decoration.h"
+#include "MaterialSnapshot"
+#include "Surface"
 
 using namespace de;
 

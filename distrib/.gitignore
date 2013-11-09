@@ -2,6 +2,7 @@
 builddir
 build-stamp
 work
+srcwork
 plugins
 build*.txt
 products
