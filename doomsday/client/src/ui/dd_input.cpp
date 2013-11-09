@@ -33,6 +33,8 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 
+#include "render/vr.h"
+
 #include "ui/windowsystem.h"
 #include <de/KeyEvent>
 
@@ -1568,24 +1570,37 @@ void DD_ReadHeadTracker(void)
     /// @todo Access head tracking hardware here and post an event per axis using
     /// DD_PostEvent() (cf. above for the joystick).
 
+    if (! VR::hasHeadOrientation())
+        return;
+
     ddevent_t ev;
 
     ev.device = IDEV_HEAD_TRACKER;
     ev.type = E_AXIS;
     ev.axis.type = EAXIS_ABSOLUTE;
 
+    std::vector<float> pry = VR::getHeadOrientation();
+    if (pry.size() != 3)
+        return;
+
     // Yaw.
+    // skyjake wrote:
+    // > With "yawhead" and "yawbody", 1.0 means 180 degrees.
     ev.axis.id = 0; // Yaw.
-    ev.axis.pos = cos(Timer_RealSeconds());
+    // ev.axis.pos = cos(Timer_RealSeconds());
+    ev.axis.pos = de::radianToDegree(pry[2]) * 1.0 / 180.0;
     DD_PostEvent(&ev);
 
     ev.axis.id = 1; // Pitch.
-    ev.axis.pos = sin(Timer_RealSeconds()/2) * .5f;
+    // ev.axis.pos = sin(Timer_RealSeconds()/2) * .5f;
+    // 1.0 mean 85 degrees
+    ev.axis.pos = de::radianToDegree(pry[0]) * 1.0 / 85.0;
     DD_PostEvent(&ev);
 
+    // So I'll assume that if roll ever gets used, 1.0 will mean 180 degrees there too.
     ev.axis.id = 2; // Roll.
-    ev.axis.pos = 0;
-    //DD_PostEvent(&ev);
+    ev.axis.pos = de::radianToDegree(pry[1]) * 1.0 / 180.0;
+    DD_PostEvent(&ev);
 }
 
 #ifdef _DEBUG

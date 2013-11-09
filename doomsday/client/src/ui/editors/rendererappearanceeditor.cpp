@@ -265,7 +265,7 @@ DENG2_OBSERVES(App, GameChange)
 
     Instance(Public *i)
         : Base(i),
-          settings(ClientApp::rendererAppearanceSettings()),
+          settings(ClientApp::renderSystem().appearanceSettings()),
           firstColumnWidth(new IndirectRule)
     {
         // The editor will close automatically when going to Ring Zero.
@@ -721,16 +721,6 @@ void RendererAppearanceEditor::unfoldAll()
 {
     d->foldAll(false);
 }
-
-/*
-void RendererAppearanceEditor::showRendererSettings()
-{
-    RendererSettingsDialog *dlg = new RendererSettingsDialog;
-    dlg->setDeleteAfterDismissed(true);
-    dlg->setAnchorAndOpeningDirection(d->conf->rule(), Down);
-    root().add(dlg);
-    dlg->open();
-}*/
 
 void RendererAppearanceEditor::preparePanelForOpening()
 {

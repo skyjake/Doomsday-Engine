@@ -198,19 +198,7 @@ public:
      */
     static GLState *take();
 
-    /**
-     * Sets the subregion inside the real render target where scissor and
-     * viewport will be constrained to. Scissor and viewport can still be
-     * defined as if the entire window was in use; the target window only
-     * applies an offset and scaling to both.
-     *
-     * @param rect   Target window rectangle. Set a null rectangle to
-     *               use the entire window (like normally).
-     * @param apply  Immediately update current OpenGL state accordingly.
-     */
-    static void setActiveRect(Rectangleui const &rect, bool apply = false);
-
-    static Rectangleui activeRect();
+    static dsize stackDepth();
 
 private:
     DENG2_PRIVATE(d)

@@ -29,6 +29,7 @@ PFNGLBINDBUFFERPROC               glBindBuffer;
 PFNGLBINDFRAMEBUFFERPROC          glBindFramebuffer;
 PFNGLBINDRENDERBUFFERPROC         glBindRenderbuffer;
 PFNGLBLENDEQUATIONPROC            glBlendEquation;
+PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
 PFNGLBUFFERDATAPROC               glBufferData;
 
 PFNGLCHECKFRAMEBUFFERSTATUSPROC   glCheckFramebufferStatus;
@@ -98,6 +99,7 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glBindFramebuffer);
     GET_PROC(glBindRenderbuffer);
     GET_PROC(glBlendEquation);
+    GET_PROC(glBlendFuncSeparate);
     GET_PROC(glBufferData);
     GET_PROC(glCheckFramebufferStatus);
     GET_PROC(glCompileShader);

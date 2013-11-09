@@ -46,6 +46,7 @@ DENG2_OBSERVES(Asset, Deletion)
     GLTexture *texture;
     Vector2ui size;
     Vector4f clearColor;
+    Rectangleui activeRect; ///< Initially null.
 
     Instance(Public *i)
         : Base(i), fbo(0),
@@ -297,6 +298,48 @@ GLTarget::Size GLTarget::size() const
         return d->size;
     }
     return CanvasWindow::main().canvas().size();
+}
+
+void GLTarget::setActiveRect(Rectangleui const &rect, bool applyGLState)
+{
+    d->activeRect = rect;
+    if(applyGLState)
+    {
+        // Forcibly update viewport and scissor (and other GL state).
+        GLState::considerNativeStateUndefined();
+        GLState::top().apply();
+    }
+}
+
+void GLTarget::unsetActiveRect(bool applyGLState)
+{
+    setActiveRect(Rectangleui(), applyGLState);
+}
+
+Rectangleui GLTarget::scaleToActiveRect(Rectangleui const &rectInTarget) const
+{
+    // If no sub rectangle is defined, do nothing.
+    if(!hasActiveRect())
+    {
+        return rectInTarget;
+    }
+
+    Vector2f const scaling = Vector2f(d->activeRect.size()) / size();
+
+    return Rectangleui(d->activeRect.left()  + scaling.x * rectInTarget.left(),
+                       d->activeRect.top()   + scaling.y * rectInTarget.top(),
+                       rectInTarget.width()  * scaling.x,
+                       rectInTarget.height() * scaling.y);
+}
+
+Rectangleui const &GLTarget::activeRect() const
+{
+    return d->activeRect;
+}
+
+bool GLTarget::hasActiveRect() const
+{
+    return !d->activeRect.isNull();
 }
 
 } // namespace de

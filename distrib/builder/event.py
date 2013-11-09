@@ -334,6 +334,7 @@ class Event:
         return msg
         
     def release_type(self):
+        """Returns the release type as a lower-case string."""
         fn = self.file_path('releaseType.txt')
         if os.path.exists(fn):
             return file(fn).read().lower().strip()

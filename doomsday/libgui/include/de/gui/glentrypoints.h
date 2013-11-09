@@ -46,6 +46,7 @@ extern PFNGLBINDBUFFERPROC               glBindBuffer;
 extern PFNGLBINDFRAMEBUFFERPROC          glBindFramebuffer;
 extern PFNGLBINDRENDERBUFFERPROC         glBindRenderbuffer;
 extern PFNGLBLENDEQUATIONPROC            glBlendEquation;
+extern PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
 extern PFNGLBUFFERDATAPROC               glBufferData;
 
 extern PFNGLCHECKFRAMEBUFFERSTATUSPROC   glCheckFramebufferStatus;

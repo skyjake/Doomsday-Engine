@@ -124,6 +124,8 @@ DENG_CONVENIENCE_HEADERS += \
     include/ContactSpreader \
     include/Decoration \
     include/DialogContentStylist \
+    include/Drawlist \
+    include/Drawlists \
     include/EntityDatabase \
     include/Face \
     include/FontLineWrapping \
@@ -258,6 +260,7 @@ DENG_HEADERS += \
     include/gl/gl_model.h \
     include/gl/gl_tex.h \
     include/gl/gl_texmanager.h \
+    include/gl/gltextureunit.h \
     include/gl/svg.h \
     include/gl/sys_opengl.h \
     include/gl/texturecontent.h \
@@ -289,6 +292,8 @@ DENG_HEADERS += \
     include/render/biastracker.h \
     include/render/blockmapvisual.h \
     include/render/decoration.h \
+    include/render/drawlist.h \
+    include/render/drawlists.h \
     include/render/huecirclevisual.h \
     include/render/lightdecoration.h \
     include/render/lightgrid.h \
@@ -303,12 +308,12 @@ DENG_HEADERS += \
     include/render/rend_fakeradio.h \
     include/render/rend_font.h \
     include/render/rend_halo.h \
-    include/render/rend_list.h \
     include/render/rend_main.h \
     include/render/rend_model.h \
     include/render/rend_particle.h \
     include/render/rend_shadow.h \
     include/render/rendpoly.h \
+    include/render/rendersystem.h \
     include/render/shadowedge.h \
     include/render/sky.h \
     include/render/skyfixedge.h \
@@ -420,6 +425,7 @@ DENG_HEADERS += \
     include/ui/widgets/buttonwidget.h \
     include/ui/widgets/choicewidget.h \
     include/ui/widgets/commandwidget.h \
+    include/ui/widgets/compositorwidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
     include/ui/widgets/cvarchoicewidget.h \
@@ -429,11 +435,12 @@ DENG_HEADERS += \
     include/ui/widgets/documentwidget.h \
     include/ui/widgets/foldpanelwidget.h \
     include/ui/widgets/gameselectionwidget.h \
+    include/ui/widgets/gamewidget.h \
+    include/ui/widgets/gameuiwidget.h \
     include/ui/widgets/gridpopupwidget.h \
     include/ui/widgets/icvarwidget.h \
     include/ui/widgets/keygrabberwidget.h \
     include/ui/widgets/labelwidget.h \
-    include/ui/widgets/legacywidget.h \
     include/ui/widgets/lineeditwidget.h \
     include/ui/widgets/logwidget.h \
     include/ui/widgets/menuwidget.h \
@@ -644,6 +651,8 @@ SOURCES += \
     src/render/biastracker.cpp \
     src/render/blockmapvisual.cpp \
     src/render/decoration.cpp \
+    src/render/drawlist.cpp \
+    src/render/drawlists.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightdecoration.cpp \
     src/render/lightgrid.cpp \
@@ -658,12 +667,12 @@ SOURCES += \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.cpp \
     src/render/rend_halo.cpp \
-    src/render/rend_list.cpp \
     src/render/rend_main.cpp \
     src/render/rend_model.cpp \
     src/render/rend_particle.cpp \
     src/render/rend_shadow.cpp \
     src/render/rendpoly.cpp \
+    src/render/rendersystem.cpp \
     src/render/shadowedge.cpp \
     src/render/sky.cpp \
     src/render/skyfixedge.cpp \
@@ -766,6 +775,7 @@ SOURCES += \
     src/ui/widgets/buttonwidget.cpp \
     src/ui/widgets/choicewidget.cpp \
     src/ui/widgets/commandwidget.cpp \
+    src/ui/widgets/compositorwidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/cvarchoicewidget.cpp \
@@ -775,10 +785,11 @@ SOURCES += \
     src/ui/widgets/documentwidget.cpp \
     src/ui/widgets/foldpanelwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
+    src/ui/widgets/gamewidget.cpp \
+    src/ui/widgets/gameuiwidget.cpp \
     src/ui/widgets/gridpopupwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
     src/ui/widgets/labelwidget.cpp \
-    src/ui/widgets/legacywidget.cpp \
     src/ui/widgets/lineeditwidget.cpp \
     src/ui/widgets/logwidget.cpp \
     src/ui/widgets/menuwidget.cpp \

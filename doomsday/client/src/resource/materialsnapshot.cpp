@@ -17,33 +17,28 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_defs.h"
-#include "Lumobj" // Rend_LightmapTextureSpec()
+#include "de_platform.h"
+#include "resource/materialsnapshot.h"
+#include "gl/gl_texmanager.h"
+#include "gl/gltextureunit.h"
 #include "render/rend_halo.h" // Rend_HaloTextureSpec()
 #include "render/rend_main.h" // detailFactor, detailScale, smoothTexAnim, etc...
-#include "gl/gl_main.h"
-#include "gl/gl_texmanager.h"
-
+#include "resource/r_data.h" // NUM_SYSFLARE_TEXTURES
+#include "Lumobj" // Rend_LightmapTextureSpec()
 #include "Material"
 #include "Texture"
 #include <de/Log>
 
-#include "MaterialSnapshot"
-
 namespace de {
 
-struct Store {
-    /// @c true= this material is completely opaque.
+DENG2_PIMPL_NOREF(MaterialSnapshot)
+{
+    MaterialVariant *variant;
+
     bool opaque;
-
-    /// Glow strength factor.
     float glowStrength;
-
-    /// Dimensions in the world coordinate space.
     Vector2i dimensions;
-
-    /// Minimum ambient light color for shine texture.
+    blendmode_t shineBlendMode;
     Vector3f shineMinColor;
 
     /// Textures used on each logical material texture unit.
@@ -54,54 +49,28 @@ struct Store {
 
     /// Prepared render texture unit configuration. These map directly
     /// to the texture units supplied to the render lists module.
-    rtexmapunit_t units[NUM_TEXMAP_UNITS];
+    GLTextureUnit units[NUM_TEXMAP_UNITS];
 
-    Store() { initialize(); }
+    Instance(MaterialVariant &variant) : variant(&variant)
+    {
+        initialize();
+    }
 
     void initialize()
     {
-        dimensions    = Vector2i(0, 0);
-        shineMinColor = Vector3f(0, 0, 0);
-        opaque        = true;
-        glowStrength  = 0;
+        dimensions     = Vector2i(0, 0);
+        shineBlendMode = BM_NORMAL;
+        shineMinColor  = Vector3f(0, 0, 0);
+        opaque         = true;
+        glowStrength   = 0;
 
         zap(textures);
         zap(decorations);
     }
-
-    void writeTexUnit(rtexmapunitid_t unit, Texture::Variant *texture,
-                      blendmode_t blendMode, Vector2f scale, Vector2f offset,
-                      float opacity)
-    {
-        DENG2_ASSERT(unit >= 0 && unit < NUM_TEXMAP_UNITS);
-        rtexmapunit_t &tu = units[unit];
-
-        tu.texture.variant = texture;
-        tu.texture.flags   = TUF_TEXTURE_IS_MANAGED;
-        tu.opacity   = de::clamp(0.f, opacity, 1.f);
-        tu.blendMode = blendMode;
-        tu.scale     = scale;
-        tu.offset    = offset;
-    }
-};
-
-DENG2_PIMPL(MaterialSnapshot)
-{
-    /// Variant material used to derive this snapshot.
-    MaterialVariant *variant;
-
-    Store stored;
-
-    Instance(Public *i, MaterialVariant &_variant) : Base(i),
-        variant(&_variant),
-        stored()
-    {}
-
-    void takeSnapshot();
 };
 
 MaterialSnapshot::MaterialSnapshot(MaterialVariant &materialVariant)
-    : d(new Instance(this, materialVariant))
+    : d(new Instance(materialVariant))
 {}
 
 MaterialVariant &MaterialSnapshot::materialVariant() const
@@ -111,28 +80,33 @@ MaterialVariant &MaterialSnapshot::materialVariant() const
 
 Vector2i const &MaterialSnapshot::dimensions() const
 {
-    return d->stored.dimensions;
+    return d->dimensions;
 }
 
 bool MaterialSnapshot::isOpaque() const
 {
-    return d->stored.opaque;
+    return d->opaque;
 }
 
 float MaterialSnapshot::glowStrength() const
 {
-    return d->stored.glowStrength;
+    return d->glowStrength;
+}
+
+blendmode_t MaterialSnapshot::shineBlendMode() const
+{
+    return d->shineBlendMode;
 }
 
 Vector3f const &MaterialSnapshot::shineMinColor() const
 {
-    return d->stored.shineMinColor;
+    return d->shineMinColor;
 }
 
 bool MaterialSnapshot::hasTexture(int index) const
 {
     if(index < 0 || index >= NUM_MATERIAL_TEXTURE_UNITS) return false;
-    return d->stored.textures[index] != 0;
+    return d->textures[index] != 0;
 }
 
 Texture::Variant &MaterialSnapshot::texture(int index) const
@@ -142,17 +116,17 @@ Texture::Variant &MaterialSnapshot::texture(int index) const
         /// @throw UnknownUnitError Attempt to dereference with an invalid index.
         throw UnknownUnitError("MaterialSnapshot::texture", QString("Invalid texture #%1").arg(index));
     }
-    return *d->stored.textures[index];
+    return *d->textures[index];
 }
 
-rtexmapunit_t const &MaterialSnapshot::unit(int index) const
+GLTextureUnit const &MaterialSnapshot::unit(int index) const
 {
     if(index < 0 || index >= NUM_TEXMAP_UNITS)
     {
         /// @throw UnknownUnitError Attempt to obtain a reference to a unit with an invalid id.
         throw UnknownUnitError("MaterialSnapshot::unit", QString("Invalid unit #%1").arg(index));
     }
-    return d->stored.units[index];
+    return d->units[index];
 }
 
 MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
@@ -162,13 +136,12 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
         /// @throw UnknownDecorationError Attempt to obtain a reference to a decoration with an invalid index.
         throw UnknownDecorationError("MaterialSnapshot::decoration", QString("Invalid decoration #%1").arg(index));
     }
-    return d->stored.decorations[index];
+    return d->decorations[index];
 }
 
 /**
- * Attempt to locate and prepare a flare texture.
- * Somewhat more complicated than it needs to be due to the fact there
- * are two different selection methods.
+ * Attempt to locate and prepare a flare texture. Somewhat more complicated than
+ * it needs to be due to the fact there are two different selection methods.
  *
  * @param texture  Logical texture to prepare an variant of.
  * @param oldIdx  Old method of flare texture selection, by id.
@@ -197,35 +170,36 @@ static DGLuint prepareFlaremap(Texture *texture, int oldIdx)
 }
 
 /// @todo Implement more useful methods of interpolation. (What do we want/need here?)
-void MaterialSnapshot::Instance::takeSnapshot()
+void MaterialSnapshot::update()
 {
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
-    Material *material = &variant->generalCase();
+    Material *material = &d->variant->generalCase();
     Material::Layers const &layers = material->layers();
     Material::DetailLayer const *detailLayer = material->isDetailed()? &material->detailLayer() : 0;
     Material::ShineLayer const *shineLayer   =    material->isShiny()? &material->shineLayer()  : 0;
 
-    Texture::Variant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS][2];
-    std::memset(prepTextures, 0, sizeof prepTextures);
+    TextureVariant *prepTextures[NUM_MATERIAL_TEXTURE_UNITS][2];
+    zap(prepTextures);
 
     // Reinitialize the stored values.
-    stored.initialize();
+    d->initialize();
 
     /*
-     * Ensure all resources needed to visualize this have been prepared.
-     *
-     * If skymasked, we only need to update the primary tex unit (due to
-     * it being visible when skymask debug drawing is enabled).
+     * Ensure all resources needed to visualize this have been prepared. If
+     * skymasked, we only need to update the primary tex unit (due to it being
+     * visible when skymask debug drawing is enabled).
      */
     for(int i = 0; i < layers.count(); ++i)
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).layer(i);
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).layer(i);
 
         Material::Layer::Stage const *lsCur = layers[i]->stages()[l.stage];
         if(lsCur->texture)
+        {
             prepTextures[i][0] =
-                lsCur->texture->prepareVariant(*variant->spec().primarySpec);
+                lsCur->texture->prepareVariant(*d->variant->spec().primarySpec);
+        }
 
         // Smooth Texture Animation?
         if(smoothTexAnim && layers[i]->stageCount() > 1)
@@ -234,14 +208,16 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 layers[i]->stages()[(l.stage + 1) % layers[i]->stageCount()];
 
             if(lsNext->texture)
-                prepTextures[i][1] = lsNext->texture->prepareVariant(*variant->spec().primarySpec);
+            {
+                prepTextures[i][1] = lsNext->texture->prepareVariant(*d->variant->spec().primarySpec);
+            }
         }
     }
 
     // Do we need to prepare detail texture(s)?
     if(!material->isSkyMasked() && material->isDetailed())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).detailLayer();
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).detailLayer();
         Material::DetailLayer::Stage const *lsCur = detailLayer->stages()[l.stage];
 
         if(lsCur->texture)
@@ -273,46 +249,50 @@ void MaterialSnapshot::Instance::takeSnapshot()
     // Do we need to prepare a shiny texture (and possibly a mask)?
     if(!material->isSkyMasked() && material->isShiny())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).shineLayer();
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).shineLayer();
         Material::ShineLayer::Stage const *lsCur = shineLayer->stages()[l.stage];
 
         if(lsCur->texture)
+        {
             prepTextures[MTU_REFLECTION][0] =
                 lsCur->texture->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
+        }
 
         // We are only interested in a mask if we have a shiny texture.
         if(prepTextures[MTU_REFLECTION][0])
         {
             if(lsCur->maskTexture)
+            {
                 prepTextures[MTU_REFLECTION_MASK][0] =
                     lsCur->maskTexture->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
+            }
         }
     }
 
-    stored.dimensions = material->dimensions();
+    d->dimensions = material->dimensions();
 
-    stored.opaque = (prepTextures[MTU_PRIMARY][0] && !prepTextures[MTU_PRIMARY][0]->isMasked());
+    d->opaque = (prepTextures[MTU_PRIMARY][0] && !prepTextures[MTU_PRIMARY][0]->isMasked());
 
-    if(stored.dimensions.x == 0 && stored.dimensions.y == 0) return;
+    if(d->dimensions.x == 0 && d->dimensions.y == 0) return;
 
-    MaterialAnimation::LayerState const &l = material->animation(variant->context()).layer(0);
+    MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).layer(0);
     Material::Layer::Stage const *lsCur  = layers[0]->stages()[l.stage];
     Material::Layer::Stage const *lsNext = layers[0]->stages()[(l.stage + 1) % layers[0]->stageCount()];
 
     // Glow strength is presently taken from layer #0.
     if(l.inter == 0)
     {
-        stored.glowStrength = lsCur->glowStrength;
+        d->glowStrength = lsCur->glowStrength;
     }
     else // Interpolate.
     {
-        stored.glowStrength = LERP(lsCur->glowStrength, lsNext->glowStrength, l.inter);
+        d->glowStrength = LERP(lsCur->glowStrength, lsNext->glowStrength, l.inter);
     }
 
     // Setup the primary texture unit.
     if(TextureVariant *tex = prepTextures[MTU_PRIMARY][0])
     {
-        stored.textures[MTU_PRIMARY] = tex;
+        d->textures[MTU_PRIMARY] = tex;
         Vector2f offset;
         if(l.inter == 0)
         {
@@ -324,10 +304,11 @@ void MaterialSnapshot::Instance::takeSnapshot()
             offset.y = LERP(lsCur->texOrigin.y, lsNext->texOrigin.y, l.inter);
         }
 
-        stored.writeTexUnit(RTU_PRIMARY, tex, BM_NORMAL,
-                            Vector2f(1.f / stored.dimensions.x,
-                                     1.f / stored.dimensions.y),
-                            offset, 1);
+        d->units[RTU_PRIMARY] =
+            GLTextureUnit(*tex,
+                          Vector2f(1.f / d->dimensions.x,
+                                   1.f / d->dimensions.y),
+                          offset);
     }
 
     // Setup the inter primary texture unit.
@@ -338,25 +319,24 @@ void MaterialSnapshot::Instance::takeSnapshot()
         // blended and unblended surfaces.
         if(!(!usingFog && l.inter == 0))
         {
-            stored.writeTexUnit(RTU_INTER, tex, BM_NORMAL,
-                                Vector2f(stored.units[RTU_PRIMARY].scale[0],
-                                         stored.units[RTU_PRIMARY].scale[1]),
-                                Vector2f(stored.units[RTU_PRIMARY].offset[0],
-                                         stored.units[RTU_PRIMARY].offset[1]),
-                                l.inter);
+            d->units[RTU_INTER] =
+                GLTextureUnit(*tex,
+                              d->units[RTU_PRIMARY].scale,
+                              d->units[RTU_PRIMARY].offset,
+                              de::clamp(0.f, l.inter, 1.f));
         }
     }
 
     if(!material->isSkyMasked() && material->isDetailed())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).detailLayer();
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).detailLayer();
         Material::DetailLayer::Stage const *lsCur  = detailLayer->stages()[l.stage];
         Material::DetailLayer::Stage const *lsNext = detailLayer->stages()[(l.stage + 1) % detailLayer->stageCount()];
 
         // Setup the detail texture unit.
         if(TextureVariant *tex = prepTextures[MTU_DETAIL][0])
         {
-            stored.textures[MTU_DETAIL] = tex;
+            d->textures[MTU_DETAIL] = tex;
 
             float scale;
             if(l.inter == 0)
@@ -367,15 +347,16 @@ void MaterialSnapshot::Instance::takeSnapshot()
             {
                 scale = LERP(lsCur->scale, lsNext->scale, l.inter);
             }
-
             // Apply the global scale factor.
             if(detailScale > .0001f)
+            {
                 scale *= detailScale;
+            }
 
-            stored.writeTexUnit(RTU_PRIMARY_DETAIL, tex, BM_NORMAL,
-                                Vector2f(1.f / tex->generalCase().width()  * scale,
-                                         1.f / tex->generalCase().height() * scale),
-                                Vector2f(), 1);
+            d->units[RTU_PRIMARY_DETAIL] =
+                GLTextureUnit(*tex,
+                              Vector2f(1.f / tex->generalCase().width()  * scale,
+                                       1.f / tex->generalCase().height() * scale));
         }
 
         // Setup the inter detail texture unit.
@@ -386,26 +367,25 @@ void MaterialSnapshot::Instance::takeSnapshot()
             // blended and unblended surfaces.
             if(!(!usingFog && l.inter == 0))
             {
-                stored.writeTexUnit(RTU_INTER_DETAIL, tex, BM_NORMAL,
-                                    Vector2f(stored.units[RTU_PRIMARY_DETAIL].scale[0],
-                                             stored.units[RTU_PRIMARY_DETAIL].scale[1]),
-                                    Vector2f(stored.units[RTU_PRIMARY_DETAIL].offset[0],
-                                             stored.units[RTU_PRIMARY_DETAIL].offset[1]),
-                                    l.inter);
+                d->units[RTU_INTER_DETAIL] =
+                    GLTextureUnit(*tex,
+                                  d->units[RTU_PRIMARY_DETAIL].scale,
+                                  d->units[RTU_PRIMARY_DETAIL].offset,
+                                  de::clamp(0.f, l.inter, 1.f));
             }
         }
     }
 
     if(!material->isSkyMasked() && material->isShiny())
     {
-        MaterialAnimation::LayerState const &l = material->animation(variant->context()).shineLayer();
+        MaterialAnimation::LayerState const &l = material->animation(d->variant->context()).shineLayer();
         Material::ShineLayer::Stage const *lsCur  = shineLayer->stages()[l.stage];
         Material::ShineLayer::Stage const *lsNext = shineLayer->stages()[(l.stage + 1) % shineLayer->stageCount()];
 
         // Setup the shine texture unit.
         if(TextureVariant *tex = prepTextures[MTU_REFLECTION][0])
         {
-            stored.textures[MTU_REFLECTION] = tex;
+            d->textures[MTU_REFLECTION] = tex;
 
             Vector3f minColor;
             for(int i = 0; i < 3; ++i)
@@ -420,7 +400,7 @@ void MaterialSnapshot::Instance::takeSnapshot()
                 }
                 minColor[i] = de::clamp(0.0f, minColor[i], 1.0f);
             }
-            stored.shineMinColor = minColor;
+            d->shineMinColor = minColor;
 
             float shininess;
             if(l.inter == 0)
@@ -431,22 +411,23 @@ void MaterialSnapshot::Instance::takeSnapshot()
             {
                 shininess = LERP(lsCur->shininess, lsNext->shininess, l.inter);
             }
-            shininess = de::clamp(0.0f, shininess, 1.0f);
 
-            stored.writeTexUnit(RTU_REFLECTION, tex, lsCur->blendMode,
-                                Vector2f(1, 1), Vector2f(), shininess);
+            d->shineBlendMode = lsCur->blendMode;
+            d->units[RTU_REFLECTION] =
+                GLTextureUnit(*tex, Vector2f(1, 1), Vector2f(0, 0),
+                              de::clamp(0.0f, shininess, 1.0f));
         }
 
         // Setup the shine mask texture unit.
         if(prepTextures[MTU_REFLECTION][0])
         if(TextureVariant *tex = prepTextures[MTU_REFLECTION_MASK][0])
         {
-            stored.textures[MTU_REFLECTION_MASK] = tex;
-            stored.writeTexUnit(RTU_REFLECTION_MASK, tex, BM_NORMAL,
-                                Vector2f(1.f / (stored.dimensions.x * tex->generalCase().width()),
-                                         1.f / (stored.dimensions.y * tex->generalCase().height())),
-                                Vector3f(stored.units[RTU_PRIMARY].offset[0],
-                                         stored.units[RTU_PRIMARY].offset[1]), 1);
+            d->textures[MTU_REFLECTION_MASK] = tex;
+            d->units[RTU_REFLECTION_MASK] =
+                GLTextureUnit(*tex,
+                              Vector2f(1.f / (d->dimensions.x * tex->generalCase().width()),
+                                       1.f / (d->dimensions.y * tex->generalCase().height())),
+                              d->units[RTU_PRIMARY].offset);
         }
     }
 
@@ -455,12 +436,12 @@ void MaterialSnapshot::Instance::takeSnapshot()
     for(Material::Decorations::const_iterator it = decorations.begin();
         it != decorations.end(); ++it, ++idx)
     {
-        MaterialAnimation::DecorationState const &l = material->animation(variant->context()).decoration(idx);
+        MaterialAnimation::DecorationState const &l = material->animation(d->variant->context()).decoration(idx);
         MaterialDecoration const *lDef = *it;
         MaterialDecoration::Stage const *lsCur  = lDef->stages()[l.stage];
         MaterialDecoration::Stage const *lsNext = lDef->stages()[(l.stage + 1) % lDef->stageCount()];
 
-        MaterialSnapshot::Decoration &decor = stored.decorations[idx];
+        MaterialSnapshot::Decoration &decor = d->decorations[idx];
 
         if(l.inter == 0)
         {
@@ -496,11 +477,6 @@ void MaterialSnapshot::Instance::takeSnapshot()
     }
 
 #undef LERP
-}
-
-void MaterialSnapshot::update()
-{
-    d->takeSnapshot();
 }
 
 } // namespace de

@@ -25,7 +25,7 @@
 
 #include "GuiRootWidget"
 #include "resource/image.h"
-#include "ui/widgets/legacywidget.h"
+#include "ui/widgets/gamewidget.h"
 
 /**
  * Macro for conveniently accessing the current active window. There is always
@@ -75,8 +75,17 @@ public:
     TaskBarWidget &taskBar();
     ConsoleWidget &console();
     NotificationWidget &notifications();
-    LegacyWidget &game();
+    GameWidget &game();
     BusyWidget &busy();
+
+    /**
+     * Adds a widget to the widget tree so that it will be displayed over
+     * other widgets.
+     *
+     * @param widget  Widget to add on top of others. Ownership of the
+     *                widget taken by the new parent.
+     */
+    void addOnTop(GuiWidget *widget);
 
     /**
      * Installs a sidebar widget into the window. If there is an existing

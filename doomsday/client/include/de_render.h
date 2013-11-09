@@ -31,7 +31,6 @@
 #include "render/r_things.h"
 #include "render/rend_clip.h"
 #include "render/rend_halo.h"
-#include "render/rend_list.h"
 #include "render/rend_particle.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"

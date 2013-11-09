@@ -63,8 +63,6 @@ namespace internal
     /// Currently applied GL state properties.
     static BitField currentProps;
     static GLTarget *currentTarget;
-
-    static Rectangleui subRect; /// Initially null.
 }
 
 using namespace internal;
@@ -138,19 +136,6 @@ DENG2_PIMPL(GLState)
         return GL_ZERO;
     }
 
-    Rectangleui scaleToSubRect(Rectangleui const &rectInTarget)
-    {
-        // If no sub rectangle is defined, do nothing.
-        if(subRect.isNull()) return rectInTarget;
-
-        Vector2f const scaling = Vector2f(subRect.size()) / self.target().size();
-
-        return Rectangleui(subRect.left() + scaling.x * rectInTarget.left(),
-                           subRect.top()  + scaling.y * rectInTarget.top(),
-                           rectInTarget.width()  * scaling.x,
-                           rectInTarget.height() * scaling.y);
-    }
-
     void glApply(Property prop)
     {
         switch(prop)
@@ -199,7 +184,9 @@ DENG2_PIMPL(GLState)
 
         case BlendFuncSrc:
         case BlendFuncDest:
-            glBlendFunc(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()));
+            //glBlendFunc(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()));
+            glBlendFuncSeparate(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()),
+                                GL_ONE, GL_ONE);
             break;
 
         case BlendOp:
@@ -223,7 +210,7 @@ DENG2_PIMPL(GLState)
         case ScissorWidth:
         case ScissorHeight:
         {
-            if(self.scissor() || !subRect.isNull())
+            if(self.scissor() || self.target().hasActiveRect())
             {
                 glEnable(GL_SCISSOR_TEST);
 
@@ -237,7 +224,7 @@ DENG2_PIMPL(GLState)
                     origScr = Rectangleui::fromSize(self.target().size());
                 }
 
-                Rectangleui const scr = scaleToSubRect(origScr);
+                Rectangleui const scr = self.target().scaleToActiveRect(origScr);
                 glScissor(scr.left(), self.target().size().y - scr.bottom(),
                           scr.width(), scr.height());
             }
@@ -253,7 +240,9 @@ DENG2_PIMPL(GLState)
         case ViewportWidth:
         case ViewportHeight:
         {
-            Rectangleui const vp = scaleToSubRect(self.viewport());
+            Rectangleui const vp = self.target().scaleToActiveRect(self.viewport());
+            //qDebug() << "glViewport" << vp.asText();
+
             glViewport(vp.left(), self.target().size().y - vp.bottom(),
                        vp.width(), vp.height());
             break;
@@ -516,12 +505,25 @@ Rectangleui GLState::scissorRect() const
 
 void GLState::apply() const
 {
+    bool forceViewportAndScissor = false;
+
+
     // Update the render target.
     if(currentTarget != d->target)
     {
+        GLTarget const &oldTarget = (currentTarget? *currentTarget :
+                                     CanvasWindow::main().canvas().renderTarget());
+
         if(currentTarget) currentTarget->glRelease();
         currentTarget = d->target;
         if(currentTarget) currentTarget->glBind();
+
+        if(oldTarget.hasActiveRect() || target().hasActiveRect())
+        {
+            // We can't trust that the viewport or scissor can remain the same
+            // as the active rectangle may have changed.
+            forceViewportAndScissor = true;
+        }
     }
 
     // Determine which properties have changed.
@@ -535,6 +537,12 @@ void GLState::apply() const
     {
         // Just apply the changed parts of the state.
         changed = d->props.delta(currentProps);
+
+        if(forceViewportAndScissor)
+        {
+            changed.insert(ViewportX);
+            changed.insert(ScissorX);
+        }
     }
 
     if(!changed.isEmpty())
@@ -586,19 +594,9 @@ GLState *GLState::take()
     return stack.takeLast();
 }
 
-void GLState::setActiveRect(Rectangleui const &rect, bool apply)
+dsize GLState::stackDepth()
 {
-    subRect = rect;
-    if(apply)
-    {
-        considerNativeStateUndefined();
-        top().apply();
-    }
-}
-
-Rectangleui GLState::activeRect()
-{
-    return subRect;
+    return stack.size();
 }
 
 } // namespace de

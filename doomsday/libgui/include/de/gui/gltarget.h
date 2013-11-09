@@ -25,6 +25,7 @@
 #include <de/Asset>
 #include <de/Error>
 #include <de/Vector>
+#include <de/Rectangle>
 #include <QFlags>
 
 #include "libgui.h"
@@ -132,6 +133,26 @@ public:
      * @param attachments  Which ones to clear.
      */
     void clear(Flags const &attachments);
+
+    /**
+     * Sets the subregion inside the render target where scissor and viewport
+     * will be constrained to. Scissor and viewport can still be defined as if
+     * the entire window was in use; the target window only applies an offset
+     * and scaling to both.
+     *
+     * @param rect   Target window rectangle. Set a null rectangle to
+     *               use the entire window (like normally).
+     * @param apply  Immediately update current OpenGL state accordingly.
+     */
+    void setActiveRect(Rectangleui const &rect, bool applyGLState = false);
+
+    void unsetActiveRect(bool applyGLState = false);
+
+    Rectangleui scaleToActiveRect(Rectangleui const &rect) const;
+
+    Rectangleui const &activeRect() const;
+
+    bool hasActiveRect() const;
 
 private:
     DENG2_PRIVATE(d)

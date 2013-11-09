@@ -113,7 +113,6 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
         // Append prefix after version.
         int pos = src.indexOf('\n', versionPos);
         src.insert(pos + 1, prefix);
-        qDebug() << src;
     }
     else
     {

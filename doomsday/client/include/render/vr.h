@@ -1,3 +1,21 @@
+/** @file render/vr.h  Stereoscopic rendering and Oculus Rift support.
+ *
+ * @authors Copyright (c) 2013 Christopher Bruns <cmbruns@rotatingpenguin.com>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
+ */
+
 #ifndef CLIENT_RENDER_VR_H
 #define CLIENT_RENDER_VR_H
 
@@ -26,8 +44,17 @@ enum Stereo3DMode {
     MODE_MAX_3D_MODE_PLUS_ONE
 };
 
+// Sometimes we want viewpoint to remain constant between left and right eye views
+void holdViewPosition();
+void releaseViewPosition();
+bool viewPositionHeld();
+
 // Console variables
-extern int mode; /// Currently active Stereo3DMode index
+Stereo3DMode mode(); /// Currently active Stereo3DMode index
+float riftAspect(); /// Aspect ratio of OculusRift
+float riftFovX(); /// Horizontal field of view in Oculus Rift in degrees
+float riftLatency(); /// Estimated head-motion->photons latency, in seconds
+
 extern float ipd; /// Interpupillary distance in meters
 extern float playerHeight; /// Human player's real world height in meters
 extern float dominantEye; /// Kludge for aim-down-weapon-sight modes
@@ -63,6 +90,8 @@ std::vector<float> getHeadOrientation();
 
 // To release memory and resources when done, for tidiness.
 void deleteOculusTracker();
+
+void setRiftLatency(float latency);
 
 } // namespace VR
 

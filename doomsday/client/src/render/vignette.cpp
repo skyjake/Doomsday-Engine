@@ -26,6 +26,8 @@
 
 #include "render/vignette.h"
 
+using namespace de;
+
 static byte  vignetteEnabled  = true;
 static float vignetteDarkness = 1.0f;
 static float vignetteWidth    = 1.0f;
@@ -73,7 +75,8 @@ void Vignette_Render(const RectRaw* viewRect, float fov)
         alpha *= fov/100.f;
     }
 
-    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), GL_REPEAT, GL_CLAMP_TO_EDGE);
+    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), gl::Repeat,
+                            gl::ClampToEdge);
     glEnable(GL_TEXTURE_2D);
 
     glBegin(GL_TRIANGLE_STRIP);

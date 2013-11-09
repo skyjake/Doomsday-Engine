@@ -44,10 +44,7 @@ def mkdir(n):
 
 
 def remkdir(n):
-    if os.path.exists(n):
-        print n, 'exists, clearing it...'
-        shutil.rmtree(n, True)
-    os.mkdir(n)
+    builder.utils.remkdir(n)
 
 
 def remove(n):
