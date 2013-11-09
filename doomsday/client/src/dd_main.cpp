@@ -165,8 +165,6 @@ finaleid_t titleFinale;
 int gameDataFormat; // Use a game-specifc data format where applicable.
 
 static NullFileType nullFileType;
-static NullResourceClass nullResourceClass;
-static ResourceClasses resourceClasses;
 
 /// A symbolic name => file type map.
 static FileTypes fileTypeMap;
@@ -227,51 +225,6 @@ void App_DeleteMaterials()
     materials = 0;
 }
 
-void DD_CreateResourceClasses()
-{
-    resourceClasses.push_back(new ResourceClass("RC_PACKAGE",       "Packages"));
-    resourceClasses.push_back(new ResourceClass("RC_DEFINITION",    "Defs"));
-    resourceClasses.push_back(new ResourceClass("RC_GRAPHIC",       "Graphics"));
-    resourceClasses.push_back(new ResourceClass("RC_MODEL",         "Models"));
-    resourceClasses.push_back(new ResourceClass("RC_SOUND",         "Sfx"));
-    resourceClasses.push_back(new ResourceClass("RC_MUSIC",         "Music"));
-    resourceClasses.push_back(new ResourceClass("RC_FONT",          "Fonts"));
-}
-
-void DD_ClearResourceClasses()
-{
-    DENG2_FOR_EACH(ResourceClasses, i, resourceClasses)
-    {
-        delete *i;
-    }
-    resourceClasses.clear();
-}
-
-ResourceClass& DD_ResourceClassByName(String name)
-{
-    if(!name.isEmpty())
-    {
-        DENG2_FOR_EACH_CONST(ResourceClasses, i, resourceClasses)
-        {
-            ResourceClass& rclass = **i;
-            if(!rclass.name().compareWithoutCase(name))
-                return rclass;
-        }
-    }
-    return nullResourceClass; // Not found.
-}
-
-ResourceClass& DD_ResourceClassById(resourceclassid_t id)
-{
-    if(id == RC_NULL) return nullResourceClass;
-    if(!VALID_RESOURCECLASSID(id))
-    {
-        QByteArray msg = String("DD_ResourceClassById: Invalid id '%1'").arg(int(id)).toUtf8();
-        App_FatalError(msg.constData());
-    }
-    return *resourceClasses[uint(id)];
-}
-
 void DD_CreateFileTypes()
 {
     FileType* ftype;
@@ -279,7 +232,7 @@ void DD_CreateFileTypes()
     /*
      * Packages types:
      */
-    ResourceClass& packageClass = DD_ResourceClassByName("RC_PACKAGE");
+    ResourceClass& packageClass = App_ResourceSystem().resClass("RC_PACKAGE");
 
     ftype = new ZipFileType();
     ftype->addKnownExtension(".pk3");
@@ -301,13 +254,13 @@ void DD_CreateFileTypes()
      */
     ftype = new FileType("FT_DED", RC_DEFINITION);
     ftype->addKnownExtension(".ded");
-    DD_ResourceClassByName("RC_DEFINITION").addFileType(*ftype);
+    App_ResourceSystem().resClass("RC_DEFINITION").addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
     /*
      * Graphic fileTypes:
      */
-    ResourceClass& graphicClass = DD_ResourceClassByName("RC_GRAPHIC");
+    ResourceClass& graphicClass = App_ResourceSystem().resClass("RC_GRAPHIC");
 
     ftype = new FileType("FT_PNG", RC_GRAPHIC);
     ftype->addKnownExtension(".png");
@@ -332,7 +285,7 @@ void DD_CreateFileTypes()
     /*
      * Model fileTypes:
      */
-    ResourceClass& modelClass = DD_ResourceClassByName("RC_MODEL");
+    ResourceClass& modelClass = App_ResourceSystem().resClass("RC_MODEL");
 
     ftype = new FileType("FT_DMD", RC_MODEL);
     ftype->addKnownExtension(".dmd");
@@ -349,13 +302,13 @@ void DD_CreateFileTypes()
      */
     ftype = new FileType("FT_WAV", RC_SOUND);
     ftype->addKnownExtension(".wav");
-    DD_ResourceClassByName("RC_SOUND").addFileType(*ftype);
+    App_ResourceSystem().resClass("RC_SOUND").addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
     /*
      * Music fileTypes:
      */
-    ResourceClass& musicClass = DD_ResourceClassByName("RC_MUSIC");
+    ResourceClass& musicClass = App_ResourceSystem().resClass("RC_MUSIC");
 
     ftype = new FileType("FT_OGG", RC_MUSIC);
     ftype->addKnownExtension(".ogg");
@@ -382,7 +335,7 @@ void DD_CreateFileTypes()
      */
     ftype = new FileType("FT_DFN", RC_FONT);
     ftype->addKnownExtension(".dfn");
-    DD_ResourceClassByName("RC_FONT").addFileType(*ftype);
+    App_ResourceSystem().resClass("RC_FONT").addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
     /*
@@ -569,7 +522,7 @@ ResourceSystem &App_ResourceSystem()
         return ServerApp::resourceSystem();
     }
 #endif
-    throw Error("App_Textures", "App not yet initialized");
+    throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
 de::Textures &App_Textures()
@@ -1855,7 +1808,6 @@ boolean DD_Init(void)
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
-    DD_CreateResourceClasses();
     DD_CreateFileTypes();
     F_Init();
     DD_CreateFileSystemSchemes();
@@ -1884,7 +1836,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    FS1::Scheme& scheme = App_FileSystem().scheme(DD_ResourceClassByName("RC_PACKAGE").defaultScheme());
+    FS1::Scheme& scheme = App_FileSystem().scheme(App_ResourceSystem().resClass("RC_PACKAGE").defaultScheme());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -2142,7 +2094,7 @@ static int DD_StartupWorker(void* /*parm*/)
      * Add required engine resource files.
      */
     String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
-                                                 RLF_DEFAULT, DD_ResourceClassById(RC_PACKAGE));
+                                                 RLF_DEFAULT, App_ResourceSystem().resClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
     de::File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
     DENG2_ASSERT(loadedFile != 0);
@@ -2759,7 +2711,7 @@ D_CMD(Load)
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[arg], RC_PACKAGE),
-                                                          RLF_MATCH_EXTENSION, DD_ResourceClassById(RC_PACKAGE));
+                                                          RLF_MATCH_EXTENSION, App_ResourceSystem().resClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
             if(tryLoadFile(de::Uri(foundPath, RC_NULL)))
@@ -2886,7 +2838,7 @@ D_CMD(Unload)
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[1], RC_PACKAGE),
-                                                         RLF_MATCH_EXTENSION, DD_ResourceClassById(RC_PACKAGE));
+                                                         RLF_MATCH_EXTENSION, App_ResourceSystem().resClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
             if(tryUnloadFile(de::Uri(foundPath, RC_NULL)))

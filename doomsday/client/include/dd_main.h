@@ -131,14 +131,8 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
  */
 void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn);
 
-void DD_CreateResourceClasses();
-
-void DD_ClearResourceClasses();
-
 namespace de
 {
-    typedef QList<ResourceClass*> ResourceClasses;
-
     /// Map of symbolic file type names to file types.
     typedef QMap<String, FileType*> FileTypes;
 }
@@ -161,24 +155,6 @@ de::FileType& DD_GuessFileTypeFromFileName(de::String name);
 
 /// Returns the registered file types for efficient traversal.
 de::FileTypes const& DD_FileTypes();
-
-/**
- * Lookup a ResourceClass by id.
- *
- * @todo Refactor away.
- *
- * @param classId  Unique identifier of the class.
- * @return  ResourceClass associated with @a id.
- */
-de::ResourceClass& DD_ResourceClassById(resourceclassid_t classId);
-
-/**
- * Lookup a ResourceClass by symbolic name.
- *
- * @param name  Symbolic name of the class.
- * @return  ResourceClass associated with @a name; otherwise @c 0 (not found).
- */
-de::ResourceClass& DD_ResourceClassByName(de::String name);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);

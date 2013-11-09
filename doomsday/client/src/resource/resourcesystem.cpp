@@ -18,16 +18,29 @@
 
 #include "resource/resourcesystem.h"
 #include <de/Log>
+#include <QList>
+#include <QtAlgorithms>
 
 using namespace de;
 
 DENG2_PIMPL(ResourceSystem)
 {
+    typedef QList<de::ResourceClass *> ResourceClasses;
+    NullResourceClass nullResourceClass;
+    ResourceClasses resClasses;
+
     Textures textures;
 
     Instance(Public *i) : Base(i)
     {
         LOG_AS("ResourceSystem");
+        resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
+        resClasses.append(new ResourceClass("RC_DEFINITION", "Defs"));
+        resClasses.append(new ResourceClass("RC_GRAPHIC",    "Graphics"));
+        resClasses.append(new ResourceClass("RC_MODEL",      "Models"));
+        resClasses.append(new ResourceClass("RC_SOUND",      "Sfx"));
+        resClasses.append(new ResourceClass("RC_MUSIC",      "Music"));
+        resClasses.append(new ResourceClass("RC_FONT",       "Fonts"));
 
         LOG_MSG("Initializing Texture collection...");
         /// @note Order here defines the ambigious-URI search order.
@@ -44,6 +57,11 @@ DENG2_PIMPL(ResourceSystem)
         textures.createScheme("Lightmaps");
         textures.createScheme("Flaremaps");
     }
+
+    ~Instance()
+    {
+        qDeleteAll(resClasses);
+    }
 };
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
@@ -52,6 +70,30 @@ ResourceSystem::ResourceSystem() : d(new Instance(this))
 void ResourceSystem::timeChanged(Clock const &)
 {
     // Nothing to do.
+}
+
+ResourceClass &ResourceSystem::resClass(String name)
+{
+    if(!name.isEmpty())
+    {
+        foreach(ResourceClass *resClass, d->resClasses)
+        {
+            if(!resClass->name().compareWithoutCase(name))
+                return *resClass;
+        }
+    }
+    return d->nullResourceClass; // Not found.
+}
+
+ResourceClass &ResourceSystem::resClass(resourceclassid_t id)
+{
+    if(id == RC_NULL) return d->nullResourceClass;
+    if(VALID_RESOURCECLASSID(id))
+    {
+        return *d->resClasses.at(uint(id));
+    }
+    /// @throw UnknownResourceClass Attempted with an unknown id.
+    throw UnknownResourceClass("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
 }
 
 Textures &ResourceSystem::textures()

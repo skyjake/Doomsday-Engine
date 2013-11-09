@@ -1760,7 +1760,7 @@ static TexSource loadExternalTexture(image_t &image, String encodedSearchPath,
     try
     {
         String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath + optionalSuffix, RC_GRAPHIC),
-                                                     RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+                                                     RLF_DEFAULT, App_ResourceSystem().resClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
@@ -1775,7 +1775,7 @@ static TexSource loadExternalTexture(image_t &image, String encodedSearchPath,
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath, RC_GRAPHIC),
-                                                         RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+                                                         RLF_DEFAULT, App_ResourceSystem().resClass(RC_GRAPHIC));
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
 
@@ -1904,7 +1904,7 @@ TexSource GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mod
     try
     {
         String foundPath = App_FileSystem().findPath(de::Uri(RC_GRAPHIC, _searchPath),
-                                                     RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+                                                     RLF_DEFAULT, App_ResourceSystem().resClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
@@ -2182,7 +2182,7 @@ static TexSource loadRaw(image_t &image, rawtex_t const &raw)
     try
     {
         String foundPath = App_FileSystem().findPath(de::Uri("Patches", Path(Str_Text(&raw.name))),
-                                                     RLF_DEFAULT, DD_ResourceClassById(RC_GRAPHIC));
+                                                     RLF_DEFAULT, App_ResourceSystem().resClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 

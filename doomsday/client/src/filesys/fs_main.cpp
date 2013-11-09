@@ -618,7 +618,7 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
 
 String FS1::findPath(de::Uri const& search, int flags)
 {
-    return findPath(search, flags, DD_ResourceClassById(RC_NULL));
+    return findPath(search, flags, App_ResourceSystem().resClass(RC_NULL));
 }
 
 #if _DEBUG

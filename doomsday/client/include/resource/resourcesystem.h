@@ -20,6 +20,8 @@
 #define DENG_RESOURCESYSTEM_H
 
 #include <de/System>
+#include <de/Error>
+#include "resourceclass.h"
 #include "Textures"
 
 /**
@@ -28,12 +30,29 @@
 class ResourceSystem : public de::System
 {
 public:
+    /// An unknown resource class identifier was specified. @ingroup errors
+    DENG2_ERROR(UnknownResourceClass);
+
+public:
     ResourceSystem();
 
+    /**
+     * Lookup a ResourceClass by symbolic @a name.
+     */
+    de::ResourceClass &resClass(de::String name);
+
+    /**
+     * Lookup a ResourceClass by @a id.
+     * @todo Refactor away.
+     */
+    de::ResourceClass &resClass(resourceclassid_t id);
+
+    /**
+     * Provides access to the Textures collection.
+     */
     de::Textures &textures();
 
     void clearRuntimeTextureSchemes();
-
     void clearSystemTextureSchemes();
 
     // System.

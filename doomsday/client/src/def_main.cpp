@@ -840,7 +840,7 @@ static void readAllDefinitions()
      * Start with engine's own top-level definition file.
      */
     String foundPath = App_FileSystem().findPath(de::Uri("doomsday.ded", RC_DEFINITION),
-                                                  RLF_DEFAULT, DD_ResourceClassById(RC_DEFINITION));
+                                                  RLF_DEFAULT, App_ResourceSystem().resClass(RC_DEFINITION));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
     readDefinitionFile(foundPath);
@@ -1429,7 +1429,7 @@ void Def_Read()
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        FS1::Scheme &scheme = App_FileSystem().scheme(DD_ResourceClassByName("RC_MODEL").defaultScheme());
+        FS1::Scheme &scheme = App_FileSystem().scheme(App_ResourceSystem().resClass("RC_MODEL").defaultScheme());
         scheme.reset();
 
         invalidateAllMaterials();

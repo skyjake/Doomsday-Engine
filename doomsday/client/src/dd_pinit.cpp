@@ -168,6 +168,5 @@ void DD_ShutdownAll(void)
 
     Def_Destroy();
     F_Shutdown();
-    DD_ClearResourceClasses();
     Libdeng_Shutdown();
 }
