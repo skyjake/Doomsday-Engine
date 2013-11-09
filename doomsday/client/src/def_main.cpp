@@ -954,7 +954,7 @@ static void defineFlaremap(de::Uri const &resourceUri)
        resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
         return;
 
-    R_DefineTexture("Flaremaps", resourceUri);
+    App_ResourceSystem().defineTexture("Flaremaps", resourceUri);
 }
 
 static void defineLightmap(de::Uri const &resourceUri)
@@ -964,7 +964,7 @@ static void defineLightmap(de::Uri const &resourceUri)
     // Reference to none?
     if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
 
-    R_DefineTexture("Lightmaps", resourceUri);
+    App_ResourceSystem().defineTexture("Lightmaps", resourceUri);
 }
 
 static void generateMaterialDefForTexture(TextureManifest &manifest)
@@ -1583,7 +1583,7 @@ void Def_Read()
 
         if(!dtl->stage.texture) continue;
 
-        R_DefineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->stage.texture));
+        App_ResourceSystem().defineTexture("Details", reinterpret_cast<de::Uri &>(*dtl->stage.texture));
     }
 
     // Surface reflections (Define textures).
@@ -1598,11 +1598,11 @@ void Def_Read()
 
         if(ref->stage.texture)
         {
-            R_DefineTexture("Reflections", reinterpret_cast<de::Uri &>(*ref->stage.texture));
+            App_ResourceSystem().defineTexture("Reflections", reinterpret_cast<de::Uri &>(*ref->stage.texture));
         }
         if(ref->stage.maskTexture)
         {
-            R_DefineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->stage.maskTexture),
+            App_ResourceSystem().defineTexture("Masks", reinterpret_cast<de::Uri &>(*ref->stage.maskTexture),
                             Vector2i(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }

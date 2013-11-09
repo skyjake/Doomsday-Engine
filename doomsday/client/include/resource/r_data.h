@@ -21,9 +21,6 @@
 #ifndef LIBDENG_REFRESH_DATA_H
 #define LIBDENG_REFRESH_DATA_H
 
-#include "Textures"
-#include <de/Vector>
-
 /**
  * Textures used in the lighting system.
  */
@@ -45,23 +42,5 @@ typedef enum flaretexid_e {
     FXT_BIGFLARE,
     NUM_SYSFLARE_TEXTURES
 } flaretexid_t;
-
-void R_InitSystemTextures();
-void R_InitCompositeTextures();
-void R_InitFlatTextures();
-void R_InitSpriteTextures();
-
-/**
- * Search the application's Textures collection for a texture with the specified
- * @a schemeName and @a resourceUri.
- *
- * @param schemeName  Unique name of the scheme in which to search.
- * @param resourceUri  Path to the (image) resource to find the texture for.
- * @return  The found texture; otherwise @c 0.
- */
-de::Texture *R_FindTextureByResourceUri(de::String schemeName, de::Uri const *resourceUri);
-
-de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri, de::Vector2i const &dimensions);
-de::Texture *R_DefineTexture(de::String schemeName, de::Uri const &resourceUri);
 
 #endif // LIBDENG_REFRESH_DATA_H

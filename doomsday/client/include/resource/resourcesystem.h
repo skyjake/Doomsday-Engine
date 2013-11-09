@@ -36,6 +36,9 @@ public:
 public:
     ResourceSystem();
 
+    // System.
+    void timeChanged(de::Clock const &);
+
     /**
      * Lookup a ResourceClass by symbolic @a name.
      */
@@ -55,8 +58,28 @@ public:
     void clearRuntimeTextureSchemes();
     void clearSystemTextureSchemes();
 
-    // System.
-    void timeChanged(de::Clock const &);
+    void initSystemTextures();
+
+    /**
+     * Convenient method of searching the texture collection for a texture with
+     * the specified @a schemeName and @a resourceUri.
+     *
+     * @param schemeName  Unique name of the scheme in which to search.
+     * @param resourceUri  Path to the (image) resource to find the texture for.
+     *
+     * @return  The found texture; otherwise @c 0.
+     */
+    de::Texture *texture(de::String schemeName, de::Uri const *resourceUri);
+
+    de::Texture *defineTexture(de::String schemeName, de::Uri const &resourceUri,
+                               de::Vector2i const &dimensions = de::Vector2i());
+
+    patchid_t declarePatch(char const *encodedName);
+
+public: /// @todo Should be private:
+    void initCompositeTextures();
+    void initFlatTextures();
+    void initSpriteTextures();
 
 private:
     DENG2_PRIVATE(d)

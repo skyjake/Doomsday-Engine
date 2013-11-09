@@ -379,7 +379,7 @@ void GL_InitRefresh()
     GL_InitTextureManager();
 
     // Register/create Texture objects for the system textures.
-    R_InitSystemTextures();
+    App_ResourceSystem().initSystemTextures();
 
     initFullGLOk = true;
 }

@@ -1886,7 +1886,7 @@ DGLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
             return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
         }
     }
-    if(Texture *tex = R_FindTextureByResourceUri("Flaremaps", &resourceUri))
+    if(Texture *tex = App_ResourceSystem().texture("Flaremaps", &resourceUri))
     {
         if(TextureVariant const *variant = tex->prepareVariant(Rend_HaloTextureSpec()))
         {

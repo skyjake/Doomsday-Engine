@@ -1097,18 +1097,18 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
     return 0;
 }
 
-static int DD_ActivateGameWorker(void* parameters)
+static int DD_ActivateGameWorker(void *parameters)
 {
-    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
+    ddgamechange_paramaters_t *p = (ddgamechange_paramaters_t*)parameters;
     uint i;
     DENG_ASSERT(p);
 
     // Texture resources are located now, prior to initializing the game.
-    R_InitCompositeTextures();
-    R_InitFlatTextures();
-    R_InitSpriteTextures();
-    App_Textures().scheme("Lightmaps").clear();
-    App_Textures().scheme("Flaremaps").clear();
+    App_ResourceSystem().initCompositeTextures();
+    App_ResourceSystem().initFlatTextures();
+    App_ResourceSystem().initSpriteTextures();
+    App_ResourceSystem().textures().scheme("Lightmaps").clear();
+    App_ResourceSystem().textures().scheme("Flaremaps").clear();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -2006,11 +2006,11 @@ boolean DD_Init(void)
         initPathMappings();
         App_FileSystem().resetAllSchemes();
 
-        R_InitCompositeTextures();
-        R_InitFlatTextures();
-        R_InitSpriteTextures();
-        App_Textures().scheme("Lightmaps").clear();
-        App_Textures().scheme("Flaremaps").clear();
+        App_ResourceSystem().initCompositeTextures();
+        App_ResourceSystem().initFlatTextures();
+        App_ResourceSystem().initSpriteTextures();
+        App_ResourceSystem().textures().scheme("Lightmaps").clear();
+        App_ResourceSystem().textures().scheme("Flaremaps").clear();
 
         Def_Read();
 
@@ -2237,9 +2237,9 @@ void DD_UpdateEngineState(void)
     // Re-build the filesystem subspace schemes as there may be new resources to be found.
     App_FileSystem().resetAllSchemes();
 
-    R_InitCompositeTextures();
-    R_InitFlatTextures();
-    R_InitSpriteTextures();
+    App_ResourceSystem().initCompositeTextures();
+    App_ResourceSystem().initFlatTextures();
+    App_ResourceSystem().initSpriteTextures();
 
     if(App_GameLoaded() && gx.UpdateState)
         gx.UpdateState(DD_PRE);

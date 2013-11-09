@@ -335,7 +335,7 @@ static ded_light_t *lightDefByMobjState(state_t const *state)
 
 static inline Texture *lightmap(uri_s const *textureUri)
 {
-    return R_FindTextureByResourceUri("Lightmaps", reinterpret_cast<de::Uri const *>(textureUri));
+    return App_ResourceSystem().texture("Lightmaps", reinterpret_cast<de::Uri const *>(textureUri));
 }
 
 void Mobj_GenerateLumobjs(mobj_t *mo)

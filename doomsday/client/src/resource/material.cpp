@@ -29,7 +29,7 @@
 #include "audio/s_environ.h"
 #include "world/map.h"
 
-#include "resource/r_data.h" // R_FindTextureByResourceUri
+#include "resource/r_data.h" // App_ResourceSystem().texture
 
 #include "resource/material.h"
 
@@ -223,9 +223,9 @@ Material::ShineLayer::Stages const &Material::ShineLayer::stages() const
 
 Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight_stage_t const &def)
 {
-    Texture *upTexture    = R_FindTextureByResourceUri("Lightmaps", reinterpret_cast<de::Uri *>(def.up));
-    Texture *downTexture  = R_FindTextureByResourceUri("Lightmaps", reinterpret_cast<de::Uri *>(def.down));
-    Texture *sidesTexture = R_FindTextureByResourceUri("Lightmaps", reinterpret_cast<de::Uri *>(def.sides));
+    Texture *upTexture    = App_ResourceSystem().texture("Lightmaps", reinterpret_cast<de::Uri *>(def.up));
+    Texture *downTexture  = App_ResourceSystem().texture("Lightmaps", reinterpret_cast<de::Uri *>(def.down));
+    Texture *sidesTexture = App_ResourceSystem().texture("Lightmaps", reinterpret_cast<de::Uri *>(def.sides));
 
     Texture *flareTexture = 0;
     int sysFlareIdx = def.sysFlareIdx;
@@ -242,7 +242,7 @@ Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight
         }
         else
         {
-            flareTexture = R_FindTextureByResourceUri("Flaremaps", resourceUri);
+            flareTexture = App_ResourceSystem().texture("Flaremaps", resourceUri);
         }
     }
 
