@@ -191,8 +191,6 @@ def build_source_package():
         if fn[:9] == 'doomsday-' and fn[-7:] == '.tar.gz':
             remote_copy(fn, ev.file_path(fn))            
 
-    #remote_copy('deng_buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
-
 
 def rebuild_apt_repository():
     """Rebuilds the Apt repository by running apt-ftparchive."""
