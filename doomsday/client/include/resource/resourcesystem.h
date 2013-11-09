@@ -20,6 +20,7 @@
 #define DENG_RESOURCESYSTEM_H
 
 #include <de/System>
+#include "Textures"
 
 /**
  * Logical resources; materials, packages, textures, etc... @ingroup resource
@@ -28,6 +29,12 @@ class ResourceSystem : public de::System
 {
 public:
     ResourceSystem();
+
+    de::Textures &textures();
+
+    void clearRuntimeTextureSchemes();
+
+    void clearSystemTextureSchemes();
 
     // System.
     void timeChanged(de::Clock const &);

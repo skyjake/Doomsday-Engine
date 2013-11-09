@@ -21,8 +21,9 @@
 #define SERVERAPP_H
 
 #include <de/TextApp>
-#include "Games"
 #include "serversystem.h"
+#include "resource/resourcesystem.h"
+#include "Games"
 #include "world/world.h"
 
 /**
@@ -44,6 +45,7 @@ public:
     static bool haveApp();
     static ServerApp &app();
     static ServerSystem &serverSystem();
+    static ResourceSystem &resourceSystem();
     static de::Games &games();
     static de::World &world();
 

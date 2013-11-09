@@ -183,9 +183,6 @@ extern GETGAMEAPI GetGameAPI;
 // The app's global Material collection.
 static Materials *materials;
 
-// The app's global Texture collection.
-static Textures *textures;
-
 #ifdef __CLIENT__
 
 D_CMD(CheckForUpdates)
@@ -557,47 +554,32 @@ void DD_CreateFileSystemSchemes()
     }
 }
 
-Textures &App_Textures()
+ResourceSystem &App_ResourceSystem()
 {
-    if(!textures) throw Error("App_Textures", "Textures collection not yet initialized");
-    return *textures;
+#ifdef __CLIENT__
+    if(ClientApp::haveApp())
+    {
+        return ClientApp::resourceSystem();
+    }
+#endif
+
+#ifdef __SERVER__
+    if(ServerApp::haveApp())
+    {
+        return ServerApp::resourceSystem();
+    }
+#endif
+    throw Error("App_Textures", "App not yet initialized");
 }
 
-void DD_CreateTextureSchemes()
+de::Textures &App_Textures()
 {
-    Textures &textures = App_Textures();
-
-    /// @note Order here defines the ambigious-URI search order.
-    textures.createScheme("Sprites");
-    textures.createScheme("Textures");
-    textures.createScheme("Flats");
-    textures.createScheme("Patches");
-    textures.createScheme("System");
-    textures.createScheme("Details");
-    textures.createScheme("Reflections");
-    textures.createScheme("Masks");
-    textures.createScheme("ModelSkins");
-    textures.createScheme("ModelReflectionSkins");
-    textures.createScheme("Lightmaps");
-    textures.createScheme("Flaremaps");
+    return App_ResourceSystem().textures();
 }
 
 void DD_ClearRuntimeTextureSchemes()
 {
-    Textures &textures = App_Textures();
-
-    textures.scheme("Flats").clear();
-    textures.scheme("Textures").clear();
-    textures.scheme("Patches").clear();
-    textures.scheme("Sprites").clear();
-    textures.scheme("Details").clear();
-    textures.scheme("Reflections").clear();
-    textures.scheme("Masks").clear();
-    textures.scheme("ModelSkins").clear();
-    textures.scheme("ModelReflectionSkins").clear();
-    textures.scheme("Lightmaps").clear();
-    textures.scheme("Flaremaps").clear();
-
+    App_ResourceSystem().clearRuntimeTextureSchemes();
 #ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
 #endif
@@ -605,10 +587,7 @@ void DD_ClearRuntimeTextureSchemes()
 
 void DD_ClearSystemTextureSchemes()
 {
-    Textures &textures = App_Textures();
-
-    textures.scheme("System").clear();
-
+    App_ResourceSystem().clearSystemTextureSchemes();
 #ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
 #endif
@@ -2183,11 +2162,6 @@ static int DD_StartupWorker(void* /*parm*/)
     Con_SetProgress(90);
 
     R_BuildTexGammaLut();
-
-    Con_Message("Initializing Texture subsystem...");
-    DENG_ASSERT(!textures);
-    textures = new Textures();
-    DD_CreateTextureSchemes();
 
     Con_Message("Initializing Material subsystem...");
     DENG_ASSERT(!materials);

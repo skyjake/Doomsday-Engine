@@ -29,6 +29,7 @@
 #endif
 
 #include "dd_types.h"
+#include "resource/resourcesystem.h"
 #include "Games"
 #include "world/world.h"
 #include "api_plugin.h"
@@ -181,6 +182,9 @@ de::ResourceClass& DD_ResourceClassByName(de::String name);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
+
+/// @return  The application's global ResourceSystem.
+ResourceSystem &App_ResourceSystem();
 
 /// @return  @c true iff there is presently a game loaded.
 boolean App_GameLoaded();

@@ -52,6 +52,7 @@ static void handleAppTerminate(char const *msg)
 DENG2_PIMPL(ServerApp)
 {
     QScopedPointer<ServerSystem> serverSystem;
+    ResourceSystem resourceSys;
     Games games;
     World world;
 
@@ -89,6 +90,8 @@ ServerApp::ServerApp(int &argc, char **argv)
 
     d->serverSystem.reset(new ServerSystem);
     addSystem(*d->serverSystem);
+
+    addSystem(d->resourceSys);
 
     // We must presently set the current game manually (the collection is global).
     setGame(d->games.nullGame());
@@ -146,6 +149,11 @@ ServerApp &ServerApp::app()
 ServerSystem &ServerApp::serverSystem()
 {
     return *app().d->serverSystem;
+}
+
+ResourceSystem &ServerApp::resourceSystem()
+{
+    return app().d->resourceSys;
 }
 
 Games &ServerApp::games()

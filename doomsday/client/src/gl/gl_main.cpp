@@ -421,14 +421,6 @@ void GL_Shutdown()
     Sky_Shutdown();
     Rend_Reset();
 
-    // Ensure the global texture collection is destroyed.
-    try
-    {
-        delete &App_Textures();
-    }
-    catch(Error const &)
-    {} // Ignore this error.
-
     GL_ShutdownRefresh();
 
     // Shutdown OpenGL.

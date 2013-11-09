@@ -128,18 +128,20 @@ DENG2_PIMPL(ClientApp)
     QScopedPointer<WidgetActions> widgetActions;
     WindowSystem *winSys;
     RenderSystem *renderSys;
+    ResourceSystem *resourceSys;
     ServerLink *svLink;
     GLShaderBank shaderBank;
     Games games;
     World world;
 
     Instance(Public *i)
-        : Base(i),
-          menuBar(0),
-          inputSys(0),
-          winSys(0),
-          renderSys(0),
-          svLink(0)
+        : Base(i)
+        , menuBar(0)
+        , inputSys(0)
+        , winSys(0)
+        , renderSys(0)
+        , resourceSys(0)
+        , svLink(0)
     {
         clientAppSingleton = thisPublic;
     }
@@ -150,6 +152,7 @@ DENG2_PIMPL(ClientApp)
         DD_Shutdown();
 
         delete svLink;
+        delete resourceSys;
         delete renderSys;
         delete winSys;
         delete inputSys;
@@ -280,6 +283,10 @@ void ClientApp::initialize()
     d->updater.reset(new Updater);
     d->setupAppMenu();
 
+    // Create the resource system.
+    d->resourceSys = new ResourceSystem;
+    addSystem(*d->resourceSys);
+
     Plug_LoadAll();
 
     // Create the main window.
@@ -370,6 +377,13 @@ RenderSystem &ClientApp::renderSystem()
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->renderSys != 0);
     return *a.d->renderSys;
+}
+
+ResourceSystem &ClientApp::resourceSystem()
+{
+    ClientApp &a = ClientApp::app();
+    DENG2_ASSERT(a.d->resourceSys != 0);
+    return *a.d->resourceSys;
 }
 
 WindowSystem &ClientApp::windowSystem()

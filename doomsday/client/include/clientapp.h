@@ -27,6 +27,7 @@
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
 #include "render/rendersystem.h"
+#include "resource/resourcesystem.h"
 #include "WidgetActions"
 #include "updater.h"
 #include "Games"
@@ -61,6 +62,7 @@ public:
     static InputSystem &inputSystem();
     static WindowSystem &windowSystem();
     static RenderSystem &renderSystem();
+    static ResourceSystem &resourceSystem();
     static WidgetActions &widgetActions();
     static de::GLShaderBank &glShaderBank();
     static de::Games &games();
