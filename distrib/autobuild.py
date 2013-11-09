@@ -175,6 +175,25 @@ def update_debian_changelog():
     update_changes(debChanges=True)
            
 
+def build_source_package():
+    """Builds the source tarball and a Debian source package."""
+    ev = builder.Event(latestAvailable=True)
+    print "Creating source tarball for build %i." % ev.number()
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR))
+    remkdir('srcwork')
+    os.chdir('srcwork')
+    if ev.release_type() == 'stable':
+        system_command('deng_package_source.sh ' + ev.version_base())
+    else:
+        system_command('deng_package_source.sh build %i %s' % (ev.number(), 
+                                                               ev.version_base()))
+    for fn in os.listdir('.'):
+        if fn[:9] == 'doomsday-' and fn[-7:] == '.tar.gz':
+            remote_copy(fn, ev.file_path(fn))            
+
+    #remote_copy('deng_buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
+
+
 def rebuild_apt_repository():
     """Rebuilds the Apt repository by running apt-ftparchive."""
     aptDir = builder.config.APT_REPO_DIR
@@ -454,6 +473,7 @@ commands = {
     'publish': publish_packages,
     'changes': update_changes,
     'debchanges': update_debian_changelog,
+    'source': build_source_package,
     'apt': rebuild_apt_repository,
     'feed': update_feed,
     'xmlfeed': update_xml_feed,
