@@ -128,10 +128,11 @@ void R_ShutdownViewWindow(void)
     inited = false;
 }
 
-texturevariantspecification_t &Rend_PatchTextureSpec(int flags, int wrapS, int wrapT)
+texturevariantspecification_t &Rend_PatchTextureSpec(int flags,
+    gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     return GL_TextureVariantSpec(TC_UI, flags, 0, 0, 0,
-                                 wrapS, wrapT, 0, -3, 0,
+                                 GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0,
                                  false, false, false, false);
 }
 
@@ -165,7 +166,8 @@ void R_DrawPatch(Texture &tex, int x, int y)
     R_DrawPatch(tex, x, y, tex.width(), tex.height());
 }
 
-void R_DrawPatchTiled(Texture &texture, int x, int y, int w, int h, int wrapS, int wrapT)
+void R_DrawPatchTiled(Texture &texture, int x, int y, int w, int h,
+    gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     texturevariantspecification_t const &spec =
         Rend_PatchTextureSpec(0 | (texture.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
@@ -234,10 +236,10 @@ void R_DrawViewBorder()
     if(border != 0)
     {
         Textures &textures = App_Textures();
-        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOP]).texture(),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOM]).texture(), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_LEFT]).texture(),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
-        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_RIGHT]).texture(),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOP]).texture(),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
+        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOM]).texture(), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
+        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_LEFT]).texture(),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
+        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_RIGHT]).texture(),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
     }
 
     glMatrixMode(GL_TEXTURE);

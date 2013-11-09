@@ -735,7 +735,7 @@ void GL_BlendMode(blendmode_t mode)
     }
 }
 
-static GLenum glFilter(gl::Filter f)
+GLenum GL_Filter(gl::Filter f)
 {
     switch(f)
     {
@@ -745,7 +745,7 @@ static GLenum glFilter(gl::Filter f)
     return GL_REPEAT;
 }
 
-static GLenum glWrap(gl::Wrapping w)
+GLenum GL_Wrap(gl::Wrapping w)
 {
     switch(w)
     {
@@ -810,7 +810,7 @@ void GL_SetMaterialUI2(Material *mat, gl::Wrapping wrapS, gl::Wrapping wrapT)
 
     MaterialVariantSpec const &spec =
         App_Materials().variantSpec(UiContext, 0, 1, 0, 0,
-                                    glWrap(wrapS), glWrap(wrapT),
+                                    GL_Wrap(wrapS), GL_Wrap(wrapT),
                                     0, 1, 0, false, false, false, false);
     GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
 }
@@ -891,9 +891,9 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
     glBindTexture(GL_TEXTURE_2D, glName);
     Sys_GLCheckError();
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrap(wrapS));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrap(wrapT));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter(filter));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
     if(GL_state.features.texFilterAniso)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
