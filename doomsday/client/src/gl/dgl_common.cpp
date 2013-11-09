@@ -722,13 +722,14 @@ void DGL_SetNoMaterial(void)
     GL_SetNoTexture();
 }
 
-static int DGL_ToGLWrapCap(DGLint cap)
+static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
 {
     switch(cap)
     {
-    case DGL_CLAMP:         return GL_CLAMP;
-    case DGL_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
-    case DGL_REPEAT:        return GL_REPEAT;
+    case DGL_CLAMP:
+    case DGL_CLAMP_TO_EDGE: return gl::ClampToEdge;
+
+    case DGL_REPEAT:        return gl::Repeat;
     default:
         Con_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
         exit(1); // Unreachable.

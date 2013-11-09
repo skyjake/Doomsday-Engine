@@ -563,7 +563,7 @@ static void renderParticles(int rtype, boolean withBlend)
         glDepthMask(GL_FALSE);
         glDisable(GL_CULL_FACE);
 
-        GL_BindTextureUnmanaged(tex, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+        GL_BindTextureUnmanaged(tex, gl::ClampToEdge, gl::ClampToEdge);
         glEnable(GL_TEXTURE_2D);
 
         glDepthFunc(GL_LEQUAL);

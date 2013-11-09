@@ -1426,7 +1426,7 @@ void Rend_DrawShadowOffsetVerts()
     glDisable(GL_DEPTH_TEST);
 
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
-                            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+                            gl::ClampToEdge, gl::ClampToEdge);
     glEnable(GL_TEXTURE_2D);
 
     /// @todo fixme: Should use the visual plane heights of sector clusters.

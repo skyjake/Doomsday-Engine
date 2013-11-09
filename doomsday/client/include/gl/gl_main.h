@@ -187,12 +187,12 @@ void GL_CallList(DGLuint list);
 
 void GL_DeleteLists(DGLuint list, int range);
 
-void GL_SetMaterialUI2(Material *mat, int wrapS, int wrapT);
+void GL_SetMaterialUI2(Material *mat, de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
 void GL_SetMaterialUI(Material *mat);
 
 void GL_SetPSprite(Material *mat, int tclass, int tmap);
 
-void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
+void GL_SetRawImage(lumpnum_t lumpNum, de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
 
 /**
  * Bind this texture to the currently active texture unit.
@@ -203,8 +203,8 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
  */
 void GL_BindTexture(de::Texture::Variant *tex);
 
-void GL_BindTextureUnmanaged(DGLuint texname, int wrapS = GL_REPEAT, int wrapT = GL_REPEAT,
-                             int magMode = GL_LINEAR);
+void GL_BindTextureUnmanaged(GLuint texname, de::gl::Wrapping wrapS = de::gl::Repeat,
+    de::gl::Wrapping wrapT = de::gl::Repeat, de::gl::Filter = de::gl::Linear);
 
 /**
  * Bind the associated texture and apply the texture unit configuration to

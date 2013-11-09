@@ -101,7 +101,7 @@ DENG2_PIMPL(DrawList)
                     // Use the correct texture and color for the light.
                     glActiveTexture((conditions & SetLightEnv0)? GL_TEXTURE0 : GL_TEXTURE1);
                     GL_BindTextureUnmanaged(!renderTextures? 0 : modTexture,
-                                            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+                                            gl::ClampToEdge, gl::ClampToEdge);
 
                     float modColorV[4] = { modColor.x, modColor.y, modColor.z, 0 };
                     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, modColorV);

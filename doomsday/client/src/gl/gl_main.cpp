@@ -743,6 +743,27 @@ void GL_BlendMode(blendmode_t mode)
     }
 }
 
+static GLenum glFilter(gl::Filter f)
+{
+    switch(f)
+    {
+    case gl::Nearest: return GL_NEAREST;
+    case gl::Linear:  return GL_LINEAR;
+    }
+    return GL_REPEAT;
+}
+
+static GLenum glWrap(gl::Wrapping w)
+{
+    switch(w)
+    {
+    case gl::Repeat:         return GL_REPEAT;
+    case gl::RepeatMirrored: return GL_MIRRORED_REPEAT;
+    case gl::ClampToEdge:    return GL_CLAMP_TO_EDGE;
+    }
+    return GL_REPEAT;
+}
+
 int GL_NumMipmapLevels(int width, int height)
 {
     int numLevels = 0;
@@ -791,19 +812,20 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
-void GL_SetMaterialUI2(Material *mat, int wrapS, int wrapT)
+void GL_SetMaterialUI2(Material *mat, gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     if(!mat) return; // @todo we need a "NULL material".
 
     MaterialVariantSpec const &spec =
-        App_Materials().variantSpec(UiContext, 0, 1, 0, 0, wrapS, wrapT,
+        App_Materials().variantSpec(UiContext, 0, 1, 0, 0,
+                                    glWrap(wrapS), glWrap(wrapT),
                                     0, 1, 0, false, false, false, false);
     GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
 }
 
-void GL_SetMaterialUI(Material* mat)
+void GL_SetMaterialUI(Material *mat)
 {
-    GL_SetMaterialUI2(mat, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    GL_SetMaterialUI2(mat, gl::ClampToEdge, gl::ClampToEdge);
 }
 
 void GL_SetPSprite(Material *mat, int tClass, int tMap)
@@ -811,16 +833,18 @@ void GL_SetPSprite(Material *mat, int tClass, int tMap)
     if(!mat) return; // @todo we need a "NULL material".
 
     MaterialVariantSpec const &spec =
-        App_Materials().variantSpec(PSpriteContext, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+        App_Materials().variantSpec(PSpriteContext, 0, 1, tClass, tMap,
+                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                     0, 1, 0, false, true, true, false);
     GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
 }
 
-void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
+void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     if(rawtex_t *rawTex = R_GetRawTex(lumpNum))
     {
-        GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), wrapS, wrapT, (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), wrapS, wrapT,
+                                (filterUI ? gl::Linear : gl::Nearest));
     }
 }
 
@@ -858,7 +882,8 @@ void GL_BindTexture(TextureVariant *vtexture)
     }
 }
 
-void GL_BindTextureUnmanaged(DGLuint glName, int wrapS, int wrapT, int magMode)
+void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wrapT,
+    gl::Filter filter)
 {
     if(BusyMode_InWorkerThread()) return;
 
@@ -874,34 +899,13 @@ void GL_BindTextureUnmanaged(DGLuint glName, int wrapS, int wrapT, int magMode)
     glBindTexture(GL_TEXTURE_2D, glName);
     Sys_GLCheckError();
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrap(wrapS));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrap(wrapT));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter(filter));
     if(GL_state.features.texFilterAniso)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
     }
-}
-
-static GLenum glFilter(gl::Filter f)
-{
-    switch(f)
-    {
-    case gl::Nearest: return GL_NEAREST;
-    case gl::Linear:  return GL_LINEAR;
-    }
-    return GL_REPEAT;
-}
-
-static GLenum glWrap(gl::Wrapping w)
-{
-    switch(w)
-    {
-    case gl::Repeat:         return GL_REPEAT;
-    case gl::RepeatMirrored: return GL_MIRRORED_REPEAT;
-    case gl::ClampToEdge:    return GL_CLAMP_TO_EDGE;
-    }
-    return GL_REPEAT;
 }
 
 void GL_Bind(GLTextureUnit const &glTU)
@@ -920,10 +924,8 @@ void GL_Bind(GLTextureUnit const &glTU)
     }
     else
     {
-        GL_BindTextureUnmanaged(DGLuint(glTU.unmanaged.glName),
-                                glWrap(glTU.unmanaged.wrapS),
-                                glWrap(glTU.unmanaged.wrapT),
-                                glFilter(glTU.unmanaged.filter));
+        GL_BindTextureUnmanaged(glTU.unmanaged.glName, glTU.unmanaged.wrapS,
+                                glTU.unmanaged.wrapT, glTU.unmanaged.filter);
     }
 }
 
