@@ -207,7 +207,7 @@ def build_source_package():
     system_command("sed 's/%s-build%i/%s/' ../../../debian/changelog > changelog" %
                    (ev.version_base(), ev.number(), pkgVer))
     system_command("sed 's/${Arch}/i386 amd64/' ../../../debian/control.template > control")
-    system_command("sed 's/..\/build_/..\/distrib\/build_/;s/..\/..\/doomsday/..\/doomsday/' ../../../debian/rules > rules")
+    system_command("sed 's/`..\/build_number.py --print`/%i/;s/..\/..\/doomsday/..\/doomsday/' ../../../debian/rules > rules" % ev.number())
     os.chdir('..')
     system_command('debuild -S')
     os.chdir('..')
