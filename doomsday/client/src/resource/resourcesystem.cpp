@@ -74,6 +74,8 @@ DENG2_PIMPL(ResourceSystem)
     QList<PatchName> patchNames;
     Textures textures;
 
+    Fonts fonts;
+
     Instance(Public *i) : Base(i)
     {
         LOG_AS("ResourceSystem");
@@ -99,6 +101,8 @@ DENG2_PIMPL(ResourceSystem)
         textures.createScheme("ModelReflectionSkins");
         textures.createScheme("Lightmaps");
         textures.createScheme("Flaremaps");
+
+        /// @todo Initialize font resource schemes here.
     }
 
     ~Instance()
@@ -957,4 +961,9 @@ patchid_t ResourceSystem::declarePatch(char const *encodedName)
         LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
     }
     return 0;
+}
+
+Fonts &ResourceSystem::fonts()
+{
+    return d->fonts;
 }

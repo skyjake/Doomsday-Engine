@@ -128,6 +128,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/EntityDatabase \
     include/Face \
     include/FontLineWrapping \
+    include/Fonts \
     include/Game \
     include/Games \
     include/GLTextComposer \

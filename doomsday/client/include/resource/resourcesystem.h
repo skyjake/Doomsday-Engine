@@ -23,6 +23,7 @@
 #include <de/Error>
 #include "resourceclass.h"
 #include "Textures"
+#include "Fonts"
 
 /**
  * Logical resources; materials, packages, textures, etc... @ingroup resource
@@ -75,6 +76,11 @@ public:
                                de::Vector2i const &dimensions = de::Vector2i());
 
     patchid_t declarePatch(char const *encodedName);
+
+    /**
+     * Provides access to the Fonts collection.
+     */
+    de::Fonts &fonts();
 
 public: /// @todo Should be private:
     void initCompositeTextures();
