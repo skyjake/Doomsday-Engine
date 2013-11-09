@@ -143,6 +143,16 @@ void GL_DoUpdate();
 void GL_BlendMode(blendmode_t mode);
 
 /**
+ * Utility for translating to a GL texture filter identifier.
+ */
+GLenum GL_Filter(de::gl::Filter f);
+
+/**
+ * Utility for translating to a GL texture wrapping identifier.
+ */
+GLenum GL_Wrap(de::gl::Wrapping w);
+
+/**
  * Initializes the graphics library for refresh. Also called at update.
  */
 void GL_InitRefresh();
