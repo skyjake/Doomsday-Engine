@@ -189,7 +189,28 @@ def build_source_package():
                                                                ev.version_base()))
     for fn in os.listdir('.'):
         if fn[:9] == 'doomsday-' and fn[-7:] == '.tar.gz':
-            remote_copy(fn, ev.file_path(fn))            
+            remote_copy(fn, ev.file_path(fn))
+            break
+
+    # Create a source Debian package and upload it to Launchpad.
+    orig = 'doomsday_%s-build%i.orig.tar.gz' % (ev.version_base(), ev.number())
+    os.rename(fn, orig)
+    shutil.copyfile(orig, 'doomsday_%s.orig.tar.gz' % (ev.version_base()))
+    system_command('tar xzf %s' % orig)
+    os.chdir(fn[:-7])
+    system_command('echo "" | dh_make -s -c gpl2')
+    os.chdir('debian')
+    for fn in os.listdir('.'):
+        if fn[-3:].lower() == '.ex': os.remove(fn)
+    os.remove('README.Debian')
+    os.remove('README.source')
+    shutil.copyfile('../../../debian/changelog', 'changelog')
+    system_command("sed 's/${Arch}/all/' ../../../debian/control.template > control")
+    system_command("sed 's/..\/build_/..\/distrib\/build_/;s/..\/..\/doomsday/..\/doomsday/' ../../../debian/rules > rules")
+    os.chdir('..')
+    system_command('debuild -S')
+    os.chdir('..')
+    system_command('dput ppa:sjke/doomsday %s_source.changes' % (orig[:-12]))
 
 
 def rebuild_apt_repository():
