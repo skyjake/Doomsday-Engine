@@ -132,18 +132,27 @@ static void vrNonRiftFovXChanged()
     }
 }
 
+static byte autoLoadRiftParams = 1;
+D_CMD(LoadRiftParams)
+{
+    return VR::loadRiftParameters();
+}
+
 void VR::consoleRegister()
 {
+    C_VAR_BYTE  ("rend-vr-autoload-rift-params", & autoLoadRiftParams, 0, 0, 1);
     C_VAR_FLOAT ("rend-vr-dominant-eye",     & VR::dominantEye,   0, -1.0f, 1.0f);
     C_VAR_FLOAT ("rend-vr-hud-distance",     & VR::hudDistance,           0, 0.01f, 40.0f);
     C_VAR_FLOAT ("rend-vr-ipd",              & VR::ipd,           0, 0.02f, 0.2f);
     C_VAR_INT2  ("rend-vr-mode",             & vrMode,            0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
+    C_VAR_FLOAT2("rend-vr-nonrift-fovx",     & vrNonRiftFovX,     0, 5.0f, 270.0f, vrNonRiftFovXChanged);
     C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 3.0f);
     C_VAR_FLOAT ("rend-vr-rift-aspect",      & vrRiftAspect,      0, 0.10f, 10.0f);
-    C_VAR_FLOAT2("rend-vr-nonrift-fovx",     & vrNonRiftFovX,     0, 5.0f, 270.0f, vrNonRiftFovXChanged);
     C_VAR_FLOAT2("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f, vrRiftFovXChanged);
     C_VAR_FLOAT2("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.250f, vrLatencyChanged);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
+
+    C_CMD("loadriftparams", NULL, LoadRiftParams);
 }
 
 
@@ -245,17 +254,42 @@ private:
 static OculusTracker* oculusTracker = NULL;
 #endif
 
+static bool loadRiftParametersNoCheck() {
+#ifdef DENG_HAVE_OCULUS_API
+    const OVR::HMDInfo& info = oculusTracker->getInfo();
+    Con_SetFloat("rend-vr-ipd", info.InterpupillaryDistance);
+    // Use screen size instead of resolution in case non-square pixels?
+    Con_SetFloat("rend-vr-rift-aspect",
+                 0.5f * info.HScreenSize / info.VScreenSize);
+    // I think this field of view is unreliable... CMB
+    /*
+    float fov = 180.0f / de::PI * 2.0f * (atan2(
+              info.EyeToScreenDistance,
+              0.5f * (info.HScreenSize - info.InterpupillaryDistance)));
+              */
+    return true;
+#endif
+}
 // True if Oculus Rift is enabled and can report head orientation.
 bool VR::hasHeadOrientation()
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if (oculusTracker == NULL)
+    if (oculusTracker == NULL) {
         oculusTracker = new OculusTracker();
+        if (oculusTracker->isGood() && autoLoadRiftParams)
+            loadRiftParametersNoCheck();
+    }
     return oculusTracker->isGood();
 #else
     // No API; No head tracking.
     return false;
 #endif
+}
+
+bool VR::loadRiftParameters() {
+    if (! VR::hasHeadOrientation())
+        return false;
+    return loadRiftParametersNoCheck();
 }
 
 void VR::setRiftLatency(float latency)
@@ -296,3 +330,4 @@ void VR::deleteOculusTracker()
     }
 #endif
 }
+
