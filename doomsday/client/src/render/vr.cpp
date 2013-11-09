@@ -44,7 +44,7 @@ VR::Stereo3DMode VR::mode()
     return (VR::Stereo3DMode)vrMode;
 }
 
-static float vrRiftAspect = 640.0/800.0;
+static float vrRiftAspect = 640.0f/800.0f;
 float VR::riftAspect() /// Aspect ratio of OculusRift
 {
     return vrRiftAspect;
@@ -56,7 +56,9 @@ float VR::riftFovX() /// Horizontal field of view in degrees
     return vrRiftFovX;
 }
 
-static float vrLatency = 0.030;
+static float vrNonRiftFovX = 95.0;
+
+static float vrLatency = 0.030f;
 float VR::riftLatency() {
     return vrLatency;
 }
@@ -87,6 +89,16 @@ float VR::getEyeShift(float eye)
     return result;
 }
 
+static void vrLatencyChanged()
+{
+    if (VR::hasHeadOrientation()) {
+        VR::setRiftLatency(vrLatency);
+    }
+}
+
+
+// Interplay among vrNonRiftFovX, vrRiftFovX, and cameraFov depends on vrMode
+// see also rend_main.cpp
 static void vrModeChanged()
 {
     if(ClientWindow::hasMain())
@@ -94,12 +106,29 @@ static void vrModeChanged()
         // The logical UI size may need to be changed.
         ClientWindow::main().updateRootSize();
     }
+    if (VR::mode() == VR::MODE_OCULUS_RIFT) {
+        if(Con_GetFloat("rend-camera-fov") != vrRiftFovX)
+            Con_SetFloat("rend-camera-fov", vrRiftFovX);
+    }
+    else {
+        if(Con_GetFloat("rend-camera-fov") != vrNonRiftFovX)
+            Con_SetFloat("rend-camera-fov", vrNonRiftFovX);
+    }
 }
 
-static void vrLatencyChanged()
+static void vrRiftFovXChanged()
 {
-    if (VR::hasHeadOrientation()) {
-        VR::setRiftLatency(vrLatency);
+    if (VR::mode() == VR::MODE_OCULUS_RIFT) {
+        if(Con_GetFloat("rend-camera-fov") != vrRiftFovX)
+            Con_SetFloat("rend-camera-fov", vrRiftFovX);
+    }
+}
+
+static void vrNonRiftFovXChanged()
+{
+    if (VR::mode() != VR::MODE_OCULUS_RIFT) {
+        if(Con_GetFloat("rend-camera-fov") != vrNonRiftFovX)
+            Con_SetFloat("rend-camera-fov", vrNonRiftFovX);
     }
 }
 
@@ -111,7 +140,8 @@ void VR::consoleRegister()
     C_VAR_INT2  ("rend-vr-mode",             & vrMode,            0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
     C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 3.0f);
     C_VAR_FLOAT ("rend-vr-rift-aspect",      & vrRiftAspect,      0, 0.10f, 10.0f);
-    C_VAR_FLOAT ("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f);
+    C_VAR_FLOAT2("rend-vr-nonrift-fovx",     & vrNonRiftFovX,     0, 5.0f, 270.0f, vrNonRiftFovXChanged);
+    C_VAR_FLOAT2("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f, vrRiftFovXChanged);
     C_VAR_FLOAT2("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.250f, vrLatencyChanged);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
 }
