@@ -43,6 +43,7 @@
 #include "resource/rawtexture.h"
 #include "Texture"
 #include "TextureVariantSpec"
+#include "uri.hh"
 
 #define TEXQ_BEST               8
 #define MINTEXWIDTH             8
