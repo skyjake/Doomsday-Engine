@@ -34,7 +34,7 @@
 #include "world/map.h"
 #include "network/net_main.h"
 #include "render/r_main.h"
-#include "render/rend_list.h"
+#include "render/rend_main.h"
 #include "audio/s_main.h"
 #include "render/lightgrid.h"
 #include "gl/gl_main.h"

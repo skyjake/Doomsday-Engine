@@ -34,11 +34,12 @@ void R_ShutdownViewWindow();
 void R_DrawViewBorder();
 
 texturevariantspecification_t &Rend_PatchTextureSpec(int flags = 0,
-    int wrapS = GL_CLAMP_TO_EDGE, int wrapT = GL_CLAMP_TO_EDGE);
+    de::gl::Wrapping wrapS = de::gl::ClampToEdge, de::gl::Wrapping wrapT = de::gl::ClampToEdge);
 
 void R_DrawPatch(de::Texture &texture, int x, int y);
 void R_DrawPatch(de::Texture &texture, int x, int y, int w, int h, bool useOffsets = true);
 
-void R_DrawPatchTiled(de::Texture &texture, int x, int y, int w, int h, int wrapS, int wrapT);
+void R_DrawPatchTiled(de::Texture &texture, int x, int y, int w, int h,
+    de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
 
 #endif // LIBDENG_RENDER_MISC_H

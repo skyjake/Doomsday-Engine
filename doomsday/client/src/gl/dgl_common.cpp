@@ -34,6 +34,8 @@
 #include "gl/sys_opengl.h"
 #include "api_gl.h"
 
+#include <de/GLState>
+
 using namespace de;
 
 /**
@@ -305,7 +307,7 @@ void GL_ModulateTexture(int mode)
     }
 }
 
-void GL_BlendOp(int op)
+/*void GL_BlendOp(int op)
 {
     if(!GL_state.features.blendSubtract)
         return;
@@ -314,7 +316,7 @@ void GL_BlendOp(int op)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBlendEquationEXT(op);
-}
+}*/
 
 void GL_SetVSync(boolean on)
 {
@@ -649,9 +651,10 @@ void DGL_Disable(int cap)
 #undef DGL_BlendOp
 void DGL_BlendOp(int op)
 {
-    GL_BlendOp(op == DGL_SUBTRACT ? GL_FUNC_SUBTRACT : op ==
-               DGL_REVERSE_SUBTRACT ? GL_FUNC_REVERSE_SUBTRACT :
-               GL_FUNC_ADD);
+    GLState::top().setBlendOp(op == DGL_SUBTRACT         ? gl::Subtract :
+                              op == DGL_REVERSE_SUBTRACT ? gl::ReverseSubtract :
+                                                           gl::Add)
+                  .apply();
 }
 
 #undef DGL_BlendFunc
@@ -660,25 +663,26 @@ void DGL_BlendFunc(int param1, int param2)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glBlendFunc(param1 == DGL_ZERO                ? GL_ZERO :
-                param1 == DGL_ONE                 ? GL_ONE  :
-                param1 == DGL_DST_COLOR           ? GL_DST_COLOR :
-                param1 == DGL_ONE_MINUS_DST_COLOR ? GL_ONE_MINUS_DST_COLOR :
-                param1 == DGL_SRC_ALPHA           ? GL_SRC_ALPHA :
-                param1 == DGL_ONE_MINUS_SRC_ALPHA ? GL_ONE_MINUS_SRC_ALPHA :
-                param1 == DGL_DST_ALPHA           ? GL_DST_ALPHA :
-                param1 == DGL_ONE_MINUS_DST_ALPHA ? GL_ONE_MINUS_DST_ALPHA :
-                param1 == DGL_SRC_ALPHA_SATURATE  ? GL_SRC_ALPHA_SATURATE :
-                                                    GL_ZERO,
-                param2 == DGL_ZERO                ? GL_ZERO :
-                param2 == DGL_ONE                 ? GL_ONE :
-                param2 == DGL_SRC_COLOR           ? GL_SRC_COLOR :
-                param2 == DGL_ONE_MINUS_SRC_COLOR ? GL_ONE_MINUS_SRC_COLOR :
-                param2 == DGL_SRC_ALPHA           ? GL_SRC_ALPHA :
-                param2 == DGL_ONE_MINUS_SRC_ALPHA ? GL_ONE_MINUS_SRC_ALPHA :
-                param2 == DGL_DST_ALPHA           ? GL_DST_ALPHA :
-                param2 == DGL_ONE_MINUS_DST_ALPHA ? GL_ONE_MINUS_DST_ALPHA :
-                                                    GL_ZERO);
+    GLState::top().setBlendFunc(param1 == DGL_ZERO                ? gl::Zero :
+                                param1 == DGL_ONE                 ? gl::One  :
+                                param1 == DGL_DST_COLOR           ? gl::DestColor :
+                                param1 == DGL_ONE_MINUS_DST_COLOR ? gl::OneMinusDestColor :
+                                param1 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
+                                param1 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
+                                param1 == DGL_DST_ALPHA           ? gl::DestAlpha :
+                                param1 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
+                                                                    gl::Zero
+                                ,
+                                param2 == DGL_ZERO                ? gl::Zero :
+                                param2 == DGL_ONE                 ? gl::One :
+                                param2 == DGL_SRC_COLOR           ? gl::SrcColor :
+                                param2 == DGL_ONE_MINUS_SRC_COLOR ? gl::OneMinusSrcColor :
+                                param2 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
+                                param2 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
+                                param2 == DGL_DST_ALPHA           ? gl::DestAlpha :
+                                param2 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
+                                                                    gl::Zero)
+                  .apply();
 }
 
 #undef DGL_BlendMode
@@ -718,13 +722,14 @@ void DGL_SetNoMaterial(void)
     GL_SetNoTexture();
 }
 
-static int DGL_ToGLWrapCap(DGLint cap)
+static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
 {
     switch(cap)
     {
-    case DGL_CLAMP:         return GL_CLAMP;
-    case DGL_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
-    case DGL_REPEAT:        return GL_REPEAT;
+    case DGL_CLAMP:
+    case DGL_CLAMP_TO_EDGE: return gl::ClampToEdge;
+
+    case DGL_REPEAT:        return gl::Repeat;
     default:
         Con_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
         exit(1); // Unreachable.

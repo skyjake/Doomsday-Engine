@@ -433,27 +433,6 @@ void Rend_Draw2DPlayerSprites(void)
 }
 
 /**
- * The first selected unit is active after this call.
- */
-static void selectTexUnits(int count)
-{
-    for(int i = numTexUnits - 1; i >= count; i--)
-    {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glDisable(GL_TEXTURE_2D);
-    }
-
-    // Enable the selected units.
-    for(int i = count - 1; i >= 0; i--)
-    {
-        if(i >= numTexUnits) continue;
-
-        glActiveTexture(GL_TEXTURE0 + i);
-        glEnable(GL_TEXTURE_2D);
-    }
-}
-
-/**
  * A sort of a sprite, I guess... Masked walls must be rendered sorted
  * with sprites, so no artifacts appear when sprites are seen behind
  * masked walls.
@@ -487,14 +466,14 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
             dyn = 1;
         }
 
-        selectTexUnits(2);
+        GL_SelectTexUnits(2);
         GL_ModulateTexture(IS_MUL ? 4 : 5);
 
         // The dynamic light.
         glActiveTexture(IS_MUL ? GL_TEXTURE0 : GL_TEXTURE1);
         /// @todo modTex may be the name of a "managed" texture.
         GL_BindTextureUnmanaged(renderTextures ? p->modTex : 0,
-                                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+                                gl::ClampToEdge, gl::ClampToEdge);
 
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, p->modColor);
 
@@ -562,7 +541,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t const *p)
         glEnd();
 
         // Restore normal GL state.
-        selectTexUnits(1);
+        GL_SelectTexUnits(1);
         GL_ModulateTexture(1);
     }
     else

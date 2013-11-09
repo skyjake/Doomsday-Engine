@@ -30,6 +30,7 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_play.h"
+#include "clientapp.h"
 
 #include "gl/sys_opengl.h"
 #include "MaterialSnapshot"
@@ -1032,9 +1033,12 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
     if(rendFakeRadio != 2)
     {
         // Write multiple polys depending on rend params.
-        RL_LoadDefaultRtus();
-        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(wsParms.texture),
-                                   GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+        DrawListSpec listSpec;
+        listSpec.group = ShadowGeom;
+        listSpec.texunits[TU_PRIMARY] =
+            GLTextureUnit(GL_PrepareLSTexture(wsParms.texture), gl::ClampToEdge, gl::ClampToEdge);
+
+        DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
 
         if(mustSubdivide)
         {
@@ -1056,22 +1060,28 @@ static void drawWallSectionShadow(Vector3f const *origVertices,
             R_DivTexCoords(rtexcoords, origTexCoords, leftEdge, rightEdge);
             R_DivVertColors(rcolors, origColors, leftEdge, rightEdge);
 
-            RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                                 3 + rightEdge.divisionCount(),
-                                 rvertices  + 3 + leftEdge.divisionCount(),
-                                 rcolors    + 3 + leftEdge.divisionCount(),
-                                 rtexcoords + 3 + leftEdge.divisionCount(),
-                                 0);
-            RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
-                                 3 + leftEdge.divisionCount(),
-                                 rvertices, rcolors, rtexcoords, 0);
+            shadowList.write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 3 + rightEdge.divisionCount(),
+                             rvertices  + 3 + leftEdge.divisionCount(),
+                             rcolors    + 3 + leftEdge.divisionCount(),
+                             rtexcoords + 3 + leftEdge.divisionCount())
+                      .write(gl::TriangleFan,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 3 + leftEdge.divisionCount(),
+                             rvertices, rcolors, rtexcoords);
 
             R_FreeRendVertices(rvertices);
         }
         else
         {
-            RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, RPF_DEFAULT|RPF_SHADOW,
-                                 4, origVertices, rcolors, rtexcoords, 0);
+            shadowList.write(gl::TriangleStrip,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, 4,
+                             origVertices, rcolors, rtexcoords);
         }
     }
 
@@ -1241,8 +1251,12 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 
     if(rendFakeRadio == 2) return;
 
-    RL_LoadDefaultRtus();
-    RL_AddPoly(PT_FAN, RPF_DEFAULT | (!renderWireframe? RPF_SHADOW : 0), 4, rvertices, rcolors);
+    ClientApp::renderSystem().drawLists()
+              .find(DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom))
+                  .write(gl::TriangleFan,
+                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                         Vector2f(1, 1), Vector2f(0, 0),
+                         0, 4, rvertices, rcolors);
 }
 
 static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
@@ -1412,7 +1426,7 @@ void Rend_DrawShadowOffsetVerts()
     glDisable(GL_DEPTH_TEST);
 
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
-                            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+                            gl::ClampToEdge, gl::ClampToEdge);
     glEnable(GL_TEXTURE_2D);
 
     /// @todo fixme: Should use the visual plane heights of sector clusters.
