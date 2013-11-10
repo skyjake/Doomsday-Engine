@@ -637,6 +637,27 @@ DENG_EXTERN_C void GL_UseFog(int yes)
     usingFog = yes;
 }
 
+void GL_SelectTexUnits(int count)
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    for(int i = numTexUnits - 1; i >= count; i--)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    // Enable the selected units.
+    for(int i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits) continue;
+
+        glActiveTexture(GL_TEXTURE0 + i);
+        glEnable(GL_TEXTURE_2D);
+    }
+}
+
 void GL_TotalReset()
 {
     if(isDedicated) return;
@@ -692,55 +713,86 @@ void GL_BlendMode(blendmode_t mode)
     switch(mode)
     {
     case BM_ZEROALPHA:
-        GL_BlendOp(GL_FUNC_ADD);
-        glBlendFunc(GL_ONE, GL_ZERO);
+        GLState::top().setBlendOp(gl::Add)
+                      .setBlendFunc(gl::One, gl::Zero)
+                      .apply();
         break;
 
     case BM_ADD:
-        GL_BlendOp(GL_FUNC_ADD);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        GLState::top().setBlendOp(gl::Add)
+                      .setBlendFunc(gl::SrcAlpha, gl::One)
+                      .apply();
         break;
 
     case BM_DARK:
-        GL_BlendOp(GL_FUNC_ADD);
-        glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+        GLState::top().setBlendOp(gl::Add)
+                      .setBlendFunc(gl::DestColor, gl::OneMinusSrcAlpha)
+                      .apply();
         break;
 
     case BM_SUBTRACT:
-        GL_BlendOp(GL_FUNC_SUBTRACT);
-        glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+        GLState::top().setBlendOp(gl::Subtract)
+                      .setBlendFunc(gl::One, gl::SrcAlpha)
+                      .apply();
         break;
 
     case BM_ALPHA_SUBTRACT:
-        GL_BlendOp(GL_FUNC_SUBTRACT);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        GLState::top().setBlendOp(gl::Subtract)
+                      .setBlendFunc(gl::SrcAlpha, gl::One)
+                      .apply();
         break;
 
     case BM_REVERSE_SUBTRACT:
-        GL_BlendOp(GL_FUNC_REVERSE_SUBTRACT);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        GLState::top().setBlendOp(gl::ReverseSubtract)
+                      .setBlendFunc(gl::SrcAlpha, gl::One)
+                      .apply();
         break;
 
     case BM_MUL:
-        GL_BlendOp(GL_FUNC_ADD);
-        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+        GLState::top().setBlendOp(gl::Add)
+                      .setBlendFunc(gl::Zero, gl::SrcColor)
+                      .apply();
         break;
 
     case BM_INVERSE:
-        GL_BlendOp(GL_FUNC_ADD);
-        glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR);
+        GLState::top().setBlendOp(gl::Add)
+                      .setBlendFunc(gl::OneMinusDestColor, gl::OneMinusSrcColor)
+                      .apply();
         break;
 
     case BM_INVERSE_MUL:
-        GL_BlendOp(GL_FUNC_ADD);
-        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+        GLState::top().setBlendOp(gl::Add)
+                      .setBlendFunc(gl::Zero, gl::OneMinusSrcColor)
+                      .apply();
         break;
 
     default:
-        GL_BlendOp(GL_FUNC_ADD);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GLState::top().setBlendOp(gl::Add)
+                      .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
+                      .apply();
         break;
     }
+}
+
+GLenum GL_Filter(gl::Filter f)
+{
+    switch(f)
+    {
+    case gl::Nearest: return GL_NEAREST;
+    case gl::Linear:  return GL_LINEAR;
+    }
+    return GL_REPEAT;
+}
+
+GLenum GL_Wrap(gl::Wrapping w)
+{
+    switch(w)
+    {
+    case gl::Repeat:         return GL_REPEAT;
+    case gl::RepeatMirrored: return GL_MIRRORED_REPEAT;
+    case gl::ClampToEdge:    return GL_CLAMP_TO_EDGE;
+    }
+    return GL_REPEAT;
 }
 
 int GL_NumMipmapLevels(int width, int height)
@@ -791,19 +843,20 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
-void GL_SetMaterialUI2(Material *mat, int wrapS, int wrapT)
+void GL_SetMaterialUI2(Material *mat, gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     if(!mat) return; // @todo we need a "NULL material".
 
     MaterialVariantSpec const &spec =
-        App_Materials().variantSpec(UiContext, 0, 1, 0, 0, wrapS, wrapT,
+        App_Materials().variantSpec(UiContext, 0, 1, 0, 0,
+                                    GL_Wrap(wrapS), GL_Wrap(wrapT),
                                     0, 1, 0, false, false, false, false);
     GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
 }
 
-void GL_SetMaterialUI(Material* mat)
+void GL_SetMaterialUI(Material *mat)
 {
-    GL_SetMaterialUI2(mat, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    GL_SetMaterialUI2(mat, gl::ClampToEdge, gl::ClampToEdge);
 }
 
 void GL_SetPSprite(Material *mat, int tClass, int tMap)
@@ -811,16 +864,18 @@ void GL_SetPSprite(Material *mat, int tClass, int tMap)
     if(!mat) return; // @todo we need a "NULL material".
 
     MaterialVariantSpec const &spec =
-        App_Materials().variantSpec(PSpriteContext, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+        App_Materials().variantSpec(PSpriteContext, 0, 1, tClass, tMap,
+                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                     0, 1, 0, false, true, true, false);
     GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
 }
 
-void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
+void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     if(rawtex_t *rawTex = R_GetRawTex(lumpNum))
     {
-        GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), wrapS, wrapT, (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), wrapS, wrapT,
+                                (filterUI ? gl::Linear : gl::Nearest));
     }
 }
 
@@ -858,7 +913,8 @@ void GL_BindTexture(TextureVariant *vtexture)
     }
 }
 
-void GL_BindTextureUnmanaged(DGLuint glName, int wrapS, int wrapT, int magMode)
+void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wrapT,
+    gl::Filter filter)
 {
     if(BusyMode_InWorkerThread()) return;
 
@@ -874,11 +930,44 @@ void GL_BindTextureUnmanaged(DGLuint glName, int wrapS, int wrapT, int magMode)
     glBindTexture(GL_TEXTURE_2D, glName);
     Sys_GLCheckError();
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
     if(GL_state.features.texFilterAniso)
+    {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+    }
+}
+
+void GL_Bind(GLTextureUnit const &glTU)
+{
+    if(!glTU.hasTexture()) return;
+
+    if(!renderTextures)
+    {
+        GL_SetNoTexture();
+        return;
+    }
+
+    if(glTU.texture)
+    {
+        GL_BindTexture(glTU.texture);
+    }
+    else
+    {
+        GL_BindTextureUnmanaged(glTU.unmanaged.glName, glTU.unmanaged.wrapS,
+                                glTU.unmanaged.wrapT, glTU.unmanaged.filter);
+    }
+}
+
+void GL_BindTo(GLTextureUnit const &glTU, int unit)
+{
+    if(!glTU.hasTexture()) return;
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    glActiveTexture(GL_TEXTURE0 + byte(unit));
+    GL_Bind(glTU);
 }
 
 void GL_SetNoTexture()

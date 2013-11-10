@@ -122,6 +122,7 @@ DENG2_PIMPL(VRContentTransform)
         // Set render target to offscreen temporarily.
         GLState::push()
                 .setTarget(*unwarpedTarget)
+                .setViewport(Rectangleui::fromSize(unwarpedTexture.size()))
                 .apply();
         unwarpedTarget->unsetActiveRect(true);
         unwarpedTarget->clear(GLTarget::ColorDepth);

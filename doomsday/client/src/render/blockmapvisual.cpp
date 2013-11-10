@@ -113,9 +113,7 @@ static void drawBspLeaf(BspLeaf const &bspLeaf)
 
             GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
             glEnable(GL_TEXTURE_2D);
-
-            GL_BlendOp(GL_FUNC_ADD);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            GL_BlendMode(BM_ADD);
 
             glBegin(GL_QUADS);
                 glTexCoord2f(0.75f, 0.5f);

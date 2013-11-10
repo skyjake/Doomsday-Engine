@@ -326,6 +326,10 @@ def doTask(task):
         msg("BUILD RELEASE")
         return autobuild('platform_release')
 
+    elif task == 'source':
+        msg("PACKAGE SOURCE")
+        return autobuild('source')
+
     elif task == 'sign':
         msg("SIGN PACKAGES")
         return autobuild('sign')
@@ -390,7 +394,10 @@ def handleCompletedTasks():
             newTask('generate_wiki', forClient='master')
         
         elif task == 'build':
-            newTask('sign', forClient='master')            
+            newTask('source', forClient='ubuntu')
+
+        elif task == 'source':
+            newTask('sign', forClient='master')
 
         elif task == 'sign':
             newTask('publish', forClient='master')

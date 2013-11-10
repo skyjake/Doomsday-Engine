@@ -51,6 +51,7 @@
 #include "dd_main.h"
 #include "con_main.h"
 #include "ui/vrcontenttransform.h"
+#include "render/vr.h"
 
 using namespace de;
 
@@ -439,6 +440,21 @@ DENG2_OBSERVES(App,              GameChange)
         root.setViewSize(size);
         busyRoot.setViewSize(size);
     } 
+
+    void updateCompositor()
+    {
+        if(!compositor) return;
+
+        if(VR::mode() == VR::MODE_OCULUS_RIFT)
+        {
+            compositor->setCompositeProjection(Matrix4f::ortho(-1, 2, -1, 2));
+        }
+        else
+        {
+            // We'll simply cover the entire view.
+            compositor->useDefaultCompositeProjection();
+        }
+    }
 };
 
 ClientWindow::ClientWindow(String const &id)
@@ -554,6 +570,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     {
         d->updateRootSize();
     }
+    d->updateCompositor();
 
     d->contentXf.drawTransformed();
 

@@ -36,6 +36,7 @@
 #include "de_resource.h"
 #include "de_graphics.h"
 #include "de_ui.h"
+#include "clientapp.h"
 
 #include "ui/editors/rendererappearanceeditor.h"
 
@@ -109,6 +110,18 @@ boolean usingFog; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
 byte smoothTexAnim = true;
+
+int renderTextures = true;
+int renderWireframe = false;
+int useMultiTexLights = true;
+int useMultiTexDetails = true;
+
+// Rendering paramaters for dynamic lights.
+int dynlightBlend = 0;
+
+Vector3f torchColor(1, 1, 1);
+int torchAdditive = true;
+
 int useShinySurfaces = true;
 
 int useDynLights = true;
@@ -272,10 +285,12 @@ void Rend_Register()
     C_VAR_INT2  ("rend-light",                      &useDynLights,                  0, 0, 1, unlinkMobjLumobjs);
     C_VAR_INT2  ("rend-light-ambient",              &ambientLight,                  0, 0, 255, Rend_UpdateLightModMatrix);
     C_VAR_FLOAT ("rend-light-attenuation",          &rendLightDistanceAttenuation,  CVF_NO_MAX, 0, 0);
+    C_VAR_INT   ("rend-light-blend",                &dynlightBlend,                 0, 0, 2);
     C_VAR_FLOAT ("rend-light-bright",               &dynlightFactor,                0, 0, 1);
     C_VAR_FLOAT2("rend-light-compression",          &lightRangeCompression,         0, -1, 1, Rend_UpdateLightModMatrix);
     C_VAR_BYTE  ("rend-light-decor",                &useLightDecorations,           0, 0, 1);
     C_VAR_FLOAT ("rend-light-fog-bright",           &dynlightFogBright,             0, 0, 1);
+    C_VAR_INT   ("rend-light-multitex",             &useMultiTexLights,             0, 0, 1);
     C_VAR_INT   ("rend-light-num",                  &rendMaxLumobjs,                CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT2("rend-light-sky",                  &rendSkyLight,                  0, 0, 1, markLightGridForFullUpdate);
     C_VAR_BYTE2 ("rend-light-sky-auto",             &rendSkyLightAuto,              0, 0, 1, markLightGridForFullUpdate);
@@ -314,7 +329,6 @@ void Rend_Register()
 
     C_CMD("rendedit", "", OpenRendererAppearanceEditor);
 
-    RL_Register();
     BiasIllum::consoleRegister();
     BiasSurface::consoleRegister();
     LightDecoration::consoleRegister();
@@ -350,13 +364,12 @@ static void reportWallSectionDrawn(Line &line)
 void Rend_Init()
 {
     C_Init();
-    RL_Init();
     Sky_Init();
 }
 
 void Rend_Shutdown()
 {
-    RL_Shutdown();
+    ClientApp::renderSystem().clearDrawLists();
 }
 
 /// World/map renderer reset.
@@ -372,6 +385,16 @@ void Rend_Reset()
         GL_DeleteLists(dlBBox, 1);
         dlBBox = 0;
     }
+}
+
+bool Rend_IsMTexLights()
+{
+    return IS_MTEX_LIGHTS;
+}
+
+bool Rend_IsMTexDetails()
+{
+    return IS_MTEX_DETAILS;
 }
 
 float Rend_FieldOfView()
@@ -561,7 +584,7 @@ float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
         if(real < minimum)
             real = minimum; // Clamp it.
 
-        return real;
+        return de::min(real, 1.f);
     }
 
     return lightLevel;
@@ -712,17 +735,19 @@ static void lightVertex(Vector4f &color, Vector3f const &vtx, float lightLevel,
                         Vector3f const &ambientColor)
 {
     float const dist = Rend_PointDist2D(vtx);
-    float lightVal = Rend_AttenuateLightLevel(dist, lightLevel);
+
+    // Apply distance attenuation.
+    lightLevel = Rend_AttenuateLightLevel(dist, lightLevel);
 
     // Add extra light.
-    lightVal += Rend_ExtraLightDelta();
+    lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
 
-    Rend_ApplyLightAdaptation(lightVal);
+    Rend_ApplyLightAdaptation(lightLevel);
 
     // Mix with the surface color.
     for(int i = 0; i < 3; ++i)
     {
-        color[i] = lightVal * ambientColor[i];
+        color[i] = lightLevel * ambientColor[i];
     }
 }
 
@@ -944,7 +969,8 @@ static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
 
 struct rendworldpoly_params_t
 {
-    int             flags; /// @ref rendpolyFlags
+    //int             flags; /// @ref rendpolyFlags
+    bool            skyMasked;
     blendmode_t     blendMode;
     Vector3d const *topLeft;
     Vector3d const *bottomRight;
@@ -982,18 +1008,18 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     uint const realNumVertices   = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
     bool const mustSubdivide     = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
 
-    bool const skyMaskedMaterial = ((p.flags & RPF_SKYMASK) || (ms.material().isSkyMasked()));
-    bool const drawAsVisSprite   = (!p.forceOpaque && !(p.flags & RPF_SKYMASK) && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
+    bool const skyMaskedMaterial = (p.skyMasked || (ms.material().isSkyMasked()));
+    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     bool useLights = false, useShadows = false, hasDynlights = false;
 
     // Map RTU configuration from prepared MaterialSnapshot(s).
-    rtexmapunit_t const *primaryRTU       = (!(p.flags & RPF_SKYMASK))? &ms.unit(RTU_PRIMARY) : NULL;
-    rtexmapunit_t const *primaryDetailRTU = (r_detail && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_PRIMARY_DETAIL).hasTexture())? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
-    rtexmapunit_t const *interRTU         = (!(p.flags & RPF_SKYMASK) && ms.unit(RTU_INTER).hasTexture())? &ms.unit(RTU_INTER) : NULL;
-    rtexmapunit_t const *interDetailRTU   = (r_detail && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_INTER_DETAIL).hasTexture())? &ms.unit(RTU_INTER_DETAIL) : NULL;
-    rtexmapunit_t const *shinyRTU         = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
-    rtexmapunit_t const *shinyMaskRTU     = (useShinySurfaces && !(p.flags & RPF_SKYMASK) && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
+    GLTextureUnit const *primaryRTU       = (!p.skyMasked)? &ms.unit(RTU_PRIMARY) : NULL;
+    GLTextureUnit const *primaryDetailRTU = (r_detail && !p.skyMasked && ms.unit(RTU_PRIMARY_DETAIL).hasTexture())? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
+    GLTextureUnit const *interRTU         = (!p.skyMasked && ms.unit(RTU_INTER).hasTexture())? &ms.unit(RTU_INTER) : NULL;
+    GLTextureUnit const *interDetailRTU   = (r_detail && !p.skyMasked && ms.unit(RTU_INTER_DETAIL).hasTexture())? &ms.unit(RTU_INTER_DETAIL) : NULL;
+    GLTextureUnit const *shinyRTU         = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
+    GLTextureUnit const *shinyMaskRTU     = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
 
     Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
     Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
@@ -1005,7 +1031,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
     DGLuint modTex = 0;
     Vector2f modTexSt[2]; // [topLeft, bottomRight]
-    Vector4f modColor;
+    Vector3f modColor;
 
     if(!skyMaskedMaterial)
     {
@@ -1029,7 +1055,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
              * dynlight affecting this surface, grab the parameters
              * needed to draw it.
              */
-            if(useLights && RL_IsMTexLights())
+            if(useLights && Rend_IsMTexLights())
             {
                 TexProjection *dyn = 0;
                 Rend_IterateProjectionList(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
@@ -1057,7 +1083,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             quadShinyTexCoords(shinyTexCoords, &posCoords[1], &posCoords[2], p.wall.sectionWidth);
 
         // First light texture coordinates.
-        if(modTex && RL_IsMTexLights())
+        if(modTex && Rend_IsMTexLights())
             quadLightCoords(modCoords, modTexSt[0], modTexSt[1]);
     }
     else
@@ -1086,7 +1112,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             }
 
             // First light texture coordinates.
-            if(modTex && RL_IsMTexLights())
+            if(modTex && Rend_IsMTexLights())
             {
                 float const width  = p.bottomRight->x - p.topLeft->x;
                 float const height = p.bottomRight->y - p.topLeft->y;
@@ -1243,12 +1269,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
     if(drawAsVisSprite)
     {
-        DENG_ASSERT(p.isWall);
+        DENG2_ASSERT(p.isWall);
 
-        /**
-         * Masked polys (walls) get a special treatment (=> vissprite).
-         * This is needed because all masked polys must be sorted (sprites
-         * are masked polys). Otherwise there will be artifacts.
+        /*
+         * Masked polys (walls) get a special treatment (=> vissprite). This is
+         * needed because all masked polys must be sorted (sprites are masked
+         * polys). Otherwise there will be artifacts.
          */
         Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &ms.materialVariant(),
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
@@ -1306,43 +1332,6 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         Rend_RenderShadowProjections(p.shadowListIdx, parm);
     }
 
-    // Map RTU state from the prepared texture units in the MaterialSnapshot.
-    RL_LoadDefaultRtus();
-    RL_MapRtu(RTU_PRIMARY,         primaryRTU);
-    RL_MapRtu(RTU_PRIMARY_DETAIL,  primaryDetailRTU);
-    RL_MapRtu(RTU_INTER,           interRTU);
-    RL_MapRtu(RTU_INTER_DETAIL,    interDetailRTU);
-    RL_MapRtu(RTU_REFLECTION,      shinyRTU);
-    RL_MapRtu(RTU_REFLECTION_MASK, shinyMaskRTU);
-
-    if(primaryRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_PRIMARY, *p.materialOrigin);
-        if(p.materialScale)  RL_Rtu_ScaleST(RTU_PRIMARY, *p.materialScale);
-    }
-
-    if(primaryDetailRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_PRIMARY_DETAIL, *p.materialOrigin);
-    }
-
-    if(interRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_INTER, *p.materialOrigin);
-        if(p.materialScale)  RL_Rtu_ScaleST(RTU_INTER, *p.materialScale);
-    }
-
-    if(interDetailRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_INTER_DETAIL, *p.materialOrigin);
-    }
-
-    if(shinyMaskRTU)
-    {
-        if(p.materialOrigin) RL_Rtu_TranslateOffset(RTU_REFLECTION_MASK, *p.materialOrigin);
-        if(p.materialScale)  RL_Rtu_ScaleST(RTU_REFLECTION_MASK, *p.materialScale);
-    }
-
     // Write multiple polys depending on rend params.
     if(mustSubdivide)
     {
@@ -1350,9 +1339,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         WallEdge const &rightEdge = *p.wall.rightEdge;
 
         /*
-         * Need to swap indices around into fans set the position
-         * of the division vertices, interpolate texcoords and
-         * color.
+         * Need to swap indices around into fans set the position of the division
+         * vertices, interpolate texcoords and color.
          */
 
         Vector3f origVerts[4];
@@ -1403,32 +1391,240 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             R_DivVertColors(shinyColors, origShinyColors, leftEdge, rightEdge);
         }
 
-        RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-                                                 3 + rightEdge.divisionCount(),
-                                                 posCoords + 3 + leftEdge.divisionCount(),
-                                                 colorCoords? colorCoords + 3 + leftEdge.divisionCount() : 0,
-                                                 primaryCoords + 3 + leftEdge.divisionCount(),
-                                                 interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
-                                                 modTex, &modColor, modCoords? modCoords + 3 + leftEdge.divisionCount() : 0,
-                                                 shinyColors + 3 + leftEdge.divisionCount(),
-                                                 shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
-                                                 shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0);
+        if(p.skyMasked)
+        {
+            ClientApp::renderSystem().drawLists()
+                      .find(DrawListSpec(SkyMaskGeom))
+                          .write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, 3 + rightEdge.divisionCount(),
+                                 posCoords + 3 + leftEdge.divisionCount())
+                          .write(gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, 3 + leftEdge.divisionCount(),
+                                 posCoords);
+        }
+        else
+        {
+            DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
 
-        RL_AddPolyWithCoordsModulationReflection(PT_FAN, p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-                                                 3 + leftEdge.divisionCount(),
-                                                 posCoords, colorCoords, primaryCoords, interCoords,
-                                                 modTex, &modColor, modCoords,
-                                                 shinyColors, shinyTexCoords,
-                                                 shinyMaskRTU? primaryCoords : 0);
+            if(primaryRTU)
+            {
+                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
+                }
+                if(p.materialScale)
+                {
+                    listSpec.texunits[TU_PRIMARY].scale  *= *p.materialScale;
+                    listSpec.texunits[TU_PRIMARY].offset *= *p.materialScale;
+                }
+            }
+
+            if(primaryDetailRTU)
+            {
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
+                }
+            }
+
+            if(interRTU)
+            {
+                listSpec.texunits[TU_INTER] = *interRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
+                }
+                if(p.materialScale)
+                {
+                    listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
+                    listSpec.texunits[TU_INTER].offset *= *p.materialScale;
+                }
+            }
+
+            if(interDetailRTU)
+            {
+                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
+                }
+            }
+
+            ClientApp::renderSystem().drawLists()
+                      .find(listSpec)
+                          .write(gl::TriangleFan, BM_NORMAL,
+                                 listSpec.unit(TU_PRIMARY       ).scale,
+                                 listSpec.unit(TU_PRIMARY       ).offset,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                                 hasDynlights, 3 + rightEdge.divisionCount(),
+                                 posCoords + 3 + leftEdge.divisionCount(),
+                                 colorCoords? colorCoords + 3 + leftEdge.divisionCount() : 0,
+                                 primaryCoords + 3 + leftEdge.divisionCount(),
+                                 interCoords? interCoords + 3 + leftEdge.divisionCount() : 0,
+                                 modTex, &modColor, modCoords? modCoords + 3 + leftEdge.divisionCount() : 0)
+                          .write(gl::TriangleFan, BM_NORMAL,
+                                 listSpec.unit(TU_PRIMARY       ).scale,
+                                 listSpec.unit(TU_PRIMARY       ).offset,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                                 hasDynlights, 3 + leftEdge.divisionCount(),
+                                 posCoords, colorCoords, primaryCoords,
+                                 interCoords, modTex, &modColor, modCoords);
+
+            if(shinyRTU)
+            {
+                DrawListSpec listSpec(ShineGeom);
+
+                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+
+                if(shinyMaskRTU)
+                {
+                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    if(p.materialOrigin)
+                    {
+                        listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
+                    }
+                    if(p.materialScale)
+                    {
+                        listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
+                        listSpec.texunits[TU_INTER].offset *= *p.materialScale;
+                    }
+                }
+
+                ClientApp::renderSystem().drawLists()
+                          .find(listSpec)
+                              .write(gl::TriangleFan, ms.shineBlendMode(),
+                                     listSpec.unit(TU_INTER  ).scale,
+                                     listSpec.unit(TU_INTER  ).offset,
+                                     Vector2f(1, 1), Vector2f(0, 0),
+                                     hasDynlights, 3 + rightEdge.divisionCount(),
+                                     posCoords + 3 + leftEdge.divisionCount(),
+                                     shinyColors + 3 + leftEdge.divisionCount(),
+                                     shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
+                                     shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
+                              .write(gl::TriangleFan, ms.shineBlendMode(),
+                                     listSpec.unit(TU_INTER  ).scale,
+                                     listSpec.unit(TU_INTER  ).offset,
+                                     Vector2f(1, 1), Vector2f(0, 0),
+                                     hasDynlights, 3 + leftEdge.divisionCount(),
+                                     posCoords, shinyColors, shinyTexCoords,
+                                     shinyMaskRTU? primaryCoords : 0);
+            }
+        }
     }
     else
     {
-        RL_AddPolyWithCoordsModulationReflection(p.isWall? PT_TRIANGLE_STRIP : PT_FAN,
-                                                 p.flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
-                                                 numVertices, posCoords, colorCoords,
-                                                 primaryCoords, interCoords,
-                                                 modTex, &modColor, modCoords,
-                                                 shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
+        if(p.skyMasked)
+        {
+            ClientApp::renderSystem().drawLists()
+                      .find(DrawListSpec(SkyMaskGeom))
+                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                                 BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                                 Vector2f(1, 1), Vector2f(0, 0),
+                                 0, numVertices,
+                                 posCoords);
+        }
+        else
+        {
+            DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
+
+            if(primaryRTU)
+            {
+                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
+                }
+                if(p.materialScale)
+                {
+                    listSpec.texunits[TU_PRIMARY].scale  *= *p.materialScale;
+                    listSpec.texunits[TU_PRIMARY].offset *= *p.materialScale;
+                }
+            }
+
+            if(primaryDetailRTU)
+            {
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
+                }
+            }
+
+            if(interRTU)
+            {
+                listSpec.texunits[TU_INTER] = *interRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
+                }
+                if(p.materialScale)
+                {
+                    listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
+                    listSpec.texunits[TU_INTER].offset *= *p.materialScale;
+                }
+            }
+
+            if(interDetailRTU)
+            {
+                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                if(p.materialOrigin)
+                {
+                    listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
+                }
+            }
+
+            ClientApp::renderSystem().drawLists()
+                      .find(listSpec)
+                          .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                                 BM_NORMAL,
+                                 listSpec.unit(TU_PRIMARY       ).scale,
+                                 listSpec.unit(TU_PRIMARY       ).offset,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                 listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                                 hasDynlights, numVertices,
+                                 posCoords, colorCoords, primaryCoords, interCoords,
+                                 modTex, &modColor, modCoords);
+
+            if(shinyRTU)
+            {
+                DrawListSpec listSpec(ShineGeom);
+
+                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+
+                if(shinyMaskRTU)
+                {
+                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    if(p.materialOrigin)
+                    {
+                        listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
+                    }
+                    if(p.materialScale)
+                    {
+                        listSpec.texunits[TU_INTER].scale  *= *p.materialScale;
+                        listSpec.texunits[TU_INTER].offset *= *p.materialScale;
+                    }
+                }
+
+                ClientApp::renderSystem().drawLists()
+                          .find(listSpec)
+                              .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
+                                     ms.shineBlendMode(),
+                                     listSpec.unit(TU_INTER         ).scale,
+                                     listSpec.unit(TU_INTER         ).offset,
+                                     listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                                     listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                                     hasDynlights, numVertices,
+                                     posCoords, shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
+            }
+        }
     }
 
     R_FreeRendTexCoords(primaryCoords);
@@ -1630,7 +1826,7 @@ static void writeWallSection(HEdge &hedge, int section,
     Vector3d topLeft        = leftEdge.top().origin();
     Vector3d bottomRight    = rightEdge.bottom().origin();
 
-    parm.flags               = RPF_DEFAULT | (skyMasked? RPF_SKYMASK : 0);
+    parm.skyMasked           = skyMasked;
     parm.bsuf                = &segment;
     parm.geomGroup           = wallSpec.section;
     parm.topLeft             = &topLeft;
@@ -1654,7 +1850,7 @@ static void writeWallSection(HEdge &hedge, int section,
     parm.wall.leftEdge       = &leftEdge;
     parm.wall.rightEdge      = &rightEdge;
 
-    if(!(parm.flags & RPF_SKYMASK))
+    if(!parm.skyMasked)
     {
         if(glowFactor > .0001f)
         {
@@ -1761,28 +1957,29 @@ static void writeWallSection(HEdge &hedge, int section,
  *
  * @param direction  Vertex winding direction.
  * @param height     Z map space height coordinate to be set for each vertex.
- * @param verts      Built vertices are written here.
- * @param vertsSize  Number of built vertices is written here. Can be @c NULL.
+ * @param verts      Built position coordinates are written here. It is the
+ *                   responsibility of the caller to release this storage with
+ *                   @ref R_FreeRendVertices() when done.
  *
- * @return  Number of built vertices (same as written to @a vertsSize).
+ * @return  Number of built vertices.
  */
 static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
-    Vector3f **verts, uint *vertsSize)
+    Vector3f **verts)
 {
-    DENG_ASSERT(verts != 0);
+    DENG2_ASSERT(verts != 0);
 
     BspLeaf const *leaf = currentBspLeaf;
-    Face const &face = leaf->poly();
+    Face const &face    = leaf->poly();
 
     HEdge *fanBase  = leaf->fanBase();
     uint totalVerts = face.hedgeCount() + (!fanBase? 2 : 0);
 
     *verts = R_AllocRendVertices(totalVerts);
 
-    int n = 0;
+    uint n = 0;
     if(!fanBase)
     {
-        (*verts)[n] = Vector3f(face.center().x, face.center().y, height);
+        (*verts)[n] = Vector3f(face.center(), height);
         n++;
     }
 
@@ -1791,44 +1988,43 @@ static uint buildLeafPlaneGeometry(ClockDirection direction, coord_t height,
     HEdge *node = baseNode;
     do
     {
-        (*verts)[n] = Vector3f(node->origin().x, node->origin().y, height);
+        (*verts)[n] = Vector3f(node->origin(), height);
         n++;
     } while((node = &node->neighbor(direction)) != baseNode);
 
     // The last vertex is always equal to the first.
     if(!fanBase)
     {
-        (*verts)[n] = Vector3f(face.hedge()->origin().x, face.hedge()->origin().y, height);
+        (*verts)[n] = Vector3f(face.hedge()->origin(), height);
     }
 
-    if(vertsSize) *vertsSize = totalVerts;
     return totalVerts;
 }
 
 static void writeLeafPlane(Plane &plane)
 {
-    BspLeaf *leaf = currentBspLeaf;
-
-    Face const &poly = leaf->poly();
+    BspLeaf *leaf          = currentBspLeaf;
+    Face const &poly       = leaf->poly();
     Surface const &surface = plane.surface();
 
     // Skip nearly transparent surfaces.
-    float opacity = surface.opacity();
-    if(opacity < .001f)
-        return;
+    float const opacity = surface.opacity();
+    if(opacity < .001f) return;
 
     // Determine which Material to use.
     Material *material = Rend_ChooseMapSurfaceMaterial(surface);
 
     // A drawable material is required.
-    if(!material || !material->isDrawable())
-        return;
+    if(!material) return;
+    if(!material->isDrawable()) return;
 
     // Skip planes with a sky-masked material?
     if(!devRendSkyMode)
     {
         if(surface.hasSkyMaskedMaterial() && plane.indexInSector() <= Sector::Ceiling)
+        {
             return; // Not handled here (drawn with the mask geometry).
+        }
     }
 
     MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
@@ -1839,7 +2035,9 @@ static void writeLeafPlane(Plane &plane)
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
     if(plane.isSectorCeiling())
+    {
         materialOrigin.y -= poly.aaBox().maxY - poly.aaBox().minY;
+    }
     materialOrigin.y = -materialOrigin.y;
 
     Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
@@ -1855,7 +2053,6 @@ static void writeLeafPlane(Plane &plane)
 
     rendworldpoly_params_t parm; zap(parm);
 
-    parm.flags               = RPF_DEFAULT;
     parm.bsuf                = leaf;
     parm.geomGroup           = plane.indexInSector();
     parm.topLeft             = &topLeft;
@@ -1871,29 +2068,32 @@ static void writeLeafPlane(Plane &plane)
         // skymask as regular world polys (with a few obvious properties).
         if(devRendSkyMode)
         {
-            parm.blendMode = BM_NORMAL;
+            parm.blendMode   = BM_NORMAL;
             parm.forceOpaque = true;
         }
         else
-        {   // We'll mask this.
-            parm.flags |= RPF_SKYMASK;
+        {
+            // We'll mask this.
+            parm.skyMasked = true;
         }
     }
     else if(plane.indexInSector() <= Sector::Ceiling)
     {
-        parm.blendMode = BM_NORMAL;
+        parm.blendMode   = BM_NORMAL;
         parm.forceOpaque = true;
     }
     else
     {
         parm.blendMode = surface.blendMode();
         if(parm.blendMode == BM_NORMAL && noSpriteTrans)
+        {
             parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+        }
 
         parm.alpha = surface.opacity();
     }
 
-    if(!(parm.flags & RPF_SKYMASK))
+    if(!parm.skyMasked)
     {
         if(glowFactor > .0001f)
         {
@@ -1931,14 +2131,12 @@ static void writeLeafPlane(Plane &plane)
     }
 
     // Allocate position coordinates.
-    uint numVertices;
     Vector3f *posCoords;
-    buildLeafPlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
-                           plane.heightSmoothed(),
-                           &posCoords, &numVertices);
+    uint vertCount = buildLeafPlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
+                                            plane.heightSmoothed(), &posCoords);
 
     // Draw this section.
-    renderWorldPoly(posCoords, numVertices, parm, ms);
+    renderWorldPoly(posCoords, vertCount, parm, ms);
 
     if(&plane.sector() != leaf->sectorPtr())
     {
@@ -1950,32 +2148,48 @@ static void writeLeafPlane(Plane &plane)
     R_FreeRendVertices(posCoords);
 }
 
-static void writeSkyMaskStrip(int numElements, Vector3f const *posCoords,
+static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     Vector2f const *texCoords, Material *material)
 {
-    DENG_ASSERT(posCoords != 0);
+    DENG2_ASSERT(posCoords != 0);
 
-    int const rendPolyFlags = RPF_DEFAULT | (!devRendSkyMode? RPF_SKYMASK : 0);
     if(!devRendSkyMode)
     {
-        RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, numElements, posCoords, 0);
+        ClientApp::renderSystem().drawLists()
+                  .find(DrawListSpec(SkyMaskGeom))
+                      .write(gl::TriangleStrip,
+                             BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                             Vector2f(1, 1), Vector2f(0, 0),
+                             0, vertCount,
+                             posCoords);
     }
     else
     {
-        DENG_ASSERT(texCoords != 0);
+        DENG2_ASSERT(texCoords != 0);
 
+        DrawListSpec listSpec;
+        listSpec.group = UnlitGeom;
         if(renderTextures != 2)
         {
-            DENG_ASSERT(material != 0);
+            DENG2_ASSERT(material != 0);
 
             // Map RTU configuration from the sky surface material.
             MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-            RL_LoadDefaultRtus();
-            RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
+            listSpec.texunits[TU_PRIMARY]        = ms.unit(RTU_PRIMARY);
+            listSpec.texunits[TU_PRIMARY_DETAIL] = ms.unit(RTU_PRIMARY_DETAIL);
+            listSpec.texunits[TU_INTER]          = ms.unit(RTU_INTER);
+            listSpec.texunits[TU_INTER_DETAIL]   = ms.unit(RTU_INTER_DETAIL);
         }
 
-        RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rendPolyFlags, numElements,
-                             posCoords, NULL, texCoords, NULL);
+        ClientApp::renderSystem().drawLists()
+                  .find(listSpec)
+                      .write(gl::TriangleStrip, BM_NORMAL,
+                             listSpec.unit(TU_PRIMARY       ).scale,
+                             listSpec.unit(TU_PRIMARY       ).offset,
+                             listSpec.unit(TU_PRIMARY_DETAIL).scale,
+                             listSpec.unit(TU_PRIMARY_DETAIL).offset,
+                             0, vertCount,
+                             posCoords, 0, texCoords);
     }
 }
 
@@ -2123,7 +2337,9 @@ static coord_t skyPlaneZ(int skyCap)
 
     int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!P_IsInVoid(viewPlayer))
+    {
         return leaf->map().skyFix(relPlane == Sector::Ceiling);
+    }
 
     return leaf->cluster().visPlane(relPlane).heightSmoothed();
 }
@@ -2135,14 +2351,18 @@ static void writeLeafSkyMaskCap(int skyCap)
     if(devRendSkyMode) return;
     if(!skyCap) return;
 
-    Vector3f *verts;
-    uint numVerts;
-    buildLeafPlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                           skyPlaneZ(skyCap),
-                           &verts, &numVerts);
+    Vector3f *posCoords;
+    uint vertCount = buildLeafPlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
+                                            skyPlaneZ(skyCap), &posCoords);
 
-    RL_AddPoly(PT_FAN, RPF_DEFAULT | RPF_SKYMASK, numVerts, verts, 0);
-    R_FreeRendVertices(verts);
+    ClientApp::renderSystem().drawLists()
+              .find(DrawListSpec(SkyMaskGeom))
+                  .write(gl::TriangleFan,
+                         BM_NORMAL, Vector2f(1, 1), Vector2f(0, 0),
+                         Vector2f(1, 1), Vector2f(0, 0), 0,
+                         vertCount, posCoords);
+
+    R_FreeRendVertices(posCoords);
 }
 
 /// @param skyCap  @ref skyCapFlags
@@ -2153,26 +2373,18 @@ static void writeLeafSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
 
     // Any work to do?
     // Sky caps are only necessary in sectors with sky-masked planes.
-    if((skyCap & SKYCAP_LOWER) && !cluster.visFloor().surface().hasSkyMaskedMaterial())
+    if((skyCap & SKYCAP_LOWER) &&
+       !cluster.visFloor().surface().hasSkyMaskedMaterial())
+    {
         skyCap &= ~SKYCAP_LOWER;
-    if((skyCap & SKYCAP_UPPER) && !cluster.visCeiling().surface().hasSkyMaskedMaterial())
+    }
+    if((skyCap & SKYCAP_UPPER) &&
+       !cluster.visCeiling().surface().hasSkyMaskedMaterial())
+    {
         skyCap &= ~SKYCAP_UPPER;
+    }
 
     if(!skyCap) return;
-
-    if(!devRendSkyMode || renderTextures == 2)
-    {
-        // All geometry uses the same RTU write state.
-        RL_LoadDefaultRtus();
-        if(renderTextures == 2)
-        {
-            // Map RTU configuration from the special "gray" material.
-            MaterialSnapshot const &ms =
-                App_Materials().find(de::Uri("System", Path("gray")))
-                    .material().prepare(Rend_MapSurfaceMaterialSpec());
-            RL_MapRtu(RTU_PRIMARY, &ms.unit(RTU_PRIMARY));
-        }
-    }
 
     // Lower?
     if(skyCap & SKYCAP_LOWER)
@@ -2715,6 +2927,722 @@ static void generateDecorationFlares(Map &map)
     }
 }
 
+/**
+ * Setup GL state for an entire rendering pass (compassing multiple lists).
+ */
+static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
+{
+    static float const black[4] = { 0, 0, 0, 0 };
+
+    zap(texUnitMap);
+
+    switch(mode)
+    {
+    case DM_SKYMASK:
+        GL_SelectTexUnits(0);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        break;
+
+    case DM_BLENDED:
+        GL_SelectTexUnits(2);
+
+        // Intentional fall-through.
+
+    case DM_ALL:
+        // The first texture unit is used for the main texture.
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[1] = Store::TCA_BLEND + 1;
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
+        // Fog is allowed during this pass.
+        if(usingFog)
+        {
+            glEnable(GL_FOG);
+        }
+        // All of the surfaces are opaque.
+        glDisable(GL_BLEND);
+        break;
+
+    case DM_LIGHT_MOD_TEXTURE:
+    case DM_TEXTURE_PLUS_LIGHT:
+        // Modulate sector light, dynamic light and regular texture.
+        GL_SelectTexUnits(2);
+        if(mode == DM_LIGHT_MOD_TEXTURE)
+        {
+            texUnitMap[0] = Store::TCA_LIGHT + 1;
+            texUnitMap[1] = Store::TCA_MAIN + 1;
+            GL_ModulateTexture(4); // Light * texture.
+        }
+        else
+        {
+            texUnitMap[0] = Store::TCA_MAIN + 1;
+            texUnitMap[1] = Store::TCA_LIGHT + 1;
+            GL_ModulateTexture(5); // Texture + light.
+        }
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
+        // Fog is allowed during this pass.
+        if(usingFog)
+        {
+            glEnable(GL_FOG);
+        }
+        // All of the surfaces are opaque.
+        glDisable(GL_BLEND);
+        break;
+
+    case DM_FIRST_LIGHT:
+        // One light, no texture.
+        GL_SelectTexUnits(1);
+        texUnitMap[0] = Store::TCA_LIGHT + 1;
+        GL_ModulateTexture(6);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        // All of the surfaces are opaque.
+        glDisable(GL_BLEND);
+        break;
+
+    case DM_BLENDED_FIRST_LIGHT:
+        // One additive light, no texture.
+        GL_SelectTexUnits(1);
+        texUnitMap[0] = Store::TCA_LIGHT + 1;
+        GL_ModulateTexture(7); // Add light, no color.
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 1 / 255.0f);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        // All of the surfaces are opaque.
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
+        break;
+
+    case DM_WITHOUT_TEXTURE:
+        GL_SelectTexUnits(0);
+        GL_ModulateTexture(1);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        // All of the surfaces are opaque.
+        glDisable(GL_BLEND);
+        break;
+
+    case DM_LIGHTS:
+        GL_SelectTexUnits(1);
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 1 / 255.0f);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        if(usingFog)
+        {
+            glEnable(GL_FOG);
+            glFogfv(GL_FOG_COLOR, black);
+        }
+
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_ADD);
+        break;
+
+    case DM_MOD_TEXTURE:
+    case DM_MOD_TEXTURE_MANY_LIGHTS:
+    case DM_BLENDED_MOD_TEXTURE:
+        // The first texture unit is used for the main texture.
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[1] = Store::TCA_BLEND + 1;
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        // All of the surfaces are opaque.
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_COLOR, GL_ZERO);
+        break;
+
+    case DM_UNBLENDED_TEXTURE_AND_DETAIL:
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[1] = Store::TCA_MAIN + 1;
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
+        // All of the surfaces are opaque.
+        glDisable(GL_BLEND);
+        // Fog is allowed.
+        if(usingFog)
+        {
+            glEnable(GL_FOG);
+        }
+        break;
+
+    case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[1] = Store::TCA_MAIN + 1;
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        // All of the surfaces are opaque.
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_COLOR, GL_ZERO);
+        break;
+
+    case DM_ALL_DETAILS:
+        GL_SelectTexUnits(1);
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        GL_ModulateTexture(0);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        // All of the surfaces are opaque.
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+        // Use fog to fade the details, if fog is enabled.
+        if(usingFog)
+        {
+            glEnable(GL_FOG);
+            float const midGray[4] = { .5f, .5f, .5f, fogColor[3] }; // The alpha is probably meaningless?
+            glFogfv(GL_FOG_COLOR, midGray);
+        }
+        break;
+
+    case DM_BLENDED_DETAILS:
+        GL_SelectTexUnits(2);
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[1] = Store::TCA_BLEND + 1;
+        GL_ModulateTexture(3);
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        // All of the surfaces are opaque.
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+        // Use fog to fade the details, if fog is enabled.
+        if(usingFog)
+        {
+            glEnable(GL_FOG);
+            float const midGray[4] = { .5f, .5f, .5f, fogColor[3] }; // The alpha is probably meaningless?
+            glFogfv(GL_FOG_COLOR, midGray);
+        }
+        break;
+
+    case DM_SHADOW:
+        // A bit like 'negative lights'.
+        GL_SelectTexUnits(1);
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 1 / 255.0f);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        // Set normal fog, if it's enabled.
+        if(usingFog)
+        {
+            glEnable(GL_FOG);
+            glFogfv(GL_FOG_COLOR, fogColor);
+        }
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_NORMAL);
+        break;
+
+    case DM_SHINY:
+        GL_SelectTexUnits(1);
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        GL_ModulateTexture(1); // 8 for multitexture
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        if(usingFog)
+        {   // Fog makes the shininess diminish in the distance.
+            glEnable(GL_FOG);
+            glFogfv(GL_FOG_COLOR, black);
+        }
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_ADD); // Purely additive.
+        break;
+
+    case DM_MASKED_SHINY:
+        GL_SelectTexUnits(2);
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[1] = Store::TCA_BLEND + 1; // the mask
+        GL_ModulateTexture(8); // same as with details
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        if(usingFog)
+        {
+            // Fog makes the shininess diminish in the distance.
+            glEnable(GL_FOG);
+            glFogfv(GL_FOG_COLOR, black);
+        }
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_ADD); // Purely additive.
+        break;
+
+    default: break;
+    }
+}
+
+static void popGLStateForPass(DrawMode mode)
+{
+    switch(mode)
+    {
+    default: break;
+
+    case DM_SKYMASK:
+        GL_SelectTexUnits(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        break;
+
+    case DM_BLENDED:
+        GL_SelectTexUnits(1);
+
+        // Intentional fall-through.
+    case DM_ALL:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        glEnable(GL_BLEND);
+        break;
+
+    case DM_LIGHT_MOD_TEXTURE:
+    case DM_TEXTURE_PLUS_LIGHT:
+        GL_SelectTexUnits(1);
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        glEnable(GL_BLEND);
+        break;
+
+    case DM_FIRST_LIGHT:
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        break;
+
+    case DM_BLENDED_FIRST_LIGHT:
+        GL_ModulateTexture(1);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        break;
+
+    case DM_WITHOUT_TEXTURE:
+        GL_SelectTexUnits(1);
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        break;
+
+    case DM_LIGHTS:
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        GL_BlendMode(BM_NORMAL);
+        break;
+
+    case DM_MOD_TEXTURE:
+    case DM_MOD_TEXTURE_MANY_LIGHTS:
+    case DM_BLENDED_MOD_TEXTURE:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        break;
+
+    case DM_UNBLENDED_TEXTURE_AND_DETAIL:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        break;
+
+    case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        break;
+
+    case DM_ALL_DETAILS:
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        break;
+
+    case DM_BLENDED_DETAILS:
+        GL_SelectTexUnits(1);
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        break;
+
+    case DM_SHADOW:
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        break;
+
+    case DM_SHINY:
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        GL_BlendMode(BM_NORMAL);
+        break;
+
+    case DM_MASKED_SHINY:
+        GL_SelectTexUnits(1);
+        GL_ModulateTexture(1);
+        glEnable(GL_ALPHA_TEST);
+        glDisable(GL_DEPTH_TEST);
+        if(usingFog)
+        {
+            glDisable(GL_FOG);
+        }
+        GL_BlendMode(BM_NORMAL);
+        break;
+    }
+}
+
+static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
+{
+    if(lists.isEmpty()) return;
+    // If the first list is empty -- do nothing.
+    if(lists.at(0)->isEmpty()) return;
+
+    // Setup GL state that's common to all the lists in this mode.
+    TexUnitMap texUnitMap;
+    pushGLStateForPass(mode, texUnitMap);
+
+    // Draw each given list.
+    for(int i = 0; i < lists.count(); ++i)
+    {
+        lists.at(i)->draw(mode, texUnitMap);
+    }
+
+    popGLStateForPass(mode);
+}
+
+static void drawSky()
+{
+    DrawLists::FoundLists lists;
+    ClientApp::renderSystem().drawLists().findAll(SkyMaskGeom, lists);
+    if(!devRendSkyAlways && lists.isEmpty())
+    {
+        return;
+    }
+
+    // We do not want to update color and/or depth.
+    glDisable(GL_DEPTH_TEST);
+    glPushAttrib(GL_COLOR_BUFFER_BIT); // Stereo 3D
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+    // Mask out stencil buffer, setting the drawn areas to 1.
+    glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+    glStencilFunc(GL_ALWAYS, 1, 0xffffffff);
+
+    if(!devRendSkyAlways)
+    {
+        drawLists(lists, DM_SKYMASK);
+    }
+    else
+    {
+        glClearStencil(1);
+        glClear(GL_STENCIL_BUFFER_BIT);
+    }
+
+    // Restore previous GL state.
+    glPopAttrib();
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_STENCIL_TEST);
+
+    // Now, only render where the stencil is set to 1.
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_EQUAL, 1, 0xffffffff);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+    Sky_Render();
+
+    if(!devRendSkyAlways)
+    {
+        glClearStencil(0);
+    }
+
+    // Return GL state to normal.
+    glDisable(GL_STENCIL_TEST);
+    glEnable(GL_DEPTH_TEST);
+}
+
+/*
+ * We have several different paths to accommodate both multitextured details and
+ * dynamic lights. Details take precedence (they always cover entire primitives
+ * and usually *all* of the surfaces in a scene).
+ */
+static void drawAllLists()
+{
+    DENG_ASSERT(!Sys_GLCheckError());
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    drawSky();
+
+    // Render the real surfaces of the visible world.
+
+    /*
+     * Pass: Unlit geometries (all normal lists).
+     */
+
+    DrawLists::FoundLists lists;
+    ClientApp::renderSystem().drawLists().findAll(UnlitGeom, lists);
+    if(IS_MTEX_DETAILS)
+    {
+        // Draw details for unblended surfaces in this pass.
+        drawLists(lists, DM_UNBLENDED_TEXTURE_AND_DETAIL);
+
+        // Blended surfaces.
+        drawLists(lists, DM_BLENDED);
+    }
+    else
+    {
+        // Blending is done during this pass.
+        drawLists(lists, DM_ALL);
+    }
+
+    /*
+     * Pass: Lit geometries.
+     */
+
+    ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
+
+    // If multitexturing is available, we'll use it to our advantage when
+    // rendering lights.
+    if(IS_MTEX_LIGHTS && dynlightBlend != 2)
+    {
+        if(IS_MUL)
+        {
+            // All (unblended) surfaces with exactly one light can be
+            // rendered in a single pass.
+            drawLists(lists, DM_LIGHT_MOD_TEXTURE);
+
+            // Render surfaces with many lights without a texture, just
+            // with the first light.
+            drawLists(lists, DM_FIRST_LIGHT);
+        }
+        else // Additive ('foggy') lights.
+        {
+            drawLists(lists, DM_TEXTURE_PLUS_LIGHT);
+
+            // Render surfaces with blending.
+            drawLists(lists, DM_BLENDED);
+
+            // Render the first light for surfaces with blending.
+            // (Not optimal but shouldn't matter; texture is changed for
+            // each primitive.)
+            drawLists(lists, DM_BLENDED_FIRST_LIGHT);
+        }
+    }
+    else // Multitexturing is not available for lights.
+    {
+        if(IS_MUL)
+        {
+            // Render all lit surfaces without a texture.
+            drawLists(lists, DM_WITHOUT_TEXTURE);
+        }
+        else
+        {
+            if(IS_MTEX_DETAILS) // Draw detail textures using multitexturing.
+            {
+                // Unblended surfaces with a detail.
+                drawLists(lists, DM_UNBLENDED_TEXTURE_AND_DETAIL);
+
+                // Blended surfaces without details.
+                drawLists(lists, DM_BLENDED);
+
+                // Details for blended surfaces.
+                drawLists(lists, DM_BLENDED_DETAILS);
+            }
+            else
+            {
+                drawLists(lists, DM_ALL);
+            }
+        }
+    }
+
+    /*
+     * Pass: All light geometries (always additive).
+     */
+    if(dynlightBlend != 2)
+    {
+        ClientApp::renderSystem().drawLists().findAll(LightGeom, lists);
+        drawLists(lists, DM_LIGHTS);
+    }
+
+    /*
+     * Pass: Geometries with texture modulation.
+     */
+    if(IS_MUL)
+    {
+        // Finish the lit surfaces that didn't yet get a texture.
+        ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
+        if(IS_MTEX_DETAILS)
+        {
+            drawLists(lists, DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL);
+            drawLists(lists, DM_BLENDED_MOD_TEXTURE);
+            drawLists(lists, DM_BLENDED_DETAILS);
+        }
+        else
+        {
+            if(IS_MTEX_LIGHTS && dynlightBlend != 2)
+            {
+                drawLists(lists, DM_MOD_TEXTURE_MANY_LIGHTS);
+            }
+            else
+            {
+                drawLists(lists, DM_MOD_TEXTURE);
+            }
+        }
+    }
+
+    /*
+     * Pass: Geometries with details & modulation.
+     *
+     * If multitexturing is not available for details, we need to apply them as
+     * an extra pass over all the detailed surfaces.
+     */
+    if(r_detail)
+    {
+        // Render detail textures for all surfaces that need them.
+        ClientApp::renderSystem().drawLists().findAll(UnlitGeom, lists);
+        if(IS_MTEX_DETAILS)
+        {
+            // Blended detail textures.
+            drawLists(lists, DM_BLENDED_DETAILS);
+        }
+        else
+        {
+            drawLists(lists, DM_ALL_DETAILS);
+
+            ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
+            drawLists(lists, DM_ALL_DETAILS);
+        }
+    }
+
+    /*
+     * Pass: Shiny geometries.
+     *
+     * If we have two texture units, the shiny masks will be enabled. Otherwise
+     * the masks are ignored. The shine is basically specular environmental
+     * additive light, multiplied by the mask so that black texels from the mask
+     * produce areas without shine.
+     */
+
+    ClientApp::renderSystem().drawLists().findAll(ShineGeom, lists);
+    if(numTexUnits > 1)
+    {
+        // Render masked shiny surfaces in a separate pass.
+        drawLists(lists, DM_SHINY);
+        drawLists(lists, DM_MASKED_SHINY);
+    }
+    else
+    {
+        drawLists(lists, DM_ALL_SHINY);
+    }
+
+    /*
+     * Pass: Shadow geometries (objects and Fake Radio).
+     */
+    int const oldRenderTextures = renderTextures;
+
+    renderTextures = true;
+
+    ClientApp::renderSystem().drawLists().findAll(ShadowGeom, lists);
+    drawLists(lists, DM_SHADOW);
+
+    renderTextures = oldRenderTextures;
+
+    glDisable(GL_TEXTURE_2D);
+
+    // The draw lists do not modify these states -ds
+    glEnable(GL_BLEND);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0);
+    if(usingFog)
+    {
+        glEnable(GL_FOG);
+        glFogfv(GL_FOG_COLOR, fogColor);
+    }
+
+    // Draw masked walls, sprites and models.
+    Rend_DrawMasked();
+
+    // Draw particles.
+    Rend_RenderParticles();
+
+    if(usingFog)
+    {
+        glDisable(GL_FOG);
+    }
+
+    DENG2_ASSERT(!Sys_GLCheckError());
+}
+
 void Rend_RenderMap(Map &map)
 {
     // Set to true if dynlights are inited for this frame.
@@ -2728,7 +3656,7 @@ void Rend_RenderMap(Map &map)
     if(!freezeRLs)
     {
         // Prepare for rendering.
-        RL_ClearLists(); // Clear the lists for new quads.
+        ClientApp::renderSystem().resetDrawLists(); // Clear the lists for new geometry.
         C_ClearRanges(); // Clear the clipper.
 
         // Recycle the vlight lists. Currently done here as the lists are
@@ -2771,7 +3699,7 @@ void Rend_RenderMap(Map &map)
         // Draw the world!
         traverseBspAndDrawLeafs(&map.bspRoot());
     }
-    RL_RenderAllLists();
+    drawAllLists();
 
     // Draw various debugging displays:
     drawAllSurfaceTangentVectors(map);

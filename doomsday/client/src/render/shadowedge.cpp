@@ -30,6 +30,7 @@
 
 #include "render/rend_main.h"
 #include "WallEdge"
+#include "MaterialSnapshot"
 
 #include "render/shadowedge.h"
 

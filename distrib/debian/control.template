@@ -2,11 +2,11 @@ Source: doomsday
 Section: universe/games
 Priority: optional
 Maintainer: Jaakko Keränen <jaakko.keranen@iki.fi>
-Build-Depends: debhelper (>= 7.0.50~)
-Standards-Version: 3.9.1
+Build-Depends: debhelper (>= 8.0.0), python, libsdl1.2-dev, libsdl-mixer1.2-dev, libxrandr-dev, libxxf86vm-dev, libqt4-network (>= 4.7), libqtcore4 (>= 4.7), libqtgui4 (>= 4.7), qt4-qmake (>= 4.7), libqt4-opengl-dev (>= 4.7), zlib1g-dev, libfluidsynth-dev
+Standards-Version: 3.9.3
 Homepage: http://dengine.net/
-Vcs-Git: git://deng.git.sourceforge.net/gitroot/deng/deng
-Vcs-Browser: http://deng.git.sourceforge.net/git/gitweb.cgi?p=deng/deng;a=summary
+Vcs-Git: https://github.com/skyjake/Doomsday-Engine.git
+Vcs-Browser: http://github.com/skyjake/Doomsday-Engine
 
 Package: doomsday
 Architecture: ${Arch}
@@ -18,4 +18,3 @@ Description: Doom/Heretic/Hexen port with enhanced graphics
  models, and dynamic lighting effects. Data files from the original games
  are not included; you must acquire a copy of the original games from 
  id Software and/or Raven Software.
-

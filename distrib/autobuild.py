@@ -175,6 +175,49 @@ def update_debian_changelog():
     update_changes(debChanges=True)
            
 
+def build_source_package():
+    """Builds the source tarball and a Debian source package."""
+    ev = builder.Event(latestAvailable=True)
+    print "Creating source tarball for build %i." % ev.number()
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR))
+    remkdir('srcwork')
+    os.chdir('srcwork')
+    if ev.release_type() == 'stable':
+        system_command('deng_package_source.sh ' + ev.version_base())
+    else:
+        system_command('deng_package_source.sh build %i %s' % (ev.number(), 
+                                                               ev.version_base()))
+    for fn in os.listdir('.'):
+        if fn[:9] == 'doomsday-' and fn[-7:] == '.tar.gz':
+            remote_copy(fn, ev.file_path(fn))
+            break
+
+    # Create a source Debian package and upload it to Launchpad.
+    pkgVer = '%s.%i' % (ev.version_base(), ev.number())
+    pkgDir = 'doomsday-%s' % pkgVer
+    system_command('tar xzf %s' % fn)
+    os.rename(fn[:-7], pkgDir)
+    os.chdir(pkgDir)
+    system_command('echo "" | dh_make -s -c gpl2 --file ../%s' % fn)
+    os.chdir('debian')
+    for fn in os.listdir('.'):
+        if fn[-3:].lower() == '.ex': os.remove(fn)
+    os.remove('README.Debian')
+    os.remove('README.source')
+    
+    def gen_changelog(src, dst, extraSub=''):
+        system_command("sed 's/%s-build%i/%s/;%s' %s > %s" % (
+                ev.version_base(), ev.number(), pkgVer, extraSub, src, dst))
+
+    gen_changelog('../../../debian/changelog', 'changelog')
+    system_command("sed 's/${Arch}/i386 amd64/' ../../../debian/control.template > control")
+    system_command("sed 's/`..\/build_number.py --print`/%i/;s/..\/..\/doomsday/..\/doomsday/' ../../../debian/rules > rules" % ev.number())
+    os.chdir('..')
+    system_command('debuild -S')
+    os.chdir('..')
+    system_command('dput ppa:sjke/doomsday doomsday_%s_source.changes' % (pkgVer))
+
+
 def rebuild_apt_repository():
     """Rebuilds the Apt repository by running apt-ftparchive."""
     aptDir = builder.config.APT_REPO_DIR
@@ -454,6 +497,7 @@ commands = {
     'publish': publish_packages,
     'changes': update_changes,
     'debchanges': update_debian_changelog,
+    'source': build_source_package,
     'apt': rebuild_apt_repository,
     'feed': update_feed,
     'xmlfeed': update_xml_feed,

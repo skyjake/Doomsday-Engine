@@ -33,12 +33,10 @@
 #include "Material"
 
 #include "MapElement"
-#ifdef __CLIENT__
-#  include "Decoration"
-#endif
 #include "uri.hh"
 
 class BspLeaf;
+class Decoration;
 
 /**
  * Models a "boundless" but otherwise geometric map surface. Boundless in the
