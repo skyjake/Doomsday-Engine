@@ -1130,7 +1130,7 @@ void GL_ReleaseSystemTextures()
 
     GL_ReleaseTexturesByScheme("System");
     Rend_ParticleReleaseSystemTextures();
-    Fonts_ReleaseSystemTextures();
+    App_Fonts().releaseSystemTextures();
 
     GL_PruneTextureVariantSpecifications();
 }
@@ -1160,7 +1160,7 @@ void GL_ReleaseRuntimeTextures()
     GL_ReleaseTexturesForRawImages();
 
     Rend_ParticleReleaseExtraTextures();
-    Fonts_ReleaseRuntimeTextures();
+    App_Fonts().releaseRuntimeTextures();
 
     GL_PruneTextureVariantSpecifications();
 }

@@ -2794,10 +2794,10 @@ D_CMD(Font)
     if(!stricmp(argv[1], "name") && argc == 3)
     {
         de::Uri uri(String(argv[2]), RC_NULL);
-        fontid_t newFont = Fonts_ResolveUri2(reinterpret_cast<uri_s *>(&uri), true/*quiet please*/);
+        fontid_t newFont = App_Fonts().resolveUri(reinterpret_cast<uri_s *>(&uri), true/*quiet please*/);
         if(newFont)
         {
-            QScopedPointer<de::Uri> uri(reinterpret_cast<de::Uri *>(Fonts_ComposeUri(newFont)));
+            QScopedPointer<de::Uri> uri(reinterpret_cast<de::Uri *>(App_Fonts().composeUri(newFont)));
             Con_SetFont(newFont);
             if(!uri->scheme().compareWithoutCase("Game"))
             {

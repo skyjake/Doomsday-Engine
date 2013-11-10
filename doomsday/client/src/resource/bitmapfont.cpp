@@ -168,7 +168,7 @@ static void *readFormat0(font_t *font, de::FileHandle *file)
     bitmapFormat = inByte(file);
     if(bitmapFormat > 0)
     {
-        QScopedPointer<de::Uri> uri(reinterpret_cast<de::Uri *>(Fonts_ComposeUri(Fonts_Id(font))));
+        QScopedPointer<de::Uri> uri(App_Fonts().composeUri(App_Fonts().id(font)));
         throw Error("readFormat0", QString("Font \"%1\" uses unknown bitmap bitmapFormat %2").arg(*uri).arg(bitmapFormat));
     }
 
@@ -364,7 +364,7 @@ void BitmapFont_Prepare(font_t *font)
         // Upload the texture.
         if(!novideo && !isDedicated)
         {
-            QScopedPointer<de::Uri> uri(reinterpret_cast<de::Uri *>(Fonts_ComposeUri(Fonts_Id(font))));
+            QScopedPointer<de::Uri> uri(App_Fonts().composeUri(App_Fonts().id(font)));
             LOG_VERBOSE("Uploading GL texture for font \"%s\"...") << *uri;
 
             bf->_tex = GL_NewTextureWithParams(DGL_RGBA, bf->_texSize.width,

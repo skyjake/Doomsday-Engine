@@ -211,6 +211,10 @@ private:
 
 } // namespace de
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Update the Font according to the supplied definition.
  * To be called after an engine update/reset.
@@ -225,9 +229,6 @@ void Font_RebuildFromFile(struct font_s *font, char const *resourcePath);
 /// Same as Fonts_ResolveUri except @a uri is a C-string.
 fontid_t Fonts_ResolveUriCString2(char const *uri, boolean quiet);
 fontid_t Fonts_ResolveUriCString(char const *uri); /*quiet=!(verbose >= 1)*/
-
-struct font_s *R_CreateFontFromFile(Uri *uri, char const *resourcePath);
-struct font_s *R_CreateFontFromDef(ded_compositefont_t *def);
 
 /*
  * Here follows miscellaneous routines currently awaiting refactoring into the
@@ -244,5 +245,9 @@ int Fonts_Leading(struct font_s *font);
 void Fonts_CharSize(struct font_s *font, Size2Raw *size, unsigned char ch);
 int Fonts_CharHeight(struct font_s *font, unsigned char ch);
 int Fonts_CharWidth(struct font_s *font, unsigned char ch);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // DENG_RESOURCE_FONTS_H

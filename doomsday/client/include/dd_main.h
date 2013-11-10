@@ -162,6 +162,12 @@ de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 /// @return  The application's global ResourceSystem.
 ResourceSystem &App_ResourceSystem();
 
+/// @return  The application's global Texture collection.
+de::Textures &App_Textures();
+
+/// @return  The application's global Font collection.
+de::Fonts &App_Fonts();
+
 /// @return  @c true iff there is presently a game loaded.
 boolean App_GameLoaded();
 
@@ -188,9 +194,6 @@ de::Materials &App_Materials();
  * Destroy the Materials collection.
  */
 void App_DeleteMaterials();
-
-/// @return  The application's global Texture collection.
-de::Textures &App_Textures();
 
 fontschemeid_t DD_ParseFontSchemeName(char const *str);
 

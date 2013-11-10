@@ -530,6 +530,11 @@ de::Textures &App_Textures()
     return App_ResourceSystem().textures();
 }
 
+de::Fonts &App_Fonts()
+{
+    return App_ResourceSystem().fonts();
+}
+
 void DD_ClearRuntimeTextureSchemes()
 {
     App_ResourceSystem().clearRuntimeTextureSchemes();
@@ -1451,7 +1456,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         R_ShutdownSvgs();
         R_DestroyColorPalettes();
 
-        Fonts_ClearRuntime();
+        App_Fonts().clearRuntime();
         DD_ClearRuntimeTextureSchemes();
 
         Sfx_InitLogical();
@@ -1812,7 +1817,6 @@ boolean DD_Init(void)
     F_Init();
     DD_CreateFileSystemSchemes();
 
-    Fonts_Init();
     FR_Init();
 
 #ifdef __CLIENT__
@@ -2590,9 +2594,9 @@ void DD_SetVariable(int ddvalue, void *parm)
 }
 
 /// @note Part of the Doomsday public API.
-fontschemeid_t DD_ParseFontSchemeName(const char* str)
+fontschemeid_t DD_ParseFontSchemeName(char const *str)
 {
-    return Fonts_ParseScheme(str);
+    return App_Fonts().parseScheme(str);
 }
 
 String DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)

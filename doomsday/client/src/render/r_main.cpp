@@ -189,11 +189,11 @@ char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
 #ifdef __CLIENT__
 static fontid_t loadSystemFont(char const *name)
 {
-    DENG_ASSERT(name && name[0]);
+    DENG2_ASSERT(name != 0 && name[0]);
 
     // Compose the resource name.
-    struct uri_s *uri = Uri_NewWithPath2("System:", RC_NULL);
-    Uri_SetPath(uri, name);
+    de::Uri uri("System:", RC_NULL);
+    uri.setPath(name);
 
     // Compose the resource data path.
     ddstring_t resourcePath; Str_InitStd(&resourcePath);
@@ -205,9 +205,8 @@ static fontid_t loadSystemFont(char const *name)
 #endif
     F_ExpandBasePath(&resourcePath, &resourcePath);
 
-    font_t *font = R_CreateFontFromFile(uri, Str_Text(&resourcePath));
+    font_t *font = App_Fonts().createFontFromFile(uri, Str_Text(&resourcePath));
     Str_Free(&resourcePath);
-    Uri_Delete(uri);
 
     if(!font)
     {
@@ -215,7 +214,7 @@ static fontid_t loadSystemFont(char const *name)
         exit(1); // Unreachable.
     }
 
-    return Fonts_Id(font);
+    return App_Fonts().id(font);
 }
 
 static void loadFontIfNeeded(char const *uri, fontid_t *fid)
@@ -232,7 +231,7 @@ void R_LoadSystemFonts()
 {
 #ifdef __CLIENT__
 
-    if(!Fonts_IsInitialized() || isDedicated) return;
+    if(isDedicated) return;
 
     loadFontIfNeeded(R_ChooseFixedFont(), &fontFixed);
     loadFontIfNeeded(R_ChooseVariableFont(FS_NORMAL, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT), &fontVariable[FS_NORMAL]);
@@ -576,7 +575,6 @@ void R_Shutdown()
     R_ShutdownSvgs();
 #ifdef __CLIENT__
     R_ShutdownViewWindow();
-    Fonts_Shutdown();
     Rend_Shutdown();
 #endif
 }

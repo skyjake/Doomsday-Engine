@@ -1433,7 +1433,7 @@ void Def_Read()
         scheme.reset();
 
         invalidateAllMaterials();
-        Fonts_ClearDefinitionLinks();
+        App_Fonts().clearDefinitionLinks();
 
         Def_Destroy();
     }
@@ -1457,7 +1457,7 @@ void Def_Read()
     // Composite fonts.
     for(int i = 0; i < defs.count.compositeFonts.num; ++i)
     {
-        R_CreateFontFromDef(defs.compositeFonts + i);
+        App_Fonts().createFontFromDef(defs.compositeFonts + i);
     }
 
     // Sprite names.

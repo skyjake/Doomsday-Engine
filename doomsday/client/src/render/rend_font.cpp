@@ -168,16 +168,18 @@ void FR_Ticker(timespan_t /*ticLength*/)
     ++typeInTime;
 }
 
+#undef FR_ResetTypeinTimer
 void FR_ResetTypeinTimer(void)
 {
     errorIfNotInited("FR_ResetTypeinTimer");
     typeInTime = 0;
 }
 
+#undef FR_SetFont
 void FR_SetFont(fontid_t num)
 {
     errorIfNotInited("FR_SetFont");
-    if(!Fonts_ToFont(num))
+    if(!App_Fonts().toFont(num))
     {
         //LogBuffer_Printf(DE2_LOG_WARNING, "Requested invalid font %i.\n", num);
         return; // No such font.
@@ -191,18 +193,21 @@ void FR_SetNoFont(void)
     fr.fontNum = 0;
 }
 
+#undef FR_Font
 fontid_t FR_Font(void)
 {
     errorIfNotInited("FR_Font");
     return fr.fontNum;
 }
 
+#undef FR_LoadDefaultAttrib
 void FR_LoadDefaultAttrib(void)
 {
     errorIfNotInited("FR_LoadDefaultAttrib");
     memcpy(currentAttribs(), &defaultAttribs, sizeof(defaultAttribs));
 }
 
+#undef FR_PushAttrib
 void FR_PushAttrib(void)
 {
     errorIfNotInited("FR_PushAttrib");
@@ -215,6 +220,7 @@ void FR_PushAttrib(void)
     ++fr.attribStackDepth;
 }
 
+#undef FR_PopAttrib
 void FR_PopAttrib(void)
 {
     errorIfNotInited("FR_PopAttrib");
@@ -226,36 +232,42 @@ void FR_PopAttrib(void)
     --fr.attribStackDepth;
 }
 
+#undef FR_Leading
 float FR_Leading(void)
 {
     errorIfNotInited("FR_Leading");
     return currentAttribs()->leading;
 }
 
+#undef FR_SetLeading
 void FR_SetLeading(float value)
 {
     errorIfNotInited("FR_SetLeading");
     currentAttribs()->leading = value;
 }
 
+#undef FR_Tracking
 int FR_Tracking(void)
 {
     errorIfNotInited("FR_Tracking");
     return currentAttribs()->tracking;
 }
 
+#undef FR_SetTracking
 void FR_SetTracking(int value)
 {
     errorIfNotInited("FR_SetTracking");
     currentAttribs()->tracking = value;
 }
 
+#undef FR_ColorAndAlpha
 void FR_ColorAndAlpha(float rgba[4])
 {
     errorIfNotInited("FR_ColorAndAlpha");
     memcpy(rgba, currentAttribs()->rgba, sizeof(rgba[0]) * 4);
 }
 
+#undef FR_SetColor
 void FR_SetColor(float red, float green, float blue)
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -265,6 +277,7 @@ void FR_SetColor(float red, float green, float blue)
     sat->rgba[CB] = blue;
 }
 
+#undef FR_SetColorv
 void FR_SetColorv(const float rgba[3])
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -274,6 +287,7 @@ void FR_SetColorv(const float rgba[3])
     sat->rgba[CB] = rgba[CB];
 }
 
+#undef FR_SetColorAndAlpha
 void FR_SetColorAndAlpha(float red, float green, float blue, float alpha)
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -284,6 +298,7 @@ void FR_SetColorAndAlpha(float red, float green, float blue, float alpha)
     sat->rgba[CA] = alpha;
 }
 
+#undef FR_SetColorAndAlphav
 void FR_SetColorAndAlphav(const float rgba[4])
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -294,54 +309,63 @@ void FR_SetColorAndAlphav(const float rgba[4])
     sat->rgba[CA] = rgba[CA];
 }
 
+#undef FR_ColorRed
 float FR_ColorRed(void)
 {
     errorIfNotInited("FR_ColorRed");
     return currentAttribs()->rgba[CR];
 }
 
+#undef FR_SetColorRed
 void FR_SetColorRed(float value)
 {
     errorIfNotInited("FR_SetColorRed");
     currentAttribs()->rgba[CR] = value;
 }
 
+#undef FR_ColorGreen
 float FR_ColorGreen(void)
 {
     errorIfNotInited("FR_ColorGreen");
     return currentAttribs()->rgba[CG];
 }
 
+#undef FR_SetColorGreen
 void FR_SetColorGreen(float value)
 {
     errorIfNotInited("FR_SetColorGreen");
     currentAttribs()->rgba[CG] = value;
 }
 
+#undef FR_ColorBlue
 float FR_ColorBlue(void)
 {
     errorIfNotInited("FR_ColorBlue");
     return currentAttribs()->rgba[CB];
 }
 
+#undef FR_SetColorBlue
 void FR_SetColorBlue(float value)
 {
     errorIfNotInited("FR_SetColorBlue");
     currentAttribs()->rgba[CB] = value;
 }
 
+#undef FR_Alpha
 float FR_Alpha(void)
 {
     errorIfNotInited("FR_Alpha");
     return currentAttribs()->rgba[CA];
 }
 
+#undef FR_SetAlpha
 void FR_SetAlpha(float value)
 {
     errorIfNotInited("FR_SetAlpha");
     currentAttribs()->rgba[CA] = value;
 }
 
+#undef FR_ShadowOffset
 void FR_ShadowOffset(int* offsetX, int* offsetY)
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -350,6 +374,7 @@ void FR_ShadowOffset(int* offsetX, int* offsetY)
     if(NULL != offsetY) *offsetY = sat->shadowOffsetY;
 }
 
+#undef FR_SetShadowOffset
 void FR_SetShadowOffset(int offsetX, int offsetY)
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -358,61 +383,70 @@ void FR_SetShadowOffset(int offsetX, int offsetY)
     sat->shadowOffsetY = offsetY;
 }
 
+#undef FR_ShadowStrength
 float FR_ShadowStrength(void)
 {
     errorIfNotInited("FR_ShadowStrength");
     return currentAttribs()->shadowStrength;
 }
 
+#undef FR_SetShadowStrength
 void FR_SetShadowStrength(float value)
 {
     errorIfNotInited("FR_SetShadowStrength");
     currentAttribs()->shadowStrength = MINMAX_OF(0, value, 1);
 }
 
+#undef FR_GlitterStrength
 float FR_GlitterStrength(void)
 {
     errorIfNotInited("FR_GlitterStrength");
     return currentAttribs()->glitterStrength;
 }
 
+#undef FR_SetGlitterStrength
 void FR_SetGlitterStrength(float value)
 {
     errorIfNotInited("FR_SetGlitterStrength");
     currentAttribs()->glitterStrength = MINMAX_OF(0, value, 1);
 }
 
+#undef FR_CaseScale
 boolean FR_CaseScale(void)
 {
     errorIfNotInited("FR_CaseScale");
     return currentAttribs()->caseScale;
 }
 
+#undef FR_SetCaseScale
 void FR_SetCaseScale(boolean value)
 {
     errorIfNotInited("FR_SetCaseScale");
     currentAttribs()->caseScale = value;
 }
 
+#undef FR_CharSize
 void FR_CharSize(Size2Raw* size, unsigned char ch)
 {
     errorIfNotInited("FR_CharSize");
-    Fonts_CharSize(Fonts_ToFont(fr.fontNum), size, ch);
+    Fonts_CharSize(App_Fonts().toFont(fr.fontNum), size, ch);
 }
 
+#undef FR_CharWidth
 int FR_CharWidth(unsigned char ch)
 {
     errorIfNotInited("FR_CharWidth");
     if(fr.fontNum != 0)
-        return Fonts_CharWidth(Fonts_ToFont(fr.fontNum), ch);
+        return Fonts_CharWidth(App_Fonts().toFont(fr.fontNum), ch);
     return 0;
 }
 
+#undef FR_CharHeight
 int FR_CharHeight(unsigned char ch)
 {
     errorIfNotInited("FR_CharHeight");
     if(fr.fontNum != 0)
-        return Fonts_CharHeight(Fonts_ToFont(fr.fontNum), ch);
+        return Fonts_CharHeight(App_Fonts().toFont(fr.fontNum), ch);
     return 0;
 }
 
@@ -421,11 +455,11 @@ int FR_SingleLineHeight(const char* text)
     errorIfNotInited("FR_SingleLineHeight");
     if(fr.fontNum == 0 || !text)
         return 0;
-    { int ascent = Fonts_Ascent(Fonts_ToFont(fr.fontNum));
+    { int ascent = Fonts_Ascent(App_Fonts().toFont(fr.fontNum));
     if(ascent != 0)
         return ascent;
     }
-    return Fonts_CharHeight(Fonts_ToFont(fr.fontNum), (unsigned char)text[0]);
+    return Fonts_CharHeight(App_Fonts().toFont(fr.fontNum), (unsigned char)text[0]);
 }
 
 int FR_GlyphTopToAscent(const char* text)
@@ -434,10 +468,10 @@ int FR_GlyphTopToAscent(const char* text)
     errorIfNotInited("FR_GlyphTopToAscent");
     if(fr.fontNum == 0 || !text)
         return 0;
-    lineHeight = Fonts_Leading(Fonts_ToFont(fr.fontNum));
+    lineHeight = Fonts_Leading(App_Fonts().toFont(fr.fontNum));
     if(lineHeight == 0)
         return 0;
-    return lineHeight - Fonts_Ascent(Fonts_ToFont(fr.fontNum));
+    return lineHeight - Fonts_Ascent(App_Fonts().toFont(fr.fontNum));
 }
 
 static int textFragmentWidth(const char* fragment)
@@ -492,7 +526,7 @@ static int textFragmentHeight(const char* fragment)
         height = MAX_OF(height, FR_CharHeight(c));
     }
 
-    return topToAscent(Fonts_ToFont(fr.fontNum)) + height;
+    return topToAscent(App_Fonts().toFont(fr.fontNum)) + height;
     }
 }
 
@@ -509,7 +543,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 {
     assert(fragment && fragment[0]);
     {
-    font_t* font = Fonts_ToFont(fr.fontNum);
+    font_t* font = App_Fonts().toFont(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
     boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
@@ -1016,10 +1050,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                 (*strPtr) += 4;
                 if(parseString(&(*strPtr), buf, 80))
                 {
-                    uri_s *uri = Uri_NewWithPath2(buf, RC_NULL);
-
-                    fontId = Fonts_ResolveUri2(uri, true/*quiet please*/);
-                    Uri_Delete(uri);
+                    fontId = App_Fonts().resolveUri(de::Uri(buf, RC_NULL), true/*quiet please*/);
 
                     if(fontId != NOFONTID)
                     {
@@ -1096,6 +1127,7 @@ static void freeTextBuffer(void)
     largeTextBufferSize = 0;
 }
 
+#undef FR_TextWidth
 int FR_TextWidth(const char* string)
 {
     int w, maxWidth = -1;
@@ -1160,6 +1192,7 @@ int FR_TextWidth(const char* string)
     return maxWidth;
 }
 
+#undef FR_TextHeight
 int FR_TextHeight(const char* string)
 {
     int h, currentLineHeight;
@@ -1210,6 +1243,7 @@ int FR_TextHeight(const char* string)
     return h;
 }
 
+#undef FR_TextSize
 void FR_TextSize(Size2Raw* size, const char* text)
 {
     if(!size) return;
@@ -1217,6 +1251,7 @@ void FR_TextSize(Size2Raw* size, const char* text)
     size->height = FR_TextHeight(text);
 }
 
+#undef FR_DrawText3
 void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, short _textFlags)
 {
     fontid_t origFont = FR_Font();
@@ -1441,16 +1476,19 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     glColor4fv(origColor);
 }
 
+#undef FR_DrawText2
 void FR_DrawText2(const char* text, const Point2Raw* origin, int alignFlags)
 {
     FR_DrawText3(text, origin, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
+#undef FR_DrawText
 void FR_DrawText(const char* text, const Point2Raw* origin)
 {
     FR_DrawText2(text, origin, DEFAULT_ALIGNFLAGS);
 }
 
+#undef FR_DrawTextXY3
 void FR_DrawTextXY3(const char* text, int x, int y, int alignFlags, short flags)
 {
     Point2Raw origin;
@@ -1459,16 +1497,19 @@ void FR_DrawTextXY3(const char* text, int x, int y, int alignFlags, short flags)
     FR_DrawText3(text, &origin, alignFlags, flags);
 }
 
+#undef FR_DrawTextXY2
 void FR_DrawTextXY2(const char* text, int x, int y, int alignFlags)
 {
     FR_DrawTextXY3(text, x, y, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
+#undef FR_DrawTextXY
 void FR_DrawTextXY(const char* text, int x, int y)
 {
     FR_DrawTextXY2(text, x, y, DEFAULT_ALIGNFLAGS);
 }
 
+#undef FR_DrawChar3
 void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short textFlags)
 {
     char str[2];
@@ -1477,16 +1518,19 @@ void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, sho
     FR_DrawText3(str, origin, alignFlags, textFlags);
 }
 
+#undef FR_DrawChar2
 void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags)
 {
     FR_DrawChar3(ch, origin, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
+#undef FR_DrawChar
 void FR_DrawChar(unsigned char ch, const Point2Raw* origin)
 {
     FR_DrawChar2(ch, origin, DEFAULT_ALIGNFLAGS);
 }
 
+#undef FR_DrawCharXY3
 void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
 {
     Point2Raw origin;
@@ -1495,11 +1539,13 @@ void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short textFl
     FR_DrawChar3(ch, &origin, alignFlags, textFlags);
 }
 
+#undef FR_DrawCharXY2
 void FR_DrawCharXY2(unsigned char ch, int x, int y, int alignFlags)
 {
     FR_DrawCharXY3(ch, x, y, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
+#undef FR_DrawCharXY
 void FR_DrawCharXY(unsigned char ch, int x, int y)
 {
     FR_DrawCharXY2(ch, x, y, DEFAULT_ALIGNFLAGS);
