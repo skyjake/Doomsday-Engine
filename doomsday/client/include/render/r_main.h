@@ -121,10 +121,17 @@ void R_Shutdown(void);
 
 void R_Ticker(timespan_t time);
 
+namespace ui {
+    enum ViewPortLayer {
+        Player3DViewLayer,
+        HUDLayer
+    };
+}
+
 /**
  * Render all view ports in the viewport grid.
  */
-void R_RenderViewPorts(void);
+void R_RenderViewPorts(ui::ViewPortLayer layer);
 
 /**
  * Render a blank view for the specified player.
@@ -142,7 +149,7 @@ viewport_t const *R_CurrentViewPort(void);
 /**
  * Set the current GL viewport.
  */
-void R_UseViewPort(viewport_t *vp);
+void R_UseViewPort(viewport_t const *vp);
 
 viewdata_t const *R_ViewData(int consoleNum);
 

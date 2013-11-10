@@ -77,7 +77,7 @@ DENG2_PIMPL(GameWidget)
             // Notify the world that a new render frame has begun.
             App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
-            R_RenderViewPorts();
+            R_RenderViewPorts(ui::Player3DViewLayer);
 
             // End any open DGL sequence.
             DGL_End();

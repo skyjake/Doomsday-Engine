@@ -51,6 +51,7 @@
 #include "dd_main.h"
 #include "con_main.h"
 #include "ui/vrcontenttransform.h"
+#include "render/vr.h"
 
 using namespace de;
 
@@ -158,13 +159,6 @@ DENG2_OBSERVES(App,              GameChange)
         // is visible and ready to be drawn.
         legacy->disable();
         root.add(legacy);
-
-        /// @todo Compositor only needed in VR modes.
-#if 1
-        compositor = new CompositorWidget;
-        compositor->rule().setRect(root.viewRule());
-        root.add(compositor);
-#endif
 
         gameUI = new GameUIWidget;
         gameUI->rule().setRect(root.viewRule());
@@ -439,6 +433,62 @@ DENG2_OBSERVES(App,              GameChange)
         root.setViewSize(size);
         busyRoot.setViewSize(size);
     } 
+
+    void enableCompositor(bool enable)
+    {
+        if((enable && compositor) || (!enable && !compositor))
+        {
+            return;
+        }
+
+        container().remove(*gameUI);
+        container().remove(*games);
+        container().remove(*notifications);
+        container().remove(*taskBar);
+
+        if(enable && !compositor)
+        {
+            LOG_MSG("Offscreen UI composition enabled");
+
+            compositor = new CompositorWidget;
+            compositor->rule().setRect(root.viewRule());
+            root.add(compositor);
+        }
+        else
+        {
+            DENG2_ASSERT(compositor != 0);
+
+            GuiWidget::destroy(compositor);
+            compositor = 0;
+
+            LOG_MSG("Offscreen UI composition disabled");
+        }
+
+        container().add(gameUI);
+        container().add(games);
+        container().add(notifications);
+        container().add(taskBar);
+
+        if(mode == Normal)
+        {
+            root.update();
+        }
+    }
+
+    void updateCompositor()
+    {
+        if(!compositor) return;
+
+        if(VR::mode() == VR::MODE_OCULUS_RIFT)
+        {
+            compositor->setCompositeProjection(Matrix4f::ortho(-1, 2, -1, 2));
+        }
+        else
+        {
+            // We'll simply cover the entire view.
+            compositor->useDefaultCompositeProjection();
+        }
+    }
 };
 
 ClientWindow::ClientWindow(String const &id)
@@ -554,6 +604,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     {
         d->updateRootSize();
     }
+    d->updateCompositor();
 
     d->contentXf.drawTransformed();
 
@@ -633,6 +684,9 @@ void ClientWindow::draw()
 {
     // Don't run the main loop until after the paint event has been dealt with.
     ClientApp::app().loop().pause();
+
+    // Offscreen composition is only needed in Oculus Rift mode.
+    d->enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
 
     // The canvas needs to be recreated when the GL format has changed
     // (e.g., multisampling).
