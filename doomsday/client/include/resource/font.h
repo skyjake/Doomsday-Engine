@@ -101,8 +101,4 @@ public:
     void charSize(Size2Raw *size, unsigned char ch);
 };
 
-font_t *Font_FromFile(fontid_t bindId, char const *resourcePath);
-
-void Font_RebuildFromFile(font_t *font, char const *resourcePath);
-
 #endif // CLIENT_RESOURCE_FONT_H

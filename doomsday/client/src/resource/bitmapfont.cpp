@@ -133,7 +133,7 @@ static void *readFormat0(font_t *font, de::FileHandle *file)
     avgSize.width = avgSize.height = 0;
     for(i = 0; i < glyphCount; ++i)
     {
-        bitmapfont_char_t *ch = &bf->_chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
+        bitmapfont_t::bitmapfont_char_t *ch = &bf->_chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
         ushort x = inShort(file);
         ushort y = inShort(file);
         ushort w = inByte(file);
@@ -232,7 +232,7 @@ static void *readFormat2(font_t *font, de::FileHandle *file)
         ushort y = inShort(file);
         ushort w = inShort(file);
         ushort h = inShort(file);
-        bitmapfont_char_t *ch = &bf->_chars[code];
+        bitmapfont_t::bitmapfont_char_t *ch = &bf->_chars[code];
 
         ch->geometry.origin.x = 0;
         ch->geometry.origin.y = 0;
@@ -292,28 +292,6 @@ static void *readFormat2(font_t *font, de::FileHandle *file)
     return image;
 }
 
-void Font_RebuildFromFile(font_t *font, char const *resourcePath)
-{
-    if(font->type() != FT_BITMAP)
-    {
-        Con_Error("Fonts::RebuildFromFile: Font is of invalid type %i.", int(font->type()));
-        exit(1); // Unreachable.
-    }
-    BitmapFont_SetFilePath(font, resourcePath);
-}
-
-font_t *Font_FromFile(fontid_t bindId, char const *resourcePath)
-{
-    DENG2_ASSERT(resourcePath != 0);
-
-    bitmapfont_t *font = new bitmapfont_t(bindId);
-    BitmapFont_SetFilePath(font, resourcePath);
-
-    // Lets try and prepare it right away.
-    font->glInit();
-    return font;
-}
-
 bitmapfont_t::bitmapfont_t(fontid_t bindId )
     : font_t(FT_BITMAP, bindId)
 {
@@ -327,6 +305,24 @@ bitmapfont_t::bitmapfont_t(fontid_t bindId )
 bitmapfont_t::~bitmapfont_t()
 {
     glDeinit();
+}
+
+void bitmapfont_t::rebuildFromFile(char const *resourcePath)
+{
+    setFilePath(resourcePath);
+}
+
+bitmapfont_t *bitmapfont_t::fromFile(fontid_t bindId, char const *resourcePath) // static
+{
+    DENG2_ASSERT(resourcePath != 0);
+
+    bitmapfont_t *font = new bitmapfont_t(bindId);
+    font->setFilePath(resourcePath);
+
+    // Lets try and prepare it right away.
+    font->glInit();
+
+    return font;
 }
 
 RectRaw const *bitmapfont_t::charGeometry(unsigned char chr)
@@ -404,67 +400,53 @@ void bitmapfont_t::glDeinit()
     _tex = 0;
 }
 
-void BitmapFont_SetFilePath(font_t *font, char const *filePath)
+void bitmapfont_t::setFilePath(char const *filePath)
 {
-    DENG_ASSERT(font && font->_type == FT_BITMAP);
-
-    bitmapfont_t *bf = (bitmapfont_t *)font;
-
     if(!filePath || !filePath[0])
     {
-        Str_Free(&bf->_filePath);
-        font->_isDirty = true;
+        Str_Free(&_filePath);
+        _isDirty = true;
         return;
     }
 
-    if(bf->_filePath.size > 0)
+    if(_filePath.size > 0)
     {
-        if(!Str_CompareIgnoreCase(&bf->_filePath, filePath))
+        if(!Str_CompareIgnoreCase(&_filePath, filePath))
             return;
     }
     else
     {
-        Str_Init(&bf->_filePath);
+        Str_Init(&_filePath);
     }
-    Str_Set(&bf->_filePath, filePath);
-    font->_isDirty = true;
+    Str_Set(&_filePath, filePath);
+    _isDirty = true;
 }
 
-DGLuint BitmapFont_GLTextureName(font_t const *font)
+DGLuint bitmapfont_t::textureGLName() const
 {
-    DENG_ASSERT(font && font->_type == FT_BITMAP);
-    bitmapfont_t *bf = (bitmapfont_t *)font;
-    return bf->_tex;
+    return _tex;
 }
 
-Size2Raw const *BitmapFont_TextureSize(font_t const *font)
+Size2Raw const *bitmapfont_t::textureSize() const
 {
-    DENG_ASSERT(font && font->_type == FT_BITMAP);
-    bitmapfont_t *bf = (bitmapfont_t *)font;
-    return &bf->_texSize;
+    return &_texSize;
 }
 
-int BitmapFont_TextureWidth(font_t const *font)
+int bitmapfont_t::textureWidth() const
 {
-    DENG_ASSERT(font && font->_type == FT_BITMAP);
-    bitmapfont_t *bf = (bitmapfont_t *)font;
-    return bf->_texSize.width;
+    return _texSize.width;
 }
 
-int BitmapFont_TextureHeight(font_t const *font)
+int bitmapfont_t::textureHeight() const
 {
-    DENG_ASSERT(font && font->_type == FT_BITMAP);
-    bitmapfont_t *bf = (bitmapfont_t *)font;
-    return bf->_texSize.height;
+    return _texSize.height;
 }
 
-void BitmapFont_CharCoords(font_t *font, unsigned char chr, Point2Raw coords[4])
+void bitmapfont_t::charCoords(unsigned char chr, Point2Raw coords[4])
 {
-    DENG_ASSERT(font->_type == FT_BITMAP);
-    bitmapfont_t *bf = (bitmapfont_t *)font;
-    bitmapfont_char_t *ch = &bf->_chars[chr];
+    bitmapfont_t::bitmapfont_char_t *ch = &_chars[chr];
     if(!coords) return;
-    bf->glInit();
+    glInit();
     std::memcpy(coords, ch->coords, sizeof(Point2Raw) * 4);
 }
 
@@ -597,7 +579,7 @@ bitmapcompositefont_t *bitmapcompositefont_t::fromDef(fontid_t bindId, ded_compo
         try
         {
             QByteArray path = reinterpret_cast<de::Uri &>(*def->charMap[i].path).resolved().toUtf8();
-            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, path.constData());
+            font->charSetPatch(def->charMap[i].ch, path.constData());
         }
         catch(de::Uri::ResolveError const &er)
         {
@@ -634,7 +616,7 @@ void bitmapcompositefont_t::rebuildFromDef(ded_compositefont_t *def)
         try
         {
             QByteArray path = reinterpret_cast<de::Uri &>(*def->charMap[i].path).resolved().toUtf8();
-            BitmapCompositeFont_CharSetPatch(this, def->charMap[i].ch, path.constData());
+            charSetPatch(def->charMap[i].ch, path.constData());
         }
         catch(de::Uri::ResolveError const& er)
         {
@@ -643,42 +625,37 @@ void bitmapcompositefont_t::rebuildFromDef(ded_compositefont_t *def)
     }
 }
 
-Texture::Variant *BitmapCompositeFont_CharTexture(font_t *font, unsigned char ch)
+Texture::Variant *bitmapcompositefont_t::charTexture(unsigned char ch)
 {
-    bitmapcompositefont_t *cf = (bitmapcompositefont_t *)font;
-    cf->glInit();
-    return cf->_chars[ch].tex;
+    glInit();
+    return _chars[ch].tex;
 }
 
-patchid_t BitmapCompositeFont_CharPatch(font_t *font, unsigned char ch)
+patchid_t bitmapcompositefont_t::charPatch(unsigned char ch)
 {
-    bitmapcompositefont_t *cf = (bitmapcompositefont_t *)font;
-    cf->glInit();
-    return cf->_chars[ch].patch;
+    glInit();
+    return _chars[ch].patch;
 }
 
-void BitmapCompositeFont_CharSetPatch(font_t *font, unsigned char chr, char const *encodedPatchName)
+void bitmapcompositefont_t::charSetPatch(unsigned char chr, char const *encodedPatchName)
 {
-    bitmapcompositefont_t *cf = (bitmapcompositefont_t *)font;
-    bitmapcompositefont_t::bitmapcompositefont_char_t *ch = &cf->_chars[chr];
+    bitmapcompositefont_char_t *ch = &_chars[chr];
     ch->patch = R_DeclarePatch(encodedPatchName);
-    font->_isDirty = true;
+    _isDirty = true;
 }
 
-uint8_t BitmapCompositeFont_CharBorder(font_t *font, unsigned char chr)
+uint8_t bitmapcompositefont_t::charBorder(unsigned char chr)
 {
-    bitmapcompositefont_t *cf = (bitmapcompositefont_t *)font;
-    bitmapcompositefont_t::bitmapcompositefont_char_t *ch = &cf->_chars[chr];
-    cf->glInit();
+    bitmapcompositefont_char_t *ch = &_chars[chr];
+    glInit();
     return ch->border;
 }
 
-void BitmapCompositeFont_CharCoords(font_t *font, unsigned char /*chr*/, Point2Raw coords[4])
+void bitmapcompositefont_t::charCoords(unsigned char /*chr*/, Point2Raw coords[4])
 {
-    bitmapcompositefont_t *cf = (bitmapcompositefont_t *)font;
     if(!coords) return;
 
-    cf->glInit();
+    glInit();
 
     // Top left.
     coords[0].x = 0;

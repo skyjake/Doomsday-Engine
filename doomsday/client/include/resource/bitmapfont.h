@@ -27,15 +27,16 @@
 #include <de/size.h>
 #include <de/str.h>
 
-// Data for a character.
-typedef struct {
-    RectRaw geometry;
-    Point2Raw coords[4];
-} bitmapfont_char_t;
-
 class bitmapfont_t : public font_t
 {
 public:
+    // Data for a character.
+    struct bitmapfont_char_t
+    {
+        RectRaw geometry;
+        Point2Raw coords[4];
+    };
+
     /// Absolute file path to the archived version of this font (if any).
     ddstring_t _filePath;
 
@@ -48,8 +49,22 @@ public:
     /// Character map.
     bitmapfont_char_t _chars[MAX_CHARS];
 
+public:
     bitmapfont_t(fontid_t bindId);
     ~bitmapfont_t();
+
+    static bitmapfont_t *fromFile(fontid_t bindId, char const *resourcePath);
+
+    void rebuildFromFile(char const *resourcePath);
+    void setFilePath(char const *filePath);
+
+    /// @return  GL-texture name.
+    DGLuint textureGLName() const;
+    Size2Raw const *textureSize() const;
+    int textureHeight() const;
+    int textureWidth() const;
+
+    void charCoords(unsigned char ch, Point2Raw coords[4]);
 
     void glInit();
     void glDeinit();
@@ -58,16 +73,6 @@ public:
     int charWidth(unsigned char ch);
     int charHeight(unsigned char ch);
 };
-
-void BitmapFont_SetFilePath(font_t *font, char const *filePath);
-
-/// @return  GL-texture name.
-DGLuint BitmapFont_GLTextureName(font_t const *font);
-Size2Raw const *BitmapFont_TextureSize(font_t const *font);
-int BitmapFont_TextureHeight(font_t const *font);
-int BitmapFont_TextureWidth(font_t const *font);
-
-void BitmapFont_CharCoords(font_t *font, unsigned char ch, Point2Raw coords[4]);
 
 class bitmapcompositefont_t : public font_t
 {
@@ -106,6 +111,15 @@ public:
      */
     void rebuildFromDef(ded_compositefont_t *def);
 
+    patchid_t charPatch(unsigned char ch);
+    void charSetPatch(unsigned char ch, char const *encodedPatchName);
+
+    de::Texture::Variant *charTexture(unsigned char ch);
+
+    uint8_t charBorder(unsigned char chr);
+
+    void charCoords(unsigned char chr, Point2Raw coords[4]);
+
     void glInit();
     void glDeinit();
 
@@ -113,14 +127,5 @@ public:
     int charWidth(unsigned char ch);
     int charHeight(unsigned char ch);
 };
-
-patchid_t BitmapCompositeFont_CharPatch(font_t *font, unsigned char ch);
-void BitmapCompositeFont_CharSetPatch(font_t *font, unsigned char ch, char const *encodedPatchName);
-
-de::Texture::Variant *BitmapCompositeFont_CharTexture(font_t *font, unsigned char ch);
-
-uint8_t BitmapCompositeFont_CharBorder(font_t *font, unsigned char chr);
-
-void BitmapCompositeFont_CharCoords(font_t *font, unsigned char chr, Point2Raw coords[4]);
 
 #endif /* LIBDENG_BITMAPFONT_H */

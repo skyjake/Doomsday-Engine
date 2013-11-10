@@ -447,8 +447,8 @@ DENG2_PIMPL(Fonts)
                     << self.composeUri(id);
 #endif
                 compFont->rebuildFromDef(def);
-                return compFont;
             }
+            return record->font;
         }
 
         // A new font.
@@ -483,20 +483,22 @@ DENG2_PIMPL(Fonts)
 
         if(record->font)
         {
-            /// @todo Do not update fonts here (not enough knowledge). We should
-            /// instead return an invalid reference/signal and force the caller
-            /// to implement the necessary update logic.
-            font_t *font = record->font;
+            if(bitmapfont_t *bmapFont = record->font->maybeAs<bitmapfont_t>())
+            {
+                /// @todo Do not update fonts here (not enough knowledge). We should
+                /// instead return an invalid reference/signal and force the caller
+                /// to implement the necessary update logic.
 #ifdef DENG_DEBUG
-            LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
-                << self.composeUri(id);
+                LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
+                    << self.composeUri(id);
 #endif
-            Font_RebuildFromFile(font, resourcePath);
-            return font;
+                bmapFont->rebuildFromFile(resourcePath);
+            }
+            return record->font;
         }
 
         // A new font.
-        record->font = Font_FromFile(id, resourcePath);
+        record->font = bitmapfont_t::fromFile(id, resourcePath);
         if(record->font && verbose >= 1)
         {
             LOG_VERBOSE("New font \"%s\"") << self.composeUri(id);
@@ -1100,7 +1102,10 @@ font_t *Fonts::createFontFromFile(Uri const &uri, char const *resourcePath)
     font_t *font = toFont(fontId);
     if(font)
     {
-        Font_RebuildFromFile(font, resourcePath);
+        if(bitmapfont_t *bmapFont = font->maybeAs<bitmapfont_t>())
+        {
+            bmapFont->rebuildFromFile(resourcePath);
+        }
     }
     else
     {

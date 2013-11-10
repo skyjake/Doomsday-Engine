@@ -581,20 +581,21 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
     }
-    if(font->type() == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
+    if(bitmapfont_t *bmapFont = font->maybeAs<bitmapfont_t>())
     {
-        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), gl::ClampToEdge,
-                                gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
+        if(bmapFont->textureGLName())
+        {
+            GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
+                                    gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
 
-        glMatrixMode(GL_TEXTURE);
-        glPushMatrix();
-        glLoadIdentity();
-        glScalef(1.f / BitmapFont_TextureWidth(font),
-                 1.f / BitmapFont_TextureHeight(font), 1.f);
+            glMatrixMode(GL_TEXTURE);
+            glPushMatrix();
+            glLoadIdentity();
+            glScalef(1.f / bmapFont->textureWidth(), 1.f / bmapFont->textureHeight(), 1.f);
+        }
     }
 
-    { int pass;
-    for(pass = (noShadow? 1 : 0); pass < (noCharacter && noGlitter? 1 : 2); ++pass)
+    for(int pass = (noShadow? 1 : 0); pass < (noCharacter && noGlitter? 1 : 2); ++pass)
     {
         count = initialCount;
         ch = fragment;
@@ -731,13 +732,16 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 
             cx += w + sat->tracking;
         }
-    }}
+    }
 
     // Restore previous GL-state.
-    if(font->type() == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
+    if(bitmapfont_t *bmapFont = font->maybeAs<bitmapfont_t>())
     {
-        glMatrixMode(GL_TEXTURE);
-        glPopMatrix();
+        if(bmapFont->textureGLName())
+        {
+            glMatrixMode(GL_TEXTURE);
+            glPopMatrix();
+        }
     }
     if(renderWireframe > 1)
     {
@@ -767,24 +771,23 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t *font,
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(x, y, 0);
 
-    switch(font->type())
+    if(bitmapfont_t *bmapFont = font->maybeAs<bitmapfont_t>())
     {
-    case FT_BITMAP:
         /// @todo Filtering should be determined at a higher level.
         /// @todo We should not need to re-bind this texture here.
-        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), gl::ClampToEdge,
+        GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
                                 gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
 
-        std::memcpy(&geometry, font->charGeometry(ch), sizeof(geometry));
-        BitmapFont_CharCoords(font, ch, coords);
-        break;
+        std::memcpy(&geometry, bmapFont->charGeometry(ch), sizeof(geometry));
+        bmapFont->charCoords(ch, coords);
+    }
+    else if(bitmapcompositefont_t *compFont = font->maybeAs<bitmapcompositefont_t>())
+    {
+        uint8_t const border = compFont->charBorder(ch);
 
-    case FT_BITMAPCOMPOSITE: {
-        uint8_t const border = BitmapCompositeFont_CharBorder(font, ch);
+        GL_BindTexture(compFont->charTexture(ch));
 
-        GL_BindTexture(BitmapCompositeFont_CharTexture(font, ch));
-
-        std::memcpy(&geometry, font->charGeometry(ch), sizeof(geometry));
+        std::memcpy(&geometry, compFont->charGeometry(ch), sizeof(geometry));
         if(border)
         {
             geometry.origin.x -= border;
@@ -792,10 +795,10 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t *font,
             geometry.size.width += border*2;
             geometry.size.height += border*2;
         }
-        BitmapCompositeFont_CharCoords(font, ch, coords);
-        break; }
-
-    default:
+        compFont->charCoords(ch, coords);
+    }
+    else
+    {
         Con_Error("FR_DrawChar: Invalid font type %i.", (int) font->type());
         exit(1); // Unreachable.
     }
