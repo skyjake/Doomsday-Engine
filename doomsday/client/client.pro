@@ -680,12 +680,14 @@ SOURCES += \
     src/render/vlight.cpp \
     src/render/walledge.cpp \
     src/render/wallspec.cpp \
+    src/resource/abstractfont.cpp \
     src/resource/animgroups.cpp \
     src/resource/api_material.cpp \
     src/resource/api_resource.cpp \
     src/resource/bitmapfont.cpp \
     src/resource/colorpalette.cpp \
     src/resource/colorpalettes.cpp \
+    src/resource/compositebitmapfont.cpp \
     src/resource/compositetexture.cpp \
     src/resource/fonts.cpp \
     src/resource/hq2x.cpp \
