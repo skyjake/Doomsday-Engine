@@ -19,6 +19,8 @@
 #ifndef CLIENT_RENDER_VR_H
 #define CLIENT_RENDER_VR_H
 
+#include "de/Vector"
+
 namespace VR {
 
 /// Menu of stereoscopic 3D modes available. Oculus Rift is the star player, but there
@@ -43,6 +45,27 @@ enum Stereo3DMode {
     //
     MODE_MAX_3D_MODE_PLUS_ONE
 };
+
+
+class RiftState {
+public:
+    RiftState();
+    float distortionScale() const;
+    const de::Vector2f& screenSize() const {return m_screenSize;}
+    float hScreenSize() const {return m_screenSize[0];}
+    float vScreenSize() const {return m_screenSize[1];}
+    float lensSeparationDistance() const {return m_lensSeparationDistance;}
+    const de::Vector4f& hmdWarpParam() const {return m_hmdWarpParam;}
+    const de::Vector4f& chromAbParam() const {return m_chromAbParam;}
+
+private:
+    de::Vector2f m_screenSize;
+    float m_lensSeparationDistance;
+    de::Vector4f m_hmdWarpParam;
+    de::Vector4f m_chromAbParam;
+};
+
+extern RiftState riftState;
 
 // Sometimes we want viewpoint to remain constant between left and right eye views
 void holdViewPosition();

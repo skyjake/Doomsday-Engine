@@ -19,6 +19,27 @@
 #include "de_console.h"
 #include "render/vr.h"
 
+VR::RiftState VR::riftState;
+
+VR::RiftState::RiftState()
+    : m_screenSize(0.14976f, 0.09360f)
+    , m_lensSeparationDistance(0.0635f)
+    , m_hmdWarpParam(1.0f, 0.220f, 0.240f, 0.000f)
+    , m_chromAbParam(0.996f, -0.004f, 1.014f, 0.0f)
+{
+}
+
+float VR::RiftState::distortionScale() const
+{
+    float lensShift = hScreenSize() * 0.25f - lensSeparationDistance() * 0.5f;
+    float lensViewportShift = 4.0f * lensShift / hScreenSize();
+    float fitRadius = fabs(-1 - lensViewportShift);
+    float rsq = fitRadius*fitRadius;
+    const de::Vector4f& k = hmdWarpParam();
+    float scale = (k[0] + k[1] * rsq + k[2] * rsq * rsq + k[3] * rsq * rsq * rsq);
+    return scale;
+}
+
 // Sometimes we want viewpoint to remain constant between left and right eye views
 static bool holdView = false;
 void VR::holdViewPosition()

@@ -31,6 +31,10 @@ DENG2_PIMPL(VRContentTransform)
     Drawable oculusRift;
     GLUniform uOculusRiftFB;
     GLUniform uOculusDistortionScale;
+    GLUniform uOculusScreenSize;
+    GLUniform uOculusLensSeparation;
+    GLUniform uOculusHmdWarpParam;
+    GLUniform uOculusChromAbParam;
 
     typedef GLBufferT<Vertex3Tex> OculusRiftVBuf;
     QScopedPointer<GLTarget> unwarpedTarget;
@@ -39,7 +43,11 @@ DENG2_PIMPL(VRContentTransform)
     Instance(Public *i)
         : Base(i),
           uOculusRiftFB("texture", GLUniform::Sampler2D),
-          uOculusDistortionScale("distortionScale", GLUniform::Float)
+          uOculusDistortionScale("distortionScale", GLUniform::Float),
+          uOculusScreenSize("screenSize", GLUniform::Vec2),
+          uOculusLensSeparation("lensSeparationDistance", GLUniform::Float),
+          uOculusHmdWarpParam("hmdWarpParam", GLUniform::Vec4),
+          uOculusChromAbParam("chromAbParam", GLUniform::Vec4)
     {}
 
     void init()
@@ -62,7 +70,11 @@ DENG2_PIMPL(VRContentTransform)
         self.window().root().shaders()
                 .build(oculusRift.program(), "vr.oculusrift.barrel")
                     << uOculusRiftFB
-                    << uOculusDistortionScale;
+                    << uOculusDistortionScale
+                    << uOculusScreenSize
+                    << uOculusLensSeparation
+                    << uOculusHmdWarpParam
+                    << uOculusChromAbParam;
     }
 
     void deinit()
@@ -161,8 +173,12 @@ DENG2_PIMPL(VRContentTransform)
         glDisable(GL_BLEND);
 
         // Copy contents of offscreen buffer to normal screen.
-        // TODO - "distortionScale" uniform variable is not found.
-        uOculusDistortionScale = 1.714f; // TODO - compute it
+        uOculusDistortionScale = VR::riftState.distortionScale();
+        uOculusScreenSize = VR::riftState.screenSize();
+        uOculusLensSeparation = VR::riftState.lensSeparationDistance();
+        uOculusHmdWarpParam = VR::riftState.hmdWarpParam();
+        uOculusChromAbParam = VR::riftState.chromAbParam();
+        //
         oculusRift.draw();
 
         glBindTexture(GL_TEXTURE_2D, 0);
