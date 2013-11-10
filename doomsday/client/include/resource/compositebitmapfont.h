@@ -44,15 +44,8 @@ public:
         uint8_t border;
     };
 
-    /// Definition used to construct this else @c NULL if not applicable.
-    struct ded_compositefont_s *_def;
-
-    /// Character map.
-    bitmapcompositefont_char_t _chars[MAX_CHARS];
-
 public:
     CompositeBitmapFont(fontid_t bindId);
-    ~CompositeBitmapFont();
 
     static CompositeBitmapFont *fromDef(fontid_t bindId, ded_compositefont_t *def);
 
@@ -84,6 +77,9 @@ public:
     RectRaw const *charGeometry(unsigned char ch);
     int charWidth(unsigned char ch);
     int charHeight(unsigned char ch);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // CLIENT_RESOURCE_COMPOSITEBITMAPFONT_H
