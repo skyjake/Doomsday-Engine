@@ -124,18 +124,18 @@ static void errorIfNotInited(const char* callerName)
 
 static int topToAscent(font_t* font)
 {
-    int lineHeight = Fonts_Leading(font);
+    int lineHeight = Font_Leading(font);
     if(lineHeight == 0)
         return 0;
-    return lineHeight - Fonts_Ascent(font);
+    return lineHeight - Font_Ascent(font);
 }
 
 static int lineHeight(font_t* font, unsigned char ch)
 {
-    int ascent = Fonts_Ascent(font);
+    int ascent = Font_Ascent(font);
     if(ascent != 0)
         return ascent;
-    return Fonts_CharHeight(font, ch);
+    return Font_CharHeight(font, ch);
 }
 
 static __inline fr_state_attributes_t* currentAttribs(void)
@@ -429,7 +429,7 @@ void FR_SetCaseScale(boolean value)
 void FR_CharSize(Size2Raw* size, unsigned char ch)
 {
     errorIfNotInited("FR_CharSize");
-    Fonts_CharSize(App_Fonts().toFont(fr.fontNum), size, ch);
+    Font_CharSize(App_Fonts().toFont(fr.fontNum), size, ch);
 }
 
 #undef FR_CharWidth
@@ -437,7 +437,7 @@ int FR_CharWidth(unsigned char ch)
 {
     errorIfNotInited("FR_CharWidth");
     if(fr.fontNum != 0)
-        return Fonts_CharWidth(App_Fonts().toFont(fr.fontNum), ch);
+        return Font_CharWidth(App_Fonts().toFont(fr.fontNum), ch);
     return 0;
 }
 
@@ -446,7 +446,7 @@ int FR_CharHeight(unsigned char ch)
 {
     errorIfNotInited("FR_CharHeight");
     if(fr.fontNum != 0)
-        return Fonts_CharHeight(App_Fonts().toFont(fr.fontNum), ch);
+        return Font_CharHeight(App_Fonts().toFont(fr.fontNum), ch);
     return 0;
 }
 
@@ -455,11 +455,11 @@ int FR_SingleLineHeight(const char* text)
     errorIfNotInited("FR_SingleLineHeight");
     if(fr.fontNum == 0 || !text)
         return 0;
-    { int ascent = Fonts_Ascent(App_Fonts().toFont(fr.fontNum));
+    { int ascent = Font_Ascent(App_Fonts().toFont(fr.fontNum));
     if(ascent != 0)
         return ascent;
     }
-    return Fonts_CharHeight(App_Fonts().toFont(fr.fontNum), (unsigned char)text[0]);
+    return Font_CharHeight(App_Fonts().toFont(fr.fontNum), (unsigned char)text[0]);
 }
 
 int FR_GlyphTopToAscent(const char* text)
@@ -468,10 +468,10 @@ int FR_GlyphTopToAscent(const char* text)
     errorIfNotInited("FR_GlyphTopToAscent");
     if(fr.fontNum == 0 || !text)
         return 0;
-    lineHeight = Fonts_Leading(App_Fonts().toFont(fr.fontNum));
+    lineHeight = Font_Leading(App_Fonts().toFont(fr.fontNum));
     if(lineHeight == 0)
         return 0;
-    return lineHeight - Fonts_Ascent(App_Fonts().toFont(fr.fontNum));
+    return lineHeight - Font_Ascent(App_Fonts().toFont(fr.fontNum));
 }
 
 static int textFragmentWidth(const char* fragment)
@@ -757,9 +757,9 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     RectRaw geometry;
 
     if(alignFlags & ALIGN_RIGHT)
-        x -= Fonts_CharWidth(font, ch);
+        x -= Font_CharWidth(font, ch);
     else if(!(alignFlags & ALIGN_LEFT))
-        x -= Fonts_CharWidth(font, ch) / 2;
+        x -= Font_CharWidth(font, ch) / 2;
 
     if(alignFlags & ALIGN_BOTTOM)
         y -= topToAscent(font) + lineHeight(font, ch);
@@ -1563,8 +1563,13 @@ void FR_Init(void)
     typeInTime = 0;
 }
 
-// fonts.cpp
-DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri); /*quiet=!(verbose >= 1)*/
+#undef Fonts_ResolveUri
+DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
+{
+    if(!uri) return NOFONTID;
+    return App_Fonts().resolveUri(*reinterpret_cast<de::Uri const *>(uri),
+                                  !(verbose >= 1)/*log warnings if verbose*/);
+}
 
 DENG_DECLARE_API(FR) =
 {

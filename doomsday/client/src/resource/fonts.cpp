@@ -43,176 +43,6 @@ D_CMD(ListFonts);
 D_CMD(PrintFontStats);
 #endif
 
-static void Font_Delete(font_t *font)
-{
-    DENG2_ASSERT(font != 0);
-    switch(Font_Type(font))
-    {
-    case FT_BITMAP:             BitmapFont_Delete(font); return;
-    case FT_BITMAPCOMPOSITE:    BitmapCompositeFont_Delete(font); return;
-    }
-    DENG2_ASSERT(false);
-}
-
-static font_t *Font_New(fonttype_t type, fontid_t bindId)
-{
-    switch(type)
-    {
-    case FT_BITMAP:             return BitmapFont_New(bindId);
-    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_New(bindId);
-    }
-    DENG2_ASSERT(false);
-    return 0;
-}
-
-static font_t *Font_FromDef(fontid_t bindId, ded_compositefont_t *def)
-{
-    DENG2_ASSERT(def != 0);
-
-    LOG_AS("Fonts::createFontFromDef");
-
-    font_t *font = Font_New(FT_BITMAPCOMPOSITE, bindId);
-    BitmapCompositeFont_SetDefinition(font, def);
-
-    for(int i = 0; i < def->charMapCount.num; ++i)
-    {
-        if(!def->charMap[i].path) continue;
-        try
-        {
-            QByteArray path = reinterpret_cast<de::Uri &>(*def->charMap[i].path).resolved().toUtf8();
-            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, path.constData());
-        }
-        catch(de::Uri::ResolveError const &er)
-        {
-            LOG_WARNING(er.asText());
-        }
-    }
-
-    // Lets try to prepare it right away.
-    BitmapCompositeFont_Prepare(font);
-    return font;
-}
-
-static font_t *Font_FromFile(fontid_t bindId, char const *resourcePath)
-{
-    DENG2_ASSERT(resourcePath != 0);
-
-    font_t *font = Font_New(FT_BITMAP, bindId);
-    BitmapFont_SetFilePath(font, resourcePath);
-
-    // Lets try and prepare it right away.
-    BitmapFont_Prepare(font);
-    return font;
-}
-
-void Font_RebuildFromFile(font_t *font, char const *resourcePath)
-{
-    if(Font_Type(font) != FT_BITMAP)
-    {
-        Con_Error("Fonts::RebuildFromFile: Font is of invalid type %i.", int(Font_Type(font)));
-        exit(1); // Unreachable.
-    }
-    BitmapFont_SetFilePath(font, resourcePath);
-}
-
-void Font_RebuildFromDef(font_t *font, ded_compositefont_t *def)
-{
-    LOG_AS("Fonts::rebuildFromDef");
-
-    if(Font_Type(font) != FT_BITMAPCOMPOSITE)
-    {
-        Con_Error("Fonts::RebuildFromDef: Font is of invalid type %i.", int(Font_Type(font)));
-        exit(1); // Unreachable.
-    }
-
-    BitmapCompositeFont_SetDefinition(font, def);
-    if(!def) return;
-
-    for(int i = 0; i < def->charMapCount.num; ++i)
-    {
-        if(!def->charMap[i].path) continue;
-
-        try
-        {
-            QByteArray path = reinterpret_cast<de::Uri&>(*def->charMap[i].path).resolved().toUtf8();
-            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, path.constData());
-        }
-        catch(de::Uri::ResolveError const& er)
-        {
-            LOG_WARNING(er.asText());
-        }
-    }
-}
-
-void Font_Release(font_t *font)
-{
-    switch(Font_Type(font))
-    {
-    case FT_BITMAP:          BitmapFont_DeleteGLTexture(font); return;
-    case FT_BITMAPCOMPOSITE: BitmapCompositeFont_ReleaseTextures(font); return;
-    }
-    DENG2_ASSERT(false);
-}
-
-void Font_Prepare(font_t *font)
-{
-    switch(Font_Type(font))
-    {
-    case FT_BITMAP:          BitmapFont_Prepare(font); return;
-    case FT_BITMAPCOMPOSITE: BitmapCompositeFont_Prepare(font); return;
-    }
-    DENG2_ASSERT(false);
-}
-
-int Fonts_Ascent(font_t *font)
-{
-    Font_Prepare(font);
-    return Font_Ascent(font);
-}
-
-int Fonts_Descent(font_t *font)
-{
-    Font_Prepare(font);
-    return Font_Descent(font);
-}
-
-int Fonts_Leading(font_t *font)
-{
-    Font_Prepare(font);
-    return Font_Leading(font);
-}
-
-int Fonts_CharWidth(font_t *font, unsigned char ch)
-{
-    Font_Prepare(font);
-    switch(Font_Type(font))
-    {
-    case FT_BITMAP:             return BitmapFont_CharWidth(font, ch);
-    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_CharWidth(font, ch);
-    }
-    DENG2_ASSERT(false);
-    return 0;
-}
-
-int Fonts_CharHeight(font_t *font, unsigned char ch)
-{
-    Font_Prepare(font);
-    switch(Font_Type(font))
-    {
-    case FT_BITMAP:             return BitmapFont_CharHeight(font, ch);
-    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_CharHeight(font, ch);
-    }
-    DENG2_ASSERT(false);
-    return 0;
-}
-
-void Fonts_CharSize(font_t *font, Size2Raw *size, unsigned char ch)
-{
-    if(!size) return;
-    size->width  = Fonts_CharWidth(font, ch);
-    size->height = Fonts_CharHeight(font, ch);
-}
-
 namespace de {
 
 typedef UserDataPathTree FontRepository;
@@ -587,6 +417,100 @@ DENG2_PIMPL(Fonts)
         }
 
         return 0;
+    }
+
+    font_t *createFromDef(fontid_t id, ded_compositefont_t *def)
+    {
+        LOG_AS("Fonts::createFromDef");
+
+        FontRepository::Node *node = findDirectoryNodeForBindId(id);
+        if(!node)
+        {
+            LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
+            return 0;
+        }
+
+        if(!def)
+        {
+            LOG_WARNING("Failed creating Font #%u (def = NULL), ignoring.") << id;
+            return 0;
+        }
+
+        FontRecord *record = (FontRecord *) node->userPointer();
+        DENG_ASSERT(record != 0);
+
+        if(record->font)
+        {
+            /// @todo Do not update fonts here (not enough knowledge). We should instead
+            /// return an invalid reference/signal and force the caller to implement the
+            /// necessary update logic.
+            font_t *font = record->font;
+#ifdef DENG_DEBUG
+            Uri *uri = self.composeUri(id);
+            LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.") << uri;
+            delete uri;
+#endif
+            Font_RebuildFromDef(font, def);
+            return font;
+        }
+
+        // A new font.
+        record->font = Font_FromDef(id, def);
+        if(record->font && verbose >= 1)
+        {
+            Uri *uri = self.composeUri(id);
+            LOG_VERBOSE("New font \"%s\"") << uri;
+            delete uri;
+        }
+
+        return record->font;
+    }
+
+    font_t *createFromFile(fontid_t id, char const *resourcePath)
+    {
+        LOG_AS("Fonts::createFromFile");
+
+        FontRepository::Node *node = findDirectoryNodeForBindId(id);
+        if(!node)
+        {
+            LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
+            return 0;
+        }
+
+        if(!resourcePath || !resourcePath[0])
+        {
+            LOG_WARNING("Failed creating Font #%u (resourcePath = NULL), ignoring.") << id;
+            return 0;
+        }
+
+        FontRecord *record = (FontRecord *) node->userPointer();
+        DENG2_ASSERT(record != 0);
+
+        if(record->font)
+        {
+            /// @todo Do not update fonts here (not enough knowledge). We should
+            /// instead return an invalid reference/signal and force the caller
+            /// to implement the necessary update logic.
+            font_t *font = record->font;
+#ifdef DENG_DEBUG
+            Uri *uri = self.composeUri(id);
+            LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.") << uri;
+            delete uri;
+#endif
+            Font_RebuildFromFile(font, resourcePath);
+            return font;
+        }
+
+        // A new font.
+        record->font = Font_FromFile(id, resourcePath);
+        if(record->font && verbose >= 1)
+        {
+            Uri *uri = self.composeUri(id);
+            LOG_VERBOSE("New font \"%s\"") << *uri;
+            delete uri;
+        }
+
+        return record->font;
     }
 
     int iterateDirectory(fontschemeid_t schemeId,
@@ -1079,100 +1003,6 @@ fontid_t Fonts::declare(Uri const &uri, int uniqueId)
     return id;
 }
 
-font_t *Fonts::createFromDef(fontid_t id, ded_compositefont_t *def)
-{
-    LOG_AS("Fonts::createFromDef");
-
-    FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
-    if(!node)
-    {
-        LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
-        return 0;
-    }
-
-    if(!def)
-    {
-        LOG_WARNING("Failed creating Font #%u (def = NULL), ignoring.") << id;
-        return 0;
-    }
-
-    FontRecord *record = (FontRecord *) node->userPointer();
-    DENG_ASSERT(record != 0);
-
-    if(record->font)
-    {
-        /// @todo Do not update fonts here (not enough knowledge). We should instead
-        /// return an invalid reference/signal and force the caller to implement the
-        /// necessary update logic.
-        font_t *font = record->font;
-#ifdef DENG_DEBUG
-        Uri *uri = composeUri(id);
-        LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.") << uri;
-        delete uri;
-#endif
-        Font_RebuildFromDef(font, def);
-        return font;
-    }
-
-    // A new font.
-    record->font = Font_FromDef(id, def);
-    if(record->font && verbose >= 1)
-    {
-        Uri *uri = composeUri(id);
-        LOG_VERBOSE("New font \"%s\"") << uri;
-        delete uri;
-    }
-
-    return record->font;
-}
-
-font_t *Fonts::createFromFile(fontid_t id, char const *resourcePath)
-{
-    LOG_AS("Fonts::createFromFile");
-
-    FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
-    if(!node)
-    {
-        LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
-        return 0;
-    }
-
-    if(!resourcePath || !resourcePath[0])
-    {
-        LOG_WARNING("Failed creating Font #%u (resourcePath = NULL), ignoring.") << id;
-        return 0;
-    }
-
-    FontRecord *record = (FontRecord *) node->userPointer();
-    DENG2_ASSERT(record != 0);
-
-    if(record->font)
-    {
-        /// @todo Do not update fonts here (not enough knowledge). We should instead
-        /// return an invalid reference/signal and force the caller to implement the
-        /// necessary update logic.
-        font_t *font = record->font;
-#ifdef DENG_DEBUG
-        Uri *uri = composeUri(id);
-        LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.") << uri;
-        delete uri;
-#endif
-        Font_RebuildFromFile(font, resourcePath);
-        return font;
-    }
-
-    // A new font.
-    record->font = Font_FromFile(id, resourcePath);
-    if(record->font && verbose >= 1)
-    {
-        Uri *uri = composeUri(id);
-        LOG_VERBOSE("New font \"%s\"") << *uri;
-        delete uri;
-    }
-
-    return record->font;
-}
-
 int Fonts::uniqueId(fontid_t id)
 {
     FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
@@ -1309,7 +1139,7 @@ font_t *Fonts::createFontFromFile(Uri const &uri, char const *resourcePath)
     else
     {
         // A new font.
-        font = createFromFile(fontId, resourcePath);
+        font = d->createFromFile(fontId, resourcePath);
         if(!font)
         {
             LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
@@ -1351,7 +1181,7 @@ font_t *Fonts::createFontFromDef(ded_compositefont_t *def)
     else
     {
         // A new font.
-        font = createFromDef(fontId, def);
+        font = d->createFromDef(fontId, def);
         if(!font)
         {
             LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
@@ -1596,33 +1426,6 @@ static void printFonts(fontschemeid_t schemeId, char const *like)
 #endif
 
 } // namespace de
-
-fontid_t Fonts_ResolveUri(de::Uri const &uri, boolean quiet)
-{
-    return App_ResourceSystem().fonts().resolveUri(uri, quiet);
-}
-
-#undef Fonts_ResolveUri
-DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
-{
-    if(!uri) return NOFONTID;
-    return App_Fonts().resolveUri(*reinterpret_cast<de::Uri const *>(uri),
-                             !(verbose >= 1)/*log warnings if verbose*/);
-}
-
-fontid_t Fonts_ResolveUriCString2(char const *path, boolean quiet)
-{
-    if(path && path[0])
-    {
-        return App_Fonts().resolveUri(de::Uri(path, RC_NULL), quiet);
-    }
-    return NOFONTID;
-}
-
-fontid_t Fonts_ResolveUriCString(char const *path)
-{
-    return Fonts_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
-}
 
 D_CMD(ListFonts)
 {

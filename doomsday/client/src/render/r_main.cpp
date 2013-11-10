@@ -219,7 +219,13 @@ static fontid_t loadSystemFont(char const *name)
 
 static void loadFontIfNeeded(char const *uri, fontid_t *fid)
 {
-    *fid = Fonts_ResolveUriCString(uri);
+    *fid = NOFONTID;
+    if(uri && uri[0])
+    {
+        *fid = App_Fonts().resolveUri(de::Uri(uri, RC_NULL),
+                                      !(verbose >= 1)/*log warnings if verbose*/);
+    }
+
     if(*fid == NOFONTID)
     {
         *fid = loadSystemFont(uri);

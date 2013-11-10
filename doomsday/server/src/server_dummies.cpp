@@ -370,7 +370,6 @@ fontschemeid_t Fonts_ParseScheme(const char* str)
     return fontschemeid_t(0);
 }
 
-
 fontid_t Fonts_ResolveUri(Uri const *uri)
 {
     DENG_UNUSED(uri);

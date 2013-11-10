@@ -79,18 +79,21 @@ int Font_Flags(font_t const *font)
 int Font_Ascent(font_t *font)
 {
     DENG_ASSERT(font);
+    Font_Prepare(font);
     return font->_ascent;
 }
 
 int Font_Descent(font_t *font)
 {
     DENG_ASSERT(font);
+    Font_Prepare(font);
     return font->_descent;
 }
 
 int Font_Leading(font_t *font)
 {
     DENG_ASSERT(font);
+    Font_Prepare(font);
     return font->_leading;
 }
 
@@ -287,6 +290,158 @@ static void *readFormat2(font_t *font, de::FileHandle *file)
     }
 
     return image;
+}
+
+void Font_RebuildFromFile(font_t *font, char const *resourcePath)
+{
+    if(Font_Type(font) != FT_BITMAP)
+    {
+        Con_Error("Fonts::RebuildFromFile: Font is of invalid type %i.", int(Font_Type(font)));
+        exit(1); // Unreachable.
+    }
+    BitmapFont_SetFilePath(font, resourcePath);
+}
+
+void Font_RebuildFromDef(font_t *font, ded_compositefont_t *def)
+{
+    LOG_AS("Fonts::rebuildFromDef");
+
+    if(Font_Type(font) != FT_BITMAPCOMPOSITE)
+    {
+        Con_Error("Fonts::RebuildFromDef: Font is of invalid type %i.", int(Font_Type(font)));
+        exit(1); // Unreachable.
+    }
+
+    BitmapCompositeFont_SetDefinition(font, def);
+    if(!def) return;
+
+    for(int i = 0; i < def->charMapCount.num; ++i)
+    {
+        if(!def->charMap[i].path) continue;
+
+        try
+        {
+            QByteArray path = reinterpret_cast<de::Uri&>(*def->charMap[i].path).resolved().toUtf8();
+            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, path.constData());
+        }
+        catch(de::Uri::ResolveError const& er)
+        {
+            LOG_WARNING(er.asText());
+        }
+    }
+}
+
+void Font_Delete(font_t *font)
+{
+    DENG2_ASSERT(font != 0);
+    switch(Font_Type(font))
+    {
+    case FT_BITMAP:             BitmapFont_Delete(font); return;
+    case FT_BITMAPCOMPOSITE:    BitmapCompositeFont_Delete(font); return;
+    }
+    DENG2_ASSERT(false);
+}
+
+font_t *Font_New(fonttype_t type, fontid_t bindId)
+{
+    switch(type)
+    {
+    case FT_BITMAP:             return BitmapFont_New(bindId);
+    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_New(bindId);
+    }
+    DENG2_ASSERT(false);
+    return 0;
+}
+
+font_t *Font_FromDef(fontid_t bindId, ded_compositefont_t *def)
+{
+    DENG2_ASSERT(def != 0);
+
+    LOG_AS("Fonts::createFontFromDef");
+
+    font_t *font = Font_New(FT_BITMAPCOMPOSITE, bindId);
+    BitmapCompositeFont_SetDefinition(font, def);
+
+    for(int i = 0; i < def->charMapCount.num; ++i)
+    {
+        if(!def->charMap[i].path) continue;
+        try
+        {
+            QByteArray path = reinterpret_cast<de::Uri &>(*def->charMap[i].path).resolved().toUtf8();
+            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, path.constData());
+        }
+        catch(de::Uri::ResolveError const &er)
+        {
+            LOG_WARNING(er.asText());
+        }
+    }
+
+    // Lets try to prepare it right away.
+    BitmapCompositeFont_Prepare(font);
+    return font;
+}
+
+font_t *Font_FromFile(fontid_t bindId, char const *resourcePath)
+{
+    DENG2_ASSERT(resourcePath != 0);
+
+    font_t *font = Font_New(FT_BITMAP, bindId);
+    BitmapFont_SetFilePath(font, resourcePath);
+
+    // Lets try and prepare it right away.
+    BitmapFont_Prepare(font);
+    return font;
+}
+
+void Font_Release(font_t *font)
+{
+    switch(Font_Type(font))
+    {
+    case FT_BITMAP:          BitmapFont_DeleteGLTexture(font); return;
+    case FT_BITMAPCOMPOSITE: BitmapCompositeFont_ReleaseTextures(font); return;
+    }
+    DENG2_ASSERT(false);
+}
+
+void Font_Prepare(font_t *font)
+{
+    switch(Font_Type(font))
+    {
+    case FT_BITMAP:          BitmapFont_Prepare(font); return;
+    case FT_BITMAPCOMPOSITE: BitmapCompositeFont_Prepare(font); return;
+    }
+    DENG2_ASSERT(false);
+}
+
+int Font_CharWidth(font_t *font, unsigned char ch)
+{
+    Font_Prepare(font);
+    switch(Font_Type(font))
+    {
+    case FT_BITMAP:             return BitmapFont_CharWidth(font, ch);
+    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_CharWidth(font, ch);
+    }
+    DENG2_ASSERT(false);
+    return 0;
+}
+
+int Font_CharHeight(font_t *font, unsigned char ch)
+{
+    Font_Prepare(font);
+    switch(Font_Type(font))
+    {
+    case FT_BITMAP:             return BitmapFont_CharHeight(font, ch);
+    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_CharHeight(font, ch);
+    }
+    DENG2_ASSERT(false);
+    return 0;
+}
+
+void Font_CharSize(font_t *font, Size2Raw *size, unsigned char ch)
+{
+    if(!size) return;
+    size->width  = Font_CharWidth(font, ch);
+    size->height = Font_CharHeight(font, ch);
 }
 
 font_t *BitmapFont_New(fontid_t bindId)
