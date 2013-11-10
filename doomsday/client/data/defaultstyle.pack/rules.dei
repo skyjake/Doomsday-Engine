@@ -47,6 +47,11 @@ group sidebar {
 
 group console {
     rule width { constant $= UNIT * 125 }
+
+    group commandline {
+        rule width.min { constant $= UNIT * 25 }
+        rule width.max { constant $= UNIT * 75 }
+    }
 }
 
 group gameselection {
