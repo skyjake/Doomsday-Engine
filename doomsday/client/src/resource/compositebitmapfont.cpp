@@ -31,6 +31,7 @@ using namespace de;
 DENG2_PIMPL(CompositeBitmapFont)
 {
     ded_compositefont_t *def; /// Definition on which "this" font is derived (if any).
+    bool needGLInit;
 
     /// Character map.
     bitmapcompositefont_char_t chars[MAX_CHARS];
@@ -38,6 +39,7 @@ DENG2_PIMPL(CompositeBitmapFont)
     Instance(Public *i)
         : Base(i)
         , def(0)
+        , needGLInit(true)
     {
         zap(chars);
         self._flags |= FF_COLORIZE;
@@ -50,8 +52,10 @@ DENG2_PIMPL(CompositeBitmapFont)
 };
 
 CompositeBitmapFont::CompositeBitmapFont(fontid_t bindId)
-    : AbstractFont(FT_BITMAPCOMPOSITE, bindId), d(new Instance(this))
-{}
+    : AbstractFont(), d(new Instance(this))
+{
+    setPrimaryBind(bindId);
+}
 
 RectRaw const *CompositeBitmapFont::charGeometry(unsigned char chr)
 {
@@ -82,7 +86,7 @@ static texturevariantspecification_t &charTextureSpec()
 
 void CompositeBitmapFont::glInit()
 {
-    if(!_isDirty) return;
+    if(!d->needGLInit) return;
     if(novideo || isDedicated || BusyMode_Active()) return;
 
     glDeinit();
@@ -130,14 +134,14 @@ void CompositeBitmapFont::glInit()
     _noCharSize.height = avgSize.height;
 
     // We have prepared all patches.
-    _isDirty = false;
+    d->needGLInit = false;
 }
 
 void CompositeBitmapFont::glDeinit()
 {
     if(novideo || isDedicated) return;
 
-    _isDirty = true;
+    d->needGLInit = true;
     if(BusyMode_Active()) return;
 
     for(int i = 0; i < 256; ++i)
@@ -226,7 +230,7 @@ void CompositeBitmapFont::charSetPatch(unsigned char chr, char const *encodedPat
 {
     bitmapcompositefont_char_t *ch = &d->chars[chr];
     ch->patch = App_ResourceSystem().declarePatch(encodedPatchName);
-    _isDirty = true;
+    d->needGLInit = true;
 }
 
 uint8_t CompositeBitmapFont::charBorder(unsigned char chr)

@@ -49,6 +49,7 @@ DENG2_PIMPL(BitmapFont)
     ddstring_t filePath; ///< The "archived" version of this font (if any).
     DGLuint tex;         ///< GL-texture name.
     Size2Raw texSize;    ///< Texture dimensions in pixels.
+    bool needGLInit;
 
     /// Character map.
     bitmapfont_char_t chars[MAX_CHARS];
@@ -57,6 +58,7 @@ DENG2_PIMPL(BitmapFont)
         : Base(i)
         , tex(0)
         , texSize(0, 0)
+        , needGLInit(true)
     {
         Str_Init(&filePath);
         zap(chars);
@@ -239,9 +241,10 @@ DENG2_PIMPL(BitmapFont)
     }
 };
 
-BitmapFont::BitmapFont(fontid_t bindId )
-    : AbstractFont(FT_BITMAP, bindId), d(new Instance(this))
-{}
+BitmapFont::BitmapFont(fontid_t bindId) : AbstractFont(), d(new Instance(this))
+{
+    setPrimaryBind(bindId);
+}
 
 void BitmapFont::rebuildFromFile(char const *resourcePath)
 {
@@ -327,7 +330,7 @@ void BitmapFont::glDeinit()
 {
     if(novideo || isDedicated) return;
 
-    _isDirty = true;
+    d->needGLInit = true;
     if(BusyMode_Active()) return;
     if(d->tex)
     {
@@ -341,7 +344,7 @@ void BitmapFont::setFilePath(char const *newFilePath)
     if(!newFilePath || !newFilePath[0])
     {
         Str_Free(&d->filePath);
-        _isDirty = true;
+        d->needGLInit = true;
         return;
     }
 
@@ -355,7 +358,7 @@ void BitmapFont::setFilePath(char const *newFilePath)
         Str_Init(&d->filePath);
     }
     Str_Set(&d->filePath, newFilePath);
-    _isDirty = true;
+    d->needGLInit = true;
 }
 
 DGLuint BitmapFont::textureGLName() const

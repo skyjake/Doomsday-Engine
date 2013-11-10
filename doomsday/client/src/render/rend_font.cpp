@@ -759,14 +759,22 @@ static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font,
     RectRaw geometry;
 
     if(alignFlags & ALIGN_RIGHT)
+    {
         x -= font->charWidth(ch);
+    }
     else if(!(alignFlags & ALIGN_LEFT))
+    {
         x -= font->charWidth(ch) / 2;
+    }
 
     if(alignFlags & ALIGN_BOTTOM)
+    {
         y -= topToAscent(font) + lineHeight(font, ch);
+    }
     else if(!(alignFlags & ALIGN_TOP))
+    {
         y -= (topToAscent(font) + lineHeight(font, ch))/2;
+    }
 
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(x, y, 0);
@@ -799,8 +807,8 @@ static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font,
     }
     else
     {
-        Con_Error("FR_DrawChar: Invalid font type %i.", (int) font->type());
-        exit(1); // Unreachable.
+        // Unknown font type!?
+        DENG2_ASSERT(false);
     }
 
     if(font->_marginWidth)
@@ -816,7 +824,7 @@ static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font,
 
     GL_DrawRectWithCoords(&geometry, coords);
 
-    if(font->type() == FT_BITMAPCOMPOSITE)
+    if(font->is<CompositeBitmapFont>())
     {
         GL_SetNoTexture();
     }

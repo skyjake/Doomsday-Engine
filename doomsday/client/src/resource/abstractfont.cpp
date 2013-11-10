@@ -22,11 +22,8 @@
 
 using namespace de;
 
-AbstractFont::AbstractFont(fonttype_t type, fontid_t bindId)
+AbstractFont::AbstractFont(fontid_t bindId)
 {
-    DENG_ASSERT(VALID_FONTTYPE(type));
-
-    _type = type;
     _marginWidth  = 0;
     _marginHeight = 0;
     _leading = 0;
@@ -35,7 +32,6 @@ AbstractFont::AbstractFont(fonttype_t type, fontid_t bindId)
     _noCharSize.width  = 0;
     _noCharSize.height = 0;
     _primaryBind = bindId;
-    _isDirty = true;
 }
 
 void AbstractFont::glInit()
@@ -49,11 +45,6 @@ void AbstractFont::charSize(Size2Raw *size, unsigned char ch)
     if(!size) return;
     size->width  = charWidth(ch);
     size->height = charHeight(ch);
-}
-
-fonttype_t AbstractFont::type() const
-{
-    return _type;
 }
 
 fontid_t AbstractFont::primaryBind() const

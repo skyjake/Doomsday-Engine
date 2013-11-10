@@ -23,16 +23,6 @@
 #include "dd_types.h"
 #include "def_main.h"
 
-// Font types.
-typedef enum {
-    FT_FIRST = 0,
-    FT_BITMAP = FT_FIRST,
-    FT_BITMAPCOMPOSITE,
-    FT_LAST = FT_BITMAPCOMPOSITE
-} fonttype_t;
-
-#define VALID_FONTTYPE(v)       ((v) >= FT_FIRST && (v) <= FT_LAST)
-
 /**
  * @defgroup fontFlags  Font Flags
  * @ingroup flags
@@ -52,11 +42,6 @@ typedef enum {
 class AbstractFont
 {
 public:
-    fonttype_t _type;
-
-    /// @c true= Font requires a full update.
-    bool _isDirty;
-
     /// @ref fontFlags.
     int _flags;
 
@@ -74,12 +59,10 @@ public:
     /// map texture (perhaps per-glyph)?
     int _marginWidth, _marginHeight;
 
-    AbstractFont(fonttype_t type = FT_FIRST, fontid_t bindId = 0);
+    AbstractFont(fontid_t bindId = 0);
     virtual ~AbstractFont() {}
 
     DENG2_AS_IS_METHODS()
-
-    fonttype_t type() const;
 
     fontid_t primaryBind() const;
 
