@@ -23,12 +23,11 @@
 
 #include "dd_share.h" // fontschemeid_t
 #include "def_data.h"
+#include "resource/font.h"
 #include "uri.hh"
 
 /// Special value used to signify an invalid font id.
 #define NOFONTID                    0
-
-struct font_s;
 
 namespace de {
 
@@ -77,7 +76,7 @@ public:
      * Returns the symbolic name associated with the unique @a schemeId; otherwise
      * a zero-length string.
      */
-    ddstring_t const *schemeName(fontschemeid_t schemeId);
+    String const &schemeName(fontschemeid_t schemeId);
 
     /**
      * Returns the total number of fonts in the collection.
@@ -115,12 +114,12 @@ public:
     /**
      * Returns the unique identifier of the primary name for @a font else @c NOFONTID.
      */
-    fontid_t id(struct font_s *font);
+    fontid_t id(font_t *font);
 
     /**
      * Returns the Font associated with unique identifier @a fontId else @c NULL.
      */
-    struct font_s *toFont(fontid_t fontId);
+    font_t *toFont(fontid_t fontId);
 
     /**
      * Returns the Font associated with the scheme-unique identifier @a index else @c NOFONTID.
@@ -138,19 +137,14 @@ public:
     fontschemeid_t scheme(fontid_t fontId);
 
     /**
-     * Returns the symbolic name/path-to this font as a string.
-     */
-    AutoStr *composePath(fontid_t fontId);
-
-    /**
      * Composes the URI to this font. Must be destroyed with Uri_Delete().
      */
-    Uri *composeUri(fontid_t fontid);
+    Uri composeUri(fontid_t fontid);
 
     /**
      * Compose the unique URN to this font. Must be destroyed with Uri_Delete().
      */
-    Uri *composeUrn(fontid_t fontId);
+    Uri composeUrn(fontid_t fontId);
 
     /**
      * Search the Fonts collection for a font associated with @a uri.
@@ -175,9 +169,9 @@ public:
      */
     fontid_t declare(Uri const &uri, int uniqueId);
 
-    struct font_s *createFontFromFile(Uri const &uri, char const *resourcePath);
+    font_t *createFontFromFile(Uri const &uri, char const *resourcePath);
 
-    struct font_s *createFontFromDef(ded_compositefont_t *def);
+    font_t *createFontFromDef(ded_compositefont_t *def);
 
     /**
      * Iterate over defined Fonts in the collection making a callback for each
@@ -191,7 +185,7 @@ public:
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int iterate(fontschemeid_t schemeId, int (*callback)(struct font_s *font, void *context),
+    int iterate(fontschemeid_t schemeId, int (*callback)(font_t *font, void *context),
                 void *context = 0);
 
     /**

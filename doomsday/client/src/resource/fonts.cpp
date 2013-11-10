@@ -75,10 +75,8 @@ struct FontScheme
 static void destroyBoundFont(FontRepository::Node &node)
 {
     FontRecord *record = (FontRecord *) node.userPointer();
-    if(record && record->font)
-    {
-        Font_Delete(record->font); record->font = 0;
-    }
+    if(!record) return;
+    delete record->font; record->font = 0;
 }
 
 static int composeAndCompareDirectoryNodePaths(void const *a, void const *b)
@@ -168,25 +166,24 @@ DENG2_PIMPL(Fonts)
     {
         LOG_AS("Fonts::destroyRecord");
         FontRecord *record = (FontRecord *) node.userPointer();
-        if(record)
-        {
-            if(record->font)
-            {
+        if(!record) return;
+
 #ifdef DENG_DEBUG
-                Uri uri = composeUriForDirectoryNode(node);
-                LOG_WARNING("destroyRecord: Record for \"%s\" still has Font data!") << uri;
-#endif
-                Font_Delete(record->font);
-            }
-
-            unlinkDirectoryNodeFromBindIdMap(node);
-            unlinkRecordInUniqueIdMap(node);
-
-            // Detach our user data from this node.
-            node.setUserPointer(0);
-
-            M_Free(record);
+        if(record->font)
+        {
+            Uri uri = composeUriForDirectoryNode(node);
+            LOG_WARNING("destroyRecord: Record for \"%s\" still has Font data!") << uri;
         }
+#endif
+        delete record->font; record->font = 0;
+
+        unlinkDirectoryNodeFromBindIdMap(node);
+        unlinkRecordInUniqueIdMap(node);
+
+        // Detach our user data from this node.
+        node.setUserPointer(0);
+
+        M_Free(record);
     }
 
     void destroyFontAndRecord(FontRepository::Node &node)
@@ -258,8 +255,7 @@ DENG2_PIMPL(Fonts)
     /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
     Uri composeUriForDirectoryNode(FontRepository::Node const &node)
     {
-        ddstring_t const *schemeName = self.schemeName(schemeIdForDirectoryNode(node));
-        return Uri(Str_Text(schemeName), node.path());
+        return Uri(self.schemeName(schemeIdForDirectoryNode(node)), node.path());
     }
 
     /// @pre fontIdMap has been initialized and is large enough!
@@ -441,26 +437,25 @@ DENG2_PIMPL(Fonts)
 
         if(record->font)
         {
-            /// @todo Do not update fonts here (not enough knowledge). We should instead
-            /// return an invalid reference/signal and force the caller to implement the
-            /// necessary update logic.
-            font_t *font = record->font;
+            if(bitmapcompositefont_t *compFont = record->font->maybeAs<bitmapcompositefont_t>())
+            {
+                /// @todo Do not update fonts here (not enough knowledge). We should
+                /// instead return an invalid reference/signal and force the caller
+                /// to implement the necessary update logic.
 #ifdef DENG_DEBUG
-            Uri *uri = self.composeUri(id);
-            LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.") << uri;
-            delete uri;
+                LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
+                    << self.composeUri(id);
 #endif
-            Font_RebuildFromDef(font, def);
-            return font;
+                compFont->rebuildFromDef(def);
+                return compFont;
+            }
         }
 
         // A new font.
-        record->font = Font_FromDef(id, def);
+        record->font = bitmapcompositefont_t::fromDef(id, def);
         if(record->font && verbose >= 1)
         {
-            Uri *uri = self.composeUri(id);
-            LOG_VERBOSE("New font \"%s\"") << uri;
-            delete uri;
+            LOG_VERBOSE("New font \"%s\"") << self.composeUri(id);
         }
 
         return record->font;
@@ -493,9 +488,8 @@ DENG2_PIMPL(Fonts)
             /// to implement the necessary update logic.
             font_t *font = record->font;
 #ifdef DENG_DEBUG
-            Uri *uri = self.composeUri(id);
-            LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.") << uri;
-            delete uri;
+            LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
+                << self.composeUri(id);
 #endif
             Font_RebuildFromFile(font, resourcePath);
             return font;
@@ -505,9 +499,7 @@ DENG2_PIMPL(Fonts)
         record->font = Font_FromFile(id, resourcePath);
         if(record->font && verbose >= 1)
         {
-            Uri *uri = self.composeUri(id);
-            LOG_VERBOSE("New font \"%s\"") << *uri;
-            delete uri;
+            LOG_VERBOSE("New font \"%s\"") << self.composeUri(id);
         }
 
         return record->font;
@@ -568,7 +560,7 @@ DENG2_PIMPL(Fonts)
             // If we have bound a font it can provide the id.
             if(record->font)
             {
-                id = Font_PrimaryBind(record->font);
+                id = record->font->primaryBind();
             }
 
             // Otherwise look it up.
@@ -759,9 +751,9 @@ fontschemeid_t Fonts::parseScheme(char const *str)
     return FS_INVALID; // Unknown.
 }
 
-ddstring_t const *Fonts::schemeName(fontschemeid_t id)
+String const &Fonts::schemeName(fontschemeid_t id)
 {
-    static de::Str const schemes[1 + FONTSCHEME_COUNT] = {
+    static String const schemes[1 + FONTSCHEME_COUNT] = {
         /* No scheme name */ "",
         /* FS_SYSTEM */      "System",
         /* FS_GAME */        "Game"
@@ -912,7 +904,7 @@ fontid_t Fonts::resolveUri(Uri const &uri, boolean quiet)
 
         if(record->font)
         {
-            fontid_t id = Font_PrimaryBind(record->font);
+            fontid_t id = record->font->primaryBind();
             if(d->validFontId(id)) return id;
         }
 
@@ -997,7 +989,7 @@ fontid_t Fonts::declare(Uri const &uri, int uniqueId)
     {
         // The mapped resource is being replaced, so release any existing Font.
         /// @todo Only release if this Font is bound to only this binding.
-        Font_Release(record->font);
+        record->font->glDeinit();
     }
 
     return id;
@@ -1023,10 +1015,10 @@ fontid_t Fonts::id(font_t *font)
 #endif
         return NOFONTID;
     }
-    return Font_PrimaryBind(font);
+    return font->primaryBind();
 }
 
-fontschemeid_t Fonts::scheme(fontid_t id)
+/*fontschemeid_t Fonts::scheme(fontid_t id)
 {
     LOG_AS("Fonts::scheme");
     FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
@@ -1041,24 +1033,9 @@ fontschemeid_t Fonts::scheme(fontid_t id)
         return FS_ANY;
     }
     return d->schemeIdForDirectoryNode(*node);
-}
+}*/
 
-AutoStr *Fonts::composePath(fontid_t id)
-{
-    LOG_AS("Fonts::composePath");
-    FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
-    if(!node)
-    {
-#ifdef DENG_DEBUG
-        LOG_WARNING("Attempted with unbound fontId #%u, returning null-object.") << id;
-#endif
-        return AutoStr_NewStd();
-    }
-    QByteArray path = node->path().toUtf8();
-    return AutoStr_FromTextStd(path.constData());
-}
-
-Uri *Fonts::composeUri(fontid_t id)
+Uri Fonts::composeUri(fontid_t id)
 {
     LOG_AS("Fonts::composeUri");
     FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
@@ -1070,12 +1047,12 @@ Uri *Fonts::composeUri(fontid_t id)
             LOG_WARNING("Attempted with unbound fontId #%u, returning null-object.") << id;
         }
 #endif
-        return new Uri();
+        return Uri();
     }
-    return new Uri(d->composeUriForDirectoryNode(*node));
+    return d->composeUriForDirectoryNode(*node);
 }
 
-Uri *Fonts::composeUrn(fontid_t id)
+Uri Fonts::composeUrn(fontid_t id)
 {
     LOG_AS("Fonts::composeUrn");
 
@@ -1088,24 +1065,13 @@ Uri *Fonts::composeUrn(fontid_t id)
             LOG_WARNING("Attempted with unbound fontId #%u, returning null-object.") << id;
         }
 #endif
-        return new Uri();
+        return Uri();
     }
 
     FontRecord const *record = (FontRecord *) node->userPointer();
     DENG2_ASSERT(record != 0);
 
-    ddstring_t const *scheme = schemeName(d->schemeIdForDirectoryNode(*node));
-
-    ddstring_t path; Str_Init(&path);
-    Str_Reserve(&path, Str_Length(scheme) +1/*delimiter*/ + M_NumDigits(DDMAXINT));
-
-    Str_Appendf(&path, "%s:%i", Str_Text(scheme), record->uniqueId);
-
-    Uri *uri = new Uri();
-    uri->setScheme("urn").setPath(Str_Text(&path));
-
-    Str_Free(&path);
-    return uri;
+    return Uri("urn", String("%1:%2").arg(schemeName(d->schemeIdForDirectoryNode(*node))).arg(record->uniqueId, 0, 10));
 }
 
 font_t *Fonts::createFontFromFile(Uri const &uri, char const *resourcePath)
@@ -1176,7 +1142,10 @@ font_t *Fonts::createFontFromDef(ded_compositefont_t *def)
     font_t *font = toFont(fontId);
     if(font)
     {
-        Font_RebuildFromDef(font, def);
+        if(bitmapcompositefont_t *compFont = font->maybeAs<bitmapcompositefont_t>())
+        {
+            compFont->rebuildFromDef(def);
+        }
     }
     else
     {
@@ -1217,9 +1186,9 @@ int Fonts::iterateDeclared(fontschemeid_t schemeId,
 
 static int clearDefinitionLinkWorker(font_t *font, void * /*context*/)
 {
-    if(Font_Type(font) == FT_BITMAPCOMPOSITE)
+    if(bitmapcompositefont_t *compFont = font->maybeAs<bitmapcompositefont_t>())
     {
-        BitmapCompositeFont_SetDefinition(font, NULL);
+        compFont->setDefinition(0);
     }
     return 0; // Continue iteration.
 }
@@ -1232,15 +1201,7 @@ void Fonts::clearDefinitionLinks()
 
 static int releaseFontTextureWorker(font_t *font, void * /*context*/)
 {
-    switch(Font_Type(font))
-    {
-    case FT_BITMAP:
-        BitmapFont_DeleteGLTexture(font);
-        break;
-    case FT_BITMAPCOMPOSITE:
-        BitmapCompositeFont_ReleaseTextures(font);
-        break;
-    }
+    font->glDeinit();
     return 0; // Continue iteration.
 }
 
@@ -1294,18 +1255,22 @@ static void printFontOverview(FontRepository::Node &node, bool printSchemeName)
     FontRecord *record = (FontRecord *) node.userPointer();
     fontid_t fontId = findBindIdForDirectoryNode(node);
     int numUidDigits = de::max(3/*uid*/, M_NumDigits(Fonts_Size()));
-    uri_s *uri = record->font? App_Fonts().composeUri(fontId) : Uri_New();
-    ddstring_t const *path = (printSchemeName? Uri_ToString(uri) : Uri_Path(uri));
+    de::Uri uri;
+    if(record->font)
+    {
+        uri = App_Fonts().composeUri(fontId);
+    }
+    ddstring_t const *path = (printSchemeName? uri.asText() : uri.path());
     font_t *font = record->font;
 
     Con_FPrintf(!font? CPF_LIGHT : CPF_WHITE,
         "%-*s %*u %s", printSchemeName? 22 : 14, F_PrettyPath(Str_Text(path)),
-        numUidDigits, fontId, !font? "unknown" : Font_Type(font) == FT_BITMAP? "bitmap" : "bitmap_composite");
+        numUidDigits, fontId, !font? "unknown" : font->type() == FT_BITMAP? "bitmap" : "bitmap_composite");
 
     if(font && Font_IsPrepared(font))
     {
-        Con_Printf(" (ascent:%i, descent:%i, leading:%i", Fonts_Ascent(font), Fonts_Descent(font), Fonts_Leading(font));
-        if(Font_Type(font) == FT_BITMAP && BitmapFont_GLTextureName(font))
+        Con_Printf(" (ascent:%i, descent:%i, leading:%i", Font_Ascent(font), Font_Descent(font), Font_Leading(font));
+        if(font->type() == FT_BITMAP && BitmapFont_GLTextureName(font))
         {
             Con_Printf(", texWidth:%i, texHeight:%i", BitmapFont_TextureWidth(font), BitmapFont_TextureHeight(font));
         }
@@ -1315,8 +1280,6 @@ static void printFontOverview(FontRepository::Node &node, bool printSchemeName)
     {
         Con_Printf("\n");
     }
-
-    Uri_Delete(uri);
 }
 
 /**
@@ -1511,7 +1474,7 @@ D_CMD(PrintFontStats)
         if(!fontDirectory) continue;
 
         size = fontDirectory->size();
-        Con_Printf("Scheme: %s (%u %s)\n", Str_Text(fonts.schemeName(fontschemeid_t(i))), size, size==1? "font":"fonts");
+        Con_Printf("Scheme: %s (%u %s)\n", fonts.schemeName(fontschemeid_t(i)).toUtf8().constData(), size, size==1? "font":"fonts");
         fontDirectory->debugPrintHashDistribution();
         fontDirectory->debugPrint();
     }

@@ -122,23 +122,23 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
-static int topToAscent(font_t* font)
+static int topToAscent(font_t *font)
 {
-    int lineHeight = Font_Leading(font);
+    int lineHeight = font->lineSpacing();
     if(lineHeight == 0)
         return 0;
-    return lineHeight - Font_Ascent(font);
+    return lineHeight - font->ascent();
 }
 
-static int lineHeight(font_t* font, unsigned char ch)
+static int lineHeight(font_t *font, unsigned char ch)
 {
-    int ascent = Font_Ascent(font);
+    int ascent = font->ascent();
     if(ascent != 0)
         return ascent;
-    return Font_CharHeight(font, ch);
+    return font->charHeight(ch);
 }
 
-static __inline fr_state_attributes_t* currentAttribs(void)
+static inline fr_state_attributes_t *currentAttribs(void)
 {
     return fr.attribStack + fr.attribStackDepth;
 }
@@ -429,7 +429,7 @@ void FR_SetCaseScale(boolean value)
 void FR_CharSize(Size2Raw* size, unsigned char ch)
 {
     errorIfNotInited("FR_CharSize");
-    Font_CharSize(App_Fonts().toFont(fr.fontNum), size, ch);
+    App_Fonts().toFont(fr.fontNum)->charSize(size, ch);
 }
 
 #undef FR_CharWidth
@@ -437,7 +437,7 @@ int FR_CharWidth(unsigned char ch)
 {
     errorIfNotInited("FR_CharWidth");
     if(fr.fontNum != 0)
-        return Font_CharWidth(App_Fonts().toFont(fr.fontNum), ch);
+        return App_Fonts().toFont(fr.fontNum)->charWidth(ch);
     return 0;
 }
 
@@ -446,32 +446,31 @@ int FR_CharHeight(unsigned char ch)
 {
     errorIfNotInited("FR_CharHeight");
     if(fr.fontNum != 0)
-        return Font_CharHeight(App_Fonts().toFont(fr.fontNum), ch);
+        return App_Fonts().toFont(fr.fontNum)->charHeight(ch);
     return 0;
 }
 
-int FR_SingleLineHeight(const char* text)
+int FR_SingleLineHeight(char const *text)
 {
     errorIfNotInited("FR_SingleLineHeight");
     if(fr.fontNum == 0 || !text)
         return 0;
-    { int ascent = Font_Ascent(App_Fonts().toFont(fr.fontNum));
+    int ascent = App_Fonts().toFont(fr.fontNum)->ascent();
     if(ascent != 0)
         return ascent;
-    }
-    return Font_CharHeight(App_Fonts().toFont(fr.fontNum), (unsigned char)text[0]);
+    return App_Fonts().toFont(fr.fontNum)->charHeight((unsigned char)text[0]);
 }
 
-int FR_GlyphTopToAscent(const char* text)
+int FR_GlyphTopToAscent(char const *text)
 {
     int lineHeight;
     errorIfNotInited("FR_GlyphTopToAscent");
     if(fr.fontNum == 0 || !text)
         return 0;
-    lineHeight = Font_Leading(App_Fonts().toFont(fr.fontNum));
+    lineHeight = App_Fonts().toFont(fr.fontNum)->lineSpacing();
     if(lineHeight == 0)
         return 0;
-    return lineHeight - Font_Ascent(App_Fonts().toFont(fr.fontNum));
+    return lineHeight - App_Fonts().toFont(fr.fontNum)->ascent();
 }
 
 static int textFragmentWidth(const char* fragment)
@@ -541,14 +540,14 @@ static void textFragmentSize(int* width, int* height, const char* fragment)
 static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlags,
     short textFlags, int initialCount)
 {
-    assert(fragment && fragment[0]);
-    {
-    font_t* font = App_Fonts().toFont(fr.fontNum);
+    DENG2_ASSERT(fragment != 0 && fragment[0]);
+
+    font_t *font = App_Fonts().toFont(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
     boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
     boolean noShadow  = (sat->shadowStrength  <= 0 || (textFlags & DTF_NO_SHADOW)  != 0 ||
-                         (Font_Flags(font) & FF_SHADOWED) != 0);
+                         (font->flags() & FF_SHADOWED) != 0);
     boolean noCharacter = (textFlags & DTF_NO_CHARACTER) != 0;
     float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
     float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
@@ -582,7 +581,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
     }
-    if(Font_Type(font) == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
+    if(font->type() == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
     {
         GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), gl::ClampToEdge,
                                 gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
@@ -735,7 +734,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }}
 
     // Restore previous GL-state.
-    if(Font_Type(font) == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
+    if(font->type() == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
     {
         glMatrixMode(GL_TEXTURE);
         glPopMatrix();
@@ -746,10 +745,9 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         glEnable(GL_TEXTURE_2D);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-    }
 }
 
-static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
+static void drawChar(unsigned char ch, int posX, int posY, font_t *font,
     int alignFlags, short /*textFlags*/)
 {
     float x = (float) posX, y = (float) posY;
@@ -757,9 +755,9 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     RectRaw geometry;
 
     if(alignFlags & ALIGN_RIGHT)
-        x -= Font_CharWidth(font, ch);
+        x -= font->charWidth(ch);
     else if(!(alignFlags & ALIGN_LEFT))
-        x -= Font_CharWidth(font, ch) / 2;
+        x -= font->charWidth(ch) / 2;
 
     if(alignFlags & ALIGN_BOTTOM)
         y -= topToAscent(font) + lineHeight(font, ch);
@@ -769,7 +767,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(x, y, 0);
 
-    switch(Font_Type(font))
+    switch(font->type())
     {
     case FT_BITMAP:
         /// @todo Filtering should be determined at a higher level.
@@ -777,7 +775,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), gl::ClampToEdge,
                                 gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
 
-        std::memcpy(&geometry, BitmapFont_CharGeometry(font, ch), sizeof(geometry));
+        std::memcpy(&geometry, font->charGeometry(ch), sizeof(geometry));
         BitmapFont_CharCoords(font, ch, coords);
         break;
 
@@ -786,7 +784,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
 
         GL_BindTexture(BitmapCompositeFont_CharTexture(font, ch));
 
-        std::memcpy(&geometry, BitmapCompositeFont_CharGeometry(font, ch), sizeof(geometry));
+        std::memcpy(&geometry, font->charGeometry(ch), sizeof(geometry));
         if(border)
         {
             geometry.origin.x -= border;
@@ -798,7 +796,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         break; }
 
     default:
-        Con_Error("FR_DrawChar: Invalid font type %i.", (int) Font_Type(font));
+        Con_Error("FR_DrawChar: Invalid font type %i.", (int) font->type());
         exit(1); // Unreachable.
     }
 
@@ -815,7 +813,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
 
     GL_DrawRectWithCoords(&geometry, coords);
 
-    if(Font_Type(font) == FT_BITMAPCOMPOSITE)
+    if(font->type() == FT_BITMAPCOMPOSITE)
     {
         GL_SetNoTexture();
     }

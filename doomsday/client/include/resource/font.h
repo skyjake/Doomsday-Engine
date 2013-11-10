@@ -17,15 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_FONT_H
-#define LIBDENG_FONT_H
+#ifndef CLIENT_RESOURCE_FONT_H
+#define CLIENT_RESOURCE_FONT_H
 
 #include "dd_types.h"
 #include "def_main.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Font types.
 typedef enum {
@@ -51,11 +47,14 @@ typedef enum {
  * @ingroup refresh
  */
 #define MAX_CHARS               256 // Normal 256 ANSI characters.
-typedef struct font_s {
+
+class font_t
+{
+public:
     fonttype_t _type;
 
     /// @c true= Font requires a full update.
-    boolean _isDirty;
+    bool _isDirty;
 
     /// @ref fontFlags.
     int _flags;
@@ -73,60 +72,37 @@ typedef struct font_s {
     /// dj: Do fonts have margins? Is this a pixel border in the composited
     /// character map texture (perhaps per-glyph)?
     int _marginWidth, _marginHeight;
-} font_t;
 
-font_t *Font_New(fonttype_t type, fontid_t bindId);
-void Font_Delete(font_t *font);
+    font_t(fonttype_t type = FT_FIRST, fontid_t bindId = 0);
+    virtual ~font_t() {}
 
-void Font_Init(font_t *font, fonttype_t type, fontid_t bindId);
+    DENG2_AS_IS_METHODS()
 
-font_t *Font_FromDef(fontid_t bindId, ded_compositefont_t *def);
+    fonttype_t type() const;
+
+    fontid_t primaryBind() const;
+
+    void setPrimaryBind(fontid_t bindId);
+
+    /// @return  @ref fontFlags
+    int flags() const;
+
+    int ascent();
+    int descent();
+    int lineSpacing();
+
+    virtual void glInit();
+    virtual void glDeinit();
+
+    virtual RectRaw const *charGeometry(unsigned char ch) = 0;
+    virtual int charWidth(unsigned char ch) = 0;
+    virtual int charHeight(unsigned char ch) = 0;
+
+    void charSize(Size2Raw *size, unsigned char ch);
+};
 
 font_t *Font_FromFile(fontid_t bindId, char const *resourcePath);
 
-/**
- * Update the Font according to the supplied definition.
- * To be called after an engine update/reset.
- *
- * @param font  Font to be updated.
- * @param def  font definition to update using.
- */
-void Font_RebuildFromDef(font_t *font, ded_compositefont_t *def);
-
 void Font_RebuildFromFile(font_t *font, char const *resourcePath);
 
-void Font_Release(font_t *font);
-
-boolean Font_IsPrepared(font_t *font);
-
-void Font_Prepare(font_t *font);
-
-fonttype_t Font_Type(font_t const *font);
-
-fontid_t Font_PrimaryBind(font_t const *font);
-
-void Font_SetPrimaryBind(font_t *font, fontid_t bindId);
-
-/// @return  @ref fontFlags
-int Font_Flags(font_t const *font);
-
-int Font_Ascent(font_t *font);
-
-int Font_Descent(font_t *font);
-
-int Font_Leading(font_t *font);
-
-/**
- * Query the visible dimensions of a character in this font.
- */
-void Font_CharSize(font_t *font, Size2Raw *size, unsigned char ch);
-
-int Font_CharHeight(font_t *font, unsigned char ch);
-
-int Font_CharWidth(font_t *font, unsigned char ch);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_FONT_H */
+#endif // CLIENT_RESOURCE_FONT_H

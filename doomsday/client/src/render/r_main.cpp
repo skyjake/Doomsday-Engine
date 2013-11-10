@@ -192,8 +192,7 @@ static fontid_t loadSystemFont(char const *name)
     DENG2_ASSERT(name != 0 && name[0]);
 
     // Compose the resource name.
-    de::Uri uri("System:", RC_NULL);
-    uri.setPath(name);
+    de::Uri uri = de::Uri("System:", RC_NULL).setPath(name);
 
     // Compose the resource data path.
     ddstring_t resourcePath; Str_InitStd(&resourcePath);
@@ -222,8 +221,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
     *fid = NOFONTID;
     if(uri && uri[0])
     {
-        *fid = App_Fonts().resolveUri(de::Uri(uri, RC_NULL),
-                                      !(verbose >= 1)/*log warnings if verbose*/);
+        *fid = App_Fonts().resolveUri(de::Uri(uri, RC_NULL), !(verbose >= 1)/*log warnings if verbose*/);
     }
 
     if(*fid == NOFONTID)

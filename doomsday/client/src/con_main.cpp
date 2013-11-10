@@ -2797,9 +2797,9 @@ D_CMD(Font)
         fontid_t newFont = App_Fonts().resolveUri(uri, true/*quiet please*/);
         if(newFont)
         {
-            QScopedPointer<de::Uri> uri(App_Fonts().composeUri(newFont));
+            de::Uri uri = App_Fonts().composeUri(newFont);
             Con_SetFont(newFont);
-            if(!uri->scheme().compareWithoutCase("Game"))
+            if(!uri.scheme().compareWithoutCase("Game"))
             {
                 Con_SetFontScale(1.5f, 2);
                 Con_SetFontLeading(1.25f);
