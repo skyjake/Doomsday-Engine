@@ -106,8 +106,18 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
 
     // Prepare the shader source. This would be the time to substitute any
     // remaining symbols in the shader source.
-    Block src = prefix;
-    src += source;
+    Block src = source;
+    int versionPos = src.indexOf("#version ");
+    if(versionPos >= 0)
+    {
+        // Append prefix after version.
+        int pos = src.indexOf('\n', versionPos);
+        src.insert(pos + 1, prefix);
+    }
+    else
+    {
+        src = prefix + src;
+    }
     src.append('\0');
 
     char const *srcPtr = src.constData();

@@ -25,6 +25,7 @@
 #include <de/Asset>
 #include <de/Error>
 #include <de/Vector>
+#include <de/Rectangle>
 #include <QFlags>
 
 #include "libgui.h"
@@ -51,8 +52,12 @@ public:
         Depth   = 0x2,  ///< Target has a depth attachment.
         Stencil = 0x4,  ///< Target has a stencil attachment.
 
-        ColorDepth = Color | Depth,
-        DefaultFlags = ColorDepth
+        ColorDepth        = Color | Depth,
+        ColorDepthStencil = Color | Depth | Stencil,
+        DepthStencil      = Depth | Stencil,
+
+        NoAttachments = 0,
+        DefaultFlags  = ColorDepth
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -68,17 +73,21 @@ public:
      * Constructs a render target than renders onto a texture. The texture must
      * be initialized with the appropriate size beforehand.
      *
-     * @param colorTarget  Target texture for Color attachment.
+     * @param colorTarget       Target texture for Color attachment.
+     * @param otherAttachments  Other supporting attachments (renderbuffers).
      */
-    GLTarget(GLTexture &colorTarget);
+    GLTarget(GLTexture &colorTarget, Flags const &otherAttachments = NoAttachments);
 
     /**
-     * Constructs a render target with a single attachment.
+     * Constructs a render target with a texture attachment and optionally
+     * other renderbuffer attachments.
      *
-     * @param attachment  Attachment for rendering.
-     * @param texture     Texture to render on.
+     * @param attachment        Where to attach the texture (color, depth, stencil).
+     * @param texture           Texture to render on.
+     * @param otherAttachments  Other supporting attachments (renderbuffers).
      */
-    GLTarget(Flag attachment, GLTexture &texture);
+    GLTarget(Flags const &attachment, GLTexture &texture,
+             Flags const &otherAttachments = NoAttachments);
 
     //GLTarget(GLTexture *color, GLTexture *depth = 0, GLTexture *stencil = 0);
 
@@ -124,6 +133,26 @@ public:
      * @param attachments  Which ones to clear.
      */
     void clear(Flags const &attachments);
+
+    /**
+     * Sets the subregion inside the render target where scissor and viewport
+     * will be constrained to. Scissor and viewport can still be defined as if
+     * the entire window was in use; the target window only applies an offset
+     * and scaling to both.
+     *
+     * @param rect   Target window rectangle. Set a null rectangle to
+     *               use the entire window (like normally).
+     * @param apply  Immediately update current OpenGL state accordingly.
+     */
+    void setActiveRect(Rectangleui const &rect, bool applyGLState = false);
+
+    void unsetActiveRect(bool applyGLState = false);
+
+    Rectangleui scaleToActiveRect(Rectangleui const &rect) const;
+
+    Rectangleui const &activeRect() const;
+
+    bool hasActiveRect() const;
 
 private:
     DENG2_PRIVATE(d)

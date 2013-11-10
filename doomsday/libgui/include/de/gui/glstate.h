@@ -110,9 +110,22 @@ public:
     GLState &setTarget(GLTarget &target);
     GLState &setDefaultTarget();
     GLState &setViewport(Rectangleui const &viewportRect);
+
+    /**
+     * Sets a viewport that is normalized within the current render target.
+     * @param normViewportRect  Normalized viewport rectangle.
+     */
+    GLState &setNormalizedViewport(Rectanglef const &normViewportRect);
+
     GLState &setScissor(Rectanglei const &scissorRect);
     GLState &setScissor(Rectangleui const &scissorRect);
+
+    /**
+     * Sets a scissor that is normalized within the current viewport.
+     * @param normScissorRect  Normalized scissor rectangle.
+     */
     GLState &setNormalizedScissor(Rectanglef const &normScissorRect);
+
     GLState &clearScissor();
 
     gl::Cull cull() const;
@@ -158,9 +171,10 @@ public:
     static GLState &push();
 
     /**
-     * Pops the topmost state off the current thread's stack.
+     * Pops the topmost state off the current thread's stack. Returns a reference
+     * to the state that has now become the new current state.
      */
-    static void pop();
+    static GLState &pop();
 
     /**
      * Pushes a state onto the current thread's GL state stack.
@@ -175,6 +189,8 @@ public:
      * @return State instance. Ownership given to caller.
      */
     static GLState *take();
+
+    static dsize stackDepth();
 
 private:
     DENG2_PRIVATE(d)

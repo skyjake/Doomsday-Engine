@@ -151,7 +151,7 @@ void BusyWidget::grabTransitionScreenshot()
 
     if(BusyMode_IsTransitionAnimated())
     {
-        // Animation transitions are drawn only inside LegacyWidget, so just
+        // Animation transitions are drawn only inside GameWidget, so just
         // grab that portion of the screen.
         grabRect = root().window().game().rule().recti();
     }

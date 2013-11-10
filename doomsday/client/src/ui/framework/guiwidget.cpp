@@ -351,10 +351,19 @@ Rectanglef GuiWidget::normalizedRect() const
 {
     Rectanglef const rect = rule().rect();
     GuiRootWidget::Size const &viewSize = root().viewSize();
-    return Rectanglef(Vector2f(float(rect.left())   / float(viewSize.x),
-                               float(rect.top())    / float(viewSize.y)),
-                      Vector2f(float(rect.right())  / float(viewSize.x),
-                               float(rect.bottom()) / float(viewSize.y)));
+    return Rectanglef(Vector2f(rect.left()   / float(viewSize.x),
+                               rect.top()    / float(viewSize.y)),
+                      Vector2f(rect.right()  / float(viewSize.x),
+                               rect.bottom() / float(viewSize.y)));
+}
+
+Rectanglef GuiWidget::normalizedRect(Rectanglei const &viewSpaceRect) const
+{
+    GuiRootWidget::Size const &viewSize = root().viewSize();
+    return Rectanglef(Vector2f(float(viewSpaceRect.left())   / float(viewSize.x),
+                               float(viewSpaceRect.top())    / float(viewSize.y)),
+                      Vector2f(float(viewSpaceRect.right())  / float(viewSize.x),
+                               float(viewSpaceRect.bottom()) / float(viewSize.y)));
 }
 
 Rectanglef GuiWidget::normalizedContentRect() const
@@ -489,6 +498,13 @@ void GuiWidget::draw()
 {
     if(d->inited && !isHidden() && visibleOpacity() > 0)
     {
+#ifdef DENG2_DEBUG
+        // Detect mistakes in GLState stack usage.
+        dsize const depthBeforeDrawingWidget = GLState::stackDepth();
+#endif
+
+        //qDebug() << "drawing" << path();
+
         d->drawBlurredBackground();
 
         if(clipped())
@@ -502,6 +518,8 @@ void GuiWidget::draw()
         {
             GLState::pop();
         }
+
+        DENG2_ASSERT(GLState::stackDepth() == depthBeforeDrawingWidget);
     }
 }
 

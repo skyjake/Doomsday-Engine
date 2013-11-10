@@ -69,14 +69,25 @@ DENG2_OBSERVES(App, GameChange)
 {
     typedef DefaultVertexBuf VertexBuf;
 
+    enum LayoutMode {
+        NormalLayout,           ///< Taskbar widgets are full-sized.
+        CompressedLayout,       ///< Cull some redundant information.
+        ExtraCompressedLayout   ///< Hide current game indicator.
+    };
+    LayoutMode layoutMode;
+
     bool opened;
+
     ConsoleWidget *console;
     ButtonWidget *logo;
+    ButtonWidget *conf;
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     PopupMenuWidget *configMenu;
     ScalarRule *vertShift;
     bool mouseWasTrappedWhenOpening;
+    int minSpace;
+    int maxSpace;
 
     // GL objects:
     Drawable drawable;
@@ -86,7 +97,10 @@ DENG2_OBSERVES(App, GameChange)
 
     Instance(Public *i)
         : Base(i),
+          layoutMode(NormalLayout),
           opened(true),
+          logo(0),
+          conf(0),
           status(0),
           mainMenu(0),
           configMenu(0),
@@ -100,12 +114,63 @@ DENG2_OBSERVES(App, GameChange)
         vertShift = new ScalarRule(0);
 
         App::app().audienceForGameChange += this;
+
+        updateStyle();
     }
 
     ~Instance()
     {
         App::app().audienceForGameChange -= this;
         releaseRef(vertShift);
+    }
+
+    void updateStyle()
+    {
+        // TODO Commented out to avoid uncaught exception path not found CMB
+        // minSpace = style().rules().rule("console.commandline.width.min").valuei();
+        // maxSpace = style().rules().rule("console.commandline.width.max").valuei();
+    }
+
+    void updateLayoutMode()
+    {
+        LayoutMode wanted = layoutMode;
+
+        // Does the command line have enough space?
+        if(console->commandLine().rule().width().valuei() < minSpace)
+        {
+            wanted = (layoutMode == NormalLayout?     CompressedLayout :
+                      layoutMode == CompressedLayout? ExtraCompressedLayout :
+                                                      layoutMode);
+        }
+        else if(console->commandLine().rule().width().valuei() > maxSpace)
+        {
+            wanted = (layoutMode == CompressedLayout?      NormalLayout :
+                      layoutMode == ExtraCompressedLayout? CompressedLayout :
+                                                           layoutMode);
+        }
+
+        if(layoutMode != wanted)
+        {
+            layoutMode = wanted;
+            updateLogoButtonText();
+
+            // Adjust widget visibility and rules.
+            switch(layoutMode)
+            {
+            case NormalLayout:
+            case CompressedLayout:
+                status->show();
+                break;
+
+            case ExtraCompressedLayout:
+                status->hide();
+                break;
+            }
+
+            self.updateCommandLineLayout();
+            self.requestGeometry();
+            console->commandLine().requestGeometry();
+        }
     }
 
     void glInit()
@@ -124,6 +189,36 @@ DENG2_OBSERVES(App, GameChange)
         drawable.clear();
     }
 
+    void updateLogoButtonText()
+    {
+        String text;
+
+        if(layoutMode == NormalLayout)
+        {
+            VersionInfo currentVersion;
+            if(String(DOOMSDAY_RELEASE_TYPE) == "Stable")
+            {
+                text = _E(b) + currentVersion.base();
+            }
+            else
+            {
+                text = _E(b) + currentVersion.base() + " " +
+                       _E(l) + String("#%1").arg(currentVersion.build);
+            }
+        }
+        else
+        {
+            // Remove the version number if we're short of space.
+        }
+
+        logo->setText(text);
+    }
+
+    void updateProjection()
+    {
+        uMvpMatrix = root().projMatrix2D();
+    }
+
     void updateGeometry()
     {
         Rectanglei pos;
@@ -135,11 +230,6 @@ DENG2_OBSERVES(App, GameChange)
             self.glMakeGeometry(verts);
             drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
         }
-    }
-
-    void updateProjection()
-    {
-        uMvpMatrix = root().projMatrix2D();
     }
 
     GuiWidget &itemWidget(PopupMenuWidget *menu, uint pos) const
@@ -194,7 +284,7 @@ DENG2_OBSERVES(App, GameChange)
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 {
 #if 0
-    // LegacyWidget is presently incompatible with blurring.
+    // GameWidget is presently incompatible with blurring.
     BlurWidget *blur = new BlurWidget("taskbar_blur");
     add(blur);
     Background bg(*blur, style().colors().colorf("background"));
@@ -224,16 +314,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
 
-    VersionInfo currentVersion;
-    if(String(DOOMSDAY_RELEASE_TYPE) == "Stable")
-    {
-        d->logo->setText(_E(b) + currentVersion.base());
-    }
-    else
-    {
-        d->logo->setText(_E(b) + currentVersion.base() + " " +
-                         _E(l) + String("#%1").arg(currentVersion.build));
-    }
+    d->updateLogoButtonText();
 
     d->logo->setWidthPolicy(ui::Expand);
     d->logo->setTextAlignment(AlignLeft);
@@ -245,6 +326,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     // Settings.
     ButtonWidget *conf = new ButtonWidget;
+    d->conf = conf;
     conf->setImage(style().images().image("gear"));
     conf->setSizePolicy(ui::Expand, ui::Filled);
     conf->rule()
@@ -375,8 +457,13 @@ void TaskBarWidget::glDeinit()
 void TaskBarWidget::viewResized()
 {
     GuiWidget::viewResized();
-
     d->updateProjection();
+}
+
+void TaskBarWidget::update()
+{
+    GuiWidget::update();
+    d->updateLayoutMode();
 }
 
 void TaskBarWidget::drawContent()
@@ -397,7 +484,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
         {
             if(root().focus())
             {
-                // First click will remove UI focus, allowing LegacyWidget
+                // First click will remove UI focus, allowing GameWidget
                 // to receive events.
                 root().setFocus(0);
                 return true;
@@ -574,7 +661,7 @@ void TaskBarWidget::showAbout()
 {
     AboutDialog *about = new AboutDialog;
     about->setDeleteAfterDismissed(true);
-    root().add(about);
+    root().addOnTop(about);
     about->open();
 }
 
@@ -582,7 +669,7 @@ void TaskBarWidget::showUpdaterSettings()
 {
     UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
     d->setupItemSubDialog(d->configMenu, POS_UPDATER_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -590,7 +677,7 @@ void TaskBarWidget::showRendererSettings()
 {
     RendererSettingsDialog *dlg = new RendererSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_RENDERER_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -598,7 +685,7 @@ void TaskBarWidget::showVideoSettings()
 {
     VideoSettingsDialog *dlg = new VideoSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_VIDEO_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -606,7 +693,7 @@ void TaskBarWidget::showAudioSettings()
 {
     AudioSettingsDialog *dlg = new AudioSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_AUDIO_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -614,7 +701,7 @@ void TaskBarWidget::showInputSettings()
 {
     InputSettingsDialog *dlg = new InputSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_INPUT_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
@@ -622,15 +709,24 @@ void TaskBarWidget::showNetworkSettings()
 {
     NetworkSettingsDialog *dlg = new NetworkSettingsDialog;
     d->setupItemSubDialog(d->configMenu, POS_NETWORK_SETTINGS, dlg);
-    root().add(dlg);
+    root().addOnTop(dlg);
     dlg->open();
 }
 
 void TaskBarWidget::updateCommandLineLayout()
 {
+    RuleRectangle &cmdRule = d->console->commandLine().rule();
+
     // The command line extends all the way to the status indicator.
-    d->console->commandLine().rule()
-            .setInput(Rule::Left,   d->console->button().rule().right())
-            .setInput(Rule::Right,  d->status->rule().left())
-            .setInput(Rule::Bottom, rule().bottom());
+    cmdRule.setInput(Rule::Left,   d->console->button().rule().right())
+           .setInput(Rule::Bottom, rule().bottom());
+
+    if(!d->status->behavior().testFlag(Hidden))
+    {
+        cmdRule.setInput(Rule::Right, d->status->rule().left());
+    }
+    else
+    {
+        cmdRule.setInput(Rule::Right, d->conf->rule().left());
+    }
 }

@@ -344,7 +344,7 @@ void PopupWidget::preparePanelForOpening()
     // Reparent the popup into the root widget, on top of everything else.
     d->realParent = Widget::parent();
     d->realParent->remove(*this);
-    d->realParent->root().add(this);
+    d->realParent->root().as<GuiRootWidget>().addOnTop(this);
 
     d->updateLayout();
 }
@@ -354,7 +354,7 @@ void PopupWidget::panelDismissed()
     PanelWidget::panelDismissed();
 
     // Move back to the original parent widget.
-    root().remove(*this);
+    parentWidget()->remove(*this);
     d->realParent->add(this);
     d->realParent = 0;
 

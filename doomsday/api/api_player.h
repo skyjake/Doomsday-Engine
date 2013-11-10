@@ -105,8 +105,10 @@ typedef struct {
     float           offset[2];
 } ddpsprite_t;
 
+#define LOOKDIRMAX  110.0f // 85 degrees
+
 /// Player lookdir (view pitch) conversion to degrees. @ingroup player
-#define LOOKDIR2DEG(x)  ((x) * 85.0/110.0)
+#define LOOKDIR2DEG(x)  ((x) * 85.0f/LOOKDIRMAX)
 
 /// Player lookdir (view pitch) conversion to radians. @ingroup player
 #define LOOKDIR2RAD(x)  (LOOKDIR2DEG(x)/180*PI)
@@ -170,6 +172,14 @@ DENG_API_TYPEDEF(Player)
 
     void (*NewControl)(int id, controltype_t type, const char* name, const char* bindContext);
 
+    /**
+     * Determines if a control has been bound to anything.
+     *
+     * @param playerNum  Console/player number.
+     * @param control    Control id.
+     */
+    int (*IsControlBound)(int playerNum, int control);
+
     void (*GetControlState)(int playerNum, int control, float* pos, float* relativeOffset);
 
     int (*GetImpulseControlState)(int playerNum, int control);
@@ -185,6 +195,7 @@ DENG_API_T(Player);
 #define DD_GetPlayer                _api_Player.GetPlayer
 #define P_NewPlayerControl          _api_Player.NewControl
 #define P_GetControlState           _api_Player.GetControlState
+#define P_IsControlBound            _api_Player.IsControlBound
 #define P_GetImpulseControlState    _api_Player.GetImpulseControlState
 #define P_Impulse                   _api_Player.Impulse
 #endif

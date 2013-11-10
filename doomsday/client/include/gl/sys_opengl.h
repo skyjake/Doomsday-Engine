@@ -32,7 +32,6 @@
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include <GL/gl.h>
-#  include <GL/glu.h>
 #  ifdef __CLIENT__
 #    include <GL/glext.h>
 #    include <GL/wglext.h>
@@ -48,12 +47,10 @@
 #  if defined(MACOSX_NATIVESDK) || defined(MACOS_10_7)
 #    define GL_EXT_compiled_vertex_array 1
 #    include <OpenGL/gl.h>
-#    include <OpenGL/glu.h>
 #    include <OpenGL/glext.h>
 #    include <OpenGL/OpenGL.h>
 #  elif defined(MACOSX)
 #    include <GL/gl.h>
-#    include <GL/glu.h>
 #    include <OpenGL/OpenGL.h>
 #  else
 #    ifdef __CLIENT__
@@ -61,7 +58,6 @@
 #    endif
 #    include <GL/gl.h>
 #    include <GL/glext.h>
-#    include <GL/glu.h>
 #  endif
 #  define GL_CALL
 #endif

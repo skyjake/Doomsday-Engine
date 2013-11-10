@@ -33,6 +33,8 @@
 #include "gl/sys_opengl.h"
 #include "api_render.h"
 
+#include <de/GLState>
+
 using namespace de;
 
 static bool drawFilter = false;
@@ -366,10 +368,6 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t
         bp->availHeight, overrideMode, stretchEpsilon);
     bp->alignHorizontal = R_ChooseAlignModeAndScaleFactor(&bp->scaleFactor,
         bp->width, bp->height, bp->availWidth, bp->availHeight, bp->scaleMode);
-
-    bp->scissorState = 0;
-    bp->scissorRegion.origin.x = bp->scissorRegion.origin.y = 0;
-    bp->scissorRegion.size.width = bp->scissorRegion.size.height = 0;
 }
 
 #undef GL_ConfigureBorderedProjection
@@ -409,16 +407,20 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
+
+    GLState::push();
+
     if(bp->alignHorizontal)
     {
         // "Pillarbox":
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
             int w = .5f + (bp->availWidth - bp->width * bp->scaleFactor) / 2;
-            bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
-            DGL_Scissor(&bp->scissorRegion);
-            DGL_SetScissor2(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
-            DGL_Enable(DGL_SCISSOR_TEST);
+            //bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
+            //DGL_Scissor(&bp->scissorRegion);
+            DGL_SetScissor2(DENG_GAMEVIEW_X + w, DENG_GAMEVIEW_Y,
+                            bp->width * bp->scaleFactor, bp->availHeight);
+            //DGL_Enable(DGL_SCISSOR_TEST);
         }
 
         glTranslatef((float)bp->availWidth/2, 0, 0);
@@ -432,10 +434,11 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
             int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
-            bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
-            DGL_Scissor(&bp->scissorRegion);
-            DGL_SetScissor2(0, h, bp->availWidth, bp->height * bp->scaleFactor);
-            DGL_Enable(DGL_SCISSOR_TEST);
+            //bp->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
+            //DGL_Scissor(&bp->scissorRegion);
+            DGL_SetScissor2(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y + h,
+                            bp->availWidth, bp->height * bp->scaleFactor);
+            //DGL_Enable(DGL_SCISSOR_TEST);
         }
 
         glTranslatef(0, (float)bp->availHeight/2, 0);
@@ -461,14 +464,16 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    GLState::pop();
+
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
     if(bp->flags & BPF_OVERDRAW_CLIP)
     {
-        if(!bp->scissorState)
-            DGL_Disable(DGL_SCISSOR_TEST);
-        DGL_SetScissor(&bp->scissorRegion);
+        //if(!bp->scissorState)
+        //    DGL_Disable(DGL_SCISSOR_TEST);
+        //DGL_SetScissor(&bp->scissorRegion);
     }
 
     if(bp->flags & BPF_OVERDRAW_MASK)

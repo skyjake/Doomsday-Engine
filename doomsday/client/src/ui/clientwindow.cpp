@@ -30,11 +30,14 @@
 #include <de/NumberValue>
 #include <QGLFormat>
 #include <de/GLState>
+#include <de/Drawable>
 #include <QCloseEvent>
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/widgets/legacywidget.h"
+#include "ui/widgets/compositorwidget.h"
+#include "ui/widgets/gamewidget.h"
+#include "ui/widgets/gameuiwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
@@ -47,10 +50,10 @@
 
 #include "dd_main.h"
 #include "con_main.h"
+#include "ui/vrcontenttransform.h"
+#include "render/vr.h"
 
 using namespace de;
-
-static String const LEGACY_WIDGET_NAME = "legacy";
 
 DENG2_PIMPL(ClientWindow),
 DENG2_OBSERVES(KeyEventSource,   KeyEvent),
@@ -61,12 +64,15 @@ DENG2_OBSERVES(App,              GameChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;
+    bool needRootSizeUpdate;
 
     Mode mode;
 
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
-    LegacyWidget *legacy;
+    CompositorWidget *compositor;
+    GameWidget *legacy;
+    GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
     NotificationWidget *notifications;
     ColorAdjustmentDialog *colorAdjust;
@@ -81,13 +87,19 @@ DENG2_OBSERVES(App,              GameChange)
     LabelWidget *fpsCounter;
     float oldFps;
 
+    /// @todo Switch dynamically between VR and plain.
+    VRContentTransform contentXf;
+
     Instance(Public *i)
         : Base(i),
           needMainInit(true),
           needRecreateCanvas(false),
+          needRootSizeUpdate(false),
           mode(Normal),
           root(thisPublic),
+          compositor(0),
           legacy(0),
+          gameUI(0),
           taskBar(0),
           notifications(0),
           colorAdjust(0),
@@ -96,7 +108,8 @@ DENG2_OBSERVES(App,              GameChange)
           sidebar(0),
           busyRoot(thisPublic),
           fpsCounter(0),
-          oldFps(0)
+          oldFps(0),
+          contentXf(*i)
     {
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
@@ -118,31 +131,39 @@ DENG2_OBSERVES(App,              GameChange)
         self.canvas().audienceForKeyEvent -= this;
     }
 
+    Widget &container()
+    {
+        if(compositor)
+        {
+            return *compositor;
+        }
+        return root;
+    }
+
     void setupUI()
     {
         Style &style = ClientApp::windowSystem().style();
 
         // Background for Ring Zero.
-        background = new LabelWidget;
+        background = new LabelWidget("background");
         background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::FitToSize);
         background->setSizePolicy(ui::Filled, ui::Filled);
         background->margins().set("");
-        background->rule()
-                .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Top,    root.viewTop())
-                .setInput(Rule::Right,  root.viewRight())
-                .setInput(Rule::Bottom, root.viewBottom());
+        background->rule().setRect(root.viewRule());
         root.add(background);
 
-        legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
-        legacy->rule()
-                .setLeftTop    (root.viewLeft(),  root.viewTop())
-                .setRightBottom(root.viewWidth(), root.viewBottom());
+        legacy = new GameWidget;
+        legacy->rule().setRect(root.viewRule());
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
         legacy->disable();
         root.add(legacy);
+
+        gameUI = new GameUIWidget;
+        gameUI->rule().setRect(root.viewRule());
+        gameUI->disable();
+        container().add(gameUI);
 
         // Game selection.
         games = new GameSelectionWidget;
@@ -152,14 +173,14 @@ DENG2_OBSERVES(App,              GameChange)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
-        root.add(games);
+        container().add(games);
 
         // Common notification area.
         notifications = new NotificationWidget;
         notifications->rule()
                 .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
                 .setInput(Rule::Right, legacy->rule().right() - style.rules().rule("gap"));
-        root.add(notifications);
+        container().add(notifications);
 
         // FPS counter for the notification area.
         fpsCounter = new LabelWidget;
@@ -172,13 +193,12 @@ DENG2_OBSERVES(App,              GameChange)
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
-        root.add(taskBar);
+        container().add(taskBar);
 
         // The game selection's height depends on the taskbar.
         games->rule().setInput(Rule::Height,
                                OperatorRule::minimum(root.viewHeight(),
-                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,
-                                                     style.rules().rule("gameselection.max.height")));
+                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,                                                     style.rules().rule("gameselection.max.height")));
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
@@ -257,6 +277,9 @@ DENG2_OBSERVES(App,              GameChange)
         self.canvas().makeCurrent();
 
         DD_FinishInitializationAfterWindowReady();
+
+        /// @todo This should be called when a VR mode is actually used.
+        contentXf.glInit();
     }
 
     void keyEvent(KeyEvent const &ev)
@@ -275,31 +298,39 @@ DENG2_OBSERVES(App,              GameChange)
 
     void mouseEvent(MouseEvent const &event)
     {
-        if(ClientApp::windowSystem().processEvent(event))
+        MouseEvent ev = event;
+
+        // Translate mouse coordinates for direct interaction.
+        if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
+        {
+            ev.setPos(contentXf.windowToLogicalCoords(event.pos()).toVector2i());
+        }
+
+        if(ClientApp::windowSystem().processEvent(ev))
         {
             // Eaten by the window system.
             return;
         }
 
         // Fall back to legacy handling.
-        switch(event.type())
+        switch(ev.type())
         {
         case Event::MouseButton:
             Mouse_Qt_SubmitButton(
-                        event.button() == MouseEvent::Left?     IMB_LEFT :
-                        event.button() == MouseEvent::Middle?   IMB_MIDDLE :
-                        event.button() == MouseEvent::Right?    IMB_RIGHT :
-                        event.button() == MouseEvent::XButton1? IMB_EXTRA1 :
-                        event.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                        event.state() == MouseEvent::Pressed);
+                        ev.button() == MouseEvent::Left?     IMB_LEFT :
+                        ev.button() == MouseEvent::Middle?   IMB_MIDDLE :
+                        ev.button() == MouseEvent::Right?    IMB_RIGHT :
+                        ev.button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                        ev.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                        ev.state() == MouseEvent::Pressed);
             break;
 
         case Event::MouseMotion:
-            Mouse_Qt_SubmitMotion(IMA_POINTER, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_POINTER, ev.pos().x, ev.pos().y);
             break;
 
         case Event::MouseWheel:
-            Mouse_Qt_SubmitMotion(IMA_WHEEL, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_WHEEL, ev.pos().x, ev.pos().y);
             break;
 
         default:
@@ -364,11 +395,13 @@ DENG2_OBSERVES(App,              GameChange)
                     .setInput(Rule::Bottom, taskBar->rule().top());
             legacy->rule()
                     .setInput(Rule::Right,  widget->rule().left());
+            gameUI->rule()
+                    .setInput(Rule::Right,  widget->rule().left());
             break;
         }
 
         sidebar = widget;
-        root.insertBefore(sidebar, *notifications);
+        container().insertBefore(sidebar, *notifications);
     }
 
     void uninstallSidebar(SidebarLocation location)
@@ -379,12 +412,82 @@ DENG2_OBSERVES(App,              GameChange)
         {
         case RightEdge:
             legacy->rule().setInput(Rule::Right, root.viewRight());
+            gameUI->rule().setInput(Rule::Right, root.viewRight());
             break;
         }
 
-        root.remove(*sidebar);
+        container().remove(*sidebar);
         sidebar->deleteLater();
         sidebar = 0;
+    }
+
+    void updateRootSize()
+    {
+        DENG_ASSERT_IN_MAIN_THREAD();
+
+        needRootSizeUpdate = false;
+
+        Vector2ui const size = contentXf.logicalRootSize(self.canvas().size());
+
+        // Tell the widgets.
+        root.setViewSize(size);
+        busyRoot.setViewSize(size);
+    } 
+
+    void enableCompositor(bool enable)
+    {
+        if((enable && compositor) || (!enable && !compositor))
+        {
+            return;
+        }
+
+        container().remove(*gameUI);
+        container().remove(*games);
+        container().remove(*notifications);
+        container().remove(*taskBar);
+
+        if(enable && !compositor)
+        {
+            LOG_MSG("Offscreen UI composition enabled");
+
+            compositor = new CompositorWidget;
+            compositor->rule().setRect(root.viewRule());
+            root.add(compositor);
+        }
+        else
+        {
+            DENG2_ASSERT(compositor != 0);
+
+            GuiWidget::destroy(compositor);
+            compositor = 0;
+
+            LOG_MSG("Offscreen UI composition disabled");
+        }
+
+        container().add(gameUI);
+        container().add(games);
+        container().add(notifications);
+        container().add(taskBar);
+
+        if(mode == Normal)
+        {
+            root.update();
+        }
+    }
+
+    void updateCompositor()
+    {
+        if(!compositor) return;
+
+        if(VR::mode() == VR::MODE_OCULUS_RIFT)
+        {
+            compositor->setCompositeProjection(Matrix4f::ortho(-1, 2, -1, 2));
+        }
+        else
+        {
+            // We'll simply cover the entire view.
+            compositor->useDefaultCompositeProjection();
+        }
     }
 };
 
@@ -424,7 +527,7 @@ NotificationWidget &ClientWindow::notifications()
     return *d->notifications;
 }
 
-LegacyWidget &ClientWindow::game()
+GameWidget &ClientWindow::game()
 {
     return *d->legacy;
 }
@@ -466,14 +569,14 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
-    // Now that the Canvas is ready for drawing we can enable the LegacyWidget.
-    d->root.find(LEGACY_WIDGET_NAME)->enable();
+    // Now that the Canvas is ready for drawing we can enable the GameWidget.
+    d->legacy->enable();
+    d->gameUI->enable();
 
     // Configure a viewport immediately.
-    //glViewport(0, FLIP(0 + canvas.height() - 1), canvas.width(), canvas.height());
     GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
-    LOG_DEBUG("LegacyWidget enabled");
+    LOG_DEBUG("GameWidget enabled");
 
     if(d->needMainInit)
     {
@@ -497,7 +600,13 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    root().draw();
+    if(d->needRootSizeUpdate)
+    {
+        d->updateRootSize();
+    }
+    d->updateCompositor();
+
+    d->contentXf.drawTransformed();
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
     // swapped.
@@ -518,9 +627,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
 
     GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
 
-    // Tell the widgets.
-    d->root.setViewSize(size);
-    d->busyRoot.setViewSize(size);
+    d->updateRootSize();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static
@@ -532,6 +639,7 @@ bool ClientWindow::setDefaultGLFormat() // static
     fmt.setDepthBufferSize(16);
     fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
+    fmt.setStereo(true);
 
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
@@ -577,6 +685,9 @@ void ClientWindow::draw()
 {
     // Don't run the main loop until after the paint event has been dealt with.
     ClientApp::app().loop().pause();
+
+    // Offscreen composition is only needed in Oculus Rift mode.
+    d->enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
 
     // The canvas needs to be recreated when the GL format has changed
     // (e.g., multisampling).
@@ -642,6 +753,12 @@ void ClientWindow::updateCanvasFormat()
     App::config().set("window.fsaa", Con_GetByte("vid-fsaa") != 0);
 }
 
+void ClientWindow::updateRootSize()
+{
+    // This will be done a bit later as the call may originate from another thread.
+    d->needRootSizeUpdate = true;
+}
+
 ClientWindow &ClientWindow::main()
 {
     return static_cast<ClientWindow &>(PersistentCanvasWindow::main());
@@ -662,6 +779,11 @@ void ClientWindow::toggleFPSCounter()
 void ClientWindow::showColorAdjustments()
 {
     d->colorAdjust->open();
+}
+
+void ClientWindow::addOnTop(GuiWidget *widget)
+{
+    d->container().add(widget);
 }
 
 void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)
