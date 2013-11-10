@@ -126,8 +126,9 @@ DENG2_OBSERVES(App, GameChange)
 
     void updateStyle()
     {
-        minSpace = style().rules().rule("console.commandline.width.min").valuei();
-        maxSpace = style().rules().rule("console.commandline.width.max").valuei();
+        // TODO Commented out to avoid uncaught exception path not found CMB
+        // minSpace = style().rules().rule("console.commandline.width.min").valuei();
+        // maxSpace = style().rules().rule("console.commandline.width.max").valuei();
     }
 
     void updateLayoutMode()
