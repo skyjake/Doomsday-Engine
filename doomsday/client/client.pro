@@ -109,15 +109,18 @@ DENG_API_HEADERS = \
 
 # Convenience headers.
 DENG_CONVENIENCE_HEADERS += \
+    include/AbstractFont \
     include/AtlasProceduralImage \
     include/BiasDigest \
     include/BiasIllum \
     include/BiasSource \
     include/BiasSurface \
     include/BiasTracker \
+    include/BitmapFont \
     include/BspLeaf \
     include/BspNode \
     include/CommandAction \
+    include/CompositeBitmapFont \
     include/ChildWidgetOrganizer \
     include/Contact \
     include/ContactSpreader \
@@ -325,12 +328,13 @@ DENG_HEADERS += \
     include/render/vlight.h \
     include/render/walledge.h \
     include/render/wallspec.h \
+    include/resource/abstractfont.h \
     include/resource/animgroups.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
     include/resource/colorpalettes.h \
+    include/resource/compositebitmapfont.h \
     include/resource/compositetexture.h \
-    include/resource/font.h \
     include/resource/fonts.h \
     include/resource/hq2x.h \
     include/resource/image.h \

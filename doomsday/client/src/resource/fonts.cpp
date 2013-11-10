@@ -24,8 +24,6 @@
 #include "de_console.h"
 #include "de_filesys.h"
 #include "dd_main.h" // App_ResourceSystem(), verbose
-#include "resource/font.h"
-#include "resource/bitmapfont.h"
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
 #  include "gl/gl_texmanager.h"

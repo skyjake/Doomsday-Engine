@@ -35,7 +35,7 @@
 #include "de_system.h"
 #include "de_ui.h"
 
-#include "resource/font.h"
+#include "resource/abstractfont.h"
 #include "resource/fonts.h"
 #include "resource/bitmapfont.h"
 #include "m_misc.h"

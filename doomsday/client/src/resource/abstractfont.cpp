@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/font.h"
+#include "resource/abstractfont.h"
 
 using namespace de;
 

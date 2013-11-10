@@ -23,7 +23,9 @@
 
 #include "dd_share.h" // fontschemeid_t
 #include "def_data.h"
-#include "resource/font.h"
+#include "AbstractFont"
+#include "BitmapFont"
+#include "CompositeBitmapFont"
 #include "uri.hh"
 
 /// Special value used to signify an invalid font id.

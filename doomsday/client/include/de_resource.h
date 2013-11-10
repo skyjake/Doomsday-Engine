@@ -25,7 +25,7 @@
 
 #include "resource/animgroups.h"
 #include "resource/colorpalettes.h"
-#include "resource/font.h"
+#include "resource/abstractfont.h"
 #include "resource/fonts.h"
 #include "resource/r_data.h"
 #include "Materials"

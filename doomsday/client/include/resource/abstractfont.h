@@ -1,4 +1,4 @@
-/** @file font.h
+/** @file abstractfont.h  Abstract font.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RESOURCE_FONT_H
-#define CLIENT_RESOURCE_FONT_H
+#ifndef CLIENT_RESOURCE_ABSTRACTFONT_H
+#define CLIENT_RESOURCE_ABSTRACTFONT_H
 
 #include "dd_types.h"
 #include "def_main.h"
@@ -42,12 +42,13 @@ typedef enum {
 #define FF_SHADOWED             0x2 /// Font has an embedded shadow.
 /*@}*/
 
-/**
- * Abstract Font base. To be used as the basis for all types of font.
- * @ingroup refresh
- */
 #define MAX_CHARS               256 // Normal 256 ANSI characters.
 
+/**
+ * Abstract font resource.
+ *
+ * @ingroup resource
+ */
 class font_t
 {
 public:
@@ -69,8 +70,8 @@ public:
 
     Size2Raw _noCharSize;
 
-    /// dj: Do fonts have margins? Is this a pixel border in the composited
-    /// character map texture (perhaps per-glyph)?
+    /// Do fonts have margins? Is this a pixel border in the composited character
+    /// map texture (perhaps per-glyph)?
     int _marginWidth, _marginHeight;
 
     font_t(fonttype_t type = FT_FIRST, fontid_t bindId = 0);
@@ -101,4 +102,4 @@ public:
     void charSize(Size2Raw *size, unsigned char ch);
 };
 
-#endif // CLIENT_RESOURCE_FONT_H
+#endif // CLIENT_RESOURCE_ABSTRACTFONT_H
