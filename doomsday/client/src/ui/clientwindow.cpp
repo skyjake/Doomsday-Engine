@@ -639,6 +639,7 @@ bool ClientWindow::setDefaultGLFormat() // static
     fmt.setDepthBufferSize(16);
     fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
+    fmt.setStereo(true);
 
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {

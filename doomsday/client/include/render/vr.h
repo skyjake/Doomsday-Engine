@@ -93,6 +93,9 @@ void deleteOculusTracker();
 
 void setRiftLatency(float latency);
 
+// Load Oculus Rift parameters via Rift SDK
+bool loadRiftParameters();
+
 } // namespace VR
 
 #endif // CLIENT_RENDER_VR_H

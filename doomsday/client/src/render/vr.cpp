@@ -44,7 +44,7 @@ VR::Stereo3DMode VR::mode()
     return (VR::Stereo3DMode)vrMode;
 }
 
-static float vrRiftAspect = 640.0/800.0;
+static float vrRiftAspect = 640.0f/800.0f;
 float VR::riftAspect() /// Aspect ratio of OculusRift
 {
     return vrRiftAspect;
@@ -56,7 +56,9 @@ float VR::riftFovX() /// Horizontal field of view in degrees
     return vrRiftFovX;
 }
 
-static float vrLatency = 0.030;
+static float vrNonRiftFovX = 95.0;
+
+static float vrLatency = 0.030f;
 float VR::riftLatency() {
     return vrLatency;
 }
@@ -71,7 +73,7 @@ byte  VR::swapEyes = 0;
 // Global variables
 bool  VR::applyFrustumShift = true;
 float  VR::eyeShift = 0;
-float  VR::hudDistance = 30.0f;
+float  VR::hudDistance = 20.0f;
 float  VR::weaponDistance = 10.0f;
 
 
@@ -87,15 +89,6 @@ float VR::getEyeShift(float eye)
     return result;
 }
 
-static void vrModeChanged()
-{
-    if(ClientWindow::hasMain())
-    {
-        // The logical UI size may need to be changed.
-        ClientWindow::main().updateRootSize();
-    }
-}
-
 static void vrLatencyChanged()
 {
     if (VR::hasHeadOrientation()) {
@@ -103,16 +96,63 @@ static void vrLatencyChanged()
     }
 }
 
+
+// Interplay among vrNonRiftFovX, vrRiftFovX, and cameraFov depends on vrMode
+// see also rend_main.cpp
+static void vrModeChanged()
+{
+    if(ClientWindow::hasMain())
+    {
+        // The logical UI size may need to be changed.
+        ClientWindow::main().updateRootSize();
+    }
+    if (VR::mode() == VR::MODE_OCULUS_RIFT) {
+        if(Con_GetFloat("rend-camera-fov") != vrRiftFovX)
+            Con_SetFloat("rend-camera-fov", vrRiftFovX);
+    }
+    else {
+        if(Con_GetFloat("rend-camera-fov") != vrNonRiftFovX)
+            Con_SetFloat("rend-camera-fov", vrNonRiftFovX);
+    }
+}
+
+static void vrRiftFovXChanged()
+{
+    if (VR::mode() == VR::MODE_OCULUS_RIFT) {
+        if(Con_GetFloat("rend-camera-fov") != vrRiftFovX)
+            Con_SetFloat("rend-camera-fov", vrRiftFovX);
+    }
+}
+
+static void vrNonRiftFovXChanged()
+{
+    if (VR::mode() != VR::MODE_OCULUS_RIFT) {
+        if(Con_GetFloat("rend-camera-fov") != vrNonRiftFovX)
+            Con_SetFloat("rend-camera-fov", vrNonRiftFovX);
+    }
+}
+
+static byte autoLoadRiftParams = 1;
+D_CMD(LoadRiftParams)
+{
+    return VR::loadRiftParameters();
+}
+
 void VR::consoleRegister()
 {
-    C_VAR_FLOAT ("rend-vr-ipd",              & VR::ipd,           0, 0.02f, 0.2f);
-    C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 3.0f);
+    C_VAR_BYTE  ("rend-vr-autoload-rift-params", & autoLoadRiftParams, 0, 0, 1);
     C_VAR_FLOAT ("rend-vr-dominant-eye",     & VR::dominantEye,   0, -1.0f, 1.0f);
+    C_VAR_FLOAT ("rend-vr-hud-distance",     & VR::hudDistance,           0, 0.01f, 40.0f);
+    C_VAR_FLOAT ("rend-vr-ipd",              & VR::ipd,           0, 0.02f, 0.2f);
+    C_VAR_INT2  ("rend-vr-mode",             & vrMode,            0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
+    C_VAR_FLOAT2("rend-vr-nonrift-fovx",     & vrNonRiftFovX,     0, 5.0f, 270.0f, vrNonRiftFovXChanged);
+    C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 3.0f);
     C_VAR_FLOAT ("rend-vr-rift-aspect",      & vrRiftAspect,      0, 0.10f, 10.0f);
-    C_VAR_FLOAT ("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f);
+    C_VAR_FLOAT2("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f, vrRiftFovXChanged);
     C_VAR_FLOAT2("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.250f, vrLatencyChanged);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
-    C_VAR_INT2  ("rend-vr-mode",             & vrMode,            0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
+
+    C_CMD("loadriftparams", NULL, LoadRiftParams);
 }
 
 
@@ -214,17 +254,42 @@ private:
 static OculusTracker* oculusTracker = NULL;
 #endif
 
+static bool loadRiftParametersNoCheck() {
+#ifdef DENG_HAVE_OCULUS_API
+    const OVR::HMDInfo& info = oculusTracker->getInfo();
+    Con_SetFloat("rend-vr-ipd", info.InterpupillaryDistance);
+    // Use screen size instead of resolution in case non-square pixels?
+    Con_SetFloat("rend-vr-rift-aspect",
+                 0.5f * info.HScreenSize / info.VScreenSize);
+    // I think this field of view is unreliable... CMB
+    /*
+    float fov = 180.0f / de::PI * 2.0f * (atan2(
+              info.EyeToScreenDistance,
+              0.5f * (info.HScreenSize - info.InterpupillaryDistance)));
+              */
+    return true;
+#endif
+}
 // True if Oculus Rift is enabled and can report head orientation.
 bool VR::hasHeadOrientation()
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if (oculusTracker == NULL)
+    if (oculusTracker == NULL) {
         oculusTracker = new OculusTracker();
+        if (oculusTracker->isGood() && autoLoadRiftParams)
+            loadRiftParametersNoCheck();
+    }
     return oculusTracker->isGood();
 #else
     // No API; No head tracking.
     return false;
 #endif
+}
+
+bool VR::loadRiftParameters() {
+    if (! VR::hasHeadOrientation())
+        return false;
+    return loadRiftParametersNoCheck();
 }
 
 void VR::setRiftLatency(float latency)
@@ -265,3 +330,4 @@ void VR::deleteOculusTracker()
     }
 #endif
 }
+

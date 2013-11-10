@@ -30,6 +30,7 @@ DENG2_PIMPL(VRContentTransform)
 {
     Drawable oculusRift;
     GLUniform uOculusRiftFB;
+    GLUniform uOculusDistortionScale;
 
     typedef GLBufferT<Vertex3Tex> OculusRiftVBuf;
     QScopedPointer<GLTarget> unwarpedTarget;
@@ -37,7 +38,8 @@ DENG2_PIMPL(VRContentTransform)
 
     Instance(Public *i)
         : Base(i),
-          uOculusRiftFB("texture", GLUniform::Sampler2D)
+          uOculusRiftFB("texture", GLUniform::Sampler2D),
+          uOculusDistortionScale("distortionScale", GLUniform::Float)
     {}
 
     void init()
@@ -59,7 +61,8 @@ DENG2_PIMPL(VRContentTransform)
 
         self.window().root().shaders()
                 .build(oculusRift.program(), "vr.oculusrift.barrel")
-                    << uOculusRiftFB;
+                    << uOculusRiftFB
+                    << uOculusDistortionScale;
     }
 
     void deinit()
@@ -107,8 +110,11 @@ DENG2_PIMPL(VRContentTransform)
         VR::applyFrustumShift = false;
 
         /// @todo shrunken hud
-        // Allocate offscreen buffers - double Oculus Rift size, to get adequate resolution at center after warp
-        Canvas::Size textureSize(2560, 1600); // 2 * 1280x800
+        // Allocate offscreen buffers - larger than Oculus Rift size, to get adequate resolution at center after warp
+        // For some reason, 1.5X looks best, even though objects are ~2.3X unwarped size at center.
+        Canvas::Size textureSize(1920, 1200); // 1.5 * 1280x800
+        // Canvas::Size textureSize(2560, 1600); // 2 * 1280x800 // Undesirable relative softness at very center of image
+        // Canvas::Size textureSize(3200, 2000); // 2.5 * 1280x800 // Softness here too
         if(unwarpedTexture.size() != textureSize)
         {
             unwarpedTexture.setUndefinedImage(textureSize, Image::RGBA_8888);
@@ -155,6 +161,8 @@ DENG2_PIMPL(VRContentTransform)
         glDisable(GL_BLEND);
 
         // Copy contents of offscreen buffer to normal screen.
+        // TODO - "distortionScale" uniform variable is not found.
+        uOculusDistortionScale = 1.714f; // TODO - compute it
         oculusRift.draw();
 
         glBindTexture(GL_TEXTURE_2D, 0);

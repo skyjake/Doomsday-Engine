@@ -1,11 +1,11 @@
 #version 120 
  
 uniform sampler2D texture; 
+uniform float distortionScale = 1.714; // TODO check this
 
 varying highp vec2 vTexCoord;
  
 const float aspectRatio = 1.0; 
-const float distortionScale = 1.714; // TODO check this 
 const vec2 screenSize = vec2(0.14976, 0.0936);
 const vec2 screenCenter = 0.5 * screenSize; 
 const vec2 lensCenter = vec2(0.57265, 0.5); // left eye 
