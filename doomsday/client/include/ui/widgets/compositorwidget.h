@@ -39,6 +39,20 @@ public:
 
     de::GLTexture &composite() const;
 
+    /**
+     * Sets the matrix that is used when drawing the composited contents
+     * back to the normal render target.
+     *
+     * @param projMatrix  Projection matrix.
+     */
+    void setCompositeProjection(de::Matrix4f const &projMatrix);
+
+    /**
+     * Sets the projection used for displaying the composited content to the
+     * default matrix (covering the full view).
+     */
+    void useDefaultCompositeProjection();
+
     // Events.
     void viewResized();
     void preDrawChildren();

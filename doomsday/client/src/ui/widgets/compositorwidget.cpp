@@ -38,16 +38,16 @@ DENG_GUI_PIMPL(CompositorWidget)
     int nextBufIndex;
     QList<Buffer *> buffers; ///< Stack of buffers to allow nested compositing.
     GLUniform uMvpMatrix;
-    //GLUniform uColor;
-    GLUniform uTex;
+    GLUniform uTex;    
 
     Instance(Public *i)
         : Base(i),
           nextBufIndex(0),
           uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          //uColor    ("uColor",     GLUniform::Vec4),
           uTex      ("uTex",       GLUniform::Sampler2D)
-    {}
+    {
+        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+    }
 
     /*void updateSize()
     {
@@ -93,11 +93,6 @@ DENG_GUI_PIMPL(CompositorWidget)
 
     void glInit()
     {
-        // We'll simply cover the entire view.
-        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-
-        //updateSize();
-
         DefaultVertexBuf *buf = new DefaultVertexBuf;
         buf->setVertices(gl::TriangleStrip,
                          DefaultVertexBuf::Builder()
@@ -133,6 +128,16 @@ GLTexture &CompositorWidget::composite() const
 {
     DENG2_ASSERT(!d->buffers.isEmpty());
     return d->buffers.first()->texture;
+}
+
+void CompositorWidget::setCompositeProjection(const Matrix4f &projMatrix)
+{
+    d->uMvpMatrix = projMatrix;
+}
+
+void CompositorWidget::useDefaultCompositeProjection()
+{
+    d->uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
 }
 
 void CompositorWidget::viewResized()
