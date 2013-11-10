@@ -2764,7 +2764,7 @@ D_CMD(Font)
         Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);
         Con_Printf("Commands: default, leading, name, size, tracking, xsize, ysize.\n");
         Con_Printf("Names: ");
-        list = Fonts_CollectNames(&listCount);
+        list = AppFonts().collectNames(&listCount);
         for(i = 0; i < listCount-1; ++i)
         {
             Con_Printf("%s, ", Str_Text(list[i]));
@@ -2780,7 +2780,7 @@ D_CMD(Font)
     if(!stricmp(argv[1], "default"))
     {
         de::Uri uri(R_ChooseFixedFont(), RC_NULL);
-        fontid_t newFont = Fonts_ResolveUri(reinterpret_cast<uri_s *>(&uri));
+        fontid_t newFont = App_Fonts().resolveUri(uri);
         if(newFont)
         {
             Con_SetFont(newFont);
@@ -2794,10 +2794,10 @@ D_CMD(Font)
     if(!stricmp(argv[1], "name") && argc == 3)
     {
         de::Uri uri(String(argv[2]), RC_NULL);
-        fontid_t newFont = App_Fonts().resolveUri(reinterpret_cast<uri_s *>(&uri), true/*quiet please*/);
+        fontid_t newFont = App_Fonts().resolveUri(uri, true/*quiet please*/);
         if(newFont)
         {
-            QScopedPointer<de::Uri> uri(reinterpret_cast<de::Uri *>(App_Fonts().composeUri(newFont)));
+            QScopedPointer<de::Uri> uri(App_Fonts().composeUri(newFont));
             Con_SetFont(newFont);
             if(!uri->scheme().compareWithoutCase("Game"))
             {

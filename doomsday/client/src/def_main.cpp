@@ -1433,7 +1433,9 @@ void Def_Read()
         scheme.reset();
 
         invalidateAllMaterials();
+#ifdef __CLIENT__
         App_Fonts().clearDefinitionLinks();
+#endif
 
         Def_Destroy();
     }
@@ -1454,11 +1456,13 @@ void Def_Read()
     // Any definition hooks?
     DD_CallHooks(HOOK_DEFS, 0, &defs);
 
+#ifdef __CLIENT__
     // Composite fonts.
     for(int i = 0; i < defs.count.compositeFonts.num; ++i)
     {
         App_Fonts().createFontFromDef(defs.compositeFonts + i);
     }
+#endif
 
     // Sprite names.
     DED_NewEntries((void **) &sprNames, &countSprNames, sizeof(*sprNames), defs.count.sprites.num);

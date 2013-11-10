@@ -53,12 +53,12 @@ DENG_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
 DENG_EXTERN_C void FR_Init(void);
 
-DENG_EXTERN_C void Fonts_Init(void);
+/*DENG_EXTERN_C void Fonts_Init(void);
 DENG_EXTERN_C fontschemeid_t Fonts_ParseScheme(const char* str);
 //DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri);
 DENG_EXTERN_C fontid_t Fonts_ResolveUriCString(const char* uri);
 DENG_EXTERN_C void Fonts_ClearDefinitionLinks(void);
-DENG_EXTERN_C void Fonts_ClearRuntime(void);
+DENG_EXTERN_C void Fonts_ClearRuntime(void);*/
 
 DENG_EXTERN_C void Rend_Init(void);
 //DENG_EXTERN_C void Rend_DecorInitForMap();

@@ -28,6 +28,7 @@
 #include "de_defs.h" // Def_GetGenerator
 
 #include "Materials"
+#include "TextureManifest"
 
 #include "world/map.h"
 #include "Plane"

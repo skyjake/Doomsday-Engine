@@ -74,7 +74,9 @@ DENG2_PIMPL(ResourceSystem)
     QList<PatchName> patchNames;
     Textures textures;
 
+#ifdef __CLIENT__
     Fonts fonts;
+#endif
 
     Instance(Public *i) : Base(i)
     {
@@ -963,7 +965,9 @@ patchid_t ResourceSystem::declarePatch(char const *encodedName)
     return 0;
 }
 
+#ifdef __CLIENT__
 Fonts &ResourceSystem::fonts()
 {
     return d->fonts;
 }
+#endif

@@ -165,8 +165,10 @@ ResourceSystem &App_ResourceSystem();
 /// @return  The application's global Texture collection.
 de::Textures &App_Textures();
 
+#ifdef __CLIENT__
 /// @return  The application's global Font collection.
 de::Fonts &App_Fonts();
+#endif
 
 /// @return  @c true iff there is presently a game loaded.
 boolean App_GameLoaded();

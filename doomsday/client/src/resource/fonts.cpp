@@ -148,8 +148,8 @@ void Font_Release(font_t *font)
 {
     switch(Font_Type(font))
     {
-    case FT_BITMAP:          BitmapFont_DeleteGLTexture(font); break;
-    case FT_BITMAPCOMPOSITE: BitmapCompositeFont_ReleaseTextures(font); break;
+    case FT_BITMAP:          BitmapFont_DeleteGLTexture(font); return;
+    case FT_BITMAPCOMPOSITE: BitmapCompositeFont_ReleaseTextures(font); return;
     }
     DENG2_ASSERT(false);
 }
@@ -158,8 +158,8 @@ void Font_Prepare(font_t *font)
 {
     switch(Font_Type(font))
     {
-    case FT_BITMAP:          BitmapFont_Prepare(font); break;
-    case FT_BITMAPCOMPOSITE: BitmapCompositeFont_Prepare(font); break;
+    case FT_BITMAP:          BitmapFont_Prepare(font); return;
+    case FT_BITMAPCOMPOSITE: BitmapCompositeFont_Prepare(font); return;
     }
     DENG2_ASSERT(false);
 }

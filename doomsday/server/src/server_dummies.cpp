@@ -361,7 +361,7 @@ int FR_TextHeight(const char* text)
 }
 */
 
-void Fonts_Init(void)
+/*void Fonts_Init(void)
 {}
 
 fontschemeid_t Fonts_ParseScheme(const char* str)
@@ -370,13 +370,12 @@ fontschemeid_t Fonts_ParseScheme(const char* str)
     return fontschemeid_t(0);
 }
 
-/*
+
 fontid_t Fonts_ResolveUri(Uri const *uri)
 {
     DENG_UNUSED(uri);
     return 0;
 }
-*/
 
 fontid_t Fonts_ResolveUriCString(const char* uri)
 {
@@ -389,6 +388,7 @@ void Fonts_ClearDefinitionLinks(void)
 
 void Fonts_ClearRuntime(void)
 {}
+*/
 
 /*
 void R_InitViewWindow(void)

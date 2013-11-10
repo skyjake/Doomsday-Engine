@@ -23,7 +23,9 @@
 #include <de/Error>
 #include "resourceclass.h"
 #include "Textures"
-#include "Fonts"
+#ifdef __CLIENT__
+#  include "Fonts"
+#endif
 
 /**
  * Logical resources; materials, packages, textures, etc... @ingroup resource
@@ -77,10 +79,12 @@ public:
 
     patchid_t declarePatch(char const *encodedName);
 
+#ifdef __CLIENT__
     /**
      * Provides access to the Fonts collection.
      */
     de::Fonts &fonts();
+#endif
 
 public: /// @todo Should be private:
     void initCompositeTextures();
