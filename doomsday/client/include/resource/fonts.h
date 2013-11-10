@@ -116,12 +116,12 @@ public:
     /**
      * Returns the unique identifier of the primary name for @a font else @c NOFONTID.
      */
-    fontid_t id(font_t *font);
+    fontid_t id(AbstractFont *font);
 
     /**
      * Returns the Font associated with unique identifier @a fontId else @c NULL.
      */
-    font_t *toFont(fontid_t fontId);
+    AbstractFont *toFont(fontid_t fontId);
 
     /**
      * Returns the Font associated with the scheme-unique identifier @a index else @c NOFONTID.
@@ -171,9 +171,9 @@ public:
      */
     fontid_t declare(Uri const &uri, int uniqueId);
 
-    font_t *createFontFromFile(Uri const &uri, char const *resourcePath);
+    AbstractFont *createFontFromFile(Uri const &uri, char const *resourcePath);
 
-    font_t *createFontFromDef(ded_compositefont_t *def);
+    AbstractFont *createFontFromDef(ded_compositefont_t *def);
 
     /**
      * Iterate over defined Fonts in the collection making a callback for each
@@ -187,7 +187,7 @@ public:
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int iterate(fontschemeid_t schemeId, int (*callback)(font_t *font, void *context),
+    int iterate(fontschemeid_t schemeId, int (*callback)(AbstractFont *font, void *context),
                 void *context = 0);
 
     /**

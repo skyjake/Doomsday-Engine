@@ -54,7 +54,7 @@ struct FontRecord
     int uniqueId;
 
     /// The defined font instance (if any).
-    font_t *font;
+    AbstractFont *font;
 };
 
 struct FontScheme
@@ -413,7 +413,7 @@ DENG2_PIMPL(Fonts)
         return 0;
     }
 
-    font_t *createFromDef(fontid_t id, ded_compositefont_t *def)
+    AbstractFont *createFromDef(fontid_t id, ded_compositefont_t *def)
     {
         LOG_AS("Fonts::createFromDef");
 
@@ -435,7 +435,7 @@ DENG2_PIMPL(Fonts)
 
         if(record->font)
         {
-            if(bitmapcompositefont_t *compFont = record->font->maybeAs<bitmapcompositefont_t>())
+            if(CompositeBitmapFont *compFont = record->font->maybeAs<CompositeBitmapFont>())
             {
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
@@ -450,7 +450,7 @@ DENG2_PIMPL(Fonts)
         }
 
         // A new font.
-        record->font = bitmapcompositefont_t::fromDef(id, def);
+        record->font = CompositeBitmapFont::fromDef(id, def);
         if(record->font && verbose >= 1)
         {
             LOG_VERBOSE("New font \"%s\"") << self.composeUri(id);
@@ -459,7 +459,7 @@ DENG2_PIMPL(Fonts)
         return record->font;
     }
 
-    font_t *createFromFile(fontid_t id, char const *resourcePath)
+    AbstractFont *createFromFile(fontid_t id, char const *resourcePath)
     {
         LOG_AS("Fonts::createFromFile");
 
@@ -481,7 +481,7 @@ DENG2_PIMPL(Fonts)
 
         if(record->font)
         {
-            if(bitmapfont_t *bmapFont = record->font->maybeAs<bitmapfont_t>())
+            if(BitmapFont *bmapFont = record->font->maybeAs<BitmapFont>())
             {
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
@@ -496,7 +496,7 @@ DENG2_PIMPL(Fonts)
         }
 
         // A new font.
-        record->font = bitmapfont_t::fromFile(id, resourcePath);
+        record->font = BitmapFont::fromFile(id, resourcePath);
         if(record->font && verbose >= 1)
         {
             LOG_VERBOSE("New font \"%s\"") << self.composeUri(id);
@@ -534,7 +534,7 @@ DENG2_PIMPL(Fonts)
     struct iteratedirectoryworker_params_t
     {
         Instance *inst;
-        int (*definedCallback)(font_t *font, void *context);
+        int (*definedCallback)(AbstractFont *font, void *context);
         int (*declaredCallback)(fontid_t id, void *context);
         void *context;
     };
@@ -845,7 +845,7 @@ void Fonts::clearScheme(fontschemeid_t schemeId)
     }
 }
 
-font_t *Fonts::toFont(fontid_t id)
+AbstractFont *Fonts::toFont(fontid_t id)
 {
     LOG_AS("Fonts::toFont");
     if(!d->validFontId(id))
@@ -1005,7 +1005,7 @@ int Fonts::uniqueId(fontid_t id)
     throw Error("Fonts::UniqueId", QString("Passed invalid fontId #%1.").arg(id));
 }
 
-fontid_t Fonts::id(font_t *font)
+fontid_t Fonts::id(AbstractFont *font)
 {
     LOG_AS("Fonts::id");
     if(!font)
@@ -1074,7 +1074,7 @@ Uri Fonts::composeUrn(fontid_t id)
     return Uri("urn", String("%1:%2").arg(schemeName(d->schemeIdForDirectoryNode(*node))).arg(record->uniqueId, 0, 10));
 }
 
-font_t *Fonts::createFontFromFile(Uri const &uri, char const *resourcePath)
+AbstractFont *Fonts::createFontFromFile(Uri const &uri, char const *resourcePath)
 {
     LOG_AS("R_CreateFontFromFile");
 
@@ -1097,10 +1097,10 @@ font_t *Fonts::createFontFromFile(Uri const &uri, char const *resourcePath)
     if(fontId == NOFONTID) return 0; // Invalid URI?
 
     // Have we already encountered this name?
-    font_t *font = toFont(fontId);
+    AbstractFont *font = toFont(fontId);
     if(font)
     {
-        if(bitmapfont_t *bmapFont = font->maybeAs<bitmapfont_t>())
+        if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
         {
             bmapFont->rebuildFromFile(resourcePath);
         }
@@ -1118,7 +1118,7 @@ font_t *Fonts::createFontFromFile(Uri const &uri, char const *resourcePath)
     return font;
 }
 
-font_t *Fonts::createFontFromDef(ded_compositefont_t *def)
+AbstractFont *Fonts::createFontFromDef(ded_compositefont_t *def)
 {
     LOG_AS("Fonts::CreateFontFromDef");
 
@@ -1142,10 +1142,10 @@ font_t *Fonts::createFontFromDef(ded_compositefont_t *def)
     if(fontId == NOFONTID) return 0; // Invalid URI?
 
     // Have we already encountered this name?
-    font_t *font = toFont(fontId);
+    AbstractFont *font = toFont(fontId);
     if(font)
     {
-        if(bitmapcompositefont_t *compFont = font->maybeAs<bitmapcompositefont_t>())
+        if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
         {
             compFont->rebuildFromDef(def);
         }
@@ -1164,7 +1164,7 @@ font_t *Fonts::createFontFromDef(ded_compositefont_t *def)
 }
 
 int Fonts::iterate(fontschemeid_t schemeId,
-    int (*callback)(font_t *font, void *context), void *context)
+    int (*callback)(AbstractFont *font, void *context), void *context)
 {
     if(!callback) return 0;
 
@@ -1187,9 +1187,9 @@ int Fonts::iterateDeclared(fontschemeid_t schemeId,
     return d->iterateDirectory(schemeId, Instance::iterateWorker, &parm);
 }
 
-static int clearDefinitionLinkWorker(font_t *font, void * /*context*/)
+static int clearDefinitionLinkWorker(AbstractFont *font, void * /*context*/)
 {
-    if(bitmapcompositefont_t *compFont = font->maybeAs<bitmapcompositefont_t>())
+    if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
     {
         compFont->setDefinition(0);
     }
@@ -1202,7 +1202,7 @@ void Fonts::clearDefinitionLinks()
     iterate(FS_ANY, clearDefinitionLinkWorker);
 }
 
-static int releaseFontTextureWorker(font_t *font, void * /*context*/)
+static int releaseFontTextureWorker(AbstractFont *font, void * /*context*/)
 {
     font->glDeinit();
     return 0; // Continue iteration.
@@ -1264,7 +1264,7 @@ static void printFontOverview(FontRepository::Node &node, bool printSchemeName)
         uri = App_Fonts().composeUri(fontId);
     }
     ddstring_t const *path = (printSchemeName? uri.asText() : uri.path());
-    font_t *font = record->font;
+    AbstractFont *font = record->font;
 
     Con_FPrintf(!font? CPF_LIGHT : CPF_WHITE,
         "%-*s %*u %s", printSchemeName? 22 : 14, F_PrettyPath(Str_Text(path)),

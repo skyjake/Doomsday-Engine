@@ -49,7 +49,7 @@ typedef enum {
  *
  * @ingroup resource
  */
-class font_t
+class AbstractFont
 {
 public:
     fonttype_t _type;
@@ -74,8 +74,8 @@ public:
     /// map texture (perhaps per-glyph)?
     int _marginWidth, _marginHeight;
 
-    font_t(fonttype_t type = FT_FIRST, fontid_t bindId = 0);
-    virtual ~font_t() {}
+    AbstractFont(fonttype_t type = FT_FIRST, fontid_t bindId = 0);
+    virtual ~AbstractFont() {}
 
     DENG2_AS_IS_METHODS()
 

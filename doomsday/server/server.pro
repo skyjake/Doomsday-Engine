@@ -199,7 +199,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/colorpalette.h \
     $$SRC/include/resource/colorpalettes.h \
     $$SRC/include/resource/compositetexture.h \
-    $$SRC/include/resource/abstractfont.h \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/lumpcache.h \
     $$SRC/include/resource/material.h \

@@ -44,12 +44,12 @@ static unsigned short inShort(de::FileHandle *file)
     return USHORT(s);
 }
 
-static void *readFormat0(font_t *font, de::FileHandle *file)
+static void *readFormat0(AbstractFont *font, de::FileHandle *file)
 {
     DENG_ASSERT(font && font->_type == FT_BITMAP && file);
 
     int i, c, bitmapFormat, numPels, glyphCount = 0;
-    bitmapfont_t *bf = (bitmapfont_t *)font;
+    BitmapFont *bf = (BitmapFont *)font;
     Size2Raw avgSize;
     uint32_t *image;
 
@@ -66,7 +66,7 @@ static void *readFormat0(font_t *font, de::FileHandle *file)
     avgSize.width = avgSize.height = 0;
     for(i = 0; i < glyphCount; ++i)
     {
-        bitmapfont_t::bitmapfont_char_t *ch = &bf->_chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
+        BitmapFont::bitmapfont_char_t *ch = &bf->_chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
         ushort x = inShort(file);
         ushort y = inShort(file);
         ushort w = inByte(file);
@@ -127,12 +127,12 @@ static void *readFormat0(font_t *font, de::FileHandle *file)
     return image;
 }
 
-static void *readFormat2(font_t *font, de::FileHandle *file)
+static void *readFormat2(AbstractFont *font, de::FileHandle *file)
 {
     DENG_ASSERT(font && font->_type == FT_BITMAP && file);
 
     int i, numPels, dataHeight, glyphCount = 0;
-    bitmapfont_t *bf = (bitmapfont_t *)font;
+    BitmapFont *bf = (BitmapFont *)font;
     byte bitmapFormat = 0;
     uint32_t *image, *ptr;
     Size2Raw avgSize;
@@ -165,7 +165,7 @@ static void *readFormat2(font_t *font, de::FileHandle *file)
         ushort y = inShort(file);
         ushort w = inShort(file);
         ushort h = inShort(file);
-        bitmapfont_t::bitmapfont_char_t *ch = &bf->_chars[code];
+        BitmapFont::bitmapfont_char_t *ch = &bf->_chars[code];
 
         ch->geometry.origin.x = 0;
         ch->geometry.origin.y = 0;
@@ -225,8 +225,8 @@ static void *readFormat2(font_t *font, de::FileHandle *file)
     return image;
 }
 
-bitmapfont_t::bitmapfont_t(fontid_t bindId )
-    : font_t(FT_BITMAP, bindId)
+BitmapFont::BitmapFont(fontid_t bindId )
+    : AbstractFont(FT_BITMAP, bindId)
 {
     _tex = 0;
     _texSize.width = 0;
@@ -235,21 +235,21 @@ bitmapfont_t::bitmapfont_t(fontid_t bindId )
     std::memset(_chars, 0, sizeof(_chars));
 }
 
-bitmapfont_t::~bitmapfont_t()
+BitmapFont::~BitmapFont()
 {
     glDeinit();
 }
 
-void bitmapfont_t::rebuildFromFile(char const *resourcePath)
+void BitmapFont::rebuildFromFile(char const *resourcePath)
 {
     setFilePath(resourcePath);
 }
 
-bitmapfont_t *bitmapfont_t::fromFile(fontid_t bindId, char const *resourcePath) // static
+BitmapFont *BitmapFont::fromFile(fontid_t bindId, char const *resourcePath) // static
 {
     DENG2_ASSERT(resourcePath != 0);
 
-    bitmapfont_t *font = new bitmapfont_t(bindId);
+    BitmapFont *font = new BitmapFont(bindId);
     font->setFilePath(resourcePath);
 
     // Lets try and prepare it right away.
@@ -258,28 +258,28 @@ bitmapfont_t *bitmapfont_t::fromFile(fontid_t bindId, char const *resourcePath) 
     return font;
 }
 
-RectRaw const *bitmapfont_t::charGeometry(unsigned char chr)
+RectRaw const *BitmapFont::charGeometry(unsigned char chr)
 {
     glInit();
     bitmapfont_char_t *ch = &_chars[chr];
     return &ch->geometry;
 }
 
-int bitmapfont_t::charWidth(unsigned char ch)
+int BitmapFont::charWidth(unsigned char ch)
 {
     glInit();
     if(_chars[ch].geometry.size.width == 0) return _noCharSize.width;
     return _chars[ch].geometry.size.width;
 }
 
-int bitmapfont_t::charHeight(unsigned char ch)
+int BitmapFont::charHeight(unsigned char ch)
 {
     glInit();
     if(_chars[ch].geometry.size.height == 0) return _noCharSize.height;
     return _chars[ch].geometry.size.height;
 }
 
-void bitmapfont_t::glInit()
+void BitmapFont::glInit()
 {
     void *image = 0;
     int version;
@@ -320,7 +320,7 @@ void bitmapfont_t::glInit()
     }
 }
 
-void bitmapfont_t::glDeinit()
+void BitmapFont::glDeinit()
 {
     if(novideo || isDedicated) return;
 
@@ -333,7 +333,7 @@ void bitmapfont_t::glDeinit()
     _tex = 0;
 }
 
-void bitmapfont_t::setFilePath(char const *filePath)
+void BitmapFont::setFilePath(char const *filePath)
 {
     if(!filePath || !filePath[0])
     {
@@ -355,29 +355,29 @@ void bitmapfont_t::setFilePath(char const *filePath)
     _isDirty = true;
 }
 
-DGLuint bitmapfont_t::textureGLName() const
+DGLuint BitmapFont::textureGLName() const
 {
     return _tex;
 }
 
-Size2Raw const *bitmapfont_t::textureSize() const
+Size2Raw const *BitmapFont::textureSize() const
 {
     return &_texSize;
 }
 
-int bitmapfont_t::textureWidth() const
+int BitmapFont::textureWidth() const
 {
     return _texSize.width;
 }
 
-int bitmapfont_t::textureHeight() const
+int BitmapFont::textureHeight() const
 {
     return _texSize.height;
 }
 
-void bitmapfont_t::charCoords(unsigned char chr, Point2Raw coords[4])
+void BitmapFont::charCoords(unsigned char chr, Point2Raw coords[4])
 {
-    bitmapfont_t::bitmapfont_char_t *ch = &_chars[chr];
+    BitmapFont::bitmapfont_char_t *ch = &_chars[chr];
     if(!coords) return;
     glInit();
     std::memcpy(coords, ch->coords, sizeof(Point2Raw) * 4);

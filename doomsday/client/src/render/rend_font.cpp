@@ -101,9 +101,9 @@ typedef struct {
 } drawtextstate_t;
 
 static __inline fr_state_attributes_t* currentAttribs(void);
-static int topToAscent(font_t* font);
-static int lineHeight(font_t* font, unsigned char ch);
-static void drawChar(unsigned char ch, int posX, int posY, font_t* font, int alignFlags, short textFlags);
+static int topToAscent(AbstractFont* font);
+static int lineHeight(AbstractFont* font, unsigned char ch);
+static void drawChar(unsigned char ch, int posX, int posY, AbstractFont* font, int alignFlags, short textFlags);
 static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright);
 
 static int inited = false;
@@ -122,7 +122,7 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
-static int topToAscent(font_t *font)
+static int topToAscent(AbstractFont *font)
 {
     int lineHeight = font->lineSpacing();
     if(lineHeight == 0)
@@ -130,7 +130,7 @@ static int topToAscent(font_t *font)
     return lineHeight - font->ascent();
 }
 
-static int lineHeight(font_t *font, unsigned char ch)
+static int lineHeight(AbstractFont *font, unsigned char ch)
 {
     int ascent = font->ascent();
     if(ascent != 0)
@@ -542,7 +542,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 {
     DENG2_ASSERT(fragment != 0 && fragment[0]);
 
-    font_t *font = App_Fonts().toFont(fr.fontNum);
+    AbstractFont *font = App_Fonts().toFont(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
     boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
@@ -581,7 +581,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
     }
-    if(bitmapfont_t *bmapFont = font->maybeAs<bitmapfont_t>())
+    if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
         if(bmapFont->textureGLName())
         {
@@ -735,7 +735,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }
 
     // Restore previous GL-state.
-    if(bitmapfont_t *bmapFont = font->maybeAs<bitmapfont_t>())
+    if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
         if(bmapFont->textureGLName())
         {
@@ -751,7 +751,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }
 }
 
-static void drawChar(unsigned char ch, int posX, int posY, font_t *font,
+static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font,
     int alignFlags, short /*textFlags*/)
 {
     float x = (float) posX, y = (float) posY;
@@ -771,7 +771,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t *font,
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(x, y, 0);
 
-    if(bitmapfont_t *bmapFont = font->maybeAs<bitmapfont_t>())
+    if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
         /// @todo Filtering should be determined at a higher level.
         /// @todo We should not need to re-bind this texture here.
@@ -781,7 +781,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t *font,
         std::memcpy(&geometry, bmapFont->charGeometry(ch), sizeof(geometry));
         bmapFont->charCoords(ch, coords);
     }
-    else if(bitmapcompositefont_t *compFont = font->maybeAs<bitmapcompositefont_t>())
+    else if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
     {
         uint8_t const border = compFont->charBorder(ch);
 

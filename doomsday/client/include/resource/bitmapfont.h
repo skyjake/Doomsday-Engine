@@ -32,7 +32,7 @@
  *
  * @ingroup resource
  */
-class bitmapfont_t : public font_t
+class BitmapFont : public AbstractFont
 {
 public:
     // Data for a character.
@@ -55,10 +55,10 @@ public:
     bitmapfont_char_t _chars[MAX_CHARS];
 
 public:
-    bitmapfont_t(fontid_t bindId);
-    ~bitmapfont_t();
+    BitmapFont(fontid_t bindId);
+    ~BitmapFont();
 
-    static bitmapfont_t *fromFile(fontid_t bindId, char const *resourcePath);
+    static BitmapFont *fromFile(fontid_t bindId, char const *resourcePath);
 
     void rebuildFromFile(char const *resourcePath);
     void setFilePath(char const *filePath);

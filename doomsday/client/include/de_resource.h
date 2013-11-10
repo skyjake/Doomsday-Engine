@@ -26,7 +26,6 @@
 #include "resource/animgroups.h"
 #include "resource/colorpalettes.h"
 #include "resource/abstractfont.h"
-#include "resource/fonts.h"
 #include "resource/r_data.h"
 #include "Materials"
 #include "resource/models.h"
@@ -36,7 +35,6 @@
 #include "Textures"
 
 #ifdef __CLIENT__
-#  include "resource/bitmapfont.h"
 #  include "resource/materialsnapshot.h"
 #  include "resource/materialvariantspec.h"
 #endif

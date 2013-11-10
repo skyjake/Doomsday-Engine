@@ -28,34 +28,34 @@
 
 using namespace de;
 
-bitmapcompositefont_t::bitmapcompositefont_t(fontid_t bindId)
-    : font_t(FT_BITMAPCOMPOSITE, bindId)
+CompositeBitmapFont::CompositeBitmapFont(fontid_t bindId)
+    : AbstractFont(FT_BITMAPCOMPOSITE, bindId)
 {
     _def = 0;
     std::memset(_chars, 0, sizeof(_chars));
     _flags |= FF_COLORIZE;
 }
 
-bitmapcompositefont_t::~bitmapcompositefont_t()
+CompositeBitmapFont::~CompositeBitmapFont()
 {
     glDeinit();
 }
 
-RectRaw const *bitmapcompositefont_t::charGeometry(unsigned char chr)
+RectRaw const *CompositeBitmapFont::charGeometry(unsigned char chr)
 {
     glInit();
     bitmapcompositefont_char_t *ch = &_chars[chr];
     return &ch->geometry;
 }
 
-int bitmapcompositefont_t::charWidth(unsigned char ch)
+int CompositeBitmapFont::charWidth(unsigned char ch)
 {
     glInit();
     if(_chars[ch].geometry.size.width == 0) return _noCharSize.width;
     return _chars[ch].geometry.size.width;
 }
 
-int bitmapcompositefont_t::charHeight(unsigned char ch)
+int CompositeBitmapFont::charHeight(unsigned char ch)
 {
     glInit();
     if(_chars[ch].geometry.size.height == 0) return _noCharSize.height;
@@ -69,7 +69,7 @@ static inline texturevariantspecification_t &charTextureSpec()
                                  0, -3, 0, false, false, false, false);
 }
 
-void bitmapcompositefont_t::glInit()
+void CompositeBitmapFont::glInit()
 {
     Size2Raw avgSize;
     int numPatches;
@@ -127,7 +127,7 @@ void bitmapcompositefont_t::glInit()
     _isDirty = false;
 }
 
-void bitmapcompositefont_t::glDeinit()
+void CompositeBitmapFont::glDeinit()
 {
     if(novideo || isDedicated) return;
 
@@ -143,13 +143,13 @@ void bitmapcompositefont_t::glDeinit()
     }
 }
 
-bitmapcompositefont_t *bitmapcompositefont_t::fromDef(fontid_t bindId, ded_compositefont_t *def) // static
+CompositeBitmapFont *CompositeBitmapFont::fromDef(fontid_t bindId, ded_compositefont_t *def) // static
 {
     DENG2_ASSERT(def != 0);
 
-    LOG_AS("bitmapcompositefont_t::fromDef");
+    LOG_AS("CompositeBitmapFont::fromDef");
 
-    bitmapcompositefont_t *font = new bitmapcompositefont_t(bindId);
+    CompositeBitmapFont *font = new CompositeBitmapFont(bindId);
     font->setDefinition(def);
 
     for(int i = 0; i < def->charMapCount.num; ++i)
@@ -171,19 +171,19 @@ bitmapcompositefont_t *bitmapcompositefont_t::fromDef(fontid_t bindId, ded_compo
     return font;
 }
 
-struct ded_compositefont_s *bitmapcompositefont_t::definition() const
+struct ded_compositefont_s *CompositeBitmapFont::definition() const
 {
     return _def;
 }
 
-void bitmapcompositefont_t::setDefinition(struct ded_compositefont_s *newDef)
+void CompositeBitmapFont::setDefinition(struct ded_compositefont_s *newDef)
 {
     _def = newDef;
 }
 
-void bitmapcompositefont_t::rebuildFromDef(ded_compositefont_t *def)
+void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t *def)
 {
-    LOG_AS("bitmapcompositefont_t::rebuildFromDef");
+    LOG_AS("CompositeBitmapFont::rebuildFromDef");
 
     setDefinition(def);
     if(!def) return;
@@ -204,33 +204,33 @@ void bitmapcompositefont_t::rebuildFromDef(ded_compositefont_t *def)
     }
 }
 
-Texture::Variant *bitmapcompositefont_t::charTexture(unsigned char ch)
+Texture::Variant *CompositeBitmapFont::charTexture(unsigned char ch)
 {
     glInit();
     return _chars[ch].tex;
 }
 
-patchid_t bitmapcompositefont_t::charPatch(unsigned char ch)
+patchid_t CompositeBitmapFont::charPatch(unsigned char ch)
 {
     glInit();
     return _chars[ch].patch;
 }
 
-void bitmapcompositefont_t::charSetPatch(unsigned char chr, char const *encodedPatchName)
+void CompositeBitmapFont::charSetPatch(unsigned char chr, char const *encodedPatchName)
 {
     bitmapcompositefont_char_t *ch = &_chars[chr];
     ch->patch = App_ResourceSystem().declarePatch(encodedPatchName);
     _isDirty = true;
 }
 
-uint8_t bitmapcompositefont_t::charBorder(unsigned char chr)
+uint8_t CompositeBitmapFont::charBorder(unsigned char chr)
 {
     bitmapcompositefont_char_t *ch = &_chars[chr];
     glInit();
     return ch->border;
 }
 
-void bitmapcompositefont_t::charCoords(unsigned char /*chr*/, Point2Raw coords[4])
+void CompositeBitmapFont::charCoords(unsigned char /*chr*/, Point2Raw coords[4])
 {
     if(!coords) return;
 

@@ -204,7 +204,7 @@ static fontid_t loadSystemFont(char const *name)
 #endif
     F_ExpandBasePath(&resourcePath, &resourcePath);
 
-    font_t *font = App_Fonts().createFontFromFile(uri, Str_Text(&resourcePath));
+    AbstractFont *font = App_Fonts().createFontFromFile(uri, Str_Text(&resourcePath));
     Str_Free(&resourcePath);
 
     if(!font)

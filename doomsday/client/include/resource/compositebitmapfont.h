@@ -32,7 +32,7 @@
  *
  * @ingroup resource
  */
-class bitmapcompositefont_t : public font_t
+class CompositeBitmapFont : public AbstractFont
 {
 public:
     // Data for a character.
@@ -51,10 +51,10 @@ public:
     bitmapcompositefont_char_t _chars[MAX_CHARS];
 
 public:
-    bitmapcompositefont_t(fontid_t bindId);
-    ~bitmapcompositefont_t();
+    CompositeBitmapFont(fontid_t bindId);
+    ~CompositeBitmapFont();
 
-    static bitmapcompositefont_t *fromDef(fontid_t bindId, ded_compositefont_t *def);
+    static CompositeBitmapFont *fromDef(fontid_t bindId, ded_compositefont_t *def);
 
     struct ded_compositefont_s *definition() const;
     void setDefinition(struct ded_compositefont_s *def);

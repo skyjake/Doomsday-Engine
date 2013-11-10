@@ -22,7 +22,7 @@
 
 using namespace de;
 
-font_t::font_t(fonttype_t type, fontid_t bindId)
+AbstractFont::AbstractFont(fonttype_t type, fontid_t bindId)
 {
     DENG_ASSERT(VALID_FONTTYPE(type));
 
@@ -38,52 +38,52 @@ font_t::font_t(fonttype_t type, fontid_t bindId)
     _isDirty = true;
 }
 
-void font_t::glInit()
+void AbstractFont::glInit()
 {}
 
-void font_t::glDeinit()
+void AbstractFont::glDeinit()
 {}
 
-void font_t::charSize(Size2Raw *size, unsigned char ch)
+void AbstractFont::charSize(Size2Raw *size, unsigned char ch)
 {
     if(!size) return;
     size->width  = charWidth(ch);
     size->height = charHeight(ch);
 }
 
-fonttype_t font_t::type() const
+fonttype_t AbstractFont::type() const
 {
     return _type;
 }
 
-fontid_t font_t::primaryBind() const
+fontid_t AbstractFont::primaryBind() const
 {
     return _primaryBind;
 }
 
-void font_t::setPrimaryBind(fontid_t bindId)
+void AbstractFont::setPrimaryBind(fontid_t bindId)
 {
     _primaryBind = bindId;
 }
 
-int font_t::flags() const
+int AbstractFont::flags() const
 {
     return _flags;
 }
 
-int font_t::ascent()
+int AbstractFont::ascent()
 {
     glInit();
     return _ascent;
 }
 
-int font_t::descent()
+int AbstractFont::descent()
 {
     glInit();
     return _descent;
 }
 
-int font_t::lineSpacing()
+int AbstractFont::lineSpacing()
 {
     glInit();
     return _leading;
