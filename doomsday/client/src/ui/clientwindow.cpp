@@ -160,13 +160,6 @@ DENG2_OBSERVES(App,              GameChange)
         legacy->disable();
         root.add(legacy);
 
-        /// @todo Compositor only needed in VR modes.
-#if 1
-        compositor = new CompositorWidget;
-        compositor->rule().setRect(root.viewRule());
-        root.add(compositor);
-#endif
-
         gameUI = new GameUIWidget;
         gameUI->rule().setRect(root.viewRule());
         gameUI->disable();
@@ -441,6 +434,47 @@ DENG2_OBSERVES(App,              GameChange)
         busyRoot.setViewSize(size);
     } 
 
+    void enableCompositor(bool enable)
+    {
+        if((enable && compositor) || (!enable && !compositor))
+        {
+            return;
+        }
+
+        container().remove(*gameUI);
+        container().remove(*games);
+        container().remove(*notifications);
+        container().remove(*taskBar);
+
+        if(enable && !compositor)
+        {
+            LOG_MSG("Offscreen UI composition enabled");
+
+            compositor = new CompositorWidget;
+            compositor->rule().setRect(root.viewRule());
+            root.add(compositor);
+        }
+        else
+        {
+            DENG2_ASSERT(compositor != 0);
+
+            GuiWidget::destroy(compositor);
+            compositor = 0;
+
+            LOG_MSG("Offscreen UI composition disabled");
+        }
+
+        container().add(gameUI);
+        container().add(games);
+        container().add(notifications);
+        container().add(taskBar);
+
+        if(mode == Normal)
+        {
+            root.update();
+        }
+    }
+
     void updateCompositor()
     {
         if(!compositor) return;
@@ -651,6 +685,9 @@ void ClientWindow::draw()
 {
     // Don't run the main loop until after the paint event has been dealt with.
     ClientApp::app().loop().pause();
+
+    // Offscreen composition is only needed in Oculus Rift mode.
+    d->enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
 
     // The canvas needs to be recreated when the GL format has changed
     // (e.g., multisampling).
