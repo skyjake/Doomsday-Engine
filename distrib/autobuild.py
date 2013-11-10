@@ -204,8 +204,12 @@ def build_source_package():
         if fn[-3:].lower() == '.ex': os.remove(fn)
     os.remove('README.Debian')
     os.remove('README.source')
-    system_command("sed 's/%s-build%i/%s/' ../../../debian/changelog > changelog" %
-                   (ev.version_base(), ev.number(), pkgVer))
+    
+    def gen_changelog(src, dst, extraSub=''):
+        system_command("sed 's/%s-build%i/%s/;%s' %s > %s" % (
+                ev.version_base(), ev.number(), pkgVer, extraSub, src, dst))
+
+    gen_changelog('../../../debian/changelog', 'changelog')
     system_command("sed 's/${Arch}/i386 amd64/' ../../../debian/control.template > control")
     system_command("sed 's/`..\/build_number.py --print`/%i/;s/..\/..\/doomsday/..\/doomsday/' ../../../debian/rules > rules" % ev.number())
     os.chdir('..')
