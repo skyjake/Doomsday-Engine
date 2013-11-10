@@ -469,7 +469,10 @@ DENG2_OBSERVES(App,              GameChange)
         container().add(notifications);
         container().add(taskBar);
 
-        root.update();
+        if(mode == Normal)
+        {
+            root.update();
+        }
     }
 
     void updateCompositor()
