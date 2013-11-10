@@ -21,11 +21,10 @@
 #define CLIENT_RESOURCE_COMPOSITEBITMAPFONT_H
 
 #include "abstractfont.h"
+#include "def_main.h"
 #include "Texture"
-#include <de/point.h>
-#include <de/rect.h>
-#include <de/size.h>
-#include <de/str.h>
+#include <de/Rectangle>
+#include <de/Vector>
 
 /**
  * Composite bitmap font.
@@ -38,7 +37,7 @@ public:
     // Data for a character.
     struct bitmapcompositefont_char_t
     {
-        RectRaw geometry;
+        de::Rectanglei geometry;
         patchid_t patch;
         de::Texture::Variant *tex;
         uint8_t border;
@@ -49,8 +48,8 @@ public:
 
     static CompositeBitmapFont *fromDef(fontid_t bindId, ded_compositefont_t *def);
 
-    struct ded_compositefont_s *definition() const;
-    void setDefinition(struct ded_compositefont_s *def);
+    ded_compositefont_t *definition() const;
+    void setDefinition(ded_compositefont_t *newDef);
 
     /**
      * Update the font according to the supplied definition. To be called after
@@ -62,21 +61,21 @@ public:
      */
     void rebuildFromDef(ded_compositefont_t *def);
 
-    patchid_t charPatch(unsigned char ch);
-    void charSetPatch(unsigned char ch, char const *encodedPatchName);
+    patchid_t charPatch(uchar ch);
+    void charSetPatch(uchar ch, char const *encodedPatchName);
 
-    de::Texture::Variant *charTexture(unsigned char ch);
+    de::Texture::Variant *charTexture(uchar ch);
 
-    uint8_t charBorder(unsigned char chr);
+    uint8_t charBorder(uchar chr);
 
-    void charCoords(unsigned char chr, Point2Raw coords[4]);
+    void charCoords(uchar chr, de::Vector2i coords[4]);
 
     void glInit();
     void glDeinit();
 
-    RectRaw const *charGeometry(unsigned char ch);
-    int charWidth(unsigned char ch);
-    int charHeight(unsigned char ch);
+    de::Rectanglei const &charGeometry(uchar ch);
+    int charWidth(uchar ch);
+    int charHeight(uchar ch);
 
 private:
     DENG2_PRIVATE(d)

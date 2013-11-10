@@ -33,12 +33,14 @@
 #include "gl/sys_opengl.h"
 #include "api_render.h"
 
+#include "gl/gl_draw.h"
+
 using namespace de;
 
 static bool drawFilter = false;
 static Vector4f filterColor;
 
-void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4])
+void GL_DrawRectWithCoords(RectRaw const *rect, Vector2i coords[4])
 {
     if(!rect) return;
 
@@ -47,26 +49,26 @@ void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4])
 
     glBegin(GL_QUADS);
         // Upper left.
-        if(coords) glTexCoord2iv((GLint*)coords[0].xy);
+        if(coords) glTexCoord2i(coords[0].x, coords[0].y);
         glVertex2f(rect->origin.x, rect->origin.y);
 
         // Upper Right.
-        if(coords) glTexCoord2iv((GLint*)coords[1].xy);
+        if(coords) glTexCoord2i(coords[1].x, coords[1].y);
         glVertex2f(rect->origin.x + rect->size.width, rect->origin.y);
 
         // Lower right.
-        if(coords) glTexCoord2iv((GLint*)coords[2].xy);
+        if(coords) glTexCoord2i(coords[2].x, coords[2].y);
         glVertex2f(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
 
         // Lower left.
-        if(coords) glTexCoord2iv((GLint*)coords[3].xy);
+        if(coords) glTexCoord2i(coords[3].x, coords[3].y);
         glVertex2f(rect->origin.x, rect->origin.y + rect->size.height);
     glEnd();
 }
 
-void GL_DrawRect(const RectRaw* rect)
+void GL_DrawRect(RectRaw const *rect)
 {
-    Point2Raw coords[4];
+    Vector2i coords[4];
     coords[0].x = 0;
     coords[0].y = 0;
     coords[1].x = 1;

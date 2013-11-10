@@ -19,7 +19,7 @@
  */
 
 #include "de_platform.h"
-#include "resource/bitmapfont.h"
+#include "resource/compositebitmapfont.h"
 
 #include "api_resource.h" // R_GetPatchInfo
 #include "dd_main.h" // App_ResourceSystem(), isDedicated
@@ -57,24 +57,24 @@ CompositeBitmapFont::CompositeBitmapFont(fontid_t bindId)
     setPrimaryBind(bindId);
 }
 
-RectRaw const *CompositeBitmapFont::charGeometry(unsigned char chr)
+Rectanglei const &CompositeBitmapFont::charGeometry(uchar chr)
 {
     glInit();
-    return &d->chars[chr].geometry;
+    return d->chars[chr].geometry;
 }
 
-int CompositeBitmapFont::charWidth(unsigned char ch)
+int CompositeBitmapFont::charWidth(uchar ch)
 {
     glInit();
-    if(d->chars[ch].geometry.size.width == 0) return _noCharSize.width;
-    return d->chars[ch].geometry.size.width;
+    if(d->chars[ch].geometry.width() == 0) return _noCharSize.x;
+    return d->chars[ch].geometry.width();
 }
 
-int CompositeBitmapFont::charHeight(unsigned char ch)
+int CompositeBitmapFont::charHeight(uchar ch)
 {
     glInit();
-    if(d->chars[ch].geometry.size.height == 0) return _noCharSize.height;
-    return d->chars[ch].geometry.size.height;
+    if(d->chars[ch].geometry.height() == 0) return _noCharSize.y;
+    return d->chars[ch].geometry.height();
 }
 
 static texturevariantspecification_t &charTextureSpec()
@@ -92,7 +92,7 @@ void CompositeBitmapFont::glInit()
     glDeinit();
 
     int numPatches = 0;
-    Size2Raw avgSize;
+    Vector2ui avgSize;
     for(int i = 0; i < MAX_CHARS; ++i)
     {
         bitmapcompositefont_char_t *ch = &d->chars[i];
@@ -102,36 +102,28 @@ void CompositeBitmapFont::glInit()
         if(0 == patch) continue;
 
         R_GetPatchInfo(patch, &info);
-        std::memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
-
-        ch->geometry.origin.x -= _marginWidth;
-        ch->geometry.origin.y -= _marginHeight;
-        ch->geometry.size.width  += _marginWidth  * 2;
-        ch->geometry.size.height += _marginHeight * 2;
+        ch->geometry.topLeft = Vector2i(info.geometry.origin.xy) - Vector2i(_margin.x, _margin.y);
+        ch->geometry.setSize(_margin * 2 +
+                             Vector2ui(info.geometry.size.width, info.geometry.size.height));
         ch->border = 0;
-
-        ch->tex = App_ResourceSystem().textures()
-                      .scheme("Patches").findByUniqueId(patch)
-                          .texture().prepareVariant(charTextureSpec());
+        ch->tex    = App_ResourceSystem().textures()
+                        .scheme("Patches").findByUniqueId(patch)
+                            .texture().prepareVariant(charTextureSpec());
         if(ch->tex && ch->tex->source() == TEXS_ORIGINAL)
         {
             // Upscale & Sharpen will have been applied.
             ch->border = 1;
         }
 
-        avgSize.width  += ch->geometry.size.width;
-        avgSize.height += ch->geometry.size.height;
+        avgSize += ch->geometry.size();
         ++numPatches;
     }
 
     if(numPatches)
     {
-        avgSize.width  /= numPatches;
-        avgSize.height /= numPatches;
+        avgSize /= numPatches;
     }
-
-    _noCharSize.width  = avgSize.width;
-    _noCharSize.height = avgSize.height;
+    _noCharSize = avgSize;
 
     // We have prepared all patches.
     d->needGLInit = false;
@@ -214,51 +206,40 @@ void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t *newDef)
     }
 }
 
-TextureVariant *CompositeBitmapFont::charTexture(unsigned char ch)
+TextureVariant *CompositeBitmapFont::charTexture(uchar ch)
 {
     glInit();
     return d->chars[ch].tex;
 }
 
-patchid_t CompositeBitmapFont::charPatch(unsigned char ch)
+patchid_t CompositeBitmapFont::charPatch(uchar ch)
 {
     glInit();
     return d->chars[ch].patch;
 }
 
-void CompositeBitmapFont::charSetPatch(unsigned char chr, char const *encodedPatchName)
+void CompositeBitmapFont::charSetPatch(uchar chr, char const *encodedPatchName)
 {
     bitmapcompositefont_char_t *ch = &d->chars[chr];
     ch->patch = App_ResourceSystem().declarePatch(encodedPatchName);
     d->needGLInit = true;
 }
 
-uint8_t CompositeBitmapFont::charBorder(unsigned char chr)
+uint8_t CompositeBitmapFont::charBorder(uchar chr)
 {
     bitmapcompositefont_char_t *ch = &d->chars[chr];
     glInit();
     return ch->border;
 }
 
-void CompositeBitmapFont::charCoords(unsigned char /*chr*/, Point2Raw coords[4])
+void CompositeBitmapFont::charCoords(uchar /*chr*/, Vector2i coords[4])
 {
     if(!coords) return;
 
     glInit();
 
-    // Top left.
-    coords[0].x = 0;
-    coords[0].y = 0;
-
-    // Bottom right.
-    coords[2].x = 1;
-    coords[2].y = 1;
-
-    // Top right.
-    coords[1].x = 1;
-    coords[1].y = 0;
-
-    // Bottom left.
-    coords[3].x = 0;
-    coords[3].y = 1;
+    coords[0] = Vector2i(0, 0); // Top left.
+    coords[2] = Vector2i(1, 1); // Bottom right.
+    coords[1] = Vector2i(1, 0); // Top right.
+    coords[3] = Vector2i(0, 1); // Bottom left.
 }

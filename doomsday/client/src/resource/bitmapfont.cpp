@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_graphics.h"
-#include "de_render.h"
-#include "de_system.h"
-#include "de_filesys.h"
-#include "de_resource.h"
+#include "de_platform.h"
+#include "resource/bitmapfont.h"
 
+#include "dd_main.h"
+#include "filesys/fs_main.h"
+#include "gl/gl_texmanager.h"
+#include "sys_system.h" // novideo
+#include "uri.hh"
 #include <de/mathutil.h> // M_CeilPow2()
 #include <de/memory.h>
 
@@ -37,7 +37,7 @@ static byte inByte(de::FileHandle *file)
     return b;
 }
 
-static unsigned short inShort(de::FileHandle *file)
+static ushort inShort(de::FileHandle *file)
 {
     ushort s;
     file->read((uint8_t *)&s, sizeof(s));
@@ -46,9 +46,9 @@ static unsigned short inShort(de::FileHandle *file)
 
 DENG2_PIMPL(BitmapFont)
 {
-    ddstring_t filePath; ///< The "archived" version of this font (if any).
-    DGLuint tex;         ///< GL-texture name.
-    Size2Raw texSize;    ///< Texture dimensions in pixels.
+    ddstring_t filePath;    ///< The "archived" version of this font (if any).
+    GLuint texGLName;       ///< GL-texture name.
+    Vector2i texDimensions; ///< Texture dimensions in pixels.
     bool needGLInit;
 
     /// Character map.
@@ -56,8 +56,7 @@ DENG2_PIMPL(BitmapFont)
 
     Instance(Public *i)
         : Base(i)
-        , tex(0)
-        , texSize(0, 0)
+        , texGLName(0)
         , needGLInit(true)
     {
         Str_Init(&filePath);
@@ -75,16 +74,14 @@ DENG2_PIMPL(BitmapFont)
 
         self._flags |= FF_COLORIZE;
         self._flags &= ~FF_SHADOWED;
-        self._marginWidth = self._marginHeight = 0;
+        self._margin = Vector2ui(0, 0);
 
         // Load in the data.
-        texSize.width  = inShort(file);
-        texSize.height = inShort(file);
-        int glyphCount = inShort(file);
-        VERBOSE2( Con_Printf("readFormat0: Size: %i x %i, with %i chars.\n",
-                             texSize.width, texSize.height, glyphCount) )
+        texDimensions.x = inShort(file);
+        texDimensions.y = inShort(file);
+        int glyphCount  = inShort(file);
 
-        Size2Raw avgSize;
+        Vector2ui avgSize;
         for(int i = 0; i < glyphCount; ++i)
         {
             bitmapfont_char_t *ch = &chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
@@ -93,43 +90,28 @@ DENG2_PIMPL(BitmapFont)
             ushort w = inByte(file);
             ushort h = inByte(file);
 
-            ch->geometry.origin.x = 0;
-            ch->geometry.origin.y = 0;
-            ch->geometry.size.width  = w - self._marginWidth *2;
-            ch->geometry.size.height = h - self._marginHeight*2;
+            ch->geometry.topLeft = Vector2i(0, 0);
+            ch->geometry.setSize(Vector2ui(w, h) - self._margin * 2);
 
-            // Top left.
-            ch->coords[0].x = x;
-            ch->coords[0].y = y;
+            ch->coords[0] = Vector2i(x, y); // Top left.
+            ch->coords[2] = Vector2i(x + w, y + h); // Bottom right.
+            ch->coords[1] = Vector2i(ch->coords[2].x, ch->coords[0].y); // Top right.
+            ch->coords[3] = Vector2i(ch->coords[0].x, ch->coords[2].y); // Bottom left.
 
-            // Bottom right.
-            ch->coords[2].x = x + w;
-            ch->coords[2].y = y + h;
-
-            // Top right.
-            ch->coords[1].x = ch->coords[2].x;
-            ch->coords[1].y = ch->coords[0].y;
-
-            // Bottom left.
-            ch->coords[3].x = ch->coords[0].x;
-            ch->coords[3].y = ch->coords[2].y;
-
-            avgSize.width  += ch->geometry.size.width;
-            avgSize.height += ch->geometry.size.height;
+            avgSize += ch->geometry.size();
         }
 
-        self._noCharSize.width  = avgSize.width  / glyphCount;
-        self._noCharSize.height = avgSize.height / glyphCount;
+        self._noCharSize = avgSize / glyphCount;
 
         // Load the bitmap.
         int bitmapFormat = inByte(file);
         if(bitmapFormat > 0)
         {
             de::Uri uri = App_Fonts().composeUri(App_Fonts().id(thisPublic));
-            throw Error("readFormat0", QString("Font \"%1\" uses unknown bitmap bitmapFormat %2").arg(uri).arg(bitmapFormat));
+            throw Error("BitmapFont::readFormat0", QString("Font \"%1\" uses unknown bitmap bitmapFormat %2").arg(uri).arg(bitmapFormat));
         }
 
-        int numPels = texSize.width * texSize.height;
+        int numPels = texDimensions.x * texDimensions.y;
         uint32_t *image = (uint32_t *) M_Calloc(numPels * sizeof(int));
         int c, i;
         for(c = i = 0; i < (numPels + 7) / 8; ++i)
@@ -153,26 +135,27 @@ DENG2_PIMPL(BitmapFont)
     {
         DENG2_ASSERT(file != 0);
 
-        byte bitmapFormat = inByte(file);
+        int bitmapFormat = inByte(file);
         if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
         {
-            Con_Error("FR_ReadFormat2: Bitmap format %i not implemented.\n", bitmapFormat);
+            de::Uri uri = App_Fonts().composeUri(App_Fonts().id(thisPublic));
+            throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown bitmap bitmapFormat %2").arg(uri).arg(bitmapFormat));
         }
 
         self._flags |= FF_COLORIZE|FF_SHADOWED;
 
         // Load in the data.
-        texSize.width  = inShort(file);
-        texSize.height = M_CeilPow2(inShort(file));
-        int glyphCount = inShort(file);
-        self._marginWidth = self._marginHeight = inShort(file);
+        texDimensions.x = inShort(file);
+        texDimensions.y = M_CeilPow2(inShort(file));
+        int glyphCount  = inShort(file);
+        self._margin.x  = self._margin.y = inShort(file);
 
         self._leading = inShort(file);
         /*glyphHeight =*/ inShort(file); // Unused.
         self._ascent  = inShort(file);
         self._descent = inShort(file);
 
-        Size2Raw avgSize;
+        Vector2ui avgSize;
         for(int i = 0; i < glyphCount; ++i)
         {
             ushort code = inShort(file);
@@ -182,38 +165,23 @@ DENG2_PIMPL(BitmapFont)
             ushort h    = inShort(file);
             bitmapfont_char_t *ch = &chars[code];
 
-            ch->geometry.origin.x = 0;
-            ch->geometry.origin.y = 0;
-            ch->geometry.size.width  = w - self._marginWidth *2;
-            ch->geometry.size.height = h - self._marginHeight*2;
+            ch->geometry.topLeft = Vector2i(0, 0);
+            ch->geometry.setSize(self._margin * 2 - Vector2ui(w, h));
 
-            // Top left.
-            ch->coords[0].x = x;
-            ch->coords[0].y = y;
+            ch->coords[0] = Vector2i(x, y); // Top left.
+            ch->coords[2] = Vector2i(x + w, y + h); // Bottom right.
+            ch->coords[1] = Vector2i(ch->coords[2].x, ch->coords[0].y); // Top right.
+            ch->coords[3] = Vector2i(ch->coords[0].x, ch->coords[2].y); // Bottom left.
 
-            // Bottom right.
-            ch->coords[2].x = x + w;
-            ch->coords[2].y = y + h;
-
-            // Top right.
-            ch->coords[1].x = ch->coords[2].x;
-            ch->coords[1].y = ch->coords[0].y;
-
-            // Bottom left.
-            ch->coords[3].x = ch->coords[0].x;
-            ch->coords[3].y = ch->coords[2].y;
-
-            avgSize.width  += ch->geometry.size.width;
-            avgSize.height += ch->geometry.size.height;
+            avgSize += ch->geometry.size();
         }
 
-        self._noCharSize.width  = avgSize.width  / glyphCount;
-        self._noCharSize.height = avgSize.height / glyphCount;
+        self._noCharSize = avgSize / glyphCount;
 
         // Read the bitmap.
-        int numPels = texSize.width * texSize.height;
-        uint32_t *ptr = (uint32_t *) M_Calloc(numPels * 4);
-        uint32_t *image = ptr;
+        int numPels = texDimensions.x * texDimensions.y;
+        uint32_t *image = (uint32_t *) M_Calloc(numPels * 4);
+        uint32_t *ptr = image;
 
         if(bitmapFormat == 0)
         {
@@ -232,7 +200,7 @@ DENG2_PIMPL(BitmapFont)
             for(int i = 0; i < numPels; ++i)
             {
                 byte luminance = inByte(file);
-                byte alpha = inByte(file);
+                byte alpha     = inByte(file);
                 *ptr++ = ULONG(luminance | (luminance << 8) | (luminance << 16) | (alpha << 24));
             }
         }
@@ -264,29 +232,29 @@ BitmapFont *BitmapFont::fromFile(fontid_t bindId, char const *resourcePath) // s
     return font;
 }
 
-RectRaw const *BitmapFont::charGeometry(unsigned char chr)
+de::Rectanglei const &BitmapFont::charGeometry(unsigned char chr)
 {
     glInit();
-    return &d->chars[chr].geometry;
+    return d->chars[chr].geometry;
 }
 
 int BitmapFont::charWidth(unsigned char ch)
 {
     glInit();
-    if(d->chars[ch].geometry.size.width == 0) return _noCharSize.width;
-    return d->chars[ch].geometry.size.width;
+    if(d->chars[ch].geometry.width() == 0) return _noCharSize.x;
+    return d->chars[ch].geometry.width();
 }
 
 int BitmapFont::charHeight(unsigned char ch)
 {
     glInit();
-    if(d->chars[ch].geometry.size.height == 0) return _noCharSize.height;
-    return d->chars[ch].geometry.size.height;
+    if(d->chars[ch].geometry.height() == 0) return _noCharSize.y;
+    return d->chars[ch].geometry.height();
 }
 
 void BitmapFont::glInit()
 {
-    if(d->tex) return; // Already prepared.
+    if(d->texGLName) return; // Already prepared.
 
     de::FileHandle *file = reinterpret_cast<de::FileHandle *>(F_Open(Str_Text(&d->filePath), "rb"));
     if(file)
@@ -315,8 +283,8 @@ void BitmapFont::glInit()
             LOG_VERBOSE("Uploading GL texture for font \"%s\"...")
                 << App_Fonts().composeUri(App_Fonts().id(this));
 
-            d->tex = GL_NewTextureWithParams(DGL_RGBA, d->texSize.width,
-                d->texSize.height, (uint8_t const *)image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
+            d->texGLName = GL_NewTextureWithParams(DGL_RGBA, d->texDimensions.x, d->texDimensions.y,
+                (uint8_t const *)image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         }
 
@@ -332,11 +300,11 @@ void BitmapFont::glDeinit()
 
     d->needGLInit = true;
     if(BusyMode_Active()) return;
-    if(d->tex)
+    if(d->texGLName)
     {
-        glDeleteTextures(1, (GLuint const *) &d->tex);
+        glDeleteTextures(1, (GLuint const *) &d->texGLName);
     }
-    d->tex = 0;
+    d->texGLName = 0;
 }
 
 void BitmapFont::setFilePath(char const *newFilePath)
@@ -361,30 +329,19 @@ void BitmapFont::setFilePath(char const *newFilePath)
     d->needGLInit = true;
 }
 
-DGLuint BitmapFont::textureGLName() const
+GLuint BitmapFont::textureGLName() const
 {
-    return d->tex;
+    return d->texGLName;
 }
 
-Size2Raw const *BitmapFont::textureSize() const
+Vector2i const &BitmapFont::textureDimensions() const
 {
-    return &d->texSize;
+    return d->texDimensions;
 }
 
-int BitmapFont::textureWidth() const
+void BitmapFont::charCoords(unsigned char chr, Vector2i coords[4])
 {
-    return d->texSize.width;
-}
-
-int BitmapFont::textureHeight() const
-{
-    return d->texSize.height;
-}
-
-void BitmapFont::charCoords(unsigned char chr, Point2Raw coords[4])
-{
-    bitmapfont_char_t *ch = &d->chars[chr];
     if(!coords) return;
     glInit();
-    std::memcpy(coords, ch->coords, sizeof(Point2Raw) * 4);
+    std::memcpy(coords, d->chars[chr].coords, sizeof(*coords) * 4);
 }

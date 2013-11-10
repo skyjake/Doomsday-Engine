@@ -53,8 +53,6 @@
 #include "de_defs.h"
 #include "de_filesys.h"
 
-#include "resource/fonts.h"
-//#include "cbuffer.h"
 #include "Game"
 #include <de/LogBuffer>
 

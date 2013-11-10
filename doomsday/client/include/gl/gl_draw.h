@@ -25,6 +25,7 @@
 #ifndef LIBDENG_GRAPHICS_DRAW_H
 #define LIBDENG_GRAPHICS_DRAW_H
 
+#include <de/Vector>
 #include <de/rect.h>
 
 #ifdef __cplusplus
@@ -33,10 +34,10 @@ extern "C" {
 
 void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
 
-void GL_DrawRect(const RectRaw* rect);
+void GL_DrawRect(RectRaw const *rect);
 void GL_DrawRect2(int x, int y, int w, int h);
 
-void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4]);
+void GL_DrawRectWithCoords(RectRaw const *rect, de::Vector2i coords[4]);
 
 void GL_DrawRectf(const RectRawf* rect);
 void GL_DrawRectf2(double x, double y, double w, double h);

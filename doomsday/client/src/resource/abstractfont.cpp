@@ -23,16 +23,12 @@
 using namespace de;
 
 AbstractFont::AbstractFont(fontid_t bindId)
-{
-    _marginWidth  = 0;
-    _marginHeight = 0;
-    _leading = 0;
-    _ascent = 0;
-    _descent = 0;
-    _noCharSize.width  = 0;
-    _noCharSize.height = 0;
-    _primaryBind = bindId;
-}
+    : _flags(0)
+    , _primaryBind(bindId)
+    , _leading(0)
+    , _ascent(0)
+    , _descent(0)
+{}
 
 void AbstractFont::glInit()
 {}
@@ -40,11 +36,9 @@ void AbstractFont::glInit()
 void AbstractFont::glDeinit()
 {}
 
-void AbstractFont::charSize(Size2Raw *size, unsigned char ch)
+Vector2i AbstractFont::charSize(unsigned char ch)
 {
-    if(!size) return;
-    size->width  = charWidth(ch);
-    size->height = charHeight(ch);
+    return Vector2i(charWidth(ch), charHeight(ch));
 }
 
 fontid_t AbstractFont::primaryBind() const

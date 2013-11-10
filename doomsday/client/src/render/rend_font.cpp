@@ -1,4 +1,4 @@
-/** @file rend_font.cpp
+/** @file rend_font.cpp  Font Renderer.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -15,10 +15,6 @@
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
- */
-
-/**
- * Font Renderer.
  */
 
 #include <assert.h>
@@ -100,10 +96,7 @@ typedef struct {
     } caseMod[2]; // 1=upper, 0=lower
 } drawtextstate_t;
 
-static __inline fr_state_attributes_t* currentAttribs(void);
-static int topToAscent(AbstractFont* font);
-static int lineHeight(AbstractFont* font, unsigned char ch);
-static void drawChar(unsigned char ch, int posX, int posY, AbstractFont* font, int alignFlags, short textFlags);
+static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font, int alignFlags, short textFlags);
 static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright);
 
 static int inited = false;
@@ -426,10 +419,15 @@ void FR_SetCaseScale(boolean value)
 }
 
 #undef FR_CharSize
-void FR_CharSize(Size2Raw* size, unsigned char ch)
+void FR_CharSize(Size2Raw *size, unsigned char ch)
 {
     errorIfNotInited("FR_CharSize");
-    App_Fonts().toFont(fr.fontNum)->charSize(size, ch);
+    if(size)
+    {
+        Vector2i dimensions = App_Fonts().toFont(fr.fontNum)->charSize(ch);
+        size->width  = dimensions.x;
+        size->height = dimensions.y;
+    }
 }
 
 #undef FR_CharWidth
@@ -591,7 +589,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             glMatrixMode(GL_TEXTURE);
             glPushMatrix();
             glLoadIdentity();
-            glScalef(1.f / bmapFont->textureWidth(), 1.f / bmapFont->textureHeight(), 1.f);
+            glScalef(1.f / bmapFont->textureDimensions().x,
+                     1.f / bmapFont->textureDimensions().y, 1.f);
         }
     }
 
@@ -607,10 +606,10 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             c = *ch++;
             yoff = 0;
 
-            glitter = (noGlitter? 0 : sat->glitterStrength);
+            glitter    = (noGlitter? 0 : sat->glitterStrength);
             glitterMul = 0;
 
-            shadow = (noShadow? 0 : sat->shadowStrength);
+            shadow    = (noShadow? 0 : sat->shadowStrength);
             shadowMul = (noShadow? 0 : sat->rgba[CA]);
 
             // Do the type-in effect?
@@ -755,7 +754,7 @@ static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font,
     int alignFlags, short /*textFlags*/)
 {
     float x = (float) posX, y = (float) posY;
-    Point2Raw coords[4];
+    Vector2i coords[4];
     RectRaw geometry;
 
     if(alignFlags & ALIGN_RIGHT)
@@ -811,15 +810,15 @@ static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font,
         DENG2_ASSERT(false);
     }
 
-    if(font->_marginWidth)
+    if(font->_margin.x)
     {
-        geometry.origin.x -= font->_marginWidth;
-        geometry.size.width += font->_marginWidth*2;
+        geometry.origin.x   -= font->_margin.x;
+        geometry.size.width += font->_margin.x * 2;
     }
-    if(font->_marginHeight)
+    if(font->_margin.y)
     {
-        geometry.origin.y -= font->_marginHeight;
-        geometry.size.height += font->_marginHeight*2;
+        geometry.origin.y -= font->_margin.y;
+        geometry.size.height += font->_margin.y * 2;
     }
 
     GL_DrawRectWithCoords(&geometry, coords);

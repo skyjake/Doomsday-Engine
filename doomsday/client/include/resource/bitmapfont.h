@@ -22,10 +22,9 @@
 
 #include "abstractfont.h"
 #include "Texture"
-#include <de/point.h>
-#include <de/rect.h>
-#include <de/size.h>
-#include <de/str.h>
+#include "gl/gl_main.h"
+#include <de/Rectangle>
+#include <de/Vector>
 
 /**
  * Bitmap font.
@@ -38,8 +37,8 @@ public:
     // Data for a character.
     struct bitmapfont_char_t
     {
-        RectRaw geometry;
-        Point2Raw coords[4];
+        de::Rectanglei geometry;
+        de::Vector2i coords[4];
     };
 
 public:
@@ -51,17 +50,15 @@ public:
     void setFilePath(char const *filePath);
 
     /// @return  GL-texture name.
-    DGLuint textureGLName() const;
-    Size2Raw const *textureSize() const;
-    int textureHeight() const;
-    int textureWidth() const;
+    GLuint textureGLName() const;
+    de::Vector2i const &textureDimensions() const;
 
-    void charCoords(unsigned char ch, Point2Raw coords[4]);
+    void charCoords(unsigned char ch, de::Vector2i coords[4]);
 
     void glInit();
     void glDeinit();
 
-    RectRaw const *charGeometry(unsigned char ch);
+    de::Rectanglei const &charGeometry(unsigned char ch);
     int charWidth(unsigned char ch);
     int charHeight(unsigned char ch);
 

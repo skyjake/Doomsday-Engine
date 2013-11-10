@@ -20,8 +20,11 @@
 #ifndef CLIENT_RESOURCE_ABSTRACTFONT_H
 #define CLIENT_RESOURCE_ABSTRACTFONT_H
 
-#include "dd_types.h"
-#include "def_main.h"
+#include "dd_types.h" // fontid_t
+#include <de/Rectangle>
+#include <de/Vector>
+
+#define MAX_CHARS               256 // Normal 256 ANSI characters.
 
 /**
  * @defgroup fontFlags  Font Flags
@@ -31,8 +34,6 @@
 #define FF_COLORIZE             0x1 /// Font can be colored.
 #define FF_SHADOWED             0x2 /// Font has an embedded shadow.
 /*@}*/
-
-#define MAX_CHARS               256 // Normal 256 ANSI characters.
 
 /**
  * Abstract font resource.
@@ -53,11 +54,11 @@ public:
     int _ascent;
     int _descent;
 
-    Size2Raw _noCharSize;
+    de::Vector2ui _noCharSize;
 
     /// Do fonts have margins? Is this a pixel border in the composited character
     /// map texture (perhaps per-glyph)?
-    int _marginWidth, _marginHeight;
+    de::Vector2ui _margin;
 
     AbstractFont(fontid_t bindId = 0);
     virtual ~AbstractFont() {}
@@ -78,11 +79,11 @@ public:
     virtual void glInit();
     virtual void glDeinit();
 
-    virtual RectRaw const *charGeometry(unsigned char ch) = 0;
-    virtual int charWidth(unsigned char ch) = 0;
-    virtual int charHeight(unsigned char ch) = 0;
+    virtual de::Rectanglei const &charGeometry(uchar ch) = 0;
+    virtual int charWidth(uchar ch) = 0;
+    virtual int charHeight(uchar ch) = 0;
 
-    void charSize(Size2Raw *size, unsigned char ch);
+    de::Vector2i charSize(uchar ch);
 };
 
 #endif // CLIENT_RESOURCE_ABSTRACTFONT_H
