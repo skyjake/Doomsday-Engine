@@ -22,11 +22,10 @@
 #define DENG_CLIENT_RENDER_DRAWLIST_H
 
 #include "gl/gltextureunit.h"
+#include "api_gl.h" // blendmode_e
 #include <de/GLBuffer>
 #include <de/Vector>
 #include <QFlags>
-
-enum blendmode_e;
 
 /// Semantic geometry group identifiers.
 enum GeomGroup

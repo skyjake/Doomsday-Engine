@@ -55,6 +55,8 @@ DENG2_PIMPL(DrawLists)
         case LightGeom:  return dynHash;
         case ShadowGeom: return shadowHash;
         case ShineGeom:  return shinyHash;
+
+        case SkyMaskGeom: break; // n/a?
         }
         DENG2_ASSERT(false);
         return unlitHash;
