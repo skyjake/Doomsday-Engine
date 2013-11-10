@@ -42,21 +42,8 @@ public:
         Point2Raw coords[4];
     };
 
-    /// Absolute file path to the archived version of this font (if any).
-    ddstring_t _filePath;
-
-    /// GL-texture name.
-    DGLuint _tex;
-
-    /// Size of the texture in pixels.
-    Size2Raw _texSize;
-
-    /// Character map.
-    bitmapfont_char_t _chars[MAX_CHARS];
-
 public:
     BitmapFont(fontid_t bindId);
-    ~BitmapFont();
 
     static BitmapFont *fromFile(fontid_t bindId, char const *resourcePath);
 
@@ -77,6 +64,9 @@ public:
     RectRaw const *charGeometry(unsigned char ch);
     int charWidth(unsigned char ch);
     int charHeight(unsigned char ch);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // CLIENT_RESOURCE_BITMAPFONT_H

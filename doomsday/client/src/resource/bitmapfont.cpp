@@ -44,201 +44,204 @@ static unsigned short inShort(de::FileHandle *file)
     return USHORT(s);
 }
 
-static void *readFormat0(AbstractFont *font, de::FileHandle *file)
+DENG2_PIMPL(BitmapFont)
 {
-    DENG_ASSERT(font && font->_type == FT_BITMAP && file);
+    ddstring_t filePath; ///< The "archived" version of this font (if any).
+    DGLuint tex;         ///< GL-texture name.
+    Size2Raw texSize;    ///< Texture dimensions in pixels.
 
-    int i, c, bitmapFormat, numPels, glyphCount = 0;
-    BitmapFont *bf = (BitmapFont *)font;
-    Size2Raw avgSize;
-    uint32_t *image;
+    /// Character map.
+    bitmapfont_char_t chars[MAX_CHARS];
 
-    font->_flags |= FF_COLORIZE;
-    font->_flags &= ~FF_SHADOWED;
-    font->_marginWidth = font->_marginHeight = 0;
-
-    // Load in the data.
-    bf->_texSize.width  = inShort(file);
-    bf->_texSize.height = inShort(file);
-    glyphCount = inShort(file);
-    VERBOSE2( Con_Printf("readFormat0: Size: %i x %i, with %i chars.\n", bf->_texSize.width, bf->_texSize.height, glyphCount) )
-
-    avgSize.width = avgSize.height = 0;
-    for(i = 0; i < glyphCount; ++i)
+    Instance(Public *i)
+        : Base(i)
+        , tex(0)
+        , texSize(0, 0)
     {
-        BitmapFont::bitmapfont_char_t *ch = &bf->_chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
-        ushort x = inShort(file);
-        ushort y = inShort(file);
-        ushort w = inByte(file);
-        ushort h = inByte(file);
-
-        ch->geometry.origin.x = 0;
-        ch->geometry.origin.y = 0;
-        ch->geometry.size.width  = w - font->_marginWidth *2;
-        ch->geometry.size.height = h - font->_marginHeight*2;
-
-        // Top left.
-        ch->coords[0].x = x;
-        ch->coords[0].y = y;
-
-        // Bottom right.
-        ch->coords[2].x = x + w;
-        ch->coords[2].y = y + h;
-
-        // Top right.
-        ch->coords[1].x = ch->coords[2].x;
-        ch->coords[1].y = ch->coords[0].y;
-
-        // Bottom left.
-        ch->coords[3].x = ch->coords[0].x;
-        ch->coords[3].y = ch->coords[2].y;
-
-        avgSize.width  += ch->geometry.size.width;
-        avgSize.height += ch->geometry.size.height;
+        Str_Init(&filePath);
+        zap(chars);
     }
 
-    font->_noCharSize.width  = avgSize.width  / glyphCount;
-    font->_noCharSize.height = avgSize.height / glyphCount;
-
-    // The bitmap.
-    bitmapFormat = inByte(file);
-    if(bitmapFormat > 0)
+    ~Instance()
     {
-        de::Uri uri = App_Fonts().composeUri(App_Fonts().id(font));
-        throw Error("readFormat0", QString("Font \"%1\" uses unknown bitmap bitmapFormat %2").arg(uri).arg(bitmapFormat));
+        self.glDeinit();
     }
 
-    numPels = bf->_texSize.width * bf->_texSize.height;
-    image = (uint32_t *) M_Calloc(numPels * sizeof(int));
-    for(c = i = 0; i < (numPels + 7) / 8; ++i)
+    void *readFormat0(de::FileHandle *file)
     {
-        int bit, mask = inByte(file);
+        DENG2_ASSERT(file != 0);
 
-        for(bit = 7; bit >= 0; bit--, ++c)
+        self._flags |= FF_COLORIZE;
+        self._flags &= ~FF_SHADOWED;
+        self._marginWidth = self._marginHeight = 0;
+
+        // Load in the data.
+        texSize.width  = inShort(file);
+        texSize.height = inShort(file);
+        int glyphCount = inShort(file);
+        VERBOSE2( Con_Printf("readFormat0: Size: %i x %i, with %i chars.\n",
+                             texSize.width, texSize.height, glyphCount) )
+
+        Size2Raw avgSize;
+        for(int i = 0; i < glyphCount; ++i)
         {
-            if(c >= numPels) break;
-            if(mask & (1 << bit))
+            bitmapfont_char_t *ch = &chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
+            ushort x = inShort(file);
+            ushort y = inShort(file);
+            ushort w = inByte(file);
+            ushort h = inByte(file);
+
+            ch->geometry.origin.x = 0;
+            ch->geometry.origin.y = 0;
+            ch->geometry.size.width  = w - self._marginWidth *2;
+            ch->geometry.size.height = h - self._marginHeight*2;
+
+            // Top left.
+            ch->coords[0].x = x;
+            ch->coords[0].y = y;
+
+            // Bottom right.
+            ch->coords[2].x = x + w;
+            ch->coords[2].y = y + h;
+
+            // Top right.
+            ch->coords[1].x = ch->coords[2].x;
+            ch->coords[1].y = ch->coords[0].y;
+
+            // Bottom left.
+            ch->coords[3].x = ch->coords[0].x;
+            ch->coords[3].y = ch->coords[2].y;
+
+            avgSize.width  += ch->geometry.size.width;
+            avgSize.height += ch->geometry.size.height;
+        }
+
+        self._noCharSize.width  = avgSize.width  / glyphCount;
+        self._noCharSize.height = avgSize.height / glyphCount;
+
+        // Load the bitmap.
+        int bitmapFormat = inByte(file);
+        if(bitmapFormat > 0)
+        {
+            de::Uri uri = App_Fonts().composeUri(App_Fonts().id(thisPublic));
+            throw Error("readFormat0", QString("Font \"%1\" uses unknown bitmap bitmapFormat %2").arg(uri).arg(bitmapFormat));
+        }
+
+        int numPels = texSize.width * texSize.height;
+        uint32_t *image = (uint32_t *) M_Calloc(numPels * sizeof(int));
+        int c, i;
+        for(c = i = 0; i < (numPels + 7) / 8; ++i)
+        {
+            int bit, mask = inByte(file);
+
+            for(bit = 7; bit >= 0; bit--, ++c)
             {
-                image[c] = ~0;
+                if(c >= numPels) break;
+                if(mask & (1 << bit))
+                {
+                    image[c] = ~0;
+                }
             }
         }
+
+        return image;
     }
 
-    return image;
-}
-
-static void *readFormat2(AbstractFont *font, de::FileHandle *file)
-{
-    DENG_ASSERT(font && font->_type == FT_BITMAP && file);
-
-    int i, numPels, dataHeight, glyphCount = 0;
-    BitmapFont *bf = (BitmapFont *)font;
-    byte bitmapFormat = 0;
-    uint32_t *image, *ptr;
-    Size2Raw avgSize;
-
-    bitmapFormat = inByte(file);
-    if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
+    void *readFormat2(de::FileHandle *file)
     {
-        Con_Error("FR_ReadFormat2: Bitmap format %i not implemented.\n", bitmapFormat);
-    }
+        DENG2_ASSERT(file != 0);
 
-    font->_flags |= FF_COLORIZE|FF_SHADOWED;
-
-    // Load in the data.
-    bf->_texSize.width = inShort(file);
-    dataHeight = inShort(file);
-    bf->_texSize.height = M_CeilPow2(dataHeight);
-    glyphCount = inShort(file);
-    font->_marginWidth = font->_marginHeight = inShort(file);
-
-    font->_leading = inShort(file);
-    /*font->_glyphHeight =*/ inShort(file); // Unused.
-    font->_ascent = inShort(file);
-    font->_descent = inShort(file);
-
-    avgSize.width = avgSize.height = 0;
-    for(i = 0; i < glyphCount; ++i)
-    {
-        ushort code = inShort(file);
-        ushort x = inShort(file);
-        ushort y = inShort(file);
-        ushort w = inShort(file);
-        ushort h = inShort(file);
-        BitmapFont::bitmapfont_char_t *ch = &bf->_chars[code];
-
-        ch->geometry.origin.x = 0;
-        ch->geometry.origin.y = 0;
-        ch->geometry.size.width  = w - font->_marginWidth *2;
-        ch->geometry.size.height = h - font->_marginHeight*2;
-
-        // Top left.
-        ch->coords[0].x = x;
-        ch->coords[0].y = y;
-
-        // Bottom right.
-        ch->coords[2].x = x + w;
-        ch->coords[2].y = y + h;
-
-        // Top right.
-        ch->coords[1].x = ch->coords[2].x;
-        ch->coords[1].y = ch->coords[0].y;
-
-        // Bottom left.
-        ch->coords[3].x = ch->coords[0].x;
-        ch->coords[3].y = ch->coords[2].y;
-
-        avgSize.width  += ch->geometry.size.width;
-        avgSize.height += ch->geometry.size.height;
-    }
-
-    font->_noCharSize.width  = avgSize.width  / glyphCount;
-    font->_noCharSize.height = avgSize.height / glyphCount;
-
-    // Read the bitmap.
-    numPels = bf->_texSize.width * bf->_texSize.height;
-    image = ptr = (uint32_t *) M_Calloc(numPels * 4);
-    if(!image) Con_Error("FR_ReadFormat2: Failed on allocation of %lu bytes for font bitmap buffer.\n", (unsigned long) (numPels*4));
-
-    if(bitmapFormat == 0)
-    {
-        for(i = 0; i < numPels; ++i)
+        byte bitmapFormat = inByte(file);
+        if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
         {
-            byte red   = inByte(file);
-            byte green = inByte(file);
-            byte blue  = inByte(file);
-            byte alpha = inByte(file);
-
-            *ptr++ = ULONG(red | (green << 8) | (blue << 16) | (alpha << 24));
+            Con_Error("FR_ReadFormat2: Bitmap format %i not implemented.\n", bitmapFormat);
         }
-    }
-    else if(bitmapFormat == 1)
-    {
-        for(i = 0; i < numPels; ++i)
+
+        self._flags |= FF_COLORIZE|FF_SHADOWED;
+
+        // Load in the data.
+        texSize.width  = inShort(file);
+        texSize.height = M_CeilPow2(inShort(file));
+        int glyphCount = inShort(file);
+        self._marginWidth = self._marginHeight = inShort(file);
+
+        self._leading = inShort(file);
+        /*glyphHeight =*/ inShort(file); // Unused.
+        self._ascent  = inShort(file);
+        self._descent = inShort(file);
+
+        Size2Raw avgSize;
+        for(int i = 0; i < glyphCount; ++i)
         {
-            byte luminance = inByte(file);
-            byte alpha = inByte(file);
-            *ptr++ = ULONG(luminance | (luminance << 8) | (luminance << 16) | (alpha << 24));
-        }
-    }
+            ushort code = inShort(file);
+            ushort x    = inShort(file);
+            ushort y    = inShort(file);
+            ushort w    = inShort(file);
+            ushort h    = inShort(file);
+            bitmapfont_char_t *ch = &chars[code];
 
-    return image;
-}
+            ch->geometry.origin.x = 0;
+            ch->geometry.origin.y = 0;
+            ch->geometry.size.width  = w - self._marginWidth *2;
+            ch->geometry.size.height = h - self._marginHeight*2;
+
+            // Top left.
+            ch->coords[0].x = x;
+            ch->coords[0].y = y;
+
+            // Bottom right.
+            ch->coords[2].x = x + w;
+            ch->coords[2].y = y + h;
+
+            // Top right.
+            ch->coords[1].x = ch->coords[2].x;
+            ch->coords[1].y = ch->coords[0].y;
+
+            // Bottom left.
+            ch->coords[3].x = ch->coords[0].x;
+            ch->coords[3].y = ch->coords[2].y;
+
+            avgSize.width  += ch->geometry.size.width;
+            avgSize.height += ch->geometry.size.height;
+        }
+
+        self._noCharSize.width  = avgSize.width  / glyphCount;
+        self._noCharSize.height = avgSize.height / glyphCount;
+
+        // Read the bitmap.
+        int numPels = texSize.width * texSize.height;
+        uint32_t *ptr = (uint32_t *) M_Calloc(numPels * 4);
+        uint32_t *image = ptr;
+
+        if(bitmapFormat == 0)
+        {
+            for(int i = 0; i < numPels; ++i)
+            {
+                byte red   = inByte(file);
+                byte green = inByte(file);
+                byte blue  = inByte(file);
+                byte alpha = inByte(file);
+
+                *ptr++ = ULONG(red | (green << 8) | (blue << 16) | (alpha << 24));
+            }
+        }
+        else if(bitmapFormat == 1)
+        {
+            for(int i = 0; i < numPels; ++i)
+            {
+                byte luminance = inByte(file);
+                byte alpha = inByte(file);
+                *ptr++ = ULONG(luminance | (luminance << 8) | (luminance << 16) | (alpha << 24));
+            }
+        }
+
+        return image;
+    }
+};
 
 BitmapFont::BitmapFont(fontid_t bindId )
-    : AbstractFont(FT_BITMAP, bindId)
-{
-    _tex = 0;
-    _texSize.width = 0;
-    _texSize.height = 0;
-    Str_Init(&_filePath);
-    std::memset(_chars, 0, sizeof(_chars));
-}
-
-BitmapFont::~BitmapFont()
-{
-    glDeinit();
-}
+    : AbstractFont(FT_BITMAP, bindId), d(new Instance(this))
+{}
 
 void BitmapFont::rebuildFromFile(char const *resourcePath)
 {
@@ -261,45 +264,45 @@ BitmapFont *BitmapFont::fromFile(fontid_t bindId, char const *resourcePath) // s
 RectRaw const *BitmapFont::charGeometry(unsigned char chr)
 {
     glInit();
-    bitmapfont_char_t *ch = &_chars[chr];
-    return &ch->geometry;
+    return &d->chars[chr].geometry;
 }
 
 int BitmapFont::charWidth(unsigned char ch)
 {
     glInit();
-    if(_chars[ch].geometry.size.width == 0) return _noCharSize.width;
-    return _chars[ch].geometry.size.width;
+    if(d->chars[ch].geometry.size.width == 0) return _noCharSize.width;
+    return d->chars[ch].geometry.size.width;
 }
 
 int BitmapFont::charHeight(unsigned char ch)
 {
     glInit();
-    if(_chars[ch].geometry.size.height == 0) return _noCharSize.height;
-    return _chars[ch].geometry.size.height;
+    if(d->chars[ch].geometry.size.height == 0) return _noCharSize.height;
+    return d->chars[ch].geometry.size.height;
 }
 
 void BitmapFont::glInit()
 {
-    void *image = 0;
-    int version;
+    if(d->tex) return; // Already prepared.
 
-    if(_tex) return; // Already prepared.
-
-    de::FileHandle *file = reinterpret_cast<de::FileHandle *>(F_Open(Str_Text(&_filePath), "rb"));
+    de::FileHandle *file = reinterpret_cast<de::FileHandle *>(F_Open(Str_Text(&d->filePath), "rb"));
     if(file)
     {
         glDeinit();
 
         // Load the font glyph map from the file.
-        version = inByte(file);
+        int version = inByte(file);
+
+        void *image;
         switch(version)
         {
         // Original format.
-        case 0: image = readFormat0(this, file); break;
+        case 0: image = d->readFormat0(file); break;
         // Enhanced format.
-        case 2: image = readFormat2(this, file); break;
-        default: break;
+        case 2: image = d->readFormat2(file); break;
+
+        default:
+            DENG2_ASSERT(false);
         }
         if(!image) return;
 
@@ -309,8 +312,8 @@ void BitmapFont::glInit()
             LOG_VERBOSE("Uploading GL texture for font \"%s\"...")
                 << App_Fonts().composeUri(App_Fonts().id(this));
 
-            _tex = GL_NewTextureWithParams(DGL_RGBA, _texSize.width,
-                _texSize.height, (uint8_t const *)image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
+            d->tex = GL_NewTextureWithParams(DGL_RGBA, d->texSize.width,
+                d->texSize.height, (uint8_t const *)image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         }
 
@@ -326,58 +329,58 @@ void BitmapFont::glDeinit()
 
     _isDirty = true;
     if(BusyMode_Active()) return;
-    if(_tex)
+    if(d->tex)
     {
-        glDeleteTextures(1, (GLuint const *) &_tex);
+        glDeleteTextures(1, (GLuint const *) &d->tex);
     }
-    _tex = 0;
+    d->tex = 0;
 }
 
-void BitmapFont::setFilePath(char const *filePath)
+void BitmapFont::setFilePath(char const *newFilePath)
 {
-    if(!filePath || !filePath[0])
+    if(!newFilePath || !newFilePath[0])
     {
-        Str_Free(&_filePath);
+        Str_Free(&d->filePath);
         _isDirty = true;
         return;
     }
 
-    if(_filePath.size > 0)
+    if(d->filePath.size > 0)
     {
-        if(!Str_CompareIgnoreCase(&_filePath, filePath))
+        if(!Str_CompareIgnoreCase(&d->filePath, newFilePath))
             return;
     }
     else
     {
-        Str_Init(&_filePath);
+        Str_Init(&d->filePath);
     }
-    Str_Set(&_filePath, filePath);
+    Str_Set(&d->filePath, newFilePath);
     _isDirty = true;
 }
 
 DGLuint BitmapFont::textureGLName() const
 {
-    return _tex;
+    return d->tex;
 }
 
 Size2Raw const *BitmapFont::textureSize() const
 {
-    return &_texSize;
+    return &d->texSize;
 }
 
 int BitmapFont::textureWidth() const
 {
-    return _texSize.width;
+    return d->texSize.width;
 }
 
 int BitmapFont::textureHeight() const
 {
-    return _texSize.height;
+    return d->texSize.height;
 }
 
 void BitmapFont::charCoords(unsigned char chr, Point2Raw coords[4])
 {
-    BitmapFont::bitmapfont_char_t *ch = &_chars[chr];
+    bitmapfont_char_t *ch = &d->chars[chr];
     if(!coords) return;
     glInit();
     std::memcpy(coords, ch->coords, sizeof(Point2Raw) * 4);
