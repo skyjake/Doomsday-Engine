@@ -26,6 +26,7 @@ VR::RiftState::RiftState()
     , m_lensSeparationDistance(0.0635f)
     , m_hmdWarpParam(1.0f, 0.220f, 0.240f, 0.000f)
     , m_chromAbParam(0.996f, -0.004f, 1.014f, 0.0f)
+    , m_eyeToScreenDistance(0.041f)
 {
 }
 
@@ -38,6 +39,20 @@ float VR::RiftState::distortionScale() const
     const de::Vector4f& k = hmdWarpParam();
     float scale = (k[0] + k[1] * rsq + k[2] * rsq * rsq + k[3] * rsq * rsq * rsq);
     return scale;
+}
+
+float VR::RiftState::fovX() const {
+    float w = 0.25 * hScreenSize() * distortionScale();
+    float d = m_eyeToScreenDistance;
+    float fov = de::radianToDegree(2.0 * atan(w/d));
+    return fov;
+}
+
+float VR::RiftState::fovY() const {
+    float w = 0.5 * vScreenSize() * distortionScale();
+    float d = m_eyeToScreenDistance;
+    float fov = de::radianToDegree(2.0 * atan(w/d));
+    return fov;
 }
 
 // Sometimes we want viewpoint to remain constant between left and right eye views
@@ -63,12 +78,6 @@ static int vrMode = (int)VR::MODE_MONO;
 VR::Stereo3DMode VR::mode()
 {
     return (VR::Stereo3DMode)vrMode;
-}
-
-static float vrRiftAspect = 640.0f/800.0f;
-float VR::riftAspect() /// Aspect ratio of OculusRift
-{
-    return vrRiftAspect;
 }
 
 static float vrRiftFovX = 110.0;
@@ -168,7 +177,6 @@ void VR::consoleRegister()
     C_VAR_INT2  ("rend-vr-mode",             & vrMode,            0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
     C_VAR_FLOAT2("rend-vr-nonrift-fovx",     & vrNonRiftFovX,     0, 5.0f, 270.0f, vrNonRiftFovXChanged);
     C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 3.0f);
-    C_VAR_FLOAT ("rend-vr-rift-aspect",      & vrRiftAspect,      0, 0.10f, 10.0f);
     C_VAR_FLOAT2("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f, vrRiftFovXChanged);
     C_VAR_FLOAT2("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.250f, vrLatencyChanged);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
@@ -277,11 +285,10 @@ static OculusTracker* oculusTracker = NULL;
 
 static bool loadRiftParametersNoCheck() {
 #ifdef DENG_HAVE_OCULUS_API
+    VR::riftState.loadRiftParameters();
     const OVR::HMDInfo& info = oculusTracker->getInfo();
     Con_SetFloat("rend-vr-ipd", info.InterpupillaryDistance);
-    // Use screen size instead of resolution in case non-square pixels?
-    Con_SetFloat("rend-vr-rift-aspect",
-                 0.5f * info.HScreenSize / info.VScreenSize);
+    Con_SetFloat("rend-vr-rift-fovx", VR::riftState.fovX());
     // I think this field of view is unreliable... CMB
     /*
     float fov = 180.0f / de::PI * 2.0f * (atan2(
@@ -311,6 +318,30 @@ bool VR::loadRiftParameters() {
     if (! VR::hasHeadOrientation())
         return false;
     return loadRiftParametersNoCheck();
+}
+
+bool VR::RiftState::loadRiftParameters() {
+    if (! VR::hasHeadOrientation())
+        return false;
+#ifdef DENG_HAVE_OCULUS_API
+    const OVR::HMDInfo& info = oculusTracker->getInfo();
+    m_screenSize = de::Vector2f(info.HScreenSize, info.VScreenSize);
+    m_lensSeparationDistance = info.LensSeparationDistance;
+    m_hmdWarpParam = de::Vector4f(
+                info.DistortionK[0],
+                info.DistortionK[1],
+                info.DistortionK[2],
+                info.DistortionK[3]);
+    m_chromAbParam = de::Vector4f(
+                info.ChromaAbCorrection[0],
+                info.ChromaAbCorrection[1],
+                info.ChromaAbCorrection[2],
+                info.ChromaAbCorrection[3]);
+    m_eyeToScreenDistance = info.EyeToScreenDistance;
+    return true;
+#else
+    return false;
+#endif
 }
 
 void VR::setRiftLatency(float latency)

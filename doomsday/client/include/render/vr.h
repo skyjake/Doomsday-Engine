@@ -50,19 +50,26 @@ enum Stereo3DMode {
 class RiftState {
 public:
     RiftState();
-    float distortionScale() const;
-    const de::Vector2f& screenSize() const {return m_screenSize;}
-    float hScreenSize() const {return m_screenSize[0];}
-    float vScreenSize() const {return m_screenSize[1];}
-    float lensSeparationDistance() const {return m_lensSeparationDistance;}
-    const de::Vector4f& hmdWarpParam() const {return m_hmdWarpParam;}
+
+    // Use screen size instead of resolution in case non-square pixels?
+    float aspect() const {return 0.5f * hScreenSize() / vScreenSize();}
     const de::Vector4f& chromAbParam() const {return m_chromAbParam;}
+    float distortionScale() const;
+    float fovX() const; // in degrees
+    float fovY() const; // in degrees
+    const de::Vector4f& hmdWarpParam() const {return m_hmdWarpParam;}
+    float hScreenSize() const {return m_screenSize[0];}
+    float lensSeparationDistance() const {return m_lensSeparationDistance;}
+    bool loadRiftParameters();
+    const de::Vector2f& screenSize() const {return m_screenSize;}
+    float vScreenSize() const {return m_screenSize[1];}
 
 private:
     de::Vector2f m_screenSize;
     float m_lensSeparationDistance;
     de::Vector4f m_hmdWarpParam;
     de::Vector4f m_chromAbParam;
+    float m_eyeToScreenDistance;
 };
 
 extern RiftState riftState;
@@ -74,7 +81,6 @@ bool viewPositionHeld();
 
 // Console variables
 Stereo3DMode mode(); /// Currently active Stereo3DMode index
-float riftAspect(); /// Aspect ratio of OculusRift
 float riftFovX(); /// Horizontal field of view in Oculus Rift in degrees
 float riftLatency(); /// Estimated head-motion->photons latency, in seconds
 
