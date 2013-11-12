@@ -19,17 +19,51 @@
 #include "render/cameralensfx.h"
 #include "render/rend_main.h"
 #include "render/viewports.h"
-#include "render/vignette.h"
-#include "gl/gl_draw.h"
+#include "render/fx/colorfilter.h"
+#include "render/fx/vignette.h"
 
-static int fxFramePlayerNum;
+#include <de/libdeng2.h>
+#include <de/Rectangle>
+#include <QList>
+
+using namespace de;
+
+static int fxFramePlayerNum; ///< Player view currently being drawn.
+
+struct ConsoleEffectStack
+{
+    /// Dynamic stack of effects. Used currently as a fixed array, though.
+    QList<ConsoleEffect *> effects;
+
+    ~ConsoleEffectStack() {
+        clear();
+    }
+
+    void clear() {
+        qDeleteAll(effects);
+        effects.clear();
+    }
+};
+
+static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
 void LensFx_Init()
 {
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        ConsoleEffectStack &stack = fxConsole[i];
+        stack.effects.append(new fx::ColorFilter(i));
+        stack.effects.append(new fx::Vignette(i));
+        //stack.effects.append(new LensFlareConsoleEffect(i));
+    }
 }
 
 void LensFx_Shutdown()
 {
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        fxConsole[i].clear();
+    }
 }
 
 void LensFx_BeginFrame(int playerNum)
@@ -40,12 +74,14 @@ void LensFx_BeginFrame(int playerNum)
 void LensFx_EndFrame()
 {
     viewdata_t const *vd = R_ViewData(fxFramePlayerNum);
+    Rectanglei const viewRect(vd->window.origin.x,
+                              vd->window.origin.y,
+                              vd->window.size.width,
+                              vd->window.size.height);
 
-    // The colored filter.
-    if(GL_FilterIsVisible())
+    // Draw all the effects for this console.
+    foreach(ConsoleEffect *effect, fxConsole[fxFramePlayerNum].effects)
     {
-        GL_DrawFilter();
+        effect->draw(viewRect);
     }
-
-    Vignette_Render(&vd->window, Rend_FieldOfView());
 }

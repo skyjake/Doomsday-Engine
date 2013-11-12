@@ -19,31 +19,33 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_VIGNETTE_H
-#define LIBDENG_RENDER_VIGNETTE_H
+#ifndef DENG_CLIENT_FX_VIGNETTE_H
+#define DENG_CLIENT_FX_VIGNETTE_H
 
-#include <de/rect.h>
+#include "render/consoleeffect.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace fx {
 
 /**
  * Initializes the vignette rendering module. This includes registering console
  * commands.
  */
-void Vignette_Register(void);
+class Vignette : public ConsoleEffect
+{
+public:
+    Vignette(int console);
 
-/**
- * Renders the vignette for the player's view.
- *
- * @param viewRect  View window where to draw the vignette.
- * @param fov       Current horizontal FOV angle (degrees).
- */
-void Vignette_Render(RectRaw const *viewRect, float fov);
+    /**
+     * Renders the vignette for the player's view.
+     *
+     * @param viewRect  View window where to draw the vignette.
+     */
+    void draw(de::Rectanglei const &viewRect);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+public:
+    static void consoleRegister();
+};
 
-#endif // LIBDENG_RENDER_VIGNETTE_H
+} // namespace fx
+
+#endif // DENG_CLIENT_FX_VIGNETTE_H

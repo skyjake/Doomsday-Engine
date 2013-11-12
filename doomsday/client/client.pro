@@ -292,9 +292,12 @@ DENG_HEADERS += \
     include/render/biastracker.h \
     include/render/blockmapvisual.h \
     include/render/cameralensfx.h \
+    include/render/consoleeffect.h \
     include/render/decoration.h \
     include/render/drawlist.h \
     include/render/drawlists.h \
+    include/render/fx/colorfilter.h \
+    include/render/fx/vignette.h \
     include/render/huecirclevisual.h \
     include/render/lightdecoration.h \
     include/render/lightgrid.h \
@@ -322,7 +325,6 @@ DENG_HEADERS += \
     include/render/surfacedecorator.h \
     include/render/trianglestripbuilder.h \
     include/render/viewports.h \
-    include/render/vignette.h \
     include/render/vissprite.h \
     include/render/vlight.h \
     include/render/vr.h \
@@ -653,9 +655,12 @@ SOURCES += \
     src/render/biastracker.cpp \
     src/render/blockmapvisual.cpp \
     src/render/cameralensfx.cpp \
+    src/render/consoleeffect.cpp \
     src/render/decoration.cpp \
     src/render/drawlist.cpp \
     src/render/drawlists.cpp \
+    src/render/fx/colorfilter.cpp \
+    src/render/fx/vignette.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightdecoration.cpp \
     src/render/lightgrid.cpp \
@@ -683,7 +688,6 @@ SOURCES += \
     src/render/surfacedecorator.cpp \
     src/render/trianglestripbuilder.cpp \
     src/render/viewports.cpp \
-    src/render/vignette.cpp \
     src/render/vissprite.cpp \
     src/render/vlight.cpp \
     src/render/vr.cpp \

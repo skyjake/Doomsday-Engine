@@ -24,22 +24,18 @@
 #include <de/vector1.h>
 #include <math.h>
 
-#include "render/vignette.h"
+#include "render/fx/vignette.h"
+#include "render/rend_main.h"
 
 using namespace de;
+
+namespace fx {
 
 static byte  vignetteEnabled  = true;
 static float vignetteDarkness = 1.0f;
 static float vignetteWidth    = 1.0f;
 
-void Vignette_Register(void)
-{
-    C_VAR_BYTE ("rend-vignette",          &vignetteEnabled,  0,          0, 1);
-    C_VAR_FLOAT("rend-vignette-darkness", &vignetteDarkness, CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("rend-vignette-width",    &vignetteWidth,    0,          0, 2);
-}
-
-void Vignette_Render(RectRaw const *viewRect, float fov)
+static void Vignette_Render(Rectanglei const &viewRect, float fov)
 {
     const int DIVS = 60;
     vec2f_t vec;
@@ -50,11 +46,11 @@ void Vignette_Render(RectRaw const *viewRect, float fov)
     if(!vignetteEnabled) return;
 
     // Center point.
-    cx = viewRect->origin.x + viewRect->size.width/2;
-    cy = viewRect->origin.y + viewRect->size.height/2;
+    cx = viewRect.left() + viewRect.width()  / 2.f;
+    cy = viewRect.top()  + viewRect.height() / 2.f;
 
     // Radius.
-    V2f_Set(vec, viewRect->size.width/2, viewRect->size.height/2);
+    V2f_Set(vec, viewRect.width() / 2.f, viewRect.height() / 2.f);
     outer = V2f_Length(vec) + 1; // Extra pixel to account for a possible gap.
     if(fov < 100)
     {
@@ -98,3 +94,22 @@ void Vignette_Render(RectRaw const *viewRect, float fov)
 
     glDisable(GL_TEXTURE_2D);
 }
+
+Vignette::Vignette(int console) : ConsoleEffect(console)
+{}
+
+void Vignette::draw(const Rectanglei &viewRect)
+{
+    /// @todo Field of view should be console-specific.
+
+    Vignette_Render(viewRect, Rend_FieldOfView());
+}
+
+void Vignette::consoleRegister()
+{
+    C_VAR_BYTE ("rend-vignette",          &vignetteEnabled,  0,          0, 1);
+    C_VAR_FLOAT("rend-vignette-darkness", &vignetteDarkness, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-vignette-width",    &vignetteWidth,    0,          0, 2);
+}
+
+} // namespace fx

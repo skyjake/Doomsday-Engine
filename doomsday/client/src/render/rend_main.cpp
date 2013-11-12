@@ -73,6 +73,7 @@
 #include "render/blockmapvisual.h"
 #include "render/sprite.h"
 #include "render/vissprite.h"
+#include "render/fx/vignette.h"
 #include "render/vr.h"
 
 #include "gl/sys_opengl.h"
@@ -328,7 +329,7 @@ void Rend_Register()
     Rend_RadioRegister();
     Rend_SpriteRegister();
     //Rend_ConsoleRegister();
-    Vignette_Register();
+    fx::Vignette::consoleRegister();
     VR::consoleRegister();
 }
 
