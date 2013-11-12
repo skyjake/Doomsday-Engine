@@ -40,7 +40,7 @@ void Vignette_Register(void);
  * @param viewRect  View window where to draw the vignette.
  * @param fov       Current horizontal FOV angle (degrees).
  */
-void Vignette_Render(const RectRaw* viewRect, float fov);
+void Vignette_Render(RectRaw const *viewRect, float fov);
 
 #ifdef __cplusplus
 } // extern "C"

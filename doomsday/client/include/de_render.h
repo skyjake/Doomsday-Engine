@@ -42,6 +42,7 @@
 #include "render/rendpoly.h"
 #include "render/sky.h"
 #include "render/sprite.h"
+#include "render/cameralensfx.h"
 #include "render/vignette.h"
 #include "render/vissprite.h"
 #include "render/vlight.h"

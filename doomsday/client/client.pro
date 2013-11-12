@@ -291,6 +291,7 @@ DENG_HEADERS += \
     include/render/biassurface.h \
     include/render/biastracker.h \
     include/render/blockmapvisual.h \
+    include/render/cameralensfx.h \
     include/render/decoration.h \
     include/render/drawlist.h \
     include/render/drawlists.h \
@@ -651,6 +652,7 @@ SOURCES += \
     src/render/biassurface.cpp \
     src/render/biastracker.cpp \
     src/render/blockmapvisual.cpp \
+    src/render/cameralensfx.cpp \
     src/render/decoration.cpp \
     src/render/drawlist.cpp \
     src/render/drawlists.cpp \

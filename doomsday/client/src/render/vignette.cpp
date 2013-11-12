@@ -39,7 +39,7 @@ void Vignette_Register(void)
     C_VAR_FLOAT("rend-vignette-width",    &vignetteWidth,    0,          0, 2);
 }
 
-void Vignette_Render(const RectRaw* viewRect, float fov)
+void Vignette_Render(RectRaw const *viewRect, float fov)
 {
     const int DIVS = 60;
     vec2f_t vec;

@@ -87,6 +87,7 @@ void R_Init()
     R_InitRawTexs();
     R_InitSvgs();
 #ifdef __CLIENT__
+    LensFx_Init();
     Viewports_Init();
 #endif
 }
@@ -126,11 +127,12 @@ void R_Update()
 
 void R_Shutdown()
 {
+#ifdef __CLIENT__
+    LensFx_Shutdown();
+    Viewports_Shutdown();
+#endif
     R_ClearAnimGroups();
     R_ShutdownSprites();
     Models_Shutdown();
     R_ShutdownSvgs();
-#ifdef __CLIENT__
-    Viewports_Shutdown();
-#endif
 }

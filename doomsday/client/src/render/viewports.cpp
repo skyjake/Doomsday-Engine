@@ -1042,14 +1042,6 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    // The colored filter.
-    if(GL_FilterIsVisible())
-    {
-        GL_DrawFilter();
-    }
-
-    Vignette_Render(&vd->window, Rend_FieldOfView());
-
     // Now we can show the viewPlayer's mobj again.
     if(!(player->shared.flags & DDPF_CHASECAM))
         player->shared.mo->ddFlags = oldFlags;
@@ -1182,7 +1174,9 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
             {
             case ui::Player3DViewLayer:
                 R_UpdateViewer(vp->console);
+                LensFx_BeginFrame(vp->console);
                 gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 0/*layer #0*/);
+                LensFx_EndFrame();
                 break;
 
             case ui::ViewBorderLayer:
