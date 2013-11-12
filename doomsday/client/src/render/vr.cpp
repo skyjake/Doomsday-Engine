@@ -80,7 +80,7 @@ VR::Stereo3DMode VR::mode()
     return (VR::Stereo3DMode)vrMode;
 }
 
-static float vrRiftFovX = 110.0;
+static float vrRiftFovX = 114.8;
 float VR::riftFovX() /// Horizontal field of view in degrees
 {
     return vrRiftFovX;
