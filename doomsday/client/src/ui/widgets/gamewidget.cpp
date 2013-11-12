@@ -78,6 +78,7 @@ DENG2_PIMPL(GameWidget)
             App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
             R_RenderViewPorts(ui::Player3DViewLayer);
+            R_RenderViewPorts(ui::ViewBorderLayer);
 
             // End any open DGL sequence.
             DGL_End();

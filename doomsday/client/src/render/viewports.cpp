@@ -1178,18 +1178,20 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
 
             viewdata_t const *vd = &viewDataOfConsole[vp->console];
 
-            if(layer == ui::Player3DViewLayer)
+            switch(layer)
             {
+            case ui::Player3DViewLayer:
                 R_UpdateViewer(vp->console);
-
                 gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 0/*layer #0*/);
-                restoreDefaultGLState();
+                break;
 
+            case ui::ViewBorderLayer:
                 R_RenderPlayerViewBorder();
-            }
-            else if(layer == ui::HUDLayer)
-            {
+                break;
+
+            case ui::HUDLayer:
                 gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 1/*layer #1*/);
+                break;
             }
 
             restoreDefaultGLState();

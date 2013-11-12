@@ -76,6 +76,7 @@ void R_Ticker(timespan_t time);
 namespace ui {
     enum ViewPortLayer {
         Player3DViewLayer,
+        ViewBorderLayer,
         HUDLayer
     };
 }
@@ -83,12 +84,12 @@ namespace ui {
 void Viewports_Init();
 void Viewports_Shutdown();
 
-int R_FrameCount();
-
 /**
  * Register console variables.
  */
 void Viewports_Register(void);
+
+int R_FrameCount();
 
 /**
  * Render all view ports in the viewport grid.
