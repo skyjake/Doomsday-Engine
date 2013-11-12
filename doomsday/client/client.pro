@@ -320,6 +320,7 @@ DENG_HEADERS += \
     include/render/sprite.h \
     include/render/surfacedecorator.h \
     include/render/trianglestripbuilder.h \
+    include/render/viewports.h \
     include/render/vignette.h \
     include/render/vissprite.h \
     include/render/vlight.h \
@@ -679,6 +680,7 @@ SOURCES += \
     src/render/sprite.cpp \
     src/render/surfacedecorator.cpp \
     src/render/trianglestripbuilder.cpp \
+    src/render/viewports.cpp \
     src/render/vignette.cpp \
     src/render/vissprite.cpp \
     src/render/vlight.cpp \

@@ -66,6 +66,7 @@
 #  include "Lumobj"
 #  include "SurfaceDecorator"
 #  include "WallEdge"
+#  include "render/viewports.h"
 #  include "render/rend_main.h"
 #  include "render/sky.h"
 #endif
@@ -1089,7 +1090,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         /*
          * Apply changes to all surfaces:
          */
-        bias.lastChangeOnFrame = frameCount;
+        bias.lastChangeOnFrame = R_FrameCount();
         foreach(BspLeaf *bspLeaf, bspLeafs)
         {
             bspLeaf->applyBiasDigest(allChanges);

@@ -32,7 +32,7 @@ void H_Register(void)
     Con_AddVariableList(cvars);
 }
 
-#if 0
+#if 0 // old GL1 implementation
 
 #include <cmath>
 

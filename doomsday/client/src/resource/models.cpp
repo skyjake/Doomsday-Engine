@@ -49,6 +49,7 @@
 #  include "MaterialSnapshot"
 #  include "render/r_things.h"
 #endif
+#include "render/r_main.h"
 #include "render/rend_model.h"
 #include "render/sprite.h"
 

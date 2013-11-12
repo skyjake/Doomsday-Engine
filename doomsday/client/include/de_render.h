@@ -25,6 +25,7 @@
 #include "render/r_main.h"
 
 #ifdef __CLIENT__
+#include "render/viewports.h"
 #include "render/lightgrid.h"
 #include "render/projector.h"
 #include "render/r_draw.h"

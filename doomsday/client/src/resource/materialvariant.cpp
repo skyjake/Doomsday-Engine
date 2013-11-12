@@ -20,7 +20,7 @@
 #include "de_base.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
-#include "render/r_main.h" // frameCount, frameTimePos
+#include "render/viewports.h"
 #include <de/Error>
 #include <de/Log>
 
@@ -97,9 +97,9 @@ MaterialSnapshot const &Material::Variant::prepare(bool forceSnapshotUpdate)
 
     MaterialSnapshot *snapshot = d->snapshot.get();
     // Time to update the snapshot?
-    if(forceSnapshotUpdate || d->snapshotPrepareFrame != frameCount)
+    if(forceSnapshotUpdate || d->snapshotPrepareFrame != R_FrameCount())
     {
-        d->snapshotPrepareFrame = frameCount;
+        d->snapshotPrepareFrame = R_FrameCount();
         snapshot->update();
     }
     return *snapshot;

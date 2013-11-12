@@ -655,9 +655,9 @@ void DD_Register(void)
     F_Register();
     Con_Register();
     DH_Register();
-    R_Register();
     S_Register();
 #ifdef __CLIENT__
+    Viewports_Register();
     B_Register(); // for control bindings
     DD_RegisterInput();
     SBE_Register(); // for bias editor
@@ -1251,8 +1251,10 @@ static int DD_ActivateGameWorker(void* parameters)
     gameTime = 0;
     DD_ResetTimer();
 
+#ifdef __CLIENT__
     // Make sure that the next frame does not use a filtered viewer.
     R_ResetViewer();
+#endif
 
     // Invalidate old cmds and init player values.
     for(i = 0; i < DDMAXPLAYERS; ++i)

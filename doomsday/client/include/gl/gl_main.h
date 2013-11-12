@@ -34,7 +34,7 @@
 #include "sys_opengl.h"
 
 #include "gl/gltextureunit.h"
-#include "render/r_main.h"
+#include "render/viewports.h"
 #include "Texture"
 
 struct colorpalette_s;

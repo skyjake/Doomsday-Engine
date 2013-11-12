@@ -2736,9 +2736,9 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
     BspLeaf const *leaf = currentBspLeaf;
     SectorCluster &cluster = leaf->cluster();
 
-    if(mo.addFrameCount != frameCount)
+    if(mo.addFrameCount != R_FrameCount())
     {
-        mo.addFrameCount = frameCount;
+        mo.addFrameCount = R_FrameCount();
 
         R_ProjectSprite(&mo);
 
@@ -2773,12 +2773,12 @@ static void projectLeafSprites()
     BspLeaf *leaf = currentBspLeaf;
 
     // Do not use validCount because other parts of the renderer may change it.
-    if(leaf->lastSpriteProjectFrame() == frameCount)
+    if(leaf->lastSpriteProjectFrame() == R_FrameCount())
         return; // Already added.
 
     R_BspLeafMobjContactIterator(*leaf, projectSpriteWorker);
 
-    leaf->setLastSpriteProjectFrame(frameCount);
+    leaf->setLastSpriteProjectFrame(R_FrameCount());
 }
 
 /**
