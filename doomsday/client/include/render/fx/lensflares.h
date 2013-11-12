@@ -1,4 +1,4 @@
-/** @file consoleeffect.cpp
+/** @file lensflares.h
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,28 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#ifndef DENG_CLIENT_FX_LENSFLARES_H
+#define DENG_CLIENT_FX_LENSFLARES_H
+
 #include "render/consoleeffect.h"
 
-DENG2_PIMPL_NOREF(ConsoleEffect)
+namespace fx {
+
+/**
+ * Draws lens flares for all visible light sources in the current frame.
+ */
+class LensFlares : public ConsoleEffect
 {
-    int console;
+public:
+    LensFlares(int console);
+
+    void glInit();
+    void glDeinit();
+
+    void draw(de::Rectanglei const &viewRect);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-ConsoleEffect::ConsoleEffect(int console) : d(new Instance)
-{
-    d->console = console;
-}
+} // namespace fx
 
-ConsoleEffect::~ConsoleEffect()
-{}
-
-int ConsoleEffect::console() const
-{
-    return d->console;
-}
-
-void ConsoleEffect::glInit()
-{}
-
-void ConsoleEffect::glDeinit()
-{}
+#endif // DENG_CLIENT_FX_LENSFLARES_H

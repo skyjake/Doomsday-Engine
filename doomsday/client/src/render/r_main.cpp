@@ -87,7 +87,6 @@ void R_Init()
     R_InitRawTexs();
     R_InitSvgs();
 #ifdef __CLIENT__
-    LensFx_Init();
     Viewports_Init();
 #endif
 }

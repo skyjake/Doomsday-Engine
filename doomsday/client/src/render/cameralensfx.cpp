@@ -20,6 +20,7 @@
 #include "render/rend_main.h"
 #include "render/viewports.h"
 #include "render/fx/colorfilter.h"
+#include "render/fx/lensflares.h"
 #include "render/fx/vignette.h"
 
 #include <de/libdeng2.h>
@@ -54,7 +55,12 @@ void LensFx_Init()
         ConsoleEffectStack &stack = fxConsole[i];
         stack.effects.append(new fx::ColorFilter(i));
         stack.effects.append(new fx::Vignette(i));
-        //stack.effects.append(new LensFlareConsoleEffect(i));
+        stack.effects.append(new fx::LensFlares(i));
+
+        foreach(ConsoleEffect *effect, stack.effects)
+        {
+            effect->glInit();
+        }
     }
 }
 
@@ -62,6 +68,11 @@ void LensFx_Shutdown()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
+        foreach(ConsoleEffect *effect, fxConsole[i].effects)
+        {
+            effect->glDeinit();
+        }
+
         fxConsole[i].clear();
     }
 }

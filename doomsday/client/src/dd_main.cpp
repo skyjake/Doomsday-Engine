@@ -1897,6 +1897,7 @@ boolean DD_Init(void)
 #ifdef __CLIENT__
     GL_Init();
     GL_InitRefresh();
+    LensFx_Init();
 #endif
 
 #ifdef __CLIENT__

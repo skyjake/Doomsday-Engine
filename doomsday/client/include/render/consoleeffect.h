@@ -38,6 +38,9 @@ public:
      */
     int console() const;
 
+    virtual void glInit();
+    virtual void glDeinit();
+
     virtual void draw(de::Rectanglei const &viewRect) = 0;
 
 private:
