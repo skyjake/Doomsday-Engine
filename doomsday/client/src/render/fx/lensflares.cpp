@@ -20,7 +20,7 @@
 #include "gl/gl_main.h"
 
 #include <de/concurrency.h>
-#include <de/Counted>
+#include <de/Shared>
 #include <de/Log>
 
 using namespace de;
@@ -30,45 +30,26 @@ namespace fx {
 /**
  * Shared GL resources for rendering lens flares.
  */
-struct SharedFlareData : public Counted
+struct FlareData
 {
-    static SharedFlareData *instance;
-
-    SharedFlareData()
+    FlareData()
     {
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
     }
 
-    ~SharedFlareData()
+    ~FlareData()
     {
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         LOG_DEBUG("Releasing shared data");
-        instance = 0;
-    }
-
-    static SharedFlareData *hold()
-    {
-        if(!instance)
-        {
-            instance = new SharedFlareData;
-            LOG_DEBUG("Allocated shared data");
-        }
-        else
-        {
-            // Hold a reference to the shared data.
-            instance->ref<Counted>();
-        }
-        return instance;
     }
 };
 
-SharedFlareData *SharedFlareData::instance = 0;
-
 DENG2_PIMPL(LensFlares)
 {
+    typedef Shared<FlareData> SharedFlareData;
     SharedFlareData *res;
 
     Instance(Public *i) : Base(i), res(0)
@@ -77,6 +58,7 @@ DENG2_PIMPL(LensFlares)
 
     ~Instance()
     {
+        DENG2_ASSERT(res == 0); // should have been glDeinit'd
         releaseRef(res);
     }
 
@@ -115,3 +97,5 @@ void LensFlares::draw(Rectanglei const &viewRect)
 }
 
 } // namespace fx
+
+DENG2_SHARED_INSTANCE(fx::FlareData)
