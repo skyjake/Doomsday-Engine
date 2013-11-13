@@ -44,32 +44,34 @@ static ushort inShort(de::FileHandle *file)
     return USHORT(s);
 }
 
+struct Glyph
+{
+    Rectanglei posCoords;
+    Rectanglei texCoords;
+};
+
 DENG2_PIMPL(BitmapFont)
 {
-    ddstring_t filePath;    ///< The "archived" version of this font (if any).
+    String filePath;        ///< The "archived" version of this font (if any).
     GLuint texGLName;       ///< GL-texture name.
     Vector2i texDimensions; ///< Texture dimensions in pixels.
     bool needGLInit;
 
-    bitmapfont_char_t glyphs[MAX_CHARS];
-    bitmapfont_char_t missingGlyph;
+    Glyph glyphs[MAX_CHARS];
+    Glyph missingGlyph;
 
     Instance(Public *i)
         : Base(i)
         , texGLName(0)
         , needGLInit(true)
-    {
-        Str_Init(&filePath);
-        zap(glyphs);
-        zap(missingGlyph);
-    }
+    {}
 
     ~Instance()
     {
         self.glDeinit();
     }
 
-    bitmapfont_char_t &glyph(uchar ch)
+    Glyph &glyph(uchar ch)
     {
         if(ch >= MAX_CHARS) return missingGlyph;
         return glyphs[ch];
@@ -91,19 +93,19 @@ DENG2_PIMPL(BitmapFont)
         Vector2ui avgSize;
         for(int i = 0; i < glyphCount; ++i)
         {
-            bitmapfont_char_t *ch = &glyphs[i < MAX_CHARS ? i : MAX_CHARS - 1];
+            Glyph *ch = &glyphs[i < MAX_CHARS ? i : MAX_CHARS - 1];
             ushort x = inShort(file);
             ushort y = inShort(file);
             ushort w = inByte(file);
             ushort h = inByte(file);
 
-            ch->geometry = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - self._margin * 2);
-            ch->coords   = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
+            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - self._margin * 2);
+            ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
 
-            avgSize += ch->geometry.size();
+            avgSize += ch->posCoords.size();
         }
 
-        missingGlyph.geometry.setSize(avgSize / glyphCount);
+        missingGlyph.posCoords.setSize(avgSize / glyphCount);
 
         // Load the bitmap.
         int bitmapFormat = inByte(file);
@@ -165,15 +167,15 @@ DENG2_PIMPL(BitmapFont)
             ushort y    = inShort(file);
             ushort w    = inShort(file);
             ushort h    = inShort(file);
-            bitmapfont_char_t *ch = &glyphs[code];
+            Glyph *ch = &glyphs[code];
 
-            ch->geometry = Rectanglei::fromSize(Vector2i(0, 0), self._margin * 2 - Vector2ui(w, h));
-            ch->coords   = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
+            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), self._margin * 2 - Vector2ui(w, h));
+            ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
 
-            avgSize += ch->geometry.size();
+            avgSize += ch->posCoords.size();
         }
 
-        missingGlyph.geometry.setSize(avgSize / glyphCount);
+        missingGlyph.posCoords.setSize(avgSize / glyphCount);
 
         // Read the bitmap.
         int numPels = texDimensions.x * texDimensions.y;
@@ -211,16 +213,15 @@ BitmapFont::BitmapFont(fontid_t bindId) : AbstractFont(), d(new Instance(this))
     setPrimaryBind(bindId);
 }
 
-void BitmapFont::rebuildFromFile(char const *resourcePath)
+void BitmapFont::rebuildFromFile(String resourcePath)
 {
     setFilePath(resourcePath);
 }
 
-BitmapFont *BitmapFont::fromFile(fontid_t bindId, char const *resourcePath) // static
+BitmapFont *BitmapFont::fromFile(fontid_t bindId, String resourcePath) // static
 {
-    DENG2_ASSERT(resourcePath != 0);
-
     BitmapFont *font = new BitmapFont(bindId);
+
     font->setFilePath(resourcePath);
 
     // Lets try and prepare it right away.
@@ -229,37 +230,40 @@ BitmapFont *BitmapFont::fromFile(fontid_t bindId, char const *resourcePath) // s
     return font;
 }
 
-Rectanglei const &BitmapFont::charPosCoords(uchar ch)
+Rectanglei const &BitmapFont::glyphPosCoords(uchar ch)
 {
     glInit();
-    return d->glyph(ch).geometry;
+    return d->glyph(ch).posCoords;
 }
 
-Rectanglei const &BitmapFont::charTexCoords(uchar ch)
+Rectanglei const &BitmapFont::glyphTexCoords(uchar ch)
 {
     glInit();
-    return d->glyph(ch).coords;
+    return d->glyph(ch).texCoords;
 }
 
 void BitmapFont::glInit()
 {
     if(d->texGLName) return; // Already prepared.
 
-    de::FileHandle *file = reinterpret_cast<de::FileHandle *>(F_Open(Str_Text(&d->filePath), "rb"));
-    if(file)
+    try
     {
+        // Relative paths are relative to the native working directory.
+        String path = (NativePath::workPath() / NativePath(d->filePath).expand()).withSeparators('/');
+        de::FileHandle *hndl = &App_FileSystem().openFile(path, "rb");
+
         glDeinit();
 
         // Load the font glyph map from the file.
-        int version = inByte(file);
+        int version = inByte(hndl);
 
         void *image;
         switch(version)
         {
         // Original format.
-        case 0: image = d->readFormat0(file); break;
+        case 0: image = d->readFormat0(hndl); break;
         // Enhanced format.
-        case 2: image = d->readFormat2(file); break;
+        case 2: image = d->readFormat2(hndl); break;
 
         default:
             DENG2_ASSERT(false);
@@ -278,9 +282,11 @@ void BitmapFont::glInit()
         }
 
         M_Free(image);
-        App_FileSystem().releaseFile(file->file());
-        delete file;
+        App_FileSystem().releaseFile(hndl->file());
+        delete hndl;
     }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore error.
 }
 
 void BitmapFont::glDeinit()
@@ -296,26 +302,13 @@ void BitmapFont::glDeinit()
     d->texGLName = 0;
 }
 
-void BitmapFont::setFilePath(char const *newFilePath)
+void BitmapFont::setFilePath(String newFilePath)
 {
-    if(!newFilePath || !newFilePath[0])
+    if(d->filePath != newFilePath)
     {
-        Str_Free(&d->filePath);
+        d->filePath = newFilePath;
         d->needGLInit = true;
-        return;
     }
-
-    if(d->filePath.size > 0)
-    {
-        if(!Str_CompareIgnoreCase(&d->filePath, newFilePath))
-            return;
-    }
-    else
-    {
-        Str_Init(&d->filePath);
-    }
-    Str_Set(&d->filePath, newFilePath);
-    d->needGLInit = true;
 }
 
 GLuint BitmapFont::textureGLName() const

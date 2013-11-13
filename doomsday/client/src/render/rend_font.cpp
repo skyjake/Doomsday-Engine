@@ -416,7 +416,7 @@ void FR_CharSize(Size2Raw *size, uchar ch)
     errorIfNotInited("FR_CharSize");
     if(size)
     {
-        Vector2ui dimensions = App_Fonts().toFont(fr.fontNum)->charPosCoords(ch).size();
+        Vector2ui dimensions = App_Fonts().toFont(fr.fontNum)->glyphPosCoords(ch).size();
         size->width  = dimensions.x;
         size->height = dimensions.y;
     }
@@ -427,7 +427,7 @@ int FR_CharWidth(uchar ch)
 {
     errorIfNotInited("FR_CharWidth");
     if(fr.fontNum != 0)
-        return App_Fonts().toFont(fr.fontNum)->charPosCoords(ch).width();
+        return App_Fonts().toFont(fr.fontNum)->glyphPosCoords(ch).width();
     return 0;
 }
 
@@ -436,7 +436,7 @@ int FR_CharHeight(uchar ch)
 {
     errorIfNotInited("FR_CharHeight");
     if(fr.fontNum != 0)
-        return App_Fonts().toFont(fr.fontNum)->charPosCoords(ch).height();
+        return App_Fonts().toFont(fr.fontNum)->glyphPosCoords(ch).height();
     return 0;
 }
 
@@ -448,7 +448,7 @@ int FR_SingleLineHeight(char const *text)
     int ascent = App_Fonts().toFont(fr.fontNum)->ascent();
     if(ascent != 0)
         return ascent;
-    return App_Fonts().toFont(fr.fontNum)->charPosCoords((uchar)text[0]).height();
+    return App_Fonts().toFont(fr.fontNum)->glyphPosCoords((uchar)text[0]).height();
 }
 
 int FR_GlyphTopToAscent(char const *text)
@@ -747,15 +747,15 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
 {
     if(alignFlags & ALIGN_RIGHT)
     {
-        x -= font->charPosCoords(ch).width();
+        x -= font->glyphPosCoords(ch).width();
     }
     else if(!(alignFlags & ALIGN_LEFT))
     {
-        x -= font->charPosCoords(ch).width() / 2;
+        x -= font->glyphPosCoords(ch).width() / 2;
     }
 
     int const ascent = font->ascent();
-    int const lineHeight = ascent? ascent : font->charPosCoords(ch).height();
+    int const lineHeight = ascent? ascent : font->glyphPosCoords(ch).height();
     if(alignFlags & ALIGN_BOTTOM)
     {
         y -= topToAscent(font) + lineHeight;
@@ -768,7 +768,7 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(x, y, 0);
 
-    Rectanglei geometry = font->charPosCoords(ch);
+    Rectanglei geometry = font->glyphPosCoords(ch);
 
     if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
@@ -779,8 +779,8 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
     }
     else if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
     {
-        GL_BindTexture(compFont->charTexture(ch));
-        if(uint border = compFont->charBorder(ch))
+        GL_BindTexture(compFont->glyphTexture(ch));
+        if(uint border = compFont->glyphTextureBorder(ch))
         {
             geometry = geometry.expanded(border);
         }
@@ -797,10 +797,10 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
         geometry.setHeight(geometry.height() + font->_margin.y * 2);
     }
 
-    Vector2i coords[4] = { font->charTexCoords(ch).topLeft,
-                           font->charTexCoords(ch).topRight(),
-                           font->charTexCoords(ch).bottomRight,
-                           font->charTexCoords(ch).bottomLeft() };
+    Vector2i coords[4] = { font->glyphTexCoords(ch).topLeft,
+                           font->glyphTexCoords(ch).topRight(),
+                           font->glyphTexCoords(ch).bottomRight,
+                           font->glyphTexCoords(ch).bottomLeft() };
 
     GL_DrawRectWithCoords(geometry, coords);
 

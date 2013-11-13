@@ -64,7 +64,6 @@ public:
     DENG2_AS_IS_METHODS()
 
     fontid_t primaryBind() const;
-
     void setPrimaryBind(fontid_t bindId);
 
     /// @return  @ref fontFlags
@@ -77,8 +76,8 @@ public:
     virtual void glInit();
     virtual void glDeinit();
 
-    virtual de::Rectanglei const &charPosCoords(uchar ch) = 0;
-    virtual de::Rectanglei const &charTexCoords(uchar ch) = 0;
+    virtual de::Rectanglei const &glyphPosCoords(uchar ch) = 0;
+    virtual de::Rectanglei const &glyphTexCoords(uchar ch) = 0;
 };
 
 #endif // CLIENT_RESOURCE_ABSTRACTFONT_H

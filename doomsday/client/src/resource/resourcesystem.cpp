@@ -886,11 +886,11 @@ Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourc
     return 0;
 }
 
-patchid_t ResourceSystem::declarePatch(char const *encodedName)
+patchid_t ResourceSystem::declarePatch(String encodedName)
 {
     LOG_AS("ResourceSystem::declarePatch");
 
-    if(!encodedName || !encodedName[0])
+    if(encodedName.isEmpty())
     {
         LOG_DEBUG("Invalid 'name' argument, ignoring.");
         return 0;

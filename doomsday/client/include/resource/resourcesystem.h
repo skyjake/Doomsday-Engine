@@ -77,7 +77,7 @@ public:
     de::Texture *defineTexture(de::String schemeName, de::Uri const &resourceUri,
                                de::Vector2i const &dimensions = de::Vector2i());
 
-    patchid_t declarePatch(char const *encodedName);
+    patchid_t declarePatch(de::String encodedName);
 
 #ifdef __CLIENT__
     /**

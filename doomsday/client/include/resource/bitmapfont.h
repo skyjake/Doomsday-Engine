@@ -21,9 +21,9 @@
 #define CLIENT_RESOURCE_BITMAPFONT_H
 
 #include "abstractfont.h"
-#include "Texture"
 #include "gl/gl_main.h"
 #include <de/Rectangle>
+#include <de/String>
 #include <de/Vector>
 
 /**
@@ -34,20 +34,12 @@
 class BitmapFont : public AbstractFont
 {
 public:
-    // Data for a character.
-    struct bitmapfont_char_t
-    {
-        de::Rectanglei geometry;
-        de::Rectanglei coords;
-    };
-
-public:
     BitmapFont(fontid_t bindId);
 
-    static BitmapFont *fromFile(fontid_t bindId, char const *resourcePath);
+    static BitmapFont *fromFile(fontid_t bindId, de::String resourcePath);
 
-    void rebuildFromFile(char const *resourcePath);
-    void setFilePath(char const *filePath);
+    void rebuildFromFile(de::String resourcePath);
+    void setFilePath(de::String resourcePath);
 
     /// @return  GL-texture name.
     GLuint textureGLName() const;
@@ -56,8 +48,8 @@ public:
     void glInit();
     void glDeinit();
 
-    de::Rectanglei const &charPosCoords(uchar ch);
-    de::Rectanglei const &charTexCoords(uchar ch);
+    de::Rectanglei const &glyphPosCoords(uchar ch);
+    de::Rectanglei const &glyphTexCoords(uchar ch);
 
 private:
     DENG2_PRIVATE(d)

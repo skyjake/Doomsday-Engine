@@ -33,8 +33,8 @@ DENG2_PIMPL(CompositeBitmapFont)
     ded_compositefont_t *def; /// Definition on which "this" font is derived (if any).
     bool needGLInit;
 
-    bitmapcompositefont_char_t glyphs[MAX_CHARS];
-    bitmapcompositefont_char_t missingGlyph;
+    Glyph glyphs[MAX_CHARS];
+    Glyph missingGlyph;
 
     Instance(Public *i)
         : Base(i)
@@ -51,7 +51,7 @@ DENG2_PIMPL(CompositeBitmapFont)
         self.glDeinit();
     }
 
-    bitmapcompositefont_char_t &glyph(uchar ch)
+    Glyph &glyph(uchar ch)
     {
         if(ch >= MAX_CHARS) return missingGlyph;
         if(!glyphs[ch].haveSourceImage) return missingGlyph;
@@ -65,38 +65,38 @@ CompositeBitmapFont::CompositeBitmapFont(fontid_t bindId)
     setPrimaryBind(bindId);
 }
 
-Rectanglei const &CompositeBitmapFont::charPosCoords(uchar ch)
+Rectanglei const &CompositeBitmapFont::glyphPosCoords(uchar ch)
 {
     glInit();
     return d->glyph(ch).geometry;
 }
 
-Rectanglei const &CompositeBitmapFont::charTexCoords(uchar /*ch*/)
+Rectanglei const &CompositeBitmapFont::glyphTexCoords(uchar /*ch*/)
 {
     static Rectanglei coords(Vector2i(0, 0), Vector2i(1, 1));
     glInit();
     return coords;
 }
 
-uint CompositeBitmapFont::charBorder(uchar ch)
+uint CompositeBitmapFont::glyphTextureBorder(uchar ch)
 {
     glInit();
     return d->glyph(ch).border;
 }
 
-TextureVariant *CompositeBitmapFont::charTexture(uchar ch)
+TextureVariant *CompositeBitmapFont::glyphTexture(uchar ch)
 {
     glInit();
     return d->glyph(ch).tex;
 }
 
-patchid_t CompositeBitmapFont::charPatch(uchar ch)
+patchid_t CompositeBitmapFont::glyphPatch(uchar ch)
 {
     glInit();
     return d->glyph(ch).patch;
 }
 
-void CompositeBitmapFont::charSetPatch(uchar ch, char const *encodedPatchName)
+void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
 {
     if(ch >= MAX_CHARS) return;
     d->glyphs[ch].patch = App_ResourceSystem().declarePatch(encodedPatchName);
@@ -123,7 +123,7 @@ void CompositeBitmapFont::glInit()
     Vector2ui avgSize;
     for(int i = 0; i < MAX_CHARS; ++i)
     {
-        bitmapcompositefont_char_t *ch = &d->glyphs[i];
+        Glyph *ch = &d->glyphs[i];
         patchid_t patch = ch->patch;
 
         ch->haveSourceImage = patch != 0;
@@ -164,7 +164,7 @@ void CompositeBitmapFont::glDeinit()
 
     for(int i = 0; i < 256; ++i)
     {
-        bitmapcompositefont_char_t *ch = &d->glyphs[i];
+        Glyph *ch = &d->glyphs[i];
         if(!ch->tex) continue;
         GL_ReleaseVariantTexture(*ch->tex);
         ch->tex = 0;
@@ -186,7 +186,7 @@ CompositeBitmapFont *CompositeBitmapFont::fromDef(fontid_t bindId, ded_composite
         try
         {
             QByteArray path = reinterpret_cast<de::Uri &>(*def->charMap[i].path).resolved().toUtf8();
-            font->charSetPatch(def->charMap[i].ch, path.constData());
+            font->glyphSetPatch(def->charMap[i].ch, path.constData());
         }
         catch(de::Uri::ResolveError const &er)
         {
@@ -223,7 +223,7 @@ void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t *newDef)
         try
         {
             QByteArray path = reinterpret_cast<de::Uri &>(*newDef->charMap[i].path).resolved().toUtf8();
-            charSetPatch(newDef->charMap[i].ch, path.constData());
+            glyphSetPatch(newDef->charMap[i].ch, path.constData());
         }
         catch(de::Uri::ResolveError const& er)
         {
