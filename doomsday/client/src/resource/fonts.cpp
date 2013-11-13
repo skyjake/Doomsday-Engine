@@ -29,9 +29,12 @@
 #  include "gl/gl_texmanager.h"
 #endif
 #include <de/NativePath>
+#include <de/Observers>
 #include <de/PathTree>
 #include <de/mathutil.h>
 #include <de/memory.h>
+#include <QList>
+#include <QtAlgorithms>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -43,45 +46,89 @@ D_CMD(PrintFontStats);
 
 namespace de {
 
-typedef UserDataPathTree FontRepository;
-
 /**
  * FontRecord. Stores metadata for a unique Font in the collection.
  */
 struct FontRecord
 {
+    DENG2_DEFINE_AUDIENCE(Deletion, void fontRecordBeingDeleted(FontRecord const &manifest))
+
     /// Scheme-unique identifier chosen by the owner of the collection.
     int uniqueId;
 
     /// The defined font instance (if any).
     AbstractFont *font;
+
+    FontRecord()
+        : uniqueId(0)
+        , font(0)
+    {}
+
+    ~FontRecord()
+    {
+        DENG2_FOR_AUDIENCE(Deletion, i) i->fontRecordBeingDeleted(*this);
+    }
+
+    void clearFont()
+    {
+        delete font; font = 0;
+    }
 };
 
 struct FontScheme
 {
-    /// FontRepository contains mappings between names and unique font records.
-    FontRepository *repository;
+    typedef UserDataPathTree Index;
+
+    String _name;
+
+    /// Mappings from paths to font records.
+    Index _index;
 
     /// LUT which translates scheme-unique-ids to their associated fontid_t (if any).
     /// Index with uniqueId - uniqueIdBase.
     int uniqueIdBase;
-    bool uniqueIdMapDirty;
     uint uniqueIdMapSize;
     fontid_t *uniqueIdMap;
+    bool uniqueIdMapDirty;
+
+    FontScheme(String symbolicName)
+        : _name(symbolicName)
+        , uniqueIdBase(0)
+        , uniqueIdMapSize(0)
+        , uniqueIdMap(0)
+        , uniqueIdMapDirty(false)
+    {}
+
+    ~FontScheme()
+    {
+        DENG2_ASSERT(_index.isEmpty()); // sanity check.
+        M_Free(uniqueIdMap);
+    }
+
+    /// @return  Symbolic name of this scheme (e.g., "System").
+    String const &name() const
+    {
+        return _name;
+    }
+
+    Index &index()
+    {
+        return _index;
+    }
 };
 
-static void destroyBoundFont(FontRepository::Node &node)
+static void clearRecordFont(FontScheme::Index::Node &node)
 {
     FontRecord *record = (FontRecord *) node.userPointer();
     if(!record) return;
-    delete record->font; record->font = 0;
+    record->clearFont();
 }
 
 static int composeAndCompareDirectoryNodePaths(void const *a, void const *b)
 {
     // Decode paths before determining a lexicographical delta.
-    FontRepository::Node const &nodeA = **(FontRepository::Node const **)a;
-    FontRepository::Node const &nodeB = **(FontRepository::Node const **)b;
+    FontScheme::Index::Node const &nodeA = **(FontScheme::Index::Node const **)a;
+    FontScheme::Index::Node const &nodeB = **(FontScheme::Index::Node const **)b;
     QByteArray pathAUtf8 = nodeA.path().toUtf8();
     QByteArray pathBUtf8 = nodeB.path().toUtf8();
     AutoStr *pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
@@ -100,67 +147,45 @@ static int composeAndCompareDirectoryNodePaths(void const *a, void const *b)
 
 DENG2_PIMPL(Fonts)
 {
-    Uri *emptyUri;
-
     // LUT which translates fontid_t to PathTreeNode*. Index with fontid_t-1
     uint fontIdMapSize;
-    FontRepository::Node **fontIdMap;
+    FontScheme::Index::Node **fontIdMap;
 
     // Font scheme set.
-    FontScheme schemes[FONTSCHEME_COUNT];
+    QList<FontScheme *> schemes;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i)
+        : Base(i)
+        , fontIdMapSize(0)
+        , fontIdMap(0)
     {
         LOG_VERBOSE("Initializing Fonts collection...");
 
-        emptyUri = new Uri();
-
-        fontIdMap = 0;
-        fontIdMapSize = 0;
-
-        for(int i = 0; i < FONTSCHEME_COUNT; ++i)
-        {
-            FontScheme &fn = schemes[i];
-            fn.repository       = new FontRepository();
-            fn.uniqueIdBase     = 0;
-            fn.uniqueIdMapSize  = 0;
-            fn.uniqueIdMap      = 0;
-            fn.uniqueIdMapDirty = false;
-        }
+        schemes.append(new FontScheme("System"));
+        schemes.append(new FontScheme("Game"));
     }
 
     ~Instance()
     {
         self.clear();
 
-        for(int i = 0; i < FONTSCHEME_COUNT; ++i)
+        foreach(FontScheme *scheme, schemes)
         {
-            FontScheme &fn = schemes[i];
-
-            if(fn.repository)
-            {
-                fn.repository->traverse(PathTree::NoBranch, NULL, FontRepository::no_hash, destroyRecordWorker, this);
-                delete fn.repository; fn.repository = 0;
-            }
-
-            M_Free(fn.uniqueIdMap); fn.uniqueIdMap = 0;
-
-            fn.uniqueIdBase     = 0;
-            fn.uniqueIdMapSize  = 0;
-            fn.uniqueIdMapDirty = false;
+            scheme->index().traverse(PathTree::NoBranch, NULL, FontScheme::Index::no_hash, destroyRecordWorker, this);
         }
+        qDeleteAll(schemes);
 
         // Clear the bindId to PathTreeNode LUT.
-        M_Free(fontIdMap); fontIdMap = 0;
-        fontIdMapSize = 0;
-
-        if(emptyUri)
-        {
-            delete emptyUri; emptyUri = 0;
-        }
+        M_Free(fontIdMap);
     }
 
-    void destroyRecord(FontRepository::Node &node)
+    FontScheme &scheme(fontschemeid_t id)
+    {
+        DENG2_ASSERT(VALID_FONTSCHEMEID(id));
+        return *schemes[id - FONTSCHEME_FIRST];
+    }
+
+    void destroyRecord(FontScheme::Index::Node &node)
     {
         LOG_AS("Fonts::destroyRecord");
         FontRecord *record = (FontRecord *) node.userPointer();
@@ -173,7 +198,7 @@ DENG2_PIMPL(Fonts)
             LOG_WARNING("destroyRecord: Record for \"%s\" still has Font data!") << uri;
         }
 #endif
-        delete record->font; record->font = 0;
+        record->clearFont();
 
         unlinkDirectoryNodeFromBindIdMap(node);
         unlinkRecordInUniqueIdMap(node);
@@ -184,20 +209,20 @@ DENG2_PIMPL(Fonts)
         M_Free(record);
     }
 
-    void destroyFontAndRecord(FontRepository::Node &node)
+    void destroyFontAndRecord(FontScheme::Index::Node &node)
     {
-        destroyBoundFont(node);
+        clearRecordFont(node);
         destroyRecord(node);
     }
 
-    static int destroyRecordWorker(FontRepository::Node &node, void *context)
+    static int destroyRecordWorker(FontScheme::Index::Node &node, void *context)
     {
         Instance *inst = static_cast<Instance *>(context);
         inst->destroyRecord(node);
         return 0; // Continue iteration.
     }
 
-    static int destroyFontAndRecordWorker(FontRepository::Node &node, void *context)
+    static int destroyFontAndRecordWorker(FontScheme::Index::Node &node, void *context)
     {
         Instance *inst = static_cast<Instance *>(context);
         inst->destroyFontAndRecord(node);
@@ -209,18 +234,14 @@ DENG2_PIMPL(Fonts)
         return (id != NOFONTID && id <= fontIdMapSize);
     }
 
-    inline FontRepository *repositoryBySchemeId(fontschemeid_t id)
-    {
-        DENG2_ASSERT(VALID_FONTSCHEMEID(id));
-        return schemes[id - FONTSCHEME_FIRST].repository;
-    }
-
     fontschemeid_t schemeIdForRepository(PathTree const &pt)
     {
         for(uint i = uint(FONTSCHEME_FIRST); i <= uint(FONTSCHEME_LAST); ++i)
         {
-            uint idx = i - FONTSCHEME_FIRST;
-            if(schemes[idx].repository == &pt) return fontschemeid_t(i);
+            if(&scheme(fontschemeid_t(i)).index() == &pt)
+            {
+                return fontschemeid_t(i);
+            }
         }
         // Only reachable if attempting to find the id for a Font that is not
         // in the collection, or the collection has not yet been initialized.
@@ -228,13 +249,13 @@ DENG2_PIMPL(Fonts)
         exit(1); // Unreachable.
     }
 
-    FontRepository::Node *findDirectoryNodeForBindId(fontid_t id)
+    FontScheme::Index::Node *findDirectoryNodeForBindId(fontid_t id)
     {
         if(!validFontId(id)) return 0;
         return fontIdMap[id-1/*1-based index*/];
     }
 
-    fontid_t findBindIdForDirectoryNode(FontRepository::Node const &node)
+    fontid_t findBindIdForDirectoryNode(FontScheme::Index::Node const &node)
     {
         /// @todo Optimize (Low priority): Do not use a linear search.
         for(uint i = 0; i < fontIdMapSize; ++i)
@@ -245,19 +266,19 @@ DENG2_PIMPL(Fonts)
         return NOFONTID; // Not linked.
     }
 
-    inline fontschemeid_t schemeIdForDirectoryNode(FontRepository::Node const &node)
+    inline fontschemeid_t schemeIdForDirectoryNode(FontScheme::Index::Node const &node)
     {
         return schemeIdForRepository(node.tree());
     }
 
     /// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
-    Uri composeUriForDirectoryNode(FontRepository::Node const &node)
+    Uri composeUriForDirectoryNode(FontScheme::Index::Node const &node)
     {
         return Uri(self.schemeName(schemeIdForDirectoryNode(node)), node.path());
     }
 
     /// @pre fontIdMap has been initialized and is large enough!
-    void unlinkDirectoryNodeFromBindIdMap(FontRepository::Node const &node)
+    void unlinkDirectoryNodeFromBindIdMap(FontScheme::Index::Node const &node)
     {
         fontid_t id = findBindIdForDirectoryNode(node);
         if(!validFontId(id)) return; // Not linked.
@@ -265,38 +286,35 @@ DENG2_PIMPL(Fonts)
     }
 
     /// @pre uniqueIdMap has been initialized and is large enough!
-    static int linkRecordInUniqueIdMap(FontRepository::Node &node, void *context)
+    static int linkRecordInUniqueIdMap(FontScheme::Index::Node &node, void *context)
     {
         Instance *inst = static_cast<Instance *>(context);
 
         FontRecord const *record = (FontRecord *) node.userPointer();
-        fontschemeid_t const schemeId = inst->schemeIdForRepository(node.tree());
-        FontScheme &fn = inst->schemes[schemeId - FONTSCHEME_FIRST];
-        fn.uniqueIdMap[record->uniqueId - fn.uniqueIdBase] = inst->findBindIdForDirectoryNode(node);
+        FontScheme &scheme = inst->scheme(inst->schemeIdForRepository(node.tree()));
+        scheme.uniqueIdMap[record->uniqueId - scheme.uniqueIdBase] = inst->findBindIdForDirectoryNode(node);
         return 0; // Continue iteration.
     }
 
     /// @pre uniqueIdMap has been initialized and is large enough!
-    static int linkRecordInUniqueIdMapWorker(FontRepository::Node &node, void *context)
+    static int linkRecordInUniqueIdMapWorker(FontScheme::Index::Node &node, void *context)
     {
         Instance *inst = static_cast<Instance *>(context);
 
         FontRecord const *record = (FontRecord *) node.userPointer();
-        fontschemeid_t const schemeId = inst->schemeIdForRepository(node.tree());
-        FontScheme &fn = inst->schemes[schemeId - FONTSCHEME_FIRST];
-        fn.uniqueIdMap[record->uniqueId - fn.uniqueIdBase] = inst->findBindIdForDirectoryNode(node);
+        FontScheme &scheme = inst->scheme(inst->schemeIdForRepository(node.tree()));
+        scheme.uniqueIdMap[record->uniqueId - scheme.uniqueIdBase] = inst->findBindIdForDirectoryNode(node);
         return 0; // Continue iteration.
     }
 
     /// @pre uniqueIdMap is large enough if initialized!
-    void unlinkRecordInUniqueIdMap(FontRepository::Node &node)
+    void unlinkRecordInUniqueIdMap(FontScheme::Index::Node &node)
     {
         FontRecord const *record = (FontRecord *) node.userPointer();
-        fontschemeid_t const schemeId = schemeIdForRepository(node.tree());
-        FontScheme &fn = schemes[schemeId - FONTSCHEME_FIRST];
-        if(fn.uniqueIdMap)
+        FontScheme &fs = scheme(schemeIdForRepository(node.tree()));
+        if(fs.uniqueIdMap)
         {
-            fn.uniqueIdMap[record->uniqueId - fn.uniqueIdBase] = NOFONTID;
+            fs.uniqueIdMap[record->uniqueId - fs.uniqueIdBase] = NOFONTID;
         }
     }
 
@@ -353,20 +371,20 @@ DENG2_PIMPL(Fonts)
      * @param path  Path of the font to search for.
      * @return  Found DirectoryNode else @c NULL
      */
-    FontRepository::Node *findDirectoryNodeForPath(FontRepository &directory, Path const &path)
+    FontScheme::Index::Node *findDirectoryNodeForPath(FontScheme::Index &directory, Path const &path)
     {
         try
         {
-            FontRepository::Node &node = directory.find(path, PathTree::NoBranch | PathTree::MatchFull);
+            FontScheme::Index::Node &node = directory.find(path, PathTree::NoBranch | PathTree::MatchFull);
             return &node;
         }
-        catch(FontRepository::NotFoundError const &)
+        catch(FontScheme::Index::NotFoundError const &)
         {} // Ignore this error.
         return 0;
     }
 
     /// @pre @a uri has already been validated and is well-formed.
-    FontRepository::Node *findDirectoryNodeForUri(Uri const &uri)
+    FontScheme::Index::Node *findDirectoryNodeForUri(Uri const &uri)
     {
         if(!uri.scheme().compareWithoutCase("urn"))
         {
@@ -391,7 +409,7 @@ DENG2_PIMPL(Fonts)
         if(schemeId != FS_ANY)
         {
             // Caller wants a font in a specific scheme.
-            return findDirectoryNodeForPath(*repositoryBySchemeId(schemeId), path);
+            return findDirectoryNodeForPath(scheme(schemeId).index(), path);
         }
 
         // Caller does not care which scheme.
@@ -402,8 +420,8 @@ DENG2_PIMPL(Fonts)
 
         for(int i = 0; order[i] != FS_ANY; ++i)
         {
-            FontRepository &repository = *repositoryBySchemeId(order[i]);
-            FontRepository::Node *node = findDirectoryNodeForPath(repository, path);
+            FontScheme &fs = scheme(order[i]);
+            FontScheme::Index::Node *node = findDirectoryNodeForPath(fs.index(), path);
             if(node)
             {
                 return node;
@@ -417,7 +435,7 @@ DENG2_PIMPL(Fonts)
     {
         LOG_AS("Fonts::createFromDef");
 
-        FontRepository::Node *node = findDirectoryNodeForBindId(id);
+        FontScheme::Index::Node *node = findDirectoryNodeForBindId(id);
         if(!node)
         {
             LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
@@ -463,7 +481,7 @@ DENG2_PIMPL(Fonts)
     {
         LOG_AS("Fonts::createFromFile");
 
-        FontRepository::Node *node = findDirectoryNodeForBindId(id);
+        FontScheme::Index::Node *node = findDirectoryNodeForBindId(id);
         if(!node)
         {
             LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
@@ -506,9 +524,9 @@ DENG2_PIMPL(Fonts)
     }
 
     int iterateDirectory(fontschemeid_t schemeId,
-        int (*callback)(FontRepository::Node &node, void *context), void *context)
+        int (*callback)(FontScheme::Index::Node &node, void *context), void *context)
     {
-        fontschemeid_t from, to;
+        uint from, to;
         if(VALID_FONTSCHEMEID(schemeId))
         {
             from = to = schemeId;
@@ -519,16 +537,16 @@ DENG2_PIMPL(Fonts)
             to   = FONTSCHEME_LAST;
         }
 
-        int result = 0;
-        for(uint i = uint(from); i <= uint(to); ++i)
+        for(uint i = from; i <= to; ++i)
         {
-            FontRepository *directory = repositoryBySchemeId(fontschemeid_t(i));
-            if(!directory) continue;
-
-            result = directory->traverse(PathTree::NoBranch, 0, FontRepository::no_hash, callback, context);
-            if(result) break;
+            FontScheme &fs = scheme(fontschemeid_t(i));
+            if(int result = fs.index().traverse(PathTree::NoBranch, 0, FontScheme::Index::no_hash, callback, context))
+            {
+                return result;
+            }
         }
-        return result;
+
+        return 0;
     }
 
     struct iteratedirectoryworker_params_t
@@ -539,7 +557,7 @@ DENG2_PIMPL(Fonts)
         void *context;
     };
 
-    static int iterateWorker(FontRepository::Node &node, void *context)
+    static int iterateWorker(FontScheme::Index::Node &node, void *context)
     {
         DENG2_ASSERT(context != 0);
         iteratedirectoryworker_params_t *p = (iteratedirectoryworker_params_t*)context;
@@ -582,7 +600,7 @@ DENG2_PIMPL(Fonts)
         int minId, maxId;
     };
 
-    static int findUniqueIdBounds(FontRepository::Node &node, void *context)
+    static int findUniqueIdBounds(FontScheme::Index::Node &node, void *context)
     {
         FontRecord const *record = (FontRecord *) node.userPointer();
         finduniqueidbounds_params_t *p = (finduniqueidbounds_params_t *)context;
@@ -593,10 +611,9 @@ DENG2_PIMPL(Fonts)
 
     void rebuildUniqueIdMap(fontschemeid_t schemeId)
     {
-        FontScheme scheme = schemes[schemeId - FONTSCHEME_FIRST];
-        DENG2_ASSERT(VALID_FONTSCHEMEID(schemeId));
+        FontScheme &fs = scheme(schemeId);
 
-        if(!scheme.uniqueIdMapDirty) return;
+        if(!fs.uniqueIdMapDirty) return;
 
         // Determine the size of the LUT.
         finduniqueidbounds_params_t parm; zap(parm);
@@ -607,23 +624,23 @@ DENG2_PIMPL(Fonts)
         if(parm.minId > parm.maxId)
         {
             // None found.
-            scheme.uniqueIdBase = 0;
-            scheme.uniqueIdMapSize = 0;
+            fs.uniqueIdBase = 0;
+            fs.uniqueIdMapSize = 0;
         }
         else
         {
-            scheme.uniqueIdBase = parm.minId;
-            scheme.uniqueIdMapSize = parm.maxId - parm.minId + 1;
+            fs.uniqueIdBase = parm.minId;
+            fs.uniqueIdMapSize = parm.maxId - parm.minId + 1;
         }
 
         // Construct and (re)populate the LUT.
-        scheme.uniqueIdMap = (fontid_t *)M_Realloc(scheme.uniqueIdMap, sizeof *scheme.uniqueIdMap * scheme.uniqueIdMapSize);
-        if(scheme.uniqueIdMapSize)
+        fs.uniqueIdMap = (fontid_t *)M_Realloc(fs.uniqueIdMap, sizeof *fs.uniqueIdMap * fs.uniqueIdMapSize);
+        if(fs.uniqueIdMapSize)
         {
-            std::memset(scheme.uniqueIdMap, NOFONTID, sizeof *scheme.uniqueIdMap * scheme.uniqueIdMapSize);
+            std::memset(fs.uniqueIdMap, NOFONTID, sizeof *fs.uniqueIdMap * fs.uniqueIdMapSize);
             iterateDirectory(schemeId, linkRecordInUniqueIdMap, this);
         }
-        scheme.uniqueIdMapDirty = false;
+        fs.uniqueIdMapDirty = false;
     }
 
     /**
@@ -636,10 +653,10 @@ DENG2_PIMPL(Fonts)
     {
         de::String like;
         int idx;
-        FontRepository::Node **storage;
+        FontScheme::Index::Node **storage;
     };
 
-    static int collectDirectoryNodeWorker(FontRepository::Node &node, void *context)
+    static int collectDirectoryNodeWorker(FontScheme::Index::Node &node, void *context)
     {
         collectdirectorynodeworker_params_t *p = (collectdirectorynodeworker_params_t *)context;
 
@@ -661,8 +678,8 @@ DENG2_PIMPL(Fonts)
         return 0; // Continue iteration.
     }
 
-    FontRepository::Node **collectDirectoryNodes(fontschemeid_t schemeId,
-        String like, uint *count, FontRepository::Node **storage)
+    FontScheme::Index::Node **collectDirectoryNodes(fontschemeid_t schemeId,
+        String like, uint *count, FontScheme::Index::Node **storage)
     {
         fontschemeid_t fromId, toId;
         if(VALID_FONTSCHEMEID(schemeId))
@@ -684,16 +701,14 @@ DENG2_PIMPL(Fonts)
 
         for(uint i = uint(fromId); i <= uint(toId); ++i)
         {
-            FontRepository *fontDirectory = repositoryBySchemeId(fontschemeid_t(i));
-            if(!fontDirectory) continue;
-
-            fontDirectory->traverse(PathTree::NoBranch | PathTree::MatchFull, 0,
-                                    FontRepository::no_hash, collectDirectoryNodeWorker, &p);
+            FontScheme &fs = scheme(fontschemeid_t(i));
+            fs.index().traverse(PathTree::NoBranch | PathTree::MatchFull, 0,
+                                FontScheme::Index::no_hash, collectDirectoryNodeWorker, &p);
         }
 
         if(storage)
         {
-            storage[p.idx] = NULL; // Terminate.
+            storage[p.idx] = 0; // Terminate.
             if(count) *count = p.idx;
             return storage;
         }
@@ -704,7 +719,7 @@ DENG2_PIMPL(Fonts)
             return NULL;
         }
 
-        storage = (FontRepository::Node **) M_Malloc(sizeof(*storage) * (p.idx+1));
+        storage = (FontScheme::Index::Node **) M_Malloc(sizeof(*storage) * (p.idx+1));
         return collectDirectoryNodes(schemeId, like, count, storage);
     }
 };
@@ -730,7 +745,7 @@ fontschemeid_t Fonts::parseScheme(char const *str)
         // Ordered according to a best guess of occurance frequency.
         { "Game",     sizeof("Game")   - 1, FS_GAME   },
         { "System",   sizeof("System") - 1, FS_SYSTEM },
-        { NULL,             0,                          FS_ANY    }
+        { NULL,       0,                    FS_ANY    }
     };
     size_t len, n;
 
@@ -753,16 +768,12 @@ fontschemeid_t Fonts::parseScheme(char const *str)
 
 String const &Fonts::schemeName(fontschemeid_t id)
 {
-    static String const schemes[1 + FONTSCHEME_COUNT] = {
-        /* No scheme name */ "",
-        /* FS_SYSTEM */      "System",
-        /* FS_GAME */        "Game"
-    };
+    static String const emptyName;
     if(VALID_FONTSCHEMEID(id))
     {
-        return schemes[1 + (id - FONTSCHEME_FIRST)];
+        return d->scheme(id).name();
     }
-    return schemes[0];
+    return emptyName;
 }
 
 uint Fonts::size()
@@ -772,12 +783,11 @@ uint Fonts::size()
 
 uint Fonts::count(fontschemeid_t schemeId)
 {
-    if(!VALID_FONTSCHEMEID(schemeId)) return 0;
-    if(!size()) return 0;
-
-    FontRepository *directory = d->repositoryBySchemeId(schemeId);
-    if(!directory) return 0;
-    return directory->size();
+    if(VALID_FONTSCHEMEID(schemeId))
+    {
+        return d->scheme(schemeId).index().size();
+    }
+    return 0;
 }
 
 void Fonts::clear()
@@ -814,7 +824,7 @@ void Fonts::clearScheme(fontschemeid_t schemeId)
 {
     if(!size()) return;
 
-    fontschemeid_t from, to;
+    uint from, to;
     if(schemeId == FS_ANY)
     {
         from = FONTSCHEME_FIRST;
@@ -830,18 +840,14 @@ void Fonts::clearScheme(fontschemeid_t schemeId)
         exit(1); // Unreachable.
     }
 
-    for(uint i = uint(from); i <= uint(to); ++i)
+    for(uint i = from; i <= to; ++i)
     {
-        FontScheme &fn = d->schemes[i - FONTSCHEME_FIRST];
+        FontScheme &scheme = d->scheme(fontschemeid_t(i));
 
-        if(fn.repository)
-        {
-            fn.repository->traverse(PathTree::NoBranch, 0, FontRepository::no_hash,
-                                    Instance::destroyFontAndRecordWorker, d);
-            fn.repository->clear();
-        }
-
-        fn.uniqueIdMapDirty = true;
+        scheme.index().traverse(PathTree::NoBranch, 0, FontScheme::Index::no_hash,
+                              Instance::destroyFontAndRecordWorker, d);
+        scheme.index().clear();
+        scheme.uniqueIdMapDirty = true;
     }
 }
 
@@ -859,7 +865,7 @@ AbstractFont *Fonts::toFont(fontid_t id)
         return NULL;
     }
 
-    FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
+    FontScheme::Index::Node *node = d->findDirectoryNodeForBindId(id);
     if(!node) return 0;
     return ((FontRecord *) node->userPointer())->font;
 }
@@ -868,7 +874,7 @@ fontid_t Fonts::fontForUniqueId(fontschemeid_t schemeId, int uniqueId)
 {
     if(VALID_FONTSCHEMEID(schemeId))
     {
-        FontScheme fn = d->schemes[schemeId - FONTSCHEME_FIRST];
+        FontScheme &fn = d->scheme(schemeId);
 
         d->rebuildUniqueIdMap(schemeId);
         if(fn.uniqueIdMap && uniqueId >= fn.uniqueIdBase &&
@@ -895,7 +901,7 @@ fontid_t Fonts::resolveUri(Uri const &uri, boolean quiet)
     }
 
     // Perform the search.
-    FontRepository::Node *node = d->findDirectoryNodeForUri(uri);
+    FontScheme::Index::Node *node = d->findDirectoryNodeForUri(uri);
     if(node)
     {
         // If we have bound a font - it can provide the id.
@@ -935,7 +941,7 @@ fontid_t Fonts::declare(Uri const &uri, int uniqueId)
     // Have we already created a binding for this?
     fontid_t id;
     FontRecord *record;
-    FontRepository::Node *node = d->findDirectoryNodeForUri(uri);
+    FontScheme::Index::Node *node = d->findDirectoryNodeForUri(uri);
     if(node)
     {
         record = (FontRecord *) node->userPointer();
@@ -952,18 +958,17 @@ fontid_t Fonts::declare(Uri const &uri, int uniqueId)
         record->font     = 0;
         record->uniqueId = uniqueId;
 
-        fontschemeid_t schemeId = parseScheme(uri.schemeCStr());
-        FontScheme &fn = d->schemes[schemeId - FONTSCHEME_FIRST];
+        FontScheme &scheme = d->scheme(parseScheme(uri.schemeCStr()));
 
-        node = &fn.repository->insert(uri.path());
+        node = &scheme.index().insert(uri.path());
         node->setUserPointer(record);
 
         // We'll need to rebuild the unique id map too.
-        fn.uniqueIdMapDirty = true;
+        scheme.uniqueIdMapDirty = true;
 
         id = d->fontIdMapSize + 1; // 1-based identfier
         // Link it into the id map.
-        d->fontIdMap = (FontRepository::Node **) M_Realloc(d->fontIdMap, sizeof(*d->fontIdMap) * ++d->fontIdMapSize);
+        d->fontIdMap = (FontScheme::Index::Node **) M_Realloc(d->fontIdMap, sizeof(*d->fontIdMap) * ++d->fontIdMapSize);
         d->fontIdMap[id - 1] = node;
     }
 
@@ -980,8 +985,7 @@ fontid_t Fonts::declare(Uri const &uri, int uniqueId)
         releaseFont = true;
 
         // We'll need to rebuild the id map too.
-        fontschemeid_t schemeId = d->schemeIdForRepository(node->tree());
-        FontScheme &fn = d->schemes[schemeId - FONTSCHEME_FIRST];
+        FontScheme &fn = d->scheme(d->schemeIdForRepository(node->tree()));
         fn.uniqueIdMapDirty = true;
     }
 
@@ -997,7 +1001,7 @@ fontid_t Fonts::declare(Uri const &uri, int uniqueId)
 
 int Fonts::uniqueId(fontid_t id)
 {
-    FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
+    FontScheme::Index::Node *node = d->findDirectoryNodeForBindId(id);
     if(node)
     {
         return ((FontRecord*) node->userPointer())->uniqueId;
@@ -1021,7 +1025,7 @@ fontid_t Fonts::id(AbstractFont *font)
 /*fontschemeid_t Fonts::scheme(fontid_t id)
 {
     LOG_AS("Fonts::scheme");
-    FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
+    FontScheme::Index::Node *node = d->findDirectoryNodeForBindId(id);
     if(!node)
     {
 #ifdef DENG_DEBUG
@@ -1038,7 +1042,7 @@ fontid_t Fonts::id(AbstractFont *font)
 Uri Fonts::composeUri(fontid_t id)
 {
     LOG_AS("Fonts::composeUri");
-    FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
+    FontScheme::Index::Node *node = d->findDirectoryNodeForBindId(id);
     if(!node)
     {
 #ifdef DENG_DEBUG
@@ -1056,7 +1060,7 @@ Uri Fonts::composeUrn(fontid_t id)
 {
     LOG_AS("Fonts::composeUrn");
 
-    FontRepository::Node *node = d->findDirectoryNodeForBindId(id);
+    FontScheme::Index::Node *node = d->findDirectoryNodeForBindId(id);
     if(!node)
     {
 #ifdef DENG_DEBUG
@@ -1230,7 +1234,7 @@ ddstring_t **Fonts::collectNames(int *rCount)
     uint count = 0;
     ddstring_t **list = NULL;
 
-    FontRepository::Node **foundFonts = d->collectDirectoryNodes(FS_ANY, "", &count, 0);
+    FontScheme::Index::Node **foundFonts = d->collectDirectoryNodes(FS_ANY, "", &count, 0);
     if(foundFonts)
     {
         qsort(foundFonts, (size_t)count, sizeof(*foundFonts), composeAndCompareDirectoryNodePaths);
@@ -1238,9 +1242,9 @@ ddstring_t **Fonts::collectNames(int *rCount)
         list = (ddstring_t **) M_Malloc(sizeof(*list) * (count+1));
 
         int idx = 0;
-        for(FontRepository::Node **iter = foundFonts; *iter; ++iter)
+        for(FontScheme::Index::Node **iter = foundFonts; *iter; ++iter)
         {
-            FontRepository::Node &node = **iter;
+            FontScheme::Index::Node &node = **iter;
             QByteArray path = node.path().toUtf8();
             list[idx++] = Str_Set(Str_NewStd(), path.constData());
         }
@@ -1253,7 +1257,7 @@ ddstring_t **Fonts::collectNames(int *rCount)
 
 #if 0
 
-static void printFontOverview(FontRepository::Node &node, bool printSchemeName)
+static void printFontOverview(FontScheme::Index::Node &node, bool printSchemeName)
 {
     FontRecord *record = (FontRecord *) node.userPointer();
     fontid_t fontId = findBindIdForDirectoryNode(node);
@@ -1302,8 +1306,8 @@ static size_t printFonts3(fontschemeid_t schemeId, char const *like, int flags)
 {
     bool const printScheme = !(flags & PFF_TRANSFORM_PATH_NO_SCHEME);
     uint idx, count = 0;
-    FontRepository::Node **foundFonts = collectDirectoryNodes(schemeId, like, &count, NULL);
-    FontRepository::Node **iter;
+    FontScheme::Index::Node **foundFonts = collectDirectoryNodes(schemeId, like, &count, NULL);
+    FontScheme::Index::Node **iter;
     int numFoundDigits, numUidDigits;
 
     if(!foundFonts) return 0;
@@ -1344,7 +1348,7 @@ static size_t printFonts3(fontschemeid_t schemeId, char const *like, int flags)
     idx = 0;
     for(iter = foundFonts; *iter; ++iter)
     {
-        FontRepository::Node *node = *iter;
+        FontScheme::Index::Node *node = *iter;
         Con_Printf(" %*u: ", numFoundDigits, idx++);
         printFontOverview(*node, printScheme);
     }
@@ -1471,7 +1475,7 @@ D_CMD(PrintFontStats)
     Con_FPrintf(CPF_YELLOW, "Font Statistics:\n");
     for(uint i = uint(FONTSCHEME_FIRST); i <= uint(FONTSCHEME_LAST); ++i)
     {
-        FontRepository *fontDirectory = repositoryBySchemeId(fontschemeid_t(i));
+        FontScheme::Index *fontDirectory = repositoryBySchemeId(fontschemeid_t(i));
         uint size;
 
         if(!fontDirectory) continue;
