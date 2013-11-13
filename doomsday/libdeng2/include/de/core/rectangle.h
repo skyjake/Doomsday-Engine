@@ -103,8 +103,14 @@ public:
     RectangleType expanded(Type n) const {
         return RectangleType(topLeft - Corner(n, n), bottomRight + Corner(n, n));
     }
+    RectangleType expanded(Corner delta) const {
+        return RectangleType(topLeft - delta, bottomRight + delta);
+    }
     RectangleType shrunk(Type n) const {
         return RectangleType(topLeft + Corner(n, n), bottomRight - Corner(n, n));
+    }
+    RectangleType shrunk(Corner delta) const {
+        return RectangleType(topLeft + delta, bottomRight - delta);
     }
     RectangleType adjusted(CornerVectorType const &tl, CornerVectorType const &br) const {
         return RectangleType(topLeft + tl, bottomRight + br);

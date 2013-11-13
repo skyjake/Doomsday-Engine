@@ -36,11 +36,6 @@ void AbstractFont::glInit()
 void AbstractFont::glDeinit()
 {}
 
-Vector2i AbstractFont::charSize(unsigned char ch)
-{
-    return Vector2i(charWidth(ch), charHeight(ch));
-}
-
 fontid_t AbstractFont::primaryBind() const
 {
     return _primaryBind;

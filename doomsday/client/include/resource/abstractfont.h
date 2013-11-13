@@ -54,8 +54,6 @@ public:
     int _ascent;
     int _descent;
 
-    de::Vector2ui _noCharSize;
-
     /// Do fonts have margins? Is this a pixel border in the composited character
     /// map texture (perhaps per-glyph)?
     de::Vector2ui _margin;
@@ -79,11 +77,8 @@ public:
     virtual void glInit();
     virtual void glDeinit();
 
-    virtual de::Rectanglei const &charGeometry(uchar ch) = 0;
-    virtual int charWidth(uchar ch) = 0;
-    virtual int charHeight(uchar ch) = 0;
-
-    de::Vector2i charSize(uchar ch);
+    virtual de::Rectanglei const &charPosCoords(uchar ch) = 0;
+    virtual de::Rectanglei const &charTexCoords(uchar ch) = 0;
 };
 
 #endif // CLIENT_RESOURCE_ABSTRACTFONT_H

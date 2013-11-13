@@ -51,8 +51,8 @@ DENG2_PIMPL(BitmapFont)
     Vector2i texDimensions; ///< Texture dimensions in pixels.
     bool needGLInit;
 
-    /// Character map.
-    bitmapfont_char_t chars[MAX_CHARS];
+    bitmapfont_char_t glyphs[MAX_CHARS];
+    bitmapfont_char_t missingGlyph;
 
     Instance(Public *i)
         : Base(i)
@@ -60,12 +60,19 @@ DENG2_PIMPL(BitmapFont)
         , needGLInit(true)
     {
         Str_Init(&filePath);
-        zap(chars);
+        zap(glyphs);
+        zap(missingGlyph);
     }
 
     ~Instance()
     {
         self.glDeinit();
+    }
+
+    bitmapfont_char_t &glyph(uchar ch)
+    {
+        if(ch >= MAX_CHARS) return missingGlyph;
+        return glyphs[ch];
     }
 
     void *readFormat0(de::FileHandle *file)
@@ -84,31 +91,26 @@ DENG2_PIMPL(BitmapFont)
         Vector2ui avgSize;
         for(int i = 0; i < glyphCount; ++i)
         {
-            bitmapfont_char_t *ch = &chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
+            bitmapfont_char_t *ch = &glyphs[i < MAX_CHARS ? i : MAX_CHARS - 1];
             ushort x = inShort(file);
             ushort y = inShort(file);
             ushort w = inByte(file);
             ushort h = inByte(file);
 
-            ch->geometry.topLeft = Vector2i(0, 0);
-            ch->geometry.setSize(Vector2ui(w, h) - self._margin * 2);
-
-            ch->coords[0] = Vector2i(x, y); // Top left.
-            ch->coords[2] = Vector2i(x + w, y + h); // Bottom right.
-            ch->coords[1] = Vector2i(ch->coords[2].x, ch->coords[0].y); // Top right.
-            ch->coords[3] = Vector2i(ch->coords[0].x, ch->coords[2].y); // Bottom left.
+            ch->geometry = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - self._margin * 2);
+            ch->coords   = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
 
             avgSize += ch->geometry.size();
         }
 
-        self._noCharSize = avgSize / glyphCount;
+        missingGlyph.geometry.setSize(avgSize / glyphCount);
 
         // Load the bitmap.
         int bitmapFormat = inByte(file);
         if(bitmapFormat > 0)
         {
             de::Uri uri = App_Fonts().composeUri(App_Fonts().id(thisPublic));
-            throw Error("BitmapFont::readFormat0", QString("Font \"%1\" uses unknown bitmap bitmapFormat %2").arg(uri).arg(bitmapFormat));
+            throw Error("BitmapFont::readFormat0", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 
         int numPels = texDimensions.x * texDimensions.y;
@@ -139,7 +141,7 @@ DENG2_PIMPL(BitmapFont)
         if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
         {
             de::Uri uri = App_Fonts().composeUri(App_Fonts().id(thisPublic));
-            throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown bitmap bitmapFormat %2").arg(uri).arg(bitmapFormat));
+            throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 
         self._flags |= FF_COLORIZE|FF_SHADOWED;
@@ -163,20 +165,15 @@ DENG2_PIMPL(BitmapFont)
             ushort y    = inShort(file);
             ushort w    = inShort(file);
             ushort h    = inShort(file);
-            bitmapfont_char_t *ch = &chars[code];
+            bitmapfont_char_t *ch = &glyphs[code];
 
-            ch->geometry.topLeft = Vector2i(0, 0);
-            ch->geometry.setSize(self._margin * 2 - Vector2ui(w, h));
-
-            ch->coords[0] = Vector2i(x, y); // Top left.
-            ch->coords[2] = Vector2i(x + w, y + h); // Bottom right.
-            ch->coords[1] = Vector2i(ch->coords[2].x, ch->coords[0].y); // Top right.
-            ch->coords[3] = Vector2i(ch->coords[0].x, ch->coords[2].y); // Bottom left.
+            ch->geometry = Rectanglei::fromSize(Vector2i(0, 0), self._margin * 2 - Vector2ui(w, h));
+            ch->coords   = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
 
             avgSize += ch->geometry.size();
         }
 
-        self._noCharSize = avgSize / glyphCount;
+        missingGlyph.geometry.setSize(avgSize / glyphCount);
 
         // Read the bitmap.
         int numPels = texDimensions.x * texDimensions.y;
@@ -232,24 +229,16 @@ BitmapFont *BitmapFont::fromFile(fontid_t bindId, char const *resourcePath) // s
     return font;
 }
 
-de::Rectanglei const &BitmapFont::charGeometry(unsigned char chr)
+Rectanglei const &BitmapFont::charPosCoords(uchar ch)
 {
     glInit();
-    return d->chars[chr].geometry;
+    return d->glyph(ch).geometry;
 }
 
-int BitmapFont::charWidth(unsigned char ch)
+Rectanglei const &BitmapFont::charTexCoords(uchar ch)
 {
     glInit();
-    if(d->chars[ch].geometry.width() == 0) return _noCharSize.x;
-    return d->chars[ch].geometry.width();
-}
-
-int BitmapFont::charHeight(unsigned char ch)
-{
-    glInit();
-    if(d->chars[ch].geometry.height() == 0) return _noCharSize.y;
-    return d->chars[ch].geometry.height();
+    return d->glyph(ch).coords;
 }
 
 void BitmapFont::glInit()
@@ -337,11 +326,4 @@ GLuint BitmapFont::textureGLName() const
 Vector2i const &BitmapFont::textureDimensions() const
 {
     return d->texDimensions;
-}
-
-void BitmapFont::charCoords(unsigned char chr, Vector2i coords[4])
-{
-    if(!coords) return;
-    glInit();
-    std::memcpy(coords, d->chars[chr].coords, sizeof(*coords) * 4);
 }

@@ -40,54 +40,40 @@ using namespace de;
 static bool drawFilter = false;
 static Vector4f filterColor;
 
-void GL_DrawRectWithCoords(RectRaw const *rect, Vector2i coords[4])
+void GL_DrawRectWithCoords(Rectanglei const &rect, Vector2i const coords[4])
 {
-    if(!rect) return;
-
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glBegin(GL_QUADS);
-        // Upper left.
+        // Top left.
         if(coords) glTexCoord2i(coords[0].x, coords[0].y);
-        glVertex2f(rect->origin.x, rect->origin.y);
+        glVertex2f(rect.topLeft.x, rect.topLeft.y);
 
-        // Upper Right.
+        // Top Right.
         if(coords) glTexCoord2i(coords[1].x, coords[1].y);
-        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y);
+        glVertex2f(rect.topRight().x, rect.topRight().y);
 
-        // Lower right.
+        // Bottom right.
         if(coords) glTexCoord2i(coords[2].x, coords[2].y);
-        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
+        glVertex2f(rect.bottomRight.x, rect.bottomRight.y);
 
-        // Lower left.
+        // Bottom left.
         if(coords) glTexCoord2i(coords[3].x, coords[3].y);
-        glVertex2f(rect->origin.x, rect->origin.y + rect->size.height);
+        glVertex2f(rect.bottomLeft().x, rect.bottomLeft().y);
     glEnd();
 }
 
-void GL_DrawRect(RectRaw const *rect)
+void GL_DrawRect(Rectanglei const &rect)
 {
-    Vector2i coords[4];
-    coords[0].x = 0;
-    coords[0].y = 0;
-    coords[1].x = 1;
-    coords[1].y = 0;
-    coords[2].x = 1;
-    coords[2].y = 1;
-    coords[3].x = 0;
-    coords[3].y = 1;
+    Vector2i coords[4] = { Vector2i(0, 0), Vector2i(1, 0),
+                           Vector2i(1, 1), Vector2i(0, 1) };
     GL_DrawRectWithCoords(rect, coords);
 }
 
 void GL_DrawRect2(int x, int y, int w, int h)
 {
-    RectRaw rect;
-    rect.origin.x = x;
-    rect.origin.y = y;
-    rect.size.width = w;
-    rect.size.height = h;
-    GL_DrawRect(&rect);
+    GL_DrawRect(Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h)));
 }
 
 void GL_DrawRectfWithCoords(const RectRawf* rect, Point2Rawf coords[4])

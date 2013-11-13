@@ -96,13 +96,13 @@ typedef struct {
     } caseMod[2]; // 1=upper, 0=lower
 } drawtextstate_t;
 
-static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font, int alignFlags, short textFlags);
+static void drawChar(uchar ch, float posX, float posY, AbstractFont *font, int alignFlags, short textFlags);
 static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright);
 
 static int inited = false;
 
 static char smallTextBuffer[FR_SMALL_TEXT_BUFFER_SIZE+1];
-static char* largeTextBuffer = NULL;
+static char *largeTextBuffer = NULL;
 static size_t largeTextBufferSize = 0;
 
 static int typeInTime;
@@ -121,14 +121,6 @@ static int topToAscent(AbstractFont *font)
     if(lineHeight == 0)
         return 0;
     return lineHeight - font->ascent();
-}
-
-static int lineHeight(AbstractFont *font, unsigned char ch)
-{
-    int ascent = font->ascent();
-    if(ascent != 0)
-        return ascent;
-    return font->charHeight(ch);
 }
 
 static inline fr_state_attributes_t *currentAttribs(void)
@@ -419,32 +411,32 @@ void FR_SetCaseScale(boolean value)
 }
 
 #undef FR_CharSize
-void FR_CharSize(Size2Raw *size, unsigned char ch)
+void FR_CharSize(Size2Raw *size, uchar ch)
 {
     errorIfNotInited("FR_CharSize");
     if(size)
     {
-        Vector2i dimensions = App_Fonts().toFont(fr.fontNum)->charSize(ch);
+        Vector2ui dimensions = App_Fonts().toFont(fr.fontNum)->charPosCoords(ch).size();
         size->width  = dimensions.x;
         size->height = dimensions.y;
     }
 }
 
 #undef FR_CharWidth
-int FR_CharWidth(unsigned char ch)
+int FR_CharWidth(uchar ch)
 {
     errorIfNotInited("FR_CharWidth");
     if(fr.fontNum != 0)
-        return App_Fonts().toFont(fr.fontNum)->charWidth(ch);
+        return App_Fonts().toFont(fr.fontNum)->charPosCoords(ch).width();
     return 0;
 }
 
 #undef FR_CharHeight
-int FR_CharHeight(unsigned char ch)
+int FR_CharHeight(uchar ch)
 {
     errorIfNotInited("FR_CharHeight");
     if(fr.fontNum != 0)
-        return App_Fonts().toFont(fr.fontNum)->charHeight(ch);
+        return App_Fonts().toFont(fr.fontNum)->charPosCoords(ch).height();
     return 0;
 }
 
@@ -456,7 +448,7 @@ int FR_SingleLineHeight(char const *text)
     int ascent = App_Fonts().toFont(fr.fontNum)->ascent();
     if(ascent != 0)
         return ascent;
-    return App_Fonts().toFont(fr.fontNum)->charHeight((unsigned char)text[0]);
+    return App_Fonts().toFont(fr.fontNum)->charPosCoords((uchar)text[0]).height();
 }
 
 int FR_GlyphTopToAscent(char const *text)
@@ -750,33 +742,33 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }
 }
 
-static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font,
+static void drawChar(uchar ch, float x, float y, AbstractFont *font,
     int alignFlags, short /*textFlags*/)
 {
-    float x = (float) posX, y = (float) posY;
-    Vector2i coords[4];
-    RectRaw geometry;
-
     if(alignFlags & ALIGN_RIGHT)
     {
-        x -= font->charWidth(ch);
+        x -= font->charPosCoords(ch).width();
     }
     else if(!(alignFlags & ALIGN_LEFT))
     {
-        x -= font->charWidth(ch) / 2;
+        x -= font->charPosCoords(ch).width() / 2;
     }
 
+    int const ascent = font->ascent();
+    int const lineHeight = ascent? ascent : font->charPosCoords(ch).height();
     if(alignFlags & ALIGN_BOTTOM)
     {
-        y -= topToAscent(font) + lineHeight(font, ch);
+        y -= topToAscent(font) + lineHeight;
     }
     else if(!(alignFlags & ALIGN_TOP))
     {
-        y -= (topToAscent(font) + lineHeight(font, ch))/2;
+        y -= (topToAscent(font) + lineHeight) / 2;
     }
 
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(x, y, 0);
+
+    Rectanglei geometry = font->charPosCoords(ch);
 
     if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
     {
@@ -784,44 +776,33 @@ static void drawChar(unsigned char ch, int posX, int posY, AbstractFont *font,
         /// @todo We should not need to re-bind this texture here.
         GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
                                 gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
-
-        std::memcpy(&geometry, bmapFont->charGeometry(ch), sizeof(geometry));
-        bmapFont->charCoords(ch, coords);
     }
     else if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
     {
-        uint8_t const border = compFont->charBorder(ch);
-
         GL_BindTexture(compFont->charTexture(ch));
-
-        std::memcpy(&geometry, compFont->charGeometry(ch), sizeof(geometry));
-        if(border)
+        if(uint border = compFont->charBorder(ch))
         {
-            geometry.origin.x -= border;
-            geometry.origin.y -= border;
-            geometry.size.width += border*2;
-            geometry.size.height += border*2;
+            geometry = geometry.expanded(border);
         }
-        compFont->charCoords(ch, coords);
-    }
-    else
-    {
-        // Unknown font type!?
-        DENG2_ASSERT(false);
     }
 
     if(font->_margin.x)
     {
-        geometry.origin.x   -= font->_margin.x;
-        geometry.size.width += font->_margin.x * 2;
+        geometry.topLeft.x -= font->_margin.x;
+        geometry.setWidth(geometry.width() + font->_margin.x * 2);
     }
     if(font->_margin.y)
     {
-        geometry.origin.y -= font->_margin.y;
-        geometry.size.height += font->_margin.y * 2;
+        geometry.topLeft.y -= font->_margin.y;
+        geometry.setHeight(geometry.height() + font->_margin.y * 2);
     }
 
-    GL_DrawRectWithCoords(&geometry, coords);
+    Vector2i coords[4] = { font->charTexCoords(ch).topLeft,
+                           font->charTexCoords(ch).topRight(),
+                           font->charTexCoords(ch).bottomRight,
+                           font->charTexCoords(ch).bottomLeft() };
+
+    GL_DrawRectWithCoords(geometry, coords);
 
     if(font->is<CompositeBitmapFont>())
     {

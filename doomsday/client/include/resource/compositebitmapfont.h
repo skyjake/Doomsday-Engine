@@ -41,6 +41,7 @@ public:
         patchid_t patch;
         de::Texture::Variant *tex;
         uint8_t border;
+        bool haveSourceImage;
     };
 
 public:
@@ -66,16 +67,13 @@ public:
 
     de::Texture::Variant *charTexture(uchar ch);
 
-    uint8_t charBorder(uchar chr);
-
-    void charCoords(uchar chr, de::Vector2i coords[4]);
+    uint charBorder(uchar ch);
 
     void glInit();
     void glDeinit();
 
-    de::Rectanglei const &charGeometry(uchar ch);
-    int charWidth(uchar ch);
-    int charHeight(uchar ch);
+    de::Rectanglei const &charPosCoords(uchar ch);
+    de::Rectanglei const &charTexCoords(uchar ch);
 
 private:
     DENG2_PRIVATE(d)

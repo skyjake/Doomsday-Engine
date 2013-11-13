@@ -38,7 +38,7 @@ public:
     struct bitmapfont_char_t
     {
         de::Rectanglei geometry;
-        de::Vector2i coords[4];
+        de::Rectanglei coords;
     };
 
 public:
@@ -53,14 +53,11 @@ public:
     GLuint textureGLName() const;
     de::Vector2i const &textureDimensions() const;
 
-    void charCoords(unsigned char ch, de::Vector2i coords[4]);
-
     void glInit();
     void glDeinit();
 
-    de::Rectanglei const &charGeometry(unsigned char ch);
-    int charWidth(unsigned char ch);
-    int charHeight(unsigned char ch);
+    de::Rectanglei const &charPosCoords(uchar ch);
+    de::Rectanglei const &charTexCoords(uchar ch);
 
 private:
     DENG2_PRIVATE(d)
