@@ -43,7 +43,7 @@ public:
     /**
      * Returns @c true if the identified bias source is marked as changed.
      */
-    bool sourceMarkedChanged(uint index) const;
+    bool isSourceChanged(uint index) const;
 
 private:
     DENG2_PRIVATE(d)

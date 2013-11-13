@@ -58,7 +58,7 @@ DENG2_PIMPL(LensFlares)
 
     ~Instance()
     {
-        DENG2_ASSERT(res == 0); // should have been glDeinit'd
+        DENG2_ASSERT(res == 0); // should have been deinited
         releaseRef(res);
     }
 
