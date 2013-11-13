@@ -27,11 +27,11 @@
 #include "api_resourceclass.h"
 
 #ifdef __cplusplus
-//#ifndef DENG2_C_API_ONLY
+#ifndef DENG2_C_API_ONLY
 
-#include <QList>
-#include <de/String>
 #include "filetype.h"
+#include <de/String>
+#include <QList>
 
 namespace de
 {
@@ -129,7 +129,7 @@ namespace de
 
 } // namespace de
 
-//#endif // DENG2_C_API_ONLY
+#endif // DENG2_C_API_ONLY
 #endif // __cplusplus
 
 #endif /* LIBDENG_RESOURCECLASS_H */

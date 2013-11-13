@@ -19,13 +19,13 @@
 #ifndef DENG_RESOURCESYSTEM_H
 #define DENG_RESOURCESYSTEM_H
 
-#include <de/System>
-#include <de/Error>
 #include "resourceclass.h"
 #include "Textures"
 #ifdef __CLIENT__
 #  include "Fonts"
 #endif
+#include <de/System>
+#include <de/Error>
 
 /**
  * Logical resources; materials, packages, textures, etc... @ingroup resource

@@ -35,7 +35,6 @@
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include "Materials"
-#include "resource/textures.h"
 #include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
 #include <de/LibraryFile>

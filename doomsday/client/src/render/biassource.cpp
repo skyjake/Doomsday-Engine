@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "dd_main.h"
+#include "de_base.h"
 #include "def_data.h"
 
 #include "world/world.h"

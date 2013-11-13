@@ -22,33 +22,38 @@
  * 02110-1301 USA</small>
  */
 
+#ifdef _DEBUG
+
 #include "de_base.h"
 #include "de_graphics.h"
 
-#include <math.h>
+#include <de/Rectangle>
+#include <de/Vector>
 #include <de/concurrency.h>
-
-#ifdef _DEBUG
+#include <math.h>
 
 /// @todo Find a better way to access the private data of the zone
 /// (e.g., move this into the library and use an abstract graphics interface).
 #include "../../libdeng1/src/memoryzone_private.h"
 
-void Z_DrawRegion(memvolume_t* volume, RectRaw* rect, size_t start, size_t size, const float* color)
-{
-    const int bytesPerRow = (volume->size - sizeof(memzone_t)) / rect->size.height;
-    const float toPixelScale = (float)rect->size.width / (float)bytesPerRow;
-    const size_t edge = rect->origin.x + rect->size.width;
-    int x = (start % bytesPerRow)*toPixelScale + rect->origin.x;
-    int y = start / bytesPerRow + rect->origin.y;
-    int pixels = MAX_OF(1, ceil(size * toPixelScale));
+using namespace de;
 
-    assert(start + size <= volume->size);
+static void drawRegion(memvolume_t &volume, Rectanglei &rect, size_t start,
+    size_t size, float const color[4])
+{
+    DENG2_ASSERT(start + size <= volume.size);
+
+    int const bytesPerRow = (volume.size - sizeof(memzone_t)) / rect.height();
+    float const toPixelScale = (float)rect.width() / (float)bytesPerRow;
+    size_t const edge = rect.topLeft.x + rect.width();
+    int x = (start % bytesPerRow) * toPixelScale + rect.topLeft.x;
+    int y = start / bytesPerRow + rect.topLeft.y;
+    int pixels = de::max<dint>(1, std::ceil(size * toPixelScale));
 
     while(pixels > 0)
     {
-        const int availPixels = edge - x;
-        const int usedPixels = MIN_OF(availPixels, pixels);
+        int const availPixels = edge - x;
+        int const usedPixels = de::min(availPixels, pixels);
 
         glColor4fv(color);
         glVertex2i(x, y);
@@ -58,21 +63,21 @@ void Z_DrawRegion(memvolume_t* volume, RectRaw* rect, size_t start, size_t size,
 
         // Move to the next row.
         y++;
-        x = rect->origin.x;
+        x = rect.topLeft.x;
     }
 }
 
-void Z_DebugDrawVolume(MemoryZonePrivateData* pd, memvolume_t* volume, RectRaw* rect)
+void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectanglei &rect)
 {
-    memblock_t* block;
-    char* base = ((char*)volume->zone) + sizeof(memzone_t);
-    float opacity = .85f;
-    float colAppStatic[4]   = { 1, 1, 1, .65f };
-    float colGameStatic[4]  = { 1, 0, 0, .65f };
-    float colMap[4]         = { 0, 1, 0, .65f };
-    float colMapStatic[4]   = { 0, .5f, 0, .65f };
-    float colCache[4]       = { 1, 0, 1, .65f };
-    float colOther[4]       = { 0, 0, 1, .65f };
+    float const opacity = .85f;
+    float const colAppStatic[4]   = { 1, 1, 1, .65f };
+    float const colGameStatic[4]  = { 1, 0, 0, .65f };
+    float const colMap[4]         = { 0, 1, 0, .65f };
+    float const colMapStatic[4]   = { 0, .5f, 0, .65f };
+    float const colCache[4]       = { 1, 0, 1, .65f };
+    float const colOther[4]       = { 0, 0, 1, .65f };
+
+    char *base = ((char *)volume->zone) + sizeof(memzone_t);
 
     // Clear the background.
     glColor4f(0, 0, 0, opacity);
@@ -88,11 +93,11 @@ void Z_DebugDrawVolume(MemoryZonePrivateData* pd, memvolume_t* volume, RectRaw* 
     glBegin(GL_LINES);
 
     // Visualize each block.
-    for(block = volume->zone->blockList.next;
+    for(memblock_t *block = volume->zone->blockList.next;
         block != &volume->zone->blockList;
         block = block->next)
     {
-        const float* color = colOther;
+        float const *color = colOther;
         if(!block->user) continue; // Free is black.
 
         // Choose the color for this block.
@@ -108,7 +113,7 @@ void Z_DebugDrawVolume(MemoryZonePrivateData* pd, memvolume_t* volume, RectRaw* 
             break;
         }
 
-        Z_DrawRegion(volume, rect, (char*)block - base, block->size, color);
+        drawRegion(*volume, rect, (char *)block - base, block->size, color);
     }
 
     glEnd();
@@ -163,12 +168,11 @@ void Z_DebugDrawer(void)
     i = 0;
     for(volume = pd.volumeRoot; volume; volume = volume->next, ++i)
     {
-        RectRaw rect;
-        rect.size.width = MIN_OF(400, DENG_GAMEVIEW_WIDTH);
-        rect.size.height = h;
-        rect.origin.x = DENG_GAMEVIEW_WIDTH - rect.size.width - 1;
-        rect.origin.y = DENG_GAMEVIEW_HEIGHT - rect.size.height*(i+1) - 10*i - 1;
-        Z_DebugDrawVolume(&pd, volume, &rect);
+        int size = de::min(400, DENG_GAMEVIEW_WIDTH);
+        Z_DebugDrawVolume(&pd, volume,
+                          Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_WIDTH - size - 1,
+                                                        DENG_GAMEVIEW_HEIGHT - size * (i+1) - 10*i - 1),
+                                               Vector2ui(size, size)));
     }
 
     pd.unlock();

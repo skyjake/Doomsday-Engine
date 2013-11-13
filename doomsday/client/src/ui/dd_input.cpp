@@ -41,6 +41,8 @@
 #  include "de_graphics.h"
 #endif
 
+using namespace de;
+
 #define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
 
 #define MAX_AXIS_FILTER 40
@@ -1629,7 +1631,6 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
     const inputdevkey_t* key;
     char keyLabelBuf[2];
     Point2Raw origin;
-    RectRaw textGeom;
     ddstring_t label;
 
     if(geometry)
@@ -1679,16 +1680,17 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
     initDrawStateForVisual(&origin);
 
     // Calculate the size of the visual according to the dimensions of the text.
-    textGeom.origin.x = textGeom.origin.y = 0;
-    FR_TextSize(&textGeom.size, Str_Text(&label));
+    Size2Raw textSize;
+    FR_TextSize(&textSize, Str_Text(&label));
 
     // Enlarge by BORDER pixels.
-    textGeom.size.width  += BORDER * 2;
-    textGeom.size.height += BORDER * 2;
+    Rectanglei textGeom = Rectanglei::fromSize(Vector2i(0, 0),
+                                               Vector2ui(textSize.width  + BORDER * 2,
+                                                         textSize.height + BORDER * 2));
 
     // Draw a background.
     glColor4fv(key->isDown? downColor : upColor);
-    GL_DrawRect(&textGeom);
+    GL_DrawRect(textGeom);
 
     // Draw the text.
     glEnable(GL_TEXTURE_2D);
@@ -1698,20 +1700,20 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
     // Mark expired?
     if(key->assoc.flags & IDAF_EXPIRED)
     {
-        const int markSize = .5f + MIN_OF(textGeom.size.width, textGeom.size.height) / 3.f;
+        int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
         glColor3fv(expiredMarkColor);
         glBegin(GL_TRIANGLES);
-        glVertex2i(textGeom.size.width, 0);
-        glVertex2i(textGeom.size.width, markSize);
-        glVertex2i(textGeom.size.width-markSize, 0);
+        glVertex2i(textGeom.width(), 0);
+        glVertex2i(textGeom.width(), markSize);
+        glVertex2i(textGeom.width() - markSize, 0);
         glEnd();
     }
 
     // Mark triggered?
     if(key->assoc.flags & IDAF_TRIGGERED)
     {
-        const int markSize = .5f + MIN_OF(textGeom.size.width, textGeom.size.height) / 3.f;
+        int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
         glColor3fv(triggeredMarkColor);
         glBegin(GL_TRIANGLES);
@@ -1728,7 +1730,8 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
     if(geometry)
     {
         memcpy(&geometry->origin, &origin, sizeof(geometry->origin));
-        memcpy(&geometry->size, &textGeom.size, sizeof(geometry->size));
+        geometry->size.width  = textGeom.width();
+        geometry->size.height = textGeom.height();
     }
 
 #undef BORDER

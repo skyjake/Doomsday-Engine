@@ -17,15 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/Observers>
+#include "de_platform.h"
+#include "render/biastracker.h"
 
 #include "dd_main.h"
-
 #include "world/map.h"
 #include "BiasDigest"
 #include "BiasSource"
-
-#include "render/biastracker.h"
+#include <de/Observers>
 
 using namespace de;
 

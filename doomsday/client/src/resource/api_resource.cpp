@@ -1,6 +1,6 @@
 #define DENG_NO_API_MACROS_RESOURCE
+#include "de_base.h"
 #include "api_resource.h"
-#include "dd_main.h"
 #include "Textures"
 
 #undef Textures_UniqueId2

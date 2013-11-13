@@ -24,8 +24,8 @@
 #include <de/Log>
 #include <de/LogBuffer>
 
+#include "de_base.h"
 #include "con_main.h"
-#include "dd_main.h"
 #include "games.h"
 #include "Game"
 #include "network/net_main.h"

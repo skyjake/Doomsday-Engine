@@ -2427,8 +2427,8 @@ void UI_DrawLogo(Point2Raw const *origin, Size2Raw const *size)
 
     glColor4f(1, 1, 1, uiAlpha);
     glEnable(GL_TEXTURE_2D);
-    RectRaw rect(origin->x, origin->y, size->width, size->height);
-    GL_DrawRect(&rect);
+    GL_DrawRect(Rectanglei::fromSize(Vector2i(origin->xy),
+                                     Vector2ui(size->width, size->height)));
     glDisable(GL_TEXTURE_2D);
 }
 

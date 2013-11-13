@@ -17,7 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "dd_main.h"
+#include "de_base.h"
 
 #include "Face"
 
