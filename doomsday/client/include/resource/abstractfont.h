@@ -43,41 +43,32 @@
 class AbstractFont
 {
 public:
-    /// @ref fontFlags.
-    int _flags;
-
     /// Unique identifier of the primary binding in the owning collection.
     fontid_t _primaryBind;
 
-    /// Font metrics.
-    int _leading;
-    int _ascent;
-    int _descent;
-
-    /// Do fonts have margins? Is this a pixel border in the composited character
-    /// map texture (perhaps per-glyph)?
-    de::Vector2ui _margin;
+    /// @ref fontFlags.
+    int _flags;
 
     AbstractFont(fontid_t bindId = 0);
     virtual ~AbstractFont() {}
 
     DENG2_AS_IS_METHODS()
 
-    fontid_t primaryBind() const;
-    void setPrimaryBind(fontid_t bindId);
-
     /// @return  @ref fontFlags
     int flags() const;
 
-    int ascent();
-    int descent();
-    int lineSpacing();
+    virtual int ascent();
+    virtual int descent();
+    virtual int lineSpacing();
 
     virtual void glInit();
     virtual void glDeinit();
 
     virtual de::Rectanglei const &glyphPosCoords(uchar ch) = 0;
     virtual de::Rectanglei const &glyphTexCoords(uchar ch) = 0;
+
+    fontid_t primaryBind() const;
+    void setPrimaryBind(fontid_t bindId);
 };
 
 #endif // CLIENT_RESOURCE_ABSTRACTFONT_H

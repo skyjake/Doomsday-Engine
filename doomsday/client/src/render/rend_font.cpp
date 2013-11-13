@@ -776,6 +776,18 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
         /// @todo We should not need to re-bind this texture here.
         GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
                                 gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
+
+        Vector2ui const &texMargin = bmapFont->textureMargin();
+        if(texMargin.x)
+        {
+            geometry.topLeft.x -= texMargin.x;
+            geometry.setWidth(geometry.width() + texMargin.x * 2);
+        }
+        if(texMargin.y)
+        {
+            geometry.topLeft.y -= texMargin.y;
+            geometry.setHeight(geometry.height() + texMargin.y * 2);
+        }
     }
     else if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
     {
@@ -784,17 +796,6 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
         {
             geometry = geometry.expanded(border);
         }
-    }
-
-    if(font->_margin.x)
-    {
-        geometry.topLeft.x -= font->_margin.x;
-        geometry.setWidth(geometry.width() + font->_margin.x * 2);
-    }
-    if(font->_margin.y)
-    {
-        geometry.topLeft.y -= font->_margin.y;
-        geometry.setHeight(geometry.height() + font->_margin.y * 2);
     }
 
     Vector2i coords[4] = { font->glyphTexCoords(ch).topLeft,

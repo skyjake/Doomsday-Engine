@@ -38,12 +38,16 @@ public:
 
     static BitmapFont *fromFile(fontid_t bindId, de::String resourcePath);
 
-    void rebuildFromFile(de::String resourcePath);
     void setFilePath(de::String resourcePath);
 
     /// @return  GL-texture name.
     GLuint textureGLName() const;
     de::Vector2i const &textureDimensions() const;
+    de::Vector2ui const &textureMargin() const;
+
+    int ascent();
+    int descent();
+    int lineSpacing();
 
     void glInit();
     void glDeinit();

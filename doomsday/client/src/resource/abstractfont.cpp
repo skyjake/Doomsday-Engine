@@ -25,9 +25,6 @@ using namespace de;
 AbstractFont::AbstractFont(fontid_t bindId)
     : _flags(0)
     , _primaryBind(bindId)
-    , _leading(0)
-    , _ascent(0)
-    , _descent(0)
 {}
 
 void AbstractFont::glInit()
@@ -53,19 +50,15 @@ int AbstractFont::flags() const
 
 int AbstractFont::ascent()
 {
-    glInit();
-    return _ascent;
+    return 0;
 }
 
 int AbstractFont::descent()
 {
-    glInit();
-    return _descent;
+    return 0;
 }
 
 int AbstractFont::lineSpacing()
 {
-    glInit();
-    return _leading;
+    return 0;
 }
-

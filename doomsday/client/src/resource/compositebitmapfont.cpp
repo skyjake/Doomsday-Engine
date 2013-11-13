@@ -33,6 +33,11 @@ DENG2_PIMPL(CompositeBitmapFont)
     ded_compositefont_t *def; /// Definition on which "this" font is derived (if any).
     bool needGLInit;
 
+    /// Font metrics.
+    int leading;
+    int ascent;
+    int descent;
+
     Glyph glyphs[MAX_CHARS];
     Glyph missingGlyph;
 
@@ -40,6 +45,9 @@ DENG2_PIMPL(CompositeBitmapFont)
         : Base(i)
         , def(0)
         , needGLInit(true)
+        , leading(0)
+        , ascent(0)
+        , descent(0)
     {
         zap(glyphs);
         zap(missingGlyph);
@@ -63,6 +71,24 @@ CompositeBitmapFont::CompositeBitmapFont(fontid_t bindId)
     : AbstractFont(), d(new Instance(this))
 {
     setPrimaryBind(bindId);
+}
+
+int CompositeBitmapFont::ascent()
+{
+    glInit();
+    return d->ascent;
+}
+
+int CompositeBitmapFont::descent()
+{
+    glInit();
+    return d->descent;
+}
+
+int CompositeBitmapFont::lineSpacing()
+{
+    glInit();
+    return d->leading;
 }
 
 Rectanglei const &CompositeBitmapFont::glyphPosCoords(uchar ch)
@@ -142,8 +168,7 @@ void CompositeBitmapFont::glInit()
         }
 
         ch->geometry = Rectanglei::fromSize(Vector2i(info.geometry.origin.xy),
-                                            Vector2ui(info.geometry.size.width, info.geometry.size.height))
-                                  .expanded(_margin.toVector2i());
+                                            Vector2ui(info.geometry.size.width, info.geometry.size.height));
 
         avgSize += ch->geometry.size();
         ++foundGlyphs;

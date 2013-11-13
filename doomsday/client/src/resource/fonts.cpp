@@ -508,7 +508,7 @@ DENG2_PIMPL(Fonts)
                 LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
                     << self.composeUri(id);
 #endif
-                bmapFont->rebuildFromFile(resourcePath);
+                bmapFont->setFilePath(resourcePath);
             }
             return record->font;
         }
@@ -1106,7 +1106,7 @@ AbstractFont *Fonts::createFontFromFile(Uri const &uri, char const *resourcePath
     {
         if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
         {
-            bmapFont->rebuildFromFile(resourcePath);
+            bmapFont->setFilePath(resourcePath);
         }
     }
     else

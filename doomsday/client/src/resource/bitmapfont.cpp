@@ -52,10 +52,16 @@ struct Glyph
 
 DENG2_PIMPL(BitmapFont)
 {
-    String filePath;        ///< The "archived" version of this font (if any).
-    GLuint texGLName;       ///< GL-texture name.
-    Vector2i texDimensions; ///< Texture dimensions in pixels.
+    String filePath;         ///< The "archived" version of this font (if any).
+    GLuint texGLName;        ///< GL-texture name.
+    de::Vector2ui texMargin; ///< Margin in pixels.
+    Vector2i texDimensions;  ///< Texture dimensions in pixels.
     bool needGLInit;
+
+    /// Font metrics.
+    int leading;
+    int ascent;
+    int descent;
 
     Glyph glyphs[MAX_CHARS];
     Glyph missingGlyph;
@@ -64,6 +70,9 @@ DENG2_PIMPL(BitmapFont)
         : Base(i)
         , texGLName(0)
         , needGLInit(true)
+        , leading(0)
+        , ascent(0)
+        , descent(0)
     {}
 
     ~Instance()
@@ -83,7 +92,7 @@ DENG2_PIMPL(BitmapFont)
 
         self._flags |= FF_COLORIZE;
         self._flags &= ~FF_SHADOWED;
-        self._margin = Vector2ui(0, 0);
+        texMargin = Vector2ui(0, 0);
 
         // Load in the data.
         texDimensions.x = inShort(file);
@@ -99,7 +108,7 @@ DENG2_PIMPL(BitmapFont)
             ushort w = inByte(file);
             ushort h = inByte(file);
 
-            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - self._margin * 2);
+            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - texMargin * 2);
             ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
 
             avgSize += ch->posCoords.size();
@@ -152,12 +161,12 @@ DENG2_PIMPL(BitmapFont)
         texDimensions.x = inShort(file);
         texDimensions.y = M_CeilPow2(inShort(file));
         int glyphCount  = inShort(file);
-        self._margin.x  = self._margin.y = inShort(file);
+        texMargin.x     = texMargin.y = inShort(file);
 
-        self._leading = inShort(file);
+        leading = inShort(file);
         /*glyphHeight =*/ inShort(file); // Unused.
-        self._ascent  = inShort(file);
-        self._descent = inShort(file);
+        ascent  = inShort(file);
+        descent = inShort(file);
 
         Vector2ui avgSize;
         for(int i = 0; i < glyphCount; ++i)
@@ -169,7 +178,7 @@ DENG2_PIMPL(BitmapFont)
             ushort h    = inShort(file);
             Glyph *ch = &glyphs[code];
 
-            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), self._margin * 2 - Vector2ui(w, h));
+            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), texMargin * 2 - Vector2ui(w, h));
             ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
 
             avgSize += ch->posCoords.size();
@@ -213,11 +222,6 @@ BitmapFont::BitmapFont(fontid_t bindId) : AbstractFont(), d(new Instance(this))
     setPrimaryBind(bindId);
 }
 
-void BitmapFont::rebuildFromFile(String resourcePath)
-{
-    setFilePath(resourcePath);
-}
-
 BitmapFont *BitmapFont::fromFile(fontid_t bindId, String resourcePath) // static
 {
     BitmapFont *font = new BitmapFont(bindId);
@@ -228,6 +232,24 @@ BitmapFont *BitmapFont::fromFile(fontid_t bindId, String resourcePath) // static
     font->glInit();
 
     return font;
+}
+
+int BitmapFont::ascent()
+{
+    glInit();
+    return d->ascent;
+}
+
+int BitmapFont::descent()
+{
+    glInit();
+    return d->descent;
+}
+
+int BitmapFont::lineSpacing()
+{
+    glInit();
+    return d->leading;
 }
 
 Rectanglei const &BitmapFont::glyphPosCoords(uchar ch)
@@ -319,4 +341,9 @@ GLuint BitmapFont::textureGLName() const
 Vector2i const &BitmapFont::textureDimensions() const
 {
     return d->texDimensions;
+}
+
+Vector2ui const &BitmapFont::textureMargin() const
+{
+    return d->texMargin;
 }

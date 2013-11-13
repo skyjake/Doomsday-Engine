@@ -62,6 +62,10 @@ public:
      */
     void rebuildFromDef(ded_compositefont_t *def);
 
+    int ascent();
+    int descent();
+    int lineSpacing();
+
     void glInit();
     void glDeinit();
 
