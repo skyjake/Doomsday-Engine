@@ -76,8 +76,6 @@ static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
 void LensFx_Init()
 {
-    //postProc.glInit();
-
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         ConsoleEffectStack &stack = fxConsole[i];
@@ -85,18 +83,11 @@ void LensFx_Init()
         stack.effects.append(new fx::Vignette(i));
         stack.effects.append(new fx::LensFlares(i));
         stack.effects.append(new fx::PostProcessing(i));
-
-        /*foreach(ConsoleEffect *effect, stack.effects)
-        {
-            effect->glInit();
-        }*/
     }
 }
 
 void LensFx_Shutdown()
 {
-    //postProc.glDeinit();
-
     LensFx_GLRelease();
 
     for(int i = 0; i < DDMAXPLAYERS; ++i)
