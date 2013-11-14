@@ -28,7 +28,7 @@ class ColorFilter : public ConsoleEffect
 public:
     ColorFilter(int console);
 
-    void draw(de::Rectanglei const &);
+    void draw();
 };
 
 } // namespace fx

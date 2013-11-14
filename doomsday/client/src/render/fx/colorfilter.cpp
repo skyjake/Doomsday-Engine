@@ -26,7 +26,7 @@ namespace fx {
 ColorFilter::ColorFilter(int console) : ConsoleEffect(console)
 {}
 
-void ColorFilter::draw(Rectanglei const &)
+void ColorFilter::draw()
 {
     /// @todo Color filter should be console-specific.
 

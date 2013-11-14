@@ -53,8 +53,7 @@ DENG2_PIMPL(LensFlares)
     SharedFlareData *res;
 
     Instance(Public *i) : Base(i), res(0)
-    {
-    }
+    {}
 
     ~Instance()
     {
@@ -81,6 +80,7 @@ void LensFlares::glInit()
 {
     LOG_AS("fx::LensFlares");
 
+    ConsoleEffect::glInit();
     d->glInit();
 }
 
@@ -89,9 +89,10 @@ void LensFlares::glDeinit()
     LOG_AS("fx::LensFlares");
 
     d->glDeinit();
+    ConsoleEffect::glDeinit();
 }
 
-void LensFlares::draw(Rectanglei const &viewRect)
+void LensFlares::draw()
 {
 
 }

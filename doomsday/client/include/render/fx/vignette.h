@@ -40,7 +40,7 @@ public:
      *
      * @param viewRect  View window where to draw the vignette.
      */
-    void draw(de::Rectanglei const &viewRect);
+    void draw();
 
 public:
     static void consoleRegister();

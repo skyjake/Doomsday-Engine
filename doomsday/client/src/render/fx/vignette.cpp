@@ -98,11 +98,11 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
 Vignette::Vignette(int console) : ConsoleEffect(console)
 {}
 
-void Vignette::draw(const Rectanglei &viewRect)
+void Vignette::draw()
 {
     /// @todo Field of view should be console-specific.
 
-    Vignette_Render(viewRect, Rend_FieldOfView());
+    Vignette_Render(viewRect(), Rend_FieldOfView());
 }
 
 void Vignette::consoleRegister()

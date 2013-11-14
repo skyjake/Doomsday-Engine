@@ -38,10 +38,42 @@ public:
      */
     int console() const;
 
+    /**
+     * Determines the console's view rectangle in window coordinates.
+     */
+    de::Rectanglei viewRect() const;
+
+    bool isInited() const;
+
+    /**
+     * Allocate and prepare GL resources for drawing. Derived classes must call
+     * the base class method if they override it.
+     */
     virtual void glInit();
+
+    /**
+     * Release GL resources. Derived classes must call the base class method if
+     * they override it.
+     */
     virtual void glDeinit();
 
-    virtual void draw(de::Rectanglei const &viewRect) = 0;
+    /**
+     * Called for all console effects when a frame begins. The methods
+     * are called in the console's stack order.
+     */
+    virtual void beginFrame();
+
+    /**
+     * Called for all console effects in stack order, after the raw frame has
+     * been drawn.
+     */
+    virtual void draw();
+
+    /**
+     * Called for all console effects when a frame ends. The methods are called
+     * in reverse stack order, after the draw() methods have all been called.
+     */
+    virtual void endFrame();
 
 private:
     DENG2_PRIVATE(d)

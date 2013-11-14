@@ -17,10 +17,17 @@
  */
 
 #include "render/consoleeffect.h"
+#include "render/viewports.h"
+
+using namespace de;
 
 DENG2_PIMPL_NOREF(ConsoleEffect)
 {
     int console;
+    bool inited;
+
+    Instance() : console(0), inited(false)
+    {}
 };
 
 ConsoleEffect::ConsoleEffect(int console) : d(new Instance)
@@ -36,8 +43,35 @@ int ConsoleEffect::console() const
     return d->console;
 }
 
+Rectanglei ConsoleEffect::viewRect() const
+{
+    viewdata_t const *vd = R_ViewData(d->console);
+    return Rectanglei(vd->window.origin.x,
+                      vd->window.origin.y,
+                      vd->window.size.width,
+                      vd->window.size.height);
+}
+
+bool ConsoleEffect::isInited() const
+{
+    return d->inited;
+}
+
 void ConsoleEffect::glInit()
-{}
+{
+    d->inited = true;
+}
 
 void ConsoleEffect::glDeinit()
+{
+    d->inited = false;
+}
+
+void ConsoleEffect::beginFrame()
+{}
+
+void ConsoleEffect::draw()
+{}
+
+void ConsoleEffect::endFrame()
 {}

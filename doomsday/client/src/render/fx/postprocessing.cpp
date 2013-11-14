@@ -42,14 +42,19 @@ DENG2_PIMPL(PostProcessing)
         , uFrame    ("uTex",       GLUniform::Sampler2D)
     {}
 
-    Canvas &canvas()
-    {
-        return ClientWindow::main().canvas();
-    }
-
-    GuiRootWidget &root()
+    GuiRootWidget &root() const
     {
         return ClientWindow::main().game().root();
+    }
+
+    Vector2ui consoleSize() const
+    {        
+        /**
+         * @todo The offscreen target could simply use the viewport area, not
+         * the full canvas size.
+         */
+        //return self.viewRect().size();
+        return root().window().canvas().size();
     }
 
     void glInit()
@@ -58,13 +63,13 @@ DENG2_PIMPL(PostProcessing)
         uFrame = texture;
 
         texture.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
-        texture.setUndefinedImage(canvas().size(), Image::RGBA_8888);
+        texture.setUndefinedImage(consoleSize(), Image::RGBA_8888);
         target.reset(new GLTarget(texture, GLTarget::DepthStencil));
 
         // Drawable for drawing stuff back to the original target.
         VBuf *buf = new VBuf;
         buf->setVertices(gl::TriangleStrip,
-                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 0, 1, 1)),
+                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 0, 1, -1)),
                          gl::Static);
         frame.addBuffer(buf);
         root().shaders().build(frame.program(), "generic.texture")
@@ -80,8 +85,11 @@ DENG2_PIMPL(PostProcessing)
     void update()
     {
         if(!target.isNull())
-        {
-            target->resize(canvas().size());
+        {                    
+            if(target->size() != consoleSize())
+                LOG_DEBUG("Resizing to %s") << consoleSize().asText();
+
+            target->resize(consoleSize());
         }
     }
 
@@ -102,6 +110,13 @@ DENG2_PIMPL(PostProcessing)
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_ALPHA_TEST);
 
+        /*
+        Canvas::Size const size = root().window().canvas().size();
+        uMvpMatrix =
+                Matrix4f::ortho(0, size.x, 0, size.y) *
+                Matrix4f::scaleThenTranslate(self.viewRect().size(),
+                                             self.viewRect().topLeft);*/
+
         GLState::push()
                 .setBlend(false)
                 .setDepthTest(false)
@@ -117,31 +132,30 @@ DENG2_PIMPL(PostProcessing)
     }
 };
 
-PostProcessing::PostProcessing() : d(new Instance(this))
+PostProcessing::PostProcessing(int console)
+    : ConsoleEffect(console), d(new Instance(this))
 {}
 
 void PostProcessing::glInit()
 {
+    ConsoleEffect::glInit();
     d->glInit();
 }
 
 void PostProcessing::glDeinit()
 {
     d->glDeinit();
+    ConsoleEffect::glDeinit();
 }
 
-void PostProcessing::begin()
+void PostProcessing::beginFrame()
 {
     d->begin();
 }
 
-void PostProcessing::end()
+void PostProcessing::draw()
 {
     d->end();
-}
-
-void PostProcessing::drawResult()
-{
     d->draw();
 }
 

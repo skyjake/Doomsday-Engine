@@ -23,6 +23,13 @@ void LensFx_Init();
 void LensFx_Shutdown();
 
 /**
+ * Deinitializes all console effects. This is called when the viewport
+ * configuration changes so that GL resources for unnecessary consoles are not
+ * retained.
+ */
+void LensFx_GLRelease();
+
+/**
  * Notifies camera lens FX that the rendering of a world view frame will begin.
  * All graphics until LensFx_EndFrame() are considered part of the the frame.
  * The render target may change during this call if additional post-procesing

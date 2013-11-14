@@ -448,6 +448,9 @@ boolean R_SetViewGrid(int numCols, int numRows)
 {
     int x, y, p, console;
 
+    // LensFx needs to reallocate resources only for the consoles in use.
+    LensFx_GLRelease();
+
     if(numCols > 0 && numRows > 0)
     {
         if(numCols * numRows > DDMAXPLAYERS)

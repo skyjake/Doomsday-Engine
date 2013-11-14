@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_FX_POSTPROCESSING_H
 #define DENG_CLIENT_FX_POSTPROCESSING_H
 
-#include <de/libdeng2.h>
+#include "render/consoleeffect.h"
 
 namespace fx {
 
@@ -28,17 +28,16 @@ namespace fx {
  * render target and provides a way to draw it back to the regular target
  * with shader effects applied.
  */
-class PostProcessing
+class PostProcessing : public ConsoleEffect
 {
 public:
-    PostProcessing();
+    PostProcessing(int console);
 
     void glInit();
     void glDeinit();
 
-    void begin();
-    void end();
-    void drawResult();
+    void beginFrame();
+    void draw();
 
 private:
     DENG2_PRIVATE(d)

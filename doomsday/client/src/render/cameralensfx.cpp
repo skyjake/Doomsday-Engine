@@ -39,7 +39,8 @@ static int fxFramePlayerNum; ///< Player view currently being drawn.
 struct ConsoleEffectStack
 {
     /// Dynamic stack of effects. Used currently as a fixed array, though.
-    QList<ConsoleEffect *> effects;
+    typedef QList<ConsoleEffect *> EffectList;
+    EffectList effects;
 
     ~ConsoleEffectStack() {
         clear();
@@ -52,11 +53,10 @@ struct ConsoleEffectStack
 };
 
 static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
-static fx::PostProcessing postProc;
 
 void LensFx_Init()
 {
-    postProc.glInit();
+    //postProc.glInit();
 
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
@@ -64,26 +64,38 @@ void LensFx_Init()
         stack.effects.append(new fx::ColorFilter(i));
         stack.effects.append(new fx::Vignette(i));
         stack.effects.append(new fx::LensFlares(i));
+        stack.effects.append(new fx::PostProcessing(i));
 
-        foreach(ConsoleEffect *effect, stack.effects)
+        /*foreach(ConsoleEffect *effect, stack.effects)
         {
             effect->glInit();
-        }
+        }*/
     }
 }
 
 void LensFx_Shutdown()
 {
-    postProc.glDeinit();
+    //postProc.glDeinit();
 
+    LensFx_GLRelease();
+
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        fxConsole[i].clear();
+    }
+}
+
+void LensFx_GLRelease()
+{
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         foreach(ConsoleEffect *effect, fxConsole[i].effects)
         {
-            effect->glDeinit();
+            if(effect->isInited())
+            {
+                effect->glDeinit();
+            }
         }
-
-        fxConsole[i].clear();
     }
 }
 
@@ -91,23 +103,34 @@ void LensFx_BeginFrame(int playerNum)
 {
     fxFramePlayerNum = playerNum;
 
-    postProc.begin();
+    ConsoleEffectStack::EffectList const &effects = fxConsole[fxFramePlayerNum].effects;
+
+    // Initialize these effects if they currently are not.
+    foreach(ConsoleEffect *effect, effects)
+    {
+        if(!effect->isInited())
+        {
+            effect->glInit();
+        }
+    }
+
+    foreach(ConsoleEffect *effect, effects)
+    {
+        effect->beginFrame();
+    }
 }
 
 void LensFx_EndFrame()
 {
-    viewdata_t const *vd = R_ViewData(fxFramePlayerNum);
-    Rectanglei const viewRect(vd->window.origin.x,
-                              vd->window.origin.y,
-                              vd->window.size.width,
-                              vd->window.size.height);
+    ConsoleEffectStack::EffectList const &effects = fxConsole[fxFramePlayerNum].effects;
 
-    // Draw all the effects for this console.
-    foreach(ConsoleEffect *effect, fxConsole[fxFramePlayerNum].effects)
+    foreach(ConsoleEffect *effect, effects)
     {
-        effect->draw(viewRect);
+        effect->draw();
     }
 
-    postProc.end();
-    postProc.drawResult();
+    for(int i = effects.size() - 1; i >= 0; --i)
+    {
+        effects.at(i)->endFrame();
+    }
 }

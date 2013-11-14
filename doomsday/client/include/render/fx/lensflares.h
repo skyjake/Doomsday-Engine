@@ -34,7 +34,7 @@ public:
     void glInit();
     void glDeinit();
 
-    void draw(de::Rectanglei const &viewRect);
+    void draw();
 
 private:
     DENG2_PRIVATE(d)
