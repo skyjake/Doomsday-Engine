@@ -1,5 +1,25 @@
 /** @file cameralensfx.cpp  Camera lens effects.
  *
+ * Renders camera lens effects, i.e., special effects applied to a "raw" world
+ * frame. ConsoleEffect-derived isntances are put onto a stack; each console
+ * has its own effect stack.
+ *
+ * Given the following stack of effects:
+ * - A
+ * - B
+ * - C
+ *
+ * The following sequence of methods is called during the rendering of a frame:
+ *  1. A.beginFrame
+ *  2. B.beginFrame
+ *  3. C.beginFrame
+ *  4. A.draw
+ *  5. B.draw
+ *  6. C.draw
+ *  7. C.endFrame   <-- reverse order
+ *  8. B.endFrame
+ *  9. A.endFrame
+ *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
