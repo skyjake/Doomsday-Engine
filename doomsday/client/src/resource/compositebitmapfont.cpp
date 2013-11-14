@@ -67,11 +67,9 @@ DENG2_PIMPL(CompositeBitmapFont)
     }
 };
 
-CompositeBitmapFont::CompositeBitmapFont(fontid_t bindId)
-    : AbstractFont(), d(new Instance(this))
-{
-    setPrimaryBind(bindId);
-}
+CompositeBitmapFont::CompositeBitmapFont(FontManifest &manifest)
+    : AbstractFont(manifest), d(new Instance(this))
+{}
 
 int CompositeBitmapFont::ascent()
 {
@@ -196,22 +194,21 @@ void CompositeBitmapFont::glDeinit()
     }
 }
 
-CompositeBitmapFont *CompositeBitmapFont::fromDef(fontid_t bindId, ded_compositefont_t *def) // static
+CompositeBitmapFont *CompositeBitmapFont::fromDef(FontManifest &manifest,
+    ded_compositefont_t const &def) // static
 {
-    DENG2_ASSERT(def != 0);
-
     LOG_AS("CompositeBitmapFont::fromDef");
 
-    CompositeBitmapFont *font = new CompositeBitmapFont(bindId);
-    font->setDefinition(def);
+    CompositeBitmapFont *font = new CompositeBitmapFont(manifest);
+    font->setDefinition(const_cast<ded_compositefont_t *>(&def));
 
-    for(int i = 0; i < def->charMapCount.num; ++i)
+    for(int i = 0; i < def.charMapCount.num; ++i)
     {
-        if(!def->charMap[i].path) continue;
+        if(!def.charMap[i].path) continue;
         try
         {
-            QByteArray path = reinterpret_cast<de::Uri &>(*def->charMap[i].path).resolved().toUtf8();
-            font->glyphSetPatch(def->charMap[i].ch, path.constData());
+            String glyphPatchPath = reinterpret_cast<de::Uri &>(*def.charMap[i].path).resolved();
+            font->glyphSetPatch(def.charMap[i].ch, glyphPatchPath);
         }
         catch(de::Uri::ResolveError const &er)
         {

@@ -45,9 +45,9 @@ public:
     };
 
 public:
-    CompositeBitmapFont(fontid_t bindId);
+    CompositeBitmapFont(de::FontManifest &manifest);
 
-    static CompositeBitmapFont *fromDef(fontid_t bindId, ded_compositefont_t *def);
+    static CompositeBitmapFont *fromDef(de::FontManifest &manifest, ded_compositefont_t const &def);
 
     ded_compositefont_t *definition() const;
     void setDefinition(ded_compositefont_t *newDef);

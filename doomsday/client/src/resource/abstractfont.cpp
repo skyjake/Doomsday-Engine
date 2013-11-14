@@ -22,10 +22,15 @@
 
 using namespace de;
 
-AbstractFont::AbstractFont(fontid_t bindId)
-    : _flags(0)
-    , _primaryBind(bindId)
+AbstractFont::AbstractFont(FontManifest &manifest)
+    : _manifest(manifest)
+    , _flags(0)
 {}
+
+AbstractFont::~AbstractFont()
+{
+    DENG2_FOR_AUDIENCE(Deletion, i) i->fontBeingDeleted(*this);
+}
 
 void AbstractFont::glInit()
 {}
@@ -33,14 +38,9 @@ void AbstractFont::glInit()
 void AbstractFont::glDeinit()
 {}
 
-fontid_t AbstractFont::primaryBind() const
+FontManifest &AbstractFont::manifest() const
 {
-    return _primaryBind;
-}
-
-void AbstractFont::setPrimaryBind(fontid_t bindId)
-{
-    _primaryBind = bindId;
+    return _manifest;
 }
 
 AbstractFont::Flags AbstractFont::flags() const

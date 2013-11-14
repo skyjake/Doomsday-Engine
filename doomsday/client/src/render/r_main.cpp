@@ -187,7 +187,7 @@ char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
 }
 
 #ifdef __CLIENT__
-static fontid_t loadSystemFont(char const *name)
+static AbstractFont *loadSystemFont(char const *name)
 {
     DENG2_ASSERT(name != 0 && name[0]);
 
@@ -204,16 +204,15 @@ static fontid_t loadSystemFont(char const *name)
 #endif
     F_ExpandBasePath(&resourcePath, &resourcePath);
 
-    AbstractFont *font = App_Fonts().createFontFromFile(uri, Str_Text(&resourcePath));
-    Str_Free(&resourcePath);
-
+    AbstractFont *font = App_ResourceSystem().createFontFromFile(uri, Str_Text(&resourcePath));
     if(!font)
     {
         Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
         exit(1); // Unreachable.
     }
 
-    return App_Fonts().id(font);
+    Str_Free(&resourcePath);
+    return font;
 }
 
 static void loadFontIfNeeded(char const *uri, fontid_t *fid)
@@ -221,12 +220,21 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
     *fid = NOFONTID;
     if(uri && uri[0])
     {
-        *fid = App_Fonts().resolveUri(de::Uri(uri, RC_NULL), !(verbose >= 1)/*log warnings if verbose*/);
+        try
+        {
+            FontManifest &manifest = App_ResourceSystem().fonts().find(de::Uri(uri, RC_NULL));
+            if(manifest.hasFont())
+            {
+                *fid = fontid_t(manifest.uniqueId());
+            }
+        }
+        catch(Fonts::NotFoundError const &)
+        {}
     }
 
     if(*fid == NOFONTID)
     {
-        *fid = loadSystemFont(uri);
+        *fid = loadSystemFont(uri)->manifest().uniqueId();
     }
 }
 #endif // __CLIENT__

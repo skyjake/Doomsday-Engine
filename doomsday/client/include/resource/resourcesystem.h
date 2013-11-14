@@ -84,6 +84,13 @@ public:
      * Provides access to the Fonts collection.
      */
     de::Fonts &fonts();
+
+    void clearRuntimeFontSchemes();
+    void clearSystemFontSchemes();
+
+    AbstractFont *createFontFromDef(ded_compositefont_t const &def);
+    AbstractFont *createFontFromFile(de::Uri const &uri, char const *resourcePath);
+
 #endif
 
 public: /// @todo Should be private:

@@ -164,12 +164,15 @@ void FR_ResetTypeinTimer(void)
 void FR_SetFont(fontid_t num)
 {
     errorIfNotInited("FR_SetFont");
-    if(!App_Fonts().toFont(num))
+    try
     {
-        //LogBuffer_Printf(DE2_LOG_WARNING, "Requested invalid font %i.\n", num);
-        return; // No such font.
+        App_Fonts().toManifest(num);
+        fr.fontNum = num;
+        return;
     }
-    fr.fontNum = num;
+    catch(Fonts::UnknownIdError const &)
+    {}
+    //LogBuffer_Printf(DE2_LOG_WARNING, "Requested invalid font %i.\n", num);
 }
 
 void FR_SetNoFont(void)
@@ -416,7 +419,7 @@ void FR_CharSize(Size2Raw *size, uchar ch)
     errorIfNotInited("FR_CharSize");
     if(size)
     {
-        Vector2ui dimensions = App_Fonts().toFont(fr.fontNum)->glyphPosCoords(ch).size();
+        Vector2ui dimensions = App_Fonts().toManifest(fr.fontNum).font().glyphPosCoords(ch).size();
         size->width  = dimensions.x;
         size->height = dimensions.y;
     }
@@ -427,7 +430,7 @@ int FR_CharWidth(uchar ch)
 {
     errorIfNotInited("FR_CharWidth");
     if(fr.fontNum != 0)
-        return App_Fonts().toFont(fr.fontNum)->glyphPosCoords(ch).width();
+        return App_Fonts().toManifest(fr.fontNum).font().glyphPosCoords(ch).width();
     return 0;
 }
 
@@ -436,7 +439,7 @@ int FR_CharHeight(uchar ch)
 {
     errorIfNotInited("FR_CharHeight");
     if(fr.fontNum != 0)
-        return App_Fonts().toFont(fr.fontNum)->glyphPosCoords(ch).height();
+        return App_Fonts().toManifest(fr.fontNum).font().glyphPosCoords(ch).height();
     return 0;
 }
 
@@ -445,59 +448,53 @@ int FR_SingleLineHeight(char const *text)
     errorIfNotInited("FR_SingleLineHeight");
     if(fr.fontNum == 0 || !text)
         return 0;
-    int ascent = App_Fonts().toFont(fr.fontNum)->ascent();
+    AbstractFont &font = App_Fonts().toManifest(fr.fontNum).font();
+    int ascent = font.ascent();
     if(ascent != 0)
         return ascent;
-    return App_Fonts().toFont(fr.fontNum)->glyphPosCoords((uchar)text[0]).height();
+    return font.glyphPosCoords((uchar)text[0]).height();
 }
 
 int FR_GlyphTopToAscent(char const *text)
 {
-    int lineHeight;
     errorIfNotInited("FR_GlyphTopToAscent");
     if(fr.fontNum == 0 || !text)
         return 0;
-    lineHeight = App_Fonts().toFont(fr.fontNum)->lineSpacing();
+    AbstractFont &font = App_Fonts().toManifest(fr.fontNum).font();
+    int lineHeight = font.lineSpacing();
     if(lineHeight == 0)
         return 0;
-    return lineHeight - App_Fonts().toFont(fr.fontNum)->ascent();
+    return lineHeight - font.ascent();
 }
 
-static int textFragmentWidth(const char* fragment)
+static int textFragmentWidth(char const *fragment)
 {
-    assert(NULL != fragment);
-    {
-    size_t i, len;
-    int width = 0;
-    const char* ch;
-    unsigned char c;
+    DENG2_ASSERT(fragment != 0);
 
     if(fr.fontNum == 0)
     {
         Con_Error("textFragmentHeight: Cannot determine height without a current font.");
         exit(1);
     }
+
+    int width = 0;
 
     // Just add them together.
-    len = strlen(fragment);
-    i = 0;
-    ch = fragment;
+    size_t len = strlen(fragment);
+    size_t i = 0;
+    char const *ch = fragment;
+    uchar c;
     while(i++ < len && (c = *ch++) != 0 && c != '\n')
+    {
         width += FR_CharWidth(c);
-
-    return (int) (width + currentAttribs()->tracking * (len-1));
     }
+
+    return int( width + currentAttribs()->tracking * (len-1) );
 }
 
-static int textFragmentHeight(const char* fragment)
+static int textFragmentHeight(char const *fragment)
 {
-    assert(NULL != fragment);
-    {
-    const char* ch;
-    unsigned char c;
-    int height = 0;
-    size_t len;
-    uint i;
+    DENG2_ASSERT(fragment != 0);
 
     if(fr.fontNum == 0)
     {
@@ -505,18 +502,19 @@ static int textFragmentHeight(const char* fragment)
         exit(1);
     }
 
+    int height = 0;
+
     // Find the greatest height.
-    i = 0;
-    height = 0;
-    len = strlen(fragment);
-    ch = fragment;
+    uint i = 0;
+    size_t len = strlen(fragment);
+    char const *ch = fragment;
+    uchar c;
     while(i++ < len && (c = *ch++) != 0 && c != '\n')
     {
-        height = MAX_OF(height, FR_CharHeight(c));
+        height = de::max(height, FR_CharHeight(c));
     }
 
-    return topToAscent(App_Fonts().toFont(fr.fontNum)) + height;
-    }
+    return topToAscent(&App_Fonts().toManifest(fr.fontNum).font()) + height;
 }
 
 /*
@@ -532,7 +530,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 {
     DENG2_ASSERT(fragment != 0 && fragment[0]);
 
-    AbstractFont *font = App_Fonts().toFont(fr.fontNum);
+    AbstractFont *font = &App_Fonts().toManifest(fr.fontNum).font();
     fr_state_attributes_t* sat = currentAttribs();
     boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
@@ -1019,7 +1017,6 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
         else
         {
             // Perhaps a font name?
-            fontid_t fontId;
             if(!strnicmp((*strPtr), "font", 4))
             {
                 char buf[80];
@@ -1027,13 +1024,13 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                 (*strPtr) += 4;
                 if(parseString(&(*strPtr), buf, 80))
                 {
-                    fontId = App_Fonts().resolveUri(de::Uri(buf, RC_NULL), true/*quiet please*/);
-
-                    if(fontId != NOFONTID)
+                    try
                     {
-                        state->fontNum = fontId;
+                        state->fontNum = App_Fonts().find(de::Uri(buf, RC_NULL)).uniqueId();
                         continue;
                     }
+                    catch(Fonts::NotFoundError const &)
+                    {}
                 }
 
                 Con_Message("Warning:parseParamaterBlock: Unknown font '%s'.", (*strPtr));
@@ -1042,7 +1039,9 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
 
             // Unknown, skip it.
             if(*(*strPtr) != '}')
+            {
                 (*strPtr)++;
+            }
         }
     }
 
@@ -1544,8 +1543,17 @@ void FR_Init(void)
 DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
 {
     if(!uri) return NOFONTID;
-    return App_Fonts().resolveUri(*reinterpret_cast<de::Uri const *>(uri),
-                                  !(verbose >= 1)/*log warnings if verbose*/);
+    try
+    {
+        FontManifest &manifest = App_Fonts().find(*reinterpret_cast<de::Uri const *>(uri));
+        if(manifest.hasFont())
+        {
+            return manifest.uniqueId();
+        }
+    }
+    catch(Fonts::NotFoundError const &)
+    {}
+    return NOFONTID;
 }
 
 DENG_DECLARE_API(FR) =

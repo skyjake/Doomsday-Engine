@@ -47,788 +47,265 @@ D_CMD(PrintFontStats);
 
 namespace de {
 
-struct FontScheme
-{
-public:
-    /// The requested records could not be found in the index.
-    DENG2_ERROR(NotFoundError);
-
-    /// Records in the scheme are placed into a tree.
-    typedef UserDataPathTree Index;
-
-    String _name;
-
-    /// Mappings from paths to font records.
-    Index _index;
-
-    /// LUT which translates scheme-unique-ids to their associated fontid_t (if any).
-    /// Index with uniqueId - uniqueIdBase.
-    int uniqueIdBase;
-    uint uniqueIdMapSize;
-    fontid_t *uniqueIdMap;
-    bool uniqueIdMapDirty;
-
-    FontScheme(String symbolicName)
-        : _name(symbolicName)
-        , uniqueIdBase(0)
-        , uniqueIdMapSize(0)
-        , uniqueIdMap(0)
-        , uniqueIdMapDirty(false)
-    {}
-
-    ~FontScheme()
-    {
-        DENG2_ASSERT(_index.isEmpty()); // sanity check.
-        M_Free(uniqueIdMap);
-    }
-
-    /// @return  Symbolic name of this scheme (e.g., "System").
-    String const &name() const
-    {
-        return _name;
-    }
-
-    /// @return  Total number of records in the scheme.
-    inline int size() const { return index().size(); }
-
-    /// @return  Total number of records in the scheme. Same as @ref size().
-    inline int count() const { return size(); }
-
-    /**
-     * Search the scheme for a record matching @a path.
-     *
-     * @return  Found record.
-     */
-    Index::Node const &find(Path const &path) const;
-
-    /// @copydoc find()
-    Index::Node &find(Path const &path);
-
-    Index &index()
-    {
-        return _index;
-    }
-
-    Index const &index() const
-    {
-        return _index;
-    }
-};
-
-FontScheme::Index::Node &FontScheme::find(Path const &path)
-{
-    try
-    {
-        return _index.find(path, PathTree::NoBranch | PathTree::MatchFull);
-    }
-    catch(Index::NotFoundError const &)
-    {} // Ignore this error.
-    /// @throw NotFoundError Failed to locate a matching record.
-    throw NotFoundError("FontScheme::find", "Failed to locate a record matching \"" + path.asText() + "\"");
-}
-
-/**
- * FontRecord. Stores metadata for a unique Font in the collection.
- */
-struct FontRecord
-{
-    DENG2_DEFINE_AUDIENCE(Deletion, void fontRecordBeingDeleted(FontRecord const &manifest))
-    DENG2_DEFINE_AUDIENCE(UniqueIdChanged, void fontRecordUniqueIdChanged (FontRecord &manifest))
-
-    PathTree::Node *_node;
-
-    /// Scheme-unique identifier chosen by the owner of the collection.
-    int _uniqueId;
-
-    /// The defined font instance (if any).
-    AbstractFont *font;
-
-    FontRecord(PathTree::Node &node);
-    ~FontRecord();
-
-    void clearFont();
-
-    /**
-     * Returns the owning scheme of the manifest.
-     */
-    FontScheme &scheme() const;
-
-    /// Convenience method for returning the name of the owning scheme.
-    String const &schemeName() const;
-
-    /**
-     * Compose a URI of the form "scheme:path" for the FontRecord.
-     *
-     * The scheme component of the URI will contain the symbolic name of
-     * the scheme for the FontRecord.
-     *
-     * The path component of the URI will contain the percent-encoded path
-     * of the FontRecord.
-     */
-    inline Uri composeUri(QChar sep = '/') const
-    {
-        return Uri(schemeName(), _node->path(sep));
-    }
-
-    /**
-     * Compose a URN of the form "urn:scheme:uniqueid" for the font
-     * FontRecord.
-     *
-     * The scheme component of the URI will contain the identifier 'urn'.
-     *
-     * The path component of the URI is a string which contains both the
-     * symbolic name of the scheme followed by the unique id of the font
-     * FontRecord, separated with a colon.
-     *
-     * @see uniqueId(), setUniqueId()
-     */
-    inline Uri composeUrn() const
-    {
-        return Uri("urn", String("%1:%2").arg(schemeName()).arg(uniqueId(), 0, 10));
-    }
-
-    /**
-     * Returns the scheme-unique identifier for the manifest.
-     */
-    int uniqueId() const;
-
-    /**
-     * Change the unique identifier property of the manifest.
-     *
-     * @return  @c true iff @a newUniqueId differed to the existing unique
-     *          identifier, which was subsequently changed.
-     */
-    bool setUniqueId(int newUniqueId);
-
-    /// Returns a reference to the application's font collection.
-    static Fonts &fonts();
-};
-
-FontRecord::FontRecord(PathTree::Node &node)
-    : _node(&node)
-    , _uniqueId(0)
-    , font(0)
+FontScheme::FontScheme(String symbolicName)
+    : _name(symbolicName)
+    , _uniqueIdLutDirty(false)
+    , _uniqueIdBase(0)
 {}
 
-FontRecord::~FontRecord()
+FontScheme::~FontScheme()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->fontRecordBeingDeleted(*this);
+    clear();
+    DENG2_ASSERT(_index.isEmpty()); // sanity check.
 }
 
-Fonts &FontRecord::fonts()
+void FontScheme::clear()
+{
+    /*PathTreeIterator<Index> iter(_index.leafNodes());
+    while(iter.hasNext())
+    {
+        deindex(iter.next());
+    }*/
+    _index.clear();
+    _uniqueIdLutDirty = true;
+}
+
+String const &FontScheme::name() const
+{
+    return _name;
+}
+
+FontScheme::Manifest &FontScheme::declare(Path const &path)
+{
+    LOG_AS("FontScheme::declare");
+
+    if(path.isEmpty())
+    {
+        /// @throw InvalidPathError An empty path was specified.
+        throw InvalidPathError("FontScheme::declare", "Missing/zero-length path was supplied");
+    }
+
+    int const sizeBefore = _index.size();
+    Manifest *newManifest = &_index.insert(path);
+    DENG2_ASSERT(newManifest);
+
+    if(_index.size() != sizeBefore)
+    {
+        // We want notification if/when the manifest's uniqueId changes.
+        newManifest->audienceForUniqueIdChanged += this;
+
+        // We want notification when the manifest is about to be deleted.
+        newManifest->audienceForDeletion += this;
+
+        // Notify interested parties that a new manifest was defined in the scheme.
+        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->schemeManifestDefined(*this, *newManifest);
+    }
+
+    return *newManifest;
+}
+
+bool FontScheme::has(Path const &path) const
+{
+    return _index.has(path, Index::NoBranch | Index::MatchFull);
+}
+
+FontScheme::Manifest const &FontScheme::find(Path const &path) const
+{
+    if(has(path))
+    {
+        return _index.find(path, Index::NoBranch | Index::MatchFull);
+    }
+    /// @throw NotFoundError Failed to locate a matching manifest.
+    throw NotFoundError("FontScheme::find", "Failed to locate a manifest matching \"" + path.asText() + "\"");
+}
+
+FontScheme::Manifest &FontScheme::find(Path const &path)
+{
+    Manifest const &found = const_cast<FontScheme const *>(this)->find(path);
+    return const_cast<Manifest &>(found);
+}
+
+FontScheme::Manifest const &FontScheme::findByUniqueId(int uniqueId) const
+{
+    const_cast<FontScheme *>(this)->rebuildUniqueIdLut();
+
+    if(uniqueIdInLutRange(uniqueId))
+    {
+        Manifest *manifest = _uniqueIdLut[uniqueId - _uniqueIdBase];
+        if(manifest) return *manifest;
+    }
+    /// @throw NotFoundError  No manifest was found with a matching resource URI.
+    throw NotFoundError("FontScheme::findByUniqueId", "No manifest found with a unique ID matching \"" + QString("%1").arg(uniqueId) + "\"");
+}
+
+FontScheme::Manifest &FontScheme::findByUniqueId(int uniqueId)
+{
+    Manifest const &found = const_cast<FontScheme const *>(this)->findByUniqueId(uniqueId);
+    return const_cast<Manifest &>(found);
+}
+
+FontScheme::Index const &FontScheme::index() const
+{
+    return _index;
+}
+
+void FontScheme::manifestUniqueIdChanged(Manifest & /*manifest*/)
+{
+    // We'll need to rebuild the id map.
+    _uniqueIdLutDirty = true;
+}
+
+void FontScheme::manifestBeingDeleted(Manifest const &manifest)
+{
+    deindex(const_cast<Manifest &>(manifest));
+}
+
+FontManifest::FontManifest(PathTree::NodeArgs const &args)
+    : Node(args)
+    , _uniqueId(0)
+{}
+
+FontManifest::~FontManifest()
+{
+    DENG2_FOR_AUDIENCE(Deletion, i) i->manifestBeingDeleted(*this);
+}
+
+Fonts &FontManifest::fonts()
 {
     return App_Fonts();
 }
 
-void FontRecord::clearFont()
+FontScheme &FontManifest::scheme() const
 {
-    delete font; font = 0;
-}
-
-FontScheme &FontRecord::scheme() const
-{
-    LOG_AS("FontRecord::scheme");
+    LOG_AS("FontManifest::scheme");
     /// @todo Optimize: FontRecord should contain a link to the owning FontScheme.
     foreach(FontScheme *scheme, fonts().allSchemes())
     {
-        if(&scheme->index() == &_node->tree()) return *scheme;
+        if(&scheme->index() == &tree()) return *scheme;
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
-    throw Error("FontRecord::scheme", String("Failed to determine scheme for record [%1]").arg(de::dintptr(this)));
+    throw Error("FontManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
 }
 
-String const &FontRecord::schemeName() const
+String const &FontManifest::schemeName() const
 {
     return scheme().name();
 }
 
-int FontRecord::uniqueId() const
+String FontManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
+{
+    return String("%1").arg(composeUri().compose(uriCompositionFlags | Uri::DecodePath),
+                            ( uriCompositionFlags.testFlag(Uri::OmitScheme)? -14 : -22 ) );
+}
+
+int FontManifest::uniqueId() const
 {
     return _uniqueId;
 }
 
-bool FontRecord::setUniqueId(int newUniqueId)
+bool FontManifest::setUniqueId(int newUniqueId)
 {
     if(_uniqueId == newUniqueId) return false;
 
     _uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
-    DENG2_FOR_AUDIENCE(UniqueIdChanged, i) i->fontRecordUniqueIdChanged(*this);
+    DENG2_FOR_AUDIENCE(UniqueIdChanged, i) i->fontManifestUniqueIdChanged(*this);
 
     return true;
 }
 
-static void clearRecordFont(FontScheme::Index::Node &node)
+bool FontManifest::hasFont() const
 {
-    FontRecord *record = (FontRecord *) node.userPointer();
-    if(!record) return;
-    record->clearFont();
+    return !_font.isNull();
 }
 
-static int composeAndCompareDirectoryNodePaths(void const *a, void const *b)
+AbstractFont &FontManifest::font() const
 {
-    // Decode paths before determining a lexicographical delta.
-    FontScheme::Index::Node const &nodeA = **(FontScheme::Index::Node const **)a;
-    FontScheme::Index::Node const &nodeB = **(FontScheme::Index::Node const **)b;
-    QByteArray pathAUtf8 = nodeA.path().toUtf8();
-    QByteArray pathBUtf8 = nodeB.path().toUtf8();
-    AutoStr *pathA = Str_PercentDecode(AutoStr_FromTextStd(pathAUtf8.constData()));
-    AutoStr *pathB = Str_PercentDecode(AutoStr_FromTextStd(pathBUtf8.constData()));
-    return qstricmp(Str_Text(pathA), Str_Text(pathB));
+    if(hasFont())
+    {
+        return *_font.data();
+    }
+    /// @throw MissingFontError There is no font associated with the manifest.
+    throw MissingFontError("FontRecord::font", "No font is associated");
 }
 
-/**
- * @defgroup validateFontUriFlags  Validate Font Uri Flags
- * @ingroup flags
- */
-///@{
-#define VFUF_ALLOW_ANY_SCHEME       0x1 ///< The scheme of the uri may be of zero-length; signifying "any scheme".
-#define VFUF_NO_URN                 0x2 ///< Do not accept a URN.
-///@}
+void FontManifest::setFont(AbstractFont *newFont)
+{
+    if(_font.data() != newFont)
+    {
+        if(AbstractFont *curFont = _font.data())
+        {
+            // Cancel notifications about the existing font.
+            curFont->audienceForDeletion -= this;
+        }
+
+        _font.reset(newFont);
+
+        if(AbstractFont *curFont = _font.data())
+        {
+            // We want notification when the new font is about to be deleted.
+            curFont->audienceForDeletion += this;
+        }
+    }
+}
+
+void FontManifest::fontBeingDeleted(AbstractFont const & /*font*/)
+{
+    _font.reset();
+}
 
 DENG2_PIMPL(Fonts)
 {
-    // LUT which translates fontid_t to PathTreeNode*. Index with fontid_t-1
-    uint fontIdMapSize;
-    FontScheme::Index::Node **fontIdMap;
+    /// System subspace schemes containing the textures.
+    Schemes schemes;
+    QList<Scheme *> schemeCreationOrder;
 
-    // Font scheme set.
-    Fonts::Schemes schemes;
+    /// All fonts instances in the system (from all schemes).
+    All fonts;
+
+    /// Total number of URI font manifests (in all schemes).
+    uint manifestCount;
+
+    /// LUT which translates fontid_t => FontManifest*.
+    /// Index with fontid_t-1
+    uint manifestIdMapSize;
+    FontManifest **manifestIdMap;
 
     Instance(Public *i)
         : Base(i)
-        , fontIdMapSize(0)
-        , fontIdMap(0)
-    {
-        LOG_VERBOSE("Initializing Fonts collection...");
-
-        schemes.append(new FontScheme("System"));
-        schemes.append(new FontScheme("Game"));
-    }
+        , manifestCount(0)
+        , manifestIdMapSize(0)
+        , manifestIdMap(0)
+    {}
 
     ~Instance()
     {
-        self.clear();
+        clearFonts();
+        clearManifests();
+    }
 
-        foreach(FontScheme *scheme, schemes)
-        {
-            scheme->index().traverse(PathTree::NoBranch, NULL, FontScheme::Index::no_hash, destroyRecordWorker, this);
-        }
+    void clearFonts()
+    {
+        qDeleteAll(fonts);
+        fonts.clear();
+    }
+
+    void clearManifests()
+    {
         qDeleteAll(schemes);
+        schemes.clear();
+        schemeCreationOrder.clear();
 
-        // Clear the bindId to PathTreeNode LUT.
-        M_Free(fontIdMap);
-    }
-
-    inline bool validFontId(fontid_t id)
-    {
-        return (id != NOFONTID && id <= fontIdMapSize);
-    }
-
-    FontScheme &scheme(fontschemeid_t id)
-    {
-        DENG2_ASSERT(VALID_FONTSCHEMEID(id));
-        return *schemes[id - FONTSCHEME_FIRST];
-    }
-
-    void destroyRecord(FontScheme::Index::Node &node)
-    {
-        LOG_AS("Fonts::destroyRecord");
-        FontRecord *record = (FontRecord *) node.userPointer();
-        if(!record) return;
-
-#ifdef DENG_DEBUG
-        if(record->font)
+        // Clear the manifest index/map.
+        if(manifestIdMap)
         {
-            Uri uri = record->composeUri();
-            LOG_WARNING("destroyRecord: Record for \"%s\" still has Font data!")
-                << uri;
+            M_Free(manifestIdMap); manifestIdMap = 0;
+            manifestIdMapSize = 0;
         }
-#endif
-        record->clearFont();
-
-        unlinkDirectoryNodeFromBindIdMap(node);
-        unlinkRecordInUniqueIdMap(node);
-
-        // Detach our user data from this node.
-        node.setUserPointer(0);
-
-        delete record;
-    }
-
-    void destroyFontAndRecord(FontScheme::Index::Node &node)
-    {
-        clearRecordFont(node);
-        destroyRecord(node);
-    }
-
-    static int destroyRecordWorker(FontScheme::Index::Node &node, void *context)
-    {
-        Instance *inst = static_cast<Instance *>(context);
-        inst->destroyRecord(node);
-        return 0; // Continue iteration.
-    }
-
-    static int destroyFontAndRecordWorker(FontScheme::Index::Node &node, void *context)
-    {
-        Instance *inst = static_cast<Instance *>(context);
-        inst->destroyFontAndRecord(node);
-        return 0; // Continue iteration.
-    }
-
-    FontScheme::Index::Node *findDirectoryNodeForBindId(fontid_t id)
-    {
-        if(!validFontId(id)) return 0;
-        return fontIdMap[id-1/*1-based index*/];
-    }
-
-    fontid_t findBindIdForDirectoryNode(FontScheme::Index::Node const &node)
-    {
-        /// @todo Optimize (Low priority): Do not use a linear search.
-        for(uint i = 0; i < fontIdMapSize; ++i)
-        {
-            if(fontIdMap[i] == &node)
-                return fontid_t(i + 1); // 1-based index.
-        }
-        return NOFONTID; // Not linked.
-    }
-
-    /// @pre fontIdMap has been initialized and is large enough!
-    void unlinkDirectoryNodeFromBindIdMap(FontScheme::Index::Node const &node)
-    {
-        fontid_t id = findBindIdForDirectoryNode(node);
-        if(!validFontId(id)) return; // Not linked.
-        fontIdMap[id - 1/*1-based index*/] = 0;
-    }
-
-    /// @pre uniqueIdMap has been initialized and is large enough!
-    static int linkRecordInUniqueIdMap(FontScheme::Index::Node &node, void *context)
-    {
-        Instance *inst = static_cast<Instance *>(context);
-
-        FontRecord const *record = static_cast<FontRecord *>(node.userPointer());
-        FontScheme &scheme = record->scheme();
-        scheme.uniqueIdMap[record->uniqueId() - scheme.uniqueIdBase] = inst->findBindIdForDirectoryNode(node);
-        return 0; // Continue iteration.
-    }
-
-    /// @pre uniqueIdMap has been initialized and is large enough!
-    static int linkRecordInUniqueIdMapWorker(FontScheme::Index::Node &node, void *context)
-    {
-        Instance *inst = static_cast<Instance *>(context);
-
-        FontRecord const *record = static_cast<FontRecord *>(node.userPointer());
-        FontScheme &scheme = record->scheme();
-        scheme.uniqueIdMap[record->uniqueId() - scheme.uniqueIdBase] = inst->findBindIdForDirectoryNode(node);
-        return 0; // Continue iteration.
-    }
-
-    /// @pre uniqueIdMap is large enough if initialized!
-    void unlinkRecordInUniqueIdMap(FontScheme::Index::Node &node)
-    {
-        FontRecord const *record = static_cast<FontRecord *>(node.userPointer());
-        FontScheme &fs = record->scheme();
-        if(fs.uniqueIdMap)
-        {
-            fs.uniqueIdMap[record->uniqueId() - fs.uniqueIdBase] = NOFONTID;
-        }
-    }
-
-    /**
-     * @param uri       Uri to be validated.
-     * @param flags     @ref validateFontUriFlags
-     * @param quiet     @c true= Do not output validation remarks to the log.
-     *
-     * @return  @c true if @a Uri passes validation.
-     */
-    bool validateUri(Uri const &uri, int flags, bool quiet = false)
-    {
-        LOG_AS("Fonts::validateUri");
-
-        if(uri.isEmpty())
-        {
-            if(!quiet)
-            {
-                LOG_MSG("Invalid path in Font uri \"%s\".") << uri;
-            }
-            return false;
-        }
-
-        // If this is a URN we extract the scheme from the path.
-        String schemeString;
-        if(!uri.scheme().compareWithoutCase("urn"))
-        {
-            if(flags & VFUF_NO_URN) return false;
-            schemeString = uri.path();
-        }
-        else
-        {
-            schemeString = uri.scheme();
-        }
-
-        fontschemeid_t schemeId = self.parseScheme(schemeString.toUtf8().constData());
-        if(!((flags & VFUF_ALLOW_ANY_SCHEME) && schemeId == FS_ANY) &&
-           !VALID_FONTSCHEMEID(schemeId))
-        {
-            if(!quiet)
-            {
-                LOG_MSG("Unknown scheme in Font uri \"%s\".") << uri;
-            }
-            return false;
-        }
-
-        return true;
-    }
-
-    /// @pre @a uri has already been validated and is well-formed.
-    FontScheme::Index::Node *findDirectoryNodeForUri(Uri const &uri)
-    {
-        if(!uri.scheme().compareWithoutCase("urn"))
-        {
-            // This is a URN of the form; urn:schemename:uniqueid
-            fontschemeid_t schemeId = self.parseScheme(uri.pathCStr());
-            int uidPos = uri.path().toStringRef().indexOf(':');
-            if(uidPos >= 0)
-            {
-                int uid = uri.path().toStringRef().mid(uidPos + 1/*skip scheme delimiter*/).toInt();
-                fontid_t id = self.fontForUniqueId(schemeId, uid);
-                if(id != NOFONTID)
-                {
-                    return findDirectoryNodeForBindId(id);
-                }
-            }
-            return 0;
-        }
-
-        // This is a URI.
-        fontschemeid_t schemeId = self.parseScheme(uri.schemeCStr());
-        Path const &path = uri.path();
-        if(schemeId != FS_ANY)
-        {
-            // Caller wants a font in a specific scheme.
-            try
-            {
-                return &scheme(schemeId).find(path);
-            }
-            catch(FontScheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
-        }
-
-        // Caller does not care which scheme.
-        // Check for the font in these schemes in priority order.
-        static const fontschemeid_t order[] = {
-            FS_GAME, FS_SYSTEM, FS_ANY
-        };
-
-        for(int i = 0; order[i] != FS_ANY; ++i)
-        {
-            try
-            {
-                return &scheme(order[i]).find(path);
-            }
-            catch(FontScheme::NotFoundError const &)
-            {} // Ignore, we'll throw our own...
-        }
-
-        return 0;
-    }
-
-    AbstractFont *createFromDef(fontid_t id, ded_compositefont_t *def)
-    {
-        LOG_AS("Fonts::createFromDef");
-
-        FontScheme::Index::Node *node = findDirectoryNodeForBindId(id);
-        if(!node)
-        {
-            LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
-            return 0;
-        }
-
-        if(!def)
-        {
-            LOG_WARNING("Failed creating Font #%u (def = NULL), ignoring.") << id;
-            return 0;
-        }
-
-        FontRecord *record = (FontRecord *) node->userPointer();
-        DENG_ASSERT(record != 0);
-
-        if(record->font)
-        {
-            if(CompositeBitmapFont *compFont = record->font->maybeAs<CompositeBitmapFont>())
-            {
-                /// @todo Do not update fonts here (not enough knowledge). We should
-                /// instead return an invalid reference/signal and force the caller
-                /// to implement the necessary update logic.
-#ifdef DENG_DEBUG
-                LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
-                    << self.composeUri(id);
-#endif
-                compFont->rebuildFromDef(def);
-            }
-            return record->font;
-        }
-
-        // A new font.
-        record->font = CompositeBitmapFont::fromDef(id, def);
-        if(record->font && verbose >= 1)
-        {
-            LOG_VERBOSE("New font \"%s\"") << self.composeUri(id);
-        }
-
-        return record->font;
-    }
-
-    AbstractFont *createFromFile(fontid_t id, char const *resourcePath)
-    {
-        LOG_AS("Fonts::createFromFile");
-
-        FontScheme::Index::Node *node = findDirectoryNodeForBindId(id);
-        if(!node)
-        {
-            LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
-            return 0;
-        }
-
-        if(!resourcePath || !resourcePath[0])
-        {
-            LOG_WARNING("Failed creating Font #%u (resourcePath = NULL), ignoring.") << id;
-            return 0;
-        }
-
-        FontRecord *record = (FontRecord *) node->userPointer();
-        DENG2_ASSERT(record != 0);
-
-        if(record->font)
-        {
-            if(BitmapFont *bmapFont = record->font->maybeAs<BitmapFont>())
-            {
-                /// @todo Do not update fonts here (not enough knowledge). We should
-                /// instead return an invalid reference/signal and force the caller
-                /// to implement the necessary update logic.
-#ifdef DENG_DEBUG
-                LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
-                    << self.composeUri(id);
-#endif
-                bmapFont->setFilePath(resourcePath);
-            }
-            return record->font;
-        }
-
-        // A new font.
-        record->font = BitmapFont::fromFile(id, resourcePath);
-        if(record->font && verbose >= 1)
-        {
-            LOG_VERBOSE("New font \"%s\"") << self.composeUri(id);
-        }
-
-        return record->font;
-    }
-
-    int iterateDirectory(fontschemeid_t schemeId,
-        int (*callback)(FontScheme::Index::Node &node, void *context), void *context)
-    {
-        uint from, to;
-        if(VALID_FONTSCHEMEID(schemeId))
-        {
-            from = to = schemeId;
-        }
-        else
-        {
-            from = FONTSCHEME_FIRST;
-            to   = FONTSCHEME_LAST;
-        }
-
-        for(uint i = from; i <= to; ++i)
-        {
-            FontScheme &fs = scheme(fontschemeid_t(i));
-            if(int result = fs.index().traverse(PathTree::NoBranch, 0, FontScheme::Index::no_hash, callback, context))
-            {
-                return result;
-            }
-        }
-
-        return 0;
-    }
-
-    struct iteratedirectoryworker_params_t
-    {
-        Instance *inst;
-        int (*definedCallback)(AbstractFont *font, void *context);
-        int (*declaredCallback)(fontid_t id, void *context);
-        void *context;
-    };
-
-    static int iterateWorker(FontScheme::Index::Node &node, void *context)
-    {
-        DENG2_ASSERT(context != 0);
-        iteratedirectoryworker_params_t *p = (iteratedirectoryworker_params_t*)context;
-
-        FontRecord *record = (FontRecord *) node.userPointer();
-        DENG2_ASSERT(record != 0);
-        if(p->definedCallback)
-        {
-            if(record->font)
-            {
-                return p->definedCallback(record->font, p->context);
-            }
-        }
-        else
-        {
-            fontid_t id = NOFONTID;
-
-            // If we have bound a font it can provide the id.
-            if(record->font)
-            {
-                id = record->font->primaryBind();
-            }
-
-            // Otherwise look it up.
-            if(!p->inst->validFontId(id))
-            {
-                id = p->inst->findBindIdForDirectoryNode(node);
-            }
-
-            // Sanity check.
-            DENG2_ASSERT(p->inst->validFontId(id));
-
-            return p->declaredCallback(id, p->context);
-        }
-        return 0; // Continue iteration.
-    }
-
-    struct finduniqueidbounds_params_t
-    {
-        int minId, maxId;
-    };
-
-    static int findUniqueIdBounds(FontScheme::Index::Node &node, void *context)
-    {
-        FontRecord const *record = (FontRecord *) node.userPointer();
-        finduniqueidbounds_params_t *p = (finduniqueidbounds_params_t *)context;
-        if(record->uniqueId() < p->minId) p->minId = record->uniqueId();
-        if(record->uniqueId() > p->maxId) p->maxId = record->uniqueId();
-        return 0; // Continue iteration.
-    }
-
-    void rebuildUniqueIdMap(fontschemeid_t schemeId)
-    {
-        FontScheme &fs = scheme(schemeId);
-
-        if(!fs.uniqueIdMapDirty) return;
-
-        // Determine the size of the LUT.
-        finduniqueidbounds_params_t parm; zap(parm);
-        parm.minId = DDMAXINT;
-        parm.maxId = DDMININT;
-        iterateDirectory(schemeId, findUniqueIdBounds, &parm);
-
-        if(parm.minId > parm.maxId)
-        {
-            // None found.
-            fs.uniqueIdBase = 0;
-            fs.uniqueIdMapSize = 0;
-        }
-        else
-        {
-            fs.uniqueIdBase = parm.minId;
-            fs.uniqueIdMapSize = parm.maxId - parm.minId + 1;
-        }
-
-        // Construct and (re)populate the LUT.
-        fs.uniqueIdMap = (fontid_t *)M_Realloc(fs.uniqueIdMap, sizeof *fs.uniqueIdMap * fs.uniqueIdMapSize);
-        if(fs.uniqueIdMapSize)
-        {
-            std::memset(fs.uniqueIdMap, NOFONTID, sizeof *fs.uniqueIdMap * fs.uniqueIdMapSize);
-            iterateDirectory(schemeId, linkRecordInUniqueIdMap, this);
-        }
-        fs.uniqueIdMapDirty = false;
-    }
-
-    /**
-     * @todo A horridly inefficent algorithm. This should be implemented in PathTree
-     * itself and not force users of this class to implement this sort of thing themselves.
-     * However this is only presently used for the font search/listing console commands so
-     * is not hugely important right now.
-     */
-    struct collectdirectorynodeworker_params_t
-    {
-        de::String like;
-        int idx;
-        FontScheme::Index::Node **storage;
-    };
-
-    static int collectDirectoryNodeWorker(FontScheme::Index::Node &node, void *context)
-    {
-        collectdirectorynodeworker_params_t *p = (collectdirectorynodeworker_params_t *)context;
-
-        if(!p->like.isEmpty())
-        {
-            de::String path = node.path();
-            if(!path.beginsWith(p->like, Qt::CaseInsensitive)) return 0; // Continue iteration.
-        }
-
-        if(p->storage)
-        {
-            p->storage[p->idx++] = &node;
-        }
-        else
-        {
-            ++p->idx;
-        }
-
-        return 0; // Continue iteration.
-    }
-
-    FontScheme::Index::Node **collectDirectoryNodes(fontschemeid_t schemeId,
-        String like, uint *count, FontScheme::Index::Node **storage)
-    {
-        fontschemeid_t fromId, toId;
-        if(VALID_FONTSCHEMEID(schemeId))
-        {
-            // Only consider fonts in this scheme.
-            fromId = toId = schemeId;
-        }
-        else
-        {
-            // Consider fonts in any scheme.
-            fromId = FONTSCHEME_FIRST;
-            toId   = FONTSCHEME_LAST;
-        }
-
-        collectdirectorynodeworker_params_t p;
-        p.like = like;
-        p.idx = 0;
-        p.storage = storage;
-
-        for(uint i = uint(fromId); i <= uint(toId); ++i)
-        {
-            FontScheme &fs = scheme(fontschemeid_t(i));
-            fs.index().traverse(PathTree::NoBranch | PathTree::MatchFull, 0,
-                                FontScheme::Index::no_hash, collectDirectoryNodeWorker, &p);
-        }
-
-        if(storage)
-        {
-            storage[p.idx] = 0; // Terminate.
-            if(count) *count = p.idx;
-            return storage;
-        }
-
-        if(p.idx == 0)
-        {
-            if(count) *count = 0;
-            return NULL;
-        }
-
-        storage = (FontScheme::Index::Node **) M_Malloc(sizeof(*storage) * (p.idx+1));
-        return collectDirectoryNodes(schemeId, like, count, storage);
+        manifestCount = 0;
     }
 };
-
-Fonts::Fonts() : d(new Instance(this))
-{}
 
 void Fonts::consoleRegister() // static
 {
@@ -838,6 +315,142 @@ void Fonts::consoleRegister() // static
 #endif
 }
 
+Fonts::Fonts() : d(new Instance(this))
+{}
+
+Fonts::Scheme &Fonts::scheme(String name) const
+{
+    LOG_AS("Fonts::scheme");
+    if(!name.isEmpty())
+    {
+        Schemes::iterator found = d->schemes.find(name.toLower());
+        if(found != d->schemes.end()) return **found;
+    }
+    /// @throw UnknownSchemeError An unknown scheme was referenced.
+    throw UnknownSchemeError("Fonts::scheme", "No scheme found matching '" + name + "'");
+}
+
+Fonts::Scheme &Fonts::createScheme(String name)
+{
+    DENG_ASSERT(name.length() >= Scheme::min_name_length);
+
+    // Ensure this is a unique name.
+    if(knownScheme(name)) return scheme(name);
+
+    // Create a new scheme.
+    Scheme *newScheme = new Scheme(name);
+    d->schemes.insert(name.toLower(), newScheme);
+    d->schemeCreationOrder.push_back(newScheme);
+
+    // We want notification when a new manifest is defined in this scheme.
+    newScheme->audienceForManifestDefined += this;
+
+    return *newScheme;
+}
+
+bool Fonts::knownScheme(String name) const
+{
+    if(!name.isEmpty())
+    {
+        Schemes::iterator found = d->schemes.find(name.toLower());
+        if(found != d->schemes.end()) return true;
+    }
+    return false;
+}
+
+Fonts::Schemes const &Fonts::allSchemes() const
+{
+    return d->schemes;
+}
+
+bool Fonts::has(Uri const &path) const
+{
+    try
+    {
+        find(path);
+        return true;
+    }
+    catch(NotFoundError const &)
+    {} // Ignore this error.
+    return false;
+}
+
+Fonts::Manifest &Fonts::find(Uri const &uri) const
+{
+    LOG_AS("Fonts::find");
+
+    // Perform the search.
+    // Is this a URN? (of the form "urn:schemename:uniqueid")
+    if(!uri.scheme().compareWithoutCase("urn"))
+    {
+        String const &pathStr = uri.path().toStringRef();
+        int uIdPos = pathStr.indexOf(':');
+        if(uIdPos > 0)
+        {
+            String schemeName = pathStr.left(uIdPos);
+            int uniqueId      = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+
+            try
+            {
+                return scheme(schemeName).findByUniqueId(uniqueId);
+            }
+            catch(Scheme::NotFoundError const &)
+            {} // Ignore, we'll throw our own...
+        }
+    }
+    else
+    {
+        // No, this is a URI.
+        String const &path = uri.path();
+
+        // Does the user want a manifest in a specific scheme?
+        if(!uri.scheme().isEmpty())
+        {
+            try
+            {
+                return scheme(uri.scheme()).find(path);
+            }
+            catch(Scheme::NotFoundError const &)
+            {} // Ignore, we'll throw our own...
+        }
+        else
+        {
+            // No, check each scheme in priority order.
+            foreach(Scheme *scheme, d->schemeCreationOrder)
+            {
+                try
+                {
+                    return scheme->find(path);
+                }
+                catch(Scheme::NotFoundError const &)
+                {} // Ignore, we'll throw our own...
+            }
+        }
+    }
+
+    /// @throw NotFoundError Failed to locate a matching manifest.
+    throw NotFoundError("Fonts::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+}
+
+Fonts::Manifest &Fonts::toManifest(fontid_t id) const
+{
+    if(id > 0 && id <= d->manifestCount)
+    {
+        duint32 idx = id - 1; // 1-based index.
+        if(d->manifestIdMap[idx])
+        {
+            return *d->manifestIdMap[idx];
+        }
+
+        // Internal bookeeping error.
+        DENG_ASSERT(0);
+    }
+
+    /// @throw UnknownIdError The specified material id is invalid.
+    throw UnknownIdError("Fonts::toManifest", QString("Invalid font ID %1, valid range [1..%2)").arg(id).arg(d->manifestCount + 1));
+}
+
+#if 0
 fontschemeid_t Fonts::parseScheme(char const *str)
 {
     static const struct scheme_s {
@@ -869,25 +482,14 @@ fontschemeid_t Fonts::parseScheme(char const *str)
     return FS_INVALID; // Unknown.
 }
 
-int Fonts::size()
-{
-    return d->fontIdMapSize;
-}
-
-int Fonts::count(fontschemeid_t schemeId)
-{
-    if(VALID_FONTSCHEMEID(schemeId))
-    {
-        return d->scheme(schemeId).count();
-    }
-    return 0;
-}
-
 void Fonts::clear()
 {
     if(!size()) return;
 
-    clearScheme(FS_ANY);
+    foreach(Scheme *scheme, d->schemes)
+    {
+        scheme->clear();
+    }
 #ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
 #endif
@@ -897,7 +499,7 @@ void Fonts::clearRuntime()
 {
     if(!size()) return;
 
-    clearScheme(FS_GAME);
+    scheme("Game").clear();
 #ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
 #endif
@@ -907,46 +509,10 @@ void Fonts::clearSystem()
 {
     if(!size()) return;
 
-    clearScheme(FS_SYSTEM);
+    scheme("System").clear();
 #ifdef __CLIENT__
     GL_PruneTextureVariantSpecifications();
 #endif
-}
-
-void Fonts::clearScheme(fontschemeid_t schemeId)
-{
-    if(!size()) return;
-
-    uint from, to;
-    if(schemeId == FS_ANY)
-    {
-        from = FONTSCHEME_FIRST;
-        to   = FONTSCHEME_LAST;
-    }
-    else if(VALID_FONTSCHEMEID(schemeId))
-    {
-        from = to = schemeId;
-    }
-    else
-    {
-        Con_Error("Fonts::ClearScheme: Invalid font scheme %i.", (int) schemeId);
-        exit(1); // Unreachable.
-    }
-
-    for(uint i = from; i <= to; ++i)
-    {
-        FontScheme &scheme = d->scheme(fontschemeid_t(i));
-
-        scheme.index().traverse(PathTree::NoBranch, 0, FontScheme::Index::no_hash,
-                              Instance::destroyFontAndRecordWorker, d);
-        scheme.index().clear();
-        scheme.uniqueIdMapDirty = true;
-    }
-}
-
-Fonts::Schemes const &Fonts::allSchemes() const
-{
-    return d->schemes;
 }
 
 AbstractFont *Fonts::toFont(fontid_t id)
@@ -965,23 +531,7 @@ AbstractFont *Fonts::toFont(fontid_t id)
 
     FontScheme::Index::Node *node = d->findDirectoryNodeForBindId(id);
     if(!node) return 0;
-    return ((FontRecord *) node->userPointer())->font;
-}
-
-fontid_t Fonts::fontForUniqueId(fontschemeid_t schemeId, int uniqueId)
-{
-    if(VALID_FONTSCHEMEID(schemeId))
-    {
-        FontScheme &fn = d->scheme(schemeId);
-
-        d->rebuildUniqueIdMap(schemeId);
-        if(fn.uniqueIdMap && uniqueId >= fn.uniqueIdBase &&
-           (unsigned)(uniqueId - fn.uniqueIdBase) <= fn.uniqueIdMapSize)
-        {
-            return fn.uniqueIdMap[uniqueId - fn.uniqueIdBase];
-        }
-    }
-    return NOFONTID; // Not found.
+    return &static_cast<FontManifest *>(node->userPointer())->font();
 }
 
 fontid_t Fonts::resolveUri(Uri const &uri, boolean quiet)
@@ -1003,12 +553,12 @@ fontid_t Fonts::resolveUri(Uri const &uri, boolean quiet)
     if(node)
     {
         // If we have bound a font - it can provide the id.
-        FontRecord *record = (FontRecord *) node->userPointer();
-        DENG2_ASSERT(record != 0);
+        FontManifest *manifest = (FontManifest *) node->userPointer();
+        DENG2_ASSERT(manifest != 0);
 
-        if(record->font)
+        if(manifest->hasFont())
         {
-            fontid_t id = record->font->primaryBind();
+            fontid_t id = manifest->font().primaryBind();
             if(d->validFontId(id)) return id;
         }
 
@@ -1024,99 +574,14 @@ fontid_t Fonts::resolveUri(Uri const &uri, boolean quiet)
     return NOFONTID;
 }
 
-fontid_t Fonts::declare(Uri const &uri, int uniqueId)
-{
-    LOG_AS("Fonts::declare");
-
-    // We require a properly formed URI (but not a URN - this is a path).
-    if(!d->validateUri(uri, VFUF_NO_URN, (verbose >= 1)))
-    {
-        LOG_WARNING("Failed creating Font \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
-        return NOFONTID;
-    }
-
-    // Have we already created a binding for this?
-    fontid_t id;
-    FontRecord *record;
-    FontScheme::Index::Node *node = d->findDirectoryNodeForUri(uri);
-    if(node)
-    {
-        record = (FontRecord *) node->userPointer();
-        DENG2_ASSERT(record != 0);
-        id = d->findBindIdForDirectoryNode(*node);
-    }
-    else
-    {
-        /*
-         * A new binding.
-         */
-
-        FontScheme &scheme = d->scheme(parseScheme(uri.schemeCStr()));
-
-        node = &scheme.index().insert(uri.path());
-        node->setUserPointer(new FontRecord(*node));
-
-        record = static_cast<FontRecord *>(node->userPointer());
-        record->setUniqueId(uniqueId);
-
-        // We'll need to rebuild the unique id map too.
-        scheme.uniqueIdMapDirty = true;
-
-        id = d->fontIdMapSize + 1; // 1-based identfier
-        // Link it into the id map.
-        d->fontIdMap = (FontScheme::Index::Node **) M_Realloc(d->fontIdMap, sizeof(*d->fontIdMap) * ++d->fontIdMapSize);
-        d->fontIdMap[id - 1] = node;
-    }
-
-    /*
-     * (Re)configure this binding.
-     */
-    bool releaseFont = false;
-
-    // We don't care whether these identfiers are truely unique. Our only
-    // responsibility is to release fonts when they change.
-    if(record->uniqueId() != uniqueId)
-    {
-        record->setUniqueId(uniqueId);
-        releaseFont = true;
-
-        // We'll need to rebuild the id map too.
-        FontScheme &fn = record->scheme();
-        fn.uniqueIdMapDirty = true;
-    }
-
-    if(releaseFont && record->font)
-    {
-        // The mapped resource is being replaced, so release any existing Font.
-        /// @todo Only release if this Font is bound to only this binding.
-        record->font->glDeinit();
-    }
-
-    return id;
-}
-
 int Fonts::uniqueId(fontid_t id)
 {
     FontScheme::Index::Node *node = d->findDirectoryNodeForBindId(id);
     if(node)
     {
-        return static_cast<FontRecord *>(node->userPointer())->uniqueId();
+        return static_cast<FontManifest *>(node->userPointer())->uniqueId();
     }
     throw Error("Fonts::UniqueId", QString("Passed invalid fontId #%1.").arg(id));
-}
-
-fontid_t Fonts::id(AbstractFont *font)
-{
-    LOG_AS("Fonts::id");
-    if(!font)
-    {
-#ifdef DENG_DEBUG
-        LOG_WARNING("Attempted with invalid reference [%p], returning NOFONTID.") << font;
-#endif
-        return NOFONTID;
-    }
-    return font->primaryBind();
 }
 
 Uri Fonts::composeUri(fontid_t id)
@@ -1133,7 +598,7 @@ Uri Fonts::composeUri(fontid_t id)
 #endif
         return Uri();
     }
-    return static_cast<FontRecord *>(node->userPointer())->composeUri();
+    return static_cast<FontManifest *>(node->userPointer())->composeUri();
 }
 
 Uri Fonts::composeUrn(fontid_t id)
@@ -1152,139 +617,232 @@ Uri Fonts::composeUrn(fontid_t id)
         return Uri();
     }
 
-    FontRecord const *record = static_cast<FontRecord *>(node->userPointer());
-    DENG2_ASSERT(record != 0);
-
-    return Uri("urn", String("%1:%2").arg(record->scheme().name()).arg(record->uniqueId(), 0, 10));
+    return static_cast<FontManifest *>(node->userPointer())->composeUrn();
 }
-
-AbstractFont *Fonts::createFontFromFile(Uri const &uri, char const *resourcePath)
-{
-    LOG_AS("R_CreateFontFromFile");
-
-    if(!resourcePath || !resourcePath[0] || !F_Access(resourcePath))
-    {
-        LOG_WARNING("Invalid Uri or ResourcePath reference, ignoring.");
-        return 0;
-    }
-
-    fontschemeid_t schemeId = parseScheme(uri.schemeCStr());
-    if(!VALID_FONTSCHEMEID(schemeId))
-    {
-        LOG_WARNING("Invalid font scheme in Font Uri \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
-        return 0;
-    }
-
-    int uniqueId = count(schemeId) + 1; // 1-based index.
-    fontid_t fontId = declare(uri, uniqueId/*, resourcePath*/);
-    if(fontId == NOFONTID) return 0; // Invalid URI?
-
-    // Have we already encountered this name?
-    AbstractFont *font = toFont(fontId);
-    if(font)
-    {
-        if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
-        {
-            bmapFont->setFilePath(resourcePath);
-        }
-    }
-    else
-    {
-        // A new font.
-        font = d->createFromFile(fontId, resourcePath);
-        if(!font)
-        {
-            LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
-                << NativePath(uri.asText()).pretty();
-        }
-    }
-    return font;
-}
-
-AbstractFont *Fonts::createFontFromDef(ded_compositefont_t *def)
-{
-    LOG_AS("Fonts::CreateFontFromDef");
-
-    if(!def || !def->uri)
-    {
-        LOG_WARNING("Invalid Definition or Uri reference, ignoring.");
-        return 0;
-    }
-    Uri const &uri = reinterpret_cast<Uri const &>(*def->uri);
-
-    fontschemeid_t schemeId = parseScheme(uri.schemeCStr());
-    if(!VALID_FONTSCHEMEID(schemeId))
-    {
-        LOG_WARNING("Invalid URI scheme in font definition \"%s\", ignoring.")
-            << NativePath(uri.asText()).pretty();
-        return 0;
-    }
-
-    int uniqueId = count(schemeId) + 1; // 1-based index.
-    fontid_t fontId = declare(uri, uniqueId);
-    if(fontId == NOFONTID) return 0; // Invalid URI?
-
-    // Have we already encountered this name?
-    AbstractFont *font = toFont(fontId);
-    if(font)
-    {
-        if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
-        {
-            compFont->rebuildFromDef(def);
-        }
-    }
-    else
-    {
-        // A new font.
-        font = d->createFromDef(fontId, def);
-        if(!font)
-        {
-            LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
-                << NativePath(uri.asText()).pretty();
-        }
-    }
-    return font;
-}
-
-int Fonts::iterate(fontschemeid_t schemeId,
-    int (*callback)(AbstractFont *font, void *context), void *context)
-{
-    if(!callback) return 0;
-
-    Instance::iteratedirectoryworker_params_t parm; zap(parm);
-    parm.inst            = d;
-    parm.definedCallback = callback;
-    parm.context         = context;
-    return d->iterateDirectory(schemeId, Instance::iterateWorker, &parm);
-}
-
-int Fonts::iterateDeclared(fontschemeid_t schemeId,
-    int (*callback)(fontid_t fontId, void *context), void *context)
-{
-    if(!callback) return 0;
-
-    Instance::iteratedirectoryworker_params_t parm; zap(parm);
-    parm.inst             = d;
-    parm.declaredCallback = callback;
-    parm.context          = context;
-    return d->iterateDirectory(schemeId, Instance::iterateWorker, &parm);
-}
-
-static int clearDefinitionLinkWorker(AbstractFont *font, void * /*context*/)
-{
-    if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
-    {
-        compFont->setDefinition(0);
-    }
-    return 0; // Continue iteration.
-}
+#endif
 
 void Fonts::clearDefinitionLinks()
 {
-    if(!size()) return;
-    iterate(FS_ANY, clearDefinitionLinkWorker);
+    foreach(AbstractFont *font, d->fonts)
+    {
+        if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
+        {
+            compFont->setDefinition(0);
+        }
+    }
 }
+
+void Fonts::schemeManifestDefined(Scheme & /*scheme*/, Manifest &manifest)
+{
+    // We want notification when the manifest is derived to produce a material.
+    //manifest.audienceForFontDerived += this;
+
+    // We want notification when the manifest is about to be deleted.
+    manifest.audienceForDeletion += this;
+
+    // Acquire a new unique identifier for the manifest.
+    fontid_t const id = ++d->manifestCount; // 1-based.
+    manifest.setUniqueId(id);
+
+    // Add the new manifest to the id index/map.
+    if(d->manifestCount > d->manifestIdMapSize)
+    {
+        // Allocate more memory.
+        d->manifestIdMapSize += 32;
+        d->manifestIdMap = (Manifest **) M_Realloc(d->manifestIdMap, sizeof(*d->manifestIdMap) * d->manifestIdMapSize);
+    }
+    d->manifestIdMap[d->manifestCount - 1] = &manifest;
+}
+
+#if 0
+void Fonts::manifestFontDerived(Manifest & /*manifest*/, AbstractFont &font)
+{
+    // Include this new font in the scheme-agnostic list of instances.
+    d->fonts.push_back(&font);
+
+    // We want notification when the font is about to be deleted.
+    font.audienceForDeletion += this;
+}
+#endif
+
+void Fonts::manifestBeingDeleted(Manifest const &manifest)
+{
+    d->manifestIdMap[manifest.uniqueId() - 1 /*1-based*/] = 0;
+
+    // There will soon be one fewer manifest in the system.
+    d->manifestCount -= 1;
+}
+
+void Fonts::fontBeingDeleted(AbstractFont const &font)
+{
+    d->fonts.removeOne(const_cast<AbstractFont *>(&font));
+}
+
+Fonts::All const &Fonts::all() const
+{
+    return d->fonts;
+}
+
+static bool pathBeginsWithComparator(FontManifest const &manifest, void *parameters)
+{
+    Path const *path = reinterpret_cast<Path *>(parameters);
+    /// @todo Use PathTree::Node::compare()
+    return manifest.path().toStringRef().beginsWith(*path, Qt::CaseInsensitive);
+}
+
+/**
+ * @todo This logic should be implemented in de::PathTree -ds
+ */
+static int collectManifestsInScheme(FontScheme const &scheme,
+    bool (*predicate)(FontManifest const &manifest, void *parameters), void *parameters,
+    QList<FontManifest *> *storage = 0)
+{
+    int count = 0;
+    PathTreeIterator<FontScheme::Index> iter(scheme.index().leafNodes());
+    while(iter.hasNext())
+    {
+        FontManifest &manifest = iter.next();
+        if(predicate(manifest, parameters))
+        {
+            count += 1;
+            if(storage) // Store mode?
+            {
+                storage->push_back(&manifest);
+            }
+        }
+    }
+    return count;
+}
+
+static QList<FontManifest *> collectManifests(FontScheme *scheme,
+    Path const &path, QList<FontManifest *> *storage = 0)
+{
+    int count = 0;
+
+    if(scheme)
+    {
+        // Consider materials in the specified scheme only.
+        count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
+    }
+    else
+    {
+        // Consider materials in any scheme.
+        foreach(FontScheme *scheme, App_Fonts().allSchemes())
+        {
+            count += collectManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
+        }
+    }
+
+    // Are we done?
+    if(storage) return *storage;
+
+    // Collect and populate.
+    QList<FontManifest *> result;
+    if(count == 0) return result;
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    result.reserve(count);
+#endif
+    return collectManifests(scheme, path, &result);
+}
+
+/**
+ * Decode and then lexicographically compare the two manifest paths,
+ * returning @c true if @a is less than @a b.
+ */
+static bool compareManifestPathsAssending(FontManifest const *a, FontManifest const *b)
+{
+    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
+    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
+    return pathA.compareWithoutCase(pathB) < 0;
+}
+
+/**
+ * @param scheme    Font subspace scheme being printed. Can be @c NULL in
+ *                  which case textures are printed from all schemes.
+ * @param like      Font path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printIndex2(FontScheme *scheme, Path const &like,
+                       Uri::ComposeAsTextFlags composeUriFlags)
+{
+    QList<FontManifest *> found = collectManifests(scheme, like);
+    if(found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known fonts";
+    if(!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" + like.toStringRef() + "\"";
+    heading += ":";
+    Con_FPrintf(CPF_YELLOW, "%s\n", heading.toUtf8().constData());
+
+    // Print the result index key.
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+
+#ifdef __CLIENT__
+    Con_Printf(" %*s: %-*s origin n# uri\n", numFoundDigits, "idx",
+               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
+#else
+    Con_Printf(" %*s: %-*s origin uri\n", numFoundDigits, "idx",
+               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
+#endif
+    Con_PrintRuler();
+
+    // Sort and print the index.
+    qSort(found.begin(), found.end(), compareManifestPathsAssending);
+    int idx = 0;
+    foreach(FontManifest *manifest, found)
+    {
+        String info = String(" %1: ").arg(idx, numFoundDigits)
+                    + manifest->description(composeUriFlags);
+
+        Con_FPrintf(!manifest->hasFont()? CPF_LIGHT : CPF_WHITE, "%s\n", info.toUtf8().constData());
+        idx++;
+    }
+
+    return found.count();
+}
+
+static void printIndex(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+{
+    Fonts &fonts = App_Fonts();
+
+    int printTotal = 0;
+
+    // Collate and print results from all schemes?
+    if(search.scheme().isEmpty() && !search.path().isEmpty())
+    {
+        printTotal = printIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        Con_PrintRuler();
+    }
+    // Print results within only the one scheme?
+    else if(fonts.knownScheme(search.scheme()))
+    {
+        printTotal = printIndex2(&fonts.scheme(search.scheme()), search.path(), flags | de::Uri::OmitScheme);
+        Con_PrintRuler();
+    }
+    else
+    {
+        // Collect and sort results in each scheme separately.
+        foreach(FontScheme *scheme, fonts.allSchemes())
+        {
+            int numPrinted = printIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            if(numPrinted)
+            {
+                Con_PrintRuler();
+                printTotal += numPrinted;
+            }
+        }
+    }
+    Con_Message("Found %i %s.", printTotal, printTotal == 1? "Font" : "Fonts");
+}
+
+#if 0
 
 static int releaseFontTextureWorker(AbstractFont *font, void * /*context*/)
 {
@@ -1309,46 +867,18 @@ void Fonts::releaseSystemTextures()
     releaseTexturesByScheme(FS_SYSTEM);
 }
 
-ddstring_t **Fonts::collectNames(int *rCount)
-{
-    uint count = 0;
-    ddstring_t **list = NULL;
-
-    FontScheme::Index::Node **foundFonts = d->collectDirectoryNodes(FS_ANY, "", &count, 0);
-    if(foundFonts)
-    {
-        qsort(foundFonts, (size_t)count, sizeof(*foundFonts), composeAndCompareDirectoryNodePaths);
-
-        list = (ddstring_t **) M_Malloc(sizeof(*list) * (count+1));
-
-        int idx = 0;
-        for(FontScheme::Index::Node **iter = foundFonts; *iter; ++iter)
-        {
-            FontScheme::Index::Node &node = **iter;
-            QByteArray path = node.path().toUtf8();
-            list[idx++] = Str_Set(Str_NewStd(), path.constData());
-        }
-        list[idx] = NULL; // Terminate.
-    }
-
-    if(rCount) *rCount = count;
-    return list;
-}
-
-#if 0
-
 static void printFontOverview(FontScheme::Index::Node &node, bool printSchemeName)
 {
-    FontRecord *record = (FontRecord *) node.userPointer();
+    FontRecord *manifest = (FontRecord *) node.userPointer();
     fontid_t fontId = findBindIdForDirectoryNode(node);
     int numUidDigits = de::max(3/*uid*/, M_NumDigits(Fonts_Size()));
     de::Uri uri;
-    if(record->font)
+    if(manifest->font)
     {
         uri = App_Fonts().composeUri(fontId);
     }
     ddstring_t const *path = (printSchemeName? uri.asText() : uri.path());
-    AbstractFont *font = record->font;
+    AbstractFont *font = manifest->font;
 
     Con_FPrintf(!font? CPF_LIGHT : CPF_WHITE,
         "%-*s %*u %s", printSchemeName? 22 : 14, F_PrettyPath(Str_Text(path)),

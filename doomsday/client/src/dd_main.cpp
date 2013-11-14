@@ -537,14 +537,6 @@ de::Fonts &App_Fonts()
 }
 #endif
 
-void DD_ClearRuntimeTextureSchemes()
-{
-    App_ResourceSystem().clearRuntimeTextureSchemes();
-#ifdef __CLIENT__
-    GL_PruneTextureVariantSpecifications();
-#endif
-}
-
 void DD_ClearSystemTextureSchemes()
 {
     App_ResourceSystem().clearSystemTextureSchemes();
@@ -1458,10 +1450,11 @@ bool App_ChangeGame(Game &game, bool allowReload)
         R_ShutdownSvgs();
         R_DestroyColorPalettes();
 
+        App_ResourceSystem().clearRuntimeTextureSchemes();
 #ifdef __CLIENT__
-        App_Fonts().clearRuntime();
+        App_ResourceSystem().clearRuntimeFontSchemes();
+        GL_PruneTextureVariantSpecifications();
 #endif
-        DD_ClearRuntimeTextureSchemes();
 
         Sfx_InitLogical();
 
@@ -2601,10 +2594,23 @@ void DD_SetVariable(int ddvalue, void *parm)
 fontschemeid_t DD_ParseFontSchemeName(char const *str)
 {
 #ifdef __CLIENT__
-    return App_Fonts().parseScheme(str);
-#else
-    return FS_INVALID;
+    try
+    {
+        FontScheme &scheme = App_Fonts().scheme(str);
+        if(!scheme.name().compareWithoutCase("System"))
+        {
+            return FS_SYSTEM;
+        }
+        if(!scheme.name().compareWithoutCase("Game"))
+        {
+            return FS_GAME;
+        }
+    }
+    catch(Fonts::UnknownSchemeError const &)
+    {}
 #endif
+    qDebug() << "Unknown font scheme:" << String(str) << ", returning 'FS_INVALID'";
+    return FS_INVALID;
 }
 
 String DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)

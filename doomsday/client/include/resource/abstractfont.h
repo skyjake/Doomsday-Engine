@@ -20,12 +20,16 @@
 #ifndef CLIENT_RESOURCE_ABSTRACTFONT_H
 #define CLIENT_RESOURCE_ABSTRACTFONT_H
 
-#include "dd_types.h" // fontid_t
+#include <de/Observers>
 #include <de/Rectangle>
 #include <de/Vector>
 #include <QFlags>
 
 #define MAX_CHARS               256 // Normal 256 ANSI characters.
+
+namespace de {
+class FontManifest;
+}
 
 /**
  * Abstract font resource.
@@ -35,6 +39,8 @@
 class AbstractFont
 {
 public:
+    DENG2_DEFINE_AUDIENCE(Deletion, void fontBeingDeleted(AbstractFont const &font))
+
     enum Flag {
         Colorize  = 0x1, ///< Can be colored.
         Shadowed  = 0x2  ///< A shaodw is embedded in the font.
@@ -42,15 +48,20 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
-    /// Unique identifier of the primary binding in the owning collection.
-    fontid_t _primaryBind;
+    /// Resource manifest for the font.
+    de::FontManifest &_manifest;
 
     Flags _flags;
 
-    AbstractFont(fontid_t bindId = 0);
-    virtual ~AbstractFont() {}
+    AbstractFont(de::FontManifest &manifest);
+    virtual ~AbstractFont();
 
     DENG2_AS_IS_METHODS()
+
+    /**
+     * Returns the resource manifest for the font.
+     */
+    de::FontManifest &manifest() const;
 
     /// @return  Returns a copy of the font's flags.
     Flags flags() const;
@@ -64,9 +75,6 @@ public:
 
     virtual de::Rectanglei const &glyphPosCoords(uchar ch) = 0;
     virtual de::Rectanglei const &glyphTexCoords(uchar ch) = 0;
-
-    fontid_t primaryBind() const;
-    void setPrimaryBind(fontid_t bindId);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractFont::Flags)

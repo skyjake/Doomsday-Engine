@@ -1112,6 +1112,20 @@ void GL_LoadSystemTextures()
     Rend_ParticleLoadSystemTextures();
 }
 
+void GL_ReleaseFontTexturesByScheme(char const *schemeName)
+{
+    if(!schemeName) return;
+    PathTreeIterator<FontScheme::Index> iter(App_Fonts().scheme(schemeName).index().leafNodes());
+    while(iter.hasNext())
+    {
+        FontManifest &manifest = iter.next();
+        if(manifest.hasFont())
+        {
+            manifest.font().glDeinit();
+        }
+    }
+}
+
 void GL_ReleaseSystemTextures()
 {
     if(novideo || !initedOk) return;
@@ -1130,7 +1144,7 @@ void GL_ReleaseSystemTextures()
 
     GL_ReleaseTexturesByScheme("System");
     Rend_ParticleReleaseSystemTextures();
-    App_Fonts().releaseSystemTextures();
+    GL_ReleaseFontTexturesByScheme("System");
 
     GL_PruneTextureVariantSpecifications();
 }
@@ -1160,7 +1174,7 @@ void GL_ReleaseRuntimeTextures()
     GL_ReleaseTexturesForRawImages();
 
     Rend_ParticleReleaseExtraTextures();
-    App_Fonts().releaseRuntimeTextures();
+    GL_ReleaseFontTexturesByScheme("Game");
 
     GL_PruneTextureVariantSpecifications();
 }

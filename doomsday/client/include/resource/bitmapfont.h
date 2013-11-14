@@ -34,9 +34,9 @@
 class BitmapFont : public AbstractFont
 {
 public:
-    BitmapFont(fontid_t bindId);
+    BitmapFont(de::FontManifest &manifest);
 
-    static BitmapFont *fromFile(fontid_t bindId, de::String resourcePath);
+    static BitmapFont *fromFile(de::FontManifest &manifest, de::String resourcePath);
 
     void setFilePath(de::String resourcePath);
 

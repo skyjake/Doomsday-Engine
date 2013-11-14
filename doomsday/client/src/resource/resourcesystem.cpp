@@ -104,7 +104,10 @@ DENG2_PIMPL(ResourceSystem)
         textures.createScheme("Lightmaps");
         textures.createScheme("Flaremaps");
 
-        /// @todo Initialize font resource schemes here.
+        LOG_VERBOSE("Initializing Font collection...");
+        /// @note Order here defines the ambigious-URI search order.
+        fonts.createScheme("System");
+        fonts.createScheme("Game");
     }
 
     ~Instance()
@@ -970,4 +973,161 @@ Fonts &ResourceSystem::fonts()
 {
     return d->fonts;
 }
+
+void ResourceSystem::clearRuntimeFontSchemes()
+{
+    d->fonts.scheme("Flats").clear();
+}
+
+void ResourceSystem::clearSystemFontSchemes()
+{
+    d->fonts.scheme("System").clear();
+}
+
+AbstractFont *ResourceSystem::createFontFromDef(ded_compositefont_t const &def)
+{
+    LOG_AS("ResourceSystem::createFontFromDef");
+
+    if(!def.uri) return 0;
+    de::Uri const &uri = *reinterpret_cast<de::Uri *>(def.uri);
+
+    try
+    {
+        // Create/retrieve a manifest for the would-be font.
+        FontManifest &manifest = d->fonts.declare(uri);
+
+        if(manifest.hasFont())
+        {
+            if(CompositeBitmapFont *compFont = manifest.font().maybeAs<CompositeBitmapFont>())
+            {
+                /// @todo Do not update fonts here (not enough knowledge). We should
+                /// instead return an invalid reference/signal and force the caller
+                /// to implement the necessary update logic.
+#ifdef DENG_DEBUG
+                LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
+                    << manifest.composeUri();
 #endif
+                compFont->rebuildFromDef(def);
+            }
+
+            return &manifest.font();
+        }
+
+        // A new font.
+        manifest.setFont(CompositeBitmapFont::fromDef(manifest, def));
+        if(manifest.hasFont())
+        {
+            if(verbose >= 1)
+            {
+                LOG_VERBOSE("New font \"%s\"") << manifest.composeUri(id);
+            }
+            return &manifest.font();
+        }
+
+        LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
+            << NativePath(uri.asText()).pretty();
+    }
+    catch(Fonts::UnknownSchemeError const &er)
+    {
+        LOG_WARNING(er.asText() + ". Failed declaring font \"%s\", ignoring.")
+            << NativePath(uri.asText()).pretty();
+    }
+    catch(FontScheme::InvalidPathError const &er)
+    {
+        LOG_WARNING(er.asText() + ". Failed declaring font \"%s\", ignoring.")
+            << NativePath(uri.asText()).pretty();
+    }
+
+    return 0;
+}
+
+AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
+    char const *resourcePath)
+{
+    LOG_AS("ResourceSystem::createFontFromFile");
+
+    if(!resourcePath || !resourcePath[0] ||
+       !App_FileSystem().accessFile(de::Uri::fromNativePath(resourcePath)))
+    {
+        LOG_WARNING("Invalid ResourcePath reference, ignoring.");
+        return 0;
+    }
+
+    fontschemeid_t schemeId = parseScheme(uri.schemeCStr());
+    if(!VALID_FONTSCHEMEID(schemeId))
+    {
+        LOG_WARNING("Invalid font scheme in Font Uri \"%s\", ignoring.")
+            << NativePath(uri.asText()).pretty();
+        return 0;
+    }
+
+    FontScheme &fs = scheme(uri.scheme());
+    int uniqueId = fs.count() + 1; // 1-based index.
+    fontid_t id = fs.declare(uri.path(), uniqueId);
+    if(id == NOFONTID) return 0; // Invalid URI?
+
+    // Have we already encountered this name?
+    AbstractFont *font = toFont(id);
+    if(font)
+    {
+        if(BitmapFont *bmapFont = font->maybeAs<BitmapFont>())
+        {
+            bmapFont->setFilePath(resourcePath);
+        }
+
+        return font;
+    }
+
+    // A new font.
+    FontManifest *manifest = findDirectoryNodeForBindId(id);
+    if(!manifest)
+    {
+        LOG_WARNING("Failed creating Font #%u (invalid id), ignoring.") << id;
+        return 0;
+    }
+
+    if(!resourcePath || !resourcePath[0])
+    {
+        LOG_WARNING("Failed creating Font #%u (resourcePath = NULL), ignoring.") << id;
+        return 0;
+    }
+
+    if(manifest->hasFont())
+    {
+        if(BitmapFont *bmapFont = manifest->font().maybeAs<BitmapFont>())
+        {
+            /// @todo Do not update fonts here (not enough knowledge). We should
+            /// instead return an invalid reference/signal and force the caller
+            /// to implement the necessary update logic.
+#ifdef DENG_DEBUG
+            LOG_DEBUG("A Font with uri \"%s\" already exists, returning existing.")
+                << manifest->composeUri(id);
+#endif
+            bmapFont->setFilePath(resourcePath);
+        }
+
+        return &manifest->font();
+    }
+
+    // A new font.
+    manifest->setFont(BitmapFont::fromFile(id, resourcePath));
+    if(manifest->hasFont())
+    {
+        if(verbose >= 1)
+        {
+            LOG_VERBOSE("New font \"%s\"") << manifest->composeUri(id);
+        }
+
+        return &manifest->font();
+    }
+
+    if(!font)
+    {
+        LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
+            << NativePath(uri.asText()).pretty();
+    }
+
+    return font;
+}
+
+#endif // __CLIENT__

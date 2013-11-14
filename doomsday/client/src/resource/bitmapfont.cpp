@@ -120,7 +120,7 @@ DENG2_PIMPL(BitmapFont)
         int bitmapFormat = inByte(file);
         if(bitmapFormat > 0)
         {
-            de::Uri uri = App_Fonts().composeUri(App_Fonts().id(thisPublic));
+            de::Uri uri = self.manifest().composeUri();
             throw Error("BitmapFont::readFormat0", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 
@@ -151,7 +151,7 @@ DENG2_PIMPL(BitmapFont)
         int bitmapFormat = inByte(file);
         if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
         {
-            de::Uri uri = App_Fonts().composeUri(App_Fonts().id(thisPublic));
+            de::Uri uri = self.manifest().composeUri();
             throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 
@@ -217,14 +217,13 @@ DENG2_PIMPL(BitmapFont)
     }
 };
 
-BitmapFont::BitmapFont(fontid_t bindId) : AbstractFont(), d(new Instance(this))
-{
-    setPrimaryBind(bindId);
-}
+BitmapFont::BitmapFont(FontManifest &manifest)
+    : AbstractFont(manifest), d(new Instance(this))
+{}
 
-BitmapFont *BitmapFont::fromFile(fontid_t bindId, String resourcePath) // static
+BitmapFont *BitmapFont::fromFile(FontManifest &manifest, String resourcePath) // static
 {
-    BitmapFont *font = new BitmapFont(bindId);
+    BitmapFont *font = new BitmapFont(manifest);
 
     font->setFilePath(resourcePath);
 
@@ -296,7 +295,7 @@ void BitmapFont::glInit()
         if(!novideo && !isDedicated)
         {
             LOG_VERBOSE("Uploading GL texture for font \"%s\"...")
-                << App_Fonts().composeUri(App_Fonts().id(this));
+                << manifest().composeUri();
 
             d->texGLName = GL_NewTextureWithParams(DGL_RGBA, d->texDimensions.x, d->texDimensions.y,
                 (uint8_t const *)image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,

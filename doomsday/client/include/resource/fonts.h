@@ -27,14 +27,341 @@
 #include "BitmapFont"
 #include "CompositeBitmapFont"
 #include "uri.hh"
-#include <QList>
+#include <de/Error>
+#include <de/String>
+#include <QMap>
 
 /// Special value used to signify an invalid font id.
 #define NOFONTID                    0
 
 namespace de {
 
-struct FontScheme;
+class Fonts;
+class FontScheme;
+
+/**
+ * FontManifest. Stores metadata for a unique Font in the collection.
+ */
+class FontManifest : public PathTree::Node,
+DENG2_OBSERVES(AbstractFont, Deletion)
+{
+public:
+    /// Required Font instance is missing. @ingroup errors
+    DENG2_ERROR(MissingFontError);
+
+    DENG2_DEFINE_AUDIENCE(Deletion, void manifestBeingDeleted(FontManifest const &manifest))
+    DENG2_DEFINE_AUDIENCE(UniqueIdChanged, void manifestUniqueIdChanged(FontManifest &manifest))
+
+public:
+    /// Scheme-unique identifier chosen by the owner of the collection.
+    int _uniqueId;
+
+    /// The defined font instance (if any).
+    QScopedPointer<AbstractFont>(_font);
+
+public:
+    FontManifest(PathTree::NodeArgs const &args);
+    ~FontManifest();
+
+    /**
+     * Returns the owning scheme of the manifest.
+     */
+    FontScheme &scheme() const;
+
+    /// Convenience method for returning the name of the owning scheme.
+    String const &schemeName() const;
+
+    /**
+     * Compose a URI of the form "scheme:path" for the FontRecord.
+     *
+     * The scheme component of the URI will contain the symbolic name of
+     * the scheme for the FontRecord.
+     *
+     * The path component of the URI will contain the percent-encoded path
+     * of the FontRecord.
+     */
+    inline Uri composeUri(QChar sep = '/') const
+    {
+        return Uri(schemeName(), path(sep));
+    }
+
+    /**
+     * Compose a URN of the form "urn:scheme:uniqueid" for the font
+     * FontRecord.
+     *
+     * The scheme component of the URI will contain the identifier 'urn'.
+     *
+     * The path component of the URI is a string which contains both the
+     * symbolic name of the scheme followed by the unique id of the font
+     * FontRecord, separated with a colon.
+     *
+     * @see uniqueId(), setUniqueId()
+     */
+    inline Uri composeUrn() const
+    {
+        return Uri("urn", String("%1:%2").arg(schemeName()).arg(uniqueId(), 0, 10));
+    }
+
+    /**
+     * Returns a textual description of the manifest.
+     *
+     * @return Human-friendly description the manifest.
+     */
+    String description(Uri::ComposeAsTextFlags uriCompositionFlags = Uri::DefaultComposeAsTextFlags) const;
+
+    /**
+     * Returns the scheme-unique identifier for the manifest.
+     */
+    int uniqueId() const;
+
+    /**
+     * Change the unique identifier property of the manifest.
+     *
+     * @return  @c true iff @a newUniqueId differed to the existing unique
+     *          identifier, which was subsequently changed.
+     */
+    bool setUniqueId(int newUniqueId);
+
+    /**
+     * Returns @c true if a Font is presently associated with the manifest.
+     */
+    bool hasFont() const;
+
+    /**
+     * Returns the logical Font associated with the manifest.
+     */
+    AbstractFont &font() const;
+
+    /**
+     * Change the logical Font associated with the manifest.
+     *
+     * @param newFont  New logical Font to associate.
+     */
+    void setFont(AbstractFont *newFont);
+
+    /**
+     * Clear the logical Font associated with the manifest.
+     *
+     * Same as @c setFont(0)
+     */
+    inline void clearFont() { setFont(0); }
+
+    /// Returns a reference to the application's font collection.
+    static Fonts &fonts();
+
+protected:
+    // Observes AbstractFont::Deletion.
+    void fontBeingDeleted(AbstractFont const &font);
+};
+
+class FontScheme :
+DENG2_OBSERVES(FontManifest, UniqueIdChanged),
+DENG2_OBSERVES(FontManifest, Deletion)
+{
+    typedef class FontManifest Manifest;
+
+public:
+    /// The requested manifests could not be found in the index.
+    DENG2_ERROR(NotFoundError);
+
+    /// The specified path was not valid. @ingroup errors
+    DENG2_ERROR(InvalidPathError);
+
+    DENG2_DEFINE_AUDIENCE(ManifestDefined, void schemeManifestDefined(FontScheme &scheme, Manifest &manifest))
+
+    /// Minimum length of a symbolic name.
+    static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
+
+    /// Manifests in the scheme are placed into a tree.
+    typedef PathTreeT<Manifest> Index;
+
+public: /// @todo make private:
+    /// Symbolic name of the scheme.
+    String _name;
+
+    /// Mappings from paths to manifests.
+    Index _index;
+
+    /// LUT which translates scheme-unique-ids to their associated manifest (if any).
+    /// Index with uniqueId - uniqueIdBase.
+    QList<Manifest *> _uniqueIdLut;
+    bool _uniqueIdLutDirty;
+    int _uniqueIdBase;
+
+public:
+    /**
+     * Construct a new (empty) texture subspace scheme.
+     *
+     * @param symbolicName  Symbolic name of the new subspace scheme. Must
+     *                      have at least @ref min_name_length characters.
+     */
+    FontScheme(String symbolicName);
+    ~FontScheme();
+
+    /// @return  Symbolic name of this scheme (e.g., "System").
+    String const &name() const;
+
+    /// @return  Total number of records in the scheme.
+    inline int size() const { return index().size(); }
+
+    /// @return  Total number of records in the scheme. Same as @ref size().
+    inline int count() const { return size(); }
+
+    /**
+     * Clear all records in the scheme (any GL textures which have been
+     * acquired for associated font textures will be released).
+     */
+    void clear();
+
+    /**
+     * Insert a new manifest at the given @a path into the scheme.
+     * If a manifest already exists at this path, the existing manifest is
+     * returned and the call is a no-op.
+     *
+     * @param path  Virtual path for the resultant manifest.
+     * @return  The (possibly newly created) manifest at @a path.
+     */
+    Manifest &declare(Path const &path);
+
+    /**
+     * Determines if a manifest exists on the given @a path.
+     * @return @c true if a manifest exists; otherwise @a false.
+     */
+    bool has(Path const &path) const;
+
+    /**
+     * Search the scheme for a manifest matching @a path.
+     *
+     * @return  Found manifest.
+     */
+    Manifest const &find(Path const &path) const;
+
+    /// @copydoc find()
+    Manifest &find(Path const &path);
+
+    /**
+     * Search the scheme for a manifest whose associated unique
+     * identifier matches @a uniqueId.
+     *
+     * @return  Found manifest.
+     */
+    Manifest const &findByUniqueId(int uniqueId) const;
+
+    /// @copydoc findByUniqueId()
+    Manifest &findByUniqueId(int uniqueId);
+
+    /**
+     * Provides access to the manifest index for efficient traversal.
+     */
+    Index const &index() const;
+
+protected:
+    // Observes Manifest UniqueIdChanged
+    void manifestUniqueIdChanged(Manifest &manifest);
+
+    // Observes Manifest Deletion.
+    void manifestBeingDeleted(Manifest const &manifest);
+
+private:
+    bool inline uniqueIdInLutRange(int uniqueId) const
+    {
+        return (uniqueId - _uniqueIdBase >= 0 && (uniqueId - _uniqueIdBase) < _uniqueIdLut.size());
+    }
+
+    void findUniqueIdRange(int *minId, int *maxId)
+    {
+        if(!minId && !maxId) return;
+
+        if(minId) *minId = DDMAXINT;
+        if(maxId) *maxId = DDMININT;
+
+        PathTreeIterator<Index> iter(_index.leafNodes());
+        while(iter.hasNext())
+        {
+            Manifest &manifest = iter.next();
+            int const uniqueId = manifest.uniqueId();
+            if(minId && uniqueId < *minId) *minId = uniqueId;
+            if(maxId && uniqueId > *maxId) *maxId = uniqueId;
+        }
+    }
+
+    void deindex(Manifest &manifest)
+    {
+        /// @todo Only destroy the font if this is the last remaining reference.
+        manifest.clearFont();
+
+        unlinkInUniqueIdLut(manifest);
+    }
+
+    /// @pre uniqueIdMap is large enough if initialized!
+    void unlinkInUniqueIdLut(Manifest const &manifest)
+    {
+        DENG2_ASSERT(&manifest.scheme() == this); // sanity check.
+        // If the lut is already considered 'dirty' do not unlink.
+        if(!_uniqueIdLutDirty)
+        {
+            int uniqueId = manifest.uniqueId();
+            DENG2_ASSERT(uniqueIdInLutRange(uniqueId));
+            _uniqueIdLut[uniqueId - _uniqueIdBase] = NOFONTID;
+        }
+    }
+
+    /// @pre uniqueIdLut has been initialized and is large enough!
+    void linkInUniqueIdLut(Manifest &manifest)
+    {
+        DENG2_ASSERT(&manifest.scheme() == this); // sanity check.
+        int uniqueId = manifest.uniqueId();
+        DENG_ASSERT(uniqueIdInLutRange(uniqueId));
+        _uniqueIdLut[uniqueId - _uniqueIdBase] = &manifest;
+    }
+
+    void rebuildUniqueIdLut()
+    {
+        // Is a rebuild necessary?
+        if(!_uniqueIdLutDirty) return;
+
+        // Determine the size of the LUT.
+        int minId, maxId;
+        findUniqueIdRange(&minId, &maxId);
+
+        int lutSize = 0;
+        if(minId > maxId) // None found?
+        {
+            _uniqueIdBase = 0;
+        }
+        else
+        {
+            _uniqueIdBase = minId;
+            lutSize = maxId - minId + 1;
+        }
+
+        // Fill the LUT with initial values.
+#ifdef DENG2_QT_4_7_OR_NEWER
+        _uniqueIdLut.reserve(lutSize);
+#endif
+        int i = 0;
+        for(; i < _uniqueIdLut.size(); ++i)
+        {
+            _uniqueIdLut[i] = 0;
+        }
+        for(; i < lutSize; ++i)
+        {
+            _uniqueIdLut.push_back(0);
+        }
+
+        if(lutSize)
+        {
+            // Populate the LUT.
+            PathTreeIterator<Index> iter(_index.leafNodes());
+            while(iter.hasNext())
+            {
+                linkInUniqueIdLut(iter.next());
+            }
+        }
+
+        _uniqueIdLutDirty = false;
+    }
+};
 
 /**
  * Font resource collection.
@@ -53,65 +380,111 @@ struct FontScheme;
  *
  * Thus there are two general states for a font:
  *
- *   1) Declared but not defined.
- *   2) Declared and defined.
+ *   A) Declared but not defined.
+ *   B) Declared and defined.
  *
  * @ingroup resource
  */
-class Fonts
+class Fonts :
+DENG2_OBSERVES(FontScheme, ManifestDefined),
+DENG2_OBSERVES(FontManifest, Deletion),
+DENG2_OBSERVES(AbstractFont, Deletion)
 {
-public:
-    typedef QList<FontScheme *> Schemes;
+    /// Internal typedefs for brevity/cleanliness.
+    typedef class FontManifest Manifest;
+    typedef class FontScheme Scheme;
 
 public:
+    /// The referenced font/manifest was not found. @ingroup errors
+    DENG2_ERROR(NotFoundError);
+
+    /// An unknown scheme was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSchemeError);
+
+    /// The specified font id was invalid (out of range). @ingroup errors
+    DENG2_ERROR(UnknownIdError);
+
+    typedef QMap<String, Scheme *> Schemes;
+    typedef QList<AbstractFont *> All;
+
+public:
+    /**
+     * Constructs a new font resource collection.
+     */
     Fonts();
 
-    /// Register the console commands, variables, etc..., of this module.
+    /**
+     * Register the console commands, variables, etc..., of this module.
+     */
     static void consoleRegister();
 
-    /// To be called during a definition database reset to clear all links to defs.
+    /**
+     * To be called during a definition database reset to clear all links to defs.
+     */
     void clearDefinitionLinks();
 
     /**
-     * Try to interpret a font scheme identifier from @a str. If found to match
-     * a known scheme name, return the associated identifier. If the reference
-     * @a str is not valid (i.e., NULL or a zero-length string) then the special
-     * identifier @c FS_ANY is returned. Otherwise @c FS_INVALID.
+     * Returns the total number of unique fonts in the collection.
      */
-    fontschemeid_t parseScheme(char const *str);
+    uint count() const { return all().count(); }
 
     /**
-     * Returns the total number of fonts in the collection.
-     */
-    int size();
-
-    /**
-     * Returns the number of fonts in the identified @a schemeId.
-     */
-    int count(fontschemeid_t schemeId);
-
-    /**
-     * Clear all fonts in all schemes (and release any acquired GL-textures).
-     */
-    void clear();
-
-    /**
-     * Clear all fonts flagged 'runtime' (and release any acquired GL-textures).
-     */
-    void clearRuntime();
-
-    /**
-     * Clear all fonts flagged 'system' (and release any acquired GL-textures).
-     */
-    void clearSystem();
-
-    /**
-     * Clear all fonts in the identified scheme(s) (and release any acquired GL-textures).
+     * Returns the total number of unique fonts in the collection.
      *
-     * @param schemeId  Unique identifier of the scheme to process
-     *     or @c FS_ANY to clear all fonts in any scheme.
+     * Same as size()
      */
-    void clearScheme(fontschemeid_t schemeId);
+    inline uint size() const { return count(); }
+
+    /**
+     * Determines if a manifest exists for a declared font on @a path.
+     * @return @c true, if a manifest exists; otherwise @a false.
+     */
+    bool has(Uri const &path) const;
+
+    /**
+     * Find the manifest for a declared font.
+     *
+     * @param search  The search term.
+     * @return Found unique identifier.
+     */
+    Manifest &find(Uri const &search) const;
+
+    /**
+     * Lookup a manifest by unique identifier.
+     *
+     * @param id  Unique identifier for the manifest to be looked up. Note
+     *            that @c 0 is not a valid identifier.
+     *
+     * @return  The associated manifest.
+     */
+    Manifest &toManifest(fontid_t id) const;
+
+    /**
+     * Lookup a subspace scheme by symbolic name.
+     *
+     * @param name  Symbolic name of the scheme.
+     * @return  Scheme associated with @a name.
+     *
+     * @throws UnknownSchemeError If @a name is unknown.
+     */
+    Scheme &scheme(String name) const;
+
+    /**
+     * Create a new subspace scheme.
+     *
+     * @note Scheme creation order defines the order in which schemes are tried
+     *       by @ref find() when presented with an ambiguous URI (i.e., those
+     *       without a scheme).
+     *
+     * @param name      Unique symbolic name of the new scheme. Must be at
+     *                  least @c Scheme::min_name_length characters long.
+     */
+    Scheme &createScheme(String name);
+
+    /**
+     * Returns @c true iff a Scheme exists with the symbolic @a name.
+     */
+    bool knownScheme(String name) const;
 
     /**
      * Returns a list of all the schemes for efficient traversal.
@@ -124,114 +497,50 @@ public:
     inline int schemeCount() const { return allSchemes().count(); }
 
     /**
-     * Returns the unique identifier of the primary name for @a font else @c NOFONTID.
-     */
-    fontid_t id(AbstractFont *font);
-
-    /**
-     * Returns the Font associated with unique identifier @a fontId else @c NULL.
-     */
-    AbstractFont *toFont(fontid_t fontId);
-
-    /**
-     * Returns the Font associated with the scheme-unique identifier @a index else @c NOFONTID.
-     */
-    fontid_t fontForUniqueId(fontschemeid_t schemeId, int uniqueId);
-
-    /**
-     * Returns the scheme-unique identfier associated with the identified @a fontId.
-     */
-    int uniqueId(fontid_t fontId);
-
-    /**
-     * Returns the unique identifier of the scheme this name is in.
-     */
-    fontschemeid_t scheme(fontid_t fontId);
-
-    /**
-     * Composes the URI to this font. Must be destroyed with Uri_Delete().
-     */
-    Uri composeUri(fontid_t fontid);
-
-    /**
-     * Compose the unique URN to this font. Must be destroyed with Uri_Delete().
-     */
-    Uri composeUrn(fontid_t fontId);
-
-    /**
-     * Search the Fonts collection for a font associated with @a uri.
+     * Clear all fonts in all schemes.
      *
-     * @param uri    Either a path or URN to the font.
-     * @param quiet  @c true: suppress the console message that is printed if the
-     *               Uri cannot be found.
-     *
-     * @return  Unique identifier of the found texture else @c NOFONTID.
+     * @see allSchemes(), Scheme::clear().
      */
-    fontid_t resolveUri(Uri const &uri, boolean quiet);
+    inline void clearAllSchemes()
+    {
+        foreach(Scheme *scheme, allSchemes())
+        {
+            scheme->clear();
+        }
+    }
 
     /**
-     * Declare a font in the collection. If a font with the specified @a uri
-     * already exists, its unique identifier is returned..
+     * Declare a font in the collection, producing a manifest for a logical
+     * AbstractFont which will be defined later. If a manifest with the specified
+     * @a uri already exists the existing manifest will be returned.
      *
-     * @param uri       Uri representing a path to the font in the virtual hierarchy.
-     * @param uniqueId  Scheme-unique identifier to associate with the font.
+     * @param uri  Uri representing a path to the font in the virtual hierarchy.
      *
-     * @return  Unique identifier for this font unless @a uri is invalid, in
-     * which case @c NOFONTID is returned.
+     * @return  Manifest for this URI.
      */
-    fontid_t declare(Uri const &uri, int uniqueId);
-
-    AbstractFont *createFontFromFile(Uri const &uri, char const *resourcePath);
-
-    AbstractFont *createFontFromDef(ded_compositefont_t *def);
+    inline Manifest &declare(Uri const &uri)
+    {
+        return scheme(uri.scheme()).declare(uri.path());
+    }
 
     /**
-     * Iterate over defined Fonts in the collection making a callback for each
-     * visited. Iteration ends when all fonts have been visited or a callback
-     * returns non-zero.
-     *
-     * @param schemeId  If a valid scheme identifier, only consider fonts in this
-     *                  scheme, otherwise visit all fonts.
-     * @param callback  Callback function ptr.
-     * @param context   Passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly.
+     * Returns a list of all the unique texture instances in the collection,
+     * from all schemes.
      */
-    int iterate(fontschemeid_t schemeId, int (*callback)(AbstractFont *font, void *context),
-                void *context = 0);
+    All const &all() const;
 
-    /**
-     * Iterate over declared fonts in the collection making a callback for each
-     * visited. Iteration ends when all fonts have been visited or a callback
-     * returns non-zero.
-     *
-     * @param schemeId  If a valid scheme identifier, only consider fonts in this
-     *                  scheme, otherwise visit all fonts.
-     * @param callback  Callback function ptr.
-     * @param context   Passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly.
-     */
-    int iterateDeclared(fontschemeid_t schemeId, int (*callback)(fontid_t textureId, void *context),
-                        void *context = 0);
+protected:
+    // Observes Scheme ManifestDefined.
+    void schemeManifestDefined(Scheme &scheme, Manifest &manifest);
 
-    /**
-     * To be called during engine/gl-subsystem reset to release all resources
-     * acquired from the GL subsystem (v-buffers, d-lists, textures, etc...)
-     * for fonts.
-     *
-     * @note Called automatically prior to module shutdown.
-     * @todo Define new texture schemes for font textures and refactor away.
-     */
-    void releaseRuntimeTextures();
-    void releaseSystemTextures();
+    // Observes Manifest Deletion.
+    void manifestBeingDeleted(Manifest const &manifest);
 
-    void releaseTexturesByScheme(fontschemeid_t schemeId);
+    // Observes Manifest FontDerived.
+    //void manifestFontDerived(Manifest &manifest, AbstractFont &font);
 
-    inline void releaseAllTextures() { releaseTexturesByScheme(FS_ANY); }
-
-    /// @return  List of collected font names.
-    ddstring_t **collectNames(int *count);
+    // Observes AbstractFont Deletion.
+    void fontBeingDeleted(AbstractFont const &font);
 
 private:
     DENG2_PRIVATE(d)
