@@ -90,8 +90,8 @@ DENG2_PIMPL(BitmapFont)
     {
         DENG2_ASSERT(file != 0);
 
-        self._flags |= FF_COLORIZE;
-        self._flags &= ~FF_SHADOWED;
+        self._flags |= AbstractFont::Colorize;
+        self._flags &= ~AbstractFont::Shadowed;
         texMargin = Vector2ui(0, 0);
 
         // Load in the data.
@@ -155,7 +155,7 @@ DENG2_PIMPL(BitmapFont)
             throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 
-        self._flags |= FF_COLORIZE|FF_SHADOWED;
+        self._flags |= AbstractFont::Colorize | AbstractFont::Shadowed;
 
         // Load in the data.
         texDimensions.x = inShort(file);

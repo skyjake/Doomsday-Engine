@@ -537,7 +537,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
     boolean noShadow  = (sat->shadowStrength  <= 0 || (textFlags & DTF_NO_SHADOW)  != 0 ||
-                         (font->flags() & FF_SHADOWED) != 0);
+                         font->flags().testFlag(AbstractFont::Shadowed));
     boolean noCharacter = (textFlags & DTF_NO_CHARACTER) != 0;
     float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
     float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
@@ -777,25 +777,12 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
         GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
                                 gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
 
-        Vector2ui const &texMargin = bmapFont->textureMargin();
-        if(texMargin.x)
-        {
-            geometry.topLeft.x -= texMargin.x;
-            geometry.setWidth(geometry.width() + texMargin.x * 2);
-        }
-        if(texMargin.y)
-        {
-            geometry.topLeft.y -= texMargin.y;
-            geometry.setHeight(geometry.height() + texMargin.y * 2);
-        }
+        geometry = geometry.expanded(bmapFont->textureMargin().toVector2i());
     }
     else if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
     {
         GL_BindTexture(compFont->glyphTexture(ch));
-        if(uint border = compFont->glyphTextureBorder(ch))
-        {
-            geometry = geometry.expanded(border);
-        }
+        geometry = geometry.expanded(compFont->glyphTextureBorder(ch));
     }
 
     Vector2i coords[4] = { font->glyphTexCoords(ch).topLeft,

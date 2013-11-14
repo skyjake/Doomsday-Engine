@@ -43,7 +43,7 @@ void AbstractFont::setPrimaryBind(fontid_t bindId)
     _primaryBind = bindId;
 }
 
-int AbstractFont::flags() const
+AbstractFont::Flags AbstractFont::flags() const
 {
     return _flags;
 }

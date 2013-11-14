@@ -51,7 +51,7 @@ DENG2_PIMPL(CompositeBitmapFont)
     {
         zap(glyphs);
         zap(missingGlyph);
-        self._flags |= FF_COLORIZE;
+        self._flags |= AbstractFont::Colorize;
     }
 
     ~Instance()

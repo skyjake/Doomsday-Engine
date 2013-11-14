@@ -23,17 +23,9 @@
 #include "dd_types.h" // fontid_t
 #include <de/Rectangle>
 #include <de/Vector>
+#include <QFlags>
 
 #define MAX_CHARS               256 // Normal 256 ANSI characters.
-
-/**
- * @defgroup fontFlags  Font Flags
- * @ingroup flags
- */
-/*@{*/
-#define FF_COLORIZE             0x1 /// Font can be colored.
-#define FF_SHADOWED             0x2 /// Font has an embedded shadow.
-/*@}*/
 
 /**
  * Abstract font resource.
@@ -43,19 +35,25 @@
 class AbstractFont
 {
 public:
+    enum Flag {
+        Colorize  = 0x1, ///< Can be colored.
+        Shadowed  = 0x2  ///< A shaodw is embedded in the font.
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+public:
     /// Unique identifier of the primary binding in the owning collection.
     fontid_t _primaryBind;
 
-    /// @ref fontFlags.
-    int _flags;
+    Flags _flags;
 
     AbstractFont(fontid_t bindId = 0);
     virtual ~AbstractFont() {}
 
     DENG2_AS_IS_METHODS()
 
-    /// @return  @ref fontFlags
-    int flags() const;
+    /// @return  Returns a copy of the font's flags.
+    Flags flags() const;
 
     virtual int ascent();
     virtual int descent();
@@ -70,5 +68,7 @@ public:
     fontid_t primaryBind() const;
     void setPrimaryBind(fontid_t bindId);
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractFont::Flags)
 
 #endif // CLIENT_RESOURCE_ABSTRACTFONT_H

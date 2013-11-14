@@ -27,11 +27,14 @@
 #include "BitmapFont"
 #include "CompositeBitmapFont"
 #include "uri.hh"
+#include <QList>
 
 /// Special value used to signify an invalid font id.
 #define NOFONTID                    0
 
 namespace de {
+
+struct FontScheme;
 
 /**
  * Font resource collection.
@@ -58,6 +61,9 @@ namespace de {
 class Fonts
 {
 public:
+    typedef QList<FontScheme *> Schemes;
+
+public:
     Fonts();
 
     /// Register the console commands, variables, etc..., of this module.
@@ -75,20 +81,14 @@ public:
     fontschemeid_t parseScheme(char const *str);
 
     /**
-     * Returns the symbolic name associated with the unique @a schemeId; otherwise
-     * a zero-length string.
-     */
-    String const &schemeName(fontschemeid_t schemeId);
-
-    /**
      * Returns the total number of fonts in the collection.
      */
-    uint size();
+    int size();
 
     /**
      * Returns the number of fonts in the identified @a schemeId.
      */
-    uint count(fontschemeid_t schemeId);
+    int count(fontschemeid_t schemeId);
 
     /**
      * Clear all fonts in all schemes (and release any acquired GL-textures).
@@ -112,6 +112,16 @@ public:
      *     or @c FS_ANY to clear all fonts in any scheme.
      */
     void clearScheme(fontschemeid_t schemeId);
+
+    /**
+     * Returns a list of all the schemes for efficient traversal.
+     */
+    Schemes const &allSchemes() const;
+
+    /**
+     * Returns the total number of manifest schemes in the collection.
+     */
+    inline int schemeCount() const { return allSchemes().count(); }
 
     /**
      * Returns the unique identifier of the primary name for @a font else @c NOFONTID.
