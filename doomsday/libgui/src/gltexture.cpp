@@ -39,6 +39,7 @@ using namespace gl;
 DENG2_PIMPL(GLTexture)
 {
     Size size;
+    Image::Format format;
     GLuint name;
     GLenum texTarget;
     Filter minFilter;
@@ -49,6 +50,7 @@ DENG2_PIMPL(GLTexture)
 
     Instance(Public *i)
         : Base(i),
+          format(Image::Unknown),
           name(0),
           texTarget(GL_TEXTURE_2D),
           minFilter(Linear), magFilter(Linear), mipFilter(MipNone),
@@ -282,6 +284,7 @@ void GLTexture::setUndefinedImage(GLTexture::Size const &size, Image::Format for
 {
     d->texTarget = GL_TEXTURE_2D;
     d->size = size;
+    d->format = format;
 
     d->alloc();
     d->glBind();
@@ -296,6 +299,7 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
     d->size = size;
+    d->format = format;
 
     d->alloc();
     d->glBind();
@@ -309,6 +313,7 @@ void GLTexture::setImage(Image const &image, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
     d->size = image.size();
+    d->format = image.format();
 
     d->alloc();
     d->glBind();
@@ -327,6 +332,7 @@ void GLTexture::setImage(CubeFace face, Image const &image, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
     d->size = image.size();
+    d->format = image.format();
 
     d->alloc();
     d->glBind();
@@ -417,6 +423,11 @@ void GLTexture::glBindToUnit(int unit) const
     {
         d->glUpdateParamsOfBoundTexture();
     }
+}
+
+Image::Format GLTexture::imageFormat() const
+{
+    return d->format;
 }
 
 GLTexture::Size GLTexture::maximumSize()

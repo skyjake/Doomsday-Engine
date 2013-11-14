@@ -135,6 +135,15 @@ public:
     void clear(Flags const &attachments);
 
     /**
+     * Resizes the target's attached buffers and/or textures to a new size.
+     * Nothing happens if the provided size is the same as the current size. If
+     * resizing occurs, the contents of all buffers/textures become undefined.
+     *
+     * @param size  New size for buffers and/or textures.
+     */
+    void resize(Size const &size);
+
+    /**
      * Sets the subregion inside the render target where scissor and viewport
      * will be constrained to. Scissor and viewport can still be defined as if
      * the entire window was in use; the target window only applies an offset

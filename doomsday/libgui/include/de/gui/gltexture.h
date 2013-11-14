@@ -213,6 +213,12 @@ public:
 
     void glBindToUnit(int unit) const;
 
+    /**
+     * Returns the image format that was specified when image content was put
+     * into the texture (with setImage() or setSubImage()).
+     */
+    Image::Format imageFormat() const;
+
 public:
     /**
      * Determines the maximum supported texture size.

@@ -122,35 +122,48 @@ DENG2_OBSERVES(Asset, Deletion)
 
         if(size != nullSize) // A non-default target: size must be specified.
         {
-            // Fill in all the other requested attachments.
-            if(flags.testFlag(Color) && !textureAttachment.testFlag(Color))
-            {
-                /// @todo Note that for GLES, GL_RGBA8 is not supported (without an extension).
-                attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
-            }
+            allocRenderBuffers();
+        }
 
-            if(flags.testFlag(DepthStencil) && (!texture || textureAttachment == Color))
+        validate();
+    }
+
+    void allocRenderBuffers()
+    {
+        DENG2_ASSERT(size != nullSize);
+
+        // Fill in all the other requested attachments.
+        if(flags.testFlag(Color) && !textureAttachment.testFlag(Color))
+        {
+            /// @todo Note that for GLES, GL_RGBA8 is not supported (without an extension).
+            attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
+        }
+
+        if(flags.testFlag(DepthStencil) && (!texture || textureAttachment == Color))
+        {
+            // We can use a combined depth/stencil buffer.
+            attachRenderbuffer(DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
+        }
+        else
+        {
+            // Separate depth and stencil, then.
+            if(flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
             {
-                // We can use a combined depth/stencil buffer.
-                attachRenderbuffer(DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
+                attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT16, GL_DEPTH_ATTACHMENT);
             }
-            else
+            if(flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
             {
-                // Separate depth and stencil, then.
-                if(flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
-                {
-                    attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT16, GL_DEPTH_ATTACHMENT);
-                }
-                if(flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
-                {
-                    attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX8, GL_STENCIL_ATTACHMENT);
-                }
+                attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX8, GL_STENCIL_ATTACHMENT);
             }
         }
 
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
 
-        validate();
+    void releaseRenderBuffers()
+    {
+        glDeleteRenderbuffers(MAX_BUFFERS, renderBufs);
+        zap(renderBufs);
     }
 
     void release()
@@ -158,14 +171,20 @@ DENG2_OBSERVES(Asset, Deletion)
         self.setState(NotReady);
         if(fbo)
         {
+            releaseRenderBuffers();
             glDeleteFramebuffers(1, &fbo);
-            glDeleteRenderbuffers(MAX_BUFFERS, renderBufs);
-
             fbo = 0;
-            zap(renderBufs);
         }
         texture = 0;
         size = Vector2ui(0, 0);
+    }
+
+    void resizeRenderBuffers(Size const &newSize)
+    {
+        size = newSize;
+
+        releaseRenderBuffers();
+        allocRenderBuffers();
     }
 
     void validate()
@@ -279,6 +298,20 @@ void GLTarget::clear(Flags const &attachments)
             (which & Depth?   GL_DEPTH_BUFFER_BIT   : 0) |
             (which & Stencil? GL_STENCIL_BUFFER_BIT : 0));
 
+    GLState::top().target().glBind();
+}
+
+void GLTarget::resize(Size const &size)
+{
+    // The default target resizes itself automatically with the canvas.
+    if(d->size == size || d->isDefault()) return;
+
+    glBind();
+    if(d->texture)
+    {
+        d->texture->setUndefinedImage(size, d->texture->imageFormat());
+    }
+    d->resizeRenderBuffers(size);
     GLState::top().target().glBind();
 }
 

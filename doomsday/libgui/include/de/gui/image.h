@@ -47,6 +47,7 @@ public:
      */
     enum Format
     {
+        Unknown = -1,
         UseQImageFormat = 0,    ///< May not be GL friendly.
 
         Luminance_8 = 1,
