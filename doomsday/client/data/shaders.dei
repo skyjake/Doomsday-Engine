@@ -32,6 +32,26 @@ group generic {
             }"
     }
     
+    shader texture {
+        vertex = "
+            uniform highp mat4 uMvpMatrix;
+            attribute highp vec4 aVertex;
+            attribute highp vec2 aUV;
+            varying highp vec2 vUV;
+        
+            void main(void) {
+                gl_Position = uMvpMatrix * aVertex;
+                vUV = aUV;
+            }"
+        fragment = "
+            uniform sampler2D uTex;
+            varying highp vec2 vUV;
+
+            void main(void) {
+                gl_FragColor = texture2D(uTex, vUV);
+            }"        
+    }
+    
     group textured {    
         # Simple shader with one texture plus a color per vertex. Uses a
         # combined model-view-projection matrix.

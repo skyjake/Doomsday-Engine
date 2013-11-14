@@ -21,10 +21,15 @@
 #include "render/viewports.h"
 #include "render/fx/colorfilter.h"
 #include "render/fx/lensflares.h"
+#include "render/fx/postprocessing.h"
 #include "render/fx/vignette.h"
+
+#include "ui/clientwindow.h"
 
 #include <de/libdeng2.h>
 #include <de/Rectangle>
+#include <de/Drawable>
+#include <de/GLTarget>
 #include <QList>
 
 using namespace de;
@@ -47,9 +52,12 @@ struct ConsoleEffectStack
 };
 
 static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
+static fx::PostProcessing postProc;
 
 void LensFx_Init()
 {
+    postProc.glInit();
+
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         ConsoleEffectStack &stack = fxConsole[i];
@@ -66,6 +74,8 @@ void LensFx_Init()
 
 void LensFx_Shutdown()
 {
+    postProc.glDeinit();
+
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         foreach(ConsoleEffect *effect, fxConsole[i].effects)
@@ -80,6 +90,8 @@ void LensFx_Shutdown()
 void LensFx_BeginFrame(int playerNum)
 {
     fxFramePlayerNum = playerNum;
+
+    postProc.begin();
 }
 
 void LensFx_EndFrame()
@@ -95,4 +107,7 @@ void LensFx_EndFrame()
     {
         effect->draw(viewRect);
     }
+
+    postProc.end();
+    postProc.drawResult();
 }

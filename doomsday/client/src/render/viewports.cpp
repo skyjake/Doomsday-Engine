@@ -1100,6 +1100,41 @@ static void restoreDefaultGLState()
     DGL_Enable(DGL_POINT_SMOOTH);
 }
 
+static void clearViewPorts()
+{
+    GLbitfield bits = GL_DEPTH_BUFFER_BIT;
+
+    if(!devRendSkyMode)
+        bits |= GL_STENCIL_BUFFER_BIT;
+
+    if(freezeRLs)
+    {
+        bits |= GL_COLOR_BUFFER_BIT;
+    }
+    else
+    {
+        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            player_t *plr = &ddPlayers[i];
+
+            if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
+                continue;
+
+            if(P_IsInVoid(plr))
+            {
+                bits |= GL_COLOR_BUFFER_BIT;
+                break;
+            }
+        }
+    }
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // This is all the clearing we'll do.
+    glClear(bits);
+}
+
 void R_RenderViewPorts(ui::ViewPortLayer layer)
 {
     int oldDisplay = displayPlayer;
@@ -1107,37 +1142,7 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
     // First clear the viewport.
     if(layer == ui::Player3DViewLayer)
     {
-        GLbitfield bits = GL_DEPTH_BUFFER_BIT;
-
-        if(!devRendSkyMode)
-            bits |= GL_STENCIL_BUFFER_BIT;
-
-        if(freezeRLs)
-        {
-            bits |= GL_COLOR_BUFFER_BIT;
-        }
-        else
-        {
-            for(int i = 0; i < DDMAXPLAYERS; ++i)
-            {
-                player_t *plr = &ddPlayers[i];
-
-                if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
-                    continue;
-
-                if(P_IsInVoid(plr))
-                {
-                    bits |= GL_COLOR_BUFFER_BIT;
-                    break;
-                }
-            }
-        }
-
-        DENG_ASSERT_IN_MAIN_THREAD();
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-        // This is all the clearing we'll do.
-        glClear(bits);
+        clearViewPorts();
     }
 
     // Draw a view for all players with a visible viewport.
