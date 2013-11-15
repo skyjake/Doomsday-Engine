@@ -52,10 +52,10 @@ struct Glyph
 
 DENG2_PIMPL(BitmapFont)
 {
-    String filePath;         ///< The "archived" version of this font (if any).
-    GLuint texGLName;        ///< GL-texture name.
-    de::Vector2ui texMargin; ///< Margin in pixels.
-    Vector2i texDimensions;  ///< Texture dimensions in pixels.
+    String filePath;        ///< The "archived" version of this font (if any).
+    GLuint texGLName;       ///< GL-texture name.
+    Vector2ui texMargin;    ///< Margin in pixels.
+    Vector2i texDimensions; ///< Texture dimensions in pixels.
     bool needGLInit;
 
     /// Font metrics.
@@ -108,7 +108,7 @@ DENG2_PIMPL(BitmapFont)
             ushort w = inByte(file);
             ushort h = inByte(file);
 
-            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - texMargin * 2);
+            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h));
             ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
 
             avgSize += ch->posCoords.size();
@@ -172,13 +172,15 @@ DENG2_PIMPL(BitmapFont)
         for(int i = 0; i < glyphCount; ++i)
         {
             ushort code = inShort(file);
-            ushort x    = inShort(file);
-            ushort y    = inShort(file);
-            ushort w    = inShort(file);
-            ushort h    = inShort(file);
+            DENG2_ASSERT(code < MAX_CHARS);
             Glyph *ch = &glyphs[code];
 
-            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), texMargin * 2 - Vector2ui(w, h));
+            ushort x = inShort(file);
+            ushort y = inShort(file);
+            ushort w = inShort(file);
+            ushort h = inShort(file);
+
+            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - texMargin * 2);
             ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
 
             avgSize += ch->posCoords.size();
@@ -265,6 +267,8 @@ Rectanglei const &BitmapFont::glyphTexCoords(uchar ch)
 
 void BitmapFont::glInit()
 {
+    LOG_AS("BitmapFont");
+
     if(!d->needGLInit) return;
     if(novideo || isDedicated || BusyMode_Active()) return;
 
@@ -315,6 +319,8 @@ void BitmapFont::glInit()
 
 void BitmapFont::glDeinit()
 {
+    LOG_AS("BitmapFont");
+
     if(novideo || isDedicated) return;
 
     d->needGLInit = true;
