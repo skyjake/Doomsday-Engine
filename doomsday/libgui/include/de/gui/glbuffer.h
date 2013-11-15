@@ -131,6 +131,32 @@ struct LIBGUI_PUBLIC Vertex3TexRgba
 };
 
 /**
+ * Vertex format with 3D coordinates, two sets of texture coordinates, and an
+ * RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3Tex2Rgba
+{
+    Vector3f pos;
+    Vector2f texCoord[2];
+    Vector4f rgba;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(4)
+};
+
+/**
+ * Vertex format with 3D coordinates, three sets of texture coordinates, and an
+ * RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3Tex3Rgba
+{
+    Vector3f pos;
+    Vector2f texCoord[3];
+    Vector4f rgba;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(5)
+};
+
+/**
  * Vertex format with 3D coordinates, normal vector, one set of texture
  * coordinates, and an RGBA color.
  */
