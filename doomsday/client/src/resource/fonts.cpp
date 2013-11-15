@@ -23,10 +23,6 @@
 
 #include "de_console.h"
 #include "dd_main.h" // App_Fonts(), verbose
-#ifdef __CLIENT__
-#  include "BitmapFont"
-#  include "CompositeBitmapFont"
-#endif
 #include <de/memory.h>
 #include <QList>
 #include <QtAlgorithms>
