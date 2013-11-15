@@ -79,11 +79,9 @@ static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
 D_CMD(PostFx)
 {
-    DENG_UNUSED(argc);
-
     int console = String(argv[1]).toInt();
     String const shader = argv[2];
-    TimeDelta const span = String(argv[3]).toFloat();
+    TimeDelta const span = (argc == 4? String(argv[3]).toFloat() : 0);
 
     if(console < 0 || console >= DDMAXPLAYERS)
     {
@@ -107,6 +105,7 @@ D_CMD(PostFx)
 
 void LensFx_Register()
 {
+    C_CMD("postfx", "is", PostFx);
     C_CMD("postfx", "isf", PostFx);
 }
 

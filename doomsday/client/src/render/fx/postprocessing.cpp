@@ -81,6 +81,7 @@ DENG2_PIMPL(PostProcessing)
         try
         {
             root().shaders().build(frame.program(), "fx.post." + name);
+            LOG_VERBOSE("Post-processing shader \"fx.post.%s\"") << name;
             return true;
         }
         catch(Error const &er)
@@ -94,7 +95,7 @@ DENG2_PIMPL(PostProcessing)
     /// Determines if the post-processing shader will be applied.
     bool isActive() const
     {
-        return fade > 0;
+        return !fade.done() || fade > 0 || !queue.isEmpty();
     }
 
     void glInit()
@@ -121,6 +122,7 @@ DENG2_PIMPL(PostProcessing)
 
     void glDeinit()
     {
+        LOG_DEBUG("Releasing GL resources");
         texture.clear();
         target.reset();
     }
@@ -151,6 +153,7 @@ DENG2_PIMPL(PostProcessing)
                 }
             }
             fade.setValue(entry.fade, entry.span);
+            LOG_DEBUG("%s %s") << entry.shaderName << fade.asText();
         }
     }
 
@@ -159,6 +162,7 @@ DENG2_PIMPL(PostProcessing)
         if(!isActive()) return;
 
         update();
+
         target->clear(GLTarget::ColorDepthStencil);
         GLState::push().setTarget(*target).apply();
     }
@@ -232,6 +236,8 @@ void PostProcessing::glInit()
 
 void PostProcessing::glDeinit()
 {
+    LOG_AS("fx::PostProcessing");
+
     d->glDeinit();
     ConsoleEffect::glDeinit();
 }
@@ -253,7 +259,6 @@ void PostProcessing::endFrame()
 
     if(!d->isActive() && isInited())
     {
-        LOG_DEBUG("Releasing GL resources");
         glDeinit();
     }
 
