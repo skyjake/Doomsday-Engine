@@ -73,16 +73,21 @@ DENG2_OBSERVES(GLUniform, Deletion)
         }
     }
 
-    void release()
+    void releaseButRetainBindings()
     {
         self.setState(NotReady);
         detachAllShaders();
-        unbindAll();
         if(name)
         {
             glDeleteProgram(name);
             name = 0;
         }
+    }
+
+    void release()
+    {
+        unbindAll();
+        releaseButRetainBindings();
     }
 
     void attach(GLShader const *shader)
@@ -187,7 +192,7 @@ DENG2_OBSERVES(GLUniform, Deletion)
 
     void markAllBoundUniformsChanged()
     {
-        foreach(GLUniform const *u, changed)
+        foreach(GLUniform const *u, bound)
         {
             changed.insert(u);
         }
@@ -265,7 +270,7 @@ GLProgram &GLProgram::build(GLShader const *vertexShader, GLShader const *fragme
     DENG2_ASSERT(fragmentShader->isReady());
     DENG2_ASSERT(fragmentShader->type() == GLShader::Fragment);
 
-    d->detachAllShaders();
+    d->releaseButRetainBindings();
     d->attach(vertexShader);
     d->attach(fragmentShader);
     d->bindVertexAttribs();    
