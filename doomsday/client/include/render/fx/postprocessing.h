@@ -20,6 +20,7 @@
 #define DENG_CLIENT_FX_POSTPROCESSING_H
 
 #include "render/consoleeffect.h"
+#include <de/Time>
 
 namespace fx {
 
@@ -33,11 +34,17 @@ class PostProcessing : public ConsoleEffect
 public:
     PostProcessing(int console);
 
+    bool isActive() const;
+
+    void fadeInShader(de::String const &fxPostShader, de::TimeDelta const &span);
+    void fadeOut(de::TimeDelta const &span);
+
     void glInit();
     void glDeinit();
 
     void beginFrame();
     void draw();
+    void endFrame();
 
 private:
     DENG2_PRIVATE(d)
