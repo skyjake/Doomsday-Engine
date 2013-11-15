@@ -30,7 +30,15 @@
 #include <de/System>
 
 /**
- * Logical resources; materials, packages, textures, etc... @ingroup resource
+ * Logical resources; materials, packages, textures, etc...
+ *
+ * @em Runtime fonts are not loaded until precached or actually needed. They
+ * may be cleared, in which case they will be reloaded when needed.
+ *
+ * @em System fonts are loaded at startup and remain in memory all the time.
+ * After clearing they must be manually reloaded.
+ *
+ * @ingroup resource
  */
 class ResourceSystem : public de::System
 {

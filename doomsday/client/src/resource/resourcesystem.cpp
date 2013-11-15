@@ -109,7 +109,7 @@ DENG2_PIMPL(ResourceSystem)
         textures.createScheme("Flaremaps");
 
 #ifdef __CLIENT__
-        LOG_VERBOSE("Initializing Font collection...");
+        LOG_MSG("Initializing Font collection...");
         /// @note Order here defines the ambigious-URI search order.
         fonts.createScheme("System");
         fonts.createScheme("Game");

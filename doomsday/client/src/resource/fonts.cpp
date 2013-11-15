@@ -207,7 +207,7 @@ Fonts::Manifest &Fonts::toManifest(fontid_t id) const
         }
 
         // Internal bookeeping error.
-        DENG_ASSERT(0);
+        DENG2_ASSERT(false);
     }
 
     /// @throw UnknownIdError The specified manifest id is invalid.
@@ -376,13 +376,8 @@ static int printIndex2(FontScheme *scheme, Path const &like,
     // Print the result index key.
     int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
 
-#ifdef __CLIENT__
-    Con_Printf(" %*s: %-*s origin n# uri\n", numFoundDigits, "idx",
-               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
-#else
     Con_Printf(" %*s: %-*s origin uri\n", numFoundDigits, "idx",
                printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
-#endif
     Con_PrintRuler();
 
     // Sort and print the index.

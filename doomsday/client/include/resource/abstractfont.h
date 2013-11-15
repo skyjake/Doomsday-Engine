@@ -34,6 +34,12 @@ class FontManifest;
 /**
  * Abstract font resource.
  *
+ * @em Clearing a font means any names bound to it are deleted and any GL textures
+ * acquired for it are 'released' at this time). The Font instance record used
+ * to represent it is also deleted.
+ *
+ * @em Releasing a font will release any GL textures acquired for it.
+ *
  * @ingroup resource
  */
 class AbstractFont

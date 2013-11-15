@@ -38,19 +38,7 @@ namespace de {
 /**
  * Font resource collection.
  *
- * @em Runtime fonts are not loaded until precached or actually needed. They may
- * be cleared, in which case they will be reloaded when needed.
- *
- * @em System fonts are loaded at startup and remain in memory all the time. After
- * clearing they must be manually reloaded.
- *
- * "Clearing" a font means any names bound to it are deleted and any GL textures
- * acquired for it are 'released' at this time). The Font instance record used
- * to represent it is also deleted.
- *
- * "Releasing" a font will release any GL textures acquired for it.
- *
- * Thus there are two general states for a font:
+ * There are two general states for a font:
  *
  *   A) Declared but not defined.
  *   B) Declared and defined.
