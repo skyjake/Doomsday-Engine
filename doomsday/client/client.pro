@@ -301,6 +301,7 @@ DENG_HEADERS += \
     include/render/fx/postprocessing.h \
     include/render/fx/vignette.h \
     include/render/huecirclevisual.h \
+    include/render/ilightsource.h \
     include/render/lightdecoration.h \
     include/render/lightgrid.h \
     include/render/lumobj.h \
