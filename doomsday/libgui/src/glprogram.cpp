@@ -185,6 +185,14 @@ DENG2_OBSERVES(GLUniform, Deletion)
         }
     }
 
+    void markAllBoundUniformsChanged()
+    {
+        foreach(GLUniform const *u, changed)
+        {
+            changed.insert(u);
+        }
+    }
+
     void updateUniforms()
     {
         if(changed.isEmpty()) return;
@@ -260,7 +268,8 @@ GLProgram &GLProgram::build(GLShader const *vertexShader, GLShader const *fragme
     d->detachAllShaders();
     d->attach(vertexShader);
     d->attach(fragmentShader);
-    d->bindVertexAttribs();
+    d->bindVertexAttribs();    
+    d->markAllBoundUniformsChanged();
 
     setState(Ready);
 
