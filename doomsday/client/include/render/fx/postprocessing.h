@@ -34,9 +34,24 @@ class PostProcessing : public ConsoleEffect
 public:
     PostProcessing(int console);
 
+    /**
+     * Determines whether the effect is active. If it isn't, it can be skipped
+     * altogether when post processing a frame.
+     */
     bool isActive() const;
 
+    /**
+     * Fades in, or immediately takes into use, a new post-processing shader.
+     * Only shaders in the "fx.post" namespace can be used.
+     *
+     * If a shader is already in use, it will simply be swapped immediately
+     * with the new shader rather than crossfaded.
+     *
+     * @param fxPostShader  Name of the shader under "fx.post".
+     * @param span          Duration of the fade in animation.
+     */
     void fadeInShader(de::String const &fxPostShader, de::TimeDelta const &span);
+
     void fadeOut(de::TimeDelta const &span);
 
     void glInit();
