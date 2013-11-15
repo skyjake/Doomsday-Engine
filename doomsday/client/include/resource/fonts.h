@@ -24,6 +24,7 @@
 #include "AbstractFont"
 #include "uri.hh"
 #include <de/Error>
+#include <de/PathTree>
 #include <de/String>
 #include <QMap>
 

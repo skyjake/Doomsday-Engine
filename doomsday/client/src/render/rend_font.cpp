@@ -17,10 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <assert.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
 
 #define DENG_NO_API_MACROS_FONT_RENDER
 
@@ -31,9 +30,8 @@
 #include "de_system.h"
 #include "de_ui.h"
 
-#include "resource/abstractfont.h"
-#include "resource/fonts.h"
-#include "resource/bitmapfont.h"
+#include "BitmapFont"
+#include "CompositeBitmapFont"
 #include "m_misc.h"
 
 #include <de/GLState>

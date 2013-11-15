@@ -23,6 +23,10 @@
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
+#ifdef __CLIENT__
+#  include "BitmapFont"
+#  include "CompositeBitmapFont"
+#endif
 #include "filesys/fs_main.h"
 #include "filesys/lumpindex.h"
 #include <de/ByteRefArray>

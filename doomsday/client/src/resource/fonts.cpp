@@ -22,23 +22,16 @@
 #include "resource/fonts.h"
 
 #include "de_console.h"
-#include "de_filesys.h"
 #include "dd_main.h" // App_ResourceSystem(), verbose
 #ifdef __CLIENT__
-#  include "gl/gl_main.h"
-#  include "gl/gl_texmanager.h"
+#  include "BitmapFont"
+#  include "CompositeBitmapFont"
 #endif
 #include <de/Error>
-#include <de/NativePath>
-#include <de/Observers>
-#include <de/PathTree>
-#include <de/mathutil.h>
 #include <de/memory.h>
 #include <QList>
 #include <QtAlgorithms>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
+#include <cstdlib>
 
 D_CMD(ListFonts);
 #ifdef DENG_DEBUG
