@@ -179,7 +179,7 @@ FontScheme::Manifest &FontScheme::declare(Path const &path)
 
     int const sizeBefore = d->index.size();
     Manifest *newManifest = &d->index.insert(path);
-    DENG2_ASSERT(newManifest);
+    DENG2_ASSERT(newManifest != 0);
 
     if(d->index.size() != sizeBefore)
     {
