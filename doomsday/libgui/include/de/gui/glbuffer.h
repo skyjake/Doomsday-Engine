@@ -60,10 +60,16 @@ namespace internal
     typedef std::pair<AttribSpec const *, duint> AttribSpecs;
 }
 
-#define DENG2_DECLARE_VERTEX_FORMAT(NumElems) \
+#define LIBGUI_DECLARE_VERTEX_FORMAT(NumElems) \
     public:  static internal::AttribSpecs formatSpec(); \
     private: static internal::AttribSpec const _spec[NumElems]; \
     public:
+
+#define LIBGUI_VERTEX_FORMAT_SPEC(TypeName, ExpectedSize) \
+    internal::AttribSpecs TypeName::formatSpec() { \
+        DENG2_ASSERT(sizeof(TypeName) == ExpectedSize); /* sanity check */ \
+        return internal::AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0])); \
+    }
 
 /**
  * Vertex format with 2D coordinates and one set of texture coordinates.
@@ -73,7 +79,7 @@ struct LIBGUI_PUBLIC Vertex2Tex
     Vector2f pos;
     Vector2f texCoord;
 
-    DENG2_DECLARE_VERTEX_FORMAT(2)
+    LIBGUI_DECLARE_VERTEX_FORMAT(2)
 };
 
 /**
@@ -84,7 +90,7 @@ struct LIBGUI_PUBLIC Vertex2Rgba
     Vector2f pos;
     Vector4f rgba;
 
-    DENG2_DECLARE_VERTEX_FORMAT(2)
+    LIBGUI_DECLARE_VERTEX_FORMAT(2)
 };
 
 /**
@@ -97,7 +103,7 @@ struct LIBGUI_PUBLIC Vertex2TexRgba
     Vector2f texCoord;
     Vector4f rgba;
 
-    DENG2_DECLARE_VERTEX_FORMAT(3)
+    LIBGUI_DECLARE_VERTEX_FORMAT(3)
 };
 
 /**
@@ -108,7 +114,7 @@ struct LIBGUI_PUBLIC Vertex3Tex
     Vector3f pos;
     Vector2f texCoord;
 
-    DENG2_DECLARE_VERTEX_FORMAT(2)
+    LIBGUI_DECLARE_VERTEX_FORMAT(2)
 };
 
 /**
@@ -121,7 +127,21 @@ struct LIBGUI_PUBLIC Vertex3TexRgba
     Vector2f texCoord;
     Vector4f rgba;
 
-    DENG2_DECLARE_VERTEX_FORMAT(3)
+    LIBGUI_DECLARE_VERTEX_FORMAT(3)
+};
+
+/**
+ * Vertex format with 3D coordinates, normal vector, one set of texture
+ * coordinates, and an RGBA color.
+ */
+struct LIBGUI_PUBLIC Vertex3NormalTexRgba
+{
+    Vector3f pos;
+    Vector3f normal;
+    Vector2f texCoord;
+    Vector4f rgba;
+
+    LIBGUI_DECLARE_VERTEX_FORMAT(4)
 };
 
 namespace gl
