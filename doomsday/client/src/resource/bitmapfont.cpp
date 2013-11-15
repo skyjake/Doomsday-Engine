@@ -265,15 +265,16 @@ Rectanglei const &BitmapFont::glyphTexCoords(uchar ch)
 
 void BitmapFont::glInit()
 {
-    if(d->texGLName) return; // Already prepared.
+    if(!d->needGLInit) return;
+    if(novideo || isDedicated || BusyMode_Active()) return;
+
+    glDeinit();
 
     try
     {
         // Relative paths are relative to the native working directory.
         String path = (NativePath::workPath() / NativePath(d->filePath).expand()).withSeparators('/');
         de::FileHandle *hndl = &App_FileSystem().openFile(path, "rb");
-
-        glDeinit();
 
         // Load the font glyph map from the file.
         int version = inByte(hndl);
@@ -308,6 +309,8 @@ void BitmapFont::glInit()
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore error.
+
+    d->needGLInit = false;
 }
 
 void BitmapFont::glDeinit()
@@ -316,6 +319,7 @@ void BitmapFont::glDeinit()
 
     d->needGLInit = true;
     if(BusyMode_Active()) return;
+
     if(d->texGLName)
     {
         glDeleteTextures(1, (GLuint const *) &d->texGLName);

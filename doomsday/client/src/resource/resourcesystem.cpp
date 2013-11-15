@@ -982,7 +982,7 @@ Fonts &ResourceSystem::fonts()
 
 void ResourceSystem::clearRuntimeFontSchemes()
 {
-    d->fonts.scheme("Flats").clear();
+    d->fonts.scheme("Game").clear();
 }
 
 void ResourceSystem::clearSystemFontSchemes()
