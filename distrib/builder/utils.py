@@ -79,12 +79,13 @@ def sys_id():
     
     # Special case: the Snow Leopard builder targets 64-bit.
     if plat == 'darwin':
-        if platform.mac_ver()[0][:4] == '10.8':
+        macVer = mac_os_version()
+        if macVer == '10.8' or macVer == '10.9':
             plat = 'macx8'
             bits = '64bit'
-        elif platform.mac_ver()[0][:4] == '10.6':
+        elif macVer == '10.6':
             bits = '64bit'
-        elif platform.mac_ver()[0][:4] == '10.5':
+        elif macVer == '10.5':
             plat = 'macx5'
         
     return "%s-%s" % (plat, bits)
