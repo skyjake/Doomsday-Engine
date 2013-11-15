@@ -24,6 +24,7 @@
 #include "AbstractFont"
 #include "uri.hh"
 #include <de/Error>
+#include <de/Observers>
 #include <de/PathTree>
 #include <de/String>
 
@@ -33,7 +34,7 @@ class Fonts;
 class FontScheme;
 
 /**
- * FontManifest. Stores metadata for a unique Font in the collection.
+ * FontManifest. Stores metadata for would-be Font resource.
  */
 class FontManifest : public PathTree::Node,
 DENG2_OBSERVES(AbstractFont, Deletion)
@@ -58,13 +59,13 @@ public:
     String const &schemeName() const;
 
     /**
-     * Compose a URI of the form "scheme:path" for the FontRecord.
+     * Compose a URI of the form "scheme:path" for the manifest.
      *
      * The scheme component of the URI will contain the symbolic name of
-     * the scheme for the FontRecord.
+     * the scheme for the manifest.
      *
      * The path component of the URI will contain the percent-encoded path
-     * of the FontRecord.
+     * of the manifest.
      */
     inline Uri composeUri(QChar sep = '/') const
     {
@@ -72,14 +73,13 @@ public:
     }
 
     /**
-     * Compose a URN of the form "urn:scheme:uniqueid" for the font
-     * FontRecord.
+     * Compose a URN of the form "urn:scheme:uniqueid" for the manifest.
      *
      * The scheme component of the URI will contain the identifier 'urn'.
      *
      * The path component of the URI is a string which contains both the
      * symbolic name of the scheme followed by the unique id of the font
-     * FontRecord, separated with a colon.
+     * manifest, separated with a colon.
      *
      * @see uniqueId(), setUniqueId()
      */
@@ -109,35 +109,35 @@ public:
     bool setUniqueId(int newUniqueId);
 
     /**
-     * Returns @c true if a Font is presently associated with the manifest.
+     * Returns @c true if a resource is presently associated with the manifest.
      */
-    bool hasFont() const;
+    bool hasResource() const;
 
     /**
-     * Returns the logical Font associated with the manifest.
+     * Returns the logical resource associated with the manifest.
      */
-    AbstractFont &font() const;
+    AbstractFont &resource() const;
 
     /**
-     * Change the logical Font associated with the manifest.
+     * Change the logical resource associated with the manifest.
      *
-     * @param newFont  New logical Font to associate.
+     * @param newFont  New resource to associate.
      */
-    void setFont(AbstractFont *newFont);
+    void setResource(AbstractFont *newResource);
 
     /**
-     * Clear the logical Font associated with the manifest.
+     * Clear the logical resource associated with the manifest.
      *
-     * Same as @c setFont(0)
+     * Same as @c setResource(0)
      */
-    inline void clearFont() { setFont(0); }
+    inline void clearResource() { setResource(0); }
 
-    /// Returns a reference to the application's font collection.
-    static Fonts &fonts();
+    /// Returns a reference to the owning collection.
+    static Fonts &collection();
 
 protected:
     // Observes AbstractFont::Deletion.
-    void fontBeingDeleted(AbstractFont const &font);
+    void fontBeingDeleted(AbstractFont const &resource);
 
 private:
     DENG2_PRIVATE(d)

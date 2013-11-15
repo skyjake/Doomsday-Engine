@@ -1119,9 +1119,9 @@ void GL_ReleaseFontTexturesByScheme(char const *schemeName)
     while(iter.hasNext())
     {
         FontManifest &manifest = iter.next();
-        if(manifest.hasFont())
+        if(manifest.hasResource())
         {
-            manifest.font().glDeinit();
+            manifest.resource().glDeinit();
         }
     }
 }

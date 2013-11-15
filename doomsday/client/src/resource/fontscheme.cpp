@@ -70,8 +70,8 @@ DENG2_PIMPL(FontScheme)
 
     void deindex(Manifest &manifest)
     {
-        /// @todo Only destroy the font if this is the last remaining reference.
-        manifest.clearFont();
+        /// @todo Only destroy the resource if this is the last remaining reference.
+        manifest.clearResource();
 
         unlinkInUniqueIdLut(manifest);
     }

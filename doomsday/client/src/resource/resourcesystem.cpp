@@ -1013,9 +1013,9 @@ AbstractFont *ResourceSystem::createFontFromDef(ded_compositefont_t const &def)
         // Create/retrieve a manifest for the would-be font.
         FontManifest &manifest = d->fonts.declare(uri);
 
-        if(manifest.hasFont())
+        if(manifest.hasResource())
         {
-            if(CompositeBitmapFont *compFont = manifest.font().maybeAs<CompositeBitmapFont>())
+            if(CompositeBitmapFont *compFont = manifest.resource().maybeAs<CompositeBitmapFont>())
             {
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
@@ -1025,19 +1025,19 @@ AbstractFont *ResourceSystem::createFontFromDef(ded_compositefont_t const &def)
 
                 compFont->rebuildFromDef(def);
             }
-            return &manifest.font();
+            return &manifest.resource();
         }
 
         // A new font.
-        manifest.setFont(CompositeBitmapFont::fromDef(manifest, def));
-        if(manifest.hasFont())
+        manifest.setResource(CompositeBitmapFont::fromDef(manifest, def));
+        if(manifest.hasResource())
         {
             if(verbose >= 1)
             {
                 LOG_VERBOSE("New font \"%s\"")
                     << manifest.composeUri();
             }
-            return &manifest.font();
+            return &manifest.resource();
         }
 
         LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
@@ -1073,9 +1073,9 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
         // Create/retrieve a manifest for the would-be font.
         FontManifest &manifest = d->fonts.declare(uri);
 
-        if(manifest.hasFont())
+        if(manifest.hasResource())
         {
-            if(BitmapFont *bmapFont = manifest.font().maybeAs<BitmapFont>())
+            if(BitmapFont *bmapFont = manifest.resource().maybeAs<BitmapFont>())
             {
                 /// @todo Do not update fonts here (not enough knowledge). We should
                 /// instead return an invalid reference/signal and force the caller
@@ -1085,19 +1085,19 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
 
                 bmapFont->setFilePath(filePath);
             }
-            return &manifest.font();
+            return &manifest.resource();
         }
 
         // A new font.
-        manifest.setFont(BitmapFont::fromFile(manifest, filePath));
-        if(manifest.hasFont())
+        manifest.setResource(BitmapFont::fromFile(manifest, filePath));
+        if(manifest.hasResource())
         {
             if(verbose >= 1)
             {
                 LOG_VERBOSE("New font \"%s\"")
                     << manifest.composeUri();
             }
-            return &manifest.font();
+            return &manifest.resource();
         }
 
         LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")

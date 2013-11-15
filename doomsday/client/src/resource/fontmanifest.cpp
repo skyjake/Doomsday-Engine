@@ -43,7 +43,7 @@ FontManifest::~FontManifest()
     DENG2_FOR_AUDIENCE(Deletion, i) i->manifestBeingDeleted(*this);
 }
 
-Fonts &FontManifest::fonts()
+Fonts &FontManifest::collection()
 {
     return App_Fonts();
 }
@@ -52,7 +52,7 @@ FontScheme &FontManifest::scheme() const
 {
     LOG_AS("FontManifest::scheme");
     /// @todo Optimize: FontManifest should contain a link to the owning FontScheme.
-    foreach(FontScheme *scheme, fonts().allSchemes())
+    foreach(FontScheme *scheme, collection().allSchemes())
     {
         if(&scheme->index() == &tree()) return *scheme;
     }
@@ -88,14 +88,14 @@ bool FontManifest::setUniqueId(int newUniqueId)
     return true;
 }
 
-bool FontManifest::hasFont() const
+bool FontManifest::hasResource() const
 {
     return !d->resource.isNull();
 }
 
-AbstractFont &FontManifest::font() const
+AbstractFont &FontManifest::resource() const
 {
-    if(hasFont())
+    if(hasResource())
     {
         return *d->resource.data();
     }
@@ -103,7 +103,7 @@ AbstractFont &FontManifest::font() const
     throw MissingFontError("FontManifest::font", "No resource is associated");
 }
 
-void FontManifest::setFont(AbstractFont *newResource)
+void FontManifest::setResource(AbstractFont *newResource)
 {
     if(d->resource.data() != newResource)
     {

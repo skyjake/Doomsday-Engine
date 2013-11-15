@@ -53,40 +53,40 @@ public:
 
 public:
     /**
-     * Construct a new (empty) texture subspace scheme.
+     * Construct a new (empty) resource subspace scheme.
      *
-     * @param symbolicName  Symbolic name of the new subspace scheme. Must
-     *                      have at least @ref min_name_length characters.
+     * @param symbolicName  Symbolic name of the new subspace scheme. Must have
+     *                      at least @ref min_name_length characters.
      */
     FontScheme(String symbolicName);
 
     /// @return  Symbolic name of this scheme (e.g., "System").
     String const &name() const;
 
-    /// @return  Total number of records in the scheme.
+    /// @return  Total number of manifests in the scheme.
     inline int size() const { return index().size(); }
 
-    /// @return  Total number of records in the scheme. Same as @ref size().
+    /// @return  Total number of manifests in the scheme. Same as @ref size().
     inline int count() const { return size(); }
 
     /**
-     * Clear all records in the scheme (any GL textures which have been
-     * acquired for associated font textures will be released).
+     * Destroys all manifests (and any associated resources) in the scheme.
      */
     void clear();
 
     /**
-     * Insert a new manifest at the given @a path into the scheme.
-     * If a manifest already exists at this path, the existing manifest is
-     * returned and the call is a no-op.
+     * Insert a new manifest at the given @a path into the scheme. If a manifest
+     * already exists at this path, the existing manifest is returned.
      *
      * @param path  Virtual path for the resultant manifest.
+     *
      * @return  The (possibly newly created) manifest at @a path.
      */
     Manifest &declare(Path const &path);
 
     /**
      * Determines if a manifest exists on the given @a path.
+     *
      * @return @c true if a manifest exists; otherwise @a false.
      */
     bool has(Path const &path) const;
@@ -102,8 +102,8 @@ public:
     Manifest &find(Path const &path);
 
     /**
-     * Search the scheme for a manifest whose associated unique
-     * identifier matches @a uniqueId.
+     * Search the scheme for a manifest whose associated unique identifier
+     * matches @a uniqueId.
      *
      * @return  Found manifest.
      */

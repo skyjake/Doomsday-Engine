@@ -56,7 +56,7 @@ DENG2_OBSERVES(AbstractFont, Deletion)
     typedef class FontScheme Scheme;
 
 public:
-    /// The referenced font/manifest was not found. @ingroup errors
+    /// The referenced rsource/manifest was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
     /// An unknown scheme was referenced. @ingroup errors
@@ -70,7 +70,7 @@ public:
 
 public:
     /**
-     * Constructs a new font resource collection.
+     * Constructs a new Font resource collection.
      */
     Fonts();
 
@@ -80,25 +80,25 @@ public:
     static void consoleRegister();
 
     /**
-     * Returns the total number of unique fonts in the collection.
+     * Returns the total number of resource manifests in the collection.
      */
     uint count() const { return all().count(); }
 
     /**
-     * Returns the total number of unique fonts in the collection.
+     * Returns the total number of resource manifests in the collection.
      *
      * Same as size()
      */
     inline uint size() const { return count(); }
 
     /**
-     * Determines if a manifest exists for a declared font on @a path.
+     * Determines if a manifest exists for a resource on @a path.
      * @return @c true, if a manifest exists; otherwise @a false.
      */
     bool has(Uri const &path) const;
 
     /**
-     * Find the manifest for a declared font.
+     * Find a resource manifest.
      *
      * @param search  The search term.
      * @return Found unique identifier.
@@ -153,7 +153,7 @@ public:
     inline int schemeCount() const { return allSchemes().count(); }
 
     /**
-     * Clear all fonts in all schemes.
+     * Clear all resources in all schemes.
      *
      * @see allSchemes(), Scheme::clear().
      */
@@ -166,13 +166,13 @@ public:
     }
 
     /**
-     * Declare a font in the collection, producing a manifest for a logical
-     * AbstractFont which will be defined later. If a manifest with the specified
+     * Declare a resource in the collection, producing a (possibly new) manifest
+     * for a resource which may be defined later. If a manifest with the specified
      * @a uri already exists the existing manifest will be returned.
      *
-     * @param uri  Uri representing a path to the font in the virtual hierarchy.
+     * @param uri  Uri representing a path to the resource in the virtual hierarchy.
      *
-     * @return  Manifest for this URI.
+     * @return  The associated manifest for this URI.
      */
     inline Manifest &declare(Uri const &uri)
     {
@@ -180,7 +180,7 @@ public:
     }
 
     /**
-     * Returns a list of all the unique texture instances in the collection,
+     * Returns a list of pointers to all the concrete resources in the collection,
      * from all schemes.
      */
     All const &all() const;

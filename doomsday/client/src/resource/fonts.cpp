@@ -373,7 +373,7 @@ static int printIndex2(FontScheme *scheme, Path const &like,
         String info = String(" %1: ").arg(idx, numFoundDigits)
                     + manifest->description(composeUriFlags);
 
-        Con_FPrintf(!manifest->hasFont()? CPF_LIGHT : CPF_WHITE, "%s\n", info.toUtf8().constData());
+        Con_FPrintf(!manifest->hasResource()? CPF_LIGHT : CPF_WHITE, "%s\n", info.toUtf8().constData());
         idx++;
     }
 
