@@ -56,7 +56,7 @@ DENG2_OBSERVES(AbstractFont, Deletion)
     typedef class FontScheme Scheme;
 
 public:
-    /// The referenced rsource/manifest was not found. @ingroup errors
+    /// The referenced resource/manifest was not found. @ingroup errors
     DENG2_ERROR(NotFoundError);
 
     /// An unknown scheme was referenced. @ingroup errors
@@ -114,6 +114,18 @@ public:
      * @return  The associated manifest.
      */
     Manifest &toManifest(fontid_t id) const;
+
+    /**
+     * Convenient method of looking up a concrete font resource in the collection
+     * given it's unique identifier.
+     *
+     * @return  The associated font resource.
+     *
+     * @see toManifest(), FontManifest::hasResource()
+     */
+    inline AbstractFont &font(fontid_t id) const {
+        return toManifest(id).resource();
+    }
 
     /**
      * Lookup a subspace scheme by symbolic name.

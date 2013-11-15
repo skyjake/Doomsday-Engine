@@ -121,7 +121,7 @@ public:
     /**
      * Change the logical resource associated with the manifest.
      *
-     * @param newFont  New resource to associate.
+     * @param newResource  New resource to associate.
      */
     void setResource(AbstractFont *newResource);
 
