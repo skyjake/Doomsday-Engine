@@ -1,7 +1,7 @@
-/** @file bitmapfont.cpp Bitmap Font
+/** @file bitmapfont.cpp  Bitmap font resource.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,11 +20,13 @@
 #include "de_platform.h"
 #include "resource/bitmapfont.h"
 
-#include "dd_main.h"
+#include "dd_main.h" // isDedicated
 #include "filesys/fs_main.h"
 #include "gl/gl_texmanager.h"
 #include "sys_system.h" // novideo
+#include "FontManifest"
 #include "uri.hh"
+#include <de/Log>
 #include <de/mathutil.h> // M_CeilPow2()
 #include <de/memory.h>
 
@@ -80,13 +82,38 @@ DENG2_PIMPL(BitmapFont)
         self.glDeinit();
     }
 
+    /**
+     * Lookup the glyph for the specified character @a ch. If no glyph is defined
+     * for this character then the special "missing glyph" is returned instead.
+     */
     Glyph &glyph(uchar ch)
     {
         if(ch >= MAX_CHARS) return missingGlyph;
         return glyphs[ch];
     }
 
-    void *readFormat0(de::FileHandle *file)
+    /**
+     * Determine the dimensions of the "missing glyph" by averaging the dimensions
+     * of the available/defined glyphs.
+     *
+     * @todo Could be smarter. Presently this treats @em all glyphs equally.
+     */
+    Vector2ui findMissingGlyphSize()
+    {
+        Vector2ui accumSize;
+        int glyphCount = 0;
+        for(int i = 0; i < MAX_CHARS; ++i)
+        {
+            Glyph &glyph = glyphs[i];
+            if(glyph.posCoords.isNull()) continue;
+
+            accumSize += glyph.posCoords.size();
+            glyphCount += 1;
+        }
+        return accumSize / glyphCount;
+    }
+
+    uint8_t *readFormat0(de::FileHandle *file)
     {
         DENG2_ASSERT(file != 0);
 
@@ -99,7 +126,6 @@ DENG2_PIMPL(BitmapFont)
         texDimensions.y = inShort(file);
         int glyphCount  = inShort(file);
 
-        Vector2ui avgSize;
         for(int i = 0; i < glyphCount; ++i)
         {
             Glyph *ch = &glyphs[i < MAX_CHARS ? i : MAX_CHARS - 1];
@@ -110,13 +136,10 @@ DENG2_PIMPL(BitmapFont)
 
             ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h));
             ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
-
-            avgSize += ch->posCoords.size();
         }
 
-        missingGlyph.posCoords.setSize(avgSize / glyphCount);
+        missingGlyph.posCoords.setSize(findMissingGlyphSize());
 
-        // Load the bitmap.
         int bitmapFormat = inByte(file);
         if(bitmapFormat > 0)
         {
@@ -124,8 +147,9 @@ DENG2_PIMPL(BitmapFont)
             throw Error("BitmapFont::readFormat0", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 
-        int numPels = texDimensions.x * texDimensions.y;
-        uint32_t *image = (uint32_t *) M_Calloc(numPels * sizeof(int));
+        // Read the glyph atlas texture.
+        int const numPels = texDimensions.x * texDimensions.y;
+        uint32_t *image = (uint32_t *) M_Calloc(numPels * 4);
         int c, i;
         for(c = i = 0; i < (numPels + 7) / 8; ++i)
         {
@@ -141,12 +165,14 @@ DENG2_PIMPL(BitmapFont)
             }
         }
 
-        return image;
+        return (uint8_t *)image;
     }
 
-    void *readFormat2(de::FileHandle *file)
+    uint8_t *readFormat2(de::FileHandle *file)
     {
         DENG2_ASSERT(file != 0);
+
+        self._flags |= AbstractFont::Colorize | AbstractFont::Shadowed;
 
         int bitmapFormat = inByte(file);
         if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
@@ -154,8 +180,6 @@ DENG2_PIMPL(BitmapFont)
             de::Uri uri = self.manifest().composeUri();
             throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
-
-        self._flags |= AbstractFont::Colorize | AbstractFont::Shadowed;
 
         // Load in the data.
         texDimensions.x = inShort(file);
@@ -168,7 +192,6 @@ DENG2_PIMPL(BitmapFont)
         ascent  = inShort(file);
         descent = inShort(file);
 
-        Vector2ui avgSize;
         for(int i = 0; i < glyphCount; ++i)
         {
             ushort code = inShort(file);
@@ -182,19 +205,16 @@ DENG2_PIMPL(BitmapFont)
 
             ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - texMargin * 2);
             ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
-
-            avgSize += ch->posCoords.size();
         }
 
-        missingGlyph.posCoords.setSize(avgSize / glyphCount);
+        missingGlyph.posCoords.setSize(findMissingGlyphSize());
 
-        // Read the bitmap.
-        int numPels = texDimensions.x * texDimensions.y;
+        // Read the glyph atlas texture.
+        int const numPels = texDimensions.x * texDimensions.y;
         uint32_t *image = (uint32_t *) M_Calloc(numPels * 4);
-        uint32_t *ptr = image;
-
         if(bitmapFormat == 0)
         {
+            uint32_t *ptr = image;
             for(int i = 0; i < numPels; ++i)
             {
                 byte red   = inByte(file);
@@ -207,6 +227,7 @@ DENG2_PIMPL(BitmapFont)
         }
         else if(bitmapFormat == 1)
         {
+            uint32_t *ptr = image;
             for(int i = 0; i < numPels; ++i)
             {
                 byte luminance = inByte(file);
@@ -215,7 +236,7 @@ DENG2_PIMPL(BitmapFont)
             }
         }
 
-        return image;
+        return (uint8_t *)image;
     }
 };
 
@@ -280,34 +301,33 @@ void BitmapFont::glInit()
         String path = (NativePath::workPath() / NativePath(d->filePath).expand()).withSeparators('/');
         de::FileHandle *hndl = &App_FileSystem().openFile(path, "rb");
 
-        // Load the font glyph map from the file.
-        int version = inByte(hndl);
+        int format = inByte(hndl);
 
-        void *image;
-        switch(version)
+        uint8_t *pixels;
+        switch(format)
         {
         // Original format.
-        case 0: image = d->readFormat0(hndl); break;
+        case 0: pixels = d->readFormat0(hndl); break;
         // Enhanced format.
-        case 2: image = d->readFormat2(hndl); break;
+        case 2: pixels = d->readFormat2(hndl); break;
 
         default:
             DENG2_ASSERT(false);
         }
-        if(!image) return;
+        if(!pixels) return;
 
         // Upload the texture.
         if(!novideo && !isDedicated)
         {
-            LOG_VERBOSE("Uploading GL texture for font \"%s\"...")
+            LOG_DEBUG("Uploading atlas texture for \"%s\"...")
                 << manifest().composeUri();
 
             d->texGLName = GL_NewTextureWithParams(DGL_RGBA, d->texDimensions.x, d->texDimensions.y,
-                (uint8_t const *)image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
+                pixels, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         }
 
-        M_Free(image);
+        M_Free(pixels);
         App_FileSystem().releaseFile(hndl->file());
         delete hndl;
     }
