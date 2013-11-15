@@ -19,7 +19,7 @@
  */
 
 #include "resource/fontmanifest.h"
-#include "dd_main.h" // App_Fonts()
+#include "dd_main.h" // App_Fonts(), remove me
 #include "FontScheme"
 #include <de/Log>
 
@@ -43,14 +43,9 @@ FontManifest::~FontManifest()
     DENG2_FOR_AUDIENCE(Deletion, i) i->manifestBeingDeleted(*this);
 }
 
-Fonts &FontManifest::collection()
-{
-    return App_Fonts();
-}
-
 FontScheme &FontManifest::scheme() const
 {
-    LOG_AS("FontManifest::scheme");
+    LOG_AS("FontManifest");
     /// @todo Optimize: FontManifest should contain a link to the owning FontScheme.
     foreach(FontScheme *scheme, collection().allSchemes())
     {
@@ -78,6 +73,8 @@ int FontManifest::uniqueId() const
 
 bool FontManifest::setUniqueId(int newUniqueId)
 {
+    LOG_AS("FontManifest");
+
     if(d->uniqueId == newUniqueId) return false;
 
     d->uniqueId = newUniqueId;
@@ -100,11 +97,13 @@ AbstractFont &FontManifest::resource() const
         return *d->resource.data();
     }
     /// @throw MissingFontError No resource is associated with the manifest.
-    throw MissingFontError("FontManifest::font", "No resource is associated");
+    throw MissingFontError("FontManifest::resource", "No resource is associated");
 }
 
 void FontManifest::setResource(AbstractFont *newResource)
 {
+    LOG_AS("FontManifest");
+
     if(d->resource.data() != newResource)
     {
         if(AbstractFont *curFont = d->resource.data())
@@ -126,4 +125,9 @@ void FontManifest::setResource(AbstractFont *newResource)
 void FontManifest::fontBeingDeleted(AbstractFont const & /*resource*/)
 {
     d->resource.reset();
+}
+
+Fonts &FontManifest::collection()
+{
+    return App_Fonts();
 }

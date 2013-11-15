@@ -55,7 +55,11 @@ public:
      */
     FontScheme &scheme() const;
 
-    /// Convenience method for returning the name of the owning scheme.
+    /**
+     * Convenient method of returning the name of the owning scheme.
+     *
+     * @see scheme(), FontScheme::name()
+     */
     String const &schemeName() const;
 
     /**
@@ -67,8 +71,7 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the manifest.
      */
-    inline Uri composeUri(QChar sep = '/') const
-    {
+    inline Uri composeUri(QChar sep = '/') const {
         return Uri(schemeName(), path(sep));
     }
 
@@ -83,8 +86,7 @@ public:
      *
      * @see uniqueId(), setUniqueId()
      */
-    inline Uri composeUrn() const
-    {
+    inline Uri composeUrn() const {
         return Uri("urn", String("%1:%2").arg(schemeName()).arg(uniqueId(), 0, 10));
     }
 
