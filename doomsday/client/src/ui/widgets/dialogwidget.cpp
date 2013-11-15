@@ -527,7 +527,7 @@ bool DialogWidget::handleEvent(Event const &event)
     if(d->modality == Modal)
     {
         // The event should already have been handled by the children.
-        if(event.isKeyDown() ||
+        if((event.isKeyDown() && !(event.as<KeyEvent>().qtKey() == Qt::Key_Shift)) ||
            (event.type() == Event::MouseButton &&
             event.as<MouseEvent>().state() == MouseEvent::Pressed &&
             !hitTest(event)))

@@ -50,7 +50,8 @@ class Event:
                          ('Mac OS X 10.6+ (x86_64/i386)', 'mac10_6.dmg', 'darwin-64bit'),
                          ('Mac OS X 10.4+ (ppc/i386)',    '32bit.dmg',   'darwin-32bit'),
                          ('Ubuntu (x86_64)',              'amd64.deb',   'linux2-64bit'),
-                         ('Ubuntu (x86)',                 'i386.deb',    'linux2-32bit')]
+                         ('Ubuntu (x86)',                 'i386.deb',    'linux2-32bit'),
+                         ('Source',                       '.tar.gz',      'source')]
 
             if self.has_version() and utils.version_cmp(self.version_base(), '1.11') >= 0:
                 del self.oses[3] # no more OS X 10.4
@@ -76,7 +77,8 @@ class Event:
                        'darwin-64bit': 'mac10_6-x86-x86_64',
                        'macx8-64bit':  'mac10_8-x86_64',
                        'linux2-32bit': 'linux-x86',
-                       'linux2-64bit': 'linux-x86_64'}
+                       'linux2-64bit': 'linux-x86_64',
+                       'source':       'source'}
 
         # Prepare compiler logs present in the build dir.
         self.compress_logs()
@@ -161,7 +163,8 @@ class Event:
     def list_package_files(self):
         files = glob.glob(os.path.join(self.buildDir, '*.dmg')) + \
                 glob.glob(os.path.join(self.buildDir, '*.exe')) + \
-                glob.glob(os.path.join(self.buildDir, '*.deb'))
+                glob.glob(os.path.join(self.buildDir, '*.deb')) + \
+                glob.glob(os.path.join(self.buildDir, '*.tar.gz'))
 
         return [os.path.basename(f) for f in files]
 
@@ -198,7 +201,7 @@ class Event:
             if commitCount == 100: moreThan = 'more than '
             msg += " contains %s%i commits and" % (moreThan, commitCount)
 
-        msg += " produced %i installable binary package%s." % \
+        msg += " produced %i package%s." % \
             (pkgCount, 's' if (pkgCount != 1) else '')
 
         return msg
@@ -334,6 +337,7 @@ class Event:
         return msg
         
     def release_type(self):
+        """Returns the release type as a lower-case string."""
         fn = self.file_path('releaseType.txt')
         if os.path.exists(fn):
             return file(fn).read().lower().strip()
