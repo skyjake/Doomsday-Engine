@@ -27,7 +27,6 @@
 #include <de/Observers>
 #include <de/PathTree>
 #include <de/String>
-#include <QList>
 
 namespace de {
 
@@ -52,19 +51,6 @@ public:
     /// Manifests in the scheme are placed into a tree.
     typedef PathTreeT<Manifest> Index;
 
-public: /// @todo make private:
-    /// Symbolic name of the scheme.
-    String _name;
-
-    /// Mappings from paths to manifests.
-    Index _index;
-
-    /// LUT which translates scheme-unique-ids to their associated manifest (if any).
-    /// Index with uniqueId - uniqueIdBase.
-    QList<Manifest *> _uniqueIdLut;
-    bool _uniqueIdLutDirty;
-    int _uniqueIdBase;
-
 public:
     /**
      * Construct a new (empty) texture subspace scheme.
@@ -73,7 +59,6 @@ public:
      *                      have at least @ref min_name_length characters.
      */
     FontScheme(String symbolicName);
-    ~FontScheme();
 
     /// @return  Symbolic name of this scheme (e.g., "System").
     String const &name() const;
@@ -140,104 +125,7 @@ protected:
     void manifestBeingDeleted(Manifest const &manifest);
 
 private:
-    bool inline uniqueIdInLutRange(int uniqueId) const
-    {
-        return (uniqueId - _uniqueIdBase >= 0 && (uniqueId - _uniqueIdBase) < _uniqueIdLut.size());
-    }
-
-    void findUniqueIdRange(int *minId, int *maxId)
-    {
-        if(!minId && !maxId) return;
-
-        if(minId) *minId = DDMAXINT;
-        if(maxId) *maxId = DDMININT;
-
-        PathTreeIterator<Index> iter(_index.leafNodes());
-        while(iter.hasNext())
-        {
-            Manifest &manifest = iter.next();
-            int const uniqueId = manifest.uniqueId();
-            if(minId && uniqueId < *minId) *minId = uniqueId;
-            if(maxId && uniqueId > *maxId) *maxId = uniqueId;
-        }
-    }
-
-    void deindex(Manifest &manifest)
-    {
-        /// @todo Only destroy the font if this is the last remaining reference.
-        manifest.clearFont();
-
-        unlinkInUniqueIdLut(manifest);
-    }
-
-    /// @pre uniqueIdMap is large enough if initialized!
-    void unlinkInUniqueIdLut(Manifest const &manifest)
-    {
-        DENG2_ASSERT(&manifest.scheme() == this); // sanity check.
-        // If the lut is already considered 'dirty' do not unlink.
-        if(!_uniqueIdLutDirty)
-        {
-            int uniqueId = manifest.uniqueId();
-            DENG2_ASSERT(uniqueIdInLutRange(uniqueId));
-            _uniqueIdLut[uniqueId - _uniqueIdBase] = 0;
-        }
-    }
-
-    /// @pre uniqueIdLut has been initialized and is large enough!
-    void linkInUniqueIdLut(Manifest &manifest)
-    {
-        DENG2_ASSERT(&manifest.scheme() == this); // sanity check.
-        int uniqueId = manifest.uniqueId();
-        DENG_ASSERT(uniqueIdInLutRange(uniqueId));
-        _uniqueIdLut[uniqueId - _uniqueIdBase] = &manifest;
-    }
-
-    void rebuildUniqueIdLut()
-    {
-        // Is a rebuild necessary?
-        if(!_uniqueIdLutDirty) return;
-
-        // Determine the size of the LUT.
-        int minId, maxId;
-        findUniqueIdRange(&minId, &maxId);
-
-        int lutSize = 0;
-        if(minId > maxId) // None found?
-        {
-            _uniqueIdBase = 0;
-        }
-        else
-        {
-            _uniqueIdBase = minId;
-            lutSize = maxId - minId + 1;
-        }
-
-        // Fill the LUT with initial values.
-#ifdef DENG2_QT_4_7_OR_NEWER
-        _uniqueIdLut.reserve(lutSize);
-#endif
-        int i = 0;
-        for(; i < _uniqueIdLut.size(); ++i)
-        {
-            _uniqueIdLut[i] = 0;
-        }
-        for(; i < lutSize; ++i)
-        {
-            _uniqueIdLut.push_back(0);
-        }
-
-        if(lutSize)
-        {
-            // Populate the LUT.
-            PathTreeIterator<Index> iter(_index.leafNodes());
-            while(iter.hasNext())
-            {
-                linkInUniqueIdLut(iter.next());
-            }
-        }
-
-        _uniqueIdLutDirty = false;
-    }
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

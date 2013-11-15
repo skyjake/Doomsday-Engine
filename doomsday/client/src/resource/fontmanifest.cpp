@@ -23,11 +23,19 @@
 #include "FontScheme"
 #include <de/Log>
 
-namespace de {
+using namespace de;
+
+DENG2_PIMPL_NOREF(FontManifest)
+{
+    int uniqueId;
+    QScopedPointer<AbstractFont>(resource); ///< Associated resource (if any).
+
+    Instance() : uniqueId(0)
+    {}
+};
 
 FontManifest::FontManifest(PathTree::NodeArgs const &args)
-    : Node(args)
-    , _uniqueId(0)
+    : Node(args), d(new Instance())
 {}
 
 FontManifest::~FontManifest()
@@ -43,7 +51,7 @@ Fonts &FontManifest::fonts()
 FontScheme &FontManifest::scheme() const
 {
     LOG_AS("FontManifest::scheme");
-    /// @todo Optimize: FontRecord should contain a link to the owning FontScheme.
+    /// @todo Optimize: FontManifest should contain a link to the owning FontScheme.
     foreach(FontScheme *scheme, fonts().allSchemes())
     {
         if(&scheme->index() == &tree()) return *scheme;
@@ -65,14 +73,14 @@ String FontManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags
 
 int FontManifest::uniqueId() const
 {
-    return _uniqueId;
+    return d->uniqueId;
 }
 
 bool FontManifest::setUniqueId(int newUniqueId)
 {
-    if(_uniqueId == newUniqueId) return false;
+    if(d->uniqueId == newUniqueId) return false;
 
-    _uniqueId = newUniqueId;
+    d->uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
     DENG2_FOR_AUDIENCE(UniqueIdChanged, i) i->manifestUniqueIdChanged(*this);
@@ -82,42 +90,40 @@ bool FontManifest::setUniqueId(int newUniqueId)
 
 bool FontManifest::hasFont() const
 {
-    return !_font.isNull();
+    return !d->resource.isNull();
 }
 
 AbstractFont &FontManifest::font() const
 {
     if(hasFont())
     {
-        return *_font.data();
+        return *d->resource.data();
     }
-    /// @throw MissingFontError There is no font associated with the manifest.
-    throw MissingFontError("FontRecord::font", "No font is associated");
+    /// @throw MissingFontError No resource is associated with the manifest.
+    throw MissingFontError("FontManifest::font", "No resource is associated");
 }
 
-void FontManifest::setFont(AbstractFont *newFont)
+void FontManifest::setFont(AbstractFont *newResource)
 {
-    if(_font.data() != newFont)
+    if(d->resource.data() != newResource)
     {
-        if(AbstractFont *curFont = _font.data())
+        if(AbstractFont *curFont = d->resource.data())
         {
-            // Cancel notifications about the existing font.
+            // Cancel notifications about the existing resource.
             curFont->audienceForDeletion -= this;
         }
 
-        _font.reset(newFont);
+        d->resource.reset(newResource);
 
-        if(AbstractFont *curFont = _font.data())
+        if(AbstractFont *curFont = d->resource.data())
         {
-            // We want notification when the new font is about to be deleted.
+            // We want notification when the new resource is about to be deleted.
             curFont->audienceForDeletion += this;
         }
     }
 }
 
-void FontManifest::fontBeingDeleted(AbstractFont const & /*font*/)
+void FontManifest::fontBeingDeleted(AbstractFont const & /*resource*/)
 {
-    _font.reset();
+    d->resource.reset();
 }
-
-} // namespace de

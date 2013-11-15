@@ -46,13 +46,6 @@ public:
     DENG2_DEFINE_AUDIENCE(UniqueIdChanged, void manifestUniqueIdChanged(FontManifest &manifest))
 
 public:
-    /// Scheme-unique identifier chosen by the owner of the collection.
-    int _uniqueId;
-
-    /// The defined font instance (if any).
-    QScopedPointer<AbstractFont>(_font);
-
-public:
     FontManifest(PathTree::NodeArgs const &args);
     ~FontManifest();
 
@@ -145,6 +138,9 @@ public:
 protected:
     // Observes AbstractFont::Deletion.
     void fontBeingDeleted(AbstractFont const &font);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de
