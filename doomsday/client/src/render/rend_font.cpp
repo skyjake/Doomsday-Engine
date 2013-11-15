@@ -162,15 +162,22 @@ void FR_ResetTypeinTimer(void)
 void FR_SetFont(fontid_t num)
 {
     errorIfNotInited("FR_SetFont");
-    try
+    if(num != NOFONTID)
     {
-        App_Fonts().toManifest(num);
-        fr.fontNum = num;
-        return;
+        try
+        {
+            App_Fonts().toManifest(num);
+            fr.fontNum = num;
+            return;
+        }
+        catch(Fonts::UnknownIdError const &)
+        {}
+        //LogBuffer_Printf(DE2_LOG_WARNING, "Requested invalid font %i.\n", num);
     }
-    catch(Fonts::UnknownIdError const &)
-    {}
-    //LogBuffer_Printf(DE2_LOG_WARNING, "Requested invalid font %i.\n", num);
+    else
+    {
+        fr.fontNum = num;
+    }
 }
 
 void FR_SetNoFont(void)
@@ -1543,11 +1550,7 @@ DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
     if(!uri) return NOFONTID;
     try
     {
-        FontManifest &manifest = App_Fonts().find(*reinterpret_cast<de::Uri const *>(uri));
-        if(manifest.hasFont())
-        {
-            return manifest.uniqueId();
-        }
+        return App_Fonts().find(*reinterpret_cast<de::Uri const *>(uri)).uniqueId();
     }
     catch(Fonts::NotFoundError const &)
     {}

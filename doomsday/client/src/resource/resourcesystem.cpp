@@ -1053,13 +1053,14 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
 
     if(!App_FileSystem().accessFile(de::Uri::fromNativePath(filePath)))
     {
-        LOG_WARNING("Invalid resourcePath reference, ignoring.");
+        LOG_WARNING("Invalid filePath, ignoring.");
         return 0;
     }
 
     try
     {
-        FontManifest &manifest = d->fonts.scheme(uri.scheme()).declare(uri.path());
+        // Create/retrieve a manifest for the would-be font.
+        FontManifest &manifest = d->fonts.declare(uri);
 
         if(manifest.hasFont())
         {
