@@ -36,24 +36,17 @@ namespace de {
 /**
  * Specialized resource collection for a set of logical textures.
  *
- * @em Clearing a texture is to 'undefine' it - any names bound to it will be
- * deleted and any GL textures acquired for it are 'released'. The logical
- * Texture instance used to represent it is also deleted.
+ * There are two general states for textures in the collection:
  *
- * @em Releasing a texture will leave it defined (any names bound to it will
- * persist) but any GL textures acquired for it are 'released'. Note that the
- * logical Texture instance used to represent is NOT be deleted.
- *
- * Thus there are two general states for textures in the collection:
- *
- *   A) Declared but not defined.
- *   B) Declared and defined.
+ *   A) Declared but not defined (only a manifest is present).
+ *   B) Declared and defined (a manifest is present and a resource is associated).
  *
  * @ingroup resource
  */
-class Textures : DENG2_OBSERVES(TextureScheme, ManifestDefined),
-                 DENG2_OBSERVES(TextureManifest, TextureDerived),
-                 DENG2_OBSERVES(Texture, Deletion)
+class Textures :
+DENG2_OBSERVES(TextureScheme, ManifestDefined),
+DENG2_OBSERVES(TextureManifest, TextureDerived),
+DENG2_OBSERVES(Texture, Deletion)
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef class TextureManifest Manifest;

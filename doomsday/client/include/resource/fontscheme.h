@@ -30,8 +30,14 @@
 
 namespace de {
 
+/**
+ * Font collection resource subspace.
+ *
+ * @see Fonts
+ * @ingroup resource
+ */
 class FontScheme :
-DENG2_OBSERVES(FontManifest, UniqueIdChanged),
+DENG2_OBSERVES(FontManifest, UniqueIdChange),
 DENG2_OBSERVES(FontManifest, Deletion)
 {
     typedef class FontManifest Manifest;
@@ -43,6 +49,7 @@ public:
     /// The specified path was not valid. @ingroup errors
     DENG2_ERROR(InvalidPathError);
 
+    /// Notified whenever a new manifest is defined in the scheme.
     DENG2_DEFINE_AUDIENCE(ManifestDefined, void schemeManifestDefined(FontScheme &scheme, Manifest &manifest))
 
     /// Minimum length of a symbolic name.
@@ -118,7 +125,7 @@ public:
     Index const &index() const;
 
 protected:
-    // Observes Manifest UniqueIdChanged
+    // Observes Manifest UniqueIdChange
     void manifestUniqueIdChanged(Manifest &manifest);
 
     // Observes Manifest Deletion.

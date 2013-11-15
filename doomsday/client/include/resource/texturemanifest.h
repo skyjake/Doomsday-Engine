@@ -52,7 +52,7 @@ public:
     DENG2_ERROR(MissingResourceUriError);
 
     DENG2_DEFINE_AUDIENCE(Deletion,        void manifestBeingDeleted    (TextureManifest const &manifest))
-    DENG2_DEFINE_AUDIENCE(UniqueIdChanged, void manifestUniqueIdChanged (TextureManifest &manifest))
+    DENG2_DEFINE_AUDIENCE(UniqueIdChange, void manifestUniqueIdChanged (TextureManifest &manifest))
     DENG2_DEFINE_AUDIENCE(TextureDerived,  void manifestTextureDerived  (TextureManifest &manifest, Texture &texture))
 
 public:

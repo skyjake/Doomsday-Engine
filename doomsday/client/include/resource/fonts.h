@@ -37,12 +37,12 @@
 namespace de {
 
 /**
- * Font resource collection.
+ * Specialized resource collection for a set of logical fonts.
  *
- * There are two general states for a font:
+ * There are two general states for fonts in the collection:
  *
- *   A) Declared but not defined.
- *   B) Declared and defined.
+ *   A) Declared but not defined (only a manifest is present).
+ *   B) Declared and defined (a manifest is present and a resource is associated).
  *
  * @ingroup resource
  */
@@ -169,10 +169,8 @@ public:
      *
      * @see allSchemes(), Scheme::clear().
      */
-    inline void clearAllSchemes()
-    {
-        foreach(Scheme *scheme, allSchemes())
-        {
+    inline void clearAllSchemes() {
+        foreach(Scheme *scheme, allSchemes()) {
             scheme->clear();
         }
     }
@@ -186,8 +184,7 @@ public:
      *
      * @return  The associated manifest for this URI.
      */
-    inline Manifest &declare(Uri const &uri)
-    {
+    inline Manifest &declare(Uri const &uri) {
         return scheme(uri.scheme()).declare(uri.path());
     }
 

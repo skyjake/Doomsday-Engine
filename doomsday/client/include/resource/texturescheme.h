@@ -34,7 +34,7 @@ namespace de {
  * @see Textures
  * @ingroup resource
  */
-class TextureScheme : DENG2_OBSERVES(TextureManifest, UniqueIdChanged),
+class TextureScheme : DENG2_OBSERVES(TextureManifest, UniqueIdChange),
                       DENG2_OBSERVES(TextureManifest, Deletion)
 {
     typedef class TextureManifest Manifest;
@@ -146,7 +146,7 @@ public:
     Index const &index() const;
 
 protected:
-    // Observes Manifest UniqueIdChanged
+    // Observes Manifest UniqueIdChange
     void manifestUniqueIdChanged(Manifest &manifest);
 
     // Observes Manifest Deletion.

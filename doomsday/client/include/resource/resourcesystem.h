@@ -32,6 +32,18 @@
 /**
  * Logical resources; materials, packages, textures, etc...
  *
+ * @par Textures
+ *
+ * @em Clearing a texture is to 'undefine' it - any names bound to it will be
+ * deleted and any GL textures acquired for it are 'released'. The logical
+ * Texture instance used to represent it is also deleted.
+ *
+ * @em Releasing a texture will leave it defined (any names bound to it will
+ * persist) but any GL textures acquired for it are 'released'. Note that the
+ * logical Texture instance used to represent is NOT be deleted.
+ *
+ * @par Fonts
+ *
  * @em Runtime fonts are not loaded until precached or actually needed. They
  * may be cleared, in which case they will be reloaded when needed.
  *

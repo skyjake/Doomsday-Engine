@@ -80,7 +80,7 @@ bool FontManifest::setUniqueId(int newUniqueId)
     d->uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
-    DENG2_FOR_AUDIENCE(UniqueIdChanged, i) i->manifestUniqueIdChanged(*this);
+    DENG2_FOR_AUDIENCE(UniqueIdChange, i) i->manifestUniqueIdChanged(*this);
 
     return true;
 }

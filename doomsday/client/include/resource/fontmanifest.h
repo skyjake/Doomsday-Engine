@@ -34,7 +34,13 @@ class Fonts;
 class FontScheme;
 
 /**
- * FontManifest. Stores metadata for would-be Font resource.
+ * Description for a would-be logical Font resource.
+ *
+ * Models a reference to and the associated metadata for a logical font in the
+ * font resource collection.
+ *
+ * @see FontScheme, AbstractFont
+ * @ingroup resource
  */
 class FontManifest : public PathTree::Node,
 DENG2_OBSERVES(AbstractFont, Deletion)
@@ -43,8 +49,11 @@ public:
     /// Required Font instance is missing. @ingroup errors
     DENG2_ERROR(MissingFontError);
 
+    /// Notified when the manifest is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void manifestBeingDeleted(FontManifest const &manifest))
-    DENG2_DEFINE_AUDIENCE(UniqueIdChanged, void manifestUniqueIdChanged(FontManifest &manifest))
+
+    /// Notified whenever the unique identifier changes.
+    DENG2_DEFINE_AUDIENCE(UniqueIdChange, void manifestUniqueIdChanged(FontManifest &manifest))
 
 public:
     FontManifest(PathTree::NodeArgs const &args);

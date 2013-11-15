@@ -45,6 +45,7 @@ class FontManifest;
 class AbstractFont
 {
 public:
+    /// Notified when the resource is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void fontBeingDeleted(AbstractFont const &font))
 
     enum Flag {
