@@ -1460,7 +1460,7 @@ void Def_Read()
     // Composite fonts.
     for(int i = 0; i < defs.count.compositeFonts.num; ++i)
     {
-        App_ResourceSystem().createFontFromDef(defs.compositeFonts + i);
+        App_ResourceSystem().createFontFromDef(defs.compositeFonts[i]);
     }
 #endif
 

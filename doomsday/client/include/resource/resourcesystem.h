@@ -19,13 +19,15 @@
 #ifndef DENG_RESOURCESYSTEM_H
 #define DENG_RESOURCESYSTEM_H
 
+#include "def_data.h"
 #include "resourceclass.h"
 #include "Textures"
 #ifdef __CLIENT__
 #  include "Fonts"
 #endif
-#include <de/System>
 #include <de/Error>
+#include <de/String>
+#include <de/System>
 
 /**
  * Logical resources; materials, packages, textures, etc... @ingroup resource
@@ -89,7 +91,7 @@ public:
     void clearSystemFontSchemes();
 
     AbstractFont *createFontFromDef(ded_compositefont_t const &def);
-    AbstractFont *createFontFromFile(de::Uri const &uri, char const *resourcePath);
+    AbstractFont *createFontFromFile(de::Uri const &uri, de::String filePath);
 
 #endif
 

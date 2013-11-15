@@ -142,7 +142,7 @@ namespace de
  * @param name  Symbolic name of the type.
  * @return  FileType associated with @a name. May return a null-object.
  */
-de::FileType& DD_FileTypeByName(de::String name);
+de::FileType &DD_FileTypeByName(de::String name);
 
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely
@@ -150,7 +150,7 @@ de::FileType& DD_FileTypeByName(de::String name);
  *
  * @return  Type determined for this resource. May return a null-object.
  */
-de::FileType& DD_GuessFileTypeFromFileName(de::String name);
+de::FileType &DD_GuessFileTypeFromFileName(de::String name);
 
 /// Returns the registered file types for efficient traversal.
 de::FileTypes const& DD_FileTypes();

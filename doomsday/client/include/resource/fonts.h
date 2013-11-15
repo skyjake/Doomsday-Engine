@@ -21,11 +21,7 @@
 #ifndef DENG_RESOURCE_FONTS_H
 #define DENG_RESOURCE_FONTS_H
 
-#include "dd_share.h" // fontschemeid_t
-#include "def_data.h"
 #include "AbstractFont"
-#include "BitmapFont"
-#include "CompositeBitmapFont"
 #include "uri.hh"
 #include <de/Error>
 #include <de/String>

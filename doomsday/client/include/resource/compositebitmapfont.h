@@ -60,7 +60,7 @@ public:
      *
      * @todo Should observe engine reset.
      */
-    void rebuildFromDef(ded_compositefont_t *def);
+    void rebuildFromDef(ded_compositefont_t const &def);
 
     int ascent();
     int descent();

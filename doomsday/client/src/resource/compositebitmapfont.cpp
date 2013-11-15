@@ -231,21 +231,21 @@ void CompositeBitmapFont::setDefinition(ded_compositefont_t *newDef)
     d->def = newDef;
 }
 
-void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t *newDef)
+void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t const &newDef)
 {
     LOG_AS("CompositeBitmapFont::rebuildFromDef");
 
-    setDefinition(newDef);
-    if(!newDef) return;
+    setDefinition(const_cast<ded_compositefont_t *>(&newDef));
+    if(!d->def) return;
 
-    for(int i = 0; i < newDef->charMapCount.num; ++i)
+    for(int i = 0; i < d->def->charMapCount.num; ++i)
     {
-        if(!newDef->charMap[i].path) continue;
+        if(!d->def->charMap[i].path) continue;
 
         try
         {
-            QByteArray path = reinterpret_cast<de::Uri &>(*newDef->charMap[i].path).resolved().toUtf8();
-            glyphSetPatch(newDef->charMap[i].ch, path.constData());
+            String glyphPatchPath = reinterpret_cast<de::Uri &>(*d->def->charMap[i].path).resolved();
+            glyphSetPatch(d->def->charMap[i].ch, glyphPatchPath);
         }
         catch(de::Uri::ResolveError const& er)
         {
