@@ -19,6 +19,7 @@
 #ifndef DENG_CLIENT_CAMERALENSFX_H
 #define DENG_CLIENT_CAMERALENSFX_H
 
+void LensFx_Register();
 void LensFx_Init();
 void LensFx_Shutdown();
 

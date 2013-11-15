@@ -329,6 +329,7 @@ void Rend_Register()
     Rend_RadioRegister();
     Rend_SpriteRegister();
     //Rend_ConsoleRegister();
+    LensFx_Register();
     fx::Vignette::consoleRegister();
     VR::consoleRegister();
 }

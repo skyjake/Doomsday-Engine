@@ -43,6 +43,7 @@
 #include "render/fx/lensflares.h"
 #include "render/fx/postprocessing.h"
 #include "render/fx/vignette.h"
+#include "con_main.h"
 
 #include "ui/clientwindow.h"
 
@@ -74,6 +75,41 @@ struct ConsoleEffectStack
 
 static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
+#define IDX_POST_PROCESSING     3
+
+D_CMD(PostFx)
+{
+    DENG_UNUSED(argc);
+
+    int console = String(argv[1]).toInt();
+    String const shader = argv[2];
+    TimeDelta const span = String(argv[3]).toFloat();
+
+    if(console < 0 || console >= DDMAXPLAYERS)
+    {
+        LOG_WARNING("Invalid console %i") << console;
+        return false;
+    }
+
+    fx::PostProcessing *post =
+            static_cast<fx::PostProcessing *>(fxConsole[console].effects[IDX_POST_PROCESSING]);
+
+    // Special case to clear out the current shader.
+    if(shader == "none")
+    {
+        post->fadeOut(span);
+        return true;
+    }
+
+    post->fadeInShader(shader, span);
+    return true;
+}
+
+void LensFx_Register()
+{
+    C_CMD("postfx", "isf", PostFx);
+}
+
 void LensFx_Init()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
@@ -82,7 +118,7 @@ void LensFx_Init()
         stack.effects.append(new fx::ColorFilter(i));
         stack.effects.append(new fx::Vignette(i));
         stack.effects.append(new fx::LensFlares(i));
-        stack.effects.append(new fx::PostProcessing(i));
+        stack.effects.append(new fx::PostProcessing(i)); // IDX_POST_PROCESSING
     }
 }
 
