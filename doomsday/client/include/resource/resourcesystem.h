@@ -98,6 +98,12 @@ public:
     void clearRuntimeFontSchemes();
     void clearSystemFontSchemes();
 
+    /**
+     * To be called during a definition database reset to clear all definitions
+     * linked to by Font resources.
+     */
+    void clearFontDefinitionLinks();
+
     AbstractFont *createFontFromDef(ded_compositefont_t const &def);
     AbstractFont *createFontFromFile(de::Uri const &uri, de::String filePath);
 

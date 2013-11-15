@@ -1434,7 +1434,7 @@ void Def_Read()
 
         invalidateAllMaterials();
 #ifdef __CLIENT__
-        App_Fonts().clearDefinitionLinks();
+        App_ResourceSystem().clearFontDefinitionLinks();
 #endif
 
         Def_Destroy();

@@ -28,6 +28,7 @@
 #include <de/Error>
 #include <de/Observers>
 #include <de/String>
+#include <QList>
 #include <QMap>
 
 /// Special value used to signify an invalid font id.
@@ -77,11 +78,6 @@ public:
      * Register the console commands, variables, etc..., of this module.
      */
     static void consoleRegister();
-
-    /**
-     * To be called during a definition database reset to clear all links to defs.
-     */
-    void clearDefinitionLinks();
 
     /**
      * Returns the total number of unique fonts in the collection.

@@ -990,6 +990,17 @@ void ResourceSystem::clearSystemFontSchemes()
     d->fonts.scheme("System").clear();
 }
 
+void ResourceSystem::clearFontDefinitionLinks()
+{
+    foreach(AbstractFont *font, d->fonts.all())
+    {
+        if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
+        {
+            compFont->setDefinition(0);
+        }
+    }
+}
+
 AbstractFont *ResourceSystem::createFontFromDef(ded_compositefont_t const &def)
 {
     LOG_AS("ResourceSystem::createFontFromDef");

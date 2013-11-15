@@ -214,17 +214,6 @@ Fonts::Manifest &Fonts::toManifest(fontid_t id) const
     throw UnknownIdError("Fonts::toManifest", QString("Invalid font ID %1, valid range [1..%2)").arg(id).arg(d->manifestCount + 1));
 }
 
-void Fonts::clearDefinitionLinks()
-{
-    foreach(AbstractFont *font, d->fonts)
-    {
-        if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
-        {
-            compFont->setDefinition(0);
-        }
-    }
-}
-
 void Fonts::schemeManifestDefined(Scheme & /*scheme*/, Manifest &manifest)
 {
     // We want notification when the manifest is derived to produce a resource.
