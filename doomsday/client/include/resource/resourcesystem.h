@@ -21,6 +21,7 @@
 
 #include "def_data.h"
 #include "resourceclass.h"
+#include "resource/animgroups.h"
 #ifdef __CLIENT__
 #  include "Fonts"
 #endif
@@ -132,6 +133,28 @@ public:
     AbstractFont *createFontFromFile(de::Uri const &uri, de::String filePath);
 
 #endif
+
+    /**
+     * Returns the total number of animation/precache groups.
+     */
+    int animGroupCount();
+
+    /**
+     * Destroys all the animation groups.
+     */
+    void clearAllAnimGroups();
+
+    /**
+     * Returns the AnimGroup associated with @a index; otherwise @c 0.
+     */
+    de::AnimGroup *animGroup(int index);
+
+    /**
+     * Construct a new animation group.
+     *
+     * @param flags  @ref animationGroupFlags
+     */
+    de::AnimGroup &newAnimGroup(int flags);
 
 public: /// @todo Should be private:
     void initCompositeTextures();

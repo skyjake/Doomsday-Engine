@@ -1,8 +1,7 @@
-/**
- * @file animgroups.h (Material) Animation groups.
+/** @file animgroups.h  Material animation group.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,52 +18,126 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_ANIMGROUPS_H
-#define LIBDENG_RESOURCE_ANIMGROUPS_H
+#ifndef DENG_RESOURCE_ANIMATIONGROUP_H
+#define DENG_RESOURCE_ANIMATIONGROUP_H
 
-#include "Texture"
+#include "dd_types.h"
+#include "TextureManifest"
+#include <QList>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * (Material) Animation group frame.
- * @ingroup resource
- */
-typedef struct animframe_s
-{
-    void *textureManifest;
-    ushort tics;
-    ushort randomTics;
-} animframe_t;
+namespace de {
 
 /**
- * (Material) Animation group.
+ * Material Animation group.
+ *
  * @ingroup resource
  */
-typedef struct animgroup_s
+class AnimGroup
 {
-    int id;
-    int flags;
-    int count;
-    animframe_t *frames;
-} animgroup_t;
+public:
+    /**
+     * A single frame in the animation.
+     */
+    struct Frame
+    {
+    public:
+        /**
+         * Returns the texture manifest for the frame.
+         */
+        TextureManifest &textureManifest() const;
 
-/// @return  Number of animation/precache groups.
-int R_AnimGroupCount(void);
+        /**
+         * Returns the duration of the frame in tics.
+         */
+        ushort tics() const;
 
-/// To be called to destroy all animation groups when they are no longer needed.
-void R_ClearAnimGroups(void);
+        /**
+         * Returns the additional duration of the frame tics.
+         */
+        ushort randomTics() const;
 
-/// @return  AnimGroup associated with @a animGroupNum else @c NULL
-animgroup_t const *R_ToAnimGroup(int animGroupNum);
+        friend class AnimGroup;
 
-/// @return  @c true iff @a texture is linked to the identified @a animGroupNum.
-boolean R_IsTextureInAnimGroup(Uri const *texture, int animGroupNum);
+    private:
+        Frame(TextureManifest &textureManifest, ushort tics, ushort randomTics);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+        TextureManifest *_textureManifest;
+        ushort _tics;
+        ushort _randomTics;
+    };
 
-#endif /* LIBDENG_RESOURCE_ANIMGROUPS_H */
+    typedef QList<Frame *> Frames;
+
+public:
+    /**
+     * Construct a new animation group.
+     *
+     * @param uniqueId  Unique identifier to associate with the group.
+     * @param flags     @ref animationGroupFlags
+     */
+    AnimGroup(int uniqueId, int flags = 0);
+
+    /**
+     * Returns the unique identifier associated with the animation.
+     */
+    int id() const;
+
+    /**
+     * @return @ref animationGroupFlags
+     */
+    int flags() const;
+
+    /**
+     * Returns @c true iff at least one frame in the animation uses the specified
+     * @a textureManifest
+     *
+     * @see frames()
+     */
+    bool hasFrameFor(TextureManifest const &textureManifest) const;
+
+    /**
+     * Append a new frame to the animation.
+     *
+     * @param texture     Manifest for the texture to use during the frame.
+     * @param tics        Duration of the frame in tics.
+     * @param randomTics  Random duration of the frame in tics.
+     *
+     * @return  The new frame.
+     */
+    Frame &newFrame(TextureManifest &textureManifest, ushort tics,
+                          ushort randomTics = 0);
+
+    /**
+     * Clear all frames in the animation.
+     */
+    void clearAllFrames();
+
+    /**
+     * Returns the total number of frames in the animation.
+     */
+    inline int frameCount() const { return allFrames().count(); }
+
+    /**
+     * Convenient method of returning a frame in the animation by @a index.
+     * It is assumed that the index is within valid [0..frameCount) range.
+     *
+     * @see frameCount()
+     */
+    inline Frame &frame(int index) const { return *allFrames().at(index); }
+
+    /**
+     * Provides access to the frame list for efficient traversal.
+     *
+     * @see frame()
+     */
+    Frames const &allFrames() const;
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+typedef AnimGroup::Frame AnimGroupFrame;
+
+} // namespace de
+
+#endif // DENG_RESOURCE_ANIMATIONGROUP_H

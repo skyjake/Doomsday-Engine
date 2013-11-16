@@ -920,22 +920,16 @@ static void readAllDefinitions()
     LOG_INFO(String("readAllDefinitions: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-static animgroup_t const *findAnimGroupForTexture(TextureManifest &manifest)
+static AnimGroup const *findAnimGroupForTexture(TextureManifest &textureManifest)
 {
     // Group ids are 1-based.
     // Search backwards to allow patching.
-    for(int i = R_AnimGroupCount(); i > 0; i--)
+    for(int i = App_ResourceSystem().animGroupCount(); i > 0; i--)
     {
-        animgroup_t const *anim = R_ToAnimGroup(i);
-        for(int j = 0; j < anim->count; ++j)
+        AnimGroup *animGroup = App_ResourceSystem().animGroup(i);
+        if(animGroup->hasFrameFor(textureManifest))
         {
-            animframe_t const *frame = &anim->frames[j];
-            if(!frame->textureManifest) continue;
-
-            if(&manifest == frame->textureManifest)
-            {
-                return anim;
-            }
+            return animGroup;
         }
     }
     return 0; // Not found.
@@ -999,47 +993,46 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
     st->texture = reinterpret_cast<uri_s *>(new de::Uri(texUri));
 
     // Is there an animation for this?
-    animgroup_t const *anim = findAnimGroupForTexture(manifest);
-    if(anim && anim->count > 1)
+    AnimGroup const *anim = findAnimGroupForTexture(manifest);
+    if(anim && anim->frameCount() > 1)
     {
-        animframe_t const *animFrame;
+        AnimGroupFrame const *animFrame;
 
         // Determine the start frame.
         int startFrame = 0;
-        while(anim->frames[startFrame].textureManifest != &manifest)
+        while(&anim->frame(startFrame).textureManifest() != &manifest)
         {
             startFrame++;
         }
 
         // Just animate the first in the sequence?
-        if(startFrame && (anim->flags & AGF_FIRST_ONLY))
+        if(startFrame && (anim->flags() & AGF_FIRST_ONLY))
             return;
 
         // Complete configuration of the first stage.
-        animFrame = &anim->frames[startFrame];
-        st->tics = animFrame->tics + animFrame->randomTics;
-        if(animFrame->randomTics)
+        animFrame = &anim->frame(startFrame);
+        st->tics = animFrame->tics() + animFrame->randomTics();
+        if(animFrame->randomTics())
         {
-            st->variance = animFrame->randomTics / float( st->tics );
+            st->variance = animFrame->randomTics() / float( st->tics );
         }
 
         // Add further stages according to the animation group.
         startFrame++;
-        for(int i = 0; i < anim->count - 1; ++i)
+        for(int i = 0; i < anim->frameCount() - 1; ++i)
         {
-            int frame = de::wrap(startFrame + i, 0, anim->count);
+            int frame = de::wrap(startFrame + i, 0, anim->frameCount());
 
-            animFrame = &anim->frames[frame];
-            if(!animFrame->textureManifest) continue;
-            TextureManifest &frameManifest = *reinterpret_cast<TextureManifest *>(animFrame->textureManifest);
+            animFrame = &anim->frame(frame);
+            TextureManifest &frameManifest = animFrame->textureManifest();
 
             int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
             ded_material_layer_stage_t *st = &mat->layers[0].stages[layerIdx];
             st->texture = reinterpret_cast<uri_s *>(new de::Uri(frameManifest.composeUrn()));
-            st->tics = animFrame->tics + animFrame->randomTics;
-            if(animFrame->randomTics)
+            st->tics = animFrame->tics() + animFrame->randomTics();
+            if(animFrame->randomTics())
             {
-                st->variance = animFrame->randomTics / float( st->tics );
+                st->variance = animFrame->randomTics() / float( st->tics );
             }
         }
     }

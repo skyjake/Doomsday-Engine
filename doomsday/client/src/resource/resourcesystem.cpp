@@ -78,8 +78,11 @@ static Texture *deriveTexture(TextureManifest &manifest)
 DENG2_PIMPL(ResourceSystem)
 {
     typedef QList<de::ResourceClass *> ResourceClasses;
-    NullResourceClass nullResourceClass;
     ResourceClasses resClasses;
+    NullResourceClass nullResourceClass;
+
+    typedef QList<AnimGroup *> AnimGroups;
+    AnimGroups animGroups;
 
     QList<PatchName> patchNames;
     Textures textures;
@@ -134,6 +137,7 @@ DENG2_PIMPL(ResourceSystem)
     ~Instance()
     {
         qDeleteAll(resClasses);
+        self.clearAllAnimGroups();
     }
 
 #ifdef __CLIENT__
@@ -1168,6 +1172,37 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
 }
 
 #endif // __CLIENT__
+
+void ResourceSystem::clearAllAnimGroups()
+{
+    qDeleteAll(d->animGroups);
+    d->animGroups.clear();
+}
+
+int ResourceSystem::animGroupCount()
+{
+    return d->animGroups.count();
+}
+
+AnimGroup *ResourceSystem::animGroup(int index)
+{
+    LOG_AS("ResourceSystem::animGroup");
+    if(index >= 0 && index < d->animGroups.count())
+    {
+        return d->animGroups.at(index);
+    }
+    LOG_DEBUG("Invalid group #%i, returning NULL.") << index;
+    return 0;
+}
+
+AnimGroup &ResourceSystem::newAnimGroup(int flags)
+{
+    LOG_AS("ResourceSystem");
+    int const uniqueId = d->animGroups.count() + 1; // 1-based index.
+    // Allocating one by one is inefficient but it doesn't really matter.
+    d->animGroups.append(new AnimGroup(uniqueId, flags));
+    return *d->animGroups.last();
+}
 
 void ResourceSystem::consoleRegister() // static
 {

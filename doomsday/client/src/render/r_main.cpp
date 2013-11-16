@@ -581,7 +581,6 @@ void R_Update()
 
 void R_Shutdown()
 {
-    R_ClearAnimGroups();
     R_ShutdownSprites();
     Models_Shutdown();
     R_ShutdownSvgs();

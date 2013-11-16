@@ -2,7 +2,7 @@
 #include "de_base.h"
 #include "api_resource.h"
 #include "Textures"
-
+#include "resource/animgroups.h"
 #include "gl/gl_tex.h" // averagealpha_analysis_t, etc...
 #ifdef __CLIENT__
 #  include "render/r_draw.h" // Rend_PatchTextureSpec()
@@ -36,13 +36,38 @@ DENG_EXTERN_C int Textures_UniqueId(Uri const *uri)
     return Textures_UniqueId2(uri, false);
 }
 
-/*
- * animgroups.cpp:
- */
 #undef R_CreateAnimGroup
-DENG_EXTERN_C int R_CreateAnimGroup(int flags);
+DENG_EXTERN_C int R_CreateAnimGroup(int flags)
+{
+    return App_ResourceSystem().newAnimGroup(flags & ~AGF_PRECACHE).id();
+}
+
 #undef R_AddAnimGroupFrame
-DENG_EXTERN_C void R_AddAnimGroupFrame(int animGroupNum, Uri const *texture, int tics, int randomTics);
+DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, int tics, int randomTics)
+{
+    LOG_AS("R_AddAnimGroupFrame");
+
+    if(!textureUri_) return;
+    de::Uri const &textureUri = reinterpret_cast<de::Uri const &>(*textureUri_);
+
+    try
+    {
+        if(de::AnimGroup *group = App_ResourceSystem().animGroup(groupId))
+        {
+            group->newFrame(App_Textures().find(textureUri), tics, randomTics);
+        }
+        else
+        {
+            LOG_DEBUG("Unknown anim group #%i, ignoring.") << groupId;
+        }
+    }
+    catch(de::Textures::NotFoundError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ". Failed adding texture \"%s\" to group #%i, ignoring.")
+            << textureUri << groupId;
+    }
+}
 
 /*
  * colorpalettes.cpp:

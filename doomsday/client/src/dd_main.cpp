@@ -1410,7 +1410,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         B_BindDefaults();
         B_InitialContextActivations();
 #endif
-        R_ClearAnimGroups();
+        App_ResourceSystem().clearAllAnimGroups();
 
         // Reset the world back to it's initial state (unload the map, reset players, etc...).
         App_World().reset();
