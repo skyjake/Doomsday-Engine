@@ -145,9 +145,9 @@ public:
     void clearAllAnimGroups();
 
     /**
-     * Returns the AnimGroup associated with @a index; otherwise @c 0.
+     * Returns the AnimGroup associated with @a uniqueId (1-based); otherwise @c 0.
      */
-    de::AnimGroup *animGroup(int index);
+    de::AnimGroup *animGroup(int uniqueId);
 
     /**
      * Construct a new animation group.

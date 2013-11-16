@@ -1184,21 +1184,21 @@ int ResourceSystem::animGroupCount()
     return d->animGroups.count();
 }
 
-AnimGroup *ResourceSystem::animGroup(int index)
+AnimGroup *ResourceSystem::animGroup(int uniqueId)
 {
     LOG_AS("ResourceSystem::animGroup");
-    if(index >= 0 && index < d->animGroups.count())
+    if(uniqueId > 0 && uniqueId <= d->animGroups.count())
     {
-        return d->animGroups.at(index);
+        return d->animGroups.at(uniqueId - 1);
     }
-    LOG_DEBUG("Invalid group #%i, returning NULL.") << index;
+    LOG_DEBUG("Invalid group #%i, returning NULL.") << uniqueId;
     return 0;
 }
 
 AnimGroup &ResourceSystem::newAnimGroup(int flags)
 {
     LOG_AS("ResourceSystem");
-    int const uniqueId = d->animGroups.count() + 1; // 1-based index.
+    int const uniqueId = d->animGroups.count() + 1; // 1-based.
     // Allocating one by one is inefficient but it doesn't really matter.
     d->animGroups.append(new AnimGroup(uniqueId, flags));
     return *d->animGroups.last();

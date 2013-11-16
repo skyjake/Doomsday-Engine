@@ -52,7 +52,7 @@ public:
         ushort tics() const;
 
         /**
-         * Returns the additional duration of the frame tics.
+         * Returns the additional duration of the frame in tics.
          */
         ushort randomTics() const;
 
@@ -100,12 +100,12 @@ public:
      *
      * @param texture     Manifest for the texture to use during the frame.
      * @param tics        Duration of the frame in tics.
-     * @param randomTics  Random duration of the frame in tics.
+     * @param randomTics  Additional random duration of the frame in tics.
      *
      * @return  The new frame.
      */
     Frame &newFrame(TextureManifest &textureManifest, ushort tics,
-                          ushort randomTics = 0);
+                    ushort randomTics = 0);
 
     /**
      * Clear all frames in the animation.
