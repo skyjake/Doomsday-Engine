@@ -1,7 +1,7 @@
-/** @file colorpalette.cpp Color Palette.
+/** @file colorpalette.cpp  Color palette resource.
  *
- * @authors Copyright &copy; 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,261 +18,190 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "de_console.h"
-#include "dd_def.h"
-#include "m_misc.h" // for M_ReadBits
-
 #include "resource/colorpalette.h"
+
+#include "dd_share.h" // reciprocal255
+#include "m_misc.h" // M_ReadBits
+#include <de/Log>
+#include <de/Range>
+#include <QVector>
+
+using namespace de;
 
 #define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
 
-static void prepareNearestLUT(colorpalette_t* pal);
-static void prepareColorTable(colorpalette_t* pal, const int compOrder[3],
-    const uint8_t compBits[3], const uint8_t* colorData, int colorCount);
-
-colorpalette_t* ColorPalette_New(void)
+DENG2_PIMPL_NOREF(ColorPalette)
 {
-    colorpalette_t* pal = (colorpalette_t*) malloc(sizeof(*pal));
-    if(NULL == pal)
-        Con_Error("ColorPalette::Construct: Failed on allocation of %lu bytes for "
-            "new ColorPalette.", (unsigned long) sizeof(*pal));
+    typedef Vector3ub Color;
+    typedef QVector<Color> ColorTable;
+    ColorTable colors;
 
-    pal->_flags = CPF_UPDATE_18TO8; // Defer creation of the nearest color LUT.
-    pal->_colorCount = 0;
-    pal->_colorData = NULL;
-    pal->_18To8LUT = NULL;
-    return pal;
-}
+    /// 18-bit to 8-bit, nearest color translation table.
+    typedef QVector<int> XLat18To8;
+    QScopedPointer<XLat18To8> xlat18To8;
+    bool need18To8Update;
 
-colorpalette_t* ColorPalette_NewWithColorTable(const int compOrder[3],
-    const uint8_t compBits[3], const uint8_t* colorData, int colorCount)
-{
-    assert(compOrder && compBits);
+    Instance() : need18To8Update(false) // No color table yet.
+    {}
+
+    /// @note A time-consuming operation.
+    void prepareNearestLUT()
     {
-    colorpalette_t* pal = ColorPalette_New();
-    if(colorCount > 0 && NULL != colorData)
-        prepareColorTable(pal, compOrder, compBits, colorData, colorCount);
-    return pal;
+#define COLORS18BIT 262144
+
+        need18To8Update = false;
+
+        if(xlat18To8.isNull())
+        {
+            xlat18To8.reset(new XLat18To8(COLORS18BIT));
+        }
+
+        for(int r = 0; r < 64; ++r)
+        for(int g = 0; g < 64; ++g)
+        for(int b = 0; b < 64; ++b)
+        {
+            int nearest = 0;
+            int smallestDiff = DDMAXINT;
+            for(int i = 0; i < colors.count(); ++i)
+            {
+                Color const &color = colors[i];
+                int diff = (color.x - (r << 2)) * (color.x - (r << 2)) +
+                           (color.y - (g << 2)) * (color.y - (g << 2)) +
+                           (color.z - (b << 2)) * (color.z - (b << 2));
+
+                if(diff < smallestDiff)
+                {
+                    smallestDiff = diff;
+                    nearest = i;
+                }
+            }
+
+            (*xlat18To8)[RGB18(r, g, b)] = nearest;
+        }
+
+#undef COLORS18BIT
+    }
+};
+
+ColorPalette::ColorPalette() : d(new Instance())
+{}
+
+ColorPalette::ColorPalette(int const compOrder[3], uint8_t const compBits[3],
+    uint8_t const *colorData, int colorCount)
+    : d(new Instance())
+{
+    DENG2_ASSERT(compOrder != 0 && compBits != 0);
+    if(colorCount > 0 && colorData)
+    {
+        replaceColorTable(compOrder, compBits, colorData, colorCount);
     }
 }
 
-void ColorPalette_Delete(colorpalette_t* pal)
+void ColorPalette::replaceColorTable(int const compOrder[3],
+    uint8_t const compBits[3], uint8_t const *colorData, int colorCount)
 {
-    assert(pal);
-    if(pal->_colorData)
-        free(pal->_colorData);
-    if(pal->_18To8LUT)
-        free(pal->_18To8LUT);
-    free(pal);
-}
-
-void ColorPalette_ReplaceColorTable(colorpalette_t* pal, const int compOrder[3],
-    const uint8_t compBits[3], const uint8_t* colorData, int colorCount)
-{
-    prepareColorTable(pal, compOrder, compBits, colorData, colorCount);
-}
-
-void ColorPalette_Color(const colorpalette_t* pal, int colorIdx, uint8_t rgb[3])
-{
-    DENG_ASSERT(pal && rgb);
-
-
-#if _DEBUG
-    if(colorIdx < 0 || colorIdx >= pal->_colorCount)
-        Con_Message("Warning: ColorPalette::Color: ColorIdx %u out of range [0..%u).",
-            colorIdx, pal->_colorCount);
-#endif
-
-    if(0 == pal->_colorCount)
-    {
-        rgb[CR] = rgb[CG] = rgb[CB] = 0;
-        return;
-    }
-
-    size_t offset = 3 * (size_t)MINMAX_OF(0, colorIdx, pal->_colorCount-1);
-    rgb[CR] = pal->_colorData[offset + CR];
-    rgb[CG] = pal->_colorData[offset + CG];
-    rgb[CB] = pal->_colorData[offset + CB];
-}
-
-int ColorPalette_NearestIndex(colorpalette_t* pal, uint8_t red, uint8_t green, uint8_t blue)
-{
-    assert(pal);
-    if(0 == pal->_colorCount)
-        return -1;
-    // Ensure we've prepared the 18 to 8 table.
-    prepareNearestLUT(pal);
-    return pal->_18To8LUT[RGB18(red >> 2, green >> 2, blue >> 2)];
-}
-
-int ColorPalette_NearestIndexv(colorpalette_t* pal, const uint8_t rgb[3])
-{
-    return ColorPalette_NearestIndex(pal, rgb[CR], rgb[CG], rgb[CB]);
-}
-
-static void prepareColorTable(colorpalette_t* pal, const int compOrder[3],
-    const uint8_t compBits[3], const uint8_t* colorData, int colorCount)
-{
-    assert(pal);
-    {
-    uint8_t order[3], bits[3], cb;
-    const uint8_t* src;
+    // We may need a new 18 => 8 bit xlat table.
+    d->need18To8Update = true;
 
     // Ensure input is in range.
-    order[0] = MINMAX_OF(0, compOrder[0], 2);
-    order[1] = MINMAX_OF(0, compOrder[1], 2);
-    order[2] = MINMAX_OF(0, compOrder[2], 2);
+    Vector3i order(de::clamp(0, compOrder[0], 2),
+                   de::clamp(0, compOrder[1], 2),
+                   de::clamp(0, compOrder[2], 2));
 
-    bits[CR] = MIN_OF(compBits[CR], COLORPALETTE_MAX_COMPONENT_BITS);
-    bits[CG] = MIN_OF(compBits[CG], COLORPALETTE_MAX_COMPONENT_BITS);
-    bits[CB] = MIN_OF(compBits[CB], COLORPALETTE_MAX_COMPONENT_BITS);
+    Vector3ub bits = Vector3ub(compBits).min(Vector3ub(max_component_bits,
+                                                       max_component_bits,
+                                                       max_component_bits));
 
-    if(NULL != pal->_colorData)
-    {
-        free(pal->_colorData); pal->_colorData = NULL;
-        pal->_colorCount = 0;
-    }
-
-    if(NULL != pal->_18To8LUT)
-    {
-        free(pal->_18To8LUT); pal->_18To8LUT = NULL;
-        pal->_flags |= CPF_UPDATE_18TO8;
-    }
-
-    pal->_colorCount = colorCount;
-    if(NULL == (pal->_colorData = (uint8_t*) malloc(pal->_colorCount * 3 * sizeof(uint8_t))))
-        Con_Error("ColorPalette::prepareColorTable: Failed on allocation of %lu bytes for "
-            "color table.", (unsigned long) (pal->_colorCount * 3 * sizeof(uint8_t)));
+    d->colors.resize(colorCount);
 
     // Already in the format we want?
-    if(8 == bits[CR] && 8 == bits[CG] && 8 == bits[CB])
-    {   // Great! Just copy it as-is.
-        memcpy(pal->_colorData, colorData, pal->_colorCount * 3);
-
-        // Do we need to adjust the order?
-        if(0 != order[CR]|| 1 != order[CG] || 2 != order[CB])
+    if(8 == bits.x && 8 == bits.y && 8 == bits.z)
+    {
+        // Great! Just copy it as-is.
+        uint8_t const *src = colorData;
+        for(int i = 0; i < colorCount; ++i, src += 3)
         {
-            int i;
-            for(i = 0; i < pal->_colorCount; ++i)
-            {
-                uint8_t* dst = &pal->_colorData[i * 3];
-                uint8_t tmp[3];
-
-                tmp[0] = dst[0];
-                tmp[1] = dst[1];
-                tmp[2] = dst[2];
-
-                dst[CR] = tmp[order[CR]];
-                dst[CG] = tmp[order[CG]];
-                dst[CB] = tmp[order[CB]];
-            }
+            d->colors[i] = Vector3ub(src[order.x], src[order.y], src[order.z]);
         }
         return;
     }
 
     // Conversion is necessary.
-    src = colorData;
-    cb = 0;
-    { int i;
-    for(i = 0; i < pal->_colorCount; ++i)
+    uint8_t const *src = colorData;
+    uint8_t cb = 0;
+    for(int i = 0; i < colorCount; ++i)
     {
-        uint8_t* dst = &pal->_colorData[i * 3];
-        int tmp[3];
+        Vector3ub &dst = d->colors[i];
 
-        tmp[CR] = tmp[CG] = tmp[CB] = 0;
-
-        M_ReadBits(bits[order[CR]], &src, &cb, (uint8_t*) &(tmp[order[CR]]));
-        M_ReadBits(bits[order[CG]], &src, &cb, (uint8_t*) &(tmp[order[CG]]));
-        M_ReadBits(bits[order[CB]], &src, &cb, (uint8_t*) &(tmp[order[CB]]));
+        Vector3i tmp;
+        M_ReadBits(bits[order.x], &src, &cb, (uint8_t *) &(tmp[order.x]));
+        M_ReadBits(bits[order.y], &src, &cb, (uint8_t *) &(tmp[order.y]));
+        M_ReadBits(bits[order.z], &src, &cb, (uint8_t *) &(tmp[order.z]));
 
         // Need to do any scaling?
-        if(8 != bits[CR])
+        if(8 != bits.x)
         {
-            if(bits[CR] < 8)
-                tmp[CR] <<= 8 - bits[CR];
+            if(bits.x < 8)
+                tmp.x <<= 8 - bits.x;
             else
-                tmp[CR] >>= bits[CR] - 8;
+                tmp.x >>= bits.x - 8;
         }
 
-        if(8 != bits[CG])
+        if(8 != bits.y)
         {
-            if(bits[CG] < 8)
-                tmp[CG] <<= 8 - bits[CG];
+            if(bits.y < 8)
+                tmp.y <<= 8 - bits.y;
             else
-                tmp[CG] >>= bits[CG] - 8;
+                tmp.y >>= bits.y - 8;
         }
 
-        if(8 != bits[CB])
+        if(8 != bits.z)
         {
-            if(bits[CB] < 8)
-                tmp[CB] <<= 8 - bits[CB];
+            if(bits.z < 8)
+                tmp.z <<= 8 - bits.z;
             else
-                tmp[CB] >>= bits[CB] - 8;
+                tmp.z >>= bits.z - 8;
         }
 
         // Store the final color.
-        dst[CR] = (uint8_t) MINMAX_OF(0, tmp[CR], 255);
-        dst[CG] = (uint8_t) MINMAX_OF(0, tmp[CG], 255);
-        dst[CB] = (uint8_t) MINMAX_OF(0, tmp[CB], 255);
-    }}
+        dst = Vector3ub(de::clamp<uint8_t>(0, tmp.x, 255),
+                        de::clamp<uint8_t>(0, tmp.y, 255),
+                        de::clamp<uint8_t>(0, tmp.z, 255));
     }
 }
 
-/// @note A time-consuming operation.
-static void prepareNearestLUT(colorpalette_t* pal)
+Vector3ub ColorPalette::color(int colorIndex) const
 {
-#define SIZEOF18TO8         (sizeof(int) * 262144)
+    LOG_AS("ColorPalette::color");
 
-    assert(pal);
-    if((pal->_flags & CPF_UPDATE_18TO8) || !pal->_18To8LUT)
+    if(colorIndex < 0 || colorIndex >= d->colors.count())
     {
-        int r, g, b, i, nearest, smallestDiff;
-
-        if(!pal->_18To8LUT)
-        {
-            if(NULL == (pal->_18To8LUT = (int*) malloc(SIZEOF18TO8)))
-                Con_Error("ColorPalette::prepareNearestLUT: Failed on allocation of %lu bytes for "
-                    "lookup table.", (unsigned long) SIZEOF18TO8);
-        }
-
-        for(r = 0; r < 64; ++r)
-        {
-            for(g = 0; g < 64; ++g)
-            {
-                for(b = 0; b < 64; ++b)
-                {
-                    nearest = 0;
-                    smallestDiff = DDMAXINT;
-                    for(i = 0; i < pal->_colorCount; ++i)
-                    {
-                        const uint8_t* rgb = &pal->_colorData[i * 3];
-                        int diff =
-                            (rgb[CR] - (r << 2)) * (rgb[CR] - (r << 2)) +
-                            (rgb[CG] - (g << 2)) * (rgb[CG] - (g << 2)) +
-                            (rgb[CB] - (b << 2)) * (rgb[CB] - (b << 2));
-
-                        if(diff < smallestDiff)
-                        {
-                            smallestDiff = diff;
-                            nearest = i;
-                        }
-                    }
-
-                    pal->_18To8LUT[RGB18(r, g, b)] = nearest;
-                }
-            }
-        }
-
-        pal->_flags &= ~CPF_UPDATE_18TO8;
-
-        /*if(ArgCheck("-dump_pal18to8"))
-        {
-            FILE* file = fopen("colorpalette18To8.lmp", "wb");
-            fwrite(pal->_18To8LUT, SIZEOF18TO8, 1, file);
-            fclose(file);
-        }*/
+        LOG_DEBUG("Index %i out of range %s, will clamp.")
+            << colorIndex << Rangeui(0, d->colors.count()).asText();
     }
 
-#undef SIZEOF18TO8
+    if(!d->colors.isEmpty())
+    {
+        return d->colors[de::clamp(0, colorIndex, d->colors.count() - 1)];
+    }
+
+    return Vector3ub();
+}
+
+Vector3f ColorPalette::colorf(int colorIdx) const
+{
+    return color(colorIdx).toVector3f() * reciprocal255;
+}
+
+int ColorPalette::nearestIndex(Vector3ub const &rgb) const
+{
+    if(d->colors.isEmpty()) return -1;
+
+    // Ensure we've prepared the 18 to 8 table.
+    if(d->need18To8Update || d->xlat18To8.isNull())
+    {
+        d->prepareNearestLUT();
+    }
+
+    return (*d->xlat18To8)[RGB18(rgb.x >> 2, rgb.y >> 2, rgb.z >> 2)];
 }

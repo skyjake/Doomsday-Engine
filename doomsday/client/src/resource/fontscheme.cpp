@@ -184,7 +184,7 @@ FontScheme::Manifest &FontScheme::declare(Path const &path)
     if(d->index.size() != sizeBefore)
     {
         // We want notification if/when the manifest's uniqueId changes.
-        newManifest->audienceForUniqueIdChanged += this;
+        newManifest->audienceForUniqueIdChange += this;
 
         // We want notification when the manifest is about to be deleted.
         newManifest->audienceForDeletion += this;

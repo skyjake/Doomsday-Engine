@@ -51,13 +51,13 @@ void R_DestroyColorPalettes(void);
 int R_ColorPaletteCount(void);
 
 /// @return  ColorPalette associated with unique @a id, else @c NULL.
-colorpalette_t *R_ToColorPalette(colorpaletteid_t id);
+ColorPalette *R_ToColorPalette(colorpaletteid_t id);
 
 /**
  * Given a color palette list index return the ColorPalette.
  * @return  ColorPalette if found else @c NULL
  */
-colorpalette_t *R_GetColorPaletteByIndex(int paletteIdx);
+ColorPalette *R_GetColorPaletteByIndex(int paletteIdx);
 
 /**
  * Change the default color palette.

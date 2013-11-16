@@ -196,7 +196,7 @@ TextureManifest &TextureScheme::declare(Path const &path,
         d->uniqueIdLutDirty = true;
 
         // We want notification if/when the manifest's uniqueId changes.
-        newManifest->audienceForUniqueIdChanged += this;
+        newManifest->audienceForUniqueIdChange += this;
 
         // We want notification when the manifest is about to be deleted.
         newManifest->audienceForDeletion += this;

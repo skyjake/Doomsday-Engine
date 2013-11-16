@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GL_MAIN_H
-#define LIBDENG_GL_MAIN_H
+#ifndef DENG_GL_MAIN_H
+#define DENG_GL_MAIN_H
 
 #ifndef __CLIENT__
 #  error "gl only exists in the Client"
@@ -37,11 +37,11 @@
 #include "render/r_main.h"
 #include "Texture"
 
-struct colorpalette_s;
 struct ColorRawf_s;
 struct material_s;
 struct texturevariant_s;
 
+class ColorPalette;
 class Material;
 
 DENG_EXTERN_C int numTexUnits;
@@ -262,7 +262,7 @@ int GL_ChooseSmartFilter(int width, int height, int flags);
  * 4 = RGBA
  */
 uint8_t *GL_ConvertBuffer(uint8_t const *src, int width, int height,
-    int informat, struct colorpalette_s *palette, int outformat);
+    int informat, ColorPalette const *palette, int outformat);
 
 /**
  * @param method  Unique identifier of the smart filtering method to apply.
@@ -285,10 +285,10 @@ uint8_t *GL_SmartFilter(int method, uint8_t const *src, int width, int height,
  * Handles pixel sizes; 1 (==2), 3 and 4.
  */
 void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
-    struct colorpalette_s *palette, float *brightX, float *brightY,
+    ColorPalette const *palette, float *brightX, float *brightY,
     struct ColorRawf_s *color, float *lumSize);
 
 // Console commands.
 D_CMD(UpdateGammaRamp);
 
-#endif /* LIBDENG_GL_MAIN_H */
+#endif // DENG_GL_MAIN_H

@@ -1,7 +1,6 @@
-/**
- * @file colorpalette.h Color Palette.
+/** @file colorpalette.h  Color palette resource.
  *
- * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,99 +17,92 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_COLORPALETTE_H
-#define LIBDENG_RESOURCE_COLORPALETTE_H
+#ifndef DENG_RESOURCE_COLORPALETTE_H
+#define DENG_RESOURCE_COLORPALETTE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * @defgroup colorPaletteFlags  Color Palette Flags
- * @ingroup flags
- */
-///@{
-#define CPF_UPDATE_18TO8        0x1 /// The 18To8 LUT needs updating.
-///@}
-
-#define COLORPALETTE_MAX_COMPONENT_BITS (16) // Max bits per component.
+#include "dd_types.h"
+#include <de/Vector>
 
 /**
  * Color Palette.
  *
  * @ingroup resource
  */
-typedef struct colorpalette_s {
-    /// @ref colorPaletteFlags
-    uint8_t _flags;
+class ColorPalette
+{
+public:
+    /// Maximum number of bits per color component.
+    static int const max_component_bits = 16;
 
-    /// R8G8B88 color triplets [_num * 3].
-    uint8_t *_colorData;
-    int _colorCount;
+public:
+    /**
+     * Construct a new empty color palette.
+     */
+    ColorPalette();
 
-    /// Nearest color lookup table.
-    int *_18To8LUT;
-} colorpalette_t;
+    /**
+     * Constructs a new color palette using the specified color table.
+     *
+     * @param compOrder   Component order. Examples:
+     * <pre> [0,1,2] == RGB
+     * [2,1,0] == BGR
+     * </pre>
+     *
+     * @param compBits    Number of bits per component [R,G,B].
+     * @param colorData   Color triplets (at least @a numColors * 3).
+     * @param colorCount  Number of color triplets.
+     */
+    ColorPalette(int const compOrder[3], uint8_t const compBits[3],
+        uint8_t const *colorData, int colorCount);
 
-colorpalette_t* ColorPalette_New(void);
+    /**
+     * Returns the total number of colors in the palette.
+     */
+    int size() const;
 
-/**
- * Constructs a new color palette.
- *
- * @param compOrder  Component order. Examples:
- * <pre> [0,1,2] == RGB
- * [2,1,0] == BGR</pre>
- * @param compBits  Number of bits per component [R,G,B].
- * @param colorData  Color triplets (at least @a numColors * 3).
- * @param colorCount  Number of color triplets.
- */
-colorpalette_t *ColorPalette_NewWithColorTable(int const compOrder[3],
-    uint8_t const compBits[3], uint8_t const *colorData, int colorCount);
+    /**
+     * Replace the entire color table.
+     *
+     * @param compOrder   Component order. Examples:
+     * <pre> [0,1,2] == RGB
+     * [2,1,0] == BGR
+     * </pre>
+     *
+     * @param compBits    Number of bits per component [R,G,B].
+     * @param colorData   Color triplets (at least @a numColors * 3).
+     * @param colorCount  Number of color triplets.
+     */
+    void replaceColorTable(int const compOrder[3], uint8_t const compBits[3],
+        uint8_t const *colorData, int colorCount);
 
-void ColorPalette_Delete(colorpalette_t *pal);
+    /**
+     * Lookup a color in the palette by @a colorIndex. If the specified index is
+     * out of valid [0..colorCount) range it will be clamped.
+     *
+     * @param colorIndex  Index of the color in the palette.
+     *
+     * @return  Associated R8G8B8 color triplet.
+     *
+     * @see colorf()
+     */
+    de::Vector3ub color(int colorIndex) const;
 
-/// @return  Number of colors in the palette.
-ushort ColorPalette_Size(colorpalette_t *pal);
+    /**
+     * Same as @ref color() except the color is returned in [0..1] floating-point.
+     */
+    de::Vector3f colorf(int colorIndex) const;
 
-/**
- * Replace the entire color table.
- *
- * @param pal  Color palette.
- * @param compOrder  Component order. Examples:
- * <pre> [0,1,2] == RGB
- * [2,1,0] == BGR</pre>
- * @param compBits  Number of bits per component [R,G,B].
- * @param colorData  Color triplets (at least @a numColors * 3).
- * @param colorCount  Number of color triplets.
- */
-void ColorPalette_ReplaceColorTable(colorpalette_t *pal, int const compOrder[3],
-    uint8_t const compBits[3], uint8_t const *colorData, int colorCount);
+    /**
+     * Given an R8G8B8 color triplet return the closet matching color index.
+     *
+     * @param rgb  R8G8B8 color to be matched.
+     *
+     * @return  Closet matching color index or @c -1 if no colors in the palette.
+     */
+    int nearestIndex(de::Vector3ub const &rgb) const;
 
-/**
- * Lookup a color in the palette.
- *
- * @note If the specified color index is out of range it will be clamped to
- * a valid value before use.
- *
- * @param pal  Color palette.
- * @param colorIdx  Index of the color to lookup.
- * @param rgb  Associated R8G8B8 color triplet is written here.
- */
-void ColorPalette_Color(colorpalette_t const *pal, int colorIdx, uint8_t rgb[3]);
+private:
+    DENG2_PRIVATE(d)
+};
 
-/**
- * Given an R8G8B8 color triplet return the closet matching color index.
- *
- * @param pal  Color palette.
- * @param rgb  R8G8B8 color to be matched.
- *
- * @return  Closet matching color index or @c -1 if no colors in the palette.
- */
-int ColorPalette_NearestIndexv(colorpalette_t *pal, uint8_t const rgb[3]);
-int ColorPalette_NearestIndex(colorpalette_t *pal, uint8_t red, uint8_t green, uint8_t blue);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_RESOURCE_COLORPALETTE_H */
+#endif // DENG_RESOURCE_COLORPALETTE_H

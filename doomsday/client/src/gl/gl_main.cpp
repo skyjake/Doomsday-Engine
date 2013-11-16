@@ -989,12 +989,12 @@ uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
     return out;
 }
 
-uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat,
-    colorpalette_t* palette, int outformat)
+uint8_t *GL_ConvertBuffer(uint8_t const *in, int width, int height, int informat,
+    ColorPalette const *palette, int outformat)
 {
-    assert(in);
-    {
-    uint8_t* out;
+    DENG2_ASSERT(in != 0);
+
+    uint8_t *out;
 
     if(width <= 0 || height <= 0)
     {
@@ -1048,11 +1048,10 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
         }
     }
     return out;
-    }
 }
 
 void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSize,
-    colorpalette_t *palette, float *retBrightX, float *retBrightY,
+    ColorPalette const *palette, float *retBrightX, float *retBrightY,
     ColorRawf *retColor, float *retLumSize)
 {
     DENG_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
@@ -1133,7 +1132,10 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
 
             if(pixelSize == 1)
             {
-                ColorPalette_Color(palette, *src, rgb);
+                Vector3ub palColor = palette->color(*src);
+                rgb[CR] = palColor.x;
+                rgb[CG] = palColor.y;
+                rgb[CB] = palColor.z;
             }
             else if(pixelSize >= 3)
             {

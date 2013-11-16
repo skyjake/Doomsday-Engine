@@ -1,9 +1,11 @@
-/**
- * @file gl_tex.h
- * Image manipulation and evaluation algorithms. @ingroup gl
+/** @file gl_tex.h  Image manipulation and evaluation algorithms.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @ingroup gl
+ *
+ * @todo Belongs in the resource domain -- no ties to GL or related components.
+ *
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,10 +22,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_IMAGE_MANIPULATION_H
-#define LIBDENG_IMAGE_MANIPULATION_H
+#ifndef DENG_GL_IMAGE_MANIPULATION_H
+#define DENG_GL_IMAGE_MANIPULATION_H
 
 #include "color.h"
+
+class ColorPalette;
 
 typedef struct colorpalette_analysis_s {
     colorpaletteid_t paletteId;
@@ -42,10 +46,6 @@ typedef struct averagealpha_analysis_s {
     float alpha; ///< Result of the average.
     float coverage; ///< Fraction representing the ratio of alpha to non-alpha pixels.
 } averagealpha_analysis_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @param pixels    Luminance image to be enhanced.
@@ -155,7 +155,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
  * @param color     Determined average color written here.
  */
 void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
-    const struct colorpalette_s* palette, boolean hasAlpha, ColorRawf* color);
+    ColorPalette const *palette, boolean hasAlpha, ColorRawf* color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -178,7 +178,7 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
  * @param color     Determined average color written here.
  */
 void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
-    int line, const struct colorpalette_s* palette, boolean hasAlpha, ColorRawf* color);
+    int line, ColorPalette const *palette, boolean hasAlpha, ColorRawf* color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -200,7 +200,7 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height, int pixelSiz
  * @param coverage  Fraction representing the ratio of alpha to non-alpha pixels.
  */
 void FindAverageAlphaIdx(const uint8_t* pixels, int width, int height,
-    const struct colorpalette_s* palette, float* alpha, float* coverage);
+    ColorPalette const *palette, float* alpha, float* coverage);
 
 /**
  * Calculates a clip region for the image that excludes alpha pixels.
@@ -259,22 +259,18 @@ void GL_DownMipmap32(uint8_t* pixels, int width, int height, int pixelSize);
  */
 void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float fade);
 
-boolean GL_PalettizeImage(uint8_t* out, int outformat, const struct colorpalette_s* palette,
-    boolean gammaCorrect, const uint8_t* in, int informat, int width, int height);
+boolean GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palette,
+    boolean gammaCorrect, uint8_t const *in, int informat, int width, int height);
 
-boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat,
-    struct colorpalette_s* palette, const uint8_t* in, int informat, int width, int height);
+boolean GL_QuantizeImageToPalette(uint8_t *out, int outformat,
+    ColorPalette const *palette, uint8_t const *in, int informat, int width, int height);
 
 /**
  * Desaturates the texture in the dest buffer by averaging the colour then
  * looking up the nearest match in the palette. Increases the brightness
  * to maximum.
  */
-void GL_DeSaturatePalettedImage(uint8_t* buffer, struct colorpalette_s* palette,
+void GL_DeSaturatePalettedImage(uint8_t *buffer, ColorPalette const *palette,
     int width, int height);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBDENG_IMAGE_MANIPULATION_H
+#endif // DENG_GL_IMAGE_MANIPULATION_H
