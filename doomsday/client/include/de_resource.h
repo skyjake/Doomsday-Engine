@@ -23,7 +23,6 @@
 
 #include "resourceclass.h"
 
-#include "resource/animgroups.h"
 #include "resource/colorpalettes.h"
 #include "resource/abstractfont.h"
 #include "Materials"

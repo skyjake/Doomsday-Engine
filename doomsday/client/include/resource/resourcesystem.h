@@ -21,7 +21,7 @@
 
 #include "def_data.h"
 #include "resourceclass.h"
-#include "resource/animgroups.h"
+#include "resource/animgroup.h"
 #ifdef __CLIENT__
 #  include "Fonts"
 #endif

@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/animgroups.h"
+#include "resource/animgroup.h"
 
 #include <de/Log>
 #include <QtAlgorithms>

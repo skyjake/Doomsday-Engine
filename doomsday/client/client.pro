@@ -331,7 +331,7 @@ DENG_HEADERS += \
     include/render/walledge.h \
     include/render/wallspec.h \
     include/resource/abstractfont.h \
-    include/resource/animgroups.h \
+    include/resource/animgroup.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
     include/resource/colorpalettes.h \
@@ -688,7 +688,7 @@ SOURCES += \
     src/render/walledge.cpp \
     src/render/wallspec.cpp \
     src/resource/abstractfont.cpp \
-    src/resource/animgroups.cpp \
+    src/resource/animgroup.cpp \
     src/resource/api_material.cpp \
     src/resource/api_resource.cpp \
     src/resource/bitmapfont.cpp \

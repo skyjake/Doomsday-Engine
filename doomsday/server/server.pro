@@ -195,7 +195,7 @@ DENG_HEADERS += \
     $$SRC/include/partition.h \
     $$SRC/include/r_util.h \
     $$SRC/include/render/r_main.h \
-    $$SRC/include/resource/animgroups.h \
+    $$SRC/include/resource/animgroup.h \
     $$SRC/include/resource/colorpalette.h \
     $$SRC/include/resource/colorpalettes.h \
     $$SRC/include/resource/compositetexture.h \
@@ -364,7 +364,7 @@ SOURCES += \
     $$SRC/src/network/net_ping.cpp \
     $$SRC/src/r_util.cpp \
     $$SRC/src/render/r_main.cpp \
-    $$SRC/src/resource/animgroups.cpp \
+    $$SRC/src/resource/animgroup.cpp \
     $$SRC/src/resource/api_material.cpp \
     $$SRC/src/resource/api_resource.cpp \
     $$SRC/src/resource/colorpalette.cpp \

@@ -1,8 +1,7 @@
 #define DENG_NO_API_MACROS_RESOURCE
 #include "de_base.h"
 #include "api_resource.h"
-#include "Textures"
-#include "resource/animgroups.h"
+#include "resource/resourcesystem.h"
 #include "gl/gl_tex.h" // averagealpha_analysis_t, etc...
 #ifdef __CLIENT__
 #  include "render/r_draw.h" // Rend_PatchTextureSpec()
