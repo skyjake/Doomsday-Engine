@@ -97,6 +97,79 @@ ColorPalette::ColorPalette(int const compOrder[3], uint8_t const compBits[3],
     }
 }
 
+void ColorPalette::parseColorFormat(char const *fmt, int compOrder[], uint8_t compSize[])
+{
+    static char const *compNames[] = { "red", "green", "blue" };
+
+    std::memset(compOrder, -1, sizeof(compOrder));
+
+    int pos = 0;
+    char const *end = fmt + (qstrlen(fmt) - 1);
+    char const *c = fmt;
+    do
+    {
+        int comp = -1;
+        if     (*c == 'R' || *c == 'r') comp = 0;
+        else if(*c == 'G' || *c == 'g') comp = 1;
+        else if(*c == 'B' || *c == 'b') comp = 2;
+
+        if(comp != -1)
+        {
+            // Have we encountered this component yet?
+            if(compOrder[comp] == -1)
+            {
+                // No.
+                char const *start;
+                size_t numDigits;
+
+                compOrder[comp] = pos++;
+
+                // Read the number of bits.
+                start = ++c;
+                while((*c >= '0' && *c <= '9') && ++c < end)
+                {}
+
+                numDigits = c - start;
+                if(numDigits != 0 && numDigits <= 2)
+                {
+                    char buf[3];
+
+                    std::memset(buf, 0, sizeof(buf));
+                    std::memcpy(buf, start, numDigits);
+
+                    compSize[comp] = atoi(buf);
+
+                    // Are we done?
+                    if(pos == 3) break;
+
+                    // Unread the last character.
+                    c--;
+                    continue;
+                }
+            }
+        }
+
+        /// @throw ColorFormatError
+        throw ColorFormatError("parseColorFormat", QString("Invalid character '%1' in format string at position %2.").arg(*c).arg((unsigned int) (c - fmt)));
+    } while(++c <= end);
+
+    if(pos != 3)
+    {
+        /// @throw ColorFormatError
+        throw ColorFormatError("parseColorFormat", "Incomplete specification.");
+    }
+
+    // Check validity of bits per component.
+    for(int i = 0; i < 3; ++i)
+    {
+        if(compSize[i] == 0 || compSize[i] > ColorPalette::max_component_bits)
+        {
+            /// @throw ColorFormatError
+            throw ColorFormatError("parseColorFormat", QString("Unsupported bit depth %1 for %2 component.").arg(compSize[i]).arg(compNames[compOrder[i]]));
+        }
+    }
+}
+
 void ColorPalette::replaceColorTable(int const compOrder[3],
     uint8_t const compBits[3], uint8_t const *colorData, int colorCount)
 {

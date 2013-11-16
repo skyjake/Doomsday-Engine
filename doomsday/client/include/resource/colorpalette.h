@@ -21,6 +21,7 @@
 #define DENG_RESOURCE_COLORPALETTE_H
 
 #include "dd_types.h"
+#include <de/Error>
 #include <de/Vector>
 
 /**
@@ -31,6 +32,9 @@
 class ColorPalette
 {
 public:
+    /// Base class for color-format-related errors. @ingroup errors
+    DENG2_ERROR(ColorFormatError);
+
     /// Maximum number of bits per color component.
     static int const max_component_bits = 16;
 
@@ -54,6 +58,13 @@ public:
      */
     ColorPalette(int const compOrder[3], uint8_t const compBits[3],
         uint8_t const *colorData, int colorCount);
+
+    static void parseColorFormat(char const *fmt, int compOrder[3], uint8_t compSize[3]);
+
+    /// @see color()
+    inline de::Vector3ub operator [] (int colorIndex) const {
+        return color(colorIndex);
+    }
 
     /**
      * Returns the total number of colors in the palette.
@@ -83,7 +94,7 @@ public:
      *
      * @return  Associated R8G8B8 color triplet.
      *
-     * @see colorf()
+     * @see colorf(), operator []
      */
     de::Vector3ub color(int colorIndex) const;
 

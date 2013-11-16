@@ -1,7 +1,6 @@
-/**
- * @file colorpalettes.h ColorPalette repository and related bookkeeping.
+/** @file colorpalettes.h  Color palette resource collection.
  *
- * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_COLORPALETTES_H
-#define LIBDENG_RESOURCE_COLORPALETTES_H
+#ifndef DENG_RESOURCE_COLORPALETTES_H
+#define DENG_RESOURCE_COLORPALETTES_H
 
 #include "dd_share.h" // For colorpaletteid_t
 #include "resource/colorpalette.h"
@@ -30,28 +29,27 @@
 #define NUM_TRANSLATION_TABLES          (NUM_TRANSLATION_CLASSES * NUM_TRANSLATION_MAPS_PER_CLASS)
 
 DENG_EXTERN_C colorpaletteid_t defaultColorPalette;
-DENG_EXTERN_C byte* translationTables;
+DENG_EXTERN_C byte *translationTables;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void R_InitTranslationTables(void);
-void R_UpdateTranslationTables(void);
+void R_InitTranslationTables();
+void R_UpdateTranslationTables();
 
 byte const *R_TranslationTable(int tclass, int tmap);
 
 /// Prepare for color palette creation.
-void R_InitColorPalettes(void);
+void R_InitColorPalettes();
 
 /// To be called when any existing color palettes are no longer required.
-void R_DestroyColorPalettes(void);
+void R_DestroyColorPalettes();
 
 /// @return  Number of available color palettes.
-int R_ColorPaletteCount(void);
+int R_ColorPaletteCount();
 
 /// @return  ColorPalette associated with unique @a id, else @c NULL.
 ColorPalette *R_ToColorPalette(colorpaletteid_t id);
+
+DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name);
+DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id);
 
 /**
  * Given a color palette list index return the ColorPalette.
@@ -68,8 +66,4 @@ ColorPalette *R_GetColorPaletteByIndex(int paletteIdx);
  */
 boolean R_SetDefaultColorPalette(colorpaletteid_t id);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_RESOURCE_COLORPALETTES_H */
+#endif // DENG_RESOURCE_COLORPALETTES_H
