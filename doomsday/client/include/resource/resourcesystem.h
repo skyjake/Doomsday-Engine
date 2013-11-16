@@ -60,6 +60,10 @@ public:
     DENG2_ERROR(UnknownResourceClass);
 
 public:
+    /**
+     * Construct a new resource system, configuring all resource classes and
+     * their collections.
+     */
     ResourceSystem();
 
     /**

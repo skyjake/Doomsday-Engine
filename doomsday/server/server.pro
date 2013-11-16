@@ -208,7 +208,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/materialscheme.h \
     $$SRC/include/resource/patch.h \
     $$SRC/include/resource/patchname.h \
-    $$SRC/include/resource/r_data.h \
     $$SRC/include/resource/rawtexture.h \
     $$SRC/include/resource/resourcesystem.h \
     $$SRC/include/resource/sprites.h \
@@ -381,7 +380,6 @@ SOURCES += \
     $$SRC/src/resource/patch.cpp \
     $$SRC/src/resource/patchname.cpp \
     $$SRC/src/resource/pcx.cpp \
-    $$SRC/src/resource/r_data.cpp \
     $$SRC/src/resource/rawtexture.cpp \
     $$SRC/src/resource/resourcesystem.cpp \
     $$SRC/src/resource/sprites.cpp \

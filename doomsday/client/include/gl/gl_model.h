@@ -21,7 +21,6 @@
 #define LIBDENG_GL_MODEL_H
 
 #include "dd_types.h"
-#include "resource/r_data.h"
 #include "resource/texture.h"
 
 #define MD2_MAGIC           0x32504449

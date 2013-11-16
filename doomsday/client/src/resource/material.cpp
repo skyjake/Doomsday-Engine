@@ -29,8 +29,6 @@
 #include "audio/s_environ.h"
 #include "world/map.h"
 
-#include "resource/r_data.h" // App_ResourceSystem().texture
-
 #include "resource/material.h"
 
 using namespace de;

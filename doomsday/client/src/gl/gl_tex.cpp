@@ -28,7 +28,6 @@
 #include "de_console.h"
 #include "color.h"
 #include "resource/colorpalettes.h"
-#include "resource/r_data.h"
 #include "render/r_main.h"
 
 #include "gl/gl_tex.h"

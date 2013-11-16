@@ -26,7 +26,6 @@
 #include "world/p_object.h"
 #include "world/polyobj.h"
 #include "world/surface.h"
-#include "resource/r_data.h"
 #include "Materials"
 #include "sv_missile.h"
 

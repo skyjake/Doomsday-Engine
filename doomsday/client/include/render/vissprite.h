@@ -24,7 +24,6 @@
 
 #include <de/Vector>
 
-#include "resource/r_data.h"
 #include "rend_model.h"
 
 #define MAXVISSPRITES   8192

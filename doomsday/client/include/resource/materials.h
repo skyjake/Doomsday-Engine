@@ -60,10 +60,11 @@ namespace de {
  *
  * @ingroup resource
  */
-class Materials : DENG2_OBSERVES(MaterialScheme, ManifestDefined),
-                  DENG2_OBSERVES(MaterialManifest, MaterialDerived),
-                  DENG2_OBSERVES(MaterialManifest, Deletion),
-                  DENG2_OBSERVES(Material, Deletion)
+class Materials :
+DENG2_OBSERVES(MaterialScheme, ManifestDefined),
+DENG2_OBSERVES(MaterialManifest, MaterialDerived),
+DENG2_OBSERVES(MaterialManifest, Deletion),
+DENG2_OBSERVES(Material, Deletion)
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef class MaterialScheme Scheme;

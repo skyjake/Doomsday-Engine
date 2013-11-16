@@ -136,25 +136,23 @@ DENG2_PIMPL(ResourceSystem)
         qDeleteAll(resClasses);
     }
 
-    void clearRuntimeFontSchemes()
+#ifdef __CLIENT__
+    void clearRuntimeFonts()
     {
         fonts.scheme("Game").clear();
 
-#ifdef __CLIENT__
         GL_PruneTextureVariantSpecifications();
-#endif
     }
 
-    void clearSystemFontSchemes()
+    void clearSystemFonts()
     {
         fonts.scheme("System").clear();
 
-#ifdef __CLIENT__
         GL_PruneTextureVariantSpecifications();
-#endif
     }
+#endif // __CLIENT__
 
-    void clearRuntimeTextureSchemes()
+    void clearRuntimeTextures()
     {
         textures.scheme("Flats").clear();
         textures.scheme("Textures").clear();
@@ -173,7 +171,7 @@ DENG2_PIMPL(ResourceSystem)
 #endif
     }
 
-    void clearSystemTextureSchemes()
+    void clearSystemTextures()
     {
         textures.scheme("System").clear();
 
@@ -578,17 +576,17 @@ ResourceClass &ResourceSystem::resClass(resourceclassid_t id)
 void ResourceSystem::clearAllRuntimeResources()
 {
 #ifdef __CLIENT__
-    d->clearRuntimeFontSchemes();
+    d->clearRuntimeFonts();
 #endif
-    d->clearRuntimeTextureSchemes();
+    d->clearRuntimeTextures();
 }
 
 void ResourceSystem::clearAllSystemResources()
 {
 #ifdef __CLIENT__
-    d->clearSystemFontSchemes();
+    d->clearSystemFonts();
 #endif
-    d->clearSystemTextureSchemes();
+    d->clearSystemTextures();
 }
 
 Materials &ResourceSystem::materials()
@@ -651,7 +649,7 @@ static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
      *
      * (last)TEXTURE2 > (last)TEXTURE1
      */
-    LumpIndex const &index = App_FileSystem().nameIndex();
+    LumpIndex const &index  = App_FileSystem().nameIndex();
     lumpnum_t firstTexLump  = App_FileSystem().lumpNumForName("TEXTURE1");
     lumpnum_t secondTexLump = App_FileSystem().lumpNumForName("TEXTURE2");
 
@@ -1175,5 +1173,7 @@ void ResourceSystem::consoleRegister() // static
 {
     Textures::consoleRegister();
     Materials::consoleRegister();
+#ifdef __CLIENT__
     Fonts::consoleRegister();
+#endif
 }

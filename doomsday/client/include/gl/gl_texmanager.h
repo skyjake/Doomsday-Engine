@@ -39,7 +39,6 @@
 
 #include "gl/texturecontent.h"
 #include "resource/image.h"
-#include "resource/r_data.h" // For flaretexid_t, lightingtexid_t, etc...
 #include "resource/rawtexture.h"
 #include "Texture"
 #include "TextureVariantSpec"
@@ -48,6 +47,28 @@
 #define TEXQ_BEST               8
 #define MINTEXWIDTH             8
 #define MINTEXHEIGHT            8
+
+/**
+ * Textures used in the lighting system.
+ */
+typedef enum lightingtexid_e {
+    LST_DYNAMIC, ///< Round dynamic light
+    LST_GRADIENT, ///< Top-down gradient
+    LST_RADIO_CO, ///< FakeRadio closed/open corner shadow
+    LST_RADIO_CC, ///< FakeRadio closed/closed corner shadow
+    LST_RADIO_OO, ///< FakeRadio open/open shadow
+    LST_RADIO_OE, ///< FakeRadio open/edge shadow
+    LST_CAMERA_VIGNETTE,
+    NUM_LIGHTING_TEXTURES
+} lightingtexid_t;
+
+typedef enum flaretexid_e {
+    FXT_ROUND,
+    FXT_FLARE,
+    FXT_BRFLARE,
+    FXT_BIGFLARE,
+    NUM_SYSFLARE_TEXTURES
+} flaretexid_t;
 
 DENG_EXTERN_C int ratioLimit;
 DENG_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
@@ -214,8 +235,6 @@ void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
  */
 void GL_UploadTextureContent(texturecontent_t const &content,
                              GLUploadMethod method = Deferred);
-
-
 
 GLint GL_MinFilterForVariantSpec(variantspecification_t const &spec);
 GLint GL_MagFilterForVariantSpec(variantspecification_t const &spec);

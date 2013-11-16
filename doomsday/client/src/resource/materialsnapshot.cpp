@@ -23,7 +23,6 @@
 #include "gl/gltextureunit.h"
 #include "render/rend_halo.h" // Rend_HaloTextureSpec()
 #include "render/rend_main.h" // detailFactor, detailScale, smoothTexAnim, etc...
-#include "resource/r_data.h" // NUM_SYSFLARE_TEXTURES
 #include "Lumobj" // Rend_LightmapTextureSpec()
 #include "Material"
 #include "Texture"
