@@ -556,7 +556,7 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
             try
             {
                 String foundPath = App_FileSystem().findPath(de::Uri(info->lumpName, RC_SOUND),
-                                                             RLF_DEFAULT, App_ResourceSystem().resClass(RC_SOUND));
+                                                             RLF_DEFAULT, App_ResourceClass(RC_SOUND));
                 foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
                 data = WAV_Load(foundPath.toUtf8().constData(), &bytesPer, &rate, &numSamples);

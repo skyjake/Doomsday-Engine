@@ -272,7 +272,7 @@ ResourceManifest &ResourceManifest::locateFile()
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri(*i, d->classId),
-                                                         RLF_DEFAULT, App_ResourceSystem().resClass(d->classId));
+                                                         RLF_DEFAULT, App_ResourceClass(d->classId));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
             // Perform identity validation.

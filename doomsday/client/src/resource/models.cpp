@@ -505,7 +505,7 @@ static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
         try
         {
             de::Uri searchPath("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName());
-            return App_FileSystem().findPath(searchPath, RLF_DEFAULT, App_ResourceSystem().resClass(RC_GRAPHIC));
+            return App_FileSystem().findPath(searchPath, RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         }
         catch(FS1::NotFoundError const &)
         {} // Ignore this error.
@@ -513,7 +513,7 @@ static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
 
     /// @throws FS1::NotFoundError if no resource was found.
     de::Uri searchPath("Models", skinPath);
-    return App_FileSystem().findPath(searchPath, RLF_DEFAULT, App_ResourceSystem().resClass(RC_GRAPHIC));
+    return App_FileSystem().findPath(searchPath, RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
 }
 
 /**
@@ -578,7 +578,7 @@ static void defineAllSkins(model_t &mdl)
         try
         {
             String foundPath = App_FileSystem().findPath(searchPath, RLF_DEFAULT,
-                                                         App_ResourceSystem().resClass(RC_GRAPHIC));
+                                                         App_ResourceClass(RC_GRAPHIC));
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
 
@@ -1091,7 +1091,7 @@ static void setupModel(ded_model_t& def)
         try
         {
             String foundPath = App_FileSystem().findPath(searchPath, RLF_DEFAULT,
-                                                         App_ResourceSystem().resClass(RC_MODEL));
+                                                         App_ResourceClass(RC_MODEL));
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
 

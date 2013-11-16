@@ -178,9 +178,6 @@ static size_t numSessionResourceFileList;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-// The app's global Material collection.
-static Materials *materials;
-
 #ifdef __CLIENT__
 
 D_CMD(CheckForUpdates)
@@ -219,12 +216,6 @@ D_CMD(ShowUpdateSettings)
 
 #endif // __CLIENT__
 
-void App_DeleteMaterials()
-{
-    delete materials;
-    materials = 0;
-}
-
 void DD_CreateFileTypes()
 {
     FileType* ftype;
@@ -232,7 +223,7 @@ void DD_CreateFileTypes()
     /*
      * Packages types:
      */
-    ResourceClass& packageClass = App_ResourceSystem().resClass("RC_PACKAGE");
+    ResourceClass& packageClass = App_ResourceClass("RC_PACKAGE");
 
     ftype = new ZipFileType();
     ftype->addKnownExtension(".pk3");
@@ -254,13 +245,13 @@ void DD_CreateFileTypes()
      */
     ftype = new FileType("FT_DED", RC_DEFINITION);
     ftype->addKnownExtension(".ded");
-    App_ResourceSystem().resClass("RC_DEFINITION").addFileType(*ftype);
+    App_ResourceClass("RC_DEFINITION").addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
     /*
      * Graphic fileTypes:
      */
-    ResourceClass& graphicClass = App_ResourceSystem().resClass("RC_GRAPHIC");
+    ResourceClass& graphicClass = App_ResourceClass("RC_GRAPHIC");
 
     ftype = new FileType("FT_PNG", RC_GRAPHIC);
     ftype->addKnownExtension(".png");
@@ -285,7 +276,7 @@ void DD_CreateFileTypes()
     /*
      * Model fileTypes:
      */
-    ResourceClass& modelClass = App_ResourceSystem().resClass("RC_MODEL");
+    ResourceClass& modelClass = App_ResourceClass("RC_MODEL");
 
     ftype = new FileType("FT_DMD", RC_MODEL);
     ftype->addKnownExtension(".dmd");
@@ -302,13 +293,13 @@ void DD_CreateFileTypes()
      */
     ftype = new FileType("FT_WAV", RC_SOUND);
     ftype->addKnownExtension(".wav");
-    App_ResourceSystem().resClass("RC_SOUND").addFileType(*ftype);
+    App_ResourceClass("RC_SOUND").addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
     /*
      * Music fileTypes:
      */
-    ResourceClass& musicClass = App_ResourceSystem().resClass("RC_MUSIC");
+    ResourceClass& musicClass = App_ResourceClass("RC_MUSIC");
 
     ftype = new FileType("FT_OGG", RC_MUSIC);
     ftype->addKnownExtension(".ogg");
@@ -335,7 +326,7 @@ void DD_CreateFileTypes()
      */
     ftype = new FileType("FT_DFN", RC_FONT);
     ftype->addKnownExtension(".dfn");
-    App_ResourceSystem().resClass("RC_FONT").addFileType(*ftype);
+    App_ResourceClass("RC_FONT").addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
     /*
@@ -525,6 +516,21 @@ ResourceSystem &App_ResourceSystem()
     throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
+de::ResourceClass &App_ResourceClass(String className)
+{
+    return App_ResourceSystem().resClass(className);
+}
+
+de::ResourceClass &App_ResourceClass(resourceclassid_t classId)
+{
+    return App_ResourceSystem().resClass(classId);
+}
+
+Materials &App_Materials()
+{
+    return App_ResourceSystem().materials();
+}
+
 de::Textures &App_Textures()
 {
     return App_ResourceSystem().textures();
@@ -536,39 +542,6 @@ de::Fonts &App_Fonts()
     return App_ResourceSystem().fonts();
 }
 #endif
-
-void DD_ClearSystemTextureSchemes()
-{
-    App_ResourceSystem().clearSystemTextureSchemes();
-#ifdef __CLIENT__
-    GL_PruneTextureVariantSpecifications();
-#endif
-}
-
-Materials &App_Materials()
-{
-    if(!App_HaveMaterials())
-    {
-        throw Error("App_Materials", "Materials collection not yet initialized");
-    }
-    return *materials;
-}
-
-bool App_HaveMaterials()
-{
-    return materials != 0;
-}
-
-void DD_CreateMaterialSchemes()
-{
-    Materials &materials = App_Materials();
-
-    /// @note Order here defines the ambigious-URI search order.
-    materials.createScheme("Sprites");
-    materials.createScheme("Textures");
-    materials.createScheme("Flats");
-    materials.createScheme("System");
-}
 
 /**
  * Register the engine commands and variables.
@@ -600,8 +573,7 @@ void DD_Register(void)
     P_ControlRegister();
     I_Register();
 #endif
-    Materials::consoleRegister();
-    Textures::consoleRegister();
+    ResourceSystem::consoleRegister();
     Net_Register();
     World::consoleRegister();
     FI_Register();
@@ -1450,11 +1422,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         R_ShutdownSvgs();
         R_DestroyColorPalettes();
 
-        App_ResourceSystem().clearRuntimeTextureSchemes();
-#ifdef __CLIENT__
-        App_ResourceSystem().clearRuntimeFontSchemes();
-        GL_PruneTextureVariantSpecifications();
-#endif
+        App_ResourceSystem().clearAllRuntimeResources();
 
         Sfx_InitLogical();
 
@@ -1502,9 +1470,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
     FI_Shutdown();
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
-    /// @todo Material collection should not be destroyed during a reload.
-    App_DeleteMaterials();
-
     if(!game.isNull())
     {
         LOG_VERBOSE("Selecting game '%s'...") << Str_Text(game.identityKey());
@@ -1530,10 +1495,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
             LOG_WARNING("Failed exchanging entrypoints with plugin %i, aborting...") << int(game.pluginId());
             return false;
         }
-
-        DENG_ASSERT(!materials);
-        materials = new Materials();
-        DD_CreateMaterialSchemes();
 
         FI_Init();
     }
@@ -1837,7 +1798,7 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    FS1::Scheme& scheme = App_FileSystem().scheme(App_ResourceSystem().resClass("RC_PACKAGE").defaultScheme());
+    FS1::Scheme& scheme = App_FileSystem().scheme(App_ResourceClass("RC_PACKAGE").defaultScheme());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
@@ -2095,7 +2056,7 @@ static int DD_StartupWorker(void* /*parm*/)
      * Add required engine resource files.
      */
     String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
-                                                 RLF_DEFAULT, App_ResourceSystem().resClass(RC_PACKAGE));
+                                                 RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
     de::File1 *loadedFile = tryLoadFile(de::Uri(foundPath, RC_NULL));
     DENG2_ASSERT(loadedFile != 0);
@@ -2115,13 +2076,6 @@ static int DD_StartupWorker(void* /*parm*/)
     Con_SetProgress(90);
 
     R_BuildTexGammaLut();
-
-    Con_Message("Initializing Material subsystem...");
-    DENG_ASSERT(!materials);
-    materials = new Materials();
-    DD_CreateMaterialSchemes();
-    Con_SetProgress(140);
-
     R_Init();
     Con_SetProgress(165);
 
@@ -2729,7 +2683,7 @@ D_CMD(Load)
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[arg], RC_PACKAGE),
-                                                          RLF_MATCH_EXTENSION, App_ResourceSystem().resClass(RC_PACKAGE));
+                                                          RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
             if(tryLoadFile(de::Uri(foundPath, RC_NULL)))
@@ -2856,7 +2810,7 @@ D_CMD(Unload)
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[1], RC_PACKAGE),
-                                                         RLF_MATCH_EXTENSION, App_ResourceSystem().resClass(RC_PACKAGE));
+                                                         RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
             if(tryUnloadFile(de::Uri(foundPath, RC_NULL)))

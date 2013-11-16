@@ -27,8 +27,14 @@
 #  include "BitmapFont"
 #  include "CompositeBitmapFont"
 #endif
+
 #include "filesys/fs_main.h"
 #include "filesys/lumpindex.h"
+
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+#endif
+
 #include <de/ByteRefArray>
 #include <de/Log>
 #include <de/Reader>
@@ -78,6 +84,8 @@ DENG2_PIMPL(ResourceSystem)
     QList<PatchName> patchNames;
     Textures textures;
 
+    Materials materials;
+
 #ifdef __CLIENT__
     Fonts fonts;
 #endif
@@ -108,6 +116,13 @@ DENG2_PIMPL(ResourceSystem)
         textures.createScheme("Lightmaps");
         textures.createScheme("Flaremaps");
 
+        LOG_MSG("Initializing Material collection...");
+        /// @note Order here defines the ambigious-URI search order.
+        materials.createScheme("Sprites");
+        materials.createScheme("Textures");
+        materials.createScheme("Flats");
+        materials.createScheme("System");
+
 #ifdef __CLIENT__
         LOG_MSG("Initializing Font collection...");
         /// @note Order here defines the ambigious-URI search order.
@@ -119,6 +134,52 @@ DENG2_PIMPL(ResourceSystem)
     ~Instance()
     {
         qDeleteAll(resClasses);
+    }
+
+    void clearRuntimeFontSchemes()
+    {
+        fonts.scheme("Game").clear();
+
+#ifdef __CLIENT__
+        GL_PruneTextureVariantSpecifications();
+#endif
+    }
+
+    void clearSystemFontSchemes()
+    {
+        fonts.scheme("System").clear();
+
+#ifdef __CLIENT__
+        GL_PruneTextureVariantSpecifications();
+#endif
+    }
+
+    void clearRuntimeTextureSchemes()
+    {
+        textures.scheme("Flats").clear();
+        textures.scheme("Textures").clear();
+        textures.scheme("Patches").clear();
+        textures.scheme("Sprites").clear();
+        textures.scheme("Details").clear();
+        textures.scheme("Reflections").clear();
+        textures.scheme("Masks").clear();
+        textures.scheme("ModelSkins").clear();
+        textures.scheme("ModelReflectionSkins").clear();
+        textures.scheme("Lightmaps").clear();
+        textures.scheme("Flaremaps").clear();
+
+#ifdef __CLIENT__
+        GL_PruneTextureVariantSpecifications();
+#endif
+    }
+
+    void clearSystemTextureSchemes()
+    {
+        textures.scheme("System").clear();
+
+#ifdef __CLIENT__
+        GL_PruneTextureVariantSpecifications();
+#endif
     }
 
     void deriveAllTexturesInScheme(String schemeName)
@@ -514,29 +575,30 @@ ResourceClass &ResourceSystem::resClass(resourceclassid_t id)
     throw UnknownResourceClass("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
 }
 
+void ResourceSystem::clearAllRuntimeResources()
+{
+#ifdef __CLIENT__
+    d->clearRuntimeFontSchemes();
+#endif
+    d->clearRuntimeTextureSchemes();
+}
+
+void ResourceSystem::clearAllSystemResources()
+{
+#ifdef __CLIENT__
+    d->clearSystemFontSchemes();
+#endif
+    d->clearSystemTextureSchemes();
+}
+
+Materials &ResourceSystem::materials()
+{
+    return d->materials;
+}
+
 Textures &ResourceSystem::textures()
 {
     return d->textures;
-}
-
-void ResourceSystem::clearRuntimeTextureSchemes()
-{
-    d->textures.scheme("Flats").clear();
-    d->textures.scheme("Textures").clear();
-    d->textures.scheme("Patches").clear();
-    d->textures.scheme("Sprites").clear();
-    d->textures.scheme("Details").clear();
-    d->textures.scheme("Reflections").clear();
-    d->textures.scheme("Masks").clear();
-    d->textures.scheme("ModelSkins").clear();
-    d->textures.scheme("ModelReflectionSkins").clear();
-    d->textures.scheme("Lightmaps").clear();
-    d->textures.scheme("Flaremaps").clear();
-}
-
-void ResourceSystem::clearSystemTextureSchemes()
-{
-    d->textures.scheme("System").clear();
 }
 
 void ResourceSystem::initSystemTextures()
@@ -980,16 +1042,6 @@ Fonts &ResourceSystem::fonts()
     return d->fonts;
 }
 
-void ResourceSystem::clearRuntimeFontSchemes()
-{
-    d->fonts.scheme("Game").clear();
-}
-
-void ResourceSystem::clearSystemFontSchemes()
-{
-    d->fonts.scheme("System").clear();
-}
-
 void ResourceSystem::clearFontDefinitionLinks()
 {
     foreach(AbstractFont *font, d->fonts.all())
@@ -1118,3 +1170,10 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
 }
 
 #endif // __CLIENT__
+
+void ResourceSystem::consoleRegister() // static
+{
+    Textures::consoleRegister();
+    Materials::consoleRegister();
+    Fonts::consoleRegister();
+}

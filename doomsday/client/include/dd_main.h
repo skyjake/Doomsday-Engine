@@ -161,6 +161,21 @@ de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 /// @return  The application's global ResourceSystem.
 ResourceSystem &App_ResourceSystem();
 
+/**
+ * Convenient method of returning a resource class from the application's global
+ * resource system.
+ */
+de::ResourceClass &App_ResourceClass(de::String className);
+
+/**
+ * Convenient method of returning a resource class from the application's global
+ * resource system.
+ */
+de::ResourceClass &App_ResourceClass(resourceclassid_t classId);
+
+/// @return  The application's global Material collection.
+de::Materials &App_Materials();
+
 /// @return  The application's global Texture collection.
 de::Textures &App_Textures();
 
@@ -185,16 +200,6 @@ de::Games &App_Games();
 
 /// @return  The application's global World.
 de::World &App_World();
-
-bool App_HaveMaterials();
-
-/// @return  The application's global Materials (collection).
-de::Materials &App_Materials();
-
-/**
- * Destroy the Materials collection.
- */
-void App_DeleteMaterials();
 
 fontschemeid_t DD_ParseFontSchemeName(char const *str);
 

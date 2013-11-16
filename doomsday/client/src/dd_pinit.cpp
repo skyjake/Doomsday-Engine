@@ -163,9 +163,6 @@ void DD_ShutdownAll(void)
 #endif
     R_Shutdown();
 
-    // Ensure the global material collection is destroyed.
-    App_DeleteMaterials();
-
     Def_Destroy();
     F_Shutdown();
     Libdeng_Shutdown();

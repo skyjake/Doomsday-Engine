@@ -21,10 +21,11 @@
 
 #include "def_data.h"
 #include "resourceclass.h"
-#include "Textures"
 #ifdef __CLIENT__
 #  include "Fonts"
 #endif
+#include "Materials"
+#include "Textures"
 #include <de/Error>
 #include <de/String>
 #include <de/System>
@@ -61,6 +62,11 @@ public:
 public:
     ResourceSystem();
 
+    /**
+     * Register the console commands, variables, etc..., of this module.
+     */
+    static void consoleRegister();
+
     // System.
     void timeChanged(de::Clock const &);
 
@@ -75,13 +81,18 @@ public:
      */
     de::ResourceClass &resClass(resourceclassid_t id);
 
+    void clearAllRuntimeResources();
+    void clearAllSystemResources();
+
+    /**
+     * Provides access to the Materials collection.
+     */
+    de::Materials &materials();
+
     /**
      * Provides access to the Textures collection.
      */
     de::Textures &textures();
-
-    void clearRuntimeTextureSchemes();
-    void clearSystemTextureSchemes();
 
     void initSystemTextures();
 
@@ -106,9 +117,6 @@ public:
      * Provides access to the Fonts collection.
      */
     de::Fonts &fonts();
-
-    void clearRuntimeFontSchemes();
-    void clearSystemFontSchemes();
 
     /**
      * To be called during a definition database reset to clear all definitions

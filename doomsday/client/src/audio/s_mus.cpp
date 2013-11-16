@@ -254,7 +254,7 @@ int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri(def->lumpName, RC_MUSIC), RLF_DEFAULT,
-                                                         App_ResourceSystem().resClass(RC_MUSIC));
+                                                         App_ResourceClass(RC_MUSIC));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
             // Does the caller want to know the matched path?

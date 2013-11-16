@@ -121,7 +121,7 @@ DENG2_PIMPL_NOREF(Uri)
 
         if(VALID_RESOURCECLASSID(defaultResourceClass))
         {
-            FS1::Scheme &fsScheme = App_FileSystem().scheme(App_ResourceSystem().resClass(defaultResourceClass).defaultScheme());
+            FS1::Scheme &fsScheme = App_FileSystem().scheme(App_ResourceClass(defaultResourceClass).defaultScheme());
             scheme = fsScheme.name();
         }
     }
