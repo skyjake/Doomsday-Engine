@@ -589,13 +589,6 @@ void GL_ProjectionMatrix()
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
     if (VR::mode() == VR::MODE_OCULUS_RIFT)
     {
         aspect = VR::riftAspect();
@@ -608,27 +601,34 @@ void GL_ProjectionMatrix()
         yfov = Rend_FieldOfView() / aspect;
     }
 
-    // Replaced gluPerspective() with glFrustum() so we can do stereo 3D
-    // gluPerspective(yfov, aspect, glNearClip, glFarClip); // Replaced with lower-level glFrustum()
     float fH = tan(0.5 * de::degreeToRadian(yfov)) * glNearClip;
     float fW = fH*aspect;
-    // Asymmetric frustum shift is computed to realign screen-depth items after view point has shifted.
-    // Asymmetric frustum shift method is probably superior to competing toe-in stereo 3D method:
-    //  * AFS preserves identical near and far clipping planes in both views
-    //  * AFS shows items at/near infinity better
-    //  * AFS conforms to what stereo 3D photographers call "ortho stereo"
-    // Asymmetric frustum shift is used for all stereo 3D modes except Oculus Rift mode, which only applies the viewpoint shift.
+    /*
+     * Asymmetric frustum shift is computed to realign screen-depth items after view point has shifted.
+     * Asymmetric frustum shift method is probably superior to competing toe-in stereo 3D method:
+     *  - AFS preserves identical near and far clipping planes in both views
+     *  - AFS shows items at/near infinity better
+     *  - AFS conforms to what stereo 3D photographers call "ortho stereo"
+     * Asymmetric frustum shift is used for all stereo 3D modes except Oculus Rift mode, which only
+     * applies the viewpoint shift.
+     */
     float frustumShift = 0;
     if (VR::applyFrustumShift)
+    {
         frustumShift = VR::eyeShift * glNearClip / VR::hudDistance;
-    glFrustum(-fW - frustumShift, fW - frustumShift,
-              -fH, fH,
-              glNearClip, glFarClip);
-    // Actually shift the player viewpoint
-    glTranslatef(-VR::eyeShift, 0, 0);
+    }
 
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Actually shift the player viewpoint
     // We'd like to have a left-handed coordinate system.
-    glScalef(1, 1, -1);
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf((Matrix4f::frustum(-fW - frustumShift, fW - frustumShift,
+                                    -fH, fH,
+                                    glNearClip, glFarClip) *
+                   Matrix4f::translate(Vector3f(-VR::eyeShift, 0, 0)) *
+                   Matrix4f::scale(Vector3f(1, 1, -1))).values());
 }
 
 #undef GL_UseFog
