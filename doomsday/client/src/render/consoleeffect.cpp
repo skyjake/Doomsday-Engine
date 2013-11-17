@@ -18,6 +18,7 @@
 
 #include "render/consoleeffect.h"
 #include "render/viewports.h"
+#include "clientapp.h"
 
 using namespace de;
 
@@ -55,6 +56,11 @@ Rectanglei ConsoleEffect::viewRect() const
 bool ConsoleEffect::isInited() const
 {
     return d->inited;
+}
+
+GLShaderBank &ConsoleEffect::shaders() const
+{
+    return ClientApp::glShaderBank();
 }
 
 void ConsoleEffect::glInit()

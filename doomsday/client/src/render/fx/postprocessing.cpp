@@ -18,6 +18,7 @@
 
 #include "render/fx/postprocessing.h"
 #include "ui/clientwindow.h"
+#include "clientapp.h"
 
 #include <de/Animation>
 #include <de/Drawable>
@@ -80,7 +81,7 @@ DENG2_PIMPL(PostProcessing)
     {
         try
         {
-            root().shaders().build(frame.program(), "fx.post." + name);
+            self.shaders().build(frame.program(), "fx.post." + name);
             LOG_VERBOSE("Post-processing shader \"fx.post.%s\"") << name;
             return true;
         }

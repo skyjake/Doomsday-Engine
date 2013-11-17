@@ -21,6 +21,7 @@
 
 #include <de/libdeng2.h>
 #include <de/Rectangle>
+#include <de/GLShaderBank>
 
 /**
  * Draws camera lens effects for a particular player console. Maintains
@@ -44,6 +45,8 @@ public:
     de::Rectanglei viewRect() const;
 
     bool isInited() const;
+
+    de::GLShaderBank &shaders() const;
 
     /**
      * Allocate and prepare GL resources for drawing. Derived classes must call
