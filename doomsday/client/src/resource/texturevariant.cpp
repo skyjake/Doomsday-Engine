@@ -160,9 +160,11 @@ static void performImageAnalyses(image_t const &image,
         }
 
         if(firstInit || forceUpdate)
-            GL_CalcLuminance(image.pixels, image.size.width, image.size.height, image.pixelSize,
-                             R_ToColorPalette(image.paletteId), &pl->originX, &pl->originY,
-                             &pl->color, &pl->brightMul);
+        {
+            GL_CalcLuminance(image.pixels, image.size.width, image.size.height,
+                             image.pixelSize, image.paletteId,
+                             &pl->originX, &pl->originY, &pl->color, &pl->brightMul);
+        }
     }
 
     // Average alpha?
@@ -188,8 +190,8 @@ static void performImageAnalyses(image_t const &image,
             {
                 if(image.flags & IMGF_IS_MASKED)
                 {
-                    FindAverageAlphaIdx(image.pixels, image.size.width, image.size.height,
-                                        R_ToColorPalette(image.paletteId), &aa->alpha, &aa->coverage);
+                    FindAverageAlphaIdx(image.pixels, image.size.width,
+                                        image.size.height, &aa->alpha, &aa->coverage);
                 }
                 else
                 {
@@ -223,7 +225,8 @@ static void performImageAnalyses(image_t const &image,
             else
             {
                 FindAverageColorIdx(image.pixels, image.size.width, image.size.height,
-                                    R_ToColorPalette(image.paletteId), false, &ac->color);
+                                    App_ResourceSystem().colorPalette(image.paletteId),
+                                    false, &ac->color);
             }
         }
     }
@@ -250,7 +253,8 @@ static void performImageAnalyses(image_t const &image,
             else
             {
                 FindAverageColorIdx(image.pixels, image.size.width, image.size.height,
-                                    R_ToColorPalette(image.paletteId), false, &ac->color);
+                                    App_ResourceSystem().colorPalette(image.paletteId),
+                                    false, &ac->color);
             }
             Vector3f color(ac->color.rgb);
             R_AmplifyColor(color);
@@ -283,7 +287,8 @@ static void performImageAnalyses(image_t const &image,
             else
             {
                 FindAverageLineColorIdx(image.pixels, image.size.width, image.size.height, 0,
-                                        R_ToColorPalette(image.paletteId), false, &ac->color);
+                                        App_ResourceSystem().colorPalette(image.paletteId),
+                                        false, &ac->color);
             }
         }
     }
@@ -310,7 +315,8 @@ static void performImageAnalyses(image_t const &image,
             else
             {
                 FindAverageLineColorIdx(image.pixels, image.size.width, image.size.height,
-                                        image.size.height - 1, R_ToColorPalette(image.paletteId),
+                                        image.size.height - 1,
+                                        App_ResourceSystem().colorPalette(image.paletteId),
                                         false, &ac->color);
             }
         }

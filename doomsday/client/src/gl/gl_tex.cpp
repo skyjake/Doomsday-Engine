@@ -827,10 +827,10 @@ boolean GL_QuantizeImageToPalette(uint8_t *out, int outformat, ColorPalette cons
     return false;
 }
 
-void GL_DeSaturatePalettedImage(uint8_t *buffer, ColorPalette const *palette,
+void GL_DeSaturatePalettedImage(uint8_t *pixels, ColorPalette const &palette,
     int width, int height)
 {
-    DENG2_ASSERT(buffer != 0 && palette != 0);
+    DENG2_ASSERT(pixels != 0);
 
     if(!width || !height)  return;
 
@@ -840,7 +840,7 @@ void GL_DeSaturatePalettedImage(uint8_t *buffer, ColorPalette const *palette,
     int max = 0;
     for(long i = 0; i < numPels; ++i)
     {
-        de::Vector3ub palColor = palette->color(buffer[i]);
+        de::Vector3ub palColor = palette[pixels[i]];
         if(palColor.x == palColor.y && palColor.x == palColor.z)
         {
             if(palColor.x > max)
@@ -856,7 +856,7 @@ void GL_DeSaturatePalettedImage(uint8_t *buffer, ColorPalette const *palette,
 
     for(long i = 0; i < numPels; ++i)
     {
-        de::Vector3ub palColor = palette->color(buffer[i]);
+        de::Vector3ub palColor = palette[pixels[i]];
         if(palColor.x == palColor.y && palColor.x == palColor.z)
         {
             continue;
@@ -866,12 +866,12 @@ void GL_DeSaturatePalettedImage(uint8_t *buffer, ColorPalette const *palette,
         int temp = (2 * int( palColor.x ) + 4 * int( palColor.y ) + 3 * int( palColor.z )) / 9;
         if(max) temp *= 255.f / max;
 
-        buffer[i] = palette->nearestIndex(de::Vector3ub(temp, temp, temp));
+        pixels[i] = palette.nearestIndex(de::Vector3ub(temp, temp, temp));
     }
 }
 
 void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
-    ColorPalette const *palette, boolean hasAlpha, ColorRawf *color)
+    ColorPalette const &palette, boolean hasAlpha, ColorRawf *color)
 {
     DENG2_ASSERT(data != 0 && color != 0);
 
@@ -901,7 +901,7 @@ void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
     {
         if(!hasAlpha || alphaStart[i])
         {
-            de::Vector3ub palColor = palette->color(start[i]);
+            de::Vector3ub palColor = palette[start[i]];
             avg[CR] += palColor.x;
             avg[CG] += palColor.y;
             avg[CB] += palColor.z;
@@ -989,7 +989,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
                         avg[CB] / numpels * reciprocal255);
 }
 
-void FindAverageColorIdx(uint8_t const *data, int w, int h, ColorPalette const *palette,
+void FindAverageColorIdx(uint8_t const *data, int w, int h, ColorPalette const &palette,
     boolean hasAlpha, ColorRawf *color)
 {
     DENG2_ASSERT(data != 0 && color != 0);
@@ -1010,7 +1010,7 @@ void FindAverageColorIdx(uint8_t const *data, int w, int h, ColorPalette const *
     {
         if(!hasAlpha || alphaStart[i])
         {
-            de::Vector3ub palColor = palette->color(data[i]);
+            de::Vector3ub palColor = palette[data[i]];
             avg[CR] += palColor.x;
             avg[CG] += palColor.y;
             avg[CB] += palColor.z;
@@ -1076,12 +1076,11 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height,
     if(coverage) *coverage = (float)alphaCount / numPels;
 }
 
-/// @todo @a palette is unused; should be removed?
-void FindAverageAlphaIdx(const uint8_t* pixels, int w, int h, const ColorPalette* /*palette*/,
-    float* alpha, float* coverage)
+void FindAverageAlphaIdx(uint8_t const *pixels, int w, int h, float *alpha,
+    float *coverage)
 {
     long i, numPels, avg = 0, alphaCount = 0;
-    const uint8_t* alphaStart;
+    uint8_t const *alphaStart;
 
     if(!pixels || !alpha) return;
 
@@ -1097,7 +1096,7 @@ void FindAverageAlphaIdx(const uint8_t* pixels, int w, int h, const ColorPalette
     alphaStart = pixels + numPels;
     for(i = 0; i < numPels; ++i)
     {
-        const uint8_t val = alphaStart[i];
+        uint8_t const val = alphaStart[i];
         avg += val;
         if(val < 255)
         {

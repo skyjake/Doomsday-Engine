@@ -30,7 +30,7 @@ using namespace de;
 
 #define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
 
-DENG2_PIMPL_NOREF(ColorPalette)
+DENG2_PIMPL(ColorPalette)
 {
     typedef Vector3ub Color;
     typedef QVector<Color> ColorTable;
@@ -41,8 +41,22 @@ DENG2_PIMPL_NOREF(ColorPalette)
     QScopedPointer<XLat18To8> xlat18To8;
     bool need18To8Update;
 
-    Instance() : need18To8Update(false) // No color table yet.
-    {}
+    Id id;
+
+    Instance(Public *i)
+        : Base(i)
+        , need18To8Update(false) // No color table yet.
+    {
+        LOG_VERBOSE("New color palette %s") << id;
+    }
+
+    void notifyColorTableChanged()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(ColorTableChange, i)
+        {
+            i->colorPaletteColorTableChanged(self);
+        }
+    }
 
     /// @note A time-consuming operation.
     void prepareNearestLUT()
@@ -83,28 +97,44 @@ DENG2_PIMPL_NOREF(ColorPalette)
     }
 };
 
-ColorPalette::ColorPalette() : d(new Instance())
+ColorPalette::ColorPalette() : d(new Instance(this))
 {}
 
 ColorPalette::ColorPalette(int const compOrder[3], uint8_t const compBits[3],
     uint8_t const *colorData, int colorCount)
-    : d(new Instance())
+    : d(new Instance(this))
 {
     DENG2_ASSERT(compOrder != 0 && compBits != 0);
     if(colorCount > 0 && colorData)
     {
-        replaceColorTable(compOrder, compBits, colorData, colorCount);
+        loadColorTable(compOrder, compBits, colorData, colorCount);
     }
 }
 
-void ColorPalette::parseColorFormat(char const *fmt, int compOrder[], uint8_t compSize[])
+Id ColorPalette::id() const
+{
+    return d->id;
+}
+
+int ColorPalette::colorCount() const
+{
+    return d->colors.count();
+}
+
+void ColorPalette::parseColorFormat(char const *fmt, int compOrder[], uint8_t compSize[]) // static
 {
     static char const *compNames[] = { "red", "green", "blue" };
 
-    std::memset(compOrder, -1, sizeof(compOrder));
+    compOrder[0] = -1;
+    compOrder[1] = -1;
+    compOrder[2] = -1;
+
+    compSize[0] = 0;
+    compSize[1] = 0;
+    compSize[2] = 0;
 
     int pos = 0;
-    char const *end = fmt + (qstrlen(fmt) - 1);
+    char const *end = fmt + (strlen(fmt) - 1);
     char const *c = fmt;
     do
     {
@@ -170,7 +200,7 @@ void ColorPalette::parseColorFormat(char const *fmt, int compOrder[], uint8_t co
     }
 }
 
-void ColorPalette::replaceColorTable(int const compOrder[3],
+ColorPalette &ColorPalette::loadColorTable(int const compOrder[3],
     uint8_t const compBits[3], uint8_t const *colorData, int colorCount)
 {
     // We may need a new 18 => 8 bit xlat table.
@@ -196,51 +226,57 @@ void ColorPalette::replaceColorTable(int const compOrder[3],
         {
             d->colors[i] = Vector3ub(src[order.x], src[order.y], src[order.z]);
         }
-        return;
     }
-
-    // Conversion is necessary.
-    uint8_t const *src = colorData;
-    uint8_t cb = 0;
-    for(int i = 0; i < colorCount; ++i)
+    else
     {
-        Vector3ub &dst = d->colors[i];
-
-        Vector3i tmp;
-        M_ReadBits(bits[order.x], &src, &cb, (uint8_t *) &(tmp[order.x]));
-        M_ReadBits(bits[order.y], &src, &cb, (uint8_t *) &(tmp[order.y]));
-        M_ReadBits(bits[order.z], &src, &cb, (uint8_t *) &(tmp[order.z]));
-
-        // Need to do any scaling?
-        if(8 != bits.x)
+        // Conversion is necessary.
+        uint8_t const *src = colorData;
+        uint8_t cb = 0;
+        for(int i = 0; i < colorCount; ++i)
         {
-            if(bits.x < 8)
-                tmp.x <<= 8 - bits.x;
-            else
-                tmp.x >>= bits.x - 8;
-        }
+            Vector3ub &dst = d->colors[i];
 
-        if(8 != bits.y)
-        {
-            if(bits.y < 8)
-                tmp.y <<= 8 - bits.y;
-            else
-                tmp.y >>= bits.y - 8;
-        }
+            Vector3i tmp;
+            M_ReadBits(bits[order.x], &src, &cb, (uint8_t *) &(tmp[order.x]));
+            M_ReadBits(bits[order.y], &src, &cb, (uint8_t *) &(tmp[order.y]));
+            M_ReadBits(bits[order.z], &src, &cb, (uint8_t *) &(tmp[order.z]));
 
-        if(8 != bits.z)
-        {
-            if(bits.z < 8)
-                tmp.z <<= 8 - bits.z;
-            else
-                tmp.z >>= bits.z - 8;
-        }
+            // Need to do any scaling?
+            if(8 != bits.x)
+            {
+                if(bits.x < 8)
+                    tmp.x <<= 8 - bits.x;
+                else
+                    tmp.x >>= bits.x - 8;
+            }
 
-        // Store the final color.
-        dst = Vector3ub(de::clamp<uint8_t>(0, tmp.x, 255),
-                        de::clamp<uint8_t>(0, tmp.y, 255),
-                        de::clamp<uint8_t>(0, tmp.z, 255));
+            if(8 != bits.y)
+            {
+                if(bits.y < 8)
+                    tmp.y <<= 8 - bits.y;
+                else
+                    tmp.y >>= bits.y - 8;
+            }
+
+            if(8 != bits.z)
+            {
+                if(bits.z < 8)
+                    tmp.z <<= 8 - bits.z;
+                else
+                    tmp.z >>= bits.z - 8;
+            }
+
+            // Store the final color.
+            dst = Vector3ub(de::clamp<uint8_t>(0, tmp.x, 255),
+                            de::clamp<uint8_t>(0, tmp.y, 255),
+                            de::clamp<uint8_t>(0, tmp.z, 255));
+        }
     }
+
+    // Notify interested parties.
+    d->notifyColorTableChanged();
+
+    return *this;
 }
 
 Vector3ub ColorPalette::color(int colorIndex) const
@@ -249,8 +285,8 @@ Vector3ub ColorPalette::color(int colorIndex) const
 
     if(colorIndex < 0 || colorIndex >= d->colors.count())
     {
-        LOG_DEBUG("Index %i out of range %s, will clamp.")
-            << colorIndex << Rangeui(0, d->colors.count()).asText();
+        LOG_DEBUG("Index %i out of range %s in palette %s, will clamp.")
+            << colorIndex << Rangeui(0, d->colors.count()).asText() << d->id;
     }
 
     if(!d->colors.isEmpty())

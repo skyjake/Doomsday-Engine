@@ -262,7 +262,7 @@ int GL_ChooseSmartFilter(int width, int height, int flags);
  * 4 = RGBA
  */
 uint8_t *GL_ConvertBuffer(uint8_t const *src, int width, int height,
-    int informat, ColorPalette const *palette, int outformat);
+    int informat, colorpaletteid_t paletteId, int outformat);
 
 /**
  * @param method  Unique identifier of the smart filtering method to apply.
@@ -285,7 +285,7 @@ uint8_t *GL_SmartFilter(int method, uint8_t const *src, int width, int height,
  * Handles pixel sizes; 1 (==2), 3 and 4.
  */
 void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
-    ColorPalette const *palette, float *brightX, float *brightY,
+    colorpaletteid_t paletteId, float *brightX, float *brightY,
     struct ColorRawf_s *color, float *lumSize);
 
 // Console commands.

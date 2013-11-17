@@ -388,7 +388,7 @@ void GL_ShutdownRefresh()
 {
     initFullGLOk = false;
 
-    R_DestroyColorPalettes();
+    App_ResourceSystem().clearAllColorPalettes();
 
     GL_ShutdownTextureManager();
 }
@@ -990,11 +990,15 @@ uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
 }
 
 uint8_t *GL_ConvertBuffer(uint8_t const *in, int width, int height, int informat,
-    ColorPalette const *palette, int outformat)
+    colorpaletteid_t paletteId, int outformat)
 {
     DENG2_ASSERT(in != 0);
 
-    uint8_t *out;
+    if(informat == outformat)
+    {
+        // No conversion necessary.
+        return (uint8_t*)in;
+    }
 
     if(width <= 0 || height <= 0)
     {
@@ -1002,20 +1006,9 @@ uint8_t *GL_ConvertBuffer(uint8_t const *in, int width, int height, int informat
         exit(1); // Unreachable.
     }
 
-    if(informat <= 2 && palette == NULL)
-    {
-        Con_Error("GL_ConvertBuffer: Cannot process image of pixelsize==1 without palette.");
-        exit(1); // Unreachable.
-    }
+    ColorPalette *palette = (informat <= 2? &App_ResourceSystem().colorPalette(paletteId) : 0);
 
-    if(informat == outformat)
-    {   // No conversion necessary.
-        return (uint8_t*)in;
-    }
-
-    if(NULL == (out = (uint8_t*) malloc(outformat * width * height)))
-        Con_Error("GL_ConvertBuffer: Failed on allocation of %lu bytes for "
-                  "conversion buffer.", (unsigned long) (outformat * width * height));
+    uint8_t *out = (uint8_t*) M_Malloc(outformat * width * height);
 
     // Conversion from pal8(a) to RGB(A).
     if(informat <= 2 && outformat >= 3)
@@ -1034,8 +1027,8 @@ uint8_t *GL_ConvertBuffer(uint8_t const *in, int width, int height, int informat
     if(informat == 3 && outformat == 4)
     {
         long i, numPels = width * height;
-        const uint8_t* src = in;
-        uint8_t* dst = out;
+        uint8_t const *src = in;
+        uint8_t *dst = out;
         for(i = 0; i < numPels; ++i)
         {
             dst[CR] = src[CR];
@@ -1051,7 +1044,7 @@ uint8_t *GL_ConvertBuffer(uint8_t const *in, int width, int height, int informat
 }
 
 void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSize,
-    ColorPalette const *palette, float *retBrightX, float *retBrightY,
+    colorpaletteid_t paletteId, float *retBrightX, float *retBrightY,
     ColorRawf *retColor, float *retLumSize)
 {
     DENG_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
@@ -1065,11 +1058,7 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
     long bright[2];
     uint8_t rgb[3];
 
-    if(pixelSize == 1 && !palette)
-    {
-        Con_Error("GL_CalcLuminance: Cannot process image of pixelsize==1 without palette.");
-        exit(1); // Unreachable.
-    }
+    ColorPalette *palette = (pixelSize == 1? &App_ResourceSystem().colorPalette(paletteId) : 0);
 
     // Apply the defaults.
     // Default to the center of the texture.

@@ -44,6 +44,8 @@
 #include "TextureVariantSpec"
 #include "uri.hh"
 
+class ColorPalette;
+
 #define TEXQ_BEST               8
 #define MINTEXWIDTH             8
 #define MINTEXHEIGHT            8
@@ -150,9 +152,6 @@ void GL_ReleaseVariantTexture(de::TextureVariant &texture);
  * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
  */
 void GL_ReleaseVariantTexturesBySpec(de::Texture &texture, texturevariantspecification_t &spec);
-
-/// Release all textures associated with the identified colorpalette @a paletteId.
-void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId);
 
 /// Release all textures used with 'Raw Images'.
 void GL_ReleaseTexturesForRawImages();

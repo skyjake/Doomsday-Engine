@@ -154,8 +154,8 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color     Determined average color written here.
  */
-void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
-    ColorPalette const *palette, boolean hasAlpha, ColorRawf* color);
+void FindAverageColorIdx(uint8_t const *pixels, int width, int height,
+    ColorPalette const &palette, boolean hasAlpha, ColorRawf *color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -165,8 +165,8 @@ void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
  * @param line       Line to evaluate.
  * @param color      Determined average color written here.
  */
-void FindAverageLineColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, int line, ColorRawf* color);
+void FindAverageLineColor(uint8_t const *pixels, int width, int height,
+    int pixelSize, int line, ColorRawf *color);
 
 /**
  * @param pixels    Index-color image to evaluate.
@@ -177,8 +177,8 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color     Determined average color written here.
  */
-void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
-    int line, ColorPalette const *palette, boolean hasAlpha, ColorRawf* color);
+void FindAverageLineColorIdx(uint8_t const *pixels, int width, int height,
+    int line, ColorPalette const &palette, boolean hasAlpha, ColorRawf *color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -188,19 +188,18 @@ void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
  * @param alpha      Determined average alpha written here.
  * @param coverage   Fraction representing the ratio of alpha to non-alpha pixels.
  */
-void FindAverageAlpha(const uint8_t* pixels, int width, int height, int pixelSize,
-    float* alpha, float* coverage);
+void FindAverageAlpha(uint8_t const *pixels, int width, int height, int pixelSize,
+    float *alpha, float *coverage);
 
 /**
  * @param pixels    Index-color image to evaluate.
  * @param width     Width of the image in pixels.
  * @param height    Height of the image in pixels.
- * @param palette   Color palette to use.
  * @param alpha     Determined average alpha written here.
  * @param coverage  Fraction representing the ratio of alpha to non-alpha pixels.
  */
-void FindAverageAlphaIdx(const uint8_t* pixels, int width, int height,
-    ColorPalette const *palette, float* alpha, float* coverage);
+void FindAverageAlphaIdx(uint8_t const *pixels, int width, int height, float *alpha,
+    float *coverage);
 
 /**
  * Calculates a clip region for the image that excludes alpha pixels.
@@ -270,7 +269,7 @@ boolean GL_QuantizeImageToPalette(uint8_t *out, int outformat,
  * looking up the nearest match in the palette. Increases the brightness
  * to maximum.
  */
-void GL_DeSaturatePalettedImage(uint8_t *buffer, ColorPalette const *palette,
+void GL_DeSaturatePalettedImage(uint8_t *buffer, ColorPalette const &palette,
     int width, int height);
 
 #endif // DENG_GL_IMAGE_MANIPULATION_H

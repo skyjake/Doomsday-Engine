@@ -1410,8 +1410,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
         B_BindDefaults();
         B_InitialContextActivations();
 #endif
-        App_ResourceSystem().clearAllAnimGroups();
-
         // Reset the world back to it's initial state (unload the map, reset players, etc...).
         App_World().reset();
 
@@ -1420,9 +1418,10 @@ bool App_ChangeGame(Game &game, bool allowReload)
         P_ShutdownMapEntityDefs();
 
         R_ShutdownSvgs();
-        R_DestroyColorPalettes();
 
         App_ResourceSystem().clearAllRuntimeResources();
+        App_ResourceSystem().clearAllAnimGroups();
+        App_ResourceSystem().clearAllColorPalettes();
 
         Sfx_InitLogical();
 

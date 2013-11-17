@@ -22,6 +22,7 @@
 #include "def_data.h"
 #include "resourceclass.h"
 #include "resource/animgroup.h"
+#include "resource/colorpalette.h"
 #ifdef __CLIENT__
 #  include "Fonts"
 #endif
@@ -58,7 +59,10 @@ class ResourceSystem : public de::System
 {
 public:
     /// An unknown resource class identifier was specified. @ingroup errors
-    DENG2_ERROR(UnknownResourceClass);
+    DENG2_ERROR(UnknownResourceClassError);
+
+    /// The referenced color paletted could not be found. @ingroup errors
+    DENG2_ERROR(MissingColorPaletteError);
 
 public:
     /**
@@ -155,6 +159,58 @@ public:
      * @param flags  @ref animationGroupFlags
      */
     de::AnimGroup &newAnimGroup(int flags);
+
+    /**
+     * Returns the total number of color palettes.
+     */
+    int colorPaletteCount() const;
+
+    /**
+     * Destroys all the color palettes.
+     */
+    void clearAllColorPalettes();
+
+    /**
+     * Returns the ColorPalette associated with unique @a id.
+     */
+    ColorPalette &colorPalette(colorpaletteid_t id) const;
+
+    /**
+     * Returns the symbolic name of the specified color @a palette. A zero-length
+     * string is return if no name is associated.
+     */
+    de::String colorPaletteName(ColorPalette &palette) const;
+
+    /**
+     * Returns @c true iff a ColorPalette with the specified @a name is present.
+     */
+    bool hasColorPalette(de::String name) const;
+
+    /**
+     * Returns the ColorPalette associated with @a name.
+     *
+     * @see hasColorPalette()
+     */
+    ColorPalette &colorPalette(de::String name) const;
+
+    /**
+     * @param newPalette  Color palette to add. Ownership of the palette is given
+     *                    to the resource system.
+     * @param name        Symbolic name of the color palette.
+     */
+    void addColorPalette(ColorPalette &newPalette, de::String const &name = de::String());
+
+    /**
+     * Returns the unique identifier of the current default color palette.
+     */
+    colorpaletteid_t defaultColorPalette() const;
+
+    /**
+     * Change the default color palette.
+     *
+     * @param newDefaultPalette  The color palette to make default.
+     */
+    void setDefaultColorPalette(ColorPalette *newDefaultPalette);
 
 public: /// @todo Should be private:
     void initCompositeTextures();

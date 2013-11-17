@@ -22,6 +22,8 @@
 
 #include "dd_types.h"
 #include <de/Error>
+#include <de/Id>
+#include <de/Observers>
 #include <de/Vector>
 
 /**
@@ -34,6 +36,9 @@ class ColorPalette
 public:
     /// Base class for color-format-related errors. @ingroup errors
     DENG2_ERROR(ColorFormatError);
+
+    /// Notified whenever the color table changes.
+    DENG2_DEFINE_AUDIENCE(ColorTableChange, void colorPaletteColorTableChanged(ColorPalette &colorPalette))
 
     /// Maximum number of bits per color component.
     static int const max_component_bits = 16;
@@ -67,9 +72,14 @@ public:
     }
 
     /**
+     * Returns the automatically generated, unique identifier of the color palette.
+     */
+    de::Id id() const;
+
+    /**
      * Returns the total number of colors in the palette.
      */
-    int size() const;
+    int colorCount() const;
 
     /**
      * Replace the entire color table.
@@ -83,7 +93,7 @@ public:
      * @param colorData   Color triplets (at least @a numColors * 3).
      * @param colorCount  Number of color triplets.
      */
-    void replaceColorTable(int const compOrder[3], uint8_t const compBits[3],
+    ColorPalette &loadColorTable(int const compOrder[3], uint8_t const compBits[3],
         uint8_t const *colorData, int colorCount);
 
     /**

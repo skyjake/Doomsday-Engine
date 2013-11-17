@@ -535,7 +535,6 @@ boolean R_SetViewGrid(int numCols, int numRows)
 void R_Init()
 {
     R_LoadSystemFonts();
-    R_InitColorPalettes();
     R_InitTranslationTables();
     R_InitRawTexs();
     R_InitSvgs();

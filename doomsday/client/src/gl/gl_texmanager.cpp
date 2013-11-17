@@ -770,7 +770,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
             // Paletted.
             uint8_t *newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
                                                   ((image.flags & IMGF_IS_MASKED)? 2 : 1),
-                                                  R_ToColorPalette(image.paletteId), 3);
+                                                  image.paletteId, 3);
             M_Free(image.pixels);
             image.pixels = newPixels;
             image.pixelSize = 3;
@@ -790,11 +790,16 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
     else if(0 != image.paletteId)
     {
         if(fillOutlines && (image.flags & IMGF_IS_MASKED))
+        {
             ColorOutlinesIdx(image.pixels, image.size.width, image.size.height);
+        }
 
         if(monochrome && !scaleSharp)
-            GL_DeSaturatePalettedImage(image.pixels, R_ToColorPalette(image.paletteId),
+        {
+            GL_DeSaturatePalettedImage(image.pixels,
+                                       App_ResourceSystem().colorPalette(image.paletteId),
                                        image.size.width, image.size.height);
+        }
 
         if(scaleSharp)
         {
@@ -804,7 +809,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
 
             uint8_t *newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
                                                   ((image.flags & IMGF_IS_MASKED)? 2 : 1),
-                                                  R_ToColorPalette(image.paletteId), 4);
+                                                  image.paletteId, 4);
             if(newPixels != image.pixels)
             {
                 M_Free(image.pixels);
@@ -840,7 +845,9 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
             else
             {   // Yes. Quantize down from RGA(+A) to Paletted(+A), replacing the old image.
                 newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
-                                             (origMasked? 2 : 1), R_ToColorPalette(origPaletteId), 4);
+                                             (origMasked? 2 : 1),
+                                             origPaletteId, 4);
+
                 if(newPixels != image.pixels)
                 {
                     M_Free(image.pixels);
@@ -848,7 +855,9 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
                     image.pixelSize = (origMasked? 2 : 1);
                     image.paletteId = origPaletteId;
                     if(origMasked)
+                    {
                         image.flags |= IMGF_IS_MASKED;
+                    }
                 }
             }
         }
@@ -1533,7 +1542,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, GLUploadMethod met
         // Convert a paletted source image to truecolor.
         uint8_t *newPixels = GL_ConvertBuffer(loadPixels, loadWidth, loadHeight,
                                               DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 2 : 1,
-                                              R_ToColorPalette(content.paletteId),
+                                              content.paletteId,
                                               DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 4 : 3);
         if(loadPixels != content.pixels)
         {
@@ -2009,7 +2018,7 @@ static TexSource loadFlat(image_t &image, de::FileHandle &hndl)
     image.size.width  = FLAT_WIDTH;
     image.size.height = FLAT_HEIGHT;
     image.pixelSize = 1;
-    image.paletteId = defaultColorPalette;
+    image.paletteId = App_ResourceSystem().defaultColorPalette();
 
     de::File1 &file   = hndl.file();
     size_t fileLength = hndl.length();
@@ -2110,7 +2119,7 @@ static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass, int
             image.size.width  = info.logicalDimensions.x + border*2;
             image.size.height = info.logicalDimensions.y + border*2;
             image.pixelSize   = 1;
-            image.paletteId   = defaultColorPalette;
+            image.paletteId   = App_ResourceSystem().defaultColorPalette();
 
             image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
             if(!image.pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image.size.width * image.size.height));
@@ -2146,7 +2155,7 @@ static TexSource loadPatchComposite(image_t &image, Texture const &tex,
     image.pixelSize = 1;
     image.size.width  = tex.width();
     image.size.height = tex.height();
-    image.paletteId = defaultColorPalette;
+    image.paletteId   = App_ResourceSystem().defaultColorPalette();
 
     image.pixels = (uint8_t *) M_Calloc(2 * image.size.width * image.size.height);
 
@@ -2587,18 +2596,6 @@ void GL_ReleaseVariantTexturesBySpec(Texture &texture, texturevariantspecificati
 void GL_ReleaseVariantTexture(TextureVariant &tex)
 {
     releaseVariantGLTexture(tex);
-}
-
-void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
-{
-    foreach(Texture *texture, App_Textures().all())
-    {
-        colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(Texture::ColorPaletteAnalysis));
-        if(cp && cp->paletteId == paletteId)
-        {
-            GL_ReleaseGLTexturesByTexture(*texture);
-        }
-    }
 }
 
 void GL_InitTextureContent(texturecontent_t *content)

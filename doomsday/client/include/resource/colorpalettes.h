@@ -20,50 +20,18 @@
 #ifndef DENG_RESOURCE_COLORPALETTES_H
 #define DENG_RESOURCE_COLORPALETTES_H
 
-#include "dd_share.h" // For colorpaletteid_t
-#include "resource/colorpalette.h"
+#include <de/libdeng1.h>
 
 // Maximum number of palette translation tables.
 #define NUM_TRANSLATION_CLASSES         3
 #define NUM_TRANSLATION_MAPS_PER_CLASS  7
 #define NUM_TRANSLATION_TABLES          (NUM_TRANSLATION_CLASSES * NUM_TRANSLATION_MAPS_PER_CLASS)
 
-DENG_EXTERN_C colorpaletteid_t defaultColorPalette;
 DENG_EXTERN_C byte *translationTables;
 
 void R_InitTranslationTables();
 void R_UpdateTranslationTables();
 
 byte const *R_TranslationTable(int tclass, int tmap);
-
-/// Prepare for color palette creation.
-void R_InitColorPalettes();
-
-/// To be called when any existing color palettes are no longer required.
-void R_DestroyColorPalettes();
-
-/// @return  Number of available color palettes.
-int R_ColorPaletteCount();
-
-/// @return  ColorPalette associated with unique @a id, else @c NULL.
-ColorPalette *R_ToColorPalette(colorpaletteid_t id);
-
-DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name);
-DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id);
-
-/**
- * Given a color palette list index return the ColorPalette.
- * @return  ColorPalette if found else @c NULL
- */
-ColorPalette *R_GetColorPaletteByIndex(int paletteIdx);
-
-/**
- * Change the default color palette.
- *
- * @param id  Id of the color palette to make default.
- *
- * @return  @c true iff successful, else @c NULL.
- */
-boolean R_SetDefaultColorPalette(colorpaletteid_t id);
 
 #endif // DENG_RESOURCE_COLORPALETTES_H

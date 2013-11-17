@@ -20,6 +20,7 @@
 #include "de_platform.h"
 #include "resource/resourcesystem.h"
 
+#include "resource/colorpalette.h"
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
@@ -32,6 +33,7 @@
 #include "filesys/lumpindex.h"
 
 #ifdef __CLIENT__
+#  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
 #endif
 
@@ -76,6 +78,9 @@ static Texture *deriveTexture(TextureManifest &manifest)
 }
 
 DENG2_PIMPL(ResourceSystem)
+#ifdef __CLIENT__
+, DENG2_OBSERVES(ColorPalette, ColorTableChange)
+#endif
 {
     typedef QList<de::ResourceClass *> ResourceClasses;
     ResourceClasses resClasses;
@@ -85,15 +90,25 @@ DENG2_PIMPL(ResourceSystem)
     AnimGroups animGroups;
 
     QList<PatchName> patchNames;
-    Textures textures;
 
+    typedef QMap<colorpaletteid_t, ColorPalette *> ColorPalettes;
+    ColorPalettes colorPalettes;
+
+    typedef QMap<String, ColorPalette *> ColorPaletteNames;
+    ColorPaletteNames colorPaletteNames;
+
+    colorpaletteid_t defaultColorPalette;
+
+    Textures textures;
     Materials materials;
 
 #ifdef __CLIENT__
     Fonts fonts;
 #endif
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i)
+        : Base(i)
+        , defaultColorPalette(0)
     {
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
@@ -543,6 +558,27 @@ DENG2_PIMPL(ResourceSystem)
             delete &def;
         }
     }
+
+#ifdef __CLIENT__
+    /// Release all GL textures prepared using @a colorPalette.
+    void releaseGLTexturesFor(ColorPalette const &colorPalette)
+    {
+        foreach(Texture *texture, textures.all())
+        {
+            colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(Texture::ColorPaletteAnalysis));
+            if(cp && cp->paletteId == colorpaletteid_t(colorPalette.id()))
+            {
+                GL_ReleaseGLTexturesByTexture(*texture);
+            }
+        }
+    }
+
+    /// Observes ColorPalette ColorTableChange
+    void colorPaletteColorTableChanged(ColorPalette &colorPalette)
+    {
+        releaseGLTexturesFor(colorPalette);
+    }
+#endif
 };
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
@@ -574,7 +610,7 @@ ResourceClass &ResourceSystem::resClass(resourceclassid_t id)
         return *d->resClasses.at(uint(id));
     }
     /// @throw UnknownResourceClass Attempted with an unknown id.
-    throw UnknownResourceClass("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
+    throw UnknownResourceClassError("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
 }
 
 void ResourceSystem::clearAllRuntimeResources()
@@ -1202,6 +1238,97 @@ AnimGroup &ResourceSystem::newAnimGroup(int flags)
     // Allocating one by one is inefficient but it doesn't really matter.
     d->animGroups.append(new AnimGroup(uniqueId, flags));
     return *d->animGroups.last();
+}
+
+void ResourceSystem::clearAllColorPalettes()
+{
+    d->colorPaletteNames.clear();
+
+    qDeleteAll(d->colorPalettes);
+    d->colorPalettes.clear();
+
+    d->defaultColorPalette = 0;
+}
+
+int ResourceSystem::colorPaletteCount() const
+{
+    return d->colorPalettes.count();
+}
+
+ColorPalette &ResourceSystem::colorPalette(colorpaletteid_t id) const
+{
+    // Choose the default palette?
+    if(!id)
+    {
+        id = d->defaultColorPalette;
+    }
+
+    Instance::ColorPalettes::const_iterator found = d->colorPalettes.find(id);
+    if(found != d->colorPalettes.end())
+    {
+        return *found.value();
+    }
+    /// @throw MissingColorPaletteError An unknown/invalid id was specified.
+    throw MissingColorPaletteError("ResourceSystem::colorPalette", QString("Invalid id %1").arg(id));
+}
+
+String ResourceSystem::colorPaletteName(ColorPalette &palette) const
+{
+    QList<String> names = d->colorPaletteNames.keys(&palette);
+    if(!names.isEmpty())
+    {
+        return names.first();
+    }
+    return String();
+}
+
+bool ResourceSystem::hasColorPalette(String name) const
+{
+    return d->colorPaletteNames.contains(name);
+}
+
+ColorPalette &ResourceSystem::colorPalette(String name) const
+{
+    Instance::ColorPaletteNames::const_iterator found = d->colorPaletteNames.find(name);
+    if(found != d->colorPaletteNames.end())
+    {
+        return *found.value();
+    }
+    /// @throw MissingColorPaletteError An unknown/invalid id was specified.
+    throw MissingColorPaletteError("ResourceSystem::colorPalette", "Unknown name '" + name + "'");
+}
+
+void ResourceSystem::addColorPalette(ColorPalette &newPalette, String const &name)
+{
+    // Do we already own this palette?
+    Instance::ColorPalettes::const_iterator found = d->colorPalettes.find(newPalette.id());
+    if(found != d->colorPalettes.end())
+    {
+        return;
+    }
+
+    d->colorPalettes.insert(newPalette.id(), &newPalette);
+
+    if(!name.isEmpty())
+    {
+        d->colorPaletteNames.insert(name, &newPalette);
+    }
+
+    // If this is the first palette automatically set it as the default.
+    if(d->colorPalettes.count() == 1)
+    {
+        d->defaultColorPalette = newPalette.id();
+    }
+}
+
+colorpaletteid_t ResourceSystem::defaultColorPalette() const
+{
+    return d->defaultColorPalette;
+}
+
+void ResourceSystem::setDefaultColorPalette(ColorPalette *newDefaultPalette)
+{
+    d->defaultColorPalette = newDefaultPalette? newDefaultPalette->id() : 0;
 }
 
 void ResourceSystem::consoleRegister() // static
