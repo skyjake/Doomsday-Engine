@@ -1,4 +1,4 @@
-/** @file textures.h Texture Resource Collection.
+/** @file textures.h  Texture Resource Collection.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -18,15 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_TEXTURES_H
-#define LIBDENG_RESOURCE_TEXTURES_H
+#ifndef DENG_RESOURCE_TEXTURES_H
+#define DENG_RESOURCE_TEXTURES_H
 
 #include "Texture"
 #include "TextureManifest"
 #include "TextureScheme"
 #include "uri.hh"
 #include <de/Error>
-#include <de/Observers>
 #include <de/Vector>
 #include <QList>
 #include <QMap>
@@ -43,10 +42,7 @@ namespace de {
  *
  * @ingroup resource
  */
-class Textures :
-DENG2_OBSERVES(TextureScheme, ManifestDefined),
-DENG2_OBSERVES(TextureManifest, TextureDerived),
-DENG2_OBSERVES(Texture, Deletion)
+class Textures
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef class TextureManifest Manifest;
@@ -169,20 +165,10 @@ public:
      */
     All const &all() const;
 
-protected:
-    // Observes Scheme ManifestDefined.
-    void schemeManifestDefined(Scheme &scheme, Manifest &manifest);
-
-    // Observes Manifest TextureDerived.
-    void manifestTextureDerived(Manifest &manifest, Texture &texture);
-
-    // Observes Texture Deletion.
-    void textureBeingDeleted(Texture const &texture);
-
 private:
     DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_TEXTURES_H */
+#endif // DENG_RESOURCE_TEXTURES_H

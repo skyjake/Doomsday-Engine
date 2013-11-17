@@ -26,6 +26,7 @@
 #  include "MaterialSnapshot"
 #endif
 #include <de/Log>
+#include <de/Observers>
 #include <de/math.h>
 #include <de/mathutil.h> // for M_NumDigits
 #include <de/memory.h>
@@ -72,11 +73,15 @@ typedef QList<VariantCacheTask *> VariantCacheQueue;
 
 namespace de {
 
-DENG2_PIMPL(Materials)
+DENG2_PIMPL(Materials),
+DENG2_OBSERVES(MaterialScheme, ManifestDefined),
+DENG2_OBSERVES(MaterialManifest, MaterialDerived),
+DENG2_OBSERVES(MaterialManifest, Deletion),
+DENG2_OBSERVES(Material, Deletion)
 {
     /// System subspace schemes containing the manifests.
-    Materials::Schemes schemes;
-    QList<MaterialScheme *> schemeCreationOrder;
+    Schemes schemes;
+    QList<Scheme *> schemeCreationOrder;
 
 #ifdef __CLIENT__
     /// Material variant specifications.
@@ -87,10 +92,10 @@ DENG2_PIMPL(Materials)
 #endif
 
     /// All material instances in the system (from all schemes).
-    Materials::All materials;
+    All materials;
 
     /// Manifest groups.
-    Materials::ManifestGroups groups;
+    ManifestGroups groups;
 
     /// Total number of URI material manifests (in all schemes).
     uint manifestCount;
@@ -197,6 +202,62 @@ DENG2_PIMPL(Materials)
         return *findVariantSpec(tpl, true);
     }
 #endif
+
+    /// Observes Scheme ManifestDefined.
+    void schemeManifestDefined(Scheme &scheme, Manifest &manifest)
+    {
+        DENG2_UNUSED(scheme);
+
+        // We want notification when the manifest is derived to produce a material.
+        manifest.audienceForMaterialDerived += this;
+
+        // We want notification when the manifest is about to be deleted.
+        manifest.audienceForDeletion += this;
+
+        // Acquire a new unique identifier for the manifest.
+        materialid_t const id = ++manifestCount; // 1-based.
+        manifest.setId(id);
+
+        // Add the new manifest to the id index/map.
+        if(manifestCount > manifestIdMapSize)
+        {
+            // Allocate more memory.
+            manifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
+            manifestIdMap = (Manifest **) M_Realloc(manifestIdMap, sizeof(*manifestIdMap) * manifestIdMapSize);
+        }
+        manifestIdMap[manifestCount - 1] = &manifest;
+    }
+
+    /// Observes Manifest MaterialDerived.
+    void manifestMaterialDerived(Manifest &manifest, Material &material)
+    {
+        DENG2_UNUSED(manifest);
+
+        // Include this new material in the scheme-agnostic list of instances.
+        materials.push_back(&material);
+
+        // We want notification when the material is about to be deleted.
+        material.audienceForDeletion += this;
+    }
+
+    /// Observes Manifest Deletion.
+    void manifestBeingDeleted(Manifest const &manifest)
+    {
+        foreach(ManifestGroup *group, groups)
+        {
+            group->remove(const_cast<Manifest *>(&manifest));
+        }
+        manifestIdMap[manifest.id() - 1 /*1-based*/] = 0;
+
+        // There will soon be one fewer manifest in the system.
+        manifestCount -= 1;
+    }
+
+    /// Observes Material Deletion.
+    void materialBeingDeleted(Material const &material)
+    {
+        materials.removeOne(const_cast<Material *>(&material));
+    }
 };
 
 void Materials::consoleRegister()
@@ -224,12 +285,12 @@ MaterialScheme &Materials::scheme(String name) const
         if(found != d->schemes.end()) return **found;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
-    throw Materials::UnknownSchemeError("Materials::scheme", "No scheme found matching '" + name + "'");
+    throw UnknownSchemeError("Materials::scheme", "No scheme found matching '" + name + "'");
 }
 
 MaterialScheme &Materials::createScheme(String name)
 {
-    DENG_ASSERT(name.length() >= Scheme::min_name_length);
+    DENG2_ASSERT(name.length() >= Scheme::min_name_length);
 
     // Ensure this is a unique name.
     if(knownScheme(name)) return scheme(name);
@@ -240,7 +301,7 @@ MaterialScheme &Materials::createScheme(String name)
     d->schemeCreationOrder.push_back(newScheme);
 
     // We want notification when a new manifest is defined in this scheme.
-    newScheme->audienceForManifestDefined += this;
+    newScheme->audienceForManifestDefined += d;
 
     return *newScheme;
 }
@@ -249,8 +310,7 @@ bool Materials::knownScheme(String name) const
 {
     if(!name.isEmpty())
     {
-        Schemes::iterator found = d->schemes.find(name.toLower());
-        if(found != d->schemes.end()) return true;
+        return d->schemes.contains(name.toLower());
     }
     return false;
 }
@@ -314,58 +374,6 @@ MaterialManifest &Materials::find(Uri const &uri) const
 
     /// @throw NotFoundError Failed to locate a matching manifest.
     throw NotFoundError("Materials::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
-}
-
-void Materials::schemeManifestDefined(MaterialScheme &scheme, MaterialManifest &manifest)
-{
-    DENG2_UNUSED(scheme);
-
-    // We want notification when the manifest is derived to produce a material.
-    manifest.audienceForMaterialDerived += this;
-
-    // We want notification when the manifest is about to be deleted.
-    manifest.audienceForDeletion += this;
-
-    // Acquire a new unique identifier for the manifest.
-    materialid_t const id = ++d->manifestCount; // 1-based.
-    manifest.setId(id);
-
-    // Add the new manifest to the id index/map.
-    if(d->manifestCount > d->manifestIdMapSize)
-    {
-        // Allocate more memory.
-        d->manifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
-        d->manifestIdMap = (Manifest **) M_Realloc(d->manifestIdMap, sizeof *d->manifestIdMap * d->manifestIdMapSize);
-    }
-    d->manifestIdMap[d->manifestCount - 1] = &manifest;
-}
-
-void Materials::manifestMaterialDerived(MaterialManifest &manifest, Material &material)
-{
-    DENG2_UNUSED(manifest);
-
-    // Include this new material in the scheme-agnostic list of instances.
-    d->materials.push_back(&material);
-
-    // We want notification when the material is about to be deleted.
-    material.audienceForDeletion += this;
-}
-
-void Materials::manifestBeingDeleted(MaterialManifest const &manifest)
-{
-    foreach(ManifestGroup *group, d->groups)
-    {
-        group->remove(const_cast<Manifest *>(&manifest));
-    }
-    d->manifestIdMap[manifest.id() - 1 /*1-based*/] = 0;
-
-    // There will soon be one fewer manifest in the system.
-    d->manifestCount -= 1;
-}
-
-void Materials::materialBeingDeleted(Material const &material)
-{
-    d->materials.removeOne(const_cast<Material *>(&material));
 }
 
 Materials::All const &Materials::all() const

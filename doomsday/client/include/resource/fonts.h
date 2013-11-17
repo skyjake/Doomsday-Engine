@@ -26,7 +26,6 @@
 #include "FontScheme"
 #include "uri.hh"
 #include <de/Error>
-#include <de/Observers>
 #include <de/String>
 #include <QList>
 #include <QMap>
@@ -46,10 +45,7 @@ namespace de {
  *
  * @ingroup resource
  */
-class Fonts :
-DENG2_OBSERVES(FontScheme, ManifestDefined),
-DENG2_OBSERVES(FontManifest, Deletion),
-DENG2_OBSERVES(AbstractFont, Deletion)
+class Fonts
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef class FontManifest Manifest;
@@ -193,19 +189,6 @@ public:
      * from all schemes.
      */
     All const &all() const;
-
-protected:
-    // Observes Scheme ManifestDefined.
-    void schemeManifestDefined(Scheme &scheme, Manifest &manifest);
-
-    // Observes Manifest Deletion.
-    void manifestBeingDeleted(Manifest const &manifest);
-
-    // Observes Manifest FontDerived.
-    //void manifestFontDerived(Manifest &manifest, AbstractFont &font);
-
-    // Observes AbstractFont Deletion.
-    void fontBeingDeleted(AbstractFont const &font);
 
 private:
     DENG2_PRIVATE(d)

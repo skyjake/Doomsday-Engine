@@ -23,6 +23,7 @@
 #include "de_console.h"
 #include "dd_main.h" // App_Textures(), verbose
 #include <de/Log>
+#include <de/Observers>
 #include <QList>
 #include <QtAlgorithms>
 
@@ -34,7 +35,10 @@ D_CMD(PrintTextureStats);
 
 namespace de {
 
-DENG2_PIMPL(Textures)
+DENG2_PIMPL(Textures),
+DENG2_OBSERVES(TextureScheme, ManifestDefined),
+DENG2_OBSERVES(TextureManifest, TextureDerived),
+DENG2_OBSERVES(Texture, Deletion)
 {
     /// System subspace schemes containing the textures.
     Schemes schemes;
@@ -57,6 +61,33 @@ DENG2_PIMPL(Textures)
         qDeleteAll(schemes);
         schemes.clear();
         schemeCreationOrder.clear();
+    }
+
+    /// Observes Scheme ManifestDefined.
+    void schemeManifestDefined(Scheme &scheme, Manifest &manifest)
+    {
+        DENG2_UNUSED(scheme);
+
+        // We want notification when the manifest is derived to produce a texture.
+        manifest.audienceForTextureDerived += this;
+    }
+
+    /// Observes Manifest TextureDerived.
+    void manifestTextureDerived(Manifest &manifest, Texture &texture)
+    {
+        DENG2_UNUSED(manifest);
+
+        // Include this new texture in the scheme-agnostic list of instances.
+        textures.push_back(&texture);
+
+        // We want notification when the texture is about to be deleted.
+        texture.audienceForDeletion += this;
+    }
+
+    /// Observes Texture Deletion.
+    void textureBeingDeleted(Texture const &texture)
+    {
+        textures.removeOne(const_cast<Texture *>(&texture));
     }
 };
 
@@ -101,7 +132,7 @@ TextureScheme &Textures::createScheme(String name)
     d->schemeCreationOrder.push_back(newScheme);
 
     // We want notification when a new manifest is defined in this scheme.
-    newScheme->audienceForManifestDefined += this;
+    newScheme->audienceForManifestDefined += d;
 
     return *newScheme;
 }
@@ -187,30 +218,6 @@ TextureManifest &Textures::find(Uri const &uri) const
 
     /// @throw NotFoundError Failed to locate a matching manifest.
     throw NotFoundError("Textures::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
-}
-
-void Textures::schemeManifestDefined(TextureScheme &scheme, TextureManifest &manifest)
-{
-    DENG2_UNUSED(scheme);
-
-    // We want notification when the manifest is derived to produce a texture.
-    manifest.audienceForTextureDerived += this;
-}
-
-void Textures::manifestTextureDerived(TextureManifest &manifest, Texture &texture)
-{
-    DENG2_UNUSED(manifest);
-
-    // Include this new texture in the scheme-agnostic list of instances.
-    d->textures.push_back(&texture);
-
-    // We want notification when the texture is about to be deleted.
-    texture.audienceForDeletion += this;
-}
-
-void Textures::textureBeingDeleted(Texture const &texture)
-{
-    d->textures.removeOne(const_cast<Texture *>(&texture));
 }
 
 Textures::All const &Textures::all() const

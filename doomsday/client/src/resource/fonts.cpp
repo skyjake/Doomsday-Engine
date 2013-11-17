@@ -24,13 +24,17 @@
 #include "de_console.h"
 #include "dd_main.h" // App_Fonts(), verbose
 #include <de/Log>
+#include <de/Observers>
 #include <de/memory.h>
 #include <QList>
 #include <QtAlgorithms>
 
 namespace de {
 
-DENG2_PIMPL_NOREF(Fonts)
+DENG2_PIMPL(Fonts),
+DENG2_OBSERVES(FontScheme, ManifestDefined),
+DENG2_OBSERVES(FontManifest, Deletion),
+DENG2_OBSERVES(AbstractFont, Deletion)
 {
     /// System subspace schemes containing the fonts.
     Schemes schemes;
@@ -42,22 +46,17 @@ DENG2_PIMPL_NOREF(Fonts)
     uint manifestIdMapSize;
     FontManifest **manifestIdMap; ///< Index with fontid_t-1
 
-    Instance()
-        : manifestCount(0)
+    Instance(Public *i)
+        : Base(i)
+        , manifestCount(0)
         , manifestIdMapSize(0)
         , manifestIdMap(0)
     {}
 
     ~Instance()
     {
-        clearFonts();
+        self.clearAllSchemes();
         clearManifests();
-    }
-
-    void clearFonts()
-    {
-        qDeleteAll(fonts);
-        fonts.clear();
     }
 
     void clearManifests()
@@ -74,9 +73,59 @@ DENG2_PIMPL_NOREF(Fonts)
         }
         manifestCount = 0;
     }
+
+    /// Observes Scheme ManifestDefined.
+    void schemeManifestDefined(Scheme & /*scheme*/, Manifest &manifest)
+    {
+        // We want notification when the manifest is derived to produce a resource.
+        //manifest.audienceForFontDerived += this;
+
+        // We want notification when the manifest is about to be deleted.
+        manifest.audienceForDeletion += this;
+
+        // Acquire a new unique identifier for the manifest.
+        fontid_t const id = ++manifestCount; // 1-based.
+        manifest.setUniqueId(id);
+
+        // Add the new manifest to the id index/map.
+        if(manifestCount > manifestIdMapSize)
+        {
+            // Allocate more memory.
+            manifestIdMapSize += 32;
+            manifestIdMap = (Manifest **) M_Realloc(manifestIdMap, sizeof(*manifestIdMap) * manifestIdMapSize);
+        }
+        manifestIdMap[manifestCount - 1] = &manifest;
+    }
+
+#if 0
+    /// Observes Manifest FontDerived.
+    void manifestFontDerived(Manifest & /*manifest*/, AbstractFont &font)
+    {
+        // Include this new font in the scheme-agnostic list of instances.
+        fonts.push_back(&font);
+
+        // We want notification when the font is about to be deleted.
+        font.audienceForDeletion += this;
+    }
+#endif
+
+    /// Observes Manifest Deletion.
+    void manifestBeingDeleted(Manifest const &manifest)
+    {
+        manifestIdMap[manifest.uniqueId() - 1 /*1-based*/] = 0;
+
+        // There will soon be one fewer manifest in the system.
+        manifestCount -= 1;
+    }
+
+    /// Observes AbstractFont Deletion.
+    void fontBeingDeleted(AbstractFont const &font)
+    {
+        fonts.removeOne(const_cast<AbstractFont *>(&font));
+    }
 };
 
-Fonts::Fonts() : d(new Instance)
+Fonts::Fonts() : d(new Instance(this))
 {}
 
 Fonts::Scheme &Fonts::scheme(String name) const
@@ -93,7 +142,7 @@ Fonts::Scheme &Fonts::scheme(String name) const
 
 Fonts::Scheme &Fonts::createScheme(String name)
 {
-    DENG_ASSERT(name.length() >= Scheme::min_name_length);
+    DENG2_ASSERT(name.length() >= Scheme::min_name_length);
 
     // Ensure this is a unique name.
     if(knownScheme(name)) return scheme(name);
@@ -104,7 +153,7 @@ Fonts::Scheme &Fonts::createScheme(String name)
     d->schemeCreationOrder.push_back(newScheme);
 
     // We want notification when a new manifest is defined in this scheme.
-    newScheme->audienceForManifestDefined += this;
+    newScheme->audienceForManifestDefined += d;
 
     return *newScheme;
 }
@@ -113,8 +162,7 @@ bool Fonts::knownScheme(String name) const
 {
     if(!name.isEmpty())
     {
-        Schemes::iterator found = d->schemes.find(name.toLower());
-        if(found != d->schemes.end()) return true;
+        return d->schemes.contains(name.toLower());
     }
     return false;
 }
@@ -209,52 +257,6 @@ Fonts::Manifest &Fonts::toManifest(fontid_t id) const
 
     /// @throw UnknownIdError The specified manifest id is invalid.
     throw UnknownIdError("Fonts::toManifest", QString("Invalid font ID %1, valid range [1..%2)").arg(id).arg(d->manifestCount + 1));
-}
-
-void Fonts::schemeManifestDefined(Scheme & /*scheme*/, Manifest &manifest)
-{
-    // We want notification when the manifest is derived to produce a resource.
-    //manifest.audienceForFontDerived += this;
-
-    // We want notification when the manifest is about to be deleted.
-    manifest.audienceForDeletion += this;
-
-    // Acquire a new unique identifier for the manifest.
-    fontid_t const id = ++d->manifestCount; // 1-based.
-    manifest.setUniqueId(id);
-
-    // Add the new manifest to the id index/map.
-    if(d->manifestCount > d->manifestIdMapSize)
-    {
-        // Allocate more memory.
-        d->manifestIdMapSize += 32;
-        d->manifestIdMap = (Manifest **) M_Realloc(d->manifestIdMap, sizeof(*d->manifestIdMap) * d->manifestIdMapSize);
-    }
-    d->manifestIdMap[d->manifestCount - 1] = &manifest;
-}
-
-#if 0
-void Fonts::manifestFontDerived(Manifest & /*manifest*/, AbstractFont &font)
-{
-    // Include this new font in the scheme-agnostic list of instances.
-    d->fonts.push_back(&font);
-
-    // We want notification when the font is about to be deleted.
-    font.audienceForDeletion += this;
-}
-#endif
-
-void Fonts::manifestBeingDeleted(Manifest const &manifest)
-{
-    d->manifestIdMap[manifest.uniqueId() - 1 /*1-based*/] = 0;
-
-    // There will soon be one fewer manifest in the system.
-    d->manifestCount -= 1;
-}
-
-void Fonts::fontBeingDeleted(AbstractFont const &font)
-{
-    d->fonts.removeOne(const_cast<AbstractFont *>(&font));
 }
 
 Fonts::All const &Fonts::all() const

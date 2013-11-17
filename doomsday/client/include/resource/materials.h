@@ -29,7 +29,6 @@
 #endif
 #include "uri.hh"
 #include <de/Error>
-#include <de/Observers>
 #include <QList>
 #include <QMap>
 #include <QSet>
@@ -60,11 +59,7 @@ namespace de {
  *
  * @ingroup resource
  */
-class Materials :
-DENG2_OBSERVES(MaterialScheme, ManifestDefined),
-DENG2_OBSERVES(MaterialManifest, MaterialDerived),
-DENG2_OBSERVES(MaterialManifest, Deletion),
-DENG2_OBSERVES(Material, Deletion)
+class Materials
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef class MaterialScheme Scheme;
@@ -296,19 +291,6 @@ public:
     void purgeCacheQueue();
 
 #endif // __CLIENT__
-
-protected:
-    // Observes Scheme ManifestDefined.
-    void schemeManifestDefined(Scheme &scheme, Manifest &manifest);
-
-    // Observes Manifest Deletion.
-    void manifestBeingDeleted(Manifest const &manifest);
-
-    // Observes Manifest MaterialDerived.
-    void manifestMaterialDerived(Manifest &manifest, Material &material);
-
-    // Observes Material Deletion.
-    void materialBeingDeleted(Material const &material);
 
 private:
     DENG2_PRIVATE(d)
