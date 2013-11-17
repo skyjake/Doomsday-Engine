@@ -1309,6 +1309,11 @@ void ResourceSystem::addColorPalette(ColorPalette &newPalette, String const &nam
 
     d->colorPalettes.insert(newPalette.id(), &newPalette);
 
+#ifdef __CLIENT__
+    // Observe changes to the color table so we can schedule texture updates.
+    newPalette.audienceForColorTableChange += d;
+#endif
+
     if(!name.isEmpty())
     {
         d->colorPaletteNames.insert(name, &newPalette);

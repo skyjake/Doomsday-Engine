@@ -61,7 +61,7 @@ public:
     /// An unknown resource class identifier was specified. @ingroup errors
     DENG2_ERROR(UnknownResourceClassError);
 
-    /// The referenced color paletted could not be found. @ingroup errors
+    /// The referenced color palette could not be found. @ingroup errors
     DENG2_ERROR(MissingColorPaletteError);
 
 public:
