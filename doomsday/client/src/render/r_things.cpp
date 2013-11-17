@@ -114,15 +114,6 @@ static Vector3d mobjOriginSmoothed(mobj_t *mo)
     return moPos;
 }
 
-static inline spriteframe_t *spriteFrame(int sprite, int frame)
-{
-    if(spritedef_t *sprDef = R_SpriteDef(sprite))
-    {
-        return SpriteDef_Frame(*sprDef, frame);
-    }
-    return 0;
-}
-
 struct findmobjzoriginworker_params_t
 {
     vissprite_t *vis;
@@ -182,8 +173,8 @@ void R_ProjectSprite(mobj_t *mo)
     // ...in an invalid state?
     if(!mo->state || mo->state == states) return;
     // ...no sprite frame is defined?
-    spriteframe_t *sprFrame = spriteFrame(mo->sprite, mo->frame);
-    if(!sprFrame) return;
+    Sprite *sprite = R_SpritePtr(mo->sprite, mo->frame);
+    if(!sprite) return;
     // ...fully transparent?
     float const alpha = Mobj_Alpha(mo);
     if(alpha <= 0) return;
@@ -216,18 +207,22 @@ void R_ProjectSprite(mobj_t *mo)
     // Decide which material to use according to the sprite's angle and position
     // relative to that of the viewer.
     bool matFlipS, matFlipT;
-    Material *mat = SpriteFrame_Material(*sprFrame, mo->angle,
-                        R_ViewPointToAngle(mo->origin),
-                        mf != 0, &matFlipS, &matFlipT);
+    Material *mat = sprite->material(mo->angle, R_ViewPointToAngle(mo->origin),
+                                       mf != 0, &matFlipS, &matFlipT);
     if(!mat) return;
 
     // A valid sprite texture in the "Sprites" scheme is required.
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
     if(!ms.hasTexture(MTU_PRIMARY))
+    {
         return;
+    }
+
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
     if(tex.manifest().schemeName().compareWithoutCase("Sprites"))
+    {
         return;
+    }
 
     bool const fullbright = ((mo->state->flags & STF_FULLBRIGHT) != 0 || levelFullBright);
     // Align to the view plane? (Means scaling down Z with models)
@@ -433,7 +428,7 @@ void R_ProjectSprite(mobj_t *mo)
     // Do we need to project a flare source too?
     if(mo->lumIdx != Lumobj::NoIndex)
     {
-        Material *mat = SpriteFrame_Material(*sprFrame, mo->angle, R_ViewPointToAngle(mo->origin));
+        Material *mat = sprite->material(mo->angle, R_ViewPointToAngle(mo->origin));
         if(!mat) return;
 
         // A valid sprite texture in the "Sprites" scheme is required.

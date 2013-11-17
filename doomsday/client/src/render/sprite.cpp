@@ -194,9 +194,9 @@ void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
         // Check for ambient and convert to ubyte.
         Vector3f color = (parms.color.max(ambient) + parms.extra).min(saturated);
 
-        out->rgba[CR] = byte( 255 * color[CR] );
-        out->rgba[CG] = byte( 255 * color[CG] );
-        out->rgba[CB] = byte( 255 * color[CB] );
+        out->rgba[CR] = byte( 255 * color.x );
+        out->rgba[CG] = byte( 255 * color.y );
+        out->rgba[CB] = byte( 255 * color.z );
         out->rgba[CA] = byte( 255 * ambient[CA] );
     }
 }
@@ -204,28 +204,18 @@ void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
 static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 {
     ddpsprite_t *psp      = spr->psp;
-    int const sprite      = psp->statePtr->sprite;
-    int const frame       = psp->statePtr->frame;
+    int const spriteIdx   = psp->statePtr->sprite;
+    int const frameIdx    = psp->statePtr->frame;
     float const offScaleY = weaponOffsetScaleY / 1000.0f;
 
-#ifdef RANGECHECK
-    if((unsigned) sprite >= (unsigned) numSprites)
-        Con_Error("setupPSpriteParams: Invalid sprite number %i.\n", sprite);
-#endif
+    Sprite const *sprite  = &R_Sprite(spriteIdx, frameIdx);
 
-    spritedef_t const *sprDef = &sprites[sprite];
-#ifdef RANGECHECK
-    if(frame >= sprDef->numFrames)
-        Con_Error("setupPSpriteParams: Invalid frame number %i for sprite %i", frame, sprite);
-#endif
-
-    spriteframe_t const *sprFrame = &sprDef->spriteFrames[frame];
-    boolean flip = sprFrame->flip[0];
+    boolean flip = sprite->_flip[0];
 
     MaterialVariantSpec const &spec =
         App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                     0, -2, 0, false, true, true, false);
-    MaterialSnapshot const &ms = sprFrame->mats[0]->prepare(spec);
+    MaterialSnapshot const &ms = sprite->_mats[0]->prepare(spec);
 
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
@@ -243,7 +233,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
 
-    params->mat = sprFrame->mats[0];
+    params->mat = sprite->_mats[0];
     params->ambientColor[CA] = spr->data.sprite.alpha;
 
     if(spr->data.sprite.isFullBright)

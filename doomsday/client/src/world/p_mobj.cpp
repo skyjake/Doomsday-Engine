@@ -365,14 +365,11 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     if(!Mobj_BspLeafAtOrigin(*mo).polyContains(mo->origin))
         return;
 
-    spritedef_t *sprDef = R_SpriteDef(mo->sprite);
-    if(!sprDef) return;
-
-    spriteframe_t *sprFrame = SpriteDef_Frame(*sprDef, mo->frame);
-    if(!sprFrame) return;
+    Sprite *sprite = R_SpritePtr(mo->sprite, mo->frame);
+    if(!sprite) return;
 
     // Always use the front rotation when determining light properties.
-    Material *mat = SpriteFrame_Material(*sprFrame);
+    Material *mat = sprite->material();
     if(!mat) return;
 
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
@@ -388,7 +385,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
         return;
 
     // Attempt to generate luminous object from the sprite.
-    QScopedPointer<Lumobj> lum(SpriteDef_GenerateLumobj(*sprDef, mo->frame));
+    QScopedPointer<Lumobj> lum(sprite->generateLumobj());
     if(lum.isNull()) return;
 
     // A light definition may override the (auto-calculated) defaults.
@@ -464,14 +461,15 @@ float Mobj_ShadowStrength(mobj_t *mo)
     // Sprites have their own shadow strength factor.
     if(!currentModelDefForMobj(*mo))
     {
-        if(Material *mat = R_MaterialForSprite(mo->sprite, mo->frame))
+        if(Sprite *sprite = R_SpritePtr(mo->sprite, mo->frame))
+        if(Material *mat = sprite->material())
         {
             // Ensure we've prepared this.
             MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
 
             averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *)
                 ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
-            DENG_ASSERT(aa != 0);
+            DENG2_ASSERT(aa != 0);
 
             // We use an average which factors in the coverage ratio
             // of alpha:non-alpha pixels.
@@ -582,7 +580,8 @@ coord_t Mobj_VisualRadius(mobj_t const &mobj)
     }
 
     // Use the sprite frame's width?
-    if(Material *material = R_MaterialForSprite(mobj.sprite, mobj.frame))
+    if(Sprite *sprite = R_SpritePtr(mobj.sprite, mobj.frame))
+    if(Material *material = sprite->material())
     {
         MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
         return ms.width() / 2;

@@ -35,12 +35,6 @@
 #include <QList>
 #include <QtAlgorithms>
 
-D_CMD(InspectMaterial);
-D_CMD(ListMaterials);
-#ifdef DENG_DEBUG
-D_CMD(PrintMaterialStats);
-#endif
-
 #ifdef __CLIENT__
 
 /// A list of specifications for material variants.

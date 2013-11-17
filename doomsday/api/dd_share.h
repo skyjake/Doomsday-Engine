@@ -786,7 +786,6 @@ typedef struct {
     int flip;
     RectRaw geometry;
     float texCoord[2]; // Prepared texture coordinates.
-    int numFrames; // Number of frames the sprite has.
 } spriteinfo_t;
 
 /**

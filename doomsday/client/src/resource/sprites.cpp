@@ -46,7 +46,23 @@
 
 #include "resource/sprites.h"
 
+#include <QList>
+#include <QtAlgorithms>
+
 using namespace de;
+
+struct SpriteGroup
+{
+    SpriteSet sprites;
+
+    ~SpriteGroup()
+    {
+        qDeleteAll(sprites);
+    }
+};
+
+typedef QList<SpriteGroup> Groups;
+static Groups groups;
 
 struct spriterecord_frame_t
 {
@@ -62,33 +78,16 @@ struct spriterecord_t
 {
     char name[5];
     int numFrames;
-    spriterecord_frame_t *frames;
+    spriterecord_frame_t *sprites;
     spriterecord_t *next;
 };
-
-spritedef_t *sprites;
-int numSprites;
 
 // Tempory storage, used when reading sprite definitions.
 static int numSpriteRecords;
 static spriterecord_t *spriteRecords;
 static blockset_t *spriteRecordBlockSet, *spriteRecordFrameBlockSet;
 
-static void clearSpriteDefs()
-{
-    if(numSprites <= 0) return;
-
-    for(int i = 0; i < numSprites; ++i)
-    {
-        spritedef_t *sprDef = &sprites[i];
-        if(sprDef->spriteFrames)
-            M_Free(sprDef->spriteFrames);
-    }
-    M_Free(sprites); sprites = 0;
-    numSprites = 0;
-}
-
-static void installSpriteLump(spriteframe_t *sprTemp, int *maxFrame,
+static void installSpriteLump(Sprite *sprTemp, int *maxFrame,
     Material *mat, uint frame, uint rotation, bool flipped)
 {
     if(frame >= 30 || rotation > 8)
@@ -102,20 +101,20 @@ static void installSpriteLump(spriteframe_t *sprTemp, int *maxFrame,
     if(rotation == 0)
     {
         // This frame should be used for all rotations.
-        sprTemp[frame].rotate = false;
+        sprTemp[frame]._rotate = false;
         for(int r = 0; r < 8; ++r)
         {
-            sprTemp[frame].mats[r] = mat;
-            sprTemp[frame].flip[r] = byte( flipped );
+            sprTemp[frame]._mats[r] = mat;
+            sprTemp[frame]._flip[r] = byte( flipped );
         }
         return;
     }
 
     rotation--; // Make 0 based.
 
-    sprTemp[frame].rotate = true;
-    sprTemp[frame].mats[rotation] = mat;
-    sprTemp[frame].flip[rotation] = byte( flipped );
+    sprTemp[frame]._rotate = true;
+    sprTemp[frame]._mats[rotation] = mat;
+    sprTemp[frame]._flip[rotation] = byte( flipped );
 }
 
 static spriterecord_t *findSpriteRecordForName(char const *name)
@@ -165,7 +164,7 @@ static void buildSprite(TextureManifest &manifest)
         strncpy(rec->name, decodedPathUtf8.constData(), 4);
         rec->name[4] = '\0';
         rec->numFrames = 0;
-        rec->frames = NULL;
+        rec->sprites = NULL;
 
         rec->next = spriteRecords;
         spriteRecords = rec;
@@ -177,8 +176,8 @@ static void buildSprite(TextureManifest &manifest)
     int const rotationNumber = decodedPath.at(5).digitValue();
 
     bool link = false;
-    spriterecord_frame_t *frame = rec->frames;
-    if(rec->frames)
+    spriterecord_frame_t *frame = rec->sprites;
+    if(rec->sprites)
     {
         while(!(frame->frame[0]    == frameNumber &&
                 frame->rotation[0] == rotationNumber) &&
@@ -210,11 +209,21 @@ static void buildSprite(TextureManifest &manifest)
 
     if(link)
     {
-        frame->next = rec->frames;
-        rec->frames = frame;
+        frame->next = rec->sprites;
+        rec->sprites = frame;
     }
 }
 
+/**
+ * Sprites are patches with a special naming convention so they can be
+ * recognized by R_InitSprites.  The sprite and frame specified by a
+ * mobj is range checked at run time.
+ *
+ * A sprite is a patch_t that is assumed to represent a three dimensional
+ * object and may have multiple rotations pre drawn.  Horizontal flipping
+ * is used to save space. Some sprites will only have one picture used
+ * for all views.
+ */
 static void buildSprites()
 {
     Time begunAt;
@@ -233,6 +242,11 @@ static void buildSprites()
     LOG_INFO(String("buildSprites: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
+void R_ClearAllSprites()
+{
+    groups.clear();
+}
+
 /**
  * Builds the sprite rotation matrixes to account for horizontally flipped
  * sprites.  Will report an error if the lumps are inconsistant.
@@ -242,82 +256,79 @@ static void buildSprites()
  * additional letter/number appended.  The rotation character can be 0 to
  * signify no rotations.
  */
-static void initSpriteDefs(spriterecord_t *const *sprRecords, int num)
+static void initSpriteDefs(spriterecord_t *const *sprRecords, int numSprites)
 {
-    spriteframe_t sprTemp[SPRITERECORD_MAX_FRAMES];
+    Sprite sprTemp[SPRITERECORD_MAX_FRAMES];
 
-    clearSpriteDefs();
+    R_ClearAllSprites();
 
-    numSprites = num;
-    if(numSprites)
+    for(int i = 0; i < numSprites; ++i)
     {
-        sprites = (spritedef_t *) M_Malloc(sizeof(*sprites) * numSprites);
+        spriterecord_t const *rec = sprRecords[i];
 
-        for(int n = 0; n < num; ++n)
+        groups.append(SpriteGroup());
+        SpriteGroup &group = groups.last();
+
+        // A record for a sprite we were unable to locate?
+        if(!rec) continue;
+
+        std::memset(sprTemp, -1, sizeof(sprTemp));
+        int maxSprite = -1;
+
+        spriterecord_frame_t const *sprite = rec->sprites;
+        do
         {
-            spritedef_t *sprDef = &sprites[n];
-
-            if(!sprRecords[n])
+            installSpriteLump(sprTemp, &maxSprite, sprite->mat, sprite->frame[0] - 1,
+                              sprite->rotation[0], false);
+            if(sprite->frame[1])
             {
-                // A record for a sprite we were unable to locate.
-                sprDef->numFrames    = 0;
-                sprDef->spriteFrames = 0;
-                continue;
+                installSpriteLump(sprTemp, &maxSprite, sprite->mat, sprite->frame[1] - 1,
+                                  sprite->rotation[1], true);
+            }
+        } while((sprite = sprite->next));
+
+        /*
+         * Check the frames that were found for completeness.
+         */
+        if(-1 == maxSprite)
+        {
+            // Should NEVER happen.
+            //sprite->_numFrames = 0;
+        }
+
+        ++maxSprite;
+        for(int j = 0; j < maxSprite; ++j)
+        {
+            if(int( sprTemp[j]._rotate) == -1) // Ahem!
+            {
+                // No rotations were found for that frame at all.
+                Error("R_InitSprites", QString("No patches found for %1 frame %2")
+                                           .arg(rec->name).arg(char(j + 'A')));
             }
 
-            std::memset(sprTemp, -1, sizeof(sprTemp));
-            int maxFrame = -1;
-
-            spriterecord_t const *rec = sprRecords[n];
-            spriterecord_frame_t const *frame = rec->frames;
-            do
+            if(sprTemp[j]._rotate)
             {
-                installSpriteLump(sprTemp, &maxFrame, frame->mat, frame->frame[0] - 1,
-                                  frame->rotation[0], false);
-                if(frame->frame[1])
+                // Must have all 8 frames.
+                for(int rotation = 0; rotation < 8; ++rotation)
                 {
-                    installSpriteLump(sprTemp, &maxFrame, frame->mat, frame->frame[1] - 1,
-                                      frame->rotation[1], true);
-                }
-            } while((frame = frame->next));
-
-            /*
-             * Check the frames that were found for completeness.
-             */
-            if(-1 == maxFrame)
-            {
-                // Should NEVER happen.
-                sprDef->numFrames = 0;
-            }
-
-            ++maxFrame;
-            for(int j = 0; j < maxFrame; ++j)
-            {
-                if(int( sprTemp[j].rotate) == -1) // Ahem!
-                {
-                    // No rotations were found for that frame at all.
-                    Error("R_InitSprites", QString("No patches found for %1 frame %2")
-                                               .arg(rec->name).arg(char(j + 'A')));
-                }
-
-                if(sprTemp[j].rotate)
-                {
-                    // Must have all 8 frames.
-                    for(int rotation = 0; rotation < 8; ++rotation)
-                    {
-                        if(!sprTemp[j].mats[rotation])
-                            Error("R_InitSprites", QString("Sprite %1 frame %2 is missing rotations")
-                                                       .arg(rec->name).arg(char(j + 'A')));
-                    }
+                    if(!sprTemp[j]._mats[rotation])
+                        Error("R_InitSprites", QString("Sprite %1 frame %2 is missing rotations")
+                                                   .arg(rec->name).arg(char(j + 'A')));
                 }
             }
+        }
 
-            qstrncpy(sprDef->name, rec->name, 5);
+        for(int i = 0; i < maxSprite; ++i)
+        {
+            Sprite const &tmpSprite = sprTemp[i];
 
-            // Allocate space for the frames present and copy sprTemp to it.
-            sprDef->numFrames = maxFrame;
-            sprDef->spriteFrames = (spriteframe_t*) M_Malloc(sizeof(*sprDef->spriteFrames) * maxFrame);
-            std::memcpy(sprDef->spriteFrames, sprTemp, sizeof(*sprDef->spriteFrames) * maxFrame);
+            Sprite *sprite = new Sprite;
+
+            sprite->_rotate = tmpSprite._rotate;
+            std::memcpy(sprite->_mats, tmpSprite._mats, sizeof(sprite->_mats));
+            std::memcpy(sprite->_flip, tmpSprite._flip, sizeof(sprite->_flip));
+
+            group.sprites.append(sprite);
         }
     }
 }
@@ -346,7 +357,7 @@ void R_InitSprites()
      */
     if(numSpriteRecords)
     {
-        int max = MAX_OF(numSpriteRecords, countSprNames.num);
+        int max = de::max(numSpriteRecords, countSprNames.num);
         if(max > 0)
         {
             spriterecord_t *rec, **list = (spriterecord_t **) M_Calloc(sizeof(spriterecord_t *) * max);
@@ -376,54 +387,51 @@ void R_InitSprites()
 
 void R_ShutdownSprites()
 {
-    clearSpriteDefs();
+    R_ClearAllSprites();
 }
 
-Material *SpriteFrame_Material(spriteframe_t &sprFrame, int rotation,
-    bool *flipX, bool *flipY)
+Sprite::Sprite()
+    : _rotate(0)
+{
+    zap(_mats);
+    zap(_flip);
+}
+
+Material *Sprite::material(int rotation, bool *flipX, bool *flipY) const
 {
     if(flipX) *flipX = false;
     if(flipY) *flipY = false;
 
-    if(rotation < 0 || rotation >= SPRITEFRAME_MAX_ANGLES)
+    if(rotation < 0 || rotation >= max_angles)
+    {
         return 0;
+    }
 
-    if(flipX) *flipX = CPP_BOOL(sprFrame.flip[rotation]);
-    return sprFrame.mats[rotation];
+    if(flipX) *flipX = CPP_BOOL(_flip[rotation]);
+
+    return _mats[rotation];
 }
 
-Material *SpriteFrame_Material(spriteframe_t &sprFrame, angle_t mobjAngle,
-    angle_t angleToEye, bool noRotation, bool *flipX, bool *flipY)
+Material *Sprite::material(angle_t mobjAngle, angle_t angleToEye,
+    bool noRotation, bool *flipX, bool *flipY) const
 {
     int rotation = 0; // Use single rotation for all viewing angles (default).
 
-    if(!noRotation && sprFrame.rotate)
+    if(!noRotation && _rotate)
     {
         // Rotation is determined by the relative angle to the viewer.
         rotation = (angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) >> 29;
     }
 
-    return SpriteFrame_Material(sprFrame, rotation, flipX, flipY);
-}
-
-spriteframe_t *SpriteDef_Frame(spritedef_t const &sprDef, int frame)
-{
-    if(frame >= 0 && frame < sprDef.numFrames)
-    {
-        return &sprDef.spriteFrames[frame];
-    }
-    return 0; // Invalid frame.
+    return material(rotation, flipX, flipY);
 }
 
 #ifdef __CLIENT__
-Lumobj *SpriteDef_GenerateLumobj(spritedef_t const &sprDef, int frame)
+Lumobj *Sprite::generateLumobj() const
 {
-    spriteframe_t *sprFrame = SpriteDef_Frame(sprDef, frame);
-    if(!sprFrame) return 0;
-
     // Always use rotation zero.
     /// @todo We could do better here...
-    Material *mat = SpriteFrame_Material(*sprFrame);
+    Material *mat = material();
     if(!mat) return 0;
 
     // Ensure we have up-to-date information about the material.
@@ -432,8 +440,7 @@ Lumobj *SpriteDef_GenerateLumobj(spritedef_t const &sprDef, int frame)
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
 
     pointlight_analysis_t const *pl = reinterpret_cast<pointlight_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis));
-    if(!pl) throw Error("SpriteDef_GenerateLumobj", QString("Texture \"%1\" has no BrightPointAnalysis")
-                                                        .arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+    if(!pl) throw Error("Sprite::generateLumobj", QString("Texture \"%1\" has no BrightPointAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
     // Apply the auto-calculated color.
     return &(new Lumobj(Vector3d(), pl->brightMul, pl->color.rgb))
@@ -441,60 +448,74 @@ Lumobj *SpriteDef_GenerateLumobj(spritedef_t const &sprDef, int frame)
 }
 #endif // __CLIENT__
 
-spritedef_t *R_SpriteDef(int sprite)
+int R_SpriteCount()
 {
-    if(sprite >= 0 && sprite < numSprites)
-    {
-        return &sprites[sprite];
-    }
-    return 0; // Not found.
+    return groups.count();
 }
 
-Material *R_MaterialForSprite(int sprite, int frame)
+Sprite *R_SpritePtr(int spriteId, int frame)
 {
-    if(spritedef_t *sprDef = R_SpriteDef(sprite))
+    if(spriteId >= 0 && spriteId < groups.count())
     {
-        if(spriteframe_t *sprFrame = SpriteDef_Frame(*sprDef, frame))
+        SpriteGroup &group = groups[spriteId];
+        if(frame >= 0 && frame < group.sprites.count())
         {
-            return SpriteFrame_Material(*sprFrame);
+            return group.sprites.at(frame);
         }
     }
     return 0;
 }
 
+Sprite &R_Sprite(int spriteId, int frame)
+{
+    if(spriteId >= 0 && spriteId < groups.count())
+    {
+        SpriteGroup &group = groups[spriteId];
+        if(frame >= 0 && frame < group.sprites.count())
+        {
+            return *group.sprites.at(frame);
+        }
+        throw Error("R_Sprite", QString("Invalid sprite frame %1").arg(frame));
+    }
+    throw Error("R_Sprite", QString("Invalid sprite id %1").arg(spriteId));
+}
+
+SpriteSet &R_SpriteSet(int spriteId)
+{
+    if(spriteId >= 0 && spriteId < groups.count())
+    {
+        return groups[spriteId].sprites;
+    }
+    throw Error("R_SpriteSet", QString("Invalid sprite id %1").arg(spriteId));
+}
+
 #undef R_GetSpriteInfo
-DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *info)
+DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *info)
 {
     LOG_AS("R_GetSpriteInfo");
 
-    spritedef_t *sprDef = R_SpriteDef(sprite);
-    if(!sprDef)
+    if(!info) return false;
+
+    zapPtr(info);
+
+    Sprite *sprite = R_SpritePtr(spriteId, frame);
+    if(!sprite)
     {
-        LOG_WARNING("Invalid sprite number %i.") << sprite;
-        zapPtr(info);
+        LOG_WARNING("Invalid sprite id (%i) and/or frame index (%i).")
+            << spriteId << frame;
         return false;
     }
 
-    spriteframe_t *sprFrame = SpriteDef_Frame(*sprDef, frame);
-    if(!sprFrame)
-    {
-        LOG_WARNING("Invalid sprite frame %i.") << frame;
-        zapPtr(info);
-        return false;
-    }
+    zapPtr(info);
+    info->flip = sprite->_flip[0];
 
     if(novideo)
     {
         // We can't prepare the material.
-        zapPtr(info);
-        info->numFrames = sprDef->numFrames;
-        info->flip      = sprFrame->flip[0];
         return true;
     }
 
-    info->material  = sprFrame->mats[0];
-    info->numFrames = sprDef->numFrames;
-    info->flip      = sprFrame->flip[0];
+    info->material = sprite->_mats[0];
 
 #ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds

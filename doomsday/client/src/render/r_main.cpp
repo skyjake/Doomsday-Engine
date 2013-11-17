@@ -1516,39 +1516,53 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
     }
 }
 
+static state_t *toState(int index)
+{
+    if(index >= 0 && index < defs.count.states.num)
+    {
+        return states + index;
+    }
+    return 0; // Not found.
+}
+
 static int findSpriteOwner(thinker_t *th, void *context)
-{    mobj_t *mo = (mobj_t *) th;
-    spritedef_t *sprDef = (spritedef_t *) context;
+{
+    mobj_t *mo = reinterpret_cast<mobj_t *>(th);
+    int const sprite = *static_cast<int *>(context);
 
     if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
     {
         /// @todo optimize: traverses the entire state list!
         for(int i = 0; i < defs.count.states.num; ++i)
         {
-            if(stateOwners[i] != &mobjInfo[mo->type]) continue;
+            if(stateOwners[i] != &mobjInfo[mo->type])
+            {
+                continue;
+            }
 
-            if(&sprites[states[i].sprite] == sprDef)
+            state_t *state = toState(i);
+            DENG2_ASSERT(state != 0);
+
+            if(state->sprite == sprite)
+            {
                 return true; // Found one.
+            }
         }
     }
 
     return false; // Continue iteration.
 }
 
-static void cacheSpritesForState(int stateIndex, MaterialVariantSpec const &spec)
+static void cacheSpritesForState(int stateIdx, MaterialVariantSpec const &spec)
 {
-    if(stateIndex < 0 || stateIndex >= defs.count.states.num) return;
+    state_t *state = toState(stateIdx);
+    DENG2_ASSERT(state != 0);
 
-    state_t *state = &states[stateIndex];
-    spritedef_t *sprDef = &sprites[state->sprite];
-
-    for(int i = 0; i < sprDef->numFrames; ++i)
+    SpriteSet const &sprites = R_SpriteSet(state->sprite);
+    foreach(Sprite *sprite, sprites)
+    for(int i = 0; i < Sprite::max_angles; ++i)
     {
-        spriteframe_t *sprFrame = &sprDef->spriteFrames[i];
-        for(int k = 0; k < 8; ++k)
-        {
-            App_Materials().cache(*sprFrame->mats[k], spec);
-        }
+        App_Materials().cache(*sprite->_mats[i], spec);
     }
 }
 
@@ -1623,24 +1637,20 @@ void Rend_CacheForMap()
     {
         MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
-        for(int i = 0; i < numSprites; ++i)
+        for(int i = 0; i < R_SpriteCount(); ++i)
         {
-            spritedef_t *sprDef = &sprites[i];
-
             if(map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                       0x1/*mobjs are public*/,
-                                      findSpriteOwner, sprDef))
+                                      findSpriteOwner, &i))
             {
                 // This sprite is used by some state of at least one mobj.
 
-                // Precache all the frames.
-                for(int k = 0; k < sprDef->numFrames; ++k)
+                // Precache all angles for all frames.
+                SpriteSet const & sprites = R_SpriteSet(i);
+                foreach(Sprite *sprite, sprites)
+                for(int k = 0; k < Sprite::max_angles; ++k)
                 {
-                    spriteframe_t *sprFrame = &sprDef->spriteFrames[k];
-                    for(int m = 0; m < 8; ++m)
-                    {
-                        App_Materials().cache(*sprFrame->mats[m], spec);
-                    }
+                    App_Materials().cache(*sprite->_mats[k], spec);
                 }
             }
         }
