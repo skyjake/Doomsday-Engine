@@ -25,7 +25,9 @@
 #include <de/Id>
 #include <de/Observers>
 #include <de/Vector>
+#ifdef __CLIENT__
 #include <QColor>
+#endif
 #include <QVector>
 
 /**
@@ -118,6 +120,7 @@ public:
      */
     de::Vector3f colorf(int colorIndex) const;
 
+#ifdef __CLIENT__
     /**
      * Same as @ref color() except the color is returned as a QColor instance.
      */
@@ -125,6 +128,7 @@ public:
         de::Vector3ub rgb = color(colorIndex);
         return QColor(rgb.x, rgb.y, rgb.z, alpha);
     }
+#endif
 
     /**
      * Given an R8G8B8 color triplet return the closet matching color index.
