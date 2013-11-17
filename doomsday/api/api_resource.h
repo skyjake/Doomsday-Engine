@@ -69,12 +69,6 @@ DENG_API_TYPEDEF(R)
     /**
      * Add a new (named) color palette.
      *
-     * The idea with the two-teered implementation is to allow maximum flexibility.
-     * Within the engine we can create new palettes and manipulate them directly
-     * via the DGL interface. The underlying implementation is wrapped in a similar
-     * way to the materials so that publically, there is a set of (eternal) names
-     * and unique identifiers that survive game and GL resets.
-     *
      * @param fmt  Format string describes the format of @p data.
      *      Expected form: "C#C#C"
      *      C = color component, one of R, G, B.

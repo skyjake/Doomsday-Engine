@@ -70,10 +70,10 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, in
 }
 
 #undef R_CreateColorPalette
-DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *fmt, char const *nameCStr,
-    uint8_t const *colorData, int colorCount)
+DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescriptor,
+    char const *nameCStr, uint8_t const *colorData, int colorCount)
 {
-    DENG2_ASSERT(nameCStr != 0 && fmt != 0 && colorData != 0);
+    DENG2_ASSERT(nameCStr != 0 && colorFormatDescriptor != 0 && colorData != 0);
 
     LOG_AS("R_CreateColorPalette");
 
@@ -86,25 +86,24 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *fmt, char const 
 
     try
     {
-        int compOrder[3];
-        uint8_t compSize[3];
-        ColorPalette::parseColorFormat(fmt, compOrder, compSize);
+        QVector<de::Vector3ub> colors =
+            ColorTableReader::read(colorFormatDescriptor, colorCount, colorData);
 
         // Replacing an existing palette?
         if(App_ResourceSystem().hasColorPalette(name))
         {
             ColorPalette &palette = App_ResourceSystem().colorPalette(name);
-            palette.loadColorTable(compOrder, compSize, colorData, colorCount);
+            palette.loadColorTable(colors);
             return palette.id();
         }
 
         // A new palette.
-        ColorPalette *palette = new ColorPalette(compOrder, compSize, colorData, colorCount);
+        ColorPalette *palette = new ColorPalette(colors);
         App_ResourceSystem().addColorPalette(*palette, name);
 
         return palette->id();
     }
-    catch(ColorPalette::ColorFormatError const &er)
+    catch(ColorTableReader::FormatError const &er)
     {
         LOG_WARNING("Error creating/replacing color palette '%s':\n")
             << name << er.asText();

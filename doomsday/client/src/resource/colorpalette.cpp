@@ -28,6 +28,138 @@
 
 using namespace de;
 
+namespace internal {
+
+/**
+ * Example: "R8G8B8"
+ */
+static void parseColorFormat(QString const &fmt, Vector3ui &compOrder, Vector3ui &compBits)
+{
+    compBits = Vector3ui();
+
+    int const end = fmt.length();
+
+    int readComponents = 0;
+    int pos = 0;
+    while(pos < end)
+    {
+        QChar ch = fmt[pos]; pos++;
+
+        int comp = -1;
+        if     (ch == 'R' || ch == 'r') comp = 0;
+        else if(ch == 'G' || ch == 'g') comp = 1;
+        else if(ch == 'B' || ch == 'b') comp = 2;
+
+        if(comp != -1 && compBits[comp] == 0)
+        {
+            compOrder[comp] = readComponents++;
+
+            // Read the number of bits.
+            int start = pos;
+            ch = fmt[pos];
+            while(ch.isDigit() && ++pos < end)
+            {
+                ch = fmt[pos];
+            }
+
+            int numDigits = pos - start;
+            if(numDigits)
+            {
+                compBits[comp] = fmt.mid(start, numDigits).toInt();
+
+                // Are we done?
+                if(readComponents == 3)
+                    break;
+
+                continue;
+            }
+        }
+
+        /// @throw ColorTableReader::FormatError
+        throw ColorTableReader::FormatError("parseColorFormat", QString("Unexpected character '%1' at position %2.").arg(ch).arg(pos));
+    }
+
+    if(readComponents != 3)
+    {
+        /// @throw ColorTableReader::FormatError
+        throw ColorTableReader::FormatError("parseColorFormat", "Incomplete format specification.");
+    }
+}
+
+} // namespace internal
+
+using namespace internal;
+
+typedef QVector<de::Vector3ub> ColorTable;
+
+ColorTable ColorTableReader::read(String format, int colorCount,
+    dbyte const *colorData) // static
+{
+    Vector3ui order;
+    Vector3ui bits;
+    parseColorFormat(format, order, bits);
+
+    ColorTable colors(colorCount);
+
+    // Already in the format we want?
+    if(8 == bits.x && 8 == bits.y && 8 == bits.z)
+    {
+        // Great! Just copy it as-is.
+        dbyte const *src = colorData;
+        for(int i = 0; i < colorCount; ++i, src += 3)
+        {
+            colors[i] = Vector3ub(src[order.x], src[order.y], src[order.z]);
+        }
+    }
+    else
+    {
+        // Conversion is necessary.
+        dbyte const *src = colorData;
+        dbyte cb = 0;
+        for(int i = 0; i < colorCount; ++i)
+        {
+            Vector3ub &dst = colors[i];
+
+            Vector3i tmp;
+            M_ReadBits(bits[order.x], &src, &cb, (dbyte *) &(tmp[order.x]));
+            M_ReadBits(bits[order.y], &src, &cb, (dbyte *) &(tmp[order.y]));
+            M_ReadBits(bits[order.z], &src, &cb, (dbyte *) &(tmp[order.z]));
+
+            // Need to do any scaling?
+            if(8 != bits.x)
+            {
+                if(bits.x < 8)
+                    tmp.x <<= 8 - bits.x;
+                else
+                    tmp.x >>= bits.x - 8;
+            }
+
+            if(8 != bits.y)
+            {
+                if(bits.y < 8)
+                    tmp.y <<= 8 - bits.y;
+                else
+                    tmp.y >>= bits.y - 8;
+            }
+
+            if(8 != bits.z)
+            {
+                if(bits.z < 8)
+                    tmp.z <<= 8 - bits.z;
+                else
+                    tmp.z >>= bits.z - 8;
+            }
+
+            // Store the final color.
+            dst = Vector3ub(de::clamp<dbyte>(0, tmp.x, 255),
+                            de::clamp<dbyte>(0, tmp.y, 255),
+                            de::clamp<dbyte>(0, tmp.z, 255));
+        }
+    }
+
+    return colors;
+}
+
 #define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
 
 DENG2_PIMPL(ColorPalette)
@@ -100,15 +232,10 @@ DENG2_PIMPL(ColorPalette)
 ColorPalette::ColorPalette() : d(new Instance(this))
 {}
 
-ColorPalette::ColorPalette(int const compOrder[3], uint8_t const compBits[3],
-    uint8_t const *colorData, int colorCount)
+ColorPalette::ColorPalette(ColorTable const &colors)
     : d(new Instance(this))
 {
-    DENG2_ASSERT(compOrder != 0 && compBits != 0);
-    if(colorCount > 0 && colorData)
-    {
-        loadColorTable(compOrder, compBits, colorData, colorCount);
-    }
+    loadColorTable(colors);
 }
 
 Id ColorPalette::id() const
@@ -121,157 +248,13 @@ int ColorPalette::colorCount() const
     return d->colors.count();
 }
 
-void ColorPalette::parseColorFormat(char const *fmt, int compOrder[], uint8_t compSize[]) // static
-{
-    static char const *compNames[] = { "red", "green", "blue" };
-
-    compOrder[0] = -1;
-    compOrder[1] = -1;
-    compOrder[2] = -1;
-
-    compSize[0] = 0;
-    compSize[1] = 0;
-    compSize[2] = 0;
-
-    int pos = 0;
-    char const *end = fmt + (strlen(fmt) - 1);
-    char const *c = fmt;
-    do
-    {
-        int comp = -1;
-        if     (*c == 'R' || *c == 'r') comp = 0;
-        else if(*c == 'G' || *c == 'g') comp = 1;
-        else if(*c == 'B' || *c == 'b') comp = 2;
-
-        if(comp != -1)
-        {
-            // Have we encountered this component yet?
-            if(compOrder[comp] == -1)
-            {
-                // No.
-                char const *start;
-                size_t numDigits;
-
-                compOrder[comp] = pos++;
-
-                // Read the number of bits.
-                start = ++c;
-                while((*c >= '0' && *c <= '9') && ++c < end)
-                {}
-
-                numDigits = c - start;
-                if(numDigits != 0 && numDigits <= 2)
-                {
-                    char buf[3];
-
-                    std::memset(buf, 0, sizeof(buf));
-                    std::memcpy(buf, start, numDigits);
-
-                    compSize[comp] = atoi(buf);
-
-                    // Are we done?
-                    if(pos == 3) break;
-
-                    // Unread the last character.
-                    c--;
-                    continue;
-                }
-            }
-        }
-
-        /// @throw ColorFormatError
-        throw ColorFormatError("parseColorFormat", QString("Invalid character '%1' in format string at position %2.").arg(*c).arg((unsigned int) (c - fmt)));
-    } while(++c <= end);
-
-    if(pos != 3)
-    {
-        /// @throw ColorFormatError
-        throw ColorFormatError("parseColorFormat", "Incomplete specification.");
-    }
-
-    // Check validity of bits per component.
-    for(int i = 0; i < 3; ++i)
-    {
-        if(compSize[i] == 0 || compSize[i] > ColorPalette::max_component_bits)
-        {
-            /// @throw ColorFormatError
-            throw ColorFormatError("parseColorFormat", QString("Unsupported bit depth %1 for %2 component.").arg(compSize[i]).arg(compNames[compOrder[i]]));
-        }
-    }
-}
-
-ColorPalette &ColorPalette::loadColorTable(int const compOrder[3],
-    uint8_t const compBits[3], uint8_t const *colorData, int colorCount)
+ColorPalette &ColorPalette::loadColorTable(ColorTable const &colorTable)
 {
     // We may need a new 18 => 8 bit xlat table.
     d->need18To8Update = true;
 
-    // Ensure input is in range.
-    Vector3i order(de::clamp(0, compOrder[0], 2),
-                   de::clamp(0, compOrder[1], 2),
-                   de::clamp(0, compOrder[2], 2));
-
-    Vector3ub bits = Vector3ub(compBits).min(Vector3ub(max_component_bits,
-                                                       max_component_bits,
-                                                       max_component_bits));
-
-    d->colors.resize(colorCount);
-
-    // Already in the format we want?
-    if(8 == bits.x && 8 == bits.y && 8 == bits.z)
-    {
-        // Great! Just copy it as-is.
-        uint8_t const *src = colorData;
-        for(int i = 0; i < colorCount; ++i, src += 3)
-        {
-            d->colors[i] = Vector3ub(src[order.x], src[order.y], src[order.z]);
-        }
-    }
-    else
-    {
-        // Conversion is necessary.
-        uint8_t const *src = colorData;
-        uint8_t cb = 0;
-        for(int i = 0; i < colorCount; ++i)
-        {
-            Vector3ub &dst = d->colors[i];
-
-            Vector3i tmp;
-            M_ReadBits(bits[order.x], &src, &cb, (uint8_t *) &(tmp[order.x]));
-            M_ReadBits(bits[order.y], &src, &cb, (uint8_t *) &(tmp[order.y]));
-            M_ReadBits(bits[order.z], &src, &cb, (uint8_t *) &(tmp[order.z]));
-
-            // Need to do any scaling?
-            if(8 != bits.x)
-            {
-                if(bits.x < 8)
-                    tmp.x <<= 8 - bits.x;
-                else
-                    tmp.x >>= bits.x - 8;
-            }
-
-            if(8 != bits.y)
-            {
-                if(bits.y < 8)
-                    tmp.y <<= 8 - bits.y;
-                else
-                    tmp.y >>= bits.y - 8;
-            }
-
-            if(8 != bits.z)
-            {
-                if(bits.z < 8)
-                    tmp.z <<= 8 - bits.z;
-                else
-                    tmp.z >>= bits.z - 8;
-            }
-
-            // Store the final color.
-            dst = Vector3ub(de::clamp<uint8_t>(0, tmp.x, 255),
-                            de::clamp<uint8_t>(0, tmp.y, 255),
-                            de::clamp<uint8_t>(0, tmp.z, 255));
-        }
-    }
+    // Replace the whole color table.
+    d->colors = colorTable;
 
     // Notify interested parties.
     d->notifyColorTableChanged();

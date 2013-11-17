@@ -20,11 +20,38 @@
 #ifndef DENG_RESOURCE_COLORPALETTE_H
 #define DENG_RESOURCE_COLORPALETTE_H
 
-#include "dd_types.h"
+#include <de/libdeng2.h>
 #include <de/Error>
 #include <de/Id>
 #include <de/Observers>
 #include <de/Vector>
+#include <QVector>
+
+/**
+ * Converts a sequence of bytes, given a color format descriptor into a table
+ * of colors (usable with ColorPalette).
+ */
+class ColorTableReader
+{
+public:
+    /// Base class for color-format-related errors. @ingroup errors
+    DENG2_ERROR(FormatError);
+
+public:
+    /**
+     * @param format  Textual color format descriptor, describing the format of
+     * each discreet color value in @a data
+     *
+     * Expected form: "C#C#C"
+     * - 'C'= color component identifier, one of [R, G, B]
+     * - '#'= number of bits for the identified component.
+     *
+     * @param colorCount  Number of discreet colors in @a colorData.
+     * @param colorData   Color data (at least @a colorCount * 3 values).
+     */
+    static QVector<de::Vector3ub> read(de::String format, int colorCount,
+                                       de::dbyte const *colorData);
+};
 
 /**
  * Color Palette.
@@ -34,14 +61,8 @@
 class ColorPalette
 {
 public:
-    /// Base class for color-format-related errors. @ingroup errors
-    DENG2_ERROR(ColorFormatError);
-
     /// Notified whenever the color table changes.
     DENG2_DEFINE_AUDIENCE(ColorTableChange, void colorPaletteColorTableChanged(ColorPalette &colorPalette))
-
-    /// Maximum number of bits per color component.
-    static int const max_component_bits = 16;
 
 public:
     /**
@@ -52,19 +73,9 @@ public:
     /**
      * Constructs a new color palette using the specified color table.
      *
-     * @param compOrder   Component order. Examples:
-     * <pre> [0,1,2] == RGB
-     * [2,1,0] == BGR
-     * </pre>
-     *
-     * @param compBits    Number of bits per component [R,G,B].
-     * @param colorData   Color triplets (at least @a numColors * 3).
-     * @param colorCount  Number of color triplets.
+     * @param colors  Color table to initialize from. A copy is made.
      */
-    ColorPalette(int const compOrder[3], uint8_t const compBits[3],
-        uint8_t const *colorData, int colorCount);
-
-    static void parseColorFormat(char const *fmt, int compOrder[3], uint8_t compSize[3]);
+    ColorPalette(QVector<de::Vector3ub> const &colors);
 
     /// @see color()
     inline de::Vector3ub operator [] (int colorIndex) const {
@@ -84,17 +95,9 @@ public:
     /**
      * Replace the entire color table.
      *
-     * @param compOrder   Component order. Examples:
-     * <pre> [0,1,2] == RGB
-     * [2,1,0] == BGR
-     * </pre>
-     *
-     * @param compBits    Number of bits per component [R,G,B].
-     * @param colorData   Color triplets (at least @a numColors * 3).
-     * @param colorCount  Number of color triplets.
+     * @param colorTable  The replacement color table. A copy is made.
      */
-    ColorPalette &loadColorTable(int const compOrder[3], uint8_t const compBits[3],
-        uint8_t const *colorData, int colorCount);
+    ColorPalette &loadColorTable(QVector<de::Vector3ub> const &colorTable);
 
     /**
      * Lookup a color in the palette by @a colorIndex. If the specified index is
