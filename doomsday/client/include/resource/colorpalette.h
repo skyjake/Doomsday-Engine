@@ -25,10 +25,11 @@
 #include <de/Id>
 #include <de/Observers>
 #include <de/Vector>
+#include <QColor>
 #include <QVector>
 
 /**
- * Converts a sequence of bytes, given a color format descriptor into a table
+ * Converts a sequence of bytes, given a color format descriptor, into a table
  * of colors (usable with ColorPalette).
  */
 class ColorTableReader
@@ -39,8 +40,8 @@ public:
 
 public:
     /**
-     * @param format  Textual color format descriptor, describing the format of
-     * each discreet color value in @a data
+     * @param format  Textual color format description of the format of each
+     * discreet color value in @a colorData.
      *
      * Expected form: "C#C#C"
      * - 'C'= color component identifier, one of [R, G, B]
@@ -93,7 +94,8 @@ public:
     int colorCount() const;
 
     /**
-     * Replace the entire color table.
+     * Replace the entire color table. The ColorTableChange audience is notified
+     * whenever the color table changes.
      *
      * @param colorTable  The replacement color table. A copy is made.
      */
@@ -115,6 +117,14 @@ public:
      * Same as @ref color() except the color is returned in [0..1] floating-point.
      */
     de::Vector3f colorf(int colorIndex) const;
+
+    /**
+     * Same as @ref color() except the color is returned as a QColor instance.
+     */
+    inline QColor colorq(int colorIndex, int alpha = 255) const {
+        de::Vector3ub rgb = color(colorIndex);
+        return QColor(rgb.x, rgb.y, rgb.z, alpha);
+    }
 
     /**
      * Given an R8G8B8 color triplet return the closet matching color index.
