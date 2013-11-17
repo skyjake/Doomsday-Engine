@@ -177,7 +177,7 @@ public:
 
     /**
      * Returns the symbolic name of the specified color @a palette. A zero-length
-     * string is return if no name is associated.
+     * string is returned if no name is associated.
      */
     de::String colorPaletteName(ColorPalette &palette) const;
 

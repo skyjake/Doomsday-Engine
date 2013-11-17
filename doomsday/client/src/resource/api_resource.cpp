@@ -207,7 +207,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
         }
         else
         {
-            de::Vector3f palColor = palette[colorIdx];
+            de::Vector3f palColor = palette.colorf(colorIdx);
             rgb[0] = palColor.x;
             rgb[1] = palColor.y;
             rgb[2] = palColor.z;

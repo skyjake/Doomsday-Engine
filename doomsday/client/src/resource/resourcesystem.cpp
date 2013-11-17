@@ -1294,7 +1294,7 @@ ColorPalette &ResourceSystem::colorPalette(String name) const
     {
         return *found.value();
     }
-    /// @throw MissingColorPaletteError An unknown/invalid id was specified.
+    /// @throw MissingColorPaletteError An unknown name was specified.
     throw MissingColorPaletteError("ResourceSystem::colorPalette", "Unknown name '" + name + "'");
 }
 
