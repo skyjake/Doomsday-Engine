@@ -36,7 +36,7 @@ DENG2_OBSERVES(FontScheme, ManifestDefined),
 DENG2_OBSERVES(FontManifest, Deletion),
 DENG2_OBSERVES(AbstractFont, Deletion)
 {
-    /// System subspace schemes containing the fonts.
+    /// System subspace schemes containing the manifests/resources.
     Schemes schemes;
     QList<Scheme *> schemeCreationOrder;
 
@@ -360,7 +360,7 @@ static int printIndex2(FontScheme *scheme, Path const &like,
         heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
     LOG_MSG(_E(D) "%s:" _E(.)) << heading;
 
-    // Print the result index key.
+    // Print the result index.
     qSort(found.begin(), found.end(), compareManifestPathsAssending);
     int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
