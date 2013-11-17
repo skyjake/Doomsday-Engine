@@ -458,8 +458,7 @@ int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path
 #ifdef DENG2_DEBUG
 void PathTree::debugPrint(QChar separator) const
 {
-    LOG_AS("PathTree");
-    LOG_INFO("[%p]:") << de::dintptr(this);
+    LOG_INFO("PathTree [%p]:") << de::dintptr(this);
     FoundPaths found;
     if(findAllPaths(found, 0, separator))
     {

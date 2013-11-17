@@ -76,13 +76,13 @@ static void parseColorFormat(QString const &fmt, Vector3ui &compOrder, Vector3ui
         }
 
         /// @throw ColorTableReader::FormatError
-        throw ColorTableReader::FormatError("parseColorFormat", QString("Unexpected character '%1' at position %2.").arg(ch).arg(pos));
+        throw ColorTableReader::FormatError("parseColorFormat", QString("Unexpected character '%1' at position %2").arg(ch).arg(pos));
     }
 
     if(readComponents != 3)
     {
         /// @throw ColorTableReader::FormatError
-        throw ColorTableReader::FormatError("parseColorFormat", "Incomplete format specification.");
+        throw ColorTableReader::FormatError("parseColorFormat", "Incomplete format specification");
     }
 }
 

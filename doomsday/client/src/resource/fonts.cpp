@@ -31,11 +31,11 @@ namespace de {
 
 DENG2_PIMPL_NOREF(Fonts)
 {
-    /// System subspace schemes containing the textures.
+    /// System subspace schemes containing the fonts.
     Schemes schemes;
     QList<Scheme *> schemeCreationOrder;
 
-    All fonts; ///< Form all schemes.
+    All fonts; ///< From all schemes.
     uint manifestCount; ///< Total number of font manifests (in all schemes).
 
     uint manifestIdMapSize;
@@ -354,26 +354,21 @@ static int printIndex2(FontScheme *scheme, Path const &like,
     if(!printSchemeName && scheme)
         heading += " in scheme '" + scheme->name() + "'";
     if(!like.isEmpty())
-        heading += " like \"" + like.toStringRef() + "\"";
-    heading += ":";
-    Con_FPrintf(CPF_YELLOW, "%s\n", heading.toUtf8().constData());
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index key.
-    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
-
-    Con_Printf(" %*s: %-*s origin uri\n", numFoundDigits, "idx",
-               printSchemeName? 22 : 14, printSchemeName? "scheme:path" : "path");
-    Con_PrintRuler();
-
-    // Sort and print the index.
     qSort(found.begin(), found.end(), compareManifestPathsAssending);
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
     foreach(FontManifest *manifest, found)
     {
-        String info = String(" %1: ").arg(idx, numFoundDigits)
-                    + manifest->description(composeUriFlags);
+        String info = String("%1: %2%3" _E(.))
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasResource()? _E(1) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
 
-        Con_FPrintf(!manifest->hasResource()? CPF_LIGHT : CPF_WHITE, "%s\n", info.toUtf8().constData());
+        LOG_MSG("  " _E(>)) << info;
         idx++;
     }
 
@@ -391,13 +386,13 @@ static void printIndex(de::Uri const &search,
     if(search.scheme().isEmpty() && !search.path().isEmpty())
     {
         printTotal = printIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
-        Con_PrintRuler();
+        LOG_MSG(_E(R));
     }
     // Print results within only the one scheme?
     else if(fonts.knownScheme(search.scheme()))
     {
         printTotal = printIndex2(&fonts.scheme(search.scheme()), search.path(), flags | de::Uri::OmitScheme);
-        Con_PrintRuler();
+        LOG_MSG(_E(R));
     }
     else
     {
@@ -407,12 +402,12 @@ static void printIndex(de::Uri const &search,
             int numPrinted = printIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
             if(numPrinted)
             {
-                Con_PrintRuler();
+                LOG_MSG(_E(R));
                 printTotal += numPrinted;
             }
         }
     }
-    Con_Message("Found %i %s.", printTotal, printTotal == 1? "Font" : "Fonts");
+    LOG_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "font" : "fonts in total");
 }
 
 } // namespace de
@@ -430,7 +425,7 @@ D_CMD(ListFonts)
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownSchemeCallback);
     if(!search.scheme().isEmpty() && !fonts.knownScheme(search.scheme()))
     {
-        Con_Message("Unknown scheme '%s'.", search.schemeCStr());
+        LOG_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -445,13 +440,14 @@ D_CMD(PrintFontStats)
 
     de::Fonts &fonts = App_Fonts();
 
-    Con_FPrintf(CPF_YELLOW, "Font Statistics:\n");
+    LOG_MSG(_E(1) "Font Statistics:");
     foreach(de::FontScheme *scheme, fonts.allSchemes())
     {
         de::FontScheme::Index const &index = scheme->index();
 
         uint const count = index.count();
-        Con_Message("Scheme: %s (%u %s)", scheme->name().toUtf8().constData(), count, count == 1? "font" : "fonts");
+        LOG_MSG("Scheme: %s (%u %s)")
+            << scheme->name() << count << (count == 1? "font" : "fonts");
         index.debugPrintHashDistribution();
         index.debugPrint();
     }
