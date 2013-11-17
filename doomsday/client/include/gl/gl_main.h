@@ -36,6 +36,7 @@
 #include "gl/gltextureunit.h"
 #include "render/viewports.h"
 #include "Texture"
+#include <de/Matrix>
 
 struct colorpalette_s;
 struct ColorRawf_s;
@@ -126,6 +127,12 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t c
 void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData);
 
 void GL_ProjectionMatrix();
+
+/**
+ * Returns the projection matrix that is used for rendering the current frame's
+ * 3D portions.
+ */
+de::Matrix4f GL_GetProjectionMatrix();
 
 /**
  * The first selected unit is active after this call.

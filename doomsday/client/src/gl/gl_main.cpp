@@ -584,7 +584,7 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
     }
 }
 
-void GL_ProjectionMatrix()
+Matrix4f GL_GetProjectionMatrix()
 {
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
@@ -618,17 +618,22 @@ void GL_ProjectionMatrix()
         frustumShift = VR::eyeShift * glNearClip / VR::hudDistance;
     }
 
+    return Matrix4f::frustum(-fW - frustumShift, fW - frustumShift,
+                             -fH, fH,
+                             glNearClip, glFarClip) *
+           Matrix4f::translate(Vector3f(-VR::eyeShift, 0, 0)) *
+           Matrix4f::scale(Vector3f(1, 1, -1));
+}
+
+void GL_ProjectionMatrix()
+{
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Actually shift the player viewpoint
     // We'd like to have a left-handed coordinate system.
     glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf((Matrix4f::frustum(-fW - frustumShift, fW - frustumShift,
-                                    -fH, fH,
-                                    glNearClip, glFarClip) *
-                   Matrix4f::translate(Vector3f(-VR::eyeShift, 0, 0)) *
-                   Matrix4f::scale(Vector3f(1, 1, -1))).values());
+    glLoadMatrixf(GL_GetProjectionMatrix().values());
 }
 
 #undef GL_UseFog
