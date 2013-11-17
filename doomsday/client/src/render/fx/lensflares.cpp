@@ -17,11 +17,16 @@
  */
 
 #include "render/fx/lensflares.h"
+#include "render/ilightsource.h"
+#include "render/viewports.h"
 #include "gl/gl_main.h"
 
 #include <de/concurrency.h>
+#include <de/Drawable>
 #include <de/Shared>
 #include <de/Log>
+
+#include <QHash>
 
 using namespace de;
 
@@ -32,6 +37,8 @@ namespace fx {
  */
 struct FlareData
 {
+    AtlasTexture atlas;
+
     FlareData()
     {
         DENG_ASSERT_IN_MAIN_THREAD();
@@ -52,29 +59,164 @@ DENG2_PIMPL(LensFlares)
     typedef Shared<FlareData> SharedFlareData;
     SharedFlareData *res;
 
-    Instance(Public *i) : Base(i), res(0)
+    struct TestLight : public ILightSource
+    {
+    public:
+        LightId lightSourceId() const {
+            return 1;
+        }
+        Origin lightSourceOrigin() const {
+            return Origin(1055, -3280, 30);
+        }
+        dfloat lightSourceRadius() const {
+            return 10;
+        }
+        Colorf lightSourceColorf() const {
+            return Colorf(1, 1, 1);
+        }
+        dfloat lightSourceIntensity(de::Vector3d const &) const {
+            return 1;
+        }
+    };
+    TestLight testLight;
+
+    /**
+     * Current state of a potentially visible light.
+     */
+    struct PVLight
+    {
+        ILightSource const *light;
+        int seenFrame; // R_FrameCount()
+
+        PVLight() : light(0), seenFrame(0)
+        {}
+    };
+
+    typedef QHash<ILightSource::LightId, PVLight *> PVSet;
+    PVSet pvs;
+
+    typedef GLBufferT<Vertex3Tex3Rgba> VBuf;
+    VBuf *buffer;
+    Drawable drawable;
+    GLUniform uMvpMatrix;
+    GLUniform uViewUnit;
+
+    Instance(Public *i)
+        : Base(i)
+        , res(0)
+        , buffer(0)
+        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uViewUnit ("uViewUnit",  GLUniform::Vec2)
     {}
 
     ~Instance()
     {
         DENG2_ASSERT(res == 0); // should have been deinited
         releaseRef(res);
+        clearPvs();
     }
 
     void glInit()
     {
         // Acquire a reference to the shared flare data.
         res = SharedFlareData::hold();
+
+        buffer = new VBuf;
+        drawable.addBuffer(buffer);
+        self.shaders().build(drawable.program(), "fx.lensflares")
+                << uMvpMatrix << uViewUnit;
     }
 
     void glDeinit()
     {
+        drawable.clear();
+        buffer = 0;
+        clearPvs();
         releaseRef(res);
+    }
+
+    void clearPvs()
+    {
+        qDeleteAll(pvs);
+        pvs.clear();
+    }
+
+    void addToPvs(ILightSource const *light)
+    {
+        PVSet::iterator found = pvs.find(light->lightSourceId());
+        if(found == pvs.end())
+        {
+            found = pvs.insert(light->lightSourceId(), new PVLight);
+        }
+
+        PVLight *pvl = found.value();
+        pvl->light = light;
+        pvl->seenFrame = R_FrameCount();
+    }
+
+    void makeVerticesForPVS()
+    {
+        int const thisFrame = R_FrameCount();
+
+        // The vertex buffer will contain a number of quads.
+        VBuf::Vertices verts;
+        VBuf::Indices idx;
+        VBuf::Type vtx;
+
+        for(PVSet::const_iterator i = pvs.constBegin(); i != pvs.constEnd(); ++i)
+        {
+            PVLight const *pvl = i.value();
+
+            // Skip lights that are not visible right now.
+            /// @todo If so, it might be time to purge it from the PVS.
+            if(pvl->seenFrame != thisFrame) continue;
+
+            float radius = .1f;
+            Rectanglef uvRect;
+
+            int const firstIdx = verts.size();
+
+            vtx.pos  = pvl->light->lightSourceOrigin().xzy();
+            vtx.rgba = pvl->light->lightSourceColorf();
+
+            vtx.texCoord[0] = uvRect.topLeft;
+            vtx.texCoord[1] = Vector2f(-1, -1) * radius;
+            verts << vtx;
+
+            vtx.texCoord[0] = uvRect.topRight();
+            vtx.texCoord[1] = Vector2f(1, -1) * radius;
+            verts << vtx;
+
+            vtx.texCoord[0] = uvRect.bottomRight;
+            vtx.texCoord[1] = Vector2f(1, 1) * radius;
+            verts << vtx;
+
+            vtx.texCoord[0] = uvRect.bottomLeft();
+            vtx.texCoord[1] = Vector2f(-1, 1) * radius;
+            verts << vtx;
+
+            // Make two triangles.
+            idx << firstIdx << firstIdx + 2 << firstIdx + 1
+                << firstIdx << firstIdx + 2 << firstIdx + 3;
+        }
+
+        buffer->setVertices(verts, gl::Dynamic);
+        buffer->setIndices(gl::Triangles, idx, gl::Dynamic);
     }
 };
 
 LensFlares::LensFlares(int console) : ConsoleEffect(console), d(new Instance(this))
 {}
+
+void LensFlares::clearLights()
+{
+    d->clearPvs();
+}
+
+void LensFlares::markLightPotentiallyVisibleForCurrentFrame(ILightSource const *lightSource)
+{
+    d->addToPvs(lightSource);
+}
 
 void LensFlares::glInit()
 {
@@ -92,9 +234,27 @@ void LensFlares::glDeinit()
     ConsoleEffect::glDeinit();
 }
 
+void fx::LensFlares::beginFrame()
+{
+    markLightPotentiallyVisibleForCurrentFrame(&d->testLight); // testing
+
+    d->makeVerticesForPVS();
+}
+
 void LensFlares::draw()
 {
+    //Rectanglef const rect = viewRect();
 
+    d->uViewUnit = Vector2f(1, 1);
+    d->uMvpMatrix = GL_GetProjectionMatrix();
+
+    GLState::push()
+            .setCull(gl::None)
+            .setDepthTest(false);
+
+    d->drawable.draw();
+
+    GLState::pop().apply();
 }
 
 } // namespace fx

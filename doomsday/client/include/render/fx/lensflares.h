@@ -20,6 +20,7 @@
 #define DENG_CLIENT_FX_LENSFLARES_H
 
 #include "render/consoleeffect.h"
+#include "render/ilightsource.h"
 
 namespace fx {
 
@@ -31,9 +32,13 @@ class LensFlares : public ConsoleEffect
 public:
     LensFlares(int console);
 
+    void clearLights();
+    void markLightPotentiallyVisibleForCurrentFrame(ILightSource const *lightSource);
+
     void glInit();
     void glDeinit();
 
+    void beginFrame();
     void draw();
 
 private:

@@ -45,7 +45,7 @@ public:
     /**
      * RGB color of the emitted light.
      */
-    typedef de::Vector3f Color;
+    typedef de::Vector3f Colorf;
 
 public:
     virtual ~ILightSource() {}
@@ -68,7 +68,7 @@ public:
      * not be factored into the color values, but is instead returned separately
      * by lightSourceIntensity().
      */
-    virtual Color lightSourceColor() const = 0;
+    virtual Colorf lightSourceColorf() const = 0;
 
     /**
      * Returns the intensity of the light.

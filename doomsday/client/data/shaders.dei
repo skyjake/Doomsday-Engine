@@ -156,6 +156,11 @@ group fx {
         }
     }
     
+    shader lensflares {
+        path.vertex   = "shaders/lensflares.vsh"
+        path.fragment = "shaders/lensflares.fsh"
+    }
+    
     # Post-processing shaders need to have uFadeInOut (0..1) for
     # fading the effect in/out.
     group post {
