@@ -19,9 +19,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#ifdef __CLIENT__
-#  include "gl/gl_texmanager.h"
-#endif
+
 #include <de/Log>
 #include <de/math.h>
 #include <de/mathutil.h> // for M_NumDigits
@@ -397,7 +395,7 @@ D_CMD(ListTextures)
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownSchemeCallback);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
-        Con_Message("Unknown scheme '%s'.", search.schemeCStr());
+        LOG_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -413,7 +411,7 @@ D_CMD(InspectTexture)
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
     if(!search.scheme().isEmpty() && !textures.knownScheme(search.scheme()))
     {
-        Con_Message("Unknown scheme '%s'.", search.schemeCStr());
+        LOG_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -423,14 +421,26 @@ D_CMD(InspectTexture)
         if(manifest.hasTexture())
         {
             de::Texture &texture = manifest.texture();
-            Con_Message(texture.description().toUtf8().constData());
+            de::String variantCountText;
+#ifdef __CLIENT__
+            variantCountText = de::String(" (x%1)").arg(texture.variantCount());
+#endif
+
+            LOG_MSG("Texture " _E(1) "%s" _E(.) "%s"
+                    "\n" _E(l) "Dimensions: " _E(.) _E(i) "%s" _E(.)
+                     " " _E(l) "Source: "     _E(.) _E(i) "%s")
+                << manifest.composeUri()
+                << variantCountText
+                << (texture.width() == 0 &&
+                    texture.height() == 0? de::String("unknown (not yet prepared)")
+                                         : texture.dimensions().asText())
+                << manifest.sourceDescription();
 
 #if defined(__CLIENT__) && defined(DENG_DEBUG)
-
             if(texture.variantCount())
             {
                 // Print variant specs.
-                Con_PrintRuler();
+                LOG_MSG(_E(R));
 
                 int variantIdx = 0;
                 foreach(de::TextureVariant *variant, texture.variants())
@@ -440,36 +450,34 @@ D_CMD(InspectTexture)
 
                     de::String textualVariantSpec = variant->spec().asText();
 
-                    de::String info =
-                        de::String("Variant #%1:"
-                                   "\n  Source:%2 Masked:%3 GLName:%4 Coords:%5"
-                                   "\n  Specification: %6")
-                            .arg(variantIdx)
-                            .arg(variant->sourceDescription())
-                            .arg(variant->isMasked()? "yes":"no")
-                            .arg(variant->glName())
-                            .arg(coords.asText())
-                            .arg(textualVariantSpec);
-
-                    Con_Message(info.toUtf8().constData());
+                    LOG_MSG(_E(D) "Variant #%i:" _E(.)
+                            " " _E(l) "Source: " _E(.) _E(i) "%s" _E(.)
+                            " " _E(l) "Masked: " _E(.) _E(i) "%s" _E(.)
+                            " " _E(l) "GLName: " _E(.) _E(i) "%i" _E(.)
+                            " " _E(l) "Coords: " _E(.) _E(i) "%s" _E(.)
+                            _E(R)
+                            "\n" _E(1) "Specification:" _E(.) "%s")
+                            << variantIdx
+                            << variant->sourceDescription()
+                            << (variant->isMasked()? "yes":"no")
+                            << variant->glName()
+                            << coords.asText()
+                            << textualVariantSpec;
 
                     ++variantIdx;
                 }
             }
-
 #endif // __CLIENT__ && DENG_DEBUG
         }
         else
         {
-            de::String description = manifest.description();
-            Con_FPrintf(CPF_LIGHT, "%s\n", description.toUtf8().constData());
+            LOG_MSG("%s") << manifest.description();
         }
         return true;
     }
     catch(de::Textures::NotFoundError const &er)
     {
-        QString msg = er.asText() + ".";
-        Con_Message(msg.toUtf8().constData());
+        LOG_WARNING("%s.") << er.asText();
     }
     return false;
 }
@@ -481,13 +489,14 @@ D_CMD(PrintTextureStats)
 
     de::Textures &textures = App_Textures();
 
-    Con_FPrintf(CPF_YELLOW, "Texture Statistics:\n");
+    LOG_MSG(_E(1) "Texture Statistics:");
     foreach(de::TextureScheme *scheme, textures.allSchemes())
     {
         de::TextureScheme::Index const &index = scheme->index();
 
         uint const count = index.count();
-        Con_Message("Scheme: %s (%u %s)", scheme->name().toUtf8().constData(), count, count == 1? "texture" : "textures");
+        LOG_MSG("Scheme: %s (%u %s)")
+            << scheme->name() << count << (count == 1? "texture" : "textures");
         index.debugPrintHashDistribution();
         index.debugPrint();
     }
