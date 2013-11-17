@@ -1,4 +1,4 @@
-/** @file fonts.cpp Font resource collection.
+/** @file fonts.cpp  Font resource collection.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -23,6 +23,7 @@
 
 #include "de_console.h"
 #include "dd_main.h" // App_Fonts(), verbose
+#include <de/Log>
 #include <de/memory.h>
 #include <QList>
 #include <QtAlgorithms>
