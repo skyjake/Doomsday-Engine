@@ -3925,7 +3925,7 @@ void Rend_UpdateLightModMatrix()
 {
     if(novideo) return;
 
-    std::memset(lightModRange, 0, sizeof(float) * 255);
+    zap(lightModRange);
 
     if(!App_World().hasMap())
     {
@@ -3935,9 +3935,13 @@ void Rend_UpdateLightModMatrix()
 
     int mapAmbient = App_World().map().ambientLightLevel();
     if(mapAmbient > ambientLight)
+    {
         rAmbient = mapAmbient;
+    }
     else
+    {
         rAmbient = ambientLight;
+    }
 
     for(int i = 0; i < 255; ++i)
     {
@@ -3959,16 +3963,25 @@ void Rend_UpdateLightModMatrix()
 
         // Lower than the ambient limit?
         if(rAmbient != 0 && i+lightlevel <= rAmbient)
+        {
             lightlevel = rAmbient - i;
+        }
 
         // Clamp the result as a modifier to the light value (j).
         if((i + lightlevel) >= 255)
+        {
             lightlevel = 255 - i;
+        }
         else if((i + lightlevel) <= 0)
+        {
             lightlevel = -i;
+        }
 
-        // Insert it into the matrix
+        // Insert it into the matrix.
         lightModRange[i] = lightlevel / 255.0f;
+
+        // Ensure the resultant value never exceeds the expected [0..1] range.
+        DENG2_ASSERT(INRANGE_OF(i / 255.0f + lightModRange[i], 0.f, 1.f));
     }
 }
 
