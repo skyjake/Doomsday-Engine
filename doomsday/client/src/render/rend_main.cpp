@@ -402,9 +402,9 @@ float Rend_FieldOfView()
     }
 }
 
-void Rend_ModelViewMatrix(bool useAngles)
+Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
 {
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(consoleNum);
 
     vOrigin[VX] = viewData->current.origin[VX];
     vOrigin[VY] = viewData->current.origin[VZ];
@@ -412,11 +412,8 @@ void Rend_ModelViewMatrix(bool useAngles)
     vang = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
     vpitch = viewData->current.pitch * 85.0 / 110.0;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    Matrix4f modelView;
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
     if(useAngles)
     {
         bool scheduledLate = false;
@@ -483,16 +480,27 @@ void Rend_ModelViewMatrix(bool useAngles)
             }
         }
 
-        glRotatef(roll, 0, 0, 1); // Pitch
-        glRotatef(pitch, 1, 0, 0); // Pitch
-        glRotatef(yaw, 0, 1, 0); // Yaw
+        modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
+                    Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
+                    Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
 
         storedRoll = roll;
         storedPitch = pitch;
         storedYaw = yaw;
     }
-    glScalef(1, 1.2f, 1);      // This is the aspect correction.
-    glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
+
+    return (modelView *
+            Matrix4f::scale(Vector3f(1.0f, 1.2f, 1.0f)) * // This is the aspect correction.
+            Matrix4f::translate(-Vector3f(vOrigin[VX], vOrigin[VY], vOrigin[VZ])));
+}
+
+void Rend_ModelViewMatrix(bool useAngles)
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(Rend_GetModelViewMatrix(viewPlayer - ddPlayers, useAngles).values());
 }
 
 static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)

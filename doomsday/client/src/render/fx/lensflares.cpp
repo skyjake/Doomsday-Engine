@@ -19,6 +19,7 @@
 #include "render/fx/lensflares.h"
 #include "render/ilightsource.h"
 #include "render/viewports.h"
+#include "render/rend_main.h"
 #include "gl/gl_main.h"
 
 #include <de/concurrency.h>
@@ -66,6 +67,7 @@ DENG2_PIMPL(LensFlares)
             return 1;
         }
         Origin lightSourceOrigin() const {
+            //return Origin(0, 0, 0);
             return Origin(1055, -3280, 30);
         }
         dfloat lightSourceRadius() const {
@@ -178,6 +180,7 @@ DENG2_PIMPL(LensFlares)
 
             vtx.pos  = pvl->light->lightSourceOrigin().xzy();
             vtx.rgba = pvl->light->lightSourceColorf();
+            vtx.rgba.w = 1.0f;
 
             vtx.texCoord[0] = uvRect.topLeft;
             vtx.texCoord[1] = Vector2f(-1, -1) * radius;
@@ -246,7 +249,7 @@ void LensFlares::draw()
     //Rectanglef const rect = viewRect();
 
     d->uViewUnit = Vector2f(1, 1);
-    d->uMvpMatrix = GL_GetProjectionMatrix();
+    d->uMvpMatrix = GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
     GLState::push()
             .setCull(gl::None)
