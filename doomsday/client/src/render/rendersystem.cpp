@@ -85,11 +85,18 @@ DENG2_PIMPL(RenderSystem)
 {
     SettingsRegister settings;
     SettingsRegister appearanceSettings;
+    GLShaderBank shaderBank;
+    ImageBank images;
     Store buffer;
     DrawLists drawLists;
 
     Instance(Public *i) : Base(i)
     {
+        LOG_AS("RenderSystem");
+
+        loadAllShaders();
+        loadImages();
+
         typedef SettingsRegister SReg;
 
         // Initialize settings.
@@ -190,10 +197,46 @@ DENG2_PIMPL(RenderSystem)
 
                 .define(SReg::FloatCVar, "rend-sky-distance", 1600);
     }
+
+    /**
+     * Reads all shader definitions and sets up a Bank where the actual
+     * compiled shaders are stored once they're needed.
+     */
+    void loadAllShaders()
+    {
+        // Load all the shader program definitions.
+        FS::FoundFiles found;
+        App::fileSystem().findAll("shaders.dei", found);
+        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+        {
+            LOG_MSG("Loading shader definitions from %s") << (*i)->description();
+            shaderBank.addFromInfo(**i);
+        }
+    }
+
+    /**
+     * Reads the renderer's image definitions and sets up a Bank for caching them
+     * when they're needed.
+     */
+    void loadImages()
+    {
+        Folder const &renderPack = App::fileSystem().find<Folder>("renderer.pack");
+        images.addFromInfo(renderPack.locate<File>("images.dei"));
+    }
 };
 
 RenderSystem::RenderSystem() : d(new Instance(this))
 {}
+
+GLShaderBank &RenderSystem::shaders()
+{
+    return d->shaderBank;
+}
+
+ImageBank &RenderSystem::images()
+{
+    return d->images;
+}
 
 void RenderSystem::timeChanged(Clock const &)
 {

@@ -60,7 +60,7 @@ bool ConsoleEffect::isInited() const
 
 GLShaderBank &ConsoleEffect::shaders() const
 {
-    return ClientApp::glShaderBank();
+    return ClientApp::renderSystem().shaders();
 }
 
 void ConsoleEffect::glInit()

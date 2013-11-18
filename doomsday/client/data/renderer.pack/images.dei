@@ -1,0 +1,8 @@
+# Images for the Renderer
+#
+# These images are used as key assets in 2D and 3D rendering.
+
+group fx.lensflares {
+    # Lens flare images.
+    
+}

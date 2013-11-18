@@ -252,7 +252,7 @@ Id GuiRootWidget::tinyDot() const
 
 GLShaderBank &GuiRootWidget::shaders()
 {
-    return ClientApp::glShaderBank();
+    return ClientApp::renderSystem().shaders();
 }
 
 Matrix4f GuiRootWidget::projMatrix2D() const

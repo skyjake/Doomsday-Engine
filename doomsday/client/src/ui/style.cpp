@@ -28,7 +28,6 @@ using namespace de;
 
 DENG2_PIMPL(Style)
 {
-    String packPath;
     Record module;
     RuleBank rules;
     FontBank fonts;
@@ -53,7 +52,6 @@ DENG2_PIMPL(Style)
 
     void load(String const &path)
     {
-        packPath = path;
         Folder const &pack = App::rootFolder().locate<Folder>(path);
 
         rules.addFromInfo(pack.locate<File>("rules.dei"));
