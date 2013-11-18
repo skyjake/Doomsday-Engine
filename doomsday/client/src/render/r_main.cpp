@@ -1646,7 +1646,7 @@ void Rend_CacheForMap()
                 // This sprite is used by some state of at least one mobj.
 
                 // Precache all angles for all frames.
-                SpriteSet const & sprites = R_SpriteSet(i);
+                SpriteSet const &sprites = R_SpriteSet(i);
                 foreach(Sprite *sprite, sprites)
                 for(int k = 0; k < Sprite::max_angles; ++k)
                 {

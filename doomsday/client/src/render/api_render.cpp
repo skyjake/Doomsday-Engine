@@ -5,6 +5,11 @@
 
 #include "api_render.h"
 
+#include "resource/sprites.h"
+#ifdef __CLIENT__
+#  include "MaterialSnapshot"
+#endif
+
 // m_misc.c
 DENG_EXTERN_C int M_ScreenShot(const char* name, int bits);
 
@@ -32,8 +37,61 @@ DENG_EXTERN_C void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 // sky.cpp
 DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);
 
-// r_things.cpp
-DENG_EXTERN_C boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t *sprinfo);
+#undef R_GetSpriteInfo
+DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *info)
+{
+    LOG_AS("R_GetSpriteInfo");
+
+    if(!info) return false;
+
+    de::zapPtr(info);
+
+    Sprite *sprite = R_SpritePtr(spriteId, frame);
+    if(!sprite)
+    {
+        LOG_WARNING("Invalid sprite id (%i) and/or frame index (%i).")
+            << spriteId << frame;
+        return false;
+    }
+
+    de::zapPtr(info);
+    info->flip = sprite->_flip[0];
+
+    if(novideo)
+    {
+        // We can't prepare the material.
+        return true;
+    }
+
+    info->material = sprite->_mats[0];
+
+#ifdef __CLIENT__
+    /// @todo fixme: We should not be using the PSprite spec here. -ds
+    de::MaterialVariantSpec const &spec =
+            App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                        0, 1, -1, false, true, true, false);
+    de::MaterialSnapshot const &ms = info->material->prepare(spec);
+
+    de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+    variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
+
+    info->geometry.origin.x    = -tex.origin().x + -texSpec.border;
+    info->geometry.origin.y    = -tex.origin().y +  texSpec.border;
+    info->geometry.size.width  = ms.width()  + texSpec.border * 2;
+    info->geometry.size.height = ms.height() + texSpec.border * 2;
+
+    ms.texture(MTU_PRIMARY).glCoords(&info->texCoord[0], &info->texCoord[1]);
+#else
+    de::Texture &tex = *info->material->layers()[0]->stages()[0]->texture;
+
+    info->geometry.origin.x    = -tex.origin().x;
+    info->geometry.origin.y    = -tex.origin().y;
+    info->geometry.size.width  = info->material->width();
+    info->geometry.size.height = info->material->height();
+#endif
+
+    return true;
+}
 
 // r_util.c
 DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);

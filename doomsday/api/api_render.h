@@ -125,6 +125,9 @@ DENG_API_TYPEDEF(Rend)
 
     scalemode_t (*ChooseScaleMode)(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 
+    /**
+     * @todo fixme: Wrong domain -- Sprite is a (logical) resource.
+     */
     boolean (*GetSpriteInfo)(int sprite, int frame, spriteinfo_t* sprinfo);
 
     /**
