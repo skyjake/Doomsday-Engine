@@ -142,8 +142,9 @@ public:
     void grab(image_t &image, bool halfSized = false) const;
 
     /**
-     * Draws the untransformed contents of the window to a texture. The drawing
-     * is done immediately; this must be called from the main/UI thread.
+     * Draws the untransformed game-related contents of the window to a
+     * texture. The drawing is done immediately; this must be called from the
+     * main/UI thread.
      *
      * The entire texture is filled, but the logical size of the UI is not
      * changed for this operation. I.e., aspect ratio is changed to fit into
@@ -151,7 +152,7 @@ public:
      *
      * @param texture  Texture to draw into.
      */
-    void drawContentToTexture(de::GLTexture &texture);
+    void drawGameContentToTexture(de::GLTexture &texture);
 
     void updateCanvasFormat();
     void updateRootSize();

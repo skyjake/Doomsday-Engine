@@ -71,17 +71,17 @@ DENG2_OBSERVES(App,              GameChange)
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
     CompositorWidget *compositor;
-    GameWidget *legacy;
+    GameWidget *game;
     GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
     NotificationWidget *notifications;
     ColorAdjustmentDialog *colorAdjust;
     LabelWidget *background;
-    GameSelectionWidget *games;
+    GameSelectionWidget *gameMenu;
     BusyWidget *busy;
     GuiWidget *sidebar;
 
-    GuiRootWidget busyRoot;
+    //GuiRootWidget busyRoot;
 
     // FPS notifications.
     LabelWidget *fpsCounter;
@@ -98,15 +98,15 @@ DENG2_OBSERVES(App,              GameChange)
           mode(Normal),
           root(thisPublic),
           compositor(0),
-          legacy(0),
+          game(0),
           gameUI(0),
           taskBar(0),
           notifications(0),
           colorAdjust(0),
           background(0),
-          games(0),
+          gameMenu(0),
           sidebar(0),
-          busyRoot(thisPublic),
+          //busyRoot(thisPublic),
           fpsCounter(0),
           oldFps(0),
           contentXf(*i)
@@ -153,33 +153,39 @@ DENG2_OBSERVES(App,              GameChange)
         background->rule().setRect(root.viewRule());
         root.add(background);
 
-        legacy = new GameWidget;
-        legacy->rule().setRect(root.viewRule());
+        game = new GameWidget;
+        game->rule().setRect(root.viewRule());
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
-        legacy->disable();
-        root.add(legacy);
+        game->disable();
+        root.add(game);
 
         gameUI = new GameUIWidget;
         gameUI->rule().setRect(root.viewRule());
         gameUI->disable();
         container().add(gameUI);
 
+        // For busy mode we have an entirely different widget tree.
+        busy = new BusyWidget;
+        busy->hide(); // normally hidden
+        busy->rule().setRect(root.viewRule());
+        container().add(busy);
+
         // Game selection.
-        games = new GameSelectionWidget;
-        games->rule()
+        gameMenu = new GameSelectionWidget;
+        gameMenu->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
                 .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
-        container().add(games);
+        container().add(gameMenu);
 
         // Common notification area.
         notifications = new NotificationWidget;
         notifications->rule()
                 .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
-                .setInput(Rule::Right, legacy->rule().right() - style.rules().rule("gap"));
+                .setInput(Rule::Right, game->rule().right() - style.rules().rule("gap"));
         container().add(notifications);
 
         // FPS counter for the notification area.
@@ -196,7 +202,7 @@ DENG2_OBSERVES(App,              GameChange)
         container().add(taskBar);
 
         // The game selection's height depends on the taskbar.
-        games->rule().setInput(Rule::Height,
+        gameMenu->rule().setInput(Rule::Height,
                                OperatorRule::minimum(root.viewHeight(),
                                                      (taskBar->rule().top() - root.viewHeight() / 2) * 2,                                                     style.rules().rule("gameselection.max.height")));
 
@@ -205,29 +211,22 @@ DENG2_OBSERVES(App,              GameChange)
         colorAdjust->setAnchor(root.viewWidth() / 2, root.viewTop());
         colorAdjust->setOpeningDirection(ui::Down);
         root.add(colorAdjust);
-
-        // For busy mode we have an entirely different widget tree.
-        busy = new BusyWidget;
-        busy->rule()
-                .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
-                .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
-        busyRoot.add(busy);
     }
 
     void currentGameChanged(game::Game const &newGame)
     {
         if(newGame.isNull())
         {
-            //legacy->hide();
+            //game->hide();
             background->show();
-            games->show();
+            gameMenu->show();
             taskBar->console().enableBlur();
         }
         else
         {
-            //legacy->show();
+            //game->show();
             background->hide();
-            games->hide();
+            gameMenu->hide();
 
             // For the time being, blurring is not compatible with the
             // legacy OpenGL rendering.
@@ -238,6 +237,35 @@ DENG2_OBSERVES(App,              GameChange)
     void setMode(Mode const &newMode)
     {
         LOG_DEBUG("Switching to %s mode") << (newMode == Busy? "Busy" : "Normal");
+
+        // Hide and show widgets as appropriate.
+        switch(newMode)
+        {
+        case Busy:
+            busy->grabTransitionScreenshot();
+
+            game->hide();
+            game->disable();
+            gameUI->hide();
+            gameUI->disable();
+            gameMenu->hide();
+            taskBar->disable();
+
+            busy->show();
+            busy->enable();
+            break;
+
+        default:
+            busy->hide();
+            busy->disable();
+            game->show();
+            game->enable();
+            gameUI->show();
+            gameUI->enable();
+            if(!App_GameLoaded()) gameMenu->show();
+            taskBar->enable();
+            break;
+        }
 
         mode = newMode;
     }
@@ -393,7 +421,7 @@ DENG2_OBSERVES(App,              GameChange)
                     .setInput(Rule::Top,    root.viewTop())
                     .setInput(Rule::Right,  root.viewRight())
                     .setInput(Rule::Bottom, taskBar->rule().top());
-            legacy->rule()
+            game->rule()
                     .setInput(Rule::Right,  widget->rule().left());
             gameUI->rule()
                     .setInput(Rule::Right,  widget->rule().left());
@@ -411,7 +439,7 @@ DENG2_OBSERVES(App,              GameChange)
         switch(location)
         {
         case RightEdge:
-            legacy->rule().setInput(Rule::Right, root.viewRight());
+            game->rule().setInput(Rule::Right, root.viewRight());
             gameUI->rule().setInput(Rule::Right, root.viewRight());
             break;
         }
@@ -431,7 +459,7 @@ DENG2_OBSERVES(App,              GameChange)
 
         // Tell the widgets.
         root.setViewSize(size);
-        busyRoot.setViewSize(size);
+        //busyRoot.setViewSize(size);
     } 
 
     void enableCompositor(bool enable)
@@ -442,7 +470,7 @@ DENG2_OBSERVES(App,              GameChange)
         }
 
         container().remove(*gameUI);
-        container().remove(*games);
+        container().remove(*gameMenu);
         container().remove(*notifications);
         container().remove(*taskBar);
 
@@ -465,7 +493,7 @@ DENG2_OBSERVES(App,              GameChange)
         }
 
         container().add(gameUI);
-        container().add(games);
+        container().add(gameMenu);
         container().add(notifications);
         container().add(taskBar);
 
@@ -509,7 +537,7 @@ ClientWindow::ClientWindow(String const &id)
 
 GuiRootWidget &ClientWindow::root()
 {
-    return d->mode == Busy? d->busyRoot : d->root;
+    return d->root; //d->mode == Busy? d->busyRoot : d->root;
 }
 
 TaskBarWidget &ClientWindow::taskBar()
@@ -529,7 +557,7 @@ NotificationWidget &ClientWindow::notifications()
 
 GameWidget &ClientWindow::game()
 {
-    return *d->legacy;
+    return *d->game;
 }
 
 BusyWidget &ClientWindow::busy()
@@ -570,7 +598,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     PersistentCanvasWindow::canvasGLReady(canvas);
 
     // Now that the Canvas is ready for drawing we can enable the GameWidget.
-    d->legacy->enable();
+    d->game->enable();
     d->gameUI->enable();
 
     // Configure a viewport immediately.
@@ -744,7 +772,7 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     DENG_ASSERT(img.pixelSize != 0);
 }
 
-void ClientWindow::drawContentToTexture(GLTexture &texture)
+void ClientWindow::drawGameContentToTexture(GLTexture &texture)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -756,7 +784,7 @@ void ClientWindow::drawContentToTexture(GLTexture &texture)
             .apply();
 
     offscreen.clear(GLTarget::ColorDepthStencil);
-    d->root.drawUntil(*d->games);
+    d->root.drawUntil(*d->gameMenu);
 
     GLState::pop().apply();
 }

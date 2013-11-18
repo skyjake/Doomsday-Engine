@@ -116,8 +116,10 @@ void BusyWidget::update()
 {
     GuiWidget::update();
 
-    DENG_ASSERT(BusyMode_Active());
-    BusyMode_Loop();
+    if(BusyMode_Active())
+    {
+        BusyMode_Loop();
+    }
 }
 
 void BusyWidget::drawContent()
@@ -155,10 +157,14 @@ bool BusyWidget::handleEvent(Event const &)
 
 void BusyWidget::grabTransitionScreenshot()
 {
+    LOG_AS("BusyWidget");
+
     //GLTexture::Size size(rule().width().valuei() / 2,
     //                         rule().height().valuei() / 2);
 
     Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
+
+    LOG_DEBUG("Rendering transition frame, size ") << grabRect.size().asText();
 
     /*
     if(BusyMode_IsTransitionAnimated())
@@ -173,7 +179,7 @@ void BusyWidget::grabTransitionScreenshot()
 
     d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
     d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGB_888);
-    root().window().drawContentToTexture(*d->transitionTex);
+    root().window().drawGameContentToTexture(*d->transitionTex);
     d->uTex = *d->transitionTex;
 }
 
