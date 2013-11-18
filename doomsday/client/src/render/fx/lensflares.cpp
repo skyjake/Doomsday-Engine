@@ -179,8 +179,7 @@ DENG2_PIMPL(LensFlares)
             int const firstIdx = verts.size();
 
             vtx.pos  = pvl->light->lightSourceOrigin().xzy();
-            vtx.rgba = pvl->light->lightSourceColorf();
-            vtx.rgba.w = 1.0f;
+            vtx.rgba = Vector4f(pvl->light->lightSourceColorf(), 1.f);
 
             vtx.texCoord[0] = uvRect.topLeft;
             vtx.texCoord[1] = Vector2f(-1, -1) * radius;
@@ -199,7 +198,7 @@ DENG2_PIMPL(LensFlares)
             verts << vtx;
 
             // Make two triangles.
-            idx << firstIdx << firstIdx + 2 << firstIdx + 1
+            idx << firstIdx << firstIdx + 1 << firstIdx + 2
                 << firstIdx << firstIdx + 2 << firstIdx + 3;
         }
 
