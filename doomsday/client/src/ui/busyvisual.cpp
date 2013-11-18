@@ -113,6 +113,8 @@ void BusyVisual_Render(void)
  */
 #include "de_misc.h"
 
+using namespace de;
+
 #define DOOMWIPESINE_NUMSAMPLES 320
 
 static void seedDoomWipeSine(void);
@@ -226,7 +228,7 @@ void Con_DrawTransition(void)
 
     GLuint const texScreenshot = ClientWindow::main().busy().transitionScreenshot()->glName();
 
-    GL_BindTextureUnmanaged(texScreenshot, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
     glEnable(GL_TEXTURE_2D);
 
     switch(transition.style)

@@ -27,6 +27,7 @@
 #include <de/Vector>
 
 #include "dd_types.h"
+#include "def_main.h"
 
 #include "Sector"
 
@@ -36,6 +37,15 @@
 namespace de {
 class Map;
 }
+
+// Multiplicative blending for dynamic lights?
+#define IS_MUL              (dynlightBlend != 1 && !usingFog)
+
+#define MTEX_DETAILS_ENABLED (r_detail && useMultiTexDetails && \
+                              defs.count.details.num > 0)
+#define IS_MTEX_DETAILS     (MTEX_DETAILS_ENABLED && numTexUnits > 1)
+#define IS_MTEX_LIGHTS      (!IS_MTEX_DETAILS && !usingFog && useMultiTexLights \
+                             && numTexUnits > 1 && envModAdd)
 
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
 
@@ -50,6 +60,16 @@ DENG_EXTERN_C float fogColor[4];
 
 DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
 DENG_EXTERN_C boolean usingFog;
+
+DENG_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
+DENG_EXTERN_C int renderWireframe;
+DENG_EXTERN_C int useMultiTexLights;
+DENG_EXTERN_C int useMultiTexDetails;
+
+DENG_EXTERN_C int dynlightBlend;
+
+DENG_EXTERN_C int torchAdditive;
+DENG_EXTERN_C de::Vector3f torchColor;
 
 DENG_EXTERN_C int rAmbient;
 DENG_EXTERN_C float rendLightDistanceAttenuation;
@@ -97,6 +117,13 @@ void Rend_Register();
 void Rend_Init();
 void Rend_Shutdown();
 void Rend_Reset();
+
+/// @return @c true iff multitexturing is currently enabled for lights.
+bool Rend_IsMTexLights();
+
+/// @return @c true iff multitexturing is currently enabled for detail textures.
+bool Rend_IsMTexDetails();
+
 void Rend_RenderMap(de::Map &map);
 
 float Rend_FieldOfView();

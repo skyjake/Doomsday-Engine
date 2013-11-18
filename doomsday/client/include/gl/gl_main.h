@@ -33,6 +33,7 @@
 #include "api_gl.h"
 #include "sys_opengl.h"
 
+#include "gl/gltextureunit.h"
 #include "render/r_main.h"
 #include "Texture"
 
@@ -42,8 +43,6 @@ struct material_s;
 struct texturevariant_s;
 
 class Material;
-
-#define MAX_TEX_UNITS           2 // More aren't currently used.
 
 DENG_EXTERN_C int numTexUnits;
 DENG_EXTERN_C boolean  envModAdd;
@@ -68,78 +67,6 @@ DENG_EXTERN_C int r_detail;
 #else
 #  define LIBDENG_ASSERT_GL_TEXTURE_ISBOUND(tex)
 #endif
-
-/**
- * Symbolic identifiers for (virtual) texture units.
- */
-typedef enum {
-    RTU_PRIMARY = 0,
-    RTU_PRIMARY_DETAIL,
-    RTU_INTER,
-    RTU_INTER_DETAIL,
-    RTU_REFLECTION,
-    RTU_REFLECTION_MASK,
-    NUM_TEXMAP_UNITS
-} rtexmapunitid_t;
-
-/**
- * @defgroup textureUnitFlags  Texture Unit Flags
- * @ingroup flags
- */
-///@{
-#define TUF_TEXTURE_IS_MANAGED    0x1 ///< A managed texture is bound to this unit.
-///@}
-
-struct rtexmapunit_texture_t
-{
-    union {
-        struct {
-            DGLuint name; ///< Texture used on this layer (if any).
-            int magMode; ///< GL texture magnification filter.
-            int wrapS; ///< GL texture S axis wrap mode.
-            int wrapT; ///< GL texture T axis wrap mode.
-        } gl;
-        de::TextureVariant *variant;
-    };
-    /// @ref textureUnitFlags
-    int flags;
-
-    rtexmapunit_texture_t() : flags(0)
-    {
-        gl.name    = 0;
-        gl.magMode = GL_LINEAR;
-        gl.wrapS   = GL_REPEAT;
-        gl.wrapT   = GL_REPEAT;
-    }
-
-    inline bool hasTexture() const
-    {
-        if(flags & TUF_TEXTURE_IS_MANAGED)
-        {
-            return variant && variant->glName() != 0;
-        }
-        return gl.name != 0;
-    }
-};
-
-/**
- * GL Texture unit config.
- */
-struct rtexmapunit_t
-{
-    rtexmapunit_texture_t texture; ///< Info about the bound texture for this unit.
-    blendmode_t blendMode;         ///< Currently used only with reflection.
-    float opacity;                 ///< Opacity of this layer [0..1].
-    de::Vector2f scale;            ///< Texture-space scale multiplier.
-    de::Vector2f offset;           ///< Texture-space origin translation (unscaled).
-
-    rtexmapunit_t() : blendMode(BM_NORMAL), opacity(1), scale(1, 1)
-    {}
-
-    bool hasTexture() const {
-        return texture.hasTexture();
-    }
-};
 
 void GL_AssertContextActive();
 
@@ -201,6 +128,11 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
 void GL_ProjectionMatrix();
 
 /**
+ * The first selected unit is active after this call.
+ */
+void GL_SelectTexUnits(int count);
+
+/**
  * Swaps buffers / blits the back buffer to the front.
  */
 void GL_DoUpdate();
@@ -209,6 +141,16 @@ void GL_DoUpdate();
  * Set the current GL blending mode.
  */
 void GL_BlendMode(blendmode_t mode);
+
+/**
+ * Utility for translating to a GL texture filter identifier.
+ */
+GLenum GL_Filter(de::gl::Filter f);
+
+/**
+ * Utility for translating to a GL texture wrapping identifier.
+ */
+GLenum GL_Wrap(de::gl::Wrapping w);
 
 /**
  * Initializes the graphics library for refresh. Also called at update.
@@ -245,7 +187,7 @@ void GL_SetVSync(boolean on);
  */
 void GL_SetMultisample(boolean on);
 
-void GL_BlendOp(int op);
+//void GL_BlendOp(int op);
 
 boolean GL_NewList(DGLuint list, int mode);
 
@@ -255,12 +197,12 @@ void GL_CallList(DGLuint list);
 
 void GL_DeleteLists(DGLuint list, int range);
 
-void GL_SetMaterialUI2(Material *mat, int wrapS, int wrapT);
+void GL_SetMaterialUI2(Material *mat, de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
 void GL_SetMaterialUI(Material *mat);
 
 void GL_SetPSprite(Material *mat, int tclass, int tmap);
 
-void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
+void GL_SetRawImage(lumpnum_t lumpNum, de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
 
 /**
  * Bind this texture to the currently active texture unit.
@@ -271,8 +213,22 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
  */
 void GL_BindTexture(de::Texture::Variant *tex);
 
-void GL_BindTextureUnmanaged(DGLuint texname, int wrapS = GL_REPEAT, int wrapT = GL_REPEAT,
-                             int magMode = GL_LINEAR);
+void GL_BindTextureUnmanaged(GLuint texname, de::gl::Wrapping wrapS = de::gl::Repeat,
+    de::gl::Wrapping wrapT = de::gl::Repeat, de::gl::Filter = de::gl::Linear);
+
+/**
+ * Bind the associated texture and apply the texture unit configuration to
+ * the @em active GL texture unit. If no texture is associated then nothing
+ * will happen.
+ */
+void GL_Bind(de::GLTextureUnit const &glTU);
+
+/**
+ * Bind the associated texture and apply the texture unit configuration to
+ * the specified GL texture @a unit, which, is made active during this call.
+ * If no texture is associated then nothing will happen.
+ */
+void GL_BindTo(de::GLTextureUnit const &glTU, int unit);
 
 void GL_SetNoTexture();
 

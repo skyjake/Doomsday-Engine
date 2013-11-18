@@ -1,4 +1,5 @@
 import os, sys, platform
+import shutil
 import subprocess
 import string
 import glob
@@ -7,6 +8,13 @@ import codecs
 import time
 import build_number
 import config
+
+def remkdir(n):
+    if os.path.exists(n):
+        print n, 'exists, clearing it...'
+        shutil.rmtree(n, True)
+    os.mkdir(n)
+
 
 def omit_path(path, omitted):
     if path.startswith(omitted):

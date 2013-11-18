@@ -168,7 +168,7 @@ game_export_t* GetGameAPI(void)
     gx.TryShutdown = G_TryShutdown;
     gx.Shutdown = H_Shutdown;
     gx.Ticker = G_Ticker;
-    gx.DrawViewPort = H_DrawViewPort;
+    gx.DrawViewPort = G_DrawViewPort;
     gx.DrawWindow = H_DrawWindow;
     gx.FinaleResponder = FI_PrivilegedResponder;
     gx.PrivilegedResponder = G_PrivilegedResponder;

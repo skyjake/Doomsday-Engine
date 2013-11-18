@@ -41,6 +41,8 @@ DENG2_PIMPL(GameUIWidget)
     {
         if(App_GameLoaded())
         {
+            R_RenderViewPorts(ui::HUDLayer);
+
             /*
             if(titleFinale == 0)
             {

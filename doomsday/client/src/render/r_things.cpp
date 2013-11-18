@@ -76,7 +76,7 @@ static void evaluateLighting(Vector3d const &origin, BspLeaf *bspLeafAtOrigin,
             lightLevel = Rend_AttenuateLightLevel(distToEye, lightLevel);
 
             // Add extra light.
-            lightLevel += Rend_ExtraLightDelta();
+            lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
 
             Rend_ApplyLightAdaptation(lightLevel);
 
