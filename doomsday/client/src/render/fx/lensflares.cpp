@@ -246,9 +246,10 @@ void fx::LensFlares::beginFrame()
 
 void LensFlares::draw()
 {
-    //Rectanglef const rect = viewRect();
+    Rectanglef const rect = viewRect();
+    float const    aspect = rect.height() / rect.width();
 
-    d->uViewUnit = Vector2f(1, 1);
+    d->uViewUnit  = Vector2f(aspect, 1.f);
     d->uMvpMatrix = GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
     GLState::push()
