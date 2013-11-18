@@ -40,7 +40,7 @@
 #ifdef __CLIENT__
 #  include "Lumobj"
 #  include "render/rend_main.h"
-#  include "render/sprite.h"
+#  include "render/billboard.h"
 
 #  include "gl/gl_tex.h"
 #endif

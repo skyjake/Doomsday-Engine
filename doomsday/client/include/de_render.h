@@ -40,7 +40,7 @@
 #include "render/rend_dynlight.h"
 #include "render/rendpoly.h"
 #include "render/sky.h"
-#include "render/sprite.h"
+#include "render/billboard.h"
 #include "render/vignette.h"
 #include "render/vissprite.h"
 #include "render/vlight.h"

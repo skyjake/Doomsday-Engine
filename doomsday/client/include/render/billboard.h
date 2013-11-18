@@ -1,8 +1,7 @@
-/**
- * @file render/sprite.h Rendering Map Objects as 2D Sprites.
+/** @file billboard.h  Rendering billboard "sprites".
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_SPRITE_H
-#define LIBDENG_RENDER_SPRITE_H
+#ifndef DENG_CLIENT_RENDER_BILLBOARD_H
+#define DENG_CLIENT_RENDER_BILLBOARD_H
 
 #include "dd_types.h"
 
@@ -85,4 +84,4 @@ void Rend_Draw3DPlayerSprites(void);
 
 ///@}
 
-#endif /* LIBDENG_RENDER_SPRITE_H */
+#endif // DENG_CLIENT_RENDER_BILLBOARD_H

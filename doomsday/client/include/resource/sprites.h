@@ -23,7 +23,7 @@
 #ifndef DENG_RESOURCE_SPRITES_H
 #define DENG_RESOURCE_SPRITES_H
 
-#include <de/libdeng1.h>
+#include "dd_types.h"
 #include <de/String>
 #include <QList>
 

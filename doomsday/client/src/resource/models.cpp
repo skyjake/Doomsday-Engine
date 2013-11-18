@@ -50,7 +50,7 @@
 #  include "render/r_things.h"
 #endif
 #include "render/rend_model.h"
-#include "render/sprite.h"
+#include "render/billboard.h"
 
 #include "resource/models.h"
 

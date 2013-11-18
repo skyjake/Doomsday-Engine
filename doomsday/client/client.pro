@@ -295,6 +295,7 @@ DENG_HEADERS += \
     include/render/biassource.h \
     include/render/biassurface.h \
     include/render/biastracker.h \
+    include/render/billboard.h \
     include/render/blockmapvisual.h \
     include/render/decoration.h \
     include/render/drawlist.h \
@@ -322,7 +323,6 @@ DENG_HEADERS += \
     include/render/shadowedge.h \
     include/render/sky.h \
     include/render/skyfixedge.h \
-    include/render/sprite.h \
     include/render/surfacedecorator.h \
     include/render/trianglestripbuilder.h \
     include/render/vignette.h \
@@ -652,6 +652,7 @@ SOURCES += \
     src/render/biassource.cpp \
     src/render/biassurface.cpp \
     src/render/biastracker.cpp \
+    src/render/billboard.cpp \
     src/render/blockmapvisual.cpp \
     src/render/decoration.cpp \
     src/render/drawlist.cpp \
@@ -679,7 +680,6 @@ SOURCES += \
     src/render/shadowedge.cpp \
     src/render/sky.cpp \
     src/render/skyfixedge.cpp \
-    src/render/sprite.cpp \
     src/render/surfacedecorator.cpp \
     src/render/trianglestripbuilder.cpp \
     src/render/vignette.cpp \
@@ -715,6 +715,7 @@ SOURCES += \
     src/resource/pcx.cpp \
     src/resource/rawtexture.cpp \
     src/resource/resourcesystem.cpp \
+    src/resource/sprite.cpp \
     src/resource/sprites.cpp \
     src/resource/texture.cpp \
     src/resource/texturemanifest.cpp \

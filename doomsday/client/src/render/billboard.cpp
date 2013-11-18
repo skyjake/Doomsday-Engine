@@ -1,4 +1,4 @@
-/** @file sprite.cpp Sprite Renderer.
+/** @file billboard.cpp  Rendering billboard "sprites".
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -40,7 +40,7 @@
 
 #include "render/vissprite.h"
 
-#include "render/sprite.h"
+#include "render/billboard.h"
 
 using namespace de;
 
