@@ -128,17 +128,22 @@ void BusyWidget::drawContent()
     }
     else
     {
+        GLState::top().apply();
+
         glDisable(GL_ALPHA_TEST); /// @todo get rid of these
         glDisable(GL_BLEND);
+        glEnable(GL_TEXTURE_2D);
 
         // Draw the texture.
         Rectanglei pos = rule().recti();
-        d->uMvpMatrix = root().projMatrix2D() *
+        d->uMvpMatrix = Matrix4f::scale(Vector3f(1, -1, 1)) *
+                root().projMatrix2D() *
                 Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
         d->drawable.draw();
 
         glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
+        glDisable(GL_TEXTURE_2D);
     }
 }
 
@@ -167,7 +172,7 @@ void BusyWidget::grabTransitionScreenshot()
     GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);*/
 
     d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
-    d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGBA_8888);
+    d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGB_888);
     root().window().drawContentToTexture(*d->transitionTex);
     d->uTex = *d->transitionTex;
 }

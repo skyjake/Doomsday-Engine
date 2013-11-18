@@ -239,6 +239,8 @@ boolean BusyMode_IsTransitionAnimated(void)
 static void preBusySetup(int initialMode)
 {
 #ifdef __CLIENT__
+    ClientWindow::main().busy().grabTransitionScreenshot();
+
     // Are we doing a transition effect?
     busyWillAnimateTransition = animatedTransitionActive(initialMode);
     if(busyWillAnimateTransition)
@@ -250,7 +252,6 @@ static void preBusySetup(int initialMode)
 
     // Load any resources needed beforehand.
     //BusyVisual_PrepareResources();
-    ClientWindow::main().busy().grabTransitionScreenshot();
 
     //BusyVisual_PrepareFont();
     //BusyVisual_LoadTextures();

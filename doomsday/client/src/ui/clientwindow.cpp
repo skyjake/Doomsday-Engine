@@ -749,14 +749,16 @@ void ClientWindow::drawContentToTexture(GLTexture &texture)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLTarget offscreen(texture);
+    GLTarget offscreen(texture, GLTarget::DepthStencil);
     GLState::push()
             .setTarget(offscreen)
-            .setViewport(Rectangleui::fromSize(texture.size()));
+            .setViewport(Rectangleui::fromSize(texture.size()))
+            .apply();
 
-    root().draw();
+    offscreen.clear(GLTarget::ColorDepthStencil);
+    d->root.drawUntil(*d->games);
 
-    GLState::pop();
+    GLState::pop().apply();
 }
 
 void ClientWindow::updateCanvasFormat()
