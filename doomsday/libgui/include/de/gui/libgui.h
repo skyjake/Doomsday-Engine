@@ -38,6 +38,12 @@
 
 #define LIBGUI_ASSERT_GL_OK() DENG2_ASSERT(glGetError() == GL_NO_ERROR)
 
+#ifdef __cplusplus
+#  define LIBGUI_EXTERN_C extern "C"
+#else
+#  define LIBGUI_EXTERN_C extern
+#endif
+
 namespace de {
 
 } // namespace de

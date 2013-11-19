@@ -217,34 +217,3 @@ void Sys_Unlock(mutex_t handle)
         m->unlock();
     }
 }
-
-#if 0
-sem_t Sem_Create(uint32_t initialValue)
-{
-    return (sem_t) SDL_CreateSemaphore(initialValue);
-}
-
-void Sem_Destroy(sem_t semaphore)
-{
-    if(semaphore)
-    {
-        SDL_DestroySemaphore((SDL_sem *) semaphore);
-    }
-}
-
-void Sem_P(sem_t semaphore)
-{
-    if(semaphore)
-    {
-        SDL_SemWait((SDL_sem *) semaphore);
-    }
-}
-
-void Sem_V(sem_t semaphore)
-{
-    if(semaphore)
-    {
-        SDL_SemPost((SDL_sem *) semaphore);
-    }
-}
-#endif

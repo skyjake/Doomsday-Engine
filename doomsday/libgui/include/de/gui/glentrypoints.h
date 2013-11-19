@@ -21,85 +21,101 @@
 
 #include "libgui.h"
 
+#if defined(WIN32) || (defined(UNIX) && !defined(MACOSX))
+#  define LIBGUI_USE_GLENTRYPOINTS
+#endif
+
+#ifdef LIBGUI_USE_GLENTRYPOINTS
+
 #ifdef WIN32
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
-#ifdef min
-#  undef min
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  ifdef min
+#    undef min
+#  endif
+#  ifdef max
+#    undef max
+#  endif
 #endif
 
-#ifdef max
-#  undef max
-#endif
+#undef GL_GLEXT_PROTOTYPES
 
 #include <GL/gl.h>
 #include <GL/glext.h>
-#include <GL/wglext.h>
 
-extern PFNGLACTIVETEXTUREPROC            glActiveTexture;
-extern PFNGLATTACHSHADERPROC             glAttachShader;
+#if defined(WIN32)
+#  include <GL/wglext.h>
+#  define LIBGUI_FETCH_GL_1_3
+#endif
 
-extern PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation;
-extern PFNGLBINDBUFFERPROC               glBindBuffer;
-extern PFNGLBINDFRAMEBUFFERPROC          glBindFramebuffer;
-extern PFNGLBINDRENDERBUFFERPROC         glBindRenderbuffer;
-extern PFNGLBLENDEQUATIONPROC            glBlendEquation;
-extern PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
-extern PFNGLBUFFERDATAPROC               glBufferData;
+#ifdef LIBGUI_FETCH_GL_1_3
+LIBGUI_EXTERN_C LIBGUI_PUBLIC PFNGLACTIVETEXTUREPROC            glActiveTexture;
+LIBGUI_EXTERN_C LIBGUI_PUBLIC PFNGLBLENDEQUATIONPROC            glBlendEquation;
+LIBGUI_EXTERN_C LIBGUI_PUBLIC PFNGLCLIENTACTIVETEXTUREPROC      glClientActiveTexture;
+LIBGUI_EXTERN_C LIBGUI_PUBLIC PFNGLMULTITEXCOORD2FPROC          glMultiTexCoord2f;
+LIBGUI_EXTERN_C LIBGUI_PUBLIC PFNGLMULTITEXCOORD2FVPROC         glMultiTexCoord2fv;
+#endif
 
-extern PFNGLCHECKFRAMEBUFFERSTATUSPROC   glCheckFramebufferStatus;
-extern PFNGLCOMPILESHADERPROC            glCompileShader;
-extern PFNGLCREATEPROGRAMPROC            glCreateProgram;
-extern PFNGLCREATESHADERPROC             glCreateShader;
+LIBGUI_EXTERN_C PFNGLATTACHSHADERPROC             glAttachShader;
 
-extern PFNGLDELETEBUFFERSPROC            glDeleteBuffers;
-extern PFNGLDELETEFRAMEBUFFERSPROC       glDeleteFramebuffers;
-extern PFNGLDELETEPROGRAMPROC            glDeleteProgram;
-extern PFNGLDELETERENDERBUFFERSPROC      glDeleteRenderbuffers;
-extern PFNGLDELETESHADERPROC             glDeleteShader;
-extern PFNGLDETACHSHADERPROC             glDetachShader;
-extern PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
+LIBGUI_EXTERN_C PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation;
+LIBGUI_EXTERN_C PFNGLBINDBUFFERPROC               glBindBuffer;
+LIBGUI_EXTERN_C PFNGLBINDFRAMEBUFFERPROC          glBindFramebuffer;
+LIBGUI_EXTERN_C PFNGLBINDRENDERBUFFERPROC         glBindRenderbuffer;
+LIBGUI_EXTERN_C PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
+LIBGUI_EXTERN_C PFNGLBUFFERDATAPROC               glBufferData;
 
-extern PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray;
+LIBGUI_EXTERN_C PFNGLCHECKFRAMEBUFFERSTATUSPROC   glCheckFramebufferStatus;
+LIBGUI_EXTERN_C PFNGLCOMPILESHADERPROC            glCompileShader;
+LIBGUI_EXTERN_C PFNGLCREATEPROGRAMPROC            glCreateProgram;
+LIBGUI_EXTERN_C PFNGLCREATESHADERPROC             glCreateShader;
 
-extern PFNGLFRAMEBUFFERRENDERBUFFERPROC  glFramebufferRenderbuffer;
-extern PFNGLFRAMEBUFFERTEXTURE2DPROC     glFramebufferTexture2D;
+LIBGUI_EXTERN_C PFNGLDELETEBUFFERSPROC            glDeleteBuffers;
+LIBGUI_EXTERN_C PFNGLDELETEFRAMEBUFFERSPROC       glDeleteFramebuffers;
+LIBGUI_EXTERN_C PFNGLDELETEPROGRAMPROC            glDeleteProgram;
+LIBGUI_EXTERN_C PFNGLDELETERENDERBUFFERSPROC      glDeleteRenderbuffers;
+LIBGUI_EXTERN_C PFNGLDELETESHADERPROC             glDeleteShader;
+LIBGUI_EXTERN_C PFNGLDETACHSHADERPROC             glDetachShader;
+LIBGUI_EXTERN_C PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 
-extern PFNGLGENBUFFERSPROC               glGenBuffers;
-extern PFNGLGENFRAMEBUFFERSPROC          glGenFramebuffers;
-extern PFNGLGENERATEMIPMAPPROC           glGenerateMipmap;
-extern PFNGLGENRENDERBUFFERSPROC         glGenRenderbuffers;
-extern PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation;
-extern PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog;
-extern PFNGLGETPROGRAMIVPROC             glGetProgramiv;
-extern PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog;
-extern PFNGLGETSHADERIVPROC              glGetShaderiv;
-extern PFNGLGETSHADERSOURCEPROC          glGetShaderSource;
-extern PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation;
+LIBGUI_EXTERN_C PFNGLENABLEVERTEXATTRIBARRAYPROC  glEnableVertexAttribArray;
 
-extern PFNGLISBUFFERPROC                 glIsBuffer;
+LIBGUI_EXTERN_C PFNGLFRAMEBUFFERRENDERBUFFERPROC  glFramebufferRenderbuffer;
+LIBGUI_EXTERN_C PFNGLFRAMEBUFFERTEXTURE2DPROC     glFramebufferTexture2D;
 
-extern PFNGLLINKPROGRAMPROC              glLinkProgram;
+LIBGUI_EXTERN_C PFNGLGENBUFFERSPROC               glGenBuffers;
+LIBGUI_EXTERN_C PFNGLGENFRAMEBUFFERSPROC          glGenFramebuffers;
+LIBGUI_EXTERN_C PFNGLGENERATEMIPMAPPROC           glGenerateMipmap;
+LIBGUI_EXTERN_C PFNGLGENRENDERBUFFERSPROC         glGenRenderbuffers;
+LIBGUI_EXTERN_C PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation;
+LIBGUI_EXTERN_C PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog;
+LIBGUI_EXTERN_C PFNGLGETPROGRAMIVPROC             glGetProgramiv;
+LIBGUI_EXTERN_C PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog;
+LIBGUI_EXTERN_C PFNGLGETSHADERIVPROC              glGetShaderiv;
+LIBGUI_EXTERN_C PFNGLGETSHADERSOURCEPROC          glGetShaderSource;
+LIBGUI_EXTERN_C PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation;
 
-extern PFNGLRENDERBUFFERSTORAGEPROC      glRenderbufferStorage;
+LIBGUI_EXTERN_C PFNGLISBUFFERPROC                 glIsBuffer;
 
-extern PFNGLSHADERSOURCEPROC             glShaderSource;
+LIBGUI_EXTERN_C PFNGLLINKPROGRAMPROC              glLinkProgram;
 
-extern PFNGLUNIFORM1FPROC                glUniform1f;
-extern PFNGLUNIFORM1IPROC                glUniform1i;
-extern PFNGLUNIFORM2FPROC                glUniform2f;
-extern PFNGLUNIFORM3FPROC                glUniform3f;
-extern PFNGLUNIFORM4FPROC                glUniform4f;
-extern PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv;
-extern PFNGLUNIFORMMATRIX4FVPROC         glUniformMatrix4fv;
-extern PFNGLUSEPROGRAMPROC               glUseProgram;
+LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEPROC      glRenderbufferStorage;
 
-extern PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
+LIBGUI_EXTERN_C PFNGLSHADERSOURCEPROC             glShaderSource;
+
+LIBGUI_EXTERN_C PFNGLUNIFORM1FPROC                glUniform1f;
+LIBGUI_EXTERN_C PFNGLUNIFORM1IPROC                glUniform1i;
+LIBGUI_EXTERN_C PFNGLUNIFORM2FPROC                glUniform2f;
+LIBGUI_EXTERN_C PFNGLUNIFORM3FPROC                glUniform3f;
+LIBGUI_EXTERN_C PFNGLUNIFORM4FPROC                glUniform4f;
+LIBGUI_EXTERN_C PFNGLUNIFORMMATRIX3FVPROC         glUniformMatrix3fv;
+LIBGUI_EXTERN_C PFNGLUNIFORMMATRIX4FVPROC         glUniformMatrix4fv;
+LIBGUI_EXTERN_C PFNGLUSEPROGRAMPROC               glUseProgram;
+
+LIBGUI_EXTERN_C PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 void getAllOpenGLEntryPoints();
 
-#endif // WIN32
+#endif // LIBGUI_USE_GLENTRYPOINTS
 
 #endif // LIBGUI_GLENTRYPOINTS_H
