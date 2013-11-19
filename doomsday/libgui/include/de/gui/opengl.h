@@ -19,13 +19,13 @@
 #ifndef LIBGUI_SYSTEM_OPENGL_H
 #define LIBGUI_SYSTEM_OPENGL_H
 
-#include <QtOpenGL>
-
 #ifdef MACOSX
 #  include <OpenGL/gl.h>
 #else
 #  include "glentrypoints.h"
 #endif
+
+#include <QtOpenGL>
 
 // Defined in GLES2.
 #ifndef GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
