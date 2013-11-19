@@ -45,7 +45,11 @@ abstract class AbstractUnstableBuilderPackage extends AbstractUnstablePackage im
         if($includePlatformName && $this->platformId !== PID_ANY)
         {
             $plat = &BuildRepositoryPlugin::platform($this->platformId);
-            $title .= ' for '. $plat['nicename'];
+            if($this->platformId !== PID_SOURCE)
+            {
+                $title .= ' for';
+            }
+            $title .= ' '. $plat['nicename'];
         }
         return $title;
     }
