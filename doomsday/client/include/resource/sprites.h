@@ -101,18 +101,4 @@ public:
 #endif
 };
 
-typedef QList<Sprite *> SpriteSet;
-
-void R_InitSprites();
-
-void R_ShutdownSprites();
-
-int R_SpriteCount();
-
-Sprite *R_SpritePtr(int spriteId, int frame);
-
-Sprite &R_Sprite(int spriteId, int frame);
-
-SpriteSet &R_SpriteSet(int spriteId);
-
 #endif // DENG_RESOURCE_SPRITES_H

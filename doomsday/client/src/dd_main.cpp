@@ -1139,7 +1139,7 @@ static int DD_ActivateGameWorker(void *parameters)
     if(p->initiatedBusyMode)
         Con_SetProgress(130);
 
-    R_InitSprites(); // Fully initialize sprites.
+    App_ResourceSystem().initSprites(); // Fully initialize sprites.
     Models_Init();
 
     Def_PostInit();
@@ -1975,7 +1975,7 @@ boolean DD_Init(void)
 
         Def_Read();
 
-        R_InitSprites();
+        App_ResourceSystem().initSprites();
         Models_Init();
 
         Def_PostInit();

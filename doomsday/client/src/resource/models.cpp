@@ -948,7 +948,7 @@ static void scaleModel(modeldef_t &mf, float destHeight, float offset)
 
 static void scaleModelToSprite(modeldef_t &mf, int spriteIdx, int frameIdx)
 {
-    Sprite *sprite = R_SpritePtr(spriteIdx, frameIdx);
+    Sprite *sprite = App_ResourceSystem().spritePtr(spriteIdx, frameIdx);
     if(!sprite) return;
 
     MaterialSnapshot const &ms = sprite->_mats[0]->prepare(Rend_SpriteMaterialSpec());

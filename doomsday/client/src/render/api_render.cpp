@@ -46,7 +46,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
 
     de::zapPtr(info);
 
-    Sprite *sprite = R_SpritePtr(spriteId, frame);
+    Sprite *sprite = App_ResourceSystem().spritePtr(spriteId, frame);
     if(!sprite)
     {
         LOG_WARNING("Invalid sprite id (%i) and/or frame index (%i).")

@@ -27,6 +27,7 @@
 #  include "Fonts"
 #endif
 #include "Materials"
+#include "resource/sprites.h"
 #include "Textures"
 #include <de/Error>
 #include <de/String>
@@ -64,6 +65,7 @@ public:
     /// The referenced color palette could not be found. @ingroup errors
     DENG2_ERROR(MissingColorPaletteError);
 
+    typedef QList<Sprite *> SpriteSet;
 public:
     /**
      * Construct a new resource system, configuring all resource classes and
@@ -97,6 +99,27 @@ public:
      * Provides access to the Materials collection.
      */
     de::Materials &materials();
+
+    /**
+     * Builds the sprite rotation matrixes to account for horizontally flipped
+     * sprites.  Will report an error if the lumps are inconsistant.
+     *
+     * Sprite lump names are 4 characters for the actor, a letter for the frame,
+     * and a number for the rotation, A sprite that is flippable will have an
+     * additional letter/number appended.  The rotation character can be 0 to
+     * signify no rotations.
+     */
+    void initSprites();
+
+    void clearAllSprites();
+
+    int spriteCount();
+
+    Sprite *spritePtr(int spriteId, int frame);
+
+    Sprite &sprite(int spriteId, int frame);
+
+    SpriteSet &spriteSet(int spriteId);
 
     /**
      * Provides access to the Textures collection.

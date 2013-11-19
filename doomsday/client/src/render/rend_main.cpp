@@ -2669,7 +2669,7 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
 
         if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            Sprite *sprite = R_SpritePtr(mo.sprite, mo.frame);
+            Sprite *sprite = App_ResourceSystem().spritePtr(mo.sprite, mo.frame);
             if(Material *material = sprite->material())
             {
                 if(!(mo.dPlayer && (mo.dPlayer->flags & DDPF_CAMERA))

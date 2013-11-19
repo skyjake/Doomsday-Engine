@@ -365,7 +365,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     if(!Mobj_BspLeafAtOrigin(*mo).polyContains(mo->origin))
         return;
 
-    Sprite *sprite = R_SpritePtr(mo->sprite, mo->frame);
+    Sprite *sprite = App_ResourceSystem().spritePtr(mo->sprite, mo->frame);
     if(!sprite) return;
 
     // Always use the front rotation when determining light properties.
@@ -461,7 +461,7 @@ float Mobj_ShadowStrength(mobj_t *mo)
     // Sprites have their own shadow strength factor.
     if(!currentModelDefForMobj(*mo))
     {
-        if(Sprite *sprite = R_SpritePtr(mo->sprite, mo->frame))
+        if(Sprite *sprite = App_ResourceSystem().spritePtr(mo->sprite, mo->frame))
         if(Material *mat = sprite->material())
         {
             // Ensure we've prepared this.
@@ -580,7 +580,7 @@ coord_t Mobj_VisualRadius(mobj_t const &mobj)
     }
 
     // Use the sprite frame's width?
-    if(Sprite *sprite = R_SpritePtr(mobj.sprite, mobj.frame))
+    if(Sprite *sprite = App_ResourceSystem().spritePtr(mobj.sprite, mobj.frame))
     if(Material *material = sprite->material())
     {
         MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());

@@ -173,7 +173,7 @@ void R_ProjectSprite(mobj_t *mo)
     // ...in an invalid state?
     if(!mo->state || mo->state == states) return;
     // ...no sprite frame is defined?
-    Sprite *sprite = R_SpritePtr(mo->sprite, mo->frame);
+    Sprite *sprite = App_ResourceSystem().spritePtr(mo->sprite, mo->frame);
     if(!sprite) return;
     // ...fully transparent?
     float const alpha = Mobj_Alpha(mo);

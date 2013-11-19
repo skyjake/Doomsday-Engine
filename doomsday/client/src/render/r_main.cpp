@@ -553,7 +553,7 @@ void R_Update()
     Def_Read();
 
     R_UpdateRawTexs();
-    R_InitSprites(); // Fully reinitialize sprites.
+    App_ResourceSystem().initSprites(); // Fully reinitialize sprites.
     Models_Init(); // Defs might've changed.
 
     R_UpdateTranslationTables();
@@ -580,7 +580,6 @@ void R_Update()
 
 void R_Shutdown()
 {
-    R_ShutdownSprites();
     Models_Shutdown();
     R_ShutdownSvgs();
 #ifdef __CLIENT__
@@ -1558,7 +1557,7 @@ static void cacheSpritesForState(int stateIdx, MaterialVariantSpec const &spec)
     state_t *state = toState(stateIdx);
     DENG2_ASSERT(state != 0);
 
-    SpriteSet const &sprites = R_SpriteSet(state->sprite);
+    ResourceSystem::SpriteSet const &sprites = App_ResourceSystem().spriteSet(state->sprite);
     foreach(Sprite *sprite, sprites)
     for(int i = 0; i < Sprite::max_angles; ++i)
     {
@@ -1637,7 +1636,7 @@ void Rend_CacheForMap()
     {
         MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
-        for(int i = 0; i < R_SpriteCount(); ++i)
+        for(int i = 0; i < App_ResourceSystem().spriteCount(); ++i)
         {
             if(map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                       0x1/*mobjs are public*/,
@@ -1646,7 +1645,7 @@ void Rend_CacheForMap()
                 // This sprite is used by some state of at least one mobj.
 
                 // Precache all angles for all frames.
-                SpriteSet const &sprites = R_SpriteSet(i);
+                ResourceSystem::SpriteSet const &sprites = App_ResourceSystem().spriteSet(i);
                 foreach(Sprite *sprite, sprites)
                 for(int k = 0; k < Sprite::max_angles; ++k)
                 {

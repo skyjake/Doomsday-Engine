@@ -208,7 +208,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     int const frameIdx    = psp->statePtr->frame;
     float const offScaleY = weaponOffsetScaleY / 1000.0f;
 
-    Sprite const *sprite  = &R_Sprite(spriteIdx, frameIdx);
+    Sprite const *sprite  = &App_ResourceSystem().sprite(spriteIdx, frameIdx);
 
     boolean flip = sprite->_flip[0];
 

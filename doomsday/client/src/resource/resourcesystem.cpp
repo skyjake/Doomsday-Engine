@@ -29,6 +29,8 @@
 #  include "CompositeBitmapFont"
 #endif
 
+#include "def_main.h"
+
 #include "filesys/fs_main.h"
 #include "filesys/lumpindex.h"
 
@@ -102,6 +104,16 @@ DENG2_PIMPL(ResourceSystem)
     Textures textures;
     Materials materials;
 
+    struct SpriteGroup {
+        SpriteSet sprites;
+
+        ~SpriteGroup() {
+            qDeleteAll(sprites);
+        }
+    };
+    typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
+    SpriteGroups spriteGroups;
+
 #ifdef __CLIENT__
     Fonts fonts;
 #endif
@@ -153,6 +165,16 @@ DENG2_PIMPL(ResourceSystem)
     {
         qDeleteAll(resClasses);
         self.clearAllAnimGroups();
+    }
+
+    SpriteGroup *spriteGroup(int spriteId)
+    {
+        SpriteGroups::iterator found = spriteGroups.find(spritenum_t(spriteId));
+        if(found != spriteGroups.end())
+        {
+            return &found.value();
+        }
+        return 0;
     }
 
 #ifdef __CLIENT__
@@ -632,6 +654,45 @@ void ResourceSystem::clearAllSystemResources()
 Materials &ResourceSystem::materials()
 {
     return d->materials;
+}
+
+int ResourceSystem::spriteCount()
+{
+    return d->spriteGroups.count();
+}
+
+Sprite *ResourceSystem::spritePtr(int spriteId, int frame)
+{
+    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
+    {
+        if(frame >= 0 && frame < group->sprites.count())
+        {
+            return group->sprites.at(frame);
+        }
+    }
+    return 0;
+}
+
+Sprite &ResourceSystem::sprite(int spriteId, int frame)
+{
+    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
+    {
+        if(frame >= 0 && frame < group->sprites.count())
+        {
+            return *group->sprites.at(frame);
+        }
+        throw Error("sprite", QString("Invalid sprite frame %1").arg(frame));
+    }
+    throw Error("sprite", QString("Invalid sprite id %1").arg(spriteId));
+}
+
+ResourceSystem::SpriteSet &ResourceSystem::spriteSet(int spriteId)
+{
+    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
+    {
+        return group->sprites;
+    }
+    throw Error("spriteSet", QString("Invalid sprite id %1").arg(spriteId));
 }
 
 Textures &ResourceSystem::textures()
@@ -1238,6 +1299,245 @@ AnimGroup &ResourceSystem::newAnimGroup(int flags)
     // Allocating one by one is inefficient but it doesn't really matter.
     d->animGroups.append(new AnimGroup(uniqueId, flags));
     return *d->animGroups.last();
+}
+
+void ResourceSystem::clearAllSprites()
+{
+    d->spriteGroups.clear();
+}
+
+struct SpriteFrameDef
+{
+    byte frame[2];
+    byte rotation[2];
+    Material *mat;
+};
+
+struct SpriteDef
+{
+    String name;
+    typedef QList<SpriteFrameDef> Frames;
+    Frames frames;
+};
+
+// Tempory storage, used when reading sprite definitions.
+typedef QList<SpriteDef> SpriteDefs;
+static SpriteDefs spriteDefs;
+
+/**
+ * In DOOM, a sprite frame is a patch texture contained in a lump
+ * existing between the S_START and S_END marker lumps (in WAD) whose
+ * lump name matches the following pattern:
+ *
+ *      NAME|A|R(A|R) (for example: "TROOA0" or "TROOA2A8")
+ *
+ * NAME: Four character name of the sprite.
+ * A: Animation frame ordinal 'A'... (ASCII).
+ * R: Rotation angle 0...8
+ *    0 : Use this frame for ALL angles.
+ *    1...8 : Angle of rotation in 45 degree increments.
+ *
+ * The second set of (optional) frame and rotation characters instruct
+ * that the same sprite frame is to be used for an additional frame
+ * but that the sprite patch should be flipped horizontally (right to
+ * left) during the loading phase.
+ *
+ * Sprite rotation 0 is facing the viewer, rotation 1 is one angle
+ * turn CLOCKWISE around the axis. This is not the same as the angle,
+ * which increases counter clockwise (protractor).
+ */
+static SpriteDefs generateSpriteDefs()
+{
+    Time begunAt;
+
+    SpriteDefs spriteDefs;
+
+    PathTreeIterator<TextureScheme::Index> iter(App_Textures().scheme("Sprites").index().leafNodes());
+    while(iter.hasNext())
+    {
+        TextureManifest &manifest = iter.next();
+
+        // Have we already encountered this name?
+        String spriteName = QString(QByteArray::fromPercentEncoding(manifest.path().toUtf8()));
+
+        SpriteDef *spriteDef = 0;
+        for(int i = 0; i < spriteDefs.count(); ++i)
+        {
+            SpriteDef const &cand = spriteDefs[i];
+            if(!cand.name.compareWithoutCase(spriteName, 4))
+            {
+                spriteDef = &spriteDefs[i];
+            }
+        }
+
+        if(!spriteDef)
+        {
+            // An entirely new sprite.
+            spriteDefs.append(SpriteDef());
+            spriteDef = &spriteDefs.last();
+
+            spriteDef->name = spriteName.left(4);
+        }
+
+        // Add the frame(s).
+        int const frameNumber    = spriteName.at(4).toUpper().unicode() - QChar('A').unicode() + 1;
+        int const rotationNumber = spriteName.at(5).digitValue();
+
+        SpriteFrameDef *frame = 0;
+        for(int i = 0; i < spriteDef->frames.count(); ++i)
+        {
+            SpriteFrameDef &cand = spriteDef->frames[i];
+            if(cand.frame[0]    == frameNumber &&
+               cand.rotation[0] == rotationNumber)
+            {
+                frame = &cand;
+                break;
+            }
+        }
+
+        if(!frame)
+        {
+            // A new frame.
+            spriteDef->frames.append(SpriteFrameDef());
+            frame = &spriteDef->frames.last();
+        }
+
+        frame->mat         = &App_Materials().find(de::Uri("Sprites", manifest.path())).material();
+        frame->frame[0]    = frameNumber;
+        frame->rotation[0] = rotationNumber;
+
+        // Not mirrored?
+        if(spriteName.length() >= 8)
+        {
+            frame->frame[1]    = spriteName.at(6).toUpper().unicode() - QChar('A').unicode() + 1;
+            frame->rotation[1] = spriteName.at(7).digitValue();
+        }
+        else
+        {
+            frame->frame[1]    = 0;
+            frame->rotation[1] = 0;
+        }
+    }
+
+    LOG_INFO(String("generateSpriteDefs: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+
+    return spriteDefs;
+}
+
+static void setupSpriteViewAngle(Sprite *sprTemp, int *maxFrame,
+    Material *mat, uint frame, uint rotation, bool flipped)
+{
+    if(frame >= 30) return;
+    if(rotation > 8) return;
+
+    if((signed) frame > *maxFrame)
+    {
+        *maxFrame = frame;
+    }
+
+    if(rotation == 0)
+    {
+        // This frame should be used for all rotations.
+        sprTemp[frame]._rotate = false;
+        for(int r = 0; r < 8; ++r)
+        {
+            sprTemp[frame]._mats[r] = mat;
+            sprTemp[frame]._flip[r] = byte( flipped );
+        }
+        return;
+    }
+
+    rotation--; // Make 0 based.
+
+    sprTemp[frame]._rotate = true;
+    sprTemp[frame]._mats[rotation] = mat;
+    sprTemp[frame]._flip[rotation] = byte( flipped );
+}
+
+void ResourceSystem::initSprites()
+{
+    Time begunAt;
+
+    LOG_MSG("Building sprites...");
+
+    clearAllSprites();
+
+    SpriteDefs defs = generateSpriteDefs();
+
+    if(!defs.isEmpty())
+    {
+        //int spriteNameCount = de::max(defs.count(), countSprNames.num);
+        //groups.reserve(spriteNameCount);
+
+        // Build the final sprites.
+        Sprite sprTemp[128];
+        int customIdx = 0;
+        foreach(SpriteDef const &def, defs)
+        {
+            spritenum_t spriteId = Def_GetSpriteNum(def.name.toUtf8().constData());
+            if(spriteId == -1)
+                spriteId = countSprNames.num + customIdx++;
+
+            DENG2_ASSERT(!d->spriteGroups.contains(spriteId)); // sanity check.
+            Instance::SpriteGroup &group = d->spriteGroups.insert(spriteId, Instance::SpriteGroup()).value();
+
+            std::memset(sprTemp, -1, sizeof(sprTemp));
+
+            int maxSprite = -1;
+            foreach(SpriteFrameDef const &frameDef, def.frames)
+            {
+                setupSpriteViewAngle(sprTemp, &maxSprite, frameDef.mat,
+                                     frameDef.frame[0] - 1, frameDef.rotation[0],
+                                     false);
+
+                if(frameDef.frame[1])
+                {
+                    setupSpriteViewAngle(sprTemp, &maxSprite, frameDef.mat,
+                                         frameDef.frame[1] - 1, frameDef.rotation[1],
+                                         true);
+                }
+            }
+            ++maxSprite;
+
+            for(int k = 0; k < maxSprite; ++k)
+            {
+                if(int(sprTemp[k]._rotate) == -1) // Ahem!
+                {
+                    // No rotations were found for that frame at all.
+                    Error("buildSprites", QString("No patches found for %1 frame %2")
+                                              .arg(def.name).arg(char(k + 'A')));
+                }
+
+                if(sprTemp[k]._rotate)
+                {
+                    // Must have all 8 frames.
+                    for(int rotation = 0; rotation < 8; ++rotation)
+                    {
+                        if(!sprTemp[k]._mats[rotation])
+                        {
+                            Error("buildSprites", QString("Sprite %1 frame %2 is missing rotations")
+                                                      .arg(def.name).arg(char(k + 'A')));
+                        }
+                    }
+                }
+            }
+
+            for(int k = 0; k < maxSprite; ++k)
+            {
+                Sprite const &tmpSprite = sprTemp[k];
+
+                Sprite *sprite = new Sprite;
+
+                sprite->_rotate = tmpSprite._rotate;
+                std::memcpy(sprite->_mats, tmpSprite._mats, sizeof(sprite->_mats));
+                std::memcpy(sprite->_flip, tmpSprite._flip, sizeof(sprite->_flip));
+
+                group.sprites.append(sprite);
+            }
+        }
+    }
+
+    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void ResourceSystem::clearAllColorPalettes()
