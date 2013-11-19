@@ -28,39 +28,37 @@
 #ifndef LIBDENG_SYSTEM_OPENGL_H
 #define LIBDENG_SYSTEM_OPENGL_H
 
-#ifdef WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#  include <GL/gl.h>
-#  ifdef __CLIENT__
-#    include <GL/glext.h>
-#    include <GL/wglext.h>
-#  endif
-#  ifdef __SERVER__
-#    define GL_CLAMP_TO_EDGE    0
-#  endif
-#  define GL_CALL   __stdcall
+#ifdef __SERVER__
+#  define GL_CLAMP_TO_EDGE    0
 #endif
 
-#ifdef UNIX
+#ifdef __CLIENT__
+
+#ifdef WIN32
+#  include <de/gui/opengl.h>
+#  define GL_CALL __stdcall
+#endif
+
+#if defined(UNIX) && !defined(MACOSX)
+#  include <de/gui/opengl.h>
+#  define GL_CALL
+#endif
+
+#if defined(UNIX) && defined(MACOSX)
 #  define GL_GLEXT_PROTOTYPES
 #  if defined(MACOSX_NATIVESDK) || defined(MACOS_10_7)
 #    define GL_EXT_compiled_vertex_array 1
 #    include <OpenGL/gl.h>
 #    include <OpenGL/glext.h>
 #    include <OpenGL/OpenGL.h>
-#  elif defined(MACOSX)
+#  else 
 #    include <GL/gl.h>
 #    include <OpenGL/OpenGL.h>
-#  else
-#    ifdef __CLIENT__
-#      include <SDL.h>
-#    endif
-#    include <GL/gl.h>
-#    include <GL/glext.h>
 #  endif
 #  define GL_CALL
 #endif
+
+#endif // __CLIENT__
 
 #ifndef GL_NV_texture_env_combine4
 #  define GL_NV_texture_env_combine4    1
@@ -72,8 +70,9 @@
 #endif
 
 #include <string.h>
-#include "gl_deferredapi.h"
+
 #ifdef __CLIENT__
+#  include "gl_deferredapi.h"
 #  include "ui/clientwindow.h"
 #endif
 
@@ -156,14 +155,12 @@ extern gl_state_t GL_state;
 #ifdef WIN32
 extern PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT;
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+#endif
 
+#if defined(LIBGUI_USE_GLENTRYPOINTS)
 extern PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT;
-extern PFNGLCLIENTACTIVETEXTUREPROC   glClientActiveTexture;
-extern PFNGLACTIVETEXTUREPROC         glActiveTexture;
-extern PFNGLMULTITEXCOORD2FPROC       glMultiTexCoord2f;
-extern PFNGLMULTITEXCOORD2FVPROC      glMultiTexCoord2fv;
 #endif
 
 #ifndef GL_ATI_texture_env_combine3
