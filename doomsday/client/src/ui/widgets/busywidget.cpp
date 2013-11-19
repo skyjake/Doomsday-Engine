@@ -116,8 +116,10 @@ void BusyWidget::update()
 {
     GuiWidget::update();
 
-    DENG_ASSERT(BusyMode_Active());
-    BusyMode_Loop();
+    if(BusyMode_Active())
+    {
+        BusyMode_Loop();
+    }
 }
 
 void BusyWidget::drawContent()
@@ -128,11 +130,22 @@ void BusyWidget::drawContent()
     }
     else
     {
+        GLState::top().apply();
+
+        glDisable(GL_ALPHA_TEST); /// @todo get rid of these
+        glDisable(GL_BLEND);
+        glEnable(GL_TEXTURE_2D);
+
         // Draw the texture.
         Rectanglei pos = rule().recti();
-        d->uMvpMatrix = root().projMatrix2D() *
+        d->uMvpMatrix = Matrix4f::scale(Vector3f(1, -1, 1)) *
+                root().projMatrix2D() *
                 Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
         d->drawable.draw();
+
+        glEnable(GL_ALPHA_TEST);
+        glEnable(GL_BLEND);
+        glDisable(GL_TEXTURE_2D);
     }
 }
 
@@ -144,11 +157,16 @@ bool BusyWidget::handleEvent(Event const &)
 
 void BusyWidget::grabTransitionScreenshot()
 {
+    LOG_AS("BusyWidget");
+
     //GLTexture::Size size(rule().width().valuei() / 2,
     //                         rule().height().valuei() / 2);
 
     Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
 
+    LOG_DEBUG("Rendering transition frame, size ") << grabRect.size().asText();
+
+    /*
     if(BusyMode_IsTransitionAnimated())
     {
         // Animation transitions are drawn only inside GameWidget, so just
@@ -157,9 +175,11 @@ void BusyWidget::grabTransitionScreenshot()
     }
 
     // Grab the game view's rectangle, as that's where the transition will be drawn.
-    GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);
+    GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);*/
 
-    d->transitionTex.reset(new GLTexture(grabbed, grabRect.size() / 2));
+    d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
+    d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGB_888);
+    root().window().drawGameContentToTexture(*d->transitionTex);
     d->uTex = *d->transitionTex;
 }
 

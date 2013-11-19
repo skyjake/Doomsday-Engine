@@ -159,18 +159,13 @@ bool Widget::hasFocus() const
     return hasRoot() && root().focus() == this;
 }
 
-bool Widget::isHidden() const
+bool Widget::hasFamilyBehavior(Behavior const &flags) const
 {
     for(Widget const *w = this; w != 0; w = w->d->parent)
     {
-        if(w->d->behavior.testFlag(Hidden)) return true;
+        if(w->d->behavior.testFlag(flags)) return true;
     }
     return false;
-}
-
-bool Widget::isVisible() const
-{
-    return !isHidden();
 }
 
 void Widget::show(bool doShow)

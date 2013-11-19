@@ -53,10 +53,10 @@ void BusyVisual_PrepareResources(void)
     BusyTask* task = BusyMode_CurrentTask();
     if(!task) return;
 
-    if(!(task->mode & BUSYF_STARTUP))
+    if(task->mode & BUSYF_STARTUP)
     {
         // Not in startup, so take a copy of the current frame contents.
-        ClientWindow::main().busy().grabTransitionScreenshot();
+        releaseScreenshotTexture(); //ClientWindow::main().busy().grabTransitionScreenshot();
     }
 #endif
 }
@@ -229,6 +229,7 @@ void Con_DrawTransition(void)
     GLuint const texScreenshot = ClientWindow::main().busy().transitionScreenshot()->glName();
 
     GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
+    glDisable(GL_ALPHA_TEST);
     glEnable(GL_TEXTURE_2D);
 
     switch(transition.style)
@@ -253,9 +254,9 @@ void Con_DrawTransition(void)
             y = doomWipeSamples[i];
 
             glColor4f(1, 1, 1, topAlpha);
-            glTexCoord2f(s, 0); glVertex2i(x, y);
+            glTexCoord2f(s, 1); glVertex2i(x, y);
             glColor4f(1, 1, 1, 1);
-            glTexCoord2f(s, 1-div); glVertex2i(x, y + h);
+            glTexCoord2f(s, div); glVertex2i(x, y + h);
         }
         glEnd();
 
@@ -268,8 +269,8 @@ void Con_DrawTransition(void)
         {
             y = doomWipeSamples[i] + h;
 
-            glTexCoord2f(s, 1-div); glVertex2i(x, y);
-            glTexCoord2f(s, 1); glVertex2i(x, y + (SCREENHEIGHT - h));
+            glTexCoord2f(s, div); glVertex2i(x, y);
+            glTexCoord2f(s, 0); glVertex2i(x, y + (SCREENHEIGHT - h));
         }
         glEnd();
         break;
@@ -287,10 +288,10 @@ void Con_DrawTransition(void)
         {
             y = doomWipeSamples[i];
 
-            glTexCoord2f(s, 0); glVertex2i(x, y);
-            glTexCoord2f(s+colWidth, 0); glVertex2i(x+1, y);
-            glTexCoord2f(s+colWidth, 1); glVertex2i(x+1, y+SCREENHEIGHT);
-            glTexCoord2f(s, 1); glVertex2i(x, y+SCREENHEIGHT);
+            glTexCoord2f(s, 1); glVertex2i(x, y);
+            glTexCoord2f(s+colWidth, 1); glVertex2i(x+1, y);
+            glTexCoord2f(s+colWidth, 0); glVertex2i(x+1, y+SCREENHEIGHT);
+            glTexCoord2f(s, 0); glVertex2i(x, y+SCREENHEIGHT);
         }
         glEnd();
         break;
@@ -299,15 +300,16 @@ void Con_DrawTransition(void)
         glColor4f(1, 1, 1, 1 - transition.position);
 
         glBegin(GL_QUADS);
-            glTexCoord2f(0, 0); glVertex2f(0, 0);
-            glTexCoord2f(0, 1); glVertex2f(0, SCREENHEIGHT);
-            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, SCREENHEIGHT);
-            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, 0);
+            glTexCoord2f(0, 1); glVertex2f(0, 0);
+            glTexCoord2f(0, 0); glVertex2f(0, SCREENHEIGHT);
+            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, SCREENHEIGHT);
+            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, 0);
         glEnd();
         break;
     }
 
     GL_SetNoTexture();
+    glEnable(GL_ALPHA_TEST);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
