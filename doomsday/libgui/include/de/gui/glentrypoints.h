@@ -21,31 +21,47 @@
 
 #include "libgui.h"
 
+#if defined(WIN32) || (defined(UNIX) && !defined(MACOSX))
+#  define LIBGUI_USE_GLENTRYPOINTS
+#endif
+
+#ifdef LIBGUI_USE_GLENTRYPOINTS
+
 #ifdef WIN32
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
-#ifdef min
-#  undef min
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  ifdef min
+#    undef min
+#  endif
+#  ifdef max
+#    undef max
+#  endif
 #endif
 
-#ifdef max
-#  undef max
-#endif
+#undef GL_GLEXT_PROTOTYPES
 
 #include <GL/gl.h>
 #include <GL/glext.h>
-#include <GL/wglext.h>
 
+#if defined(WIN32)
+#  include <GL/wglext.h>
+#  define LIBGUI_FETCH_GL_1_3
+#endif
+
+#ifdef LIBGUI_FETCH_GL_1_3
 extern PFNGLACTIVETEXTUREPROC            glActiveTexture;
+extern PFNGLBLENDEQUATIONPROC            glBlendEquation;
+extern PFNGLCLIENTACTIVETEXTUREPROC      glClientActiveTexture;
+extern PFNGLMULTITEXCOORD2FPROC          glMultiTexCoord2f;
+extern PFNGLMULTITEXCOORD2FVPROC         glMultiTexCoord2fv;
+#endif
+
 extern PFNGLATTACHSHADERPROC             glAttachShader;
 
 extern PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation;
 extern PFNGLBINDBUFFERPROC               glBindBuffer;
 extern PFNGLBINDFRAMEBUFFERPROC          glBindFramebuffer;
 extern PFNGLBINDRENDERBUFFERPROC         glBindRenderbuffer;
-extern PFNGLBLENDEQUATIONPROC            glBlendEquation;
 extern PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
 extern PFNGLBUFFERDATAPROC               glBufferData;
 
@@ -100,6 +116,6 @@ extern PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 void getAllOpenGLEntryPoints();
 
-#endif // WIN32
+#endif // LIBGUI_USE_GLENTRYPOINTS
 
 #endif // LIBGUI_GLENTRYPOINTS_H

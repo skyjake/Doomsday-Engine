@@ -18,5 +18,9 @@ else:macx {
 }
 else {
     # Generic Unix.
-    LIBS += -lGL
+    LIBS += $$system(pkg-config --libs gl)
+    INCLUDEPATH += $$system(pkg-config --cflags gl)
+
+    # An additional include path for user's GL headers.
+    !isEmpty(OPENGL_DIR): INCLUDEPATH = $$OPENGL_DIR $$INCLUDEPATH
 }
