@@ -580,6 +580,7 @@ void R_Update()
 
 void R_Shutdown()
 {
+    App_ResourceSystem().clearAllSprites();
     Models_Shutdown();
     R_ShutdownSvgs();
 #ifdef __CLIENT__

@@ -210,7 +210,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/patchname.h \
     $$SRC/include/resource/rawtexture.h \
     $$SRC/include/resource/resourcesystem.h \
-    $$SRC/include/resource/sprites.h \
+    $$SRC/include/resource/sprite.h \
     $$SRC/include/resource/texture.h \
     $$SRC/include/resource/texturemanifest.h \
     $$SRC/include/resource/textures.h \

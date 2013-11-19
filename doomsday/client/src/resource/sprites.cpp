@@ -20,7 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "resource/sprites.h"
+#include "resource/sprite.h"
 
 #include "dd_main.h"
 #include "sys_system.h" // novideo

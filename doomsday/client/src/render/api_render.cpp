@@ -5,7 +5,7 @@
 
 #include "api_render.h"
 
-#include "resource/sprites.h"
+#include "resource/sprite.h"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #endif

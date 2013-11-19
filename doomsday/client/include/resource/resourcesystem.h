@@ -27,7 +27,7 @@
 #  include "Fonts"
 #endif
 #include "Materials"
-#include "resource/sprites.h"
+#include "resource/sprite.h"
 #include "Textures"
 #include <de/Error>
 #include <de/String>

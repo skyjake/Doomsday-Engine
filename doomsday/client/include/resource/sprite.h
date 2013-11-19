@@ -1,4 +1,4 @@
-/** @file sprites.h  Sprite resource management.
+/** @file sprite.h  3D-Sprite resource.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_SPRITES_H
-#define DENG_RESOURCE_SPRITES_H
+#ifndef DENG_RESOURCE_SPRITE_H
+#define DENG_RESOURCE_SPRITE_H
 
 #include "dd_types.h"
 #include <de/String>
@@ -101,4 +101,4 @@ public:
 #endif
 };
 
-#endif // DENG_RESOURCE_SPRITES_H
+#endif // DENG_RESOURCE_SPRITE_H

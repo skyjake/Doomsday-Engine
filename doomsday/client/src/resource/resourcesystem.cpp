@@ -1322,7 +1322,6 @@ struct SpriteDef
 
 // Tempory storage, used when reading sprite definitions.
 typedef QList<SpriteDef> SpriteDefs;
-static SpriteDefs spriteDefs;
 
 /**
  * In DOOM, a sprite frame is a patch texture contained in a lump
@@ -1458,6 +1457,7 @@ void ResourceSystem::initSprites()
 {
     Time begunAt;
 
+    LOG_AS("ResourceSystem");
     LOG_MSG("Building sprites...");
 
     clearAllSprites();
@@ -1504,7 +1504,7 @@ void ResourceSystem::initSprites()
                 if(int(sprTemp[k]._rotate) == -1) // Ahem!
                 {
                     // No rotations were found for that frame at all.
-                    Error("buildSprites", QString("No patches found for %1 frame %2")
+                    Error("initSprites", QString("No patches found for %1 frame %2")
                                               .arg(def.name).arg(char(k + 'A')));
                 }
 
@@ -1515,7 +1515,7 @@ void ResourceSystem::initSprites()
                     {
                         if(!sprTemp[k]._mats[rotation])
                         {
-                            Error("buildSprites", QString("Sprite %1 frame %2 is missing rotations")
+                            Error("initSprites", QString("Sprite %1 frame %2 is missing rotations")
                                                       .arg(def.name).arg(char(k + 'A')));
                         }
                     }

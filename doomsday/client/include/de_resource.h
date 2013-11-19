@@ -29,7 +29,7 @@
 #include "resource/models.h"
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
-#include "resource/sprites.h"
+#include "resource/sprite.h"
 #include "Textures"
 
 #ifdef __CLIENT__

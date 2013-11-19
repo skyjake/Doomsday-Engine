@@ -36,7 +36,7 @@
 #include "world/thinkers.h"
 #include "BspLeaf"
 
-#include "resource/sprites.h"
+#include "resource/sprite.h"
 
 #include "render/vissprite.h"
 
