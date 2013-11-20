@@ -258,10 +258,22 @@ static void unlinkMobjLumobjs()
     }
 }
 
+static void fieldOfViewChanged() {
+    if (VR::mode() == VR::MODE_OCULUS_RIFT) {
+        if (Con_GetFloat("rend-vr-rift-fovx") != fieldOfView)
+            Con_SetFloat("rend-vr-rift-fovx", fieldOfView);
+    }
+    else
+    {
+        if (Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
+            Con_SetFloat("rend-vr-nonrift-fovx", fieldOfView);
+    }
+}
+
 void Rend_Register()
 {
     C_VAR_INT   ("rend-bias",                       &useBias,                       0, 0, 1);
-    C_VAR_FLOAT ("rend-camera-fov",                 &fieldOfView,                   0, 1, 179);
+    C_VAR_FLOAT2("rend-camera-fov",                 &fieldOfView,                   0, 1, 179, fieldOfViewChanged);
 
     C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
     C_VAR_INT   ("rend-glow-height",                &glowHeightMax,                 0, 0, 1024);
@@ -389,8 +401,9 @@ float Rend_FieldOfView()
 {
     if (VR::mode() == VR::MODE_OCULUS_RIFT)
     {
-        fieldOfView = VR::riftFovX(); // Update for culling
-        return VR::riftFovX();
+        // fieldOfView = VR::riftFovX(); // Update for culling
+        // return VR::riftFovX();
+        return fieldOfView;
     }
     else
     {
@@ -3925,7 +3938,7 @@ void Rend_UpdateLightModMatrix()
 {
     if(novideo) return;
 
-    std::memset(lightModRange, 0, sizeof(float) * 255);
+    zap(lightModRange);
 
     if(!App_World().hasMap())
     {
@@ -3935,9 +3948,13 @@ void Rend_UpdateLightModMatrix()
 
     int mapAmbient = App_World().map().ambientLightLevel();
     if(mapAmbient > ambientLight)
+    {
         rAmbient = mapAmbient;
+    }
     else
+    {
         rAmbient = ambientLight;
+    }
 
     for(int i = 0; i < 255; ++i)
     {
@@ -3959,16 +3976,25 @@ void Rend_UpdateLightModMatrix()
 
         // Lower than the ambient limit?
         if(rAmbient != 0 && i+lightlevel <= rAmbient)
+        {
             lightlevel = rAmbient - i;
+        }
 
         // Clamp the result as a modifier to the light value (j).
         if((i + lightlevel) >= 255)
+        {
             lightlevel = 255 - i;
+        }
         else if((i + lightlevel) <= 0)
+        {
             lightlevel = -i;
+        }
 
-        // Insert it into the matrix
+        // Insert it into the matrix.
         lightModRange[i] = lightlevel / 255.0f;
+
+        // Ensure the resultant value never exceeds the expected [0..1] range.
+        DENG2_ASSERT(INRANGE_OF(i / 255.0f + lightModRange[i], 0.f, 1.f));
     }
 }
 
