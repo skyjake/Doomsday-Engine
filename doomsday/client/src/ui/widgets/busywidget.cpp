@@ -19,15 +19,16 @@
 #include "de_platform.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/progresswidget.h"
-#include "GuiRootWidget"
 #include "ui/busyvisual.h"
-#include "busymode.h"
-#include "sys_system.h"
-#include "render/r_main.h"
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
+#include "gl/gl_main.h"
+#include "render/r_main.h"
+#include "GuiRootWidget"
+#include "busymode.h"
+#include "sys_system.h"
 
-#include <de/RootWidget>
+#include <de/concurrency.h>
 #include <de/Drawable>
 #include <de/GLTexture>
 
@@ -126,7 +127,7 @@ void BusyWidget::drawContent()
 {
     if(d->transitionTex.isNull())
     {
-        root().window().canvas().renderTarget().clear(GLTarget::ColorDepth);
+        //root().window().canvas().renderTarget().clear(GLTarget::ColorDepth);
     }
     else
     {
@@ -155,9 +156,18 @@ bool BusyWidget::handleEvent(Event const &)
     return true;
 }
 
-void BusyWidget::grabTransitionScreenshot()
+void BusyWidget::renderTransitionFrame()
 {
     LOG_AS("BusyWidget");
+
+    if(!d->transitionTex.isNull())
+    {
+        // We already have a valid frame, no need to render again.
+        return;
+    }
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     //GLTexture::Size size(rule().width().valuei() / 2,
     //                         rule().height().valuei() / 2);
@@ -183,12 +193,12 @@ void BusyWidget::grabTransitionScreenshot()
     d->uTex = *d->transitionTex;
 }
 
-void BusyWidget::releaseTransitionScreenshot()
+void BusyWidget::releaseTransitionFrame()
 {
     d->transitionTex.reset();
 }
 
-GLTexture const *BusyWidget::transitionScreenshot() const
+GLTexture const *BusyWidget::transitionFrame() const
 {
     return d->transitionTex.data();
 }

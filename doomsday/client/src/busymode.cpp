@@ -236,10 +236,17 @@ boolean BusyMode_IsTransitionAnimated(void)
 }
 #endif
 
+void BusyMode_FreezeGameForBusyMode(void)
+{
+#ifdef __CLIENT__
+    ClientWindow::main().busy().renderTransitionFrame();
+#endif
+}
+
 static void preBusySetup(int initialMode)
 {
 #ifdef __CLIENT__
-    ClientWindow::main().busy().grabTransitionScreenshot();
+    //ClientWindow::main().busy().renderTransitionFrame();
 
     // Are we doing a transition effect?
     busyWillAnimateTransition = animatedTransitionActive(initialMode);
@@ -281,6 +288,11 @@ static void postBusyCleanup()
 
     // Switch the window to normal UI.
     WindowSystem::main().setMode(ClientWindow::Normal);
+
+    if(!Con_TransitionInProgress())
+    {
+        ClientWindow::main().busy().releaseTransitionFrame();
+    }
 #endif
 }
 
@@ -506,6 +518,7 @@ DENG_DECLARE_API(Busy) =
     { DE_API_BUSY },
     BusyMode_Active,
     BusyMode_ElapsedTime,
+    BusyMode_FreezeGameForBusyMode,
     BusyMode_RunTask,
     BusyMode_RunTasks,
     BusyMode_RunNewTask,

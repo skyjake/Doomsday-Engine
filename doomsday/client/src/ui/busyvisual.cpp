@@ -33,7 +33,7 @@
 
 static void releaseScreenshotTexture()
 {
-    ClientWindow::main().busy().releaseTransitionScreenshot();
+    ClientWindow::main().busy().releaseTransitionFrame();
 }
 
 void BusyVisual_ReleaseTextures()
@@ -56,7 +56,7 @@ void BusyVisual_PrepareResources(void)
     if(task->mode & BUSYF_STARTUP)
     {
         // Not in startup, so take a copy of the current frame contents.
-        releaseScreenshotTexture(); //ClientWindow::main().busy().grabTransitionScreenshot();
+        releaseScreenshotTexture(); //ClientWindow::main().busy().renderTransitionFrame();
     }
 #endif
 }
@@ -224,9 +224,9 @@ void Con_DrawTransition(void)
     glLoadIdentity();
     glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
 
-    DENG2_ASSERT(ClientWindow::main().busy().transitionScreenshot() != 0);
+    DENG2_ASSERT(ClientWindow::main().busy().transitionFrame() != 0);
 
-    GLuint const texScreenshot = ClientWindow::main().busy().transitionScreenshot()->glName();
+    GLuint const texScreenshot = ClientWindow::main().busy().transitionFrame()->glName();
 
     GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
     glDisable(GL_ALPHA_TEST);

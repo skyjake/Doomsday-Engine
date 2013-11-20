@@ -242,7 +242,7 @@ DENG2_OBSERVES(App,              GameChange)
         switch(newMode)
         {
         case Busy:
-            busy->grabTransitionScreenshot();
+            //busy->renderTransitionFrame();
 
             game->hide();
             game->disable();
