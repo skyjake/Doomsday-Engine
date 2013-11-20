@@ -309,7 +309,7 @@ Widget *Widget::find(String const &name)
     }
 
     // Descend recursively to child widgets.
-    DENG2_FOR_EACH(Instance::Children, i, d->children)
+    DENG2_FOR_EACH_CONST(Instance::Children, i, d->children)
     {
         Widget *w = (*i)->find(name);
         if(w) return w;
@@ -333,11 +333,11 @@ void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
     // Note: O(n)
     for(int i = 0; i < d->children.size() && (from < 0 || to < 0); ++i)
     {
-        if(d->children[i] == child)
+        if(d->children.at(i) == child)
         {
             from = i;
         }
-        if(d->children[i] == &otherChild)
+        if(d->children.at(i) == &otherChild)
         {
             to = i;
         }
@@ -368,7 +368,7 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
 
     bool preNotified = false;
 
-    DENG2_FOR_EACH(Instance::Children, i, d->children)
+    DENG2_FOR_EACH_CONST(Instance::Children, i, d->children)
     {
         if(*i == args.until)
         {
@@ -417,7 +417,7 @@ void Widget::notifyTreeReversed(NotifyArgs const &args)
 
     for(int i = d->children.size() - 1; i >= 0; --i)
     {
-        Widget *w = d->children[i];
+        Widget *w = d->children.at(i);
 
         if(args.conditionFunc && !(w->*args.conditionFunc)())
             continue; // Skip this one.
@@ -461,7 +461,7 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
         // widgets get events first.
         for(int i = d->children.size() - 1; i >= 0; --i)
         {
-            Widget *w = d->children[i];
+            Widget *w = d->children.at(i);
             bool eaten = w->dispatchEvent(event, memberFunc);
             if(eaten) return true;
         }
