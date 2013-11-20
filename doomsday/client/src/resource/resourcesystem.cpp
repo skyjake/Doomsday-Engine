@@ -682,6 +682,11 @@ ResourceSystem::SpriteSet &ResourceSystem::spriteSet(int spriteId)
     throw MissingSpriteError("ResourceSystem::spriteSet", "Invalid sprite id " + String::number(spriteId));
 }
 
+void ResourceSystem::clearAllSprites()
+{
+    d->spriteGroups.clear();
+}
+
 Textures &ResourceSystem::textures()
 {
     return d->textures;
@@ -1288,11 +1293,6 @@ AnimGroup &ResourceSystem::newAnimGroup(int flags)
     return *d->animGroups.last();
 }
 
-void ResourceSystem::clearAllSprites()
-{
-    d->spriteGroups.clear();
-}
-
 struct SpriteFrameDef
 {
     byte frame[2];
@@ -1434,7 +1434,7 @@ void ResourceSystem::initSprites()
             if(spriteId == -1)
                 spriteId = countSprNames.num + customIdx++;
 
-            DENG2_ASSERT(!d->spriteGroups.contains(spriteId)); // sanity check.
+            DENG2_ASSERT(!d->spriteGroup(spriteId)); // sanity check.
             Instance::SpriteGroup &group = d->spriteGroups.insert(spriteId, Instance::SpriteGroup()).value();
 
             //std::memset(sprTemp, -1, sizeof(sprTemp));
@@ -1504,13 +1504,15 @@ void ResourceSystem::initSprites()
 #ifdef __CLIENT__
 void ResourceSystem::cacheSpriteSet(int spriteId, MaterialVariantSpec const &spec)
 {
-    SpriteSet const &set = spriteSet(spriteId);
-    foreach(Sprite *sprite, set)
-    for(int i = 0; i < Sprite::max_angles; ++i)
+    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
     {
-        if(sprite->hasViewAngle(i))
+        foreach(Sprite *sprite, group->sprites)
+        for(int i = 0; i < Sprite::max_angles; ++i)
         {
-            d->materials.cache(*sprite->viewAngle(0).material, spec);
+            if(sprite->hasViewAngle(i))
+            {
+                d->materials.cache(*sprite->viewAngle(i).material, spec);
+            }
         }
     }
 }
