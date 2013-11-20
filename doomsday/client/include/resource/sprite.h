@@ -49,12 +49,12 @@ public:
     static int const max_angles = 8;
 
 public:
-    byte _rotate;       ///< 0= no rotations, 1= only front, 2= more...
-    Material *_mats[8]; ///< Material to use for view angles 0-7
-    byte _flip[8];      ///< Flip (1 = flip) to use for view angles 0-7
-
-public:
     Sprite();
+    Sprite(Sprite const &other);
+
+    Sprite &operator = (Sprite const &other);
+
+    void newViewAngle(Material *material, uint rotation, bool flipped);
 
     /**
      * Select an appropriate material for visualizing the sprite given a mobj's
@@ -99,6 +99,9 @@ public:
      */
     Lumobj *generateLumobj() const;
 #endif
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // DENG_RESOURCE_SPRITE_H

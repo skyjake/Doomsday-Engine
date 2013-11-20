@@ -55,15 +55,15 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
     }
 
     de::zapPtr(info);
-    info->flip = sprite->_flip[0];
+    bool flip;
+    info->material = sprite->material(0, &flip);
+    info->flip = flip;
 
     if(novideo)
     {
         // We can't prepare the material.
         return true;
     }
-
-    info->material = sprite->_mats[0];
 
 #ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds

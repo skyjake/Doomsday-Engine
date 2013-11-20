@@ -951,7 +951,7 @@ static void scaleModelToSprite(modeldef_t &mf, int spriteIdx, int frameIdx)
     Sprite *sprite = App_ResourceSystem().spritePtr(spriteIdx, frameIdx);
     if(!sprite) return;
 
-    MaterialSnapshot const &ms = sprite->_mats[0]->prepare(Rend_SpriteMaterialSpec());
+    MaterialSnapshot const &ms = sprite->material(0)->prepare(Rend_SpriteMaterialSpec());
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     int off = de::max(0, -tex.origin().y - ms.height());
     scaleModel(mf, ms.height(), off);

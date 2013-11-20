@@ -210,12 +210,13 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
     Sprite const *sprite  = &App_ResourceSystem().sprite(spriteIdx, frameIdx);
 
-    boolean flip = sprite->_flip[0];
+    bool flip;
+    Material *material = sprite->material(0, &flip);
 
     MaterialVariantSpec const &spec =
         App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                     0, -2, 0, false, true, true, false);
-    MaterialSnapshot const &ms = sprite->_mats[0]->prepare(spec);
+    MaterialSnapshot const &ms = material->prepare(spec);
 
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
     variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
@@ -233,7 +234,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
 
-    params->mat = sprite->_mats[0];
+    params->mat = material;
     params->ambientColor[CA] = spr->data.sprite.alpha;
 
     if(spr->data.sprite.isFullBright)

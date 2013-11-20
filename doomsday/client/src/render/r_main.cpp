@@ -1553,16 +1553,16 @@ static int findSpriteOwner(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-static void cacheSpritesForState(int stateIdx, MaterialVariantSpec const &spec)
+static void cacheSpriteSet(int spriteId, MaterialVariantSpec const &spec)
 {
-    state_t *state = toState(stateIdx);
-    DENG2_ASSERT(state != 0);
-
-    ResourceSystem::SpriteSet const &sprites = App_ResourceSystem().spriteSet(state->sprite);
+    ResourceSystem::SpriteSet const &sprites = App_ResourceSystem().spriteSet(spriteId);
     foreach(Sprite *sprite, sprites)
     for(int i = 0; i < Sprite::max_angles; ++i)
     {
-        App_Materials().cache(*sprite->_mats[i], spec);
+        if(Material *material = sprite->material(i))
+        {
+            App_Materials().cache(*material, spec);
+        }
     }
 }
 
@@ -1583,7 +1583,10 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
 
         if(precacheSprites)
         {
-            cacheSpritesForState(i, spec);
+            state_t *state = toState(i);
+            DENG2_ASSERT(state != 0);
+
+            cacheSpriteSet(state->sprite, spec);
         }
         /// @todo What about sounds?
     }
@@ -1644,14 +1647,7 @@ void Rend_CacheForMap()
                                       findSpriteOwner, &i))
             {
                 // This sprite is used by some state of at least one mobj.
-
-                // Precache all angles for all frames.
-                ResourceSystem::SpriteSet const &sprites = App_ResourceSystem().spriteSet(i);
-                foreach(Sprite *sprite, sprites)
-                for(int k = 0; k < Sprite::max_angles; ++k)
-                {
-                    App_Materials().cache(*sprite->_mats[k], spec);
-                }
+                cacheSpriteSet(i, spec);
             }
         }
     }

@@ -34,11 +34,60 @@
 
 using namespace de;
 
-Sprite::Sprite()
-    : _rotate(0)
+DENG2_PIMPL_NOREF(Sprite)
 {
-    zap(_mats);
-    zap(_flip);
+    byte rotate;       ///< 0= no rotations, 1= only front, 2= more...
+    Material *mats[8]; ///< Material to use for view angles 0-7
+    byte flip[8];      ///< Flip (1 = flip) to use for view angles 0-7
+
+    Instance()
+        : rotate(0)
+    {
+        zap(mats);
+        zap(flip);
+    }
+
+    Instance(Instance const &other)
+        : rotate(other.rotate)
+    {
+        std::memcpy(mats, other.mats, sizeof(mats));
+        std::memcpy(flip, other.flip, sizeof(flip));
+    }
+};
+
+Sprite::Sprite() : d(new Instance)
+{}
+
+Sprite::Sprite(Sprite const &other) : d(new Instance(*other.d))
+{}
+
+Sprite &Sprite::operator = (Sprite const &other)
+{
+    d.reset(new Instance(*other.d));
+    return *this;
+}
+
+void Sprite::newViewAngle(Material *material, uint rotation, bool flipped)
+{
+    if(rotation > 8) return;
+
+    if(rotation == 0)
+    {
+        // This frame should be used for all rotations.
+        d->rotate = false;
+        for(int r = 0; r < 8; ++r)
+        {
+            d->mats[r] = material;
+            d->flip[r] = byte( flipped );
+        }
+        return;
+    }
+
+    rotation--; // Make 0 based.
+
+    d->rotate = true;
+    d->mats[rotation] = material;
+    d->flip[rotation] = byte( flipped );
 }
 
 Material *Sprite::material(int rotation, bool *flipX, bool *flipY) const
@@ -51,9 +100,9 @@ Material *Sprite::material(int rotation, bool *flipX, bool *flipY) const
         return 0;
     }
 
-    if(flipX) *flipX = CPP_BOOL(_flip[rotation]);
+    if(flipX) *flipX = CPP_BOOL(d->flip[rotation]);
 
-    return _mats[rotation];
+    return d->mats[rotation];
 }
 
 Material *Sprite::material(angle_t mobjAngle, angle_t angleToEye,
@@ -61,7 +110,7 @@ Material *Sprite::material(angle_t mobjAngle, angle_t angleToEye,
 {
     int rotation = 0; // Use single rotation for all viewing angles (default).
 
-    if(!noRotation && _rotate)
+    if(!noRotation && d->rotate)
     {
         // Rotation is determined by the relative angle to the viewer.
         rotation = (angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) >> 29;

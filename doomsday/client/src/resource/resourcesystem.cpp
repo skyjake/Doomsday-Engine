@@ -1423,36 +1423,6 @@ static SpriteDefs generateSpriteDefs()
     return spriteDefs;
 }
 
-static void setupSpriteViewAngle(Sprite *sprTemp, int *maxFrame,
-    Material *mat, uint frame, uint rotation, bool flipped)
-{
-    if(frame >= 30) return;
-    if(rotation > 8) return;
-
-    if((signed) frame > *maxFrame)
-    {
-        *maxFrame = frame;
-    }
-
-    if(rotation == 0)
-    {
-        // This frame should be used for all rotations.
-        sprTemp[frame]._rotate = false;
-        for(int r = 0; r < 8; ++r)
-        {
-            sprTemp[frame]._mats[r] = mat;
-            sprTemp[frame]._flip[r] = byte( flipped );
-        }
-        return;
-    }
-
-    rotation--; // Make 0 based.
-
-    sprTemp[frame]._rotate = true;
-    sprTemp[frame]._mats[rotation] = mat;
-    sprTemp[frame]._flip[rotation] = byte( flipped );
-}
-
 void ResourceSystem::initSprites()
 {
     Time begunAt;
@@ -1470,7 +1440,6 @@ void ResourceSystem::initSprites()
         //groups.reserve(spriteNameCount);
 
         // Build the final sprites.
-        Sprite sprTemp[128];
         int customIdx = 0;
         foreach(SpriteDef const &def, defs)
         {
@@ -1481,25 +1450,38 @@ void ResourceSystem::initSprites()
             DENG2_ASSERT(!d->spriteGroups.contains(spriteId)); // sanity check.
             Instance::SpriteGroup &group = d->spriteGroups.insert(spriteId, Instance::SpriteGroup()).value();
 
-            std::memset(sprTemp, -1, sizeof(sprTemp));
+            //std::memset(sprTemp, -1, sizeof(sprTemp));
+            Sprite sprTemp[128];
 
             int maxSprite = -1;
             foreach(SpriteFrameDef const &frameDef, def.frames)
             {
-                setupSpriteViewAngle(sprTemp, &maxSprite, frameDef.mat,
-                                     frameDef.frame[0] - 1, frameDef.rotation[0],
-                                     false);
+                int frame = frameDef.frame[0] - 1;
+                if(frame < 30)
+                {
+                    sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[0], false);
+                    if(frame > maxSprite)
+                    {
+                        maxSprite = frame;
+                    }
+                }
 
                 if(frameDef.frame[1])
                 {
-                    setupSpriteViewAngle(sprTemp, &maxSprite, frameDef.mat,
-                                         frameDef.frame[1] - 1, frameDef.rotation[1],
-                                         true);
+                    frame = frameDef.frame[1] - 1;
+                    if(frame < 30)
+                    {
+                        sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[1], true);
+                        if(frame > maxSprite)
+                        {
+                            maxSprite = frame;
+                        }
+                    }
                 }
             }
             ++maxSprite;
 
-            for(int k = 0; k < maxSprite; ++k)
+            /*for(int k = 0; k < maxSprite; ++k)
             {
                 if(int(sprTemp[k]._rotate) == -1) // Ahem!
                 {
@@ -1520,19 +1502,11 @@ void ResourceSystem::initSprites()
                         }
                     }
                 }
-            }
+            }*/
 
             for(int k = 0; k < maxSprite; ++k)
             {
-                Sprite const &tmpSprite = sprTemp[k];
-
-                Sprite *sprite = new Sprite;
-
-                sprite->_rotate = tmpSprite._rotate;
-                std::memcpy(sprite->_mats, tmpSprite._mats, sizeof(sprite->_mats));
-                std::memcpy(sprite->_flip, tmpSprite._flip, sizeof(sprite->_flip));
-
-                group.sprites.append(sprite);
+                group.sprites.append(new Sprite(sprTemp[k]));
             }
         }
     }
