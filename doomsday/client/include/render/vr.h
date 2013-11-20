@@ -80,14 +80,15 @@ void releaseViewPosition();
 bool viewPositionHeld();
 
 // Console variables
-Stereo3DMode mode(); /// Currently active Stereo3DMode index
-float riftFovX(); /// Horizontal field of view in Oculus Rift in degrees
-float riftLatency(); /// Estimated head-motion->photons latency, in seconds
+Stereo3DMode mode(); ///< Currently active Stereo3DMode index
+bool modeNeedsStereoGLFormat(Stereo3DMode mode);
+float riftFovX(); ///< Horizontal field of view in Oculus Rift in degrees
+float riftLatency(); ///< Estimated head-motion->photons latency, in seconds
 
-extern float ipd; /// Interpupillary distance in meters
-extern float playerHeight; /// Human player's real world height in meters
-extern float dominantEye; /// Kludge for aim-down-weapon-sight modes
-extern byte  swapEyes; /// When true, inverts stereoscopic effect
+extern float ipd; ///< Interpupillary distance in meters
+extern float playerHeight; ///< Human player's real world height in meters
+extern float dominantEye; ///< Kludge for aim-down-weapon-sight modes
+extern byte  swapEyes; ///< When true, inverts stereoscopic effect
 
 // Variables below are global, but not user visible //
 

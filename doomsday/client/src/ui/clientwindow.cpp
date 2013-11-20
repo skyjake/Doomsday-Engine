@@ -242,8 +242,6 @@ DENG2_OBSERVES(App,              GameChange)
         switch(newMode)
         {
         case Busy:
-            //busy->renderTransitionFrame();
-
             game->hide();
             game->disable();
             gameUI->hide();
@@ -258,6 +256,7 @@ DENG2_OBSERVES(App,              GameChange)
         default:
             busy->hide();
             busy->disable();
+
             game->show();
             game->enable();
             gameUI->show();
@@ -669,7 +668,13 @@ bool ClientWindow::setDefaultGLFormat() // static
     fmt.setDepthBufferSize(16);
     fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
-    fmt.setStereo(true);
+
+    if(VR::modeNeedsStereoGLFormat(VR::mode()))
+    {
+        // Only use a stereo format for modes that require it.
+        LOG_MSG("Using a stereoscopic format");
+        fmt.setStereo(true);
+    }
 
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {

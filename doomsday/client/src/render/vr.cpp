@@ -80,6 +80,11 @@ VR::Stereo3DMode VR::mode()
     return (VR::Stereo3DMode)vrMode;
 }
 
+bool VR::modeNeedsStereoGLFormat(VR::Stereo3DMode mode)
+{
+    return mode == VR::MODE_QUAD_BUFFERED;
+}
+
 static float vrRiftFovX = 114.8;
 float VR::riftFovX() /// Horizontal field of view in degrees
 {
@@ -134,7 +139,9 @@ static void vrModeChanged()
     if(ClientWindow::hasMain())
     {
         // The logical UI size may need to be changed.
-        ClientWindow::main().updateRootSize();
+        ClientWindow &win = ClientWindow::main();
+        win.updateRootSize();
+        win.updateCanvasFormat(); // possibly changes pixel format
     }
     if (VR::mode() == VR::MODE_OCULUS_RIFT) {
         if(Con_GetFloat("rend-camera-fov") != vrRiftFovX)
