@@ -30,6 +30,11 @@ DENG2_PIMPL(VRContentTransform)
 {
     Drawable oculusRift;
     GLUniform uOculusRiftFB;
+    GLUniform uOculusDistortionScale;
+    GLUniform uOculusScreenSize;
+    GLUniform uOculusLensSeparation;
+    GLUniform uOculusHmdWarpParam;
+    GLUniform uOculusChromAbParam;
 
     typedef GLBufferT<Vertex3Tex> OculusRiftVBuf;
     QScopedPointer<GLTarget> unwarpedTarget;
@@ -37,7 +42,12 @@ DENG2_PIMPL(VRContentTransform)
 
     Instance(Public *i)
         : Base(i),
-          uOculusRiftFB("texture", GLUniform::Sampler2D)
+          uOculusRiftFB("texture", GLUniform::Sampler2D),
+          uOculusDistortionScale("distortionScale", GLUniform::Float),
+          uOculusScreenSize("screenSize", GLUniform::Vec2),
+          uOculusLensSeparation("lensSeparationDistance", GLUniform::Float),
+          uOculusHmdWarpParam("hmdWarpParam", GLUniform::Vec4),
+          uOculusChromAbParam("chromAbParam", GLUniform::Vec4)
     {}
 
     void init()
@@ -59,7 +69,12 @@ DENG2_PIMPL(VRContentTransform)
 
         self.window().root().shaders()
                 .build(oculusRift.program(), "vr.oculusrift.barrel")
-                    << uOculusRiftFB;
+                    << uOculusRiftFB
+                    << uOculusDistortionScale
+                    << uOculusScreenSize
+                    << uOculusLensSeparation
+                    << uOculusHmdWarpParam
+                    << uOculusChromAbParam;
     }
 
     void deinit()
@@ -107,8 +122,11 @@ DENG2_PIMPL(VRContentTransform)
         VR::applyFrustumShift = false;
 
         /// @todo shrunken hud
-        // Allocate offscreen buffers - double Oculus Rift size, to get adequate resolution at center after warp
-        Canvas::Size textureSize(2560, 1600); // 2 * 1280x800
+        // Allocate offscreen buffers - larger than Oculus Rift size, to get adequate resolution at center after warp
+        // For some reason, 1.5X looks best, even though objects are ~2.3X unwarped size at center.
+        Canvas::Size textureSize(1920, 1200); // 1.5 * 1280x800
+        // Canvas::Size textureSize(2560, 1600); // 2 * 1280x800 // Undesirable relative softness at very center of image
+        // Canvas::Size textureSize(3200, 2000); // 2.5 * 1280x800 // Softness here too
         if(unwarpedTexture.size() != textureSize)
         {
             unwarpedTexture.setUndefinedImage(textureSize, Image::RGBA_8888);
@@ -155,6 +173,12 @@ DENG2_PIMPL(VRContentTransform)
         glDisable(GL_BLEND);
 
         // Copy contents of offscreen buffer to normal screen.
+        uOculusDistortionScale = VR::riftState.distortionScale();
+        uOculusScreenSize = VR::riftState.screenSize();
+        uOculusLensSeparation = VR::riftState.lensSeparationDistance();
+        uOculusHmdWarpParam = VR::riftState.hmdWarpParam();
+        uOculusChromAbParam = VR::riftState.chromAbParam();
+        //
         oculusRift.draw();
 
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -198,7 +222,7 @@ Vector2ui VRContentTransform::logicalRootSize(Vector2ui const &physicalCanvasSiz
     case VR::MODE_OCULUS_RIFT:
         /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
         // Adjust effective UI size for stereoscopic rendering.
-        size.x = size.y * VR::riftAspect();
+        size.x = size.y * VR::riftState.aspect();
         size *= 1.0f; // Use a large font in taskbar
         break;
 
