@@ -65,6 +65,9 @@ public:
     /// The referenced color palette could not be found. @ingroup errors
     DENG2_ERROR(MissingColorPaletteError);
 
+    /// The referenced sprite could not be found. @ingroup errors
+    DENG2_ERROR(MissingSpriteError);
+
     typedef QList<Sprite *> SpriteSet;
 public:
     /**
@@ -111,18 +114,49 @@ public:
      */
     void initSprites();
 
+    /**
+     * Destroys all sprites in all sprite sets.
+     */
     void clearAllSprites();
 
+    /**
+     * Returns the total number of sprite @em sets.
+     */
     int spriteCount();
 
-    Sprite *spritePtr(int spriteId, int frame);
+    /**
+     * Returns @c true iff a sprite exists for the specified @a spriteId and @a frame;
+     *
+     * @param spriteId  Unique identifier of the sprite set.
+     * @param frame     Frame number from the set to lookup.
+     */
+    bool hasSprite(int spriteId, int frame);
 
-    Sprite &sprite(int spriteId, int frame);
+    /**
+     * Returns a pointer to the identified Sprite.
+     *
+     * @see hasSprite()
+     */
+    inline Sprite *spritePtr(int spriteId, int frame) {
+        return hasSprite(spriteId, frame)? spriteSet(spriteId)[frame] : 0;
+    }
 
+    /**
+     * Lookup the sprite set for the specified @a spriteId.
+     *
+     * @param spriteId  Unique identifier of the sprite set.
+     * @return  The identified SpriteSet.
+     */
     SpriteSet &spriteSet(int spriteId);
 
 #ifdef __CLIENT__
-    void cacheSpriteSet(int spriteId, de::MaterialVariantSpec const &spec);
+    /**
+     * Precache resources from the set associated with the specified @a spriteId.
+     *
+     * @param spriteId      Unique identifier of the sprite set to cache.
+     * @param materialSpec  Specification to use when caching materials.
+     */
+    void cacheSpriteSet(int spriteId, de::MaterialVariantSpec const &materialSpec);
 #endif
 
     /**

@@ -46,17 +46,17 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
 
     de::zapPtr(info);
 
-    Sprite *sprite = App_ResourceSystem().spritePtr(spriteId, frame);
-    if(!sprite)
+    if(!App_ResourceSystem().hasSprite(spriteId, frame))
     {
         LOG_WARNING("Invalid sprite id (%i) and/or frame index (%i).")
             << spriteId << frame;
         return false;
     }
 
-    de::zapPtr(info);
-    info->material = sprite->viewAngle(0).material;
-    info->flip     = sprite->viewAngle(0).mirrorX;
+    SpriteViewAngle const &sprViewAngle =
+        App_ResourceSystem().spritePtr(spriteId, frame)->viewAngle(0);
+    info->material = sprViewAngle.material;
+    info->flip     = sprViewAngle.mirrorX;
 
     if(novideo)
     {

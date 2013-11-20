@@ -946,9 +946,8 @@ static void scaleModel(modeldef_t &mf, float destHeight, float offset)
     mf.offset[VY] = -bottom * scale + offset;
 }
 
-static void scaleModelToSprite(modeldef_t &mf, int spriteIdx, int frameIdx)
+static void scaleModelToSprite(modeldef_t &mf, Sprite *sprite)
 {
-    Sprite *sprite = App_ResourceSystem().spritePtr(spriteIdx, frameIdx);
     if(!sprite) return;
     if(!sprite->hasViewAngle(0)) return;
 
@@ -1225,7 +1224,10 @@ static void setupModel(ded_model_t& def)
             sprFrame = modef->state->frame;
         }
 
-        scaleModelToSprite(*modef, sprNum, sprFrame);
+        if(Sprite *sprite = App_ResourceSystem().spritePtr(sprNum, sprFrame))
+        {
+            scaleModelToSprite(*modef, sprite);
+        }
     }
 
     if(modef->state)

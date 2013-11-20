@@ -208,10 +208,9 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     int const frameIdx    = psp->statePtr->frame;
     float const offScaleY = weaponOffsetScaleY / 1000.0f;
 
-    Sprite const *sprite  = &App_ResourceSystem().sprite(spriteIdx, frameIdx);
-
-    Material *material = sprite->viewAngle(0).material;
-    bool flip          = sprite->viewAngle(0).mirrorX;
+    SpriteViewAngle const &sprViewAngle = App_ResourceSystem().spritePtr(spriteIdx, frameIdx)->viewAngle(0);
+    Material *material = sprViewAngle.material;
+    bool flip          = sprViewAngle.mirrorX;
 
     MaterialVariantSpec const &spec =
         App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,

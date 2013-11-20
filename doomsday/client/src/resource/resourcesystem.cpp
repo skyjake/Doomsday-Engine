@@ -661,29 +661,16 @@ int ResourceSystem::spriteCount()
     return d->spriteGroups.count();
 }
 
-Sprite *ResourceSystem::spritePtr(int spriteId, int frame)
+bool ResourceSystem::hasSprite(int spriteId, int frame)
 {
     if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
     {
         if(frame >= 0 && frame < group->sprites.count())
         {
-            return group->sprites.at(frame);
+            return true;
         }
     }
-    return 0;
-}
-
-Sprite &ResourceSystem::sprite(int spriteId, int frame)
-{
-    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
-    {
-        if(frame >= 0 && frame < group->sprites.count())
-        {
-            return *group->sprites.at(frame);
-        }
-        throw Error("sprite", QString("Invalid sprite frame %1").arg(frame));
-    }
-    throw Error("sprite", QString("Invalid sprite id %1").arg(spriteId));
+    return false;
 }
 
 ResourceSystem::SpriteSet &ResourceSystem::spriteSet(int spriteId)
@@ -692,7 +679,7 @@ ResourceSystem::SpriteSet &ResourceSystem::spriteSet(int spriteId)
     {
         return group->sprites;
     }
-    throw Error("spriteSet", QString("Invalid sprite id %1").arg(spriteId));
+    throw MissingSpriteError("ResourceSystem::spriteSet", "Invalid sprite id " + String::number(spriteId));
 }
 
 Textures &ResourceSystem::textures()

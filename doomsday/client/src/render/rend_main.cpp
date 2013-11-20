@@ -2669,19 +2669,21 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
 
         if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            Sprite *sprite = App_ResourceSystem().spritePtr(mo.sprite, mo.frame);
-            if(sprite->hasViewAngle(0))
+            if(Sprite *sprite = App_ResourceSystem().spritePtr(mo.sprite, mo.frame))
             {
-                Material *material = sprite->viewAngle(0).material;
-                if(!(mo.dPlayer && (mo.dPlayer->flags & DDPF_CAMERA))
-                   && mo.origin[VZ] <= cluster.visCeiling().heightSmoothed()
-                   && mo.origin[VZ] >= cluster.visFloor().heightSmoothed())
+                if(sprite->hasViewAngle(0))
                 {
-                    coord_t visibleTop = mo.origin[VZ] + material->height();
-                    if(visibleTop > cluster.sector().map().skyFixCeiling())
+                    Material *material = sprite->viewAngle(0).material;
+                    if(!(mo.dPlayer && (mo.dPlayer->flags & DDPF_CAMERA))
+                       && mo.origin[VZ] <= cluster.visCeiling().heightSmoothed()
+                       && mo.origin[VZ] >= cluster.visFloor().heightSmoothed())
                     {
-                        // Raise skyfix ceiling.
-                        cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                        coord_t visibleTop = mo.origin[VZ] + material->height();
+                        if(visibleTop > cluster.sector().map().skyFixCeiling())
+                        {
+                            // Raise skyfix ceiling.
+                            cluster.sector().map().setSkyFixCeiling(visibleTop + 16/*leeway*/);
+                        }
                     }
                 }
             }

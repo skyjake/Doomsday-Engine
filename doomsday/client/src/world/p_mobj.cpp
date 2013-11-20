@@ -344,33 +344,37 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     Mobj_UnlinkLumobjs(mo);
 
-    if(!Mobj_HasCluster(*mo))
-        return;
+    if(!Mobj_HasCluster(*mo)) return;
     SectorCluster &cluster = Mobj_Cluster(*mo);
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
        (mo->ddFlags & DDMF_ALWAYSLIT)))
+    {
         return;
+    }
 
     // Are the automatically calculated light values for fullbright sprite frames in use?
     if(mo->state &&
        (!mobjAutoLights || (mo->state->flags & STF_NOAUTOLIGHT)) &&
        !stateLights[mo->state - states])
+    {
        return;
+    }
 
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: Mobj_Link() should do this and flag the mobj accordingly.
     if(!Mobj_BspLeafAtOrigin(*mo).polyContains(mo->origin))
+    {
         return;
+    }
 
     Sprite *sprite = App_ResourceSystem().spritePtr(mo->sprite, mo->frame);
     if(!sprite) return;
 
     // Always use the front rotation when determining light properties.
     if(!sprite->hasViewAngle(0)) return;
-
     Material *mat = sprite->viewAngle(0).material;
 
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
@@ -463,26 +467,28 @@ float Mobj_ShadowStrength(mobj_t *mo)
     if(!currentModelDefForMobj(*mo))
     {
         if(Sprite *sprite = App_ResourceSystem().spritePtr(mo->sprite, mo->frame))
-        if(sprite->hasViewAngle(0))
         {
-            Material *mat = sprite->viewAngle(0).material;
-            // Ensure we've prepared this.
-            MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
+            if(sprite->hasViewAngle(0))
+            {
+                Material *mat = sprite->viewAngle(0).material;
+                // Ensure we've prepared this.
+                MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
 
-            averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *)
-                ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
-            DENG2_ASSERT(aa != 0);
+                averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *)
+                    ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
+                DENG2_ASSERT(aa != 0);
 
-            // We use an average which factors in the coverage ratio
-            // of alpha:non-alpha pixels.
-            /// @todo Constant weights could stand some tweaking...
-            float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
+                // We use an average which factors in the coverage ratio
+                // of alpha:non-alpha pixels.
+                /// @todo Constant weights could stand some tweaking...
+                float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
 
-            // Almost entirely translucent sprite? => no shadow.
-            if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+                // Almost entirely translucent sprite? => no shadow.
+                if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
 
-            // Apply this factor.
-            strength *= de::min(1.f, .2f + weightedSpriteAlpha);
+                // Apply this factor.
+                strength *= de::min(1.f, .2f + weightedSpriteAlpha);
+            }
         }
     }
 
@@ -583,13 +589,14 @@ coord_t Mobj_VisualRadius(mobj_t const &mobj)
 
     // Use the sprite frame's width?
     if(Sprite *sprite = App_ResourceSystem().spritePtr(mobj.sprite, mobj.frame))
-    if(sprite->hasViewAngle(0))
     {
-        Material *material = sprite->viewAngle(0).material;
-        MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
-        return ms.width() / 2;
+        if(sprite->hasViewAngle(0))
+        {
+            Material *material = sprite->viewAngle(0).material;
+            MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
+            return ms.width() / 2;
+        }
     }
-
 #endif
 
     // Use the physical radius.
