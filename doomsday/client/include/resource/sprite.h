@@ -2,8 +2,6 @@
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,6 +21,7 @@
 #ifndef DENG_RESOURCE_SPRITE_H
 #define DENG_RESOURCE_SPRITE_H
 
+#include "dd_types.h" // angle_t
 #include <de/Error>
 #include <de/String>
 #include <QList>

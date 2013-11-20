@@ -2,6 +2,8 @@
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,12 +27,12 @@
 #  include "MaterialSnapshot"
 #  include "TextureManifest"
 
-#  include "gl/gl_tex.h"
-#  include "gl/gl_texmanager.h"
+#  include "gl/gl_tex.h" // pointlight_analysis_t
 
 #  include "Lumobj"
-#  include "render/billboard.h"
+#  include "render/billboard.h" // Rend_SpriteMaterialSpec
 #endif
+#include <de/Log>
 
 using namespace de;
 
@@ -97,12 +99,14 @@ void Sprite::newViewAngle(Material *material, uint rotation, bool mirrorX)
 
 Sprite::ViewAngle const &Sprite::viewAngle(int rotation) const
 {
+    LOG_AS("Sprite::viewAngle");
+
     if(rotation >= 0 && rotation < max_angles)
     {
         return d->viewAngles[rotation];
     }
     /// @throw MissingViewAngle Specified an invalid rotation.
-    throw MissingViewAngleError("Sprite::viewAngle", "Invalid rotation" + String::number(rotation));
+    throw MissingViewAngleError("Sprite::viewAngle", "Invalid rotation " + String::number(rotation));
 }
 
 Sprite::ViewAngle const &Sprite::closestViewAngle(angle_t mobjAngle, angle_t angleToEye,
@@ -122,6 +126,8 @@ Sprite::ViewAngle const &Sprite::closestViewAngle(angle_t mobjAngle, angle_t ang
 #ifdef __CLIENT__
 Lumobj *Sprite::generateLumobj() const
 {
+    LOG_AS("Sprite::generateLumobj");
+
     // Always use rotation zero.
     /// @todo We could do better here...
     if(!hasViewAngle(0)) return 0;
@@ -133,7 +139,12 @@ Lumobj *Sprite::generateLumobj() const
     Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
 
     pointlight_analysis_t const *pl = reinterpret_cast<pointlight_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis));
-    if(!pl) throw Error("Sprite::generateLumobj", QString("Texture \"%1\" has no BrightPointAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+    if(!pl)
+    {
+        LOG_WARNING("Texture \"%s\" has no BrightPointAnalysis")
+            << ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri();
+        return 0;
+    }
 
     // Apply the auto-calculated color.
     return &(new Lumobj(Vector3d(), pl->brightMul, pl->color.rgb))
