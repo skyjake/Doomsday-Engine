@@ -170,22 +170,17 @@ void Def_Destroy(void)
     defsInited = false;
 }
 
-/**
- * @return              Number of the given sprite else,
- *                      @c -1, if it doesn't exist.
- */
-int Def_GetSpriteNum(const char* name)
+spritenum_t Def_GetSpriteNum(char const *name)
 {
-    int                 i;
-
-    if(!name || !name[0])
-        return -1;
-
-    for(i = 0; i < countSprNames.num; ++i)
-        if(!stricmp(sprNames[i].name, name))
-            return i;
-
-    return -1;
+    if(name && name[0])
+    {
+        for(int i = 0; i < countSprNames.num; ++i)
+        {
+            if(!stricmp(sprNames[i].name, name))
+                return i;
+        }
+    }
+    return -1; // Not found.
 }
 
 int Def_GetMobjNum(const char* id)

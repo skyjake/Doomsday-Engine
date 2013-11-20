@@ -43,7 +43,7 @@ typedef struct {
 typedef void    (C_DECL * acfnptr_t) ();
 
 typedef struct state_s {
-    int             sprite;
+    spritenum_t     sprite;
     int             flags;
     int             frame;
     int             tics;

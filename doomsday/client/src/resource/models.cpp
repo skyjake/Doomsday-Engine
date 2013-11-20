@@ -1214,8 +1214,8 @@ static void setupModel(ded_model_t& def)
     }
     else if(modef->state && modef->testSubFlag(0, MFF_AUTOSCALE))
     {
-        int sprNum   = Def_GetSpriteNum(def.sprite.id);
-        int sprFrame = def.spriteFrame;
+        spritenum_t sprNum = Def_GetSpriteNum(def.sprite.id);
+        int sprFrame       = def.spriteFrame;
 
         if(sprNum < 0)
         {

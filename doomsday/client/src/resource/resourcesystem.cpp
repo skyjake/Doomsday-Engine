@@ -167,14 +167,20 @@ DENG2_PIMPL(ResourceSystem)
         self.clearAllAnimGroups();
     }
 
-    SpriteGroup *spriteGroup(int spriteId)
+    SpriteGroup *spriteGroup(spritenum_t spriteId)
     {
-        SpriteGroups::iterator found = spriteGroups.find(spritenum_t(spriteId));
+        SpriteGroups::iterator found = spriteGroups.find(spriteId);
         if(found != spriteGroups.end())
         {
             return &found.value();
         }
         return 0;
+    }
+
+    SpriteGroup &newSpriteGroup(spritenum_t spriteId)
+    {
+        DENG2_ASSERT(!spriteGroup(spriteId)); // sanity check.
+        return spriteGroups.insert(spriteId, SpriteGroup()).value();
     }
 
 #ifdef __CLIENT__
@@ -661,7 +667,7 @@ int ResourceSystem::spriteCount()
     return d->spriteGroups.count();
 }
 
-bool ResourceSystem::hasSprite(int spriteId, int frame)
+bool ResourceSystem::hasSprite(spritenum_t spriteId, int frame)
 {
     if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
     {
@@ -673,7 +679,7 @@ bool ResourceSystem::hasSprite(int spriteId, int frame)
     return false;
 }
 
-ResourceSystem::SpriteSet &ResourceSystem::spriteSet(int spriteId)
+ResourceSystem::SpriteSet &ResourceSystem::spriteSet(spritenum_t spriteId)
 {
     if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
     {
@@ -1432,10 +1438,11 @@ void ResourceSystem::initSprites()
         {
             spritenum_t spriteId = Def_GetSpriteNum(def.name.toUtf8().constData());
             if(spriteId == -1)
+            {
                 spriteId = countSprNames.num + customIdx++;
+            }
 
-            DENG2_ASSERT(!d->spriteGroup(spriteId)); // sanity check.
-            Instance::SpriteGroup &group = d->spriteGroups.insert(spriteId, Instance::SpriteGroup()).value();
+            Instance::SpriteGroup &group = d->newSpriteGroup(spriteId);
 
             //std::memset(sprTemp, -1, sizeof(sprTemp));
             Sprite sprTemp[128];
@@ -1444,7 +1451,7 @@ void ResourceSystem::initSprites()
             foreach(SpriteFrameDef const &frameDef, def.frames)
             {
                 int frame = frameDef.frame[0] - 1;
-                if(frame < 30)
+                if(frame < 128)
                 {
                     sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[0], false);
                     if(frame > maxSprite)
@@ -1456,7 +1463,7 @@ void ResourceSystem::initSprites()
                 if(frameDef.frame[1])
                 {
                     frame = frameDef.frame[1] - 1;
-                    if(frame < 30)
+                    if(frame < 128)
                     {
                         sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[1], true);
                         if(frame > maxSprite)
@@ -1502,7 +1509,7 @@ void ResourceSystem::initSprites()
 }
 
 #ifdef __CLIENT__
-void ResourceSystem::cacheSpriteSet(int spriteId, MaterialVariantSpec const &spec)
+void ResourceSystem::cacheSpriteSet(spritenum_t spriteId, MaterialVariantSpec const &spec)
 {
     if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
     {

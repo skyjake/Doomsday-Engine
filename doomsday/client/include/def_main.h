@@ -91,7 +91,13 @@ const char*     Def_GetMobjName(int num);
 int             Def_GetStateNum(const char* id);
 const char*     Def_GetStateName(state_t* state);
 int             Def_GetActionNum(const char* id);
-int             Def_GetSpriteNum(const char* name);
+
+/**
+ * Returns the unique sprite number associated with the specified sprite @a name;
+ * otherwise @c -1 if not found.
+ */
+spritenum_t     Def_GetSpriteNum(char const *name);
+
 int             Def_GetModelNum(const char* id);
 int             Def_GetMusicNum(const char* id);
 int             Def_GetSoundNum(const char* id);

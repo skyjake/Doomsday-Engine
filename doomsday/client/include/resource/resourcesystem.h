@@ -130,14 +130,14 @@ public:
      * @param spriteId  Unique identifier of the sprite set.
      * @param frame     Frame number from the set to lookup.
      */
-    bool hasSprite(int spriteId, int frame);
+    bool hasSprite(spritenum_t spriteId, int frame);
 
     /**
      * Returns a pointer to the identified Sprite.
      *
      * @see hasSprite()
      */
-    inline Sprite *spritePtr(int spriteId, int frame) {
+    inline Sprite *spritePtr(spritenum_t spriteId, int frame) {
         return hasSprite(spriteId, frame)? spriteSet(spriteId)[frame] : 0;
     }
 
@@ -147,7 +147,7 @@ public:
      * @param spriteId  Unique identifier of the sprite set.
      * @return  The identified SpriteSet.
      */
-    SpriteSet &spriteSet(int spriteId);
+    SpriteSet &spriteSet(spritenum_t spriteId);
 
 #ifdef __CLIENT__
     /**
@@ -156,7 +156,7 @@ public:
      * @param spriteId      Unique identifier of the sprite set to cache.
      * @param materialSpec  Specification to use when caching materials.
      */
-    void cacheSpriteSet(int spriteId, de::MaterialVariantSpec const &materialSpec);
+    void cacheSpriteSet(spritenum_t spriteId, de::MaterialVariantSpec const &materialSpec);
 #endif
 
     /**
