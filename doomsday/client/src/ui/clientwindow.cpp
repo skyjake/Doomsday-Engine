@@ -77,7 +77,7 @@ DENG2_OBSERVES(App,              GameChange)
     NotificationWidget *notifications;
     ColorAdjustmentDialog *colorAdjust;
     LabelWidget *background;
-    GameSelectionWidget *gameMenu;
+    GameSelectionWidget *gameSelMenu;
     BusyWidget *busy;
     GuiWidget *sidebar;
 
@@ -104,7 +104,7 @@ DENG2_OBSERVES(App,              GameChange)
           notifications(0),
           colorAdjust(0),
           background(0),
-          gameMenu(0),
+          gameSelMenu(0),
           sidebar(0),
           //busyRoot(thisPublic),
           fpsCounter(0),
@@ -172,14 +172,14 @@ DENG2_OBSERVES(App,              GameChange)
         container().add(busy);
 
         // Game selection.
-        gameMenu = new GameSelectionWidget;
-        gameMenu->rule()
+        gameSelMenu = new GameSelectionWidget;
+        gameSelMenu->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
                 .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
-        container().add(gameMenu);
+        container().add(gameSelMenu);
 
         // Common notification area.
         notifications = new NotificationWidget;
@@ -202,9 +202,9 @@ DENG2_OBSERVES(App,              GameChange)
         container().add(taskBar);
 
         // The game selection's height depends on the taskbar.
-        gameMenu->rule().setInput(Rule::Height,
-                               OperatorRule::minimum(root.viewHeight(),
-                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,                                                     style.rules().rule("gameselection.max.height")));
+        gameSelMenu->rule().setInput(Rule::Height,
+                                     OperatorRule::minimum(root.viewHeight(),
+                                                           (taskBar->rule().top() - root.viewHeight() / 2) * 2,                                                     style.rules().rule("gameselection.max.height")));
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
@@ -219,14 +219,14 @@ DENG2_OBSERVES(App,              GameChange)
         {
             //game->hide();
             background->show();
-            gameMenu->show();
+            gameSelMenu->show();
             taskBar->console().enableBlur();
         }
         else
         {
             //game->show();
             background->hide();
-            gameMenu->hide();
+            gameSelMenu->hide();
 
             // For the time being, blurring is not compatible with the
             // legacy OpenGL rendering.
@@ -248,7 +248,7 @@ DENG2_OBSERVES(App,              GameChange)
             game->disable();
             gameUI->hide();
             gameUI->disable();
-            gameMenu->hide();
+            gameSelMenu->hide();
             taskBar->disable();
 
             busy->show();
@@ -262,7 +262,7 @@ DENG2_OBSERVES(App,              GameChange)
             game->enable();
             gameUI->show();
             gameUI->enable();
-            if(!App_GameLoaded()) gameMenu->show();
+            if(!App_GameLoaded()) gameSelMenu->show();
             taskBar->enable();
             break;
         }
@@ -470,7 +470,8 @@ DENG2_OBSERVES(App,              GameChange)
         }
 
         container().remove(*gameUI);
-        container().remove(*gameMenu);
+        container().remove(*busy);
+        container().remove(*gameSelMenu);
         container().remove(*notifications);
         container().remove(*taskBar);
 
@@ -493,7 +494,8 @@ DENG2_OBSERVES(App,              GameChange)
         }
 
         container().add(gameUI);
-        container().add(gameMenu);
+        container().add(busy);
+        container().add(gameSelMenu);
         container().add(notifications);
         container().add(taskBar);
 
@@ -785,7 +787,7 @@ void ClientWindow::drawGameContentToTexture(GLTexture &texture)
             .apply();
 
     offscreen.clear(GLTarget::ColorDepthStencil);
-    d->root.drawUntil(*d->gameMenu);
+    d->root.drawUntil(*d->gameSelMenu);
 
     GLState::pop().apply();
 }

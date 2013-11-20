@@ -65,20 +65,20 @@ DENG2_OBSERVES(ui::Margins, Change)
     GLUniform uBlurWindow;
 
     Instance(Public *i)
-        : Base(i),
-          margins("gap"),
-          inited(false),
-          needGeometry(true),
-          styleChanged(false),
-          opacity(1.f, Animation::Linear),
-          fontId("default"),
-          textColorId("text"),
-          blurInited(false),
-          uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uBlurColor    ("uColor",     GLUniform::Vec4),
-          uBlurTex      ("uTex",       GLUniform::Sampler2D),
-          uBlurStep     ("uBlurStep",  GLUniform::Vec2),
-          uBlurWindow   ("uWindow",    GLUniform::Vec4)
+        : Base(i)
+        , margins("gap")
+        , inited(false)
+        , needGeometry(true)
+        , styleChanged(false)
+        , opacity(1.f, Animation::Linear)
+        , fontId("default")
+        , textColorId("text")
+        , blurInited(false)
+        , uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uBlurColor    ("uColor",     GLUniform::Vec4)
+        , uBlurTex      ("uTex",       GLUniform::Sampler2D)
+        , uBlurStep     ("uBlurStep",  GLUniform::Vec2)
+        , uBlurWindow   ("uWindow",    GLUniform::Vec4)
     {
         self.audienceForChildAddition += this;
         margins.audienceForChange += this;
