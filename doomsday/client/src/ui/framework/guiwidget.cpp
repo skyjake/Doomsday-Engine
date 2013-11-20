@@ -503,8 +503,6 @@ void GuiWidget::draw()
         dsize const depthBeforeDrawingWidget = GLState::stackDepth();
 #endif
 
-        //qDebug() << "drawing" << path();
-
         d->drawBlurredBackground();
 
         if(clipped())

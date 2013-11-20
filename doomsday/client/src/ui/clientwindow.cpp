@@ -463,6 +463,8 @@ DENG2_OBSERVES(App,              GameChange)
 
     void enableCompositor(bool enable)
     {
+        DENG_ASSERT_IN_MAIN_THREAD();
+
         if((enable && compositor) || (!enable && !compositor))
         {
             return;
@@ -484,9 +486,10 @@ DENG2_OBSERVES(App,              GameChange)
         }
         else
         {
-            DENG2_ASSERT(compositor != 0);
+            DENG2_ASSERT(compositor != 0);            
 
-            GuiWidget::destroy(compositor);
+            root.remove(*compositor);
+            compositor->deleteLater();
             compositor = 0;
 
             LOG_MSG("Offscreen UI composition disabled");
@@ -506,6 +509,8 @@ DENG2_OBSERVES(App,              GameChange)
 
     void updateCompositor()
     {
+        DENG_ASSERT_IN_MAIN_THREAD();
+
         if(!compositor) return;
 
         if(VR::mode() == VR::MODE_OCULUS_RIFT)
