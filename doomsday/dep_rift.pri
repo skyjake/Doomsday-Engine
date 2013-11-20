@@ -10,19 +10,19 @@ exists($${LIBOVR_DIR}/Include/OVR.h) {
     }
     macx {
         # ACK! Must rebuild libovr with RTTI (TODO)
-        debug: LIBS += $${LIBOVR_DIR}/Lib/MacOS/Debug/libovr.a
-        release: LIBS += $${LIBOVR_DIR}/Lib/MacOS/Release/libovr.a
+        deng_debug: LIBS += $${LIBOVR_DIR}/Lib/MacOS/Debug/libovr.a
+              else: LIBS += $${LIBOVR_DIR}/Lib/MacOS/Release/libovr.a
         LIBS += -framework IOKit
     }
     # For linux, you need to install libxinerama-dev and libudev-dev
     linux-g++|linux-g++-32 {
-        debug: LIBS += $${LIBOVR_DIR}/Lib/Linux/Debug/i386/libovr.a
-        release: LIBS += $${LIBOVR_DIR}/Lib/Linux/Release/i386/libovr.a
+        deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Linux/Debug/i386/libovr.a
+              else: LIBS += $${LIBOVR_DIR}/Lib/Linux/Release/i386/libovr.a
         LIBS += -lX11 -ludev -lXinerama
     }
     linux-g++-64 { # 64-bit linux untested
-        debug: LIBS += $${LIBOVR_DIR}/Lib/Linux/Debug/x86_64/libovr.a
-        release: LIBS += $${LIBOVR_DIR}/Lib/Linux/Release/x86_64/libovr.a
+        deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Linux/Debug/x86_64/libovr.a
+              else: LIBS += $${LIBOVR_DIR}/Lib/Linux/Release/x86_64/libovr.a
         LIBS += -lX11 -ludev -lXinerama
     }
     DEFINES += DENG_HAVE_OCULUS_API
