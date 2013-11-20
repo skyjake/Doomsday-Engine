@@ -277,9 +277,13 @@ Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
 Widget *Widget::remove(Widget &child)
 {
     DENG2_ASSERT(child.d->parent == this);
-    child.d->parent = 0;
+    DENG2_ASSERT(d->children.contains(&child));
 
+    child.d->parent = 0;
     d->children.removeOne(&child);
+
+    DENG2_ASSERT(!d->children.contains(&child));
+
     if(!child.name().isEmpty())
     {
         d->index.remove(child.name());
@@ -365,18 +369,19 @@ String Widget::uniqueName(String const &name) const
 Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
 {
     NotifyArgs::Result result = NotifyArgs::Continue;
-
     bool preNotified = false;
 
-    DENG2_FOR_EACH_CONST(Instance::Children, i, d->children)
+    for(int idx = 0; idx < d->children.size(); ++idx)
     {
-        if(*i == args.until)
+        Widget *i = d->children.at(idx);
+
+        if(i == args.until)
         {
             result = NotifyArgs::Abort;
             break;
         }
 
-        if(args.conditionFunc && !((*i)->*args.conditionFunc)())
+        if(args.conditionFunc && !(i->*args.conditionFunc)())
             continue; // Skip this one.
 
         if(args.preNotifyFunc && !preNotified)
@@ -385,12 +390,28 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
             (this->*args.preNotifyFunc)();
         }
 
-        ((*i)->*args.notifyFunc)();
+        (i->*args.notifyFunc)();
 
-        if((*i)->notifyTree(args) == NotifyArgs::Abort)
+        if(i != d->children.at(idx))
         {
-            result = NotifyArgs::Abort;
-            break;
+            // The list of children was modified; let's update the current
+            // index accordingly.
+            idx = d->children.indexOf(i);
+
+            // The current widget cannot be removed.
+            DENG2_ASSERT(idx >= 0);
+
+            i = d->children.at(idx);
+        }
+
+        // Continue down the tree by notifying any children of this widget.
+        if(i->childCount())
+        {
+            if(i->notifyTree(args) == NotifyArgs::Abort)
+            {
+                result = NotifyArgs::Abort;
+                break;
+            }
         }
     }
 
