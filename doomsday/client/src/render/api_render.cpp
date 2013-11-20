@@ -55,9 +55,8 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
     }
 
     de::zapPtr(info);
-    bool flip;
-    info->material = sprite->material(0, &flip);
-    info->flip = flip;
+    info->material = sprite->viewAngle(0).material;
+    info->flip     = sprite->viewAngle(0).mirrorX;
 
     if(novideo)
     {

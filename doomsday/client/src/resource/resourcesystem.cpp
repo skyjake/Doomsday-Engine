@@ -1514,6 +1514,21 @@ void ResourceSystem::initSprites()
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
+#ifdef __CLIENT__
+void ResourceSystem::cacheSpriteSet(int spriteId, MaterialVariantSpec const &spec)
+{
+    SpriteSet const &set = spriteSet(spriteId);
+    foreach(Sprite *sprite, set)
+    for(int i = 0; i < Sprite::max_angles; ++i)
+    {
+        if(sprite->hasViewAngle(i))
+        {
+            d->materials.cache(*sprite->viewAngle(0).material, spec);
+        }
+    }
+}
+#endif
+
 void ResourceSystem::clearAllColorPalettes()
 {
     d->colorPaletteNames.clear();

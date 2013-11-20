@@ -36,22 +36,18 @@ using namespace de;
 
 DENG2_PIMPL_NOREF(Sprite)
 {
-    byte rotate;       ///< 0= no rotations, 1= only front, 2= more...
-    Material *mats[8]; ///< Material to use for view angles 0-7
-    byte flip[8];      ///< Flip (1 = flip) to use for view angles 0-7
+    byte rotate; ///< 0= no rotations, 1= only front, 2= more...
+    ViewAngle viewAngles[max_angles];
 
-    Instance()
-        : rotate(0)
-    {
-        zap(mats);
-        zap(flip);
-    }
+    Instance() : rotate(0)
+    {}
 
-    Instance(Instance const &other)
-        : rotate(other.rotate)
+    Instance(Instance const &other) : rotate(other.rotate)
     {
-        std::memcpy(mats, other.mats, sizeof(mats));
-        std::memcpy(flip, other.flip, sizeof(flip));
+        for(int i = 0; i < max_angles; ++i)
+        {
+            viewAngles[i] = other.viewAngles[i];
+        }
     }
 };
 
@@ -67,7 +63,16 @@ Sprite &Sprite::operator = (Sprite const &other)
     return *this;
 }
 
-void Sprite::newViewAngle(Material *material, uint rotation, bool flipped)
+bool Sprite::hasViewAngle(int rotation) const
+{
+    if(rotation >= 0 && rotation < max_angles)
+    {
+        return d->viewAngles[rotation].material != 0;
+    }
+    return false;
+}
+
+void Sprite::newViewAngle(Material *material, uint rotation, bool mirrorX)
 {
     if(rotation > 8) return;
 
@@ -75,10 +80,10 @@ void Sprite::newViewAngle(Material *material, uint rotation, bool flipped)
     {
         // This frame should be used for all rotations.
         d->rotate = false;
-        for(int r = 0; r < 8; ++r)
+        for(int i = 0; i < max_angles; ++i)
         {
-            d->mats[r] = material;
-            d->flip[r] = byte( flipped );
+            d->viewAngles[i].material = material;
+            d->viewAngles[i].mirrorX  = mirrorX;
         }
         return;
     }
@@ -86,27 +91,22 @@ void Sprite::newViewAngle(Material *material, uint rotation, bool flipped)
     rotation--; // Make 0 based.
 
     d->rotate = true;
-    d->mats[rotation] = material;
-    d->flip[rotation] = byte( flipped );
+    d->viewAngles[rotation].material = material;
+    d->viewAngles[rotation].mirrorX  = mirrorX;
 }
 
-Material *Sprite::material(int rotation, bool *flipX, bool *flipY) const
+Sprite::ViewAngle const &Sprite::viewAngle(int rotation) const
 {
-    if(flipX) *flipX = false;
-    if(flipY) *flipY = false;
-
-    if(rotation < 0 || rotation >= max_angles)
+    if(rotation >= 0 && rotation < max_angles)
     {
-        return 0;
+        return d->viewAngles[rotation];
     }
-
-    if(flipX) *flipX = CPP_BOOL(d->flip[rotation]);
-
-    return d->mats[rotation];
+    /// @throw MissingViewAngle Specified an invalid rotation.
+    throw MissingViewAngleError("Sprite::viewAngle", "Invalid rotation" + String::number(rotation));
 }
 
-Material *Sprite::material(angle_t mobjAngle, angle_t angleToEye,
-    bool noRotation, bool *flipX, bool *flipY) const
+Sprite::ViewAngle const &Sprite::closestViewAngle(angle_t mobjAngle, angle_t angleToEye,
+    bool noRotation) const
 {
     int rotation = 0; // Use single rotation for all viewing angles (default).
 
@@ -116,7 +116,7 @@ Material *Sprite::material(angle_t mobjAngle, angle_t angleToEye,
         rotation = (angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) >> 29;
     }
 
-    return material(rotation, flipX, flipY);
+    return viewAngle(rotation);
 }
 
 #ifdef __CLIENT__
@@ -124,8 +124,8 @@ Lumobj *Sprite::generateLumobj() const
 {
     // Always use rotation zero.
     /// @todo We could do better here...
-    Material *mat = material();
-    if(!mat) return 0;
+    if(!hasViewAngle(0)) return 0;
+    Material *mat = viewAngle(0).material;
 
     // Ensure we have up-to-date information about the material.
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());

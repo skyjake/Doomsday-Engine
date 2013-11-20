@@ -206,9 +206,25 @@ void R_ProjectSprite(mobj_t *mo)
 
     // Decide which material to use according to the sprite's angle and position
     // relative to that of the viewer.
-    bool matFlipS, matFlipT;
-    Material *mat = sprite->material(mo->angle, R_ViewPointToAngle(mo->origin),
-                                       mf != 0, &matFlipS, &matFlipT);
+    Material *mat = 0;
+    bool matFlipS = false;
+    bool matFlipT = false;
+
+    try
+    {
+        SpriteViewAngle const &sprViewAngle =
+            sprite->closestViewAngle(mo->angle, R_ViewPointToAngle(mo->origin), mf != 0);
+
+        mat      = sprViewAngle.material;
+        matFlipS = sprViewAngle.mirrorX;
+    }
+    catch(Sprite::MissingViewAngleError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ". Projecting sprite '%i' frame '%i', ignoring.")
+            << mo->sprite << mo->frame;
+    }
+
     if(!mat) return;
 
     // A valid sprite texture in the "Sprites" scheme is required.
@@ -428,68 +444,78 @@ void R_ProjectSprite(mobj_t *mo)
     // Do we need to project a flare source too?
     if(mo->lumIdx != Lumobj::NoIndex)
     {
-        Material *mat = sprite->material(mo->angle, R_ViewPointToAngle(mo->origin));
-        if(!mat) return;
-
-        // A valid sprite texture in the "Sprites" scheme is required.
-        MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
-        if(!ms.hasTexture(MTU_PRIMARY))
-            return;
-        Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-        if(tex.manifest().schemeName().compareWithoutCase("Sprites"))
-            return;
-
-        pointlight_analysis_t const *pl = (pointlight_analysis_t const *)
-            ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis);
-        DENG_ASSERT(pl != 0);
-
-        Lumobj const *lum = cluster.sector().map().lumobj(mo->lumIdx);
-
-        vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
-
-        vis->distance = distFromEye;
-
-        // Determine the exact center of the flare.
-        vis->origin = moPos + visOff;
-        vis->origin.z += lum->zOffset();
-
-        float flareSize = pl->brightMul;
-        // X offset to the flare position.
-        float xOffset = ms.width() * pl->originX - -tex.origin().x;
-
-        // Does the mobj have an active light definition?
-        ded_light_t const *def = (mo->state? stateLights[mo->state - states] : 0);
-        if(def)
+        try
         {
-            if(def->size)
-                flareSize = def->size;
-            if(def->haloRadius)
-                flareSize = def->haloRadius;
-            if(def->offset[VX])
-                xOffset = def->offset[VX];
+            SpriteViewAngle const &sprViewAngle =
+                sprite->closestViewAngle(mo->angle, R_ViewPointToAngle(mo->origin));
 
-            vis->data.flare.flags = def->flags;
-        }
+            Material *mat = sprViewAngle.material;
 
-        vis->data.flare.size = flareSize * 60 * (50 + haloSize) / 100.0f;
-        if(vis->data.flare.size < 8)
-            vis->data.flare.size = 8;
+            // A valid sprite texture in the "Sprites" scheme is required.
+            MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
+            if(!ms.hasTexture(MTU_PRIMARY))
+                return;
+            Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+            if(tex.manifest().schemeName().compareWithoutCase("Sprites"))
+                return;;
+            pointlight_analysis_t const *pl = (pointlight_analysis_t const *)
+                ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis);
+            DENG2_ASSERT(pl != 0);
 
-        // Color is taken from the associated lumobj.
-        V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
+            Lumobj const *lum = cluster.sector().map().lumobj(mo->lumIdx);
 
-        vis->data.flare.factor = mo->haloFactors[viewPlayer - ddPlayers];
-        vis->data.flare.xOff = xOffset;
-        vis->data.flare.mul = 1;
-        vis->data.flare.tex = 0;
+            vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
 
-        if(def && def->flare)
-        {
-            de::Uri const &flaremapResourceUri = *reinterpret_cast<de::Uri const *>(def->flare);
-            if(flaremapResourceUri.path().toStringRef().compareWithoutCase("-"))
+            vis->distance = distFromEye;
+
+            // Determine the exact center of the flare.
+            vis->origin = moPos + visOff;
+            vis->origin.z += lum->zOffset();
+
+            float flareSize = pl->brightMul;
+            // X offset to the flare position.
+            float xOffset = ms.width() * pl->originX - -tex.origin().x;
+
+            // Does the mobj have an active light definition?
+            ded_light_t const *def = (mo->state? stateLights[mo->state - states] : 0);
+            if(def)
             {
-                vis->data.flare.tex = GL_PrepareFlaremap(flaremapResourceUri);
+                if(def->size)
+                    flareSize = def->size;
+                if(def->haloRadius)
+                    flareSize = def->haloRadius;
+                if(def->offset[VX])
+                    xOffset = def->offset[VX];
+
+                vis->data.flare.flags = def->flags;
             }
+
+            vis->data.flare.size = flareSize * 60 * (50 + haloSize) / 100.0f;
+            if(vis->data.flare.size < 8)
+                vis->data.flare.size = 8;
+
+            // Color is taken from the associated lumobj.
+            V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
+
+            vis->data.flare.factor = mo->haloFactors[viewPlayer - ddPlayers];
+            vis->data.flare.xOff = xOffset;
+            vis->data.flare.mul = 1;
+            vis->data.flare.tex = 0;
+
+            if(def && def->flare)
+            {
+                de::Uri const &flaremapResourceUri = *reinterpret_cast<de::Uri const *>(def->flare);
+                if(flaremapResourceUri.path().toStringRef().compareWithoutCase("-"))
+                {
+                    vis->data.flare.tex = GL_PrepareFlaremap(flaremapResourceUri);
+                }
+            }
+        }
+        catch(Sprite::MissingViewAngleError const &er)
+        {
+            // Log but otherwise ignore this error.
+            LOG_WARNING(er.asText() + ". Projecting flare source for sprite '%i' frame '%i', ignoring.")
+                << mo->sprite << mo->frame;
         }
     }
 }

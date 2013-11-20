@@ -2670,8 +2670,9 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
         if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
         {
             Sprite *sprite = App_ResourceSystem().spritePtr(mo.sprite, mo.frame);
-            if(Material *material = sprite->material())
+            if(sprite->hasViewAngle(0))
             {
+                Material *material = sprite->viewAngle(0).material;
                 if(!(mo.dPlayer && (mo.dPlayer->flags & DDPF_CAMERA))
                    && mo.origin[VZ] <= cluster.visCeiling().heightSmoothed()
                    && mo.origin[VZ] >= cluster.visFloor().heightSmoothed())

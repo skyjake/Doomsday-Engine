@@ -121,6 +121,10 @@ public:
 
     SpriteSet &spriteSet(int spriteId);
 
+#ifdef __CLIENT__
+    void cacheSpriteSet(int spriteId, de::MaterialVariantSpec const &spec);
+#endif
+
     /**
      * Provides access to the Textures collection.
      */

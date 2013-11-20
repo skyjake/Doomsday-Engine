@@ -1553,19 +1553,6 @@ static int findSpriteOwner(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-static void cacheSpriteSet(int spriteId, MaterialVariantSpec const &spec)
-{
-    ResourceSystem::SpriteSet const &sprites = App_ResourceSystem().spriteSet(spriteId);
-    foreach(Sprite *sprite, sprites)
-    for(int i = 0; i < Sprite::max_angles; ++i)
-    {
-        if(Material *material = sprite->material(i))
-        {
-            App_Materials().cache(*material, spec);
-        }
-    }
-}
-
 #undef Rend_CacheForMobjType
 DENG_EXTERN_C void Rend_CacheForMobjType(int num)
 {
@@ -1586,7 +1573,7 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
             state_t *state = toState(i);
             DENG2_ASSERT(state != 0);
 
-            cacheSpriteSet(state->sprite, spec);
+            App_ResourceSystem().cacheSpriteSet(state->sprite, spec);
         }
         /// @todo What about sounds?
     }
@@ -1647,7 +1634,7 @@ void Rend_CacheForMap()
                                       findSpriteOwner, &i))
             {
                 // This sprite is used by some state of at least one mobj.
-                cacheSpriteSet(i, spec);
+                App_ResourceSystem().cacheSpriteSet(i, spec);
             }
         }
     }

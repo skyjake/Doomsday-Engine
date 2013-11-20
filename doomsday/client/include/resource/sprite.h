@@ -23,7 +23,7 @@
 #ifndef DENG_RESOURCE_SPRITE_H
 #define DENG_RESOURCE_SPRITE_H
 
-#include "dd_types.h"
+#include <de/Error>
 #include <de/String>
 #include <QList>
 
@@ -46,7 +46,18 @@ class Lumobj;
 class Sprite
 {
 public:
+    /// Required view angle is missing. @ingroup errors
+    DENG2_ERROR(MissingViewAngleError);
+
     static int const max_angles = 8;
+
+    struct ViewAngle {
+        Material *material;
+        bool mirrorX;
+
+        ViewAngle() : material(0), mirrorX(false)
+        {}
+    };
 
 public:
     Sprite();
@@ -54,38 +65,38 @@ public:
 
     Sprite &operator = (Sprite const &other);
 
-    void newViewAngle(Material *material, uint rotation, bool flipped);
+    void newViewAngle(Material *material, uint rotation, bool mirrorX);
 
     /**
-     * Select an appropriate material for visualizing the sprite given a mobj's
+     * Returns @c true iff a view angle is defined for the specified @a rotation.
+     *
+     * @param rotation  Rotation index/identifier to lookup the material for. The
+     *                  valid range is [0..max_angles)
+     */
+    bool hasViewAngle(int rotation) const;
+
+    /**
+     * Returns the view angle for the specified @a rotation.
+     *
+     * @param rotation  Rotation index/identifier to lookup the material for. The
+     *                  valid range is [0..max_angles)
+     *
+     * @return  The viewAngle associated with the specified rotation.
+     */
+    ViewAngle const &viewAngle(int rotation) const;
+
+    /**
+     * Select an appropriate view angle for visualizing the sprite given a mobj's
      * angle and relative angle with the viewer (the 'eye').
      *
      * @param mobjAngle   Angle of the mobj in the map coordinate space.
      * @param angleToEye  Relative angle of the mobj from the view position.
      * @param noRotation  @c true= Ignore rotations and always use the "front".
      *
-     * Return values:
-     * @param flipX       @c true= chosen material should be flipped on the X axis.
-     * @param flipY       @c true= chosen material should be flipped on the Y axis.
-     *
-     * @return  The chosen material otherwise @c 0.
+     * @return  The viewAngle associated with the chosen rotation.
      */
-    Material *material(angle_t mobjAngle, angle_t angleToEye, bool noRotation = false,
-                       bool *flipX = 0, bool *flipY = 0) const;
-
-    /**
-     * Returns the material attributed to the specified rotation.
-     *
-     * @param rotation  Rotation index/identifier to lookup the material for. The
-     *                  valid range is [0...SPRITEFRAME_MAX_ANGLES)
-     *
-     * Return values:
-     * @param flipX     @c true= chosen material should be flipped on the X axis.
-     * @param flipY     @c true= chosen material should be flipped on the Y axis.
-     *
-     * @return  The attributed material otherwise @c 0.
-     */
-    Material *material(int rotation = 0, bool *flipX = 0, bool *flipY = 0) const;
+    ViewAngle const &closestViewAngle(angle_t mobjAngle, angle_t angleToEye,
+        bool noRotation = false) const;
 
 #ifdef __CLIENT__
     /**
@@ -103,5 +114,7 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef Sprite::ViewAngle SpriteViewAngle;
 
 #endif // DENG_RESOURCE_SPRITE_H

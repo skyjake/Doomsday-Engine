@@ -369,8 +369,9 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     if(!sprite) return;
 
     // Always use the front rotation when determining light properties.
-    Material *mat = sprite->material();
-    if(!mat) return;
+    if(!sprite->hasViewAngle(0)) return;
+
+    Material *mat = sprite->viewAngle(0).material;
 
     MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
     if(!ms.hasTexture(MTU_PRIMARY)) return; // Unloadable texture?
@@ -462,8 +463,9 @@ float Mobj_ShadowStrength(mobj_t *mo)
     if(!currentModelDefForMobj(*mo))
     {
         if(Sprite *sprite = App_ResourceSystem().spritePtr(mo->sprite, mo->frame))
-        if(Material *mat = sprite->material())
+        if(sprite->hasViewAngle(0))
         {
+            Material *mat = sprite->viewAngle(0).material;
             // Ensure we've prepared this.
             MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
 
@@ -581,8 +583,9 @@ coord_t Mobj_VisualRadius(mobj_t const &mobj)
 
     // Use the sprite frame's width?
     if(Sprite *sprite = App_ResourceSystem().spritePtr(mobj.sprite, mobj.frame))
-    if(Material *material = sprite->material())
+    if(sprite->hasViewAngle(0))
     {
+        Material *material = sprite->viewAngle(0).material;
         MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
         return ms.width() / 2;
     }

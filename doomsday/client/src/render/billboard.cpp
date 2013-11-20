@@ -210,8 +210,8 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
     Sprite const *sprite  = &App_ResourceSystem().sprite(spriteIdx, frameIdx);
 
-    bool flip;
-    Material *material = sprite->material(0, &flip);
+    Material *material = sprite->viewAngle(0).material;
+    bool flip          = sprite->viewAngle(0).mirrorX;
 
     MaterialVariantSpec const &spec =
         App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
