@@ -297,6 +297,7 @@ static bool loadRiftParametersNoCheck() {
               */
     return true;
 #endif
+    return false;
 }
 // True if Oculus Rift is enabled and can report head orientation.
 bool VR::hasHeadOrientation()
