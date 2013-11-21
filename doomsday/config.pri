@@ -149,9 +149,15 @@ else:macx: include(config_macx.pri)
 
 unix:deng_ccache {
     # ccache can be used to speed up recompilation.
-    QMAKE_CC  = ccache $$QMAKE_CC -Qunused-arguments
-    QMAKE_CXX = ccache $$QMAKE_CXX -Qunused-arguments
-    QMAKE_CXXFLAGS_WARN_ON += -Wno-self-assign
+    *-clang* {
+        QMAKE_CC  = ccache $$QMAKE_CC -Qunused-arguments
+        QMAKE_CXX = ccache $$QMAKE_CXX -Qunused-arguments
+        QMAKE_CXXFLAGS_WARN_ON += -Wno-self-assign
+    }
+    *-gcc*|*-g++* {
+        QMAKE_CC  = ccache $$QMAKE_CC
+        QMAKE_CXX = ccache $$QMAKE_CXX
+    }
 }
 
 deng_nofixedasm {
