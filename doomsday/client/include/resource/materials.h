@@ -230,20 +230,6 @@ public:
 
 #ifdef __CLIENT__
     /**
-     * Rewind all material animations back to their initial/starting state.
-     *
-     * @see all(), MaterialVariant::restartAnimation()
-     */
-    inline void restartAllAnimations() const
-    {
-        foreach(Material *material, all())
-        foreach(MaterialAnimation *animation, material->animations())
-        {
-            animation->restart();
-        }
-    }
-
-    /**
      * Prepare a material variant specification in accordance to the specified
      * usage context. If incomplete context information is supplied, suitable
      * default values will be chosen in their place.

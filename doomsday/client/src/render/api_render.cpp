@@ -2,13 +2,19 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_defs.h"
 
 #include "api_render.h"
+#include "render/r_main.h"
+#include "render/billboard.h" // Rend_SpriteMaterialSpec
 
+#include "resource/models.h"
 #include "resource/sprite.h"
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
+#  include "MaterialVariantSpec"
 #endif
+#include <de/Log>
 
 // m_misc.c
 DENG_EXTERN_C int M_ScreenShot(const char* name, int bits);
@@ -19,8 +25,35 @@ DENG_EXTERN_C void Models_CacheForState(int stateIndex);
 // r_draw.cpp
 DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths);
 
+#undef Rend_CacheForMobjType
+DENG_EXTERN_C void Rend_CacheForMobjType(int num)
+{
+    LOG_AS("Rend.CacheForMobjType");
+
+    if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
+    if(num < 0 || num >= defs.count.mobjs.num) return;
+
+    de::MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
+
+    /// @todo Optimize: Traverses the entire state list!
+    for(int i = 0; i < defs.count.states.num; ++i)
+    {
+        if(stateOwners[i] != &mobjInfo[num]) continue;
+
+        Models_CacheForState(i);
+
+        if(precacheSprites)
+        {
+            state_t *state = Def_GetState(i);
+            DENG2_ASSERT(state != 0);
+
+            App_ResourceSystem().cacheSpriteSet(state->sprite, spec);
+        }
+        /// @todo What about sounds?
+    }
+}
+
 // r_main.cpp
-DENG_EXTERN_C void Rend_CacheForMobjType(int mobjtypeNum);
 DENG_EXTERN_C void R_RenderPlayerView(int num);
 DENG_EXTERN_C void R_SetViewOrigin(int consoleNum, coord_t const origin[3]);
 DENG_EXTERN_C void R_SetViewAngle(int consoleNum, angle_t angle);
@@ -40,7 +73,7 @@ DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);
 #undef R_GetSpriteInfo
 DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *info)
 {
-    LOG_AS("R_GetSpriteInfo");
+    LOG_AS("Rend.GetSpriteInfo");
 
     if(!info) return false;
 

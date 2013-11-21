@@ -55,7 +55,7 @@ public:
     static int const max_angles = 8;
 
     /**
-     * One depiction of the sprite as if viewed from the associated angle.
+     * One depiction of the entity as if viewed from the associated angle.
      */
     struct ViewAngle {
         Material *material;

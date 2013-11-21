@@ -24,6 +24,7 @@
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
+#include "resource/models.h"
 #ifdef __CLIENT__
 #  include "BitmapFont"
 #  include "CompositeBitmapFont"
@@ -37,6 +38,18 @@
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
+
+// For smart caching logics:
+#  include "network/net_demo.h" // playback
+#  include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec
+#  include "render/billboard.h" // Rend_SpriteMaterialSpec
+#  include "render/sky.h"
+
+#  include "world/world.h"
+#  include "world/map.h"
+#  include "world/p_object.h"
+#  include "world/thinkers.h"
+#  include "Surface"
 #endif
 
 #include <de/ByteRefArray>
@@ -1623,6 +1636,126 @@ void ResourceSystem::setDefaultColorPalette(ColorPalette *newDefaultPalette)
 {
     d->defaultColorPalette = newDefaultPalette? newDefaultPalette->id() : 0;
 }
+
+#ifdef __CLIENT__
+
+void ResourceSystem::restartAllMaterialAnimations()
+{
+    foreach(Material *material, d->materials.all())
+    foreach(MaterialAnimation *animation, material->animations())
+    {
+        animation->restart();
+    }
+}
+
+static int findSpriteOwner(thinker_t *th, void *context)
+{
+    mobj_t *mo = reinterpret_cast<mobj_t *>(th);
+    int const sprite = *static_cast<int *>(context);
+
+    if(mo->type >= 0 && mo->type < defs.count.mobjs.num)
+    {
+        /// @todo optimize: traverses the entire state list!
+        for(int i = 0; i < defs.count.states.num; ++i)
+        {
+            if(stateOwners[i] != &mobjInfo[mo->type])
+            {
+                continue;
+            }
+
+            state_t *state = Def_GetState(i);
+            DENG2_ASSERT(state != 0);
+
+            if(state->sprite == sprite)
+            {
+                return true; // Found one.
+            }
+        }
+    }
+
+    return false; // Continue iteration.
+}
+
+void ResourceSystem::cacheForCurrentMap()
+{
+    // Don't precache when playing a demo (why not? -ds).
+    if(playback) return;
+
+    /// @todo fixme: Do not assume the current map.
+    Map &map = App_World().map();
+
+    if(precacheMapMaterials)
+    {
+        MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
+
+        foreach(Line *line, map.lines())
+        for(int i = 0; i < 2; ++i)
+        {
+            LineSide &side = line->side(i);
+            if(!side.hasSections()) continue;
+
+            if(side.middle().hasMaterial())
+                d->materials.cache(side.middle().material(), spec);
+
+            if(side.top().hasMaterial())
+                d->materials.cache(side.top().material(), spec);
+
+            if(side.bottom().hasMaterial())
+                d->materials.cache(side.bottom().material(), spec);
+        }
+
+        foreach(Sector *sector, map.sectors())
+        {
+            // Skip sectors with no line sides as their planes will never be drawn.
+            if(!sector->sideCount()) continue;
+
+            foreach(Plane *plane, sector->planes())
+            {
+                if(plane->surface().hasMaterial())
+                    d->materials.cache(plane->surface().material(), spec);
+            }
+        }
+    }
+
+    if(precacheSprites)
+    {
+        MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
+
+        for(int i = 0; i < App_ResourceSystem().spriteCount(); ++i)
+        {
+            if(map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                      0x1/*mobjs are public*/,
+                                      findSpriteOwner, &i))
+            {
+                // This sprite is used by some state of at least one mobj.
+                cacheSpriteSet(i, spec);
+            }
+        }
+    }
+
+     // Sky models usually have big skins.
+    Sky_Cache();
+
+    // Precache model skins?
+    if(useModels && precacheSkins)
+    {
+        // All mobjs are public.
+        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                               Models_CacheForMobj);
+    }
+}
+
+void ResourceSystem::processCacheQueue()
+{
+    d->materials.processCacheQueue();
+}
+
+void ResourceSystem::purgeCacheQueue()
+{
+    d->materials.purgeCacheQueue();
+}
+
+#endif // __CLIENT__
 
 void ResourceSystem::consoleRegister() // static
 {

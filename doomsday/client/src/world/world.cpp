@@ -630,9 +630,11 @@ DENG2_PIMPL(World)
         map->buildMaterialLists();
         P_MapSpawnPlaneParticleGens();
 
+        // Precaching from 100 to 200.
+        Con_SetProgress(100);
         Time begunPrecacheAt;
-        Rend_CacheForMap();
-        App_Materials().processCacheQueue();
+        App_ResourceSystem().cacheForCurrentMap();
+        App_ResourceSystem().processCacheQueue();
         LOG_INFO(String("Precaching completed in %1 seconds.").arg(begunPrecacheAt.since(), 0, 'g', 2));
 
         ClientApp::renderSystem().clearDrawLists();
@@ -648,7 +650,7 @@ DENG2_PIMPL(World)
         map->initBias(); // Shadow bias sources and surfaces.
 
         // Restart all material animations.
-        App_Materials().restartAllAnimations();
+        App_ResourceSystem().restartAllMaterialAnimations();
 #endif
 
         /*

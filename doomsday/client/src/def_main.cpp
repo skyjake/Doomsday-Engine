@@ -218,6 +218,15 @@ const char* Def_GetMobjName(int num)
     return defs.mobjs[num].id;
 }
 
+state_t *Def_GetState(int num)
+{
+    if(num >= 0 && num < defs.count.states.num)
+    {
+        return states + num;
+    }
+    return 0; // Not found.
+}
+
 int Def_GetStateNum(const char* id)
 {
     int idx = -1;

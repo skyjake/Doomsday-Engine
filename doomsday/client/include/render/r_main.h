@@ -224,11 +224,6 @@ char const *R_ChooseFixedFont(void);
 char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
 #endif
 
-/**
- * Prepare resources for the current Map.
- */
-void Rend_CacheForMap(void);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

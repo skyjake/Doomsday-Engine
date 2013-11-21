@@ -273,6 +273,32 @@ public:
      */
     void setDefaultColorPalette(ColorPalette *newDefaultPalette);
 
+#ifdef __CLIENT__
+
+    /**
+     * Rewind all material animations back to their initial/starting state.
+     *
+     * @see Materials::all(), MaterialVariant::restartAnimation()
+     */
+    void restartAllMaterialAnimations();
+
+    /**
+     * Prepare resources for the current Map.
+     */
+    void cacheForCurrentMap();
+
+    /**
+     * Process all queued cache tasks.
+     */
+    void processCacheQueue();
+
+    /**
+     * Cancel all queued cache tasks.
+     */
+    void purgeCacheQueue();
+
+#endif // __CLIENT__
+
 public: /// @todo Should be private:
     void initCompositeTextures();
     void initFlatTextures();

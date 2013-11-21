@@ -88,9 +88,12 @@ void            Def_ReadProcessDED(const char* fileName);
 int             Def_GetMobjNum(const char* id);
 int             Def_GetMobjNumForName(const char* name);
 const char*     Def_GetMobjName(int num);
-int             Def_GetStateNum(const char* id);
-const char*     Def_GetStateName(state_t* state);
-int             Def_GetActionNum(const char* id);
+
+state_t        *Def_GetState(int num);
+int             Def_GetStateNum(char const *id);
+char const     *Def_GetStateName(state_t *state);
+
+int             Def_GetActionNum(char const *id);
 
 /**
  * Returns the unique sprite number associated with the specified sprite @a name;

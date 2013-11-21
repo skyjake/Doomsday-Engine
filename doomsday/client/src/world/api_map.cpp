@@ -1500,7 +1500,7 @@ DENG_EXTERN_C boolean P_MapChange(char const *uriCString)
     }
 
 #ifdef __CLIENT__
-    App_Materials().purgeCacheQueue();
+    App_ResourceSystem().purgeCacheQueue();
 #endif
 
     if(isServer)
