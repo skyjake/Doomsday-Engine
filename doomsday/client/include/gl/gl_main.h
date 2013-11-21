@@ -248,6 +248,17 @@ int GL_GetTexAnisoMul(int level);
 int GL_NumMipmapLevels(int width, int height);
 
 /**
+ * Determine the optimal size for a texture. Usually the dimensions are scaled
+ * upwards to the next power of two.
+ *
+ * @param noStretch  If @c true, the stretching can be skipped.
+ * @param isMipMapped  If @c true, we will require mipmaps (this has an effect
+ *     on the optimal size).
+ */
+boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
+    int *optWidth, int *optHeight);
+
+/**
  * @param width  Width of the image in pixels.
  * @param height  Height of the image in pixels.
  * @param flags  @ref imageConversionFlags.

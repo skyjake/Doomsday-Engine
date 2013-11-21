@@ -769,6 +769,81 @@ int GL_NumMipmapLevels(int width, int height)
     return numLevels;
 }
 
+boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
+    int *optWidth, int *optHeight)
+{
+    DENG_ASSERT(optWidth && optHeight);
+    if(GL_state.features.texNonPowTwo && !isMipMapped)
+    {
+        *optWidth  = width;
+        *optHeight = height;
+    }
+    else if(noStretch)
+    {
+        *optWidth  = M_CeilPow2(width);
+        *optHeight = M_CeilPow2(height);
+    }
+    else
+    {
+        // Determine the most favorable size for the texture.
+        if(texQuality == TEXQ_BEST) // The best quality.
+        {
+            // At the best texture quality *opt, all textures are
+            // sized *upwards*, so no details are lost. This takes
+            // more memory, but naturally looks better.
+            *optWidth  = M_CeilPow2(width);
+            *optHeight = M_CeilPow2(height);
+        }
+        else if(texQuality == 0)
+        {
+            // At the lowest quality, all textures are sized down to the
+            // nearest power of 2.
+            *optWidth  = M_FloorPow2(width);
+            *optHeight = M_FloorPow2(height);
+        }
+        else
+        {
+            // At the other quality *opts, a weighted rounding is used.
+            *optWidth  = M_WeightPow2(width,  1 - texQuality / (float) TEXQ_BEST);
+            *optHeight = M_WeightPow2(height, 1 - texQuality / (float) TEXQ_BEST);
+        }
+    }
+
+    // Hardware limitations may force us to modify the preferred size.
+    if(*optWidth > GL_state.maxTexSize)
+    {
+        *optWidth = GL_state.maxTexSize;
+        noStretch = false;
+    }
+    if(*optHeight > GL_state.maxTexSize)
+    {
+        *optHeight = GL_state.maxTexSize;
+        noStretch = false;
+    }
+
+    // Some GL drivers seem to have problems with VERY small textures.
+    if(*optWidth < MINTEXWIDTH)
+        *optWidth = MINTEXWIDTH;
+    if(*optHeight < MINTEXHEIGHT)
+        *optHeight = MINTEXHEIGHT;
+
+    if(ratioLimit)
+    {
+        if(*optWidth > *optHeight) // Wide texture.
+        {
+            if(*optHeight < *optWidth / ratioLimit)
+                *optHeight = *optWidth / ratioLimit;
+        }
+        else // Tall texture.
+        {
+            if(*optWidth < *optHeight / ratioLimit)
+                *optWidth = *optHeight / ratioLimit;
+        }
+    }
+
+    return noStretch;
+}
+
 int GL_GetTexAnisoMul(int level)
 {
     int mul = 1;
