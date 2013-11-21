@@ -43,7 +43,6 @@
 #  include "api_render.h"
 #  include "render/r_main.h"
 #  include "render/vignette.h"
-#  include "render/vissprite.h"
 #  include <de/GLState>
 #endif
 #include "gl/svg.h"

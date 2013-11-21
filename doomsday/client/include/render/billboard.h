@@ -22,8 +22,34 @@
 #define DENG_CLIENT_RENDER_BILLBOARD_H
 
 #include "dd_types.h"
-#include "render/vissprite.h"
+#include "Material"
 #include "MaterialVariantSpec"
+
+class BspLeaf;
+
+/**
+ * A sort of a sprite, I guess... Masked walls must be rendered sorted
+ * with sprites, so no artifacts appear when sprites are seen behind
+ * masked walls.
+ *
+ * @ingroup render
+ */
+typedef struct rendmaskedwallparams_s {
+    void *material; /// MaterialVariant
+    blendmode_t blendMode; ///< Blendmode to be used when drawing
+                               /// (two sided mid textures only)
+    struct wall_vertex_s {
+        float pos[3]; ///< x y and z coordinates.
+        float color[4];
+    } vertices[4];
+
+    double texOffset[2];
+    float texCoord[2][2]; ///< u and v coordinates.
+
+    DGLuint modTex; ///< Texture to modulate with.
+    float modTexCoord[2][2]; ///< [top-left, bottom-right][x, y]
+    float modColor[4];
+} rendmaskedwallparams_t;
 
 /// @ingroup render
 struct rendpspriteparams_t
@@ -39,6 +65,52 @@ struct rendpspriteparams_t
     uint vLightListIdx;
 };
 
+/// @ingroup render
+typedef struct rendspriteparams_s {
+// Position/Orientation/Scale
+    coord_t center[3]; // The real center point.
+    coord_t srvo[3]; // Short-range visual offset.
+    coord_t distance; // Distance from viewer.
+    boolean viewAligned;
+
+// Appearance
+    boolean noZWrite;
+    blendmode_t blendMode;
+
+    // Material:
+    void *material; /// MaterialVariant
+    boolean matFlip[2]; // [S, T] Flip along the specified axis.
+
+    // Lighting/color:
+    float ambientColor[4];
+    uint vLightListIdx;
+
+// Misc
+    BspLeaf *bspLeaf;
+} rendspriteparams_t;
+
+/**
+ * @defgroup rendFlareFlags  Flare renderer flags
+ * @ingroup render
+ * @{
+ */
+#define RFF_NO_PRIMARY      0x1 ///< Do not draw a primary flare (aka halo).
+#define RFF_NO_TURN         0x2 ///< Flares do not turn in response to viewangle/viewdir
+/**@}*/
+
+/// @ingroup render
+typedef struct rendflareparams_s {
+    byte flags; // @ref rendFlareFlags.
+    int size;
+    float color[3];
+    byte factor;
+    float xOff;
+    DGLuint tex; // Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
+    float mul; // Flare brightness factor.
+    boolean isDecoration;
+    int lumIdx;
+} rendflareparams_t;
+
 /// @addtogroup render
 /// @{
 DENG_EXTERN_C int alwaysAlign;
@@ -49,11 +121,6 @@ DENG_EXTERN_C byte devNoSprites;
 
 DENG_EXTERN_C void Rend_SpriteRegister();
 
-/**
- * A sort of a sprite, I guess... Masked walls must be rendered sorted
- * with sprites, so no artifacts appear when sprites are seen behind
- * masked walls.
- */
 void Rend_DrawMaskedWall(rendmaskedwallparams_t const &parms);
 
 void Rend_DrawPSprite(rendpspriteparams_t const &parms);
