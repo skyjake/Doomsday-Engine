@@ -37,7 +37,6 @@
 #include "render/r_main.h" // frameTimePos
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
-#  include "gl/gl_texmanager.h"
 #  include "MaterialSnapshot"
 #  include "Decoration"
 

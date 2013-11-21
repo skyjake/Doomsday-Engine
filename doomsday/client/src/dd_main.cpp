@@ -81,6 +81,8 @@
 #include "ui/p_control.h"
 
 #ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+
 #  include "render/vlight.h"
 #  include "ui/widgets/taskbarwidget.h"
 #endif

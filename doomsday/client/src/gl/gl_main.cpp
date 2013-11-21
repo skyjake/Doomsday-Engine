@@ -37,6 +37,7 @@
 
 #include "world/map.h"
 #include "world/p_object.h"
+#include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
 #include "ui/windowsystem.h"
 #include "resource/colorpalettes.h"

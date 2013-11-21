@@ -31,7 +31,7 @@
 #  include "gl/gl_tex.h"
 #  include "gl/gl_model.h"
 #  include "gl/gl_defer.h"
-#  include "gl/gl_texmanager.h"
+//#  include "gl/gl_texmanager.h"
 #endif
 
 #endif /* LIBDENG_GRAPHICS */

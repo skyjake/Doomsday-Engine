@@ -33,6 +33,7 @@
 #include "render/r_draw.h"
 #include "gl/sys_opengl.h"
 #include "api_gl.h"
+#include "gl/gl_texmanager.h"
 
 #include <de/GLState>
 

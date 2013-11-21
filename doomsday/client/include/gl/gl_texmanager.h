@@ -1,10 +1,4 @@
-/** @file gl_texmanager.h GL-Texture Management.
- *
- * @em Runtime textures are not loaded until precached or actually needed.
- * They may be cleared, in which case they will be reloaded when needed.
- *
- * @em System textures are loaded at startup and remain in memory all the
- * time. After clearing they must be manually reloaded.
+/** @file gl_texmanager.h  GL-Texture Management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -24,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GL_TEXMANAGER_H
-#define LIBDENG_GL_TEXMANAGER_H
+#ifndef DENG_CLIENT_GL_TEXMANAGER_H
+#define DENG_CLIENT_GL_TEXMANAGER_H
 
 #ifndef __CLIENT__
 #  error "GL Texture Manager only exists in the Client"
@@ -40,11 +34,9 @@
 #include "gl/texturecontent.h"
 #include "resource/image.h"
 #include "resource/rawtexture.h"
-#include "Texture"
+#include "TextureManifest"
 #include "TextureVariantSpec"
 #include "uri.hh"
-
-class ColorPalette;
 
 #define TEXQ_BEST               8
 #define MINTEXWIDTH             8
@@ -257,4 +249,4 @@ TexSource GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode
 TexSource GL_LoadSourceImage(image_t &image, de::Texture const &tex,
     texturevariantspecification_t const &spec);
 
-#endif /* LIBDENG_GL_TEXMANAGER_H */
+#endif // DENG_CLIENT_GL_TEXMANAGER_H

@@ -21,16 +21,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstdlib>
-#include <cstring> // memset, memcpy
-#include <cctype>
-#include <cmath>
+#include "de_platform.h"
+#include "gl/gl_texmanager.h"
 
-#ifdef UNIX
-#   include "de_platform.h"
-#endif
-
-#include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
@@ -49,6 +42,10 @@
 #include <de/mathutil.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
+#include <cstdlib>
+#include <cstring> // memset, memcpy
+#include <cctype>
+#include <cmath>
 
 using namespace de;
 

@@ -45,6 +45,10 @@
 #include "network/net_main.h"
 #include "client/cl_infine.h"
 
+#ifdef __CLIENT__
+#  include "gl/gl_texmanager.h"
+#endif
+
 #ifdef __SERVER__
 #  include "server/sv_infine.h"
 #endif

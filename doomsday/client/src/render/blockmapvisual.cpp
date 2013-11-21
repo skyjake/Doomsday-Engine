@@ -1,4 +1,4 @@
-/** @file render/blockmapvisual.cpp Graphical Blockmap Visual.
+/** @file blockmapvisual.cpp  Graphical Blockmap Visual.
  * @ingroup world
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -31,6 +31,8 @@
 
 #include "Face"
 #include "HEdge"
+
+#include "gl/gl_texmanager.h"
 
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"

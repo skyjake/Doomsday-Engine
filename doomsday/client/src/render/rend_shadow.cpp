@@ -30,6 +30,8 @@
 #include "MaterialSnapshot"
 #include "WallEdge"
 
+#include "gl/gl_texmanager.h"
+
 #include "render/rend_shadow.h"
 
 using namespace de;

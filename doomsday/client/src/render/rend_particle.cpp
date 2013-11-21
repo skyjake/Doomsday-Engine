@@ -31,6 +31,8 @@
 #include "de_ui.h"
 
 #include "resource/image.h"
+
+#include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
 
 #include "BspLeaf"

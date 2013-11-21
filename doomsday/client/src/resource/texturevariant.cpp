@@ -24,7 +24,7 @@
 #include "r_util.h"
 #include "gl/gl_defer.h"
 #include "gl/gl_main.h"
-#include "gl/gl_texmanager.h"
+#include "gl/gl_texmanager.h" // GL_LoadSourceImage
 #include "gl/gl_tex.h"
 #include "resource/colorpalettes.h"
 

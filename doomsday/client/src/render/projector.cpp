@@ -28,6 +28,8 @@
 #include "world/p_object.h"
 #include "Contact"
 
+#include "gl/gl_texmanager.h"
+
 #include "render/projector.h"
 
 using namespace de;

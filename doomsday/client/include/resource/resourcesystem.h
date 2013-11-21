@@ -37,7 +37,15 @@
 /**
  * Logical resources; materials, packages, textures, etc...
  *
- * @par Textures
+ * @par Classification
+ *
+ * @em Runtime resources are not loaded until precached or actually needed. They
+ * may be cleared, in which case they will be reloaded when needed.
+ *
+ * @em System resources are loaded at startup and remain in memory all the time.
+ * After clearing they must be manually reloaded.
+ *
+ * @par Texture resources
  *
  * @em Clearing a texture is to 'undefine' it - any names bound to it will be
  * deleted and any GL textures acquired for it are 'released'. The logical
@@ -46,14 +54,6 @@
  * @em Releasing a texture will leave it defined (any names bound to it will
  * persist) but any GL textures acquired for it are 'released'. Note that the
  * logical Texture instance used to represent is NOT be deleted.
- *
- * @par Fonts
- *
- * @em Runtime fonts are not loaded until precached or actually needed. They
- * may be cleared, in which case they will be reloaded when needed.
- *
- * @em System fonts are loaded at startup and remain in memory all the time.
- * After clearing they must be manually reloaded.
  *
  * @ingroup resource
  */

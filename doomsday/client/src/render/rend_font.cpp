@@ -29,10 +29,12 @@
 #include "de_render.h"
 #include "de_system.h"
 #include "de_ui.h"
+#include "m_misc.h"
 
 #include "BitmapFont"
 #include "CompositeBitmapFont"
-#include "m_misc.h"
+
+#include "gl/gl_texmanager.h"
 
 #include <de/GLState>
 

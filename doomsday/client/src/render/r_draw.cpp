@@ -1,4 +1,4 @@
-/** @file r_draw.cpp Misc Drawing Routines.
+/** @file r_draw.cpp  Misc Drawing Routines.
  *
  * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -26,6 +26,7 @@
 
 #include "MaterialSnapshot"
 #include "render/r_draw.h"
+#include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 
 using namespace de;

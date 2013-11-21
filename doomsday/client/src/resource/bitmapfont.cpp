@@ -22,7 +22,7 @@
 
 #include "dd_main.h" // isDedicated
 #include "filesys/fs_main.h"
-#include "gl/gl_texmanager.h"
+#include "gl/gl_texmanager.h" // GL_NewTextureWithParams
 #include "sys_system.h" // novideo
 #include "FontManifest"
 #include "uri.hh"

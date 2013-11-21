@@ -32,6 +32,7 @@
 #include "de_play.h"
 #include "clientapp.h"
 
+#include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"

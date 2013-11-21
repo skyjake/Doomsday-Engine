@@ -24,6 +24,8 @@
 #include <de/vector1.h>
 #include <math.h>
 
+#include "gl/gl_texmanager.h"
+
 #include "render/vignette.h"
 
 using namespace de;

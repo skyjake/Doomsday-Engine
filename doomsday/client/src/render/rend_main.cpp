@@ -74,6 +74,7 @@
 #include "render/billboard.h"
 #include "render/vissprite.h"
 
+#include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 
 #include "render/rend_main.h"

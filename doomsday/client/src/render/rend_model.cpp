@@ -38,6 +38,8 @@
 #include <de/Log>
 #include <de/memory.h>
 
+#include "gl/gl_texmanager.h"
+
 #include "network/net_main.h" // for gametic
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"

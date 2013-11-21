@@ -30,6 +30,7 @@
 #include "de_system.h"
 #include "de_graphics.h"
 #include "m_misc.h"
+#include "gl/gl_texmanager.h"
 
 #include "gl/texturecontent.h"
 

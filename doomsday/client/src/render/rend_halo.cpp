@@ -27,6 +27,8 @@
 #include "world/p_players.h"
 #include "render/rend_main.h"
 
+#include "gl/gl_texmanager.h"
+
 #include "render/rend_halo.h"
 
 #define NUM_FLARES          5

@@ -36,6 +36,8 @@
 
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
+
+#  include "gl/gl_texmanager.h"
 #endif
 
 using namespace de;
