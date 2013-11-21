@@ -215,10 +215,14 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
                    gradientThick, solidThick, 30,
                    shadowColor,
                    root().atlas().imageRectf(root().borderGlow()), 0);
-    /*verts.makeRing(layout.image.middle(),
-                   shadowRadius - gradientThick, shadowRadius - solidThick, 30,
-                   shadowColor,
-                   root().atlas().imageRectf(root().borderGlow()), 0);*/
+
+    // Shadow behind the text.
+    Rectanglef textBox = Rectanglef::fromSize(textSize());
+    ui::applyAlignment(ui::AlignCenter, textBox, layout.text);
+    int const boxSize = textBox.height() * 4;
+    verts.makeFlexibleFrame(Rectanglef(textBox.midLeft(), textBox.midRight()).expanded(boxSize),
+                            boxSize, Vector4f(shadowColor, shadowColor.w * .75f),
+                            root().atlas().imageRectf(root().borderGlow()));
 
     LabelWidget::glMakeGeometry(verts);
 
