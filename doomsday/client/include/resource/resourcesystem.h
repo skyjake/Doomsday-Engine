@@ -96,6 +96,7 @@ public:
      */
     de::ResourceClass &resClass(resourceclassid_t id);
 
+    void clearAllResources();
     void clearAllRuntimeResources();
     void clearAllSystemResources();
 
@@ -184,35 +185,40 @@ public:
                                de::Vector2i const &dimensions = de::Vector2i());
 
 #ifdef __CLIENT__
-    /// Release all textures in all schemes.
+    /**
+     * Release all GL-textures in all schemes.
+     */
     void releaseAllGLTextures();
 
-    /// Release all textures flagged 'runtime'.
+    /**
+     * Release all GL-textures in schemes flagged 'runtime'.
+     */
     void releaseAllRuntimeGLTextures();
 
-    /// Release all textures flagged 'system'.
+    /**
+     * Release all GL-textures in schemes flagged 'system'.
+     */
     void releaseAllSystemGLTextures();
 
     /**
-     * Release all textures in the identified scheme.
+     * Release all GL-textures in the identified scheme.
      *
      * @param schemeName  Symbolic name of the texture scheme to process.
      */
-    void releaseGLTexturesByScheme(char const *schemeName);
+    void releaseGLTexturesByScheme(de::String schemeName);
 
     /**
-     * Release all GL textures prepared using @a colorPalette.
+     * Release all GL-textures prepared using @a colorPalette.
      */
     void releaseGLTexturesFor(ColorPalette const &colorPalette);
 
     /**
-     * Release all textures associated with the specified variant @a texture.
+     * Release all GL-textures associated with the specified variant @a texture.
      */
     void releaseGLTexturesFor(de::TextureVariant &texture);
 
     /**
-     * Release all textures associated with the specified @a texture.
-     * @param texture  Logical Texture. Can be @c NULL, in which case this is a null-op.
+     * Release all GL-textures associated with the specified @a texture.
      */
     void releaseGLTexturesFor(de::Texture &texture);
 
@@ -238,7 +244,12 @@ public:
     AbstractFont *createFontFromDef(ded_compositefont_t const &def);
     AbstractFont *createFontFromFile(de::Uri const &uri, de::String filePath);
 
-    void releaseFontGLTexturesByScheme(char const *schemeName);
+    /**
+     * Release all GL-textures for fonts in the identified scheme.
+     *
+     * @param schemeName  Symbolic name of the font scheme to process.
+     */
+    void releaseFontGLTexturesByScheme(de::String schemeName);
 
 #endif
 

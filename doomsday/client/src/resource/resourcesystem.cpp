@@ -648,6 +648,12 @@ ResourceClass &ResourceSystem::resClass(resourceclassid_t id)
     throw UnknownResourceClassError("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
 }
 
+void ResourceSystem::clearAllResources()
+{
+    clearAllRuntimeResources();
+    clearAllSystemResources();
+}
+
 void ResourceSystem::clearAllRuntimeResources()
 {
 #ifdef __CLIENT__
@@ -1243,9 +1249,10 @@ void ResourceSystem::releaseGLTexturesFor(Texture &texture, texturevariantspecif
     }
 }
 
-void ResourceSystem::releaseGLTexturesByScheme(char const *schemeName)
+void ResourceSystem::releaseGLTexturesByScheme(String schemeName)
 {
-    if(!schemeName) return;
+    if(schemeName.isEmpty()) return;
+
     PathTreeIterator<TextureScheme::Index> iter(d->textures.scheme(schemeName).index().leafNodes());
     while(iter.hasNext())
     {
@@ -1389,9 +1396,10 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
     return 0;
 }
 
-void ResourceSystem::releaseFontGLTexturesByScheme(char const *schemeName)
+void ResourceSystem::releaseFontGLTexturesByScheme(String schemeName)
 {
-    if(!schemeName) return;
+    if(schemeName.isEmpty()) return;
+
     PathTreeIterator<FontScheme::Index> iter(d->fonts.scheme(schemeName).index().leafNodes());
     while(iter.hasNext())
     {
