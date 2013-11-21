@@ -109,5 +109,5 @@ bool MaterialVariantSpec::compare(MaterialVariantSpec const &other) const
 {
     if(this == &other) return 1;
     if(context != other.context) return 0;
-    return 1 == TextureVariantSpec_Compare(primarySpec, other.primarySpec);
+    return primarySpec == other.primarySpec;
 }

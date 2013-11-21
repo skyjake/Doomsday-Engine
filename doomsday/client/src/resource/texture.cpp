@@ -193,7 +193,7 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
             break;
 
         case FuzzyMatchSpec:
-            if(TextureVariantSpec_Compare(&cand, &spec))
+            if(cand == spec)
             {
                 // This will do fine.
                 return variant;

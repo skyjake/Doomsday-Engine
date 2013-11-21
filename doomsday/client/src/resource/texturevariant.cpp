@@ -22,17 +22,145 @@
 #include "resource/texture.h"
 
 #include "r_util.h"
+
 #include "gl/gl_defer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
-#include "gl/gl_texmanager.h" // misc global vars awaiting new home
 #include "gl/texturecontent.h"
+
 #include "resource/colorpalettes.h"
 #include "resource/image.h" // GL_LoadSourceImage
+
+#include "render/rend_main.h" // misc global vars awaiting new home
+
 #include <de/Log>
 #include <de/mathutil.h> // M_CeilPow
 
 using namespace de;
+
+variantspecification_t::variantspecification_t()
+    : context(TC_UNKNOWN)
+    , flags(0)
+    , border(0)
+    , wrapS(GL_REPEAT)
+    , wrapT(GL_REPEAT)
+    , mipmapped(false)
+    , gammaCorrection(true)
+    , noStretch(false)
+    , toAlpha(false)
+    , minFilter(GL_LINEAR)
+    , magFilter(GL_LINEAR)
+    , anisoFilter(0)
+{}
+
+variantspecification_t::variantspecification_t(variantspecification_t const &other)
+    : context(other.context)
+    , flags(other.flags)
+    , border(other.border)
+    , wrapS(other.wrapS)
+    , wrapT(other.wrapT)
+    , mipmapped(other.mipmapped)
+    , gammaCorrection(other.gammaCorrection)
+    , noStretch(other.noStretch)
+    , toAlpha(other.toAlpha)
+    , minFilter(other.minFilter)
+    , magFilter(other.magFilter)
+    , anisoFilter(other.anisoFilter)
+{
+    if(!other.translated.isNull())
+    {
+        translated.reset(new colorpalettetranslationspecification_t(*other.translated));
+    }
+}
+
+bool variantspecification_t::operator == (variantspecification_t const &other) const
+{
+    if(this == &other) return 1;
+    /// @todo We can be a bit cleverer here...
+    if(context != other.context) return 0;
+    if(flags != other.flags) return 0;
+    if(wrapS != other.wrapS || wrapT != other.wrapT) return 0;
+    //if(magFilter != b.magFilter) return 0;
+    //if(anisoFilter != b.anisoFilter) return 0;
+    if(mipmapped != other.mipmapped) return 0;
+    if(noStretch != other.noStretch) return 0;
+    if(gammaCorrection != other.gammaCorrection) return 0;
+    if(toAlpha != other.toAlpha) return 0;
+    if(border != other.border) return 0;
+    if(flags & TSF_HAS_COLORPALETTE_XLAT)
+    {
+        DENG2_ASSERT(!translated.isNull());
+        colorpalettetranslationspecification_t const &cpt = *translated;
+        DENG2_ASSERT(other.translated.isNull());
+        colorpalettetranslationspecification_t const &cptOther = *other.translated;
+        if(cpt.tClass != cptOther.tClass) return 0;
+        if(cpt.tMap   != cptOther.tMap) return 0;
+    }
+    return 1; // Equal.
+}
+
+GLint variantspecification_t::glMinFilter() const
+{
+    if(minFilter >= 0) // Constant logical value.
+    {
+        return (mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + minFilter;
+    }
+    // "No class" preference.
+    return mipmapped? glmode[mipmapping] : GL_LINEAR;
+}
+
+GLint variantspecification_t::glMagFilter() const
+{
+    if(magFilter >= 0) // Constant logical value.
+    {
+        return GL_NEAREST + magFilter;
+    }
+
+    // Preference for texture class id.
+    switch(abs(magFilter)-1)
+    {
+    case 1: // Sprite class.
+        return filterSprites? GL_LINEAR : GL_NEAREST;
+    case 2: // UI class.
+        return filterUI? GL_LINEAR : GL_NEAREST;
+    default: // "No class" preference.
+        return glmode[texMagMode];
+    }
+}
+
+int variantspecification_t::logicalAnisoLevel() const
+{
+    return anisoFilter < 0? texAniso : anisoFilter;
+}
+
+texturevariantspecification_t::texturevariantspecification_t(texturevariantspecificationtype_t type)
+    : type(type)
+{}
+
+texturevariantspecification_t::texturevariantspecification_t(texturevariantspecification_t const &other)
+    : type(other.type)
+    , variant(other.variant)
+    , detailVariant(other.detailVariant)
+{}
+
+bool detailvariantspecification_t::operator == (detailvariantspecification_t const &other) const
+{
+    if(this == &other) return true;
+    return contrast == other.contrast; // Equal.
+}
+
+bool texturevariantspecification_t::operator == (texturevariantspecification_t const &other) const
+{
+    if(this == &other) return true;
+    if(type != other.type) return false;
+    switch(type)
+    {
+    case TST_GENERAL: return variant == other.variant;
+    case TST_DETAIL:  return detailVariant == other.detailVariant;
+    }
+    DENG2_ASSERT(false);
+    return false;
+}
 
 static String nameForGLTextureWrapMode(int mode)
 {
@@ -73,14 +201,14 @@ String texturevariantspecification_t::asText() const
     switch(type)
     {
     case TST_DETAIL: {
-        detailvariantspecification_t const &spec = data.detailvariant;
+        detailvariantspecification_t const &spec = detailVariant;
         text += " Contrast:" + String::number(int(.5f + spec.contrast / 255.f * 100)) + "%";
         break; }
 
     case TST_GENERAL: {
-        variantspecification_t const &spec = data.variant;
+        variantspecification_t const &spec = variant;
         texturevariantusagecontext_t tc = spec.context;
-        DENG_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
+        DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
         int glMinFilterNameIdx;
         if(spec.minFilter >= 0) // Constant logical value.
@@ -129,100 +257,15 @@ String texturevariantspecification_t::asText() const
 
         if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            colorpalettetranslationspecification_t const *cpt = spec.translated;
-            DENG_ASSERT(cpt);
-            text += " Translated:(tclass:" + String::number(cpt->tClass)
-                                           + " tmap:" + String::number(cpt->tMap) + ")";
+            DENG2_ASSERT(!spec.translated.isNull());
+            colorpalettetranslationspecification_t const &cpt = *spec.translated;
+            text += " Translated:(tclass:" + String::number(cpt.tClass)
+                                           + " tmap:" + String::number(cpt.tMap) + ")";
         }
         break; }
     }
 
     return text;
-}
-
-GLint variantspecification_t::glMinFilter() const
-{
-    if(minFilter >= 0) // Constant logical value.
-    {
-        return (mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + minFilter;
-    }
-    // "No class" preference.
-    return mipmapped? glmode[mipmapping] : GL_LINEAR;
-}
-
-GLint variantspecification_t::glMagFilter() const
-{
-    if(magFilter >= 0) // Constant logical value.
-    {
-        return GL_NEAREST + magFilter;
-    }
-
-    // Preference for texture class id.
-    switch(abs(magFilter)-1)
-    {
-    case 1: // Sprite class.
-        return filterSprites? GL_LINEAR : GL_NEAREST;
-    case 2: // UI class.
-        return filterUI? GL_LINEAR : GL_NEAREST;
-    default: // "No class" preference.
-        return glmode[texMagMode];
-    }
-}
-
-int variantspecification_t::logicalAnisoLevel() const
-{
-    return anisoFilter < 0? texAniso : anisoFilter;
-}
-
-/**
- * @todo Magnification, Anisotropic filter level and GL texture wrap modes
- * will be handled through dynamic changes to GL's texture environment state.
- * Consequently they should be ignored here.
- */
-static int compareVariantSpecifications(variantspecification_t const &a,
-    variantspecification_t const &b)
-{
-    /// @todo We can be a bit cleverer here...
-    if(a.context != b.context) return 0;
-    if(a.flags != b.flags) return 0;
-    if(a.wrapS != b.wrapS || a.wrapT != b.wrapT) return 0;
-    //if(a.magFilter != b.magFilter) return 0;
-    //if(a.anisoFilter != b.anisoFilter) return 0;
-    if(a.mipmapped != b.mipmapped) return 0;
-    if(a.noStretch != b.noStretch) return 0;
-    if(a.gammaCorrection != b.gammaCorrection) return 0;
-    if(a.toAlpha != b.toAlpha) return 0;
-    if(a.border != b.border) return 0;
-    if(a.flags & TSF_HAS_COLORPALETTE_XLAT)
-    {
-        colorpalettetranslationspecification_t const *cptA = a.translated;
-        colorpalettetranslationspecification_t const *cptB = b.translated;
-        DENG_ASSERT(cptA && cptB);
-        if(cptA->tClass != cptB->tClass) return 0;
-        if(cptA->tMap   != cptB->tMap) return 0;
-    }
-    return 1; // Equal.
-}
-
-static int compareDetailVariantSpecifications(detailvariantspecification_t const &a,
-    detailvariantspecification_t const &b)
-{
-    if(a.contrast != b.contrast) return 0;
-    return 1; // Equal.
-}
-
-int TextureVariantSpec_Compare(texturevariantspecification_t const *a,
-    texturevariantspecification_t const *b)
-{
-    DENG_ASSERT(a && b);
-    if(a == b) return 1;
-    if(a->type != b->type) return 0;
-    switch(a->type)
-    {
-    case TST_GENERAL: return compareVariantSpecifications(TS_GENERAL(*a), TS_GENERAL(*b));
-    case TST_DETAIL:  return compareDetailVariantSpecifications(TS_DETAIL(*a), TS_DETAIL(*b));
-    }
-    throw Error("TextureVariantSpec_Compare", QString("Invalid type %1").arg(a->type));
 }
 
 DENG2_PIMPL(Texture::Variant)
@@ -482,8 +525,8 @@ uint Texture::Variant::prepare()
     // Do we need to perform any image pixel data analyses?
     if(d->spec.type == TST_GENERAL)
     {
-        performImageAnalyses(image, TS_GENERAL(d->spec).context,
-                             d->texture, true /*force update*/);
+        performImageAnalyses(image, d->spec.variant.context, d->texture,
+                             true /*force update*/);
     }
 
     // Are we preparing a new GL texture?

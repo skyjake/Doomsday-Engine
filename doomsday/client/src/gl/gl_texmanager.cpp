@@ -42,8 +42,10 @@
 
 #include "resource/hq2x.h"
 
-#include <de/memory.h>
+//#include <de/memory.h>
 #include <de/memoryzone.h>
+#include <QList>
+#include <QMutableListIterator>
 #include <cstring>
 
 using namespace de;
@@ -61,93 +63,17 @@ struct texturevariantspecificationlist_node_t
     texturevariantspecificationlist_node_t *next;
     texturevariantspecification_t *spec;
 };
-typedef texturevariantspecificationlist_node_t variantspecificationlist_t;
-static variantspecificationlist_t *variantSpecs;
+typedef QList<texturevariantspecification_t *> VariantSpecs;
+static VariantSpecs variantSpecs;
 
 /// @c TST_DETAIL type specifications are stored separately into a set of
 /// buckets. Bucket selection is determined by their quantized contrast value.
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
-static variantspecificationlist_t *detailVariantSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
+static VariantSpecs detailVariantSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
 
 static int hashDetailVariantSpecification(detailvariantspecification_t const &spec)
 {
     return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
-}
-
-static void unlinkVariantSpecification(texturevariantspecification_t &spec)
-{
-    variantspecificationlist_t **listHead;
-    DENG2_ASSERT(initedOk);
-
-    // Select list head according to variant specification type.
-    switch(spec.type)
-    {
-    case TST_GENERAL:   listHead = &variantSpecs; break;
-    case TST_DETAIL: {
-        int hash = hashDetailVariantSpecification(TS_DETAIL(spec));
-        listHead = &detailVariantSpecs[hash];
-        break; }
-    }
-
-    if(*listHead)
-    {
-        texturevariantspecificationlist_node_t *node = 0;
-        if((*listHead)->spec == &spec)
-        {
-            node = (*listHead);
-            *listHead = (*listHead)->next;
-        }
-        else
-        {
-            // Find the previous node.
-            texturevariantspecificationlist_node_t *prevNode = (*listHead);
-            while(prevNode->next && prevNode->next->spec != &spec)
-            {
-                prevNode = prevNode->next;
-            }
-            if(prevNode)
-            {
-                node = prevNode->next;
-                prevNode->next = prevNode->next->next;
-            }
-        }
-        M_Free(node);
-    }
-}
-
-static void destroyVariantSpecification(texturevariantspecification_t &spec)
-{
-    unlinkVariantSpecification(spec);
-    if(spec.type == TST_GENERAL && (TS_GENERAL(spec).flags & TSF_HAS_COLORPALETTE_XLAT))
-    {
-        M_Free(TS_GENERAL(spec).translated);
-    }
-    M_Free(&spec);
-}
-
-static texturevariantspecification_t *copyVariantSpecification(
-    texturevariantspecification_t const &tpl)
-{
-    texturevariantspecification_t *spec = (texturevariantspecification_t *) M_Malloc(sizeof(*spec));
-
-    std::memcpy(spec, &tpl, sizeof(texturevariantspecification_t));
-    if(TS_GENERAL(tpl).flags & TSF_HAS_COLORPALETTE_XLAT)
-    {
-        colorpalettetranslationspecification_t *cpt = (colorpalettetranslationspecification_t *) M_Malloc(sizeof(*cpt));
-
-        std::memcpy(cpt, TS_GENERAL(tpl).translated, sizeof(colorpalettetranslationspecification_t));
-        TS_GENERAL(*spec).translated = cpt;
-    }
-    return spec;
-}
-
-static texturevariantspecification_t *copyDetailVariantSpecification(
-    texturevariantspecification_t const &tpl)
-{
-    texturevariantspecification_t *spec = (texturevariantspecification_t *) M_Malloc(sizeof(*spec));
-
-    std::memcpy(spec, &tpl, sizeof(texturevariantspecification_t));
-    return spec;
 }
 
 static colorpalettetranslationspecification_t *applyColorPaletteTranslationSpecification(
@@ -179,26 +105,23 @@ static variantspecification_t &applyVariantSpecification(
 
     flags &= ~TSF_INTERNAL_MASK;
 
-    spec.context = tc;
-    spec.flags = flags;
-    spec.border = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
-    spec.mipmapped = mipmapped;
-    spec.wrapS = wrapS;
-    spec.wrapT = wrapT;
-    spec.minFilter = MINMAX_OF(-1, minFilter, spec.mipmapped? 3:1);
-    spec.magFilter = MINMAX_OF(-3, magFilter, 1);
-    spec.anisoFilter = MINMAX_OF(-1, anisoFilter, 4);
+    spec.context         = tc;
+    spec.flags           = flags;
+    spec.border          = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
+    spec.mipmapped       = mipmapped;
+    spec.wrapS           = wrapS;
+    spec.wrapT           = wrapT;
+    spec.minFilter       = de::clamp(-1, minFilter, spec.mipmapped? 3:1);
+    spec.magFilter       = de::clamp(-3, magFilter, 1);
+    spec.anisoFilter     = de::clamp(-1, anisoFilter, 4);
     spec.gammaCorrection = gammaCorrection;
-    spec.noStretch = noStretch;
-    spec.toAlpha = toAlpha;
+    spec.noStretch       = noStretch;
+    spec.toAlpha         = toAlpha;
+
     if(colorPaletteTranslationSpec)
     {
         spec.flags |= TSF_HAS_COLORPALETTE_XLAT;
-        spec.translated = colorPaletteTranslationSpec;
-    }
-    else
-    {
-        spec.translated = NULL;
+        spec.translated.reset(colorPaletteTranslationSpec); // takes ownership
     }
 
     return spec;
@@ -209,68 +132,64 @@ static detailvariantspecification_t &applyDetailVariantSpecification(
 {
     int const quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
 
-    spec.contrast = 255 * (int)MINMAX_OF(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
+    spec.contrast = 255 * de::clamp<int>(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
     return spec;
 }
 
 static texturevariantspecification_t &linkVariantSpecification(
-    texturevariantspecificationtype_t type, texturevariantspecification_t &spec)
+    texturevariantspecification_t *spec)
 {
-    texturevariantspecificationlist_node_t *node;
-    DENG2_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type));
+    DENG2_ASSERT(initedOk && spec != 0);
 
-    node = (texturevariantspecificationlist_node_t *) M_Malloc(sizeof(*node));
-    node->spec = &spec;
-    switch(type)
+    switch(spec->type)
     {
     case TST_GENERAL:
-        node->next = variantSpecs;
-        variantSpecs = (variantspecificationlist_t *)node;
+        variantSpecs.append(spec);
         break;
     case TST_DETAIL: {
-        int hash = hashDetailVariantSpecification(TS_DETAIL(spec));
-        node->next = detailVariantSpecs[hash];
-        detailVariantSpecs[hash] = (variantspecificationlist_t *)node;
+        int hash = hashDetailVariantSpecification(spec->detailVariant);
+        detailVariantSpecs[hash].append(spec);
         break; }
     }
 
-    return spec;
+    return *spec;
 }
 
 static texturevariantspecification_t *findVariantSpecification(
-    texturevariantspecificationtype_t type, texturevariantspecification_t const &tpl,
-    bool canCreate)
+    texturevariantspecification_t const &tpl, bool canCreate)
 {
-    texturevariantspecificationlist_node_t *node = 0;
-    DENG2_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type));
-
-    // Select list head according to variant specification type.
-    switch(type)
-    {
-    case TST_GENERAL:   node = variantSpecs; break;
-    case TST_DETAIL: {
-        int hash = hashDetailVariantSpecification(TS_DETAIL(tpl));
-        node = detailVariantSpecs[hash];
-        break; }
-    }
+    DENG2_ASSERT(initedOk);
 
     // Do we already have a concrete version of the template specification?
-    for(; node; node = node->next)
+    switch(tpl.type)
     {
-        if(TextureVariantSpec_Compare(node->spec, &tpl))
+    case TST_GENERAL: {
+        foreach(texturevariantspecification_t *varSpec, variantSpecs)
         {
-            return node->spec;
+            if(*varSpec == tpl)
+            {
+                return varSpec;
+            }
         }
+        break; }
+
+    case TST_DETAIL: {
+        int hash = hashDetailVariantSpecification(tpl.detailVariant);
+        foreach(texturevariantspecification_t *varSpec, detailVariantSpecs[hash])
+        {
+            if(*varSpec == tpl)
+            {
+                return varSpec;
+            }
+
+        }
+        break; }
     }
 
     // Not found, can we create?
     if(canCreate)
     {
-        switch(type)
-        {
-        case TST_GENERAL:   return &linkVariantSpecification(type, *copyVariantSpecification(tpl));
-        case TST_DETAIL:    return &linkVariantSpecification(type, *copyDetailVariantSpecification(tpl));
-        }
+        return &linkVariantSpecification(new texturevariantspecification_t(tpl));
     }
 
     return 0;
@@ -296,12 +215,14 @@ static texturevariantspecification_t *getVariantSpecificationForContext(
         haveCpt = true;
     }
 
-    applyVariantSpecification(TS_GENERAL(tpl), tc, flags, border, haveCpt? &cptTpl : NULL,
+    applyVariantSpecification(tpl.variant, tc, flags, border, haveCpt? &cptTpl : NULL,
         wrapS, wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection,
         noStretch, toAlpha);
 
     // Retrieve a concrete version of the rationalized specification.
-    return findVariantSpecification(tpl.type, tpl, true);
+    texturevariantspecification_t *intern = findVariantSpecification(tpl, true);
+    tpl.variant.translated.reset();
+    return intern;
 }
 
 static texturevariantspecification_t *getDetailVariantSpecificationForContext(
@@ -312,21 +233,8 @@ static texturevariantspecification_t *getDetailVariantSpecificationForContext(
     static texturevariantspecification_t tpl;
 
     tpl.type = TST_DETAIL;
-    applyDetailVariantSpecification(TS_DETAIL(tpl), contrast);
-    return findVariantSpecification(tpl.type, tpl, true);
-}
-
-static void emptyVariantSpecificationList(variantspecificationlist_t *list)
-{
-    DENG2_ASSERT(initedOk);
-
-    texturevariantspecificationlist_node_t *node = (texturevariantspecificationlist_node_t *) list;
-    while(node)
-    {
-        texturevariantspecificationlist_node_t *next = node->next;
-        destroyVariantSpecification(*node->spec);
-        node = next;
-    }
+    applyDetailVariantSpecification(tpl.detailVariant, contrast);
+    return findVariantSpecification(tpl, true);
 }
 
 static bool variantSpecInUse(texturevariantspecification_t const &spec)
@@ -342,49 +250,51 @@ static bool variantSpecInUse(texturevariantspecification_t const &spec)
     return false;
 }
 
-static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t *list)
+static int pruneUnusedTextureVariantSpecs(VariantSpecs &list)
 {
-    texturevariantspecificationlist_node_t *node = list;
     int numPruned = 0;
-    while(node)
+    QMutableListIterator<texturevariantspecification_t *> it(list);
+    while(it.hasNext())
     {
-        texturevariantspecificationlist_node_t *next = node->next;
-
-        if(!variantSpecInUse(*node->spec))
+        texturevariantspecification_t *spec = it.next();
+        if(!variantSpecInUse(*spec))
         {
-            destroyVariantSpecification(*node->spec);
-            ++numPruned;
+            it.remove();
+            delete &spec;
+            numPruned += 1;
         }
-
-        node = next;
     }
     return numPruned;
 }
 
-static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t specType)
+static int pruneUnusedTextureVariantSpecs(texturevariantspecificationtype_t specType)
 {
     DENG2_ASSERT(initedOk);
     switch(specType)
     {
-    case TST_GENERAL: return pruneUnusedVariantSpecificationsInList(variantSpecs);
+    case TST_GENERAL: return pruneUnusedTextureVariantSpecs(variantSpecs);
     case TST_DETAIL: {
         int numPruned = 0;
         for(int i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
         {
-            numPruned += pruneUnusedVariantSpecificationsInList(detailVariantSpecs[i]);
+            numPruned += pruneUnusedTextureVariantSpecs(detailVariantSpecs[i]);
         }
         return numPruned; }
     }
+    return 0;
 }
 
-static void destroyVariantSpecifications()
+static void clearTextureVariantSpecs()
 {
     DENG2_ASSERT(initedOk);
 
-    emptyVariantSpecificationList(variantSpecs); variantSpecs = 0;
+    qDeleteAll(variantSpecs);
+    variantSpecs.clear();
+
     for(int i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
     {
-        emptyVariantSpecificationList(detailVariantSpecs[i]); detailVariantSpecs[i] = 0;
+        qDeleteAll(detailVariantSpecs[i]);
+        detailVariantSpecs[i].clear();
     }
 }
 
@@ -409,13 +319,18 @@ void GL_InitTextureManager()
     zap(sysFlareTextures);
     zap(lightingTextures);
 
-    variantSpecs = 0;
-    zap(detailVariantSpecs);
-
     GL_InitSmartFilterHQ2x();
 
     // Initialization done.
     initedOk = true;
+}
+
+void GL_ShutdownTextureManager()
+{
+    if(!initedOk) return;
+
+    clearTextureVariantSpecs();
+    initedOk = false;
 }
 
 void GL_ResetTextureManager()
@@ -475,8 +390,8 @@ void GL_PruneTextureVariantSpecifications()
     if(Sys_IsShuttingDown()) return;
 
     int numPruned = 0;
-    numPruned += pruneUnusedVariantSpecifications(TST_GENERAL);
-    numPruned += pruneUnusedVariantSpecifications(TST_DETAIL);
+    numPruned += pruneUnusedTextureVariantSpecs(TST_GENERAL);
+    numPruned += pruneUnusedTextureVariantSpecs(TST_DETAIL);
 
 #ifdef DENG_DEBUG
     LOG_VERBOSE("Pruned %i unused texture variant %s.")
@@ -499,10 +414,10 @@ texturevariantspecification_t &GL_TextureVariantSpec(
 #ifdef DENG_DEBUG
     if(tClass || tMap)
     {
-        DENG2_ASSERT(tvs->data.variant.flags & TSF_HAS_COLORPALETTE_XLAT);
-        DENG2_ASSERT(tvs->data.variant.translated);
-        DENG2_ASSERT(tvs->data.variant.translated->tClass == tClass);
-        DENG2_ASSERT(tvs->data.variant.translated->tMap == tMap);
+        DENG2_ASSERT(tvs->variant.flags & TSF_HAS_COLORPALETTE_XLAT);
+        DENG2_ASSERT(!tvs->variant.translated.isNull());
+        DENG2_ASSERT(tvs->variant.translated->tClass == tClass);
+        DENG2_ASSERT(tvs->variant.translated->tMap == tMap);
     }
 #endif
 
@@ -515,14 +430,6 @@ texturevariantspecification_t &GL_DetailTextureSpec(float contrast)
     return *getDetailVariantSpecificationForContext(contrast);
 }
 
-void GL_ShutdownTextureManager()
-{
-    if(!initedOk) return;
-
-    destroyVariantSpecifications();
-    initedOk = false;
-}
-
 void GL_LoadLightingSystemTextures()
 {
     if(novideo || !initedOk) return;
@@ -533,33 +440,12 @@ void GL_LoadLightingSystemTextures()
     GL_PrepareLSTexture(LST_CAMERA_VIGNETTE);
 }
 
-void GL_LoadFlareTextures()
-{
-    if(novideo || !initedOk) return;
-
-    GL_PrepareSysFlaremap(FXT_ROUND);
-    GL_PrepareSysFlaremap(FXT_FLARE);
-    if(!haloRealistic)
-    {
-        GL_PrepareSysFlaremap(FXT_BRFLARE);
-        GL_PrepareSysFlaremap(FXT_BIGFLARE);
-    }
-}
-
 void GL_ReleaseAllLightingSystemTextures()
 {
     if(novideo || !initedOk) return;
 
     glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
     zap(lightingTextures);
-}
-
-void GL_ReleaseAllFlareTextures()
-{
-    if(novideo || !initedOk) return;
-
-    glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
-    zap(sysFlareTextures);
 }
 
 GLuint GL_PrepareLSTexture(lightingtexid_t which)
@@ -605,6 +491,27 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
 
     DENG2_ASSERT(lightingTextures[which] != 0);
     return lightingTextures[which];
+}
+
+void GL_LoadFlareTextures()
+{
+    if(novideo || !initedOk) return;
+
+    GL_PrepareSysFlaremap(FXT_ROUND);
+    GL_PrepareSysFlaremap(FXT_FLARE);
+    if(!haloRealistic)
+    {
+        GL_PrepareSysFlaremap(FXT_BRFLARE);
+        GL_PrepareSysFlaremap(FXT_BIGFLARE);
+    }
+}
+
+void GL_ReleaseAllFlareTextures()
+{
+    if(novideo || !initedOk) return;
+
+    glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
+    zap(sysFlareTextures);
 }
 
 GLuint GL_PrepareSysFlaremap(flaretexid_t which)

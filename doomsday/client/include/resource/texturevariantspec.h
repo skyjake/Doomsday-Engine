@@ -65,20 +65,6 @@ typedef enum {
 #define TSF_HAS_COLORPALETTE_XLAT   0x80000000
 /*@}*/
 
-typedef enum {
-    TST_GENERAL = 0,
-    TST_DETAIL
-} texturevariantspecificationtype_t;
-
-#define TEXTUREVARIANTSPECIFICATIONTYPE_FIRST TST_GENERAL
-#define TEXTUREVARIANTSPECIFICATIONTYPE_LAST TST_DETAIL
-
-#define TEXTUREVARIANTSPECIFICATIONTYPE_COUNT (\
-    TEXTUREVARIANTSPECIFICATIONTYPE_LAST + 1 - TEXTUREVARIANTSPECIFICATIONTYPE_FIRST )
-
-#define VALID_TEXTUREVARIANTSPECIFICATIONTYPE(t) (\
-    (t) >= TEXTUREVARIANTSPECIFICATIONTYPE_FIRST && (t) <= TEXTUREVARIANTSPECIFICATIONTYPE_LAST)
-
 struct colorpalettetranslationspecification_t
 {
     int tClass, tMap;
@@ -128,11 +114,25 @@ struct variantspecification_t
     int anisoFilter;
 
     /// Additional color palette translation spec.
-    colorpalettetranslationspecification_t *translated;
+    QScopedPointer<colorpalettetranslationspecification_t> translated;
 
     GLint glMinFilter() const;
     GLint glMagFilter() const;
     int logicalAnisoLevel() const;
+
+    variantspecification_t();
+    variantspecification_t(variantspecification_t const &other);
+
+    /**
+     * Magnification, Anisotropic filter level and GL texture wrap modes are
+     * handled through dynamic changes to GL's texture environment state.
+     * Consequently, they are ignored during spec equality comparison.
+     */
+    bool operator == (variantspecification_t const &other) const;
+
+    inline bool operator != (variantspecification_t const &other) const {
+        return !(*this == other);
+    }
 };
 
 /**
@@ -148,7 +148,28 @@ struct variantspecification_t
 struct detailvariantspecification_t
 {
     uint8_t contrast;
+
+    bool operator == (detailvariantspecification_t const &other) const;
+
+    inline bool operator != (detailvariantspecification_t const &other) const {
+        return !(*this == other);
+    }
 };
+
+enum texturevariantspecificationtype_t
+{
+    TST_GENERAL,
+    TST_DETAIL
+};
+
+#define TEXTUREVARIANTSPECIFICATIONTYPE_FIRST TST_GENERAL
+#define TEXTUREVARIANTSPECIFICATIONTYPE_LAST TST_DETAIL
+
+#define TEXTUREVARIANTSPECIFICATIONTYPE_COUNT (\
+    TEXTUREVARIANTSPECIFICATIONTYPE_LAST + 1 - TEXTUREVARIANTSPECIFICATIONTYPE_FIRST )
+
+#define VALID_TEXTUREVARIANTSPECIFICATIONTYPE(t) (\
+    (t) >= TEXTUREVARIANTSPECIFICATIONTYPE_FIRST && (t) <= TEXTUREVARIANTSPECIFICATIONTYPE_LAST)
 
 #define TS_GENERAL(ts)      ((ts).data.variant)
 #define TS_DETAIL(ts)       ((ts).data.detailvariant)
@@ -156,23 +177,22 @@ struct detailvariantspecification_t
 struct texturevariantspecification_t
 {
     texturevariantspecificationtype_t type;
-    union {
-        variantspecification_t variant;
-        detailvariantspecification_t detailvariant;
-    } data; // type-specific data.
+    variantspecification_t variant;
+    detailvariantspecification_t detailVariant;
+
+    texturevariantspecification_t(texturevariantspecificationtype_t type = TST_GENERAL);
+    texturevariantspecification_t(texturevariantspecification_t const &other);
+
+    bool operator == (texturevariantspecification_t const &other) const;
+
+    inline bool operator != (texturevariantspecification_t const &other) const {
+        return !(*this == other);
+    }
 
     /**
      * Returns a textual, human-readable representation of the specification.
      */
     de::String asText() const;
 };
-
-/**
- * Compare the given TextureVariantSpecifications and determine whether they can
- * be considered equal (dependent on current engine state and the available features
- * of the GL implementation).
- */
-int TextureVariantSpec_Compare(texturevariantspecification_t const *a,
-    texturevariantspecification_t const *b);
 
 #endif // DENG_RESOURCE_TEXTUREVARIANTSPEC_H
