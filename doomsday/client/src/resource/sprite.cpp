@@ -36,6 +36,9 @@
 
 using namespace de;
 
+/**
+ * @todo optimize: allocate only those ViewAngles that are in use.
+ */
 DENG2_PIMPL_NOREF(Sprite)
 {
     bool haveRotations;    ///< @c true= use all view angles and not just rotation 0.

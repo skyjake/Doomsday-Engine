@@ -41,6 +41,9 @@ class Lumobj;
  * Sprite animation sequences are defined elsewhere.
  *
  * @ingroup resource
+ *
+ * @todo Reimplement view angle addressing (spherical coords?).
+ * @todo Remove fixed number of view angles.
  */
 class Sprite
 {
@@ -48,8 +51,12 @@ public:
     /// Required view angle is missing. @ingroup errors
     DENG2_ERROR(MissingViewAngleError);
 
+    /// Maximum number of discreet view angles. @todo remove me
     static int const max_angles = 8;
 
+    /**
+     * One depiction of the sprite as if viewed from the associated angle.
+     */
     struct ViewAngle {
         Material *material;
         bool mirrorX;
@@ -98,6 +105,12 @@ public:
     ViewAngle const &closestViewAngle(angle_t mobjAngle, angle_t angleToEye,
         bool noRotation = false) const;
 
+    /**
+     * Provides access to the view angles for efficient traversal. The order of
+     * which should be considered undefined.
+     */
+    ViewAngles const &viewAngles() const;
+
 #ifdef __CLIENT__
     /**
      * Produce a luminous object from the sprite configuration. The properties
@@ -110,12 +123,6 @@ public:
      */
     Lumobj *generateLumobj() const;
 #endif
-
-    /**
-     * Provides access to the view angles for efficient traversal. The order of
-     * which should be considered undefined.
-     */
-    ViewAngles const &viewAngles() const;
 
 private:
     DENG2_PRIVATE(d)

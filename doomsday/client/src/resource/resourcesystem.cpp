@@ -91,7 +91,8 @@ DENG2_PIMPL(ResourceSystem)
     typedef QList<AnimGroup *> AnimGroups;
     AnimGroups animGroups;
 
-    QList<PatchName> patchNames;
+    typedef QList<PatchName> PatchNames;
+    PatchNames patchNames;
 
     typedef QMap<colorpaletteid_t, ColorPalette *> ColorPalettes;
     ColorPalettes colorPalettes;
