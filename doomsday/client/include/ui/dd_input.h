@@ -41,6 +41,7 @@ enum
     IDEV_JOY2,
     IDEV_JOY3,
     IDEV_JOY4,
+    IDEV_HEAD_TRACKER,
     NUM_INPUT_DEVICES       // Theoretical maximum.
 };
 
@@ -142,8 +143,9 @@ enum
 };
 
 // Input device axis flags.
-#define IDA_DISABLED 0x1    // Axis is always zero.
-#define IDA_INVERT 0x2      // Real input data should be inverted.
+#define IDA_DISABLED    0x1      // Axis is always zero.
+#define IDA_INVERT      0x2      // Real input data should be inverted.
+#define IDA_RAW         0x4      // Do not smooth the input values; always use latest received value.
 
 typedef struct inputdevaxis_s {
     char    name[20];       ///< Symbolic name of the axis.
@@ -199,6 +201,7 @@ boolean     DD_IgnoreInput(boolean ignore);
 void        DD_ReadKeyboard(void);
 void        DD_ReadMouse(void);
 void        DD_ReadJoystick(void);
+void        DD_ReadHeadTracker(void);
 
 void        DD_PostEvent(ddevent_t *ev);
 void        DD_ProcessEvents(timespan_t ticLength);
@@ -206,7 +209,8 @@ void        DD_ProcessSharpEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaterForKey(int ddkey, int native);
 byte        DD_ModKey(byte key);
-void        DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev);
+
+bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev);
 
 /**
  * Converts a libdeng2 Event into an old-fashioned ddevent_t.
@@ -223,8 +227,30 @@ void        I_DeviceReset(uint ident);
 void        I_ResetAllDevices(void);
 boolean     I_ShiftDown(void);
 
-inputdev_t* I_GetDevice(uint ident, boolean ifactive);
-inputdev_t* I_GetDeviceByName(const char* name, boolean ifactive);
+enum InputDeviceGetMode {
+    ActiveOrInactiveInputDevice,
+    OnlyActiveInputDevice
+};
+
+/**
+ * Retrieve a pointer to the input device state by identifier.
+ *
+ * @param ident   Intput device identifier (index; @c IDEV_*).
+ * @param mode    Finding behavior.
+ *
+ * @return Ptr to the input device state OR @c NULL.
+ */
+inputdev_t* I_GetDevice(uint ident, InputDeviceGetMode mode = ActiveOrInactiveInputDevice);
+
+/**
+ * Retrieve a pointer to the input device state by name.
+ *
+ * @param name    Input device name.
+ * @param mode    Finding behavior.
+ *
+ * @return  Ptr to the input device state OR @c NULL.
+ */
+inputdev_t* I_GetDeviceByName(char const *name, InputDeviceGetMode mode = ActiveOrInactiveInputDevice);
 
 /**
  * Retrieve the user-friendly, print-ready, name for the device associated with
@@ -233,7 +259,7 @@ inputdev_t* I_GetDeviceByName(const char* name, boolean ifactive);
  * @return  String containing the name for this device. Always valid. This string
  *          should never be free'd by the caller.
  */
-const ddstring_t* I_DeviceNameStr(uint ident);
+ddstring_t const *I_DeviceNameStr(uint ident);
 
 float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
 

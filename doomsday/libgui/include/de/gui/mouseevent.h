@@ -74,6 +74,8 @@ public:
     Button button() const { return _button; }
     ButtonState state() const { return _state; }
 
+    void setPos(Vector2i const &p) { _pos = p; }
+
 private:
     Vector2i _pos;
     WheelMotion _wheelMotion;

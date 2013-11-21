@@ -19,25 +19,21 @@
 #ifndef LIBGUI_SYSTEM_OPENGL_H
 #define LIBGUI_SYSTEM_OPENGL_H
 
-#ifdef WIN32
+#ifdef MACOSX
+#  include <OpenGL/gl.h>
+#else
 #  include "glentrypoints.h"
-#endif
-
-#if defined(UNIX) && !defined(MACOSX)
-#  define GL_GLEXT_PROTOTYPES
-#  include <GL/gl.h>
-#  include <GL/glext.h>
 #endif
 
 #include <QtOpenGL>
 
-#ifdef MACOSX
-#  include <OpenGL/gl.h>
-#endif
-
 // Defined in GLES2.
 #ifndef GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
 #  define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS 0x8CD9
+#endif
+
+#ifndef GL_VERSION_2_0
+#  error "OpenGL 2.0 (or newer) headers not found"
 #endif
 
 #endif // LIBGUI_SYSTEM_OPENGL_H

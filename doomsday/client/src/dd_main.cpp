@@ -2673,6 +2673,9 @@ D_CMD(Load)
             Con_Message("%s (%s) cannot be loaded.", Str_Text(game.title()), Str_Text(game.identityKey()));
             return true;
         }
+
+        BusyMode_FreezeGameForBusyMode();
+
         if(!App_ChangeGame(game)) return false;
 
         didLoadGame = true;
@@ -2763,6 +2766,8 @@ static bool tryUnloadFile(de::Uri const& search)
 D_CMD(Unload)
 {
     DENG_UNUSED(src);
+
+    BusyMode_FreezeGameForBusyMode();
 
     // No arguments; unload the current game if loaded.
     if(argc == 1)

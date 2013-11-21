@@ -30,11 +30,14 @@
 #include <de/NumberValue>
 #include <QGLFormat>
 #include <de/GLState>
+#include <de/Drawable>
 #include <QCloseEvent>
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/widgets/legacywidget.h"
+#include "ui/widgets/compositorwidget.h"
+#include "ui/widgets/gamewidget.h"
+#include "ui/widgets/gameuiwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
@@ -47,10 +50,10 @@
 
 #include "dd_main.h"
 #include "con_main.h"
+#include "ui/vrwindowtransform.h"
+#include "render/vr.h"
 
 using namespace de;
-
-static String const LEGACY_WIDGET_NAME = "legacy";
 
 DENG2_PIMPL(ClientWindow),
 DENG2_OBSERVES(KeyEventSource,   KeyEvent),
@@ -61,42 +64,52 @@ DENG2_OBSERVES(App,              GameChange)
 {
     bool needMainInit;
     bool needRecreateCanvas;
+    bool needRootSizeUpdate;
 
     Mode mode;
 
     /// Root of the nomal UI widgets of this window.
     GuiRootWidget root;
-    LegacyWidget *legacy;
+    CompositorWidget *compositor;
+    GameWidget *game;
+    GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
     NotificationWidget *notifications;
     ColorAdjustmentDialog *colorAdjust;
     LabelWidget *background;
-    GameSelectionWidget *games;
+    GameSelectionWidget *gameSelMenu;
     BusyWidget *busy;
     GuiWidget *sidebar;
 
-    GuiRootWidget busyRoot;
+    //GuiRootWidget busyRoot;
 
     // FPS notifications.
     LabelWidget *fpsCounter;
     float oldFps;
 
+    /// @todo Switch dynamically between VR and plain.
+    VRWindowTransform contentXf;
+
     Instance(Public *i)
         : Base(i),
           needMainInit(true),
           needRecreateCanvas(false),
+          needRootSizeUpdate(false),
           mode(Normal),
           root(thisPublic),
-          legacy(0),
+          compositor(0),
+          game(0),
+          gameUI(0),
           taskBar(0),
           notifications(0),
           colorAdjust(0),
           background(0),
-          games(0),
+          gameSelMenu(0),
           sidebar(0),
-          busyRoot(thisPublic),
+          //busyRoot(thisPublic),
           fpsCounter(0),
-          oldFps(0)
+          oldFps(0),
+          contentXf(*i)
     {
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
@@ -118,48 +131,62 @@ DENG2_OBSERVES(App,              GameChange)
         self.canvas().audienceForKeyEvent -= this;
     }
 
+    Widget &container()
+    {
+        if(compositor)
+        {
+            return *compositor;
+        }
+        return root;
+    }
+
     void setupUI()
     {
         Style &style = ClientApp::windowSystem().style();
 
         // Background for Ring Zero.
-        background = new LabelWidget;
+        background = new LabelWidget("background");
         background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::FitToSize);
         background->setSizePolicy(ui::Filled, ui::Filled);
         background->margins().set("");
-        background->rule()
-                .setInput(Rule::Left,   root.viewLeft())
-                .setInput(Rule::Top,    root.viewTop())
-                .setInput(Rule::Right,  root.viewRight())
-                .setInput(Rule::Bottom, root.viewBottom());
+        background->rule().setRect(root.viewRule());
         root.add(background);
 
-        legacy = new LegacyWidget(LEGACY_WIDGET_NAME);
-        legacy->rule()
-                .setLeftTop    (root.viewLeft(),  root.viewTop())
-                .setRightBottom(root.viewWidth(), root.viewBottom());
+        game = new GameWidget;
+        game->rule().setRect(root.viewRule());
         // Initially the widget is disabled. It will be enabled when the window
         // is visible and ready to be drawn.
-        legacy->disable();
-        root.add(legacy);
+        game->disable();
+        root.add(game);
+
+        gameUI = new GameUIWidget;
+        gameUI->rule().setRect(root.viewRule());
+        gameUI->disable();
+        container().add(gameUI);
+
+        // For busy mode we have an entirely different widget tree.
+        busy = new BusyWidget;
+        busy->hide(); // normally hidden
+        busy->rule().setRect(root.viewRule());
+        container().add(busy);
 
         // Game selection.
-        games = new GameSelectionWidget;
-        games->rule()
+        gameSelMenu = new GameSelectionWidget;
+        gameSelMenu->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
                 .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
-        root.add(games);
+        container().add(gameSelMenu);
 
         // Common notification area.
         notifications = new NotificationWidget;
         notifications->rule()
                 .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
-                .setInput(Rule::Right, legacy->rule().right() - style.rules().rule("gap"));
-        root.add(notifications);
+                .setInput(Rule::Right, game->rule().right() - style.rules().rule("gap"));
+        container().add(notifications);
 
         // FPS counter for the notification area.
         fpsCounter = new LabelWidget;
@@ -172,42 +199,34 @@ DENG2_OBSERVES(App,              GameChange)
                 .setInput(Rule::Left,   root.viewLeft())
                 .setInput(Rule::Bottom, root.viewBottom() + taskBar->shift())
                 .setInput(Rule::Width,  root.viewWidth());
-        root.add(taskBar);
+        container().add(taskBar);
 
         // The game selection's height depends on the taskbar.
-        games->rule().setInput(Rule::Height,
-                               OperatorRule::minimum(root.viewHeight(),
-                                                     (taskBar->rule().top() - root.viewHeight() / 2) * 2,
-                                                     style.rules().rule("gameselection.max.height")));
+        gameSelMenu->rule().setInput(Rule::Height,
+                                     OperatorRule::minimum(root.viewHeight(),
+                                                           (taskBar->rule().top() - root.viewHeight() / 2) * 2,                                                     style.rules().rule("gameselection.max.height")));
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
         colorAdjust->setAnchor(root.viewWidth() / 2, root.viewTop());
         colorAdjust->setOpeningDirection(ui::Down);
         root.add(colorAdjust);
-
-        // For busy mode we have an entirely different widget tree.
-        busy = new BusyWidget;
-        busy->rule()
-                .setLeftTop    (busyRoot.viewLeft(),  busyRoot.viewTop())
-                .setRightBottom(busyRoot.viewRight(), busyRoot.viewBottom());
-        busyRoot.add(busy);
     }
 
     void currentGameChanged(game::Game const &newGame)
     {
         if(newGame.isNull())
         {
-            //legacy->hide();
+            //game->hide();
             background->show();
-            games->show();
+            gameSelMenu->show();
             taskBar->console().enableBlur();
         }
         else
         {
-            //legacy->show();
+            //game->show();
             background->hide();
-            games->hide();
+            gameSelMenu->hide();
 
             // For the time being, blurring is not compatible with the
             // legacy OpenGL rendering.
@@ -218,6 +237,34 @@ DENG2_OBSERVES(App,              GameChange)
     void setMode(Mode const &newMode)
     {
         LOG_DEBUG("Switching to %s mode") << (newMode == Busy? "Busy" : "Normal");
+
+        // Hide and show widgets as appropriate.
+        switch(newMode)
+        {
+        case Busy:
+            game->hide();
+            game->disable();
+            gameUI->hide();
+            gameUI->disable();
+            gameSelMenu->hide();
+            taskBar->disable();
+
+            busy->show();
+            busy->enable();
+            break;
+
+        default:
+            busy->hide();
+            busy->disable();
+
+            game->show();
+            game->enable();
+            gameUI->show();
+            gameUI->enable();
+            if(!App_GameLoaded()) gameSelMenu->show();
+            taskBar->enable();
+            break;
+        }
 
         mode = newMode;
     }
@@ -257,6 +304,9 @@ DENG2_OBSERVES(App,              GameChange)
         self.canvas().makeCurrent();
 
         DD_FinishInitializationAfterWindowReady();
+
+        /// @todo This should be called when a VR mode is actually used.
+        contentXf.glInit();
     }
 
     void keyEvent(KeyEvent const &ev)
@@ -275,31 +325,39 @@ DENG2_OBSERVES(App,              GameChange)
 
     void mouseEvent(MouseEvent const &event)
     {
-        if(ClientApp::windowSystem().processEvent(event))
+        MouseEvent ev = event;
+
+        // Translate mouse coordinates for direct interaction.
+        if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
+        {
+            ev.setPos(contentXf.windowToLogicalCoords(event.pos()).toVector2i());
+        }
+
+        if(ClientApp::windowSystem().processEvent(ev))
         {
             // Eaten by the window system.
             return;
         }
 
         // Fall back to legacy handling.
-        switch(event.type())
+        switch(ev.type())
         {
         case Event::MouseButton:
             Mouse_Qt_SubmitButton(
-                        event.button() == MouseEvent::Left?     IMB_LEFT :
-                        event.button() == MouseEvent::Middle?   IMB_MIDDLE :
-                        event.button() == MouseEvent::Right?    IMB_RIGHT :
-                        event.button() == MouseEvent::XButton1? IMB_EXTRA1 :
-                        event.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                        event.state() == MouseEvent::Pressed);
+                        ev.button() == MouseEvent::Left?     IMB_LEFT :
+                        ev.button() == MouseEvent::Middle?   IMB_MIDDLE :
+                        ev.button() == MouseEvent::Right?    IMB_RIGHT :
+                        ev.button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                        ev.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                        ev.state() == MouseEvent::Pressed);
             break;
 
         case Event::MouseMotion:
-            Mouse_Qt_SubmitMotion(IMA_POINTER, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_POINTER, ev.pos().x, ev.pos().y);
             break;
 
         case Event::MouseWheel:
-            Mouse_Qt_SubmitMotion(IMA_WHEEL, event.pos().x, event.pos().y);
+            Mouse_Qt_SubmitMotion(IMA_WHEEL, ev.pos().x, ev.pos().y);
             break;
 
         default:
@@ -362,13 +420,15 @@ DENG2_OBSERVES(App,              GameChange)
                     .setInput(Rule::Top,    root.viewTop())
                     .setInput(Rule::Right,  root.viewRight())
                     .setInput(Rule::Bottom, taskBar->rule().top());
-            legacy->rule()
+            game->rule()
+                    .setInput(Rule::Right,  widget->rule().left());
+            gameUI->rule()
                     .setInput(Rule::Right,  widget->rule().left());
             break;
         }
 
         sidebar = widget;
-        root.insertBefore(sidebar, *notifications);
+        container().insertBefore(sidebar, *notifications);
     }
 
     void uninstallSidebar(SidebarLocation location)
@@ -378,13 +438,122 @@ DENG2_OBSERVES(App,              GameChange)
         switch(location)
         {
         case RightEdge:
-            legacy->rule().setInput(Rule::Right, root.viewRight());
+            game->rule().setInput(Rule::Right, root.viewRight());
+            gameUI->rule().setInput(Rule::Right, root.viewRight());
             break;
         }
 
-        root.remove(*sidebar);
-        sidebar->deleteLater();
+        container().remove(*sidebar);
+        sidebar->guiDeleteLater();
         sidebar = 0;
+    }
+
+    enum DeferredTaskResult {
+        Continue,
+        AbortFrame
+    };
+
+    DeferredTaskResult performDeferredTasks()
+    {
+        if(BusyMode_Active())
+        {
+            // Let's not do anything risky in busy mode.
+            return Continue;
+        }
+
+        // Offscreen composition is only needed in Oculus Rift mode.
+        enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
+
+        // The canvas needs to be recreated when the GL format has changed
+        // (e.g., multisampling).
+        if(needRecreateCanvas)
+        {
+            needRecreateCanvas = false;
+            if(self.setDefaultGLFormat())
+            {
+                self.recreateCanvas();
+                // Wait until the new Canvas is ready (note: loop remains paused!).
+                return AbortFrame;
+            }
+        }
+
+        return Continue;
+    }
+
+    void updateRootSize()
+    {
+        DENG_ASSERT_IN_MAIN_THREAD();
+
+        needRootSizeUpdate = false;
+
+        Vector2ui const size = contentXf.logicalRootSize(self.canvas().size());
+
+        // Tell the widgets.
+        root.setViewSize(size);
+        //busyRoot.setViewSize(size);
+    }
+
+    void enableCompositor(bool enable)
+    {
+        DENG_ASSERT_IN_MAIN_THREAD();
+
+        if((enable && compositor) || (!enable && !compositor))
+        {
+            return;
+        }
+
+        container().remove(*gameUI);
+        container().remove(*busy);
+        container().remove(*gameSelMenu);
+        container().remove(*notifications);
+        container().remove(*taskBar);
+
+        if(enable && !compositor)
+        {
+            LOG_MSG("Offscreen UI composition enabled");
+
+            compositor = new CompositorWidget;
+            compositor->rule().setRect(root.viewRule());
+            root.add(compositor);
+        }
+        else
+        {
+            DENG2_ASSERT(compositor != 0);            
+
+            root.remove(*compositor);
+            compositor->guiDeleteLater();
+            compositor = 0;
+
+            LOG_MSG("Offscreen UI composition disabled");
+        }
+
+        container().add(gameUI);
+        container().add(busy);
+        container().add(gameSelMenu);
+        container().add(notifications);
+        container().add(taskBar);
+
+        if(mode == Normal)
+        {
+            root.update();
+        }
+    }
+
+    void updateCompositor()
+    {
+        DENG_ASSERT_IN_MAIN_THREAD();
+
+        if(!compositor) return;
+
+        if(VR::mode() == VR::MODE_OCULUS_RIFT)
+        {
+            compositor->setCompositeProjection(Matrix4f::ortho(-1, 2, -1, 2));
+        }
+        else
+        {
+            // We'll simply cover the entire view.
+            compositor->useDefaultCompositeProjection();
+        }
     }
 };
 
@@ -406,7 +575,7 @@ ClientWindow::ClientWindow(String const &id)
 
 GuiRootWidget &ClientWindow::root()
 {
-    return d->mode == Busy? d->busyRoot : d->root;
+    return d->root; //d->mode == Busy? d->busyRoot : d->root;
 }
 
 TaskBarWidget &ClientWindow::taskBar()
@@ -424,9 +593,9 @@ NotificationWidget &ClientWindow::notifications()
     return *d->notifications;
 }
 
-LegacyWidget &ClientWindow::game()
+GameWidget &ClientWindow::game()
 {
-    return *d->legacy;
+    return *d->game;
 }
 
 BusyWidget &ClientWindow::busy()
@@ -466,14 +635,14 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
-    // Now that the Canvas is ready for drawing we can enable the LegacyWidget.
-    d->root.find(LEGACY_WIDGET_NAME)->enable();
+    // Now that the Canvas is ready for drawing we can enable the GameWidget.
+    d->game->enable();
+    d->gameUI->enable();
 
     // Configure a viewport immediately.
-    //glViewport(0, FLIP(0 + canvas.height() - 1), canvas.width(), canvas.height());
     GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
-    LOG_DEBUG("LegacyWidget enabled");
+    LOG_DEBUG("GameWidget enabled");
 
     if(d->needMainInit)
     {
@@ -497,7 +666,13 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    root().draw();
+    if(d->needRootSizeUpdate)
+    {
+        d->updateRootSize();
+    }
+    d->updateCompositor();
+
+    d->contentXf.drawTransformed();
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
     // swapped.
@@ -518,9 +693,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
 
     GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
 
-    // Tell the widgets.
-    d->root.setViewSize(size);
-    d->busyRoot.setViewSize(size);
+    d->updateRootSize();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static
@@ -532,6 +705,13 @@ bool ClientWindow::setDefaultGLFormat() // static
     fmt.setDepthBufferSize(16);
     fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
+
+    if(VR::modeNeedsStereoGLFormat(VR::mode()))
+    {
+        // Only use a stereo format for modes that require it.
+        LOG_MSG("Using a stereoscopic format");
+        fmt.setStereo(true);
+    }
 
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
@@ -578,17 +758,10 @@ void ClientWindow::draw()
     // Don't run the main loop until after the paint event has been dealt with.
     ClientApp::app().loop().pause();
 
-    // The canvas needs to be recreated when the GL format has changed
-    // (e.g., multisampling).
-    if(d->needRecreateCanvas)
+    if(d->performDeferredTasks() == Instance::AbortFrame)
     {
-        d->needRecreateCanvas = false;
-        if(setDefaultGLFormat())
-        {
-            recreateCanvas();
-            // Wait until the new Canvas is ready (note: loop remains paused!).
-            return;
-        }
+        // Shouldn't draw right now.
+        return;
     }
 
     if(shouldRepaintManually())
@@ -634,12 +807,35 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     DENG_ASSERT(img.pixelSize != 0);
 }
 
+void ClientWindow::drawGameContentToTexture(GLTexture &texture)
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    GLTarget offscreen(texture, GLTarget::DepthStencil);
+    GLState::push()
+            .setTarget(offscreen)
+            .setViewport(Rectangleui::fromSize(texture.size()))
+            .apply();
+
+    offscreen.clear(GLTarget::ColorDepthStencil);
+    d->root.drawUntil(*d->gameSelMenu);
+
+    GLState::pop().apply();
+}
+
 void ClientWindow::updateCanvasFormat()
 {
     d->needRecreateCanvas = true;
 
     // Save the relevant format settings.
     App::config().set("window.fsaa", Con_GetByte("vid-fsaa") != 0);
+}
+
+void ClientWindow::updateRootSize()
+{
+    // This will be done a bit later as the call may originate from another thread.
+    d->needRootSizeUpdate = true;
 }
 
 ClientWindow &ClientWindow::main()
@@ -662,6 +858,11 @@ void ClientWindow::toggleFPSCounter()
 void ClientWindow::showColorAdjustments()
 {
     d->colorAdjust->open();
+}
+
+void ClientWindow::addOnTop(GuiWidget *widget)
+{
+    d->container().add(widget);
 }
 
 void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)

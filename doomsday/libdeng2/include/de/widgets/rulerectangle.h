@@ -114,6 +114,11 @@ public:
     Rectanglef rect() const;
 
     /**
+     * Returns the current size of the rectangle as defined by the input rules.
+     */
+    Vector2f size() const;
+
+    /**
      * Returns the current rectangle as defined by the input rules.
      * Values are floored to integers.
      */

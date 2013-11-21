@@ -136,6 +136,8 @@ static void beginTask(BusyTask* task)
         Con_Error("Con_Busy: Already busy.\n");
     }
 
+    BusyVisual_PrepareResources();
+
     Sys_Lock(busy_Mutex);
     busyDone = false;
     busyTaskEndedWithError = false;
@@ -143,9 +145,6 @@ static void beginTask(BusyTask* task)
     busyTask = task;
     Sys_Unlock(busy_Mutex);
     busyInited = true;
-
-    // Load any resources needed to visual this task's progress.
-    BusyVisual_PrepareResources();
 
     ProgressWidget &prog = ClientWindow::main().busy().progress();
     prog.setText(task->name);
@@ -237,9 +236,18 @@ boolean BusyMode_IsTransitionAnimated(void)
 }
 #endif
 
+void BusyMode_FreezeGameForBusyMode(void)
+{
+#ifdef __CLIENT__
+    ClientWindow::main().busy().renderTransitionFrame();
+#endif
+}
+
 static void preBusySetup(int initialMode)
 {
 #ifdef __CLIENT__
+    //ClientWindow::main().busy().renderTransitionFrame();
+
     // Are we doing a transition effect?
     busyWillAnimateTransition = animatedTransitionActive(initialMode);
     if(busyWillAnimateTransition)
@@ -248,6 +256,9 @@ static void preBusySetup(int initialMode)
     }
 
     busyWasIgnoringInput = DD_IgnoreInput(true);
+
+    // Load any resources needed beforehand.
+    //BusyVisual_PrepareResources();
 
     //BusyVisual_PrepareFont();
     //BusyVisual_LoadTextures();
@@ -270,13 +281,18 @@ static void postBusyCleanup()
     DD_IgnoreInput(busyWasIgnoringInput);
     DD_ResetTimer();
 
-    BusyVisual_ReleaseTextures();
+    //BusyVisual_ReleaseTextures();
 
     // Back to unlimited frame rate.
     ClientApp::app().loop().setRate(0);
 
     // Switch the window to normal UI.
     WindowSystem::main().setMode(ClientWindow::Normal);
+
+    if(!Con_TransitionInProgress())
+    {
+        ClientWindow::main().busy().releaseTransitionFrame();
+    }
 #endif
 }
 
@@ -437,7 +453,7 @@ static void BusyMode_Exit(void)
  */
 void BusyMode_Loop(void)
 {
-    if(!busyTask) return;
+    if(!busyTask || !BusyMode_Active()) return;
 
     boolean canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
     timespan_t oldTime;
@@ -502,6 +518,7 @@ DENG_DECLARE_API(Busy) =
     { DE_API_BUSY },
     BusyMode_Active,
     BusyMode_ElapsedTime,
+    BusyMode_FreezeGameForBusyMode,
     BusyMode_RunTask,
     BusyMode_RunTasks,
     BusyMode_RunNewTask,

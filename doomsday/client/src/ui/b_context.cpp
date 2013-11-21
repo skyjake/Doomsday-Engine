@@ -89,7 +89,7 @@ void B_UpdateDeviceStateAssociations(void)
         // Mark all event bindings in the context.
         for(eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
         {
-            inputdev_t*         dev = I_GetDevice(eb->device, false);
+            inputdev_t *dev = I_GetDevice(eb->device);
 
             switch(eb->type)
             {
@@ -128,7 +128,7 @@ void B_UpdateDeviceStateAssociations(void)
                 for(db = conBin->deviceBinds[k].next; db != &conBin->deviceBinds[k];
                     db = db->next)
                 {
-                    inputdev_t* dev = I_GetDevice(db->device, false);
+                    inputdev_t *dev = I_GetDevice(db->device);
 
                     switch(db->type)
                     {
@@ -160,7 +160,7 @@ void B_UpdateDeviceStateAssociations(void)
         // relevant states.
         if(bc->flags & BCF_ACQUIRE_KEYBOARD)
         {
-            inputdev_t*         dev = I_GetDevice(IDEV_KEYBOARD, false);
+            inputdev_t *dev = I_GetDevice(IDEV_KEYBOARD);
 
             for(k = 0; k < dev->numKeys; ++k)
             {
@@ -174,7 +174,7 @@ void B_UpdateDeviceStateAssociations(void)
             int                 j;
             for(j = 0; j < NUM_INPUT_DEVICES; ++j)
             {
-                inputdev_t* dev = I_GetDevice(j, true);
+                inputdev_t *dev = I_GetDevice(j, OnlyActiveInputDevice);
 
                 if(!dev)
                     continue;
@@ -202,7 +202,7 @@ void B_UpdateDeviceStateAssociations(void)
     // the devices and see if any of the states need to be expired.
     for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
-        inputdev_t* dev = I_GetDevice(i, false);
+        inputdev_t *dev = I_GetDevice(i);
 
         // Keys.
         for(j = 0; j < (int)dev->numKeys; ++j)
@@ -551,7 +551,7 @@ de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event,
 de::Action *B_ActionForEvent(ddevent_t const *event)
 {
     event_t ev;
-    DD_ConvertEvent(event, &ev);
+    bool validGameEvent = DD_ConvertEvent(event, &ev);
 
     for(int i = 0; i < bindContextCount; ++i)
     {
@@ -575,7 +575,7 @@ de::Action *B_ActionForEvent(ddevent_t const *event)
         if(bc->ddFallbackResponder && bc->ddFallbackResponder(event))
             return 0; // fallback responder executed something
 
-        if(bc->fallbackResponder && bc->fallbackResponder(&ev))
+        if(validGameEvent && bc->fallbackResponder && bc->fallbackResponder(&ev))
             return 0; // fallback responder executed something
     }
 

@@ -331,7 +331,9 @@ DENG2_PIMPL(DrawList)
     {
         // Note that last may be reallocated during allocateData.
         last->data.numIndices = numIndices;
-        last->data.indices    = (uint *) allocateData(sizeof(uint) * numIndices);
+        // Temporary variable to avoid segfault on Ubuntu linux CMB
+        uint * lti = (uint *) allocateData(sizeof(uint) * numIndices);
+        last->data.indices = lti;
 
         for(uint i = 0; i < numIndices; ++i)
         {

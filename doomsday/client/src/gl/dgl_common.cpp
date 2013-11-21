@@ -372,7 +372,10 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    glScissor(rect->origin.x, FLIP(rect->origin.y + rect->size.height - 1), rect->size.width, rect->size.height);
+    GLState::top().setNormalizedScissor(
+                ClientWindow::main().game().normalizedRect(
+                    Rectanglei(rect->origin.x, rect->origin.y,
+                               rect->size.width, rect->size.height))).apply();
 }
 
 #undef DGL_SetScissor2
@@ -384,25 +387,6 @@ DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
     rect.size.width  = width;
     rect.size.height = height;
     DGL_SetScissor(&rect);
-}
-
-#undef DGL_Scissor
-DENG_EXTERN_C void DGL_Scissor(RectRaw *rect)
-{
-    if(!rect) return;
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    GLint v[4];
-    glGetIntegerv(GL_SCISSOR_BOX, (GLint*)v);
-    // Y is flipped.
-    v[1] = FLIP(v[1] + v[3] - 1);
-
-    rect->origin.x = v[0];
-    rect->origin.y = v[1];
-    rect->size.width  = v[2];
-    rect->size.height = v[3];
 }
 
 #undef DGL_GetIntegerv
@@ -419,7 +403,8 @@ boolean DGL_GetIntegerv(int name, int *v)
         break;
 
     case DGL_SCISSOR_TEST:
-        glGetIntegerv(GL_SCISSOR_TEST, (GLint*) v);
+        //glGetIntegerv(GL_SCISSOR_TEST, (GLint*) v);
+        *(GLint *) v = GLState::top().scissor();
         break;
 
     case DGL_FOG:
@@ -577,6 +562,21 @@ boolean DGL_SetFloat(int name, float value)
     return true;
 }
 
+#undef DGL_PushState
+void DGL_PushState(void)
+{
+    GLState::push();
+}
+
+#undef DGL_PopState
+void DGL_PopState(void)
+{
+    GLState::pop();
+
+    // Make sure the restored state is immediately in effect.
+    GLState::top().apply();
+}
+
 #undef DGL_Enable
 int DGL_Enable(int cap)
 {
@@ -597,7 +597,7 @@ int DGL_Enable(int cap)
         break;
 
     case DGL_SCISSOR_TEST:
-        glEnable(GL_SCISSOR_TEST);
+        //glEnable(GL_SCISSOR_TEST);
         break;
 
     case DGL_LINE_SMOOTH:
@@ -633,7 +633,8 @@ void DGL_Disable(int cap)
         break;
 
     case DGL_SCISSOR_TEST:
-        glDisable(GL_SCISSOR_TEST);
+        //glDisable(GL_SCISSOR_TEST);
+        GLState::top().clearScissor().apply();
         break;
 
     case DGL_LINE_SMOOTH:
@@ -928,6 +929,8 @@ DENG_DECLARE_API(GL) =
     { DE_API_GL },
     DGL_Enable,
     DGL_Disable,
+    DGL_PushState,
+    DGL_PopState,
     DGL_GetIntegerv,
     DGL_GetInteger,
     DGL_SetInteger,
@@ -935,7 +938,6 @@ DENG_DECLARE_API(GL) =
     DGL_GetFloat,
     DGL_SetFloat,
     DGL_Ortho,
-    DGL_Scissor,
     DGL_SetScissor,
     DGL_SetScissor2,
     DGL_MatrixMode,

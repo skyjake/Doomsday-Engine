@@ -1,4 +1,4 @@
-/** @file legacywidget.h  Widget for legacy UI components.
+/** @file gamewidget.h  Widget for legacy UI components.
  * @ingroup gui
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -17,20 +17,29 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef CLIENT_LEGACYWIDGET_H
-#define CLIENT_LEGACYWIDGET_H
+#ifndef CLIENT_GAMEWIDGET_H
+#define CLIENT_GAMEWIDGET_H
 
 #include "GuiWidget"
 
 /**
- * Widget for legacy UI components.
+ * Widget for drawing the game world.
  *
  * @ingroup gui
  */
-class LegacyWidget : public GuiWidget
+class GameWidget : public GuiWidget
 {
 public:
-    LegacyWidget(de::String const &name = "");
+    GameWidget(de::String const &name = "game");
+
+    /**
+     * Convenience method for changing and immediately applying a new GL
+     * viewport. The viewport is automatically normalized in relation to the
+     * root view size.
+     *
+     * This is only intended to support old graphics code that doesn't use libgui.
+     */
+    void glApplyViewport(int x, int y, int width, int height);
 
     void viewResized();
     void update();
@@ -41,4 +50,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // CLIENT_LEGACYWIDGET_H
+#endif // CLIENT_GAMEWIDGET_H

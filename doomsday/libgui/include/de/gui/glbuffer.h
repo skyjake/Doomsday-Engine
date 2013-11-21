@@ -101,6 +101,17 @@ struct LIBGUI_PUBLIC Vertex2TexRgba
 };
 
 /**
+ * Vertex format with 3D coordinates and one set of texture coordinates.
+ */
+struct LIBGUI_PUBLIC Vertex3Tex
+{
+    Vector3f pos;
+    Vector2f texCoord;
+
+    DENG2_DECLARE_VERTEX_FORMAT(2)
+};
+
+/**
  * Vertex format with 3D coordinates, one set of texture coordinates, and an
  * RGBA color.
  */

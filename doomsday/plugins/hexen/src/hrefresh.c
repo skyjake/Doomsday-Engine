@@ -178,7 +178,7 @@ void R_UpdateViewFilter(int player)
     }
 }
 
-static void rendPlayerView(int player)
+void G_RendPlayerView(int player)
 {
     player_t* plr = &players[player];
     boolean special200 = false;
@@ -226,6 +226,7 @@ static void rendPlayerView(int player)
     }
 }
 
+#if 0
 static void rendHUD(int player, const RectRaw* portGeometry)
 {
     if(player < 0 || player >= MAXPLAYERS) return;
@@ -271,6 +272,7 @@ void X_DrawViewPort(int port, const RectRaw* portGeometry,
     default: break;
     }
 }
+#endif
 
 void X_DrawWindow(const Size2Raw* windowSize)
 {

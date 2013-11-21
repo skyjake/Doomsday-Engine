@@ -139,7 +139,7 @@ boolean B_ParseKeyId(const char* desc, int* id)
 boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
 {
     // Maybe it's one of the buttons?
-    *id = I_GetKeyByName(I_GetDevice(IDEV_MOUSE, false), desc);
+    *id = I_GetKeyByName(I_GetDevice(IDEV_MOUSE), desc);
     if(*id >= 0)
     {
         // Got it.
@@ -151,7 +151,7 @@ boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
     {
         *type = E_TOGGLE;
         *id = strtoul(desc + 6, NULL, 10) - 1;
-        if(*id < 0 || (uint)*id >= I_GetDevice(IDEV_MOUSE, false)->numKeys)
+        if(*id < 0 || (uint)*id >= I_GetDevice(IDEV_MOUSE)->numKeys)
         {
             Con_Message("B_ParseMouseTypeAndId: Button %i does not exist.", *id);
             return false;
@@ -161,12 +161,27 @@ boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
     {
         // Try to find the axis.
         *type = E_AXIS;
-        *id = I_GetAxisByName(I_GetDevice(IDEV_MOUSE, false), desc);
+        *id = I_GetAxisByName(I_GetDevice(IDEV_MOUSE), desc);
         if(*id < 0)
         {
             Con_Message("B_ParseMouseTypeAndId: Axis \"%s\" is not defined.", desc);
             return false;
         }
+    }
+    return true;
+}
+
+boolean B_ParseDeviceAxisTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
+{
+    inputdev_t *dev = I_GetDevice(device);
+
+    *type = E_AXIS;
+    *id = I_GetAxisByName(dev, desc);
+    if(*id < 0)
+    {
+        Con_Message("B_ParseDeviceAxisTypeAndId: Axis \"%s\" is not defined in device '%s'.",
+                    desc, dev->name);
+        return false;
     }
     return true;
 }
@@ -177,7 +192,7 @@ boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
     {
         *type = E_TOGGLE;
         *id = strtoul(desc + 6, NULL, 10) - 1;
-        if(*id < 0 || (uint)*id >= I_GetDevice(device, false)->numKeys)
+        if(*id < 0 || (uint)*id >= I_GetDevice(device)->numKeys)
         {
             Con_Message("B_ParseJoystickTypeAndId: Button %i does not exist in joystick.", *id);
             return false;
@@ -187,7 +202,7 @@ boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
     {
         *type = E_ANGLE;
         *id = strtoul(desc + 3, NULL, 10) - 1;
-        if(*id < 0 || (uint)*id >= I_GetDevice(device, false)->numHats)
+        if(*id < 0 || (uint)*id >= I_GetDevice(device)->numHats)
         {
             Con_Message("B_ParseJoystickTypeAndId: Hat %i does not exist in joystick.", *id);
             return false;
@@ -200,12 +215,9 @@ boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
     }
     else
     {
-        // Try to find the axis.
-        *type = E_AXIS;
-        *id = I_GetAxisByName(I_GetDevice(device, false), desc);
-        if(*id < 0)
+        // Try to find the axis.       
+        if(!B_ParseDeviceAxisTypeAndId(device, desc, type, id))
         {
-            Con_Message("B_ParseJoystickTypeAndId: Axis \"%s\" is not defined in joystick.", desc);
             return false;
         }
     }
@@ -314,9 +326,9 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
             }
         }
     }
-    else if(!Str_CompareIgnoreCase(str, "joy"))
+    else if(!Str_CompareIgnoreCase(str, "joy") || !Str_CompareIgnoreCase(str, "head"))
     {
-        cond->device = IDEV_JOY1;
+        cond->device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
 
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
@@ -417,7 +429,7 @@ boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
 boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* context)
 {
     boolean fulfilled = !cond->flags.negate;
-    inputdev_t* dev = I_GetDevice(cond->device, false);
+    inputdev_t *dev = I_GetDevice(cond->device);
 
     switch(cond->type)
     {
@@ -474,7 +486,7 @@ boolean B_EqualConditions(const statecondition_t* a, const statecondition_t* b)
 
 void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str)
 {
-    inputdev_t* dev = I_GetDevice(device, false);
+    inputdev_t *dev = I_GetDevice(device);
     const char* name;
 
     if(type != E_SYMBOLIC)

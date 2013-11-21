@@ -184,7 +184,9 @@ DENG2_PIMPL(GLState)
 
         case BlendFuncSrc:
         case BlendFuncDest:
-            glBlendFunc(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()));
+            //glBlendFunc(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()));
+            glBlendFuncSeparate(glBFunc(self.srcBlendFunc()), glBFunc(self.destBlendFunc()),
+                                GL_ONE, GL_ONE);
             break;
 
         case BlendOp:
@@ -208,14 +210,23 @@ DENG2_PIMPL(GLState)
         case ScissorWidth:
         case ScissorHeight:
         {
-            if(self.scissor())
+            if(self.scissor() || self.target().hasActiveRect())
             {
                 glEnable(GL_SCISSOR_TEST);
 
-                Rectangleui scr = self.scissorRect();
+                Rectangleui origScr;
+                if(self.scissor())
+                {
+                    origScr = self.scissorRect();
+                }
+                else
+                {
+                    origScr = Rectangleui::fromSize(self.target().size());
+                }
+
+                Rectangleui const scr = self.target().scaleToActiveRect(origScr);
                 glScissor(scr.left(), self.target().size().y - scr.bottom(),
                           scr.width(), scr.height());
-                //glScissor(scr.left(), scr.top(), scr.width(), scr.height());
             }
             else
             {
@@ -229,7 +240,9 @@ DENG2_PIMPL(GLState)
         case ViewportWidth:
         case ViewportHeight:
         {
-            Rectangleui vp = self.viewport();
+            Rectangleui const vp = self.target().scaleToActiveRect(self.viewport());
+            //qDebug() << "glViewport" << vp.asText();
+
             glViewport(vp.left(), self.target().size().y - vp.bottom(),
                        vp.width(), vp.height());
             break;
@@ -360,6 +373,16 @@ GLState &GLState::setViewport(Rectangleui const &viewportRect)
     return *this;
 }
 
+GLState &GLState::setNormalizedViewport(Rectanglef const &normViewportRect)
+{
+    GLTarget::Size const size = target().size();
+    Rectangleui vp(Vector2ui(normViewportRect.left() * size.x,
+                             normViewportRect.top()  * size.y),
+                   Vector2ui(std::ceil(normViewportRect.right()  * size.x),
+                             std::ceil(normViewportRect.bottom() * size.y)));
+    return setViewport(vp);
+}
+
 GLState &GLState::setScissor(Rectanglei const &scissorRect)
 {
     return setScissor(scissorRect.toRectangleui());
@@ -482,12 +505,25 @@ Rectangleui GLState::scissorRect() const
 
 void GLState::apply() const
 {
+    bool forceViewportAndScissor = false;
+
+
     // Update the render target.
     if(currentTarget != d->target)
     {
+        GLTarget const &oldTarget = (currentTarget? *currentTarget :
+                                     CanvasWindow::main().canvas().renderTarget());
+
         if(currentTarget) currentTarget->glRelease();
         currentTarget = d->target;
         if(currentTarget) currentTarget->glBind();
+
+        if(oldTarget.hasActiveRect() || target().hasActiveRect())
+        {
+            // We can't trust that the viewport or scissor can remain the same
+            // as the active rectangle may have changed.
+            forceViewportAndScissor = true;
+        }
     }
 
     // Determine which properties have changed.
@@ -501,6 +537,12 @@ void GLState::apply() const
     {
         // Just apply the changed parts of the state.
         changed = d->props.delta(currentProps);
+
+        if(forceViewportAndScissor)
+        {
+            changed.insert(ViewportX);
+            changed.insert(ScissorX);
+        }
     }
 
     if(!changed.isEmpty())
@@ -535,9 +577,10 @@ GLState &GLState::push()
     return top();
 }
 
-void GLState::pop()
+GLState &GLState::pop()
 {
     delete take();
+    return top();
 }
 
 void GLState::push(GLState *state)
@@ -549,6 +592,11 @@ GLState *GLState::take()
 {
     DENG2_ASSERT(stack.size() > 1);
     return stack.takeLast();
+}
+
+dsize GLState::stackDepth()
+{
+    return stack.size();
 }
 
 } // namespace de

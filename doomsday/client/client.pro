@@ -36,6 +36,7 @@ include(../dep_deng2.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_deng1.pri)
+include(../dep_rift.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -56,7 +57,7 @@ win32 {
 
     QMAKE_LFLAGS += /NODEFAULTLIB:libcmt
 
-    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lopengl32 -lglu32
+    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lopengl32
 }
 else:macx {
     useFramework(Cocoa)
@@ -126,8 +127,8 @@ DENG_CONVENIENCE_HEADERS += \
     include/ContactSpreader \
     include/Decoration \
     include/DialogContentStylist \
-    include/Drawlist \
-    include/Drawlists \
+    include/DrawList \
+    include/DrawLists \
     include/EntityDatabase \
     include/Face \
     include/FontLineWrapping \
@@ -328,6 +329,7 @@ DENG_HEADERS += \
     include/render/vignette.h \
     include/render/vissprite.h \
     include/render/vlight.h \
+    include/render/vr.h \
     include/render/walledge.h \
     include/render/wallspec.h \
     include/resource/abstractfont.h \
@@ -425,11 +427,13 @@ DENG_HEADERS += \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
     include/ui/uidefs.h \
+    include/ui/vrwindowtransform.h \
     include/ui/widgets/blurwidget.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/buttonwidget.h \
     include/ui/widgets/choicewidget.h \
     include/ui/widgets/commandwidget.h \
+    include/ui/widgets/compositorwidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
     include/ui/widgets/cvarchoicewidget.h \
@@ -439,11 +443,12 @@ DENG_HEADERS += \
     include/ui/widgets/documentwidget.h \
     include/ui/widgets/foldpanelwidget.h \
     include/ui/widgets/gameselectionwidget.h \
+    include/ui/widgets/gamewidget.h \
+    include/ui/widgets/gameuiwidget.h \
     include/ui/widgets/gridpopupwidget.h \
     include/ui/widgets/icvarwidget.h \
     include/ui/widgets/keygrabberwidget.h \
     include/ui/widgets/labelwidget.h \
-    include/ui/widgets/legacywidget.h \
     include/ui/widgets/lineeditwidget.h \
     include/ui/widgets/logwidget.h \
     include/ui/widgets/menuwidget.h \
@@ -460,6 +465,7 @@ DENG_HEADERS += \
     include/ui/widgets/togglewidget.h \
     include/ui/widgets/variabletogglewidget.h \
     include/ui/windowsystem.h \
+    include/ui/windowtransform.h \
     include/ui/zonedebug.h \
     include/updater.h \
     include/updater/downloaddialog.h \
@@ -686,6 +692,7 @@ SOURCES += \
     src/render/vignette.cpp \
     src/render/vissprite.cpp \
     src/render/vlight.cpp \
+    src/render/vr.cpp \
     src/render/walledge.cpp \
     src/render/wallspec.cpp \
     src/resource/abstractfont.cpp \
@@ -776,11 +783,13 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
+    src/ui/vrwindowtransform.cpp \
     src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
     src/ui/widgets/choicewidget.cpp \
     src/ui/widgets/commandwidget.cpp \
+    src/ui/widgets/compositorwidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/cvarchoicewidget.cpp \
@@ -790,10 +799,11 @@ SOURCES += \
     src/ui/widgets/documentwidget.cpp \
     src/ui/widgets/foldpanelwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
+    src/ui/widgets/gamewidget.cpp \
+    src/ui/widgets/gameuiwidget.cpp \
     src/ui/widgets/gridpopupwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
     src/ui/widgets/labelwidget.cpp \
-    src/ui/widgets/legacywidget.cpp \
     src/ui/widgets/lineeditwidget.cpp \
     src/ui/widgets/logwidget.cpp \
     src/ui/widgets/menuwidget.cpp \
@@ -810,6 +820,7 @@ SOURCES += \
     src/ui/widgets/togglewidget.cpp \
     src/ui/widgets/variabletogglewidget.cpp \
     src/ui/windowsystem.cpp \
+    src/ui/windowtransform.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \

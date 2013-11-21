@@ -1597,6 +1597,8 @@ static void runGameAction(void)
     // Do things to change the game state.
     while((currentAction = G_GameAction()) != GA_NONE)
     {
+        BusyMode_FreezeGameForBusyMode();
+
         switch(currentAction)
         {
         case GA_NEWGAME:

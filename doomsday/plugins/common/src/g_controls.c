@@ -113,6 +113,9 @@ void G_DefineControls(void)
     P_NewPlayerControl(CTL_ZFLY, CTLT_NUMERIC, "zfly", "game");
     P_NewPlayerControl(CTL_TURN, CTLT_NUMERIC, "turn", "game");
     P_NewPlayerControl(CTL_LOOK, CTLT_NUMERIC, "look", "game");
+    P_NewPlayerControl(CTL_LOOK_PITCH, CTLT_NUMERIC, "lookpitch", "game");
+    P_NewPlayerControl(CTL_HEAD_YAW, CTLT_NUMERIC, "yawhead", "game");
+    P_NewPlayerControl(CTL_BODY_YAW, CTLT_NUMERIC, "yawbody", "game");
     P_NewPlayerControl(CTL_SPEED, CTLT_NUMERIC, "speed", "game");
     P_NewPlayerControl(CTL_MODIFIER_1, CTLT_NUMERIC, "strafe", "game");
     P_NewPlayerControl(CTL_ATTACK, CTLT_NUMERIC_TRIGGERED, "attack", "game");
@@ -500,13 +503,21 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
 #endif
 
 /**
- * Updates the viewers' look angle.
- * Called every tic by G_Ticker.
+ * Updates the viewers' look offset.
  */
-void G_LookAround(int pnum)
+void P_PlayerThinkHeadTurning(int pnum, timespan_t ticLength)
 {
-    pcontrolstate_t *cstate = &controlStates[pnum];
+    pcontrolstate_t *state = &controlStates[pnum];
+    float pos;
 
+    DENG_UNUSED(ticLength);
+
+    // Returned pos is in range -1...+1.
+    P_GetControlState(pnum, CTL_HEAD_YAW, &pos, NULL);
+
+    state->lookOffset = pos * .5f;
+
+#if 0 // Old logic.
     if(povangle != -1)
     {
         cstate->targetLookOffset = povangle / 8.0f;
@@ -533,6 +544,7 @@ void G_LookAround(int pnum)
 
         cstate->lookOffset += diff;
     }
+#endif
 }
 
 #if 0

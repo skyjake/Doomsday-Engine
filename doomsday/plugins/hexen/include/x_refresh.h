@@ -36,6 +36,8 @@ DENG_EXTERN_C float quitDarkenOpacity;
 extern "C" {
 #endif
 
+void G_RendPlayerView(int player);
+
 void X_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
 void X_DrawWindow(const Size2Raw* windowSize);
 void X_EndFrame(void);

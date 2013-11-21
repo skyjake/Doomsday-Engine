@@ -457,8 +457,8 @@ void R_UpdateViewPortGeometry(viewport_t *port, int col, int row)
     DENG_ASSERT(port);
 
     RectRaw *rect = &port->geometry;
-    int const x = col * DENG_GAMEVIEW_WIDTH  / gridCols;
-    int const y = row * DENG_GAMEVIEW_HEIGHT / gridRows;
+    int const x = DENG_GAMEVIEW_X + col * DENG_GAMEVIEW_WIDTH  / gridCols;
+    int const y = DENG_GAMEVIEW_Y + row * DENG_GAMEVIEW_HEIGHT / gridRows;
     int const width  = (col+1) * DENG_GAMEVIEW_WIDTH  / gridCols - x;
     int const height = (row+1) * DENG_GAMEVIEW_HEIGHT / gridRows - y;
     ddhook_viewport_reshape_t p;
@@ -931,7 +931,7 @@ void R_RenderPlayerViewBorder()
     R_DrawViewBorder();
 }
 
-void R_UseViewPort(viewport_t *vp)
+void R_UseViewPort(viewport_t const *vp)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -939,20 +939,18 @@ void R_UseViewPort(viewport_t *vp)
     if(!vp)
     {
         currentViewport = NULL;
-        //glViewport(0, FLIP(0 + DENG_GAMEVIEW_HEIGHT - 1),
-        //    DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
-        GLState::top().setViewport(Rectangleui(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)).apply();
+        ClientWindow::main().game().glApplyViewport(DENG_GAMEVIEW_X,
+                                                    DENG_GAMEVIEW_Y,
+                                                    DENG_GAMEVIEW_WIDTH,
+                                                    DENG_GAMEVIEW_HEIGHT);
     }
     else
     {
-        currentViewport = vp;
-        /*glViewport(vp->geometry.origin.x,
-            FLIP(vp->geometry.origin.y + vp->geometry.size.height - 1),
-            vp->geometry.size.width, vp->geometry.size.height);*/
-        GLState::top().setViewport(Rectangleui(vp->geometry.origin.x,
-                                               vp->geometry.origin.y,
-                                               vp->geometry.size.width,
-                                               vp->geometry.size.height)).apply();
+        currentViewport = const_cast<viewport_t *>(vp);
+        ClientWindow::main().game().glApplyViewport(vp->geometry.origin.x,
+                                                    vp->geometry.origin.y,
+                                                    vp->geometry.size.width,
+                                                    vp->geometry.size.height);
     }
 }
 
@@ -1469,58 +1467,64 @@ static void restoreDefaultGLState()
     DGL_Enable(DGL_POINT_SMOOTH);
 }
 
-void R_RenderViewPorts()
+void R_RenderViewPorts(ui::ViewPortLayer layer)
 {
-    int oldDisplay = displayPlayer, x, y, p;
-    GLbitfield bits = GL_DEPTH_BUFFER_BIT;
+    int oldDisplay = displayPlayer;
 
-    if(!devRendSkyMode)
-        bits |= GL_STENCIL_BUFFER_BIT;
+    // First clear the viewport.
+    if(layer == ui::Player3DViewLayer)
+    {
+        GLbitfield bits = GL_DEPTH_BUFFER_BIT;
 
-    if(freezeRLs)
-    {
-        bits |= GL_COLOR_BUFFER_BIT;
-    }
-    else
-    {
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        if(!devRendSkyMode)
+            bits |= GL_STENCIL_BUFFER_BIT;
+
+        if(freezeRLs)
         {
-            player_t *plr = &ddPlayers[i];
-
-            if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
-                continue;
-
-            if(P_IsInVoid(plr))
+            bits |= GL_COLOR_BUFFER_BIT;
+        }
+        else
+        {
+            for(int i = 0; i < DDMAXPLAYERS; ++i)
             {
-                bits |= GL_COLOR_BUFFER_BIT;
-                break;
+                player_t *plr = &ddPlayers[i];
+
+                if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
+                    continue;
+
+                if(P_IsInVoid(plr))
+                {
+                    bits |= GL_COLOR_BUFFER_BIT;
+                    break;
+                }
             }
         }
+
+        DENG_ASSERT_IN_MAIN_THREAD();
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+        // This is all the clearing we'll do.
+        glClear(bits);
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // This is all the clearing we'll do.
-    glClear(bits);
-
-    // Draw a view for all players with a visible viewport.
-    for(p = 0, y = 0; y < gridRows; ++y)
-        for(x = 0; x < gridCols; x++, ++p)
+    // Draw a view for all players with a visible viewport.    
+    for(int p = 0, y = 0; y < gridRows; ++y)
+    {
+        for(int x = 0; x < gridCols; x++, ++p)
         {
-            viewport_t *vp = &viewportOfLocalPlayer[p];
+            viewport_t const *vp = &viewportOfLocalPlayer[p];
             displayPlayer = vp->console;
+
             R_UseViewPort(vp);
 
             if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_ORIGIN))
             {
-                R_RenderBlankView();
+                if(layer == ui::Player3DViewLayer)
+                {
+                    R_RenderBlankView();
+                }
                 continue;
             }
-
-            R_UpdateViewer(vp->console);
-
-            viewdata_t *vd = &viewDataOfConsole[vp->console];
 
             glMatrixMode(GL_PROJECTION);
             glPushMatrix();
@@ -1531,25 +1535,39 @@ void R_RenderViewPorts()
              */
             glOrtho(0, vp->geometry.size.width, vp->geometry.size.height, 0, -1, 1);
 
-            gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 0/*layer #0*/);
-            restoreDefaultGLState();
+            viewdata_t const *vd = &viewDataOfConsole[vp->console];
 
-            R_RenderPlayerViewBorder();
+            if(layer == ui::Player3DViewLayer)
+            {
+                R_UpdateViewer(vp->console);
 
-            gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 1/*layer #1*/);
+                gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 0/*layer #0*/);
+                restoreDefaultGLState();
+
+                R_RenderPlayerViewBorder();
+            }
+            else if(layer == ui::HUDLayer)
+            {
+                gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 1/*layer #1*/);
+            }
+
             restoreDefaultGLState();
 
             glMatrixMode(GL_PROJECTION);
             glPopMatrix();
-
-            // Increment the internal frame count. This does not
-            // affect the FPS counter.
-            frameCount++;
         }
+    }
 
-    // Keep reseting until a new sharp world has arrived.
-    if(resetNextViewer > 1)
-        resetNextViewer = 0;
+    if(layer == ui::Player3DViewLayer)
+    {
+        // Increment the internal frame count. This does not
+        // affect the window's FPS counter.
+        frameCount++;
+
+        // Keep reseting until a new sharp world has arrived.
+        if(resetNextViewer > 1)
+            resetNextViewer = 0;
+    }
 
     // Restore things back to normal.
     displayPlayer = oldDisplay;

@@ -262,7 +262,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                 char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
                     "(...)",
                     "(deb)",
-                    "(vrb)",
+                    "(v)",
                     "",
                     "(i)",
                     "(WRN)",

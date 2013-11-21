@@ -203,8 +203,8 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     contentLayout(layout);
 
     // There is a shadow behind the wheel.
-    float gradientThick = layout.image.width() * 1;
-    float solidThick = layout.image.width() * .5f;
+    float gradientThick = layout.image.width() * 2.f;
+    float solidThick = layout.image.width() * .53f;
 
     Vector4f const shadowColor = style().colors().colorf(d->shadowColorId);
     verts.makeRing(layout.image.middle(),
@@ -215,10 +215,16 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
                    gradientThick, solidThick, 30,
                    shadowColor,
                    root().atlas().imageRectf(root().borderGlow()), 0);
-    /*verts.makeRing(layout.image.middle(),
-                   shadowRadius - gradientThick, shadowRadius - solidThick, 30,
-                   shadowColor,
-                   root().atlas().imageRectf(root().borderGlow()), 0);*/
+
+    // Shadow behind the text.
+    Rectanglef textBox = Rectanglef::fromSize(textSize());
+    ui::applyAlignment(ui::AlignCenter, textBox, layout.text);
+    int const boxSize = textBox.height() * 4;
+    Vector2f const off(0, textBox.height() / 4);
+    verts.makeFlexibleFrame(Rectanglef(off + textBox.midLeft(),
+                                       off + textBox.midRight()).expanded(boxSize),
+                            boxSize, Vector4f(shadowColor, shadowColor.w * .75f),
+                            root().atlas().imageRectf(root().borderGlow()));
 
     LabelWidget::glMakeGeometry(verts);
 

@@ -46,6 +46,7 @@
 #include "MaterialVariantSpec"
 #include "Texture"
 #include "api_render.h"
+#include "render/vr.h"
 
 #include <de/DisplayMode>
 #include <de/GLState>
@@ -491,8 +492,8 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t c
     viewpy = port->geometry.origin.y + viewData->window.origin.y;
     viewpw = MIN_OF(port->geometry.size.width, viewData->window.size.width);
     viewph = MIN_OF(port->geometry.size.height, viewData->window.size.height);
-    //glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
-    GLState::top().setViewport(Rectangleui(viewpx, viewpy, viewpw, viewph)).apply();
+
+    ClientWindow::main().game().glApplyViewport(viewpx, viewpy, viewpw, viewph);
 
     // The 3D projection matrix.
     GL_ProjectionMatrix();
@@ -555,12 +556,11 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
         break; }
 
     case 2: // After Restore Step 2 we're back in 2D rendering mode.
-        //glViewport(currentView.geometry.origin.x, FLIP(currentView.geometry.origin.y + currentView.geometry.size.height - 1),
-        //           currentView.geometry.size.width, currentView.geometry.size.height);
-        GLState::top().setViewport(Rectangleui(currentView.geometry.origin.x,
-                                               currentView.geometry.origin.y,
-                                               currentView.geometry.size.width,
-                                               currentView.geometry.size.height)).apply();
+        ClientWindow::main().game().
+                glApplyViewport(currentView.geometry.origin.x,
+                                currentView.geometry.origin.y,
+                                currentView.geometry.size.width,
+                                currentView.geometry.size.height);
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
@@ -580,12 +580,43 @@ void GL_ProjectionMatrix()
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
+
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(yfov = Rend_FieldOfView() / aspect, aspect, glNearClip, glFarClip);
+
+    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+    {
+        aspect = VR::riftState.aspect();
+        // A little trigonometry to apply aspect ratio to angles
+        float x = tan(0.5 * de::degreeToRadian(Rend_FieldOfView()));
+        yfov = de::radianToDegree(2.0 * atan2(x/aspect, 1.0f));
+    }
+    else
+    {
+        yfov = Rend_FieldOfView() / aspect;
+    }
+
+    // Replaced gluPerspective() with glFrustum() so we can do stereo 3D
+    // gluPerspective(yfov, aspect, glNearClip, glFarClip); // Replaced with lower-level glFrustum()
+    float fH = tan(0.5 * de::degreeToRadian(yfov)) * glNearClip;
+    float fW = fH*aspect;
+    // Asymmetric frustum shift is computed to realign screen-depth items after view point has shifted.
+    // Asymmetric frustum shift method is probably superior to competing toe-in stereo 3D method:
+    //  * AFS preserves identical near and far clipping planes in both views
+    //  * AFS shows items at/near infinity better
+    //  * AFS conforms to what stereo 3D photographers call "ortho stereo"
+    // Asymmetric frustum shift is used for all stereo 3D modes except Oculus Rift mode, which only applies the viewpoint shift.
+    float frustumShift = 0;
+    if (VR::applyFrustumShift)
+        frustumShift = VR::eyeShift * glNearClip / VR::hudDistance;
+    glFrustum(-fW - frustumShift, fW - frustumShift,
+              -fH, fH,
+              glNearClip, glFarClip);
+    // Actually shift the player viewpoint
+    glTranslatef(-VR::eyeShift, 0, 0);
 
     // We'd like to have a left-handed coordinate system.
     glScalef(1, 1, -1);

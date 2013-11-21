@@ -52,7 +52,7 @@ static void strCpyLen(char* dest, const char* src, int maxWidth);
 extern int glMaxTexSize;
 extern boolean stopTime;
 extern boolean tickUI;
-extern boolean drawGame;
+//extern boolean drawGame;
 
 static boolean uiActive; /// The user interface is active.
 static boolean uiNoMouse;
@@ -121,7 +121,7 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     stopTime = halttime;
     tickUI = tckui;
     tickFrame = tckframe;
-    uiDrawGame = drawGame = drwgame;
+    uiDrawGame = /*drawGame = */ drwgame;
     // Advise the game not to draw any HUD displays
     gameDrawHUD = false;
     I_SetUIMouseMode(true);
@@ -163,7 +163,7 @@ void UI_End(void)
     tickFrame = true;
     stopTime = false;
     tickUI = false;
-    drawGame = true;
+    //drawGame = true;
     // Advise the game it can now draw HUD displays again.
     gameDrawHUD = true;
 
@@ -463,7 +463,7 @@ void UI_Ticker(timespan_t time)
     {
         // By default, the game is not visible, but since the alpha is not
         // fully opaque, it must be shown anyway.
-        drawGame = (uiAlpha < 1.0);
+        //drawGame = (uiAlpha < 1.0);
     }
 
     // Call the active page's ticker.

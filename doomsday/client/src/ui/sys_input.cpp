@@ -76,58 +76,6 @@ static keyevent_t *getKeyEvent(void)
     return ev;
 }
 
-#if 0
-/**
- * SDL's events are all returned from the same routine.  This function
- * is called periodically, and the events we are interested in a saved
- * into our own buffer.
- */
-void I_PollEvents(void)
-{
-    SDL_Event   event;
-    keyevent_t *e;
-
-    while(SDL_PollEvent(&event))
-    {
-        switch(event.type)
-        {
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
-            e = I_NewKeyEvent();
-            e->event = (event.type == SDL_KEYDOWN ? IKE_DOWN : IKE_UP);
-            e->ddkey = I_TranslateKeyCode(event.key.keysym.sym);
-            /*printf("sdl:%i ddkey:%i\n", event.key.keysym.scancode, e->ddkey);*/
-            break;
-
-        case SDL_MOUSEBUTTONDOWN:
-            mouseClickers[MIN_OF(event.button.button - 1, IMB_MAXBUTTONS - 1)].down++;
-            break;
-
-        case SDL_MOUSEBUTTONUP:
-            mouseClickers[MIN_OF(event.button.button - 1, IMB_MAXBUTTONS - 1)].up++;
-            break;
-
-        case SDL_JOYBUTTONDOWN:
-            joyClickers[MIN_OF(event.jbutton.button, IJOY_MAXBUTTONS - 1)].down++;
-            break;
-
-        case SDL_JOYBUTTONUP:
-            joyClickers[MIN_OF(event.jbutton.button, IJOY_MAXBUTTONS - 1)].up++;
-            break;
-
-        case SDL_QUIT:
-            // The system wishes to close the program immediately...
-            Sys_Quit();
-            break;
-
-        default:
-            // The rest of the events are ignored.
-            break;
-        }
-    }
-}
-#endif
-
 static void Mouse_Init(void)
 {
     if(CommandLine_Check("-nomouse") || novideo)

@@ -19,15 +19,16 @@
 #include "de_platform.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/progresswidget.h"
-#include "GuiRootWidget"
 #include "ui/busyvisual.h"
-#include "busymode.h"
-#include "sys_system.h"
-#include "render/r_main.h"
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
+#include "gl/gl_main.h"
+#include "render/r_main.h"
+#include "GuiRootWidget"
+#include "busymode.h"
+#include "sys_system.h"
 
-#include <de/RootWidget>
+#include <de/concurrency.h>
 #include <de/Drawable>
 #include <de/GLTexture>
 
@@ -116,23 +117,36 @@ void BusyWidget::update()
 {
     GuiWidget::update();
 
-    DENG_ASSERT(BusyMode_Active());
-    BusyMode_Loop();
+    if(BusyMode_Active())
+    {
+        BusyMode_Loop();
+    }
 }
 
 void BusyWidget::drawContent()
 {
     if(d->transitionTex.isNull())
     {
-        root().window().canvas().renderTarget().clear(GLTarget::ColorDepth);
+        //root().window().canvas().renderTarget().clear(GLTarget::ColorDepth);
     }
     else
     {
+        GLState::top().apply();
+
+        glDisable(GL_ALPHA_TEST); /// @todo get rid of these
+        glDisable(GL_BLEND);
+        glEnable(GL_TEXTURE_2D);
+
         // Draw the texture.
         Rectanglei pos = rule().recti();
-        d->uMvpMatrix = root().projMatrix2D() *
+        d->uMvpMatrix = Matrix4f::scale(Vector3f(1, -1, 1)) *
+                root().projMatrix2D() *
                 Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
         d->drawable.draw();
+
+        glEnable(GL_ALPHA_TEST);
+        glEnable(GL_BLEND);
+        glDisable(GL_TEXTURE_2D);
     }
 }
 
@@ -142,33 +156,49 @@ bool BusyWidget::handleEvent(Event const &)
     return true;
 }
 
-void BusyWidget::grabTransitionScreenshot()
+void BusyWidget::renderTransitionFrame()
 {
+    LOG_AS("BusyWidget");
+
+    if(!d->transitionTex.isNull())
+    {
+        // We already have a valid frame, no need to render again.
+        return;
+    }
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
     //GLTexture::Size size(rule().width().valuei() / 2,
     //                         rule().height().valuei() / 2);
 
     Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
 
+    LOG_DEBUG("Rendering transition frame, size ") << grabRect.size().asText();
+
+    /*
     if(BusyMode_IsTransitionAnimated())
     {
-        // Animation transitions are drawn only inside LegacyWidget, so just
+        // Animation transitions are drawn only inside GameWidget, so just
         // grab that portion of the screen.
         grabRect = root().window().game().rule().recti();
     }
 
     // Grab the game view's rectangle, as that's where the transition will be drawn.
-    GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);
+    GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);*/
 
-    d->transitionTex.reset(new GLTexture(grabbed, grabRect.size() / 2));
+    d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
+    d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGB_888);
+    root().window().drawGameContentToTexture(*d->transitionTex);
     d->uTex = *d->transitionTex;
 }
 
-void BusyWidget::releaseTransitionScreenshot()
+void BusyWidget::releaseTransitionFrame()
 {
     d->transitionTex.reset();
 }
 
-GLTexture const *BusyWidget::transitionScreenshot() const
+GLTexture const *BusyWidget::transitionFrame() const
 {
     return d->transitionTex.data();
 }
