@@ -24,7 +24,7 @@
 #include "dd_types.h" // angle_t
 #include <de/Error>
 #include <de/String>
-#include <QList>
+#include <QVector>
 
 class Material;
 #ifdef __CLIENT__
@@ -57,6 +57,7 @@ public:
         ViewAngle() : material(0), mirrorX(false)
         {}
     };
+    typedef QVector<ViewAngle> ViewAngles;
 
 public:
     Sprite();
@@ -109,6 +110,12 @@ public:
      */
     Lumobj *generateLumobj() const;
 #endif
+
+    /**
+     * Provides access to the view angles for efficient traversal. The order of
+     * which should be considered undefined.
+     */
+    ViewAngles const &viewAngles() const;
 
 private:
     DENG2_PRIVATE(d)

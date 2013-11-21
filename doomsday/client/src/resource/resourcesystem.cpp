@@ -1516,11 +1516,11 @@ void ResourceSystem::cacheSpriteSet(spritenum_t spriteId, MaterialVariantSpec co
     if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
     {
         foreach(Sprite *sprite, group->sprites)
-        for(int i = 0; i < Sprite::max_angles; ++i)
+        foreach(SpriteViewAngle const &viewAngle, sprite->viewAngles())
         {
-            if(sprite->hasViewAngle(i))
+            if(Material *material = viewAngle.material)
             {
-                d->materials.cache(*sprite->viewAngle(i).material, spec);
+                d->materials.cache(*material, spec);
             }
         }
     }

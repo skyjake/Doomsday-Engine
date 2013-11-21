@@ -39,18 +39,17 @@ using namespace de;
 DENG2_PIMPL_NOREF(Sprite)
 {
     byte rotate; ///< 0= no rotations, 1= only front, 2= more...
-    ViewAngle viewAngles[max_angles];
+    ViewAngles viewAngles;
 
-    Instance() : rotate(0)
+    Instance()
+        : rotate(0)
+        , viewAngles(max_angles)
     {}
 
-    Instance(Instance const &other) : rotate(other.rotate)
-    {
-        for(int i = 0; i < max_angles; ++i)
-        {
-            viewAngles[i] = other.viewAngles[i];
-        }
-    }
+    Instance(Instance const &other)
+        : rotate(other.rotate)
+        , viewAngles(other.viewAngles)
+    {}
 };
 
 Sprite::Sprite() : d(new Instance)
@@ -67,7 +66,7 @@ Sprite &Sprite::operator = (Sprite const &other)
 
 bool Sprite::hasViewAngle(int rotation) const
 {
-    if(rotation >= 0 && rotation < max_angles)
+    if(rotation >= 0 && rotation < d->viewAngles.count())
     {
         return d->viewAngles[rotation].material != 0;
     }
@@ -76,13 +75,13 @@ bool Sprite::hasViewAngle(int rotation) const
 
 void Sprite::newViewAngle(Material *material, uint rotation, bool mirrorX)
 {
-    if(rotation > 8) return;
+    DENG2_ASSERT(rotation <= max_angles);
 
     if(rotation == 0)
     {
         // This frame should be used for all rotations.
         d->rotate = false;
-        for(int i = 0; i < max_angles; ++i)
+        for(int i = 0; i < d->viewAngles.count(); ++i)
         {
             d->viewAngles[i].material = material;
             d->viewAngles[i].mirrorX  = mirrorX;
@@ -101,7 +100,7 @@ Sprite::ViewAngle const &Sprite::viewAngle(int rotation) const
 {
     LOG_AS("Sprite::viewAngle");
 
-    if(rotation >= 0 && rotation < max_angles)
+    if(rotation >= 0 && rotation < d->viewAngles.count())
     {
         return d->viewAngles[rotation];
     }
@@ -151,3 +150,8 @@ Lumobj *Sprite::generateLumobj() const
                     ->setZOffset(-tex.origin().y - pl->originY * ms.height());
 }
 #endif // __CLIENT__
+
+Sprite::ViewAngles const &Sprite::viewAngles() const
+{
+    return d->viewAngles;
+}
