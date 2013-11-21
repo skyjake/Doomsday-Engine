@@ -1,5 +1,7 @@
 /** @file billboard.h  Rendering billboard "sprites".
  *
+ * @ingroup render
+ *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -28,13 +30,13 @@
 class BspLeaf;
 
 /**
- * A sort of a sprite, I guess... Masked walls must be rendered sorted
- * with sprites, so no artifacts appear when sprites are seen behind
- * masked walls.
+ * Billboard drawing arguments for a masked wall.
  *
- * @ingroup render
+ * A sort of a sprite, I guess... Masked walls must be rendered sorted with
+ * sprites, so no artifacts appear when sprites are seen behind masked walls.
  */
-typedef struct rendmaskedwallparams_s {
+struct rendmaskedwallparams_t
+{
     void *material; /// MaterialVariant
     blendmode_t blendMode; ///< Blendmode to be used when drawing
                                /// (two sided mid textures only)
@@ -49,9 +51,13 @@ typedef struct rendmaskedwallparams_s {
     DGLuint modTex; ///< Texture to modulate with.
     float modTexCoord[2][2]; ///< [top-left, bottom-right][x, y]
     float modColor[4];
-} rendmaskedwallparams_t;
+};
 
-/// @ingroup render
+void Rend_DrawMaskedWall(rendmaskedwallparams_t const &parms);
+
+/**
+ * Billboard drawing arguments for a "player" sprite (HUD sprite).
+ */
 struct rendpspriteparams_t
 {
     float pos[2]; // {X, Y} Screen-space position.
@@ -65,8 +71,13 @@ struct rendpspriteparams_t
     uint vLightListIdx;
 };
 
-/// @ingroup render
-typedef struct rendspriteparams_s {
+void Rend_DrawPSprite(rendpspriteparams_t const &parms);
+
+/**
+ * Billboard drawing arguments for a map entity, sprite visualization.
+ */
+struct rendspriteparams_t
+{
 // Position/Orientation/Scale
     coord_t center[3]; // The real center point.
     coord_t srvo[3]; // Short-range visual offset.
@@ -87,19 +98,27 @@ typedef struct rendspriteparams_s {
 
 // Misc
     BspLeaf *bspLeaf;
-} rendspriteparams_t;
+};
+
+void Rend_DrawSprite(rendspriteparams_t const &parms);
+
+de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
 
 /**
  * @defgroup rendFlareFlags  Flare renderer flags
- * @ingroup render
  * @{
  */
 #define RFF_NO_PRIMARY      0x1 ///< Do not draw a primary flare (aka halo).
 #define RFF_NO_TURN         0x2 ///< Flares do not turn in response to viewangle/viewdir
 /**@}*/
 
-/// @ingroup render
-typedef struct rendflareparams_s {
+/**
+ * Billboard drawing arguments for a lens flare.
+ *
+ * @see H_RenderHalo()
+ */
+struct rendflareparams_t
+{
     byte flags; // @ref rendFlareFlags.
     int size;
     float color[3];
@@ -109,10 +128,8 @@ typedef struct rendflareparams_s {
     float mul; // Flare brightness factor.
     boolean isDecoration;
     int lumIdx;
-} rendflareparams_t;
+};
 
-/// @addtogroup render
-/// @{
 DENG_EXTERN_C int alwaysAlign;
 DENG_EXTERN_C int spriteLight, useSpriteAlpha, useSpriteBlend;
 DENG_EXTERN_C int noSpriteZWrite;
@@ -120,15 +137,5 @@ DENG_EXTERN_C byte noSpriteTrans;
 DENG_EXTERN_C byte devNoSprites;
 
 DENG_EXTERN_C void Rend_SpriteRegister();
-
-void Rend_DrawMaskedWall(rendmaskedwallparams_t const &parms);
-
-void Rend_DrawPSprite(rendpspriteparams_t const &parms);
-
-void Rend_DrawSprite(rendspriteparams_t const &parms);
-
-de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
-
-/// @}
 
 #endif // DENG_CLIENT_RENDER_BILLBOARD_H

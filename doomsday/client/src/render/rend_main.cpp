@@ -3343,7 +3343,9 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
     float occlusionFactor;
 
     if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
+    {
         return false;
+    }
 
     if(spr->data.flare.isDecoration)
     {
