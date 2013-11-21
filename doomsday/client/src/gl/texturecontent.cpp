@@ -51,6 +51,39 @@ static int BytesPerPixelFmt(dgltexformat_t format)
     }
 }
 
+/**
+ * Given a pixel format return the number of bytes to store one pixel.
+ * @pre Input data is of GL_UNSIGNED_BYTE type.
+ */
+static int BytesPerPixel(GLint format)
+{
+    switch(format)
+    {
+    case GL_COLOR_INDEX:
+    case GL_STENCIL_INDEX:
+    case GL_DEPTH_COMPONENT:
+    case GL_RED:
+    case GL_GREEN:
+    case GL_BLUE:
+    case GL_ALPHA:
+    case GL_LUMINANCE:              return 1;
+
+    case GL_LUMINANCE_ALPHA:        return 2;
+
+    case GL_RGB:
+    case GL_RGB8:
+    case GL_BGR:                    return 3;
+
+    case GL_RGBA:
+    case GL_RGBA8:
+    case GL_BGRA:                   return 4;
+
+    default:
+        Con_Error("BytesPerPixel: Unknown format %i.", (int) format);
+        return 0; // Unreachable.
+    }
+}
+
 void GL_InitTextureContent(texturecontent_t *content)
 {
     DENG_ASSERT(content);
@@ -405,6 +438,218 @@ static GLint ChooseTextureFormat(dgltexformat_t format, boolean allowCompression
     }
 }
 
+/**
+ * @param glFormat  Identifier of the desired GL texture format.
+ * @param loadFormat  Identifier of the GL texture format used during upload.
+ * @param pixels  Texture pixel data to be uploaded.
+ * @param width  Width of the texture in pixels.
+ * @param height  Height of the texture in pixels.
+ * @param genMipmaps  If negative sets a specific mipmap level, e.g.:
+ *      @c -1, means mipmap level 1.
+ *
+ * @return  @c true iff successful.
+ */
+static boolean uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
+    int width,  int height, int genMipmaps)
+{
+    const int packRowLength = 0, packAlignment = 1, packSkipRows = 0, packSkipPixels = 0;
+    const int unpackRowLength = 0, unpackAlignment = 1, unpackSkipRows = 0, unpackSkipPixels = 0;
+    int mipLevel = 0;
+    DENG_ASSERT(pixels);
+
+    if(!(GL_LUMINANCE_ALPHA == loadFormat || GL_LUMINANCE == loadFormat ||
+         GL_RGB == loadFormat || GL_RGBA == loadFormat))
+    {
+        throw Error("texturecontent_t::uploadTexture", "Unsupported load format " + String::number(loadFormat));
+    }
+
+    // Can't operate on null texture.
+    if(width < 1 || height < 1)
+        return false;
+
+    // Check that the texture dimensions are valid.
+    if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
+        return false;
+
+    if(!GL_state.features.texNonPowTwo &&
+       (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
+        return false;
+
+    // Negative indices signify a specific mipmap level is being uploaded.
+    if(genMipmaps < 0)
+    {
+        mipLevel = -genMipmaps;
+        genMipmaps = 0;
+    }
+
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Automatic mipmap generation?
+    if(GL_state.extensions.genMipmapSGIS && genMipmaps)
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+
+    glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+    glPixelStorei(GL_PACK_ROW_LENGTH, (GLint)packRowLength);
+    glPixelStorei(GL_PACK_ALIGNMENT, (GLint)packAlignment);
+    glPixelStorei(GL_PACK_SKIP_ROWS, (GLint)packSkipRows);
+    glPixelStorei(GL_PACK_SKIP_PIXELS, (GLint)packSkipPixels);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)unpackRowLength);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, (GLint)unpackAlignment);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, (GLint)unpackSkipRows);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, (GLint)unpackSkipPixels);
+
+    if(genMipmaps && !GL_state.extensions.genMipmapSGIS)
+    {   // Build all mipmap levels.
+        int neww, newh, bpp, w, h;
+        void* image, *newimage;
+
+        bpp = BytesPerPixel(loadFormat);
+        if(bpp == 0)
+            throw Error("texturecontent_t::uploadTexture", "Unknown GL format " + String::number(loadFormat));
+
+        GL_OptimalTextureSize(width, height, false, true, &w, &h);
+
+        if(w != width || h != height)
+        {
+            // Must rescale image to get "top" mipmap texture image.
+            image = GL_ScaleBufferEx(pixels, width, height, bpp, /*GL_UNSIGNED_BYTE,*/
+                unpackRowLength, unpackAlignment, unpackSkipRows, unpackSkipPixels,
+                w, h, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment, packSkipRows,
+                packSkipPixels);
+            if(!image)
+                throw Error("texturecontent_t::uploadTexture", "Unknown error resizing mipmap level #0");
+        }
+        else
+        {
+            image = (void*) pixels;
+        }
+
+        for(;;)
+        {
+            glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, w, h, 0, (GLint)loadFormat,
+                GL_UNSIGNED_BYTE, image);
+
+            if(w == 1 && h == 1)
+                break;
+
+            ++mipLevel;
+            neww = (w < 2) ? 1 : w / 2;
+            newh = (h < 2) ? 1 : h / 2;
+            newimage = GL_ScaleBufferEx(image, w, h, bpp, /*GL_UNSIGNED_BYTE,*/
+                unpackRowLength, unpackAlignment, unpackSkipRows, unpackSkipPixels,
+                neww, newh, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment,
+                packSkipRows, packSkipPixels);
+            if(!newimage)
+                throw Error("texturecontent_t::uploadTexture", "Unknown error resizing mipmap level #" + String::number(mipLevel));
+
+            if(image != pixels)
+                M_Free(image);
+            image = newimage;
+
+            w = neww;
+            h = newh;
+        }
+
+        if(image != pixels)
+            M_Free(image);
+    }
+    else
+    {
+        glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, (GLsizei)width,
+            (GLsizei)height, 0, (GLint)loadFormat, GL_UNSIGNED_BYTE, pixels);
+    }
+
+    glPopClientAttrib();
+    DENG_ASSERT(!Sys_GLCheckError());
+
+    return true;
+}
+
+/**
+ * @param glFormat  Identifier of the desired GL texture format.
+ * @param loadFormat  Identifier of the GL texture format used during upload.
+ * @param pixels  Texture pixel data to be uploaded.
+ * @param width  Width of the texture in pixels.
+ * @param height  Height of the texture in pixels.
+ * @param grayFactor  Strength of the blend where @c 0:none @c 1:full.
+ *
+ * @return  @c true iff successful.
+ */
+static boolean uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
+    int width, int height, float grayFactor)
+{
+    int i, w, h, numpels = width * height, numLevels, pixelSize;
+    uint8_t* image, *faded, *out;
+    const uint8_t* in;
+    float invFactor;
+    DENG_ASSERT(pixels);
+
+    if(!(GL_RGB == loadFormat || GL_LUMINANCE == loadFormat))
+    {
+        throw Error("texturecontent_t::uploadTextureGrayMipmap", "Unsupported load format " + String::number(loadFormat));
+    }
+
+    pixelSize = (loadFormat == GL_LUMINANCE? 1 : 3);
+
+    // Can't operate on null texture.
+    if(width < 1 || height < 1)
+        return false;
+
+    // Check that the texture dimensions are valid.
+    if(!GL_state.features.texNonPowTwo &&
+       (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
+        return false;
+
+    if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
+        return false;
+
+    numLevels = GL_NumMipmapLevels(width, height);
+    grayFactor = MINMAX_OF(0, grayFactor, 1);
+    invFactor = 1 - grayFactor;
+
+    // Buffer used for the faded texture.
+    faded = (uint8_t*) M_Malloc(numpels / 4);
+    image = (uint8_t*) M_Malloc(numpels);
+
+    // Initial fading.
+    in = pixels;
+    out = image;
+    for(i = 0; i < numpels; ++i)
+    {
+        *out++ = (uint8_t) MINMAX_OF(0, (*in * grayFactor + 127 * invFactor), 255);
+        in += pixelSize;
+    }
+
+    // Upload the first level right away.
+    glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, (GLint)loadFormat,
+        GL_UNSIGNED_BYTE, image);
+
+    // Generate all mipmaps levels.
+    w = width;
+    h = height;
+    for(i = 0; i < numLevels; ++i)
+    {
+        GL_DownMipmap8(image, faded, w, h, (i * 1.75f) / numLevels);
+
+        // Go down one level.
+        if(w > 1)
+            w /= 2;
+        if(h > 1)
+            h /= 2;
+
+        glTexImage2D(GL_TEXTURE_2D, i + 1, glFormat, w, h, 0, (GLint)loadFormat,
+            GL_UNSIGNED_BYTE, faded);
+    }
+
+    // Do we need to free the temp buffer?
+    M_Free(faded);
+    M_Free(image);
+
+    DENG_ASSERT(!Sys_GLCheckError());
+    return true;
+}
+
 /// @note Texture parameters will NOT be set here!
 void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod method)
 {
@@ -626,8 +871,8 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
 
         GLint glFormat = ChooseTextureFormat(dglFormat, !noCompression);
 
-        if(!GL_UploadTexture(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
-                             generateMipmaps ? true : false))
+        if(!uploadTexture(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
+                          generateMipmaps ? true : false))
         {
             throw Error("GL_UploadTextureContent", QString("TexImage failed (%1:%2 fmt%3)")
                                                        .arg(content.name)
@@ -650,8 +895,8 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
 
         glFormat = ChooseTextureFormat(DGL_LUMINANCE, !noCompression);
 
-        if(!GL_UploadTextureGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
-                                       content.grayMipmap * reciprocal255))
+        if(!uploadTextureGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
+                                    content.grayMipmap * reciprocal255))
         {
             throw Error("GL_UploadTextureContent", QString("TexImageGrayMipmap failed (%1:%2 fmt%3)")
                                                        .arg(content.name)

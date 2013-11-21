@@ -86,54 +86,7 @@ void GL_ResetTextureManager();
 
 void GL_TexReset();
 
-/**
- * Change the GL minification filter for all prepared textures.
- */
-void GL_SetAllTexturesMinFilter(int minFilter);
-
-/**
- * Change the GL minification filter for all prepared "raw" textures.
- */
-void GL_SetRawTexturesMinFilter(int minFilter);
-
-/// Release all textures used with 'Raw Images'.
-void GL_ReleaseTexturesForRawImages();
-
 void GL_PruneTextureVariantSpecifications();
-
-/**
- * Prepares all the system textures (dlight, ptcgens).
- */
-void GL_LoadSystemTextures();
-
-void GL_DeleteAllLightingSystemTextures();
-
-/**
- * @param glFormat  Identifier of the desired GL texture format.
- * @param loadFormat  Identifier of the GL texture format used during upload.
- * @param pixels  Texture pixel data to be uploaded.
- * @param width  Width of the texture in pixels.
- * @param height  Height of the texture in pixels.
- * @param genMipmaps  If negative sets a specific mipmap level, e.g.:
- *      @c -1, means mipmap level 1.
- *
- * @return  @c true iff successful.
- */
-boolean GL_UploadTexture(int glFormat, int loadFormat, uint8_t const *pixels,
-    int width, int height, int genMipmaps);
-
-/**
- * @param glFormat  Identifier of the desired GL texture format.
- * @param loadFormat  Identifier of the GL texture format used during upload.
- * @param pixels  Texture pixel data to be uploaded.
- * @param width  Width of the texture in pixels.
- * @param height  Height of the texture in pixels.
- * @param grayFactor  Strength of the blend where @c 0:none @c 1:full.
- *
- * @return  @c true iff successful.
- */
-boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, uint8_t const *pixels,
-    int width, int height, float grayFactor);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context. If incomplete
@@ -165,11 +118,26 @@ texturevariantspecification_t &GL_DetailTextureSpec(float contrast);
  * revised texture management APIs.
  */
 
+/**
+ * Prepares all the system textures (dlight, ptcgens).
+ */
+void GL_LoadSystemTextures();
+
+void GL_DeleteAllLightingSystemTextures();
+
 DGLuint GL_PrepareFlaremap(de::Uri const &resourceUri);
 DGLuint GL_PrepareSysFlaremap(flaretexid_t which);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
 
 DGLuint GL_PrepareRawTexture(rawtex_t &rawTex);
+
+/**
+ * Change the GL minification filter for all prepared "raw" textures.
+ */
+void GL_SetRawTexturesMinFilter(int minFilter);
+
+/// Release all textures used with 'Raw Images'.
+void GL_ReleaseTexturesForRawImages();
 
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
