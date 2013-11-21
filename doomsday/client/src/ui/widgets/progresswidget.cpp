@@ -220,7 +220,9 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     Rectanglef textBox = Rectanglef::fromSize(textSize());
     ui::applyAlignment(ui::AlignCenter, textBox, layout.text);
     int const boxSize = textBox.height() * 4;
-    verts.makeFlexibleFrame(Rectanglef(textBox.midLeft(), textBox.midRight()).expanded(boxSize),
+    Vector2f const off(0, textBox.height() / 4);
+    verts.makeFlexibleFrame(Rectanglef(off + textBox.midLeft(),
+                                       off + textBox.midRight()).expanded(boxSize),
                             boxSize, Vector4f(shadowColor, shadowColor.w * .75f),
                             root().atlas().imageRectf(root().borderGlow()));
 
