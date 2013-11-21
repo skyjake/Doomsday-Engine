@@ -697,7 +697,7 @@ static void renderSkyModels()
         parm.vLightListIdx = 0;
         parm.shineTranslateWithViewerPos = true;
 
-        Rend_RenderModel(&parm);
+        Rend_DrawModel(&parm);
     }
 
     // We don't want that anything interferes with what was drawn.

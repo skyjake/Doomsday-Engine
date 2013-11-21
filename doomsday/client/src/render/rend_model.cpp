@@ -1346,7 +1346,7 @@ static int drawLightVectorWorker(VectorLight const *vlight, void *context)
 /**
  * Render all the submodels of a model.
  */
-void Rend_RenderModel(rendmodelparams_t const *parm)
+void Rend_DrawModel(rendmodelparams_t const *parm)
 {
     DENG_ASSERT(inited);
     DENG_ASSERT_IN_MAIN_THREAD();

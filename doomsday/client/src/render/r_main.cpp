@@ -1086,13 +1086,248 @@ void R_SetupPlayerSprites()
     }
 }
 
+static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
+{
+    ddpsprite_t *psp      = spr->psp;
+    int const spriteIdx   = psp->statePtr->sprite;
+    int const frameIdx    = psp->statePtr->frame;
+    float const offScaleY = weaponOffsetScaleY / 1000.0f;
+
+    SpriteViewAngle const &sprViewAngle = App_ResourceSystem().spritePtr(spriteIdx, frameIdx)->viewAngle(0);
+    Material *material = sprViewAngle.material;
+    bool flip          = sprViewAngle.mirrorX;
+
+    MaterialVariantSpec const &spec =
+        App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                    0, -2, 0, false, true, true, false);
+    MaterialSnapshot const &ms = material->prepare(spec);
+
+    Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+    variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
+
+#define WEAPONTOP   32   /// @todo Currently hardcoded here and in the plugins.
+
+    params->pos[VX] = psp->pos[VX] + tex.origin().x + pspOffset[VX] - texSpec.border;
+    params->pos[VY] = WEAPONTOP + offScaleY * (psp->pos[VY] - WEAPONTOP) + tex.origin().y +
+                      pspOffset[VY] - texSpec.border;
+    params->width  = ms.width() + texSpec.border*2;
+    params->height = ms.height() + texSpec.border*2;
+
+    ms.texture(MTU_PRIMARY).glCoords(&params->texOffset[0], &params->texOffset[1]);
+
+    params->texFlip[0] = flip;
+    params->texFlip[1] = false;
+
+    params->mat = material;
+    params->ambientColor[CA] = spr->data.sprite.alpha;
+
+    if(spr->data.sprite.isFullBright)
+    {
+        params->ambientColor[CR] = params->ambientColor[CG] =
+            params->ambientColor[CB] = 1;
+        params->vLightListIdx = 0;
+    }
+    else
+    {
+        Map &map = App_World().map();
+
+        if(useBias && map.hasLightGrid())
+        {
+            // Evaluate the position in the light grid.
+            Vector3f tmp = map.lightGrid().evaluate(spr->origin);
+            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
+        }
+        else
+        {
+            SectorCluster &cluster = spr->data.sprite.bspLeaf->cluster();
+            Vector3f const &secColor = Rend_SectorLightColor(cluster);
+
+            // No need for distance attentuation.
+            float lightLevel = cluster.sector().lightLevel();
+
+            // Add extra light plus bonus.
+            lightLevel += Rend_ExtraLightDelta();
+            lightLevel *= pspLightLevelMultiplier;
+
+            Rend_ApplyLightAdaptation(lightLevel);
+
+            // Determine the final ambientColor in affect.
+            for(int i = 0; i < 3; ++i)
+            {
+                params->ambientColor[i] = lightLevel * secColor[i];
+            }
+        }
+
+        Rend_ApplyTorchLight(params->ambientColor, 0);
+
+        collectaffectinglights_params_t lparams; zap(lparams);
+        lparams.origin       = Vector3d(spr->origin);
+        lparams.bspLeaf      = spr->data.sprite.bspLeaf;
+        lparams.ambientColor = Vector3f(params->ambientColor);
+
+        params->vLightListIdx = R_CollectAffectingLights(&lparams);
+    }
+
+#undef WEAPONTOP
+}
+
+/**
+ * Draws 2D HUD sprites. If they were already drawn 3D, this won't do anything.
+ */
+static void drawPlayerSprites()
+{
+    ddplayer_t *ddpl = &viewPlayer->shared;
+
+    // Cameramen have no HUD sprites.
+    if(ddpl->flags & DDPF_CAMERA) return;
+    if(ddpl->flags & DDPF_CHASECAM) return;
+
+    if(usingFog)
+    {
+        glEnable(GL_FOG);
+    }
+
+    // Check for fullbright.
+    int i;
+    ddpsprite_t *psp;
+    for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
+    {
+        vispsprite_t *spr = &visPSprites[i];
+
+        // Should this psprite be drawn?
+        if(spr->type != VPSPR_SPRITE) continue; // No...
+
+        // Draw as separate sprites.
+        if(spr->psp && spr->psp->statePtr)
+        {
+            rendpspriteparams_t params;
+
+            setupPSpriteParams(&params, spr);
+            Rend_DrawPSprite(&params);
+        }
+    }
+
+    if(usingFog)
+    {
+        glDisable(GL_FOG);
+    }
+}
+
+static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_t *spr)
+{
+    params->mf = spr->data.model.mf;
+    params->nextMF = spr->data.model.nextMF;
+    params->inter = spr->data.model.inter;
+    params->alwaysInterpolate = false;
+    params->id = spr->data.model.id;
+    params->selector = spr->data.model.selector;
+    params->flags = spr->data.model.flags;
+    params->origin[VX] = spr->origin[VX];
+    params->origin[VY] = spr->origin[VY];
+    params->origin[VZ] = spr->origin[VZ];
+    params->srvo[VX] = spr->data.model.visOff[VX];
+    params->srvo[VY] = spr->data.model.visOff[VY];
+    params->srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
+    params->gzt = spr->data.model.gzt;
+    params->distance = -10;
+    params->yaw = spr->data.model.yaw;
+    params->extraYawAngle = 0;
+    params->yawAngleOffset = spr->data.model.yawAngleOffset;
+    params->pitch = spr->data.model.pitch;
+    params->extraPitchAngle = 0;
+    params->pitchAngleOffset = spr->data.model.pitchAngleOffset;
+    params->extraScale = 0;
+    params->viewAlign = spr->data.model.viewAligned;
+    params->mirror = (mirrorHudModels? true : false);
+    params->shineYawOffset = -vang;
+    params->shinePitchOffset = vpitch + 90;
+    params->shineTranslateWithViewerPos = false;
+    params->shinepspriteCoordSpace = true;
+    params->ambientColor[CA] = spr->data.model.alpha;
+
+    if((levelFullBright || spr->data.model.stateFullBright) &&
+       !spr->data.model.mf->testSubFlag(0, MFF_DIM))
+    {
+        params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
+        params->vLightListIdx = 0;
+    }
+    else
+    {
+        Map &map = App_World().map();
+
+        if(useBias && map.hasLightGrid())
+        {
+            Vector3f tmp = map.lightGrid().evaluate(params->origin);
+            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
+        }
+        else
+        {
+            SectorCluster &cluster = spr->data.model.bspLeaf->cluster();
+            Vector3f const &secColor = Rend_SectorLightColor(cluster);
+
+            // Diminished light (with compression).
+            float lightLevel = cluster.sector().lightLevel();
+
+            // No need for distance attentuation.
+
+            // Add extra light.
+            lightLevel += Rend_ExtraLightDelta();
+
+            // The last step is to compress the resultant light value by
+            // the global lighting function.
+            Rend_ApplyLightAdaptation(lightLevel);
+
+            // Determine the final ambientColor in effect.
+            for(int i = 0; i < 3; ++i)
+            {
+                params->ambientColor[i] = lightLevel * secColor[i];
+            }
+        }
+
+        Rend_ApplyTorchLight(params->ambientColor, params->distance);
+
+        collectaffectinglights_params_t lparams; zap(lparams);
+        lparams.origin       = Vector3d(spr->origin);
+        lparams.bspLeaf      = spr->data.model.bspLeaf;
+        lparams.ambientColor = Vector3f(params->ambientColor);
+        lparams.starkLight   = true;
+
+        params->vLightListIdx = R_CollectAffectingLights(&lparams);
+    }
+}
+
+/**
+ * Draws 3D HUD models.
+ */
+static void drawPlayerModels()
+{
+    // Setup the modelview matrix.
+    Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
+
+    // Clear Z buffer. This will prevent the psprites from being clipped
+    // by nearby polygons.
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    rendmodelparams_t parm;
+    for(int i = 0; i < DDMAXPSPRITES; ++i)
+    {
+        vispsprite_t *spr = &visPSprites[i];
+
+        if(spr->type != VPSPR_MODEL) continue; // Not used.
+
+        setupModelParamsForVisPSprite(&parm, spr);
+        Rend_DrawModel(&parm);
+    }
+}
+
 #undef R_RenderPlayerView
 DENG_EXTERN_C void R_RenderPlayerView(int num)
 {
     if(num < 0 || num >= DDMAXPLAYERS) return; // Huh?
     player_t *player = &ddPlayers[num];
 
-    if(!player->shared.inGame || !player->shared.mo) return;
+    if(!player->shared.inGame) return;
+    if(!player->shared.mo) return;
 
     if(firstFrameAfterLoad)
     {
@@ -1105,8 +1340,8 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     // Too early? Game has not configured the view window?
     viewdata_t *vd = &viewDataOfConsole[num];
-    if(vd->window.size.width == 0 || vd->window.size.height == 0)
-        return;
+    if(vd->window.size.width == 0) return;
+    if(vd->window.size.height == 0) return;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
@@ -1123,7 +1358,9 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     // Go to wireframe mode?
     if(renderWireframe)
+    {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
 
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true, currentViewport, vd);
@@ -1138,18 +1375,22 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
+    {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 
-    Rend_Draw2DPlayerSprites(); // If the 2D versions are needed.
+    drawPlayerSprites(); // If the 2D versions are needed.
 
     if(renderWireframe)
+    {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
 
     // Do we need to render any 3D psprites?
     if(psp3d)
     {
         GL_SwitchTo3DState(false, currentViewport, vd);
-        Rend_Draw3DPlayerSprites();
+        drawPlayerModels();
     }
 
     // Restore fullscreen viewport, original matrices and state: back to normal 2D.
@@ -1157,7 +1398,9 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     // Back from wireframe mode?
     if(renderWireframe)
+    {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 
     // The colored filter.
     if(GL_FilterIsVisible())
@@ -1169,21 +1412,23 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     // Now we can show the viewPlayer's mobj again.
     if(!(player->shared.flags & DDPF_CHASECAM))
+    {
         player->shared.mo->ddFlags = oldFlags;
+    }
 
     // Should we be counting triangles?
-    if(rendInfoTris)
+    /*if(rendInfoTris)
     {
         // This count includes all triangles drawn since R_SetupFrame.
-        //Con_Printf("Tris: %-4i (Mdl=%-4i)\n", polyCounter, modelTriCount);
-        //modelTriCount = 0;
-        //polyCounter = 0;
-    }
+        Con_Printf("Tris: %-4i (Mdl=%-4i)\n", polyCounter, modelTriCount);
+        modelTriCount = 0;
+        polyCounter = 0;
+    }*/
 
-    if(rendInfoLums)
+    /*if(rendInfoLums)
     {
-        //Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
-    }
+        Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
+    }*/
 
     R_PrintRendPoolInfo();
 

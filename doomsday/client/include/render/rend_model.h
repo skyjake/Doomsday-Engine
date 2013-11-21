@@ -133,6 +133,6 @@ struct texturevariantspecification_s &Rend_ModelShinyTextureSpec();
 /**
  * Render a submodel according to paramaters.
  */
-void Rend_RenderModel(rendmodelparams_t const *params);
+void Rend_DrawModel(rendmodelparams_t const *params);
 
 #endif // LIBDENG_RENDER_MODEL_H

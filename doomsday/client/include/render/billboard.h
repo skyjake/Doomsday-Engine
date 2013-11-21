@@ -22,11 +22,13 @@
 #define DENG_CLIENT_RENDER_BILLBOARD_H
 
 #include "dd_types.h"
+#include "render/vissprite.h"
+#include "MaterialVariantSpec"
 
 /// @addtogroup render
 ///@{
 
-typedef struct rendpspriteparams_s
+struct rendpspriteparams_t
 {
     float pos[2]; // {X, Y} Screen-space position.
     float width, height;
@@ -37,7 +39,7 @@ typedef struct rendpspriteparams_s
 
     float ambientColor[4];
     uint vLightListIdx;
-} rendpspriteparams_t;
+};
 
 DENG_EXTERN_C int alwaysAlign;
 DENG_EXTERN_C int spriteLight, useSpriteAlpha, useSpriteBlend;
@@ -45,43 +47,19 @@ DENG_EXTERN_C int noSpriteZWrite;
 DENG_EXTERN_C byte noSpriteTrans;
 DENG_EXTERN_C byte devNoSprites;
 
-DENG_EXTERN_C void Rend_SpriteRegister(void);
+DENG_EXTERN_C void Rend_SpriteRegister();
 
-#ifdef __CLIENT__
-#ifdef __cplusplus
+/**
+ * A sort of a sprite, I guess... Masked walls must be rendered sorted
+ * with sprites, so no artifacts appear when sprites are seen behind
+ * masked walls.
+ */
+void Rend_DrawMaskedWall(rendmaskedwallparams_t const *parms);
 
-#include "MaterialVariantSpec"
+void Rend_DrawPSprite(rendpspriteparams_t const *parms);
+
+void Rend_DrawSprite(rendspriteparams_t const *parms);
 
 de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
-
-extern "C" {
-#endif // __cplusplus
-
-/**
- * Render sprites, 3D models, masked wall segments and halos, ordered
- * back to front. Halos are rendered with Z-buffer tests and writes
- * disabled, so they don't go into walls or interfere with real objects.
- * It means that halos can be partly occluded by objects that are closer
- * to the viewpoint, but that's the price to pay for not having access to
- * the actual Z-buffer per-pixel depth information. The other option would
- * be for halos to shine through masked walls, sprites and models, which
- * looks even worse. (Plus, they are *halos*, not real lens flares...)
- */
-void Rend_DrawMasked(void);
-
-/**
- * Draws 2D HUD sprites. If they were already drawn 3D, this won't do anything.
- */
-void Rend_Draw2DPlayerSprites(void);
-
-void Rend_Draw3DPlayerSprites(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // __CLIENT__
-
-///@}
 
 #endif // DENG_CLIENT_RENDER_BILLBOARD_H

@@ -3338,6 +3338,108 @@ static void drawSky()
     glEnable(GL_DEPTH_TEST);
 }
 
+static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
+{
+    float occlusionFactor;
+
+    if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
+        return false;
+
+    if(spr->data.flare.isDecoration)
+    {
+        /*
+         * Surface decorations do not yet persist over frames, so we do
+         * not smoothly occlude their flares. Instead, we will have to
+         * put up with them instantly appearing/disappearing.
+         */
+        occlusionFactor = R_ViewerLumobjIsClipped(spr->data.flare.lumIdx)? 0 : 1;
+    }
+    else
+    {
+        occlusionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
+    }
+
+    return H_RenderHalo(spr->origin,
+                        spr->data.flare.size,
+                        spr->data.flare.tex,
+                        spr->data.flare.color,
+                        spr->distance,
+                        occlusionFactor, spr->data.flare.mul,
+                        spr->data.flare.xOff, primary,
+                        (spr->data.flare.flags & RFF_NO_TURN) == 0);
+}
+
+/**
+ * Render sprites, 3D models, masked wall segments and halos, ordered back to
+ * front. Halos are rendered with Z-buffer tests and writes disabled, so they
+ * don't go into walls or interfere with real objects. It means that halos can
+ * be partly occluded by objects that are closer to the viewpoint, but that's
+ * the price to pay for not having access to the actual Z-buffer per-pixel depth
+ * information. The other option would be for halos to shine through masked walls,
+ * sprites and models, which looks even worse. (Plus, they are *halos*, not real
+ * lens flares...)
+ */
+static void drawMasked()
+{
+    if(devNoSprites) return;
+
+    R_SortVisSprites();
+
+    if(visSpriteP > visSprites)
+    {
+        bool primaryHaloDrawn = false;
+
+        // Draw all vissprites back to front.
+        // Sprites look better with Z buffer writes turned off.
+        for(vissprite_t *spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
+        {
+            switch(spr->type)
+            {
+            default: break;
+
+            case VSPR_MASKED_WALL:
+                // A masked wall is a specialized sprite.
+                Rend_DrawMaskedWall(&spr->data.wall);
+                break;
+
+            case VSPR_SPRITE:
+                // Render an old fashioned sprite, ah the nostalgia...
+                Rend_DrawSprite(&spr->data.sprite);
+                break;
+
+            case VSPR_MODEL:
+                Rend_DrawModel(&spr->data.model);
+                break;
+
+            case VSPR_FLARE:
+                if(generateHaloForVisSprite(spr, true))
+                {
+                    primaryHaloDrawn = true;
+                }
+                break;
+            }
+        }
+
+        // Draw secondary halos?
+        if(primaryHaloDrawn && haloMode > 1)
+        {
+            // Now we can setup the state only once.
+            H_SetupState(true);
+
+            for(vissprite_t *spr = visSprSortedHead.next; spr != &visSprSortedHead; spr = spr->next)
+            {
+                if(spr->type == VSPR_FLARE)
+                {
+                    generateHaloForVisSprite(spr);
+                }
+            }
+
+            // And we're done...
+            H_SetupState(false);
+        }
+    }
+}
+
 /*
  * We have several different paths to accommodate both multitextured details and
  * dynamic lights. Details take precedence (they always cover entire primitives
@@ -3541,7 +3643,7 @@ static void drawAllLists()
     }
 
     // Draw masked walls, sprites and models.
-    Rend_DrawMasked();
+    drawMasked();
 
     // Draw particles.
     Rend_RenderParticles();
