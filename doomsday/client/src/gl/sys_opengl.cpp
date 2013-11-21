@@ -33,8 +33,9 @@
 
 #ifdef WIN32
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
-#elif defined(UNIX)
-#   define GETPROC(Type, x)   x = SDL_GL_GetProcAddress(#x)
+#elif defined(UNIX) && !defined(MACOSX)
+#   include <GL/glx.h>
+#   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
 #endif
 
 gl_state_t GL_state;
@@ -42,13 +43,9 @@ gl_state_t GL_state;
 #ifdef WIN32
 PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT = NULL;
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
+#endif
 
-PFNGLCLIENTACTIVETEXTUREPROC   glClientActiveTexture = NULL;
-PFNGLACTIVETEXTUREPROC         glActiveTexture = NULL;
-
-PFNGLMULTITEXCOORD2FPROC       glMultiTexCoord2f = NULL;
-PFNGLMULTITEXCOORD2FVPROC      glMultiTexCoord2fv = NULL;
-
+#ifdef LIBGUI_USE_GLENTRYPOINTS
 PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT = NULL;
 PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT = NULL;
 PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT = NULL;
@@ -92,7 +89,7 @@ static void initialize(void)
 
     if(0 != (GL_state.extensions.lockArray = query("GL_EXT_compiled_vertex_array")))
     {
-#ifdef WIN32
+#ifdef LIBGUI_USE_GLENTRYPOINTS
         GETPROC(PFNGLLOCKARRAYSEXTPROC, glLockArraysEXT);
         GETPROC(PFNGLUNLOCKARRAYSEXTPROC, glUnlockArraysEXT);
         if(NULL == glLockArraysEXT || NULL == glUnlockArraysEXT)
@@ -115,7 +112,7 @@ static void initialize(void)
 
     if(0 != (GL_state.extensions.blendSub = query("GL_EXT_blend_subtract")))
     {
-#ifdef WIN32
+#ifdef LIBGUI_USE_GLENTRYPOINTS
         GETPROC(PFNGLBLENDEQUATIONEXTPROC, glBlendEquationEXT);
         if(NULL == glBlendEquationEXT)
             GL_state.features.blendSubtract = false;
@@ -151,12 +148,6 @@ static void initialize(void)
     if(CommandLine_Exists("-notexcomp"))
         GL_state.features.texCompression = false;
 
-#ifdef WIN32
-    GETPROC(PFNGLACTIVETEXTUREPROC, glActiveTexture);
-    GETPROC(PFNGLCLIENTACTIVETEXTUREPROC, glClientActiveTexture);
-    GETPROC(PFNGLMULTITEXCOORD2FPROC, glMultiTexCoord2f);
-    GETPROC(PFNGLMULTITEXCOORD2FVPROC, glMultiTexCoord2fv);
-#endif
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &GL_state.maxTexUnits);
 
     // Automatic mipmap generation.

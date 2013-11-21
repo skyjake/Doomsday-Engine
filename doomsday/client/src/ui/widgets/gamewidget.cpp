@@ -143,11 +143,7 @@ void GameWidget::update()
 {
     GuiWidget::update();
 
-    if(isDisabled()) return;
-
-    //LOG_DEBUG("Legacy update");
-
-    DENG2_ASSERT(!BusyMode_Active());
+    if(isDisabled() || BusyMode_Active()) return;
 
     // We may be performing GL operations.
     ClientWindow::main().glActivate();

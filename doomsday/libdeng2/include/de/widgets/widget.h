@@ -128,10 +128,20 @@ public:
     void enable(bool yes = true) { setBehavior(Disabled, yes? UnsetFlags : SetFlags); }
     void disable(bool yes = true) { setBehavior(Disabled, yes? SetFlags : UnsetFlags); }
 
-    bool isHidden() const;
-    bool isVisible() const;
-    inline bool isEnabled() const { return !behavior().testFlag(Disabled); }
-    inline bool isDisabled() const { return behavior().testFlag(Disabled); }
+    inline bool isHidden() const { return hasFamilyBehavior(Hidden); }
+    inline bool isVisible() const { return !isHidden(); }
+    inline bool isDisabled() const { return hasFamilyBehavior(Disabled); }
+    inline bool isEnabled() const { return !isDisabled(); }
+
+    /**
+     * Determines if this widget or any of its parents have specific behavior
+     * flags set.
+     *
+     * @param flags  Flags to check (all must be set).
+     *
+     * @return @c true, if behavior is set; otherwise @c false.
+     */
+    bool hasFamilyBehavior(Behavior const &flags) const;
 
     /**
      * Sets or clears one or more behavior flags.

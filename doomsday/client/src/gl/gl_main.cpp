@@ -591,7 +591,7 @@ Matrix4f GL_GetProjectionMatrix()
 
     if (VR::mode() == VR::MODE_OCULUS_RIFT)
     {
-        aspect = VR::riftAspect();
+        aspect = VR::riftState.aspect();
         // A little trigonometry to apply aspect ratio to angles
         float x = tan(0.5 * de::degreeToRadian(Rend_FieldOfView()));
         yfov = de::radianToDegree(2.0 * atan2(x/aspect, 1.0f));

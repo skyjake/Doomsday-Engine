@@ -151,6 +151,9 @@ public:
      * Updates the OpenGL state to match this GLState. Until this is called no
      * changes occur in the OpenGL state. Calling this more than once is
      * allowed; the subsequent calls do nothing.
+     *
+     * @todo Remove excess calls to apply() once all direct GL1 state
+     * manipulation has been removed.
      */
     void apply() const;
 

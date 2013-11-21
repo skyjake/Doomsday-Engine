@@ -65,7 +65,8 @@ enum {
     DE_API_BINDING              = DE_API_BINDING_v1,
 
     DE_API_BUSY_v1              = 200,     // 1.10
-    DE_API_BUSY                 = DE_API_BUSY_v1,
+    DE_API_BUSY_v2              = 201,     // 1.13
+    DE_API_BUSY                 = DE_API_BUSY_v2,
 
     DE_API_CLIENT_v1            = 300,     // 1.10
     DE_API_CLIENT               = DE_API_CLIENT_v1,

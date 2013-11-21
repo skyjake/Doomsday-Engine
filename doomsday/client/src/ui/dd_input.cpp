@@ -1358,24 +1358,6 @@ void DD_ReadKeyboard(void)
 void I_SetUIMouseMode(boolean on)
 {
     uiMouseMode = on;
-
-    /// @todo  Update this after the Qt window management is working.
-
-#if 0
-#ifdef UNIX
-    if(Mouse_IsPresent())
-    {
-        // Release mouse grab when in windowed mode.
-        boolean isFullScreen = true;
-
-        Sys_GetWindowFullscreen(1, &isFullScreen);
-        if(!isFullScreen)
-        {
-            SDL_WM_GrabInput(on? SDL_GRAB_OFF : SDL_GRAB_ON);
-        }
-    }
-#endif
-#endif
 }
 
 /**

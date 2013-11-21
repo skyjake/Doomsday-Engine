@@ -124,8 +124,8 @@ DENG_CONVENIENCE_HEADERS += \
     include/ContactSpreader \
     include/Decoration \
     include/DialogContentStylist \
-    include/Drawlist \
-    include/Drawlists \
+    include/DrawList \
+    include/DrawLists \
     include/EntityDatabase \
     include/Face \
     include/FontLineWrapping \

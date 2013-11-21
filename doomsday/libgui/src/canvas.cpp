@@ -273,7 +273,7 @@ void Canvas::initializeGL()
     LOG_AS("Canvas");
     LOG_DEBUG("Notifying GL init (during paint)");
 
-#ifdef WIN32
+#ifdef LIBGUI_USE_GLENTRYPOINTS
     getAllOpenGLEntryPoints();
 #endif
 
@@ -306,10 +306,9 @@ void Canvas::showEvent(QShowEvent* ev)
     {
         LOG_DEBUG("Received first show event, scheduling GL ready notification");
 
-#ifdef WIN32
+#ifdef LIBGUI_USE_GLENTRYPOINTS
         makeCurrent();
         getAllOpenGLEntryPoints();
-        //doneCurrent();
 #endif
         QTimer::singleShot(1, this, SLOT(notifyReady()));
     }

@@ -203,8 +203,8 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     contentLayout(layout);
 
     // There is a shadow behind the wheel.
-    float gradientThick = layout.image.width() * 1;
-    float solidThick = layout.image.width() * .5f;
+    float gradientThick = layout.image.width() * 2.f;
+    float solidThick = layout.image.width() * .53f;
 
     Vector4f const shadowColor = style().colors().colorf(d->shadowColorId);
     verts.makeRing(layout.image.middle(),

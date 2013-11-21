@@ -59,6 +59,7 @@ DENG2_PIMPL(GameUIWidget)
             }
             */
 
+
             if(!(UI_IsActive() && UI_Alpha() >= 1.0))
             {
                 UI2_Drawer();
@@ -72,9 +73,11 @@ DENG2_PIMPL(GameUIWidget)
             }
         }
 
-        /// @todo Transition must be done at window level to work correctly.
         if(Con_TransitionInProgress())
+        {
+            /// @todo Transition must be done at window level to work correctly.
             Con_DrawTransition();
+        }
 
         // Draw the widgets of the Shadow Bias Editor (if active).
         SBE_DrawGui();

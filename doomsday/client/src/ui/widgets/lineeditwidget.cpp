@@ -368,6 +368,8 @@ void LineEditWidget::drawContent()
 
 bool LineEditWidget::handleEvent(Event const &event)
 {
+    if(isDisabled()) return false;
+
     if(event.type() == Event::MousePosition)
     {
         d->updateHover(event.as<MouseEvent>().pos());

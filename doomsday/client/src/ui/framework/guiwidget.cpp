@@ -65,20 +65,20 @@ DENG2_OBSERVES(ui::Margins, Change)
     GLUniform uBlurWindow;
 
     Instance(Public *i)
-        : Base(i),
-          margins("gap"),
-          inited(false),
-          needGeometry(true),
-          styleChanged(false),
-          opacity(1.f, Animation::Linear),
-          fontId("default"),
-          textColorId("text"),
-          blurInited(false),
-          uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uBlurColor    ("uColor",     GLUniform::Vec4),
-          uBlurTex      ("uTex",       GLUniform::Sampler2D),
-          uBlurStep     ("uBlurStep",  GLUniform::Vec2),
-          uBlurWindow   ("uWindow",    GLUniform::Vec4)
+        : Base(i)
+        , margins("gap")
+        , inited(false)
+        , needGeometry(true)
+        , styleChanged(false)
+        , opacity(1.f, Animation::Linear)
+        , fontId("default")
+        , textColorId("text")
+        , blurInited(false)
+        , uBlurMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uBlurColor    ("uColor",     GLUniform::Vec4)
+        , uBlurTex      ("uTex",       GLUniform::Sampler2D)
+        , uBlurStep     ("uBlurStep",  GLUniform::Vec2)
+        , uBlurWindow   ("uWindow",    GLUniform::Vec4)
     {
         self.audienceForChildAddition += this;
         margins.audienceForChange += this;
@@ -384,7 +384,7 @@ static void deleteGuiWidget(void *ptr)
     GuiWidget::destroy(reinterpret_cast<GuiWidget *>(ptr));
 }
 
-void GuiWidget::deleteLater()
+void GuiWidget::guiDeleteLater()
 {
     Garbage_TrashInstance(this, deleteGuiWidget);
 }
@@ -502,8 +502,6 @@ void GuiWidget::draw()
         // Detect mistakes in GLState stack usage.
         dsize const depthBeforeDrawingWidget = GLState::stackDepth();
 #endif
-
-        //qDebug() << "drawing" << path();
 
         d->drawBlurredBackground();
 

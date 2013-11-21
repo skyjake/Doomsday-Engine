@@ -1659,8 +1659,9 @@ int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
             linkStore.append(reinterpret_cast<Line *>(tn[nix].ptr));
         }
 
-        foreach(Line *line, linkStore)
+        for(int i = 0; i < linkStore.count(); ++i)
         {
+            Line *line = linkStore[i];
             if(int result = callback(line, context))
                 return result;
         }
@@ -1712,8 +1713,9 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
         }
     }
 
-    foreach(Sector *sector, linkStore)
+    for(int i = 0; i < linkStore.count(); ++i)
     {
+        Sector *sector = linkStore[i];
         if(int result = callback(sector, context))
             return result;
     }
@@ -1734,8 +1736,9 @@ int Map::lineTouchingMobjIterator(Line *line, int (*callback) (mobj_t *, void *)
         linkStore.append(reinterpret_cast<mobj_t *>(ln[nix].ptr));
     }
 
-    foreach(mobj_t *mobj, linkStore)
+    for(int i = 0; i < linkStore.count(); ++i)
     {
+        mobj_t *mobj = linkStore[i];
         if(int result = callback(mobj, context))
             return result;
     }
@@ -1776,8 +1779,9 @@ int Map::sectorTouchingMobjIterator(Sector *sector,
     }
 
     // Process all collected mobjs.
-    foreach(mobj_t *mobj, linkStore)
+    for(int i = 0; i < linkStore.count(); ++i)
     {
+        mobj_t *mobj = linkStore[i];
         if(int result = callback(mobj, context))
             return result;
     }

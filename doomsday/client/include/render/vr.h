@@ -19,6 +19,8 @@
 #ifndef CLIENT_RENDER_VR_H
 #define CLIENT_RENDER_VR_H
 
+#include "de/Vector"
+
 namespace VR {
 
 /// Menu of stereoscopic 3D modes available. Oculus Rift is the star player, but there
@@ -44,21 +46,49 @@ enum Stereo3DMode {
     MODE_MAX_3D_MODE_PLUS_ONE
 };
 
+
+class RiftState {
+public:
+    RiftState();
+
+    // Use screen size instead of resolution in case non-square pixels?
+    float aspect() const {return 0.5f * hScreenSize() / vScreenSize();}
+    const de::Vector4f& chromAbParam() const {return m_chromAbParam;}
+    float distortionScale() const;
+    float fovX() const; // in degrees
+    float fovY() const; // in degrees
+    const de::Vector4f& hmdWarpParam() const {return m_hmdWarpParam;}
+    float hScreenSize() const {return m_screenSize[0];}
+    float lensSeparationDistance() const {return m_lensSeparationDistance;}
+    bool loadRiftParameters();
+    const de::Vector2f& screenSize() const {return m_screenSize;}
+    float vScreenSize() const {return m_screenSize[1];}
+
+private:
+    de::Vector2f m_screenSize;
+    float m_lensSeparationDistance;
+    de::Vector4f m_hmdWarpParam;
+    de::Vector4f m_chromAbParam;
+    float m_eyeToScreenDistance;
+};
+
+extern RiftState riftState;
+
 // Sometimes we want viewpoint to remain constant between left and right eye views
 void holdViewPosition();
 void releaseViewPosition();
 bool viewPositionHeld();
 
 // Console variables
-Stereo3DMode mode(); /// Currently active Stereo3DMode index
-float riftAspect(); /// Aspect ratio of OculusRift
-float riftFovX(); /// Horizontal field of view in Oculus Rift in degrees
-float riftLatency(); /// Estimated head-motion->photons latency, in seconds
+Stereo3DMode mode(); ///< Currently active Stereo3DMode index
+bool modeNeedsStereoGLFormat(Stereo3DMode mode);
+float riftFovX(); ///< Horizontal field of view in Oculus Rift in degrees
+float riftLatency(); ///< Estimated head-motion->photons latency, in seconds
 
-extern float ipd; /// Interpupillary distance in meters
-extern float playerHeight; /// Human player's real world height in meters
-extern float dominantEye; /// Kludge for aim-down-weapon-sight modes
-extern byte  swapEyes; /// When true, inverts stereoscopic effect
+extern float ipd; ///< Interpupillary distance in meters
+extern float playerHeight; ///< Human player's real world height in meters
+extern float dominantEye; ///< Kludge for aim-down-weapon-sight modes
+extern byte  swapEyes; ///< When true, inverts stereoscopic effect
 
 // Variables below are global, but not user visible //
 
@@ -92,6 +122,9 @@ std::vector<float> getHeadOrientation();
 void deleteOculusTracker();
 
 void setRiftLatency(float latency);
+
+// Load Oculus Rift parameters via Rift SDK
+bool loadRiftParameters();
 
 } // namespace VR
 

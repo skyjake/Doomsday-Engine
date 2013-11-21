@@ -31,6 +31,7 @@ deng_qt5 {
 
 # Print include directories and other info.
 #QMAKE_CFLAGS += -Wp,-v
+#QMAKE_CXXFLAGS += -Wp,-v
 #QMAKE_LFLAGS += -v
 
 # Unix System Tools ----------------------------------------------------------
