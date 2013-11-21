@@ -87,6 +87,8 @@ DENG2_PIMPL(CanvasWindow)
 
     void finishCanvasRecreation()
     {
+        DENG2_ASSERT_IN_MAIN_THREAD();
+
         LOG_DEBUG("About to replace Canvas %p with %p")
                 << de::dintptr(canvas) << de::dintptr(recreated);
 
@@ -148,6 +150,8 @@ float CanvasWindow::frameRate() const
 
 void CanvasWindow::recreateCanvas()
 {
+    DENG2_ASSERT_IN_MAIN_THREAD();
+
     d->ready = false;
 
     // Steal the focus change audience temporarily so no spurious focus
