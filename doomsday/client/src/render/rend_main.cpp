@@ -73,6 +73,7 @@
 #include "render/blockmapvisual.h"
 #include "render/sprite.h"
 #include "render/vissprite.h"
+#include "render/vr.h"
 
 #include "gl/sys_opengl.h"
 
@@ -257,10 +258,22 @@ static void unlinkMobjLumobjs()
     }
 }
 
+static void fieldOfViewChanged() {
+    if (VR::mode() == VR::MODE_OCULUS_RIFT) {
+        if (Con_GetFloat("rend-vr-rift-fovx") != fieldOfView)
+            Con_SetFloat("rend-vr-rift-fovx", fieldOfView);
+    }
+    else
+    {
+        if (Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
+            Con_SetFloat("rend-vr-nonrift-fovx", fieldOfView);
+    }
+}
+
 void Rend_Register()
 {
     C_VAR_INT   ("rend-bias",                       &useBias,                       0, 0, 1);
-    C_VAR_FLOAT ("rend-camera-fov",                 &fieldOfView,                   0, 1, 179);
+    C_VAR_FLOAT2("rend-camera-fov",                 &fieldOfView,                   0, 1, 179, fieldOfViewChanged);
 
     C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
     C_VAR_INT   ("rend-glow-height",                &glowHeightMax,                 0, 0, 1024);
@@ -328,6 +341,7 @@ void Rend_Register()
     Rend_SpriteRegister();
     //Rend_ConsoleRegister();
     Vignette_Register();
+    VR::consoleRegister();
 }
 
 static void reportWallSectionDrawn(Line &line)
@@ -385,9 +399,18 @@ bool Rend_IsMTexDetails()
 
 float Rend_FieldOfView()
 {
-    float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
-    widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
-    return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+    {
+        // fieldOfView = VR::riftFovX(); // Update for culling
+        // return VR::riftFovX();
+        return fieldOfView;
+    }
+    else
+    {
+        float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
+        widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
+        return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+    }
 }
 
 void Rend_ModelViewMatrix(bool useAngles)
@@ -407,8 +430,77 @@ void Rend_ModelViewMatrix(bool useAngles)
     glLoadIdentity();
     if(useAngles)
     {
-        glRotatef(vpitch, 1, 0, 0);
-        glRotatef(vang, 0, 1, 0);
+        bool scheduledLate = false;
+        float pitch, roll, yaw;
+        static float storedPitch, storedRoll, storedYaw;
+
+        if (VR::viewPositionHeld()) {
+            roll = storedRoll;
+            pitch = storedPitch;
+            yaw = storedYaw;
+        }
+        else {
+            /// Hard code Oculus Rift roll angle directly into OpenGL ModelView matrix
+            /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player model.
+            if ( (VR::mode() == VR::MODE_OCULUS_RIFT) && (VR::hasHeadOrientation()) )
+            {
+                std::vector<float> pry = VR::getHeadOrientation();
+                if (pry.size() == 3)
+                {
+                    static float previousRiftYaw = 0;
+                    static float previousVang2 = 0;
+
+                    // Desired view angle without interpolation?
+                    float vang2 = viewData->latest.angle / (float) ANGLE_MAX *360 - 90;
+
+                    // Late-scheduled update
+                    scheduledLate = true;
+                    roll = -radianToDegree(pry[1]);
+                    pitch = radianToDegree(pry[0]);
+
+                    // Yaw might have a contribution from mouse/keyboard.
+                    // So only late schedule if it seems to be head tracking only.
+                    yaw = vang2; // default no late schedule
+                    float currentRiftYaw = radianToDegree(pry[2]);
+                    float dRiftYaw = currentRiftYaw - previousRiftYaw;
+                    while (dRiftYaw > 180) dRiftYaw -= 360;
+                    while (dRiftYaw < -180) dRiftYaw += 360;
+                    float dVang = vang2 - previousVang2;
+                    while (dVang > 180) dVang -= 360;
+                    while (dVang < -180) dVang += 360;
+                    if (abs(dVang) < 2.0 * abs(dRiftYaw)) // Mostly head motion
+                    {
+                        yaw = storedYaw + dRiftYaw;
+                        float dy = vang2 - yaw;
+                        while (dy > 180) dy -= 360;
+                        while (dy < -180) dy += 360;
+                        yaw += 0.05 * dy; // ease slowly toward target angle
+                    }
+                    else
+                    {
+                        yaw = vang2; // No interpolation if not from head tracker
+                    }
+
+                    previousRiftYaw = currentRiftYaw;
+                    previousVang2 = vang2;
+                }
+            }
+            if (! scheduledLate)
+            {
+                // Vanilla angle update
+                roll = 0;
+                pitch = vpitch;
+                yaw = vang;
+            }
+        }
+
+        glRotatef(roll, 0, 0, 1); // Pitch
+        glRotatef(pitch, 1, 0, 0); // Pitch
+        glRotatef(yaw, 0, 1, 0); // Yaw
+
+        storedRoll = roll;
+        storedPitch = pitch;
+        storedYaw = yaw;
     }
     glScalef(1, 1.2f, 1);      // This is the aspect correction.
     glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
@@ -3295,6 +3387,7 @@ static void drawSky()
 
     // We do not want to update color and/or depth.
     glDisable(GL_DEPTH_TEST);
+    glPushAttrib(GL_COLOR_BUFFER_BIT); // Stereo 3D
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
     // Mask out stencil buffer, setting the drawn areas to 1.
@@ -3312,8 +3405,8 @@ static void drawSky()
         glClear(GL_STENCIL_BUFFER_BIT);
     }
 
-    // Re-enable update of color and depth.
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    // Restore previous GL state.
+    glPopAttrib();
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
 

@@ -33,12 +33,15 @@ using namespace ui;
 DENG_GUI_PIMPL(InputSettingsDialog)
 {
     VariableToggleWidget *syncMouse;
+    CVarToggleWidget *syncInput;
     CVarSliderWidget *mouseSensiX;
     CVarSliderWidget *mouseSensiY;
     ToggleWidget *mouseDisableX;
     ToggleWidget *mouseDisableY;
     ToggleWidget *mouseInvertX;
     ToggleWidget *mouseInvertY;
+    ToggleWidget *mouseFilterX;
+    ToggleWidget *mouseFilterY;
     CVarToggleWidget *joyEnable;
     GridPopupWidget *devPopup;
 
@@ -47,12 +50,15 @@ DENG_GUI_PIMPL(InputSettingsDialog)
         ScrollAreaWidget &area = self.area();
 
         area.add(syncMouse     = new VariableToggleWidget(App::config()["input.mouse.syncSensitivity"]));
+        area.add(syncInput     = new CVarToggleWidget("input-sharp"));
         area.add(mouseSensiX   = new CVarSliderWidget("input-mouse-x-scale"));
         area.add(mouseSensiY   = new CVarSliderWidget("input-mouse-y-scale"));
         area.add(mouseDisableX = new ToggleWidget);
         area.add(mouseDisableY = new ToggleWidget);
         area.add(mouseInvertX  = new ToggleWidget);
         area.add(mouseInvertY  = new ToggleWidget);
+        area.add(mouseFilterX  = new ToggleWidget);
+        area.add(mouseFilterY  = new ToggleWidget);
         area.add(joyEnable     = new CVarToggleWidget("input-joy"));
 
         // Developer options.
@@ -64,6 +70,7 @@ DENG_GUI_PIMPL(InputSettingsDialog)
 
     void fetch()
     {
+        syncInput->updateFromCVar();
         mouseSensiX->updateFromCVar();
         mouseSensiY->updateFromCVar();
         joyEnable->updateFromCVar();
@@ -72,6 +79,8 @@ DENG_GUI_PIMPL(InputSettingsDialog)
         mouseDisableY->setActive(Con_GetInteger("input-mouse-y-flags") & IDA_DISABLED);
         mouseInvertX->setActive(Con_GetInteger("input-mouse-x-flags") & IDA_INVERT);
         mouseInvertY->setActive(Con_GetInteger("input-mouse-y-flags") & IDA_INVERT);
+        mouseFilterX->setInactive(Con_GetInteger("input-mouse-x-flags") & IDA_RAW);
+        mouseFilterY->setInactive(Con_GetInteger("input-mouse-y-flags") & IDA_RAW);
 
         enableOrDisable();
     }
@@ -82,17 +91,21 @@ DENG_GUI_PIMPL(InputSettingsDialog)
         mouseSensiY->disable(mouseDisableY->isActive());
         mouseInvertX->disable(mouseDisableX->isActive());
         mouseInvertY->disable(mouseDisableY->isActive());
+        mouseFilterX->disable(mouseDisableX->isActive());
+        mouseFilterY->disable(mouseDisableY->isActive());
     }
 
     void updateMouseFlags()
     {
         Con_SetInteger("input-mouse-x-flags",
-                       (mouseDisableX->isActive()? IDA_DISABLED : 0) |
-                       (mouseInvertX->isActive()?  IDA_INVERT   : 0));
+                       (mouseDisableX->isActive()?  IDA_DISABLED : 0) |
+                       (mouseInvertX->isActive()?   IDA_INVERT   : 0) |
+                       (mouseFilterX->isInactive()? IDA_RAW      : 0));
 
         Con_SetInteger("input-mouse-y-flags",
-                       (mouseDisableY->isActive()? IDA_DISABLED : 0) |
-                       (mouseInvertY->isActive()?  IDA_INVERT   : 0));
+                       (mouseDisableY->isActive()?  IDA_DISABLED : 0) |
+                       (mouseInvertY->isActive()?   IDA_INVERT   : 0) |
+                       (mouseFilterY->isInactive()? IDA_RAW      : 0));
 
         enableOrDisable();
     }
@@ -103,6 +116,7 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
 {
     heading().setText(tr("Input Settings"));
 
+    d->syncInput->setText(tr("Vanilla 35Hz Input Rate"));
     d->syncMouse->setText(tr("Uniform Mouse Axis Sensitivity"));
 
     LabelWidget *mouseXLabel = LabelWidget::newWithText(_E(1)_E(D) + tr("Mouse X"), &area());
@@ -122,14 +136,18 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
 
     d->mouseInvertX->setText(tr("Invert Axis"));
     d->mouseDisableX->setText(tr("Disable Axis"));
+    d->mouseFilterX->setText(tr("Filter Axis"));
 
     d->mouseInvertY->setText(tr("Invert Axis"));
     d->mouseDisableY->setText(tr("Disable Axis"));
+    d->mouseFilterY->setText(tr("Filter Axis"));
 
     connect(d->mouseInvertX, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), this, SLOT(mouseTogglesChanged()));
     connect(d->mouseInvertY, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), this, SLOT(mouseTogglesChanged()));
     connect(d->mouseDisableX, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), this, SLOT(mouseTogglesChanged()));
     connect(d->mouseDisableY, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), this, SLOT(mouseTogglesChanged()));
+    connect(d->mouseFilterX, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), this, SLOT(mouseTogglesChanged()));
+    connect(d->mouseFilterY, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), this, SLOT(mouseTogglesChanged()));
 
     d->joyEnable->setText(tr("Joystick Enabled"));
 
@@ -137,11 +155,13 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
     //layout.setColumnAlignment(0, ui::AlignRight);
-    layout.append(*d->joyEnable, 2)
+    layout.append(*d->syncInput, 2)
+          .append(*d->joyEnable, 2)
           .append(*d->syncMouse, 2);
     layout << *mouseXLabel      << *mouseYLabel
            << *d->mouseSensiX   << *d->mouseSensiY
            << *d->mouseInvertX  << *d->mouseInvertY
+           << *d->mouseFilterX  << *d->mouseFilterY
            << *d->mouseDisableX << *d->mouseDisableY;
 
     area().setContentSize(layout.width(), layout.height());

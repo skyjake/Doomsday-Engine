@@ -187,6 +187,7 @@ public:
     ui::Margins const &margins() const;
 
     de::Rectanglef normalizedRect() const;
+    de::Rectanglef normalizedRect(de::Rectanglei const &viewSpaceRect) const;
 
     /**
      * Normalized content rectangle. Same as normalizedRect() except margins
@@ -194,7 +195,7 @@ public:
      */
     de::Rectanglef normalizedContentRect() const;
 
-    void deleteLater();
+    void guiDeleteLater();
 
     void setFont(de::DotPath const &id);
     void setTextColor(de::DotPath const &id);

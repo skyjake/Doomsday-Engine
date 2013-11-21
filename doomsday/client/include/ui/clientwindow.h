@@ -25,7 +25,7 @@
 
 #include "GuiRootWidget"
 #include "resource/image.h"
-#include "ui/widgets/legacywidget.h"
+#include "ui/widgets/gamewidget.h"
 
 /**
  * Macro for conveniently accessing the current active window. There is always
@@ -34,6 +34,8 @@
  */
 //#define DENG_WINDOW         (&ClientWindow::main())
 
+#define DENG_GAMEVIEW_X         ClientWindow::main().game().rule().left().valuei()
+#define DENG_GAMEVIEW_Y         ClientWindow::main().game().rule().top().valuei()
 #define DENG_GAMEVIEW_WIDTH     ClientWindow::main().game().rule().width().valuei()
 #define DENG_GAMEVIEW_HEIGHT    ClientWindow::main().game().rule().height().valuei()
 
@@ -57,14 +59,12 @@ class ClientWindow : public de::PersistentCanvasWindow,
     Q_OBJECT
 
 public:
-    enum Mode
-    {
+    enum Mode {
         Normal,
         Busy
     };
 
-    enum SidebarLocation
-    {
+    enum SidebarLocation {
         RightEdge
     };
 
@@ -75,8 +75,17 @@ public:
     TaskBarWidget &taskBar();
     ConsoleWidget &console();
     NotificationWidget &notifications();
-    LegacyWidget &game();
+    GameWidget &game();
     BusyWidget &busy();
+
+    /**
+     * Adds a widget to the widget tree so that it will be displayed over
+     * other widgets.
+     *
+     * @param widget  Widget to add on top of others. Ownership of the
+     *                widget taken by the new parent.
+     */
+    void addOnTop(GuiWidget *widget);
 
     /**
      * Installs a sidebar widget into the window. If there is an existing
@@ -132,7 +141,21 @@ public:
      */
     void grab(image_t &image, bool halfSized = false) const;
 
+    /**
+     * Draws the untransformed game-related contents of the window to a
+     * texture. The drawing is done immediately; this must be called from the
+     * main/UI thread.
+     *
+     * The entire texture is filled, but the logical size of the UI is not
+     * changed for this operation. I.e., aspect ratio is changed to fit into
+     * the texture and appropriate scaling is done using a GL viewport.
+     *
+     * @param texture  Texture to draw into.
+     */
+    void drawGameContentToTexture(de::GLTexture &texture);
+
     void updateCanvasFormat();
+    void updateRootSize();
 
     // Notifications.
     bool isFPSCounterVisible() const;

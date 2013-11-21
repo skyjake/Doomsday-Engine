@@ -183,6 +183,8 @@ ButtonWidget::State ButtonWidget::state() const
 
 bool ButtonWidget::handleEvent(Event const &event)
 {
+    if(isDisabled()) return false;
+
     if(event.isMouse())
     {
         MouseEvent const &mouse = event.as<MouseEvent>();

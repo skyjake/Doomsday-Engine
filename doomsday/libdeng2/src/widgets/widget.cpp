@@ -159,18 +159,13 @@ bool Widget::hasFocus() const
     return hasRoot() && root().focus() == this;
 }
 
-bool Widget::isHidden() const
+bool Widget::hasFamilyBehavior(Behavior const &flags) const
 {
     for(Widget const *w = this; w != 0; w = w->d->parent)
     {
-        if(w->d->behavior.testFlag(Hidden)) return true;
+        if(w->d->behavior.testFlag(flags)) return true;
     }
     return false;
-}
-
-bool Widget::isVisible() const
-{
-    return !isHidden();
 }
 
 void Widget::show(bool doShow)
@@ -282,9 +277,13 @@ Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
 Widget *Widget::remove(Widget &child)
 {
     DENG2_ASSERT(child.d->parent == this);
-    child.d->parent = 0;
+    DENG2_ASSERT(d->children.contains(&child));
 
+    child.d->parent = 0;
     d->children.removeOne(&child);
+
+    DENG2_ASSERT(!d->children.contains(&child));
+
     if(!child.name().isEmpty())
     {
         d->index.remove(child.name());
@@ -314,7 +313,7 @@ Widget *Widget::find(String const &name)
     }
 
     // Descend recursively to child widgets.
-    DENG2_FOR_EACH(Instance::Children, i, d->children)
+    DENG2_FOR_EACH_CONST(Instance::Children, i, d->children)
     {
         Widget *w = (*i)->find(name);
         if(w) return w;
@@ -338,11 +337,11 @@ void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
     // Note: O(n)
     for(int i = 0; i < d->children.size() && (from < 0 || to < 0); ++i)
     {
-        if(d->children[i] == child)
+        if(d->children.at(i) == child)
         {
             from = i;
         }
-        if(d->children[i] == &otherChild)
+        if(d->children.at(i) == &otherChild)
         {
             to = i;
         }
@@ -370,18 +369,19 @@ String Widget::uniqueName(String const &name) const
 Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
 {
     NotifyArgs::Result result = NotifyArgs::Continue;
-
     bool preNotified = false;
 
-    DENG2_FOR_EACH(Instance::Children, i, d->children)
+    for(int idx = 0; idx < d->children.size(); ++idx)
     {
-        if(*i == args.until)
+        Widget *i = d->children.at(idx);
+
+        if(i == args.until)
         {
             result = NotifyArgs::Abort;
             break;
         }
 
-        if(args.conditionFunc && !((*i)->*args.conditionFunc)())
+        if(args.conditionFunc && !(i->*args.conditionFunc)())
             continue; // Skip this one.
 
         if(args.preNotifyFunc && !preNotified)
@@ -390,12 +390,28 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
             (this->*args.preNotifyFunc)();
         }
 
-        ((*i)->*args.notifyFunc)();
+        (i->*args.notifyFunc)();
 
-        if((*i)->notifyTree(args) == NotifyArgs::Abort)
+        if(i != d->children.at(idx))
         {
-            result = NotifyArgs::Abort;
-            break;
+            // The list of children was modified; let's update the current
+            // index accordingly.
+            idx = d->children.indexOf(i);
+
+            // The current widget cannot be removed.
+            DENG2_ASSERT(idx >= 0);
+
+            i = d->children.at(idx);
+        }
+
+        // Continue down the tree by notifying any children of this widget.
+        if(i->childCount())
+        {
+            if(i->notifyTree(args) == NotifyArgs::Abort)
+            {
+                result = NotifyArgs::Abort;
+                break;
+            }
         }
     }
 
@@ -422,7 +438,7 @@ void Widget::notifyTreeReversed(NotifyArgs const &args)
 
     for(int i = d->children.size() - 1; i >= 0; --i)
     {
-        Widget *w = d->children[i];
+        Widget *w = d->children.at(i);
 
         if(args.conditionFunc && !(w->*args.conditionFunc)())
             continue; // Skip this one.
@@ -466,7 +482,7 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
         // widgets get events first.
         for(int i = d->children.size() - 1; i >= 0; --i)
         {
-            Widget *w = d->children[i];
+            Widget *w = d->children.at(i);
             bool eaten = w->dispatchEvent(event, memberFunc);
             if(eaten) return true;
         }

@@ -72,6 +72,9 @@ void R_CycleGammaLevel(void);
 
 void R_StatusBarSize(int player, Size2Raw *statusBarSize);
 
+void G_DrawViewPort(int port, RectRaw const *portGeometry,
+                    RectRaw const *windowGeometry, int player, int layer);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

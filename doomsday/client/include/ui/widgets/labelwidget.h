@@ -81,6 +81,11 @@ public:
     de::String text() const;
 
     /**
+     * Returns the actual size of the text in pixels.
+     */
+    de::Vector2ui textSize() const;
+
+    /**
      * Sets the gap between the text and image. Defaults to "label.gap".
      *
      * @param styleRuleId  Id of a rule in the style.

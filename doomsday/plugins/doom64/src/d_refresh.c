@@ -76,7 +76,7 @@ float quitDarkenOpacity = 0;
  * Draws a special filter over the screen (eg the inversing filter used
  * when in god mode).
  */
-static void rendSpecialFilter(int player, const RectRaw* region)
+void G_RendSpecialFilter(int player, const RectRaw* region)
 {
     player_t* plr = players + player;
     const int filter = plr->powers[PT_INVULNERABILITY];
@@ -211,7 +211,7 @@ void R_UpdateViewFilter(int player)
 #undef RADIATIONPAL
 }
 
-static void rendPlayerView(int player)
+void G_RendPlayerView(int player)
 {
     player_t* plr = &players[player];
     float pspriteOffsetY;
@@ -243,6 +243,7 @@ static void rendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
+#if 0
 static void rendHUD(int player, const RectRaw* portGeometry)
 {
     if(player < 0 || player >= MAXPLAYERS) return;
@@ -289,6 +290,7 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
     default: break;
     }
 }
+#endif
 
 void D_DrawWindow(const Size2Raw* windowSize)
 {

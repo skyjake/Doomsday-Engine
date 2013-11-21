@@ -73,9 +73,6 @@
 #define MELEERANGE          64
 #define MISSILERANGE        (32*64)
 
-#define LOOKDIR2DEG(x)      ((x) * 85.0/110.0)
-#define LOOKDIR2RAD(x)      (LOOKDIR2DEG(x)/180*PI)
-
 #define BASETHRESHOLD       100 // Follow a player exlusively for 3 seconds.
 
 #define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))

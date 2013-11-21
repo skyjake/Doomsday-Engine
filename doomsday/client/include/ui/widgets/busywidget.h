@@ -34,9 +34,9 @@ public:
 
     ProgressWidget &progress();
 
-    void grabTransitionScreenshot();
-    void releaseTransitionScreenshot();
-    de::GLTexture const *transitionScreenshot() const;
+    void renderTransitionFrame();
+    void releaseTransitionFrame();
+    de::GLTexture const *transitionFrame() const;
 
     // Events.
     void viewResized();

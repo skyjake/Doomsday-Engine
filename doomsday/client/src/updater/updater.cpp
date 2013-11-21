@@ -421,7 +421,7 @@ DENG2_OBSERVES(App, StartupComplete)
         QObject::connect(download, SIGNAL(downloadFailed(QString)), thisPublic, SLOT(downloadFailed(QString)));
         QObject::connect(download, SIGNAL(accepted(int)), thisPublic, SLOT(downloadCompleted(int)));
 
-        ClientWindow::main().root().add(download);
+        ClientWindow::main().root().addOnTop(download);
     }
 
     /**
@@ -589,7 +589,7 @@ void Updater::downloadCompleted(int)
     d->startInstall(d->download->downloadedFilePath());
 
     // The download dialog can be dismissed now.
-    d->download->deleteLater();
+    d->download->guiDeleteLater();
     d->download = 0;
     d->savingSuggested = false;
 }

@@ -65,7 +65,8 @@ enum {
     DE_API_BINDING              = DE_API_BINDING_v1,
 
     DE_API_BUSY_v1              = 200,     // 1.10
-    DE_API_BUSY                 = DE_API_BUSY_v1,
+    DE_API_BUSY_v2              = 201,     // 1.13
+    DE_API_BUSY                 = DE_API_BUSY_v2,
 
     DE_API_CLIENT_v1            = 300,     // 1.10
     DE_API_CLIENT               = DE_API_CLIENT_v1,
@@ -83,7 +84,8 @@ enum {
     DE_API_FONT_RENDER          = DE_API_FONT_RENDER_v1,
 
     DE_API_GL_v1                = 800,     // 1.10
-    DE_API_GL                   = DE_API_GL_v1,
+    DE_API_GL_v2                = 801,     // 1.13
+    DE_API_GL                   = DE_API_GL_v2,
 
     DE_API_INFINE_v1            = 900,     // 1.10
     DE_API_INFINE               = DE_API_INFINE_v1,
@@ -107,7 +109,8 @@ enum {
     DE_API_MATERIAL_ARCHIVE     = DE_API_MATERIAL_ARCHIVE_v1,
 
     DE_API_PLAYER_v1            = 1500,    // 1.10
-    DE_API_PLAYER               = DE_API_PLAYER_v1,
+    DE_API_PLAYER_v2            = 1501,    // 1.13
+    DE_API_PLAYER               = DE_API_PLAYER_v2,
 
     DE_API_PLUGIN_v1            = 1600,    // 1.10
     DE_API_PLUGIN               = DE_API_PLUGIN_v1,

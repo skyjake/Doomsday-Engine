@@ -477,6 +477,11 @@ String LabelWidget::text() const
     return d->glText.text();
 }
 
+Vector2ui LabelWidget::textSize() const
+{
+    return d->textSize();
+}
+
 void LabelWidget::setTextGap(DotPath const &styleRuleId)
 {
     d->gapId = styleRuleId;

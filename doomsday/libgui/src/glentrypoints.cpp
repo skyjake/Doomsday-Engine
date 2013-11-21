@@ -19,16 +19,27 @@
 #include "de/gui/glentrypoints.h"
 #include <de/Log>
 
-#ifdef WIN32
+#ifdef LIBGUI_USE_GLENTRYPOINTS
 
+#ifdef UNIX
+#  include <GL/glx.h>
+#endif
+
+#ifdef LIBGUI_FETCH_GL_1_3
 PFNGLACTIVETEXTUREPROC            glActiveTexture;
+PFNGLBLENDEQUATIONPROC            glBlendEquation;
+PFNGLCLIENTACTIVETEXTUREPROC      glClientActiveTexture;
+PFNGLMULTITEXCOORD2FPROC          glMultiTexCoord2f;
+PFNGLMULTITEXCOORD2FVPROC         glMultiTexCoord2fv;
+#endif
+
 PFNGLATTACHSHADERPROC             glAttachShader;
 
 PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation;
 PFNGLBINDBUFFERPROC               glBindBuffer;
 PFNGLBINDFRAMEBUFFERPROC          glBindFramebuffer;
 PFNGLBINDRENDERBUFFERPROC         glBindRenderbuffer;
-PFNGLBLENDEQUATIONPROC            glBlendEquation;
+PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
 PFNGLBUFFERDATAPROC               glBufferData;
 
 PFNGLCHECKFRAMEBUFFERSTATUSPROC   glCheckFramebufferStatus;
@@ -85,19 +96,30 @@ void getAllOpenGLEntryPoints()
     static bool haveProcs = false;
     if(haveProcs) return;
 
-#define GET_PROC(name) *((void**)&name) = wglGetProcAddress(#name); DENG2_ASSERT(name != 0)
+#ifdef WIN32
+#  define GET_PROC(name) *((void**)&name) = wglGetProcAddress(#name); DENG2_ASSERT(name != 0)
+#else
+#  define GET_PROC(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name); DENG2_ASSERT(name != 0)
+#endif
 
     LOG_AS("getAllOpenGLEntryPoints");
 
     LOG_VERBOSE("GL_VERSION: ") << (char const *) glGetString(GL_VERSION);
 
+#ifdef LIBGUI_FETCH_GL_1_3
     GET_PROC(glActiveTexture);
+    GET_PROC(glBlendEquation);
+    GET_PROC(glClientActiveTexture);
+    GET_PROC(glMultiTexCoord2f);
+    GET_PROC(glMultiTexCoord2fv);
+#endif
+
     GET_PROC(glAttachShader);
     GET_PROC(glBindAttribLocation);
     GET_PROC(glBindBuffer);
     GET_PROC(glBindFramebuffer);
     GET_PROC(glBindRenderbuffer);
-    GET_PROC(glBlendEquation);
+    GET_PROC(glBlendFuncSeparate);
     GET_PROC(glBufferData);
     GET_PROC(glCheckFramebufferStatus);
     GET_PROC(glCompileShader);
@@ -141,4 +163,4 @@ void getAllOpenGLEntryPoints()
     haveProcs = true;
 }
 
-#endif // WIN32
+#endif // LIBGUI_USE_GLENTRYPOINTS

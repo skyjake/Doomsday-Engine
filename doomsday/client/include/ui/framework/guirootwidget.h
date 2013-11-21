@@ -26,6 +26,7 @@
 #include <de/Matrix>
 
 class ClientWindow;
+class GuiWidget;
 
 /**
  * Graphical root widget.
@@ -48,6 +49,13 @@ public:
      * Returns the window in which the root widget resides.
      */
     ClientWindow &window();
+
+    /**
+     * Adds a widget over all others.
+     *
+     * @param widget  Widget to add on top.
+     */
+    void addOnTop(GuiWidget *widget);
 
     de::AtlasTexture &atlas();
     de::GLUniform &uAtlas();
@@ -72,6 +80,12 @@ public:
     // Events.
     void update();
     void draw();
+
+    /**
+     * Draws until the widget @a until is encountered during tree notification.
+     *
+     * @param until  Widget to stop drawing at. @a until is not drawn.
+     */
     void drawUntil(de::Widget &until);
 
 private:

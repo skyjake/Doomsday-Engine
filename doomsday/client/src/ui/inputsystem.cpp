@@ -64,7 +64,8 @@ DENG2_PIMPL(InputSystem)
                 .define(SettingsRegister::FloatCVar,      "input-mouse-y-scale", 1.f/1000.f)
                 .define(SettingsRegister::IntCVar,        "input-mouse-x-flags", 0)
                 .define(SettingsRegister::IntCVar,        "input-mouse-y-flags", 0)
-                .define(SettingsRegister::IntCVar,        "input-joy", 1);
+                .define(SettingsRegister::IntCVar,        "input-joy", 1)
+                .define(SettingsRegister::IntCVar,        "input-sharp", 1);
 
         // Initialize script bindings.
         Function::registerNativeEntryPoint("InputSystem_BindEvent", Binding_InputSystem_BindEvent);

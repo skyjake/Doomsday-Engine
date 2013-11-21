@@ -54,6 +54,8 @@ DENG_API_TYPEDEF(Busy)
     /// @return  Amount of time we have been busy (if not busy, @c 0).
     timespan_t (*ElapsedTime)(void);
 
+    void (*FreezeGameForBusyMode)(void);
+
     int (*RunTask)(BusyTask* task);
 
     /**
@@ -114,6 +116,7 @@ DENG_API_T(Busy);
 #ifndef DENG_NO_API_MACROS_BUSY
 #define BusyMode_Active             _api_Busy.Active
 #define BusyMode_ElapsedTime        _api_Busy.ElapsedTime
+#define BusyMode_FreezeGameForBusyMode _api_Busy.FreezeGameForBusyMode
 #define BusyMode_RunTask            _api_Busy.RunTask
 #define BusyMode_RunTasks           _api_Busy.RunTasks
 #define BusyMode_RunNewTask         _api_Busy.RunNewTask

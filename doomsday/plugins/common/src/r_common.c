@@ -46,6 +46,7 @@
 #include "p_player.h"
 #include "g_common.h"
 #include "g_controls.h"
+#include "x_hair.h"
 
 #include "r_common.h"
 
@@ -291,4 +292,72 @@ void R_UpdateConsoleView(int player)
     R_SetViewOrigin(player, viewOrigin);
     R_SetViewAngle(player, mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));
     R_SetViewPitch(player, plr->plr->lookDir);
+}
+
+static void rendHUD(int player, const RectRaw* portGeometry)
+{
+    if(player < 0 || player >= MAXPLAYERS) return;
+    if(G_GameState() != GS_MAP) return;
+    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
+    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT)) return; // The engine advises not to draw any HUD displays.
+
+    ST_Drawer(player);
+    HU_DrawScoreBoard(player);
+    Hu_MapTitleDrawer(portGeometry);
+}
+
+void G_DrawViewPort(int port, RectRaw const *portGeometry,
+                    RectRaw const *windowGeometry, int player, int layer)
+{
+    switch(G_GameState())
+    {
+    case GS_MAP: {
+        player_t* plr = players + player;
+        boolean isAutomapObscuring = ST_AutomapObscures2(player, windowGeometry);
+
+        if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
+            return;
+
+        if(Con_GetInteger("rend-vr-mode") == 9) // Oculus Rift mode
+        {
+            // Automap will not cover the full view.
+            isAutomapObscuring = false;
+        }
+
+        switch(layer)
+        {
+        case 0: // Primary layer (3D view).
+            if(!isAutomapObscuring)
+            {
+                G_RendPlayerView(player);
+#ifndef __JHEXEN__
+                G_RendSpecialFilter(player, windowGeometry);
+#endif
+            }
+            break;
+
+        default: // HUD layer.
+            // Crosshair.
+            if(!isAutomapObscuring && !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
+            {
+                X_Drawer(player);
+            }
+
+            // Other HUD elements.
+            rendHUD(player, portGeometry);
+            break;
+        }
+        break; }
+
+    case GS_STARTUP:
+        if(layer == 0)
+        {
+            DGL_DrawRectf2Color(0, 0, portGeometry->size.width, portGeometry->size.height,
+                                0, 0, 0, 1);
+        }
+        break;
+
+    default:
+        break;
+    }
 }
