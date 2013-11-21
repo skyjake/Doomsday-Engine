@@ -1168,7 +1168,8 @@ void ResourceSystem::releaseAllSystemGLTextures()
     // Which, obviously, can't persist any longer...
     ClientApp::renderSystem().clearDrawLists();
 
-    GL_DeleteAllLightingSystemTextures();
+    GL_ReleaseAllLightingSystemTextures();
+    GL_ReleaseAllFlareTextures();
 
     releaseGLTexturesByScheme("System");
     Rend_ParticleReleaseSystemTextures();

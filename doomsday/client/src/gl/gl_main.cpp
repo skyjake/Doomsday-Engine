@@ -150,8 +150,6 @@ void GL_Register()
     C_CMD      ("togglemaximized",  "",     ToggleMaximized);
     C_CMD      ("togglecentered",   "",     ToggleCentered);
     C_CMD      ("centerwindow",     "",     CenterWindow);
-
-    GL_TexRegister();
 }
 
 boolean GL_IsInited()

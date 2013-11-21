@@ -103,6 +103,9 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h, float a
 void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color3f[3], float alpha);
 
 D_CMD(OpenRendererAppearanceEditor);
+D_CMD(LowRes);
+D_CMD(MipMap);
+D_CMD(TexReset);
 
 int useBias; // Shadow Bias enabled? cvar
 
@@ -142,6 +145,34 @@ byte useLightDecorations = true; ///< cvar
 
 float detailFactor = .5f;
 float detailScale = 4;
+
+int mipmapping = 5;
+int filterUI   = 1;
+int texQuality = TEXQ_BEST;
+
+int ratioLimit = 0; // Zero if none.
+boolean fillOutlines = true;
+int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
+int filterSprites = true;
+int texMagMode = 1; // Linear.
+int texAniso = -1; // Use best.
+
+boolean noHighResTex = false;
+boolean noHighResPatches = false;
+boolean highResWithPWAD = false;
+byte loadExtAlways = false; // Always check for extres (cvar)
+
+float texGamma = 0;
+
+int glmode[6] = // Indexed by 'mipmapping'.
+{
+    GL_NEAREST,
+    GL_LINEAR,
+    GL_NEAREST_MIPMAP_NEAREST,
+    GL_LINEAR_MIPMAP_NEAREST,
+    GL_NEAREST_MIPMAP_LINEAR,
+    GL_LINEAR_MIPMAP_LINEAR
+};
 
 coord_t vOrigin[3];
 float vang, vpitch;
@@ -258,6 +289,38 @@ static void unlinkMobjLumobjs()
     }
 }
 
+static void detailFactorChanged()
+{
+    App_ResourceSystem().releaseGLTexturesByScheme("Details");
+}
+
+static void loadExtAlwaysChanged()
+{
+    GL_TexReset();
+}
+
+static void useSmartFilterChanged()
+{
+    GL_TexReset();
+}
+
+static void texGammaChanged()
+{
+    R_BuildTexGammaLut();
+    GL_TexReset();
+    //LOG_MSG("Gamma correction set to %f.") << texGamma;
+}
+
+static void mipmappingChanged()
+{
+    GL_TexReset();
+}
+
+static void texQualityChanged()
+{
+    GL_TexReset();
+}
+
 void Rend_Register()
 {
     C_VAR_INT   ("rend-bias",                       &useBias,                       0, 0, 1);
@@ -292,7 +355,21 @@ void Rend_Register()
     C_VAR_INT   ("rend-shadow-far",                 &shadowMaxDistance,             CVF_NO_MAX, 0, 0);
     C_VAR_INT   ("rend-shadow-radius-max",          &shadowMaxRadius,               CVF_NO_MAX, 0, 0);
 
+    C_VAR_INT   ("rend-tex",                        &renderTextures,                CVF_NO_ARCHIVE, 0, 2);
     C_VAR_BYTE  ("rend-tex-anim-smooth",            &smoothTexAnim,                 0, 0, 1);
+    C_VAR_INT   ("rend-tex-detail",                 &r_detail,                      0, 0, 1);
+    C_VAR_INT   ("rend-tex-detail-multitex",        &useMultiTexDetails,            0, 0, 1);
+    C_VAR_FLOAT ("rend-tex-detail-scale",           &detailScale,                   CVF_NO_MIN | CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT2("rend-tex-detail-strength",        &detailFactor,                  0, 0, 5, detailFactorChanged);
+    C_VAR_BYTE2 ("rend-tex-external-always",        &loadExtAlways,                 0, 0, 1, loadExtAlwaysChanged);
+    C_VAR_INT   ("rend-tex-filter-anisotropic",     &texAniso,                      0, -1, 4);
+    C_VAR_INT   ("rend-tex-filter-mag",             &texMagMode,                    0, 0, 1);
+    C_VAR_INT2  ("rend-tex-filter-smart",           &useSmartFilter,                0, 0, 1, useSmartFilterChanged);
+    C_VAR_INT   ("rend-tex-filter-sprite",          &filterSprites,                 0, 0, 1);
+    C_VAR_INT   ("rend-tex-filter-ui",              &filterUI,                      0, 0, 1);
+    C_VAR_FLOAT2("rend-tex-gamma",                  &texGamma,                      0, 0, 1, texGammaChanged);
+    C_VAR_INT2  ("rend-tex-mipmap",                 &mipmapping,                    CVF_PROTECTED, 0, 5, mipmappingChanged);
+    C_VAR_INT2  ("rend-tex-quality",                &texQuality,                    0, 0, 8, texQualityChanged);
     C_VAR_INT   ("rend-tex-shiny",                  &useShinySurfaces,              0, 0, 1);
 
     C_VAR_BYTE  ("rend-dev-blockmap-debug",         &bmapShowDebug,                 CVF_NO_ARCHIVE, 0, 4);
@@ -315,7 +392,11 @@ void Rend_Register()
     C_VAR_BYTE  ("rend-dev-vertex-show-bars",       &devVertexBars,                 CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE  ("rend-dev-vertex-show-indices",    &devVertexIndices,              CVF_NO_ARCHIVE, 0, 1);
 
-    C_CMD("rendedit", "", OpenRendererAppearanceEditor);
+    C_CMD       ("rendedit",    "",     OpenRendererAppearanceEditor);
+
+    C_CMD_FLAGS ("lowres",      "",     LowRes, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS ("mipmap",      "i",    MipMap, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS ("texreset",    "",     TexReset, CMDF_NO_DEDICATED);
 
     BiasIllum::consoleRegister();
     BiasSurface::consoleRegister();
@@ -5014,5 +5095,55 @@ D_CMD(OpenRendererAppearanceEditor)
         RendererAppearanceEditor *editor = new RendererAppearanceEditor;
         editor->open();
     }
+    return true;
+}
+
+D_CMD(LowRes)
+{
+    DENG2_UNUSED3(src, argv, argc);
+
+    // Set everything as low as they go.
+    filterSprites = 0;
+    filterUI      = 0;
+    texMagMode    = 0;
+
+    //GL_SetAllTexturesMinFilter(GL_NEAREST);
+    GL_SetRawTexturesMinFilter(GL_NEAREST);
+
+    // And do a texreset so everything is updated.
+    GL_TexReset();
+    return true;
+}
+
+D_CMD(TexReset)
+{
+    DENG2_UNUSED(src);
+
+    if(argc == 2 && !stricmp(argv[1], "raw"))
+    {
+        // Reset just raw images.
+        GL_ReleaseTexturesForRawImages();
+    }
+    else
+    {
+        // Reset everything.
+        GL_TexReset();
+    }
+    return true;
+}
+
+D_CMD(MipMap)
+{
+    DENG2_UNUSED2(src, argc);
+
+    int newMipMode = String(argv[1]).toInt();
+    if(newMipMode < 0 || newMipMode > 5)
+    {
+        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0..5).", newMipMode);
+        return false;
+    }
+
+    mipmapping = newMipMode;
+    //GL_SetAllTexturesMinFilter(glmode[mipmapping]);
     return true;
 }

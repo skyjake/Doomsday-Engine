@@ -106,6 +106,18 @@ DENG_EXTERN_C int useShinySurfaces;
 
 DENG_EXTERN_C float detailFactor, detailScale;
 
+DENG_EXTERN_C int ratioLimit;
+DENG_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
+DENG_EXTERN_C int texMagMode, texAniso;
+DENG_EXTERN_C int useSmartFilter;
+DENG_EXTERN_C int texMagMode;
+DENG_EXTERN_C int glmode[6];
+DENG_EXTERN_C boolean fillOutlines;
+DENG_EXTERN_C boolean noHighResTex;
+DENG_EXTERN_C boolean noHighResPatches;
+DENG_EXTERN_C boolean highResWithPWAD;
+DENG_EXTERN_C byte loadExtAlways;
+
 DENG_EXTERN_C byte devRendSkyAlways;
 DENG_EXTERN_C byte rendInfoLums;
 DENG_EXTERN_C byte devDrawLums;

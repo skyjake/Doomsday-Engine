@@ -35,10 +35,6 @@
 #include "TextureVariantSpec"
 #include "uri.hh"
 
-#define TEXQ_BEST               8
-#define MINTEXWIDTH             8
-#define MINTEXHEIGHT            8
-
 /**
  * Textures used in the lighting system.
  */
@@ -60,20 +56,6 @@ typedef enum flaretexid_e {
     FXT_BIGFLARE,
     NUM_SYSFLARE_TEXTURES
 } flaretexid_t;
-
-DENG_EXTERN_C int ratioLimit;
-DENG_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
-DENG_EXTERN_C int texMagMode, texAniso;
-DENG_EXTERN_C int useSmartFilter;
-DENG_EXTERN_C int texMagMode;
-DENG_EXTERN_C int glmode[6];
-DENG_EXTERN_C boolean fillOutlines;
-DENG_EXTERN_C boolean noHighResTex;
-DENG_EXTERN_C boolean noHighResPatches;
-DENG_EXTERN_C boolean highResWithPWAD;
-DENG_EXTERN_C byte loadExtAlways;
-
-void GL_TexRegister();
 
 void GL_InitTextureManager();
 
@@ -118,26 +100,28 @@ texturevariantspecification_t &GL_DetailTextureSpec(float contrast);
  * revised texture management APIs.
  */
 
-/**
- * Prepares all the system textures (dlight, ptcgens).
- */
-void GL_LoadSystemTextures();
+void GL_LoadLightingSystemTextures();
+void GL_ReleaseAllLightingSystemTextures();
 
-void GL_DeleteAllLightingSystemTextures();
+DGLuint GL_PrepareLSTexture(lightingtexid_t which);
+
+void GL_LoadFlareTextures();
+void GL_ReleaseAllFlareTextures();
 
 DGLuint GL_PrepareFlaremap(de::Uri const &resourceUri);
 DGLuint GL_PrepareSysFlaremap(flaretexid_t which);
-DGLuint GL_PrepareLSTexture(lightingtexid_t which);
+
 
 DGLuint GL_PrepareRawTexture(rawtex_t &rawTex);
+
+/// Release all textures used with 'Raw Images'.
+void GL_ReleaseTexturesForRawImages();
 
 /**
  * Change the GL minification filter for all prepared "raw" textures.
  */
 void GL_SetRawTexturesMinFilter(int minFilter);
 
-/// Release all textures used with 'Raw Images'.
-void GL_ReleaseTexturesForRawImages();
 
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,

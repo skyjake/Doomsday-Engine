@@ -44,6 +44,10 @@ struct texturevariant_s;
 class ColorPalette;
 class Material;
 
+#define TEXQ_BEST               8
+#define MINTEXWIDTH             8
+#define MINTEXHEIGHT            8
+
 DENG_EXTERN_C int numTexUnits;
 DENG_EXTERN_C boolean  envModAdd;
 DENG_EXTERN_C int defResX, defResY, defBPP, defFullscreen;

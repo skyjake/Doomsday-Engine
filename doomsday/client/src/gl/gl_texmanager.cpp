@@ -24,34 +24,36 @@
 #include "de_platform.h"
 #include "gl/gl_texmanager.h"
 
-#include "de_console.h"
-#include "de_system.h"
 #include "de_filesys.h"
-#include "de_graphics.h"
-#include "de_render.h"
 #include "de_resource.h"
-#include "de_play.h"
-#include "de_ui.h"
 #include "clientapp.h"
-
+#include "dd_main.h" // App_ResourceSystem()
+#include "con_main.h"
+#include "con_bar.h"
 #include "def_main.h"
+
+#include "gl/gl_main.h" // DENG_ASSERT_GL_CONTEXT_ACTIVE
+#include "gl/texturecontent.h"
+
+#include "render/r_main.h" // R_BuildTexGammaLut
+#include "render/rend_halo.h" // haloRealistic
+#include "render/rend_main.h" // misc global vars
+#include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures()
+
 #include "resource/hq2x.h"
 
-#include <QSize>
-#include <de/ByteRefArray>
-#include <de/mathutil.h>
 #include <de/memory.h>
-#include <de/memoryzone.h>
-#include <cstdlib>
-#include <cstring> // memset, memcpy
-#include <cctype>
-#include <cmath>
+#include <cstring>
 
 using namespace de;
 
-int mipmapping = 5;
-int filterUI   = 1;
-int texQuality = TEXQ_BEST;
+static boolean initedOk = false; // Init done.
+
+// Names of the dynamic light textures.
+static DGLuint lightingTextures[NUM_LIGHTING_TEXTURES];
+
+// Names of the flare textures (halos).
+static DGLuint sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
 struct texturevariantspecificationlist_node_t
 {
@@ -59,106 +61,12 @@ struct texturevariantspecificationlist_node_t
     texturevariantspecification_t *spec;
 };
 typedef texturevariantspecificationlist_node_t variantspecificationlist_t;
-
-D_CMD(LowRes);
-D_CMD(MipMap);
-D_CMD(TexReset);
-
-int ratioLimit = 0; // Zero if none.
-boolean fillOutlines = true;
-int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
-int filterSprites = true;
-int texMagMode = 1; // Linear.
-int texAniso = -1; // Use best.
-
-boolean noHighResTex = false;
-boolean noHighResPatches = false;
-boolean highResWithPWAD = false;
-byte loadExtAlways = false; // Always check for extres (cvar)
-
-float texGamma = 0;
-
-int glmode[6] = // Indexed by 'mipmapping'.
-{
-    GL_NEAREST,
-    GL_LINEAR,
-    GL_NEAREST_MIPMAP_NEAREST,
-    GL_LINEAR_MIPMAP_NEAREST,
-    GL_NEAREST_MIPMAP_LINEAR,
-    GL_LINEAR_MIPMAP_LINEAR
-};
-
-// Names of the dynamic light textures.
-DGLuint lightingTextures[NUM_LIGHTING_TEXTURES];
-
-// Names of the flare textures (halos).
-DGLuint sysFlareTextures[NUM_SYSFLARE_TEXTURES];
-
-static boolean initedOk = false; // Init done.
-
 static variantspecificationlist_t *variantSpecs;
 
 /// @c TST_DETAIL type specifications are stored separately into a set of
 /// buckets. Bucket selection is determined by their quantized contrast value.
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
 static variantspecificationlist_t *detailVariantSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
-
-static void detailFactorChanged()
-{
-    App_ResourceSystem().releaseGLTexturesByScheme("Details");
-}
-
-static void loadExtAlwaysChanged()
-{
-    GL_TexReset();
-}
-
-static void useSmartFilterChanged()
-{
-    GL_TexReset();
-}
-
-static void texGammaChanged()
-{
-    if(initedOk)
-    {
-        R_BuildTexGammaLut();
-        GL_TexReset();
-    }
-    //LOG_MSG("Gamma correction set to %f.") << texGamma;
-}
-
-static void mipmappingChanged()
-{
-    GL_TexReset();
-}
-
-static void texQualityChanged()
-{
-    GL_TexReset();
-}
-
-void GL_TexRegister()
-{
-    C_VAR_INT   ("rend-tex",                    &renderTextures,     CVF_NO_ARCHIVE, 0, 2);
-    C_VAR_INT   ("rend-tex-detail",             &r_detail,           0, 0, 1);
-    C_VAR_INT   ("rend-tex-detail-multitex",    &useMultiTexDetails, 0, 0, 1);
-    C_VAR_FLOAT ("rend-tex-detail-scale",       &detailScale,        CVF_NO_MIN | CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT2("rend-tex-detail-strength",    &detailFactor,       0, 0, 5, detailFactorChanged);
-    C_VAR_BYTE2 ("rend-tex-external-always",    &loadExtAlways,      0, 0, 1, loadExtAlwaysChanged);
-    C_VAR_INT   ("rend-tex-filter-anisotropic", &texAniso,           0, -1, 4);
-    C_VAR_INT   ("rend-tex-filter-mag",         &texMagMode,         0, 0, 1);
-    C_VAR_INT2  ("rend-tex-filter-smart",       &useSmartFilter,     0, 0, 1, useSmartFilterChanged);
-    C_VAR_INT   ("rend-tex-filter-sprite",      &filterSprites,      0, 0, 1);
-    C_VAR_INT   ("rend-tex-filter-ui",          &filterUI,           0, 0, 1);
-    C_VAR_FLOAT2("rend-tex-gamma",              &texGamma,           0, 0, 1, texGammaChanged);
-    C_VAR_INT2  ("rend-tex-mipmap",             &mipmapping,         CVF_PROTECTED, 0, 5, mipmappingChanged);
-    C_VAR_INT2  ("rend-tex-quality",            &texQuality,         0, 0, 8, texQualityChanged);
-
-    C_CMD_FLAGS ("lowres",      "",     LowRes, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS ("mipmap",      "i",    MipMap, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS ("texreset",    "",     TexReset, CMDF_NO_DEDICATED);
-}
 
 static int hashDetailVariantSpecification(detailvariantspecification_t const &spec)
 {
@@ -486,26 +394,14 @@ static void destroyVariantSpecifications()
     }
 }
 
-static void uploadContentUnmanaged(texturecontent_t const &content)
-{
-    LOG_AS("uploadContentUnmanaged");
-    if(novideo) return;
-
-    gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
-    if(uploadMethod == gl::Immediate)
-    {
-        LOG_DEBUG("Uploading texture (%i:%ix%i) while not busy! Should be precached in busy mode?")
-                << content.name << content.width << content.height;
-    }
-
-    GL_UploadTextureContent(content, uploadMethod);
-}
-
 void GL_InitTextureManager()
 {
     if(initedOk)
     {
-        GL_LoadSystemTextures();
+        GL_LoadLightingSystemTextures();
+        GL_LoadFlareTextures();
+
+        Rend_ParticleLoadSystemTextures();
         return; // Already been here.
     }
 
@@ -515,7 +411,7 @@ void GL_InitTextureManager()
     // Should we allow using external resources with PWAD textures?
     highResWithPWAD  = CommandLine_Exists("-pwadtex");
 
-    // System textures loaded in GL_LoadSystemTextures.
+    // System textures.
     zap(sysFlareTextures);
     zap(lightingTextures);
 
@@ -531,9 +427,52 @@ void GL_InitTextureManager()
 void GL_ResetTextureManager()
 {
     if(!initedOk) return;
-    ResourceSystem().releaseAllGLTextures();
+
+    App_ResourceSystem().releaseAllGLTextures();
     GL_PruneTextureVariantSpecifications();
-    GL_LoadSystemTextures();
+
+    GL_LoadLightingSystemTextures();
+    GL_LoadFlareTextures();
+    Rend_ParticleLoadSystemTextures();
+}
+
+static int reloadTextures(void *context)
+{
+    bool const usingBusyMode = *static_cast<bool *>(context);
+
+    /// @todo re-upload ALL textures currently in use.
+    GL_LoadLightingSystemTextures();
+    GL_LoadFlareTextures();
+
+    Rend_ParticleLoadSystemTextures();
+    Rend_ParticleLoadExtraTextures();
+
+    if(usingBusyMode)
+    {
+        Con_SetProgress(200);
+        BusyMode_WorkerEnd();
+    }
+    return 0;
+}
+
+void GL_TexReset()
+{
+    if(!initedOk) return;
+
+    App_ResourceSystem().releaseAllGLTextures();
+    LOG_MSG("All DGL textures deleted.");
+
+    bool useBusyMode = !BusyMode_Active();
+    if(useBusyMode)
+    {
+        Con_InitProgress(200);
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                    reloadTextures, &useBusyMode, "Reseting textures...");
+    }
+    else
+    {
+        reloadTextures(&useBusyMode);
+    }
 }
 
 texturevariantspecification_t &GL_TextureVariantSpec(
@@ -575,7 +514,7 @@ void GL_ShutdownTextureManager()
     initedOk = false;
 }
 
-void GL_LoadSystemTextures()
+void GL_LoadLightingSystemTextures()
 {
     if(novideo || !initedOk) return;
 
@@ -583,6 +522,11 @@ void GL_LoadSystemTextures()
     GL_PrepareLSTexture(LST_DYNAMIC);
     GL_PrepareLSTexture(LST_GRADIENT);
     GL_PrepareLSTexture(LST_CAMERA_VIGNETTE);
+}
+
+void GL_LoadFlareTextures()
+{
+    if(novideo || !initedOk) return;
 
     GL_PrepareSysFlaremap(FXT_ROUND);
     GL_PrepareSysFlaremap(FXT_FLARE);
@@ -591,16 +535,19 @@ void GL_LoadSystemTextures()
         GL_PrepareSysFlaremap(FXT_BRFLARE);
         GL_PrepareSysFlaremap(FXT_BIGFLARE);
     }
-
-    Rend_ParticleLoadSystemTextures();
 }
 
-void GL_DeleteAllLightingSystemTextures()
+void GL_ReleaseAllLightingSystemTextures()
 {
     if(novideo || !initedOk) return;
 
     glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
     zap(lightingTextures);
+}
+
+void GL_ReleaseAllFlareTextures()
+{
+    if(novideo || !initedOk) return;
 
     glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
     zap(sysFlareTextures);
@@ -840,40 +787,6 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
     Z_Free(rawTexs);
 }
 
-static int reloadTextures(void *context)
-{
-    bool const usingBusyMode = *static_cast<bool *>(context);
-
-    /// @todo re-upload ALL textures currently in use.
-    GL_LoadSystemTextures();
-    Rend_ParticleLoadExtraTextures();
-
-    if(usingBusyMode)
-    {
-        Con_SetProgress(200);
-        BusyMode_WorkerEnd();
-    }
-    return 0;
-}
-
-void GL_TexReset()
-{
-    App_ResourceSystem().releaseAllGLTextures();
-    LOG_MSG("All DGL textures deleted.");
-
-    bool useBusyMode = !BusyMode_Active();
-    if(useBusyMode)
-    {
-        Con_InitProgress(200);
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    reloadTextures, &useBusyMode, "Reseting textures...");
-    }
-    else
-    {
-        reloadTextures(&useBusyMode);
-    }
-}
-
 void GL_ReleaseTexturesForRawImages()
 {
     rawtex_t **rawTexs = R_CollectRawTexs();
@@ -887,6 +800,21 @@ void GL_ReleaseTexturesForRawImages()
         }
     }
     Z_Free(rawTexs);
+}
+
+static void uploadContentUnmanaged(texturecontent_t const &content)
+{
+    LOG_AS("uploadContentUnmanaged");
+    if(novideo) return;
+
+    gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
+    if(uploadMethod == gl::Immediate)
+    {
+        LOG_DEBUG("Uploading texture (%i:%ix%i) while not busy! Should be precached in busy mode?")
+                << content.name << content.width << content.height;
+    }
+
+    GL_UploadTextureContent(content, uploadMethod);
 }
 
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
@@ -928,54 +856,4 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
 
     uploadContentUnmanaged(c);
     return c.name;
-}
-
-D_CMD(LowRes)
-{
-    DENG2_UNUSED3(src, argv, argc);
-
-    // Set everything as low as they go.
-    filterSprites = 0;
-    filterUI      = 0;
-    texMagMode    = 0;
-
-    //GL_SetAllTexturesMinFilter(GL_NEAREST);
-    GL_SetRawTexturesMinFilter(GL_NEAREST);
-
-    // And do a texreset so everything is updated.
-    GL_TexReset();
-    return true;
-}
-
-D_CMD(TexReset)
-{
-    DENG2_UNUSED(src);
-
-    if(argc == 2 && !stricmp(argv[1], "raw"))
-    {
-        // Reset just raw images.
-        GL_ReleaseTexturesForRawImages();
-    }
-    else
-    {
-        // Reset everything.
-        GL_TexReset();
-    }
-    return true;
-}
-
-D_CMD(MipMap)
-{
-    DENG2_UNUSED2(src, argc);
-
-    int newMipMode = String(argv[1]).toInt();
-    if(newMipMode < 0 || newMipMode > 5)
-    {
-        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0..5).", newMipMode);
-        return false;
-    }
-
-    mipmapping = newMipMode;
-    //GL_SetAllTexturesMinFilter(glmode[mipmapping]);
-    return true;
 }
