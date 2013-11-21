@@ -1,4 +1,4 @@
-/** @file mapelement.cpp Base class for all map elements.
+/** @file mapelement.cpp  Base class for all map elements.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/map.h"
+#include "de_platform.h"
 #include "world/mapelement.h"
+
+#include "world/map.h"
 
 using namespace de;
 

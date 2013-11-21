@@ -18,12 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include <map>
-
-#include <de/Log>
-
 #include "de_platform.h"
 #include "world/entitydatabase.h"
+
+#include <de/Log>
+#include <map>
 
 // An entity is a set of one or more properties.
 // Key is the unique identifier of said property in the

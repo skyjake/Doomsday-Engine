@@ -17,9 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "world/map.h"
-
+#include "de_platform.h"
 #include "render/biasdigest.h"
+
+#include "world/map.h"
 
 using namespace de;
 

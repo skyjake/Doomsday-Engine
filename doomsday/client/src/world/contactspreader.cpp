@@ -1,4 +1,4 @@
-/** @file contactspreader.cpp World object => BSP leaf "contact" spreader.
+/** @file contactspreader.cpp  World object => BSP leaf "contact" spreader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,9 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <QBitArray>
-
-#include <de/vector1.h>
+#include "de_platform.h"
+#include "world/contactspreader.h"
 
 #include "Face"
 #include "HEdge"
@@ -34,7 +33,8 @@
 #include "WallEdge"
 #include "MaterialSnapshot"
 
-#include "world/contactspreader.h"
+#include <de/vector1.h>
+#include <QBitArray>
 
 namespace de {
 

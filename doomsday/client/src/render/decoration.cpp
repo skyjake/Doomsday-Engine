@@ -19,7 +19,9 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include "render/decoration.h"
+
 #include "MaterialSnapshot"
 #include "Surface"
 

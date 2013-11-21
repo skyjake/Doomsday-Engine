@@ -1,4 +1,4 @@
-/** @file hand.cpp Hand (metaphor) for the manipulation of "grabbables".
+/** @file hand.cpp  Hand (metaphor) for the manipulation of "grabbables".
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,9 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "BiasSource" // remove me
-
+#include "de_platform.h"
 #include "world/hand.h"
+
+#include "BiasSource" // remove me
 
 using namespace de;
 

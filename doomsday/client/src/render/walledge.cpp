@@ -17,7 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <QtAlgorithms>
+#include "de_platform.h"
+#include "render/walledge.h"
 
 #include "BspLeaf"
 #include "Sector"
@@ -30,8 +31,7 @@
 #include "world/maputil.h"
 
 #include "render/rend_main.h" // devRendSkyMode, remove me
-
-#include "render/walledge.h"
+#include <QtAlgorithms>
 
 using namespace de;
 

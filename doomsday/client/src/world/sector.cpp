@@ -18,12 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <QList>
-#include <QtAlgorithms>
-
-#include <de/vector1.h>
-
-#include <de/Log>
+#include "de_platform.h"
+#include "world/sector.h"
 
 #include "Face"
 
@@ -34,7 +30,10 @@
 #include "world/map.h"
 #include "world/p_object.h"
 
-#include "world/sector.h"
+#include <de/Log>
+#include <de/vector1.h>
+#include <QList>
+#include <QtAlgorithms>
 
 using namespace de;
 

@@ -1,4 +1,4 @@
-/** @file partitioner.cpp World map binary space partitioner.
+/** @file partitioner.cpp  World map binary space partitioner.
  *
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -22,15 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <algorithm>
-
-#include <QList>
-#include <QHash>
-#include <QtAlgorithms>
-
-#include <de/vector1.h>
-
-#include <de/Log>
+#include "de_platform.h"
+#include "world/bsp/partitioner.h"
 
 #include "world/map.h"
 #include "BspLeaf"
@@ -48,7 +41,12 @@
 #include "world/bsp/partitioncost.h"
 #include "world/bsp/superblockmap.h"
 
-#include "world/bsp/partitioner.h"
+#include <de/Log>
+#include <de/vector1.h>
+#include <QList>
+#include <QHash>
+#include <QtAlgorithms>
+#include <algorithm>
 
 namespace de {
 

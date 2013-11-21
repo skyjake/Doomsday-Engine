@@ -20,6 +20,7 @@
 #include "clientapp.h"
 #include "render/rendersystem.h"
 
+#include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include <de/memory.h>
 

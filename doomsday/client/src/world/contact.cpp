@@ -1,4 +1,4 @@
-/** @file contact.cpp World object => BSP leaf "contact" and contact lists.
+/** @file contact.cpp  World object => BSP leaf "contact" and contact lists.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,15 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/memoryzone.h>
-
-#include <de/Error>
+#include "de_platform.h"
+#include "world/contact.h"
 
 #include "world/map.h"
 #include "world/p_object.h"
 #include "BspLeaf"
-
-#include "world/contact.h"
+#include <de/Error>
+#include <de/memoryzone.h>
 
 using namespace de;
 

@@ -19,11 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <QMap>
-#include <QSet>
-
-#include <de/Observers>
-#include <de/Vector>
+#include "de_platform.h"
+#include "render/surfacedecorator.h"
 
 #include "world/map.h"
 #include "BspLeaf"
@@ -33,7 +30,10 @@
 #include "LightDecoration"
 #include "WallEdge"
 
-#include "render/surfacedecorator.h"
+#include <de/Observers>
+#include <de/Vector>
+#include <QMap>
+#include <QSet>
 
 using namespace de;
 

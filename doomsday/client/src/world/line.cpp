@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <QMap>
-#include <QtAlgorithms>
+#include "de_platform.h"
+#include "world/line.h"
 
 #include "dd_main.h" // App_Materials(), verbose
 #include "m_misc.h"
@@ -41,8 +41,8 @@
 #  include "BiasSource"
 #  include "BiasTracker"
 #endif
-
-#include "world/line.h"
+#include <QMap>
+#include <QtAlgorithms>
 
 #ifdef WIN32
 #  undef max

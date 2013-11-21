@@ -1,4 +1,4 @@
-/** @file generators.cpp World map generator collection.
+/** @file generators.cpp  World map generator collection.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,9 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/memoryzone.h>
-
+#include "de_platform.h"
 #include "world/generators.h"
+
+#include <de/memoryzone.h>
 
 namespace de {
 

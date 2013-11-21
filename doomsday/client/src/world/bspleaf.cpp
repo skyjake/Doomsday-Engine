@@ -1,4 +1,4 @@
-/** @file bspleaf.cpp World map BSP leaf.
+/** @file bspleaf.cpp  World map BSP leaf.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,10 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <QMap>
-#include <QtAlgorithms>
-
-#include <de/Log>
+#include "de_platform.h"
+#include "world/bspleaf.h"
 
 #include "Face"
 
@@ -39,7 +37,9 @@
 #  include "BiasTracker"
 #endif
 
-#include "world/bspleaf.h"
+#include <de/Log>
+#include <QMap>
+#include <QtAlgorithms>
 
 using namespace de;
 

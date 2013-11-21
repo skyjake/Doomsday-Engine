@@ -1,4 +1,4 @@
-/** @file maputil.cpp World map utilities.
+/** @file maputil.cpp  World map utilities.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,6 +18,9 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
+#include "world/maputil.h"
+
 #include "Line"
 #include "Plane"
 #include "Sector"
@@ -34,8 +37,6 @@
 #include "render/rend_main.h" // Rend_MapSurfacematerialSpec
 #include "WallEdge"
 #endif
-
-#include "world/maputil.h"
 
 using namespace de;
 

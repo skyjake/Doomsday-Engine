@@ -1,4 +1,4 @@
-/** @file plane.h World map plane.
+/** @file plane.h  World map plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,7 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Log>
+#include "de_platform.h"
+#include "world/plane.h"
 
 #include "world/map.h"
 #include "world/world.h" /// ddMapSetup
@@ -26,8 +27,7 @@
 #include "Sector"
 
 #include "render/r_main.h" // frameTimePos
-
-#include "world/plane.h"
+#include <de/Log>
 
 using namespace de;
 

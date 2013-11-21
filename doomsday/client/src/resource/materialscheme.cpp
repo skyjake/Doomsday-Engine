@@ -1,4 +1,4 @@
-/** @file materialscheme.cpp Material system subspace scheme.
+/** @file materialscheme.cpp  Material system subspace scheme.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,9 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "MaterialManifest"
-
+#include "de_platform.h"
 #include "resource/materialscheme.h"
+
+#include "MaterialManifest"
 
 using namespace de;
 

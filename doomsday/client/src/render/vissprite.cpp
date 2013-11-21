@@ -71,7 +71,8 @@ void VisSprite_SetupSprite(rendspriteparams_t &p,
     MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
     MaterialVariant *variant = material.chooseVariant(spec, true);
 
-    DENG_ASSERT((tClass == 0 && tMap == 0) || spec.primarySpec->data.variant.translated);
+    DENG2_ASSERT((tClass == 0 && tMap == 0) ||
+                 (spec.primarySpec->variant.flags & TSF_HAS_COLORPALETTE_XLAT));
 
     p.center[VX]      = center.x;
     p.center[VY]      = center.y;

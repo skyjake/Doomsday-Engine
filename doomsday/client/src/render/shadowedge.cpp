@@ -18,6 +18,9 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
+#include "render/shadowedge.h"
+
 #include "Face"
 #include "HEdge"
 
@@ -31,8 +34,6 @@
 #include "render/rend_main.h"
 #include "WallEdge"
 #include "MaterialSnapshot"
-
-#include "render/shadowedge.h"
 
 namespace de {
 

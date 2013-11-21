@@ -19,17 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
+#include "de_platform.h"
+#include "world/p_particle.h"
 
 #include "de_base.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_audio.h"
-
-#include <de/String>
-#include <de/Time>
-#include <de/fixedpoint.h>
-#include <de/memoryzone.h>
 
 #include "Face"
 
@@ -43,7 +39,11 @@
 #include "m_misc.h"
 #include "m_profiler.h"
 
-#include "world/p_particle.h"
+#include <de/String>
+#include <de/Time>
+#include <de/fixedpoint.h>
+#include <de/memoryzone.h>
+#include <cmath>
 
 using namespace de;
 

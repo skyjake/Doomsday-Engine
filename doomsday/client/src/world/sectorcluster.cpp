@@ -18,13 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <QRect>
-#include <QMap>
-#include <QMutableMapIterator>
-#include <QSet>
-#include <QtAlgorithms>
-
-#include <de/vector1.h>
+#include "de_platform.h"
+#include "world/sector.h"
 
 #include "Face"
 
@@ -40,12 +35,17 @@
 #  include "render/rend_main.h" // useBias
 #endif
 
-#include "world/sector.h"
+#include <de/vector1.h>
+#include <QRect>
+#include <QMap>
+#include <QMutableMapIterator>
+#include <QSet>
+#include <QtAlgorithms>
 
-using namespace de;
+namespace de {
 
-namespace internal
-{
+namespace internal {
+
     /// Classification flags:
     enum ClusterFlag
     {
@@ -59,8 +59,10 @@ namespace internal
     Q_DECLARE_FLAGS(ClusterFlags, ClusterFlag)
     Q_DECLARE_OPERATORS_FOR_FLAGS(ClusterFlags)
 }
+}
 
-using namespace internal;
+using namespace de;
+using namespace de::internal;
 
 static QRectF qrectFromAABox(AABoxd const &aaBox)
 {
