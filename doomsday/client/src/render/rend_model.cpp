@@ -1343,36 +1343,37 @@ static int drawLightVectorWorker(VectorLight const *vlight, void *context)
     return false; // Continue iteration.
 }
 
-/**
- * Render all the submodels of a model.
- */
-void Rend_DrawModel(rendmodelparams_t const *parm)
+void Rend_DrawModel(rendmodelparams_t const &parms)
 {
     DENG_ASSERT(inited);
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(!parm || !parm->mf) return;
+    if(!parms.mf) return;
 
     // Render all the submodels of this model.
-    for(uint i = 0; i < parm->mf->subCount(); ++i)
+    for(uint i = 0; i < parms.mf->subCount(); ++i)
     {
-        if(parm->mf->subModelId(i))
+        if(parms.mf->subModelId(i))
         {
-            bool disableZ = (parm->mf->flags & MFF_DISABLE_Z_WRITE ||
-                             parm->mf->testSubFlag(i, MFF_DISABLE_Z_WRITE));
+            bool disableZ = (parms.mf->flags & MFF_DISABLE_Z_WRITE ||
+                             parms.mf->testSubFlag(i, MFF_DISABLE_Z_WRITE));
 
             if(disableZ)
+            {
                 glDepthMask(GL_FALSE);
+            }
 
-            Mod_RenderSubModel(i, parm);
+            Mod_RenderSubModel(i, &parms);
 
             if(disableZ)
+            {
                 glDepthMask(GL_TRUE);
+            }
         }
     }
 
-    if(devMobjVLights && parm->vLightListIdx)
+    if(devMobjVLights && parms.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
         glDisable(GL_DEPTH_TEST);
@@ -1381,10 +1382,10 @@ void Rend_DrawModel(rendmodelparams_t const *parm)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(parm->origin[VX], parm->origin[VZ], parm->origin[VY]);
+        glTranslatef(parms.origin[VX], parms.origin[VZ], parms.origin[VY]);
 
-        coord_t distFromViewer = de::abs(parm->distance);
-        VL_ListIterator(parm->vLightListIdx, drawLightVectorWorker, &distFromViewer);
+        coord_t distFromViewer = de::abs(parms.distance);
+        VL_ListIterator(parms.vLightListIdx, drawLightVectorWorker, &distFromViewer);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

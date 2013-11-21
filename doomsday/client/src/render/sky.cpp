@@ -659,8 +659,8 @@ static void renderSkyModels()
     // Setup basic translation.
     glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
 
-    rendmodelparams_t parm;
-    skymodel_t* sky = skyModels;
+    rendmodelparams_t parms;
+    skymodel_t *sky = skyModels;
     for(int i = 0; i < NUM_SKY_MODELS; ++i, sky++)
     {
         if(!sky->def) continue;
@@ -674,30 +674,30 @@ static void renderSkyModels()
 
         float inter = (sky->maxTimer > 0 ? sky->timer / float(sky->maxTimer) : 0);
 
-        memset(&parm, 0, sizeof(parm));
+        zap(parms);
 
         // Calculate the coordinates for the model.
-        parm.origin[VX] = vOrigin[VX] * -sky->def->coordFactor[VX];
-        parm.origin[VY] = vOrigin[VZ] * -sky->def->coordFactor[VZ];
-        parm.origin[VZ] = vOrigin[VY] * -sky->def->coordFactor[VY];
-        parm.gzt = parm.origin[VZ];
-        parm.distance = 1;
+        parms.origin[VX] = vOrigin[VX] * -sky->def->coordFactor[VX];
+        parms.origin[VY] = vOrigin[VZ] * -sky->def->coordFactor[VZ];
+        parms.origin[VZ] = vOrigin[VY] * -sky->def->coordFactor[VY];
+        parms.gzt = parms.origin[VZ];
+        parms.distance = 1;
 
-        parm.extraYawAngle   = parm.yawAngleOffset   = sky->def->rotate[0];
-        parm.extraPitchAngle = parm.pitchAngleOffset = sky->def->rotate[1];
-        parm.inter = inter;
-        parm.mf = sky->model;
-        parm.alwaysInterpolate = true;
+        parms.extraYawAngle   = parms.yawAngleOffset   = sky->def->rotate[0];
+        parms.extraPitchAngle = parms.pitchAngleOffset = sky->def->rotate[1];
+        parms.inter = inter;
+        parms.mf = sky->model;
+        parms.alwaysInterpolate = true;
         Rend_ModelSetFrame(sky->model, sky->frame);
-        parm.yaw = sky->yaw;
+        parms.yaw = sky->yaw;
         for(int c = 0; c < 4; ++c)
         {
-            parm.ambientColor[c] = sky->def->color[c];
+            parms.ambientColor[c] = sky->def->color[c];
         }
-        parm.vLightListIdx = 0;
-        parm.shineTranslateWithViewerPos = true;
+        parms.vLightListIdx = 0;
+        parms.shineTranslateWithViewerPos = true;
 
-        Rend_DrawModel(&parm);
+        Rend_DrawModel(parms);
     }
 
     // We don't want that anything interferes with what was drawn.

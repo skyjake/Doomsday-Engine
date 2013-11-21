@@ -1308,15 +1308,15 @@ static void drawPlayerModels()
     // by nearby polygons.
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    rendmodelparams_t parm;
     for(int i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
 
         if(spr->type != VPSPR_MODEL) continue; // Not used.
 
-        setupModelParamsForVisPSprite(&parm, spr);
-        Rend_DrawModel(&parm);
+        rendmodelparams_t parms; zap(parms);
+        setupModelParamsForVisPSprite(&parms, spr);
+        Rend_DrawModel(parms);
     }
 }
 

@@ -3408,7 +3408,7 @@ static void drawMasked()
                 break;
 
             case VSPR_MODEL:
-                Rend_DrawModel(&spr->data.model);
+                Rend_DrawModel(spr->data.model);
                 break;
 
             case VSPR_FLARE:

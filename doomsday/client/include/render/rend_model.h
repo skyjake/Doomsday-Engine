@@ -1,9 +1,9 @@
-/**
- * @file rend_model.h
- * 3D Model Renderer (v2.1). @ingroup gl
+/** @file rend_model.h  Model renderer (v2.1).
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @ingroup gl
+ *
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_MODEL_H
-#define LIBDENG_RENDER_MODEL_H
+#ifndef DENG_CLIENT_RENDER_MODEL_H
+#define DENG_CLIENT_RENDER_MODEL_H
 
 #include "resource/models.h"
 
@@ -131,8 +131,8 @@ struct texturevariantspecification_s &Rend_ModelDiffuseTextureSpec(bool noCompre
 struct texturevariantspecification_s &Rend_ModelShinyTextureSpec();
 
 /**
- * Render a submodel according to paramaters.
+ * Render all the submodels of a model.
  */
-void Rend_DrawModel(rendmodelparams_t const *params);
+void Rend_DrawModel(rendmodelparams_t const &parms);
 
-#endif // LIBDENG_RENDER_MODEL_H
+#endif // DENG_CLIENT_RENDER_MODEL_H

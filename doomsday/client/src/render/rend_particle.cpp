@@ -727,12 +727,10 @@ static void renderParticles(int rtype, boolean withBlend)
         // routine.
         if(rtype == PTC_MODEL && dst->model >= 0)
         {
-            rendmodelparams_t params;
+            rendmodelparams_t parms; zap(parms);
+            setupModelParamsForParticle(&parms, pt, st, dst, center, dist, size, mark, color[CA]);
 
-            memset(&params, 0, sizeof(rendmodelparams_t));
-
-            setupModelParamsForParticle(&params, pt, st, dst, center, dist, size, mark, color[CA]);
-            Rend_DrawModel(&params);
+            Rend_DrawModel(parms);
             continue;
         }
 
