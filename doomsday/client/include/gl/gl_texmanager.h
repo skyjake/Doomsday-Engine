@@ -82,7 +82,7 @@ void GL_PruneTextureVariantSpecifications();
  *
  * @return  A rationalized and valid TextureVariantSpecification.
  */
-texturevariantspecification_t &GL_TextureVariantSpec(
+TextureVariantSpec &GL_TextureVariantSpec(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
@@ -93,7 +93,7 @@ texturevariantspecification_t &GL_TextureVariantSpec(
  *
  * @return  A rationalized and valid TextureVariantSpecification.
  */
-texturevariantspecification_t &GL_DetailTextureSpec(float contrast);
+TextureVariantSpec &GL_DetailTextureSpec(float contrast);
 
 /*
  * Here follows miscellaneous routines currently awaiting refactoring into the

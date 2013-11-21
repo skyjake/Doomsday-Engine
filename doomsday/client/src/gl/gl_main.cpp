@@ -989,17 +989,17 @@ void GL_BindTexture(TextureVariant *vtexture)
     Sys_GLCheckError();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
-    texturevariantspecification_t const &spec = vtexture->spec();
+    TextureVariantSpec const &spec = vtexture->spec();
     if(spec.type == TST_GENERAL)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec).wrapS);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(spec).wrapT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, spec.variant.wrapT);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TS_GENERAL(spec).glMagFilter());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
         if(GL_state.features.texFilterAniso)
         {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                            GL_GetTexAnisoMul(TS_GENERAL(spec).logicalAnisoLevel()));
+                            GL_GetTexAnisoMul(spec.variant.logicalAnisoLevel()));
         }
     }
 }

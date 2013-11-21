@@ -51,6 +51,8 @@ variantspecification_t::variantspecification_t()
     , minFilter(GL_LINEAR)
     , magFilter(GL_LINEAR)
     , anisoFilter(0)
+    , tClass(0)
+    , tMap(0)
 {}
 
 variantspecification_t::variantspecification_t(variantspecification_t const &other)
@@ -66,12 +68,9 @@ variantspecification_t::variantspecification_t(variantspecification_t const &oth
     , minFilter(other.minFilter)
     , magFilter(other.magFilter)
     , anisoFilter(other.anisoFilter)
-{
-    if(!other.translated.isNull())
-    {
-        translated.reset(new colorpalettetranslationspecification_t(*other.translated));
-    }
-}
+    , tClass(other.tClass)
+    , tMap(other.tMap)
+{}
 
 bool variantspecification_t::operator == (variantspecification_t const &other) const
 {
@@ -89,12 +88,8 @@ bool variantspecification_t::operator == (variantspecification_t const &other) c
     if(border != other.border) return 0;
     if(flags & TSF_HAS_COLORPALETTE_XLAT)
     {
-        DENG2_ASSERT(!translated.isNull());
-        colorpalettetranslationspecification_t const &cpt = *translated;
-        DENG2_ASSERT(other.translated.isNull());
-        colorpalettetranslationspecification_t const &cptOther = *other.translated;
-        if(cpt.tClass != cptOther.tClass) return 0;
-        if(cpt.tMap   != cptOther.tMap) return 0;
+        if(tClass != other.tClass) return 0;
+        if(tMap   != other.tMap) return 0;
     }
     return 1; // Equal.
 }
@@ -133,11 +128,11 @@ int variantspecification_t::logicalAnisoLevel() const
     return anisoFilter < 0? texAniso : anisoFilter;
 }
 
-texturevariantspecification_t::texturevariantspecification_t(texturevariantspecificationtype_t type)
+TextureVariantSpec::TextureVariantSpec(texturevariantspecificationtype_t type)
     : type(type)
 {}
 
-texturevariantspecification_t::texturevariantspecification_t(texturevariantspecification_t const &other)
+TextureVariantSpec::TextureVariantSpec(TextureVariantSpec const &other)
     : type(other.type)
     , variant(other.variant)
     , detailVariant(other.detailVariant)
@@ -149,7 +144,7 @@ bool detailvariantspecification_t::operator == (detailvariantspecification_t con
     return contrast == other.contrast; // Equal.
 }
 
-bool texturevariantspecification_t::operator == (texturevariantspecification_t const &other) const
+bool TextureVariantSpec::operator == (TextureVariantSpec const &other) const
 {
     if(this == &other) return true;
     if(type != other.type) return false;
@@ -170,7 +165,7 @@ static String nameForGLTextureWrapMode(int mode)
     return "(unknown)";
 }
 
-String texturevariantspecification_t::asText() const
+String TextureVariantSpec::asText() const
 {
     static String const textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
         /* TC_UNKNOWN */                    "unknown",
@@ -186,7 +181,7 @@ String texturevariantspecification_t::asText() const
         /* TC_PSPRITE_DIFFUSE */            "psprite_diffuse",
         /* TC_SKYSPHERE_DIFFUSE */          "skysphere_diffuse"
     };
-    static String const textureSpecificationTypeNames[TEXTUREVARIANTSPECIFICATIONTYPE_COUNT] = {
+    static String const textureSpecificationTypeNames[2] = {
         /* TST_GENERAL */   "general",
         /* TST_DETAIL */    "detail"
     };
@@ -257,10 +252,8 @@ String texturevariantspecification_t::asText() const
 
         if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            DENG2_ASSERT(!spec.translated.isNull());
-            colorpalettetranslationspecification_t const &cpt = *spec.translated;
-            text += " Translated:(tclass:" + String::number(cpt.tClass)
-                                           + " tmap:" + String::number(cpt.tMap) + ")";
+            text += " Translated:(tclass:" + String::number(spec.tClass)
+                                           + " tmap:" + String::number(spec.tMap) + ")";
         }
         break; }
     }
@@ -274,7 +267,7 @@ DENG2_PIMPL(Texture::Variant)
     Texture &texture;
 
     /// Specification used to derive this variant.
-    texturevariantspecification_t const &spec;
+    TextureVariantSpec const &spec;
 
     /// Variant flags.
     Texture::Variant::Flags flags;
@@ -289,7 +282,7 @@ DENG2_PIMPL(Texture::Variant)
     float s, t;
 
     Instance(Public *i, Texture &generalCase,
-             texturevariantspecification_t const &spec) : Base(i),
+             TextureVariantSpec const &spec) : Base(i),
       texture(generalCase),
       spec(spec),
       flags(0),
@@ -300,7 +293,7 @@ DENG2_PIMPL(Texture::Variant)
     {}
 };
 
-Texture::Variant::Variant(Texture &generalCase, texturevariantspecification_t const &spec)
+Texture::Variant::Variant(Texture &generalCase, TextureVariantSpec const &spec)
     : d(new Instance(this, generalCase, spec))
 {}
 
@@ -611,7 +604,7 @@ Texture &Texture::Variant::generalCase() const
     return d->texture;
 }
 
-texturevariantspecification_t const &Texture::Variant::spec() const
+TextureVariantSpec const &Texture::Variant::spec() const
 {
     return d->spec;
 }

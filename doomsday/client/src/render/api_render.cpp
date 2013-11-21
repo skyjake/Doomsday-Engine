@@ -105,7 +105,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
     de::MaterialSnapshot const &ms = info->material->prepare(spec);
 
     de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-    variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
+    variantspecification_t const &texSpec = ms.texture(MTU_PRIMARY).spec().variant;
 
     info->geometry.origin.x    = -tex.origin().x + -texSpec.border;
     info->geometry.origin.y    = -tex.origin().y +  texSpec.border;

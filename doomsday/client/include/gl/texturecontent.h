@@ -82,7 +82,7 @@ void GL_DestroyTextureContent(texturecontent_t *content);
  *                      (for informational purposes, i.e., logging)
  */
 void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
-    image_t &image, texturevariantspecification_t const &spec,
+    image_t &image, TextureVariantSpec const &spec,
     de::TextureManifest const &textureManifest);
 
 /**

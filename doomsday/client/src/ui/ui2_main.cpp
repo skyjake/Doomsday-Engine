@@ -1046,12 +1046,12 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
-                texturevariantspecification_t const &texSpec = ms.texture(MTU_PRIMARY).spec();
+                TextureVariantSpec const &texSpec = ms.texture(MTU_PRIMARY).spec();
 
                 /// @todo Utilize *all* properties of the Material.
                 V3f_Set(dimensions,
-                        ms.width() + TS_GENERAL(texSpec).border * 2,
-                        ms.height() + TS_GENERAL(texSpec).border * 2, 0);
+                        ms.width() + texSpec.variant.border * 2,
+                        ms.height() + texSpec.variant.border * 2, 0);
                 V2f_Set(rotateCenter, dimensions[VX] / 2, dimensions[VY] / 2);
                 ms.texture(MTU_PRIMARY).glCoords(&texScale[VX], &texScale[VY]);
 
@@ -1073,7 +1073,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             if(manifest.hasTexture())
             {
                 Texture &tex = manifest.texture();
-                texturevariantspecification_t &texSpec =
+                TextureVariantSpec &texSpec =
                     Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                             | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
                 GL_BindTexture(tex.prepareVariant(texSpec));

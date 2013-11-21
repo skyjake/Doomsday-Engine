@@ -177,7 +177,7 @@ DENG2_OBSERVES(Material, Deletion)
         default: DENG2_ASSERT(false);
         }
 
-        texturevariantspecification_t &primarySpec =
+        TextureVariantSpec &primarySpec =
             GL_TextureVariantSpec(primaryContext, flags, border, tClass, tMap,
                                   wrapS, wrapT, minFilter, magFilter, anisoFilter,
                                   mipmapped, gammaCorrection, noStretch, toAlpha);

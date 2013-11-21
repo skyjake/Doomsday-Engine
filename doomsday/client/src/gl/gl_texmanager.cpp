@@ -58,12 +58,7 @@ static DGLuint lightingTextures[NUM_LIGHTING_TEXTURES];
 // Names of the flare textures (halos).
 static DGLuint sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
-struct texturevariantspecificationlist_node_t
-{
-    texturevariantspecificationlist_node_t *next;
-    texturevariantspecification_t *spec;
-};
-typedef QList<texturevariantspecification_t *> VariantSpecs;
+typedef QList<TextureVariantSpec *> VariantSpecs;
 static VariantSpecs variantSpecs;
 
 /// @c TST_DETAIL type specifications are stored separately into a set of
@@ -76,29 +71,10 @@ static int hashDetailVariantSpecification(detailvariantspecification_t const &sp
     return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
 }
 
-static colorpalettetranslationspecification_t *applyColorPaletteTranslationSpecification(
-    colorpalettetranslationspecification_t *spec, int tClass, int tMap)
-{
-    DENG2_ASSERT(initedOk && spec);
-    LOG_AS("applyColorPaletteTranslationSpecification");
-
-    spec->tClass = de::max(0, tClass);
-    spec->tMap   = de::max(0, tMap);
-
-#ifdef DENG_DEBUG
-    if(0 == tClass && 0 == tMap)
-    {
-        LOG_WARNING("Applied unnecessary zero-translation (tClass:0 tMap:0).");
-    }
-#endif
-
-    return spec;
-}
-
 static variantspecification_t &applyVariantSpecification(
     variantspecification_t &spec, texturevariantusagecontext_t tc, int flags,
-    byte border, colorpalettetranslationspecification_t *colorPaletteTranslationSpec,
-    int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter, boolean mipmapped,
+    byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
+    int magFilter, int anisoFilter, boolean mipmapped,
     boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     DENG2_ASSERT(initedOk && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
@@ -118,10 +94,11 @@ static variantspecification_t &applyVariantSpecification(
     spec.noStretch       = noStretch;
     spec.toAlpha         = toAlpha;
 
-    if(colorPaletteTranslationSpec)
+    if(tClass || tMap)
     {
-        spec.flags |= TSF_HAS_COLORPALETTE_XLAT;
-        spec.translated.reset(colorPaletteTranslationSpec); // takes ownership
+        spec.flags      |= TSF_HAS_COLORPALETTE_XLAT;
+        spec.tClass      = de::max(0, tClass);
+        spec.tMap        = de::max(0, tMap);
     }
 
     return spec;
@@ -136,8 +113,8 @@ static detailvariantspecification_t &applyDetailVariantSpecification(
     return spec;
 }
 
-static texturevariantspecification_t &linkVariantSpecification(
-    texturevariantspecification_t *spec)
+static TextureVariantSpec &linkVariantSpecification(
+    TextureVariantSpec *spec)
 {
     DENG2_ASSERT(initedOk && spec != 0);
 
@@ -155,8 +132,8 @@ static texturevariantspecification_t &linkVariantSpecification(
     return *spec;
 }
 
-static texturevariantspecification_t *findVariantSpecification(
-    texturevariantspecification_t const &tpl, bool canCreate)
+static TextureVariantSpec *findVariantSpecification(
+    TextureVariantSpec const &tpl, bool canCreate)
 {
     DENG2_ASSERT(initedOk);
 
@@ -164,7 +141,7 @@ static texturevariantspecification_t *findVariantSpecification(
     switch(tpl.type)
     {
     case TST_GENERAL: {
-        foreach(texturevariantspecification_t *varSpec, variantSpecs)
+        foreach(TextureVariantSpec *varSpec, variantSpecs)
         {
             if(*varSpec == tpl)
             {
@@ -175,7 +152,7 @@ static texturevariantspecification_t *findVariantSpecification(
 
     case TST_DETAIL: {
         int hash = hashDetailVariantSpecification(tpl.detailVariant);
-        foreach(texturevariantspecification_t *varSpec, detailVariantSpecs[hash])
+        foreach(TextureVariantSpec *varSpec, detailVariantSpecs[hash])
         {
             if(*varSpec == tpl)
             {
@@ -189,55 +166,43 @@ static texturevariantspecification_t *findVariantSpecification(
     // Not found, can we create?
     if(canCreate)
     {
-        return &linkVariantSpecification(new texturevariantspecification_t(tpl));
+        return &linkVariantSpecification(new TextureVariantSpec(tpl));
     }
 
     return 0;
 }
 
-static texturevariantspecification_t *getVariantSpecificationForContext(
+static TextureVariantSpec *getVariantSpecificationForContext(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     DENG2_ASSERT(initedOk);
 
-    static texturevariantspecification_t tpl;
-    static colorpalettetranslationspecification_t cptTpl;
-
+    static TextureVariantSpec tpl;
     tpl.type = TST_GENERAL;
 
-    bool haveCpt = false;
-    if(0 != tClass || 0 != tMap)
-    {
-        // A color palette translation spec is required.
-        applyColorPaletteTranslationSpecification(&cptTpl, tClass, tMap);
-        haveCpt = true;
-    }
-
-    applyVariantSpecification(tpl.variant, tc, flags, border, haveCpt? &cptTpl : NULL,
+    applyVariantSpecification(tpl.variant, tc, flags, border, tClass, tMap,
         wrapS, wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection,
         noStretch, toAlpha);
 
     // Retrieve a concrete version of the rationalized specification.
-    texturevariantspecification_t *intern = findVariantSpecification(tpl, true);
-    tpl.variant.translated.reset();
-    return intern;
+    return findVariantSpecification(tpl, true);
 }
 
-static texturevariantspecification_t *getDetailVariantSpecificationForContext(
+static TextureVariantSpec *getDetailVariantSpecificationForContext(
     float contrast)
 {
     DENG2_ASSERT(initedOk);
 
-    static texturevariantspecification_t tpl;
+    static TextureVariantSpec tpl;
 
     tpl.type = TST_DETAIL;
     applyDetailVariantSpecification(tpl.detailVariant, contrast);
     return findVariantSpecification(tpl, true);
 }
 
-static bool variantSpecInUse(texturevariantspecification_t const &spec)
+static bool variantSpecInUse(TextureVariantSpec const &spec)
 {
     foreach(Texture *texture, App_Textures().all())
     foreach(TextureVariant *variant, texture->variants())
@@ -253,10 +218,10 @@ static bool variantSpecInUse(texturevariantspecification_t const &spec)
 static int pruneUnusedTextureVariantSpecs(VariantSpecs &list)
 {
     int numPruned = 0;
-    QMutableListIterator<texturevariantspecification_t *> it(list);
+    QMutableListIterator<TextureVariantSpec *> it(list);
     while(it.hasNext())
     {
-        texturevariantspecification_t *spec = it.next();
+        TextureVariantSpec *spec = it.next();
         if(!variantSpecInUse(*spec))
         {
             it.remove();
@@ -399,14 +364,14 @@ void GL_PruneTextureVariantSpecifications()
 #endif
 }
 
-texturevariantspecification_t &GL_TextureVariantSpec(
+TextureVariantSpec &GL_TextureVariantSpec(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     DENG2_ASSERT(initedOk);
 
-    texturevariantspecification_t *tvs =
+    TextureVariantSpec *tvs =
         getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS, wrapT,
                                           minFilter, magFilter, anisoFilter,
                                           mipmapped, gammaCorrection, noStretch, toAlpha);
@@ -415,16 +380,15 @@ texturevariantspecification_t &GL_TextureVariantSpec(
     if(tClass || tMap)
     {
         DENG2_ASSERT(tvs->variant.flags & TSF_HAS_COLORPALETTE_XLAT);
-        DENG2_ASSERT(!tvs->variant.translated.isNull());
-        DENG2_ASSERT(tvs->variant.translated->tClass == tClass);
-        DENG2_ASSERT(tvs->variant.translated->tMap == tMap);
+        DENG2_ASSERT(tvs->variant.tClass == tClass);
+        DENG2_ASSERT(tvs->variant.tMap == tMap);
     }
 #endif
 
     return *tvs;
 }
 
-texturevariantspecification_t &GL_DetailTextureSpec(float contrast)
+TextureVariantSpec &GL_DetailTextureSpec(float contrast)
 {
     DENG2_ASSERT(initedOk);
     return *getDetailVariantSpecificationForContext(contrast);

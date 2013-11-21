@@ -83,7 +83,7 @@ void H_Register(void)
     C_CMD_FLAGS("flareconfig", NULL, FlareConfig, CMDF_NO_DEDICATED);
 }
 
-texturevariantspecification_t &Rend_HaloTextureSpec()
+TextureVariantSpec &Rend_HaloTextureSpec()
 {
     return GL_TextureVariantSpec(TC_HALO_LUMINANCE, TSF_NO_COMPRESSION, 0, 0, 0,
                                  GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, 1, 0,

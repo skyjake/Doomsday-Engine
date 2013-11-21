@@ -25,7 +25,7 @@
 
 #include "resource/models.h"
 
-struct texturevariantspecification_t;
+class TextureVariantSpec;
 
 /// Absolute maximum number of vertices per submodel supported by this module.
 #define RENDER_MAX_MODEL_VERTS  16192
@@ -121,14 +121,14 @@ void Rend_ModelSetFrame(modeldef_t *modef, int frame);
  * @param  noCompression  @c true= disable texture compression.
  * @return  Specification to be used when preparing such textures.
  */
-texturevariantspecification_t &Rend_ModelDiffuseTextureSpec(bool noCompression);
+TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression);
 
 /**
  * Lookup the texture specification for shiny model skins.
  *
  * @return  Specification to be used when preparing such textures.
  */
-texturevariantspecification_t &Rend_ModelShinyTextureSpec();
+TextureVariantSpec &Rend_ModelShinyTextureSpec();
 
 /**
  * Render all the submodels of a model.

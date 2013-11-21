@@ -45,7 +45,7 @@ public:
     MaterialContextId context;
 
     /// Specification for the primary texture.
-    texturevariantspecification_t *primarySpec;
+    TextureVariantSpec *primarySpec;
 
 public:
     /**

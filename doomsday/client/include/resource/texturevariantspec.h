@@ -65,11 +65,6 @@ typedef enum {
 #define TSF_HAS_COLORPALETTE_XLAT   0x80000000
 /*@}*/
 
-struct colorpalettetranslationspecification_t
-{
-    int tClass, tMap;
-};
-
 struct variantspecification_t
 {
     texturevariantusagecontext_t context;
@@ -113,8 +108,8 @@ struct variantspecification_t
     /// -1: User preference else a logical DGL anisotropic filter level.
     int anisoFilter;
 
-    /// Additional color palette translation spec.
-    QScopedPointer<colorpalettetranslationspecification_t> translated;
+    /// Color palette translation.
+    int tClass, tMap;
 
     GLint glMinFilter() const;
     GLint glMagFilter() const;
@@ -162,30 +157,20 @@ enum texturevariantspecificationtype_t
     TST_DETAIL
 };
 
-#define TEXTUREVARIANTSPECIFICATIONTYPE_FIRST TST_GENERAL
-#define TEXTUREVARIANTSPECIFICATIONTYPE_LAST TST_DETAIL
-
-#define TEXTUREVARIANTSPECIFICATIONTYPE_COUNT (\
-    TEXTUREVARIANTSPECIFICATIONTYPE_LAST + 1 - TEXTUREVARIANTSPECIFICATIONTYPE_FIRST )
-
-#define VALID_TEXTUREVARIANTSPECIFICATIONTYPE(t) (\
-    (t) >= TEXTUREVARIANTSPECIFICATIONTYPE_FIRST && (t) <= TEXTUREVARIANTSPECIFICATIONTYPE_LAST)
-
-#define TS_GENERAL(ts)      ((ts).data.variant)
-#define TS_DETAIL(ts)       ((ts).data.detailvariant)
-
-struct texturevariantspecification_t
+class TextureVariantSpec
 {
+public:
     texturevariantspecificationtype_t type;
     variantspecification_t variant;
     detailvariantspecification_t detailVariant;
 
-    texturevariantspecification_t(texturevariantspecificationtype_t type = TST_GENERAL);
-    texturevariantspecification_t(texturevariantspecification_t const &other);
+public:
+    TextureVariantSpec(texturevariantspecificationtype_t type = TST_GENERAL);
+    TextureVariantSpec(TextureVariantSpec const &other);
 
-    bool operator == (texturevariantspecification_t const &other) const;
+    bool operator == (TextureVariantSpec const &other) const;
 
-    inline bool operator != (texturevariantspecification_t const &other) const {
+    inline bool operator != (TextureVariantSpec const &other) const {
         return !(*this == other);
     }
 

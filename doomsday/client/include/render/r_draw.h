@@ -33,7 +33,7 @@ void R_ShutdownViewWindow();
  */
 void R_DrawViewBorder();
 
-texturevariantspecification_t &Rend_PatchTextureSpec(int flags = 0,
+TextureVariantSpec &Rend_PatchTextureSpec(int flags = 0,
     de::gl::Wrapping wrapS = de::gl::ClampToEdge, de::gl::Wrapping wrapT = de::gl::ClampToEdge);
 
 void R_DrawPatch(de::Texture &texture, int x, int y);

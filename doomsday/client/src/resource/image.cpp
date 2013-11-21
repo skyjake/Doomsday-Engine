@@ -30,8 +30,10 @@
 #  include "resource/patch.h"
 #  include "resource/pcx.h"
 #  include "resource/tga.h"
+
 #  include "gl/gl_tex.h"
-#  include "gl/gl_texmanager.h" // misc global vars awaiting new home
+
+#  include "render/rend_main.h" // misc global vars awaiting new home
 #endif
 #include <de/Log>
 #ifdef __CLIENT__
@@ -781,10 +783,10 @@ static Source loadDetail(image_t &image, de::FileHandle &hndl)
 }
 
 Source GL_LoadSourceImage(image_t &image, Texture const &tex,
-    texturevariantspecification_t const &spec)
+    TextureVariantSpec const &spec)
 {
     Source source = None;
-    variantspecification_t const &vspec = TS_GENERAL(spec);
+    variantspecification_t const &vspec = spec.variant;
     if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Attempt to load an external replacement for this composite texture?
@@ -854,9 +856,8 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
         int tclass = 0, tmap = 0;
         if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            DENG_ASSERT(vspec.translated);
-            tclass = vspec.translated->tClass;
-            tmap   = vspec.translated->tMap;
+            tclass = vspec.tClass;
+            tmap   = vspec.tMap;
         }
 
         // Attempt to load an external replacement for this patch?
@@ -895,9 +896,8 @@ Source GL_LoadSourceImage(image_t &image, Texture const &tex,
         int tclass = 0, tmap = 0;
         if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            DENG_ASSERT(vspec.translated);
-            tclass = vspec.translated->tClass;
-            tmap   = vspec.translated->tMap;
+            tclass = vspec.tClass;
+            tmap   = vspec.tMap;
         }
 
         // Attempt to load an external replacement for this sprite?

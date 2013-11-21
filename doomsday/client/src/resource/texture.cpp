@@ -177,11 +177,11 @@ uint Texture::variantCount() const
 }
 
 Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
-    texturevariantspecification_t const &spec, bool canCreate)
+    TextureVariantSpec const &spec, bool canCreate)
 {
     foreach(Variant *variant, d->variants)
     {
-        texturevariantspecification_t const &cand = variant->spec();
+        TextureVariantSpec const &cand = variant->spec();
         switch(method)
         {
         case MatchSpec:
@@ -220,7 +220,7 @@ Texture::Variant *Texture::chooseVariant(ChooseVariantMethod method,
     return d->variants.back();
 }
 
-Texture::Variant *Texture::prepareVariant(texturevariantspecification_t const &spec)
+Texture::Variant *Texture::prepareVariant(TextureVariantSpec const &spec)
 {
     Variant *variant = chooseVariant(MatchSpec, spec, true /*can create*/);
     DENG2_ASSERT(variant);

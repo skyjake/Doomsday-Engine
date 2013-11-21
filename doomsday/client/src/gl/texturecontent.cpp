@@ -304,7 +304,7 @@ static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
 }
 
 void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
-    image_t &image, texturevariantspecification_t const &spec,
+    image_t &image, TextureVariantSpec const &spec,
     TextureManifest const &textureManifest)
 {
     DENG_ASSERT(glTexName != 0);
@@ -317,7 +317,7 @@ void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
     switch(spec.type)
     {
     case TST_GENERAL: {
-        variantspecification_t const &vspec = TS_GENERAL(spec);
+        variantspecification_t const &vspec = spec.variant;
         bool const noCompression = (vspec.flags & TSF_NO_COMPRESSION) != 0;
         // If the Upscale And Sharpen filter is enabled, scaling is applied
         // implicitly by prepareImageAsTexture(), so don't do it again.
@@ -348,7 +348,7 @@ void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
         break; }
 
     case TST_DETAIL: {
-        detailvariantspecification_t const &dspec = TS_DETAIL(spec);
+        detailvariantspecification_t const &dspec = spec.detailVariant;
 
         // Prepare the image for upload.
         float baMul, hiMul, loMul;

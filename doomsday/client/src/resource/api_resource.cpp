@@ -273,7 +273,7 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 
 #ifdef __CLIENT__
         // Ensure we have up to date information about this patch.
-        texturevariantspecification_t &texSpec =
+        TextureVariantSpec &texSpec =
             Rend_PatchTextureSpec(0 | (tex.isFlagged(de::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                     | (tex.isFlagged(de::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
         tex.prepareVariant(texSpec);

@@ -5064,14 +5064,14 @@ MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
     return Rend_MapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
 }
 
-texturevariantspecification_t &Rend_MapSurfaceShinyTextureSpec()
+TextureVariantSpec &Rend_MapSurfaceShinyTextureSpec()
 {
     return GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTION, TSF_NO_COMPRESSION,
                                  0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
                                  false, false, false, false);
 }
 
-texturevariantspecification_t &Rend_MapSurfaceShinyMaskTextureSpec()
+TextureVariantSpec &Rend_MapSurfaceShinyMaskTextureSpec()
 {
     return GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTIONMASK, 0,
                                  0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1,

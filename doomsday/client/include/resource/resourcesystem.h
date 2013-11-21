@@ -228,7 +228,7 @@ public:
      * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
      * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
      */
-    void releaseGLTexturesFor(de::Texture &texture, texturevariantspecification_t &spec);
+    void releaseGLTexturesFor(de::Texture &texture, TextureVariantSpec &spec);
 
     /**
      * Provides access to the Fonts collection.

@@ -218,7 +218,7 @@ void MaterialSnapshot::update()
         if(lsCur->texture)
         {
             float const contrast = de::clamp(0.f, lsCur->strength, 1.f) * detailFactor /*Global strength multiplier*/;
-            texturevariantspecification_t &dTexSpec =
+            TextureVariantSpec &dTexSpec =
                 GL_DetailTextureSpec(contrast);
 
             prepTextures[MTU_DETAIL][0] =
@@ -232,7 +232,7 @@ void MaterialSnapshot::update()
             if(lsNext->texture)
             {
                 float const contrast = de::clamp(0.f, lsNext->strength, 1.f) * detailFactor /*Global strength multiplier*/;
-                texturevariantspecification_t &dTexSpec =
+                TextureVariantSpec &dTexSpec =
                     GL_DetailTextureSpec(contrast);
 
                 prepTextures[MTU_DETAIL][1] =

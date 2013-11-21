@@ -101,7 +101,7 @@ public:
      * and logics pertaining to a specialized version of the @em superior
      * Texture instance.
      *
-     * @see texturevariantspecification_t
+     * @see TextureVariantSpec
      */
     class Variant
     {
@@ -120,7 +120,7 @@ public:
          * @param spec          Specification used to derive this variant.
          *                      Ownership is NOT given to the Variant.
          */
-        Variant(Texture &generalCase, texturevariantspecification_t const &spec);
+        Variant(Texture &generalCase, TextureVariantSpec const &spec);
 
     public:
         /// @return  Superior texture of which the variant is a derivative.
@@ -155,7 +155,7 @@ public:
         /**
          * Returns the specification used to derive the variant.
          */
-        texturevariantspecification_t const &spec() const;
+        TextureVariantSpec const &spec() const;
 
         /**
          * Returns the source of the image used to prepare the uploaded GL-texture
@@ -337,7 +337,7 @@ public:
      * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
      */
     Variant *chooseVariant(ChooseVariantMethod method,
-        texturevariantspecification_t const &spec, bool canCreate = false);
+        TextureVariantSpec const &spec, bool canCreate = false);
 
     /**
      * Choose/create a variant of the texture which fulfills @a spec and then
@@ -354,7 +354,7 @@ public:
      *
      * @see chooseVariant()
      */
-    Variant *prepareVariant(texturevariantspecification_t const &spec);
+    Variant *prepareVariant(TextureVariantSpec const &spec);
 
     /**
      * Provides access to the list of variant instances for efficent traversal.

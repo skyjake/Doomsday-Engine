@@ -30,7 +30,7 @@
 #include <de/size.h>
 
 /// @todo Should not depend on texture-level stuff here.
-struct texturevariantspecification_t;
+class TextureVariantSpec;
 namespace de {
 class Texture;
 }
@@ -140,7 +140,7 @@ res::Source GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mo
 
 /// @todo Move into image_t
 res::Source GL_LoadSourceImage(image_t &image, de::Texture const &tex,
-    texturevariantspecification_t const &spec);
+    TextureVariantSpec const &spec);
 
 #endif // __CLIENT__
 

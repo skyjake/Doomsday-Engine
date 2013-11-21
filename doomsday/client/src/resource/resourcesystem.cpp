@@ -1148,7 +1148,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
 
 #ifdef __CLIENT__
 
-static int releaseGLTexture(TextureVariant &variant, texturevariantspecification_t *spec = 0)
+static int releaseGLTexture(TextureVariant &variant, TextureVariantSpec *spec = 0)
 {
     if(!spec || spec == &variant.spec())
     {
@@ -1239,7 +1239,7 @@ void ResourceSystem::releaseGLTexturesFor(Texture &texture)
     }
 }
 
-void ResourceSystem::releaseGLTexturesFor(Texture &texture, texturevariantspecification_t &spec)
+void ResourceSystem::releaseGLTexturesFor(Texture &texture, TextureVariantSpec &spec)
 {
     foreach(TextureVariant *variant, texture.variants())
     {

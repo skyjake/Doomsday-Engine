@@ -1102,7 +1102,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     MaterialSnapshot const &ms = material->prepare(spec);
 
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-    variantspecification_t const &texSpec = TS_GENERAL(ms.texture(MTU_PRIMARY).spec());
+    variantspecification_t const &texSpec = ms.texture(MTU_PRIMARY).spec().variant;
 
 #define WEAPONTOP   32   /// @todo Currently hardcoded here and in the plugins.
 

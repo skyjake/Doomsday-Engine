@@ -168,7 +168,7 @@ static Lumobj::LightmapSemantic semanticFromFlags(int flags)
 }
 
 /// Returns the texture variant specification for lightmaps.
-static texturevariantspecification_t &lightmapSpec()
+static TextureVariantSpec &lightmapSpec()
 {
     return GL_TextureVariantSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0,
                                  GL_CLAMP, GL_CLAMP, 1, -1, -1,

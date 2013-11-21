@@ -466,7 +466,7 @@ void Rend_DrawSprite(rendspriteparams_t const &parms)
         // Ensure this variant has been prepared.
         ms = &reinterpret_cast<MaterialVariant *>(parms.material)->prepare();
 
-        variantspecification_t const &texSpec = TS_GENERAL(ms->texture(MTU_PRIMARY).spec());
+        variantspecification_t const &texSpec = ms->texture(MTU_PRIMARY).spec().variant;
         size.width  = ms->width() + texSpec.border * 2;
         size.height = ms->height() + texSpec.border * 2;
         viewOffset.x = -size.width / 2;
