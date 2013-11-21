@@ -38,16 +38,16 @@ using namespace de;
 
 DENG2_PIMPL_NOREF(Sprite)
 {
-    byte rotate; ///< 0= no rotations, 1= only front, 2= more...
+    bool haveRotations;    ///< @c true= use all view angles and not just rotation 0.
     ViewAngles viewAngles;
 
     Instance()
-        : rotate(0)
+        : haveRotations(false)
         , viewAngles(max_angles)
     {}
 
     Instance(Instance const &other)
-        : rotate(other.rotate)
+        : haveRotations(other.haveRotations)
         , viewAngles(other.viewAngles)
     {}
 };
@@ -73,33 +73,34 @@ bool Sprite::hasViewAngle(int rotation) const
     return false;
 }
 
-void Sprite::newViewAngle(Material *material, uint rotation, bool mirrorX)
+void Sprite::newViewAngle(Material *material, int rotation, bool mirrorX)
 {
     DENG2_ASSERT(rotation <= max_angles);
 
-    if(rotation == 0)
+    if(rotation <= 0)
     {
-        // This frame should be used for all rotations.
-        d->rotate = false;
+        // Use only one view angle for all rotations.
+        d->haveRotations = false;
         for(int i = 0; i < d->viewAngles.count(); ++i)
         {
-            d->viewAngles[i].material = material;
-            d->viewAngles[i].mirrorX  = mirrorX;
+            ViewAngle &vAngle = d->viewAngles[i];
+            vAngle.material = material;
+            vAngle.mirrorX  = mirrorX;
         }
         return;
     }
 
     rotation--; // Make 0 based.
 
-    d->rotate = true;
-    d->viewAngles[rotation].material = material;
-    d->viewAngles[rotation].mirrorX  = mirrorX;
+    d->haveRotations = true;
+    ViewAngle &vAngle = d->viewAngles[rotation];
+    vAngle.material = material;
+    vAngle.mirrorX  = mirrorX;
 }
 
 Sprite::ViewAngle const &Sprite::viewAngle(int rotation) const
 {
     LOG_AS("Sprite::viewAngle");
-
     if(rotation >= 0 && rotation < d->viewAngles.count())
     {
         return d->viewAngles[rotation];
@@ -113,7 +114,7 @@ Sprite::ViewAngle const &Sprite::closestViewAngle(angle_t mobjAngle, angle_t ang
 {
     int rotation = 0; // Use single rotation for all viewing angles (default).
 
-    if(!noRotation && d->rotate)
+    if(!noRotation && d->haveRotations)
     {
         // Rotation is determined by the relative angle to the viewer.
         rotation = (angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) >> 29;

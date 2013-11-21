@@ -65,7 +65,7 @@ public:
 
     Sprite &operator = (Sprite const &other);
 
-    void newViewAngle(Material *material, uint rotation, bool mirrorX);
+    void newViewAngle(Material *material, int rotation, bool mirrorX);
 
     /**
      * Returns @c true iff a view angle is defined for the specified @a rotation.
