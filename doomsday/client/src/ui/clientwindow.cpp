@@ -448,6 +448,38 @@ DENG2_OBSERVES(App,              GameChange)
         sidebar = 0;
     }
 
+    enum DeferredTaskResult {
+        Continue,
+        AbortFrame
+    };
+
+    DeferredTaskResult performDeferredTasks()
+    {
+        if(BusyMode_Active())
+        {
+            // Let's not do anything risky in busy mode.
+            return Continue;
+        }
+
+        // Offscreen composition is only needed in Oculus Rift mode.
+        enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
+
+        // The canvas needs to be recreated when the GL format has changed
+        // (e.g., multisampling).
+        if(needRecreateCanvas)
+        {
+            needRecreateCanvas = false;
+            if(self.setDefaultGLFormat())
+            {
+                self.recreateCanvas();
+                // Wait until the new Canvas is ready (note: loop remains paused!).
+                return AbortFrame;
+            }
+        }
+
+        return Continue;
+    }
+
     void updateRootSize()
     {
         DENG_ASSERT_IN_MAIN_THREAD();
@@ -459,7 +491,7 @@ DENG2_OBSERVES(App,              GameChange)
         // Tell the widgets.
         root.setViewSize(size);
         //busyRoot.setViewSize(size);
-    } 
+    }
 
     void enableCompositor(bool enable)
     {
@@ -726,20 +758,10 @@ void ClientWindow::draw()
     // Don't run the main loop until after the paint event has been dealt with.
     ClientApp::app().loop().pause();
 
-    // Offscreen composition is only needed in Oculus Rift mode.
-    d->enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
-
-    // The canvas needs to be recreated when the GL format has changed
-    // (e.g., multisampling).
-    if(d->needRecreateCanvas)
+    if(d->performDeferredTasks() == Instance::AbortFrame)
     {
-        d->needRecreateCanvas = false;
-        if(setDefaultGLFormat())
-        {
-            recreateCanvas();
-            // Wait until the new Canvas is ready (note: loop remains paused!).
-            return;
-        }
+        // Shouldn't draw right now.
+        return;
     }
 
     if(shouldRepaintManually())
