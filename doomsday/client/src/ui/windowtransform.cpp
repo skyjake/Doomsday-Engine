@@ -1,4 +1,4 @@
-/** @file contenttransform.cpp Base class for window content transformation.
+/** @file windowtransform.cpp Base class for window content transformation.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,48 +16,48 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/contenttransform.h"
+#include "ui/windowtransform.h"
 #include "ui/clientwindow.h"
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ContentTransform)
+DENG2_PIMPL_NOREF(WindowTransform)
 {
     ClientWindow *win;
 };
 
-ContentTransform::ContentTransform(ClientWindow &window)
+WindowTransform::WindowTransform(ClientWindow &window)
     : d(new Instance)
 {
     d->win = &window;
 }
 
-ClientWindow &ContentTransform::window() const
+ClientWindow &WindowTransform::window() const
 {
     return *d->win;
 }
 
-void ContentTransform::glInit()
+void WindowTransform::glInit()
 {
     // nothing to do
 }
 
-void ContentTransform::glDeinit()
+void WindowTransform::glDeinit()
 {
     // nothing to do
 }
 
-Vector2ui ContentTransform::logicalRootSize(Vector2ui const &physicalCanvasSize) const
+Vector2ui WindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize) const
 {
     return physicalCanvasSize;
 }
 
-Vector2f ContentTransform::windowToLogicalCoords(de::Vector2i const &pos) const
+Vector2f WindowTransform::windowToLogicalCoords(de::Vector2i const &pos) const
 {
     return pos;
 }
 
-void ContentTransform::drawTransformed()
+void WindowTransform::drawTransformed()
 {
     return d->win->root().draw();
 }

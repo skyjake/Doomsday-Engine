@@ -1,4 +1,4 @@
-/** @file vrcontenttransform.cpp  Content transformation for virtual reality.
+/** @file vrwindowtransform.cpp  Window content transformation for virtual reality.
  *
  * @authors Copyright (c) 2013 Christopher Bruns <cmbruns@rotatingpenguin.com>
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/vrcontenttransform.h"
+#include "ui/vrwindowtransform.h"
 #include "de_platform.h"
 #include "con_main.h"
 #include "render/vr.h"
@@ -26,7 +26,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(VRContentTransform)
+DENG2_PIMPL(VRWindowTransform)
 {
     Drawable oculusRift;
     GLUniform uOculusRiftFB;
@@ -191,21 +191,21 @@ DENG2_PIMPL(VRContentTransform)
     }
 };
 
-VRContentTransform::VRContentTransform(ClientWindow &window)
-    : ContentTransform(window), d(new Instance(this))
+VRWindowTransform::VRWindowTransform(ClientWindow &window)
+    : WindowTransform(window), d(new Instance(this))
 {}
 
-void VRContentTransform::glInit()
+void VRWindowTransform::glInit()
 {
     d->init();
 }
 
-void VRContentTransform::glDeinit()
+void VRWindowTransform::glDeinit()
 {
     d->deinit();
 }
 
-Vector2ui VRContentTransform::logicalRootSize(Vector2ui const &physicalCanvasSize) const
+Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize) const
 {
     Canvas::Size size = physicalCanvasSize;
 
@@ -236,7 +236,7 @@ Vector2ui VRContentTransform::logicalRootSize(Vector2ui const &physicalCanvasSiz
     return size;
 }
 
-Vector2f VRContentTransform::windowToLogicalCoords(Vector2i const &winPos) const
+Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
 {
     // We need to map the real window coordinates to logical root view
     // coordinates according to the used transformation.
@@ -286,7 +286,7 @@ Vector2f VRContentTransform::windowToLogicalCoords(Vector2i const &winPos) const
     return pos;
 }
 
-void VRContentTransform::drawTransformed()
+void VRWindowTransform::drawTransformed()
 {
     switch(VR::mode())
     {

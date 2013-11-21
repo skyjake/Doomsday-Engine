@@ -50,7 +50,7 @@
 
 #include "dd_main.h"
 #include "con_main.h"
-#include "ui/vrcontenttransform.h"
+#include "ui/vrwindowtransform.h"
 #include "render/vr.h"
 
 using namespace de;
@@ -88,7 +88,7 @@ DENG2_OBSERVES(App,              GameChange)
     float oldFps;
 
     /// @todo Switch dynamically between VR and plain.
-    VRContentTransform contentXf;
+    VRWindowTransform contentXf;
 
     Instance(Public *i)
         : Base(i),

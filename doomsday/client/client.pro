@@ -369,7 +369,6 @@ DENG_HEADERS += \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
     include/ui/clientwindow.h \
-    include/ui/contenttransform.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
     include/ui/dialogs/aboutdialog.h \
@@ -419,7 +418,7 @@ DENG_HEADERS += \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
     include/ui/uidefs.h \
-    include/ui/vrcontenttransform.h \
+    include/ui/vrwindowtransform.h \
     include/ui/widgets/blurwidget.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/buttonwidget.h \
@@ -457,6 +456,7 @@ DENG_HEADERS += \
     include/ui/widgets/togglewidget.h \
     include/ui/widgets/variabletogglewidget.h \
     include/ui/windowsystem.h \
+    include/ui/windowtransform.h \
     include/ui/zonedebug.h \
     include/updater.h \
     include/updater/downloaddialog.h \
@@ -728,7 +728,6 @@ SOURCES += \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
     src/ui/clientwindow.cpp \
-    src/ui/contenttransform.cpp \
     src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
@@ -769,7 +768,7 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
-    src/ui/vrcontenttransform.cpp \
+    src/ui/vrwindowtransform.cpp \
     src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/buttonwidget.cpp \
@@ -806,6 +805,7 @@ SOURCES += \
     src/ui/widgets/togglewidget.cpp \
     src/ui/widgets/variabletogglewidget.cpp \
     src/ui/windowsystem.cpp \
+    src/ui/windowtransform.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \
