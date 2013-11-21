@@ -96,7 +96,7 @@ void FoldPanelWidget::setContent(GuiWidget *content)
         // We'll just take it and do nothing else yet.
         if(d->container)
         {
-            d->container->deleteLater();
+            d->container->guiDeleteLater();
         }
         d->container = content;
         return;

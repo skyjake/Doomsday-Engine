@@ -384,7 +384,7 @@ static void deleteGuiWidget(void *ptr)
     GuiWidget::destroy(reinterpret_cast<GuiWidget *>(ptr));
 }
 
-void GuiWidget::deleteLater()
+void GuiWidget::guiDeleteLater()
 {
     Garbage_TrashInstance(this, deleteGuiWidget);
 }

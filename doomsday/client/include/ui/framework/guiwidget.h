@@ -195,7 +195,7 @@ public:
      */
     de::Rectanglef normalizedContentRect() const;
 
-    void deleteLater();
+    void guiDeleteLater();
 
     void setFont(de::DotPath const &id);
     void setTextColor(de::DotPath const &id);

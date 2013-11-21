@@ -444,7 +444,7 @@ DENG2_OBSERVES(App,              GameChange)
         }
 
         container().remove(*sidebar);
-        sidebar->deleteLater();
+        sidebar->guiDeleteLater();
         sidebar = 0;
     }
 
@@ -489,7 +489,7 @@ DENG2_OBSERVES(App,              GameChange)
             DENG2_ASSERT(compositor != 0);            
 
             root.remove(*compositor);
-            compositor->deleteLater();
+            compositor->guiDeleteLater();
             compositor = 0;
 
             LOG_MSG("Offscreen UI composition disabled");

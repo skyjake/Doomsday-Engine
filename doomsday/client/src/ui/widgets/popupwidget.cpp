@@ -360,6 +360,6 @@ void PopupWidget::panelDismissed()
 
     if(d->deleteAfterDismiss)
     {
-        deleteLater();
+        guiDeleteLater();
     }
 }
