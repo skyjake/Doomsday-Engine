@@ -1,4 +1,4 @@
-/** @file texturescheme.cpp Texture system subspace scheme.
+/** @file texturescheme.cpp  Texture system subspace scheme.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,11 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "TextureManifest"
-#ifdef __CLIENT__
-#  include "gl/gl_texmanager.h"
-#endif
 #include "resource/texturescheme.h"
+
+#include "dd_main.h" // App_ResourceSystem()
+#include "TextureManifest"
 
 using namespace de;
 
@@ -236,7 +235,7 @@ TextureManifest &TextureScheme::declare(Path const &path,
     {
 #ifdef __CLIENT__
         /// @todo Update any Materials (and thus Surfaces) which reference this.
-        GL_ReleaseGLTexturesByTexture(newManifest->texture());
+        App_ResourceSystem().releaseGLTexturesFor(newManifest->texture());
 #endif
     }
 

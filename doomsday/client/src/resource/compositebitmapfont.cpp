@@ -24,7 +24,7 @@
 #include "api_resource.h" // R_GetPatchInfo
 #include "dd_main.h" // App_ResourceSystem(), isDedicated
 #include "sys_system.h" // novideo
-#include "gl/gl_texmanager.h"
+#include "gl/gl_texmanager.h" // GL_TextureVariantSpec
 
 using namespace de;
 
@@ -129,6 +129,7 @@ void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
     d->needGLInit = true;
 }
 
+/// @todo fixme: Do not assume the texture-usage context is @c TC_UI.
 static texturevariantspecification_t &glyphTextureSpec()
 {
     return GL_TextureVariantSpec(TC_UI, TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN,
@@ -189,7 +190,7 @@ void CompositeBitmapFont::glDeinit()
     {
         Glyph *ch = &d->glyphs[i];
         if(!ch->tex) continue;
-        GL_ReleaseVariantTexture(*ch->tex);
+        App_ResourceSystem().releaseGLTexturesFor(*ch->tex);
         ch->tex = 0;
     }
 }

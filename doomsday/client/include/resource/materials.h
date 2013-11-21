@@ -1,4 +1,4 @@
-/** @file materials.h Specialized resource collection for a set of materials.
+/** @file materials.h  Specialized material resource collection.
  *
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MATERIALS_H
-#define LIBDENG_RESOURCE_MATERIALS_H
+#ifndef DENG_RESOURCE_MATERIALS_H
+#define DENG_RESOURCE_MATERIALS_H
 
 #include "Material"
 #include "MaterialManifest"
@@ -284,4 +284,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_MATERIALS_H */
+#endif // DENG_RESOURCE_MATERIALS_H

@@ -1738,7 +1738,7 @@ boolean DD_Init(void)
 #ifdef _DEBUG
     // Type size check.
     {
-        void* ptr = 0;
+        void *ptr = 0;
         int32_t int32 = 0;
         int16_t int16 = 0;
         float float32 = 0;
@@ -1797,11 +1797,13 @@ boolean DD_Init(void)
                                 DD_DummyWorker, 0, "Buffering...");
 
     // Add resource paths specified using -iwad on the command line.
-    FS1::Scheme& scheme = App_FileSystem().scheme(App_ResourceClass("RC_PACKAGE").defaultScheme());
+    FS1::Scheme &scheme = App_FileSystem().scheme(App_ResourceClass("RC_PACKAGE").defaultScheme());
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
         if(!CommandLine_IsMatchingAlias("-iwad", CommandLine_At(p)))
+        {
             continue;
+        }
 
         while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
         {
@@ -1809,7 +1811,7 @@ boolean DD_Init(void)
             ///       the "Packages" scheme.
 
             // CommandLine_PathAt() always returns an absolute path.
-            directory_t* dir = Dir_FromText(CommandLine_PathAt(p));
+            directory_t *dir = Dir_FromText(CommandLine_PathAt(p));
             de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
             LOG_DEBUG("User supplied IWAD path: \"%s\"") << Dir_Path(dir);
@@ -1831,18 +1833,17 @@ boolean DD_Init(void)
     // Attempt automatic game selection.
     if(!CommandLine_Exists("-noautoselect") || isDedicated)
     {
-        de::Game* game = DD_AutoselectGame();
-
-        if(game)
+        if(de::Game *game = DD_AutoselectGame())
         {
             // An implicit game session has been defined.
-            int p;
-
             // Add all resources specified using -file options on the command line
             // to the list for this session.
-            for(p = 0; p < CommandLine_Count(); ++p)
+            for(int p = 0; p < CommandLine_Count(); ++p)
             {
-                if(!CommandLine_IsMatchingAlias("-file", CommandLine_At(p))) continue;
+                if(!CommandLine_IsMatchingAlias("-file", CommandLine_At(p)))
+                {
+                    continue;
+                }
 
                 while(++p != CommandLine_Count() && !CommandLine_IsOption(p))
                 {
@@ -1887,7 +1888,7 @@ boolean DD_Init(void)
         }
         else
         {
-            Con_Message("Warning: Cannot dump unknown lump \"%s\", ignoring.", name.toLatin1().constData());
+            LOG_WARNING("Cannot dump unknown lump \"%s\", ignoring.") << name;
         }
     }
 
@@ -1904,30 +1905,34 @@ boolean DD_Init(void)
     // Read additional config files that should be processed post engine init.
     if(CommandLine_CheckWith("-parse", 1))
     {
-        uint startTime;
-        Con_Message("Parsing additional (pre-init) config files:");
-        startTime = Timer_RealMilliseconds();
-        for(;;)
+        LOG_MSG("Parsing additional (pre-init) config files:");
+        Time begunAt;
+        forever
         {
-            const char* arg = CommandLine_Next();
-            if(!arg || arg[0] == '-') break;
+            char const *arg = CommandLine_Next();
+            if(!arg || arg[0] == '-')
+            {
+                break;
+            }
 
-            Con_Message("  Processing \"%s\"...", F_PrettyPath(arg));
+            LOG_MSG("  Processing \"%s\"...") << F_PrettyPath(arg);
             Con_ParseCommands(arg);
         }
-        VERBOSE( Con_Message("  Completed in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+        LOG_INFO(String("  Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
     }
 
     // A console command on the command line?
-    { int p;
-    for(p = 1; p < CommandLine_Count() - 1; p++)
+    for(int p = 1; p < CommandLine_Count() - 1; p++)
     {
-        if(stricmp(CommandLine_At(p), "-command") && stricmp(CommandLine_At(p), "-cmd"))
+        if(stricmp(CommandLine_At(p), "-command") &&
+           stricmp(CommandLine_At(p), "-cmd"))
+        {
             continue;
+        }
 
         for(++p; p < CommandLine_Count(); p++)
         {
-            const char* arg = CommandLine_At(p);
+            char const *arg = CommandLine_At(p);
 
             if(arg[0] == '-')
             {
@@ -1936,9 +1941,9 @@ boolean DD_Init(void)
             }
             Con_Execute(CMDS_CMDLINE, arg, false, false);
         }
-    }}
+    }
 
-    /**
+    /*
      * One-time execution of network commands on the command line.
      * Commands are only executed if we have loaded a game during startup.
      */
@@ -1946,11 +1951,15 @@ boolean DD_Init(void)
     {
         // Client connection command.
         if(CommandLine_CheckWith("-connect", 1))
+        {
             Con_Executef(CMDS_CMDLINE, false, "connect %s", CommandLine_Next());
+        }
 
         // Incoming TCP port.
         if(CommandLine_CheckWith("-port", 1))
+        {
             Con_Executef(CMDS_CMDLINE, false, "net-ip-port %s", CommandLine_Next());
+        }
 
 #ifdef __SERVER__
         // Automatically start the server.
@@ -1998,19 +2007,7 @@ boolean DD_Init(void)
     return true;
 }
 
-static void DD_InitResourceSystem(void)
-{
-    Con_Message("Initializing Resource subsystem...");
-
-    initPathMappings();
-
-    App_FileSystem().resetAllSchemes();
-
-    // Initialize the definition databases.
-    Def_Init();
-}
-
-static int DD_StartupWorker(void* /*parm*/)
+static int DD_StartupWorker(void * /*context*/)
 {
 #ifdef WIN32
     // Initialize COM for this thread (needed for DirectInput).
@@ -2024,9 +2021,15 @@ static int DD_StartupWorker(void* /*parm*/)
 
     // Was the change to userdir OK?
     if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
-        Con_Message("--(!)-- User directory not found (check -userdir).");
+    {
+        LOG_WARNING("User directory not found (check -userdir).");
+    }
 
-    DD_InitResourceSystem();
+    initPathMappings();
+    App_FileSystem().resetAllSchemes();
+
+    // Initialize the definition databases.
+    Def_Init();
 
     Con_SetProgress(40);
 
@@ -2037,18 +2040,18 @@ static int DD_StartupWorker(void* /*parm*/)
     // Read config files that should be read BEFORE engine init.
     if(CommandLine_CheckWith("-cparse", 1))
     {
-        uint startTime = Timer_RealMilliseconds();
+        Time begunAt;
 
-        Con_Message("Parsing additional (pre-init) config files:");
+        LOG_MSG("Parsing additional (pre-init) config files:");
         for(;;)
         {
             char const *arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-') break;
 
-            Con_Message("  Processing \"%s\"...", F_PrettyPath(arg));
+            LOG_MSG("  Processing \"%s\"...") << F_PrettyPath(arg);
             Con_ParseCommands(arg);
         }
-        VERBOSE( Con_Message("  Completed in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+        LOG_INFO(String("  Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
     }
 
     /*
@@ -2083,10 +2086,10 @@ static int DD_StartupWorker(void* /*parm*/)
     Demo_Init();
 #endif
 
-    Con_Message("Initializing InFine subsystem...");
+    LOG_MSG("Initializing InFine subsystem...");
     FI_Init();
 
-    Con_Message("Initializing UI subsystem...");
+    LOG_MSG("Initializing UI subsystem...");
     UI_Init();
     Con_SetProgress(190);
 
@@ -2114,9 +2117,8 @@ static int DD_StartupWorker(void* /*parm*/)
  * This only exists so we have something to call while the deferred uploads of the
  * startup are processed.
  */
-static int DD_DummyWorker(void *parm)
+static int DD_DummyWorker(void * /*context*/)
 {
-    DENG_UNUSED(parm);
     Con_SetProgress(200);
     BusyMode_WorkerEnd();
     return 0;
@@ -2132,23 +2134,17 @@ void DD_CheckTimeDemo(void)
         if(CommandLine_CheckWith("-timedemo", 1) || // Timedemo mode.
            CommandLine_CheckWith("-playdemo", 1)) // Play-once mode.
         {
-            char            buf[200];
+            char buf[200]; sprintf(buf, "playdemo %s", CommandLine_Next());
 
-            sprintf(buf, "playdemo %s", CommandLine_Next());
             Con_Execute(CMDS_CMDLINE, buf, false, false);
         }
     }
 }
 
-typedef struct {
-    /// @c true iff caller (i.e., DD_UpdateEngineState) initiated busy mode.
-    boolean initiatedBusyMode;
-} ddupdateenginestateworker_paramaters_t;
-
-static int DD_UpdateEngineStateWorker(void *parameters)
+static int DD_UpdateEngineStateWorker(void *context)
 {
-    DENG_ASSERT(parameters);
-    ddupdateenginestateworker_paramaters_t *p = (ddupdateenginestateworker_paramaters_t *) parameters;
+    DENG2_ASSERT(context != 0);
+    bool const initiatedBusyMode = *static_cast<bool *>(context);
 
 #ifdef __CLIENT__
     if(!novideo)
@@ -2157,12 +2153,14 @@ static int DD_UpdateEngineStateWorker(void *parameters)
     }
 #endif
 
-    if(p->initiatedBusyMode)
+    if(initiatedBusyMode)
+    {
         Con_SetProgress(50);
+    }
 
     R_Update();
 
-    if(p->initiatedBusyMode)
+    if(initiatedBusyMode)
     {
         Con_SetProgress(200);
         BusyMode_WorkerEnd();
@@ -2170,9 +2168,9 @@ static int DD_UpdateEngineStateWorker(void *parameters)
     return 0;
 }
 
-void DD_UpdateEngineState(void)
+void DD_UpdateEngineState()
 {
-    Con_Message("Updating engine state...");
+    LOG_MSG("Updating engine state...");
 
     // Stop playing sounds and music.
     S_Reset();
@@ -2187,7 +2185,6 @@ void DD_UpdateEngineState(void)
     // Update the dir/WAD translations.
     initPathLumpMappings();
     initPathMappings();
-
     // Re-build the filesystem subspace schemes as there may be new resources to be found.
     App_FileSystem().resetAllSchemes();
 
@@ -2196,7 +2193,9 @@ void DD_UpdateEngineState(void)
     App_ResourceSystem().initSpriteTextures();
 
     if(App_GameLoaded() && gx.UpdateState)
+    {
         gx.UpdateState(DD_PRE);
+    }
 
 #ifdef __CLIENT__
     boolean hadFog = usingFog;
@@ -2206,34 +2205,38 @@ void DD_UpdateEngineState(void)
 
     // Make sure the fog is enabled, if necessary.
     if(hadFog)
+    {
         GL_UseFog(true);
+    }
 #endif
 
-    /**
+    /*
      * The bulk of this we can do in busy mode unless we are already busy
      * (which can happen during a runtime game change).
      */
-    ddupdateenginestateworker_paramaters_t p;
-    p.initiatedBusyMode = !BusyMode_Active();
-    if(p.initiatedBusyMode)
+    bool initiatedBusyMode = !BusyMode_Active();
+    if(initiatedBusyMode)
     {
 #ifdef __CLIENT__
         Con_InitProgress(200);
 #endif
         BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    DD_UpdateEngineStateWorker, &p, "Updating engine state...");
+                                    DD_UpdateEngineStateWorker, &initiatedBusyMode,
+                                    "Updating engine state...");
     }
     else
     {
         /// @todo Update the current task name and push progress.
-        DD_UpdateEngineStateWorker(&p);
+        DD_UpdateEngineStateWorker(&initiatedBusyMode);
     }
 
     if(App_GameLoaded() && gx.UpdateState)
+    {
         gx.UpdateState(DD_POST);
+    }
 
 #ifdef __CLIENT__
-    App_Materials().restartAllAnimations();
+    App_ResourceSystem().restartAllMaterialAnimations();
 #endif
 }
 

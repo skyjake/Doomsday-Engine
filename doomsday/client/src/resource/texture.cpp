@@ -1,4 +1,4 @@
-/** @file texture.cpp Logical Texture.
+/** @file texture.cpp  Logical texture resource.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -18,19 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-//#include <cctype>
-//#include <cstring>
+#include "resource/texture.h"
 
-#include "de_base.h"
-#ifdef __CLIENT__
-#  include "gl/gl_texmanager.h"
-#endif
+#include "dd_main.h" // App_ResourceSystem()
+#include "TextureManifest"
 #include "resource/compositetexture.h"
 #include <de/Error>
 #include <de/Log>
+#include <de/memory.h>
 #include <QMap>
-
-#include "resource/texture.h"
 
 using namespace de;
 
@@ -92,8 +88,8 @@ Texture::~Texture()
     DENG2_FOR_AUDIENCE(Deletion, i) i->textureBeingDeleted(*this);
 
 #ifdef __CLIENT__
-    /// @todo GL Texture manager should observe Deletion.
-    GL_ReleaseGLTexturesByTexture(*this);
+    /// @todo ResourceSystem should observe Deletion.
+    App_ResourceSystem().releaseGLTexturesFor(*this);
 #endif
 
     if(!manifest().schemeName().compareWithoutCase("Textures"))

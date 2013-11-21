@@ -118,41 +118,6 @@ void GL_SetAllTexturesMinFilter(int minFilter);
  */
 void GL_SetRawTexturesMinFilter(int minFilter);
 
-/// Release all textures in all schemes.
-void GL_ReleaseTextures();
-
-/// Release all textures flagged 'runtime'.
-void GL_ReleaseRuntimeTextures();
-
-/// Release all textures flagged 'system'.
-void GL_ReleaseSystemTextures();
-
-/**
- * Release all textures in the identified scheme.
- *
- * @param schemeName  Symbolic name of the texture scheme to process.
- */
-void GL_ReleaseTexturesByScheme(char const *schemeName);
-
-/**
- * Release all textures associated with the specified @a texture.
- * @param texture  Logical Texture. Can be @c NULL, in which case this is a null-op.
- */
-void GL_ReleaseGLTexturesByTexture(de::Texture &texture);
-
-/**
- * Release all textures associated with the specified variant @a texture.
- */
-void GL_ReleaseVariantTexture(de::TextureVariant &texture);
-
-/**
- * Release all variants of @a tex which match @a spec.
- *
- * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
- * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
- */
-void GL_ReleaseVariantTexturesBySpec(de::Texture &texture, texturevariantspecification_t &spec);
-
 /// Release all textures used with 'Raw Images'.
 void GL_ReleaseTexturesForRawImages();
 
@@ -162,6 +127,8 @@ void GL_PruneTextureVariantSpecifications();
  * Prepares all the system textures (dlight, ptcgens).
  */
 void GL_LoadSystemTextures();
+
+void GL_DeleteAllLightingSystemTextures();
 
 /**
  * @param glFormat  Identifier of the desired GL texture format.

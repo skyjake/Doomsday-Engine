@@ -517,16 +517,6 @@ GLUploadMethod GL_ChooseUploadMethod(texturecontent_t const &content)
     return Deferred;
 }
 
-static int releaseVariantGLTexture(TextureVariant &variant, texturevariantspecification_t *spec = 0)
-{
-    if(!spec || spec == &variant.spec())
-    {
-        variant.release();
-        if(spec) return true; // We're done.
-    }
-    return 0; // Continue iteration.
-}
-
 static void uploadContentUnmanaged(texturecontent_t const &content)
 {
     LOG_AS("uploadContentUnmanaged");
@@ -950,7 +940,7 @@ void GL_InitTextureManager()
 void GL_ResetTextureManager()
 {
     if(!initedOk) return;
-    GL_ReleaseTextures();
+    ResourceSystem().releaseAllGLTextures();
     GL_PruneTextureVariantSpecifications();
     GL_LoadSystemTextures();
 }
@@ -1121,79 +1111,15 @@ void GL_LoadSystemTextures()
     Rend_ParticleLoadSystemTextures();
 }
 
-void GL_ReleaseFontTexturesByScheme(char const *schemeName)
-{
-    if(!schemeName) return;
-    PathTreeIterator<FontScheme::Index> iter(App_Fonts().scheme(schemeName).index().leafNodes());
-    while(iter.hasNext())
-    {
-        FontManifest &manifest = iter.next();
-        if(manifest.hasResource())
-        {
-            manifest.resource().glDeinit();
-        }
-    }
-}
-
-void GL_ReleaseSystemTextures()
+void GL_DeleteAllLightingSystemTextures()
 {
     if(novideo || !initedOk) return;
-
-    LOG_VERBOSE("Releasing System textures...");
-
-    // The rendering lists contain persistent references to texture names.
-    // Which, obviously, can't persist any longer...
-    ClientApp::renderSystem().clearDrawLists();
 
     glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
     std::memset(lightingTextures, 0, sizeof(lightingTextures));
 
     glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
     std::memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
-
-    GL_ReleaseTexturesByScheme("System");
-    Rend_ParticleReleaseSystemTextures();
-    GL_ReleaseFontTexturesByScheme("System");
-
-    GL_PruneTextureVariantSpecifications();
-}
-
-void GL_ReleaseRuntimeTextures()
-{
-    if(novideo || !initedOk) return;
-
-    LOG_VERBOSE("Releasing Runtime textures...");
-
-    // The rendering lists contain persistent references to texture names.
-    // Which, obviously, can't persist any longer...
-    ClientApp::renderSystem().clearDrawLists();
-
-    // texture-wrapped GL textures; textures, flats, sprites...
-    GL_ReleaseTexturesByScheme("Flats");
-    GL_ReleaseTexturesByScheme("Textures");
-    GL_ReleaseTexturesByScheme("Patches");
-    GL_ReleaseTexturesByScheme("Sprites");
-    GL_ReleaseTexturesByScheme("Details");
-    GL_ReleaseTexturesByScheme("Reflections");
-    GL_ReleaseTexturesByScheme("Masks");
-    GL_ReleaseTexturesByScheme("ModelSkins");
-    GL_ReleaseTexturesByScheme("ModelReflectionSkins");
-    GL_ReleaseTexturesByScheme("Lightmaps");
-    GL_ReleaseTexturesByScheme("Flaremaps");
-    GL_ReleaseTexturesForRawImages();
-
-    Rend_ParticleReleaseExtraTextures();
-    GL_ReleaseFontTexturesByScheme("Game");
-
-    GL_PruneTextureVariantSpecifications();
-}
-
-void GL_ReleaseTextures()
-{
-    if(!initedOk) return;
-
-    GL_ReleaseRuntimeTextures();
-    GL_ReleaseSystemTextures();
 }
 
 void GL_PruneTextureVariantSpecifications()
@@ -2393,9 +2319,9 @@ void GL_DoUpdateTexParams()
     GL_SetRawTexturesMinFilter(newMinFilter);
 }
 
-static int reloadTextures(void *parameters)
+static int reloadTextures(void *context)
 {
-    boolean usingBusyMode = *((boolean *) parameters);
+    bool const usingBusyMode = *static_cast<bool *>(context);
 
     /// @todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
@@ -2411,11 +2337,10 @@ static int reloadTextures(void *parameters)
 
 void GL_TexReset()
 {
-    boolean useBusyMode = !BusyMode_Active();
+    App_ResourceSystem().releaseAllGLTextures();
+    LOG_MSG("All DGL textures deleted.");
 
-    GL_ReleaseTextures();
-    Con_Message("All DGL textures deleted.");
-
+    bool useBusyMode = !BusyMode_Active();
     if(useBusyMode)
     {
         Con_InitProgress(200);
@@ -2436,7 +2361,7 @@ void GL_DoUpdateTexGamma()
         GL_TexReset();
     }
 
-    Con_Message("Gamma correction set to %f.", texGamma);
+    LOG_MSG("Gamma correction set to %f.") << texGamma;
 }
 
 void GL_DoTexReset()
@@ -2446,7 +2371,7 @@ void GL_DoTexReset()
 
 void GL_DoResetDetailTextures()
 {
-    GL_ReleaseTexturesByScheme("Details");
+    App_ResourceSystem().releaseGLTexturesByScheme("Details");
 }
 
 void GL_ReleaseTexturesForRawImages()
@@ -2561,41 +2486,6 @@ void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
         // Invalid spec type.
         DENG_ASSERT(false);
     }
-}
-
-void GL_ReleaseGLTexturesByTexture(Texture &texture)
-{
-    foreach(TextureVariant *variant, texture.variants())
-    {
-        releaseVariantGLTexture(*variant);
-    }
-}
-
-void GL_ReleaseTexturesByScheme(char const *schemeName)
-{
-    if(!schemeName) return;
-    PathTreeIterator<TextureScheme::Index> iter(App_Textures().scheme(schemeName).index().leafNodes());
-    while(iter.hasNext())
-    {
-        TextureManifest &manifest = iter.next();
-        if(manifest.hasTexture())
-        {
-            GL_ReleaseGLTexturesByTexture(manifest.texture());
-        }
-    }
-}
-
-void GL_ReleaseVariantTexturesBySpec(Texture &texture, texturevariantspecification_t &spec)
-{
-    foreach(TextureVariant *variant, texture.variants())
-    {
-        if(releaseVariantGLTexture(*variant, &spec)) break;
-    }
-}
-
-void GL_ReleaseVariantTexture(TextureVariant &tex)
-{
-    releaseVariantGLTexture(tex);
 }
 
 void GL_InitTextureContent(texturecontent_t *content)

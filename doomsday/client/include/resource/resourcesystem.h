@@ -25,6 +25,7 @@
 #include "resource/colorpalette.h"
 #ifdef __CLIENT__
 #  include "Fonts"
+#  include "MaterialVariantSpec"
 #endif
 #include "Materials"
 #include "resource/sprite.h"
@@ -164,6 +165,8 @@ public:
      */
     de::Textures &textures();
 
+    patchid_t declarePatch(de::String encodedName);
+
     void initSystemTextures();
 
     /**
@@ -180,9 +183,47 @@ public:
     de::Texture *defineTexture(de::String schemeName, de::Uri const &resourceUri,
                                de::Vector2i const &dimensions = de::Vector2i());
 
-    patchid_t declarePatch(de::String encodedName);
-
 #ifdef __CLIENT__
+    /// Release all textures in all schemes.
+    void releaseAllGLTextures();
+
+    /// Release all textures flagged 'runtime'.
+    void releaseAllRuntimeGLTextures();
+
+    /// Release all textures flagged 'system'.
+    void releaseAllSystemGLTextures();
+
+    /**
+     * Release all textures in the identified scheme.
+     *
+     * @param schemeName  Symbolic name of the texture scheme to process.
+     */
+    void releaseGLTexturesByScheme(char const *schemeName);
+
+    /**
+     * Release all GL textures prepared using @a colorPalette.
+     */
+    void releaseGLTexturesFor(ColorPalette const &colorPalette);
+
+    /**
+     * Release all textures associated with the specified variant @a texture.
+     */
+    void releaseGLTexturesFor(de::TextureVariant &texture);
+
+    /**
+     * Release all textures associated with the specified @a texture.
+     * @param texture  Logical Texture. Can be @c NULL, in which case this is a null-op.
+     */
+    void releaseGLTexturesFor(de::Texture &texture);
+
+    /**
+     * Release all variants of @a tex which match @a spec.
+     *
+     * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
+     * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
+     */
+    void releaseGLTexturesFor(de::Texture &texture, texturevariantspecification_t &spec);
+
     /**
      * Provides access to the Fonts collection.
      */
@@ -196,6 +237,8 @@ public:
 
     AbstractFont *createFontFromDef(ded_compositefont_t const &def);
     AbstractFont *createFontFromFile(de::Uri const &uri, de::String filePath);
+
+    void releaseFontGLTexturesByScheme(char const *schemeName);
 
 #endif
 
@@ -296,6 +339,17 @@ public:
      * Cancel all queued cache tasks.
      */
     void purgeCacheQueue();
+
+    /**
+     * Add a variant of @a material to the cache queue for deferred preparation.
+     *
+     * @param material      Base material from which to derive a context variant.
+     * @param spec          Specification for the derivation of @a material.
+     * @param cacheGroups   @c true= variants for all materials in any applicable
+     *                      groups are desired; otherwise just specified material.
+     */
+    void cacheMaterial(Material &material, de::MaterialVariantSpec const &spec,
+        bool cacheGroups = true);
 
 #endif // __CLIENT__
 

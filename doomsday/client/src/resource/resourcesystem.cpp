@@ -20,6 +20,10 @@
 #include "de_platform.h"
 #include "resource/resourcesystem.h"
 
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
+
 #include "resource/colorpalette.h"
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
@@ -38,6 +42,8 @@
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
+#  include "render/rend_particle.h" // Rend_ParticleReleaseSystemTextures
+#  include "sys_system.h" // novideo
 
 // For smart caching logics:
 #  include "network/net_demo.h" // playback
@@ -602,23 +608,10 @@ DENG2_PIMPL(ResourceSystem)
     }
 
 #ifdef __CLIENT__
-    /// Release all GL textures prepared using @a colorPalette.
-    void releaseGLTexturesFor(ColorPalette const &colorPalette)
-    {
-        foreach(Texture *texture, textures.all())
-        {
-            colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(Texture::ColorPaletteAnalysis));
-            if(cp && cp->paletteId == colorpaletteid_t(colorPalette.id()))
-            {
-                GL_ReleaseGLTexturesByTexture(*texture);
-            }
-        }
-    }
-
     /// Observes ColorPalette ColorTableChange
     void colorPaletteColorTableChanged(ColorPalette &colorPalette)
     {
-        releaseGLTexturesFor(colorPalette);
+        self.releaseGLTexturesFor(colorPalette);
     }
 #endif
 };
@@ -1148,6 +1141,122 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
 }
 
 #ifdef __CLIENT__
+
+static int releaseGLTexture(TextureVariant &variant, texturevariantspecification_t *spec = 0)
+{
+    if(!spec || spec == &variant.spec())
+    {
+        variant.release();
+        if(spec) return true; // We're done.
+    }
+    return 0; // Continue iteration.
+}
+
+void ResourceSystem::releaseAllSystemGLTextures()
+{
+    if(novideo) return;
+
+    LOG_VERBOSE("Releasing System textures...");
+
+    // The rendering lists contain persistent references to texture names.
+    // Which, obviously, can't persist any longer...
+    ClientApp::renderSystem().clearDrawLists();
+
+    GL_DeleteAllLightingSystemTextures();
+
+    releaseGLTexturesByScheme("System");
+    Rend_ParticleReleaseSystemTextures();
+    releaseFontGLTexturesByScheme("System");
+
+    GL_PruneTextureVariantSpecifications();
+}
+
+void ResourceSystem::releaseAllRuntimeGLTextures()
+{
+    if(novideo) return;
+
+    LOG_VERBOSE("Releasing Runtime textures...");
+
+    // The rendering lists contain persistent references to texture names.
+    // Which, obviously, can't persist any longer...
+    ClientApp::renderSystem().clearDrawLists();
+
+    // texture-wrapped GL textures; textures, flats, sprites...
+    releaseGLTexturesByScheme("Flats");
+    releaseGLTexturesByScheme("Textures");
+    releaseGLTexturesByScheme("Patches");
+    releaseGLTexturesByScheme("Sprites");
+    releaseGLTexturesByScheme("Details");
+    releaseGLTexturesByScheme("Reflections");
+    releaseGLTexturesByScheme("Masks");
+    releaseGLTexturesByScheme("ModelSkins");
+    releaseGLTexturesByScheme("ModelReflectionSkins");
+    releaseGLTexturesByScheme("Lightmaps");
+    releaseGLTexturesByScheme("Flaremaps");
+    GL_ReleaseTexturesForRawImages();
+
+    Rend_ParticleReleaseExtraTextures();
+    releaseFontGLTexturesByScheme("Game");
+
+    GL_PruneTextureVariantSpecifications();
+}
+
+void ResourceSystem::releaseAllGLTextures()
+{
+    releaseAllRuntimeGLTextures();
+    releaseAllSystemGLTextures();
+}
+
+void ResourceSystem::releaseGLTexturesFor(ColorPalette const &colorPalette)
+{
+    foreach(Texture *texture, d->textures.all())
+    {
+        colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(Texture::ColorPaletteAnalysis));
+        if(cp && cp->paletteId == colorpaletteid_t(colorPalette.id()))
+        {
+            releaseGLTexturesFor(*texture);
+        }
+    }
+}
+
+void ResourceSystem::releaseGLTexturesFor(TextureVariant &tex)
+{
+    releaseGLTexture(tex);
+}
+
+void ResourceSystem::releaseGLTexturesFor(Texture &texture)
+{
+    foreach(TextureVariant *variant, texture.variants())
+    {
+        releaseGLTexture(*variant);
+    }
+}
+
+void ResourceSystem::releaseGLTexturesFor(Texture &texture, texturevariantspecification_t &spec)
+{
+    foreach(TextureVariant *variant, texture.variants())
+    {
+        if(releaseGLTexture(*variant, &spec))
+        {
+            break;
+        }
+    }
+}
+
+void ResourceSystem::releaseGLTexturesByScheme(char const *schemeName)
+{
+    if(!schemeName) return;
+    PathTreeIterator<TextureScheme::Index> iter(d->textures.scheme(schemeName).index().leafNodes());
+    while(iter.hasNext())
+    {
+        TextureManifest &manifest = iter.next();
+        if(manifest.hasTexture())
+        {
+            releaseGLTexturesFor(manifest.texture());
+        }
+    }
+}
+
 Fonts &ResourceSystem::fonts()
 {
     return d->fonts;
@@ -1278,6 +1387,20 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
     }
 
     return 0;
+}
+
+void ResourceSystem::releaseFontGLTexturesByScheme(char const *schemeName)
+{
+    if(!schemeName) return;
+    PathTreeIterator<FontScheme::Index> iter(d->fonts.scheme(schemeName).index().leafNodes());
+    while(iter.hasNext())
+    {
+        FontManifest &manifest = iter.next();
+        if(manifest.hasResource())
+        {
+            manifest.resource().glDeinit();
+        }
+    }
 }
 
 #endif // __CLIENT__
@@ -1534,7 +1657,7 @@ void ResourceSystem::cacheSpriteSet(spritenum_t spriteId, MaterialVariantSpec co
         {
             if(Material *material = viewAngle.material)
             {
-                d->materials.cache(*material, spec);
+                cacheMaterial(*material, spec);
             }
         }
     }
@@ -1681,7 +1804,6 @@ void ResourceSystem::cacheForCurrentMap()
     // Don't precache when playing a demo (why not? -ds).
     if(playback) return;
 
-    /// @todo fixme: Do not assume the current map.
     Map &map = App_World().map();
 
     if(precacheMapMaterials)
@@ -1695,13 +1817,13 @@ void ResourceSystem::cacheForCurrentMap()
             if(!side.hasSections()) continue;
 
             if(side.middle().hasMaterial())
-                d->materials.cache(side.middle().material(), spec);
+                cacheMaterial(side.middle().material(), spec);
 
             if(side.top().hasMaterial())
-                d->materials.cache(side.top().material(), spec);
+                cacheMaterial(side.top().material(), spec);
 
             if(side.bottom().hasMaterial())
-                d->materials.cache(side.bottom().material(), spec);
+                cacheMaterial(side.bottom().material(), spec);
         }
 
         foreach(Sector *sector, map.sectors())
@@ -1712,7 +1834,7 @@ void ResourceSystem::cacheForCurrentMap()
             foreach(Plane *plane, sector->planes())
             {
                 if(plane->surface().hasMaterial())
-                    d->materials.cache(plane->surface().material(), spec);
+                    cacheMaterial(plane->surface().material(), spec);
             }
         }
     }
@@ -1753,6 +1875,12 @@ void ResourceSystem::processCacheQueue()
 void ResourceSystem::purgeCacheQueue()
 {
     d->materials.purgeCacheQueue();
+}
+
+void ResourceSystem::cacheMaterial(Material &material, de::MaterialVariantSpec const &spec,
+    bool cacheGroups)
+{
+    d->materials.cache(material, spec, cacheGroups);
 }
 
 #endif // __CLIENT__
