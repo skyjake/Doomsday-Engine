@@ -3399,12 +3399,12 @@ static void drawMasked()
 
             case VSPR_MASKED_WALL:
                 // A masked wall is a specialized sprite.
-                Rend_DrawMaskedWall(&spr->data.wall);
+                Rend_DrawMaskedWall(spr->data.wall);
                 break;
 
             case VSPR_SPRITE:
                 // Render an old fashioned sprite, ah the nostalgia...
-                Rend_DrawSprite(&spr->data.sprite);
+                Rend_DrawSprite(spr->data.sprite);
                 break;
 
             case VSPR_MODEL:

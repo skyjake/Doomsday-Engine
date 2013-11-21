@@ -1203,7 +1203,7 @@ static void drawPlayerSprites()
             rendpspriteparams_t params;
 
             setupPSpriteParams(&params, spr);
-            Rend_DrawPSprite(&params);
+            Rend_DrawPSprite(params);
         }
     }
 

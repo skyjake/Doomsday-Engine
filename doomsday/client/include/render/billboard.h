@@ -25,9 +25,7 @@
 #include "render/vissprite.h"
 #include "MaterialVariantSpec"
 
-/// @addtogroup render
-///@{
-
+/// @ingroup render
 struct rendpspriteparams_t
 {
     float pos[2]; // {X, Y} Screen-space position.
@@ -41,6 +39,8 @@ struct rendpspriteparams_t
     uint vLightListIdx;
 };
 
+/// @addtogroup render
+/// @{
 DENG_EXTERN_C int alwaysAlign;
 DENG_EXTERN_C int spriteLight, useSpriteAlpha, useSpriteBlend;
 DENG_EXTERN_C int noSpriteZWrite;
@@ -54,12 +54,14 @@ DENG_EXTERN_C void Rend_SpriteRegister();
  * with sprites, so no artifacts appear when sprites are seen behind
  * masked walls.
  */
-void Rend_DrawMaskedWall(rendmaskedwallparams_t const *parms);
+void Rend_DrawMaskedWall(rendmaskedwallparams_t const &parms);
 
-void Rend_DrawPSprite(rendpspriteparams_t const *parms);
+void Rend_DrawPSprite(rendpspriteparams_t const &parms);
 
-void Rend_DrawSprite(rendspriteparams_t const *parms);
+void Rend_DrawSprite(rendspriteparams_t const &parms);
 
 de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
+
+/// @}
 
 #endif // DENG_CLIENT_RENDER_BILLBOARD_H
