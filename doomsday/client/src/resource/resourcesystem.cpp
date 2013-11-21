@@ -679,7 +679,7 @@ bool ResourceSystem::hasSprite(spritenum_t spriteId, int frame)
     return false;
 }
 
-ResourceSystem::SpriteSet &ResourceSystem::spriteSet(spritenum_t spriteId)
+ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t spriteId)
 {
     if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
     {
@@ -1451,6 +1451,7 @@ void ResourceSystem::initSprites()
             foreach(SpriteFrameDef const &frameDef, def.frames)
             {
                 int frame = frameDef.frame[0] - 1;
+                DENG2_ASSERT(frame >= 0);
                 if(frame < 128)
                 {
                     sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[0], false);
@@ -1463,6 +1464,7 @@ void ResourceSystem::initSprites()
                 if(frameDef.frame[1])
                 {
                     frame = frameDef.frame[1] - 1;
+                    DENG2_ASSERT(frame >= 0);
                     if(frame < 128)
                     {
                         sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[1], true);

@@ -138,7 +138,7 @@ public:
      * @see hasSprite()
      */
     inline Sprite *spritePtr(spritenum_t spriteId, int frame) {
-        return hasSprite(spriteId, frame)? spriteSet(spriteId)[frame] : 0;
+        return hasSprite(spriteId, frame)? spriteSet(spriteId).at(frame) : 0;
     }
 
     /**
@@ -147,7 +147,7 @@ public:
      * @param spriteId  Unique identifier of the sprite set.
      * @return  The identified SpriteSet.
      */
-    SpriteSet &spriteSet(spritenum_t spriteId);
+    SpriteSet const &spriteSet(spritenum_t spriteId);
 
 #ifdef __CLIENT__
     /**
