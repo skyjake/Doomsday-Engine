@@ -269,6 +269,10 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean 
  */
 int GL_ChooseSmartFilter(int width, int height, int flags);
 
+GLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
+GLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
+                               int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
+
 /**
  * in/out format:
  * 1 = palette indices

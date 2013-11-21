@@ -46,7 +46,7 @@
  */
 typedef struct texturecontent_s {
     dgltexformat_t format;
-    DGLuint name;
+    GLuint name;
     uint8_t const *pixels;
     colorpaletteid_t paletteId;
     int width;
@@ -81,7 +81,7 @@ void GL_DestroyTextureContent(texturecontent_t *content);
  * @param textureManifest  Manifest for the logical texture being prepared.
  *                      (for informational purposes, i.e., logging)
  */
-void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
+void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
     image_t &image, texturevariantspecification_t const &spec,
     de::TextureManifest const &textureManifest);
 

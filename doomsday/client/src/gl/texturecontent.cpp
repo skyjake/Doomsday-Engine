@@ -24,9 +24,12 @@
 #include "de_console.h"
 #include "dd_def.h" // texGamma
 #include "dd_main.h" // App_ResourceSystem()
+
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
-#include "gl/gl_texmanager.h" // misc global vars awaiting new home
+
+#include "render/rend_main.h" // misc global vars awaiting new home
+
 #include <de/memory.h>
 #include <cstring>
 
@@ -300,7 +303,7 @@ static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
     return DGL_LUMINANCE;
 }
 
-void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
+void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
     image_t &image, texturevariantspecification_t const &spec,
     TextureManifest const &textureManifest)
 {

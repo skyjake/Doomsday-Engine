@@ -43,6 +43,7 @@
 #include "resource/hq2x.h"
 
 #include <de/memory.h>
+#include <de/memoryzone.h>
 #include <cstring>
 
 using namespace de;
@@ -76,7 +77,7 @@ static int hashDetailVariantSpecification(detailvariantspecification_t const &sp
 static void unlinkVariantSpecification(texturevariantspecification_t &spec)
 {
     variantspecificationlist_t **listHead;
-    DENG_ASSERT(initedOk);
+    DENG2_ASSERT(initedOk);
 
     // Select list head according to variant specification type.
     switch(spec.type)
@@ -86,10 +87,6 @@ static void unlinkVariantSpecification(texturevariantspecification_t &spec)
         int hash = hashDetailVariantSpecification(TS_DETAIL(spec));
         listHead = &detailVariantSpecs[hash];
         break; }
-
-    default:
-        Con_Error("unlinkVariantSpecification: Invalid spec type %i.", spec.type);
-        exit(1); // Unreachable.
     }
 
     if(*listHead)
@@ -132,13 +129,11 @@ static texturevariantspecification_t *copyVariantSpecification(
     texturevariantspecification_t const &tpl)
 {
     texturevariantspecification_t *spec = (texturevariantspecification_t *) M_Malloc(sizeof(*spec));
-    if(!spec) Con_Error("Textures::copyVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecification.", (unsigned long) sizeof(*spec));
 
     std::memcpy(spec, &tpl, sizeof(texturevariantspecification_t));
     if(TS_GENERAL(tpl).flags & TSF_HAS_COLORPALETTE_XLAT)
     {
         colorpalettetranslationspecification_t *cpt = (colorpalettetranslationspecification_t *) M_Malloc(sizeof(*cpt));
-        if(!cpt) Con_Error("Textures::copyVariantSpecification: Failed on allocation of %lu bytes for new ColorPaletteTranslationSpecification.", (unsigned long) sizeof(*cpt));
 
         std::memcpy(cpt, TS_GENERAL(tpl).translated, sizeof(colorpalettetranslationspecification_t));
         TS_GENERAL(*spec).translated = cpt;
@@ -150,7 +145,6 @@ static texturevariantspecification_t *copyDetailVariantSpecification(
     texturevariantspecification_t const &tpl)
 {
     texturevariantspecification_t *spec = (texturevariantspecification_t *) M_Malloc(sizeof(*spec));
-    if(!spec) Con_Error("Textures::copyDetailVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecification.", (unsigned long) sizeof(*spec));
 
     std::memcpy(spec, &tpl, sizeof(texturevariantspecification_t));
     return spec;
@@ -159,15 +153,17 @@ static texturevariantspecification_t *copyDetailVariantSpecification(
 static colorpalettetranslationspecification_t *applyColorPaletteTranslationSpecification(
     colorpalettetranslationspecification_t *spec, int tClass, int tMap)
 {
-    DENG_ASSERT(initedOk && spec);
+    DENG2_ASSERT(initedOk && spec);
     LOG_AS("applyColorPaletteTranslationSpecification");
 
-    spec->tClass = MAX_OF(0, tClass);
-    spec->tMap   = MAX_OF(0, tMap);
+    spec->tClass = de::max(0, tClass);
+    spec->tMap   = de::max(0, tMap);
 
-#if _DEBUG
+#ifdef DENG_DEBUG
     if(0 == tClass && 0 == tMap)
+    {
         LOG_WARNING("Applied unnecessary zero-translation (tClass:0 tMap:0).");
+    }
 #endif
 
     return spec;
@@ -179,7 +175,7 @@ static variantspecification_t &applyVariantSpecification(
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter, boolean mipmapped,
     boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
-    DENG_ASSERT(initedOk && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
+    DENG2_ASSERT(initedOk && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
 
     flags &= ~TSF_INTERNAL_MASK;
 
@@ -221,11 +217,9 @@ static texturevariantspecification_t &linkVariantSpecification(
     texturevariantspecificationtype_t type, texturevariantspecification_t &spec)
 {
     texturevariantspecificationlist_node_t *node;
-    DENG_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type));
+    DENG2_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type));
 
     node = (texturevariantspecificationlist_node_t *) M_Malloc(sizeof(*node));
-    if(!node) Con_Error("Textures::linkVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecificationListNode.", (unsigned long) sizeof(*node));
-
     node->spec = &spec;
     switch(type)
     {
@@ -239,6 +233,7 @@ static texturevariantspecification_t &linkVariantSpecification(
         detailVariantSpecs[hash] = (variantspecificationlist_t *)node;
         break; }
     }
+
     return spec;
 }
 
@@ -246,8 +241,8 @@ static texturevariantspecification_t *findVariantSpecification(
     texturevariantspecificationtype_t type, texturevariantspecification_t const &tpl,
     bool canCreate)
 {
-    texturevariantspecificationlist_node_t *node;
-    DENG_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type));
+    texturevariantspecificationlist_node_t *node = 0;
+    DENG2_ASSERT(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type));
 
     // Select list head according to variant specification type.
     switch(type)
@@ -257,28 +252,28 @@ static texturevariantspecification_t *findVariantSpecification(
         int hash = hashDetailVariantSpecification(TS_DETAIL(tpl));
         node = detailVariantSpecs[hash];
         break; }
-
-    default:
-        Con_Error("findVariantSpecification: Invalid spec type %i.", type);
-        exit(1); // Unreachable.
     }
 
     // Do we already have a concrete version of the template specification?
     for(; node; node = node->next)
     {
         if(TextureVariantSpec_Compare(node->spec, &tpl))
+        {
             return node->spec;
+        }
     }
 
     // Not found, can we create?
     if(canCreate)
-    switch(type)
     {
-    case TST_GENERAL:   return &linkVariantSpecification(type, *copyVariantSpecification(tpl));
-    case TST_DETAIL:    return &linkVariantSpecification(type, *copyDetailVariantSpecification(tpl));
+        switch(type)
+        {
+        case TST_GENERAL:   return &linkVariantSpecification(type, *copyVariantSpecification(tpl));
+        case TST_DETAIL:    return &linkVariantSpecification(type, *copyDetailVariantSpecification(tpl));
+        }
     }
 
-    return NULL;
+    return 0;
 }
 
 static texturevariantspecification_t *getVariantSpecificationForContext(
@@ -286,12 +281,14 @@ static texturevariantspecification_t *getVariantSpecificationForContext(
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
+    DENG2_ASSERT(initedOk);
+
     static texturevariantspecification_t tpl;
     static colorpalettetranslationspecification_t cptTpl;
-    boolean haveCpt = false;
-    DENG_ASSERT(initedOk);
 
     tpl.type = TST_GENERAL;
+
+    bool haveCpt = false;
     if(0 != tClass || 0 != tMap)
     {
         // A color palette translation spec is required.
@@ -310,8 +307,9 @@ static texturevariantspecification_t *getVariantSpecificationForContext(
 static texturevariantspecification_t *getDetailVariantSpecificationForContext(
     float contrast)
 {
+    DENG2_ASSERT(initedOk);
+
     static texturevariantspecification_t tpl;
-    DENG_ASSERT(initedOk);
 
     tpl.type = TST_DETAIL;
     applyDetailVariantSpecification(TS_DETAIL(tpl), contrast);
@@ -320,9 +318,9 @@ static texturevariantspecification_t *getDetailVariantSpecificationForContext(
 
 static void emptyVariantSpecificationList(variantspecificationlist_t *list)
 {
-    texturevariantspecificationlist_node_t* node = (texturevariantspecificationlist_node_t *) list;
-    DENG_ASSERT(initedOk);
+    DENG2_ASSERT(initedOk);
 
+    texturevariantspecificationlist_node_t *node = (texturevariantspecificationlist_node_t *) list;
     while(node)
     {
         texturevariantspecificationlist_node_t *next = node->next;
@@ -365,7 +363,7 @@ static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t *li
 
 static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t specType)
 {
-    DENG_ASSERT(initedOk);
+    DENG2_ASSERT(initedOk);
     switch(specType)
     {
     case TST_GENERAL: return pruneUnusedVariantSpecificationsInList(variantSpecs);
@@ -376,16 +374,12 @@ static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t sp
             numPruned += pruneUnusedVariantSpecificationsInList(detailVariantSpecs[i]);
         }
         return numPruned; }
-
-    default:
-        Con_Error("Textures::pruneUnusedVariantSpecifications: Invalid variant spec type %i.", (int) specType);
-        exit(1); // Unreachable.
     }
 }
 
 static void destroyVariantSpecifications()
 {
-    DENG_ASSERT(initedOk);
+    DENG2_ASSERT(initedOk);
 
     emptyVariantSpecificationList(variantSpecs); variantSpecs = 0;
     for(int i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
@@ -475,25 +469,40 @@ void GL_TexReset()
     }
 }
 
+void GL_PruneTextureVariantSpecifications()
+{
+    if(!initedOk) return;
+    if(Sys_IsShuttingDown()) return;
+
+    int numPruned = 0;
+    numPruned += pruneUnusedVariantSpecifications(TST_GENERAL);
+    numPruned += pruneUnusedVariantSpecifications(TST_DETAIL);
+
+#ifdef DENG_DEBUG
+    LOG_VERBOSE("Pruned %i unused texture variant %s.")
+        << numPruned << (numPruned == 1? "specification" : "specifications");
+#endif
+}
+
 texturevariantspecification_t &GL_TextureVariantSpec(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
-    if(!initedOk) Con_Error("GL_TextureVariantSpec: GL texture manager not yet initialized.");
+    DENG2_ASSERT(initedOk);
 
-    texturevariantspecification_t *tvs
-        = getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS, wrapT,
-                                            minFilter, magFilter, anisoFilter,
-                                            mipmapped, gammaCorrection, noStretch, toAlpha);
+    texturevariantspecification_t *tvs =
+        getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS, wrapT,
+                                          minFilter, magFilter, anisoFilter,
+                                          mipmapped, gammaCorrection, noStretch, toAlpha);
 
 #ifdef DENG_DEBUG
     if(tClass || tMap)
     {
-        DENG_ASSERT(tvs->data.variant.flags & TSF_HAS_COLORPALETTE_XLAT);
-        DENG_ASSERT(tvs->data.variant.translated);
-        DENG_ASSERT(tvs->data.variant.translated->tClass == tClass);
-        DENG_ASSERT(tvs->data.variant.translated->tMap == tMap);
+        DENG2_ASSERT(tvs->data.variant.flags & TSF_HAS_COLORPALETTE_XLAT);
+        DENG2_ASSERT(tvs->data.variant.translated);
+        DENG2_ASSERT(tvs->data.variant.translated->tClass == tClass);
+        DENG2_ASSERT(tvs->data.variant.translated->tMap == tMap);
     }
 #endif
 
@@ -502,7 +511,7 @@ texturevariantspecification_t &GL_TextureVariantSpec(
 
 texturevariantspecification_t &GL_DetailTextureSpec(float contrast)
 {
-    if(!initedOk) Con_Error("GL_DetailTextureVariantSpecificationForContext: GL texture manager not yet initialized.");
+    DENG2_ASSERT(initedOk);
     return *getDetailVariantSpecificationForContext(contrast);
 }
 
@@ -553,21 +562,7 @@ void GL_ReleaseAllFlareTextures()
     zap(sysFlareTextures);
 }
 
-void GL_PruneTextureVariantSpecifications()
-{
-    if(!initedOk || Sys_IsShuttingDown()) return;
-
-    int numPruned = 0;
-    numPruned += pruneUnusedVariantSpecifications(TST_GENERAL);
-    numPruned += pruneUnusedVariantSpecifications(TST_DETAIL);
-
-#ifdef DENG_DEBUG
-    LOG_VERBOSE("Pruned %i unused texture variant %s.")
-        << numPruned << (numPruned == 1? "specification" : "specifications");
-#endif
-}
-
-DGLuint GL_PrepareLSTexture(lightingtexid_t which)
+GLuint GL_PrepareLSTexture(lightingtexid_t which)
 {
     if(novideo) return 0;
     if(which < 0 || which >= NUM_LIGHTING_TEXTURES) return 0;
@@ -608,11 +603,11 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
         Image_Destroy(&image);
     }
 
-    DENG_ASSERT(lightingTextures[which] != 0);
+    DENG2_ASSERT(lightingTextures[which] != 0);
     return lightingTextures[which];
 }
 
-DGLuint GL_PrepareSysFlaremap(flaretexid_t which)
+GLuint GL_PrepareSysFlaremap(flaretexid_t which)
 {
     if(novideo) return 0;
     if(which < 0 || which >= NUM_SYSFLARE_TEXTURES) return 0;
@@ -649,11 +644,11 @@ DGLuint GL_PrepareSysFlaremap(flaretexid_t which)
         Image_Destroy(&image);
     }
 
-    DENG_ASSERT(sysFlareTextures[which] != 0);
+    DENG2_ASSERT(sysFlareTextures[which] != 0);
     return sysFlareTextures[which];
 }
 
-DGLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
+GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
 {
     if(resourceUri.path().length() == 1)
     {
@@ -732,7 +727,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
     return res::None;
 }
 
-DGLuint GL_PrepareRawTexture(rawtex_t &raw)
+GLuint GL_PrepareRawTexture(rawtex_t &raw)
 {
     if(raw.lumpNum < 0 || raw.lumpNum >= F_LumpCount()) return 0;
 
@@ -800,60 +795,4 @@ void GL_ReleaseTexturesForRawImages()
         }
     }
     Z_Free(rawTexs);
-}
-
-static void uploadContentUnmanaged(texturecontent_t const &content)
-{
-    LOG_AS("uploadContentUnmanaged");
-    if(novideo) return;
-
-    gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
-    if(uploadMethod == gl::Immediate)
-    {
-        LOG_DEBUG("Uploading texture (%i:%ix%i) while not busy! Should be precached in busy mode?")
-                << content.name << content.width << content.height;
-    }
-
-    GL_UploadTextureContent(content, uploadMethod);
-}
-
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-    uint8_t const *pixels, int flags)
-{
-    texturecontent_t c;
-
-    GL_InitTextureContent(&c);
-    c.name = GL_GetReservedTextureName();
-    c.format = format;
-    c.width = width;
-    c.height = height;
-    c.pixels = pixels;
-    c.flags = flags;
-
-    uploadContentUnmanaged(c);
-    return c.name;
-}
-
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-    uint8_t const *pixels, int flags, int grayMipmap, int minFilter, int magFilter,
-    int anisoFilter, int wrapS, int wrapT)
-{
-    texturecontent_t c;
-
-    GL_InitTextureContent(&c);
-    c.name = GL_GetReservedTextureName();
-    c.format = format;
-    c.width = width;
-    c.height = height;
-    c.pixels = pixels;
-    c.flags = flags;
-    c.grayMipmap = grayMipmap;
-    c.minFilter = minFilter;
-    c.magFilter = magFilter;
-    c.anisoFilter = anisoFilter;
-    c.wrap[0] = wrapS;
-    c.wrap[1] = wrapT;
-
-    uploadContentUnmanaged(c);
-    return c.name;
 }

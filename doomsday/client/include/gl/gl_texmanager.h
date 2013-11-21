@@ -103,16 +103,16 @@ texturevariantspecification_t &GL_DetailTextureSpec(float contrast);
 void GL_LoadLightingSystemTextures();
 void GL_ReleaseAllLightingSystemTextures();
 
-DGLuint GL_PrepareLSTexture(lightingtexid_t which);
+GLuint GL_PrepareLSTexture(lightingtexid_t which);
 
 void GL_LoadFlareTextures();
 void GL_ReleaseAllFlareTextures();
 
-DGLuint GL_PrepareFlaremap(de::Uri const &resourceUri);
-DGLuint GL_PrepareSysFlaremap(flaretexid_t which);
+GLuint GL_PrepareFlaremap(de::Uri const &resourceUri);
+GLuint GL_PrepareSysFlaremap(flaretexid_t which);
 
 
-DGLuint GL_PrepareRawTexture(rawtex_t &rawTex);
+GLuint GL_PrepareRawTexture(rawtex_t &rawTex);
 
 /// Release all textures used with 'Raw Images'.
 void GL_ReleaseTexturesForRawImages();
@@ -122,9 +122,5 @@ void GL_ReleaseTexturesForRawImages();
  */
 void GL_SetRawTexturesMinFilter(int minFilter);
 
-
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
-                                int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
 
 #endif // DENG_CLIENT_GL_TEXMANAGER_H

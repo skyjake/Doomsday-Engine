@@ -878,6 +878,62 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
+static void uploadContentUnmanaged(texturecontent_t const &content)
+{
+    LOG_AS("uploadContentUnmanaged");
+    if(novideo) return;
+
+    gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
+    if(uploadMethod == gl::Immediate)
+    {
+        LOG_DEBUG("Uploading texture (%i:%ix%i) while not busy! Should be precached in busy mode?")
+                << content.name << content.width << content.height;
+    }
+
+    GL_UploadTextureContent(content, uploadMethod);
+}
+
+GLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
+    uint8_t const *pixels, int flags)
+{
+    texturecontent_t c;
+
+    GL_InitTextureContent(&c);
+    c.name = GL_GetReservedTextureName();
+    c.format = format;
+    c.width = width;
+    c.height = height;
+    c.pixels = pixels;
+    c.flags = flags;
+
+    uploadContentUnmanaged(c);
+    return c.name;
+}
+
+GLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
+    uint8_t const *pixels, int flags, int grayMipmap, int minFilter, int magFilter,
+    int anisoFilter, int wrapS, int wrapT)
+{
+    texturecontent_t c;
+
+    GL_InitTextureContent(&c);
+    c.name = GL_GetReservedTextureName();
+    c.format = format;
+    c.width = width;
+    c.height = height;
+    c.pixels = pixels;
+    c.flags = flags;
+    c.grayMipmap = grayMipmap;
+    c.minFilter = minFilter;
+    c.magFilter = magFilter;
+    c.anisoFilter = anisoFilter;
+    c.wrap[0] = wrapS;
+    c.wrap[1] = wrapT;
+
+    uploadContentUnmanaged(c);
+    return c.name;
+}
+
 void GL_SetMaterialUI2(Material *mat, gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     if(!mat) return; // @todo we need a "NULL material".
