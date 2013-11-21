@@ -18,19 +18,54 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Log>
-#include <de/mathutil.h> // M_CeilPow
 #include "de_base.h"
+#include "resource/texture.h"
+
 #include "r_util.h"
 #include "gl/gl_defer.h"
 #include "gl/gl_main.h"
-#include "gl/gl_texmanager.h" // GL_LoadSourceImage
 #include "gl/gl_tex.h"
+#include "gl/gl_texmanager.h" // misc global vars awaiting new home
 #include "resource/colorpalettes.h"
-
-#include "resource/texture.h"
+#include "resource/image.h" // GL_LoadSourceImage
+#include <de/Log>
+#include <de/mathutil.h> // M_CeilPow
 
 using namespace de;
+
+GLint variantspecification_t::glMinFilter() const
+{
+    if(minFilter >= 0) // Constant logical value.
+    {
+        return (mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + minFilter;
+    }
+    // "No class" preference.
+    return mipmapped? glmode[mipmapping] : GL_LINEAR;
+}
+
+GLint variantspecification_t::glMagFilter() const
+{
+    if(magFilter >= 0) // Constant logical value.
+    {
+        return GL_NEAREST + magFilter;
+    }
+
+    // Preference for texture class id.
+    switch(abs(magFilter)-1)
+    {
+    case 1: // Sprite class.
+        return filterSprites? GL_LINEAR : GL_NEAREST;
+    case 2: // UI class.
+        return filterUI? GL_LINEAR : GL_NEAREST;
+    default: // "No class" preference.
+        return glmode[texMagMode];
+    }
+}
+
+int variantspecification_t::logicalAnisoLevel() const
+{
+    return anisoFilter < 0? texAniso : anisoFilter;
+}
 
 /**
  * @todo Magnification, Anisotropic filter level and GL texture wrap modes
@@ -95,7 +130,7 @@ DENG2_PIMPL(Texture::Variant)
     Texture::Variant::Flags flags;
 
     /// Source of this texture.
-    TexSource texSource;
+    res::Source texSource;
 
     /// Name of the associated GL texture object.
     uint glTexName;
@@ -108,7 +143,7 @@ DENG2_PIMPL(Texture::Variant)
       texture(generalCase),
       spec(spec),
       flags(0),
-      texSource(TEXS_NONE),
+      texSource(res::None),
       glTexName(0),
       s(0),
       t(0)
@@ -333,8 +368,8 @@ uint Texture::Variant::prepare()
 
     // Load the source image data.
     image_t image;
-    TexSource source = GL_LoadSourceImage(image, d->texture, d->spec);
-    if(source == TEXS_NONE)
+    res::Source source = GL_LoadSourceImage(image, d->texture, d->spec);
+    if(source == res::None)
         return 0;
 
     // Do we need to perform any image pixel data analyses?
@@ -429,15 +464,15 @@ texturevariantspecification_t const &Texture::Variant::spec() const
     return d->spec;
 }
 
-TexSource Texture::Variant::source() const
+res::Source Texture::Variant::source() const
 {
     return d->texSource;
 }
 
 String Texture::Variant::sourceDescription() const
 {
-    if(d->texSource == TEXS_ORIGINAL) return "original";
-    if(d->texSource == TEXS_EXTERNAL) return "external";
+    if(d->texSource == res::Original) return "original";
+    if(d->texSource == res::External) return "external";
     return "none";
 }
 

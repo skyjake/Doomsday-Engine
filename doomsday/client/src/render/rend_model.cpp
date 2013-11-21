@@ -45,6 +45,8 @@
 #include "MaterialVariantSpec"
 #include "Texture"
 
+#include "render/rend_model.h"
+
 using namespace de;
 
 #define QATAN2(y,x)         qatan2(y,x)

@@ -72,7 +72,7 @@ void GL_DoUpdateTexParams();
 
 static int hashDetailVariantSpecification(detailvariantspecification_t const &spec);
 
-static TexSource loadRaw(image_t &image, rawtex_t const &raw);
+static res::Source loadRaw(image_t &image, rawtex_t const &raw);
 
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
@@ -133,40 +133,6 @@ void GL_TexRegister()
     C_CMD_FLAGS ("lowres",      "",     LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS ("mipmap",      "i",    MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS ("texreset",    "",     TexReset, CMDF_NO_DEDICATED);
-}
-
-GLint GL_MinFilterForVariantSpec(variantspecification_t const &spec)
-{
-    if(spec.minFilter >= 0) // Constant logical value.
-    {
-        return (spec.mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + spec.minFilter;
-    }
-    // "No class" preference.
-    return spec.mipmapped? glmode[mipmapping] : GL_LINEAR;
-}
-
-GLint GL_MagFilterForVariantSpec(variantspecification_t const &spec)
-{
-    if(spec.magFilter >= 0) // Constant logical value.
-    {
-        return GL_NEAREST + spec.magFilter;
-    }
-
-    // Preference for texture class id.
-    switch(abs(spec.magFilter)-1)
-    {
-    case 1: // Sprite class.
-        return filterSprites? GL_LINEAR : GL_NEAREST;
-    case 2: // UI class.
-        return filterUI? GL_LINEAR : GL_NEAREST;
-    default: // "No class" preference.
-        return glmode[texMagMode];
-    }
-}
-
-int GL_LogicalAnisoLevelForVariantSpec(variantspecification_t const &spec)
-{
-    return spec.anisoFilter < 0? texAniso : spec.anisoFilter;
 }
 
 static void unlinkVariantSpecification(texturevariantspecification_t &spec)
@@ -1576,7 +1542,7 @@ DGLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
     return 0;
 }
 
-static TexSource loadRaw(image_t &image, rawtex_t const &raw)
+static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 {
     // First try an external resource.
     try
@@ -1586,7 +1552,7 @@ static TexSource loadRaw(image_t &image, rawtex_t const &raw)
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
-        return GL_LoadImage(image, foundPath)? TEXS_EXTERNAL : TEXS_NONE;
+        return GL_LoadImage(image, foundPath)? res::External : res::None;
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore this error.
@@ -1599,7 +1565,7 @@ static TexSource loadRaw(image_t &image, rawtex_t const &raw)
             if(Image_LoadFromFile(&image, file))
             {
                 F_Delete(file);
-                return TEXS_ORIGINAL;
+                return res::Original;
             }
 
             // It must be an old-fashioned "raw" image.
@@ -1622,14 +1588,14 @@ static TexSource loadRaw(image_t &image, rawtex_t const &raw)
             image.pixelSize = 1;
 
             F_Delete(file);
-            return TEXS_ORIGINAL;
+            return res::Original;
 
 #undef RAW_HEIGHT
 #undef RAW_WIDTH
         }
     }
 
-    return TEXS_NONE;
+    return res::None;
 }
 
 DGLuint GL_PrepareRawTexture(rawtex_t &raw)
@@ -1641,7 +1607,7 @@ DGLuint GL_PrepareRawTexture(rawtex_t &raw)
         image_t image;
         Image_Init(&image);
 
-        if(loadRaw(image, raw) == TEXS_EXTERNAL)
+        if(loadRaw(image, raw) == res::External)
         {
             // Loaded an external raw texture.
             raw.tex = GL_NewTextureWithParams(image.pixelSize == 4? DGL_RGBA : DGL_RGB,
@@ -1883,9 +1849,9 @@ void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
         if(vspec.mipmapped)       c.flags |= TXCF_MIPMAP;
         if(noSmartFilter)         c.flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
 
-        c.magFilter   = GL_MagFilterForVariantSpec(vspec);
-        c.minFilter   = GL_MinFilterForVariantSpec(vspec);
-        c.anisoFilter = GL_LogicalAnisoLevelForVariantSpec(vspec);
+        c.magFilter   = vspec.glMagFilter();
+        c.minFilter   = vspec.glMinFilter();
+        c.anisoFilter = vspec.logicalAnisoLevel();
         c.wrap[0]     = vspec.wrapS;
         c.wrap[1]     = vspec.wrapT;
         break; }

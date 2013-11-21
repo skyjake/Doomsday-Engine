@@ -1,4 +1,4 @@
-/** @file image.cpp  Image objects and relates routines.
+/** @file image.cpp  Image objects and related routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,7 +20,7 @@
 
 #include <cstring>
 
-#include "de_base.h"
+#include "de_platform.h"
 #include "de_console.h"
 #include "de_filesys.h"
 #include "m_misc.h"
@@ -47,6 +47,7 @@
 #endif
 
 using namespace de;
+using namespace res;
 
 #ifdef __CLIENT__
 
@@ -460,7 +461,7 @@ uint8_t *GL_LoadImage(image_t &image, String nativePath)
     return 0; // Not loaded.
 }
 
-TexSource GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
+Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
 {
     DENG_ASSERT(_searchPath);
 
@@ -483,13 +484,13 @@ TexSource GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mod
                 Image_ConvertToLuminance(&image, true);
             }
 
-            return TEXS_EXTERNAL;
+            return External;
         }
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore this error.
 
-    return TEXS_NONE;
+    return None;
 }
 
 static boolean palettedIsMasked(uint8_t const *pixels, int width, int height)
@@ -507,7 +508,7 @@ static boolean palettedIsMasked(uint8_t const *pixels, int width, int height)
     return false;
 }
 
-static TexSource loadExternalTexture(image_t &image, String encodedSearchPath,
+static Source loadExternalTexture(image_t &image, String encodedSearchPath,
     String optionalSuffix = "")
 {
     // First look for a version with an optional suffix.
@@ -518,7 +519,7 @@ static TexSource loadExternalTexture(image_t &image, String encodedSearchPath,
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
-        return GL_LoadImage(image, foundPath)? TEXS_EXTERNAL : TEXS_NONE;
+        return GL_LoadImage(image, foundPath)? External : None;
     }
     catch(FS1::NotFoundError const&)
     {} // Ignore this error.
@@ -533,13 +534,13 @@ static TexSource loadExternalTexture(image_t &image, String encodedSearchPath,
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
 
-            return GL_LoadImage(image, foundPath)? TEXS_EXTERNAL : TEXS_NONE;
+            return GL_LoadImage(image, foundPath)? External : None;
         }
         catch(FS1::NotFoundError const&)
         {} // Ignore this error.
     }
 
-    return TEXS_NONE;
+    return None;
 }
 
 /**
@@ -599,14 +600,14 @@ static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int t
     }
 }
 
-static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
+static Source loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
     int tmap = 0, int border = 0)
 {
-    LOG_AS("GL_LoadPatchLump");
+    LOG_AS("image_t::loadPatchLump");
 
     if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
     {
-        return TEXS_EXTERNAL;
+        return External;
     }
 
     de::File1 &file = hndl.file();
@@ -627,7 +628,6 @@ static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
             image.paletteId   = App_ResourceSystem().defaultColorPalette();
 
             image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
-            if(!image.pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image.size.width * image.size.height));
 
             compositePaletted(image.pixels, Vector2i(image.size.width, image.size.height),
                               patchImg, info.logicalDimensions, Vector2i(border, border));
@@ -637,7 +637,7 @@ static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
                 image.flags |= IMGF_IS_MASKED;
             }
 
-            return TEXS_ORIGINAL;
+            return Original;
         }
         catch(IByteArray::OffsetError const &)
         {
@@ -648,13 +648,13 @@ static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
     }
 
     file.unlock();
-    return TEXS_NONE;
+    return None;
 }
 
-static TexSource loadPatchComposite(image_t &image, Texture const &tex,
+static Source loadPatchComposite(image_t &image, Texture const &tex,
     bool maskZero = false, bool useZeroOriginIfOneComponent = false)
 {
-    LOG_AS("GL_LoadPatchComposite");
+    LOG_AS("image_t::loadPatchComposite");
 
     Image_Init(&image);
     image.pixelSize = 1;
@@ -696,19 +696,21 @@ static TexSource loadPatchComposite(image_t &image, Texture const &tex,
     }
 
     if(maskZero || palettedIsMasked(image.pixels, image.size.width, image.size.height))
+    {
         image.flags |= IMGF_IS_MASKED;
+    }
 
     // For debug:
     // GL_DumpImage(&image, Str_Text(GL_ComposeCacheNameForTexture(tex)));
 
-    return TEXS_ORIGINAL;
+    return Original;
 }
 
-static TexSource loadFlat(image_t &image, de::FileHandle &hndl)
+static Source loadFlat(image_t &image, de::FileHandle &hndl)
 {
     if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
     {
-        return TEXS_EXTERNAL;
+        return External;
     }
 
     // A DOOM flat.
@@ -728,24 +730,25 @@ static TexSource loadFlat(image_t &image, de::FileHandle &hndl)
 
     size_t bufSize = MAX_OF(fileLength, (size_t) image.size.width * image.size.height);
     image.pixels = (uint8_t *) M_Malloc(bufSize);
-    if(!image.pixels) Con_Error("GL_LoadFlat: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
 
     if(fileLength < bufSize)
+    {
         std::memset(image.pixels, 0, bufSize);
+    }
 
     // Load the raw image data.
     file.read(image.pixels, 0, fileLength);
-    return TEXS_ORIGINAL;
+    return Original;
 
 #undef FLAT_HEIGHT
 #undef FLAT_WIDTH
 }
 
-static TexSource loadDetail(image_t &image, de::FileHandle &hndl)
+static Source loadDetail(image_t &image, de::FileHandle &hndl)
 {
     if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
     {
-        return TEXS_ORIGINAL;
+        return Original;
     }
 
     // It must be an old-fashioned "raw" image.
@@ -768,17 +771,19 @@ static TexSource loadDetail(image_t &image, de::FileHandle &hndl)
     image.pixels = (uint8_t *) M_Malloc(bufSize);
 
     if(fileLength < bufSize)
+    {
         std::memset(image.pixels, 0, bufSize);
+    }
 
     // Load the raw image data.
     file.read(image.pixels, fileLength);
-    return TEXS_ORIGINAL;
+    return Original;
 }
 
-TexSource GL_LoadSourceImage(image_t &image, Texture const &tex,
+Source GL_LoadSourceImage(image_t &image, Texture const &tex,
     texturevariantspecification_t const &spec)
 {
-    TexSource source = TEXS_NONE;
+    Source source = None;
     variantspecification_t const &vspec = TS_GENERAL(spec);
     if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
@@ -790,7 +795,7 @@ TexSource GL_LoadSourceImage(image_t &image, Texture const &tex,
             source = loadExternalTexture(image, uri.compose(), "-ck");
         }
 
-        if(source == TEXS_NONE)
+        if(source == None)
         {
             if(TC_SKYSPHERE_DIFFUSE != vspec.context)
             {
@@ -813,14 +818,14 @@ TexSource GL_LoadSourceImage(image_t &image, Texture const &tex,
             de::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
 
-            if(source == TEXS_NONE)
+            if(source == None)
             {
                 // How about the old-fashioned "flat-name" in the textures scheme?
                 source = loadExternalTexture(image, "Textures:flat-" + uri.path().toStringRef(), "-ck");
             }
         }
 
-        if(source == TEXS_NONE)
+        if(source == None)
         {
             if(tex.manifest().hasResourceUri())
             {
@@ -861,7 +866,7 @@ TexSource GL_LoadSourceImage(image_t &image, Texture const &tex,
             source = loadExternalTexture(image, uri.compose(), "-ck");
         }
 
-        if(source == TEXS_NONE)
+        if(source == None)
         {
             if(tex.manifest().hasResourceUri())
             {
@@ -916,7 +921,7 @@ TexSource GL_LoadSourceImage(image_t &image, Texture const &tex,
             }
         }
 
-        if(source == TEXS_NONE)
+        if(source == None)
         {
             if(tex.manifest().hasResourceUri())
             {

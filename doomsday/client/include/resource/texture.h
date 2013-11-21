@@ -1,4 +1,4 @@
-/** @file texture.h Logical Texture.
+/** @file texture.h  Logical texture resource.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -18,10 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_TEXTURE_H
-#define LIBDENG_RESOURCE_TEXTURE_H
+#ifndef DENG_RESOURCE_TEXTURE_H
+#define DENG_RESOURCE_TEXTURE_H
 
 #ifdef __CLIENT__
+#  include "resource/image.h" // res::Source
 #  include "TextureVariantSpec"
 #endif
 #include <de/Error>
@@ -29,15 +30,6 @@
 #include <de/Vector>
 #include <QFlag>
 #include <QList>
-
-/**
- * Texture (content) Source.
- */
-typedef enum {
-    TEXS_NONE,                    /// Not a valid source.
-    TEXS_ORIGINAL,                /// An "original".
-    TEXS_EXTERNAL                 /// An "external" replacement.
-} TexSource;
 
 namespace de {
 
@@ -169,7 +161,7 @@ public:
          * Returns the source of the image used to prepare the uploaded GL-texture
          * for the variant.
          */
-        TexSource source() const;
+        res::Source source() const;
 
         /**
          * Returns a textual description of the source of the variant.
@@ -431,4 +423,4 @@ typedef Texture::Variant TextureVariant;
 
 } // namespace de
 
-#endif // LIBDENG_RESOURCE_TEXTURE_H
+#endif // DENG_RESOURCE_TEXTURE_H

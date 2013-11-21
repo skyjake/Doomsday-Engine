@@ -23,11 +23,26 @@
 #ifndef DENG_RESOURCE_IMAGE_H
 #define DENG_RESOURCE_IMAGE_H
 
-#include "Texture"
+#include "dd_share.h" // gfxmode_t
 #include "filehandle.h"
 #include <de/String>
 #include <de/Vector>
 #include <de/size.h>
+
+/// @todo Should not depend on texture-level stuff here.
+struct texturevariantspecification_t;
+namespace de {
+class Texture;
+}
+
+namespace res
+{
+    enum Source {
+        None,     ///< Not a valid source.
+        Original, ///< An "original".
+        External  ///< An "external" replacement.
+    };
+}
 
 /**
  * @defgroup imageConversionFlags Image Conversion Flags
@@ -47,7 +62,8 @@
 #define IMGF_IS_MASKED              (0x1)
 /*@}*/
 
-typedef struct image_s {
+typedef struct image_s
+{
     /// @ref imageFlags
     int flags;
 
@@ -120,10 +136,10 @@ void Image_ConvertToLuminance(image_t* image, boolean retainAlpha);
 uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
 
 /// @todo Move into image_t
-TexSource GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);
+res::Source GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);
 
 /// @todo Move into image_t
-TexSource GL_LoadSourceImage(image_t &image, de::Texture const &tex,
+res::Source GL_LoadSourceImage(image_t &image, de::Texture const &tex,
     texturevariantspecification_t const &spec);
 
 #endif // __CLIENT__

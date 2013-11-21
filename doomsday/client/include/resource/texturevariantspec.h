@@ -1,4 +1,4 @@
-/** @file texturevariantspec.h Texture Variant Specification.
+/** @file texturevariantspec.h  Texture resource, variant specification.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,15 +17,16 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_TEXTUREVARIANTSPEC_H
-#define LIBDENG_RESOURCE_TEXTUREVARIANTSPEC_H
+#ifndef DENG_RESOURCE_TEXTUREVARIANTSPEC_H
+#define DENG_RESOURCE_TEXTUREVARIANTSPEC_H
 
 #ifndef __CLIENT__
 #  error "resource/texturevariantspec.h only exists in the Client"
 #endif
 
-#include <de/String>
 #include "dd_types.h"
+#include "gl/sys_opengl.h"
+#include <de/String>
 
 typedef enum {
     TC_UNKNOWN = -1,
@@ -77,11 +78,13 @@ typedef enum {
 #define VALID_TEXTUREVARIANTSPECIFICATIONTYPE(t) (\
     (t) >= TEXTUREVARIANTSPECIFICATIONTYPE_FIRST && (t) <= TEXTUREVARIANTSPECIFICATIONTYPE_LAST)
 
-typedef struct {
+struct colorpalettetranslationspecification_t
+{
     int tClass, tMap;
-} colorpalettetranslationspecification_t;
+};
 
-typedef struct {
+struct variantspecification_t
+{
     texturevariantusagecontext_t context;
     int flags; /// @ref textureVariantSpecificationFlags
     byte border; /// In pixels, added to all four edges of the texture.
@@ -125,7 +128,11 @@ typedef struct {
 
     /// Additional color palette translation spec.
     colorpalettetranslationspecification_t *translated;
-} variantspecification_t;
+
+    GLint glMinFilter() const;
+    GLint glMagFilter() const;
+    int logicalAnisoLevel() const;
+};
 
 /**
  * Detail textures are faded to gray depending on the contrast factor.
@@ -137,14 +144,16 @@ typedef struct {
  */
 #define DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR  (10)
 
-typedef struct {
+struct detailvariantspecification_t
+{
     uint8_t contrast;
-} detailvariantspecification_t;
+};
 
 #define TS_GENERAL(ts)      ((ts).data.variant)
 #define TS_DETAIL(ts)       ((ts).data.detailvariant)
 
-typedef struct texturevariantspecification_s {
+struct texturevariantspecification_t
+{
     texturevariantspecificationtype_t type;
     union {
         variantspecification_t variant;
@@ -155,7 +164,7 @@ typedef struct texturevariantspecification_s {
      * Returns a textual, human-readable representation of the specification.
      */
     de::String asText() const;
-} texturevariantspecification_t;
+};
 
 /**
  * Compare the given TextureVariantSpecifications and determine whether they can
@@ -165,4 +174,4 @@ typedef struct texturevariantspecification_s {
 int TextureVariantSpec_Compare(texturevariantspecification_t const *a,
     texturevariantspecification_t const *b);
 
-#endif /* LIBDENG_RESOURCE_TEXTUREVARIANTSPEC_H */
+#endif // DENG_RESOURCE_TEXTUREVARIANTSPEC_H

@@ -866,11 +866,11 @@ void GL_BindTexture(TextureVariant *vtexture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec).wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(spec).wrapT);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_MagFilterForVariantSpec(TS_GENERAL(spec)));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TS_GENERAL(spec).glMagFilter());
         if(GL_state.features.texFilterAniso)
         {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                            GL_GetTexAnisoMul(GL_LogicalAnisoLevelForVariantSpec(TS_GENERAL(spec))));
+                            GL_GetTexAnisoMul(TS_GENERAL(spec).logicalAnisoLevel()));
         }
     }
 }

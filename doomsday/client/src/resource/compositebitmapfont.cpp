@@ -160,7 +160,7 @@ void CompositeBitmapFont::glInit()
                         .scheme("Patches").findByUniqueId(patch)
                             .texture().prepareVariant(glyphTextureSpec());
         ch->border = 0;
-        if(ch->tex && ch->tex->source() == TEXS_ORIGINAL)
+        if(ch->tex && ch->tex->source() == res::Original)
         {
             // Upscale & Sharpen will have been applied.
             ch->border = 1;

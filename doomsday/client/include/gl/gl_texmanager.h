@@ -194,10 +194,6 @@ void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
 void GL_UploadTextureContent(texturecontent_t const &content,
                              GLUploadMethod method = Deferred);
 
-GLint GL_MinFilterForVariantSpec(variantspecification_t const &spec);
-GLint GL_MagFilterForVariantSpec(variantspecification_t const &spec);
-int GL_LogicalAnisoLevelForVariantSpec(variantspecification_t const &spec);
-
 /**
  * Prepare a TextureVariantSpecification according to usage context. If incomplete
  * context information is supplied, suitable defaults are chosen in their place.
@@ -221,8 +217,7 @@ texturevariantspecification_t &GL_TextureVariantSpec(
  *
  * @return  A rationalized and valid TextureVariantSpecification.
  */
-texturevariantspecification_t &GL_DetailTextureSpec(
-    float contrast);
+texturevariantspecification_t &GL_DetailTextureSpec(float contrast);
 
 /*
  * Here follows miscellaneous routines currently awaiting refactoring into the
