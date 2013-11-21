@@ -625,6 +625,7 @@ SOURCES += \
     src/gl/gl_model.cpp \
     src/gl/gl_tex.cpp \
     src/gl/gl_texmanager.cpp \
+    src/gl/texturecontent.cpp \
     src/gl/svg.cpp \
     src/gl/sys_opengl.cpp \
     src/hedge.cpp \

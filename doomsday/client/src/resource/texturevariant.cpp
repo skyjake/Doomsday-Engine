@@ -414,16 +414,18 @@ uint Texture::Variant::prepare()
     }
 
     if(image.flags & IMGF_IS_MASKED)
+    {
         d->flags |= TextureVariant::Masked;
+    }
 
     // Submit the content for uploading (possibly deferred).
-    GLUploadMethod uploadMethod = GL_ChooseUploadMethod(c);
+    gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&c);
     GL_UploadTextureContent(c, uploadMethod);
 
 #ifdef DENG_DEBUG
     LOG_DEBUG("Prepared \"%s\" variant (glName:%u)%s")
         << d->texture.manifest().composeUri() << uint(d->glTexName)
-        << (uploadMethod == Immediate? " while not busy!" : "");
+        << (uploadMethod == gl::Immediate? " while not busy!" : "");
     LOG_TRACE("  Content: %s") << Image_Description(&image);
     LOG_TRACE("  Specification [%p]: %s") << de::dintptr(&d->spec) << d->spec.asText();
 #endif

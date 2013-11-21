@@ -31,6 +31,7 @@
 
 #include "sys_opengl.h"
 
+#include "gl/gl_defer.h"
 #include "gl/texturecontent.h"
 #include "resource/image.h"
 #include "resource/rawtexture.h"
@@ -148,51 +149,6 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, uint8_t const *pixels,
  */
 boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, uint8_t const *pixels,
     int width, int height, float grayFactor);
-
-/**
- * Methods of uploading GL data.
- *
- * @ingroup GL
- */
-enum GLUploadMethod
-{
-    /// Upload the data immediately.
-    Immediate,
-
-    /// Defer the data upload until convenient.
-    Deferred
-};
-
-/**
- * Returns the chosen method for uploading the given texture @a content.
- */
-GLUploadMethod GL_ChooseUploadMethod(texturecontent_t const &content);
-
-/**
- * Prepare the texture content @a c, using the given image in accordance with
- * the supplied specification. The image data will be transformed in-place.
- *
- * @param c             Texture content to be completed.
- * @param glTexName     GL name for the texture we intend to upload.
- * @param image         Source image containing the pixel data to be prepared.
- * @param spec          Specification describing any transformations which
- *                      should be applied to the image.
- *
- * @param textureManifest  Manifest for the logical texture being prepared.
- *                      (for informational purposes, i.e., logging)
- */
-void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
-    image_t &image, texturevariantspecification_t const &spec,
-    de::TextureManifest const &textureManifest);
-
-/**
- * @param method  GL upload method. By default the upload is deferred.
- *
- * @note Can be rather time-consuming due to forced scaling operations and
- * the generation of mipmaps.
- */
-void GL_UploadTextureContent(texturecontent_t const &content,
-                             GLUploadMethod method = Deferred);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context. If incomplete

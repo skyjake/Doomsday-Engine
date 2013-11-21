@@ -1,8 +1,7 @@
-/**
- * @file texturecontent.h Texture Content
+/** @file texturecontent.h  GL-texture content.
  *
- * @author Copyright &copy; 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,14 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_TEXTURECONTENT_H
-#define LIBDENG_TEXTURECONTENT_H
+#ifndef DENG_CLIENT_GL_TEXTURECONTENT_H
+#define DENG_CLIENT_GL_TEXTURECONTENT_H
 
 #include "api_gl.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "gl/gl_defer.h"
+#include "TextureManifest"
 
 /**
  * @defgroup textureContentFlags  Texture Content Flags
@@ -71,8 +68,30 @@ texturecontent_t *GL_ConstructTextureContentCopy(texturecontent_t const *other);
 
 void GL_DestroyTextureContent(texturecontent_t *content);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+/**
+ * Prepare the texture content @a c, using the given image in accordance with
+ * the supplied specification. The image data will be transformed in-place.
+ *
+ * @param c             Texture content to be completed.
+ * @param glTexName     GL name for the texture we intend to upload.
+ * @param image         Source image containing the pixel data to be prepared.
+ * @param spec          Specification describing any transformations which
+ *                      should be applied to the image.
+ *
+ * @param textureManifest  Manifest for the logical texture being prepared.
+ *                      (for informational purposes, i.e., logging)
+ */
+void GL_PrepareTextureContent(texturecontent_t &c, DGLuint glTexName,
+    image_t &image, texturevariantspecification_t const &spec,
+    de::TextureManifest const &textureManifest);
 
-#endif /* LIBDENG_TEXTURECONTENT_H */
+/**
+ * @param method  GL upload method. By default the upload is deferred.
+ *
+ * @note Can be rather time-consuming due to forced scaling operations and
+ * the generation of mipmaps.
+ */
+void GL_UploadTextureContent(texturecontent_t const &content,
+                             de::gl::UploadMethod method = de::gl::Deferred);
+
+#endif // DENG_CLIENT_GL_TEXTURECONTENT_H

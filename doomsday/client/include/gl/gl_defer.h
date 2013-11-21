@@ -1,6 +1,6 @@
-/**
- * @file gl_defer.h
- * Deferred GL tasks. @ingroup gl
+/** @file gl_defer.h  Deferred GL tasks.
+ *
+ * @ingroup gl
  *
  * GL is only available from the main thread. When accessed from other threads,
  * the operations need to be deferred for processing later in the main thread.
@@ -23,37 +23,44 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GL_DEFERRED_H
-#define LIBDENG_GL_DEFERRED_H
+#ifndef DENG_CLIENT_GL_DEFERRED_H
+#define DENG_CLIENT_GL_DEFERRED_H
 
 #include "api_gl.h"
 #include "sys_opengl.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace de
+{
+    namespace gl
+    {
+        enum UploadMethod  {
+            Immediate, ///< Upload the data immediately.
+            Deferred   ///< Defer the data upload until convenient.
+        };
+    }
+}
 
 struct texturecontent_s;
 
 /**
  * Initializes the deferred tasks module.
  */
-void GL_InitDeferredTask(void);
+void GL_InitDeferredTask();
 
 /**
  * Shuts down the deferred tasks.
  */
-void GL_ShutdownDeferredTask(void);
+void GL_ShutdownDeferredTask();
 
 /**
  * Clears the currently queued GL tasks. They will not be executed.
  */
-void GL_PurgeDeferredTasks(void);
+void GL_PurgeDeferredTasks();
 
 /**
  * @return  Number of GL tasks waiting to be carried out.
  */
-int GL_DeferredTaskCount(void);
+int GL_DeferredTaskCount();
 
 /**
  * Processes deferred GL tasks. This must be called from the main thread.
@@ -63,11 +70,16 @@ int GL_DeferredTaskCount(void);
  */
 void GL_ProcessDeferredTasks(uint timeOutMilliSeconds);
 
-DGLuint GL_GetReservedTextureName(void);
+DGLuint GL_GetReservedTextureName();
 
-void GL_ReserveNames(void);
+void GL_ReserveNames();
 
-void GL_ReleaseReservedNames(void);
+void GL_ReleaseReservedNames();
+
+/**
+ * Returns the chosen method for uploading the given texture @a content.
+ */
+de::gl::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content);
 
 /**
  * Adds a new deferred texture upload task to the queue.
@@ -75,9 +87,13 @@ void GL_ReleaseReservedNames(void);
  * @param content  Texture content to upload. Caller can free its copy of the content;
  *                 a copy is made for the deferred task.
  */
-void GL_DeferTextureUpload(const struct texturecontent_s* content);
+void GL_DeferTextureUpload(struct texturecontent_s const *content);
 
 void GL_DeferSetVSync(boolean enableVSync);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Deferring functions for various function signatures.
 #define LIBDENG_GL_DEFER1(form, x)          void GL_Defer_##form(void (GL_CALL *ptr)(x), x)
@@ -95,4 +111,4 @@ LIBDENG_GL_DEFER2(uintArray, GLsizei count, const GLuint* values);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_GL_DEFERRED_H */
+#endif // DENG_CLIENT_GL_DEFERRED_H

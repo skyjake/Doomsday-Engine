@@ -34,6 +34,8 @@
 
 #include "gl/texturecontent.h"
 
+using namespace de;
+
 #define NUM_RESERVED_TEXTURENAMES  512
 
 typedef enum {
@@ -207,7 +209,7 @@ static void processTask(deferredtask_t *task)
     case DTT_UPLOAD_TEXTURECONTENT:
         DENG2_ASSERT(task->data);
         GL_UploadTextureContent(*reinterpret_cast<texturecontent_t *>(task->data),
-                                Immediate);
+                                gl::Immediate);
         break;
 
     case DTT_SET_VSYNC:
@@ -431,6 +433,19 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
     }
 
     GL_ReserveNames();
+}
+
+gl::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content)
+{
+    DENG2_ASSERT(content != 0);
+
+    // Must the operation be carried out immediately?
+    if((content->flags & TXCF_NEVER_DEFER) || !BusyMode_Active())
+    {
+        return gl::Immediate;
+    }
+    // We can defer.
+    return gl::Deferred;
 }
 
 void GL_DeferTextureUpload(struct texturecontent_s const *content)
