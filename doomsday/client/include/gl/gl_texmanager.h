@@ -239,14 +239,4 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, ui
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
                                 int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
 
-/// @todo Move into image_t
-uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
-
-/// @todo Move into image_t
-TexSource GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);
-
-/// @todo Move into image_t
-TexSource GL_LoadSourceImage(image_t &image, de::Texture const &tex,
-    texturevariantspecification_t const &spec);
-
 #endif // DENG_CLIENT_GL_TEXMANAGER_H

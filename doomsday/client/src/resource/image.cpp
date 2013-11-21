@@ -1,5 +1,4 @@
-/** @file image.cpp Image objects and relates routines. 
- * @ingroup gl
+/** @file image.cpp  Image objects and relates routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -26,9 +25,13 @@
 #include "de_filesys.h"
 #include "m_misc.h"
 #ifdef __CLIENT__
+#  include "resource/colorpalettes.h"
+#  include "resource/compositetexture.h"
+#  include "resource/patch.h"
 #  include "resource/pcx.h"
 #  include "resource/tga.h"
 #  include "gl/gl_tex.h"
+#  include "gl/gl_texmanager.h" // misc global vars awaiting new home
 #endif
 #include <de/Log>
 #ifdef __CLIENT__
@@ -434,3 +437,545 @@ boolean Image_Save(image_t const *img, char const *filePath)
     return false;
 #endif
 }
+
+#ifdef __CLIENT__
+uint8_t *GL_LoadImage(image_t &image, String nativePath)
+{
+    try
+    {
+        // Relative paths are relative to the native working directory.
+        String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
+
+        de::FileHandle &hndl = App_FileSystem().openFile(path, "rb");
+        uint8_t *pixels = Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl));
+
+        App_FileSystem().releaseFile(hndl.file());
+        delete &hndl;
+
+        return pixels;
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore error.
+
+    return 0; // Not loaded.
+}
+
+TexSource GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
+{
+    DENG_ASSERT(_searchPath);
+
+    try
+    {
+        String foundPath = App_FileSystem().findPath(de::Uri(RC_GRAPHIC, _searchPath),
+                                                     RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
+        // Ensure the found path is absolute.
+        foundPath = App_BasePath() / foundPath;
+
+        if(GL_LoadImage(image, foundPath))
+        {
+            // Force it to grayscale?
+            if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
+            {
+                Image_ConvertToAlpha(&image, mode == LGM_WHITE_ALPHA);
+            }
+            else if(mode == LGM_GRAYSCALE)
+            {
+                Image_ConvertToLuminance(&image, true);
+            }
+
+            return TEXS_EXTERNAL;
+        }
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+
+    return TEXS_NONE;
+}
+
+static boolean palettedIsMasked(uint8_t const *pixels, int width, int height)
+{
+    DENG2_ASSERT(pixels != 0);
+    // Jump to the start of the alpha data.
+    pixels += width * height;
+    for(int i = 0; i < width * height; ++i)
+    {
+        if(255 != pixels[i])
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static TexSource loadExternalTexture(image_t &image, String encodedSearchPath,
+    String optionalSuffix = "")
+{
+    // First look for a version with an optional suffix.
+    try
+    {
+        String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath + optionalSuffix, RC_GRAPHIC),
+                                                     RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
+        // Ensure the found path is absolute.
+        foundPath = App_BasePath() / foundPath;
+
+        return GL_LoadImage(image, foundPath)? TEXS_EXTERNAL : TEXS_NONE;
+    }
+    catch(FS1::NotFoundError const&)
+    {} // Ignore this error.
+
+    // Try again without the suffix?
+    if(!optionalSuffix.empty())
+    {
+        try
+        {
+            String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath, RC_GRAPHIC),
+                                                         RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
+            // Ensure the found path is absolute.
+            foundPath = App_BasePath() / foundPath;
+
+            return GL_LoadImage(image, foundPath)? TEXS_EXTERNAL : TEXS_NONE;
+        }
+        catch(FS1::NotFoundError const&)
+        {} // Ignore this error.
+    }
+
+    return TEXS_NONE;
+}
+
+/**
+ * Draw the component image @a src into the composite @a dst.
+ *
+ * @param dst               The composite buffer (drawn to).
+ * @param dstDimensions     Pixel dimensions of @a dst.
+ * @param src               The component image to be composited (read from).
+ * @param srcDimensions     Pixel dimensions of @a src.
+ * @param origin            Coordinates (topleft) in @a dst to draw @a src.
+ *
+ * @todo Optimize: Should be redesigned to composite whole rows -ds
+ */
+static void compositePaletted(dbyte *dst, Vector2i const &dstDimensions,
+    IByteArray const &src, Vector2i const &srcDimensions, Vector2i const &origin)
+{
+    if(dstDimensions.x == 0 && dstDimensions.y == 0) return;
+    if(srcDimensions.x == 0 && srcDimensions.y == 0) return;
+
+    int const    srcW = srcDimensions.x;
+    int const    srcH = srcDimensions.y;
+    size_t const srcPels = srcW * srcH;
+
+    int const    dstW = dstDimensions.x;
+    int const    dstH = dstDimensions.y;
+    size_t const dstPels = dstW * dstH;
+
+    int dstX, dstY;
+
+    for(int srcY = 0; srcY < srcH; ++srcY)
+    for(int srcX = 0; srcX < srcW; ++srcX)
+    {
+        dstX = origin.x + srcX;
+        dstY = origin.y + srcY;
+        if(dstX < 0 || dstX >= dstW) continue;
+        if(dstY < 0 || dstY >= dstH) continue;
+
+        dbyte srcAlpha;
+        src.get(srcY * srcW + srcX + srcPels, &srcAlpha, 1);
+        if(srcAlpha)
+        {
+            src.get(srcY * srcW + srcX, &dst[dstY * dstW + dstX], 1);
+            dst[dstY * dstW + dstX + dstPels] = srcAlpha;
+        }
+    }
+}
+
+static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int tmap = 0)
+{
+    if(dbyte const *xlatTable = R_TranslationTable(tclass, tmap))
+    {
+        return Patch::load(data, ByteRefArray(xlatTable, 256), Patch::ClipToLogicalDimensions);
+    }
+    else
+    {
+        return Patch::load(data, Patch::ClipToLogicalDimensions);
+    }
+}
+
+static TexSource loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
+    int tmap = 0, int border = 0)
+{
+    LOG_AS("GL_LoadPatchLump");
+
+    if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
+    {
+        return TEXS_EXTERNAL;
+    }
+
+    de::File1 &file = hndl.file();
+    ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+
+    // A DOOM patch?
+    if(Patch::recognize(fileData))
+    {
+        try
+        {
+            Block patchImg = loadAndTranslatePatch(fileData, tclass, tmap);
+            Patch::Metadata info = Patch::loadMetadata(fileData);
+
+            Image_Init(&image);
+            image.size.width  = info.logicalDimensions.x + border*2;
+            image.size.height = info.logicalDimensions.y + border*2;
+            image.pixelSize   = 1;
+            image.paletteId   = App_ResourceSystem().defaultColorPalette();
+
+            image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
+            if(!image.pixels) Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image.size.width * image.size.height));
+
+            compositePaletted(image.pixels, Vector2i(image.size.width, image.size.height),
+                              patchImg, info.logicalDimensions, Vector2i(border, border));
+
+            if(palettedIsMasked(image.pixels, image.size.width, image.size.height))
+            {
+                image.flags |= IMGF_IS_MASKED;
+            }
+
+            return TEXS_ORIGINAL;
+        }
+        catch(IByteArray::OffsetError const &)
+        {
+            LOG_WARNING("File \"%s:%s\" does not appear to be a valid Patch.")
+                << NativePath(file.container().composePath()).pretty()
+                << NativePath(file.composePath()).pretty();
+        }
+    }
+
+    file.unlock();
+    return TEXS_NONE;
+}
+
+static TexSource loadPatchComposite(image_t &image, Texture const &tex,
+    bool maskZero = false, bool useZeroOriginIfOneComponent = false)
+{
+    LOG_AS("GL_LoadPatchComposite");
+
+    Image_Init(&image);
+    image.pixelSize = 1;
+    image.size.width  = tex.width();
+    image.size.height = tex.height();
+    image.paletteId   = App_ResourceSystem().defaultColorPalette();
+
+    image.pixels = (uint8_t *) M_Calloc(2 * image.size.width * image.size.height);
+
+    CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
+    DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
+    {
+        de::File1 &file = App_FileSystem().nameIndex().lump(i->lumpNum());
+        ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+
+        // A DOOM patch?
+        if(Patch::recognize(fileData))
+        {
+            try
+            {
+                Patch::Flags loadFlags;
+                if(maskZero) loadFlags |= Patch::MaskZero;
+                Block patchImg = Patch::load(fileData, loadFlags);
+                Patch::Metadata info = Patch::loadMetadata(fileData);
+
+                Vector2i origin = i->origin();
+                if(useZeroOriginIfOneComponent && texDef.componentCount() == 1)
+                    origin = Vector2i(0, 0);
+
+                // Draw the patch in the buffer.
+                compositePaletted(image.pixels, Vector2i(image.size.width, image.size.height),
+                                  patchImg, info.dimensions, origin);
+            }
+            catch(IByteArray::OffsetError const &)
+            {} // Ignore this error.
+        }
+
+        file.unlock();
+    }
+
+    if(maskZero || palettedIsMasked(image.pixels, image.size.width, image.size.height))
+        image.flags |= IMGF_IS_MASKED;
+
+    // For debug:
+    // GL_DumpImage(&image, Str_Text(GL_ComposeCacheNameForTexture(tex)));
+
+    return TEXS_ORIGINAL;
+}
+
+static TexSource loadFlat(image_t &image, de::FileHandle &hndl)
+{
+    if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
+    {
+        return TEXS_EXTERNAL;
+    }
+
+    // A DOOM flat.
+#define FLAT_WIDTH          64
+#define FLAT_HEIGHT         64
+
+    Image_Init(&image);
+
+    /// @todo not all flats are 64x64!
+    image.size.width  = FLAT_WIDTH;
+    image.size.height = FLAT_HEIGHT;
+    image.pixelSize = 1;
+    image.paletteId = App_ResourceSystem().defaultColorPalette();
+
+    de::File1 &file   = hndl.file();
+    size_t fileLength = hndl.length();
+
+    size_t bufSize = MAX_OF(fileLength, (size_t) image.size.width * image.size.height);
+    image.pixels = (uint8_t *) M_Malloc(bufSize);
+    if(!image.pixels) Con_Error("GL_LoadFlat: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
+
+    if(fileLength < bufSize)
+        std::memset(image.pixels, 0, bufSize);
+
+    // Load the raw image data.
+    file.read(image.pixels, 0, fileLength);
+    return TEXS_ORIGINAL;
+
+#undef FLAT_HEIGHT
+#undef FLAT_WIDTH
+}
+
+static TexSource loadDetail(image_t &image, de::FileHandle &hndl)
+{
+    if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
+    {
+        return TEXS_ORIGINAL;
+    }
+
+    // It must be an old-fashioned "raw" image.
+    Image_Init(&image);
+
+    // How big is it?
+    de::File1 &file = hndl.file();
+    size_t fileLength = hndl.length();
+    switch(fileLength)
+    {
+    case 256 * 256: image.size.width = image.size.height = 256; break;
+    case 128 * 128: image.size.width = image.size.height = 128; break;
+    case  64 *  64: image.size.width = image.size.height =  64; break;
+    default:
+        throw Error("image_t::loadDetail", "Must be 256x256, 128x128 or 64x64.");
+    }
+
+    image.pixelSize = 1;
+    size_t bufSize = (size_t) image.size.width * image.size.height;
+    image.pixels = (uint8_t *) M_Malloc(bufSize);
+
+    if(fileLength < bufSize)
+        std::memset(image.pixels, 0, bufSize);
+
+    // Load the raw image data.
+    file.read(image.pixels, fileLength);
+    return TEXS_ORIGINAL;
+}
+
+TexSource GL_LoadSourceImage(image_t &image, Texture const &tex,
+    texturevariantspecification_t const &spec)
+{
+    TexSource source = TEXS_NONE;
+    variantspecification_t const &vspec = TS_GENERAL(spec);
+    if(!tex.manifest().schemeName().compareWithoutCase("Textures"))
+    {
+        // Attempt to load an external replacement for this composite texture?
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
+        {
+            // First try the textures scheme.
+            de::Uri uri = tex.manifest().composeUri();
+            source = loadExternalTexture(image, uri.compose(), "-ck");
+        }
+
+        if(source == TEXS_NONE)
+        {
+            if(TC_SKYSPHERE_DIFFUSE != vspec.context)
+            {
+                source = loadPatchComposite(image, tex);
+            }
+            else
+            {
+                bool const zeroMask = (vspec.flags & TSF_ZEROMASK) != 0;
+                bool const useZeroOriginIfOneComponent = true;
+                source = loadPatchComposite(image, tex, zeroMask, useZeroOriginIfOneComponent);
+            }
+        }
+    }
+    else if(!tex.manifest().schemeName().compareWithoutCase("Flats"))
+    {
+        // Attempt to load an external replacement for this flat?
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
+        {
+            // First try the flats scheme.
+            de::Uri uri = tex.manifest().composeUri();
+            source = loadExternalTexture(image, uri.compose(), "-ck");
+
+            if(source == TEXS_NONE)
+            {
+                // How about the old-fashioned "flat-name" in the textures scheme?
+                source = loadExternalTexture(image, "Textures:flat-" + uri.path().toStringRef(), "-ck");
+            }
+        }
+
+        if(source == TEXS_NONE)
+        {
+            if(tex.manifest().hasResourceUri())
+            {
+                de::Uri resourceUri = tex.manifest().resourceUri();
+                if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+                {
+                    try
+                    {
+                        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
+                        de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                        de::FileHandle &hndl = App_FileSystem().openLump(lump);
+
+                        source = loadFlat(image, hndl);
+
+                        App_FileSystem().releaseFile(hndl.file());
+                        delete &hndl;
+                    }
+                    catch(LumpIndex::NotFoundError const&)
+                    {} // Ignore this error.
+                }
+            }
+        }
+    }
+    else if(!tex.manifest().schemeName().compareWithoutCase("Patches"))
+    {
+        int tclass = 0, tmap = 0;
+        if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
+        {
+            DENG_ASSERT(vspec.translated);
+            tclass = vspec.translated->tClass;
+            tmap   = vspec.translated->tMap;
+        }
+
+        // Attempt to load an external replacement for this patch?
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !tex.isFlagged(Texture::Custom)))
+        {
+            de::Uri uri = tex.manifest().composeUri();
+            source = loadExternalTexture(image, uri.compose(), "-ck");
+        }
+
+        if(source == TEXS_NONE)
+        {
+            if(tex.manifest().hasResourceUri())
+            {
+                de::Uri resourceUri = tex.manifest().resourceUri();
+                if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+                {
+                    try
+                    {
+                        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
+                        de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                        de::FileHandle &hndl = App_FileSystem().openLump(lump);
+
+                        source = loadPatch(image, hndl, tclass, tmap, vspec.border);
+
+                        App_FileSystem().releaseFile(hndl.file());
+                        delete &hndl;
+                    }
+                    catch(LumpIndex::NotFoundError const&)
+                    {} // Ignore this error.
+                }
+            }
+        }
+    }
+    else if(!tex.manifest().schemeName().compareWithoutCase("Sprites"))
+    {
+        int tclass = 0, tmap = 0;
+        if(vspec.flags & TSF_HAS_COLORPALETTE_XLAT)
+        {
+            DENG_ASSERT(vspec.translated);
+            tclass = vspec.translated->tClass;
+            tmap   = vspec.translated->tMap;
+        }
+
+        // Attempt to load an external replacement for this sprite?
+        if(!noHighResPatches)
+        {
+            de::Uri uri = tex.manifest().composeUri();
+
+            // Prefer psprite or translated versions if available.
+            if(TC_PSPRITE_DIFFUSE == vspec.context)
+            {
+                source = loadExternalTexture(image, "Patches:" + uri.path() + "-hud", "-ck");
+            }
+            else if(tclass || tmap)
+            {
+                source = loadExternalTexture(image, "Patches:" + uri.path() + String("-table%1%2").arg(tclass).arg(tmap), "-ck");
+            }
+
+            if(!source)
+            {
+                source = loadExternalTexture(image, "Patches:" + uri.path(), "-ck");
+            }
+        }
+
+        if(source == TEXS_NONE)
+        {
+            if(tex.manifest().hasResourceUri())
+            {
+                de::Uri resourceUri = tex.manifest().resourceUri();
+                if(!resourceUri.scheme().compareWithoutCase("LumpIndex"))
+                {
+                    try
+                    {
+                        lumpnum_t lumpNum = resourceUri.path().toString().toInt();
+                        de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                        de::FileHandle &hndl = App_FileSystem().openLump(lump);
+
+                        source = loadPatch(image, hndl, tclass, tmap, vspec.border);
+
+                        App_FileSystem().releaseFile(hndl.file());
+                        delete &hndl;
+                    }
+                    catch(LumpIndex::NotFoundError const&)
+                    {} // Ignore this error.
+                }
+            }
+        }
+    }
+    else if(!tex.manifest().schemeName().compareWithoutCase("Details"))
+    {
+        if(tex.manifest().hasResourceUri())
+        {
+            de::Uri resourceUri = tex.manifest().resourceUri();
+            if(resourceUri.scheme().compareWithoutCase("Lumps"))
+            {
+                source = loadExternalTexture(image, resourceUri.compose());
+            }
+            else
+            {
+                lumpnum_t lumpNum = App_FileSystem().lumpNumForName(resourceUri.path());
+                try
+                {
+                    de::File1 &lump = App_FileSystem().nameIndex().lump(lumpNum);
+                    de::FileHandle &hndl = App_FileSystem().openLump(lump);
+
+                    source = loadDetail(image, hndl);
+
+                    App_FileSystem().releaseFile(hndl.file());
+                    delete &hndl;
+                }
+                catch(LumpIndex::NotFoundError const&)
+                {} // Ignore this error.
+            }
+        }
+    }
+    else
+    {
+        if(tex.manifest().hasResourceUri())
+        {
+            de::Uri resourceUri = tex.manifest().resourceUri();
+            source = loadExternalTexture(image, resourceUri.compose());
+        }
+    }
+    return source;
+}
+
+#endif // __CLIENT__

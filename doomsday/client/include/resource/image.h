@@ -1,6 +1,6 @@
-/**
- * @file image.h
- * Image objects and relates routines. @ingroup resource
+/** @file image.h  Image objects and related routines.
+ *
+ * @ingroup resource
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -20,12 +20,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_IMAGE_H
-#define LIBDENG_IMAGE_H
+#ifndef DENG_RESOURCE_IMAGE_H
+#define DENG_RESOURCE_IMAGE_H
 
+#include "Texture"
+#include "filehandle.h"
 #include <de/String>
 #include <de/Vector>
-#include "filehandle.h"
 #include <de/size.h>
 
 /**
@@ -93,7 +94,7 @@ de::String Image_Description(image_t const *image);
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-uint8_t* Image_LoadFromFile(image_t* image, FileHandle* file);
+uint8_t *Image_LoadFromFile(image_t* image, FileHandle* file);
 
 boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, FileHandle* file);
 
@@ -114,4 +115,17 @@ void Image_ConvertToAlpha(image_t* image, boolean makeWhite);
  */
 void Image_ConvertToLuminance(image_t* image, boolean retainAlpha);
 
-#endif /* LIBDENG_IMAGE_H */
+#ifdef __CLIENT__
+/// @todo Move into image_t
+uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
+
+/// @todo Move into image_t
+TexSource GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);
+
+/// @todo Move into image_t
+TexSource GL_LoadSourceImage(image_t &image, de::Texture const &tex,
+    texturevariantspecification_t const &spec);
+
+#endif // __CLIENT__
+
+#endif // DENG_RESOURCE_IMAGE_H
