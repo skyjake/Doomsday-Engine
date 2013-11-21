@@ -22,18 +22,12 @@
 #ifndef DENG_CLIENT_RENDER_THINGS_H
 #define DENG_CLIENT_RENDER_THINGS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "world/p_object.h"
 
 /**
  * Generates a vissprite for a mobj if it might be visible.
  */
-void R_ProjectSprite(struct mobj_s *mobj);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
+void R_ProjectSprite(mobj_t *mobj);
 
 #endif // DENG_CLIENT_RENDER_THINGS_H
 #endif // __CLIENT__

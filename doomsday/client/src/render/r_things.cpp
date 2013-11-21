@@ -1,4 +1,4 @@
-/** @file r_things.cpp Map Object => Vissprite Projection.
+/** @file r_things.cpp  Map Object => Vissprite Projection.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,12 +20,10 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/vector1.h>
-
 #include "de_platform.h"
-#include "de_render.h"
-#include "de_resource.h"
+#include "render/r_things.h"
 
+#include "de_render.h"
 #include "dd_main.h" // App_World()
 #include "def_main.h" // states
 
@@ -34,12 +32,16 @@
 
 #include "network/net_main.h" // clients[]
 
+#include "render/vissprite.h"
+
+#include "MaterialSnapshot"
+
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "BspLeaf"
 
-#include "render/r_things.h"
+#include <de/vector1.h>
 
 using namespace de;
 
