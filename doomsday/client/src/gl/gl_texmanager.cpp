@@ -58,21 +58,11 @@ struct texturevariantspecificationlist_node_t
     texturevariantspecificationlist_node_t *next;
     texturevariantspecification_t *spec;
 };
-
 typedef texturevariantspecificationlist_node_t variantspecificationlist_t;
 
 D_CMD(LowRes);
 D_CMD(MipMap);
 D_CMD(TexReset);
-
-void GL_DoResetDetailTextures();
-void GL_DoTexReset();
-void GL_DoUpdateTexGamma();
-void GL_DoUpdateTexParams();
-
-static int hashDetailVariantSpecification(detailvariantspecification_t const &spec);
-
-static res::Source loadRaw(image_t &image, rawtex_t const &raw);
 
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
@@ -113,26 +103,66 @@ static variantspecificationlist_t *variantSpecs;
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
 static variantspecificationlist_t *detailVariantSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
 
+static void detailFactorChanged()
+{
+    App_ResourceSystem().releaseGLTexturesByScheme("Details");
+}
+
+static void loadExtAlwaysChanged()
+{
+    GL_TexReset();
+}
+
+static void useSmartFilterChanged()
+{
+    GL_TexReset();
+}
+
+static void texGammaChanged()
+{
+    if(initedOk)
+    {
+        R_BuildTexGammaLut();
+        GL_TexReset();
+    }
+    //LOG_MSG("Gamma correction set to %f.") << texGamma;
+}
+
+static void mipmappingChanged()
+{
+    GL_TexReset();
+}
+
+static void texQualityChanged()
+{
+    GL_TexReset();
+}
+
 void GL_TexRegister()
 {
     C_VAR_INT   ("rend-tex",                    &renderTextures,     CVF_NO_ARCHIVE, 0, 2);
     C_VAR_INT   ("rend-tex-detail",             &r_detail,           0, 0, 1);
     C_VAR_INT   ("rend-tex-detail-multitex",    &useMultiTexDetails, 0, 0, 1);
     C_VAR_FLOAT ("rend-tex-detail-scale",       &detailScale,        CVF_NO_MIN | CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT2("rend-tex-detail-strength",    &detailFactor,       0, 0, 5, GL_DoResetDetailTextures);
-    C_VAR_BYTE2 ("rend-tex-external-always",    &loadExtAlways,      0, 0, 1, GL_DoTexReset);
+    C_VAR_FLOAT2("rend-tex-detail-strength",    &detailFactor,       0, 0, 5, detailFactorChanged);
+    C_VAR_BYTE2 ("rend-tex-external-always",    &loadExtAlways,      0, 0, 1, loadExtAlwaysChanged);
     C_VAR_INT   ("rend-tex-filter-anisotropic", &texAniso,           0, -1, 4);
     C_VAR_INT   ("rend-tex-filter-mag",         &texMagMode,         0, 0, 1);
-    C_VAR_INT2  ("rend-tex-filter-smart",       &useSmartFilter,     0, 0, 1, GL_DoTexReset);
+    C_VAR_INT2  ("rend-tex-filter-smart",       &useSmartFilter,     0, 0, 1, useSmartFilterChanged);
     C_VAR_INT   ("rend-tex-filter-sprite",      &filterSprites,      0, 0, 1);
     C_VAR_INT   ("rend-tex-filter-ui",          &filterUI,           0, 0, 1);
-    C_VAR_FLOAT2("rend-tex-gamma",              &texGamma,           0, 0, 1, GL_DoUpdateTexGamma);
-    C_VAR_INT2  ("rend-tex-mipmap",             &mipmapping,         CVF_PROTECTED, 0, 5, GL_DoTexReset);
-    C_VAR_INT2  ("rend-tex-quality",            &texQuality,         0, 0, 8, GL_DoTexReset);
+    C_VAR_FLOAT2("rend-tex-gamma",              &texGamma,           0, 0, 1, texGammaChanged);
+    C_VAR_INT2  ("rend-tex-mipmap",             &mipmapping,         CVF_PROTECTED, 0, 5, mipmappingChanged);
+    C_VAR_INT2  ("rend-tex-quality",            &texQuality,         0, 0, 8, texQualityChanged);
 
     C_CMD_FLAGS ("lowres",      "",     LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS ("mipmap",      "i",    MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS ("texreset",    "",     TexReset, CMDF_NO_DEDICATED);
+}
+
+static int hashDetailVariantSpecification(detailvariantspecification_t const &spec)
+{
+    return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
 }
 
 static void unlinkVariantSpecification(texturevariantspecification_t &spec)
@@ -277,11 +307,6 @@ static detailvariantspecification_t &applyDetailVariantSpecification(
 
     spec.contrast = 255 * (int)MINMAX_OF(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
     return spec;
-}
-
-static int hashDetailVariantSpecification(detailvariantspecification_t const &spec)
-{
-    return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
 }
 
 static texturevariantspecification_t &linkVariantSpecification(
@@ -485,18 +510,17 @@ void GL_InitTextureManager()
     }
 
     // Disable the use of 'high resolution' textures and/or patches?
-    noHighResTex = CommandLine_Exists("-nohightex");
+    noHighResTex     = CommandLine_Exists("-nohightex");
     noHighResPatches = CommandLine_Exists("-nohighpat");
-
     // Should we allow using external resources with PWAD textures?
-    highResWithPWAD = CommandLine_Exists("-pwadtex");
+    highResWithPWAD  = CommandLine_Exists("-pwadtex");
 
     // System textures loaded in GL_LoadSystemTextures.
-    std::memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
-    std::memset(lightingTextures, 0, sizeof(lightingTextures));
+    zap(sysFlareTextures);
+    zap(lightingTextures);
 
-    variantSpecs = NULL;
-    memset(detailVariantSpecs, 0, sizeof(detailVariantSpecs));
+    variantSpecs = 0;
+    zap(detailVariantSpecs);
 
     GL_InitSmartFilterHQ2x();
 
@@ -512,112 +536,6 @@ void GL_ResetTextureManager()
     GL_LoadSystemTextures();
 }
 
-static String nameForGLTextureWrapMode(int mode)
-{
-    if(mode == GL_REPEAT) return "repeat";
-    if(mode == GL_CLAMP) return "clamp";
-    if(mode == GL_CLAMP_TO_EDGE) return "clamp_edge";
-    return "(unknown)";
-}
-
-String texturevariantspecification_t::asText() const
-{
-    static String const textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
-        /* TC_UNKNOWN */                    "unknown",
-        /* TC_UI */                         "ui",
-        /* TC_MAPSURFACE_DIFFUSE */         "mapsurface_diffuse",
-        /* TC_MAPSURFACE_REFLECTION */      "mapsurface_reflection",
-        /* TC_MAPSURFACE_REFLECTIONMASK */  "mapsurface_reflectionmask",
-        /* TC_MAPSURFACE_LIGHTMAP */        "mapsurface_lightmap",
-        /* TC_SPRITE_DIFFUSE */             "sprite_diffuse",
-        /* TC_MODELSKIN_DIFFUSE */          "modelskin_diffuse",
-        /* TC_MODELSKIN_REFLECTION */       "modelskin_reflection",
-        /* TC_HALO_LUMINANCE */             "halo_luminance",
-        /* TC_PSPRITE_DIFFUSE */            "psprite_diffuse",
-        /* TC_SKYSPHERE_DIFFUSE */          "skysphere_diffuse"
-    };
-    static String const textureSpecificationTypeNames[TEXTUREVARIANTSPECIFICATIONTYPE_COUNT] = {
-        /* TST_GENERAL */   "general",
-        /* TST_DETAIL */    "detail"
-    };
-    static String const filterModeNames[] = { "ui", "sprite", "noclass", "const" };
-    static String const glFilterNames[] = {
-        "nearest", "linear", "nearest_mipmap_nearest", "linear_mipmap_nearest",
-        "nearest_mipmap_linear", "linear_mipmap_linear"
-    };
-
-    String text = String("Type:%1").arg(textureSpecificationTypeNames[type]);
-
-    switch(type)
-    {
-    case TST_DETAIL: {
-        detailvariantspecification_t const &spec = data.detailvariant;
-        text += " Contrast:" + String::number(int(.5f + spec.contrast / 255.f * 100)) + "%";
-        break; }
-
-    case TST_GENERAL: {
-        variantspecification_t const &spec = data.variant;
-        texturevariantusagecontext_t tc = spec.context;
-        DENG_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
-
-        int glMinFilterNameIdx;
-        if(spec.minFilter >= 0) // Constant logical value.
-        {
-            glMinFilterNameIdx = (spec.mipmapped? 2 : 0) + spec.minFilter;
-        }
-        else // "No class" preference.
-        {
-            glMinFilterNameIdx = spec.mipmapped? mipmapping : 1;
-        }
-
-        int glMagFilterNameIdx;
-        if(spec.magFilter >= 0) // Constant logical value.
-        {
-            glMagFilterNameIdx = spec.magFilter;
-        }
-        else
-        {
-            // Preference for texture class id.
-            switch(abs(spec.magFilter)-1)
-            {
-            // "No class" preference.
-            default: glMagFilterNameIdx = texMagMode; break;
-
-            // "Sprite" class.
-            case 1:  glMagFilterNameIdx = filterSprites; break;
-
-            // "UI" class.
-            case 2:  glMagFilterNameIdx = filterUI; break;
-            }
-        }
-
-        text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]
-              + " Flags:" + String::number(spec.flags & ~TSF_INTERNAL_MASK)
-              + " Border:" + String::number(spec.border)
-              + " MinFilter:" + filterModeNames[3 + de::clamp(-1, spec.minFilter, 0)]
-                              + "|" + glFilterNames[glMinFilterNameIdx]
-              + " MagFilter:" + filterModeNames[3 + de::clamp(-3, spec.magFilter, 0)]
-                              + "|" + glFilterNames[glMagFilterNameIdx]
-              + " AnisoFilter:" + String::number(spec.anisoFilter)
-              + " WrapS:" + nameForGLTextureWrapMode(spec.wrapS)
-              + " WrapT:" + nameForGLTextureWrapMode(spec.wrapT)
-              + " CorrectGamma:" + (spec.gammaCorrection? "yes" : "no")
-              + " NoStretch:" + (spec.noStretch? "yes" : "no")
-              + " ToAlpha:" + (spec.toAlpha? "yes" : "no");
-
-        if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
-        {
-            colorpalettetranslationspecification_t const *cpt = spec.translated;
-            DENG_ASSERT(cpt);
-            text += " Translated:(tclass:" + String::number(cpt->tClass)
-                                           + " tmap:" + String::number(cpt->tMap) + ")";
-        }
-        break; }
-    }
-
-    return text;
-}
-
 texturevariantspecification_t &GL_TextureVariantSpec(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
@@ -630,7 +548,7 @@ texturevariantspecification_t &GL_TextureVariantSpec(
                                             minFilter, magFilter, anisoFilter,
                                             mipmapped, gammaCorrection, noStretch, toAlpha);
 
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
     if(tClass || tMap)
     {
         DENG_ASSERT(tvs->data.variant.flags & TSF_HAS_COLORPALETTE_XLAT);
@@ -643,8 +561,7 @@ texturevariantspecification_t &GL_TextureVariantSpec(
     return *tvs;
 }
 
-texturevariantspecification_t &GL_DetailTextureSpec(
-    float contrast)
+texturevariantspecification_t &GL_DetailTextureSpec(float contrast)
 {
     if(!initedOk) Con_Error("GL_DetailTextureVariantSpecificationForContext: GL texture manager not yet initialized.");
     return *getDetailVariantSpecificationForContext(contrast);
@@ -683,10 +600,10 @@ void GL_DeleteAllLightingSystemTextures()
     if(novideo || !initedOk) return;
 
     glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
-    std::memset(lightingTextures, 0, sizeof(lightingTextures));
+    zap(lightingTextures);
 
     glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
-    std::memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
+    zap(sysFlareTextures);
 }
 
 void GL_PruneTextureVariantSpecifications()
@@ -697,7 +614,7 @@ void GL_PruneTextureVariantSpecifications()
     numPruned += pruneUnusedVariantSpecifications(TST_GENERAL);
     numPruned += pruneUnusedVariantSpecifications(TST_DETAIL);
 
-#if _DEBUG
+#ifdef DENG_DEBUG
     LOG_VERBOSE("Pruned %i unused texture variant %s.")
         << numPruned << (numPruned == 1? "specification" : "specifications");
 #endif
@@ -923,14 +840,6 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
     Z_Free(rawTexs);
 }
 
-void GL_DoUpdateTexParams()
-{
-    int newMinFilter = glmode[mipmapping];
-
-    //GL_SetAllTexturesMinFilter(newMinFilter);
-    GL_SetRawTexturesMinFilter(newMinFilter);
-}
-
 static int reloadTextures(void *context)
 {
     bool const usingBusyMode = *static_cast<bool *>(context);
@@ -963,27 +872,6 @@ void GL_TexReset()
     {
         reloadTextures(&useBusyMode);
     }
-}
-
-void GL_DoUpdateTexGamma()
-{
-    if(initedOk)
-    {
-        R_BuildTexGammaLut();
-        GL_TexReset();
-    }
-
-    LOG_MSG("Gamma correction set to %f.") << texGamma;
-}
-
-void GL_DoTexReset()
-{
-    GL_TexReset();
-}
-
-void GL_DoResetDetailTextures()
-{
-    App_ResourceSystem().releaseGLTexturesByScheme("Details");
 }
 
 void GL_ReleaseTexturesForRawImages()

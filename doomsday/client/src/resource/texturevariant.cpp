@@ -26,12 +26,119 @@
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h" // misc global vars awaiting new home
+#include "gl/texturecontent.h"
 #include "resource/colorpalettes.h"
 #include "resource/image.h" // GL_LoadSourceImage
 #include <de/Log>
 #include <de/mathutil.h> // M_CeilPow
 
 using namespace de;
+
+static String nameForGLTextureWrapMode(int mode)
+{
+    if(mode == GL_REPEAT) return "repeat";
+    if(mode == GL_CLAMP) return "clamp";
+    if(mode == GL_CLAMP_TO_EDGE) return "clamp_edge";
+    return "(unknown)";
+}
+
+String texturevariantspecification_t::asText() const
+{
+    static String const textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
+        /* TC_UNKNOWN */                    "unknown",
+        /* TC_UI */                         "ui",
+        /* TC_MAPSURFACE_DIFFUSE */         "mapsurface_diffuse",
+        /* TC_MAPSURFACE_REFLECTION */      "mapsurface_reflection",
+        /* TC_MAPSURFACE_REFLECTIONMASK */  "mapsurface_reflectionmask",
+        /* TC_MAPSURFACE_LIGHTMAP */        "mapsurface_lightmap",
+        /* TC_SPRITE_DIFFUSE */             "sprite_diffuse",
+        /* TC_MODELSKIN_DIFFUSE */          "modelskin_diffuse",
+        /* TC_MODELSKIN_REFLECTION */       "modelskin_reflection",
+        /* TC_HALO_LUMINANCE */             "halo_luminance",
+        /* TC_PSPRITE_DIFFUSE */            "psprite_diffuse",
+        /* TC_SKYSPHERE_DIFFUSE */          "skysphere_diffuse"
+    };
+    static String const textureSpecificationTypeNames[TEXTUREVARIANTSPECIFICATIONTYPE_COUNT] = {
+        /* TST_GENERAL */   "general",
+        /* TST_DETAIL */    "detail"
+    };
+    static String const filterModeNames[] = { "ui", "sprite", "noclass", "const" };
+    static String const glFilterNames[] = {
+        "nearest", "linear", "nearest_mipmap_nearest", "linear_mipmap_nearest",
+        "nearest_mipmap_linear", "linear_mipmap_linear"
+    };
+
+    String text = String("Type:%1").arg(textureSpecificationTypeNames[type]);
+
+    switch(type)
+    {
+    case TST_DETAIL: {
+        detailvariantspecification_t const &spec = data.detailvariant;
+        text += " Contrast:" + String::number(int(.5f + spec.contrast / 255.f * 100)) + "%";
+        break; }
+
+    case TST_GENERAL: {
+        variantspecification_t const &spec = data.variant;
+        texturevariantusagecontext_t tc = spec.context;
+        DENG_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
+
+        int glMinFilterNameIdx;
+        if(spec.minFilter >= 0) // Constant logical value.
+        {
+            glMinFilterNameIdx = (spec.mipmapped? 2 : 0) + spec.minFilter;
+        }
+        else // "No class" preference.
+        {
+            glMinFilterNameIdx = spec.mipmapped? mipmapping : 1;
+        }
+
+        int glMagFilterNameIdx;
+        if(spec.magFilter >= 0) // Constant logical value.
+        {
+            glMagFilterNameIdx = spec.magFilter;
+        }
+        else
+        {
+            // Preference for texture class id.
+            switch(abs(spec.magFilter)-1)
+            {
+            // "No class" preference.
+            default: glMagFilterNameIdx = texMagMode; break;
+
+            // "Sprite" class.
+            case 1:  glMagFilterNameIdx = filterSprites; break;
+
+            // "UI" class.
+            case 2:  glMagFilterNameIdx = filterUI; break;
+            }
+        }
+
+        text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]
+              + " Flags:" + String::number(spec.flags & ~TSF_INTERNAL_MASK)
+              + " Border:" + String::number(spec.border)
+              + " MinFilter:" + filterModeNames[3 + de::clamp(-1, spec.minFilter, 0)]
+                              + "|" + glFilterNames[glMinFilterNameIdx]
+              + " MagFilter:" + filterModeNames[3 + de::clamp(-3, spec.magFilter, 0)]
+                              + "|" + glFilterNames[glMagFilterNameIdx]
+              + " AnisoFilter:" + String::number(spec.anisoFilter)
+              + " WrapS:" + nameForGLTextureWrapMode(spec.wrapS)
+              + " WrapT:" + nameForGLTextureWrapMode(spec.wrapT)
+              + " CorrectGamma:" + (spec.gammaCorrection? "yes" : "no")
+              + " NoStretch:" + (spec.noStretch? "yes" : "no")
+              + " ToAlpha:" + (spec.toAlpha? "yes" : "no");
+
+        if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
+        {
+            colorpalettetranslationspecification_t const *cpt = spec.translated;
+            DENG_ASSERT(cpt);
+            text += " Translated:(tclass:" + String::number(cpt->tClass)
+                                           + " tmap:" + String::number(cpt->tMap) + ")";
+        }
+        break; }
+    }
+
+    return text;
+}
 
 GLint variantspecification_t::glMinFilter() const
 {
