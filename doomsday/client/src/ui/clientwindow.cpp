@@ -60,7 +60,8 @@ DENG2_OBSERVES(KeyEventSource,   KeyEvent),
 DENG2_OBSERVES(MouseEventSource, MouseStateChange),
 DENG2_OBSERVES(MouseEventSource, MouseEvent),
 DENG2_OBSERVES(Canvas,           FocusChange),
-DENG2_OBSERVES(App,              GameChange)
+DENG2_OBSERVES(App,              GameChange),
+DENG2_OBSERVES(App,              StartupComplete)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -112,6 +113,7 @@ DENG2_OBSERVES(App,              GameChange)
         /// canvas is really a concern for the input drivers.
 
         App::app().audienceForGameChange += this;
+        App::app().audienceForStartupComplete += this;
 
         // Listen to input.
         self.canvas().audienceForKeyEvent += this;
@@ -122,6 +124,7 @@ DENG2_OBSERVES(App,              GameChange)
     ~Instance()
     {
         App::app().audienceForGameChange -= this;
+        App::app().audienceForStartupComplete -= this;
 
         self.canvas().audienceForFocusChange -= this;
         self.canvas().audienceForMouseStateChange -= this;
@@ -143,6 +146,7 @@ DENG2_OBSERVES(App,              GameChange)
 
         // Background for Ring Zero.
         background = new LabelWidget("background");
+        background->setImageColor(Vector4f(0, 0, 0, 1));
         background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::FitToSize);
         background->setSizePolicy(ui::Filled, ui::Filled);
@@ -208,6 +212,12 @@ DENG2_OBSERVES(App,              GameChange)
         colorAdjust->setAnchor(root.viewWidth() / 2, root.viewTop());
         colorAdjust->setOpeningDirection(ui::Down);
         root.add(colorAdjust);
+    }
+
+    void appStartupCompleted()
+    {
+        // Allow the background image to show.
+        background->setImageColor(Vector4f(1, 1, 1, 1));
     }
 
     void currentGameChanged(game::Game const &newGame)
