@@ -251,7 +251,8 @@ DENG2_OBSERVES(App,              GameChange)
             break;
 
         default:
-            busy->hide();
+            //busy->hide();
+            // The busy widget will hide itself after a possible transition has finished.
             busy->disable();
 
             game->show();

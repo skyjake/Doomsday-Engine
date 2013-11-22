@@ -27,6 +27,7 @@
 #include "GuiRootWidget"
 #include "busymode.h"
 #include "sys_system.h"
+#include "con_main.h"
 
 #include <de/concurrency.h>
 #include <de/Drawable>
@@ -104,11 +105,25 @@ void BusyWidget::update()
 
 void BusyWidget::drawContent()
 {
-    if(d->transitionTex.isNull())
+    if(!BusyMode_Active())
     {
-        //root().window().canvas().renderTarget().clear(GLTarget::ColorDepth);
+        d->progress->hide();
+
+        if(Con_TransitionInProgress())
+        {
+            Con_DrawTransition();
+        }
+        else
+        {
+            // Time to hide the busy widget, the transition has ended (or
+            // was never started).
+            hide();
+            releaseTransitionFrame();
+        }
+        return;
     }
-    else
+
+    if(!d->transitionTex.isNull())
     {
         GLState::top().apply();
 
