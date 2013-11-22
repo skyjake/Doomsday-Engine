@@ -65,8 +65,10 @@ int MemoryLogSink::entryCount() const
 LogEntry const &MemoryLogSink::entry(int index) const
 {
     DENG2_GUARD(this);
+    DENG2_ASSERT(index >= 0);
+    DENG2_ASSERT(index < _entries.size());
 
-    return *_entries[index];
+    return *_entries.at(index);
 }
 
 void MemoryLogSink::remove(int pos, int n)
