@@ -90,27 +90,6 @@ ProgressWidget &BusyWidget::progress()
 void BusyWidget::viewResized()
 {
     GuiWidget::viewResized();
-
-#if 0
-    if(!BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
-
-    ClientWindow::main().glActivate(); // needed for legacy stuff
-
-    //DENG_ASSERT(BusyMode_Active());
-
-    LOG_AS("BusyWidget");
-    LOG_DEBUG("View resized to ") << root().viewSize().asText();
-
-    // Update viewports.
-    R_SetViewGrid(0, 0);
-    R_UseViewPort(0);
-    R_LoadSystemFonts();
-
-    if(UI_IsActive())
-    {
-        UI_UpdatePageLayout();
-    }
-#endif
 }
 
 void BusyWidget::update()

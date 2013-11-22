@@ -38,75 +38,24 @@ static void releaseScreenshotTexture()
 
 void BusyVisual_ReleaseTextures()
 {
-#ifdef __CLIENT__
     // Don't release yet if doing a transition.
     if(!Con_TransitionInProgress())
     {
         releaseScreenshotTexture();
     }
-#endif
 }
 
 void BusyVisual_PrepareResources(void)
 {
-#ifdef __CLIENT__
     BusyTask* task = BusyMode_CurrentTask();
     if(!task) return;
 
     if(task->mode & BUSYF_STARTUP)
     {
         // Not in startup, so take a copy of the current frame contents.
-        releaseScreenshotTexture(); //ClientWindow::main().busy().renderTransitionFrame();
+        releaseScreenshotTexture();
     }
-#endif
 }
-
-#if 0
-void BusyVisual_Render(void)
-{
-    BusyTask* task = BusyMode_CurrentTask();
-    float pos = 0;
-
-    if(!task) return;
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, DENG_WINDOW->width(), DENG_WINDOW->height(), 0, -1, 1);
-
-    drawBackground(0, 0, DENG_WINDOW->width(), DENG_WINDOW->height());
-
-    // Indefinite activity?
-    if((task->mode & BUSYF_ACTIVITY) || (task->mode & BUSYF_PROGRESS_BAR))
-    {
-        if(task->mode & BUSYF_ACTIVITY)
-            pos = 1;
-        else // The progress is animated elsewhere.
-            pos = Con_GetProgress();
-
-        drawPositionIndicator(DENG_WINDOW->width()/2,
-                              DENG_WINDOW->height()/2,
-                              DENG_WINDOW->height()/12, pos, task->name);
-    }
-
-    /*
-    // Output from the console?
-    if(task->mode & BUSYF_CONSOLE_OUTPUT)
-    {
-        drawConsoleOutput();
-    }*/
-
-#ifdef _DEBUG
-    Z_DebugDrawer();
-#endif
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-}
-#endif
 
 /**
  * Transition effect:

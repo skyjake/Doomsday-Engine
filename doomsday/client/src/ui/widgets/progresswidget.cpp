@@ -222,8 +222,8 @@ void ProgressWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     int const boxSize = textBox.height() * 6;
     Vector2f const off(0, textBox.height() * .16f);
     Vector2f const hoff(textBox.height(), 0);
-    verts.makeFlexibleFrame(Rectanglef(off + textBox.midLeft() + hoff,
-                                       off + textBox.midRight() - hoff)
+    verts.makeFlexibleFrame(Rectanglef(textBox.midLeft() + hoff + off,
+                                       textBox.midRight() - hoff + off)
                                 .expanded(boxSize),
                             boxSize, Vector4f(shadowColor, shadowColor.w * .75f),
                             root().atlas().imageRectf(root().borderGlow()));
