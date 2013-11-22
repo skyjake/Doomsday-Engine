@@ -119,6 +119,11 @@ public:
     Vector2f size() const;
 
     /**
+     * Returns the current size of the rectangle as defined by the input rules.
+     */
+    Vector2i sizei() const;
+
+    /**
      * Returns the current rectangle as defined by the input rules.
      * Values are floored to integers.
      */

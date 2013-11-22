@@ -27,6 +27,7 @@
 #include "GuiRootWidget"
 #include "busymode.h"
 #include "sys_system.h"
+#include "con_main.h"
 
 #include <de/concurrency.h>
 #include <de/Drawable>
@@ -90,27 +91,6 @@ ProgressWidget &BusyWidget::progress()
 void BusyWidget::viewResized()
 {
     GuiWidget::viewResized();
-
-#if 0
-    if(!BusyMode_Active() || isDisabled() || Sys_IsShuttingDown()) return;
-
-    ClientWindow::main().glActivate(); // needed for legacy stuff
-
-    //DENG_ASSERT(BusyMode_Active());
-
-    LOG_AS("BusyWidget");
-    LOG_DEBUG("View resized to ") << root().viewSize().asText();
-
-    // Update viewports.
-    R_SetViewGrid(0, 0);
-    R_UseViewPort(0);
-    R_LoadSystemFonts();
-
-    if(UI_IsActive())
-    {
-        UI_UpdatePageLayout();
-    }
-#endif
 }
 
 void BusyWidget::update()
@@ -125,11 +105,25 @@ void BusyWidget::update()
 
 void BusyWidget::drawContent()
 {
-    if(d->transitionTex.isNull())
+    if(!BusyMode_Active())
     {
-        //root().window().canvas().renderTarget().clear(GLTarget::ColorDepth);
+        d->progress->hide();
+
+        if(Con_TransitionInProgress())
+        {
+            Con_DrawTransition();
+        }
+        else
+        {
+            // Time to hide the busy widget, the transition has ended (or
+            // was never started).
+            hide();
+            releaseTransitionFrame();
+        }
+        return;
     }
-    else
+
+    if(!d->transitionTex.isNull())
     {
         GLState::top().apply();
 

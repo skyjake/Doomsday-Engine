@@ -410,7 +410,7 @@ void GuiWidget::setOpacity(float opacity, TimeDelta span, TimeDelta startDelay)
     d->opacity.setValue(opacity, span, startDelay);
 }
 
-float GuiWidget::opacity() const
+Animation GuiWidget::opacity() const
 {
     return d->opacity;
 }
