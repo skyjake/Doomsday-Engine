@@ -322,6 +322,11 @@ Vector2f RuleRectangle::size() const
     return Vector2f(width().value(), height().value());
 }
 
+Vector2i RuleRectangle::sizei() const
+{
+    return Vector2i(width().valuei(), height().valuei());
+}
+
 Rectanglei RuleRectangle::recti() const
 {
     Rectanglef const r = rect();
