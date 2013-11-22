@@ -19,12 +19,12 @@ def encodedText(logText):
     
     
 def xmlEncodedText(logText):
-    result = ''
+    result = u''
     for c in logText:
-        if c == '<': 
-            result += '<![CDATA[<]]>'
+        if c == u'<': 
+            result += u'<![CDATA[<]]>'
         elif c == '>': 
-            result += '<![CDATA[>]]>'
+            result += u'<![CDATA[>]]>'
         else:
             result += c
     return result
@@ -273,7 +273,7 @@ class Changes:
             for entry in self.entries:
                 print >> out, '<commit>'
                 print >> out, '<submitDate>%s</submitDate>' % entry.date
-                print >> out, '<author>%s</author>' % entry.author
+                out.write((u'<author>%s</author>\n' % xmlEncodedText(entry.author)).encode('utf-8'))
                 print >> out, '<repositoryUrl>%s</repositoryUrl>' % entry.link
                 print >> out, '<sha1>%s</sha1>' % entry.hash
                 if entry.tags or entry.guessedTags:
