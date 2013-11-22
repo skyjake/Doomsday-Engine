@@ -81,8 +81,6 @@ DENG2_OBSERVES(App,              GameChange)
     BusyWidget *busy;
     GuiWidget *sidebar;
 
-    //GuiRootWidget busyRoot;
-
     // FPS notifications.
     LabelWidget *fpsCounter;
     float oldFps;
@@ -106,7 +104,6 @@ DENG2_OBSERVES(App,              GameChange)
           background(0),
           gameSelMenu(0),
           sidebar(0),
-          //busyRoot(thisPublic),
           fpsCounter(0),
           oldFps(0),
           contentXf(*i)
@@ -490,7 +487,6 @@ DENG2_OBSERVES(App,              GameChange)
 
         // Tell the widgets.
         root.setViewSize(size);
-        //busyRoot.setViewSize(size);
     }
 
     void enableCompositor(bool enable)
@@ -575,7 +571,7 @@ ClientWindow::ClientWindow(String const &id)
 
 GuiRootWidget &ClientWindow::root()
 {
-    return d->root; //d->mode == Busy? d->busyRoot : d->root;
+    return d->root;
 }
 
 TaskBarWidget &ClientWindow::taskBar()
