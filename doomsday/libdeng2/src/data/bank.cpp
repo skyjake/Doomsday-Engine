@@ -144,7 +144,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
             if(data.get())
             {
-                LOG_DEBUG("Item \"%s\" data cleared from memory (%i bytes)")
+                LOG_VERBOSE("Item \"%s\" data cleared from memory (%i bytes)")
                         << path('.') << data->sizeInMemory();
                 data->aboutToUnload();
                 data.reset();
@@ -193,7 +193,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             // us. This may take an unspecified amount of time.
             QScopedPointer<IData> loaded(bank->loadFromSource(*source));
 
-            LOG_DEBUG("Loaded \"%s\" from source in %.2f seconds") << path('.') << startedAt.since();
+            LOG_TRACE("Loaded \"%s\" from source in %.2f seconds") << path('.') << startedAt.since();
 
             if(loaded.data())
             {
@@ -225,7 +225,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
                     QScopedPointer<IData> blank(bank->newData());
                     reader >> *blank->asSerializable();
                     setData(blank.take());
-                    LOG_DEBUG("Deserialized \"%s\" in %.2f seconds") << path('.') << startedAt.since();
+                    LOG_TRACE("Deserialized \"%s\" in %.2f seconds") << path('.') << startedAt.since();
                     return; // Done!
                 }
                 // We cannot use this.
@@ -304,7 +304,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
                 // Externally we use dotted paths.
                 Path const itemPath = path('.');
 
-                LOG_DEBUG("Item \"%s\" moved to %s cache")
+                LOG_TRACE("Item \"%s\" moved to %s cache")
                         << itemPath << Cache::formatAsText(toCache.format());
 
                 bank->d->notify(Notification(itemPath, toCache));
@@ -637,7 +637,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
                 if(item.isValidSerialTime(hotTime))
                 {
-                    LOG_DEBUG("Found valid serialized copy of \"%s\"") << item.path('.');
+                    LOG_VERBOSE("Found valid serialized copy of \"%s\"") << item.path('.');
 
                     item.serial = array;
                     best = serialCache;
@@ -853,13 +853,13 @@ Bank::IData &Bank::data(DotPath const &path) const
     item.reset();
     item.unlock();
 
-    LOG_DEBUG("Loading \"%s\"...") << path;
+    LOG_TRACE("Loading \"%s\"...") << path;
 
     Time requestedAt;
     d->load(path, Immediately);
     item.wait();
 
-    LOG_DEBUG("\"%s\" is available (waited %.2f seconds)") << path << requestedAt.since();
+    LOG_DEBUG("\"%s\" loaded (waited %.2f seconds)") << path << requestedAt.since();
 
     item.lock();
     if(!item.data.get())
