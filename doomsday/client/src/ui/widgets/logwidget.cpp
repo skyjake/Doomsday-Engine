@@ -242,6 +242,8 @@ public Font::RichFormat::IStyle
          */
         void beginWorkOnNext()
         {
+            DENG2_GUARD(this);
+
             while(_width > 0 && _next >= 0 && _next < entryCount())
             {
                 LogEntry const &ent = entry(_next);
