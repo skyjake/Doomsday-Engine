@@ -21,9 +21,11 @@
 #include "render/viewports.h"
 #include "render/rend_main.h"
 #include "gl/gl_main.h"
+#include "clientapp.h"
 
 #include <de/concurrency.h>
 #include <de/Drawable>
+#include <de/RowAtlasAllocator>
 #include <de/Shared>
 #include <de/Log>
 
@@ -39,11 +41,38 @@ namespace fx {
 struct FlareData
 {
     AtlasTexture atlas;
+    enum FlareId {
+        Burst,
+        Circle,
+        Exponent,
+        Halo,
+        Ring,
+        Star,
+        MAX_FLARES
+    };
+    enum Corner {
+        TopLeft,
+        TopRight,
+        BottomRight,
+        BottomLeft
+    };
+    Id flare[MAX_FLARES];
 
     FlareData()
+        : atlas(Atlas::BackingStore, Atlas::Size(1024, 1536))
     {
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+        /// @todo Use KdTreeAtlasAllocator
+        atlas.setAllocator(new RowAtlasAllocator);
+
+        flare[Exponent] = atlas.alloc(flareImage("exponent"));
+        flare[Star]     = atlas.alloc(flareImage("star"));
+        flare[Halo]     = atlas.alloc(flareImage("halo"));
+        flare[Circle]   = atlas.alloc(flareImage("circle"));
+        flare[Ring]     = atlas.alloc(flareImage("ring"));
+        flare[Burst]    = atlas.alloc(flareImage("burst"));
     }
 
     ~FlareData()
@@ -52,6 +81,36 @@ struct FlareData
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         LOG_DEBUG("Releasing shared data");
+    }
+
+    static Image const &flareImage(String const &name)
+    {
+        return ClientApp::renderSystem().images().image("fx.lensflares." + name);
+    }
+
+    Rectanglef uvRect(FlareId id) const
+    {
+        return atlas.imageRectf(flare[id]);
+    }
+
+    Vector2f flareCorner(FlareId id, Corner corner) const
+    {
+        Vector2f p;
+        switch(corner)
+        {
+        case TopLeft:     p = Vector2f(-1, -1); break;
+        case TopRight:    p = Vector2f( 1, -1); break;
+        case BottomRight: p = Vector2f( 1,  1); break;
+        case BottomLeft:  p = Vector2f(-1,  1); break;
+        }
+
+        if(id == Burst)
+        {
+            // Non-square.
+            p *= Vector2f(2, .5f);
+        }
+
+        return p;
     }
 };
 
@@ -102,6 +161,7 @@ DENG2_PIMPL(LensFlares)
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uViewUnit;
+    GLUniform uAtlas;
 
     Instance(Public *i)
         : Base(i)
@@ -109,6 +169,7 @@ DENG2_PIMPL(LensFlares)
         , buffer(0)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uViewUnit ("uViewUnit",  GLUniform::Vec2)
+        , uAtlas    ("uTex",       GLUniform::Sampler2D)
     {}
 
     ~Instance()
@@ -126,7 +187,9 @@ DENG2_PIMPL(LensFlares)
         buffer = new VBuf;
         drawable.addBuffer(buffer);
         self.shaders().build(drawable.program(), "fx.lensflares")
-                << uMvpMatrix << uViewUnit;
+                << uMvpMatrix << uViewUnit << uAtlas;
+
+        uAtlas = res->atlas;
     }
 
     void glDeinit()
@@ -173,8 +236,9 @@ DENG2_PIMPL(LensFlares)
             /// @todo If so, it might be time to purge it from the PVS.
             if(pvl->seenFrame != thisFrame) continue;
 
-            float radius = .1f;
-            Rectanglef uvRect;
+            float radius = .5f;
+            FlareData::FlareId id = FlareData::Burst;
+            Rectanglef uvRect = res->uvRect(id);
 
             int const firstIdx = verts.size();
 
@@ -182,19 +246,19 @@ DENG2_PIMPL(LensFlares)
             vtx.rgba = Vector4f(pvl->light->lightSourceColorf(), 1.f);
 
             vtx.texCoord[0] = uvRect.topLeft;
-            vtx.texCoord[1] = Vector2f(-1, -1) * radius;
+            vtx.texCoord[1] = res->flareCorner(id, FlareData::TopLeft) * radius;
             verts << vtx;
 
             vtx.texCoord[0] = uvRect.topRight();
-            vtx.texCoord[1] = Vector2f(1, -1) * radius;
+            vtx.texCoord[1] = res->flareCorner(id, FlareData::TopRight) * radius;
             verts << vtx;
 
             vtx.texCoord[0] = uvRect.bottomRight;
-            vtx.texCoord[1] = Vector2f(1, 1) * radius;
+            vtx.texCoord[1] = res->flareCorner(id, FlareData::BottomRight) * radius;
             verts << vtx;
 
             vtx.texCoord[0] = uvRect.bottomLeft();
-            vtx.texCoord[1] = Vector2f(-1, 1) * radius;
+            vtx.texCoord[1] = res->flareCorner(id, FlareData::BottomLeft) * radius;
             verts << vtx;
 
             // Make two triangles.
@@ -253,7 +317,9 @@ void LensFlares::draw()
 
     GLState::push()
             .setCull(gl::None)
-            .setDepthTest(false);
+            .setDepthTest(false)
+            .setBlend(true)
+            .setBlendFunc(gl::SrcAlpha, gl::One);
 
     d->drawable.draw();
 
