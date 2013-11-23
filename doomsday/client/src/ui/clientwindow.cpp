@@ -60,7 +60,8 @@ DENG2_OBSERVES(KeyEventSource,   KeyEvent),
 DENG2_OBSERVES(MouseEventSource, MouseStateChange),
 DENG2_OBSERVES(MouseEventSource, MouseEvent),
 DENG2_OBSERVES(Canvas,           FocusChange),
-DENG2_OBSERVES(App,              GameChange)
+DENG2_OBSERVES(App,              GameChange),
+DENG2_OBSERVES(App,              StartupComplete)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -80,8 +81,6 @@ DENG2_OBSERVES(App,              GameChange)
     GameSelectionWidget *gameSelMenu;
     BusyWidget *busy;
     GuiWidget *sidebar;
-
-    //GuiRootWidget busyRoot;
 
     // FPS notifications.
     LabelWidget *fpsCounter;
@@ -106,7 +105,6 @@ DENG2_OBSERVES(App,              GameChange)
           background(0),
           gameSelMenu(0),
           sidebar(0),
-          //busyRoot(thisPublic),
           fpsCounter(0),
           oldFps(0),
           contentXf(*i)
@@ -115,6 +113,7 @@ DENG2_OBSERVES(App,              GameChange)
         /// canvas is really a concern for the input drivers.
 
         App::app().audienceForGameChange += this;
+        App::app().audienceForStartupComplete += this;
 
         // Listen to input.
         self.canvas().audienceForKeyEvent += this;
@@ -125,6 +124,7 @@ DENG2_OBSERVES(App,              GameChange)
     ~Instance()
     {
         App::app().audienceForGameChange -= this;
+        App::app().audienceForStartupComplete -= this;
 
         self.canvas().audienceForFocusChange -= this;
         self.canvas().audienceForMouseStateChange -= this;
@@ -146,6 +146,7 @@ DENG2_OBSERVES(App,              GameChange)
 
         // Background for Ring Zero.
         background = new LabelWidget("background");
+        background->setImageColor(Vector4f(0, 0, 0, 1));
         background->setImage(style.images().image("window.background"));
         background->setImageFit(ui::FitToSize);
         background->setSizePolicy(ui::Filled, ui::Filled);
@@ -213,6 +214,12 @@ DENG2_OBSERVES(App,              GameChange)
         root.add(colorAdjust);
     }
 
+    void appStartupCompleted()
+    {
+        // Allow the background image to show.
+        background->setImageColor(Vector4f(1, 1, 1, 1));
+    }
+
     void currentGameChanged(game::Game const &newGame)
     {
         if(newGame.isNull())
@@ -254,7 +261,8 @@ DENG2_OBSERVES(App,              GameChange)
             break;
 
         default:
-            busy->hide();
+            //busy->hide();
+            // The busy widget will hide itself after a possible transition has finished.
             busy->disable();
 
             game->show();
@@ -490,7 +498,6 @@ DENG2_OBSERVES(App,              GameChange)
 
         // Tell the widgets.
         root.setViewSize(size);
-        //busyRoot.setViewSize(size);
     }
 
     void enableCompositor(bool enable)
@@ -575,7 +582,7 @@ ClientWindow::ClientWindow(String const &id)
 
 GuiRootWidget &ClientWindow::root()
 {
-    return d->root; //d->mode == Busy? d->busyRoot : d->root;
+    return d->root;
 }
 
 TaskBarWidget &ClientWindow::taskBar()

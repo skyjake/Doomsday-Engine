@@ -532,6 +532,7 @@ void LabelWidget::setImageScale(float scaleFactor)
 void LabelWidget::setImageColor(Vector4f const &imageColor)
 {
     d->imageColor = imageColor;
+    requestGeometry();
 }
 
 bool LabelWidget::hasImage() const

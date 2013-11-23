@@ -225,9 +225,9 @@ public:
     void setOpacity(float opacity, de::TimeDelta span = 0, de::TimeDelta startDelay = 0);
 
     /**
-     * Determines the widget's current opacity.
+     * Determines the widget's opacity animation.
      */
-    float opacity() const;
+    de::Animation opacity() const;
 
     /**
      * Determines the widget's opacity, factoring in all ancestor opacities.

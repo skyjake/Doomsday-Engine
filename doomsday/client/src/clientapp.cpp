@@ -126,9 +126,9 @@ DENG2_PIMPL(ClientApp)
     QMenuBar *menuBar;
     InputSystem *inputSys;
     QScopedPointer<WidgetActions> widgetActions;
-    WindowSystem *winSys;
     RenderSystem *renderSys;
     ResourceSystem *resourceSys;
+    WindowSystem *winSys;
     ServerLink *svLink;
     GLShaderBank shaderBank;
     Games games;
@@ -152,9 +152,9 @@ DENG2_PIMPL(ClientApp)
         DD_Shutdown();
 
         delete svLink;
-        delete resourceSys;
-        delete renderSys;
         delete winSys;
+        delete renderSys;
+        delete resourceSys;
         delete inputSys;
         delete menuBar;
         clientAppSingleton = 0;

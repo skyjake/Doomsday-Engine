@@ -147,6 +147,7 @@ static void beginTask(BusyTask* task)
     busyInited = true;
 
     ProgressWidget &prog = ClientWindow::main().busy().progress();
+    prog.show();
     prog.setText(task->name);
     prog.setMode(task->mode & BUSYF_ACTIVITY? ProgressWidget::Indefinite :
                                               ProgressWidget::Ranged);
