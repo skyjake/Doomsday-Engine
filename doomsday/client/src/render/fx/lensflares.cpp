@@ -25,7 +25,7 @@
 
 #include <de/concurrency.h>
 #include <de/Drawable>
-#include <de/RowAtlasAllocator>
+#include <de/KdTreeAtlasAllocator>
 #include <de/Shared>
 #include <de/Log>
 
@@ -59,13 +59,13 @@ struct FlareData
     Id flare[MAX_FLARES];
 
     FlareData()
-        : atlas(Atlas::BackingStore, Atlas::Size(1024, 1536))
+        : atlas(Atlas::BackingStore, Atlas::Size(1024, 1024))
     {
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
         /// @todo Use KdTreeAtlasAllocator
-        atlas.setAllocator(new RowAtlasAllocator);
+        atlas.setAllocator(new KdTreeAtlasAllocator);
 
         flare[Exponent] = atlas.alloc(flareImage("exponent"));
         flare[Star]     = atlas.alloc(flareImage("star"));
@@ -237,7 +237,7 @@ DENG2_PIMPL(LensFlares)
             if(pvl->seenFrame != thisFrame) continue;
 
             float radius = .5f;
-            FlareData::FlareId id = FlareData::Burst;
+            FlareData::FlareId id = FlareData::Halo;
             Rectanglef uvRect = res->uvRect(id);
 
             int const firstIdx = verts.size();
