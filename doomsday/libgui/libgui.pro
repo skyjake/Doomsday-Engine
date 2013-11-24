@@ -66,6 +66,7 @@ HEADERS += \
     include/de/GuiApp \
     include/de/Image \
     include/de/ImageBank \
+    include/de/KdTreeAtlasAllocator \
     include/de/KeyEvent \
     include/de/KeyEventSource \
     include/de/MouseEvent \
@@ -97,6 +98,7 @@ HEADERS += \
     include/de/gui/guiapp.h \
     include/de/gui/image.h \
     include/de/gui/imagebank.h \
+    include/de/gui/kdtreeatlasallocator.h \
     include/de/gui/keyevent.h \
     include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
@@ -130,6 +132,7 @@ SOURCES +=  \
     src/guiapp.cpp \
     src/image.cpp \
     src/imagebank.cpp \
+    src/kdtreeatlasallocator.cpp \
     src/keyevent.cpp \
     src/mouseevent.cpp \
     src/persistentcanvaswindow.cpp \

@@ -76,7 +76,7 @@ DENG2_OBSERVES(Bank, Load)
           uColor    ("uColor",     GLUniform::Vec4),
           uTime     ("uTime",      GLUniform::Float),
           uTex      ("uTex",       GLUniform::Sampler2D),
-          atlas     (AtlasTexture::newWithRowAllocator(Atlas::AllowDefragment | Atlas::BackingStore))
+          atlas     (AtlasTexture::newWithKdTreeAllocator(Atlas::AllowDefragment | Atlas::BackingStore))
     {
         // Use this as the main window.
         setMain(i);
@@ -375,6 +375,7 @@ DENG2_OBSERVES(Bank, Load)
             return;
         }
 
+#if 1
         if(!(qrand() % 3) && !atlas->isEmpty())
         {
             // Randomly remove one of the allocations.
@@ -385,6 +386,7 @@ DENG2_OBSERVES(Bank, Load)
 
             LOG_DEBUG("Removed ") << chosen;
         }
+#endif
 
         // Generate a random image.
         QSize imgSize(10 + qrand() % 40, 10 + qrand() % 40);
