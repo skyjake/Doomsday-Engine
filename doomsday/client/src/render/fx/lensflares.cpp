@@ -64,7 +64,6 @@ struct FlareData
         DENG_ASSERT_IN_MAIN_THREAD();
         DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-        /// @todo Use KdTreeAtlasAllocator
         atlas.setAllocator(new KdTreeAtlasAllocator);
 
         flare[Exponent] = atlas.alloc(flareImage("exponent"));
@@ -187,7 +186,8 @@ DENG2_PIMPL(LensFlares)
         buffer = new VBuf;
         drawable.addBuffer(buffer);
         self.shaders().build(drawable.program(), "fx.lensflares")
-                << uMvpMatrix << uViewUnit << uAtlas;
+                << uMvpMatrix << uViewUnit
+                << uAtlas;
 
         uAtlas = res->atlas;
     }
@@ -219,6 +219,42 @@ DENG2_PIMPL(LensFlares)
         pvl->seenFrame = R_FrameCount();
     }
 
+    void makeFlare(VBuf::Vertices &   verts,
+                   VBuf::Indices &    idx,
+                   FlareData::FlareId id,
+                   float              axisPos,
+                   float              radius,
+                   PVLight const *    pvl)
+    {
+        Rectanglef const uvRect = res->uvRect(id);
+        int const firstIdx = verts.size();
+
+        VBuf::Type vtx;
+        vtx.pos  = pvl->light->lightSourceOrigin().xzy();
+        vtx.rgba = Vector4f(pvl->light->lightSourceColorf(), 1.f);
+        vtx.texCoord[2] = Vector2f(axisPos, 0);
+
+        vtx.texCoord[0] = uvRect.topLeft;
+        vtx.texCoord[1] = res->flareCorner(id, FlareData::TopLeft) * radius;
+        verts << vtx;
+
+        vtx.texCoord[0] = uvRect.topRight();
+        vtx.texCoord[1] = res->flareCorner(id, FlareData::TopRight) * radius;
+        verts << vtx;
+
+        vtx.texCoord[0] = uvRect.bottomRight;
+        vtx.texCoord[1] = res->flareCorner(id, FlareData::BottomRight) * radius;
+        verts << vtx;
+
+        vtx.texCoord[0] = uvRect.bottomLeft();
+        vtx.texCoord[1] = res->flareCorner(id, FlareData::BottomLeft) * radius;
+        verts << vtx;
+
+        // Make two triangles.
+        idx << firstIdx << firstIdx + 1 << firstIdx + 2
+            << firstIdx << firstIdx + 2 << firstIdx + 3;
+    }
+
     void makeVerticesForPVS()
     {
         int const thisFrame = R_FrameCount();
@@ -236,34 +272,19 @@ DENG2_PIMPL(LensFlares)
             /// @todo If so, it might be time to purge it from the PVS.
             if(pvl->seenFrame != thisFrame) continue;
 
-            float radius = .5f;
-            FlareData::FlareId id = FlareData::Halo;
-            Rectanglef uvRect = res->uvRect(id);
+            makeFlare(verts, idx, FlareData::Star, 1, .5f, pvl);
+            makeFlare(verts, idx, FlareData::Halo, -1, .5f, pvl);
 
-            int const firstIdx = verts.size();
+            /*
+            // Project viewtocenter vector onto viewSideVec.
+            Vector3f const eyeToFlare = pvl->lightSourceOrigin() - eyePos;
 
-            vtx.pos  = pvl->light->lightSourceOrigin().xzy();
-            vtx.rgba = Vector4f(pvl->light->lightSourceColorf(), 1.f);
-
-            vtx.texCoord[0] = uvRect.topLeft;
-            vtx.texCoord[1] = res->flareCorner(id, FlareData::TopLeft) * radius;
-            verts << vtx;
-
-            vtx.texCoord[0] = uvRect.topRight();
-            vtx.texCoord[1] = res->flareCorner(id, FlareData::TopRight) * radius;
-            verts << vtx;
-
-            vtx.texCoord[0] = uvRect.bottomRight;
-            vtx.texCoord[1] = res->flareCorner(id, FlareData::BottomRight) * radius;
-            verts << vtx;
-
-            vtx.texCoord[0] = uvRect.bottomLeft();
-            vtx.texCoord[1] = res->flareCorner(id, FlareData::BottomLeft) * radius;
-            verts << vtx;
-
-            // Make two triangles.
-            idx << firstIdx << firstIdx + 1 << firstIdx + 2
-                << firstIdx << firstIdx + 2 << firstIdx + 3;
+            // Calculate the 'mirror' vector.
+            float const scale = viewToCenter.dot(viewData->frontVec)
+                                / Vector3f(viewData->frontVec).dot(viewData->frontVec);
+            Vector3f const mirror =
+                (Vector3f(viewData->frontVec) * scale - viewToCenter) * 2;
+            */
         }
 
         buffer->setVertices(verts, gl::Dynamic);
@@ -309,6 +330,12 @@ void fx::LensFlares::beginFrame()
 
 void LensFlares::draw()
 {
+    /*
+    viewdata_t const *viewData = R_ViewData(console());
+    d->uEyePos   = Vector3f(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
+    d->uEyeFront = Vector3f(viewData->frontVec);
+    */
+
     Rectanglef const rect = viewRect();
     float const    aspect = rect.height() / rect.width();
 
