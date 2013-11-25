@@ -383,7 +383,6 @@ SOURCES += \
     $$SRC/src/resource/rawtexture.cpp \
     $$SRC/src/resource/resourcesystem.cpp \
     $$SRC/src/resource/sprite.cpp \
-    $$SRC/src/resource/sprites.cpp \
     $$SRC/src/resource/texture.cpp \
     $$SRC/src/resource/texturemanifest.cpp \
     $$SRC/src/resource/texturescheme.cpp \

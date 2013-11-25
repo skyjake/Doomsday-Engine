@@ -724,7 +724,6 @@ SOURCES += \
     src/resource/rawtexture.cpp \
     src/resource/resourcesystem.cpp \
     src/resource/sprite.cpp \
-    src/resource/sprites.cpp \
     src/resource/texture.cpp \
     src/resource/texturemanifest.cpp \
     src/resource/textures.cpp \

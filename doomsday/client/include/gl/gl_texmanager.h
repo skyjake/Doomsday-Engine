@@ -26,9 +26,8 @@
 #endif
 
 #include "api_gl.h"
-#include "resource/image.h"
+#include "gl/sys_opengl.h"
 #include "resource/rawtexture.h"
-#include "TextureVariantSpec"
 #include "uri.hh"
 
 /**
