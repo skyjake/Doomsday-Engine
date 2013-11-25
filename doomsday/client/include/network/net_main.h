@@ -271,4 +271,6 @@ void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info);
 } // extern "C"
 #endif
 
+de::String Net_UserAgent();
+
 #endif /* LIBDENG_NETWORK_H */

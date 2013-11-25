@@ -58,6 +58,7 @@
 #include "world/p_players.h"
 
 #include <de/Value>
+#include <de/Version>
 
 // MACROS ------------------------------------------------------------------
 
@@ -1468,4 +1469,10 @@ boolean Net_StringToServerInfo(const char *valuePair, serverinfo_t *info)
         return false;
     }
     return true;
+}
+
+de::String Net_UserAgent()
+{
+    return QString(DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT) +
+           " (" + de::Version().operatingSystem() + ")";
 }

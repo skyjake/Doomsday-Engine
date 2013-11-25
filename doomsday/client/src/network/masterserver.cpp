@@ -130,7 +130,7 @@ void MasterWorker::nextJob()
 
     // Let's form an HTTP request.
     QNetworkRequest req(masterUrl(d->currentAction == REQUEST_SERVERS? "?list" : 0));
-    req.setRawHeader("User-Agent", "Doomsday Engine " DOOMSDAY_VERSION_TEXT);
+    req.setRawHeader("User-Agent", Net_UserAgent().toLatin1());
 
 #ifdef __SERVER__
     if(d->currentAction == ANNOUNCE)
