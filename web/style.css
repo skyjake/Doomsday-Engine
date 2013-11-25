@@ -8,21 +8,13 @@ body {
 
     color: #A7A29C;
     font-family: "Open Sans",sans-serif !important;
-    /*font-size: 100%;
-    line-height: 1.5;*/
-
+    font-size: small;
+    padding: 0;
     margin: 1.2em;
     margin-top: 1.8em;
 }
 
-@media only screen and (max-width: 767px) {
-body {
-    margin: 0px;
-}
-}
-
 h1, h2, h3, h4, h5, h6 {
-    /*font-family: Verdana, Arial, Helvetica, sans-serif;*/
     margin-bottom: 0;
     margin-top: .6em;
     font-weight: lighter;
