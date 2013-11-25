@@ -81,6 +81,7 @@ void ColorBank::addFromInfo(File const &file)
 
 ColorBank::Color ColorBank::color(DotPath const &path) const
 {
+    if(path.isEmpty()) return Color();
     Colorf col = colorf(path);
     return Color(round<dbyte>(col.x * 255),
                  round<dbyte>(col.y * 255),
@@ -90,6 +91,7 @@ ColorBank::Color ColorBank::color(DotPath const &path) const
 
 ColorBank::Colorf ColorBank::colorf(DotPath const &path) const
 {
+    if(path.isEmpty()) return Colorf();
     Vector4d clamped = static_cast<Instance::ColorData &>(data(path)).color;
     clamped = clamped.max(Vector4d(0, 0, 0, 0)).min(Vector4d(1, 1, 1, 1));
     return Colorf(float(clamped.x), float(clamped.y), float(clamped.z), float(clamped.w));

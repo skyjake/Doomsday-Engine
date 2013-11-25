@@ -56,7 +56,7 @@ ul.navlinks {
     padding-bottom: 1px;
     margin-bottom: 1px;
     font-weight: bold;
-    font-family: Verdana, Arial, Helvetica, sans-serif;
+    /*font-family: Verdana, Arial, Helvetica, sans-serif;*/
     font-size: 12pt;
 }
 
@@ -373,9 +373,9 @@ p.rules {
 
 /* Links for forum/topic lists */
 .forumtitle, .topictitle {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
+    /*font-family: Verdana, Arial, Helvetica, sans-serif;*/
     font-size: 1.1em;
-    font-weight: bold;
+    /*font-weight: bold;*/
 }
 
 a.top {
@@ -630,7 +630,7 @@ dl.faq {
 }
 
 dl.faq dt, dl.faqanswer dt {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
+    /*font-family: Verdana, Arial, Helvetica, sans-serif;*/
     margin-bottom: 0.5em;
 }
 
@@ -666,7 +666,7 @@ dl.faq dd {
     overflow: hidden;
     width: 100%;
     font-size:10pt;
-    font-family: Arial, Helvetica, sans-serif;
+    /*font-family: Arial, Helvetica, sans-serif;*/
     line-height:120%;
 }
 
@@ -1070,7 +1070,7 @@ fieldset.polls dd div {
     width: 18%;
     float: left;
     display: inline;
-    font-family: Arial, Helvetica, sans-serif;
+    /*font-family: Arial, Helvetica, sans-serif;*/
     font-size: 8pt;
     text-align: center;
 }
@@ -1604,7 +1604,7 @@ ol.def-rules li {
 ----------------------------------------*/
 fieldset {
     border-width: 0;
-    font-family: Verdana, Helvetica, Arial, sans-serif;
+    /*font-family: Verdana, Helvetica, Arial, sans-serif;*/
     font-size: 10pt;
 }
 
