@@ -1,12 +1,15 @@
+
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,400,700,300);
+
 body {
     background: #282D2B url(panoramarotator) no-repeat fixed;
     background-position: center 100%;
     background-size: 200% 200%;
 
     color: #A7A29C;
-    font-family: Georgia, serif;
-    font-size: 100%;
-    line-height: 1.5;
+    font-family: "Open Sans",sans-serif !important;
+    /*font-size: 100%;
+    line-height: 1.5;*/
 
     margin: 1.2em;
     margin-top: 1.8em;
@@ -19,7 +22,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
+    /*font-family: Verdana, Arial, Helvetica, sans-serif;*/
     margin-bottom: 0;
     margin-top: .6em;
     font-weight: lighter;
@@ -625,8 +628,9 @@ ol.jumplist li {
 }
 
 #menu {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-weight: bold;
+    /*font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-weight: bold;*/
+    font-size:120%;
 }
 
 #menu a:focus { outline-offset: 0; }
@@ -639,7 +643,7 @@ ol.jumplist li {
 
 #menu section {
     display: inline-block;
-    min-width: 16em;
+    min-width: 14em;
     text-align: right;
 }
 
@@ -806,9 +810,9 @@ div.clear {
     color: #A7A29C;
 }
 
-#status {
+/*#status {
     font-size: 66%;
-}
+}*/
 
 #recentbuilds { float: left; }
 #activeservers { float: right; }
