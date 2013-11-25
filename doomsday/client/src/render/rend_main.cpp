@@ -74,6 +74,7 @@
 #include "render/sprite.h"
 #include "render/vissprite.h"
 #include "render/fx/vignette.h"
+#include "render/fx/lensflares.h"
 #include "render/vr.h"
 
 #include "gl/sys_opengl.h"
@@ -343,6 +344,7 @@ void Rend_Register()
     //Rend_ConsoleRegister();
     LensFx_Register();
     fx::Vignette::consoleRegister();
+    fx::LensFlares::consoleRegister();
     VR::consoleRegister();
 }
 

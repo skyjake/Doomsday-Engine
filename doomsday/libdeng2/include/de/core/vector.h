@@ -343,8 +343,11 @@ public:
     bool operator <= (Vector3 const &other) const {
         return *this == other || *this < other;
     }
-    ddouble length() const {
-        return std::sqrt(Vector2<Type>::x*Vector2<Type>::x + Vector2<Type>::y*Vector2<Type>::y + z*z);
+    inline ddouble length() const {
+        return std::sqrt(lengthSquared());
+    }
+    ddouble lengthSquared() const {
+        return Vector2<Type>::x*Vector2<Type>::x + Vector2<Type>::y*Vector2<Type>::y + z*z;
     }
     Vector3 normalize() const {
         ddouble const len = length();

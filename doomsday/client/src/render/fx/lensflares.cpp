@@ -21,13 +21,15 @@
 #include "render/viewports.h"
 #include "render/rend_main.h"
 #include "gl/gl_main.h"
+#include "con_main.h"
 #include "clientapp.h"
 
 #include <de/concurrency.h>
 #include <de/Drawable>
 #include <de/KdTreeAtlasAllocator>
-#include <de/Shared>
 #include <de/Log>
+#include <de/Range>
+#include <de/Shared>
 
 #include <QHash>
 
@@ -113,32 +115,90 @@ struct FlareData
     }
 };
 
+struct TestLight : public ILightSource
+{
+public:
+    float radius;
+    Colorf color;
+    float intensity;
+
+    TestLight() : radius(1), color(1, 1, 1), intensity(1)
+    {}
+
+    LightId lightSourceId() const {
+        return 1;
+    }
+    Origin lightSourceOrigin() const {
+        //return Origin(0, 0, 0);
+        return Origin(1055, -3280, 30);
+    }
+    dfloat lightSourceRadius() const {
+        return radius;
+    }
+    Colorf lightSourceColorf() const {
+        return color;
+    }
+    dfloat lightSourceIntensity(de::Vector3d const &) const {
+        return intensity;
+    }
+};
+
+static TestLight testLight;
+
+D_CMD(TestLight)
+{
+    String prop = argv[1];
+    float value = String(argv[2]).toFloat();
+
+    if(prop.compareWithoutCase("rd"))
+    {
+        fx::testLight.radius = value;
+    }
+    else if(prop.compareWithoutCase("in"))
+    {
+        fx::testLight.intensity = value;
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
+static float linearRangeFactor(float value, Rangef const &low, Rangef const &high)
+{
+    if(low.size() > 0)
+    {
+        if(value < low.start)
+        {
+            return 0;
+        }
+        if(low.contains(value))
+        {
+            return (value - low.start) / low.size();
+        }
+    }
+
+    if(high.size() > 0)
+    {
+        if(value > high.end)
+        {
+            return 0;
+        }
+        if(high.contains(value))
+        {
+            return 1 - (value - high.start) / high.size();
+        }
+    }
+
+    return 1;
+}
+
 DENG2_PIMPL(LensFlares)
 {
     typedef Shared<FlareData> SharedFlareData;
     SharedFlareData *res;
-
-    struct TestLight : public ILightSource
-    {
-    public:
-        LightId lightSourceId() const {
-            return 1;
-        }
-        Origin lightSourceOrigin() const {
-            //return Origin(0, 0, 0);
-            return Origin(1055, -3280, 30);
-        }
-        dfloat lightSourceRadius() const {
-            return 10;
-        }
-        Colorf lightSourceColorf() const {
-            return Colorf(1, 1, 1);
-        }
-        dfloat lightSourceIntensity(de::Vector3d const &) const {
-            return 1;
-        }
-    };
-    TestLight testLight;
 
     /**
      * Current state of a potentially visible light.
@@ -224,6 +284,7 @@ DENG2_PIMPL(LensFlares)
                    FlareData::FlareId id,
                    float              axisPos,
                    float              radius,
+                   float              alpha,
                    PVLight const *    pvl)
     {
         Rectanglef const uvRect = res->uvRect(id);
@@ -231,7 +292,7 @@ DENG2_PIMPL(LensFlares)
 
         VBuf::Type vtx;
         vtx.pos  = pvl->light->lightSourceOrigin().xzy();
-        vtx.rgba = Vector4f(pvl->light->lightSourceColorf(), 1.f);
+        vtx.rgba = Vector4f(pvl->light->lightSourceColorf(), alpha);
         vtx.texCoord[2] = Vector2f(axisPos, 0);
 
         vtx.texCoord[0] = uvRect.topLeft;
@@ -272,8 +333,70 @@ DENG2_PIMPL(LensFlares)
             /// @todo If so, it might be time to purge it from the PVS.
             if(pvl->seenFrame != thisFrame) continue;
 
-            makeFlare(verts, idx, FlareData::Star, 1, .5f, pvl);
-            makeFlare(verts, idx, FlareData::Halo, -1, .5f, pvl);
+            coord_t const distanceSquared = (Vector3d(vOrigin) - pvl->light->lightSourceOrigin().xzy()).lengthSquared();
+            coord_t const distance = std::sqrt(distanceSquared);
+
+            // Light intensity is always quadratic per distance.
+            float intensity = pvl->light->lightSourceIntensity(vOrigin) / distanceSquared;
+
+            // Projected radius of the light.
+            float const RADIUS_FACTOR = 128; // Light radius of 1 at this distance produces a visible radius of 1.
+            /// @todo The factor should be FOV-dependent.
+            float radius = pvl->light->lightSourceRadius() / distance * RADIUS_FACTOR;
+
+            qDebug() << "i:" << intensity << "r:" << radius << "IR:" << radius*intensity;
+
+            /*
+             * The main flare.
+             * - small + bright => burst
+             * - big + bright   => star
+             * - small + dim    => exponent
+             * - big + dim      => exponent
+             */
+
+            struct Spec {
+                float axisPos;
+                FlareData::FlareId id;
+                float alpha;
+                float size;
+                Rangef minIntensity;
+                Rangef maxIntensity;
+                Rangef minRadius;
+                Rangef maxRadius;
+            };
+            static Spec const specs[] = {
+                //  axisPos id                   alpha   size    intensity min/max                  radius min/max
+                {   1,      FlareData::Burst,    1,      1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(), Rangef(.5f, .8f) },
+                {   1,      FlareData::Star,     1,      1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(.5f, .7f), Rangef() },
+                {   1,      FlareData::Exponent, 1,     2,       Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .2f), Rangef() },
+
+                {  .75f,    FlareData::Halo,     .5f,    1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(.5f, .7f), Rangef() },
+                {  -.75f,   FlareData::Ring,     .3f,    .8f,    Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef() },
+
+                {  -1,      FlareData::Circle,   .3f,    1,      Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef() },
+
+                {  -1.25f,  FlareData::Ring,     .3f,    1.1f,   Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef() }
+            };
+
+            for(uint i = 0; i < sizeof(specs)/sizeof(Spec); ++i)
+            {
+                Spec const &spec = specs[i];
+
+                float size = radius * spec.size;
+                float alpha = spec.alpha;
+
+                // Apply limits.
+                alpha *= linearRangeFactor(intensity, spec.minIntensity, spec.maxIntensity);
+                alpha *= linearRangeFactor(radius, spec.minRadius, spec.maxRadius);
+
+                //qDebug() << linearRangeFactor(intensity, spec.minIntensity, spec.maxIntensity);
+                //qDebug() << linearRangeFactor(radius, spec.minRadius, spec.maxRadius);
+
+                makeFlare(verts, idx, spec.id, spec.axisPos, size, alpha, pvl);
+            }
+
+            //makeFlare(verts, idx, FlareData::Halo, -1, size, pvl);
+
 
             /*
             // Project viewtocenter vector onto viewSideVec.
@@ -323,7 +446,7 @@ void LensFlares::glDeinit()
 
 void fx::LensFlares::beginFrame()
 {
-    markLightPotentiallyVisibleForCurrentFrame(&d->testLight); // testing
+    markLightPotentiallyVisibleForCurrentFrame(&testLight); // testing
 
     d->makeVerticesForPVS();
 }
@@ -351,6 +474,11 @@ void LensFlares::draw()
     d->drawable.draw();
 
     GLState::pop().apply();
+}
+
+void LensFlares::consoleRegister()
+{
+    C_CMD("testlight", "sf", TestLight)
 }
 
 } // namespace fx

@@ -1,9 +1,10 @@
 uniform sampler2D uTex;
+varying highp vec4 vColor;
 varying highp vec2 vUV;
 
 void main(void) {
     highp vec4 tex = texture2D(uTex, vUV);
-    gl_FragColor = tex;
+    gl_FragColor = tex * vColor;
     
     /*
     highp vec4 original = texture2D(uTex, vUV);

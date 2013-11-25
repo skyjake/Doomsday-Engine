@@ -41,6 +41,8 @@ public:
     void beginFrame();
     void draw();
 
+    static void consoleRegister();
+
 private:
     DENG2_PRIVATE(d)
 };
