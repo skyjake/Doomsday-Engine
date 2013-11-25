@@ -18,6 +18,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include "render/drawlist.h"
 
 #include "gl/gl_main.h"

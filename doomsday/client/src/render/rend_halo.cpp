@@ -17,19 +17,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <cmath>
+#include "de_platform.h"
+#include "render/rend_halo.h"
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_graphics.h"
-#include "de_misc.h"
-
-#include "world/p_players.h"
 #include "render/rend_main.h"
 
+#include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 
-#include "render/rend_halo.h"
+#include "con_main.h"
+#include "dd_main.h"
+
+#include "world/p_players.h"
+
+#include <cmath>
 
 #define NUM_FLARES          5
 
@@ -85,9 +86,9 @@ void H_Register(void)
 
 TextureVariantSpec &Rend_HaloTextureSpec()
 {
-    return GL_TextureVariantSpec(TC_HALO_LUMINANCE, TSF_NO_COMPRESSION, 0, 0, 0,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, 1, 0,
-                                 false, false, false, true);
+    return App_ResourceSystem().textureSpec(TC_HALO_LUMINANCE,
+        TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, 1, 0,
+        false, false, false, true);
 }
 
 void H_SetupState(bool dosetup)

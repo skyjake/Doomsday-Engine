@@ -25,10 +25,6 @@
 #  error "GL Texture Manager only exists in the Client"
 #endif
 
-#ifndef __cplusplus
-#  error "gl/gl_texmanager.h requires C++"
-#endif
-
 #include "api_gl.h"
 #include "resource/image.h"
 #include "resource/rawtexture.h"
@@ -39,7 +35,7 @@
  * Textures used in the lighting system.
  */
 typedef enum lightingtexid_e {
-    LST_DYNAMIC, ///< Round dynamic light
+    LST_DYNAMIC,  ///< Round dynamic light
     LST_GRADIENT, ///< Top-down gradient
     LST_RADIO_CO, ///< FakeRadio closed/open corner shadow
     LST_RADIO_CC, ///< FakeRadio closed/closed corner shadow
@@ -59,41 +55,7 @@ typedef enum flaretexid_e {
 
 void GL_InitTextureManager();
 
-void GL_ShutdownTextureManager();
-
-/**
- * Call this if a full cleanup of the textures is required (engine update).
- */
-void GL_ResetTextureManager();
-
 void GL_TexReset();
-
-void GL_PruneTextureVariantSpecifications();
-
-/**
- * Prepare a TextureVariantSpecification according to usage context. If incomplete
- * context information is supplied, suitable defaults are chosen in their place.
- *
- * @param tc  Usage context.
- * @param flags  @ref textureVariantSpecificationFlags
- * @param border  Border size in pixels (all edges).
- * @param tClass  Color palette translation class.
- * @param tMap  Color palette translation map.
- *
- * @return  A rationalized and valid TextureVariantSpecification.
- */
-TextureVariantSpec &GL_TextureVariantSpec(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass,
-    int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
-
-/**
- * Prepare a TextureVariantSpecification according to usage context. If incomplete
- * context information is supplied, suitable defaults are chosen in their place.
- *
- * @return  A rationalized and valid TextureVariantSpecification.
- */
-TextureVariantSpec &GL_DetailTextureSpec(float contrast);
 
 /*
  * Here follows miscellaneous routines currently awaiting refactoring into the

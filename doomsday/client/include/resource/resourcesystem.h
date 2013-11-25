@@ -230,6 +230,35 @@ public:
      */
     void releaseGLTexturesFor(de::Texture &texture, TextureVariantSpec &spec);
 
+    void clearAllTextureSpecs();
+
+    void pruneUnusedTextureSpecs();
+
+    /**
+     * Prepare a TextureVariantSpecification according to usage context. If the
+     * specification is incomplete suitable defaults are chosen automatically.
+     *
+     * @param tc      Usage context.
+     * @param flags   @ref textureVariantSpecificationFlags
+     * @param border  Border size in pixels (all edges).
+     * @param tClass  Color palette translation class.
+     * @param tMap    Color palette translation map.
+     *
+     * @return  A rationalized and valid TextureVariantSpecification.
+     */
+    TextureVariantSpec &textureSpec(texturevariantusagecontext_t tc, int flags,
+        byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
+        int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
+        boolean noStretch, boolean toAlpha);
+
+    /**
+     * Prepare a TextureVariantSpecification according to usage context. If the
+     * specification is incomplete suitable defaults are chosen automatically.
+     *
+     * @return  A rationalized and valid TextureVariantSpecification.
+     */
+    TextureVariantSpec &detailTextureSpec(float contrast);
+
     /**
      * Provides access to the Fonts collection.
      */

@@ -17,8 +17,9 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "clientapp.h"
 #include "resource/materialsnapshot.h"
+
 #include "gl/gl_texmanager.h"
 #include "gl/gltextureunit.h"
 #include "render/rend_halo.h" // Rend_HaloTextureSpec()
@@ -219,7 +220,7 @@ void MaterialSnapshot::update()
         {
             float const contrast = de::clamp(0.f, lsCur->strength, 1.f) * detailFactor /*Global strength multiplier*/;
             TextureVariantSpec &dTexSpec =
-                GL_DetailTextureSpec(contrast);
+                ClientApp::resourceSystem().detailTextureSpec(contrast);
 
             prepTextures[MTU_DETAIL][0] =
                 lsCur->texture->prepareVariant(dTexSpec);
@@ -233,7 +234,7 @@ void MaterialSnapshot::update()
             {
                 float const contrast = de::clamp(0.f, lsNext->strength, 1.f) * detailFactor /*Global strength multiplier*/;
                 TextureVariantSpec &dTexSpec =
-                    GL_DetailTextureSpec(contrast);
+                    ClientApp::resourceSystem().detailTextureSpec(contrast);
 
                 prepTextures[MTU_DETAIL][1] =
                     lsNext->texture->prepareVariant(dTexSpec);

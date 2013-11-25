@@ -1,7 +1,7 @@
 /** @file r_draw.cpp  Misc Drawing Routines.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,16 +18,21 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_graphics.h"
-#include "de_play.h"
-#include "de_resource.h"
-
-#include "MaterialSnapshot"
+#include "clientapp.h"
 #include "render/r_draw.h"
-#include "gl/gl_texmanager.h"
+
+#include "render/r_main.h"
+
+#include "gl/gl_draw.h"
+#include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
+
+#include "api_resource.h"
+#include "MaterialSnapshot"
+
+#include "world/p_players.h" // displayPlayer
+
+#include "con_main.h"
 
 using namespace de;
 
@@ -56,7 +61,7 @@ static void loadViewBorderPatches()
     borderPatches[0] = 0;
     for(uint i = 1; i < 9; ++i)
     {
-        borderPatches[i] = R_DeclarePatch(Str_Text(Uri_Path(borderGraphicsNames[i])));
+        borderPatches[i] = ClientApp::resourceSystem().declarePatch(reinterpret_cast<de::Uri *>(borderGraphicsNames[i])->path());
     }
 
     // Detemine the view border size.
@@ -69,7 +74,7 @@ static void loadViewBorderPatches()
 #undef R_SetBorderGfx
 DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
 {
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
     if(!paths) Con_Error("R_SetBorderGfx: Missing argument.");
 
     for(uint i = 0; i < 9; ++i)
@@ -132,9 +137,8 @@ void R_ShutdownViewWindow(void)
 TextureVariantSpec &Rend_PatchTextureSpec(int flags,
     gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
-    return GL_TextureVariantSpec(TC_UI, flags, 0, 0, 0,
-                                 GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0,
-                                 false, false, false, false);
+    return ClientApp::resourceSystem().textureSpec(TC_UI, flags, 0, 0, 0,
+        GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0, false, false, false, false);
 }
 
 void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
@@ -181,8 +185,8 @@ void R_DrawPatchTiled(Texture &texture, int x, int y, int w, int h,
 
 static MaterialVariantSpec const &bgMaterialSpec()
 {
-    return App_Materials().variantSpec(UiContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                       0, -3, 0, false, false, false, false);
+    return ClientApp::resourceSystem().materials().variantSpec(UiContext, 0, 0,
+        0, 0, GL_REPEAT, GL_REPEAT, 0, -3, 0, false, false, false, false);
 }
 
 /// @todo Optimize: Do not search for resources (materials, textures) each frame.
@@ -223,8 +227,9 @@ void R_DrawViewBorder()
     // View background.
     try
     {
-        MaterialSnapshot const &ms = App_Materials().find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
-            .material().prepare(bgMaterialSpec());
+        MaterialSnapshot const &ms = ClientApp::resourceSystem().materials()
+                                        .find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
+                                            .material().prepare(bgMaterialSpec());
 
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.width(), ms.height(), 0, 0,
@@ -236,7 +241,7 @@ void R_DrawViewBorder()
 
     if(border != 0)
     {
-        Textures &textures = App_Textures();
+        Textures &textures = ClientApp::resourceSystem().textures();
         R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOP]).texture(),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
         R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOM]).texture(), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
         R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_LEFT]).texture(),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
@@ -248,7 +253,7 @@ void R_DrawViewBorder()
 
     if(border != 0)
     {
-        Textures &textures = App_Textures();
+        Textures &textures = ClientApp::resourceSystem().textures();
         R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPLEFT]).texture(),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
         R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPRIGHT]).texture(),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
         R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMRIGHT]).texture(), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);

@@ -377,6 +377,7 @@ void GL_InitRefresh()
 {
     if(novideo) return;
     GL_InitTextureManager();
+    App_ResourceSystem().clearAllTextureSpecs();
 
     // Register/create Texture objects for the system textures.
     App_ResourceSystem().initSystemTextures();
@@ -389,8 +390,7 @@ void GL_ShutdownRefresh()
     initFullGLOk = false;
 
     App_ResourceSystem().clearAllColorPalettes();
-
-    GL_ShutdownTextureManager();
+    App_ResourceSystem().clearAllTextureSpecs();
 }
 
 void GL_Shutdown()
@@ -657,7 +657,12 @@ void GL_TotalReset()
     //Rend_ConsoleUpdateTitle();
 
     // Release all texture memory.
-    GL_ResetTextureManager();
+    App_ResourceSystem().releaseAllGLTextures();
+    App_ResourceSystem().pruneUnusedTextureSpecs();
+    GL_LoadLightingSystemTextures();
+    GL_LoadFlareTextures();
+    Rend_ParticleLoadSystemTextures();
+
     GL_ReleaseReservedNames();
 
 #if _DEBUG

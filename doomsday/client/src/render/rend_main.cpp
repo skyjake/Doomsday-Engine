@@ -5159,16 +5159,15 @@ MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 
 TextureVariantSpec &Rend_MapSurfaceShinyTextureSpec()
 {
-    return GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTION, TSF_NO_COMPRESSION,
-                                 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
-                                 false, false, false, false);
+    return ClientApp::resourceSystem().textureSpec(TC_MAPSURFACE_REFLECTION,
+        TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1, false,
+        false, false, false);
 }
 
 TextureVariantSpec &Rend_MapSurfaceShinyMaskTextureSpec()
 {
-    return GL_TextureVariantSpec(TC_MAPSURFACE_REFLECTIONMASK, 0,
-                                 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1,
-                                 true, false, false, false);
+    return ClientApp::resourceSystem().textureSpec(TC_MAPSURFACE_REFLECTIONMASK,
+        0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, false, false, false);
 }
 
 D_CMD(OpenRendererAppearanceEditor)

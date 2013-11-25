@@ -98,6 +98,59 @@ static Texture *deriveTexture(TextureManifest &manifest)
     return tex;
 }
 
+#ifdef __CLIENT__
+static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
+{
+    return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
+}
+
+static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
+    int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
+{
+    DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
+
+    flags &= ~TSF_INTERNAL_MASK;
+
+    spec.context         = tc;
+    spec.flags           = flags;
+    spec.border          = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
+    spec.mipmapped       = mipmapped;
+    spec.wrapS           = wrapS;
+    spec.wrapT           = wrapT;
+    spec.minFilter       = de::clamp(-1, minFilter, spec.mipmapped? 3:1);
+    spec.magFilter       = de::clamp(-3, magFilter, 1);
+    spec.anisoFilter     = de::clamp(-1, anisoFilter, 4);
+    spec.gammaCorrection = gammaCorrection;
+    spec.noStretch       = noStretch;
+    spec.toAlpha         = toAlpha;
+
+    if(tClass || tMap)
+    {
+        spec.flags      |= TSF_HAS_COLORPALETTE_XLAT;
+        spec.tClass      = de::max(0, tClass);
+        spec.tMap        = de::max(0, tMap);
+    }
+
+    return spec;
+}
+
+static detailvariantspecification_t &configureDetailTextureSpec(
+    detailvariantspecification_t &spec, float contrast)
+{
+    int const quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
+
+    spec.contrast = 255 * de::clamp<int>(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
+    return spec;
+}
+
+/// @c TST_DETAIL type specifications are stored separately into a set of
+/// buckets. Bucket selection is determined by their quantized contrast value.
+#define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
+
+#endif // __CLIENT__
+
 DENG2_PIMPL(ResourceSystem)
 #ifdef __CLIENT__
 , DENG2_OBSERVES(ColorPalette, ColorTableChange)
@@ -135,6 +188,10 @@ DENG2_PIMPL(ResourceSystem)
     SpriteGroups spriteGroups;
 
 #ifdef __CLIENT__
+    typedef QList<TextureVariantSpec *> TextureSpecs;
+    TextureSpecs textureSpecs;
+    TextureSpecs detailTextureSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
+
     Fonts fonts;
 #endif
 
@@ -208,14 +265,152 @@ DENG2_PIMPL(ResourceSystem)
     {
         fonts.scheme("Game").clear();
 
-        GL_PruneTextureVariantSpecifications();
+        self.pruneUnusedTextureSpecs();
     }
 
     void clearSystemFonts()
     {
         fonts.scheme("System").clear();
 
-        GL_PruneTextureVariantSpecifications();
+        self.pruneUnusedTextureSpecs();
+    }
+
+    TextureVariantSpec &linkTextureSpec(TextureVariantSpec *spec)
+    {
+        DENG2_ASSERT(spec != 0);
+
+        switch(spec->type)
+        {
+        case TST_GENERAL:
+            textureSpecs.append(spec);
+            break;
+        case TST_DETAIL: {
+            int hash = hashDetailTextureSpec(spec->detailVariant);
+            detailTextureSpecs[hash].append(spec);
+            break; }
+        }
+
+        return *spec;
+    }
+
+    TextureVariantSpec *findTextureSpec(TextureVariantSpec const &tpl, bool canCreate)
+    {
+        // Do we already have a concrete version of the template specification?
+        switch(tpl.type)
+        {
+        case TST_GENERAL: {
+            foreach(TextureVariantSpec *varSpec, textureSpecs)
+            {
+                if(*varSpec == tpl)
+                {
+                    return varSpec;
+                }
+            }
+            break; }
+
+        case TST_DETAIL: {
+            int hash = hashDetailTextureSpec(tpl.detailVariant);
+            foreach(TextureVariantSpec *varSpec, detailTextureSpecs[hash])
+            {
+                if(*varSpec == tpl)
+                {
+                    return varSpec;
+                }
+
+            }
+            break; }
+        }
+
+        // Not found, can we create?
+        if(canCreate)
+        {
+            return &linkTextureSpec(new TextureVariantSpec(tpl));
+        }
+
+        return 0;
+    }
+
+    TextureVariantSpec *textureSpec(texturevariantusagecontext_t tc, int flags,
+        byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
+        int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
+        boolean noStretch, boolean toAlpha)
+    {
+        static TextureVariantSpec tpl;
+        tpl.type = TST_GENERAL;
+
+        configureTextureSpec(tpl.variant, tc, flags, border, tClass, tMap, wrapS,
+            wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection,
+            noStretch, toAlpha);
+
+        // Retrieve a concrete version of the rationalized specification.
+        return findTextureSpec(tpl, true);
+    }
+
+    TextureVariantSpec *detailTextureSpec(float contrast)
+    {
+        static TextureVariantSpec tpl;
+
+        tpl.type = TST_DETAIL;
+        configureDetailTextureSpec(tpl.detailVariant, contrast);
+        return findTextureSpec(tpl, true);
+    }
+
+    bool textureSpecInUse(TextureVariantSpec const &spec)
+    {
+        foreach(Texture *texture, textures.all())
+        foreach(TextureVariant *variant, texture->variants())
+        {
+            if(&variant->spec() == &spec)
+            {
+                return true; // Found one; stop.
+            }
+        }
+        return false;
+    }
+
+    int pruneUnusedTextureSpecs(TextureSpecs &list)
+    {
+        int numPruned = 0;
+        QMutableListIterator<TextureVariantSpec *> it(list);
+        while(it.hasNext())
+        {
+            TextureVariantSpec *spec = it.next();
+            if(!textureSpecInUse(*spec))
+            {
+                it.remove();
+                delete &spec;
+                numPruned += 1;
+            }
+        }
+        return numPruned;
+    }
+
+    int pruneUnusedTextureSpecs(texturevariantspecificationtype_t specType)
+    {
+        switch(specType)
+        {
+        case TST_GENERAL: return pruneUnusedTextureSpecs(textureSpecs);
+        case TST_DETAIL: {
+            int numPruned = 0;
+            for(int i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
+            {
+                numPruned += pruneUnusedTextureSpecs(detailTextureSpecs[i]);
+            }
+            return numPruned; }
+        }
+        return 0;
+    }
+
+    void clearAllTextureSpecs()
+    {
+        qDeleteAll(textureSpecs);
+        textureSpecs.clear();
+
+        for(int i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
+        {
+            qDeleteAll(detailTextureSpecs[i]);
+            detailTextureSpecs[i].clear();
+        }
     }
 #endif // __CLIENT__
 
@@ -234,7 +429,7 @@ DENG2_PIMPL(ResourceSystem)
         textures.scheme("Flaremaps").clear();
 
 #ifdef __CLIENT__
-        GL_PruneTextureVariantSpecifications();
+        self.pruneUnusedTextureSpecs();
 #endif
     }
 
@@ -243,7 +438,7 @@ DENG2_PIMPL(ResourceSystem)
         textures.scheme("System").clear();
 
 #ifdef __CLIENT__
-        GL_PruneTextureVariantSpecifications();
+        self.pruneUnusedTextureSpecs();
 #endif
     }
 
@@ -1175,7 +1370,7 @@ void ResourceSystem::releaseAllSystemGLTextures()
     Rend_ParticleReleaseSystemTextures();
     releaseFontGLTexturesByScheme("System");
 
-    GL_PruneTextureVariantSpecifications();
+    pruneUnusedTextureSpecs();
 }
 
 void ResourceSystem::releaseAllRuntimeGLTextures()
@@ -1205,7 +1400,7 @@ void ResourceSystem::releaseAllRuntimeGLTextures()
     Rend_ParticleReleaseExtraTextures();
     releaseFontGLTexturesByScheme("Game");
 
-    GL_PruneTextureVariantSpecifications();
+    pruneUnusedTextureSpecs();
 }
 
 void ResourceSystem::releaseAllGLTextures()
@@ -1263,6 +1458,52 @@ void ResourceSystem::releaseGLTexturesByScheme(String schemeName)
             releaseGLTexturesFor(manifest.texture());
         }
     }
+}
+
+void ResourceSystem::clearAllTextureSpecs()
+{
+    d->clearAllTextureSpecs();
+}
+
+void ResourceSystem::pruneUnusedTextureSpecs()
+{
+    if(Sys_IsShuttingDown()) return;
+
+    int numPruned = 0;
+    numPruned += d->pruneUnusedTextureSpecs(TST_GENERAL);
+    numPruned += d->pruneUnusedTextureSpecs(TST_DETAIL);
+
+#ifdef DENG_DEBUG
+    LOG_VERBOSE("Pruned %i unused texture variant %s.")
+        << numPruned << (numPruned == 1? "specification" : "specifications");
+#endif
+}
+
+TextureVariantSpec &ResourceSystem::textureSpec(texturevariantusagecontext_t tc,
+    int flags, byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
+    int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
+    boolean noStretch, boolean toAlpha)
+{
+    TextureVariantSpec *tvs =
+        d->textureSpec(tc, flags, border, tClass, tMap, wrapS, wrapT, minFilter,
+                       magFilter, anisoFilter, mipmapped, gammaCorrection,
+                       noStretch, toAlpha);
+
+#ifdef DENG_DEBUG
+    if(tClass || tMap)
+    {
+        DENG2_ASSERT(tvs->variant.flags & TSF_HAS_COLORPALETTE_XLAT);
+        DENG2_ASSERT(tvs->variant.tClass == tClass);
+        DENG2_ASSERT(tvs->variant.tMap == tMap);
+    }
+#endif
+
+    return *tvs;
+}
+
+TextureVariantSpec &ResourceSystem::detailTextureSpec(float contrast)
+{
+    return *d->detailTextureSpec(contrast);
 }
 
 Fonts &ResourceSystem::fonts()

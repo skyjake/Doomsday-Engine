@@ -1380,7 +1380,11 @@ bool App_ChangeGame(Game &game, bool allowReload)
     Demo_StopPlayback();
 
     GL_PurgeDeferredTasks();
-    GL_ResetTextureManager();
+    App_ResourceSystem().releaseAllGLTextures();
+    App_ResourceSystem().pruneUnusedTextureSpecs();
+    GL_LoadLightingSystemTextures();
+    GL_LoadFlareTextures();
+    Rend_ParticleLoadSystemTextures();
     GL_SetFilter(false);
 
     if(!game.isNull())

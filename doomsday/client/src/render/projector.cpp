@@ -17,20 +17,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/memoryzone.h>
+#include "clientapp.h"
+#include "render/projector.h"
 
-#include "de_platform.h"
-#include "de_graphics.h"
-#include "de_render.h"
+#include "render/r_main.h"
+#include "render/rend_main.h"
+
+#include "gl/gl_texmanager.h" // GL_PrepareLSTexture()
 
 #include "BspLeaf"
 #include "Surface"
 #include "world/p_object.h"
 #include "Contact"
 
-#include "gl/gl_texmanager.h"
+#include "r_util.h"
 
-#include "render/projector.h"
+#include <de/memoryzone.h>
 
 using namespace de;
 
@@ -170,9 +172,8 @@ static Lumobj::LightmapSemantic semanticFromFlags(int flags)
 /// Returns the texture variant specification for lightmaps.
 static TextureVariantSpec &lightmapSpec()
 {
-    return GL_TextureVariantSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0,
-                                 GL_CLAMP, GL_CLAMP, 1, -1, -1,
-                                 false, false, false, true);
+    return ClientApp::resourceSystem().textureSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0,
+        0, 0, GL_CLAMP, GL_CLAMP, 1, -1, -1, false, false, false, true);
 }
 
 static DGLuint prepareLightmap(Texture *tex = 0)

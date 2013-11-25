@@ -1,4 +1,4 @@
-/** @file rend_model.cpp 3D Model Rendering.
+/** @file rend_model.cpp  3D Model Rendering.
  *
  * @note Light vectors and triangle normals are in an entirely independent,
  *       right-handed coordinate system.
@@ -24,28 +24,31 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstdlib>
-#include <cmath>
-#include <cstring>
+#include "clientapp.h"
+#include "render/rend_model.h"
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_render.h"
-#include "de_play.h"
-#include "de_graphics.h"
-#include "de_misc.h"
+#include "render/rend_main.h"
+#include "render/vlight.h"
 
-#include <de/Log>
-#include <de/memory.h>
-
+#include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 
-#include "network/net_main.h" // for gametic
+#include "network/net_main.h" // gametic
+
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
 
-#include "render/rend_model.h"
+#include "con_main.h"
+#include "dd_def.h"
+#include "dd_main.h" // App_World()
+
+#include <de/Log>
+#include <de/binangle.h>
+#include <de/memory.h>
+#include <cstdlib>
+#include <cmath>
+#include <cstring>
 
 using namespace de;
 
@@ -709,10 +712,10 @@ static void Mod_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
         // Check for ambient and convert to ubyte.
         Vector3f color = (parms.color.max(ambient) + parms.extra).min(saturated);
 
-        out->rgba[CR] = byte( 255 * color[CR] );
-        out->rgba[CG] = byte( 255 * color[CG] );
-        out->rgba[CB] = byte( 255 * color[CB] );
-        out->rgba[CA] = byte( 255 * ambient[CA] );
+        out->rgba[0] = byte( 255 * color.x );
+        out->rgba[1] = byte( 255 * color.y );
+        out->rgba[2] = byte( 255 * color.z );
+        out->rgba[3] = byte( 255 * ambient[3] );
     }
 }
 
@@ -837,16 +840,16 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
 
 TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression)
 {
-    return GL_TextureVariantSpec(TC_MODELSKIN_DIFFUSE, (noCompression? TSF_NO_COMPRESSION : 0),
-                                 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
-                                 true, true, false, false);
+    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_DIFFUSE,
+        (noCompression? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT,
+        1, -2, -1, true, true, false, false);
 }
 
 TextureVariantSpec &Rend_ModelShinyTextureSpec()
 {
-    return GL_TextureVariantSpec(TC_MODELSKIN_REFLECTION, TSF_NO_COMPRESSION,
-                                 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
-                                 false, false, false, false);
+    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_REFLECTION,
+        TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,
+        false, false, false);
 }
 
 /**
@@ -1142,10 +1145,12 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     {
         // For lighting debug, render all surfaces using the gray texture.
         MaterialVariantSpec const &spec =
-            App_Materials().variantSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                                        1, -2, -1, true, true, false, false);
+            ClientApp::resourceSystem().materials()
+                .variantSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                             1, -2, -1, true, true, false, false);
         MaterialSnapshot const &ms =
-            App_Materials().find(de::Uri("System", Path("gray"))).material().prepare(spec);
+            ClientApp::resourceSystem().materials()
+                .find(de::Uri("System", Path("gray"))).material().prepare(spec);
 
         skinTexture = &ms.texture(MTU_PRIMARY);
     }

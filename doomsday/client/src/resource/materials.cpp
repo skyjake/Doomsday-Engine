@@ -24,7 +24,6 @@
 #include "de_console.h"
 #include "dd_main.h" // App_Materials(), verbose
 #ifdef __CLIENT__
-#  include "gl/gl_texmanager.h" // GL_TextureVariantSpec
 #  include "render/rend_main.h" // detailFactor, smoothTexAnim
 #  include "MaterialSnapshot"
 #endif
@@ -178,9 +177,10 @@ DENG2_OBSERVES(Material, Deletion)
         }
 
         TextureVariantSpec &primarySpec =
-            GL_TextureVariantSpec(primaryContext, flags, border, tClass, tMap,
-                                  wrapS, wrapT, minFilter, magFilter, anisoFilter,
-                                  mipmapped, gammaCorrection, noStretch, toAlpha);
+            App_ResourceSystem().textureSpec(primaryContext, flags, border, tClass, tMap,
+                                             wrapS, wrapT, minFilter, magFilter,
+                                             anisoFilter, mipmapped, gammaCorrection,
+                                             noStretch, toAlpha);
 
         // Apply the normalized spec to the template.
         tpl.context     = contextId;
@@ -425,7 +425,7 @@ void Materials::processCacheQueue()
             {
                 float const contrast = de::clamp(0.f, stage->strength, 1.f)
                                      * detailFactor /*Global strength multiplier*/;
-                stage->texture->prepareVariant(GL_DetailTextureSpec(contrast));
+                stage->texture->prepareVariant(App_ResourceSystem().detailTextureSpec(contrast));
             }
         }
 

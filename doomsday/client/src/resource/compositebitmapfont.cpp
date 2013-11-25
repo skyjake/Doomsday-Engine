@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "clientapp.h"
 #include "resource/compositebitmapfont.h"
 
 #include "api_resource.h" // R_GetPatchInfo
@@ -132,9 +132,9 @@ void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
 /// @todo fixme: Do not assume the texture-usage context is @c TC_UI.
 static TextureVariantSpec &glyphTextureSpec()
 {
-    return GL_TextureVariantSpec(TC_UI, TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN,
-                                 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 0, -3, 0, false, false, false, false);
+    return ClientApp::resourceSystem().textureSpec(TC_UI,
+        TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN, 0, 0, 0, GL_CLAMP_TO_EDGE,
+        GL_CLAMP_TO_EDGE, 0, -3, 0, false, false, false, false);
 }
 
 void CompositeBitmapFont::glInit()
