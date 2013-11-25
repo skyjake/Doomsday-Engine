@@ -28,6 +28,7 @@
 #include "SignalAction"
 #include "ui/clientwindow.h"
 #include "dd_version.h"
+#include "network/net_main.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -113,7 +114,10 @@ DENG2_PIMPL(DownloadDialog)
         QDir::current().mkpath(UpdaterSettings().downloadPath()); // may not exist
         savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
 
-        reply = network->get(QNetworkRequest(uri));
+        QNetworkRequest request(uri);
+        request.setRawHeader("User-Agent", Net_UserAgent().toLatin1());
+        reply = network->get(request);
+
         QObject::connect(reply, SIGNAL(metaDataChanged()), thisPublic, SLOT(replyMetaDataChanged()));
         QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), thisPublic, SLOT(progress(qint64,qint64)));
 
