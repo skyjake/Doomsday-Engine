@@ -18,7 +18,9 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include "resource/fontmanifest.h"
+
 #include "dd_main.h" // App_Fonts(), remove me
 #include "FontScheme"
 #include <de/Log>

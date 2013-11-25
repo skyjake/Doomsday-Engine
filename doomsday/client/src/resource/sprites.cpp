@@ -19,16 +19,3 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA</small>
  */
-
-#include "resource/sprite.h"
-
-#include "dd_main.h"
-#include "sys_system.h" // novideo
-#include "def_main.h"
-#include <de/Error>
-#include <QMap>
-#include <QtAlgorithms>
-
-using namespace de;
-
-

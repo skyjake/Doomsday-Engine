@@ -18,6 +18,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include "resource/animgroup.h"
 
 #include <de/Log>

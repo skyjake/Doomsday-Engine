@@ -17,6 +17,7 @@
  * 02110-1301 USA</small>
  */
 
+#include "de_platform.h"
 #include "resource/texturescheme.h"
 
 #include "dd_main.h" // App_ResourceSystem()
