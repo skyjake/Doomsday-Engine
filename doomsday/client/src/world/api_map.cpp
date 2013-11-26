@@ -31,7 +31,6 @@
 #include "de_play.h"
 #include "de_audio.h"
 
-#include "Materials"
 #include "api_map.h"
 
 #include "network/net_main.h"
@@ -350,7 +349,7 @@ void *P_ToPtr(int type, int index)
     case DMU_MATERIAL:
         /// @note @a index is 1-based.
         if(index > 0)
-            return &App_Materials().toManifest(index).material();
+            return &App_ResourceSystem().toMaterialManifest(index).material();
         return 0;
 
     default: {
@@ -373,7 +372,7 @@ int P_Count(int type)
     case DMU_BSPLEAF:   return App_World().hasMap()? App_World().map().bspLeafCount() : 0;
     case DMU_SECTOR:    return App_World().hasMap()? App_World().map().sectorCount()  : 0;
 
-    case DMU_MATERIAL:  return (int)App_Materials().count();
+    case DMU_MATERIAL:  return (int)App_ResourceSystem().materialCount();
 
     default:
         /// @throw Invalid/unknown DMU element type.
@@ -502,7 +501,7 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
 
     case DMU_MATERIAL:
         if(index > 0)
-            return callback(&App_Materials().toManifest(materialid_t(index)).material(), context);
+            return callback(&App_ResourceSystem().toMaterialManifest(materialid_t(index)).material(), context);
         break;
 
     case DMU_LINE_BY_TAG:

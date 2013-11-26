@@ -27,7 +27,7 @@
 #include "de_platform.h"
 #include "de_defs.h" // Def_GetGenerator
 
-#include "Materials"
+#include "MaterialManifest"
 #include "TextureManifest"
 
 #include "world/map.h"

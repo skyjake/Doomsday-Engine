@@ -150,17 +150,42 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 /// buckets. Bucket selection is determined by their quantized contrast value.
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
 
+/**
+ * Stores the arguments for a material variant cache work item.
+ */
+struct MaterialCacheTask
+{
+    /// The material from which to cache a variant.
+    Material *material;
+
+    /// Specification of the variant to be cached.
+    de::MaterialVariantSpec const *spec;
+
+    MaterialCacheTask(Material &_material, de::MaterialVariantSpec const &_spec)
+        : material(&_material), spec(&_spec)
+    {}
+};
+
+/// A FIFO queue of material variant caching tasks.
+/// Implemented as a list because we may need to remove tasks from the queue if
+/// the material is destroyed in the mean time.
+typedef QList<MaterialCacheTask *> MaterialCacheQueue;
+
 #endif // __CLIENT__
 
 DENG2_PIMPL(ResourceSystem)
-, DENG2_OBSERVES(TextureScheme,   ManifestDefined)
-, DENG2_OBSERVES(TextureManifest, TextureDerived)
-, DENG2_OBSERVES(Texture,         Deletion)
+, DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
+, DENG2_OBSERVES(MaterialManifest, MaterialDerived)
+, DENG2_OBSERVES(MaterialManifest, Deletion)
+, DENG2_OBSERVES(Material,         Deletion)
+, DENG2_OBSERVES(TextureScheme,    ManifestDefined)
+, DENG2_OBSERVES(TextureManifest,  TextureDerived)
+, DENG2_OBSERVES(Texture,          Deletion)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(FontScheme,      ManifestDefined)
-, DENG2_OBSERVES(FontManifest,    Deletion)
-, DENG2_OBSERVES(AbstractFont,    Deletion)
-, DENG2_OBSERVES(ColorPalette,    ColorTableChange)
+, DENG2_OBSERVES(FontScheme,       ManifestDefined)
+, DENG2_OBSERVES(FontManifest,     Deletion)
+, DENG2_OBSERVES(AbstractFont,     Deletion)
+, DENG2_OBSERVES(ColorPalette,     ColorTableChange)
 #endif
 {
     typedef QList<de::ResourceClass *> ResourceClasses;
@@ -187,17 +212,17 @@ DENG2_PIMPL(ResourceSystem)
     /// All texture instances in the system (from all schemes).
     AllTextures textures;
 
-    Materials materials;
+    /// System subspace schemes containing the manifests/resources.
+    MaterialSchemes materialSchemes;
+    QList<MaterialScheme *> materialSchemeCreationOrder;
 
-    struct SpriteGroup {
-        SpriteSet sprites;
+    AllMaterials materials; ///< From all schemes.
+    uint materialManifestCount; ///< Total number of material manifests (in all schemes).
 
-        ~SpriteGroup() {
-            qDeleteAll(sprites);
-        }
-    };
-    typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
-    SpriteGroups spriteGroups;
+    MaterialManifestGroups materialGroups;
+
+    uint materialManifestIdMapSize;
+    MaterialManifest **materialManifestIdMap; ///< Index with materialid_t-1
 
 #ifdef __CLIENT__
     /// System subspace schemes containing the manifests/resources.
@@ -210,14 +235,33 @@ DENG2_PIMPL(ResourceSystem)
     uint fontManifestIdMapSize;
     FontManifest **fontManifestIdMap; ///< Index with fontid_t-1
 
+    /// A list of specifications for material variants.
+    typedef QList<MaterialVariantSpec *> MaterialSpecs;
+    MaterialSpecs materialSpecs;
+
     typedef QList<TextureVariantSpec *> TextureSpecs;
     TextureSpecs textureSpecs;
     TextureSpecs detailTextureSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
+
+    MaterialCacheQueue materialCacheQueue;
 #endif
+
+    struct SpriteGroup {
+        SpriteSet sprites;
+
+        ~SpriteGroup() {
+            qDeleteAll(sprites);
+        }
+    };
+    typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
+    SpriteGroups spriteGroups;
 
     Instance(Public *i)
         : Base(i)
         , defaultColorPalette(0)
+        , materialManifestCount(0)
+        , materialManifestIdMapSize(0)
+        , materialManifestIdMap(0)
 #ifdef __CLIENT__
         , fontManifestCount(0)
         , fontManifestIdMapSize(0)
@@ -250,10 +294,10 @@ DENG2_PIMPL(ResourceSystem)
 
         LOG_MSG("Initializing Material collection...");
         /// @note Order here defines the ambigious-URI search order.
-        materials.createScheme("Sprites");
-        materials.createScheme("Textures");
-        materials.createScheme("Flats");
-        materials.createScheme("System");
+        createMaterialScheme("Sprites");
+        createMaterialScheme("Textures");
+        createMaterialScheme("Flats");
+        createMaterialScheme("System");
 
 #ifdef __CLIENT__
         LOG_MSG("Initializing Font collection...");
@@ -273,6 +317,52 @@ DENG2_PIMPL(ResourceSystem)
 #endif
         self.clearAllTextureSchemes();
         clearTextureManifests();
+
+#ifdef __CLIENT__
+        self.purgeCacheQueue();
+#endif
+
+        self.destroyAllMaterialGroups();
+        clearMaterials();
+        clearMaterialManifests();
+
+#ifdef __CLIENT__
+        clearMaterialSpecs();
+#endif
+    }
+
+    void clearMaterials()
+    {
+        qDeleteAll(materials);
+        materials.clear();
+    }
+
+    void clearMaterialManifests()
+    {
+        qDeleteAll(materialSchemes);
+        materialSchemes.clear();
+        materialSchemeCreationOrder.clear();
+
+        // Clear the manifest index/map.
+        if(materialManifestIdMap)
+        {
+            M_Free(materialManifestIdMap); materialManifestIdMap = 0;
+            materialManifestIdMapSize = 0;
+        }
+        materialManifestCount = 0;
+    }
+
+    void createMaterialScheme(String name)
+    {
+        DENG2_ASSERT(name.length() >= MaterialScheme::min_name_length);
+
+        // Create a new scheme.
+        MaterialScheme *newScheme = new MaterialScheme(name);
+        materialSchemes.insert(name.toLower(), newScheme);
+        materialSchemeCreationOrder.push_back(newScheme);
+
+        // We want notification when a new manifest is defined in this scheme.
+        newScheme->audienceForManifestDefined += this;
     }
 
     void clearTextureManifests()
@@ -354,6 +444,59 @@ DENG2_PIMPL(ResourceSystem)
         self.fontScheme("System").clear();
 
         self.pruneUnusedTextureSpecs();
+    }
+
+    void clearMaterialSpecs()
+    {
+        qDeleteAll(materialSpecs);
+        materialSpecs.clear();
+    }
+
+    MaterialVariantSpec *findMaterialSpec(MaterialVariantSpec const &tpl,
+        bool canCreate)
+    {
+        foreach(MaterialVariantSpec *spec, materialSpecs)
+        {
+            if(spec->compare(tpl)) return spec;
+        }
+
+        if(!canCreate) return 0;
+
+        materialSpecs.push_back(new MaterialVariantSpec(tpl));
+        return materialSpecs.back();
+    }
+
+    MaterialVariantSpec &getMaterialSpecForContext(MaterialContextId contextId,
+        int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
+        int minFilter, int magFilter, int anisoFilter,
+        bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
+    {
+        static MaterialVariantSpec tpl;
+
+        texturevariantusagecontext_t primaryContext = TC_UNKNOWN;
+        switch(contextId)
+        {
+        case UiContext:         primaryContext = TC_UI;                 break;
+        case MapSurfaceContext: primaryContext = TC_MAPSURFACE_DIFFUSE; break;
+        case SpriteContext:     primaryContext = TC_SPRITE_DIFFUSE;     break;
+        case ModelSkinContext:  primaryContext = TC_MODELSKIN_DIFFUSE;  break;
+        case PSpriteContext:    primaryContext = TC_PSPRITE_DIFFUSE;    break;
+        case SkySphereContext:  primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
+
+        default: DENG2_ASSERT(false);
+        }
+
+        TextureVariantSpec &primarySpec =
+            self.textureSpec(primaryContext, flags, border, tClass, tMap,
+                             wrapS, wrapT, minFilter, magFilter,
+                             anisoFilter, mipmapped, gammaCorrection,
+                             noStretch, toAlpha);
+
+        // Apply the normalized spec to the template.
+        tpl.context     = contextId;
+        tpl.primarySpec = &primarySpec;
+
+        return *findMaterialSpec(tpl, true);
     }
 
     TextureVariantSpec &linkTextureSpec(TextureVariantSpec *spec)
@@ -884,6 +1027,61 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
+    /// Observes MaterialScheme ManifestDefined.
+    void materialSchemeManifestDefined(MaterialScheme & /*scheme*/, MaterialManifest &manifest)
+    {
+        /// Number of elements to block-allocate in the material index to material manifest map.
+        int const MANIFESTIDMAP_BLOCK_ALLOC = 32;
+
+        // We want notification when the manifest is derived to produce a material.
+        manifest.audienceForMaterialDerived += this;
+
+        // We want notification when the manifest is about to be deleted.
+        manifest.audienceForDeletion += this;
+
+        // Acquire a new unique identifier for the manifest.
+        materialid_t const id = ++materialManifestCount; // 1-based.
+        manifest.setId(id);
+
+        // Add the new manifest to the id index/map.
+        if(materialManifestCount > materialManifestIdMapSize)
+        {
+            // Allocate more memory.
+            materialManifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
+            materialManifestIdMap = (MaterialManifest **) M_Realloc(materialManifestIdMap, sizeof(*materialManifestIdMap) * materialManifestIdMapSize);
+        }
+        materialManifestIdMap[materialManifestCount - 1] = &manifest;
+    }
+
+    /// Observes MaterialManifest MaterialDerived.
+    void materialManifestMaterialDerived(MaterialManifest & /*manifest*/, Material &material)
+    {
+        // Include this new material in the scheme-agnostic list of instances.
+        materials.push_back(&material);
+
+        // We want notification when the material is about to be deleted.
+        material.audienceForDeletion += this;
+    }
+
+    /// Observes MaterialManifest Deletion.
+    void materialManifestBeingDeleted(MaterialManifest const &manifest)
+    {
+        foreach(MaterialManifestGroup *group, materialGroups)
+        {
+            group->remove(const_cast<MaterialManifest *>(&manifest));
+        }
+        materialManifestIdMap[manifest.id() - 1 /*1-based*/] = 0;
+
+        // There will soon be one fewer manifest in the system.
+        materialManifestCount -= 1;
+    }
+
+    /// Observes Material Deletion.
+    void materialBeingDeleted(Material const &material)
+    {
+        materials.removeOne(const_cast<Material *>(&material));
+    }
+
     /// Observes TextureScheme ManifestDefined.
     void textureSchemeManifestDefined(TextureScheme & /*scheme*/, TextureManifest &manifest)
     {
@@ -1019,11 +1217,6 @@ void ResourceSystem::clearAllSystemResources()
     d->clearSystemFonts();
 #endif
     d->clearSystemTextures();
-}
-
-Materials &ResourceSystem::materials()
-{
-    return d->materials;
 }
 
 int ResourceSystem::spriteCount()
@@ -1491,6 +1684,126 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
         LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
     }
     return 0;
+}
+
+MaterialScheme &ResourceSystem::materialScheme(String name) const
+{
+    LOG_AS("ResourceSystem::materialScheme");
+    if(!name.isEmpty())
+    {
+        MaterialSchemes::iterator found = d->materialSchemes.find(name.toLower());
+        if(found != d->materialSchemes.end())
+        {
+            return **found;
+        }
+    }
+    /// @throw UnknownSchemeError An unknown scheme was referenced.
+    throw UnknownSchemeError("ResourceSystem::materialScheme", "No scheme found matching '" + name + "'");
+}
+
+bool ResourceSystem::knownMaterialScheme(String name) const
+{
+    if(!name.isEmpty())
+    {
+        return d->materialSchemes.contains(name.toLower());
+    }
+    return false;
+}
+
+ResourceSystem::MaterialSchemes const &ResourceSystem::allMaterialSchemes() const
+{
+    return d->materialSchemes;
+}
+
+MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
+{
+    duint32 idx = id - 1; // 1-based index.
+    if(idx >= 0 && idx < d->materialManifestCount)
+    {
+        if(d->materialManifestIdMap[idx])
+        {
+            return *d->materialManifestIdMap[idx];
+        }
+        // Internal bookeeping error.
+        DENG2_ASSERT(false);
+    }
+    /// @throw InvalidMaterialIdError The specified material id is invalid.
+    throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangeui(1, d->materialManifestCount + 1).asText());
+}
+
+bool ResourceSystem::hasMaterial(de::Uri const &path) const
+{
+    try
+    {
+        findMaterial(path);
+        return true;
+    }
+    catch(MissingManifestError const &)
+    {} // Ignore this error.
+    return false;
+}
+
+MaterialManifest &ResourceSystem::findMaterial(de::Uri const &uri) const
+{
+    LOG_AS("ResourceSystem::findMaterial");
+
+    // Does the user want a manifest in a specific scheme?
+    if(!uri.scheme().isEmpty())
+    {
+        MaterialScheme &specifiedScheme = materialScheme(uri.scheme());
+        if(specifiedScheme.has(uri.path()))
+        {
+            return specifiedScheme.find(uri.path());
+        }
+    }
+    else
+    {
+        // No, check each scheme in priority order.
+        foreach(MaterialScheme *scheme, d->materialSchemeCreationOrder)
+        {
+            if(scheme->has(uri.path()))
+            {
+                return scheme->find(uri.path());
+            }
+        }
+    }
+
+    /// @throw NotFoundError Failed to locate a matching manifest.
+    throw MissingManifestError("Materials::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+}
+
+ResourceSystem::AllMaterials const &ResourceSystem::allMaterials() const
+{
+    return d->materials;
+}
+
+ResourceSystem::MaterialManifestGroup &ResourceSystem::createMaterialGroup()
+{
+    // Allocating one by one is inefficient, but it doesn't really matter.
+    d->materialGroups.push_back(new MaterialManifestGroup());
+    return *d->materialGroups.back();
+}
+
+ResourceSystem::MaterialManifestGroup &ResourceSystem::materialGroup(int groupIdx) const
+{
+    groupIdx -= 1; // 1-based index.
+    if(groupIdx >= 0 && groupIdx < d->materialGroups.count())
+    {
+        return *d->materialGroups[groupIdx];
+    }
+    /// @throw UnknownMaterialGroupError An unknown scheme was referenced.
+    throw UnknownMaterialGroupError("ResourceSystem::materialGroup", "Invalid group #" + String::number(groupIdx+1) + ", valid range " + Rangeui(1, d->materialGroups.count() + 1).asText());
+}
+
+ResourceSystem::MaterialManifestGroups const &ResourceSystem::allMaterialGroups() const
+{
+    return d->materialGroups;
+}
+
+void ResourceSystem::destroyAllMaterialGroups()
+{
+    qDeleteAll(d->materialGroups);
+    d->materialGroups.clear();
 }
 
 TextureScheme &ResourceSystem::textureScheme(String name) const
@@ -2149,7 +2462,7 @@ static SpriteDefs generateSpriteDefs()
             frame = &spriteDef->frames.last();
         }
 
-        frame->mat         = &App_Materials().find(de::Uri("Sprites", manifest.path())).material();
+        frame->mat         = &App_ResourceSystem().findMaterial(de::Uri("Sprites", manifest.path())).material();
         frame->frame[0]    = frameNumber;
         frame->rotation[0] = rotationNumber;
 
@@ -2273,7 +2586,7 @@ void ResourceSystem::cacheSpriteSet(spritenum_t spriteId, MaterialVariantSpec co
         {
             if(Material *material = viewAngle.material)
             {
-                cacheMaterial(*material, spec);
+                cache(*material, spec);
             }
         }
     }
@@ -2378,9 +2691,113 @@ void ResourceSystem::setDefaultColorPalette(ColorPalette *newDefaultPalette)
 
 #ifdef __CLIENT__
 
+void ResourceSystem::purgeCacheQueue()
+{
+    qDeleteAll(d->materialCacheQueue);
+    d->materialCacheQueue.clear();
+}
+
+void ResourceSystem::processCacheQueue()
+{
+    while(!d->materialCacheQueue.isEmpty())
+    {
+        QScopedPointer<MaterialCacheTask> task(d->materialCacheQueue.takeFirst());
+
+        Material *material = task->material;
+        MaterialVariantSpec const *spec = task->spec;
+
+        // Ensure a variant for the specified context is created.
+        material->createVariant(*spec);
+
+        // Prepare all layer textures.
+        foreach(Material::Layer *layer, material->layers())
+        foreach(Material::Layer::Stage *stage, layer->stages())
+        {
+            if(stage->texture)
+            {
+                stage->texture->prepareVariant(*spec->primarySpec);
+            }
+        }
+
+        // Do we need to prepare detail texture(s)?
+        if(!material->isSkyMasked() && material->isDetailed())
+        foreach(Material::DetailLayer::Stage *stage, material->detailLayer().stages())
+        {
+            if(stage->texture)
+            {
+                float const contrast = de::clamp(0.f, stage->strength, 1.f)
+                                     * detailFactor /*Global strength multiplier*/;
+                stage->texture->prepareVariant(detailTextureSpec(contrast));
+            }
+        }
+
+        // Do we need to prepare a shiny texture (and possibly a mask)?
+        if(!material->isSkyMasked() && material->isShiny())
+        foreach(Material::ShineLayer::Stage *stage, material->shineLayer().stages())
+        {
+           if(stage->texture)
+           {
+               stage->texture->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
+               if(stage->maskTexture)
+               {
+                   stage->maskTexture->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
+               }
+           }
+        }
+    }
+}
+
+void ResourceSystem::cache(Material &material, MaterialVariantSpec const &spec,
+    bool cacheGroups)
+{
+    // Already in the queue?
+    foreach(MaterialCacheTask *task, d->materialCacheQueue)
+    {
+        if(&material == task->material && &spec == task->spec)
+        {
+            return;
+        }
+    }
+
+    MaterialCacheTask *newTask = new MaterialCacheTask(material, spec);
+    d->materialCacheQueue.push_back(newTask);
+
+    if(!cacheGroups) return;
+
+    // If the material is part of one or more groups; enqueue cache tasks for all
+    // other materials within the same group(s). Although we could use a flag in
+    // the task and have it find the groups come prepare time, this way we can be
+    // sure there are no overlapping tasks.
+    foreach(MaterialManifestGroup *group, d->materialGroups)
+    {
+        if(!group->contains(&material.manifest()))
+        {
+            continue;
+        }
+
+        foreach(MaterialManifest *manifest, *group)
+        {
+            if(!manifest->hasMaterial()) continue;
+            if(&manifest->material() == &material) continue; // We've already enqueued this.
+
+            cache(manifest->material(), spec, false /* do not cache groups */);
+        }
+    }
+}
+
+MaterialVariantSpec const &ResourceSystem::materialSpec(MaterialContextId contextId,
+    int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
+    int minFilter, int magFilter, int anisoFilter,
+    bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
+{
+    return d->getMaterialSpecForContext(contextId, flags, border, tClass, tMap,
+                                        wrapS, wrapT, minFilter, magFilter, anisoFilter,
+                                        mipmapped, gammaCorrection, noStretch, toAlpha);
+}
+
 void ResourceSystem::restartAllMaterialAnimations()
 {
-    foreach(Material *material, d->materials.all())
+    foreach(Material *material, d->materials)
     foreach(MaterialAnimation *animation, material->animations())
     {
         animation->restart();
@@ -2433,13 +2850,13 @@ void ResourceSystem::cacheForCurrentMap()
             if(!side.hasSections()) continue;
 
             if(side.middle().hasMaterial())
-                cacheMaterial(side.middle().material(), spec);
+                cache(side.middle().material(), spec);
 
             if(side.top().hasMaterial())
-                cacheMaterial(side.top().material(), spec);
+                cache(side.top().material(), spec);
 
             if(side.bottom().hasMaterial())
-                cacheMaterial(side.bottom().material(), spec);
+                cache(side.bottom().material(), spec);
         }
 
         foreach(Sector *sector, map.sectors())
@@ -2450,7 +2867,7 @@ void ResourceSystem::cacheForCurrentMap()
             foreach(Plane *plane, sector->planes())
             {
                 if(plane->surface().hasMaterial())
-                    cacheMaterial(plane->surface().material(), spec);
+                    cache(plane->surface().material(), spec);
             }
         }
     }
@@ -2481,22 +2898,6 @@ void ResourceSystem::cacheForCurrentMap()
         map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
                                Models_CacheForMobj);
     }
-}
-
-void ResourceSystem::processCacheQueue()
-{
-    d->materials.processCacheQueue();
-}
-
-void ResourceSystem::purgeCacheQueue()
-{
-    d->materials.purgeCacheQueue();
-}
-
-void ResourceSystem::cacheMaterial(Material &material, de::MaterialVariantSpec const &spec,
-    bool cacheGroups)
-{
-    d->materials.cache(material, spec, cacheGroups);
 }
 
 #endif // __CLIENT__
@@ -2532,6 +2933,40 @@ static int collectManifestsInScheme(SchemeType const &scheme,
         }
     }
     return count;
+}
+
+static QList<MaterialManifest *> collectMaterialManifests(MaterialScheme *scheme,
+    Path const &path, QList<MaterialManifest *> *storage = 0)
+{
+    int count = 0;
+
+    if(scheme)
+    {
+        // Consider resources in the specified scheme only.
+        count += collectManifestsInScheme<MaterialScheme, MaterialManifest>(*scheme,
+                     pathBeginsWithComparator, (void *)&path, storage);
+    }
+    else
+    {
+        // Consider resources in any scheme.
+        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+        {
+            count += collectManifestsInScheme<MaterialScheme, MaterialManifest>(*scheme,
+                         pathBeginsWithComparator, (void *)&path, storage);
+        }
+    }
+
+    // Are we done?
+    if(storage) return *storage;
+
+    // Collect and populate.
+    QList<MaterialManifest *> result;
+    if(count == 0) return result;
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    result.reserve(count);
+#endif
+    return collectMaterialManifests(scheme, path, &result);
 }
 
 static QList<TextureManifest *> collectTextureManifests(TextureScheme *scheme,
@@ -2614,6 +3049,80 @@ static bool compareManifestPathsAssending(ManifestType const *a, ManifestType co
     String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
     String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
     return pathA.compareWithoutCase(pathB) < 0;
+}
+
+/**
+ * @param scheme    Material subspace scheme being printed. Can be @c NULL in
+ *                  which case textures are printed from all schemes.
+ * @param like      Material path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
+    de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    QList<MaterialManifest *> found = collectMaterialManifests(scheme, like);
+    if(found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known materials";
+    if(!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index.
+    qSort(found.begin(), found.end(), compareManifestPathsAssending<MaterialManifest>);
+    int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach(MaterialManifest *manifest, found)
+    {
+        String info = String("%1: %2%3" _E(.))
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasMaterial()? _E(1) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
+
+        LOG_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+static void printMaterialIndex(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+{
+    int printTotal = 0;
+
+    // Collate and print results from all schemes?
+    if(search.scheme().isEmpty() && !search.path().isEmpty())
+    {
+        printTotal = printMaterialIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        LOG_MSG(_E(R));
+    }
+    // Print results within only the one scheme?
+    else if(App_ResourceSystem().knownMaterialScheme(search.scheme()))
+    {
+        printTotal = printMaterialIndex2(&App_ResourceSystem().materialScheme(search.scheme()),
+                                         search.path(), flags | de::Uri::OmitScheme);
+        LOG_MSG(_E(R));
+    }
+    else
+    {
+        // Collect and sort results in each scheme separately.
+        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+        {
+            int numPrinted = printMaterialIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            if(numPrinted)
+            {
+                LOG_MSG(_E(R));
+                printTotal += numPrinted;
+            }
+        }
+    }
+    LOG_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
 }
 
 /**
@@ -2768,6 +3277,11 @@ static void printFontIndex(de::Uri const &search,
 
 #endif // __CLIENT__
 
+static bool isKnownMaterialSchemeCallback(String name)
+{
+    return App_ResourceSystem().knownMaterialScheme(name);
+}
+
 static bool isKnownTextureSchemeCallback(String name)
 {
     return App_ResourceSystem().knownTextureScheme(name);
@@ -2779,6 +3293,23 @@ static bool isKnownFontSchemeCallback(String name)
     return App_ResourceSystem().knownFontScheme(name);
 }
 #endif
+
+D_CMD(ListMaterials)
+{
+    DENG2_UNUSED(src);
+
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownMaterialSchemeCallback);
+
+    if(!search.scheme().isEmpty() &&
+       !App_ResourceSystem().knownMaterialScheme(search.scheme()))
+    {
+        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    printMaterialIndex(search);
+    return true;
+}
 
 D_CMD(ListTextures)
 {
@@ -2816,6 +3347,24 @@ D_CMD(ListFonts)
 #endif // __CLIENT__
 
 #ifdef DENG_DEBUG
+D_CMD(PrintMaterialStats)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    LOG_MSG(_E(1) "Material Statistics:");
+    foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+    {
+        MaterialScheme::Index const &index = scheme->index();
+
+        uint count = index.count();
+        LOG_MSG("Scheme: %s (%u %s)")
+            << scheme->name() << count << (count == 1? "material" : "materials");
+        index.debugPrintHashDistribution();
+        index.debugPrint();
+    }
+    return true;
+}
+
 D_CMD(PrintTextureStats)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -2833,9 +3382,8 @@ D_CMD(PrintTextureStats)
     }
     return true;
 }
-#endif // DENG_DEBUG
 
-#if defined(__CLIENT__) && defined(DENG_DEBUG)
+#  ifdef __CLIENT__
 D_CMD(PrintFontStats)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -2853,14 +3401,14 @@ D_CMD(PrintFontStats)
     }
     return true;
 }
-#endif // __CLIENT__ && DENG_DEBUG
+#  endif // __CLIENT__
+#endif // DENG_DEBUG
 
 void ResourceSystem::consoleRegister() // static
 {
     C_CMD("listtextures",   "ss",   ListTextures)
     C_CMD("listtextures",   "s",    ListTextures)
     C_CMD("listtextures",   "",     ListTextures)
-
 #ifdef DENG_DEBUG
     C_CMD("texturestats",   NULL,   PrintTextureStats)
 #endif
@@ -2869,12 +3417,18 @@ void ResourceSystem::consoleRegister() // static
     C_CMD("listfonts",      "ss",   ListFonts)
     C_CMD("listfonts",      "s",    ListFonts)
     C_CMD("listfonts",      "",     ListFonts)
-
 #  ifdef DENG_DEBUG
     C_CMD("fontstats",      NULL,   PrintFontStats)
 #  endif
 #endif
 
+    C_CMD("listmaterials",  "ss",   ListMaterials)
+    C_CMD("listmaterials",  "s",    ListMaterials)
+    C_CMD("listmaterials",  "",     ListMaterials)
+#ifdef DENG_DEBUG
+    C_CMD("materialstats",  NULL,   PrintMaterialStats)
+#endif
+
     Texture::consoleRegister();
-    Materials::consoleRegister();
+    Material::consoleRegister();
 }

@@ -1095,8 +1095,9 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     bool flip          = sprViewAngle.mirrorX;
 
     MaterialVariantSpec const &spec =
-        App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                    0, -2, 0, false, true, true, false);
+        App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0,
+                                          GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                          0, -2, 0, false, true, true, false);
     MaterialSnapshot const &ms = material->prepare(spec);
 
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();

@@ -100,9 +100,9 @@ void UI_Register(void)
 
 de::MaterialVariantSpec const &Ui_MaterialSpec(int texSpecFlags)
 {
-    return App_Materials().variantSpec(UiContext, texSpecFlags | TSF_NO_COMPRESSION,
-                                       0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                       1, 1, 0, false, false, false, false);
+    return App_ResourceSystem().materialSpec(UiContext, texSpecFlags | TSF_NO_COMPRESSION,
+                                             0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                             1, 1, 0, false, false, false, false);
 }
 
 void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame, boolean noescape)
@@ -1923,8 +1923,9 @@ void UI_Shade(const Point2Raw* origin, const Size2Raw* size, int border, ui_colo
     if(bottomAlpha < 0)
         bottomAlpha = alpha;
 
-    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/boxshade")))
-            .material().prepare(Ui_MaterialSpec());
+    MaterialSnapshot const &ms =
+        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/boxshade"))).material()
+            .prepare(Ui_MaterialSpec());
 
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
     GL_BlendMode(BM_ADD);
@@ -1975,8 +1976,9 @@ void UI_HorizGradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t*
     leftAlpha  *= uiAlpha;
     rightAlpha *= uiAlpha;
 
-    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/hint")))
-            .material().prepare(Ui_MaterialSpec());
+    MaterialSnapshot const &ms =
+        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/hint"))).material()
+            .prepare(Ui_MaterialSpec());
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
     glBegin(GL_QUADS);
@@ -2120,8 +2122,9 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     // The fill comes first, if there's one.
     if(filled)
     {
-        MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/boxfill")))
-                .material().prepare(Ui_MaterialSpec());
+        MaterialSnapshot const &ms =
+            App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/boxfill"))).material()
+                .prepare(Ui_MaterialSpec());
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
         glBegin(GL_QUADS);
@@ -2135,8 +2138,9 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     }
     else
     {
-        MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/boxcorner")))
-                .material().prepare(Ui_MaterialSpec());
+        MaterialSnapshot const &ms =
+            App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/boxcorner"))).material()
+                .prepare(Ui_MaterialSpec());
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
         glBegin(GL_QUADS);
@@ -2395,8 +2399,9 @@ void UI_DrawMouse(const Point2Raw* origin, const Size2Raw* size)
 {
     DENG2_ASSERT(origin && size);
 
-    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/mouse")))
-            .material().prepare(Ui_MaterialSpec());
+    MaterialSnapshot const &ms =
+        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/mouse"))).material()
+            .prepare(Ui_MaterialSpec());
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
     glColor3f(1, 1, 1);
@@ -2418,8 +2423,9 @@ void UI_DrawLogo(Point2Raw const *origin, Size2Raw const *size)
 {
     DENG2_ASSERT(origin && size);
 
-    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/logo")))
-            .material().prepare(Ui_MaterialSpec());
+    MaterialSnapshot const &ms =
+        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/logo"))).material()
+            .prepare(Ui_MaterialSpec());
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
     glColor4f(1, 1, 1, uiAlpha);
@@ -2436,8 +2442,9 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
     float const mul = 1.5f;
 
     // Background gradient picture.
-    MaterialSnapshot const &ms = App_Materials().find(de::Uri("System", Path("ui/background")))
-            .material().prepare(Ui_MaterialSpec(TSF_MONOCHROME));
+    MaterialSnapshot const &ms =
+        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/background"))).material()
+            .prepare(Ui_MaterialSpec(TSF_MONOCHROME));
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
     glEnable(GL_TEXTURE_2D);

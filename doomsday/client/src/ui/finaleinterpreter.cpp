@@ -1354,16 +1354,16 @@ DEFFC(BGMaterial)
     {
         if(ded_value_t* value = Def_GetValueByUri(OP_URI(0)))
         {
-            material = &App_Materials().find(de::Uri(value->text, RC_NULL)).material();
+            material = &App_ResourceSystem().findMaterial(de::Uri(value->text, RC_NULL)).material();
         }
         else
         {
-            material = &App_Materials().find(*reinterpret_cast<de::Uri const *>(OP_URI(0))).material();
+            material = &App_ResourceSystem().findMaterial(*reinterpret_cast<de::Uri const *>(OP_URI(0))).material();
         }
     }
     catch(de::MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
-    catch(de::Materials::NotFoundError const &)
+    catch(ResourceSystem::MissingManifestError const &)
     {} // Ignore this error.
 
     changePageBackground(fi->_pages[PAGE_PICS], material);

@@ -975,9 +975,9 @@ void GL_SetMaterialUI2(Material *mat, gl::Wrapping wrapS, gl::Wrapping wrapT)
     if(!mat) return; // @todo we need a "NULL material".
 
     MaterialVariantSpec const &spec =
-        App_Materials().variantSpec(UiContext, 0, 1, 0, 0,
-                                    GL_Wrap(wrapS), GL_Wrap(wrapT),
-                                    0, 1, 0, false, false, false, false);
+        App_ResourceSystem().materialSpec(UiContext, 0, 1, 0, 0, GL_Wrap(wrapS),
+                                          GL_Wrap(wrapT), 0, 1, 0, false, false,
+                                          false, false);
     GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
 }
 
@@ -991,9 +991,9 @@ void GL_SetPSprite(Material *mat, int tClass, int tMap)
     if(!mat) return; // @todo we need a "NULL material".
 
     MaterialVariantSpec const &spec =
-        App_Materials().variantSpec(PSpriteContext, 0, 1, tClass, tMap,
-                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                    0, 1, 0, false, true, true, false);
+        App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, tClass, tMap,
+                                          GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                          0, 1, 0, false, true, true, false);
     GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
 }
 

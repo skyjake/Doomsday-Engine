@@ -34,7 +34,6 @@
 #include "world/world.h"
 #include "api_plugin.h"
 #include "api_gameexport.h"
-#include "Materials"
 #include "filesys/sys_direc.h"
 #include <de/c_wrapper.h>
 #include <de/LibraryFile>
@@ -172,9 +171,6 @@ de::ResourceClass &App_ResourceClass(de::String className);
  * resource system.
  */
 de::ResourceClass &App_ResourceClass(resourceclassid_t classId);
-
-/// @return  The application's global Material collection.
-de::Materials &App_Materials();
 
 /// @return  @c true iff there is presently a game loaded.
 boolean App_GameLoaded();

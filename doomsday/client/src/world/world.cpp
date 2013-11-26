@@ -36,8 +36,6 @@
 #include "de_play.h"
 #include "de_filesys.h"
 
-#include "Materials"
-
 #include "BspLeaf"
 #include "Plane"
 #include "Sector"

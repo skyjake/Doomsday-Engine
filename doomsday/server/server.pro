@@ -204,7 +204,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materialarchive.h \
     $$SRC/include/resource/materialmanifest.h \
-    $$SRC/include/resource/materials.h \
     $$SRC/include/resource/materialscheme.h \
     $$SRC/include/resource/patch.h \
     $$SRC/include/resource/patchname.h \
@@ -374,7 +373,6 @@ SOURCES += \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
     $$SRC/src/resource/materialmanifest.cpp \
-    $$SRC/src/resource/materials.cpp \
     $$SRC/src/resource/materialscheme.cpp \
     $$SRC/src/resource/patch.cpp \
     $$SRC/src/resource/patchname.cpp \

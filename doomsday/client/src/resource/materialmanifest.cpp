@@ -20,8 +20,7 @@
 #include "de_platform.h"
 #include "resource/materialmanifest.h"
 
-#include "dd_main.h" // App_Materials()
-#include "Materials"
+#include "dd_main.h" // App_ResourceSystem()
 
 using namespace de;
 
@@ -54,11 +53,6 @@ MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
     : Node(args), d(new Instance(this))
 {}
 
-Materials &MaterialManifest::materials()
-{
-    return App_Materials();
-}
-
 Material *MaterialManifest::derive()
 {
     if(!hasMaterial())
@@ -86,7 +80,7 @@ MaterialScheme &MaterialManifest::scheme() const
 {
     LOG_AS("MaterialManifest::scheme");
     /// @todo Optimize: MaterialManifest should contain a link to the owning MaterialScheme.
-    foreach(MaterialScheme *scheme, materials().allSchemes())
+    foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
     {
         if(&scheme->index() == &tree())
         {
@@ -95,6 +89,11 @@ MaterialScheme &MaterialManifest::scheme() const
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
     throw Error("MaterialManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
+}
+
+String const &MaterialManifest::schemeName() const
+{
+    return scheme().name();
 }
 
 String MaterialManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const

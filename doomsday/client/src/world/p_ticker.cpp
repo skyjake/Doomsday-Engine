@@ -103,7 +103,7 @@ int P_MobjTicker(thinker_t *th, void *context)
  */
 static void materialsTicker(timespan_t elapsed)
 {
-    foreach(Material *material, App_Materials().all())
+    foreach(Material *material, App_ResourceSystem().allMaterials())
     foreach(MaterialAnimation *animation, material->animations())
     {
         animation->animate(elapsed);

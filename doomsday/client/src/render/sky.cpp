@@ -26,6 +26,7 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_render.h"
+#include "clientapp.h"
 
 #include "def_data.h"
 #include "client/cl_def.h"
@@ -169,11 +170,11 @@ static void configureDefaultSky()
         layer->material = 0;
         try
         {
-            layer->material = &App_Materials().find(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)).material();
+            layer->material = &ClientApp::resourceSystem().findMaterial(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)).material();
         }
         catch(MaterialManifest::MissingMaterialError const &)
         {} // Ignore this error.
-        catch(Materials::NotFoundError const &)
+        catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.
         layer->offset = DEFAULT_SKY_SPHERE_XOFFSET;
         layer->fadeoutLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
@@ -185,8 +186,10 @@ static void configureDefaultSky()
 
 MaterialVariantSpec const &Sky_SphereMaterialSpec(bool masked)
 {
-    return App_Materials().variantSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
-                                       0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 0, -1, -1, false, true, false, false);
+    return ClientApp::resourceSystem().materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
+                                                    0, 0, 0,
+                                                    GL_REPEAT, GL_CLAMP_TO_EDGE,
+                                                    0, -1, -1, false, true, false, false);
 }
 
 static void calculateSkyAmbientColor()
@@ -293,10 +296,10 @@ void Sky_Configure(ded_sky_t *def)
         {
             try
             {
-                Material *mat = &App_Materials().find(*reinterpret_cast<de::Uri *>(sl->material)).material();
+                Material *mat = &ClientApp::resourceSystem().findMaterial(*reinterpret_cast<de::Uri *>(sl->material)).material();
                 Sky_LayerSetMaterial(i, mat);
             }
-            catch(Materials::NotFoundError const &er)
+            catch(ResourceSystem::MissingManifestError const &er)
             {
                 // Log but otherwise ignore this error.
                 LOG_WARNING(er.asText() + ". Unknown material \"%s\" in sky def %i, using default.")
@@ -793,14 +796,14 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         if(renderTextures == 2)
         {
-            mat = &App_Materials().find(de::Uri("System", Path("gray"))).material();
+            mat = &ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("gray"))).material();
         }
         else
         {
             mat = Sky_LayerMaterial(layer);
             if(!mat)
             {
-                mat = &App_Materials().find(de::Uri("System", Path("missing"))).material();
+                mat = &ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("missing"))).material();
                 rs.texXFlip = false;
             }
         }

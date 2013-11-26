@@ -18,12 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "clientapp.h"
 #include "render/billboard.h"
 
 #include "de_render.h"
 #include "de_graphics.h"
-#include "dd_main.h" // App_Materials()
 #include "con_main.h"
 
 #include "MaterialSnapshot"
@@ -315,9 +314,9 @@ static void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
 
 MaterialVariantSpec const &PSprite_MaterialSpec()
 {
-    return App_Materials().variantSpec(SpriteContext, 0, 0, 0, 0,
-                                       GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                       1, -2, 0, false, true, true, false);
+    return ClientApp::resourceSystem().materialSpec(SpriteContext, 0, 0, 0, 0,
+                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                    1, -2, 0, false, true, true, false);
 }
 
 void Rend_DrawPSprite(rendpspriteparams_t const &parms)
@@ -334,7 +333,8 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
         MaterialSnapshot const &ms =
-            App_Materials().find(de::Uri("System", Path("gray"))).material().prepare(PSprite_MaterialSpec());
+            ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("gray"))).material()
+                .prepare(PSprite_MaterialSpec());
 
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
         glEnable(GL_TEXTURE_2D);
@@ -418,9 +418,9 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 
 MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass, int tmap)
 {
-    return App_Materials().variantSpec(SpriteContext, 0, 1, tclass, tmap,
-                                       GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                       1, -2, -1, true, true, true, false);
+    return ClientApp::resourceSystem().materialSpec(SpriteContext, 0, 1, tclass, tmap,
+                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                    1, -2, -1, true, true, true, false);
 }
 
 static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
@@ -429,7 +429,8 @@ static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        return App_Materials().find(de::Uri("System", Path("gray"))).material().chooseVariant(Rend_SpriteMaterialSpec(), true);
+        return ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("gray"))).material()
+                    .chooseVariant(Rend_SpriteMaterialSpec(), true);
     }
 
     // Use the pre-chosen sprite.

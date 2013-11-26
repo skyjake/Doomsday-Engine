@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MATERIAL_H
-#define LIBDENG_RESOURCE_MATERIAL_H
+#ifndef DENG_RESOURCE_MATERIAL_H
+#define DENG_RESOURCE_MATERIAL_H
 
 #include "MapElement"
 #include "def_data.h"
@@ -991,7 +991,7 @@ public:
      *
      * @return  Snapshot for the chosen and prepared variant of Material.
      *
-     * @see Materials::variantSpec(), chooseVariant(), Variant::prepare()
+     * @see ResourceSystem::materialSpec(), chooseVariant(), Variant::prepare()
      */
     inline Snapshot const &prepare(VariantSpec const &spec, bool forceSnapshotUpdate = false)
     {
@@ -1020,4 +1020,4 @@ typedef Material::Decoration MaterialDecoration;
 typedef Material::Variant MaterialVariant;
 #endif
 
-#endif /* LIBDENG_RESOURCE_MATERIAL_H */
+#endif // DENG_RESOURCE_MATERIAL_H

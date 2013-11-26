@@ -973,9 +973,9 @@ D_CMD(InspectMaterial)
 {
     DENG2_UNUSED(src);
 
-    de::Materials &materials = App_Materials();
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
-    if(!search.scheme().isEmpty() && !materials.knownScheme(search.scheme()))
+    if(!search.scheme().isEmpty() &&
+       !App_ResourceSystem().knownMaterialScheme(search.scheme()))
     {
         LOG_WARNING("Unknown scheme %s") << search.scheme();
         return false;
@@ -983,7 +983,7 @@ D_CMD(InspectMaterial)
 
     try
     {
-        de::MaterialManifest &manifest = materials.find(search);
+        de::MaterialManifest &manifest = App_ResourceSystem().findMaterial(search);
         if(manifest.hasMaterial())
         {
             Material &material = manifest.material();
@@ -1092,7 +1092,7 @@ D_CMD(InspectMaterial)
         }
         return true;
     }
-    catch(de::Materials::NotFoundError const &er)
+    catch(ResourceSystem::MissingManifestError const &er)
     {
         LOG_WARNING("%s.") << er.asText();
     }

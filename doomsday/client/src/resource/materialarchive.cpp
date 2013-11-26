@@ -21,7 +21,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "uri.hh"
-#include "Materials"
 #include <de/StringPool>
 
 #include "resource/materialarchive.h"
@@ -99,9 +98,9 @@ static Material *findRecordMaterial(Records &records, SerialId id)
         Material *material = 0;
         try
         {
-            material = &App_Materials().find(Uri(records.stringRef(id), RC_NULL)).material();
+            material = &App_ResourceSystem().findMaterial(Uri(records.stringRef(id), RC_NULL)).material();
         }
-        catch(Materials::NotFoundError const &)
+        catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.
 
         records.setUserPointer(id, material);
@@ -352,7 +351,7 @@ MaterialArchive *MaterialArchive_New(int useSegments)
     de::MaterialArchive *archive = new de::MaterialArchive(useSegments);
 
     // Populate the archive using the application's global/main Material collection.
-    foreach(Material *material, App_Materials().all())
+    foreach(Material *material, App_ResourceSystem().allMaterials())
     {
         archive->addRecord(*material);
     }

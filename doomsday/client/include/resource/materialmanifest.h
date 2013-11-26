@@ -21,15 +21,15 @@
 #define DENG_RESOURCE_MATERIALMANIFEST_H
 
 #include "Material"
-#include "MaterialScheme"
 #include "uri.hh"
 #include <de/Error>
 #include <de/Observers>
 #include <de/PathTree>
+#include <de/Vector>
 
 namespace de {
 
-class Materials;
+class MaterialScheme;
 
 /**
  * Description for a would-be logical Material resource.
@@ -75,7 +75,7 @@ public:
     MaterialScheme &scheme() const;
 
     /// Convenience method for returning the name of the owning scheme.
-    inline String const &schemeName() const { return scheme().name(); }
+    String const &schemeName() const;
 
     /**
      * Compose a URI of the form "scheme:path" for the material manifest.
@@ -150,9 +150,6 @@ public:
      * @param  newMaterial  New material to associate with.
      */
     void setMaterial(Material *newMaterial);
-
-    /// Returns a reference to the application's material collection.
-    static Materials &materials();
 
 private:
     DENG2_PRIVATE(d)

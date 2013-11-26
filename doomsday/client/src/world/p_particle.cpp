@@ -26,6 +26,7 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_audio.h"
+#include "clientapp.h"
 
 #include "Face"
 
@@ -1443,7 +1444,7 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
         {
             try
             {
-                Material *defMat = &App_Materials().find(*reinterpret_cast<de::Uri const *>(def->material)).material();
+                Material *defMat = &ClientApp::resourceSystem().findMaterial(*reinterpret_cast<de::Uri const *>(def->material)).material();
 
                 Material *mat = gen->plane->surface().materialPtr();
                 if(def->flags & PGF_FLOOR_SPAWN)
@@ -1472,7 +1473,7 @@ static int findDefForGenerator(ptcgen_t *gen, void *parameters)
             }
             catch(MaterialManifest::MissingMaterialError const &)
             {} // Ignore this error.
-            catch(Materials::NotFoundError const &)
+            catch(ResourceSystem::MissingManifestError const &)
             {} // Ignore this error.
         }
 

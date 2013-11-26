@@ -528,11 +528,6 @@ de::ResourceClass &App_ResourceClass(resourceclassid_t classId)
     return App_ResourceSystem().resClass(classId);
 }
 
-Materials &App_Materials()
-{
-    return App_ResourceSystem().materials();
-}
-
 /**
  * Register the engine commands and variables.
  */

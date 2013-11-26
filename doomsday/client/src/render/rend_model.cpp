@@ -1145,12 +1145,12 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     {
         // For lighting debug, render all surfaces using the gray texture.
         MaterialVariantSpec const &spec =
-            ClientApp::resourceSystem().materials()
-                .variantSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                             1, -2, -1, true, true, false, false);
+            ClientApp::resourceSystem()
+                .materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                              1, -2, -1, true, true, false, false);
         MaterialSnapshot const &ms =
-            ClientApp::resourceSystem().materials()
-                .find(de::Uri("System", Path("gray"))).material().prepare(spec);
+            ClientApp::resourceSystem()
+                .findMaterial(de::Uri("System", Path("gray"))).material().prepare(spec);
 
         skinTexture = &ms.texture(MTU_PRIMARY);
     }

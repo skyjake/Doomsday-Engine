@@ -26,7 +26,6 @@
 #include "world/p_object.h"
 #include "world/polyobj.h"
 #include "world/surface.h"
-#include "Materials"
 #include "sv_missile.h"
 
 #ifdef __cplusplus

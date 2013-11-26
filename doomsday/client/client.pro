@@ -156,7 +156,6 @@ DENG_CONVENIENCE_HEADERS += \
     include/MaterialArchive \
     include/MaterialContext \
     include/MaterialManifest \
-    include/Materials \
     include/MaterialScheme \
     include/MaterialSnapshot \
     include/MaterialVariantSpec \
@@ -345,7 +344,6 @@ DENG_HEADERS += \
     include/resource/material.h \
     include/resource/materialarchive.h \
     include/resource/materialmanifest.h \
-    include/resource/materials.h \
     include/resource/materialscheme.h \
     include/resource/materialsnapshot.h \
     include/resource/materialvariantspec.h \
@@ -708,7 +706,6 @@ SOURCES += \
     src/resource/materialanimation.cpp \
     src/resource/materialarchive.cpp \
     src/resource/materialmanifest.cpp \
-    src/resource/materials.cpp \
     src/resource/materialscheme.cpp \
     src/resource/materialsnapshot.cpp \
     src/resource/materialvariant.cpp \

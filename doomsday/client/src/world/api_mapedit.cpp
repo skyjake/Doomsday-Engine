@@ -27,8 +27,6 @@
 #include "de_console.h"
 #include "dd_main.h"
 
-#include "Materials"
-
 #include "world/entitydatabase.h"
 #include "world/map.h"
 #include "Plane"
@@ -164,17 +162,17 @@ static Material *findMaterialInDict(String const &materialUriStr)
         // First try the preferred scheme, then any.
         try
         {
-            material = &App_Materials().find(materialUri).material();
+            material = &App_ResourceSystem().findMaterial(materialUri).material();
         }
-        catch(Materials::NotFoundError const &)
+        catch(ResourceSystem::MissingManifestError const &)
         {
             // Try any scheme.
             try
             {
                 materialUri.setScheme("");
-                material = &App_Materials().find(materialUri).material();
+                material = &App_ResourceSystem().findMaterial(materialUri).material();
             }
-            catch(Materials::NotFoundError const &)
+            catch(ResourceSystem::MissingManifestError const &)
             {}
         }
 

@@ -29,7 +29,6 @@
 
 namespace de {
 
-class Textures;
 class TextureScheme;
 
 /**

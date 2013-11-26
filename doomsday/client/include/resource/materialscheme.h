@@ -20,14 +20,13 @@
 #ifndef DENG_RESOURCE_MATERIALSCHEME_H
 #define DENG_RESOURCE_MATERIALSCHEME_H
 
+#include "MaterialManifest"
 #include "uri.hh"
 #include <de/Observers>
 #include <de/PathTree>
 #include <de/Error>
 
 namespace de {
-
-class MaterialManifest;
 
 /**
  * Material collection subspace.
@@ -37,7 +36,7 @@ class MaterialManifest;
  */
 class MaterialScheme
 {
-    typedef MaterialManifest Manifest;
+    typedef class MaterialManifest Manifest;
 
 public:
     /// The requested manifest could not be found in the index. @ingroup errors

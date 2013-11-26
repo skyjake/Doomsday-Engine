@@ -100,8 +100,9 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
 #ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds
     de::MaterialVariantSpec const &spec =
-            App_Materials().variantSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                        0, 1, -1, false, true, true, false);
+        App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0,
+                                          GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                          0, 1, -1, false, true, true, false);
     de::MaterialSnapshot const &ms = info->material->prepare(spec);
 
     de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();

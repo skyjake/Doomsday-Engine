@@ -185,8 +185,9 @@ void R_DrawPatchTiled(Texture &texture, int x, int y, int w, int h,
 
 static MaterialVariantSpec const &bgMaterialSpec()
 {
-    return ClientApp::resourceSystem().materials().variantSpec(UiContext, 0, 0,
-        0, 0, GL_REPEAT, GL_REPEAT, 0, -3, 0, false, false, false, false);
+    return ClientApp::resourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
+                                                    GL_REPEAT, GL_REPEAT, 0, -3,
+                                                    0, false, false, false, false);
 }
 
 /// @todo Optimize: Do not search for resources (materials, textures) each frame.
@@ -227,9 +228,9 @@ void R_DrawViewBorder()
     // View background.
     try
     {
-        MaterialSnapshot const &ms = ClientApp::resourceSystem().materials()
-                                        .find(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
-                                            .material().prepare(bgMaterialSpec());
+        MaterialSnapshot const &ms =
+            ClientApp::resourceSystem().findMaterial(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
+                .material().prepare(bgMaterialSpec());
 
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.width(), ms.height(), 0, 0,

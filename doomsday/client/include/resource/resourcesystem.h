@@ -28,7 +28,8 @@
 #  include "FontScheme"
 #  include "MaterialVariantSpec"
 #endif
-#include "Materials"
+#include "Material"
+#include "MaterialScheme"
 #include "resource/sprite.h"
 #include "Texture"
 #include "TextureScheme"
@@ -43,6 +44,15 @@
 
 /**
  * Logical resources; materials, packages, textures, etc...
+ *
+ * Resource pointers are considered @em eternal in the sense that they will
+ * continue to reference the same logical resource data, even after the engine
+ * is reset. Public resource identifiers (e.g., materialid_t) are similarly
+ * eternal.
+ *
+ * Resource names (paths) are semi-independant from the resources. There may be
+ * multiple names for any given resource (aliases). The only requirement is that
+ * their symbolic name must be unique among resources in the same scheme.
  *
  * @par Classification
  *
@@ -82,25 +92,33 @@ public:
     /// The referenced sprite could not be found. @ingroup errors
     DENG2_ERROR(MissingSpriteError);
 
-    /// The referenced texture was not found. @ingroup errors
-    DENG2_ERROR(MissingTextureError);
+    /// An unknown material group was referenced. @ingroup errors
+    DENG2_ERROR(UnknownMaterialGroupError);
+
+    /// The specified material id was invalid (out of range). @ingroup errors
+    DENG2_ERROR(UnknownMaterialIdError);
 
 #ifdef __CLIENT__
-    /// The referenced font was not found. @ingroup errors
-    DENG2_ERROR(MissingFontError);
-
     /// The specified font id was invalid (out of range). @ingroup errors
     DENG2_ERROR(UnknownFontIdError);
 #endif
 
+    typedef QSet<de::MaterialManifest *> MaterialManifestSet;
+    typedef MaterialManifestSet MaterialManifestGroup; // Alias
+    typedef QList<MaterialManifestGroup *> MaterialManifestGroups;
+
+    typedef QMap<de::String, de::MaterialScheme *> MaterialSchemes;
+    typedef QList<Material *> AllMaterials;
+
     typedef QMap<de::String, de::TextureScheme *> TextureSchemes;
     typedef QList<de::Texture *> AllTextures;
-    typedef QList<Sprite *> SpriteSet;
 
 #ifdef __CLIENT__
     typedef QMap<de::String, de::FontScheme *> FontSchemes;
     typedef QList<AbstractFont *> AllFonts;
 #endif
+
+    typedef QList<Sprite *> SpriteSet;
 
 public:
     /**
@@ -126,11 +144,6 @@ public:
     void clearAllResources();
     void clearAllRuntimeResources();
     void clearAllSystemResources();
-
-    /**
-     * Provides access to the Materials collection.
-     */
-    de::Materials &materials();
 
     /**
      * Builds the sprite rotation matrixes to account for horizontally flipped
@@ -206,6 +219,118 @@ public:
 
     de::Texture *defineTexture(de::String schemeName, de::Uri const &resourceUri,
                                de::Vector2i const &dimensions = de::Vector2i());
+
+    /**
+     * Returns the total number of unique materials in the collection.
+     */
+    uint materialCount() const { return allMaterials().count(); }
+
+    /**
+     * Determines if a manifest exists for a material on @a path.
+     * @return @c true if a manifest exists; otherwise @a false.
+     */
+    bool hasMaterial(de::Uri const &path) const;
+
+    /**
+     * Find the material manifest on @a path.
+     *
+     * @param path  The path to search for.
+     * @return  Found material manifest.
+     */
+    de::MaterialManifest &findMaterial(de::Uri const &path) const;
+
+    /**
+     * Lookup a manifest by unique identifier.
+     *
+     * @param id  Unique identifier for the manifest to be looked up. Note
+     *            that @c 0 is not a valid identifier.
+     *
+     * @return  The associated manifest.
+     */
+    de::MaterialManifest &toMaterialManifest(materialid_t id) const;
+
+    /**
+     * Lookup a subspace scheme by symbolic name.
+     *
+     * @param name  Symbolic name of the scheme.
+     * @return  Scheme associated with @a name.
+     *
+     * @throws UnknownSchemeError If @a name is unknown.
+     */
+    de::MaterialScheme &materialScheme(de::String name) const;
+
+    /**
+     * Returns @c true iff a Scheme exists with the symbolic @a name.
+     */
+    bool knownMaterialScheme(de::String name) const;
+
+    /**
+     * Returns a list of all the schemes for efficient traversal.
+     */
+    MaterialSchemes const &allMaterialSchemes() const;
+
+    /**
+     * Returns the total number of manifest schemes in the collection.
+     */
+    inline int materialSchemeCount() const { return allMaterialSchemes().count(); }
+
+    /**
+     * Clear all manifests and materials in all schemes.
+     *
+     * @see allSchemes(), Scheme::clear().
+     */
+    inline void clearAllMaterialSchemes()
+    {
+        foreach(de::MaterialScheme *scheme, allMaterialSchemes())
+        {
+            scheme->clear();
+        }
+    }
+
+    /**
+     * Lookup a manifest group by unique @a number.
+     */
+    MaterialManifestGroup &materialGroup(int number) const;
+
+    /**
+     * Create a new (empty) manifest group.
+     */
+    MaterialManifestGroup &createMaterialGroup();
+
+    /**
+     * To be called to destroy all manifest groups when they are no longer needed.
+     */
+    void destroyAllMaterialGroups();
+
+    /**
+     * Provides access to the list of manifest groups for efficient traversal.
+     */
+    MaterialManifestGroups const &allMaterialGroups() const;
+
+    /**
+     * Returns the total number of manifest groups in the collection.
+     */
+    inline int materialGroupCount() const { return allMaterialGroups().count(); }
+
+    /**
+     * Declare a material in the collection, producing a manifest for a logical
+     * Material which will be defined later. If a manifest with the specified
+     * @a uri already exists the existing manifest will be returned.
+     *
+     * @param uri  Uri representing a path to the material in the virtual hierarchy.
+     *
+     * @return  Manifest for this URI.
+     */
+    inline de::MaterialManifest &declareMaterial(de::Uri const &uri)
+    {
+        return materialScheme(uri.scheme()).declare(uri.path());
+    }
+
+    /**
+     * Returns a list of all the unique material instances in the collection,
+     * from all schemes.
+     */
+    AllMaterials const &allMaterials() const;
 
     /**
      * Determines if a manifest exists for a declared texture on @a path.
@@ -438,6 +563,33 @@ public:
      */
     void releaseGLTexturesFor(de::Texture &texture, TextureVariantSpec &spec);
 
+    /**
+     * Prepare a material variant specification in accordance to the specified
+     * usage context. If incomplete context information is supplied, suitable
+     * default values will be chosen in their place.
+     *
+     * @param contextId         Usage context identifier.
+     * @param flags             @ref textureVariantSpecificationFlags
+     * @param border            Border size in pixels (all edges).
+     * @param tClass            Color palette translation class.
+     * @param tMap              Color palette translation map.
+     * @param wrapS             GL texture wrap/clamp mode on the horizontal axis (texture-space).
+     * @param wrapT             GL texture wrap/clamp mode on the vertical axis (texture-space).
+     * @param minFilter         Logical DGL texture minification level.
+     * @param magFilter         Logical DGL texture magnification level.
+     * @param anisoFilter       @c -1= User preference else a logical DGL anisotropic filter level.
+     * @param mipmapped         @c true= use mipmapping.
+     * @param gammaCorrection   @c true= apply gamma correction to textures.
+     * @param noStretch         @c true= disallow stretching of textures.
+     * @param toAlpha           @c true= convert textures to alpha data.
+     *
+     * @return  Rationalized (and interned) copy of the final specification.
+     */
+    de::MaterialVariantSpec const &materialSpec(MaterialContextId contextId,
+        int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
+        int minFilter, int magFilter, int anisoFilter, bool mipmapped,
+        bool gammaCorrection, bool noStretch, bool toAlpha);
+
     void clearAllTextureSpecs();
 
     void pruneUnusedTextureSpecs();
@@ -483,7 +635,7 @@ public:
      */
     void releaseFontGLTexturesByScheme(de::String schemeName);
 
-#endif
+#endif // __CLIENT__
 
     /**
      * Returns the total number of animation/precache groups.
@@ -574,16 +726,6 @@ public:
     void cacheForCurrentMap();
 
     /**
-     * Process all queued cache tasks.
-     */
-    void processCacheQueue();
-
-    /**
-     * Cancel all queued cache tasks.
-     */
-    void purgeCacheQueue();
-
-    /**
      * Add a variant of @a material to the cache queue for deferred preparation.
      *
      * @param material      Base material from which to derive a context variant.
@@ -591,8 +733,18 @@ public:
      * @param cacheGroups   @c true= variants for all materials in any applicable
      *                      groups are desired; otherwise just specified material.
      */
-    void cacheMaterial(Material &material, de::MaterialVariantSpec const &spec,
-        bool cacheGroups = true);
+    void cache(Material &material, de::MaterialVariantSpec const &spec,
+               bool cacheGroups = true);
+
+    /**
+     * Process all queued material cache tasks.
+     */
+    void processCacheQueue();
+
+    /**
+     * Cancel all queued material cache tasks.
+     */
+    void purgeCacheQueue();
 
 #endif // __CLIENT__
 
