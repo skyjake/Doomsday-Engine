@@ -372,20 +372,21 @@ DENG2_PIMPL(LensFlares)
                 Rangef minAngle;
                 Rangef maxAngle;
             };
+            typedef Rangef Rgf;
             static Spec const specs[] = {
-                //  axisPos id                   alpha   size    intensity min/max                  radius min/max              angle min/max
-                {   1,      FlareData::Burst,    1,      1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(), Rangef(.5f, .8f), Rangef(), Rangef() },
-                {   1,      FlareData::Star,     1,      1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(.5f, .7f), Rangef(), Rangef(), Rangef() },
-                {   1,      FlareData::Exponent, 1,      2,      Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .2f), Rangef(), Rangef(), Rangef() },
+                //  axisPos id                   alpha   size    intensity min/max              radius min/max          angle min/max
+                {   1,      FlareData::Burst,    1,      1,      Rgf(1.0e-6, 1.0e-5), Rgf(),    Rgf(), Rgf(.5f, .8f),   Rgf(), Rgf() },
+                {   1,      FlareData::Star,     1,      1,      Rgf(1.0e-6, 1.0e-5), Rgf(),    Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf() },
+                {   1,      FlareData::Exponent, 1,      2,      Rgf(1.0e-8, 1.0e-7), Rgf(),    Rgf(.1f, .2f), Rgf(),   Rgf(), Rgf() },
 
-                {  .75f,    FlareData::Halo,     .5f,    1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(.5f, .7f), Rangef(), Rangef(), Rangef(30, 60) },
+                {  .75f,    FlareData::Halo,     .5f,    1,      Rgf(1.0e-6, 1.0e-5), Rgf(),    Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf(30, 60) },
 
-                {  -.75f,   FlareData::Ring,     .25f,   .5f,    Rangef(1.0e-5, 1.0e-4), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(5, 20), Rangef(40, 50) },
-                {  -1,      FlareData::Circle,   .3f,    .62f,   Rangef(4.0e-6, 4.0e-5), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(0, 23), Rangef(30, 60) },
-                {  -1.25f,  FlareData::Ring,     .25f,   .7f,    Rangef(1.0e-5, 1.0e-4), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(10, 25), Rangef(35, 50) },
+                {  -.75f,   FlareData::Ring,     .25f,   .5f,    Rgf(1.0e-5, 1.0e-4), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(5, 20), Rgf(40, 50) },
+                {  -1,      FlareData::Circle,   .3f,    .62f,   Rgf(4.0e-6, 4.0e-5), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(0, 23), Rgf(30, 60) },
+                {  -1.25f,  FlareData::Ring,     .25f,   .7f,    Rgf(1.0e-5, 1.0e-4), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(35, 50) },
 
-                {  1.333f,  FlareData::Ring,     .1f,   1.2f,    Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(10, 25), Rangef(25, 45) },
-                {  1.45f,   FlareData::Ring,     .1f,   1.15f,   Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(10, 25), Rangef(25, 45) }
+                {  1.333f,  FlareData::Ring,     .1f,   1.2f,    Rgf(1.0e-8, 1.0e-7), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
+                {  1.45f,   FlareData::Ring,     .1f,   1.15f,   Rgf(1.0e-8, 1.0e-7), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) }
             };
 
             for(uint i = 0; i < sizeof(specs)/sizeof(Spec); ++i)
