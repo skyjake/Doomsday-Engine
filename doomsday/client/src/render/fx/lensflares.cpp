@@ -32,6 +32,7 @@
 #include <de/Shared>
 
 #include <QHash>
+#include <cmath>
 
 using namespace de;
 
@@ -215,6 +216,8 @@ DENG2_PIMPL(LensFlares)
     typedef QHash<ILightSource::LightId, PVLight *> PVSet;
     PVSet pvs;
 
+    Vector3f eyeFront;
+
     typedef GLBufferT<Vertex3Tex3Rgba> VBuf;
     VBuf *buffer;
     Drawable drawable;
@@ -344,6 +347,9 @@ DENG2_PIMPL(LensFlares)
             /// @todo The factor should be FOV-dependent.
             float radius = pvl->light->lightSourceRadius() / distance * RADIUS_FACTOR;
 
+            float const dot = (pvl->light->lightSourceOrigin().xzy() - Vector3d(vOrigin)).normalize().dot(eyeFront);
+            float const angle = radianToDegree(std::acos(dot));
+
             qDebug() << "i:" << intensity << "r:" << radius << "IR:" << radius*intensity;
 
             /*
@@ -363,19 +369,23 @@ DENG2_PIMPL(LensFlares)
                 Rangef maxIntensity;
                 Rangef minRadius;
                 Rangef maxRadius;
+                Rangef minAngle;
+                Rangef maxAngle;
             };
             static Spec const specs[] = {
-                //  axisPos id                   alpha   size    intensity min/max                  radius min/max
-                {   1,      FlareData::Burst,    1,      1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(), Rangef(.5f, .8f) },
-                {   1,      FlareData::Star,     1,      1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(.5f, .7f), Rangef() },
-                {   1,      FlareData::Exponent, 1,     2,       Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .2f), Rangef() },
+                //  axisPos id                   alpha   size    intensity min/max                  radius min/max              angle min/max
+                {   1,      FlareData::Burst,    1,      1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(), Rangef(.5f, .8f), Rangef(), Rangef() },
+                {   1,      FlareData::Star,     1,      1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(.5f, .7f), Rangef(), Rangef(), Rangef() },
+                {   1,      FlareData::Exponent, 1,      2,      Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .2f), Rangef(), Rangef(), Rangef() },
 
-                {  .75f,    FlareData::Halo,     .5f,    1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(.5f, .7f), Rangef() },
-                {  -.75f,   FlareData::Ring,     .3f,    .8f,    Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef() },
+                {  .75f,    FlareData::Halo,     .5f,    1,      Rangef(1.0e-6, 1.0e-5), Rangef(),  Rangef(.5f, .7f), Rangef(), Rangef(), Rangef(30, 60) },
 
-                {  -1,      FlareData::Circle,   .3f,    1,      Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef() },
+                {  -.75f,   FlareData::Ring,     .25f,   .5f,    Rangef(1.0e-5, 1.0e-4), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(5, 20), Rangef(40, 50) },
+                {  -1,      FlareData::Circle,   .3f,    .62f,   Rangef(4.0e-6, 4.0e-5), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(0, 23), Rangef(30, 60) },
+                {  -1.25f,  FlareData::Ring,     .25f,   .7f,    Rangef(1.0e-5, 1.0e-4), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(10, 25), Rangef(35, 50) },
 
-                {  -1.25f,  FlareData::Ring,     .3f,    1.1f,   Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef() }
+                {  1.333f,  FlareData::Ring,     .1f,   1.2f,    Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(10, 25), Rangef(25, 45) },
+                {  1.45f,   FlareData::Ring,     .1f,   1.15f,   Rangef(1.0e-8, 1.0e-7), Rangef(),  Rangef(.1f, .5f), Rangef(), Rangef(10, 25), Rangef(25, 45) }
             };
 
             for(uint i = 0; i < sizeof(specs)/sizeof(Spec); ++i)
@@ -388,6 +398,7 @@ DENG2_PIMPL(LensFlares)
                 // Apply limits.
                 alpha *= linearRangeFactor(intensity, spec.minIntensity, spec.maxIntensity);
                 alpha *= linearRangeFactor(radius, spec.minRadius, spec.maxRadius);
+                alpha *= linearRangeFactor(angle, spec.minAngle, spec.maxAngle);
 
                 //qDebug() << linearRangeFactor(intensity, spec.minIntensity, spec.maxIntensity);
                 //qDebug() << linearRangeFactor(radius, spec.minRadius, spec.maxRadius);
@@ -453,11 +464,13 @@ void fx::LensFlares::beginFrame()
 
 void LensFlares::draw()
 {
-    /*
     viewdata_t const *viewData = R_ViewData(console());
+    /*
     d->uEyePos   = Vector3f(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
     d->uEyeFront = Vector3f(viewData->frontVec);
     */
+
+    d->eyeFront = Vector3f(viewData->frontVec);
 
     Rectanglef const rect = viewRect();
     float const    aspect = rect.height() / rect.width();
