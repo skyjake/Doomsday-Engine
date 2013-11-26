@@ -533,13 +533,6 @@ Materials &App_Materials()
     return App_ResourceSystem().materials();
 }
 
-#ifdef __CLIENT__
-de::Fonts &App_Fonts()
-{
-    return App_ResourceSystem().fonts();
-}
-#endif
-
 /**
  * Register the engine commands and variables.
  */
@@ -2553,7 +2546,7 @@ fontschemeid_t DD_ParseFontSchemeName(char const *str)
 #ifdef __CLIENT__
     try
     {
-        FontScheme &scheme = App_Fonts().scheme(str);
+        FontScheme &scheme = App_ResourceSystem().fontScheme(str);
         if(!scheme.name().compareWithoutCase("System"))
         {
             return FS_SYSTEM;
@@ -2563,7 +2556,7 @@ fontschemeid_t DD_ParseFontSchemeName(char const *str)
             return FS_GAME;
         }
     }
-    catch(Fonts::UnknownSchemeError const &)
+    catch(ResourceSystem::UnknownSchemeError const &)
     {}
 #endif
     qDebug() << "Unknown font scheme:" << String(str) << ", returning 'FS_INVALID'";

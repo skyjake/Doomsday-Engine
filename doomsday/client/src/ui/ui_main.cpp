@@ -27,7 +27,6 @@
 #include "de_misc.h"
 
 #include "resource/image.h"
-#include "resource/fonts.h"
 #include "gl/texturecontent.h"
 #include "render/rend_main.h"
 #include "render/rend_font.h"

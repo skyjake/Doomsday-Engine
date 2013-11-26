@@ -152,12 +152,15 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 
 #endif // __CLIENT__
 
-DENG2_PIMPL(ResourceSystem),
-DENG2_OBSERVES(TextureScheme, ManifestDefined),
-DENG2_OBSERVES(TextureManifest, TextureDerived),
-DENG2_OBSERVES(Texture, Deletion)
+DENG2_PIMPL(ResourceSystem)
+, DENG2_OBSERVES(TextureScheme,   ManifestDefined)
+, DENG2_OBSERVES(TextureManifest, TextureDerived)
+, DENG2_OBSERVES(Texture,         Deletion)
 #ifdef __CLIENT__
-, DENG2_OBSERVES(ColorPalette, ColorTableChange)
+, DENG2_OBSERVES(FontScheme,      ManifestDefined)
+, DENG2_OBSERVES(FontManifest,    Deletion)
+, DENG2_OBSERVES(AbstractFont,    Deletion)
+, DENG2_OBSERVES(ColorPalette,    ColorTableChange)
 #endif
 {
     typedef QList<de::ResourceClass *> ResourceClasses;
@@ -197,16 +200,29 @@ DENG2_OBSERVES(Texture, Deletion)
     SpriteGroups spriteGroups;
 
 #ifdef __CLIENT__
+    /// System subspace schemes containing the manifests/resources.
+    FontSchemes fontSchemes;
+    QList<FontScheme *> fontSchemeCreationOrder;
+
+    AllFonts fonts; ///< From all schemes.
+    uint fontManifestCount; ///< Total number of font manifests (in all schemes).
+
+    uint fontManifestIdMapSize;
+    FontManifest **fontManifestIdMap; ///< Index with fontid_t-1
+
     typedef QList<TextureVariantSpec *> TextureSpecs;
     TextureSpecs textureSpecs;
     TextureSpecs detailTextureSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
-
-    Fonts fonts;
 #endif
 
     Instance(Public *i)
         : Base(i)
         , defaultColorPalette(0)
+#ifdef __CLIENT__
+        , fontManifestCount(0)
+        , fontManifestIdMapSize(0)
+        , fontManifestIdMap(0)
+#endif
     {
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
@@ -242,8 +258,8 @@ DENG2_OBSERVES(Texture, Deletion)
 #ifdef __CLIENT__
         LOG_MSG("Initializing Font collection...");
         /// @note Order here defines the ambigious-URI search order.
-        fonts.createScheme("System");
-        fonts.createScheme("Game");
+        createFontScheme("System");
+        createFontScheme("Game");
 #endif
     }
 
@@ -251,6 +267,10 @@ DENG2_OBSERVES(Texture, Deletion)
     {
         qDeleteAll(resClasses);
         self.clearAllAnimGroups();
+#ifdef __CLIENT__
+        self.clearAllFontSchemes();
+        clearFontManifests();
+#endif
         self.clearAllTextureSchemes();
         clearTextureManifests();
     }
@@ -275,6 +295,36 @@ DENG2_OBSERVES(Texture, Deletion)
         newScheme->audienceForManifestDefined += this;
     }
 
+#ifdef __CLIENT__
+    void clearFontManifests()
+    {
+        qDeleteAll(fontSchemes);
+        fontSchemes.clear();
+        fontSchemeCreationOrder.clear();
+
+        // Clear the manifest index/map.
+        if(fontManifestIdMap)
+        {
+            M_Free(fontManifestIdMap); fontManifestIdMap = 0;
+            fontManifestIdMapSize = 0;
+        }
+        fontManifestCount = 0;
+    }
+
+    void createFontScheme(String name)
+    {
+        DENG2_ASSERT(name.length() >= FontScheme::min_name_length);
+
+        // Create a new scheme.
+        FontScheme *newScheme = new FontScheme(name);
+        fontSchemes.insert(name.toLower(), newScheme);
+        fontSchemeCreationOrder.push_back(newScheme);
+
+        // We want notification when a new manifest is defined in this scheme.
+        newScheme->audienceForManifestDefined += this;
+    }
+#endif
+
     SpriteGroup *spriteGroup(spritenum_t spriteId)
     {
         SpriteGroups::iterator found = spriteGroups.find(spriteId);
@@ -294,14 +344,14 @@ DENG2_OBSERVES(Texture, Deletion)
 #ifdef __CLIENT__
     void clearRuntimeFonts()
     {
-        fonts.scheme("Game").clear();
+        self.fontScheme("Game").clear();
 
         self.pruneUnusedTextureSpecs();
     }
 
     void clearSystemFonts()
     {
-        fonts.scheme("System").clear();
+        self.fontScheme("System").clear();
 
         self.pruneUnusedTextureSpecs();
     }
@@ -858,12 +908,63 @@ DENG2_OBSERVES(Texture, Deletion)
     }
 
 #ifdef __CLIENT__
+    /// Observes FontScheme ManifestDefined.
+    void fontSchemeManifestDefined(FontScheme & /*scheme*/, FontManifest &manifest)
+    {
+        // We want notification when the manifest is derived to produce a resource.
+        //manifest.audienceForFontDerived += this;
+
+        // We want notification when the manifest is about to be deleted.
+        manifest.audienceForDeletion += this;
+
+        // Acquire a new unique identifier for the manifest.
+        fontid_t const id = ++fontManifestCount; // 1-based.
+        manifest.setUniqueId(id);
+
+        // Add the new manifest to the id index/map.
+        if(fontManifestCount > fontManifestIdMapSize)
+        {
+            // Allocate more memory.
+            fontManifestIdMapSize += 32;
+            fontManifestIdMap = (FontManifest **) M_Realloc(fontManifestIdMap, sizeof(*fontManifestIdMap) * fontManifestIdMapSize);
+        }
+        fontManifestIdMap[fontManifestCount - 1] = &manifest;
+    }
+
+#if 0
+    /// Observes FontManifest FontDerived.
+    void fontManifestFontDerived(FontManifest & /*manifest*/, AbstractFont &font)
+    {
+        // Include this new font in the scheme-agnostic list of instances.
+        fonts.push_back(&font);
+
+        // We want notification when the font is about to be deleted.
+        font.audienceForDeletion += this;
+    }
+#endif
+
+    /// Observes FontManifest Deletion.
+    void fontManifestBeingDeleted(FontManifest const &manifest)
+    {
+        fontManifestIdMap[manifest.uniqueId() - 1 /*1-based*/] = 0;
+
+        // There will soon be one fewer manifest in the system.
+        fontManifestCount -= 1;
+    }
+
+    /// Observes AbstractFont Deletion.
+    void fontBeingDeleted(AbstractFont const &font)
+    {
+        fonts.removeOne(const_cast<AbstractFont *>(&font));
+    }
+
     /// Observes ColorPalette ColorTableChange
     void colorPaletteColorTableChanged(ColorPalette &colorPalette)
     {
         self.releaseGLTexturesFor(colorPalette);
     }
-#endif
+
+#endif // __CLIENT__
 };
 
 ResourceSystem::ResourceSystem() : d(new Instance(this))
@@ -1660,14 +1761,130 @@ TextureVariantSpec &ResourceSystem::detailTextureSpec(float contrast)
     return *d->detailTextureSpec(contrast);
 }
 
-Fonts &ResourceSystem::fonts()
+FontScheme &ResourceSystem::fontScheme(String name) const
+{
+    LOG_AS("ResourceSystem::fontScheme");
+    if(!name.isEmpty())
+    {
+        FontSchemes::iterator found = d->fontSchemes.find(name.toLower());
+        if(found != d->fontSchemes.end())
+        {
+            return **found;
+        }
+    }
+    /// @throw UnknownSchemeError An unknown scheme was referenced.
+    throw UnknownSchemeError("ResourceSystem::fontScheme", "No scheme found matching '" + name + "'");
+}
+
+bool ResourceSystem::knownFontScheme(String name) const
+{
+    if(!name.isEmpty())
+    {
+        return d->fontSchemes.contains(name.toLower());
+    }
+    return false;
+}
+
+ResourceSystem::FontSchemes const &ResourceSystem::allFontSchemes() const
+{
+    return d->fontSchemes;
+}
+
+bool ResourceSystem::hasFont(de::Uri const &path) const
+{
+    try
+    {
+        findFont(path);
+        return true;
+    }
+    catch(MissingManifestError const &)
+    {} // Ignore this error.
+    return false;
+}
+
+FontManifest &ResourceSystem::findFont(de::Uri const &uri) const
+{
+    LOG_AS("ResourceSystem::findFont");
+
+    // Perform the search.
+    // Is this a URN? (of the form "urn:schemename:uniqueid")
+    if(!uri.scheme().compareWithoutCase("urn"))
+    {
+        String const &pathStr = uri.path().toStringRef();
+        int uIdPos = pathStr.indexOf(':');
+        if(uIdPos > 0)
+        {
+            String schemeName = pathStr.left(uIdPos);
+            int uniqueId      = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+
+            try
+            {
+                return fontScheme(schemeName).findByUniqueId(uniqueId);
+            }
+            catch(FontScheme::NotFoundError const &)
+            {} // Ignore, we'll throw our own...
+        }
+    }
+    else
+    {
+        // No, this is a URI.
+        String const &path = uri.path();
+
+        // Does the user want a manifest in a specific scheme?
+        if(!uri.scheme().isEmpty())
+        {
+            try
+            {
+                return fontScheme(uri.scheme()).find(path);
+            }
+            catch(FontScheme::NotFoundError const &)
+            {} // Ignore, we'll throw our own...
+        }
+        else
+        {
+            // No, check each scheme in priority order.
+            foreach(FontScheme *scheme, d->fontSchemeCreationOrder)
+            {
+                try
+                {
+                    return scheme->find(path);
+                }
+                catch(FontScheme::NotFoundError const &)
+                {} // Ignore, we'll throw our own...
+            }
+        }
+    }
+
+    /// @throw MissingManifestError Failed to locate a matching manifest.
+    throw MissingManifestError("ResourceSystem::findFont", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+}
+
+FontManifest &ResourceSystem::toFontManifest(fontid_t id) const
+{
+    if(id > 0 && id <= d->fontManifestCount)
+    {
+        duint32 idx = id - 1; // 1-based index.
+        if(d->fontManifestIdMap[idx])
+        {
+            return *d->fontManifestIdMap[idx];
+        }
+
+        // Internal bookeeping error.
+        DENG2_ASSERT(false);
+    }
+
+    /// @throw UnknownIdError The specified manifest id is invalid.
+    throw UnknownFontIdError("ResourceSystem::toFontManifest", QString("Invalid font ID %1, valid range [1..%2)").arg(id).arg(d->fontManifestCount + 1));
+}
+
+ResourceSystem::AllFonts const &ResourceSystem::allFonts() const
 {
     return d->fonts;
 }
 
 void ResourceSystem::clearFontDefinitionLinks()
 {
-    foreach(AbstractFont *font, d->fonts.all())
+    foreach(AbstractFont *font, d->fonts)
     {
         if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
         {
@@ -1686,7 +1903,7 @@ AbstractFont *ResourceSystem::createFontFromDef(ded_compositefont_t const &def)
     try
     {
         // Create/retrieve a manifest for the would-be font.
-        FontManifest &manifest = d->fonts.declare(uri);
+        FontManifest &manifest = declareFont(uri);
 
         if(manifest.hasResource())
         {
@@ -1718,7 +1935,7 @@ AbstractFont *ResourceSystem::createFontFromDef(ded_compositefont_t const &def)
         LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
             << NativePath(uri.asText()).pretty();
     }
-    catch(Fonts::UnknownSchemeError const &er)
+    catch(UnknownSchemeError const &er)
     {
         LOG_WARNING(er.asText() + ". Failed declaring font \"%s\", ignoring.")
             << NativePath(uri.asText()).pretty();
@@ -1746,7 +1963,7 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
     try
     {
         // Create/retrieve a manifest for the would-be font.
-        FontManifest &manifest = d->fonts.declare(uri);
+        FontManifest &manifest = declareFont(uri);
 
         if(manifest.hasResource())
         {
@@ -1778,7 +1995,7 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
         LOG_WARNING("Failed defining new Font for \"%s\", ignoring.")
             << NativePath(uri.asText()).pretty();
     }
-    catch(Fonts::UnknownSchemeError const &er)
+    catch(UnknownSchemeError const &er)
     {
         LOG_WARNING(er.asText() + ". Failed declaring font \"%s\", ignoring.")
             << NativePath(uri.asText()).pretty();
@@ -1796,7 +2013,7 @@ void ResourceSystem::releaseFontGLTexturesByScheme(String schemeName)
 {
     if(schemeName.isEmpty()) return;
 
-    PathTreeIterator<FontScheme::Index> iter(d->fonts.scheme(schemeName).index().leafNodes());
+    PathTreeIterator<FontScheme::Index> iter(fontScheme(schemeName).index().leafNodes());
     while(iter.hasNext())
     {
         FontManifest &manifest = iter.next();
@@ -2284,7 +2501,8 @@ void ResourceSystem::cacheMaterial(Material &material, de::MaterialVariantSpec c
 
 #endif // __CLIENT__
 
-static bool pathBeginsWithComparator(TextureManifest const &manifest, void *context)
+template <typename ManifestType>
+static bool pathBeginsWithComparator(ManifestType const &manifest, void *context)
 {
     Path const *path = reinterpret_cast<Path*>(context);
     /// @todo Use PathTree::Node::compare()
@@ -2294,15 +2512,16 @@ static bool pathBeginsWithComparator(TextureManifest const &manifest, void *cont
 /**
  * @todo This logic should be implemented in de::PathTree -ds
  */
-static int collectTextureManifestsInScheme(TextureScheme const &scheme,
-    bool (*predicate)(TextureManifest const &manifest, void *context), void *context,
-    QList<TextureManifest *> *storage = 0)
+template <typename SchemeType, typename ManifestType>
+static int collectManifestsInScheme(SchemeType const &scheme,
+    bool (*predicate)(ManifestType const &manifest, void *context), void *context,
+    QList<ManifestType *> *storage = 0)
 {
     int count = 0;
-    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
+    PathTreeIterator<SchemeType::Index> iter(scheme.index().leafNodes());
     while(iter.hasNext())
     {
-        TextureManifest &manifest = iter.next();
+        ManifestType &manifest = iter.next();
         if(predicate(manifest, context))
         {
             count += 1;
@@ -2322,15 +2541,17 @@ static QList<TextureManifest *> collectTextureManifests(TextureScheme *scheme,
 
     if(scheme)
     {
-        // Consider materials in the specified scheme only.
-        count += collectTextureManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
+        // Consider resources in the specified scheme only.
+        count += collectManifestsInScheme<TextureScheme, TextureManifest>(*scheme,
+                    pathBeginsWithComparator, (void *)&path, storage);
     }
     else
     {
-        // Consider materials in any scheme.
+        // Consider resources in any scheme.
         foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
         {
-            count += collectTextureManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
+            count += collectManifestsInScheme<TextureScheme, TextureManifest>(*scheme,
+                        pathBeginsWithComparator, (void *)&path, storage);
         }
     }
 
@@ -2347,11 +2568,48 @@ static QList<TextureManifest *> collectTextureManifests(TextureScheme *scheme,
     return collectTextureManifests(scheme, path, &result);
 }
 
+#ifdef __CLIENT__
+static QList<FontManifest *> collectFontManifests(FontScheme *scheme,
+    Path const &path, QList<FontManifest *> *storage = 0)
+{
+    int count = 0;
+
+    if(scheme)
+    {
+        // Consider resources in the specified scheme only.
+        count += collectManifestsInScheme<FontScheme, FontManifest>(*scheme,
+                    pathBeginsWithComparator, (void *)&path, storage);
+    }
+    else
+    {
+        // Consider resources in any scheme.
+        foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
+        {
+            count += collectManifestsInScheme<FontScheme, FontManifest>(*scheme,
+                        pathBeginsWithComparator, (void *)&path, storage);
+        }
+    }
+
+    // Are we done?
+    if(storage) return *storage;
+
+    // Collect and populate.
+    QList<FontManifest *> result;
+    if(count == 0) return result;
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    result.reserve(count);
+#endif
+    return collectFontManifests(scheme, path, &result);
+}
+#endif // __CLIENT__
+
 /**
  * Decode and then lexicographically compare the two manifest paths,
  * returning @c true if @a is less than @a b.
  */
-static bool compareManifestPathsAssending(TextureManifest const *a, TextureManifest const *b)
+template <typename ManifestType>
+static bool compareManifestPathsAssending(ManifestType const *a, ManifestType const *b)
 {
     String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
     String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
@@ -2381,7 +2639,7 @@ static int printTextureIndex2(TextureScheme *scheme, Path const &like,
     LOG_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index key.
-    qSort(found.begin(), found.end(), compareManifestPathsAssending);
+    qSort(found.begin(), found.end(), compareManifestPathsAssending<TextureManifest>);
     int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
     foreach(TextureManifest *manifest, found)
@@ -2432,10 +2690,95 @@ static void printTextureIndex(de::Uri const &search,
     LOG_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "texture" : "textures in total");
 }
 
+#ifdef __CLIENT__
+
+/**
+ * @param scheme    Resource subspace scheme being printed. Can be @c NULL in
+ *                  which case resources are printed from all schemes.
+ * @param like      Resource path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printFontIndex2(FontScheme *scheme, Path const &like,
+    de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    QList<FontManifest *> found = collectFontManifests(scheme, like);
+    if(found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known fonts";
+    if(!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index.
+    qSort(found.begin(), found.end(), compareManifestPathsAssending<FontManifest>);
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach(FontManifest *manifest, found)
+    {
+        String info = String("%1: %2%3" _E(.))
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasResource()? _E(1) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
+
+        LOG_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+static void printFontIndex(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+{
+    int printTotal = 0;
+
+    // Collate and print results from all schemes?
+    if(search.scheme().isEmpty() && !search.path().isEmpty())
+    {
+        printTotal = printFontIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        LOG_MSG(_E(R));
+    }
+    // Print results within only the one scheme?
+    else if(App_ResourceSystem().knownFontScheme(search.scheme()))
+    {
+        printTotal = printFontIndex2(&App_ResourceSystem().fontScheme(search.scheme()),
+                                     search.path(), flags | de::Uri::OmitScheme);
+        LOG_MSG(_E(R));
+    }
+    else
+    {
+        // Collect and sort results in each scheme separately.
+        foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
+        {
+            int numPrinted = printFontIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            if(numPrinted)
+            {
+                LOG_MSG(_E(R));
+                printTotal += numPrinted;
+            }
+        }
+    }
+    LOG_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "font" : "fonts in total");
+}
+
+#endif // __CLIENT__
+
 static bool isKnownTextureSchemeCallback(String name)
 {
     return App_ResourceSystem().knownTextureScheme(name);
 }
+
+#ifdef __CLIENT__
+static bool isKnownFontSchemeCallback(String name)
+{
+    return App_ResourceSystem().knownFontScheme(name);
+}
+#endif
 
 D_CMD(ListTextures)
 {
@@ -2453,6 +2796,24 @@ D_CMD(ListTextures)
     printTextureIndex(search);
     return true;
 }
+
+#ifdef __CLIENT__
+D_CMD(ListFonts)
+{
+    DENG2_UNUSED(src);
+
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownFontSchemeCallback);
+    if(!search.scheme().isEmpty() &&
+       !App_ResourceSystem().knownFontScheme(search.scheme()))
+    {
+        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    printFontIndex(search);
+    return true;
+}
+#endif // __CLIENT__
 
 #ifdef DENG_DEBUG
 D_CMD(PrintTextureStats)
@@ -2472,7 +2833,27 @@ D_CMD(PrintTextureStats)
     }
     return true;
 }
-#endif
+#endif // DENG_DEBUG
+
+#if defined(__CLIENT__) && defined(DENG_DEBUG)
+D_CMD(PrintFontStats)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    LOG_MSG(_E(1) "Font Statistics:");
+    foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
+    {
+        FontScheme::Index const &index = scheme->index();
+
+        uint const count = index.count();
+        LOG_MSG("Scheme: %s (%u %s)")
+            << scheme->name() << count << (count == 1? "font" : "fonts");
+        index.debugPrintHashDistribution();
+        index.debugPrint();
+    }
+    return true;
+}
+#endif // __CLIENT__ && DENG_DEBUG
 
 void ResourceSystem::consoleRegister() // static
 {
@@ -2484,9 +2865,16 @@ void ResourceSystem::consoleRegister() // static
     C_CMD("texturestats",   NULL,   PrintTextureStats)
 #endif
 
+#ifdef __CLIENT__
+    C_CMD("listfonts",      "ss",   ListFonts)
+    C_CMD("listfonts",      "s",    ListFonts)
+    C_CMD("listfonts",      "",     ListFonts)
+
+#  ifdef DENG_DEBUG
+    C_CMD("fontstats",      NULL,   PrintFontStats)
+#  endif
+#endif
+
     Texture::consoleRegister();
     Materials::consoleRegister();
-#ifdef __CLIENT__
-    Fonts::consoleRegister();
-#endif
 }

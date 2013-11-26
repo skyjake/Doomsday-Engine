@@ -24,7 +24,8 @@
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
 #ifdef __CLIENT__
-#  include "Fonts"
+#  include "AbstractFont"
+#  include "FontScheme"
 #  include "MaterialVariantSpec"
 #endif
 #include "Materials"
@@ -34,6 +35,11 @@
 #include <de/Error>
 #include <de/String>
 #include <de/System>
+
+#ifdef __CLIENT__
+/// Special value used to signify an invalid font id.
+#define NOFONTID                    0
+#endif
 
 /**
  * Logical resources; materials, packages, textures, etc...
@@ -79,9 +85,22 @@ public:
     /// The referenced texture was not found. @ingroup errors
     DENG2_ERROR(MissingTextureError);
 
+#ifdef __CLIENT__
+    /// The referenced font was not found. @ingroup errors
+    DENG2_ERROR(MissingFontError);
+
+    /// The specified font id was invalid (out of range). @ingroup errors
+    DENG2_ERROR(UnknownFontIdError);
+#endif
+
     typedef QMap<de::String, de::TextureScheme *> TextureSchemes;
     typedef QList<de::Texture *> AllTextures;
     typedef QList<Sprite *> SpriteSet;
+
+#ifdef __CLIENT__
+    typedef QMap<de::String, de::FontScheme *> FontSchemes;
+    typedef QList<AbstractFont *> AllFonts;
+#endif
 
 public:
     /**
@@ -279,6 +298,102 @@ public:
 
 #ifdef __CLIENT__
     /**
+     * Returns the total number of resource manifests in the collection.
+     */
+    uint fontCount() const { return allFonts().count(); }
+
+    /**
+     * Determines if a manifest exists for a resource on @a path.
+     * @return @c true, if a manifest exists; otherwise @a false.
+     */
+    bool hasFont(de::Uri const &path) const;
+
+    /**
+     * Find a resource manifest.
+     *
+     * @param search  The search term.
+     * @return Found unique identifier.
+     */
+    de::FontManifest &findFont(de::Uri const &search) const;
+
+    /**
+     * Lookup a manifest by unique identifier.
+     *
+     * @param id  Unique identifier for the manifest to be looked up. Note
+     *            that @c 0 is not a valid identifier.
+     *
+     * @return  The associated manifest.
+     */
+    de::FontManifest &toFontManifest(fontid_t id) const;
+
+    /**
+     * Convenient method of looking up a concrete font resource in the collection
+     * given it's unique identifier.
+     *
+     * @return  The associated font resource.
+     *
+     * @see toManifest(), FontManifest::hasResource()
+     */
+    inline AbstractFont &font(fontid_t id) const {
+        return toFontManifest(id).resource();
+    }
+
+    /**
+     * Lookup a subspace scheme by symbolic name.
+     *
+     * @param name  Symbolic name of the scheme.
+     * @return  Scheme associated with @a name.
+     *
+     * @throws UnknownSchemeError If @a name is unknown.
+     */
+    de::FontScheme &fontScheme(de::String name) const;
+
+    /**
+     * Returns @c true iff a Scheme exists with the symbolic @a name.
+     */
+    bool knownFontScheme(de::String name) const;
+
+    /**
+     * Returns a list of all the schemes for efficient traversal.
+     */
+    FontSchemes const &allFontSchemes() const;
+
+    /**
+     * Returns the total number of manifest schemes in the collection.
+     */
+    inline int fontSchemeCount() const { return allFontSchemes().count(); }
+
+    /**
+     * Clear all resources in all schemes.
+     *
+     * @see allSchemes(), Scheme::clear().
+     */
+    inline void clearAllFontSchemes() {
+        foreach(de::FontScheme *scheme, allFontSchemes()) {
+            scheme->clear();
+        }
+    }
+
+    /**
+     * Declare a resource in the collection, producing a (possibly new) manifest
+     * for a resource which may be defined later. If a manifest with the specified
+     * @a uri already exists the existing manifest will be returned.
+     *
+     * @param uri  Uri representing a path to the resource in the virtual hierarchy.
+     *
+     * @return  The associated manifest for this URI.
+     */
+    inline de::FontManifest &declareFont(de::Uri const &uri) {
+        return fontScheme(uri.scheme()).declare(uri.path());
+    }
+
+    /**
+     * Returns a list of pointers to all the concrete resources in the collection,
+     * from all schemes.
+     */
+    AllFonts const &allFonts() const;
+
+    /**
      * Release all GL-textures in all schemes.
      */
     void releaseAllGLTextures();
@@ -351,11 +466,6 @@ public:
      * @return  A rationalized and valid TextureVariantSpecification.
      */
     TextureVariantSpec &detailTextureSpec(float contrast);
-
-    /**
-     * Provides access to the Fonts collection.
-     */
-    de::Fonts &fonts();
 
     /**
      * To be called during a definition database reset to clear all definitions

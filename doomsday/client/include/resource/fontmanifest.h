@@ -30,7 +30,6 @@
 
 namespace de {
 
-class Fonts;
 class FontScheme;
 
 /**
@@ -140,9 +139,6 @@ public:
      * Same as @c setResource(0)
      */
     inline void clearResource() { setResource(0); }
-
-    /// Returns a reference to the owning collection.
-    static Fonts &collection();
 
 private:
     DENG2_PRIVATE(d)

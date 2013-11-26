@@ -133,7 +133,6 @@ DENG_CONVENIENCE_HEADERS += \
     include/Face \
     include/FontLineWrapping \
     include/FontManifest \
-    include/Fonts \
     include/FontScheme \
     include/Game \
     include/Games \
@@ -339,7 +338,6 @@ DENG_HEADERS += \
     include/resource/compositebitmapfont.h \
     include/resource/compositetexture.h \
     include/resource/fontmanifest.h \
-    include/resource/fonts.h \
     include/resource/fontscheme.h \
     include/resource/hq2x.h \
     include/resource/image.h \
@@ -703,7 +701,6 @@ SOURCES += \
     src/resource/compositebitmapfont.cpp \
     src/resource/compositetexture.cpp \
     src/resource/fontmanifest.cpp \
-    src/resource/fonts.cpp \
     src/resource/fontscheme.cpp \
     src/resource/hq2x.cpp \
     src/resource/image.cpp \

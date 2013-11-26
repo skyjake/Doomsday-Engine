@@ -58,7 +58,7 @@ FontScheme &FontManifest::scheme() const
 {
     LOG_AS("FontManifest");
     /// @todo Optimize: FontManifest should contain a link to the owning FontScheme.
-    foreach(FontScheme *scheme, collection().allSchemes())
+    foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
     {
         if(&scheme->index() == &tree()) return *scheme;
     }
@@ -131,9 +131,4 @@ void FontManifest::setResource(AbstractFont *newResource)
             curFont->audienceForDeletion += d;
         }
     }
-}
-
-Fonts &FontManifest::collection()
-{
-    return App_Fonts();
 }

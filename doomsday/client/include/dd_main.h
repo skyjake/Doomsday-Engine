@@ -176,11 +176,6 @@ de::ResourceClass &App_ResourceClass(resourceclassid_t classId);
 /// @return  The application's global Material collection.
 de::Materials &App_Materials();
 
-#ifdef __CLIENT__
-/// @return  The application's global Font collection.
-de::Fonts &App_Fonts();
-#endif
-
 /// @return  @c true iff there is presently a game loaded.
 boolean App_GameLoaded();
 
