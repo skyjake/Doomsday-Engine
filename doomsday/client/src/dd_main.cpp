@@ -533,11 +533,6 @@ Materials &App_Materials()
     return App_ResourceSystem().materials();
 }
 
-de::Textures &App_Textures()
-{
-    return App_ResourceSystem().textures();
-}
-
 #ifdef __CLIENT__
 de::Fonts &App_Fonts()
 {
@@ -1080,8 +1075,8 @@ static int DD_ActivateGameWorker(void *parameters)
     App_ResourceSystem().initCompositeTextures();
     App_ResourceSystem().initFlatTextures();
     App_ResourceSystem().initSpriteTextures();
-    App_ResourceSystem().textures().scheme("Lightmaps").clear();
-    App_ResourceSystem().textures().scheme("Flaremaps").clear();
+    App_ResourceSystem().textureScheme("Lightmaps").clear();
+    App_ResourceSystem().textureScheme("Flaremaps").clear();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);
@@ -1985,8 +1980,8 @@ boolean DD_Init(void)
         App_ResourceSystem().initCompositeTextures();
         App_ResourceSystem().initFlatTextures();
         App_ResourceSystem().initSpriteTextures();
-        App_ResourceSystem().textures().scheme("Lightmaps").clear();
-        App_ResourceSystem().textures().scheme("Flaremaps").clear();
+        App_ResourceSystem().textureScheme("Lightmaps").clear();
+        App_ResourceSystem().textureScheme("Flaremaps").clear();
 
         Def_Read();
 

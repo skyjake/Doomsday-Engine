@@ -24,7 +24,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(FontScheme)
+DENG2_PIMPL(FontScheme),
+DENG2_OBSERVES(FontManifest, UniqueIdChange),
+DENG2_OBSERVES(FontManifest, Deletion)
 {
     String name; ///< Symbolic.
     Index index; ///< Mappings from paths to manifests.
@@ -144,6 +146,19 @@ DENG2_PIMPL(FontScheme)
 
         uniqueIdLutDirty = false;
     }
+
+    // Observes FontManifest UniqueIdChange
+    void fontManifestUniqueIdChanged(Manifest & /*manifest*/)
+    {
+        // We'll need to rebuild the id map.
+        uniqueIdLutDirty = true;
+    }
+
+    // Observes FontManifest Deletion.
+    void fontManifestBeingDeleted(Manifest const &manifest)
+    {
+        deindex(const_cast<Manifest &>(manifest));
+    }
 };
 
 FontScheme::FontScheme(String symbolicName) : d(new Instance(this))
@@ -184,13 +199,13 @@ FontScheme::Manifest &FontScheme::declare(Path const &path)
     if(d->index.size() != sizeBefore)
     {
         // We want notification if/when the manifest's uniqueId changes.
-        newManifest->audienceForUniqueIdChange += this;
+        newManifest->audienceForUniqueIdChange += d;
 
         // We want notification when the manifest is about to be deleted.
-        newManifest->audienceForDeletion += this;
+        newManifest->audienceForDeletion += d;
 
         // Notify interested parties that a new manifest was defined in the scheme.
-        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->schemeManifestDefined(*this, *newManifest);
+        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->fontSchemeManifestDefined(*this, *newManifest);
     }
 
     return *newManifest;
@@ -239,15 +254,4 @@ FontScheme::Manifest &FontScheme::findByUniqueId(int uniqueId)
 FontScheme::Index const &FontScheme::index() const
 {
     return d->index;
-}
-
-void FontScheme::manifestUniqueIdChanged(Manifest & /*manifest*/)
-{
-    // We'll need to rebuild the id map.
-    d->uniqueIdLutDirty = true;
-}
-
-void FontScheme::manifestBeingDeleted(Manifest const &manifest)
-{
-    d->deindex(const_cast<Manifest &>(manifest));
 }

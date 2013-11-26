@@ -22,8 +22,12 @@
 #include "resource/texture.h"
 
 #include "dd_main.h" // App_ResourceSystem()
-#include "TextureManifest"
+#include "con_main.h"
+
+#include "resource/resourcesystem.h"
 #include "resource/compositetexture.h"
+#include "TextureManifest"
+
 #include <de/Error>
 #include <de/Log>
 #include <de/memory.h>
@@ -35,14 +39,12 @@ typedef QMap<Texture::AnalysisId, void *> Analyses;
 
 DENG2_PIMPL(Texture)
 {
-    /// Manifest derived to yield the texture.
     TextureManifest &manifest;
-
-    Texture::Flags flags;
+    Flags flags;
 
 #ifdef __CLIENT__
     /// Set of (render-) context variants.
-    Texture::Variants variants;
+    Variants variants;
 #endif
 
     /// User data associated with this texture.
@@ -57,9 +59,10 @@ DENG2_PIMPL(Texture)
     /// Image analysis data, used for various purposes according to context.
     Analyses analyses;
 
-    Instance(Public *i, TextureManifest &_manifest) : Base(i),
-        manifest(_manifest),
-        userData(0)
+    Instance(Public *i, TextureManifest &_manifest)
+        : Base(i)
+        , manifest(_manifest)
+        , userData(0)
     {}
 
     ~Instance()
@@ -314,4 +317,90 @@ String Texture::description() const
     str += String(" x%1").arg(variantCount());
 #endif
     return str;
+}
+
+D_CMD(InspectTexture)
+{
+    DENG2_UNUSED(src);
+
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
+
+    if(!search.scheme().isEmpty() &&
+       !App_ResourceSystem().knownTextureScheme(search.scheme()))
+    {
+        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    try
+    {
+        TextureManifest &manifest = App_ResourceSystem().findTexture(search);
+        if(manifest.hasTexture())
+        {
+            Texture &texture = manifest.texture();
+            String variantCountText;
+#ifdef __CLIENT__
+            variantCountText = de::String(" (x%1)").arg(texture.variantCount());
+#endif
+
+            LOG_MSG("Texture " _E(1) "%s" _E(.) "%s"
+                    "\n" _E(l) "Dimensions: " _E(.) _E(i) "%s" _E(.)
+                     " " _E(l) "Source: "     _E(.) _E(i) "%s")
+                << manifest.composeUri()
+                << variantCountText
+                << (texture.width() == 0 &&
+                    texture.height() == 0? String("unknown (not yet prepared)")
+                                         : texture.dimensions().asText())
+                << manifest.sourceDescription();
+
+#if defined(__CLIENT__) && defined(DENG_DEBUG)
+            if(texture.variantCount())
+            {
+                // Print variant specs.
+                LOG_MSG(_E(R));
+
+                int variantIdx = 0;
+                foreach(TextureVariant *variant, texture.variants())
+                {
+                    Vector2f coords;
+                    variant->glCoords(&coords.x, &coords.y);
+
+                    String textualVariantSpec = variant->spec().asText();
+
+                    LOG_MSG(_E(D) "Variant #%i:" _E(.)
+                            " " _E(l) "Source: " _E(.) _E(i) "%s" _E(.)
+                            " " _E(l) "Masked: " _E(.) _E(i) "%s" _E(.)
+                            " " _E(l) "GLName: " _E(.) _E(i) "%i" _E(.)
+                            " " _E(l) "Coords: " _E(.) _E(i) "%s" _E(.)
+                            _E(R)
+                            "\n" _E(1) "Specification:" _E(.) "%s")
+                        << variantIdx
+                        << variant->sourceDescription()
+                        << (variant->isMasked()? "yes":"no")
+                        << variant->glName()
+                        << coords.asText()
+                        << textualVariantSpec;
+
+                    ++variantIdx;
+                }
+            }
+#endif // __CLIENT__ && DENG_DEBUG
+        }
+        else
+        {
+            LOG_MSG("%s") << manifest.description();
+        }
+        return true;
+    }
+    catch(ResourceSystem::MissingManifestError const &er)
+    {
+        LOG_WARNING("%s.") << er.asText();
+    }
+    return false;
+}
+
+void Texture::consoleRegister() // static
+{
+    C_CMD("inspecttexture", "ss",   InspectTexture)
+    C_CMD("inspecttexture", "s",    InspectTexture)
 }

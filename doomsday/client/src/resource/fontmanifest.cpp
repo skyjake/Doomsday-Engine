@@ -27,23 +27,32 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(FontManifest)
+DENG2_PIMPL(FontManifest),
+DENG2_OBSERVES(AbstractFont, Deletion)
 {
     int uniqueId;
     QScopedPointer<AbstractFont>(resource); ///< Associated resource (if any).
 
-    Instance() : uniqueId(0)
+    Instance(Public *i)
+        : Base(i)
+        , uniqueId(0)
     {}
+
+    ~Instance()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->fontManifestBeingDeleted(self);
+    }
+
+    // Observes AbstractFont::Deletion.
+    void fontBeingDeleted(AbstractFont const & /*resource*/)
+    {
+        resource.reset();
+    }
 };
 
 FontManifest::FontManifest(PathTree::NodeArgs const &args)
-    : Node(args), d(new Instance())
+    : Node(args), d(new Instance(this))
 {}
-
-FontManifest::~FontManifest()
-{
-    DENG2_FOR_AUDIENCE(Deletion, i) i->manifestBeingDeleted(*this);
-}
 
 FontScheme &FontManifest::scheme() const
 {
@@ -82,7 +91,7 @@ bool FontManifest::setUniqueId(int newUniqueId)
     d->uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
-    DENG2_FOR_AUDIENCE(UniqueIdChange, i) i->manifestUniqueIdChanged(*this);
+    DENG2_FOR_AUDIENCE(UniqueIdChange, i) i->fontManifestUniqueIdChanged(*this);
 
     return true;
 }
@@ -111,7 +120,7 @@ void FontManifest::setResource(AbstractFont *newResource)
         if(AbstractFont *curFont = d->resource.data())
         {
             // Cancel notifications about the existing resource.
-            curFont->audienceForDeletion -= this;
+            curFont->audienceForDeletion -= d;
         }
 
         d->resource.reset(newResource);
@@ -119,14 +128,9 @@ void FontManifest::setResource(AbstractFont *newResource)
         if(AbstractFont *curFont = d->resource.data())
         {
             // We want notification when the new resource is about to be deleted.
-            curFont->audienceForDeletion += this;
+            curFont->audienceForDeletion += d;
         }
     }
-}
-
-void FontManifest::fontBeingDeleted(AbstractFont const & /*resource*/)
-{
-    d->resource.reset();
 }
 
 Fonts &FontManifest::collection()

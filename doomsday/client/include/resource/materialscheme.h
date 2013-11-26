@@ -1,4 +1,4 @@
-/** @file materialscheme.h Material collection subspace.
+/** @file materialscheme.h  Material collection subspace.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MATERIALSCHEME_H
-#define LIBDENG_RESOURCE_MATERIALSCHEME_H
+#ifndef DENG_RESOURCE_MATERIALSCHEME_H
+#define DENG_RESOURCE_MATERIALSCHEME_H
 
 #include "uri.hh"
 #include <de/Observers>
@@ -46,7 +46,7 @@ public:
     /// The specified path was not valid. @ingroup errors
     DENG2_ERROR(InvalidPathError);
 
-    DENG2_DEFINE_AUDIENCE(ManifestDefined, void schemeManifestDefined(MaterialScheme &scheme, Manifest &manifest))
+    DENG2_DEFINE_AUDIENCE(ManifestDefined, void materialSchemeManifestDefined(MaterialScheme &scheme, Manifest &manifest))
 
     /// Minimum length of a symbolic name.
     static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
@@ -114,4 +114,4 @@ private:
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_MATERIALSCHEME_H */
+#endif // DENG_RESOURCE_MATERIALSCHEME_H

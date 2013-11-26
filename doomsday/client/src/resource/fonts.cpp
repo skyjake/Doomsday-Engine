@@ -74,8 +74,8 @@ DENG2_OBSERVES(AbstractFont, Deletion)
         manifestCount = 0;
     }
 
-    /// Observes Scheme ManifestDefined.
-    void schemeManifestDefined(Scheme & /*scheme*/, Manifest &manifest)
+    /// Observes FontScheme ManifestDefined.
+    void fontSchemeManifestDefined(Scheme & /*scheme*/, Manifest &manifest)
     {
         // We want notification when the manifest is derived to produce a resource.
         //manifest.audienceForFontDerived += this;
@@ -98,8 +98,8 @@ DENG2_OBSERVES(AbstractFont, Deletion)
     }
 
 #if 0
-    /// Observes Manifest FontDerived.
-    void manifestFontDerived(Manifest & /*manifest*/, AbstractFont &font)
+    /// Observes FontManifest FontDerived.
+    void fontManifestFontDerived(Manifest & /*manifest*/, AbstractFont &font)
     {
         // Include this new font in the scheme-agnostic list of instances.
         fonts.push_back(&font);
@@ -109,8 +109,8 @@ DENG2_OBSERVES(AbstractFont, Deletion)
     }
 #endif
 
-    /// Observes Manifest Deletion.
-    void manifestBeingDeleted(Manifest const &manifest)
+    /// Observes FontManifest Deletion.
+    void fontManifestBeingDeleted(Manifest const &manifest)
     {
         manifestIdMap[manifest.uniqueId() - 1 /*1-based*/] = 0;
 
@@ -415,7 +415,7 @@ static void printIndex(de::Uri const &search,
 
 } // namespace de
 
-static bool isKnownSchemeCallback(de::String name)
+static bool isKnownFontSchemeCallback(de::String name)
 {
     return App_Fonts().knownScheme(name);
 }
@@ -425,7 +425,7 @@ D_CMD(ListFonts)
     DENG2_UNUSED(src);
 
     de::Fonts &fonts = App_Fonts();
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownSchemeCallback);
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownFontSchemeCallback);
     if(!search.scheme().isEmpty() && !fonts.knownScheme(search.scheme()))
     {
         LOG_WARNING("Unknown scheme %s") << search.scheme();

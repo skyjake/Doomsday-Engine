@@ -241,11 +241,11 @@ void R_DrawViewBorder()
 
     if(border != 0)
     {
-        Textures &textures = ClientApp::resourceSystem().textures();
-        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOP]).texture(),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOM]).texture(), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_LEFT]).texture(),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
-        R_DrawPatchTiled(textures.scheme("Patches").findByUniqueId(borderPatches[BG_RIGHT]).texture(),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
+        TextureScheme &patches = ClientApp::resourceSystem().textureScheme("Patches");
+        R_DrawPatchTiled(patches.findByUniqueId(borderPatches[BG_TOP]).texture(),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
+        R_DrawPatchTiled(patches.findByUniqueId(borderPatches[BG_BOTTOM]).texture(), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
+        R_DrawPatchTiled(patches.findByUniqueId(borderPatches[BG_LEFT]).texture(),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
+        R_DrawPatchTiled(patches.findByUniqueId(borderPatches[BG_RIGHT]).texture(),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -253,11 +253,11 @@ void R_DrawViewBorder()
 
     if(border != 0)
     {
-        Textures &textures = ClientApp::resourceSystem().textures();
-        R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPLEFT]).texture(),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_TOPRIGHT]).texture(),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMRIGHT]).texture(), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);
-        R_DrawPatch(textures.scheme("Patches").findByUniqueId(borderPatches[BG_BOTTOMLEFT]).texture(),  vd->window.origin.x - border, vd->window.origin.y + vd->window.size.height, border, border, false);
+        TextureScheme &patches = ClientApp::resourceSystem().textureScheme("Patches");
+        R_DrawPatch(patches.findByUniqueId(borderPatches[BG_TOPLEFT]).texture(),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
+        R_DrawPatch(patches.findByUniqueId(borderPatches[BG_TOPRIGHT]).texture(),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
+        R_DrawPatch(patches.findByUniqueId(borderPatches[BG_BOTTOMRIGHT]).texture(), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);
+        R_DrawPatch(patches.findByUniqueId(borderPatches[BG_BOTTOMLEFT]).texture(),  vd->window.origin.x - border, vd->window.origin.y + vd->window.size.height, border, border, false);
     }
 
     glDisable(GL_TEXTURE_2D);

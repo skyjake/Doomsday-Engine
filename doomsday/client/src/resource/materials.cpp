@@ -191,10 +191,8 @@ DENG2_OBSERVES(Material, Deletion)
 #endif
 
     /// Observes Scheme ManifestDefined.
-    void schemeManifestDefined(Scheme &scheme, Manifest &manifest)
+    void materialSchemeManifestDefined(Scheme & /*scheme*/, Manifest &manifest)
     {
-        DENG2_UNUSED(scheme);
-
         // We want notification when the manifest is derived to produce a material.
         manifest.audienceForMaterialDerived += this;
 
@@ -215,11 +213,9 @@ DENG2_OBSERVES(Material, Deletion)
         manifestIdMap[manifestCount - 1] = &manifest;
     }
 
-    /// Observes Manifest MaterialDerived.
-    void manifestMaterialDerived(Manifest &manifest, Material &material)
+    /// Observes MaterialManifest MaterialDerived.
+    void materialManifestMaterialDerived(Manifest & /*manifest*/, Material &material)
     {
-        DENG2_UNUSED(manifest);
-
         // Include this new material in the scheme-agnostic list of instances.
         materials.push_back(&material);
 
@@ -227,8 +223,8 @@ DENG2_OBSERVES(Material, Deletion)
         material.audienceForDeletion += this;
     }
 
-    /// Observes Manifest Deletion.
-    void manifestBeingDeleted(Manifest const &manifest)
+    /// Observes MaterialManifest Deletion.
+    void materialManifestBeingDeleted(Manifest const &manifest)
     {
         foreach(ManifestGroup *group, groups)
         {
@@ -648,7 +644,7 @@ static void printIndex(de::Uri const &search,
 
 } // namespace de
 
-static bool isKnownSchemeCallback(de::String name)
+static bool isKnownMaterialSchemeCallback(de::String name)
 {
     return App_Materials().knownScheme(name);
 }
@@ -658,7 +654,7 @@ D_CMD(ListMaterials)
     DENG2_UNUSED(src);
 
     de::Materials &materials = App_Materials();
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownSchemeCallback);
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownMaterialSchemeCallback);
     if(!search.scheme().isEmpty() && !materials.knownScheme(search.scheme()))
     {
         LOG_WARNING("Unknown scheme %s") << search.scheme();
@@ -667,138 +663,6 @@ D_CMD(ListMaterials)
 
     de::printIndex(search);
     return true;
-}
-
-D_CMD(InspectMaterial)
-{
-    DENG2_UNUSED(src);
-
-    de::Materials &materials = App_Materials();
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
-    if(!search.scheme().isEmpty() && !materials.knownScheme(search.scheme()))
-    {
-        LOG_WARNING("Unknown scheme %s") << search.scheme();
-        return false;
-    }
-
-    try
-    {
-        de::MaterialManifest &manifest = materials.find(search);
-        if(manifest.hasMaterial())
-        {
-            Material &material = manifest.material();
-
-            // Print material description:
-            Con_Message(material.description().toUtf8().constData());
-
-            // Print material synopsis:
-            Con_Message(material.synopsis().toUtf8().constData());
-
-#if defined(__CLIENT__) && defined(DENG_DEBUG)
-            // Print current animation states?
-            if(material.hasAnimatedLayers() || material.hasAnimatedDecorations())
-            {
-                Con_PrintRuler();
-
-                foreach(MaterialAnimation *animation, material.animations())
-                {
-                    Con_Message("Animation Context #%i:"
-                                "\n  Layer  Stage Tics Inter", int(animation->context()));
-
-                    QString indexKey = QString();
-                    Con_Message(indexKey.toUtf8().constData());
-
-                    // Print layer state info:
-                    int const layerCount = material.layerCount();
-                    for(int i = 0; i < layerCount; ++i)
-                    {
-                        Material::Layer *layer = material.layers()[i];
-                        if(!layer->isAnimated()) continue;
-
-                        MaterialAnimation::LayerState const &l = animation->layer(i);
-                        QString info = QString("  %1 %2 %3 %4")
-                                           .arg(QString("#%1:").arg(i), 6)
-                                           .arg(l.stage, -5)
-                                           .arg(int(l.tics), -4)
-                                           .arg(l.inter, -5);
-                        Con_Message(info.toUtf8().constData());
-                    }
-
-                    // Print detail layer state info:
-                    if(material.isDetailed() && material.detailLayer().isAnimated())
-                    {
-                        MaterialAnimation::LayerState const &l = animation->detailLayer();
-                        QString info = QString("  %1 %2 %3 %4")
-                                           .arg("Detail:")
-                                           .arg(l.stage, -5)
-                                           .arg(int(l.tics), -4)
-                                           .arg(l.inter, -5);
-                        Con_Message(info.toUtf8().constData());
-                    }
-
-                    // Print shine layer state info:
-                    if(material.isShiny() && material.shineLayer().isAnimated())
-                    {
-                        MaterialAnimation::LayerState const &l = animation->shineLayer();
-                        QString info = QString("  %1 %2 %3 %4")
-                                           .arg("Shine:")
-                                           .arg(l.stage, -5)
-                                           .arg(int(l.tics), -4)
-                                           .arg(l.inter, -5);
-                        Con_Message(info.toUtf8().constData());
-                    }
-
-                    // Print decoration state info:
-                    if(material.isDecorated())
-                    {
-                        Con_Message("  Decor  Stage Tics Inter");
-
-                        int const decorationCount = material.decorationCount();
-                        for(int i = 0; i < decorationCount; ++i)
-                        {
-                            Material::Decoration *decor = material.decorations()[i];
-                            if(!decor->isAnimated()) continue;
-
-                            MaterialAnimation::DecorationState const &l = animation->decoration(i);
-                            QString info = QString("  %1 %2 %3 %4")
-                                               .arg(QString("#%1:").arg(i), 6)
-                                               .arg(l.stage, -5)
-                                               .arg(int(l.tics), -4)
-                                               .arg(l.inter, -5);
-                            Con_Message(info.toUtf8().constData());
-                        }
-                    }
-                }
-            }
-
-            if(material.variantCount())
-            {
-                // Print variant specs.
-                Con_PrintRuler();
-
-                int variantIdx = 0;
-                foreach(MaterialVariant *variant, material.variants())
-                {
-                    Con_Message("Variant #%i: Spec:%p", variantIdx, de::dintptr(&variant->spec()));
-                    ++variantIdx;
-                }
-            }
-
-#endif // __CLIENT__ && DENG_DEBUG
-        }
-        else
-        {
-            de::String description = manifest.description();
-            Con_FPrintf(CPF_LIGHT, "%s\n", description.toUtf8().constData());
-        }
-        return true;
-    }
-    catch(de::Materials::NotFoundError const &er)
-    {
-        QString msg = er.asText() + ".";
-        Con_Message(msg.toUtf8().constData());
-    }
-    return false;
 }
 
 #ifdef DENG_DEBUG
@@ -825,8 +689,6 @@ D_CMD(PrintMaterialStats)
 
 void de::Materials::consoleRegister()
 {
-    C_CMD("inspectmaterial",    "ss",   InspectMaterial)
-    C_CMD("inspectmaterial",    "s",    InspectMaterial)
     C_CMD("listmaterials",      "ss",   ListMaterials)
     C_CMD("listmaterials",      "s",    ListMaterials)
     C_CMD("listmaterials",      "",     ListMaterials)
@@ -834,4 +696,6 @@ void de::Materials::consoleRegister()
 #ifdef DENG_DEBUG
     C_CMD("materialstats",      NULL,   PrintMaterialStats)
 #endif
+
+    Material::consoleRegister();
 }

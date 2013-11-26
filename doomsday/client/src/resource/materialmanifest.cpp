@@ -1,4 +1,4 @@
-/** @file materialmanifest.cpp Description of a logical material resource.
+/** @file materialmanifest.cpp  Description of a logical material resource.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,38 +17,42 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "Materials"
-
+#include "de_platform.h"
 #include "resource/materialmanifest.h"
+
+#include "dd_main.h" // App_Materials()
+#include "Materials"
 
 using namespace de;
 
-DENG2_PIMPL(MaterialManifest)
+DENG2_PIMPL(MaterialManifest),
+DENG2_OBSERVES(Material, Deletion)
 {
-    /// Material associated with this.
-    Material *material;
-
-    /// Unique identifier.
+    Flags flags;           ///< Classification flags.
     materialid_t id;
+    Material *material;    ///< Associated resource.
 
-    /// Classification flags.
-    MaterialManifest::Flags flags;
-
-    Instance(Public *i) : Base(i),
-        material(0),
-        id(0)
+    Instance(Public *i)
+        : Base(i)
+        , id(0)
+        , material(0)
     {}
+
+    ~Instance()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->materialManifestBeingDeleted(self);
+    }
+
+    // Observes Material Deletion.
+    void materialBeingDeleted(Material const & /*material*/)
+    {
+        material = 0;
+    }
 };
 
 MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
     : Node(args), d(new Instance(this))
 {}
-
-MaterialManifest::~MaterialManifest()
-{
-    DENG2_FOR_AUDIENCE(Deletion, i) i->manifestBeingDeleted(*this);
-}
 
 Materials &MaterialManifest::materials()
 {
@@ -63,7 +67,7 @@ Material *MaterialManifest::derive()
         setMaterial(new Material(*this));
 
         // Notify interested parties that a new material was derived from the manifest.
-        DENG2_FOR_AUDIENCE(MaterialDerived, i) i->manifestMaterialDerived(*this, material());
+        DENG2_FOR_AUDIENCE(MaterialDerived, i) i->materialManifestMaterialDerived(*this, material());
     }
     return &material();
 }
@@ -84,7 +88,10 @@ MaterialScheme &MaterialManifest::scheme() const
     /// @todo Optimize: MaterialManifest should contain a link to the owning MaterialScheme.
     foreach(MaterialScheme *scheme, materials().allSchemes())
     {
-        if(&scheme->index() == &tree()) return *scheme;
+        if(&scheme->index() == &tree())
+        {
+            return *scheme;
+        }
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
     throw Error("MaterialManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
@@ -121,17 +128,17 @@ void MaterialManifest::setFlags(MaterialManifest::Flags flagsToChange, FlagOp op
 
 bool MaterialManifest::hasMaterial() const
 {
-    return !!d->material;
+    return d->material != 0;
 }
 
 Material &MaterialManifest::material() const
 {
-    if(!d->material)
+    if(d->material)
     {
-        /// @throw MissingMaterialError  The manifest is not presently associated with a material.
-        throw MissingMaterialError("MaterialManifest::material", "Missing required material");
+        return *d->material;
     }
-    return *d->material;
+    /// @throw MissingMaterialError  The manifest is not presently associated with a material.
+    throw MissingMaterialError("MaterialManifest::material", "Missing required material");
 }
 
 void MaterialManifest::setMaterial(Material *newMaterial)
@@ -141,7 +148,7 @@ void MaterialManifest::setMaterial(Material *newMaterial)
         if(d->material)
         {
             // Cancel notifications about the existing material.
-            d->material->audienceForDeletion -= this;
+            d->material->audienceForDeletion -= d;
         }
 
         d->material = newMaterial;
@@ -149,13 +156,7 @@ void MaterialManifest::setMaterial(Material *newMaterial)
         if(d->material)
         {
             // We want notification when the new material is about to be deleted.
-            d->material->audienceForDeletion += this;
+            d->material->audienceForDeletion += d;
         }
     }
-}
-
-void MaterialManifest::materialBeingDeleted(Material const &material)
-{
-    DENG2_UNUSED(material);
-    d->material = 0;
 }

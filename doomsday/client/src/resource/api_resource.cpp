@@ -8,8 +8,10 @@
 #endif
 #include "render/r_main.h" // texGammaLut
 
+using namespace de;
+
 #undef Textures_UniqueId2
-DENG_EXTERN_C int Textures_UniqueId2(Uri const *_uri, boolean quiet)
+DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, boolean quiet)
 {
     LOG_AS("Textures_UniqueId");
     if(!_uri) return -1;
@@ -17,9 +19,9 @@ DENG_EXTERN_C int Textures_UniqueId2(Uri const *_uri, boolean quiet)
 
     try
     {
-        return App_Textures().find(uri).uniqueId();
+        return App_ResourceSystem().findTexture(uri).uniqueId();
     }
-    catch(de::Textures::NotFoundError const &)
+    catch(ResourceSystem::MissingManifestError const &)
     {
         // Log but otherwise ignore this error.
         if(!quiet)
@@ -31,7 +33,7 @@ DENG_EXTERN_C int Textures_UniqueId2(Uri const *_uri, boolean quiet)
 }
 
 #undef Textures_UniqueId
-DENG_EXTERN_C int Textures_UniqueId(Uri const *uri)
+DENG_EXTERN_C int Textures_UniqueId(uri_s const *uri)
 {
     return Textures_UniqueId2(uri, false);
 }
@@ -52,16 +54,16 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, in
 
     try
     {
-        if(de::AnimGroup *group = App_ResourceSystem().animGroup(groupId))
+        if(AnimGroup *group = App_ResourceSystem().animGroup(groupId))
         {
-            group->newFrame(App_Textures().find(textureUri), tics, randomTics);
+            group->newFrame(App_ResourceSystem().findTexture(textureUri), tics, randomTics);
         }
         else
         {
             LOG_DEBUG("Unknown anim group #%i, ignoring.") << groupId;
         }
     }
-    catch(de::Textures::NotFoundError const &er)
+    catch(ResourceSystem::MissingManifestError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ". Failed adding texture \"%s\" to group #%i, ignoring.")
@@ -77,7 +79,7 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
 
     LOG_AS("R_CreateColorPalette");
 
-    de::String name(nameCStr);
+    String name(nameCStr);
     if(name.isEmpty())
     {
         LOG_WARNING("Invalid/zero-length name specified, ignoring.");
@@ -86,7 +88,7 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
 
     try
     {
-        QVector<de::Vector3ub> colors =
+        QVector<Vector3ub> colors =
             ColorTableReader::read(colorFormatDescriptor, colorCount, colorData);
 
         // Replacing an existing palette?
@@ -161,7 +163,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
 
     try
     {
-        de::Vector3ub palColor = App_ResourceSystem().colorPalette(paletteId)[colorIdx];
+        Vector3ub palColor = App_ResourceSystem().colorPalette(paletteId)[colorIdx];
         rgb[0] = palColor.x;
         rgb[1] = palColor.y;
         rgb[2] = palColor.z;
@@ -199,14 +201,14 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
         ColorPalette &palette = App_ResourceSystem().colorPalette(paletteId);
         if(applyTexGamma)
         {
-            de::Vector3ub palColor = palette[colorIdx];
+            Vector3ub palColor = palette[colorIdx];
             rgb[0] = texGammaLut[palColor.x] * reciprocal255;
             rgb[1] = texGammaLut[palColor.y] * reciprocal255;
             rgb[2] = texGammaLut[palColor.z] * reciprocal255;
         }
         else
         {
-            de::Vector3f palColor = palette.colorf(colorIdx);
+            Vector3f palColor = palette.colorf(colorIdx);
             rgb[0] = palColor.x;
             rgb[1] = palColor.y;
             rgb[2] = palColor.z;
@@ -225,10 +227,10 @@ DENG_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
     LOG_AS("R_ComposePatchPath");
     try
     {
-        de::TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(id);
+        TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches").findByUniqueId(id);
         return AutoStr_FromTextStd(manifest.path().toUtf8().constData());
     }
-    catch(de::TextureScheme::NotFoundError const &er)
+    catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -241,10 +243,10 @@ DENG_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
 {
     try
     {
-        de::TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(id);
+        TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches").findByUniqueId(id);
         return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
     }
-    catch(de::TextureScheme::NotFoundError const &er)
+    catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -264,25 +266,25 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
     DENG2_ASSERT(info);
     LOG_AS("R_GetPatchInfo");
 
-    std::memset(info, 0, sizeof(patchinfo_t));
+    de::zapPtr(info);
     if(!id) return false;
 
     try
     {
-        de::Texture &tex = App_Textures().scheme("Patches").findByUniqueId(id).texture();
+        Texture &tex = App_ResourceSystem().textureScheme("Patches").findByUniqueId(id).texture();
 
 #ifdef __CLIENT__
         // Ensure we have up to date information about this patch.
         TextureVariantSpec &texSpec =
-            Rend_PatchTextureSpec(0 | (tex.isFlagged(de::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
-                                    | (tex.isFlagged(de::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
+            Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
+                                    | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
         tex.prepareVariant(texSpec);
 #endif
 
         info->id = id;
-        info->flags.isCustom = tex.isFlagged(de::Texture::Custom);
+        info->flags.isCustom = tex.isFlagged(Texture::Custom);
 
-        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex.analysisDataPointer(de::Texture::AverageAlphaAnalysis));
+        averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex.analysisDataPointer(Texture::AverageAlphaAnalysis));
         info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
 
         info->geometry.size.width  = tex.width();
@@ -292,16 +294,16 @@ DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         info->geometry.origin.y = tex.origin().y;
 
         /// @todo fixme: kludge:
-        info->extraOffset[0] = info->extraOffset[1] = (tex.isFlagged(de::Texture::UpscaleAndSharpen)? -1 : 0);
+        info->extraOffset[0] = info->extraOffset[1] = (tex.isFlagged(Texture::UpscaleAndSharpen)? -1 : 0);
         // Kludge end.
         return true;
     }
-    catch(de::TextureManifest::MissingTextureError const &er)
+    catch(TextureManifest::MissingTextureError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
-    catch(de::TextureScheme::NotFoundError const &er)
+    catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");

@@ -175,7 +175,6 @@ DENG_CONVENIENCE_HEADERS += \
     include/TextDrawable \
     include/Texture \
     include/TextureManifest \
-    include/Textures \
     include/TextureScheme \
     include/TextureVariantSpec \
     include/TriangleStripBuilder \    
@@ -361,7 +360,6 @@ DENG_HEADERS += \
     include/resource/sprite.h \
     include/resource/texture.h \
     include/resource/texturemanifest.h \
-    include/resource/textures.h \
     include/resource/texturescheme.h \
     include/resource/texturevariantspec.h \
     include/resource/tga.h \
@@ -726,7 +724,6 @@ SOURCES += \
     src/resource/sprite.cpp \
     src/resource/texture.cpp \
     src/resource/texturemanifest.cpp \
-    src/resource/textures.cpp \
     src/resource/texturescheme.cpp \
     src/resource/texturevariant.cpp \
     src/resource/tga.cpp \

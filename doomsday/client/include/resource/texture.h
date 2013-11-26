@@ -410,6 +410,10 @@ public:
      */
     void setUserDataPointer(void *userData);
 
+public:
+    /// Register the console commands, variables, etc..., of this module.
+    static void consoleRegister();
+
 private:
     Instance *d;
 };

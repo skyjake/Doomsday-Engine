@@ -30,7 +30,6 @@
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
 #include "resource/sprite.h"
-#include "Textures"
 
 #ifdef __CLIENT__
 #  include "resource/materialsnapshot.h"

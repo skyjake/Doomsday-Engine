@@ -36,9 +36,7 @@ namespace de {
  * @see Fonts
  * @ingroup resource
  */
-class FontScheme :
-DENG2_OBSERVES(FontManifest, UniqueIdChange),
-DENG2_OBSERVES(FontManifest, Deletion)
+class FontScheme
 {
     typedef class FontManifest Manifest;
 
@@ -50,7 +48,7 @@ public:
     DENG2_ERROR(InvalidPathError);
 
     /// Notified whenever a new manifest is defined in the scheme.
-    DENG2_DEFINE_AUDIENCE(ManifestDefined, void schemeManifestDefined(FontScheme &scheme, Manifest &manifest))
+    DENG2_DEFINE_AUDIENCE(ManifestDefined, void fontSchemeManifestDefined(FontScheme &scheme, Manifest &manifest))
 
     /// Minimum length of a symbolic name.
     static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
@@ -123,13 +121,6 @@ public:
      * Provides access to the manifest index for efficient traversal.
      */
     Index const &index() const;
-
-protected:
-    // Observes Manifest UniqueIdChange
-    void manifestUniqueIdChanged(Manifest &manifest);
-
-    // Observes Manifest Deletion.
-    void manifestBeingDeleted(Manifest const &manifest);
 
 private:
     DENG2_PRIVATE(d)

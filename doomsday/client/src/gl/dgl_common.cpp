@@ -749,7 +749,7 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
     try
     {
-        TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(id);
+        TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches").findByUniqueId(id);
         if(!manifest.hasTexture()) return;
 
         Texture &tex = manifest.texture();

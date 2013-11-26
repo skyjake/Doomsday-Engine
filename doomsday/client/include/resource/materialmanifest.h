@@ -1,4 +1,4 @@
-/** @file materialmanifest.h Description of a logical material resource.
+/** @file materialmanifest.h  Description of a logical material resource.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MATERIALMANIFEST_H
-#define LIBDENG_RESOURCE_MATERIALMANIFEST_H
+#ifndef DENG_RESOURCE_MATERIALMANIFEST_H
+#define DENG_RESOURCE_MATERIALMANIFEST_H
 
 #include "Material"
 #include "MaterialScheme"
@@ -40,15 +40,14 @@ class Materials;
  * @see MaterialScheme, Material
  * @ingroup resource
  */
-class MaterialManifest : public PathTree::Node,
-                         DENG2_OBSERVES(Material, Deletion)
+class MaterialManifest : public PathTree::Node
 {
 public:
     /// Required material instance is missing. @ingroup errors
     DENG2_ERROR(MissingMaterialError);
 
-    DENG2_DEFINE_AUDIENCE(Deletion, void manifestBeingDeleted(MaterialManifest const &manifest))
-    DENG2_DEFINE_AUDIENCE(MaterialDerived, void manifestMaterialDerived(MaterialManifest &manifest, Material &material))
+    DENG2_DEFINE_AUDIENCE(Deletion, void materialManifestBeingDeleted(MaterialManifest const &manifest))
+    DENG2_DEFINE_AUDIENCE(MaterialDerived, void materialManifestMaterialDerived(MaterialManifest &manifest, Material &material))
 
     enum Flag
     {
@@ -62,7 +61,6 @@ public:
 
 public:
     MaterialManifest(PathTree::NodeArgs const &args);
-    virtual ~MaterialManifest();
 
     /**
      * Derive a new logical Material instance by interpreting the manifest.
@@ -156,10 +154,6 @@ public:
     /// Returns a reference to the application's material collection.
     static Materials &materials();
 
-protected:
-    // Observes Material Deletion.
-    void materialBeingDeleted(Material const &material);
-
 private:
     DENG2_PRIVATE(d)
 };
@@ -168,4 +162,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialManifest::Flags)
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_MATERIALMANIFEST_H */
+#endif // DENG_RESOURCE_MATERIALMANIFEST_H

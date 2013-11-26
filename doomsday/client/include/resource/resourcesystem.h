@@ -29,7 +29,8 @@
 #endif
 #include "Materials"
 #include "resource/sprite.h"
-#include "Textures"
+#include "Texture"
+#include "TextureScheme"
 #include <de/Error>
 #include <de/String>
 #include <de/System>
@@ -63,24 +64,31 @@ public:
     /// An unknown resource class identifier was specified. @ingroup errors
     DENG2_ERROR(UnknownResourceClassError);
 
+    /// An unknown resource scheme was referenced. @ingroup errors
+    DENG2_ERROR(UnknownSchemeError);
+
+    /// The referenced manifest was not found. @ingroup errors
+    DENG2_ERROR(MissingManifestError);
+
     /// The referenced color palette could not be found. @ingroup errors
     DENG2_ERROR(MissingColorPaletteError);
 
     /// The referenced sprite could not be found. @ingroup errors
     DENG2_ERROR(MissingSpriteError);
 
+    /// The referenced texture was not found. @ingroup errors
+    DENG2_ERROR(MissingTextureError);
+
+    typedef QMap<de::String, de::TextureScheme *> TextureSchemes;
+    typedef QList<de::Texture *> AllTextures;
     typedef QList<Sprite *> SpriteSet;
+
 public:
     /**
      * Construct a new resource system, configuring all resource classes and
      * their collections.
      */
     ResourceSystem();
-
-    /**
-     * Register the console commands, variables, etc..., of this module.
-     */
-    static void consoleRegister();
 
     // System.
     void timeChanged(de::Clock const &);
@@ -161,10 +169,6 @@ public:
     void cacheSpriteSet(spritenum_t spriteId, de::MaterialVariantSpec const &materialSpec);
 #endif
 
-    /**
-     * Provides access to the Textures collection.
-     */
-    de::Textures &textures();
 
     patchid_t declarePatch(de::String encodedName);
 
@@ -183,6 +187,95 @@ public:
 
     de::Texture *defineTexture(de::String schemeName, de::Uri const &resourceUri,
                                de::Vector2i const &dimensions = de::Vector2i());
+
+    /**
+     * Determines if a manifest exists for a declared texture on @a path.
+     * @return @c true, if a manifest exists; otherwise @a false.
+     */
+    bool hasTexture(de::Uri const &path) const;
+
+    /**
+     * Find the manifest for a declared texture.
+     *
+     * @param search  The search term.
+     * @return Found unique identifier.
+     */
+    de::TextureManifest &findTexture(de::Uri const &search) const;
+
+    /**
+     * Lookup a subspace scheme by symbolic name.
+     *
+     * @param name  Symbolic name of the scheme.
+     * @return  Scheme associated with @a name.
+     *
+     * @throws UnknownSchemeError If @a name is unknown.
+     */
+    de::TextureScheme &textureScheme(de::String name) const;
+
+    /**
+     * Returns @c true iff a Scheme exists with the symbolic @a name.
+     */
+    bool knownTextureScheme(de::String name) const;
+
+    /**
+     * Returns a list of all the schemes for efficient traversal.
+     */
+    TextureSchemes const &allTextureSchemes() const;
+
+    /**
+     * Returns the total number of manifest schemes in the collection.
+     */
+    inline int textureSchemeCount() const {
+        return allTextureSchemes().count();
+    }
+
+    /**
+     * Clear all textures in all schemes.
+     *
+     * @see Scheme::clear().
+     */
+    inline void clearAllTextureSchemes()
+    {
+        foreach(de::TextureScheme *scheme, allTextureSchemes())
+        {
+            scheme->clear();
+        }
+    }
+
+    /**
+     * Declare a texture in the collection, producing a manifest for a logical
+     * Texture which will be defined later. If a manifest with the specified
+     * @a uri already exists the existing manifest will be returned.
+     *
+     * If any of the property values (flags, dimensions, etc...) differ from
+     * that which is already defined in the pre-existing manifest, any texture
+     * which is currently associated is released (any GL-textures acquired for
+     * it are deleted).
+     *
+     * @param uri           Uri representing a path to the texture in the
+     *                      virtual hierarchy.
+     * @param flags         Texture flags property.
+     * @param dimensions    Logical dimensions property.
+     * @param origin        World origin offset property.
+     * @param uniqueId      Unique identifier property.
+     * @param resourceUri   Resource URI property.
+     *
+     * @return  Manifest for this URI.
+     */
+    inline de::TextureManifest &declareTexture(de::Uri const &uri,
+        de::Texture::Flags flags, de::Vector2i const &dimensions,
+        de::Vector2i const &origin, int uniqueId, de::Uri const *resourceUri = 0)
+    {
+        return textureScheme(uri.scheme())
+                   .declare(uri.path(), flags, dimensions, origin, uniqueId,
+                            resourceUri);
+    }
+
+    /**
+     * Returns a list of all the unique texture instances in the collection,
+     * from all schemes.
+     */
+    AllTextures const &allTextures() const;
 
 #ifdef __CLIENT__
     /**
@@ -397,6 +490,12 @@ public: /// @todo Should be private:
     void initCompositeTextures();
     void initFlatTextures();
     void initSpriteTextures();
+
+public:
+    /**
+     * Register the console commands, variables, etc..., of this module.
+     */
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

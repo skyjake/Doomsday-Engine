@@ -1,4 +1,4 @@
-/** @file material.cpp Logical Material.
+/** @file material.cpp  Logical Material.
  *
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,19 +17,21 @@
  * 02110-1301 USA</small>
  */
 
-#include <QtAlgorithms>
+#include "de_platform.h"
+#include "resource/material.h"
 
-#include <de/math.h>
-
-#include "de_base.h"
+#include "dd_main.h"
+#include "con_main.h"
 #include "def_main.h"
 
 #include "r_util.h" // R_NameForBlendMode
 
 #include "audio/s_environ.h"
+
 #include "world/map.h"
 
-#include "resource/material.h"
+#include <QtAlgorithms>
+#include <de/math.h>
 
 using namespace de;
 
@@ -47,12 +49,12 @@ static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
     {
         if(def.texture)
         {
-            return &App_Textures().find(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+            return &App_ResourceSystem().findTexture(*reinterpret_cast<de::Uri *>(def.texture)).texture();
         }
     }
     catch(TextureManifest::MissingTextureError const &)
     {} // Ignore this error.
-    catch(Textures::NotFoundError const &)
+    catch(ResourceSystem::MissingManifestError const &)
     {} // Ignore this error.
     return 0;
 }
@@ -104,7 +106,7 @@ static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
     {
         if(def.texture)
         {
-            return &App_Textures().scheme("Details")
+            return &App_ResourceSystem().textureScheme("Details")
                         .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
         }
     }
@@ -163,7 +165,7 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
         {
             if(def.maskTexture)
             {
-                return &App_Textures().scheme("Masks")
+                return &App_ResourceSystem().textureScheme("Masks")
                             .findByResourceUri(*reinterpret_cast<de::Uri *>(def.maskTexture)).texture();
             }
         }
@@ -171,7 +173,7 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
         {
             if(def.texture)
             {
-                return &App_Textures().scheme("Reflections")
+                return &App_ResourceSystem().textureScheme("Reflections")
                             .findByResourceUri(*reinterpret_cast<de::Uri *>(def.texture)).texture();
             }
         }
@@ -329,55 +331,57 @@ Material::Decoration::Stages const &Material::Decoration::stages() const
 
 #endif // __CLIENT__
 
-DENG2_PIMPL(Material)
+DENG2_PIMPL(Material),
+DENG2_OBSERVES(de::Texture, DimensionsChange),
+DENG2_OBSERVES(de::Texture, Deletion)
 {
     /// Manifest derived to yield the material.
     MaterialManifest &manifest;
 
 #ifdef __CLIENT__
     /// Set of context animation states.
-    Material::Animations animations;
+    Animations animations;
     bool animationsAreDirty;
 
     /// Set of use-case/context variant instances.
-    Material::Variants variants;
+    Variants variants;
 #endif
 
     /// World dimensions in map coordinate space units.
     Vector2i dimensions;
 
     /// @ref materialFlags
-    Material::Flags flags;
+    Flags flags;
 
     /// Layers.
-    Material::Layers layers;
-    Material::DetailLayer *detailLayer;
-    Material::ShineLayer *shineLayer;
+    Layers layers;
+    DetailLayer *detailLayer;
+    ShineLayer *shineLayer;
 
 #ifdef __CLIENT__
     /// Audio environment.
     AudioEnvironmentId audioEnvironment;
 
     /// Decorations (will be projected into the map relative to a surface).
-    Material::Decorations decorations;
+    Decorations decorations;
 #endif
 
     /// @c false= the material is no longer valid.
     bool valid;
 
     Instance(Public *i, MaterialManifest &_manifest)
-        : Base(i),
-          manifest(_manifest),
+        : Base(i)
+        , manifest(_manifest)
 #ifdef __CLIENT__
-         animationsAreDirty(true),
+        , animationsAreDirty(true)
 #endif
-         flags(0),
-         detailLayer(0),
-         shineLayer(0),
+        , flags(0)
+        , detailLayer(0)
+        , shineLayer(0)
 #ifdef __CLIENT__
-         audioEnvironment(AE_NONE),
+        , audioEnvironment(AE_NONE)
 #endif
-         valid(true)
+        , valid(true)
     {}
 
     ~Instance()
@@ -466,9 +470,33 @@ DENG2_PIMPL(Material)
         Texture *inheritanceTexture = inheritDimensionsTexture();
         if(!inheritanceTexture) return;
 
-        inheritanceTexture->audienceForDimensionsChange -= self;
+        inheritanceTexture->audienceForDimensionsChange -= this;
         // Thusly, we are no longer interested in deletion notification either.
-        inheritanceTexture->audienceForDeletion -= self;
+        inheritanceTexture->audienceForDeletion -= this;
+    }
+
+    // Observes Texture DimensionsChange.
+    void textureDimensionsChanged(Texture const &texture)
+    {
+        DENG2_ASSERT(!haveValidDimensions()); // Sanity check.
+        self.setDimensions(texture.dimensions());
+    }
+
+    // Observes Texture Deletion.
+    void textureBeingDeleted(Texture const &texture)
+    {
+        // If here it means the texture we were planning to inherit dimensions
+        // from is being deleted and therefore we won't be able to.
+
+        DENG2_ASSERT(!haveValidDimensions()); // Sanity check.
+        DENG2_ASSERT(inheritDimensionsTexture() == &texture); // Sanity check.
+
+        // Clear the association so we don't try to cancel notifications later.
+        layers[0]->stages()[0]->texture = 0;
+
+#if !defined(DENG2_DEBUG)
+        DENG2_UNUSED(texture);
+#endif
     }
 };
 
@@ -602,9 +630,9 @@ Material::Layer *Material::newLayer(ded_material_layer_t const *def)
         Texture *inheritanceTexture = d->inheritDimensionsTexture();
         if(inheritanceTexture)
         {
-            inheritanceTexture->audienceForDimensionsChange += this;
+            inheritanceTexture->audienceForDimensionsChange += d;
             // Thusly, we are also interested in deletion notification.
-            inheritanceTexture->audienceForDeletion += this;
+            inheritanceTexture->audienceForDeletion += d;
         }
     }
     return newLayer;
@@ -643,7 +671,7 @@ Material::DetailLayer const &Material::detailLayer() const
 {
     if(isDetailed())
     {
-        DENG_ASSERT(d->detailLayer);
+        DENG2_ASSERT(d->detailLayer != 0);
         return *d->detailLayer;
     }
     /// @throw Material::UnknownLayerError Invalid layer reference.
@@ -654,33 +682,11 @@ Material::ShineLayer const &Material::shineLayer() const
 {
     if(isShiny())
     {
-        DENG_ASSERT(d->shineLayer);
+        DENG2_ASSERT(d->shineLayer != 0);
         return *d->shineLayer;
     }
     /// @throw Material::UnknownLayerError Invalid layer reference.
     throw UnknownLayerError("Material::shineLayer", "Material has no shine layer");
-}
-
-void Material::textureDimensionsChanged(Texture const &texture)
-{
-    DENG2_ASSERT(!d->haveValidDimensions()); // Sanity check.
-    setDimensions(texture.dimensions());
-}
-
-void Material::textureBeingDeleted(de::Texture const &texture)
-{
-    // If here it means the texture we were planning to inherit dimensions
-    // from is being deleted and therefore we won't be able to.
-
-    DENG2_ASSERT(!d->haveValidDimensions()); // Sanity check.
-    DENG2_ASSERT(d->inheritDimensionsTexture() == &texture); // Sanity check.
-
-    // Clear the association so we don't try to cancel notifications later.
-    d->layers[0]->stages()[0]->texture = 0;
-
-#if !defined(DENG2_DEBUG)
-    DENG2_UNUSED(texture);
-#endif
 }
 
 #ifdef __CLIENT__
@@ -961,4 +967,140 @@ String Material::synopsis() const
 #endif
 
     return str;
+}
+
+D_CMD(InspectMaterial)
+{
+    DENG2_UNUSED(src);
+
+    de::Materials &materials = App_Materials();
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
+    if(!search.scheme().isEmpty() && !materials.knownScheme(search.scheme()))
+    {
+        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    try
+    {
+        de::MaterialManifest &manifest = materials.find(search);
+        if(manifest.hasMaterial())
+        {
+            Material &material = manifest.material();
+
+            // Print material description:
+            LOG_MSG(material.description());
+
+            // Print material synopsis:
+            LOG_MSG(material.synopsis());
+
+#if defined(__CLIENT__) && defined(DENG_DEBUG)
+            // Print current animation states?
+            if(material.hasAnimatedLayers() || material.hasAnimatedDecorations())
+            {
+                LOG_MSG(_E(R));
+
+                foreach(MaterialAnimation *animation, material.animations())
+                {
+                    Con_Message("Animation Context #%i:"
+                                "\n  Layer  Stage Tics Inter", int(animation->context()));
+
+                    QString indexKey = QString();
+                    Con_Message(indexKey.toUtf8().constData());
+
+                    // Print layer state info:
+                    int const layerCount = material.layerCount();
+                    for(int i = 0; i < layerCount; ++i)
+                    {
+                        Material::Layer *layer = material.layers()[i];
+                        if(!layer->isAnimated()) continue;
+
+                        MaterialAnimation::LayerState const &l = animation->layer(i);
+                        QString info = QString("  %1 %2 %3 %4")
+                                           .arg(QString("#%1:").arg(i), 6)
+                                           .arg(l.stage, -5)
+                                           .arg(int(l.tics), -4)
+                                           .arg(l.inter, -5);
+                        Con_Message(info.toUtf8().constData());
+                    }
+
+                    // Print detail layer state info:
+                    if(material.isDetailed() && material.detailLayer().isAnimated())
+                    {
+                        MaterialAnimation::LayerState const &l = animation->detailLayer();
+                        QString info = QString("  %1 %2 %3 %4")
+                                           .arg("Detail:")
+                                           .arg(l.stage, -5)
+                                           .arg(int(l.tics), -4)
+                                           .arg(l.inter, -5);
+                        Con_Message(info.toUtf8().constData());
+                    }
+
+                    // Print shine layer state info:
+                    if(material.isShiny() && material.shineLayer().isAnimated())
+                    {
+                        MaterialAnimation::LayerState const &l = animation->shineLayer();
+                        QString info = QString("  %1 %2 %3 %4")
+                                           .arg("Shine:")
+                                           .arg(l.stage, -5)
+                                           .arg(int(l.tics), -4)
+                                           .arg(l.inter, -5);
+                        Con_Message(info.toUtf8().constData());
+                    }
+
+                    // Print decoration state info:
+                    if(material.isDecorated())
+                    {
+                        Con_Message("  Decor  Stage Tics Inter");
+
+                        int const decorationCount = material.decorationCount();
+                        for(int i = 0; i < decorationCount; ++i)
+                        {
+                            Material::Decoration *decor = material.decorations()[i];
+                            if(!decor->isAnimated()) continue;
+
+                            MaterialAnimation::DecorationState const &l = animation->decoration(i);
+                            QString info = QString("  %1 %2 %3 %4")
+                                               .arg(QString("#%1:").arg(i), 6)
+                                               .arg(l.stage, -5)
+                                               .arg(int(l.tics), -4)
+                                               .arg(l.inter, -5);
+                            Con_Message(info.toUtf8().constData());
+                        }
+                    }
+                }
+            }
+
+            if(material.variantCount())
+            {
+                // Print variant specs.
+                LOG_MSG(_E(R));
+
+                int variantIdx = 0;
+                foreach(MaterialVariant *variant, material.variants())
+                {
+                    Con_Message("Variant #%i: Spec:%p", variantIdx, de::dintptr(&variant->spec()));
+                    ++variantIdx;
+                }
+            }
+
+#endif // __CLIENT__ && DENG_DEBUG
+        }
+        else
+        {
+            LOG_MSG("%s") << manifest.description();
+        }
+        return true;
+    }
+    catch(de::Materials::NotFoundError const &er)
+    {
+        LOG_WARNING("%s.") << er.asText();
+    }
+    return false;
+}
+
+void Material::consoleRegister() // static
+{
+    C_CMD("inspectmaterial",    "ss",   InspectMaterial)
+    C_CMD("inspectmaterial",    "s",    InspectMaterial)
 }

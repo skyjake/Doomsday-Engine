@@ -176,9 +176,6 @@ de::ResourceClass &App_ResourceClass(resourceclassid_t classId);
 /// @return  The application's global Material collection.
 de::Materials &App_Materials();
 
-/// @return  The application's global Texture collection.
-de::Textures &App_Textures();
-
 #ifdef __CLIENT__
 /// @return  The application's global Font collection.
 de::Fonts &App_Fonts();

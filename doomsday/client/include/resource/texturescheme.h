@@ -1,4 +1,4 @@
-/** @file texturescheme.h Texture collection subspace.
+/** @file texturescheme.h  Texture collection subspace.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_TEXTURESCHEME_H
-#define LIBDENG_RESOURCE_TEXTURESCHEME_H
+#ifndef DENG_RESOURCE_TEXTURESCHEME_H
+#define DENG_RESOURCE_TEXTURESCHEME_H
 
 #include "TextureManifest"
 #include "uri.hh"
@@ -34,8 +34,7 @@ namespace de {
  * @see Textures
  * @ingroup resource
  */
-class TextureScheme : DENG2_OBSERVES(TextureManifest, UniqueIdChange),
-                      DENG2_OBSERVES(TextureManifest, Deletion)
+class TextureScheme
 {
     typedef class TextureManifest Manifest;
 
@@ -46,7 +45,7 @@ public:
     /// The specified path was not valid. @ingroup errors
     DENG2_ERROR(InvalidPathError);
 
-    DENG2_DEFINE_AUDIENCE(ManifestDefined, void schemeManifestDefined(TextureScheme &scheme, Manifest &manifest))
+    DENG2_DEFINE_AUDIENCE(ManifestDefined, void textureSchemeManifestDefined(TextureScheme &scheme, Manifest &manifest))
 
     /// Minimum length of a symbolic name.
     static int const min_name_length = DENG2_URI_MIN_SCHEME_LENGTH;
@@ -145,17 +144,10 @@ public:
      */
     Index const &index() const;
 
-protected:
-    // Observes Manifest UniqueIdChange
-    void manifestUniqueIdChanged(Manifest &manifest);
-
-    // Observes Manifest Deletion.
-    void manifestBeingDeleted(Manifest const &manifest);
-
 private:
     DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG_RESOURCE_TEXTURESCHEME_H
+#endif // DENG_RESOURCE_TEXTURESCHEME_H

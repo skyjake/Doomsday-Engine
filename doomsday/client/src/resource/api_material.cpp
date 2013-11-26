@@ -13,7 +13,7 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 
     try
     {
-        de::Uri uri = App_Textures().find(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
+        de::Uri uri = App_ResourceSystem().findTexture(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
         return &App_Materials().find(uri).material();
     }
@@ -24,12 +24,12 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
     }
     catch(Materials::NotFoundError const &)
     {} // Ignore this error.
-    catch(Textures::UnknownSchemeError const &er)
+    catch(ResourceSystem::UnknownSchemeError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
-    catch(Textures::NotFoundError const &)
+    catch(ResourceSystem::MissingManifestError const &)
     {} // Ignore this error.
 
     return 0; // Not found.

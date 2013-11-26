@@ -1,4 +1,4 @@
-/** @file texturemanifest.cpp Texture Manifest.
+/** @file texturemanifest.cpp  Texture Manifest.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,50 +17,43 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h" // App_Textures()
-#include "Textures"
-
+#include "de_platform.h"
 #include "resource/texturemanifest.h"
+
+#include "dd_main.h" // App_ResourceSystem()
 
 using namespace de;
 
-DENG2_PIMPL(TextureManifest)
+DENG2_PIMPL(TextureManifest),
+DENG2_OBSERVES(Texture, Deletion)
 {
-    /// Scheme-unique identifier determined by the owner of the subspace.
-    int uniqueId;
+    int uniqueId;                    ///< Scheme-unique identifier (user defined).
+    Uri resourceUri;                 ///< Image resource path, to be loaded.
+    Vector2i logicalDimensions;      ///< Dimensions in map space.
+    Vector2i origin;                 ///< Origin offset in map space.
+    Texture::Flags flags;            ///< Classification flags.
+    QScopedPointer<Texture> texture; ///< Associated resource (if any).
 
-    /// Path to the resource containing the image data to be loaded.
-    Uri resourceUri;
-
-    /// World dimensions in map coordinate space units.
-    Vector2i logicalDimensions;
-
-    /// World origin offset in map coordinate space units.
-    Vector2i origin;
-
-    /// Texture classification flags.
-    Texture::Flags flags;
-
-    /// The associated logical Texture instance (if any).
-    std::auto_ptr<Texture> texture;
-
-    Instance(Public *i) : Base(i), uniqueId(0)
+    Instance(Public *i)
+        : Base(i)
+        , uniqueId(0)
     {}
+
+    ~Instance()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->textureManifestBeingDeleted(self);
+    }
+
+    // Observes Texture Deletion.
+    void textureBeingDeleted(Texture const & /*texture*/)
+    {
+        texture.reset();
+    }
 };
 
 TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
     : Node(args), d(new Instance(this))
 {}
-
-TextureManifest::~TextureManifest()
-{
-    DENG2_FOR_AUDIENCE(Deletion, i) i->manifestBeingDeleted(*this);
-}
-
-Textures &TextureManifest::textures()
-{
-    return App_Textures();
-}
 
 Texture *TextureManifest::derive()
 {
@@ -71,7 +64,7 @@ Texture *TextureManifest::derive()
         setTexture(new Texture(*this));
 
         // Notify interested parties that a new texture was derived from the manifest.
-        DENG2_FOR_AUDIENCE(TextureDerived, i) i->manifestTextureDerived(*this, texture());
+        DENG2_FOR_AUDIENCE(TextureDerived, i) i->textureManifestTextureDerived(*this, texture());
     }
     else
     {
@@ -92,9 +85,12 @@ TextureScheme &TextureManifest::scheme() const
 {
     LOG_AS("TextureManifest::scheme");
     /// @todo Optimize: TextureManifest should contain a link to the owning TextureScheme.
-    foreach(TextureScheme *scheme, textures().allSchemes())
+    foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
     {
-        if(&scheme->index() == &tree()) return *scheme;
+        if(&scheme->index() == &tree())
+        {
+            return *scheme;
+        }
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
     throw Error("TextureManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
@@ -163,7 +159,7 @@ bool TextureManifest::setUniqueId(int newUniqueId)
     d->uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
-    DENG2_FOR_AUDIENCE(UniqueIdChange, i) i->manifestUniqueIdChanged(*this);
+    DENG2_FOR_AUDIENCE(UniqueIdChange, i) i->textureManifestUniqueIdChanged(*this);
 
     return true;
 }
@@ -205,14 +201,14 @@ void TextureManifest::setOrigin(Vector2i const &newOrigin)
 
 bool TextureManifest::hasTexture() const
 {
-    return !!d->texture.get();
+    return !d->texture.isNull();
 }
 
 Texture &TextureManifest::texture() const
 {
     if(hasTexture())
     {
-        return *d->texture.get();
+        return *d->texture;
     }
     /// @throw MissingTextureError There is no texture associated with the manifest.
     throw MissingTextureError("TextureManifest::texture", "No texture is associated");
@@ -220,26 +216,20 @@ Texture &TextureManifest::texture() const
 
 void TextureManifest::setTexture(Texture *newTexture)
 {
-    if(d->texture.get() != newTexture)
+    if(d->texture.data() != newTexture)
     {
-        if(Texture *curTexture = d->texture.get())
+        if(Texture *curTexture = d->texture.data())
         {
             // Cancel notifications about the existing texture.
-            curTexture->audienceForDeletion -= this;
+            curTexture->audienceForDeletion -= d;
         }
 
         d->texture.reset(newTexture);
 
-        if(Texture *curTexture = d->texture.get())
+        if(Texture *curTexture = d->texture.data())
         {
             // We want notification when the new texture is about to be deleted.
-            curTexture->audienceForDeletion += this;
+            curTexture->audienceForDeletion += d;
         }
     }
-}
-
-void TextureManifest::textureBeingDeleted(Texture const &texture)
-{
-    DENG2_UNUSED(texture);
-    d->texture.release();
 }

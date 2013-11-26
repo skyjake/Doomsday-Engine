@@ -42,22 +42,20 @@ class FontScheme;
  * @see FontScheme, AbstractFont
  * @ingroup resource
  */
-class FontManifest : public PathTree::Node,
-DENG2_OBSERVES(AbstractFont, Deletion)
+class FontManifest : public PathTree::Node
 {
 public:
     /// Required Font instance is missing. @ingroup errors
     DENG2_ERROR(MissingFontError);
 
     /// Notified when the manifest is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void manifestBeingDeleted(FontManifest const &manifest))
+    DENG2_DEFINE_AUDIENCE(Deletion, void fontManifestBeingDeleted(FontManifest const &manifest))
 
     /// Notified whenever the unique identifier changes.
-    DENG2_DEFINE_AUDIENCE(UniqueIdChange, void manifestUniqueIdChanged(FontManifest &manifest))
+    DENG2_DEFINE_AUDIENCE(UniqueIdChange, void fontManifestUniqueIdChanged(FontManifest &manifest))
 
 public:
     FontManifest(PathTree::NodeArgs const &args);
-    ~FontManifest();
 
     /**
      * Returns the owning scheme of the manifest.
@@ -145,10 +143,6 @@ public:
 
     /// Returns a reference to the owning collection.
     static Fonts &collection();
-
-protected:
-    // Observes AbstractFont::Deletion.
-    void fontBeingDeleted(AbstractFont const &resource);
 
 private:
     DENG2_PRIVATE(d)

@@ -24,6 +24,9 @@
 #  include "clientapp.h"
 #endif
 
+#include "con_main.h"
+#include "def_main.h"
+
 #include "resource/colorpalette.h"
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
@@ -33,8 +36,6 @@
 #  include "BitmapFont"
 #  include "CompositeBitmapFont"
 #endif
-
-#include "def_main.h"
 
 #include "filesys/fs_main.h"
 #include "filesys/lumpindex.h"
@@ -151,7 +152,10 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 
 #endif // __CLIENT__
 
-DENG2_PIMPL(ResourceSystem)
+DENG2_PIMPL(ResourceSystem),
+DENG2_OBSERVES(TextureScheme, ManifestDefined),
+DENG2_OBSERVES(TextureManifest, TextureDerived),
+DENG2_OBSERVES(Texture, Deletion)
 #ifdef __CLIENT__
 , DENG2_OBSERVES(ColorPalette, ColorTableChange)
 #endif
@@ -174,7 +178,12 @@ DENG2_PIMPL(ResourceSystem)
 
     colorpaletteid_t defaultColorPalette;
 
-    Textures textures;
+    /// System subspace schemes containing the textures.
+    TextureSchemes textureSchemes;
+    QList<TextureScheme *> textureSchemeCreationOrder;
+    /// All texture instances in the system (from all schemes).
+    AllTextures textures;
+
     Materials materials;
 
     struct SpriteGroup {
@@ -210,18 +219,18 @@ DENG2_PIMPL(ResourceSystem)
 
         LOG_MSG("Initializing Texture collection...");
         /// @note Order here defines the ambigious-URI search order.
-        textures.createScheme("Sprites");
-        textures.createScheme("Textures");
-        textures.createScheme("Flats");
-        textures.createScheme("Patches");
-        textures.createScheme("System");
-        textures.createScheme("Details");
-        textures.createScheme("Reflections");
-        textures.createScheme("Masks");
-        textures.createScheme("ModelSkins");
-        textures.createScheme("ModelReflectionSkins");
-        textures.createScheme("Lightmaps");
-        textures.createScheme("Flaremaps");
+        createTextureScheme("Sprites");
+        createTextureScheme("Textures");
+        createTextureScheme("Flats");
+        createTextureScheme("Patches");
+        createTextureScheme("System");
+        createTextureScheme("Details");
+        createTextureScheme("Reflections");
+        createTextureScheme("Masks");
+        createTextureScheme("ModelSkins");
+        createTextureScheme("ModelReflectionSkins");
+        createTextureScheme("Lightmaps");
+        createTextureScheme("Flaremaps");
 
         LOG_MSG("Initializing Material collection...");
         /// @note Order here defines the ambigious-URI search order.
@@ -242,6 +251,28 @@ DENG2_PIMPL(ResourceSystem)
     {
         qDeleteAll(resClasses);
         self.clearAllAnimGroups();
+        self.clearAllTextureSchemes();
+        clearTextureManifests();
+    }
+
+    void clearTextureManifests()
+    {
+        qDeleteAll(textureSchemes);
+        textureSchemes.clear();
+        textureSchemeCreationOrder.clear();
+    }
+
+    void createTextureScheme(String name)
+    {
+        DENG2_ASSERT(name.length() >= TextureScheme::min_name_length);
+
+        // Create a new scheme.
+        TextureScheme *newScheme = new TextureScheme(name);
+        textureSchemes.insert(name.toLower(), newScheme);
+        textureSchemeCreationOrder.push_back(newScheme);
+
+        // We want notification when a new manifest is defined in this scheme.
+        newScheme->audienceForManifestDefined += this;
     }
 
     SpriteGroup *spriteGroup(spritenum_t spriteId)
@@ -357,7 +388,7 @@ DENG2_PIMPL(ResourceSystem)
 
     bool textureSpecInUse(TextureVariantSpec const &spec)
     {
-        foreach(Texture *texture, textures.all())
+        foreach(Texture *texture, textures)
         foreach(TextureVariant *variant, texture->variants())
         {
             if(&variant->spec() == &spec)
@@ -416,17 +447,17 @@ DENG2_PIMPL(ResourceSystem)
 
     void clearRuntimeTextures()
     {
-        textures.scheme("Flats").clear();
-        textures.scheme("Textures").clear();
-        textures.scheme("Patches").clear();
-        textures.scheme("Sprites").clear();
-        textures.scheme("Details").clear();
-        textures.scheme("Reflections").clear();
-        textures.scheme("Masks").clear();
-        textures.scheme("ModelSkins").clear();
-        textures.scheme("ModelReflectionSkins").clear();
-        textures.scheme("Lightmaps").clear();
-        textures.scheme("Flaremaps").clear();
+        self.textureScheme("Flats").clear();
+        self.textureScheme("Textures").clear();
+        self.textureScheme("Patches").clear();
+        self.textureScheme("Sprites").clear();
+        self.textureScheme("Details").clear();
+        self.textureScheme("Reflections").clear();
+        self.textureScheme("Masks").clear();
+        self.textureScheme("ModelSkins").clear();
+        self.textureScheme("ModelReflectionSkins").clear();
+        self.textureScheme("Lightmaps").clear();
+        self.textureScheme("Flaremaps").clear();
 
 #ifdef __CLIENT__
         self.pruneUnusedTextureSpecs();
@@ -435,7 +466,7 @@ DENG2_PIMPL(ResourceSystem)
 
     void clearSystemTextures()
     {
-        textures.scheme("System").clear();
+        self.textureScheme("System").clear();
 
 #ifdef __CLIENT__
         self.pruneUnusedTextureSpecs();
@@ -444,7 +475,7 @@ DENG2_PIMPL(ResourceSystem)
 
     void deriveAllTexturesInScheme(String schemeName)
     {
-        TextureScheme &scheme = textures.scheme(schemeName);
+        TextureScheme &scheme = self.textureScheme(schemeName);
 
         PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
         while(iter.hasNext())
@@ -767,7 +798,8 @@ DENG2_PIMPL(ResourceSystem)
             try
             {
                 TextureManifest &manifest =
-                    textures.declare(uri, flags, def.logicalDimensions(), Vector2i(), def.origIndex());
+                    self.declareTexture(uri, flags, def.logicalDimensions(),
+                                        Vector2i(), def.origIndex());
 
                 // Are we redefining an existing texture?
                 if(manifest.hasTexture())
@@ -800,6 +832,29 @@ DENG2_PIMPL(ResourceSystem)
 
             delete &def;
         }
+    }
+
+    /// Observes TextureScheme ManifestDefined.
+    void textureSchemeManifestDefined(TextureScheme & /*scheme*/, TextureManifest &manifest)
+    {
+        // We want notification when the manifest is derived to produce a texture.
+        manifest.audienceForTextureDerived += this;
+    }
+
+    /// Observes TextureManifest TextureDerived.
+    void textureManifestTextureDerived(TextureManifest & /*manifest*/, Texture &texture)
+    {
+        // Include this new texture in the scheme-agnostic list of instances.
+        textures.push_back(&texture);
+
+        // We want notification when the texture is about to be deleted.
+        texture.audienceForDeletion += this;
+    }
+
+    /// Observes Texture Deletion.
+    void textureBeingDeleted(Texture const &texture)
+    {
+        textures.removeOne(const_cast<Texture *>(&texture));
     }
 
 #ifdef __CLIENT__
@@ -901,11 +956,6 @@ void ResourceSystem::clearAllSprites()
     d->spriteGroups.clear();
 }
 
-Textures &ResourceSystem::textures()
-{
-    return d->textures;
-}
-
 void ResourceSystem::initSystemTextures()
 {
     LOG_AS("ResourceSystem");
@@ -937,8 +987,8 @@ void ResourceSystem::initSystemTextures()
         int uniqueId = i + 1/*1-based index*/;
         de::Uri resourceUri("Graphics", Path(def.graphicName));
 
-        d->textures.declare(de::Uri("System", Path(def.path)), Texture::Custom,
-                            Vector2i(), Vector2i(), uniqueId, &resourceUri);
+        declareTexture(de::Uri("System", Path(def.path)), Texture::Custom,
+                       Vector2i(), Vector2i(), uniqueId, &resourceUri);
     }
 
     // Define any as yet undefined system textures.
@@ -1006,7 +1056,7 @@ void ResourceSystem::initCompositeTextures()
 
     DENG_ASSERT(texs.isEmpty());
 
-    LOG_INFO(String("R_InitCompositeTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("ResourceSystem::initCompositeTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void ResourceSystem::initFlatTextures()
@@ -1053,7 +1103,7 @@ void ResourceSystem::initFlatTextures()
                !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
             de::Uri uri("Flats", Path(percentEncodedName));
-            if(d->textures.has(uri)) continue;
+            if(hasTexture(uri)) continue;
 
             Texture::Flags flags;
             if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -1070,7 +1120,7 @@ void ResourceSystem::initFlatTextures()
             int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
             de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
-            d->textures.declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+            declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
         }
     }
 
@@ -1078,7 +1128,7 @@ void ResourceSystem::initFlatTextures()
     /// @todo Defer until necessary (manifest texture is first referenced).
     d->deriveAllTexturesInScheme("Flats");
 
-    LOG_INFO(String("R_InitFlatTetxures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("ResourceSystem::initFlatTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 /// Returns @c true iff @a name is a well-formed sprite name.
@@ -1181,7 +1231,7 @@ void ResourceSystem::initSpriteTextures()
         de::Uri resourceUri = composeLumpIndexResourceUrn(i);
         try
         {
-            d->textures.declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+            declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
             uniqueId++;
         }
         catch(TextureScheme::InvalidPathError const &er)
@@ -1210,7 +1260,7 @@ Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
 
         try
         {
-            return &d->textures.scheme(schemeName).findByResourceUri(*resourceUri).texture();
+            return &textureScheme(schemeName).findByResourceUri(*resourceUri).texture();
         }
         catch(TextureManifest::MissingTextureError const &)
         {} // Ignore this error.
@@ -1228,7 +1278,7 @@ Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourc
     if(resourceUri.isEmpty()) return 0;
 
     // Have we already created one for this?
-    TextureScheme &scheme = d->textures.scheme(schemeName);
+    TextureScheme &scheme = textureScheme(schemeName);
     try
     {
         return &scheme.findByResourceUri(resourceUri).texture();
@@ -1249,8 +1299,8 @@ Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourc
     de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
     try
     {
-        TextureManifest &manifest = d->textures.declare(uri, Texture::Custom, dimensions,
-                                                        Vector2i(), uniqueId, &resourceUri);
+        TextureManifest &manifest = declareTexture(uri, Texture::Custom, dimensions,
+                                                   Vector2i(), uniqueId, &resourceUri);
 
         /// @todo Defer until necessary (manifest texture is first referenced).
         return deriveTexture(manifest);
@@ -1277,11 +1327,11 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     // Already defined as a patch?
     try
     {
-        TextureManifest &manifest = d->textures.find(uri);
+        TextureManifest &manifest = findTexture(uri);
         /// @todo We should instead define Materials from patches and return the material id.
         return patchid_t( manifest.uniqueId() );
     }
-    catch(Textures::NotFoundError const &)
+    catch(MissingManifestError const &)
     {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
@@ -1322,12 +1372,13 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     }
     file.unlock();
 
-    int uniqueId        = d->textures.scheme("Patches").count() + 1; // 1-based index.
+    int uniqueId        = textureScheme("Patches").count() + 1; // 1-based index.
     de::Uri resourceUri = composeLumpIndexResourceUrn(lumpNum);
 
     try
     {
-        TextureManifest &manifest = d->textures.declare(uri, flags, dimensions, origin, uniqueId, &resourceUri);
+        TextureManifest &manifest = declareTexture(uri, flags, dimensions, origin,
+                                                   uniqueId, &resourceUri);
 
         /// @todo Defer until necessary (manifest texture is first referenced).
         deriveTexture(manifest);
@@ -1339,6 +1390,109 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
         LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
     }
     return 0;
+}
+
+TextureScheme &ResourceSystem::textureScheme(String name) const
+{
+    LOG_AS("ResourceSystem::textureScheme");
+    if(!name.isEmpty())
+    {
+        TextureSchemes::iterator found = d->textureSchemes.find(name.toLower());
+        if(found != d->textureSchemes.end())
+        {
+            return **found;
+        }
+    }
+    /// @throw UnknownSchemeError An unknown scheme was referenced.
+    throw UnknownSchemeError("ResourceSystem::textureScheme", "No scheme found matching '" + name + "'");
+}
+
+bool ResourceSystem::knownTextureScheme(String name) const
+{
+    if(!name.isEmpty())
+    {
+        return d->textureSchemes.contains(name.toLower());
+    }
+    return false;
+}
+
+ResourceSystem::TextureSchemes const& ResourceSystem::allTextureSchemes() const
+{
+    return d->textureSchemes;
+}
+
+bool ResourceSystem::hasTexture(de::Uri const &path) const
+{
+    try
+    {
+        findTexture(path);
+        return true;
+    }
+    catch(MissingManifestError const &)
+    {} // Ignore this error.
+    return false;
+}
+
+TextureManifest &ResourceSystem::findTexture(de::Uri const &uri) const
+{
+    LOG_AS("ResourceSystem::findTexture");
+
+    // Perform the search.
+    // Is this a URN? (of the form "urn:schemename:uniqueid")
+    if(!uri.scheme().compareWithoutCase("urn"))
+    {
+        String const &pathStr = uri.path().toStringRef();
+        int uIdPos = pathStr.indexOf(':');
+        if(uIdPos > 0)
+        {
+            String schemeName = pathStr.left(uIdPos);
+            int uniqueId      = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+
+            try
+            {
+                return textureScheme(schemeName).findByUniqueId(uniqueId);
+            }
+            catch(TextureScheme::NotFoundError const &)
+            {} // Ignore, we'll throw our own...
+        }
+    }
+    else
+    {
+        // No, this is a URI.
+        String const &path = uri.path();
+
+        // Does the user want a manifest in a specific scheme?
+        if(!uri.scheme().isEmpty())
+        {
+            try
+            {
+                return textureScheme(uri.scheme()).find(path);
+            }
+            catch(TextureScheme::NotFoundError const &)
+            {} // Ignore, we'll throw our own...
+        }
+        else
+        {
+            // No, check each scheme in priority order.
+            foreach(TextureScheme *scheme, d->textureSchemeCreationOrder)
+            {
+                try
+                {
+                    return scheme->find(path);
+                }
+                catch(TextureScheme::NotFoundError const &)
+                {} // Ignore, we'll throw our own...
+            }
+        }
+    }
+
+    /// @throw MissingManifestError Failed to locate a matching manifest.
+    throw MissingManifestError("ResourceSystem::findTexture", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+}
+
+ResourceSystem::AllTextures const &ResourceSystem::allTextures() const
+{
+    return d->textures;
 }
 
 #ifdef __CLIENT__
@@ -1411,7 +1565,7 @@ void ResourceSystem::releaseAllGLTextures()
 
 void ResourceSystem::releaseGLTexturesFor(ColorPalette const &colorPalette)
 {
-    foreach(Texture *texture, d->textures.all())
+    foreach(Texture *texture, d->textures)
     {
         colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(Texture::ColorPaletteAnalysis));
         if(cp && cp->paletteId == colorpaletteid_t(colorPalette.id()))
@@ -1449,7 +1603,7 @@ void ResourceSystem::releaseGLTexturesByScheme(String schemeName)
 {
     if(schemeName.isEmpty()) return;
 
-    PathTreeIterator<TextureScheme::Index> iter(d->textures.scheme(schemeName).index().leafNodes());
+    PathTreeIterator<TextureScheme::Index> iter(textureScheme(schemeName).index().leafNodes());
     while(iter.hasNext())
     {
         TextureManifest &manifest = iter.next();
@@ -1704,9 +1858,9 @@ struct SpriteDef
 typedef QList<SpriteDef> SpriteDefs;
 
 /**
- * In DOOM, a sprite frame is a patch texture contained in a lump
- * existing between the S_START and S_END marker lumps (in WAD) whose
- * lump name matches the following pattern:
+ * In DOOM, a sprite frame is a patch texture contained in a lump existing
+ * between the S_START and S_END marker lumps (in WAD) whose lump name matches
+ * the following pattern:
  *
  *      NAME|A|R(A|R) (for example: "TROOA0" or "TROOA2A8")
  *
@@ -1716,22 +1870,19 @@ typedef QList<SpriteDef> SpriteDefs;
  *    0 : Use this frame for ALL angles.
  *    1...8 : Angle of rotation in 45 degree increments.
  *
- * The second set of (optional) frame and rotation characters instruct
- * that the same sprite frame is to be used for an additional frame
- * but that the sprite patch should be flipped horizontally (right to
- * left) during the loading phase.
+ * The second set of (optional) frame and rotation characters instruct that the
+ * same sprite frame is to be used for an additional frame but that the sprite
+ * patch should be flipped horizontally (right to left) during the loading phase.
  *
- * Sprite rotation 0 is facing the viewer, rotation 1 is one angle
- * turn CLOCKWISE around the axis. This is not the same as the angle,
- * which increases counter clockwise (protractor).
+ * Sprite rotation 0 is facing the viewer, rotation 1 is one angle turn CLOCKWISE
+ * around the axis. This is not the same as the angle, which increases counter
+ * clockwise (protractor).
  */
 static SpriteDefs generateSpriteDefs()
 {
-    Time begunAt;
-
     SpriteDefs spriteDefs;
 
-    PathTreeIterator<TextureScheme::Index> iter(App_Textures().scheme("Sprites").index().leafNodes());
+    PathTreeIterator<TextureScheme::Index> iter(App_ResourceSystem().textureScheme("Sprites").index().leafNodes());
     while(iter.hasNext())
     {
         TextureManifest &manifest = iter.next();
@@ -1797,8 +1948,6 @@ static SpriteDefs generateSpriteDefs()
             frame->rotation[1] = 0;
         }
     }
-
-    LOG_INFO(String("generateSpriteDefs: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
     return spriteDefs;
 }
@@ -2135,9 +2284,207 @@ void ResourceSystem::cacheMaterial(Material &material, de::MaterialVariantSpec c
 
 #endif // __CLIENT__
 
+static bool pathBeginsWithComparator(TextureManifest const &manifest, void *context)
+{
+    Path const *path = reinterpret_cast<Path*>(context);
+    /// @todo Use PathTree::Node::compare()
+    return manifest.path().toStringRef().beginsWith(*path, Qt::CaseInsensitive);
+}
+
+/**
+ * @todo This logic should be implemented in de::PathTree -ds
+ */
+static int collectTextureManifestsInScheme(TextureScheme const &scheme,
+    bool (*predicate)(TextureManifest const &manifest, void *context), void *context,
+    QList<TextureManifest *> *storage = 0)
+{
+    int count = 0;
+    PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
+    while(iter.hasNext())
+    {
+        TextureManifest &manifest = iter.next();
+        if(predicate(manifest, context))
+        {
+            count += 1;
+            if(storage) // Store mode?
+            {
+                storage->push_back(&manifest);
+            }
+        }
+    }
+    return count;
+}
+
+static QList<TextureManifest *> collectTextureManifests(TextureScheme *scheme,
+    Path const &path, QList<TextureManifest *> *storage = 0)
+{
+    int count = 0;
+
+    if(scheme)
+    {
+        // Consider materials in the specified scheme only.
+        count += collectTextureManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
+    }
+    else
+    {
+        // Consider materials in any scheme.
+        foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
+        {
+            count += collectTextureManifestsInScheme(*scheme, pathBeginsWithComparator, (void *)&path, storage);
+        }
+    }
+
+    // Are we done?
+    if(storage) return *storage;
+
+    // Collect and populate.
+    QList<TextureManifest *> result;
+    if(count == 0) return result;
+
+#ifdef DENG2_QT_4_7_OR_NEWER
+    result.reserve(count);
+#endif
+    return collectTextureManifests(scheme, path, &result);
+}
+
+/**
+ * Decode and then lexicographically compare the two manifest paths,
+ * returning @c true if @a is less than @a b.
+ */
+static bool compareManifestPathsAssending(TextureManifest const *a, TextureManifest const *b)
+{
+    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
+    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
+    return pathA.compareWithoutCase(pathB) < 0;
+}
+
+/**
+ * @param scheme    Texture subspace scheme being printed. Can be @c NULL in
+ *                  which case textures are printed from all schemes.
+ * @param like      Texture path search term.
+ * @param composeUriFlags  Flags governing how URIs should be composed.
+ */
+static int printTextureIndex2(TextureScheme *scheme, Path const &like,
+    de::Uri::ComposeAsTextFlags composeUriFlags)
+{
+    QList<TextureManifest *> found = collectTextureManifests(scheme, like);
+    if(found.isEmpty()) return 0;
+
+    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+
+    // Print a heading.
+    String heading = "Known textures";
+    if(!printSchemeName && scheme)
+        heading += " in scheme '" + scheme->name() + "'";
+    if(!like.isEmpty())
+        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+    LOG_MSG(_E(D) "%s:" _E(.)) << heading;
+
+    // Print the result index key.
+    qSort(found.begin(), found.end(), compareManifestPathsAssending);
+    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    int idx = 0;
+    foreach(TextureManifest *manifest, found)
+    {
+        String info = String("%1: %2%3")
+                        .arg(idx, numFoundDigits)
+                        .arg(manifest->hasTexture()? _E(1) : _E(2))
+                        .arg(manifest->description(composeUriFlags));
+
+        LOG_MSG("  " _E(>)) << info;
+        idx++;
+    }
+
+    return found.count();
+}
+
+static void printTextureIndex(de::Uri const &search,
+    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+{
+    int printTotal = 0;
+
+    // Collate and print results from all schemes?
+    if(search.scheme().isEmpty() && !search.path().isEmpty())
+    {
+        printTotal = printTextureIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        LOG_MSG(_E(R));
+    }
+    // Print results within only the one scheme?
+    else if(App_ResourceSystem().knownTextureScheme(search.scheme()))
+    {
+        printTotal = printTextureIndex2(&App_ResourceSystem().textureScheme(search.scheme()),
+                                        search.path(), flags | de::Uri::OmitScheme);
+        LOG_MSG(_E(R));
+    }
+    else
+    {
+        // Collect and sort results in each scheme separately.
+        foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
+        {
+            int numPrinted = printTextureIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            if(numPrinted)
+            {
+                LOG_MSG(_E(R));
+                printTotal += numPrinted;
+            }
+        }
+    }
+    LOG_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "texture" : "textures in total");
+}
+
+static bool isKnownTextureSchemeCallback(String name)
+{
+    return App_ResourceSystem().knownTextureScheme(name);
+}
+
+D_CMD(ListTextures)
+{
+    DENG2_UNUSED(src);
+
+    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownTextureSchemeCallback);
+
+    if(!search.scheme().isEmpty() &&
+       !App_ResourceSystem().knownTextureScheme(search.scheme()))
+    {
+        LOG_WARNING("Unknown scheme %s") << search.scheme();
+        return false;
+    }
+
+    printTextureIndex(search);
+    return true;
+}
+
+#ifdef DENG_DEBUG
+D_CMD(PrintTextureStats)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    LOG_MSG(_E(1) "Texture Statistics:");
+    foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
+    {
+        TextureScheme::Index const &index = scheme->index();
+
+        uint const count = index.count();
+        LOG_MSG("Scheme: %s (%u %s)")
+            << scheme->name() << count << (count == 1? "texture" : "textures");
+        index.debugPrintHashDistribution();
+        index.debugPrint();
+    }
+    return true;
+}
+#endif
+
 void ResourceSystem::consoleRegister() // static
 {
-    Textures::consoleRegister();
+    C_CMD("listtextures",   "ss",   ListTextures)
+    C_CMD("listtextures",   "s",    ListTextures)
+    C_CMD("listtextures",   "",     ListTextures)
+
+#ifdef DENG_DEBUG
+    C_CMD("texturestats",   NULL,   PrintTextureStats)
+#endif
+
+    Texture::consoleRegister();
     Materials::consoleRegister();
 #ifdef __CLIENT__
     Fonts::consoleRegister();

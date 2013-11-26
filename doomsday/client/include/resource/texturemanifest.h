@@ -1,4 +1,4 @@
-/** @file texturemanifest.h Description of a logical texture resource.
+/** @file texturemanifest.h  Description of a logical texture resource.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_TEXTUREMANIFEST_H
-#define LIBDENG_RESOURCE_TEXTUREMANIFEST_H
+#ifndef DENG_RESOURCE_TEXTUREMANIFEST_H
+#define DENG_RESOURCE_TEXTUREMANIFEST_H
 
 #include "Texture"
 #include "uri.hh"
@@ -41,8 +41,7 @@ class TextureScheme;
  * @see TextureScheme, Texture
  * @ingroup resource
  */
-class TextureManifest : public PathTree::Node,
-                        DENG2_OBSERVES(Texture, Deletion)
+class TextureManifest : public PathTree::Node
 {
 public:
     /// Required texture instance is missing. @ingroup errors
@@ -51,13 +50,12 @@ public:
     /// Required resource URI is not defined. @ingroup errors
     DENG2_ERROR(MissingResourceUriError);
 
-    DENG2_DEFINE_AUDIENCE(Deletion,        void manifestBeingDeleted    (TextureManifest const &manifest))
-    DENG2_DEFINE_AUDIENCE(UniqueIdChange, void manifestUniqueIdChanged (TextureManifest &manifest))
-    DENG2_DEFINE_AUDIENCE(TextureDerived,  void manifestTextureDerived  (TextureManifest &manifest, Texture &texture))
+    DENG2_DEFINE_AUDIENCE(Deletion,       void textureManifestBeingDeleted(TextureManifest const &manifest))
+    DENG2_DEFINE_AUDIENCE(UniqueIdChange, void textureManifestUniqueIdChanged(TextureManifest &manifest))
+    DENG2_DEFINE_AUDIENCE(TextureDerived, void textureManifestTextureDerived(TextureManifest &manifest, Texture &texture))
 
 public:
     TextureManifest(PathTree::NodeArgs const &args);
-    ~TextureManifest();
 
     /**
      * Derive a new logical Texture instance by interpreting the manifest.
@@ -213,17 +211,10 @@ public:
      */
     inline void clearTexture() { setTexture(0); }
 
-    /// Returns a reference to the application's texture collection.
-    static Textures &textures();
-
-protected:
-    // Observes Texture Deletion.
-    void textureBeingDeleted(Texture const &texture);
-
 private:
     DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // LIBDENG_RESOURCE_TEXTUREMANIFEST_H
+#endif // DENG_RESOURCE_TEXTUREMANIFEST_H

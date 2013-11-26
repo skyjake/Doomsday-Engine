@@ -1069,7 +1069,8 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             break; }
 
         case PFT_PATCH: {
-            TextureManifest &manifest = App_Textures().scheme("Patches").findByUniqueId(f->texRef.patch);
+            TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches")
+                                            .findByUniqueId(f->texRef.patch);
             if(manifest.hasTexture())
             {
                 Texture &tex = manifest.texture();

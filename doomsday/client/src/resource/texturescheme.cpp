@@ -25,7 +25,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(TextureScheme)
+DENG2_PIMPL(TextureScheme),
+DENG2_OBSERVES(TextureManifest, UniqueIdChange),
+DENG2_OBSERVES(TextureManifest, Deletion)
 {
     /// Symbolic name of the scheme.
     String name;
@@ -148,6 +150,19 @@ DENG2_PIMPL(TextureScheme)
 
         uniqueIdLutDirty = false;
     }
+
+    // Observes TextureManifest UniqueIdChange
+    void textureManifestUniqueIdChanged(Manifest & /*manifest*/)
+    {
+        // We'll need to rebuild the id map.
+        uniqueIdLutDirty = true;
+    }
+
+    // Observes TextureManifest Deletion.
+    void textureManifestBeingDeleted(TextureManifest const &manifest)
+    {
+        deindex(const_cast<TextureManifest &>(manifest));
+    }
 };
 
 TextureScheme::TextureScheme(String symbolicName) : d(new Instance(this, symbolicName))
@@ -196,13 +211,13 @@ TextureManifest &TextureScheme::declare(Path const &path,
         d->uniqueIdLutDirty = true;
 
         // We want notification if/when the manifest's uniqueId changes.
-        newManifest->audienceForUniqueIdChange += this;
+        newManifest->audienceForUniqueIdChange += d;
 
         // We want notification when the manifest is about to be deleted.
-        newManifest->audienceForDeletion += this;
+        newManifest->audienceForDeletion += d;
 
         // Notify interested parties that a new manifest was defined in the scheme.
-        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->schemeManifestDefined(*this, *newManifest);
+        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->textureSchemeManifestDefined(*this, *newManifest);
     }
 
     /*
@@ -313,16 +328,4 @@ TextureManifest &TextureScheme::findByUniqueId(int uniqueId)
 TextureScheme::Index const &TextureScheme::index() const
 {
     return d->index;
-}
-
-void TextureScheme::manifestUniqueIdChanged(TextureManifest &manifest)
-{
-    DENG2_UNUSED(manifest);
-    // We'll need to rebuild the id map.
-    d->uniqueIdLutDirty = true;
-}
-
-void TextureScheme::manifestBeingDeleted(TextureManifest const &manifest)
-{
-    d->deindex(const_cast<TextureManifest &>(manifest));
 }

@@ -54,9 +54,7 @@ struct MaterialVariantSpec;
  *
  * @ingroup resource
  */
-class Material : public de::MapElement,
-                 DENG2_OBSERVES(de::Texture, DimensionsChange),
-                 DENG2_OBSERVES(de::Texture, Deletion)
+class Material : public de::MapElement
 {
     /// Internal typedefs for brevity/cleanliness.
     typedef de::MaterialManifest Manifest;
@@ -1003,13 +1001,11 @@ public:
 #endif // __CLIENT__
 
 protected:
-    // Observes Texture DimensionsChange.
-    void textureDimensionsChanged(de::Texture const &texture);
-
-    // Observes Texture Deletion.
-    void textureBeingDeleted(de::Texture const &texture);
-
     int property(DmuArgs &args) const;
+
+public:
+        /// Register the console commands, variables, etc..., of this module.
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

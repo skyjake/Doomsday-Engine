@@ -213,7 +213,6 @@ DENG_HEADERS += \
     $$SRC/include/resource/sprite.h \
     $$SRC/include/resource/texture.h \
     $$SRC/include/resource/texturemanifest.h \
-    $$SRC/include/resource/textures.h \
     $$SRC/include/resource/texturescheme.h \
     $$SRC/include/resource/wad.h \
     $$SRC/include/resource/zip.h \
@@ -386,7 +385,6 @@ SOURCES += \
     $$SRC/src/resource/texture.cpp \
     $$SRC/src/resource/texturemanifest.cpp \
     $$SRC/src/resource/texturescheme.cpp \
-    $$SRC/src/resource/textures.cpp \
     $$SRC/src/resource/tga.cpp \
     $$SRC/src/resource/wad.cpp \
     $$SRC/src/resource/zip.cpp \

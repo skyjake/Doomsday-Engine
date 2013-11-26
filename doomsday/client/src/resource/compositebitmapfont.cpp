@@ -156,8 +156,8 @@ void CompositeBitmapFont::glInit()
 
         patchinfo_t info;
         R_GetPatchInfo(patch, &info);
-        ch->tex    = App_ResourceSystem().textures()
-                        .scheme("Patches").findByUniqueId(patch)
+        ch->tex    = App_ResourceSystem().textureScheme("Patches")
+                         .findByUniqueId(patch)
                             .texture().prepareVariant(glyphTextureSpec());
         ch->border = 0;
         if(ch->tex && ch->tex->source() == res::Original)

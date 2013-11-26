@@ -1044,7 +1044,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
 
 static void generateMaterialDefsForAllTexturesInScheme(String schemeName)
 {
-    TextureScheme &scheme = App_Textures().scheme(schemeName);
+    TextureScheme &scheme = App_ResourceSystem().textureScheme(schemeName);
 
     PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
     while(iter.hasNext())
@@ -1147,12 +1147,12 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
 
                         try
                         {
-                            Texture &texture = App_Textures().find(reinterpret_cast<de::Uri const &>(*gm.material)).texture();
+                            Texture &texture = App_ResourceSystem().findTexture(reinterpret_cast<de::Uri const &>(*gm.material)).texture();
                             layer0->addStage(Material::Layer::Stage(&texture, gm.tics, gm.randomTics / float( gm.tics )));
                         }
                         catch(TextureManifest::MissingTextureError const &)
                         {} // Ignore this error.
-                        catch(Textures::NotFoundError const &)
+                        catch(ResourceSystem::MissingManifestError const &)
                         {} // Ignore this error.
                     }
                 }
@@ -1184,7 +1184,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                         // Add a new stage.
                         try
                         {
-                            Texture &texture = App_Textures().scheme("Details").findByResourceUri(*reinterpret_cast<de::Uri const *>(detailDef->stage.texture)).texture();
+                            Texture &texture = App_ResourceSystem().textureScheme("Details").findByResourceUri(*reinterpret_cast<de::Uri const *>(detailDef->stage.texture)).texture();
                             dlayer->addStage(Material::DetailLayer::Stage(&texture, stage->tics, stage->variance,
                                                                           detailDef->stage.scale, detailDef->stage.strength,
                                                                           detailDef->stage.maxDistance));
@@ -1201,7 +1201,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                         }
                         catch(TextureManifest::MissingTextureError const &)
                         {} // Ignore this error.
-                        catch(Textures::NotFoundError const &)
+                        catch(ResourceSystem::MissingManifestError const &)
                         {} // Ignore this error.
                     }
                 }
@@ -1233,18 +1233,20 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                         // Add a new stage.
                         try
                         {
-                            Texture &texture = App_Textures().scheme("Reflections").findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.texture)).texture();
+                            Texture &texture = App_ResourceSystem().textureScheme("Reflections")
+                                                   .findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.texture)).texture();
 
                             Texture *maskTexture = 0;
                             if(shineDef->stage.maskTexture)
                             {
                                 try
                                 {
-                                    maskTexture = &App_Textures().scheme("Masks").findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.maskTexture)).texture();
+                                    maskTexture = &App_ResourceSystem().textureScheme("Masks")
+                                                       .findByResourceUri(reinterpret_cast<de::Uri const &>(*shineDef->stage.maskTexture)).texture();
                                 }
                                 catch(TextureManifest::MissingTextureError const &)
                                 {} // Ignore this error.
-                                catch(Textures::NotFoundError const &)
+                                catch(ResourceSystem::MissingManifestError const &)
                                 {} // Ignore this error.
                             }
 
@@ -1266,7 +1268,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                         }
                         catch(TextureManifest::MissingTextureError const &)
                         {} // Ignore this error.
-                        catch(Textures::NotFoundError const &)
+                        catch(ResourceSystem::MissingManifestError const &)
                         {} // Ignore this error.
                     }
                 }
@@ -1366,11 +1368,13 @@ static void interpretMaterialDef(ded_material_t const &def)
             {
                 try
                 {
-                    Texture &texture = App_Textures().find(*reinterpret_cast<de::Uri *>(firstLayer.stages[0].texture)).texture();
+                    Texture &texture = App_ResourceSystem().findTexture(*reinterpret_cast<de::Uri *>(firstLayer.stages[0].texture)).texture();
                     if(texture.isFlagged(Texture::Custom))
+                    {
                         manifest->setFlags(MaterialManifest::Custom);
+                    }
                 }
-                catch(Textures::NotFoundError const &er)
+                catch(ResourceSystem::MissingManifestError const &er)
                 {
                     // Log but otherwise ignore this error.
                     LOG_WARNING(er.asText() + ". Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i), ignoring.")
@@ -1573,7 +1577,7 @@ void Def_Read()
     }
 
     // Detail textures (Define textures).
-    App_Textures().scheme("Details").clear();
+    App_ResourceSystem().textureScheme("Details").clear();
     for(int i = 0; i < defs.count.details.num; ++i)
     {
         ded_detailtexture_t *dtl = &defs.details[i];
@@ -1588,8 +1592,8 @@ void Def_Read()
     }
 
     // Surface reflections (Define textures).
-    App_Textures().scheme("Reflections").clear();
-    App_Textures().scheme("Masks").clear();
+    App_ResourceSystem().textureScheme("Reflections").clear();
+    App_ResourceSystem().textureScheme("Masks").clear();
     for(int i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t *ref = &defs.reflections[i];
