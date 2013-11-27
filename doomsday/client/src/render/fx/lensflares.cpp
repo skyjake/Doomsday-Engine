@@ -151,13 +151,17 @@ D_CMD(TestLight)
     String prop = argv[1];
     float value = String(argv[2]).toFloat();
 
-    if(prop.compareWithoutCase("rd"))
+    if(!prop.compareWithoutCase("rd"))
     {
         fx::testLight.radius = value;
     }
-    else if(prop.compareWithoutCase("in"))
+    else if(!prop.compareWithoutCase("in"))
     {
         fx::testLight.intensity = value;
+    }
+    else if(!prop.compareWithoutCase("cl") && argc >= 5)
+    {
+        fx::testLight.color = ILightSource::Colorf(value, String(argv[3]).toFloat(), String(argv[4]).toFloat());
     }
     else
     {
@@ -382,7 +386,7 @@ DENG2_PIMPL(LensFlares)
                 {  .75f,    FlareData::Halo,     .5f,    1,      Rgf(1.0e-6, 1.0e-5), Rgf(),    Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf(30, 60) },
 
                 {  -.75f,   FlareData::Ring,     .25f,   .5f,    Rgf(1.0e-5, 1.0e-4), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(5, 20), Rgf(40, 50) },
-                {  -1,      FlareData::Circle,   .3f,    .62f,   Rgf(4.0e-6, 4.0e-5), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(0, 23), Rgf(30, 60) },
+                {  -1,      FlareData::Circle,   .3f,    .62f,   Rgf(4.0e-6, 4.0e-5), Rgf(),    Rgf(.08f, .45f), Rgf(), Rgf(0, 23), Rgf(30, 60) },
                 {  -1.25f,  FlareData::Ring,     .25f,   .7f,    Rgf(1.0e-5, 1.0e-4), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(35, 50) },
 
                 {  1.333f,  FlareData::Ring,     .1f,   1.2f,    Rgf(1.0e-8, 1.0e-7), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
@@ -492,7 +496,7 @@ void LensFlares::draw()
 
 void LensFlares::consoleRegister()
 {
-    C_CMD("testlight", "sf", TestLight)
+    C_CMD("testlight", "sf*", TestLight)
 }
 
 } // namespace fx
