@@ -177,6 +177,7 @@ def update_debian_changelog():
 
 def build_source_package():
     """Builds the source tarball and a Debian source package."""
+    git_pull()
     ev = builder.Event(latestAvailable=True)
     print "Creating source tarball for build %i." % ev.number()
     os.chdir(os.path.join(builder.config.DISTRIB_DIR))
@@ -192,8 +193,12 @@ def build_source_package():
             remote_copy(fn, ev.file_path(fn))
             break
 
+    # Check distribution.
+    system_command("lsb_release -a | perl -n -e 'm/Codename:\s(.+)/ && print $1' > /tmp/distroname")
+    distro = file('/tmp/distroname', 'rt').read()
+
     # Create a source Debian package and upload it to Launchpad.
-    pkgVer = '%s.%i' % (ev.version_base(), ev.number())
+    pkgVer = '%s.%i+%s' % (ev.version_base(), ev.number(), distro)
     pkgDir = 'doomsday-%s' % pkgVer
     system_command('tar xzf %s' % fn)
     os.rename(fn[:-7], pkgDir)
@@ -209,7 +214,12 @@ def build_source_package():
         system_command("sed 's/%s-build%i/%s/;%s' %s > %s" % (
                 ev.version_base(), ev.number(), pkgVer, extraSub, src, dst))
 
-    gen_changelog('../../../debian/changelog', 'changelog')
+    # Figure out the name of the distribution.
+    dsub = ''
+    if distro:
+        dsub = 's/) precise;/) %s;/' % distro
+
+    gen_changelog('../../../debian/changelog', 'changelog', dsub)
     system_command("sed 's/${Arch}/i386 amd64/' ../../../debian/control.template > control")
     system_command("sed 's/`..\/build_number.py --print`/%i/;s/..\/..\/doomsday/..\/doomsday/' ../../../debian/rules > rules" % ev.number())
     os.chdir('..')
