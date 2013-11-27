@@ -137,21 +137,23 @@ def aptrepo_find_latest_tag():
 
 def count_log_word(fn, word):
     count = 0
-    #txt = unicode(gzip.open(fn).read(), 'latin1').lower()
-    for txt in [unicode(rl, 'latin1').lower() for rl in string.split(gzip.open(fn).read(), '\n')]:
-        pos = txt.find(unicode(word))
-        if pos < 0: continue 
-        # Ignore some unnecessary gcc messages.
-        if 'should be explicitly initialized in the copy constructor' in txt: continue
-        if 'deprecated' in txt: continue
-        try:
-            if txt[pos-1] not in '/\\_'+string.ascii_letters and \
-                txt[pos+len(word)] not in 's.' and \
-                txt[pos-11:pos] != 'shlibdeps: ' and txt[pos-12:pos] != 'genchanges: ' and \
-                txt[pos-12:pos] != 'cc1objplus: ':
-                count += 1            
-        except IndexError:
-            count += 1
+    try:
+        for txt in [unicode(rl, 'latin1').lower() for rl in string.split(gzip.open(fn).read(), '\n')]:
+            pos = txt.find(unicode(word))
+            if pos < 0: continue 
+            # Ignore some unnecessary gcc messages.
+            if 'should be explicitly initialized in the copy constructor' in txt: continue
+            if 'deprecated' in txt: continue
+            try:
+                if txt[pos-1] not in '/\\_'+string.ascii_letters and \
+                    txt[pos+len(word)] not in 's.' and \
+                    txt[pos-11:pos] != 'shlibdeps: ' and txt[pos-12:pos] != 'genchanges: ' and \
+                    txt[pos-12:pos] != 'cc1objplus: ':
+                    count += 1            
+            except IndexError:
+                count += 1
+    except:
+        pass
     return count
 
 
