@@ -277,9 +277,7 @@ void ClientApp::initialize()
     Plug_LoadAll();
 
     // Create the main window.
-    char title[256];
-    DD_ComposeMainWindowTitle(title);
-    d->winSys->createWindow()->setWindowTitle(title);
+    d->winSys->createWindow()->setWindowTitle(DD_ComposeMainWindowTitle());
 
     // Create the input system.
     d->inputSys = new InputSystem;

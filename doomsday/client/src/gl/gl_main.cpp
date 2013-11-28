@@ -396,7 +396,7 @@ void GL_ShutdownRefresh()
 
 void GL_Shutdown()
 {
-    if(!initGLOk)
+    if(!initGLOk || !ClientWindow::hasMain())
         return; // Not yet initialized fully.
 
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -420,6 +420,7 @@ void GL_Shutdown()
     FR_Shutdown();
     Rend_ModelShutdown();
     Sky_Shutdown();
+    LensFx_Shutdown();
     Rend_Reset();
 
     // Ensure the global texture collection is destroyed.

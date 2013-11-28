@@ -940,7 +940,7 @@ void GL_InitTextureManager()
 
 void GL_ResetTextureManager()
 {
-    if(!initedOk) return;
+    if(Sys_IsShuttingDown() || !initedOk) return;
     GL_ReleaseTextures();
     GL_PruneTextureVariantSpecifications();
     GL_LoadSystemTextures();

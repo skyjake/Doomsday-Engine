@@ -20,6 +20,7 @@
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
 #include "ui/style.h"
+#include "gl/gl_main.h"
 #include "clientapp.h"
 
 #include <QMap>
@@ -108,7 +109,10 @@ ClientWindow *WindowSystem::find(String const &id) const
 }
 
 void WindowSystem::closeAll()
-{
+{   
+    // We can't get rid of the windows without tearing down GL stuff first.
+    GL_Shutdown();
+
     qDeleteAll(d->windows.values());
     d->windows.clear();
 }

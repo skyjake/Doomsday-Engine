@@ -584,6 +584,8 @@ void DD_CreateTextureSchemes()
 
 void DD_ClearRuntimeTextureSchemes()
 {
+    if(Sys_IsShuttingDown()) return;
+
     Textures &textures = App_Textures();
 
     textures.scheme("Flats").clear();
@@ -1432,6 +1434,10 @@ de::Game &App_CurrentGame()
 
 bool App_ChangeGame(Game &game, bool allowReload)
 {
+#ifdef __CLIENT__
+    DENG_ASSERT(ClientWindow::hasMain());
+#endif
+
     //LOG_AS("App_ChangeGame");
 
     bool isReload = false;
@@ -1585,9 +1591,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     Library_ReleaseGames();
 
 #ifdef __CLIENT__
-    char buf[256];
-    DD_ComposeMainWindowTitle(buf);
-    ClientWindow::main().setWindowTitle(buf);
+    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
 #endif
 
     if(!DD_IsShuttingDown())
@@ -1610,8 +1614,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     App::app().setGame(game);
 
 #ifdef __CLIENT__
-    DD_ComposeMainWindowTitle(buf);
-    ClientWindow::main().setWindowTitle(buf);
+    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
 #endif
 
     /**
@@ -1684,20 +1687,23 @@ bool App_ChangeGame(Game &game, bool allowReload)
     DENG_ASSERT(DD_ActivePluginId() == 0);
 
 #ifdef __CLIENT__
-    /**
-     * Clear any input events we may have accumulated during this process.
-     * @note Only necessary here because we might not have been able to use
-     *       busy mode (which would normally do this for us on end).
-     */
-    DD_ClearEvents();
+    if(!Sys_IsShuttingDown())
+    {
+        /**
+         * Clear any input events we may have accumulated during this process.
+         * @note Only necessary here because we might not have been able to use
+         *       busy mode (which would normally do this for us on end).
+         */
+        DD_ClearEvents();
 
-    if(!App_GameLoaded())
-    {
-        ClientWindow::main().taskBar().open();
-    }
-    else
-    {
-        ClientWindow::main().console().clearLog();
+        if(!App_GameLoaded())
+        {
+            ClientWindow::main().taskBar().open();
+        }
+        else
+        {
+            ClientWindow::main().console().clearLog();
+        }
     }
 #endif
 
@@ -1815,9 +1821,7 @@ void DD_FinishInitializationAfterWindowReady()
     }
     else
     {
-        char buf[256];
-        DD_ComposeMainWindowTitle(buf);
-        ClientWindow::main().setWindowTitle(buf);
+        ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
     }
 #endif
 
