@@ -160,6 +160,13 @@ public:
      */
     GLTarget &renderTarget() const;
 
+    /**
+     * Returns the GL texture containing the depth buffer.
+     *
+     * @return GL depth target.
+     */
+    GLTexture &depthTexture() const;
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);

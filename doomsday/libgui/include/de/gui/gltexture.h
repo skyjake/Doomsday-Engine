@@ -150,6 +150,10 @@ public:
      */
     void setUndefinedImage(gl::CubeFace face, Size const &size, Image::Format format, int level = 0);
 
+    void setUndefinedContent(Size const &size, Image::GLFormat const &glFormat, int level = 0);
+
+    void setUndefinedContent(gl::CubeFace face, Size const &size, Image::GLFormat const &glFormat, int level = 0);
+
     /**
      * Sets the image content of the texture at a particular level. The format
      * of the image determines which GL format is chosen for the texture.

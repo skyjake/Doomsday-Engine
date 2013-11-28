@@ -20,6 +20,7 @@
 #include "de/Canvas"
 #include "de/CanvasWindow"
 #include "de/GLState"
+#include "de/GLTexture"
 #include "de/gui/opengl.h"
 
 #include <de/App>
@@ -44,6 +45,8 @@ static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 DENG2_PIMPL(Canvas)
 {
     GLTarget target;
+    GLTexture depthTexture; ///< Texture where framebuffer depth values are available.
+
     CanvasWindow *parent;
     bool readyNotified;
     Size currentSize;
@@ -62,7 +65,7 @@ DENG2_PIMPL(Canvas)
           readyNotified(false),
           //mouseDisabled(false),
           mouseGrabbed(false)
-    {
+    {        
         wheelDir[0] = wheelDir[1] = 0;
 #ifdef WIN32
         altIsDown = false;
@@ -268,6 +271,11 @@ GLTarget &Canvas::renderTarget() const
     return d->target;
 }
 
+GLTexture &Canvas::depthTexture() const
+{
+    return d->depthTexture;
+}
+
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
@@ -319,6 +327,10 @@ void Canvas::notifyReady()
     if(d->readyNotified) return;
 
     d->readyNotified = true;
+
+    // Set up a rendering target with depth texture.
+    //d->depthTexture.setUndefinedContent(size(), Image::GLFormat(GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, 2));
+    //d->target.configure(GLTarget::Depth, d->depthTexture, GLTarget::Color);
 
     LOG_DEBUG("Notifying GL ready");
 

@@ -309,6 +309,34 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
     setState(Ready);
 }
 
+void GLTexture::setUndefinedContent(Size const &size, Image::GLFormat const &glFormat, int level)
+{
+    d->texTarget = GL_TEXTURE_2D;
+    d->size = size;
+    d->format = Image::Unknown;
+
+    d->alloc();
+    d->glBind();
+    d->glImage(level, size, glFormat, NULL);
+    d->glUnbind();
+
+    setState(Ready);
+}
+
+void GLTexture::setUndefinedContent(CubeFace face, Size const &size, Image::GLFormat const &glFormat, int level)
+{
+    d->texTarget = GL_TEXTURE_CUBE_MAP;
+    d->size = size;
+    d->format = Image::Unknown;
+
+    d->alloc();
+    d->glBind();
+    d->glImage(level, size, glFormat, NULL, face);
+    d->glUnbind();
+
+    setState(Ready);
+}
+
 void GLTexture::setImage(Image const &image, int level)
 {
     d->texTarget = GL_TEXTURE_2D;

@@ -228,6 +228,7 @@ DENG2_PIMPL(LensFlares)
     GLUniform uMvpMatrix;
     GLUniform uViewUnit;
     GLUniform uAtlas;
+    GLUniform uDepthBuf;
 
     Instance(Public *i)
         : Base(i)
@@ -236,6 +237,7 @@ DENG2_PIMPL(LensFlares)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uViewUnit ("uViewUnit",  GLUniform::Vec2)
         , uAtlas    ("uTex",       GLUniform::Sampler2D)
+        , uDepthBuf ("uDepthBuf",  GLUniform::Sampler2D)
     {}
 
     ~Instance()
@@ -254,9 +256,10 @@ DENG2_PIMPL(LensFlares)
         drawable.addBuffer(buffer);
         self.shaders().build(drawable.program(), "fx.lensflares")
                 << uMvpMatrix << uViewUnit
-                << uAtlas;
+                << uAtlas << uDepthBuf;
 
         uAtlas = res->atlas;
+        //uDepthBuf = ClientWindow::main().canvas().depthTexture();
     }
 
     void glDeinit()

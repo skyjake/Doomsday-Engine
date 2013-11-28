@@ -54,6 +54,7 @@ public:
 
         ColorDepth        = Color | Depth,
         ColorDepthStencil = Color | Depth | Stencil,
+        ColorStencil      = Color | Stencil,
         DepthStencil      = Depth | Stencil,
 
         NoAttachments = 0,
@@ -100,6 +101,17 @@ public:
     GLTarget(Vector2ui const &size, Flags const &flags = DefaultFlags);
 
     Flags flags() const;
+
+    /**
+     * Changes the configuration of the render target. Any previously allocated
+     * renderbuffers are released.
+     *
+     * @param attachment  Where to attach @a texture.
+     * @param texture     Texture to render on.
+     * @param otherAttachments  Other supporting attachments (renderbuffers).
+     */
+    void configure(Flags const &attachment, GLTexture &texture,
+                   Flags const &otherAttachments = NoAttachments);
 
     /**
      * Activates this render target as the one where GL drawing is being done.

@@ -247,6 +247,19 @@ GLTarget::GLTarget(Vector2ui const &size, Flags const &flags)
     d->alloc();
 }
 
+void GLTarget::configure(Flags const &attachment, GLTexture &texture, Flags const &otherAttachments)
+{
+    d->release();
+
+    // Set new configuration.
+    d->texture = &texture;
+    d->textureAttachment = attachment;
+    d->flags = attachment | otherAttachments;
+    d->size = texture.size();
+
+    d->alloc();
+}
+
 void GLTarget::glBind() const
 {
     if(!isReady()) return;
