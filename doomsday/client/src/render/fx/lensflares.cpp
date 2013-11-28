@@ -379,8 +379,8 @@ DENG2_PIMPL(LensFlares)
             typedef Rangef Rgf;
             static Spec const specs[] = {
                 //  axisPos id                   color                          size    intensity min/max              radius min/max          angle min/max
-                {   1,      FlareData::Burst,    Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-8, 1.0e-6), Rgf(),    Rgf(), Rgf(/*.5f, .8f*/),   Rgf(), Rgf() },
-                //{   1,      FlareData::Star,     Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-6, 1.0e-5), Rgf(),    Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf() },
+                {   1,      FlareData::Burst,    Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-8, 1.0e-6), Rgf(),    Rgf(), Rgf(.5f, .8f),   Rgf(), Rgf() },
+                {   1,      FlareData::Star,     Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-6, 1.0e-5), Rgf(),    Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf() },
                 {   1,      FlareData::Exponent, Vector4f(1, 1, 1, 1),          2.5f,   Rgf(1.0e-6, 1.0e-5), Rgf(),    Rgf(.1f, .2f), Rgf(),   Rgf(), Rgf() },
 
                 {  .8f,     FlareData::Halo,     Vector4f(1, 1, 1, .5f),        1,      Rgf(5.0e-6, 5.0e-5), Rgf(),    Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf(30, 60) },
