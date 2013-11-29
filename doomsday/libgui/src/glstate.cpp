@@ -62,7 +62,46 @@ namespace internal
 
     /// Currently applied GL state properties.
     static BitField currentProps;
-    static GLTarget *currentTarget;
+
+    /// Observes the current target and clears the pointer if it happens to get
+    /// deleted.
+    class CurrentTarget : DENG2_OBSERVES(Asset, Deletion) {
+        GLTarget *_target;
+        void assetDeleted(Asset &asset) {
+            if(&asset == _target) {
+                qDebug() << "GLState: Current target destroyed, clearing pointer";
+                _target = 0;
+            }
+        }
+    public:
+        CurrentTarget() : _target(0) {}
+        ~CurrentTarget() {
+            set(0);
+        }
+        void set(GLTarget *trg) {
+            if(_target) {
+                _target->audienceForDeletion -= this;
+            }
+            _target = trg;
+            if(_target) {
+                _target->audienceForDeletion += this;
+            }
+        }
+        CurrentTarget &operator = (GLTarget *trg) {
+            set(trg);
+            return *this;
+        }
+        bool operator != (GLTarget *trg) const {
+            return _target != trg;
+        }
+        GLTarget *get() const {
+            return _target;
+        }
+        operator GLTarget *() const {
+            return _target;
+        }
+    };
+    static CurrentTarget currentTarget;
 }
 
 using namespace internal;
@@ -507,18 +546,22 @@ void GLState::apply() const
 {
     bool forceViewportAndScissor = false;
 
-
     // Update the render target.
-    if(currentTarget != d->target)
+    GLTarget *newTarget = &target();
+    DENG2_ASSERT(newTarget != 0);
+
+    if(currentTarget != newTarget)
     {
-        GLTarget const &oldTarget = (currentTarget? *currentTarget :
-                                     CanvasWindow::main().canvas().renderTarget());
+        GLTarget const *oldTarget = currentTarget;
+        if(oldTarget)
+        {
+            oldTarget->glRelease();
+        }
 
-        if(currentTarget) currentTarget->glRelease();
-        currentTarget = d->target;
-        if(currentTarget) currentTarget->glBind();
+        currentTarget = newTarget;
+        currentTarget.get()->glBind();
 
-        if(oldTarget.hasActiveRect() || target().hasActiveRect())
+        if((oldTarget && oldTarget->hasActiveRect()) || newTarget->hasActiveRect())
         {
             // We can't trust that the viewport or scissor can remain the same
             // as the active rectangle may have changed.

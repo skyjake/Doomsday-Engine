@@ -27,6 +27,7 @@
 namespace de {
 
 DENG2_PIMPL(GLUniform)
+, DENG2_OBSERVES(Asset, Deletion)
 {
     Block name;
     Type type;
@@ -88,6 +89,10 @@ DENG2_PIMPL(GLUniform)
             delete value.mat4;
             break;
 
+        case Sampler2D:
+            if(value.tex) value.tex->audienceForDeletion -= this;
+            break;
+
         default:
             break;
         }
@@ -139,6 +144,18 @@ DENG2_PIMPL(GLUniform)
         DENG2_FOR_PUBLIC_AUDIENCE(ValueChange, i)
         {
             i->uniformValueChanged(self);
+        }
+    }
+
+    void assetDeleted(Asset &asset)
+    {
+        if(type == Sampler2D)
+        {
+            if(value.tex == &asset)
+            {
+                // No more texture to refer to.
+                value.tex = 0;
+            }
         }
     }
 };
@@ -262,8 +279,13 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
 
     if(d->value.tex != texture)
     {
+        // We will observe the texture this uniform refers to.
+        if(d->value.tex) d->value.tex->audienceForDeletion -= d;
+
         d->value.tex = texture;
         d->markAsChanged();
+
+        if(d->value.tex) d->value.tex->audienceForDeletion += d;
     }
     return *this;
 }
@@ -360,6 +382,7 @@ Matrix4f const &GLUniform::toMatrix4f() const
 
 GLTexture const *GLUniform::texture() const
 {
+    DENG2_ASSERT(d->type == Sampler2D);
     return d->value.tex;
 }
 
