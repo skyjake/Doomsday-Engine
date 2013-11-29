@@ -126,18 +126,6 @@ DENG2_OBSERVES(Asset, Deletion)
         return 0;
     }
 
-    void attachRenderbuffer(AttachmentId id, GLenum type, GLenum attachment)
-    {
-        DENG2_ASSERT(size != Vector2ui(0, 0));
-
-        glGenRenderbuffers       (1, &renderBufs[id]);
-        glBindRenderbuffer       (GL_RENDERBUFFER, renderBufs[id]);
-        glRenderbufferStorage    (GL_RENDERBUFFER, type, size.x, size.y);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER,  attachment,
-                                  GL_RENDERBUFFER, renderBufs[id]);
-        LIBGUI_ASSERT_GL_OK();
-    }
-
     void allocFBO()
     {
         if(isDefault() || fbo) return;
@@ -159,6 +147,18 @@ DENG2_OBSERVES(Asset, Deletion)
         LIBGUI_ASSERT_GL_OK();
 
         bufTextures[attachmentToId(attachment)] = &tex;
+    }
+
+    void attachRenderbuffer(AttachmentId id, GLenum type, GLenum attachment)
+    {
+        DENG2_ASSERT(size != Vector2ui(0, 0));
+
+        glGenRenderbuffers       (1, &renderBufs[id]);
+        glBindRenderbuffer       (GL_RENDERBUFFER, renderBufs[id]);
+        glRenderbufferStorage    (GL_RENDERBUFFER, type, size.x, size.y);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER,  attachment,
+                                  GL_RENDERBUFFER, renderBufs[id]);
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void alloc()
@@ -284,7 +284,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void assetDeleted(Asset &asset)
     {
-        if(&asset == texture)
+        if(texture == &asset)
         {
             release();
         }
@@ -511,8 +511,7 @@ Vector2f GLTarget::activeRectNormalizedOffset() const
     {
         return Vector2f(0, 0);
     }
-    return Vector2f(float(d->activeRect.left()) / float(size().x),
-                    float(d->activeRect.top())  / float(size().y));
+    return Vector2f(d->activeRect.topLeft) / size();
 }
 
 Rectangleui GLTarget::scaleToActiveRect(Rectangleui const &rectInTarget) const
