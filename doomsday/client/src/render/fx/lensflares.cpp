@@ -227,6 +227,7 @@ DENG2_PIMPL(LensFlares)
     Drawable drawable;
     GLUniform uMvpMatrix;
     GLUniform uViewUnit;
+    GLUniform uPixelAsUv;
     GLUniform uAtlas;
     GLUniform uDepthBuf;
 
@@ -236,6 +237,7 @@ DENG2_PIMPL(LensFlares)
         , buffer(0)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uViewUnit ("uViewUnit",  GLUniform::Vec2)
+        , uPixelAsUv("uPixelAsUv", GLUniform::Vec2)
         , uAtlas    ("uTex",       GLUniform::Sampler2D)
         , uDepthBuf ("uDepthBuf",  GLUniform::Sampler2D)
     {}
@@ -255,7 +257,7 @@ DENG2_PIMPL(LensFlares)
         buffer = new VBuf;
         drawable.addBuffer(buffer);
         self.shaders().build(drawable.program(), "fx.lensflares")
-                << uMvpMatrix << uViewUnit
+                << uMvpMatrix << uViewUnit << uPixelAsUv
                 << uAtlas << uDepthBuf;
 
         uAtlas = res->atlas;
@@ -485,9 +487,12 @@ void LensFlares::draw()
     Rectanglef const rect = viewRect();
     float const    aspect = rect.height() / rect.width();
 
+    Canvas &canvas = ClientWindow::main().canvas();
+
     d->uViewUnit  = Vector2f(aspect, 1.f);
+    d->uPixelAsUv = Vector2f(1.f / canvas.width(), 1.f / canvas.height());
     d->uMvpMatrix = GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
-    d->uDepthBuf  = ClientWindow::main().canvas().depthBufferTexture();
+    d->uDepthBuf  = canvas.depthBufferTexture();
 
     GLState::push()
             .setCull(gl::None)

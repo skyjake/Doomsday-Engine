@@ -177,9 +177,9 @@ public:
 
     /**
      * Sets the subregion inside the render target where scissor and viewport
-     * will be constrained to. Scissor and viewport can still be defined as if
-     * the entire window was in use; the target window only applies an offset
-     * and scaling to both.
+     * will be scaled into. Scissor and viewport can still be defined as if the
+     * entire window was in use; this only applies an offset and scaling to
+     * both.
      *
      * @param rect   Target window rectangle. Set a null rectangle to
      *               use the entire window (like normally).
