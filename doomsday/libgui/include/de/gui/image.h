@@ -27,6 +27,7 @@
 #include <de/ISerializable>
 
 #include "libgui.h"
+#include "../GLPixelFormat"
 
 namespace de {
 
@@ -65,15 +66,6 @@ public:
 
     typedef Vector2ui Size;
     typedef Vector4ub Color;
-
-    /// GL format + type for glTex(Sub)Image.
-    struct GLFormat {
-        duint format;
-        duint type;
-        duint rowAlignment;
-
-        GLFormat(duint f, duint t = 0, duint ra = 0) : format(f), type(t), rowAlignment(ra) {}
-    };
 
 public:
     Image();
@@ -143,7 +135,7 @@ public:
      */
     QImage toQImage() const;
 
-    GLFormat glFormat() const;
+    GLPixelFormat glFormat() const;
 
     // Drawing/editing methods.
     Image subImage(Rectanglei const &subArea) const;
@@ -157,8 +149,8 @@ public:
     void operator << (Reader &from);
 
 public:
-    static GLFormat glFormat(Format imageFormat);
-    static GLFormat glFormat(QImage::Format qtImageFormat);
+    static GLPixelFormat glFormat(Format imageFormat);
+    static GLPixelFormat glFormat(QImage::Format qtImageFormat);
 
     static Image solidColor(Color const &color, Size const &size);
 
