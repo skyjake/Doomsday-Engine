@@ -171,8 +171,11 @@ DENG2_PIMPL(GLTexture)
                  void const *data, CubeFace face = PositiveX)
     {
         /// @todo GLES2: Check for the BGRA extension.
-        GLenum const internalFormat = (glFormat.format == GL_BGRA? GL_RGBA : glFormat.format);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
+        GLenum const internalFormat =
+                (glFormat.format == GL_BGRA?          GL_RGBA :
+                 glFormat.format == GL_DEPTH_STENCIL? GL_DEPTH24_STENCIL8 :
+                                                      glFormat.format);
+        if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexImage2D(isCube()? glFace(face) : texTarget,
                      level, internalFormat, size.x, size.y, 0,
                      glFormat.format, glFormat.type, data);
@@ -183,7 +186,7 @@ DENG2_PIMPL(GLTexture)
     void glSubImage(int level, Vector2i const &pos, Size const &size,
                     Image::GLFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
-        glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
+        if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexSubImage2D(isCube()? glFace(face) : texTarget,
                         level, pos.x, pos.y, size.x, size.y,
                         glFormat.format, glFormat.type, data);

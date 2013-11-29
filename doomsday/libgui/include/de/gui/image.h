@@ -72,7 +72,7 @@ public:
         duint type;
         duint rowAlignment;
 
-        GLFormat(duint f, duint t, duint ra) : format(f), type(t), rowAlignment(ra) {}
+        GLFormat(duint f, duint t = 0, duint ra = 0) : format(f), type(t), rowAlignment(ra) {}
     };
 
 public:
