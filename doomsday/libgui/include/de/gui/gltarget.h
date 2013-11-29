@@ -103,6 +103,26 @@ public:
     Flags flags() const;
 
     /**
+     * Reconfigures the render target back to the default OpenGL framebuffer.
+     * All attachments will be released.
+     */
+    void configure();
+
+    /**
+     * Reconfigures the render target with two textures, one for the color
+     * values and one for depth/stencil values.
+     *
+     * If @a colorTex or @a depthStencilTex is omitted, a renderbuffer will be
+     * created in its place.
+     *
+     * Any previous attachments are released.
+     *
+     * @param colorTex         Texture for color values.
+     * @param depthStencilTex  Texture for depth/stencil values.
+     */
+    void configure(GLTexture *colorTex, GLTexture *depthStencilTex);
+
+    /**
      * Changes the configuration of the render target. Any previously allocated
      * renderbuffers are released.
      *

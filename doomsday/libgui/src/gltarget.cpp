@@ -94,12 +94,28 @@ DENG2_OBSERVES(Asset, Deletion)
         LIBGUI_ASSERT_GL_OK();
     }
 
-    void alloc()
+    void allocFBO()
     {
         if(isDefault() || fbo) return;
 
         glGenFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+        LOG_DEBUG("Creating FBO %i") << fbo;
+    }
+
+    void attachTexture(GLuint texName, GLenum attachment, int level = 0)
+    {
+        LOG_DEBUG("glTex %i (level %i) => FBO attachment 0x%x") << texName << level << attachment;
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texName, level);
+
+        LIBGUI_ASSERT_GL_OK();
+    }
+
+    void alloc()
+    {
+        allocFBO();
 
         if(texture)
         {
@@ -112,12 +128,11 @@ DENG2_OBSERVES(Asset, Deletion)
                          textureAttachment == Stencil ||
                          textureAttachment == DepthStencil);
 
-            glFramebufferTexture2D(GL_FRAMEBUFFER,
-                                   textureAttachment == Color?   GL_COLOR_ATTACHMENT0  :
-                                   textureAttachment == Depth?   GL_DEPTH_ATTACHMENT   :
-                                   textureAttachment == Stencil? GL_STENCIL_ATTACHMENT :
-                                                                 GL_DEPTH_STENCIL_ATTACHMENT,
-                                   GL_TEXTURE_2D, texture->glName(), 0);
+            attachTexture(texture->glName(),
+                          textureAttachment == Color?   GL_COLOR_ATTACHMENT0  :
+                          textureAttachment == Depth?   GL_DEPTH_ATTACHMENT   :
+                          textureAttachment == Stencil? GL_STENCIL_ATTACHMENT :
+                                                        GL_DEPTH_STENCIL_ATTACHMENT);
         }
 
         if(size != nullSize) // A non-default target: size must be specified.
@@ -136,12 +151,14 @@ DENG2_OBSERVES(Asset, Deletion)
         if(flags.testFlag(Color) && !textureAttachment.testFlag(Color))
         {
             /// @todo Note that for GLES, GL_RGBA8 is not supported (without an extension).
+            LOG_DEBUG("FBO color attachment %s") << size.asText();
             attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
         }
 
         if(flags.testFlag(DepthStencil) && (!texture || textureAttachment == Color))
         {
             // We can use a combined depth/stencil buffer.
+            LOG_DEBUG("FBO depth+stencil attachment %s") << size.asText();
             attachRenderbuffer(DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
         }
         else
@@ -149,10 +166,12 @@ DENG2_OBSERVES(Asset, Deletion)
             // Separate depth and stencil, then.
             if(flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
             {
+                LOG_DEBUG("FBO depth attachment %s") << size.asText();
                 attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT16, GL_DEPTH_ATTACHMENT);
             }
             if(flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
             {
+                LOG_DEBUG("FBO stencil attachment %s") << size.asText();
                 attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX8, GL_STENCIL_ATTACHMENT);
             }
         }
@@ -200,7 +219,8 @@ DENG2_OBSERVES(Asset, Deletion)
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
-        GLState::top().target().glBind();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        GLState::considerNativeStateUndefined(); // state was manually changed
 
         if(status != GL_FRAMEBUFFER_COMPLETE)
         {
@@ -232,23 +252,84 @@ GLTarget::GLTarget() : d(new Instance(this))
 GLTarget::GLTarget(GLTexture &colorTarget, Flags const &otherAttachments)
     : d(new Instance(this, Color, colorTarget, otherAttachments))
 {
+    LOG_AS("GLTarget");
     d->alloc();
 }
 
 GLTarget::GLTarget(Flags const &attachment, GLTexture &texture, Flags const &otherAttachments)
     : d(new Instance(this, attachment, texture, otherAttachments))
 {
+    LOG_AS("GLTarget");
     d->alloc();
 }
 
 GLTarget::GLTarget(Vector2ui const &size, Flags const &flags)
     : d(new Instance(this, size, flags))
 {
+    LOG_AS("GLTarget");
     d->alloc();
+}
+
+void GLTarget::configure()
+{
+    LOG_AS("GLTarget");
+
+    d->release();
+
+    d->texture = 0;
+    d->textureAttachment = NoAttachments;
+    d->flags = NoAttachments;
+    d->size = nullSize;
+
+    setState(Ready);
+}
+
+void GLTarget::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
+{
+    DENG2_ASSERT(colorTex || depthStencilTex);
+
+    LOG_AS("GLTarget");
+
+    d->release();
+
+    d->texture = 0;
+    d->textureAttachment = NoAttachments;
+    d->flags = ColorDepthStencil;
+    d->size = (colorTex? colorTex->size() : depthStencilTex->size());
+
+    d->allocFBO();
+
+    // The color attachment.
+    if(colorTex)
+    {
+        DENG2_ASSERT(colorTex->isReady());
+        DENG2_ASSERT(d->size == colorTex->size());
+        d->attachTexture(colorTex->glName(), GL_COLOR_ATTACHMENT0);
+    }
+    else
+    {
+        d->attachRenderbuffer(Instance::ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
+    }
+
+    // The depth attachment.
+    if(depthStencilTex)
+    {
+        DENG2_ASSERT(depthStencilTex->isReady());
+        DENG2_ASSERT(d->size == depthStencilTex->size());
+        d->attachTexture(depthStencilTex->glName(), GL_DEPTH_STENCIL_ATTACHMENT);
+    }
+    else
+    {
+        d->attachRenderbuffer(Instance::DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
+    }
+
+    d->validate();
 }
 
 void GLTarget::configure(Flags const &attachment, GLTexture &texture, Flags const &otherAttachments)
 {
+    LOG_AS("GLTarget");
+
     d->release();
 
     // Set new configuration.
@@ -262,6 +343,7 @@ void GLTarget::configure(Flags const &attachment, GLTexture &texture, Flags cons
 
 void GLTarget::glBind() const
 {
+    DENG2_ASSERT(isReady());
     if(!isReady()) return;
 
     glBindFramebuffer(GL_FRAMEBUFFER, d->fbo);
