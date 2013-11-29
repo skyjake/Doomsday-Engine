@@ -459,6 +459,7 @@ class Vector4 : public Vector3<Type>
 public:
     Vector4(Type a = 0, Type b = 0, Type c = 0, Type d = 0) : Vector3<Type>(a, b, c), w(d) {}
     Vector4(Vector3<Type> const &v3, Type d = 0) : Vector3<Type>(v3), w(d) {}
+    Vector4(Vector2<Type> const &a, Vector2<Type> const &b) : Vector3<Type>(a, b.x), w(b.y) {}
     Vector4(Type const *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
 
     /// Implicit conversion operator to a float vector.

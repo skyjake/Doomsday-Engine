@@ -197,10 +197,10 @@ public:
 
     void unsetActiveRect(bool applyGLState = false);
 
+    Vector2f activeRectScale() const;
+    Vector2f activeRectNormalizedOffset() const;
     Rectangleui scaleToActiveRect(Rectangleui const &rect) const;
-
     Rectangleui const &activeRect() const;
-
     bool hasActiveRect() const;
 
 private:

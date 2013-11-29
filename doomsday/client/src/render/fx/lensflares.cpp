@@ -228,6 +228,7 @@ DENG2_PIMPL(LensFlares)
     GLUniform uMvpMatrix;
     GLUniform uViewUnit;
     GLUniform uPixelAsUv;
+    GLUniform uActiveRect;
     GLUniform uAtlas;
     GLUniform uDepthBuf;
 
@@ -235,11 +236,12 @@ DENG2_PIMPL(LensFlares)
         : Base(i)
         , res(0)
         , buffer(0)
-        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uViewUnit ("uViewUnit",  GLUniform::Vec2)
-        , uPixelAsUv("uPixelAsUv", GLUniform::Vec2)
-        , uAtlas    ("uTex",       GLUniform::Sampler2D)
-        , uDepthBuf ("uDepthBuf",  GLUniform::Sampler2D)
+        , uMvpMatrix ("uMvpMatrix",  GLUniform::Mat4)
+        , uViewUnit  ("uViewUnit",   GLUniform::Vec2)
+        , uPixelAsUv ("uPixelAsUv",  GLUniform::Vec2)
+        , uActiveRect("uActiveRect", GLUniform::Vec4)
+        , uAtlas     ("uTex",        GLUniform::Sampler2D)
+        , uDepthBuf  ("uDepthBuf",   GLUniform::Sampler2D)
     {}
 
     ~Instance()
@@ -257,7 +259,8 @@ DENG2_PIMPL(LensFlares)
         buffer = new VBuf;
         drawable.addBuffer(buffer);
         self.shaders().build(drawable.program(), "fx.lensflares")
-                << uMvpMatrix << uViewUnit << uPixelAsUv
+                << uMvpMatrix
+                << uViewUnit << uPixelAsUv << uActiveRect
                 << uAtlas << uDepthBuf;
 
         uAtlas = res->atlas;
@@ -489,9 +492,13 @@ void LensFlares::draw()
     d->uMvpMatrix = GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
     // Depth information is required for occlusion.
-    GLTexture *depthTex = GLState::top().target().attachedTexture(GLTarget::Depth);
+    GLTarget &target = GLState::top().target();
+    GLTexture *depthTex = target.attachedTexture(GLTarget::Depth);
     /// @todo Handle the situation if depth information is not available in the target.
     d->uDepthBuf = depthTex;
+
+    d->uActiveRect = Vector4f(target.activeRectScale(),
+                              target.activeRectNormalizedOffset());
 
     GLState::push()
             .setCull(gl::None)

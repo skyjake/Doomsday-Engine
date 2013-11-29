@@ -496,6 +496,25 @@ void GLTarget::unsetActiveRect(bool applyGLState)
     setActiveRect(Rectangleui(), applyGLState);
 }
 
+Vector2f GLTarget::activeRectScale() const
+{
+    if(!hasActiveRect())
+    {
+        return Vector2f(1, 1);
+    }
+    return Vector2f(d->activeRect.size()) / size();
+}
+
+Vector2f GLTarget::activeRectNormalizedOffset() const
+{
+    if(!hasActiveRect())
+    {
+        return Vector2f(0, 0);
+    }
+    return Vector2f(float(d->activeRect.left()) / float(size().x),
+                    float(d->activeRect.top())  / float(size().y));
+}
+
 Rectangleui GLTarget::scaleToActiveRect(Rectangleui const &rectInTarget) const
 {
     // If no sub rectangle is defined, do nothing.
@@ -504,7 +523,7 @@ Rectangleui GLTarget::scaleToActiveRect(Rectangleui const &rectInTarget) const
         return rectInTarget;
     }
 
-    Vector2f const scaling = Vector2f(d->activeRect.size()) / size();
+    Vector2f const scaling = activeRectScale();
 
     return Rectangleui(d->activeRect.left()  + scaling.x * rectInTarget.left(),
                        d->activeRect.top()   + scaling.y * rectInTarget.top(),
