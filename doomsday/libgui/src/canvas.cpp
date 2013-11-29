@@ -25,6 +25,7 @@
 
 #include <de/App>
 #include <de/Log>
+#include <de/Drawable>
 
 #include <QApplication>
 #include <QKeyEvent>
@@ -44,13 +45,24 @@ static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
 DENG2_PIMPL(Canvas)
 {
+    enum FramebufferMode {
+        AutomaticFramebuffer,
+        ManualFramebuffer
+    };
+    FramebufferMode framebufMode;
+
     GLTarget target;
-    GLTexture depthTexture; ///< Texture where framebuffer depth values are available.
+    GLTexture backBuffer; ///< Texture where color values are written.
+    GLTexture depthStencilBuffer; ///< Texture where framebuffer depth values are stored.
+
+    Drawable bufSwap;
+    GLUniform uMvpMatrix;
+    GLUniform uBufTex;
+    typedef GLBufferT<Vertex2Tex> VBuf;
 
     CanvasWindow *parent;
     bool readyNotified;
     Size currentSize;
-    //bool mouseDisabled;
     bool mouseGrabbed;
 #ifdef WIN32
     bool altIsDown;
@@ -60,11 +72,13 @@ DENG2_PIMPL(Canvas)
     int wheelDir[2];
 
     Instance(Public *i, CanvasWindow *parentWindow)
-        : Base(i),
-          parent(parentWindow),
-          readyNotified(false),
-          //mouseDisabled(false),
-          mouseGrabbed(false)
+        : Base(i)
+        , framebufMode(AutomaticFramebuffer)
+        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uBufTex("uTex", GLUniform::Sampler2D)
+        , parent(parentWindow)
+        , readyNotified(false)
+        , mouseGrabbed(false)
     {        
         wheelDir[0] = wheelDir[1] = 0;
 #ifdef WIN32
@@ -168,6 +182,78 @@ DENG2_PIMPL(Canvas)
                                  (ev->modifiers().testFlag(Qt::MetaModifier)?    KeyEvent::Meta    : KeyEvent::NoModifiers)));
         }
     }
+
+    void reconfigureFramebuffer()
+    {
+        if(framebufMode == ManualFramebuffer)
+        {
+            /// @todo For multisampling there should be a bigger back buffer.
+            backBuffer.setUndefinedImage(currentSize, Image::RGB_888);
+            depthStencilBuffer.setUndefinedContent(currentSize, Image::GLFormat(GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8));
+            target.configure(&backBuffer, &depthStencilBuffer);
+        }
+    }
+
+    void glInit()
+    {
+        DENG2_ASSERT(parent != 0);
+
+        VBuf *buf = new VBuf;
+        bufSwap.addBuffer(buf);
+        bufSwap.program().build(// Vertex shader:
+                                Block("uniform highp mat4 uMvpMatrix; "
+                                      "attribute highp vec4 aVertex; "
+                                      "attribute highp vec2 aUV; "
+                                      "varying highp vec2 vUV; "
+                                      "void main(void) {"
+                                          "gl_Position = uMvpMatrix * aVertex; "
+                                          "vUV = aUV; }"),
+                                // Fragment shader:
+                                Block("uniform sampler2D uTex; "
+                                      "varying highp vec2 vUV; "
+                                      "void main(void) { "
+                                          "gl_FragColor = texture2D(uTex, vUV); }"))
+                << uMvpMatrix
+                << uBufTex;
+
+        buf->setVertices(gl::TriangleStrip,
+                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
+                         gl::Static);
+
+        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+        uBufTex = backBuffer;
+    }
+
+    void glDeinit()
+    {
+        bufSwap.clear();
+    }
+
+    void swapBuffers()
+    {
+        switch(framebufMode)
+        {
+        case AutomaticFramebuffer:
+            self.QGLWidget::swapBuffers();
+            break;
+
+        case ManualFramebuffer: {
+            /// @todo Double buffering is not really needed in manual FB mode.
+            GLTarget defaultTarget;
+            GLState::push()
+                    .setTarget(defaultTarget)
+                    .setViewport(Rectangleui::fromSize(self.size()));
+
+            // Draw the back buffer texture to the main framebuffer.
+            bufSwap.draw();
+
+            self.QGLWidget::swapBuffers();
+
+            GLState::pop().apply();
+            break; }
+        }
+
+    }
 };
 
 Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
@@ -230,8 +316,6 @@ Canvas::Size Canvas::size() const
 
 void Canvas::trapMouse(bool trap)
 {
-    //if(d->mouseDisabled) return;
-
     if(trap)
     {
         d->grabMouse();
@@ -271,9 +355,14 @@ GLTarget &Canvas::renderTarget() const
     return d->target;
 }
 
-GLTexture &Canvas::depthTexture() const
+GLTexture &Canvas::depthBufferTexture() const
 {
-    return d->depthTexture;
+    return d->depthStencilBuffer;
+}
+
+void Canvas::swapBuffers()
+{
+    d->swapBuffers();
 }
 
 void Canvas::initializeGL()
@@ -296,6 +385,7 @@ void Canvas::resizeGL(int w, int h)
     if(d->currentSize != newSize)
     {
         d->currentSize = newSize;
+        d->reconfigureFramebuffer();
 
         DENG2_FOR_AUDIENCE(GLResize, i) i->canvasGLResized(*this);
     }
@@ -328,9 +418,17 @@ void Canvas::notifyReady()
 
     d->readyNotified = true;
 
-    // Set up a rendering target with depth texture.
-    //d->depthTexture.setUndefinedContent(size(), Image::GLFormat(GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, 2));
-    //d->target.configure(GLTarget::Depth, d->depthTexture, GLTarget::Color);
+#if 1
+    {
+        d->framebufMode = Instance::ManualFramebuffer;
+
+        d->glInit();
+
+        // Set up a rendering target with depth texture.
+        LOG_DEBUG("Using manually configured framebuffer in Canvas, size ") << size().asText();
+        d->reconfigureFramebuffer();
+    }
+#endif
 
     LOG_DEBUG("Notifying GL ready");
 

@@ -165,7 +165,12 @@ public:
      *
      * @return GL depth target.
      */
-    GLTexture &depthTexture() const;
+    GLTexture &depthBufferTexture() const;
+
+    /**
+     * Copies or swaps the back buffer to the front, making it visible.
+     */
+    void swapBuffers();
 
 protected:
     void initializeGL();
