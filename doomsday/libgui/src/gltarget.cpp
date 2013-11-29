@@ -32,18 +32,42 @@ static Vector2ui const nullSize;
 DENG2_PIMPL(GLTarget),
 DENG2_OBSERVES(Asset, Deletion)
 {
-    enum RenderBufId {
+    enum AttachmentId {
         ColorBuffer,
         DepthBuffer,
         StencilBuffer,
-        MAX_BUFFERS
+        MAX_ATTACHMENTS
     };
 
+    static AttachmentId attachmentToId(GLenum atc)
+    {
+        switch(atc)
+        {
+        case GL_COLOR_ATTACHMENT0:
+            return ColorBuffer;
+
+        case GL_DEPTH_ATTACHMENT:
+            return DepthBuffer;
+
+        case GL_STENCIL_ATTACHMENT:
+            return StencilBuffer;
+
+        case GL_DEPTH_STENCIL_ATTACHMENT:
+            return DepthBuffer;
+
+        default:
+            DENG2_ASSERT(false);
+            break;
+        }
+        return ColorBuffer; // should not be reached
+    }
+
     GLuint fbo;
-    GLuint renderBufs[MAX_BUFFERS];
+    GLuint renderBufs[MAX_ATTACHMENTS];
+    GLTexture *bufTextures[MAX_ATTACHMENTS];
     Flags flags;
     Flags textureAttachment;    ///< Where to attach @a texture.
-    GLTexture *texture;
+    GLTexture *texture;    
     Vector2ui size;
     Vector4f clearColor;
     Rectangleui activeRect; ///< Initially null.
@@ -54,6 +78,7 @@ DENG2_OBSERVES(Asset, Deletion)
           texture(0)
     {
         zap(renderBufs);
+        zap(bufTextures);
     }
 
     Instance(Public *i, Flags const &texAttachment, GLTexture &colorTexture, Flags const &otherAtm)
@@ -62,6 +87,7 @@ DENG2_OBSERVES(Asset, Deletion)
           texture(&colorTexture), size(colorTexture.size())
     {
         zap(renderBufs);
+        zap(bufTextures);
     }
 
     Instance(Public *i, Vector2ui const &targetSize, Flags const &fboFlags)
@@ -70,6 +96,7 @@ DENG2_OBSERVES(Asset, Deletion)
           texture(0), size(targetSize)
     {
         zap(renderBufs);
+        zap(bufTextures);
     }
 
     ~Instance()
@@ -82,7 +109,24 @@ DENG2_OBSERVES(Asset, Deletion)
         return !texture && size == nullSize;
     }
 
-    void attachRenderbuffer(RenderBufId id, GLenum type, GLenum attachment)
+    GLTexture *bufferTexture(Flags const &flags) const
+    {
+        if(flags == Color)
+        {
+            return bufTextures[ColorBuffer];
+        }
+        if(flags == DepthStencil || flags == Depth)
+        {
+            return bufTextures[DepthBuffer];
+        }
+        if(flags == Stencil)
+        {
+            return bufTextures[StencilBuffer];
+        }
+        return 0;
+    }
+
+    void attachRenderbuffer(AttachmentId id, GLenum type, GLenum attachment)
     {
         DENG2_ASSERT(size != Vector2ui(0, 0));
 
@@ -104,13 +148,17 @@ DENG2_OBSERVES(Asset, Deletion)
         LOG_DEBUG("Creating FBO %i") << fbo;
     }
 
-    void attachTexture(GLuint texName, GLenum attachment, int level = 0)
+    void attachTexture(GLTexture &tex, GLenum attachment, int level = 0)
     {
-        LOG_DEBUG("glTex %i (level %i) => FBO attachment 0x%x") << texName << level << attachment;
+        DENG2_ASSERT(tex.isReady());
 
-        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texName, level);
+        LOG_DEBUG("glTex %i (level %i) => FBO attachment %i (0x%x)")
+                << tex.glName() << level << attachmentToId(attachment) << attachment;
 
+        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
         LIBGUI_ASSERT_GL_OK();
+
+        bufTextures[attachmentToId(attachment)] = &tex;
     }
 
     void alloc()
@@ -119,16 +167,13 @@ DENG2_OBSERVES(Asset, Deletion)
 
         if(texture)
         {
-            // Target renders to texture.
-            DENG2_ASSERT(texture->isReady());
-
             // The texture's attachment point must be unambiguously defined.
             DENG2_ASSERT(textureAttachment == Color   ||
                          textureAttachment == Depth   ||
                          textureAttachment == Stencil ||
                          textureAttachment == DepthStencil);
 
-            attachTexture(texture->glName(),
+            attachTexture(*texture,
                           textureAttachment == Color?   GL_COLOR_ATTACHMENT0  :
                           textureAttachment == Depth?   GL_DEPTH_ATTACHMENT   :
                           textureAttachment == Stencil? GL_STENCIL_ATTACHMENT :
@@ -181,8 +226,9 @@ DENG2_OBSERVES(Asset, Deletion)
 
     void releaseRenderBuffers()
     {
-        glDeleteRenderbuffers(MAX_BUFFERS, renderBufs);
+        glDeleteRenderbuffers(MAX_ATTACHMENTS, renderBufs);
         zap(renderBufs);
+        zap(bufTextures);
     }
 
     void release()
@@ -194,6 +240,7 @@ DENG2_OBSERVES(Asset, Deletion)
             glDeleteFramebuffers(1, &fbo);
             fbo = 0;
         }
+        zap(bufTextures);
         texture = 0;
         size = Vector2ui(0, 0);
     }
@@ -304,7 +351,7 @@ void GLTarget::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
     {
         DENG2_ASSERT(colorTex->isReady());
         DENG2_ASSERT(d->size == colorTex->size());
-        d->attachTexture(colorTex->glName(), GL_COLOR_ATTACHMENT0);
+        d->attachTexture(*colorTex, GL_COLOR_ATTACHMENT0);
     }
     else
     {
@@ -316,7 +363,7 @@ void GLTarget::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
     {
         DENG2_ASSERT(depthStencilTex->isReady());
         DENG2_ASSERT(d->size == depthStencilTex->size());
-        d->attachTexture(depthStencilTex->glName(), GL_DEPTH_STENCIL_ATTACHMENT);
+        d->attachTexture(*depthStencilTex, GL_DEPTH_STENCIL_ATTACHMENT);
     }
     else
     {
@@ -408,6 +455,11 @@ void GLTarget::resize(Size const &size)
     }
     d->resizeRenderBuffers(size);
     GLState::top().target().glBind();
+}
+
+GLTexture *GLTarget::attachedTexture(Flags const &attachment) const
+{
+    return d->bufferTexture(attachment);
 }
 
 GLuint GLTarget::glName() const

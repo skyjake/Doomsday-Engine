@@ -477,22 +477,21 @@ void fx::LensFlares::beginFrame()
 void LensFlares::draw()
 {
     viewdata_t const *viewData = R_ViewData(console());
-    /*
-    d->uEyePos   = Vector3f(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
-    d->uEyeFront = Vector3f(viewData->frontVec);
-    */
-
     d->eyeFront = Vector3f(viewData->frontVec);
 
     Rectanglef const rect = viewRect();
-    float const    aspect = rect.height() / rect.width();
+    float const aspect = rect.height() / rect.width();
 
     Canvas &canvas = ClientWindow::main().canvas();
 
     d->uViewUnit  = Vector2f(aspect, 1.f);
     d->uPixelAsUv = Vector2f(1.f / canvas.width(), 1.f / canvas.height());
     d->uMvpMatrix = GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
-    d->uDepthBuf  = canvas.depthBufferTexture();
+
+    // Depth information is required for occlusion.
+    GLTexture *depthTex = GLState::top().target().attachedTexture(GLTarget::Depth);
+    /// @todo Handle the situation if depth information is not available in the target.
+    d->uDepthBuf = depthTex;
 
     GLState::push()
             .setCull(gl::None)

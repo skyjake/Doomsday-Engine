@@ -176,6 +176,14 @@ public:
     void resize(Size const &size);
 
     /**
+     * Returns the texture being used for a particular attachment in this target.
+     *
+     * @param attachment  Which attachment.
+     * @return
+     */
+    GLTexture *attachedTexture(Flags const &attachment) const;
+
+    /**
      * Sets the subregion inside the render target where scissor and viewport
      * will be scaled into. Scissor and viewport can still be defined as if the
      * entire window was in use; this only applies an offset and scaling to
