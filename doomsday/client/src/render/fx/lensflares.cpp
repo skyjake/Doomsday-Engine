@@ -259,7 +259,6 @@ DENG2_PIMPL(LensFlares)
                 << uAtlas << uDepthBuf;
 
         uAtlas = res->atlas;
-        //uDepthBuf = ClientWindow::main().canvas().depthTexture();
     }
 
     void glDeinit()
@@ -488,10 +487,12 @@ void LensFlares::draw()
 
     d->uViewUnit  = Vector2f(aspect, 1.f);
     d->uMvpMatrix = GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
+    d->uDepthBuf  = ClientWindow::main().canvas().depthBufferTexture();
 
     GLState::push()
             .setCull(gl::None)
             .setDepthTest(false)
+            .setDepthWrite(false)
             .setBlend(true)
             .setBlendFunc(gl::SrcAlpha, gl::One);
 
