@@ -56,6 +56,7 @@ HEADERS += \
     include/de/Font \
     include/de/FontBank \
     include/de/GLBuffer \
+    include/de/GLPixelFormat \
     include/de/GLProgram \
     include/de/GLShader \
     include/de/GLShaderBank \
@@ -88,6 +89,7 @@ HEADERS += \
     include/de/gui/fontbank.h \
     include/de/gui/glbuffer.h \
     include/de/gui/glentrypoints.h \
+    include/de/gui/glpixelformat.h \
     include/de/gui/glprogram.h \
     include/de/gui/glshader.h \
     include/de/gui/glshaderbank.h \
