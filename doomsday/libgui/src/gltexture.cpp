@@ -167,14 +167,17 @@ DENG2_PIMPL(GLTexture)
         flags &= ~ParamsChanged;
     }
 
-    void glImage(int level, Size const &size, Image::GLFormat const &glFormat,
+    void glImage(int level, Size const &size, GLPixelFormat const &glFormat,
                  void const *data, CubeFace face = PositiveX)
     {
         /// @todo GLES2: Check for the BGRA extension.
+
+        // Choose suitable informal format.
         GLenum const internalFormat =
                 (glFormat.format == GL_BGRA?          GL_RGBA :
                  glFormat.format == GL_DEPTH_STENCIL? GL_DEPTH24_STENCIL8 :
                                                       glFormat.format);
+
         if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexImage2D(isCube()? glFace(face) : texTarget,
                      level, internalFormat, size.x, size.y, 0,
@@ -184,7 +187,7 @@ DENG2_PIMPL(GLTexture)
     }
 
     void glSubImage(int level, Vector2i const &pos, Size const &size,
-                    Image::GLFormat const &glFormat, void const *data, CubeFace face = PositiveX)
+                    GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
         if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexSubImage2D(isCube()? glFace(face) : texTarget,
@@ -312,7 +315,7 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
     setState(Ready);
 }
 
-void GLTexture::setUndefinedContent(Size const &size, Image::GLFormat const &glFormat, int level)
+void GLTexture::setUndefinedContent(Size const &size, GLPixelFormat const &glFormat, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
     d->size = size;
@@ -326,7 +329,7 @@ void GLTexture::setUndefinedContent(Size const &size, Image::GLFormat const &glF
     setState(Ready);
 }
 
-void GLTexture::setUndefinedContent(CubeFace face, Size const &size, Image::GLFormat const &glFormat, int level)
+void GLTexture::setUndefinedContent(CubeFace face, Size const &size, GLPixelFormat const &glFormat, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
     d->size = size;
@@ -338,6 +341,11 @@ void GLTexture::setUndefinedContent(CubeFace face, Size const &size, Image::GLFo
     d->glUnbind();
 
     setState(Ready);
+}
+
+void GLTexture::setDepthStencilContent(Size const &size)
+{
+    setUndefinedContent(size, GLPixelFormat(GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8));
 }
 
 void GLTexture::setImage(Image const &image, int level)

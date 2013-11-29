@@ -188,8 +188,17 @@ DENG2_PIMPL(Canvas)
         if(framebufMode == ManualFramebuffer)
         {
             /// @todo For multisampling there should be a bigger back buffer.
+
+            // Set up a color buffer.
             backBuffer.setUndefinedImage(currentSize, Image::RGB_888);
-            depthStencilBuffer.setUndefinedContent(currentSize, Image::GLFormat(GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8));
+            backBuffer.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            backBuffer.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+
+            // Set up a depth/stencil buffer.
+            depthStencilBuffer.setDepthStencilContent(currentSize);
+            depthStencilBuffer.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            depthStencilBuffer.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+
             target.configure(&backBuffer, &depthStencilBuffer);
         }
     }
