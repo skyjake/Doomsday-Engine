@@ -37,8 +37,9 @@ DENG2_PIMPL(VRWindowTransform)
     GLUniform uOculusChromAbParam;
 
     typedef GLBufferT<Vertex3Tex> OculusRiftVBuf;
-    QScopedPointer<GLTarget> unwarpedTarget;
+    GLTarget unwarpedTarget;
     GLTexture unwarpedTexture;
+    GLTexture depthStencilTexture;
 
     Instance(Public *i)
         : Base(i),
@@ -80,8 +81,9 @@ DENG2_PIMPL(VRWindowTransform)
     void deinit()
     {
         oculusRift.clear();
-        unwarpedTarget.reset();
+        unwarpedTarget.configure();
         unwarpedTexture.clear();
+        depthStencilTexture.clear();
     }
 
     Canvas &canvas() const
@@ -129,32 +131,37 @@ DENG2_PIMPL(VRWindowTransform)
         // Canvas::Size textureSize(3200, 2000); // 2.5 * 1280x800 // Softness here too
         if(unwarpedTexture.size() != textureSize)
         {
-            unwarpedTexture.setUndefinedImage(textureSize, Image::RGBA_8888);
+            unwarpedTexture.setUndefinedImage(textureSize, Image::RGB_888);
             unwarpedTexture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
             unwarpedTexture.setFilter(gl::Linear, gl::Linear, gl::MipNone);
-            unwarpedTarget.reset(new GLTarget(unwarpedTexture, GLTarget::DepthStencil));
+
+            depthStencilTexture.setDepthStencilContent(textureSize);
+            depthStencilTexture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            depthStencilTexture.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+
+            unwarpedTarget.configure(&unwarpedTexture, &depthStencilTexture);
 
             uOculusRiftFB = unwarpedTexture;
         }
 
         // Set render target to offscreen temporarily.
         GLState::push()
-                .setTarget(*unwarpedTarget)
+                .setTarget(unwarpedTarget)
                 .setViewport(Rectangleui::fromSize(unwarpedTexture.size()))
                 .apply();
-        unwarpedTarget->unsetActiveRect(true);
-        unwarpedTarget->clear(GLTarget::ColorDepth);
+        unwarpedTarget.unsetActiveRect(true);
+        unwarpedTarget.clear(GLTarget::ColorDepth);
 
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
-        unwarpedTarget->setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
+        unwarpedTarget.setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::holdViewPosition(); // Don't (late-schedule) change view direction between eye renders
 
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
-        unwarpedTarget->setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
+        unwarpedTarget.setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::releaseViewPosition(); // OK, you can change the viewpoint henceforth
@@ -162,15 +169,11 @@ DENG2_PIMPL(VRWindowTransform)
         GLState::pop().apply();
 
         // Necessary until the legacy code uses GLState, too:
-        glDisable(GL_ALPHA_TEST);
         glEnable(GL_TEXTURE_2D);
 
         target().clear(GLTarget::Color);
         GLState::push()
-                .setBlend(false)
                 .setDepthTest(false);
-
-        glDisable(GL_BLEND);
 
         // Copy contents of offscreen buffer to normal screen.
         uOculusDistortionScale = VR::riftState.distortionScale();
@@ -182,7 +185,6 @@ DENG2_PIMPL(VRWindowTransform)
         oculusRift.draw();
 
         glBindTexture(GL_TEXTURE_2D, 0);
-        glEnable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
 
         GLState::pop().apply();
