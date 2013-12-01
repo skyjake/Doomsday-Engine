@@ -61,7 +61,9 @@ DENG2_PIMPL(Model)
     }
 };
 
-Model::Model(uint modelId, Flags flags) : d(new Instance(this))
+Model::Model(uint modelId, Flags flags)
+    : _numVertices(0)
+    , d(new Instance(this))
 {
     setModelId(modelId);
     setFlags(flags, de::ReplaceFlags);
@@ -173,9 +175,13 @@ void Model::clearAllSkins()
     d->skins.clear();
 }
 
-int Model::lodCount() const
+Model::DetailLevel &Model::lod(int level) const
 {
-    return _numLODs;
+    if(hasLod(level))
+    {
+        return *_lods.at(level);
+    }
+    throw MissingDetailLevelError("Model::lod", "Invalid detail leve " + String::number(level) + " Valid range is " + Rangei(0, _lods.count()).asText());
 }
 
 Model::DetailLevels const &Model::lods() const

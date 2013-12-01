@@ -273,7 +273,6 @@ static void loadMd2(de::FileHandle &file, Model &mdl)
     DENG2_ASSERT(readHeaderOk);
     DENG2_UNUSED(readHeaderOk); // should this be checked?
 
-    mdl._numLODs     = 1;
     mdl._numVertices = hdr.numVertices;
 
     mdl.clearAllFrames();
@@ -287,7 +286,7 @@ static void loadMd2(de::FileHandle &file, Model &mdl)
         Vector3f const translation(FLOAT(pfr->translate[0]), FLOAT(pfr->translate[2]), FLOAT(pfr->translate[1]));
         String const frameName = pfr->name;
 
-        ModelFrame *frame = new ModelFrame(frameName);
+        ModelFrame *frame = new ModelFrame(mdl, frameName);
         frame->vertices.reserve(hdr.numVertices);
 
         // Scale and translate each vertex.
@@ -318,13 +317,16 @@ static void loadMd2(de::FileHandle &file, Model &mdl)
     }
     M_Free(frameData);
 
+    mdl._lods.append(new ModelDetailLevel);
+    ModelDetailLevel &lod0 = *mdl._lods.last();
+
     uint8_t *commandData = (uint8_t *) allocAndLoad(file, hdr.offsetGlCommands, 4 * hdr.numGlCommands);
     for(uint8_t const *pos = commandData; *pos;)
     {
         int count = LONG( *(int *) pos ); pos += 4;
 
-        mdl._lods[0].primitives.append(ModelDetailLevel::Primitive());
-        ModelDetailLevel::Primitive &prim = mdl._lods[0].primitives.last();
+        lod0.primitives.append(ModelDetailLevel::Primitive());
+        ModelDetailLevel::Primitive &prim = lod0.primitives.last();
 
         // The type of primitive depends on the sign.
         prim.triFan = (count < 0);
@@ -490,8 +492,6 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
         // Read the next chunk header.
         file.read((uint8_t *)&chunk, sizeof(chunk));
     }
-
-    mdl._numLODs     = info.numLODs;
     mdl._numVertices = info.numVertices;
 
     mdl.clearAllSkins();
@@ -515,7 +515,7 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
         Vector3f const translation(FLOAT(pfr->translate[0]), FLOAT(pfr->translate[2]), FLOAT(pfr->translate[1]));
         String const frameName = pfr->name;
 
-        ModelFrame *frame = new ModelFrame(frameName);
+        ModelFrame *frame = new ModelFrame(mdl, frameName);
         frame->vertices.reserve(info.numVertices);
 
         // Scale and translate each vertex.
@@ -547,16 +547,24 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
     M_Free(frameData);
 
     file.seek(info.offsetLODs, SeekSet);
-    dmd_levelOfDetail_t lodInfo[Model::MAX_LODS]; zap(lodInfo);
-    file.read((uint8_t *)lodInfo, sizeof(dmd_levelOfDetail_t) * info.numLODs);
+    dmd_levelOfDetail_t *lodInfo = new dmd_levelOfDetail_t[info.numLODs];
 
-    dmd_triangle_t *triangles[Model::MAX_LODS];
     for(int i = 0; i < info.numLODs; ++i)
     {
+        file.read((uint8_t *)&lodInfo[i], sizeof(dmd_levelOfDetail_t));
+
         lodInfo[i].numTriangles     = LONG(lodInfo[i].numTriangles);
         lodInfo[i].numGlCommands    = LONG(lodInfo[i].numGlCommands);
         lodInfo[i].offsetTriangles  = LONG(lodInfo[i].offsetTriangles);
         lodInfo[i].offsetGlCommands = LONG(lodInfo[i].offsetGlCommands);
+    }
+
+    dmd_triangle_t **triangles = new dmd_triangle_t*[info.numLODs];
+
+    for(int i = 0; i < info.numLODs; ++i)
+    {
+        mdl._lods.append(new ModelDetailLevel);
+        ModelDetailLevel &lod = *mdl._lods.last();
 
         triangles[i] = (dmd_triangle_t *) allocAndLoad(file, lodInfo[i].offsetTriangles,
                                                        sizeof(dmd_triangle_t) * lodInfo[i].numTriangles);
@@ -567,8 +575,8 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
         {
             int count = LONG( *(int *) pos ); pos += 4;
 
-            mdl._lods[i].primitives.append(ModelDetailLevel::Primitive());
-            ModelDetailLevel::Primitive &prim = mdl._lods[i].primitives.last();
+            lod.primitives.append(ModelDetailLevel::Primitive());
+            ModelDetailLevel::Primitive &prim = lod.primitives.last();
 
             // The type of primitive depends on the sign of the element count.
             prim.triFan = (count < 0);
@@ -584,6 +592,7 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
 
                 prim.elements.append(ModelDetailLevel::Primitive::Element());
                 ModelDetailLevel::Primitive::Element &elem = prim.elements.last();
+
                 elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
                 elem.index    = LONG(v->index);
             }
@@ -592,7 +601,7 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
     }
 
     // Determine vertex usage at each LOD level.
-    mdl._vertexUsage.resize(info.numVertices * Model::MAX_LODS);
+    mdl._vertexUsage.resize(info.numVertices * info.numLODs);
     mdl._vertexUsage.fill(false);
 
     for(int i = 0; i < info.numLODs; ++i)
@@ -600,14 +609,15 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
     for(int c = 0; c < 3; ++c)
     {
         int vertexIndex = SHORT(triangles[i][k].vertexIndices[c]);
-        mdl._vertexUsage.setBit(vertexIndex * Model::MAX_LODS + i);
+        mdl._vertexUsage.setBit(vertexIndex * info.numLODs + i);
     }
 
-    // We don't need the triangles any more.
+    delete [] lodInfo;
     for(int i = 0; i < info.numLODs; ++i)
     {
         M_Free(triangles[i]);
     }
+    delete [] triangles;
 }
 
 static Model *modelForId(modelid_t modelId, bool canCreate = false)

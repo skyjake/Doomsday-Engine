@@ -515,6 +515,7 @@ static inline float Mod_Lerp(float start, float end, float pos)
 static void Mod_LerpVertices(float inter, int count, ModelFrame const &from,
     ModelFrame const &to, Vector3f *posOut, Vector3f *normOut)
 {
+    DENG2_ASSERT(&from.model == &to.model); // sanity check.
     DENG2_ASSERT(from.vertices.count() == to.vertices.count()); // sanity check.
 
     ModelFrame::VertexBuf::const_iterator startIt = from.vertices.begin();
@@ -534,9 +535,10 @@ static void Mod_LerpVertices(float inter, int count, ModelFrame const &from,
 
     if(vertexUsage)
     {
+        int const modelLodCount = from.model.lodCount();
         for(int i = 0; i < count; ++i, startIt++, endIt++, posOut++, normOut++)
         {
-            if(vertexUsage->testBit(i * Model::MAX_LODS + activeLod))
+            if(vertexUsage->testBit(i * modelLodCount + activeLod))
             {
                 *posOut  = startIt->pos  * invInter + endIt->pos  * inter;
                 *normOut = startIt->norm * invInter + endIt->norm * inter;
@@ -618,9 +620,9 @@ static int lightModelVertexWorker(VectorLight const *vlight, void *context)
  * Calculate vertex lighting.
  * @todo construct a rotation matrix once and use it for all vertices.
  */
-static void Mod_VertexColors(int count, Vector4ub *out, Vector3f const *normCoords,
-    uint vLightListIdx, uint maxLights, Vector4f const &ambient, bool invert,
-    float rotateYaw, float rotatePitch)
+static void Mod_VertexColors(Vector4ub *out, int count, int modelLodCount,
+    Vector3f const *normCoords, uint vLightListIdx, uint maxLights,
+    Vector4f const &ambient, bool invert, float rotateYaw, float rotatePitch)
 {
     Vector4f const saturated(1, 1, 1, 1);
     lightmodelvertexworker_params_t parms;
@@ -629,7 +631,7 @@ static void Mod_VertexColors(int count, Vector4ub *out, Vector3f const *normCoor
     {
         if(vertexUsage)
         {
-            if(!vertexUsage->testBit(i * Model::MAX_LODS + activeLod))
+            if(!vertexUsage->testBit(i * modelLodCount + activeLod))
                 continue;
         }
 
@@ -680,14 +682,15 @@ static void Mod_FixedVertexColors(int count, Vector4ub *colorCoords, Vector4ub c
 /**
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
-static void Mod_ShinyCoords(int count, Vector2f *out, Vector3f const *normCoords,
-    float normYaw, float normPitch, float shinyAng, float shinyPnt, float reactSpeed)
+static void Mod_ShinyCoords(Vector2f *out, int count, int modelLodCount,
+    Vector3f const *normCoords, float normYaw, float normPitch, float shinyAng,
+    float shinyPnt, float reactSpeed)
 {
     for(int i = 0; i < count; ++i, out++, normCoords++)
     {
         if(vertexUsage)
         {
-            if(!vertexUsage->testBit(i * Model::MAX_LODS + activeLod))
+            if(!vertexUsage->testBit(i * modelLodCount + activeLod))
                 continue;
         }
 
@@ -981,10 +984,9 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         // Lit normally.
         ambient = Vector4f(parm->ambientColor, alpha);
 
-        Mod_VertexColors(numVerts, modelColorCoords, modelNormCoords,
-                         parm->vLightListIdx, modelLight + 1, ambient,
-                         mf->scale[VY] < 0? true: false,
-                         -parm->yaw, -parm->pitch);
+        Mod_VertexColors(modelColorCoords, numVerts, frame->model.lodCount(),
+                         modelNormCoords, parm->vLightListIdx, modelLight + 1,
+                         ambient, (mf->scale[VY] < 0), -parm->yaw, -parm->pitch);
     }
 
     shininess = 0;
@@ -1042,8 +1044,8 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
             shinyPnt = QATAN2(delta.y, delta.x) / (2 * PI);
         }
 
-        Mod_ShinyCoords(numVerts, modelTexCoords, modelNormCoords, normYaw,
-                        normPitch, shinyAng, shinyPnt,
+        Mod_ShinyCoords(modelTexCoords, numVerts, frame->model.lodCount(),
+                        modelNormCoords, normYaw, normPitch, shinyAng, shinyPnt,
                         mf->def->sub(number).shinyReact);
 
         // Shiny color.
@@ -1105,7 +1107,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
             GL_BindTexture(renderTextures? skinTexture : 0);
 
             Mod_RenderPrimitives(RC_COMMAND_COORDS,
-                                 mdl->_lods[activeLod].primitives,
+                                 mdl->lod(activeLod).primitives,
                                  modelPosCoords, modelColorCoords);
         }
 
@@ -1136,7 +1138,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                 glActiveTexture(GL_TEXTURE0);
                 GL_BindTexture(renderTextures? skinTexture : 0);
 
-                Mod_RenderPrimitives(RC_BOTH_COORDS, mdl->_lods[activeLod].primitives,
+                Mod_RenderPrimitives(RC_BOTH_COORDS, mdl->lod(activeLod).primitives,
                                      modelPosCoords, modelColorCoords, modelTexCoords);
 
                 Mod_SelectTexUnits(1);
@@ -1148,7 +1150,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                 Mod_SelectTexUnits(1);
                 GL_BindTexture(renderTextures? shinyTexture : 0);
 
-                Mod_RenderPrimitives(RC_OTHER_COORDS, mdl->_lods[activeLod].primitives,
+                Mod_RenderPrimitives(RC_OTHER_COORDS, mdl->lod(activeLod).primitives,
                                      modelPosCoords, modelColorCoords, modelTexCoords);
             }
         }
@@ -1173,7 +1175,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         glActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures? skinTexture : 0);
 
-        Mod_RenderPrimitives(RC_BOTH_COORDS, mdl->_lods[activeLod].primitives,
+        Mod_RenderPrimitives(RC_BOTH_COORDS, mdl->lod(activeLod).primitives,
                              modelPosCoords, modelColorCoords, modelTexCoords);
 
         Mod_SelectTexUnits(1);

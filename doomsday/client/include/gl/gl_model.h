@@ -43,8 +43,8 @@ public:
     /// Referenced skin is missing. @ingroup errors
     DENG2_ERROR(MissingSkinError);
 
-    /// Maximum levels of detail.
-    static int const MAX_LODS = 4;
+    /// Referenced detail level is missing. @ingroup errors
+    DENG2_ERROR(MissingDetailLevelError);
 
     /**
      * Classification/processing flags.
@@ -59,6 +59,7 @@ public:
      */
     struct Frame
     {
+        Model &model;
         struct Vertex {
             de::Vector3f pos;
             de::Vector3f norm;
@@ -69,7 +70,8 @@ public:
         de::Vector3f max;
         de::String name;
 
-        Frame(de::String const &name = "") : name(name)
+        Frame(Model &model, de::String const &name = "")
+            : model(model), name(name)
         {}
 
         void bounds(de::Vector3f &min, de::Vector3f &max) const;
@@ -111,11 +113,10 @@ public:
         typedef QList<Primitive> Primitives;
         Primitives primitives;
     };
-    typedef DetailLevel DetailLevels[MAX_LODS];
+    typedef QList<DetailLevel *> DetailLevels;
 
 public: /// @todo make private:
     int _numVertices;       ///< Total number of vertices in the model.
-    int _numLODs;           ///< Number of detail levels in use.
     DetailLevels _lods;     ///< Level of detail information.
     QBitArray _vertexUsage; ///< Denotes used vertices for each level of detail.
 
@@ -228,9 +229,22 @@ public:
     void clearAllSkins();
 
     /**
+     * Convenient method of determining whether the specified model detail
+     * @a level is valid (i.e., detail information is defined for it).
+     */
+    inline bool hasLod(int level) const {
+        return (level >= 0 && level < lodCount());
+    }
+
+    /**
      * Returns the total number of detail levels for the model.
      */
-    int lodCount() const;
+    inline int lodCount() const { return lods().count(); }
+
+    /**
+     * Retrieve model detail information by it's unique @a level number.
+     */
+    DetailLevel &lod(int level) const;
 
     /**
      * Provides readonly access to the level of detail information.
