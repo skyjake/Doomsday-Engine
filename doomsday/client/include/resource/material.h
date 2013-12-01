@@ -1,4 +1,4 @@
-/** @file material.h Logical material resource.
+/** @file material.h  Logical material resource.
  *
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -56,13 +56,6 @@ struct MaterialVariantSpec;
  */
 class Material : public de::MapElement
 {
-    /// Internal typedefs for brevity/cleanliness.
-    typedef de::MaterialManifest Manifest;
-#ifdef __CLIENT__
-    typedef de::MaterialSnapshot Snapshot;
-    typedef de::MaterialVariantSpec VariantSpec;
-#endif
-
 public:
     /// Maximum number of layers a material supports.
     static int const max_layers = 1;
@@ -416,11 +409,8 @@ public:
         /**
          * Construct a new default decoration.
          */
-        Decoration();
-
-        Decoration(de::Vector2i const &_patternSkip,
-                   de::Vector2i const &_patternOffset);
-
+        Decoration(de::Vector2i const &_patternSkip   = de::Vector2i(),
+                   de::Vector2i const &_patternOffset = de::Vector2i());
         ~Decoration();
 
         /**
@@ -504,7 +494,7 @@ public:
          * Notified when a decoration stage change occurs.
          */
         DENG2_DEFINE_AUDIENCE(DecorationStageChange,
-            void materialAnimationDecorationStageChanged(Animation &anim, Material::Decoration &decor))
+            void materialAnimationDecorationStageChanged(Animation &anim, Decoration &decor))
 
         /// Current state of a layer animation.
         struct LayerState
@@ -611,7 +601,7 @@ public:
          * @param generalCase  Material from which the variant is to be derived.
          * @param spec         Specification used to derive the variant.
          */
-        Variant(Material &generalCase, VariantSpec const &spec);
+        Variant(Material &generalCase, de::MaterialVariantSpec const &spec);
 
     public:
         /**
@@ -628,7 +618,7 @@ public:
         Material &generalCase() const;
 
         /// @return  Material variant specification for the variant.
-        VariantSpec const &spec() const;
+        de::MaterialVariantSpec const &spec() const;
 
         /**
          * Returns the usage context for this variant (from the spec).
@@ -652,7 +642,7 @@ public:
          *
          * @see Material::chooseVariant(), Material::prepare()
          */
-        Snapshot const &prepare(bool forceSnapshotUpdate = false);
+        de::MaterialSnapshot const &prepare(bool forceSnapshotUpdate = false);
 
         friend class Material;
 
@@ -669,13 +659,13 @@ public:
     /**
      * @param manifest  Manifest derived to yield the material.
      */
-    Material(Manifest &manifest);
+    Material(de::MaterialManifest &manifest);
     ~Material();
 
     /**
      * Returns the MaterialManifest derived to yield the material.
      */
-    Manifest &manifest() const;
+    de::MaterialManifest &manifest() const;
 
     /**
      * Returns a brief textual description/overview of the material.
@@ -959,7 +949,7 @@ public:
      *
      * @return  The chosen variant; otherwise @c 0 (if none suitable, when not creating).
      */
-    Variant *chooseVariant(VariantSpec const &spec, bool canCreate = false);
+    Variant *chooseVariant(de::MaterialVariantSpec const &spec, bool canCreate = false);
 
     /**
      * Shorthand alternative to @c chooseVariant(@a spec, true).
@@ -969,7 +959,7 @@ public:
      *
      * @see chooseVariant()
      */
-    inline Variant &createVariant(VariantSpec const &spec)
+    inline Variant &createVariant(de::MaterialVariantSpec const &spec)
     {
         return *chooseVariant(spec, true/*create*/);
     }
@@ -993,7 +983,8 @@ public:
      *
      * @see ResourceSystem::materialSpec(), chooseVariant(), Variant::prepare()
      */
-    inline Snapshot const &prepare(VariantSpec const &spec, bool forceSnapshotUpdate = false)
+    inline de::MaterialSnapshot const &prepare(de::MaterialVariantSpec const &spec,
+        bool forceSnapshotUpdate = false)
     {
         return createVariant(spec).prepare(forceSnapshotUpdate);
     }

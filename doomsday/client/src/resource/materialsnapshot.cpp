@@ -1,4 +1,4 @@
-/** @file materialsnapshot.cpp Logical material state snapshot.
+/** @file materialsnapshot.cpp  Logical material state snapshot.
  *
  * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *

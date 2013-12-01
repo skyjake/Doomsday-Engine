@@ -28,7 +28,7 @@
 #include <QList>
 #include <QVector>
 
-/// Unique identifier associated with each model in the collection.
+/// Unique identifier associated with each model.
 typedef uint modelid_t;
 
 /// Special value used to signify an invalid model id.
@@ -105,15 +105,15 @@ public:
                 int index; ///< Index into the model's vertex mesh.
             };
             typedef QVector<Element> Elements;
-            bool triFan; ///< @c true= triangle fan; otherwise triangle strip.
             Elements elements;
+            bool triFan; ///< @c true= triangle fan; otherwise triangle strip.
         };
         typedef QList<Primitive> Primitives;
         Primitives primitives;
     };
     typedef DetailLevel DetailLevels[MAX_LODS];
 
-public:
+public: /// @todo make private:
     int _numVertices;       ///< Total number of vertices in the model.
     int _numLODs;           ///< Number of detail levels in use.
     DetailLevels _lods;     ///< Level of detail information.

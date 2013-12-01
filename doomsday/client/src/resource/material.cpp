@@ -259,10 +259,6 @@ String Material::Decoration::Stage::LightLevels::asText() const
                .arg(max, 0, 'g', 2);
 }
 
-Material::Decoration::Decoration()
-    : _material(0), _patternSkip(0, 0), _patternOffset(0, 0)
-{}
-
 Material::Decoration::Decoration(Vector2i const &_patternSkip, Vector2i const &_patternOffset)
     : _material(0), _patternSkip(_patternSkip), _patternOffset(_patternOffset)
 {}
@@ -752,11 +748,11 @@ Material::Variants const &Material::variants() const
     return d->variants;
 }
 
-Material::Variant *Material::chooseVariant(Material::VariantSpec const &spec, bool canCreate)
+Material::Variant *Material::chooseVariant(MaterialVariantSpec const &spec, bool canCreate)
 {
     foreach(Variant *variant, variants())
     {
-        VariantSpec const &cand = variant->spec();
+        MaterialVariantSpec const &cand = variant->spec();
         if(cand.compare(spec))
         {
             // This will do fine.

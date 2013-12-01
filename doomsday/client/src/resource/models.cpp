@@ -55,7 +55,8 @@ using namespace de;
 #define MD2_MAGIC 0x32504449
 
 #pragma pack(1)
-typedef struct {
+struct md2_header_t
+{
     int magic;
     int version;
     int skinWidth;
@@ -73,18 +74,19 @@ typedef struct {
     int offsetFrames;
     int offsetGlCommands;
     int offsetEnd;
-} md2_header_t;
+};
 #pragma pack()
 
 //
 #define DMD_MAGIC 0x4D444D44 ///< "DMDM" = Doomsday/Detailed MoDel Magic
 
 #pragma pack(1)
-typedef struct {
+struct dmd_header_t
+{
     int magic;
     int version;
     int flags;
-} dmd_header_t;
+};
 #pragma pack()
 
 ModelDefs modefs;
@@ -240,17 +242,19 @@ static bool recogniseMd2(de::FileHandle &file)
 }
 
 #pragma pack(1)
-typedef struct {
+struct md2_triangleVertex_t
+{
     byte vertex[3];
     byte normalIndex;
-} md2_triangleVertex_t;
+};
 
-typedef struct {
+struct md2_packedFrame_t
+{
     float scale[3];
     float translate[3];
     char name[16];
     md2_triangleVertex_t vertices[1];
-} md2_packedFrame_t;
+};
 
 struct md2_commandElement_t {
     float s, t;

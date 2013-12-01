@@ -66,12 +66,12 @@ public:
     /// Interpolated (light) decoration properties.
     struct Decoration
     {
-        de::Vector2f pos; // Coordinates in material space.
-        float elevation; // Distance from the surface.
-        de::Vector3f color; // Light color.
-        float radius; // Dynamic light radius (-1 = no light).
-        float flareSize; // Halo radius (zero = no halo).
-        float lightLevels[2]; // Fade by sector lightlevel.
+        de::Vector2f pos;      // Coordinates in material space.
+        float elevation;       // Distance from the surface.
+        de::Vector3f color;    // Light color.
+        float radius;          // Dynamic light radius (-1 = no light).
+        float flareSize;       // Halo radius (zero = no halo).
+        float lightLevels[2];  // Fade by sector lightlevel.
 
         Texture *tex, *ceilTex, *floorTex;
         DGLuint flareTex;

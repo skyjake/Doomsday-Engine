@@ -481,12 +481,12 @@ static void Mod_RenderPrimitives(rendcmd_t mode, Model::DetailLevel::Primitives 
         break;
     }
 
-    foreach(ModelDetailLevel::Primitive const &cmd, primitives)
+    foreach(ModelDetailLevel::Primitive const &prim, primitives)
     {
         // The type of primitive depends on the sign.
-        glBegin(cmd.triFan? GL_TRIANGLE_FAN : GL_TRIANGLE_STRIP);
+        glBegin(prim.triFan? GL_TRIANGLE_FAN : GL_TRIANGLE_STRIP);
 
-        foreach(ModelDetailLevel::Primitive::Element const &elem, cmd.elements)
+        foreach(ModelDetailLevel::Primitive::Element const &elem, prim.elements)
         {
             if(mode != RC_OTHER_COORDS)
             {
@@ -1105,8 +1105,8 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
             GL_BindTexture(renderTextures? skinTexture : 0);
 
             Mod_RenderPrimitives(RC_COMMAND_COORDS,
-                               mdl->_lods[activeLod].primitives, /*numVerts,*/
-                               modelPosCoords, modelColorCoords);
+                                 mdl->_lods[activeLod].primitives,
+                                 modelPosCoords, modelColorCoords);
         }
 
         if(shininess > 0)
@@ -1137,7 +1137,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                 GL_BindTexture(renderTextures? skinTexture : 0);
 
                 Mod_RenderPrimitives(RC_BOTH_COORDS, mdl->_lods[activeLod].primitives,
-                                   modelPosCoords, modelColorCoords, modelTexCoords);
+                                     modelPosCoords, modelColorCoords, modelTexCoords);
 
                 Mod_SelectTexUnits(1);
                 GL_ModulateTexture(1);
@@ -1149,7 +1149,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                 GL_BindTexture(renderTextures? shinyTexture : 0);
 
                 Mod_RenderPrimitives(RC_OTHER_COORDS, mdl->_lods[activeLod].primitives,
-                                   modelPosCoords, modelColorCoords, modelTexCoords);
+                                     modelPosCoords, modelColorCoords, modelTexCoords);
             }
         }
     }
@@ -1167,14 +1167,14 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         GL_BindTexture(renderTextures? shinyTexture : 0);
 
         // Multiply by shininess.
-        float colorv1[] = { color.x * color.x, color.y * color.y, color.z * color.z, color.w };
+        float colorv1[] = { color.x * color.w, color.y * color.w, color.z * color.w, color.w };
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, colorv1);
 
         glActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures? skinTexture : 0);
 
         Mod_RenderPrimitives(RC_BOTH_COORDS, mdl->_lods[activeLod].primitives,
-                           modelPosCoords, modelColorCoords, modelTexCoords);
+                             modelPosCoords, modelColorCoords, modelTexCoords);
 
         Mod_SelectTexUnits(1);
         GL_ModulateTexture(1);

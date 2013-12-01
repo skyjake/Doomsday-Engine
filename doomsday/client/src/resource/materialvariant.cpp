@@ -42,7 +42,7 @@ DENG2_PIMPL(Material::Variant)
     /// Frame count when the snapshot was last prepared/updated.
     int snapshotPrepareFrame;
 
-    Instance(Public *i, Material &generalCase, Material::VariantSpec const &_spec)
+    Instance(Public *i, Material &generalCase, MaterialVariantSpec const &_spec)
         : Base(i), material(&generalCase),
           spec(_spec),
           snapshotPrepareFrame(-1)
@@ -53,7 +53,7 @@ DENG2_PIMPL(Material::Variant)
      * present it will be replaced. Ownership of @a materialSnapshot is given to
      * the variant.
      */
-    void attachSnapshot(Material::Snapshot *newSnapshot)
+    void attachSnapshot(MaterialSnapshot *newSnapshot)
     {
         DENG2_ASSERT(newSnapshot);
         if(snapshot.get())
