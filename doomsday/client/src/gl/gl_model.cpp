@@ -25,7 +25,6 @@
 #include "Texture"
 #include "TextureManifest"
 #include <de/Range>
-#include <de/memory.h>
 #include <QtAlgorithms>
 
 using namespace de;
@@ -181,7 +180,7 @@ Model::DetailLevel &Model::lod(int level) const
     {
         return *_lods.at(level);
     }
-    throw MissingDetailLevelError("Model::lod", "Invalid detail leve " + String::number(level) + " Valid range is " + Rangei(0, _lods.count()).asText());
+    throw MissingDetailLevelError("Model::lod", "Invalid detail level " + String::number(level) + " Valid range is " + Rangei(0, _lods.count()).asText());
 }
 
 Model::DetailLevels const &Model::lods() const
@@ -189,7 +188,7 @@ Model::DetailLevels const &Model::lods() const
     return _lods;
 }
 
-int Model::numVertices() const
+int Model::vertexCount() const
 {
     return _numVertices;
 }

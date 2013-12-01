@@ -252,7 +252,7 @@ public:
     DetailLevels const &lods() const;
 
     /// @todo Remove me.
-    int numVertices() const;
+    int vertexCount() const;
 
 private:
     DENG2_PRIVATE(d)

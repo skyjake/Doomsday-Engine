@@ -881,7 +881,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     }
 
     // Determine the total number of vertices we have.
-    numVerts = mdl->numVertices();
+    numVerts = mdl->vertexCount();
 
     // Ensure our vertex render buffers can accommodate this.
     if(!Mod_ExpandVertexBuffer(numVerts))
