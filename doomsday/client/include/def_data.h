@@ -23,11 +23,12 @@
  * @todo Needs to be redesigned.
  */
 
-#ifndef LIBDENG_DEFINITION_FILE_H
-#define LIBDENG_DEFINITION_FILE_H
+#ifndef DENG_DEFINITION_FILE_H
+#define DENG_DEFINITION_FILE_H
 
 #include <vector>
 #include <de/libdeng2.h>
+#include <de/Vector>
 
 #include "def_share.h"
 #include "api_uri.h"
@@ -162,37 +163,35 @@ struct ded_submodel_t
     ded_flags_t     flags; // ASCII string of the flags.
     int             skin;
     int             skinRange;
-    float           offset[3]; // Offset XYZ within model.
+    de::Vector3f    offset; // Offset XYZ within model.
     float           alpha;
     float           parm; // Custom parameter.
     unsigned char   selSkinBits[2]; // Mask and offset.
     unsigned char   selSkins[8];
     Uri*            shinySkin;
     float           shiny;
-    float           shinyColor[3];
+    de::Vector3f    shinyColor;
     float           shinyReact;
     blendmode_t     blendMode; // bm_*
 
     ded_submodel_t()
-        : filename(0),
-          skinFilename(0),
-          frameRange(0),
-          flags(0),
-          skin(0),
-          skinRange(0),
-          alpha(0),
-          parm(0),
-          shinySkin(0),
-          shiny(0),
-          blendMode(BM_NORMAL)
+        : filename(0)
+        , skinFilename(0)
+        , frameRange(0)
+        , flags(0)
+        , skin(0)
+        , skinRange(0)
+        , alpha(0)
+        , parm(0)
+        , shinySkin(0)
+        , shiny(0)
+        , shinyColor(1, 1, 1)
+        , shinyReact(1.0f)
+        , blendMode(BM_NORMAL)
     {
         de::zap(frame);
-        de::zap(offset);
         de::zap(selSkinBits);
         de::zap(selSkins);
-
-        shinyColor[0] = shinyColor[1] = shinyColor[2] = 1;
-        shinyReact = 1.0f;
     }
 };
 
@@ -209,34 +208,33 @@ struct ded_model_t
     float           interMark;
     float           interRange[2]; // 0-1 by default.
     int             skinTics; // Tics per skin in range.
-    float           scale[3]; // Scale XYZ
+    de::Vector3f    scale; // Scale XYZ
     float           resize;
-    float           offset[3]; // Offset XYZ
+    de::Vector3f    offset; // Offset XYZ
     float           shadowRadius; // Radius for shadow (0=auto).
 
     typedef std::vector<ded_submodel_t> Submodels;
     Submodels _sub;
 
     ded_model_t(char const *spriteId = "")
-        : off(0),
-          spriteFrame(0),
-          group(0),
-          selector(0),
-          flags(0),
-          interMark(0),
-          skinTics(0),
-          resize(0),
-          shadowRadius(0)
+        : off(0)
+        , spriteFrame(0)
+        , group(0)
+        , selector(0)
+        , flags(0)
+        , interMark(0)
+        , skinTics(0)
+        , scale(1, 1, 1)
+        , resize(0)
+        , shadowRadius(0)
     {
         de::zap(id);
         de::zap(state);
         de::zap(sprite);
         de::zap(interRange);
-        de::zap(offset);
 
         strcpy(sprite.id, spriteId);
         interRange[1] = 1;
-        scale[0] = scale[1] = scale[2] = 1;
     }
 
     bool hasSub(unsigned int subnum) const
@@ -251,13 +249,13 @@ struct ded_model_t
 
     ded_submodel_t &sub(unsigned int subnum)
     {
-        DENG_ASSERT(hasSub(subnum));
+        DENG2_ASSERT(hasSub(subnum));
         return _sub[subnum];
     }
 
     ded_submodel_t const &sub(unsigned int subnum) const
     {
-        DENG_ASSERT(hasSub(subnum));
+        DENG2_ASSERT(hasSub(subnum));
         return _sub[subnum];
     }
 
@@ -849,4 +847,4 @@ void            DED_ZCount(ded_count_t* c);
 
 DENG_EXTERN_C char dedReadError[];
 
-#endif /* LIBDENG_DEFINITION_FILE_H */
+#endif // DENG_DEFINITION_FILE_H

@@ -1,8 +1,8 @@
-/** @file gl_model.cpp 3D Model Renderable.
+/** @file gl_model.cpp  3D Model Renderable.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,52 +19,171 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstring>
-
-#include <de/Error>
-
 #include "de_platform.h"
-#include "de_graphics.h"
-
 #include "gl/gl_model.h"
+
+#include "Texture"
+#include "TextureManifest"
+#include <de/Range>
+#include <de/memory.h>
+#include <QtAlgorithms>
 
 using namespace de;
 
-void model_frame_t::getBounds(float _min[3], float _max[3]) const
+void Model::Frame::bounds(Vector3f &retMin, Vector3f &retMax) const
 {
-    std::memcpy(_min, min, sizeof(float) * 3);
-    std::memcpy(_max, max, sizeof(float) * 3);
+    retMin = min;
+    retMax = max;
 }
 
-float model_frame_t::horizontalRange(float *top, float *bottom) const
+float Model::Frame::horizontalRange(float *top, float *bottom) const
 {
-    *top    = max[VY];
-    *bottom = min[VY];
-    return max[VY] - min[VY];
+    *top    = max.y;
+    *bottom = min.y;
+    return max.y - min.y;
 }
 
-bool model_t::validFrameNumber(int value) const
+DENG2_PIMPL(Model)
 {
-    return (value >= 0 && value < info.numFrames);
-}
+    uint modelId; ///< Unique id of the model (in the repository).
+    Flags flags;
+    Skins skins;
+    Frames frames;
 
-model_frame_t &model_t::frame(int number) const
-{
-    if(!validFrameNumber(number))
-        throw Error("model_t::frame", QString("Invalid frame number %i. Valid range is [0..%i)")
-                                          .arg(number).arg(info.numFrames));
-    return frames[number];
-}
+    Instance(Public *i)
+        : Base(i)
+        , modelId(0)
+    {}
 
-int model_t::frameNumForName(char const *name) const
-{
-    if(name && name[0])
+    ~Instance()
     {
-        for(int i = 0; i < info.numFrames; ++i)
+        self.clearAllFrames();
+    }
+};
+
+Model::Model(uint modelId, Flags flags) : d(new Instance(this))
+{
+    setModelId(modelId);
+    setFlags(flags, de::ReplaceFlags);
+}
+
+uint Model::modelId() const
+{
+    return d->modelId;
+}
+
+void Model::setModelId(uint newModelId)
+{
+    d->modelId = newModelId;
+}
+
+Model::Flags Model::flags() const
+{
+    return d->flags;
+}
+
+void Model::setFlags(Model::Flags flagsToChange, FlagOp operation)
+{
+    applyFlagOperation(d->flags, flagsToChange, operation);
+}
+
+int Model::toFrameNumber(String name) const
+{
+    if(!name.isEmpty())
+    {
+        for(int i = 0; i < d->frames.count(); ++i)
         {
-            if(!qstricmp(frames[i].name, name))
+            Frame *frame = d->frames.at(i);
+            if(!frame->name.compareWithoutCase(name))
                 return i;
         }
     }
-    return 0;
+    return -1; // Not found.
+}
+
+Model::Frame &Model::frame(int number) const
+{
+    if(hasFrame(number))
+    {
+        return *d->frames.at(number);
+    }
+    throw MissingFrameError("Model::frame", "Invalid frame number " + String::number(number) + " Valid range is " + Rangei(0, d->frames.count()).asText());
+}
+
+void Model::addFrame(Frame *newFrame)
+{
+    if(!newFrame) return;
+    if(!d->frames.contains(newFrame))
+    {
+        d->frames.append(newFrame);
+    }
+}
+
+Model::Frames const &Model::frames() const
+{
+    return d->frames;
+}
+
+void Model::clearAllFrames()
+{
+    qDeleteAll(d->frames);
+    d->frames.clear();
+}
+
+int Model::toSkinNumber(String name) const
+{
+    if(!name.isEmpty())
+    {
+        for(int i = 0; i < d->skins.count(); ++i)
+        {
+            Skin const &skin = d->skins.at(i);
+            if(!skin.name.compareWithoutCase(name))
+                return i;
+        }
+    }
+    return -1; // Not found.
+}
+
+Model::Skin &Model::skin(int number) const
+{
+    if(hasSkin(number))
+    {
+        return const_cast<Skin &>(d->skins.at(number));
+    }
+    throw MissingSkinError("Model::skin", "Invalid skin number " + String::number(number) + " Valid range is " + Rangei(0, d->skins.count()).asText());
+}
+
+Model::Skin &Model::newSkin(String name)
+{
+    if(int index = toSkinNumber(name) > 0)
+    {
+        return skin(index);
+    }
+    d->skins.append(ModelSkin(name));
+    return d->skins.last();
+}
+
+Model::Skins const &Model::skins() const
+{
+    return d->skins;
+}
+
+void Model::clearAllSkins()
+{
+    d->skins.clear();
+}
+
+int Model::lodCount() const
+{
+    return _numLODs;
+}
+
+Model::DetailLevels const &Model::lods() const
+{
+    return _lods;
+}
+
+int Model::numVertices() const
+{
+    return _numVertices;
 }

@@ -73,7 +73,6 @@ int frameInter         = true;
 int mirrorHudModels;
 int modelShinyMultitex = true;
 float modelShinyFactor = 1.0f;
-int modelTriCount;
 float modelSpinSpeed   = 1;
 int maxModelDistance   = 1500;
 float rend_model_lod   = 256;
@@ -83,15 +82,15 @@ static bool inited;
 static array_t arrays[MAX_ARRAYS];
 
 // The global vertex render buffer.
-static dgl_vertex_t *modelVertices;
-static dgl_vertex_t *modelNormals;
-static dgl_color_t *modelColors;
-static dgl_texcoord_t *modelTexCoords;
+static Vector3f *modelPosCoords;
+static Vector3f *modelNormCoords;
+static Vector4ub *modelColorCoords;
+static Vector2f *modelTexCoords;
 
 // Global variables for ease of use. (Egads!)
-static float modelCenter[3];
+static Vector3f modelCenter;
 static int activeLod;
-static char *vertexUsage;
+static QBitArray *vertexUsage;
 
 static uint vertexBufferMax; ///< Maximum number of vertices we'll be required to render per submodel.
 static uint vertexBufferSize; ///< Current number of vertices supported by the render buffer.
@@ -116,7 +115,7 @@ void Rend_ModelRegister()
 
 boolean Rend_ModelExpandVertexBuffers(uint numVertices)
 {
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
 
     LOG_AS("Rend_ModelExpandVertexBuffers");
 
@@ -125,7 +124,7 @@ boolean Rend_ModelExpandVertexBuffers(uint numVertices)
     // Sanity check a sane maximum...
     if(numVertices >= RENDER_MAX_MODEL_VERTS)
     {
-#if _DEBUG
+#ifdef DENG_DEBUG
         if(!announcedVertexBufferMaxBreach)
         {
             LOG_WARNING("Attempted to expand to %u vertices (max %u), ignoring.")
@@ -148,13 +147,13 @@ void Rend_ModelSetFrame(modeldef_t *modef, int frame)
     for(uint i = 0; i < modef->subCount(); ++i)
     {
         submodeldef_t &subdef = modef->subModelDef(i);
-        model_t *mdl;
+        Model *mdl;
         if(subdef.modelId == NOMODELID) continue;
 
         // Modify the modeldef itself: set the current frame.
         mdl = Models_ToModel(subdef.modelId);
-        DENG_ASSERT(mdl);
-        subdef.frame = frame % mdl->info.numFrames;
+        DENG2_ASSERT(mdl != 0);
+        subdef.frame = frame % mdl->frameCount();
     }
 }
 
@@ -167,36 +166,11 @@ static bool Mod_ExpandVertexBuffer(uint numVertices)
     // Do we need to resize the buffers?
     if(vertexBufferMax != vertexBufferSize)
     {
-        dgl_vertex_t *newVertices;
-        dgl_vertex_t *newNormals;
-        dgl_color_t *newColors;
-        dgl_texcoord_t *newTexCoords;
-
         /// @todo Align access to this memory along a 4-byte boundary?
-        newVertices = (dgl_vertex_t*) M_Calloc(sizeof(*newVertices) * vertexBufferMax);
-        if(!newVertices) return false;
-
-        newNormals = (dgl_vertex_t*) M_Calloc(sizeof(*newNormals) * vertexBufferMax);
-        if(!newNormals) return false;
-
-        newColors = (dgl_color_t*) M_Calloc(sizeof(*newColors) * vertexBufferMax);
-        if(!newColors) return false;
-
-        newTexCoords = (dgl_texcoord_t*) M_Calloc(sizeof(*newTexCoords) * vertexBufferMax);
-        if(!newTexCoords) return false;
-
-        // Swap over the buffers.
-        if(modelVertices) M_Free(modelVertices);
-        modelVertices = newVertices;
-
-        if(modelNormals) M_Free(modelNormals);
-        modelNormals = newNormals;
-
-        if(modelColors) M_Free(modelColors);
-        modelColors = newColors;
-
-        if(modelTexCoords) M_Free(modelTexCoords);
-        modelTexCoords = newTexCoords;
+        modelPosCoords   =  (Vector3f *) M_Realloc(modelPosCoords,   sizeof(*modelPosCoords)   * vertexBufferMax);
+        modelNormCoords  =  (Vector3f *) M_Realloc(modelNormCoords,  sizeof(*modelNormCoords)  * vertexBufferMax);
+        modelColorCoords = (Vector4ub *) M_Realloc(modelColorCoords, sizeof(*modelColorCoords) * vertexBufferMax);
+        modelTexCoords   =  (Vector2f *) M_Realloc(modelTexCoords,   sizeof(*modelTexCoords)   * vertexBufferMax);
 
         vertexBufferSize = vertexBufferMax;
     }
@@ -208,7 +182,7 @@ static bool Mod_ExpandVertexBuffer(uint numVertices)
 static void Mod_InitArrays()
 {
     if(!GL_state.features.elementArrays) return;
-    memset(arrays, 0, sizeof(arrays));
+    de::zap(arrays);
 }
 
 #if 0
@@ -339,8 +313,8 @@ static void Mod_SelectTexUnits(int count)
 /**
  * Enable, set and optionally lock all enabled arrays.
  */
-static void Mod_Arrays(void *vertices, void *colors, int numCoords, void **coords,
-                       int lock)
+static void Mod_Arrays(void *vertices, void *colors, int numCoords = 0,
+    void **coords = 0, int lock = 0)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -355,7 +329,7 @@ static void Mod_Arrays(void *vertices, void *colors, int numCoords, void **coord
         else
         {
             glEnableClientState(GL_VERTEX_ARRAY);
-            glVertexPointer(3, GL_FLOAT, 16, vertices);
+            glVertexPointer(3, GL_FLOAT, 0, vertices);
         }
     }
 
@@ -428,65 +402,35 @@ static void Mod_ArrayElement(int index)
         {
             if(!arrays[AR_TEXCOORD0 + i].enabled) continue;
 
-            glMultiTexCoord2fv(GL_TEXTURE0 + i, ((dgl_texcoord_t *)arrays[AR_TEXCOORD0 + i].data)[index].st);
+            Vector2f const &texCoord = ((Vector2f const *)arrays[AR_TEXCOORD0 + i].data)[index];
+            glMultiTexCoord2f(GL_TEXTURE0 + i, texCoord.x, texCoord.y);
         }
 
         if(arrays[AR_COLOR].enabled)
-            glColor4ubv(((dgl_color_t *) arrays[AR_COLOR].data)[index].rgba);
+        {
+            Vector4ub const &colorCoord = ((Vector4ub const *) arrays[AR_COLOR].data)[index];
+            glColor4ub(colorCoord.x, colorCoord.y, colorCoord.z, colorCoord.w);
+        }
 
         if(arrays[AR_VERTEX].enabled)
-            glVertex3fv(((dgl_vertex_t *) arrays[AR_VERTEX].data)[index].xyz);
-    }
-}
-
-#if 0
-static void Mod_DrawElements(dglprimtype_t type, int count, uint const *indices)
-{
-    GLenum primType = (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN :
-                       type == DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    if(GL_state.features.elementArrays)
-    {
-        glDrawElements(primType, count, GL_UNSIGNED_INT, indices);
-    }
-    else
-    {
-        glBegin(primType);
-        for(int i = 0; i < count; ++i)
         {
-            Mod_ArrayElement(indices[i]);
+            Vector3f const &posCoord = ((Vector3f const *) arrays[AR_VERTEX].data)[index];
+            glVertex3f(posCoord.x, posCoord.y, posCoord.z);
         }
-        glEnd();
     }
-
-    DENG_ASSERT(!Sys_GLCheckError());
 }
-#endif
 
 static inline float qatan2(float y, float x)
 {
     float ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
     if(ang > PI) ang -= 2 * (float) PI;
     return ang;
-    // This is slightly faster, I believe...
-    //return atan2(y, x);
-}
-
-/**
- * Linear interpolation between two values.
- */
-static inline float Mod_Lerp(float start, float end, float pos)
-{
-    return end * pos + start * (1 - pos);
 }
 
 /**
  * Return a pointer to the visible model frame.
  */
-static model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
+static ModelFrame *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjId)
 {
     if(subnumber >= int(mf->subCount()))
     {
@@ -494,31 +438,22 @@ static model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mob
                     QString("Model has %1 submodels, but submodel #%2 was requested")
                     .arg(mf->subCount()).arg(subnumber));
     }
-
     submodeldef_t const &sub = mf->subModelDef(subnumber);
 
-    model_t *mdl = Models_ToModel(sub.modelId);
-    DENG_ASSERT(mdl);
-
-    int index = sub.frame;
+    int curFrame = sub.frame;
     if(mf->flags & MFF_IDFRAME)
     {
-        index += mobjid % sub.frameRange;
+        curFrame += mobjId % sub.frameRange;
     }
-    if(index >= mdl->info.numFrames)
-    {
-        throw Error("Mod_GetVisibleFrame", "Frame index out of bounds.");
-    }
-    return mdl->frames + index;
+
+    return &Models_ToModel(sub.modelId)->frame(curFrame);
 }
 
 /**
- * Render a set of GL commands using the given data.
- *
- * @todo Render the commands as-is - endian swapping should be done at load time -ds
+ * Render a set of 3D model primitives using the given data.
  */
-static void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
-    dgl_vertex_t *vertices, dgl_color_t *colors, dgl_texcoord_t *texCoords)
+static void Mod_RenderPrimitives(rendcmd_t mode, Model::DetailLevel::Primitives const &primitives,
+    Vector3f *posCoords, Vector4ub *colorCoords, Vector2f *texCoords = 0)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -532,44 +467,33 @@ static void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVerti
     {
     case RC_OTHER_COORDS:
         coords[0] = texCoords;
-        Mod_Arrays(vertices, colors, 1, coords, 0);
+        Mod_Arrays(posCoords, colorCoords, 1, coords);
         break;
 
     case RC_BOTH_COORDS:
         coords[0] = NULL;
         coords[1] = texCoords;
-        Mod_Arrays(vertices, colors, 2, coords, 0);
+        Mod_Arrays(posCoords, colorCoords, 2, coords);
         break;
 
     default:
-        Mod_Arrays(vertices, colors, 0, NULL, 0 /* numVertices */ );
+        Mod_Arrays(posCoords, colorCoords);
         break;
     }
 
-    for(byte *pos = (byte *)glCommands; *pos;)
+    foreach(ModelDetailLevel::Primitive const &cmd, primitives)
     {
-        int count = LONG( *(int *) pos );
-        pos += 4;
-
         // The type of primitive depends on the sign.
-        glBegin(count > 0 ? GL_TRIANGLE_STRIP : GL_TRIANGLE_FAN);
-        if(count < 0)
-            count = -count;
+        glBegin(cmd.triFan? GL_TRIANGLE_FAN : GL_TRIANGLE_STRIP);
 
-        // Increment the total model triangle counter.
-        modelTriCount += count - 2;
-
-        while(count--)
+        foreach(ModelDetailLevel::Primitive::Element const &elem, cmd.elements)
         {
-            glcommand_vertex_t *v = (glcommand_vertex_t *) pos;
-            pos += sizeof(glcommand_vertex_t);
-
             if(mode != RC_OTHER_COORDS)
             {
-                glTexCoord2f(FLOAT(v->s), FLOAT(v->t));
+                glTexCoord2f(elem.texCoord.x, elem.texCoord.y);
             }
 
-            Mod_ArrayElement(LONG(v->index));
+            Mod_ArrayElement(elem.index);
         }
 
         // The primitive is complete.
@@ -578,43 +502,53 @@ static void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVerti
 }
 
 /**
+ * Linear interpolation between two values.
+ */
+static inline float Mod_Lerp(float start, float end, float pos)
+{
+    return end * pos + start * (1 - pos);
+}
+
+/**
  * Interpolate linearly between two sets of vertices.
  */
-static void Mod_LerpVertices(float pos, int count, model_vertex_t *start,
-    model_vertex_t *end, dgl_vertex_t *out)
+static void Mod_LerpVertices(float inter, int count, ModelFrame const &from,
+    ModelFrame const &to, Vector3f *posOut, Vector3f *normOut)
 {
-    if(start == end || pos == 0)
+    DENG2_ASSERT(from.vertices.count() == to.vertices.count()); // sanity check.
+
+    ModelFrame::VertexBuf::const_iterator startIt = from.vertices.begin();
+    ModelFrame::VertexBuf::const_iterator endIt   = to.vertices.begin();
+
+    if(&from == &to || de::fequal(inter, 0))
     {
-        for(int i = 0; i < count; ++i, start++, out++)
+        for(int i = 0; i < count; ++i, startIt++, posOut++, normOut++)
         {
-            out->xyz[0] = start->xyz[0];
-            out->xyz[1] = start->xyz[1];
-            out->xyz[2] = start->xyz[2];
+            *posOut  = startIt->pos;
+            *normOut = startIt->norm;
         }
         return;
     }
 
-    float inv = 1 - pos;
+    float const invInter = 1 - inter;
 
     if(vertexUsage)
     {
-        for(int i = 0; i < count; ++i, start++, end++, out++)
+        for(int i = 0; i < count; ++i, startIt++, endIt++, posOut++, normOut++)
         {
-            if(vertexUsage[i] & (1 << activeLod))
+            if(vertexUsage->testBit(i * Model::MAX_LODS + activeLod))
             {
-                out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
-                out->xyz[1] = inv * start->xyz[1] + pos * end->xyz[1];
-                out->xyz[2] = inv * start->xyz[2] + pos * end->xyz[2];
+                *posOut  = startIt->pos  * invInter + endIt->pos  * inter;
+                *normOut = startIt->norm * invInter + endIt->norm * inter;
             }
         }
     }
     else
     {
-        for(int i = 0; i < count; ++i, start++, end++, out++)
+        for(int i = 0; i < count; ++i, startIt++, endIt++, posOut++, normOut++)
         {
-            out->xyz[0] = inv * start->xyz[0] + pos * end->xyz[0];
-            out->xyz[1] = inv * start->xyz[1] + pos * end->xyz[1];
-            out->xyz[2] = inv * start->xyz[2] + pos * end->xyz[2];
+            *posOut  = startIt->pos  * invInter + endIt->pos  * inter;
+            *normOut = startIt->norm * invInter + endIt->norm * inter;
         }
     }
 }
@@ -622,11 +556,11 @@ static void Mod_LerpVertices(float pos, int count, model_vertex_t *start,
 /**
  * Negate all Z coordinates.
  */
-static void Mod_MirrorVertices(int count, dgl_vertex_t *v, int axis)
+static void Mod_MirrorCoords(int count, Vector3f *coords, int axis)
 {
-    for(; count-- > 0; v++)
+    for(; count-- > 0; coords++)
     {
-        v->xyz[axis] = -v->xyz[axis];
+        (*coords)[axis] = -(*coords)[axis];
     }
 }
 
@@ -684,22 +618,25 @@ static int lightModelVertexWorker(VectorLight const *vlight, void *context)
  * Calculate vertex lighting.
  * @todo construct a rotation matrix once and use it for all vertices.
  */
-static void Mod_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
-    uint vLightListIdx, uint maxLights, float ambient[4], bool invert,
+static void Mod_VertexColors(int count, Vector4ub *out, Vector3f const *normCoords,
+    uint vLightListIdx, uint maxLights, Vector4f const &ambient, bool invert,
     float rotateYaw, float rotatePitch)
 {
-    Vector3f const saturated(1, 1, 1);
+    Vector4f const saturated(1, 1, 1, 1);
     lightmodelvertexworker_params_t parms;
 
-    for(int i = 0; i < count; ++i, out++, normal++)
+    for(int i = 0; i < count; ++i, out++, normCoords++)
     {
-        if(vertexUsage && !(vertexUsage[i] & (1 << activeLod)))
-            continue;
+        if(vertexUsage)
+        {
+            if(!vertexUsage->testBit(i * Model::MAX_LODS + activeLod))
+                continue;
+        }
 
         // Begin with total darkness.
         parms.color        = Vector3f();
         parms.extra        = Vector3f();
-        parms.normal       = Vector3f(normal->xyz);
+        parms.normal       = *normCoords;
         parms.invert       = invert;
         parms.rotateYaw    = rotateYaw;
         parms.rotatePitch  = rotatePitch;
@@ -710,59 +647,51 @@ static void Mod_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
         VL_ListIterator(vLightListIdx, lightModelVertexWorker, &parms);
 
         // Check for ambient and convert to ubyte.
-        Vector3f color = (parms.color.max(ambient) + parms.extra).min(saturated);
+        Vector4f color(parms.color.max(ambient) + parms.extra, ambient[3]);
 
-        out->rgba[0] = byte( 255 * color.x );
-        out->rgba[1] = byte( 255 * color.y );
-        out->rgba[2] = byte( 255 * color.z );
-        out->rgba[3] = byte( 255 * ambient[3] );
+        *out = (color.min(saturated) * 255).toVector4ub();
     }
 }
 
 /**
  * Set all the colors in the array to bright white.
  */
-static void Mod_FullBrightVertexColors(int count, dgl_color_t *colors, float alpha)
+static void Mod_FullBrightVertexColors(int count, Vector4ub *colorCoords, float alpha)
 {
-    for(; count-- > 0; colors++)
+    DENG2_ASSERT(colorCoords != 0);
+    for(; count-- > 0; colorCoords++)
     {
-        std::memset(colors->rgba, 255, 3);
-        colors->rgba[3] = (byte) (255 * alpha);
+        *colorCoords = Vector4ub(255, 255, 255, 255 * alpha);
     }
 }
 
 /**
  * Set all the colors into the array to the same values.
  */
-static void Mod_FixedVertexColors(int count, dgl_color_t *colors, float *color)
+static void Mod_FixedVertexColors(int count, Vector4ub *colorCoords, Vector4ub const &color)
 {
-    byte rgba[4];
-
-    rgba[0] = color[0] * 255;
-    rgba[1] = color[1] * 255;
-    rgba[2] = color[2] * 255;
-    rgba[3] = color[3] * 255;
-    for(; count-- > 0; colors++)
+    DENG2_ASSERT(colorCoords != 0);
+    for(; count-- > 0; colorCoords++)
     {
-        std::memcpy(colors->rgba, rgba, 4);
+        *colorCoords = color;
     }
 }
 
 /**
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
-static void Mod_ShinyCoords(int count, dgl_texcoord_t *coords, dgl_vertex_t *normals,
+static void Mod_ShinyCoords(int count, Vector2f *out, Vector3f const *normCoords,
     float normYaw, float normPitch, float shinyAng, float shinyPnt, float reactSpeed)
 {
-    float rotatedNormal[3];
-
-    for(int i = 0; i < count; ++i, coords++, normals++)
+    for(int i = 0; i < count; ++i, out++, normCoords++)
     {
-        if(vertexUsage && !(vertexUsage[i] & (1 << activeLod))) continue;
+        if(vertexUsage)
+        {
+            if(!vertexUsage->testBit(i * Model::MAX_LODS + activeLod))
+                continue;
+        }
 
-        rotatedNormal[VX] = normals->xyz[VX];
-        rotatedNormal[VY] = normals->xyz[VY];
-        rotatedNormal[VZ] = normals->xyz[VZ];
+        float rotatedNormal[3] = { normCoords->x, normCoords->y, normCoords->z };
 
         // Rotate the normal vector so that it approximates the
         // model's orientation compared to the viewer.
@@ -770,8 +699,7 @@ static void Mod_ShinyCoords(int count, dgl_texcoord_t *coords, dgl_vertex_t *nor
                        (shinyPnt + normYaw) * 360 * reactSpeed,
                        (shinyAng + normPitch - .5f) * 180 * reactSpeed);
 
-        coords->st[0] = rotatedNormal[VX] + 1;
-        coords->st[1] = rotatedNormal[VZ];
+        *out = Vector2f(rotatedNormal[0] + 1, rotatedNormal[2]);
     }
 }
 
@@ -797,10 +725,12 @@ static int chooseSelSkin(modeldef_t *mf, int submodel, int selector)
 static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tmap)
 {
     if(submodel >= int(mf->subCount()))
+    {
         return 0;
+    }
 
     submodeldef_t &smf = mf->subModelDef(submodel);
-    model_t *mdl = Models_ToModel(smf.modelId);
+    Model *mdl = Models_ToModel(smf.modelId);
     int skin = smf.skin;
 
     // Selskin overrides the skin range.
@@ -829,11 +759,15 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
 
     // Need translation?
     if(smf.testFlag(MFF_SKINTRANS))
+    {
         skin = tmap;
+    }
 
-    DENG_ASSERT(mdl);
-    if(skin < 0 || skin >= mdl->info.numSkins)
+    DENG2_ASSERT(mdl != 0);
+    if(skin < 0 || skin >= mdl->skinCount())
+    {
         skin = 0;
+    }
 
     return skin;
 }
@@ -859,18 +793,20 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
 {
     modeldef_t *mf = parm->mf, *mfNext = parm->nextMF;
     submodeldef_t *smf = &mf->subModelDef(number);
-    model_t *mdl = Models_ToModel(smf->modelId);
-    model_frame_t *frame = Mod_GetVisibleFrame(mf, number, parm->id);
-    model_frame_t *nextFrame = NULL;
+    Model *mdl = Models_ToModel(smf->modelId);
+    ModelFrame *frame = Mod_GetVisibleFrame(mf, number, parm->id);
+    ModelFrame *nextFrame = 0;
 
-    int numVerts, useSkin, c;
+    int numVerts, useSkin;
     float endPos, offset, alpha;
-    float delta[3], color[4], ambient[4];
-    float shininess, *shinyColor;
+    Vector3f delta;
+    Vector4f color, ambient;
+    float shininess;
+    Vector3f shinyColor;
     float normYaw, normPitch, shinyAng, shinyPnt;
     float inter = parm->inter;
     blendmode_t blending;
-    Texture::Variant *skinTexture = NULL, *shinyTexture = NULL;
+    TextureVariant *skinTexture = 0, *shinyTexture = 0;
     int zSign = (parm->mirror? -1 : 1);
 
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -915,7 +851,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     {
         // Always interpolate, if there's animation.
         // Used with sky and particle models.
-        nextFrame = mdl->frames + (smf->frame + 1) % mdl->info.numFrames;
+        nextFrame = &mdl->frame((smf->frame + 1) % mdl->frameCount());
         mfNext = mf;
     }
     else
@@ -931,10 +867,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     }
 
     // Clamp interpolation.
-    if(inter < 0)
-        inter = 0;
-    if(inter > 1)
-        inter = 1;
+    inter = de::clamp(0.f, inter, 1.f);
 
     if(!nextFrame)
     {
@@ -945,7 +878,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     }
 
     // Determine the total number of vertices we have.
-    numVerts = mdl->info.numVertices;
+    numVerts = mdl->numVertices();
 
     // Ensure our vertex render buffers can accommodate this.
     if(!Mod_ExpandVertexBuffer(numVerts))
@@ -960,11 +893,11 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
 
     // Model space => World space
     glTranslatef(parm->origin[VX] + parm->srvo[VX] +
-                   Mod_Lerp(mf->offset[VX], mfNext->offset[VX], inter),
+                   Mod_Lerp(mf->offset.x, mfNext->offset.x, inter),
                  parm->origin[VZ] + parm->srvo[VZ] +
-                   Mod_Lerp(mf->offset[VY], mfNext->offset[VY], inter),
+                   Mod_Lerp(mf->offset.y, mfNext->offset.y, inter),
                  parm->origin[VY] + parm->srvo[VY] + zSign *
-                   Mod_Lerp(mf->offset[VZ], mfNext->offset[VZ], inter));
+                   Mod_Lerp(mf->offset.z, mfNext->offset.z, inter));
 
     if(parm->extraYawAngle || parm->extraPitchAngle)
     {
@@ -982,83 +915,73 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
               0, 0, 1);
 
     // Scaling and model space offset.
-    glScalef(Mod_Lerp(mf->scale[VX], mfNext->scale[VX], inter),
-             Mod_Lerp(mf->scale[VY], mfNext->scale[VY], inter),
-             Mod_Lerp(mf->scale[VZ], mfNext->scale[VZ], inter));
+    glScalef(Mod_Lerp(mf->scale.x, mfNext->scale.x, inter),
+             Mod_Lerp(mf->scale.y, mfNext->scale.y, inter),
+             Mod_Lerp(mf->scale.z, mfNext->scale.z, inter));
     if(parm->extraScale)
     {
         // Particle models have an extra scale.
         glScalef(parm->extraScale, parm->extraScale, parm->extraScale);
     }
-    glTranslatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
+    glTranslatef(smf->offset.x, smf->offset.y, smf->offset.z);
 
     /**
      * Now we can draw.
      */
 
     // Determine the suitable LOD.
-    if(mdl->info.numLODs > 1 && rend_model_lod != 0)
+    if(mdl->lodCount() > 1 && rend_model_lod != 0)
     {
         float lodFactor = rend_model_lod * DENG_GAMEVIEW_WIDTH / 640.0f / (Rend_FieldOfView() / 90.0f);
-        if(!FEQUAL(lodFactor, 0))
+        if(!de::fequal(lodFactor, 0))
+        {
             lodFactor = 1 / lodFactor;
+        }
 
         // Determine the LOD we will be using.
-        activeLod = int(lodFactor * parm->distance);
-        if(activeLod < 0)
-            activeLod = 0;
-        if(activeLod >= mdl->info.numLODs)
-            activeLod = mdl->info.numLODs - 1;
-        vertexUsage = mdl->vertexUsage;
+        activeLod = de::clamp<int>(0, lodFactor * parm->distance, mdl->lodCount() - 1);
+        vertexUsage = &mdl->_vertexUsage;
     }
     else
     {
-        activeLod = 0;
-        vertexUsage = NULL;
+        activeLod   = 0;
+        vertexUsage = 0;
     }
 
     // Interpolate vertices and normals.
-    Mod_LerpVertices(inter, numVerts, frame->vertices, nextFrame->vertices,
-                     modelVertices);
-    Mod_LerpVertices(inter, numVerts, frame->normals, nextFrame->normals,
-                     modelNormals);
+    Mod_LerpVertices(inter, numVerts, *frame, *nextFrame,
+                     modelPosCoords, modelNormCoords);
+
     if(zSign < 0)
     {
-        Mod_MirrorVertices(numVerts, modelVertices, VZ);
-        Mod_MirrorVertices(numVerts, modelNormals, VY);
+        Mod_MirrorCoords(numVerts, modelPosCoords, 2);
+        Mod_MirrorCoords(numVerts, modelNormCoords, 1);
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter[VX] = parm->origin[VX] + parm->srvo[VX] + mf->offset[VX];
-    modelCenter[VY] = parm->origin[VY] + parm->srvo[VY] + mf->offset[VZ];
-    modelCenter[VZ] = ((parm->origin[VZ] + parm->gzt) * 2) + parm->srvo[VZ] +
-                        mf->offset[VY];
+    modelCenter = Vector3f(parm->origin[VX], parm->origin[VY], (parm->origin[VZ] + parm->gzt) * 2)
+            + Vector3d(parm->srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
 
     // Calculate lighting.
     if(smf->testFlag(MFF_FULLBRIGHT) && !smf->testFlag(MFF_DIM))
     {
         // Submodel-specific lighting override.
-        ambient[CR] = ambient[CG] = ambient[CB] = ambient[CA] = 1;
-        Mod_FullBrightVertexColors(numVerts, modelColors, alpha);
+        ambient = Vector4f(1, 1, 1, 1);
+        Mod_FullBrightVertexColors(numVerts, modelColorCoords, alpha);
     }
     else if(!parm->vLightListIdx)
     {
         // Lit uniformly.
-        ambient[CR] = parm->ambientColor[CR];
-        ambient[CG] = parm->ambientColor[CG];
-        ambient[CB] = parm->ambientColor[CB];
-        ambient[CA] = alpha;
-        Mod_FixedVertexColors(numVerts, modelColors, ambient);
+        ambient = Vector4f(parm->ambientColor, alpha);
+        Mod_FixedVertexColors(numVerts, modelColorCoords,
+                              (ambient * 255).toVector4ub());
     }
     else
     {
         // Lit normally.
-        ambient[CR] = parm->ambientColor[CR];
-        ambient[CG] = parm->ambientColor[CG];
-        ambient[CB] = parm->ambientColor[CB];
-        ambient[CA] = alpha;
+        ambient = Vector4f(parm->ambientColor, alpha);
 
-        Mod_VertexColors(numVerts, modelColors, modelNormals,
+        Mod_VertexColors(numVerts, modelColorCoords, modelNormCoords,
                          parm->vLightListIdx, modelLight + 1, ambient,
                          mf->scale[VY] < 0? true: false,
                          -parm->yaw, -parm->pitch);
@@ -1067,11 +990,11 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     shininess = 0;
     if(mf->def->hasSub(number))
     {
-        shininess = MINMAX_OF(0, mf->def->sub(number).shiny * modelShinyFactor, 1);
+        shininess = de::clamp(0.f, mf->def->sub(number).shiny * modelShinyFactor, 1.f);
         // Ensure we've prepared the shiny skin.
         if(shininess > 0)
         {
-            if(Texture *tex = reinterpret_cast<Texture *>(mf->subModelDef(number).shinySkin))
+            if(Texture *tex = mf->subModelDef(number).shinySkin)
             {
                 shinyTexture = tex->prepareVariant(Rend_ModelShinyTextureSpec());
             }
@@ -1107,38 +1030,31 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         }
         else
         {
-            delta[VX] = modelCenter[VX] - vOrigin[VX];
-            delta[VY] = modelCenter[VY] - vOrigin[VZ];
-            delta[VZ] = modelCenter[VZ] - vOrigin[VY];
+            delta = modelCenter - Vector3f(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
             if(parm->shineTranslateWithViewerPos)
             {
-                delta[VX] += vOrigin[VX];
-                delta[VY] += vOrigin[VZ];
-                delta[VZ] += vOrigin[VY];
+                delta += Vector3f(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
             }
 
-            shinyAng = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], delta[VY])) / PI + 0.5f; // shinyAng is [0,1]
+            shinyAng = QATAN2(delta.z, M_ApproxDistancef(delta.x, delta.y)) / PI + 0.5f; // shinyAng is [0,1]
 
-            shinyPnt = QATAN2(delta[VY], delta[VX]) / (2 * PI);
+            shinyPnt = QATAN2(delta.y, delta.x) / (2 * PI);
         }
 
-        Mod_ShinyCoords(numVerts, modelTexCoords, modelNormals, normYaw,
+        Mod_ShinyCoords(numVerts, modelTexCoords, modelNormCoords, normYaw,
                         normPitch, shinyAng, shinyPnt,
                         mf->def->sub(number).shinyReact);
 
         // Shiny color.
         if(smf->testFlag(MFF_SHINY_LIT))
         {
-            for(c = 0; c < 3; ++c)
-                color[c] = ambient[c] * shinyColor[c];
+            color = Vector4f(ambient * shinyColor, shininess);
         }
         else
         {
-            for(c = 0; c < 3; ++c)
-                color[c] = shinyColor[c];
+            color = Vector4f(shinyColor, shininess);
         }
-        color[3] = shininess;
     }
 
     if(renderTextures == 2)
@@ -1157,9 +1073,9 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     else
     {
         skinTexture = 0;
-        if(Texture *tex = reinterpret_cast<Texture *>(mdl->skins[useSkin].texture))
+        if(Texture *tex = mdl->skin(useSkin).texture)
         {
-            skinTexture = tex->prepareVariant(Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
+            skinTexture = tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl->flags().testFlag(Model::NoTextureCompression)));
         }
     }
 
@@ -1188,9 +1104,9 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
             GL_BlendMode(blending);
             GL_BindTexture(renderTextures? skinTexture : 0);
 
-            Mod_RenderCommands(RC_COMMAND_COORDS,
-                               mdl->lods[activeLod].glCommands, /*numVerts,*/
-                               modelVertices, modelColors, NULL);
+            Mod_RenderPrimitives(RC_COMMAND_COORDS,
+                               mdl->_lods[activeLod].primitives, /*numVerts,*/
+                               modelPosCoords, modelColorCoords);
         }
 
         if(shininess > 0)
@@ -1204,7 +1120,8 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                 GL_BlendMode(BM_NORMAL);
 
             // Shiny color.
-            Mod_FixedVertexColors(numVerts, modelColors, color);
+            Mod_FixedVertexColors(numVerts, modelColorCoords,
+                                  (color * 255).toVector4ub());
 
             if(numTexUnits > 1 && modelShinyMultitex)
             {
@@ -1219,9 +1136,8 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                 glActiveTexture(GL_TEXTURE0);
                 GL_BindTexture(renderTextures? skinTexture : 0);
 
-                Mod_RenderCommands(RC_BOTH_COORDS,
-                                   mdl->lods[activeLod].glCommands, /*numVerts,*/
-                                   modelVertices, modelColors, modelTexCoords);
+                Mod_RenderPrimitives(RC_BOTH_COORDS, mdl->_lods[activeLod].primitives,
+                                   modelPosCoords, modelColorCoords, modelTexCoords);
 
                 Mod_SelectTexUnits(1);
                 GL_ModulateTexture(1);
@@ -1232,9 +1148,8 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                 Mod_SelectTexUnits(1);
                 GL_BindTexture(renderTextures? shinyTexture : 0);
 
-                Mod_RenderCommands(RC_OTHER_COORDS,
-                                   mdl->lods[activeLod].glCommands, /*numVerts,*/
-                                   modelVertices, modelColors, modelTexCoords);
+                Mod_RenderPrimitives(RC_OTHER_COORDS, mdl->_lods[activeLod].primitives,
+                                   modelPosCoords, modelColorCoords, modelTexCoords);
             }
         }
     }
@@ -1252,16 +1167,14 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         GL_BindTexture(renderTextures? shinyTexture : 0);
 
         // Multiply by shininess.
-        for(c = 0; c < 3; ++c)
-            color[c] *= color[3];
-        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+        float colorv1[] = { color.x * color.x, color.y * color.y, color.z * color.z, color.w };
+        glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, colorv1);
 
         glActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures? skinTexture : 0);
 
-        Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
-                           /*numVerts,*/ modelVertices, modelColors,
-                           modelTexCoords);
+        Mod_RenderPrimitives(RC_BOTH_COORDS, mdl->_lods[activeLod].primitives,
+                           modelPosCoords, modelColorCoords, modelTexCoords);
 
         Mod_SelectTexUnits(1);
         GL_ModulateTexture(1);
@@ -1291,13 +1204,13 @@ void Rend_ModelInit()
 {
     if(inited) return; // Already been here.
 
-    modelVertices  = 0;
-    modelNormals   = 0;
-    modelColors    = 0;
-    modelTexCoords = 0;
+    modelPosCoords   = 0;
+    modelNormCoords  = 0;
+    modelColorCoords = 0;
+    modelTexCoords   = 0;
 
     vertexBufferMax = vertexBufferSize = 0;
-#if _DEBUG
+#ifdef DENG_DEBUG
     announcedVertexBufferMaxBreach = false;
 #endif
 
@@ -1310,32 +1223,13 @@ void Rend_ModelShutdown()
 {
     if(!inited) return;
 
-    if(modelVertices)
-    {
-        M_Free(modelVertices);
-        modelVertices = 0;
-    }
-
-    if(modelNormals)
-    {
-        M_Free(modelNormals);
-        modelNormals = 0;
-    }
-
-    if(modelColors)
-    {
-        M_Free(modelColors);
-        modelColors = 0;
-    }
-
-    if(modelTexCoords)
-    {
-        M_Free(modelTexCoords);
-        modelTexCoords = 0;
-    }
+    M_Free(modelPosCoords); modelPosCoords = 0;
+    M_Free(modelNormCoords); modelNormCoords = 0;
+    M_Free(modelColorCoords); modelColorCoords = 0;
+    M_Free(modelTexCoords); modelTexCoords = 0;
 
     vertexBufferMax = vertexBufferSize = 0;
-#if _DEBUG
+#ifdef DENG_DEBUG
     announcedVertexBufferMaxBreach = false;
 #endif
 

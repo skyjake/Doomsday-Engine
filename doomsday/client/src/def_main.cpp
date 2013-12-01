@@ -1899,14 +1899,16 @@ void Def_PostInit(void)
                 continue;
             }
 
-            model_t *mdl = Models_ToModel(modef->subModelId(0));
-            DENG_ASSERT(mdl);
+            Model *mdl = Models_ToModel(modef->subModelId(0));
+            DENG2_ASSERT(mdl != 0);
 
             st->model = modef - &modefs[0];
-            st->frame = mdl->frameNumForName(st->frameName);
+            st->frame = mdl->toFrameNumber(st->frameName);
+            if(st->frame < 0) st->frame = 0;
             if(st->endFrameName[0])
             {
-                st->endFrame = mdl->frameNumForName(st->endFrameName);
+                st->endFrame = mdl->toFrameNumber(st->endFrameName);
+                if(st->endFrame < 0) st->endFrame = 0;
             }
             else
             {

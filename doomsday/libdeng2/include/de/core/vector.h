@@ -466,6 +466,9 @@ public:
     Vector4<dint> toVector4i() const {
         return Vector4<dint>(dint(Vector3<Type>::x), dint(Vector3<Type>::y), dint(Vector3<Type>::z), dint(w));
     }
+    Vector4<dbyte> toVector4ub() const {
+        return Vector4<dbyte>(dbyte(Vector3<Type>::x), dbyte(Vector3<Type>::y), dbyte(Vector3<Type>::z), dbyte(w));
+    }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 3);
         Type *ptrs[] = { &(this->Vector2<Type>::x),

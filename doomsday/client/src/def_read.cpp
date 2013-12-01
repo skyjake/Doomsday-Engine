@@ -1446,8 +1446,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_FLT("Resize", mdl->resize)
                 if(ISLABEL("Scale"))
                 {
-                    READFLT(mdl->scale[1]);
-                    mdl->scale[0] = mdl->scale[2] = mdl->scale[1];
+                    float scale; READFLT(scale);
+                    mdl->scale = Vector3f(scale, scale, scale);
                 }
                 else RV_VEC("Scale XYZ", mdl->scale, 3)
                 RV_FLT("Offset", mdl->offset[1])

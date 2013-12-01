@@ -1,12 +1,7 @@
-/**
- * @file models.h
+/** @file models.h  3D Model Resources.
  *
- * 3D Model Resources.
- *
- * @ingroup resource
- *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,20 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MODELS_H
-#define LIBDENG_RESOURCE_MODELS_H
+#ifndef DENG_RESOURCE_MODELS_H
+#define DENG_RESOURCE_MODELS_H
 
 #include <vector>
 #include <de/Vector>
 
 #include "def_data.h"
 #include "gl/gl_model.h"
-
-/// Unique identifier associated with each model in the collection.
-typedef uint modelid_t;
-
-/// Special value used to signify an invalid model id.
-#define NOMODELID               0
 
 /**
  * @defgroup modelFrameFlags Model frame flags
@@ -83,24 +72,22 @@ struct SubmodelDef
     int _flags;
     short skin;
     char skinRange;
-    float offset[3];
+    de::Vector3f offset;
     byte alpha;
     de::Texture *shinySkin;
     blendmode_t blendMode;
 
     SubmodelDef()
-        : modelId(0),
-          frame(0),
-          frameRange(0),
-          _flags(0),
-          skin(0),
-          skinRange(0),
-          alpha(0),
-          shinySkin(0),
-          blendMode(BM_NORMAL)
-    {
-        de::zap(offset);
-    }
+        : modelId(0)
+        , frame(0)
+        , frameRange(0)
+        , _flags(0)
+        , skin(0)
+        , skinRange(0)
+        , alpha(0)
+        , shinySkin(0)
+        , blendMode(BM_NORMAL)
+    {}
 
     void setFlags(int newFlags)
     {
@@ -129,26 +116,26 @@ struct ModelDef
     char id[MODELDEF_ID_MAXLEN + 1];
 
     /// Pointer to the states list.
-    state_t* state;
+    state_t *state;
 
     int flags;
-    unsigned int group;
+    uint group;
     int select;
     short skinTics;
 
     /// [0,1) When is this frame in effect?
     float interMark;
     float interRange[2];
-    float offset[3];
+    de::Vector3f offset;
     float resize;
-    float scale[3];
+    de::Vector3f scale;
 
     typedef std::vector<de::Vector3f> PtcOffsets;
     PtcOffsets _ptcOffset;
 
     float visualRadius;
 
-    ded_model_t* def;
+    ded_model_t *def;
 
     /// Points to next inter-frame, or NULL.
     ModelDef *interNext;
@@ -213,13 +200,13 @@ struct ModelDef
 
     SubmodelDef &subModelDef(unsigned int subnum)
     {
-        DENG_ASSERT(hasSub(subnum));
+        DENG2_ASSERT(hasSub(subnum));
         return _sub[subnum];
     }
 
     SubmodelDef const &subModelDef(unsigned int subnum) const
     {
-        DENG_ASSERT(hasSub(subnum));
+        DENG2_ASSERT(hasSub(subnum));
         return _sub[subnum];
     }
 
@@ -232,7 +219,7 @@ struct ModelDef
     {
         if(hasSub(subnum))
         {
-            DENG_ASSERT(subnum < _ptcOffset.size());
+            DENG2_ASSERT(subnum < _ptcOffset.size());
             return _ptcOffset[subnum];
         }
         return de::Vector3f();
@@ -240,7 +227,7 @@ struct ModelDef
 
     void setParticleOffset(unsigned int subnum, de::Vector3f const &off)
     {
-        DENG_ASSERT(hasSub(subnum));
+        DENG2_ASSERT(hasSub(subnum));
         _ptcOffset[subnum] = off;
     }
 };
@@ -250,21 +237,21 @@ typedef std::vector<ModelDef> ModelDefs;
 
 #ifdef __CLIENT__
 
-extern ModelDefs modefs;
-extern byte useModels;
-extern float rModelAspectMod;
+DENG_EXTERN_C ModelDefs modefs;
+DENG_EXTERN_C byte useModels;
+DENG_EXTERN_C float rModelAspectMod;
 
 /**
  * @pre States must be initialized before this.
  */
-void Models_Init(void);
+void Models_Init();
 
 /**
  * Frees all memory allocated for models.
  */
-void Models_Shutdown(void);
+void Models_Shutdown();
 
-model_t* Models_ToModel(modelid_t id);
+Model *Models_ToModel(modelid_t id);
 
 /**
  * Is there a model for this mobj? The decision is made based on the state and tics
@@ -279,16 +266,16 @@ float Models_ModelForMobj(struct mobj_s const *mo, modeldef_t **mdef, modeldef_t
  * @param id  Unique id of the definition to lookup.
  * @return  Found model definition; otherwise @c 0.
  */
-modeldef_t* Models_Definition(char const* id);
+modeldef_t *Models_Definition(char const *id);
 
-void Models_Cache(modeldef_t* modef);
+void Models_Cache(modeldef_t *modef);
 
 /**
  * @note The skins are also bound here once so they should be ready for use
  *       the next time they are needed.
  */
-int Models_CacheForMobj(thinker_t* th, void* context);
+int Models_CacheForMobj(thinker_t *th, void *context);
 
 #endif // __CLIENT__
 
-#endif // LIBDENG_RESOURCE_MODELS_H
+#endif // DENG_RESOURCE_MODELS_H

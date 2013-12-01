@@ -1,10 +1,8 @@
-/** @file models.cpp 3D Model Resources.
+/** @file models.cpp  3D model resource management.
  *
- * MD2/DMD2 loading and setup.
- *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,40 +19,73 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-#include <cstring> // memset
+#include "de_platform.h"
+#include "resource/models.h"
 
-#include <QDir>
+#include "dd_main.h" // App_FileSystem()
+#include "con_bar.h"
+#include "con_main.h"
+#include "def_main.h"
 
-#include <de/mathutil.h> // M_CycleIntoRange()
-#include <de/memory.h>
+#include "filesys/fs_main.h"
+
+#ifdef __CLIENT__
+#  include "MaterialSnapshot"
+
+#  include "render/billboard.h" // Rend_SpriteMaterialSpec()
+#  include "render/r_main.h" // frameTimePos, precacheSkins
+#  include "render/rend_model.h"
+#endif
+
+#include "world/p_object.h"
 
 #include <de/App>
 #include <de/ByteOrder>
 #include <de/NativePath>
 #include <de/StringPool>
 
-#include "de_platform.h"
-
-#include "de_base.h"
-#include "de_console.h"
-#include "de_filesys.h"
-#include "de_graphics.h"
-#include "de_play.h"
-#include "de_resource.h"
-
-#include "def_main.h"
-
-#ifdef __CLIENT__
-#  include "MaterialSnapshot"
-#  include "render/r_things.h"
-#endif
-#include "render/rend_model.h"
-#include "render/billboard.h"
-
-#include "resource/models.h"
+#include <de/mathutil.h> // M_CycleIntoRange()
+#include <de/memory.h>
+#include <cmath>
+#include <cstring> // memset
 
 using namespace de;
+
+//
+#define MD2_MAGIC 0x32504449
+
+#pragma pack(1)
+typedef struct {
+    int magic;
+    int version;
+    int skinWidth;
+    int skinHeight;
+    int frameSize;
+    int numSkins;
+    int numVertices;
+    int numTexCoords;
+    int numTriangles;
+    int numGlCommands;
+    int numFrames;
+    int offsetSkins;
+    int offsetTexCoords;
+    int offsetTriangles;
+    int offsetFrames;
+    int offsetGlCommands;
+    int offsetEnd;
+} md2_header_t;
+#pragma pack()
+
+//
+#define DMD_MAGIC 0x4D444D44 ///< "DMDM" = Doomsday/Detailed MoDel Magic
+
+#pragma pack(1)
+typedef struct {
+    int magic;
+    int version;
+    int flags;
+} dmd_header_t;
+#pragma pack()
 
 ModelDefs modefs;
 
@@ -62,44 +93,13 @@ byte useModels = true;
 
 float rModelAspectMod = 1 / 1.2f; //.833334f;
 
-static StringPool* modelRepository; // Owns model_t instances.
+static StringPool *modelRepository; // Owns model_t instances.
 static std::vector<int> stateModefs; // Index to the modefs array.
 
+#define NUMVERTEXNORMALS 162
 static float avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "tab_anorms.h"
 };
-
-static int indexOfModelDef(ModelDef const *mf)
-{
-    return mf - &modefs[0];
-}
-
-static ModelDef *modelDefForState(int stateIndex)
-{
-    DENG2_ASSERT(stateIndex >= 0);
-    DENG2_ASSERT(stateIndex < int(stateModefs.size()));
-
-    if(stateModefs[stateIndex] < 0) return 0;
-
-    DENG2_ASSERT(stateModefs[stateIndex] >= 0);
-    DENG2_ASSERT(stateModefs[stateIndex] < int(modefs.size()));
-
-    return &modefs[stateModefs[stateIndex]];
-}
-
-/**
- * Packed: pppppppy yyyyyyyy. Yaw is on the XY plane.
- */
-static void unpackVector(ushort packed, float vec[3])
-{
-    float const yaw   = (packed & 511) / 512.0f * 2 * PI;
-    float const pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
-    float const cosp  = float(cos(pitch));
-
-    vec[VX] = float( cos(yaw) * cosp );
-    vec[VY] = float( sin(yaw) * cosp );
-    vec[VZ] = float( sin(pitch) );
-}
 
 /**
  * Calculate vertex normals. Only with -renorm.
@@ -175,18 +175,35 @@ static void rebuildNormals(model_t &mdl)
 }
 #endif
 
-static void* allocAndLoad(de::FileHandle& file, int offset, int len)
+static int indexOfModelDef(ModelDef const *mf)
 {
-    uint8_t* ptr = (uint8_t*) M_Malloc(len);
-    if(!ptr) throw Error("allocAndLoad:", String("Failed on allocation of %1 bytes for load buffer").arg(len));
+    return mf - &modefs[0];
+}
+
+static ModelDef *modelDefForState(int stateIndex)
+{
+    DENG2_ASSERT(stateIndex >= 0);
+    DENG2_ASSERT(stateIndex < int(stateModefs.size()));
+
+    if(stateModefs[stateIndex] < 0) return 0;
+
+    DENG2_ASSERT(stateModefs[stateIndex] >= 0);
+    DENG2_ASSERT(stateModefs[stateIndex] < int(modefs.size()));
+
+    return &modefs[stateModefs[stateIndex]];
+}
+
+static void *allocAndLoad(de::FileHandle &file, int offset, int len)
+{
+    uint8_t *ptr = (uint8_t *) M_Malloc(len);
     file.seek(offset, SeekSet);
     file.read(ptr, len);
     return ptr;
 }
 
-static bool readMd2Header(de::FileHandle& file, md2_header_t& hdr)
+static bool readMd2Header(de::FileHandle &file, md2_header_t &hdr)
 {
-    size_t readBytes = file.read((uint8_t*)&hdr, sizeof(md2_header_t));
+    size_t readBytes = file.read((uint8_t *)&hdr, sizeof(md2_header_t));
     if(readBytes < sizeof(md2_header_t)) return false;
 
     hdr.magic            = littleEndianByteOrder.toNative(hdr.magic);
@@ -210,7 +227,7 @@ static bool readMd2Header(de::FileHandle& file, md2_header_t& hdr)
 }
 
 /// @todo We only really need to read the magic bytes and the version here.
-static bool recogniseMd2(de::FileHandle& file)
+static bool recogniseMd2(de::FileHandle &file)
 {
     md2_header_t hdr;
     size_t initPos = file.tell();
@@ -222,104 +239,123 @@ static bool recogniseMd2(de::FileHandle& file)
     return result;
 }
 
-static void loadMd2(de::FileHandle& file, model_t& mdl)
+#pragma pack(1)
+typedef struct {
+    byte vertex[3];
+    byte normalIndex;
+} md2_triangleVertex_t;
+
+typedef struct {
+    float scale[3];
+    float translate[3];
+    char name[16];
+    md2_triangleVertex_t vertices[1];
+} md2_packedFrame_t;
+
+struct md2_commandElement_t {
+    float s, t;
+    int index;
+};
+#pragma pack()
+
+/**
+ * Note vertex Z/Y are swapped here (ordered XYZ in the serialized data).
+ */
+static void loadMd2(de::FileHandle &file, Model &mdl)
 {
-    int const axis[3] = { 0, 2, 1 };
-
-    md2_header_t oldHdr;
-    dmd_header_t& hdr = mdl.header;
-    dmd_info_t&   inf = mdl.info;
-
     // Read the header.
-    bool readHeaderOk = readMd2Header(file, oldHdr);
-    DENG_ASSERT(readHeaderOk);
-    DENG_UNUSED(readHeaderOk); // should this be checked?
+    md2_header_t hdr;
+    bool readHeaderOk = readMd2Header(file, hdr);
+    DENG2_ASSERT(readHeaderOk);
+    DENG2_UNUSED(readHeaderOk); // should this be checked?
 
-    // Convert it to DMD.
-    hdr.magic = MD2_MAGIC;
-    hdr.version = 8;
-    hdr.flags = 0;
-    mdl.vertexUsage = NULL;
+    mdl._numLODs     = 1;
+    mdl._numVertices = hdr.numVertices;
 
-    inf.skinWidth       = oldHdr.skinWidth;
-    inf.skinHeight      = oldHdr.skinHeight;
-    inf.frameSize       = oldHdr.frameSize;
-    inf.numSkins        = oldHdr.numSkins;
-    inf.numTexCoords    = oldHdr.numTexCoords;
-    inf.numVertices     = oldHdr.numVertices;
-    inf.numFrames       = oldHdr.numFrames;
-    inf.offsetSkins     = oldHdr.offsetSkins;
-    inf.offsetTexCoords = oldHdr.offsetTexCoords;
-    inf.offsetFrames    = oldHdr.offsetFrames;
-    inf.offsetLODs      = oldHdr.offsetEnd;    // Doesn't exist.
-    inf.numLODs         = 1;
+    mdl.clearAllFrames();
 
-    mdl.lodInfo[0].numTriangles     = oldHdr.numTriangles;
-    mdl.lodInfo[0].numGlCommands    = oldHdr.numGlCommands;
-    mdl.lodInfo[0].offsetTriangles  = oldHdr.offsetTriangles;
-    mdl.lodInfo[0].offsetGlCommands = oldHdr.offsetGlCommands;
-    inf.offsetEnd = oldHdr.offsetEnd;
-
-    // The frames need to be unpacked.
-    byte* frames = (byte*) allocAndLoad(file, inf.offsetFrames, inf.frameSize * inf.numFrames);
-
-    mdl.frames = (model_frame_t*) M_Malloc(sizeof(model_frame_t) * inf.numFrames);
-
-    model_frame_t* frame = mdl.frames;
-    for(int i = 0; i < inf.numFrames; ++i, ++frame)
+    // Load and convert to DMD.
+    uint8_t *frameData = (uint8_t *) allocAndLoad(file, hdr.offsetFrames, hdr.frameSize * hdr.numFrames);
+    for(int i = 0; i < hdr.numFrames; ++i)
     {
-        md2_packedFrame_t* pfr = (md2_packedFrame_t*) (frames + inf.frameSize * i);
+        md2_packedFrame_t const *pfr = (md2_packedFrame_t const *) (frameData + hdr.frameSize * i);
+        Vector3f const scale(FLOAT(pfr->scale[0]), FLOAT(pfr->scale[2]), FLOAT(pfr->scale[1]));
+        Vector3f const translation(FLOAT(pfr->translate[0]), FLOAT(pfr->translate[2]), FLOAT(pfr->translate[1]));
+        String const frameName = pfr->name;
 
-        memcpy(frame->name, pfr->name, sizeof(pfr->name));
-        frame->vertices = (model_vertex_t*) M_Malloc(sizeof(model_vertex_t) * inf.numVertices);
-        frame->normals  = (model_vertex_t*) M_Malloc(sizeof(model_vertex_t) * inf.numVertices);
+        ModelFrame *frame = new ModelFrame(frameName);
+        frame->vertices.reserve(hdr.numVertices);
 
-        // Translate each vertex.
-        md2_triangleVertex_t* pVtx = pfr->vertices;
-        for(int k = 0; k < inf.numVertices; ++k, pVtx++)
+        // Scale and translate each vertex.
+        md2_triangleVertex_t const *pVtx = pfr->vertices;
+        for(int k = 0; k < hdr.numVertices; ++k, pVtx++)
         {
-            byte const lightNormalIndex = pVtx->lightNormalIndex;
+            frame->vertices.append(ModelFrame::Vertex());
+            ModelFrame::Vertex &vtx = frame->vertices.last();
 
-            memcpy(frame->normals[k].xyz, avertexnormals[lightNormalIndex], sizeof(float) * 3);
+            vtx.pos = Vector3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
+                          * scale + translation;
+            vtx.pos.y *= rModelAspectMod; // Aspect undoing.
 
-            for(int c = 0; c < 3; ++c)
+            vtx.norm = Vector3f(avertexnormals[pVtx->normalIndex]);
+
+            if(!k)
             {
-                frame->vertices[k].xyz[axis[c]] =
-                    pVtx->vertex[c] * FLOAT(pfr->scale[c]) + FLOAT(pfr->translate[c]);
+                frame->min = frame->max = vtx.pos;
             }
-
-            // Aspect undoing.
-            frame->vertices[k].xyz[VY] *= rModelAspectMod;
-
-            for(int c = 0; c < 3; ++c)
+            else
             {
-                if(!k || frame->vertices[k].xyz[c] < frame->min[c])
-                    frame->min[c] = frame->vertices[k].xyz[c];
-
-                if(!k || frame->vertices[k].xyz[c] > frame->max[c])
-                    frame->max[c] = frame->vertices[k].xyz[c];
+                frame->min = vtx.pos.min(frame->min);
+                frame->max = vtx.pos.max(frame->max);
             }
         }
-    }
-    M_Free(frames);
 
-    mdl.lods[0].glCommands = (int*) allocAndLoad(file, mdl.lodInfo[0].offsetGlCommands,
-                                                 sizeof(int) * mdl.lodInfo[0].numGlCommands);
+        mdl.addFrame(frame); // takes owernship
+    }
+    M_Free(frameData);
+
+    uint8_t *commandData = (uint8_t *) allocAndLoad(file, hdr.offsetGlCommands, 4 * hdr.numGlCommands);
+    for(uint8_t const *pos = commandData; *pos;)
+    {
+        int count = LONG( *(int *) pos ); pos += 4;
+
+        mdl._lods[0].primitives.append(ModelDetailLevel::Primitive());
+        ModelDetailLevel::Primitive &prim = mdl._lods[0].primitives.last();
+
+        // The type of primitive depends on the sign.
+        prim.triFan = (count < 0);
+
+        if(count < 0)
+        {
+            count = -count;
+        }
+
+        while(count--)
+        {
+            md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
+
+            prim.elements.append(ModelDetailLevel::Primitive::Element());
+            ModelDetailLevel::Primitive::Element &elem = prim.elements.last();
+            elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
+            elem.index    = LONG(v->index);
+        }
+    }
+    M_Free(commandData);
+
+    mdl.clearAllSkins();
 
     // Load skins. (Note: numSkins may be zero.)
-    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(*mdl.skins) * inf.numSkins);
-    if(!mdl.skins) throw std::bad_alloc();
-
-    file.seek(inf.offsetSkins, SeekSet);
-    for(int i = 0; i < inf.numSkins; ++i)
+    file.seek(hdr.offsetSkins, SeekSet);
+    for(int i = 0; i < hdr.numSkins; ++i)
     {
-        file.read((uint8_t*)mdl.skins[i].name, 64);
+        char name[64]; file.read((uint8_t *)name, 64);
+        mdl.newSkin(name);
     }
 }
 
-static bool readHeaderDmd(de::FileHandle& file, dmd_header_t& hdr)
+static bool readHeaderDmd(de::FileHandle &file, dmd_header_t &hdr)
 {
-    size_t readBytes = file.read((uint8_t*)&hdr, sizeof(dmd_header_t));
+    size_t readBytes = file.read((uint8_t *)&hdr, sizeof(dmd_header_t));
     if(readBytes < sizeof(dmd_header_t)) return false;
 
     hdr.magic   = littleEndianByteOrder.toNative(hdr.magic);
@@ -328,7 +364,7 @@ static bool readHeaderDmd(de::FileHandle& file, dmd_header_t& hdr)
     return true;
 }
 
-static bool recogniseDmd(de::FileHandle& file)
+static bool recogniseDmd(de::FileHandle &file)
 {
     dmd_header_t hdr;
     size_t initPos = file.tell();
@@ -340,151 +376,250 @@ static bool recogniseDmd(de::FileHandle& file)
     return result;
 }
 
-static void loadDmd(de::FileHandle& file, model_t& mdl)
+// DMD chunk types.
+enum {
+    DMC_END, /// Must be the last chunk.
+    DMC_INFO /// Required; will be expected to exist.
+};
+
+#pragma pack(1)
+typedef struct {
+    int type;
+    int length; /// Next chunk follows...
+} dmd_chunk_t;
+
+typedef struct {
+    int skinWidth;
+    int skinHeight;
+    int frameSize;
+    int numSkins;
+    int numVertices;
+    int numTexCoords;
+    int numFrames;
+    int numLODs;
+    int offsetSkins;
+    int offsetTexCoords;
+    int offsetFrames;
+    int offsetLODs;
+    int offsetEnd;
+} dmd_info_t;
+
+typedef struct {
+    int numTriangles;
+    int numGlCommands;
+    int offsetTriangles;
+    int offsetGlCommands;
+} dmd_levelOfDetail_t;
+
+typedef struct {
+    byte vertex[3];
+    unsigned short normal; /// Yaw and pitch.
+} dmd_packedVertex_t;
+
+typedef struct {
+    float scale[3];
+    float translate[3];
+    char name[16];
+    dmd_packedVertex_t vertices[1]; // dmd_info_t::numVertices size
+} dmd_packedFrame_t;
+
+typedef struct {
+    short vertexIndices[3];
+    short textureIndices[3];
+} dmd_triangle_t;
+#pragma pack()
+
+/**
+ * Packed: pppppppy yyyyyyyy. Yaw is on the XY plane.
+ */
+static Vector3f unpackVector(ushort packed)
 {
-    int const axis[3] = { 0, 2, 1 };
+    float const yaw   = (packed & 511) / 512.0f * 2 * PI;
+    float const pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
+    float const cosp  = float(cos(pitch));
+    return Vector3f(cos(yaw) * cosp, sin(yaw) * cosp, sin(pitch));
+}
 
+/**
+ * Note vertex Z/Y are swapped here (ordered XYZ in the serialized data).
+ */
+static void loadDmd(de::FileHandle &file, Model &mdl)
+{
     // Read the header.
-    bool readHeaderOk = readHeaderDmd(file, mdl.header);
-    DENG_ASSERT(readHeaderOk);
-    DENG_UNUSED(readHeaderOk); // should this be checked?
-
-    dmd_info_t& inf = mdl.info;
+    dmd_header_t hdr;
+    bool readHeaderOk = readHeaderDmd(file, hdr);
+    DENG2_ASSERT(readHeaderOk);
+    DENG2_UNUSED(readHeaderOk); // should this be checked?
 
     // Read the chunks.
     dmd_chunk_t chunk;
-    file.read((uint8_t*)&chunk, sizeof(chunk));
+    file.read((uint8_t *)&chunk, sizeof(chunk));
 
+    dmd_info_t info; zap(info);
     while(LONG(chunk.type) != DMC_END)
     {
         switch(LONG(chunk.type))
         {
         case DMC_INFO: // Standard DMD information chunk.
-            file.read((uint8_t*)&inf, LONG(chunk.length));
-            inf.skinWidth       = LONG(inf.skinWidth);
-            inf.skinHeight      = LONG(inf.skinHeight);
-            inf.frameSize       = LONG(inf.frameSize);
-            inf.numSkins        = LONG(inf.numSkins);
-            inf.numVertices     = LONG(inf.numVertices);
-            inf.numTexCoords    = LONG(inf.numTexCoords);
-            inf.numFrames       = LONG(inf.numFrames);
-            inf.numLODs         = LONG(inf.numLODs);
-            inf.offsetSkins     = LONG(inf.offsetSkins);
-            inf.offsetTexCoords = LONG(inf.offsetTexCoords);
-            inf.offsetFrames    = LONG(inf.offsetFrames);
-            inf.offsetLODs      = LONG(inf.offsetLODs);
-            inf.offsetEnd       = LONG(inf.offsetEnd);
+            file.read((uint8_t *)&info, LONG(chunk.length));
+
+            info.skinWidth       = LONG(info.skinWidth);
+            info.skinHeight      = LONG(info.skinHeight);
+            info.frameSize       = LONG(info.frameSize);
+            info.numSkins        = LONG(info.numSkins);
+            info.numVertices     = LONG(info.numVertices);
+            info.numTexCoords    = LONG(info.numTexCoords);
+            info.numFrames       = LONG(info.numFrames);
+            info.numLODs         = LONG(info.numLODs);
+            info.offsetSkins     = LONG(info.offsetSkins);
+            info.offsetTexCoords = LONG(info.offsetTexCoords);
+            info.offsetFrames    = LONG(info.offsetFrames);
+            info.offsetLODs      = LONG(info.offsetLODs);
+            info.offsetEnd       = LONG(info.offsetEnd);
             break;
 
         default:
-            // Just skip all unknown chunks.
+            // Skip unknown chunks.
             file.seek(LONG(chunk.length), SeekCur);
             break;
         }
         // Read the next chunk header.
-        file.read((uint8_t*)&chunk, sizeof(chunk));
+        file.read((uint8_t *)&chunk, sizeof(chunk));
     }
+
+    mdl._numLODs     = info.numLODs;
+    mdl._numVertices = info.numVertices;
+
+    mdl.clearAllSkins();
 
     // Allocate and load in the data. (Note: numSkins may be zero.)
-    mdl.skins = (dmd_skin_t*) M_Calloc(sizeof(dmd_skin_t) * inf.numSkins);
-    file.seek(inf.offsetSkins, SeekSet);
-    for(int i = 0; i < inf.numSkins; ++i)
+    file.seek(info.offsetSkins, SeekSet);
+    for(int i = 0; i < info.numSkins; ++i)
     {
-        file.read((uint8_t*)mdl.skins[i].name, 64);
+        char name[64]; file.read((uint8_t *)name, 64);
+        mdl.newSkin(name);
     }
 
-    char* temp = (char*) allocAndLoad(file, inf.offsetFrames, inf.frameSize * inf.numFrames);
-    mdl.frames = (model_frame_t*) M_Malloc(sizeof(model_frame_t) * inf.numFrames);
+    mdl.clearAllFrames();
 
-    model_frame_t* frame = mdl.frames;
-    for(int i = 0; i < inf.numFrames; ++i, ++frame)
+    uint8_t *frameData = (uint8_t *) allocAndLoad(file, info.offsetFrames, info.frameSize * info.numFrames);
+
+    for(int i = 0; i < info.numFrames; ++i)
     {
-        dmd_packedFrame_t* pfr = (dmd_packedFrame_t*) (temp + inf.frameSize * i);
-        dmd_packedVertex_t* pVtx;
+        dmd_packedFrame_t const *pfr = (dmd_packedFrame_t *) (frameData + info.frameSize * i);
+        Vector3f const scale(FLOAT(pfr->scale[0]), FLOAT(pfr->scale[2]), FLOAT(pfr->scale[1]));
+        Vector3f const translation(FLOAT(pfr->translate[0]), FLOAT(pfr->translate[2]), FLOAT(pfr->translate[1]));
+        String const frameName = pfr->name;
 
-        memcpy(frame->name, pfr->name, sizeof(pfr->name));
-        frame->vertices = (model_vertex_t*) M_Malloc(sizeof(model_vertex_t) * inf.numVertices);
-        frame->normals  = (model_vertex_t*) M_Malloc(sizeof(model_vertex_t) * inf.numVertices);
+        ModelFrame *frame = new ModelFrame(frameName);
+        frame->vertices.reserve(info.numVertices);
 
-        // Translate each vertex.
-        pVtx = pfr->vertices;
-        for(int k = 0; k < inf.numVertices; ++k, ++pVtx)
+        // Scale and translate each vertex.
+        dmd_packedVertex_t const *pVtx = pfr->vertices;
+        for(int k = 0; k < info.numVertices; ++k, ++pVtx)
         {
-            unpackVector(USHORT(pVtx->normal), frame->normals[k].xyz);
-            for(int c = 0; c < 3; ++c)
+            frame->vertices.append(ModelFrame::Vertex());
+            ModelFrame::Vertex &vtx = frame->vertices.last();
+
+            vtx.pos = Vector3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
+                          * scale + translation;
+            vtx.pos.y *= rModelAspectMod; // Aspect undo.
+
+            vtx.norm = unpackVector(USHORT(pVtx->normal));
+
+            if(!k)
             {
-                frame->vertices[k].xyz[axis[c]] =
-                    pVtx->vertex[c] * FLOAT(pfr->scale[c]) + FLOAT(pfr->translate[c]);
+                frame->min = frame->max = vtx.pos;
             }
-
-            // Aspect undo.
-            frame->vertices[k].xyz[1] *= rModelAspectMod;
-
-            for(int c = 0; c < 3; ++c)
+            else
             {
-                if(!k || frame->vertices[k].xyz[c] < frame->min[c])
-                    frame->min[c] = frame->vertices[k].xyz[c];
-
-                if(!k || frame->vertices[k].xyz[c] > frame->max[c])
-                    frame->max[c] = frame->vertices[k].xyz[c];
+                frame->min = vtx.pos.min(frame->min);
+                frame->max = vtx.pos.max(frame->max);
             }
         }
+
+        mdl.addFrame(frame);
     }
-    M_Free(temp);
+    M_Free(frameData);
 
-    file.seek(inf.offsetLODs, SeekSet);
-    file.read((uint8_t*)mdl.lodInfo, sizeof(dmd_levelOfDetail_t) * inf.numLODs);
+    file.seek(info.offsetLODs, SeekSet);
+    dmd_levelOfDetail_t lodInfo[Model::MAX_LODS]; zap(lodInfo);
+    file.read((uint8_t *)lodInfo, sizeof(dmd_levelOfDetail_t) * info.numLODs);
 
-    dmd_triangle_t* triangles[MAX_LODS];
-    for(int i = 0; i < inf.numLODs; ++i)
+    dmd_triangle_t *triangles[Model::MAX_LODS];
+    for(int i = 0; i < info.numLODs; ++i)
     {
-        mdl.lodInfo[i].numTriangles     = LONG(mdl.lodInfo[i].numTriangles);
-        mdl.lodInfo[i].numGlCommands    = LONG(mdl.lodInfo[i].numGlCommands);
-        mdl.lodInfo[i].offsetTriangles  = LONG(mdl.lodInfo[i].offsetTriangles);
-        mdl.lodInfo[i].offsetGlCommands = LONG(mdl.lodInfo[i].offsetGlCommands);
+        lodInfo[i].numTriangles     = LONG(lodInfo[i].numTriangles);
+        lodInfo[i].numGlCommands    = LONG(lodInfo[i].numGlCommands);
+        lodInfo[i].offsetTriangles  = LONG(lodInfo[i].offsetTriangles);
+        lodInfo[i].offsetGlCommands = LONG(lodInfo[i].offsetGlCommands);
 
-        triangles[i] = (dmd_triangle_t*) allocAndLoad(file, mdl.lodInfo[i].offsetTriangles,
-                                                      sizeof(dmd_triangle_t) * mdl.lodInfo[i].numTriangles);
+        triangles[i] = (dmd_triangle_t *) allocAndLoad(file, lodInfo[i].offsetTriangles,
+                                                       sizeof(dmd_triangle_t) * lodInfo[i].numTriangles);
 
-        mdl.lods[i].glCommands = (int*) allocAndLoad(file, mdl.lodInfo[i].offsetGlCommands,
-                                                     sizeof(int) * mdl.lodInfo[i].numGlCommands);
+        uint8_t *commandData = (uint8_t *) allocAndLoad(file, lodInfo[i].offsetGlCommands,
+                                                        4 * lodInfo[i].numGlCommands);
+        for(uint8_t const *pos = commandData; *pos;)
+        {
+            int count = LONG( *(int *) pos ); pos += 4;
+
+            mdl._lods[i].primitives.append(ModelDetailLevel::Primitive());
+            ModelDetailLevel::Primitive &prim = mdl._lods[i].primitives.last();
+
+            // The type of primitive depends on the sign of the element count.
+            prim.triFan = (count < 0);
+
+            if(count < 0)
+            {
+                count = -count;
+            }
+
+            while(count--)
+            {
+                md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
+
+                prim.elements.append(ModelDetailLevel::Primitive::Element());
+                ModelDetailLevel::Primitive::Element &elem = prim.elements.last();
+                elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
+                elem.index    = LONG(v->index);
+            }
+        }
+        M_Free(commandData);
     }
 
     // Determine vertex usage at each LOD level.
-    /// @attention Assumes there will never be more than 8 LOD levels.
-    mdl.vertexUsage = (char*) M_Calloc(inf.numVertices);
-    for(int i = 0; i < inf.numLODs; ++i)
+    mdl._vertexUsage.resize(info.numVertices * Model::MAX_LODS);
+    mdl._vertexUsage.fill(false);
+
+    for(int i = 0; i < info.numLODs; ++i)
+    for(int k = 0; k < lodInfo[i].numTriangles; ++k)
+    for(int c = 0; c < 3; ++c)
     {
-        for(int k = 0; k < mdl.lodInfo[i].numTriangles; ++k)
-        {
-            for(int c = 0; c < 3; ++c)
-                mdl.vertexUsage[SHORT(triangles[i][k].vertexIndices[c])] |= 1 << i;
-        }
+        int vertexIndex = SHORT(triangles[i][k].vertexIndices[c]);
+        mdl._vertexUsage.setBit(vertexIndex * Model::MAX_LODS + i);
     }
 
     // We don't need the triangles any more.
-    for(int i = 0; i < inf.numLODs; ++i)
+    for(int i = 0; i < info.numLODs; ++i)
     {
         M_Free(triangles[i]);
     }
 }
 
-static model_t* modelForId(modelid_t modelId, bool canCreate = false)
+static Model *modelForId(modelid_t modelId, bool canCreate = false)
 {
-    DENG_ASSERT(modelRepository);
-    model_t* mdl = reinterpret_cast<model_t*>(modelRepository->userPointer(modelId));
+    DENG2_ASSERT(modelRepository);
+    Model *mdl = reinterpret_cast<Model*>(modelRepository->userPointer(modelId));
     if(!mdl && canCreate)
     {
         // Allocate a new model_t.
-        mdl = (model_t*) M_Calloc(sizeof(model_t));
-        mdl->modelId = modelId;
-        mdl->allowTexComp = true;
+        mdl = new Model(modelId);
         modelRepository->setUserPointer(modelId, mdl);
     }
     return mdl;
 }
 
-model_t* Models_ToModel(modelid_t id)
+Model *Models_ToModel(modelid_t id)
 {
     return modelForId(id);
 }
@@ -496,7 +631,7 @@ static inline String const &findModelPath(modelid_t id)
 
 static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
 {
-    DENG_ASSERT(!skinPath.isEmpty());
+    DENG2_ASSERT(!skinPath.isEmpty());
 
     // Try the "first choice" directory first.
     if(!modelFilePath.isEmpty())
@@ -512,53 +647,49 @@ static String findSkinPath(Path const &skinPath, Path const &modelFilePath)
     }
 
     /// @throws FS1::NotFoundError if no resource was found.
-    de::Uri searchPath("Models", skinPath);
-    return App_FileSystem().findPath(searchPath, RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
+    return App_FileSystem().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
+                                     App_ResourceClass(RC_GRAPHIC));
 }
 
 /**
  * Allocate room for a new skin file name.
  */
-static short defineSkinAndAddToModelIndex(model_t &mdl, Path const &skinPath)
+static short defineSkinAndAddToModelIndex(Model &mdl, Path const &skinPath)
 {
-    int const newSkin = mdl.info.numSkins;
-
     if(Texture *tex = App_ResourceSystem().defineTexture("ModelSkins", de::Uri(skinPath)))
     {
         // A duplicate? (return existing skin number)
-        for(int i = 0; i < mdl.info.numSkins; ++i)
+        for(int i = 0; i < mdl.skinCount(); ++i)
         {
-            if(mdl.skins[i].texture == tex)
+            if(mdl.skin(i).texture == tex)
                 return i;
         }
 
         // Add this new skin.
-        mdl.skins = (dmd_skin_t *) M_Realloc(mdl.skins, sizeof(*mdl.skins) * ++mdl.info.numSkins);
-        if(!mdl.skins) throw Error("newModelSkin", String("Failed on (re)allocation of %1 bytes enlarging DmdSkin list").arg(sizeof(*mdl.skins) * mdl.info.numSkins));
-        std::memset(mdl.skins + newSkin, 0, sizeof(dmd_skin_t));
-
-        QByteArray pathUtf8 = skinPath.toString().toUtf8();
-        qstrncpy(mdl.skins[newSkin].name, pathUtf8.constData(), 256);
-        mdl.skins[newSkin].texture = tex;
+        mdl.newSkin(skinPath.toString()).texture = tex;
+        return mdl.skinCount() - 1;
     }
 
-    return newSkin;
+    return -1;
 }
 
-static void defineAllSkins(model_t &mdl)
+static void defineAllSkins(Model &mdl)
 {
-    String const &modelFilePath = findModelPath(mdl.modelId);
+    String const &modelFilePath = findModelPath(mdl.modelId());
 
     int numFoundSkins = 0;
-    for(int i = 0; i < mdl.info.numSkins; ++i)
+    for(int i = 0; i < mdl.skinCount(); ++i)
     {
-        if(!mdl.skins[i].name[0]) continue;
+        ModelSkin &skin = mdl.skin(i);
+
+        if(skin.name.isEmpty())
+            continue;
 
         try
         {
-            de::Uri foundResourceUri(Path(findSkinPath(mdl.skins[i].name, modelFilePath)));
+            de::Uri foundResourceUri(Path(findSkinPath(skin.name, modelFilePath)));
 
-            mdl.skins[i].texture = App_ResourceSystem().defineTexture("ModelSkins", foundResourceUri);
+            skin.texture = App_ResourceSystem().defineTexture("ModelSkins", foundResourceUri);
 
             // We have found one more skin for this model.
             numFoundSkins += 1;
@@ -566,7 +697,7 @@ static void defineAllSkins(model_t &mdl)
         catch(FS1::NotFoundError const&)
         {
             LOG_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\", ignoring.")
-                << mdl.skins[i].name << i << NativePath(modelFilePath).pretty();
+                << skin.name << i << NativePath(modelFilePath).pretty();
         }
     }
 
@@ -601,26 +732,24 @@ static void defineAllSkins(model_t &mdl)
     }
 }
 
-static model_t *interpretDmd(de::FileHandle &hndl, String path, modelid_t modelId)
+static Model *interpretDmd(de::FileHandle &hndl, String path, modelid_t modelId)
 {
     if(recogniseDmd(hndl))
     {
-        LOG_AS("DmdFileType");
-        LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
-        model_t *mdl = modelForId(modelId, true/*create*/);
+        LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\" as a DMD model.");
+        Model *mdl = modelForId(modelId, true/*create*/);
         loadDmd(hndl, *mdl);
         return mdl;
     }
     return 0;
 }
 
-static model_t *interpretMd2(de::FileHandle &hndl, String path, modelid_t modelId)
+static Model *interpretMd2(de::FileHandle &hndl, String path, modelid_t modelId)
 {
     if(recogniseMd2(hndl))
     {
-        LOG_AS("Md2FileType");
-        LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
-        model_t *mdl = modelForId(modelId, true/*create*/);
+        LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\" as a MD2 model.");
+        Model *mdl = modelForId(modelId, true/*create*/);
         loadMd2(hndl, *mdl);
         return mdl;
     }
@@ -635,7 +764,7 @@ struct ModelFileType
     /// Known file extension.
     String const ext;
 
-    model_t *(*interpretFunc)(de::FileHandle &hndl, String path, modelid_t modelId);
+    Model *(*interpretFunc)(de::FileHandle &hndl, String path, modelid_t modelId);
 };
 
 // Model resource types.
@@ -663,44 +792,40 @@ static ModelFileType const *guessModelFileTypeFromFileName(String filePath)
     return 0; // Unknown.
 }
 
-static model_t *interpretModel(de::FileHandle &hndl, String path, modelid_t modelId)
+static Model *interpretModel(de::FileHandle &hndl, String path, modelid_t modelId)
 {
-    model_t *mdl = 0;
-
     // Firstly try the interpreter for the guessed resource types.
     ModelFileType const *rtypeGuess = guessModelFileTypeFromFileName(path);
     if(rtypeGuess)
     {
-        mdl = rtypeGuess->interpretFunc(hndl, path, modelId);
+        if(Model *mdl = rtypeGuess->interpretFunc(hndl, path, modelId))
+            return mdl;
     }
 
-    // If not yet interpreted - try each recognisable format in order.
-    if(!mdl)
+    // Not yet interpreted - try each recognisable format in order.
+    // Try each recognisable format instead.
+    for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
     {
-        // Try each recognisable format instead.
-        for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
-        {
-            ModelFileType const &modelType = modelTypes[i];
+        ModelFileType const &modelType = modelTypes[i];
 
-            // Already tried this?
-            if(&modelType == rtypeGuess) continue;
+        // Already tried this?
+        if(&modelType == rtypeGuess) continue;
 
-            mdl = modelType.interpretFunc(hndl, path, modelId);
-            if(mdl) break;
-        }
+        if(Model *mdl = modelType.interpretFunc(hndl, path, modelId))
+            return mdl;
     }
 
-    return mdl;
+    return 0;
 }
 
 /**
  * Finds the existing model or loads in a new one.
  */
-static model_t *loadModel(String path)
+static Model *loadModel(String path)
 {
     // Have we already loaded this?
     modelid_t modelId = modelRepository->intern(path);
-    model_t *mdl = Models_ToModel(modelId);
+    Model *mdl = Models_ToModel(modelId);
     if(mdl) return mdl; // Yes.
 
     try
@@ -720,11 +845,11 @@ static model_t *loadModel(String path)
             defineAllSkins(*mdl);
 
             // Enlarge the vertex buffers in preparation for drawing of this model.
-            if(!Rend_ModelExpandVertexBuffers(mdl->info.numVertices))
+            if(!Rend_ModelExpandVertexBuffers(mdl->numVertices()))
             {
-                LOG_WARNING("Model \"%s\" contains more than %u max vertices (%u), it will not be rendered.")
+                LOG_WARNING("Model \"%s\" contains more than %u max vertices (%i), it will not be rendered.")
                     << NativePath(path).pretty()
-                    << uint(RENDER_MAX_MODEL_VERTS) << uint(mdl->info.numVertices);
+                    << uint(RENDER_MAX_MODEL_VERTS) << mdl->numVertices();
             }
 
             return mdl;
@@ -763,14 +888,16 @@ static modeldef_t *getStateModel(state_t &st, int select)
     return modef;
 }
 
-modeldef_t* Models_Definition(char const* id)
+modeldef_t *Models_Definition(char const *id)
 {
     if(!id || !id[0]) return 0;
 
     for(uint i = 0; i < modefs.size(); ++i)
     {
         if(!strcmp(modefs[i].id, id))
+        {
             return &modefs[i];
+        }
     }
     return 0;
 }
@@ -847,7 +974,7 @@ float Models_ModelForMobj(mobj_t const *mo, modeldef_t **modef, modeldef_t **nex
     else if(st.nextState > 0) // Check next state.
     {
         // Find the appropriate state based on interrange.
-        state_t* it = states + st.nextState;
+        state_t *it = states + st.nextState;
         bool foundNext = false;
         if((*modef)->interRange[1] < 1)
         {
@@ -867,7 +994,7 @@ float Models_ModelForMobj(mobj_t const *mo, modeldef_t **modef, modeldef_t **nex
                 else
                 {
                     // Scan interlinks, then go to the next state.
-                    modeldef_t* mdit;
+                    modeldef_t *mdit;
                     if((mdit = getStateModel(*it, mo->selector)) && mdit->interNext)
                     {
                         forever
@@ -939,11 +1066,8 @@ static void scaleModel(modeldef_t &mf, float destHeight, float offset)
 
     float scale = destHeight / height;
 
-    for(int i = 0; i < 3; ++i)
-    {
-        mf.scale[i] = scale;
-    }
-    mf.offset[VY] = -bottom * scale + offset;
+    mf.scale    = Vector3f(scale, scale, scale);
+    mf.offset.y = -bottom * scale + offset;
 }
 
 static void scaleModelToSprite(modeldef_t &mf, Sprite *sprite)
@@ -962,7 +1086,7 @@ static float calcModelVisualRadius(modeldef_t *def)
     if(!def || !def->subModelId(0)) return 0;
 
     // Use the first frame bounds.
-    float min[3], max[3];
+    Vector3f min, max;
     float maxRadius = 0;
     for(uint i = 0; i < def->subCount(); ++i)
     {
@@ -970,13 +1094,15 @@ static float calcModelVisualRadius(modeldef_t *def)
 
         SubmodelDef &sub = def->subModelDef(i);
 
-        Models_ToModel(sub.modelId)->frame(sub.frame).getBounds(min, max);
+        Models_ToModel(sub.modelId)->frame(sub.frame).bounds(min, max);
 
         // Half the distance from bottom left to top right.
-        float radius = (def->scale[VX] * (max[VX] - min[VX]) +
-                        def->scale[VZ] * (max[VZ] - min[VZ])) / 3.5f;
+        float radius = (def->scale.x * (max.x - min.x) +
+                        def->scale.z * (max.z - min.z)) / 3.5f;
         if(radius > maxRadius)
+        {
             maxRadius = radius;
+        }
     }
 
     return maxRadius;
@@ -985,13 +1111,13 @@ static float calcModelVisualRadius(modeldef_t *def)
 /**
  * Create a new modeldef or find an existing one. This is for ID'd models.
  */
-static modeldef_t* getModelDefWithId(char const* id)
+static modeldef_t *getModelDefWithId(char const *id)
 {
     // ID defined?
-    if(!id || !id[0]) return NULL;
+    if(!id || !id[0]) return 0;
 
     // First try to find an existing modef.
-    modeldef_t* md = Models_Definition(id);
+    modeldef_t *md = Models_Definition(id);
     if(md) return md;
 
     // Get a new entry.
@@ -1003,10 +1129,10 @@ static modeldef_t* getModelDefWithId(char const* id)
  * Create a new modeldef or find an existing one. There can be only one model
  * definition associated with a state/intermark pair.
  */
-static modeldef_t* getModelDef(int state, float interMark, int select)
+static modeldef_t *getModelDef(int state, float interMark, int select)
 {
     // Is this a valid state?
-    if(state < 0 || state >= countStates.num) return NULL;
+    if(state < 0 || state >= countStates.num) return 0;
 
     // First try to find an existing modef.
     for(uint i = 0; i < modefs.size(); ++i)
@@ -1023,10 +1149,10 @@ static modeldef_t* getModelDef(int state, float interMark, int select)
     modefs.push_back(ModelDef());
 
     // Set initial data.
-    modeldef_t* md = &modefs.back();
-    md->state = &states[state];
+    modeldef_t *md = &modefs.back();
+    md->state     = &states[state];
     md->interMark = interMark;
-    md->select = select;
+    md->select    = select;
     return md;
 }
 
@@ -1037,7 +1163,7 @@ static modeldef_t* getModelDef(int state, float interMark, int select)
  * Model DEDs, each State that has a model will have a pointer to the one
  * with the smallest intermark (start of a chain).
  */
-static void setupModel(ded_model_t& def)
+static void setupModel(ded_model_t &def)
 {
     LOG_AS("setupModel");
 
@@ -1045,7 +1171,7 @@ static void setupModel(ded_model_t& def)
     int const statenum = Def_GetStateNum(def.state);
 
     // Is this an ID'd model?
-    modeldef_t* modef = getModelDefWithId(def.id);
+    modeldef_t *modef = getModelDefWithId(def.id);
     if(!modef)
     {
         // No, normal State-model.
@@ -1056,24 +1182,19 @@ static void setupModel(ded_model_t& def)
     }
 
     // Init modef info (state & intermark already set).
-    modef->def = &def;
-    modef->group = def.group;
-    modef->flags = modelScopeFlags;
-    for(int i = 0; i < 3; ++i)
-    {
-        modef->offset[i] = def.offset[i];
-        modef->scale[i]  = def.scale[i];
-    }
-    modef->offset[VY] += defs.modelOffset; // Common Y axis offset.
-    modef->scale[VY]  *= defs.modelScale;  // Common Y axis scaling.
-    modef->resize      = def.resize;
-    modef->skinTics    = def.skinTics;
+    modef->def       = &def;
+    modef->group     = def.group;
+    modef->flags     = modelScopeFlags;
+    modef->offset    = def.offset;
+    modef->offset.y += defs.modelOffset; // Common Y axis offset.
+    modef->scale     = def.scale;
+    modef->scale.y  *= defs.modelScale;  // Common Y axis scaling.
+    modef->resize    = def.resize;
+    modef->skinTics  = de::max(def.skinTics, 1);
     for(int i = 0; i < 2; ++i)
     {
         modef->interRange[i] = def.interRange[i];
     }
-    if(modef->skinTics < 1)
-        modef->skinTics = 1;
 
     // Submodels.
     modef->clearSubs();
@@ -1084,9 +1205,10 @@ static void setupModel(ded_model_t& def)
 
         sub->modelId = 0;
 
-        if(!subdef->filename || Uri_IsEmpty(subdef->filename)) continue;
-
+        if(!subdef->filename) continue;
         de::Uri const &searchPath = reinterpret_cast<de::Uri &>(*subdef->filename);
+        if(searchPath.isEmpty()) continue;
+
         try
         {
             String foundPath = App_FileSystem().findPath(searchPath, RLF_DEFAULT,
@@ -1094,15 +1216,16 @@ static void setupModel(ded_model_t& def)
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
 
-            model_t* mdl = loadModel(foundPath);
+            Model *mdl = loadModel(foundPath);
             if(!mdl) continue;
 
-            sub->modelId = mdl->modelId;
-            sub->frame = mdl->frameNumForName(subdef->frame);
-            sub->frameRange = MAX_OF(1, subdef->frameRange); // Frame range must always be greater than zero.
+            sub->modelId    = mdl->modelId();
+            sub->frame      = mdl->toFrameNumber(subdef->frame);
+            if(sub->frame < 0) sub->frame = 0;
+            sub->frameRange = de::max(1, subdef->frameRange); // Frame range must always be greater than zero.
 
-            sub->alpha = byte(255 - subdef->alpha * 255);
-            sub->blendMode = subdef->blendMode;
+            sub->alpha      = byte(255 - subdef->alpha * 255);
+            sub->blendMode  = subdef->blendMode;
 
             // Submodel-specific flags cancel out model-scope flags!
             sub->setFlags(modelScopeFlags ^ subdef->flags);
@@ -1162,16 +1285,11 @@ static void setupModel(ded_model_t& def)
                 sub->skin = subdef->skin;
             }
 
-            sub->skinRange = subdef->skinRange;
             // Skin range must always be greater than zero.
-            if(sub->skinRange < 1)
-                sub->skinRange = 1;
+            sub->skinRange = de::max(subdef->skinRange, 1);
 
             // Offset within the model.
-            for(int k = 0; k < 3; ++k)
-            {
-                sub->offset[k] = subdef->offset[k];
-            }
+            sub->offset = subdef->offset;
 
             if(subdef->shinySkin && !Uri_IsEmpty(subdef->shinySkin))
             {
@@ -1198,7 +1316,7 @@ static void setupModel(ded_model_t& def)
             if(sub->testFlag(MFF_NO_TEXCOMP))
             {
                 // All skins of this model will no longer use compression.
-                mdl->allowTexComp = false;
+                mdl->setFlags(Model::NoTextureCompression);
             }
         }
         catch(FS1::NotFoundError const &)
@@ -1210,7 +1328,7 @@ static void setupModel(ded_model_t& def)
     // Do scaling, if necessary.
     if(modef->resize)
     {
-        scaleModel(*modef, modef->resize, modef->offset[VY]);
+        scaleModel(*modef, modef->resize, modef->offset.y);
     }
     else if(modef->state && modef->testSubFlag(0, MFF_AUTOSCALE))
     {
@@ -1243,7 +1361,7 @@ static void setupModel(ded_model_t& def)
         else
         {
             // Must check intermark; smallest wins!
-            modeldef_t* other = modelDefForState(stateNum);
+            modeldef_t *other = modelDefForState(stateNum);
 
             if((modef->interMark <= other->interMark && // Should never be ==
                 modef->select == other->select) || modef->select < other->select) // Smallest selector?
@@ -1254,73 +1372,54 @@ static void setupModel(ded_model_t& def)
     }
 
     // Calculate the particle offset for each submodel.
-    float min[3], max[3];
+    Vector3f min, max;
     for(uint i = 0; i < modef->subCount(); ++i)
     {
         SubmodelDef *sub = &modef->subModelDef(i);
-        de::Vector3f off;
-        if(sub->modelId)
+        if(sub->modelId && sub->frame >= 0)
         {
-            Models_ToModel(sub->modelId)->frame(sub->frame).getBounds(min, max);
-
-            // Apply the various scalings and offsets.
-            for(int k = 0; k < 3; ++k)
-            {
-                off[k] = ((max[k] + min[k]) / 2 + sub->offset[k]) * modef->scale[k] + modef->offset[k];
-            }
+            Models_ToModel(sub->modelId)->frame(sub->frame).bounds(min, max);
+            modef->setParticleOffset(i, ((max + min) / 2 + sub->offset) * modef->scale + modef->offset);
         }
-        modef->setParticleOffset(i, off);
     }
 
     // Calculate visual radius for shadows.
-    if(def.shadowRadius)
+    /// @todo fixme: use a separate property.
+    /*if(def.shadowRadius)
     {
         modef->visualRadius = def.shadowRadius;
     }
-    else
+    else*/
     {
         modef->visualRadius = calcModelVisualRadius(modef);
     }
 }
 
-static int destroyModelInRepository(StringPool::Id id, void* /*parm*/)
+static int destroyModelInRepository(StringPool::Id id, void * /*context*/)
 {
-    model_t* mdl = reinterpret_cast<model_t*>(modelRepository->userPointer(id));
-    if(!mdl) return 0;
-
-    M_Free(mdl->skins);
-    for(int i = 0; i < mdl->info.numFrames; ++i)
+    if(Model *model = reinterpret_cast<Model *>(modelRepository->userPointer(id)))
     {
-        M_Free(mdl->frames[i].vertices);
-        M_Free(mdl->frames[i].normals);
+        modelRepository->setUserPointer(id, 0);
+        delete model;
     }
-    M_Free(mdl->frames);
-
-    for(int i = 0; i < mdl->info.numLODs; ++i)
-    {
-        //M_Free(modellist[i]->lods[k].triangles);
-        M_Free(mdl->lods[i].glCommands);
-    }
-    M_Free(mdl->vertexUsage);
-    M_Free(mdl);
-
     return 0;
 }
 
-static void clearModelList(void)
+static void clearModelList()
 {
     if(!modelRepository) return;
 
     modelRepository->iterate(destroyModelInRepository, 0);
 }
 
-void Models_Init(void)
+void Models_Init()
 {
     // Dedicated servers do nothing with models.
-    if(isDedicated || CommandLine_Check("-nomd2")) return;
+    if(isDedicated) return;
+    if(CommandLine_Check("-nomd2")) return;
 
     LOG_VERBOSE("Initializing Models...");
-    uint usedTime = Timer_RealMilliseconds();
+    Time begunAt;
 
     modelRepository = new StringPool();
 
@@ -1359,14 +1458,14 @@ void Models_Init(void)
     // For each modeldef we will find the "next" def.
     for(int i = int(modefs.size()) - 1; i >= 0; --i)
     {
-        modeldef_t* me = &modefs[i];
+        modeldef_t *me = &modefs[i];
 
         float minmark = 2; // max = 1, so this is "out of bounds".
 
-        modeldef_t* closest = 0;
+        modeldef_t *closest = 0;
         for(int k = int(modefs.size()) - 1; k >= 0; --k)
         {
-            modeldef_t* other = &modefs[k];
+            modeldef_t *other = &modefs[k];
 
             // Same state and a bigger order are the requirements.
             if(other->state == me->state && other->def > me->def && // Defined after me.
@@ -1388,7 +1487,7 @@ void Models_Init(void)
 
         int minsel = DDMAXINT;
 
-        modeldef_t* closest = 0;
+        modeldef_t *closest = 0;
 
         // Start scanning from the next definition.
         for(int k = int(modefs.size()) - 1; k >= 0; --k)
@@ -1408,10 +1507,10 @@ void Models_Init(void)
         me->selectNext = closest;
     }
 
-    LOG_INFO("Models_Init: Completed in %.2f seconds.") << (Timer_RealMilliseconds() - usedTime) / 1000.0f;
+    LOG_INFO(String("Models_Init: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-void Models_Shutdown(void)
+void Models_Shutdown()
 {
     /// @todo Why only centralized memory deallocation? Bad (lazy) design...
     modefs.clear();
@@ -1432,20 +1531,20 @@ void Models_Cache(modeldef_t *modef)
     for(uint sub = 0; sub < modef->subCount(); ++sub)
     {
         submodeldef_t &subdef = modef->subModelDef(sub);
-        model_t *mdl = Models_ToModel(subdef.modelId);
+        Model *mdl = Models_ToModel(subdef.modelId);
         if(!mdl) continue;
 
         // Load all skins.
-        for(int k = 0; k < mdl->info.numSkins; ++k)
+        foreach(ModelSkin const &skin, mdl->skins())
         {
-            if(Texture *tex = reinterpret_cast<Texture *>(mdl->skins[k].texture))
+            if(Texture *tex = skin.texture)
             {
-                tex->prepareVariant(Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
+                tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl->flags().testFlag(Model::NoTextureCompression)));
             }
         }
 
         // Load the shiny skin too.
-        if(Texture *tex = reinterpret_cast<Texture *>(subdef.shinySkin))
+        if(Texture *tex = subdef.shinySkin)
         {
             tex->prepareVariant(Rend_ModelShinyTextureSpec());
         }
@@ -1462,16 +1561,16 @@ DENG_EXTERN_C void Models_CacheForState(int stateIndex)
     Models_Cache(modelDefForState(stateIndex));
 }
 
-int Models_CacheForMobj(thinker_t* th, void* /*context*/)
+int Models_CacheForMobj(thinker_t *th, void * /*context*/)
 {
     if(!(useModels && precacheSkins)) return true;
 
-    mobj_t* mo = (mobj_t*) th;
+    mobj_t *mo = (mobj_t *) th;
 
     // Check through all the model definitions.
     for(uint i = 0; i < modefs.size(); ++i)
     {
-        modeldef_t* modef = &modefs[i];
+        modeldef_t *modef = &modefs[i];
 
         if(!modef->state) continue;
         if(mo->type < 0 || mo->type >= defs.count.mobjs.num) continue; // Hmm?

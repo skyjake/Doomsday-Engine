@@ -1,4 +1,4 @@
-/** @file gl_model.h  MD2 and DMD2 3D model formats
+/** @file gl_model.h  3D model resource
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,194 +17,237 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_GL_MODEL_H
-#define LIBDENG_GL_MODEL_H
+#ifndef DENG_RESOURCE_MODEL_H
+#define DENG_RESOURCE_MODEL_H
 
-#include "dd_types.h"
-#include "resource/texture.h"
+#include "Texture"
+#include <de/Error>
+#include <de/String>
+#include <de/Vector>
+#include <QBitArray>
+#include <QList>
+#include <QVector>
 
-#define MD2_MAGIC           0x32504449
-#define NUMVERTEXNORMALS    162
-//#define MAX_MODELS          768
+/// Unique identifier associated with each model in the collection.
+typedef uint modelid_t;
 
-// "DMDM" = Doomsday/Detailed MoDel Magic
-#define DMD_MAGIC           0x4D444D44
-#define MAX_LODS            4
+/// Special value used to signify an invalid model id.
+#define NOMODELID 0
 
-typedef struct {
-    int             magic;
-    int             version;
-    int             skinWidth;
-    int             skinHeight;
-    int             frameSize;
-    int             numSkins;
-    int             numVertices;
-    int             numTexCoords;
-    int             numTriangles;
-    int             numGlCommands;
-    int             numFrames;
-    int             offsetSkins;
-    int             offsetTexCoords;
-    int             offsetTriangles;
-    int             offsetFrames;
-    int             offsetGlCommands;
-    int             offsetEnd;
-} md2_header_t;
+class Model
+{
+public:
+    /// Referenced frame is missing. @ingroup errors
+    DENG2_ERROR(MissingFrameError);
 
-typedef struct {
-    byte            vertex[3];
-    byte            lightNormalIndex;
-} md2_triangleVertex_t;
+    /// Referenced skin is missing. @ingroup errors
+    DENG2_ERROR(MissingSkinError);
 
-typedef struct {
-    float           scale[3];
-    float           translate[3];
-    char            name[16];
-    md2_triangleVertex_t vertices[1];
-} md2_packedFrame_t;
+    /// Maximum levels of detail.
+    static int const MAX_LODS = 4;
 
-typedef struct {
-    float           vertex[3];
-    byte            lightNormalIndex;
-} md2_modelVertex_t;
+    /**
+     * Classification/processing flags.
+     */
+    enum Flag {
+        NoTextureCompression = 0x1 ///< Do not compress skin textures.
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
 
-// Translated frame (vertices in model space).
-typedef struct {
-    char            name[16];
-    md2_modelVertex_t *vertices;
-} md2_frame_t;
+    /**
+     * Animation key-frame.
+     */
+    struct Frame
+    {
+        struct Vertex {
+            de::Vector3f pos;
+            de::Vector3f norm;
+        };
+        typedef QVector<Vertex> VertexBuf;
+        VertexBuf vertices;
+        de::Vector3f min;
+        de::Vector3f max;
+        de::String name;
 
-typedef struct {
-    char            name[256];
-    int             id;
-} md2_skin_t;
+        Frame(de::String const &name = "") : name(name)
+        {}
 
-typedef struct {
-    short           vertexIndices[3];
-    short           textureIndices[3];
-} md2_triangle_t;
+        void bounds(de::Vector3f &min, de::Vector3f &max) const;
 
-typedef struct {
-    short           s, t;
-} md2_textureCoordinate_t;
+        float horizontalRange(float *top, float *bottom) const;
+    };
+    typedef QList<Frame *> Frames;
 
-typedef struct {
-    float           s, t;
-    int             vertexIndex;
-} md2_glCommandVertex_t;
+    /**
+     * Texture => Skin assignment.
+     */
+    struct Skin
+    {
+        de::String name;
+        de::Texture *texture; // Not owned.
 
-//===========================================================================
-// DMD (Detailed/Doomsday Models)
-//===========================================================================
+        Skin(de::String const &name = "", de::Texture *texture = 0)
+            : name(name), texture(texture)
+        {}
+    };
+    typedef QList<Skin> Skins;
 
-typedef struct {
-    int magic;
-    int version;
-    int flags;
-} dmd_header_t;
+    /**
+     * Level of detail information.
+     */
+    struct DetailLevel
+    {
+        struct Primitive
+        {
+            struct Element
+            {
+                de::Vector2f texCoord;
+                int index; ///< Index into the model's vertex mesh.
+            };
+            typedef QVector<Element> Elements;
+            bool triFan; ///< @c true= triangle fan; otherwise triangle strip.
+            Elements elements;
+        };
+        typedef QList<Primitive> Primitives;
+        Primitives primitives;
+    };
+    typedef DetailLevel DetailLevels[MAX_LODS];
 
-// Chunk types.
-enum {
-    DMC_END, /// Must be the last chunk.
-    DMC_INFO /// Required; will be expected to exist.
+public:
+    int _numVertices;       ///< Total number of vertices in the model.
+    int _numLODs;           ///< Number of detail levels in use.
+    DetailLevels _lods;     ///< Level of detail information.
+    QBitArray _vertexUsage; ///< Denotes used vertices for each level of detail.
+
+public:
+    /**
+     * Construct a new 3D model.
+     */
+    Model(uint modelId, Flags flags = 0);
+
+    uint modelId() const;
+
+    void setModelId(uint newId);
+
+    /**
+     * Returns a copy of the current model flags.
+     */
+    Flags flags() const;
+
+    /**
+     * Change the model's flags.
+     *
+     * @param flagsToChange  Flags to change the value of.
+     * @param operation      Logical operation to perform on the flags.
+     */
+    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+
+    /**
+     * Lookup a model animation frame by @a name.
+     *
+     * @return  Unique number of the found frame; otherwise @c -1 (not found).
+     */
+    int toFrameNumber(de::String name) const;
+
+    /**
+     * Convenient method of determining whether the specified model animation
+     * frame @a number is valid (i.e., a frame is defined for it).
+     */
+    inline bool hasFrame(int number) const {
+        return (number >= 0 && number < frameCount());
+    }
+
+    /**
+     * Retrieve a model animation frame by it's unique frame @a number.
+     */
+    Frame &frame(int number) const;
+
+    /**
+     * Append a new animation frame to the model.
+     *
+     * @param newFrame  Ownership is given to the model.
+     */
+    void addFrame(Frame *newFrame);
+
+    /**
+     * Returns the total number of model animation frames.
+     */
+    inline int frameCount() const { return frames().count(); }
+
+    /**
+     * Provides access to the model animation frames, for efficient traversal.
+     */
+    Frames const &frames() const;
+
+    /**
+     * Clear all model animation frames.
+     */
+    void clearAllFrames();
+
+    /**
+     * Lookup a model skin by @a name.
+     *
+     * @return  Unique number of the found skin; otherwise @c -1 (not found).
+     */
+    int toSkinNumber(de::String name) const;
+
+    /**
+     * Convenient method of determining whether the specified model skin @a number
+     * is valid (i.e., a skin is defined for it).
+     */
+    inline bool hasSkin(int number) const {
+        return (number >= 0 && number < skinCount());
+    }
+
+    /**
+     * Retrieve a model skin by it's unique @a number.
+     */
+    Skin &skin(int number) const;
+
+    /**
+     * Append a new skin with the given @a name to the model. If a skin already
+     * exists with this name it will be returned instead.
+     *
+     * @return  Reference to the (possibly new) skin.
+     */
+    Skin &newSkin(de::String name);
+
+    /**
+     * Returns the total number of model skins.
+     */
+    inline int skinCount() const { return skins().count(); }
+
+    /**
+     * Provides access to the model skins, for efficient traversal.
+     */
+    Skins const &skins() const;
+
+    /**
+     * Clear all model skin assignments.
+     */
+    void clearAllSkins();
+
+    /**
+     * Returns the total number of detail levels for the model.
+     */
+    int lodCount() const;
+
+    /**
+     * Provides readonly access to the level of detail information.
+     */
+    DetailLevels const &lods() const;
+
+    /// @todo Remove me.
+    int numVertices() const;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-#pragma pack(1)
-typedef struct {
-    int type;
-    int length; /// Next chunk follows...
-} dmd_chunk_t;
+Q_DECLARE_OPERATORS_FOR_FLAGS(Model::Flags)
 
-typedef struct {
-    int skinWidth;
-    int skinHeight;
-    int frameSize;
-    int numSkins;
-    int numVertices;
-    int numTexCoords;
-    int numFrames;
-    int numLODs;
-    int offsetSkins;
-    int offsetTexCoords;
-    int offsetFrames;
-    int offsetLODs;
-    int offsetEnd;
-} dmd_info_t;
+typedef Model::DetailLevel ModelDetailLevel;
+typedef Model::Frame ModelFrame;
+typedef Model::Skin ModelSkin;
 
-typedef struct {
-    int numTriangles;
-    int numGlCommands;
-    int offsetTriangles;
-    int offsetGlCommands;
-} dmd_levelOfDetail_t;
-
-typedef struct {
-    byte vertex[3];
-    unsigned short normal; /// Yaw and pitch.
-} dmd_packedVertex_t;
-
-typedef struct {
-    float scale[3];
-    float translate[3];
-    char name[16];
-    dmd_packedVertex_t vertices[1];
-} dmd_packedFrame_t;
-
-typedef struct {
-    char name[256];
-    de::Texture *texture;
-} dmd_skin_t;
-
-typedef struct {
-    short vertexIndices[3];
-    short textureIndices[3];
-} dmd_triangle_t;
-
-typedef struct {
-    float s, t;
-    int vertexIndex;
-} dmd_glCommandVertex_t;
-
-typedef struct {
-    int* glCommands;
-} dmd_lod_t;
-#pragma pack()
-
-typedef struct model_vertex_s {
-    float xyz[3];
-} model_vertex_t;
-
-typedef struct model_frame_s {
-    char name[16];
-    model_vertex_t *vertices;
-    model_vertex_t *normals;
-    float min[3], max[3];
-
-#ifdef __cplusplus
-    void getBounds(float min[3], float max[3]) const;
-
-    float horizontalRange(float *top, float *bottom) const;
-#endif
-} model_frame_t;
-
-typedef struct model_s {
-    uint modelId; ///< Id of the model in the repository.
-    dmd_header_t header;
-    dmd_info_t info;
-    dmd_skin_t *skins;
-    model_frame_t *frames;
-    dmd_levelOfDetail_t lodInfo[MAX_LODS];
-    dmd_lod_t lods[MAX_LODS];
-    char *vertexUsage; ///< Bitfield for each vertex.
-    boolean allowTexComp; ///< Allow texture compression with this.
-
-#ifdef __cplusplus
-    bool validFrameNumber(int value) const;
-
-    model_frame_t &frame(int number) const;
-
-    int frameNumForName(char const *name) const;
-#endif
-} model_t;
-
-#endif /* LIBDENG_GL_MODEL_H */
+#endif // DENG_RESOURCE_MODEL_H
