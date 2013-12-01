@@ -88,7 +88,7 @@ void Model::setFlags(Model::Flags flagsToChange, FlagOp operation)
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-int Model::toFrameNumber(String name) const
+int Model::frameNumber(String name) const
 {
     if(!name.isEmpty())
     {
@@ -131,7 +131,7 @@ void Model::clearAllFrames()
     d->frames.clear();
 }
 
-int Model::toSkinNumber(String name) const
+int Model::skinNumber(String name) const
 {
     if(!name.isEmpty())
     {
@@ -156,7 +156,7 @@ Model::Skin &Model::skin(int number) const
 
 Model::Skin &Model::newSkin(String name)
 {
-    if(int index = toSkinNumber(name) > 0)
+    if(int index = skinNumber(name) > 0)
     {
         return skin(index);
     }

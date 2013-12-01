@@ -1903,11 +1903,11 @@ void Def_PostInit(void)
             DENG2_ASSERT(mdl != 0);
 
             st->model = Models_ToIndex(modef);
-            st->frame = mdl->toFrameNumber(st->frameName);
+            st->frame = mdl->frameNumber(st->frameName);
             if(st->frame < 0) st->frame = 0;
             if(st->endFrameName[0])
             {
-                st->endFrame = mdl->toFrameNumber(st->endFrameName);
+                st->endFrame = mdl->frameNumber(st->endFrameName);
                 if(st->endFrame < 0) st->endFrame = 0;
             }
             else

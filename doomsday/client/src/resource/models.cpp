@@ -502,7 +502,7 @@ static void setupModel(ded_model_t &def)
             if(!mdl) continue;
 
             sub->modelId    = mdl->modelId();
-            sub->frame      = mdl->toFrameNumber(subdef->frame);
+            sub->frame      = mdl->frameNumber(subdef->frame);
             if(sub->frame < 0) sub->frame = 0;
             sub->frameRange = de::max(1, subdef->frameRange); // Frame range must always be greater than zero.
 

@@ -148,7 +148,7 @@ public:
      *
      * @return  Unique number of the found frame; otherwise @c -1 (not found).
      */
-    int toFrameNumber(de::String name) const;
+    int frameNumber(de::String name) const;
 
     /**
      * Convenient method of determining whether the specified model animation
@@ -190,7 +190,7 @@ public:
      *
      * @return  Unique number of the found skin; otherwise @c -1 (not found).
      */
-    int toSkinNumber(de::String name) const;
+    int skinNumber(de::String name) const;
 
     /**
      * Convenient method of determining whether the specified model skin @a number

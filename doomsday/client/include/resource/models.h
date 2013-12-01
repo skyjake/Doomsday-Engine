@@ -253,7 +253,7 @@ void Models_Shutdown();
 /**
  * Lookup the unique index attributed to the given @a modelDef.
  *
- * @return  Index of the definition; otherwise @c -1 if @a is unknown.
+ * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
  */
 int Models_ToIndex(modeldef_t const *modelDef);
 
