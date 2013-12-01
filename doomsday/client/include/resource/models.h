@@ -237,7 +237,6 @@ typedef std::vector<ModelDef> ModelDefs;
 
 #ifdef __CLIENT__
 
-DENG_EXTERN_C ModelDefs modefs;
 DENG_EXTERN_C byte useModels;
 DENG_EXTERN_C float rModelAspectMod;
 
@@ -251,24 +250,45 @@ void Models_Init();
  */
 void Models_Shutdown();
 
-Model *Models_ToModel(modelid_t id);
+/**
+ * Lookup the unique index attributed to the given @a modelDef.
+ *
+ * @return  Index of the definition; otherwise @c -1 if @a is unknown.
+ */
+int Models_ToIndex(modeldef_t const *modelDef);
+
+/**
+ * Retrieve a model by it's unique @a id. O(1)
+ *
+ * @return  Pointer to the associated model; otherwise @c 0.
+ */
+Model *Models_Model(modelid_t id);
 
 /**
  * Is there a model for this mobj? The decision is made based on the state and tics
  * of the mobj. Returns the modeldefs that are in effect at the moment (interlinks
  * checked appropriately).
  */
-float Models_ModelForMobj(struct mobj_s const *mo, modeldef_t **mdef, modeldef_t **nextmdef);
+float Models_ModelDefForMobj(struct mobj_s const *mo, modeldef_t **mdef, modeldef_t **nextmdef);
 
 /**
- * Lookup a model definition by id.
+ * Retrieve a model definition by it's unique @a index. O(1)
  *
- * @param id  Unique id of the definition to lookup.
+ * @return  Pointer to the associated definition; otherwise @c 0.
+ */
+modeldef_t *Models_ModelDef(int index);
+
+/**
+ * Lookup a model definition by it's unique @a id. O(n)
+ *
  * @return  Found model definition; otherwise @c 0.
  */
-modeldef_t *Models_Definition(char const *id);
+modeldef_t *Models_ModelDef(char const *id);
 
-void Models_Cache(modeldef_t *modef);
+/**
+ * Cache all resources needed to visualize models using the given @a modelDef.
+ */
+void Models_Cache(modeldef_t *modelDef);
 
 /**
  * @note The skins are also bound here once so they should be ready for use

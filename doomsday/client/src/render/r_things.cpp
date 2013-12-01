@@ -193,7 +193,7 @@ void R_ProjectSprite(mobj_t *mo)
     float interp = 0;
     if(useModels)
     {
-        interp = Models_ModelForMobj(mo, &mf, &nextmf);
+        interp = Models_ModelDefForMobj(mo, &mf, &nextmf);
         if(mf)
         {
             // Use a sprite if the object is beyond the maximum model distance.

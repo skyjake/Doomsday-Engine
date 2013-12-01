@@ -295,7 +295,7 @@ static modeldef_t *currentModelDefForMobj(mobj_t const &mo)
     if(useModels)
     {
         modeldef_t *mf = 0, *nextmf = 0;
-        Models_ModelForMobj(&mo, &mf, &nextmf);
+        Models_ModelDefForMobj(&mo, &mf, &nextmf);
         return mf;
     }
     return 0;

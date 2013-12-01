@@ -1021,7 +1021,7 @@ void R_SetupPlayerSprites()
             dummy.state = psp->statePtr;
             dummy.tics = psp->tics;
 
-            inter = Models_ModelForMobj(&dummy, &mf, &nextmf);
+            inter = Models_ModelDefForMobj(&dummy, &mf, &nextmf);
             if(mf) isModel = true;
         }
 

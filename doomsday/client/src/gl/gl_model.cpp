@@ -108,7 +108,7 @@ Model::Frame &Model::frame(int number) const
     {
         return *d->frames.at(number);
     }
-    throw MissingFrameError("Model::frame", "Invalid frame number " + String::number(number) + " Valid range is " + Rangei(0, d->frames.count()).asText());
+    throw MissingFrameError("Model::frame", "Invalid frame number " + String::number(number) + ", valid range is " + Rangei(0, d->frames.count()).asText());
 }
 
 void Model::addFrame(Frame *newFrame)
@@ -151,7 +151,7 @@ Model::Skin &Model::skin(int number) const
     {
         return const_cast<Skin &>(d->skins.at(number));
     }
-    throw MissingSkinError("Model::skin", "Invalid skin number " + String::number(number) + " Valid range is " + Rangei(0, d->skins.count()).asText());
+    throw MissingSkinError("Model::skin", "Invalid skin number " + String::number(number) + ", valid range is " + Rangei(0, d->skins.count()).asText());
 }
 
 Model::Skin &Model::newSkin(String name)
@@ -180,7 +180,7 @@ Model::DetailLevel &Model::lod(int level) const
     {
         return *_lods.at(level);
     }
-    throw MissingDetailLevelError("Model::lod", "Invalid detail level " + String::number(level) + " Valid range is " + Rangei(0, _lods.count()).asText());
+    throw MissingDetailLevelError("Model::lod", "Invalid detail level " + String::number(level) + ", valid range is " + Rangei(0, _lods.count()).asText());
 }
 
 Model::DetailLevels const &Model::lods() const

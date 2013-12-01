@@ -151,7 +151,7 @@ void Rend_ModelSetFrame(modeldef_t *modef, int frame)
         if(subdef.modelId == NOMODELID) continue;
 
         // Modify the modeldef itself: set the current frame.
-        mdl = Models_ToModel(subdef.modelId);
+        mdl = Models_Model(subdef.modelId);
         DENG2_ASSERT(mdl != 0);
         subdef.frame = frame % mdl->frameCount();
     }
@@ -446,7 +446,7 @@ static ModelFrame *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjId
         curFrame += mobjId % sub.frameRange;
     }
 
-    return &Models_ToModel(sub.modelId)->frame(curFrame);
+    return &Models_Model(sub.modelId)->frame(curFrame);
 }
 
 /**
@@ -733,7 +733,7 @@ static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tm
     }
 
     submodeldef_t &smf = mf->subModelDef(submodel);
-    Model *mdl = Models_ToModel(smf.modelId);
+    Model *mdl = Models_Model(smf.modelId);
     int skin = smf.skin;
 
     // Selskin overrides the skin range.
@@ -796,7 +796,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
 {
     modeldef_t *mf = parm->mf, *mfNext = parm->nextMF;
     submodeldef_t *smf = &mf->subModelDef(number);
-    Model *mdl = Models_ToModel(smf->modelId);
+    Model *mdl = Models_Model(smf->modelId);
     ModelFrame *frame = Mod_GetVisibleFrame(mf, number, parm->id);
     ModelFrame *nextFrame = 0;
 

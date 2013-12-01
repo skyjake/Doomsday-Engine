@@ -407,8 +407,8 @@ static int listVisibleParticles()
     return true;
 }
 
-static void setupModelParamsForParticle(rendmodelparams_t* params,
-    const particle_t* pt, const ptcstage_t* st, const ded_ptcstage_t* dst,
+static void setupModelParamsForParticle(rendmodelparams_t *params,
+    particle_t const *pt, ptcstage_t const *st, ded_ptcstage_t const *dst,
     const_pvec3f_t origin, float dist, float size, float mark, float alpha)
 {
     // Render the particle as a model.
@@ -418,7 +418,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     params->distance = dist;
 
     params->extraScale = size; // Extra scaling factor.
-    params->mf = &modefs[dst->model];
+    params->mf = Models_ModelDef(dst->model);
     params->alwaysInterpolate = true;
 
     int frame;

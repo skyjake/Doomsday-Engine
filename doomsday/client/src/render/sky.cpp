@@ -339,7 +339,7 @@ static void setupSkyModels(ded_sky_t *def)
     for(int i = 0; i < MAX_SKY_MODELS; ++i, modef++, sm++)
     {
         // Is the model ID set?
-        sm->model = Models_Definition(modef->id);
+        sm->model = Models_ModelDef(modef->id);
         if(!sm->model || !sm->model->subCount()) continue;
 
         // There is a model here.

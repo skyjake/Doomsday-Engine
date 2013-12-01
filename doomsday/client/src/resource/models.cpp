@@ -51,25 +51,19 @@
 
 using namespace de;
 
-ModelDefs modefs;
-
 byte useModels = true;
-
 float rModelAspectMod = 1 / 1.2f; //.833334f;
 
-static StringPool *modelRepository; // Owns Model instances.
+static ModelDefs modefs;
 static std::vector<int> stateModefs; // Index to the modefs array.
+
+static StringPool *modelRepository; // Owns Model instances.
 
 static Model *loadModel(String path);
 static bool recogniseDmd(de::FileHandle &file);
 static bool recogniseMd2(de::FileHandle &file);
 static void loadDmd(de::FileHandle &file, Model &mdl);
 static void loadMd2(de::FileHandle &file, Model &mdl);
-
-static int indexOfModelDef(ModelDef const *mf)
-{
-    return mf - &modefs[0];
-}
 
 static ModelDef *modelDefForState(int stateIndex, int select = 0)
 {
@@ -116,12 +110,21 @@ static inline String const &findModelPath(modelid_t id)
     return modelRepository->stringRef(id);
 }
 
-Model *Models_ToModel(modelid_t id)
+Model *Models_Model(modelid_t id)
 {
     return modelForId(id);
 }
 
-modeldef_t *Models_Definition(char const *id)
+modeldef_t *Models_ModelDef(int index)
+{
+    if(index >= 0 && index < int(modefs.size()))
+    {
+        return &modefs[index];
+    }
+    return 0;
+}
+
+modeldef_t *Models_ModelDef(char const *id)
 {
     if(!id || !id[0]) return 0;
 
@@ -135,7 +138,7 @@ modeldef_t *Models_Definition(char const *id)
     return 0;
 }
 
-float Models_ModelForMobj(mobj_t const *mo, modeldef_t **modef, modeldef_t **nextmodef)
+float Models_ModelDefForMobj(mobj_t const *mo, modeldef_t **modef, modeldef_t **nextmodef)
 {
     // On the client it is possible that we don't know the mobj's state.
     if(!mo->state) return -1;
@@ -296,7 +299,7 @@ static void scaleModel(modeldef_t &mf, float destHeight, float offset)
 
     // Find the top and bottom heights.
     float top, bottom;
-    float height = Models_ToModel(smf.modelId)->frame(smf.frame).horizontalRange(&top, &bottom);
+    float height = Models_Model(smf.modelId)->frame(smf.frame).horizontalRange(&top, &bottom);
     if(!height) height = 1;
 
     float scale = destHeight / height;
@@ -329,7 +332,7 @@ static float calcModelVisualRadius(modeldef_t *def)
 
         SubmodelDef &sub = def->subModelDef(i);
 
-        Models_ToModel(sub.modelId)->frame(sub.frame).bounds(min, max);
+        Models_Model(sub.modelId)->frame(sub.frame).bounds(min, max);
 
         // Half the distance from bottom left to top right.
         float radius = (def->scale.x * (max.x - min.x) +
@@ -352,7 +355,7 @@ static modeldef_t *getModelDefWithId(char const *id)
     if(!id || !id[0]) return 0;
 
     // First try to find an existing modef.
-    modeldef_t *md = Models_Definition(id);
+    modeldef_t *md = Models_ModelDef(id);
     if(md) return md;
 
     // Get a new entry.
@@ -635,7 +638,7 @@ static void setupModel(ded_model_t &def)
         if(stateModefs[stateNum] < 0)
         {
             // No modef; use this.
-            stateModefs[stateNum] = indexOfModelDef(modef);
+            stateModefs[stateNum] = Models_ToIndex(modef);
         }
         else
         {
@@ -645,7 +648,7 @@ static void setupModel(ded_model_t &def)
             if((modef->interMark <= other->interMark && // Should never be ==
                 modef->select == other->select) || modef->select < other->select) // Smallest selector?
             {
-                stateModefs[stateNum] = indexOfModelDef(modef);
+                stateModefs[stateNum] = Models_ToIndex(modef);
             }
         }
     }
@@ -657,7 +660,7 @@ static void setupModel(ded_model_t &def)
         SubmodelDef *sub = &modef->subModelDef(i);
         if(sub->modelId && sub->frame >= 0)
         {
-            Models_ToModel(sub->modelId)->frame(sub->frame).bounds(min, max);
+            Models_Model(sub->modelId)->frame(sub->frame).bounds(min, max);
             modef->setParticleOffset(i, ((max + min) / 2 + sub->offset) * modef->scale + modef->offset);
         }
     }
@@ -803,14 +806,24 @@ void Models_Shutdown()
     }
 }
 
-void Models_Cache(modeldef_t *modef)
+int Models_ToIndex(modeldef_t const *modelDef)
 {
-    if(!modef) return;
-
-    for(uint sub = 0; sub < modef->subCount(); ++sub)
+    int index = int(modelDef - &modefs[0]);
+    if(index >= 0 && index < int(modefs.size()))
     {
-        submodeldef_t &subdef = modef->subModelDef(sub);
-        Model *mdl = Models_ToModel(subdef.modelId);
+        return index;
+    }
+    return -1;
+}
+
+void Models_Cache(modeldef_t *modelDef)
+{
+    if(!modelDef) return;
+
+    for(uint sub = 0; sub < modelDef->subCount(); ++sub)
+    {
+        submodeldef_t &subdef = modelDef->subModelDef(sub);
+        Model *mdl = Models_Model(subdef.modelId);
         if(!mdl) continue;
 
         // Load all skins.
@@ -1094,7 +1107,7 @@ static Model *loadModel(String path)
 {
     // Have we already loaded this?
     modelid_t modelId = modelRepository->intern(path);
-    Model *mdl = Models_ToModel(modelId);
+    Model *mdl = Models_Model(modelId);
     if(mdl) return mdl; // Yes.
 
     try
