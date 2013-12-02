@@ -31,7 +31,7 @@ class TextureVariantSpec;
 #define RENDER_MAX_MODEL_VERTS  16192
 
 /// @todo Split this large inflexible structure into logical subcomponent pieces.
-struct rendmodelparams_t
+struct drawmodelparams_t
 {
 // Animation, frame interpolation.
     ModelDef *mf, *nextMF;
@@ -109,8 +109,6 @@ void Rend_ModelShutdown();
  */
 bool Rend_ModelExpandVertexBuffers(uint numVertices);
 
-void Rend_ModelSetFrame(ModelDef &modef, int frame);
-
 /**
  * Lookup the texture specification for diffuse model skins.
  *
@@ -129,6 +127,6 @@ TextureVariantSpec &Rend_ModelShinyTextureSpec();
 /**
  * Render all the submodels of a model.
  */
-void Rend_DrawModel(rendmodelparams_t const &parms);
+void Rend_DrawModel(drawmodelparams_t const &parms);
 
 #endif // DENG_CLIENT_RENDER_MODEL_H

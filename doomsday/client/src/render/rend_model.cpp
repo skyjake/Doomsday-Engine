@@ -55,7 +55,12 @@ using namespace de;
 #define QATAN2(y,x)         qatan2(y,x)
 #define QASIN(x)            asin(x) // @todo Precalculate arcsin.
 
-#define MAX_ARRAYS  (2 + MAX_TEX_UNITS)
+static inline float qatan2(float y, float x)
+{
+    float ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
+    if(ang > PI) ang -= 2 * (float) PI;
+    return ang;
+}
 
 enum rendcmd_t
 {
@@ -80,6 +85,7 @@ struct array_t
     bool enabled;
     void *data;
 };
+#define MAX_ARRAYS (2 + MAX_TEX_UNITS)
 static array_t arrays[MAX_ARRAYS];
 
 // The global vertex render buffer.
@@ -98,6 +104,8 @@ static uint vertexBufferSize; ///< Current number of vertices supported by the r
 static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been made to expand beyond our capability.
 #endif
 
+static void initArrays();
+
 void Rend_ModelRegister()
 {
     C_VAR_BYTE ("rend-model",                &useModels,            0, 0, 1);
@@ -111,6 +119,42 @@ void Rend_ModelRegister()
     C_VAR_FLOAT("rend-model-spin-speed",     &modelSpinSpeed,       CVF_NO_MAX | CVF_NO_MIN, 0, 0);
     C_VAR_INT  ("rend-model-shiny-multitex", &modelShinyMultitex,   0, 0, 1);
     C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor,     0, 0, 10);
+}
+
+void Rend_ModelInit()
+{
+    if(inited) return; // Already been here.
+
+    modelPosCoords   = 0;
+    modelNormCoords  = 0;
+    modelColorCoords = 0;
+    modelTexCoords   = 0;
+
+    vertexBufferMax = vertexBufferSize = 0;
+#ifdef DENG_DEBUG
+    announcedVertexBufferMaxBreach = false;
+#endif
+
+    initArrays();
+
+    inited = true;
+}
+
+void Rend_ModelShutdown()
+{
+    if(!inited) return;
+
+    M_Free(modelPosCoords); modelPosCoords = 0;
+    M_Free(modelNormCoords); modelNormCoords = 0;
+    M_Free(modelColorCoords); modelColorCoords = 0;
+    M_Free(modelTexCoords); modelTexCoords = 0;
+
+    vertexBufferMax = vertexBufferSize = 0;
+#ifdef DENG_DEBUG
+    announcedVertexBufferMaxBreach = false;
+#endif
+
+    inited = false;
 }
 
 bool Rend_ModelExpandVertexBuffers(uint numVertices)
@@ -140,22 +184,8 @@ bool Rend_ModelExpandVertexBuffers(uint numVertices)
     return true;
 }
 
-void Rend_ModelSetFrame(ModelDef &modef, int frame)
-{
-    for(uint i = 0; i < modef.subCount(); ++i)
-    {
-        submodeldef_t &subdef = modef.subModelDef(i);
-        if(subdef.modelId == NOMODELID) continue;
-
-        // Modify the modeldef itself: set the current frame.
-        Model *mdl = Models_Model(subdef.modelId);
-        DENG2_ASSERT(mdl != 0);
-        subdef.frame = frame % mdl->frameCount();
-    }
-}
-
 /// @return  @c true= Vertex buffer is large enough to handle @a numVertices.
-static bool Mod_ExpandVertexBuffer(uint numVertices)
+static bool resizeVertexBuffer(uint numVertices)
 {
     // Mark the vertex buffer if a resize is necessary.
     Rend_ModelExpandVertexBuffers(numVertices);
@@ -176,14 +206,14 @@ static bool Mod_ExpandVertexBuffer(uint numVertices)
     return vertexBufferSize >= numVertices;
 }
 
-static void Mod_InitArrays()
+static void initArrays()
 {
     if(!GL_state.features.elementArrays) return;
     de::zap(arrays);
 }
 
 #if 0
-static void Mod_EnableArrays(int vertices, int colors, int coords)
+static void enableArrays(int vertices, int colors, int coords)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -224,7 +254,7 @@ static void Mod_EnableArrays(int vertices, int colors, int coords)
 }
 #endif
 
-static void Mod_DisableArrays(int vertices, int colors, int coords)
+static void disableArrays(int vertices, int colors, int coords)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -285,14 +315,14 @@ static inline void disableTexUnit(byte id)
     // Implicit disabling of texcoord array.
     if(!GL_state.features.elementArrays)
     {
-        Mod_DisableArrays(0, 0, 1 << id);
+        disableArrays(0, 0, 1 << id);
     }
 }
 
 /**
  * The first selected unit is active after this call.
  */
-static void Mod_SelectTexUnits(int count)
+static void selectTexUnits(int count)
 {
     for(int i = numTexUnits - 1; i >= count; i--)
     {
@@ -310,7 +340,7 @@ static void Mod_SelectTexUnits(int count)
 /**
  * Enable, set and optionally lock all enabled arrays.
  */
-static void Mod_Arrays(void *vertices, void *colors, int numCoords = 0,
+static void configureArrays(void *vertices, void *colors, int numCoords = 0,
     void **coords = 0, int lock = 0)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -372,7 +402,7 @@ static void Mod_Arrays(void *vertices, void *colors, int numCoords = 0,
 }
 
 #if 0
-static void Mod_UnlockArrays()
+static void unlockArrays()
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -384,7 +414,7 @@ static void Mod_UnlockArrays()
 }
 #endif
 
-static void Mod_ArrayElement(int index)
+static void drawArrayElement(int index)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -417,46 +447,39 @@ static void Mod_ArrayElement(int index)
     }
 }
 
-static inline float qatan2(float y, float x)
-{
-    float ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
-    if(ang > PI) ang -= 2 * (float) PI;
-    return ang;
-}
-
 /**
  * Return a pointer to the visible model frame.
  */
-static ModelFrame *Mod_GetVisibleFrame(ModelDef *mf, int subnumber, int mobjId)
+static ModelFrame &visibleModelFrame(ModelDef &modef, int subnumber, int mobjId)
 {
-    if(subnumber >= int(mf->subCount()))
+    if(subnumber >= int(modef.subCount()))
     {
-        throw Error("Mod_GetVisibleFrame",
+        throw Error("Rend_DrawModel.visibleFrame",
                     QString("Model has %1 submodels, but submodel #%2 was requested")
-                    .arg(mf->subCount()).arg(subnumber));
+                        .arg(modef.subCount()).arg(subnumber));
     }
-    submodeldef_t const &sub = mf->subModelDef(subnumber);
+    submodeldef_t const &sub = modef.subModelDef(subnumber);
 
     int curFrame = sub.frame;
-    if(mf->flags & MFF_IDFRAME)
+    if(modef.flags & MFF_IDFRAME)
     {
         curFrame += mobjId % sub.frameRange;
     }
 
-    return &Models_Model(sub.modelId)->frame(curFrame);
+    return Models_Model(sub.modelId)->frame(curFrame);
 }
 
 /**
  * Render a set of 3D model primitives using the given data.
  */
-static void Mod_RenderPrimitives(rendcmd_t mode, Model::Primitives const &primitives,
+static void drawPrimitives(rendcmd_t mode, Model::Primitives const &primitives,
     Vector3f *posCoords, Vector4ub *colorCoords, Vector2f *texCoords = 0)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disable all vertex arrays.
-    Mod_DisableArrays(true, true, DDMAXINT);
+    disableArrays(true, true, DDMAXINT);
 
     // Load the vertex array.
     void *coords[2];
@@ -464,17 +487,17 @@ static void Mod_RenderPrimitives(rendcmd_t mode, Model::Primitives const &primit
     {
     case RC_OTHER_COORDS:
         coords[0] = texCoords;
-        Mod_Arrays(posCoords, colorCoords, 1, coords);
+        configureArrays(posCoords, colorCoords, 1, coords);
         break;
 
     case RC_BOTH_COORDS:
         coords[0] = NULL;
         coords[1] = texCoords;
-        Mod_Arrays(posCoords, colorCoords, 2, coords);
+        configureArrays(posCoords, colorCoords, 2, coords);
         break;
 
     default:
-        Mod_Arrays(posCoords, colorCoords);
+        configureArrays(posCoords, colorCoords);
         break;
     }
 
@@ -490,7 +513,7 @@ static void Mod_RenderPrimitives(rendcmd_t mode, Model::Primitives const &primit
                 glTexCoord2f(elem.texCoord.x, elem.texCoord.y);
             }
 
-            Mod_ArrayElement(elem.index);
+            drawArrayElement(elem.index);
         }
 
         // The primitive is complete.
@@ -676,13 +699,13 @@ static void Mod_ShinyCoords(Vector2f *out, int count, Vector3f const *normCoords
     }
 }
 
-static int chooseSelSkin(ModelDef *mf, int submodel, int selector)
+static int chooseSelSkin(ModelDef &mf, int submodel, int selector)
 {
-    if(mf->def->hasSub(submodel))
+    if(mf.def->hasSub(submodel))
     {
         int i = (selector >> DDMOBJ_SELECTOR_SHIFT) &
-                mf->def->sub(submodel).selSkinBits[0]; // Selskin mask
-        int c = mf->def->sub(submodel).selSkinBits[1]; // Selskin shift
+                mf.def->sub(submodel).selSkinBits[0]; // Selskin mask
+        int c = mf.def->sub(submodel).selSkinBits[1]; // Selskin shift
 
         if(c > 0) i >>= c;
         else      i <<= -c;
@@ -690,19 +713,19 @@ static int chooseSelSkin(ModelDef *mf, int submodel, int selector)
         if(i > 7) i = 7; // Maximum number of skins for selskin.
         if(i < 0) i = 0; // Improbable (impossible?), but doesn't hurt.
 
-        return mf->def->sub(submodel).selSkins[i];
+        return mf.def->sub(submodel).selSkins[i];
     }
     return 0;
 }
 
-static int chooseSkin(ModelDef *mf, int submodel, int id, int selector, int tmap)
+static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap)
 {
-    if(submodel >= int(mf->subCount()))
+    if(submodel >= int(mf.subCount()))
     {
         return 0;
     }
 
-    submodeldef_t &smf = mf->subModelDef(submodel);
+    submodeldef_t &smf = mf.subModelDef(submodel);
     Model *mdl = Models_Model(smf.modelId);
     int skin = smf.skin;
 
@@ -724,7 +747,7 @@ static int chooseSkin(ModelDef *mf, int submodel, int id, int selector, int tmap
         }
         else
         {
-            offset = SECONDS_TO_TICKS(App_World().time()) / mf->skinTics;
+            offset = SECONDS_TO_TICKS(App_World().time()) / mf.skinTics;
         }
 
         skin += offset % smf.skinRange;
@@ -745,21 +768,7 @@ static int chooseSkin(ModelDef *mf, int submodel, int id, int selector, int tmap
     return skin;
 }
 
-TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression)
-{
-    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_DIFFUSE,
-        (noCompression? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT,
-        1, -2, -1, true, true, false, false);
-}
-
-TextureVariantSpec &Rend_ModelShinyTextureSpec()
-{
-    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_REFLECTION,
-        TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,
-        false, false, false);
-}
-
-static void drawSubmodel(uint number, rendmodelparams_t const &parm)
+static void drawSubmodel(uint number, drawmodelparams_t const &parm)
 {
     int const zSign = (parm.mirror? -1 : 1);
     ModelDef *mf = parm.mf, *mfNext = parm.nextMF;
@@ -788,7 +797,7 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
         blending = BM_ADD;
     }
 
-    int useSkin = chooseSkin(mf, number, parm.id, parm.selector, parm.tmap);
+    int useSkin = chooseSkin(*mf, number, parm.id, parm.selector, parm.tmap);
 
     // Scale interpos. Intermark becomes zero and endmark becomes one.
     // (Full sub-interpolation!) But only do it for the standard
@@ -801,7 +810,7 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
         inter = (parm.inter - mf->interMark) / (endPos - mf->interMark);
     }
 
-    ModelFrame *frame = Mod_GetVisibleFrame(mf, number, parm.id);
+    ModelFrame *frame = &visibleModelFrame(*mf, number, parm.id);
     ModelFrame *nextFrame = 0;
     // Do we have a sky/particle model here?
     if(parm.alwaysInterpolate)
@@ -818,7 +827,7 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
         {
             if(mfNext->hasSub(number) && mfNext->subModelId(number) == smf.modelId)
             {
-                nextFrame = Mod_GetVisibleFrame(mfNext, number, parm.id);
+                nextFrame = &visibleModelFrame(*mfNext, number, parm.id);
             }
         }
     }
@@ -838,7 +847,7 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
     int numVerts = mdl.vertexCount();
 
     // Ensure our vertex render buffers can accommodate this.
-    if(!Mod_ExpandVertexBuffer(numVerts))
+    if(!resizeVertexBuffer(numVerts))
     {
         // No can do, we aint got the power!
         return;
@@ -1058,12 +1067,12 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
         // The first pass can be skipped if it won't be visible.
         if(shininess < 1 || smf.testFlag(MFF_SHINY_SPECULAR))
         {
-            Mod_SelectTexUnits(1);
+            selectTexUnits(1);
             GL_BlendMode(blending);
             GL_BindTexture(renderTextures? skinTexture : 0);
 
-            Mod_RenderPrimitives(RC_COMMAND_COORDS, primitives,
-                                 modelPosCoords, modelColorCoords);
+            drawPrimitives(RC_COMMAND_COORDS, primitives,
+                           modelPosCoords, modelColorCoords);
         }
 
         if(shininess > 0)
@@ -1084,7 +1093,7 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
             {
                 // We'll use multitexturing to clear out empty spots in
                 // the primary texture.
-                Mod_SelectTexUnits(2);
+                selectTexUnits(2);
                 GL_ModulateTexture(11);
 
                 glActiveTexture(GL_TEXTURE1);
@@ -1093,20 +1102,20 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
                 glActiveTexture(GL_TEXTURE0);
                 GL_BindTexture(renderTextures? skinTexture : 0);
 
-                Mod_RenderPrimitives(RC_BOTH_COORDS, primitives,
-                                     modelPosCoords, modelColorCoords, modelTexCoords);
+                drawPrimitives(RC_BOTH_COORDS, primitives,
+                               modelPosCoords, modelColorCoords, modelTexCoords);
 
-                Mod_SelectTexUnits(1);
+                selectTexUnits(1);
                 GL_ModulateTexture(1);
             }
             else
             {
                 // Empty spots will get shine, too.
-                Mod_SelectTexUnits(1);
+                selectTexUnits(1);
                 GL_BindTexture(renderTextures? shinyTexture : 0);
 
-                Mod_RenderPrimitives(RC_OTHER_COORDS, primitives,
-                                     modelPosCoords, modelColorCoords, modelTexCoords);
+                drawPrimitives(RC_OTHER_COORDS, primitives,
+                               modelPosCoords, modelColorCoords, modelTexCoords);
             }
         }
     }
@@ -1115,7 +1124,7 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
         // A special case: specular shininess on an opaque object.
         // Multitextured shininess with the normal blending.
         GL_BlendMode(blending);
-        Mod_SelectTexUnits(2);
+        selectTexUnits(2);
 
         // Tex1*Color + Tex2RGB*ConstRGB
         GL_ModulateTexture(10);
@@ -1130,10 +1139,10 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
         glActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures? skinTexture : 0);
 
-        Mod_RenderPrimitives(RC_BOTH_COORDS, primitives,
-                             modelPosCoords, modelColorCoords, modelTexCoords);
+        drawPrimitives(RC_BOTH_COORDS, primitives,
+                       modelPosCoords, modelColorCoords, modelTexCoords);
 
-        Mod_SelectTexUnits(1);
+        selectTexUnits(1);
         GL_ModulateTexture(1);
     }
 
@@ -1157,42 +1166,6 @@ static void drawSubmodel(uint number, rendmodelparams_t const &parm)
     GL_BlendMode(BM_NORMAL);
 }
 
-void Rend_ModelInit()
-{
-    if(inited) return; // Already been here.
-
-    modelPosCoords   = 0;
-    modelNormCoords  = 0;
-    modelColorCoords = 0;
-    modelTexCoords   = 0;
-
-    vertexBufferMax = vertexBufferSize = 0;
-#ifdef DENG_DEBUG
-    announcedVertexBufferMaxBreach = false;
-#endif
-
-    Mod_InitArrays();
-
-    inited = true;
-}
-
-void Rend_ModelShutdown()
-{
-    if(!inited) return;
-
-    M_Free(modelPosCoords); modelPosCoords = 0;
-    M_Free(modelNormCoords); modelNormCoords = 0;
-    M_Free(modelColorCoords); modelColorCoords = 0;
-    M_Free(modelTexCoords); modelTexCoords = 0;
-
-    vertexBufferMax = vertexBufferSize = 0;
-#ifdef DENG_DEBUG
-    announcedVertexBufferMaxBreach = false;
-#endif
-
-    inited = false;
-}
-
 static int drawLightVectorWorker(VectorLight const *vlight, void *context)
 {
     coord_t distFromViewer = *static_cast<coord_t *>(context);
@@ -1203,7 +1176,7 @@ static int drawLightVectorWorker(VectorLight const *vlight, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_DrawModel(rendmodelparams_t const &parm)
+void Rend_DrawModel(drawmodelparams_t const &parm)
 {
     DENG2_ASSERT(inited);
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -1253,4 +1226,18 @@ void Rend_DrawModel(rendmodelparams_t const &parm)
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
     }
+}
+
+TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression)
+{
+    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_DIFFUSE,
+        (noCompression? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT,
+        1, -2, -1, true, true, false, false);
+}
+
+TextureVariantSpec &Rend_ModelShinyTextureSpec()
+{
+    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_REFLECTION,
+        TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,
+        false, false, false);
 }

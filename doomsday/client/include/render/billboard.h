@@ -35,7 +35,7 @@ class BspLeaf;
  * A sort of a sprite, I guess... Masked walls must be rendered sorted with
  * sprites, so no artifacts appear when sprites are seen behind masked walls.
  */
-struct rendmaskedwallparams_t
+struct drawmaskedwallparams_t
 {
     void *material; /// MaterialVariant
     blendmode_t blendMode; ///< Blendmode to be used when drawing
@@ -53,7 +53,7 @@ struct rendmaskedwallparams_t
     float modColor[4];
 };
 
-void Rend_DrawMaskedWall(rendmaskedwallparams_t const &parms);
+void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms);
 
 /**
  * Billboard drawing arguments for a "player" sprite (HUD sprite).
@@ -76,7 +76,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms);
 /**
  * Billboard drawing arguments for a map entity, sprite visualization.
  */
-struct rendspriteparams_t
+struct drawspriteparams_t
 {
 // Position/Orientation/Scale
     coord_t center[3]; // The real center point.
@@ -100,7 +100,7 @@ struct rendspriteparams_t
     BspLeaf *bspLeaf;
 };
 
-void Rend_DrawSprite(rendspriteparams_t const &parms);
+void Rend_DrawSprite(drawspriteparams_t const &parms);
 
 de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
 
@@ -117,7 +117,7 @@ de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap 
  *
  * @see H_RenderHalo()
  */
-struct rendflareparams_t
+struct drawflareparams_t
 {
     byte flags; // @ref rendFlareFlags.
     int size;

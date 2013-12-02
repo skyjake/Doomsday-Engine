@@ -50,10 +50,10 @@ typedef struct vissprite_s {
 
     // An anonymous union for the data.
     union vissprite_data_u {
-        rendspriteparams_t sprite;
-        rendmaskedwallparams_t wall;
-        rendmodelparams_t model;
-        rendflareparams_t flare;
+        drawspriteparams_t sprite;
+        drawmaskedwallparams_t wall;
+        drawmodelparams_t model;
+        drawflareparams_t flare;
     } data;
 } vissprite_t;
 
@@ -62,7 +62,7 @@ typedef struct vissprite_s {
 #define VS_MODEL(v)         (&((v)->data.model))
 #define VS_FLARE(v)         (&((v)->data.flare))
 
-void VisSprite_SetupSprite(rendspriteparams_t &p,
+void VisSprite_SetupSprite(drawspriteparams_t &p,
     de::Vector3d const &center, coord_t distToEye, de::Vector3d const &visOffset,
     float secFloor, float secCeil, float floorClip, float top,
     Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
@@ -70,7 +70,7 @@ void VisSprite_SetupSprite(rendspriteparams_t &p,
     uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
     bool floorAdjust, bool fitTop, bool fitBottom, bool viewAligned);
 
-void VisSprite_SetupModel(rendmodelparams_t &p,
+void VisSprite_SetupModel(drawmodelparams_t &p,
     de::Vector3d const &origin, coord_t distToEye, de::Vector3d const &visOffset,
     float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
     ModelDef *mf, ModelDef *nextMF, float inter,

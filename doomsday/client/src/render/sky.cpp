@@ -362,7 +362,7 @@ void Sky_Cache()
 
     if(skyModelsInited)
     {
-        skymodel_t* sky = skyModels;
+        skymodel_t *sky = skyModels;
         for(int i = 0; i < MAX_SKY_MODELS; ++i, sky++)
         {
             if(!sky->def) continue;
@@ -665,7 +665,7 @@ static void renderSkyModels()
     // Setup basic translation.
     glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
 
-    rendmodelparams_t parms;
+    drawmodelparams_t parms;
     skymodel_t *sky = skyModels;
     for(int i = 0; i < NUM_SKY_MODELS; ++i, sky++)
     {
@@ -694,7 +694,7 @@ static void renderSkyModels()
         parms.inter = inter;
         parms.mf = sky->model;
         parms.alwaysInterpolate = true;
-        Rend_ModelSetFrame(*sky->model, sky->frame);
+        Models_SetFrame(*sky->model, sky->frame);
         parms.yaw = sky->yaw;
         for(int c = 0; c < 4; ++c)
         {

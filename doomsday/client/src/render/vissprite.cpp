@@ -60,7 +60,7 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
     return spr;
 }
 
-void VisSprite_SetupSprite(rendspriteparams_t &p,
+void VisSprite_SetupSprite(drawspriteparams_t &p,
     Vector3d const &center, coord_t distToEye, Vector3d const &visOffset,
     float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
     Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
@@ -98,7 +98,7 @@ void VisSprite_SetupSprite(rendspriteparams_t &p,
     p.vLightListIdx   = vLightListIdx;
 }
 
-void VisSprite_SetupModel(rendmodelparams_t &p,
+void VisSprite_SetupModel(drawmodelparams_t &p,
     Vector3d const &origin, coord_t distToEye, Vector3d const &visOffset,
     float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
     ModelDef *mf, ModelDef *nextMF, float inter,

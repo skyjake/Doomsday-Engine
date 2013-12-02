@@ -84,7 +84,7 @@ static inline void drawQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
     glEnd();
 }
 
-void Rend_DrawMaskedWall(rendmaskedwallparams_t const &parms)
+void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -423,7 +423,7 @@ MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass, int tmap)
                                                     1, -2, -1, true, true, true, false);
 }
 
-static MaterialVariant *chooseSpriteMaterial(rendspriteparams_t const &p)
+static MaterialVariant *chooseSpriteMaterial(drawspriteparams_t const &p)
 {
     if(!renderTextures) return 0;
     if(renderTextures == 2)
@@ -447,7 +447,7 @@ static int drawVectorLightWorker(VectorLight const *vlight, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_DrawSprite(rendspriteparams_t const &parms)
+void Rend_DrawSprite(drawspriteparams_t const &parms)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();

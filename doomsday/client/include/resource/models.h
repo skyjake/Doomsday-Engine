@@ -282,6 +282,9 @@ ModelDef *Models_ModelDef(int index);
  */
 ModelDef *Models_ModelDef(char const *id);
 
+/// @todo Refactor away. Used for animating particle/sky models.
+void Models_SetFrame(ModelDef &modelDef, int frame);
+
 /**
  * Cache all resources needed to visualize models using the given @a modelDef.
  */

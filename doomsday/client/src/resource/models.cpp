@@ -817,6 +817,20 @@ int Models_IndexOf(ModelDef const *modelDef)
     return -1;
 }
 
+void Models_SetFrame(ModelDef &modef, int frame)
+{
+    for(uint i = 0; i < modef.subCount(); ++i)
+    {
+        submodeldef_t &subdef = modef.subModelDef(i);
+        if(subdef.modelId == NOMODELID) continue;
+
+        // Modify the modeldef itself: set the current frame.
+        Model *mdl = Models_Model(subdef.modelId);
+        DENG2_ASSERT(mdl != 0);
+        subdef.frame = frame % mdl->frameCount();
+    }
+}
+
 void Models_Cache(ModelDef *modelDef)
 {
     if(!modelDef) return;

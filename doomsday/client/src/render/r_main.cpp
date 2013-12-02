@@ -1211,7 +1211,7 @@ static void drawPlayerSprites()
     }
 }
 
-static void setupModelParamsForVisPSprite(rendmodelparams_t *params, vispsprite_t *spr)
+static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_t *spr)
 {
     params->mf = spr->data.model.mf;
     params->nextMF = spr->data.model.nextMF;
@@ -1312,7 +1312,7 @@ static void drawPlayerModels()
 
         if(spr->type != VPSPR_MODEL) continue; // Not used.
 
-        rendmodelparams_t parms; zap(parms);
+        drawmodelparams_t parms; zap(parms);
         setupModelParamsForVisPSprite(&parms, spr);
         Rend_DrawModel(parms);
     }

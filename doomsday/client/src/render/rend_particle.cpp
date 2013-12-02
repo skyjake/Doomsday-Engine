@@ -407,7 +407,7 @@ static int listVisibleParticles()
     return true;
 }
 
-static void setupModelParamsForParticle(rendmodelparams_t *params,
+static void setupModelParamsForParticle(drawmodelparams_t *params,
     particle_t const *pt, ptcstage_t const *st, ded_ptcstage_t const *dst,
     const_pvec3f_t origin, float dist, float size, float mark, float alpha)
 {
@@ -433,7 +433,7 @@ static void setupModelParamsForParticle(rendmodelparams_t *params,
         params->inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
     }
 
-    Rend_ModelSetFrame(*params->mf, frame);
+    Models_SetFrame(*params->mf, frame);
     // Set the correct orientation for the particle.
     if(params->mf->testSubFlag(0, MFF_MOVEMENT_YAW))
     {
@@ -729,7 +729,7 @@ static void renderParticles(int rtype, boolean withBlend)
         // routine.
         if(rtype == PTC_MODEL && dst->model >= 0)
         {
-            rendmodelparams_t parms; zap(parms);
+            drawmodelparams_t parms; zap(parms);
             setupModelParamsForParticle(&parms, pt, st, dst, center, dist, size, mark, color[CA]);
 
             Rend_DrawModel(parms);
