@@ -152,6 +152,19 @@ inline dint cmp(Type const &a, Type const &b) {
     return 0;
 }
 
+/**
+ * Linear interpolation between two values.
+ *
+ * @param start  Value to interpolate from.
+ * @param end    Value to interpolate to.
+ * @param pos    Normalized interpolation point [0..1].
+ */
+template <typename Type>
+static Type lerp(Type start, Type end, float pos)
+{
+    return end * pos + start * (1 - pos);
+}
+
 } // namespace de
 
 #endif /* LIBDENG2_MATH_H */

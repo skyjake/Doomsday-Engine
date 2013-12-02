@@ -499,21 +499,13 @@ static void Mod_RenderPrimitives(rendcmd_t mode, Model::Primitives const &primit
 }
 
 /**
- * Linear interpolation between two values.
- */
-static inline float Mod_Lerp(float start, float end, float pos)
-{
-    return end * pos + start * (1 - pos);
-}
-
-/**
  * Interpolate linearly between two sets of vertices.
  */
 static void Mod_LerpVertices(float inter, int count, ModelFrame const &from,
     ModelFrame const &to, Vector3f *posOut, Vector3f *normOut)
 {
     DENG2_ASSERT(&from.model == &to.model); // sanity check.
-    DENG2_ASSERT(&activeLod->model == &from.model); // sanity check.
+    DENG2_ASSERT(!activeLod || &activeLod->model == &from.model); // sanity check.
     DENG2_ASSERT(from.vertices.count() == to.vertices.count()); // sanity check.
 
     ModelFrame::VertexBuf::const_iterator startIt = from.vertices.begin();
@@ -532,14 +524,12 @@ static void Mod_LerpVertices(float inter, int count, ModelFrame const &from,
     }
     else
     {
-        float const invInter = 1 - inter;
-
         for(int i = 0; i < count; ++i, startIt++, endIt++, posOut++, normOut++)
         {
             if(!activeLod || activeLod->hasVertex(i))
             {
-                *posOut  = startIt->pos  * invInter + endIt->pos  * inter;
-                *normOut = startIt->norm * invInter + endIt->norm * inter;
+                *posOut  = de::lerp(startIt->pos,  endIt->pos,  inter);
+                *normOut = de::lerp(startIt->norm, endIt->norm, inter);
             }
         }
     }
@@ -876,11 +866,11 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
 
     // Model space => World space
     glTranslatef(parm->origin[VX] + parm->srvo[VX] +
-                   Mod_Lerp(mf->offset.x, mfNext->offset.x, inter),
+                   de::lerp(mf->offset.x, mfNext->offset.x, inter),
                  parm->origin[VZ] + parm->srvo[VZ] +
-                   Mod_Lerp(mf->offset.y, mfNext->offset.y, inter),
+                   de::lerp(mf->offset.y, mfNext->offset.y, inter),
                  parm->origin[VY] + parm->srvo[VY] + zSign *
-                   Mod_Lerp(mf->offset.z, mfNext->offset.z, inter));
+                   de::lerp(mf->offset.z, mfNext->offset.z, inter));
 
     if(parm->extraYawAngle || parm->extraPitchAngle)
     {
@@ -898,9 +888,9 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
               0, 0, 1);
 
     // Scaling and model space offset.
-    glScalef(Mod_Lerp(mf->scale.x, mfNext->scale.x, inter),
-             Mod_Lerp(mf->scale.y, mfNext->scale.y, inter),
-             Mod_Lerp(mf->scale.z, mfNext->scale.z, inter));
+    glScalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
+             de::lerp(mf->scale.y, mfNext->scale.y, inter),
+             de::lerp(mf->scale.z, mfNext->scale.z, inter));
     if(parm->extraScale)
     {
         // Particle models have an extra scale.
