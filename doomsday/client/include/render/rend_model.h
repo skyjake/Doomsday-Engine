@@ -109,7 +109,7 @@ void Rend_ModelShutdown();
  */
 bool Rend_ModelExpandVertexBuffers(uint numVertices);
 
-void Rend_ModelSetFrame(modeldef_t &modef, int frame);
+void Rend_ModelSetFrame(ModelDef &modef, int frame);
 
 /**
  * Lookup the texture specification for diffuse model skins.

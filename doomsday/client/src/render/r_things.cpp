@@ -189,7 +189,7 @@ void R_ProjectSprite(mobj_t *mo)
     coord_t const distFromEye = Rend_PointDist2D(moPos);
 
     // Should we use a 3D model?
-    modeldef_t *mf = 0, *nextmf = 0;
+    ModelDef *mf = 0, *nextmf = 0;
     float interp = 0;
     if(useModels)
     {

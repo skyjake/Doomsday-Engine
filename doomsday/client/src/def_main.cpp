@@ -1892,7 +1892,7 @@ void Def_PostInit(void)
 
             sprintf(name, "Particle%02i", st->type - PTC_MODEL);
 
-            modeldef_t *modef = Models_ModelDef(name);
+            ModelDef *modef = Models_ModelDef(name);
             if(!modef || modef->subModelId(0) == NOMODELID)
             {
                 st->model = -1;

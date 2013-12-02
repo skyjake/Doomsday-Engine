@@ -290,11 +290,11 @@ DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
 
 #ifdef __CLIENT__
 
-static modeldef_t *currentModelDefForMobj(mobj_t const &mo)
+static ModelDef *currentModelDefForMobj(mobj_t const &mo)
 {
     if(useModels)
     {
-        modeldef_t *mf = 0, *nextmf = 0;
+        ModelDef *mf = 0, *nextmf = 0;
         Models_ModelDefForMobj(&mo, &mf, &nextmf);
         return mf;
     }
@@ -582,7 +582,7 @@ coord_t Mobj_VisualRadius(mobj_t const &mobj)
 #ifdef __CLIENT__
 
     // If models are being used, use the model's radius.
-    if(modeldef_t *mf = currentModelDefForMobj(mobj))
+    if(ModelDef *mf = currentModelDefForMobj(mobj))
     {
         return mf->visualRadius;
     }

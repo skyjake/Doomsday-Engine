@@ -1010,7 +1010,7 @@ void R_SetupPlayerSprites()
 
         // First, determine whether this is a model or a sprite.
         bool isModel = false;
-        modeldef_t *mf = 0, *nextmf = 0;
+        ModelDef *mf = 0, *nextmf = 0;
         float inter = 0;
         if(useModels)
         {

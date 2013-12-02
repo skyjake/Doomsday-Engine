@@ -232,9 +232,6 @@ struct ModelDef
     }
 };
 
-typedef ModelDef modeldef_t;
-typedef std::vector<ModelDef> ModelDefs;
-
 #ifdef __CLIENT__
 
 DENG_EXTERN_C byte useModels;
@@ -255,7 +252,7 @@ void Models_Shutdown();
  *
  * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
  */
-int Models_IndexOf(modeldef_t const *modelDef);
+int Models_IndexOf(ModelDef const *modelDef);
 
 /**
  * Retrieve a model by it's unique @a id. O(1)
@@ -269,26 +266,26 @@ Model *Models_Model(modelid_t id);
  * of the mobj. Returns the modeldefs that are in effect at the moment (interlinks
  * checked appropriately).
  */
-float Models_ModelDefForMobj(struct mobj_s const *mo, modeldef_t **mdef, modeldef_t **nextmdef);
+float Models_ModelDefForMobj(struct mobj_s const *mo, ModelDef **mdef, ModelDef **nextmdef);
 
 /**
  * Retrieve a model definition by it's unique @a index. O(1)
  *
  * @return  Pointer to the associated definition; otherwise @c 0.
  */
-modeldef_t *Models_ModelDef(int index);
+ModelDef *Models_ModelDef(int index);
 
 /**
  * Lookup a model definition by it's unique @a id. O(n)
  *
  * @return  Found model definition; otherwise @c 0.
  */
-modeldef_t *Models_ModelDef(char const *id);
+ModelDef *Models_ModelDef(char const *id);
 
 /**
  * Cache all resources needed to visualize models using the given @a modelDef.
  */
-void Models_Cache(modeldef_t *modelDef);
+void Models_Cache(ModelDef *modelDef);
 
 /**
  * @note The skins are also bound here once so they should be ready for use

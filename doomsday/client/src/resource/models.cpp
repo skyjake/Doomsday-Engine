@@ -54,6 +54,7 @@ using namespace de;
 byte useModels = true;
 float rModelAspectMod = 1 / 1.2f; //.833334f;
 
+typedef std::vector<ModelDef> ModelDefs;
 static ModelDefs modefs;
 static std::vector<int> stateModefs; // Index to the modefs array.
 
@@ -115,7 +116,7 @@ Model *Models_Model(modelid_t id)
     return modelForId(id);
 }
 
-modeldef_t *Models_ModelDef(int index)
+ModelDef *Models_ModelDef(int index)
 {
     if(index >= 0 && index < int(modefs.size()))
     {
@@ -124,7 +125,7 @@ modeldef_t *Models_ModelDef(int index)
     return 0;
 }
 
-modeldef_t *Models_ModelDef(char const *id)
+ModelDef *Models_ModelDef(char const *id)
 {
     if(!id || !id[0]) return 0;
 
@@ -138,7 +139,7 @@ modeldef_t *Models_ModelDef(char const *id)
     return 0;
 }
 
-float Models_ModelDefForMobj(mobj_t const *mo, modeldef_t **modef, modeldef_t **nextmodef)
+float Models_ModelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelDef **nextmodef)
 {
     // On the client it is possible that we don't know the mobj's state.
     if(!mo->state) return -1;
@@ -230,7 +231,7 @@ float Models_ModelDefForMobj(mobj_t const *mo, modeldef_t **modef, modeldef_t **
                 else
                 {
                     // Scan interlinks, then go to the next state.
-                    modeldef_t *mdit;
+                    ModelDef *mdit;
                     if((mdit = modelDefForState(it - states, mo->selector)) && mdit->interNext)
                     {
                         forever
@@ -288,7 +289,7 @@ float Models_ModelDefForMobj(mobj_t const *mo, modeldef_t **modef, modeldef_t **
  * Scales the given model so that it'll be 'destHeight' units tall. Measurements
  * are based on submodel zero. Scale is applied uniformly.
  */
-static void scaleModel(modeldef_t &mf, float destHeight, float offset)
+static void scaleModel(ModelDef &mf, float destHeight, float offset)
 {
     if(!mf.subCount()) return;
 
@@ -308,7 +309,7 @@ static void scaleModel(modeldef_t &mf, float destHeight, float offset)
     mf.offset.y = -bottom * scale + offset;
 }
 
-static void scaleModelToSprite(modeldef_t &mf, Sprite *sprite)
+static void scaleModelToSprite(ModelDef &mf, Sprite *sprite)
 {
     if(!sprite) return;
     if(!sprite->hasViewAngle(0)) return;
@@ -319,7 +320,7 @@ static void scaleModelToSprite(modeldef_t &mf, Sprite *sprite)
     scaleModel(mf, ms.height(), off);
 }
 
-static float calcModelVisualRadius(modeldef_t *def)
+static float calcModelVisualRadius(ModelDef *def)
 {
     if(!def || !def->subModelId(0)) return 0;
 
@@ -349,13 +350,13 @@ static float calcModelVisualRadius(modeldef_t *def)
 /**
  * Create a new modeldef or find an existing one. This is for ID'd models.
  */
-static modeldef_t *getModelDefWithId(char const *id)
+static ModelDef *getModelDefWithId(char const *id)
 {
     // ID defined?
     if(!id || !id[0]) return 0;
 
     // First try to find an existing modef.
-    modeldef_t *md = Models_ModelDef(id);
+    ModelDef *md = Models_ModelDef(id);
     if(md) return md;
 
     // Get a new entry.
@@ -367,7 +368,7 @@ static modeldef_t *getModelDefWithId(char const *id)
  * Create a new modeldef or find an existing one. There can be only one model
  * definition associated with a state/intermark pair.
  */
-static modeldef_t *getModelDef(int state, float interMark, int select)
+static ModelDef *getModelDef(int state, float interMark, int select)
 {
     // Is this a valid state?
     if(state < 0 || state >= countStates.num) return 0;
@@ -387,7 +388,7 @@ static modeldef_t *getModelDef(int state, float interMark, int select)
     modefs.push_back(ModelDef());
 
     // Set initial data.
-    modeldef_t *md = &modefs.back();
+    ModelDef *md = &modefs.back();
     md->state     = &states[state];
     md->interMark = interMark;
     md->select    = select;
@@ -453,7 +454,7 @@ static void setupModel(ded_model_t &def)
     int const statenum = Def_GetStateNum(def.state);
 
     // Is this an ID'd model?
-    modeldef_t *modef = getModelDefWithId(def.id);
+    ModelDef *modef = getModelDefWithId(def.id);
     if(!modef)
     {
         // No, normal State-model.
@@ -643,7 +644,7 @@ static void setupModel(ded_model_t &def)
         else
         {
             // Must check intermark; smallest wins!
-            modeldef_t *other = modelDefForState(stateNum);
+            ModelDef *other = modelDefForState(stateNum);
 
             if((modef->interMark <= other->interMark && // Should never be ==
                 modef->select == other->select) || modef->select < other->select) // Smallest selector?
@@ -740,14 +741,14 @@ void Models_Init()
     // For each modeldef we will find the "next" def.
     for(int i = int(modefs.size()) - 1; i >= 0; --i)
     {
-        modeldef_t *me = &modefs[i];
+        ModelDef *me = &modefs[i];
 
         float minmark = 2; // max = 1, so this is "out of bounds".
 
-        modeldef_t *closest = 0;
+        ModelDef *closest = 0;
         for(int k = int(modefs.size()) - 1; k >= 0; --k)
         {
-            modeldef_t *other = &modefs[k];
+            ModelDef *other = &modefs[k];
 
             // Same state and a bigger order are the requirements.
             if(other->state == me->state && other->def > me->def && // Defined after me.
@@ -765,16 +766,16 @@ void Models_Init()
     // Create selectlinks.
     for(int i = int(modefs.size()) - 1; i >= 0; --i)
     {
-        modeldef_t *me = &modefs[i];
+        ModelDef *me = &modefs[i];
 
         int minsel = DDMAXINT;
 
-        modeldef_t *closest = 0;
+        ModelDef *closest = 0;
 
         // Start scanning from the next definition.
         for(int k = int(modefs.size()) - 1; k >= 0; --k)
         {
-            modeldef_t *other = &modefs[k];
+            ModelDef *other = &modefs[k];
 
             // Same state and a bigger order are the requirements.
             if(other->state == me->state && other->def > me->def && // Defined after me.
@@ -806,7 +807,7 @@ void Models_Shutdown()
     }
 }
 
-int Models_IndexOf(modeldef_t const *modelDef)
+int Models_IndexOf(ModelDef const *modelDef)
 {
     int index = int(modelDef - &modefs[0]);
     if(index >= 0 && index < int(modefs.size()))
@@ -816,7 +817,7 @@ int Models_IndexOf(modeldef_t const *modelDef)
     return -1;
 }
 
-void Models_Cache(modeldef_t *modelDef)
+void Models_Cache(ModelDef *modelDef)
 {
     if(!modelDef) return;
 
@@ -852,7 +853,7 @@ int Models_CacheForMobj(thinker_t *th, void * /*context*/)
     // Check through all the model definitions.
     for(uint i = 0; i < modefs.size(); ++i)
     {
-        modeldef_t *modef = &modefs[i];
+        ModelDef *modef = &modefs[i];
 
         if(!modef->state) continue;
         if(mo->type < 0 || mo->type >= defs.count.mobjs.num) continue; // Hmm?

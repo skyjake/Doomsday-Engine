@@ -88,7 +88,7 @@ enum hemispherecap_t
 struct skymodel_t
 {
     ded_skymodel_t *def;
-    modeldef_t *model;
+    ModelDef *model;
     int frame;
     int timer;
     int maxTimer;

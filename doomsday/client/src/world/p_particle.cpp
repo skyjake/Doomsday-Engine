@@ -492,7 +492,7 @@ static void P_NewParticle(ptcgen_t *gen)
     angle_t ang, ang2;
     BspLeaf *bspLeaf;
     float inter = -1;
-    modeldef_t *mf = 0, *nextmf = 0;
+    ModelDef *mf = 0, *nextmf = 0;
 
     // Check for model-only generators.
     if(gen->source)

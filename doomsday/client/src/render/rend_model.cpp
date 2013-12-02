@@ -140,7 +140,7 @@ bool Rend_ModelExpandVertexBuffers(uint numVertices)
     return true;
 }
 
-void Rend_ModelSetFrame(modeldef_t &modef, int frame)
+void Rend_ModelSetFrame(ModelDef &modef, int frame)
 {
     for(uint i = 0; i < modef.subCount(); ++i)
     {
@@ -427,7 +427,7 @@ static inline float qatan2(float y, float x)
 /**
  * Return a pointer to the visible model frame.
  */
-static ModelFrame *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjId)
+static ModelFrame *Mod_GetVisibleFrame(ModelDef *mf, int subnumber, int mobjId)
 {
     if(subnumber >= int(mf->subCount()))
     {
@@ -676,7 +676,7 @@ static void Mod_ShinyCoords(Vector2f *out, int count, Vector3f const *normCoords
     }
 }
 
-static int chooseSelSkin(modeldef_t *mf, int submodel, int selector)
+static int chooseSelSkin(ModelDef *mf, int submodel, int selector)
 {
     if(mf->def->hasSub(submodel))
     {
@@ -695,7 +695,7 @@ static int chooseSelSkin(modeldef_t *mf, int submodel, int selector)
     return 0;
 }
 
-static int chooseSkin(modeldef_t *mf, int submodel, int id, int selector, int tmap)
+static int chooseSkin(ModelDef *mf, int submodel, int id, int selector, int tmap)
 {
     if(submodel >= int(mf->subCount()))
     {
@@ -759,82 +759,66 @@ TextureVariantSpec &Rend_ModelShinyTextureSpec()
         false, false, false);
 }
 
-/**
- * Render a submodel from the vissprite.
- */
-static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
+static void drawSubmodel(uint number, rendmodelparams_t const &parm)
 {
-    modeldef_t *mf = parm->mf, *mfNext = parm->nextMF;
-    submodeldef_t *smf = &mf->subModelDef(number);
-    Model *mdl = Models_Model(smf->modelId);
-    ModelFrame *frame = Mod_GetVisibleFrame(mf, number, parm->id);
-    ModelFrame *nextFrame = 0;
+    int const zSign = (parm.mirror? -1 : 1);
+    ModelDef *mf = parm.mf, *mfNext = parm.nextMF;
+    SubmodelDef const &smf = mf->subModelDef(number);
 
-    int numVerts, useSkin;
-    float endPos, offset, alpha;
-    Vector3f delta;
-    Vector4f color, ambient;
-    float shininess;
-    Vector3f shinyColor;
-    float normYaw, normPitch, shinyAng, shinyPnt;
-    float inter = parm->inter;
-    blendmode_t blending;
-    TextureVariant *skinTexture = 0, *shinyTexture = 0;
-    int zSign = (parm->mirror? -1 : 1);
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    Model &mdl = *Models_Model(smf.modelId);
 
     // Do not bother with infinitely small models...
-    if(mf->scale[VX] == 0 && (int)mf->scale[VY] == 0 && mf->scale[VZ] == 0) return;
+    if(mf->scale == Vector3f(0, 0, 0))
+        return;
 
-    alpha = parm->ambientColor[CA];
+    float alpha = parm.ambientColor[CA];
     // Is the submodel-defined alpha multiplier in effect?
-    if(!(parm->flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
+    if(!(parm.flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
     {
-        alpha *= smf->alpha * reciprocal255;
+        alpha *= smf.alpha * reciprocal255;
     }
 
     // Would this be visible?
     if(alpha <= 0) return;
 
+    blendmode_t blending = smf.blendMode;
     // Is the submodel-defined blend mode in effect?
-    if(parm->flags & DDMF_BRIGHTSHADOW)
+    if(parm.flags & DDMF_BRIGHTSHADOW)
     {
         blending = BM_ADD;
     }
-    else
-    {
-        blending = smf->blendMode;
-    }
 
-    useSkin = chooseSkin(mf, number, parm->id, parm->selector, parm->tmap);
+    int useSkin = chooseSkin(mf, number, parm.id, parm.selector, parm.tmap);
 
     // Scale interpos. Intermark becomes zero and endmark becomes one.
     // (Full sub-interpolation!) But only do it for the standard
     // interrange. If a custom one is defined, don't touch interpos.
-    if((mf->interRange[0] == 0 && mf->interRange[1] == 1) || smf->testFlag(MFF_WORLD_TIME_ANIM))
+    float endPos = 0;
+    float inter = parm.inter;
+    if((mf->interRange[0] == 0 && mf->interRange[1] == 1) || smf.testFlag(MFF_WORLD_TIME_ANIM))
     {
         endPos = (mf->interNext ? mf->interNext->interMark : 1);
-        inter = (parm->inter - mf->interMark) / (endPos - mf->interMark);
+        inter = (parm.inter - mf->interMark) / (endPos - mf->interMark);
     }
 
+    ModelFrame *frame = Mod_GetVisibleFrame(mf, number, parm.id);
+    ModelFrame *nextFrame = 0;
     // Do we have a sky/particle model here?
-    if(parm->alwaysInterpolate)
+    if(parm.alwaysInterpolate)
     {
         // Always interpolate, if there's animation.
         // Used with sky and particle models.
-        nextFrame = &mdl->frame((smf->frame + 1) % mdl->frameCount());
+        nextFrame = &mdl.frame((smf.frame + 1) % mdl.frameCount());
         mfNext = mf;
     }
     else
     {
         // Check for possible interpolation.
-        if(frameInter && mfNext && !smf->testFlag(MFF_DONT_INTERPOLATE))
+        if(frameInter && mfNext && !smf.testFlag(MFF_DONT_INTERPOLATE))
         {
-            if(mfNext->hasSub(number) && mfNext->subModelId(number) == smf->modelId)
+            if(mfNext->hasSub(number) && mfNext->subModelId(number) == smf.modelId)
             {
-                nextFrame = Mod_GetVisibleFrame(mfNext, number, parm->id);
+                nextFrame = Mod_GetVisibleFrame(mfNext, number, parm.id);
             }
         }
     }
@@ -851,7 +835,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     }
 
     // Determine the total number of vertices we have.
-    numVerts = mdl->vertexCount();
+    int numVerts = mdl.vertexCount();
 
     // Ensure our vertex render buffers can accommodate this.
     if(!Mod_ExpandVertexBuffer(numVerts))
@@ -865,45 +849,41 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     glPushMatrix();
 
     // Model space => World space
-    glTranslatef(parm->origin[VX] + parm->srvo[VX] +
+    glTranslatef(parm.origin[VX] + parm.srvo[VX] +
                    de::lerp(mf->offset.x, mfNext->offset.x, inter),
-                 parm->origin[VZ] + parm->srvo[VZ] +
+                 parm.origin[VZ] + parm.srvo[VZ] +
                    de::lerp(mf->offset.y, mfNext->offset.y, inter),
-                 parm->origin[VY] + parm->srvo[VY] + zSign *
+                 parm.origin[VY] + parm.srvo[VY] + zSign *
                    de::lerp(mf->offset.z, mfNext->offset.z, inter));
 
-    if(parm->extraYawAngle || parm->extraPitchAngle)
+    if(parm.extraYawAngle || parm.extraPitchAngle)
     {
         // Sky models have an extra rotation.
         glScalef(1, 200 / 240.0f, 1);
-        glRotatef(parm->extraYawAngle, 1, 0, 0);
-        glRotatef(parm->extraPitchAngle, 0, 0, 1);
+        glRotatef(parm.extraYawAngle, 1, 0, 0);
+        glRotatef(parm.extraPitchAngle, 0, 0, 1);
         glScalef(1, 240 / 200.0f, 1);
     }
 
     // Model rotation.
-    glRotatef(parm->viewAlign ? parm->yawAngleOffset : parm->yaw,
+    glRotatef(parm.viewAlign ? parm.yawAngleOffset : parm.yaw,
               0, 1, 0);
-    glRotatef(parm->viewAlign ? parm->pitchAngleOffset : parm->pitch,
+    glRotatef(parm.viewAlign ? parm.pitchAngleOffset : parm.pitch,
               0, 0, 1);
 
     // Scaling and model space offset.
     glScalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
              de::lerp(mf->scale.y, mfNext->scale.y, inter),
              de::lerp(mf->scale.z, mfNext->scale.z, inter));
-    if(parm->extraScale)
+    if(parm.extraScale)
     {
         // Particle models have an extra scale.
-        glScalef(parm->extraScale, parm->extraScale, parm->extraScale);
+        glScalef(parm.extraScale, parm.extraScale, parm.extraScale);
     }
-    glTranslatef(smf->offset.x, smf->offset.y, smf->offset.z);
-
-    /**
-     * Now we can draw.
-     */
+    glTranslatef(smf.offset.x, smf.offset.y, smf.offset.z);
 
     // Determine the suitable LOD.
-    if(mdl->lodCount() > 1 && rend_model_lod != 0)
+    if(mdl.lodCount() > 1 && rend_model_lod != 0)
     {
         float lodFactor = rend_model_lod * DENG_GAMEVIEW_WIDTH / 640.0f / (Rend_FieldOfView() / 90.0f);
         if(!de::fequal(lodFactor, 0))
@@ -912,7 +892,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         }
 
         // Determine the LOD we will be using.
-        activeLod = &mdl->lod(de::clamp<int>(0, lodFactor * parm->distance, mdl->lodCount() - 1));
+        activeLod = &mdl.lod(de::clamp<int>(0, lodFactor * parm.distance, mdl.lodCount() - 1));
     }
     else
     {
@@ -930,34 +910,36 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter = Vector3f(parm->origin[VX], parm->origin[VY], (parm->origin[VZ] + parm->gzt) * 2)
-            + Vector3d(parm->srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
+    modelCenter = Vector3f(parm.origin[VX], parm.origin[VY], (parm.origin[VZ] + parm.gzt) * 2)
+            + Vector3d(parm.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
 
     // Calculate lighting.
-    if(smf->testFlag(MFF_FULLBRIGHT) && !smf->testFlag(MFF_DIM))
+    Vector4f ambient;
+    if(smf.testFlag(MFF_FULLBRIGHT) && !smf.testFlag(MFF_DIM))
     {
         // Submodel-specific lighting override.
         ambient = Vector4f(1, 1, 1, 1);
         Mod_FullBrightVertexColors(numVerts, modelColorCoords, alpha);
     }
-    else if(!parm->vLightListIdx)
+    else if(!parm.vLightListIdx)
     {
         // Lit uniformly.
-        ambient = Vector4f(parm->ambientColor, alpha);
+        ambient = Vector4f(parm.ambientColor, alpha);
         Mod_FixedVertexColors(numVerts, modelColorCoords,
                               (ambient * 255).toVector4ub());
     }
     else
     {
         // Lit normally.
-        ambient = Vector4f(parm->ambientColor, alpha);
+        ambient = Vector4f(parm.ambientColor, alpha);
 
         Mod_VertexColors(modelColorCoords, numVerts,
-                         modelNormCoords, parm->vLightListIdx, modelLight + 1,
-                         ambient, (mf->scale[VY] < 0), -parm->yaw, -parm->pitch);
+                         modelNormCoords, parm.vLightListIdx, modelLight + 1,
+                         ambient, (mf->scale[VY] < 0), -parm.yaw, -parm.pitch);
     }
 
-    shininess = 0;
+    TextureVariant *shinyTexture = 0;
+    float shininess = 0;
     if(mf->def->hasSub(number))
     {
         shininess = de::clamp(0.f, mf->def->sub(number).shiny * modelShinyFactor, 1.f);
@@ -975,34 +957,36 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         }
     }
 
+    Vector4f color;
     if(shininess > 0)
     {
         // Calculate shiny coordinates.
-        shinyColor = mf->def->sub(number).shinyColor;
+        Vector3f shinyColor = mf->def->sub(number).shinyColor;
 
         // With psprites, add the view angle/pitch.
-        offset = parm->shineYawOffset;
+        float offset = parm.shineYawOffset;
 
         // Calculate normalized (0,1) model yaw and pitch.
-        normYaw = M_CycleIntoRange(((parm->viewAlign ? parm->yawAngleOffset
-                                                     : parm->yaw) + offset) / 360, 1);
+        float normYaw = M_CycleIntoRange(((parm.viewAlign ? parm.yawAngleOffset
+                                                           : parm.yaw) + offset) / 360, 1);
 
-        offset = parm->shinePitchOffset;
+        offset = parm.shinePitchOffset;
 
-        normPitch = M_CycleIntoRange(((parm->viewAlign ? parm->pitchAngleOffset
-                                                       : parm->pitch) + offset) / 360, 1);
+        float normPitch = M_CycleIntoRange(((parm.viewAlign ? parm.pitchAngleOffset
+                                                             : parm.pitch) + offset) / 360, 1);
 
-        if(parm->shinepspriteCoordSpace)
+        float shinyAng = 0;
+        float shinyPnt = 0;
+        if(parm.shinepspriteCoordSpace)
         {
             // This is a hack to accommodate the psprite coordinate space.
-            shinyAng = 0;
             shinyPnt = 0.5;
         }
         else
         {
-            delta = modelCenter - Vector3f(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+            Vector3f delta = modelCenter - Vector3f(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
 
-            if(parm->shineTranslateWithViewerPos)
+            if(parm.shineTranslateWithViewerPos)
             {
                 delta += Vector3f(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
             }
@@ -1017,7 +1001,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
                         mf->def->sub(number).shinyReact);
 
         // Shiny color.
-        if(smf->testFlag(MFF_SHINY_LIT))
+        if(smf.testFlag(MFF_SHINY_LIT))
         {
             color = Vector4f(ambient * shinyColor, shininess);
         }
@@ -1027,6 +1011,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
         }
     }
 
+    TextureVariant *skinTexture = 0;
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
@@ -1043,9 +1028,9 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     else
     {
         skinTexture = 0;
-        if(Texture *tex = mdl->skin(useSkin).texture)
+        if(Texture *tex = mdl.skin(useSkin).texture)
         {
-            skinTexture = tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl->flags().testFlag(Model::NoTextureCompression)));
+            skinTexture = tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl.flags().testFlag(Model::NoTextureCompression)));
         }
     }
 
@@ -1056,22 +1041,22 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     }
 
     // Twosided models won't use backface culling.
-    if(smf->testFlag(MFF_TWO_SIDED))
+    if(smf.testFlag(MFF_TWO_SIDED))
     {
         glDisable(GL_CULL_FACE);
     }
     glEnable(GL_TEXTURE_2D);
 
     Model::Primitives const &primitives =
-        activeLod? activeLod->primitives : mdl->primitives();
+        activeLod? activeLod->primitives : mdl.primitives();
 
     // Render using multiple passes?
     if(!modelShinyMultitex || shininess <= 0 || alpha < 1 ||
-       blending != BM_NORMAL || !smf->testFlag(MFF_SHINY_SPECULAR) ||
+       blending != BM_NORMAL || !smf.testFlag(MFF_SHINY_SPECULAR) ||
        numTexUnits < 2 || !envModAdd)
     {
         // The first pass can be skipped if it won't be visible.
-        if(shininess < 1 || smf->testFlag(MFF_SHINY_SPECULAR))
+        if(shininess < 1 || smf.testFlag(MFF_SHINY_SPECULAR))
         {
             Mod_SelectTexUnits(1);
             GL_BlendMode(blending);
@@ -1086,7 +1071,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
             glDepthFunc(GL_LEQUAL);
 
             // Set blending mode, two choices: reflected and specular.
-            if(smf->testFlag(MFF_SHINY_SPECULAR))
+            if(smf.testFlag(MFF_SHINY_SPECULAR))
                 GL_BlendMode(BM_ADD);
             else
                 GL_BlendMode(BM_NORMAL);
@@ -1158,7 +1143,7 @@ static void Mod_RenderSubModel(uint number, rendmodelparams_t const *parm)
     glPopMatrix();
 
     // Normally culling is always enabled.
-    if(smf->testFlag(MFF_TWO_SIDED))
+    if(smf.testFlag(MFF_TWO_SIDED))
     {
         glEnable(GL_CULL_FACE);
     }
@@ -1218,28 +1203,28 @@ static int drawLightVectorWorker(VectorLight const *vlight, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_DrawModel(rendmodelparams_t const &parms)
+void Rend_DrawModel(rendmodelparams_t const &parm)
 {
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(!parms.mf) return;
+    if(!parm.mf) return;
 
     // Render all the submodels of this model.
-    for(uint i = 0; i < parms.mf->subCount(); ++i)
+    for(uint i = 0; i < parm.mf->subCount(); ++i)
     {
-        if(parms.mf->subModelId(i))
+        if(parm.mf->subModelId(i))
         {
-            bool disableZ = (parms.mf->flags & MFF_DISABLE_Z_WRITE ||
-                             parms.mf->testSubFlag(i, MFF_DISABLE_Z_WRITE));
+            bool disableZ = (parm.mf->flags & MFF_DISABLE_Z_WRITE ||
+                             parm.mf->testSubFlag(i, MFF_DISABLE_Z_WRITE));
 
             if(disableZ)
             {
                 glDepthMask(GL_FALSE);
             }
 
-            Mod_RenderSubModel(i, &parms);
+            drawSubmodel(i, parm);
 
             if(disableZ)
             {
@@ -1248,7 +1233,7 @@ void Rend_DrawModel(rendmodelparams_t const &parms)
         }
     }
 
-    if(devMobjVLights && parms.vLightListIdx)
+    if(devMobjVLights && parm.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
         glDisable(GL_DEPTH_TEST);
@@ -1257,10 +1242,10 @@ void Rend_DrawModel(rendmodelparams_t const &parms)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(parms.origin[VX], parms.origin[VZ], parms.origin[VY]);
+        glTranslatef(parm.origin[VX], parm.origin[VZ], parm.origin[VY]);
 
-        coord_t distFromViewer = de::abs(parms.distance);
-        VL_ListIterator(parms.vLightListIdx, drawLightVectorWorker, &distFromViewer);
+        coord_t distFromViewer = de::abs(parm.distance);
+        VL_ListIterator(parm.vLightListIdx, drawLightVectorWorker, &distFromViewer);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
