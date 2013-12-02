@@ -607,7 +607,7 @@ void GLState::considerNativeStateUndefined()
     currentTarget = 0;
 }
 
-GLState &GLState::top()
+GLState &GLState::current()
 {
     DENG2_ASSERT(!stack.isEmpty());
     return *stack.last();
@@ -616,14 +616,14 @@ GLState &GLState::top()
 GLState &GLState::push()
 {
     // Duplicate the topmost state.
-    push(new GLState(top()));
-    return top();
+    push(new GLState(current()));
+    return current();
 }
 
 GLState &GLState::pop()
 {
     delete take();
-    return top();
+    return current();
 }
 
 void GLState::push(GLState *state)

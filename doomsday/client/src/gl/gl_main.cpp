@@ -719,63 +719,63 @@ void GL_BlendMode(blendmode_t mode)
     switch(mode)
     {
     case BM_ZEROALPHA:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::One, gl::Zero)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::One, gl::Zero)
+                          .apply();
         break;
 
     case BM_ADD:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::SrcAlpha, gl::One)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::SrcAlpha, gl::One)
+                          .apply();
         break;
 
     case BM_DARK:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::DestColor, gl::OneMinusSrcAlpha)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::DestColor, gl::OneMinusSrcAlpha)
+                          .apply();
         break;
 
     case BM_SUBTRACT:
-        GLState::top().setBlendOp(gl::Subtract)
-                      .setBlendFunc(gl::One, gl::SrcAlpha)
-                      .apply();
+        GLState::current().setBlendOp(gl::Subtract)
+                          .setBlendFunc(gl::One, gl::SrcAlpha)
+                          .apply();
         break;
 
     case BM_ALPHA_SUBTRACT:
-        GLState::top().setBlendOp(gl::Subtract)
-                      .setBlendFunc(gl::SrcAlpha, gl::One)
-                      .apply();
+        GLState::current().setBlendOp(gl::Subtract)
+                          .setBlendFunc(gl::SrcAlpha, gl::One)
+                          .apply();
         break;
 
     case BM_REVERSE_SUBTRACT:
-        GLState::top().setBlendOp(gl::ReverseSubtract)
-                      .setBlendFunc(gl::SrcAlpha, gl::One)
-                      .apply();
+        GLState::current().setBlendOp(gl::ReverseSubtract)
+                          .setBlendFunc(gl::SrcAlpha, gl::One)
+                          .apply();
         break;
 
     case BM_MUL:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::Zero, gl::SrcColor)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::Zero, gl::SrcColor)
+                          .apply();
         break;
 
     case BM_INVERSE:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::OneMinusDestColor, gl::OneMinusSrcColor)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::OneMinusDestColor, gl::OneMinusSrcColor)
+                          .apply();
         break;
 
     case BM_INVERSE_MUL:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::Zero, gl::OneMinusSrcColor)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::Zero, gl::OneMinusSrcColor)
+                          .apply();
         break;
 
     default:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
+                          .apply();
         break;
     }
 }

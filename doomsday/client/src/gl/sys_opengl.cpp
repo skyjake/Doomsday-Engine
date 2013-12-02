@@ -597,7 +597,7 @@ void Sys_GLConfigureDefaultState(void)
     glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
 
     // Configure the default GLState (bottom of the stack).
-    de::GLState::top().setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha);
+    de::GLState::current().setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha);
 }
 
 /**

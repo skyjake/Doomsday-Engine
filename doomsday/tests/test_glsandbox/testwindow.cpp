@@ -111,7 +111,7 @@ DENG2_OBSERVES(Bank, Load)
     void glInit(Canvas &cv)
     {
         // Set up the default state.
-        GLState &st = GLState::top();
+        GLState &st = GLState::current();
         st.setBlend(true);
         st.setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
         //st.setCull(gl::Back);
@@ -244,7 +244,7 @@ DENG2_OBSERVES(Bank, Load)
     {
         LOG_DEBUG("GLResized: %i x %i") << cv.width() << cv.height();
 
-        GLState &st = GLState::top();
+        GLState &st = GLState::current();
         //st.setViewport(Rectangleui::fromSize(cv.size()));
         st.setViewport(Rectangleui(0, 0, cv.width(), cv.height()));
 
@@ -315,7 +315,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void drawRttFrame()
     {
-        GLState::top().target().clear(GLTarget::ColorDepth);
+        GLState::current().target().clear(GLTarget::ColorDepth);
 
         // The left cube.
         uTex = testpic;
@@ -334,7 +334,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void drawAtlasFrame()
     {
-        GLState::top().target().clear(GLTarget::ColorDepth);
+        GLState::current().target().clear(GLTarget::ColorDepth);
         uTex = *atlas;
         atlasOb.draw();
     }

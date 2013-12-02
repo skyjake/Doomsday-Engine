@@ -169,9 +169,9 @@ public:
     static void considerNativeStateUndefined();
 
     /**
-     * Returns the current topmost state on the GL state stack.
+     * Returns the current (i.e., topmost) state on the GL state stack.
      */
-    static GLState &top();
+    static GLState &current();
 
     /**
      * Pushes a copy of the current state onto the current thread's GL state

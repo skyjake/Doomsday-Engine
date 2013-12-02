@@ -371,7 +371,7 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLState::top().setNormalizedScissor(
+    GLState::current().setNormalizedScissor(
                 ClientWindow::main().game().normalizedRect(
                     Rectanglei(rect->origin.x, rect->origin.y,
                                rect->size.width, rect->size.height))).apply();
@@ -403,7 +403,7 @@ boolean DGL_GetIntegerv(int name, int *v)
 
     case DGL_SCISSOR_TEST:
         //glGetIntegerv(GL_SCISSOR_TEST, (GLint*) v);
-        *(GLint *) v = GLState::top().scissor();
+        *(GLint *) v = GLState::current().scissor();
         break;
 
     case DGL_FOG:
@@ -573,7 +573,7 @@ void DGL_PopState(void)
     GLState::pop();
 
     // Make sure the restored state is immediately in effect.
-    GLState::top().apply();
+    GLState::current().apply();
 }
 
 #undef DGL_Enable
@@ -633,7 +633,7 @@ void DGL_Disable(int cap)
 
     case DGL_SCISSOR_TEST:
         //glDisable(GL_SCISSOR_TEST);
-        GLState::top().clearScissor().apply();
+        GLState::current().clearScissor().apply();
         break;
 
     case DGL_LINE_SMOOTH:
@@ -652,10 +652,10 @@ void DGL_Disable(int cap)
 #undef DGL_BlendOp
 void DGL_BlendOp(int op)
 {
-    GLState::top().setBlendOp(op == DGL_SUBTRACT         ? gl::Subtract :
-                              op == DGL_REVERSE_SUBTRACT ? gl::ReverseSubtract :
-                                                           gl::Add)
-                  .apply();
+    GLState::current().setBlendOp(op == DGL_SUBTRACT         ? gl::Subtract :
+                                  op == DGL_REVERSE_SUBTRACT ? gl::ReverseSubtract :
+                                                               gl::Add)
+            .apply();
 }
 
 #undef DGL_BlendFunc
@@ -664,26 +664,26 @@ void DGL_BlendFunc(int param1, int param2)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLState::top().setBlendFunc(param1 == DGL_ZERO                ? gl::Zero :
-                                param1 == DGL_ONE                 ? gl::One  :
-                                param1 == DGL_DST_COLOR           ? gl::DestColor :
-                                param1 == DGL_ONE_MINUS_DST_COLOR ? gl::OneMinusDestColor :
-                                param1 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
-                                param1 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
-                                param1 == DGL_DST_ALPHA           ? gl::DestAlpha :
-                                param1 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
-                                                                    gl::Zero
-                                ,
-                                param2 == DGL_ZERO                ? gl::Zero :
-                                param2 == DGL_ONE                 ? gl::One :
-                                param2 == DGL_SRC_COLOR           ? gl::SrcColor :
-                                param2 == DGL_ONE_MINUS_SRC_COLOR ? gl::OneMinusSrcColor :
-                                param2 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
-                                param2 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
-                                param2 == DGL_DST_ALPHA           ? gl::DestAlpha :
-                                param2 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
-                                                                    gl::Zero)
-                  .apply();
+    GLState::current().setBlendFunc(param1 == DGL_ZERO                ? gl::Zero :
+                                    param1 == DGL_ONE                 ? gl::One  :
+                                    param1 == DGL_DST_COLOR           ? gl::DestColor :
+                                    param1 == DGL_ONE_MINUS_DST_COLOR ? gl::OneMinusDestColor :
+                                    param1 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
+                                    param1 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
+                                    param1 == DGL_DST_ALPHA           ? gl::DestAlpha :
+                                    param1 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
+                                                                        gl::Zero
+                                    ,
+                                    param2 == DGL_ZERO                ? gl::Zero :
+                                    param2 == DGL_ONE                 ? gl::One :
+                                    param2 == DGL_SRC_COLOR           ? gl::SrcColor :
+                                    param2 == DGL_ONE_MINUS_SRC_COLOR ? gl::OneMinusSrcColor :
+                                    param2 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
+                                    param2 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
+                                    param2 == DGL_DST_ALPHA           ? gl::DestAlpha :
+                                    param2 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
+                                                                        gl::Zero)
+            .apply();
 }
 
 #undef DGL_BlendMode

@@ -417,7 +417,7 @@ QImage GLTarget::toImage() const
         glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE,
                      (GLvoid *) img.constBits());
         // Restore the stack's target.
-        GLState::top().target().glBind();
+        GLState::current().target().glBind();
         return img;
     }
     return QImage();
@@ -440,7 +440,7 @@ void GLTarget::clear(Flags const &attachments)
             (which & Depth?   GL_DEPTH_BUFFER_BIT   : 0) |
             (which & Stencil? GL_STENCIL_BUFFER_BIT : 0));
 
-    GLState::top().target().glBind();
+    GLState::current().target().glBind();
 }
 
 void GLTarget::resize(Size const &size)
@@ -454,7 +454,7 @@ void GLTarget::resize(Size const &size)
         d->texture->setUndefinedImage(size, d->texture->imageFormat());
     }
     d->resizeRenderBuffers(size);
-    GLState::top().target().glBind();
+    GLState::current().target().glBind();
 }
 
 GLTexture *GLTarget::attachedTexture(Flags const &attachment) const
@@ -487,7 +487,7 @@ void GLTarget::setActiveRect(Rectangleui const &rect, bool applyGLState)
     {
         // Forcibly update viewport and scissor (and other GL state).
         GLState::considerNativeStateUndefined();
-        GLState::top().apply();
+        GLState::current().apply();
     }
 }
 

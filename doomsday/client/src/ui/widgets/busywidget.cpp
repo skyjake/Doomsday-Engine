@@ -125,7 +125,7 @@ void BusyWidget::drawContent()
 
     if(!d->transitionTex.isNull())
     {
-        GLState::top().apply();
+        GLState::current().apply();
 
         glDisable(GL_ALPHA_TEST); /// @todo get rid of these
         glDisable(GL_BLEND);

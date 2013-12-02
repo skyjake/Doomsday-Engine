@@ -492,7 +492,7 @@ void LensFlares::draw()
     d->uMvpMatrix = GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
     // Depth information is required for occlusion.
-    GLTarget &target = GLState::top().target();
+    GLTarget &target = GLState::current().target();
     GLTexture *depthTex = target.attachedTexture(GLTarget::Depth);
     /**
      * @todo Handle the situation when depth information is not available in the target.

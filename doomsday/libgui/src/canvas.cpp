@@ -449,7 +449,7 @@ void Canvas::notifyReady()
 void Canvas::paintGL()
 {
     // Make sure any changes to the state stack become effective.
-    GLState::top().apply();
+    GLState::current().apply();
 
     DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
 }

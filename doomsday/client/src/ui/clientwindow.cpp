@@ -647,7 +647,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     d->gameUI->enable();
 
     // Configure a viewport immediately.
-    GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
+    GLState::current().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
     LOG_DEBUG("GameWidget enabled");
 
@@ -698,7 +698,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
     Canvas::Size size = canvas.size();
     LOG_TRACE("Canvas resized to ") << size.asText();
 
-    GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
+    GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
     d->updateRootSize();
 }

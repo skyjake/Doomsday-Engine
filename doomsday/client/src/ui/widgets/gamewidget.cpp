@@ -120,7 +120,7 @@ GameWidget::GameWidget(String const &name)
 
 void GameWidget::glApplyViewport(int x, int y, int width, int height)
 {
-    GLState::top()
+    GLState::current()
             .setNormalizedViewport(normalizedRect(Rectanglei(x, y, width, height)))
             .apply();
 }
