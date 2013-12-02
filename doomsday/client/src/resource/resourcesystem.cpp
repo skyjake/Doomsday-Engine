@@ -22,6 +22,7 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
+#  include "con_bar.h"
 #endif
 
 #include "con_main.h"
@@ -35,6 +36,7 @@
 #ifdef __CLIENT__
 #  include "BitmapFont"
 #  include "CompositeBitmapFont"
+#  include "MaterialSnapshot"
 #endif
 
 #include "filesys/fs_main.h"
@@ -43,6 +45,7 @@
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
+#  include "render/rend_model.h"
 #  include "render/rend_particle.h" // Rend_ParticleReleaseSystemTextures
 #  include "sys_system.h" // novideo
 
@@ -63,6 +66,11 @@
 #include <de/Log>
 #include <de/Reader>
 #include <de/Time>
+#ifdef __CLIENT__
+#  include <de/ByteOrder>
+#  include <de/NativePath>
+#  include <de/StringPool>
+#endif
 #include "uri.hh"
 #include <de/stack.h> /// @todo remove me
 #include <QList>
@@ -235,6 +243,13 @@ DENG2_PIMPL(ResourceSystem)
     uint fontManifestIdMapSize;
     FontManifest **fontManifestIdMap; ///< Index with fontid_t-1
 
+    typedef std::vector<ModelDef> ModelDefs;
+    ModelDefs modefs;
+    std::vector<int> stateModefs; // Index to the modefs array.
+
+    typedef StringPool ModelRepository;
+    ModelRepository *modelRepository; // Owns Model instances.
+
     /// A list of specifications for material variants.
     typedef QList<MaterialVariantSpec *> MaterialSpecs;
     MaterialSpecs materialSpecs;
@@ -266,6 +281,7 @@ DENG2_PIMPL(ResourceSystem)
         , fontManifestCount(0)
         , fontManifestIdMapSize(0)
         , fontManifestIdMap(0)
+        , modelRepository(0)
 #endif
     {
         LOG_AS("ResourceSystem");
@@ -329,6 +345,11 @@ DENG2_PIMPL(ResourceSystem)
 #ifdef __CLIENT__
         clearMaterialSpecs();
 #endif
+    }
+
+    inline de::FS1 &fileSystem()
+    {
+        return App_FileSystem();
     }
 
     void clearMaterials()
@@ -687,8 +708,8 @@ DENG2_PIMPL(ResourceSystem)
 
         try
         {
-            lumpnum_t lumpNum = App_FileSystem().lumpNumForName(lumpName);
-            de::File1 &file = App_FileSystem().nameIndex().lump(lumpNum);
+            lumpnum_t lumpNum = fileSystem().lumpNumForName(lumpName);
+            de::File1 &file = fileSystem().nameIndex().lump(lumpNum);
 
             if(file.size() < 4)
             {
@@ -1027,6 +1048,437 @@ DENG2_PIMPL(ResourceSystem)
         }
     }
 
+#ifdef __CLIENT__
+    Model *modelForId(modelid_t modelId, bool canCreate = false)
+    {
+        DENG2_ASSERT(modelRepository);
+        Model *mdl = reinterpret_cast<Model *>(modelRepository->userPointer(modelId));
+        if(!mdl && canCreate)
+        {
+            // Allocate a new model_t.
+            mdl = new Model(modelId);
+            modelRepository->setUserPointer(modelId, mdl);
+        }
+        return mdl;
+    }
+
+    inline String const &findModelPath(modelid_t id)
+    {
+        return modelRepository->stringRef(id);
+    }
+
+    /**
+     * Create a new modeldef or find an existing one. This is for ID'd models.
+     */
+    ModelDef *getModelDefWithId(char const *id)
+    {
+        // ID defined?
+        if(!id || !id[0]) return 0;
+
+        // First try to find an existing modef.
+        ModelDef *md = self.modelDef(id);
+        if(md) return md;
+
+        // Get a new entry.
+        modefs.push_back(ModelDef(id));
+        return &modefs.back();
+    }
+
+    /**
+     * Create a new modeldef or find an existing one. There can be only one model
+     * definition associated with a state/intermark pair.
+     */
+    ModelDef *getModelDef(int state, float interMark, int select)
+    {
+        // Is this a valid state?
+        if(state < 0 || state >= countStates.num) return 0;
+
+        // First try to find an existing modef.
+        for(uint i = 0; i < modefs.size(); ++i)
+        {
+            if(modefs[i].state == &states[state] &&
+               modefs[i].interMark == interMark && modefs[i].select == select)
+            {
+                // Models are loaded in reverse order; this one already has
+                // a model.
+                return NULL;
+            }
+        }
+
+        modefs.push_back(ModelDef());
+
+        // Set initial data.
+        ModelDef *md = &modefs.back();
+        md->state     = &states[state];
+        md->interMark = interMark;
+        md->select    = select;
+        return md;
+    }
+
+    String findSkinPath(Path const &skinPath, Path const &modelFilePath)
+    {
+        DENG2_ASSERT(!skinPath.isEmpty());
+
+        // Try the "first choice" directory first.
+        if(!modelFilePath.isEmpty())
+        {
+            // The "first choice" directory is that in which the model file resides.
+            try
+            {
+                return fileSystem().findPath(de::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
+                                             RLF_DEFAULT, self.resClass(RC_GRAPHIC));
+            }
+            catch(FS1::NotFoundError const &)
+            {} // Ignore this error.
+        }
+
+        /// @throws FS1::NotFoundError if no resource was found.
+        return fileSystem().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
+                                     self.resClass(RC_GRAPHIC));
+    }
+
+    /**
+     * Allocate room for a new skin file name.
+     */
+    short defineSkinAndAddToModelIndex(Model &mdl, Path const &skinPath)
+    {
+        if(Texture *tex = self.defineTexture("ModelSkins", de::Uri(skinPath)))
+        {
+            // A duplicate? (return existing skin number)
+            for(int i = 0; i < mdl.skinCount(); ++i)
+            {
+                if(mdl.skin(i).texture == tex)
+                    return i;
+            }
+
+            // Add this new skin.
+            mdl.newSkin(skinPath.toString()).texture = tex;
+            return mdl.skinCount() - 1;
+        }
+
+        return -1;
+    }
+
+    /**
+     * Scales the given model so that it'll be 'destHeight' units tall. Measurements
+     * are based on submodel zero. Scale is applied uniformly.
+     */
+    void scaleModel(ModelDef &mf, float destHeight, float offset)
+    {
+        if(!mf.subCount()) return;
+
+        submodeldef_t &smf = mf.subModelDef(0);
+
+        // No model to scale?
+        if(!smf.modelId) return;
+
+        // Find the top and bottom heights.
+        float top, bottom;
+        float height = self.model(smf.modelId)->frame(smf.frame).horizontalRange(&top, &bottom);
+        if(!height) height = 1;
+
+        float scale = destHeight / height;
+
+        mf.scale    = Vector3f(scale, scale, scale);
+        mf.offset.y = -bottom * scale + offset;
+    }
+
+    void scaleModelToSprite(ModelDef &mf, Sprite *sprite)
+    {
+        if(!sprite) return;
+        if(!sprite->hasViewAngle(0)) return;
+
+        MaterialSnapshot const &ms = sprite->viewAngle(0).material->prepare(Rend_SpriteMaterialSpec());
+        Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
+        int off = de::max(0, -tex.origin().y - ms.height());
+        scaleModel(mf, ms.height(), off);
+    }
+
+    float calcModelVisualRadius(ModelDef *def)
+    {
+        if(!def || !def->subModelId(0)) return 0;
+
+        // Use the first frame bounds.
+        Vector3f min, max;
+        float maxRadius = 0;
+        for(uint i = 0; i < def->subCount(); ++i)
+        {
+            if(!def->subModelId(i)) break;
+
+            SubmodelDef &sub = def->subModelDef(i);
+
+            self.model(sub.modelId)->frame(sub.frame).bounds(min, max);
+
+            // Half the distance from bottom left to top right.
+            float radius = (def->scale.x * (max.x - min.x) +
+                            def->scale.z * (max.z - min.z)) / 3.5f;
+            if(radius > maxRadius)
+            {
+                maxRadius = radius;
+            }
+        }
+
+        return maxRadius;
+    }
+
+    /**
+     * Creates a modeldef based on the given DED info. A pretty straightforward
+     * operation. No interlinks are set yet. Autoscaling is done and the scale
+     * factors set appropriately. After this has been called for all available
+     * Model DEDs, each State that has a model will have a pointer to the one
+     * with the smallest intermark (start of a chain).
+     */
+    void setupModel(ded_model_t &def)
+    {
+        LOG_AS("setupModel");
+
+        int const modelScopeFlags = def.flags | defs.modelFlags;
+        int const statenum = Def_GetStateNum(def.state);
+
+        // Is this an ID'd model?
+        ModelDef *modef = getModelDefWithId(def.id);
+        if(!modef)
+        {
+            // No, normal State-model.
+            if(statenum < 0) return;
+
+            modef = getModelDef(statenum + def.off, def.interMark, def.selector);
+            if(!modef) return; // Can't get a modef, quit!
+        }
+
+        // Init modef info (state & intermark already set).
+        modef->def       = &def;
+        modef->group     = def.group;
+        modef->flags     = modelScopeFlags;
+        modef->offset    = def.offset;
+        modef->offset.y += defs.modelOffset; // Common Y axis offset.
+        modef->scale     = def.scale;
+        modef->scale.y  *= defs.modelScale;  // Common Y axis scaling.
+        modef->resize    = def.resize;
+        modef->skinTics  = de::max(def.skinTics, 1);
+        for(int i = 0; i < 2; ++i)
+        {
+            modef->interRange[i] = def.interRange[i];
+        }
+
+        // Submodels.
+        modef->clearSubs();
+        for(uint i = 0; i < def.subCount(); ++i)
+        {
+            ded_submodel_t const *subdef = &def.sub(i);
+            submodeldef_t *sub = modef->addSub();
+
+            sub->modelId = 0;
+
+            if(!subdef->filename) continue;
+            de::Uri const &searchPath = reinterpret_cast<de::Uri &>(*subdef->filename);
+            if(searchPath.isEmpty()) continue;
+
+            try
+            {
+                String foundPath = fileSystem().findPath(searchPath, RLF_DEFAULT,
+                                                         self.resClass(RC_MODEL));
+                // Ensure the found path is absolute.
+                foundPath = App_BasePath() / foundPath;
+
+                Model *mdl = loadModel(foundPath);
+                if(!mdl) continue;
+
+                sub->modelId    = mdl->modelId();
+                sub->frame      = mdl->frameNumber(subdef->frame);
+                if(sub->frame < 0) sub->frame = 0;
+                sub->frameRange = de::max(1, subdef->frameRange); // Frame range must always be greater than zero.
+
+                sub->alpha      = byte(255 - subdef->alpha * 255);
+                sub->blendMode  = subdef->blendMode;
+
+                // Submodel-specific flags cancel out model-scope flags!
+                sub->setFlags(modelScopeFlags ^ subdef->flags);
+
+                // Flags may override alpha and/or blendmode.
+                if(sub->testFlag(MFF_BRIGHTSHADOW))
+                {
+                    sub->alpha = byte(256 * .80f);
+                    sub->blendMode = BM_ADD;
+                }
+                else if(sub->testFlag(MFF_BRIGHTSHADOW2))
+                {
+                    sub->blendMode = BM_ADD;
+                }
+                else if(sub->testFlag(MFF_DARKSHADOW))
+                {
+                    sub->blendMode = BM_DARK;
+                }
+                else if(sub->testFlag(MFF_SHADOW2))
+                {
+                    sub->alpha = byte(256 * .2f);
+                }
+                else if(sub->testFlag(MFF_SHADOW1))
+                {
+                    sub->alpha = byte(256 * .62f);
+                }
+
+                // Extra blendmodes:
+                if(sub->testFlag(MFF_REVERSE_SUBTRACT))
+                {
+                    sub->blendMode = BM_REVERSE_SUBTRACT;
+                }
+                else if(sub->testFlag(MFF_SUBTRACT))
+                {
+                    sub->blendMode = BM_SUBTRACT;
+                }
+
+                if(subdef->skinFilename && !Uri_IsEmpty(subdef->skinFilename))
+                {
+                    // A specific file name has been given for the skin.
+                    String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->skinFilename).path();
+                    String const &modelFilePath = findModelPath(sub->modelId);
+                    try
+                    {
+                        Path foundResourcePath(findSkinPath(skinFilePath, modelFilePath));
+
+                        sub->skin = defineSkinAndAddToModelIndex(*mdl, foundResourcePath);
+                    }
+                    catch(FS1::NotFoundError const&)
+                    {
+                        LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
+                            << reinterpret_cast<de::Uri &>(*subdef->skinFilename) << NativePath(modelFilePath).pretty();
+                    }
+                }
+                else
+                {
+                    sub->skin = subdef->skin;
+                }
+
+                // Skin range must always be greater than zero.
+                sub->skinRange = de::max(subdef->skinRange, 1);
+
+                // Offset within the model.
+                sub->offset = subdef->offset;
+
+                if(subdef->shinySkin && !Uri_IsEmpty(subdef->shinySkin))
+                {
+                    String const &skinFilePath  = reinterpret_cast<de::Uri &>(*subdef->shinySkin).path();
+                    String const &modelFilePath = findModelPath(sub->modelId);
+                    try
+                    {
+                        de::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
+
+                        sub->shinySkin = self.defineTexture("ModelReflectionSkins", foundResourceUri);
+                    }
+                    catch(FS1::NotFoundError const &)
+                    {
+                        LOG_WARNING("Failed to locate skin \"%s\" for model \"%s\", ignoring.")
+                            << skinFilePath << NativePath(modelFilePath).pretty();
+                    }
+                }
+                else
+                {
+                    sub->shinySkin = 0;
+                }
+
+                // Should we allow texture compression with this model?
+                if(sub->testFlag(MFF_NO_TEXCOMP))
+                {
+                    // All skins of this model will no longer use compression.
+                    mdl->setFlags(Model::NoTextureCompression);
+                }
+            }
+            catch(FS1::NotFoundError const &)
+            {
+                LOG_WARNING("Failed to locate \"%s\", ignoring.") << searchPath;
+            }
+        }
+
+        // Do scaling, if necessary.
+        if(modef->resize)
+        {
+            scaleModel(*modef, modef->resize, modef->offset.y);
+        }
+        else if(modef->state && modef->testSubFlag(0, MFF_AUTOSCALE))
+        {
+            spritenum_t sprNum = Def_GetSpriteNum(def.sprite.id);
+            int sprFrame       = def.spriteFrame;
+
+            if(sprNum < 0)
+            {
+                // No sprite ID given.
+                sprNum   = modef->state->sprite;
+                sprFrame = modef->state->frame;
+            }
+
+            if(Sprite *sprite = self.spritePtr(sprNum, sprFrame))
+            {
+                scaleModelToSprite(*modef, sprite);
+            }
+        }
+
+        if(modef->state)
+        {
+            int stateNum = modef->state - states;
+
+            // Associate this modeldef with its state.
+            if(stateModefs[stateNum] < 0)
+            {
+                // No modef; use this.
+                stateModefs[stateNum] = self.indexOf(modef);
+            }
+            else
+            {
+                // Must check intermark; smallest wins!
+                ModelDef *other = self.modelDefForState(stateNum);
+
+                if((modef->interMark <= other->interMark && // Should never be ==
+                    modef->select == other->select) || modef->select < other->select) // Smallest selector?
+                {
+                    stateModefs[stateNum] = self.indexOf(modef);
+                }
+            }
+        }
+
+        // Calculate the particle offset for each submodel.
+        Vector3f min, max;
+        for(uint i = 0; i < modef->subCount(); ++i)
+        {
+            SubmodelDef *sub = &modef->subModelDef(i);
+            if(sub->modelId && sub->frame >= 0)
+            {
+                self.model(sub->modelId)->frame(sub->frame).bounds(min, max);
+                modef->setParticleOffset(i, ((max + min) / 2 + sub->offset) * modef->scale + modef->offset);
+            }
+        }
+
+        // Calculate visual radius for shadows.
+        /// @todo fixme: use a separate property.
+        /*if(def.shadowRadius)
+        {
+            modef->visualRadius = def.shadowRadius;
+        }
+        else*/
+        {
+            modef->visualRadius = calcModelVisualRadius(modef);
+        }
+    }
+
+    static int destroyModelInRepository(StringPool::Id id, void *context)
+    {
+        ModelRepository &modelRepository = *static_cast<ModelRepository *>(context);
+        if(Model *model = reinterpret_cast<Model *>(modelRepository.userPointer(id)))
+        {
+            modelRepository.setUserPointer(id, 0);
+            delete model;
+        }
+        return 0;
+    }
+
+    void clearModelList()
+    {
+        if(!modelRepository) return;
+
+        modelRepository->iterate(destroyModelInRepository, modelRepository);
+    }
+#endif
+
     /// Observes MaterialScheme ManifestDefined.
     void materialSchemeManifestDefined(MaterialScheme & /*scheme*/, MaterialManifest &manifest)
     {
@@ -1359,7 +1811,7 @@ void ResourceSystem::initFlatTextures()
 
     LOG_VERBOSE("Initializing Flat textures...");
 
-    LumpIndex const &index = App_FileSystem().nameIndex();
+    LumpIndex const &index = d->fileSystem().nameIndex();
     lumpnum_t firstFlatMarkerLumpNum = index.firstIndexForPath(Path("F_START.lmp"));
     if(firstFlatMarkerLumpNum >= 0)
     {
@@ -1456,7 +1908,7 @@ void ResourceSystem::initSpriteTextures()
     /// @todo fixme: Order here does not respect id tech1 logic.
     ddstack_t *stack = Stack_New();
 
-    LumpIndex const &index = App_FileSystem().nameIndex();
+    LumpIndex const &index = d->fileSystem().nameIndex();
     for(int i = 0; i < index.size(); ++i)
     {
         de::File1 &file = index.lump(i);
@@ -1629,14 +2081,14 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     {} // Ignore this error.
 
     Path lumpPath = uri.path() + ".lmp";
-    lumpnum_t lumpNum = App_FileSystem().nameIndex().lastIndexForPath(lumpPath);
+    lumpnum_t lumpNum = d->fileSystem().nameIndex().lastIndexForPath(lumpPath);
     if(lumpNum < 0)
     {
         LOG_WARNING("Failed to locate lump for \"%s\", ignoring.") << uri;
         return 0;
     }
 
-    de::File1 &file = App_FileSystem().nameIndex().lump(lumpNum);
+    de::File1 &file = d->fileSystem().nameIndex().lump(lumpNum);
 
     Texture::Flags flags;
     if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -2267,7 +2719,7 @@ AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
 {
     LOG_AS("ResourceSystem::createFontFromFile");
 
-    if(!App_FileSystem().accessFile(de::Uri::fromNativePath(filePath)))
+    if(!d->fileSystem().accessFile(de::Uri::fromNativePath(filePath)))
     {
         LOG_WARNING("Invalid filePath, ignoring.");
         return 0;
@@ -2337,6 +2789,387 @@ void ResourceSystem::releaseFontGLTexturesByScheme(String schemeName)
     }
 }
 
+Model *ResourceSystem::model(modelid_t id)
+{
+    return d->modelForId(id);
+}
+
+int ResourceSystem::modelDefCount() const
+{
+    return d->modefs.size();
+}
+
+ModelDef *ResourceSystem::modelDef(int index)
+{
+    if(index >= 0 && index < int(d->modefs.size()))
+    {
+        return &d->modefs[index];
+    }
+    return 0;
+}
+
+ModelDef *ResourceSystem::modelDef(char const *id)
+{
+    if(!id || !id[0]) return 0;
+
+    for(uint i = 0; i < d->modefs.size(); ++i)
+    {
+        if(!strcmp(d->modefs[i].id, id))
+        {
+            return &d->modefs[i];
+        }
+    }
+    return 0;
+}
+
+ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
+{
+    if(stateIndex < 0 || stateIndex >= defs.count.states.num)
+    {
+        return 0;
+    }
+    if(stateIndex < 0 || stateIndex >= int(d->stateModefs.size()))
+    {
+        return 0;
+    }
+    if(d->stateModefs[stateIndex] < 0)
+    {
+        return 0;
+    }
+
+    DENG2_ASSERT(d->stateModefs[stateIndex] >= 0);
+    DENG2_ASSERT(d->stateModefs[stateIndex] < int(d->modefs.size()));
+
+    ModelDef *def = &d->modefs[d->stateModefs[stateIndex]];
+    if(select)
+    {
+        // Choose the correct selector, or selector zero if the given one not available.
+        int const mosel = select & DDMOBJ_SELECTOR_MASK;
+        for(ModelDef *it = def; it; it = it->selectNext)
+        {
+            if(it->select == mosel)
+            {
+                return it;
+            }
+        }
+    }
+
+    return def;
+}
+
+float ResourceSystem::modelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelDef **nextmodef)
+{
+    // On the client it is possible that we don't know the mobj's state.
+    if(!mo->state) return -1;
+
+    state_t &st = *mo->state;
+
+    // By default there are no models.
+    *nextmodef = 0;
+    *modef = modelDefForState(&st - states, mo->selector);
+    if(!*modef) return -1; // No model available.
+
+    float interp = -1;
+
+    // World time animation?
+    bool worldTime = false;
+    if((*modef)->flags & MFF_WORLD_TIME_ANIM)
+    {
+        float duration = (*modef)->interRange[0];
+        float offset   = (*modef)->interRange[1];
+
+        // Validate/modify the values.
+        if(duration == 0) duration = 1;
+
+        if(offset == -1)
+        {
+            offset = M_CycleIntoRange(MOBJ_TO_ID(mo), duration);
+        }
+
+        interp = M_CycleIntoRange(App_World().time() / duration + offset, 1);
+        worldTime = true;
+    }
+    else
+    {
+        // Calculate the currently applicable intermark.
+        interp = 1.0f - (mo->tics - frameTimePos) / float( st.tics );
+    }
+
+/*#if _DEBUG
+    if(mo->dPlayer)
+    {
+        qDebug() << "itp:" << interp << " mot:" << mo->tics << " stt:" << st.tics;
+    }
+#endif*/
+
+    // First find the modef for the interpoint. Intermark is 'stronger' than interrange.
+
+    // Scan interlinks.
+    while((*modef)->interNext && (*modef)->interNext->interMark <= interp)
+    {
+        *modef = (*modef)->interNext;
+    }
+
+    if(!worldTime)
+    {
+        // Scale to the modeldef's interpolation range.
+        interp = (*modef)->interRange[0] + interp * ((*modef)->interRange[1] -
+                                                     (*modef)->interRange[0]);
+    }
+
+    // What would be the next model? Check interlinks first.
+    if((*modef)->interNext)
+    {
+        *nextmodef = (*modef)->interNext;
+    }
+    else if(worldTime)
+    {
+        *nextmodef = modelDefForState(&st - states, mo->selector);
+    }
+    else if(st.nextState > 0) // Check next state.
+    {
+        // Find the appropriate state based on interrange.
+        state_t *it = states + st.nextState;
+        bool foundNext = false;
+        if((*modef)->interRange[1] < 1)
+        {
+            // Current modef doesn't interpolate to the end, find the proper destination
+            // modef (it isn't just the next one). Scan the states that follow (and
+            // interlinks of each).
+            bool stopScan = false;
+            int max = 20; // Let's not be here forever...
+            while(!stopScan)
+            {
+                if(!((!modelDefForState(it - states) ||
+                      modelDefForState(it - states, mo->selector)->interRange[0] > 0) &&
+                     it->nextState > 0))
+                {
+                    stopScan = true;
+                }
+                else
+                {
+                    // Scan interlinks, then go to the next state.
+                    ModelDef *mdit;
+                    if((mdit = modelDefForState(it - states, mo->selector)) && mdit->interNext)
+                    {
+                        forever
+                        {
+                            mdit = mdit->interNext;
+                            if(mdit)
+                            {
+                                if(mdit->interRange[0] <= 0) // A new beginning?
+                                {
+                                    *nextmodef = mdit;
+                                    foundNext = true;
+                                }
+                            }
+
+                            if(!mdit || foundNext)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    if(foundNext)
+                    {
+                        stopScan = true;
+                    }
+                    else
+                    {
+                        it = states + it->nextState;
+                    }
+                }
+
+                if(max-- <= 0)
+                    stopScan = true;
+            }
+            // @todo What about max == -1? What should 'it' be then?
+        }
+
+        if(!foundNext)
+        {
+            *nextmodef = modelDefForState(it - states, mo->selector);
+        }
+    }
+
+    // Is this group disabled?
+    if(useModels >= 2 && (*modef)->group & useModels)
+    {
+        *modef = *nextmodef = 0;
+        return -1;
+    }
+
+    return interp;
+}
+
+void ResourceSystem::initModels()
+{
+    LOG_AS("ResourceSystem");
+
+    if(CommandLine_Check("-nomd2"))
+    {
+        LOG_VERBOSE("3D models are disabled.");
+        return;
+    }
+
+    LOG_VERBOSE("Initializing Models...");
+    Time begunAt;
+
+    d->modelRepository = new StringPool();
+
+    d->clearModelList();
+    d->modefs.clear();
+
+    // There can't be more modeldefs than there are DED Models.
+    for(uint i = 0; i < defs.models.size(); ++i)
+    {
+        d->modefs.push_back(ModelDef());
+    }
+
+    // Clear the modef pointers of all States.
+    d->stateModefs.clear();
+    for(int i = 0; i < countStates.num; ++i)
+    {
+        d->stateModefs.push_back(-1);
+    }
+
+    // Read in the model files and their data.
+    // Use the latest definition available for each sprite ID.
+    for(int i = int(defs.models.size()) - 1; i >= 0; --i)
+    {
+        if(!(i % 100))
+        {
+            // This may take a while, so keep updating the progress.
+            Con_SetProgress(130 + 70*(defs.models.size() - i)/defs.models.size());
+        }
+
+        d->setupModel(defs.models[i]);
+    }
+
+    // Create interlinks. Note that the order in which the defs were loaded
+    // is important. We want to allow "patch" definitions, right?
+
+    // For each modeldef we will find the "next" def.
+    for(int i = int(d->modefs.size()) - 1; i >= 0; --i)
+    {
+        ModelDef *me = &d->modefs[i];
+
+        float minmark = 2; // max = 1, so this is "out of bounds".
+
+        ModelDef *closest = 0;
+        for(int k = int(d->modefs.size()) - 1; k >= 0; --k)
+        {
+            ModelDef *other = &d->modefs[k];
+
+            // Same state and a bigger order are the requirements.
+            if(other->state == me->state && other->def > me->def && // Defined after me.
+               other->interMark > me->interMark &&
+               other->interMark < minmark)
+            {
+                minmark = other->interMark;
+                closest = other;
+            }
+        }
+
+        me->interNext = closest;
+    }
+
+    // Create selectlinks.
+    for(int i = int(d->modefs.size()) - 1; i >= 0; --i)
+    {
+        ModelDef *me = &d->modefs[i];
+
+        int minsel = DDMAXINT;
+
+        ModelDef *closest = 0;
+
+        // Start scanning from the next definition.
+        for(int k = int(d->modefs.size()) - 1; k >= 0; --k)
+        {
+            ModelDef *other = &d->modefs[k];
+
+            // Same state and a bigger order are the requirements.
+            if(other->state == me->state && other->def > me->def && // Defined after me.
+               other->select > me->select && other->select < minsel &&
+               other->interMark >= me->interMark)
+            {
+                minsel = other->select;
+                closest = other;
+            }
+        }
+
+        me->selectNext = closest;
+    }
+
+    LOG_INFO(String("Model init completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+}
+
+void ResourceSystem::clearAllModels()
+{
+    /// @todo Why only centralized memory deallocation? Bad (lazy) design...
+    d->modefs.clear();
+    d->stateModefs.clear();
+
+    d->clearModelList();
+
+    if(d->modelRepository)
+    {
+        delete d->modelRepository; d->modelRepository = 0;
+    }
+}
+
+int ResourceSystem::indexOf(ModelDef const *modelDef)
+{
+    int index = int(modelDef - &d->modefs[0]);
+    if(index >= 0 && index < int(d->modefs.size()))
+    {
+        return index;
+    }
+    return -1;
+}
+
+void ResourceSystem::setModelDefFrame(ModelDef &modef, int frame)
+{
+    for(uint i = 0; i < modef.subCount(); ++i)
+    {
+        submodeldef_t &subdef = modef.subModelDef(i);
+        if(subdef.modelId == NOMODELID) continue;
+
+        // Modify the modeldef itself: set the current frame.
+        Model *mdl = model(subdef.modelId);
+        DENG2_ASSERT(mdl != 0);
+        subdef.frame = frame % mdl->frameCount();
+    }
+}
+
+void ResourceSystem::cache(ModelDef *modelDef)
+{
+    if(!useModels) return;
+    if(!modelDef) return;
+
+    for(uint sub = 0; sub < modelDef->subCount(); ++sub)
+    {
+        submodeldef_t &subdef = modelDef->subModelDef(sub);
+        Model *mdl = model(subdef.modelId);
+        if(!mdl) continue;
+
+        // Load all skins.
+        foreach(ModelSkin const &skin, mdl->skins())
+        {
+            if(Texture *tex = skin.texture)
+            {
+                tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl->flags().testFlag(Model::NoTextureCompression)));
+            }
+        }
+
+        // Load the shiny skin too.
+        if(Texture *tex = subdef.shinySkin)
+        {
+            tex->prepareVariant(Rend_ModelShinyTextureSpec());
+        }
+    }
+}
 #endif // __CLIENT__
 
 void ResourceSystem::clearAllAnimGroups()
@@ -2832,6 +3665,33 @@ static int findSpriteOwner(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
+/**
+ * @note The skins are also bound here once so they should be ready for use
+ *       the next time they are needed.
+ */
+static int cacheModelsForMobj(thinker_t *th, void *context)
+{
+    mobj_t *mo = (mobj_t *) th;
+    ResourceSystem &resSys = *static_cast<ResourceSystem *>(context);
+
+    if(!(useModels && precacheSkins))
+        return true;
+
+    // Check through all the model definitions.
+    for(uint i = 0; i < resSys.modelDefCount(); ++i)
+    {
+        ModelDef *modef = resSys.modelDef(i);
+
+        if(!modef->state) continue;
+        if(mo->type < 0 || mo->type >= defs.count.mobjs.num) continue; // Hmm?
+        if(stateOwners[modef->state - states] != &mobjInfo[mo->type]) continue;
+
+        resSys.cache(modef);
+    }
+
+    return false; // Used as iterator.
+}
+
 void ResourceSystem::cacheForCurrentMap()
 {
     // Don't precache when playing a demo (why not? -ds).
@@ -2876,7 +3736,7 @@ void ResourceSystem::cacheForCurrentMap()
     {
         MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
 
-        for(int i = 0; i < App_ResourceSystem().spriteCount(); ++i)
+        for(int i = 0; i < spriteCount(); ++i)
         {
             if(map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                       0x1/*mobjs are public*/,
@@ -2896,7 +3756,7 @@ void ResourceSystem::cacheForCurrentMap()
     {
         // All mobjs are public.
         map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               Models_CacheForMobj);
+                               cacheModelsForMobj, this);
     }
 }
 

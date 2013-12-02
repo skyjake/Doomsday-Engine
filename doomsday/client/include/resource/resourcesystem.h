@@ -24,6 +24,7 @@
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
 #ifdef __CLIENT__
+#  include "resource/models.h"
 #  include "AbstractFont"
 #  include "FontScheme"
 #  include "MaterialVariantSpec"
@@ -519,6 +520,71 @@ public:
     AllFonts const &allFonts() const;
 
     /**
+     * @pre States must be initialized before this.
+     */
+    void initModels();
+
+    /**
+     * Frees all memory allocated for models.
+     */
+    void clearAllModels();
+
+    /**
+     * Lookup the unique index attributed to the given @a modelDef.
+     *
+     * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
+     */
+    int indexOf(ModelDef const *modelDef);
+
+    /**
+     * Retrieve a model by it's unique @a id. O(1)
+     *
+     * @return  Pointer to the associated model; otherwise @c 0.
+     */
+    Model *model(modelid_t id);
+
+    /**
+     * Returns the total number of model definitions in the system.
+     */
+    int modelDefCount() const;
+
+    /**
+     * Retrieve a model definition by it's unique @a index. O(1)
+     *
+     * @return  Pointer to the associated definition; otherwise @c 0.
+     */
+    ModelDef *modelDef(int index);
+
+    /**
+     * Lookup a model definition by it's unique @a id. O(n)
+     *
+     * @return  Found model definition; otherwise @c 0.
+     */
+    ModelDef *modelDef(char const *id);
+
+    /**
+     * Lookup a model definition for the specified mobj @a stateIndex.
+     *
+     * @param stateIndex  Index of the mobj state.
+     * @param select      Model selector argument. There may be multiple models for
+     *                    a given mobj state. The selector determines which is used
+     *                    according to some external selection criteria.
+     *
+     * @return  Found model definition; otherwise @c 0.
+     */
+    ModelDef *modelDefForState(int stateIndex, int select = 0);
+
+    /**
+     * Is there a model for this mobj? The decision is made based on the state and tics
+     * of the mobj. Returns the modeldefs that are in effect at the moment (interlinks
+     * checked appropriately).
+     */
+    float modelDefForMobj(struct mobj_s const *mo, ModelDef **mdef, ModelDef **nextmdef);
+
+    /// @todo Refactor away. Used for animating particle/sky models.
+    void setModelDefFrame(ModelDef &modelDef, int frame);
+
+    /**
      * Release all GL-textures in all schemes.
      */
     void releaseAllGLTextures();
@@ -735,6 +801,11 @@ public:
      */
     void cache(Material &material, de::MaterialVariantSpec const &spec,
                bool cacheGroups = true);
+
+    /**
+     * Cache all resources needed to visualize models using the given @a modelDef.
+     */
+    void cache(ModelDef *modelDef);
 
     /**
      * Process all queued material cache tasks.

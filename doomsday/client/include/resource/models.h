@@ -1,4 +1,4 @@
-/** @file models.h  3D Model Resources.
+/** @file models.h  3D model resource definition.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -231,83 +231,5 @@ struct ModelDef
         _ptcOffset[subnum] = off;
     }
 };
-
-#ifdef __CLIENT__
-
-DENG_EXTERN_C byte useModels;
-DENG_EXTERN_C float rModelAspectMod;
-
-/**
- * @pre States must be initialized before this.
- */
-void Models_Init();
-
-/**
- * Frees all memory allocated for models.
- */
-void Models_Shutdown();
-
-/**
- * Lookup the unique index attributed to the given @a modelDef.
- *
- * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
- */
-int Models_IndexOf(ModelDef const *modelDef);
-
-/**
- * Retrieve a model by it's unique @a id. O(1)
- *
- * @return  Pointer to the associated model; otherwise @c 0.
- */
-Model *Models_Model(modelid_t id);
-
-/**
- * Retrieve a model definition by it's unique @a index. O(1)
- *
- * @return  Pointer to the associated definition; otherwise @c 0.
- */
-ModelDef *Models_ModelDef(int index);
-
-/**
- * Lookup a model definition by it's unique @a id. O(n)
- *
- * @return  Found model definition; otherwise @c 0.
- */
-ModelDef *Models_ModelDef(char const *id);
-
-/**
- * Lookup a model definition for the specified mobj @a stateIndex.
- *
- * @param stateIndex  Index of the mobj state.
- * @param select      Model selector argument. There may be multiple models for
- *                    a given mobj state. The selector determines which is used
- *                    according to some external selection criteria.
- *
- * @return  Found model definition; otherwise @c 0.
- */
-ModelDef *Models_ModelDefForState(int stateIndex, int select = 0);
-
-/**
- * Is there a model for this mobj? The decision is made based on the state and tics
- * of the mobj. Returns the modeldefs that are in effect at the moment (interlinks
- * checked appropriately).
- */
-float Models_ModelDefForMobj(struct mobj_s const *mo, ModelDef **mdef, ModelDef **nextmdef);
-
-/// @todo Refactor away. Used for animating particle/sky models.
-void Models_SetFrame(ModelDef &modelDef, int frame);
-
-/**
- * Cache all resources needed to visualize models using the given @a modelDef.
- */
-void Models_Cache(ModelDef *modelDef);
-
-/**
- * @note The skins are also bound here once so they should be ready for use
- *       the next time they are needed.
- */
-int Models_CacheForMobj(thinker_t *th, void *context);
-
-#endif // __CLIENT__
 
 #endif // DENG_RESOURCE_MODELS_H

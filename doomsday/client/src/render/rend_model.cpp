@@ -69,8 +69,10 @@ enum rendcmd_t
     RC_BOTH_COORDS
 };
 
+byte useModels         = true;
 int modelLight         = 4;
 int frameInter         = true;
+float modelAspectMod   = 1 / 1.2f; //.833334f;
 int mirrorHudModels;
 int modelShinyMultitex = true;
 float modelShinyFactor = 1.0f;
@@ -106,12 +108,17 @@ static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been 
 
 static void initArrays();
 
+/*static void modelAspectModChanged()
+{
+    /// @todo Reload and resize all models.
+}*/
+
 void Rend_ModelRegister()
 {
     C_VAR_BYTE ("rend-model",                &useModels,            0, 0, 1);
     C_VAR_INT  ("rend-model-lights",         &modelLight,           0, 0, 10);
     C_VAR_INT  ("rend-model-inter",          &frameInter,           0, 0, 1);
-    C_VAR_FLOAT("rend-model-aspect",         &rModelAspectMod,      CVF_NO_MAX | CVF_NO_MIN, 0, 0);
+    C_VAR_FLOAT("rend-model-aspect",         &modelAspectMod,       CVF_NO_MAX | CVF_NO_MIN, 0, 0);
     C_VAR_INT  ("rend-model-distance",       &maxModelDistance,     CVF_NO_MAX, 0, 0);
     C_VAR_BYTE ("rend-model-precache",       &precacheSkins,        0, 0, 1);
     C_VAR_FLOAT("rend-model-lod",            &rend_model_lod,       CVF_NO_MAX, 0, 0);
