@@ -326,7 +326,7 @@ void Sky_Configure(ded_sky_t *def)
 static void setupSkyModels(ded_sky_t *def)
 {
     // Clear the whole sky models data.
-    memset(skyModels, 0, sizeof(skyModels));
+    zap(skyModels);
 
     // Normally the sky sphere is not drawn if models are in use.
     alwaysDrawSphere = (def->flags & SIF_DRAW_SPHERE) != 0;
@@ -340,15 +340,18 @@ static void setupSkyModels(ded_sky_t *def)
     {
         // Is the model ID set?
         sm->model = Models_ModelDef(modef->id);
-        if(!sm->model || !sm->model->subCount()) continue;
+        if(!sm->model || !sm->model->subCount())
+        {
+            continue;
+        }
 
         // There is a model here.
         skyModelsInited = true;
 
-        sm->def = modef;
+        sm->def      = modef;
         sm->maxTimer = (int) (TICSPERSEC * modef->frameInterval);
-        sm->yaw = modef->yaw;
-        sm->frame = sm->model->subModelDef(0).frame;
+        sm->yaw      = modef->yaw;
+        sm->frame    = sm->model->subModelDef(0).frame;
     }
 }
 
@@ -691,7 +694,7 @@ static void renderSkyModels()
         parms.inter = inter;
         parms.mf = sky->model;
         parms.alwaysInterpolate = true;
-        Rend_ModelSetFrame(sky->model, sky->frame);
+        Rend_ModelSetFrame(*sky->model, sky->frame);
         parms.yaw = sky->yaw;
         for(int c = 0; c < 4; ++c)
         {

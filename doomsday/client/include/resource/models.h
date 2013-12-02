@@ -255,7 +255,7 @@ void Models_Shutdown();
  *
  * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
  */
-int Models_ToIndex(modeldef_t const *modelDef);
+int Models_IndexOf(modeldef_t const *modelDef);
 
 /**
  * Retrieve a model by it's unique @a id. O(1)

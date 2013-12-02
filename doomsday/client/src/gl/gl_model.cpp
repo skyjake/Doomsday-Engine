@@ -29,6 +29,11 @@
 
 using namespace de;
 
+bool Model::DetailLevel::hasVertex(int number) const
+{
+    return model._vertexUsage.testBit(number * model.lodCount() + level);
+}
+
 void Model::Frame::bounds(Vector3f &retMin, Vector3f &retMax) const
 {
     retMin = min;
@@ -186,6 +191,11 @@ Model::DetailLevel &Model::lod(int level) const
 Model::DetailLevels const &Model::lods() const
 {
     return _lods;
+}
+
+Model::Primitives const &Model::primitives() const
+{
+    return lod(0).primitives;
 }
 
 int Model::vertexCount() const

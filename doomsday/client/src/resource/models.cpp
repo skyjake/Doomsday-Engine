@@ -638,7 +638,7 @@ static void setupModel(ded_model_t &def)
         if(stateModefs[stateNum] < 0)
         {
             // No modef; use this.
-            stateModefs[stateNum] = Models_ToIndex(modef);
+            stateModefs[stateNum] = Models_IndexOf(modef);
         }
         else
         {
@@ -648,7 +648,7 @@ static void setupModel(ded_model_t &def)
             if((modef->interMark <= other->interMark && // Should never be ==
                 modef->select == other->select) || modef->select < other->select) // Smallest selector?
             {
-                stateModefs[stateNum] = Models_ToIndex(modef);
+                stateModefs[stateNum] = Models_IndexOf(modef);
             }
         }
     }
@@ -806,7 +806,7 @@ void Models_Shutdown()
     }
 }
 
-int Models_ToIndex(modeldef_t const *modelDef)
+int Models_IndexOf(modeldef_t const *modelDef)
 {
     int index = int(modelDef - &modefs[0]);
     if(index >= 0 && index < int(modefs.size()))
@@ -1113,13 +1113,12 @@ static Model *loadModel(String path)
     try
     {
         // Attempt to interpret and load this model file.
-        de::FileHandle &hndl = App_FileSystem().openFile(path, "rb");
+        QScopedPointer<de::FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
 
-        mdl = interpretModel(hndl, path, modelId);
+        mdl = interpretModel(*hndl, path, modelId);
 
         // We're done with the file.
-        App_FileSystem().releaseFile(hndl.file());
-        delete &hndl;
+        App_FileSystem().releaseFile(hndl->file());
 
         // Loaded?
         if(mdl)
@@ -1139,7 +1138,6 @@ static Model *loadModel(String path)
     }
     catch(FS1::NotFoundError const &er)
     {
-        // Huh?? Should never happen.
         LOG_WARNING(er.asText() + ", ignoring.");
     }
 
@@ -1294,7 +1292,7 @@ static void loadMd2(de::FileHandle &file, Model &mdl)
     }
     M_Free(frameData);
 
-    mdl._lods.append(new ModelDetailLevel);
+    mdl._lods.append(new ModelDetailLevel(mdl, 0));
     ModelDetailLevel &lod0 = *mdl._lods.last();
 
     uint8_t *commandData = (uint8_t *) allocAndLoad(file, hdr.offsetGlCommands, 4 * hdr.numGlCommands);
@@ -1302,8 +1300,8 @@ static void loadMd2(de::FileHandle &file, Model &mdl)
     {
         int count = LONG( *(int *) pos ); pos += 4;
 
-        lod0.primitives.append(ModelDetailLevel::Primitive());
-        ModelDetailLevel::Primitive &prim = lod0.primitives.last();
+        lod0.primitives.append(Model::Primitive());
+        Model::Primitive &prim = lod0.primitives.last();
 
         // The type of primitive depends on the sign.
         prim.triFan = (count < 0);
@@ -1317,8 +1315,8 @@ static void loadMd2(de::FileHandle &file, Model &mdl)
         {
             md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
 
-            prim.elements.append(ModelDetailLevel::Primitive::Element());
-            ModelDetailLevel::Primitive::Element &elem = prim.elements.last();
+            prim.elements.append(Model::Primitive::Element());
+            Model::Primitive::Element &elem = prim.elements.last();
             elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
             elem.index    = LONG(v->index);
         }
@@ -1551,7 +1549,7 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
 
     for(int i = 0; i < info.numLODs; ++i)
     {
-        mdl._lods.append(new ModelDetailLevel);
+        mdl._lods.append(new ModelDetailLevel(mdl, i));
         ModelDetailLevel &lod = *mdl._lods.last();
 
         triangles[i] = (dmd_triangle_t *) allocAndLoad(file, lodInfo[i].offsetTriangles,
@@ -1563,8 +1561,8 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
         {
             int count = LONG( *(int *) pos ); pos += 4;
 
-            lod.primitives.append(ModelDetailLevel::Primitive());
-            ModelDetailLevel::Primitive &prim = lod.primitives.last();
+            lod.primitives.append(Model::Primitive());
+            Model::Primitive &prim = lod.primitives.last();
 
             // The type of primitive depends on the sign of the element count.
             prim.triFan = (count < 0);
@@ -1578,8 +1576,8 @@ static void loadDmd(de::FileHandle &file, Model &mdl)
             {
                 md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
 
-                prim.elements.append(ModelDetailLevel::Primitive::Element());
-                ModelDetailLevel::Primitive::Element &elem = prim.elements.last();
+                prim.elements.append(Model::Primitive::Element());
+                Model::Primitive::Element &elem = prim.elements.last();
 
                 elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
                 elem.index    = LONG(v->index);

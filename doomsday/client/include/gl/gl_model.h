@@ -95,23 +95,41 @@ public:
     typedef QList<Skin> Skins;
 
     /**
+     * Prepared model geometry uses lists of primitives.
+     */
+    struct Primitive
+    {
+        struct Element
+        {
+            de::Vector2f texCoord;
+            int index; ///< Index into the model's vertex mesh.
+        };
+        typedef QVector<Element> Elements;
+        Elements elements;
+        bool triFan; ///< @c true= triangle fan; otherwise triangle strip.
+    };
+    typedef QList<Primitive> Primitives;
+
+    /**
      * Level of detail information.
+     *
+     * Used with DMD models to reduce complexity of the drawn model geometry.
      */
     struct DetailLevel
     {
-        struct Primitive
-        {
-            struct Element
-            {
-                de::Vector2f texCoord;
-                int index; ///< Index into the model's vertex mesh.
-            };
-            typedef QVector<Element> Elements;
-            Elements elements;
-            bool triFan; ///< @c true= triangle fan; otherwise triangle strip.
-        };
-        typedef QList<Primitive> Primitives;
+        Model &model;
+        int level;
         Primitives primitives;
+
+        DetailLevel(Model &model, int level)
+            : model(model), level(level)
+        {}
+
+        /**
+         * Returns @c true iff the specified vertex @a number is in use for this
+         * detail level.
+         */
+        bool hasVertex(int number) const;
     };
     typedef QList<DetailLevel *> DetailLevels;
 
@@ -229,6 +247,18 @@ public:
     void clearAllSkins();
 
     /**
+     * Convenient method of accessing the primitive list used for drawing the
+     * model with the highest degree of geometric fidelity (i.e., detail level
+     * zero).
+     */
+    Primitives const &primitives() const;
+
+    /**
+     * Returns the total number of vertices used at detail level zero.
+     */
+    int vertexCount() const;
+
+    /**
      * Convenient method of determining whether the specified model detail
      * @a level is valid (i.e., detail information is defined for it).
      */
@@ -250,9 +280,6 @@ public:
      * Provides readonly access to the level of detail information.
      */
     DetailLevels const &lods() const;
-
-    /// @todo Remove me.
-    int vertexCount() const;
 
 private:
     DENG2_PRIVATE(d)

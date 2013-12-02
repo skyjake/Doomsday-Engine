@@ -31,7 +31,8 @@ class TextureVariantSpec;
 #define RENDER_MAX_MODEL_VERTS  16192
 
 /// @todo Split this large inflexible structure into logical subcomponent pieces.
-typedef struct rendmodelparams_s {
+struct rendmodelparams_t
+{
 // Animation, frame interpolation.
     ModelDef *mf, *nextMF;
     float           inter;
@@ -64,7 +65,7 @@ typedef struct rendmodelparams_s {
     float           shinePitchOffset;
     boolean         shineTranslateWithViewerPos;
     boolean         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
-} rendmodelparams_t;
+};
 
 DENG_EXTERN_C int modelLight;
 DENG_EXTERN_C int frameInter;
@@ -106,9 +107,9 @@ void Rend_ModelShutdown();
  * @return  @c true= successfully expanded. May fail if @a numVertices is larger
  *          than RENDER_MAX_MODEL_VERTS.
  */
-boolean Rend_ModelExpandVertexBuffers(uint numVertices);
+bool Rend_ModelExpandVertexBuffers(uint numVertices);
 
-void Rend_ModelSetFrame(modeldef_t *modef, int frame);
+void Rend_ModelSetFrame(modeldef_t &modef, int frame);
 
 /**
  * Lookup the texture specification for diffuse model skins.

@@ -1902,7 +1902,7 @@ void Def_PostInit(void)
             Model *mdl = Models_Model(modef->subModelId(0));
             DENG2_ASSERT(mdl != 0);
 
-            st->model = Models_ToIndex(modef);
+            st->model = Models_IndexOf(modef);
             st->frame = mdl->frameNumber(st->frameName);
             if(st->frame < 0) st->frame = 0;
             if(st->endFrameName[0])
