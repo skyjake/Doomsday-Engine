@@ -26,6 +26,7 @@
 #include <de/App>
 #include <de/Log>
 #include <de/Drawable>
+#include <de/GLFramebuffer>
 
 #include <QApplication>
 #include <QKeyEvent>
@@ -50,15 +51,7 @@ DENG2_PIMPL(Canvas)
         ManualFramebuffer
     };
     FramebufferMode framebufMode;
-
-    GLTarget target;
-    GLTexture backBuffer; ///< Texture where color values are written.
-    GLTexture depthStencilBuffer; ///< Texture where framebuffer depth values are stored.
-
-    Drawable bufSwap;
-    GLUniform uMvpMatrix;
-    GLUniform uBufTex;
-    typedef GLBufferT<Vertex2Tex> VBuf;
+    GLFramebuffer framebuf;
 
     CanvasWindow *parent;
     bool readyNotified;
@@ -74,8 +67,6 @@ DENG2_PIMPL(Canvas)
     Instance(Public *i, CanvasWindow *parentWindow)
         : Base(i)
         , framebufMode(AutomaticFramebuffer)
-        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uBufTex("uTex", GLUniform::Sampler2D)
         , parent(parentWindow)
         , readyNotified(false)
         , mouseGrabbed(false)
@@ -189,53 +180,20 @@ DENG2_PIMPL(Canvas)
         {
             /// @todo For multisampling there should be a bigger back buffer.
 
-            // Set up a color buffer.
-            backBuffer.setUndefinedImage(currentSize, Image::RGB_888);
-            backBuffer.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-            backBuffer.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
-
-            // Set up a depth/stencil buffer.
-            depthStencilBuffer.setDepthStencilContent(currentSize);
-            depthStencilBuffer.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-            depthStencilBuffer.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
-
-            target.configure(&backBuffer, &depthStencilBuffer);
+            framebuf.setColorFormat(Image::RGB_888);
+            framebuf.resize(currentSize);
         }
     }
 
     void glInit()
     {
         DENG2_ASSERT(parent != 0);
-
-        VBuf *buf = new VBuf;
-        bufSwap.addBuffer(buf);
-        bufSwap.program().build(// Vertex shader:
-                                Block("uniform highp mat4 uMvpMatrix; "
-                                      "attribute highp vec4 aVertex; "
-                                      "attribute highp vec2 aUV; "
-                                      "varying highp vec2 vUV; "
-                                      "void main(void) {"
-                                          "gl_Position = uMvpMatrix * aVertex; "
-                                          "vUV = aUV; }"),
-                                // Fragment shader:
-                                Block("uniform sampler2D uTex; "
-                                      "varying highp vec2 vUV; "
-                                      "void main(void) { "
-                                          "gl_FragColor = texture2D(uTex, vUV); }"))
-                << uMvpMatrix
-                << uBufTex;
-
-        buf->setVertices(gl::TriangleStrip,
-                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
-                         gl::Static);
-
-        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-        uBufTex = backBuffer;
+        framebuf.glInit();
     }
 
     void glDeinit()
     {
-        bufSwap.clear();
+        framebuf.glDeinit();
     }
 
     void swapBuffers()
@@ -246,22 +204,11 @@ DENG2_PIMPL(Canvas)
             self.QGLWidget::swapBuffers();
             break;
 
-        case ManualFramebuffer: {
+        case ManualFramebuffer:
             /// @todo Double buffering is not really needed in manual FB mode.
-            GLTarget defaultTarget;
-            GLState::push()
-                    .setTarget(defaultTarget)
-                    .setViewport(Rectangleui::fromSize(self.size()));
-
-            // Draw the back buffer texture to the main framebuffer.
-            bufSwap.draw();
-
-            self.QGLWidget::swapBuffers();
-
-            GLState::pop().apply();
-            break; }
+            framebuf.swapBuffers(self);
+            break;
         }
-
     }
 };
 
@@ -361,12 +308,12 @@ void Canvas::copyAudiencesFrom(Canvas const &other)
 
 GLTarget &Canvas::renderTarget() const
 {
-    return d->target;
+    return d->framebuf.target();
 }
 
 GLTexture &Canvas::depthBufferTexture() const
 {
-    return d->depthStencilBuffer;
+    return d->framebuf.depthStencilTexture();
 }
 
 void Canvas::swapBuffers()
@@ -430,8 +377,7 @@ void Canvas::notifyReady()
 #if 1
     {
         d->framebufMode = Instance::ManualFramebuffer;
-
-        d->glInit();
+        d->framebuf.glInit();
 
         // Set up a rendering target with depth texture.
         LOG_DEBUG("Using manually configured framebuffer in Canvas, size ") << size().asText();
