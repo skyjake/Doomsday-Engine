@@ -23,6 +23,7 @@
 #include "render/vr.h"
 
 #include <de/Drawable>
+#include <de/GLFramebuffer>
 
 using namespace de;
 
@@ -37,9 +38,7 @@ DENG2_PIMPL(VRWindowTransform)
     GLUniform uOculusChromAbParam;
 
     typedef GLBufferT<Vertex3Tex> OculusRiftVBuf;
-    GLTarget unwarpedTarget;
-    GLTexture unwarpedTexture;
-    GLTexture depthStencilTexture;
+    GLFramebuffer unwarpedFB;
 
     Instance(Public *i)
         : Base(i),
@@ -76,14 +75,15 @@ DENG2_PIMPL(VRWindowTransform)
                     << uOculusLensSeparation
                     << uOculusHmdWarpParam
                     << uOculusChromAbParam;
+
+        unwarpedFB.glInit();
+        uOculusRiftFB = unwarpedFB.colorTexture();
     }
 
     void deinit()
     {
         oculusRift.clear();
-        unwarpedTarget.configure();
-        unwarpedTexture.clear();
-        depthStencilTexture.clear();
+        unwarpedFB.glDeinit();
     }
 
     Canvas &canvas() const
@@ -129,39 +129,26 @@ DENG2_PIMPL(VRWindowTransform)
         Canvas::Size textureSize(1920, 1200); // 1.5 * 1280x800
         // Canvas::Size textureSize(2560, 1600); // 2 * 1280x800 // Undesirable relative softness at very center of image
         // Canvas::Size textureSize(3200, 2000); // 2.5 * 1280x800 // Softness here too
-        if(unwarpedTexture.size() != textureSize)
-        {
-            unwarpedTexture.setUndefinedImage(textureSize, Image::RGB_888);
-            unwarpedTexture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-            unwarpedTexture.setFilter(gl::Linear, gl::Linear, gl::MipNone);
-
-            depthStencilTexture.setDepthStencilContent(textureSize);
-            depthStencilTexture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-            depthStencilTexture.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
-
-            unwarpedTarget.configure(&unwarpedTexture, &depthStencilTexture);
-
-            uOculusRiftFB = unwarpedTexture;
-        }
+        unwarpedFB.resize(textureSize);
 
         // Set render target to offscreen temporarily.
         GLState::push()
-                .setTarget(unwarpedTarget)
-                .setViewport(Rectangleui::fromSize(unwarpedTexture.size()))
+                .setTarget(unwarpedFB.target())
+                .setViewport(Rectangleui::fromSize(unwarpedFB.size()))
                 .apply();
-        unwarpedTarget.unsetActiveRect(true);
-        unwarpedTarget.clear(GLTarget::ColorDepth);
+        unwarpedFB.target().unsetActiveRect(true);
+        unwarpedFB.target().clear(GLTarget::ColorDepth);
 
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
-        unwarpedTarget.setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
+        unwarpedFB.target().setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::holdViewPosition(); // Don't (late-schedule) change view direction between eye renders
 
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
-        unwarpedTarget.setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
+        unwarpedFB.target().setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::releaseViewPosition(); // OK, you can change the viewpoint henceforth
