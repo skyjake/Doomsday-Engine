@@ -131,7 +131,7 @@ public:
     }
     Origin lightSourceOrigin() const {
         //return Origin(0, 0, 0);
-        return Origin(1055, -3280, 30);
+        return Origin(782, -3227, 30);
     }
     dfloat lightSourceRadius() const {
         return radius;
@@ -361,7 +361,7 @@ DENG2_PIMPL(LensFlares)
             float const dot = (pvl->light->lightSourceOrigin().xzy() - Vector3d(vOrigin)).normalize().dot(eyeFront);
             float const angle = radianToDegree(std::acos(dot));
 
-            qDebug() << "i:" << intensity << "r:" << radius << "IR:" << radius*intensity;
+            //qDebug() << "i:" << intensity << "r:" << radius << "IR:" << radius*intensity;
 
             /*
              * The main flare.
@@ -403,7 +403,7 @@ DENG2_PIMPL(LensFlares)
                 {  -.2f,    FlareData::Circle,   Vector4f(1, 1, .9f, .2f),      .23f,   Rgf(1.0e-5, 1.0e-4), Rgf(),    Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
             };
 
-            for(uint i = 0; i < sizeof(specs)/sizeof(Spec); ++i)
+            for(uint i = 0; i < sizeof(specs)/sizeof(specs[0]); ++i)
             {
                 Spec const &spec = specs[i];
 
@@ -494,11 +494,16 @@ void LensFlares::draw()
     // Depth information is required for occlusion.
     GLTarget &target = GLState::top().target();
     GLTexture *depthTex = target.attachedTexture(GLTarget::Depth);
-    /// @todo Handle the situation if depth information is not available in the target.
+    /**
+     * @todo Handle the situation when depth information is not available in the target.
+     */
     d->uDepthBuf = depthTex;
 
-    d->uActiveRect = Vector4f(target.activeRectScale(),
-                              target.activeRectNormalizedOffset());
+    // The active rectangle is specified with top/left coordinates, but the shader
+    // works with bottom/left ones.
+    Vector4f active(target.activeRectScale(), target.activeRectNormalizedOffset());
+    active.w = 1 - (active.w + active.y); // flip y
+    d->uActiveRect = active;
 
     GLState::push()
             .setCull(gl::None)
