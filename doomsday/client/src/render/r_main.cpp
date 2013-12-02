@@ -553,7 +553,9 @@ void R_Update()
 
     R_UpdateRawTexs();
     App_ResourceSystem().initSprites(); // Fully reinitialize sprites.
+#ifdef __CLIENT__
     Models_Init(); // Defs might've changed.
+#endif
 
     R_UpdateTranslationTables();
 
@@ -580,7 +582,9 @@ void R_Update()
 void R_Shutdown()
 {
     App_ResourceSystem().clearAllSprites();
+#ifdef __CLIENT__
     Models_Shutdown();
+#endif
     R_ShutdownSvgs();
 #ifdef __CLIENT__
     R_ShutdownViewWindow();

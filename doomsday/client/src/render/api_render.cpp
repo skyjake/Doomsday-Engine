@@ -19,8 +19,16 @@
 // m_misc.c
 DENG_EXTERN_C int M_ScreenShot(const char* name, int bits);
 
-// models.cpp
-DENG_EXTERN_C void Models_CacheForState(int stateIndex);
+#undef Models_CacheForState
+DENG_EXTERN_C void Models_CacheForState(int stateIndex)
+{
+#ifdef __CLIENT__
+    if(ModelDef *modelDef = Models_ModelDefForState(stateIndex))
+    {
+        Models_Cache(modelDef);
+    }
+#endif
+}
 
 // r_draw.cpp
 DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths);

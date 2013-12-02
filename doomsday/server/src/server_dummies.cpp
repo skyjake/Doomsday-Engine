@@ -477,17 +477,6 @@ void Rend_ConsoleCursorResetBlink()
 void Sky_Ticker()
 {}
 
-void Models_Init()
-{}
-
-void Models_Shutdown()
-{}
-
-void Models_CacheForState(int stateIndex)
-{
-    DENG_UNUSED(stateIndex);
-}
-
 void Cl_InitPlayers(void)
 {}
 

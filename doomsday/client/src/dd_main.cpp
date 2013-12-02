@@ -1125,7 +1125,9 @@ static int DD_ActivateGameWorker(void *parameters)
         Con_SetProgress(130);
 
     App_ResourceSystem().initSprites(); // Fully initialize sprites.
+#ifdef __CLIENT__
     Models_Init();
+#endif
 
     Def_PostInit();
 
@@ -1974,7 +1976,9 @@ boolean DD_Init(void)
         Def_Read();
 
         App_ResourceSystem().initSprites();
+#ifdef __CLIENT__
         Models_Init();
+#endif
 
         Def_PostInit();
 

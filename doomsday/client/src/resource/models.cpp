@@ -30,6 +30,7 @@
 #include "filesys/fs_main.h"
 
 #ifdef __CLIENT__
+// For smart caching logics:
 #  include "MaterialSnapshot"
 
 #  include "render/billboard.h" // Rend_SpriteMaterialSpec()
@@ -47,7 +48,6 @@
 #include <de/mathutil.h> // M_CycleIntoRange()
 #include <de/memory.h>
 #include <cmath>
-#include <cstring> // memset
 
 using namespace de;
 
@@ -66,37 +66,10 @@ static bool recogniseMd2(de::FileHandle &file);
 static void loadDmd(de::FileHandle &file, Model &mdl);
 static void loadMd2(de::FileHandle &file, Model &mdl);
 
-static ModelDef *modelDefForState(int stateIndex, int select = 0)
-{
-    DENG2_ASSERT(stateIndex >= 0);
-    DENG2_ASSERT(stateIndex < int(stateModefs.size()));
-
-    if(stateModefs[stateIndex] < 0) return 0;
-
-    DENG2_ASSERT(stateModefs[stateIndex] >= 0);
-    DENG2_ASSERT(stateModefs[stateIndex] < int(modefs.size()));
-
-    ModelDef *def = &modefs[stateModefs[stateIndex]];
-    if(select)
-    {
-        // Choose the correct selector, or selector zero if the given one not available.
-        int const mosel = select & DDMOBJ_SELECTOR_MASK;
-        for(ModelDef *it = def; it; it = it->selectNext)
-        {
-            if(it->select == mosel)
-            {
-                return it;
-            }
-        }
-    }
-
-    return def;
-}
-
 static Model *modelForId(modelid_t modelId, bool canCreate = false)
 {
     DENG2_ASSERT(modelRepository);
-    Model *mdl = reinterpret_cast<Model*>(modelRepository->userPointer(modelId));
+    Model *mdl = reinterpret_cast<Model *>(modelRepository->userPointer(modelId));
     if(!mdl && canCreate)
     {
         // Allocate a new model_t.
@@ -139,6 +112,41 @@ ModelDef *Models_ModelDef(char const *id)
     return 0;
 }
 
+ModelDef *Models_ModelDefForState(int stateIndex, int select)
+{
+    if(stateIndex < 0 || stateIndex >= defs.count.states.num)
+    {
+        return 0;
+    }
+    if(stateIndex < 0 || stateIndex >= int(stateModefs.size()))
+    {
+        return 0;
+    }
+    if(stateModefs[stateIndex] < 0)
+    {
+        return 0;
+    }
+
+    DENG2_ASSERT(stateModefs[stateIndex] >= 0);
+    DENG2_ASSERT(stateModefs[stateIndex] < int(modefs.size()));
+
+    ModelDef *def = &modefs[stateModefs[stateIndex]];
+    if(select)
+    {
+        // Choose the correct selector, or selector zero if the given one not available.
+        int const mosel = select & DDMOBJ_SELECTOR_MASK;
+        for(ModelDef *it = def; it; it = it->selectNext)
+        {
+            if(it->select == mosel)
+            {
+                return it;
+            }
+        }
+    }
+
+    return def;
+}
+
 float Models_ModelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelDef **nextmodef)
 {
     // On the client it is possible that we don't know the mobj's state.
@@ -147,8 +155,8 @@ float Models_ModelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelDef **next
     state_t &st = *mo->state;
 
     // By default there are no models.
-    *nextmodef = NULL;
-    *modef = modelDefForState(&st - states, mo->selector);
+    *nextmodef = 0;
+    *modef = Models_ModelDefForState(&st - states, mo->selector);
     if(!*modef) return -1; // No model available.
 
     float interp = -1;
@@ -206,7 +214,7 @@ float Models_ModelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelDef **next
     }
     else if(worldTime)
     {
-        *nextmodef = modelDefForState(&st - states, mo->selector);
+        *nextmodef = Models_ModelDefForState(&st - states, mo->selector);
     }
     else if(st.nextState > 0) // Check next state.
     {
@@ -222,8 +230,8 @@ float Models_ModelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelDef **next
             int max = 20; // Let's not be here forever...
             while(!stopScan)
             {
-                if(!((!modelDefForState(it - states) ||
-                      modelDefForState(it - states, mo->selector)->interRange[0] > 0) &&
+                if(!((!Models_ModelDefForState(it - states) ||
+                      Models_ModelDefForState(it - states, mo->selector)->interRange[0] > 0) &&
                      it->nextState > 0))
                 {
                     stopScan = true;
@@ -232,7 +240,7 @@ float Models_ModelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelDef **next
                 {
                     // Scan interlinks, then go to the next state.
                     ModelDef *mdit;
-                    if((mdit = modelDefForState(it - states, mo->selector)) && mdit->interNext)
+                    if((mdit = Models_ModelDefForState(it - states, mo->selector)) && mdit->interNext)
                     {
                         forever
                         {
@@ -271,7 +279,7 @@ float Models_ModelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelDef **next
 
         if(!foundNext)
         {
-            *nextmodef = modelDefForState(it - states, mo->selector);
+            *nextmodef = Models_ModelDefForState(it - states, mo->selector);
         }
     }
 
@@ -644,7 +652,7 @@ static void setupModel(ded_model_t &def)
         else
         {
             // Must check intermark; smallest wins!
-            ModelDef *other = modelDefForState(stateNum);
+            ModelDef *other = Models_ModelDefForState(stateNum);
 
             if((modef->interMark <= other->interMark && // Should never be ==
                 modef->select == other->select) || modef->select < other->select) // Smallest selector?
@@ -697,10 +705,6 @@ static void clearModelList()
 
 void Models_Init()
 {
-    // Dedicated servers do nothing with models.
-    if(isDedicated) return;
-    if(CommandLine_Check("-nomd2")) return;
-
     LOG_VERBOSE("Initializing Models...");
     Time begunAt;
 
@@ -833,6 +837,7 @@ void Models_SetFrame(ModelDef &modef, int frame)
 
 void Models_Cache(ModelDef *modelDef)
 {
+    if(!useModels) return;
     if(!modelDef) return;
 
     for(uint sub = 0; sub < modelDef->subCount(); ++sub)
@@ -877,16 +882,6 @@ int Models_CacheForMobj(thinker_t *th, void * /*context*/)
     }
 
     return false; // Used as iterator.
-}
-
-#undef Models_CacheForState
-DENG_EXTERN_C void Models_CacheForState(int stateIndex)
-{
-    if(!useModels) return;
-    if(stateIndex <= 0 || stateIndex >= defs.count.states.num) return;
-    if(stateModefs[stateIndex] < 0) return;
-
-    Models_Cache(modelDefForState(stateIndex));
 }
 
 // -----------------------------------------------------------------------------

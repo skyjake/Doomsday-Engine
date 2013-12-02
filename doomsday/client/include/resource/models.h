@@ -262,13 +262,6 @@ int Models_IndexOf(ModelDef const *modelDef);
 Model *Models_Model(modelid_t id);
 
 /**
- * Is there a model for this mobj? The decision is made based on the state and tics
- * of the mobj. Returns the modeldefs that are in effect at the moment (interlinks
- * checked appropriately).
- */
-float Models_ModelDefForMobj(struct mobj_s const *mo, ModelDef **mdef, ModelDef **nextmdef);
-
-/**
  * Retrieve a model definition by it's unique @a index. O(1)
  *
  * @return  Pointer to the associated definition; otherwise @c 0.
@@ -281,6 +274,25 @@ ModelDef *Models_ModelDef(int index);
  * @return  Found model definition; otherwise @c 0.
  */
 ModelDef *Models_ModelDef(char const *id);
+
+/**
+ * Lookup a model definition for the specified mobj @a stateIndex.
+ *
+ * @param stateIndex  Index of the mobj state.
+ * @param select      Model selector argument. There may be multiple models for
+ *                    a given mobj state. The selector determines which is used
+ *                    according to some external selection criteria.
+ *
+ * @return  Found model definition; otherwise @c 0.
+ */
+ModelDef *Models_ModelDefForState(int stateIndex, int select = 0);
+
+/**
+ * Is there a model for this mobj? The decision is made based on the state and tics
+ * of the mobj. Returns the modeldefs that are in effect at the moment (interlinks
+ * checked appropriately).
+ */
+float Models_ModelDefForMobj(struct mobj_s const *mo, ModelDef **mdef, ModelDef **nextmdef);
 
 /// @todo Refactor away. Used for animating particle/sky models.
 void Models_SetFrame(ModelDef &modelDef, int frame);

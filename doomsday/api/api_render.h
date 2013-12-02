@@ -33,9 +33,12 @@ DENG_API_TYPEDEF(Rend)
 
     /**
      * Prepare all texture resources for the specified mobjtype.
+     *
+     * @todo Wrong domain => resource
      */
     void (*CacheForMobjType)(int mobjtypeNum);
 
+    /// @todo Wrong domain => resource
     void (*CacheModelsForState)(int stateIndex);
 
     /**
