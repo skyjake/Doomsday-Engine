@@ -25,7 +25,7 @@
 #include <de/Vector>
 
 #include "def_data.h"
-#include "gl/gl_model.h"
+#include "resource/model.h"
 
 /**
  * @defgroup modelFrameFlags Model frame flags

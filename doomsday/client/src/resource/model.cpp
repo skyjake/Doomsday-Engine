@@ -1,4 +1,4 @@
-/** @file gl_model.cpp  3D Model Renderable.
+/** @file model.cpp  3D model resource.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,7 +20,7 @@
  */
 
 #include "de_platform.h"
-#include "gl/gl_model.h"
+#include "resource/model.h"
 
 #include "Texture"
 #include "TextureManifest"

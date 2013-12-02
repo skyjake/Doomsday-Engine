@@ -160,6 +160,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/MaterialSnapshot \
     include/MaterialVariantSpec \
     include/Mesh \
+    include/Model \
     include/Plane \
     include/Polyobj \
     include/ProceduralImage \
@@ -260,7 +261,6 @@ DENG_HEADERS += \
     include/gl/gl_deferredapi.h \
     include/gl/gl_draw.h \
     include/gl/gl_main.h \
-    include/gl/gl_model.h \
     include/gl/gl_tex.h \
     include/gl/gl_texmanager.h \
     include/gl/gltextureunit.h \
@@ -347,6 +347,7 @@ DENG_HEADERS += \
     include/resource/materialscheme.h \
     include/resource/materialsnapshot.h \
     include/resource/materialvariantspec.h \
+    include/resource/model.h \
     include/resource/models.h \
     include/resource/patch.h \
     include/resource/patchname.h \
@@ -622,7 +623,6 @@ SOURCES += \
     src/gl/gl_draw.cpp \
     src/gl/gl_drawvectorgraphic.cpp \
     src/gl/gl_main.cpp \
-    src/gl/gl_model.cpp \
     src/gl/gl_tex.cpp \
     src/gl/gl_texmanager.cpp \
     src/gl/texturecontent.cpp \
@@ -709,6 +709,7 @@ SOURCES += \
     src/resource/materialscheme.cpp \
     src/resource/materialsnapshot.cpp \
     src/resource/materialvariant.cpp \
+    src/resource/model.cpp \
     src/resource/models.cpp \
     src/resource/patch.cpp \
     src/resource/patchname.cpp \
