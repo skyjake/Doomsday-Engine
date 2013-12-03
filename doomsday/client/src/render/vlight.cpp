@@ -320,7 +320,7 @@ uint R_CollectAffectingLights(collectaffectinglights_params_t const *p)
     lightWithWorldLight(p->ambientColor, p->starkLight, listIdx);
 
     // Add extra light by interpreting nearby sources.
-    if(p->bspLeaf)
+    if(p->bspLeaf && p->bspLeaf->hasCluster())
     {
         lightWithLumobjs(p->origin, *p->bspLeaf, listIdx);
 

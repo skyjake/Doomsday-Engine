@@ -7,18 +7,33 @@ body {
     background-size: 200% 200%;
 
     color: #A7A29C;
+
     font-family: "Open Sans",sans-serif !important;
-    font-size: small;
+    font-size: 100%;
+    font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+
+    display: block;
+    border: 0;
     padding: 0;
-    margin: 1.2em;
-    margin-top: 1.8em;
+    margin: 0;
+    vertical-align: baseline;
+}
+
+@media only screen and (min-width: 476px) {
+body { margin: 1.2em; }
 }
 
 h1, h2, h3, h4, h5, h6 {
     margin-bottom: 0;
     margin-top: .6em;
-    font-weight: lighter;
-    line-height:1.3;
+    font-weight: normal;
+    font-variant: normal;
+    font-weight: 300;
+    font-size: 1.4em;
+    line-height: 1.3;
 }
 
 h1, h2, h3, h4, h5, h6,
@@ -281,9 +296,8 @@ ul.topiclist dd {
 ul.topiclist {
     list-style-type: none;
     margin: -6px;
-    padding:0;
-    /*font-family: sans-serif;*/
-    font-size: 8pt;
+    padding: 0;
+    font-size: .8em;
 }
 
 ul.topiclist li {
@@ -543,6 +557,7 @@ ol.jumplist li {
     font-size: small;
     vertical-align: text-top;
     background: #414141;
+    max-width: 94%;
 }
 
 .picture p {
@@ -559,38 +574,6 @@ ol.jumplist li {
 
 /*------------------ Library Icons -----------------*/
 
-#libicons {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    min-width: 640px;
-    z-index: 0;
-    overflow: hidden;
-}
-
-#libicons ul {
-    margin-top: 0;
-    margin-bottom: .4em;
-}
-
-#libicons li {
-    padding-left: 0.2em;
-    padding-right: 0.2em;
-}
-
-#libicons #groupa {
-    margin: 0;
-    padding: 8px 10px;
-    float: left;
-}
-
-#libicons #groupb {
-    margin: 0;
-    padding: 6px 10px;
-    float: right;
-}
-
 .heading.collapsible {
     cursor: pointer;
 }
@@ -600,11 +583,15 @@ ol.jumplist li {
 #main {
     width: 100%;
     position: relative;
-    /*overflow: hidden;/**/
+    overflow: hidden;
     max-width: 1100px;
-    min-width: 640px;
+    min-width: 355px;
     margin-left: auto;
     margin-right: auto;
+}
+
+@media only screen and (min-width: 767px) {
+#main { overflow: hidden; }
 }
 
 .framepanel {
@@ -620,9 +607,8 @@ ol.jumplist li {
 }
 
 #menu {
-    /*font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-weight: bold;*/
-    font-size:120%;
+    font-size: 70%;
+    padding: 0 1em;
 }
 
 #menu a:focus { outline-offset: 0; }
@@ -635,7 +621,7 @@ ol.jumplist li {
 
 #menu section {
     display: inline-block;
-    min-width: 16em;
+    min-width: 11em;
     text-align: right;
 }
 
@@ -647,24 +633,26 @@ ol.jumplist li {
 
 #menu li.logo {
     background: url(http://dengine.net/images/deng-logo-sq-114x114-web.png) no-repeat;
-    background-position: 0 21px;
-    padding: 64px 0;
+    background-position: 50%;
+    background-size: 110%;
+    padding: 26px 0;
     margin: 0;
 }
 
 #menu li.logo a {
     padding-top: 48px;
     padding-bottom: 33px;
-    padding-left: 110px;
+    padding-left: 68px;
     outline: 0 none;
 }
 
-#menu a, span.paddle_left_select, span.paddle_right_select {
+#menu a, span.paddle_left_select,
+#menu a, span.paddle_right_select {
     position:inherit;
     padding-top: 19px;
     padding-bottom: 19px;
-    padding-left: .6em;
-    padding-right: .6em;
+    padding-left: .25em;
+    padding-right: .25em;
     color: white;
 }
 
@@ -674,6 +662,13 @@ span.paddle_left_select, span.paddle_right_select {
 
 #menu a:hover {
     color: #FFC764;
+}
+
+@media only screen and (min-width: 767px) {
+#menu { font-size: 100%; }
+#menu section { min-width: 13em; }
+#menu li.logo { background-size: 100%; padding: 64px 0; }
+#menu li.logo a { padding-left: 104px; }
 }
 
 #divider {
@@ -694,7 +689,6 @@ span.paddle_left_select, span.paddle_right_select {
 #framepanel_top {
     position: absolute;
     width: 100%;
-    height: 280px;
     top: -10px;
 }
 
@@ -702,18 +696,20 @@ span.paddle_left_select, span.paddle_right_select {
     position: relative;
     left:50%;
     margin-left:-650px;
-    height: 280px;
     width: 1300px;
     background: #282D2B url(panoramarotator) no-repeat;
+    background-position-y: -90px;
 }
 
-/*------------------- Bottom Panel -----------------*/
+#framepanel_top, #panorama {
+    height: 160px;
+}
 
 #framepanel_bottom {
     float: right;
     clear: both;
     margin: 0;
-    margin-top: 270px;
+    margin-top: 150px;
     width: 100%;
     text-align: center;
 }
@@ -721,7 +717,7 @@ span.paddle_left_select, span.paddle_right_select {
 #pageheading,
 #latestversion {
     position: relative;
-    margin-top: -8.2em;
+    margin-top: -6em;
     white-space: nowrap;
     z-index: 1;
     color: white;
@@ -732,7 +728,7 @@ span.paddle_left_select, span.paddle_right_select {
 
 #pageheading h1,
 #latestversion h1 {
-    font-size: 280%;
+    font-size: 1.8em;
     margin-top: 0;
 }
 
@@ -741,6 +737,14 @@ span.paddle_left_select, span.paddle_right_select {
 
 #latestversion a { color: white; }
 #latestversion a:hover { color: #FFCB0F; }
+
+@media only screen and (min-width: 767px) {
+#framepanel_top, #panorama { height: 280px; }
+#framepanel_bottom { margin-top: 270px; }
+#pageheading, #latestversion { margin-top: -7.5em; }
+#pageheading h1, #latestversion h1 { font-size: 2.5em; }
+#panorama { background-position-y: 0; }
+}
 
 #contentbox, #contentbox2 {
     text-align: left;
@@ -783,10 +787,16 @@ div.clear {
 #search-box {
     position: relative;
     float: right;
-    margin-right: 1.6em;
-    top: -275px; /* minus (image height - divider height) */
+    margin: 1.6em;
+    top: -150px; /* minus (image height - divider height) */
     font-size: xx-small;
     text-align: right;
+}
+
+@media only screen and (min-width: 767px) {
+#search-box {
+    top: -270px;
+}
 }
 
 /*----------------- Status ----------------------*/
@@ -802,9 +812,9 @@ div.clear {
     color: #A7A29C;
 }
 
-/*#status {
+#status {
     font-size: 66%;
-}*/
+}
 
 #recentbuilds { float: left; }
 #activeservers { float: right; }
