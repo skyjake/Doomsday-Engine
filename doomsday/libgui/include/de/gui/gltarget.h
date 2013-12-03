@@ -64,6 +64,57 @@ public:
 
     typedef Vector2ui Size;
 
+    /**
+     * Utility for temporarily using an alternative buffer as one of a render
+     * target's attachments. Usage:
+     * - construct as a local variable
+     * - init
+     * - automatically deinited when goes out of scope
+     */
+    class LIBGUI_PUBLIC AlternativeBuffer
+    {
+    public:
+        /**
+         * Prepares an alternative texture attachment. The new texture is not
+         * taken into use yet.
+         *
+         * @param target      The rendering target this is for.
+         * @param texture     Texture to use as alternative attachment.
+         * @param attachment  Which attachment.
+         */
+        AlternativeBuffer(GLTarget &target, GLTexture &texture, Flags const &attachment);
+
+        /**
+         * Automatically deinitialize the alternative buffer, if it was taken
+         * into use.
+         */
+        ~AlternativeBuffer();
+
+        /**
+         * Take the alternative buffer into use. The original buffer is
+         * remembered and will be restored when the alternative buffer is no
+         * longer in use. Nothing happens if this already has been called
+         * previously.
+         *
+         * @return @c true, if initialization was done. Otherwise, @c false
+         * (for example if already initialized).
+         */
+        bool init();
+
+        /**
+         * Restores the original attachment.
+         *
+         * @return @c true, if the original attachment was restored. Otherwise,
+         * @c false (for example if already deinitialized).
+         */
+        bool deinit();
+
+        GLTarget &target() const;
+
+    private:
+        DENG2_PRIVATE(d)
+    };
+
 public:
     /**
      * Constructs a default render target (the window framebuffer).

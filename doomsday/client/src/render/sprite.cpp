@@ -107,15 +107,8 @@ void Rend_Draw3DPlayerSprites()
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
-    bool zBufferHasBeenSetUp = false;
-
-    /// @todo Set up an easier API for switching depth buffer temporarily
-
-    GLTarget &target = GLState::current().target();
-    GLTexture *originalDepth = target.attachedTexture(GLTarget::DepthStencil);
-    DENG2_ASSERT(originalDepth != 0);
-
-    static GLTexture localDepth;
+    static GLTexture localDepth; // note: static!
+    GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth, GLTarget::DepthStencil);
 
     rendmodelparams_t parm;
     for(int i = 0; i < DDMAXPSPRITES; ++i)
@@ -124,26 +117,14 @@ void Rend_Draw3DPlayerSprites()
 
         if(spr->type != VPSPR_MODEL) continue; // Not used.
 
-        if(!zBufferHasBeenSetUp)
+        if(altDepth.init())
         {
-            // Resize the local depth buffer to match target size.
-            if(localDepth.size() != target.size())
-            {
-                localDepth.setDepthStencilContent(target.size());
-            }
-            target.replaceAttachment(GLTarget::DepthStencil, localDepth);
-            target.clear(GLTarget::DepthStencil);
-            zBufferHasBeenSetUp = true;
+            // Clear the depth before first use.
+            altDepth.target().clear(GLTarget::DepthStencil);
         }
 
         setupModelParamsForVisPSprite(&parm, spr);
         Rend_RenderModel(&parm);
-    }
-
-    // Restore the old depth/stencil buffer.
-    if(zBufferHasBeenSetUp)
-    {
-        target.replaceAttachment(GLTarget::DepthStencil, *originalDepth);
     }
 }
 

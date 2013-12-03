@@ -132,6 +132,7 @@ SOURCES +=  \
     src/glshaderbank.cpp \
     src/glstate.cpp \
     src/gltarget.cpp \
+    src/gltarget_alternativebuffer.cpp \
     src/gltexture.cpp \
     src/gluniform.cpp \
     src/guiapp.cpp \
