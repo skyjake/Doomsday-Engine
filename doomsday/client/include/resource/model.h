@@ -146,6 +146,12 @@ public:
     Model(Flags flags = 0);
 
     /**
+     * Determines whether the specified @a file appears to be in a recognised
+     * model format.
+     */
+    static bool recognise(de::FileHandle &file);
+
+    /**
      * Attempt to load a new model resource from the specified @a file.
      *
      * @param aspectScale  Optionally apply y-aspect scaling.
