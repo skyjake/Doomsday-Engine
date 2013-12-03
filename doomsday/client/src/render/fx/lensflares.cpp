@@ -34,6 +34,8 @@
 #include <QHash>
 #include <cmath>
 
+//#define FX_TEST_LIGHT
+
 using namespace de;
 
 namespace fx {
@@ -116,6 +118,7 @@ struct FlareData
     }
 };
 
+#ifdef FX_TEST_LIGHT
 struct TestLight : public ILightSource
 {
 public:
@@ -170,6 +173,7 @@ D_CMD(TestLight)
 
     return true;
 }
+#endif
 
 static float linearRangeFactor(float value, Rangef const &low, Rangef const &high)
 {
@@ -472,7 +476,9 @@ void LensFlares::glDeinit()
 
 void fx::LensFlares::beginFrame()
 {
+#ifdef FX_TEST_LIGHT
     markLightPotentiallyVisibleForCurrentFrame(&testLight); // testing
+#endif
 
     d->makeVerticesForPVS();
 }
@@ -519,7 +525,9 @@ void LensFlares::draw()
 
 void LensFlares::consoleRegister()
 {
+#ifdef FX_TEST_LIGHT
     C_CMD("testlight", "sf*", TestLight)
+#endif
 }
 
 } // namespace fx
