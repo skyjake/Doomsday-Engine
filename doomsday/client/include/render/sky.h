@@ -1,4 +1,4 @@
-/**  @file sky.h  Sky Sphere and 3D Models
+/** @file sky.h  Sky Sphere and 3D Models
  *
  * This version supports only two sky layers. (More would be a waste of resources?)
  *

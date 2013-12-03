@@ -37,7 +37,10 @@ typedef uint modelid_t;
 
 /**
  * 3D model resource.
+ *
  * @ingroup resource
+ *
+ * @todo Implement an API for building models programmatically.
  */
 class Model
 {

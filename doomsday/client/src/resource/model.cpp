@@ -137,6 +137,9 @@ static float avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "tab_anorms.h"
 };
 
+/**
+ * @todo reimplement file loading using de::Reader.
+ */
 DENG2_PIMPL(Model)
 {
     Flags flags;
@@ -520,26 +523,6 @@ DENG2_PIMPL(Model)
         return mdl;
     }
 
-    static Model *interpretDmd(de::FileHandle &hndl, float aspectScale)
-    {
-        if(Model *mdl = loadDmd(hndl, aspectScale))
-        {
-            LOG_VERBOSE("Interpreted \"" + NativePath(hndl.file().composePath()).pretty() + "\" as a DMD model.");
-            return mdl;
-        }
-        return 0;
-    }
-
-    static Model *interpretMd2(de::FileHandle &hndl, float aspectScale)
-    {
-        if(Model *mdl = loadMd2(hndl, aspectScale))
-        {
-            LOG_VERBOSE("Interpreted \"" + NativePath(hndl.file().composePath()).pretty() + "\" as a MD2 model.");
-            return mdl;
-        }
-        return 0;
-    }
-
 #if 0
     /**
      * Calculate vertex normals. Only with -renorm.
@@ -646,6 +629,8 @@ static bool recogniseMd2(de::FileHandle &file)
 
 bool Model::recognise(de::FileHandle &hndl) //static
 {
+    LOG_AS("Model");
+
     if(recogniseDmd(hndl)) return true;
     if(recogniseMd2(hndl)) return true;
     return false;
@@ -656,15 +641,17 @@ struct ModelFileType
     String name; ///< Symbolic name of the resource type.
     String ext;  ///< Known file extension.
 
-    Model *(*interpretFunc)(de::FileHandle &hndl, float aspectScale);
+    Model *(*loadFunc)(de::FileHandle &hndl, float aspectScale);
 };
 
 Model *Model::loadFromFile(de::FileHandle &hndl, float aspectScale) //static
 {
-    // Recognised file types.
+    LOG_AS("Model");
+
+    // Recognized file types.
     static ModelFileType modelTypes[] = {
-        { "DMD",    ".dmd",     Instance::interpretDmd },
-        { "MD2",    ".md2",     Instance::interpretMd2 },
+        { "DMD",    ".dmd",     Instance::loadDmd },
+        { "MD2",    ".md2",     Instance::loadMd2 },
         { "",       "",         0 } // Terminate.
     };
 
@@ -676,12 +663,13 @@ Model *Model::loadFromFile(de::FileHandle &hndl, float aspectScale) //static
     {
         for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
         {
-            ModelFileType &type = modelTypes[i];
-            if(!type.ext.compareWithoutCase(ext))
+            ModelFileType &rtype = modelTypes[i];
+            if(!rtype.ext.compareWithoutCase(ext))
             {
-                rtypeGuess = &type;
-                if(Model *mdl = type.interpretFunc(hndl, aspectScale))
+                rtypeGuess = &rtype;
+                if(Model *mdl = rtype.loadFunc(hndl, aspectScale))
                 {
+                    LOG_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model.");
                     return mdl;
                 }
                 break;
@@ -692,13 +680,14 @@ Model *Model::loadFromFile(de::FileHandle &hndl, float aspectScale) //static
     // Not yet interpreted - try each known format in order.
     for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
     {
-        ModelFileType const &modelType = modelTypes[i];
+        ModelFileType const &rtype = modelTypes[i];
 
         // Already tried this?
-        if(&modelType == rtypeGuess) continue;
+        if(&rtype == rtypeGuess) continue;
 
-        if(Model *mdl = modelType.interpretFunc(hndl, aspectScale))
+        if(Model *mdl = rtype.loadFunc(hndl, aspectScale))
         {
+            LOG_VERBOSE("Interpreted \"" + NativePath(filePath).pretty() + "\" as a " + rtype.name + " model.");
             return mdl;
         }
     }
@@ -723,6 +712,7 @@ Model::Flags Model::flags() const
 
 void Model::setFlags(Model::Flags flagsToChange, FlagOp operation)
 {
+    LOG_AS("Model");
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
@@ -742,6 +732,7 @@ int Model::frameNumber(String name) const
 
 Model::Frame &Model::frame(int number) const
 {
+    LOG_AS("Model");
     if(hasFrame(number))
     {
         return *d->frames.at(number);
@@ -756,6 +747,7 @@ Model::Frames const &Model::frames() const
 
 void Model::clearAllFrames()
 {
+    LOG_AS("Model");
     qDeleteAll(d->frames);
     d->frames.clear();
 }
@@ -776,6 +768,7 @@ int Model::skinNumber(String name) const
 
 Model::Skin &Model::skin(int number) const
 {
+    LOG_AS("Model");
     if(hasSkin(number))
     {
         return const_cast<Skin &>(d->skins.at(number));
@@ -785,6 +778,7 @@ Model::Skin &Model::skin(int number) const
 
 Model::Skin &Model::newSkin(String name)
 {
+    LOG_AS("Model");
     if(int index = skinNumber(name) > 0)
     {
         return skin(index);
@@ -800,11 +794,13 @@ Model::Skins const &Model::skins() const
 
 void Model::clearAllSkins()
 {
+    LOG_AS("Model");
     d->skins.clear();
 }
 
 Model::DetailLevel &Model::lod(int level) const
 {
+    LOG_AS("Model");
     if(hasLod(level))
     {
         return *d->lods.at(level);
@@ -819,6 +815,7 @@ Model::DetailLevels const &Model::lods() const
 
 Model::Primitives const &Model::primitives() const
 {
+    LOG_AS("Model");
     return lod(0).primitives;
 }
 
