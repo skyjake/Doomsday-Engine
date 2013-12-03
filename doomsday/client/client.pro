@@ -161,6 +161,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/MaterialVariantSpec \
     include/Mesh \
     include/Model \
+    include/ModelDef \
     include/Plane \
     include/Polyobj \
     include/ProceduralImage \
@@ -348,7 +349,7 @@ DENG_HEADERS += \
     include/resource/materialsnapshot.h \
     include/resource/materialvariantspec.h \
     include/resource/model.h \
-    include/resource/models.h \
+    include/resource/modeldef.h \
     include/resource/patch.h \
     include/resource/patchname.h \
     include/resource/pcx.h \
@@ -710,7 +711,6 @@ SOURCES += \
     src/resource/materialsnapshot.cpp \
     src/resource/materialvariant.cpp \
     src/resource/model.cpp \
-    src/resource/models.cpp \
     src/resource/patch.cpp \
     src/resource/patchname.cpp \
     src/resource/pcx.cpp \

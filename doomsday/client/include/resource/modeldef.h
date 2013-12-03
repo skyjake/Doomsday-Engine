@@ -1,4 +1,4 @@
-/** @file models.h  3D model resource definition.
+/** @file modeldef.h  3D model resource definition.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_MODELS_H
-#define DENG_RESOURCE_MODELS_H
+#ifndef DENG_RESOURCE_MODELDEF_H
+#define DENG_RESOURCE_MODELDEF_H
 
 #include <vector>
 #include <de/Vector>
@@ -106,8 +106,6 @@ struct SubmodelDef
         return (_flags & flag) == flag;
     }
 };
-
-typedef SubmodelDef submodeldef_t;
 
 #define MODELDEF_ID_MAXLEN      32
 
@@ -232,4 +230,4 @@ struct ModelDef
     }
 };
 
-#endif // DENG_RESOURCE_MODELS_H
+#endif // DENG_RESOURCE_MODELDEF_H

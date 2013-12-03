@@ -24,10 +24,11 @@
 #include "resource/animgroup.h"
 #include "resource/colorpalette.h"
 #ifdef __CLIENT__
-#  include "resource/models.h"
 #  include "AbstractFont"
 #  include "FontScheme"
 #  include "MaterialVariantSpec"
+#  include "Model"
+#  include "ModelDef"
 #endif
 #include "Material"
 #include "MaterialScheme"
