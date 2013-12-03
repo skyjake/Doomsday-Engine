@@ -22,7 +22,7 @@
 
 #include <de/Animation>
 #include <de/Drawable>
-#include <de/GLTarget>
+#include <de/GLFramebuffer>
 
 #include <QList>
 
@@ -32,8 +32,7 @@ namespace fx {
 
 DENG2_PIMPL(PostProcessing)
 {
-    GLTexture texture;
-    QScopedPointer<GLTarget> target;
+    GLFramebuffer framebuf;
     Drawable frame;
     GLUniform uMvpMatrix;
     GLUniform uFrame;
@@ -103,13 +102,12 @@ DENG2_PIMPL(PostProcessing)
     {
         LOG_DEBUG("Allocating texture and target, size %s") << consoleSize().asText();
 
-        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-        uFrame = texture;
+        framebuf.glInit();
+        framebuf.setColorFormat(Image::RGBA_8888);
+        framebuf.resize(consoleSize());
 
-        texture.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
-        texture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-        texture.setUndefinedImage(consoleSize(), Image::RGBA_8888);
-        target.reset(new GLTarget(texture, GLTarget::DepthStencil));
+        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+        uFrame = framebuf.colorTexture();
 
         // Drawable for drawing stuff back to the original target.
         VBuf *buf = new VBuf;
@@ -124,17 +122,12 @@ DENG2_PIMPL(PostProcessing)
     void glDeinit()
     {
         LOG_DEBUG("Releasing GL resources");
-        texture.clear();
-        target.reset();
+        framebuf.glDeinit();
     }
 
     void update()
     {
-        if(!target.isNull() && target->size() != consoleSize())
-        {
-            LOG_DEBUG("Resizing post-processing target to %s") << consoleSize().asText();
-            target->resize(consoleSize());
-        }
+        framebuf.resize(consoleSize());
     }
 
     void checkQueue()
@@ -164,8 +157,8 @@ DENG2_PIMPL(PostProcessing)
 
         update();
 
-        target->clear(GLTarget::ColorDepthStencil);
-        GLState::push().setTarget(*target).apply();
+        framebuf.target().clear(GLTarget::ColorDepthStencil);
+        GLState::push().setTarget(framebuf.target()).apply();
     }
 
     void end()
