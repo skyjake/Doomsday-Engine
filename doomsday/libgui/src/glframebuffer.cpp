@@ -81,7 +81,7 @@ DENG2_PIMPL(GLFramebuffer)
 
     void reconfigure()
     {
-        if(size == Size()) return;
+        if(!self.isReady() || size == Size()) return;
 
         color.setUndefinedImage(size, colorFormat);
         color.setWrap(gl::ClampToEdge, gl::ClampToEdge);
@@ -128,12 +128,17 @@ GLFramebuffer::GLFramebuffer(Image::Format const &colorFormat, Size const &initi
 
 void GLFramebuffer::glInit()
 {
+    if(isReady()) return;
+
     d->alloc();
+    setState(Ready);
+
     d->reconfigure();
 }
 
 void GLFramebuffer::glDeinit()
 {
+    setState(NotReady);
     d->release();
 }
 

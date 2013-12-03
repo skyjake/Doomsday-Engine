@@ -814,23 +814,14 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     DENG_ASSERT(img.pixelSize != 0);
 }
 
-void ClientWindow::drawGameContentToTexture(GLTexture &texture)
+void ClientWindow::drawGameContent()
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    /// @todo Use GLFramebuffer
+    GLState::current().target().clear(GLTarget::ColorDepthStencil);
 
-    GLTarget offscreen(texture, GLTarget::DepthStencil);
-    GLState::push()
-            .setTarget(offscreen)
-            .setViewport(Rectangleui::fromSize(texture.size()))
-            .apply();
-
-    offscreen.clear(GLTarget::ColorDepthStencil);
-    d->root.drawUntil(*d->gameSelMenu);
-
-    GLState::pop().apply();
+    d->root.drawUntil(*d->busy);
 }
 
 void ClientWindow::updateCanvasFormat()

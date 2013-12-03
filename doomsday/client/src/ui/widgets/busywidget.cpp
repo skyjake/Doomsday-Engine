@@ -31,7 +31,7 @@
 
 #include <de/concurrency.h>
 #include <de/Drawable>
-#include <de/GLTexture>
+#include <de/GLFramebuffer>
 
 using namespace de;
 
@@ -40,7 +40,7 @@ DENG_GUI_PIMPL(BusyWidget)
     typedef DefaultVertexBuf VertexBuf;
 
     ProgressWidget *progress;
-    QScopedPointer<GLTexture> transitionTex;
+    GLFramebuffer transitionFrame;
     Drawable drawable;
     GLUniform uTex;
     GLUniform uMvpMatrix;
@@ -60,6 +60,8 @@ DENG_GUI_PIMPL(BusyWidget)
 
     void glInit()
     {
+        //transitionFrame.setColorFormat(Image::RGB_888);
+
         VertexBuf *buf = new VertexBuf;
 
         VertexBuf::Builder verts;
@@ -74,6 +76,12 @@ DENG_GUI_PIMPL(BusyWidget)
     void glDeinit()
     {
         drawable.clear();
+        transitionFrame.glDeinit();
+    }
+
+    bool haveTransitionFrame() const
+    {
+        return transitionFrame.isReady();
     }
 };
 
@@ -123,7 +131,7 @@ void BusyWidget::drawContent()
         return;
     }
 
-    if(!d->transitionTex.isNull())
+    if(d->haveTransitionFrame())
     {
         GLState::current().apply();
 
@@ -154,7 +162,7 @@ void BusyWidget::renderTransitionFrame()
 {
     LOG_AS("BusyWidget");
 
-    if(!d->transitionTex.isNull())
+    if(d->haveTransitionFrame())
     {
         // We already have a valid frame, no need to render again.
         return;
@@ -181,20 +189,40 @@ void BusyWidget::renderTransitionFrame()
     // Grab the game view's rectangle, as that's where the transition will be drawn.
     GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);*/
 
-    d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
-    d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGB_888);
-    root().window().drawGameContentToTexture(*d->transitionTex);
-    d->uTex = *d->transitionTex;
+    d->transitionFrame.resize(grabRect.size());
+    d->transitionFrame.glInit();
+
+    GLState::push()
+            .setTarget(d->transitionFrame.target())
+            .setViewport(Rectangleui::fromSize(d->transitionFrame.size()))
+            .apply();
+
+    //d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
+    //d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGB_888);
+
+    root().window().drawGameContent();
+
+    GLState::pop().apply();
+
+    d->uTex = d->transitionFrame.colorTexture();
 }
 
 void BusyWidget::releaseTransitionFrame()
 {
-    d->transitionTex.reset();
+    if(d->haveTransitionFrame())
+    {
+        LOG_DEBUG("Releasing transition frame");
+        d->transitionFrame.glDeinit();
+    }
 }
 
 GLTexture const *BusyWidget::transitionFrame() const
 {
-    return d->transitionTex.data();
+    if(d->haveTransitionFrame())
+    {
+        return &d->transitionFrame.colorTexture();
+    }
+    return 0;
 }
 
 void BusyWidget::glInit()

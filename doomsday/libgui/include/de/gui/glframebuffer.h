@@ -20,6 +20,7 @@
 #define LIBGUI_GLFRAMEBUFFER_H
 
 #include <de/Vector>
+#include <de/Asset>
 
 #include "../GLTarget"
 #include "../GLTexture"
@@ -34,7 +35,7 @@ class Canvas;
  *
  * Color values and depth/stencil values are written to textures.
  */
-class GLFramebuffer
+class GLFramebuffer : public Asset
 {
 public:
     typedef Vector2ui Size;

@@ -152,7 +152,7 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         DENG2_ASSERT(tex.isReady());
 
-        LOG_DEBUG("glTex %i (level %i) => FBO attachment %i (0x%x)")
+        LOG_TRACE("glTex %i (level %i) => FBO attachment %i (0x%x)")
                 << tex.glName() << level << attachmentToId(attachment) << attachment;
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
