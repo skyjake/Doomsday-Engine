@@ -35,6 +35,10 @@ typedef uint modelid_t;
 /// Special value used to signify an invalid model id.
 #define NOMODELID 0
 
+/**
+ * 3D model resource.
+ * @ingroup resource
+ */
 class Model
 {
 public:
@@ -150,6 +154,8 @@ public:
      * Attempt to load a new model resource from the specified @a file.
      *
      * @param aspectScale  Optionally apply y-aspect scaling.
+     *
+     * @return  The new Model (if any). Ownership is given to the caller.
      */
     static Model *loadFromFile(de::FileHandle &file, float aspectScale = 1);
 
@@ -197,13 +203,6 @@ public:
      * Retrieve a model animation frame by it's unique frame @a number.
      */
     Frame &frame(int number) const;
-
-    /**
-     * Append a new animation frame to the model.
-     *
-     * @param newFrame  Ownership is given to the model.
-     */
-    void addFrame(Frame *newFrame);
 
     /**
      * Returns the total number of model animation frames.
@@ -299,7 +298,7 @@ public:
     DetailLevels const &lods() const;
 
     /// @todo Refactor away.
-    QBitArray const vertexUsage() const;
+    QBitArray const &lodVertexUsage() const;
 
 private:
     DENG2_PRIVATE(d)

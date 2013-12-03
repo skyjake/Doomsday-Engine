@@ -33,7 +33,7 @@ using namespace de;
 
 bool Model::DetailLevel::hasVertex(int number) const
 {
-    return model.vertexUsage().testBit(number * model.lodCount() + level);
+    return model.lodVertexUsage().testBit(number * model.lodCount() + level);
 }
 
 void Model::Frame::bounds(Vector3f &retMin, Vector3f &retMax) const
@@ -100,19 +100,6 @@ static bool readMd2Header(de::FileHandle &file, md2_header_t &hdr)
     return true;
 }
 
-/// @todo We only really need to read the magic bytes and the version here.
-static bool recogniseMd2(de::FileHandle &file)
-{
-    md2_header_t hdr;
-    size_t initPos = file.tell();
-    // Seek to the start of the header.
-    file.seek(0, SeekSet);
-    bool result = (readMd2Header(file, hdr) && LONG(hdr.magic) == MD2_MAGIC);
-    // Return the stream to its original position.
-    file.seek(initPos, SeekSet);
-    return result;
-}
-
 //
 #define DMD_MAGIC 0x4D444D44 ///< "DMDM" = Doomsday/Detailed MoDel Magic
 
@@ -136,18 +123,6 @@ static bool readHeaderDmd(de::FileHandle &file, dmd_header_t &hdr)
     return true;
 }
 
-static bool recogniseDmd(de::FileHandle &file)
-{
-    dmd_header_t hdr;
-    size_t initPos = file.tell();
-    // Seek to the start of the header.
-    file.seek(0, SeekSet);
-    bool result = (readHeaderDmd(file, hdr) && LONG(hdr.magic) == DMD_MAGIC);
-    // Return the stream to its original position.
-    file.seek(initPos, SeekSet);
-    return result;
-}
-
 static void *allocAndLoad(de::FileHandle &file, int offset, int len)
 {
     uint8_t *ptr = (uint8_t *) M_Malloc(len);
@@ -167,12 +142,12 @@ DENG2_PIMPL(Model)
     Flags flags;
     Skins skins;
     Frames frames;
-    int numVertices;       ///< Total number of vertices in the model.
+    int numVertices;
 
-    DetailLevels lods;     ///< Level of detail information.
-    QBitArray vertexUsage; ///< Denotes used vertices for each level of detail.
+    DetailLevels lods;
+    QBitArray lodVertexUsage;
 
-    uint modelId;          ///< Unique id of the model (in the repository).
+    uint modelId; ///< In the repository.
 
     Instance(Public *i)
         : Base(i)
@@ -211,11 +186,10 @@ DENG2_PIMPL(Model)
      */
     static Model *loadMd2(de::FileHandle &file, float aspectScale)
     {
-        // Read the header.
+        // Determine whether this appears to be a MD2 model.
         md2_header_t hdr;
-        bool readHeaderOk = readMd2Header(file, hdr);
-        DENG2_ASSERT(readHeaderOk);
-        DENG2_UNUSED(readHeaderOk); // should this be checked?
+        if(!readMd2Header(file, hdr)) return 0;
+        if(LONG(hdr.magic) != MD2_MAGIC) return 0;
 
         Model *mdl = new Model;
 
@@ -257,7 +231,7 @@ DENG2_PIMPL(Model)
                 }
             }
 
-            mdl->addFrame(frame); // takes owernship
+            mdl->d->frames.append(frame);
         }
         M_Free(frameData);
 
@@ -378,11 +352,10 @@ DENG2_PIMPL(Model)
      */
     static Model *loadDmd(de::FileHandle &file, float aspectScale)
     {
-        // Read the header.
+        // Determine whether this appears to be a DMD model.
         dmd_header_t hdr;
-        bool readHeaderOk = readHeaderDmd(file, hdr);
-        DENG2_ASSERT(readHeaderOk);
-        DENG2_UNUSED(readHeaderOk); // should this be checked?
+        if(!readHeaderDmd(file, hdr)) return 0;
+        if(LONG(hdr.magic) != DMD_MAGIC) return 0;
 
         // Read the chunks.
         dmd_chunk_t chunk;
@@ -467,7 +440,7 @@ DENG2_PIMPL(Model)
                 }
             }
 
-            mdl->addFrame(frame);
+            mdl->d->frames.append(frame);
         }
         M_Free(frameData);
 
@@ -526,15 +499,15 @@ DENG2_PIMPL(Model)
         }
 
         // Determine vertex usage at each LOD level.
-        mdl->d->vertexUsage.resize(info.numVertices * info.numLODs);
-        mdl->d->vertexUsage.fill(false);
+        mdl->d->lodVertexUsage.resize(info.numVertices * info.numLODs);
+        mdl->d->lodVertexUsage.fill(false);
 
         for(int i = 0; i < info.numLODs; ++i)
         for(int k = 0; k < lodInfo[i].numTriangles; ++k)
         for(int m = 0; m < 3; ++m)
         {
             int vertexIndex = SHORT(triangles[i][k].vertexIndices[m]);
-            mdl->d->vertexUsage.setBit(vertexIndex * info.numLODs + i);
+            mdl->d->lodVertexUsage.setBit(vertexIndex * info.numLODs + i);
         }
 
         delete [] lodInfo;
@@ -549,20 +522,20 @@ DENG2_PIMPL(Model)
 
     static Model *interpretDmd(de::FileHandle &hndl, float aspectScale)
     {
-        if(recogniseDmd(hndl))
+        if(Model *mdl = loadDmd(hndl, aspectScale))
         {
             LOG_VERBOSE("Interpreted \"" + NativePath(hndl.file().composePath()).pretty() + "\" as a DMD model.");
-            return loadDmd(hndl, aspectScale);
+            return mdl;
         }
         return 0;
     }
 
     static Model *interpretMd2(de::FileHandle &hndl, float aspectScale)
     {
-        if(recogniseMd2(hndl))
+        if(Model *mdl = loadMd2(hndl, aspectScale))
         {
             LOG_VERBOSE("Interpreted \"" + NativePath(hndl.file().composePath()).pretty() + "\" as a MD2 model.");
-            return loadMd2(hndl, aspectScale);
+            return mdl;
         }
         return 0;
     }
@@ -645,6 +618,30 @@ DENG2_PIMPL(Model)
 Model::Model(Flags flags) : d(new Instance(this))
 {
     setFlags(flags, de::ReplaceFlags);
+}
+
+static bool recogniseDmd(de::FileHandle &file)
+{
+    dmd_header_t hdr;
+    size_t initPos = file.tell();
+    // Seek to the start of the header.
+    file.seek(0, SeekSet);
+    bool result = (readHeaderDmd(file, hdr) && LONG(hdr.magic) == DMD_MAGIC);
+    // Return the stream to its original position.
+    file.seek(initPos, SeekSet);
+    return result;
+}
+
+static bool recogniseMd2(de::FileHandle &file)
+{
+    md2_header_t hdr;
+    size_t initPos = file.tell();
+    // Seek to the start of the header.
+    file.seek(0, SeekSet);
+    bool result = (readMd2Header(file, hdr) && LONG(hdr.magic) == MD2_MAGIC);
+    // Return the stream to its original position.
+    file.seek(initPos, SeekSet);
+    return result;
 }
 
 bool Model::recognise(de::FileHandle &hndl) //static
@@ -752,15 +749,6 @@ Model::Frame &Model::frame(int number) const
     throw MissingFrameError("Model::frame", "Invalid frame number " + String::number(number) + ", valid range is " + Rangei(0, d->frames.count()).asText());
 }
 
-void Model::addFrame(Frame *newFrame)
-{
-    if(!newFrame) return;
-    if(!d->frames.contains(newFrame))
-    {
-        d->frames.append(newFrame);
-    }
-}
-
 Model::Frames const &Model::frames() const
 {
     return d->frames;
@@ -839,7 +827,7 @@ int Model::vertexCount() const
     return d->numVertices;
 }
 
-QBitArray const Model::vertexUsage() const
+QBitArray const &Model::lodVertexUsage() const
 {
-    return d->vertexUsage;
+    return d->lodVertexUsage;
 }

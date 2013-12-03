@@ -1342,7 +1342,7 @@ DENG2_PIMPL(ResourceSystem)
                     // Attempt to load it in now.
                     QScopedPointer<de::FileHandle> hndl(&fileSystem().openFile(foundPath, "rb"));
 
-                    mdl = Model::loadFromFile(*hndl);
+                    mdl = Model::loadFromFile(*hndl, modelAspectMod);
 
                     // We're done with the file.
                     fileSystem().releaseFile(hndl->file());
