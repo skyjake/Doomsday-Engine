@@ -134,11 +134,6 @@ public:
     };
     typedef QList<DetailLevel *> DetailLevels;
 
-public: /// @todo make private:
-    int _numVertices;       ///< Total number of vertices in the model.
-    DetailLevels _lods;     ///< Level of detail information.
-    QBitArray _vertexUsage; ///< Denotes used vertices for each level of detail.
-
 public:
     /**
      * Construct a new 3D model.
@@ -302,6 +297,9 @@ public:
      * Provides readonly access to the level of detail information.
      */
     DetailLevels const &lods() const;
+
+    /// @todo Refactor away.
+    QBitArray const vertexUsage() const;
 
 private:
     DENG2_PRIVATE(d)

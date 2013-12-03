@@ -33,7 +33,7 @@ using namespace de;
 
 bool Model::DetailLevel::hasVertex(int number) const
 {
-    return model._vertexUsage.testBit(number * model.lodCount() + level);
+    return model.vertexUsage().testBit(number * model.lodCount() + level);
 }
 
 void Model::Frame::bounds(Vector3f &retMin, Vector3f &retMax) const
@@ -164,13 +164,19 @@ static float avertexnormals[NUMVERTEXNORMALS][3] = {
 
 DENG2_PIMPL(Model)
 {
-    uint modelId; ///< Unique id of the model (in the repository).
     Flags flags;
     Skins skins;
     Frames frames;
+    int numVertices;       ///< Total number of vertices in the model.
+
+    DetailLevels lods;     ///< Level of detail information.
+    QBitArray vertexUsage; ///< Denotes used vertices for each level of detail.
+
+    uint modelId;          ///< Unique id of the model (in the repository).
 
     Instance(Public *i)
         : Base(i)
+        , numVertices(0)
         , modelId(0)
     {}
 
@@ -179,7 +185,7 @@ DENG2_PIMPL(Model)
         self.clearAllFrames();
     }
 
-    #pragma pack(1)
+#pragma pack(1)
     struct md2_triangleVertex_t
     {
         byte vertex[3];
@@ -198,7 +204,7 @@ DENG2_PIMPL(Model)
         float s, t;
         int index;
     };
-    #pragma pack()
+#pragma pack()
 
     /**
      * Note vertex Z/Y are swapped here (ordered XYZ in the serialized data).
@@ -213,7 +219,7 @@ DENG2_PIMPL(Model)
 
         Model *mdl = new Model;
 
-        mdl->_numVertices = hdr.numVertices;
+        mdl->d->numVertices = hdr.numVertices;
 
         // Load and convert to DMD.
         uint8_t *frameData = (uint8_t *) allocAndLoad(file, hdr.offsetFrames, hdr.frameSize * hdr.numFrames);
@@ -255,8 +261,8 @@ DENG2_PIMPL(Model)
         }
         M_Free(frameData);
 
-        mdl->_lods.append(new ModelDetailLevel(*mdl, 0));
-        ModelDetailLevel &lod0 = *mdl->_lods.last();
+        mdl->d->lods.append(new ModelDetailLevel(*mdl, 0));
+        ModelDetailLevel &lod0 = *mdl->d->lods.last();
 
         uint8_t *commandData = (uint8_t *) allocAndLoad(file, hdr.offsetGlCommands, 4 * hdr.numGlCommands);
         for(uint8_t const *pos = commandData; *pos;)
@@ -303,13 +309,15 @@ DENG2_PIMPL(Model)
         DMC_INFO /// Required; will be expected to exist.
     };
 
-    #pragma pack(1)
-    typedef struct {
+#pragma pack(1)
+    struct dmd_chunk_t
+    {
         int type;
         int length; /// Next chunk follows...
-    } dmd_chunk_t;
+    };
 
-    typedef struct {
+    struct dmd_info_t
+    {
         int skinWidth;
         int skinHeight;
         int frameSize;
@@ -323,32 +331,36 @@ DENG2_PIMPL(Model)
         int offsetFrames;
         int offsetLODs;
         int offsetEnd;
-    } dmd_info_t;
+    };
 
-    typedef struct {
+    struct dmd_levelOfDetail_t
+    {
         int numTriangles;
         int numGlCommands;
         int offsetTriangles;
         int offsetGlCommands;
-    } dmd_levelOfDetail_t;
+    };
 
-    typedef struct {
+    struct dmd_packedVertex_t
+    {
         byte vertex[3];
         unsigned short normal; /// Yaw and pitch.
-    } dmd_packedVertex_t;
+    };
 
-    typedef struct {
+    struct dmd_packedFrame_t
+    {
         float scale[3];
         float translate[3];
         char name[16];
         dmd_packedVertex_t vertices[1]; // dmd_info_t::numVertices size
-    } dmd_packedFrame_t;
+    };
 
-    typedef struct {
+    struct dmd_triangle_t
+    {
         short vertexIndices[3];
         short textureIndices[3];
-    } dmd_triangle_t;
-    #pragma pack()
+    };
+#pragma pack()
 
     /**
      * Packed: pppppppy yyyyyyyy. Yaw is on the XY plane.
@@ -410,7 +422,7 @@ DENG2_PIMPL(Model)
 
         Model *mdl = new Model;
 
-        mdl->_numVertices = info.numVertices;
+        mdl->d->numVertices = info.numVertices;
 
         // Allocate and load in the data. (Note: numSkins may be zero.)
         file.seek(info.offsetSkins, SeekSet);
@@ -428,15 +440,15 @@ DENG2_PIMPL(Model)
             Vector3f const translation(FLOAT(pfr->translate[0]), FLOAT(pfr->translate[2]), FLOAT(pfr->translate[1]));
             String const frameName = pfr->name;
 
-            ModelFrame *frame = new ModelFrame(*mdl, frameName);
+            Frame *frame = new Frame(*mdl, frameName);
             frame->vertices.reserve(info.numVertices);
 
             // Scale and translate each vertex.
             dmd_packedVertex_t const *pVtx = pfr->vertices;
             for(int k = 0; k < info.numVertices; ++k, ++pVtx)
             {
-                frame->vertices.append(ModelFrame::Vertex());
-                ModelFrame::Vertex &vtx = frame->vertices.last();
+                frame->vertices.append(Frame::Vertex());
+                Frame::Vertex &vtx = frame->vertices.last();
 
                 vtx.pos = Vector3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
                               * scale + translation;
@@ -476,8 +488,8 @@ DENG2_PIMPL(Model)
 
         for(int i = 0; i < info.numLODs; ++i)
         {
-            mdl->_lods.append(new ModelDetailLevel(*mdl, i));
-            ModelDetailLevel &lod = *mdl->_lods.last();
+            mdl->d->lods.append(new DetailLevel(*mdl, i));
+            DetailLevel &lod = *mdl->d->lods.last();
 
             triangles[i] = (dmd_triangle_t *) allocAndLoad(file, lodInfo[i].offsetTriangles,
                                                            sizeof(dmd_triangle_t) * lodInfo[i].numTriangles);
@@ -488,8 +500,8 @@ DENG2_PIMPL(Model)
             {
                 int count = LONG( *(int *) pos ); pos += 4;
 
-                lod.primitives.append(Model::Primitive());
-                Model::Primitive &prim = lod.primitives.last();
+                lod.primitives.append(Primitive());
+                Primitive &prim = lod.primitives.last();
 
                 // The type of primitive depends on the sign of the element count.
                 prim.triFan = (count < 0);
@@ -503,8 +515,8 @@ DENG2_PIMPL(Model)
                 {
                     md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
 
-                    prim.elements.append(Model::Primitive::Element());
-                    Model::Primitive::Element &elem = prim.elements.last();
+                    prim.elements.append(Primitive::Element());
+                    Primitive::Element &elem = prim.elements.last();
 
                     elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
                     elem.index    = LONG(v->index);
@@ -514,15 +526,15 @@ DENG2_PIMPL(Model)
         }
 
         // Determine vertex usage at each LOD level.
-        mdl->_vertexUsage.resize(info.numVertices * info.numLODs);
-        mdl->_vertexUsage.fill(false);
+        mdl->d->vertexUsage.resize(info.numVertices * info.numLODs);
+        mdl->d->vertexUsage.fill(false);
 
         for(int i = 0; i < info.numLODs; ++i)
         for(int k = 0; k < lodInfo[i].numTriangles; ++k)
         for(int m = 0; m < 3; ++m)
         {
             int vertexIndex = SHORT(triangles[i][k].vertexIndices[m]);
-            mdl->_vertexUsage.setBit(vertexIndex * info.numLODs + i);
+            mdl->d->vertexUsage.setBit(vertexIndex * info.numLODs + i);
         }
 
         delete [] lodInfo;
@@ -630,9 +642,7 @@ DENG2_PIMPL(Model)
 #endif
 };
 
-Model::Model(Flags flags)
-    : _numVertices(0)
-    , d(new Instance(this))
+Model::Model(Flags flags) : d(new Instance(this))
 {
     setFlags(flags, de::ReplaceFlags);
 }
@@ -663,7 +673,6 @@ Model *Model::loadFromFile(de::FileHandle &hndl, float aspectScale) //static
 
     // Firstly, attempt to guess the resource type from the file extension.
     ModelFileType *rtypeGuess = 0;
-    // An extension is required for this.
     String filePath = hndl.file().composePath();
     String ext      = filePath.fileNameExtension();
     if(!ext.isEmpty())
@@ -683,8 +692,7 @@ Model *Model::loadFromFile(de::FileHandle &hndl, float aspectScale) //static
         }
     }
 
-    // Not yet interpreted - try each recognisable format in order.
-    // Try each recognisable format instead.
+    // Not yet interpreted - try each known format in order.
     for(int i = 0; !modelTypes[i].name.isEmpty(); ++i)
     {
         ModelFileType const &modelType = modelTypes[i];
@@ -811,14 +819,14 @@ Model::DetailLevel &Model::lod(int level) const
 {
     if(hasLod(level))
     {
-        return *_lods.at(level);
+        return *d->lods.at(level);
     }
-    throw MissingDetailLevelError("Model::lod", "Invalid detail level " + String::number(level) + ", valid range is " + Rangei(0, _lods.count()).asText());
+    throw MissingDetailLevelError("Model::lod", "Invalid detail level " + String::number(level) + ", valid range is " + Rangei(0, d->lods.count()).asText());
 }
 
 Model::DetailLevels const &Model::lods() const
 {
-    return _lods;
+    return d->lods;
 }
 
 Model::Primitives const &Model::primitives() const
@@ -828,5 +836,10 @@ Model::Primitives const &Model::primitives() const
 
 int Model::vertexCount() const
 {
-    return _numVertices;
+    return d->numVertices;
+}
+
+QBitArray const Model::vertexUsage() const
+{
+    return d->vertexUsage;
 }
