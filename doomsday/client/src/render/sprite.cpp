@@ -39,8 +39,11 @@
 #include "resource/sprites.h"
 
 #include "render/vissprite.h"
-
 #include "render/sprite.h"
+
+#include <de/GLState>
+#include <de/GLTarget>
+#include <de/GLTexture>
 
 using namespace de;
 
@@ -104,9 +107,15 @@ void Rend_Draw3DPlayerSprites()
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
-    // Clear Z buffer. This will prevent the psprites from being clipped
-    // by nearby polygons.
-    glClear(GL_DEPTH_BUFFER_BIT);
+    bool zBufferHasBeenSetUp = false;
+
+    /// @todo Set up an easier API for switching depth buffer temporarily
+
+    GLTarget &target = GLState::current().target();
+    GLTexture *originalDepth = target.attachedTexture(GLTarget::DepthStencil);
+    DENG2_ASSERT(originalDepth != 0);
+
+    static GLTexture localDepth;
 
     rendmodelparams_t parm;
     for(int i = 0; i < DDMAXPSPRITES; ++i)
@@ -115,8 +124,26 @@ void Rend_Draw3DPlayerSprites()
 
         if(spr->type != VPSPR_MODEL) continue; // Not used.
 
+        if(!zBufferHasBeenSetUp)
+        {
+            // Resize the local depth buffer to match target size.
+            if(localDepth.size() != target.size())
+            {
+                localDepth.setDepthStencilContent(target.size());
+            }
+            target.replaceAttachment(GLTarget::DepthStencil, localDepth);
+            target.clear(GLTarget::DepthStencil);
+            zBufferHasBeenSetUp = true;
+        }
+
         setupModelParamsForVisPSprite(&parm, spr);
         Rend_RenderModel(&parm);
+    }
+
+    // Restore the old depth/stencil buffer.
+    if(zBufferHasBeenSetUp)
+    {
+        target.replaceAttachment(GLTarget::DepthStencil, *originalDepth);
     }
 }
 

@@ -819,6 +819,8 @@ void ClientWindow::drawGameContentToTexture(GLTexture &texture)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    /// @todo Use GLFramebuffer
+
     GLTarget offscreen(texture, GLTarget::DepthStencil);
     GLState::push()
             .setTarget(offscreen)

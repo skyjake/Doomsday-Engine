@@ -184,6 +184,14 @@ public:
     GLTexture *attachedTexture(Flags const &attachment) const;
 
     /**
+     * Replaces a currently attached texture with another.
+     *
+     * @param attachment  Which attachment.
+     * @param texture     New texture to use as the attachment.
+     */
+    void replaceAttachment(Flags const &attachment, GLTexture &texture);
+
+    /**
      * Sets the subregion inside the render target where scissor and viewport
      * will be scaled into. Scissor and viewport can still be defined as if the
      * entire window was in use; this only applies an offset and scaling to

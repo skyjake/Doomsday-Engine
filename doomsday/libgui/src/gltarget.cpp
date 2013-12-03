@@ -62,6 +62,18 @@ DENG2_OBSERVES(Asset, Deletion)
         return ColorBuffer; // should not be reached
     }
 
+    static GLenum flagsToGLAttachment(Flags const &flags)
+    {
+        DENG2_ASSERT(!flags.testFlag(ColorDepth));
+        DENG2_ASSERT(!flags.testFlag(ColorDepthStencil));
+
+        return flags == Color?   GL_COLOR_ATTACHMENT0  :
+               flags == Depth?   GL_DEPTH_ATTACHMENT   :
+               flags == Stencil? GL_STENCIL_ATTACHMENT :
+                                 GL_DEPTH_STENCIL_ATTACHMENT;
+    }
+
+
     GLuint fbo;
     GLuint renderBufs[MAX_ATTACHMENTS];
     GLTexture *bufTextures[MAX_ATTACHMENTS];
@@ -251,6 +263,18 @@ DENG2_OBSERVES(Asset, Deletion)
 
         releaseRenderBuffers();
         allocRenderBuffers();
+    }
+
+    void replace(GLenum attachment, GLTexture &newTexture)
+    {
+        DENG2_ASSERT(self.isReady());       // must already be inited
+        DENG2_ASSERT(bufTextures[attachmentToId(attachment)] != 0); // must have an attachment already
+
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        attachTexture(newTexture, attachment);
+
+        // Restore previous target.
+        GLState::current().target().glBind();
     }
 
     void validate()
@@ -460,6 +484,13 @@ void GLTarget::resize(Size const &size)
 GLTexture *GLTarget::attachedTexture(Flags const &attachment) const
 {
     return d->bufferTexture(attachment);
+}
+
+void GLTarget::replaceAttachment(Flags const &attachment, GLTexture &texture)
+{
+    DENG2_ASSERT(!d->isDefault());
+
+    d->replace(d->flagsToGLAttachment(attachment), texture);
 }
 
 GLuint GLTarget::glName() const
