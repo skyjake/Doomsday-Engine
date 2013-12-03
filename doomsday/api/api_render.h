@@ -1,4 +1,4 @@
-/** @file api_render.h Public API of the renderer.
+/** @file api_render.h  Public API of the renderer.
  * @ingroup render
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>

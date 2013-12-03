@@ -1,5 +1,6 @@
 /** @file resourcesystem.cpp  Resource subsystem.
  *
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -32,7 +33,6 @@
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
-#include "resource/models.h"
 #ifdef __CLIENT__
 #  include "BitmapFont"
 #  include "CompositeBitmapFont"
@@ -1220,7 +1220,7 @@ DENG2_PIMPL(ResourceSystem)
     {
         if(!mf.subCount()) return;
 
-        submodeldef_t &smf = mf.subModelDef(0);
+        SubmodelDef &smf = mf.subModelDef(0);
 
         // No model to scale?
         if(!smf.modelId) return;
@@ -1319,7 +1319,7 @@ DENG2_PIMPL(ResourceSystem)
         for(uint i = 0; i < def.subCount(); ++i)
         {
             ded_submodel_t const *subdef = &def.sub(i);
-            submodeldef_t *sub = modef->addSub();
+            SubmodelDef *sub = modef->addSub();
 
             sub->modelId = 0;
 
@@ -3219,7 +3219,7 @@ void ResourceSystem::setModelDefFrame(ModelDef &modef, int frame)
 {
     for(uint i = 0; i < modef.subCount(); ++i)
     {
-        submodeldef_t &subdef = modef.subModelDef(i);
+        SubmodelDef &subdef = modef.subModelDef(i);
         if(subdef.modelId == NOMODELID) continue;
 
         // Modify the modeldef itself: set the current frame.
@@ -3236,7 +3236,7 @@ void ResourceSystem::cache(ModelDef *modelDef)
 
     for(uint sub = 0; sub < modelDef->subCount(); ++sub)
     {
-        submodeldef_t &subdef = modelDef->subModelDef(sub);
+        SubmodelDef &subdef = modelDef->subModelDef(sub);
         Model *mdl = model(subdef.modelId);
         if(!mdl) continue;
 

@@ -189,7 +189,7 @@ DENG2_PIMPL(Model)
         // Determine whether this appears to be a MD2 model.
         md2_header_t hdr;
         if(!readMd2Header(file, hdr)) return 0;
-        if(LONG(hdr.magic) != MD2_MAGIC) return 0;
+        if(hdr.magic != MD2_MAGIC) return 0;
 
         Model *mdl = new Model;
 
@@ -355,7 +355,7 @@ DENG2_PIMPL(Model)
         // Determine whether this appears to be a DMD model.
         dmd_header_t hdr;
         if(!readHeaderDmd(file, hdr)) return 0;
-        if(LONG(hdr.magic) != DMD_MAGIC) return 0;
+        if(hdr.magic != DMD_MAGIC) return 0;
 
         // Read the chunks.
         dmd_chunk_t chunk;

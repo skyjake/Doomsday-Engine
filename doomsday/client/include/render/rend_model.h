@@ -23,7 +23,7 @@
 #ifndef DENG_CLIENT_RENDER_MODEL_H
 #define DENG_CLIENT_RENDER_MODEL_H
 
-#include "resource/models.h"
+#include "ModelDef"
 
 class TextureVariantSpec;
 

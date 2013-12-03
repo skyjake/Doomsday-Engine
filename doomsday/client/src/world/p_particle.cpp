@@ -40,8 +40,6 @@
 #include "render/r_main.h" // validCount
 #include "render/rend_model.h"
 
-#include "resource/models.h"
-
 #include <de/String>
 #include <de/Time>
 #include <de/fixedpoint.h>

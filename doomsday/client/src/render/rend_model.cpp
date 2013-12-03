@@ -465,7 +465,7 @@ static ModelFrame &visibleModelFrame(ModelDef &modef, int subnumber, int mobjId)
                     QString("Model has %1 submodels, but submodel #%2 was requested")
                         .arg(modef.subCount()).arg(subnumber));
     }
-    submodeldef_t const &sub = modef.subModelDef(subnumber);
+    SubmodelDef const &sub = modef.subModelDef(subnumber);
 
     int curFrame = sub.frame;
     if(modef.flags & MFF_IDFRAME)
@@ -732,7 +732,7 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
         return 0;
     }
 
-    submodeldef_t &smf = mf.subModelDef(submodel);
+    SubmodelDef &smf = mf.subModelDef(submodel);
     Model *mdl = App_ResourceSystem().model(smf.modelId);
     int skin = smf.skin;
 

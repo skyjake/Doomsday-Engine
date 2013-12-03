@@ -1,10 +1,9 @@
-/**
- * @file sky.h Sky Sphere and 3D Models
+/**  @file sky.h  Sky Sphere and 3D Models
  *
  * This version supports only two sky layers. (More would be a waste of resources?)
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,11 +20,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_SKY_H
-#define LIBDENG_RENDER_SKY_H
+#ifndef DENG_CLIENT_RENDER_SKY_H
+#define DENG_CLIENT_RENDER_SKY_H
 
 #include "color.h"
-#include "resource/models.h"
 #include "Material"
 
 #define MAX_SKY_LAYERS                   ( 2 )
@@ -129,4 +127,4 @@ void Sky_Render(void);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_RENDER_SKY_H */
+#endif // DENG_CLIENT_RENDER_SKY_H

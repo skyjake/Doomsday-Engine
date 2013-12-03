@@ -25,7 +25,6 @@
 
 #include "resource/colorpalettes.h"
 #include "resource/abstractfont.h"
-#include "resource/models.h"
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"
 #include "resource/sprite.h"
