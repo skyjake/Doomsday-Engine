@@ -2936,6 +2936,8 @@ static void generateDecorationFlares(Map &map)
     foreach(Lumobj *lum, map.lumobjs())
     {
         lum->generateFlare(viewPos, R_ViewerLumobjDistance(lum->indexInMap()));
+
+        /// @todo mark these light sources visible for LensFx
     }
 }
 

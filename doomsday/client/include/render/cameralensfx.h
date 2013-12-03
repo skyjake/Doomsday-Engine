@@ -19,6 +19,8 @@
 #ifndef DENG_CLIENT_CAMERALENSFX_H
 #define DENG_CLIENT_CAMERALENSFX_H
 
+#include "ilightsource.h"
+
 void LensFx_Register();
 void LensFx_Init();
 void LensFx_Shutdown();
@@ -46,5 +48,10 @@ void LensFx_BeginFrame(int playerNum);
  * top.
  */
 void LensFx_EndFrame();
+
+/**
+ * Marks a light potentially visible in the current frame.
+ */
+void LensFx_MarkLightVisible(ILightSource const &lightSource);
 
 #endif // DENG_CLIENT_CAMERALENSFX_H

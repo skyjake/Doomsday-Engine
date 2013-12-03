@@ -75,6 +75,7 @@ struct ConsoleEffectStack
 
 static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
+#define IDX_LENS_FLARES         2
 #define IDX_POST_PROCESSING     3
 
 D_CMD(PostFx)
@@ -179,4 +180,12 @@ void LensFx_EndFrame()
     {
         effects.at(i)->endFrame();
     }
+}
+
+void LensFx_MarkLightVisibleInFrame(ILightSource const &lightSource)
+{
+    ConsoleEffectStack::EffectList const &effects = fxConsole[fxFramePlayerNum].effects;
+
+    static_cast<fx::LensFlares *>(effects.at(IDX_LENS_FLARES))->
+            markLightPotentiallyVisibleForCurrentFrame(&lightSource);
 }
