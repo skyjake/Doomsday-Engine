@@ -154,6 +154,8 @@ public:
      * and a number for the rotation, A sprite that is flippable will have an
      * additional letter/number appended.  The rotation character can be 0 to
      * signify no rotations.
+     *
+     * Can be reinitalized, clearing all sprites in the process.
      */
     void initSprites();
 
@@ -521,6 +523,7 @@ public:
 
     /**
      * @pre States must be initialized before this.
+     * Can be reinitalized, clearing all models in the process.
      */
     void initModels();
 

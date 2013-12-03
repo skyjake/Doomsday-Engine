@@ -339,7 +339,7 @@ static void setupSkyModels(ded_sky_t *def)
     for(int i = 0; i < MAX_SKY_MODELS; ++i, modef++, sm++)
     {
         // Is the model ID set?
-        sm->model = Models_ModelDef(modef->id);
+        sm->model = App_ResourceSystem().modelDef(modef->id);
         if(!sm->model || !sm->model->subCount())
         {
             continue;
@@ -366,7 +366,7 @@ void Sky_Cache()
         for(int i = 0; i < MAX_SKY_MODELS; ++i, sky++)
         {
             if(!sky->def) continue;
-            Models_Cache(sky->model);
+            App_ResourceSystem().cache(sky->model);
         }
     }
 }
@@ -694,7 +694,7 @@ static void renderSkyModels()
         parms.inter = inter;
         parms.mf = sky->model;
         parms.alwaysInterpolate = true;
-        Models_SetFrame(*sky->model, sky->frame);
+        App_ResourceSystem().setModelDefFrame(*sky->model, sky->frame);
         parms.yaw = sky->yaw;
         for(int c = 0; c < 4; ++c)
         {

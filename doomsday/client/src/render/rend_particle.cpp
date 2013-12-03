@@ -418,7 +418,7 @@ static void setupModelParamsForParticle(drawmodelparams_t *params,
     params->distance = dist;
 
     params->extraScale = size; // Extra scaling factor.
-    params->mf = Models_ModelDef(dst->model);
+    params->mf = App_ResourceSystem().modelDef(dst->model);
     params->alwaysInterpolate = true;
 
     int frame;
@@ -433,7 +433,7 @@ static void setupModelParamsForParticle(drawmodelparams_t *params,
         params->inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
     }
 
-    Models_SetFrame(*params->mf, frame);
+    App_ResourceSystem().setModelDefFrame(*params->mf, frame);
     // Set the correct orientation for the particle.
     if(params->mf->testSubFlag(0, MFF_MOVEMENT_YAW))
     {

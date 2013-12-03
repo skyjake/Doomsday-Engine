@@ -7,6 +7,7 @@
 #include "api_render.h"
 #include "render/r_main.h"
 #include "render/billboard.h" // Rend_SpriteMaterialSpec
+#include "render/rend_model.h"
 
 #include "resource/models.h"
 #include "resource/sprite.h"
@@ -23,9 +24,9 @@ DENG_EXTERN_C int M_ScreenShot(const char* name, int bits);
 DENG_EXTERN_C void Models_CacheForState(int stateIndex)
 {
 #ifdef __CLIENT__
-    if(ModelDef *modelDef = Models_ModelDefForState(stateIndex))
+    if(ModelDef *modelDef = App_ResourceSystem().modelDefForState(stateIndex))
     {
-        Models_Cache(modelDef);
+        App_ResourceSystem().cache(modelDef);
     }
 #endif
 }
@@ -38,7 +39,8 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
 {
     LOG_AS("Rend.CacheForMobjType");
 
-    if(novideo || !((useModels && precacheSkins) || precacheSprites)) return;
+    if(novideo) return;
+    if(!((useModels && precacheSkins) || precacheSprites)) return;
     if(num < 0 || num >= defs.count.mobjs.num) return;
 
     de::MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();

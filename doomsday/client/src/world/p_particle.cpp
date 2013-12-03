@@ -27,18 +27,20 @@
 #include "de_play.h"
 #include "de_audio.h"
 #include "clientapp.h"
+#include "m_misc.h"
+#include "m_profiler.h"
 
 #include "Face"
 
 #include "world/generators.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
+#include "api_map.h"
 
 #include "render/r_main.h" // validCount
+#include "render/rend_model.h"
+
 #include "resource/models.h"
-#include "api_map.h"
-#include "m_misc.h"
-#include "m_profiler.h"
 
 #include <de/String>
 #include <de/Time>
@@ -497,7 +499,7 @@ static void P_NewParticle(ptcgen_t *gen)
     // Check for model-only generators.
     if(gen->source)
     {
-        inter = Models_ModelDefForMobj(gen->source, &mf, &nextmf);
+        inter = App_ResourceSystem().modelDefForMobj(gen->source, &mf, &nextmf);
         if(((!mf || !useModels) && def->flags & PGF_MODEL_ONLY) ||
            (mf && useModels && mf->flags & MFF_NO_PARTICLES))
             return;

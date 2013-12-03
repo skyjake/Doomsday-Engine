@@ -1892,17 +1892,17 @@ void Def_PostInit(void)
 
             sprintf(name, "Particle%02i", st->type - PTC_MODEL);
 
-            ModelDef *modef = Models_ModelDef(name);
+            ModelDef *modef = App_ResourceSystem().modelDef(name);
             if(!modef || modef->subModelId(0) == NOMODELID)
             {
                 st->model = -1;
                 continue;
             }
 
-            Model *mdl = Models_Model(modef->subModelId(0));
+            Model *mdl = App_ResourceSystem().model(modef->subModelId(0));
             DENG2_ASSERT(mdl != 0);
 
-            st->model = Models_IndexOf(modef);
+            st->model = App_ResourceSystem().indexOf(modef);
             st->frame = mdl->frameNumber(st->frameName);
             if(st->frame < 0) st->frame = 0;
             if(st->endFrameName[0])

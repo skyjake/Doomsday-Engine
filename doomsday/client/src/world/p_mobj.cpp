@@ -40,6 +40,7 @@
 #ifdef __CLIENT__
 #  include "Lumobj"
 #  include "render/rend_main.h"
+#  include "render/rend_model.h"
 #  include "render/billboard.h"
 
 #  include "gl/gl_tex.h"
@@ -295,7 +296,7 @@ static ModelDef *currentModelDefForMobj(mobj_t const &mo)
     if(useModels)
     {
         ModelDef *mf = 0, *nextmf = 0;
-        Models_ModelDefForMobj(&mo, &mf, &nextmf);
+        App_ResourceSystem().modelDefForMobj(&mo, &mf, &nextmf);
         return mf;
     }
     return 0;

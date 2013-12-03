@@ -1339,7 +1339,7 @@ DENG2_PIMPL(ResourceSystem)
                 Model *mdl = self.model(modelId);
                 if(!mdl)
                 {
-                    // Attempt to interpret and load this model file.
+                    // Attempt to load it in now.
                     QScopedPointer<de::FileHandle> hndl(&fileSystem().openFile(foundPath, "rb"));
 
                     mdl = Model::loadFromFile(*hndl);
@@ -1350,7 +1350,7 @@ DENG2_PIMPL(ResourceSystem)
                     // Loaded?
                     if(mdl)
                     {
-                        // Allocate a new model_t.
+                        // Add it to the repository,
                         mdl->setModelId(modelId);
                         modelRepository->setUserPointer(modelId, mdl);
 
@@ -3101,10 +3101,11 @@ void ResourceSystem::initModels()
     LOG_VERBOSE("Initializing Models...");
     Time begunAt;
 
-    d->modelRepository = new StringPool();
-
     d->clearModelList();
     d->modefs.clear();
+
+    delete d->modelRepository;
+    d->modelRepository = new StringPool();
 
     // There can't be more modeldefs than there are DED Models.
     for(uint i = 0; i < defs.models.size(); ++i)
