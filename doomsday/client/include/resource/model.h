@@ -20,6 +20,7 @@
 #ifndef DENG_RESOURCE_MODEL_H
 #define DENG_RESOURCE_MODEL_H
 
+#include "filehandle.h"
 #include "Texture"
 #include <de/Error>
 #include <de/String>
@@ -142,10 +143,25 @@ public:
     /**
      * Construct a new 3D model.
      */
-    Model(uint modelId, Flags flags = 0);
+    Model(Flags flags = 0);
 
+    /**
+     * Attempt to load a new model resource from the specified @a file.
+     *
+     * @param aspectScale  Optionally apply y-aspect scaling.
+     */
+    static Model *loadFromFile(de::FileHandle &file, float aspectScale = 1);
+
+    /**
+     * Returns the unique identifier associated with the model.
+     */
     uint modelId() const;
 
+    /**
+     * Change the unique identifier associated with the model.
+     *
+     * @param newId  New identifier to apply.
+     */
     void setModelId(uint newId);
 
     /**

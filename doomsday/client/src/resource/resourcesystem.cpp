@@ -73,6 +73,7 @@
 #endif
 #include "uri.hh"
 #include <de/stack.h> /// @todo remove me
+#include <de/mathutil.h> // M_CycleIntoRange()
 #include <QList>
 #include <QMap>
 #include <QtAlgorithms>
@@ -1049,17 +1050,10 @@ DENG2_PIMPL(ResourceSystem)
     }
 
 #ifdef __CLIENT__
-    Model *modelForId(modelid_t modelId, bool canCreate = false)
+    Model *modelForId(modelid_t modelId)
     {
         DENG2_ASSERT(modelRepository);
-        Model *mdl = reinterpret_cast<Model *>(modelRepository->userPointer(modelId));
-        if(!mdl && canCreate)
-        {
-            // Allocate a new model_t.
-            mdl = new Model(modelId);
-            modelRepository->setUserPointer(modelId, mdl);
-        }
-        return mdl;
+        return reinterpret_cast<Model *>(modelRepository->userPointer(modelId));
     }
 
     inline String const &findModelPath(modelid_t id)
@@ -1157,6 +1151,65 @@ DENG2_PIMPL(ResourceSystem)
         }
 
         return -1;
+    }
+
+    void defineAllSkins(Model &mdl)
+    {
+        String const &modelFilePath = findModelPath(mdl.modelId());
+
+        int numFoundSkins = 0;
+        for(int i = 0; i < mdl.skinCount(); ++i)
+        {
+            ModelSkin &skin = mdl.skin(i);
+
+            if(skin.name.isEmpty())
+                continue;
+
+            try
+            {
+                de::Uri foundResourceUri(Path(findSkinPath(skin.name, modelFilePath)));
+
+                skin.texture = self.defineTexture("ModelSkins", foundResourceUri);
+
+                // We have found one more skin for this model.
+                numFoundSkins += 1;
+            }
+            catch(FS1::NotFoundError const&)
+            {
+                LOG_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\", ignoring.")
+                    << skin.name << i << NativePath(modelFilePath).pretty();
+            }
+        }
+
+        if(!numFoundSkins)
+        {
+            // Lastly try a skin named similarly to the model in the same directory.
+            de::Uri searchPath(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
+
+            try
+            {
+                String foundPath = fileSystem().findPath(searchPath, RLF_DEFAULT,
+                                                         self.resClass(RC_GRAPHIC));
+                // Ensure the found path is absolute.
+                foundPath = App_BasePath() / foundPath;
+
+                defineSkinAndAddToModelIndex(mdl, foundPath);
+                // We have found one more skin for this model.
+                numFoundSkins = 1;
+
+                LOG_INFO("Assigned fallback skin \"%s\" to index #0 for model \"%s\".")
+                    << NativePath(foundPath).pretty()
+                    << NativePath(modelFilePath).pretty();
+            }
+            catch(FS1::NotFoundError const&)
+            {} // Ignore this error.
+        }
+
+        if(!numFoundSkins)
+        {
+            LOG_WARNING("Failed to locate a skin for model \"%s\". This model will be rendered without a skin.")
+                << NativePath(modelFilePath).pretty();
+        }
     }
 
     /**
@@ -1281,7 +1334,39 @@ DENG2_PIMPL(ResourceSystem)
                 // Ensure the found path is absolute.
                 foundPath = App_BasePath() / foundPath;
 
-                Model *mdl = loadModel(foundPath);
+                // Have we already loaded this?
+                modelid_t modelId = modelRepository->intern(foundPath);
+                Model *mdl = self.model(modelId);
+                if(!mdl)
+                {
+                    // Attempt to interpret and load this model file.
+                    QScopedPointer<de::FileHandle> hndl(&fileSystem().openFile(foundPath, "rb"));
+
+                    mdl = Model::loadFromFile(*hndl);
+
+                    // We're done with the file.
+                    fileSystem().releaseFile(hndl->file());
+
+                    // Loaded?
+                    if(mdl)
+                    {
+                        // Allocate a new model_t.
+                        mdl->setModelId(modelId);
+                        modelRepository->setUserPointer(modelId, mdl);
+
+                        defineAllSkins(*mdl);
+
+                        // Enlarge the vertex buffers in preparation for drawing of this model.
+                        if(!Rend_ModelExpandVertexBuffers(mdl->vertexCount()))
+                        {
+                            LOG_WARNING("Model \"%s\" contains more than %u max vertices (%i), it will not be rendered.")
+                                << NativePath(foundPath).pretty()
+                                << uint(RENDER_MAX_MODEL_VERTS) << mdl->vertexCount();
+                        }
+                    }
+                }
+
+                // Loaded?
                 if(!mdl) continue;
 
                 sub->modelId    = mdl->modelId();
