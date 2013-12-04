@@ -61,8 +61,9 @@ fi
 if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     $CP plugins/fluidsynth/audio_fluidsynth.bundle $PLUGDIR/
 
+    # Assumption: glib-2.0 and gettext installed using Homebrew!
 	GLIB_VER=`pkg-config --modversion glib-2.0`
-    GETTEXT_VER=0.18.2
+    GETTEXT_VER=`ls /usr/local/Cellar/gettext/ | sort -n | tail -n1`
 
     echo "Installing deps for audio_fluidsynth..."
 	echo "- glib version: $GLIB_VER"
