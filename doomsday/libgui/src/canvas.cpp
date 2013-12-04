@@ -375,18 +375,32 @@ void Canvas::notifyReady()
     d->readyNotified = true;
 
 #if 1
-    {
-        d->framebufMode = Instance::ManualFramebuffer;
-        d->framebuf.glInit();
+    d->framebufMode = Instance::ManualFramebuffer;
+    d->framebuf.glInit();
 
-        // Set up a rendering target with depth texture.
-        LOG_DEBUG("Using manually configured framebuffer in Canvas, size ") << size().asText();
-        d->reconfigureFramebuffer();
-    }
+    // Set up a rendering target with depth texture.
+    LOG_DEBUG("Using manually configured framebuffer in Canvas, size ") << size().asText();
+    d->reconfigureFramebuffer();
 #endif
 
-    LOG_DEBUG("Notifying GL ready");
+    // Print some information.
+    QGLFormat const fmt = format();
+    if(fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3))
+        LOG_INFO("OpenGL 3.3 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_2)))
+        LOG_INFO("OpenGL 3.2 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_1)))
+        LOG_INFO("OpenGL 3.1 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_0)))
+        LOG_INFO("OpenGL 3.0 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_1)))
+        LOG_INFO("OpenGL 2.1 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_0)))
+        LOG_INFO("OpenGL 2.0 supported");
+    else
+        LOG_WARNING("OpenGL 2.0 is not supported!");
 
+    LOG_DEBUG("Notifying GL ready");
     DENG2_FOR_AUDIENCE(GLReady, i) i->canvasGLReady(*this);
 
     // This Canvas instance might have been destroyed now.
