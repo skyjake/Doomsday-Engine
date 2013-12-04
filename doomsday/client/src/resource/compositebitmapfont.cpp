@@ -130,7 +130,7 @@ void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
 }
 
 /// @todo fixme: Do not assume the texture-usage context is @c TC_UI.
-static TextureVariantSpec &glyphTextureSpec()
+static TextureVariantSpec const &glyphTextureSpec()
 {
     return ClientApp::resourceSystem().textureSpec(TC_UI,
         TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN, 0, 0, 0, GL_CLAMP_TO_EDGE,

@@ -5159,14 +5159,14 @@ MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
     return Rend_MapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
 }
 
-TextureVariantSpec &Rend_MapSurfaceShinyTextureSpec()
+TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec()
 {
     return ClientApp::resourceSystem().textureSpec(TC_MAPSURFACE_REFLECTION,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1, false,
         false, false, false);
 }
 
-TextureVariantSpec &Rend_MapSurfaceShinyMaskTextureSpec()
+TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec()
 {
     return ClientApp::resourceSystem().textureSpec(TC_MAPSURFACE_REFLECTIONMASK,
         0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, false, false, false);

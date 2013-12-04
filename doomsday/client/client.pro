@@ -170,6 +170,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/SettingsRegister \
     include/SignalAction \
     include/SkyFixEdge \
+    include/Sprite \
     include/Surface \
     include/SurfaceDecorator \
     include/TextDrawable \

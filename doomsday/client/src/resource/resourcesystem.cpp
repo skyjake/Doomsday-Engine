@@ -518,7 +518,7 @@ DENG2_PIMPL(ResourceSystem)
         default: DENG2_ASSERT(false);
         }
 
-        TextureVariantSpec &primarySpec =
+        TextureVariantSpec const &primarySpec =
             self.textureSpec(primaryContext, flags, border, tClass, tMap,
                              wrapS, wrapT, minFilter, magFilter,
                              anisoFilter, mipmapped, gammaCorrection,
@@ -2607,7 +2607,7 @@ void ResourceSystem::pruneUnusedTextureSpecs()
 #endif
 }
 
-TextureVariantSpec &ResourceSystem::textureSpec(texturevariantusagecontext_t tc,
+TextureVariantSpec const &ResourceSystem::textureSpec(texturevariantusagecontext_t tc,
     int flags, byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
     int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
     boolean noStretch, boolean toAlpha)
@@ -2753,17 +2753,6 @@ FontManifest &ResourceSystem::toFontManifest(fontid_t id) const
 ResourceSystem::AllFonts const &ResourceSystem::allFonts() const
 {
     return d->fonts;
-}
-
-void ResourceSystem::clearFontDefinitionLinks()
-{
-    foreach(AbstractFont *font, d->fonts)
-    {
-        if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
-        {
-            compFont->setDefinition(0);
-        }
-    }
 }
 
 AbstractFont *ResourceSystem::createFontFromDef(ded_compositefont_t const &def)

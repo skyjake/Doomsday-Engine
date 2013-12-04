@@ -134,7 +134,7 @@ void R_ShutdownViewWindow(void)
     inited = false;
 }
 
-TextureVariantSpec &Rend_PatchTextureSpec(int flags,
+TextureVariantSpec const &Rend_PatchTextureSpec(int flags,
     gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
     return ClientApp::resourceSystem().textureSpec(TC_UI, flags, 0, 0, 0,
@@ -152,7 +152,7 @@ void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
         return;
     }
 
-    TextureVariantSpec &texSpec =
+    TextureVariantSpec const &texSpec =
         Rend_PatchTextureSpec(0 | (texture.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                 | (texture.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
     GL_BindTexture(texture.prepareVariant(texSpec));

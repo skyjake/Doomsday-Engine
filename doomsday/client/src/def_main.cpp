@@ -1425,6 +1425,19 @@ static void invalidateAllMaterials()
     }
 }
 
+#ifdef __CLIENT__
+static void clearFontDefinitionLinks()
+{
+    foreach(AbstractFont *font, App_ResourceSystem().allFonts())
+    {
+        if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
+        {
+            compFont->setDefinition(0);
+        }
+    }
+}
+#endif // __CLIENT__
+
 void Def_Read()
 {
     if(defsInited)
@@ -1436,7 +1449,7 @@ void Def_Read()
 
         invalidateAllMaterials();
 #ifdef __CLIENT__
-        App_ResourceSystem().clearFontDefinitionLinks();
+        clearFontDefinitionLinks();
 #endif
 
         Def_Destroy();

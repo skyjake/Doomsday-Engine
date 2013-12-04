@@ -1233,14 +1233,14 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
     }
 }
 
-TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression)
+TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression)
 {
     return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_DIFFUSE,
         (noCompression? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT,
         1, -2, -1, true, true, false, false);
 }
 
-TextureVariantSpec &Rend_ModelShinyTextureSpec()
+TextureVariantSpec const &Rend_ModelShinyTextureSpec()
 {
     return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_REFLECTION,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,

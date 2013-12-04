@@ -117,14 +117,14 @@ bool Rend_ModelExpandVertexBuffers(uint numVertices);
  * @param  noCompression  @c true= disable texture compression.
  * @return  Specification to be used when preparing such textures.
  */
-TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression);
+TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression);
 
 /**
  * Lookup the texture specification for shiny model skins.
  *
  * @return  Specification to be used when preparing such textures.
  */
-TextureVariantSpec &Rend_ModelShinyTextureSpec();
+TextureVariantSpec const &Rend_ModelShinyTextureSpec();
 
 /**
  * Render all the submodels of a model.

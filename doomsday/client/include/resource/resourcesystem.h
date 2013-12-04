@@ -25,6 +25,8 @@
 #include "resource/colorpalette.h"
 #ifdef __CLIENT__
 #  include "AbstractFont"
+#  include "BitmapFont"
+#  include "CompositeBitmapFont"
 #  include "FontScheme"
 #  include "MaterialVariantSpec"
 #  include "Model"
@@ -32,7 +34,7 @@
 #endif
 #include "Material"
 #include "MaterialScheme"
-#include "resource/sprite.h"
+#include "Sprite"
 #include "Texture"
 #include "TextureScheme"
 #include <de/Error>
@@ -409,10 +411,8 @@ public:
      *
      * @see Scheme::clear().
      */
-    inline void clearAllTextureSchemes()
-    {
-        foreach(de::TextureScheme *scheme, allTextureSchemes())
-        {
+    inline void clearAllTextureSchemes() {
+        foreach(de::TextureScheme *scheme, allTextureSchemes()) {
             scheme->clear();
         }
     }
@@ -457,11 +457,6 @@ public:
 
 #ifdef __CLIENT__
     /**
-     * Returns the total number of resource manifests in the collection.
-     */
-    uint fontCount() const { return allFonts().count(); }
-
-    /**
      * Determines if a manifest exists for a resource on @a path.
      * @return @c true, if a manifest exists; otherwise @a false.
      */
@@ -478,6 +473,11 @@ public:
     inline AbstractFont &font(fontid_t id) const {
         return toFontManifest(id).resource();
     }
+
+    /**
+     * Returns the total number of resource manifests in the collection.
+     */
+    uint fontCount() const { return allFonts().count(); }
 
     /**
      * Find a resource manifest.
@@ -687,7 +687,7 @@ public:
      * @param noStretch         @c true= disallow stretching of textures.
      * @param toAlpha           @c true= convert textures to alpha data.
      *
-     * @return  Rationalized (and interned) copy of the final specification.
+     * @return  The interned copy of the rationalized specification.
      */
     de::MaterialVariantSpec const &materialSpec(MaterialContextId contextId,
         int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
@@ -704,10 +704,10 @@ public:
      * @param tClass  Color palette translation class.
      * @param tMap    Color palette translation map.
      *
-     * @return  A rationalized and valid TextureVariantSpecification.
+     * @return  The interned copy of the rationalized specification.
      */
-    TextureVariantSpec &textureSpec(texturevariantusagecontext_t tc, int flags,
-        byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
+    TextureVariantSpec const &textureSpec(texturevariantusagecontext_t tc,
+        int flags, byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
         int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
         boolean noStretch, boolean toAlpha);
 
@@ -868,12 +868,6 @@ public: /// @todo Should be private:
 
     void clearAllTextureSpecs();
     void pruneUnusedTextureSpecs();
-
-    /**
-     * To be called during a definition database reset to clear all definitions
-     * linked to by Font resources.
-     */
-    void clearFontDefinitionLinks();
 
 public:
     /**

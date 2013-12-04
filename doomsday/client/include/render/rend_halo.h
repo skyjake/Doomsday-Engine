@@ -33,7 +33,7 @@ void H_Register();
 /**
  * Returns the texture variant specification for halos.
  */
-TextureVariantSpec &Rend_HaloTextureSpec();
+TextureVariantSpec const &Rend_HaloTextureSpec();
 
 void H_SetupState(bool dosetup);
 

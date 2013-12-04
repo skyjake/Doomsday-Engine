@@ -1074,7 +1074,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             if(manifest.hasTexture())
             {
                 Texture &tex = manifest.texture();
-                TextureVariantSpec &texSpec =
+                TextureVariantSpec const &texSpec =
                     Rend_PatchTextureSpec(0 | (tex.isFlagged(Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                             | (tex.isFlagged(Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
                 GL_BindTexture(tex.prepareVariant(texSpec));

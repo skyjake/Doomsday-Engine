@@ -44,8 +44,8 @@ public:
     /// Usage context identifier.
     MaterialContextId context;
 
-    /// Specification for the primary texture.
-    TextureVariantSpec *primarySpec;
+    /// Interned specification for the primary texture.
+    TextureVariantSpec const *primarySpec;
 
 public:
     /**
