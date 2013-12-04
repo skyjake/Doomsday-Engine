@@ -418,7 +418,7 @@ static void setupModelParamsForParticle(drawmodelparams_t *params,
     params->distance = dist;
 
     params->extraScale = size; // Extra scaling factor.
-    params->mf = App_ResourceSystem().modelDef(dst->model);
+    params->mf = &App_ResourceSystem().modelDef(dst->model);
     params->alwaysInterpolate = true;
 
     int frame;

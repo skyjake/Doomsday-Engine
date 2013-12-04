@@ -39,7 +39,7 @@ public:
     {
         de::Rectanglei geometry;
         patchid_t patch;
-        de::Texture::Variant *tex;
+        de::TextureVariant *tex;
         uint8_t border;
         bool haveSourceImage;
     };
@@ -74,7 +74,7 @@ public:
 
     patchid_t glyphPatch(uchar ch);
     void glyphSetPatch(uchar ch, de::String encodedPatchName);
-    de::Texture::Variant *glyphTexture(uchar ch);
+    de::TextureVariant *glyphTexture(uchar ch);
     uint glyphTextureBorder(uchar ch);
 
 private:

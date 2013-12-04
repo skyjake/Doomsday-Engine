@@ -339,19 +339,24 @@ static void setupSkyModels(ded_sky_t *def)
     for(int i = 0; i < MAX_SKY_MODELS; ++i, modef++, sm++)
     {
         // Is the model ID set?
-        sm->model = App_ResourceSystem().modelDef(modef->id);
-        if(!sm->model || !sm->model->subCount())
+        try
         {
-            continue;
+            sm->model = &App_ResourceSystem().modelDef(modef->id);
+            if(!sm->model->subCount())
+            {
+                continue;
+            }
+
+            // There is a model here.
+            skyModelsInited = true;
+
+            sm->def      = modef;
+            sm->maxTimer = (int) (TICSPERSEC * modef->frameInterval);
+            sm->yaw      = modef->yaw;
+            sm->frame    = sm->model->subModelDef(0).frame;
         }
-
-        // There is a model here.
-        skyModelsInited = true;
-
-        sm->def      = modef;
-        sm->maxTimer = (int) (TICSPERSEC * modef->frameInterval);
-        sm->yaw      = modef->yaw;
-        sm->frame    = sm->model->subModelDef(0).frame;
+        catch(ResourceSystem::UnknownModelDefError const &)
+        {} // Ignore this error.
     }
 }
 

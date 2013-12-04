@@ -121,7 +121,7 @@ DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name)
     {
         return App_ResourceSystem().colorPalette(name).id();
     }
-    catch(ResourceSystem::MissingColorPaletteError const &er)
+    catch(ResourceSystem::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -138,7 +138,7 @@ DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
         ColorPalette &palette = App_ResourceSystem().colorPalette(id);
         return App_ResourceSystem().colorPaletteName(palette).toUtf8().constData();
     }
-    catch(ResourceSystem::MissingColorPaletteError const &er)
+    catch(ResourceSystem::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -174,7 +174,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
             rgb[2] = texGammaLut[rgb[2]];
         }
     }
-    catch(ResourceSystem::MissingColorPaletteError const &er)
+    catch(ResourceSystem::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");
@@ -214,7 +214,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorId
             rgb[2] = palColor.z;
         }
     }
-    catch(ResourceSystem::MissingColorPaletteError const &er)
+    catch(ResourceSystem::MissingResourceError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_WARNING(er.asText() + ", ignoring.");

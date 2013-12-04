@@ -25,11 +25,12 @@
 #include <de/Vector>
 #include <QFlags>
 
-#define MAX_CHARS               256 // Normal 256 ANSI characters.
-
 namespace de {
 class FontManifest;
 }
+
+/// Special value used to signify an invalid font id.
+#define NOFONTID                    0
 
 /**
  * Abstract font resource.
@@ -53,6 +54,8 @@ public:
         Shadowed  = 0x2  ///< A shaodw is embedded in the font.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
+
+    static int const MAX_CHARS = 256; // Normal 256 ANSI characters.
 
 public:
     /// Resource manifest for the font.

@@ -473,7 +473,7 @@ static ModelFrame &visibleModelFrame(ModelDef &modef, int subnumber, int mobjId)
         curFrame += mobjId % sub.frameRange;
     }
 
-    return App_ResourceSystem().model(sub.modelId)->frame(curFrame);
+    return App_ResourceSystem().model(sub.modelId).frame(curFrame);
 }
 
 /**
@@ -733,7 +733,7 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
     }
 
     SubmodelDef &smf = mf.subModelDef(submodel);
-    Model *mdl = App_ResourceSystem().model(smf.modelId);
+    Model &mdl = App_ResourceSystem().model(smf.modelId);
     int skin = smf.skin;
 
     // Selskin overrides the skin range.
@@ -766,8 +766,7 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
         skin = tmap;
     }
 
-    DENG2_ASSERT(mdl != 0);
-    if(skin < 0 || skin >= mdl->skinCount())
+    if(skin < 0 || skin >= mdl.skinCount())
     {
         skin = 0;
     }
@@ -781,7 +780,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     ModelDef *mf = parm.mf, *mfNext = parm.nextMF;
     SubmodelDef const &smf = mf->subModelDef(number);
 
-    Model &mdl = *App_ResourceSystem().model(smf.modelId);
+    Model &mdl = App_ResourceSystem().model(smf.modelId);
 
     // Do not bother with infinitely small models...
     if(mf->scale == Vector3f(0, 0, 0))

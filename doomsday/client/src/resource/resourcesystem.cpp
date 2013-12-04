@@ -1064,17 +1064,16 @@ DENG2_PIMPL(ResourceSystem)
     /**
      * Create a new modeldef or find an existing one. This is for ID'd models.
      */
-    ModelDef *getModelDefWithId(char const *id)
+    ModelDef *getModelDefWithId(String id)
     {
-        // ID defined?
-        if(!id || !id[0]) return 0;
-
         // First try to find an existing modef.
-        ModelDef *md = self.modelDef(id);
-        if(md) return md;
+        if(self.hasModelDef(id))
+        {
+            return &self.modelDef(id);
+        }
 
         // Get a new entry.
-        modefs.push_back(ModelDef(id));
+        modefs.push_back(ModelDef(id.toUtf8().constData()));
         return &modefs.back();
     }
 
@@ -1227,7 +1226,7 @@ DENG2_PIMPL(ResourceSystem)
 
         // Find the top and bottom heights.
         float top, bottom;
-        float height = self.model(smf.modelId)->frame(smf.frame).horizontalRange(&top, &bottom);
+        float height = self.model(smf.modelId).frame(smf.frame).horizontalRange(&top, &bottom);
         if(!height) height = 1;
 
         float scale = destHeight / height;
@@ -1260,7 +1259,7 @@ DENG2_PIMPL(ResourceSystem)
 
             SubmodelDef &sub = def->subModelDef(i);
 
-            self.model(sub.modelId)->frame(sub.frame).bounds(min, max);
+            self.model(sub.modelId).frame(sub.frame).bounds(min, max);
 
             // Half the distance from bottom left to top right.
             float radius = (def->scale.x * (max.x - min.x) +
@@ -1289,8 +1288,12 @@ DENG2_PIMPL(ResourceSystem)
         int const statenum = Def_GetStateNum(def.state);
 
         // Is this an ID'd model?
-        ModelDef *modef = getModelDefWithId(def.id);
-        if(!modef)
+        ModelDef *modef;
+        if(self.hasModelDef(def.id))
+        {
+            modef = &self.modelDef(def.id);
+        }
+        else
         {
             // No, normal State-model.
             if(statenum < 0) return;
@@ -1336,7 +1339,7 @@ DENG2_PIMPL(ResourceSystem)
 
                 // Have we already loaded this?
                 modelid_t modelId = modelRepository->intern(foundPath);
-                Model *mdl = self.model(modelId);
+                Model *mdl = modelForId(modelId);
                 if(!mdl)
                 {
                     // Attempt to load it in now.
@@ -1528,7 +1531,7 @@ DENG2_PIMPL(ResourceSystem)
             SubmodelDef *sub = &modef->subModelDef(i);
             if(sub->modelId && sub->frame >= 0)
             {
-                self.model(sub->modelId)->frame(sub->frame).bounds(min, max);
+                self.model(sub->modelId).frame(sub->frame).bounds(min, max);
                 modef->setParticleOffset(i, ((max + min) / 2 + sub->offset) * modef->scale + modef->offset);
             }
         }
@@ -1779,7 +1782,8 @@ ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t spriteId)
     {
         return group->sprites;
     }
-    throw MissingSpriteError("ResourceSystem::spriteSet", "Invalid sprite id " + String::number(spriteId));
+    /// @throw MissingResourceError An unknown/invalid id was specified.
+    throw MissingResourceError("ResourceSystem::spriteSet", "Invalid sprite id " + String::number(spriteId));
 }
 
 void ResourceSystem::clearAllSprites()
@@ -2328,7 +2332,7 @@ ResourceSystem::MaterialManifestGroup &ResourceSystem::materialGroup(int groupId
     {
         return *d->materialGroups[groupIdx];
     }
-    /// @throw UnknownMaterialGroupError An unknown scheme was referenced.
+    /// @throw UnknownMaterialGroupError An unknown material group was referenced.
     throw UnknownMaterialGroupError("ResourceSystem::materialGroup", "Invalid group #" + String::number(groupIdx+1) + ", valid range " + Rangeui(1, d->materialGroups.count() + 1).asText());
 }
 
@@ -2874,37 +2878,57 @@ void ResourceSystem::releaseFontGLTexturesByScheme(String schemeName)
     }
 }
 
-Model *ResourceSystem::model(modelid_t id)
+Model &ResourceSystem::model(modelid_t id)
 {
-    return d->modelForId(id);
-}
-
-int ResourceSystem::modelDefCount() const
-{
-    return d->modefs.size();
-}
-
-ModelDef *ResourceSystem::modelDef(int index)
-{
-    if(index >= 0 && index < int(d->modefs.size()))
+    if(Model *model = d->modelForId(id))
     {
-        return &d->modefs[index];
+        return *model;
     }
-    return 0;
+    /// @throw MissingResourceError An unknown/invalid id was specified.
+    throw MissingResourceError("ResourceSystem::model", QString("Invalid id %1").arg(id));
 }
 
-ModelDef *ResourceSystem::modelDef(char const *id)
+bool ResourceSystem::hasModelDef(de::String id) const
 {
-    if(!id || !id[0]) return 0;
-
-    for(uint i = 0; i < d->modefs.size(); ++i)
+    if(!id.isEmpty())
     {
-        if(!strcmp(d->modefs[i].id, id))
+        char const *idCStr = id.toUtf8().constData();
+        DENG2_FOR_EACH(Instance::ModelDefs, i, d->modefs)
         {
-            return &d->modefs[i];
+            if(!strcmp(i->id, idCStr))
+            {
+                return true;
+            }
         }
     }
-    return 0;
+    return false;
+}
+
+ModelDef &ResourceSystem::modelDef(int index)
+{
+    if(index >= 0 && index < modelDefCount())
+    {
+        return d->modefs[index];
+    }
+    /// @throw UnknownModelDefIndexError An unknown model definition was referenced.
+    throw UnknownModelDefError("ResourceSystem::modelDef", "Invalid index " + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
+}
+
+ModelDef &ResourceSystem::modelDef(String id)
+{
+    if(!id.isEmpty())
+    {
+        char const *idCStr = id.toUtf8().constData();
+        DENG2_FOR_EACH(Instance::ModelDefs, i, d->modefs)
+        {
+            if(!strcmp(i->id, idCStr))
+            {
+                return *i;
+            }
+        }
+    }
+    /// @throw UnknownModelDefIndexError An unknown model definition was referenced.
+    throw UnknownModelDefError("ResourceSystem::modelDef", QString("Invalid id %1").arg(id));
 }
 
 ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
@@ -3088,6 +3112,11 @@ float ResourceSystem::modelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelD
     return interp;
 }
 
+int ResourceSystem::modelDefCount() const
+{
+    return d->modefs.size();
+}
+
 void ResourceSystem::initModels()
 {
     LOG_AS("ResourceSystem");
@@ -3223,9 +3252,7 @@ void ResourceSystem::setModelDefFrame(ModelDef &modef, int frame)
         if(subdef.modelId == NOMODELID) continue;
 
         // Modify the modeldef itself: set the current frame.
-        Model *mdl = model(subdef.modelId);
-        DENG2_ASSERT(mdl != 0);
-        subdef.frame = frame % mdl->frameCount();
+        subdef.frame = frame % model(subdef.modelId).frameCount();
     }
 }
 
@@ -3237,7 +3264,7 @@ void ResourceSystem::cache(ModelDef *modelDef)
     for(uint sub = 0; sub < modelDef->subCount(); ++sub)
     {
         SubmodelDef &subdef = modelDef->subModelDef(sub);
-        Model *mdl = model(subdef.modelId);
+        Model *mdl = d->modelForId(subdef.modelId);
         if(!mdl) continue;
 
         // Load all skins.
@@ -3540,8 +3567,8 @@ ColorPalette &ResourceSystem::colorPalette(colorpaletteid_t id) const
     {
         return *found.value();
     }
-    /// @throw MissingColorPaletteError An unknown/invalid id was specified.
-    throw MissingColorPaletteError("ResourceSystem::colorPalette", QString("Invalid id %1").arg(id));
+    /// @throw MissingResourceError An unknown/invalid id was specified.
+    throw MissingResourceError("ResourceSystem::colorPalette", QString("Invalid id %1").arg(id));
 }
 
 String ResourceSystem::colorPaletteName(ColorPalette &palette) const
@@ -3566,8 +3593,8 @@ ColorPalette &ResourceSystem::colorPalette(String name) const
     {
         return *found.value();
     }
-    /// @throw MissingColorPaletteError An unknown name was specified.
-    throw MissingColorPaletteError("ResourceSystem::colorPalette", "Unknown name '" + name + "'");
+    /// @throw MissingResourceError An unknown name was specified.
+    throw MissingResourceError("ResourceSystem::colorPalette", "Unknown name '" + name + "'");
 }
 
 void ResourceSystem::addColorPalette(ColorPalette &newPalette, String const &name)
@@ -3764,15 +3791,15 @@ static int cacheModelsForMobj(thinker_t *th, void *context)
         return true;
 
     // Check through all the model definitions.
-    for(uint i = 0; i < resSys.modelDefCount(); ++i)
+    for(int i = 0; i < resSys.modelDefCount(); ++i)
     {
-        ModelDef *modef = resSys.modelDef(i);
+        ModelDef &modef = resSys.modelDef(i);
 
-        if(!modef->state) continue;
+        if(!modef.state) continue;
         if(mo->type < 0 || mo->type >= defs.count.mobjs.num) continue; // Hmm?
-        if(stateOwners[modef->state - states] != &mobjInfo[mo->type]) continue;
+        if(stateOwners[modef.state - states] != &mobjInfo[mo->type]) continue;
 
-        resSys.cache(modef);
+        resSys.cache(&modef);
     }
 
     return false; // Used as iterator.

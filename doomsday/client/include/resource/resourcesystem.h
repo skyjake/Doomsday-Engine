@@ -39,11 +39,6 @@
 #include <de/String>
 #include <de/System>
 
-#ifdef __CLIENT__
-/// Special value used to signify an invalid font id.
-#define NOFONTID                    0
-#endif
-
 /**
  * Logical resources; materials, packages, textures, etc...
  *
@@ -88,11 +83,8 @@ public:
     /// The referenced manifest was not found. @ingroup errors
     DENG2_ERROR(MissingManifestError);
 
-    /// The referenced color palette could not be found. @ingroup errors
-    DENG2_ERROR(MissingColorPaletteError);
-
-    /// The referenced sprite could not be found. @ingroup errors
-    DENG2_ERROR(MissingSpriteError);
+    /// The referenced resource was not found. @ingroup errors
+    DENG2_ERROR(MissingResourceError);
 
     /// An unknown material group was referenced. @ingroup errors
     DENG2_ERROR(UnknownMaterialGroupError);
@@ -101,6 +93,9 @@ public:
     DENG2_ERROR(UnknownMaterialIdError);
 
 #ifdef __CLIENT__
+    /// An unknown model def was referenced. @ingroup errors
+    DENG2_ERROR(UnknownModelDefError);
+
     /// The specified font id was invalid (out of range). @ingroup errors
     DENG2_ERROR(UnknownFontIdError);
 #endif
@@ -541,30 +536,38 @@ public:
     int indexOf(ModelDef const *modelDef);
 
     /**
-     * Retrieve a model by it's unique @a id. O(1)
+     * Convenient method of looking up a concrete model resource in the collection
+     * given it's unique identifier.
      *
-     * @return  Pointer to the associated model; otherwise @c 0.
+     * @return  The associated model resource.
      */
-    Model *model(modelid_t id);
+    Model &model(modelid_t id);
 
     /**
-     * Returns the total number of model definitions in the system.
+     * Determines if a model definition exists with the given @a id.
+     * @return  @c true, if a definition exists; otherwise @a false.
+     *
+     * @see modelDef()
      */
-    int modelDefCount() const;
+    bool hasModelDef(de::String id) const;
 
     /**
      * Retrieve a model definition by it's unique @a index. O(1)
      *
-     * @return  Pointer to the associated definition; otherwise @c 0.
+     * @return  Pointer to the associated definition.
+     *
+     * @see modelDefCount()
      */
-    ModelDef *modelDef(int index);
+    ModelDef &modelDef(int index);
 
     /**
      * Lookup a model definition by it's unique @a id. O(n)
      *
-     * @return  Found model definition; otherwise @c 0.
+     * @return  Found model definition.
+     *
+     * @see hasModelDef()
      */
-    ModelDef *modelDef(char const *id);
+    ModelDef &modelDef(de::String id);
 
     /**
      * Lookup a model definition for the specified mobj @a stateIndex.
@@ -584,6 +587,13 @@ public:
      * checked appropriately).
      */
     float modelDefForMobj(struct mobj_s const *mo, ModelDef **mdef, ModelDef **nextmdef);
+
+    /**
+     * Returns the total number of model definitions in the system.
+     *
+     * @see modelDef()
+     */
+    int modelDefCount() const;
 
     /// @todo Refactor away. Used for animating particle/sky models.
     void setModelDefFrame(ModelDef &modelDef, int frame);

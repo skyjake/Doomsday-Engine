@@ -1875,7 +1875,7 @@ static void initMaterialGroup(ded_group_t &def)
     }
 }
 
-void Def_PostInit(void)
+void Def_PostInit()
 {
 #ifdef __CLIENT__
 
@@ -1883,37 +1883,38 @@ void Def_PostInit(void)
     ded_ptcgen_t *gen = defs.ptcGens;
     for(int i = 0; i < defs.count.ptcGens.num; ++i, gen++)
     {
-        char name[40];
         ded_ptcstage_t *st = gen->stages;
         for(int k = 0; k < gen->stageCount.num; ++k, st++)
         {
             if(st->type < PTC_MODEL || st->type >= PTC_MODEL + MAX_PTC_MODELS)
                 continue;
 
-            sprintf(name, "Particle%02i", st->type - PTC_MODEL);
-
-            ModelDef *modef = App_ResourceSystem().modelDef(name);
-            if(!modef || modef->subModelId(0) == NOMODELID)
+            st->model = -1;
+            try
             {
-                st->model = -1;
-                continue;
-            }
+                ModelDef &modef = App_ResourceSystem().modelDef(String("Particle%1").arg(st->type - PTC_MODEL, 2, 10, QChar('0')));
+                if(modef.subModelId(0) == NOMODELID)
+                {
+                    continue;
+                }
 
-            Model *mdl = App_ResourceSystem().model(modef->subModelId(0));
-            DENG2_ASSERT(mdl != 0);
+                Model &mdl = App_ResourceSystem().model(modef.subModelId(0));
 
-            st->model = App_ResourceSystem().indexOf(modef);
-            st->frame = mdl->frameNumber(st->frameName);
-            if(st->frame < 0) st->frame = 0;
-            if(st->endFrameName[0])
-            {
-                st->endFrame = mdl->frameNumber(st->endFrameName);
-                if(st->endFrame < 0) st->endFrame = 0;
+                st->model = App_ResourceSystem().indexOf(&modef);
+                st->frame = mdl.frameNumber(st->frameName);
+                if(st->frame < 0) st->frame = 0;
+                if(st->endFrameName[0])
+                {
+                    st->endFrame = mdl.frameNumber(st->endFrameName);
+                    if(st->endFrame < 0) st->endFrame = 0;
+                }
+                else
+                {
+                    st->endFrame = -1;
+                }
             }
-            else
-            {
-                st->endFrame = -1;
-            }
+            catch(ResourceSystem::UnknownModelDefError const &)
+            {} // Ignore this error.
         }
     }
 
