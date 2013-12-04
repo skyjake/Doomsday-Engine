@@ -143,29 +143,6 @@ public:
     void clearAllSystemResources();
 
     /**
-     * Builds the sprite rotation matrixes to account for horizontally flipped
-     * sprites.  Will report an error if the lumps are inconsistant.
-     *
-     * Sprite lump names are 4 characters for the actor, a letter for the frame,
-     * and a number for the rotation, A sprite that is flippable will have an
-     * additional letter/number appended.  The rotation character can be 0 to
-     * signify no rotations.
-     *
-     * Can be reinitalized, clearing all sprites in the process.
-     */
-    void initSprites();
-
-    /**
-     * Destroys all sprites in all sprite sets.
-     */
-    void clearAllSprites();
-
-    /**
-     * Returns the total number of sprite @em sets.
-     */
-    int spriteCount();
-
-    /**
      * Returns @c true iff a sprite exists for the specified @a spriteId and @a frame;
      *
      * @param spriteId  Unique identifier of the sprite set.
@@ -190,20 +167,12 @@ public:
      */
     SpriteSet const &spriteSet(spritenum_t spriteId);
 
-#ifdef __CLIENT__
     /**
-     * Precache resources from the set associated with the specified @a spriteId.
-     *
-     * @param spriteId      Unique identifier of the sprite set to cache.
-     * @param materialSpec  Specification to use when caching materials.
+     * Returns the total number of sprite @em sets.
      */
-    void cacheSpriteSet(spritenum_t spriteId, de::MaterialVariantSpec const &materialSpec);
-#endif
-
+    int spriteCount();
 
     patchid_t declarePatch(de::String encodedName);
-
-    void initSystemTextures();
 
     /**
      * Convenient method of searching the texture collection for a texture with
@@ -220,23 +189,29 @@ public:
                                de::Vector2i const &dimensions = de::Vector2i());
 
     /**
-     * Returns the total number of unique materials in the collection.
-     */
-    uint materialCount() const { return allMaterials().count(); }
-
-    /**
      * Determines if a manifest exists for a material on @a path.
      * @return @c true if a manifest exists; otherwise @a false.
      */
     bool hasMaterial(de::Uri const &path) const;
 
     /**
-     * Find the material manifest on @a path.
+     * Lookup a material resource for the specified @a path.
+     *
+     * @return The found material.
+     *
+     * @see MaterialManifest::material()
+     */
+    inline Material &material(de::Uri const &path) const {
+        return materialManifest(path).material();
+    }
+
+    /**
+     * Lookup a material manifest by it's unique resource @a path.
      *
      * @param path  The path to search for.
      * @return  Found material manifest.
      */
-    de::MaterialManifest &findMaterial(de::Uri const &path) const;
+    de::MaterialManifest &materialManifest(de::Uri const &path) const;
 
     /**
      * Lookup a manifest by unique identifier.
@@ -247,6 +222,11 @@ public:
      * @return  The associated manifest.
      */
     de::MaterialManifest &toMaterialManifest(materialid_t id) const;
+
+    /**
+     * Returns the total number of unique materials in the collection.
+     */
+    uint materialCount() const { return allMaterials().count(); }
 
     /**
      * Lookup a subspace scheme by symbolic name.
@@ -518,17 +498,6 @@ public:
     AllFonts const &allFonts() const;
 
     /**
-     * @pre States must be initialized before this.
-     * Can be reinitalized, clearing all models in the process.
-     */
-    void initModels();
-
-    /**
-     * Frees all memory allocated for models.
-     */
-    void clearAllModels();
-
-    /**
      * Lookup the unique index attributed to the given @a modelDef.
      *
      * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
@@ -554,7 +523,7 @@ public:
     /**
      * Retrieve a model definition by it's unique @a index. O(1)
      *
-     * @return  Pointer to the associated definition.
+     * @return  The associated model definition.
      *
      * @see modelDefCount()
      */
@@ -822,6 +791,14 @@ public:
     void cache(ModelDef *modelDef);
 
     /**
+     * Precache resources from the set associated with the specified @a spriteId.
+     *
+     * @param spriteId      Unique identifier of the sprite set to cache.
+     * @param materialSpec  Specification to use when caching materials.
+     */
+    void cache(spritenum_t spriteId, de::MaterialVariantSpec const &materialSpec);
+
+    /**
      * Process all queued material cache tasks.
      */
     void processCacheQueue();
@@ -837,6 +814,12 @@ public: /// @todo Should be private:
     void initCompositeTextures();
     void initFlatTextures();
     void initSpriteTextures();
+    void initSystemTextures();
+
+    void initSprites();
+#ifdef __CLIENT__
+    void initModels();
+#endif
 
 public:
     /**

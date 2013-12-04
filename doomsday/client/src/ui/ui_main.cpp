@@ -1924,7 +1924,7 @@ void UI_Shade(const Point2Raw* origin, const Size2Raw* size, int border, ui_colo
         bottomAlpha = alpha;
 
     MaterialSnapshot const &ms =
-        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/boxshade"))).material()
+        App_ResourceSystem().materialManifest(de::Uri("System", Path("ui/boxshade"))).material()
             .prepare(Ui_MaterialSpec());
 
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
@@ -1977,7 +1977,7 @@ void UI_HorizGradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t*
     rightAlpha *= uiAlpha;
 
     MaterialSnapshot const &ms =
-        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/hint"))).material()
+        App_ResourceSystem().materialManifest(de::Uri("System", Path("ui/hint"))).material()
             .prepare(Ui_MaterialSpec());
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
@@ -2123,7 +2123,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     if(filled)
     {
         MaterialSnapshot const &ms =
-            App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/boxfill"))).material()
+            App_ResourceSystem().materialManifest(de::Uri("System", Path("ui/boxfill"))).material()
                 .prepare(Ui_MaterialSpec());
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
@@ -2139,7 +2139,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     else
     {
         MaterialSnapshot const &ms =
-            App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/boxcorner"))).material()
+            App_ResourceSystem().materialManifest(de::Uri("System", Path("ui/boxcorner"))).material()
                 .prepare(Ui_MaterialSpec());
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
@@ -2400,7 +2400,7 @@ void UI_DrawMouse(const Point2Raw* origin, const Size2Raw* size)
     DENG2_ASSERT(origin && size);
 
     MaterialSnapshot const &ms =
-        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/mouse"))).material()
+        App_ResourceSystem().materialManifest(de::Uri("System", Path("ui/mouse"))).material()
             .prepare(Ui_MaterialSpec());
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
@@ -2424,7 +2424,7 @@ void UI_DrawLogo(Point2Raw const *origin, Size2Raw const *size)
     DENG2_ASSERT(origin && size);
 
     MaterialSnapshot const &ms =
-        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/logo"))).material()
+        App_ResourceSystem().materialManifest(de::Uri("System", Path("ui/logo"))).material()
             .prepare(Ui_MaterialSpec());
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
 
@@ -2443,7 +2443,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
 
     // Background gradient picture.
     MaterialSnapshot const &ms =
-        App_ResourceSystem().findMaterial(de::Uri("System", Path("ui/background"))).material()
+        App_ResourceSystem().materialManifest(de::Uri("System", Path("ui/background"))).material()
             .prepare(Ui_MaterialSpec(TSF_MONOCHROME));
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
 

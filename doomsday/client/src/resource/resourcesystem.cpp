@@ -346,6 +346,11 @@ DENG2_PIMPL(ResourceSystem)
 #ifdef __CLIENT__
         clearMaterialSpecs();
 #endif
+
+        clearSprites();
+#ifdef __CLIENT__
+        clearModels();
+#endif
     }
 
     inline de::FS1 &fileSystem()
@@ -436,6 +441,11 @@ DENG2_PIMPL(ResourceSystem)
         newScheme->audienceForManifestDefined += this;
     }
 #endif
+
+    void clearSprites()
+    {
+        spriteGroups.clear();
+    }
 
     SpriteGroup *spriteGroup(spritenum_t spriteId)
     {
@@ -1050,6 +1060,20 @@ DENG2_PIMPL(ResourceSystem)
     }
 
 #ifdef __CLIENT__
+    void clearModels()
+    {
+        /// @todo Why only centralized memory deallocation? Bad (lazy) design...
+        modefs.clear();
+        stateModefs.clear();
+
+        clearModelList();
+
+        if(modelRepository)
+        {
+            delete modelRepository; modelRepository = 0;
+        }
+    }
+
     Model *modelForId(modelid_t modelId)
     {
         DENG2_ASSERT(modelRepository);
@@ -1786,11 +1810,6 @@ ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t spriteId)
     throw MissingResourceError("ResourceSystem::spriteSet", "Invalid sprite id " + String::number(spriteId));
 }
 
-void ResourceSystem::clearAllSprites()
-{
-    d->spriteGroups.clear();
-}
-
 void ResourceSystem::initSystemTextures()
 {
     LOG_AS("ResourceSystem");
@@ -2276,7 +2295,7 @@ bool ResourceSystem::hasMaterial(de::Uri const &path) const
 {
     try
     {
-        findMaterial(path);
+        materialManifest(path);
         return true;
     }
     catch(MissingManifestError const &)
@@ -2284,9 +2303,9 @@ bool ResourceSystem::hasMaterial(de::Uri const &path) const
     return false;
 }
 
-MaterialManifest &ResourceSystem::findMaterial(de::Uri const &uri) const
+MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
 {
-    LOG_AS("ResourceSystem::findMaterial");
+    LOG_AS("ResourceSystem::materialManifest");
 
     // Does the user want a manifest in a specific scheme?
     if(!uri.scheme().isEmpty())
@@ -2310,7 +2329,7 @@ MaterialManifest &ResourceSystem::findMaterial(de::Uri const &uri) const
     }
 
     /// @throw NotFoundError Failed to locate a matching manifest.
-    throw MissingManifestError("Materials::find", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
+    throw MissingManifestError("ResourceSystem::materialManifest", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
 ResourceSystem::AllMaterials const &ResourceSystem::allMaterials() const
@@ -3220,20 +3239,6 @@ void ResourceSystem::initModels()
     LOG_INFO(String("Model init completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
-void ResourceSystem::clearAllModels()
-{
-    /// @todo Why only centralized memory deallocation? Bad (lazy) design...
-    d->modefs.clear();
-    d->stateModefs.clear();
-
-    d->clearModelList();
-
-    if(d->modelRepository)
-    {
-        delete d->modelRepository; d->modelRepository = 0;
-    }
-}
-
 int ResourceSystem::indexOf(ModelDef const *modelDef)
 {
     int index = int(modelDef - &d->modefs[0]);
@@ -3408,7 +3413,7 @@ static SpriteDefs generateSpriteDefs()
             frame = &spriteDef->frames.last();
         }
 
-        frame->mat         = &App_ResourceSystem().findMaterial(de::Uri("Sprites", manifest.path())).material();
+        frame->mat         = &App_ResourceSystem().materialManifest(de::Uri("Sprites", manifest.path())).material();
         frame->frame[0]    = frameNumber;
         frame->rotation[0] = rotationNumber;
 
@@ -3435,7 +3440,7 @@ void ResourceSystem::initSprites()
     LOG_AS("ResourceSystem");
     LOG_MSG("Building sprites...");
 
-    clearAllSprites();
+    d->clearSprites();
 
     SpriteDefs defs = generateSpriteDefs();
 
@@ -3523,7 +3528,7 @@ void ResourceSystem::initSprites()
 }
 
 #ifdef __CLIENT__
-void ResourceSystem::cacheSpriteSet(spritenum_t spriteId, MaterialVariantSpec const &spec)
+void ResourceSystem::cache(spritenum_t spriteId, MaterialVariantSpec const &spec)
 {
     if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
     {
@@ -3856,7 +3861,7 @@ void ResourceSystem::cacheForCurrentMap()
                                       findSpriteOwner, &i))
             {
                 // This sprite is used by some state of at least one mobj.
-                cacheSpriteSet(i, spec);
+                cache(i, spec);
             }
         }
     }

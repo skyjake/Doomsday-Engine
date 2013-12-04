@@ -15,7 +15,12 @@ DENG_EXTERN_C Material *DD_MaterialForTextureUri(uri_s const *textureUri)
     {
         de::Uri uri = App_ResourceSystem().findTexture(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
-        return &App_ResourceSystem().findMaterial(uri).material();
+        return &App_ResourceSystem().material(uri);
+    }
+    catch(MaterialManifest::MissingMaterialError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING(er.asText() + ", ignoring.");
     }
     catch(ResourceSystem::UnknownSchemeError const &er)
     {
@@ -40,7 +45,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
     try
     {
-        return App_ResourceSystem().findMaterial(*reinterpret_cast<de::Uri const *>(uri)).id();
+        return App_ResourceSystem().materialManifest(*reinterpret_cast<de::Uri const *>(uri)).id();
     }
     catch(ResourceSystem::MissingManifestError const &)
     {} // Ignore this error.
@@ -54,7 +59,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
     {
         try
         {
-            return App_ResourceSystem().findMaterial(de::Uri(uriCString, RC_NULL)).id();
+            return App_ResourceSystem().materialManifest(de::Uri(uriCString, RC_NULL)).id();
         }
         catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.

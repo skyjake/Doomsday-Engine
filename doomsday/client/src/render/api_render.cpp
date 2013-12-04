@@ -78,7 +78,7 @@ DENG_EXTERN_C void Rend_CacheForMobjType(int num)
             state_t *state = Def_GetState(i);
             DENG2_ASSERT(state != 0);
 
-            App_ResourceSystem().cacheSpriteSet(state->sprite, spec);
+            App_ResourceSystem().cache(state->sprite, spec);
         }
         /// @todo What about sounds?
     }

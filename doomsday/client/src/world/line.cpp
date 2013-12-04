@@ -771,7 +771,7 @@ static Material *chooseFixMaterial(LineSide &side, int section)
     if(choice2) return choice2;
 
     // We'll assign the special "missing" material...
-    return &App_ResourceSystem().findMaterial(de::Uri("System", Path("missing"))).material();
+    return &App_ResourceSystem().materialManifest(de::Uri("System", Path("missing"))).material();
 }
 
 static void addMissingMaterial(LineSide &side, int section)

@@ -229,8 +229,8 @@ void R_DrawViewBorder()
     try
     {
         MaterialSnapshot const &ms =
-            ClientApp::resourceSystem().findMaterial(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
-                .material().prepare(bgMaterialSpec());
+            ClientApp::resourceSystem().material(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
+                      .prepare(bgMaterialSpec());
 
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.width(), ms.height(), 0, 0,

@@ -581,10 +581,6 @@ void R_Update()
 
 void R_Shutdown()
 {
-    App_ResourceSystem().clearAllSprites();
-#ifdef __CLIENT__
-    App_ResourceSystem().clearAllModels();
-#endif
     R_ShutdownSvgs();
 #ifdef __CLIENT__
     R_ShutdownViewWindow();

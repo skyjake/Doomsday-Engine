@@ -1036,7 +1036,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
                               1, -2, -1, true, true, false, false);
         MaterialSnapshot const &ms =
             ClientApp::resourceSystem()
-                .findMaterial(de::Uri("System", Path("gray"))).material().prepare(spec);
+                .materialManifest(de::Uri("System", Path("gray"))).material().prepare(spec);
 
         skinTexture = &ms.texture(MTU_PRIMARY);
     }

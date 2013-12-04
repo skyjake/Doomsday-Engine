@@ -170,7 +170,7 @@ static void configureDefaultSky()
         layer->material = 0;
         try
         {
-            layer->material = &ClientApp::resourceSystem().findMaterial(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)).material();
+            layer->material = &ClientApp::resourceSystem().materialManifest(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)).material();
         }
         catch(MaterialManifest::MissingMaterialError const &)
         {} // Ignore this error.
@@ -296,7 +296,7 @@ void Sky_Configure(ded_sky_t *def)
         {
             try
             {
-                Material *mat = &ClientApp::resourceSystem().findMaterial(*reinterpret_cast<de::Uri *>(sl->material)).material();
+                Material *mat = &ClientApp::resourceSystem().materialManifest(*reinterpret_cast<de::Uri *>(sl->material)).material();
                 Sky_LayerSetMaterial(i, mat);
             }
             catch(ResourceSystem::MissingManifestError const &er)
@@ -804,14 +804,14 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         if(renderTextures == 2)
         {
-            mat = &ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("gray"))).material();
+            mat = &ClientApp::resourceSystem().materialManifest(de::Uri("System", Path("gray"))).material();
         }
         else
         {
             mat = Sky_LayerMaterial(layer);
             if(!mat)
             {
-                mat = &ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("missing"))).material();
+                mat = &ClientApp::resourceSystem().materialManifest(de::Uri("System", Path("missing"))).material();
                 rs.texXFlip = false;
             }
         }

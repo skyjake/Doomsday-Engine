@@ -979,7 +979,7 @@ D_CMD(InspectMaterial)
 
     try
     {
-        de::MaterialManifest &manifest = App_ResourceSystem().findMaterial(search);
+        de::MaterialManifest &manifest = App_ResourceSystem().materialManifest(search);
         if(manifest.hasMaterial())
         {
             Material &material = manifest.material();

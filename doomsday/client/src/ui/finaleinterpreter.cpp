@@ -1354,11 +1354,11 @@ DEFFC(BGMaterial)
     {
         if(ded_value_t* value = Def_GetValueByUri(OP_URI(0)))
         {
-            material = &App_ResourceSystem().findMaterial(de::Uri(value->text, RC_NULL)).material();
+            material = &App_ResourceSystem().material(de::Uri(value->text, RC_NULL));
         }
         else
         {
-            material = &App_ResourceSystem().findMaterial(*reinterpret_cast<de::Uri const *>(OP_URI(0))).material();
+            material = &App_ResourceSystem().material(*reinterpret_cast<de::Uri const *>(OP_URI(0)));
         }
     }
     catch(de::MaterialManifest::MissingMaterialError const &)

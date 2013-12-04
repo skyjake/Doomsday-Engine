@@ -98,7 +98,7 @@ static Material *findRecordMaterial(Records &records, SerialId id)
         Material *material = 0;
         try
         {
-            material = &App_ResourceSystem().findMaterial(Uri(records.stringRef(id), RC_NULL)).material();
+            material = &App_ResourceSystem().materialManifest(Uri(records.stringRef(id), RC_NULL)).material();
         }
         catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.

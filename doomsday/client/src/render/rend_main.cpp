@@ -789,7 +789,7 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
         if(devNoTexFix && surface.hasFixMaterial())
         {
             // Missing material debug mode -- use special "missing" material.
-            return &ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("missing"))).material();
+            return &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
         }
 
         // Use the surface-bound material.
@@ -801,7 +801,7 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
             if(!surface.hasSkyMaskedMaterial() || devRendSkyMode)
             {
                 // Use the special "gray" material.
-                return &ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("gray"))).material();
+                return &ClientApp::resourceSystem().material(de::Uri("System", Path("gray")));
             }
         }
         break;
@@ -1944,7 +1944,7 @@ static void writeWallSection(HEdge &hedge, int section,
             {
                 Material *actualMaterial =
                     surface.hasMaterial()? surface.materialPtr()
-                                         : &ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("missing"))).material();
+                                         : &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
 
                 MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
                 parm.glowing = ms.glowStrength();
@@ -2187,7 +2187,7 @@ static void writeLeafPlane(Plane &plane)
             {
                 Material *actualMaterial =
                     surface.hasMaterial()? surface.materialPtr()
-                                         : &ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("missing"))).material();
+                                         : &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
 
                 MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
                 parm.glowing = ms.glowStrength();
@@ -4446,8 +4446,8 @@ static void drawMobjBoundingBoxes(Map &map)
     glDisable(GL_CULL_FACE);
 
     MaterialSnapshot const &ms =
-        ClientApp::resourceSystem().findMaterial(de::Uri("System", Path("bbox")))
-            .material().prepare(Rend_SpriteMaterialSpec());
+        ClientApp::resourceSystem().material(de::Uri("System", Path("bbox")))
+                  .prepare(Rend_SpriteMaterialSpec());
 
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
     GL_BlendMode(BM_ADD);

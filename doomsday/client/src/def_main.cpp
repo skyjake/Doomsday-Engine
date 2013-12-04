@@ -1840,7 +1840,7 @@ static void initMaterialGroup(ded_group_t &def)
 
         try
         {
-            MaterialManifest &manifest = App_ResourceSystem().findMaterial(*reinterpret_cast<de::Uri *>(gm->material));
+            MaterialManifest &manifest = App_ResourceSystem().materialManifest(*reinterpret_cast<de::Uri *>(gm->material));
 
             if(def.flags & AGF_PRECACHE) // A precache group.
             {
@@ -2036,7 +2036,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     {
         try
         {
-            l->actMaterial = App_ResourceSystem().findMaterial(*reinterpret_cast<de::Uri *>(def->actMaterial)).id();
+            l->actMaterial = App_ResourceSystem().materialManifest(*reinterpret_cast<de::Uri *>(def->actMaterial)).id();
         }
         catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.
@@ -2046,7 +2046,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     {
         try
         {
-            l->deactMaterial = App_ResourceSystem().findMaterial(*reinterpret_cast<de::Uri *>(def->deactMaterial)).id();
+            l->deactMaterial = App_ResourceSystem().materialManifest(*reinterpret_cast<de::Uri *>(def->deactMaterial)).id();
         }
         catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.
@@ -2085,7 +2085,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 {
                     try
                     {
-                        l->iparm[k] = App_ResourceSystem().findMaterial(de::Uri(def->iparmStr[k], RC_NULL)).id();
+                        l->iparm[k] = App_ResourceSystem().materialManifest(de::Uri(def->iparmStr[k], RC_NULL)).id();
                     }
                     catch(ResourceSystem::MissingManifestError const &)
                     {} // Ignore this error.
