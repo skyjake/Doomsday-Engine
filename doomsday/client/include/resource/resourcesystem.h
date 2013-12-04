@@ -224,15 +224,15 @@ public:
     uint materialCount() const { return allMaterials().count(); }
 
     /**
-     * Returns @c true iff a Scheme exists with the symbolic @a name.
+     * Returns @c true iff a MaterialScheme exists with the symbolic @a name.
      */
     bool knownMaterialScheme(de::String name) const;
 
     /**
-     * Lookup a subspace scheme by symbolic name.
+     * Lookup a material resource scheme by symbolic name.
      *
      * @param name  Symbolic name of the scheme.
-     * @return  Scheme associated with @a name.
+     * @return  MaterialScheme associated with @a name.
      *
      * @throws UnknownSchemeError If @a name is unknown.
      *
@@ -246,12 +246,12 @@ public:
     MaterialSchemes const &allMaterialSchemes() const;
 
     /**
-     * Returns the total number of manifest schemes in the collection.
+     * Returns the total number of material manifest schemes in the collection.
      */
     inline int materialSchemeCount() const { return allMaterialSchemes().count(); }
 
     /**
-     * Clear all manifests and materials in all schemes.
+     * Clear all materials (and their manifests) in all schemes.
      *
      * @see allMaterialSchemes(), MaterialScheme::clear().
      */

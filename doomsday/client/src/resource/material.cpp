@@ -49,7 +49,7 @@ static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
     {
         if(def.texture)
         {
-            return &App_ResourceSystem().textureManifest(*reinterpret_cast<de::Uri *>(def.texture)).texture();
+            return &App_ResourceSystem().texture(*reinterpret_cast<de::Uri *>(def.texture));
         }
     }
     catch(TextureManifest::MissingTextureError const &)
