@@ -512,6 +512,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         container().remove(*gameUI);
         container().remove(*busy);
         container().remove(*gameSelMenu);
+        if(sidebar) container().remove(*sidebar);
         container().remove(*notifications);
         container().remove(*taskBar);
 
@@ -537,6 +538,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         container().add(gameUI);
         container().add(busy);
         container().add(gameSelMenu);
+        if(sidebar) container().add(sidebar);
         container().add(notifications);
         container().add(taskBar);
 
