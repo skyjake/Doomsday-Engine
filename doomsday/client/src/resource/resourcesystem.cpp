@@ -339,7 +339,7 @@ DENG2_PIMPL(ResourceSystem)
         self.purgeCacheQueue();
 #endif
 
-        self.destroyAllMaterialGroups();
+        self.clearAllMaterialGroups();
         clearMaterials();
         clearMaterialManifests();
 
@@ -2181,7 +2181,7 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
     // Already defined as a patch?
     try
     {
-        TextureManifest &manifest = findTexture(uri);
+        TextureManifest &manifest = textureManifest(uri);
         /// @todo We should instead define Materials from patches and return the material id.
         return patchid_t( manifest.uniqueId() );
     }
@@ -2360,7 +2360,7 @@ ResourceSystem::MaterialManifestGroups const &ResourceSystem::allMaterialGroups(
     return d->materialGroups;
 }
 
-void ResourceSystem::destroyAllMaterialGroups()
+void ResourceSystem::clearAllMaterialGroups()
 {
     qDeleteAll(d->materialGroups);
     d->materialGroups.clear();
@@ -2399,7 +2399,7 @@ bool ResourceSystem::hasTexture(de::Uri const &path) const
 {
     try
     {
-        findTexture(path);
+        textureManifest(path);
         return true;
     }
     catch(MissingManifestError const &)
@@ -2407,7 +2407,7 @@ bool ResourceSystem::hasTexture(de::Uri const &path) const
     return false;
 }
 
-TextureManifest &ResourceSystem::findTexture(de::Uri const &uri) const
+TextureManifest &ResourceSystem::textureManifest(de::Uri const &uri) const
 {
     LOG_AS("ResourceSystem::findTexture");
 
@@ -2667,7 +2667,7 @@ bool ResourceSystem::hasFont(de::Uri const &path) const
 {
     try
     {
-        findFont(path);
+        fontManifest(path);
         return true;
     }
     catch(MissingManifestError const &)
@@ -2675,7 +2675,7 @@ bool ResourceSystem::hasFont(de::Uri const &path) const
     return false;
 }
 
-FontManifest &ResourceSystem::findFont(de::Uri const &uri) const
+FontManifest &ResourceSystem::fontManifest(de::Uri const &uri) const
 {
     LOG_AS("ResourceSystem::findFont");
 

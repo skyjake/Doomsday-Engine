@@ -19,7 +19,7 @@ DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, boolean quiet)
 
     try
     {
-        return App_ResourceSystem().findTexture(uri).uniqueId();
+        return App_ResourceSystem().textureManifest(uri).uniqueId();
     }
     catch(ResourceSystem::MissingManifestError const &)
     {
@@ -56,7 +56,7 @@ DENG_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, in
     {
         if(AnimGroup *group = App_ResourceSystem().animGroup(groupId))
         {
-            group->newFrame(App_ResourceSystem().findTexture(textureUri), tics, randomTics);
+            group->newFrame(App_ResourceSystem().textureManifest(textureUri), tics, randomTics);
         }
         else
         {

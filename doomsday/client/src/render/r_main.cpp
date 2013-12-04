@@ -221,7 +221,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
     {
         try
         {
-            FontManifest &manifest = App_ResourceSystem().findFont(de::Uri(uri, RC_NULL));
+            FontManifest &manifest = App_ResourceSystem().fontManifest(de::Uri(uri, RC_NULL));
             if(manifest.hasResource())
             {
                 *fid = fontid_t(manifest.uniqueId());

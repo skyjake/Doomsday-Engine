@@ -175,20 +175,6 @@ public:
     patchid_t declarePatch(de::String encodedName);
 
     /**
-     * Convenient method of searching the texture collection for a texture with
-     * the specified @a schemeName and @a resourceUri.
-     *
-     * @param schemeName  Unique name of the scheme in which to search.
-     * @param resourceUri  Path to the (image) resource to find the texture for.
-     *
-     * @return  The found texture; otherwise @c 0.
-     */
-    de::Texture *texture(de::String schemeName, de::Uri const *resourceUri);
-
-    de::Texture *defineTexture(de::String schemeName, de::Uri const &resourceUri,
-                               de::Vector2i const &dimensions = de::Vector2i());
-
-    /**
      * Determines if a manifest exists for a material on @a path.
      * @return @c true if a manifest exists; otherwise @a false.
      */
@@ -203,6 +189,15 @@ public:
      */
     inline Material &material(de::Uri const &path) const {
         return materialManifest(path).material();
+    }
+
+    /**
+     * Returns a pointer to the identified Material.
+     *
+     * @see hasMaterial()
+     */
+    inline Material *materialPtr(de::Uri const &path) {
+        return hasMaterial(path)? &material(path) : 0;
     }
 
     /**
@@ -229,19 +224,21 @@ public:
     uint materialCount() const { return allMaterials().count(); }
 
     /**
+     * Returns @c true iff a Scheme exists with the symbolic @a name.
+     */
+    bool knownMaterialScheme(de::String name) const;
+
+    /**
      * Lookup a subspace scheme by symbolic name.
      *
      * @param name  Symbolic name of the scheme.
      * @return  Scheme associated with @a name.
      *
      * @throws UnknownSchemeError If @a name is unknown.
+     *
+     * @see knownMaterialScheme()
      */
     de::MaterialScheme &materialScheme(de::String name) const;
-
-    /**
-     * Returns @c true iff a Scheme exists with the symbolic @a name.
-     */
-    bool knownMaterialScheme(de::String name) const;
 
     /**
      * Returns a list of all the schemes for efficient traversal.
@@ -256,7 +253,7 @@ public:
     /**
      * Clear all manifests and materials in all schemes.
      *
-     * @see allSchemes(), Scheme::clear().
+     * @see allMaterialSchemes(), MaterialScheme::clear().
      */
     inline void clearAllMaterialSchemes()
     {
@@ -267,27 +264,27 @@ public:
     }
 
     /**
-     * Lookup a manifest group by unique @a number.
+     * Lookup a material manifest group by unique @a number.
      */
     MaterialManifestGroup &materialGroup(int number) const;
 
     /**
-     * Create a new (empty) manifest group.
+     * Create a new (empty) material manifest group.
      */
     MaterialManifestGroup &createMaterialGroup();
 
     /**
-     * To be called to destroy all manifest groups when they are no longer needed.
+     * Destroys all material manifest groups.
      */
-    void destroyAllMaterialGroups();
+    void clearAllMaterialGroups();
 
     /**
-     * Provides access to the list of manifest groups for efficient traversal.
+     * Provides a list of all material manifest groups, for efficient traversal.
      */
     MaterialManifestGroups const &allMaterialGroups() const;
 
     /**
-     * Returns the total number of manifest groups in the collection.
+     * Returns the total number of material manifest groups in the collection.
      */
     inline int materialGroupCount() const { return allMaterialGroups().count(); }
 
@@ -312,10 +309,41 @@ public:
     AllMaterials const &allMaterials() const;
 
     /**
-     * Determines if a manifest exists for a declared texture on @a path.
+     * Determines if a texture manifest exists for a declared texture on @a path.
      * @return @c true, if a manifest exists; otherwise @a false.
      */
     bool hasTexture(de::Uri const &path) const;
+
+    /**
+     * Lookup a texture resource for the specified @a path.
+     *
+     * @return The found texture.
+     *
+     * @see TextureManifest::material()
+     */
+    inline de::Texture &texture(de::Uri const &path) const {
+        return textureManifest(path).texture();
+    }
+
+    /**
+     * Returns a pointer to the identified Texture.
+     *
+     * @see hasTexture()
+     */
+    inline de::Texture *texturePtr(de::Uri const &path) {
+        return hasTexture(path)? &texture(path) : 0;
+    }
+
+    /**
+     * Convenient method of searching the texture collection for a texture with
+     * the specified @a schemeName and @a resourceUri.
+     *
+     * @param schemeName  Unique name of the scheme in which to search.
+     * @param resourceUri  Path to the (image) resource to find the texture for.
+     *
+     * @return  The found texture; otherwise @c 0.
+     */
+    de::Texture *texture(de::String schemeName, de::Uri const *resourceUri);
 
     /**
      * Find the manifest for a declared texture.
@@ -323,7 +351,7 @@ public:
      * @param search  The search term.
      * @return Found unique identifier.
      */
-    de::TextureManifest &findTexture(de::Uri const &search) const;
+    de::TextureManifest &textureManifest(de::Uri const &search) const;
 
     /**
      * Lookup a subspace scheme by symbolic name.
@@ -366,6 +394,12 @@ public:
     }
 
     /**
+     * Returns a list of all the unique texture instances in the collection,
+     * from all schemes.
+     */
+    AllTextures const &allTextures() const;
+
+    /**
      * Declare a texture in the collection, producing a manifest for a logical
      * Texture which will be defined later. If a manifest with the specified
      * @a uri already exists the existing manifest will be returned.
@@ -394,11 +428,8 @@ public:
                             resourceUri);
     }
 
-    /**
-     * Returns a list of all the unique texture instances in the collection,
-     * from all schemes.
-     */
-    AllTextures const &allTextures() const;
+    de::Texture *defineTexture(de::String schemeName, de::Uri const &resourceUri,
+                               de::Vector2i const &dimensions = de::Vector2i());
 
 #ifdef __CLIENT__
     /**
@@ -413,12 +444,24 @@ public:
     bool hasFont(de::Uri const &path) const;
 
     /**
+     * Convenient method of looking up a concrete font resource in the collection
+     * given it's unique identifier.
+     *
+     * @return  The associated font resource.
+     *
+     * @see toFontManifest(), FontManifest::hasResource()
+     */
+    inline AbstractFont &font(fontid_t id) const {
+        return toFontManifest(id).resource();
+    }
+
+    /**
      * Find a resource manifest.
      *
      * @param search  The search term.
      * @return Found unique identifier.
      */
-    de::FontManifest &findFont(de::Uri const &search) const;
+    de::FontManifest &fontManifest(de::Uri const &search) const;
 
     /**
      * Lookup a manifest by unique identifier.
@@ -429,18 +472,6 @@ public:
      * @return  The associated manifest.
      */
     de::FontManifest &toFontManifest(fontid_t id) const;
-
-    /**
-     * Convenient method of looking up a concrete font resource in the collection
-     * given it's unique identifier.
-     *
-     * @return  The associated font resource.
-     *
-     * @see toManifest(), FontManifest::hasResource()
-     */
-    inline AbstractFont &font(fontid_t id) const {
-        return toFontManifest(id).resource();
-    }
 
     /**
      * Lookup a subspace scheme by symbolic name.
@@ -479,6 +510,12 @@ public:
     }
 
     /**
+     * Returns a list of pointers to all the concrete resources in the collection,
+     * from all schemes.
+     */
+    AllFonts const &allFonts() const;
+
+    /**
      * Declare a resource in the collection, producing a (possibly new) manifest
      * for a resource which may be defined later. If a manifest with the specified
      * @a uri already exists the existing manifest will be returned.
@@ -492,12 +529,6 @@ public:
     }
 
     /**
-     * Returns a list of pointers to all the concrete resources in the collection,
-     * from all schemes.
-     */
-    AllFonts const &allFonts() const;
-
-    /**
      * Lookup the unique index attributed to the given @a modelDef.
      *
      * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
@@ -506,7 +537,7 @@ public:
 
     /**
      * Convenient method of looking up a concrete model resource in the collection
-     * given it's unique identifier.
+     * given it's unique identifier. O(1)
      *
      * @return  The associated model resource.
      */
@@ -639,10 +670,6 @@ public:
         int minFilter, int magFilter, int anisoFilter, bool mipmapped,
         bool gammaCorrection, bool noStretch, bool toAlpha);
 
-    void clearAllTextureSpecs();
-
-    void pruneUnusedTextureSpecs();
-
     /**
      * Prepare a TextureVariantSpecification according to usage context. If the
      * specification is incomplete suitable defaults are chosen automatically.
@@ -667,12 +694,6 @@ public:
      * @return  A rationalized and valid TextureVariantSpecification.
      */
     TextureVariantSpec &detailTextureSpec(float contrast);
-
-    /**
-     * To be called during a definition database reset to clear all definitions
-     * linked to by Font resources.
-     */
-    void clearFontDefinitionLinks();
 
     AbstractFont *createFontFromDef(ded_compositefont_t const &def);
     AbstractFont *createFontFromFile(de::Uri const &uri, de::String filePath);
@@ -820,6 +841,15 @@ public: /// @todo Should be private:
 #ifdef __CLIENT__
     void initModels();
 #endif
+
+    void clearAllTextureSpecs();
+    void pruneUnusedTextureSpecs();
+
+    /**
+     * To be called during a definition database reset to clear all definitions
+     * linked to by Font resources.
+     */
+    void clearFontDefinitionLinks();
 
 public:
     /**

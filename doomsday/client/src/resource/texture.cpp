@@ -334,7 +334,7 @@ D_CMD(InspectTexture)
 
     try
     {
-        TextureManifest &manifest = App_ResourceSystem().findTexture(search);
+        TextureManifest &manifest = App_ResourceSystem().textureManifest(search);
         if(manifest.hasTexture())
         {
             Texture &texture = manifest.texture();

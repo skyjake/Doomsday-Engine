@@ -1147,7 +1147,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
 
                         try
                         {
-                            Texture &texture = App_ResourceSystem().findTexture(reinterpret_cast<de::Uri const &>(*gm.material)).texture();
+                            Texture &texture = App_ResourceSystem().textureManifest(reinterpret_cast<de::Uri const &>(*gm.material)).texture();
                             layer0->addStage(Material::Layer::Stage(&texture, gm.tics, gm.randomTics / float( gm.tics )));
                         }
                         catch(TextureManifest::MissingTextureError const &)
@@ -1369,7 +1369,7 @@ static void interpretMaterialDef(ded_material_t const &def)
             {
                 try
                 {
-                    Texture &texture = App_ResourceSystem().findTexture(*reinterpret_cast<de::Uri *>(firstLayer.stages[0].texture)).texture();
+                    Texture &texture = App_ResourceSystem().textureManifest(*reinterpret_cast<de::Uri *>(firstLayer.stages[0].texture)).texture();
                     if(texture.isFlagged(Texture::Custom))
                     {
                         manifest->setFlags(MaterialManifest::Custom);
@@ -1944,7 +1944,7 @@ void Def_PostInit()
     }
 
     // Material groups (e.g., for precaching).
-    App_ResourceSystem().destroyAllMaterialGroups();
+    App_ResourceSystem().clearAllMaterialGroups();
     for(int i = 0; i < defs.count.groups.num; ++i)
     {
         initMaterialGroup(defs.groups[i]);
