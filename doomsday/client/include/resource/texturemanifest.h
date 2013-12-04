@@ -188,13 +188,26 @@ public:
 
     /**
      * Returns @c true if a Texture is presently associated with the manifest.
+     *
+     * @see texture(), texturePtr()
      */
     bool hasTexture() const;
 
     /**
      * Returns the logical Texture associated with the manifest.
+     *
+     * @see hasTexture()
      */
     Texture &texture() const;
+
+    /**
+     * Returns a pointer to the associated Texture resource; otherwise @c 0.
+     *
+     * @see hasTexture()
+     */
+    inline Texture *texturePtr() const {
+        return hasTexture()? &texture() : 0;
+    }
 
     /**
      * Change the logical Texture associated with the manifest.

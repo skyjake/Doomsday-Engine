@@ -175,10 +175,15 @@ public:
     patchid_t declarePatch(de::String encodedName);
 
     /**
-     * Determines if a manifest exists for a material on @a path.
-     * @return @c true if a manifest exists; otherwise @a false.
+     * Determines if a material exists for a @a path.
+     * @return @c true if a material exists; otherwise @a false.
+     *
+     * @see hasMaterialManifest(), MaterialManifest::hasMaterial()
      */
-    bool hasMaterial(de::Uri const &path) const;
+    inline bool hasMaterial(de::Uri const &path) const {
+        if(hasMaterialManifest(path)) return materialManifest(path).hasMaterial();
+        return false;
+    }
 
     /**
      * Lookup a material resource for the specified @a path.
@@ -194,11 +199,18 @@ public:
     /**
      * Returns a pointer to the identified Material.
      *
-     * @see hasMaterial()
+     * @see hasMaterialManifest(), MaterialManifest::materialPtr()
      */
     inline Material *materialPtr(de::Uri const &path) {
-        return hasMaterial(path)? &material(path) : 0;
+        if(hasMaterialManifest(path)) return materialManifest(path).materialPtr();
+        return 0;
     }
+
+    /**
+     * Determines if a manifest exists for a material on @a path.
+     * @return @c true if a manifest exists; otherwise @a false.
+     */
+    bool hasMaterialManifest(de::Uri const &path) const;
 
     /**
      * Lookup a material manifest by it's unique resource @a path.
@@ -309,17 +321,22 @@ public:
     AllMaterials const &allMaterials() const;
 
     /**
-     * Determines if a texture manifest exists for a declared texture on @a path.
-     * @return @c true, if a manifest exists; otherwise @a false.
+     * Determines if a texture exists for @a path.
+     * @return @c true, if a texture exists; otherwise @a false.
+     *
+     * @see hasTextureManifest(), TextureManifest::hasTexture()
      */
-    bool hasTexture(de::Uri const &path) const;
+    inline bool hasTexture(de::Uri const &path) const {
+        if(hasTextureManifest(path)) return textureManifest(path).hasTexture();
+        return false;
+    }
 
     /**
      * Lookup a texture resource for the specified @a path.
      *
      * @return The found texture.
      *
-     * @see TextureManifest::material()
+     * @see textureManifest(), TextureManifest::texture()
      */
     inline de::Texture &texture(de::Uri const &path) const {
         return textureManifest(path).texture();
@@ -328,10 +345,11 @@ public:
     /**
      * Returns a pointer to the identified Texture.
      *
-     * @see hasTexture()
+     * @see hasTextureManifest(), TextureManifest::texturePtr()
      */
     inline de::Texture *texturePtr(de::Uri const &path) {
-        return hasTexture(path)? &texture(path) : 0;
+        if(hasTextureManifest(path)) return textureManifest(path).texturePtr();
+        return false;
     }
 
     /**
@@ -344,6 +362,12 @@ public:
      * @return  The found texture; otherwise @c 0.
      */
     de::Texture *texture(de::String schemeName, de::Uri const *resourceUri);
+
+    /**
+     * Determines if a texture manifest exists for a declared texture on @a path.
+     * @return @c true, if a manifest exists; otherwise @a false.
+     */
+    bool hasTextureManifest(de::Uri const &path) const;
 
     /**
      * Find the manifest for a declared texture.

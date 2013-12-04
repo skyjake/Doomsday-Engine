@@ -1957,7 +1957,7 @@ void ResourceSystem::initFlatTextures()
                !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
             de::Uri uri("Flats", Path(percentEncodedName));
-            if(hasTexture(uri)) continue;
+            if(hasTextureManifest(uri)) continue;
 
             Texture::Flags flags;
             if(file.container().hasCustom()) flags |= Texture::Custom;
@@ -2291,7 +2291,7 @@ MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
     throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangeui(1, d->materialManifestCount + 1).asText());
 }
 
-bool ResourceSystem::hasMaterial(de::Uri const &path) const
+bool ResourceSystem::hasMaterialManifest(de::Uri const &path) const
 {
     try
     {
@@ -2395,7 +2395,7 @@ ResourceSystem::TextureSchemes const& ResourceSystem::allTextureSchemes() const
     return d->textureSchemes;
 }
 
-bool ResourceSystem::hasTexture(de::Uri const &path) const
+bool ResourceSystem::hasTextureManifest(de::Uri const &path) const
 {
     try
     {

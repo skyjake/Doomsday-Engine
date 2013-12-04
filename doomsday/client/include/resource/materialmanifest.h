@@ -136,13 +136,26 @@ public:
 
     /**
      * Returns @c true if a Material is presently associated with the manifest.
+     *
+     * @see material(), materialPtr()
      */
     bool hasMaterial() const;
 
     /**
      * Returns the logical Material associated with the manifest.
+     *
+     * @see hasMaterial()
      */
     Material &material() const;
+
+    /**
+     * Returns a pointer to the associated Material resource; otherwise @c 0.
+     *
+     * @see hasMaterial()
+     */
+    inline Material *materialPtr() const {
+        return hasMaterial()? &material() : 0;
+    }
 
     /**
      * Change the material associated with the manifest.
