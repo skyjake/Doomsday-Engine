@@ -469,9 +469,6 @@ DENG2_OBSERVES(App,              StartupComplete)
             return Continue;
         }
 
-        // Offscreen composition is only needed in Oculus Rift mode.
-        enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
-
         // The canvas needs to be recreated when the GL format has changed
         // (e.g., multisampling).
         if(needRecreateCanvas)
@@ -766,6 +763,9 @@ void ClientWindow::draw()
 {
     // Don't run the main loop until after the paint event has been dealt with.
     ClientApp::app().loop().pause();
+
+    // Offscreen composition is only needed in Oculus Rift mode.
+    d->enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
 
     if(d->performDeferredTasks() == Instance::AbortFrame)
     {
