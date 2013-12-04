@@ -70,7 +70,9 @@ DENG2_PIMPL(PostProcessing)
         /**
          * @todo The offscreen target should simply use the viewport area, not
          * the full canvas size. This way the shader could, for instance,
-         * easily mirror texture coordinates.
+         * easily mirror texture coordinates. However, this would require
+         * drawing the frame without applying a further GL viewport in the game
+         * widgets. -jk
          */
         //return self.viewRect().size();
         return root().window().canvas().size();
@@ -158,7 +160,10 @@ DENG2_PIMPL(PostProcessing)
         update();
 
         framebuf.target().clear(GLTarget::ColorDepthStencil);
-        GLState::push().setTarget(framebuf.target()).apply();
+        GLState::push()
+                .setTarget(framebuf.target())
+                .setViewport(Rectangleui::fromSize(consoleSize()))
+                .apply();
     }
 
     void end()
@@ -187,6 +192,7 @@ DENG2_PIMPL(PostProcessing)
         GLState::push()
                 .setBlend(false)
                 .setDepthTest(false)
+                .setViewport(Rectangleui::fromSize(root().window().canvas().size()))
                 .apply();
 
         frame.draw();
