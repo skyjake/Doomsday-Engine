@@ -979,8 +979,8 @@ D_CMD(InspectMaterial)
 
     try
     {
-        de::MaterialManifest &manifest = App_ResourceSystem().materialManifest(search);
-        if(manifest.hasMaterial())
+        MaterialManifest &manifest = App_ResourceSystem().materialManifest(search);
+        try
         {
             Material &material = manifest.material();
 
@@ -1079,14 +1079,13 @@ D_CMD(InspectMaterial)
                     ++variantIdx;
                 }
             }
-
 #endif // __CLIENT__ && DENG_DEBUG
         }
-        else
+        catch(MaterialManifest::MissingMaterialError const &)
         {
-            LOG_MSG("%s") << manifest.description();
+            LOG_MSG("%s.") << manifest.description();
+            return true;
         }
-        return true;
     }
     catch(ResourceSystem::MissingManifestError const &er)
     {

@@ -1030,13 +1030,12 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        MaterialVariantSpec const &spec =
-            ClientApp::resourceSystem()
+        MaterialVariantSpec const &spec = ClientApp::resourceSystem()
                 .materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                               1, -2, -1, true, true, false, false);
-        MaterialSnapshot const &ms =
-            ClientApp::resourceSystem()
-                .materialManifest(de::Uri("System", Path("gray"))).material().prepare(spec);
+
+        MaterialSnapshot const &ms = ClientApp::resourceSystem()
+                .material(de::Uri("System", Path("gray"))).prepare(spec);
 
         skinTexture = &ms.texture(MTU_PRIMARY);
     }

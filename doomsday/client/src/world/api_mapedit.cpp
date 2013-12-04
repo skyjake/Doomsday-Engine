@@ -162,7 +162,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
         // First try the preferred scheme, then any.
         try
         {
-            material = &App_ResourceSystem().materialManifest(materialUri).material();
+            material = &App_ResourceSystem().material(materialUri);
         }
         catch(ResourceSystem::MissingManifestError const &)
         {
@@ -170,7 +170,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
             try
             {
                 materialUri.setScheme("");
-                material = &App_ResourceSystem().materialManifest(materialUri).material();
+                material = &App_ResourceSystem().material(materialUri);
             }
             catch(ResourceSystem::MissingManifestError const &)
             {}

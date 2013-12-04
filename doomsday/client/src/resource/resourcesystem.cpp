@@ -3413,7 +3413,7 @@ static SpriteDefs generateSpriteDefs()
             frame = &spriteDef->frames.last();
         }
 
-        frame->mat         = &App_ResourceSystem().materialManifest(de::Uri("Sprites", manifest.path())).material();
+        frame->mat         = &App_ResourceSystem().material(de::Uri("Sprites", manifest.path()));
         frame->frame[0]    = frameNumber;
         frame->rotation[0] = rotationNumber;
 
