@@ -161,16 +161,16 @@ DENG2_OBSERVES(App,              StartupComplete)
         game->disable();
         root.add(game);
 
+        // Busy widget shows progress indicator and frozen game content.
+        busy = new BusyWidget;
+        busy->hide(); // normally hidden
+        busy->rule().setRect(root.viewRule());
+        root.add(busy);
+
         gameUI = new GameUIWidget;
         gameUI->rule().setRect(root.viewRule());
         gameUI->disable();
         container().add(gameUI);
-
-        // For busy mode we have an entirely different widget tree.
-        busy = new BusyWidget;
-        busy->hide(); // normally hidden
-        busy->rule().setRect(root.viewRule());
-        container().add(busy);
 
         // Game selection.
         gameSelMenu = new GameSelectionWidget;
@@ -507,7 +507,6 @@ DENG2_OBSERVES(App,              StartupComplete)
         }
 
         container().remove(*gameUI);
-        container().remove(*busy);
         container().remove(*gameSelMenu);
         if(sidebar) container().remove(*sidebar);
         container().remove(*notifications);
@@ -533,7 +532,6 @@ DENG2_OBSERVES(App,              StartupComplete)
         }
 
         container().add(gameUI);
-        container().add(busy);
         container().add(gameSelMenu);
         if(sidebar) container().add(sidebar);
         container().add(notifications);
