@@ -57,6 +57,7 @@ HEADERS += \
     include/de/FontBank \
     include/de/GLBuffer \
     include/de/GLFramebuffer \
+    include/de/GLInfo \
     include/de/GLPixelFormat \
     include/de/GLProgram \
     include/de/GLShader \
@@ -91,6 +92,7 @@ HEADERS += \
     include/de/gui/glbuffer.h \
     include/de/gui/glentrypoints.h \
     include/de/gui/glframebuffer.h \
+    include/de/gui/glinfo.h \
     include/de/gui/glpixelformat.h \
     include/de/gui/glprogram.h \
     include/de/gui/glshader.h \
@@ -127,6 +129,7 @@ SOURCES +=  \
     src/glbuffer.cpp \
     src/glentrypoints.cpp \
     src/glframebuffer.cpp \
+    src/glinfo.cpp \
     src/glprogram.cpp \
     src/glshader.cpp \
     src/glshaderbank.cpp \

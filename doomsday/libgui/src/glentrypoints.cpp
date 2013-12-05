@@ -33,6 +33,10 @@ PFNGLMULTITEXCOORD2FPROC          glMultiTexCoord2f;
 PFNGLMULTITEXCOORD2FVPROC         glMultiTexCoord2fv;
 #endif
 
+#ifdef WIN32
+PFNWGLGETEXTENSIONSSTRINGARBPROC  wglGetExtensionsStringARB;
+#endif
+
 PFNGLATTACHSHADERPROC             glAttachShader;
 
 PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation;
@@ -112,6 +116,10 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glClientActiveTexture);
     GET_PROC(glMultiTexCoord2f);
     GET_PROC(glMultiTexCoord2fv);
+#endif
+
+#ifdef WIN32
+    GET_PROC(wglGetExtensionsStringARB);
 #endif
 
     GET_PROC(glAttachShader);
