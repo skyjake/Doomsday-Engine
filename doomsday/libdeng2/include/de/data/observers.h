@@ -138,7 +138,7 @@ public:
      */
     class Loop {
     public:
-        Loop(Observers &observers) {
+        Loop(Observers const &observers) {
             DENG2_GUARD(observers);
             _observers = observers._members;
             _next = _observers.constBegin();
