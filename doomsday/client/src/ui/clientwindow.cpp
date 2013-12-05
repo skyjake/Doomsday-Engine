@@ -821,7 +821,7 @@ void ClientWindow::drawGameContent()
 
     GLState::current().target().clear(GLTarget::ColorDepthStencil);
 
-    d->root.drawUntil(*d->busy);
+    d->root.drawUntil(*d->gameSelMenu);
 }
 
 void ClientWindow::updateCanvasFormat()
