@@ -48,6 +48,7 @@
 #include "render/vr.h"
 
 #include <de/DisplayMode>
+#include <de/GLInfo>
 #include <de/GLState>
 
 D_CMD(Fog);
@@ -299,10 +300,6 @@ static void printConfiguration()
     LOG_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
     LOG_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
     LOG_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
-    if(GL_state.forceFinishBeforeSwap)
-    {
-        LOG_VERBOSE("  glFinish() forced before swapping buffers.");
-    }
 }
 
 boolean GL_EarlyInit()
@@ -315,8 +312,9 @@ boolean GL_EarlyInit()
     gamma_support = !CommandLine_Check("-noramp");
 
     // We are simple people; two texture units is enough.
-    numTexUnits = MIN_OF(GL_state.maxTexUnits, MAX_TEX_UNITS);
-    envModAdd = (GL_state.extensions.texEnvCombNV || GL_state.extensions.texEnvCombATI);
+    numTexUnits = MIN_OF(GLInfo::limits().maxTexUnits, MAX_TEX_UNITS);
+    envModAdd = (GLInfo::extensions().NV_texture_env_combine4 ||
+                 GLInfo::extensions().ATI_texture_env_combine3);
 
     GL_InitDeferredTask();
 
@@ -325,20 +323,10 @@ boolean GL_EarlyInit()
     Rend_ModelInit();
 
     // Check the maximum texture size.
-    if(GL_state.maxTexSize == 256)
+    if(GLInfo::limits().maxTexSize == 256)
     {
         LOG_WARNING("Using restricted texture w/h ratio (1:8)");
         ratioLimit = 8;
-    }
-    // Set a custom maximum size?
-    if(CommandLine_CheckWith("-maxtex", 1))
-    {
-        int customSize = M_CeilPow2(strtol(CommandLine_Next(), 0, 0));
-
-        if(GL_state.maxTexSize < customSize)
-            customSize = GL_state.maxTexSize;
-        GL_state.maxTexSize = customSize;
-        LOG_INFO("Using maximum texture size of %i x %i") << GL_state.maxTexSize << GL_state.maxTexSize;
     }
     if(CommandLine_Check("-outlines"))
     {
@@ -822,7 +810,7 @@ int GL_GetTexAnisoMul(int level)
     {
         if(level < 0)
         {   // Go with the maximum!
-            mul = GL_state.maxTexFilterAniso;
+            mul = GLInfo::limits().maxTexFilterAniso;
         }
         else
         {   // Convert from a DGL aniso level to a multiplier.
@@ -841,8 +829,7 @@ int GL_GetTexAnisoMul(int level)
             }
 
             // Clamp.
-            if(mul > GL_state.maxTexFilterAniso)
-                mul = GL_state.maxTexFilterAniso;
+            mul = MIN_OF(mul, GLInfo::limits().maxTexFilterAniso);
         }
     }
 
