@@ -26,6 +26,7 @@
 #include <de/App>
 #include <de/Log>
 #include <de/Drawable>
+#include <de/GLInfo>
 #include <de/GLFramebuffer>
 
 #include <QApplication>
@@ -325,6 +326,8 @@ void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
     LOG_DEBUG("Notifying GL init (during paint)");
+
+    GLInfo::glInit();
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
     getAllOpenGLEntryPoints();
