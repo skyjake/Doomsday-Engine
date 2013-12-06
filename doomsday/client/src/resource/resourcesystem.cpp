@@ -759,17 +759,23 @@ DENG2_PIMPL(ResourceSystem)
         bool cacheGroups = true)
     {
         // Already in the queue?
+        bool isQueued = false;
         foreach(CacheTask *baseTask, cacheQueue)
         {
             if(MaterialCacheTask *task = dynamic_cast<MaterialCacheTask *>(baseTask))
             {
                 if(&material == task->material && &contextSpec == task->spec)
                 {
-                    return;
+                    isQueued = true;
+                    break;
                 }
             }
         }
-        cacheQueue.append(new MaterialCacheTask(material, contextSpec));
+
+        if(!isQueued)
+        {
+            cacheQueue.append(new MaterialCacheTask(material, contextSpec));
+        }
 
         if(!cacheGroups) return;
 
