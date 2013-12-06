@@ -263,34 +263,35 @@ String TextureVariantSpec::asText() const
 
 DENG2_PIMPL(Texture::Variant)
 {
-    /// Superior Texture of which this is a derivative.
-    Texture &texture;
+    Texture &texture; /// The base for which "this" is a context derivative.
+    TextureVariantSpec const &spec; /// Usage context specification.
+    Flags flags;
 
-    /// Specification used to derive this variant.
-    TextureVariantSpec const &spec;
-
-    /// Variant flags.
-    Texture::Variant::Flags flags;
-
-    /// Source of this texture.
-    res::Source texSource;
+    res::Source texSource; ///< Logical source of the image.
 
     /// Name of the associated GL texture object.
+    /// @todo Use GLTexture
     uint glTexName;
 
     /// Prepared coordinates for the bottom right of the texture minus border.
     float s, t;
 
-    Instance(Public *i, Texture &generalCase,
-             TextureVariantSpec const &spec) : Base(i),
-      texture(generalCase),
-      spec(spec),
-      flags(0),
-      texSource(res::None),
-      glTexName(0),
-      s(0),
-      t(0)
+    Instance(Public *i, Texture &generalCase, TextureVariantSpec const &spec)
+        : Base(i)
+        , texture(generalCase)
+        , spec(spec)
+        , flags(0)
+        , texSource(res::None)
+        , glTexName(0)
+        , s(0)
+        , t(0)
     {}
+
+    ~Instance()
+    {
+        // Release any GL texture we may have prepared.
+        self.release();
+    }
 };
 
 Texture::Variant::Variant(Texture &generalCase, TextureVariantSpec const &spec)

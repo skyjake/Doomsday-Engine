@@ -91,11 +91,6 @@ Texture::~Texture()
 {
     DENG2_FOR_AUDIENCE(Deletion, i) i->textureBeingDeleted(*this);
 
-#ifdef __CLIENT__
-    /// @todo ResourceSystem should observe Deletion.
-    App_ResourceSystem().releaseGLTexturesFor(*this);
-#endif
-
     if(!manifest().schemeName().compareWithoutCase("Textures"))
     {
         CompositeTexture *pcTex = reinterpret_cast<CompositeTexture *>(userDataPointer());
