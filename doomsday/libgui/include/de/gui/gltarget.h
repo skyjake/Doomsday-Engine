@@ -52,6 +52,8 @@ public:
         Depth   = 0x2,  ///< Target has a depth attachment.
         Stencil = 0x4,  ///< Target has a stencil attachment.
 
+        Changed = 0x8, ///< Draw/clear has occurred on the target.
+
         ColorDepth        = Color | Depth,
         ColorDepthStencil = Color | Depth | Stencil,
         ColorStencil      = Color | Stencil,
@@ -154,10 +156,28 @@ public:
     Flags flags() const;
 
     /**
+     * Marks the rendering target modified. This is done automatically when the
+     * target is cleared or when GLBuffer is used to draw something on the
+     * target.
+     */
+    void markAsChanged();
+
+    /**
      * Reconfigures the render target back to the default OpenGL framebuffer.
      * All attachments will be released.
      */
     void configure();
+
+    /**
+     * Configure the target with one or more renderbuffers. Multisampled buffers
+     * can be configured by giving a @a sampleCount higher than 1.
+     *
+     * @param size         Size of the render target.
+     * @param flags        Which attachments to set up.
+     * @param sampleCount  Number of samples per pixel in each attachment.
+     */
+    void configure(Vector2ui const &size, Flags const &flags = DefaultFlags,
+                   int sampleCount = 1);
 
     /**
      * Reconfigures the render target with two textures, one for the color
@@ -241,6 +261,23 @@ public:
      * @param texture     New texture to use as the attachment.
      */
     void replaceAttachment(Flags const &attachment, GLTexture &texture);
+
+    /**
+     * Sets the target that is actually bound when this GLTarget is bound.
+     * Intended to be used with multisampled buffers.
+     *
+     * @param proxy  Proxy target.
+     */
+    void setProxy(GLTarget const *proxy);
+
+    void updateFromProxy();
+
+    /**
+     * Blits this target's contents to the @a copy target.
+     *
+     * @param dest  Target where to copy this target's contents.
+     */
+    void blit(GLTarget &dest) const;
 
     /**
      * Sets the subregion inside the render target where scissor and viewport

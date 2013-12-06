@@ -161,4 +161,10 @@ GLInfo::Limits const &GLInfo::limits()
     return info.d->lim;
 }
 
+bool GLInfo::supportsFramebufferMultisampling()
+{
+    return extensions().EXT_framebuffer_multisample &&
+           extensions().EXT_framebuffer_blit;
+}
+
 } // namespace de

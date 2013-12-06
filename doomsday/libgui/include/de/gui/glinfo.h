@@ -65,6 +65,8 @@ public:
     static Extensions const &extensions();
     static Limits const &limits();
 
+    static bool supportsFramebufferMultisampling();
+
     /**
      * Initializes the static instance of GLInfo. Cannot be called before there
      * is a current OpenGL context. Canvas will call this after initialization.

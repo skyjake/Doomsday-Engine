@@ -35,18 +35,20 @@ class Canvas;
  *
  * Color values and depth/stencil values are written to textures.
  */
-class GLFramebuffer : public Asset
+class LIBGUI_PUBLIC GLFramebuffer : public Asset
 {
 public:
     typedef Vector2ui Size;
 
 public:
     GLFramebuffer(Image::Format const & colorFormat = Image::RGB_888,
-                  Size const &          initialSize = Size());
+                  Size const &          initialSize = Size(),
+                  int                   sampleCount = 0 /*default*/);
 
     void glInit();
     void glDeinit();
 
+    void setSampleCount(int sampleCount);
     void setColorFormat(Image::Format const &colorFormat);
     void resize(Size const &newSize);
 
@@ -56,6 +58,18 @@ public:
     GLTexture &depthStencilTexture() const;
 
     void swapBuffers(Canvas &canvas);
+
+public:
+    /**
+     * Sets the default sample count for all frame buffers.
+     *
+     * @param sampleCount  Sample count.
+     *
+     * @return @c true, iff the default value was changed.
+     */
+    static bool setDefaultMultisampling(int sampleCount);
+
+    static int defaultMultisampling();
 
 private:
     DENG2_PRIVATE(d)

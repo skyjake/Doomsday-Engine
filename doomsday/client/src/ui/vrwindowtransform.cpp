@@ -130,6 +130,7 @@ DENG2_PIMPL(VRWindowTransform)
         // Canvas::Size textureSize(2560, 1600); // 2 * 1280x800 // Undesirable relative softness at very center of image
         // Canvas::Size textureSize(3200, 2000); // 2.5 * 1280x800 // Softness here too
         unwarpedFB.resize(textureSize);
+        unwarpedFB.setSampleCount(GLFramebuffer::defaultMultisampling());
 
         // Set render target to offscreen temporarily.
         GLState::push()

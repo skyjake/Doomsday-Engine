@@ -30,6 +30,7 @@
 #include <de/NumberValue>
 #include <QGLFormat>
 #include <de/GLState>
+#include <de/GLFramebuffer>
 #include <de/Drawable>
 #include <QCloseEvent>
 
@@ -730,21 +731,20 @@ bool ClientWindow::setDefaultGLFormat() // static
 
     // The value of the "vid-fsaa" variable is written to this settings
     // key when the value of the variable changes.
+    int sampleCount = 1;
     bool configured = de::App::config().getb("window.fsaa");
-
     if(CommandLine_Exists("-nofsaa") || !configured)
     {
-        fmt.setSampleBuffers(false);
         LOG_DEBUG("multisampling off");
     }
     else
     {
-        fmt.setSampleBuffers(true); // multisampling on (default: highest available)
-        //fmt.setSamples(4);
-        LOG_DEBUG("multisampling on (max)");
+        sampleCount = 4; // four samples is fine?
+        LOG_DEBUG("multisampling on (%i samples)") << sampleCount;
     }
+    bool const msChanged = GLFramebuffer::setDefaultMultisampling(sampleCount);
 
-    if(fmt != QGLFormat::defaultFormat())
+    if(fmt != QGLFormat::defaultFormat() || msChanged)
     {
         LOG_DEBUG("Applying new format...");
         QGLFormat::setDefaultFormat(fmt);

@@ -1,4 +1,4 @@
-/** @file glentrypoints.h  API entry points for OpenGL (Windows).
+/** @file glentrypoints.h  API entry points for OpenGL (Windows/Linux).
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -117,6 +117,11 @@ LIBGUI_EXTERN_C PFNGLUNIFORMMATRIX4FVPROC         glUniformMatrix4fv;
 LIBGUI_EXTERN_C PFNGLUSEPROGRAMPROC               glUseProgram;
 
 LIBGUI_EXTERN_C PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
+
+// Extensions:
+
+LIBGUI_EXTERN_C PFNGLBLITFRAMEBUFFEREXTPROC                     glBlitFramebufferEXT;
+LIBGUI_EXTERN_C PFNGLFRAMEBUFFERRENDERBUFFERMULTISAMPLEEXTPROC  glFramebufferRenderbufferMultisampleEXT;
 
 void getAllOpenGLEntryPoints();
 

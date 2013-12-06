@@ -22,6 +22,7 @@
 #include "de/GLTarget"
 #include "de/GLTexture"
 #include "de/GLState"
+#include "de/GLInfo"
 #include "de/CanvasWindow"
 #include <de/Asset>
 
@@ -73,7 +74,6 @@ DENG2_OBSERVES(Asset, Deletion)
                                  GL_DEPTH_STENCIL_ATTACHMENT;
     }
 
-
     GLuint fbo;
     GLuint renderBufs[MAX_ATTACHMENTS];
     GLTexture *bufTextures[MAX_ATTACHMENTS];
@@ -83,29 +83,45 @@ DENG2_OBSERVES(Asset, Deletion)
     Vector2ui size;
     Vector4f clearColor;
     Rectangleui activeRect; ///< Initially null.
+    int sampleCount;
+    GLTarget const *proxy;
 
     Instance(Public *i)
-        : Base(i), fbo(0),
-          flags(DefaultFlags), textureAttachment(NoAttachments),
-          texture(0)
+        : Base(i)
+        , fbo(0)
+        , flags(DefaultFlags)
+        , textureAttachment(NoAttachments)
+        , texture(0)
+        , sampleCount(0)
+        , proxy(0)
     {
         zap(renderBufs);
         zap(bufTextures);
     }
 
     Instance(Public *i, Flags const &texAttachment, GLTexture &colorTexture, Flags const &otherAtm)
-        : Base(i), fbo(0),
-          flags(texAttachment | otherAtm), textureAttachment(texAttachment),
-          texture(&colorTexture), size(colorTexture.size())
+        : Base(i)
+        , fbo(0)
+        , flags(texAttachment | otherAtm)
+        , textureAttachment(texAttachment)
+        , texture(&colorTexture)
+        , size(colorTexture.size())
+        , sampleCount(0)
+        , proxy(0)
     {
         zap(renderBufs);
         zap(bufTextures);
     }
 
     Instance(Public *i, Vector2ui const &targetSize, Flags const &fboFlags)
-        : Base(i), fbo(0),
-          flags(fboFlags), textureAttachment(NoAttachments),
-          texture(0), size(targetSize)
+        : Base(i)
+        , fbo(0)
+        , flags(fboFlags)
+        , textureAttachment(NoAttachments)
+        , texture(0)
+        , size(targetSize)
+        , sampleCount(0)
+        , proxy(0)
     {
         zap(renderBufs);
         zap(bufTextures);
@@ -165,9 +181,23 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         DENG2_ASSERT(size != Vector2ui(0, 0));
 
-        glGenRenderbuffers       (1, &renderBufs[id]);
-        glBindRenderbuffer       (GL_RENDERBUFFER, renderBufs[id]);
-        glRenderbufferStorage    (GL_RENDERBUFFER, type, size.x, size.y);
+        glGenRenderbuffers(1, &renderBufs[id]);
+        glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[id]);
+
+        if(sampleCount > 1)
+        {
+            LOG_DEBUG("FBO %i: Multisampled renderbuffer %ix%i with %i samples => attachment %i")
+                    << fbo << size.x << size.y << sampleCount
+                    << attachmentToId(attachment);
+
+            DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
+            glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
+        }
+        else
+        {
+            glRenderbufferStorage(GL_RENDERBUFFER, type, size.x, size.y);
+        }
+
         glFramebufferRenderbuffer(GL_FRAMEBUFFER,  attachment,
                                   GL_RENDERBUFFER, renderBufs[id]);
         LIBGUI_ASSERT_GL_OK();
@@ -254,7 +284,17 @@ DENG2_OBSERVES(Asset, Deletion)
         }
         zap(bufTextures);
         texture = 0;
-        size = Vector2ui(0, 0);
+        size = nullSize;
+    }
+
+    void releaseAndReset()
+    {
+        release();
+
+        textureAttachment = NoAttachments;
+        flags = NoAttachments;
+        sampleCount = 0;
+        proxy = 0;
     }
 
     void resizeRenderBuffers(Size const &newSize)
@@ -313,6 +353,22 @@ DENG2_OBSERVES(Asset, Deletion)
             release();
         }
     }
+
+    void updateFromProxy()
+    {
+        if(!proxy) return;
+
+        if(!flags.testFlag(Changed))
+        {
+            qDebug() << "GLTarget: " << fbo << "being updated from proxy without Changed flag (!)";
+        }
+
+        //if(flags.testFlag(Changed))
+        {
+            proxy->blit(self);
+            flags &= ~Changed;
+        }
+    }
 };
 
 GLTarget::GLTarget() : d(new Instance(this))
@@ -341,18 +397,37 @@ GLTarget::GLTarget(Vector2ui const &size, Flags const &flags)
     d->alloc();
 }
 
+GLTarget::Flags GLTarget::flags() const
+{
+    return d->flags;
+}
+
+void GLTarget::markAsChanged()
+{
+    d->flags |= Changed;
+}
+
 void GLTarget::configure()
 {
     LOG_AS("GLTarget");
 
-    d->release();
-
-    d->texture = 0;
-    d->textureAttachment = NoAttachments;
-    d->flags = NoAttachments;
-    d->size = nullSize;
-
+    d->releaseAndReset();
     setState(Ready);
+}
+
+void GLTarget::configure(Vector2ui const &size, Flags const &flags, int sampleCount)
+{
+    LOG_AS("GLTarget");
+
+    d->releaseAndReset();
+
+    d->flags = flags;
+    d->size = size;
+    d->sampleCount = (sampleCount > 1? sampleCount : 0);
+
+    d->allocFBO();
+    d->allocRenderBuffers();
+    d->validate();
 }
 
 void GLTarget::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
@@ -361,10 +436,8 @@ void GLTarget::configure(GLTexture *colorTex, GLTexture *depthStencilTex)
 
     LOG_AS("GLTarget");
 
-    d->release();
+    d->releaseAndReset();
 
-    d->texture = 0;
-    d->textureAttachment = NoAttachments;
     d->flags = ColorDepthStencil;
     d->size = (colorTex? colorTex->size() : depthStencilTex->size());
 
@@ -401,7 +474,7 @@ void GLTarget::configure(Flags const &attachment, GLTexture &texture, Flags cons
 {
     LOG_AS("GLTarget");
 
-    d->release();
+    d->releaseAndReset();
 
     // Set new configuration.
     d->texture = &texture;
@@ -417,12 +490,25 @@ void GLTarget::glBind() const
     DENG2_ASSERT(isReady());
     if(!isReady()) return;
 
-    glBindFramebuffer(GL_FRAMEBUFFER, d->fbo);
+    if(d->proxy)
+    {
+        //qDebug() << "GLTarget: binding proxy of" << d->fbo << "=>";
+        d->proxy->glBind();
+    }
+    else
+    {
+        //qDebug() << "GLTarget: binding FBO" << d->fbo;
+        glBindFramebuffer(GLInfo::extensions().EXT_framebuffer_blit?
+                              GL_DRAW_FRAMEBUFFER_EXT : GL_FRAMEBUFFER, d->fbo);
+    }
 }
 
 void GLTarget::glRelease() const
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GLInfo::extensions().EXT_framebuffer_blit?
+                          GL_DRAW_FRAMEBUFFER_EXT : GL_FRAMEBUFFER, 0);
+
+    d->updateFromProxy();
 }
 
 QImage GLTarget::toImage() const
@@ -436,7 +522,7 @@ QImage GLTarget::toImage() const
         // Read the contents of the color attachment.
         Size imgSize = size();
         QImage img(QSize(imgSize.x, imgSize.y), QImage::Format_ARGB32);
-        glBind();
+        glBindFramebuffer(GL_FRAMEBUFFER, d->fbo);
         glPixelStorei(GL_PACK_ALIGNMENT, 4);
         glReadPixels(0, 0, imgSize.x, imgSize.y, GL_BGRA, GL_UNSIGNED_BYTE,
                      (GLvoid *) img.constBits());
@@ -454,6 +540,10 @@ void GLTarget::setClearColor(Vector4f const &color)
 
 void GLTarget::clear(Flags const &attachments)
 {
+    DENG2_ASSERT(isReady());
+
+    markAsChanged();
+
     glBind();
 
     // Only clear what we have.
@@ -472,7 +562,7 @@ void GLTarget::resize(Size const &size)
     // The default target resizes itself automatically with the canvas.
     if(d->size == size || d->isDefault()) return;
 
-    glBind();
+    glBindFramebuffer(GL_FRAMEBUFFER, d->fbo);
     if(d->texture)
     {
         d->texture->setUndefinedImage(size, d->texture->imageFormat());
@@ -491,6 +581,50 @@ void GLTarget::replaceAttachment(Flags const &attachment, GLTexture &texture)
     DENG2_ASSERT(!d->isDefault());
 
     d->replace(d->flagsToGLAttachment(attachment), texture);
+}
+
+void GLTarget::setProxy(GLTarget const *proxy)
+{
+    d->proxy = proxy;
+}
+
+void GLTarget::updateFromProxy()
+{
+    d->updateFromProxy();
+}
+
+void GLTarget::blit(GLTarget &dest) const
+{
+    //qDebug() << "GLTarget: blit from" << d->fbo << "to" << dest.glName();
+
+    DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_blit);
+    if(!GLInfo::extensions().EXT_framebuffer_blit) return;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, d->fbo);
+    LIBGUI_ASSERT_GL_OK();
+
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
+    LIBGUI_ASSERT_GL_OK();
+
+    Flags common = d->flags & dest.flags();
+
+    glBlitFramebufferEXT(0, 0, size().x, size().y,
+                         0, 0, dest.size().x, dest.size().y,
+                         !dest.glName()? GL_COLOR_BUFFER_BIT /* only color to system backbuffer */ :
+                         ((common.testFlag(Color)?   GL_COLOR_BUFFER_BIT   : 0) |
+                          (common.testFlag(Depth)?   GL_DEPTH_BUFFER_BIT   : 0) |
+                          (common.testFlag(Stencil)? GL_STENCIL_BUFFER_BIT : 0)),
+                         GL_NEAREST);
+    LIBGUI_ASSERT_GL_OK();
+
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, 0);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, 0);
+
+    dest.markAsChanged();
+
+    GLState::current().target().glBind();
 }
 
 GLuint GLTarget::glName() const

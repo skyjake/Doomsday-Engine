@@ -1,4 +1,4 @@
-/** @file glentrypoints.cpp  API entry points for OpenGL (Windows).
+/** @file glentrypoints.cpp  API entry points for OpenGL (Windows/Linux).
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -18,8 +18,11 @@
 
 #include "de/gui/glentrypoints.h"
 #include <de/Log>
+#include <de/GLInfo>
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
+
+using namespace de;
 
 #ifdef UNIX
 #  include <GL/glx.h>
@@ -95,6 +98,11 @@ PFNGLUSEPROGRAMPROC               glUseProgram;
 
 PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
+// Extensions:
+
+PFNGLBLITFRAMEBUFFEREXTPROC                        glBlitFramebufferEXT;
+PFNGLFRAMEBUFFERRENDERBUFFERMULTISAMPLEEXTPROC     glFramebufferRenderbufferMultisampleEXT;
+
 void getAllOpenGLEntryPoints()
 {
     static bool haveProcs = false;
@@ -167,6 +175,16 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glUniformMatrix4fv);
     GET_PROC(glUseProgram);
     GET_PROC(glVertexAttribPointer);
+
+    if(GLInfo::extensions().EXT_framebuffer_blit)
+    {
+        GET_PROC(glBlitFramebufferEXT);
+    }
+
+    if(GLInfo::extensions().EXT_framebuffer_multisample)
+    {
+        GET_PROC(glRenderbufferStorageMultisampleEXT);
+    }
 
     haveProcs = true;
 }

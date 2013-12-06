@@ -17,6 +17,8 @@
  */
 
 #include "de/GLBuffer"
+#include "de/GLState"
+#include "de/GLTarget"
 
 namespace de {
 
@@ -259,6 +261,9 @@ void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usa
 void GLBuffer::draw(duint first, dint count)
 {
     if(!isReady()) return;
+
+    // Mark the current target changed.
+    GLState::current().target().markAsChanged();
 
     glBindBuffer(GL_ARRAY_BUFFER, d->name);
     d->enableArrays(true);
