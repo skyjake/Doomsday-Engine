@@ -1004,6 +1004,10 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)
 
+typedef Material::Layer MaterialLayer;
+typedef Material::DetailLayer MaterialDetailLayer;
+typedef Material::ShineLayer MaterialShineLayer;
+
 // Aliases.
 #ifdef __CLIENT__
 typedef Material::Animation MaterialAnimation;

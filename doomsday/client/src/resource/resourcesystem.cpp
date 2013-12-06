@@ -159,27 +159,6 @@ static detailvariantspecification_t &configureDetailTextureSpec(
 /// buckets. Bucket selection is determined by their quantized contrast value.
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
 
-/**
- * Stores the arguments for a material variant cache work item.
- */
-struct MaterialCacheTask
-{
-    /// The material from which to cache a variant.
-    Material *material;
-
-    /// Specification of the variant to be cached.
-    de::MaterialVariantSpec const *spec;
-
-    MaterialCacheTask(Material &_material, de::MaterialVariantSpec const &_spec)
-        : material(&_material), spec(&_spec)
-    {}
-};
-
-/// A FIFO queue of material variant caching tasks.
-/// Implemented as a list because we may need to remove tasks from the queue if
-/// the material is destroyed in the mean time.
-typedef QList<MaterialCacheTask *> MaterialCacheQueue;
-
 #endif // __CLIENT__
 
 DENG2_PIMPL(ResourceSystem)
@@ -259,7 +238,75 @@ DENG2_PIMPL(ResourceSystem)
     TextureSpecs textureSpecs;
     TextureSpecs detailTextureSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
 
-    MaterialCacheQueue materialCacheQueue;
+    struct CacheTask
+    {
+        virtual ~CacheTask() {}
+        virtual void run() = 0;
+    };
+
+    /**
+     * Stores the arguments for a resource cache work item.
+     */
+    struct MaterialCacheTask : public CacheTask
+    {
+        Material *material;
+        MaterialVariantSpec const *spec; /// Interned context specification.
+
+        MaterialCacheTask(Material &resource, MaterialVariantSpec const &contextSpec)
+            : CacheTask(), material(&resource), spec(&contextSpec)
+        {}
+
+        void run()
+        {
+            ResourceSystem &resSys = App_ResourceSystem();
+
+            // Ensure a variant for the specified context is created.
+            material->createVariant(*spec);
+            DENG2_ASSERT(material->chooseVariant(*spec) != 0);
+
+            // Prepare all layer textures.
+            foreach(MaterialLayer *layer, material->layers())
+            foreach(MaterialLayer::Stage *stage, layer->stages())
+            {
+                if(stage->texture)
+                {
+                    stage->texture->prepareVariant(*spec->primarySpec);
+                }
+            }
+
+            // Do we need to prepare detail texture(s)?
+            if(!material->isSkyMasked() && material->isDetailed())
+            foreach(MaterialDetailLayer::Stage *stage, material->detailLayer().stages())
+            {
+                if(stage->texture)
+                {
+                    float const contrast = de::clamp(0.f, stage->strength, 1.f)
+                                         * detailFactor /*Global strength multiplier*/;
+                    stage->texture->prepareVariant(resSys.detailTextureSpec(contrast));
+                }
+            }
+
+            // Do we need to prepare a shiny texture (and possibly a mask)?
+            if(!material->isSkyMasked() && material->isShiny())
+            foreach(MaterialShineLayer::Stage *stage, material->shineLayer().stages())
+            {
+               if(stage->texture)
+               {
+                   stage->texture->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
+                   if(stage->maskTexture)
+                   {
+                       stage->maskTexture->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
+                   }
+               }
+            }
+        }
+    };
+
+    /// A FIFO queue of material variant caching tasks.
+    /// Implemented as a list because we may need to remove tasks from the queue if
+    /// the material is destroyed in the mean time.
+    typedef QList<CacheTask *> CacheQueue;
+    CacheQueue cacheQueue;
 #endif
 
     struct SpriteGroup {
@@ -697,6 +744,102 @@ DENG2_PIMPL(ResourceSystem)
         self.pruneUnusedTextureSpecs();
 #endif
     }
+
+#ifdef __CLIENT__
+    void processCacheQueue()
+    {
+        while(!cacheQueue.isEmpty())
+        {
+            QScopedPointer<CacheTask> task(cacheQueue.takeFirst());
+            task->run();
+        }
+    }
+
+    void queueCacheTasksForMaterial(Material &material, MaterialVariantSpec const &contextSpec,
+        bool cacheGroups = true)
+    {
+        // Already in the queue?
+        foreach(CacheTask *baseTask, cacheQueue)
+        {
+            if(MaterialCacheTask *task = dynamic_cast<MaterialCacheTask *>(baseTask))
+            {
+                if(&material == task->material && &contextSpec == task->spec)
+                {
+                    return;
+                }
+            }
+        }
+        cacheQueue.append(new MaterialCacheTask(material, contextSpec));
+
+        if(!cacheGroups) return;
+
+        // If the material is part of one or more groups enqueue cache tasks
+        // for all other materials within the same group(s). Although we could
+        // use a flag in the task and have it find the groups come prepare time,
+        // this way we can be sure there are no overlapping tasks.
+        foreach(MaterialManifestGroup *group, materialGroups)
+        {
+            if(!group->contains(&material.manifest()))
+            {
+                continue;
+            }
+
+            foreach(MaterialManifest *manifest, *group)
+            {
+                if(!manifest->hasMaterial()) continue;
+
+                // Have we already enqueued this material?
+                if(&manifest->material() == &material) continue;
+
+                queueCacheTasksForMaterial(manifest->material(), contextSpec,
+                                           false /* do not cache groups */);
+            }
+        }
+    }
+
+    void queueCacheTasksForSprite(spritenum_t spriteId, MaterialVariantSpec const &contextSpec,
+        bool cacheGroups = true)
+    {
+        if(SpriteGroup *group = spriteGroup(spriteId))
+        {
+            foreach(Sprite *sprite, group->sprites)
+            foreach(SpriteViewAngle const &viewAngle, sprite->viewAngles())
+            {
+                if(Material *material = viewAngle.material)
+                {
+                    queueCacheTasksForMaterial(*material, contextSpec, cacheGroups);
+                }
+            }
+        }
+    }
+
+    void queueCacheTasksForModel(ModelDef &modelDef)
+    {
+        if(!useModels) return;
+
+        for(uint sub = 0; sub < modelDef.subCount(); ++sub)
+        {
+            SubmodelDef &subdef = modelDef.subModelDef(sub);
+            Model *mdl = modelForId(subdef.modelId);
+            if(!mdl) continue;
+
+            // Load all skins.
+            foreach(ModelSkin const &skin, mdl->skins())
+            {
+                if(Texture *tex = skin.texture)
+                {
+                    tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl->flags().testFlag(Model::NoTextureCompression)));
+                }
+            }
+
+            // Load the shiny skin too.
+            if(Texture *shinyTex = subdef.shinySkin)
+            {
+                shinyTex->prepareVariant(Rend_ModelShinyTextureSpec());
+            }
+        }
+    }
+#endif
 
     void deriveAllTexturesInScheme(String schemeName)
     {
@@ -3252,30 +3395,8 @@ void ResourceSystem::setModelDefFrame(ModelDef &modef, int frame)
 
 void ResourceSystem::cache(ModelDef *modelDef)
 {
-    if(!useModels) return;
     if(!modelDef) return;
-
-    for(uint sub = 0; sub < modelDef->subCount(); ++sub)
-    {
-        SubmodelDef &subdef = modelDef->subModelDef(sub);
-        Model *mdl = d->modelForId(subdef.modelId);
-        if(!mdl) continue;
-
-        // Load all skins.
-        foreach(ModelSkin const &skin, mdl->skins())
-        {
-            if(Texture *tex = skin.texture)
-            {
-                tex->prepareVariant(Rend_ModelDiffuseTextureSpec(mdl->flags().testFlag(Model::NoTextureCompression)));
-            }
-        }
-
-        // Load the shiny skin too.
-        if(Texture *tex = subdef.shinySkin)
-        {
-            tex->prepareVariant(Rend_ModelShinyTextureSpec());
-        }
-    }
+    d->queueCacheTasksForModel(*modelDef);
 }
 #endif // __CLIENT__
 
@@ -3519,17 +3640,7 @@ void ResourceSystem::initSprites()
 #ifdef __CLIENT__
 void ResourceSystem::cache(spritenum_t spriteId, MaterialVariantSpec const &spec)
 {
-    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
-    {
-        foreach(Sprite *sprite, group->sprites)
-        foreach(SpriteViewAngle const &viewAngle, sprite->viewAngles())
-        {
-            if(Material *material = viewAngle.material)
-            {
-                cache(*material, spec);
-            }
-        }
-    }
+    d->queueCacheTasksForSprite(spriteId, spec);
 }
 #endif
 
@@ -3633,96 +3744,19 @@ void ResourceSystem::setDefaultColorPalette(ColorPalette *newDefaultPalette)
 
 void ResourceSystem::purgeCacheQueue()
 {
-    qDeleteAll(d->materialCacheQueue);
-    d->materialCacheQueue.clear();
+    qDeleteAll(d->cacheQueue);
+    d->cacheQueue.clear();
 }
 
 void ResourceSystem::processCacheQueue()
 {
-    while(!d->materialCacheQueue.isEmpty())
-    {
-        QScopedPointer<MaterialCacheTask> task(d->materialCacheQueue.takeFirst());
-
-        Material *material = task->material;
-        MaterialVariantSpec const *spec = task->spec;
-
-        // Ensure a variant for the specified context is created.
-        material->createVariant(*spec);
-
-        // Prepare all layer textures.
-        foreach(Material::Layer *layer, material->layers())
-        foreach(Material::Layer::Stage *stage, layer->stages())
-        {
-            if(stage->texture)
-            {
-                stage->texture->prepareVariant(*spec->primarySpec);
-            }
-        }
-
-        // Do we need to prepare detail texture(s)?
-        if(!material->isSkyMasked() && material->isDetailed())
-        foreach(Material::DetailLayer::Stage *stage, material->detailLayer().stages())
-        {
-            if(stage->texture)
-            {
-                float const contrast = de::clamp(0.f, stage->strength, 1.f)
-                                     * detailFactor /*Global strength multiplier*/;
-                stage->texture->prepareVariant(detailTextureSpec(contrast));
-            }
-        }
-
-        // Do we need to prepare a shiny texture (and possibly a mask)?
-        if(!material->isSkyMasked() && material->isShiny())
-        foreach(Material::ShineLayer::Stage *stage, material->shineLayer().stages())
-        {
-           if(stage->texture)
-           {
-               stage->texture->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
-               if(stage->maskTexture)
-               {
-                   stage->maskTexture->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
-               }
-           }
-        }
-    }
+    d->processCacheQueue();
 }
 
 void ResourceSystem::cache(Material &material, MaterialVariantSpec const &spec,
     bool cacheGroups)
 {
-    // Already in the queue?
-    foreach(MaterialCacheTask *task, d->materialCacheQueue)
-    {
-        if(&material == task->material && &spec == task->spec)
-        {
-            return;
-        }
-    }
-
-    MaterialCacheTask *newTask = new MaterialCacheTask(material, spec);
-    d->materialCacheQueue.push_back(newTask);
-
-    if(!cacheGroups) return;
-
-    // If the material is part of one or more groups; enqueue cache tasks for all
-    // other materials within the same group(s). Although we could use a flag in
-    // the task and have it find the groups come prepare time, this way we can be
-    // sure there are no overlapping tasks.
-    foreach(MaterialManifestGroup *group, d->materialGroups)
-    {
-        if(!group->contains(&material.manifest()))
-        {
-            continue;
-        }
-
-        foreach(MaterialManifest *manifest, *group)
-        {
-            if(!manifest->hasMaterial()) continue;
-            if(&manifest->material() == &material) continue; // We've already enqueued this.
-
-            cache(manifest->material(), spec, false /* do not cache groups */);
-        }
-    }
+    d->queueCacheTasksForMaterial(material, spec, cacheGroups);
 }
 
 MaterialVariantSpec const &ResourceSystem::materialSpec(MaterialContextId contextId,

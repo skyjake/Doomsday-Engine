@@ -51,7 +51,9 @@ public:
     /**
      * Construct a zeroed MaterialVariantSpec instance.
      */
-    MaterialVariantSpec() : context(MaterialContextId(0)), primarySpec(0)
+    MaterialVariantSpec()
+        : context(MaterialContextId(0))
+        , primarySpec(0)
     {}
 
     /**
