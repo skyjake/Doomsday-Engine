@@ -645,29 +645,6 @@ public:
     void releaseGLTexturesByScheme(de::String schemeName);
 
     /**
-     * Release all GL-textures prepared using @a colorPalette.
-     */
-    void releaseGLTexturesFor(ColorPalette const &colorPalette);
-
-    /**
-     * Release all GL-textures associated with the specified variant @a texture.
-     */
-    void releaseGLTexturesFor(de::TextureVariant &texture);
-
-    /**
-     * Release all GL-textures associated with the specified @a texture.
-     */
-    void releaseGLTexturesFor(de::Texture &texture);
-
-    /**
-     * Release all variants of @a tex which match @a spec.
-     *
-     * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
-     * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
-     */
-    void releaseGLTexturesFor(de::Texture &texture, TextureVariantSpec &spec);
-
-    /**
      * Prepare a material variant specification in accordance to the specified
      * usage context. If incomplete context information is supplied, suitable
      * default values will be chosen in their place.

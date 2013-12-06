@@ -190,7 +190,7 @@ void CompositeBitmapFont::glDeinit()
     {
         Glyph *ch = &d->glyphs[i];
         if(!ch->tex) continue;
-        App_ResourceSystem().releaseGLTexturesFor(*ch->tex);
+        ch->tex->release();
         ch->tex = 0;
     }
 }

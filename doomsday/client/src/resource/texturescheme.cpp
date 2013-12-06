@@ -251,7 +251,7 @@ TextureManifest &TextureScheme::declare(Path const &path,
     {
 #ifdef __CLIENT__
         /// @todo Update any Materials (and thus Surfaces) which reference this.
-        App_ResourceSystem().releaseGLTexturesFor(newManifest->texture());
+        newManifest->texture().releaseGLTextures();
 #endif
     }
 

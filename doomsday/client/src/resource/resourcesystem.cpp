@@ -1872,7 +1872,15 @@ DENG2_PIMPL(ResourceSystem)
     /// Observes ColorPalette ColorTableChange
     void colorPaletteColorTableChanged(ColorPalette &colorPalette)
     {
-        self.releaseGLTexturesFor(colorPalette);
+        // Release all GL-textures prepared using @a colorPalette.
+        foreach(Texture *texture, textures)
+        {
+            colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(Texture::ColorPaletteAnalysis));
+            if(cp && cp->paletteId == colorpaletteid_t(colorPalette.id()))
+            {
+                texture->releaseGLTextures();
+            }
+        }
     }
 
 #endif // __CLIENT__
@@ -2620,16 +2628,6 @@ ResourceSystem::AllTextures const &ResourceSystem::allTextures() const
 
 #ifdef __CLIENT__
 
-static int releaseGLTexture(TextureVariant &variant, TextureVariantSpec *spec = 0)
-{
-    if(!spec || spec == &variant.spec())
-    {
-        variant.release();
-        if(spec) return true; // We're done.
-    }
-    return 0; // Continue iteration.
-}
-
 void ResourceSystem::releaseAllSystemGLTextures()
 {
     if(novideo) return;
@@ -2686,42 +2684,6 @@ void ResourceSystem::releaseAllGLTextures()
     releaseAllSystemGLTextures();
 }
 
-void ResourceSystem::releaseGLTexturesFor(ColorPalette const &colorPalette)
-{
-    foreach(Texture *texture, d->textures)
-    {
-        colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(Texture::ColorPaletteAnalysis));
-        if(cp && cp->paletteId == colorpaletteid_t(colorPalette.id()))
-        {
-            releaseGLTexturesFor(*texture);
-        }
-    }
-}
-
-void ResourceSystem::releaseGLTexturesFor(TextureVariant &tex)
-{
-    releaseGLTexture(tex);
-}
-
-void ResourceSystem::releaseGLTexturesFor(Texture &texture)
-{
-    foreach(TextureVariant *variant, texture.variants())
-    {
-        releaseGLTexture(*variant);
-    }
-}
-
-void ResourceSystem::releaseGLTexturesFor(Texture &texture, TextureVariantSpec &spec)
-{
-    foreach(TextureVariant *variant, texture.variants())
-    {
-        if(releaseGLTexture(*variant, &spec))
-        {
-            break;
-        }
-    }
-}
-
 void ResourceSystem::releaseGLTexturesByScheme(String schemeName)
 {
     if(schemeName.isEmpty()) return;
@@ -2732,7 +2694,7 @@ void ResourceSystem::releaseGLTexturesByScheme(String schemeName)
         TextureManifest &manifest = iter.next();
         if(manifest.hasTexture())
         {
-            releaseGLTexturesFor(manifest.texture());
+            manifest.texture().releaseGLTextures();
         }
     }
 }

@@ -253,6 +253,21 @@ void Texture::clearVariants()
     }
 }
 
+void Texture::releaseGLTextures(TextureVariantSpec *spec)
+{
+    foreach(TextureVariant *variant, variants())
+    {
+        if(!spec || spec == &variant->spec())
+        {
+            variant->release();
+            if(spec)
+            {
+                break;
+            }
+        }
+    }
+}
+
 #endif // __CLIENT__
 
 void Texture::clearAnalyses()

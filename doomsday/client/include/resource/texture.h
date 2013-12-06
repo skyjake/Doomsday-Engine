@@ -366,6 +366,13 @@ public:
      */
     uint variantCount() const;
 
+    /**
+     * Release prepared GL-textures for identified variants.
+     *
+     * @param spec  If non-zero release only for variants derived with this spec.
+     */
+    void releaseGLTextures(TextureVariantSpec *spec = 0);
+
 #endif // __CLIENT__
 
     /**
