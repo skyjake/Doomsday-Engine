@@ -38,6 +38,7 @@ namespace internal
         BlendFuncSrc,
         BlendFuncDest,
         BlendOp,
+        ColorMask,
         Scissor,
         ScissorX,
         ScissorY,
@@ -122,6 +123,7 @@ DENG2_PIMPL(GLState)
             { BlendFuncSrc,   4  },
             { BlendFuncDest,  4  },
             { BlendOp,        2  },
+            { ColorMask,      4  },
             { Scissor,        1  },
             { ScissorX,       12 }, // 12 bits == 4096 max
             { ScissorY,       12 },
@@ -243,6 +245,16 @@ DENG2_PIMPL(GLState)
             }
             break;
 
+        case ColorMask:
+        {
+            gl::ColorMask const mask = self.colorMask();
+            glColorMask((mask & gl::WriteRed)   != 0,
+                        (mask & gl::WriteGreen) != 0,
+                        (mask & gl::WriteBlue)  != 0,
+                        (mask & gl::WriteAlpha) != 0);
+            break;
+        }
+
         case Scissor:
         case ScissorX:
         case ScissorY:
@@ -328,6 +340,7 @@ GLState::GLState() : d(new Instance(this))
     setBlend     (true);
     setBlendFunc (gl::One, gl::Zero);
     setBlendOp   (gl::Add);
+    setColorMask (gl::WriteAll);
 
     setDefaultTarget();
 }
@@ -388,6 +401,12 @@ GLState &GLState::setBlendFunc(gl::BlendFunc func)
 GLState &GLState::setBlendOp(gl::BlendOp op)
 {
     d->props.set(BlendOp, duint(op));
+    return *this;
+}
+
+GLState &GLState::setColorMask(gl::ColorMask mask)
+{
+    d->props.set(ColorMask, duint(mask));
     return *this;
 }
 
@@ -510,6 +529,11 @@ gl::BlendFunc GLState::blendFunc() const
 gl::BlendOp GLState::blendOp() const
 {
     return d->props.valueAs<gl::BlendOp>(BlendOp);
+}
+
+gl::ColorMask GLState::colorMask() const
+{
+    return d->props.valueAs<gl::ColorMask>(ColorMask);
 }
 
 GLTarget &GLState::target() const

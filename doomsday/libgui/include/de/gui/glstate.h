@@ -35,6 +35,17 @@ class GLTarget;
 
 namespace gl
 {
+    enum ColorMaskFlag {
+        WriteNone  = 0,
+        WriteRed   = 0x1,
+        WriteGreen = 0x2,
+        WriteBlue  = 0x4,
+        WriteAlpha = 0x8,
+        WriteAll   = WriteRed | WriteGreen | WriteBlue | WriteAlpha
+    };
+    Q_DECLARE_FLAGS(ColorMask, ColorMaskFlag)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(ColorMask)
+
     enum Comparison {
         Never,
         Always,
@@ -107,6 +118,7 @@ public:
     GLState &setBlendFunc(gl::Blend src, gl::Blend dest);
     GLState &setBlendFunc(gl::BlendFunc func);
     GLState &setBlendOp(gl::BlendOp op);
+    GLState &setColorMask(gl::ColorMask mask);
     GLState &setTarget(GLTarget &target);
     GLState &setDefaultTarget();
     GLState &setViewport(Rectangleui const &viewportRect);
@@ -142,6 +154,7 @@ public:
     gl::Blend destBlendFunc() const;
     gl::BlendFunc blendFunc() const;
     gl::BlendOp blendOp() const;
+    gl::ColorMask colorMask() const;
     GLTarget &target() const;
     Rectangleui viewport() const;
     bool scissor() const;
