@@ -108,10 +108,12 @@ void getAllOpenGLEntryPoints()
     if(haveProcs) return;
 
 #ifdef WIN32
-#  define GET_PROC(name) *((void**)&name) = wglGetProcAddress(#name); DENG2_ASSERT(name != 0)
+#  define GET_PROC_EXT(name) *((void**)&name) = wglGetProcAddress(#name)
 #else
-#  define GET_PROC(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name); DENG2_ASSERT(name != 0)
+#  define GET_PROC_EXT(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name)
 #endif
+
+#define GET_PROC(name) GET_PROC_EXT(name); DENG2_ASSERT(name != 0) // must have
 
     //LOG_AS("getAllOpenGLEntryPoints");
     //LOG_VERBOSE("GL_VERSION: ") << (char const *) glGetString(GL_VERSION);
@@ -174,15 +176,8 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glUseProgram);
     GET_PROC(glVertexAttribPointer);
 
-    if(GLInfo::extensions().EXT_framebuffer_blit)
-    {
-        GET_PROC(glBlitFramebufferEXT);
-    }
-
-    if(GLInfo::extensions().EXT_framebuffer_multisample)
-    {
-        GET_PROC(glRenderbufferStorageMultisampleEXT);
-    }
+    GET_PROC_EXT(glBlitFramebufferEXT);
+    GET_PROC_EXT(glRenderbufferStorageMultisampleEXT);
 
     haveProcs = true;
 }

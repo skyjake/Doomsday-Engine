@@ -99,6 +99,8 @@ DENG2_PIMPL_NOREF(GLInfo)
 
     void init()
     {
+        if(inited) return;
+
         // Extensions.
         ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
         ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");

@@ -302,11 +302,10 @@ void Canvas::initializeGL()
     LOG_AS("Canvas");
     LOG_DEBUG("Notifying GL init (during paint)");
 
-    GLInfo::glInit();
-
 #ifdef LIBGUI_USE_GLENTRYPOINTS
     getAllOpenGLEntryPoints();
 #endif
+    GLInfo::glInit();
 
     DENG2_FOR_AUDIENCE(GLInit, i) i->canvasGLInit(*this);
 }
@@ -342,6 +341,7 @@ void Canvas::showEvent(QShowEvent* ev)
         makeCurrent();
         getAllOpenGLEntryPoints();
 #endif
+        GLInfo::glInit();
         QTimer::singleShot(1, this, SLOT(notifyReady()));
     }
 }
