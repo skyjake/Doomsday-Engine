@@ -175,7 +175,7 @@ void R_ProjectSprite(mobj_t *mo)
     // ...in an invalid state?
     if(!mo->state || mo->state == states) return;
     // ...no sprite frame is defined?
-    Sprite *sprite = App_ResourceSystem().spritePtr(mo->sprite, mo->frame);
+    Sprite *sprite = Mobj_Sprite(*mo);
     if(!sprite) return;
     // ...fully transparent?
     float const alpha = Mobj_Alpha(mo);
@@ -193,7 +193,7 @@ void R_ProjectSprite(mobj_t *mo)
     float interp = 0;
     if(useModels)
     {
-        interp = App_ResourceSystem().modelDefForMobj(mo, &mf, &nextmf);
+        mf = Mobj_ModelDef(*mo, &nextmf, &interp);
         if(mf)
         {
             // Use a sprite if the object is beyond the maximum model distance.

@@ -113,6 +113,13 @@ public:
 
 #ifdef __CLIENT__
     /**
+     * Returns the radius of the sprite as it would visually appear to be.
+     *
+     * @note Presently considers rotation 0 only!
+     */
+    double visualRadius() const;
+
+    /**
      * Produce a luminous object from the sprite configuration. The properties
      * of any resultant lumobj are configured in "sprite-local" space. This means
      * that it will positioned relative to the center of the sprite and must be

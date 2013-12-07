@@ -497,7 +497,7 @@ static void P_NewParticle(ptcgen_t *gen)
     // Check for model-only generators.
     if(gen->source)
     {
-        inter = App_ResourceSystem().modelDefForMobj(gen->source, &mf, &nextmf);
+        mf = Mobj_ModelDef(*gen->source, &nextmf, &inter);
         if(((!mf || !useModels) && def->flags & PGF_MODEL_ONLY) ||
            (mf && useModels && mf->flags & MFF_NO_PARTICLES))
             return;

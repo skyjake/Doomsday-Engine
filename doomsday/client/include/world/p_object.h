@@ -25,11 +25,13 @@
 #  error Attempted to include internal Doomsday p_object.h from a game
 #endif
 
-#include <de/aabox.h>
-
-#include <de/Vector>
-
+#ifdef __CLIENT__
+#  include "ModelDef"
+#  include "Sprite"
+#endif
 #include "Sector"
+#include <de/Vector>
+#include <de/aabox.h>
 
 class BspLeaf;
 class Plane;
@@ -160,6 +162,26 @@ void Mobj_GenerateLumobjs(mobj_t *mobj);
  *       no light diminishing or light range compression.
  */
 float Mobj_ShadowStrength(mobj_t *mobj);
+
+/**
+ * Determines which of the available sprites is in effect for the current mobj
+ * state and frame. May return @c 0 if the state and/or frame is not valid.
+ */
+Sprite *Mobj_Sprite(mobj_t const &mobj);
+
+/**
+ * Determines which of the available model definitions (if any), are in effect
+ * for the current mobj state and frame. (Interlinks are resolved).
+ *
+ * @param nextModef  If non-zero the model definition for the @em next frame is
+ *                   written here.
+ * @param interp     If non-zero and both model definitions are found the current
+ *                   interpolation point between the two is written here.
+ *
+ * @return  Active model definition for the current frame (if any).
+ */
+ModelDef *Mobj_ModelDef(mobj_t const &mobj, ModelDef **nextModef = 0,
+                        float *interp = 0);
 
 #endif // __CLIENT__
 

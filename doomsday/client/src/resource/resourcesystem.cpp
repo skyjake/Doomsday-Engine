@@ -24,18 +24,16 @@
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "con_bar.h"
+#  include "sys_system.h" // novideo
 #endif
 
 #include "con_main.h"
 #include "def_main.h"
 
-#include "resource/colorpalette.h"
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
 #ifdef __CLIENT__
-#  include "BitmapFont"
-#  include "CompositeBitmapFont"
 #  include "MaterialSnapshot"
 #endif
 
@@ -47,7 +45,6 @@
 #  include "gl/gl_texmanager.h"
 #  include "render/rend_model.h"
 #  include "render/rend_particle.h" // Rend_ParticleReleaseSystemTextures
-#  include "sys_system.h" // novideo
 
 // For smart caching logics:
 #  include "network/net_demo.h" // playback
@@ -71,11 +68,8 @@
 #  include <de/NativePath>
 #  include <de/StringPool>
 #endif
-#include "uri.hh"
 #include <de/stack.h> /// @todo remove me
-#include <de/mathutil.h> // M_CycleIntoRange()
-#include <QList>
-#include <QMap>
+#include <QVector>
 #include <QtAlgorithms>
 
 using namespace de;
@@ -223,9 +217,9 @@ DENG2_PIMPL(ResourceSystem)
     uint fontManifestIdMapSize;
     FontManifest **fontManifestIdMap; ///< Index with fontid_t-1
 
-    typedef std::vector<ModelDef> ModelDefs;
+    typedef QVector<ModelDef> ModelDefs;
     ModelDefs modefs;
-    std::vector<int> stateModefs; // Index to the modefs array.
+    QVector<int> stateModefs; // Index to the modefs array.
 
     typedef StringPool ModelRepository;
     ModelRepository *modelRepository; // Owns Model instances.
@@ -1246,8 +1240,8 @@ DENG2_PIMPL(ResourceSystem)
         }
 
         // Get a new entry.
-        modefs.push_back(ModelDef(id.toUtf8().constData()));
-        return &modefs.back();
+        modefs.append(ModelDef(id.toUtf8().constData()));
+        return &modefs.last();
     }
 
     /**
@@ -1257,27 +1251,30 @@ DENG2_PIMPL(ResourceSystem)
     ModelDef *getModelDef(int state, float interMark, int select)
     {
         // Is this a valid state?
-        if(state < 0 || state >= countStates.num) return 0;
+        if(state < 0 || state >= countStates.num)
+        {
+            return 0;
+        }
 
         // First try to find an existing modef.
-        for(uint i = 0; i < modefs.size(); ++i)
+        foreach(ModelDef const &modef, modefs)
         {
-            if(modefs[i].state == &states[state] &&
-               modefs[i].interMark == interMark && modefs[i].select == select)
+            if(modef.state == &states[state] &&
+               modef.interMark == interMark && modef.select == select)
             {
-                // Models are loaded in reverse order; this one already has
-                // a model.
-                return NULL;
+                // Models are loaded in reverse order; this one already has a model.
+                return 0;
             }
         }
 
-        modefs.push_back(ModelDef());
+        modefs.append(ModelDef());
+        ModelDef *md = &modefs.last();
 
         // Set initial data.
-        ModelDef *md = &modefs.back();
         md->state     = &states[state];
         md->interMark = interMark;
         md->select    = select;
+
         return md;
     }
 
@@ -3012,9 +3009,9 @@ bool ResourceSystem::hasModelDef(de::String id) const
     if(!id.isEmpty())
     {
         char const *idCStr = id.toUtf8().constData();
-        DENG2_FOR_EACH(Instance::ModelDefs, i, d->modefs)
+        foreach(ModelDef const &modef, d->modefs)
         {
-            if(!strcmp(i->id, idCStr))
+            if(!strcmp(modef.id, idCStr))
             {
                 return true;
             }
@@ -3029,8 +3026,8 @@ ModelDef &ResourceSystem::modelDef(int index)
     {
         return d->modefs[index];
     }
-    /// @throw UnknownModelDefIndexError An unknown model definition was referenced.
-    throw UnknownModelDefError("ResourceSystem::modelDef", "Invalid index " + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
+    /// @throw MissingModelDefError An unknown model definition was referenced.
+    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid index " + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
 }
 
 ModelDef &ResourceSystem::modelDef(String id)
@@ -3038,16 +3035,16 @@ ModelDef &ResourceSystem::modelDef(String id)
     if(!id.isEmpty())
     {
         char const *idCStr = id.toUtf8().constData();
-        DENG2_FOR_EACH(Instance::ModelDefs, i, d->modefs)
+        foreach(ModelDef const &modef, d->modefs)
         {
-            if(!strcmp(i->id, idCStr))
+            if(!strcmp(modef.id, idCStr))
             {
-                return *i;
+                return const_cast<ModelDef &>(modef);
             }
         }
     }
-    /// @throw UnknownModelDefIndexError An unknown model definition was referenced.
-    throw UnknownModelDefError("ResourceSystem::modelDef", QString("Invalid id %1").arg(id));
+    /// @throw MissingModelDefError An unknown model definition was referenced.
+    throw MissingModelDefError("ResourceSystem::modelDef", QString("Invalid id %1").arg(id));
 }
 
 ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
@@ -3056,7 +3053,7 @@ ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
     {
         return 0;
     }
-    if(stateIndex < 0 || stateIndex >= int(d->stateModefs.size()))
+    if(stateIndex < 0 || stateIndex >= d->stateModefs.count())
     {
         return 0;
     }
@@ -3066,7 +3063,7 @@ ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
     }
 
     DENG2_ASSERT(d->stateModefs[stateIndex] >= 0);
-    DENG2_ASSERT(d->stateModefs[stateIndex] < int(d->modefs.size()));
+    DENG2_ASSERT(d->stateModefs[stateIndex] < d->modefs.count());
 
     ModelDef *def = &d->modefs[d->stateModefs[stateIndex]];
     if(select)
@@ -3085,155 +3082,9 @@ ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
     return def;
 }
 
-float ResourceSystem::modelDefForMobj(mobj_t const *mo, ModelDef **modef, ModelDef **nextmodef)
-{
-    // On the client it is possible that we don't know the mobj's state.
-    if(!mo->state) return -1;
-
-    state_t &st = *mo->state;
-
-    // By default there are no models.
-    *nextmodef = 0;
-    *modef = modelDefForState(&st - states, mo->selector);
-    if(!*modef) return -1; // No model available.
-
-    float interp = -1;
-
-    // World time animation?
-    bool worldTime = false;
-    if((*modef)->flags & MFF_WORLD_TIME_ANIM)
-    {
-        float duration = (*modef)->interRange[0];
-        float offset   = (*modef)->interRange[1];
-
-        // Validate/modify the values.
-        if(duration == 0) duration = 1;
-
-        if(offset == -1)
-        {
-            offset = M_CycleIntoRange(MOBJ_TO_ID(mo), duration);
-        }
-
-        interp = M_CycleIntoRange(App_World().time() / duration + offset, 1);
-        worldTime = true;
-    }
-    else
-    {
-        // Calculate the currently applicable intermark.
-        interp = 1.0f - (mo->tics - frameTimePos) / float( st.tics );
-    }
-
-/*#if _DEBUG
-    if(mo->dPlayer)
-    {
-        qDebug() << "itp:" << interp << " mot:" << mo->tics << " stt:" << st.tics;
-    }
-#endif*/
-
-    // First find the modef for the interpoint. Intermark is 'stronger' than interrange.
-
-    // Scan interlinks.
-    while((*modef)->interNext && (*modef)->interNext->interMark <= interp)
-    {
-        *modef = (*modef)->interNext;
-    }
-
-    if(!worldTime)
-    {
-        // Scale to the modeldef's interpolation range.
-        interp = (*modef)->interRange[0] + interp * ((*modef)->interRange[1] -
-                                                     (*modef)->interRange[0]);
-    }
-
-    // What would be the next model? Check interlinks first.
-    if((*modef)->interNext)
-    {
-        *nextmodef = (*modef)->interNext;
-    }
-    else if(worldTime)
-    {
-        *nextmodef = modelDefForState(&st - states, mo->selector);
-    }
-    else if(st.nextState > 0) // Check next state.
-    {
-        // Find the appropriate state based on interrange.
-        state_t *it = states + st.nextState;
-        bool foundNext = false;
-        if((*modef)->interRange[1] < 1)
-        {
-            // Current modef doesn't interpolate to the end, find the proper destination
-            // modef (it isn't just the next one). Scan the states that follow (and
-            // interlinks of each).
-            bool stopScan = false;
-            int max = 20; // Let's not be here forever...
-            while(!stopScan)
-            {
-                if(!((!modelDefForState(it - states) ||
-                      modelDefForState(it - states, mo->selector)->interRange[0] > 0) &&
-                     it->nextState > 0))
-                {
-                    stopScan = true;
-                }
-                else
-                {
-                    // Scan interlinks, then go to the next state.
-                    ModelDef *mdit;
-                    if((mdit = modelDefForState(it - states, mo->selector)) && mdit->interNext)
-                    {
-                        forever
-                        {
-                            mdit = mdit->interNext;
-                            if(mdit)
-                            {
-                                if(mdit->interRange[0] <= 0) // A new beginning?
-                                {
-                                    *nextmodef = mdit;
-                                    foundNext = true;
-                                }
-                            }
-
-                            if(!mdit || foundNext)
-                            {
-                                break;
-                            }
-                        }
-                    }
-
-                    if(foundNext)
-                    {
-                        stopScan = true;
-                    }
-                    else
-                    {
-                        it = states + it->nextState;
-                    }
-                }
-
-                if(max-- <= 0)
-                    stopScan = true;
-            }
-            // @todo What about max == -1? What should 'it' be then?
-        }
-
-        if(!foundNext)
-        {
-            *nextmodef = modelDefForState(it - states, mo->selector);
-        }
-    }
-
-    // Is this group disabled?
-    if(useModels >= 2 && (*modef)->group & useModels)
-    {
-        *modef = *nextmodef = 0;
-        return -1;
-    }
-
-    return interp;
-}
-
 int ResourceSystem::modelDefCount() const
 {
-    return d->modefs.size();
+    return d->modefs.count();
 }
 
 void ResourceSystem::initModels()
@@ -3256,16 +3107,13 @@ void ResourceSystem::initModels()
     d->modelRepository = new StringPool();
 
     // There can't be more modeldefs than there are DED Models.
-    for(uint i = 0; i < defs.models.size(); ++i)
-    {
-        d->modefs.push_back(ModelDef());
-    }
+    d->modefs.resize(defs.models.size());
 
-    // Clear the modef pointers of all States.
-    d->stateModefs.clear();
+    // Clear the stateid => modeldef LUT.
+    d->stateModefs.resize(countStates.num);
     for(int i = 0; i < countStates.num; ++i)
     {
-        d->stateModefs.push_back(-1);
+        d->stateModefs[i] = -1;
     }
 
     // Read in the model files and their data.
@@ -3285,14 +3133,14 @@ void ResourceSystem::initModels()
     // is important. We want to allow "patch" definitions, right?
 
     // For each modeldef we will find the "next" def.
-    for(int i = int(d->modefs.size()) - 1; i >= 0; --i)
+    for(int i = d->modefs.count() - 1; i >= 0; --i)
     {
         ModelDef *me = &d->modefs[i];
 
         float minmark = 2; // max = 1, so this is "out of bounds".
 
         ModelDef *closest = 0;
-        for(int k = int(d->modefs.size()) - 1; k >= 0; --k)
+        for(int k = d->modefs.count() - 1; k >= 0; --k)
         {
             ModelDef *other = &d->modefs[k];
 
@@ -3310,7 +3158,7 @@ void ResourceSystem::initModels()
     }
 
     // Create selectlinks.
-    for(int i = int(d->modefs.size()) - 1; i >= 0; --i)
+    for(int i = d->modefs.count() - 1; i >= 0; --i)
     {
         ModelDef *me = &d->modefs[i];
 
@@ -3319,7 +3167,7 @@ void ResourceSystem::initModels()
         ModelDef *closest = 0;
 
         // Start scanning from the next definition.
-        for(int k = int(d->modefs.size()) - 1; k >= 0; --k)
+        for(int k = d->modefs.count() - 1; k >= 0; --k)
         {
             ModelDef *other = &d->modefs[k];
 
@@ -3342,7 +3190,7 @@ void ResourceSystem::initModels()
 int ResourceSystem::indexOf(ModelDef const *modelDef)
 {
     int index = int(modelDef - &d->modefs[0]);
-    if(index >= 0 && index < int(d->modefs.size()))
+    if(index >= 0 && index < d->modefs.count())
     {
         return index;
     }
@@ -3735,15 +3583,6 @@ MaterialVariantSpec const &ResourceSystem::materialSpec(MaterialContextId contex
     return d->getMaterialSpecForContext(contextId, flags, border, tClass, tMap,
                                         wrapS, wrapT, minFilter, magFilter, anisoFilter,
                                         mipmapped, gammaCorrection, noStretch, toAlpha);
-}
-
-void ResourceSystem::restartAllMaterialAnimations()
-{
-    foreach(Material *material, d->materials)
-    foreach(MaterialAnimation *animation, material->animations())
-    {
-        animation->restart();
-    }
 }
 
 static int findSpriteOwner(thinker_t *th, void *context)

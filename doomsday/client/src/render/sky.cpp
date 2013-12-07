@@ -355,7 +355,7 @@ static void setupSkyModels(ded_sky_t *def)
             sm->yaw      = modef->yaw;
             sm->frame    = sm->model->subModelDef(0).frame;
         }
-        catch(ResourceSystem::UnknownModelDefError const &)
+        catch(ResourceSystem::MissingModelDefError const &)
         {} // Ignore this error.
     }
 }

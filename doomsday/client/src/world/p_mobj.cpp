@@ -291,17 +291,6 @@ DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
 
 #ifdef __CLIENT__
 
-static ModelDef *currentModelDefForMobj(mobj_t const &mo)
-{
-    if(useModels)
-    {
-        ModelDef *mf = 0, *nextmf = 0;
-        App_ResourceSystem().modelDefForMobj(&mo, &mf, &nextmf);
-        return mf;
-    }
-    return 0;
-}
-
 boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
     if(!mo || !Mobj_HasCluster(*mo))
@@ -371,7 +360,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
         return;
     }
 
-    Sprite *sprite = App_ResourceSystem().spritePtr(mo->sprite, mo->frame);
+    Sprite *sprite = Mobj_Sprite(*mo);
     if(!sprite) return;
 
     // Always use the front rotation when determining light properties.
@@ -465,9 +454,9 @@ float Mobj_ShadowStrength(mobj_t *mo)
     }
 
     // Sprites have their own shadow strength factor.
-    if(!currentModelDefForMobj(*mo))
+    if(!useModels || !Mobj_ModelDef(*mo))
     {
-        if(Sprite *sprite = App_ResourceSystem().spritePtr(mo->sprite, mo->frame))
+        if(Sprite *sprite = Mobj_Sprite(*mo))
         {
             if(sprite->hasViewAngle(0))
             {
@@ -498,6 +487,158 @@ float Mobj_ShadowStrength(mobj_t *mo)
 
     /// @note This equation is the same as that used for fakeradio.
     return (0.6f - ambientLightLevel * 0.4f) * strength;
+}
+
+Sprite *Mobj_Sprite(mobj_t const &mo)
+{
+    return App_ResourceSystem().spritePtr(mo.sprite, mo.frame);
+}
+
+ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInter)
+{
+    ResourceSystem &resSys = App_ResourceSystem();
+
+    // By default there are no models.
+    if(retNextModef) *retNextModef = 0;
+    if(retInter)     *retInter = -1;
+
+    // On the client it is possible that we don't know the mobj's state.
+    if(!mo.state) return 0;
+
+    state_t &st = *mo.state;
+    ModelDef *modef = resSys.modelDefForState(&st - states, mo.selector);
+    if(!modef) return 0; // No model available.
+
+    float interp = -1;
+
+    // World time animation?
+    bool worldTime = false;
+    if(modef->flags & MFF_WORLD_TIME_ANIM)
+    {
+        float duration = modef->interRange[0];
+        float offset   = modef->interRange[1];
+
+        // Validate/modify the values.
+        if(duration == 0) duration = 1;
+
+        if(offset == -1)
+        {
+            offset = M_CycleIntoRange(MOBJ_TO_ID(&mo), duration);
+        }
+
+        interp = M_CycleIntoRange(App_World().time() / duration + offset, 1);
+        worldTime = true;
+    }
+    else
+    {
+        // Calculate the currently applicable intermark.
+        interp = 1.0f - (mo.tics - frameTimePos) / float( st.tics );
+    }
+
+/*#if _DEBUG
+    if(mo.dPlayer)
+    {
+        qDebug() << "itp:" << interp << " mot:" << mo.tics << " stt:" << st.tics;
+    }
+#endif*/
+
+    // First find the modef for the interpoint. Intermark is 'stronger' than interrange.
+
+    // Scan interlinks.
+    while(modef->interNext && modef->interNext->interMark <= interp)
+    {
+        modef = modef->interNext;
+    }
+
+    if(!worldTime)
+    {
+        // Scale to the modeldef's interpolation range.
+        interp = modef->interRange[0] + interp
+               * (modef->interRange[1] - modef->interRange[0]);
+    }
+
+    // What would be the next model? Check interlinks first.
+    if(retNextModef)
+    {
+        if(modef->interNext)
+        {
+            *retNextModef = modef->interNext;
+        }
+        else if(worldTime)
+        {
+            *retNextModef = resSys.modelDefForState(&st - states, mo.selector);
+        }
+        else if(st.nextState > 0) // Check next state.
+        {
+            // Find the appropriate state based on interrange.
+            state_t *it = states + st.nextState;
+            bool foundNext = false;
+            if(modef->interRange[1] < 1)
+            {
+                // Current modef doesn't interpolate to the end, find the proper destination
+                // modef (it isn't just the next one). Scan the states that follow (and
+                // interlinks of each).
+                bool stopScan = false;
+                int max = 20; // Let's not be here forever...
+                while(!stopScan)
+                {
+                    if(!((!resSys.modelDefForState(it - states) ||
+                          resSys.modelDefForState(it - states, mo.selector)->interRange[0] > 0) &&
+                         it->nextState > 0))
+                    {
+                        stopScan = true;
+                    }
+                    else
+                    {
+                        // Scan interlinks, then go to the next state.
+                        ModelDef *mdit = resSys.modelDefForState(it - states, mo.selector);
+                        if(mdit && mdit->interNext)
+                        {
+                            forever
+                            {
+                                mdit = mdit->interNext;
+                                if(mdit)
+                                {
+                                    if(mdit->interRange[0] <= 0) // A new beginning?
+                                    {
+                                        *retNextModef = mdit;
+                                        foundNext = true;
+                                    }
+                                }
+
+                                if(!mdit || foundNext)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+
+                        if(foundNext)
+                        {
+                            stopScan = true;
+                        }
+                        else
+                        {
+                            it = states + it->nextState;
+                        }
+                    }
+
+                    if(max-- <= 0)
+                        stopScan = true;
+                }
+                // @todo What about max == -1? What should 'it' be then?
+            }
+
+            if(!foundNext)
+            {
+                *retNextModef = resSys.modelDefForState(it - states, mo.selector);
+            }
+        }
+    }
+
+    if(retInter) *retInter = interp;
+
+    return modef;
 }
 
 #endif // __CLIENT__
@@ -581,22 +722,19 @@ coord_t Mobj_Radius(mobj_t const &mobj)
 coord_t Mobj_VisualRadius(mobj_t const &mobj)
 {
 #ifdef __CLIENT__
-
-    // If models are being used, use the model's radius.
-    if(ModelDef *mf = currentModelDefForMobj(mobj))
+    // Is a model in effect?
+    if(useModels)
     {
-        return mf->visualRadius;
+        if(ModelDef *modef = Mobj_ModelDef(mobj))
+        {
+            return modef->visualRadius;
+        }
     }
 
-    // Use the sprite frame's width?
-    if(Sprite *sprite = App_ResourceSystem().spritePtr(mobj.sprite, mobj.frame))
+    // Is a sprite in effect?
+    if(Sprite *sprite = Mobj_Sprite(mobj))
     {
-        if(sprite->hasViewAngle(0))
-        {
-            Material *material = sprite->viewAngle(0).material;
-            MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
-            return ms.width() / 2;
-        }
+        return sprite->visualRadius();
     }
 #endif
 

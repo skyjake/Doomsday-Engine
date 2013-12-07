@@ -126,7 +126,23 @@ Sprite::ViewAngle const &Sprite::closestViewAngle(angle_t mobjAngle, angle_t ang
     return viewAngle(rotation);
 }
 
+Sprite::ViewAngles const &Sprite::viewAngles() const
+{
+    return d->viewAngles;
+}
+
 #ifdef __CLIENT__
+double Sprite::visualRadius() const
+{
+    if(hasViewAngle(0))
+    {
+        Material *material = viewAngle(0).material;
+        MaterialSnapshot const &ms = material->prepare(Rend_SpriteMaterialSpec());
+        return ms.width() / 2;
+    }
+    return 0;
+}
+
 Lumobj *Sprite::generateLumobj() const
 {
     LOG_AS("Sprite::generateLumobj");
@@ -154,8 +170,3 @@ Lumobj *Sprite::generateLumobj() const
                     ->setZOffset(-tex.origin().y - pl->originY * ms.height());
 }
 #endif // __CLIENT__
-
-Sprite::ViewAngles const &Sprite::viewAngles() const
-{
-    return d->viewAngles;
-}

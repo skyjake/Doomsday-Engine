@@ -2843,7 +2843,7 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
 
         if(cluster.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            if(Sprite *sprite = App_ResourceSystem().spritePtr(mo.sprite, mo.frame))
+            if(Sprite *sprite = Mobj_Sprite(mo))
             {
                 if(sprite->hasViewAngle(0))
                 {

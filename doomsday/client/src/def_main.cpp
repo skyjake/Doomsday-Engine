@@ -1926,7 +1926,7 @@ void Def_PostInit()
                     st->endFrame = -1;
                 }
             }
-            catch(ResourceSystem::UnknownModelDefError const &)
+            catch(ResourceSystem::MissingModelDefError const &)
             {} // Ignore this error.
         }
     }

@@ -37,9 +37,13 @@
 #include "Sprite"
 #include "Texture"
 #include "TextureScheme"
+#include "uri.hh"
 #include <de/Error>
 #include <de/String>
 #include <de/System>
+#include <QList>
+#include <QMap>
+#include <QSet>
 
 /**
  * Logical resources; materials, packages, textures, etc...
@@ -95,8 +99,8 @@ public:
     DENG2_ERROR(UnknownMaterialIdError);
 
 #ifdef __CLIENT__
-    /// An unknown model def was referenced. @ingroup errors
-    DENG2_ERROR(UnknownModelDefError);
+    /// The referenced model def was not found. @ingroup errors
+    DENG2_ERROR(MissingModelDefError);
 
     /// The specified font id was invalid (out of range). @ingroup errors
     DENG2_ERROR(UnknownFontIdError);
@@ -122,7 +126,7 @@ public:
 public:
     /**
      * Construct a new resource system, configuring all resource classes and
-     * their collections.
+     * the associated resource collection schemes.
      */
     ResourceSystem();
 
@@ -174,10 +178,9 @@ public:
      */
     int spriteCount();
 
-    patchid_t declarePatch(de::String encodedName);
-
     /**
      * Determines if a material exists for a @a path.
+     *
      * @return @c true if a material exists; otherwise @a false.
      *
      * @see hasMaterialManifest(), MaterialManifest::hasMaterial()
@@ -210,6 +213,7 @@ public:
 
     /**
      * Determines if a manifest exists for a material on @a path.
+     *
      * @return @c true if a manifest exists; otherwise @a false.
      */
     bool hasMaterialManifest(de::Uri const &path) const;
@@ -269,10 +273,8 @@ public:
      *
      * @see allMaterialSchemes(), MaterialScheme::clear().
      */
-    inline void clearAllMaterialSchemes()
-    {
-        foreach(de::MaterialScheme *scheme, allMaterialSchemes())
-        {
+    inline void clearAllMaterialSchemes() {
+        foreach(de::MaterialScheme *scheme, allMaterialSchemes()) {
             scheme->clear();
         }
     }
@@ -311,8 +313,7 @@ public:
      *
      * @return  Manifest for this URI.
      */
-    inline de::MaterialManifest &declareMaterial(de::Uri const &uri)
-    {
+    inline de::MaterialManifest &declareMaterial(de::Uri const &uri) {
         return materialScheme(uri.scheme()).declare(uri.path());
     }
 
@@ -324,6 +325,7 @@ public:
 
     /**
      * Determines if a texture exists for @a path.
+     *
      * @return @c true, if a texture exists; otherwise @a false.
      *
      * @see hasTextureManifest(), TextureManifest::hasTexture()
@@ -367,6 +369,7 @@ public:
 
     /**
      * Determines if a texture manifest exists for a declared texture on @a path.
+     *
      * @return @c true, if a manifest exists; otherwise @a false.
      */
     bool hasTextureManifest(de::Uri const &path) const;
@@ -455,9 +458,12 @@ public:
     de::Texture *defineTexture(de::String schemeName, de::Uri const &resourceUri,
                                de::Vector2i const &dimensions = de::Vector2i());
 
+    patchid_t declarePatch(de::String encodedName);
+
 #ifdef __CLIENT__
     /**
      * Determines if a manifest exists for a resource on @a path.
+     *
      * @return @c true, if a manifest exists; otherwise @a false.
      */
     bool hasFont(de::Uri const &path) const;
@@ -568,7 +574,8 @@ public:
     Model &model(modelid_t id);
 
     /**
-     * Determines if a model definition exists with the given @a id.
+     * Determines if a model definition exists with the given @a id. O(n)
+     *
      * @return  @c true, if a definition exists; otherwise @a false.
      *
      * @see modelDef()
@@ -597,20 +604,13 @@ public:
      * Lookup a model definition for the specified mobj @a stateIndex.
      *
      * @param stateIndex  Index of the mobj state.
-     * @param select      Model selector argument. There may be multiple models for
-     *                    a given mobj state. The selector determines which is used
-     *                    according to some external selection criteria.
+     * @param select      Model selector argument. There may be multiple models
+     *                    for a given mobj state. The selector determines which
+     *                    is used according to some external selection criteria.
      *
      * @return  Found model definition; otherwise @c 0.
      */
     ModelDef *modelDefForState(int stateIndex, int select = 0);
-
-    /**
-     * Is there a model for this mobj? The decision is made based on the state and tics
-     * of the mobj. Returns the modeldefs that are in effect at the moment (interlinks
-     * checked appropriately).
-     */
-    float modelDefForMobj(struct mobj_s const *mo, ModelDef **mdef, ModelDef **nextmdef);
 
     /**
      * Returns the total number of model definitions in the system.
@@ -787,9 +787,14 @@ public:
     /**
      * Rewind all material animations back to their initial/starting state.
      *
-     * @see Materials::all(), MaterialVariant::restartAnimation()
+     * @see allMaterials(), MaterialAnimation::restart()
      */
-    void restartAllMaterialAnimations();
+    inline void restartAllMaterialAnimations() {
+        foreach(Material *material, allMaterials())
+        foreach(MaterialAnimation *animation, material->animations()) {
+            animation->restart();
+        }
+    }
 
     /**
      * Prepare resources for the current Map.

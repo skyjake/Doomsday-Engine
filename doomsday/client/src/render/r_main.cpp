@@ -1021,7 +1021,7 @@ void R_SetupPlayerSprites()
             dummy.state = psp->statePtr;
             dummy.tics = psp->tics;
 
-            inter = App_ResourceSystem().modelDefForMobj(&dummy, &mf, &nextmf);
+            mf = Mobj_ModelDef(dummy, &nextmf, &inter);
             if(mf) isModel = true;
         }
 
