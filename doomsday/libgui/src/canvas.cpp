@@ -47,11 +47,6 @@ static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
 DENG2_PIMPL(Canvas)
 {
-    enum FramebufferMode {
-        AutomaticFramebuffer,
-        ManualFramebuffer
-    };
-    FramebufferMode framebufMode;
     GLFramebuffer framebuf;
 
     CanvasWindow *parent;
@@ -67,7 +62,6 @@ DENG2_PIMPL(Canvas)
 
     Instance(Public *i, CanvasWindow *parentWindow)
         : Base(i)
-        , framebufMode(AutomaticFramebuffer)
         , parent(parentWindow)
         , readyNotified(false)
         , mouseGrabbed(false)
@@ -177,13 +171,8 @@ DENG2_PIMPL(Canvas)
 
     void reconfigureFramebuffer()
     {
-        if(framebufMode == ManualFramebuffer)
-        {
-            /// @todo For multisampling there should be a bigger back buffer.
-
-            framebuf.setColorFormat(Image::RGB_888);
-            framebuf.resize(currentSize);
-        }
+        framebuf.setColorFormat(Image::RGB_888);
+        framebuf.resize(currentSize);
     }
 
     void glInit()
@@ -199,17 +188,8 @@ DENG2_PIMPL(Canvas)
 
     void swapBuffers()
     {
-        switch(framebufMode)
-        {
-        case AutomaticFramebuffer:
-            self.QGLWidget::swapBuffers();
-            break;
-
-        case ManualFramebuffer:
-            /// @todo Double buffering is not really needed in manual FB mode.
-            framebuf.swapBuffers(self);
-            break;
-        }
+        /// @todo Double buffering is not really needed in manual FB mode.
+        framebuf.swapBuffers(self);
     }
 };
 
@@ -312,11 +292,6 @@ GLTarget &Canvas::renderTarget() const
     return d->framebuf.target();
 }
 
-GLTexture &Canvas::depthBufferTexture() const
-{
-    return d->framebuf.depthStencilTexture();
-}
-
 void Canvas::swapBuffers()
 {
     d->swapBuffers();
@@ -377,14 +352,8 @@ void Canvas::notifyReady()
 
     d->readyNotified = true;
 
-#if 1
-    d->framebufMode = Instance::ManualFramebuffer;
     d->framebuf.glInit();
-
-    // Set up a rendering target with depth texture.
-    LOG_DEBUG("Using manually configured framebuffer in Canvas, size ") << size().asText();
     d->reconfigureFramebuffer();
-#endif
 
     // Print some information.
     QGLFormat const fmt = format();

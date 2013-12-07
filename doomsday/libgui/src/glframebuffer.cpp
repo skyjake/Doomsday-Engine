@@ -121,11 +121,13 @@ DENG2_PIMPL(GLFramebuffer)
         depthStencil.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
 
         target.configure(&color, &depthStencil);
+        target.clear(GLTarget::ColorDepthStencil);
 
         if(isMultisampled())
         {
             // Set up the multisampled target with suitable renderbuffers.
             multisampleTarget.configure(size, GLTarget::ColorDepthStencil, sampleCount());
+            multisampleTarget.clear(GLTarget::ColorDepthStencil);
 
             // Actual drawing occurs in the multisampled target that is then
             // blitted to the main target.

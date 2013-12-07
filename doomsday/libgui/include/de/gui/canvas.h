@@ -161,13 +161,6 @@ public:
     GLTarget &renderTarget() const;
 
     /**
-     * Returns the GL texture containing the depth buffer.
-     *
-     * @return GL depth target.
-     */
-    GLTexture &depthBufferTexture() const;
-
-    /**
      * Copies or swaps the back buffer to the front, making it visible.
      */
     void swapBuffers();
