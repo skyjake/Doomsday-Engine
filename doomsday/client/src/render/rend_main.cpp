@@ -27,8 +27,8 @@
 #include <QBitArray>
 
 #include <de/vector1.h>
-
 #include <de/libdeng2.h>
+#include <de/GLState>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -3401,8 +3401,7 @@ static void drawSky()
 
     // We do not want to update color and/or depth.
     glDisable(GL_DEPTH_TEST);
-    glPushAttrib(GL_COLOR_BUFFER_BIT); // Stereo 3D
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    GLState::push().setColorMask(gl::WriteNone).apply();
 
     // Mask out stencil buffer, setting the drawn areas to 1.
     glEnable(GL_STENCIL_TEST);
@@ -3420,7 +3419,7 @@ static void drawSky()
     }
 
     // Restore previous GL state.
-    glPopAttrib();
+    GLState::pop().apply();
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
 

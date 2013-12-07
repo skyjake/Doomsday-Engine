@@ -65,6 +65,7 @@ DENG2_PIMPL(PostProcessing)
         return ClientWindow::main().game().root();
     }
 
+#if 0
     Vector2ui consoleSize() const
     {        
         /**
@@ -77,6 +78,7 @@ DENG2_PIMPL(PostProcessing)
         //return self.viewRect().size();
         return root().window().canvas().size();
     }
+#endif
 
     bool setShader(String const &name)
     {
@@ -102,11 +104,11 @@ DENG2_PIMPL(PostProcessing)
 
     void glInit()
     {
-        LOG_DEBUG("Allocating texture and target, size %s") << consoleSize().asText();
+        //LOG_DEBUG("Allocating texture and target, size %s") << consoleSize().asText();
 
         framebuf.glInit();
-        framebuf.setColorFormat(Image::RGBA_8888);
-        framebuf.resize(consoleSize());
+        //framebuf.setColorFormat(Image::RGBA_8888);
+        //framebuf.resize(consoleSize());
 
         uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
         uFrame = framebuf.colorTexture();
@@ -129,7 +131,16 @@ DENG2_PIMPL(PostProcessing)
 
     void update()
     {
-        framebuf.resize(consoleSize());
+        if(GLState::current().target().hasActiveRect())
+        {
+            framebuf.resize(GLState::current().target().activeRect().size() /* cconsoleSize()*/);
+        }
+        else
+        {
+            framebuf.resize(root().window().canvas().size());
+        }
+
+        framebuf.setSampleCount(GLFramebuffer::defaultMultisampling());
     }
 
     void checkQueue()
@@ -159,11 +170,12 @@ DENG2_PIMPL(PostProcessing)
 
         update();
 
-        framebuf.target().clear(GLTarget::ColorDepthStencil);
         GLState::push()
                 .setTarget(framebuf.target())
-                .setViewport(Rectangleui::fromSize(consoleSize()))
+                .setViewport(Rectangleui::fromSize(framebuf.size() /*consoleSize()*/))
+                .setColorMask(gl::WriteAll)
                 .apply();
+        framebuf.target().clear(GLTarget::ColorDepthStencil);
     }
 
     void end()
@@ -192,7 +204,7 @@ DENG2_PIMPL(PostProcessing)
         GLState::push()
                 .setBlend(false)
                 .setDepthTest(false)
-                .setViewport(Rectangleui::fromSize(root().window().canvas().size()))
+                //.setViewport(Rectangleui::fromSize(root().window().canvas().size()))
                 .apply();
 
         frame.draw();

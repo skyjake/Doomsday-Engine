@@ -154,6 +154,8 @@ DENG2_PIMPL(VRWindowTransform)
 
         VR::releaseViewPosition(); // OK, you can change the viewpoint henceforth
 
+        unwarpedFB.target().unsetActiveRect(true);
+
         GLState::pop().apply();
 
         // Necessary until the legacy code uses GLState, too:
@@ -350,30 +352,26 @@ void VRWindowTransform::drawTransformed()
     // Overlaid type stereo 3D modes below:
     case VR::MODE_GREEN_MAGENTA:
         // Left eye view
-        VR::eyeShift = VR::getEyeShift(-1);
-        // save previous glColorMask
-        glPushAttrib(GL_COLOR_BUFFER_BIT);
-        glColorMask(0, 1, 0, 1); // Left eye view green
+        VR::eyeShift = VR::getEyeShift(-1);        
+        GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha).apply(); // Left eye view green
         d->drawContent();
         // Right eye view
         VR::eyeShift = VR::getEyeShift(+1);
-        glColorMask(1, 0, 1, 1); // Right eye view magenta
+        GLState::current().setColorMask(gl::WriteRed | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view magenta
         d->drawContent();
-        glPopAttrib(); // restore glColorMask
+        GLState::pop().apply();
         break;
 
     case VR::MODE_RED_CYAN:
         // Left eye view
         VR::eyeShift = VR::getEyeShift(-1);
-        // save previous glColorMask
-        glPushAttrib(GL_COLOR_BUFFER_BIT);
-        glColorMask(1, 0, 0, 1); // Left eye view red
+        GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha).apply(); // Left eye view red
         d->drawContent();
         // Right eye view
         VR::eyeShift = VR::getEyeShift(+1);
-        glColorMask(0, 1, 1, 1); // Right eye view cyan
+        GLState::current().setColorMask(gl::WriteGreen | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view cyan
         d->drawContent();
-        glPopAttrib(); // restore glColorMask
+        GLState::pop().apply();
         break;
 
     case VR::MODE_QUAD_BUFFERED:
