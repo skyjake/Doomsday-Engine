@@ -120,7 +120,7 @@ Sprite::ViewAngle const &Sprite::closestViewAngle(angle_t mobjAngle, angle_t ang
     if(!noRotation && d->haveRotations)
     {
         // Rotation is determined by the relative angle to the viewer.
-        rotation = (angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) >> 29;
+        rotation = ((angleToEye - mobjAngle + (unsigned) (ANG45 / 2) * 9) - (unsigned) (ANGLE_180 / 16)) >> 28;
     }
 
     return viewAngle(rotation);

@@ -52,7 +52,7 @@ public:
     DENG2_ERROR(MissingViewAngleError);
 
     /// Maximum number of discreet view angles. @todo remove me
-    static int const max_angles = 8;
+    static int const max_angles = 16;
 
     /**
      * One depiction of the entity as if viewed from the associated angle.
@@ -113,6 +113,11 @@ public:
      * which should be considered undefined.
      */
     ViewAngles const &viewAngles() const;
+
+    /**
+     * Returns the total number of defined view angles for the sprite.
+     */
+    inline int viewAngleCount() const { return viewAngles().count(); }
 
 #ifdef __CLIENT__
     /**

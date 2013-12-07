@@ -2057,6 +2057,7 @@ void ResourceSystem::initCompositeTextures()
 {
     Time begunAt;
 
+    LOG_AS("ResourceSystem");
     LOG_VERBOSE("Initializing PatchComposite textures...");
 
     // Load texture definitions from TEXTURE1/2 lumps.
@@ -2065,13 +2066,14 @@ void ResourceSystem::initCompositeTextures()
 
     DENG_ASSERT(texs.isEmpty());
 
-    LOG_INFO(String("ResourceSystem::initCompositeTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("initCompositeTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 void ResourceSystem::initFlatTextures()
 {
-    de::Time begunAt;
+    Time begunAt;
 
+    LOG_AS("ResourceSystem");
     LOG_VERBOSE("Initializing Flat textures...");
 
     LumpIndex const &index = d->fileSystem().nameIndex();
@@ -2137,7 +2139,45 @@ void ResourceSystem::initFlatTextures()
     /// @todo Defer until necessary (manifest texture is first referenced).
     d->deriveAllTexturesInScheme("Flats");
 
-    LOG_INFO(String("ResourceSystem::initFlatTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("initFlatTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+}
+
+/// Returns a value in the range [0..Sprite::max_angles] if @a rotCode can be
+/// interpreted as a sprite rotation number; otherwise @c -1
+static int toSpriteRotation(QChar rotCode)
+{
+    int rot = -1; // Unknown.
+
+    if(rotCode.isDigit())
+    {
+        rot = rotCode.digitValue();
+    }
+    else if(rotCode.isLetter())
+    {
+        char charCodeLatin1 = rotCode.toUpper().toLatin1();
+        if(charCodeLatin1 >= 'A')
+        {
+            rot = charCodeLatin1 - 'A' + 10;
+        }
+    }
+
+    if(rot > Sprite::max_angles)
+    {
+        rot = -1;
+    }
+    else if(rot > 0)
+    {
+        if(rot <= Sprite::max_angles / 2)
+        {
+            rot = (rot - 1) * 2 + 1;
+        }
+        else
+        {
+            rot = (rot - 9) * 2 + 2;
+        }
+    }
+
+    return rot;
 }
 
 /// Returns @c true iff @a name is a well-formed sprite name.
@@ -2145,15 +2185,19 @@ static bool validateSpriteName(String name)
 {
     if(name.length() < 6) return false;
 
-    // Character at position 5 must be a number [0..8)
-    int frameOrRotationNumber = name.at(5).digitValue();
-    if(frameOrRotationNumber < 0 || frameOrRotationNumber > 8) return false;
+    // Character at position 5 is a rotation number.
+    if(toSpriteRotation(name.at(5)) < 0)
+    {
+        return false;
+    }
 
-    // If defined, the character at position 7 must be a number [0..8)
+    // If defined, the character at position 7 is also a rotation number.
     if(name.length() >= 7)
     {
-        int rotationNumber = name.at(7).digitValue();
-        if(rotationNumber < 0 || rotationNumber > 8) return false;
+        if(toSpriteRotation(name.at(7)) < 0)
+        {
+            return false;
+        }
     }
 
     return true;
@@ -2258,7 +2302,7 @@ void ResourceSystem::initSpriteTextures()
     /// @todo Defer until necessary (manifest texture is first referenced).
     d->deriveAllTexturesInScheme("Sprites");
 
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_INFO(String("initSpriteTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
 
 Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
@@ -3277,17 +3321,18 @@ typedef QHash<String, SpriteDef> SpriteDefs;
  *
  * NAME: Four character name of the sprite.
  * A: Animation frame ordinal 'A'... (ASCII).
- * R: Rotation angle 0...8
+ * R: Rotation angle 0...G
  *    0 : Use this frame for ALL angles.
- *    1...8 : Angle of rotation in 45 degree increments.
+ *    1...8: Angle of rotation in 45 degree increments.
+ *    A...G: Angle of rotation in 22.5 degree increments.
  *
  * The second set of (optional) frame and rotation characters instruct that the
  * same sprite frame is to be used for an additional frame but that the sprite
  * patch should be flipped horizontally (right to left) during the loading phase.
  *
- * Sprite rotation 0 is facing the viewer, rotation 1 is one angle turn CLOCKWISE
- * around the axis. This is not the same as the angle, which increases counter
- * clockwise (protractor).
+ * Sprite rotation 0 is facing the viewer, rotation 1 is one half-angle turn
+ * CLOCKWISE around the axis. This is not the same as the angle, which increases
+ * counter clockwise (protractor).
  */
 static SpriteDefs generateSpriteDefs()
 {
@@ -3315,7 +3360,7 @@ static SpriteDefs generateSpriteDefs()
 
         // Add the frame(s).
         int const frameNumber    = desc.at(4).toUpper().unicode() - QChar('A').unicode() + 1;
-        int const rotationNumber = desc.at(5).digitValue();
+        int const rotationNumber = toSpriteRotation(desc.at(5));
 
         SpriteFrameDef *frameDef = 0;
         for(int i = 0; i < def->frames.count(); ++i)
@@ -3343,7 +3388,7 @@ static SpriteDefs generateSpriteDefs()
         if(desc.length() >= 8)
         {
             frameDef->frame[1]    = desc.at(6).toUpper().unicode() - QChar('A').unicode() + 1;
-            frameDef->rotation[1] = desc.at(7).digitValue();
+            frameDef->rotation[1] = toSpriteRotation(desc.at(7));
         }
         else
         {
@@ -3368,9 +3413,6 @@ void ResourceSystem::initSprites()
 
     if(!defs.isEmpty())
     {
-        //int spriteNameCount = de::max(defs.count(), countSprNames.num);
-        //groups.reserve(spriteNameCount);
-
         // Build the final sprites.
         int customIdx = 0;
         foreach(SpriteDef const &def, defs)
@@ -3415,28 +3457,28 @@ void ResourceSystem::initSprites()
             }
             ++maxSprite;
 
-            /*for(int k = 0; k < maxSprite; ++k)
+            // Duplicate view angles to complete the rotation set (if defined).
+            for(int frame = 0; frame < maxSprite; ++frame)
             {
-                if(int(sprTemp[k]._rotate) == -1) // Ahem!
-                {
-                    // No rotations were found for that frame at all.
-                    Error("initSprites", QString("No patches found for %1 frame %2")
-                                              .arg(def.name).arg(char(k + 'A')));
-                }
+                Sprite &sprite = sprTemp[frame];
 
-                if(sprTemp[k]._rotate)
+                if(sprite.viewAngleCount() < 2)
+                    continue;
+
+                for(int rot = 0; rot < Sprite::max_angles / 2; ++rot)
                 {
-                    // Must have all 8 frames.
-                    for(int rotation = 0; rotation < 8; ++rotation)
+                    if(!sprite.hasViewAngle(rot * 2 + 1))
                     {
-                        if(!sprTemp[k]._mats[rotation])
-                        {
-                            Error("initSprites", QString("Sprite %1 frame %2 is missing rotations")
-                                                      .arg(def.name).arg(char(k + 'A')));
-                        }
+                        SpriteViewAngle const &src = sprite.viewAngle(rot * 2);
+                        sprite.newViewAngle(src.material, rot * 2 + 2, src.mirrorX);
+                    }
+                    if(!sprite.hasViewAngle(rot * 2))
+                    {
+                        SpriteViewAngle const &src = sprite.viewAngle(rot * 2 + 1);
+                        sprite.newViewAngle(src.material, rot * 2 + 1, src.mirrorX);
                     }
                 }
-            }*/
+            }
 
             for(int k = 0; k < maxSprite; ++k)
             {
