@@ -112,7 +112,11 @@ PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
                                                     .arg(Str_Text(P_NameForMapEntityDef(def->entity))));
 
     Entity::const_iterator found = entity->find(def->id);
-    DENG2_ASSERT(found != entity->end()); // Sanity check.
+    if(found == entity->end())
+        throw Error("EntityDatabase::property", QString("Element %1 of type %2 has no value for property %3")
+                                                    .arg(elementIndex)
+                                                    .arg(Str_Text(P_NameForMapEntityDef(def->entity)))
+                                                    .arg(def->id));
     return *found->second;
 }
 
