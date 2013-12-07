@@ -90,7 +90,7 @@ DENG2_PIMPL_NOREF(GLInfo)
 
 #ifdef WIN32
         // Prefer the wgl-specific extensions.
-        if(checkExtensionString(ext, wglGetExtensionsStringARB(wglGetCurrentDC())))
+        if(checkExtensionString(ext, (GLubyte const *) wglGetExtensionsStringARB(wglGetCurrentDC())))
             return true;
 #endif
 
@@ -115,8 +115,8 @@ DENG2_PIMPL_NOREF(GLInfo)
         ext.SGIS_generate_mipmap           = query("GL_SGIS_generate_mipmap");
 
 #ifdef WIN32
-        ext.WGL_ARB_multisample            = query("WGL_ARB_multisample");
-        ext.WGL_EXT_swap_control           = query("WGL_EXT_swap_control");
+        ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
+        ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
 #endif
 
         // Limits.

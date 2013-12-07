@@ -124,11 +124,11 @@ static void initialize(void)
     }
 
 #ifdef WIN32
-    if(ext.WGL_EXT_swap_control)
+    if(ext.Windows_EXT_swap_control)
     {
         GETPROC(PFNWGLSWAPINTERVALEXTPROC, wglSwapIntervalEXT);
     }
-    if(!ext.WGL_EXT_swap_control || !wglSwapIntervalEXT)
+    if(!ext.Windows_EXT_swap_control || !wglSwapIntervalEXT)
         GL_state.features.vsync = false;
 #else
     GL_state.features.vsync = true;
@@ -427,10 +427,10 @@ void Sys_GLPrintExtensions(void)
 
 #if WIN32
     // List the WGL extensions too.
-    if(wglGetExtString)
+    if(wglGetExtensionsStringARB)
     {
         Con_Message("  Extensions (WGL):");
-        printExtensions(QString((char const *) ((GLubyte const *(__stdcall *)(HDC))wglGetExtString)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
+        printExtensions(QString((char const *) ((GLubyte const *(__stdcall *)(HDC))wglGetExtensionsStringARB)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
     }
 #endif
 }

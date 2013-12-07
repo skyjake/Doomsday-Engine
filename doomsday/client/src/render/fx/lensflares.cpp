@@ -390,21 +390,21 @@ DENG2_PIMPL(LensFlares)
             typedef Rangef Rgf;
             static Spec const specs[] = {
                 //  axisPos id                   color                          size    intensity min/max              radius min/max          angle min/max
-                {   1,      FlareData::Burst,    Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-8, 1.0e-6), Rgf(),    Rgf(), Rgf(.5f, .8f),   Rgf(), Rgf() },
-                {   1,      FlareData::Star,     Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-6, 1.0e-5), Rgf(),    Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf() },
-                {   1,      FlareData::Exponent, Vector4f(1, 1, 1, 1),          2.5f,   Rgf(1.0e-6, 1.0e-5), Rgf(),    Rgf(.1f, .2f), Rgf(),   Rgf(), Rgf() },
+                {   1,      FlareData::Burst,    Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-8f, 1.0e-6f), Rgf(),  Rgf(), Rgf(.5f, .8f),   Rgf(), Rgf() },
+                {   1,      FlareData::Star,     Vector4f(1, 1, 1, 1),          1,      Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf() },
+                {   1,      FlareData::Exponent, Vector4f(1, 1, 1, 1),          2.5f,   Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.1f, .2f), Rgf(),   Rgf(), Rgf() },
 
-                {  .8f,     FlareData::Halo,     Vector4f(1, 1, 1, .5f),        1,      Rgf(5.0e-6, 5.0e-5), Rgf(),    Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf(30, 60) },
+                {  .8f,     FlareData::Halo,     Vector4f(1, 1, 1, .5f),        1,      Rgf(5.0e-6f, 5.0e-5f), Rgf(),  Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf(30, 60) },
 
-                {  -.8f,    FlareData::Ring,     Vector4f(.4f, 1, .4f, .26f),   .4f,    Rgf(1.0e-5, 1.0e-4), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(5, 20), Rgf(40, 50) },
-                {  -1,      FlareData::Circle,   Vector4f(.4f, .4f, 1, .30f),   .5f,    Rgf(4.0e-6, 4.0e-5), Rgf(),    Rgf(.08f, .45f), Rgf(), Rgf(0, 23), Rgf(30, 60) },
-                {  -1.2f ,  FlareData::Ring,     Vector4f(1, .4f, .4f, .26f),   .56f,   Rgf(1.0e-5, 1.0e-4), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(35, 50) },
+                {  -.8f,    FlareData::Ring,     Vector4f(.4f, 1, .4f, .26f),   .4f,    Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(5, 20), Rgf(40, 50) },
+                {  -1,      FlareData::Circle,   Vector4f(.4f, .4f, 1, .30f),   .5f,    Rgf(4.0e-6f, 4.0e-5f), Rgf(),  Rgf(.08f, .45f), Rgf(), Rgf(0, 23), Rgf(30, 60) },
+                {  -1.2f ,  FlareData::Ring,     Vector4f(1, .4f, .4f, .26f),   .56f,   Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(35, 50) },
 
-                {  1.333f,  FlareData::Ring,     Vector4f(.5f, .5f, 1, .1f),    1.2f,   Rgf(1.0e-8, 1.0e-7), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
-                {  1.45f,   FlareData::Ring,     Vector4f(1, .5f, .5f, .15f),   1.15f,  Rgf(1.0e-8, 1.0e-7), Rgf(),    Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
+                {  1.333f,  FlareData::Ring,     Vector4f(.5f, .5f, 1, .1f),    1.2f,   Rgf(1.0e-8f, 1.0e-7f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
+                {  1.45f,   FlareData::Ring,     Vector4f(1, .5f, .5f, .15f),   1.15f,  Rgf(1.0e-8f, 1.0e-7f), Rgf(),  Rgf(.1f, .5f), Rgf(),   Rgf(10, 25), Rgf(25, 45) },
 
-                {  -1.45f,  FlareData::Ring,     Vector4f(1, 1, .9f, .25f),     .2f,    Rgf(1.0e-5, 1.0e-4), Rgf(),    Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
-                {  -.2f,    FlareData::Circle,   Vector4f(1, 1, .9f, .2f),      .23f,   Rgf(1.0e-5, 1.0e-4), Rgf(),    Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
+                {  -1.45f,  FlareData::Ring,     Vector4f(1, 1, .9f, .25f),     .2f,    Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
+                {  -.2f,    FlareData::Circle,   Vector4f(1, 1, .9f, .2f),      .23f,   Rgf(1.0e-5f, 1.0e-4f), Rgf(),  Rgf(.1f, .4f), Rgf(),   Rgf(5, 10), Rgf(15, 30) },
             };
 
             for(uint i = 0; i < sizeof(specs)/sizeof(specs[0]); ++i)

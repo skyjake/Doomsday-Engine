@@ -36,6 +36,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_platform.h"
+
 #include "render/cameralensfx.h"
 #include "render/rend_main.h"
 #include "render/viewports.h"
