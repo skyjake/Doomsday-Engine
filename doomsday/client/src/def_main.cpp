@@ -1475,7 +1475,7 @@ void Def_Read()
     // Composite fonts.
     for(int i = 0; i < defs.count.compositeFonts.num; ++i)
     {
-        App_ResourceSystem().createFontFromDef(defs.compositeFonts[i]);
+        App_ResourceSystem().newFontFromDef(defs.compositeFonts[i]);
     }
 #endif
 
@@ -1860,7 +1860,7 @@ static void initMaterialGroup(ded_group_t &def)
                 // Only create the group once the first material has been found.
                 if(!group)
                 {
-                    group = &App_ResourceSystem().createMaterialGroup();
+                    group = &App_ResourceSystem().newMaterialGroup();
                 }
 
                 group->insert(&manifest);

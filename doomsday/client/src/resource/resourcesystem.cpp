@@ -69,6 +69,7 @@
 #  include <de/StringPool>
 #endif
 #include <de/stack.h> /// @todo remove me
+#include <QHash>
 #include <QVector>
 #include <QtAlgorithms>
 
@@ -427,7 +428,7 @@ DENG2_PIMPL(ResourceSystem)
         // Create a new scheme.
         MaterialScheme *newScheme = new MaterialScheme(name);
         materialSchemes.insert(name.toLower(), newScheme);
-        materialSchemeCreationOrder.push_back(newScheme);
+        materialSchemeCreationOrder.append(newScheme);
 
         // We want notification when a new manifest is defined in this scheme.
         newScheme->audienceForManifestDefined += this;
@@ -447,7 +448,7 @@ DENG2_PIMPL(ResourceSystem)
         // Create a new scheme.
         TextureScheme *newScheme = new TextureScheme(name);
         textureSchemes.insert(name.toLower(), newScheme);
-        textureSchemeCreationOrder.push_back(newScheme);
+        textureSchemeCreationOrder.append(newScheme);
 
         // We want notification when a new manifest is defined in this scheme.
         newScheme->audienceForManifestDefined += this;
@@ -476,7 +477,7 @@ DENG2_PIMPL(ResourceSystem)
         // Create a new scheme.
         FontScheme *newScheme = new FontScheme(name);
         fontSchemes.insert(name.toLower(), newScheme);
-        fontSchemeCreationOrder.push_back(newScheme);
+        fontSchemeCreationOrder.append(newScheme);
 
         // We want notification when a new manifest is defined in this scheme.
         newScheme->audienceForManifestDefined += this;
@@ -535,7 +536,7 @@ DENG2_PIMPL(ResourceSystem)
 
         if(!canCreate) return 0;
 
-        materialSpecs.push_back(new MaterialVariantSpec(tpl));
+        materialSpecs.append(new MaterialVariantSpec(tpl));
         return materialSpecs.back();
     }
 
@@ -898,7 +899,7 @@ DENG2_PIMPL(ResourceSystem)
                 {
                     PatchName name;
                     from >> name;
-                    patchNames.push_back(name);
+                    patchNames.append(name);
                 }
             }
 
@@ -1767,7 +1768,7 @@ DENG2_PIMPL(ResourceSystem)
     void materialManifestMaterialDerived(MaterialManifest & /*manifest*/, Material &material)
     {
         // Include this new material in the scheme-agnostic list of instances.
-        materials.push_back(&material);
+        materials.append(&material);
 
         // We want notification when the material is about to be deleted.
         material.audienceForDeletion += this;
@@ -1803,7 +1804,7 @@ DENG2_PIMPL(ResourceSystem)
     void textureManifestTextureDerived(TextureManifest & /*manifest*/, Texture &texture)
     {
         // Include this new texture in the scheme-agnostic list of instances.
-        textures.push_back(&texture);
+        textures.append(&texture);
 
         // We want notification when the texture is about to be deleted.
         texture.audienceForDeletion += this;
@@ -1844,7 +1845,7 @@ DENG2_PIMPL(ResourceSystem)
     void fontManifestFontDerived(FontManifest & /*manifest*/, AbstractFont &font)
     {
         // Include this new font in the scheme-agnostic list of instances.
-        fonts.push_back(&font);
+        fonts.append(&font);
 
         // We want notification when the font is about to be deleted.
         font.audienceForDeletion += this;
@@ -2036,17 +2037,17 @@ static QList<de::File1 *> collectPatchCompositeDefinitionFiles()
             continue;
         }
 
-        result.push_back(&file);
+        result.append(&file);
     }
 
     if(firstTexLump >= 0)
     {
-        result.push_back(&index.lump(firstTexLump));
+        result.append(&index.lump(firstTexLump));
     }
 
     if(secondTexLump >= 0)
     {
-        result.push_back(&index.lump(secondTexLump));
+        result.append(&index.lump(secondTexLump));
     }
 
     return result;
@@ -2491,10 +2492,10 @@ ResourceSystem::AllMaterials const &ResourceSystem::allMaterials() const
     return d->materials;
 }
 
-ResourceSystem::MaterialManifestGroup &ResourceSystem::createMaterialGroup()
+ResourceSystem::MaterialManifestGroup &ResourceSystem::newMaterialGroup()
 {
     // Allocating one by one is inefficient, but it doesn't really matter.
-    d->materialGroups.push_back(new MaterialManifestGroup());
+    d->materialGroups.append(new MaterialManifestGroup());
     return *d->materialGroups.back();
 }
 
@@ -2863,9 +2864,9 @@ ResourceSystem::AllFonts const &ResourceSystem::allFonts() const
     return d->fonts;
 }
 
-AbstractFont *ResourceSystem::createFontFromDef(ded_compositefont_t const &def)
+AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
 {
-    LOG_AS("ResourceSystem::createFontFromDef");
+    LOG_AS("ResourceSystem::newFontFromDef");
 
     if(!def.uri) return 0;
     de::Uri const &uri = *reinterpret_cast<de::Uri *>(def.uri);
@@ -2919,10 +2920,10 @@ AbstractFont *ResourceSystem::createFontFromDef(ded_compositefont_t const &def)
     return 0;
 }
 
-AbstractFont *ResourceSystem::createFontFromFile(de::Uri const &uri,
+AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri,
     String filePath)
 {
-    LOG_AS("ResourceSystem::createFontFromFile");
+    LOG_AS("ResourceSystem::newFontFromFile");
 
     if(!d->fileSystem().accessFile(de::Uri::fromNativePath(filePath)))
     {
@@ -3209,11 +3210,6 @@ void ResourceSystem::setModelDefFrame(ModelDef &modef, int frame)
     }
 }
 
-void ResourceSystem::cache(ModelDef *modelDef)
-{
-    if(!modelDef) return;
-    d->queueCacheTasksForModel(*modelDef);
-}
 #endif // __CLIENT__
 
 void ResourceSystem::clearAllAnimGroups()
@@ -3259,10 +3255,18 @@ struct SpriteDef
     String name;
     typedef QList<SpriteFrameDef> Frames;
     Frames frames;
+
+    SpriteDef(String const &name = "") : name(name)
+    {}
+
+    SpriteFrameDef &addFrame(SpriteFrameDef const &frame = SpriteFrameDef()) {
+        frames.append(frame);
+        return frames.last();
+    }
 };
 
 // Tempory storage, used when reading sprite definitions.
-typedef QList<SpriteDef> SpriteDefs;
+typedef QHash<String, SpriteDef> SpriteDefs;
 
 /**
  * In DOOM, a sprite frame is a patch texture contained in a lump existing
@@ -3287,72 +3291,64 @@ typedef QList<SpriteDef> SpriteDefs;
  */
 static SpriteDefs generateSpriteDefs()
 {
-    SpriteDefs spriteDefs;
+    ResourceSystem &resSys = App_ResourceSystem();
+    TextureScheme::Index const &spriteTexIndex = resSys.textureScheme("Sprites").index();
 
-    PathTreeIterator<TextureScheme::Index> iter(App_ResourceSystem().textureScheme("Sprites").index().leafNodes());
+    SpriteDefs spriteDefs;
+    spriteDefs.reserve(spriteTexIndex.leafNodes().count() / 8); // overestimate
+
+    PathTreeIterator<TextureScheme::Index> iter(spriteTexIndex.leafNodes());
     while(iter.hasNext())
     {
         TextureManifest &manifest = iter.next();
 
+        String const desc = QString(QByteArray::fromPercentEncoding(manifest.path().toUtf8()));
+        String const name = desc.left(4).toLower();
+
         // Have we already encountered this name?
-        String spriteName = QString(QByteArray::fromPercentEncoding(manifest.path().toUtf8()));
-
-        SpriteDef *spriteDef = 0;
-        for(int i = 0; i < spriteDefs.count(); ++i)
-        {
-            SpriteDef const &cand = spriteDefs[i];
-            if(!cand.name.compareWithoutCase(spriteName, 4))
-            {
-                spriteDef = &spriteDefs[i];
-            }
-        }
-
-        if(!spriteDef)
+        SpriteDef *def = &spriteDefs[name];
+        if(def->frames.isEmpty())
         {
             // An entirely new sprite.
-            spriteDefs.append(SpriteDef());
-            spriteDef = &spriteDefs.last();
-
-            spriteDef->name = spriteName.left(4);
+            def->name = name;
         }
 
         // Add the frame(s).
-        int const frameNumber    = spriteName.at(4).toUpper().unicode() - QChar('A').unicode() + 1;
-        int const rotationNumber = spriteName.at(5).digitValue();
+        int const frameNumber    = desc.at(4).toUpper().unicode() - QChar('A').unicode() + 1;
+        int const rotationNumber = desc.at(5).digitValue();
 
-        SpriteFrameDef *frame = 0;
-        for(int i = 0; i < spriteDef->frames.count(); ++i)
+        SpriteFrameDef *frameDef = 0;
+        for(int i = 0; i < def->frames.count(); ++i)
         {
-            SpriteFrameDef &cand = spriteDef->frames[i];
+            SpriteFrameDef &cand = def->frames[i];
             if(cand.frame[0]    == frameNumber &&
                cand.rotation[0] == rotationNumber)
             {
-                frame = &cand;
+                frameDef = &cand;
                 break;
             }
         }
 
-        if(!frame)
+        if(!frameDef)
         {
             // A new frame.
-            spriteDef->frames.append(SpriteFrameDef());
-            frame = &spriteDef->frames.last();
+            frameDef = &def->addFrame();
         }
 
-        frame->mat         = &App_ResourceSystem().material(de::Uri("Sprites", manifest.path()));
-        frame->frame[0]    = frameNumber;
-        frame->rotation[0] = rotationNumber;
+        frameDef->mat         = &resSys.material(de::Uri("Sprites", manifest.path()));
+        frameDef->frame[0]    = frameNumber;
+        frameDef->rotation[0] = rotationNumber;
 
-        // Not mirrored?
-        if(spriteName.length() >= 8)
+        // Mirrored?
+        if(desc.length() >= 8)
         {
-            frame->frame[1]    = spriteName.at(6).toUpper().unicode() - QChar('A').unicode() + 1;
-            frame->rotation[1] = spriteName.at(7).digitValue();
+            frameDef->frame[1]    = desc.at(6).toUpper().unicode() - QChar('A').unicode() + 1;
+            frameDef->rotation[1] = desc.at(7).digitValue();
         }
         else
         {
-            frame->frame[1]    = 0;
-            frame->rotation[1] = 0;
+            frameDef->frame[1]    = 0;
+            frameDef->rotation[1] = 0;
         }
     }
 
@@ -3387,15 +3383,14 @@ void ResourceSystem::initSprites()
 
             Instance::SpriteGroup &group = d->newSpriteGroup(spriteId);
 
-            //std::memset(sprTemp, -1, sizeof(sprTemp));
-            Sprite sprTemp[128];
+            Sprite sprTemp[29];
 
             int maxSprite = -1;
             foreach(SpriteFrameDef const &frameDef, def.frames)
             {
                 int frame = frameDef.frame[0] - 1;
                 DENG2_ASSERT(frame >= 0);
-                if(frame < 128)
+                if(frame < 29)
                 {
                     sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[0], false);
                     if(frame > maxSprite)
@@ -3408,7 +3403,7 @@ void ResourceSystem::initSprites()
                 {
                     frame = frameDef.frame[1] - 1;
                     DENG2_ASSERT(frame >= 0);
-                    if(frame < 128)
+                    if(frame < 29)
                     {
                         sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[1], true);
                         if(frame > maxSprite)
@@ -3450,15 +3445,11 @@ void ResourceSystem::initSprites()
         }
     }
 
+    // We're done with the definitions.
+    defs.clear();
+
     LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 }
-
-#ifdef __CLIENT__
-void ResourceSystem::cache(spritenum_t spriteId, MaterialVariantSpec const &spec)
-{
-    d->queueCacheTasksForSprite(spriteId, spec);
-}
-#endif
 
 void ResourceSystem::clearAllColorPalettes()
 {
@@ -3573,6 +3564,17 @@ void ResourceSystem::cache(Material &material, MaterialVariantSpec const &spec,
     bool cacheGroups)
 {
     d->queueCacheTasksForMaterial(material, spec, cacheGroups);
+}
+
+void ResourceSystem::cache(spritenum_t spriteId, MaterialVariantSpec const &spec)
+{
+    d->queueCacheTasksForSprite(spriteId, spec);
+}
+
+void ResourceSystem::cache(ModelDef *modelDef)
+{
+    if(!modelDef) return;
+    d->queueCacheTasksForModel(*modelDef);
 }
 
 MaterialVariantSpec const &ResourceSystem::materialSpec(MaterialContextId contextId,
@@ -3691,7 +3693,7 @@ void ResourceSystem::cacheForCurrentMap()
                                       findSpriteOwner, &i))
             {
                 // This sprite is used by some state of at least one mobj.
-                cache(i, spec);
+                cache(spritenum_t(i), spec);
             }
         }
     }
@@ -3736,7 +3738,7 @@ static int collectManifestsInScheme(SchemeType const &scheme,
             count += 1;
             if(storage) // Store mode?
             {
-                storage->push_back(&manifest);
+                storage->append(&manifest);
             }
         }
     }
@@ -3852,7 +3854,7 @@ static QList<FontManifest *> collectFontManifests(FontScheme *scheme,
  * returning @c true if @a is less than @a b.
  */
 template <typename ManifestType>
-static bool compareManifestPathsAssending(ManifestType const *a, ManifestType const *b)
+static bool compareManifestPathsAscending(ManifestType const *a, ManifestType const *b)
 {
     String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
     String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
@@ -3882,7 +3884,7 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
     LOG_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
-    qSort(found.begin(), found.end(), compareManifestPathsAssending<MaterialManifest>);
+    qSort(found.begin(), found.end(), compareManifestPathsAscending<MaterialManifest>);
     int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
     foreach(MaterialManifest *manifest, found)
@@ -3956,7 +3958,7 @@ static int printTextureIndex2(TextureScheme *scheme, Path const &like,
     LOG_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index key.
-    qSort(found.begin(), found.end(), compareManifestPathsAssending<TextureManifest>);
+    qSort(found.begin(), found.end(), compareManifestPathsAscending<TextureManifest>);
     int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
     foreach(TextureManifest *manifest, found)
@@ -4032,7 +4034,7 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     LOG_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
-    qSort(found.begin(), found.end(), compareManifestPathsAssending<FontManifest>);
+    qSort(found.begin(), found.end(), compareManifestPathsAscending<FontManifest>);
     int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
     foreach(FontManifest *manifest, found)

@@ -203,7 +203,7 @@ static AbstractFont *loadSystemFont(char const *name)
 #endif
     F_ExpandBasePath(&resourcePath, &resourcePath);
 
-    AbstractFont *font = App_ResourceSystem().createFontFromFile(uri, Str_Text(&resourcePath));
+    AbstractFont *font = App_ResourceSystem().newFontFromFile(uri, Str_Text(&resourcePath));
     if(!font)
     {
         Con_Error("loadSystemFont: Failed loading font \"%s\".", name);

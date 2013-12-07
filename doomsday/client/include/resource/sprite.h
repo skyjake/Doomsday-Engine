@@ -72,6 +72,9 @@ public:
 
     Sprite &operator = (Sprite const &other);
 
+    /**
+     * @param rotation  @c 0= front, @c 1= one angle turn clockwise, etc...
+     */
     void newViewAngle(Material *material, int rotation, bool mirrorX);
 
     /**

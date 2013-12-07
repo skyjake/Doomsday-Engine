@@ -287,7 +287,7 @@ public:
     /**
      * Create a new (empty) material manifest group.
      */
-    MaterialManifestGroup &createMaterialGroup();
+    MaterialManifestGroup &newMaterialGroup();
 
     /**
      * Destroys all material manifest groups.
@@ -531,7 +531,7 @@ public:
     /**
      * Clear all resources in all schemes.
      *
-     * @see allSchemes(), Scheme::clear().
+     * @see allFontSchemes(), FontScheme::clear().
      */
     inline void clearAllFontSchemes() {
         foreach(de::FontScheme *scheme, allFontSchemes()) {
@@ -696,8 +696,8 @@ public:
      */
     TextureVariantSpec &detailTextureSpec(float contrast);
 
-    AbstractFont *createFontFromDef(ded_compositefont_t const &def);
-    AbstractFont *createFontFromFile(de::Uri const &uri, de::String filePath);
+    AbstractFont *newFontFromDef(ded_compositefont_t const &def);
+    AbstractFont *newFontFromFile(de::Uri const &uri, de::String filePath);
 
     /**
      * Release all GL-textures for fonts in the identified scheme.
