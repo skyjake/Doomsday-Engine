@@ -17,7 +17,6 @@
  */
 
 #include "de/gui/glentrypoints.h"
-#include <de/Log>
 #include <de/GLInfo>
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
@@ -100,8 +99,8 @@ PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 // Extensions:
 
-PFNGLBLITFRAMEBUFFEREXTPROC                        glBlitFramebufferEXT;
-PFNGLFRAMEBUFFERRENDERBUFFERMULTISAMPLEEXTPROC     glFramebufferRenderbufferMultisampleEXT;
+PFNGLBLITFRAMEBUFFEREXTPROC                 glBlitFramebufferEXT;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC  glRenderbufferStorageMultisampleEXT;
 
 void getAllOpenGLEntryPoints()
 {
@@ -114,9 +113,8 @@ void getAllOpenGLEntryPoints()
 #  define GET_PROC(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name); DENG2_ASSERT(name != 0)
 #endif
 
-    LOG_AS("getAllOpenGLEntryPoints");
-
-    LOG_VERBOSE("GL_VERSION: ") << (char const *) glGetString(GL_VERSION);
+    //LOG_AS("getAllOpenGLEntryPoints");
+    //LOG_VERBOSE("GL_VERSION: ") << (char const *) glGetString(GL_VERSION);
 
 #ifdef LIBGUI_FETCH_GL_1_3
     GET_PROC(glActiveTexture);
