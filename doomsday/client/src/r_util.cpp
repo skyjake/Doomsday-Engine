@@ -60,16 +60,16 @@ float R_MovementXYZPitch(float momx, float momy, float momz)
 angle_t R_ViewPointToAngle(Vector2d point)
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    point -= Vector2d(viewData->current.origin[VX],
-                      viewData->current.origin[VY]);
+    point -= Vector2d(viewData->current.origin);
     return M_PointXYToAngle(point.x, point.y);
 }
 
 coord_t R_ViewPointDistance(coord_t x, coord_t y)
 {
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    coord_t point[2] = { x, y };
-    return M_PointDistance(viewData->current.origin, point);
+    Vector3d const &viewOrigin = R_ViewData(viewPlayer - ddPlayers)->current.origin;
+    coord_t viewOriginv1[2] = { viewOrigin.x, viewOrigin.y };
+    coord_t pointv1[2] = { x, y };
+    return M_PointDistance(viewOriginv1, pointv1);
 }
 
 Vector3d R_ClosestPointOnPlane(Vector3f const &planeNormal_,
@@ -97,8 +97,8 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPla
     else
     {
         // Transform the origin point.
-        coord_t trX   = center[VX] - viewData->current.origin[VX];
-        coord_t trY   = center[VY] - viewData->current.origin[VY];
+        coord_t trX   = center[VX] - viewData->current.origin.x;
+        coord_t trY   = center[VY] - viewData->current.origin.y;
         float thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
         sinrv = sin(thangle);
         cosrv = cos(thangle);
@@ -128,8 +128,8 @@ void R_ProjectViewRelativeLine2D(Vector2d const center, bool alignToViewPlane,
     else
     {
         // Transform the origin point.
-        coord_t trX   = center[VX] - viewData->current.origin[VX];
-        coord_t trY   = center[VY] - viewData->current.origin[VY];
+        coord_t trX   = center[VX] - viewData->current.origin.x;
+        coord_t trY   = center[VY] - viewData->current.origin.y;
         float thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
         sinrv = sin(thangle);
         cosrv = cos(thangle);

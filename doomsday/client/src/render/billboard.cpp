@@ -359,13 +359,13 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 
     // All psprite vertices are co-plannar, so just copy the view front vector.
     // @todo: Can we do something better here?
-    float const *frontVec = R_ViewData(viewPlayer - ddPlayers)->frontVec;
+    Vector3f const &frontVec = R_ViewData(viewPlayer - ddPlayers)->frontVec;
     dgl_vertex_t quadNormals[4];
     for(int i = 0; i < 4; ++i)
     {
-        quadNormals[i].xyz[VX] = frontVec[VX];
-        quadNormals[i].xyz[VY] = frontVec[VZ];
-        quadNormals[i].xyz[VZ] = frontVec[VY];
+        quadNormals[i].xyz[VX] = frontVec.x;
+        quadNormals[i].xyz[VY] = frontVec.z;
+        quadNormals[i].xyz[VZ] = frontVec.y;
     }
 
     dgl_color_t quadColors[4];

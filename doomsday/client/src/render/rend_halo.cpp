@@ -147,13 +147,13 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
 
     // viewSideVec is to the left.
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    Vector3f const leftOff  = Vector3f(viewData->upVec) + Vector3f(viewData->sideVec);
-    Vector3f const rightOff = Vector3f(viewData->upVec) - Vector3f(viewData->sideVec);
+    Vector3f const leftOff  = viewData->upVec + viewData->sideVec;
+    Vector3f const rightOff = viewData->upVec - viewData->sideVec;
 
     // Calculate the center of the flare.
     // Apply the flare's X offset. (Positive is to the right.)
     Vector3f const center = Vector3f(origin.x, origin.z, origin.y)
-                          - Vector3f(viewData->sideVec) * viewXOffset;
+                          - viewData->sideVec * viewXOffset;
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
@@ -161,9 +161,9 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
 
     // Calculate the 'mirror' vector.
     float const scale = viewToCenter.dot(viewData->frontVec)
-                        / Vector3f(viewData->frontVec).dot(viewData->frontVec);
+                        / viewData->frontVec.dot(viewData->frontVec);
     Vector3f const mirror =
-        (Vector3f(viewData->frontVec) * scale - viewToCenter) * 2;
+        (viewData->frontVec * scale - viewToCenter) * 2;
 
     // Calculate dimming factors.
     float const fadeFactor    = fadeFactorAt(distanceToViewer);

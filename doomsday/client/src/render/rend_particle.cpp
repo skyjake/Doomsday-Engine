@@ -96,8 +96,8 @@ static boolean isPtcGenVisible(ptcgen_t const *gen)
 static float pointDist(fixed_t c[3])
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    float dist = ((viewData->current.origin[VY] - FIX2FLT(c[VY])) * -viewData->viewSin) -
-        ((viewData->current.origin[VX] - FIX2FLT(c[VX])) * viewData->viewCos);
+    float dist = ((viewData->current.origin.y - FIX2FLT(c[VY])) * -viewData->viewSin) -
+        ((viewData->current.origin.x - FIX2FLT(c[VX])) * viewData->viewCos);
 
     if(dist < 0)
         return -dist; // Always return positive.
@@ -524,7 +524,6 @@ static void lineUnitVector(Line const &line, pvec2f_t unitVec)
 
 static void renderParticles(int rtype, boolean withBlend)
 {
-    float leftoff[3], rightoff[3];
     ushort primType = GL_QUADS;
     blendmode_t mode = BM_NORMAL, newMode;
     DGLuint tex = 0;
@@ -535,12 +534,9 @@ static void renderParticles(int rtype, boolean withBlend)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    // viewSideVec points to the left.
-    for(c = 0; c < 3; ++c)
-    {
-        leftoff[c]  = viewData->upVec[c] + viewData->sideVec[c];
-        rightoff[c] = viewData->upVec[c] - viewData->sideVec[c];
-    }
+
+    Vector3f const leftoff  = viewData->upVec + viewData->sideVec;
+    Vector3f const rightoff = viewData->upVec - viewData->sideVec;
 
     // Should we use a texture?
     if(rtype == PTC_POINT ||

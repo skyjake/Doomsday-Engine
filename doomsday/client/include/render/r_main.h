@@ -21,8 +21,10 @@
 #ifndef DENG_RENDER_R_MAIN_H
 #define DENG_RENDER_R_MAIN_H
 
-#include <de/rect.h>
 #include "dd_share.h"
+
+#include <de/Vector>
+#include <de/rect.h>
 
 #ifdef __CLIENT__
 class BspLeaf;
@@ -37,9 +39,28 @@ struct viewport_t
 
 struct viewer_t
 {
-    coord_t origin[3];
+    de::Vector3d origin;
     angle_t angle;
     float pitch;
+
+    viewer_t(de::Vector3d const &origin = de::Vector3d(),
+             angle_t angle              = 0,
+             float pitch                = 0)
+        : origin(origin)
+        , angle(angle)
+        , pitch(pitch)
+    {}
+    viewer_t(viewer_t const &other)
+        : origin(other.origin)
+        , angle(other.angle)
+        , pitch(other.pitch)
+    {}
+
+    viewer_t lerp(viewer_t const &end, float pos) const {
+        return viewer_t(de::lerp(origin, end.origin, pos),
+                        angle + int(pos * (int(end.angle) - int(angle))),
+                        de::lerp(pitch,  end.pitch,  pos));
+    }
 };
 
 struct viewdata_t
@@ -48,13 +69,13 @@ struct viewdata_t
     viewer_t lastSharp[2]; ///< For smoothing.
     viewer_t latest; ///< "Sharp" values taken from here.
 
-    /**
+    /*
      * These vectors are in the DGL coordinate system, which is a left-handed
      * one (same as in the game, but Y and Z have been swapped). Anyone who uses
      * these must note that it might be necessary to fix the aspect ratio of the
      * Y axis by dividing the Y coordinate by 1.2.
      */
-    float frontVec[3], upVec[3], sideVec[3];
+    de::Vector3f frontVec, upVec, sideVec; /* to the left */
 
     float viewCos, viewSin;
 
@@ -62,10 +83,8 @@ struct viewdata_t
     float windowInter;
 };
 
-DENG_EXTERN_C float    frameTimePos;      // 0...1: fractional part for sharp game tics
 DENG_EXTERN_C int      loadInStartupMode;
 DENG_EXTERN_C int      validCount;
-DENG_EXTERN_C int      frameCount;
 DENG_EXTERN_C int      rendInfoTris;
 
 DENG_EXTERN_C int      levelFullBright;
@@ -82,19 +101,10 @@ DENG_EXTERN_C byte     precacheMapMaterials, precacheSprites, precacheSkins;
 
 DENG_EXTERN_C fixed_t  fineTangent[FINEANGLES / 2];
 
-DENG_EXTERN_C byte     texGammaLut[256];
-#ifdef __CLIENT__
-DENG_EXTERN_C boolean  loInited;
-#endif
-
 /**
  * Register console variables.
  */
 void R_Register();
-
-void R_BuildTexGammaLut();
-
-void R_Ticker(timespan_t time);
 
 namespace ui {
     enum ViewPortLayer {
@@ -179,12 +189,6 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf);
 #endif // __CLIENT__
 
 /**
- * Update the sharp world data by rotating the stored values of plane
- * heights and sharp camera positions.
- */
-void R_NewSharpWorld();
-
-/**
  * Attempt to set up a view grid and calculate the viewports. Set 'numCols' and
  * 'numRows' to zero to just update the viewport coordinates.
  */
@@ -197,4 +201,10 @@ void R_SetupDefaultViewWindow(int consoleNum);
  */
 void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
 
-#endif // DENG_REFRESH_MAIN_H
+/**
+ * Update the sharp world data by rotating the stored values of plane
+ * heights and sharp camera positions.
+ */
+void R_NewSharpWorld();
+
+#endif // DENG_RENDER_R_MAIN_H

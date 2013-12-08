@@ -241,8 +241,10 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
            // $voodoodolls: Must be a real player to use the smoothed origin.
            mo->dPlayer->mo == mo)
         {
-            const viewdata_t* vd = R_ViewData(consolePlayer);
-            V3d_Copy(origin, vd->current.origin);
+            viewdata_t const *vd = R_ViewData(consolePlayer);
+            origin[VX] = vd->current.origin.x;
+            origin[VY] = vd->current.origin.y;
+            origin[VZ] = vd->current.origin.z;
         }
         // The client may have a Smoother for this object.
         else if(isClient)

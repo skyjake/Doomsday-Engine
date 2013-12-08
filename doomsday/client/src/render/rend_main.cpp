@@ -499,9 +499,9 @@ void Rend_ModelViewMatrix(bool useAngles)
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
-    vOrigin[VX] = viewData->current.origin[VX];
-    vOrigin[VY] = viewData->current.origin[VZ];
-    vOrigin[VZ] = viewData->current.origin[VY];
+    vOrigin[VX] = viewData->current.origin.x;
+    vOrigin[VY] = viewData->current.origin.z;
+    vOrigin[VZ] = viewData->current.origin.y;
     vang = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
     vpitch = viewData->current.pitch * 85.0 / 110.0;
 
@@ -3862,7 +3862,7 @@ void Rend_RenderMap(Map &map)
         Rend_ParticleInitForNewFrame();
 
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-        eyeOrigin = Vector3d(viewData->current.origin);
+        eyeOrigin = viewData->current.origin;
 
         // Add the backside clipping range (if vpitch allows).
         if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)

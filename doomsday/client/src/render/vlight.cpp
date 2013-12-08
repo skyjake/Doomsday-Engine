@@ -19,10 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/mathutil.h> // M_ApproxDistance
-#include <de/memoryzone.h>
-
 #include "de_platform.h"
+#include "render/vlight.h"
+
 #include "de_graphics.h"
 #include "de_render.h"
 
@@ -30,8 +29,9 @@
 #include "Surface"
 #include "world/map.h"
 #include "Contact"
-
-#include "render/vlight.h"
+#include <de/concurrency.h>
+#include <de/mathutil.h> // M_ApproxDistance
+#include <de/memoryzone.h>
 
 using namespace de;
 

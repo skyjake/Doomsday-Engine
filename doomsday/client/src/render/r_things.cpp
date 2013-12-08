@@ -269,7 +269,7 @@ void R_ProjectSprite(mobj_t *mo)
         // If the model is close to the viewpoint we should still to draw it,
         // otherwise large models are likely to disappear too early.
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-        Vector2d delta(distFromEye, moPos.z + (mo->height / 2) - viewData->current.origin[VZ]);
+        Vector2d delta(distFromEye, moPos.z + (mo->height / 2) - viewData->current.origin.z);
         if(M_ApproxDistance(delta.x, delta.y) > MAX_OBJECT_RADIUS)
             return;
 
@@ -313,8 +313,8 @@ void R_ProjectSprite(mobj_t *mo)
         {
             // Transform the origin point.
             viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-            Vector2d delta(moPos.y - viewData->current.origin[VY],
-                           moPos.x - viewData->current.origin[VX]);
+            Vector2d delta(moPos.y - viewData->current.origin.y,
+                           moPos.x - viewData->current.origin.x);
 
             yaw = 90 - (BANG2RAD(bamsAtan2(delta.x * 10, delta.y * 10)) - PI / 2) / PI * 180;
         }
@@ -340,7 +340,7 @@ void R_ProjectSprite(mobj_t *mo)
         if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
             viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-            Vector2d delta((vis->origin.z + gzt) / 2 - viewData->current.origin[VZ], distFromEye);
+            Vector2d delta((vis->origin.z + gzt) / 2 - viewData->current.origin.z, distFromEye);
 
             pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
         }

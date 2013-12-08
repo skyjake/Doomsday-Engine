@@ -171,7 +171,7 @@ void R_BuildTexGammaLut()
 DENG_EXTERN_C void R_SetViewOrigin(int consoleNum, coord_t const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    V3d_Copy(viewDataOfConsole[consoleNum].latest.origin, origin);
+    viewDataOfConsole[consoleNum].latest.origin = Vector3d(origin);
 }
 
 #undef R_SetViewAngle
@@ -462,30 +462,9 @@ int R_NextViewer()
     return resetNextViewer;
 }
 
-void R_InterpolateViewer(viewer_t *start, viewer_t *end, float pos, viewer_t *out)
-{
-    float inv = 1 - pos;
-    int delta;
-
-    out->origin[VX] = inv * start->origin[VX] + pos * end->origin[VX];
-    out->origin[VY] = inv * start->origin[VY] + pos * end->origin[VY];
-    out->origin[VZ] = inv * start->origin[VZ] + pos * end->origin[VZ];
-
-    delta = int(end->angle) - int(start->angle);
-    out->angle = start->angle + int(pos * delta);
-    out->pitch = inv * start->pitch + pos * end->pitch;
-}
-
-void R_CopyViewer(viewer_t *dst, viewer_t const *src)
-{
-    V3d_Copy(dst->origin, src->origin);
-    dst->angle = src->angle;
-    dst->pitch = src->pitch;
-}
-
 viewdata_t const *R_ViewData(int consoleNum)
 {
-    DENG_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
+    DENG2_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
     return &viewDataOfConsole[consoleNum];
 }
 
@@ -499,17 +478,15 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 
     /// @todo Remove this snapping. The game should determine this and disable the
     ///       the interpolation as required.
-    if(fabs(dst->origin[VX] - src->origin[VX]) > MAXMOVE ||
-       fabs(dst->origin[VY] - src->origin[VY]) > MAXMOVE)
+    if(fabs(dst->origin.x - src->origin.x) > MAXMOVE ||
+       fabs(dst->origin.y - src->origin.y) > MAXMOVE)
     {
-        V3d_Copy(src->origin, dst->origin);
+        src->origin = dst->origin;
     }
 
     if(abs(int(dst->angle) - int(src->angle)) >= ANGLE_45)
     {
-#ifdef _DEBUG
-        Con_Message("R_CheckViewerLimits: Snap camera angle to %08x.", dst->angle);
-#endif
+        LOG_DEBUG("R_CheckViewerLimits: Snap camera angle to %08x.") << dst->angle;
         src->angle = dst->angle;
     }
 }
@@ -517,58 +494,58 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 /**
  * Retrieve the current sharp camera position.
  */
-void R_GetSharpView(viewer_t *view, player_t *player)
+viewer_t R_SharpViewer(player_t &player)
 {
-    if(!player || !player->shared.mo) return;
+    DENG2_ASSERT(player.shared.mo != 0);
 
-    ddplayer_t *ddpl = &player->shared;
-    viewdata_t *vd = &viewDataOfConsole[player - ddPlayers];
+    ddplayer_t const &ddpl = player.shared;
 
-    R_CopyViewer(view, &vd->latest);
+    viewer_t view(viewDataOfConsole[&player - ddPlayers].latest);
 
-    if((ddpl->flags & DDPF_CHASECAM) && !(ddpl->flags & DDPF_CAMERA))
+    if((ddpl.flags & DDPF_CHASECAM) && !(ddpl.flags & DDPF_CAMERA))
     {
         /* STUB
          * This needs to be fleshed out with a proper third person
          * camera control setup. Currently we simply project the viewer's
          * position a set distance behind the ddpl.
          */
-        angle_t pitch = LOOKDIR2DEG(view->pitch) / 360 * ANGLE_MAX;
-        angle_t angle = view->angle;
-        float distance = 90;
+        float const distance = 90;
 
-        angle = view->angle >> ANGLETOFINESHIFT;
-        pitch >>= ANGLETOFINESHIFT;
+        uint angle = view.angle >> ANGLETOFINESHIFT;
+        uint pitch = angle_t(LOOKDIR2DEG(view.pitch) / 360 * ANGLE_MAX) >> ANGLETOFINESHIFT;
 
-        view->origin[VX] -= distance * FIX2FLT(fineCosine[angle]);
-        view->origin[VY] -= distance * FIX2FLT(finesine[angle]);
-        view->origin[VZ] -= distance * FIX2FLT(finesine[pitch]);
+        view.origin -= Vector3d(FIX2FLT(fineCosine[angle]),
+                                FIX2FLT(finesine[angle]),
+                                FIX2FLT(finesine[pitch])) * distance;
     }
 
     // Check that the viewZ doesn't go too high or low.
     // Cameras are not restricted.
-    if(!(ddpl->flags & DDPF_CAMERA))
+    if(!(ddpl.flags & DDPF_CAMERA))
     {
-        if(view->origin[VZ] > ddpl->mo->ceilingZ - 4)
+        if(view.origin.z > ddpl.mo->ceilingZ - 4)
         {
-            view->origin[VZ] = ddpl->mo->ceilingZ - 4;
+            view.origin.z = ddpl.mo->ceilingZ - 4;
         }
 
-        if(view->origin[VZ] < ddpl->mo->floorZ + 4)
+        if(view.origin.z < ddpl.mo->floorZ + 4)
         {
-            view->origin[VZ] = ddpl->mo->floorZ + 4;
+            view.origin.z = ddpl.mo->floorZ + 4;
         }
     }
+
+    return view;
 }
 
 void R_NewSharpWorld()
 {
     if(resetNextViewer)
+    {
         resetNextViewer = 2;
+    }
 
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        viewer_t sharpView;
         viewdata_t *vd = &viewDataOfConsole[i];
         player_t *plr = &ddPlayers[i];
 
@@ -578,7 +555,7 @@ void R_NewSharpWorld()
             continue;
         }
 
-        R_GetSharpView(&sharpView, plr);
+        viewer_t sharpView = R_SharpViewer(*plr);
 
         // The game tic has changed, which means we have an updated sharp
         // camera position.  However, the position is at the beginning of
@@ -587,8 +564,8 @@ void R_NewSharpWorld()
         // buffer.  The effect of this is that [0] is the previous sharp
         // position and [1] is the current one.
 
-        std::memcpy(&vd->lastSharp[0], &vd->lastSharp[1], sizeof(viewer_t));
-        std::memcpy(&vd->lastSharp[1], &sharpView, sizeof(sharpView));
+        vd->lastSharp[0] = vd->lastSharp[1];
+        vd->lastSharp[1] = sharpView;
 
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
@@ -612,23 +589,24 @@ void R_UpdateViewer(int consoleNum)
     viewdata_t *vd   = viewDataOfConsole + consoleNum;
     player_t *player = ddPlayers + consoleNum;
 
-    if(!player->shared.inGame || !player->shared.mo) return;
+    if(!player->shared.inGame) return;
+    if(!player->shared.mo) return;
 
-    viewer_t sharpView;
-    R_GetSharpView(&sharpView, player);
+    viewer_t sharpView = R_SharpViewer(*player);
 
     if(resetNextViewer ||
-       V3d_Distance(vd->current.origin, sharpView.origin) > VIEWPOS_MAX_SMOOTHDISTANCE)
+       (sharpView.origin - vd->current.origin).length() > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
         // Keep reseting until a new sharp world has arrived.
         if(resetNextViewer > 1)
+        {
             resetNextViewer = 0;
+        }
 
         // Just view from the sharp position.
-        R_CopyViewer(&vd->current, &sharpView);
+        vd->current = sharpView;
 
-        std::memcpy(&vd->lastSharp[0], &sharpView, sizeof(sharpView));
-        std::memcpy(&vd->lastSharp[1], &sharpView, sizeof(sharpView));
+        vd->lastSharp[0] = vd->lastSharp[1] = sharpView;
     }
     // While the game is paused there is no need to calculate any
     // time offsets or interpolated camera positions.
@@ -637,10 +615,9 @@ void R_UpdateViewer(int consoleNum)
         // Calculate the smoothed camera position, which is somewhere between
         // the previous and current sharp positions. This introduces a slight
         // delay (max. 1/35 sec) to the movement of the smoothed camera.
-        viewer_t smoothView;
-        R_InterpolateViewer(vd->lastSharp, vd->lastSharp + 1, frameTimePos, &smoothView);
+        viewer_t smoothView = vd->lastSharp[0].lerp(vd->lastSharp[1], frameTimePos);
 
-        // Use the latest view angles known to us, if the interpolation flags
+        // Use the latest view angles known to us if the interpolation flags
         // are not set. The interpolation flags are used when the view angles
         // are updated during the sharp tics and need to be smoothed out here.
         // For example, view locking (dead or camera setlock).
@@ -649,18 +626,18 @@ void R_UpdateViewer(int consoleNum)
         /*if(!(player->shared.flags & DDPF_INTERPITCH))
             smoothView.pitch = sharpView.pitch;*/
 
-        R_CopyViewer(&vd->current, &smoothView);
+        vd->current = smoothView;
 
         // Monitor smoothness of yaw/pitch changes.
         if(showViewAngleDeltas)
         {
-            typedef struct oldangle_s {
+            struct OldAngle {
                 double time;
                 float yaw, pitch;
-            } oldangle_t;
+            };
 
-            static oldangle_t oldangle[DDMAXPLAYERS];
-            oldangle_t *old = &oldangle[viewPlayer - ddPlayers];
+            static OldAngle oldAngle[DDMAXPLAYERS];
+            OldAngle *old = &oldAngle[viewPlayer - ddPlayers];
             float yaw = (double)smoothView.angle / ANGLE_MAX * 360;
 
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
@@ -673,62 +650,59 @@ void R_UpdateViewer(int consoleNum)
                         (yaw - old->yaw) / (sysTime - old->time),
                         (smoothView.pitch - old->pitch) / (sysTime - old->time));
 
-            old->yaw = yaw;
+            old->yaw   = yaw;
             old->pitch = smoothView.pitch;
-            old->time = sysTime;
+            old->time  = sysTime;
         }
 
         // The Rdx and Rdy should stay constant when moving.
         if(showViewPosDeltas)
         {
-            struct OldPos
-            {
+            struct OldPos {
                 double time;
-                float x, y, z;
+                Vector3f pos;
             };
 
-            static OldPos oldpos[DDMAXPLAYERS];
-            OldPos *old = &oldpos[viewPlayer - ddPlayers];
+            static OldPos oldPos[DDMAXPLAYERS];
+            OldPos *old = &oldPos[viewPlayer - ddPlayers];
 
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
                         sysTime - old->time,
-                        smoothView.origin[0] - old->x,
-                        smoothView.origin[1] - old->y,
-                        smoothView.origin[2] - old->z,
-                        (smoothView.origin[0] - old->x) / (sysTime - old->time),
-                        (smoothView.origin[1] - old->y) / (sysTime - old->time));
+                        smoothView.origin.x - old->pos.x,
+                        smoothView.origin.y - old->pos.y,
+                        smoothView.origin.z - old->pos.z,
+                        (smoothView.origin.x - old->pos.x) / (sysTime - old->time),
+                        (smoothView.origin.y - old->pos.y) / (sysTime - old->time));
 
-            old->x = smoothView.origin[VX];
-            old->y = smoothView.origin[VY];
-            old->z = smoothView.origin[VZ];
+            old->pos  = smoothView.origin;
             old->time = sysTime;
         }
     }
 
     // Update viewer.
-    uint an = vd->current.angle >> ANGLETOFINESHIFT;
+    uint const an = vd->current.angle >> ANGLETOFINESHIFT;
     vd->viewSin = FIX2FLT(finesine[an]);
     vd->viewCos = FIX2FLT(fineCosine[an]);
 
     // Calculate the front, up and side unit vectors.
-    float yawRad = ((vd->current.angle / (float) ANGLE_MAX) *2) * PI;
-    float pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
+    float const yawRad = ((vd->current.angle / (float) ANGLE_MAX) *2) * PI;
+    float const pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
 
     // The front vector.
-    vd->frontVec[VX] = cos(yawRad) * cos(pitchRad);
-    vd->frontVec[VZ] = sin(yawRad) * cos(pitchRad);
-    vd->frontVec[VY] = sin(pitchRad);
+    vd->frontVec.x = cos(yawRad) * cos(pitchRad);
+    vd->frontVec.z = sin(yawRad) * cos(pitchRad);
+    vd->frontVec.y = sin(pitchRad);
 
     // The up vector.
-    vd->upVec[VX] = -cos(yawRad) * sin(pitchRad);
-    vd->upVec[VZ] = -sin(yawRad) * sin(pitchRad);
-    vd->upVec[VY] = cos(pitchRad);
+    vd->upVec.x = -cos(yawRad) * sin(pitchRad);
+    vd->upVec.z = -sin(yawRad) * sin(pitchRad);
+    vd->upVec.y = cos(pitchRad);
 
     // The side vector is the cross product of the front and up vectors.
-    V3f_CrossProduct(vd->sideVec, vd->frontVec, vd->upVec);
+    vd->sideVec = vd->frontVec.cross(vd->upVec);
 }
 
 /**
@@ -892,7 +866,7 @@ void R_SetupPlayerSprites()
             spr->data.model.bspLeaf = &Mobj_BspLeafAtOrigin(*mo);
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
-            spr->data.model.gzt = viewData->current.origin[VZ];
+            spr->data.model.gzt = viewData->current.origin.z;
             spr->data.model.secFloor = cluster.visFloor().heightSmoothed();
             spr->data.model.secCeil  = cluster.visCeiling().heightSmoothed();
             spr->data.model.pClass = 0;
@@ -902,9 +876,9 @@ void R_SetupPlayerSprites()
             spr->data.model.nextMF = nextmf;
             spr->data.model.inter = inter;
             spr->data.model.viewAligned = true;
-            spr->origin[VX] = viewData->current.origin[VX];
-            spr->origin[VY] = viewData->current.origin[VY];
-            spr->origin[VZ] = viewData->current.origin[VZ];
+            spr->origin[VX] = viewData->current.origin.x;
+            spr->origin[VY] = viewData->current.origin.y;
+            spr->origin[VZ] = viewData->current.origin.z;
 
             // Offsets to rotation angles.
             spr->data.model.yawAngleOffset = psp->pos[VX] * weaponOffsetScale - 90;
@@ -928,9 +902,9 @@ void R_SetupPlayerSprites()
             spr->type = VPSPR_SPRITE;
 
             // Adjust the center slightly so an angle can be calculated.
-            spr->origin[VX] = viewData->current.origin[VX];
-            spr->origin[VY] = viewData->current.origin[VY];
-            spr->origin[VZ] = viewData->current.origin[VZ];
+            spr->origin[VX] = viewData->current.origin.x;
+            spr->origin[VY] = viewData->current.origin.y;
+            spr->origin[VZ] = viewData->current.origin.z;
 
             spr->data.sprite.bspLeaf = &Mobj_BspLeafAtOrigin(*mo);
             spr->data.sprite.alpha = psp->alpha;
@@ -1523,7 +1497,7 @@ void R_BeginFrame()
     foreach(Lumobj *lum, map.lumobjs())
     {
         // Approximate the distance in 3D.
-        Vector3d delta = lum->origin() - Vector3d(viewData->current.origin);
+        Vector3d delta = lum->origin() - viewData->current.origin;
         luminousDist[lum->indexInMap()] = M_ApproxDistance3(delta.x, delta.y, delta.z * 1.2 /*correct aspect*/);
     }
 

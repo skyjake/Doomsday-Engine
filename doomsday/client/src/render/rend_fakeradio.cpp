@@ -1367,18 +1367,12 @@ static void drawPoint(Vector3d const &point, int radius, float const color[4])
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
 
-    // viewData->sideVec is to the left.
-    Vector3d leftOff, rightOff, viewToCenter;
-    for(int i = 0; i < 3; ++i)
-    {
-        leftOff[i]  = viewData->upVec[i] + viewData->sideVec[i];
-        rightOff[i] = viewData->upVec[i] - viewData->sideVec[i];
+    Vector3d const leftOff      = viewData->upVec + viewData->sideVec;
+    Vector3d const rightOff     = viewData->upVec - viewData->sideVec;
 
-        viewToCenter[i] = point[i] - vOrigin[i];
-    }
-
-    //float scale = float(V3d_DotProductf(viewToCenter, viewData->frontVec)) /
-    //                V3f_DotProduct(viewData->frontVec, viewData->frontVec);
+    //Vector3d const viewToCenter = point - Vector3d(vOrigin);
+    //float scale = float(viewToCenter.dot(viewData->frontVec)) /
+    //                viewData->frontVec.dot(viewData->frontVec);
 
     Vector3d finalPos( point.x, point.z, point.y );
 
