@@ -84,7 +84,7 @@
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
 #include <de/NativePath>
-#include <de/binangle.h>
+#include <de/Log>
 #include <de/memory.h>
 #include <QStringList>
 #ifdef UNIX
@@ -130,10 +130,11 @@ public:
     }
 };
 
+static void consoleRegister();
+static void initPathMappings();
 static int DD_StartupWorker(void *context);
 static int DD_DummyWorker(void *context);
 static void DD_AutoLoad();
-static void initPathMappings();
 
 /**
  * @param path          Path to the file to be loaded. Either a "real" file in
@@ -168,44 +169,6 @@ static FileTypes fileTypeMap;
 // found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
 static ddstring_t **sessionResourceFileList;
 static size_t numSessionResourceFileList;
-
-#ifdef __CLIENT__
-
-D_CMD(CheckForUpdates)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    Con_Message("Checking for available updates...");
-    ClientApp::updater().checkNow(Updater::OnlyShowResultIfUpdateAvailable);
-    return true;
-}
-
-D_CMD(CheckForUpdatesAndNotify)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    Con_Message("Checking for available updates...");
-    ClientApp::updater().checkNow(Updater::AlwaysShowResult);
-    return true;
-}
-
-D_CMD(LastUpdated)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    ClientApp::updater().printLastUpdated();
-    return true;
-}
-
-D_CMD(ShowUpdateSettings)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    ClientApp::updater().showSettings();
-    return true;
-}
-
-#endif // __CLIENT__
 
 static void registerResourceFileTypes()
 {
@@ -517,38 +480,6 @@ de::ResourceClass &App_ResourceClass(resourceclassid_t classId)
     return App_ResourceSystem().resClass(classId);
 }
 
-static void consoleRegister()
-{
-#ifdef __CLIENT__
-    C_CMD("update",          "", CheckForUpdates);
-    C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
-    C_CMD("updatesettings",  "", ShowUpdateSettings);
-    C_CMD("lastupdated",     "", LastUpdated);
-#endif
-
-    DD_RegisterLoop();
-    F_Register();
-    Con_Register();
-    DH_Register();
-    R_Register();
-    S_Register();
-#ifdef __CLIENT__
-    B_Register(); // for control bindings
-    DD_RegisterInput();
-    SBE_Register(); // for bias editor
-    RenderSystem::consoleRegister();
-    GL_Register();
-    UI_Register();
-    Demo_Register();
-    P_ControlRegister();
-    I_Register();
-#endif
-    ResourceSystem::consoleRegister();
-    Net_Register();
-    World::consoleRegister();
-    FI_Register();
-}
-
 static void addToPathList(ddstring_t ***list, size_t *listSize, char const *rawPath)
 {
     DENG2_ASSERT(list != 0 && listSize != 0 && rawPath != 0 && rawPath[0]);
@@ -604,12 +535,15 @@ void DD_StartTitle()
 {
 #ifdef __CLIENT__
     ddfinale_t fin;
-    if(!Def_Get(DD_DEF_FINALE, "background", &fin)) return;
+    if(!Def_Get(DD_DEF_FINALE, "background", &fin))
+    {
+        return;
+    }
 
     ddstring_t setupCmds; Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    char const *fontName = R_ChooseVariableFont(FS_NORMAL, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
+    char const *fontName = R_ChooseVariableFont(FS_NORMAL);
 
     for(int i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
@@ -683,9 +617,9 @@ static int loadFilesFromDataGameAuto()
  *
  * @return Number of new files that were added to the list.
  */
-static int listFilesFromDataGameAuto(ddstring_t*** list, size_t* listSize)
+static int listFilesFromDataGameAuto(ddstring_t ***list, size_t *listSize)
 {
-    if(!list || !listSize) return 0;
+    DENG2_ASSERT(list != 0 && listSize != 0);
 
     FS1::PathList found;
     findAllGameDataPaths(found);
@@ -861,7 +795,10 @@ static void initPathMappings()
     int argC = CommandLine_Count();
     for(int i = 0; i < argC; ++i)
     {
-        if(strnicmp("-vdmap", CommandLine_At(i), 6)) continue;
+        if(strnicmp("-vdmap", CommandLine_At(i), 6))
+        {
+            continue;
+        }
 
         if(i < argC - 1 && !CommandLine_IsOption(i + 1) && !CommandLine_IsOption(i + 2))
         {
@@ -893,7 +830,7 @@ static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t *path, char con
     if(!*ptr || *ptr == '\n') return false;
 
     // Find the end of the lump name.
-    char const* end = (char const*)M_FindWhite((char*)ptr);
+    char const *end = (char const *)M_FindWhite((char *)ptr);
     if(!*end || *end == '\n') return false;
 
     size_t len = end - ptr;
@@ -1083,10 +1020,8 @@ static int DD_ActivateGameWorker(void *context)
         Con_SetProgress(100);
     }
 
-    /**
-     * Parse the game's main config file.
-     * If a custom top-level config is specified; let it override.
-     */
+    // Parse the game's main config file.
+    // If a custom top-level config is specified; let it override.
     ddstring_t const *configFileName = 0;
     ddstring_t tmp;
     if(CommandLine_CheckWith("-config", 1))
@@ -1100,7 +1035,7 @@ static int DD_ActivateGameWorker(void *context)
         configFileName = App_CurrentGame().mainConfig();
     }
 
-    Con_Message("Parsing primary config \"%s\"...", F_PrettyPath(Str_Text(configFileName)));
+    LOG_MSG("Parsing primary config \"%s\"...") << F_PrettyPath(Str_Text(configFileName));
     Con_ParseCommands2(Str_Text(configFileName), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
     if(configFileName == &tmp)
         Str_Free(&tmp);
@@ -1136,9 +1071,6 @@ static int DD_ActivateGameWorker(void *context)
     Def_PostInit();
 
     DD_ReadGameHelp();
-
-    // Re-init to update the title, background etc.
-    //Rend_ConsoleInit();
 
     // Reset the tictimer so than any fractional accumulation is not added to
     // the tic/game timer of the newly-loaded game.
@@ -1393,7 +1325,9 @@ bool App_ChangeGame(Game &game, bool allowReload)
     if(App_GameLoaded())
     {
         if(gx.Shutdown)
+        {
             gx.Shutdown();
+        }
         Con_SaveDefaults();
 
 #ifdef __CLIENT__
@@ -1486,7 +1420,8 @@ bool App_ChangeGame(Game &game, bool allowReload)
         // Re-initialize subsystems needed even when in ringzero.
         if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
         {
-            LOG_WARNING("Failed exchanging entrypoints with plugin %i, aborting...") << int(game.pluginId());
+            LOG_WARNING("Failed exchanging entrypoints with plugin %i, aborting...")
+                    << int(game.pluginId());
             return false;
         }
 
@@ -1501,13 +1436,13 @@ bool App_ChangeGame(Game &game, bool allowReload)
     ClientWindow::main().setWindowTitle(buf);
 #endif
 
-    /**
+    /*
      * If we aren't shutting down then we are either loading a game or switching
      * to ringzero (the current game will have already been unloaded).
      */
     if(!DD_IsShuttingDown())
     {
-        /**
+        /*
          * The bulk of this we can do in busy mode unless we are already busy
          * (which can happen if a fatal error occurs during game load and we must
          * shutdown immediately; Sys_Shutdown will call back to load the special
@@ -1522,7 +1457,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
             // Phase 2: Loading "startup" resources.
             { DD_LoadGameStartupResourcesWorker, &p, busyMode, NULL,                200, 0.1f, 0.3f, 0 },
 
-            // Phase 3: Loading "addon" resources.
+            // Phase 3: Loading "add-on" resources.
             { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading add-ons...", 200, 0.3f, 0.7f, 0 },
 
             // Phase 4: Game activation.
@@ -2040,7 +1975,7 @@ static int DD_StartupWorker(void * /*context*/)
         Time begunAt;
 
         LOG_MSG("Parsing additional (pre-init) config files:");
-        for(;;)
+        forever
         {
             char const *arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-') break;
@@ -2075,7 +2010,15 @@ static int DD_StartupWorker(void * /*context*/)
     Con_SetProgress(90);
 
     R_BuildTexGammaLut();
-    R_Init();
+    R_LoadSystemFonts();
+    R_InitTranslationTables();
+    R_InitRawTexs();
+    R_InitSvgs();
+#ifdef __CLIENT__
+    R_InitViewWindow();
+    Rend_Init();
+#endif
+    frameCount = 0;
     Con_SetProgress(165);
 
     Net_InitGame();
@@ -2121,7 +2064,7 @@ static int DD_DummyWorker(void * /*context*/)
     return 0;
 }
 
-void DD_CheckTimeDemo(void)
+void DD_CheckTimeDemo()
 {
     static boolean checked = false;
 
@@ -2155,7 +2098,37 @@ static int DD_UpdateEngineStateWorker(void *context)
         Con_SetProgress(50);
     }
 
-    R_Update();
+    // Reset file IDs so previously seen files can be processed again.
+    F_ResetFileIds();
+    // Re-read definitions.
+    Def_Read();
+
+    R_UpdateRawTexs();
+    App_ResourceSystem().initSprites(); // Fully reinitialize sprites.
+#ifdef __CLIENT__
+    App_ResourceSystem().initModels(); // Defs might've changed.
+#endif
+
+    R_UpdateTranslationTables();
+
+    Def_PostInit();
+
+    App_World().update();
+
+#ifdef __CLIENT__
+    // Recalculate the light range mod matrix.
+    Rend_UpdateLightModMatrix();
+
+    // The rendering lists have persistent data that has changed during the
+    // re-initialization.
+    ClientApp::renderSystem().clearDrawLists();
+
+    /// @todo fixme: Update the game title and the status.
+#endif
+
+#ifdef DENG_DEBUG
+    Z_CheckHeap();
+#endif
 
     if(initiatedBusyMode)
     {
@@ -2334,7 +2307,7 @@ int DD_GetInteger(int ddvalue)
     case DD_NUMLUMPS:
         return F_LumpCount();
 
-    case DD_MAP_MUSIC: {
+    case DD_MAP_MUSIC:
         if(App_World().hasMap())
         {
             de::Uri mapUri = App_World().map().uri();
@@ -2343,15 +2316,19 @@ int DD_GetInteger(int ddvalue)
                 return Def_GetMusicNum(mapInfo->music);
             }
         }
-        return -1; }
+        return -1;
 
     default: break;
     }
 
     if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
+    {
         return 0;
+    }
     if(ddValues[ddvalue].readPtr == 0)
+    {
         return 0;
+    }
     return *ddValues[ddvalue].readPtr;
 }
 
@@ -2362,9 +2339,14 @@ int DD_GetInteger(int ddvalue)
 void DD_SetInteger(int ddvalue, int parm)
 {
     if(ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
+    {
         return;
+    }
+
     if(ddValues[ddvalue].writePtr)
+    {
         *ddValues[ddvalue].writePtr = parm;
+    }
 }
 
 /**
@@ -2375,10 +2357,7 @@ void DD_SetInteger(int ddvalue, int parm)
 void *DD_GetVariable(int ddvalue)
 {
     static int value;
-    static float valueF;
     static double valueD;
-
-    DENG_UNUSED(valueF);
 
     switch(ddvalue)
     {
@@ -2413,7 +2392,7 @@ void *DD_GetVariable(int ddvalue)
         if(App_World().hasMap())
         {
             de::Uri mapUri = App_World().map().uri();
-            ded_mapinfo_t* mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
+            ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             if(mapInfo && mapInfo->author[0])
             {
                 return mapInfo->author;
@@ -2474,7 +2453,7 @@ void *DD_GetVariable(int ddvalue)
 
     // We have to separately calculate the 35 Hz ticks.
     case DD_GAMETIC: {
-        static timespan_t       fracTic;
+        static timespan_t fracTic;
         fracTic = gameTime * TICSPERSEC;
         return &fracTic; }
 
@@ -2487,7 +2466,9 @@ void *DD_GetVariable(int ddvalue)
     }
 
     if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
+    {
         return 0;
+    }
 
     // Other values not supported.
     return ddValues[ddvalue].writePtr;
@@ -2590,7 +2571,6 @@ String DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
     {
         return "System";
     }
-
     return "";
 }
 
@@ -2610,33 +2590,34 @@ AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeNa
 /**
  * Convert propertyType enum constant into a string for error/debug messages.
  */
-const char* value_Str(int val)
+char const *value_Str(int val)
 {
     static char valStr[40];
     struct val_s {
-        int                 val;
-        const char*         str;
+        int val;
+        char const *str;
     } valuetypes[] = {
-        { DDVT_BOOL, "DDVT_BOOL" },
-        { DDVT_BYTE, "DDVT_BYTE" },
-        { DDVT_SHORT, "DDVT_SHORT" },
-        { DDVT_INT, "DDVT_INT" },
-        { DDVT_UINT, "DDVT_UINT" },
-        { DDVT_FIXED, "DDVT_FIXED" },
-        { DDVT_ANGLE, "DDVT_ANGLE" },
-        { DDVT_FLOAT, "DDVT_FLOAT" },
-        { DDVT_DOUBLE, "DDVT_DOUBLE" },
-        { DDVT_LONG, "DDVT_LONG" },
-        { DDVT_ULONG, "DDVT_ULONG" },
-        { DDVT_PTR, "DDVT_PTR" },
-        { DDVT_BLENDMODE, "DDVT_BLENDMODE" },
+        { DDVT_BOOL,        "DDVT_BOOL" },
+        { DDVT_BYTE,        "DDVT_BYTE" },
+        { DDVT_SHORT,       "DDVT_SHORT" },
+        { DDVT_INT,         "DDVT_INT" },
+        { DDVT_UINT,        "DDVT_UINT" },
+        { DDVT_FIXED,       "DDVT_FIXED" },
+        { DDVT_ANGLE,       "DDVT_ANGLE" },
+        { DDVT_FLOAT,       "DDVT_FLOAT" },
+        { DDVT_DOUBLE,      "DDVT_DOUBLE" },
+        { DDVT_LONG,        "DDVT_LONG" },
+        { DDVT_ULONG,       "DDVT_ULONG" },
+        { DDVT_PTR,         "DDVT_PTR" },
+        { DDVT_BLENDMODE,   "DDVT_BLENDMODE" },
         { 0, NULL }
     };
-    uint i;
 
-    for(i = 0; valuetypes[i].str; ++i)
+    for(uint i = 0; valuetypes[i].str; ++i)
+    {
         if(valuetypes[i].val == val)
             return valuetypes[i].str;
+    }
 
     sprintf(valStr, "(unnamed %i)", val);
     return valStr;
@@ -2644,7 +2625,7 @@ const char* value_Str(int val)
 
 D_CMD(Load)
 {
-    DENG_UNUSED(src);
+    DENG2_UNUSED(src);
 
     bool didLoadGame = false, didLoadResource = false;
     int arg = 1;
@@ -2659,7 +2640,7 @@ D_CMD(Load)
     // Ignore attempts to load directories.
     if(Str_RAt(searchPath, 0) == '/')
     {
-        Con_Message("Directories cannot be \"loaded\" (only files and/or known games).");
+        LOG_WARNING("Directories cannot be \"loaded\" (only files and/or known games).");
         return true;
     }
 
@@ -2669,15 +2650,19 @@ D_CMD(Load)
         Game &game = App_Games().byIdentityKey(Str_Text(searchPath));
         if(!game.allStartupFilesFound())
         {
-            Con_Message("Failed to locate all required startup resources:");
+            LOG_WARNING("Failed to locate all required startup resources:");
             Game::printFiles(game, FF_STARTUP);
-            Con_Message("%s (%s) cannot be loaded.", Str_Text(game.title()), Str_Text(game.identityKey()));
+            LOG_MSG("%s (%s) cannot be loaded.")
+                    << Str_Text(game.title()) << Str_Text(game.identityKey());
             return true;
         }
 
         BusyMode_FreezeGameForBusyMode();
 
-        if(!App_ChangeGame(game)) return false;
+        if(!App_ChangeGame(game))
+        {
+            return false;
+        }
 
         didLoadGame = true;
         ++arg;
@@ -2691,7 +2676,7 @@ D_CMD(Load)
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[arg], RC_PACKAGE),
-                                                          RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
+                                                         RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
             if(tryLoadFile(de::Uri(foundPath, RC_NULL)))
@@ -2699,7 +2684,7 @@ D_CMD(Load)
                 didLoadResource = true;
             }
         }
-        catch(FS1::NotFoundError const&)
+        catch(FS1::NotFoundError const &)
         {} // Ignore this error.
     }
 
@@ -2711,14 +2696,14 @@ D_CMD(Load)
     return didLoadGame || didLoadResource;
 }
 
-static de::File1* tryLoadFile(de::Uri const& search, size_t baseOffset)
+static de::File1 *tryLoadFile(de::Uri const &search, size_t baseOffset)
 {
     try
     {
         de::FileHandle& hndl = App_FileSystem().openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
 
         de::Uri foundFileUri = hndl.file().composeUri();
-        VERBOSE( Con_Message("Loading \"%s\"...", NativePath(foundFileUri.asText()).pretty().toUtf8().constData()) )
+        LOG_VERBOSE("Loading \"%s\"...") << NativePath(foundFileUri.asText()).pretty().toUtf8().constData();
 
         App_FileSystem().index(hndl.file());
 
@@ -2729,13 +2714,13 @@ static de::File1* tryLoadFile(de::Uri const& search, size_t baseOffset)
         if(App_FileSystem().accessFile(search))
         {
             // Must already be loaded.
-            LOG_DEBUG("\"%s\" already loaded.") << NativePath(search.asText()).pretty();
+            LOG_INFO("\"%s\" already loaded.") << NativePath(search.asText()).pretty();
         }
     }
     return 0;
 }
 
-static bool tryUnloadFile(de::Uri const& search)
+static bool tryUnloadFile(de::Uri const &search)
 {
     try
     {
@@ -2775,7 +2760,7 @@ D_CMD(Unload)
     {
         if(!App_GameLoaded())
         {
-            Con_Message("There is no game currently loaded.");
+            LOG_MSG("No game is currently loaded.");
             return true;
         }
         return App_ChangeGame(App_Games().nullGame());
@@ -2791,7 +2776,7 @@ D_CMD(Unload)
     // Ignore attempts to unload directories.
     if(Str_RAt(searchPath, 0) == '/')
     {
-        Con_Message("Directories cannot be \"unloaded\" (only files and/or known games).");
+        LOG_MSG("Directories cannot be \"unloaded\" (only files and/or known games).");
         return true;
     }
 
@@ -2806,7 +2791,7 @@ D_CMD(Unload)
                 return App_ChangeGame(App_Games().nullGame());
             }
 
-            Con_Message("%s is not currently loaded.", Str_Text(game.identityKey()));
+            LOG_MSG("%s is not currently loaded.") << Str_Text(game.identityKey());
             return true;
         }
         catch(Games::NotFoundError const &)
@@ -2855,11 +2840,81 @@ D_CMD(ReloadGame)
 
     if(!App_GameLoaded())
     {
-        Con_Message("No game is presently loaded.");
+        LOG_MSG("No game is presently loaded.");
         return true;
     }
     App_ChangeGame(App_CurrentGame(), true/* allow reload */);
     return true;
+}
+
+#ifdef __CLIENT__
+
+D_CMD(CheckForUpdates)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    LOG_MSG("Checking for available updates...");
+    ClientApp::updater().checkNow(Updater::OnlyShowResultIfUpdateAvailable);
+    return true;
+}
+
+D_CMD(CheckForUpdatesAndNotify)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    LOG_MSG("Checking for available updates...");
+    ClientApp::updater().checkNow(Updater::AlwaysShowResult);
+    return true;
+}
+
+D_CMD(LastUpdated)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientApp::updater().printLastUpdated();
+    return true;
+}
+
+D_CMD(ShowUpdateSettings)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientApp::updater().showSettings();
+    return true;
+}
+
+#endif // __CLIENT__
+
+static void consoleRegister()
+{
+#ifdef __CLIENT__
+    C_CMD("update",          "", CheckForUpdates);
+    C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
+    C_CMD("updatesettings",  "", ShowUpdateSettings);
+    C_CMD("lastupdated",     "", LastUpdated);
+#endif
+
+    DD_RegisterLoop();
+    F_Register();
+    Con_Register();
+    DH_Register();
+    R_Register();
+    S_Register();
+#ifdef __CLIENT__
+    B_Register(); // for control bindings
+    DD_RegisterInput();
+    SBE_Register(); // for bias editor
+    RenderSystem::consoleRegister();
+    GL_Register();
+    UI_Register();
+    Demo_Register();
+    P_ControlRegister();
+    I_Register();
+#endif
+    ResourceSystem::consoleRegister();
+    Net_Register();
+    World::consoleRegister();
+    FI_Register();
 }
 
 // dd_loop.c

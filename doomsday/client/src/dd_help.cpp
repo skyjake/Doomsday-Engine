@@ -1,4 +1,5 @@
-/** @file dd_help.cpp Runtime help text strings.
+/** @file dd_help.cpp  Runtime help text strings.
+ *
  * @ingroup base
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -29,19 +30,12 @@
 #include <QMap>
 #include <QStringBuilder>
 
-D_CMD(LoadHelp);
-
 using namespace de;
 
 typedef QMap<int, String> StringsByType; // HST_* type => string
 typedef QMap<String, StringsByType> HelpStrings; // id => typed strings
 
 static HelpStrings helps;
-
-void DH_Register(void)
-{
-    C_CMD("loadhelp", "", LoadHelp);
-}
 
 /**
  * Parses the given file looking for help strings. The contents of the file are
@@ -144,13 +138,13 @@ HelpId DH_Find(char const *id)
     {
         return &found.value();
     }
-    return NULL;
+    return 0;
 }
 
 char const *DH_GetString(HelpId found, int type)
 {
-    if(!found || type < 0 || type > NUM_HELPSTRING_TYPES)
-        return NULL;
+    if(!found) return 0;
+    if(type < 0 || type > NUM_HELPSTRING_TYPES) return 0;
 
     StringsByType const *hs = reinterpret_cast<StringsByType const *>(found);
 
@@ -159,10 +153,10 @@ char const *DH_GetString(HelpId found, int type)
     {
         return Str_Text(AutoStr_FromTextStd(i.value().toUtf8().constData()));
     }
-    return NULL;
+    return 0;
 }
 
-void DD_InitHelp(void)
+void DD_InitHelp()
 {
     LOG_AS("DD_InitHelp");
     try
@@ -175,7 +169,7 @@ void DD_InitHelp(void)
     }
 }
 
-void DD_ReadGameHelp(void)
+void DD_ReadGameHelp()
 {
     LOG_AS("DD_ReadGameHelp");
     try
@@ -192,16 +186,21 @@ void DD_ReadGameHelp(void)
     }
 }
 
-void DD_ShutdownHelp(void)
+void DD_ShutdownHelp()
 {
     helps.clear();
 }
 
 D_CMD(LoadHelp)
 {
-    DENG2_UNUSED(src); DENG2_UNUSED(argc); DENG2_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     DD_ShutdownHelp();
     DD_InitHelp();
     return true;
+}
+
+void DH_Register()
+{
+    C_CMD("loadhelp", "", LoadHelp);
 }

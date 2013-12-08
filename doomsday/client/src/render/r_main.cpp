@@ -1,7 +1,7 @@
 /** @file r_main.cpp
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,14 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-#include <cstring>
+#include "de_platform.h"
+#include "render/r_main.h"
 
-#ifdef __CLIENT__
-#include <QBitArray>
-#endif
-
-#include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_filesys.h"
@@ -53,6 +48,12 @@
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "Surface"
+
+#ifdef __CLIENT__
+#  include <QBitArray>
+#endif
+#include <cmath>
+#include <cstring>
 
 using namespace de;
 
@@ -157,12 +158,10 @@ char const *R_ChooseFixedFont()
     if(DENG_GAMEVIEW_WIDTH > 768) return "console18";
     return "console14";
 }
-#endif
 
-char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
+char const *R_ChooseVariableFont(fontstyle_t style)
 {
-    DENG_UNUSED(resX);
-
+    int const resY = DENG_GAMEVIEW_HEIGHT;
     int const SMALL_LIMIT = 500;
     int const MED_LIMIT   = 800;
 
@@ -185,7 +184,6 @@ char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
     }
 }
 
-#ifdef __CLIENT__
 static AbstractFont *loadSystemFont(char const *name)
 {
     DENG2_ASSERT(name != 0 && name[0]);
@@ -244,10 +242,10 @@ void R_LoadSystemFonts()
 
     if(isDedicated) return;
 
-    loadFontIfNeeded(R_ChooseFixedFont(), &fontFixed);
-    loadFontIfNeeded(R_ChooseVariableFont(FS_NORMAL, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT), &fontVariable[FS_NORMAL]);
-    loadFontIfNeeded(R_ChooseVariableFont(FS_BOLD,   DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT), &fontVariable[FS_BOLD]);
-    loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT,  DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT), &fontVariable[FS_LIGHT]);
+    loadFontIfNeeded(R_ChooseFixedFont(),             &fontFixed);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_NORMAL), &fontVariable[FS_NORMAL]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_BOLD),   &fontVariable[FS_BOLD]);
+    loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT),  &fontVariable[FS_LIGHT]);
 
     //Con_SetFont(fontFixed);
 
@@ -365,8 +363,8 @@ DENG_EXTERN_C void R_SetViewWindowGeometry(int player, RectRaw const *geometry, 
     RectRaw newGeom;
 
     // Clamp to valid range.
-    newGeom.origin.x = MINMAX_OF(0, geometry->origin.x, vp->geometry.size.width);
-    newGeom.origin.y = MINMAX_OF(0, geometry->origin.y, vp->geometry.size.height);
+    newGeom.origin.x = de::clamp(0, geometry->origin.x, vp->geometry.size.width);
+    newGeom.origin.y = de::clamp(0, geometry->origin.y, vp->geometry.size.height);
     newGeom.size.width  = abs(geometry->size.width);
     newGeom.size.height = abs(geometry->size.height);
     if(newGeom.origin.x + newGeom.size.width > vp->geometry.size.width)
@@ -529,63 +527,6 @@ boolean R_SetViewGrid(int numCols, int numRows)
     }
 
     return true;
-}
-
-void R_Init()
-{
-    R_LoadSystemFonts();
-    R_InitTranslationTables();
-    R_InitRawTexs();
-    R_InitSvgs();
-#ifdef __CLIENT__
-    R_InitViewWindow();
-    Rend_Init();
-#endif
-    frameCount = 0;
-}
-
-void R_Update()
-{
-    // Reset file IDs so previously seen files can be processed again.
-    F_ResetFileIds();
-    // Re-read definitions.
-    Def_Read();
-
-    R_UpdateRawTexs();
-    App_ResourceSystem().initSprites(); // Fully reinitialize sprites.
-#ifdef __CLIENT__
-    App_ResourceSystem().initModels(); // Defs might've changed.
-#endif
-
-    R_UpdateTranslationTables();
-
-    Def_PostInit();
-
-    App_World().update();
-
-#ifdef __CLIENT__
-    // Recalculate the light range mod matrix.
-    Rend_UpdateLightModMatrix();
-
-    // The rendering lists have persistent data that has changed during the
-    // re-initialization.
-    ClientApp::renderSystem().clearDrawLists();
-
-    /// @todo fixme: Update the game title and the status.
-#endif
-
-#ifdef DENG_DEBUG
-    Z_CheckHeap();
-#endif
-}
-
-void R_Shutdown()
-{
-    R_ShutdownSvgs();
-#ifdef __CLIENT__
-    R_ShutdownViewWindow();
-    Rend_Shutdown();
-#endif
 }
 
 void R_Ticker(timespan_t time)

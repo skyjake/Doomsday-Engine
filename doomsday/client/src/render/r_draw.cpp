@@ -21,18 +21,18 @@
 #include "clientapp.h"
 #include "render/r_draw.h"
 
-#include "render/r_main.h"
+#include "con_main.h"
 
 #include "gl/gl_draw.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
 
+#include "render/r_main.h"
+
 #include "api_resource.h"
 #include "MaterialSnapshot"
 
 #include "world/p_players.h" // displayPlayer
-
-#include "con_main.h"
 
 using namespace de;
 
@@ -51,7 +51,7 @@ enum {
 
 static bool inited = false;
 static int borderSize;
-static struct uri_s *borderGraphicsNames[9];
+static de::Uri *borderGraphicsNames[9];
 
 /// @todo Declare the patches with URNs to avoid unnecessary duplication here -ds
 static patchid_t borderPatches[9];
@@ -61,35 +61,55 @@ static void loadViewBorderPatches()
     borderPatches[0] = 0;
     for(uint i = 1; i < 9; ++i)
     {
-        borderPatches[i] = ClientApp::resourceSystem().declarePatch(reinterpret_cast<de::Uri *>(borderGraphicsNames[i])->path());
+        borderPatches[i] = ClientApp::resourceSystem().declarePatch(borderGraphicsNames[i]->path());
     }
 
     // Detemine the view border size.
     borderSize = 0;
     patchinfo_t info;
-    if(!R_GetPatchInfo(borderPatches[BG_TOP], &info)) return;
+    if(!R_GetPatchInfo(borderPatches[BG_TOP], &info))
+    {
+        return;
+    }
     borderSize = info.geometry.size.height;
+}
+
+static Texture &borderTexture(int borderComp)
+{
+    TextureScheme &patches = ClientApp::resourceSystem().textureScheme("Patches");
+    DENG2_ASSERT(borderComp >= 0 && borderComp < 9);
+    return patches.findByUniqueId(borderPatches[borderComp]).texture();
 }
 
 #undef R_SetBorderGfx
 DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
 {
     DENG2_ASSERT(inited);
-    if(!paths) Con_Error("R_SetBorderGfx: Missing argument.");
+    if(!paths)
+    {
+#ifdef DENG_DEBUG
+        LOG_AS("R_SetBorderGfx");
+        LOG_WARNING("R_SetBorderGfx: Invalid arguments, aborting.");
+#endif
+        return;
+    }
 
     for(uint i = 0; i < 9; ++i)
     {
         if(paths[i])
         {
             if(!borderGraphicsNames[i])
-                borderGraphicsNames[i] = Uri_Dup(paths[i]);
-            else
-                Uri_Copy(borderGraphicsNames[i], paths[i]);
+            {
+                borderGraphicsNames[i] = new de::Uri;
+            }
+            *(borderGraphicsNames[i]) = *reinterpret_cast<de::Uri const *>(paths[i]);
         }
         else
         {
             if(borderGraphicsNames[i])
-                Uri_Delete(borderGraphicsNames[i]);
+            {
+                delete borderGraphicsNames[i];
+            }
             borderGraphicsNames[i] = 0;
         }
     }
@@ -97,7 +117,7 @@ DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
     loadViewBorderPatches();
 }
 
-void R_InitViewWindow(void)
+void R_InitViewWindow()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
@@ -110,32 +130,34 @@ void R_InitViewWindow(void)
         {
             if(borderGraphicsNames[i])
             {
-                Uri_Delete(borderGraphicsNames[i]);
+                delete borderGraphicsNames[i];
             }
         }
     }
-    memset(borderGraphicsNames, 0, sizeof(borderGraphicsNames));
-    memset(borderPatches, 0, sizeof(borderPatches));
+    de::zap(borderGraphicsNames);
+    de::zap(borderPatches);
     borderSize = 0;
     inited = true;
 }
 
-void R_ShutdownViewWindow(void)
+void R_ShutdownViewWindow()
 {
     if(!inited) return;
 
-    for(uint i = 0; i < 9; ++i)
+    for(int i = 0; i < 9; ++i)
     {
         if(borderGraphicsNames[i])
-            Uri_Delete(borderGraphicsNames[i]);
+        {
+            delete borderGraphicsNames[i];
+        }
     }
 
-    memset(borderGraphicsNames, 0, sizeof(borderGraphicsNames));
+    de::zap(borderGraphicsNames);
     inited = false;
 }
 
-TextureVariantSpec const &Rend_PatchTextureSpec(int flags,
-    gl::Wrapping wrapS, gl::Wrapping wrapT)
+TextureVariantSpec const &Rend_PatchTextureSpec(int flags, gl::Wrapping wrapS,
+    gl::Wrapping wrapT)
 {
     return ClientApp::resourceSystem().textureSpec(TC_UI, flags, 0, 0, 0,
         GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0, false, false, false, false);
@@ -147,7 +169,7 @@ void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
     {
 #ifdef DENG_DEBUG
         LOG_AS("R_DrawPatch3");
-        LOG_WARNING("Attempted to draw a non-patch [%p].") << dintptr(&texture);
+        LOG_WARNING("Attempted to draw a non-patch [%p], aborting.") << dintptr(&texture);
 #endif
         return;
     }
@@ -197,10 +219,17 @@ void R_DrawViewBorder()
 
     viewport_t const *port = R_CurrentViewPort();
     viewdata_t const *vd = R_ViewData(displayPlayer);
-    DENG_ASSERT(port && vd);
+    DENG_ASSERT(port != 0 && vd != 0);
 
-    if(0 == vd->window.size.width || 0 == vd->window.size.height) return;
-    if(vd->window.size.width == port->geometry.size.width && vd->window.size.height == port->geometry.size.height) return;
+    if(!vd->window.size.width || !vd->window.size.height)
+    {
+        return;
+    }
+    if(vd->window.size.width == port->geometry.size.width &&
+       vd->window.size.height == port->geometry.size.height)
+    {
+        return;
+    }
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -229,36 +258,34 @@ void R_DrawViewBorder()
     try
     {
         MaterialSnapshot const &ms =
-            ClientApp::resourceSystem().material(*reinterpret_cast<de::Uri *>(borderGraphicsNames[BG_BACKGROUND]))
+            ClientApp::resourceSystem().material(*borderGraphicsNames[BG_BACKGROUND])
                       .prepare(bgMaterialSpec());
 
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.width(), ms.height(), 0, 0,
-                            vd->window.origin.x - border, vd->window.origin.y - border,
-                            vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
+                              vd->window.origin.x - border, vd->window.origin.y - border,
+                              vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
     }
     catch(MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
 
-    if(border != 0)
+    if(border)
     {
-        TextureScheme &patches = ClientApp::resourceSystem().textureScheme("Patches");
-        R_DrawPatchTiled(patches.findByUniqueId(borderPatches[BG_TOP]).texture(),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(patches.findByUniqueId(borderPatches[BG_BOTTOM]).texture(), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(patches.findByUniqueId(borderPatches[BG_LEFT]).texture(),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
-        R_DrawPatchTiled(patches.findByUniqueId(borderPatches[BG_RIGHT]).texture(),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
+        R_DrawPatchTiled(borderTexture(BG_TOP),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
+        R_DrawPatchTiled(borderTexture(BG_BOTTOM), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
+        R_DrawPatchTiled(borderTexture(BG_LEFT),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
+        R_DrawPatchTiled(borderTexture(BG_RIGHT),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
     }
 
     glMatrixMode(GL_TEXTURE);
     glPopMatrix();
 
-    if(border != 0)
+    if(border)
     {
-        TextureScheme &patches = ClientApp::resourceSystem().textureScheme("Patches");
-        R_DrawPatch(patches.findByUniqueId(borderPatches[BG_TOPLEFT]).texture(),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch(patches.findByUniqueId(borderPatches[BG_TOPRIGHT]).texture(),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch(patches.findByUniqueId(borderPatches[BG_BOTTOMRIGHT]).texture(), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);
-        R_DrawPatch(patches.findByUniqueId(borderPatches[BG_BOTTOMLEFT]).texture(),  vd->window.origin.x - border, vd->window.origin.y + vd->window.size.height, border, border, false);
+        R_DrawPatch(borderTexture(BG_TOPLEFT),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
+        R_DrawPatch(borderTexture(BG_TOPRIGHT),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
+        R_DrawPatch(borderTexture(BG_BOTTOMRIGHT), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);
+        R_DrawPatch(borderTexture(BG_BOTTOMLEFT),  vd->window.origin.x - border, vd->window.origin.y + vd->window.size.height, border, border, false);
     }
 
     glDisable(GL_TEXTURE_2D);

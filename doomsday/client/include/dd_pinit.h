@@ -41,8 +41,6 @@ extern uint mainWindowIdx;
  */
 void DD_ShutdownAll(void);
 
-int DD_CheckArg(char const *tag, const char** value);
-
 #ifdef __CLIENT__
 /**
  * Compose the title for the main window.

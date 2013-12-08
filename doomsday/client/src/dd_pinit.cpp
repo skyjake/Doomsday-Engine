@@ -37,6 +37,11 @@
 #include "de_filesys.h"
 
 #include "def_main.h"
+#include "gl/svg.h"
+#ifdef __CLIENT__
+#  include "render/r_draw.h"
+#  include "render/rend_main.h"
+#endif
 #include "render/r_main.h"
 #include "updater.h"
 
@@ -56,22 +61,8 @@ DENG_DECLARE_API(InternalData) =
 };
 game_export_t __gx;
 
-int DD_CheckArg(char const *tag, const char** value)
-{
-    /// @todo Add parameter for using NextAsPath().
-
-    int                 i = CommandLine_Check(tag);
-    const char*         next = CommandLine_Next();
-
-    if(!i)
-        return 0;
-    if(value && next)
-        *value = next;
-    return 1;
-}
-
 #ifdef __CLIENT__
-void DD_ComposeMainWindowTitle(char* title)
+void DD_ComposeMainWindowTitle(char *title)
 {
     if(App_GameLoaded() && gx.GetVariable)
     {
@@ -161,8 +152,11 @@ void DD_ShutdownAll(void)
 #ifdef __SERVER__
     Sv_Shutdown();
 #endif
-    R_Shutdown();
-
+    R_ShutdownSvgs();
+#ifdef __CLIENT__
+    R_ShutdownViewWindow();
+    Rend_Shutdown();
+#endif
     Def_Destroy();
     F_Shutdown();
     Libdeng_Shutdown();

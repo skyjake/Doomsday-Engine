@@ -37,6 +37,7 @@
 #include "Sprite"
 #include "Texture"
 #include "TextureScheme"
+#include "resource/rawtexture.h" /// @todo not yet owned
 #include "resource/wad.h"
 #include "resource/zip.h"
 #include "uri.hh"

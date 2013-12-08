@@ -1,7 +1,7 @@
 /** @file r_main.h
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_R_MAIN_H
-#define LIBDENG_RENDER_R_MAIN_H
+#ifndef DENG_RENDER_R_MAIN_H
+#define DENG_RENDER_R_MAIN_H
 
 #include <de/rect.h>
 #include "dd_share.h"
@@ -29,18 +29,21 @@ class BspLeaf;
 class Lumobj;
 #endif
 
-typedef struct viewport_s {
+struct viewport_t
+{
     int console;
     RectRaw geometry;
-} viewport_t;
+};
 
-typedef struct viewer_s {
+struct viewer_t
+{
     coord_t origin[3];
     angle_t angle;
     float pitch;
-} viewer_t;
+};
 
-typedef struct viewdata_s {
+struct viewdata_t
+{
     viewer_t current;
     viewer_t lastSharp[2]; ///< For smoothing.
     viewer_t latest; ///< "Sharp" values taken from here.
@@ -57,14 +60,14 @@ typedef struct viewdata_s {
 
     RectRaw window, windowTarget, windowOld;
     float windowInter;
-} viewdata_t;
+};
 
-typedef enum fontstyle_e {
+enum fontstyle_t {
     FS_NORMAL,
     FS_BOLD,
     FS_LIGHT,
     FONTSTYLE_COUNT
-} fontstyle_t;
+};
 
 DENG_EXTERN_C float    frameTimePos;      // 0...1: fractional part for sharp game tics
 DENG_EXTERN_C int      loadInStartupMode;
@@ -93,31 +96,12 @@ DENG_EXTERN_C byte     texGammaLut[256];
 DENG_EXTERN_C boolean  loInited;
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Register console variables.
  */
-void R_Register(void);
+void R_Register();
 
-void R_BuildTexGammaLut(void);
-
-/**
- * One-time initialization of the refresh daemon. Called by DD_Main.
- */
-void R_Init(void);
-
-/**
- * Re-initialize almost everything.
- */
-void R_Update(void);
-
-/**
- * Shutdown the refresh daemon.
- */
-void R_Shutdown(void);
+void R_BuildTexGammaLut();
 
 void R_Ticker(timespan_t time);
 
@@ -136,15 +120,15 @@ void R_RenderViewPorts(ui::ViewPortLayer layer);
 /**
  * Render a blank view for the specified player.
  */
-void R_RenderBlankView(void);
+void R_RenderBlankView();
 
 /**
  * Draw the border around the view window.
  */
-void R_RenderPlayerViewBorder(void);
+void R_RenderPlayerViewBorder();
 
 /// @return  Current viewport; otherwise @c NULL.
-viewport_t const *R_CurrentViewPort(void);
+viewport_t const *R_CurrentViewPort();
 
 /**
  * Set the current GL viewport.
@@ -155,18 +139,18 @@ viewdata_t const *R_ViewData(int consoleNum);
 
 void R_UpdateViewer(int consoleNum);
 
-void R_ResetViewer(void);
+void R_ResetViewer();
 
-int R_NextViewer(void);
+int R_NextViewer();
 
 #ifdef __CLIENT__
 
-void R_ClearViewData(void);
+void R_ClearViewData();
 
 /**
  * To be called at the beginning of a render frame to perform necessary initialization.
  */
-void R_BeginFrame(void);
+void R_BeginFrame();
 
 /**
  * Returns @c true iff the BSP leaf is marked as visible for the current frame.
@@ -207,7 +191,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf);
  * Update the sharp world data by rotating the stored values of plane
  * heights and sharp camera positions.
  */
-void R_NewSharpWorld(void);
+void R_NewSharpWorld();
 
 /**
  * Attempt to set up a view grid and calculate the viewports. Set 'numCols' and
@@ -222,17 +206,11 @@ void R_SetupDefaultViewWindow(int consoleNum);
  */
 void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
 
-void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
-
-void R_LoadSystemFonts(void);
+void R_LoadSystemFonts();
 
 #ifdef __CLIENT__
-char const *R_ChooseFixedFont(void);
-char const *R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
+char const *R_ChooseFixedFont();
+char const *R_ChooseVariableFont(fontstyle_t style);
 #endif
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_REFRESH_MAIN_H */
+#endif // DENG_REFRESH_MAIN_H

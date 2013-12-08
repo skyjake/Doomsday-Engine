@@ -47,6 +47,8 @@ class Map;
 
 /**
  * @ingroup world
+ *
+ * @todo Derive from de::System
  */
 class World
 {
