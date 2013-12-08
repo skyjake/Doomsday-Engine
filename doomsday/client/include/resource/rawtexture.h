@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_RAWTEXTURE
-#define LIBDENG_RESOURCE_RAWTEXTURE
+#ifndef DENG_RESOURCE_RAWTEXTURE
+#define DENG_RESOURCE_RAWTEXTURE
 
 #include "dd_share.h" // For lumpnum_t
 #include <de/str.h>
@@ -37,24 +37,4 @@ struct rawtex_t
     rawtex_t *next;
 };
 
-void R_InitRawTexs();
-void R_UpdateRawTexs();
-
-/**
- * Returns a rawtex_t for the given lump if one already exists; otherwise @c 0.
- */
-rawtex_t *R_FindRawTex(lumpnum_t lumpNum);
-
-/**
- * Get a rawtex_t data structure for a raw texture specified with a WAD lump
- * number. Allocates a new rawtex_t if it hasn't been loaded yet.
- */
-rawtex_t *R_GetRawTex(lumpnum_t lumpNum);
-
-/**
- * Returns a NULL-terminated array of pointers to all the rawtexs.
- * The array must be freed with Z_Free.
- */
-rawtex_t **R_CollectRawTexs(int *count = 0);
-
-#endif // LIBDENG_RESOURCE_RAWTEXTURE
+#endif // DENG_RESOURCE_RAWTEXTURE

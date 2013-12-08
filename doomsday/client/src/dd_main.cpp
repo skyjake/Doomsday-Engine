@@ -2014,7 +2014,6 @@ static int DD_StartupWorker(void * /*context*/)
     UI_LoadFonts();
 #endif
     R_InitTranslationTables();
-    R_InitRawTexs();
     R_InitSvgs();
 #ifdef __CLIENT__
     R_InitViewWindow();
@@ -2104,7 +2103,7 @@ static int DD_UpdateEngineStateWorker(void *context)
     // Re-read definitions.
     Def_Read();
 
-    R_UpdateRawTexs();
+    App_ResourceSystem().initRawTextures();
     App_ResourceSystem().initSprites(); // Fully reinitialize sprites.
 #ifdef __CLIENT__
     App_ResourceSystem().initModels(); // Defs might've changed.

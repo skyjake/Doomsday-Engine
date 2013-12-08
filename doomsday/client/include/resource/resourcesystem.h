@@ -463,6 +463,23 @@ public:
 
     patchid_t declarePatch(de::String encodedName);
 
+    /**
+     * Returns a rawtex_t for the given lump if one already exists; otherwise @c 0.
+     */
+    rawtex_t *rawTexture(lumpnum_t lumpNum);
+
+    /**
+     * Get a rawtex_t data structure for a raw texture specified with a WAD lump
+     * number. Allocates a new rawtex_t if it hasn't been loaded yet.
+     */
+    rawtex_t *declareRawTexture(lumpnum_t lumpNum);
+
+    /**
+     * Returns a NULL-terminated array of pointers to all the rawtexs.
+     * The array must be freed with Z_Free.
+     */
+    rawtex_t **collectRawTextures(int *count = 0);
+
 #ifdef __CLIENT__
     /**
      * Determines if a manifest exists for a resource on @a path.
@@ -843,6 +860,7 @@ public:
 public: /// @todo Should be private:
     void initCompositeTextures();
     void initFlatTextures();
+    void initRawTextures();
     void initSpriteTextures();
     void initSystemTextures();
 

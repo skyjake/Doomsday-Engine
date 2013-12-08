@@ -999,7 +999,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
         switch(f->type)
         {
         case PFT_RAW: {
-            rawtex_t *rawTex = R_GetRawTex(f->texRef.lumpNum);
+            rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(f->texRef.lumpNum);
             if(rawTex)
             {
                 DGLuint glName = GL_PrepareRawTexture(*rawTex);

@@ -37,6 +37,7 @@
 #  include "MaterialSnapshot"
 #endif
 
+#include "api_filesys.h"
 #include "filesys/fs_main.h"
 #include "filesys/lumpindex.h"
 
@@ -195,6 +196,16 @@ DENG2_PIMPL(ResourceSystem)
     /// All texture instances in the system (from all schemes).
     AllTextures textures;
 
+    static int const RAWTEX_HASH_SIZE = 128;
+    struct RawTexHash {
+        rawtex_t *first;
+    };
+    RawTexHash rawtexhash[RAWTEX_HASH_SIZE];
+
+    inline RawTexHash &rawTextureHash(lumpnum_t lumpNum) {
+        return rawtexhash[((unsigned) lumpNum) & (RAWTEX_HASH_SIZE - 1)];
+    }
+
     /// System subspace schemes containing the manifests/resources.
     MaterialSchemes materialSchemes;
     QList<MaterialScheme *> materialSchemeCreationOrder;
@@ -327,6 +338,8 @@ DENG2_PIMPL(ResourceSystem)
         , modelRepository(0)
 #endif
     {
+        zap(rawtexhash);
+
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
         resClasses.append(new ResourceClass("RC_DEFINITION", "Defs"));
@@ -2443,6 +2456,90 @@ patchid_t ResourceSystem::declarePatch(String encodedName)
         LOG_WARNING(er.asText() + ". Failed declaring texture \"%s\", ignoring.") << uri;
     }
     return 0;
+}
+
+rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
+{
+    LOG_AS("ResourceSystem::rawTexture");
+    if(-1 == lumpNum || lumpNum >= F_LumpCount())
+    {
+        LOG_DEBUG("LumpNum #%i out of bounds (%i), returning 0.") << lumpNum << F_LumpCount();
+        return 0;
+    }
+
+    for(rawtex_t *i = d->rawTextureHash(lumpNum).first; i; i = i->next)
+    {
+        if(i->lumpNum == lumpNum)
+            return i;
+    }
+    return 0;
+}
+
+rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
+{
+    LOG_AS("ResourceSystem::rawTexture");
+    if(-1 == lumpNum || lumpNum >= F_LumpCount())
+    {
+        LOG_DEBUG("LumpNum #%i out of bounds (%i), returning 0.") << lumpNum << F_LumpCount();
+        return 0;
+    }
+
+    // Check if this lumpNum has already been loaded as a rawtex.
+    rawtex_t *r = rawTexture(lumpNum);
+    if(r) return r;
+
+    // Hmm, this is an entirely new rawtex.
+    r = (rawtex_t *) Z_Calloc(sizeof(*r), PU_REFRESHRAW, 0);
+    F_FileName(Str_Init(&r->name), Str_Text(F_LumpName(lumpNum)));
+    r->lumpNum = lumpNum;
+
+    // Link to the hash.
+    Instance::RawTexHash &hash = d->rawTextureHash(lumpNum);
+    r->next = hash.first;
+    hash.first = r;
+
+    return r;
+}
+
+rawtex_t **ResourceSystem::collectRawTextures(int *count)
+{
+    // First count the number of patchtexs.
+    int num = 0;
+    for(int i = 0; i < Instance::RAWTEX_HASH_SIZE; ++i)
+    for(rawtex_t *r = d->rawtexhash[i].first; r; r = r->next)
+    {
+        num++;
+    }
+
+    // Tell this to the caller.
+    if(count) *count = num;
+
+    // Allocate the array, plus one for the terminator.
+    rawtex_t **list = (rawtex_t **) Z_Malloc(sizeof(**list) * (num + 1), PU_APPSTATIC, NULL);
+
+    // Collect the pointers.
+    num = 0;
+    for(int i = 0; i < Instance::RAWTEX_HASH_SIZE; ++i)
+    for(rawtex_t *r = d->rawtexhash[i].first; r; r = r->next)
+    {
+        list[num++] = r;
+    }
+
+    // Terminate.
+    list[num] = NULL;
+
+    return list;
+}
+
+void ResourceSystem::initRawTextures()
+{
+    for(int i = 0; i < Instance::RAWTEX_HASH_SIZE; ++i)
+    for(rawtex_t *rawTex = d->rawtexhash[i].first; rawTex; rawTex = rawTex->next)
+    {
+        Str_Free(&rawTex->name);
+    }
+    Z_FreeTags(PU_REFRESHRAW, PU_REFRESHRAW);
+    zap(d->rawtexhash);
 }
 
 MaterialScheme &ResourceSystem::materialScheme(String name) const

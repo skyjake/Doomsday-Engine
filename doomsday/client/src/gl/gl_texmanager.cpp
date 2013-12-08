@@ -369,7 +369,7 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
 
 void GL_SetRawTexturesMinFilter(int newMinFilter)
 {
-    rawtex_t **rawTexs = R_CollectRawTexs();
+    rawtex_t **rawTexs = App_ResourceSystem().collectRawTextures();
     for(rawtex_t **ptr = rawTexs; *ptr; ptr++)
     {
         rawtex_t *r = *ptr;
@@ -387,7 +387,7 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
 
 void GL_ReleaseTexturesForRawImages()
 {
-    rawtex_t **rawTexs = R_CollectRawTexs();
+    rawtex_t **rawTexs = App_ResourceSystem().collectRawTextures();
     for(rawtex_t **ptr = rawTexs; *ptr; ptr++)
     {
         rawtex_t *r = (*ptr);

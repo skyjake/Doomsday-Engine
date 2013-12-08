@@ -715,7 +715,6 @@ SOURCES += \
     src/resource/patch.cpp \
     src/resource/patchname.cpp \
     src/resource/pcx.cpp \
-    src/resource/rawtexture.cpp \
     src/resource/resourcesystem.cpp \
     src/resource/sprite.cpp \
     src/resource/texture.cpp \

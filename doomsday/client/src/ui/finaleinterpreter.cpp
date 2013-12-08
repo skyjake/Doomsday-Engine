@@ -1563,7 +1563,7 @@ DEFFC(Image)
 
     FIData_PicClearAnimation(obj);
 
-    rawTex = R_GetRawTex(lumpNum);
+    rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
     if(NULL != rawTex)
     {
         FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
@@ -1584,7 +1584,7 @@ DEFFC(ImageAt)
     AnimatorVector3_Init(obj->pos, x, y, 0);
     FIData_PicClearAnimation(obj);
 
-    rawTex = R_GetRawTex(lumpNum);
+    rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
     if(NULL != rawTex)
     {
         FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
@@ -1721,7 +1721,7 @@ DEFFC(AnimImage)
     char const *encodedName = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
     lumpnum_t lumpNum = F_LumpNumForName(encodedName);
-    rawtex_t *rawTex = R_GetRawTex(lumpNum);
+    rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
     if(rawTex)
     {
         FIData_PicAppendFrame(obj, PFT_RAW, tics, &rawTex->lumpNum, 0, false);
