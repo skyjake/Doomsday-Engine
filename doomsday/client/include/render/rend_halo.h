@@ -20,19 +20,6 @@
 #ifndef DENG_CLIENT_RENDER_HALO_H
 #define DENG_CLIENT_RENDER_HALO_H
 
-#include <de/libdeng1.h>
-
-DENG_EXTERN_C int haloOccludeSpeed;
-
-void H_Register();
-
-#endif
-
-#if 0
-
-#ifndef DENG_CLIENT_RENDER_HALO_H
-#define DENG_CLIENT_RENDER_HALO_H
-
 #include <de/Vector>
 
 #include "TextureVariantSpec"
@@ -82,5 +69,3 @@ bool H_RenderHalo(de::Vector3d const &origin, float size,
 D_CMD(FlareConfig);
 
 #endif // DENG_CLIENT_RENDER_HALO_H
-
-#endif // 0

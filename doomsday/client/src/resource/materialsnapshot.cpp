@@ -150,9 +150,6 @@ MaterialSnapshot::Decoration &MaterialSnapshot::decoration(int index) const
  */
 static DGLuint prepareFlaremap(Texture *texture, int oldIdx)
 {
-    DENG_UNUSED(texture);
-    DENG_UNUSED(oldIdx);
-#if 0
     if(texture)
     {
         if(TextureVariant const *variant = texture->prepareVariant(Rend_HaloTextureSpec()))
@@ -165,7 +162,6 @@ static DGLuint prepareFlaremap(Texture *texture, int oldIdx)
     {
         return GL_PrepareSysFlaremap(flaretexid_t(oldIdx - 1));
     }
-#endif
     return 0; // Use the automatic selection logic.
 }
 
