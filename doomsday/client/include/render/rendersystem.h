@@ -81,6 +81,12 @@ public:
     // System.
     void timeChanged(de::Clock const &);
 
+public:
+    /**
+     * Register the console commands, variables, etc..., of this module.
+     */
+    static void consoleRegister();
+
 private:
     DENG2_PRIVATE(d)
 };

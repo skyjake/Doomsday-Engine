@@ -1,13 +1,12 @@
-/** @file dd_main.cpp
+/** @file dd_main.cpp  Engine core.
  *
- * Engine core.
  * @ingroup core
  *
  * @todo Much of this should be refactored and merged into the App classes.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -31,10 +30,7 @@
 #  include <objbase.h>
 #endif
 
-#include <QStringList>
 #include <de/App>
-#include <de/NativePath>
-#include <de/binangle.h>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -46,31 +42,30 @@
 #endif
 
 #include "de_platform.h"
-
-#ifdef UNIX
-#  include <ctype.h>
-#endif
-
-#include <cstring>
-
-#include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
 #include "de_network.h"
-#include "de_graphics.h"
-#include "de_render.h"
 #include "de_audio.h"
-#include "de_ui.h"
-#include "de_edit.h"
-#include "de_filesys.h"
-#include "de_resource.h"
 
+#include "edit_bias.h"
 #include "updater.h"
-#include "m_misc.h"
 
 #include "gl/svg.h"
+#ifdef __CLIENT__
+#  include "gl/gl_defer.h"
+#  include "gl/gl_texmanager.h"
+#endif
 
-#include "api_map.h"
+#include "render/r_main.h" // R_Init, R_ResetViewer
+#ifdef __CLIENT__
+#  include "render/r_draw.h" // R_InitViewWindow
+#  include "render/rend_font.h"
+#  include "render/rend_main.h"
+#  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
+#endif
+
+#include "resource/colorpalettes.h" // translationTables, remove me
+
 #include "world/entitydef.h"
 #include "world/p_players.h"
 #ifdef __CLIENT__
@@ -78,19 +73,24 @@
 #endif
 #include "world/world.h"
 
+#include "ui/ui_main.h"
+#include "ui/ui2_main.h"
+#include "ui/fi_main.h"
 #include "ui/p_control.h"
-
 #ifdef __CLIENT__
-#  include "gl/gl_texmanager.h"
-
-#  include "render/vlight.h"
 #  include "ui/widgets/taskbarwidget.h"
 #endif
 
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
-
-extern int renderTextures;
+#include <de/NativePath>
+#include <de/binangle.h>
+#include <de/memory.h>
+#include <QStringList>
+#ifdef UNIX
+#  include <ctype.h>
+#endif
+#include <cstring>
 
 using namespace de;
 
@@ -100,7 +100,7 @@ public:
     ZipFileType() : NativeFileType("FT_ZIP", RC_PACKAGE)
     {}
 
-    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
+    de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
     {
         if(Zip::recognise(hndl))
         {
@@ -118,7 +118,7 @@ public:
     WadFileType() : NativeFileType("FT_WAD", RC_PACKAGE)
     {}
 
-    de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const
+    de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
     {
         if(Wad::recognise(hndl))
         {
@@ -130,13 +130,8 @@ public:
     }
 };
 
-typedef struct ddvalue_s {
-    int*            readPtr;
-    int*            writePtr;
-} ddvalue_t;
-
-static int DD_StartupWorker(void* parameters);
-static int DD_DummyWorker(void* parameters);
+static int DD_StartupWorker(void *context);
+static int DD_DummyWorker(void *context);
 static void DD_AutoLoad();
 static void initPathMappings();
 
@@ -147,9 +142,7 @@ static void initPathMappings();
  *
  * @return  @c true iff the referenced file was loaded.
  */
-static de::File1* tryLoadFile(de::Uri const& path, size_t baseOffset = 0);
-
-static bool tryUnloadFile(de::Uri const& path);
+static de::File1 *tryLoadFile(de::Uri const &path, size_t baseOffset = 0);
 
 filename_t ddBasePath = ""; // Doomsday root directory is at...?
 filename_t ddRuntimePath, ddBinPath;
@@ -159,7 +152,7 @@ int isDedicated;
 int verbose; // For debug messages (-verbose).
 
 // List of file names, whitespace seperating (written to .cfg).
-char* startupFiles = (char*) ""; // ignore warning
+char *startupFiles = (char *) ""; // ignore warning
 
 // Id of the currently running title finale if playing, else zero.
 finaleid_t titleFinale;
@@ -173,18 +166,14 @@ static FileTypes fileTypeMap;
 
 // List of session data files (specified via the command line or in a cfg, or
 // found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
-static ddstring_t** sessionResourceFileList;
+static ddstring_t **sessionResourceFileList;
 static size_t numSessionResourceFileList;
-
-#ifndef WIN32
-extern GETGAMEAPI GetGameAPI;
-#endif
 
 #ifdef __CLIENT__
 
 D_CMD(CheckForUpdates)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     Con_Message("Checking for available updates...");
     ClientApp::updater().checkNow(Updater::OnlyShowResultIfUpdateAvailable);
@@ -193,7 +182,7 @@ D_CMD(CheckForUpdates)
 
 D_CMD(CheckForUpdatesAndNotify)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     Con_Message("Checking for available updates...");
     ClientApp::updater().checkNow(Updater::AlwaysShowResult);
@@ -202,7 +191,7 @@ D_CMD(CheckForUpdatesAndNotify)
 
 D_CMD(LastUpdated)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     ClientApp::updater().printLastUpdated();
     return true;
@@ -210,7 +199,7 @@ D_CMD(LastUpdated)
 
 D_CMD(ShowUpdateSettings)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     ClientApp::updater().showSettings();
     return true;
@@ -218,9 +207,9 @@ D_CMD(ShowUpdateSettings)
 
 #endif // __CLIENT__
 
-void DD_CreateFileTypes()
+static void registerResourceFileTypes()
 {
-    FileType* ftype;
+    FileType *ftype;
 
     /*
      * Packages types:
@@ -339,7 +328,7 @@ void DD_CreateFileTypes()
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 }
 
-FileType& DD_FileTypeByName(String name)
+FileType &DD_FileTypeByName(String name)
 {
     if(!name.isEmpty())
     {
@@ -349,13 +338,13 @@ FileType& DD_FileTypeByName(String name)
     return nullFileType; // Not found.
 }
 
-FileType& DD_GuessFileTypeFromFileName(String path)
+FileType &DD_GuessFileTypeFromFileName(String path)
 {
     if(!path.isEmpty())
     {
         DENG2_FOR_EACH_CONST(FileTypes, i, fileTypeMap)
         {
-            FileType& ftype = **i;
+            FileType &ftype = **i;
             if(ftype.fileNameIsKnown(path))
                 return ftype;
         }
@@ -363,14 +352,14 @@ FileType& DD_GuessFileTypeFromFileName(String path)
     return nullFileType;
 }
 
-FileTypes const& DD_FileTypes()
+FileTypes const &DD_FileTypes()
 {
     return fileTypeMap;
 }
 
 static void createPackagesScheme()
 {
-    FS1::Scheme& scheme = App_FileSystem().createScheme("Packages");
+    FS1::Scheme &scheme = App_FileSystem().createScheme("Packages");
 
     /*
      * Add default search paths.
@@ -426,13 +415,13 @@ void DD_CreateFileSystemSchemes()
 {
     int const schemedef_max_searchpaths = 5;
     struct schemedef_s {
-        char const* name;
-        char const* optOverridePath;
-        char const* optFallbackPath;
+        char const *name;
+        char const *optOverridePath;
+        char const *optFallbackPath;
         FS1::Scheme::Flags flags;
         SearchPath::Flags searchPathFlags;
         /// Priority is right to left.
-        char const* searchPaths[schemedef_max_searchpaths];
+        char const *searchPaths[schemedef_max_searchpaths];
     } defs[] = {
         { "Defs",         NULL,           NULL,           FS1::Scheme::Flag(0), 0,
             { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
@@ -470,10 +459,10 @@ void DD_CreateFileSystemSchemes()
     createPackagesScheme();
 
     // Setup the rest...
-    struct schemedef_s const* def = defs;
+    struct schemedef_s const *def = defs;
     for(int i = 0; defs[i].name; ++i, ++def)
     {
-        FS1::Scheme& scheme = App_FileSystem().createScheme(def->name, def->flags);
+        FS1::Scheme &scheme = App_FileSystem().createScheme(def->name, def->flags);
 
         int searchPathCount = 0;
         while(def->searchPaths[searchPathCount] && ++searchPathCount < schemedef_max_searchpaths)
@@ -528,10 +517,7 @@ de::ResourceClass &App_ResourceClass(resourceclassid_t classId)
     return App_ResourceSystem().resClass(classId);
 }
 
-/**
- * Register the engine commands and variables.
- */
-void DD_Register(void)
+static void consoleRegister()
 {
 #ifdef __CLIENT__
     C_CMD("update",          "", CheckForUpdates);
@@ -550,9 +536,8 @@ void DD_Register(void)
     B_Register(); // for control bindings
     DD_RegisterInput();
     SBE_Register(); // for bias editor
-    Rend_Register();
+    RenderSystem::consoleRegister();
     GL_Register();
-    H_Register();
     UI_Register();
     Demo_Register();
     P_ControlRegister();
@@ -564,52 +549,49 @@ void DD_Register(void)
     FI_Register();
 }
 
-static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawPath)
+static void addToPathList(ddstring_t ***list, size_t *listSize, char const *rawPath)
 {
-    ddstring_t* newPath = Str_New();
-    DENG_ASSERT(list && listSize && rawPath && rawPath[0]);
+    DENG2_ASSERT(list != 0 && listSize != 0 && rawPath != 0 && rawPath[0]);
 
+    ddstring_t *newPath = Str_New();
     Str_Set(newPath, rawPath);
     F_FixSlashes(newPath, newPath);
     F_ExpandBasePath(newPath, newPath);
 
-    *list = (ddstring_t**) M_Realloc(*list, sizeof(**list) * ++(*listSize));
+    *list = (ddstring_t **) M_Realloc(*list, sizeof(**list) * ++(*listSize));
     (*list)[(*listSize)-1] = newPath;
 }
 
-static void parseStartupFilePathsAndAddFiles(const char* pathString)
+static void parseStartupFilePathsAndAddFiles(char const *pathString)
 {
 #define ATWSEPS                 ",; \t"
 
-    char* token, *buffer;
-    size_t len;
-
     if(!pathString || !pathString[0]) return;
 
-    len = strlen(pathString);
-    buffer = (char*)malloc(len + 1);
-    if(!buffer) Con_Error("parseStartupFilePathsAndAddFiles: Failed on allocation of %lu bytes for parse buffer.", (unsigned long) (len+1));
+    size_t len = strlen(pathString);
+    char *buffer = (char *) M_Malloc(len + 1);
 
     strcpy(buffer, pathString);
-    token = strtok(buffer, ATWSEPS);
+    char *token = strtok(buffer, ATWSEPS);
     while(token)
     {
         tryLoadFile(de::Uri(token, RC_NULL));
         token = strtok(NULL, ATWSEPS);
     }
-    free(buffer);
+    M_Free(buffer);
 
 #undef ATWSEPS
 }
 
-static void destroyPathList(ddstring_t*** list, size_t* listSize)
+static void destroyPathList(ddstring_t ***list, size_t *listSize)
 {
-    DENG_ASSERT(list && listSize);
+    DENG2_ASSERT(list != 0 && listSize != 0);
     if(*list)
     {
-        size_t i;
-        for(i = 0; i < *listSize; ++i)
+        for(size_t i = 0; i < *listSize; ++i)
+        {
             Str_Delete((*list)[i]);
+        }
         M_Free(*list); *list = 0;
     }
     *listSize = 0;
@@ -618,7 +600,7 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
 /**
  * Begin the Doomsday title animation sequence.
  */
-void DD_StartTitle(void)
+void DD_StartTitle()
 {
 #ifdef __CLIENT__
     ddfinale_t fin;
@@ -637,7 +619,7 @@ void DD_StartTitle(void)
     // Configure the predefined colors.
     for(int i = 1; i <= MIN_OF(NUM_UI_COLORS, FIPAGE_NUM_PREDEFINED_FONTS); ++i)
     {
-        ui_color_t* color = UI_Color(i - 1);
+        ui_color_t *color = UI_Color(i - 1);
         Str_Appendf(&setupCmds, "precolor %i %f %f %f\n", i, color->red, color->green, color->blue);
     }
 
@@ -722,6 +704,10 @@ static int listFilesFromDataGameAuto(ddstring_t*** list, size_t* listSize)
     return numFilesAdded;
 }
 
+#ifndef WIN32
+extern GETGAMEAPI GetGameAPI;
+#endif
+
 boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
 {
     if(pluginId != 0)
@@ -729,7 +715,9 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
         // Do the API transfer.
         GETGAMEAPI fptAdr;
         if(!(fptAdr = (GETGAMEAPI) DD_FindEntryPoint(pluginId, "GetGameAPI")))
+        {
             return false;
+        }
         app.GetGameAPI = fptAdr;
         DD_InitAPI();
         Def_GetGameClasses();
@@ -745,12 +733,12 @@ boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
 
 static void loadResource(ResourceManifest &manifest)
 {
-    DENG_ASSERT(manifest.resourceClass() == RC_PACKAGE);
+    DENG2_ASSERT(manifest.resourceClass() == RC_PACKAGE);
 
     de::Uri path(manifest.resolvedPath(false/*do not locate resource*/), RC_NULL);
     if(path.isEmpty()) return;
 
-    if(de::File1* file = tryLoadFile(path, 0/*base offset*/))
+    if(de::File1 *file = tryLoadFile(path, 0/*base offset*/))
     {
         // Mark this as an original game resource.
         file->setCustom(false);
@@ -763,42 +751,41 @@ static void loadResource(ResourceManifest &manifest)
     }
 }
 
-typedef struct {
+struct ddgamechange_params_t
+{
     /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.
     boolean initiatedBusyMode;
-} ddgamechange_paramaters_t;
+};
 
-static int DD_BeginGameChangeWorker(void* parameters)
+static int DD_BeginGameChangeWorker(void *context)
 {
-    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
-    DENG_ASSERT(p);
+    ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
 
     Map::initDummies();
     P_InitMapEntityDefs();
 
-    if(p->initiatedBusyMode)
-        Con_SetProgress(100);
-
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
         BusyMode_WorkerEnd();
     }
+
     return 0;
 }
 
-static int DD_LoadGameStartupResourcesWorker(void* parameters)
+static int DD_LoadGameStartupResourcesWorker(void *context)
 {
-    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
-    DENG_ASSERT(p);
+    ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
 
     // Reset file Ids so previously seen files can be processed again.
     App_FileSystem().resetFileIds();
     initPathMappings();
     App_FileSystem().resetAllSchemes();
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
+    {
         Con_SetProgress(50);
+    }
 
     if(App_GameLoaded())
     {
@@ -818,37 +805,41 @@ static int DD_LoadGameStartupResourcesWorker(void* parameters)
      */
     Con_Message("Loading game resources%s", verbose >= 1? ":" : "...");
 
-    Game::Manifests const& gameManifests = App_CurrentGame().manifests();
+    GameManifests const &gameManifests = App_CurrentGame().manifests();
     int const numPackages = gameManifests.count(RC_PACKAGE);
     int packageIdx = 0;
-    for(Game::Manifests::const_iterator i = gameManifests.find(RC_PACKAGE);
+    for(GameManifests::const_iterator i = gameManifests.find(RC_PACKAGE);
         i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
     {
         loadResource(**i);
 
         // Update our progress.
-        if(p->initiatedBusyMode)
+        if(parms.initiatedBusyMode)
         {
             Con_SetProgress((packageIdx + 1) * (200 - 50) / numPackages - 1);
         }
     }
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
         BusyMode_WorkerEnd();
     }
+
     return 0;
 }
 
-static int addListFiles(ddstring_t*** list, size_t* listSize, FileType const& ftype)
+static int addListFiles(ddstring_t ***list, size_t *listSize, FileType const &ftype)
 {
-    size_t i;
     int count = 0;
     if(!list || !listSize) return 0;
-    for(i = 0; i < *listSize; ++i)
+    for(size_t i = 0; i < *listSize; ++i)
     {
-        if(&ftype != &DD_GuessFileTypeFromFileName(Str_Text((*list)[i]))) continue;
+        if(&ftype != &DD_GuessFileTypeFromFileName(Str_Text((*list)[i])))
+        {
+            continue;
+        }
+
         if(tryLoadFile(de::Uri(Str_Text((*list)[i]), RC_NULL)))
         {
             count += 1;
@@ -883,20 +874,20 @@ static void initPathMappings()
 }
 
 /// Skip all whitespace except newlines.
-static inline char const* skipSpace(char const* ptr)
+static inline char const *skipSpace(char const *ptr)
 {
-    DENG_ASSERT(ptr);
+    DENG2_ASSERT(ptr != 0);
     while(*ptr && *ptr != '\n' && isspace(*ptr))
     { ptr++; }
     return ptr;
 }
 
-static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t* path, char const* buffer)
+static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t *path, char const *buffer)
 {
-    DENG_ASSERT(lumpName && path);
+    DENG2_ASSERT(lumpName && path != 0);
 
     // Find the start of the lump name.
-    char const* ptr = skipSpace(buffer);
+    char const *ptr = skipSpace(buffer);
 
     // Just whitespace?
     if(!*ptr || *ptr == '\n') return false;
@@ -930,15 +921,15 @@ static bool parsePathLumpMapping(lumpname_t lumpName, ddstring_t* path, char con
  * LUMPNAM1 Path\\In\\The\\RuntimeDir.ext
  *  :</pre>
  */
-static bool parsePathLumpMappings(char const* buffer)
+static bool parsePathLumpMappings(char const *buffer)
 {
-    DENG_ASSERT(buffer);
+    DENG2_ASSERT(buffer != 0);
 
     bool successful = false;
     ddstring_t path; Str_Init(&path);
     ddstring_t line; Str_Init(&line);
 
-    char const* ch = buffer;
+    char const *ch = buffer;
     lumpname_t lumpName;
     do
     {
@@ -977,46 +968,51 @@ static void initPathLumpMappings()
     if(DD_IsShuttingDown()) return;
 
     size_t bufSize = 0;
-    uint8_t* buf = NULL;
+    uint8_t *buf = 0;
 
     // Add the contents of all DD_DIREC lumps.
     DENG2_FOR_EACH_CONST(LumpIndex::Lumps, i, App_FileSystem().nameIndex().lumps())
     {
-        de::File1& lump = **i;
-        FileInfo const& lumpInfo = lump.info();
+        de::File1 &lump = **i;
+        FileInfo const &lumpInfo = lump.info();
 
-        if(!lump.name().beginsWith("DD_DIREC", Qt::CaseInsensitive)) continue;
+        if(!lump.name().beginsWith("DD_DIREC", Qt::CaseInsensitive))
+        {
+            continue;
+        }
 
         // Make a copy of it so we can ensure it ends in a null.
         if(bufSize < lumpInfo.size + 1)
         {
             bufSize = lumpInfo.size + 1;
-            buf = (uint8_t*) M_Realloc(buf, bufSize);
-            if(!buf) Con_Error("initPathLumpMappings: Failed on (re)allocation of %lu bytes for temporary read buffer.", (unsigned long) bufSize);
+            buf = (uint8_t *) M_Realloc(buf, bufSize);
         }
 
         lump.read(buf, 0, lumpInfo.size);
         buf[lumpInfo.size] = 0;
-        parsePathLumpMappings(reinterpret_cast<char const*>(buf));
+        parsePathLumpMappings(reinterpret_cast<char const *>(buf));
     }
 
-    if(buf) M_Free(buf);
+    M_Free(buf);
 }
 
-static int DD_LoadAddonResourcesWorker(void* parameters)
+static int DD_LoadAddonResourcesWorker(void *context)
 {
-    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)parameters;
-    DENG_ASSERT(p);
+    ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
 
     /**
      * Add additional game-startup files.
      * @note These must take precedence over Auto but not game-resource files.
      */
     if(startupFiles && startupFiles[0])
+    {
         parseStartupFilePathsAndAddFiles(startupFiles);
+    }
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
+    {
         Con_SetProgress(50);
+    }
 
     if(App_GameLoaded())
     {
@@ -1036,8 +1032,10 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
         DD_AutoLoad();
     }
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
+    {
         Con_SetProgress(180);
+    }
 
     initPathLumpMappings();
 
@@ -1045,19 +1043,18 @@ static int DD_LoadAddonResourcesWorker(void* parameters)
     // on existing search paths (probably that is).
     App_FileSystem().resetAllSchemes();
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
         BusyMode_WorkerEnd();
     }
+
     return 0;
 }
 
-static int DD_ActivateGameWorker(void *parameters)
+static int DD_ActivateGameWorker(void *context)
 {
-    ddgamechange_paramaters_t *p = (ddgamechange_paramaters_t*)parameters;
-    uint i;
-    DENG_ASSERT(p);
+    ddgamechange_params_t &parms = *static_cast<ddgamechange_params_t *>(context);
 
     // Texture resources are located now, prior to initializing the game.
     App_ResourceSystem().initCompositeTextures();
@@ -1066,27 +1063,31 @@ static int DD_ActivateGameWorker(void *parameters)
     App_ResourceSystem().textureScheme("Lightmaps").clear();
     App_ResourceSystem().textureScheme("Flaremaps").clear();
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
+    {
         Con_SetProgress(50);
+    }
 
     // Now that resources have been located we can begin to initialize the game.
     if(App_GameLoaded() && gx.PreInit)
     {
-        DENG_ASSERT(App_CurrentGame().pluginId() != 0);
+        DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
 
         DD_SetActivePluginId(App_CurrentGame().pluginId());
         gx.PreInit(App_Games().id(App_CurrentGame()));
         DD_SetActivePluginId(0);
     }
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
+    {
         Con_SetProgress(100);
+    }
 
     /**
      * Parse the game's main config file.
      * If a custom top-level config is specified; let it override.
      */
-    { ddstring_t const* configFileName = 0;
+    ddstring_t const *configFileName = 0;
     ddstring_t tmp;
     if(CommandLine_CheckWith("-config", 1))
     {
@@ -1103,7 +1104,6 @@ static int DD_ActivateGameWorker(void *parameters)
     Con_ParseCommands2(Str_Text(configFileName), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
     if(configFileName == &tmp)
         Str_Free(&tmp);
-    }
 
 #ifdef __CLIENT__
     if(App_GameLoaded())
@@ -1116,13 +1116,17 @@ static int DD_ActivateGameWorker(void *parameters)
     }
 #endif
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
+    {
         Con_SetProgress(120);
+    }
 
     Def_Read();
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
+    {
         Con_SetProgress(130);
+    }
 
     App_ResourceSystem().initSprites(); // Fully initialize sprites.
 #ifdef __CLIENT__
@@ -1145,9 +1149,9 @@ static int DD_ActivateGameWorker(void *parameters)
     R_ResetViewer();
 
     // Invalidate old cmds and init player values.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t* plr = &ddPlayers[i];
+        player_t *plr = &ddPlayers[i];
 
         plr->extraLight = plr->targetExtraLight = 0;
         plr->extraLightCounter = 0;
@@ -1160,7 +1164,7 @@ static int DD_ActivateGameWorker(void *parameters)
         DD_SetActivePluginId(0);
     }
 
-    if(p->initiatedBusyMode)
+    if(parms.initiatedBusyMode)
     {
         Con_SetProgress(200);
         BusyMode_WorkerEnd();
@@ -1205,7 +1209,7 @@ void DD_DestroyGames()
     App::app().setGame(App_Games().nullGame());
 }
 
-static void populateGameInfo(GameInfo& info, de::Game& game)
+static void populateGameInfo(GameInfo &info, de::Game &game)
 {
     info.identityKey = Str_Text(game.identityKey());
     info.title       = Str_Text(game.title());
@@ -1430,7 +1434,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         App::app().setGame(App_Games().nullGame());
 
         Con_InitDatabases();
-        DD_Register();
+        consoleRegister();
 
 #ifdef __CLIENT__
         I_InitVirtualInputDevices();
@@ -1510,7 +1514,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
          * "null-game" game).
          */
         int const busyMode = BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
-        ddgamechange_paramaters_t p;
+        ddgamechange_params_t p;
         BusyTask gameChangeTasks[] = {
             // Phase 1: Initialization.
             { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f, 0 },
@@ -1674,7 +1678,7 @@ int DD_EarlyInit()
     Con_InitDatabases();
 
     // Register the engine's console commands and variables.
-    DD_Register();
+    consoleRegister();
 
     return true;
 }
@@ -1761,7 +1765,7 @@ boolean DD_Init(void)
 
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
-    DD_CreateFileTypes();
+    registerResourceFileTypes();
     F_Init();
     DD_CreateFileSystemSchemes();
 
@@ -2232,6 +2236,12 @@ void DD_UpdateEngineState()
     App_ResourceSystem().restartAllMaterialAnimations();
 #endif
 }
+
+struct ddvalue_t
+{
+    int *readPtr;
+    int *writePtr;
+};
 
 ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&netGame, 0},

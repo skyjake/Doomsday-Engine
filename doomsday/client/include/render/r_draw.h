@@ -1,8 +1,9 @@
-/** @file r_draw.h Misc Drawing Routines
+/** @file r_draw.h Misc  Drawing routines.
+ *
  * @ingroup render
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,11 +20,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RENDER_MISC_H
-#define LIBDENG_RENDER_MISC_H
+#ifndef DENG_CLIENT_RENDER_MISC_H
+#define DENG_CLIENT_RENDER_MISC_H
 
-#include "de_system.h"
 #include "Texture"
+#include "TextureVariantSpec"
+#include <de/GLTexture>
 
 void R_InitViewWindow();
 void R_ShutdownViewWindow();
@@ -42,4 +44,4 @@ void R_DrawPatch(de::Texture &texture, int x, int y, int w, int h, bool useOffse
 void R_DrawPatchTiled(de::Texture &texture, int x, int y, int w, int h,
     de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
 
-#endif // LIBDENG_RENDER_MISC_H
+#endif // DENG_CLIENT_RENDER_MISC_H

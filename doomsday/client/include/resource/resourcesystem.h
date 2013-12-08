@@ -37,6 +37,8 @@
 #include "Sprite"
 #include "Texture"
 #include "TextureScheme"
+#include "resource/wad.h"
+#include "resource/zip.h"
 #include "uri.hh"
 #include <de/Error>
 #include <de/String>

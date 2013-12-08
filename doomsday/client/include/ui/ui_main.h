@@ -24,7 +24,9 @@
 
 #include <de/rect.h>
 #include "dd_input.h" // ddevent_t
-#include "MaterialVariantSpec"
+#ifdef __CLIENT__
+#  include "MaterialVariantSpec"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

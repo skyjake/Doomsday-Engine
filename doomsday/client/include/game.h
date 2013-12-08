@@ -165,6 +165,8 @@ private:
     DENG2_PRIVATE(d)
 };
 
+typedef Game::Manifests GameManifests;
+
 /**
  * The special "null" Game object.
  * @todo Should employ the Singleton pattern.

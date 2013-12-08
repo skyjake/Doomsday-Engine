@@ -20,6 +20,9 @@
 #include "clientapp.h"
 #include "render/rendersystem.h"
 
+#include "render/rend_main.h"
+#include "render/rend_halo.h"
+
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include <de/memory.h>
@@ -235,4 +238,10 @@ void RenderSystem::resetDrawLists()
 DrawLists &RenderSystem::drawLists()
 {
     return d->drawLists;
+}
+
+void RenderSystem::consoleRegister()
+{
+    Rend_Register();
+    H_Register();
 }

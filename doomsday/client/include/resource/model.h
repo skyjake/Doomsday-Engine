@@ -27,7 +27,6 @@
 #include <de/Vector>
 #include <QBitArray>
 #include <QList>
-#include <QVector>
 
 /// Unique identifier associated with each model.
 typedef uint modelid_t;
