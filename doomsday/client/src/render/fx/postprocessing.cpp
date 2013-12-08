@@ -129,17 +129,23 @@ DENG2_PIMPL(PostProcessing)
         framebuf.glDeinit();
     }
 
+    Rectangleui outRect() const
+    {
+        GLTarget &target = GLState::current().target();
+        Rectangleui rect = Rectangleui::fromSize(target.size());
+
+        if(target.hasActiveRect())
+        {
+            rect = target.scaleToActiveRect(rect);
+        }
+        return rect;
+    }
+
     void update()
     {
-        if(GLState::current().target().hasActiveRect())
-        {
-            framebuf.resize(GLState::current().target().activeRect().size() /* cconsoleSize()*/);
-        }
-        else
-        {
-            framebuf.resize(root().window().canvas().size());
-        }
+        Rectangleui rect = outRect();
 
+        framebuf.resize(rect.size());
         framebuf.setSampleCount(GLFramebuffer::defaultMultisampling());
     }
 
@@ -172,7 +178,7 @@ DENG2_PIMPL(PostProcessing)
 
         GLState::push()
                 .setTarget(framebuf.target())
-                .setViewport(Rectangleui::fromSize(framebuf.size() /*consoleSize()*/))
+                .setViewport(Rectangleui::fromSize(framebuf.size()))
                 .setColorMask(gl::WriteAll)
                 .apply();
         framebuf.target().clear(GLTarget::ColorDepthStencil);
@@ -201,10 +207,12 @@ DENG2_PIMPL(PostProcessing)
 
         uFadeInOut = fade;
 
+        Rectangleui rect = outRect();
+
         GLState::push()
                 .setBlend(false)
                 .setDepthTest(false)
-                //.setViewport(Rectangleui::fromSize(root().window().canvas().size()))
+                .setViewport(Rectangleui::fromSize(GLState::current().target().size()))
                 .apply();
 
         frame.draw();
