@@ -543,7 +543,7 @@ void DD_StartTitle()
     ddstring_t setupCmds; Str_Init(&setupCmds);
 
     // Configure the predefined fonts (all normal, variable width).
-    char const *fontName = R_ChooseVariableFont(FS_NORMAL);
+    char const *fontName = UI_ChooseVariableFont(FS_NORMAL);
 
     for(int i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
     {
@@ -2010,7 +2010,9 @@ static int DD_StartupWorker(void * /*context*/)
     Con_SetProgress(90);
 
     R_BuildTexGammaLut();
-    R_LoadSystemFonts();
+#ifdef __CLIENT__
+    UI_LoadFonts();
+#endif
     R_InitTranslationTables();
     R_InitRawTexs();
     R_InitSvgs();

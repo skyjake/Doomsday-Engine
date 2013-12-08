@@ -89,7 +89,7 @@ DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
     {
 #ifdef DENG_DEBUG
         LOG_AS("R_SetBorderGfx");
-        LOG_WARNING("R_SetBorderGfx: Invalid arguments, aborting.");
+        LOG_WARNING("Invalid arguments, aborting.");
 #endif
         return;
     }

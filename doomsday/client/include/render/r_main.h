@@ -62,13 +62,6 @@ struct viewdata_t
     float windowInter;
 };
 
-enum fontstyle_t {
-    FS_NORMAL,
-    FS_BOLD,
-    FS_LIGHT,
-    FONTSTYLE_COUNT
-};
-
 DENG_EXTERN_C float    frameTimePos;      // 0...1: fractional part for sharp game tics
 DENG_EXTERN_C int      loadInStartupMode;
 DENG_EXTERN_C int      validCount;
@@ -86,8 +79,6 @@ DENG_EXTERN_C byte     weaponScaleMode; // cvar
 DENG_EXTERN_C boolean  firstFrameAfterLoad;
 
 DENG_EXTERN_C byte     precacheMapMaterials, precacheSprites, precacheSkins;
-
-DENG_EXTERN_C fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
 DENG_EXTERN_C fixed_t  fineTangent[FINEANGLES / 2];
 
@@ -205,12 +196,5 @@ void R_SetupDefaultViewWindow(int consoleNum);
  * Animates the view window towards the target values.
  */
 void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
-
-void R_LoadSystemFonts();
-
-#ifdef __CLIENT__
-char const *R_ChooseFixedFont();
-char const *R_ChooseVariableFont(fontstyle_t style);
-#endif
 
 #endif // DENG_REFRESH_MAIN_H

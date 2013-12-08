@@ -21,6 +21,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 #include "de_system.h"
 #include "de_graphics.h"
 #include "de_ui.h"
@@ -52,6 +53,8 @@ extern int glMaxTexSize;
 extern boolean stopTime;
 extern boolean tickUI;
 //extern boolean drawGame;
+
+fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
 static boolean uiActive; /// The user interface is active.
 static boolean uiNoMouse;
@@ -97,6 +100,102 @@ void UI_Register(void)
     // Ccmds
     C_CMD_FLAGS("uicolor", "sfff", UIColor, CMDF_NO_DEDICATED);
 }
+
+#ifdef __CLIENT__
+char const *UI_ChooseFixedFont()
+{
+    if(DENG_GAMEVIEW_WIDTH < 300) return "console11";
+    if(DENG_GAMEVIEW_WIDTH > 768) return "console18";
+    return "console14";
+}
+
+char const *UI_ChooseVariableFont(fontstyle_t style)
+{
+    int const resY = DENG_GAMEVIEW_HEIGHT;
+    int const SMALL_LIMIT = 500;
+    int const MED_LIMIT   = 800;
+
+    switch(style)
+    {
+    default:
+        return (resY < SMALL_LIMIT ? "normal12" :
+                resY < MED_LIMIT   ? "normal18" :
+                                     "normal24");
+
+    case FS_LIGHT:
+        return (resY < SMALL_LIMIT ? "normallight12" :
+                resY < MED_LIMIT   ? "normallight18" :
+                                     "normallight24");
+
+    case FS_BOLD:
+        return (resY < SMALL_LIMIT ? "normalbold12" :
+                resY < MED_LIMIT   ? "normalbold18" :
+                                     "normalbold24");
+    }
+}
+
+static AbstractFont *loadSystemFont(char const *name)
+{
+    DENG2_ASSERT(name != 0 && name[0]);
+
+    // Compose the resource name.
+    de::Uri uri = de::Uri("System:", RC_NULL).setPath(name);
+
+    // Compose the resource data path.
+    ddstring_t resourcePath; Str_InitStd(&resourcePath);
+    Str_Appendf(&resourcePath, "}data/Fonts/%s.dfn", name);
+#if defined(UNIX) && !defined(MACOSX)
+    // Case-sensitive file system.
+    /// @todo Unkludge this: handle in a more generic manner.
+    strlwr(resourcePath.str);
+#endif
+    F_ExpandBasePath(&resourcePath, &resourcePath);
+
+    AbstractFont *font = App_ResourceSystem().newFontFromFile(uri, Str_Text(&resourcePath));
+    if(!font)
+    {
+        Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
+        exit(1); // Unreachable.
+    }
+
+    Str_Free(&resourcePath);
+    return font;
+}
+
+static void loadFontIfNeeded(char const *uri, fontid_t *fid)
+{
+    *fid = NOFONTID;
+    if(uri && uri[0])
+    {
+        try
+        {
+            FontManifest &manifest = App_ResourceSystem().fontManifest(de::Uri(uri, RC_NULL));
+            if(manifest.hasResource())
+            {
+                *fid = fontid_t(manifest.uniqueId());
+            }
+        }
+        catch(ResourceSystem::MissingManifestError const &)
+        {}
+    }
+
+    if(*fid == NOFONTID)
+    {
+        *fid = loadSystemFont(uri)->manifest().uniqueId();
+    }
+}
+
+void UI_LoadFonts()
+{
+    if(isDedicated) return;
+
+    loadFontIfNeeded(UI_ChooseFixedFont(),             &fontFixed);
+    loadFontIfNeeded(UI_ChooseVariableFont(FS_NORMAL), &fontVariable[FS_NORMAL]);
+    loadFontIfNeeded(UI_ChooseVariableFont(FS_BOLD),   &fontVariable[FS_BOLD]);
+    loadFontIfNeeded(UI_ChooseVariableFont(FS_LIGHT),  &fontVariable[FS_LIGHT]);
+}
+
+#endif // __CLIENT__
 
 de::MaterialVariantSpec const &Ui_MaterialSpec(int texSpecFlags)
 {

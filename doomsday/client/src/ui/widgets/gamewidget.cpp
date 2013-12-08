@@ -102,7 +102,7 @@ DENG2_PIMPL(GameWidget)
             // Update for busy mode.
             R_UseViewPort(0);
         }
-        R_LoadSystemFonts();
+        UI_LoadFonts();
         if(UI_IsActive())
         {
             UI_UpdatePageLayout();

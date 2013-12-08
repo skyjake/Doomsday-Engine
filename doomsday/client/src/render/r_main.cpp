@@ -21,34 +21,52 @@
 #include "de_platform.h"
 #include "render/r_main.h"
 
-#include "de_console.h"
-#include "de_system.h"
-#include "de_filesys.h"
-#include "de_resource.h"
-#include "de_network.h"
-#include "de_render.h"
-#include "de_graphics.h"
-#include "de_audio.h"
-#include "de_misc.h"
-#include "de_ui.h"
+#include "dd_def.h" // finesine
+#include "dd_main.h"
+#include "dd_loop.h"
+#include "con_main.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "edit_bias.h"
+
+#  include "MaterialSnapshot"
+
 #  include "api_render.h"
+#  include "render/projector.h"
+#  include "render/r_draw.h"
 #  include "render/r_main.h"
+#  include "render/rend_clip.h"
+#  include "render/rend_main.h"
+#  include "render/rendpoly.h"
 #  include "render/vignette.h"
+#  include "render/vissprite.h"
+#  include "render/vlight.h"
+
 #  include <de/GLState>
 #endif
+
 #include "gl/svg.h"
+#ifdef __CLIENT__
+#  include "gl/gl_draw.h"
+#endif
+
+#include "network/net_main.h" // clients
+
+#ifdef __CLIENT__
+#  include "ui/ui_main.h"
+#endif
 
 #include "world/linesighttest.h"
+#include "world/p_object.h"
 #include "world/p_players.h"
 #include "Contact"
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "Surface"
 
+#include <de/memory.h>
+#include <de/vector1.h>
 #ifdef __CLIENT__
 #  include <QBitArray>
 #endif
@@ -81,8 +99,6 @@ byte precacheSkins = true;
 byte precacheMapMaterials = true;
 byte precacheSprites = true;
 byte texGammaLut[256];
-
-fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
 static int resetNextViewer = true;
 
@@ -149,107 +165,6 @@ void R_BuildTexGammaLut()
     {
         texGammaLut[i] = byte(255.0f * pow(double(i / 255.0f), invGamma));
     }
-}
-
-#ifdef __CLIENT__
-char const *R_ChooseFixedFont()
-{
-    if(DENG_GAMEVIEW_WIDTH < 300) return "console11";
-    if(DENG_GAMEVIEW_WIDTH > 768) return "console18";
-    return "console14";
-}
-
-char const *R_ChooseVariableFont(fontstyle_t style)
-{
-    int const resY = DENG_GAMEVIEW_HEIGHT;
-    int const SMALL_LIMIT = 500;
-    int const MED_LIMIT   = 800;
-
-    switch(style)
-    {
-    default:
-        return (resY < SMALL_LIMIT ? "normal12" :
-                resY < MED_LIMIT   ? "normal18" :
-                                     "normal24");
-
-    case FS_LIGHT:
-        return (resY < SMALL_LIMIT ? "normallight12" :
-                resY < MED_LIMIT   ? "normallight18" :
-                                     "normallight24");
-
-    case FS_BOLD:
-        return (resY < SMALL_LIMIT ? "normalbold12" :
-                resY < MED_LIMIT   ? "normalbold18" :
-                                     "normalbold24");
-    }
-}
-
-static AbstractFont *loadSystemFont(char const *name)
-{
-    DENG2_ASSERT(name != 0 && name[0]);
-
-    // Compose the resource name.
-    de::Uri uri = de::Uri("System:", RC_NULL).setPath(name);
-
-    // Compose the resource data path.
-    ddstring_t resourcePath; Str_InitStd(&resourcePath);
-    Str_Appendf(&resourcePath, "}data/Fonts/%s.dfn", name);
-#if defined(UNIX) && !defined(MACOSX)
-    // Case-sensitive file system.
-    /// @todo Unkludge this: handle in a more generic manner.
-    strlwr(resourcePath.str);
-#endif
-    F_ExpandBasePath(&resourcePath, &resourcePath);
-
-    AbstractFont *font = App_ResourceSystem().newFontFromFile(uri, Str_Text(&resourcePath));
-    if(!font)
-    {
-        Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
-        exit(1); // Unreachable.
-    }
-
-    Str_Free(&resourcePath);
-    return font;
-}
-
-static void loadFontIfNeeded(char const *uri, fontid_t *fid)
-{
-    *fid = NOFONTID;
-    if(uri && uri[0])
-    {
-        try
-        {
-            FontManifest &manifest = App_ResourceSystem().fontManifest(de::Uri(uri, RC_NULL));
-            if(manifest.hasResource())
-            {
-                *fid = fontid_t(manifest.uniqueId());
-            }
-        }
-        catch(ResourceSystem::MissingManifestError const &)
-        {}
-    }
-
-    if(*fid == NOFONTID)
-    {
-        *fid = loadSystemFont(uri)->manifest().uniqueId();
-    }
-}
-#endif // __CLIENT__
-
-void R_LoadSystemFonts()
-{
-#ifdef __CLIENT__
-
-    if(isDedicated) return;
-
-    loadFontIfNeeded(R_ChooseFixedFont(),             &fontFixed);
-    loadFontIfNeeded(R_ChooseVariableFont(FS_NORMAL), &fontVariable[FS_NORMAL]);
-    loadFontIfNeeded(R_ChooseVariableFont(FS_BOLD),   &fontVariable[FS_BOLD]);
-    loadFontIfNeeded(R_ChooseVariableFont(FS_LIGHT),  &fontVariable[FS_LIGHT]);
-
-    //Con_SetFont(fontFixed);
-
-#endif
 }
 
 #undef R_SetViewOrigin

@@ -28,9 +28,12 @@
 #  include "MaterialVariantSpec"
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+enum fontstyle_t {
+    FS_NORMAL,
+    FS_BOLD,
+    FS_LIGHT,
+    FONTSTYLE_COUNT
+};
 
 #define IS_ACTKEY(x)    (x == ' ' || x == DDKEY_RETURN)
 
@@ -191,7 +194,20 @@ typedef struct {
     byte button[3]; /// Button states (0=normal, 1=down).
 } uidata_slider_t;
 
+DENG_EXTERN_C fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void UI_Register(void);
+
+#ifdef __CLIENT__
+void UI_LoadFonts(void);
+
+char const *UI_ChooseFixedFont(void);
+char const *UI_ChooseVariableFont(fontstyle_t style);
+#endif
 
 /// Called when entering a UI page.
 void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame, boolean noescape);

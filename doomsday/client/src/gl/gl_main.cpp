@@ -679,7 +679,7 @@ void GL_TotalRestore()
     GL_Init2DState();
 
     // Choose fonts again.
-    R_LoadSystemFonts();
+    UI_LoadFonts();
     //Con_Resize();
 
     /// @todo fixme: Should this use the default MapInfo def if none found? -ds
