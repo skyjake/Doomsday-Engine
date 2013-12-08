@@ -25,6 +25,7 @@
 
 #include "de_render.h"
 #include "dd_main.h" // App_World()
+#include "dd_loop.h" // frameTimePos
 #include "def_main.h" // states
 
 #include "gl/gl_tex.h"

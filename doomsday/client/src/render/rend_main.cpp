@@ -110,6 +110,8 @@ D_CMD(TexReset);
 
 int useBias; // Shadow Bias enabled? cvar
 
+int frameCount; // Just for profiling purposes.
+
 boolean usingFog; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
@@ -445,6 +447,8 @@ static void reportWallSectionDrawn(Line &line)
 
 void Rend_Init()
 {
+    frameCount = 0;
+
     C_Init();
     Sky_Init();
 }
@@ -3835,9 +3839,6 @@ static void drawAllLists()
 
 void Rend_RenderMap(Map &map)
 {
-    // Set to true if dynlights are inited for this frame.
-    loInited = false;
-
     GL_SetMultisample(true);
 
     // Setup the modelview matrix.

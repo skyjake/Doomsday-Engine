@@ -56,6 +56,8 @@
  */
 #define MAX_FRAME_TIME (1.0/MIN_TIC_RATE)
 
+float frameTimePos; // 0...1: fractional part for sharp game tics.
+
 int maxFrameRate = 120; // Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
@@ -170,7 +172,10 @@ static void baseTicker(timespan_t time)
 
 #ifdef __CLIENT__
         // Windowing system ticks.
-        R_Ticker(time);
+        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            R_ViewWindowTicker(i, time);
+        }
 
         if(isClient)
         {

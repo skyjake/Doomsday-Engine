@@ -24,13 +24,14 @@
 
 #include "dd_types.h"
 
+DENG_EXTERN_C float frameTimePos;      // 0...1: fractional part for sharp game tics
+DENG_EXTERN_C int rFrameCount;
+DENG_EXTERN_C timespan_t sysTime, gameTime, demoTime;
+DENG_EXTERN_C boolean tickFrame;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern int rFrameCount;
-extern timespan_t sysTime, gameTime, demoTime;
-extern boolean tickFrame;
 
 /**
  * Register console variables for main loop.

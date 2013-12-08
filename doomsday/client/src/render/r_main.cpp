@@ -83,7 +83,6 @@ float devCameraMovementStartTimeRealSecs = 0;
 D_CMD(ViewGrid);
 
 int validCount = 1; // Increment every time a check is made.
-int frameCount; // Just for profiling purposes.
 int rendInfoTris = 0;
 
 boolean firstFrameAfterLoad;
@@ -91,14 +90,11 @@ boolean firstFrameAfterLoad;
 // Precalculated math tables.
 fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 
-float frameTimePos; // 0...1: fractional part for sharp game tics.
-
 int loadInStartupMode = false;
 
 byte precacheSkins = true;
 byte precacheMapMaterials = true;
 byte precacheSprites = true;
-byte texGammaLut[256];
 
 static int resetNextViewer = true;
 
@@ -114,8 +110,6 @@ static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS];
 #ifdef __CLIENT__
 static int rendCameraSmooth = true; // Smoothed by default.
 static viewport_t *currentViewport;
-
-boolean loInited;
 
 static coord_t *luminousDist;
 static byte *luminousClipped;
@@ -151,20 +145,6 @@ void R_Register()
 
     C_CMD("viewgrid", "ii", ViewGrid);
 #endif
-}
-
-void R_BuildTexGammaLut()
-{
-#ifdef __SERVER__
-    double invGamma = 1.0f;
-#else
-    double invGamma = 1.0f - MINMAX_OF(0, texGamma, 1); // Clamp to a sane range.
-#endif
-
-    for(int i = 0; i < 256; ++i)
-    {
-        texGammaLut[i] = byte(255.0f * pow(double(i / 255.0f), invGamma));
-    }
 }
 
 #undef R_SetViewOrigin
@@ -442,14 +422,6 @@ boolean R_SetViewGrid(int numCols, int numRows)
     }
 
     return true;
-}
-
-void R_Ticker(timespan_t time)
-{
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        R_ViewWindowTicker(i, time);
-    }
 }
 
 void R_ResetViewer()
@@ -1531,10 +1503,6 @@ void R_BeginFrame()
         // Mark all as clipped.
         std::memset(luminousClipped, 1, numLuminous * sizeof(*luminousClipped));
     }
-
-    // objLinks already contains links if there are any light decorations
-    // currently in use.
-    loInited = true;
 }
 
 void R_ViewerClipLumobj(Lumobj *lum)

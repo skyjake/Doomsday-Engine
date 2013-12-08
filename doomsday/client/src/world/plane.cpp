@@ -21,12 +21,11 @@
 #include "de_platform.h"
 #include "world/plane.h"
 
+#include "dd_loop.h" // frameTimePos
 #include "world/map.h"
 #include "world/world.h" /// ddMapSetup
 #include "Surface"
 #include "Sector"
-
-#include "render/r_main.h" // frameTimePos
 #include <de/Log>
 
 using namespace de;

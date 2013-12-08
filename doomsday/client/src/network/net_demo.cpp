@@ -480,7 +480,7 @@ void Demo_WriteLocalCamera(int plrNum)
     Writer_WriteInt16(msgWriter, y >> 16);
     Writer_WriteByte(msgWriter, y >> 8);
 
-    z = FLT2FIX(mo->origin[VZ] + viewData->current.origin[VZ]);
+    z = FLT2FIX(mo->origin[VZ] + viewData->current.origin.z);
     Writer_WriteInt16(msgWriter, z >> 16);
     Writer_WriteByte(msgWriter, z >> 8);
 

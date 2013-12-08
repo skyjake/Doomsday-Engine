@@ -2020,7 +2020,6 @@ static int DD_StartupWorker(void * /*context*/)
     R_InitViewWindow();
     Rend_Init();
 #endif
-    frameCount = 0;
     Con_SetProgress(165);
 
     Net_InitGame();

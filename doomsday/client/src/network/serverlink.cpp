@@ -16,7 +16,9 @@
  * http://www.gnu.org/licenses</small> 
  */
 
+#include "de_platform.h"
 #include "network/serverlink.h"
+
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_demo.h"

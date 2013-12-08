@@ -161,7 +161,7 @@ inline dint cmp(Type const &a, Type const &b) {
  */
 template <typename Type>
 inline Type lerp(Type start, Type end, float pos) {
-    return end * pos + start * (1 - pos);
+    return end * pos + (start * (1 - pos));
 }
 
 } // namespace de

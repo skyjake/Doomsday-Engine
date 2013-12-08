@@ -36,6 +36,10 @@
 
 #include "audio/s_sfx.h"
 
+#ifdef __CLIENT__
+#  include "ui/ui_main.h"
+#endif
+
 #define SFX_MAX_CHANNELS        (256)
 #define SFX_LOWEST_PRIORITY     (-1000)
 

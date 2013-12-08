@@ -234,7 +234,10 @@ void Con_Register(void)
 
     Con_DataRegister();
 
+#ifdef __CLIENT__
+    /// @todo Move to UI module.
     Con_TransitionRegister();
+#endif
 }
 
 #if 0

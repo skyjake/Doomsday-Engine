@@ -17,14 +17,14 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
+#include "de_platform.h"
+#include "resource/material.h"
+
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
-#include "render/r_main.h" // frameCount, frameTimePos
+#include "render/rend_main.h" // frameCount, frameTimePos
 #include <de/Error>
 #include <de/Log>
-
-#include "resource/material.h"
 
 using namespace de;
 
@@ -37,7 +37,7 @@ DENG2_PIMPL(Material::Variant)
     MaterialVariantSpec const &spec;
 
     /// Cached state snapshot (if any).
-    std::auto_ptr<MaterialSnapshot> snapshot;
+    QScopedPointer<MaterialSnapshot> snapshot;
 
     /// Frame count when the snapshot was last prepared/updated.
     int snapshotPrepareFrame;
@@ -56,7 +56,7 @@ DENG2_PIMPL(Material::Variant)
     void attachSnapshot(MaterialSnapshot *newSnapshot)
     {
         DENG2_ASSERT(newSnapshot);
-        if(snapshot.get())
+        if(!snapshot.isNull())
         {
 #ifdef DENG_DEBUG
             LOG_AS("Material::Variant::AttachSnapshot");
@@ -89,13 +89,13 @@ MaterialContextId Material::Variant::context() const
 MaterialSnapshot const &Material::Variant::prepare(bool forceSnapshotUpdate)
 {
     // Time to attach a snapshot?
-    if(!d->snapshot.get())
+    if(d->snapshot.isNull())
     {
         d->attachSnapshot(new MaterialSnapshot(*const_cast<Material::Variant *>(this)));
         forceSnapshotUpdate = true;
     }
 
-    MaterialSnapshot *snapshot = d->snapshot.get();
+    MaterialSnapshot *snapshot = d->snapshot.data();
     // Time to update the snapshot?
     if(forceSnapshotUpdate || d->snapshotPrepareFrame != frameCount)
     {

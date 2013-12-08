@@ -53,6 +53,8 @@ class Map;
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
+DENG_EXTERN_C int frameCount;
+
 DENG_EXTERN_C coord_t vOrigin[3];
 DENG_EXTERN_C float vang, vpitch, yfov;
 DENG_EXTERN_C float viewsidex, viewsidey;

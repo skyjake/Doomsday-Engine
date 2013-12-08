@@ -38,7 +38,6 @@
 #  error "Attempted to include server's header in a non-server build"
 #endif
 
-DENG_EXTERN_C void Con_TransitionRegister();
 DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
 DENG_EXTERN_C void Con_SetProgress(int progress);
 
@@ -53,18 +52,7 @@ DENG_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
 DENG_EXTERN_C void FR_Init(void);
 
-/*DENG_EXTERN_C void Fonts_Init(void);
-DENG_EXTERN_C fontschemeid_t Fonts_ParseScheme(const char* str);
-DENG_EXTERN_C fontid_t Fonts_ResolveUri(Uri const *uri);
-DENG_EXTERN_C fontid_t Fonts_ResolveUriCString(const char* uri);
-DENG_EXTERN_C void Fonts_ClearDefinitionLinks(void);
-DENG_EXTERN_C void Fonts_ClearRuntime(void);*/
-
-DENG_EXTERN_C void Rend_Init(void);
-//DENG_EXTERN_C void Rend_DecorInitForMap();
-//DENG_EXTERN_C void Rend_CacheForMap();
 DENG_EXTERN_C void Rend_CacheForMobjType(int num);
-//DENG_EXTERN_C void Rend_UpdateLightModMatrix();
 DENG_EXTERN_C void Rend_ConsoleInit();
 DENG_EXTERN_C void Rend_ConsoleResize(int force);
 DENG_EXTERN_C void Rend_ConsoleOpen(int yes);

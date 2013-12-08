@@ -18,14 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include <QtAlgorithms>
-
-#include <de/vector1.h>
-
-#include <de/Log>
-
 #include "de_platform.h"
+#include "world/surface.h"
+
 #include "de_defs.h" // Def_GetGenerator
+#include "dd_loop.h" // frameTimePos
 
 #include "MaterialManifest"
 #include "TextureManifest"
@@ -34,16 +31,18 @@
 #include "Plane"
 #include "world/world.h" // ddMapSetup
 
-#include "render/r_main.h" // frameTimePos
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
+
 #  include "MaterialSnapshot"
 #  include "Decoration"
 
 #  include "render/rend_main.h"
 #endif
 
-#include "world/surface.h"
+#include <de/Log>
+#include <de/vector1.h>
+#include <QtAlgorithms>
 
 using namespace de;
 
