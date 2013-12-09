@@ -178,6 +178,10 @@ DENG2_PIMPL(GLTexture)
                  glFormat.format == GL_DEPTH_STENCIL? GL_DEPTH24_STENCIL8 :
                                                       glFormat.format);
 
+        /*qDebug() << "glTexImage2D:" << name << (isCube()? glFace(face) : texTarget)
+                << level << internalFormat << size.x << size.y << 0
+                << glFormat.format << glFormat.type << data;*/
+
         if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexImage2D(isCube()? glFace(face) : texTarget,
                      level, internalFormat, size.x, size.y, 0,
