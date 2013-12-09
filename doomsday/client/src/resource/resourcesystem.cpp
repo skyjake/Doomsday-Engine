@@ -349,7 +349,6 @@ DENG2_PIMPL(ResourceSystem)
         resClasses.append(new ResourceClass("RC_MUSIC",      "Music"));
         resClasses.append(new ResourceClass("RC_FONT",       "Fonts"));
 
-        LOG_MSG("Initializing Texture collection...");
         /// @note Order here defines the ambigious-URI search order.
         createTextureScheme("Sprites");
         createTextureScheme("Textures");
@@ -364,7 +363,6 @@ DENG2_PIMPL(ResourceSystem)
         createTextureScheme("Lightmaps");
         createTextureScheme("Flaremaps");
 
-        LOG_MSG("Initializing Material collection...");
         /// @note Order here defines the ambigious-URI search order.
         createMaterialScheme("Sprites");
         createMaterialScheme("Textures");
@@ -372,7 +370,6 @@ DENG2_PIMPL(ResourceSystem)
         createMaterialScheme("System");
 
 #ifdef __CLIENT__
-        LOG_MSG("Initializing Font collection...");
         /// @note Order here defines the ambigious-URI search order.
         createFontScheme("System");
         createFontScheme("Game");
@@ -1968,6 +1965,11 @@ bool ResourceSystem::hasSprite(spritenum_t spriteId, int frame)
     return false;
 }
 
+Sprite &ResourceSystem::sprite(spritenum_t spriteId, int frame)
+{
+    return *spriteSet(spriteId).at(frame);
+}
+
 ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t spriteId)
 {
     if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
@@ -2771,7 +2773,8 @@ void ResourceSystem::releaseAllSystemGLTextures()
 {
     if(novideo) return;
 
-    LOG_VERBOSE("Releasing System textures...");
+    LOG_AS("ResourceSystem");
+    LOG_VERBOSE("Releasing system textures...");
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
@@ -2791,7 +2794,8 @@ void ResourceSystem::releaseAllRuntimeGLTextures()
 {
     if(novideo) return;
 
-    LOG_VERBOSE("Releasing Runtime textures...");
+    LOG_AS("ResourceSystem");
+    LOG_VERBOSE("Releasing runtime textures...");
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...

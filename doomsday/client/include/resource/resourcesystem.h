@@ -37,7 +37,7 @@
 #include "Sprite"
 #include "Texture"
 #include "TextureScheme"
-#include "resource/rawtexture.h" /// @todo not yet owned
+#include "resource/rawtexture.h"
 #include "resource/wad.h"
 #include "resource/zip.h"
 #include "uri.hh"
@@ -160,12 +160,19 @@ public:
     bool hasSprite(spritenum_t spriteId, int frame);
 
     /**
+     * Lookup a sprite by unique identifier & frame number.
+     *
+     * @see hasSprite(), spritePtr()
+     */
+    Sprite &sprite(spritenum_t spriteId, int frame);
+
+    /**
      * Returns a pointer to the identified Sprite.
      *
      * @see hasSprite()
      */
     inline Sprite *spritePtr(spritenum_t spriteId, int frame) {
-        return hasSprite(spriteId, frame)? spriteSet(spriteId).at(frame) : 0;
+        return hasSprite(spriteId, frame)? &sprite(spriteId, frame) : 0;
     }
 
     /**

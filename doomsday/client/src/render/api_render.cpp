@@ -118,7 +118,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
     }
 
     SpriteViewAngle const &sprViewAngle =
-        App_ResourceSystem().spritePtr(spriteId, frame)->viewAngle(0);
+        App_ResourceSystem().sprite(spriteId, frame).viewAngle(0);
     info->material = sprViewAngle.material;
     info->flip     = sprViewAngle.mirrorX;
 

@@ -71,7 +71,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     float const offScaleY = weaponOffsetScaleY / 1000.0f;
 
     SpriteViewAngle const &sprViewAngle =
-        ClientApp::resourceSystem().spritePtr(spriteIdx, frameIdx)->viewAngle(0);
+        ClientApp::resourceSystem().sprite(spriteIdx, frameIdx).viewAngle(0);
 
     Material *material = sprViewAngle.material;
     bool flip          = sprViewAngle.mirrorX;
