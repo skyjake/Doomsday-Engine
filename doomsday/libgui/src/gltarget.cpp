@@ -168,8 +168,8 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         DENG2_ASSERT(tex.isReady());
 
-        LOG_TRACE("glTex %i (level %i) => FBO attachment %i (0x%x)")
-                << tex.glName() << level << attachmentToId(attachment) << attachment;
+        LOG_TRACE("glTex %i (level %i) => FBO %i attachment %i (0x%x)")
+                << tex.glName() << level << fbo << attachmentToId(attachment) << attachment;
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
         LIBGUI_ASSERT_GL_OK();
@@ -186,7 +186,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
         if(sampleCount > 1)
         {
-            LOG_DEBUG("FBO %i: Multisampled renderbuffer %ix%i with %i samples => attachment %i")
+            LOG_DEBUG("FBO %i: renderbuffer %ix%i is multisampled with %i samples => attachment %i")
                     << fbo << size.x << size.y << sampleCount
                     << attachmentToId(attachment);
 
@@ -238,14 +238,14 @@ DENG2_OBSERVES(Asset, Deletion)
         if(flags.testFlag(Color) && !textureAttachment.testFlag(Color))
         {
             /// @todo Note that for GLES, GL_RGBA8 is not supported (without an extension).
-            LOG_DEBUG("FBO color attachment %s") << size.asText();
+            LOG_DEBUG("FBO %i: color renderbuffer %s") << fbo << size.asText();
             attachRenderbuffer(ColorBuffer, GL_RGBA8, GL_COLOR_ATTACHMENT0);
         }
 
         if(flags.testFlag(DepthStencil) && (!texture || textureAttachment == Color))
         {
             // We can use a combined depth/stencil buffer.
-            LOG_DEBUG("FBO depth+stencil attachment %s") << size.asText();
+            LOG_DEBUG("FBO %i: depth+stencil renderbuffer %s") << fbo << size.asText();
             attachRenderbuffer(DepthBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
         }
         else
@@ -253,12 +253,12 @@ DENG2_OBSERVES(Asset, Deletion)
             // Separate depth and stencil, then.
             if(flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
             {
-                LOG_DEBUG("FBO depth attachment %s") << size.asText();
+                LOG_DEBUG("FBO %i: depth renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT16, GL_DEPTH_ATTACHMENT);
             }
             if(flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
             {
-                LOG_DEBUG("FBO stencil attachment %s") << size.asText();
+                LOG_DEBUG("FBO %i: stencil renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX8, GL_STENCIL_ATTACHMENT);
             }
         }

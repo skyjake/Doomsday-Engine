@@ -25,9 +25,24 @@
 
 namespace de {
 
-static int defaultSampleCount = 1;
+struct DefaultSampleCount {
+    int samples;
+
+    DENG2_DEFINE_AUDIENCE(Change, void defaultSampleCountChanged())
+
+    DefaultSampleCount() : samples(1) {}
+    void set(int value) {
+        samples = value;
+        DENG2_FOR_AUDIENCE(Change, i) {
+            i->defaultSampleCountChanged();
+        }
+    }
+};
+
+static DefaultSampleCount defaultSampleCount;
 
 DENG2_PIMPL(GLFramebuffer)
+, DENG2_OBSERVES(DefaultSampleCount, Change)
 {
     Image::Format colorFormat;
     Size size;
@@ -49,11 +64,18 @@ DENG2_PIMPL(GLFramebuffer)
         , _samples(0)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uBufTex   ("uTex",       GLUniform::Sampler2D)
-    {}
+    {
+        defaultSampleCount.audienceForChange += this;
+    }
+
+    ~Instance()
+    {
+        defaultSampleCount.audienceForChange -= this;
+    }
 
     int sampleCount() const
     {
-        if(_samples <= 0) return defaultSampleCount;
+        if(_samples <= 0) return defaultSampleCount.samples;
         return _samples;
     }
 
@@ -65,6 +87,11 @@ DENG2_PIMPL(GLFramebuffer)
             return false;
         }
         return sampleCount() > 1;
+    }
+
+    void defaultSampleCountChanged()
+    {
+        reconfigure();
     }
 
     void alloc()
@@ -264,10 +291,9 @@ bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
     LOG_AS("GLFramebuffer");
 
     int const newCount = max(1, sampleCount);
-    if(defaultSampleCount != newCount)
+    if(defaultSampleCount.samples != newCount)
     {
-        defaultSampleCount = newCount;
-        LOG_DEBUG("Default sample count is now %i") << defaultSampleCount;
+        defaultSampleCount.set(newCount);
         return true;
     }
     return false;
@@ -275,7 +301,7 @@ bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
 
 int GLFramebuffer::defaultMultisampling()
 {
-    return defaultSampleCount;
+    return defaultSampleCount.samples;
 }
 
 } // namespace de

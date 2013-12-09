@@ -707,8 +707,10 @@ bool ClientWindow::setDefaultGLFormat() // static
 
     // Configure the GL settings for all subsequently created canvases.
     QGLFormat fmt;
-    fmt.setDepthBufferSize(16);
-    fmt.setStencilBufferSize(8);
+    fmt.setDepth(false); // depth and stencil handled in GLFramebuffer
+    fmt.setStencil(false);
+    //fmt.setDepthBufferSize(16);
+    //fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
 
     if(VR::modeNeedsStereoGLFormat(VR::mode()))
@@ -742,9 +744,9 @@ bool ClientWindow::setDefaultGLFormat() // static
         sampleCount = 4; // four samples is fine?
         LOG_DEBUG("multisampling on (%i samples)") << sampleCount;
     }
-    bool const msChanged = GLFramebuffer::setDefaultMultisampling(sampleCount);
+    GLFramebuffer::setDefaultMultisampling(sampleCount);
 
-    if(fmt != QGLFormat::defaultFormat() || msChanged)
+    if(fmt != QGLFormat::defaultFormat())
     {
         LOG_DEBUG("Applying new format...");
         QGLFormat::setDefaultFormat(fmt);
