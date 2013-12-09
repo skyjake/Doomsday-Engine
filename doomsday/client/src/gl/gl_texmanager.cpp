@@ -398,4 +398,5 @@ void GL_ReleaseTexturesForRawImages()
         }
     }
     Z_Free(rawTexs);
+    LOG_MSG("All GL textures for RawTextures deleted.");
 }

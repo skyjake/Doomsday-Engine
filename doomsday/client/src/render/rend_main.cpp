@@ -412,6 +412,7 @@ void Rend_Register()
     C_CMD_FLAGS ("lowres",      "",     LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS ("mipmap",      "i",    MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS ("texreset",    "",     TexReset, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS ("texreset",    "s",    TexReset, CMDF_NO_DEDICATED);
 
     BiasIllum::consoleRegister();
     BiasSurface::consoleRegister();
@@ -423,7 +424,6 @@ void Rend_Register()
     Rend_ParticleRegister();
     Rend_RadioRegister();
     Rend_SpriteRegister();
-    //Rend_ConsoleRegister();
     LensFx_Register();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();
@@ -5223,7 +5223,7 @@ D_CMD(TexReset)
 {
     DENG2_UNUSED(src);
 
-    if(argc == 2 && !stricmp(argv[1], "raw"))
+    if(argc == 2 && !String(argv[1]).compareWithoutCase("raw"))
     {
         // Reset just raw images.
         GL_ReleaseTexturesForRawImages();
