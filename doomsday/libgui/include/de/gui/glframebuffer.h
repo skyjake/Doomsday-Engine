@@ -31,9 +31,15 @@ namespace de {
 class Canvas;
 
 /**
- * GL framebuffer.
+ * GL framebuffer that stores color, depth, and stencil values in GL textures.
+ * Automatically sets up and updates a render target where the textures are
+ * attached. Provides a way to swap the contents of the framebuffer to a
+ * Canvas's back buffer.
  *
- * Color values and depth/stencil values are written to textures.
+ * The framebuffer must be manually resized as appropriate.
+ *
+ * Supports multisampling using EXT_framebuffer_multisample and
+ * EXT_framebuffer_blit.
  */
 class LIBGUI_PUBLIC GLFramebuffer : public Asset
 {
@@ -50,6 +56,13 @@ public:
 
     void setSampleCount(int sampleCount);
     void setColorFormat(Image::Format const &colorFormat);
+
+    /**
+     * Resizes the framebuffer's textures. If the new size is the same as the
+     * current one, nothing happens.
+     *
+     * @param newSize  New size for the framebuffer.
+     */
     void resize(Size const &newSize);
 
     Size size() const;

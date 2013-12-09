@@ -358,14 +358,18 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         if(!proxy) return;
 
+        /// @todo Ensure this only occurs iff the target contents have changed. -jk
+
+#ifdef _DEBUG
         if(!flags.testFlag(Changed))
         {
             qDebug() << "GLTarget: " << fbo << "being updated from proxy without Changed flag (!)";
         }
+#endif
 
         //if(flags.testFlag(Changed))
         {
-            proxy->blit(self);
+            proxy->blit(self, ColorDepth);
             flags &= ~Changed;
         }
     }
@@ -593,7 +597,7 @@ void GLTarget::updateFromProxy()
     d->updateFromProxy();
 }
 
-void GLTarget::blit(GLTarget &dest) const
+void GLTarget::blit(GLTarget &dest, Flags const &attachments, gl::Filter filtering) const
 {
     //qDebug() << "GLTarget: blit from" << d->fbo << "to" << dest.glName();
 
@@ -608,15 +612,14 @@ void GLTarget::blit(GLTarget &dest) const
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
     LIBGUI_ASSERT_GL_OK();
 
-    Flags common = d->flags & dest.flags();
+    Flags common = d->flags & dest.flags() & attachments;
 
     glBlitFramebufferEXT(0, 0, size().x, size().y,
                          0, 0, dest.size().x, dest.size().y,
-                         !dest.glName()? GL_COLOR_BUFFER_BIT /* only color to system backbuffer */ :
-                         ((common.testFlag(Color)?   GL_COLOR_BUFFER_BIT   : 0) |
-                          (common.testFlag(Depth)?   GL_DEPTH_BUFFER_BIT   : 0) |
-                          (common.testFlag(Stencil)? GL_STENCIL_BUFFER_BIT : 0)),
-                         GL_NEAREST);
+                         (common.testFlag(Color)?   GL_COLOR_BUFFER_BIT   : 0) |
+                         (common.testFlag(Depth)?   GL_DEPTH_BUFFER_BIT   : 0) |
+                         (common.testFlag(Stencil)? GL_STENCIL_BUFFER_BIT : 0),
+                         filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
     LIBGUI_ASSERT_GL_OK();
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, 0);

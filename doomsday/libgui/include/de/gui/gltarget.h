@@ -30,10 +30,9 @@
 
 #include "libgui.h"
 #include "opengl.h"
+#include "../GLTexture"
 
 namespace de {
-
-class GLTexture;
 
 /**
  * GL render target.
@@ -275,9 +274,12 @@ public:
     /**
      * Blits this target's contents to the @a copy target.
      *
-     * @param dest  Target where to copy this target's contents.
+     * @param dest         Target where to copy this target's contents.
+     * @param attachments  Which attachments to blit.
+     * @param filtering    Filtering to use if source and destinations sizes
+     *                     aren't the same.
      */
-    void blit(GLTarget &dest) const;
+    void blit(GLTarget &dest, Flags const &attachments = Color, gl::Filter filtering = gl::Nearest) const;
 
     /**
      * Sets the subregion inside the render target where scissor and viewport
