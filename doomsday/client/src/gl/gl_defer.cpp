@@ -298,6 +298,8 @@ void GL_ShutdownDeferredTask(void)
 
     Sys_DestroyMutex(deferredMutex);
     deferredMutex = 0;
+
+    inited = false;
 }
 
 int GL_DeferredTaskCount(void)

@@ -42,6 +42,8 @@
 
 #include "api_internaldata.h"
 
+#include <de/String>
+
 /*
  * The game imports and exports.
  */
@@ -71,17 +73,16 @@ int DD_CheckArg(char const *tag, const char** value)
 }
 
 #ifdef __CLIENT__
-void DD_ComposeMainWindowTitle(char* title)
+de::String DD_ComposeMainWindowTitle()
 {
+    de::String title = DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT;
+
     if(App_GameLoaded() && gx.GetVariable)
     {
-        sprintf(title, "%s - " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT,
-                Str_Text(App_CurrentGame().title()));
+        title = de::String(Str_Text(App_CurrentGame().title())) + " - " + title;
     }
-    else
-    {
-        strcpy(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT);
-    }
+
+    return title;
 }
 #endif
 

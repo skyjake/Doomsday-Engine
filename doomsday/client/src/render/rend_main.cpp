@@ -27,8 +27,8 @@
 #include <QBitArray>
 
 #include <de/vector1.h>
-
 #include <de/libdeng2.h>
+#include <de/GLState>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -73,6 +73,8 @@
 #include "render/blockmapvisual.h"
 #include "render/sprite.h"
 #include "render/vissprite.h"
+#include "render/fx/vignette.h"
+#include "render/fx/lensflares.h"
 #include "render/vr.h"
 
 #include "gl/sys_opengl.h"
@@ -340,7 +342,9 @@ void Rend_Register()
     Rend_RadioRegister();
     Rend_SpriteRegister();
     //Rend_ConsoleRegister();
-    Vignette_Register();
+    LensFx_Register();
+    fx::Vignette::consoleRegister();
+    fx::LensFlares::consoleRegister();
     VR::consoleRegister();
 }
 
@@ -413,9 +417,9 @@ float Rend_FieldOfView()
     }
 }
 
-void Rend_ModelViewMatrix(bool useAngles)
+Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
 {
-    viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
+    viewdata_t const *viewData = R_ViewData(consoleNum);
 
     vOrigin[VX] = viewData->current.origin[VX];
     vOrigin[VY] = viewData->current.origin[VZ];
@@ -423,11 +427,8 @@ void Rend_ModelViewMatrix(bool useAngles)
     vang = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
     vpitch = viewData->current.pitch * 85.0 / 110.0;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    Matrix4f modelView;
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
     if(useAngles)
     {
         bool scheduledLate = false;
@@ -494,16 +495,27 @@ void Rend_ModelViewMatrix(bool useAngles)
             }
         }
 
-        glRotatef(roll, 0, 0, 1); // Pitch
-        glRotatef(pitch, 1, 0, 0); // Pitch
-        glRotatef(yaw, 0, 1, 0); // Yaw
+        modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
+                    Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
+                    Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
 
         storedRoll = roll;
         storedPitch = pitch;
         storedYaw = yaw;
     }
-    glScalef(1, 1.2f, 1);      // This is the aspect correction.
-    glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
+
+    return (modelView *
+            Matrix4f::scale(Vector3f(1.0f, 1.2f, 1.0f)) * // This is the aspect correction.
+            Matrix4f::translate(-Vector3f(vOrigin[VX], vOrigin[VY], vOrigin[VZ])));
+}
+
+void Rend_ModelViewMatrix(bool useAngles)
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(Rend_GetModelViewMatrix(viewPlayer - ddPlayers, useAngles).values());
 }
 
 static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)
@@ -2749,9 +2761,9 @@ static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
     BspLeaf const *leaf = currentBspLeaf;
     SectorCluster &cluster = leaf->cluster();
 
-    if(mo.addFrameCount != frameCount)
+    if(mo.addFrameCount != R_FrameCount())
     {
-        mo.addFrameCount = frameCount;
+        mo.addFrameCount = R_FrameCount();
 
         R_ProjectSprite(&mo);
 
@@ -2786,12 +2798,12 @@ static void projectLeafSprites()
     BspLeaf *leaf = currentBspLeaf;
 
     // Do not use validCount because other parts of the renderer may change it.
-    if(leaf->lastSpriteProjectFrame() == frameCount)
+    if(leaf->lastSpriteProjectFrame() == R_FrameCount())
         return; // Already added.
 
     R_BspLeafMobjContactIterator(*leaf, projectSpriteWorker);
 
-    leaf->setLastSpriteProjectFrame(frameCount);
+    leaf->setLastSpriteProjectFrame(R_FrameCount());
 }
 
 /**
@@ -2924,6 +2936,8 @@ static void generateDecorationFlares(Map &map)
     foreach(Lumobj *lum, map.lumobjs())
     {
         lum->generateFlare(viewPos, R_ViewerLumobjDistance(lum->indexInMap()));
+
+        /// @todo mark these light sources visible for LensFx
     }
 }
 
@@ -3387,8 +3401,7 @@ static void drawSky()
 
     // We do not want to update color and/or depth.
     glDisable(GL_DEPTH_TEST);
-    glPushAttrib(GL_COLOR_BUFFER_BIT); // Stereo 3D
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    GLState::push().setColorMask(gl::WriteNone).apply();
 
     // Mask out stencil buffer, setting the drawn areas to 1.
     glEnable(GL_STENCIL_TEST);
@@ -3406,7 +3419,7 @@ static void drawSky()
     }
 
     // Restore previous GL state.
-    glPopAttrib();
+    GLState::pop().apply();
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
 

@@ -476,7 +476,7 @@ void Drawable::draw() const
     GLState   const *currentState   = 0;
 
     // Make sure the GL state on the top of the stack is in effect.
-    GLState::top().apply();
+    GLState::current().apply();
 
     DENG2_FOR_EACH_CONST(Instance::Buffers, i, d->buffers)
     {
@@ -503,7 +503,7 @@ void Drawable::draw() const
         {
             // Use the current state from the stack.
             currentState = 0;
-            GLState::top().apply();
+            GLState::current().apply();
         }
 
         // Ready to draw.
@@ -518,7 +518,7 @@ void Drawable::draw() const
     if(currentState)
     {
         // We messed with the state; restore to what the stack says is current.
-        GLState::top().apply();
+        GLState::current().apply();
     }
 }
 

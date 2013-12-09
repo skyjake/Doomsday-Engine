@@ -39,8 +39,11 @@
 #include "resource/sprites.h"
 
 #include "render/vissprite.h"
-
 #include "render/sprite.h"
+
+#include <de/GLState>
+#include <de/GLTarget>
+#include <de/GLTexture>
 
 using namespace de;
 
@@ -104,9 +107,8 @@ void Rend_Draw3DPlayerSprites()
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
-    // Clear Z buffer. This will prevent the psprites from being clipped
-    // by nearby polygons.
-    glClear(GL_DEPTH_BUFFER_BIT);
+    static GLTexture localDepth; // note: static!
+    GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth, GLTarget::DepthStencil);
 
     rendmodelparams_t parm;
     for(int i = 0; i < DDMAXPSPRITES; ++i)
@@ -114,6 +116,12 @@ void Rend_Draw3DPlayerSprites()
         vispsprite_t *spr = &visPSprites[i];
 
         if(spr->type != VPSPR_MODEL) continue; // Not used.
+
+        if(altDepth.init())
+        {
+            // Clear the depth before first use.
+            altDepth.target().clear(GLTarget::DepthStencil);
+        }
 
         setupModelParamsForVisPSprite(&parm, spr);
         Rend_RenderModel(&parm);

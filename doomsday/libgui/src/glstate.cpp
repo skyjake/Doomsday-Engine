@@ -38,6 +38,7 @@ namespace internal
         BlendFuncSrc,
         BlendFuncDest,
         BlendOp,
+        ColorMask,
         Scissor,
         ScissorX,
         ScissorY,
@@ -62,7 +63,46 @@ namespace internal
 
     /// Currently applied GL state properties.
     static BitField currentProps;
-    static GLTarget *currentTarget;
+
+    /// Observes the current target and clears the pointer if it happens to get
+    /// deleted.
+    class CurrentTarget : DENG2_OBSERVES(Asset, Deletion) {
+        GLTarget *_target;
+        void assetDeleted(Asset &asset) {
+            if(&asset == _target) {
+                qDebug() << "GLState: Current target destroyed, clearing pointer";
+                _target = 0;
+            }
+        }
+    public:
+        CurrentTarget() : _target(0) {}
+        ~CurrentTarget() {
+            set(0);
+        }
+        void set(GLTarget *trg) {
+            if(_target) {
+                _target->audienceForDeletion -= this;
+            }
+            _target = trg;
+            if(_target) {
+                _target->audienceForDeletion += this;
+            }
+        }
+        CurrentTarget &operator = (GLTarget *trg) {
+            set(trg);
+            return *this;
+        }
+        bool operator != (GLTarget *trg) const {
+            return _target != trg;
+        }
+        GLTarget *get() const {
+            return _target;
+        }
+        operator GLTarget *() const {
+            return _target;
+        }
+    };
+    static CurrentTarget currentTarget;
 }
 
 using namespace internal;
@@ -83,6 +123,7 @@ DENG2_PIMPL(GLState)
             { BlendFuncSrc,   4  },
             { BlendFuncDest,  4  },
             { BlendOp,        2  },
+            { ColorMask,      4  },
             { Scissor,        1  },
             { ScissorX,       12 }, // 12 bits == 4096 max
             { ScissorY,       12 },
@@ -204,6 +245,16 @@ DENG2_PIMPL(GLState)
             }
             break;
 
+        case ColorMask:
+        {
+            gl::ColorMask const mask = self.colorMask();
+            glColorMask((mask & gl::WriteRed)   != 0,
+                        (mask & gl::WriteGreen) != 0,
+                        (mask & gl::WriteBlue)  != 0,
+                        (mask & gl::WriteAlpha) != 0);
+            break;
+        }
+
         case Scissor:
         case ScissorX:
         case ScissorY:
@@ -289,6 +340,7 @@ GLState::GLState() : d(new Instance(this))
     setBlend     (true);
     setBlendFunc (gl::One, gl::Zero);
     setBlendOp   (gl::Add);
+    setColorMask (gl::WriteAll);
 
     setDefaultTarget();
 }
@@ -349,6 +401,12 @@ GLState &GLState::setBlendFunc(gl::BlendFunc func)
 GLState &GLState::setBlendOp(gl::BlendOp op)
 {
     d->props.set(BlendOp, duint(op));
+    return *this;
+}
+
+GLState &GLState::setColorMask(gl::ColorMask mask)
+{
+    d->props.set(ColorMask, duint(mask));
     return *this;
 }
 
@@ -473,6 +531,11 @@ gl::BlendOp GLState::blendOp() const
     return d->props.valueAs<gl::BlendOp>(BlendOp);
 }
 
+gl::ColorMask GLState::colorMask() const
+{
+    return d->props.valueAs<gl::ColorMask>(ColorMask);
+}
+
 GLTarget &GLState::target() const
 {
     if(d->target)
@@ -507,18 +570,22 @@ void GLState::apply() const
 {
     bool forceViewportAndScissor = false;
 
-
     // Update the render target.
-    if(currentTarget != d->target)
+    GLTarget *newTarget = &target();
+    DENG2_ASSERT(newTarget != 0);
+
+    if(currentTarget != newTarget)
     {
-        GLTarget const &oldTarget = (currentTarget? *currentTarget :
-                                     CanvasWindow::main().canvas().renderTarget());
+        GLTarget const *oldTarget = currentTarget;
+        if(oldTarget)
+        {
+            oldTarget->glRelease();
+        }
 
-        if(currentTarget) currentTarget->glRelease();
-        currentTarget = d->target;
-        if(currentTarget) currentTarget->glBind();
+        currentTarget = newTarget;
+        currentTarget.get()->glBind();
 
-        if(oldTarget.hasActiveRect() || target().hasActiveRect())
+        if((oldTarget && oldTarget->hasActiveRect()) || newTarget->hasActiveRect())
         {
             // We can't trust that the viewport or scissor can remain the same
             // as the active rectangle may have changed.
@@ -564,7 +631,7 @@ void GLState::considerNativeStateUndefined()
     currentTarget = 0;
 }
 
-GLState &GLState::top()
+GLState &GLState::current()
 {
     DENG2_ASSERT(!stack.isEmpty());
     return *stack.last();
@@ -573,14 +640,14 @@ GLState &GLState::top()
 GLState &GLState::push()
 {
     // Duplicate the topmost state.
-    push(new GLState(top()));
-    return top();
+    push(new GLState(current()));
+    return current();
 }
 
 GLState &GLState::pop()
 {
     delete take();
-    return top();
+    return current();
 }
 
 void GLState::push(GLState *state)

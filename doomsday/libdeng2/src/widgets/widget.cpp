@@ -396,12 +396,20 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
         {
             // The list of children was modified; let's update the current
             // index accordingly.
-            idx = d->children.indexOf(i);
+            int newIdx = d->children.indexOf(i);
 
-            // The current widget cannot be removed.
-            DENG2_ASSERT(idx >= 0);
-
-            i = d->children.at(idx);
+            // The current widget remains in the tree.
+            if(newIdx >= 0)
+            {
+                idx = newIdx;
+                i = d->children.at(newIdx);
+            }
+            else
+            {
+                // The current widget is gone. Continue with the same index.
+                idx--;
+                continue;
+            }
         }
 
         // Continue down the tree by notifying any children of this widget.

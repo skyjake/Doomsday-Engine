@@ -35,6 +35,17 @@ class GLTarget;
 
 namespace gl
 {
+    enum ColorMaskFlag {
+        WriteNone  = 0,
+        WriteRed   = 0x1,
+        WriteGreen = 0x2,
+        WriteBlue  = 0x4,
+        WriteAlpha = 0x8,
+        WriteAll   = WriteRed | WriteGreen | WriteBlue | WriteAlpha
+    };
+    Q_DECLARE_FLAGS(ColorMask, ColorMaskFlag)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(ColorMask)
+
     enum Comparison {
         Never,
         Always,
@@ -107,12 +118,16 @@ public:
     GLState &setBlendFunc(gl::Blend src, gl::Blend dest);
     GLState &setBlendFunc(gl::BlendFunc func);
     GLState &setBlendOp(gl::BlendOp op);
+    GLState &setColorMask(gl::ColorMask mask);
     GLState &setTarget(GLTarget &target);
     GLState &setDefaultTarget();
     GLState &setViewport(Rectangleui const &viewportRect);
 
     /**
-     * Sets a viewport that is normalized within the current render target.
+     * Sets a viewport using coordinates that have been normalized within the
+     * current render target. This is useful for operations that should be
+     * independent of target size.
+     *
      * @param normViewportRect  Normalized viewport rectangle.
      */
     GLState &setNormalizedViewport(Rectanglef const &normViewportRect);
@@ -121,7 +136,9 @@ public:
     GLState &setScissor(Rectangleui const &scissorRect);
 
     /**
-     * Sets a scissor that is normalized within the current viewport.
+     * Sets a scissor using coordinates that have been normalized within the
+     * current viewport.
+     *
      * @param normScissorRect  Normalized scissor rectangle.
      */
     GLState &setNormalizedScissor(Rectanglef const &normScissorRect);
@@ -137,6 +154,7 @@ public:
     gl::Blend destBlendFunc() const;
     gl::BlendFunc blendFunc() const;
     gl::BlendOp blendOp() const;
+    gl::ColorMask colorMask() const;
     GLTarget &target() const;
     Rectangleui viewport() const;
     bool scissor() const;
@@ -157,13 +175,16 @@ public:
      * Tells GLState to consider the native OpenGL state undefined, meaning
      * that when the next GLState is applied, all properties need to be set
      * rather than just the changed ones.
+     *
+     * @todo Remove this once all direct OpenGL state changes have been
+     * removed.
      */
     static void considerNativeStateUndefined();
 
     /**
-     * Returns the current topmost state on the GL state stack.
+     * Returns the current (i.e., topmost) state on the GL state stack.
      */
-    static GLState &top();
+    static GLState &current();
 
     /**
      * Pushes a copy of the current state onto the current thread's GL state

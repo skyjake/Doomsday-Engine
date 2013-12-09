@@ -185,9 +185,11 @@ static void baseTicker(timespan_t time)
             // Set frametime back by one tick (to stay in the 0..1 range).
             realFrameTimePos -= 1;
 
+#ifdef __CLIENT__
             // Camera smoothing: now that the world tic has occurred, the next sharp
             // position can be processed.
             R_NewSharpWorld();
+#endif
 
 #ifdef LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
             if(ddPlayers[0].shared.inGame && ddPlayers[0].shared.mo)

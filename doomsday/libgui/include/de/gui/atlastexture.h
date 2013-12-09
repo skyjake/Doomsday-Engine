@@ -44,6 +44,9 @@ public:
     static AtlasTexture *newWithRowAllocator(Atlas::Flags const &flags = DefaultFlags,
                                              Atlas::Size const &totalSize = Atlas::Size());
 
+    static AtlasTexture *newWithKdTreeAllocator(Atlas::Flags const &flags = DefaultFlags,
+                                                Atlas::Size const &totalSize = Atlas::Size());
+
     void clear();
 
 protected:

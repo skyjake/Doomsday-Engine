@@ -25,6 +25,7 @@
 #endif
 
 #include <de/Vector>
+#include <de/Matrix>
 
 #include "dd_types.h"
 #include "def_main.h"
@@ -132,6 +133,8 @@ float Rend_FieldOfView();
  * @param useAngles  @c true= Apply viewer angle rotation.
  */
 void Rend_ModelViewMatrix(bool useAngles = true);
+
+de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles = true);
 
 #define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-(c)[VY])*viewsidex - (vOrigin[VX]-(c)[VX])*viewsidey))
 

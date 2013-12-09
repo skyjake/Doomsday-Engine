@@ -433,6 +433,8 @@ void R_ProjectSprite(mobj_t *mo)
     // Do we need to project a flare source too?
     if(mo->lumIdx != Lumobj::NoIndex)
     {
+        /// @todo mark this light source visible for LensFx
+
         Material *mat = SpriteFrame_Material(*sprFrame, mo->angle, R_ViewPointToAngle(mo->origin));
         if(!mat) return;
 

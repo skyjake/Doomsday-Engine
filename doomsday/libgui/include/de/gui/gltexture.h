@@ -26,6 +26,7 @@
 #include "libgui.h"
 #include "opengl.h"
 #include "../Image"
+#include "../GLPixelFormat"
 
 namespace de {
 
@@ -150,6 +151,12 @@ public:
      */
     void setUndefinedImage(gl::CubeFace face, Size const &size, Image::Format format, int level = 0);
 
+    void setUndefinedContent(Size const &size, GLPixelFormat const &glFormat, int level = 0);
+
+    void setUndefinedContent(gl::CubeFace face, Size const &size, GLPixelFormat const &glFormat, int level = 0);
+
+    void setDepthStencilContent(Size const &size);
+
     /**
      * Sets the image content of the texture at a particular level. The format
      * of the image determines which GL format is chosen for the texture.
@@ -212,6 +219,12 @@ public:
     GLuint glName() const;
 
     void glBindToUnit(int unit) const;
+
+    /**
+     * Returns the image format that was specified when image content was put
+     * into the texture (with setImage() or setSubImage()).
+     */
+    Image::Format imageFormat() const;
 
 public:
     /**

@@ -56,6 +56,9 @@ HEADERS += \
     include/de/Font \
     include/de/FontBank \
     include/de/GLBuffer \
+    include/de/GLFramebuffer \
+    include/de/GLInfo \
+    include/de/GLPixelFormat \
     include/de/GLProgram \
     include/de/GLShader \
     include/de/GLShaderBank \
@@ -66,6 +69,7 @@ HEADERS += \
     include/de/GuiApp \
     include/de/Image \
     include/de/ImageBank \
+    include/de/KdTreeAtlasAllocator \
     include/de/KeyEvent \
     include/de/KeyEventSource \
     include/de/MouseEvent \
@@ -87,6 +91,9 @@ HEADERS += \
     include/de/gui/fontbank.h \
     include/de/gui/glbuffer.h \
     include/de/gui/glentrypoints.h \
+    include/de/gui/glframebuffer.h \
+    include/de/gui/glinfo.h \
+    include/de/gui/glpixelformat.h \
     include/de/gui/glprogram.h \
     include/de/gui/glshader.h \
     include/de/gui/glshaderbank.h \
@@ -97,6 +104,7 @@ HEADERS += \
     include/de/gui/guiapp.h \
     include/de/gui/image.h \
     include/de/gui/imagebank.h \
+    include/de/gui/kdtreeatlasallocator.h \
     include/de/gui/keyevent.h \
     include/de/gui/keyeventsource.h \
     include/de/gui/libgui.h \
@@ -120,16 +128,20 @@ SOURCES +=  \
     src/fontbank.cpp \
     src/glbuffer.cpp \
     src/glentrypoints.cpp \
+    src/glframebuffer.cpp \
+    src/glinfo.cpp \
     src/glprogram.cpp \
     src/glshader.cpp \
     src/glshaderbank.cpp \
     src/glstate.cpp \
     src/gltarget.cpp \
+    src/gltarget_alternativebuffer.cpp \
     src/gltexture.cpp \
     src/gluniform.cpp \
     src/guiapp.cpp \
     src/image.cpp \
     src/imagebank.cpp \
+    src/kdtreeatlasallocator.cpp \
     src/keyevent.cpp \
     src/mouseevent.cpp \
     src/persistentcanvaswindow.cpp \

@@ -330,6 +330,22 @@ public:
         m[14]      = -(farDistance + nearDistance)   / (farDistance - nearDistance);
         return m;
     }
+    static Matrix4 frustum(Type left, Type right, Type bottom, Type top, Type zNear, Type zFar) {
+        // This is identical to glFrustum.
+        Type const A = (right + left) / (right - left);
+        Type const B = (top + bottom) / (top - bottom);
+        Type const C = - (zFar + zNear) / (zFar - zNear);
+        Type const D = - (Type(2) * zFar * zNear) / (zFar - zNear);
+        Matrix4 m(Zero);
+        m.at(0, 0) = (Type(2) * zNear) / (right - left);
+        m.at(1, 1) = (Type(2) * zNear) / (top - bottom);
+        m.at(0, 2) = A;
+        m.at(1, 2) = B;
+        m.at(2, 2) = C;
+        m.at(3, 2) = -Type(1);
+        m.at(2, 3) = D;
+        return m;
+    }
     static Matrix4 perspective(Type fov, Type aspectRatio, Type nearDistance = 1.f, Type farDistance = 1000.f) {
         Type const halfWidth  = std::tan(Type(.5) * degreeToRadian(fov));
         Type const halfHeight = halfWidth / aspectRatio;

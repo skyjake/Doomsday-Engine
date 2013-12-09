@@ -129,7 +129,6 @@ DENG2_PIMPL(ClientApp)
     RenderSystem *renderSys;
     WindowSystem *winSys;
     ServerLink *svLink;
-    GLShaderBank shaderBank;
     Games games;
     World world;
 
@@ -137,8 +136,8 @@ DENG2_PIMPL(ClientApp)
         : Base(i),
           menuBar(0),
           inputSys(0),
-          winSys(0),
           renderSys(0),
+          winSys(0),
           svLink(0)
     {
         clientAppSingleton = thisPublic;
@@ -263,14 +262,9 @@ void ClientApp::initialize()
     }
 #endif
 
-    // Load all the shader program definitions.
-    FS::FoundFiles found;
-    fileSystem().findAll("shaders.dei", found);
-    DENG2_FOR_EACH(FS::FoundFiles, i, found)
-    {
-        LOG_MSG("Loading shader definitions from %s") << (*i)->description();
-        d->shaderBank.addFromInfo(**i);
-    }
+    // Create the render system.
+    d->renderSys = new RenderSystem;
+    addSystem(*d->renderSys);
 
     // Create the window system.
     d->winSys = new WindowSystem;
@@ -283,18 +277,12 @@ void ClientApp::initialize()
     Plug_LoadAll();
 
     // Create the main window.
-    char title[256];
-    DD_ComposeMainWindowTitle(title);
-    d->winSys->createWindow()->setWindowTitle(title);
+    d->winSys->createWindow()->setWindowTitle(DD_ComposeMainWindowTitle());
 
     // Create the input system.
     d->inputSys = new InputSystem;
     addSystem(*d->inputSys);
     d->widgetActions.reset(new WidgetActions);
-
-    // Create the render system.
-    d->renderSys = new RenderSystem;
-    addSystem(*d->renderSys);
 
     // Finally, run the bootstrap script.
     scriptSystem().importModule("bootstrap");
@@ -382,11 +370,6 @@ WindowSystem &ClientApp::windowSystem()
 WidgetActions &ClientApp::widgetActions()
 {
     return *app().d->widgetActions;
-}
-
-GLShaderBank &ClientApp::glShaderBank()
-{
-    return app().d->shaderBank;
 }
 
 Games &ClientApp::games()

@@ -808,9 +808,9 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
                             gl::ClampToEdge, gl::ClampToEdge);
 
-    GLState::top().setBlendFunc(bright? gl::SrcAlpha : gl::Zero,
+    GLState::current().setBlendFunc(bright? gl::SrcAlpha : gl::Zero,
                                 bright? gl::One : gl::OneMinusSrcAlpha)
-                  .apply();
+                      .apply();
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
@@ -823,8 +823,8 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
         glVertex2f(x, y + h);
     glEnd();
 
-    GLState::top().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
-                  .apply();
+    GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
+                      .apply();
 }
 
 /**

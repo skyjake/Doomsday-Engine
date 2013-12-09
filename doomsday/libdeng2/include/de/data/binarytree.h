@@ -68,14 +68,21 @@ public:
      * @param right     Right child of this node. This node takes ownership.
      * @param left      Left child of this node. This node takes ownership.
      */
-    BinaryTree(Type const &userData, BinaryTree *parent=0, BinaryTree *right=0, BinaryTree *left=0)
-        : _parent(parent), _rightChild(right), _leftChild(left), _userDataValue(userData)
-    {}
+    BinaryTree(Type const &userData = Type(), BinaryTree *parent = 0, BinaryTree *right = 0, BinaryTree *left = 0)
+        : _parent(parent), _rightChild(right), _leftChild(left), _userDataValue(userData) {}
 
     virtual ~BinaryTree()
     {
-        if(_rightChild) delete _rightChild;
-        if(_leftChild)  delete _leftChild;
+        clear();
+    }
+
+    /**
+     * Removes both branches of the tree.
+     */
+    void clear()
+    {
+        delete _rightChild; _rightChild = 0;
+        delete _leftChild;  _leftChild  = 0;
     }
 
     /**
@@ -309,8 +316,10 @@ public:
     BinaryTree &setChild(ChildId child, BinaryTree *subtree)
     {
         assertValidChildId(child);
-        if(child) _leftChild  = subtree;
-        else      _rightChild = subtree;
+        if(child == Left)
+            _leftChild = subtree;
+        else
+            _rightChild = subtree;
         return *this;
     }
 
@@ -331,6 +340,34 @@ public:
             return (right > left? right : left) + 1;
         }
         return 0;
+    }
+
+    /**
+     * Makes a copy of another tree. The structure of the other tree is
+     * duplicated in full, with copies of its user data.
+     *
+     * @param other  Tree to make copy of.
+     */
+    BinaryTree &operator = (BinaryTree const &other)
+    {
+        // Remove old children.
+        clear();
+
+        setUserData(other.userData());
+
+        if(other.hasLeft())
+        {
+            setLeft(new BinaryTree);
+            left() = other.left();
+            left().setParent(this);
+        }
+        if(other.hasRight())
+        {
+            setRight(new BinaryTree);
+            right() = other.right();
+            right().setParent(this);
+        }
+        return *this;
     }
 
     /**

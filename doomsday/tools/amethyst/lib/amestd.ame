@@ -105,6 +105,9 @@ $ mailto: link.
 	}
 }
 
+$ Executable/binary file.
+@macro{bin}{@strong{@arg}}
+
 $ Document header and any output language specific things.
 @macro{begin}{
 	@ifdef{HTML}{
@@ -183,6 +186,24 @@ $ Specify an author with contact information. (Manual page only.)
     }
 }
 
+@macro{ident}{
+    @ifdef{WIKI}{@{@{Identifier|@glue{@arg}@}@}}
+    @else{
+        @ifdef{HELP}{@arg}
+        @else{@cmd{@arg}}
+    }
+}
+
+@macro{help_arg}{
+    @ifdef{WIKI}{@{@{Argument|@glue{@arg}@}@}}
+    @else{(@arg{})}
+}
+
+@macro{help_optionalarg}{
+    @ifdef{WIKI}{@{@{Optional|@glue{@help_arg{@arg}}@}@}}
+    @else{[@help_arg{@arg}]}
+}
+
 $ Makes a special note.
 @macro{notice}{
 	@ifdef{HTML}{
@@ -204,4 +225,7 @@ $ Doomsday Engine Wiki specific macros.
 @ifdef{TXT}{
 	$ Omit the hyperlinks in TXT files.
 	@macro{wikilink}{@arg}
+}
+@ifdef{HELP}{
+    @macro{wikiterm}{@dquote{@arg} in wiki}
 }

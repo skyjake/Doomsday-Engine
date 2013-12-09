@@ -1,4 +1,4 @@
-/** @file glentrypoints.cpp  API entry points for OpenGL (Windows).
+/** @file glentrypoints.cpp  API entry points for OpenGL (Windows/Linux).
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,9 +17,11 @@
  */
 
 #include "de/gui/glentrypoints.h"
-#include <de/Log>
+#include <de/GLInfo>
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
+
+using namespace de;
 
 #ifdef UNIX
 #  include <GL/glx.h>
@@ -31,6 +33,10 @@ PFNGLBLENDEQUATIONPROC            glBlendEquation;
 PFNGLCLIENTACTIVETEXTUREPROC      glClientActiveTexture;
 PFNGLMULTITEXCOORD2FPROC          glMultiTexCoord2f;
 PFNGLMULTITEXCOORD2FVPROC         glMultiTexCoord2fv;
+#endif
+
+#ifdef WIN32
+PFNWGLGETEXTENSIONSSTRINGARBPROC  wglGetExtensionsStringARB;
 #endif
 
 PFNGLATTACHSHADERPROC             glAttachShader;
@@ -91,20 +97,26 @@ PFNGLUSEPROGRAMPROC               glUseProgram;
 
 PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
+// Extensions:
+
+PFNGLBLITFRAMEBUFFEREXTPROC                 glBlitFramebufferEXT;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC  glRenderbufferStorageMultisampleEXT;
+
 void getAllOpenGLEntryPoints()
 {
     static bool haveProcs = false;
     if(haveProcs) return;
 
 #ifdef WIN32
-#  define GET_PROC(name) *((void**)&name) = wglGetProcAddress(#name); DENG2_ASSERT(name != 0)
+#  define GET_PROC_EXT(name) *((void**)&name) = wglGetProcAddress(#name)
 #else
-#  define GET_PROC(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name); DENG2_ASSERT(name != 0)
+#  define GET_PROC_EXT(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name)
 #endif
 
-    LOG_AS("getAllOpenGLEntryPoints");
+#define GET_PROC(name) GET_PROC_EXT(name); DENG2_ASSERT(name != 0) // must have
 
-    LOG_VERBOSE("GL_VERSION: ") << (char const *) glGetString(GL_VERSION);
+    //LOG_AS("getAllOpenGLEntryPoints");
+    //LOG_VERBOSE("GL_VERSION: ") << (char const *) glGetString(GL_VERSION);
 
 #ifdef LIBGUI_FETCH_GL_1_3
     GET_PROC(glActiveTexture);
@@ -112,6 +124,10 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glClientActiveTexture);
     GET_PROC(glMultiTexCoord2f);
     GET_PROC(glMultiTexCoord2fv);
+#endif
+
+#ifdef WIN32
+    GET_PROC(wglGetExtensionsStringARB);
 #endif
 
     GET_PROC(glAttachShader);
@@ -159,6 +175,9 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glUniformMatrix4fv);
     GET_PROC(glUseProgram);
     GET_PROC(glVertexAttribPointer);
+
+    GET_PROC_EXT(glBlitFramebufferEXT);
+    GET_PROC_EXT(glRenderbufferStorageMultisampleEXT);
 
     haveProcs = true;
 }

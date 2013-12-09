@@ -27,6 +27,7 @@
 #include "gl/sys_opengl.h"
 
 #include <de/libdeng2.h>
+#include <de/GLInfo>
 #include <de/GLState>
 #include <QSet>
 #include <QStringList>
@@ -55,39 +56,11 @@ static boolean doneEarlyInit = false;
 static boolean inited = false;
 static boolean firstTimeInit = true;
 
-#if WIN32
-static PROC wglGetExtString;
-#endif
-
-static int query(const char* ext)
-{
-    int result = 0;
-    assert(ext);
-
-#if WIN32
-    // Prefer the wgl-specific extensions.
-    if(wglGetExtString)
-    {
-        const GLubyte* extensions =
-            ((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC());
-        result = (Sys_GLQueryExtension(ext, extensions)? 1 : 0);
-    }
-#endif
-
-    if(!result)
-        result = (Sys_GLQueryExtension(ext, glGetString(GL_EXTENSIONS))? 1 : 0);
-    return result;
-}
-
 static void initialize(void)
 {
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &GL_state.maxTexSize);
+    de::GLInfo::Extensions const &ext = de::GLInfo::extensions();
 
-#ifdef WIN32
-    wglGetExtString = wglGetProcAddress("wglGetExtensionsStringARB");
-#endif
-
-    if(0 != (GL_state.extensions.lockArray = query("GL_EXT_compiled_vertex_array")))
+    if(ext.EXT_compiled_vertex_array)
     {
 #ifdef LIBGUI_USE_GLENTRYPOINTS
         GETPROC(PFNGLLOCKARRAYSEXTPROC, glLockArraysEXT);
@@ -96,25 +69,29 @@ static void initialize(void)
             GL_state.features.elementArrays = false;
 #endif
     }
+
     if(CommandLine_Exists("-vtxar") && !CommandLine_Exists("-novtxar"))
-        GL_state.features.elementArrays = true;
-
-    if(0 != (GL_state.extensions.texFilterAniso = query("GL_EXT_texture_filter_anisotropic")))
     {
-        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &GL_state.maxTexFilterAniso);
+        GL_state.features.elementArrays = true;
     }
+
     if(CommandLine_Exists("-noanifilter"))
+    {
         GL_state.features.texFilterAniso = false;
+    }
 
-    GL_state.extensions.texNonPowTwo = query("GL_ARB_texture_non_power_of_two");
-    if(!GL_state.extensions.texNonPowTwo || CommandLine_Exists("-notexnonpow2") || CommandLine_Exists("-notexnonpowtwo"))
+    if(!ext.ARB_texture_non_power_of_two ||
+       CommandLine_Exists("-notexnonpow2") ||
+       CommandLine_Exists("-notexnonpowtwo"))
+    {
         GL_state.features.texNonPowTwo = false;
+    }
 
-    if(0 != (GL_state.extensions.blendSub = query("GL_EXT_blend_subtract")))
+    if(ext.EXT_blend_subtract)
     {
 #ifdef LIBGUI_USE_GLENTRYPOINTS
         GETPROC(PFNGLBLENDEQUATIONEXTPROC, glBlendEquationEXT);
-        if(NULL == glBlendEquationEXT)
+        if(!glBlendEquationEXT)
             GL_state.features.blendSubtract = false;
 #endif
     }
@@ -123,19 +100,9 @@ static void initialize(void)
         GL_state.features.blendSubtract = false;
     }
 
-    // ARB_texture_env_combine
-    if(0 == (GL_state.extensions.texEnvComb = query("GL_ARB_texture_env_combine")))
-    {
-        // Try the older EXT_texture_env_combine (identical to ARB).
-        GL_state.extensions.texEnvComb = query("GL_EXT_texture_env_combine");
-    }
-
-    GL_state.extensions.texEnvCombNV = query("GL_NV_texture_env_combine4");
-    GL_state.extensions.texEnvCombATI = query("GL_ATI_texture_env_combine3");
-
 #ifdef USE_TEXTURE_COMPRESSION_S3
     // Enabled by default if available.
-    if(0 != (GL_state.extensions.texCompressionS3 = query("GL_EXT_texture_compression_s3tc")))
+    if(ext.EXT_texture_compression_s3tc)
     {
         GLint iVal;
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
@@ -146,21 +113,22 @@ static void initialize(void)
     GL_state.features.texCompression = false;
 #endif
     if(CommandLine_Exists("-notexcomp"))
+    {
         GL_state.features.texCompression = false;
-
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &GL_state.maxTexUnits);
+    }
 
     // Automatic mipmap generation.
-    GL_state.extensions.genMipmapSGIS = query("GL_SGIS_generate_mipmap");
-    if(0 == GL_state.extensions.genMipmapSGIS || CommandLine_Exists("-nosgm"))
+    if(!ext.SGIS_generate_mipmap || CommandLine_Exists("-nosgm"))
+    {
         GL_state.features.genMipmap = false;
+    }
 
 #ifdef WIN32
-    if(0 != (GL_state.extensions.wglSwapIntervalEXT = query("WGL_EXT_swap_control")))
+    if(ext.Windows_EXT_swap_control)
     {
         GETPROC(PFNWGLSWAPINTERVALEXTPROC, wglSwapIntervalEXT);
     }
-    if(0 == GL_state.extensions.wglSwapIntervalEXT || NULL == wglSwapIntervalEXT)
+    if(!ext.Windows_EXT_swap_control || !wglSwapIntervalEXT)
         GL_state.features.vsync = false;
 #else
     GL_state.features.vsync = true;
@@ -188,7 +156,7 @@ de::String Sys_GLDescription()
     GLint iVal;
 
 #ifdef USE_TEXTURE_COMPRESSION_S3
-    if(GL_state.extensions.texCompressionS3)
+    if(de::GLInfo::extensions().EXT_texture_compression_s3tc)
     {
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
         os << TABBED("Compressed texture formats:", iVal);
@@ -198,7 +166,7 @@ de::String Sys_GLDescription()
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
     os << TABBED("Available texture units:", iVal);
 
-    if(GL_state.extensions.texFilterAniso)
+    if(de::GLInfo::extensions().EXT_texture_filter_anisotropic)
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
         os << TABBED("Maximum texture anisotropy:", iVal);
@@ -230,196 +198,12 @@ static void printGLUInfo(void)
     Sys_GLPrintExtensions();
 }
 
-#if 0
-#ifdef WIN32
-static void testMultisampling(HDC hDC)
-{
-    int pixelFormat, valid;
-    uint numFormats;
-    float fAttributes[] = {0,0};
-    int iAttributes[] = {
-        WGL_DRAW_TO_WINDOW_ARB,GL_TRUE,
-        WGL_SUPPORT_OPENGL_ARB,GL_TRUE,
-        WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
-        WGL_COLOR_BITS_ARB,24,
-        WGL_ALPHA_BITS_ARB,8,
-        WGL_DEPTH_BITS_ARB,16,
-        WGL_STENCIL_BITS_ARB,8,
-        WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
-        WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
-        WGL_SAMPLES_ARB,4,
-        0,0
-    };
-
-    // First, see if we can get a pixel format using four samples.
-    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
-
-    if(valid && numFormats >= 1)
-    {   // This will do nicely.
-        GL_state.multisampleFormat = pixelFormat;
-        GL_state.features.multisample = true;
-    }
-    else
-    {   // Failed. Try a pixel format using two samples.
-        iAttributes[19] = 2;
-        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
-        if(valid && numFormats >= 1)
-        {
-            GL_state.multisampleFormat = pixelFormat;
-            GL_state.features.multisample = true;
-        }
-    }
-}
-
-static void createDummyWindow(application_t* app)
-{
-    HWND                hWnd = NULL;
-    HGLRC               hGLRC = NULL;
-    boolean             ok = true;
-
-    // Create the window.
-    hWnd = CreateWindowEx(WS_EX_APPWINDOW, TEXT(MAINWCLASS), TEXT("dummy"),
-                          (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS),
-                          CW_USEDEFAULT, CW_USEDEFAULT,
-                          CW_USEDEFAULT, CW_USEDEFAULT,
-                          NULL, NULL,
-                          app->hInstance, NULL);
-    if(hWnd)
-    {   // Initialize.
-        PIXELFORMATDESCRIPTOR pfd;
-        int         pixForm = 0;
-        HDC         hDC = NULL;
-
-        // Setup the pixel format descriptor.
-        ZeroMemory(&pfd, sizeof(pfd));
-        pfd.nSize = sizeof(pfd);
-        pfd.nVersion = 1;
-        pfd.iPixelType = PFD_TYPE_RGBA;
-        pfd.iLayerType = PFD_MAIN_PLANE;
-#ifndef DRMESA
-        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-        pfd.cColorBits = 32;
-        pfd.cDepthBits = 16;
-        pfd.cStencilBits = 8;
-#else /* Double Buffer, no alpha */
-        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
-            PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
-        pfd.cColorBits = 24;
-        pfd.cRedBits = 8;
-        pfd.cGreenBits = 8;
-        pfd.cGreenShift = 8;
-        pfd.cBlueBits = 8;
-        pfd.cBlueShift = 16;
-        pfd.cDepthBits = 16;
-        pfd.cStencilBits = 2;
-#endif
-
-        if(ok)
-        {
-            // Acquire a device context handle.
-            hDC = GetDC(hWnd);
-            if(!hDC)
-            {
-                Sys_CriticalMessage("DD_CreateWindow: Failed acquiring device context handle.");
-                hDC = NULL;
-                ok = false;
-            }
-        }
-
-        if(ok)
-        {   // Request a matching (or similar) pixel format.
-            pixForm = ChoosePixelFormat(hDC, &pfd);
-            if(!pixForm)
-            {
-                Sys_CriticalMessage("DD_CreateWindow: Choosing of pixel format failed.");
-                pixForm = -1;
-                ok = false;
-            }
-        }
-
-        if(ok)
-        {   // Make sure that the driver is hardware-accelerated.
-            DescribePixelFormat(hDC, pixForm, sizeof(pfd), &pfd);
-            if((pfd.dwFlags & PFD_GENERIC_FORMAT) && !ArgCheck("-allowsoftware"))
-            {
-                Sys_CriticalMessage("DD_CreateWindow: GL driver not accelerated!\n"
-                                    "Use the -allowsoftware option to bypass this.");
-                ok = false;
-            }
-        }
-
-        if(ok)
-        {   // Set the pixel format for the device context. Can only be done once
-            // (unless we release the context and acquire another).
-            if(!SetPixelFormat(hDC, pixForm, &pfd))
-            {
-                Sys_CriticalMessage("DD_CreateWindow: Failed setting pixel format.");
-            }
-        }
-
-        // Create the OpenGL rendering context.
-        if(ok)
-        {
-            if(!(hGLRC = wglCreateContext(hDC)))
-            {
-                Sys_CriticalMessage("DD_CreateWindow: Failed creating render context.");
-                ok = false;
-            }
-            // Make the context current.
-            else if(!wglMakeCurrent(hDC, hGLRC))
-            {
-                Sys_CriticalMessage("DD_CreateWindow: Failed making render context current.");
-                ok = false;
-            }
-        }
-
-        if(ok)
-        {
-            PROC wglGetExtensionsStringARB;
-            const GLubyte* exts;
-
-            GETPROC(wglGetExtensionsStringARB);
-            exts = ((const GLubyte*(__stdcall*)(HDC))wglGetExtensionsStringARB)(hDC);
-
-            GL_state.extensions.wglMultisampleARB = Sys_GLQueryExtension("WGL_ARB_multisample", exts);
-            if(GL_state.extensions.wglMultisampleARB)
-            {
-                GETPROC(wglChoosePixelFormatARB);
-                if(wglChoosePixelFormatARB)
-                    testMultisampling(hDC);
-            }
-        }
-
-        // We've now finished with the device context.
-        if(hDC)
-            ReleaseDC(hWnd, hDC);
-    }
-
-    // Delete the window's rendering context if one has been acquired.
-    if(hGLRC)
-    {
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(hGLRC);
-    }
-
-    // Destroy the window and release the handle.
-    if(hWnd)
-        DestroyWindow(hWnd);
-}
-#endif
-#endif // 0
-
 boolean Sys_GLPreInit(void)
 {
     if(novideo) return true;
     if(doneEarlyInit) return true; // Already been here??
 
-    memset(&GL_state.extensions, 0, sizeof(GL_state.extensions));
     // Init assuming ideal configuration.
-    GL_state.forceFinishBeforeSwap = CommandLine_Exists("-glfinish");
-    GL_state.maxTexFilterAniso = 4;
-    GL_state.maxTexSize = 4096;
-    GL_state.maxTexUnits = 1;
     GL_state.multisampleFormat = 0; // No valid default can be assumed at this time.
 
     GL_state.features.blendSubtract = true;
@@ -434,16 +218,6 @@ boolean Sys_GLPreInit(void)
     GL_state.currentLineWidth = 1.5f;
     GL_state.currentPointSize = 1.5f;
     GL_state.currentUseFog = false;
-
-#if 0 // WIN32
-    // We prefer to use  multisampling if available so create a dummy window
-    // and see what pixel formats are present.
-    createDummyWindow(&app);
-
-    // User disabled?
-    if(ArgCheck("-noaa"))
-        GL_state.features.multisample = false;
-#endif
 
     doneEarlyInit = true;
     return true;
@@ -501,7 +275,7 @@ boolean Sys_GLInitialize(void)
      */
 
     // Use nice quality for mipmaps please.
-    if(GL_state.features.genMipmap && GL_state.extensions.genMipmapSGIS)
+    if(GL_state.features.genMipmap && de::GLInfo::extensions().SGIS_generate_mipmap)
         glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
 
     assert(!Sys_GLCheckError());
@@ -597,45 +371,7 @@ void Sys_GLConfigureDefaultState(void)
     glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
 
     // Configure the default GLState (bottom of the stack).
-    de::GLState::top().setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha);
-}
-
-/**
- * This routine is based on the method used by David Blythe and Tom McReynolds
- * in the book "Advanced Graphics Programming Using OpenGL" ISBN: 1-55860-659-9.
- */
-boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions)
-{
-    const GLubyte* start;
-    GLubyte* c, *terminator;
-
-    // Extension names should not have spaces.
-    c = (GLubyte *) strchr(name, ' ');
-    if(c || *name == '\0')
-        return false;
-
-    if(!extensions)
-        return false;
-
-    // It takes a bit of care to be fool-proof about parsing the
-    // OpenGL extensions string. Don't be fooled by sub-strings, etc.
-    start = extensions;
-    for(;;)
-    {
-        c = (GLubyte*) strstr((const char*) start, name);
-        if(!c)
-            break;
-
-        terminator = c + strlen(name);
-        if(c == start || *(c - 1) == ' ')
-            if(*terminator == ' ' || *terminator == '\0')
-            {
-                return true;
-            }
-        start = terminator;
-    }
-
-    return false;
+    de::GLState::current().setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha);
 }
 
 static de::String omitGLPrefix(de::String str)
@@ -691,10 +427,10 @@ void Sys_GLPrintExtensions(void)
 
 #if WIN32
     // List the WGL extensions too.
-    if(wglGetExtString)
+    if(wglGetExtensionsStringARB)
     {
         Con_Message("  Extensions (WGL):");
-        printExtensions(QString((char const *) ((GLubyte const *(__stdcall *)(HDC))wglGetExtString)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
+        printExtensions(QString((char const *) ((GLubyte const *(__stdcall *)(HDC))wglGetExtensionsStringARB)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
     }
 #endif
 }

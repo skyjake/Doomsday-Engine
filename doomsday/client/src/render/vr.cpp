@@ -85,7 +85,7 @@ bool VR::modeNeedsStereoGLFormat(VR::Stereo3DMode mode)
     return mode == VR::MODE_QUAD_BUFFERED;
 }
 
-static float vrRiftFovX = 114.8;
+static float vrRiftFovX = 114.8f;
 float VR::riftFovX() /// Horizontal field of view in degrees
 {
     return vrRiftFovX;

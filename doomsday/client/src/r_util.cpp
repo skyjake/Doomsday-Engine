@@ -28,7 +28,9 @@
 #include "de_play.h"
 #include "de_misc.h"
 
-#include "render/r_main.h" // viewdata_t
+#ifdef __CLIENT__
+#  include "render/viewports.h"
+#endif
 
 #include "r_util.h"
 
@@ -57,6 +59,8 @@ float R_MovementXYZPitch(float momx, float momy, float momz)
     return R_MovementPitch(mom);
 }
 
+#ifdef __CLIENT__
+
 angle_t R_ViewPointToAngle(Vector2d point)
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
@@ -72,6 +76,8 @@ coord_t R_ViewPointDistance(coord_t x, coord_t y)
     return M_PointDistance(viewData->current.origin, point);
 }
 
+#endif // __CLIENT__
+
 Vector3d R_ClosestPointOnPlane(Vector3f const &planeNormal_,
     Vector3d const &planePoint_, Vector3d const &origin_)
 {
@@ -81,6 +87,8 @@ Vector3d R_ClosestPointOnPlane(Vector3f const &planeNormal_,
     vec3d_t point; V3d_ClosestPointOnPlanef(point, planeNormal, planePoint, origin);
     return point;
 }
+
+#ifdef __CLIENT__
 
 void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
@@ -156,6 +164,8 @@ void R_AmplifyColor(de::Vector3f &rgb)
         rgb[i] = rgb[i] / max;
     }
 }
+
+#endif // __CLIENT__
 
 void R_ScaleAmbientRGB(float *out, float const *in, float mul)
 {

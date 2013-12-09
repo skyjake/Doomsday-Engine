@@ -36,6 +36,7 @@
 #include "network/net_main.h"
 #include "render/r_main.h"
 #include "render/rend_main.h"
+#include "render/cameralensfx.h"
 #include "audio/s_main.h"
 #include "render/lightgrid.h"
 #include "gl/gl_main.h"
@@ -78,6 +79,7 @@ DENG2_PIMPL(GameWidget)
             App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
             R_RenderViewPorts(ui::Player3DViewLayer);
+            R_RenderViewPorts(ui::ViewBorderLayer);
 
             // End any open DGL sequence.
             DGL_End();
@@ -118,7 +120,7 @@ GameWidget::GameWidget(String const &name)
 
 void GameWidget::glApplyViewport(int x, int y, int width, int height)
 {
-    GLState::top()
+    GLState::current()
             .setNormalizedViewport(normalizedRect(Rectanglei(x, y, width, height)))
             .apply();
 }
