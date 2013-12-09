@@ -22,73 +22,37 @@
 #include "render/r_main.h"
 
 #include "dd_def.h" // finesine
-#include "dd_main.h"
-#include "dd_loop.h"
-#include "con_main.h"
-
 #ifdef __CLIENT__
 #  include "clientapp.h"
-#  include "edit_bias.h"
 
-#  include "MaterialSnapshot"
-
-#  include "api_render.h"
-#  include "render/projector.h"
-#  include "render/r_draw.h"
-#  include "render/r_main.h"
-#  include "render/rend_clip.h"
+#  include "render/billboard.h"
 #  include "render/rend_main.h"
-#  include "render/rendpoly.h"
 #  include "render/vissprite.h"
 #  include "render/vlight.h"
 
+#  include "MaterialSnapshot"
+
+#  include "world/map.h"
+#  include "world/p_players.h"
+#  include "BspLeaf"
+
 #  include <de/GLState>
+#  include <de/vector1.h>
 #endif
-
-#include "gl/svg.h"
-#ifdef __CLIENT__
-#  include "gl/gl_draw.h"
-#endif
-
-#include "network/net_main.h" // clients
-
-#ifdef __CLIENT__
-#  include "ui/ui_main.h"
-#endif
-
-#include "world/linesighttest.h"
-#include "world/p_object.h"
-#include "world/p_players.h"
-#include "Contact"
-#include "world/thinkers.h"
-#include "BspLeaf"
-#include "Surface"
-
-#ifdef __CLIENT__
-#  include <de/GLState>
-#  include <de/GLTarget>
-#  include <de/GLTexture>
-#endif
-#include <de/memory.h>
-#include <de/vector1.h>
-#ifdef __CLIENT__
-#  include <QBitArray>
-#endif
-#include <cmath>
-#include <cstring>
 
 using namespace de;
 
 int validCount = 1; // Increment every time a check is made.
 
+int levelFullBright;
+int weaponOffsetScaleY = 1000;
+int psp3d;
+
 // Precalculated math tables.
 fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 
-int psp3d;
 float pspLightLevelMultiplier = 1;
 float pspOffset[2];
-int levelFullBright;
-int weaponOffsetScaleY = 1000;
 
 /*
  * Console variables:
@@ -106,14 +70,16 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     int const frameIdx    = psp->statePtr->frame;
     float const offScaleY = weaponOffsetScaleY / 1000.0f;
 
-    SpriteViewAngle const &sprViewAngle = App_ResourceSystem().spritePtr(spriteIdx, frameIdx)->viewAngle(0);
+    SpriteViewAngle const &sprViewAngle =
+        ClientApp::resourceSystem().spritePtr(spriteIdx, frameIdx)->viewAngle(0);
+
     Material *material = sprViewAngle.material;
     bool flip          = sprViewAngle.mirrorX;
 
     MaterialVariantSpec const &spec =
-        App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0,
-                                          GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                          0, -2, 0, false, true, true, false);
+        ClientApp::resourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0,
+                                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                                 0, -2, 0, false, true, true, false);
     MaterialSnapshot const &ms = material->prepare(spec);
 
     Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
@@ -133,17 +99,18 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     params->texFlip[1] = false;
 
     params->mat = material;
-    params->ambientColor[CA] = spr->data.sprite.alpha;
+    params->ambientColor[3] = spr->data.sprite.alpha;
 
     if(spr->data.sprite.isFullBright)
     {
-        params->ambientColor[CR] = params->ambientColor[CG] =
-            params->ambientColor[CB] = 1;
+        params->ambientColor[0] =
+            params->ambientColor[1] =
+                params->ambientColor[2] = 1;
         params->vLightListIdx = 0;
     }
     else
     {
-        Map &map = App_World().map();
+        Map &map = ClientApp::world().map();
 
         if(useBias && map.hasLightGrid())
         {
@@ -264,7 +231,7 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
     }
     else
     {
-        Map &map = App_World().map();
+        Map &map = ClientApp::world().map();
 
         if(useBias && map.hasLightGrid())
         {
