@@ -88,6 +88,9 @@ public:
     Vector2<dint> toVector2i() const {
         return Vector2<dint>(dint(x), dint(y));
     }
+    Vector2<duint> toVector2ui() const {
+        return Vector2<duint>(duint(de::max(Type(0), x)), duint(de::max(Type(0), y)));
+    }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 1);
         Type *ptrs[] = { &x, &y };
@@ -343,8 +346,11 @@ public:
     bool operator <= (Vector3 const &other) const {
         return *this == other || *this < other;
     }
-    ddouble length() const {
-        return std::sqrt(Vector2<Type>::x*Vector2<Type>::x + Vector2<Type>::y*Vector2<Type>::y + z*z);
+    inline ddouble length() const {
+        return std::sqrt(lengthSquared());
+    }
+    ddouble lengthSquared() const {
+        return Vector2<Type>::x*Vector2<Type>::x + Vector2<Type>::y*Vector2<Type>::y + z*z;
     }
     Vector3 normalize() const {
         ddouble const len = length();
@@ -397,6 +403,9 @@ public:
         if(vecAbs.y > vecAbs[axis]) axis = 1;
         if(vecAbs.z > vecAbs[axis]) axis = 2;
         return axis;
+    }
+    Vector3<Type> xzy() const {
+        return Vector3<Type>(Vector2<Type>::x, z, Vector2<Type>::y);
     }
 
 public:
@@ -453,6 +462,7 @@ class Vector4 : public Vector3<Type>
 public:
     Vector4(Type a = 0, Type b = 0, Type c = 0, Type d = 0) : Vector3<Type>(a, b, c), w(d) {}
     Vector4(Vector3<Type> const &v3, Type d = 0) : Vector3<Type>(v3), w(d) {}
+    Vector4(Vector2<Type> const &a, Vector2<Type> const &b) : Vector3<Type>(a, b.x), w(b.y) {}
     Vector4(Type const *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
 
     /// Implicit conversion operator to a float vector.

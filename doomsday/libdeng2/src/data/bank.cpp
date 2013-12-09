@@ -846,6 +846,7 @@ Bank::IData &Bank::data(DotPath const &path) const
 
     if(item.data.get())
     {
+        // Item is already in memory.
         return *item.data;
     }
 
@@ -859,7 +860,15 @@ Bank::IData &Bank::data(DotPath const &path) const
     d->load(path, Immediately);
     item.wait();
 
-    LOG_DEBUG("\"%s\" loaded (waited %.2f seconds)") << path << requestedAt.since();
+    TimeDelta const waitTime = requestedAt.since();
+    if(waitTime > 0.0)
+    {
+        LOG_DEBUG("\"%s\" loaded (waited %.3f seconds)") << path << waitTime;
+    }
+    else
+    {
+        LOG_DEBUG("\"%s\" loaded") << path;
+    }
 
     item.lock();
     if(!item.data.get())

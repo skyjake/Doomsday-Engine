@@ -17,62 +17,74 @@
  */
 
 #include "de/GLBuffer"
+#include "de/GLState"
+#include "de/GLTarget"
 
 namespace de {
 
 using namespace internal;
 using namespace gl;
 
-// Vertex Formats ------------------------------------------------------------
+// Vertex Format Layout ------------------------------------------------------
 
 AttribSpec const Vertex2Tex::_spec[2] = {
     { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2Tex), 0 },
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2Tex), 2 * sizeof(float) }
 };
-AttribSpecs Vertex2Tex::formatSpec() {
-    DENG2_ASSERT(sizeof(Vertex2Tex) == 4 * sizeof(float)); // sanity check
-    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
-}
+LIBGUI_VERTEX_FORMAT_SPEC(Vertex2Tex, 4 * sizeof(float))
 
 AttribSpec const Vertex2Rgba::_spec[2] = {
     { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2Rgba), 0 },
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex2Rgba), 2 * sizeof(float) }
 };
-AttribSpecs Vertex2Rgba::formatSpec() {
-    DENG2_ASSERT(sizeof(Vertex2Rgba) == 6 * sizeof(float)); // sanity check
-    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
-}
+LIBGUI_VERTEX_FORMAT_SPEC(Vertex2Rgba, 6 * sizeof(float))
 
 AttribSpec const Vertex2TexRgba::_spec[3] = {
     { AttribSpec::Position,  2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 0 },
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex2TexRgba), 2 * sizeof(float) },
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex2TexRgba), 4 * sizeof(float) }
 };
-AttribSpecs Vertex2TexRgba::formatSpec() {
-    DENG2_ASSERT(sizeof(Vertex2TexRgba) == 8 * sizeof(float)); // sanity check
-    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
-}
+LIBGUI_VERTEX_FORMAT_SPEC(Vertex2TexRgba, 8 * sizeof(float))
 
 AttribSpec const Vertex3Tex::_spec[2] = {
     { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3Tex), 0 },
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3Tex), 3 * sizeof(float) }
 };
-AttribSpecs Vertex3Tex::formatSpec() {
-    DENG2_ASSERT(sizeof(Vertex3Tex) == 5 * sizeof(float)); // sanity check
-    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
-}
+LIBGUI_VERTEX_FORMAT_SPEC(Vertex3Tex, 5 * sizeof(float))
 
 AttribSpec const Vertex3TexRgba::_spec[3] = {
     { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3TexRgba), 0 },
     { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3TexRgba), 3 * sizeof(float) },
     { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex3TexRgba), 5 * sizeof(float) }
 };
-AttribSpecs Vertex3TexRgba::formatSpec() {
-    DENG2_ASSERT(sizeof(Vertex3TexRgba) == 9 * sizeof(float)); // sanity check
-    return AttribSpecs(_spec, sizeof(_spec)/sizeof(_spec[0]));
-}
+LIBGUI_VERTEX_FORMAT_SPEC(Vertex3TexRgba, 9 * sizeof(float))
 
-// ---------------------------------------------------------------------------
+AttribSpec const Vertex3Tex2Rgba::_spec[4] = {
+    { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3Tex2Rgba), 0 },
+    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3Tex2Rgba), 3 * sizeof(float) },
+    { AttribSpec::TexCoord1, 2, GL_FLOAT, false, sizeof(Vertex3Tex2Rgba), 5 * sizeof(float) },
+    { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex3Tex2Rgba), 7 * sizeof(float) }
+};
+LIBGUI_VERTEX_FORMAT_SPEC(Vertex3Tex2Rgba, 11 * sizeof(float))
+
+AttribSpec const Vertex3Tex3Rgba::_spec[5] = {
+    { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3Tex3Rgba), 0 },
+    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3Tex3Rgba), 3 * sizeof(float) },
+    { AttribSpec::TexCoord1, 2, GL_FLOAT, false, sizeof(Vertex3Tex3Rgba), 5 * sizeof(float) },
+    { AttribSpec::TexCoord2, 2, GL_FLOAT, false, sizeof(Vertex3Tex3Rgba), 7 * sizeof(float) },
+    { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex3Tex3Rgba), 9 * sizeof(float) }
+};
+LIBGUI_VERTEX_FORMAT_SPEC(Vertex3Tex3Rgba, 13 * sizeof(float))
+
+AttribSpec const Vertex3NormalTexRgba::_spec[4] = {
+    { AttribSpec::Position,  3, GL_FLOAT, false, sizeof(Vertex3NormalTexRgba), 0 },
+    { AttribSpec::Normal,    3, GL_FLOAT, false, sizeof(Vertex3NormalTexRgba), 3 * sizeof(float) },
+    { AttribSpec::TexCoord0, 2, GL_FLOAT, false, sizeof(Vertex3NormalTexRgba), 6 * sizeof(float) },
+    { AttribSpec::Color,     4, GL_FLOAT, false, sizeof(Vertex3NormalTexRgba), 8 * sizeof(float) }
+};
+LIBGUI_VERTEX_FORMAT_SPEC(Vertex3NormalTexRgba, 12 * sizeof(float))
+
+//----------------------------------------------------------------------------
 
 DENG2_PIMPL(GLBuffer)
 {
@@ -249,6 +261,9 @@ void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usa
 void GLBuffer::draw(duint first, dint count)
 {
     if(!isReady()) return;
+
+    // Mark the current target changed.
+    GLState::current().target().markAsChanged();
 
     glBindBuffer(GL_ARRAY_BUFFER, d->name);
     d->enableArrays(true);

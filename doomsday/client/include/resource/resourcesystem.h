@@ -882,6 +882,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
+DENG_EXTERN_C byte precacheMapMaterials, precacheSprites;
 DENG_EXTERN_C byte texGammaLut[256];
 
 void R_BuildTexGammaLut();

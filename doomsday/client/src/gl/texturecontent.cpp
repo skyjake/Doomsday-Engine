@@ -30,6 +30,7 @@
 
 #include "render/rend_main.h" // misc global vars awaiting new home
 
+#include <de/GLInfo>
 #include <de/memory.h>
 #include <cstring>
 
@@ -414,7 +415,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, boolean allowCompression
         if(!compress)
             return GL_RGB8;
 #if USE_TEXTURE_COMPRESSION_S3
-        if(GL_state.extensions.texCompressionS3)
+        if(GLInfo::extensions().EXT_texture_compression_s3tc)
             return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 #endif
         return GL_COMPRESSED_RGB;
@@ -424,7 +425,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, boolean allowCompression
         if(!compress)
             return GL_RGBA8;
 #if USE_TEXTURE_COMPRESSION_S3
-        if(GL_state.extensions.texCompressionS3)
+        if(GLInfo::extensions().EXT_texture_compression_s3tc)
             return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 #endif
         return GL_COMPRESSED_RGBA;
@@ -471,7 +472,7 @@ static boolean uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
         return false;
 
     // Check that the texture dimensions are valid.
-    if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
+    if(width > GLInfo::limits().maxTexSize || height > GLInfo::limits().maxTexSize)
         return false;
 
     if(!GL_state.features.texNonPowTwo &&
@@ -489,7 +490,7 @@ static boolean uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Automatic mipmap generation?
-    if(GL_state.extensions.genMipmapSGIS && genMipmaps)
+    if(GLInfo::extensions().SGIS_generate_mipmap && genMipmaps)
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
 
     glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
@@ -502,7 +503,7 @@ static boolean uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
     glPixelStorei(GL_UNPACK_SKIP_ROWS, (GLint)unpackSkipRows);
     glPixelStorei(GL_UNPACK_SKIP_PIXELS, (GLint)unpackSkipPixels);
 
-    if(genMipmaps && !GL_state.extensions.genMipmapSGIS)
+    if(genMipmaps && !GLInfo::extensions().SGIS_generate_mipmap)
     {   // Build all mipmap levels.
         int neww, newh, bpp, w, h;
         void* image, *newimage;
@@ -604,7 +605,7 @@ static boolean uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
        (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
         return false;
 
-    if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
+    if(width > GLInfo::limits().maxTexSize || height > GLInfo::limits().maxTexSize)
         return false;
 
     numLevels = GL_NumMipmapLevels(width, height);

@@ -1,17 +1,29 @@
 $ Amethyst Doomsday Help formatting.
 
 $*** STRUCTURE ***$
-@macro{summary}{desc = @arg @br}
-@macro{description}{inf = @arg @br}
-@macro{default}{def = @arg @br}
-@macro{cvar}{cvar = @arg @br}
+@macro{forcedbreak}{@apply{@n}{.}}
+@macro{summary}{desc = @arg @forcedbreak}
+@macro{default}{def = @arg @forcedbreak}
+@macro{cvar}{cvar = @arg @forcedbreak}
+@macro{description}{inf = @arg @forcedbreak}
+
+$ Standard sections.
+@macro{usage}{@section{Usage}}
+@macro{examples}{@section{Examples}}
+@macro{seealso}{@section{See also}}
+@macro{params}{Params: @arg}
+@macro{example}{For example, @arg}
+
 @macro{cbr}{@set{spacing 0}{\n}}
 @macro{cbreak}{@set{spacing 0}{\b}}
 
 $*** FORMATTING RULES ***$
 @format{@=}
-@format{break}{@n}
-@format{br}{@n}
+@format{break prev try chapter part pass}{@n}
+@format{break prev !chapter !part @ next !chapter !part}{\n}
+@format{break next section @ prev text =}{@_}
+@format{br}{}
+@format{pre}{@s(@n|\n) @=}
 
 $ Styles.
 $*
@@ -23,6 +35,8 @@ $*
 @format{order 1 parent try opt cmd code pass}{<tt>@=}
 @format{order -1 parent try opt cmd code pass}{@=</tt>}
 *$
+@format{order 1 parent try cmd code pass}{'@=}
+@format{order -1 parent try cmd code pass}{@='}
 @format{order 1 parent email}{<@=}
 @format{order -1 parent email}{@=>}
 $ @format{pre !control}{@n@= @< @B<pre> @> </pre>@b}
@@ -32,12 +46,14 @@ $ @format{order -1 parent caption}{@=</nowiki></div>}
 $ Indented styles.
 
 $ Remove all section numbers, they are not needed.
-@format{parent child 1 parent try chapter section subsec sub2sec pass}{}
+@format{parent child 1 parent try part chapter section subsec sub2sec pass}{}
 
 $ Titles.
-@format{child 2 parent chapter}{@< @N#@n#@_ @> @n#}
-@format{child 2 parent section}{@< @N[ @> ]}
-$*
+@format{child 2 parent part}{@< @N#@n#@_ @> @n#}
+@format{child 2 parent chapter}{@< @N[ @> ]}
+@format{child 2 parent section}{@> :}
+@format{parent child 2 parent section}{@u}
+$***
 @format{child 2 parent chapter}{@<==@_@>@_==}
 @format{child 2 parent section}{@<===@_@>@_===}
 @format{child 2 parent subsec}{@<====@_@>@_====}
@@ -46,7 +62,10 @@ $*
 *$
 
 $ Lists.
-$ @format{parent list}{*@_ @> @n}
+@format{child 1 parent2 deflist}{@< \n@_ }
+@format{child 2 parent2 deflist}{@< @_-@_}
+@format{parent list note}{\nNOTE!}
+@format{parent list !note }{-@_ @> \n}
 $ @format{parent enum list}{#@_}
 $ @format{list}{@< <ul> @> </ul>}
 $ @format{enum list}{@< <ol> @> </ol>}
@@ -64,12 +83,19 @@ $ @format{first header @ parent2 table}{@< !@_valign="top"@_width="@w%"@_| @> @n
 $*** LENGTH RULES ***$
 
 $ Word spacing.
-@length{!text ? !text . !text , !text : !text ; !begins ) !begins ] !email !url}{
-    try email url pass order 1}{opt !order 1}{spacing 1}
-@length{try text ) text ] pass}{prev try text ( text [ text \n text \b pass}{
-    order 1 parent prev try text ( text [ pass}{
-    order 1 parent2 try part chapter section subsec sub2sec sub3sec pass}{
-    order 1 single}{spacing 0}
+@length
+    {!text ? !text . !text , !text : !text ; !begins ) !begins ] !email !url}
+    {try email url pass order 1}
+    {opt !order 1}
+    {spacing 1}
+
+@length
+    {try break text ) text ] pass}
+    {prev try break text ( text [ text \n text \b pass}
+    {order 1 parent prev try text ( text [ pass}
+    {order 1 parent2 try part chapter section subsec sub2sec sub3sec pass}
+    {order 1 single}
+    {spacing 0}
 
 $ Lists.
 @length{leftmargin 0}

@@ -1083,7 +1083,15 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     }
 
     // What *is* that?
-    Con_Printf("%s: unknown identifier, or command arguments invalid.\n", args.argv[0]);
+    if(Con_FindCommand(args.argv[0]))
+    {
+        LOG_WARNING("%s: command arguments invalid") << args.argv[0];
+        Con_Executef(CMDS_DDAY, false, "help %s", args.argv[0]);
+    }
+    else
+    {
+        LOG_MSG("%s: unknown identifier") << args.argv[0];
+    }
     return false;
 }
 
@@ -2203,18 +2211,21 @@ void Con_Error(char const *error, ...)
 }
 
 void Con_AbnormalShutdown(char const *message)
-{
+{   
+    // This is a crash landing, better be safe than sorry.
+    BusyMode_SetAllowed(false);
+
     Sys_Shutdown();
 
 #ifdef __CLIENT__
     DisplayMode_Shutdown();
-
     DENG2_GUI_APP->loop().pause();
 
     // This is an abnormal shutdown, we cannot continue drawing any of the
     // windows. (Alternatively could hide/disable drawing of the windows.) Note
     // that the app's event loop is running normally while we show the native
-    // message box below.
+    // message box below -- if the app windows are not hidden/closed, they might
+    // receive draw events.
     ClientApp::windowSystem().closeAll();
 #endif
 
@@ -2225,10 +2236,11 @@ void Con_AbnormalShutdown(char const *message)
 
         /// @todo Get the actual output filename (might be a custom one).
         Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
-                                          "See Details for complete messsage log contents.",
+                                          "See Details for complete message log contents.",
                                           de::LogBuffer::appBuffer().outputFile().toUtf8());
     }
 
+    //Sys_Shutdown();
     DD_Shutdown();
 
     // Get outta here.

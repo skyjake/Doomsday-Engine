@@ -244,7 +244,7 @@ public Font::RichFormat::IStyle
         uColor = Vector4f(1, 1, 1, self.visibleOpacity());
 
         // Update the scissor for the text.
-        clippedTextState = GLState::top();
+        clippedTextState = GLState::current();
         clippedTextState.setNormalizedScissor(self.normalizedContentRect());
 
         drawable.draw();

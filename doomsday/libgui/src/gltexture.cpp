@@ -39,6 +39,7 @@ using namespace gl;
 DENG2_PIMPL(GLTexture)
 {
     Size size;
+    Image::Format format;
     GLuint name;
     GLenum texTarget;
     Filter minFilter;
@@ -49,6 +50,7 @@ DENG2_PIMPL(GLTexture)
 
     Instance(Public *i)
         : Base(i),
+          format(Image::Unknown),
           name(0),
           texTarget(GL_TEXTURE_2D),
           minFilter(Linear), magFilter(Linear), mipFilter(MipNone),
@@ -165,12 +167,18 @@ DENG2_PIMPL(GLTexture)
         flags &= ~ParamsChanged;
     }
 
-    void glImage(int level, Size const &size, Image::GLFormat const &glFormat,
+    void glImage(int level, Size const &size, GLPixelFormat const &glFormat,
                  void const *data, CubeFace face = PositiveX)
     {
         /// @todo GLES2: Check for the BGRA extension.
-        GLenum const internalFormat = (glFormat.format == GL_BGRA? GL_RGBA : glFormat.format);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
+
+        // Choose suitable informal format.
+        GLenum const internalFormat =
+                (glFormat.format == GL_BGRA?          GL_RGBA :
+                 glFormat.format == GL_DEPTH_STENCIL? GL_DEPTH24_STENCIL8 :
+                                                      glFormat.format);
+
+        if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexImage2D(isCube()? glFace(face) : texTarget,
                      level, internalFormat, size.x, size.y, 0,
                      glFormat.format, glFormat.type, data);
@@ -179,9 +187,9 @@ DENG2_PIMPL(GLTexture)
     }
 
     void glSubImage(int level, Vector2i const &pos, Size const &size,
-                    Image::GLFormat const &glFormat, void const *data, CubeFace face = PositiveX)
+                    GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
     {
-        glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
+        if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
         glTexSubImage2D(isCube()? glFace(face) : texTarget,
                         level, pos.x, pos.y, size.x, size.y,
                         glFormat.format, glFormat.type, data);
@@ -282,6 +290,7 @@ void GLTexture::setUndefinedImage(GLTexture::Size const &size, Image::Format for
 {
     d->texTarget = GL_TEXTURE_2D;
     d->size = size;
+    d->format = format;
 
     d->alloc();
     d->glBind();
@@ -296,6 +305,7 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
     d->size = size;
+    d->format = format;
 
     d->alloc();
     d->glBind();
@@ -305,10 +315,44 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
     setState(Ready);
 }
 
+void GLTexture::setUndefinedContent(Size const &size, GLPixelFormat const &glFormat, int level)
+{
+    d->texTarget = GL_TEXTURE_2D;
+    d->size = size;
+    d->format = Image::Unknown;
+
+    d->alloc();
+    d->glBind();
+    d->glImage(level, size, glFormat, NULL);
+    d->glUnbind();
+
+    setState(Ready);
+}
+
+void GLTexture::setUndefinedContent(CubeFace face, Size const &size, GLPixelFormat const &glFormat, int level)
+{
+    d->texTarget = GL_TEXTURE_CUBE_MAP;
+    d->size = size;
+    d->format = Image::Unknown;
+
+    d->alloc();
+    d->glBind();
+    d->glImage(level, size, glFormat, NULL, face);
+    d->glUnbind();
+
+    setState(Ready);
+}
+
+void GLTexture::setDepthStencilContent(Size const &size)
+{
+    setUndefinedContent(size, GLPixelFormat(GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8));
+}
+
 void GLTexture::setImage(Image const &image, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
     d->size = image.size();
+    d->format = image.format();
 
     d->alloc();
     d->glBind();
@@ -327,6 +371,7 @@ void GLTexture::setImage(CubeFace face, Image const &image, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
     d->size = image.size();
+    d->format = image.format();
 
     d->alloc();
     d->glBind();
@@ -417,6 +462,11 @@ void GLTexture::glBindToUnit(int unit) const
     {
         d->glUpdateParamsOfBoundTexture();
     }
+}
+
+Image::Format GLTexture::imageFormat() const
+{
+    return d->format;
 }
 
 GLTexture::Size GLTexture::maximumSize()

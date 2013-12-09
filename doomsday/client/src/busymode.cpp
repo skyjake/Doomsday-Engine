@@ -50,6 +50,7 @@ static boolean busyWasIgnoringInput;
 
 #endif // __CLIENT__
 
+static boolean busyModeAllowed = true; ///< Can we enter busy mode?
 static boolean busyInited;
 static volatile boolean busyDone;
 
@@ -203,31 +204,32 @@ static int runTask(BusyTask* task)
     DENG_ASSERT(task);
 
 #ifdef __CLIENT__
+    if(busyModeAllowed)
+    {
+        // Let's get busy!
+        beginTask(task);
 
-    // Let's get busy!
-    beginTask(task);
+        DENG_ASSERT(eventLoop == 0);
 
-    DENG_ASSERT(eventLoop == 0);
+        // Run a local event loop since the primary event loop is blocked while
+        // we're busy. This event loop is able to handle window and input events
+        // just like the primary loop.
+        eventLoop = new QEventLoop;
+        int result = eventLoop->exec();
+        delete eventLoop;
+        eventLoop = 0;
 
-    // Run a local event loop since the primary event loop is blocked while
-    // we're busy. This event loop is able to handle window and input events
-    // just like the primary loop.
-    eventLoop = new QEventLoop;
-    int result = eventLoop->exec();
-    delete eventLoop;
-    eventLoop = 0;
+        // Teardown.
+        endTask(task);
 
-    // Teardown.
-    endTask(task);
-
-    return result;
-
-#else // __SERVER__
-
-    // Don't bother to start a thread -- non-GUI mode.
-    return task->worker(task->workerData);
-
+        return result;
+    }
+    else
 #endif
+    {
+        // Don't bother to start a thread -- non-GUI mode.
+        return task->worker(task->workerData);
+    }
 }
 
 #ifdef __CLIENT__
@@ -237,10 +239,18 @@ boolean BusyMode_IsTransitionAnimated(void)
 }
 #endif
 
-void BusyMode_FreezeGameForBusyMode(void)
+void BusyMode_SetAllowed(boolean allow)
 {
+    busyModeAllowed = allow;
+}
+
+void BusyMode_FreezeGameForBusyMode(void)
+{    
 #ifdef __CLIENT__
-    ClientWindow::main().busy().renderTransitionFrame();
+    if(ClientWindow::hasMain() && busyModeAllowed)
+    {
+        ClientWindow::main().busy().renderTransitionFrame();
+    }
 #endif
 }
 

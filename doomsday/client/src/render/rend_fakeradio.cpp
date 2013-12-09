@@ -103,7 +103,7 @@ void Rend_RadioUpdateForLineSide(LineSide &side)
 
     // Have already determined the shadow properties on this side?
     LineSideRadioData &frData = Rend_RadioDataForLineSide(side);
-    if(frData.updateCount == frameCount) return;
+    if(frData.updateCount == R_FrameCount()) return;
 
     // Not yet - Calculate now.
     for(uint i = 0; i < 2; ++i)
@@ -113,7 +113,7 @@ void Rend_RadioUpdateForLineSide(LineSide &side)
     }
 
     scanEdges(frData.topCorners, frData.bottomCorners, frData.sideCorners, frData.spans, side);
-    frData.updateCount = frameCount; // Mark as done.
+    frData.updateCount = R_FrameCount(); // Mark as done.
 }
 
 /**
@@ -1347,9 +1347,9 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(side->shadowVisCount() != frameCount)
+        if(side->shadowVisCount() != R_FrameCount())
         {
-            side->setShadowVisCount(frameCount);
+            side->setShadowVisCount(R_FrameCount());
 
             for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
             {

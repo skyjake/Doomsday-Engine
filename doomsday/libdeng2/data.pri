@@ -38,6 +38,7 @@ HEADERS += \
     include/de/Record \
     include/de/RecordValue \
     include/de/RefValue \
+    include/de/Shared \
     include/de/String \
     include/de/StringPool \
     include/de/TextValue \
@@ -89,6 +90,7 @@ HEADERS += \
     include/de/data/record.h \
     include/de/data/recordvalue.h \
     include/de/data/refvalue.h \
+    include/de/data/shared.h \
     include/de/data/string.h \
     include/de/data/stringpool.h \
     include/de/data/textvalue.h \

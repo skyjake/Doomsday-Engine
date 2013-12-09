@@ -21,6 +21,8 @@
 
 #include <de/System>
 #include <de/Vector>
+#include <de/GLShaderBank>
+#include <de/ImageBank>
 #include "DrawLists"
 #include "settingsregister.h"
 
@@ -63,6 +65,9 @@ class RenderSystem : public de::System
 {
 public:
     RenderSystem();
+
+    de::GLShaderBank &shaders();
+    de::ImageBank &images();
 
     SettingsRegister &settings();
     SettingsRegister &appearanceSettings();

@@ -44,8 +44,6 @@
 #include "edit_map.h"
 #include "network/net_main.h"
 
-#include "render/r_main.h" // R_ResetViewer
-
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "client/cl_def.h"
@@ -56,6 +54,7 @@
 #  include "HueCircle"
 
 #  include "Lumobj"
+#  include "render/viewports.h" // R_ResetViewer
 #  include "render/projector.h"
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
@@ -676,10 +675,10 @@ DENG2_PIMPL(World)
         // appear that no time has passed during the setup.
         DD_ResetTimer();
 
+#ifdef __CLIENT__
         // Make sure that the next frame doesn't use a filtered viewer.
         R_ResetViewer();
 
-#ifdef __CLIENT__
         // Clear any input events that might have accumulated during setup.
         DD_ClearEvents();
 

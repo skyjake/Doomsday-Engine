@@ -87,10 +87,6 @@
  */
 typedef struct gl_state_s {
     /// Global config:
-    boolean forceFinishBeforeSwap;
-    int maxTexFilterAniso;
-    int maxTexSize; // Pixels.
-    int maxTexUnits;
     int multisampleFormat;
 
     /// Current state:
@@ -110,25 +106,6 @@ typedef struct gl_state_s {
         uint texNonPowTwo : 1;
         uint vsync : 1;
     } features;
-
-    /// Extension availability bits:
-    struct {
-        uint blendSub : 1;
-        uint genMipmapSGIS : 1;
-        uint lockArray : 1;
-#ifdef USE_TEXTURE_COMPRESSION_S3
-        uint texCompressionS3 : 1;
-#endif
-        uint texEnvComb : 1;
-        uint texEnvCombNV : 1;
-        uint texEnvCombATI : 1;
-        uint texFilterAniso : 1;
-        uint texNonPowTwo : 1;
-#if WIN32
-        uint wglMultisampleARB : 1;
-        uint wglSwapIntervalEXT : 1;
-#endif
-    } extensions;
 } gl_state_t;
 
 typedef enum arraytype_e {
@@ -194,11 +171,6 @@ void Sys_GLConfigureDefaultState(void);
  * Echo the full list of available GL extensions to the console.
  */
 void Sys_GLPrintExtensions(void);
-
-/**
- * @return  Non-zero iff the extension is found.
- */
-boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions);
 
 boolean Sys_GLCheckError(void);
 

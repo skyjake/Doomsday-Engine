@@ -119,6 +119,8 @@ DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
 
 void R_InitViewWindow()
 {
+    if(Sys_IsShuttingDown()) return;
+
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         R_SetupDefaultViewWindow(i);

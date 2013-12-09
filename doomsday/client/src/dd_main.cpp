@@ -58,6 +58,7 @@
 
 #include "render/r_main.h" // R_Init, R_ResetViewer
 #ifdef __CLIENT__
+#  include "render/cameralensfx.h"
 #  include "render/r_draw.h" // R_InitViewWindow
 #  include "render/rend_font.h"
 #  include "render/rend_main.h"
@@ -1077,8 +1078,10 @@ static int DD_ActivateGameWorker(void *context)
     gameTime = 0;
     DD_ResetTimer();
 
+#ifdef __CLIENT__
     // Make sure that the next frame does not use a filtered viewer.
     R_ResetViewer();
+#endif
 
     // Invalidate old cmds and init player values.
     for(int i = 0; i < DDMAXPLAYERS; ++i)
@@ -1256,6 +1259,10 @@ de::Game &App_CurrentGame()
 
 bool App_ChangeGame(Game &game, bool allowReload)
 {
+#ifdef __CLIENT__
+    DENG_ASSERT(ClientWindow::hasMain());
+#endif
+
     //LOG_AS("App_ChangeGame");
 
     bool isReload = false;
@@ -1301,11 +1308,16 @@ bool App_ChangeGame(Game &game, bool allowReload)
     Demo_StopPlayback();
 
     GL_PurgeDeferredTasks();
-    App_ResourceSystem().releaseAllGLTextures();
-    App_ResourceSystem().pruneUnusedTextureSpecs();
-    GL_LoadLightingSystemTextures();
-    GL_LoadFlareTextures();
-    Rend_ParticleLoadSystemTextures();
+
+    //if(!Sys_IsShuttingDown())
+    {
+        App_ResourceSystem().releaseAllGLTextures();
+        App_ResourceSystem().pruneUnusedTextureSpecs();
+        GL_LoadLightingSystemTextures();
+        GL_LoadFlareTextures();
+        Rend_ParticleLoadSystemTextures();
+    }
+
     GL_SetFilter(false);
 
     if(!game.isNull())
@@ -1410,9 +1422,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     Library_ReleaseGames();
 
 #ifdef __CLIENT__
-    char buf[256];
-    DD_ComposeMainWindowTitle(buf);
-    ClientWindow::main().setWindowTitle(buf);
+    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
 #endif
 
     if(!DD_IsShuttingDown())
@@ -1432,8 +1442,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     App::app().setGame(game);
 
 #ifdef __CLIENT__
-    DD_ComposeMainWindowTitle(buf);
-    ClientWindow::main().setWindowTitle(buf);
+    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
 #endif
 
     /*
@@ -1506,20 +1515,23 @@ bool App_ChangeGame(Game &game, bool allowReload)
     DENG_ASSERT(DD_ActivePluginId() == 0);
 
 #ifdef __CLIENT__
-    /**
-     * Clear any input events we may have accumulated during this process.
-     * @note Only necessary here because we might not have been able to use
-     *       busy mode (which would normally do this for us on end).
-     */
-    DD_ClearEvents();
+    if(!Sys_IsShuttingDown())
+    {
+        /**
+         * Clear any input events we may have accumulated during this process.
+         * @note Only necessary here because we might not have been able to use
+         *       busy mode (which would normally do this for us on end).
+         */
+        DD_ClearEvents();
 
-    if(!App_GameLoaded())
-    {
-        ClientWindow::main().taskBar().open();
-    }
-    else
-    {
-        ClientWindow::main().console().clearLog();
+        if(!App_GameLoaded())
+        {
+            ClientWindow::main().taskBar().open();
+        }
+        else
+        {
+            ClientWindow::main().console().clearLog();
+        }
     }
 #endif
 
@@ -1637,9 +1649,7 @@ void DD_FinishInitializationAfterWindowReady()
     }
     else
     {
-        char buf[256];
-        DD_ComposeMainWindowTitle(buf);
-        ClientWindow::main().setWindowTitle(buf);
+        ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
     }
 #endif
 
@@ -1717,6 +1727,7 @@ boolean DD_Init(void)
 #ifdef __CLIENT__
     GL_Init();
     GL_InitRefresh();
+    LensFx_Init();
 #endif
 
 #ifdef __CLIENT__
@@ -2018,6 +2029,7 @@ static int DD_StartupWorker(void * /*context*/)
 #ifdef __CLIENT__
     R_InitViewWindow();
     Rend_Init();
+    R_ResetFrameCount();
 #endif
     Con_SetProgress(165);
 
@@ -2898,9 +2910,9 @@ static void consoleRegister()
     F_Register();
     Con_Register();
     DH_Register();
-    R_Register();
     S_Register();
 #ifdef __CLIENT__
+    Viewports_Register();
     B_Register(); // for control bindings
     DD_RegisterInput();
     SBE_Register(); // for bias editor

@@ -78,6 +78,12 @@ p.add_files(
     [ ('client/data/defaultstyle.pack', '') ] )
 p.create('defaultstyle.pack')
 
+# renderer.pack
+p = Pack()
+p.add_files(
+    [ ('client/data/renderer.pack', '') ] )
+p.create('renderer.pack')
+
 # libdoom.pk3
 p = Pack()
 p.add_files(

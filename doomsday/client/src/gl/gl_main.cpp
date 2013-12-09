@@ -49,6 +49,7 @@
 #include "render/vr.h"
 
 #include <de/DisplayMode>
+#include <de/GLInfo>
 #include <de/GLState>
 
 D_CMD(Fog);
@@ -298,10 +299,6 @@ static void printConfiguration()
     LOG_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
     LOG_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
     LOG_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
-    if(GL_state.forceFinishBeforeSwap)
-    {
-        LOG_VERBOSE("  glFinish() forced before swapping buffers.");
-    }
 }
 
 boolean GL_EarlyInit()
@@ -314,8 +311,9 @@ boolean GL_EarlyInit()
     gamma_support = !CommandLine_Check("-noramp");
 
     // We are simple people; two texture units is enough.
-    numTexUnits = MIN_OF(GL_state.maxTexUnits, MAX_TEX_UNITS);
-    envModAdd = (GL_state.extensions.texEnvCombNV || GL_state.extensions.texEnvCombATI);
+    numTexUnits = MIN_OF(GLInfo::limits().maxTexUnits, MAX_TEX_UNITS);
+    envModAdd = (GLInfo::extensions().NV_texture_env_combine4 ||
+                 GLInfo::extensions().ATI_texture_env_combine3);
 
     GL_InitDeferredTask();
 
@@ -324,20 +322,10 @@ boolean GL_EarlyInit()
     Rend_ModelInit();
 
     // Check the maximum texture size.
-    if(GL_state.maxTexSize == 256)
+    if(GLInfo::limits().maxTexSize == 256)
     {
         LOG_WARNING("Using restricted texture w/h ratio (1:8)");
         ratioLimit = 8;
-    }
-    // Set a custom maximum size?
-    if(CommandLine_CheckWith("-maxtex", 1))
-    {
-        int customSize = M_CeilPow2(strtol(CommandLine_Next(), 0, 0));
-
-        if(GL_state.maxTexSize < customSize)
-            customSize = GL_state.maxTexSize;
-        GL_state.maxTexSize = customSize;
-        LOG_INFO("Using maximum texture size of %i x %i") << GL_state.maxTexSize << GL_state.maxTexSize;
     }
     if(CommandLine_Check("-outlines"))
     {
@@ -395,7 +383,7 @@ void GL_ShutdownRefresh()
 
 void GL_Shutdown()
 {
-    if(!initGLOk)
+    if(!initGLOk || !ClientWindow::hasMain())
         return; // Not yet initialized fully.
 
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -419,6 +407,7 @@ void GL_Shutdown()
     FR_Shutdown();
     Rend_ModelShutdown();
     Sky_Shutdown();
+    LensFx_Shutdown();
     Rend_Reset();
 
     GL_ShutdownRefresh();
@@ -575,17 +564,10 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
     }
 }
 
-void GL_ProjectionMatrix()
+Matrix4f GL_GetProjectionMatrix()
 {
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
-
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
 
     if (VR::mode() == VR::MODE_OCULUS_RIFT)
     {
@@ -599,27 +581,39 @@ void GL_ProjectionMatrix()
         yfov = Rend_FieldOfView() / aspect;
     }
 
-    // Replaced gluPerspective() with glFrustum() so we can do stereo 3D
-    // gluPerspective(yfov, aspect, glNearClip, glFarClip); // Replaced with lower-level glFrustum()
     float fH = tan(0.5 * de::degreeToRadian(yfov)) * glNearClip;
     float fW = fH*aspect;
-    // Asymmetric frustum shift is computed to realign screen-depth items after view point has shifted.
-    // Asymmetric frustum shift method is probably superior to competing toe-in stereo 3D method:
-    //  * AFS preserves identical near and far clipping planes in both views
-    //  * AFS shows items at/near infinity better
-    //  * AFS conforms to what stereo 3D photographers call "ortho stereo"
-    // Asymmetric frustum shift is used for all stereo 3D modes except Oculus Rift mode, which only applies the viewpoint shift.
+    /*
+     * Asymmetric frustum shift is computed to realign screen-depth items after view point has shifted.
+     * Asymmetric frustum shift method is probably superior to competing toe-in stereo 3D method:
+     *  - AFS preserves identical near and far clipping planes in both views
+     *  - AFS shows items at/near infinity better
+     *  - AFS conforms to what stereo 3D photographers call "ortho stereo"
+     * Asymmetric frustum shift is used for all stereo 3D modes except Oculus Rift mode, which only
+     * applies the viewpoint shift.
+     */
     float frustumShift = 0;
     if (VR::applyFrustumShift)
+    {
         frustumShift = VR::eyeShift * glNearClip / VR::hudDistance;
-    glFrustum(-fW - frustumShift, fW - frustumShift,
-              -fH, fH,
-              glNearClip, glFarClip);
-    // Actually shift the player viewpoint
-    glTranslatef(-VR::eyeShift, 0, 0);
+    }
 
+    return Matrix4f::frustum(-fW - frustumShift, fW - frustumShift,
+                             -fH, fH,
+                             glNearClip, glFarClip) *
+           Matrix4f::translate(Vector3f(-VR::eyeShift, 0, 0)) *
+           Matrix4f::scale(Vector3f(1, 1, -1));
+}
+
+void GL_ProjectionMatrix()
+{
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Actually shift the player viewpoint
     // We'd like to have a left-handed coordinate system.
-    glScalef(1, 1, -1);
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(GL_GetProjectionMatrix().values());
 }
 
 #undef GL_UseFog
@@ -709,63 +703,63 @@ void GL_BlendMode(blendmode_t mode)
     switch(mode)
     {
     case BM_ZEROALPHA:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::One, gl::Zero)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::One, gl::Zero)
+                          .apply();
         break;
 
     case BM_ADD:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::SrcAlpha, gl::One)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::SrcAlpha, gl::One)
+                          .apply();
         break;
 
     case BM_DARK:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::DestColor, gl::OneMinusSrcAlpha)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::DestColor, gl::OneMinusSrcAlpha)
+                          .apply();
         break;
 
     case BM_SUBTRACT:
-        GLState::top().setBlendOp(gl::Subtract)
-                      .setBlendFunc(gl::One, gl::SrcAlpha)
-                      .apply();
+        GLState::current().setBlendOp(gl::Subtract)
+                          .setBlendFunc(gl::One, gl::SrcAlpha)
+                          .apply();
         break;
 
     case BM_ALPHA_SUBTRACT:
-        GLState::top().setBlendOp(gl::Subtract)
-                      .setBlendFunc(gl::SrcAlpha, gl::One)
-                      .apply();
+        GLState::current().setBlendOp(gl::Subtract)
+                          .setBlendFunc(gl::SrcAlpha, gl::One)
+                          .apply();
         break;
 
     case BM_REVERSE_SUBTRACT:
-        GLState::top().setBlendOp(gl::ReverseSubtract)
-                      .setBlendFunc(gl::SrcAlpha, gl::One)
-                      .apply();
+        GLState::current().setBlendOp(gl::ReverseSubtract)
+                          .setBlendFunc(gl::SrcAlpha, gl::One)
+                          .apply();
         break;
 
     case BM_MUL:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::Zero, gl::SrcColor)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::Zero, gl::SrcColor)
+                          .apply();
         break;
 
     case BM_INVERSE:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::OneMinusDestColor, gl::OneMinusSrcColor)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::OneMinusDestColor, gl::OneMinusSrcColor)
+                          .apply();
         break;
 
     case BM_INVERSE_MUL:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::Zero, gl::OneMinusSrcColor)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::Zero, gl::OneMinusSrcColor)
+                          .apply();
         break;
 
     default:
-        GLState::top().setBlendOp(gl::Add)
-                      .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
-                      .apply();
+        GLState::current().setBlendOp(gl::Add)
+                          .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
+                          .apply();
         break;
     }
 }
@@ -844,14 +838,14 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean 
     }
 
     // Hardware limitations may force us to modify the preferred size.
-    if(*optWidth > GL_state.maxTexSize)
+    if(*optWidth > GLInfo::limits().maxTexSize)
     {
-        *optWidth = GL_state.maxTexSize;
+        *optWidth = GLInfo::limits().maxTexSize;
         noStretch = false;
     }
-    if(*optHeight > GL_state.maxTexSize)
+    if(*optHeight > GLInfo::limits().maxTexSize)
     {
-        *optHeight = GL_state.maxTexSize;
+        *optHeight = GLInfo::limits().maxTexSize;
         noStretch = false;
     }
 
@@ -887,7 +881,7 @@ int GL_GetTexAnisoMul(int level)
     {
         if(level < 0)
         {   // Go with the maximum!
-            mul = GL_state.maxTexFilterAniso;
+            mul = GLInfo::limits().maxTexFilterAniso;
         }
         else
         {   // Convert from a DGL aniso level to a multiplier.
@@ -906,8 +900,7 @@ int GL_GetTexAnisoMul(int level)
             }
 
             // Clamp.
-            if(mul > GL_state.maxTexFilterAniso)
-                mul = GL_state.maxTexFilterAniso;
+            mul = MIN_OF(mul, GLInfo::limits().maxTexFilterAniso);
         }
     }
 

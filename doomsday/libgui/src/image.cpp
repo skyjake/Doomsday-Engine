@@ -274,7 +274,7 @@ QImage Image::toQImage() const
     return img;
 }
 
-Image::GLFormat Image::glFormat() const
+GLPixelFormat Image::glFormat() const
 {
     if(d->format == UseQImageFormat)
     {
@@ -371,82 +371,82 @@ void Image::operator << (Reader &from)
     }
 }
 
-Image::GLFormat Image::glFormat(Format imageFormat)
+GLPixelFormat Image::glFormat(Format imageFormat)
 {
     DENG2_ASSERT(imageFormat >= Luminance_8 && imageFormat <= RGBx_8888);
 
     switch(imageFormat)
     {
     case Luminance_8:
-        return GLFormat(GL_LUMINANCE, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_LUMINANCE, GL_UNSIGNED_BYTE, 1);
 
     case LuminanceAlpha_88:
-        return GLFormat(GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, 2);
+        return GLPixelFormat(GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, 2);
 
     case Alpha_8:
-        return GLFormat(GL_ALPHA, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_ALPHA, GL_UNSIGNED_BYTE, 1);
 
     case RGB_555:
-        return GLFormat(GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, 2);
+        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, 2);
 
     case RGB_565:
-        return GLFormat(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 2);
+        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 2);
 
     case RGB_444:
-        return GLFormat(GL_RGB, GL_UNSIGNED_SHORT_4_4_4_4, 2);
+        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_4_4_4_4, 2);
 
     case RGB_888:
-        return GLFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
 
     case RGBA_4444:
-        return GLFormat(GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2);
+        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2);
 
     case RGBA_5551:
-        return GLFormat(GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 2);
+        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, 2);
 
     case RGBA_8888:
-        return GLFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
+        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
 
     default:
     case RGBx_8888:
-        return GLFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
+        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
     }
 }
 
-Image::GLFormat Image::glFormat(QImage::Format format)
+GLPixelFormat Image::glFormat(QImage::Format format)
 {
     switch(format)
     {
     case QImage::Format_Indexed8:
-        return GLFormat(GL_LUMINANCE, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_LUMINANCE, GL_UNSIGNED_BYTE, 1);
 
     case QImage::Format_RGB444:
-        return GLFormat(GL_RGB, GL_UNSIGNED_SHORT_4_4_4_4, 2);
+        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_4_4_4_4, 2);
 
     case QImage::Format_ARGB4444_Premultiplied:
-        return GLFormat(GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2);
+        return GLPixelFormat(GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, 2);
 
     case QImage::Format_RGB555:
-        return GLFormat(GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, 2);
+        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, 2);
 
     case QImage::Format_RGB16:
-        return GLFormat(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 2);
+        return GLPixelFormat(GL_RGB, GL_UNSIGNED_SHORT_5_6_5, 2);
 
     case QImage::Format_RGB888:
-        return GLFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
+        return GLPixelFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
 
     case QImage::Format_RGB32:
         /// @todo Is GL_BGR in any GL standard spec? Check for EXT_bgra.
-        return GLFormat(GL_BGR, GL_UNSIGNED_BYTE, 4);
+        return GLPixelFormat(GL_BGR, GL_UNSIGNED_BYTE, 4);
 
     case QImage::Format_ARGB32:
         /// @todo Is GL_BGRA in any GL standard spec? Check for EXT_bgra.
-        return GLFormat(GL_BGRA, GL_UNSIGNED_BYTE, 4);
+        return GLPixelFormat(GL_BGRA, GL_UNSIGNED_BYTE, 4);
 
     default:
         break;
     }
-    return GLFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
+    return GLPixelFormat(GL_RGBA, GL_UNSIGNED_BYTE, 4);
 }
 
 Image Image::solidColor(Color const &color, Size const &size)

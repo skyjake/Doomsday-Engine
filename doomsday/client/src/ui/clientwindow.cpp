@@ -30,6 +30,7 @@
 #include <de/NumberValue>
 #include <QGLFormat>
 #include <de/GLState>
+#include <de/GLFramebuffer>
 #include <de/Drawable>
 #include <QCloseEvent>
 
@@ -161,16 +162,16 @@ DENG2_OBSERVES(App,              StartupComplete)
         game->disable();
         root.add(game);
 
+        // Busy widget shows progress indicator and frozen game content.
+        busy = new BusyWidget;
+        busy->hide(); // normally hidden
+        busy->rule().setRect(root.viewRule());
+        root.add(busy);
+
         gameUI = new GameUIWidget;
         gameUI->rule().setRect(root.viewRule());
         gameUI->disable();
         container().add(gameUI);
-
-        // For busy mode we have an entirely different widget tree.
-        busy = new BusyWidget;
-        busy->hide(); // normally hidden
-        busy->rule().setRect(root.viewRule());
-        container().add(busy);
 
         // Game selection.
         gameSelMenu = new GameSelectionWidget;
@@ -469,9 +470,6 @@ DENG2_OBSERVES(App,              StartupComplete)
             return Continue;
         }
 
-        // Offscreen composition is only needed in Oculus Rift mode.
-        enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
-
         // The canvas needs to be recreated when the GL format has changed
         // (e.g., multisampling).
         if(needRecreateCanvas)
@@ -510,8 +508,8 @@ DENG2_OBSERVES(App,              StartupComplete)
         }
 
         container().remove(*gameUI);
-        container().remove(*busy);
         container().remove(*gameSelMenu);
+        if(sidebar) container().remove(*sidebar);
         container().remove(*notifications);
         container().remove(*taskBar);
 
@@ -535,8 +533,8 @@ DENG2_OBSERVES(App,              StartupComplete)
         }
 
         container().add(gameUI);
-        container().add(busy);
         container().add(gameSelMenu);
+        if(sidebar) container().add(sidebar);
         container().add(notifications);
         container().add(taskBar);
 
@@ -647,7 +645,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     d->gameUI->enable();
 
     // Configure a viewport immediately.
-    GLState::top().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
+    GLState::current().setViewport(Rectangleui(0, 0, canvas.width(), canvas.height())).apply();
 
     LOG_DEBUG("GameWidget enabled");
 
@@ -698,7 +696,7 @@ void ClientWindow::canvasGLResized(Canvas &canvas)
     Canvas::Size size = canvas.size();
     LOG_TRACE("Canvas resized to ") << size.asText();
 
-    GLState::top().setViewport(Rectangleui(0, 0, size.x, size.y));
+    GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
     d->updateRootSize();
 }
@@ -709,8 +707,10 @@ bool ClientWindow::setDefaultGLFormat() // static
 
     // Configure the GL settings for all subsequently created canvases.
     QGLFormat fmt;
-    fmt.setDepthBufferSize(16);
-    fmt.setStencilBufferSize(8);
+    fmt.setDepth(false); // depth and stencil handled in GLFramebuffer
+    fmt.setStencil(false);
+    //fmt.setDepthBufferSize(16);
+    //fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
 
     if(VR::modeNeedsStereoGLFormat(VR::mode()))
@@ -733,19 +733,18 @@ bool ClientWindow::setDefaultGLFormat() // static
 
     // The value of the "vid-fsaa" variable is written to this settings
     // key when the value of the variable changes.
+    int sampleCount = 1;
     bool configured = de::App::config().getb("window.fsaa");
-
     if(CommandLine_Exists("-nofsaa") || !configured)
     {
-        fmt.setSampleBuffers(false);
         LOG_DEBUG("multisampling off");
     }
     else
     {
-        fmt.setSampleBuffers(true); // multisampling on (default: highest available)
-        //fmt.setSamples(4);
-        LOG_DEBUG("multisampling on (max)");
+        sampleCount = 4; // four samples is fine?
+        LOG_DEBUG("multisampling on (%i samples)") << sampleCount;
     }
+    GLFramebuffer::setDefaultMultisampling(sampleCount);
 
     if(fmt != QGLFormat::defaultFormat())
     {
@@ -764,6 +763,9 @@ void ClientWindow::draw()
 {
     // Don't run the main loop until after the paint event has been dealt with.
     ClientApp::app().loop().pause();
+
+    // Offscreen composition is only needed in Oculus Rift mode.
+    d->enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
 
     if(d->performDeferredTasks() == Instance::AbortFrame)
     {
@@ -814,21 +816,14 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     DENG_ASSERT(img.pixelSize != 0);
 }
 
-void ClientWindow::drawGameContentToTexture(GLTexture &texture)
+void ClientWindow::drawGameContent()
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLTarget offscreen(texture, GLTarget::DepthStencil);
-    GLState::push()
-            .setTarget(offscreen)
-            .setViewport(Rectangleui::fromSize(texture.size()))
-            .apply();
+    GLState::current().target().clear(GLTarget::ColorDepthStencil);
 
-    offscreen.clear(GLTarget::ColorDepthStencil);
     d->root.drawUntil(*d->gameSelMenu);
-
-    GLState::pop().apply();
 }
 
 void ClientWindow::updateCanvasFormat()

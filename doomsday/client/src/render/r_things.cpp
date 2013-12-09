@@ -447,6 +447,7 @@ void R_ProjectSprite(mobj_t *mo)
     // Do we need to project a flare source too?
     if(mo->lumIdx != Lumobj::NoIndex)
     {
+        /// @todo mark this light source visible for LensFx
         try
         {
             SpriteViewAngle const &sprViewAngle =

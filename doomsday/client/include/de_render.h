@@ -25,6 +25,7 @@
 #include "render/r_main.h"
 
 #ifdef __CLIENT__
+#include "render/viewports.h"
 #include "render/lightgrid.h"
 #include "render/projector.h"
 #include "render/r_draw.h"
@@ -41,7 +42,7 @@
 #include "render/rendpoly.h"
 #include "render/sky.h"
 #include "render/billboard.h"
-#include "render/vignette.h"
+#include "render/cameralensfx.h"
 #include "render/vissprite.h"
 #include "render/vlight.h"
 #endif

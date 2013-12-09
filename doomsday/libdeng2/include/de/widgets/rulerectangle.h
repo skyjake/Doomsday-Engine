@@ -123,6 +123,8 @@ public:
      */
     Vector2i sizei() const;
 
+    Vector2ui sizeui() const;
+
     /**
      * Returns the current rectangle as defined by the input rules.
      * Values are floored to integers.

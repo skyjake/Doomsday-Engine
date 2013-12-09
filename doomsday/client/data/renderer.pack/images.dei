@@ -1,0 +1,13 @@
+# Images for the Renderer
+#
+# These images are used as key assets in 2D and 3D rendering.
+
+# Lens flare images.
+group fx.lensflares {
+    image burst    { path = "graphics/flares/h-burst.png"  }
+    image circle   { path = "graphics/flares/circle.png"   }
+    image exponent { path = "graphics/flares/exponent.png" }
+    image halo     { path = "graphics/flares/halo.png"     }
+    image ring     { path = "graphics/flares/ring.png"     }
+    image star     { path = "graphics/flares/star.png"     }
+}

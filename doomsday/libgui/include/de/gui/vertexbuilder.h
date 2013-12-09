@@ -51,6 +51,15 @@ struct VertexBuilder
             v.pos = rect.bottomRight;  quad << v;
             return *this += quad;
         }
+        Vertices &makeQuad(Rectanglef const &rect, Rectanglef const &uv) {
+            Vertices quad;
+            VertexType v;
+            v.pos = rect.topLeft;      v.texCoord = uv.topLeft;      quad << v;
+            v.pos = rect.topRight();   v.texCoord = uv.topRight();   quad << v;
+            v.pos = rect.bottomLeft(); v.texCoord = uv.bottomLeft(); quad << v;
+            v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
+            return *this += quad;
+        }
         Vertices &makeQuad(Rectanglef const &rect, Vector4f const &color, Rectanglef const &uv) {
             Vertices quad;
             VertexType v;

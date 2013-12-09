@@ -32,7 +32,7 @@
 #include "world/map.h"
 #include "world/p_players.h" // viewPlayer
 
-#include "render/r_main.h" // viewdata_t, remove me
+#include "render/viewports.h"
 #include "render/rend_main.h" // gameDrawHUD/vOrigin, remove me
 
 #include "edit_bias.h"

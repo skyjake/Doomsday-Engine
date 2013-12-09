@@ -27,6 +27,16 @@
 #include "api_internaldata.h"
 #include <de/c_wrapper.h>
 
+#ifdef __CLIENT__
+#include <de/String>
+
+/**
+ * Compose the title for the main window.
+ * @param title  Title text for the window.
+ */
+de::String DD_ComposeMainWindowTitle();
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,14 +50,6 @@ extern uint mainWindowIdx;
  * Shuts down all subsystems. This is called from DD_Shutdown().
  */
 void DD_ShutdownAll(void);
-
-#ifdef __CLIENT__
-/**
- * Compose the title for the main window.
- * @param title  Title text for the window.
- */
-void DD_ComposeMainWindowTitle(char* title);
-#endif
 
 /**
  * Called early on during the startup process so that we can get the console

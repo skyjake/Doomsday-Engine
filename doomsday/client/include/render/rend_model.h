@@ -76,6 +76,7 @@ DENG_EXTERN_C int modelShinyMultitex;
 DENG_EXTERN_C float modelSpinSpeed;
 DENG_EXTERN_C int maxModelDistance;
 DENG_EXTERN_C float rendModelLOD;
+DENG_EXTERN_C byte precacheSkins;
 
 /**
  * Registers the console commands and variables used by this module.

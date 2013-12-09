@@ -23,6 +23,7 @@
 #include "render/vr.h"
 
 #include <de/Drawable>
+#include <de/GLFramebuffer>
 
 using namespace de;
 
@@ -37,8 +38,7 @@ DENG2_PIMPL(VRWindowTransform)
     GLUniform uOculusChromAbParam;
 
     typedef GLBufferT<Vertex3Tex> OculusRiftVBuf;
-    QScopedPointer<GLTarget> unwarpedTarget;
-    GLTexture unwarpedTexture;
+    GLFramebuffer unwarpedFB;
 
     Instance(Public *i)
         : Base(i),
@@ -75,13 +75,15 @@ DENG2_PIMPL(VRWindowTransform)
                     << uOculusLensSeparation
                     << uOculusHmdWarpParam
                     << uOculusChromAbParam;
+
+        unwarpedFB.glInit();
+        uOculusRiftFB = unwarpedFB.colorTexture();
     }
 
     void deinit()
     {
         oculusRift.clear();
-        unwarpedTarget.reset();
-        unwarpedTexture.clear();
+        unwarpedFB.glDeinit();
     }
 
     Canvas &canvas() const
@@ -127,50 +129,41 @@ DENG2_PIMPL(VRWindowTransform)
         Canvas::Size textureSize(1920, 1200); // 1.5 * 1280x800
         // Canvas::Size textureSize(2560, 1600); // 2 * 1280x800 // Undesirable relative softness at very center of image
         // Canvas::Size textureSize(3200, 2000); // 2.5 * 1280x800 // Softness here too
-        if(unwarpedTexture.size() != textureSize)
-        {
-            unwarpedTexture.setUndefinedImage(textureSize, Image::RGBA_8888);
-            unwarpedTexture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-            unwarpedTexture.setFilter(gl::Linear, gl::Linear, gl::MipNone);
-            unwarpedTarget.reset(new GLTarget(unwarpedTexture, GLTarget::DepthStencil));
-
-            uOculusRiftFB = unwarpedTexture;
-        }
+        unwarpedFB.resize(textureSize);
+        unwarpedFB.setSampleCount(GLFramebuffer::defaultMultisampling());
 
         // Set render target to offscreen temporarily.
         GLState::push()
-                .setTarget(*unwarpedTarget)
-                .setViewport(Rectangleui::fromSize(unwarpedTexture.size()))
+                .setTarget(unwarpedFB.target())
+                .setViewport(Rectangleui::fromSize(unwarpedFB.size()))
                 .apply();
-        unwarpedTarget->unsetActiveRect(true);
-        unwarpedTarget->clear(GLTarget::ColorDepth);
+        unwarpedFB.target().unsetActiveRect(true);
+        unwarpedFB.target().clear(GLTarget::ColorDepth);
 
         // Left eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(-1);
-        unwarpedTarget->setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
+        unwarpedFB.target().setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::holdViewPosition(); // Don't (late-schedule) change view direction between eye renders
 
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
-        unwarpedTarget->setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
+        unwarpedFB.target().setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         VR::releaseViewPosition(); // OK, you can change the viewpoint henceforth
 
+        unwarpedFB.target().unsetActiveRect(true);
+
         GLState::pop().apply();
 
         // Necessary until the legacy code uses GLState, too:
-        glDisable(GL_ALPHA_TEST);
         glEnable(GL_TEXTURE_2D);
 
         target().clear(GLTarget::Color);
         GLState::push()
-                .setBlend(false)
                 .setDepthTest(false);
-
-        glDisable(GL_BLEND);
 
         // Copy contents of offscreen buffer to normal screen.
         uOculusDistortionScale = VR::riftState.distortionScale();
@@ -182,7 +175,6 @@ DENG2_PIMPL(VRWindowTransform)
         oculusRift.draw();
 
         glBindTexture(GL_TEXTURE_2D, 0);
-        glEnable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
 
         GLState::pop().apply();
@@ -360,30 +352,26 @@ void VRWindowTransform::drawTransformed()
     // Overlaid type stereo 3D modes below:
     case VR::MODE_GREEN_MAGENTA:
         // Left eye view
-        VR::eyeShift = VR::getEyeShift(-1);
-        // save previous glColorMask
-        glPushAttrib(GL_COLOR_BUFFER_BIT);
-        glColorMask(0, 1, 0, 1); // Left eye view green
+        VR::eyeShift = VR::getEyeShift(-1);        
+        GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha).apply(); // Left eye view green
         d->drawContent();
         // Right eye view
         VR::eyeShift = VR::getEyeShift(+1);
-        glColorMask(1, 0, 1, 1); // Right eye view magenta
+        GLState::current().setColorMask(gl::WriteRed | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view magenta
         d->drawContent();
-        glPopAttrib(); // restore glColorMask
+        GLState::pop().apply();
         break;
 
     case VR::MODE_RED_CYAN:
         // Left eye view
         VR::eyeShift = VR::getEyeShift(-1);
-        // save previous glColorMask
-        glPushAttrib(GL_COLOR_BUFFER_BIT);
-        glColorMask(1, 0, 0, 1); // Left eye view red
+        GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha).apply(); // Left eye view red
         d->drawContent();
         // Right eye view
         VR::eyeShift = VR::getEyeShift(+1);
-        glColorMask(0, 1, 1, 1); // Right eye view cyan
+        GLState::current().setColorMask(gl::WriteGreen | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view cyan
         d->drawContent();
-        glPopAttrib(); // restore glColorMask
+        GLState::pop().apply();
         break;
 
     case VR::MODE_QUAD_BUFFERED:

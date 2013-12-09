@@ -31,6 +31,8 @@ float R_MovementXYYaw(float momx, float momy);
 float R_MovementPitch(float const mom[3]);
 float R_MovementXYZPitch(float momx, float momy, float momz);
 
+#ifdef __CLIENT__
+
 /**
  * Get a global angle from Cartesian coordinates in the map coordinate space
  * relative to the viewer.
@@ -56,14 +58,20 @@ inline angle_t R_ViewPointToAngle(coord_t x, coord_t y) {
  */
 coord_t R_ViewPointDistance(coord_t x, coord_t y);
 
+#endif
+
 de::Vector3d R_ClosestPointOnPlane(de::Vector3f const &planeNormal,
     de::Vector3d const &planePoint, de::Vector3d const &origin);
+
+#ifdef __CLIENT__
 
 void R_ProjectViewRelativeLine2D(coord_t const center[2], boolean alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2]);
 
 void R_ProjectViewRelativeLine2D(de::Vector2d const center, bool alignToViewPlane,
     coord_t width, coord_t offset, de::Vector2d &start, de::Vector2d &end);
+
+#endif
 
 /**
  * Scale @a color uniformly so that the highest component becomes one.

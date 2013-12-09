@@ -64,7 +64,6 @@ public:
     static RenderSystem &renderSystem();
     static ResourceSystem &resourceSystem();
     static WidgetActions &widgetActions();
-    static de::GLShaderBank &glShaderBank();
     static de::Games &games();
     static de::World &world();
 

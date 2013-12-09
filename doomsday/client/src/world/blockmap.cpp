@@ -132,14 +132,6 @@ private:
     }
 };
 
-template <typename Type>
-Type ceilPow2(Type unit)
-{
-    Type cumul;
-    for(cumul = 1; unit > cumul; cumul <<= 1) {}
-    return cumul;
-}
-
 DENG2_PIMPL(Blockmap)
 {
     /**

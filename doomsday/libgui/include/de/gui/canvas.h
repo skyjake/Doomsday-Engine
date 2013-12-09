@@ -160,6 +160,11 @@ public:
      */
     GLTarget &renderTarget() const;
 
+    /**
+     * Copies or swaps the back buffer to the front, making it visible.
+     */
+    void swapBuffers();
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);

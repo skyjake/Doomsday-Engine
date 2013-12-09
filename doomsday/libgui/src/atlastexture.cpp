@@ -18,6 +18,7 @@
 
 #include "de/AtlasTexture"
 #include "de/RowAtlasAllocator"
+#include "de/KdTreeAtlasAllocator"
 
 namespace de {
 
@@ -32,6 +33,13 @@ AtlasTexture *AtlasTexture::newWithRowAllocator(Atlas::Flags const &flags, Atlas
 {
     AtlasTexture *atlas = new AtlasTexture(flags, totalSize);
     atlas->setAllocator(new RowAtlasAllocator);
+    return atlas;
+}
+
+AtlasTexture *AtlasTexture::newWithKdTreeAllocator(Atlas::Flags const &flags, Atlas::Size const &totalSize)
+{
+    AtlasTexture *atlas = new AtlasTexture(flags, totalSize);
+    atlas->setAllocator(new KdTreeAtlasAllocator);
     return atlas;
 }
 

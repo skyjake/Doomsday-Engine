@@ -152,6 +152,13 @@ inline dint cmp(Type const &a, Type const &b) {
     return 0;
 }
 
+template <typename IntType>
+IntType ceilPow2(IntType const &num) {
+    IntType cumul;
+    for(cumul = 1; num > cumul; cumul <<= 1) {}
+    return cumul;
+}
+
 /**
  * Linear interpolation between two values.
  *

@@ -35,10 +35,11 @@
 #include "de_audio.h"
 
 #include "def_main.h"
+#include "render/r_main.h" // validCount
 
-#include "render/r_main.h" // validCount, viewport
 #ifdef __CLIENT__
 #  include "Lumobj"
+#  include "render/viewports.h"
 #  include "render/rend_main.h"
 #  include "render/rend_model.h"
 #  include "render/billboard.h"
@@ -234,6 +235,7 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
         V3d_Sum(origin, origin, srvo);
     }
 
+#ifdef __CLIENT__
     if(mo->dPlayer)
     {
         /// @todo What about splitscreen? We have smoothed origins for all local players.
@@ -252,6 +254,7 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
             Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, origin);
         }
     }
+#endif
 }
 
 bool Mobj_IsLinked(mobj_t const &mobj)
@@ -650,6 +653,7 @@ DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t* mo)
 {
     if(!mo) return 0;
 
+#ifdef __CLIENT__
     if(mo->dPlayer)
     {
         /// @todo What about splitscreen? We have smoothed angles for all local players.
@@ -662,7 +666,6 @@ DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t* mo)
         }
     }
 
-#ifdef __CLIENT__
     // Apply a Short Range Visual Offset?
     if(useSRVOAngle && !netGame && !playback)
     {

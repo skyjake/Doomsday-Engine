@@ -79,6 +79,7 @@ float modelShinyFactor = 1.0f;
 float modelSpinSpeed   = 1;
 int maxModelDistance   = 1500;
 float rend_model_lod   = 256;
+byte precacheSkins     = true;
 
 static bool inited;
 

@@ -31,7 +31,7 @@
 #include "de_network.h"
 #include "de_misc.h"
 
-#include "render/r_main.h"
+#include "render/viewports.h"
 #include "render/rend_main.h"
 #include "world/p_players.h"
 

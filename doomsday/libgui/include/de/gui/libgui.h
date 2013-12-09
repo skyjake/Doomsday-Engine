@@ -36,7 +36,12 @@
 #  define LIBGUI_PUBLIC
 #endif
 
-#define LIBGUI_ASSERT_GL_OK() DENG2_ASSERT(glGetError() == GL_NO_ERROR)
+#ifndef NDEBUG
+#  define LIBGUI_ASSERT_GL_OK() {GLuint _er = glGetError(); if(_er != GL_NO_ERROR) { \
+    qWarning("OpenGL error: 0x%x", _er); DENG2_ASSERT(!"OpenGL error"); }}
+#else
+#  define LIBGUI_ASSERT_GL_OK()
+#endif
 
 #ifdef __cplusplus
 #  define LIBGUI_EXTERN_C extern "C"

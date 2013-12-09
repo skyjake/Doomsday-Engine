@@ -32,6 +32,11 @@
 #  define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS 0x8CD9
 #endif
 
+/*
+ * The LIBGUI_GLES2 macro is defined when the OpenGL ES 2.0 API is in use.
+ */
+//#define LIBGUI_GLES2
+
 #ifndef GL_VERSION_2_0
 #  error "OpenGL 2.0 (or newer) headers not found"
 #endif

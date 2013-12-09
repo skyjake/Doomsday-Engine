@@ -94,8 +94,10 @@ void GLShader::clear()
 
 void GLShader::compile(Type shaderType, IByteArray const &source)
 {
+#ifndef LIBGUI_GLES2
     // With non-ES OpenGL, ignore the precision attributes.
     static QByteArray prefix("#ifndef GL_ES\n#define lowp\n#define mediump\n#define highp\n#endif\n");
+#endif
 
     DENG2_ASSERT(shaderType == Vertex || shaderType == Fragment);
 

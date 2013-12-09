@@ -25,6 +25,7 @@
 #endif
 
 #include <de/Vector>
+#include <de/Matrix>
 
 #include "dd_types.h"
 #include "def_main.h"
@@ -52,8 +53,6 @@ class Map;
 #define OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
-
-DENG_EXTERN_C int frameCount;
 
 DENG_EXTERN_C coord_t vOrigin[3];
 DENG_EXTERN_C float vang, vpitch, yfov;
@@ -146,6 +145,8 @@ float Rend_FieldOfView();
  * @param useAngles  @c true= Apply viewer angle rotation.
  */
 void Rend_ModelViewMatrix(bool useAngles = true);
+
+de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles = true);
 
 #define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-(c)[VY])*viewsidex - (vOrigin[VX]-(c)[VX])*viewsidey))
 

@@ -3851,6 +3851,8 @@ void ResourceSystem::cacheForCurrentMap()
 
 #endif // __CLIENT__
 
+byte precacheMapMaterials = true;
+byte precacheSprites = true;
 byte texGammaLut[256];
 
 void R_BuildTexGammaLut()

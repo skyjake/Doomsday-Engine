@@ -50,7 +50,7 @@ void BiasDigest::markSourceChanged(uint index)
     d->changes[index >> 5] |= (1 << (index & 0x1f));
 }
 
-bool BiasDigest::sourceMarkedChanged(uint index) const
+bool BiasDigest::isSourceChanged(uint index) const
 {
     // Assume 32-bit uint.
     return (d->changes[index >> 5] & (1 << (index & 0x1f))) != 0;

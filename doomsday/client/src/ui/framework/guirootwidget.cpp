@@ -72,7 +72,7 @@ DENG2_OBSERVES(Widget, ChildAddition)
         {
             Style const &st = ClientApp::windowSystem().style();
 
-            atlas.reset(AtlasTexture::newWithRowAllocator(
+            atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                             Atlas::BackingStore | Atlas::AllowDefragment,
                             GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
             uTexAtlas = *atlas;
@@ -252,7 +252,7 @@ Id GuiRootWidget::tinyDot() const
 
 GLShaderBank &GuiRootWidget::shaders()
 {
-    return ClientApp::glShaderBank();
+    return ClientApp::renderSystem().shaders();
 }
 
 Matrix4f GuiRootWidget::projMatrix2D() const

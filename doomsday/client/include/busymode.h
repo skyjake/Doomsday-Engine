@@ -37,6 +37,10 @@
 
 #include "dd_share.h"
 
+/// Enables or disables busy mode; if disabled, work is done synchronously
+/// in the main thread.
+void BusyMode_SetAllowed(boolean allow);
+
 /// @return  @c true if specified thread is the current busy task worker.
 boolean BusyMode_IsWorkerThread(uint threadId);
 

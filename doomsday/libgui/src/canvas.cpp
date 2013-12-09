@@ -20,10 +20,14 @@
 #include "de/Canvas"
 #include "de/CanvasWindow"
 #include "de/GLState"
+#include "de/GLTexture"
 #include "de/gui/opengl.h"
 
 #include <de/App>
 #include <de/Log>
+#include <de/Drawable>
+#include <de/GLInfo>
+#include <de/GLFramebuffer>
 
 #include <QApplication>
 #include <QKeyEvent>
@@ -43,11 +47,11 @@ static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
 DENG2_PIMPL(Canvas)
 {
-    GLTarget target;
+    GLFramebuffer framebuf;
+
     CanvasWindow *parent;
     bool readyNotified;
     Size currentSize;
-    //bool mouseDisabled;
     bool mouseGrabbed;
 #ifdef WIN32
     bool altIsDown;
@@ -57,12 +61,11 @@ DENG2_PIMPL(Canvas)
     int wheelDir[2];
 
     Instance(Public *i, CanvasWindow *parentWindow)
-        : Base(i),
-          parent(parentWindow),
-          readyNotified(false),
-          //mouseDisabled(false),
-          mouseGrabbed(false)
-    {
+        : Base(i)
+        , parent(parentWindow)
+        , readyNotified(false)
+        , mouseGrabbed(false)
+    {        
         wheelDir[0] = wheelDir[1] = 0;
 #ifdef WIN32
         altIsDown = false;
@@ -165,6 +168,29 @@ DENG2_PIMPL(Canvas)
                                  (ev->modifiers().testFlag(Qt::MetaModifier)?    KeyEvent::Meta    : KeyEvent::NoModifiers)));
         }
     }
+
+    void reconfigureFramebuffer()
+    {
+        framebuf.setColorFormat(Image::RGB_888);
+        framebuf.resize(currentSize);
+    }
+
+    void glInit()
+    {
+        DENG2_ASSERT(parent != 0);
+        framebuf.glInit();
+    }
+
+    void glDeinit()
+    {
+        framebuf.glDeinit();
+    }
+
+    void swapBuffers()
+    {
+        /// @todo Double buffering is not really needed in manual FB mode.
+        framebuf.swapBuffers(self);
+    }
 };
 
 Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
@@ -172,7 +198,7 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
 {
     LOG_AS("Canvas");
     LOG_DEBUG("swap interval: ") << format().swapInterval();
-    LOG_DEBUG("multisample: %b") << format().sampleBuffers();
+    LOG_DEBUG("multisample: %b") << (GLFramebuffer::defaultMultisampling() > 1);
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
@@ -227,8 +253,6 @@ Canvas::Size Canvas::size() const
 
 void Canvas::trapMouse(bool trap)
 {
-    //if(d->mouseDisabled) return;
-
     if(trap)
     {
         d->grabMouse();
@@ -265,7 +289,12 @@ void Canvas::copyAudiencesFrom(Canvas const &other)
 
 GLTarget &Canvas::renderTarget() const
 {
-    return d->target;
+    return d->framebuf.target();
+}
+
+void Canvas::swapBuffers()
+{
+    d->swapBuffers();
 }
 
 void Canvas::initializeGL()
@@ -276,6 +305,7 @@ void Canvas::initializeGL()
 #ifdef LIBGUI_USE_GLENTRYPOINTS
     getAllOpenGLEntryPoints();
 #endif
+    GLInfo::glInit();
 
     DENG2_FOR_AUDIENCE(GLInit, i) i->canvasGLInit(*this);
 }
@@ -288,6 +318,7 @@ void Canvas::resizeGL(int w, int h)
     if(d->currentSize != newSize)
     {
         d->currentSize = newSize;
+        d->reconfigureFramebuffer();
 
         DENG2_FOR_AUDIENCE(GLResize, i) i->canvasGLResized(*this);
     }
@@ -310,6 +341,7 @@ void Canvas::showEvent(QShowEvent* ev)
         makeCurrent();
         getAllOpenGLEntryPoints();
 #endif
+        GLInfo::glInit();
         QTimer::singleShot(1, this, SLOT(notifyReady()));
     }
 }
@@ -320,8 +352,27 @@ void Canvas::notifyReady()
 
     d->readyNotified = true;
 
-    LOG_DEBUG("Notifying GL ready");
+    d->framebuf.glInit();
+    d->reconfigureFramebuffer();
 
+    // Print some information.
+    QGLFormat const fmt = format();
+    if(fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3))
+        LOG_INFO("OpenGL 3.3 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_2)))
+        LOG_INFO("OpenGL 3.2 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_1)))
+        LOG_INFO("OpenGL 3.1 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_0)))
+        LOG_INFO("OpenGL 3.0 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_1)))
+        LOG_INFO("OpenGL 2.1 supported");
+    else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_0)))
+        LOG_INFO("OpenGL 2.0 supported");
+    else
+        LOG_WARNING("OpenGL 2.0 is not supported!");
+
+    LOG_DEBUG("Notifying GL ready");
     DENG2_FOR_AUDIENCE(GLReady, i) i->canvasGLReady(*this);
 
     // This Canvas instance might have been destroyed now.
@@ -330,7 +381,7 @@ void Canvas::notifyReady()
 void Canvas::paintGL()
 {
     // Make sure any changes to the state stack become effective.
-    GLState::top().apply();
+    GLState::current().apply();
 
     DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
 }
