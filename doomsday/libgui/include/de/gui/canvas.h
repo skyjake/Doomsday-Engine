@@ -183,6 +183,7 @@ protected:
 
 protected slots:
     void notifyReady();
+    void updateSize();
 
 private:
     DENG2_PRIVATE(d)

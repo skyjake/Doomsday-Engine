@@ -43,6 +43,10 @@
 
 namespace de {
 
+#ifdef Q_WS_X11
+#  define LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+#endif
+
 static const int MOUSE_WHEEL_CONTINUOUS_THRESHOLD_MS = 100;
 
 DENG2_PIMPL(Canvas)
@@ -52,6 +56,10 @@ DENG2_PIMPL(Canvas)
     CanvasWindow *parent;
     bool readyNotified;
     Size currentSize;
+    Size pendingSize;
+#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+    QTimer resizeTimer;
+#endif
     bool mouseGrabbed;
 #ifdef WIN32
     bool altIsDown;
@@ -67,10 +75,16 @@ DENG2_PIMPL(Canvas)
         , mouseGrabbed(false)
     {        
         wheelDir[0] = wheelDir[1] = 0;
+
 #ifdef WIN32
         altIsDown = false;
 #endif
         //mouseDisabled = App::commandLine().has("-nomouse");
+
+#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+        resizeTimer.setSingleShot(true);
+        QObject::connect(&resizeTimer, SIGNAL(timeout()), thisPublic, SLOT(updateSize()));
+#endif
     }
 
     void grabMouse()
@@ -312,16 +326,25 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int w, int h)
 {
-    Size newSize(max(0, w), max(0, h));
+    d->pendingSize = Size(max(0, w), max(0, h));
 
     // Only react if this is actually a resize.
-    if(d->currentSize != newSize)
+    if(d->currentSize != d->pendingSize)
     {
-        d->currentSize = newSize;
-        d->reconfigureFramebuffer();
-
-        DENG2_FOR_AUDIENCE(GLResize, i) i->canvasGLResized(*this);
+#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+        d->resizeTimer.start(100);
+#else
+        updateSize();
+#endif
     }
+}
+
+void Canvas::updateSize()
+{
+    d->currentSize = d->pendingSize;
+    d->reconfigureFramebuffer();
+
+    DENG2_FOR_AUDIENCE(GLResize, i) i->canvasGLResized(*this);
 }
 
 void Canvas::showEvent(QShowEvent* ev)
