@@ -88,6 +88,9 @@ public:
     Vector2<dint> toVector2i() const {
         return Vector2<dint>(dint(x), dint(y));
     }
+    Vector2<duint> toVector2ui() const {
+        return Vector2<duint>(duint(de::max(Type(0), x)), duint(de::max(Type(0), y)));
+    }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 1);
         Type *ptrs[] = { &x, &y };
