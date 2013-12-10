@@ -285,6 +285,7 @@ DrawLists &RenderSystem::drawLists()
 
 void RenderSystem::consoleRegister()
 {
+    Viewports_Register();
     Rend_Register();
     H_Register();
 }

@@ -2916,7 +2916,6 @@ static void consoleRegister()
     DH_Register();
     S_Register();
 #ifdef __CLIENT__
-    Viewports_Register();
     B_Register(); // for control bindings
     DD_RegisterInput();
     SBE_Register(); // for bias editor
