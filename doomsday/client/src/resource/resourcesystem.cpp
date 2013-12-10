@@ -396,6 +396,7 @@ DENG2_PIMPL(ResourceSystem)
         clearMaterialManifests();
 
 #ifdef __CLIENT__
+        clearAllTextureSpecs();
         clearMaterialSpecs();
 #endif
 
@@ -403,6 +404,7 @@ DENG2_PIMPL(ResourceSystem)
 #ifdef __CLIENT__
         clearModels();
 #endif
+        self.clearAllColorPalettes();
     }
 
     inline de::FS1 &fileSystem()

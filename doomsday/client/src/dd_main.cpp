@@ -1727,6 +1727,8 @@ boolean DD_Init(void)
 #ifdef __CLIENT__
     GL_Init();
     GL_InitRefresh();
+    App_ResourceSystem().clearAllTextureSpecs();
+    App_ResourceSystem().initSystemTextures();
     LensFx_Init();
 #endif
 
@@ -2102,6 +2104,8 @@ static int DD_UpdateEngineStateWorker(void *context)
     if(!novideo)
     {
         GL_InitRefresh();
+        App_ResourceSystem().clearAllTextureSpecs();
+        App_ResourceSystem().initSystemTextures();
     }
 #endif
 

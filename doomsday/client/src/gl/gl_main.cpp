@@ -364,11 +364,8 @@ void GL_Init()
 void GL_InitRefresh()
 {
     if(novideo) return;
-    GL_InitTextureManager();
-    App_ResourceSystem().clearAllTextureSpecs();
 
-    // Register/create Texture objects for the system textures.
-    App_ResourceSystem().initSystemTextures();
+    GL_InitTextureManager();
 
     initFullGLOk = true;
 }
@@ -376,9 +373,6 @@ void GL_InitRefresh()
 void GL_ShutdownRefresh()
 {
     initFullGLOk = false;
-
-    App_ResourceSystem().clearAllColorPalettes();
-    App_ResourceSystem().clearAllTextureSpecs();
 }
 
 void GL_Shutdown()
