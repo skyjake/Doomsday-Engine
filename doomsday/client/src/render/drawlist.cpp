@@ -635,9 +635,9 @@ DENG2_PIMPL(DrawList)
                 glPushMatrix();
 
                 // Scale towards the viewpoint to avoid Z-fighting.
-                glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
+                glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
                 glScalef(.99f, .99f, .99f);
-                glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
+                glTranslatef(-vOrigin.x, -vOrigin.y, -vOrigin.z);
             }
             return 0;
 

@@ -24,16 +24,13 @@
 #  error "render/rend_main.h only exists in the Client"
 #endif
 
-#include <de/Vector>
-#include <de/Matrix>
-
 #include "dd_types.h"
 #include "def_main.h"
-
 #include "Sector"
-
 #include "MaterialVariantSpec"
 #include "WallEdge"
+#include <de/Vector>
+#include <de/Matrix>
 
 namespace de {
 class Map;
@@ -54,7 +51,7 @@ class Map;
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
-DENG_EXTERN_C coord_t vOrigin[3];
+DENG_EXTERN_C de::Vector3d vOrigin;
 DENG_EXTERN_C float vang, vpitch, yfov;
 DENG_EXTERN_C float viewsidex, viewsidey;
 DENG_EXTERN_C float fogColor[4];
@@ -148,7 +145,7 @@ void Rend_ModelViewMatrix(bool useAngles = true);
 
 de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles = true);
 
-#define Rend_PointDist2D(c) (fabs((vOrigin[VZ]-(c)[VY])*viewsidex - (vOrigin[VX]-(c)[VX])*viewsidey))
+#define Rend_PointDist2D(c) (fabs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
 
 /**
  * The DOOM lighting model applies a light level delta to everything when

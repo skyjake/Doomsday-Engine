@@ -227,7 +227,7 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
     // Apply a Short Range Visual Offset?
     if(useSRVO && mo->state && mo->tics >= 0)
     {
-        const double mul = mo->tics / (float) mo->state->tics;
+        double const mul = mo->tics / float( mo->state->tics );
         vec3d_t srvo;
 
         V3d_Copy(srvo, mo->srvo);
@@ -244,9 +244,7 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
            mo->dPlayer->mo == mo)
         {
             viewdata_t const *vd = R_ViewData(consolePlayer);
-            origin[VX] = vd->current.origin.x;
-            origin[VY] = vd->current.origin.y;
-            origin[VZ] = vd->current.origin.z;
+            V3d_Set(origin, vd->current.origin.x, vd->current.origin.y, vd->current.origin.z);
         }
         // The client may have a Smoother for this object.
         else if(isClient)

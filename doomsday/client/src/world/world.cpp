@@ -698,10 +698,7 @@ DENG2_PIMPL(World)
         DENG2_ASSERT(hand != 0 && map != 0);
 
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-        hand->setOrigin(viewData->current.origin
-                        + Vector3d(viewData->frontVec.x,
-                                   viewData->frontVec.z,
-                                   viewData->frontVec.y) * handDistance);
+        hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
 #endif
 };

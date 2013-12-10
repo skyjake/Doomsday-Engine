@@ -177,7 +177,7 @@ int glmode[6] = // Indexed by 'mipmapping'.
     GL_LINEAR_MIPMAP_LINEAR
 };
 
-coord_t vOrigin[3];
+Vector3d vOrigin;
 float vang, vpitch;
 float viewsidex, viewsidey;
 
@@ -503,11 +503,9 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
 {
     viewdata_t const *viewData = R_ViewData(consoleNum);
 
-    vOrigin[VX] = viewData->current.origin.x;
-    vOrigin[VY] = viewData->current.origin.z;
-    vOrigin[VZ] = viewData->current.origin.y;
-    vang = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
-    vpitch = viewData->current.pitch * 85.0 / 110.0;
+    vOrigin = viewData->current.origin.xzy();
+    vang    = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
+    vpitch  = viewData->current.pitch * 85.0 / 110.0;
 
     Matrix4f modelView;
 
@@ -588,7 +586,7 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
 
     return (modelView *
             Matrix4f::scale(Vector3f(1.0f, 1.2f, 1.0f)) * // This is the aspect correction.
-            Matrix4f::translate(-Vector3f(vOrigin[VX], vOrigin[VY], vOrigin[VZ])));
+            Matrix4f::translate(-vOrigin));
 }
 
 void Rend_ModelViewMatrix(bool useAngles)
@@ -603,7 +601,7 @@ void Rend_ModelViewMatrix(bool useAngles)
 static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)
 {
     // The dot product.
-    return (v1.y - v2.y) * (v1.x - vOrigin[VX]) + (v2.x - v1.x) * (v1.y - vOrigin[VZ]);
+    return (v1.y - v2.y) * (v1.x - vOrigin.x) + (v2.x - v1.x) * (v1.y - vOrigin.z);
 }
 
 static void Rend_VertexColorsGlow(Vector4f *colors, uint num, float glow)
@@ -1003,8 +1001,8 @@ static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
     for(i = 0; i < 2; ++i)
     {
         // View vector.
-        V2f_Set(view, vOrigin[VX] - (i == 0? topLeft->x : bottomRight->x),
-                      vOrigin[VZ] - (i == 0? topLeft->y : bottomRight->y));
+        V2f_Set(view, vOrigin.x - (i == 0? topLeft->x : bottomRight->x),
+                      vOrigin.z - (i == 0? topLeft->y : bottomRight->y));
 
         distance = V2f_Normalize(view);
 
@@ -1034,15 +1032,15 @@ static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
             tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*acos(-dot)/PI*/
 
         // Vertical coordinates.
-        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(vOrigin[VY] - bottomRight->z, distance);
-        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(vOrigin[VY] - topLeft->z, distance);
+        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(vOrigin.y - bottomRight->z, distance);
+        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(vOrigin.y - topLeft->z, distance);
     }
 }
 
 static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
 {
     // Determine distance to viewer.
-    float distToEye = Vector2f(vOrigin[VX] - point.x, vOrigin[VZ] - point.y)
+    float distToEye = Vector2f(vOrigin.x - point.x, vOrigin.z - point.y)
                           .normalize().length();
     if(distToEye < 10)
     {
@@ -1052,13 +1050,13 @@ static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
     }
 
     // Offset from the normal view plane.
-    Vector2f start(vOrigin[VX], vOrigin[VZ]);
+    Vector2f start(vOrigin.x, vOrigin.z);
 
     float offset = ((start.y - point.y) * sin(.4f)/*viewFrontVec[VX]*/ -
                     (start.x - point.x) * cos(.4f)/*viewFrontVec[VZ]*/);
 
     tc->x = ((shinyVertical(offset, distToEye) - .5f) * 2) + .5f;
-    tc->y = shinyVertical(vOrigin[VY] - point.z, distToEye);
+    tc->y = shinyVertical(vOrigin.y - point.z, distToEye);
 }
 
 struct rendworldpoly_params_t
@@ -1794,7 +1792,7 @@ static void projectDynamics(Surface const &surface, float glowStrength,
 static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
                             float &opacity)
 {
-    if(vOrigin[VY] < leftEdge.bottom().z() || vOrigin[VY] > rightEdge.top().z())
+    if(vOrigin.y < leftEdge.bottom().z() || vOrigin.y > rightEdge.top().z())
         return false;
 
     mobj_t const *mo         = viewPlayer->shared.mo;
@@ -2756,16 +2754,16 @@ static void occludeLeaf(bool frontFacing)
         Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
 
         // Does the floor create an occlusion?
-        if(((openBottom > cluster.visFloor().heightSmoothed() && vOrigin[VY] <= openBottom)
-            || (openBottom >  backCluster.visFloor().heightSmoothed() && vOrigin[VY] >= openBottom))
+        if(((openBottom > cluster.visFloor().heightSmoothed() && vOrigin.y <= openBottom)
+            || (openBottom >  backCluster.visFloor().heightSmoothed() && vOrigin.y >= openBottom))
            && canOccludeEdgeBetweenPlanes(cluster.visFloor(), backCluster.visFloor()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
-        if(((openTop < cluster.visCeiling().heightSmoothed() && vOrigin[VY] >= openTop)
-            || (openTop <  backCluster.visCeiling().heightSmoothed() && vOrigin[VY] <= openTop))
+        if(((openTop < cluster.visCeiling().heightSmoothed() && vOrigin.y >= openTop)
+            || (openTop <  backCluster.visCeiling().heightSmoothed() && vOrigin.y <= openTop))
            && canOccludeEdgeBetweenPlanes(cluster.visCeiling(), backCluster.visCeiling()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
@@ -3017,7 +3015,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
  */
 static void generateDecorationFlares(Map &map)
 {
-    Vector3d const viewPos(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    Vector3d const viewPos = vOrigin.xzy();
 
     foreach(Lumobj *lum, map.lumobjs())
     {
@@ -3975,7 +3973,7 @@ static void drawLabel(Vector3d const &origin, String const &label, float scale, 
 
 static void drawLabel(Vector3d const &origin, String const &label)
 {
-    ddouble distToEye = (Vector3d(vOrigin[VX], vOrigin[VZ], vOrigin[VY]) - origin).length();
+    ddouble distToEye = (vOrigin.xzy() - origin).length();
     drawLabel(origin, label, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / 2000);
 }
 
@@ -4051,9 +4049,9 @@ static void drawBiasEditingVisuals(Map &map)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
+        glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
         glScalef(1, 1.0f/1.2f, 1);
-        glTranslatef(-vOrigin[VX], -vOrigin[VY], -vOrigin[VZ]);
+        glTranslatef(-vOrigin.x, -vOrigin.y, -vOrigin.z);
 
         HueCircleVisual::draw(*hueCircle, vOrigin, viewData->frontVec);
 

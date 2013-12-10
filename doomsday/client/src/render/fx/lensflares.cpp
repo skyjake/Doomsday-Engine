@@ -351,7 +351,7 @@ DENG2_PIMPL(LensFlares)
             /// @todo If so, it might be time to purge it from the PVS.
             if(pvl->seenFrame != thisFrame) continue;
 
-            coord_t const distanceSquared = (Vector3d(vOrigin) - pvl->light->lightSourceOrigin().xzy()).lengthSquared();
+            coord_t const distanceSquared = (vOrigin - pvl->light->lightSourceOrigin().xzy()).lengthSquared();
             coord_t const distance = std::sqrt(distanceSquared);
 
             // Light intensity is always quadratic per distance.
@@ -362,7 +362,7 @@ DENG2_PIMPL(LensFlares)
             /// @todo The factor should be FOV-dependent.
             float radius = pvl->light->lightSourceRadius() / distance * RADIUS_FACTOR;
 
-            float const dot = (pvl->light->lightSourceOrigin().xzy() - Vector3d(vOrigin)).normalize().dot(eyeFront);
+            float const dot = (pvl->light->lightSourceOrigin().xzy() - vOrigin).normalize().dot(eyeFront);
             float const angle = radianToDegree(std::acos(dot));
 
             //qDebug() << "i:" << intensity << "r:" << radius << "IR:" << radius*intensity;

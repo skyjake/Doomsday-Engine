@@ -541,7 +541,7 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
     origin.y += th;
 
     int sourceIndex = App_World().map().toIndex(*s);
-    coord_t distance = (s->origin() - Vector3d(vOrigin[VX], vOrigin[VZ], vOrigin[VY])).length();
+    coord_t distance = (s->origin() - vOrigin.xzy()).length();
     float minLight, maxLight;
     s->lightLevels(minLight, maxLight);
 

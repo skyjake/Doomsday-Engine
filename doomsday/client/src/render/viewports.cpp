@@ -301,8 +301,7 @@ DENG_EXTERN_C void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
  */
 void R_UpdateViewPortGeometry(viewport_t *port, int col, int row)
 {
-#ifdef __CLIENT__
-    DENG_ASSERT(port);
+    DENG2_ASSERT(port != 0);
 
     RectRaw *rect = &port->geometry;
     int const x = DENG_GAMEVIEW_X + col * DENG_GAMEVIEW_WIDTH  / gridCols;
@@ -332,7 +331,6 @@ void R_UpdateViewPortGeometry(viewport_t *port, int col, int row)
         std::memcpy(&p.geometry, rect, sizeof(p.geometry));
         DD_CallHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void*)&p);
     }
-#endif // __CLIENT__
 }
 
 boolean R_SetViewGrid(int numCols, int numRows)
@@ -500,14 +498,12 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-#ifdef __CLIENT__
-    if(App_World().hasMap())
+    if(ClientApp::world().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = ClientApp::world().map();
         map.updateTrackedPlanes();
         map.updateScrollingSurfaces();
     }
-#endif
 }
 
 void R_UpdateViewer(int consoleNum)
@@ -885,9 +881,9 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true, currentViewport, vd);
 
-    if(App_World().hasMap())
+    if(ClientApp::world().hasMap())
     {
-        Rend_RenderMap(App_World().map());
+        Rend_RenderMap(ClientApp::world().map());
     }
 
     // Orthogonal projection to the view window.
@@ -1120,7 +1116,7 @@ void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes)
 double R_ViewerLumobjDistance(int idx)
 {
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < App_World().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
     {
         return luminousDist[idx];
     }
@@ -1133,7 +1129,7 @@ bool R_ViewerLumobjIsClipped(int idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < App_World().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
     {
         return CPP_BOOL(luminousClipped[idx]);
     }
@@ -1146,7 +1142,7 @@ bool R_ViewerLumobjIsHidden(int idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < App_World().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
     {
         return luminousClipped[idx] == 2;
     }
@@ -1171,7 +1167,7 @@ void R_BeginFrame()
      */
     Rend_ProjectorReset();
 
-    Map &map = App_World().map();
+    Map &map = ClientApp::world().map();
 
     bspLeafsVisible.resize(map.bspLeafCount());
     bspLeafsVisible.fill(false);
@@ -1252,7 +1248,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     {
         luminousClipped[lumIdx] = 1;
 
-        Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+        Vector3d const eye = vOrigin.xzy();
 
         if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
                 .trace(lum->map().bspRoot()))
@@ -1273,7 +1269,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
 
     // We need to figure out if any of the polyobj's segments lies
     // between the viewpoint and the lumobj.
-    Vector3d eye(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    Vector3d const eye = vOrigin.xzy();
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())

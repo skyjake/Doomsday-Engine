@@ -763,7 +763,7 @@ int C_SafeAddRange(binangle_t startAngle, binangle_t endAngle)
 
 void C_AddRangeFromViewRelPoints(Vector2d const &from, Vector2d const &to)
 {
-    Vector2d const eyeOrigin(vOrigin[VX], vOrigin[VZ]);
+    Vector2d const eyeOrigin(vOrigin.x, vOrigin.z);
     C_SafeAddRange(pointToAngle(to   - eyeOrigin),
                    pointToAngle(from - eyeOrigin));
 }
@@ -803,7 +803,7 @@ void C_AddViewRelOcclusion(Vector2d const &from, Vector2d const &to, coord_t hei
 
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
-    Vector3d const eyeOrigin(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    Vector3d const eyeOrigin = vOrigin.xzy();
     Vector3d eyeToV1 = Vector3d(from, height) - eyeOrigin;
     Vector3d eyeToV2 = Vector3d(to,   height) - eyeOrigin;
 
@@ -862,7 +862,7 @@ int C_IsPointVisible(Vector3d const &point)
 {
     if(devNoCulling) return true;
 
-    Vector3d const eyeOrigin(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+    Vector3d const eyeOrigin = vOrigin.xzy();
     Vector3d const viewRelPoint = point - eyeOrigin;
 
     binangle_t const angle = pointToAngle(viewRelPoint);
@@ -905,7 +905,7 @@ int C_CheckRangeFromViewRelPoints(Vector2d const &from, Vector2d const &to)
 {
     if(devNoCulling) return true;
 
-    Vector2d const eyeOrigin(vOrigin[VX], vOrigin[VZ]);
+    Vector2d const eyeOrigin(vOrigin.x, vOrigin.z);
     return C_SafeCheckRange(pointToAngle(to   - eyeOrigin) - BANG_45/90,
                             pointToAngle(from - eyeOrigin) + BANG_45/90);
 }
@@ -941,7 +941,7 @@ int C_IsPolyVisible(Face const &poly)
     }
 
     // Find angles to all corners.
-    Vector2d const eyeOrigin(vOrigin[VX], vOrigin[VZ]);
+    Vector2d const eyeOrigin(vOrigin.x, vOrigin.z);
     int n = 0;
     HEdge const *hedge = poly.hedge();
     do

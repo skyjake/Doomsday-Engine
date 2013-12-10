@@ -668,7 +668,7 @@ static void renderSkyModels()
     glPushMatrix();
 
     // Setup basic translation.
-    glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
+    glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
 
     drawmodelparams_t parms;
     skymodel_t *sky = skyModels;
@@ -688,9 +688,9 @@ static void renderSkyModels()
         zap(parms);
 
         // Calculate the coordinates for the model.
-        parms.origin[VX] = vOrigin[VX] * -sky->def->coordFactor[VX];
-        parms.origin[VY] = vOrigin[VZ] * -sky->def->coordFactor[VZ];
-        parms.origin[VZ] = vOrigin[VY] * -sky->def->coordFactor[VY];
+        parms.origin[VX] = vOrigin.x * -sky->def->coordFactor[VX];
+        parms.origin[VY] = vOrigin.z * -sky->def->coordFactor[VZ];
+        parms.origin[VZ] = vOrigin.y * -sky->def->coordFactor[VY];
         parms.gzt = parms.origin[VZ];
         parms.distance = 1;
 
@@ -1026,7 +1026,7 @@ void Sky_Render()
         // Setup a proper matrix.
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
-        glTranslatef(vOrigin[VX], vOrigin[VY], vOrigin[VZ]);
+        glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
         glScalef(skyDistance, skyDistance, skyDistance);
 
         // Always draw both hemispheres.

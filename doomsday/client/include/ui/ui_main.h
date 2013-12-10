@@ -420,7 +420,7 @@ void UI_DrawHelpBox(const Point2Raw* origin, const Size2Raw* size, float alpha, 
 } // extern "C"
 
 # ifdef __CLIENT__
-de::MaterialVariantSpec const &Ui_MaterialSpec(int texSpecFlags = 0);
+de::MaterialVariantSpec const &UI_MaterialSpec(int texSpecFlags = 0);
 # endif
 
 #endif // __cplusplus

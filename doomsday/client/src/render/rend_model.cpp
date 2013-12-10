@@ -1000,11 +1000,11 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
         }
         else
         {
-            Vector3f delta = modelCenter - Vector3f(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+            Vector3f delta = modelCenter;
 
-            if(parm.shineTranslateWithViewerPos)
+            if(!parm.shineTranslateWithViewerPos)
             {
-                delta += Vector3f(vOrigin[VX], vOrigin[VZ], vOrigin[VY]);
+                delta -= vOrigin.xzy();
             }
 
             shinyAng = QATAN2(delta.z, M_ApproxDistancef(delta.x, delta.y)) / PI + 0.5f; // shinyAng is [0,1]

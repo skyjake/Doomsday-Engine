@@ -1326,12 +1326,12 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 
     // Flag planes in the cluster which face the viewer.
     QBitArray planesVisible(cluster.visPlaneCount());
-    Vector3f eyeToSurface(Vector2d(vOrigin[VX], vOrigin[VZ]) - bspLeaf.poly().center());
+    Vector3f eyeToSurface(Vector2d(vOrigin.x, vOrigin.z) - bspLeaf.poly().center());
     for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
     {
         Plane const &plane = cluster.visPlane(pln);
 
-        eyeToSurface.z = vOrigin[VY] - plane.heightSmoothed();
+        eyeToSurface.z = vOrigin.y - plane.heightSmoothed();
         if(eyeToSurface.dot(plane.surface().normal()) >= 0)
         {
             planesVisible.setBit(pln);
@@ -1370,7 +1370,7 @@ static void drawPoint(Vector3d const &point, int radius, float const color[4])
     Vector3d const leftOff      = viewData->upVec + viewData->sideVec;
     Vector3d const rightOff     = viewData->upVec - viewData->sideVec;
 
-    //Vector3d const viewToCenter = point - Vector3d(vOrigin);
+    //Vector3d const viewToCenter = point - vOrigin;
     //float scale = float(viewToCenter.dot(viewData->frontVec)) /
     //                viewData->frontVec.dot(viewData->frontVec);
 

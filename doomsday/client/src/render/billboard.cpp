@@ -567,10 +567,10 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
 
             if(alwaysAlign == 2)
             {   // Restricted camera alignment.
-                float dx = spriteCenter[VX] - vOrigin[VX];
-                float dy = spriteCenter[VY] - vOrigin[VZ];
+                float dx = spriteCenter[VX] - vOrigin.x;
+                float dy = spriteCenter[VY] - vOrigin.z;
                 float spriteAngle = BANG2DEG(
-                    bamsAtan2(spriteCenter[VZ] - vOrigin[VY], sqrt(dx * dx + dy * dy)));
+                    bamsAtan2(spriteCenter[VZ] - vOrigin.y, sqrt(dx * dx + dy * dy)));
 
                 if(spriteAngle > 180)
                     spriteAngle -= 360;

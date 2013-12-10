@@ -157,7 +157,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
-    Vector3f const viewToCenter = center - Vector3d(vOrigin);
+    Vector3f const viewToCenter = center - vOrigin;
 
     // Calculate the 'mirror' vector.
     float const scale = viewToCenter.dot(viewData->frontVec)
