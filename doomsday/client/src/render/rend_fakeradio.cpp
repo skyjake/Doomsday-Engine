@@ -1329,7 +1329,8 @@ void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
 
     // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
-    foreach(LineSide const *side, bspLeaf.shadowLines())
+    BspLeaf::ShadowLines const &shadowLines = bspLeaf.shadowLines();
+    foreach(LineSide *side, shadowLines)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
