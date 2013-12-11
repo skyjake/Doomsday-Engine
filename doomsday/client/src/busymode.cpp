@@ -247,7 +247,8 @@ void BusyMode_SetAllowed(boolean allow)
 void BusyMode_FreezeGameForBusyMode(void)
 {    
 #ifdef __CLIENT__
-    if(ClientWindow::hasMain() && busyModeAllowed)
+    // This is only possible from the main thread.
+    if(ClientWindow::hasMain() && busyModeAllowed && de::App::inMainThread())
     {
         ClientWindow::main().busy().renderTransitionFrame();
     }

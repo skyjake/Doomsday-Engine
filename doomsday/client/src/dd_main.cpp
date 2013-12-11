@@ -2158,6 +2158,8 @@ void DD_UpdateEngineState()
 {
     LOG_MSG("Updating engine state...");
 
+    BusyMode_FreezeGameForBusyMode();
+
     // Stop playing sounds and music.
     S_Reset();
 

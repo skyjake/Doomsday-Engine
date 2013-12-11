@@ -114,6 +114,8 @@ void GL_TexReset()
     bool useBusyMode = !BusyMode_Active();
     if(useBusyMode)
     {
+        BusyMode_FreezeGameForBusyMode();
+
         Con_InitProgress(200);
         BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                     reloadTextures, &useBusyMode, "Reseting textures...");
