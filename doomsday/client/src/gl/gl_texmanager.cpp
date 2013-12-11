@@ -2390,6 +2390,7 @@ static int reloadTextures(void *parameters)
 void GL_TexReset()
 {
     boolean useBusyMode = !BusyMode_Active();
+    BusyMode_FreezeGameForBusyMode();
 
     GL_ReleaseTextures();
     Con_Message("All DGL textures deleted.");
