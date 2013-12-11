@@ -46,6 +46,7 @@ DENG2_OBSERVES(ui::Margins, Change)
     bool styleChanged;
     Background background;
     Animation opacity;
+    Animation opacityWhenDisabled;
     QList<IEventHandler *> eventHandlers;
 
     // Style.
@@ -71,6 +72,7 @@ DENG2_OBSERVES(ui::Margins, Change)
         , needGeometry(true)
         , styleChanged(false)
         , opacity(1.f, Animation::Linear)
+        , opacityWhenDisabled(1.f, Animation::Linear)
         , fontId("default")
         , textColorId("text")
         , blurInited(false)
@@ -257,6 +259,20 @@ DENG2_OBSERVES(ui::Margins, Change)
             self.drawBlurredRect(self.rule().recti(), background.solidFill);
         }
     }
+
+    inline float currentOpacity() const
+    {
+        return min(opacity.value(), opacityWhenDisabled.value());
+    }
+
+    void updateOpacityForDisabledWidgets()
+    {
+        float const opac = (self.isDisabled()? .3f : 1.f);
+        if(opacityWhenDisabled.target() != opac)
+        {
+            opacityWhenDisabled.setValue(opac, .3f);
+        }
+    }
 };
 
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
@@ -417,19 +433,15 @@ Animation GuiWidget::opacity() const
 
 float GuiWidget::visibleOpacity() const
 {
-    float opacity = d->opacity;
+    float opacity = d->currentOpacity();
     for(Widget *i = Widget::parent(); i != 0; i = i->parent())
     {
         GuiWidget *w = dynamic_cast<GuiWidget *>(i);
         if(w)
         {
-            opacity *= w->d->opacity;
+            opacity *= w->d->currentOpacity();
         }
     }
-
-    // Disabled widgets are automatically made translucent.
-    if(isDisabled()) opacity *= .3f;
-
     return opacity;
 }
 
@@ -492,6 +504,7 @@ void GuiWidget::update()
         d->styleChanged = false;
         updateStyle();
     }
+    d->updateOpacityForDisabledWidgets();
 }
 
 void GuiWidget::draw()
