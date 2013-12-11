@@ -196,15 +196,8 @@ DENG2_PIMPL(ResourceSystem)
     /// All texture instances in the system (from all schemes).
     AllTextures textures;
 
-    static int const RAWTEX_HASH_SIZE = 128;
-    struct RawTexHash {
-        rawtex_t *first;
-    };
-    RawTexHash rawtexhash[RAWTEX_HASH_SIZE];
-
-    inline RawTexHash &rawTextureHash(lumpnum_t lumpNum) {
-        return rawtexhash[((unsigned) lumpNum) & (RAWTEX_HASH_SIZE - 1)];
-    }
+    typedef QHash<lumpnum_t, rawtex_t *> RawTextureHash;
+    RawTextureHash rawTexHash;
 
     /// System subspace schemes containing the manifests/resources.
     MaterialSchemes materialSchemes;
@@ -338,8 +331,6 @@ DENG2_PIMPL(ResourceSystem)
         , modelRepository(0)
 #endif
     {
-        zap(rawtexhash);
-
         LOG_AS("ResourceSystem");
         resClasses.append(new ResourceClass("RC_PACKAGE",    "Packages"));
         resClasses.append(new ResourceClass("RC_DEFINITION", "Defs"));
@@ -386,6 +377,9 @@ DENG2_PIMPL(ResourceSystem)
 #endif
         self.clearAllTextureSchemes();
         clearTextureManifests();
+#ifdef __CLIENT__
+        clearAllRawTextures();
+#endif
 
 #ifdef __CLIENT__
         self.purgeCacheQueue();
@@ -464,6 +458,12 @@ DENG2_PIMPL(ResourceSystem)
 
         // We want notification when a new manifest is defined in this scheme.
         newScheme->audienceForManifestDefined += this;
+    }
+
+    void clearAllRawTextures()
+    {
+        qDeleteAll(rawTexHash);
+        rawTexHash.clear();
     }
 
 #ifdef __CLIENT__
@@ -688,7 +688,7 @@ DENG2_PIMPL(ResourceSystem)
             if(!textureSpecInUse(*spec))
             {
                 it.remove();
-                delete &spec;
+                delete spec;
                 numPruned += 1;
             }
         }
@@ -2471,10 +2471,10 @@ rawtex_t *ResourceSystem::rawTexture(lumpnum_t lumpNum)
         return 0;
     }
 
-    for(rawtex_t *i = d->rawTextureHash(lumpNum).first; i; i = i->next)
+    Instance::RawTextureHash::iterator found = d->rawTexHash.find(lumpNum);
+    if(found != d->rawTexHash.end())
     {
-        if(i->lumpNum == lumpNum)
-            return i;
+        return found.value();
     }
     return 0;
 }
@@ -2484,66 +2484,32 @@ rawtex_t *ResourceSystem::declareRawTexture(lumpnum_t lumpNum)
     LOG_AS("ResourceSystem::rawTexture");
     if(-1 == lumpNum || lumpNum >= F_LumpCount())
     {
-        LOG_DEBUG("LumpNum #%i out of bounds (%i), returning 0.") << lumpNum << F_LumpCount();
+        LOG_DEBUG("LumpNum #%i out of range %s, returning 0.")
+            << lumpNum << Rangeui(0, F_LumpCount()).asText();
         return 0;
     }
 
-    // Check if this lumpNum has already been loaded as a rawtex.
-    rawtex_t *r = rawTexture(lumpNum);
-    if(r) return r;
+    // Has this raw texture already been declared?
+    rawtex_t *raw = rawTexture(lumpNum);
+    if(!raw)
+    {
+        // An entirely new raw texture.
+        String const &name = App_FileSystem().nameIndex().lump(lumpNum).name();
+        raw = new rawtex_t(name, lumpNum);
+        d->rawTexHash.insert(lumpNum, raw);
+    }
 
-    // Hmm, this is an entirely new rawtex.
-    r = (rawtex_t *) Z_Calloc(sizeof(*r), PU_REFRESHRAW, 0);
-    F_FileName(Str_Init(&r->name), Str_Text(F_LumpName(lumpNum)));
-    r->lumpNum = lumpNum;
-
-    // Link to the hash.
-    Instance::RawTexHash &hash = d->rawTextureHash(lumpNum);
-    r->next = hash.first;
-    hash.first = r;
-
-    return r;
+    return raw;
 }
 
-rawtex_t **ResourceSystem::collectRawTextures(int *count)
+QList<rawtex_t *> ResourceSystem::collectRawTextures() const
 {
-    // First count the number of patchtexs.
-    int num = 0;
-    for(int i = 0; i < Instance::RAWTEX_HASH_SIZE; ++i)
-    for(rawtex_t *r = d->rawtexhash[i].first; r; r = r->next)
-    {
-        num++;
-    }
-
-    // Tell this to the caller.
-    if(count) *count = num;
-
-    // Allocate the array, plus one for the terminator.
-    rawtex_t **list = (rawtex_t **) Z_Malloc(sizeof(**list) * (num + 1), PU_APPSTATIC, NULL);
-
-    // Collect the pointers.
-    num = 0;
-    for(int i = 0; i < Instance::RAWTEX_HASH_SIZE; ++i)
-    for(rawtex_t *r = d->rawtexhash[i].first; r; r = r->next)
-    {
-        list[num++] = r;
-    }
-
-    // Terminate.
-    list[num] = NULL;
-
-    return list;
+    return d->rawTexHash.values();
 }
 
 void ResourceSystem::initRawTextures()
 {
-    for(int i = 0; i < Instance::RAWTEX_HASH_SIZE; ++i)
-    for(rawtex_t *rawTex = d->rawtexhash[i].first; rawTex; rawTex = rawTex->next)
-    {
-        Str_Free(&rawTex->name);
-    }
-    Z_FreeTags(PU_REFRESHRAW, PU_REFRESHRAW);
-    zap(d->rawtexhash);
+    d->clearAllRawTextures();
 }
 
 MaterialScheme &ResourceSystem::materialScheme(String name) const

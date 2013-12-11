@@ -22,19 +22,27 @@
 #define DENG_RESOURCE_RAWTEXTURE
 
 #include "dd_share.h" // For lumpnum_t
-#include <de/str.h>
+#include <de/String>
 
 /**
  * A rawtex is a lump raw graphic that has been prepared for render.
  */
 struct rawtex_t
 {
-    ddstring_t name; ///< Percent-encoded.
+    de::String name; ///< Percent-encoded.
     lumpnum_t lumpNum;
     DGLuint tex; /// Name of the associated DGL texture.
     short width, height;
     byte masked;
-    rawtex_t *next;
+
+    rawtex_t(de::String name, lumpnum_t lumpNum)
+        : name(name)
+        , lumpNum(lumpNum)
+        , tex(0)
+        , width(0)
+        , height(0)
+        , masked(0)
+    {}
 };
 
 #endif // DENG_RESOURCE_RAWTEXTURE

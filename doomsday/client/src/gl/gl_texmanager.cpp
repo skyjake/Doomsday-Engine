@@ -279,7 +279,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
     // First try an external resource.
     try
     {
-        String foundPath = App_FileSystem().findPath(de::Uri("Patches", Path(Str_Text(&raw.name))),
+        String foundPath = App_FileSystem().findPath(de::Uri("Patches", Path(raw.name)),
                                                      RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
@@ -371,34 +371,28 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
 
 void GL_SetRawTexturesMinFilter(int newMinFilter)
 {
-    rawtex_t **rawTexs = App_ResourceSystem().collectRawTextures();
-    for(rawtex_t **ptr = rawTexs; *ptr; ptr++)
+    foreach(rawtex_t *raw, App_ResourceSystem().collectRawTextures())
     {
-        rawtex_t *r = *ptr;
-        if(r->tex) // Is the texture loaded?
+        if(raw->tex) // Is the texture loaded?
         {
             DENG_ASSERT_IN_MAIN_THREAD();
             DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-            glBindTexture(GL_TEXTURE_2D, r->tex);
+            glBindTexture(GL_TEXTURE_2D, raw->tex);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);
         }
     }
-    Z_Free(rawTexs);
 }
 
 void GL_ReleaseTexturesForRawImages()
 {
-    rawtex_t **rawTexs = App_ResourceSystem().collectRawTextures();
-    for(rawtex_t **ptr = rawTexs; *ptr; ptr++)
+    foreach(rawtex_t *raw, App_ResourceSystem().collectRawTextures())
     {
-        rawtex_t *r = (*ptr);
-        if(r->tex)
+        if(raw->tex)
         {
-            glDeleteTextures(1, (GLuint const *) &r->tex);
-            r->tex = 0;
+            glDeleteTextures(1, (GLuint const *) &raw->tex);
+            raw->tex = 0;
         }
     }
-    Z_Free(rawTexs);
     LOG_MSG("All GL textures for RawTextures deleted.");
 }

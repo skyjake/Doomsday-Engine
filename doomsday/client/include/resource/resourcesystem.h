@@ -482,10 +482,9 @@ public:
     rawtex_t *declareRawTexture(lumpnum_t lumpNum);
 
     /**
-     * Returns a NULL-terminated array of pointers to all the rawtexs.
-     * The array must be freed with Z_Free.
+     * Returns a list of pointers to all the raw textures in the collection.
      */
-    rawtex_t **collectRawTextures(int *count = 0);
+    QList<rawtex_t *> collectRawTextures() const;
 
 #ifdef __CLIENT__
     /**
