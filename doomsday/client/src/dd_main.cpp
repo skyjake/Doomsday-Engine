@@ -738,20 +738,23 @@ static int DD_LoadGameStartupResourcesWorker(void *context)
      * @note  Duplicate processing of the same file is automatically guarded
      *        against by the virtual file system layer.
      */
-    Con_Message("Loading game resources%s", verbose >= 1? ":" : "...");
-
     GameManifests const &gameManifests = App_CurrentGame().manifests();
     int const numPackages = gameManifests.count(RC_PACKAGE);
-    int packageIdx = 0;
-    for(GameManifests::const_iterator i = gameManifests.find(RC_PACKAGE);
-        i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
+    if(numPackages)
     {
-        loadResource(**i);
+        LOG_MSG("Loading game resources") << (verbose >= 1? ":" : "...");
 
-        // Update our progress.
-        if(parms.initiatedBusyMode)
+        int packageIdx = 0;
+        for(GameManifests::const_iterator i = gameManifests.find(RC_PACKAGE);
+            i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
         {
-            Con_SetProgress((packageIdx + 1) * (200 - 50) / numPackages - 1);
+            loadResource(**i);
+
+            // Update our progress.
+            if(parms.initiatedBusyMode)
+            {
+                Con_SetProgress((packageIdx + 1) * (200 - 50) / numPackages - 1);
+            }
         }
     }
 
