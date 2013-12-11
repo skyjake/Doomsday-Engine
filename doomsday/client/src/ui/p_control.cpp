@@ -344,6 +344,7 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // Check that this is really a numeric control.
     DENG_ASSERT(pc);
     DENG_ASSERT(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
+    DENG_UNUSED(pc);
 
     // Bindings are associated with the ordinal of the local player, not
     // the actual console number (playerNum) being used. That is why

@@ -417,6 +417,7 @@ void VRWindowTransform::drawTransformed()
         QPoint ulCorner(0, 0);
         ulCorner = d->canvas().mapToGlobal(ulCorner); // widget to screen coordinates
         bool rowParityIsEven = ((ulCorner.x() % 2) == 0);
+        DENG_UNUSED(rowParityIsEven);
         /// @todo - use row parity in shader or stencil, to actually interleave rows.
         // Left eye view
         VR::eyeShift = VR::getEyeShift(-1);

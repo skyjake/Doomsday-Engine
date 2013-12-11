@@ -207,8 +207,6 @@ DENG2_PIMPL(PostProcessing)
 
         uFadeInOut = fade;
 
-        Rectangleui rect = outRect();
-
         GLState::push()
                 .setBlend(false)
                 .setDepthTest(false)
