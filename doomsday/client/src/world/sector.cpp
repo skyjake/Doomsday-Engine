@@ -318,17 +318,17 @@ void Sector::setValidCount(int newValidCount)
 
 Plane &Sector::plane(int planeIndex)
 {
-    if(planeIndex >= 0 && planeIndex < d->planes.count())
-    {
-        return *d->planes[planeIndex];
-    }
-    /// @throw MissingPlaneError The referenced plane does not exist.
-    throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
+    return const_cast<Plane &>(const_cast<Sector const &>(*this).plane(planeIndex));
 }
 
 Plane const &Sector::plane(int planeIndex) const
 {
-    return const_cast<Plane const &>(const_cast<Sector &>(*this).plane(planeIndex));
+    if(planeIndex >= 0 && planeIndex < d->planes.count())
+    {
+        return *d->planes.at(planeIndex);
+    }
+    /// @throw MissingPlaneError The referenced plane does not exist.
+    throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
 }
 
 Sector::Sides const &Sector::sides() const
@@ -593,11 +593,11 @@ int Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_VALIDCOUNT, &d->validCount, 0);
         break;
     case DMU_FLOOR_PLANE: {
-        Plane *pln = d->planes[Floor];
+        Plane *pln = d->planes.at(Floor);
         args.setValue(DMT_SECTOR_FLOORPLANE, &pln, 0);
         break; }
     case DMU_CEILING_PLANE: {
-        Plane *pln = d->planes[Ceiling];
+        Plane *pln = d->planes.at(Ceiling);
         args.setValue(DMT_SECTOR_CEILINGPLANE, &pln, 0);
         break; }
     default:

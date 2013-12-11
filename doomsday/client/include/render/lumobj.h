@@ -99,7 +99,7 @@ public:
      *
      * @param newSource  New source to attribute. Use @c 0 to clear.
      */
-    void setSource(Source *newSource);
+    void setSource(Source const *newSource);
 
     /**
      * Returns the light color/intensity of the lumobj.

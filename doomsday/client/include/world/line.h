@@ -532,7 +532,7 @@ public:
          *
          * @param newCount  New shadow vis count.
          */
-        void setShadowVisCount(int newCount);
+        void setShadowVisCount(int newCount) const;
 
 #ifdef __CLIENT__
 

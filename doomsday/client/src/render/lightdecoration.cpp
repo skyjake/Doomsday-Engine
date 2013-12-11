@@ -70,7 +70,7 @@ static float checkLightLevel(float lightlevel, float min, float max)
     return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
 }
 
-Lumobj *LightDecoration::generateLumobj()
+Lumobj *LightDecoration::generateLumobj() const
 {
     // Decorations with zero color intensity produce no light.
     if(source().color == Vector3f(0, 0, 0))
