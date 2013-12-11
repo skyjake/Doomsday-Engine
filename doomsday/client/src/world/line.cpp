@@ -666,7 +666,7 @@ int Line::Side::shadowVisCount() const
     return d->shadowVisCount;
 }
 
-void Line::Side::setShadowVisCount(int newCount)
+void Line::Side::setShadowVisCount(int newCount) const
 {
     d->shadowVisCount = newCount;
 }

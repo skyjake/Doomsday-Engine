@@ -1109,11 +1109,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
     }
 
-    void generateLumobjs(QList<Decoration *> const &decorList)
+    void generateLumobjs(QList<Decoration *> const &decorList) const
     {
-        foreach(Decoration *decor, decorList)
+        foreach(Decoration const *decor, decorList)
         {
-            if(LightDecoration *decorLight = decor->maybeAs<LightDecoration>())
+            if(LightDecoration const *decorLight = decor->maybeAs<LightDecoration>())
             {
                 QScopedPointer<Lumobj>lum(decorLight->generateLumobj());
                 if(!lum.isNull())

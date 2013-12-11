@@ -35,7 +35,9 @@ class HEdge;
 class ShadowEdge
 {
 public:
-    ShadowEdge(HEdge &leftMostHEdge, int edge);
+    ShadowEdge();
+
+    void init(HEdge const &leftMostHEdge, int edge);
 
     void prepare(int planeIndex);
 

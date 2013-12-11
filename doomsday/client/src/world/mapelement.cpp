@@ -61,17 +61,17 @@ bool MapElement::hasParent() const
 
 MapElement &MapElement::parent()
 {
+    return const_cast<MapElement &>(const_cast<MapElement const *>(this)->parent());
+}
+
+MapElement const &MapElement::parent() const
+{
     if(d->parent)
     {
         return *d->parent;
     }
     /// @throw MissingParentError  Attempted with no parent element is attributed.
     throw MissingParentError("MapElement::parent", "No parent map element is attributed");
-}
-
-MapElement const &MapElement::parent() const
-{
-    return const_cast<MapElement *>(this)->parent();
 }
 
 void MapElement::setParent(MapElement *newParent)

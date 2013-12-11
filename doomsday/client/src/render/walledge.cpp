@@ -499,15 +499,15 @@ DENG2_PIMPL(WallEdge), public IHPlane
     {
         ClockDirection const direction = edge? Clockwise : Anticlockwise;
 
-        HEdge *hedge = wallHEdge;
+        HEdge const *hedge = wallHEdge;
         while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
             // Stop if there is no back cluster.
-            BspLeaf *backLeaf = hedge->hasFace()? &hedge->face().mapElementAs<BspLeaf>() : 0;
+            BspLeaf const *backLeaf = hedge->hasFace()? &hedge->face().mapElementAs<BspLeaf>() : 0;
             if(!backLeaf || !backLeaf->hasCluster())
                 break;
 
-            SectorCluster &cluster = backLeaf->cluster();
+            SectorCluster const &cluster = backLeaf->cluster();
             if(cluster.hasWorldVolume())
             {
                 for(int i = 0; i < cluster.visPlaneCount(); ++i)

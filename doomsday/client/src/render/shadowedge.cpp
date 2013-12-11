@@ -39,25 +39,26 @@ namespace de {
 
 DENG2_PIMPL_NOREF(ShadowEdge)
 {
-    HEdge *leftMostHEdge;
+    HEdge const *leftMostHEdge;
     int edge;
 
     Vector3d inner;
     Vector3d outer;
     float sectorOpenness;
     float openness;
-
-    Instance(HEdge &leftMostHEdge, int edge)
-        : leftMostHEdge(&leftMostHEdge),
-          edge(edge),
-          sectorOpenness(0),
-          openness(0)
-    {}
 };
 
-ShadowEdge::ShadowEdge(HEdge &leftMostHEdge, int edge)
-    : d(new Instance(leftMostHEdge, edge))
+ShadowEdge::ShadowEdge() : d(new Instance)
 {}
+
+void ShadowEdge::init(HEdge const &leftMostHEdge, int edge)
+{
+    d->leftMostHEdge = &leftMostHEdge;
+    d->edge          = edge;
+
+    d->inner = d->outer = Vector3d();
+    d->sectorOpenness = d->openness = 0;
+}
 
 /**
  * Returns a value in the range of 0..2, representing how 'open' the edge is.

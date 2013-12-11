@@ -41,7 +41,7 @@ float Lumobj::Source::occlusion(Vector3d const &eye) const
 
 DENG2_PIMPL_NOREF(Lumobj)
 {
-    Source *source;     ///< Source of the lumobj (if any, not owned).
+    Source const *source;///< Source of the lumobj (if any, not owned).
     double maxDistance; ///< Used when rendering to limit the number drawn lumobjs.
     Vector3f color;     ///< Light color/intensity.
     double radius;      ///< Radius in map space units.
@@ -92,7 +92,7 @@ Lumobj::Lumobj(Lumobj const &other)
     : MapObject(other.origin()), d(new Instance(*other.d))
 {}
 
-void Lumobj::setSource(Source *newSource)
+void Lumobj::setSource(Source const *newSource)
 {
     d->source = newSource;
 }

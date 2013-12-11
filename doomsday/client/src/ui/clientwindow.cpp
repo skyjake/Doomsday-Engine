@@ -213,12 +213,15 @@ DENG2_OBSERVES(App,              StartupComplete)
         colorAdjust->setAnchor(root.viewWidth() / 2, root.viewTop());
         colorAdjust->setOpeningDirection(ui::Down);
         root.add(colorAdjust);
+
+        taskBar->hide();
     }
 
     void appStartupCompleted()
     {
         // Allow the background image to show.
         background->setImageColor(Vector4f(1, 1, 1, 1));
+        taskBar->show();
     }
 
     void currentGameChanged(game::Game const &newGame)

@@ -83,7 +83,8 @@ DENG2_OBSERVES(ButtonWidget, Press)
             Rectanglei flip = Rectanglei::fromSize(recti.topLeft +
                                                    Vector2i(1 + de::round<int>(p * (size().x - flipWidth)), 1),
                                                    Vector2ui(flipWidth, size().y) - Vector2ui(2, 2));
-            verts.makeQuad(flip, _bgColor, atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
+            verts.makeQuad(flip, _bgColor * Vector4f(1, 1, 1, 3),
+                           atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
         }
 
         void updateStyle()

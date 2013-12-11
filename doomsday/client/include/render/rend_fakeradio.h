@@ -145,7 +145,7 @@ void Rend_RadioWallSection(de::WallEdge const &leftEdge, de::WallEdge const &rig
  * Render FakeRadio for the given BSP leaf. Draws all shadow geometry linked to the
  * BspLeaf, that has not already been rendered.
  */
-void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf);
+void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf);
 
 /**
  * Render the shadow poly vertices, for debug.

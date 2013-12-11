@@ -116,7 +116,10 @@ public:
         /**
          * Returns the parent sector of the cluster.
          */
-        Sector &sector() const;
+        Sector const &sector() const;
+
+        /// @copydoc sector()
+        Sector &sector();
 
         /**
          * Returns the identified @em physical plane of the parent sector. Note
@@ -125,21 +128,30 @@ public:
          *
          * @param planeIndex  Index of the plane to return.
          */
-        Plane &plane(int planeIndex) const;
+        Plane const &plane(int planeIndex) const;
+
+        /// @copydoc plane()
+        Plane &plane(int planeIndex);
 
         /**
          * Returns the sector plane which defines the @em physical floor of the
          * cluster.
          * @see hasSector(), plane()
          */
-        inline Plane &floor() const { return plane(Sector::Floor); }
+        inline Plane const &floor() const { return plane(Sector::Floor); }
+
+        /// @copydoc floor()
+        inline Plane &floor() { return plane(Sector::Floor); }
 
         /**
          * Returns the sector plane which defines the @em physical ceiling of
          * the cluster.
          * @see hasSector(), plane()
          */
-        inline Plane &ceiling() const { return plane(Sector::Ceiling); }
+        inline Plane const &ceiling() const { return plane(Sector::Ceiling); }
+
+        /// @copydoc ceiling()
+        inline Plane &ceiling() { return plane(Sector::Ceiling); }
 
         /**
          * Returns the identified @em visual sector plane for the cluster (which
@@ -147,21 +159,30 @@ public:
          *
          * @param planeIndex  Index of the plane to return.
          */
-        Plane &visPlane(int planeIndex) const;
+        Plane const &visPlane(int planeIndex) const;
+
+        /// @copydoc visPlane()
+        Plane &visPlane(int planeIndex);
 
         /**
          * Returns the sector plane which defines the @em visual floor of the
          * cluster.
          * @see hasSector(), floor()
          */
-        inline Plane &visFloor() const   { return visPlane(Sector::Floor); }
+        inline Plane const &visFloor() const { return visPlane(Sector::Floor); }
+
+        /// @copydoc visFloor()
+        inline Plane &visFloor() { return visPlane(Sector::Floor); }
 
         /**
          * Returns the sector plane which defines the @em visual ceiling of the
          * cluster.
          * @see hasSector(), ceiling()
          */
-        inline Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
+        inline Plane const &visCeiling() const { return visPlane(Sector::Ceiling); }
+
+        /// @copydoc visCeiling()
+        inline Plane &visCeiling() { return visPlane(Sector::Ceiling); }
 
         /**
          * Returns the total number of @em visual planes in the cluster.
@@ -637,7 +658,7 @@ public:
      * cluster to face boundary, or when navigating the so-called "one-ring" of
      * a vertex.
      */
-    static de::HEdge &findBackNeighbor(de::HEdge &hedge, de::ClockDirection direction)
+    static de::HEdge &findBackNeighbor(de::HEdge const &hedge, de::ClockDirection direction)
     {
         return getNeighbor(hedge, direction, getCluster(hedge)).twin();
     }
@@ -648,16 +669,16 @@ public:
      *
      * @param direction  Relative direction of the desired neighbor.
      */
-    de::HEdge &neighbor(de::ClockDirection direction) {
+    de::HEdge const &neighbor(de::ClockDirection direction) {
         _current = &getNeighbor(*_current, direction, _cluster);
         return *_current;
     }
 
     /// Returns the next half-edge (clockwise) and advances the circulator.
-    inline de::HEdge &next() { return neighbor(de::Clockwise); }
+    inline de::HEdge const &next() { return neighbor(de::Clockwise); }
 
     /// Returns the previous half-edge (anticlockwise) and advances the circulator.
-    inline de::HEdge &previous() { return neighbor(de::Anticlockwise); }
+    inline de::HEdge const &previous() { return neighbor(de::Anticlockwise); }
 
     /// Advance to the next half-edge (clockwise).
     inline SectorClusterCirculator &operator ++ () {
@@ -688,7 +709,7 @@ public:
     }
 
     /// Returns the current half-edge of a non-empty sequence.
-    de::HEdge &operator * () const {
+    de::HEdge const &operator * () const {
         if(!_current)
         {
             /// @throw NullError Attempted to dereference a "null" circulator.
@@ -699,17 +720,17 @@ public:
 
     /// Returns a pointer to the current half-edge (might be @c NULL, meaning the
     /// circulator references an empty sequence).
-    de::HEdge *operator -> () const { return _current; }
+    de::HEdge const *operator -> () const { return _current; }
 
 private:
-    static SectorCluster *getCluster(de::HEdge &hedge);
+    static SectorCluster *getCluster(de::HEdge const &hedge);
 
-    static de::HEdge &getNeighbor(de::HEdge &hedge, de::ClockDirection direction,
-                                  SectorCluster *cluster = 0);
+    static de::HEdge const &getNeighbor(de::HEdge const &hedge, de::ClockDirection direction,
+                                        SectorCluster const *cluster = 0);
 
-    de::HEdge *_hedge;
-    de::HEdge *_current;
-    SectorCluster *_cluster;
+    de::HEdge const *_hedge;
+    de::HEdge const *_current;
+    SectorCluster const *_cluster;
 };
 
 #endif // DENG_WORLD_SECTOR_H

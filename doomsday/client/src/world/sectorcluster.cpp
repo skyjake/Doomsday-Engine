@@ -247,7 +247,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 
             flags &= ~(NeverMapped|PartSelfRef);
             flags |= AllSelfRef|AllMissingBottom|AllMissingTop;
-            foreach(BspLeaf *leaf, bspLeafs)
+            foreach(BspLeaf const *leaf, bspLeafs)
             {
                 HEdge const *base  = leaf->poly().hedge();
                 HEdge const *hedge = base;
@@ -809,18 +809,34 @@ bool Sector::Cluster::isInternalEdge(HEdge *hedge) // static
     return frontCluster == hedge->twin().face().mapElementAs<BspLeaf>().clusterPtr();
 }
 
-Sector &Sector::Cluster::sector() const
+Sector const &Sector::Cluster::sector() const
+{
+    return const_cast<BspLeaf const *>(d->bspLeafs.first())->parent().as<Sector>();
+}
+
+Sector &Sector::Cluster::sector()
 {
     return d->bspLeafs.first()->parent().as<Sector>();
 }
 
-Plane &Sector::Cluster::plane(int planeIndex) const
+Plane const &Sector::Cluster::plane(int planeIndex) const
 {
     // Physical planes are never mapped.
     return sector().plane(planeIndex);
 }
 
-Plane &Sector::Cluster::visPlane(int planeIndex) const
+Plane &Sector::Cluster::plane(int planeIndex)
+{
+    // Physical planes are never mapped.
+    return sector().plane(planeIndex);
+}
+
+Plane &Sector::Cluster::visPlane(int planeIndex)
+{
+    return const_cast<Plane &>(const_cast<Sector::Cluster const *>(this)->visPlane(planeIndex));
+}
+
+Plane const &Sector::Cluster::visPlane(int planeIndex) const
 {
     if(planeIndex >= Floor && planeIndex <= Ceiling)
     {
@@ -831,7 +847,7 @@ Plane &Sector::Cluster::visPlane(int planeIndex) const
         }
 
         /// @todo Cache this result.
-        Cluster *mappedCluster = (planeIndex == Ceiling? d->mappedVisCeiling : d->mappedVisFloor);
+        Cluster const *mappedCluster = (planeIndex == Ceiling? d->mappedVisCeiling : d->mappedVisFloor);
         if(mappedCluster && mappedCluster != this)
         {
             return mappedCluster->visPlane(planeIndex);
@@ -854,7 +870,7 @@ AABoxd const &Sector::Cluster::aaBox() const
     if(d->aaBox.isNull())
     {
         // Unite the geometry bounding boxes of all BSP leafs in the cluster.
-        foreach(BspLeaf *leaf, d->bspLeafs)
+        foreach(BspLeaf const *leaf, d->bspLeafs)
         {
             AABoxd const &leafAABox = leaf->poly().aaBox();
             if(!d->aaBox.isNull())
@@ -931,7 +947,7 @@ bool Sector::Cluster::hasSkyMaskedPlane() const
 
 // SectorClusterCirculator -----------------------------------------------------
 
-SectorCluster *SectorClusterCirculator::getCluster(HEdge &hedge) // static
+SectorCluster *SectorClusterCirculator::getCluster(HEdge const &hedge) // static
 {
     if(!hedge.hasFace()) return 0;
     if(!hedge.face().hasMapElement()) return 0;
@@ -939,10 +955,10 @@ SectorCluster *SectorClusterCirculator::getCluster(HEdge &hedge) // static
     return hedge.face().mapElementAs<BspLeaf>().clusterPtr();
 }
 
-HEdge &SectorClusterCirculator::getNeighbor(HEdge &hedge, ClockDirection direction,
-    SectorCluster *cluster) // static
+HEdge const &SectorClusterCirculator::getNeighbor(HEdge const &hedge, ClockDirection direction,
+    SectorCluster const *cluster) // static
 {
-    HEdge *neighbor = &hedge.neighbor(direction);
+    HEdge const *neighbor = &hedge.neighbor(direction);
     // Skip over interior edges.
     if(cluster)
     {

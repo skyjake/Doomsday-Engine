@@ -1260,7 +1260,7 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
                          0, 4, rvertices, rcolors);
 }
 
-static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
+static void writeShadowSection(int planeIndex, LineSide const &side, float shadowDark)
 {
     DENG_ASSERT(side.hasSections());
     DENG_ASSERT(!side.line().definesPolyobj());
@@ -1269,9 +1269,9 @@ static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
 
     if(!side.leftHEdge()) return;
 
-    HEdge *leftHEdge   = side.leftHEdge();
-    Plane const &plane = side.sector().plane(planeIndex);
-    Surface const *suf = &plane.surface();
+    HEdge const *leftHEdge = side.leftHEdge();
+    Plane const &plane     = side.sector().plane(planeIndex);
+    Surface const *suf     = &plane.surface();
 
     // Surfaces with a missing material don't shadow.
     if(!suf->hasMaterial()) return;
@@ -1285,12 +1285,15 @@ static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
     /// @todo Encapsulate this logic in ShadowEdge -ds
     if(!leftHEdge->hasFace()) return;
 
-    BspLeaf &frontLeaf = leftHEdge->face().mapElementAs<BspLeaf>();
+    BspLeaf const &frontLeaf = leftHEdge->face().mapElementAs<BspLeaf>();
     if(!frontLeaf.hasCluster() || !frontLeaf.cluster().hasWorldVolume())
         return;
 
-    ShadowEdge leftEdge(*leftHEdge, Line::From);
-    ShadowEdge rightEdge(*leftHEdge, Line::To);
+    static ShadowEdge leftEdge; // this function is called often; keep these around
+    static ShadowEdge rightEdge;
+
+    leftEdge.init(*leftHEdge, Line::From);
+    rightEdge.init(*leftHEdge, Line::To);
 
     leftEdge.prepare(planeIndex);
     rightEdge.prepare(planeIndex);
@@ -1304,14 +1307,14 @@ static void writeShadowSection(int planeIndex, LineSide &side, float shadowDark)
  * @attention Do not use the global radio state in here, as @a bspLeaf can be
  * part of any sector, not the one chosen for wall rendering.
  */
-void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
+void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
 {
     if(!rendFakeRadio) return;
     if(levelFullBright) return;
 
     if(bspLeaf.shadowLines().isEmpty()) return;
 
-    SectorCluster &cluster = bspLeaf.cluster();
+    SectorCluster const &cluster = bspLeaf.cluster();
     float sectorlight = cluster.sector().lightLevel();
 
     // Determine the shadow properties.
@@ -1322,28 +1325,11 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    bool workToDo = false;
-
-    // Flag planes in the cluster which face the viewer.
-    QBitArray planesVisible(cluster.visPlaneCount());
-    Vector3f eyeToSurface(Vector2d(vOrigin.x, vOrigin.z) - bspLeaf.poly().center());
-    for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
-    {
-        Plane const &plane = cluster.visPlane(pln);
-
-        eyeToSurface.z = vOrigin.y - plane.heightSmoothed();
-        if(eyeToSurface.dot(plane.surface().normal()) >= 0)
-        {
-            planesVisible.setBit(pln);
-            workToDo = true;
-        }
-    }
-
-    if(!workToDo) return;
+    Vector3f const eyeToSurface(Vector2d(vOrigin.x, vOrigin.z) - bspLeaf.poly().center());
 
     // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
-    foreach(LineSide *side, bspLeaf.shadowLines())
+    foreach(LineSide const *side, bspLeaf.shadowLines())
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
@@ -1353,7 +1339,9 @@ void Rend_RadioBspLeafEdges(BspLeaf &bspLeaf)
 
             for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
             {
-                if(planesVisible.testBit(pln))
+                Plane const &plane = cluster.visPlane(pln);
+                if(Vector3f(eyeToSurface, vOrigin.y - plane.heightSmoothed())
+                        .dot(plane.surface().normal()) >= 0)
                 {
                     writeShadowSection(pln, *side, shadowDark);
                 }

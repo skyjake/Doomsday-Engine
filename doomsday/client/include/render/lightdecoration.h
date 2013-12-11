@@ -72,7 +72,7 @@ public:
      *
      * @see Decoration::setSurface(), Decoration::hasSurface()
      */
-    Lumobj *generateLumobj();
+    Lumobj *generateLumobj() const;
 };
 
 #endif // DENG_CLIENT_RENDER_LIGHTDECORATION_H
