@@ -363,7 +363,7 @@ public:
      */
     inline de::Texture *texturePtr(de::Uri const &path) {
         if(hasTextureManifest(path)) return textureManifest(path).texturePtr();
-        return false;
+        return NULL;
     }
 
     /**

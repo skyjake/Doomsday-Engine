@@ -138,8 +138,8 @@ DENG2_PIMPL(ClientApp)
         , menuBar(0)
         , inputSys(0)
         , renderSys(0)
-        , winSys(0)
         , resourceSys(0)
+        , winSys(0)
         , svLink(0)
     {
         clientAppSingleton = thisPublic;
