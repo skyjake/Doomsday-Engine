@@ -400,11 +400,15 @@ static void configureArrays(void *vertices, void *colors, int numCoords = 0,
         }
     }
 
+#if GL_EXT_compiled_vertex_array
     if(GL_state.features.elementArrays && lock > 0)
     {
         // 'lock' is the number of vertices to lock.
         glLockArraysEXT(0, lock);
+
+        /// @todo Never unlocked? Maybe this is dead code? -jk
     }
+#endif
 
     DENG_ASSERT(!Sys_GLCheckError());
 }

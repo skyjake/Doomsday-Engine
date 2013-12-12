@@ -47,7 +47,6 @@
 #if defined(UNIX) && defined(MACOSX)
 #  define GL_GLEXT_PROTOTYPES
 #  if defined(MACOSX_NATIVESDK) || defined(MACOS_10_7)
-#    define GL_EXT_compiled_vertex_array 1
 #    include <OpenGL/gl.h>
 #    include <OpenGL/glext.h>
 #    include <OpenGL/OpenGL.h>
