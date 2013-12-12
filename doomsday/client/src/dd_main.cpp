@@ -1413,6 +1413,9 @@ bool App_ChangeGame(Game &game, bool allowReload)
     FI_Shutdown();
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
+    /// @todo The entire material collection should not be destroyed during a reload.
+    App_ResourceSystem().clearAllMaterialSchemes();
+
     if(!game.isNull())
     {
         LOG_VERBOSE("Selecting game '%s'...") << Str_Text(game.identityKey());
