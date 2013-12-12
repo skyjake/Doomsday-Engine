@@ -386,7 +386,7 @@ DENG2_PIMPL(ResourceSystem)
 #endif
 
         self.clearAllMaterialGroups();
-        clearMaterials();
+        self.clearAllMaterialSchemes();
         clearMaterialManifests();
 
 #ifdef __CLIENT__
@@ -404,12 +404,6 @@ DENG2_PIMPL(ResourceSystem)
     inline de::FS1 &fileSystem()
     {
         return App_FileSystem();
-    }
-
-    void clearMaterials()
-    {
-        qDeleteAll(materials);
-        materials.clear();
     }
 
     void clearMaterialManifests()
