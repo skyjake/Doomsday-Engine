@@ -3649,7 +3649,7 @@ colorpaletteid_t ResourceSystem::defaultColorPalette() const
 
 void ResourceSystem::setDefaultColorPalette(ColorPalette *newDefaultPalette)
 {
-    d->defaultColorPalette = newDefaultPalette? newDefaultPalette->id() : 0;
+    d->defaultColorPalette = newDefaultPalette? newDefaultPalette->id().asUInt32() : 0;
 }
 
 #ifdef __CLIENT__

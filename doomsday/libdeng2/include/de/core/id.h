@@ -81,6 +81,8 @@ public:
 
     ddouble asDouble() const;
 
+    inline duint32 asUInt32() const { return _id; }
+
     dint64 asInt64() const;
 
     // Implements ISerializable.
