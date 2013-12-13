@@ -2538,7 +2538,7 @@ ResourceSystem::MaterialSchemes const &ResourceSystem::allMaterialSchemes() cons
 MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
 {
     duint32 idx = id - 1; // 1-based index.
-    if(idx >= 0 && idx < d->materialManifestCount)
+    if(idx < d->materialManifestCount)
     {
         if(d->materialManifestIdMap[idx])
         {
@@ -3852,7 +3852,7 @@ static int collectManifestsInScheme(SchemeType const &scheme,
     QList<ManifestType *> *storage = 0)
 {
     int count = 0;
-    PathTreeIterator<SchemeType::Index> iter(scheme.index().leafNodes());
+    PathTreeIterator<typename SchemeType::Index> iter(scheme.index().leafNodes());
     while(iter.hasNext())
     {
         ManifestType &manifest = iter.next();

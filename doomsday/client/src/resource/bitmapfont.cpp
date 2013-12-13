@@ -303,7 +303,7 @@ void BitmapFont::glInit()
 
         int format = inByte(hndl);
 
-        uint8_t *pixels;
+        uint8_t *pixels = 0;
         switch(format)
         {
         // Original format.
@@ -312,7 +312,7 @@ void BitmapFont::glInit()
         case 2: pixels = d->readFormat2(hndl); break;
 
         default:
-            DENG2_ASSERT(false);
+            DENG2_ASSERT(!"BitmapFont: Format not implemented");
         }
         if(!pixels) return;
 
