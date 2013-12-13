@@ -62,7 +62,7 @@ namespace res
 #define IMGF_IS_MASKED              (0x1)
 /*@}*/
 
-typedef struct image_s
+struct image_t
 {
     /// @ref imageFlags
     int flags;
@@ -78,31 +78,31 @@ typedef struct image_s
 
     /// Pixel color/palette (+alpha) data buffer.
     uint8_t *pixels;
-} image_t;
+};
 
 /**
  * Initializes the previously allocated @a image for use.
  * @param image  Image instance.
  */
-void Image_Init(image_t* image);
+void Image_Init(image_t &image);
 
 /**
  * Releases image pixel data, but does not delete @a image.
  * @param image  Image instance.
  */
-void Image_Destroy(image_t* image);
+void Image_ClearPixelData(image_t &image);
 
 /**
  * Returns the dimensions of the image in pixels.
  */
-de::Vector2i Image_Dimensions(image_t const *image);
+de::Vector2i Image_Dimensions(image_t const &image);
 
 /**
  * Returns a textual description of the image.
  *
  * @return Human-friendly description of the image.
  */
-de::String Image_Description(image_t const *image);
+de::String Image_Description(image_t const &image);
 
 /**
  * Loads PCX, TGA and PNG images. The returned buffer must be freed
@@ -110,28 +110,27 @@ de::String Image_Description(image_t const *image);
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-uint8_t *Image_LoadFromFile(image_t* image, FileHandle* file);
+uint8_t *Image_LoadFromFile(image_t &image, de::FileHandle &file);
 
-boolean Image_LoadFromFileWithFormat(image_t* img, const char* format, FileHandle* file);
+bool Image_LoadFromFileWithFormat(image_t &image, char const *format, de::FileHandle &file);
 
-boolean Image_Save(const image_t *image, const char* filePath);
+bool Image_Save(image_t const &image, char const *filePath);
 
 /// @return  @c true if the image pixel data contains alpha information.
-boolean Image_HasAlpha(const image_t* image);
+bool Image_HasAlpha(image_t const &image);
 
 /**
  * Converts the image by converting it to a luminance map and then moving
  * the resultant luminance data into the alpha channel. The color channel(s)
  * are then filled all-white.
  */
-void Image_ConvertToAlpha(image_t* image, boolean makeWhite);
+void Image_ConvertToAlpha(image_t &image, bool makeWhite = false);
 
 /**
  * Converts the image data to grayscale luminance in-place.
  */
-void Image_ConvertToLuminance(image_t* image, boolean retainAlpha);
+void Image_ConvertToLuminance(image_t &image, bool retainAlpha = true);
 
-#ifdef __CLIENT__
 /// @todo Move into image_t
 uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
 
@@ -141,7 +140,5 @@ res::Source GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mo
 /// @todo Move into image_t
 res::Source GL_LoadSourceImage(image_t &image, de::Texture const &tex,
     TextureVariantSpec const &spec);
-
-#endif // __CLIENT__
 
 #endif // DENG_RESOURCE_IMAGE_H

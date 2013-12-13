@@ -114,7 +114,7 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
         if(App_ResourceSystem().hasColorPalette(name))
         {
             ColorPalette &palette = App_ResourceSystem().colorPalette(name);
-            palette.loadColorTable(colors);
+            palette.replaceColorTable(colors);
             return palette.id();
         }
 

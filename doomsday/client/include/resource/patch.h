@@ -1,7 +1,7 @@
-/** @file patch.h Patch Image Format.
+/** @file patch.h  Patch Image Format.
  *
- * @author Copyright &copy; 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_PATCH_H
-#define LIBDENG_RESOURCE_PATCH_H
+#ifndef DENG_RESOURCE_PATCH_H
+#define DENG_RESOURCE_PATCH_H
 
 #include <de/Block>
 #include <de/IByteArray>
@@ -108,6 +108,8 @@ public:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Patch::Flags)
 
+typedef Patch::Metadata PatchMetadata;
+
 } // namespace de
 
-#endif // LIBDENG_RESOURCE_PATCH_H
+#endif // DENG_RESOURCE_PATCH_H

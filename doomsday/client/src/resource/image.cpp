@@ -68,7 +68,7 @@ struct GraphicFileType
 
 static bool interpretPcx(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
-    Image_Init(&img);
+    Image_Init(img);
     img.pixels = PCX_Load(reinterpret_cast<filehandle_s *>(&hndl),
                           &img.size.width, &img.size.height, &img.pixelSize);
     return (0 != img.pixels);
@@ -76,23 +76,17 @@ static bool interpretPcx(de::FileHandle &hndl, String /*filePath*/, image_t &img
 
 static bool interpretJpg(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
-    return Image_LoadFromFileWithFormat(&img, "JPG", reinterpret_cast<filehandle_s *>(&hndl));
+    return Image_LoadFromFileWithFormat(img, "JPG", hndl);
 }
 
 static bool interpretPng(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
-    /*
-    Image_Init(&img);
-    img.pixels = PNG_Load(reinterpret_cast<filehandle_s *>(&hndl),
-                          &img.size.width, &img.size.height, &img.pixelSize);
-    return (0 != img.pixels);
-    */
-    return Image_LoadFromFileWithFormat(&img, "PNG", reinterpret_cast<filehandle_s *>(&hndl));
+    return Image_LoadFromFileWithFormat(img, "PNG", hndl);
 }
 
 static bool interpretTga(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
-    Image_Init(&img);
+    Image_Init(img);
     img.pixels = TGA_Load(reinterpret_cast<filehandle_s *>(&hndl),
                           &img.size.width, &img.size.height, &img.pixelSize);
     return (0 != img.pixels);
@@ -160,133 +154,118 @@ static inline bool isColorKeyed(String path)
 
 #endif // __CLIENT__
 
-void Image_Init(image_t *img)
+void Image_Init(image_t &img)
 {
-    DENG2_ASSERT(img);
-    img->size.width = 0;
-    img->size.height = 0;
-    img->pixelSize = 0;
-    img->flags = 0;
-    img->paletteId = 0;
-    img->pixels = 0;
+    img.size.width  = 0;
+    img.size.height = 0;
+    img.pixelSize   = 0;
+    img.flags       = 0;
+    img.paletteId   = 0;
+    img.pixels      = 0;
 }
 
-void Image_Destroy(image_t *img)
+void Image_ClearPixelData(image_t &img)
 {
-    DENG2_ASSERT(img);
-    if(!img->pixels) return;
-
-    M_Free(img->pixels);
-    img->pixels = 0;
+    M_Free(img.pixels); img.pixels = 0;
 }
 
-de::Vector2i Image_Dimensions(image_t const *img)
+de::Vector2i Image_Dimensions(image_t const &img)
 {
-    DENG2_ASSERT(img);
-    return Vector2i(img->size.width, img->size.height);
+    return Vector2i(img.size.width, img.size.height);
 }
 
-String Image_Description(image_t const *img)
+String Image_Description(image_t const &img)
 {
-    DENG2_ASSERT(img);
-    Vector2i dimensions(img->size.width, img->size.height);
+    Vector2i dimensions(img.size.width, img.size.height);
 
     return String("Dimensions:%1 Flags:%2 %3:%4")
                .arg(dimensions.asText())
-               .arg(img->flags)
-               .arg(0 != img->paletteId? "ColorPalette" : "PixelSize")
-               .arg(0 != img->paletteId? img->paletteId : img->pixelSize);
+               .arg(img.flags)
+               .arg(0 != img.paletteId? "ColorPalette" : "PixelSize")
+               .arg(0 != img.paletteId? img.paletteId : img.pixelSize);
 }
 
-void Image_ConvertToLuminance(image_t *img, boolean retainAlpha)
+void Image_ConvertToLuminance(image_t &img, bool retainAlpha)
 {
-    DENG_ASSERT(img);
-    LOG_AS("GL_ConvertToLuminance");
+    LOG_AS("Image_ConvertToLuminance");
 
     uint8_t *alphaChannel = 0, *ptr = 0;
 
     // Is this suitable?
-    if(0 != img->paletteId || (img->pixelSize < 3 && (img->flags & IMGF_IS_MASKED)))
+    if(0 != img.paletteId || (img.pixelSize < 3 && (img.flags & IMGF_IS_MASKED)))
     {
-#if _DEBUG
         LOG_WARNING("Attempt to convert paletted/masked image. I don't know this format!");
-#endif
         return;
     }
 
-    long numPels = img->size.width * img->size.height;
+    long numPels = img.size.width * img.size.height;
 
     // Do we need to relocate the alpha data?
-    if(retainAlpha && img->pixelSize == 4)
+    if(retainAlpha && img.pixelSize == 4)
     {
         // Yes. Take a copy.
         alphaChannel = reinterpret_cast<uint8_t *>(M_Malloc(numPels));
 
-        ptr = img->pixels;
-        for(long p = 0; p < numPels; ++p, ptr += img->pixelSize)
+        ptr = img.pixels;
+        for(long p = 0; p < numPels; ++p, ptr += img.pixelSize)
         {
             alphaChannel[p] = ptr[3];
         }
     }
 
     // Average the RGB colors.
-    ptr = img->pixels;
-    for(long p = 0; p < numPels; ++p, ptr += img->pixelSize)
+    ptr = img.pixels;
+    for(long p = 0; p < numPels; ++p, ptr += img.pixelSize)
     {
-        int min = MIN_OF(ptr[0], MIN_OF(ptr[1], ptr[2]));
-        int max = MAX_OF(ptr[0], MAX_OF(ptr[1], ptr[2]));
-        img->pixels[p] = (min == max? min : (min + max) / 2);
+        int min = de::min(ptr[0], de::min(ptr[1], ptr[2]));
+        int max = de::max(ptr[0], de::max(ptr[1], ptr[2]));
+        img.pixels[p] = (min == max? min : (min + max) / 2);
     }
 
     // Do we need to relocate the alpha data?
     if(alphaChannel)
     {
-        std::memcpy(img->pixels + numPels, alphaChannel, numPels);
-        img->pixelSize = 2;
+        std::memcpy(img.pixels + numPels, alphaChannel, numPels);
+        img.pixelSize = 2;
         M_Free(alphaChannel);
         return;
     }
 
-    img->pixelSize = 1;
+    img.pixelSize = 1;
 }
 
-void Image_ConvertToAlpha(image_t *img, boolean makeWhite)
+void Image_ConvertToAlpha(image_t &img, bool makeWhite)
 {
-    DENG2_ASSERT(img);
+    Image_ConvertToLuminance(img);
 
-    Image_ConvertToLuminance(img, true);
-
-    long total = img->size.width * img->size.height;
+    long total = img.size.width * img.size.height;
     for(long p = 0; p < total; ++p)
     {
-        img->pixels[total + p] = img->pixels[p];
-        if(makeWhite) img->pixels[p] = 255;
+        img.pixels[total + p] = img.pixels[p];
+        if(makeWhite) img.pixels[p] = 255;
     }
-    img->pixelSize = 2;
+    img.pixelSize = 2;
 }
 
-boolean Image_HasAlpha(image_t const *img)
+bool Image_HasAlpha(image_t const &img)
 {
-    DENG2_ASSERT(img);
     LOG_AS("Image_HasAlpha");
 
-    if(0 != img->paletteId || (img->flags & IMGF_IS_MASKED))
+    if(0 != img.paletteId || (img.flags & IMGF_IS_MASKED))
     {
-#if _DEBUG
         LOG_WARNING("Attempt to determine alpha for paletted/masked image. I don't know this format!");
-#endif
         return false;
     }
 
-    if(img->pixelSize == 3)
+    if(img.pixelSize == 3)
     {
         return false;
     }
 
-    if(img->pixelSize == 4)
+    if(img.pixelSize == 4)
     {
-        long const numpels = img->size.width * img->size.height;
-        uint8_t const *in = img->pixels;
+        long const numpels = img.size.width * img.size.height;
+        uint8_t const *in = img.pixels;
         for(long i = 0; i < numpels; ++i, in += 4)
         {
             if(in[3] < 255)
@@ -295,70 +274,65 @@ boolean Image_HasAlpha(image_t const *img)
             }
         }
     }
+
     return false;
 }
 
-uint8_t *Image_LoadFromFile(image_t *img, filehandle_s *_file)
+uint8_t *Image_LoadFromFile(image_t &img, de::FileHandle &file)
 {
 #ifdef __CLIENT__
-    DENG2_ASSERT(img && _file);
-    de::FileHandle &file = reinterpret_cast<de::FileHandle &>(*_file);
     LOG_AS("Image_LoadFromFile");
 
     String filePath = file.file().composePath();
 
     Image_Init(img);
-    interpretGraphic(file, filePath, *img);
+    interpretGraphic(file, filePath, img);
 
     // Still not interpreted?
-    if(!img->pixels)
+    if(!img.pixels)
     {
         LOG_DEBUG("\"%s\" unrecognized, trying fallback loader...")
             << NativePath(filePath).pretty();
-        return NULL; // Not a recognised format. It may still be loadable, however.
+        return 0; // Not a recognised format. It may still be loadable, however.
     }
 
     // How about some color-keying?
     if(isColorKeyed(filePath))
     {
-        uint8_t *out = ApplyColorKeying(img->pixels, img->size.width, img->size.height, img->pixelSize);
-        if(out != img->pixels)
+        uint8_t *out = ApplyColorKeying(img.pixels, img.size.width, img.size.height, img.pixelSize);
+        if(out != img.pixels)
         {
             // Had to allocate a larger buffer, free the old and attach the new.
-            M_Free(img->pixels);
-            img->pixels = out;
+            M_Free(img.pixels);
+            img.pixels = out;
         }
 
         // Color keying is done; now we have 4 bytes per pixel.
-        img->pixelSize = 4;
+        img.pixelSize = 4;
     }
 
     // Any alpha pixels?
     if(Image_HasAlpha(img))
     {
-        img->flags |= IMGF_IS_MASKED;
+        img.flags |= IMGF_IS_MASKED;
     }
 
     LOG_VERBOSE("\"%s\" (%ix%i)")
-        << NativePath(filePath).pretty() << img->size.width << img->size.height;
+        << NativePath(filePath).pretty() << img.size.width << img.size.height;
 
-    return img->pixels;
+    return img.pixels;
 #else
     // Server does not load image files.
-    DENG2_UNUSED2(img, _file);
+    DENG2_UNUSED2(img, file);
     return NULL;
 #endif
 }
 
-boolean Image_LoadFromFileWithFormat(image_t *img, char const *format, filehandle_s *_hndl)
+bool Image_LoadFromFileWithFormat(image_t &img, char const *format, de::FileHandle &hndl)
 {
 #ifdef __CLIENT__
     /// @todo There are too many copies made here. It would be best if image_t
     /// contained an instance of QImage. -jk
-
-    DENG2_ASSERT(img);
-    DENG2_ASSERT(_hndl);
-    de::FileHandle &hndl = *reinterpret_cast<de::FileHandle *>(_hndl);
 
     // It is assumed that file's position stays the same (could be trying multiple interpreters).
     size_t initPos = hndl.tell();
@@ -391,37 +365,35 @@ boolean Image_LoadFromFileWithFormat(image_t *img, char const *format, filehandl
     // Swap the red and blue channels for GL.
     image = image.rgbSwapped();
 
-    img->size.width  = image.width();
-    img->size.height = image.height();
-    img->pixelSize   = image.depth() / 8;
+    img.size.width  = image.width();
+    img.size.height = image.height();
+    img.pixelSize   = image.depth() / 8;
 
     LOG_TRACE("Image_Load: size %i x %i depth %i alpha %b bytes %i")
-        << img->size.width << img->size.height << img->pixelSize
+        << img.size.width << img.size.height << img.pixelSize
         << image.hasAlphaChannel() << image.byteCount();
 
-    img->pixels = reinterpret_cast<uint8_t *>(M_MemDup(image.constBits(), image.byteCount()));
+    img.pixels = reinterpret_cast<uint8_t *>(M_MemDup(image.constBits(), image.byteCount()));
 
     // Back to the original file position.
     hndl.seek(initPos, SeekSet);
     return true;
 #else
     // Server does not load image files.
-    DENG2_UNUSED3(img, format, _hndl);
+    DENG2_UNUSED3(img, format, hndl);
     return false;
 #endif
 }
 
-boolean Image_Save(image_t const *img, char const *filePath)
+bool Image_Save(image_t const &img, char const *filePath)
 {
 #ifdef __CLIENT__
-    DENG2_ASSERT(img);
-
     // Compose the full path.
     String fullPath = String(filePath);
     if(fullPath.isEmpty())
     {
         static int n = 0;
-        fullPath = String("image%1x%2-%3").arg(img->size.width).arg(img->size.height).arg(n++, 3);
+        fullPath = String("image%1x%2-%3").arg(img.size.width).arg(img.size.height).arg(n++, 3);
     }
 
     if(fullPath.fileNameExtension().isEmpty())
@@ -430,10 +402,10 @@ boolean Image_Save(image_t const *img, char const *filePath)
     }
 
     // Swap red and blue channels then save.
-    QImage image = QImage(img->pixels, img->size.width, img->size.height, QImage::Format_ARGB32);
+    QImage image = QImage(img.pixels, img.size.width, img.size.height, QImage::Format_ARGB32);
     image = image.rgbSwapped();
 
-    return CPP_BOOL(image.save(NativePath(fullPath)));
+    return image.save(NativePath(fullPath));
 #else
     // Server does not save images.
     DENG2_UNUSED2(img, filePath);
@@ -450,7 +422,7 @@ uint8_t *GL_LoadImage(image_t &image, String nativePath)
         String path = (NativePath::workPath() / NativePath(nativePath).expand()).withSeparators('/');
 
         de::FileHandle &hndl = App_FileSystem().openFile(path, "rb");
-        uint8_t *pixels = Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl));
+        uint8_t *pixels = Image_LoadFromFile(image, hndl);
 
         App_FileSystem().releaseFile(hndl.file());
         delete &hndl;
@@ -479,11 +451,11 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
             // Force it to grayscale?
             if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
             {
-                Image_ConvertToAlpha(&image, mode == LGM_WHITE_ALPHA);
+                Image_ConvertToAlpha(image, mode == LGM_WHITE_ALPHA);
             }
             else if(mode == LGM_GRAYSCALE)
             {
-                Image_ConvertToLuminance(&image, true);
+                Image_ConvertToLuminance(image);
             }
 
             return External;
@@ -607,7 +579,7 @@ static Source loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
 {
     LOG_AS("image_t::loadPatchLump");
 
-    if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
+    if(Image_LoadFromFile(image, hndl))
     {
         return External;
     }
@@ -620,14 +592,16 @@ static Source loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
     {
         try
         {
-            Block patchImg = loadAndTranslatePatch(fileData, tclass, tmap);
-            Patch::Metadata info = Patch::loadMetadata(fileData);
+            colorpaletteid_t colorPaletteId = App_ResourceSystem().defaultColorPalette();
 
-            Image_Init(&image);
+            Block patchImg = loadAndTranslatePatch(fileData, tclass, tmap);
+            PatchMetadata info = Patch::loadMetadata(fileData);
+
+            Image_Init(image);
             image.size.width  = info.logicalDimensions.x + border*2;
             image.size.height = info.logicalDimensions.y + border*2;
             image.pixelSize   = 1;
-            image.paletteId   = App_ResourceSystem().defaultColorPalette();
+            image.paletteId   = colorPaletteId;
 
             image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
 
@@ -658,7 +632,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
 {
     LOG_AS("image_t::loadPatchComposite");
 
-    Image_Init(&image);
+    Image_Init(image);
     image.pixelSize = 1;
     image.size.width  = tex.width();
     image.size.height = tex.height();
@@ -679,8 +653,9 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
             {
                 Patch::Flags loadFlags;
                 if(maskZero) loadFlags |= Patch::MaskZero;
+
                 Block patchImg = Patch::load(fileData, loadFlags);
-                Patch::Metadata info = Patch::loadMetadata(fileData);
+                PatchMetadata info = Patch::loadMetadata(fileData);
 
                 Vector2i origin = i->origin();
                 if(useZeroOriginIfOneComponent && texDef.componentCount() == 1)
@@ -710,7 +685,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
 
 static Source loadFlat(image_t &image, de::FileHandle &hndl)
 {
-    if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
+    if(Image_LoadFromFile(image, hndl))
     {
         return External;
     }
@@ -719,7 +694,7 @@ static Source loadFlat(image_t &image, de::FileHandle &hndl)
 #define FLAT_WIDTH          64
 #define FLAT_HEIGHT         64
 
-    Image_Init(&image);
+    Image_Init(image);
 
     /// @todo not all flats are 64x64!
     image.size.width  = FLAT_WIDTH;
@@ -730,7 +705,7 @@ static Source loadFlat(image_t &image, de::FileHandle &hndl)
     de::File1 &file   = hndl.file();
     size_t fileLength = hndl.length();
 
-    size_t bufSize = MAX_OF(fileLength, (size_t) image.size.width * image.size.height);
+    size_t bufSize = de::max(fileLength, (size_t) image.size.width * image.size.height);
     image.pixels = (uint8_t *) M_Malloc(bufSize);
 
     if(fileLength < bufSize)
@@ -748,13 +723,13 @@ static Source loadFlat(image_t &image, de::FileHandle &hndl)
 
 static Source loadDetail(image_t &image, de::FileHandle &hndl)
 {
-    if(Image_LoadFromFile(&image, reinterpret_cast<filehandle_s *>(&hndl)))
+    if(Image_LoadFromFile(image, hndl))
     {
         return Original;
     }
 
     // It must be an old-fashioned "raw" image.
-    Image_Init(&image);
+    Image_Init(image);
 
     // How big is it?
     de::File1 &file = hndl.file();

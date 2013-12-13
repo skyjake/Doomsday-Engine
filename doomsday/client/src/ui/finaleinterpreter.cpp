@@ -1612,7 +1612,7 @@ static DGLuint loadAndPrepareExtTexture(char const *fileName)
             0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-        Image_Destroy(&image);
+        Image_ClearPixelData(image);
     }
 
     return glTexName;

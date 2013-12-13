@@ -37,7 +37,7 @@ namespace de {
  * Some image formats do not allow drawing. As a rule, all QImage-based formats
  * support drawing (via QPainter).
  *
- * @todo Merge image_s and the related Image_* routines into here.
+ * @todo Merge image_t and the related Image_* routines into here.
  */
 class LIBGUI_PUBLIC Image : public ISerializable
 {

@@ -805,12 +805,12 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     QSize outputSize = (halfSized? QSize(width()/2, height()/2) : QSize());
     QImage grabbed = canvas().grabImage(outputSize);
 
-    Image_Init(&img);
+    Image_Init(img);
     img.size.width  = grabbed.width();
     img.size.height = grabbed.height();
     img.pixelSize   = grabbed.depth()/8;
     img.pixels = (uint8_t *) malloc(grabbed.byteCount());
-    memcpy(img.pixels, grabbed.constBits(), grabbed.byteCount());
+    std::memcpy(img.pixels, grabbed.constBits(), grabbed.byteCount());
 
     LOG_DEBUG("Canvas: grabbed %i x %i, byteCount:%i depth:%i format:%i")
             << grabbed.width() << grabbed.height()

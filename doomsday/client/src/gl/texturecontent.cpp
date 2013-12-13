@@ -163,7 +163,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
             image.flags &= ~IMGF_IS_MASKED;
         }
 
-        Image_ConvertToLuminance(&image, false);
+        Image_ConvertToLuminance(image, false /*discard alpha*/);
         long total = image.size.width * image.size.height;
         for(long i = 0; i < total; ++i)
         {
@@ -224,7 +224,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
             {
                 // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
-                Image_ConvertToLuminance(&image, true);
+                Image_ConvertToLuminance(image);
                 AmplifyLuma(image.pixels, image.size.width, image.size.height, image.pixelSize == 2);
             }
             else
@@ -251,7 +251,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
     {
         if(monochrome)
         {
-            Image_ConvertToLuminance(&image, true);
+            Image_ConvertToLuminance(image);
             AmplifyLuma(image.pixels, image.size.width, image.size.height, image.pixelSize == 2);
         }
     }
@@ -295,7 +295,7 @@ static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
     // We want a luminance map.
     if(image.pixelSize > 2)
     {
-        Image_ConvertToLuminance(&image, false);
+        Image_ConvertToLuminance(image, false /*discard alpha*/);
     }
 
     // Try to normalize the luminance data so it works expectedly as a detail texture.

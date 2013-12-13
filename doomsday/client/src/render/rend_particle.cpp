@@ -158,7 +158,7 @@ static byte loadParticleTexture(uint particleTex, bool silent)
 
     // If 8-bit with no alpha, generate alpha automatically.
     if(image.pixelSize == 1)
-        Image_ConvertToAlpha(&image, true);
+        Image_ConvertToAlpha(image, true);
 
     // Create a new texture and upload the image.
     ptctexname[particleTex] = GL_NewTextureWithParams(
@@ -168,7 +168,7 @@ static byte loadParticleTexture(uint particleTex, bool silent)
         TXCF_NO_COMPRESSION);
 
     // Free the buffer.
-    Image_Destroy(&image);
+    Image_ClearPixelData(image);
     return 2; // External
 }
 
@@ -195,7 +195,7 @@ void Rend_ParticleLoadSystemTextures()
 
             DENG2_ASSERT(pointTex != 0);
         }
-        Image_Destroy(&image);
+        Image_ClearPixelData(image);
     }
 }
 

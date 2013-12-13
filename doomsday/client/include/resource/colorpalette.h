@@ -96,14 +96,6 @@ public:
     int colorCount() const;
 
     /**
-     * Replace the entire color table. The ColorTableChange audience is notified
-     * whenever the color table changes.
-     *
-     * @param colorTable  The replacement color table. A copy is made.
-     */
-    ColorPalette &loadColorTable(QVector<de::Vector3ub> const &colorTable);
-
-    /**
      * Lookup a color in the palette by @a colorIndex. If the specified index is
      * out of valid [0..colorCount) range it will be clamped.
      *
@@ -129,6 +121,14 @@ public:
         return QColor(rgb.x, rgb.y, rgb.z, alpha);
     }
 #endif
+
+    /**
+     * Replace the entire color table. The ColorTableChange audience is notified
+     * whenever the color table changes.
+     *
+     * @param colorTable  The replacement color table. A copy is made.
+     */
+    ColorPalette &replaceColorTable(QVector<de::Vector3ub> const &colorTable);
 
     /**
      * Given an R8G8B8 color triplet return the closet matching color index.

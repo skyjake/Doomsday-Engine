@@ -235,7 +235,7 @@ ColorPalette::ColorPalette() : d(new Instance(this))
 ColorPalette::ColorPalette(ColorTable const &colors)
     : d(new Instance(this))
 {
-    loadColorTable(colors);
+    replaceColorTable(colors);
 }
 
 Id ColorPalette::id() const
@@ -248,7 +248,7 @@ int ColorPalette::colorCount() const
     return d->colors.count();
 }
 
-ColorPalette &ColorPalette::loadColorTable(ColorTable const &colorTable)
+ColorPalette &ColorPalette::replaceColorTable(ColorTable const &colorTable)
 {
     // We may need a new 18 => 8 bit xlat table.
     d->need18To8Update = true;

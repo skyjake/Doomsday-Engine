@@ -182,7 +182,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
             lightingTextures[which] = glName;
         }
 
-        Image_Destroy(&image);
+        Image_ClearPixelData(image);
     }
 
     DENG2_ASSERT(lightingTextures[which] != 0);
@@ -244,7 +244,7 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
             sysFlareTextures[which] = glName;
         }
 
-        Image_Destroy(&image);
+        Image_ClearPixelData(image);
     }
 
     DENG2_ASSERT(sysFlareTextures[which] != 0);
@@ -294,7 +294,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
         filehandle_s *file = F_OpenLump(raw.lumpNum);
         if(file)
         {
-            if(Image_LoadFromFile(&image, file))
+            if(Image_LoadFromFile(image, *reinterpret_cast<de::FileHandle *>(file)))
             {
                 F_Delete(file);
                 return res::Original;
@@ -304,7 +304,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 #define RAW_WIDTH           320
 #define RAW_HEIGHT          200
 
-            Image_Init(&image);
+            Image_Init(image);
 
             size_t fileLength = FileHandle_Length(file);
             size_t bufSize = 3 * RAW_WIDTH * RAW_HEIGHT;
@@ -339,7 +339,7 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
     if(!raw.tex)
     {
         image_t image;
-        Image_Init(&image);
+        Image_Init(image);
 
         if(loadRaw(image, raw) == res::External)
         {
@@ -363,7 +363,7 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
 
         raw.width  = image.size.width;
         raw.height = image.size.height;
-        Image_Destroy(&image);
+        Image_ClearPixelData(image);
     }
 
     return raw.tex;

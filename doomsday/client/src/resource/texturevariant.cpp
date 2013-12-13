@@ -570,7 +570,7 @@ uint Texture::Variant::prepare()
     LOG_DEBUG("Prepared \"%s\" variant (glName:%u)%s")
         << d->texture.manifest().composeUri() << uint(d->glTexName)
         << (uploadMethod == gl::Immediate? " while not busy!" : "");
-    LOG_TRACE("  Content: %s") << Image_Description(&image);
+    LOG_TRACE("  Content: %s") << Image_Description(image);
     LOG_TRACE("  Specification [%p]: %s") << de::dintptr(&d->spec) << d->spec.asText();
 #endif
 
@@ -578,7 +578,7 @@ uint Texture::Variant::prepare()
     // of the source image?
     if(d->texture.width() == 0 && d->texture.height() == 0)
     {
-        Vector2i dimensions = Image_Dimensions(&image);
+        Vector2i dimensions = Image_Dimensions(image);
 
         LOG_DEBUG("World dimensions for \"%s\" taken from image pixels %s.")
             << d->texture.manifest().composeUri() << dimensions.asText();
@@ -587,7 +587,7 @@ uint Texture::Variant::prepare()
     }
 
     // We're done with the image data.
-    Image_Destroy(&image);
+    Image_ClearPixelData(image);
 
     return d->glTexName;
 }
