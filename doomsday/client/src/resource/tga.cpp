@@ -1,4 +1,4 @@
-/** @file tga.cpp
+/** @file tga.cpp  Truevision TGA (a.k.a Targa) image reader/writer
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
@@ -17,16 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "de_console.h"
-#include "de_system.h"
-#include "de_filesys.h"
-#include "de_graphics.h"
-
+#include "dd_share.h" // endianness conversion macros
 #include "resource/tga.h"
+
+#include <de/memory.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+using namespace de;
 
 enum {
     TGA_FALSE,
@@ -74,7 +73,7 @@ typedef struct {
 } tga_imagespec_t;
 #pragma pack()
 
-static char* lastErrorMsg = 0; /// @todo potentially never free'd
+static char *lastErrorMsg = 0; /// @todo potentially never free'd
 
 #ifdef __BIG_ENDIAN__
 static int16_t shortSwap(int16_t n)
@@ -83,13 +82,15 @@ static int16_t shortSwap(int16_t n)
 }
 #endif
 
-static void setLastError(const char* msg)
+static void setLastError(char const *msg)
 {
     size_t len;
     if(0 == msg || 0 == (len = strlen(msg)))
     {
         if(lastErrorMsg != 0)
-            free(lastErrorMsg);
+        {
+            M_Free(lastErrorMsg);
+        }
         lastErrorMsg = 0;
         return;
     }
@@ -98,28 +99,28 @@ static void setLastError(const char* msg)
     strcpy(lastErrorMsg, msg);
 }
 
-static void writeByte(FILE* f, uint8_t b)
+static void writeByte(FILE *f, uint8_t b)
 {
     fwrite(&b, 1, 1, f);
 }
 
-static void writeShort(FILE* f, int16_t s)
+static void writeShort(FILE *f, int16_t s)
 {
     int16_t v = SHORT(s);
     fwrite(&v, sizeof(v), 1, f);
 }
 
-static uint8_t readByte(FileHandle* f)
+static uint8_t readByte(de::FileHandle &f)
 {
     uint8_t v;
-    FileHandle_Read(f, &v, 1);
+    f.read(&v, 1);
     return v;
 }
 
-static int16_t readShort(FileHandle* f)
+static int16_t readShort(de::FileHandle &f)
 {
     int16_t v;
-    FileHandle_Read(f, (uint8_t*)&v, sizeof(v));
+    f.read((uint8_t *)&v, sizeof(v));
     return SHORT(v);
 }
 
@@ -140,18 +141,18 @@ static int16_t readShort(FileHandle* f)
  * @param file          Handle to the file to be written to.
  */
 static void writeHeader(uint8_t idLength, uint8_t colorMapType,
-    uint8_t imageType, FILE* file)
+    uint8_t imageType, FILE *file)
 {
     writeByte(file, idLength);
     writeByte(file, colorMapType? 1 : 0);
     writeByte(file, imageType);
 }
 
-static void readHeader(tga_header_t* dst, FileHandle* file)
+static void readHeader(tga_header_t *dst, de::FileHandle &file)
 {
-    dst->idLength = readByte(file);
+    dst->idLength     = readByte(file);
     dst->colorMapType = readByte(file);
-    dst->imageType = readByte(file);
+    dst->imageType    = readByte(file);
 }
 
 /**
@@ -160,18 +161,18 @@ static void readHeader(tga_header_t* dst, FileHandle* file)
  * @param entrySize     Number of bits in a color map entry; 15/16/24/32.
  * @param file          Handle to the file to be written to.
  */
-static void writeColorMapSpec(int16_t index, int16_t length,
-    uint8_t entrySize, FILE* file)
+static void writeColorMapSpec(int16_t index, int16_t length, uint8_t entrySize,
+    FILE *file)
 {
     writeShort(file, index);
     writeShort(file, length);
     writeByte(file, entrySize);
 }
 
-static void readColorMapSpec(tga_colormapspec_t* dst, FileHandle* file)
+static void readColorMapSpec(tga_colormapspec_t *dst, de::FileHandle &file)
 {
-    dst->index = readShort(file);
-    dst->length = readShort(file);
+    dst->index     = readShort(file);
+    dst->length    = readShort(file);
     dst->entrySize = readByte(file);
 }
 
@@ -183,9 +184,8 @@ static void readColorMapSpec(tga_colormapspec_t* dst, FileHandle* file)
  * @param pixDepth      Number of bits per pixel, one of; 16/24/32.
  * @param file          Handle to the file to be written to.
  */
-static void writeImageSpec(int16_t xOrigin, int16_t yOrigin,
-    int16_t width, int16_t height, uint8_t pixDepth,
-    FILE* file)
+static void writeImageSpec(int16_t xOrigin, int16_t yOrigin, int16_t width,
+    int16_t height, uint8_t pixDepth, FILE *file)
 {
     writeShort(file, xOrigin);
     writeShort(file, yOrigin);
@@ -193,7 +193,7 @@ static void writeImageSpec(int16_t xOrigin, int16_t yOrigin,
     writeShort(file, height);
     writeByte(file, pixDepth);
 
-    /**
+    /*
      * attributeBits:4; // Attribute bits associated with each pixel.
      * reserved:1; // A reserved bit; must be 0.
      * screenOrigin:1; // Location of screen origin; must be 0.
@@ -202,18 +202,17 @@ static void writeImageSpec(int16_t xOrigin, int16_t yOrigin,
     writeByte(file, 0);
 }
 
-static void readImageSpec(tga_imagespec_t* dst, FileHandle* file)
+static void readImageSpec(tga_imagespec_t *dst, de::FileHandle &file)
 {
-    uint8_t bits;
-
-    dst->xOrigin = readShort(file);
-    dst->yOrigin = readShort(file);
-    dst->width = readShort(file);
-    dst->height = readShort(file);
+    dst->xOrigin    = readShort(file);
+    dst->yOrigin    = readShort(file);
+    dst->width      = readShort(file);
+    dst->height     = readShort(file);
     dst->pixelDepth = readByte(file);
-    bits = readByte(file);
 
-    /**
+    uint8_t bits = readByte(file);
+
+    /*
      * attributeBits:4; // Attribute bits associated with each pixel.
      * reserved:1; // A reserved bit; must be 0.
      * screenOrigin:1; // Location of screen origin; must be 0.
@@ -224,10 +223,10 @@ static void readImageSpec(tga_imagespec_t* dst, FileHandle* file)
     dst->attributeBits = (bits & 0xf);
 }
 
-int TGA_Save24_rgb565(FILE* file, int w, int h, const uint16_t* buf)
+int TGA_Save24_rgb565(FILE *file, int w, int h, const uint16_t *buf)
 {
     int i, k;
-    uint8_t* outBuf;
+    uint8_t *outBuf;
     size_t outBufStart;
 
     if(NULL == file || !buf || !(w > 0 && h > 0))
@@ -364,26 +363,22 @@ int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf)
     return 1; // Success.
 }
 
-uint8_t* TGA_Load(FileHandle* file, int* w, int* h, int* pixelSize)
+uint8_t *TGA_Load(de::FileHandle &file, Vector2ui &outSize, int &pixelSize)
 {
-    assert(file && w && h && pixelSize);
-    {
-    size_t initPos = FileHandle_Tell(file);
-    int x, y, pixbytes, format;
-    tga_header_t header;
-    tga_colormapspec_t colorMapSpec;
-    tga_imagespec_t imageSpec;
-    uint8_t* srcBuf;
-    const uint8_t* src;
-    uint8_t* dstBuf = 0;
+    uint8_t *dstBuf = 0;
 
-    // Read and check the header.
+    size_t const initPos = file.tell();
+
+    tga_header_t header;
     readHeader(&header, file);
+
+    tga_colormapspec_t colorMapSpec;
     readColorMapSpec(&colorMapSpec, file);
+
+    tga_imagespec_t imageSpec;
     readImageSpec(&imageSpec, file);
 
-    *w = imageSpec.width;
-    *h = imageSpec.height;
+    outSize = Vector2ui(imageSpec.width, imageSpec.height);
 
     if(header.imageType != 2 ||
        (imageSpec.pixelDepth != 32 && imageSpec.pixelDepth != 24) ||
@@ -392,54 +387,38 @@ uint8_t* TGA_Load(FileHandle* file, int* w, int* h, int* pixelSize)
         (imageSpec.flags & ISF_SCREEN_ORIGIN_UPPER))
     {
         setLastError("Unsupported format.");
-        FileHandle_Seek(file, initPos, SeekSet);
+        file.seek(initPos, SeekSet);
         return 0;
     }
 
-/*#if _DEBUG
-    Con_Message("TGA: type=%i pxsize=%i abits=%i", header.imageType,
-                imageSpec.pixelDepth, imageSpec.attributeBits);
-#endif*/
-
     // Determine format.
-    if(imageSpec.pixelDepth == 24)
-    {
-        format = TGA_TARGA24;
-        pixbytes = 3;
-    }
-    else
-    {
-        format = TGA_TARGA32;
-        pixbytes = 4;
-    }
+    //int const format = (imageSpec.pixelDepth == 24? TGA_TARGA24 : TGA_TARGA32);
 
-    DENG_UNUSED(format);
-
-    *pixelSize = pixbytes;
+    pixelSize = (imageSpec.pixelDepth == 24? 3 : 4);
 
     // Read the pixel data.
-    srcBuf = (uint8_t *) M_Malloc((*w) * (*h) * pixbytes);
-    FileHandle_Read(file, srcBuf, (*w) * (*h) * pixbytes);
+    int const numPels = outSize.x * outSize.y;
+    uint8_t *srcBuf = (uint8_t *) M_Malloc(numPels * pixelSize);
+    file.read(srcBuf, numPels * pixelSize);
 
     // "Unpack" the pixels (origin in the lower left corner).
     // TGA pixels are in BGRA format.
-    dstBuf = (uint8_t *) M_Malloc(4 * (*w) * (*h));
-    src = srcBuf;
-    for(y = (*h) - 1; y >= 0; y--)
-        for(x = 0; x < (*w); x++)
-        {
-            uint8_t* dst = &dstBuf[(y * (*w) + x) * pixbytes];
+    dstBuf = (uint8_t *) M_Malloc(4 * numPels);
+    uint8_t const *src = srcBuf;
+    for(int y = outSize.y - 1; y >= 0; y--)
+    for(int x = 0; x < (signed) outSize.x; x++)
+    {
+        uint8_t *dst = &dstBuf[(y * outSize.x + x) * pixelSize];
 
-            dst[2] = *src++;
-            dst[1] = *src++;
-            dst[0] = *src++;
-            if(pixbytes == 4)
-                dst[3] = *src++;
-        }
-    free(srcBuf);
+        dst[2] = *src++;
+        dst[1] = *src++;
+        dst[0] = *src++;
+        if(pixelSize == 4) dst[3] = *src++;
+    }
+    M_Free(srcBuf);
 
     setLastError(0); // Success.
-    FileHandle_Seek(file, initPos, SeekSet);
+    file.seek(initPos, SeekSet);
+
     return dstBuf;
-    }
 }

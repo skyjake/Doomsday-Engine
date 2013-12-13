@@ -64,6 +64,8 @@ namespace res
 
 struct image_t
 {
+    typedef de::Vector2ui Size;
+
     /// @ref imageFlags
     int flags;
 
@@ -71,7 +73,7 @@ struct image_t
     uint paletteId;
 
     /// Size of the image in pixels.
-    Size2Raw size;
+    Size size;
 
     /// Bytes per pixel in the data buffer.
     int pixelSize;
@@ -93,9 +95,9 @@ void Image_Init(image_t &image);
 void Image_ClearPixelData(image_t &image);
 
 /**
- * Returns the dimensions of the image in pixels.
+ * Returns the size of the image in pixels.
  */
-de::Vector2i Image_Dimensions(image_t const &image);
+image_t::Size Image_Size(image_t const &image);
 
 /**
  * Returns a textual description of the image.

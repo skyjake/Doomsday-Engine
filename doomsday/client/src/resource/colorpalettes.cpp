@@ -40,13 +40,19 @@ void R_UpdateTranslationTables()
     R_InitTranslationTables();
 }
 
-byte const *R_TranslationTable(int tclass, int tmap)
+int R_ToPaletteTranslation(int tclass, int tmap)
 {
     // Is translation unnecessary?
-    if(!tclass && !tmap) return 0;
+    if(!tclass && !tmap) return -1;
 
     int trans = de::max(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
     LOG_DEBUG("tclass=%i tmap=%i => TransPal# %i") << tclass << tmap << trans;
+    return trans;
+}
 
+byte const *R_TranslationTable(int trans)
+{
+    if(trans < 0) return 0;
+    DENG2_ASSERT(trans < NUM_TRANSLATION_TABLES);
     return translationTables + trans * 256;
 }

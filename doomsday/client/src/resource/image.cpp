@@ -69,8 +69,7 @@ struct GraphicFileType
 static bool interpretPcx(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     Image_Init(img);
-    img.pixels = PCX_Load(reinterpret_cast<filehandle_s *>(&hndl),
-                          &img.size.width, &img.size.height, &img.pixelSize);
+    img.pixels = PCX_Load(hndl, img.size, img.pixelSize);
     return (0 != img.pixels);
 }
 
@@ -87,8 +86,7 @@ static bool interpretPng(de::FileHandle &hndl, String /*filePath*/, image_t &img
 static bool interpretTga(de::FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     Image_Init(img);
-    img.pixels = TGA_Load(reinterpret_cast<filehandle_s *>(&hndl),
-                          &img.size.width, &img.size.height, &img.pixelSize);
+    img.pixels = TGA_Load(hndl, img.size, img.pixelSize);
     return (0 != img.pixels);
 }
 
@@ -156,12 +154,11 @@ static inline bool isColorKeyed(String path)
 
 void Image_Init(image_t &img)
 {
-    img.size.width  = 0;
-    img.size.height = 0;
-    img.pixelSize   = 0;
-    img.flags       = 0;
-    img.paletteId   = 0;
-    img.pixels      = 0;
+    img.size      = Vector2ui(0, 0);
+    img.pixelSize = 0;
+    img.flags     = 0;
+    img.paletteId = 0;
+    img.pixels    = 0;
 }
 
 void Image_ClearPixelData(image_t &img)
@@ -169,17 +166,15 @@ void Image_ClearPixelData(image_t &img)
     M_Free(img.pixels); img.pixels = 0;
 }
 
-de::Vector2i Image_Dimensions(image_t const &img)
+image_t::Size Image_Size(image_t const &img)
 {
-    return Vector2i(img.size.width, img.size.height);
+    return img.size;
 }
 
 String Image_Description(image_t const &img)
 {
-    Vector2i dimensions(img.size.width, img.size.height);
-
     return String("Dimensions:%1 Flags:%2 %3:%4")
-               .arg(dimensions.asText())
+               .arg(img.size.asText())
                .arg(img.flags)
                .arg(0 != img.paletteId? "ColorPalette" : "PixelSize")
                .arg(0 != img.paletteId? img.paletteId : img.pixelSize);
@@ -198,7 +193,7 @@ void Image_ConvertToLuminance(image_t &img, bool retainAlpha)
         return;
     }
 
-    long numPels = img.size.width * img.size.height;
+    long numPels = img.size.x * img.size.y;
 
     // Do we need to relocate the alpha data?
     if(retainAlpha && img.pixelSize == 4)
@@ -238,7 +233,7 @@ void Image_ConvertToAlpha(image_t &img, bool makeWhite)
 {
     Image_ConvertToLuminance(img);
 
-    long total = img.size.width * img.size.height;
+    long total = img.size.x * img.size.y;
     for(long p = 0; p < total; ++p)
     {
         img.pixels[total + p] = img.pixels[p];
@@ -264,7 +259,7 @@ bool Image_HasAlpha(image_t const &img)
 
     if(img.pixelSize == 4)
     {
-        long const numpels = img.size.width * img.size.height;
+        long const numpels = img.size.x * img.size.y;
         uint8_t const *in = img.pixels;
         for(long i = 0; i < numpels; ++i, in += 4)
         {
@@ -299,7 +294,7 @@ uint8_t *Image_LoadFromFile(image_t &img, de::FileHandle &file)
     // How about some color-keying?
     if(isColorKeyed(filePath))
     {
-        uint8_t *out = ApplyColorKeying(img.pixels, img.size.width, img.size.height, img.pixelSize);
+        uint8_t *out = ApplyColorKeying(img.pixels, img.size.x, img.size.y, img.pixelSize);
         if(out != img.pixels)
         {
             // Had to allocate a larger buffer, free the old and attach the new.
@@ -317,8 +312,8 @@ uint8_t *Image_LoadFromFile(image_t &img, de::FileHandle &file)
         img.flags |= IMGF_IS_MASKED;
     }
 
-    LOG_VERBOSE("\"%s\" (%ix%i)")
-        << NativePath(filePath).pretty() << img.size.width << img.size.height;
+    LOG_VERBOSE("\"%s\" (%s)")
+            << NativePath(filePath).pretty() << img.size.asText();
 
     return img.pixels;
 #else
@@ -365,13 +360,12 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, de::FileHand
     // Swap the red and blue channels for GL.
     image = image.rgbSwapped();
 
-    img.size.width  = image.width();
-    img.size.height = image.height();
-    img.pixelSize   = image.depth() / 8;
+    img.size      = Vector2ui(image.width(), image.height());
+    img.pixelSize = image.depth() / 8;
 
-    LOG_TRACE("Image_Load: size %i x %i depth %i alpha %b bytes %i")
-        << img.size.width << img.size.height << img.pixelSize
-        << image.hasAlphaChannel() << image.byteCount();
+    LOG_TRACE("Image_Load: size:%s depth:%i alpha:%b bytes:%i")
+            << img.size.asText() << img.pixelSize
+            << image.hasAlphaChannel() << image.byteCount();
 
     img.pixels = reinterpret_cast<uint8_t *>(M_MemDup(image.constBits(), image.byteCount()));
 
@@ -393,7 +387,7 @@ bool Image_Save(image_t const &img, char const *filePath)
     if(fullPath.isEmpty())
     {
         static int n = 0;
-        fullPath = String("image%1x%2-%3").arg(img.size.width).arg(img.size.height).arg(n++, 3);
+        fullPath = String("image%1x%2-%3").arg(img.size.x).arg(img.size.y).arg(n++, 3);
     }
 
     if(fullPath.fileNameExtension().isEmpty())
@@ -402,7 +396,7 @@ bool Image_Save(image_t const &img, char const *filePath)
     }
 
     // Swap red and blue channels then save.
-    QImage image = QImage(img.pixels, img.size.width, img.size.height, QImage::Format_ARGB32);
+    QImage image = QImage(img.pixels, img.size.x, img.size.y, QImage::Format_ARGB32);
     image = image.rgbSwapped();
 
     return image.save(NativePath(fullPath));
@@ -528,18 +522,18 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
  *
  * @todo Optimize: Should be redesigned to composite whole rows -ds
  */
-static void compositePaletted(dbyte *dst, Vector2i const &dstDimensions,
+static void compositePaletted(dbyte *dst, Vector2ui const &dstDimensions,
     IByteArray const &src, Vector2i const &srcDimensions, Vector2i const &origin)
 {
-    if(dstDimensions.x == 0 && dstDimensions.y == 0) return;
-    if(srcDimensions.x == 0 && srcDimensions.y == 0) return;
+    if(dstDimensions == Vector2ui()) return;
+    if(srcDimensions <= Vector2i()) return;
 
-    int const    srcW = srcDimensions.x;
-    int const    srcH = srcDimensions.y;
+    int const       srcW = srcDimensions.x;
+    int const       srcH = srcDimensions.y;
     size_t const srcPels = srcW * srcH;
 
-    int const    dstW = dstDimensions.x;
-    int const    dstH = dstDimensions.y;
+    int const       dstW = dstDimensions.x;
+    int const       dstH = dstDimensions.y;
     size_t const dstPels = dstW * dstH;
 
     int dstX, dstY;
@@ -564,7 +558,8 @@ static void compositePaletted(dbyte *dst, Vector2i const &dstDimensions,
 
 static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int tmap = 0)
 {
-    if(dbyte const *xlatTable = R_TranslationTable(tclass, tmap))
+    int const trans = R_ToPaletteTranslation(tclass, tmap);
+    if(dbyte const *xlatTable = R_TranslationTable(trans))
     {
         return Patch::load(data, ByteRefArray(xlatTable, 256), Patch::ClipToLogicalDimensions);
     }
@@ -577,7 +572,7 @@ static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int t
 static Source loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
     int tmap = 0, int border = 0)
 {
-    LOG_AS("image_t::loadPatchLump");
+    LOG_AS("image_t::loadPatch");
 
     if(Image_LoadFromFile(image, hndl))
     {
@@ -598,17 +593,17 @@ static Source loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
             PatchMetadata info = Patch::loadMetadata(fileData);
 
             Image_Init(image);
-            image.size.width  = info.logicalDimensions.x + border*2;
-            image.size.height = info.logicalDimensions.y + border*2;
-            image.pixelSize   = 1;
-            image.paletteId   = colorPaletteId;
+            image.size      = Vector2ui(info.logicalDimensions.x + border*2,
+                                        info.logicalDimensions.y + border*2);
+            image.pixelSize = 1;
+            image.paletteId = colorPaletteId;
 
-            image.pixels = (uint8_t*) M_Calloc(2 * image.size.width * image.size.height);
+            image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
 
-            compositePaletted(image.pixels, Vector2i(image.size.width, image.size.height),
+            compositePaletted(image.pixels, image.size,
                               patchImg, info.logicalDimensions, Vector2i(border, border));
 
-            if(palettedIsMasked(image.pixels, image.size.width, image.size.height))
+            if(palettedIsMasked(image.pixels, image.size.x, image.size.y))
             {
                 image.flags |= IMGF_IS_MASKED;
             }
@@ -634,11 +629,10 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
 
     Image_Init(image);
     image.pixelSize = 1;
-    image.size.width  = tex.width();
-    image.size.height = tex.height();
-    image.paletteId   = App_ResourceSystem().defaultColorPalette();
+    image.size      = Vector2ui(tex.width(), tex.height());
+    image.paletteId = App_ResourceSystem().defaultColorPalette();
 
-    image.pixels = (uint8_t *) M_Calloc(2 * image.size.width * image.size.height);
+    image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
 
     CompositeTexture const &texDef = *reinterpret_cast<CompositeTexture *>(tex.userDataPointer());
     DENG2_FOR_EACH_CONST(CompositeTexture::Components, i, texDef.components())
@@ -659,10 +653,12 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
 
                 Vector2i origin = i->origin();
                 if(useZeroOriginIfOneComponent && texDef.componentCount() == 1)
+                {
                     origin = Vector2i(0, 0);
+                }
 
                 // Draw the patch in the buffer.
-                compositePaletted(image.pixels, Vector2i(image.size.width, image.size.height),
+                compositePaletted(image.pixels, image.size,
                                   patchImg, info.dimensions, origin);
             }
             catch(IByteArray::OffsetError const &)
@@ -672,7 +668,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
         file.unlock();
     }
 
-    if(maskZero || palettedIsMasked(image.pixels, image.size.width, image.size.height))
+    if(maskZero || palettedIsMasked(image.pixels, image.size.x, image.size.y))
     {
         image.flags |= IMGF_IS_MASKED;
     }
@@ -691,21 +687,17 @@ static Source loadFlat(image_t &image, de::FileHandle &hndl)
     }
 
     // A DOOM flat.
-#define FLAT_WIDTH          64
-#define FLAT_HEIGHT         64
-
     Image_Init(image);
 
     /// @todo not all flats are 64x64!
-    image.size.width  = FLAT_WIDTH;
-    image.size.height = FLAT_HEIGHT;
+    image.size      = Vector2ui(64, 64);
     image.pixelSize = 1;
     image.paletteId = App_ResourceSystem().defaultColorPalette();
 
     de::File1 &file   = hndl.file();
     size_t fileLength = hndl.length();
 
-    size_t bufSize = de::max(fileLength, (size_t) image.size.width * image.size.height);
+    size_t bufSize = de::max(fileLength, (size_t) image.size.x * image.size.y);
     image.pixels = (uint8_t *) M_Malloc(bufSize);
 
     if(fileLength < bufSize)
@@ -716,9 +708,6 @@ static Source loadFlat(image_t &image, de::FileHandle &hndl)
     // Load the raw image data.
     file.read(image.pixels, 0, fileLength);
     return Original;
-
-#undef FLAT_HEIGHT
-#undef FLAT_WIDTH
 }
 
 static Source loadDetail(image_t &image, de::FileHandle &hndl)
@@ -736,15 +725,15 @@ static Source loadDetail(image_t &image, de::FileHandle &hndl)
     size_t fileLength = hndl.length();
     switch(fileLength)
     {
-    case 256 * 256: image.size.width = image.size.height = 256; break;
-    case 128 * 128: image.size.width = image.size.height = 128; break;
-    case  64 *  64: image.size.width = image.size.height =  64; break;
+    case 256 * 256: image.size.x = image.size.y = 256; break;
+    case 128 * 128: image.size.x = image.size.y = 128; break;
+    case  64 *  64: image.size.x = image.size.y =  64; break;
     default:
         throw Error("image_t::loadDetail", "Must be 256x256, 128x128 or 64x64.");
     }
 
     image.pixelSize = 1;
-    size_t bufSize = (size_t) image.size.width * image.size.height;
+    size_t bufSize = (size_t) image.size.x * image.size.y;
     image.pixels = (uint8_t *) M_Malloc(bufSize);
 
     if(fileLength < bufSize)

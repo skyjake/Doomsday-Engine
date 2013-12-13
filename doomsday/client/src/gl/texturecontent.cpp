@@ -153,7 +153,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
         if(0 != image.paletteId)
         {
             // Paletted.
-            uint8_t *newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
+            uint8_t *newPixels = GL_ConvertBuffer(image.pixels, image.size.x, image.size.y,
                                                   ((image.flags & IMGF_IS_MASKED)? 2 : 1),
                                                   image.paletteId, 3);
             M_Free(image.pixels);
@@ -164,7 +164,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
         }
 
         Image_ConvertToLuminance(image, false /*discard alpha*/);
-        long total = image.size.width * image.size.height;
+        long total = image.size.x * image.size.y;
         for(long i = 0; i < total; ++i)
         {
             image.pixels[total + i] = image.pixels[i];
@@ -176,23 +176,23 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
     {
         if(fillOutlines && (image.flags & IMGF_IS_MASKED))
         {
-            ColorOutlinesIdx(image.pixels, image.size.width, image.size.height);
+            ColorOutlinesIdx(image.pixels, image.size.x, image.size.y);
         }
 
         if(monochrome && !scaleSharp)
         {
             GL_DeSaturatePalettedImage(image.pixels,
                                        App_ResourceSystem().colorPalette(image.paletteId),
-                                       image.size.width, image.size.height);
+                                       image.size.x, image.size.y);
         }
 
         if(scaleSharp)
         {
-            int scaleMethod = GL_ChooseSmartFilter(image.size.width, image.size.height, 0);
+            int scaleMethod = GL_ChooseSmartFilter(image.size.x, image.size.y, 0);
             bool origMasked = (image.flags & IMGF_IS_MASKED) != 0;
             colorpaletteid_t origPaletteId = image.paletteId;
 
-            uint8_t *newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
+            uint8_t *newPixels = GL_ConvertBuffer(image.pixels, image.size.x, image.size.y,
                                                   ((image.flags & IMGF_IS_MASKED)? 2 : 1),
                                                   image.paletteId, 4);
             if(newPixels != image.pixels)
@@ -205,19 +205,23 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
             }
 
             if(monochrome)
-                Desaturate(image.pixels, image.size.width, image.size.height, image.pixelSize);
+            {
+                Desaturate(image.pixels, image.size.x, image.size.y, image.pixelSize);
+            }
 
-            newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.size.width, image.size.height,
-                                       0, &image.size.width, &image.size.height);
+            int newWidth = 0, newHeight = 0;
+            newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.size.x, image.size.y,
+                                       0, &newWidth, &newHeight);
+            image.size = Vector2ui(newWidth, newHeight);
             if(newPixels != image.pixels)
             {
                 M_Free(image.pixels);
                 image.pixels = newPixels;
             }
 
-            EnhanceContrast(image.pixels, image.size.width, image.size.height, image.pixelSize);
-            //SharpenPixels(image.pixels, image.size.width, image.size.height, image.pixelSize);
-            //BlackOutlines(image.pixels, image.size.width, image.size.height, image.pixelSize);
+            EnhanceContrast(image.pixels, image.size.x, image.size.y, image.pixelSize);
+            //SharpenPixels(image.pixels, image.size.x, image.size.y, image.pixelSize);
+            //BlackOutlines(image.pixels, image.size.x, image.size.y, image.pixelSize);
 
             // Back to paletted+alpha?
             if(monochrome)
@@ -225,11 +229,11 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
                 // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
                 Image_ConvertToLuminance(image);
-                AmplifyLuma(image.pixels, image.size.width, image.size.height, image.pixelSize == 2);
+                AmplifyLuma(image.pixels, image.size.x, image.size.y, image.pixelSize == 2);
             }
             else
             {   // Yes. Quantize down from RGA(+A) to Paletted(+A), replacing the old image.
-                newPixels = GL_ConvertBuffer(image.pixels, image.size.width, image.size.height,
+                newPixels = GL_ConvertBuffer(image.pixels, image.size.x, image.size.y,
                                              (origMasked? 2 : 1),
                                              origPaletteId, 4);
 
@@ -252,7 +256,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
         if(monochrome)
         {
             Image_ConvertToLuminance(image);
-            AmplifyLuma(image.pixels, image.size.width, image.size.height, image.pixelSize == 2);
+            AmplifyLuma(image.pixels, image.size.x, image.size.y, image.pixelSize == 2);
         }
     }
 
@@ -299,7 +303,7 @@ static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
     }
 
     // Try to normalize the luminance data so it works expectedly as a detail texture.
-    EqualizeLuma(image.pixels, image.size.width, image.size.height, baMul, hiMul, loMul);
+    EqualizeLuma(image.pixels, image.size.x, image.size.y, baMul, hiMul, loMul);
 
     return DGL_LUMINANCE;
 }
@@ -329,12 +333,12 @@ void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
 
         // Configure the texture content.
         c.format      = dglFormat;
-        c.width       = image.size.width;
-        c.height      = image.size.height;
+        c.width       = image.size.x;
+        c.height      = image.size.y;
         c.pixels      = image.pixels;
         c.paletteId   = image.paletteId;
 
-        if(noCompression || (image.size.width < 128 || image.size.height < 128))
+        if(noCompression || (image.size.x < 128 || image.size.y < 128))
             c.flags |= TXCF_NO_COMPRESSION;
         if(vspec.gammaCorrection) c.flags |= TXCF_APPLY_GAMMACORRECTION;
         if(vspec.noStretch)       c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
@@ -377,12 +381,12 @@ void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
         c.flags       = TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
 
         // Disable compression?
-        if(image.size.width < 128 || image.size.height < 128)
+        if(image.size.x < 128 || image.size.y < 128)
             c.flags |= TXCF_NO_COMPRESSION;
 
         c.grayMipmap  = grayMipmapFactor;
-        c.width       = image.size.width;
-        c.height      = image.size.height;
+        c.width       = image.size.x;
+        c.height      = image.size.y;
         c.pixels      = image.pixels;
         c.anisoFilter = texAniso;
         c.magFilter   = glmode[texMagMode];

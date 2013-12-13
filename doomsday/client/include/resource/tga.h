@@ -1,8 +1,7 @@
-/**
- * @file tga.h Truevision TGA (a.k.a Targa) image reader/writer
+/** @file tga.h  Truevision TGA (a.k.a Targa) image reader/writer
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,14 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GRAPHICS_TGA_H
-#define LIBDENG_GRAPHICS_TGA_H
+#ifndef DENG_RESOURCE_TGA_H
+#define DENG_RESOURCE_TGA_H
 
 #include "filehandle.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <de/Vector>
 
 /// @addtogroup resource
 ///@{
@@ -87,17 +83,13 @@ int TGA_Save16_rgb888(FILE *file, int w, int h, uint8_t const *buf);
  *
  * @return  Non-zero iff the image is loaded successfully.
  */
-uint8_t *TGA_Load(FileHandle *file, int *width, int *height, int *pixelSize);
+uint8_t *TGA_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize);
 
 /**
  * @return  Textual message detailing the last error encountered else @c 0.
  */
-char const *TGA_LastError(void);
+char const *TGA_LastError();
 
 ///@}
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* LIBDENG_GRAPHICS_TGA_H */
+#endif // DENG_RESOURCE_TGA_H

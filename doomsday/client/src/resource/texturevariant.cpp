@@ -340,7 +340,7 @@ static void performImageAnalyses(image_t const &image,
 
         if(firstInit || forceUpdate)
         {
-            GL_CalcLuminance(image.pixels, image.size.width, image.size.height,
+            GL_CalcLuminance(image.pixels, image.size.x, image.size.y,
                              image.pixelSize, image.paletteId,
                              &pl->originX, &pl->originY, &pl->color, &pl->brightMul);
         }
@@ -362,15 +362,15 @@ static void performImageAnalyses(image_t const &image,
         {
             if(!image.paletteId)
             {
-                FindAverageAlpha(image.pixels, image.size.width, image.size.height,
+                FindAverageAlpha(image.pixels, image.size.x, image.size.y,
                                  image.pixelSize, &aa->alpha, &aa->coverage);
             }
             else
             {
                 if(image.flags & IMGF_IS_MASKED)
                 {
-                    FindAverageAlphaIdx(image.pixels, image.size.width,
-                                        image.size.height, &aa->alpha, &aa->coverage);
+                    FindAverageAlphaIdx(image.pixels, image.size.x, image.size.y,
+                                        &aa->alpha, &aa->coverage);
                 }
                 else
                 {
@@ -398,12 +398,12 @@ static void performImageAnalyses(image_t const &image,
         {
             if(0 == image.paletteId)
             {
-                FindAverageColor(image.pixels, image.size.width, image.size.height,
+                FindAverageColor(image.pixels, image.size.x, image.size.y,
                                  image.pixelSize, &ac->color);
             }
             else
             {
-                FindAverageColorIdx(image.pixels, image.size.width, image.size.height,
+                FindAverageColorIdx(image.pixels, image.size.x, image.size.y,
                                     App_ResourceSystem().colorPalette(image.paletteId),
                                     false, &ac->color);
             }
@@ -426,12 +426,12 @@ static void performImageAnalyses(image_t const &image,
         {
             if(0 == image.paletteId)
             {
-                FindAverageColor(image.pixels, image.size.width, image.size.height,
+                FindAverageColor(image.pixels, image.size.x, image.size.y,
                                  image.pixelSize, &ac->color);
             }
             else
             {
-                FindAverageColorIdx(image.pixels, image.size.width, image.size.height,
+                FindAverageColorIdx(image.pixels, image.size.x, image.size.y,
                                     App_ResourceSystem().colorPalette(image.paletteId),
                                     false, &ac->color);
             }
@@ -460,12 +460,12 @@ static void performImageAnalyses(image_t const &image,
         {
             if(0 == image.paletteId)
             {
-                FindAverageLineColor(image.pixels, image.size.width, image.size.height,
+                FindAverageLineColor(image.pixels, image.size.x, image.size.y,
                                      image.pixelSize, 0, &ac->color);
             }
             else
             {
-                FindAverageLineColorIdx(image.pixels, image.size.width, image.size.height, 0,
+                FindAverageLineColorIdx(image.pixels, image.size.x, image.size.y, 0,
                                         App_ResourceSystem().colorPalette(image.paletteId),
                                         false, &ac->color);
             }
@@ -488,13 +488,13 @@ static void performImageAnalyses(image_t const &image,
         {
             if(0 == image.paletteId)
             {
-                FindAverageLineColor(image.pixels, image.size.width, image.size.height,
-                                     image.pixelSize, image.size.height - 1, &ac->color);
+                FindAverageLineColor(image.pixels, image.size.x, image.size.y,
+                                     image.pixelSize, image.size.y - 1, &ac->color);
             }
             else
             {
-                FindAverageLineColorIdx(image.pixels, image.size.width, image.size.height,
-                                        image.size.height - 1,
+                FindAverageLineColorIdx(image.pixels, image.size.x, image.size.y,
+                                        image.size.y - 1,
                                         App_ResourceSystem().colorPalette(image.paletteId),
                                         false, &ac->color);
             }
@@ -548,8 +548,8 @@ uint Texture::Variant::prepare()
     if((c.flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
        (!GL_state.features.texNonPowTwo || (c.flags & TXCF_MIPMAP)))
     {
-        d->s =  image.size.width / float( M_CeilPow2(image.size.width) );
-        d->t = image.size.height / float( M_CeilPow2(image.size.height) );
+        d->s = image.size.x / float( de::ceilPow2(image.size.x) );
+        d->t = image.size.y / float( de::ceilPow2(image.size.y) );
     }
     else
     {
@@ -578,12 +578,10 @@ uint Texture::Variant::prepare()
     // of the source image?
     if(d->texture.width() == 0 && d->texture.height() == 0)
     {
-        Vector2i dimensions = Image_Dimensions(image);
-
         LOG_DEBUG("World dimensions for \"%s\" taken from image pixels %s.")
-            << d->texture.manifest().composeUri() << dimensions.asText();
+            << d->texture.manifest().composeUri() << image.size.asText();
 
-        d->texture.setDimensions(dimensions);
+        d->texture.setDimensions(image.size.toVector2i());
     }
 
     // We're done with the image data.

@@ -1,4 +1,4 @@
-/**\file pcx.cpp
+/** @file pcx.cpp  PCX image reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,12 +18,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_console.h"
-#include "de_system.h"
-#include "de_filesys.h"
-#include "m_misc.h"
-
+#include "dd_share.h" // endianness conversion macros
 #include "resource/pcx.h"
+
+#include <de/memory.h>
+
+using namespace de;
 
 #pragma pack(1)
 typedef struct {
@@ -42,15 +42,17 @@ typedef struct {
 } header_t;
 #pragma pack()
 
-static char* lastErrorMsg = 0; /// @todo potentially never free'd
+static char *lastErrorMsg = 0; /// @todo potentially never free'd
 
-static void setLastError(const char* msg)
+static void setLastError(char const *msg)
 {
     size_t len;
     if(0 == msg || 0 == (len = strlen(msg)))
     {
         if(lastErrorMsg != 0)
-            free(lastErrorMsg);
+        {
+            M_Free(lastErrorMsg);
+        }
         lastErrorMsg = 0;
         return;
     }
@@ -59,23 +61,20 @@ static void setLastError(const char* msg)
     strcpy(lastErrorMsg, msg);
 }
 
-static int load(FileHandle* file, int width, int height, uint8_t* dstBuf)
+static bool load(de::FileHandle &file, int width, int height, uint8_t *dstBuf)
 {
-    assert(file && dstBuf);
-    {
-    int x, y, dataByte, runLength;
-    boolean result = false;
-    const uint8_t* srcPos, *palette;
-    uint8_t* raw;
-    size_t len;
+    DENG2_ASSERT(dstBuf != 0);
 
-    len = FileHandle_Length(file);
-    if(0 == (raw = (uint8_t *) M_Malloc(len)))
-        Con_Error("PCX_Load: Failed on allocation of %lu bytes for read buffer.", (unsigned long) len);
-    FileHandle_Read(file, raw, len);
-    srcPos = raw;
-    // Palette is at the end.
-    palette = srcPos + len - 768;
+    int x, y, dataByte, runLength;
+    bool result = false;
+
+    size_t const len = file.length();
+    uint8_t *raw = (uint8_t *) M_Malloc(len);
+
+    file.read(raw, len);
+
+    uint8_t const *srcPos = raw;
+    uint8_t const *palette = srcPos + len - 768; // Palette is at the end.
 
     srcPos += sizeof(header_t);
     for(y = 0; y < height; ++y, dstBuf += width * 3)
@@ -90,16 +89,18 @@ static int load(FileHandle* file, int width, int height, uint8_t* dstBuf)
                 dataByte = *srcPos++;
             }
             else
+            {
                 runLength = 1;
+            }
 
             while(runLength-- > 0)
             {
-                memcpy(dstBuf + x++ * 3, palette + dataByte * 3, 3);
+                std::memcpy(dstBuf + x++ * 3, palette + dataByte * 3, 3);
             }
         }
     }
 
-    if(!((size_t) (srcPos - (uint8_t*) raw) > len))
+    if(!((size_t) (srcPos - (uint8_t *) raw) > len))
     {
         setLastError(0); // Success.
         result = true;
@@ -109,27 +110,27 @@ static int load(FileHandle* file, int width, int height, uint8_t* dstBuf)
         setLastError("RLE inflation failed.");
     }
 
-    free(raw);
+    M_Free(raw);
     return result;
-    }
 }
 
-const char* PCX_LastError(void)
+char const *PCX_LastError()
 {
     if(lastErrorMsg)
+    {
         return lastErrorMsg;
+    }
     return 0;
 }
 
-uint8_t* PCX_Load(FileHandle* file, int* width, int* height, int* pixelSize)
+uint8_t *PCX_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize)
 {
-    assert(file && width && height && pixelSize);
-    {
+    uint8_t *dstBuf = 0;
+
+    size_t const initPos = file.tell();
+
     header_t hdr;
-    size_t initPos = FileHandle_Tell(file);
-    size_t readBytes = FileHandle_Read(file, (uint8_t*)&hdr, sizeof(hdr));
-    uint8_t* dstBuf = 0;
-    if(!(readBytes < sizeof(hdr)))
+    if(file.read((uint8_t *)&hdr, sizeof(hdr)) >= sizeof(hdr))
     {
         size_t dstBufSize;
 
@@ -137,26 +138,23 @@ uint8_t* PCX_Load(FileHandle* file, int* width, int* height, int* pixelSize)
            hdr.encoding != 1 || hdr.bits_per_pixel != 8)
         {
             setLastError("Unsupported format.");
-            FileHandle_Seek(file, initPos, SeekSet);
+            file.seek(initPos, SeekSet);
             return 0;
         }
 
-        *width  = SHORT(hdr.xmax) + 1;
-        *height = SHORT(hdr.ymax) + 1;
-        *pixelSize = 3;
+        outSize   = Vector2ui(SHORT(hdr.xmax) + 1, SHORT(hdr.ymax) + 1);
+        pixelSize = 3;
 
-        dstBufSize = 4 * (*width) * (*height);
-        if(0 == (dstBuf = (uint8_t *) M_Malloc(dstBufSize)))
-            Con_Error("PCX_Load: Failed on allocation of %lu bytes for output buffer.", (unsigned long) dstBufSize);
+        dstBufSize = 4 * outSize.x * outSize.y;
+        dstBuf = (uint8_t *) M_Malloc(dstBufSize);
 
-        FileHandle_Rewind(file);
-        if(!load(file, *width, *height, dstBuf))
+        file.rewind();
+        if(!load(file, outSize.x, outSize.y, dstBuf))
         {
-            free(dstBuf);
+            M_Free(dstBuf);
             dstBuf = 0;
         }
     }
-    FileHandle_Seek(file, initPos, SeekSet);
+    file.seek(initPos, SeekSet);
     return dstBuf;
-    }
 }

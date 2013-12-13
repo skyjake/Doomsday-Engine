@@ -164,7 +164,7 @@ static byte loadParticleTexture(uint particleTex, bool silent)
     ptctexname[particleTex] = GL_NewTextureWithParams(
         image.pixelSize == 4 ? DGL_RGBA :
         image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
-        image.size.width, image.size.height, image.pixels,
+        image.size.x, image.size.y, image.pixels,
         TXCF_NO_COMPRESSION);
 
     // Free the buffer.
@@ -189,7 +189,7 @@ void Rend_ParticleLoadSystemTextures()
                 ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
                   image.pixelSize == 3 ? DGL_RGB :
                   image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-                image.size.width, image.size.height, image.pixels,
+                image.size.x, image.size.y, image.pixels,
                 ( TXCF_MIPMAP | TXCF_NO_COMPRESSION ),
                 0, glmode[mipmapping], GL_LINEAR, 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 

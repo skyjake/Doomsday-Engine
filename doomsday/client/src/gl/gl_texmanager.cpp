@@ -175,7 +175,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
                 ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
                   image.pixelSize == 3 ? DGL_RGB :
                   image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-                image.size.width, image.size.height, image.pixels,
+                image.size.x, image.size.y, image.pixels,
                 TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR, -1 /*best anisotropy*/,
                 ( which == LST_GRADIENT? GL_REPEAT : GL_CLAMP_TO_EDGE ), GL_CLAMP_TO_EDGE);
 
@@ -237,7 +237,7 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
                 ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
                   image.pixelSize == 3 ? DGL_RGB :
                   image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-                image.size.width, image.size.height, image.pixels,
+                image.size.x, image.size.y, image.pixels,
                 TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
@@ -317,8 +317,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 
             // Load the raw image data.
             FileHandle_Read(file, image.pixels, fileLength);
-            image.size.width = RAW_WIDTH;
-            image.size.height = int(fileLength / image.size.width);
+            image.size      = Vector2ui(RAW_WIDTH, fileLength / image.size.x);
             image.pixelSize = 1;
 
             F_Delete(file);
@@ -345,7 +344,7 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
         {
             // Loaded an external raw texture.
             raw.tex = GL_NewTextureWithParams(image.pixelSize == 4? DGL_RGBA : DGL_RGB,
-                image.size.width, image.size.height, image.pixels, 0, 0,
+                image.size.x, image.size.y, image.pixels, 0, 0,
                 GL_NEAREST, (filterUI ? GL_LINEAR : GL_NEAREST), 0 /*no anisotropy*/,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         }
@@ -355,14 +354,14 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
                 (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 :
                           image.pixelSize == 4? DGL_RGBA :
                           image.pixelSize == 3? DGL_RGB : DGL_COLOR_INDEX_8,
-                image.size.width, image.size.height, image.pixels, 0, 0,
+                image.size.x, image.size.y, image.pixels, 0, 0,
                 GL_NEAREST, (filterUI? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         }
 
-        raw.width  = image.size.width;
-        raw.height = image.size.height;
+        raw.width  = image.size.x;
+        raw.height = image.size.y;
         Image_ClearPixelData(image);
     }
 

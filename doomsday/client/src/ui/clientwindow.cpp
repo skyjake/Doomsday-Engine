@@ -806,9 +806,9 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     QImage grabbed = canvas().grabImage(outputSize);
 
     Image_Init(img);
-    img.size.width  = grabbed.width();
-    img.size.height = grabbed.height();
-    img.pixelSize   = grabbed.depth()/8;
+    img.size      = Vector2ui(grabbed.width(), grabbed.height());
+    img.pixelSize = grabbed.depth()/8;
+
     img.pixels = (uint8_t *) malloc(grabbed.byteCount());
     std::memcpy(img.pixels, grabbed.constBits(), grabbed.byteCount());
 

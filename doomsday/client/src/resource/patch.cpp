@@ -281,7 +281,9 @@ static Block compositeImage(Reader &reader, IByteArray const *xlatTable,
                 }
 
                 if(!maskZero || palIdx)
+                {
                     *out = palIdx;
+                }
 
                 if(maskZero)
                     *outAlpha = (palIdx? 0xff : 0);

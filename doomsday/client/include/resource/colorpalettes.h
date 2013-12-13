@@ -32,6 +32,10 @@ DENG_EXTERN_C byte *translationTables;
 void R_InitTranslationTables();
 void R_UpdateTranslationTables();
 
-byte const *R_TranslationTable(int tclass, int tmap);
+/// Returns a linear palette translation index for the given class and map.
+/// Note that @c -1 is returned when @a tclass =0 and @a tmap =0
+int R_ToPaletteTranslation(int tclass, int tmap);
+
+byte const *R_TranslationTable(int trans);
 
 #endif // DENG_RESOURCE_COLORPALETTES_H

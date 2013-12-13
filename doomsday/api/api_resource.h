@@ -41,7 +41,7 @@ DENG_API_TYPEDEF(R)
      * @param info  Extend info will be written here if found.
      * @return  @c true: Extended info for this patch was found.
      */
-    boolean (*GetPatchInfo)(patchid_t id, patchinfo_t* info);
+    boolean (*GetPatchInfo)(patchid_t id, patchinfo_t *info);
 
     /// @return  Uri for the patch associated with @a id. Should be released with Uri_Delete()
     Uri* (*ComposePatchUri)(patchid_t id);
@@ -64,7 +64,7 @@ DENG_API_TYPEDEF(R)
      * @param tics  Base duration of the new frame in tics.
      * @param randomTics  Extra frame duration in tics (randomized on each cycle).
      */
-    void (*AddAnimGroupFrame)(int groupNum, const Uri* texture, int tics, int randomTics);
+    void (*AddAnimGroupFrame)(int groupNum, Uri const *texture, int tics, int randomTics);
 
     /**
      * Add a new (named) color palette.
@@ -80,7 +80,7 @@ DENG_API_TYPEDEF(R)
      *
      * @return  Color palette id.
      */
-    colorpaletteid_t (*CreateColorPalette)(const char* fmt, const char* name, const uint8_t* colorData, int colorCount);
+    colorpaletteid_t (*CreateColorPalette)(char const *fmt, char const *name, uint8_t const *colorData, int colorCount);
 
     /**
      * Given a color palette name, look up the associated identifier.
@@ -88,7 +88,7 @@ DENG_API_TYPEDEF(R)
      * @param name Unique name of the palette to locate.
      * @return  Identifier of the palette associated with this name, else @c 0
      */
-    colorpaletteid_t (*GetColorPaletteNumForName)(const char* name);
+    colorpaletteid_t (*GetColorPaletteNumForName)(char const *name);
 
     /**
      * Given a color palette id, look up the specified unique name.
@@ -96,7 +96,7 @@ DENG_API_TYPEDEF(R)
      * @param id  Id of the color palette to locate.
      * @return  Pointer to the unique name associated with the specified id else @c NULL
      */
-    const char* (*GetColorPaletteNameForNum)(colorpaletteid_t id);
+    char const* (*GetColorPaletteNameForNum)(colorpaletteid_t id);
 
     /**
      * Given a color palette index, calculate the equivalent RGB color.
@@ -118,8 +118,8 @@ DENG_API_TYPEDEF(R)
      */
     void (*GetColorPaletteRGBubv)(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], boolean applyTexGamma);
 
-    int (*TextureUniqueId)(const Uri* uri); /*quiet=false*/
-    int (*TextureUniqueId2)(const Uri* uri, boolean quiet);
+    int (*TextureUniqueId)(Uri const *uri); /*quiet=false*/
+    int (*TextureUniqueId2)(Uri const *uri, boolean quiet);
 }
 DENG_API_T(R);
 

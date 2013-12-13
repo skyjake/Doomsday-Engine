@@ -1607,8 +1607,8 @@ static DGLuint loadAndPrepareExtTexture(char const *fileName)
             ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
               image.pixelSize == 3 ? DGL_RGB :
               image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-            image.size.width, image.size.height, image.pixels,
-            (image.size.width < 128 && image.size.height < 128? TXCF_NO_COMPRESSION : 0),
+            image.size.x, image.size.y, image.pixels,
+            (image.size.x < 128 && image.size.y < 128? TXCF_NO_COMPRESSION : 0),
             0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 

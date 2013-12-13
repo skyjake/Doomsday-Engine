@@ -593,12 +593,13 @@ void R_LoadColorPalettes(void)
 
     lumpnum_t lumpNum = W_GetLumpNumForName(PALLUMPNAME);
     uint8_t data[PALENTRIES*3];
+    colorpaletteid_t palId;
 
     // Record whether we are using a custom palette.
     customPal = W_LumpIsCustom(lumpNum);
 
     W_ReadLumpSection(lumpNum, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
-    R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
+    palId = R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
 
     /**
      * Create the translation tables to map the green color ramp to gray,
@@ -609,7 +610,7 @@ void R_LoadColorPalettes(void)
      */
 #if __JDOOM__ || __JDOOM64__
     {
-    byte* translationtables = (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    byte *translationtables = (byte *) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
     int i;
 
     // Translate just the 16 green colors.
@@ -633,7 +634,7 @@ void R_LoadColorPalettes(void)
 #elif __JHERETIC__
     {
     int i;
-    byte* translationtables = (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    uint8_t *translationtables = (uint8_t *) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
 
     // Fill out the translation tables.
     for(i = 0; i < 256; ++i)
@@ -654,7 +655,7 @@ void R_LoadColorPalettes(void)
 #else // __JHEXEN__
     {
     int i, cl, idx;
-    uint8_t* translationtables = (uint8_t*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    uint8_t *translationtables = (uint8_t *) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
     lumpnum_t lumpNum;
     char name[9];
     int numPerClass = (gameMode == hexen_v10? 3 : 7);
@@ -665,23 +666,26 @@ void R_LoadColorPalettes(void)
 
     idx = 0;
     for(cl = 0; cl < 3; ++cl)
-        for(i = 0; i < 7; ++i)
-        {
-            if(i == numPerClass) break; // Not present.
-            strcpy(name, "TRANTBL0");
-            if(idx < 10)
-                name[7] += idx;
-            else
-                name[7] = 'A' + idx - 10;
-            idx++;
+    for(i = 0; i < 7; ++i)
+    {
+        if(i == numPerClass) break; // Not present.
+
+        strcpy(name, "TRANTBL0");
+        if(idx < 10)
+            name[7] += idx;
+        else
+            name[7] = 'A' + idx - 10;
+
+        idx++;
 #ifdef _DEBUG
-            Con_Message("Reading translation table '%s' as tclass=%i tmap=%i.", name, cl, i);
+        Con_Message("Reading translation table '%s' as tclass=%i tmap=%i.", name, cl, i);
 #endif
-            if(-1 != (lumpNum = W_CheckLumpNumForName(name)))
-            {
-                W_ReadLumpSection(lumpNum, &translationtables[(7*cl + i) * 256], 0, 256);
-            }
+        if(-1 != (lumpNum = W_CheckLumpNumForName(name)))
+        {
+            W_ReadLumpSection(lumpNum, &translationtables[(7*cl + i) * 256], 0, 256);
         }
+    }
+
     }
 #endif
 
