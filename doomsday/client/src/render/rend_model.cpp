@@ -107,8 +107,6 @@ static uint vertexBufferSize; ///< Current number of vertices supported by the r
 static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been made to expand beyond our capability.
 #endif
 
-static void initArrays();
-
 /*static void modelAspectModChanged()
 {
     /// @todo Reload and resize all models.
@@ -142,8 +140,6 @@ void Rend_ModelInit()
 #ifdef DENG_DEBUG
     announcedVertexBufferMaxBreach = false;
 #endif
-
-    initArrays();
 
     inited = true;
 }
@@ -214,54 +210,6 @@ static bool resizeVertexBuffer(uint numVertices)
     return vertexBufferSize >= numVertices;
 }
 
-static void initArrays()
-{
-    if(!GL_state.features.elementArrays) return;
-    de::zap(arrays);
-}
-
-#if 0
-static void enableArrays(int vertices, int colors, int coords)
-{
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    if(vertices)
-    {
-        if(!GL_state.features.elementArrays)
-            arrays[AR_VERTEX].enabled = true;
-        else
-            glEnableClientState(GL_VERTEX_ARRAY);
-    }
-
-    if(colors)
-    {
-        if(!GL_state.features.elementArrays)
-            arrays[AR_COLOR].enabled = true;
-        else
-            glEnableClientState(GL_COLOR_ARRAY);
-    }
-
-    for(int i = 0; i < numTexUnits; ++i)
-    {
-        if(coords & (1 << i))
-        {
-            if(!GL_state.features.elementArrays)
-            {
-                arrays[AR_TEXCOORD0 + i].enabled = true;
-            }
-            else
-            {
-                glClientActiveTexture(GL_TEXTURE0 + i);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            }
-        }
-    }
-
-    DENG_ASSERT(!Sys_GLCheckError());
-}
-#endif
-
 static void disableArrays(int vertices, int colors, int coords)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -269,34 +217,19 @@ static void disableArrays(int vertices, int colors, int coords)
 
     if(vertices)
     {
-        if(!GL_state.features.elementArrays)
-            arrays[AR_VERTEX].enabled = false;
-        else
-            glDisableClientState(GL_VERTEX_ARRAY);
+        arrays[AR_VERTEX].enabled = false;
     }
 
     if(colors)
     {
-        if(!GL_state.features.elementArrays)
-            arrays[AR_COLOR].enabled = false;
-        else
-            glDisableClientState(GL_COLOR_ARRAY);
+        arrays[AR_COLOR].enabled = false;
     }
 
     for(int i = 0; i < numTexUnits; ++i)
     {
         if(coords & (1 << i))
         {
-            if(!GL_state.features.elementArrays)
-            {
-                arrays[AR_TEXCOORD0 + i].enabled = false;
-            }
-            else
-            {
-                glClientActiveTexture(GL_TEXTURE0 + i);
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                glTexCoordPointer(2, GL_FLOAT, 0, NULL);
-            }
+            arrays[AR_TEXCOORD0 + i].enabled = false;
         }
     }
 
@@ -321,10 +254,7 @@ static inline void disableTexUnit(byte id)
     glDisable(GL_TEXTURE_2D);
 
     // Implicit disabling of texcoord array.
-    if(!GL_state.features.elementArrays)
-    {
-        disableArrays(0, 0, 1 << id);
-    }
+    disableArrays(0, 0, 1 << id);
 }
 
 /**
@@ -356,106 +286,51 @@ static void configureArrays(void *vertices, void *colors, int numCoords = 0,
 
     if(vertices)
     {
-        if(!GL_state.features.elementArrays)
-        {
-            arrays[AR_VERTEX].enabled = true;
-            arrays[AR_VERTEX].data = vertices;
-        }
-        else
-        {
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glVertexPointer(3, GL_FLOAT, 0, vertices);
-        }
+        arrays[AR_VERTEX].enabled = true;
+        arrays[AR_VERTEX].data = vertices;
     }
 
     if(colors)
     {
-        if(!GL_state.features.elementArrays)
-        {
-            arrays[AR_COLOR].enabled = true;
-            arrays[AR_COLOR].data = colors;
-        }
-        else
-        {
-            glEnableClientState(GL_COLOR_ARRAY);
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-        }
+        arrays[AR_COLOR].enabled = true;
+        arrays[AR_COLOR].data = colors;
     }
 
     for(int i = 0; i < numCoords && i < MAX_TEX_UNITS; ++i)
     {
         if(coords[i])
         {
-            if(!GL_state.features.elementArrays)
-            {
-                arrays[AR_TEXCOORD0 + i].enabled = true;
-                arrays[AR_TEXCOORD0 + i].data = coords[i];
-            }
-            else
-            {
-                glClientActiveTexture(GL_TEXTURE0 + i);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
-            }
+            arrays[AR_TEXCOORD0 + i].enabled = true;
+            arrays[AR_TEXCOORD0 + i].data = coords[i];
         }
     }
 
-#if GL_EXT_compiled_vertex_array
-    if(GL_state.features.elementArrays && lock > 0)
-    {
-        // 'lock' is the number of vertices to lock.
-        glLockArraysEXT(0, lock);
-
-        /// @todo Never unlocked? Maybe this is dead code? -jk
-    }
-#endif
-
     DENG_ASSERT(!Sys_GLCheckError());
 }
-
-#if 0
-static void unlockArrays()
-{
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    if(!GL_state.features.elementArrays) return;
-
-    glUnlockArraysEXT();
-    DENG_ASSERT(!Sys_GLCheckError());
-}
-#endif
 
 static void drawArrayElement(int index)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(GL_state.features.elementArrays)
+    for(int i = 0; i < numTexUnits; ++i)
     {
-        glArrayElement(index);
+        if(!arrays[AR_TEXCOORD0 + i].enabled) continue;
+
+        Vector2f const &texCoord = ((Vector2f const *)arrays[AR_TEXCOORD0 + i].data)[index];
+        glMultiTexCoord2f(GL_TEXTURE0 + i, texCoord.x, texCoord.y);
     }
-    else
+
+    if(arrays[AR_COLOR].enabled)
     {
-        for(int i = 0; i < numTexUnits; ++i)
-        {
-            if(!arrays[AR_TEXCOORD0 + i].enabled) continue;
+        Vector4ub const &colorCoord = ((Vector4ub const *) arrays[AR_COLOR].data)[index];
+        glColor4ub(colorCoord.x, colorCoord.y, colorCoord.z, colorCoord.w);
+    }
 
-            Vector2f const &texCoord = ((Vector2f const *)arrays[AR_TEXCOORD0 + i].data)[index];
-            glMultiTexCoord2f(GL_TEXTURE0 + i, texCoord.x, texCoord.y);
-        }
-
-        if(arrays[AR_COLOR].enabled)
-        {
-            Vector4ub const &colorCoord = ((Vector4ub const *) arrays[AR_COLOR].data)[index];
-            glColor4ub(colorCoord.x, colorCoord.y, colorCoord.z, colorCoord.w);
-        }
-
-        if(arrays[AR_VERTEX].enabled)
-        {
-            Vector3f const &posCoord = ((Vector3f const *) arrays[AR_VERTEX].data)[index];
-            glVertex3f(posCoord.x, posCoord.y, posCoord.z);
-        }
+    if(arrays[AR_VERTEX].enabled)
+    {
+        Vector3f const &posCoord = ((Vector3f const *) arrays[AR_VERTEX].data)[index];
+        glVertex3f(posCoord.x, posCoord.y, posCoord.z);
     }
 }
 

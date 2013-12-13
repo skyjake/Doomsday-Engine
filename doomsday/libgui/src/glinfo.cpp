@@ -106,7 +106,6 @@ DENG2_PIMPL_NOREF(GLInfo)
         ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
 
         ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
-        ext.EXT_compiled_vertex_array      = query("GL_EXT_compiled_vertex_array");
         ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
         ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
         ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");

@@ -35,7 +35,6 @@ public:
         duint32 ARB_texture_non_power_of_two : 1;
 
         duint32 EXT_blend_subtract : 1;
-        duint32 EXT_compiled_vertex_array : 1;
         duint32 EXT_framebuffer_blit : 1;
         duint32 EXT_framebuffer_multisample : 1;
         duint32 EXT_texture_compression_s3tc : 1;

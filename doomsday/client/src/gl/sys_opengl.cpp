@@ -60,21 +60,6 @@ static void initialize(void)
 {
     de::GLInfo::Extensions const &ext = de::GLInfo::extensions();
 
-    if(ext.EXT_compiled_vertex_array)
-    {
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-        GETPROC(PFNGLLOCKARRAYSEXTPROC, glLockArraysEXT);
-        GETPROC(PFNGLUNLOCKARRAYSEXTPROC, glUnlockArraysEXT);
-        if(NULL == glLockArraysEXT || NULL == glUnlockArraysEXT)
-            GL_state.features.elementArrays = false;
-#endif
-    }
-
-    if(CommandLine_Exists("-vtxar") && !CommandLine_Exists("-novtxar"))
-    {
-        GL_state.features.elementArrays = true;
-    }
-
     if(CommandLine_Exists("-noanifilter"))
     {
         GL_state.features.texFilterAniso = false;
@@ -213,7 +198,6 @@ boolean Sys_GLPreInit(void)
     GL_state.features.texFilterAniso = true;
     GL_state.features.texNonPowTwo = true;
     GL_state.features.vsync = true;
-    GL_state.features.elementArrays = false;
 
     GL_state.currentLineWidth = 1.5f;
     GL_state.currentPointSize = 1.5f;

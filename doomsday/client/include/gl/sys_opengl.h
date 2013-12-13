@@ -97,7 +97,6 @@ typedef struct gl_state_s {
     /// Vendor and implementation agnostic.
     struct {
         uint blendSubtract : 1;
-        uint elementArrays : 1;
         uint genMipmap : 1;
         uint multisample : 1;
         uint texCompression : 1;
