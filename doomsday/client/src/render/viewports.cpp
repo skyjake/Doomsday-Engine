@@ -130,38 +130,32 @@ void R_SetupDefaultViewWindow(int consoleNum)
     viewdata_t *vd = &viewDataOfConsole[consoleNum];
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
 
-    vd->window.origin.x = vd->windowOld.origin.x = vd->windowTarget.origin.x = 0;
-    vd->window.origin.y = vd->windowOld.origin.y = vd->windowTarget.origin.y = 0;
-    vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = DENG_GAMEVIEW_WIDTH;
-    vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = DENG_GAMEVIEW_HEIGHT;
+    vd->window =
+        vd->windowOld =
+            vd->windowTarget = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT));
     vd->windowInter = 1;
 }
 
 void R_ViewWindowTicker(int consoleNum, timespan_t ticLength)
 {
-#define LERP(start, end, pos) (end * pos + start * (1 - pos))
-
     viewdata_t *vd = &viewDataOfConsole[consoleNum];
-    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS)
+    {
+        return;
+    }
 
     vd->windowInter += float(.4 * ticLength * TICRATE);
     if(vd->windowInter >= 1)
     {
-        std::memcpy(&vd->window, &vd->windowTarget, sizeof(vd->window));
+        vd->window = vd->windowTarget;
     }
     else
     {
-        float const x = LERP(vd->windowOld.origin.x, vd->windowTarget.origin.x, vd->windowInter);
-        float const y = LERP(vd->windowOld.origin.y, vd->windowTarget.origin.y, vd->windowInter);
-        float const w = LERP(vd->windowOld.size.width,  vd->windowTarget.size.width,  vd->windowInter);
-        float const h = LERP(vd->windowOld.size.height, vd->windowTarget.size.height, vd->windowInter);
-        vd->window.origin.x = ROUND(x);
-        vd->window.origin.y = ROUND(y);
-        vd->window.size.width  = ROUND(w);
-        vd->window.size.height = ROUND(h);
+        vd->window.moveTopLeft(Vector2i(de::roundf(de::lerp<float>(vd->windowOld.topLeft.x, vd->windowTarget.topLeft.x, vd->windowInter)),
+                                        de::roundf(de::lerp<float>(vd->windowOld.topLeft.y, vd->windowTarget.topLeft.y, vd->windowInter))));
+        vd->window.setSize(Vector2ui(de::roundf(de::lerp<float>(vd->windowOld.width(),  vd->windowTarget.width(),  vd->windowInter)),
+                                     de::roundf(de::lerp<float>(vd->windowOld.height(), vd->windowTarget.height(), vd->windowInter))));
     }
-
-#undef LERP
 }
 
 #undef R_ViewWindowGeometry
@@ -170,8 +164,11 @@ DENG_EXTERN_C int R_ViewWindowGeometry(int player, RectRaw *geometry)
     if(!geometry) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const *vd = &viewDataOfConsole[player];
-    std::memcpy(geometry, &vd->window, sizeof *geometry);
+    viewdata_t const &vd = viewDataOfConsole[player];
+    geometry->origin.x    = vd.window.topLeft.x;
+    geometry->origin.y    = vd.window.topLeft.y;
+    geometry->size.width  = vd.window.width();
+    geometry->size.height = vd.window.height();
     return true;
 }
 
@@ -181,19 +178,21 @@ DENG_EXTERN_C int R_ViewWindowOrigin(int player, Point2Raw *origin)
     if(!origin) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const *vd = &viewDataOfConsole[player];
-    std::memcpy(origin, &vd->window.origin, sizeof *origin);
+    viewdata_t const &vd = viewDataOfConsole[player];
+    origin->x = vd.window.topLeft.x;
+    origin->y = vd.window.topLeft.y;
     return true;
 }
 
 #undef R_ViewWindowSize
-DENG_EXTERN_C int R_ViewWindowSize(int player, Size2Raw* size)
+DENG_EXTERN_C int R_ViewWindowSize(int player, Size2Raw *size)
 {
     if(!size) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const *vd = &viewDataOfConsole[player];
-    std::memcpy(size, &vd->window.size, sizeof *size);
+    viewdata_t const &vd = viewDataOfConsole[player];
+    size->width  = vd.window.width();
+    size->height = vd.window.height();
     return true;
 }
 
@@ -210,39 +209,41 @@ DENG_EXTERN_C void R_SetViewWindowGeometry(int player, RectRaw const *geometry, 
 
     viewport_t const *vp = &viewportOfLocalPlayer[p];
     viewdata_t *vd = &viewDataOfConsole[player];
-    RectRaw newGeom;
 
-    // Clamp to valid range.
-    newGeom.origin.x = de::clamp(0, geometry->origin.x, vp->geometry.size.width);
-    newGeom.origin.y = de::clamp(0, geometry->origin.y, vp->geometry.size.height);
-    newGeom.size.width  = abs(geometry->size.width);
-    newGeom.size.height = abs(geometry->size.height);
-    if(newGeom.origin.x + newGeom.size.width > vp->geometry.size.width)
-        newGeom.size.width = vp->geometry.size.width - newGeom.origin.x;
-    if(newGeom.origin.y + newGeom.size.height > vp->geometry.size.height)
-        newGeom.size.height = vp->geometry.size.height - newGeom.origin.y;
+    Rectanglei newGeom = Rectanglei::fromSize(Vector2i(de::clamp<int>(0, geometry->origin.x, vp->geometry.width()),
+                                                       de::clamp<int>(0, geometry->origin.y, vp->geometry.height())),
+                                              Vector2ui(de::abs(geometry->size.width),
+                                                        de::abs(geometry->size.height)));
+
+    if((unsigned) newGeom.bottomRight.x > vp->geometry.width())
+    {
+        newGeom.setWidth(vp->geometry.width() - newGeom.topLeft.x);
+    }
+    if((unsigned) newGeom.bottomRight.y > vp->geometry.height())
+    {
+        newGeom.setHeight(vp->geometry.height() - newGeom.topLeft.y);
+    }
 
     // Already at this target?
-    if(vd->window.origin.x    == newGeom.origin.x &&
-       vd->window.origin.y    == newGeom.origin.y &&
-       vd->window.size.width  == newGeom.size.width &&
-       vd->window.size.height == newGeom.size.height)
+    if(vd->window == newGeom)
+    {
         return;
+    }
 
     // Record the new target.
-    std::memcpy(&vd->windowTarget, &newGeom, sizeof vd->windowTarget);
+    vd->windowTarget = newGeom;
 
     // Restart or advance the interpolation timer?
     // If dimensions have not yet been set - do not interpolate.
-    if(interpolate && !(vd->window.size.width == 0 && vd->window.size.height == 0))
+    if(interpolate && vd->window.size() != Vector2ui(0, 0))
     {
+        vd->windowOld   = vd->window;
         vd->windowInter = 0;
-        std::memcpy(&vd->windowOld, &vd->window, sizeof(vd->windowOld));
     }
     else
     {
+        vd->windowOld   = vd->windowTarget;
         vd->windowInter = 1; // Update on next frame.
-        std::memcpy(&vd->windowOld, &vd->windowTarget, sizeof(vd->windowOld));
     }
 }
 
@@ -254,8 +255,11 @@ DENG_EXTERN_C int R_ViewPortGeometry(int player, RectRaw *geometry)
     int p = P_ConsoleToLocal(player);
     if(p == -1) return false;
 
-    viewport_t* vp = &viewportOfLocalPlayer[p];
-    std::memcpy(geometry, &vp->geometry, sizeof *geometry);
+    viewport_t const &vp = viewportOfLocalPlayer[p];
+    geometry->origin.x    = vp.geometry.topLeft.x;
+    geometry->origin.y    = vp.geometry.topLeft.y;
+    geometry->size.width  = vp.geometry.width();
+    geometry->size.height = vp.geometry.height();
     return true;
 }
 
@@ -267,8 +271,9 @@ DENG_EXTERN_C int R_ViewPortOrigin(int player, Point2Raw *origin)
     int p = P_ConsoleToLocal(player);
     if(p == -1) return false;
 
-    viewport_t *vp = &viewportOfLocalPlayer[p];
-    std::memcpy(origin, &vp->geometry.origin, sizeof *origin);
+    viewport_t const &vp = viewportOfLocalPlayer[p];
+    origin->x = vp.geometry.topLeft.x;
+    origin->y = vp.geometry.topLeft.y;
     return true;
 }
 
@@ -280,8 +285,9 @@ DENG_EXTERN_C int R_ViewPortSize(int player, Size2Raw *size)
     int p = P_ConsoleToLocal(player);
     if(p == -1) return false;
 
-    viewport_t *vp = &viewportOfLocalPlayer[p];
-    std::memcpy(size, &vp->geometry.size, sizeof *size);
+    viewport_t const &vp = viewportOfLocalPlayer[p];
+    size->width  = vp.geometry.width();
+    size->height = vp.geometry.height();
     return true;
 }
 
@@ -303,47 +309,48 @@ void R_UpdateViewPortGeometry(viewport_t *port, int col, int row)
 {
     DENG2_ASSERT(port != 0);
 
-    RectRaw *rect = &port->geometry;
-    int const x = DENG_GAMEVIEW_X + col * DENG_GAMEVIEW_WIDTH  / gridCols;
-    int const y = DENG_GAMEVIEW_Y + row * DENG_GAMEVIEW_HEIGHT / gridRows;
-    int const width  = (col+1) * DENG_GAMEVIEW_WIDTH  / gridCols - x;
-    int const height = (row+1) * DENG_GAMEVIEW_HEIGHT / gridRows - y;
+    Rectanglei newGeom = Rectanglei(Vector2i(DENG_GAMEVIEW_X + col * DENG_GAMEVIEW_WIDTH  / gridCols,
+                                             DENG_GAMEVIEW_Y + row * DENG_GAMEVIEW_HEIGHT / gridRows),
+                                    Vector2i(DENG_GAMEVIEW_X + (col+1) * DENG_GAMEVIEW_WIDTH  / gridCols,
+                                             DENG_GAMEVIEW_Y + (row+1) * DENG_GAMEVIEW_HEIGHT / gridRows));
     ddhook_viewport_reshape_t p;
+
+    if(port->geometry == newGeom) return;
+
     bool doReshape = false;
-
-    if(rect->origin.x == x && rect->origin.y == y &&
-       rect->size.width == width && rect->size.height == height)
-        return;
-
     if(port->console != -1 && Plug_CheckForHook(HOOK_VIEWPORT_RESHAPE))
     {
-        std::memcpy(&p.oldGeometry, rect, sizeof(p.oldGeometry));
+        p.oldGeometry.origin.x    = port->geometry.topLeft.x;
+        p.oldGeometry.origin.y    = port->geometry.topLeft.y;
+        p.oldGeometry.size.width  = port->geometry.width();
+        p.oldGeometry.size.height = port->geometry.height();
         doReshape = true;
     }
 
-    rect->origin.x = x;
-    rect->origin.y = y;
-    rect->size.width  = width;
-    rect->size.height = height;
+    port->geometry = newGeom;
 
     if(doReshape)
     {
-        std::memcpy(&p.geometry, rect, sizeof(p.geometry));
+        p.geometry.origin.x    = port->geometry.topLeft.x;
+        p.geometry.origin.y    = port->geometry.topLeft.y;
+        p.geometry.size.width  = port->geometry.width();
+        p.geometry.size.height = port->geometry.height();
+
         DD_CallHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void*)&p);
     }
 }
 
-boolean R_SetViewGrid(int numCols, int numRows)
+bool R_SetViewGrid(int numCols, int numRows)
 {
-    int x, y, p, console;
-
     // LensFx needs to reallocate resources only for the consoles in use.
     LensFx_GLRelease();
 
     if(numCols > 0 && numRows > 0)
     {
         if(numCols * numRows > DDMAXPLAYERS)
+        {
             return false;
+        }
 
         if(numCols > DDMAXPLAYERS)
             numCols = DDMAXPLAYERS;
@@ -354,27 +361,25 @@ boolean R_SetViewGrid(int numCols, int numRows)
         gridRows = numRows;
     }
 
-    p = 0;
-    for(y = 0; y < gridRows; ++y)
+    int p = 0;
+    for(int y = 0; y < gridRows; ++y)
+    for(int x = 0; x < gridCols; ++x)
     {
-        for(x = 0; x < gridCols; ++x)
+        // The console number is -1 if the viewport belongs to no one.
+        viewport_t *vp = viewportOfLocalPlayer + p;
+
+        int const console = P_LocalToConsole(p);
+        if(console != -1)
         {
-            // The console number is -1 if the viewport belongs to no one.
-            viewport_t *vp = viewportOfLocalPlayer + p;
-
-            console = P_LocalToConsole(p);
-            if(console != -1)
-            {
-                vp->console = clients[console].viewConsole;
-            }
-            else
-            {
-                vp->console = -1;
-            }
-
-            R_UpdateViewPortGeometry(vp, x, y);
-            ++p;
+            vp->console = clients[console].viewConsole;
         }
+        else
+        {
+            vp->console = -1;
+        }
+
+        R_UpdateViewPortGeometry(vp, x, y);
+        ++p;
     }
 
     return true;
@@ -691,19 +696,15 @@ void R_UseViewPort(viewport_t const *vp)
 
     if(!vp)
     {
-        currentViewport = NULL;
-        ClientWindow::main().game().glApplyViewport(DENG_GAMEVIEW_X,
-                                                    DENG_GAMEVIEW_Y,
-                                                    DENG_GAMEVIEW_WIDTH,
-                                                    DENG_GAMEVIEW_HEIGHT);
+        currentViewport = 0;
+        ClientWindow::main().game().glApplyViewport(
+                Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y),
+                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));
     }
     else
     {
         currentViewport = const_cast<viewport_t *>(vp);
-        ClientWindow::main().game().glApplyViewport(vp->geometry.origin.x,
-                                                    vp->geometry.origin.y,
-                                                    vp->geometry.size.width,
-                                                    vp->geometry.size.height);
+        ClientWindow::main().game().glApplyViewport(vp->geometry);
     }
 }
 
@@ -856,8 +857,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     // Too early? Game has not configured the view window?
     viewdata_t *vd = &viewDataOfConsole[num];
-    if(vd->window.size.width == 0) return;
-    if(vd->window.size.height == 0) return;
+    if(vd->window.isNull()) return;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
@@ -1049,16 +1049,21 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
             /**
              * Use an orthographic projection in real pixel dimensions.
              */
-            glOrtho(0, vp->geometry.size.width, vp->geometry.size.height, 0, -1, 1);
+            glOrtho(0, vp->geometry.width(), vp->geometry.height(), 0, -1, 1);
 
             viewdata_t const *vd = &viewDataOfConsole[vp->console];
+            RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
+                               vp->geometry.width(), vp->geometry.height());
+
+            RectRaw vdWindow(vd->window.topLeft.x, vd->window.topLeft.y,
+                             vd->window.width(), vd->window.height());
 
             switch(layer)
             {
             case ui::Player3DViewLayer:
                 R_UpdateViewer(vp->console);
                 LensFx_BeginFrame(vp->console);
-                gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 0/*layer #0*/);
+                gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 0/*layer #0*/);
                 LensFx_EndFrame();
                 break;
 
@@ -1067,7 +1072,7 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
                 break;
 
             case ui::HUDLayer:
-                gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 1/*layer #1*/);
+                gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 1/*layer #1*/);
                 break;
             }
 
@@ -1296,14 +1301,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
 
 D_CMD(ViewGrid)
 {
-    DENG_UNUSED(src);
-
-    if(argc != 3)
-    {
-        Con_Printf("Usage: %s (cols) (rows)\n", argv[0]);
-        return true;
-    }
-
+    DENG2_UNUSED2(src, argc);
     // Recalculate viewports.
-    return R_SetViewGrid(strtol(argv[1], NULL, 0), strtol(argv[2], NULL, 0));
+    return R_SetViewGrid(String(argv[1]).toInt(), String(argv[2]).toInt());
 }

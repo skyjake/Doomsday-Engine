@@ -42,7 +42,7 @@ public:
     /**
      * Determines the console's view rectangle in window coordinates.
      */
-    de::Rectanglei viewRect() const;
+    de::Rectanglei const &viewRect() const;
 
     bool isInited() const;
 

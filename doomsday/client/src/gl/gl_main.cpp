@@ -468,14 +468,15 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t c
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-    memcpy(&currentView, port, sizeof(currentView));
+    std::memcpy(&currentView, port, sizeof(currentView));
 
-    viewpx = port->geometry.origin.x + viewData->window.origin.x;
-    viewpy = port->geometry.origin.y + viewData->window.origin.y;
-    viewpw = MIN_OF(port->geometry.size.width, viewData->window.size.width);
-    viewph = MIN_OF(port->geometry.size.height, viewData->window.size.height);
+    viewpx = port->geometry.topLeft.x + viewData->window.topLeft.x;
+    viewpy = port->geometry.topLeft.y + viewData->window.topLeft.y;
+    viewpw = de::min(port->geometry.width(), viewData->window.width());
+    viewph = de::min(port->geometry.height(), viewData->window.height());
 
-    ClientWindow::main().game().glApplyViewport(viewpx, viewpy, viewpw, viewph);
+    ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vector2i(viewpx, viewpy),
+                                                                     Vector2ui(viewpw, viewph)));
 
     // The 3D projection matrix.
     GL_ProjectionMatrix();
@@ -489,9 +490,9 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
     switch(step)
     {
     case 1: { // After Restore Step 1 normal player sprites are rendered.
-        int height = (float)(port->geometry.size.width * viewData->window.size.height / viewData->window.size.width) / port->geometry.size.height * SCREENHEIGHT;
+        int height = (float)(port->geometry.width() * viewData->window.height() / viewData->window.width()) / port->geometry.height() * SCREENHEIGHT;
         scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT,
-                                           port->geometry.size.width, port->geometry.size.height,
+                                           port->geometry.width(), port->geometry.height(),
                                            scalemode_t(weaponScaleMode));
 
         glMatrixMode(GL_PROJECTION);
@@ -509,19 +510,22 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
              * corrected coordinate space at 4:3, aligned vertically to
              * the bottom and centered horizontally in the window.
              */
-            glOrtho(0, port->geometry.size.width, port->geometry.size.height, 0, -1, 1);
-            glTranslatef(port->geometry.size.width/2, port->geometry.size.height, 0);
+            glOrtho(0, port->geometry.width(), port->geometry.height(), 0, -1, 1);
+            glTranslatef(port->geometry.width()/2, port->geometry.height(), 0);
 
-            if(port->geometry.size.width >= port->geometry.size.height)
-                glScalef((float)port->geometry.size.height/SCREENHEIGHT, (float)port->geometry.size.height/SCREENHEIGHT, 1);
+            if(port->geometry.width() >= port->geometry.height())
+                glScalef((float)port->geometry.height() / SCREENHEIGHT,
+                         (float)port->geometry.height() / SCREENHEIGHT, 1);
             else
-                glScalef((float)port->geometry.size.width/SCREENWIDTH, (float)port->geometry.size.width/SCREENWIDTH, 1);
+                glScalef((float)port->geometry.width() / SCREENWIDTH,
+                         (float)port->geometry.width() / SCREENWIDTH, 1);
 
             // Special case: viewport height is greater than width.
-            // Apply an additional scaling factor to prevent player sprites looking too small.
-            if(port->geometry.size.height > port->geometry.size.width)
+            // Apply an additional scaling factor to prevent player sprites
+            // looking too small.
+            if(port->geometry.height() > port->geometry.width())
             {
-                float extraScale = (((float)port->geometry.size.height*2)/port->geometry.size.width) / 2;
+                float extraScale = (((float)port->geometry.height()*2)/port->geometry.width()) / 2;
                 glScalef(extraScale, extraScale, 1);
             }
 
@@ -538,11 +542,7 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
         break; }
 
     case 2: // After Restore Step 2 we're back in 2D rendering mode.
-        ClientWindow::main().game().
-                glApplyViewport(currentView.geometry.origin.x,
-                                currentView.geometry.origin.y,
-                                currentView.geometry.size.width,
-                                currentView.geometry.size.height);
+        ClientWindow::main().game().glApplyViewport(currentView.geometry);
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);

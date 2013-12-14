@@ -118,10 +118,10 @@ GameWidget::GameWidget(String const &name)
     requestGeometry(false);
 }
 
-void GameWidget::glApplyViewport(int x, int y, int width, int height)
+void GameWidget::glApplyViewport(Rectanglei const &rect)
 {
     GLState::current()
-            .setNormalizedViewport(normalizedRect(Rectanglei(x, y, width, height)))
+            .setNormalizedViewport(normalizedRect(rect))
             .apply();
 }
 

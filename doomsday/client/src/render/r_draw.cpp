@@ -217,21 +217,14 @@ static MaterialVariantSpec const &bgMaterialSpec()
 /// @todo Optimize: Do not search for resources (materials, textures) each frame.
 void R_DrawViewBorder()
 {
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
 
     viewport_t const *port = R_CurrentViewPort();
     viewdata_t const *vd = R_ViewData(displayPlayer);
-    DENG_ASSERT(port != 0 && vd != 0);
+    DENG2_ASSERT(port != 0 && vd != 0);
 
-    if(!vd->window.size.width || !vd->window.size.height)
-    {
-        return;
-    }
-    if(vd->window.size.width == port->geometry.size.width &&
-       vd->window.size.height == port->geometry.size.height)
-    {
-        return;
-    }
+    if(vd->window.isNull()) return;
+    if(vd->window.size() >= port->geometry.size()) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -243,15 +236,17 @@ void R_DrawViewBorder()
 
     // Scale from viewport space to fixed 320x200 space.
     int border;
-    if(port->geometry.size.width >= port->geometry.size.height)
+    if(port->geometry.width() >= port->geometry.height())
     {
-        glScalef(float(SCREENHEIGHT) / port->geometry.size.height, float(SCREENHEIGHT) / port->geometry.size.height, 1);
-        border = float(borderSize) / SCREENHEIGHT * port->geometry.size.height;
+        glScalef(float(SCREENHEIGHT) / port->geometry.height(),
+                 float(SCREENHEIGHT) / port->geometry.height(), 1);
+        border = float(borderSize) / SCREENHEIGHT * port->geometry.height();
     }
     else
     {
-        glScalef(float(SCREENWIDTH) / port->geometry.size.width, float(SCREENWIDTH) / port->geometry.size.width, 1);
-        border = float(borderSize) / SCREENWIDTH * port->geometry.size.width;
+        glScalef(float(SCREENWIDTH) / port->geometry.width(),
+                 float(SCREENWIDTH) / port->geometry.width(), 1);
+        border = float(borderSize) / SCREENWIDTH * port->geometry.width();
     }
 
     glColor4f(1, 1, 1, 1);
@@ -264,19 +259,20 @@ void R_DrawViewBorder()
                       .prepare(bgMaterialSpec());
 
         GL_BindTexture(&ms.texture(MTU_PRIMARY));
-        GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms.width(), ms.height(), 0, 0,
-                              vd->window.origin.x - border, vd->window.origin.y - border,
-                              vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
+        GL_DrawCutRectf2Tiled(0, 0, port->geometry.width(), port->geometry.height(),
+                              ms.width(), ms.height(), 0, 0,
+                              vd->window.topLeft.x - border, vd->window.topLeft.y - border,
+                              vd->window.width() + 2 * border, vd->window.height() + 2 * border);
     }
     catch(MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
 
     if(border)
     {
-        R_DrawPatchTiled(borderTexture(BG_TOP),    vd->window.origin.x, vd->window.origin.y - border, vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(borderTexture(BG_BOTTOM), vd->window.origin.x, vd->window.origin.y + vd->window.size.height , vd->window.size.width, border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(borderTexture(BG_LEFT),   vd->window.origin.x - border, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
-        R_DrawPatchTiled(borderTexture(BG_RIGHT),  vd->window.origin.x + vd->window.size.width, vd->window.origin.y, border, vd->window.size.height, gl::ClampToEdge, gl::Repeat);
+        R_DrawPatchTiled(borderTexture(BG_TOP),    vd->window.topLeft.x, vd->window.topLeft.y - border, vd->window.width(), border, gl::Repeat, gl::ClampToEdge);
+        R_DrawPatchTiled(borderTexture(BG_BOTTOM), vd->window.topLeft.x, vd->window.bottomRight.y, vd->window.width(), border, gl::Repeat, gl::ClampToEdge);
+        R_DrawPatchTiled(borderTexture(BG_LEFT),   vd->window.topLeft.x - border, vd->window.topLeft.y, border, vd->window.height(), gl::ClampToEdge, gl::Repeat);
+        R_DrawPatchTiled(borderTexture(BG_RIGHT),  vd->window.topRight().x, vd->window.topRight().y, border, vd->window.height(), gl::ClampToEdge, gl::Repeat);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -284,10 +280,10 @@ void R_DrawViewBorder()
 
     if(border)
     {
-        R_DrawPatch(borderTexture(BG_TOPLEFT),     vd->window.origin.x - border, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch(borderTexture(BG_TOPRIGHT),    vd->window.origin.x + vd->window.size.width, vd->window.origin.y - border, border, border, false);
-        R_DrawPatch(borderTexture(BG_BOTTOMRIGHT), vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height, border, border, false);
-        R_DrawPatch(borderTexture(BG_BOTTOMLEFT),  vd->window.origin.x - border, vd->window.origin.y + vd->window.size.height, border, border, false);
+        R_DrawPatch(borderTexture(BG_TOPLEFT),     vd->window.topLeft.x - border, vd->window.topLeft.y - border, border, border, false);
+        R_DrawPatch(borderTexture(BG_TOPRIGHT),    vd->window.topRight().x, vd->window.topLeft.y - border, border, border, false);
+        R_DrawPatch(borderTexture(BG_BOTTOMRIGHT), vd->window.bottomRight.x, vd->window.bottomRight.y, border, border, false);
+        R_DrawPatch(borderTexture(BG_BOTTOMLEFT),  vd->window.bottomLeft().x - border, vd->window.bottomRight.y, border, border, false);
     }
 
     glDisable(GL_TEXTURE_2D);

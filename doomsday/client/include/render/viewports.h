@@ -24,6 +24,7 @@
 #  error "viewports.h is for the client only"
 #endif
 
+#include <de/Rectangle>
 #include <de/Vector>
 #include <de/rect.h>
 
@@ -33,7 +34,7 @@ class Lumobj;
 struct viewport_t
 {
     int console;
-    RectRaw geometry;
+    de::Rectanglei geometry;
 };
 
 struct viewer_t
@@ -78,7 +79,7 @@ struct viewdata_t
 
     float viewCos, viewSin;
 
-    RectRaw window, windowTarget, windowOld;
+    de::Rectanglei window, windowTarget, windowOld;
     float windowInter;
 };
 
@@ -96,7 +97,7 @@ DENG_EXTERN_C boolean  firstFrameAfterLoad;
 /**
  * Register console variables.
  */
-void Viewports_Register(void);
+void Viewports_Register();
 
 int R_FrameCount();
 
@@ -110,15 +111,15 @@ void R_RenderViewPorts(ui::ViewPortLayer layer);
 /**
  * Render a blank view for the specified player.
  */
-void R_RenderBlankView(void);
+void R_RenderBlankView();
 
 /**
  * Draw the border around the view window.
  */
-void R_RenderPlayerViewBorder(void);
+void R_RenderPlayerViewBorder();
 
-/// @return  Current viewport; otherwise @c NULL.
-viewport_t const *R_CurrentViewPort(void);
+/// @return  Current viewport; otherwise @c 0.
+viewport_t const *R_CurrentViewPort();
 
 /**
  * Set the current GL viewport.
@@ -129,22 +130,22 @@ viewdata_t const *R_ViewData(int consoleNum);
 
 void R_UpdateViewer(int consoleNum);
 
-void R_ResetViewer(void);
+void R_ResetViewer();
 
-int R_NextViewer(void);
+int R_NextViewer();
 
-void R_ClearViewData(void);
+void R_ClearViewData();
 
 /**
  * To be called at the beginning of a render frame to perform necessary initialization.
  */
-void R_BeginFrame(void);
+void R_BeginFrame();
 
 /**
  * Update the sharp world data by rotating the stored values of plane
  * heights and sharp camera positions.
  */
-void R_NewSharpWorld(void);
+void R_NewSharpWorld();
 
 /**
  * Returns @c true iff the BSP leaf is marked as visible for the current frame.
@@ -183,7 +184,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf);
  * Attempt to set up a view grid and calculate the viewports. Set 'numCols' and
  * 'numRows' to zero to just update the viewport coordinates.
  */
-boolean R_SetViewGrid(int numCols, int numRows);
+bool R_SetViewGrid(int numCols, int numRows);
 
 void R_SetupDefaultViewWindow(int consoleNum);
 

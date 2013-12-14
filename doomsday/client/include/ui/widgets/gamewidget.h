@@ -39,7 +39,7 @@ public:
      *
      * This is only intended to support old graphics code that doesn't use libgui.
      */
-    void glApplyViewport(int x, int y, int width, int height);
+    void glApplyViewport(de::Rectanglei const &rect);
 
     void viewResized();
     void update();

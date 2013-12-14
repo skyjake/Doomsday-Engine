@@ -44,13 +44,10 @@ int ConsoleEffect::console() const
     return d->console;
 }
 
-Rectanglei ConsoleEffect::viewRect() const
+Rectanglei const &ConsoleEffect::viewRect() const
 {
     viewdata_t const *vd = R_ViewData(d->console);
-    return Rectanglei(vd->window.origin.x,
-                      vd->window.origin.y,
-                      vd->window.size.width,
-                      vd->window.size.height);
+    return vd->window;
 }
 
 bool ConsoleEffect::isInited() const
