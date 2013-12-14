@@ -1593,19 +1593,19 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 ClientApp::renderSystem().drawLists()
                           .find(listSpec)
                               .write(gl::TriangleFan, ms.shineBlendMode(),
-                                     listSpec.unit(TU_INTER  ).scale,
-                                     listSpec.unit(TU_INTER  ).offset,
+                                     listSpec.unit(TU_INTER).scale,
+                                     listSpec.unit(TU_INTER).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
-                                     hasDynlights, 3 + rightEdge.divisionCount(),
+                                     false, 3 + rightEdge.divisionCount(),
                                      posCoords + 3 + leftEdge.divisionCount(),
                                      shinyColors + 3 + leftEdge.divisionCount(),
                                      shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
                                      shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
                               .write(gl::TriangleFan, ms.shineBlendMode(),
-                                     listSpec.unit(TU_INTER  ).scale,
-                                     listSpec.unit(TU_INTER  ).offset,
+                                     listSpec.unit(TU_INTER).scale,
+                                     listSpec.unit(TU_INTER).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
-                                     hasDynlights, 3 + leftEdge.divisionCount(),
+                                     false, 3 + leftEdge.divisionCount(),
                                      posCoords, shinyColors, shinyTexCoords,
                                      shinyMaskRTU? primaryCoords : 0);
             }
@@ -1713,7 +1713,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                      listSpec.unit(TU_INTER         ).offset,
                                      listSpec.unit(TU_PRIMARY_DETAIL).scale,
                                      listSpec.unit(TU_PRIMARY_DETAIL).offset,
-                                     hasDynlights, numVertices,
+                                     false, numVertices,
                                      posCoords, shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
             }
         }
