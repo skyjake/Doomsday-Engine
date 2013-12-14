@@ -24,8 +24,6 @@
 #include "m_misc.h" // M_ReadBits
 #include <de/Log>
 #include <de/Range>
-#include <de/memory.h>
-#include <QVector>
 
 using namespace de;
 

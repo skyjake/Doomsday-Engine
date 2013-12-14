@@ -133,7 +133,7 @@ public:
      * Replace the entire color table. The ColorTableChange audience is notified
      * whenever the color table changes.
      *
-     * If the new color table has a different number of colors then any existing
+     * If the new color table has a different number of colors, then any existing
      * translation maps will be cleared automatically.
      *
      * @param colorTable  The replacement color table. A copy is made.
@@ -162,9 +162,9 @@ public:
     Translation const *translation(de::String id) const;
 
     /**
-     * Add/replace the identified @a translation map.
+     * Add/replace the identified translation map.
      *
-     * @param id        Unique identifier for the translation.
+     * @param id        Unique identifier of the translation.
      * @param mappings  Table of palette index mappings (a copy is made). It is
      *                  assumed that this table contains a mapping for each color
      *                  in the palette.
