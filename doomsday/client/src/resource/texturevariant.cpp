@@ -28,7 +28,6 @@
 #include "gl/gl_tex.h"
 #include "gl/texturecontent.h"
 
-#include "resource/colorpalettes.h"
 #include "resource/image.h" // GL_LoadSourceImage
 
 #include "render/rend_main.h" // misc global vars awaiting new home
