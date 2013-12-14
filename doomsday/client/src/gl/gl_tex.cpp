@@ -27,7 +27,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "color.h"
-#include "resource/colorpalettes.h"
 #include "render/r_main.h"
 
 #include "gl/gl_tex.h"

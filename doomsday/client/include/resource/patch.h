@@ -21,6 +21,7 @@
 #ifndef DENG_RESOURCE_PATCH_H
 #define DENG_RESOURCE_PATCH_H
 
+#include "resource/colorpalette.h"
 #include <de/Block>
 #include <de/IByteArray>
 #include <de/IReadable>
@@ -94,7 +95,8 @@ public:
      * @param xlatTable  If not @c NULL, use this translation table when
      *                   compositing final color palette indices.
      */
-    static Block load(IByteArray const &data, IByteArray const &xlatTable, Flags = 0);
+    static Block load(IByteArray const &data, ColorPaletteTranslation const &xlatTable,
+                      Flags = 0);
 
     /**
      * Determines whether @a data looks like it can be interpreted as a Patch.

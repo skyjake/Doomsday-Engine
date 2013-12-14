@@ -220,7 +220,7 @@ enum {
     DD_DEF_ACTION,
 
     // Non-integer/special values for Set/Get
-    DD_TRANSLATIONTABLES_ADDRESS,
+    DD_UNUSED9, // DD_TRANSLATIONTABLES_ADDRESS,
     DD_UNUSED4, // DD_TRACE_ADDRESS
     DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
     DD_ACTION_LINK, ///< State action routine addresses.
@@ -798,7 +798,7 @@ typedef enum gfxmode_e {
     LGM_WHITE_ALPHA = 3
 } gfxmode_t;
 
-typedef unsigned int colorpaletteid_t;
+typedef uint colorpaletteid_t;
 
 //------------------------------------------------------------------------
 //

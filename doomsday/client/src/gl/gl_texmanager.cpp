@@ -276,11 +276,13 @@ GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
 
 static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 {
+    de::FS1 &fileSys = App_FileSystem();
+
     // First try an external resource.
     try
     {
-        String foundPath = App_FileSystem().findPath(de::Uri("Patches", Path(raw.name)),
-                                                     RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
+        String foundPath = fileSys.findPath(de::Uri("Patches", Path(raw.name)),
+                                             RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
@@ -289,44 +291,46 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
     catch(FS1::NotFoundError const&)
     {} // Ignore this error.
 
-    if(raw.lumpNum >= 0)
+    try
     {
-        filehandle_s *file = F_OpenLump(raw.lumpNum);
-        if(file)
+        de::FileHandle &file = fileSys.openLump(fileSys.nameIndex().lump(raw.lumpNum));
+        if(Image_LoadFromFile(image, file))
         {
-            if(Image_LoadFromFile(image, *reinterpret_cast<de::FileHandle *>(file)))
-            {
-                F_Delete(file);
-                return res::Original;
-            }
+            fileSys.releaseFile(file.file());
+            delete &file;
 
-            // It must be an old-fashioned "raw" image.
+            return res::Original;
+        }
+
+        // It must be an old-fashioned "raw" image.
 #define RAW_WIDTH           320
 #define RAW_HEIGHT          200
 
-            Image_Init(image);
+        size_t const fileLength = file.length();
 
-            size_t fileLength = FileHandle_Length(file);
-            size_t bufSize = 3 * RAW_WIDTH * RAW_HEIGHT;
+        Image_Init(image);
+        image.size      = Vector2ui(RAW_WIDTH, fileLength / RAW_WIDTH);
+        image.pixelSize = 1;
 
-            image.pixels = (uint8_t *) M_Malloc(bufSize);
-            if(fileLength < bufSize)
-            {
-                std::memset(image.pixels, 0, bufSize);
-            }
+        // Load the raw image data.
+        size_t const numPels = RAW_WIDTH * RAW_HEIGHT;
+        image.pixels = (uint8_t *) M_Malloc(3 * numPels);
+        if(fileLength < 3 * numPels)
+        {
+            std::memset(image.pixels, 0, 3 * numPels);
+        }
+        file.read(image.pixels, fileLength);
 
-            // Load the raw image data.
-            FileHandle_Read(file, image.pixels, fileLength);
-            image.size      = Vector2ui(RAW_WIDTH, fileLength / image.size.x);
-            image.pixelSize = 1;
+        fileSys.releaseFile(file.file());
+        delete &file;
 
-            F_Delete(file);
-            return res::Original;
+        return res::Original;
 
 #undef RAW_HEIGHT
 #undef RAW_WIDTH
-        }
     }
+    catch(LumpIndex::NotFoundError const &)
+    {} // Ignore error.
 
     return res::None;
 }

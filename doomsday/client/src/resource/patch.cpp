@@ -23,7 +23,6 @@
 #include <de/libdeng2.h>
 #include <de/Log>
 
-#include "resource/colorpalettes.h"
 #include "resource/patch.h"
 
 #include <de/math.h>
@@ -186,9 +185,8 @@ static int calcRealHeight(Columns const &columns)
     return geom.height();
 }
 
-static Block compositeImage(Reader &reader, IByteArray const *xlatTable,
-                            Columns const &columns, Patch::Metadata const &meta,
-                            Patch::Flags flags)
+static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatTable,
+    Columns const &columns, Patch::Metadata const &meta, Patch::Flags flags)
 {
     bool const maskZero                = flags.testFlag(Patch::MaskZero);
     bool const clipToLogicalDimensions = flags.testFlag(Patch::ClipToLogicalDimensions);
@@ -277,7 +275,7 @@ static Block compositeImage(Reader &reader, IByteArray const *xlatTable,
                 // Is palette index translation in effect?
                 if(xlatTable)
                 {
-                    xlatTable->get(palIdx, &palIdx, 1);
+                    palIdx = dbyte(xlatTable->at(palIdx));
                 }
 
                 if(!maskZero || palIdx)
@@ -326,7 +324,7 @@ Patch::Metadata Patch::loadMetadata(IByteArray const &data)
     return prepareMetadata(hdr, internal::calcRealHeight(columns));
 }
 
-Block Patch::load(IByteArray const &data, IByteArray const &xlatTable, Patch::Flags flags)
+Block Patch::load(IByteArray const &data, ColorPaletteTranslation const &xlatTable, Patch::Flags flags)
 {
     LOG_AS("Patch::load");
     Reader reader = Reader(data);

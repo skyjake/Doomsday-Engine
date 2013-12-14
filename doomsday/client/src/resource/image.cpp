@@ -25,7 +25,6 @@
 #include "de_filesys.h"
 #include "m_misc.h"
 #ifdef __CLIENT__
-#  include "resource/colorpalettes.h"
 #  include "resource/compositetexture.h"
 #  include "resource/patch.h"
 #  include "resource/pcx.h"
@@ -556,12 +555,31 @@ static void compositePaletted(dbyte *dst, Vector2ui const &dstDimensions,
     }
 }
 
-static Block loadAndTranslatePatch(IByteArray const &data, int tclass = 0, int tmap = 0)
+/// Returns a palette translation id for the given class and map.
+/// Note that a zero-length id is returned when @a tclass =0 and @a tmap =0
+static String toTranslationId(int tclass, int tmap)
 {
-    int const trans = R_ToPaletteTranslation(tclass, tmap);
-    if(dbyte const *xlatTable = R_TranslationTable(trans))
+#define NUM_TRANSLATION_CLASSES         3
+#define NUM_TRANSLATION_MAPS_PER_CLASS  7
+
+    // Is translation unnecessary?
+    if(!tclass && !tmap) return String();
+
+    int trans = de::max(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
+    LOG_DEBUG("tclass=%i tmap=%i => TransPal# %i") << tclass << tmap << trans;
+    return String::number(trans);
+
+#undef NUM_TRANSLATION_MAPS_PER_CLASS
+#undef NUM_TRANSLATION_CLASSES
+}
+
+static Block loadAndTranslatePatch(IByteArray const &data, colorpaletteid_t palId,
+    int tclass = 0, int tmap = 0)
+{
+    ColorPalette &palette = App_ResourceSystem().colorPalette(palId);
+    if(ColorPaletteTranslation const *xlat = palette.translation(toTranslationId(tclass, tmap)))
     {
-        return Patch::load(data, ByteRefArray(xlatTable, 256), Patch::ClipToLogicalDimensions);
+        return Patch::load(data, *xlat, Patch::ClipToLogicalDimensions);
     }
     else
     {
@@ -589,7 +607,7 @@ static Source loadPatch(image_t &image, de::FileHandle &hndl, int tclass = 0,
         {
             colorpaletteid_t colorPaletteId = App_ResourceSystem().defaultColorPalette();
 
-            Block patchImg = loadAndTranslatePatch(fileData, tclass, tmap);
+            Block patchImg = loadAndTranslatePatch(fileData, colorPaletteId, tclass, tmap);
             PatchMetadata info = Patch::loadMetadata(fileData);
 
             Image_Init(image);

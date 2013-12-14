@@ -76,6 +76,4 @@ extern int extralight;
 
 extern fixed_t  pspritescale, pspriteiscale;
 
-void            R_UpdateTranslationTables(void);
-
 #endif

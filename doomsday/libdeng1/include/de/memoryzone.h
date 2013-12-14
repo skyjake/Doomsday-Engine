@@ -46,8 +46,6 @@ extern "C" {
 ///@{
 #define PU_APPSTATIC         1 ///< Static entire execution time.
 
-#define PU_REFRESHTRANS     13
-
 #define PU_GAMESTATIC       40 ///< Static until the game plugin which allocated it is unloaded.
 #define PU_MAP              50 ///< Static until map exited (may still be freed during the map, though).
 #define PU_MAPSTATIC        52 ///< Not freed until map exited.

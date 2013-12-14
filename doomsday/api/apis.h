@@ -119,7 +119,8 @@ enum {
     DE_API_RENDER               = DE_API_RENDER_v1,
 
     DE_API_RESOURCE_v1          = 1800,    // 1.10
-    DE_API_RESOURCE             = DE_API_RESOURCE_v1,
+    DE_API_RESOURCE_v2          = 1801,    // 1.13
+    DE_API_RESOURCE             = DE_API_RESOURCE_v2,
 
     DE_API_SERVER_v1            = 1900,    // 1.10
     DE_API_SERVER               = DE_API_SERVER_v1,

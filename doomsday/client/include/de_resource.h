@@ -23,7 +23,6 @@
 
 #include "resourceclass.h"
 
-#include "resource/colorpalettes.h"
 #include "resource/abstractfont.h"
 #include "resource/compositetexture.h"
 #include "resource/rawtexture.h"

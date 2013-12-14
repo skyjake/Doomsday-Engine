@@ -132,6 +132,45 @@ DENG_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescr
     return 0;
 }
 
+#undef R_CreateColorPaletteTranslation
+DENG_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
+    ddstring_s const *translationId, uint8_t const *mappings_)
+{
+    DENG2_ASSERT(mappings_ != 0);
+
+    LOG_AS("R_CreateColorPaletteTranslation");
+
+    try
+    {
+        ColorPalette &palette = App_ResourceSystem().colorPalette(paletteId);
+
+        // Convert the mapping table.
+        int const colorCount  = palette.colorCount();
+        ColorPaletteTranslation mappings(colorCount);
+        for(int i = 0; i < colorCount; ++i)
+        {
+            int const palIdx = mappings_[i];
+            DENG2_ASSERT(palIdx >= 0 && palIdx < colorCount);
+            mappings[i] = palIdx;
+        }
+
+        // Create/update this translation.
+        palette.newTranslation(Str_Text(translationId), mappings);
+    }
+    catch(ResourceSystem::MissingResourceError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
+            << paletteId << Str_Text(translationId) << er.asText();
+    }
+    catch(ColorPalette::InvalidTranslationIdError const &er)
+    {
+        // Log but otherwise ignore this error.
+        LOG_WARNING("Error creating/replacing color palette '%u' translation '%s':\n")
+            << paletteId << Str_Text(translationId) << er.asText();
+    }
+}
+
 #undef R_GetColorPaletteNumForName
 DENG_EXTERN_C colorpaletteid_t R_GetColorPaletteNumForName(char const *name)
 {
@@ -340,6 +379,7 @@ DENG_DECLARE_API(R) =
     R_CreateAnimGroup,
     R_AddAnimGroupFrame,
     R_CreateColorPalette,
+    R_CreateColorPaletteTranslation,
     R_GetColorPaletteNumForName,
     R_GetColorPaletteNameForNum,
     R_GetColorPaletteRGBf,

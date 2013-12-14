@@ -40,7 +40,6 @@
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
 #include "ui/windowsystem.h"
-#include "resource/colorpalettes.h"
 #include "resource/hq2x.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"

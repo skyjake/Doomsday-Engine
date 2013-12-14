@@ -592,102 +592,106 @@ void R_LoadColorPalettes(void)
 #define PALID               (0)
 
     lumpnum_t lumpNum = W_GetLumpNumForName(PALLUMPNAME);
-    uint8_t data[PALENTRIES*3];
+    uint8_t colors[PALENTRIES*3];
     colorpaletteid_t palId;
+    Str xlatId;
+    Str_InitStd(&xlatId);
 
     // Record whether we are using a custom palette.
     customPal = W_LumpIsCustom(lumpNum);
 
-    W_ReadLumpSection(lumpNum, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
-    palId = R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
+    W_ReadLumpSection(lumpNum, colors, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
+    palId = R_CreateColorPalette("R8G8B8", PALLUMPNAME, colors, PALENTRIES);
 
-    /**
-     * Create the translation tables to map the green color ramp to gray,
-     * brown, red.
-     *
-     * \note Assumes a given structure of the PLAYPAL. Could be read from a
-     * lump instead?
-     */
-#if __JDOOM__ || __JDOOM64__
+#if __JHEXEN__
+    // Load the translation tables.
     {
-    byte *translationtables = (byte *) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
-    int i;
+    int const numPerClass = (gameMode == hexen_v10? 3 : 7);
 
-    // Translate just the 16 green colors.
-    for(i = 0; i < 256; ++i)
-    {
-        if(i >= 0x70 && i <= 0x7f)
-        {
-            // Map green ramp to gray, brown, red.
-            translationtables[i] = 0x60 + (i & 0xf);
-            translationtables[i + 256] = 0x40 + (i & 0xf);
-            translationtables[i + 512] = 0x20 + (i & 0xf);
-        }
-        else
-        {
-            // Keep all other colors as is.
-            translationtables[i] = translationtables[i + 256] =
-                translationtables[i + 512] = i;
-        }
-    }
-    }
-#elif __JHERETIC__
-    {
-    int i;
-    uint8_t *translationtables = (uint8_t *) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
-
-    // Fill out the translation tables.
-    for(i = 0; i < 256; ++i)
-    {
-        if(i >= 225 && i <= 240)
-        {
-            translationtables[i] = 114 + (i - 225); // yellow
-            translationtables[i + 256] = 145 + (i - 225); // red
-            translationtables[i + 512] = 190 + (i - 225); // blue
-        }
-        else
-        {
-            translationtables[i] = translationtables[i + 256] =
-                translationtables[i + 512] = i;
-        }
-    }
-    }
-#else // __JHEXEN__
-    {
-    int i, cl, idx;
-    uint8_t *translationtables = (uint8_t *) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    int i, cl;
+    int xlatNum;
     lumpnum_t lumpNum;
-    char name[9];
-    int numPerClass = (gameMode == hexen_v10? 3 : 7);
+    Str lumpName;
+    Str_Reserve(Str_InitStd(&lumpName), 8);
 
     // In v1.0, the color translations are a bit different. There are only
     // three translation maps per class, whereas Doomsday assumes seven maps
     // per class. Thus we'll need to account for the difference.
 
-    idx = 0;
+    xlatNum = 0;
     for(cl = 0; cl < 3; ++cl)
     for(i = 0; i < 7; ++i)
     {
         if(i == numPerClass) break; // Not present.
 
-        strcpy(name, "TRANTBL0");
-        if(idx < 10)
-            name[7] += idx;
-        else
-            name[7] = 'A' + idx - 10;
-
-        idx++;
-#ifdef _DEBUG
-        Con_Message("Reading translation table '%s' as tclass=%i tmap=%i.", name, cl, i);
-#endif
-        if(-1 != (lumpNum = W_CheckLumpNumForName(name)))
+        Str_Clear(&lumpName);
+        if(xlatNum < 10)
         {
-            W_ReadLumpSection(lumpNum, &translationtables[(7*cl + i) * 256], 0, 256);
+            Str_Appendf(&lumpName, "TRANTBL%i", xlatNum);
+        }
+        else
+        {
+            Str_Appendf(&lumpName, "TRANTBL%c", 'A' + (xlatNum - 10));
+        }
+        xlatNum++;
+
+#ifdef _DEBUG
+        Con_Message("Reading translation table '%s' as tclass=%i tmap=%i.",
+                    Str_Text(&lumpName), cl, i);
+#endif
+
+        if(-1 != (lumpNum = W_CheckLumpNumForName(Str_Text(&lumpName))))
+        {
+            uint8_t const *mappings = W_CacheLump(lumpNum);
+            Str_Appendf(Str_Clear(&xlatId), "%i", 7 * cl + i);
+            R_CreateColorPaletteTranslation(palId, &xlatId, mappings);
+            W_UnlockLump(lumpNum);
         }
     }
 
+    Str_Free(&lumpName);
+    }
+#else
+    // Create the translation tables to map the green color ramp to gray,
+    // brown, red. Could be read from a lump instead?
+    {
+    uint8_t xlat[PALENTRIES];
+    int xlatNum, palIdx;
+
+    for(xlatNum = 0; xlatNum < 3; ++xlatNum)
+    {
+        // Translate just the 16 green colors.
+        for(palIdx = 0; palIdx < 256; ++palIdx)
+        {
+#  if __JHERETIC__
+            if(palIdx >= 225 && palIdx <= 240)
+            {
+                xlat[palIdx] = xlatNum == 0? 114 + (palIdx - 225) /*yellow*/ :
+                               xlatNum == 1? 145 + (palIdx - 225) /*red*/ :
+                                             190 + (palIdx - 225) /*blue*/;
+            }
+#  else
+            if(palIdx >= 0x70 && palIdx <= 0x7f)
+            {
+                // Map green ramp to gray, brown, red.
+                xlat[palIdx] = xlatNum == 0? 0x60 + (palIdx & 0xf) :
+                               xlatNum == 1? 0x40 + (palIdx & 0xf) :
+                                             0x20 + (palIdx & 0xf);
+            }
+#  endif
+            else
+            {
+                // Keep all other colors as is.
+                xlat[palIdx] = palIdx;
+            }
+        }
+        Str_Appendf(Str_Clear(&xlatId), "%i", xlatNum);
+        R_CreateColorPaletteTranslation(palId, &xlatId, xlat);
+    }
     }
 #endif
+
+    Str_Free(&xlatId);
 
 #undef PALID
 #undef PALENTRIES

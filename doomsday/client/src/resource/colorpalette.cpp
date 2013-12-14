@@ -24,6 +24,7 @@
 #include "m_misc.h" // M_ReadBits
 #include <de/Log>
 #include <de/Range>
+#include <de/memory.h>
 #include <QVector>
 
 using namespace de;
@@ -168,6 +169,9 @@ DENG2_PIMPL(ColorPalette)
     typedef QVector<Color> ColorTable;
     ColorTable colors;
 
+    typedef QMap<String, Translation> Translations;
+    Translations translations;
+
     /// 18-bit to 8-bit, nearest color translation table.
     typedef QVector<int> XLat18To8;
     QScopedPointer<XLat18To8> xlat18To8;
@@ -180,6 +184,16 @@ DENG2_PIMPL(ColorPalette)
         , need18To8Update(false) // No color table yet.
     {
         LOG_VERBOSE("New color palette %s") << id;
+    }
+
+    Translation *translation(String id)
+    {
+        Translations::iterator found = translations.find(id);
+        if(found != translations.end())
+        {
+            return &found.value();
+        }
+        return 0;
     }
 
     void notifyColorTableChanged()
@@ -250,6 +264,10 @@ int ColorPalette::colorCount() const
 
 ColorPalette &ColorPalette::replaceColorTable(ColorTable const &colorTable)
 {
+    LOG_AS("ColorPalette");
+
+    int const colorCountBefore = colorCount();
+
     // We may need a new 18 => 8 bit xlat table.
     d->need18To8Update = true;
 
@@ -259,12 +277,19 @@ ColorPalette &ColorPalette::replaceColorTable(ColorTable const &colorTable)
     // Notify interested parties.
     d->notifyColorTableChanged();
 
+    // When the color count changes all existing translations are destroyed as
+    // they will no longer be valid.
+    if(colorCountBefore != colorCount())
+    {
+        clearTranslations();
+    }
+
     return *this;
 }
 
 Vector3ub ColorPalette::color(int colorIndex) const
 {
-    LOG_AS("ColorPalette::color");
+    LOG_AS("ColorPalette");
 
     if(colorIndex < 0 || colorIndex >= d->colors.count())
     {
@@ -287,6 +312,8 @@ Vector3f ColorPalette::colorf(int colorIdx) const
 
 int ColorPalette::nearestIndex(Vector3ub const &rgb) const
 {
+    LOG_AS("ColorPalette");
+
     if(d->colors.isEmpty()) return -1;
 
     // Ensure we've prepared the 18 to 8 table.
@@ -296,4 +323,55 @@ int ColorPalette::nearestIndex(Vector3ub const &rgb) const
     }
 
     return (*d->xlat18To8)[RGB18(rgb.x >> 2, rgb.y >> 2, rgb.z >> 2)];
+}
+
+void ColorPalette::clearTranslations()
+{
+    LOG_AS("ColorPalette");
+    d->translations.clear();
+}
+
+ColorPalette::Translation const *ColorPalette::translation(String id) const
+{
+    LOG_AS("ColorPalette");
+    return d->translation(id);
+}
+
+void ColorPalette::newTranslation(String id, Translation const &mappings)
+{
+    LOG_AS("ColorPalette");
+
+    if(!colorCount())
+    {
+        //qDebug() << "Cannot define a translation for an empty palette!";
+        return;
+    }
+
+    DENG2_ASSERT(mappings.count() == colorCount()); // sanity check
+
+    if(!id.isEmpty())
+    {
+        Translation *xlat = d->translation(id);
+        if(!xlat)
+        {
+            // An entirely new translation.
+            xlat = &d->translations.insert(id, Translation()).value();
+        }
+
+        // Replace the whole mapping table.
+        *xlat = mappings;
+
+        // Ensure the mappings are within valid range.
+        for(int i = 0; i < colorCount(); ++i)
+        {
+            int palIdx = (*xlat)[i];
+            if(palIdx < 0 || palIdx >= colorCount())
+            {
+                (*xlat)[i] = i;
+            }
+        }
+        return;
+    }
+    /// @throw InvalidTranslationIdError .
+    throw InvalidTranslationIdError("ColorPalette::newTranslation", "A zero-length id was specified");
 }

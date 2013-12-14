@@ -197,7 +197,6 @@ DENG_HEADERS += \
     $$SRC/include/render/r_main.h \
     $$SRC/include/resource/animgroup.h \
     $$SRC/include/resource/colorpalette.h \
-    $$SRC/include/resource/colorpalettes.h \
     $$SRC/include/resource/compositetexture.h \
     $$SRC/include/resource/image.h \
     $$SRC/include/resource/lumpcache.h \
@@ -366,7 +365,6 @@ SOURCES += \
     $$SRC/src/resource/api_material.cpp \
     $$SRC/src/resource/api_resource.cpp \
     $$SRC/src/resource/colorpalette.cpp \
-    $$SRC/src/resource/colorpalettes.cpp \
     $$SRC/src/resource/compositetexture.cpp \
     $$SRC/src/resource/hq2x.cpp \
     $$SRC/src/resource/image.cpp \

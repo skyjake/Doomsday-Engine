@@ -65,8 +65,6 @@
 #  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
 #endif
 
-#include "resource/colorpalettes.h" // translationTables, remove me
-
 #include "world/entitydef.h"
 #include "world/p_players.h"
 #ifdef __CLIENT__
@@ -2032,7 +2030,6 @@ static int DD_StartupWorker(void * /*context*/)
 #ifdef __CLIENT__
     UI_LoadFonts();
 #endif
-    R_InitTranslationTables();
     R_InitSvgs();
 #ifdef __CLIENT__
     R_InitViewWindow();
@@ -2130,8 +2127,6 @@ static int DD_UpdateEngineStateWorker(void *context)
 #ifdef __CLIENT__
     App_ResourceSystem().initModels(); // Defs might've changed.
 #endif
-
-    R_UpdateTranslationTables();
 
     Def_PostInit();
 
@@ -2391,9 +2386,6 @@ void *DD_GetVariable(int ddvalue)
     case DD_POLYOBJ_COUNT:
         value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
         return &value;
-
-    case DD_TRANSLATIONTABLES_ADDRESS:
-        return translationTables;
 
     case DD_MAP_NAME:
         if(App_World().hasMap())

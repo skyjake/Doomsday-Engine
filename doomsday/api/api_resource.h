@@ -83,6 +83,17 @@ DENG_API_TYPEDEF(R)
     colorpaletteid_t (*CreateColorPalette)(char const *fmt, char const *name, uint8_t const *colorData, int colorCount);
 
     /**
+     * Add a new translation map to the specified color palette.
+     *
+     * @param paletteId      Color palette identifier.
+     * @param translationId  Unique identifier to associate with the translation.
+     * @param mappings       Table of color palette index mappings. A copy is made.
+     *                       It is assumed that this table contains a mapping for
+     *                       each color index in the palette.
+     */
+    void (*CreateColorPaletteTranslation)(colorpaletteid_t paletteId, Str const *translationId, uint8_t const *mappings);
+
+    /**
      * Given a color palette name, look up the associated identifier.
      *
      * @param name Unique name of the palette to locate.
@@ -131,6 +142,7 @@ DENG_API_T(R);
 #define R_CreateAnimGroup               _api_R.CreateAnimGroup
 #define R_AddAnimGroupFrame             _api_R.AddAnimGroupFrame
 #define R_CreateColorPalette            _api_R.CreateColorPalette
+#define R_CreateColorPaletteTranslation _api_R.CreateColorPaletteTranslation
 #define R_GetColorPaletteNumForName		_api_R.GetColorPaletteNumForName
 #define R_GetColorPaletteNameForNum		_api_R.GetColorPaletteNameForNum
 #define R_GetColorPaletteRGBf           _api_R.GetColorPaletteRGBf

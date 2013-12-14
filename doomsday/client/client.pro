@@ -342,7 +342,6 @@ DENG_HEADERS += \
     include/resource/animgroup.h \
     include/resource/bitmapfont.h \
     include/resource/colorpalette.h \
-    include/resource/colorpalettes.h \
     include/resource/compositebitmapfont.h \
     include/resource/compositetexture.h \
     include/resource/fontmanifest.h \
@@ -710,7 +709,6 @@ SOURCES += \
     src/resource/api_resource.cpp \
     src/resource/bitmapfont.cpp \
     src/resource/colorpalette.cpp \
-    src/resource/colorpalettes.cpp \
     src/resource/compositebitmapfont.cpp \
     src/resource/compositetexture.cpp \
     src/resource/fontmanifest.cpp \

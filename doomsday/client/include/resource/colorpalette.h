@@ -24,6 +24,7 @@
 #include <de/Error>
 #include <de/Id>
 #include <de/Observers>
+#include <de/String>
 #include <de/Vector>
 #ifdef __CLIENT__
 #include <QColor>
@@ -64,8 +65,14 @@ public:
 class ColorPalette
 {
 public:
+    /// An invalid translation id was specified. @ingroup errors
+    DENG2_ERROR(InvalidTranslationIdError);
+
     /// Notified whenever the color table changes.
     DENG2_DEFINE_AUDIENCE(ColorTableChange, void colorPaletteColorTableChanged(ColorPalette &colorPalette))
+
+    /// Palette index translation mapping table.
+    typedef QVector<int> Translation;
 
 public:
     /**
@@ -126,6 +133,9 @@ public:
      * Replace the entire color table. The ColorTableChange audience is notified
      * whenever the color table changes.
      *
+     * If the new color table has a different number of colors then any existing
+     * translation maps will be cleared automatically.
+     *
      * @param colorTable  The replacement color table. A copy is made.
      */
     ColorPalette &replaceColorTable(QVector<de::Vector3ub> const &colorTable);
@@ -139,8 +149,34 @@ public:
      */
     int nearestIndex(de::Vector3ub const &rgb) const;
 
+    /**
+     * Clear all translation maps.
+     */
+    void clearTranslations();
+
+    /**
+     * Lookup a translation map by it's unique @a id.
+     *
+     * @return  Pointer to the identified translation; otherwise @c 0.
+     */
+    Translation const *translation(de::String id) const;
+
+    /**
+     * Add/replace the identified @a translation map.
+     *
+     * @param id        Unique identifier for the translation.
+     * @param mappings  Table of palette index mappings (a copy is made). It is
+     *                  assumed that this table contains a mapping for each color
+     *                  in the palette.
+     *
+     * @see colorCount()
+     */
+    void newTranslation(de::String id, Translation const &mappings);
+
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef ColorPalette::Translation ColorPaletteTranslation;
 
 #endif // DENG_RESOURCE_COLORPALETTE_H
