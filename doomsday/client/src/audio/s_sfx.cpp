@@ -40,6 +40,8 @@
 #  include "ui/ui_main.h"
 #endif
 
+#include <de/Log>
+
 #define SFX_MAX_CHANNELS        (256)
 #define SFX_LOWEST_PRIORITY     (-1000)
 
@@ -588,56 +590,60 @@ sfxchannel_t* Sfx_ChannelFindVacant(boolean use3D, int bytes, int rate,
     return NULL;
 }
 
-int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
-                   mobj_t* emitter, coord_t* fixedOrigin, int flags)
+int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitter,
+    coord_t *fixedOrigin, int flags)
 {
-    sfxchannel_t* ch, *selCh, *prioCh;
-    sfxinfo_t* info;
-    int i, count, nowTime;
-    float myPrio, lowPrio = 0, channelPrios[SFX_MAX_CHANNELS];
-    boolean haveChannelPrios = false;
-    boolean play3D = sfx3D && (emitter || fixedOrigin);
+    bool const play3D = sfx3D && (emitter || fixedOrigin);
 
-    if(!sfxAvail || sample->id < 1 || sample->id >= defs.count.sounds.num ||
-       volume <= 0 || !sample->size)
-        return false;
+    LOG_AS("Sfx_StartSound");
+
+    if(!sfxAvail) return false;
+
+    if(sample->id < 1 || sample->id >= defs.count.sounds.num) return false;
+    if(volume <= 0 || !sample->size) return false;
 
     if(emitter && sfxOneSoundPerEmitter)
     {
-        // Stop any other sounds from the same origin. Only one sound is
-        // allowed per emitter.
+        // Stop any other sounds from the same emitter.
         if(Sfx_StopSoundWithLowerPriority(0, emitter, defs.sounds[sample->id].priority) < 0)
         {
-            DEBUG_Message(("Sfx_StartSound: cannot start ID %i (prio%i), overriden (emitter %i)\n",
-                           sample->id, defs.sounds[sample->id].priority, emitter->thinker.id));
             // Something with a higher priority is playing, can't start now.
+            LOG_MSG("Cannot start ID %i (prio%i), overriden (emitter %i)")
+                << sample->id << defs.sounds[sample->id].priority << emitter->thinker.id;
+
             return false;
         }
     }
 
     // Calculate the new sound's priority.
-    nowTime = Timer_Ticks();
-    myPrio = Sfx_Priority(emitter, fixedOrigin, volume, nowTime);
+    int const nowTime = Timer_Ticks();
+    float const myPrio = Sfx_Priority(emitter, fixedOrigin, volume, nowTime);
+
+    bool haveChannelPrios = false;
+    float channelPrios[SFX_MAX_CHANNELS];
+    float lowPrio = 0;
 
     // Ensure there aren't already too many channels playing this sample.
-    info = sounds + sample->id;
+    sfxinfo_t *info = sounds + sample->id;
     if(info->channels > 0)
     {
         // The decision to stop channels is based on priorities.
         Sfx_GetChannelPriorities(channelPrios);
         haveChannelPrios = true;
 
-        count = Sfx_CountPlaying(sample->id);
+        int count = Sfx_CountPlaying(sample->id);
         while(count >= info->channels)
         {
-            /**
-             * Stop the lowest priority sound of the playing instances,
-             * again noting sounds that are more important than us.
-             */
-            for(selCh = NULL, i = 0, ch = channels; i < numChannels;
-                ++i, ch++)
+            // Stop the lowest priority sound of the playing instances, again
+            // noting sounds that are more important than us.
+            sfxchannel_t *ch = channels;
+            sfxchannel_t *selCh = 0;
+            for(int i = 0; i < numChannels; ++i, ch++)
             {
-                if(ch->buffer && (ch->buffer->flags & SFXBF_PLAYING) && ch->buffer->sample->id == sample->id)
+                if(!ch->buffer) continue;
+                if(ch->buffer->sample->id != sample->id) continue;
+
+                if(ch->buffer->flags & SFXBF_PLAYING)
                 {
                     if(myPrio >= channelPrios[i] && (!selCh || channelPrios[i] <= lowPrio))
                     {
@@ -649,13 +655,10 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
 
             if(!selCh)
             {
-                /**
-                 * The new sound can't be played because we were unable to
-                 * stop enough channels to accommodate the limitation.
-                 */
-#ifdef _DEBUG
-                Con_Message("Sfx_StartSound: Not playing %i because channels are busy.", sample->id);
-#endif
+                // The new sound can't be played because we were unable to stop
+                // enough channels to accommodate the limitation.
+                LOG_DEBUG("Not playing %i because channels are busy.")
+                        << sample->id;
                 return false;
             }
 
@@ -668,55 +671,57 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     // Hit count tells how many times the cached sound has been used.
     Sfx_CacheHit(sample->id);
 
-    /**
+    /*
      * Pick a channel for the sound. We will do our best to play the sound,
-     * cancelling existing ones if need be. The best choice would be a
-     * free channel already loaded with the sample, in the correct format
-     * and mode.
+     * cancelling existing ones if need be. The ideal choice is a free channel
+     * that is already loaded with the sample, in the correct format and mode.
      */
+    sfxchannel_t *selCh = 0;
 
     BEGIN_COP;
 
-    // First look through the stopped channels. At this stage we're very
-    // picky: only the perfect choice will be good enough.
+    // First look through the stopped channels. At this stage we're very picky:
+    // only the perfect choice will be good enough.
     selCh = Sfx_ChannelFindVacant(play3D, sample->bytesPer, sample->rate,
                                   sample->id);
 
-    // The second step is to look for a vacant channel with any sample,
-    // but preferably one with no sample already loaded.
     if(!selCh)
     {
-        selCh = Sfx_ChannelFindVacant(play3D, sample->bytesPer,
-                                      sample->rate, 0);
-    }
-
-    // Then try any non-playing channel in the correct format.
-    if(!selCh)
-    {
-        selCh = Sfx_ChannelFindVacant(play3D, sample->bytesPer,
-                                      sample->rate, -1);
+        // Perhaps there is a vacant channel (with any sample, but preferably one
+        // with no sample already loaded).
+        selCh = Sfx_ChannelFindVacant(play3D, sample->bytesPer, sample->rate, 0);
     }
 
     if(!selCh)
-    {   // A perfect channel could not be found.
+    {
+        // Try any non-playing channel in the correct format.
+        selCh = Sfx_ChannelFindVacant(play3D, sample->bytesPer, sample->rate, -1);
+    }
 
-        /**
-         * We must use a channel with the wrong format or decide which one
-         * of the playing ones gets stopped.
-         */
+    if(!selCh)
+    {
+        // A perfect channel could not be found.
+        // We must use a channel with the wrong format or decide which one of the
+        // playing ones gets stopped.
 
         if(!haveChannelPrios)
-            Sfx_GetChannelPriorities(channelPrios);
-
-        // All channels with a priority less than or equal to ours can be
-        // stopped.
-        for(prioCh = NULL, i = 0, ch = channels; i < numChannels; ++i, ch++)
         {
-            if(!ch->buffer || play3D != ((ch->buffer->flags & SFXBF_3D) != 0))
-                continue; // No buffer or in the wrong mode.
+            Sfx_GetChannelPriorities(channelPrios);
+        }
+
+        // All channels with a priority less than or equal to ours can be stopped.
+        sfxchannel_t *ch = channels;
+        sfxchannel_t *prioCh = 0;
+        for(int i = 0; i < numChannels; ++i, ch++)
+        {
+            // No buffer?
+            if(!ch->buffer) continue;
+            // Wrong mode?
+            if(play3D != ((ch->buffer->flags & SFXBF_3D) != 0)) continue;
 
             if(!(ch->buffer->flags & SFXBF_PLAYING))
-            {   // This channel is not playing, just take it!
+            {
+                // This channel is not playing, just take it!
                 selCh = ch;
                 break;
             }
@@ -740,11 +745,10 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     }
 
     if(!selCh)
-    {   // A suitable channel was not found.
+    {
+        // A suitable channel was not found.
         END_COP;
-#ifdef _DEBUG
-        Con_Message("Sfx_StartSound: Failed to find suitable channel for sample %i.", sample->id);
-#endif
+        LOG_DEBUG("Failed to find suitable channel for sample %i.") << sample->id;
         return false;
     }
 
@@ -808,12 +812,12 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
         // Init the buffer's min/max distances.
         // This is only done once, when the sound is started (i.e., here).
         AudioDriver_SFX()->Set(selCh->buffer, SFXBP_MIN_DISTANCE,
-                  (selCh->flags & SFXCF_NO_ATTENUATION)? 10000 :
-                  soundMinDist);
+                               (selCh->flags & SFXCF_NO_ATTENUATION)? 10000 :
+                               soundMinDist);
 
         AudioDriver_SFX()->Set(selCh->buffer, SFXBP_MAX_DISTANCE,
-                  (selCh->flags & SFXCF_NO_ATTENUATION)? 20000 :
-                  soundMaxDist);
+                               (selCh->flags & SFXCF_NO_ATTENUATION)? 20000 :
+                               soundMaxDist);
     }
 
     // This'll commit all the deferred properties.
@@ -855,10 +859,12 @@ void Sfx_Update(void)
     Sfx_ListenerUpdate();
 }
 
-void Sfx_StartFrame(void)
+void Sfx_StartFrame()
 {
-    static int          old16Bit = false;
-    static int          oldRate = 11025;
+    LOG_AS("Sfx_StartFrame");
+
+    static int old16Bit = false;
+    static int oldRate = 11025;
 
     if(!sfxAvail)
         return;
@@ -872,7 +878,7 @@ void Sfx_StartFrame(void)
     // Check that the rate is valid.
     if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
     {
-        Con_Message("Sfx_StartFrame: sound-rate corrected to 11025.");
+        LOG_DEBUG("Sound-rate corrected to 11025.");
         sfxSampleRate = 11025;
     }
 
@@ -911,22 +917,20 @@ void Sfx_EndFrame(void)
  */
 static void createChannels(int num2D, int bits, int rate)
 {
-    int                 i;
-    sfxchannel_t*       ch;
-    float               parm[2];
+    LOG_AS("Sfx_CreateChannels");
 
     // Change the primary buffer's format to match the channel format.
-    parm[0] = bits;
-    parm[1] = rate;
+    float parm[2] = { bits, rate };
     AudioDriver_SFX()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
     // Try to create a buffer for each channel.
-    for(i = 0, ch = channels; i < numChannels; ++i, ch++)
+    sfxchannel_t *ch = channels;
+    for(int i = 0; i < numChannels; ++i, ch++)
     {
         ch->buffer = AudioDriver_SFX()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
         if(!ch->buffer)
         {
-            Con_Message("Sfx_CreateChannels: Failed to create buffer for #%i.", i);
+            LOG_WARNING("Failed to create buffer for #%i.") << i;
             continue;
         }
     }
@@ -935,23 +939,21 @@ static void createChannels(int num2D, int bits, int rate)
 /**
  * Stop all channels and destroy their buffers.
  */
-void Sfx_DestroyChannels(void)
+void Sfx_DestroyChannels()
 {
-    int                 i;
-
     BEGIN_COP;
-    for(i = 0; i < numChannels; ++i)
+    for(int i = 0; i < numChannels; ++i)
     {
         Sfx_ChannelStop(channels + i);
 
         if(channels[i].buffer)
             AudioDriver_SFX()->Destroy(channels[i].buffer);
-        channels[i].buffer = NULL;
+        channels[i].buffer = 0;
     }
     END_COP;
 }
 
-void Sfx_InitChannels(void)
+void Sfx_InitChannels()
 {
     numChannels = sfxMaxChannels;
 
@@ -964,7 +966,7 @@ void Sfx_InitChannels(void)
         if(numChannels > SFX_MAX_CHANNELS)
             numChannels = SFX_MAX_CHANNELS;
 
-        Con_Message("Sfx_InitChannels: %i channels.", numChannels);
+        LOG_MSG("Initialized %i sound effect channels.") << numChannels;
     }
 
     // Allocate and init the channels.
@@ -991,8 +993,10 @@ void Sfx_ShutdownChannels(void)
  * Start the channel refresh thread. It will stop on its own when it
  * notices that the rest of the sound system is going down.
  */
-void Sfx_StartRefresh(void)
+void Sfx_StartRefresh()
 {
+    LOG_AS("Sfx_StartRefresh");
+
     int disableRefresh = false;
 
     refreshing = false;
@@ -1011,28 +1015,28 @@ void Sfx_StartRefresh(void)
     else
     {
 noRefresh:
-        VERBOSE( Con_Message("Sfx_StartRefresh: Driver does not require a refresh thread.") );
+#ifdef DENG_DEBUG
+        LOG_INFO("Audio driver does not require a refresh thread.");
+#endif
     }
 }
 
-boolean Sfx_Init(void)
+boolean Sfx_Init()
 {
-    if(sfxAvail)
-        return true; // Already initialized.
+    // Already initialized?
+    if(sfxAvail) return true;
 
     // Check if sound has been disabled with a command line option.
     if(CommandLine_Exists("-nosfx"))
     {
-        Con_Message("Sound Effects disabled.");
+        LOG_INFO("Sound Effects disabled.");
         return true;
     }
 
-    VERBOSE( Con_Message("Initializing Sound Effects subsystem...") )
+    LOG_VERBOSE("Initializing Sound Effects subsystem...");
 
-    if(!AudioDriver_SFX())
-    {   // No interface for SFX playback.
-        return false;
-    }
+    // No interface for SFX playback?
+    if(!AudioDriver_SFX()) return false;
 
     // This is based on the scientific calculations that if the DOOM marine
     // is 56 units tall, 60 is about two meters.
