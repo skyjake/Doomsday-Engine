@@ -47,6 +47,7 @@ DENG2_OBSERVES(ui::Margins, Change)
     Background background;
     Animation opacity;
     Animation opacityWhenDisabled;
+    bool firstUpdateAfterCreation;
     QList<IEventHandler *> eventHandlers;
 
     // Style.
@@ -73,6 +74,7 @@ DENG2_OBSERVES(ui::Margins, Change)
         , styleChanged(false)
         , opacity(1.f, Animation::Linear)
         , opacityWhenDisabled(1.f, Animation::Linear)
+        , firstUpdateAfterCreation(true)
         , fontId("default")
         , textColorId("text")
         , blurInited(false)
@@ -271,6 +273,10 @@ DENG2_OBSERVES(ui::Margins, Change)
         if(opacityWhenDisabled.target() != opac)
         {
             opacityWhenDisabled.setValue(opac, .3f);
+        }
+        if(firstUpdateAfterCreation)
+        {
+            opacityWhenDisabled.finish();
         }
     }
 };
@@ -505,6 +511,8 @@ void GuiWidget::update()
         updateStyle();
     }
     d->updateOpacityForDisabledWidgets();
+
+    d->firstUpdateAfterCreation = false;
 }
 
 void GuiWidget::draw()
