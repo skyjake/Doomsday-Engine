@@ -641,15 +641,15 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
             for(int i = 0; i < numChannels; ++i, ch++)
             {
                 if(!ch->buffer) continue;
+                if(!(ch->buffer->flags & SFXBF_PLAYING)) continue;
+
+                DENG2_ASSERT(ch->buffer->sample != 0);
                 if(ch->buffer->sample->id != sample->id) continue;
 
-                if(ch->buffer->flags & SFXBF_PLAYING)
+                if(myPrio >= channelPrios[i] && (!selCh || channelPrios[i] <= lowPrio))
                 {
-                    if(myPrio >= channelPrios[i] && (!selCh || channelPrios[i] <= lowPrio))
-                    {
-                        selCh = ch;
-                        lowPrio = channelPrios[i];
-                    }
+                    selCh = ch;
+                    lowPrio = channelPrios[i];
                 }
             }
 
