@@ -139,10 +139,14 @@ static TextureVariantSpec const &glyphTextureSpec()
 
 void CompositeBitmapFont::glInit()
 {
+    LOG_AS("CompositeBitmapFont");
+
     if(!d->needGLInit) return;
     if(novideo || isDedicated || BusyMode_Active()) return;
 
     glDeinit();
+
+    ResourceSystem &resSys = App_ResourceSystem();
 
     int foundGlyphs = 0;
     Vector2ui avgSize;
@@ -154,23 +158,33 @@ void CompositeBitmapFont::glInit()
         ch->haveSourceImage = patch != 0;
         if(!ch->haveSourceImage) continue;
 
-        patchinfo_t info;
-        R_GetPatchInfo(patch, &info);
-        ch->tex    = App_ResourceSystem().textureScheme("Patches")
-                         .findByUniqueId(patch)
-                            .texture().prepareVariant(glyphTextureSpec());
-        ch->border = 0;
-        if(ch->tex && ch->tex->source() == res::Original)
+        try
         {
-            // Upscale & Sharpen will have been applied.
-            ch->border = 1;
+            Texture &tex = resSys.textureScheme("Patches").findByUniqueId(patch).texture();
+
+            ch->tex      = tex.prepareVariant(glyphTextureSpec());
+            ch->geometry = Rectanglei::fromSize(tex.origin(), tex.dimensions().toVector2ui());
+
+            ch->border   = 0;
+            if(ch->tex && ch->tex->source() == res::Original)
+            {
+                // Upscale & Sharpen will have been applied.
+                ch->border = 1;
+            }
+
+            avgSize += ch->geometry.size();
+            ++foundGlyphs;
         }
-
-        ch->geometry = Rectanglei::fromSize(Vector2i(info.geometry.origin.xy),
-                                            Vector2ui(info.geometry.size.width, info.geometry.size.height));
-
-        avgSize += ch->geometry.size();
-        ++foundGlyphs;
+        catch(TextureManifest::MissingTextureError const &er)
+        {
+            // Log but otherwise ignore this error.
+            LOG_WARNING(er.asText() + ", ignoring.");
+        }
+        catch(TextureScheme::NotFoundError const &er)
+        {
+            // Log but otherwise ignore this error.
+            LOG_WARNING(er.asText() + ", ignoring.");
+        }
     }
 
     d->missingGlyph.geometry.setSize(avgSize / (foundGlyphs? foundGlyphs : 1));
