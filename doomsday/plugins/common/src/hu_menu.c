@@ -5268,7 +5268,7 @@ void Hu_MenuCommand(menucommand_e cmd)
     {
         if(menuActive)
         {
-            BusyMode_FreezeGameForBusyMode();
+            //BusyMode_FreezeGameForBusyMode();
 
             menuNominatingQuickSaveSlot = false;
 

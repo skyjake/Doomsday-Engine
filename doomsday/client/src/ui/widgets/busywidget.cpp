@@ -162,7 +162,7 @@ bool BusyWidget::handleEvent(Event const &)
     return true;
 }
 
-static TimeDelta const TRANSITION_FRAME_VALID_DURATION = 0.1; // seconds
+static TimeDelta const TRANSITION_FRAME_VALID_DURATION = 0.5; // seconds
 
 void BusyWidget::renderTransitionFrame()
 {
