@@ -287,6 +287,7 @@ public:
         foreach(de::MaterialScheme *scheme, allMaterialSchemes()) {
             scheme->clear();
         }
+        DENG2_ASSERT(allMaterials().isEmpty()); // sanity check
     }
 
     /**

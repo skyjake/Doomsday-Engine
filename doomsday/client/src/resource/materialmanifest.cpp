@@ -27,25 +27,28 @@ using namespace de;
 DENG2_PIMPL(MaterialManifest),
 DENG2_OBSERVES(Material, Deletion)
 {
-    Flags flags;           ///< Classification flags.
-    materialid_t id;
-    Material *material;    ///< Associated resource.
+    Flags flags;                       ///< Classification flags.
+    materialid_t id;                   ///< Globally unique identifier.
+    QScopedPointer<Material> material; ///< Associated resource (if any).
 
     Instance(Public *i)
         : Base(i)
         , id(0)
-        , material(0)
     {}
 
     ~Instance()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->materialManifestBeingDeleted(self);
+        if(!material.isNull())
+        {
+            material->audienceForDeletion -= this;
+        }
     }
 
     // Observes Material Deletion.
     void materialBeingDeleted(Material const & /*material*/)
     {
-        material = 0;
+        material.reset();
     }
 };
 
@@ -127,12 +130,12 @@ void MaterialManifest::setFlags(MaterialManifest::Flags flagsToChange, FlagOp op
 
 bool MaterialManifest::hasMaterial() const
 {
-    return d->material != 0;
+    return !d->material.isNull();
 }
 
 Material &MaterialManifest::material() const
 {
-    if(d->material)
+    if(hasMaterial())
     {
         return *d->material;
     }
@@ -142,20 +145,20 @@ Material &MaterialManifest::material() const
 
 void MaterialManifest::setMaterial(Material *newMaterial)
 {
-    if(d->material != newMaterial)
+    if(d->material.data() != newMaterial)
     {
-        if(d->material)
+        if(Material *curMaterial = d->material.data())
         {
             // Cancel notifications about the existing material.
-            d->material->audienceForDeletion -= d;
+            curMaterial->audienceForDeletion -= d;
         }
 
-        d->material = newMaterial;
+        d->material.reset(newMaterial);
 
-        if(d->material)
+        if(Material *curMaterial = d->material.data())
         {
             // We want notification when the new material is about to be deleted.
-            d->material->audienceForDeletion += d;
+            curMaterial->audienceForDeletion += d;
         }
     }
 }
