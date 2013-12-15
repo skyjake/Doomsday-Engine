@@ -1014,7 +1014,7 @@ void Sfx_StartRefresh()
     }
     else
     {
-noRefresh:
+noRefresh:;
 #ifdef DENG_DEBUG
         LOG_INFO("Audio driver does not require a refresh thread.");
 #endif
