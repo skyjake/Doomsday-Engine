@@ -40,6 +40,7 @@ DENG_GUI_PIMPL(BusyWidget)
     typedef DefaultVertexBuf VertexBuf;
 
     ProgressWidget *progress;
+    Time frameDrawnAt;
     GLFramebuffer transitionFrame;
     Drawable drawable;
     GLUniform uTex;
@@ -161,15 +162,21 @@ bool BusyWidget::handleEvent(Event const &)
     return true;
 }
 
+static TimeDelta const TRANSITION_FRAME_VALID_DURATION = 0.1; // seconds
+
 void BusyWidget::renderTransitionFrame()
 {
     LOG_AS("BusyWidget");
 
-    if(d->haveTransitionFrame())
+    if(d->haveTransitionFrame() && d->frameDrawnAt.since() < TRANSITION_FRAME_VALID_DURATION)
     {
         // We already have a valid frame, no need to render again.
+        LOG_DEBUG("Skipping rendering of transition frame (got one already)");
         return;
     }
+
+    // We'll have an up-to-date frame after this.
+    d->frameDrawnAt = Time();
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -193,7 +200,10 @@ void BusyWidget::renderTransitionFrame()
     GLuint grabbed = root().window().grabAsTexture(grabRect, ClientWindow::GrabHalfSized);*/
 
     d->transitionFrame.resize(grabRect.size());
-    d->transitionFrame.glInit();
+    if(!d->transitionFrame.isReady())
+    {
+        d->transitionFrame.glInit();
+    }
 
     GLState::push()
             .setTarget(d->transitionFrame.target())
