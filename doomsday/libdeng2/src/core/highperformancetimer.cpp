@@ -18,13 +18,15 @@
 
 #include "de/HighPerformanceTimer"
 
+#include <de/Guard>
+#include <de/Lockable>
 #include <QTime>
 
 namespace de {
 
 static duint32 const WARP_INTERVAL = 12 * 60 * 60 * 1000;
 
-DENG2_PIMPL_NOREF(HighPerformanceTimer)
+DENG2_PIMPL_NOREF(HighPerformanceTimer), public Lockable
 {
     QTime startedAt;
     duint64 timerOffset; /// Range extension. QTime only provides a 24h range.
@@ -36,6 +38,8 @@ DENG2_PIMPL_NOREF(HighPerformanceTimer)
 
     duint64 milliSeconds()
     {
+        DENG2_GUARD(this);
+
         int const elapsed = startedAt.elapsed();
         duint64 now = duint64(elapsed) + timerOffset;
 
