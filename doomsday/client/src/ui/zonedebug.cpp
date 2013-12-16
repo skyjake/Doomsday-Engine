@@ -38,7 +38,7 @@
 
 using namespace de;
 
-static void drawRegion(memvolume_t &volume, Rectanglei &rect, size_t start,
+static void drawRegion(memvolume_t &volume, Rectanglei const &rect, size_t start,
     size_t size, float const color[4])
 {
     DENG2_ASSERT(start + size <= volume.size);
@@ -67,7 +67,7 @@ static void drawRegion(memvolume_t &volume, Rectanglei &rect, size_t start,
     }
 }
 
-void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectanglei &rect)
+void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectanglei const &rect)
 {
     float const opacity = .85f;
     float const colAppStatic[4]   = { 1, 1, 1, .65f };
