@@ -96,34 +96,31 @@ DENG2_PIMPL(GLFramebuffer)
 
     void alloc()
     {
-        if(!GLInfo::extensions().EXT_framebuffer_blit)
-        {
-            // Prepare the fallback blit method.
-            VBuf *buf = new VBuf;
-            bufSwap.addBuffer(buf);
-            bufSwap.program().build(// Vertex shader:
-                                    Block("uniform highp mat4 uMvpMatrix; "
-                                          "attribute highp vec4 aVertex; "
-                                          "attribute highp vec2 aUV; "
-                                          "varying highp vec2 vUV; "
-                                          "void main(void) {"
-                                              "gl_Position = uMvpMatrix * aVertex; "
-                                              "vUV = aUV; }"),
-                                    // Fragment shader:
-                                    Block("uniform sampler2D uTex; "
-                                          "varying highp vec2 vUV; "
-                                          "void main(void) { "
-                                              "gl_FragColor = texture2D(uTex, vUV); }"))
-                    << uMvpMatrix
-                    << uBufTex;
+        // Prepare the fallback blit method.
+        VBuf *buf = new VBuf;
+        bufSwap.addBuffer(buf);
+        bufSwap.program().build(// Vertex shader:
+                                Block("uniform highp mat4 uMvpMatrix; "
+                                      "attribute highp vec4 aVertex; "
+                                      "attribute highp vec2 aUV; "
+                                      "varying highp vec2 vUV; "
+                                      "void main(void) {"
+                                          "gl_Position = uMvpMatrix * aVertex; "
+                                          "vUV = aUV; }"),
+                                // Fragment shader:
+                                Block("uniform sampler2D uTex; "
+                                      "varying highp vec2 vUV; "
+                                      "void main(void) { "
+                                          "gl_FragColor = texture2D(uTex, vUV); }"))
+                << uMvpMatrix
+                << uBufTex;
 
-            buf->setVertices(gl::TriangleStrip,
-                             VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
-                             gl::Static);
+        buf->setVertices(gl::TriangleStrip,
+                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
+                         gl::Static);
 
-            uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-            uBufTex = color;
-        }
+        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+        uBufTex = color;
     }
 
     void release()
@@ -175,7 +172,16 @@ DENG2_PIMPL(GLFramebuffer)
         }
     }
 
-    void swapBuffers(Canvas &canvas)
+    void drawSwap()
+    {
+        if(isMultisampled())
+        {
+            target.updateFromProxy();
+        }
+        bufSwap.draw();
+    }
+
+    void swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
     {
         GLTarget defaultTarget;
 
@@ -184,24 +190,44 @@ DENG2_PIMPL(GLFramebuffer)
                 .setViewport(Rectangleui::fromSize(size))
                 .apply();
 
-        if(GLInfo::extensions().EXT_framebuffer_blit)
+        switch(swapMode)
         {
-            if(isMultisampled())
+        case gl::SwapMonoBuffer:
+            if(GLInfo::extensions().EXT_framebuffer_blit)
             {
-                multisampleTarget.blit(defaultTarget); // resolve multisampling to system backbuffer
+                if(isMultisampled())
+                {
+                    multisampleTarget.blit(defaultTarget); // resolve multisampling to system backbuffer
+                }
+                else
+                {
+                    target.blit(defaultTarget);  // copy to system backbuffer
+                }
             }
             else
             {
-                target.blit(defaultTarget);  // copy to system backbuffer
+                // Fallback: draw the back buffer texture to the main framebuffer.
+                bufSwap.draw();
             }
-        }
-        else
-        {
-            // Fallback: draw the back buffer texture to the main framebuffer.
-            bufSwap.draw();
-        }
+            canvas.QGLWidget::swapBuffers();
+            break;
 
-        canvas.QGLWidget::swapBuffers();
+        case gl::SwapStereoLeftBuffer:
+            glDrawBuffer(GL_BACK_LEFT);
+            drawSwap();
+            glDrawBuffer(GL_BACK);
+            break;
+
+        case gl::SwapStereoRightBuffer:
+            glDrawBuffer(GL_BACK_RIGHT);
+            drawSwap();
+            glDrawBuffer(GL_BACK);
+            break;
+
+        case gl::SwapStereoBuffers:
+            canvas.QGLWidget::swapBuffers();
+            break;
+        }
 
         GLState::pop().apply();
     }
@@ -281,9 +307,9 @@ GLTexture &GLFramebuffer::depthStencilTexture() const
     return d->depthStencil;
 }
 
-void GLFramebuffer::swapBuffers(Canvas &canvas)
+void GLFramebuffer::swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
 {
-    d->swapBuffers(canvas);
+    d->swapBuffers(canvas, swapMode);
 }
 
 bool GLFramebuffer::setDefaultMultisampling(int sampleCount)

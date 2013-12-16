@@ -28,6 +28,15 @@
 
 namespace de {
 
+namespace gl {
+    enum SwapBufferMode {
+        SwapMonoBuffer,
+        SwapStereoLeftBuffer,
+        SwapStereoRightBuffer,
+        SwapStereoBuffers
+    };
+}
+
 class Canvas;
 
 /**
@@ -70,7 +79,16 @@ public:
     GLTexture &colorTexture() const;
     GLTexture &depthStencilTexture() const;
 
-    void swapBuffers(Canvas &canvas);
+    /**
+     * Swaps buffers.
+     *
+     * @param canvas    Canvas where to swap.
+     * @param swapMode  Stereo swapping mode:
+     *      - gl::SwapMonoBuffer: swap is done normally into the Canvas's framebuffer
+     *      - gl::SwapStereoLeftBuffer: swap updates the back/left stereo buffer
+     *      - gl::SwapStereoRightBuffer: swap updates the back/right stereo buffer
+     */
+    void swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode = gl::SwapMonoBuffer);
 
 public:
     /**

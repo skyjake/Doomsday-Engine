@@ -246,10 +246,10 @@ bool CanvasWindow::grabToFile(NativePath const &path) const
     return d->canvas->grabImage().save(path.toString());
 }
 
-void CanvasWindow::swapBuffers() const
+void CanvasWindow::swapBuffers(gl::SwapBufferMode swapMode) const
 {
     // Force a swapbuffers right now.
-    d->canvas->swapBuffers();
+    d->canvas->swapBuffers(swapMode);
 }
 
 void CanvasWindow::glActivate()

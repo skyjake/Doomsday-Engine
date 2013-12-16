@@ -200,10 +200,16 @@ DENG2_PIMPL(Canvas)
         framebuf.glDeinit();
     }
 
-    void swapBuffers()
+    void swapBuffers(gl::SwapBufferMode mode)
     {
+        if(mode == gl::SwapStereoBuffers && !self.format().stereo())
+        {
+            // The canvas is not using a stereo format, must do a normal swap.
+            mode = gl::SwapMonoBuffer;
+        }
+
         /// @todo Double buffering is not really needed in manual FB mode.
-        framebuf.swapBuffers(self);
+        framebuf.swapBuffers(self, mode);
     }
 };
 
@@ -306,9 +312,14 @@ GLTarget &Canvas::renderTarget() const
     return d->framebuf.target();
 }
 
-void Canvas::swapBuffers()
+GLFramebuffer &Canvas::framebuffer()
 {
-    d->swapBuffers();
+    return d->framebuf;
+}
+
+void Canvas::swapBuffers(gl::SwapBufferMode swapMode)
+{
+    d->swapBuffers(swapMode);
 }
 
 void Canvas::initializeGL()

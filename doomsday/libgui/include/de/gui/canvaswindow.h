@@ -27,6 +27,8 @@
 #include <de/Rectangle>
 #include <de/NativePath>
 
+#include "../GLFramebuffer"
+
 #ifdef WIN32
 #  undef min
 #  undef max
@@ -147,7 +149,7 @@ public:
      */
     bool grabToFile(NativePath const &path) const;
 
-    void swapBuffers() const;
+    void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer) const;
 
     /**
      * Activates the window's GL context so that OpenGL API calls can be made.

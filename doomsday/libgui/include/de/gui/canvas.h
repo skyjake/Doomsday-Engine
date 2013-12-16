@@ -28,6 +28,7 @@
 #include "../KeyEventSource"
 #include "../MouseEventSource"
 #include "../GLTarget"
+#include "../GLFramebuffer"
 
 namespace de {
 
@@ -160,10 +161,12 @@ public:
      */
     GLTarget &renderTarget() const;
 
+    GLFramebuffer &framebuffer();
+
     /**
      * Copies or swaps the back buffer to the front, making it visible.
      */
-    void swapBuffers();
+    void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer);
 
 protected:
     void initializeGL();
