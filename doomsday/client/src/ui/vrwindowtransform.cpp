@@ -375,40 +375,24 @@ void VRWindowTransform::drawTransformed()
         break;
 
     case VR::MODE_QUAD_BUFFERED:
-    {
-        /// @todo - attempt to enable a stereo GL context at start up.
-        GLboolean isStereoContext, isDoubleBuffered;
-        glGetBooleanv(GL_STEREO, &isStereoContext);
-        glGetBooleanv(GL_DOUBLEBUFFER, &isDoubleBuffered);
-        if (isStereoContext)
+        if(d->canvas().format().stereo())
         {
             // Left eye view
             VR::eyeShift = VR::getEyeShift(-1);
-            if (isDoubleBuffered)
-                glDrawBuffer(GL_BACK_LEFT);
-            else
-                glDrawBuffer(GL_FRONT_LEFT);
             d->drawContent();
+            d->canvas().framebuffer().swapBuffers(d->canvas(), gl::SwapStereoLeftBuffer);
+
             // Right eye view
             VR::eyeShift = VR::getEyeShift(+1);
-            if (isDoubleBuffered)
-                glDrawBuffer(GL_BACK_RIGHT);
-            else
-                glDrawBuffer(GL_FRONT_RIGHT);
             d->drawContent();
-            if (isDoubleBuffered)
-                glDrawBuffer(GL_BACK);
-            else
-                glDrawBuffer(GL_FRONT);
-            break;
+            d->canvas().framebuffer().swapBuffers(d->canvas(), gl::SwapStereoRightBuffer);
         }
         else
         {
-            // Non-stereoscopic frame.
+            // Normal non-stereoscopic frame.
             d->drawContent();
-            break;
         }
-    }
+        break;
 
     case VR::MODE_ROW_INTERLEAVED:
     {

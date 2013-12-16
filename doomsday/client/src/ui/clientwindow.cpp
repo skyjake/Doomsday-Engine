@@ -643,6 +643,11 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
+    if(VR::modeNeedsStereoGLFormat(VR::mode()) && !canvas.format().stereo())
+    {
+        LOG_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
+    }
+
     // Now that the Canvas is ready for drawing we can enable the GameWidget.
     d->game->enable();
     d->gameUI->enable();
