@@ -296,14 +296,6 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     connect(d->scriptCmd, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
 }
 
-void ConsoleWidget::commandLineFocusGained()
-{
-    setFullyOpaque();
-    openLog();
-
-    emit commandLineGotFocus();
-}
-
 ButtonWidget &ConsoleWidget::button()
 {
     return *d->button;
@@ -466,6 +458,14 @@ void ConsoleWidget::setFullyOpaque()
     d->button->setOpacity(1, .25f);
     d->cmdLine->setOpacity(1, .25f);
     d->scriptCmd->setOpacity(1, .25f);
+}
+
+void ConsoleWidget::commandLineFocusGained()
+{
+    setFullyOpaque();
+    openLog();
+
+    emit commandLineGotFocus();
 }
 
 void ConsoleWidget::commandLineFocusLost()
