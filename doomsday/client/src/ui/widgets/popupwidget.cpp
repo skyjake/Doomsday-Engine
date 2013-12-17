@@ -17,6 +17,7 @@
  */
 
 #include "ui/widgets/popupwidget.h"
+#include "ui/widgets/buttonwidget.h"
 #include "GuiRootWidget"
 #include "ui/style.h"
 #include "ui/clientwindow.h"
@@ -37,19 +38,21 @@ DENG_GUI_PIMPL(PopupWidget)
     bool useInfoStyle;
     bool deleteAfterDismiss;
     bool clickToClose;
+    bool outsideClickOngoing;
     Widget *realParent;
     Rule const *anchorX;
     Rule const *anchorY;
     Rule const *marker;
 
     Instance(Public *i)
-        : Base(i),
-          useInfoStyle(false),
-          deleteAfterDismiss(false),
-          clickToClose(true),
-          realParent(0),
-          anchorX(0),
-          anchorY(0)
+        : Base(i)
+        , useInfoStyle(false)
+        , deleteAfterDismiss(false)
+        , clickToClose(true)
+        , outsideClickOngoing(false)
+        , realParent(0)
+        , anchorX(0)
+        , anchorY(0)
     {
         // Style.
         marker = &style().rules().rule("gap");
@@ -250,12 +253,47 @@ bool PopupWidget::handleEvent(Event const &event)
         MouseEvent const &mouse = event.as<MouseEvent>();
         bool const inside = hitTest(event);
 
+        // Clicking outside the popup will close it.
         if(d->clickToClose)
         {
-            // Clicking outside the popup will close it.
-            if(!inside && mouse.state() == MouseEvent::Pressed)
+            switch(mouse.state())
             {
-                close(0); // immediately
+            case MouseEvent::Pressed:
+                if(!inside)
+                {
+                    d->outsideClickOngoing = true;
+                }
+                break;
+
+            case MouseEvent::Released:
+                if(!inside && d->outsideClickOngoing)
+                {
+                    /* This needs to satisfy the following conditions:
+                     *
+                     * - Since a mouse click comprises a Press followed by a Release, we shouldn't
+                     *   let the potential clicked widget that lies outside the popup know of the
+                     *   click before it has successfully completed.
+                     *
+                     * - Buttons perform their action when clicked, so the clicked widget must
+                     *   be notified before the popup is closed. This way buttons that open
+                     *   popup menus can either be used to toggle the menu open/closed, but also
+                     *   immediately open their menu if it currently is closed.
+                     */
+                    if(GuiWidget const *hit = root().globalHitTest(mouse.pos()))
+                    {
+                        if(hit->isEnabled() && hit->isVisible())
+                        {
+                            // Replay the click on this widget.
+                            const_cast<GuiWidget *>(hit)->handleEvent(
+                                    MouseEvent(mouse.button(), MouseEvent::Pressed, mouse.pos()));
+                            const_cast<GuiWidget *>(hit)->handleEvent(mouse);
+                        }
+                    }
+
+                    close(0); // immediately
+                }
+                d->outsideClickOngoing = false;
+                break;
             }
         }
         return true;
