@@ -65,6 +65,7 @@ public:
 
 signals:
     void commandModeChanged();
+    void commandLineGotFocus();
 
 public slots:
     void openLog();
@@ -72,6 +73,7 @@ public slots:
     void clearLog();
     void showFullLog();
     void setFullyOpaque();
+    void commandLineFocusGained();
     void commandLineFocusLost();
     void focusOnCommandLine();
     void openMenu();

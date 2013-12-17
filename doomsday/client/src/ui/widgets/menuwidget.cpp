@@ -22,38 +22,34 @@
 #include "ChildWidgetOrganizer"
 #include "ui/ListData"
 #include "ui/ActionItem"
+#include "ui/SubwidgetItem"
 #include "GridLayout"
 
 using namespace de;
 using namespace ui;
 
-DENG2_PIMPL(MenuWidget),
-DENG2_OBSERVES(Data, Addition),    // for layout update
-DENG2_OBSERVES(Data, Removal),     // for layout update
-DENG2_OBSERVES(Data, OrderChange), // for layout update
-DENG2_OBSERVES(PopupWidget, Close),
-public ChildWidgetOrganizer::IWidgetFactory
+DENG2_PIMPL(MenuWidget)
+, DENG2_OBSERVES(Data, Addition)    // for layout update
+, DENG2_OBSERVES(Data, Removal)     // for layout update
+, DENG2_OBSERVES(Data, OrderChange) // for layout update
+, DENG2_OBSERVES(PopupWidget, Close)
+, DENG2_OBSERVES(Widget, Deletion)
+, public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
-     * Action owned by the button that represents a SubmenuItem.
+     * Base class for sub-widget actions. Handles ownership/openness tracking.
      */
-    class SubmenuAction : public de::Action, DENG2_OBSERVES(Widget, Deletion)
+    class SubAction : public de::Action, DENG2_OBSERVES(Widget, Deletion)
     {
     public:
-        SubmenuAction(Instance *inst, ui::SubmenuItem const &parentItem)
-            : d(inst), _submenu(parentItem)
-        {
-            _widget = new PopupMenuWidget;
-            _widget->audienceForDeletion += this;
+        SubAction(Instance *inst, ui::Item const &parentItem)
+            : d(inst)
+            , _parentItem(parentItem)
+            , _dir(ui::Right)
+            , _widget(0)
+        {}
 
-            // Use the items from the submenu.
-            _widget->menu().setItems(parentItem.items());
-
-            // Popups need a parent; hidden items are ignored by the menu.
-            d->self.add(_widget);
-        }
-
-        ~SubmenuAction()
+        ~SubAction()
         {
             if(_widget)
             {
@@ -61,9 +57,25 @@ public ChildWidgetOrganizer::IWidgetFactory
             }
         }
 
+        void setWidget(PopupWidget *w, ui::Direction openingDirection)
+        {
+            _widget = w;
+
+            // Popups need a parent.
+            d->self.add(_widget);
+
+            _widget->audienceForDeletion += this;
+            _dir = openingDirection;
+        }
+
         void widgetBeingDeleted(Widget &)
         {
             _widget = 0;
+        }
+
+        bool isTriggered() const
+        {
+            return _widget != 0;
         }
 
         void trigger()
@@ -72,14 +84,12 @@ public ChildWidgetOrganizer::IWidgetFactory
 
             DENG2_ASSERT(_widget != 0);
 
-            GuiWidget *parent = d->organizer.itemWidget(_submenu);
+            GuiWidget *parent = d->organizer.itemWidget(_parentItem);
             DENG2_ASSERT(parent != 0);
 
-            _widget->setAnchorAndOpeningDirection(parent->hitRule(), _submenu.openingDirection());
+            _widget->setAnchorAndOpeningDirection(parent->hitRule(), _dir);
 
-            d->openPopups.insert(_widget);
-            _widget->audienceForClose += d;
-
+            d->keepTrackOfSubWidget(_widget);
             _widget->open();
         }
 
@@ -89,10 +99,54 @@ public ChildWidgetOrganizer::IWidgetFactory
             return 0;
         }
 
-    private:
+    protected:
         Instance *d;
-        ui::SubmenuItem const &_submenu;
-        PopupMenuWidget *_widget;
+        ui::Item const &_parentItem;
+        ui::Direction _dir;
+        PopupWidget *_widget;
+    };
+
+    /**
+     * Action owned by the button that represents a SubmenuItem.
+     */
+    class SubmenuAction : public SubAction
+    {
+    public:
+        SubmenuAction(Instance *inst, ui::SubmenuItem const &parentItem)
+            : SubAction(inst, parentItem)
+        {
+            PopupMenuWidget *sub = new PopupMenuWidget;
+            setWidget(sub, parentItem.openingDirection());
+
+            // Use the items from the submenu.
+            sub->menu().setItems(parentItem.items());
+        }
+    };
+
+    /**
+     * Action owned by the button that represents a SubwidgetItem.
+     */
+    class SubwidgetAction : public SubAction
+    {
+    public:
+        SubwidgetAction(Instance *inst, ui::SubwidgetItem const &parentItem)
+            : SubAction(inst, parentItem)
+            , _item(parentItem)
+        {}
+
+        void trigger()
+        {
+            if(isTriggered()) return; // Already open, cannot retrigger.
+
+            // The widget is created only at this point.
+            setWidget(_item.makeWidget(), _item.openingDirection());
+            _widget->setDeleteAfterDismissed(true);
+
+            SubAction::trigger();
+        }
+
+    private:
+        ui::SubwidgetItem const &_item;
     };
 
     bool needLayout;
@@ -100,7 +154,7 @@ public ChildWidgetOrganizer::IWidgetFactory
     ListData defaultItems;
     Data const *items;
     ChildWidgetOrganizer organizer;
-    QSet<PopupWidget *> openPopups;
+    QSet<PopupWidget *> openSubs;
 
     SizePolicy colPolicy;
     SizePolicy rowPolicy;
@@ -173,6 +227,10 @@ public ChildWidgetOrganizer::IWidgetFactory
             {
                 b->setAction(new SubmenuAction(this, item.as<SubmenuItem>()));
             }
+            else if(item.is<SubwidgetItem>())
+            {
+                b->setAction(new SubwidgetAction(this, item.as<SubwidgetItem>()));
+            }
             return b;
         }
         else if(item.semantics().testFlag(Item::Separator))
@@ -228,12 +286,30 @@ public ChildWidgetOrganizer::IWidgetFactory
             // Other kinds of items are represented as labels or
             // label-derived widgets.
             widget.as<LabelWidget>().setText(item.label());
+
+            if(SubwidgetItem const *sub = item.maybeAs<SubwidgetItem>())
+            {
+                widget.as<LabelWidget>().setImage(sub->image());
+            }
         }
     }
 
     void panelBeingClosed(PanelWidget &popup)
+    {        
+        openSubs.remove(&popup.as<PopupWidget>());
+    }
+
+    void widgetBeingDeleted(Widget &widget)
     {
-        openPopups.remove(&popup.as<PopupWidget>());
+        openSubs.remove(&widget.as<PopupWidget>());
+    }
+
+    void keepTrackOfSubWidget(PopupWidget *w)
+    {
+        openSubs.insert(w);
+
+        w->audienceForClose += this;
+        w->audienceForDeletion += this;
     }
 
     bool isVisibleItem(Widget const *child) const
@@ -361,8 +437,6 @@ ChildWidgetOrganizer const &MenuWidget::organizer() const
 
 void MenuWidget::update()
 {
-    //if(isHidden()) return;
-
     if(d->needLayout)
     {
         updateLayout();
@@ -373,22 +447,12 @@ void MenuWidget::update()
 
 bool MenuWidget::handleEvent(Event const &event)
 {
-#if 0
-    if(event.type() == Event::MousePosition)
-    {
-        if(rule().recti().contains(event.as<MouseEvent>().pos()))
-        {
-            // Eat position events inside the menu area.
-            return true;
-        }
-    }
-#endif
     return ScrollAreaWidget::handleEvent(event);
 }
 
 void MenuWidget::dismissPopups()
 {
-    foreach(PopupWidget *pop, d->openPopups)
+    foreach(PopupWidget *pop, d->openSubs)
     {
         pop->close();
     }

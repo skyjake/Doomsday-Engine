@@ -287,15 +287,21 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     // Signals.
     connect(d->log, SIGNAL(contentHeightIncreased(int)), this, SLOT(logContentHeightIncreased(int)));
 
-    connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(setFullyOpaque()));
-    connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(openLog()));
+    connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(commandLineFocusGained()));
     connect(d->cmdLine, SIGNAL(lostFocus()), this, SLOT(commandLineFocusLost()));
     connect(d->cmdLine, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
 
-    connect(d->scriptCmd, SIGNAL(gotFocus()), this, SLOT(setFullyOpaque()));
-    connect(d->scriptCmd, SIGNAL(gotFocus()), this, SLOT(openLog()));
+    connect(d->scriptCmd, SIGNAL(gotFocus()), this, SLOT(commandLineFocusGained()));
     connect(d->scriptCmd, SIGNAL(lostFocus()), this, SLOT(commandLineFocusLost()));
     connect(d->scriptCmd, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
+}
+
+void ConsoleWidget::commandLineFocusGained()
+{
+    setFullyOpaque();
+    openLog();
+
+    emit commandLineGotFocus();
 }
 
 ButtonWidget &ConsoleWidget::button()

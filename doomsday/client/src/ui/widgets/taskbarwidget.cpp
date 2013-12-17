@@ -30,6 +30,7 @@
 #include "ui/dialogs/renderersettingsdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
+#include "ui/SubwidgetItem"
 #include "GuiRootWidget"
 #include "SequentialLayout"
 #include "CommandAction"
@@ -58,14 +59,14 @@ static uint POS_GAME_SEPARATOR = 1;
 
 static uint POS_RENDERER_SETTINGS = 0;
 static uint POS_CONFIG_SEPARATOR  = 1;
-static uint POS_VIDEO_SETTINGS    = 2;
+//static uint POS_VIDEO_SETTINGS    = 2;
 static uint POS_AUDIO_SETTINGS    = 3;
 static uint POS_INPUT_SETTINGS    = 4;
-static uint POS_NETWORK_SETTINGS  = 5;
-static uint POS_UPDATER_SETTINGS  = 6;
+//static uint POS_NETWORK_SETTINGS  = 5;
+//static uint POS_UPDATER_SETTINGS  = 6;
 
-DENG_GUI_PIMPL(TaskBarWidget),
-DENG2_OBSERVES(App, GameChange)
+DENG_GUI_PIMPL(TaskBarWidget)
+, DENG2_OBSERVES(App, GameChange)
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -84,6 +85,7 @@ DENG2_OBSERVES(App, GameChange)
     LabelWidget *status;
     PopupMenuWidget *mainMenu;
     PopupMenuWidget *configMenu;
+
     ScalarRule *vertShift;
     bool mouseWasTrappedWhenOpening;
     int minSpace;
@@ -263,22 +265,14 @@ DENG2_OBSERVES(App, GameChange)
             status->setText(tr("No game loaded"));
         }
     }
-
-    void setupItemSubDialog(PopupMenuWidget *menu, ui::Data::Pos item, DialogWidget *dlg)
-    {
-        dlg->setDeleteAfterDismissed(true);
-        if(menu->isOpen())
-        {
-            dlg->setAnchorAndOpeningDirection(menu->menu().organizer().
-                                              itemWidget(item)->hitRule(),
-                                              ui::Left);
-
-            // Mutual, automatic closing.
-            connect(dlg, SIGNAL(accepted(int)), menu, SLOT(close()));
-            connect(menu, SIGNAL(closed()), dlg, SLOT(close()));
-        }
-    }
 };
+
+template <typename ClassName>
+PopupWidget *makePopup() { return new ClassName; }
+
+PopupWidget *makeUpdaterSettings() {
+    return new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
+}
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 {
@@ -369,25 +363,13 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      * depending on whether a game is loaded.
      */
     d->configMenu->items()
-            << new ui::ActionItem(ui::Item::ShownAsButton,
-                                  style().images().image("renderer"), tr("Renderer"),
-                                  new SignalAction(this, SLOT(showRendererSettings())))
+            << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(ui::Item::ShownAsButton,
-                                  style().images().image("display"), tr("Video"),
-                                  new SignalAction(this, SLOT(showVideoSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton,
-                                  style().images().image("audio"), tr("Audio"),
-                                  new SignalAction(this, SLOT(showAudioSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton,
-                                  style().images().image("input"), tr("Input"),
-                                  new SignalAction(this, SLOT(showInputSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton,
-                                  style().images().image("network"), tr("Network"),
-                                  new SignalAction(this, SLOT(showNetworkSettings())))
-            << new ui::ActionItem(ui::Item::ShownAsButton,
-                                  style().images().image("updater"), tr("Updater"),
-                                  new SignalAction(this, SLOT(showUpdaterSettings())));
+            << new ui::SubwidgetItem(style().images().image("display"),  tr("Video"),    ui::Left, makePopup<VideoSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("audio"),    tr("Audio"),    ui::Left, makePopup<AudioSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("input"),    tr("Input"),    ui::Left, makePopup<InputSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("network"),  tr("Network"),  ui::Left, makePopup<NetworkSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("updater"),  tr("Updater"),  ui::Left, makeUpdaterSettings);
 
     d->mainMenu->items()
             << unloadMenu // hidden with null-game
@@ -415,6 +397,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     updateCommandLineLayout();
 
     connect(d->console, SIGNAL(commandModeChanged()), this, SLOT(updateCommandLineLayout()));
+    connect(d->console, SIGNAL(commandLineGotFocus()), this, SLOT(closeMainMenu()));
+    connect(d->console, SIGNAL(commandLineGotFocus()), this, SLOT(closeConfigMenu()));
 }
 
 ConsoleWidget &TaskBarWidget::console()
@@ -632,6 +616,7 @@ void TaskBarWidget::close()
 
 void TaskBarWidget::openConfigMenu()
 {
+    d->mainMenu->close(0);
     d->configMenu->open();
 }
 
@@ -642,6 +627,7 @@ void TaskBarWidget::closeConfigMenu()
 
 void TaskBarWidget::openMainMenu()
 {
+    d->configMenu->close(0);
     d->mainMenu->open();
 }
 
@@ -666,48 +652,9 @@ void TaskBarWidget::showAbout()
 
 void TaskBarWidget::showUpdaterSettings()
 {
+    /// @todo This has actually little to do with the taskbar. -jk
     UpdaterSettingsDialog *dlg = new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
-    d->setupItemSubDialog(d->configMenu, POS_UPDATER_SETTINGS, dlg);
-    root().addOnTop(dlg);
-    dlg->open();
-}
-
-void TaskBarWidget::showRendererSettings()
-{
-    RendererSettingsDialog *dlg = new RendererSettingsDialog;
-    d->setupItemSubDialog(d->configMenu, POS_RENDERER_SETTINGS, dlg);
-    root().addOnTop(dlg);
-    dlg->open();
-}
-
-void TaskBarWidget::showVideoSettings()
-{
-    VideoSettingsDialog *dlg = new VideoSettingsDialog;
-    d->setupItemSubDialog(d->configMenu, POS_VIDEO_SETTINGS, dlg);
-    root().addOnTop(dlg);
-    dlg->open();
-}
-
-void TaskBarWidget::showAudioSettings()
-{
-    AudioSettingsDialog *dlg = new AudioSettingsDialog;
-    d->setupItemSubDialog(d->configMenu, POS_AUDIO_SETTINGS, dlg);
-    root().addOnTop(dlg);
-    dlg->open();
-}
-
-void TaskBarWidget::showInputSettings()
-{
-    InputSettingsDialog *dlg = new InputSettingsDialog;
-    d->setupItemSubDialog(d->configMenu, POS_INPUT_SETTINGS, dlg);
-    root().addOnTop(dlg);
-    dlg->open();
-}
-
-void TaskBarWidget::showNetworkSettings()
-{
-    NetworkSettingsDialog *dlg = new NetworkSettingsDialog;
-    d->setupItemSubDialog(d->configMenu, POS_NETWORK_SETTINGS, dlg);
+    dlg->setDeleteAfterDismissed(true);
     root().addOnTop(dlg);
     dlg->open();
 }

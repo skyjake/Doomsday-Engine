@@ -472,7 +472,7 @@ void DialogWidget::open()
     d->modality = NonModal;
 
     DENG2_ASSERT(hasRoot());
-    prepare();
+    prepare(); // calls base class's open()
 }
 
 ui::ActionItem *DialogWidget::defaultActionItem()

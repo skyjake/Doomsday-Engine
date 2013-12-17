@@ -185,6 +185,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/ui/Margins \
     include/ui/Stylist \
     include/ui/SubmenuItem \
+    include/ui/SubwidgetItem \
     include/ui/VariableToggleItem \
     include/Vertex \
     include/WallEdge \
@@ -415,6 +416,7 @@ DENG_HEADERS += \
     include/ui/framework/signalaction.h \
     include/ui/framework/stylist.h \
     include/ui/framework/submenuitem.h \
+    include/ui/framework/subwidgetitem.h \
     include/ui/framework/textdrawable.h \
     include/ui/framework/variabletoggleitem.h \
     include/ui/framework/widgetactions.h \

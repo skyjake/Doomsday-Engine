@@ -98,7 +98,7 @@ public slots:
      * Opens the panel, positioning it appropriately so that is anchored to the
      * position specified with setAnchor().
      */
-    void open();
+    virtual void open();
 
     /**
      * Closes the panel. The widget is dismissed once the closing animation
