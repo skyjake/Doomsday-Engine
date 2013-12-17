@@ -53,10 +53,12 @@ int main(int, char **)
         s = String("abc");
         String const &is = p.internAndRetrieve(s);
         DENG2_ASSERT(!is.compare(s));
+        DENG2_UNUSED(is);
 
         String s2 = String("ABC");
         String const &is2 = p.internAndRetrieve(s2);
         DENG2_ASSERT(!is2.compare(s));
+        DENG2_UNUSED(is2);
 
         DENG2_ASSERT(p.intern(is2) == 2);
 
