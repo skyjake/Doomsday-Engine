@@ -604,22 +604,6 @@ static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)
     return (v1.y - v2.y) * (v1.x - vOrigin.x) + (v2.x - v1.x) * (v1.y - vOrigin.z);
 }
 
-static void Rend_VertexColorsGlow(Vector4f *colors, uint num, float glow)
-{
-    for(uint i = 0; i < num; ++i)
-    {
-        colors[i].x = colors[i].y = colors[i].z = glow;
-    }
-}
-
-static void Rend_VertexColorsAlpha(Vector4f *colors, uint num, float alpha)
-{
-    for(uint i = 0; i < num; ++i)
-    {
-        colors[i].w = alpha;
-    }
-}
-
 float Rend_ExtraLightDelta()
 {
     return extraLightDelta;
@@ -1221,8 +1205,12 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         if(levelFullBright || !(p.glowing < 1))
         {
             // Uniform color. Apply to all vertices.
-            float glowStrength = currentSectorLightLevel + (levelFullBright? 1 : p.glowing);
-            Rend_VertexColorsGlow(colorCoords, numVertices, glowStrength);
+            float ll = de::clamp(0.f, currentSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
+            Vector4f *colorIt = colorCoords;
+            for(uint i = 0; i < numVertices; ++i, colorIt++)
+            {
+                colorIt->x = colorIt->y = colorIt->z = ll;
+            }
         }
         else
         {
@@ -1330,7 +1318,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         }
 
         // Apply uniform alpha.
-        Rend_VertexColorsAlpha(colorCoords, numVertices, p.alpha);
+        Vector4f *colorIt = colorCoords;
+        for(uint i = 0; i < numVertices; ++i, colorIt++)
+        {
+            colorIt->w = p.alpha;
+        }
     }
 
     if(useLights || useShadows)
