@@ -284,6 +284,22 @@ bool GuiRootWidget::processEvent(Event const &event)
     return true;
 }
 
+GuiWidget const *GuiRootWidget::globalHitTest(Vector2i const &pos) const
+{
+    Widget::Children const childs = children();
+    for(int i = childs.size() - 1; i >= 0; --i)
+    {
+        if(GuiWidget const *w = childs.at(i)->maybeAs<GuiWidget>())
+        {
+            if(GuiWidget const *hit = w->treeHitTest(pos))
+            {
+                return hit;
+            }
+        }
+    }
+    return 0;
+}
+
 void GuiRootWidget::update()
 {
     if(window().canvas().isGLReady())

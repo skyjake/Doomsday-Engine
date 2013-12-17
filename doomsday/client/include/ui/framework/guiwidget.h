@@ -265,6 +265,15 @@ public:
     bool hitTest(de::Event const &event) const;
 
     /**
+     * Checks if the position is on any of the children of this widget.
+     *
+     * @param pos  Coordinates.
+     *
+     * @return  The child that occupied the position in the view.
+     */
+    GuiWidget const *treeHitTest(de::Vector2i const &pos) const;
+
+    /**
      * Returns the rule rectangle used for hit testing. Defaults to a rectangle
      * equivalent to GuiWidget::rule(). Modify the hit test rule to allow
      * widgets to be hittable outside their default boundaries.

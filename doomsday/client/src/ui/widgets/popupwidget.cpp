@@ -261,7 +261,7 @@ bool PopupWidget::handleEvent(Event const &event)
         return true;
     }
 
-    if(event.type() == Event::KeyPress ||
+    if(event.type() == Event::KeyPress  ||
        event.type() == Event::KeyRepeat ||
        event.type() == Event::KeyRelease)
     {

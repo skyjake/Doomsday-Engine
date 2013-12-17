@@ -77,6 +77,17 @@ public:
 
     bool processEvent(de::Event const &event);
 
+    /**
+     * Finds the widget that occupies the given point, looking through the entire tree. The
+     * returned widget is the one that will first handle a received event associated with this
+     * position.
+     *
+     * @param pos  Position in the view.
+     *
+     * @return  Widget, or @c NULL if none were found.
+     */
+    GuiWidget const *globalHitTest(de::Vector2i const &pos) const;
+
     // Events.
     void update();
     void draw();

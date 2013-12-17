@@ -586,6 +586,27 @@ bool GuiWidget::hitTest(Event const &event) const
     return event.isMouse() && hitTest(event.as<MouseEvent>().pos());
 }
 
+GuiWidget const *GuiWidget::treeHitTest(Vector2i const &pos) const
+{
+    Children const childs = childWidgets();
+    for(int i = childs.size() - 1; i >= 0; --i)
+    {
+        if(GuiWidget const *w = childs.at(i)->maybeAs<GuiWidget>())
+        {
+            // Check children first.
+            if(GuiWidget const *hit = w->treeHitTest(pos))
+            {
+                return hit;
+            }
+        }
+    }
+    if(hitTest(pos))
+    {
+        return this;
+    }
+    return 0;
+}
+
 RuleRectangle &GuiWidget::hitRule()
 {
     return d->hitRule;
