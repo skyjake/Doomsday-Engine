@@ -37,8 +37,8 @@
 
 using namespace de;
 
-DENG2_PIMPL(Sector),
-DENG2_OBSERVES(Plane, HeightChange)
+DENG2_PIMPL(Sector)
+, DENG2_OBSERVES(Plane, HeightChange)
 {
     AABoxd aaBox;         ///< Bounding box for the whole sector (all clusters).
     bool needAABoxUpdate; ///< @c true= marked for update.
@@ -62,15 +62,15 @@ DENG2_OBSERVES(Plane, HeightChange)
     LightGridData lightGridData;
 #endif
 
-    Instance(Public *i, float lightLevel, Vector3f const &lightColor)
-        : Base(i),
-          needAABoxUpdate(false), // No BSP leafs thus no geometry.
-          mobjList(0),
-          lightLevel(lightLevel),
-          lightColor(lightColor),
-          validCount(0)
+    Instance(Public *i)
+        : Base(i)
+        , needAABoxUpdate(false) // No BSP leafs thus no geometry.
+        , mobjList(0)
+        , lightLevel(0)
+        , lightColor(Vector3f(0, 0, 0))
+        , validCount(0)
 #ifdef __CLIENT__
-         ,roughArea(-1) // needs updating
+        , roughArea(-1) // needs updating
 #endif
     {
         zap(emitter);
@@ -194,8 +194,11 @@ DENG2_OBSERVES(Plane, HeightChange)
 };
 
 Sector::Sector(float lightLevel, Vector3f const &lightColor)
-    : MapElement(DMU_SECTOR), d(new Instance(this, lightLevel, lightColor))
-{}
+    : MapElement(DMU_SECTOR), d(new Instance(this))
+{
+    d->lightLevel = de::clamp(0.f, lightLevel, 1.f);
+    d->lightColor = lightColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
+}
 
 float Sector::lightLevel() const
 {
