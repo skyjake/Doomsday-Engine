@@ -154,7 +154,7 @@ DENG2_PIMPL(MenuWidget)
     ListData defaultItems;
     Data const *items;
     ChildWidgetOrganizer organizer;
-    QSet<PopupWidget *> openSubs;
+    QSet<PanelWidget *> openSubs;
 
     SizePolicy colPolicy;
     SizePolicy rowPolicy;
@@ -296,16 +296,18 @@ DENG2_PIMPL(MenuWidget)
 
     void panelBeingClosed(PanelWidget &popup)
     {        
-        openSubs.remove(&popup.as<PopupWidget>());
+        openSubs.remove(&popup);
     }
 
     void widgetBeingDeleted(Widget &widget)
     {
-        openSubs.remove(&widget.as<PopupWidget>());
+        openSubs.remove(static_cast<PanelWidget *>(&widget));
     }
 
-    void keepTrackOfSubWidget(PopupWidget *w)
+    void keepTrackOfSubWidget(PanelWidget *w)
     {
+        DENG2_ASSERT(w->is<PanelWidget>());
+
         openSubs.insert(w);
 
         w->audienceForClose += this;
@@ -452,7 +454,7 @@ bool MenuWidget::handleEvent(Event const &event)
 
 void MenuWidget::dismissPopups()
 {
-    foreach(PopupWidget *pop, d->openSubs)
+    foreach(PanelWidget *pop, d->openSubs)
     {
         pop->close();
     }
