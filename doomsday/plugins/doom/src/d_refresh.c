@@ -47,7 +47,8 @@ static float appliedFilter[MAXPLAYERS];
 
 void G_InitSpecialFilter()
 {
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
         appliedFilter[i] = -1;
     }
@@ -60,7 +61,7 @@ void G_InitSpecialFilter()
 void G_UpdateSpecialFilter(int player)
 {
     player_t* plr = players + player;
-    float max = 30, str, r, g, b;
+    float max = 30, str; //, r, g, b;
     int filter;
 
     // In HacX a simple blue shift is used instead.
