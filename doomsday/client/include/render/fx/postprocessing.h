@@ -54,6 +54,13 @@ public:
 
     void fadeOut(de::TimeDelta const &span);
 
+    /**
+     * Sets a constant opacity factor that is applied in addition to the fade.
+     *
+     * @param opacity  Opacity factor. 1.0 by default.
+     */
+    void setOpacity(float opacity);
+
     void glInit();
     void glDeinit();
 

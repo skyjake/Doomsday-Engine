@@ -139,6 +139,9 @@ void P_DoTick(void)
     {
         R_UpdateConsoleView(i);
     }
+#ifdef __JDOOM__
+    G_UpdateSpecialFilter(DISPLAYPLAYER);
+#endif
 
     // For par times, among other things.
     mapTime++;

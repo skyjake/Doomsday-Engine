@@ -429,6 +429,7 @@ void D_PreInit(void)
 
     // Do the common pre init routine;
     G_CommonPreInit();
+    G_InitSpecialFilter();
 }
 
 /**

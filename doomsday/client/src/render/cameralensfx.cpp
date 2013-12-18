@@ -101,6 +101,11 @@ D_CMD(PostFx)
         post->fadeOut(span);
         return true;
     }
+    else if(shader == "opacity") // Change opacity.
+    {
+        post->setOpacity(span);
+        return true;
+    }
 
     post->fadeInShader(shader, span);
     return true;

@@ -38,6 +38,7 @@ DENG2_PIMPL(PostProcessing)
     GLUniform uFrame;
     GLUniform uFadeInOut;
     Animation fade;
+    float opacity;
 
     struct QueueEntry {
         String shaderName;
@@ -58,6 +59,7 @@ DENG2_PIMPL(PostProcessing)
         , uFrame    ("uTex",       GLUniform::Sampler2D)
         , uFadeInOut("uFadeInOut", GLUniform::Float)
         , fade(0, Animation::Linear)
+        , opacity(1.f)
     {}
 
     GuiRootWidget &root() const
@@ -205,7 +207,7 @@ DENG2_PIMPL(PostProcessing)
                 Matrix4f::scaleThenTranslate(self.viewRect().size(),
                                              self.viewRect().topLeft);*/
 
-        uFadeInOut = fade;
+        uFadeInOut = fade * opacity;
 
         GLState::push()
                 .setBlend(false)
@@ -240,6 +242,11 @@ void PostProcessing::fadeInShader(String const &fxPostShader, TimeDelta const &s
 void PostProcessing::fadeOut(TimeDelta const &span)
 {
     d->queue.append(Instance::QueueEntry("", 0, span));
+}
+
+void PostProcessing::setOpacity(float opacity)
+{
+    d->opacity = opacity;
 }
 
 void PostProcessing::glInit()

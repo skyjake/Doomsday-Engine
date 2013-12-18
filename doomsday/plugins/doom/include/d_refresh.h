@@ -37,7 +37,9 @@ extern "C" {
 #endif
 
 void G_RendPlayerView(int player);
-void G_RendSpecialFilter(int player, RectRaw const *region);
+//void G_RendSpecialFilter(int player, RectRaw const *region);
+void G_InitSpecialFilter();
+void G_UpdateSpecialFilter(int player);
 
 void D_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
 void D_DrawWindow(const Size2Raw* windowSize);

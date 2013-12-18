@@ -43,32 +43,61 @@
 
 float quitDarkenOpacity = 0;
 
+static float appliedFilter[MAXPLAYERS];
+
+void G_InitSpecialFilter()
+{
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        appliedFilter[i] = -1;
+    }
+}
+
 /**
  * Draws a special filter over the screen (e.g. the inversing filter used
  * when in god mode).
  */
-void G_RendSpecialFilter(int player, const RectRaw* region)
+void G_UpdateSpecialFilter(int player)
 {
     player_t* plr = players + player;
     float max = 30, str, r, g, b;
     int filter;
-    assert(region);
 
     // In HacX a simple blue shift is used instead.
     if(gameMode == doom2_hacx) return;
 
     filter = plr->powers[PT_INVULNERABILITY];
-    if(!filter) return;
+    if(!filter)
+    {
+        // Clear the filter.
+        if(appliedFilter[player] > 0)
+        {
+            DD_Executef(true, "postfx %i opacity 1; postfx %i none 0.3", player, player);
+            appliedFilter[player] = -1;
+        }
+        return;
+    }
 
-    if(filter < max)
-        str = filter / max;
-    else if(filter < 4 * 32 && !(filter & 8))
-        str = .7f;
-    else if(filter > INVULNTICS - max)
-        str = (INVULNTICS - filter) / max;
+    if(filter < 4 * 32 && !(filter & 8))
+        str = 0; //.7f;
     else
         str = 1; // Full inversion.
 
+    // Activate the filter.
+    if(appliedFilter[player] < 0)
+    {
+        DD_Executef(true, "postfx %i monochrome.inverted 0.3", player);
+    }
+
+    // Update filter opacity.
+    if(!FEQUAL(appliedFilter[player], str))
+    {
+        DD_Executef(true, "postfx %i opacity %f", player, str);
+    }
+
+    appliedFilter[player] = str;
+
+#if 0
     // Draw an inversing filter.
     DGL_BlendMode(BM_INVERSE);
 
@@ -81,6 +110,7 @@ void G_RendSpecialFilter(int player, const RectRaw* region)
 
     // Restore the normal rendering state.
     DGL_BlendMode(BM_NORMAL);
+#endif
 }
 
 boolean R_ViewFilterColor(float rgba[4], int filter)

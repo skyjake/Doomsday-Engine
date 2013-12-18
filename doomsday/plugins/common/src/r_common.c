@@ -330,7 +330,7 @@ void G_DrawViewPort(int port, RectRaw const *portGeometry,
             if(!isAutomapObscuring)
             {
                 G_RendPlayerView(player);
-#ifndef __JHEXEN__
+#if !defined(__JDOOM__) && !defined(__JHEXEN__)
                 G_RendSpecialFilter(player, windowGeometry);
 #endif
             }
