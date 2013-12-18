@@ -3146,7 +3146,7 @@ int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)
 
 void G_QuitGame(void)
 {
-    const char* endString;
+    char const *endString;
     if(G_QuitInProgress()) return;
 
     if(Hu_IsMessageActiveWithCallback(G_QuitGameResponse))
@@ -3161,14 +3161,6 @@ void G_QuitGame(void)
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
 #else
     endString = GET_TXT(TXT_QUITMSG);
-#endif
-
-#if __JDOOM__ || __JDOOM64__
-    S_LocalSound(SFX_SWTCHN, NULL);
-#elif __JHERETIC__
-    S_LocalSound(SFX_SWITCH, NULL);
-#elif __JHEXEN__
-    S_LocalSound(SFX_PICKUP_KEY, NULL);
 #endif
 
     Con_Open(false);
