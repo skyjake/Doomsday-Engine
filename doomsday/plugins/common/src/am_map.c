@@ -191,20 +191,20 @@ static void initAutomapConfig(automapcfg_t* mcfg)
     registerSpecialLine(mcfg, 0,  33, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Red locked door, locked.
     registerSpecialLine(mcfg, 0,  28, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 134, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 135, 2, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 134, 0, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 135, 0, ML_SECRET, .682f, 0, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Yellow locked door, open.
     registerSpecialLine(mcfg, 0,  34, 2, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Yellow locked door, locked.
     registerSpecialLine(mcfg, 0,  27, 2, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 136, 2, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
-    registerSpecialLine(mcfg, 0, 137, 2, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 136, 0, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, 0, 137, 0, ML_SECRET, .905f, .9f, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Exit switch.
-    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES,  11, 1, ML_SECRET, 0, 1, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES,  11, 0, ML_SECRET, 0, 1, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Exit cross line.
     registerSpecialLine(mcfg, AMF_REND_SPECIALLINES,  52, 2, ML_SECRET, 0, 1, 0, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Secret Exit switch.
-    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES,  51, 1, ML_SECRET, 0, 1, 1, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
+    registerSpecialLine(mcfg, AMF_REND_SPECIALLINES,  51, 0, ML_SECRET, 0, 1, 1, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
     // Secret Exit cross line.
     registerSpecialLine(mcfg, AMF_REND_SPECIALLINES, 124, 2, ML_SECRET, 0, 1, 1, 1, BM_NORMAL, GLOW_BOTH, .75f, 5, true);
 #elif __JHERETIC__
