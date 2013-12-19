@@ -1,10 +1,9 @@
-/**
- * @file id1map_util.cpp @ingroup wadmapconverter
+/** @file id1map_util.cpp  Miscellaneous map converter utility routines.
  *
- * Miscellaneous map converter utility routines.
+ * @ingroup wadmapconverter
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,7 +24,7 @@
 #include "maplumpinfo.h"
 #include <de/libdeng2.h>
 
-const Str* MapFormatNameForId(MapFormatId id)
+Str const *MapFormatNameForId(MapFormatId id)
 {
     static const de::Str names[1 + NUM_MAPFORMATS] = {
         /* MF_UNKNOWN */ "Unknown",
@@ -40,10 +39,12 @@ const Str* MapFormatNameForId(MapFormatId id)
     return names[0];
 }
 
-MapLumpType MapLumpTypeForName(const char* name)
+MapLumpType MapLumpTypeForName(char const *name)
 {
+    DENG2_ASSERT(name != 0);
+
     static const struct maplumpnametypepair_s {
-        const char* name;
+        char const *name;
         MapLumpType type;
     } lumptypeForNameDict[] =
     {
@@ -70,13 +71,13 @@ MapLumpType MapLumpTypeForName(const char* name)
         { NULL,         ML_INVALID }
     };
 
-    DENG2_ASSERT(name);
-
     if(name[0])
-    for(int i = 0; lumptypeForNameDict[i].name; ++i)
     {
-        if(!qstrnicmp(lumptypeForNameDict[i].name, name, strlen(lumptypeForNameDict[i].name)))
-            return lumptypeForNameDict[i].type;
+        for(int i = 0; lumptypeForNameDict[i].name; ++i)
+        {
+            if(!qstrnicmp(lumptypeForNameDict[i].name, name, strlen(lumptypeForNameDict[i].name)))
+                return lumptypeForNameDict[i].type;
+        }
     }
 
     return ML_INVALID;

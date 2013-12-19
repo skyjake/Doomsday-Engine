@@ -1,8 +1,7 @@
-/**
- * @file id1map.cpp @ingroup wadmapconverter
+/** @file id1map.cpp  id Tech 1 map format reader.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,7 +27,9 @@
 #include <de/memory.h>
 #include <de/timer.h>
 
-static Reader *bufferLump(MapLumpInfo *info);
+using namespace de;
+
+static reader_s *bufferLump(MapLumpInfo *info);
 static void clearReadBuffer();
 
 Id1Map::Id1Map(MapFormatId format)
@@ -47,6 +48,16 @@ Id1Map::~Id1Map()
     {
         M_Free(i->lineIndices);
     }
+}
+
+/// @todo fixme: A real performance killer...
+AutoStr *Id1Map::composeMaterialRef(MaterialDictId id)
+{
+    AutoStr *ref = AutoStr_NewStd();
+    String const &material = findMaterialInDictionary(id);
+    QByteArray materialUtf8 = material.toUtf8();
+    Str_Set(ref, materialUtf8.constData());
+    return ref;
 }
 
 MaterialDictId Id1Map::addMaterialToDictionary(char const *name, MaterialDictGroup group)
@@ -93,9 +104,9 @@ MaterialDictId Id1Map::addMaterialToDictionary(char const *name, MaterialDictGro
     return internId;
 }
 
-bool Id1Map::loadVertexes(Reader *reader, int numElements)
+bool Id1Map::loadVertexes(reader_s *reader, int numElements)
 {
-    DENG2_ASSERT(reader);
+    DENG2_ASSERT(reader != 0);
 
     LOG_TRACE("Processing vertexes...");
     for(int n = 0; n < numElements; ++n)
@@ -118,9 +129,9 @@ bool Id1Map::loadVertexes(Reader *reader, int numElements)
     return true;
 }
 
-bool Id1Map::loadLineDefs(Reader *reader, int numElements)
+bool Id1Map::loadLineDefs(reader_s *reader, int numElements)
 {
-    DENG2_ASSERT(reader);
+    DENG2_ASSERT(reader != 0);
 
     LOG_TRACE("Processing line definitions...");
     if(numElements)
@@ -152,9 +163,9 @@ bool Id1Map::loadLineDefs(Reader *reader, int numElements)
     return true;
 }
 
-bool Id1Map::loadSideDefs(Reader *reader, int numElements)
+bool Id1Map::loadSideDefs(reader_s *reader, int numElements)
 {
-    DENG2_ASSERT(reader);
+    DENG2_ASSERT(reader != 0);
 
     LOG_TRACE("Processing side definitions...");
     if(numElements)
@@ -181,9 +192,9 @@ bool Id1Map::loadSideDefs(Reader *reader, int numElements)
     return true;
 }
 
-bool Id1Map::loadSectors(Reader *reader, int numElements)
+bool Id1Map::loadSectors(reader_s *reader, int numElements)
 {
-    DENG2_ASSERT(reader);
+    DENG2_ASSERT(reader != 0);
 
     LOG_TRACE("Processing sectors...");
     if(numElements)
@@ -209,9 +220,9 @@ bool Id1Map::loadSectors(Reader *reader, int numElements)
     return true;
 }
 
-bool Id1Map::loadThings(Reader *reader, int numElements)
+bool Id1Map::loadThings(reader_s *reader, int numElements)
 {
-    DENG2_ASSERT(reader);
+    DENG2_ASSERT(reader != 0);
 
     LOG_TRACE("Processing things...");
     if(numElements)
@@ -243,9 +254,9 @@ bool Id1Map::loadThings(Reader *reader, int numElements)
     return true;
 }
 
-bool Id1Map::loadSurfaceTints(Reader *reader, int numElements)
+bool Id1Map::loadSurfaceTints(reader_s *reader, int numElements)
 {
-    DENG2_ASSERT(reader);
+    DENG2_ASSERT(reader != 0);
 
     LOG_TRACE("Processing surface tints...");
     if(numElements)
@@ -263,12 +274,11 @@ bool Id1Map::loadSurfaceTints(Reader *reader, int numElements)
 
 void Id1Map::load(MapLumpInfos &lumpInfos)
 {
-    /**
-     * Allocate the vertices first as a large contiguous array suitable for
-     * passing directly to Doomsday's MPE interface.
-     */
+    // Allocate the vertices first as a large contiguous array suitable for
+    // passing directly to Doomsday's MapEdit interface.
     size_t elementSize = ElementSizeForMapLumpType(mapFormat, ML_VERTEXES);
     uint numElements = lumpInfos[ML_VERTEXES]->length / elementSize;
+
     numVertexes = numElements;
     vertexes = (coord_t *)M_Malloc(numVertexes * 2 * sizeof(*vertexes));
 
@@ -283,7 +293,7 @@ void Id1Map::load(MapLumpInfos &lumpInfos)
 
         // Process this data lump.
         numElements = info->length / elementSize;
-        Reader *reader = bufferLump(info);
+        reader_s *reader = bufferLump(info);
         switch(info->type)
         {
         default: break;
@@ -307,7 +317,9 @@ void Id1Map::transferVertexes()
     LOG_TRACE("Transfering vertexes...");
     int *indices = new int[numVertexes];
     for(uint i = 0; i < numVertexes; ++i)
+    {
         indices[i] = i;
+    }
     MPE_VertexCreatev(numVertexes, vertexes, indices, 0);
     delete[] indices;
 }
@@ -493,64 +505,58 @@ int Id1Map::transfer()
     return false; // Success.
 }
 
-static uint8_t* readPtr;
-static uint8_t* readBuffer = NULL;
-static size_t readBufferSize = 0;
+static uint8_t *readPtr;
+static uint8_t *readBuffer;
+static size_t readBufferSize;
 
-static char readInt8(Reader* r)
+static char readInt8(reader_s *r)
 {
     if(!r) return 0;
-    char value = *((const int8_t*) (readPtr));
+    char value = *((int8_t const *) (readPtr));
     readPtr += 1;
     return value;
 }
 
-static short readInt16(Reader* r)
+static short readInt16(reader_s *r)
 {
     if(!r) return 0;
-    short value = *((const int16_t*) (readPtr));
+    short value = *((int16_t const *) (readPtr));
     readPtr += 2;
     return value;
 }
 
-static int readInt32(Reader* r)
+static int readInt32(reader_s *r)
 {
     if(!r) return 0;
-    int value = *((const int32_t*) (readPtr));
+    int value = *((int32_t const *) (readPtr));
     readPtr += 4;
     return value;
 }
 
-static float readFloat(Reader* r)
+static float readFloat(reader_s *r)
 {
     DENG2_ASSERT(sizeof(float) == 4);
     if(!r) return 0;
-    int32_t val = *((const int32_t*) (readPtr));
+    int32_t val = *((int32_t const *) (readPtr));
     float returnValue = 0;
-    memcpy(&returnValue, &val, 4);
+    std::memcpy(&returnValue, &val, 4);
     return returnValue;
 }
 
-static void readData(Reader* r, char* data, int len)
+static void readData(reader_s *r, char *data, int len)
 {
     if(!r) return;
-    memcpy(data, readPtr, len);
+    std::memcpy(data, readPtr, len);
     readPtr += len;
 }
 
 /// @todo It should not be necessary to buffer the lump data here.
-static Reader* bufferLump(MapLumpInfo* info)
+static reader_s *bufferLump(MapLumpInfo *info)
 {
     // Need to enlarge our read buffer?
     if(info->length > readBufferSize)
     {
-        readBuffer = (uint8_t*)M_Realloc(readBuffer, info->length);
-        if(!readBuffer)
-        {
-            throw Id1Map::LumpBufferError("Id1Map::bufferLump",
-                QString("Failed on (re)allocation of %1 bytes for the read buffer.")
-                    .arg(info->length));
-        }
+        readBuffer = (uint8_t *)M_Realloc(readBuffer, info->length);
         readBufferSize = info->length;
     }
 
@@ -562,7 +568,7 @@ static Reader* bufferLump(MapLumpInfo* info)
     return Reader_NewWithCallbacks(readInt8, readInt16, readInt32, readFloat, readData);
 }
 
-static void clearReadBuffer(void)
+static void clearReadBuffer()
 {
     if(!readBuffer) return;
     M_Free(readBuffer);

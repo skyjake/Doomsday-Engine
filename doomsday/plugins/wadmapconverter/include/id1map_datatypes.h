@@ -1,7 +1,8 @@
-/**
- * @file id1map_datatypes.h @ingroup wadmapconverter
+/** @file id1map_datatypes.h  id Tech 1 map data types.
  *
- * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @ingroup wadmapconverter
+ *
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -44,14 +45,15 @@ typedef de::StringPool::Id MaterialDictId;
 #define SIZEOF_SECTOR           (2 * 5 + 8 * 2)
 #define SIZEOF_LIGHT            (1 * 6)
 
-typedef struct mside_s {
+struct mside_t
+{
     int             index;
     int16_t         offset[2];
     MaterialDictId  topMaterial;
     MaterialDictId  bottomMaterial;
     MaterialDictId  middleMaterial;
     int             sector;
-} mside_t;
+};
 
 /// Line sides.
 #define RIGHT                   0
@@ -69,7 +71,8 @@ typedef struct mside_s {
 
 #define SEQTYPE_NUMSEQ          (10)
 
-typedef struct mline_s {
+struct mline_t
+{
     int             index;
     int             v[2];
     int             sides[2];
@@ -95,9 +98,10 @@ typedef struct mline_s {
 
     int             ddFlags;
     uint            validCount; ///< Used for polyobj line collection.
-} mline_t;
+};
 
-typedef struct msector_s {
+struct msector_t
+{
     int             index;
     int16_t         floorHeight;
     int16_t         ceilHeight;
@@ -114,14 +118,15 @@ typedef struct msector_s {
     uint16_t        d64unknownColor;
     uint16_t        d64wallTopColor;
     uint16_t        d64wallBottomColor;
-} msector_t;
+};
 
 // Thing DoomEdNums for polyobj anchors/spawn spots.
 #define PO_ANCHOR_DOOMEDNUM     (3000)
 #define PO_SPAWN_DOOMEDNUM      (3001)
 #define PO_SPAWNCRUSH_DOOMEDNUM (3002)
 
-typedef struct mthing_s {
+struct mthing_t
+{
     int             index;
     int16_t         origin[3];
     angle_t         angle;
@@ -136,21 +141,23 @@ typedef struct mthing_s {
 
     // DOOM64 format members:
     int16_t         d64TID;
-} mthing_t;
+};
 
-typedef struct mpolyobj_s {
+struct mpolyobj_t
+{
     int             index;
     int             lineCount;
     int            *lineIndices;
     int             tag;
     int             seqType;
     int16_t         anchor[2];
-} mpolyobj_t;
+};
 
-typedef struct mlight_s {
+struct surfacetint_t
+{
     int             index;
     float           rgb[3];
     int8_t          xx[3];
-} surfacetint_t;
+};
 
-#endif /* WADMAPCONVERTER_ID1MAP_DATATYPES_H */
+#endif // WADMAPCONVERTER_ID1MAP_DATATYPES_H

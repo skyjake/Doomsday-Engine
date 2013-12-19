@@ -1,9 +1,8 @@
-/**
- * @file id1map_util.h @ingroup wadmapconverter
+/** @file id1map_util.h  Miscellaneous map converter utility routines.
  *
- * Miscellaneous map converter utility routines.
+ * @ingroup wadmapconverter
  *
- * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __WADMAPCONVERTER_ID1MAP_UTIL_H__
-#define __WADMAPCONVERTER_ID1MAP_UTIL_H__
+#ifndef WADMAPCONVERTER_ID1MAP_UTIL
+#define WADMAPCONVERTER_ID1MAP_UTIL
 
 #include "doomsday.h"
 #include "dd_types.h"
@@ -34,13 +33,13 @@
  * @return Textual name for this format. Always returns a valid ddstring_t that
  *         should NOT be free'd.
  */
-const Str* MapFormatNameForId(MapFormatId id);
+Str const *MapFormatNameForId(MapFormatId id);
 
 /**
  * Determine type of a named map data lump.
  * @param name  Name of the data lump.
  * @return MapLumpType associated with the named map data lump.
  */
-MapLumpType MapLumpTypeForName(const char* name);
+MapLumpType MapLumpTypeForName(char const *name);
 
-#endif /* __WADMAPCONVERTER_ID1MAP_UTIL_H__ */
+#endif // WADMAPCONVERTER_ID1MAP_UTIL_H

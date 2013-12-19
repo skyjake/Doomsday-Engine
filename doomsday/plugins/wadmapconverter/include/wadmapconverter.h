@@ -1,12 +1,12 @@
-/**
- * @file wadmapconverter.h
- * Map converter plugin for id tech 1 format maps. @ingroup wadmapconverter
+/** @file wadmapconverter.h  Map converter plugin for id Tech 1 format maps.
+ *
+ * @ingroup wadmapconverter
  *
  * The purpose of the wadmapconverter plugin is to translate a map in the
- * id tech 1 format to Doomsday's native map format, using the engine's own
- * public map editing interface.
+ * id Tech 1 format to Doomsday's native map format, using the engine's public
+ * MapEdit API.
  *
- * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,13 +23,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __WADMAPCONVERTER_H__
-#define __WADMAPCONVERTER_H__
+#ifndef WADMAPCONVERTER_H
+#define WADMAPCONVERTER_H
 
 #include "doomsday.h"
 #include "id1map.h"
 
-extern Id1Map* map;
+extern Id1Map *map;
 
 DENG_USING_API(Base);
 DENG_USING_API(Map);
@@ -39,4 +39,4 @@ DENG_USING_API(Plug);
 DENG_USING_API(Uri);
 DENG_USING_API(W);
 
-#endif /* end of include guard: __WADMAPCONVERTER_H__ */
+#endif // WADMAPCONVERTER_H

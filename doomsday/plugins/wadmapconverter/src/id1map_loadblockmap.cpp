@@ -1,10 +1,9 @@
-/**
- * @file id1map_loadblockmap.cpp @ingroup wadmapconverter
+/** @file id1map_loadblockmap.cpp  id Tech 1 blockmap interpreter.
  *
- * id tech 1 BLOCKMAP conversion/extension.
+ * @ingroup wadmapconverter
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

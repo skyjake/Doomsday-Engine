@@ -1,7 +1,8 @@
-/**
- * @file maplumpinfo.h @ingroup wadmapconverter
+/** @file maplumpinfo.h
  *
- * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @ingroup wadmapconverter
+ *
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __WADMAPCONVERTER_MAPLUMPINFO_H__
-#define __WADMAPCONVERTER_MAPLUMPINFO_H__
+#ifndef WADMAPCONVERTER_MAPLUMPINFO_H
+#define WADMAPCONVERTER_MAPLUMPINFO_H
 
 #include "doomsday.h"
 #include "dd_types.h"
@@ -27,7 +28,7 @@
 /**
  * Logical map data lump identifier (unique).
  */
-typedef enum maplumptype_e {
+enum MapLumpType {
     ML_INVALID          = -1,
     FIRST_MAPLUMP_TYPE  = 0,
     ML_THINGS = FIRST_MAPLUMP_TYPE, ///< Monsters, items..
@@ -51,7 +52,7 @@ typedef enum maplumptype_e {
     ML_GLNODES,                 ///< GL nodes.
     ML_GLPVS,                   ///< GL PVS dataset.
     NUM_MAPLUMP_TYPES
-} MapLumpType;
+};
 
 /**
  * Helper macro for determining whether a value can be interpreted as a logical
@@ -59,22 +60,22 @@ typedef enum maplumptype_e {
  */
 #define VALID_MAPLUMPTYPE(v)    ((v) >= FIRST_MAPLUMP_TYPE && (v) < NUM_MAPLUMP_TYPES)
 
-/// POD structure for defining extended metadata for map data lumps.
-typedef struct maplumpinfo_s {
+/**
+ * POD structure for defining extended metadata for map data lumps.
+ */
+struct MapLumpInfo
+{
     lumpnum_t lump; ///< Absolute lump number for the associated data.
     MapLumpType type; ///< Recognised lump data type.
     size_t length; ///< Length of the lump data in bytes.
 
-    struct maplumpinfo_s* init(lumpnum_t lumpNum, MapLumpType lumpType, size_t lumpLength)
+    MapLumpInfo *init(lumpnum_t lumpNum, MapLumpType lumpType, size_t lumpLength)
     {
         lump = lumpNum;
         type = lumpType;
         length = lumpLength;
         return this;
     }
-} MapLumpInfo;
+};
 
-#include <map>
-typedef std::map<MapLumpType, MapLumpInfo*> MapLumpInfos;
-
-#endif /* __WADMAPCONVERTER_MAPLUMPINFO_H__ */
+#endif // WADMAPCONVERTER_MAPLUMPINFO_H

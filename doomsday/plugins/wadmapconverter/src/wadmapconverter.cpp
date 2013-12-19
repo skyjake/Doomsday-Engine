@@ -1,8 +1,8 @@
-/**
- * @file wadmapconverter.cpp
- * Map converter plugin for id tech 1 format maps. @ingroup wadmapconverter
+/** @file wadmapconverter.cpp  Map converter plugin for id tech 1 format maps.
  *
- * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @ingroup wadmapconverter
+ *
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,7 +25,7 @@
 #include <de/Error>
 #include <de/Log>
 
-Id1Map* map;
+Id1Map *map;
 
 /**
  * Given a map @a uri, attempt to locate the associated marker lump for the
@@ -35,10 +35,10 @@ Id1Map* map;
  *
  * @return Lump number for the found data else @c -1
  */
-static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
+static lumpnum_t locateMapMarkerLumpForUri(Uri const *uri)
 {
-    DENG2_ASSERT(uri);
-    const char* mapId = Str_Text(Uri_Path(uri));
+    DENG2_ASSERT(uri != 0);
+    char const *mapId = Str_Text(Uri_Path(uri));
     return W_CheckLumpNumForName2(mapId, true /*quiet please*/);
 }
 
@@ -51,8 +51,8 @@ static lumpnum_t locateMapMarkerLumpForUri(const Uri* uri)
  * @param newLumpInfo   New MapLumpInfo to be added to @a lumpInfos.
  * @return  Same as @a newLumpInfo for caller convenience.
  */
-static MapLumpInfo& addMapLumpInfoToCollection(MapLumpInfos& lumpInfos,
-    MapLumpInfo& newLumpInfo)
+static MapLumpInfo &addMapLumpInfoToCollection(MapLumpInfos &lumpInfos,
+    MapLumpInfo &newLumpInfo)
 {
     MapLumpType lumpType = newLumpInfo.type;
     MapLumpInfos::iterator i = lumpInfos.find(lumpType);
@@ -71,7 +71,7 @@ static MapLumpInfo& addMapLumpInfoToCollection(MapLumpInfos& lumpInfos,
  * @param lumpInfos     MapLumpInfo record set to populate.
  * @param startLump     Lump number at which to begin searching.
  */
-static void collectMapLumps(MapLumpInfos& lumpInfos, lumpnum_t startLump)
+static void collectMapLumps(MapLumpInfos &lumpInfos, lumpnum_t startLump)
 {
     LOG_AS("WadMapConverter");
     LOG_TRACE("Locating data lumps...");
@@ -79,7 +79,7 @@ static void collectMapLumps(MapLumpInfos& lumpInfos, lumpnum_t startLump)
     if(startLump < 0) return;
 
     // Keep checking lumps to see if its a map data lump.
-    const int numLumps = *reinterpret_cast<int*>(DD_GetVariable(DD_NUMLUMPS));
+    int const numLumps = *reinterpret_cast<int *>(DD_GetVariable(DD_NUMLUMPS));
     for(lumpnum_t i = startLump; i < numLumps; ++i)
     {
         // Lump name determines whether this lump should be included.
@@ -90,13 +90,13 @@ static void collectMapLumps(MapLumpInfos& lumpInfos, lumpnum_t startLump)
         if(lumpType == ML_INVALID) break; // Stop looking.
 
         // A recognized map data lump; record it in the collection.
-        MapLumpInfo* info = new MapLumpInfo();
+        MapLumpInfo *info = new MapLumpInfo();
         info->init(i, lumpType, W_LumpLength(i));
         addMapLumpInfoToCollection(lumpInfos, *info);
     }
 }
 
-static MapFormatId recognizeMapFormat(MapLumpInfos& lumpInfos)
+static MapFormatId recognizeMapFormat(MapLumpInfos &lumpInfos)
 {
     LOG_AS("WadMapConverter");
 
@@ -107,7 +107,7 @@ static MapFormatId recognizeMapFormat(MapLumpInfos& lumpInfos)
     // their presence unambiguously signifies which format we have.
     DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
     {
-        MapLumpInfo* info = i->second;
+        MapLumpInfo *info = i->second;
         if(!info) continue;
 
         switch(info->type)
@@ -126,11 +126,11 @@ static MapFormatId recognizeMapFormat(MapLumpInfos& lumpInfos)
     uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
     DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
     {
-        MapLumpInfo* info = i->second;
+        MapLumpInfo *info = i->second;
         if(!info) continue;
 
         // Determine the number of map data objects of each data type.
-        uint* elmCountAddr = NULL;
+        uint *elmCountAddr = 0;
         size_t elementSize = ElementSizeForMapLumpType(mapFormat, info->type);
         switch(info->type)
         {
@@ -237,7 +237,7 @@ int ConvertMapHook(int hookType, int parm, void *context)
     {
         loadAndTransferMap(uri, mapFormat, lumpInfos);
     }
-    catch(Id1Map::LumpBufferError const& er)
+    catch(Id1Map::LumpBufferError const &er)
     {
         LOG_AS("WadMapConverter");
         LOG_WARNING("Load error: %s\nAborting conversion...") << er.asText();
@@ -256,7 +256,7 @@ FAIL_UNKNOWN_FORMAT:
 
     DENG2_FOR_EACH(MapLumpInfos, i, lumpInfos)
     {
-        MapLumpInfo* info = i->second;
+        MapLumpInfo *info = i->second;
         if(!info) continue;
         delete info;
     }
@@ -270,7 +270,7 @@ FAIL_LOCATE_MAP:
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-extern "C" void DP_Initialize(void)
+extern "C" void DP_Initialize()
 {
     Plug_AddHook(HOOK_MAP_CONVERT, ConvertMapHook);
 }
@@ -279,7 +279,7 @@ extern "C" void DP_Initialize(void)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-extern "C" const char* deng_LibraryType(void)
+extern "C" char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }

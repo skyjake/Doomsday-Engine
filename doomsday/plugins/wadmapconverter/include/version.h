@@ -1,10 +1,10 @@
-/**
- * @file version.h
- * Version numbering, naming etc.
+/** @file version.h  Version information for the WadMapConverter plugin.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @ingroup wadmapconverter
+ *
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,8 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __WADMAPCONVERTER_VERSION_H__
-#define __WADMAPCONVERTER_VERSION_H__
+#ifndef WADMAPCONVERTER_VERSION_H
+#define WADMAPCONVERTER_VERSION_H
 
 #ifndef WADMAPCONVERTER_VER_ID
 #  ifdef _DEBUG
@@ -43,4 +43,4 @@
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" WADMAPCONVERTER_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,1,0,0 // For WIN32 version info.
 
-#endif /* __WADMAPCONVERTER_VERSION_H__ */
+#endif // WADMAPCONVERTER_VERSION_H

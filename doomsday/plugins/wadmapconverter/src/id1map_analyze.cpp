@@ -1,10 +1,9 @@
-/**
- * @file id1map_analyze.cpp @ingroup wadmapconverter
+/** @file id1map_analyze.cpp  id Tech 1 map analyses.
  *
- * id tech 1 post load map analyses.
+ * @ingroup wadmapconverter
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,6 +22,7 @@
 
 #include "wadmapconverter.h"
 #include <de/Log>
+#include <de/memory.h>
 #include <de/timer.h>
 
 static uint validCount = 0; // Used for Polyobj LineDef collection.
@@ -43,7 +43,7 @@ void Id1Map::collectPolyobjLinesWorker(LineList &lineList, coord_t x, coord_t y)
         coord_t v2[2] = { vertexes[i->v[1] * 2],
                           vertexes[i->v[1] * 2 + 1] };
 
-        if(FEQUAL(v1[VX], x) && FEQUAL(v1[VY], y))
+        if(de::fequal(v1[VX], x) && de::fequal(v1[VY], y))
         {
             i->validCount = validCount;
             lineList.push_back( i - lines.begin() );
@@ -72,8 +72,8 @@ void Id1Map::collectPolyobjLines(LineList &lineList, Lines::iterator lineIt)
     collectPolyobjLinesWorker(lineList, v2[VX], v2[VY]);
 }
 
-mpolyobj_t *Id1Map::createPolyobj(LineList &lineList, int tag,
-    int sequenceType, int16_t anchorX, int16_t anchorY)
+mpolyobj_t *Id1Map::createPolyobj(LineList &lineList, int tag, int sequenceType,
+    int16_t anchorX, int16_t anchorY)
 {
     // Allocate the new polyobj.
     polyobjs.push_back(mpolyobj_t());
@@ -87,24 +87,23 @@ mpolyobj_t *Id1Map::createPolyobj(LineList &lineList, int tag,
 
     // Construct the line indices array we'll pass to the MPE interface.
     po->lineCount = lineList.size();
-    po->lineIndices = (int*)malloc(sizeof(int) * po->lineCount);
+    po->lineIndices = (int *)M_Malloc(sizeof(int) * po->lineCount);
     int n = 0;
     for(LineList::iterator i = lineList.begin(); i != lineList.end(); ++i, ++n)
     {
         int lineIdx = *i;
-        mline_t* line = &lines[lineIdx];
+        mline_t *line = &lines[lineIdx];
 
         // This line now belongs to a polyobj.
         line->aFlags |= LAF_POLYOBJ;
 
-        /**
-         * Due a logic error in hexen.exe, when the column drawer is
-         * presented with polyobj segs built from two-sided linedefs;
-         * clipping is always calculated using the pegging logic for
-         * single-sided linedefs.
+        /*
+         * Due a logic error in hexen.exe, when the column drawer is presented
+         * with polyobj segs built from two-sided linedefs; clipping is always
+         * calculated using the pegging logic for single-sided linedefs.
          *
-         * Here we emulate this behavior by automatically applying
-         * bottom unpegging for two-sided linedefs.
+         * Here we emulate this behavior by automatically applying bottom unpegging
+         * for two-sided linedefs.
          */
         if(line->sides[LEFT] >= 0)
             line->ddFlags |= DDLF_DONTPEGBOTTOM;
