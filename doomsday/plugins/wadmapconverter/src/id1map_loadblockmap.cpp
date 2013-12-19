@@ -24,6 +24,8 @@
 #include "maplumpinfo.h"
 #include <de/Log>
 
+using namespace de;
+
 /**
  * Attempt to load the BLOCKMAP data resource.
  *

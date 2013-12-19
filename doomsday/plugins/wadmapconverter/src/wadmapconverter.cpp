@@ -25,6 +25,8 @@
 #include <de/Error>
 #include <de/Log>
 
+using namespace de;
+
 Id1Map *map;
 
 /**

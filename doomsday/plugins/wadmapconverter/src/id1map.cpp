@@ -32,22 +32,244 @@ using namespace de;
 static reader_s *bufferLump(MapLumpInfo *info);
 static void clearReadBuffer();
 
-Id1Map::Id1Map(MapFormatId format)
-    : mapFormat(format), numVertexes(0), vertexes(0)
-{}
+static uint validCount = 0; // Used for Polyobj LineDef collection.
 
-Id1Map::~Id1Map()
+DENG2_PIMPL(Id1Map)
 {
-    if(vertexes)
+    MapFormatId mapFormat;
+
+    uint numVertexes;
+    coord_t *vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
+
+    Lines lines;
+    Sides sides;
+    Sectors sectors;
+    Things things;
+    SurfaceTints surfaceTints;
+    Polyobjs polyobjs;
+
+    de::StringPool materials; ///< Material dictionary.
+
+    Instance(Public *i)
+        : Base(i)
+        , mapFormat(MF_UNKNOWN)
+        , numVertexes(0)
+        , vertexes(0)
+    {}
+
+    ~Instance()
     {
         M_Free(vertexes);
-        vertexes = 0;
+
+        DENG2_FOR_EACH(Polyobjs, i, polyobjs)
+        {
+            M_Free(i->lineIndices);
+        }
     }
 
-    DENG2_FOR_EACH(Polyobjs, i, polyobjs)
+    /**
+     * Create a temporary polyobj.
+     */
+    mpolyobj_t *createPolyobj(LineList &lineList, int tag, int sequenceType,
+        int16_t anchorX, int16_t anchorY)
     {
-        M_Free(i->lineIndices);
+        // Allocate the new polyobj.
+        polyobjs.push_back(mpolyobj_t());
+        mpolyobj_t *po = &polyobjs.back();
+
+        po->index      = polyobjs.size()-1;
+        po->tag        = tag;
+        po->seqType    = sequenceType;
+        po->anchor[VX] = anchorX;
+        po->anchor[VY] = anchorY;
+
+        // Construct the line indices array we'll pass to the MPE interface.
+        po->lineCount = lineList.size();
+        po->lineIndices = (int *)M_Malloc(sizeof(int) * po->lineCount);
+        int n = 0;
+        for(LineList::iterator i = lineList.begin(); i != lineList.end(); ++i, ++n)
+        {
+            int lineIdx = *i;
+            mline_t *line = &lines[lineIdx];
+
+            // This line now belongs to a polyobj.
+            line->aFlags |= LAF_POLYOBJ;
+
+            /*
+             * Due a logic error in hexen.exe, when the column drawer is presented
+             * with polyobj segs built from two-sided linedefs; clipping is always
+             * calculated using the pegging logic for single-sided linedefs.
+             *
+             * Here we emulate this behavior by automatically applying bottom unpegging
+             * for two-sided linedefs.
+             */
+            if(line->sides[LEFT] >= 0)
+                line->ddFlags |= DDLF_DONTPEGBOTTOM;
+
+            po->lineIndices[n] = lineIdx;
+        }
+
+        return po;
     }
+
+    /**
+     * Find all linedefs marked as belonging to a polyobject with the given tag
+     * and attempt to create a polyobject from them.
+     *
+     * @param tag  Line tag of linedefs to search for.
+     *
+     * @return  @c true = successfully created polyobj.
+     */
+    bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
+    {
+        LineList polyLines;
+
+        // First look for a PO_LINE_START linedef set with this tag.
+        DENG2_FOR_EACH(Lines, i, lines)
+        {
+            // Already belongs to another polyobj?
+            if(i->aFlags & LAF_POLYOBJ) continue;
+
+            if(!(i->xType == PO_LINE_START && i->xArgs[0] == tag)) continue;
+
+            collectPolyobjLines(polyLines, i);
+            if(!polyLines.empty())
+            {
+                int8_t sequenceType = i->xArgs[2];
+                if(sequenceType >= SEQTYPE_NUMSEQ) sequenceType = 0;
+
+                createPolyobj(polyLines, tag, sequenceType, anchorX, anchorY);
+                return true;
+            }
+            return false;
+        }
+
+        // Perhaps a PO_LINE_EXPLICIT linedef set with this tag?
+        for(int n = 0; ; ++n)
+        {
+            bool foundAnotherLine = false;
+
+            DENG2_FOR_EACH(Lines, i, lines)
+            {
+                // Already belongs to another polyobj?
+                if(i->aFlags & LAF_POLYOBJ) continue;
+
+                if(i->xType == PO_LINE_EXPLICIT && i->xArgs[0] == tag)
+                {
+                    if(i->xArgs[1] <= 0)
+                    {
+                        LOG_WARNING("Linedef missing (probably #%d) in explicit polyobj (tag:%d).") << n + 1 << tag;
+                        return false;
+                    }
+
+                    if(i->xArgs[1] == n + 1)
+                    {
+                        // Add this line to the list.
+                        polyLines.push_back( i - lines.begin() );
+                        foundAnotherLine = true;
+
+                        // Clear any special.
+                        i->xType = 0;
+                        i->xArgs[0] = 0;
+                    }
+                }
+            }
+
+            if(foundAnotherLine)
+            {
+                // Check if an explicit line order has been skipped.
+                // A line has been skipped if there are any more explicit lines with
+                // the current tag value.
+                DENG2_FOR_EACH(Lines, i, lines)
+                {
+                    if(i->xType == PO_LINE_EXPLICIT && i->xArgs[0] == tag)
+                    {
+                        LOG_WARNING("Linedef missing (#%d) in explicit polyobj (tag:%d).") << n << tag;
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                // All lines have now been found.
+                break;
+            }
+        }
+
+        if(polyLines.empty())
+        {
+            LOG_WARNING("Failed to locate a single line for polyobj (tag:%d).") << tag;
+            return false;
+        }
+
+        mline_t *line = &lines[ polyLines.front() ];
+        int8_t const sequenceType = line->xArgs[3];
+
+        // Setup the mirror if it exists.
+        line->xArgs[1] = line->xArgs[2];
+
+        createPolyobj(polyLines, tag, sequenceType, anchorX, anchorY);
+        return true;
+    }
+
+    /**
+     * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
+     *                  of lines in the polyobj.
+     */
+    void collectPolyobjLinesWorker(LineList &lineList, coord_t x, coord_t y)
+    {
+        DENG2_FOR_EACH(Lines, i, lines)
+        {
+            // Already belongs to another polyobj?
+            if(i->aFlags & LAF_POLYOBJ) continue;
+
+            // Have we already encounterd this?
+            if(i->validCount == validCount) continue;
+
+            coord_t v1[2] = { vertexes[i->v[0] * 2],
+                              vertexes[i->v[0] * 2 + 1] };
+
+            coord_t v2[2] = { vertexes[i->v[1] * 2],
+                              vertexes[i->v[1] * 2 + 1] };
+
+            if(de::fequal(v1[VX], x) && de::fequal(v1[VY], y))
+            {
+                i->validCount = validCount;
+                lineList.push_back( i - lines.begin() );
+                collectPolyobjLinesWorker(lineList, v2[VX], v2[VY]);
+            }
+        }
+    }
+
+    /**
+     * @todo This terribly inefficent (naive) algorithm may need replacing
+     *       (it is far outside an acceptable polynomial range!).
+     */
+    void collectPolyobjLines(LineList &lineList, Lines::iterator lineIt)
+    {
+        mline_t &line = *lineIt;
+        line.xType    = 0;
+        line.xArgs[0] = 0;
+
+        coord_t v2[2] = { vertexes[line.v[1] * 2],
+                          vertexes[line.v[1] * 2 + 1] };
+
+        validCount++;
+        // Insert the first line.
+        lineList.push_back(lineIt - lines.begin());
+        line.validCount = validCount;
+        collectPolyobjLinesWorker(lineList, v2[VX], v2[VY]);
+    }
+};
+
+Id1Map::Id1Map(MapFormatId format) : d(new Instance(this))
+{
+    d->mapFormat = format;
+}
+
+MapFormatId Id1Map::format() const
+{
+    return d->mapFormat;
 }
 
 /// @todo fixme: A real performance killer...
@@ -60,13 +282,18 @@ AutoStr *Id1Map::composeMaterialRef(MaterialDictId id)
     return ref;
 }
 
+String const &Id1Map::findMaterialInDictionary(MaterialDictId id) const
+{
+    return d->materials.stringRef(id);
+}
+
 MaterialDictId Id1Map::addMaterialToDictionary(char const *name, MaterialDictGroup group)
 {
     DENG2_ASSERT(name != 0);
 
     // Prepare the encoded URI for insertion into the dictionary.
     AutoStr *uriCString;
-    if(mapFormat == MF_DOOM64)
+    if(d->mapFormat == MF_DOOM64)
     {
         // Doom64 maps reference materials with unique ids.
         int uniqueId = *((int*) name);
@@ -98,7 +325,7 @@ MaterialDictId Id1Map::addMaterialToDictionary(char const *name, MaterialDictGro
     }
 
     // Intern this material URI in the dictionary.
-    MaterialDictId internId = materials.intern(de::String(Str_Text(uriCString)));
+    MaterialDictId internId = d->materials.intern(de::String(Str_Text(uriCString)));
 
     // We're done (phew!).
     return internId;
@@ -111,17 +338,17 @@ bool Id1Map::loadVertexes(reader_s *reader, int numElements)
     LOG_TRACE("Processing vertexes...");
     for(int n = 0; n < numElements; ++n)
     {
-        switch(mapFormat)
+        switch(d->mapFormat)
         {
         default:
         case MF_DOOM:
-            vertexes[n * 2]     = coord_t( SHORT(Reader_ReadInt16(reader)) );
-            vertexes[n * 2 + 1] = coord_t( SHORT(Reader_ReadInt16(reader)) );
+            d->vertexes[n * 2]     = coord_t( SHORT(Reader_ReadInt16(reader)) );
+            d->vertexes[n * 2 + 1] = coord_t( SHORT(Reader_ReadInt16(reader)) );
             break;
 
         case MF_DOOM64:
-            vertexes[n * 2]     = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
-            vertexes[n * 2 + 1] = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
+            d->vertexes[n * 2]     = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
+            d->vertexes[n * 2 + 1] = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
             break;
         }
     }
@@ -136,25 +363,25 @@ bool Id1Map::loadLineDefs(reader_s *reader, int numElements)
     LOG_TRACE("Processing line definitions...");
     if(numElements)
     {
-        lines.reserve(lines.size() + numElements);
+        d->lines.reserve(d->lines.size() + numElements);
         for(int n = 0; n < numElements; ++n)
         {
-            switch(mapFormat)
+            switch(d->mapFormat)
             {
             default:
             case MF_DOOM:
-                lines.push_back(mline_t());
-                MLine_Read(&lines.back(), n, reader);
+                d->lines.push_back(mline_t());
+                MLine_Read(&d->lines.back(), n, reader);
                 break;
 
             case MF_DOOM64:
-                lines.push_back(mline_t());
-                MLine64_Read(&lines.back(), n, reader);
+                d->lines.push_back(mline_t());
+                MLine64_Read(&d->lines.back(), n, reader);
                 break;
 
             case MF_HEXEN:
-                lines.push_back(mline_t());
-                MLineHx_Read(&lines.back(), n, reader);
+                d->lines.push_back(mline_t());
+                MLineHx_Read(&d->lines.back(), n, reader);
                 break;
             }
         }
@@ -170,20 +397,20 @@ bool Id1Map::loadSideDefs(reader_s *reader, int numElements)
     LOG_TRACE("Processing side definitions...");
     if(numElements)
     {
-        sides.reserve(sides.size() + numElements);
+        d->sides.reserve(d->sides.size() + numElements);
         for(int n = 0; n < numElements; ++n)
         {
-            switch(mapFormat)
+            switch(d->mapFormat)
             {
             default:
             case MF_DOOM:
-                sides.push_back(mside_t());
-                MSide_Read(&sides.back(), n, reader);
+                d->sides.push_back(mside_t());
+                MSide_Read(&d->sides.back(), n, reader);
                 break;
 
             case MF_DOOM64:
-                sides.push_back(mside_t());
-                MSide64_Read(&sides.back(), n, reader);
+                d->sides.push_back(mside_t());
+                MSide64_Read(&d->sides.back(), n, reader);
                 break;
             }
         }
@@ -199,19 +426,19 @@ bool Id1Map::loadSectors(reader_s *reader, int numElements)
     LOG_TRACE("Processing sectors...");
     if(numElements)
     {
-        sectors.reserve(sectors.size() + numElements);
+        d->sectors.reserve(d->sectors.size() + numElements);
         for(int n = 0; n < numElements; ++n)
         {
-            switch(mapFormat)
+            switch(d->mapFormat)
             {
             default:
-                sectors.push_back(msector_t());
-                MSector_Read(&sectors.back(), n, reader);
+                d->sectors.push_back(msector_t());
+                MSector_Read(&d->sectors.back(), n, reader);
                 break;
 
             case MF_DOOM64:
-                sectors.push_back(msector_t());
-                MSector64_Read(&sectors.back(), n, reader);
+                d->sectors.push_back(msector_t());
+                MSector64_Read(&d->sectors.back(), n, reader);
                 break;
             }
         }
@@ -227,25 +454,25 @@ bool Id1Map::loadThings(reader_s *reader, int numElements)
     LOG_TRACE("Processing things...");
     if(numElements)
     {
-        things.reserve(things.size() + numElements);
+        d->things.reserve(d->things.size() + numElements);
         for(int n = 0; n < numElements; ++n)
         {
-            switch(mapFormat)
+            switch(d->mapFormat)
             {
             default:
             case MF_DOOM:
-                things.push_back(mthing_t());
-                MThing_Read(&things.back(), n, reader);
+                d->things.push_back(mthing_t());
+                MThing_Read(&d->things.back(), n, reader);
                 break;
 
             case MF_DOOM64:
-                things.push_back(mthing_t());
-                MThing64_Read(&things.back(), n, reader);
+                d->things.push_back(mthing_t());
+                MThing64_Read(&d->things.back(), n, reader);
                 break;
 
             case MF_HEXEN:
-                things.push_back(mthing_t());
-                MThingHx_Read(&things.back(), n, reader);
+                d->things.push_back(mthing_t());
+                MThingHx_Read(&d->things.back(), n, reader);
                 break;
             }
         }
@@ -261,11 +488,11 @@ bool Id1Map::loadSurfaceTints(reader_s *reader, int numElements)
     LOG_TRACE("Processing surface tints...");
     if(numElements)
     {
-        surfaceTints.reserve(surfaceTints.size() + numElements);
+        d->surfaceTints.reserve(d->surfaceTints.size() + numElements);
         for(int n = 0; n < numElements; ++n)
         {
-            surfaceTints.push_back(surfacetint_t());
-            SurfaceTint_Read(&surfaceTints.back(), n, reader);
+            d->surfaceTints.push_back(surfacetint_t());
+            SurfaceTint_Read(&d->surfaceTints.back(), n, reader);
         }
     }
 
@@ -276,11 +503,11 @@ void Id1Map::load(MapLumpInfos &lumpInfos)
 {
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
-    size_t elementSize = ElementSizeForMapLumpType(mapFormat, ML_VERTEXES);
+    size_t elementSize = ElementSizeForMapLumpType(d->mapFormat, ML_VERTEXES);
     uint numElements = lumpInfos[ML_VERTEXES]->length / elementSize;
 
-    numVertexes = numElements;
-    vertexes = (coord_t *)M_Malloc(numVertexes * 2 * sizeof(*vertexes));
+    d->numVertexes = numElements;
+    d->vertexes = (coord_t *)M_Malloc(d->numVertexes * 2 * sizeof(*d->vertexes));
 
     DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
     {
@@ -288,7 +515,7 @@ void Id1Map::load(MapLumpInfos &lumpInfos)
 
         if(!info || !info->length) continue;
 
-        elementSize = ElementSizeForMapLumpType(mapFormat, info->type);
+        elementSize = ElementSizeForMapLumpType(d->mapFormat, info->type);
         if(!elementSize) continue;
 
         // Process this data lump.
@@ -312,15 +539,37 @@ void Id1Map::load(MapLumpInfos &lumpInfos)
     clearReadBuffer();
 }
 
+void Id1Map::analyze()
+{
+    uint startTime = Timer_RealMilliseconds();
+
+    LOG_AS("Id1Map");
+    if(d->mapFormat == MF_HEXEN)
+    {
+        LOG_TRACE("Locating polyobjs...");
+        DENG2_FOR_EACH(Things, i, d->things)
+        {
+            // A polyobj anchor?
+            if(i->doomEdNum == PO_ANCHOR_DOOMEDNUM)
+            {
+                int const tag = i->angle;
+                d->findAndCreatePolyobj(tag, i->origin[VX], i->origin[VY]);
+            }
+        }
+    }
+
+    LOG_VERBOSE("Analyses completed in %.2f seconds.") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
+}
+
 void Id1Map::transferVertexes()
 {
     LOG_TRACE("Transfering vertexes...");
-    int *indices = new int[numVertexes];
-    for(uint i = 0; i < numVertexes; ++i)
+    int *indices = new int[d->numVertexes];
+    for(uint i = 0; i < d->numVertexes; ++i)
     {
         indices[i] = i;
     }
-    MPE_VertexCreatev(numVertexes, vertexes, indices, 0);
+    MPE_VertexCreatev(d->numVertexes, d->vertexes, indices, 0);
     delete[] indices;
 }
 
@@ -328,7 +577,7 @@ void Id1Map::transferSectors()
 {
     LOG_TRACE("Transfering sectors...");
 
-    DENG2_FOR_EACH(Sectors, i, sectors)
+    DENG2_FOR_EACH(Sectors, i, d->sectors)
     {
         int idx = MPE_SectorCreate(float(i->lightLevel) / 255.0f, 1, 1, 1, i->index);
 
@@ -340,7 +589,7 @@ void Id1Map::transferSectors()
         MPE_GameObjProperty("XSector", idx, "Tag",    DDVT_SHORT, &i->tag);
         MPE_GameObjProperty("XSector", idx, "Type",   DDVT_SHORT, &i->type);
 
-        if(mapFormat == MF_DOOM64)
+        if(d->mapFormat == MF_DOOM64)
         {
             MPE_GameObjProperty("XSector", idx, "Flags",          DDVT_SHORT, &i->d64flags);
             MPE_GameObjProperty("XSector", idx, "CeilingColor",   DDVT_SHORT, &i->d64ceilingColor);
@@ -355,12 +604,12 @@ void Id1Map::transferSectors()
 void Id1Map::transferLinesAndSides()
 {
     LOG_TRACE("Transfering lines and sides...");
-    DENG2_FOR_EACH(Lines, i, lines)
+    DENG2_FOR_EACH(Lines, i, d->lines)
     {
-        mside_t *front = ((i)->sides[RIGHT] >= 0? &sides[(i)->sides[RIGHT]] : 0);
-        mside_t *back  = ((i)->sides[LEFT]  >= 0? &sides[(i)->sides[LEFT]] : 0);
+        mside_t *front = ((i)->sides[RIGHT] >= 0? &d->sides[(i)->sides[RIGHT]] : 0);
+        mside_t *back  = ((i)->sides[LEFT]  >= 0? &d->sides[(i)->sides[LEFT]] : 0);
 
-        int sideFlags = (mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0);
+        int sideFlags = (d->mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0);
 
         // Interpret the lack of a ML_TWOSIDED line flag to mean the
         // suppression of the side relative back sector.
@@ -394,7 +643,7 @@ void Id1Map::transferLinesAndSides()
 
         MPE_GameObjProperty("XLinedef", lineIdx, "Flags", DDVT_SHORT, &i->flags);
 
-        switch(mapFormat)
+        switch(d->mapFormat)
         {
         default:
         case MF_DOOM:
@@ -424,12 +673,12 @@ void Id1Map::transferLinesAndSides()
 
 void Id1Map::transferSurfaceTints()
 {
-    if(surfaceTints.empty()) return;
+    if(d->surfaceTints.empty()) return;
 
     LOG_TRACE("Transfering surface tints...");
-    DENG2_FOR_EACH(SurfaceTints, i, surfaceTints)
+    DENG2_FOR_EACH(SurfaceTints, i, d->surfaceTints)
     {
-        int idx = i - surfaceTints.begin();
+        int idx = i - d->surfaceTints.begin();
 
         MPE_GameObjProperty("Light", idx, "ColorR",   DDVT_FLOAT, &i->rgb[0]);
         MPE_GameObjProperty("Light", idx, "ColorG",   DDVT_FLOAT, &i->rgb[1]);
@@ -442,10 +691,10 @@ void Id1Map::transferSurfaceTints()
 
 void Id1Map::transferPolyobjs()
 {
-    if(polyobjs.empty()) return;
+    if(d->polyobjs.empty()) return;
 
     LOG_TRACE("Transfering polyobjs...");
-    DENG2_FOR_EACH(Polyobjs, i, polyobjs)
+    DENG2_FOR_EACH(Polyobjs, i, d->polyobjs)
     {
         MPE_PolyobjCreate(i->lineIndices, i->lineCount, i->tag, i->seqType,
                           coord_t(i->anchor[VX]), coord_t(i->anchor[VY]),
@@ -455,12 +704,12 @@ void Id1Map::transferPolyobjs()
 
 void Id1Map::transferThings()
 {
-    if(things.empty()) return;
+    if(d->things.empty()) return;
 
     LOG_TRACE("Transfering things...");
-    DENG2_FOR_EACH(Things, i, things)
+    DENG2_FOR_EACH(Things, i, d->things)
     {
-        int idx = i - things.begin();
+        int idx = i - d->things.begin();
 
         MPE_GameObjProperty("Thing", idx, "X",            DDVT_SHORT, &i->origin[VX]);
         MPE_GameObjProperty("Thing", idx, "Y",            DDVT_SHORT, &i->origin[VY]);
@@ -470,11 +719,11 @@ void Id1Map::transferThings()
         MPE_GameObjProperty("Thing", idx, "SkillModes",   DDVT_INT,   &i->skillModes);
         MPE_GameObjProperty("Thing", idx, "Flags",        DDVT_INT,   &i->flags);
 
-        if(mapFormat == MF_DOOM64)
+        if(d->mapFormat == MF_DOOM64)
         {
             MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->d64TID);
         }
-        else if(mapFormat == MF_HEXEN)
+        else if(d->mapFormat == MF_HEXEN)
         {
             MPE_GameObjProperty("Thing", idx, "Special",  DDVT_BYTE,  &i->xSpecial);
             MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->xTID);

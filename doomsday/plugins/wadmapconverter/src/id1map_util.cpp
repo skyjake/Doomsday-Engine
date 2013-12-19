@@ -24,7 +24,9 @@
 #include "maplumpinfo.h"
 #include <de/libdeng2.h>
 
-Str const *MapFormatNameForId(MapFormatId id)
+using namespace de;
+
+ddstring_s const *MapFormatNameForId(MapFormatId id)
 {
     static const de::Str names[1 + NUM_MAPFORMATS] = {
         /* MF_UNKNOWN */ "Unknown",
