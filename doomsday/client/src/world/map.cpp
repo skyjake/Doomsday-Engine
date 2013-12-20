@@ -1139,12 +1139,6 @@ Map::Map(Uri const &uri) : d(new Instance(this, uri))
     _ambientLightLevel = 0;
 }
 
-void Map::consoleRegister() // static
-{
-    Mobj_ConsoleRegister();
-    C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
-}
-
 Mesh const &Map::mesh() const
 {
     return d->mesh;
@@ -2446,6 +2440,46 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 }
 
 #endif // __CLIENT__
+
+D_CMD(InspectMap)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    if(!App_World().hasMap())
+    {
+        LOG_WARNING("No map is currently loaded.");
+        return false;
+    }
+
+    // Print summary information about the current map.
+    Map &map = App_World().map();
+
+#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
+
+    LOG_MSG(_E(b) "Current map elements:");
+    String str;
+    QTextStream os(&str);
+    os << TABBED(map.vertexCount(),  "Vertexes");
+    os << TABBED(map.lineCount(),    "Lines");
+    os << TABBED(map.polyobjCount(), "Polyobjs");
+    os << TABBED(map.sectorCount(),  "Sectors");
+    os << TABBED(map.bspNodeCount(), "BSP Nodes");
+    os << TABBED(map.bspLeafCount(), "BSP Leafs");
+
+    LOG_INFO("%s") << str.rightStrip();
+
+    return true;
+
+#undef TABBED
+}
+
+void Map::consoleRegister() // static
+{
+    Mobj_ConsoleRegister();
+    C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
+
+    C_CMD("inspectmap", "", InspectMap);
+}
 
 /// Runtime map editing -----------------------------------------------------
 

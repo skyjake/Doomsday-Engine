@@ -1,4 +1,4 @@
-/** @file world.cpp World.
+/** @file world.cpp  World.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,31 +18,22 @@
  * 02110-1301 USA</small>
  */
 
-#include <map>
-#include <utility>
+#include "de_platform.h"
+#include "world/world.h"
 
-#include <QMap>
-#include <QtAlgorithms>
-
-#include <de/memoryzone.h>
-
-#include <de/Error>
-#include <de/Log>
-#include <de/Time>
-
-#include "de_base.h"
-#include "de_console.h"
 #include "de_defs.h"
 #include "de_play.h"
 #include "de_filesys.h"
-
-#include "BspLeaf"
-#include "Plane"
-#include "Sector"
+#include "con_main.h"
+#include "con_bar.h"
 
 #include "audio/s_main.h"
 #include "edit_map.h"
 #include "network/net_main.h"
+
+#include "BspLeaf"
+#include "Plane"
+#include "Sector"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -68,7 +59,14 @@
 
 #include "world/thinkers.h"
 
-#include "world/world.h"
+#include <de/Error>
+#include <de/Log>
+#include <de/Time>
+#include <de/memoryzone.h>
+#include <QMap>
+#include <QtAlgorithms>
+#include <map>
+#include <utility>
 
 using namespace de;
 
@@ -83,9 +81,9 @@ static float handDistance = 300; //cvar
  *
  * @todo Consolidate with the missing material reporting done elsewhere -ds
  */
-class MapConversionReporter :
-DENG2_OBSERVES(Map, UnclosedSectorFound),
-DENG2_OBSERVES(Map, OneWayWindowFound)
+class MapConversionReporter
+: DENG2_OBSERVES(Map, UnclosedSectorFound)
+, DENG2_OBSERVES(Map, OneWayWindowFound)
 {
     /// Record "unclosed sectors".
     /// Sector index => world point relatively near to the problem area.
@@ -211,16 +209,6 @@ static String cacheIdForMap(String const &sourcePath)
 
 namespace de {
 
-/**
- * Data for a map load task.
- */
-struct MapLoadTaskData
-{
-    Uri uri;
-    QScopedPointer<Map> map;
-    QScopedPointer<MapConversionReporter> reporter;
-};
-
 DENG2_PIMPL(World)
 {
     /**
@@ -233,24 +221,19 @@ DENG2_PIMPL(World)
         //bool dataAvailable;
         //bool lastLoadAttemptFailed;
     };
-
     typedef QMap<String, MapCacheRecord> MapRecords;
-
-    /// Map cache records.
     MapRecords records;
 
-    /// Current map.
-    Map *map;
-
-    /// World-wide time.
-    timespan_t time;
-
+    Map *map;                  ///< Current map.
+    timespan_t time;           ///< World-wide time.
 #ifdef __CLIENT__
-    /// Hand for runtime map manipulation/editing.
-    QScopedPointer<Hand> hand;
+    QScopedPointer<Hand> hand; ///< For map editing/manipulation.
 #endif
 
-    Instance(Public *i) : Base(i), map(0), time(0)
+    Instance(Public *i)
+        : Base(i)
+        , map(0)
+        , time(0)
     {}
 
     void notifyMapChange()
@@ -327,6 +310,16 @@ DENG2_PIMPL(World)
 
         return records.insert(uri.resolved(), rec).value();
     }
+
+    /**
+     * Data for a map load task.
+     */
+    struct MapLoadTaskData
+    {
+        Uri uri;
+        QScopedPointer<Map> map;
+        QScopedPointer<MapConversionReporter> reporter;
+    };
 
     /**
      * Attempt JIT conversion of the map data with the help of a plugin.
@@ -482,21 +475,7 @@ DENG2_PIMPL(World)
 #endif
 
         // Print summary information about this map.
-#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
-
-        LOG_MSG(_E(b) "Current map elements:");
-        String str;
-        QTextStream os(&str);
-        os << TABBED(map->vertexCount(),  "Vertexes");
-        os << TABBED(map->lineCount(),    "Lines");
-        os << TABBED(map->polyobjCount(), "Polyobjs");
-        os << TABBED(map->sectorCount(),  "Sectors");
-        os << TABBED(map->bspNodeCount(), "BSP Nodes");
-        os << TABBED(map->bspLeafCount(), "BSP Leafs");
-
-        LOG_INFO("%s") << str.rightStrip();
-
-#undef TABBED
+        Con_Execute(CMDS_DDAY, "inspectmap", true, false);
 
         // See what MapInfo says about this map.
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s const *>(&map->uri()));
@@ -814,13 +793,13 @@ Map &World::map() const
 
 bool World::changeMap(de::Uri const &uri)
 {
-    Instance::changemapworker_params_t parm;
-    parm.inst = d;
-    parm.uri  = &uri;
-
     // Switch to busy mode (if we haven't already) except when simply unloading.
     if(!uri.isEmpty() && !BusyMode_Active())
     {
+        Instance::changemapworker_params_t parm;
+        parm.inst = d;
+        parm.uri  = &uri;
+
         BusyTask task; zap(task);
         /// @todo Use progress bar mode and update progress during the setup.
         task.mode       = BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
@@ -832,7 +811,7 @@ bool World::changeMap(de::Uri const &uri)
     }
     else
     {
-        return CPP_BOOL(d->changeMapWorker(&parm));
+        return d->changeMap(uri);
     }
 }
 

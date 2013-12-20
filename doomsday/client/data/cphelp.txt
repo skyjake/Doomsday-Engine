@@ -161,6 +161,9 @@ desc = Execute a command if the condition is true.
 [inc]
 desc = Add 1 to a cvar.
 
+[inspectmap]
+desc = Print extended information about the current map to the console.
+
 [inspectmaterial]
 desc = Print extended information about a Material to the console.
 inf = Params: inspectmaterial (uri)\nFor example, 'inspectmaterial flats:fwater1'.
