@@ -26,29 +26,27 @@
 
 using namespace de;
 
-ddstring_s const *MapFormatNameForId(MapFormatId id)
+String const &MapFormatNameForId(Id1Map::Format id)
 {
-    static const de::Str names[1 + NUM_MAPFORMATS] = {
+    static String const names[1 + Id1Map::MapFormatCount] = {
         /* MF_UNKNOWN */ "Unknown",
-        /* MF_DOOM    */ "Doom",
-        /* MF_HEXEN   */ "Hexen",
-        /* MF_DOOM64  */ "Doom64"
+        /* MF_DOOM    */ "id Tech 1 (Doom)",
+        /* MF_HEXEN   */ "id Tech 1 (Hexen)",
+        /* MF_DOOM64  */ "id Tech 1 (Doom64)"
     };
-    if(VALID_MAPFORMATID(id))
+    if(id >= Id1Map::DoomFormat && id < Id1Map::MapFormatCount)
     {
         return names[1 + id];
     }
     return names[0];
 }
 
-MapLumpType MapLumpTypeForName(char const *name)
+MapLumpType MapLumpTypeForName(String name)
 {
-    DENG2_ASSERT(name != 0);
-
-    static const struct maplumpnametypepair_s {
-        char const *name;
+    static const struct LumpTypeInfo {
+        String name;
         MapLumpType type;
-    } lumptypeForNameDict[] =
+    } lumpTypeInfo[] =
     {
         { "THINGS",     ML_THINGS },
         { "LINEDEFS",   ML_LINEDEFS },
@@ -70,15 +68,22 @@ MapLumpType MapLumpTypeForName(char const *name)
         { "GL_SSECT",   ML_GLSSECT },
         { "GL_NODES",   ML_GLNODES },
         { "GL_PVS",     ML_GLPVS},
-        { NULL,         ML_INVALID }
+        { "",           ML_INVALID }
     };
 
-    if(name[0])
+    // Ignore the file extension if present.
+    name = name.fileNameWithoutExtension();
+
+    if(!name.isEmpty())
     {
-        for(int i = 0; lumptypeForNameDict[i].name; ++i)
+        for(int i = 0; !lumpTypeInfo[i].name.isEmpty(); ++i)
         {
-            if(!qstrnicmp(lumptypeForNameDict[i].name, name, strlen(lumptypeForNameDict[i].name)))
-                return lumptypeForNameDict[i].type;
+            LumpTypeInfo const &info = lumpTypeInfo[i];
+            if(!info.name.compareWithoutCase(name) &&
+               info.name.length() == name.length())
+            {
+                return info.type;
+            }
         }
     }
 

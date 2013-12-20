@@ -98,12 +98,12 @@ static void collectMapLumps(MapLumpInfos &lumpInfos, lumpnum_t startLump)
     }
 }
 
-static MapFormatId recognizeMapFormat(MapLumpInfos &lumpInfos)
+static Id1Map::Format recognizeMapFormat(MapLumpInfos &lumpInfos)
 {
     LOG_AS("WadMapConverter");
 
     // Assume DOOM format by default.
-    MapFormatId mapFormat = MF_DOOM;
+    Id1Map::Format mapFormat = Id1Map::DoomFormat;
 
     // Some data lumps are specific to a particular map format and thus
     // their presence unambiguously signifies which format we have.
@@ -116,11 +116,11 @@ static MapFormatId recognizeMapFormat(MapLumpInfos &lumpInfos)
         {
         default: break;
 
-        case ML_BEHAVIOR:   mapFormat = MF_HEXEN; break;
+        case ML_BEHAVIOR:   mapFormat = Id1Map::HexenFormat; break;
 
         case ML_MACROS:
         case ML_LIGHTS:
-        case ML_LEAFS:      mapFormat = MF_DOOM64; break;
+        case ML_LEAFS:      mapFormat = Id1Map::Doom64Format; break;
         }
     }
 
@@ -151,7 +151,7 @@ static MapFormatId recognizeMapFormat(MapLumpInfos &lumpInfos)
             if(0 != info->length % elementSize)
             {
                 // What is this??
-                return MF_UNKNOWN;
+                return Id1Map::UnknownFormat;
             }
 
             *elmCountAddr += info->length / elementSize;
@@ -161,27 +161,19 @@ static MapFormatId recognizeMapFormat(MapLumpInfos &lumpInfos)
     // A valid map has at least one of each of these elements.
     if(!numVertexes || !numLines || !numSides || !numSectors)
     {
-        return MF_UNKNOWN;
+        return Id1Map::UnknownFormat;
     }
 
-    LOG_INFO("Recognized a %s format map.") << Str_Text(MapFormatNameForId(mapFormat));
+    LOG_INFO("Recognized a %s format map.") << MapFormatNameForId(mapFormat);
     return mapFormat;
 }
 
-static void loadAndTransferMap(Uri const *uri, MapFormatId mapFormat,
+static void loadAndTransferMap(Uri const *uri, Id1Map::Format mapFormat,
     MapLumpInfos &lumpInfos)
 {
-    DENG2_ASSERT(VALID_MAPFORMATID(mapFormat));
-
     // Load the archived map.
     map = new Id1Map(mapFormat);
     map->load(lumpInfos);
-
-    // Perform post read analyses.
-    {
-        LOG_AS("WadMapConverter");
-        map->analyze();
-    }
 
     // Rebuild the map in Doomsday's native format.
     MPE_Begin(uri);
@@ -202,14 +194,12 @@ static void loadAndTransferMap(Uri const *uri, MapFormatId mapFormat,
  * Our job is to read in the map data structures then use the Doomsday map
  * editing interface to recreate the map in native format.
  */
-int ConvertMapHook(int hookType, int parm, void *context)
+int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
 {
-    MapLumpInfos lumpInfos;
-    MapFormatId mapFormat;
+    DENG2_ASSERT(context != 0);
 
-    DENG2_UNUSED(hookType);
-    DENG2_UNUSED(parm);
-    DENG2_ASSERT(context);
+    Id1Map::Format mapFormat = Id1Map::UnknownFormat;
+    MapLumpInfos lumpInfos;
 
     // Begin the conversion attempt.
     int ret_val = true; // Assume success.
@@ -228,7 +218,7 @@ int ConvertMapHook(int hookType, int parm, void *context)
 
     // Do we recognize this format?
     mapFormat = recognizeMapFormat(lumpInfos);
-    if(!VALID_MAPFORMATID(mapFormat))
+    if(mapFormat == Id1Map::UnknownFormat)
     {
         ret_val = false;
         goto FAIL_UNKNOWN_FORMAT;
@@ -239,7 +229,7 @@ int ConvertMapHook(int hookType, int parm, void *context)
     {
         loadAndTransferMap(uri, mapFormat, lumpInfos);
     }
-    catch(Id1Map::LumpBufferError const &er)
+    catch(Id1Map::LoadError const &er)
     {
         LOG_AS("WadMapConverter");
         LOG_WARNING("Load error: %s\nAborting conversion...") << er.asText();

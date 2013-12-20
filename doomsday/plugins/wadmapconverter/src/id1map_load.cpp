@@ -21,30 +21,31 @@
  */
 
 #include "wadmapconverter.h"
+#include "id1map_datatypes.h"
 #include <de/libdeng2.h>
 
-size_t ElementSizeForMapLumpType(MapFormatId mapFormat, MapLumpType type)
+size_t ElementSizeForMapLumpType(Id1Map::Format mapFormat, MapLumpType type)
 {
     switch(type)
     {
     default: return 0;
 
     case ML_VERTEXES:
-        return (mapFormat == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64VERTEX : SIZEOF_VERTEX);
 
     case ML_LINEDEFS:
-        return (mapFormat == MF_DOOM64? SIZEOF_64LINEDEF :
-                mapFormat == MF_HEXEN ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64LINEDEF :
+                mapFormat == Id1Map::HexenFormat ? SIZEOF_XLINEDEF  : SIZEOF_LINEDEF);
 
     case ML_SIDEDEFS:
-        return (mapFormat == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
 
     case ML_SECTORS:
-        return (mapFormat == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64SECTOR : SIZEOF_SECTOR);
 
     case ML_THINGS:
-        return (mapFormat == MF_DOOM64? SIZEOF_64THING :
-                mapFormat == MF_HEXEN ? SIZEOF_XTHING  : SIZEOF_THING);
+        return (mapFormat == Id1Map::Doom64Format? SIZEOF_64THING :
+                mapFormat == Id1Map::HexenFormat ? SIZEOF_XTHING  : SIZEOF_THING);
 
     case ML_LIGHTS:
         return SIZEOF_LIGHT;
@@ -54,7 +55,7 @@ size_t ElementSizeForMapLumpType(MapFormatId mapFormat, MapLumpType type)
 /**
  * Translate the line definition flags for Doomsday.
  */
-static void interpretLineDefFlags(mline_t *l, MapFormatId mapFormat)
+static void interpretLineDefFlags(mline_t *l, Id1Map::Format mapFormat)
 {
 #define ML_BLOCKING              1 ///< Solid, is an obstacle.
 #define ML_DONTPEGTOP            8 ///< Upper texture unpegged.
@@ -79,7 +80,7 @@ static void interpretLineDefFlags(mline_t *l, MapFormatId mapFormat)
      *
      * Only valid for DOOM format maps.
      */
-    if(mapFormat == MF_DOOM)
+    if(mapFormat == Id1Map::DoomFormat)
     {
         if(l->flags & ML_INVALID)
             l->flags &= DOOM_VALIDMASK;
@@ -234,13 +235,13 @@ void MSide_Read(mside_t *s, int index, Reader *reader)
 
     char name[9];
     Reader_Read(reader, name, 8); name[8] = '\0';
-    s->topMaterial    = map->addMaterialToDictionary(name, MG_WALL);
+    s->topMaterial    = map->toMaterialId(name, Id1Map::WallMaterials);
 
     Reader_Read(reader, name, 8); name[8] = '\0';
-    s->bottomMaterial = map->addMaterialToDictionary(name, MG_WALL);
+    s->bottomMaterial = map->toMaterialId(name, Id1Map::WallMaterials);
 
     Reader_Read(reader, name, 8); name[8] = '\0';
-    s->middleMaterial = map->addMaterialToDictionary(name, MG_WALL);
+    s->middleMaterial = map->toMaterialId(name, Id1Map::WallMaterials);
 
     int idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
     if(idx == 0xFFFF) s->sector = -1;
@@ -259,13 +260,13 @@ void MSide64_Read(mside_t *s, int index, Reader *reader)
 
     int idx;
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    s->topMaterial    = map->addMaterialToDictionary((const char*) &idx, MG_WALL);
+    s->topMaterial    = map->toMaterialId(idx, Id1Map::WallMaterials);
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    s->bottomMaterial = map->addMaterialToDictionary((const char*) &idx, MG_WALL);
+    s->bottomMaterial = map->toMaterialId(idx, Id1Map::WallMaterials);
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    s->middleMaterial = map->addMaterialToDictionary((const char*) &idx, MG_WALL);
+    s->middleMaterial = map->toMaterialId(idx, Id1Map::WallMaterials);
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
     if(idx == 0xFFFF) s->sector = -1;
@@ -284,10 +285,10 @@ void MSector_Read(msector_t *s, int index, Reader *reader)
 
     char name[9];
     Reader_Read(reader, name, 8); name[8] = '\0';
-    s->floorMaterial= map->addMaterialToDictionary(name, MG_PLANE);
+    s->floorMaterial= map->toMaterialId(name, Id1Map::PlaneMaterials);
 
     Reader_Read(reader, name, 8); name[8] = '\0';
-    s->ceilMaterial = map->addMaterialToDictionary(name, MG_PLANE);
+    s->ceilMaterial = map->toMaterialId(name, Id1Map::PlaneMaterials);
 
     s->lightLevel   = SHORT( Reader_ReadInt16(reader) );
     s->type         = SHORT( Reader_ReadInt16(reader) );
@@ -306,10 +307,10 @@ void MSector64_Read(msector_t *s, int index, Reader *reader)
 
     int idx;
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    s->floorMaterial= map->addMaterialToDictionary((const char*) &idx, MG_PLANE);
+    s->floorMaterial= map->toMaterialId(idx, Id1Map::PlaneMaterials);
 
     idx = USHORT( uint16_t(Reader_ReadInt16(reader)) );
-    s->ceilMaterial = map->addMaterialToDictionary((const char*) &idx, MG_PLANE);
+    s->ceilMaterial = map->toMaterialId(idx, Id1Map::PlaneMaterials);
 
     s->d64ceilingColor  = USHORT( uint16_t(Reader_ReadInt16(reader)) );
     s->d64floorColor    = USHORT( uint16_t(Reader_ReadInt16(reader)) );

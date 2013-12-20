@@ -19,11 +19,13 @@
  */
 
 #include "wadmapconverter.h"
+#include "id1map_datatypes.h"
 #include "id1map_load.h"
 #include "id1map_util.h"
 #include <de/libdeng2.h>
-#include <de/Log>
 #include <de/Error>
+#include <de/Log>
+#include <de/Time>
 #include <de/memory.h>
 #include <de/timer.h>
 
@@ -36,7 +38,7 @@ static uint validCount = 0; // Used for Polyobj LineDef collection.
 
 DENG2_PIMPL(Id1Map)
 {
-    MapFormatId mapFormat;
+    Format format;
 
     uint numVertexes;
     coord_t *vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
@@ -52,7 +54,7 @@ DENG2_PIMPL(Id1Map)
 
     Instance(Public *i)
         : Base(i)
-        , mapFormat(MF_UNKNOWN)
+        , format(UnknownFormat)
         , numVertexes(0)
         , vertexes(0)
     {}
@@ -65,6 +67,188 @@ DENG2_PIMPL(Id1Map)
         {
             M_Free(i->lineIndices);
         }
+    }
+
+    inline String const &findMaterialInDictionary(MaterialId id) const {
+        return materials.stringRef(id);
+    }
+
+    /// @todo fixme: A real performance killer...
+    AutoStr *composeMaterialRef(MaterialId id)
+    {
+        AutoStr *ref = AutoStr_NewStd();
+        String const &material = findMaterialInDictionary(id);
+        QByteArray materialUtf8 = material.toUtf8();
+        Str_Set(ref, materialUtf8.constData());
+        return ref;
+    }
+
+    bool loadVertexes(reader_s *reader, int numElements)
+    {
+        DENG2_ASSERT(reader != 0);
+
+        LOG_TRACE("Processing vertexes...");
+        for(int n = 0; n < numElements; ++n)
+        {
+            switch(format)
+            {
+            default:
+            case DoomFormat:
+                vertexes[n * 2]     = coord_t( SHORT(Reader_ReadInt16(reader)) );
+                vertexes[n * 2 + 1] = coord_t( SHORT(Reader_ReadInt16(reader)) );
+                break;
+
+            case Doom64Format:
+                vertexes[n * 2]     = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
+                vertexes[n * 2 + 1] = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
+                break;
+            }
+        }
+
+        return true;
+    }
+
+    bool loadLineDefs(reader_s *reader, int numElements)
+    {
+        DENG2_ASSERT(reader != 0);
+
+        LOG_TRACE("Processing line definitions...");
+        if(numElements)
+        {
+            lines.reserve(lines.size() + numElements);
+            for(int n = 0; n < numElements; ++n)
+            {
+                switch(format)
+                {
+                default:
+                case DoomFormat:
+                    lines.push_back(mline_t());
+                    MLine_Read(&lines.back(), n, reader);
+                    break;
+
+                case Doom64Format:
+                    lines.push_back(mline_t());
+                    MLine64_Read(&lines.back(), n, reader);
+                    break;
+
+                case HexenFormat:
+                    lines.push_back(mline_t());
+                    MLineHx_Read(&lines.back(), n, reader);
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    bool loadSideDefs(reader_s *reader, int numElements)
+    {
+        DENG2_ASSERT(reader != 0);
+
+        LOG_TRACE("Processing side definitions...");
+        if(numElements)
+        {
+            sides.reserve(sides.size() + numElements);
+            for(int n = 0; n < numElements; ++n)
+            {
+                switch(format)
+                {
+                default:
+                case DoomFormat:
+                    sides.push_back(mside_t());
+                    MSide_Read(&sides.back(), n, reader);
+                    break;
+
+                case Doom64Format:
+                    sides.push_back(mside_t());
+                    MSide64_Read(&sides.back(), n, reader);
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    bool loadSectors(reader_s *reader, int numElements)
+    {
+        DENG2_ASSERT(reader != 0);
+
+        LOG_TRACE("Processing sectors...");
+        if(numElements)
+        {
+            sectors.reserve(sectors.size() + numElements);
+            for(int n = 0; n < numElements; ++n)
+            {
+                switch(format)
+                {
+                default:
+                    sectors.push_back(msector_t());
+                    MSector_Read(&sectors.back(), n, reader);
+                    break;
+
+                case Doom64Format:
+                    sectors.push_back(msector_t());
+                    MSector64_Read(&sectors.back(), n, reader);
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    bool loadThings(reader_s *reader, int numElements)
+    {
+        DENG2_ASSERT(reader != 0);
+
+        LOG_TRACE("Processing things...");
+        if(numElements)
+        {
+            things.reserve(things.size() + numElements);
+            for(int n = 0; n < numElements; ++n)
+            {
+                switch(format)
+                {
+                default:
+                case DoomFormat:
+                    things.push_back(mthing_t());
+                    MThing_Read(&things.back(), n, reader);
+                    break;
+
+                case Doom64Format:
+                    things.push_back(mthing_t());
+                    MThing64_Read(&things.back(), n, reader);
+                    break;
+
+                case HexenFormat:
+                    things.push_back(mthing_t());
+                    MThingHx_Read(&things.back(), n, reader);
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    bool loadSurfaceTints(reader_s *reader, int numElements)
+    {
+        DENG2_ASSERT(reader != 0);
+
+        LOG_TRACE("Processing surface tints...");
+        if(numElements)
+        {
+            surfaceTints.reserve(surfaceTints.size() + numElements);
+            for(int n = 0; n < numElements; ++n)
+            {
+                surfaceTints.push_back(surfacetint_t());
+                SurfaceTint_Read(&surfaceTints.back(), n, reader);
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -212,6 +396,202 @@ DENG2_PIMPL(Id1Map)
         return true;
     }
 
+    void analyze()
+    {
+        Time begunAt;
+
+        if(format == HexenFormat)
+        {
+            LOG_TRACE("Locating polyobjs...");
+            DENG2_FOR_EACH(Things, i, things)
+            {
+                // A polyobj anchor?
+                if(i->doomEdNum == PO_ANCHOR_DOOMEDNUM)
+                {
+                    int const tag = i->angle;
+                    findAndCreatePolyobj(tag, i->origin[VX], i->origin[VY]);
+                }
+            }
+        }
+
+        LOG_INFO(String("Analyses completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    }
+
+    void transferVertexes()
+    {
+        LOG_TRACE("Transfering vertexes...");
+        int *indices = new int[numVertexes];
+        for(uint i = 0; i < numVertexes; ++i)
+        {
+            indices[i] = i;
+        }
+        MPE_VertexCreatev(numVertexes, vertexes, indices, 0);
+        delete[] indices;
+    }
+
+    void transferSectors()
+    {
+        LOG_TRACE("Transfering sectors...");
+
+        DENG2_FOR_EACH(Sectors, i, sectors)
+        {
+            int idx = MPE_SectorCreate(float(i->lightLevel) / 255.0f, 1, 1, 1, i->index);
+
+            MPE_PlaneCreate(idx, i->floorHeight, composeMaterialRef(i->floorMaterial),
+                            0, 0, 1, 1, 1, 1, 0, 0, 1, -1);
+            MPE_PlaneCreate(idx, i->ceilHeight, composeMaterialRef(i->ceilMaterial),
+                            0, 0, 1, 1, 1, 1, 0, 0, -1, -1);
+
+            MPE_GameObjProperty("XSector", idx, "Tag",    DDVT_SHORT, &i->tag);
+            MPE_GameObjProperty("XSector", idx, "Type",   DDVT_SHORT, &i->type);
+
+            if(format == Doom64Format)
+            {
+                MPE_GameObjProperty("XSector", idx, "Flags",          DDVT_SHORT, &i->d64flags);
+                MPE_GameObjProperty("XSector", idx, "CeilingColor",   DDVT_SHORT, &i->d64ceilingColor);
+                MPE_GameObjProperty("XSector", idx, "FloorColor",     DDVT_SHORT, &i->d64floorColor);
+                MPE_GameObjProperty("XSector", idx, "UnknownColor",   DDVT_SHORT, &i->d64unknownColor);
+                MPE_GameObjProperty("XSector", idx, "WallTopColor",   DDVT_SHORT, &i->d64wallTopColor);
+                MPE_GameObjProperty("XSector", idx, "WallBottomColor", DDVT_SHORT, &i->d64wallBottomColor);
+            }
+        }
+    }
+
+    void transferLinesAndSides()
+    {
+        LOG_TRACE("Transfering lines and sides...");
+        DENG2_FOR_EACH(Lines, i, lines)
+        {
+            mside_t *front = ((i)->sides[RIGHT] >= 0? &sides[(i)->sides[RIGHT]] : 0);
+            mside_t *back  = ((i)->sides[LEFT]  >= 0? &sides[(i)->sides[LEFT]] : 0);
+
+            int sideFlags = (format == Doom64Format? SDF_MIDDLE_STRETCH : 0);
+
+            // Interpret the lack of a ML_TWOSIDED line flag to mean the
+            // suppression of the side relative back sector.
+            if(!(i->flags & 0x4 /*ML_TWOSIDED*/) && front && back)
+                sideFlags |= SDF_SUPPRESS_BACK_SECTOR;
+
+            int lineIdx = MPE_LineCreate(i->v[0], i->v[1], front? front->sector : -1,
+                                         back? back->sector : -1, i->ddFlags, i->index);
+            if(front)
+            {
+                MPE_LineAddSide(lineIdx, RIGHT, sideFlags,
+                                composeMaterialRef(front->topMaterial),
+                                front->offset[VX], front->offset[VY], 1, 1, 1,
+                                composeMaterialRef(front->middleMaterial),
+                                front->offset[VX], front->offset[VY], 1, 1, 1, 1,
+                                composeMaterialRef(front->bottomMaterial),
+                                front->offset[VX], front->offset[VY], 1, 1, 1,
+                                front->index);
+            }
+            if(back)
+            {
+                MPE_LineAddSide(lineIdx, LEFT, sideFlags,
+                                composeMaterialRef(back->topMaterial),
+                                back->offset[VX], back->offset[VY], 1, 1, 1,
+                                composeMaterialRef(back->middleMaterial),
+                                back->offset[VX], back->offset[VY], 1, 1, 1, 1,
+                                composeMaterialRef(back->bottomMaterial),
+                                back->offset[VX], back->offset[VY], 1, 1, 1,
+                                back->index);
+            }
+
+            MPE_GameObjProperty("XLinedef", lineIdx, "Flags", DDVT_SHORT, &i->flags);
+
+            switch(format)
+            {
+            default:
+            case DoomFormat:
+                MPE_GameObjProperty("XLinedef", lineIdx, "Type",  DDVT_SHORT, &i->dType);
+                MPE_GameObjProperty("XLinedef", lineIdx, "Tag",   DDVT_SHORT, &i->dTag);
+                break;
+
+            case Doom64Format:
+                MPE_GameObjProperty("XLinedef", lineIdx, "DrawFlags", DDVT_BYTE,  &i->d64drawFlags);
+                MPE_GameObjProperty("XLinedef", lineIdx, "TexFlags",  DDVT_BYTE,  &i->d64texFlags);
+                MPE_GameObjProperty("XLinedef", lineIdx, "Type",      DDVT_BYTE,  &i->d64type);
+                MPE_GameObjProperty("XLinedef", lineIdx, "UseType",   DDVT_BYTE,  &i->d64useType);
+                MPE_GameObjProperty("XLinedef", lineIdx, "Tag",       DDVT_SHORT, &i->d64tag);
+                break;
+
+            case HexenFormat:
+                MPE_GameObjProperty("XLinedef", lineIdx, "Type", DDVT_BYTE, &i->xType);
+                MPE_GameObjProperty("XLinedef", lineIdx, "Arg0", DDVT_BYTE, &i->xArgs[0]);
+                MPE_GameObjProperty("XLinedef", lineIdx, "Arg1", DDVT_BYTE, &i->xArgs[1]);
+                MPE_GameObjProperty("XLinedef", lineIdx, "Arg2", DDVT_BYTE, &i->xArgs[2]);
+                MPE_GameObjProperty("XLinedef", lineIdx, "Arg3", DDVT_BYTE, &i->xArgs[3]);
+                MPE_GameObjProperty("XLinedef", lineIdx, "Arg4", DDVT_BYTE, &i->xArgs[4]);
+                break;
+            }
+        }
+    }
+
+    void transferSurfaceTints()
+    {
+        if(surfaceTints.empty()) return;
+
+        LOG_TRACE("Transfering surface tints...");
+        DENG2_FOR_EACH(SurfaceTints, i, surfaceTints)
+        {
+            int idx = i - surfaceTints.begin();
+
+            MPE_GameObjProperty("Light", idx, "ColorR",   DDVT_FLOAT, &i->rgb[0]);
+            MPE_GameObjProperty("Light", idx, "ColorG",   DDVT_FLOAT, &i->rgb[1]);
+            MPE_GameObjProperty("Light", idx, "ColorB",   DDVT_FLOAT, &i->rgb[2]);
+            MPE_GameObjProperty("Light", idx, "XX0",      DDVT_BYTE,  &i->xx[0]);
+            MPE_GameObjProperty("Light", idx, "XX1",      DDVT_BYTE,  &i->xx[1]);
+            MPE_GameObjProperty("Light", idx, "XX2",      DDVT_BYTE,  &i->xx[2]);
+        }
+    }
+
+    void transferPolyobjs()
+    {
+        if(polyobjs.empty()) return;
+
+        LOG_TRACE("Transfering polyobjs...");
+        DENG2_FOR_EACH(Polyobjs, i, polyobjs)
+        {
+            MPE_PolyobjCreate(i->lineIndices, i->lineCount, i->tag, i->seqType,
+                              coord_t(i->anchor[VX]), coord_t(i->anchor[VY]),
+                              i->index);
+        }
+    }
+
+    void transferThings()
+    {
+        if(things.empty()) return;
+
+        LOG_TRACE("Transfering things...");
+        DENG2_FOR_EACH(Things, i, things)
+        {
+            int idx = i - things.begin();
+
+            MPE_GameObjProperty("Thing", idx, "X",            DDVT_SHORT, &i->origin[VX]);
+            MPE_GameObjProperty("Thing", idx, "Y",            DDVT_SHORT, &i->origin[VY]);
+            MPE_GameObjProperty("Thing", idx, "Z",            DDVT_SHORT, &i->origin[VZ]);
+            MPE_GameObjProperty("Thing", idx, "Angle",        DDVT_ANGLE, &i->angle);
+            MPE_GameObjProperty("Thing", idx, "DoomEdNum",    DDVT_SHORT, &i->doomEdNum);
+            MPE_GameObjProperty("Thing", idx, "SkillModes",   DDVT_INT,   &i->skillModes);
+            MPE_GameObjProperty("Thing", idx, "Flags",        DDVT_INT,   &i->flags);
+
+            if(format == Doom64Format)
+            {
+                MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->d64TID);
+            }
+            else if(format == HexenFormat)
+            {
+                MPE_GameObjProperty("Thing", idx, "Special",  DDVT_BYTE,  &i->xSpecial);
+                MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->xTID);
+                MPE_GameObjProperty("Thing", idx, "Arg0",     DDVT_BYTE,  &i->xArgs[0]);
+                MPE_GameObjProperty("Thing", idx, "Arg1",     DDVT_BYTE,  &i->xArgs[1]);
+                MPE_GameObjProperty("Thing", idx, "Arg2",     DDVT_BYTE,  &i->xArgs[2]);
+                MPE_GameObjProperty("Thing", idx, "Arg3",     DDVT_BYTE,  &i->xArgs[3]);
+                MPE_GameObjProperty("Thing", idx, "Arg4",     DDVT_BYTE,  &i->xArgs[4]);
+            }
+        }
+    }
+
     /**
      * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
      *                  of lines in the polyobj.
@@ -262,248 +642,60 @@ DENG2_PIMPL(Id1Map)
     }
 };
 
-Id1Map::Id1Map(MapFormatId format) : d(new Instance(this))
+Id1Map::Id1Map(Format format) : d(new Instance(this))
 {
-    d->mapFormat = format;
+    d->format = format;
 }
 
-MapFormatId Id1Map::format() const
+Id1Map::Format Id1Map::format() const
 {
-    return d->mapFormat;
+    return d->format;
 }
 
-/// @todo fixme: A real performance killer...
-AutoStr *Id1Map::composeMaterialRef(MaterialDictId id)
+Id1Map::MaterialId Id1Map::toMaterialId(String name, MaterialGroup group)
 {
-    AutoStr *ref = AutoStr_NewStd();
-    String const &material = findMaterialInDictionary(id);
-    QByteArray materialUtf8 = material.toUtf8();
-    Str_Set(ref, materialUtf8.constData());
-    return ref;
-}
-
-String const &Id1Map::findMaterialInDictionary(MaterialDictId id) const
-{
-    return d->materials.stringRef(id);
-}
-
-MaterialDictId Id1Map::addMaterialToDictionary(char const *name, MaterialDictGroup group)
-{
-    DENG2_ASSERT(name != 0);
-
     // Prepare the encoded URI for insertion into the dictionary.
     AutoStr *uriCString;
-    if(d->mapFormat == MF_DOOM64)
-    {
-        // Doom64 maps reference materials with unique ids.
-        int uniqueId = *((int*) name);
-        //char name[9];
-        //sprintf(name, "UNK%05i", uniqueId); name[8] = '\0';
 
-        Uri *textureUrn = Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", group == MG_PLANE? "Flats" : "Textures", uniqueId)), RC_NULL);
-        Uri *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(textureUrn)));
-        uriCString = Uri_Compose(uri);
-        Uri_Delete(uri);
-        Uri_Delete(textureUrn);
-    }
-    else
+    // In original DOOM, texture name references beginning with the
+    // hypen '-' character are always treated as meaning "no reference"
+    // or "invalid texture" and surfaces using them were not drawn.
+    if(group != PlaneMaterials && name[0] == '-')
     {
-        // In original DOOM, texture name references beginning with the
-        // hypen '-' character are always treated as meaning "no reference"
-        // or "invalid texture" and surfaces using them were not drawn.
-        if(group != MG_PLANE && name[0] == '-')
-        {
-            return 0; // Not a valid id.
-        }
-
-        // Material paths must be encoded.
-        AutoStr *path = Str_PercentEncode(AutoStr_FromText(name));
-        Uri *uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
-        Uri_SetScheme(uri, group == MG_PLANE? "Flats" : "Textures");
-        uriCString = Uri_Compose(uri);
-        Uri_Delete(uri);
+        return 0; // Not a valid id.
     }
+
+    // Material paths must be encoded.
+    AutoStr *path = Str_PercentEncode(AutoStr_FromText(name.toUtf8().constData()));
+    Uri *uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
+    Uri_SetScheme(uri, group == PlaneMaterials? "Flats" : "Textures");
+    uriCString = Uri_Compose(uri);
+    Uri_Delete(uri);
 
     // Intern this material URI in the dictionary.
-    MaterialDictId internId = d->materials.intern(de::String(Str_Text(uriCString)));
-
-    // We're done (phew!).
-    return internId;
+    return d->materials.intern(String(Str_Text(uriCString)));
 }
 
-bool Id1Map::loadVertexes(reader_s *reader, int numElements)
+Id1Map::MaterialId Id1Map::toMaterialId(int uniqueId, MaterialGroup group)
 {
-    DENG2_ASSERT(reader != 0);
+    // Prepare the encoded URI for insertion into the dictionary.
+    AutoStr *uriCString;
 
-    LOG_TRACE("Processing vertexes...");
-    for(int n = 0; n < numElements; ++n)
-    {
-        switch(d->mapFormat)
-        {
-        default:
-        case MF_DOOM:
-            d->vertexes[n * 2]     = coord_t( SHORT(Reader_ReadInt16(reader)) );
-            d->vertexes[n * 2 + 1] = coord_t( SHORT(Reader_ReadInt16(reader)) );
-            break;
+    Uri *textureUrn = Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", group == PlaneMaterials? "Flats" : "Textures", uniqueId)), RC_NULL);
+    Uri *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(textureUrn)));
+    uriCString = Uri_Compose(uri);
+    Uri_Delete(uri);
+    Uri_Delete(textureUrn);
 
-        case MF_DOOM64:
-            d->vertexes[n * 2]     = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
-            d->vertexes[n * 2 + 1] = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
-            break;
-        }
-    }
-
-    return true;
-}
-
-bool Id1Map::loadLineDefs(reader_s *reader, int numElements)
-{
-    DENG2_ASSERT(reader != 0);
-
-    LOG_TRACE("Processing line definitions...");
-    if(numElements)
-    {
-        d->lines.reserve(d->lines.size() + numElements);
-        for(int n = 0; n < numElements; ++n)
-        {
-            switch(d->mapFormat)
-            {
-            default:
-            case MF_DOOM:
-                d->lines.push_back(mline_t());
-                MLine_Read(&d->lines.back(), n, reader);
-                break;
-
-            case MF_DOOM64:
-                d->lines.push_back(mline_t());
-                MLine64_Read(&d->lines.back(), n, reader);
-                break;
-
-            case MF_HEXEN:
-                d->lines.push_back(mline_t());
-                MLineHx_Read(&d->lines.back(), n, reader);
-                break;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool Id1Map::loadSideDefs(reader_s *reader, int numElements)
-{
-    DENG2_ASSERT(reader != 0);
-
-    LOG_TRACE("Processing side definitions...");
-    if(numElements)
-    {
-        d->sides.reserve(d->sides.size() + numElements);
-        for(int n = 0; n < numElements; ++n)
-        {
-            switch(d->mapFormat)
-            {
-            default:
-            case MF_DOOM:
-                d->sides.push_back(mside_t());
-                MSide_Read(&d->sides.back(), n, reader);
-                break;
-
-            case MF_DOOM64:
-                d->sides.push_back(mside_t());
-                MSide64_Read(&d->sides.back(), n, reader);
-                break;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool Id1Map::loadSectors(reader_s *reader, int numElements)
-{
-    DENG2_ASSERT(reader != 0);
-
-    LOG_TRACE("Processing sectors...");
-    if(numElements)
-    {
-        d->sectors.reserve(d->sectors.size() + numElements);
-        for(int n = 0; n < numElements; ++n)
-        {
-            switch(d->mapFormat)
-            {
-            default:
-                d->sectors.push_back(msector_t());
-                MSector_Read(&d->sectors.back(), n, reader);
-                break;
-
-            case MF_DOOM64:
-                d->sectors.push_back(msector_t());
-                MSector64_Read(&d->sectors.back(), n, reader);
-                break;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool Id1Map::loadThings(reader_s *reader, int numElements)
-{
-    DENG2_ASSERT(reader != 0);
-
-    LOG_TRACE("Processing things...");
-    if(numElements)
-    {
-        d->things.reserve(d->things.size() + numElements);
-        for(int n = 0; n < numElements; ++n)
-        {
-            switch(d->mapFormat)
-            {
-            default:
-            case MF_DOOM:
-                d->things.push_back(mthing_t());
-                MThing_Read(&d->things.back(), n, reader);
-                break;
-
-            case MF_DOOM64:
-                d->things.push_back(mthing_t());
-                MThing64_Read(&d->things.back(), n, reader);
-                break;
-
-            case MF_HEXEN:
-                d->things.push_back(mthing_t());
-                MThingHx_Read(&d->things.back(), n, reader);
-                break;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool Id1Map::loadSurfaceTints(reader_s *reader, int numElements)
-{
-    DENG2_ASSERT(reader != 0);
-
-    LOG_TRACE("Processing surface tints...");
-    if(numElements)
-    {
-        d->surfaceTints.reserve(d->surfaceTints.size() + numElements);
-        for(int n = 0; n < numElements; ++n)
-        {
-            d->surfaceTints.push_back(surfacetint_t());
-            SurfaceTint_Read(&d->surfaceTints.back(), n, reader);
-        }
-    }
-
-    return true;
+    // Intern this material URI in the dictionary.
+    return d->materials.intern(String(Str_Text(uriCString)));
 }
 
 void Id1Map::load(MapLumpInfos &lumpInfos)
 {
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
-    size_t elementSize = ElementSizeForMapLumpType(d->mapFormat, ML_VERTEXES);
+    size_t elementSize = ElementSizeForMapLumpType(d->format, ML_VERTEXES);
     uint numElements = lumpInfos[ML_VERTEXES]->length / elementSize;
 
     d->numVertexes = numElements;
@@ -515,7 +707,7 @@ void Id1Map::load(MapLumpInfos &lumpInfos)
 
         if(!info || !info->length) continue;
 
-        elementSize = ElementSizeForMapLumpType(d->mapFormat, info->type);
+        elementSize = ElementSizeForMapLumpType(d->format, info->type);
         if(!elementSize) continue;
 
         // Process this data lump.
@@ -525,231 +717,37 @@ void Id1Map::load(MapLumpInfos &lumpInfos)
         {
         default: break;
 
-        case ML_VERTEXES: loadVertexes(reader, numElements);        break;
-        case ML_LINEDEFS: loadLineDefs(reader, numElements);        break;
-        case ML_SIDEDEFS: loadSideDefs(reader, numElements);        break;
-        case ML_SECTORS:  loadSectors(reader, numElements);         break;
-        case ML_THINGS:   loadThings(reader, numElements);          break;
-        case ML_LIGHTS:   loadSurfaceTints(reader, numElements);    break;
+        case ML_VERTEXES: d->loadVertexes(reader, numElements);        break;
+        case ML_LINEDEFS: d->loadLineDefs(reader, numElements);        break;
+        case ML_SIDEDEFS: d->loadSideDefs(reader, numElements);        break;
+        case ML_SECTORS:  d->loadSectors(reader, numElements);         break;
+        case ML_THINGS:   d->loadThings(reader, numElements);          break;
+        case ML_LIGHTS:   d->loadSurfaceTints(reader, numElements);    break;
         }
         Reader_Delete(reader);
     }
 
     // We're done with the read buffer.
     clearReadBuffer();
-}
 
-void Id1Map::analyze()
-{
-    uint startTime = Timer_RealMilliseconds();
-
-    LOG_AS("Id1Map");
-    if(d->mapFormat == MF_HEXEN)
-    {
-        LOG_TRACE("Locating polyobjs...");
-        DENG2_FOR_EACH(Things, i, d->things)
-        {
-            // A polyobj anchor?
-            if(i->doomEdNum == PO_ANCHOR_DOOMEDNUM)
-            {
-                int const tag = i->angle;
-                d->findAndCreatePolyobj(tag, i->origin[VX], i->origin[VY]);
-            }
-        }
-    }
-
-    LOG_VERBOSE("Analyses completed in %.2f seconds.") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
-}
-
-void Id1Map::transferVertexes()
-{
-    LOG_TRACE("Transfering vertexes...");
-    int *indices = new int[d->numVertexes];
-    for(uint i = 0; i < d->numVertexes; ++i)
-    {
-        indices[i] = i;
-    }
-    MPE_VertexCreatev(d->numVertexes, d->vertexes, indices, 0);
-    delete[] indices;
-}
-
-void Id1Map::transferSectors()
-{
-    LOG_TRACE("Transfering sectors...");
-
-    DENG2_FOR_EACH(Sectors, i, d->sectors)
-    {
-        int idx = MPE_SectorCreate(float(i->lightLevel) / 255.0f, 1, 1, 1, i->index);
-
-        MPE_PlaneCreate(idx, i->floorHeight, composeMaterialRef(i->floorMaterial),
-                        0, 0, 1, 1, 1, 1, 0, 0, 1, -1);
-        MPE_PlaneCreate(idx, i->ceilHeight, composeMaterialRef(i->ceilMaterial),
-                        0, 0, 1, 1, 1, 1, 0, 0, -1, -1);
-
-        MPE_GameObjProperty("XSector", idx, "Tag",    DDVT_SHORT, &i->tag);
-        MPE_GameObjProperty("XSector", idx, "Type",   DDVT_SHORT, &i->type);
-
-        if(d->mapFormat == MF_DOOM64)
-        {
-            MPE_GameObjProperty("XSector", idx, "Flags",          DDVT_SHORT, &i->d64flags);
-            MPE_GameObjProperty("XSector", idx, "CeilingColor",   DDVT_SHORT, &i->d64ceilingColor);
-            MPE_GameObjProperty("XSector", idx, "FloorColor",     DDVT_SHORT, &i->d64floorColor);
-            MPE_GameObjProperty("XSector", idx, "UnknownColor",   DDVT_SHORT, &i->d64unknownColor);
-            MPE_GameObjProperty("XSector", idx, "WallTopColor",   DDVT_SHORT, &i->d64wallTopColor);
-            MPE_GameObjProperty("XSector", idx, "WallBottomColor", DDVT_SHORT, &i->d64wallBottomColor);
-        }
-    }
-}
-
-void Id1Map::transferLinesAndSides()
-{
-    LOG_TRACE("Transfering lines and sides...");
-    DENG2_FOR_EACH(Lines, i, d->lines)
-    {
-        mside_t *front = ((i)->sides[RIGHT] >= 0? &d->sides[(i)->sides[RIGHT]] : 0);
-        mside_t *back  = ((i)->sides[LEFT]  >= 0? &d->sides[(i)->sides[LEFT]] : 0);
-
-        int sideFlags = (d->mapFormat == MF_DOOM64? SDF_MIDDLE_STRETCH : 0);
-
-        // Interpret the lack of a ML_TWOSIDED line flag to mean the
-        // suppression of the side relative back sector.
-        if(!(i->flags & 0x4 /*ML_TWOSIDED*/) && front && back)
-            sideFlags |= SDF_SUPPRESS_BACK_SECTOR;
-
-        int lineIdx = MPE_LineCreate(i->v[0], i->v[1], front? front->sector : -1,
-                                     back? back->sector : -1, i->ddFlags, i->index);
-        if(front)
-        {
-            MPE_LineAddSide(lineIdx, RIGHT, sideFlags,
-                            composeMaterialRef(front->topMaterial),
-                            front->offset[VX], front->offset[VY], 1, 1, 1,
-                            composeMaterialRef(front->middleMaterial),
-                            front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                            composeMaterialRef(front->bottomMaterial),
-                            front->offset[VX], front->offset[VY], 1, 1, 1,
-                            front->index);
-        }
-        if(back)
-        {
-            MPE_LineAddSide(lineIdx, LEFT, sideFlags,
-                            composeMaterialRef(back->topMaterial),
-                            back->offset[VX], back->offset[VY], 1, 1, 1,
-                            composeMaterialRef(back->middleMaterial),
-                            back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                            composeMaterialRef(back->bottomMaterial),
-                            back->offset[VX], back->offset[VY], 1, 1, 1,
-                            back->index);
-        }
-
-        MPE_GameObjProperty("XLinedef", lineIdx, "Flags", DDVT_SHORT, &i->flags);
-
-        switch(d->mapFormat)
-        {
-        default:
-        case MF_DOOM:
-            MPE_GameObjProperty("XLinedef", lineIdx, "Type",  DDVT_SHORT, &i->dType);
-            MPE_GameObjProperty("XLinedef", lineIdx, "Tag",   DDVT_SHORT, &i->dTag);
-            break;
-
-        case MF_DOOM64:
-            MPE_GameObjProperty("XLinedef", lineIdx, "DrawFlags", DDVT_BYTE,  &i->d64drawFlags);
-            MPE_GameObjProperty("XLinedef", lineIdx, "TexFlags",  DDVT_BYTE,  &i->d64texFlags);
-            MPE_GameObjProperty("XLinedef", lineIdx, "Type",      DDVT_BYTE,  &i->d64type);
-            MPE_GameObjProperty("XLinedef", lineIdx, "UseType",   DDVT_BYTE,  &i->d64useType);
-            MPE_GameObjProperty("XLinedef", lineIdx, "Tag",       DDVT_SHORT, &i->d64tag);
-            break;
-
-        case MF_HEXEN:
-            MPE_GameObjProperty("XLinedef", lineIdx, "Type", DDVT_BYTE, &i->xType);
-            MPE_GameObjProperty("XLinedef", lineIdx, "Arg0", DDVT_BYTE, &i->xArgs[0]);
-            MPE_GameObjProperty("XLinedef", lineIdx, "Arg1", DDVT_BYTE, &i->xArgs[1]);
-            MPE_GameObjProperty("XLinedef", lineIdx, "Arg2", DDVT_BYTE, &i->xArgs[2]);
-            MPE_GameObjProperty("XLinedef", lineIdx, "Arg3", DDVT_BYTE, &i->xArgs[3]);
-            MPE_GameObjProperty("XLinedef", lineIdx, "Arg4", DDVT_BYTE, &i->xArgs[4]);
-            break;
-        }
-    }
-}
-
-void Id1Map::transferSurfaceTints()
-{
-    if(d->surfaceTints.empty()) return;
-
-    LOG_TRACE("Transfering surface tints...");
-    DENG2_FOR_EACH(SurfaceTints, i, d->surfaceTints)
-    {
-        int idx = i - d->surfaceTints.begin();
-
-        MPE_GameObjProperty("Light", idx, "ColorR",   DDVT_FLOAT, &i->rgb[0]);
-        MPE_GameObjProperty("Light", idx, "ColorG",   DDVT_FLOAT, &i->rgb[1]);
-        MPE_GameObjProperty("Light", idx, "ColorB",   DDVT_FLOAT, &i->rgb[2]);
-        MPE_GameObjProperty("Light", idx, "XX0",      DDVT_BYTE,  &i->xx[0]);
-        MPE_GameObjProperty("Light", idx, "XX1",      DDVT_BYTE,  &i->xx[1]);
-        MPE_GameObjProperty("Light", idx, "XX2",      DDVT_BYTE,  &i->xx[2]);
-    }
-}
-
-void Id1Map::transferPolyobjs()
-{
-    if(d->polyobjs.empty()) return;
-
-    LOG_TRACE("Transfering polyobjs...");
-    DENG2_FOR_EACH(Polyobjs, i, d->polyobjs)
-    {
-        MPE_PolyobjCreate(i->lineIndices, i->lineCount, i->tag, i->seqType,
-                          coord_t(i->anchor[VX]), coord_t(i->anchor[VY]),
-                          i->index);
-    }
-}
-
-void Id1Map::transferThings()
-{
-    if(d->things.empty()) return;
-
-    LOG_TRACE("Transfering things...");
-    DENG2_FOR_EACH(Things, i, d->things)
-    {
-        int idx = i - d->things.begin();
-
-        MPE_GameObjProperty("Thing", idx, "X",            DDVT_SHORT, &i->origin[VX]);
-        MPE_GameObjProperty("Thing", idx, "Y",            DDVT_SHORT, &i->origin[VY]);
-        MPE_GameObjProperty("Thing", idx, "Z",            DDVT_SHORT, &i->origin[VZ]);
-        MPE_GameObjProperty("Thing", idx, "Angle",        DDVT_ANGLE, &i->angle);
-        MPE_GameObjProperty("Thing", idx, "DoomEdNum",    DDVT_SHORT, &i->doomEdNum);
-        MPE_GameObjProperty("Thing", idx, "SkillModes",   DDVT_INT,   &i->skillModes);
-        MPE_GameObjProperty("Thing", idx, "Flags",        DDVT_INT,   &i->flags);
-
-        if(d->mapFormat == MF_DOOM64)
-        {
-            MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->d64TID);
-        }
-        else if(d->mapFormat == MF_HEXEN)
-        {
-            MPE_GameObjProperty("Thing", idx, "Special",  DDVT_BYTE,  &i->xSpecial);
-            MPE_GameObjProperty("Thing", idx, "ID",       DDVT_SHORT, &i->xTID);
-            MPE_GameObjProperty("Thing", idx, "Arg0",     DDVT_BYTE,  &i->xArgs[0]);
-            MPE_GameObjProperty("Thing", idx, "Arg1",     DDVT_BYTE,  &i->xArgs[1]);
-            MPE_GameObjProperty("Thing", idx, "Arg2",     DDVT_BYTE,  &i->xArgs[2]);
-            MPE_GameObjProperty("Thing", idx, "Arg3",     DDVT_BYTE,  &i->xArgs[3]);
-            MPE_GameObjProperty("Thing", idx, "Arg4",     DDVT_BYTE,  &i->xArgs[4]);
-        }
-    }
+    // Perform post load analyses.
+    d->analyze();
 }
 
 int Id1Map::transfer()
 {
-    uint startTime = Timer_RealMilliseconds();
-
     LOG_AS("Id1Map");
 
-    transferVertexes();
-    transferSectors();
-    transferLinesAndSides();
-    transferSurfaceTints();
-    transferPolyobjs();
-    transferThings();
+    Time begunAt;
 
-    LOG_VERBOSE("Transfer completed in %.2f seconds.") << ((Timer_RealMilliseconds() - startTime) / 1000.0f);
+    d->transferVertexes();
+    d->transferSectors();
+    d->transferLinesAndSides();
+    d->transferSurfaceTints();
+    d->transferPolyobjs();
+    d->transferThings();
+
+    LOG_INFO(String("Transfer completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
 
     return false; // Success.
 }

@@ -23,35 +23,19 @@
 #include "doomsday.h"
 #include "dd_types.h"
 #include "maplumpinfo.h"
-#include "id1map_datatypes.h"
 #include <de/Error>
 #include <de/String>
+#include <de/StringPool>
 #include <vector>
 #include <list>
 #include <map>
 
-/**
- * Logical map format identifier (unique).
- */
-enum MapFormatId {
-    MF_UNKNOWN              = -1,
-    MF_DOOM                 = 0,
-    MF_HEXEN,
-    MF_DOOM64,
-    NUM_MAPFORMATS
-};
-
-/**
- * Helper macro for determining whether a value can be interpreted as a logical
- * map format identifier (see mapformatid_t).
- */
-#define VALID_MAPFORMATID(v)        ((v) >= MF_DOOM && (v) < NUM_MAPFORMATS)
-
-/// Material dictionary groups.
-enum MaterialDictGroup {
-    MG_PLANE = 0,
-    MG_WALL
-};
+struct mline_t;
+struct mpolyobj_t;
+struct msector_t;
+struct mside_t;
+struct mthing_t;
+struct surfacetint_t;
 
 typedef std::map<MapLumpType, MapLumpInfo *> MapLumpInfos;
 
@@ -61,8 +45,17 @@ typedef std::map<MapLumpType, MapLumpInfo *> MapLumpInfos;
 class Id1Map
 {
 public:
-    /// There was a problem opening the lump data buffer. @ingroup errors
-    DENG2_ERROR(LumpBufferError);
+    /// Base class for load-related errors. @ingroup errors
+    DENG2_ERROR(LoadError);
+
+    /// Logical map format identifiers.
+    enum Format {
+        UnknownFormat = -1,
+        DoomFormat,
+        HexenFormat,
+        Doom64Format,
+        MapFormatCount
+    };
 
     typedef std::vector<mline_t> Lines;
     typedef std::vector<mside_t> Sides;
@@ -73,38 +66,27 @@ public:
 
     typedef std::list<uint> LineList;
 
-public:
-    Id1Map(MapFormatId format);
+    /// Material group identifiers.
+    enum MaterialGroup {
+        PlaneMaterials,
+        WallMaterials
+    };
 
-    MapFormatId format() const;
+    typedef de::StringPool::Id MaterialId;
+
+public:
+    Id1Map(Format format);
+
+    Format format() const;
 
     void load(MapLumpInfos &lumpInfos);
 
-    void analyze();
-
     int transfer();
 
-    MaterialDictId addMaterialToDictionary(char const *name, MaterialDictGroup group);
+    MaterialId toMaterialId(de::String name, MaterialGroup group);
 
-private:
-    de::String const &findMaterialInDictionary(MaterialDictId id) const;
-
-    /// @todo fixme: A real performance killer...
-    AutoStr *composeMaterialRef(MaterialDictId id);
-
-    bool loadVertexes(Reader *reader, int numElements);
-    bool loadLineDefs(Reader *reader, int numElements);
-    bool loadSideDefs(Reader *reader, int numElements);
-    bool loadSectors(Reader *reader, int numElements);
-    bool loadThings(Reader *reader, int numElements);
-    bool loadSurfaceTints(Reader *reader, int numElements);
-
-    void transferVertexes();
-    void transferSectors();
-    void transferLinesAndSides();
-    void transferSurfaceTints();
-    void transferPolyobjs();
-    void transferThings();
+    // Doom64 format maps reference materials with unique ids.
+    MaterialId toMaterialId(int uniqueId, MaterialGroup group);
 
 private:
     DENG2_PRIVATE(d)

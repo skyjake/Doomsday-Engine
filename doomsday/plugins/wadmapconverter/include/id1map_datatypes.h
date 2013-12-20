@@ -24,11 +24,7 @@
 
 #include "doomsday.h"
 #include "dd_types.h"
-
-#include <de/StringPool>
-
-/// Type used to identify references to materials in the material dictionary.
-typedef de::StringPool::Id MaterialDictId;
+#include "id1map.h"
 
 /// Sizes of the map data structures in the arrived map formats (in bytes).
 #define SIZEOF_64VERTEX         (4 * 2)
@@ -47,12 +43,12 @@ typedef de::StringPool::Id MaterialDictId;
 
 struct mside_t
 {
-    int             index;
-    int16_t         offset[2];
-    MaterialDictId  topMaterial;
-    MaterialDictId  bottomMaterial;
-    MaterialDictId  middleMaterial;
-    int             sector;
+    int                 index;
+    int16_t             offset[2];
+    Id1Map::MaterialId  topMaterial;
+    Id1Map::MaterialId  bottomMaterial;
+    Id1Map::MaterialId  middleMaterial;
+    int                 sector;
 };
 
 /// Line sides.
@@ -108,8 +104,8 @@ struct msector_t
     int16_t         lightLevel;
     int16_t         type;
     int16_t         tag;
-    MaterialDictId  floorMaterial;
-    MaterialDictId  ceilMaterial;
+    Id1Map::MaterialId  floorMaterial;
+    Id1Map::MaterialId  ceilMaterial;
 
     // DOOM64 format members:
     int16_t         d64flags;

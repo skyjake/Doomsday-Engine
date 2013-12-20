@@ -22,10 +22,8 @@
 #ifndef WADMAPCONVERTER_ID1MAP_UTIL
 #define WADMAPCONVERTER_ID1MAP_UTIL
 
-#include "doomsday.h"
-#include "dd_types.h"
 #include "id1map.h"
-#include "maplumpinfo.h"
+#include <de/String>
 
 /**
  * Retrieve the textual name for the identified map format @a id.
@@ -33,13 +31,13 @@
  * @return Textual name for this format. Always returns a valid ddstring_t that
  *         should NOT be free'd.
  */
-Str const *MapFormatNameForId(MapFormatId id);
+de::String const &MapFormatNameForId(Id1Map::Format id);
 
 /**
  * Determine type of a named map data lump.
  * @param name  Name of the data lump.
  * @return MapLumpType associated with the named map data lump.
  */
-MapLumpType MapLumpTypeForName(char const *name);
+MapLumpType MapLumpTypeForName(de::String name);
 
 #endif // WADMAPCONVERTER_ID1MAP_UTIL_H
