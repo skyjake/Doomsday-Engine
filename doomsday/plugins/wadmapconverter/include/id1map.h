@@ -24,9 +24,9 @@
 #include <de/Error>
 #include <de/String>
 #include <de/StringPool>
+#include <QMap>
 #include <vector>
 #include <list>
-#include <map>
 
 struct mline_t;
 struct mpolyobj_t;
@@ -34,8 +34,6 @@ struct msector_t;
 struct mside_t;
 struct mthing_t;
 struct surfacetint_t;
-
-typedef std::map<MapLumpType, lumpnum_t> MapDataLumps;
 
 /**
  * @ingroup wadmapconverter
@@ -71,6 +69,9 @@ public:
     typedef de::StringPool::Id MaterialId;
 
 public:
+    /**
+     * Construct a new Id1Map of the specified @a format.
+     */
     Id1Map(Format format);
 
     /**
@@ -83,7 +84,12 @@ public:
      */
     static de::String const &formatName(Format id);
 
-    void load(MapDataLumps &lumpInfos);
+    /**
+     * Attempt to load a new map data set from the identified @a lumps.
+     *
+     * @param lumps  Map of lumps for each data type to be processed.
+     */
+    void load(QMap<MapLumpType, lumpnum_t> const &lumps);
 
     /**
      * Transfer the map to Doomsday (i.e., rebuild in native map format via the
@@ -91,10 +97,15 @@ public:
      */
     void transfer(Uri const &uri);
 
+    /**
+     * Convert a textual material @a name to an internal material dictionary id.
+     */
     MaterialId toMaterialId(de::String name, MaterialGroup group);
 
-    // Doom64 format maps reference materials with unique ids.
-    MaterialId toMaterialId(int uniqueId, MaterialGroup group);
+    /**
+     * Convert a Doom64 style unique material @a number to an internal dictionary id.
+     */
+    MaterialId toMaterialId(int number, MaterialGroup group);
 
 private:
     DENG2_PRIVATE(d)

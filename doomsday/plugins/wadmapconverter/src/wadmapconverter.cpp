@@ -27,6 +27,8 @@
 
 using namespace de;
 
+typedef QMap<MapLumpType, lumpnum_t> MapDataLumps;
+
 /**
  * Given a map @a uri, attempt to locate the associated marker lump for the
  * map data using the Doomsday file system.
@@ -69,41 +71,38 @@ static void collectMapLumps(MapDataLumps &lumpInfos, lumpnum_t startLump)
 
         // A recognized map data lump; record it in the collection (replacing any
         // existing record of the same type).
-        lumpInfos[lumpType] = i;
+        lumpInfos.insert(lumpType, i);
     }
 }
 
-static Id1Map::Format recognizeMapFormat(MapDataLumps &lumpInfos)
+static Id1Map::Format recognizeMapFormat(MapDataLumps &lumps)
 {
     LOG_AS("WadMapConverter");
 
-    // Assume DOOM format by default.
-    Id1Map::Format mapFormat = Id1Map::DoomFormat;
+    Id1Map::Format mapFormat = Id1Map::UnknownFormat;
 
-    // Some data lumps are specific to a particular map format and thus
-    // their presence unambiguously signifies which format we have.
-    DENG2_FOR_EACH_CONST(MapDataLumps, i, lumpInfos)
+    // Some data lumps are specific to a particular map format and thus their
+    // presence unambiguously signifies which format we have.
+    if(lumps.contains(ML_BEHAVIOR))
     {
-        MapLumpType type = i->first;
-
-        switch(type)
-        {
-        default: break;
-
-        case ML_BEHAVIOR:   mapFormat = Id1Map::HexenFormat; break;
-
-        case ML_MACROS:
-        case ML_LIGHTS:
-        case ML_LEAFS:      mapFormat = Id1Map::Doom64Format; break;
-        }
+        mapFormat = Id1Map::HexenFormat;
+    }
+    else if(lumps.contains(ML_MACROS) || lumps.contains(ML_LIGHTS) ||
+            lumps.contains(ML_LEAFS))
+    {
+        mapFormat = Id1Map::Doom64Format;
+    }
+    else
+    {
+        mapFormat = Id1Map::DoomFormat;
     }
 
     // Determine whether each data lump is of the expected size.
     uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
-    DENG2_FOR_EACH_CONST(MapDataLumps, i, lumpInfos)
+    DENG2_FOR_EACH_CONST(MapDataLumps, i, lumps)
     {
-        MapLumpType type  = i->first;
-        lumpnum_t lumpNum = i->second;
+        MapLumpType type  = i.key();
+        lumpnum_t lumpNum = i.value();
 
         // Determine the number of map data objects of each data type.
         uint *elemCountAddr = 0;
@@ -127,7 +126,7 @@ static Id1Map::Format recognizeMapFormat(MapDataLumps &lumpInfos)
 
             if(lumpLength % elemSize != 0)
             {
-                // What is this??
+                // What *is* this??
                 return Id1Map::UnknownFormat;
             }
 
@@ -135,7 +134,7 @@ static Id1Map::Format recognizeMapFormat(MapDataLumps &lumpInfos)
         }
     }
 
-    // A valid map has at least one of each of these elements.
+    // A valid map has at least one of each of these element types.
     if(!numVertexes || !numLines || !numSides || !numSectors)
     {
         return Id1Map::UnknownFormat;
@@ -146,12 +145,12 @@ static Id1Map::Format recognizeMapFormat(MapDataLumps &lumpInfos)
 }
 
 static void loadAndTransferMap(Uri const &uri, Id1Map::Format mapFormat,
-    MapDataLumps &lumpInfos)
+    MapDataLumps &lumps)
 {
     QScopedPointer<Id1Map> map(new Id1Map(mapFormat));
 
     // Load the archived map.
-    map->load(lumpInfos);
+    map->load(lumps);
 
     // Rebuild the map in Doomsday's native format.
     LOG_AS("WadMapConverter");
@@ -178,17 +177,17 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     }
 
     // Collect all of the map data lumps associated with this map.
-    MapDataLumps lumpInfos;
-    collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
+    MapDataLumps lumps;
+    collectMapLumps(lumps, markerLump + 1 /*begin after the marker*/);
 
     // Is this a recognized format?
-    Id1Map::Format mapFormat = recognizeMapFormat(lumpInfos);
+    Id1Map::Format mapFormat = recognizeMapFormat(lumps);
     if(mapFormat != Id1Map::UnknownFormat)
     {
         // Convert this map.
         try
         {
-            loadAndTransferMap(*uri, mapFormat, lumpInfos);
+            loadAndTransferMap(*uri, mapFormat, lumps);
             return true; // success
         }
         catch(Id1Map::LoadError const &er)

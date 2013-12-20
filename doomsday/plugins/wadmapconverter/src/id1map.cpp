@@ -111,7 +111,6 @@ DENG2_PIMPL(Id1Map)
 
                 line.index = n;
 
-                thisPublic;
                 switch(format)
                 {
                 default:
@@ -669,18 +668,20 @@ Id1Map::MaterialId Id1Map::toMaterialId(int uniqueId, MaterialGroup group)
     return d->materials.intern(String(Str_Text(uriCString)));
 }
 
-void Id1Map::load(MapDataLumps &lumps)
+void Id1Map::load(QMap<MapLumpType, lumpnum_t> const &lumps)
 {
+    typedef QMap<MapLumpType, lumpnum_t> DataLumps;
+
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
-    uint vertexCount = W_LumpLength(lumps[ML_VERTEXES])
+    uint vertexCount = W_LumpLength(lumps.find(ML_VERTEXES).value())
                      / ElementSizeForMapLumpType(d->format, ML_VERTEXES);
     d->vertCoords.resize(vertexCount * 2);
 
-    DENG2_FOR_EACH_CONST(MapDataLumps, i, lumps)
+    DENG2_FOR_EACH_CONST(DataLumps, i, lumps)
     {
-        MapLumpType type  = i->first;
-        lumpnum_t lumpNum = i->second;
+        MapLumpType type  = i.key();
+        lumpnum_t lumpNum = i.value();
 
         size_t lumpLength = W_LumpLength(lumpNum);
         if(!lumpLength) continue;
