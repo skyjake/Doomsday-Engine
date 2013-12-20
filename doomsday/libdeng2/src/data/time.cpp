@@ -122,9 +122,9 @@ DENG2_PIMPL_NOREF(Time)
     Delta highPerfElapsed;
 
     Instance()
-        : flags(DateTime | HighPerformance),
-          dateTime(QDateTime::currentDateTime()),
-          highPerfElapsed(highPerfTimer.elapsed())
+        : flags(DateTime | HighPerformance)
+        , dateTime(QDateTime::currentDateTime())
+        , highPerfElapsed(highPerfTimer.elapsed())
     {}
 
     Instance(QDateTime const &dt) : flags(DateTime), dateTime(dt) {}
@@ -132,9 +132,10 @@ DENG2_PIMPL_NOREF(Time)
     Instance(Delta const &delta) : flags(HighPerformance), highPerfElapsed(delta) {}
 
     Instance(Instance const &other)
-        : flags(other.flags),
-          dateTime(other.dateTime),
-          highPerfElapsed(other.highPerfElapsed)
+        : de::IPrivate()
+        , flags(other.flags)
+        , dateTime(other.dateTime)
+        , highPerfElapsed(other.highPerfElapsed)
     {}
 
     bool hasDateTime() const

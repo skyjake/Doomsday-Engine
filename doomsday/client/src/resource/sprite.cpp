@@ -50,7 +50,8 @@ DENG2_PIMPL_NOREF(Sprite)
     {}
 
     Instance(Instance const &other)
-        : haveRotations(other.haveRotations)
+        : de::IPrivate()
+        , haveRotations(other.haveRotations)
         , viewAngles(other.viewAngles)
     {}
 };

@@ -55,29 +55,30 @@ DENG2_PIMPL_NOREF(Lumobj)
     Texture *upTex;
 
     Instance()
-        : source     (0),
-          maxDistance(0),
-          color      (Vector3f(1, 1, 1)),
-          radius     (256),
-          zOffset    (0),
-          flareSize  (0),
-          flareTex   (0),
-          sideTex    (0),
-          downTex    (0),
-          upTex      (0)
+        : source     (0)
+        , maxDistance(0)
+        , color      (Vector3f(1, 1, 1))
+        , radius     (256)
+        , zOffset    (0)
+        , flareSize  (0)
+        , flareTex   (0)
+        , sideTex    (0)
+        , downTex    (0)
+        , upTex      (0)
     {}
 
     Instance(Instance const &other)
-        : source     (other.source),
-          maxDistance(other.maxDistance),
-          color      (other.color),
-          radius     (other.radius),
-          zOffset    (other.zOffset),
-          flareSize  (other.flareSize),
-          flareTex   (other.flareTex),
-          sideTex    (other.sideTex),
-          downTex    (other.downTex),
-          upTex      (other.upTex)
+        : de::IPrivate()
+        , source     (other.source)
+        , maxDistance(other.maxDistance)
+        , color      (other.color)
+        , radius     (other.radius)
+        , zOffset    (other.zOffset)
+        , flareSize  (other.flareSize)
+        , flareTex   (other.flareTex)
+        , sideTex    (other.sideTex)
+        , downTex    (other.downTex)
+        , upTex      (other.upTex)
     {}
 };
 

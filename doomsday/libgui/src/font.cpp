@@ -76,7 +76,10 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
     Instance(IStyle const &style) : style(&style) {}
 
     Instance(Instance const &other)
-        : style(other.style), ranges(other.ranges), tabs(other.tabs)
+        : de::IPrivate()
+        , style(other.style)
+        , ranges(other.ranges)
+        , tabs(other.tabs)
     {}
 
     void handlePlainText(Rangei const &range)
