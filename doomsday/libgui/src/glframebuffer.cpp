@@ -136,6 +136,7 @@ DENG2_PIMPL(GLFramebuffer)
     {
         if(!self.isReady() || size == Size()) return;
 
+        // Configure textures for the framebuffer.
         color.setUndefinedImage(size, colorFormat);
         color.setWrap(gl::ClampToEdge, gl::ClampToEdge);
         color.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
@@ -144,7 +145,22 @@ DENG2_PIMPL(GLFramebuffer)
         depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
         depthStencil.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
 
-        target.configure(&color, &depthStencil);
+        try
+        {
+            // We'd like to use texture attachments for both color and depth/stencil.
+            target.configure(&color, &depthStencil);
+        }
+        catch(GLTarget::ConfigError const &er)
+        {
+            // Alternatively try without depth/stencil texture (some renderer features
+            // will not be available!).
+            LOG_WARNING("Texture-based framebuffer failed:\n  %s\n"
+                        "Trying fallback without depth/stencil texture")
+                    << er.asText();
+
+            target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
+        }
+
         target.clear(GLTarget::ColorDepthStencil);
 
         if(isMultisampled())
@@ -245,6 +261,8 @@ void GLFramebuffer::glInit()
 {
     if(isReady()) return;
 
+    LOG_AS("GLFramebuffer");
+
     d->alloc();
     setState(Ready);
 
@@ -266,7 +284,7 @@ void GLFramebuffer::setSampleCount(int sampleCount)
 
     if(d->_samples != sampleCount)
     {
-        qDebug() << "GLFramebuffer: Sample count changed to" << sampleCount;
+        LOG_AS("GLFramebuffer");
 
         d->_samples = sampleCount;
         d->reconfigure();
