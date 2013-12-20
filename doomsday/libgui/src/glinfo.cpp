@@ -102,12 +102,14 @@ DENG2_PIMPL_NOREF(GLInfo)
         if(inited) return;
 
         // Extensions.
+        ext.ARB_framebuffer_object         = query("GL_ARB_framebuffer_object");
         ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
         ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
 
         ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
         ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
         ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
+        ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
         ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
         ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
 

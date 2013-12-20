@@ -263,6 +263,16 @@ void GLFramebuffer::glInit()
 
     LOG_AS("GLFramebuffer");
 
+    // Check for some integral OpenGL functionality.
+    if(!GLInfo::extensions().ARB_framebuffer_object)
+    {
+        LOG_WARNING("Required GL_ARB_framebuffer_object is missing!");
+    }
+    if(!GLInfo::extensions().EXT_packed_depth_stencil)
+    {
+        LOG_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
+    }
+
     d->alloc();
     setState(Ready);
 
