@@ -66,7 +66,7 @@ public:
     static Extensions const &extensions();
     static Limits const &limits();
 
-    static bool supportsFramebufferMultisampling();
+    static bool isFramebufferMultisamplingSupported();
 
     /**
      * Initializes the static instance of GLInfo. Cannot be called before there

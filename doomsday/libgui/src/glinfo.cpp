@@ -164,7 +164,7 @@ GLInfo::Limits const &GLInfo::limits()
     return info.d->lim;
 }
 
-bool GLInfo::supportsFramebufferMultisampling()
+bool GLInfo::isFramebufferMultisamplingSupported()
 {
     return extensions().EXT_framebuffer_multisample &&
            extensions().EXT_framebuffer_blit;

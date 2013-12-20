@@ -287,7 +287,7 @@ void GLFramebuffer::glDeinit()
 
 void GLFramebuffer::setSampleCount(int sampleCount)
 {
-    if(!GLInfo::supportsFramebufferMultisampling())
+    if(!GLInfo::isFramebufferMultisamplingSupported())
     {
         sampleCount = 1;
     }
