@@ -20,7 +20,6 @@ HEADERS += \
     include/id1map_datatypes.h \
     include/id1map_load.h \
     include/id1map_util.h \
-    include/maplumpinfo.h \
     include/version.h \
     include/wadmapconverter.h
 

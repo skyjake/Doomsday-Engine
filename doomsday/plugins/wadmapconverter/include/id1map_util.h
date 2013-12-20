@@ -22,8 +22,42 @@
 #ifndef WADMAPCONVERTER_ID1MAP_UTIL
 #define WADMAPCONVERTER_ID1MAP_UTIL
 
-#include "id1map.h"
 #include <de/String>
+
+/**
+ * Logical map data lump identifier (unique).
+ */
+enum MapLumpType {
+    ML_INVALID          = -1,
+    FIRST_MAPLUMP_TYPE  = 0,
+    ML_THINGS = FIRST_MAPLUMP_TYPE, ///< Monsters, items..
+    ML_LINEDEFS,                ///< Line definitions.
+    ML_SIDEDEFS,                ///< Side definitions.
+    ML_VERTEXES,                ///< Vertices.
+    ML_SEGS,                    ///< BSP subsector segments.
+    ML_SSECTORS,                ///< BSP subsectors (open).
+    ML_NODES,                   ///< BSP nodes.
+    ML_SECTORS,                 ///< Sectors.
+    ML_REJECT,                  ///< LUT, sector-sector visibility
+    ML_BLOCKMAP,                ///< LUT, motion clipping, walls/grid element.
+    ML_BEHAVIOR,                ///< ACS Scripts (compiled).
+    ML_SCRIPTS,                 ///< ACS Scripts (source).
+    ML_LIGHTS,                  ///< Surface color tints.
+    ML_MACROS,                  ///< DOOM64 format, macro scripts.
+    ML_LEAFS,                   ///< DOOM64 format, segs (closed subsectors).
+    ML_GLVERT,                  ///< GL vertexes.
+    ML_GLSEGS,                  ///< GL segs.
+    ML_GLSSECT,                 ///< GL subsectors.
+    ML_GLNODES,                 ///< GL nodes.
+    ML_GLPVS,                   ///< GL PVS dataset.
+    NUM_MAPLUMP_TYPES
+};
+
+/**
+ * Helper macro for determining whether a value can be interpreted as a logical
+ * map lump type identifier (see MapLumpType).
+ */
+#define VALID_MAPLUMPTYPE(v)    ((v) >= FIRST_MAPLUMP_TYPE && (v) < NUM_MAPLUMP_TYPES)
 
 /**
  * Determine type of a named map data lump.

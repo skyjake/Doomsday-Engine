@@ -20,7 +20,7 @@
 #ifndef WADMAPCONVERTER_ID1MAP_H
 #define WADMAPCONVERTER_ID1MAP_H
 
-#include "maplumpinfo.h"
+#include "id1map_util.h"
 #include <de/Error>
 #include <de/String>
 #include <de/StringPool>
@@ -47,9 +47,11 @@ public:
     /// Logical map format identifiers.
     enum Format {
         UnknownFormat = -1,
+
         DoomFormat,
         HexenFormat,
         Doom64Format,
+
         MapFormatCount
     };
 

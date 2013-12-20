@@ -21,7 +21,6 @@
  */
 
 #include "wadmapconverter.h"
-#include "maplumpinfo.h"
 #include <de/Log>
 
 using namespace de;

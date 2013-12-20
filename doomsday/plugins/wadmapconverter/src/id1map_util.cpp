@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "wadmapconverter.h"
-#include "maplumpinfo.h"
+#include "id1map_util.h"
 #include <de/libdeng2.h>
 
 using namespace de;
