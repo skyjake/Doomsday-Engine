@@ -21,6 +21,7 @@
 #define WADMAPCONVERTER_ID1MAP_H
 
 #include "id1map_util.h"
+#include "dd_types.h"
 #include <de/Error>
 #include <de/String>
 #include <de/StringPool>
