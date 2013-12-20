@@ -39,8 +39,8 @@
 #define PLUGIN_NICENAME     "WAD Map Converter"
 #define PLUGIN_DETAILS      "Doomsday plugin for loading id tech 1 format maps."
 
-#define PLUGIN_VERSION_TEXT "1.1.0"
+#define PLUGIN_VERSION_TEXT "1.1.1"
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" WADMAPCONVERTER_VER_ID ")"
-#define PLUGIN_VERSION_NUMBER 1,1,0,0 // For WIN32 version info.
+#define PLUGIN_VERSION_NUMBER 1,1,1,0 // For WIN32 version info.
 
 #endif // WADMAPCONVERTER_VERSION_H
