@@ -26,21 +26,6 @@
 
 using namespace de;
 
-String const &MapFormatNameForId(Id1Map::Format id)
-{
-    static String const names[1 + Id1Map::MapFormatCount] = {
-        /* MF_UNKNOWN */ "Unknown",
-        /* MF_DOOM    */ "id Tech 1 (Doom)",
-        /* MF_HEXEN   */ "id Tech 1 (Hexen)",
-        /* MF_DOOM64  */ "id Tech 1 (Doom64)"
-    };
-    if(id >= Id1Map::DoomFormat && id < Id1Map::MapFormatCount)
-    {
-        return names[1 + id];
-    }
-    return names[0];
-}
-
 MapLumpType MapLumpTypeForName(String name)
 {
     static const struct LumpTypeInfo {

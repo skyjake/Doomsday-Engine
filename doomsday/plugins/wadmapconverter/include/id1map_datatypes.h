@@ -25,6 +25,7 @@
 #include "doomsday.h"
 #include "dd_types.h"
 #include "id1map.h"
+#include <QVector>
 
 /// Sizes of the map data structures in the arrived map formats (in bytes).
 #define SIZEOF_64VERTEX         (4 * 2)
@@ -141,9 +142,10 @@ struct mthing_t
 
 struct mpolyobj_t
 {
+    typedef QVector<int> LineIndices;
+
     int             index;
-    int             lineCount;
-    int            *lineIndices;
+    LineIndices     lineIndices;
     int             tag;
     int             seqType;
     int16_t         anchor[2];

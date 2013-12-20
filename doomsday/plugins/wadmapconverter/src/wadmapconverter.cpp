@@ -27,8 +27,6 @@
 
 using namespace de;
 
-Id1Map *map;
-
 /**
  * Given a map @a uri, attempt to locate the associated marker lump for the
  * map data using the Doomsday file system.
@@ -45,35 +43,13 @@ static lumpnum_t locateMapMarkerLumpForUri(Uri const *uri)
 }
 
 /**
- * Add a @a newLumpInfo record to the @a lumpInfos record collection. If an
- * existing MapLumpInfo record of the same type is present in the collection
- * it will be replaced.
- *
- * @param lumpInfos     MapLumpInfo record set to be updated.
- * @param newLumpInfo   New MapLumpInfo to be added to @a lumpInfos.
- * @return  Same as @a newLumpInfo for caller convenience.
- */
-static MapLumpInfo &addMapLumpInfoToCollection(MapLumpInfos &lumpInfos,
-    MapLumpInfo &newLumpInfo)
-{
-    MapLumpType lumpType = newLumpInfo.type;
-    MapLumpInfos::iterator i = lumpInfos.find(lumpType);
-    if(i != lumpInfos.end())
-    {
-        delete i->second;
-    }
-    lumpInfos[lumpType] = &newLumpInfo;
-    return newLumpInfo;
-}
-
-/**
  * Find all data lumps associated with this map and populate their metadata
  * in the @a lumpInfos record set.
  *
  * @param lumpInfos     MapLumpInfo record set to populate.
  * @param startLump     Lump number at which to begin searching.
  */
-static void collectMapLumps(MapLumpInfos &lumpInfos, lumpnum_t startLump)
+static void collectMapLumps(MapDataLumps &lumpInfos, lumpnum_t startLump)
 {
     LOG_AS("WadMapConverter");
     LOG_TRACE("Locating data lumps...");
@@ -91,14 +67,13 @@ static void collectMapLumps(MapLumpInfos &lumpInfos, lumpnum_t startLump)
         // the required map data lumps.
         if(lumpType == ML_INVALID) break; // Stop looking.
 
-        // A recognized map data lump; record it in the collection.
-        MapLumpInfo *info = new MapLumpInfo();
-        info->init(i, lumpType, W_LumpLength(i));
-        addMapLumpInfoToCollection(lumpInfos, *info);
+        // A recognized map data lump; record it in the collection (replacing any
+        // existing record of the same type).
+        lumpInfos[lumpType] = i;
     }
 }
 
-static Id1Map::Format recognizeMapFormat(MapLumpInfos &lumpInfos)
+static Id1Map::Format recognizeMapFormat(MapDataLumps &lumpInfos)
 {
     LOG_AS("WadMapConverter");
 
@@ -107,12 +82,11 @@ static Id1Map::Format recognizeMapFormat(MapLumpInfos &lumpInfos)
 
     // Some data lumps are specific to a particular map format and thus
     // their presence unambiguously signifies which format we have.
-    DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
+    DENG2_FOR_EACH_CONST(MapDataLumps, i, lumpInfos)
     {
-        MapLumpInfo *info = i->second;
-        if(!info) continue;
+        MapLumpType type = i->first;
 
-        switch(info->type)
+        switch(type)
         {
         default: break;
 
@@ -126,35 +100,38 @@ static Id1Map::Format recognizeMapFormat(MapLumpInfos &lumpInfos)
 
     // Determine whether each data lump is of the expected size.
     uint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
-    DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
+    DENG2_FOR_EACH_CONST(MapDataLumps, i, lumpInfos)
     {
-        MapLumpInfo *info = i->second;
-        if(!info) continue;
+        MapLumpType type  = i->first;
+        lumpnum_t lumpNum = i->second;
 
         // Determine the number of map data objects of each data type.
-        uint *elmCountAddr = 0;
-        size_t elementSize = ElementSizeForMapLumpType(mapFormat, info->type);
-        switch(info->type)
+        uint *elemCountAddr = 0;
+        size_t const elemSize = ElementSizeForMapLumpType(mapFormat, type);
+
+        switch(type)
         {
         default: break;
 
-        case ML_VERTEXES:   elmCountAddr = &numVertexes;    break;
-        case ML_THINGS:     elmCountAddr = &numThings;      break;
-        case ML_LINEDEFS:   elmCountAddr = &numLines;       break;
-        case ML_SIDEDEFS:   elmCountAddr = &numSides;       break;
-        case ML_SECTORS:    elmCountAddr = &numSectors;     break;
-        case ML_LIGHTS:     elmCountAddr = &numLights;      break;
+        case ML_VERTEXES:   elemCountAddr = &numVertexes;    break;
+        case ML_THINGS:     elemCountAddr = &numThings;      break;
+        case ML_LINEDEFS:   elemCountAddr = &numLines;       break;
+        case ML_SIDEDEFS:   elemCountAddr = &numSides;       break;
+        case ML_SECTORS:    elemCountAddr = &numSectors;     break;
+        case ML_LIGHTS:     elemCountAddr = &numLights;      break;
         }
 
-        if(elmCountAddr)
+        if(elemCountAddr)
         {
-            if(0 != info->length % elementSize)
+            size_t const lumpLength = W_LumpLength(lumpNum);
+
+            if(lumpLength % elemSize != 0)
             {
                 // What is this??
                 return Id1Map::UnknownFormat;
             }
 
-            *elmCountAddr += info->length / elementSize;
+            *elemCountAddr += lumpLength / elemSize;
         }
     }
 
@@ -164,27 +141,21 @@ static Id1Map::Format recognizeMapFormat(MapLumpInfos &lumpInfos)
         return Id1Map::UnknownFormat;
     }
 
-    LOG_INFO("Recognized a %s format map.") << MapFormatNameForId(mapFormat);
+    LOG_INFO("Recognized a %s format map.") << Id1Map::formatName(mapFormat);
     return mapFormat;
 }
 
-static void loadAndTransferMap(Uri const *uri, Id1Map::Format mapFormat,
-    MapLumpInfos &lumpInfos)
+static void loadAndTransferMap(Uri const &uri, Id1Map::Format mapFormat,
+    MapDataLumps &lumpInfos)
 {
+    QScopedPointer<Id1Map> map(new Id1Map(mapFormat));
+
     // Load the archived map.
-    map = new Id1Map(mapFormat);
     map->load(lumpInfos);
 
     // Rebuild the map in Doomsday's native format.
-    MPE_Begin(uri);
-    {
-        LOG_AS("WadMapConverter");
-        map->transfer();
-
-        // We have now finished with our local for-conversion map representation.
-        delete map; map = 0;
-    }
-    MPE_End();
+    LOG_AS("WadMapConverter");
+    map->transfer(uri);
 }
 
 /**
@@ -198,64 +169,36 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
 {
     DENG2_ASSERT(context != 0);
 
-    Id1Map::Format mapFormat = Id1Map::UnknownFormat;
-    MapLumpInfos lumpInfos;
-
-    // Begin the conversion attempt.
-    int ret_val = true; // Assume success.
-
     // Attempt to locate the identified map data marker lump.
     Uri const *uri = reinterpret_cast<Uri const *>(context);
     lumpnum_t markerLump = locateMapMarkerLumpForUri(uri);
-    if(0 > markerLump)
+    if(markerLump < 0)
     {
-        ret_val = false;
-        goto FAIL_LOCATE_MAP;
+        return false;
     }
 
     // Collect all of the map data lumps associated with this map.
+    MapDataLumps lumpInfos;
     collectMapLumps(lumpInfos, markerLump + 1 /*begin after the marker*/);
 
-    // Do we recognize this format?
-    mapFormat = recognizeMapFormat(lumpInfos);
-    if(mapFormat == Id1Map::UnknownFormat)
+    // Is this a recognized format?
+    Id1Map::Format mapFormat = recognizeMapFormat(lumpInfos);
+    if(mapFormat != Id1Map::UnknownFormat)
     {
-        ret_val = false;
-        goto FAIL_UNKNOWN_FORMAT;
+        // Convert this map.
+        try
+        {
+            loadAndTransferMap(*uri, mapFormat, lumpInfos);
+            return true; // success
+        }
+        catch(Id1Map::LoadError const &er)
+        {
+            LOG_AS("WadMapConverter");
+            LOG_WARNING("Load error: %s\nAborting conversion...") << er.asText();
+        }
     }
 
-    // Convert this map.
-    try
-    {
-        loadAndTransferMap(uri, mapFormat, lumpInfos);
-    }
-    catch(Id1Map::LoadError const &er)
-    {
-        LOG_AS("WadMapConverter");
-        LOG_WARNING("Load error: %s\nAborting conversion...") << er.asText();
-        ret_val = false;
-    }
-
-FAIL_UNKNOWN_FORMAT:
-
-    // Cleanup.
-    if(map)
-    {
-        // If the Id1Map instance still exists it can only mean an error occured
-        // during map data load.
-        delete map; map = 0;
-    }
-
-    DENG2_FOR_EACH(MapLumpInfos, i, lumpInfos)
-    {
-        MapLumpInfo *info = i->second;
-        if(!info) continue;
-        delete info;
-    }
-
-FAIL_LOCATE_MAP:
-
-    return ret_val;
+    return false; // failure :(
 }
 
 /**

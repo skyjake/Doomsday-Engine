@@ -1,6 +1,6 @@
-/** @file id1map.h  id Tech 1 map format reader.
+/** @file id1map.h  id Tech 1 map format reader/interpreter.
  *
- * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +20,6 @@
 #ifndef WADMAPCONVERTER_ID1MAP_H
 #define WADMAPCONVERTER_ID1MAP_H
 
-#include "doomsday.h"
-#include "dd_types.h"
 #include "maplumpinfo.h"
 #include <de/Error>
 #include <de/String>
@@ -37,10 +35,10 @@ struct mside_t;
 struct mthing_t;
 struct surfacetint_t;
 
-typedef std::map<MapLumpType, MapLumpInfo *> MapLumpInfos;
+typedef std::map<MapLumpType, lumpnum_t> MapDataLumps;
 
 /**
- *
+ * @ingroup wadmapconverter
  */
 class Id1Map
 {
@@ -64,8 +62,6 @@ public:
     typedef std::vector<surfacetint_t> SurfaceTints;
     typedef std::list<mpolyobj_t> Polyobjs;
 
-    typedef std::list<uint> LineList;
-
     /// Material group identifiers.
     enum MaterialGroup {
         PlaneMaterials,
@@ -77,11 +73,23 @@ public:
 public:
     Id1Map(Format format);
 
+    /**
+     * Returns the unique format identifier for the map.
+     */
     Format format() const;
 
-    void load(MapLumpInfos &lumpInfos);
+    /**
+     * Returns the textual name for the identified map format @a id.
+     */
+    static de::String const &formatName(Format id);
 
-    int transfer();
+    void load(MapDataLumps &lumpInfos);
+
+    /**
+     * Transfer the map to Doomsday (i.e., rebuild in native map format via the
+     * public MapEdit API).
+     */
+    void transfer(Uri const &uri);
 
     MaterialId toMaterialId(de::String name, MaterialGroup group);
 

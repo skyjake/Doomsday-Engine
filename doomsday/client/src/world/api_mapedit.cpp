@@ -243,7 +243,7 @@ int MPE_VertexCreate(coord_t x, coord_t y, int archiveIndex)
 }
 
 #undef MPE_VertexCreatev
-boolean MPE_VertexCreatev(int num, coord_t *values, int *archiveIndices, int *retIndices)
+boolean MPE_VertexCreatev(int num, coord_t const *values, int *archiveIndices, int *retIndices)
 {
     ERROR_IF_NOT_INITIALIZED();
 
@@ -365,7 +365,7 @@ int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
 }
 
 #undef MPE_PolyobjCreate
-int MPE_PolyobjCreate(int *lines, int lineCount, int tag, int sequenceType,
+int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType,
     coord_t originX, coord_t originY, int archiveIndex)
 {
     DENG_UNUSED(archiveIndex); /// @todo Use this!

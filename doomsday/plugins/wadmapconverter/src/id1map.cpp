@@ -28,10 +28,11 @@
 #include <de/Time>
 #include <de/memory.h>
 #include <de/timer.h>
+#include <QVector>
 
 using namespace de;
 
-static reader_s *bufferLump(MapLumpInfo *info);
+static reader_s *bufferLump(lumpnum_t lumpNum);
 static void clearReadBuffer();
 
 static uint validCount = 0; // Used for Polyobj LineDef collection.
@@ -40,8 +41,7 @@ DENG2_PIMPL(Id1Map)
 {
     Format format;
 
-    uint numVertexes;
-    coord_t *vertexes; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
+    QVector<coord_t> vertCoords; ///< Array of vertex coords [v0:X, vo:Y, v1:X, v1:Y, ..]
 
     Lines lines;
     Sides sides;
@@ -50,23 +50,15 @@ DENG2_PIMPL(Id1Map)
     SurfaceTints surfaceTints;
     Polyobjs polyobjs;
 
-    de::StringPool materials; ///< Material dictionary.
+    StringPool materials; ///< Material dictionary.
 
     Instance(Public *i)
         : Base(i)
         , format(UnknownFormat)
-        , numVertexes(0)
-        , vertexes(0)
     {}
 
-    ~Instance()
-    {
-        M_Free(vertexes);
-
-        DENG2_FOR_EACH(Polyobjs, i, polyobjs)
-        {
-            M_Free(i->lineIndices);
-        }
+    inline int vertexCount() const {
+        return vertCoords.count() / 2;
     }
 
     inline String const &findMaterialInDictionary(MaterialId id) const {
@@ -83,10 +75,8 @@ DENG2_PIMPL(Id1Map)
         return ref;
     }
 
-    bool loadVertexes(reader_s *reader, int numElements)
+    bool loadVertexes(reader_s &reader, int numElements)
     {
-        DENG2_ASSERT(reader != 0);
-
         LOG_TRACE("Processing vertexes...");
         for(int n = 0; n < numElements; ++n)
         {
@@ -94,13 +84,13 @@ DENG2_PIMPL(Id1Map)
             {
             default:
             case DoomFormat:
-                vertexes[n * 2]     = coord_t( SHORT(Reader_ReadInt16(reader)) );
-                vertexes[n * 2 + 1] = coord_t( SHORT(Reader_ReadInt16(reader)) );
+                vertCoords[n * 2]     = coord_t( SHORT(Reader_ReadInt16(&reader)) );
+                vertCoords[n * 2 + 1] = coord_t( SHORT(Reader_ReadInt16(&reader)) );
                 break;
 
             case Doom64Format:
-                vertexes[n * 2]     = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
-                vertexes[n * 2 + 1] = coord_t( FIX2FLT(LONG(Reader_ReadInt32(reader))) );
+                vertCoords[n * 2]     = coord_t( FIX2FLT(LONG(Reader_ReadInt32(&reader))) );
+                vertCoords[n * 2 + 1] = coord_t( FIX2FLT(LONG(Reader_ReadInt32(&reader))) );
                 break;
             }
         }
@@ -108,33 +98,26 @@ DENG2_PIMPL(Id1Map)
         return true;
     }
 
-    bool loadLineDefs(reader_s *reader, int numElements)
+    bool loadLineDefs(reader_s &reader, int numElements)
     {
-        DENG2_ASSERT(reader != 0);
-
         LOG_TRACE("Processing line definitions...");
         if(numElements)
         {
             lines.reserve(lines.size() + numElements);
             for(int n = 0; n < numElements; ++n)
             {
+                lines.push_back(mline_t());
+                mline_t &line = lines.back();
+
+                line.index = n;
+
+                thisPublic;
                 switch(format)
                 {
                 default:
-                case DoomFormat:
-                    lines.push_back(mline_t());
-                    MLine_Read(&lines.back(), n, reader);
-                    break;
-
-                case Doom64Format:
-                    lines.push_back(mline_t());
-                    MLine64_Read(&lines.back(), n, reader);
-                    break;
-
-                case HexenFormat:
-                    lines.push_back(mline_t());
-                    MLineHx_Read(&lines.back(), n, reader);
-                    break;
+                case DoomFormat:   MLine_Read(line, self, reader);   break;
+                case Doom64Format: MLine64_Read(line, self, reader); break;
+                case HexenFormat:  MLineHx_Read(line, self, reader); break;
                 }
             }
         }
@@ -142,28 +125,24 @@ DENG2_PIMPL(Id1Map)
         return true;
     }
 
-    bool loadSideDefs(reader_s *reader, int numElements)
+    bool loadSideDefs(reader_s &reader, int numElements)
     {
-        DENG2_ASSERT(reader != 0);
-
         LOG_TRACE("Processing side definitions...");
         if(numElements)
         {
             sides.reserve(sides.size() + numElements);
             for(int n = 0; n < numElements; ++n)
             {
+                sides.push_back(mside_t());
+                mside_t &side = sides.back();
+
+                side.index = n;
+
                 switch(format)
                 {
                 default:
-                case DoomFormat:
-                    sides.push_back(mside_t());
-                    MSide_Read(&sides.back(), n, reader);
-                    break;
-
-                case Doom64Format:
-                    sides.push_back(mside_t());
-                    MSide64_Read(&sides.back(), n, reader);
-                    break;
+                case DoomFormat:   MSide_Read(side, self, reader);   break;
+                case Doom64Format: MSide64_Read(side, self, reader); break;
                 }
             }
         }
@@ -171,27 +150,23 @@ DENG2_PIMPL(Id1Map)
         return true;
     }
 
-    bool loadSectors(reader_s *reader, int numElements)
+    bool loadSectors(reader_s &reader, int numElements)
     {
-        DENG2_ASSERT(reader != 0);
-
         LOG_TRACE("Processing sectors...");
         if(numElements)
         {
             sectors.reserve(sectors.size() + numElements);
             for(int n = 0; n < numElements; ++n)
             {
+                sectors.push_back(msector_t());
+                msector_t &sector = sectors.back();
+
+                sector.index = n;
+
                 switch(format)
                 {
-                default:
-                    sectors.push_back(msector_t());
-                    MSector_Read(&sectors.back(), n, reader);
-                    break;
-
-                case Doom64Format:
-                    sectors.push_back(msector_t());
-                    MSector64_Read(&sectors.back(), n, reader);
-                    break;
+                default:           MSector_Read(sector, self, reader);   break;
+                case Doom64Format: MSector64_Read(sector, self, reader); break;
                 }
             }
         }
@@ -199,33 +174,25 @@ DENG2_PIMPL(Id1Map)
         return true;
     }
 
-    bool loadThings(reader_s *reader, int numElements)
+    bool loadThings(reader_s &reader, int numElements)
     {
-        DENG2_ASSERT(reader != 0);
-
         LOG_TRACE("Processing things...");
         if(numElements)
         {
             things.reserve(things.size() + numElements);
             for(int n = 0; n < numElements; ++n)
             {
+                things.push_back(mthing_t());
+                mthing_t &thing = things.back();
+
+                thing.index = n;
+
                 switch(format)
                 {
                 default:
-                case DoomFormat:
-                    things.push_back(mthing_t());
-                    MThing_Read(&things.back(), n, reader);
-                    break;
-
-                case Doom64Format:
-                    things.push_back(mthing_t());
-                    MThing64_Read(&things.back(), n, reader);
-                    break;
-
-                case HexenFormat:
-                    things.push_back(mthing_t());
-                    MThingHx_Read(&things.back(), n, reader);
-                    break;
+                case DoomFormat:   MThing_Read(thing, self, reader);   break;
+                case Doom64Format: MThing64_Read(thing, self, reader); break;
+                case HexenFormat:  MThingHx_Read(thing, self, reader); break;
                 }
             }
         }
@@ -233,10 +200,8 @@ DENG2_PIMPL(Id1Map)
         return true;
     }
 
-    bool loadSurfaceTints(reader_s *reader, int numElements)
+    bool loadSurfaceTints(reader_s &reader, int numElements)
     {
-        DENG2_ASSERT(reader != 0);
-
         LOG_TRACE("Processing surface tints...");
         if(numElements)
         {
@@ -244,7 +209,10 @@ DENG2_PIMPL(Id1Map)
             for(int n = 0; n < numElements; ++n)
             {
                 surfaceTints.push_back(surfacetint_t());
-                SurfaceTint_Read(&surfaceTints.back(), n, reader);
+                surfacetint_t &tint = surfaceTints.back();
+
+                tint.index = n;
+                SurfaceTint_Read(tint, self, reader);
             }
         }
 
@@ -254,26 +222,22 @@ DENG2_PIMPL(Id1Map)
     /**
      * Create a temporary polyobj.
      */
-    mpolyobj_t *createPolyobj(LineList &lineList, int tag, int sequenceType,
-        int16_t anchorX, int16_t anchorY)
+    mpolyobj_t *createPolyobj(mpolyobj_t::LineIndices const &lineIndices, int tag,
+        int sequenceType, int16_t anchorX, int16_t anchorY)
     {
         // Allocate the new polyobj.
         polyobjs.push_back(mpolyobj_t());
         mpolyobj_t *po = &polyobjs.back();
 
-        po->index      = polyobjs.size()-1;
-        po->tag        = tag;
-        po->seqType    = sequenceType;
-        po->anchor[VX] = anchorX;
-        po->anchor[VY] = anchorY;
+        po->index       = polyobjs.size()-1;
+        po->tag         = tag;
+        po->seqType     = sequenceType;
+        po->anchor[VX]  = anchorX;
+        po->anchor[VY]  = anchorY;
+        po->lineIndices = lineIndices; // A copy is made.
 
-        // Construct the line indices array we'll pass to the MPE interface.
-        po->lineCount = lineList.size();
-        po->lineIndices = (int *)M_Malloc(sizeof(int) * po->lineCount);
-        int n = 0;
-        for(LineList::iterator i = lineList.begin(); i != lineList.end(); ++i, ++n)
+        foreach(int lineIdx, po->lineIndices)
         {
-            int lineIdx = *i;
             mline_t *line = &lines[lineIdx];
 
             // This line now belongs to a polyobj.
@@ -289,8 +253,6 @@ DENG2_PIMPL(Id1Map)
              */
             if(line->sides[LEFT] >= 0)
                 line->ddFlags |= DDLF_DONTPEGBOTTOM;
-
-            po->lineIndices[n] = lineIdx;
         }
 
         return po;
@@ -306,7 +268,7 @@ DENG2_PIMPL(Id1Map)
      */
     bool findAndCreatePolyobj(int16_t tag, int16_t anchorX, int16_t anchorY)
     {
-        LineList polyLines;
+        mpolyobj_t::LineIndices polyLines;
 
         // First look for a PO_LINE_START linedef set with this tag.
         DENG2_FOR_EACH(Lines, i, lines)
@@ -317,7 +279,7 @@ DENG2_PIMPL(Id1Map)
             if(!(i->xType == PO_LINE_START && i->xArgs[0] == tag)) continue;
 
             collectPolyobjLines(polyLines, i);
-            if(!polyLines.empty())
+            if(!polyLines.isEmpty())
             {
                 int8_t sequenceType = i->xArgs[2];
                 if(sequenceType >= SEQTYPE_NUMSEQ) sequenceType = 0;
@@ -349,7 +311,7 @@ DENG2_PIMPL(Id1Map)
                     if(i->xArgs[1] == n + 1)
                     {
                         // Add this line to the list.
-                        polyLines.push_back( i - lines.begin() );
+                        polyLines.append( i - lines.begin() );
                         foundAnotherLine = true;
 
                         // Clear any special.
@@ -380,13 +342,13 @@ DENG2_PIMPL(Id1Map)
             }
         }
 
-        if(polyLines.empty())
+        if(polyLines.isEmpty())
         {
             LOG_WARNING("Failed to locate a single line for polyobj (tag:%d).") << tag;
             return false;
         }
 
-        mline_t *line = &lines[ polyLines.front() ];
+        mline_t *line = &lines[ polyLines.first() ];
         int8_t const sequenceType = line->xArgs[3];
 
         // Setup the mirror if it exists.
@@ -420,12 +382,13 @@ DENG2_PIMPL(Id1Map)
     void transferVertexes()
     {
         LOG_TRACE("Transfering vertexes...");
+        int const numVertexes = vertexCount();
         int *indices = new int[numVertexes];
-        for(uint i = 0; i < numVertexes; ++i)
+        for(int i = 0; i < numVertexes; ++i)
         {
             indices[i] = i;
         }
-        MPE_VertexCreatev(numVertexes, vertexes, indices, 0);
+        MPE_VertexCreatev(numVertexes, vertCoords.constData(), indices, 0);
         delete[] indices;
     }
 
@@ -552,7 +515,8 @@ DENG2_PIMPL(Id1Map)
         LOG_TRACE("Transfering polyobjs...");
         DENG2_FOR_EACH(Polyobjs, i, polyobjs)
         {
-            MPE_PolyobjCreate(i->lineIndices, i->lineCount, i->tag, i->seqType,
+            MPE_PolyobjCreate(i->lineIndices.constData(), i->lineIndices.count(),
+                              i->tag, i->seqType,
                               coord_t(i->anchor[VX]), coord_t(i->anchor[VY]),
                               i->index);
         }
@@ -596,7 +560,8 @@ DENG2_PIMPL(Id1Map)
      * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
      *                  of lines in the polyobj.
      */
-    void collectPolyobjLinesWorker(LineList &lineList, coord_t x, coord_t y)
+    void collectPolyobjLinesWorker(mpolyobj_t::LineIndices &lineList,
+        coord_t x, coord_t y)
     {
         DENG2_FOR_EACH(Lines, i, lines)
         {
@@ -606,16 +571,16 @@ DENG2_PIMPL(Id1Map)
             // Have we already encounterd this?
             if(i->validCount == validCount) continue;
 
-            coord_t v1[2] = { vertexes[i->v[0] * 2],
-                              vertexes[i->v[0] * 2 + 1] };
+            coord_t v1[2] = { vertCoords[i->v[0] * 2],
+                              vertCoords[i->v[0] * 2 + 1] };
 
-            coord_t v2[2] = { vertexes[i->v[1] * 2],
-                              vertexes[i->v[1] * 2 + 1] };
+            coord_t v2[2] = { vertCoords[i->v[1] * 2],
+                              vertCoords[i->v[1] * 2 + 1] };
 
             if(de::fequal(v1[VX], x) && de::fequal(v1[VY], y))
             {
                 i->validCount = validCount;
-                lineList.push_back( i - lines.begin() );
+                lineList.append( i - lines.begin() );
                 collectPolyobjLinesWorker(lineList, v2[VX], v2[VY]);
             }
         }
@@ -625,18 +590,18 @@ DENG2_PIMPL(Id1Map)
      * @todo This terribly inefficent (naive) algorithm may need replacing
      *       (it is far outside an acceptable polynomial range!).
      */
-    void collectPolyobjLines(LineList &lineList, Lines::iterator lineIt)
+    void collectPolyobjLines(mpolyobj_t::LineIndices &lineList, Lines::iterator lineIt)
     {
         mline_t &line = *lineIt;
         line.xType    = 0;
         line.xArgs[0] = 0;
 
-        coord_t v2[2] = { vertexes[line.v[1] * 2],
-                          vertexes[line.v[1] * 2 + 1] };
+        coord_t v2[2] = { vertCoords[line.v[1] * 2],
+                          vertCoords[line.v[1] * 2 + 1] };
 
         validCount++;
         // Insert the first line.
-        lineList.push_back(lineIt - lines.begin());
+        lineList.append(lineIt - lines.begin());
         line.validCount = validCount;
         collectPolyobjLinesWorker(lineList, v2[VX], v2[VY]);
     }
@@ -652,11 +617,23 @@ Id1Map::Format Id1Map::format() const
     return d->format;
 }
 
+String const &Id1Map::formatName(Format id) //static
+{
+    static String const names[1 + MapFormatCount] = {
+        /* MF_UNKNOWN */ "Unknown",
+        /* MF_DOOM    */ "id Tech 1 (Doom)",
+        /* MF_HEXEN   */ "id Tech 1 (Hexen)",
+        /* MF_DOOM64  */ "id Tech 1 (Doom64)"
+    };
+    if(id >= DoomFormat && id < MapFormatCount)
+    {
+        return names[1 + id];
+    }
+    return names[0];
+}
+
 Id1Map::MaterialId Id1Map::toMaterialId(String name, MaterialGroup group)
 {
-    // Prepare the encoded URI for insertion into the dictionary.
-    AutoStr *uriCString;
-
     // In original DOOM, texture name references beginning with the
     // hypen '-' character are always treated as meaning "no reference"
     // or "invalid texture" and surfaces using them were not drawn.
@@ -665,11 +642,12 @@ Id1Map::MaterialId Id1Map::toMaterialId(String name, MaterialGroup group)
         return 0; // Not a valid id.
     }
 
+    // Prepare the encoded URI for insertion into the dictionary.
     // Material paths must be encoded.
     AutoStr *path = Str_PercentEncode(AutoStr_FromText(name.toUtf8().constData()));
     Uri *uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
     Uri_SetScheme(uri, group == PlaneMaterials? "Flats" : "Textures");
-    uriCString = Uri_Compose(uri);
+    AutoStr *uriCString = Uri_Compose(uri);
     Uri_Delete(uri);
 
     // Intern this material URI in the dictionary.
@@ -691,38 +669,38 @@ Id1Map::MaterialId Id1Map::toMaterialId(int uniqueId, MaterialGroup group)
     return d->materials.intern(String(Str_Text(uriCString)));
 }
 
-void Id1Map::load(MapLumpInfos &lumpInfos)
+void Id1Map::load(MapDataLumps &lumps)
 {
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
-    size_t elementSize = ElementSizeForMapLumpType(d->format, ML_VERTEXES);
-    uint numElements = lumpInfos[ML_VERTEXES]->length / elementSize;
+    uint vertexCount = W_LumpLength(lumps[ML_VERTEXES])
+                     / ElementSizeForMapLumpType(d->format, ML_VERTEXES);
+    d->vertCoords.resize(vertexCount * 2);
 
-    d->numVertexes = numElements;
-    d->vertexes = (coord_t *)M_Malloc(d->numVertexes * 2 * sizeof(*d->vertexes));
-
-    DENG2_FOR_EACH_CONST(MapLumpInfos, i, lumpInfos)
+    DENG2_FOR_EACH_CONST(MapDataLumps, i, lumps)
     {
-        MapLumpInfo *info = i->second;
+        MapLumpType type  = i->first;
+        lumpnum_t lumpNum = i->second;
 
-        if(!info || !info->length) continue;
+        size_t lumpLength = W_LumpLength(lumpNum);
+        if(!lumpLength) continue;
 
-        elementSize = ElementSizeForMapLumpType(d->format, info->type);
-        if(!elementSize) continue;
+        size_t elemSize = ElementSizeForMapLumpType(d->format, type);
+        if(!elemSize) continue;
 
         // Process this data lump.
-        numElements = info->length / elementSize;
-        reader_s *reader = bufferLump(info);
-        switch(info->type)
+        uint elemCount = lumpLength / elemSize;
+        reader_s *reader = bufferLump(lumpNum);
+        switch(type)
         {
         default: break;
 
-        case ML_VERTEXES: d->loadVertexes(reader, numElements);        break;
-        case ML_LINEDEFS: d->loadLineDefs(reader, numElements);        break;
-        case ML_SIDEDEFS: d->loadSideDefs(reader, numElements);        break;
-        case ML_SECTORS:  d->loadSectors(reader, numElements);         break;
-        case ML_THINGS:   d->loadThings(reader, numElements);          break;
-        case ML_LIGHTS:   d->loadSurfaceTints(reader, numElements);    break;
+        case ML_VERTEXES: d->loadVertexes(*reader, elemCount);     break;
+        case ML_LINEDEFS: d->loadLineDefs(*reader, elemCount);     break;
+        case ML_SIDEDEFS: d->loadSideDefs(*reader, elemCount);     break;
+        case ML_SECTORS:  d->loadSectors(*reader, elemCount);      break;
+        case ML_THINGS:   d->loadThings(*reader, elemCount);       break;
+        case ML_LIGHTS:   d->loadSurfaceTints(*reader, elemCount); break;
         }
         Reader_Delete(reader);
     }
@@ -734,22 +712,22 @@ void Id1Map::load(MapLumpInfos &lumpInfos)
     d->analyze();
 }
 
-int Id1Map::transfer()
+void Id1Map::transfer(uri_s const &uri)
 {
     LOG_AS("Id1Map");
 
     Time begunAt;
 
-    d->transferVertexes();
-    d->transferSectors();
-    d->transferLinesAndSides();
-    d->transferSurfaceTints();
-    d->transferPolyobjs();
-    d->transferThings();
+    MPE_Begin(&uri);
+        d->transferVertexes();
+        d->transferSectors();
+        d->transferLinesAndSides();
+        d->transferSurfaceTints();
+        d->transferPolyobjs();
+        d->transferThings();
+    MPE_End();
 
     LOG_INFO(String("Transfer completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
-
-    return false; // Success.
 }
 
 static uint8_t *readPtr;
@@ -798,17 +776,18 @@ static void readData(reader_s *r, char *data, int len)
 }
 
 /// @todo It should not be necessary to buffer the lump data here.
-static reader_s *bufferLump(MapLumpInfo *info)
+static reader_s *bufferLump(lumpnum_t lumpNum)
 {
     // Need to enlarge our read buffer?
-    if(info->length > readBufferSize)
+    size_t lumpLength = W_LumpLength(lumpNum);
+    if(lumpLength > readBufferSize)
     {
-        readBuffer = (uint8_t *)M_Realloc(readBuffer, info->length);
-        readBufferSize = info->length;
+        readBuffer = (uint8_t *)M_Realloc(readBuffer, lumpLength);
+        readBufferSize = lumpLength;
     }
 
     // Buffer the entire lump.
-    W_ReadLump(info->lump, readBuffer);
+    W_ReadLump(lumpNum, readBuffer);
 
     // Create the reader.
     readPtr = readBuffer;

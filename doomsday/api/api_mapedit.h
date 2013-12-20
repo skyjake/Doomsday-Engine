@@ -55,13 +55,13 @@ DENG_API_TYPEDEF(MPE)
      * Called by the game to register the map object types it wishes us to make
      * public via the MPE interface.
      */
-    boolean         (*RegisterMapObj)(int identifier, const char* name);
+    boolean         (*RegisterMapObj)(int identifier, char const *name);
 
     /**
      * Called by the game to add a new property to a previously registered
      * map object type definition.
      */
-    boolean         (*RegisterMapObjProperty)(int identifier, int propIdentifier, const char* propName, valuetype_t type);
+    boolean         (*RegisterMapObjProperty)(int identifier, int propIdentifier, char const *propName, valuetype_t type);
 
     /**
      * To be called to begin the map building process.
@@ -98,7 +98,7 @@ DENG_API_TYPEDEF(MPE)
      *                        vertexes will be written back here.
      * @return  @c =true iff all vertexes were created successfully.
      */
-    boolean         (*VertexCreatev)(int num, coord_t *values, int *archiveIndices, int *indices);
+    boolean         (*VertexCreatev)(int num, coord_t const *values, int *archiveIndices, int *indices);
 
     /**
      * Create a new line in the editable map.
@@ -116,11 +116,11 @@ DENG_API_TYPEDEF(MPE)
      * @return  Index of the newly created line else @c -1 if there was an error.
      */
     int             (*LineCreate)(int v1, int v2, int frontSector, int backSector, int flags, int archiveIndex);
-    void            (*LineAddSide)(int line, int side, short flags, const ddstring_t* topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, const ddstring_t* middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue, int archiveIndex);
+    void            (*LineAddSide)(int line, int side, short flags, ddstring_t const *topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, ddstring_t const *middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue, int archiveIndex);
     int             (*SectorCreate)(float lightlevel, float red, float green, float blue, int archiveIndex);
-    int             (*PlaneCreate)(int sector, coord_t height, const ddstring_t* materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ, int archiveIndex);
-    int             (*PolyobjCreate)(int* lines, int linecount, int tag, int sequenceType, coord_t originX, coord_t originY, int archiveIndex);
-    boolean         (*GameObjProperty)(const char* objName, int idx, const char* propName, valuetype_t type, void* data);
+    int             (*PlaneCreate)(int sector, coord_t height, ddstring_t const *materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ, int archiveIndex);
+    int             (*PolyobjCreate)(int const *lines, int linecount, int tag, int sequenceType, coord_t originX, coord_t originY, int archiveIndex);
+    boolean         (*GameObjProperty)(char const *objName, int idx, char const *propName, valuetype_t type, void *data);
 }
 DENG_API_T(MPE);
 

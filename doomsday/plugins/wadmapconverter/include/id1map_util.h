@@ -26,14 +26,6 @@
 #include <de/String>
 
 /**
- * Retrieve the textual name for the identified map format @a id.
- * @param id  Unique identifier of the map format.
- * @return Textual name for this format. Always returns a valid ddstring_t that
- *         should NOT be free'd.
- */
-de::String const &MapFormatNameForId(Id1Map::Format id);
-
-/**
  * Determine type of a named map data lump.
  * @param name  Name of the data lump.
  * @return MapLumpType associated with the named map data lump.

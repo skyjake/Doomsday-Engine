@@ -60,22 +60,4 @@ enum MapLumpType {
  */
 #define VALID_MAPLUMPTYPE(v)    ((v) >= FIRST_MAPLUMP_TYPE && (v) < NUM_MAPLUMP_TYPES)
 
-/**
- * POD structure for defining extended metadata for map data lumps.
- */
-struct MapLumpInfo
-{
-    lumpnum_t lump; ///< Absolute lump number for the associated data.
-    MapLumpType type; ///< Recognised lump data type.
-    size_t length; ///< Length of the lump data in bytes.
-
-    MapLumpInfo *init(lumpnum_t lumpNum, MapLumpType lumpType, size_t lumpLength)
-    {
-        lump = lumpNum;
-        type = lumpType;
-        length = lumpLength;
-        return this;
-    }
-};
-
 #endif // WADMAPCONVERTER_MAPLUMPINFO_H

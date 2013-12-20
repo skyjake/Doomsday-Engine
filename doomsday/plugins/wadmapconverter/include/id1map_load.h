@@ -40,13 +40,13 @@ size_t ElementSizeForMapLumpType(Id1Map::Format mapFormat, MapLumpType type);
  * @param line  Line definition to be populated.
  * @param reader  Reader instance.
  */
-void MLine_Read(mline_t *line, int index, Reader *reader);
+void MLine_Read(mline_t &line, Id1Map &map, Reader &reader);
 
 /// Doom64 format variant of @ref MLine_Read()
-void MLine64_Read(mline_t *line, int index, Reader *reader);
+void MLine64_Read(mline_t &line, Id1Map &map, Reader &reader);
 
 /// Hexen format variant of @ref MLine_Read()
-void MLineHx_Read(mline_t *line, int index, Reader *reader);
+void MLineHx_Read(mline_t &line, Id1Map &map, Reader &reader);
 
 /**
  * Read a side definition from the archived map.
@@ -54,10 +54,10 @@ void MLineHx_Read(mline_t *line, int index, Reader *reader);
  * @param side  Side definition to be populated.
  * @param reader  Reader instance.
  */
-void MSide_Read(mside_t *side, int index, Reader *reader);
+void MSide_Read(mside_t &side, Id1Map &map, Reader &reader);
 
 /// Doom64 format variant of @ref MSide_Read()
-void MSide64_Read(mside_t *side, int index, Reader *reader);
+void MSide64_Read(mside_t &side, Id1Map &map, Reader &reader);
 
 /**
  * Read a sector definition from the archived map.
@@ -65,10 +65,10 @@ void MSide64_Read(mside_t *side, int index, Reader *reader);
  * @param sector  Sector definition to be populated.
  * @param reader  Reader instance.
  */
-void MSector_Read(msector_t *sector, int index, Reader *reader);
+void MSector_Read(msector_t &sector, Id1Map &map, Reader &reader);
 
 /// Doom64 format variant of @ref MSector_Read()
-void MSector64_Read(msector_t *sector, int index, Reader *reader);
+void MSector64_Read(msector_t &sector, Id1Map &map, Reader &reader);
 
 /**
  * Read a thing definition from the archived map.
@@ -76,13 +76,13 @@ void MSector64_Read(msector_t *sector, int index, Reader *reader);
  * @param thing  Thing definition to be populated.
  * @param reader  Reader instance.
  */
-void MThing_Read(mthing_t *thing, int index, Reader *reader);
+void MThing_Read(mthing_t &thing, Id1Map &map, Reader &reader);
 
 /// Doom64 format variant of @ref MThing_Read()
-void MThing64_Read(mthing_t *thing, int index, Reader *reader);
+void MThing64_Read(mthing_t &thing, Id1Map &map, Reader &reader);
 
 /// Hexen format variant of @ref MThing_Read()
-void MThingHx_Read(mthing_t *thing, int index, Reader *reader);
+void MThingHx_Read(mthing_t &thing, Id1Map &map, Reader &reader);
 
 /**
  * Read a surface tint definition from the archived map.
@@ -90,6 +90,6 @@ void MThingHx_Read(mthing_t *thing, int index, Reader *reader);
  * @param tint  Surface tint definition to be populated.
  * @param reader  Reader instance.
  */
-void SurfaceTint_Read(surfacetint_t *tint, int index, Reader *reader);
+void SurfaceTint_Read(surfacetint_t &tint, Id1Map &map, Reader &reader);
 
 #endif // WADMAPCONVERTER_ID1MAP_LOAD_H
