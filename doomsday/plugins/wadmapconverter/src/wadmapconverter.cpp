@@ -37,10 +37,9 @@ typedef QMap<MapLumpType, lumpnum_t> MapDataLumps;
  *
  * @return Lump number for the found data else @c -1
  */
-static lumpnum_t locateMapMarkerLumpForUri(Uri const *uri)
+static lumpnum_t locateMapMarkerLumpForUri(Uri const &uri)
 {
-    DENG2_ASSERT(uri != 0);
-    char const *mapId = Str_Text(Uri_Path(uri));
+    char const *mapId = Str_Text(Uri_Path(&uri));
     return W_CheckLumpNumForName2(mapId, true /*quiet please*/);
 }
 
@@ -48,10 +47,10 @@ static lumpnum_t locateMapMarkerLumpForUri(Uri const *uri)
  * Find all data lumps associated with this map and populate their metadata
  * in the @a lumpInfos record set.
  *
- * @param lumpInfos     MapLumpInfo record set to populate.
- * @param startLump     Lump number at which to begin searching.
+ * @param lumps      Record set to populate.
+ * @param startLump  Lump number at which to begin searching.
  */
-static void collectMapLumps(MapDataLumps &lumpInfos, lumpnum_t startLump)
+static void collectMapLumps(MapDataLumps &lumps, lumpnum_t startLump)
 {
     LOG_AS("WadMapConverter");
     LOG_TRACE("Locating data lumps...");
@@ -71,7 +70,7 @@ static void collectMapLumps(MapDataLumps &lumpInfos, lumpnum_t startLump)
 
         // A recognized map data lump; record it in the collection (replacing any
         // existing record of the same type).
-        lumpInfos.insert(lumpType, i);
+        lumps.insert(lumpType, i);
     }
 }
 
@@ -169,7 +168,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     DENG2_ASSERT(context != 0);
 
     // Attempt to locate the identified map data marker lump.
-    Uri const *uri = reinterpret_cast<Uri const *>(context);
+    Uri const &uri = *reinterpret_cast<Uri const *>(context);
     lumpnum_t markerLump = locateMapMarkerLumpForUri(uri);
     if(markerLump < 0)
     {
@@ -187,7 +186,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
         // Convert this map.
         try
         {
-            loadAndTransferMap(*uri, mapFormat, lumps);
+            loadAndTransferMap(uri, mapFormat, lumps);
             return true; // success
         }
         catch(Id1Map::LoadError const &er)
