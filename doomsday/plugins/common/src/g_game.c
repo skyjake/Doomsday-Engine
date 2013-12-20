@@ -1258,7 +1258,7 @@ void G_EndGame(void)
 }
 
 /// @param mapInfo  Can be @c NULL.
-static void initFogForMap(ddmapinfo_t* mapInfo)
+static void initFogForMap(ddmapinfo_t *mapInfo)
 {
 #if __JHEXEN__
     int fadeTable;
@@ -1294,7 +1294,7 @@ static void initFogForMap(ddmapinfo_t* mapInfo)
 #endif
 }
 
-int G_DoLoadMap(loadmap_params_t* p)
+int G_DoLoadMap(loadmap_params_t *p)
 {
     boolean hasMapInfo = false;
     ddmapinfo_t mapInfo;
@@ -1302,7 +1302,7 @@ int G_DoLoadMap(loadmap_params_t* p)
     DENG_ASSERT(p);
 
     // Is MapInfo data available for this map?
-    { AutoStr* mapUriStr = Uri_Compose(p->mapUri);
+    { AutoStr *mapUriStr = Uri_Compose(p->mapUri);
     if(mapUriStr)
     {
         hasMapInfo = Def_Get(DD_DEF_MAP_INFO, Str_Text(mapUriStr), &mapInfo);
@@ -1323,37 +1323,10 @@ int G_DoLoadMap(loadmap_params_t* p)
     return 0; // Assume success.
 }
 
-static int G_DoLoadMapWorker(void* params)
+static int G_DoLoadMapWorker(void *params)
 {
-    loadmap_params_t* p = (loadmap_params_t*) params;
+    loadmap_params_t *p = (loadmap_params_t *) params;
     int result = G_DoLoadMap(p);
-    BusyMode_WorkerEnd();
-    return result;
-}
-
-int G_DoLoadMapAndMaybeStartBriefing(loadmap_params_t* p)
-{
-    ddfinale_t fin;
-    boolean hasBrief;
-
-    DENG_ASSERT(p);
-
-    hasBrief = G_BriefingEnabled(p->episode, p->map, &fin);
-
-    G_DoLoadMap(p);
-
-    // Start a briefing, if there is one.
-    if(hasBrief)
-    {
-        G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
-    }
-    return hasBrief;
-}
-
-static int G_DoLoadMapAndMaybeStartBriefingWorker(void* parameters)
-{
-    loadmap_params_t* p = (loadmap_params_t*)parameters;
-    int result = G_DoLoadMapAndMaybeStartBriefing(p);
     BusyMode_WorkerEnd();
     return result;
 }
@@ -2639,6 +2612,7 @@ void G_DoLeaveMap(void)
     boolean oldRandomClassParm;
 #endif
     loadmap_params_t p;
+    ddfinale_t fin;
     boolean revisit = false;
     boolean hasBrief;
 
@@ -2730,7 +2704,7 @@ void G_DoLeaveMap(void)
     p.map     = nextMap;
     p.revisit = revisit;
 
-    hasBrief = G_BriefingEnabled(p.episode, p.map, 0);
+    hasBrief = G_BriefingEnabled(p.episode, p.map, &fin);
     if(!hasBrief)
     {
         G_QueMapMusic(p.episode, p.map);
@@ -2744,10 +2718,14 @@ void G_DoLeaveMap(void)
 
     /// @todo Use progress bar mode and update progress during the setup.
     BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
+                                G_DoLoadMapWorker, &p, "Loading map...");
     Uri_Delete(p.mapUri);
 
-    if(!hasBrief)
+    if(hasBrief)
+    {
+        G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
+    }
+    else
     {
         // No briefing; begin the map.
         HU_WakeWidgets(-1/* all players */);
@@ -3097,13 +3075,14 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
     {
         loadmap_params_t p;
         boolean hasBrief;
+        ddfinale_t fin;
 
         p.mapUri        = G_ComposeMapUri(gameEpisode, gameMap);
         p.episode       = gameEpisode;
         p.map           = gameMap;
         p.revisit       = false;
 
-        hasBrief = G_BriefingEnabled(gameEpisode, gameMap, 0);
+        hasBrief = G_BriefingEnabled(gameEpisode, gameMap, &fin);
         if(!hasBrief)
         {
             G_QueMapMusic(gameEpisode, gameMap);
@@ -3116,14 +3095,18 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
         {
             /// @todo Use progress bar mode and update progress during the setup.
             BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                        G_DoLoadMapAndMaybeStartBriefingWorker, &p, "Loading map...");
+                                        G_DoLoadMapWorker, &p, "Loading map...");
         }
         else
         {
-            G_DoLoadMapAndMaybeStartBriefing(&p);
+            G_DoLoadMap(&p);
         }
 
-        if(!hasBrief)
+        if(hasBrief)
+        {
+            G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
+        }
+        else
         {
             // No briefing; begin the map.
             HU_WakeWidgets(-1 /* all players */);
