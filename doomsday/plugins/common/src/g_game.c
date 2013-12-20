@@ -1323,14 +1323,6 @@ int G_DoLoadMap(loadmap_params_t *p)
     return 0; // Assume success.
 }
 
-static int G_DoLoadMapWorker(void *params)
-{
-    loadmap_params_t *p = (loadmap_params_t *) params;
-    int result = G_DoLoadMap(p);
-    BusyMode_WorkerEnd();
-    return result;
-}
-
 int G_Responder(event_t* ev)
 {
     DENG_ASSERT(ev);
@@ -2716,9 +2708,7 @@ void G_DoLeaveMap(void)
     NetSv_UpdateGameConfigDescription();
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
-    /// @todo Use progress bar mode and update progress during the setup.
-    BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                G_DoLoadMapWorker, &p, "Loading map...");
+    G_DoLoadMap(&p);
     Uri_Delete(p.mapUri);
 
     if(hasBrief)
@@ -2797,19 +2787,7 @@ void G_DoRestartMap(void)
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
-    /**
-     * Load the map.
-     */
-    if(!BusyMode_Active())
-    {
-        /// @todo Use progress bar mode and update progress during the setup.
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    G_DoLoadMapWorker, &p, "Loading map...");
-    }
-    else
-    {
-        G_DoLoadMap(&p);
-    }
+    G_DoLoadMap(&p);
 
     // No briefing; begin the map.
     HU_WakeWidgets(-1 /* all players */);
@@ -3091,16 +3069,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
         // If we're the server, let clients know the map will change.
         NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
-        if(!BusyMode_Active())
-        {
-            /// @todo Use progress bar mode and update progress during the setup.
-            BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                        G_DoLoadMapWorker, &p, "Loading map...");
-        }
-        else
-        {
-            G_DoLoadMap(&p);
-        }
+        G_DoLoadMap(&p);
 
         if(hasBrief)
         {

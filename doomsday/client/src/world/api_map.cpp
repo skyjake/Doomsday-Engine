@@ -1517,7 +1517,7 @@ DENG_EXTERN_C boolean P_MapChange(char const *uriCString)
         }
     }
 
-    return App_World().changeMap(de::Uri(uriCString, RC_NULL));
+    return (boolean) App_World().changeMap(de::Uri(uriCString, RC_NULL));
 }
 
 #undef P_CountMapObjs

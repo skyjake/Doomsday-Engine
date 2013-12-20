@@ -692,6 +692,88 @@ DENG2_PIMPL(World)
         notifyMapChange();
     }
 
+    /// @todo Split this into subtasks (load, make current, cache assets).
+    bool changeMap(de::Uri const &uri)
+    {
+#ifdef __CLIENT__
+        if(map)
+        {
+            // Remove the current map from our audiences.
+            /// @todo Map should handle this.
+            self.audienceForFrameBegin -= map;
+        }
+#endif
+
+        // As the memory zone does not provide the mechanisms to prepare another
+        // map in parallel we must free the current map first.
+        /// @todo The memory zone would still be useful if the purge and tagging
+        /// mechanisms allowed more fine grained control. It is no longer useful
+        /// for allocating memory used elsewhere so it should be repurposed for
+        /// this usage specifically.
+#ifdef __CLIENT__
+        R_DestroyContactLists();
+#endif
+        delete map; map = 0;
+        Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
+
+        // Are we just unloading the current map?
+        if(uri.isEmpty()) return true;
+
+        LOG_MSG("Loading map \"%s\"...") << uri;
+
+        // A new map is about to be set up.
+        ddMapSetup = true;
+
+        // Attempt to load in the new map.
+        MapLoadTaskData task; task.uri = uri;
+        if(loadMap(task))
+        {
+            // The map may still be in an editable state -- switch to playable.
+            bool mapIsPlayable = task.map->endEditing();
+
+            if(!task.reporter.isNull())
+            {
+                // We are no longer interested in reports about this map.
+                task.map->audienceForOneWayWindowFound   -= *task.reporter;
+                task.map->audienceForUnclosedSectorFound -= *task.reporter;
+            }
+
+            if(!mapIsPlayable)
+            {
+                // Darn. Discard the useless data.
+                task.map.reset();
+            }
+        }
+
+        // Take ownership of the map (if any) and make current.
+        makeCurrent(task.map.data()? task.map.take() : 0);
+
+        // We've finished setting up the map.
+        ddMapSetup = false;
+
+        // Output a human-readable log of any issues encountered in the conversion process.
+        if(!task.reporter.isNull())
+        {
+            task.reporter->writeLog();
+        }
+
+        return map != 0;
+    }
+
+    struct changemapworker_params_t
+    {
+        Instance *inst;
+        de::Uri const *uri;
+    };
+
+    static int changeMapWorker(void *context)
+    {
+        changemapworker_params_t &p = *static_cast<changemapworker_params_t *>(context);
+        int result = p.inst->changeMap(*p.uri);
+        BusyMode_WorkerEnd();
+        return result;
+    }
+
 #ifdef __CLIENT__
     void updateHandOrigin()
     {
@@ -732,69 +814,26 @@ Map &World::map() const
 
 bool World::changeMap(de::Uri const &uri)
 {
-#ifdef __CLIENT__
-    if(d->map)
+    Instance::changemapworker_params_t parm;
+    parm.inst = d;
+    parm.uri  = &uri;
+
+    // Switch to busy mode (if we haven't already) except when simply unloading.
+    if(!uri.isEmpty() && !BusyMode_Active())
     {
-        // Remove the current map from our audiences.
-        /// @todo Map should handle this.
-        audienceForFrameBegin -= d->map;
+        BusyTask task; zap(task);
+        /// @todo Use progress bar mode and update progress during the setup.
+        task.mode       = BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
+        task.name       = "Loading map...";
+        task.worker     = Instance::changeMapWorker;
+        task.workerData = &parm;
+
+        return CPP_BOOL(BusyMode_RunTask(&task));
     }
-#endif
-
-    // As the memory zone does not provide the mechanisms to prepare another
-    // map in parallel we must free the current map first.
-    /// @todo The memory zone would still be useful if the purge and tagging
-    /// mechanisms allowed more fine grained control. It is no longer useful
-    /// for allocating memory used elsewhere so it should be repurposed for
-    /// this usage specifically.
-#ifdef __CLIENT__
-    R_DestroyContactLists();
-#endif
-    delete d->map; d->map = 0;
-    Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
-
-    // Are we just unloading the current map?
-    if(uri.isEmpty()) return true;
-
-    LOG_MSG("Loading map \"%s\"...") << uri;
-
-    // A new map is about to be setup.
-    ddMapSetup = true;
-
-    // Attempt to load in the new map.
-    MapLoadTaskData task; task.uri = uri;
-    if(d->loadMap(task))
+    else
     {
-        // The map may still be in an editable state -- switch to playable.
-        bool mapIsPlayable = task.map->endEditing();
-
-        if(!task.reporter.isNull())
-        {
-            // We are no longer interested in reports about this map.
-            task.map->audienceForOneWayWindowFound   -= *task.reporter;
-            task.map->audienceForUnclosedSectorFound -= *task.reporter;
-        }
-
-        if(!mapIsPlayable)
-        {
-            // Darn. Discard the useless data.
-            task.map.reset();
-        }
+        return CPP_BOOL(d->changeMapWorker(&parm));
     }
-
-    // Take ownership of the map (if any) and make current.
-    d->makeCurrent(task.map.data()? task.map.take() : 0);
-
-    // We've finished setting up the map.
-    ddMapSetup = false;
-
-    // Output a human-readable log of any issues encountered in the conversion process.
-    if(!task.reporter.isNull())
-    {
-        task.reporter->writeLog();
-    }
-
-    return d->map != 0;
 }
 
 void World::reset()
