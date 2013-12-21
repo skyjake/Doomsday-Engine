@@ -74,7 +74,7 @@ DENG_GUI_PIMPL(CompositorWidget)
         }
 
         Buffer *buf = buffers[nextBufIndex];
-        Vector2ui const size = GLState::current().target().size();
+        Vector2ui const size = GLState::current().target().rectInUse().size();
         //qDebug() << "compositor" << nextBufIndex << "should be" << size.asText();
         if(buf->texture.size() != size)
         {
@@ -188,7 +188,7 @@ void CompositorWidget::drawComposite()
 {
     if(!d->shouldBeDrawn()) return;
 
-    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_ALPHA_TEST); /// @todo remove this
     glEnable(GL_TEXTURE_2D);
 
     DENG2_ASSERT(d->nextBufIndex > 0);

@@ -548,6 +548,7 @@ void GLTarget::clear(Flags const &attachments)
 
     markAsChanged();
 
+    GLState::current().apply();
     glBind();
 
     // Only clear what we have.
