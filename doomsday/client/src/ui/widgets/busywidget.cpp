@@ -120,8 +120,9 @@ void BusyWidget::drawContent()
 
         if(Con_TransitionInProgress())
         {
-            /// @todo This might not work well with multiple player viewports? -jk
-            GLState::push().setViewport(Rectangleui::fromSize(root().viewRule().sizeui())).apply();
+            GLState::push()
+                    .setViewport(Rectangleui::fromSize(GLState::current().target().size()))
+                    .apply();
             Con_DrawTransition();
             GLState::pop().apply();
         }

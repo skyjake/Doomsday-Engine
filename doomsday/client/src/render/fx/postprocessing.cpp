@@ -131,23 +131,9 @@ DENG2_PIMPL(PostProcessing)
         framebuf.glDeinit();
     }
 
-    Rectangleui outRect() const
-    {
-        GLTarget &target = GLState::current().target();
-        Rectangleui rect = Rectangleui::fromSize(target.size());
-
-        if(target.hasActiveRect())
-        {
-            rect = target.scaleToActiveRect(rect);
-        }
-        return rect;
-    }
-
     void update()
     {
-        Rectangleui rect = outRect();
-
-        framebuf.resize(rect.size());
+        framebuf.resize(GLState::current().target().rectInUse().size());
         framebuf.setSampleCount(GLFramebuffer::defaultMultisampling());
     }
 
