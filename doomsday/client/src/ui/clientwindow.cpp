@@ -533,12 +533,15 @@ DENG2_OBSERVES(App,              StartupComplete)
             return;
         }
 
+        // All the children of the compositor need to be relocated.
         container().remove(*gameUI);
         container().remove(*gameSelMenu);
         if(sidebar) container().remove(*sidebar);
         container().remove(*notifications);
         container().remove(*taskBar);
         container().remove(*cursor);
+
+        Widget::Children additional;
 
         if(enable && !compositor)
         {
@@ -551,6 +554,15 @@ DENG2_OBSERVES(App,              StartupComplete)
         else
         {
             DENG2_ASSERT(compositor != 0);            
+
+            // Anything remaining in the compositor also needs to be relocated; there could be
+            // some hidden popups. We are about to do delete the compositor, which means all its
+            // remaining children will be deleted, too.
+            additional = compositor->childWidgets();
+            foreach(Widget *w, additional)
+            {
+                compositor->remove(*w);
+            }
 
             root.remove(*compositor);
             compositor->guiDeleteLater();
@@ -565,6 +577,12 @@ DENG2_OBSERVES(App,              StartupComplete)
         container().add(notifications);
         container().add(taskBar);
         container().add(cursor);
+
+        // Also the other widgets.
+        foreach(Widget *w, additional)
+        {
+            container().add(w);
+        }
 
         if(mode == Normal)
         {
