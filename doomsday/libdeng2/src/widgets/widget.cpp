@@ -356,9 +356,31 @@ void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
     d->children.insert(to, child);
 }
 
+void Widget::moveChildToLast(Widget &child)
+{
+    DENG2_ASSERT(child->parent() == this);
+    if(!child.isLastChild())
+    {
+        remove(child);
+        add(&child);
+    }
+}
+
 Widget *Widget::parent() const
 {
     return d->parent;
+}
+
+bool Widget::isFirstChild() const
+{
+    if(!parent()) return false;
+    return this == parent()->d->children.first();
+}
+
+bool Widget::isLastChild() const
+{
+    if(!parent()) return false;
+    return this == parent()->d->children.last();
 }
 
 String Widget::uniqueName(String const &name) const

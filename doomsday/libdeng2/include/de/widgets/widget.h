@@ -194,7 +194,9 @@ public:
 
     bool isEventRouted(int type, Widget *to) const;
 
-    // Tree organization.
+    /*
+     * Tree organization.
+     */
     void clearTree();
 
     /**
@@ -213,9 +215,12 @@ public:
     Widget *find(String const &name);
     Widget const *find(String const &name) const;
     void moveChildBefore(Widget *child, Widget const &otherChild);
+    void moveChildToLast(Widget &child);
     Children children() const;
     dsize childCount() const;
     Widget *parent() const;
+    bool isFirstChild() const;
+    bool isLastChild() const;
 
     // Utilities.
     String uniqueName(String const &name) const;

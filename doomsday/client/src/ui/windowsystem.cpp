@@ -127,6 +127,11 @@ void WindowSystem::dispatchLatestMousePosition()
     d->processLatestMousePosition();
 }
 
+Vector2i WindowSystem::latestMousePosition() const
+{
+    return d->latestMousePos;
+}
+
 bool WindowSystem::processEvent(Event const &event)
 {
     /*

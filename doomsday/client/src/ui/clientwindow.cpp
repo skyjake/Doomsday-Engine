@@ -28,6 +28,7 @@
 #include "clientapp.h"
 #include <de/DisplayMode>
 #include <de/NumberValue>
+#include <de/ConstantRule>
 #include <QGLFormat>
 #include <de/GLState>
 #include <de/GLFramebuffer>
@@ -82,6 +83,10 @@ DENG2_OBSERVES(App,              StartupComplete)
     GameSelectionWidget *gameSelMenu;
     BusyWidget *busy;
     GuiWidget *sidebar;
+    LabelWidget *cursor;
+    ConstantRule *cursorX;
+    ConstantRule *cursorY;
+    bool cursorHasBeenHidden;
 
     // FPS notifications.
     LabelWidget *fpsCounter;
@@ -91,24 +96,28 @@ DENG2_OBSERVES(App,              StartupComplete)
     VRWindowTransform contentXf;
 
     Instance(Public *i)
-        : Base(i),
-          needMainInit(true),
-          needRecreateCanvas(false),
-          needRootSizeUpdate(false),
-          mode(Normal),
-          root(thisPublic),
-          compositor(0),
-          game(0),
-          gameUI(0),
-          taskBar(0),
-          notifications(0),
-          colorAdjust(0),
-          background(0),
-          gameSelMenu(0),
-          sidebar(0),
-          fpsCounter(0),
-          oldFps(0),
-          contentXf(*i)
+        : Base(i)
+        , needMainInit(true)
+        , needRecreateCanvas(false)
+        , needRootSizeUpdate(false)
+        , mode(Normal)
+        , root(thisPublic)
+        , compositor(0)
+        , game(0)
+        , gameUI(0)
+        , taskBar(0)
+        , notifications(0)
+        , colorAdjust(0)
+        , background(0)
+        , gameSelMenu(0)
+        , sidebar(0)
+        , cursor(0)
+        , cursorX(new ConstantRule(0))
+        , cursorY(new ConstantRule(0))
+        , cursorHasBeenHidden(false)
+        , fpsCounter(0)
+        , oldFps(0)
+        , contentXf(*i)
     {
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
@@ -130,6 +139,9 @@ DENG2_OBSERVES(App,              StartupComplete)
         self.canvas().audienceForFocusChange -= this;
         self.canvas().audienceForMouseStateChange -= this;
         self.canvas().audienceForKeyEvent -= this;
+
+        releaseRef(cursorX);
+        releaseRef(cursorY);
     }
 
     Widget &container()
@@ -215,6 +227,17 @@ DENG2_OBSERVES(App,              StartupComplete)
         root.add(colorAdjust);
 
         taskBar->hide();
+
+        // Mouse cursor is used with transformed content.
+        cursor = new LabelWidget;
+        cursor->margins().set(""); // no margins
+        cursor->setImage(style.images().image("window.cursor"));
+        cursor->setAlignment(ui::AlignTopLeft);
+        cursor->rule()
+                .setSize(Const(48), Const(48))
+                .setLeftTop(*cursorX, *cursorY);
+        cursor->hide();
+        container().add(cursor);
     }
 
     void appStartupCompleted()
@@ -515,6 +538,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         if(sidebar) container().remove(*sidebar);
         container().remove(*notifications);
         container().remove(*taskBar);
+        container().remove(*cursor);
 
         if(enable && !compositor)
         {
@@ -540,6 +564,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         if(sidebar) container().add(sidebar);
         container().add(notifications);
         container().add(taskBar);
+        container().add(cursor);
 
         if(mode == Normal)
         {
@@ -555,12 +580,35 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         if(VR::mode() == VR::MODE_OCULUS_RIFT)
         {
-            compositor->setCompositeProjection(Matrix4f::ortho(-1, 2, -1, 2));
+            compositor->setCompositeProjection(Matrix4f::ortho(-1.1f, 2.2f, -1.1f, 2.2f));
         }
         else
         {
             // We'll simply cover the entire view.
             compositor->useDefaultCompositeProjection();
+        }
+    }
+
+    void updateMouseCursor()
+    {
+        // The cursor is only needed if the content is warped.
+        cursor->show(!self.canvas().isMouseTrapped() && VR::mode() == VR::MODE_OCULUS_RIFT);
+
+        if(cursor->isVisible())
+        {
+            if(!cursorHasBeenHidden)
+            {
+                qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
+                cursorHasBeenHidden = true;
+            }
+
+            Vector2i cp = ClientApp::windowSystem().latestMousePosition();
+            cursorX->set(cp.x);
+            cursorY->set(cp.y);
+        }
+        else
+        {
+            cursorHasBeenHidden = false;
         }
     }
 };
@@ -678,6 +726,9 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Cursor position (if cursor is visible).
+    d->updateMouseCursor();
 
     if(d->needRootSizeUpdate)
     {
@@ -873,6 +924,9 @@ void ClientWindow::showColorAdjustments()
 void ClientWindow::addOnTop(GuiWidget *widget)
 {
     d->container().add(widget);
+
+    // Make sure the cursor remains the topmost widget.
+    d->container().moveChildToLast(*d->cursor);
 }
 
 void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)

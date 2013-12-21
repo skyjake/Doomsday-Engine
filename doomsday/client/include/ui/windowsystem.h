@@ -25,6 +25,7 @@
 
 #include <de/System>
 #include <de/String>
+#include <de/Vector>
 #include "SettingsRegister"
 
 class ClientWindow;
@@ -104,6 +105,8 @@ public:
      * happens automatically whenever the mouse has moved and time advances.
      */
     void dispatchLatestMousePosition();
+
+    de::Vector2i latestMousePosition() const;
 
     // System.
     bool processEvent(de::Event const &);
