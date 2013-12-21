@@ -52,8 +52,6 @@
  */
 #define FRAME_DEFERRED_UPLOAD_TIMEOUT 20
 
-//boolean drawGame = true; // If false the game viewport won't be rendered
-
 using namespace de;
 
 DENG2_PIMPL(GameWidget)
@@ -170,20 +168,6 @@ void GameWidget::drawContent()
     if(isDisabled() || !GL_IsFullyInited())
         return;
 
-#if 0
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
-
-    GL_Init2DState();
-#endif
-
     GLState::push();
 
     Rectanglei pos;
@@ -197,18 +181,6 @@ void GameWidget::drawContent()
 
     GLState::considerNativeStateUndefined();
     GLState::pop();
-
-#if 0
-    glPopClientAttrib();
-    glPopAttrib();
-
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-#endif
 }
 
 bool GameWidget::handleEvent(Event const &event)

@@ -43,23 +43,6 @@ DENG2_PIMPL(GameUIWidget)
         {
             R_RenderViewPorts(ui::HUDLayer);
 
-            /*
-            if(titleFinale == 0)
-            {
-                // Title animation is not playing. Lets do it manually.
-                glMatrixMode(GL_PROJECTION);
-                glPushMatrix();
-                glLoadIdentity();
-                glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
-
-                R_RenderBlankView();
-
-                glMatrixMode(GL_PROJECTION);
-                glPopMatrix();
-            }
-            */
-
-
             if(!(UI_IsActive() && UI_Alpha() >= 1.0))
             {
                 UI2_Drawer();
