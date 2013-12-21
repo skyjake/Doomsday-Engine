@@ -54,6 +54,11 @@ DENG2_PIMPL(Style)
     {
         Folder const &pack = App::rootFolder().locate<Folder>(path);
 
+        if(CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
+        {
+            fonts.setFontSizeFactor(arg.params.at(0).toFloat());
+        }
+
         rules.addFromInfo(pack.locate<File>("rules.dei"));
         fonts.addFromInfo(pack.locate<File>("fonts.dei"));
         colors.addFromInfo(pack.locate<File>("colors.dei"));

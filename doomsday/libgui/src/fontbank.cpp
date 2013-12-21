@@ -45,11 +45,11 @@ DENG2_PIMPL(FontBank)
             String size = def["size"];
             if(size.endsWith("px"))
             {
-                font.setPixelSize(size.toInt(0, 10, String::AllowSuffix));
+                font.setPixelSize(size.toInt(0, 10, String::AllowSuffix) * bank.d->fontSizeFactor);
             }
             else
             {
-                font.setPointSize(size.toInt(0, 10, String::AllowSuffix));
+                font.setPointSize(size.toInt(0, 10, String::AllowSuffix) * bank.d->fontSizeFactor);
             }
 
             // Weight.
@@ -74,7 +74,11 @@ DENG2_PIMPL(FontBank)
         ~FontData() { delete font; }
     };
 
-    Instance(Public *i) : Base(i)
+    float fontSizeFactor;
+
+    Instance(Public *i)
+        : Base(i)
+        , fontSizeFactor(1.f)
     {}
 };
 
@@ -91,6 +95,11 @@ void FontBank::addFromInfo(File const &file)
 Font const &FontBank::font(DotPath const &path) const
 {
     return *static_cast<Instance::FontData &>(data(path)).font;
+}
+
+void FontBank::setFontSizeFactor(float sizeFactor)
+{
+    d->fontSizeFactor = clamp(.1f, sizeFactor, 20.f);
 }
 
 Bank::ISource *FontBank::newSourceFromInfo(String const &id)

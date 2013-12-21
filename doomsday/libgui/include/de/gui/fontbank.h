@@ -51,6 +51,13 @@ public:
      */
     Font const &font(DotPath const &path) const;
 
+    /**
+     * Sets a factor applied to all font sizes when loading the back.
+     *
+     * @param sizeFactor  Size factor.
+     */
+    void setFontSizeFactor(float sizeFactor);
+
 protected:
     virtual ISource *newSourceFromInfo(String const &id);
     virtual IData *loadFromSource(ISource &source);
