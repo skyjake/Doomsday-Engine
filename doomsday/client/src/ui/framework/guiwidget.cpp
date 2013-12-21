@@ -369,23 +369,27 @@ ui::Margins const &GuiWidget::margins() const
     return d->margins;
 }
 
+Rectanglef GuiWidget::normalizedRect(de::Rectanglei const &rect,
+                                     de::Rectanglei const &containerRect) // static
+{
+    Rectanglef const rectf = rect.moved(-containerRect.topLeft);
+    Vector2f const contSize = containerRect.size();
+    return Rectanglef(Vector2f(rectf.left()   / contSize.x,
+                               rectf.top()    / contSize.y),
+                      Vector2f(rectf.right()  / contSize.x,
+                               rectf.bottom() / contSize.y));
+}
+
 Rectanglef GuiWidget::normalizedRect() const
 {
-    Rectanglef const rect = rule().rect();
-    GuiRootWidget::Size const &viewSize = root().viewSize();
-    return Rectanglef(Vector2f(rect.left()   / float(viewSize.x),
-                               rect.top()    / float(viewSize.y)),
-                      Vector2f(rect.right()  / float(viewSize.x),
-                               rect.bottom() / float(viewSize.y)));
+    return GuiWidget::normalizedRect(rule().recti(),
+                                     Rectanglei::fromSize(root().viewSize()));
 }
 
 Rectanglef GuiWidget::normalizedRect(Rectanglei const &viewSpaceRect) const
 {
-    GuiRootWidget::Size const &viewSize = root().viewSize();
-    return Rectanglef(Vector2f(float(viewSpaceRect.left())   / float(viewSize.x),
-                               float(viewSpaceRect.top())    / float(viewSize.y)),
-                      Vector2f(float(viewSpaceRect.right())  / float(viewSize.x),
-                               float(viewSpaceRect.bottom()) / float(viewSize.y)));
+    return GuiWidget::normalizedRect(viewSpaceRect,
+                                     Rectanglei::fromSize(root().viewSize()));
 }
 
 Rectanglef GuiWidget::normalizedContentRect() const

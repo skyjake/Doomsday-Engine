@@ -373,10 +373,13 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    GameWidget &game = ClientWindow::main().game();
+
     GLState::current().setNormalizedScissor(
-                ClientWindow::main().game().normalizedRect(
+                game.normalizedRect(
                     Rectanglei(rect->origin.x, rect->origin.y,
-                               rect->size.width, rect->size.height))).apply();
+                               rect->size.width, rect->size.height),
+                    game.rule().recti())).apply();
 }
 
 #undef DGL_SetScissor2

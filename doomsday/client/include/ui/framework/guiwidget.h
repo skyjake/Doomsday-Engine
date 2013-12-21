@@ -306,6 +306,18 @@ public:
 
     bool isInitialized() const;
 
+public:
+    /**
+     * Normalize a rectangle within a container rectangle.
+     *
+     * @param rect            Rectangle to normalize.
+     * @param containerRect   Container rectangle to normalize in.
+     *
+     * @return Normalized rectangle.
+     */
+    static de::Rectanglef normalizedRect(de::Rectanglei const &rect,
+                                         de::Rectanglei const &containerRect);
+
 protected:
     /**
      * Called by GuiWidget::update() the first time an update is being carried
