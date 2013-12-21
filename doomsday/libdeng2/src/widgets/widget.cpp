@@ -358,7 +358,7 @@ void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
 
 void Widget::moveChildToLast(Widget &child)
 {
-    DENG2_ASSERT(child->parent() == this);
+    DENG2_ASSERT(child.parent() == this);
     if(!child.isLastChild())
     {
         remove(child);
