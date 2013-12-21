@@ -34,6 +34,7 @@ static TimeDelta const OPENING_ANIM_SPAN = 0.4;
 static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
 
 DENG_GUI_PIMPL(PopupWidget)
+, DENG2_OBSERVES(Widget, Deletion)
 {
     bool useInfoStyle;
     bool deleteAfterDismiss;
@@ -60,6 +61,8 @@ DENG_GUI_PIMPL(PopupWidget)
 
     ~Instance()
     {
+        if(realParent) realParent->audienceForDeletion -= this;
+
         releaseRef(anchorX);
         releaseRef(anchorY);
     }
@@ -139,6 +142,15 @@ DENG_GUI_PIMPL(PopupWidget)
         {
             // If nested, use an opaque background.
             self.set(self.background().withSolidFillOpacity(1));
+        }
+    }
+
+    void widgetBeingDeleted(Widget &widget)
+    {
+        if(&widget == realParent)
+        {
+            // We don't know who the real parent is any more.
+            realParent = 0;
         }
     }
 };
@@ -381,6 +393,7 @@ void PopupWidget::preparePanelForOpening()
 
     // Reparent the popup into the root widget, on top of everything else.
     d->realParent = Widget::parent();
+    d->realParent->audienceForDeletion += d;
     d->realParent->remove(*this);
     d->realParent->root().as<GuiRootWidget>().addOnTop(this);
 
@@ -392,6 +405,11 @@ void PopupWidget::panelDismissed()
     PanelWidget::panelDismissed();
 
     // Move back to the original parent widget.
+    if(!d->realParent)
+    {
+        // The real parent has been deleted.
+        d->realParent = &root();
+    }
     parentWidget()->remove(*this);
     d->realParent->add(this);
     d->realParent = 0;
