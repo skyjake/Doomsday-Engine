@@ -708,4 +708,13 @@ bool GLTarget::hasActiveRect() const
     return !d->activeRect.isNull();
 }
 
+Rectangleui GLTarget::rectInUse() const
+{
+    if(hasActiveRect())
+    {
+        return activeRect();
+    }
+    return Rectangleui::fromSize(size());
+}
+
 } // namespace de

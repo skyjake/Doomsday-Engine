@@ -301,6 +301,13 @@ public:
     Rectangleui const &activeRect() const;
     bool hasActiveRect() const;
 
+    /**
+     * Returns the area of the target currently in use. This is the full area
+     * of the target, if there is no active rectangle specified. Otherwise
+     * some sub-area of the target is returned.
+     */
+    Rectangleui rectInUse() const;
+
 private:
     DENG2_PRIVATE(d)
 };
