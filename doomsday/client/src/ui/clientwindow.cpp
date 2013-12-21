@@ -553,7 +553,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         }
         else
         {
-            DENG2_ASSERT(compositor != 0);            
+            DENG2_ASSERT(compositor != 0);
 
             // Anything remaining in the compositor also needs to be relocated; there could be
             // some hidden popups. We are about to do delete the compositor, which means all its
@@ -626,6 +626,10 @@ DENG2_OBSERVES(App,              StartupComplete)
         }
         else
         {
+            if(cursorHasBeenHidden)
+            {
+                qApp->restoreOverrideCursor();
+            }
             cursorHasBeenHidden = false;
         }
     }
