@@ -405,7 +405,11 @@ void PopupWidget::panelDismissed()
     PanelWidget::panelDismissed();
 
     // Move back to the original parent widget.
-    if(!d->realParent)
+    if(d->realParent)
+    {
+        d->realParent->audienceForDeletion -= d;
+    }
+    else
     {
         // The real parent has been deleted.
         d->realParent = &root();
