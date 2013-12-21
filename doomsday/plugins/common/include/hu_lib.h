@@ -394,48 +394,69 @@ void MNPage_SetPreviousPage(mn_page_t* page, mn_page_t* prevPage);
 
 void MNPage_Refocus(mn_page_t* page);
 
-/// @return  Currently focused object else @c NULL
-mn_object_t* MNPage_FocusObject(mn_page_t* page);
+/// @return  Currently focused object; otherwise @c 0.
+mn_object_t *MNPage_FocusObject(mn_page_t *page);
 
-void MNPage_ClearFocusObject(mn_page_t* page);
+void MNPage_ClearFocusObject(mn_page_t *page);
 
 /**
- * Attempt to give focus to the MNObject @a obj which is thought to be on
- * this page. If @a obj is found to present and is not currently in-focus,
- * an out-focus action is first sent to the presently focused object, then
- * this page's focused object is set before finally executing an in-focus
- * action on the new object. If the object is not found on this page then
- * this is a NOP.
+ * Attempt to give focus to the MNObject @a obj which is thought to be on the
+ * page. If @a obj is found to present and is not currently in-focus, an out-focus
+ * action is first sent to the presently focused object, then this page's focused
+ * object is set before finally executing an in-focus action on the new object.
+ * If the object is not found on this page then nothing will happen.
  *
  * @param obj  MNObject to be given focus.
  */
-void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj);
+void MNPage_SetFocus(mn_page_t *page, mn_object_t *obj);
+
+/**
+ * Determines the size of the menu cursor for the currently focused widget. If
+ * no widget is currently focused the default cursor size (i.e., the effective
+ * line height for @c MENU_FONT1) is used. (Which means this should @em not be
+ * called to determine whether the cursor is actually in use -- for that purpose,
+ * use @ref MNPage_FocusObject() instead).
+ */
+int MNPage_CursorSize(mn_page_t *page);
 
 /**
  * Retrieve an object on this page in the specified object group.
- * @param flags  Flags used to locate the object. All specified flags must
- *      must be set @ref mnobjectFlags
+ *
+ * @param flags  @ref mnobjectFlags  used to locate the object. All flags specified
+ *               must be set.
+ *
  * @return  Found MNObject else @c NULL
  */
-mn_object_t* MNPage_FindObject(mn_page_t* page, int group, int flags);
+mn_object_t *MNPage_FindObject(mn_page_t *page, int group, int flags);
 
 /**
- * Retrieve a predefined color triplet associated with this page by it's
- * logical page color identifier.
- * @param id  Unique identifier of the predefined color being retrieved.
+ * Retrieve a predefined color triplet associated with this page by it's logical
+ * page color identifier.
+ *
+ * @param id   Unique identifier of the predefined color being retrieved.
  * @param rgb  Found color values are written here, else set to white.
  */
-void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3]);
+void MNPage_PredefinedColor(mn_page_t *page, mn_page_colorid_t id, float rgb[3]);
 
 /**
  * Retrieve a predefined Doomsday font-identifier associated with this page
  * by it's logical page font identifier.
+ *
  * @param id  Unique identifier of the predefined font being retrieved.
+ *
  * @return  Identifier of the found font else @c 0
  */
-fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
+fontid_t MNPage_PredefinedFont(mn_page_t *page, mn_page_fontid_t id);
 
-void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId);
+void MNPage_SetPredefinedFont(mn_page_t *page, mn_page_fontid_t id, fontid_t fontId);
+
+/**
+ * Returns the effective line height for the predefined @c MENU_FONT1.
+ *
+ * @param lineOffset  If not @c 0 the line offset is written here.
+ */
+int MNPage_LineHeight2(mn_page_t *page, int *lineOffset);
+int MNPage_LineHeight(mn_page_t *page/*, lineOffset = 0*/);
 
 /// @return  Current time in tics since page activation.
 int MNPage_Timer(mn_page_t* page);

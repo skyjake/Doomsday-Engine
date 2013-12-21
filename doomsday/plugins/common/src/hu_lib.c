@@ -820,7 +820,32 @@ boolean MNObject_IsDrawable(mn_object_t* ob)
     return !(MNObject_Type(ob) == MN_NONE || !ob->drawer || (MNObject_Flags(ob) & MNF_HIDDEN));
 }
 
-static void applyPageLayout(mn_page_t* page)
+int MNPage_LineHeight2(mn_page_t *page, int *lineOffset)
+{
+    fontid_t oldFont = FR_Font();
+    int lineHeight = 0;
+
+    DENG_ASSERT(page != 0);
+
+    /// @kludge We cannot yet query line height from the font...
+    FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
+    lineHeight = FR_TextHeight("{case}WyQ");
+    if(lineOffset)
+    {
+        *lineOffset = MAX_OF(1, .5f + lineHeight * .34f);
+    }
+    // Restore the old font.
+    FR_SetFont(oldFont);
+
+    return lineHeight;
+}
+
+int MNPage_LineHeight(mn_page_t *page)
+{
+    return MNPage_LineHeight2(page, 0);
+}
+
+static void applyPageLayout(mn_page_t *page)
 {
     int i, lineHeight, lineOffset;
     Point2Raw origin = { 0, 0 };
@@ -837,7 +862,7 @@ static void applyPageLayout(mn_page_t* page)
         // This page uses a fixed layout.
         for(i = 0; i < page->objectsCount; ++i)
         {
-            mn_object_t* ob = &page->objects[i];
+            mn_object_t *ob = &page->objects[i];
 
             if(!MNObject_IsDrawable(ob)) continue;
 
@@ -848,18 +873,12 @@ static void applyPageLayout(mn_page_t* page)
     }
 
     // This page uses a dynamic layout.
-
-    // Calculate leading/line offset.
-    FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
-    /// @kludge We cannot yet query line height from the font.
-    lineHeight = FR_TextHeight("{case}WyQ");
-    lineOffset = MAX_OF(1, .5f + lineHeight * .34f);
-    // kludge end.
+    lineHeight = MNPage_LineHeight2(page, &lineOffset);
 
     for(i = 0; i < page->objectsCount;)
     {
-        mn_object_t* ob = &page->objects[i];
-        mn_object_t* nextOb = i+1 < page->objectsCount? &page->objects[i+1] : NULL;
+        mn_object_t *ob = &page->objects[i];
+        mn_object_t *nextOb = i+1 < page->objectsCount? &page->objects[i+1] : 0;
 
         if(!MNObject_IsDrawable(ob))
         {
@@ -999,9 +1018,9 @@ static void drawPageHeading(mn_page_t* page, const Point2Raw* offset)
     FR_PopAttrib();
 }
 
-void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
+void MN_DrawPage(mn_page_t *page, float alpha, boolean showFocusCursor)
 {
-    mn_object_t* focusObj;
+    mn_object_t *focusObj;
     int i, focusObjHeight;
     Point2Raw cursorOrigin;
 
@@ -1028,15 +1047,17 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     // Determine the origin of the focus object (this dictates the page scroll location).
     focusObj = MNPage_FocusObject(page);
     if(focusObj && !MNObject_IsDrawable(focusObj))
-        focusObj = NULL;
+    {
+        focusObj = 0;
+    }
 
     // Are we focusing?
     if(focusObj)
     {
-        focusObjHeight = Size2_Height(MNObject_Size(focusObj));
+        focusObjHeight = MNPage_CursorSize(page);
 
         // Determine the origin and dimensions of the cursor.
-        // @todo Each object should define a focus origin...
+        /// @todo Each object should define a focus origin...
         cursorOrigin.x = -1;
         cursorOrigin.y = Point2_Y(MNObject_Origin(focusObj));
 
@@ -1046,7 +1067,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         if(MN_LIST == MNObject_Type(focusObj) && (MNObject_Flags(focusObj) & MNF_ACTIVE) &&
            MNList_SelectionIsVisible(focusObj))
         {
-            const mndata_list_t* list = (mndata_list_t*)focusObj->_typedata;
+            mndata_list_t const *list = (mndata_list_t *)focusObj->_typedata;
 
             FR_PushAttrib();
             FR_SetFont(MNPage_PredefinedFont(page, MNObject_Font(focusObj)));
@@ -1076,11 +1097,11 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         // Is scrolling in effect?
         if(pageGeometry.size.height > viewRegion.size.height)
         {
-            const int minY = -viewRegion.origin.y/2 + viewRegion.size.height/2;
+            int const minY = -viewRegion.origin.y/2 + viewRegion.size.height/2;
             if(cursorOrigin.y > minY)
             {
-                const int scrollLimitY = pageGeometry.size.height - viewRegion.size.height/2;
-                const int scrollOriginY = MIN_OF(cursorOrigin.y, scrollLimitY) - minY;
+                int const scrollLimitY = pageGeometry.size.height - viewRegion.size.height/2;
+                int const scrollOriginY = MIN_OF(cursorOrigin.y, scrollLimitY) - minY;
                 DGL_Translatef(0, -scrollOriginY, 0);
             }
         }
@@ -1089,11 +1110,11 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     // Draw child objects.
     for(i = 0; i < page->objectsCount; ++i)
     {
-        mn_object_t* obj = &page->objects[i];
+        mn_object_t *obj = &page->objects[i];
         RectRaw geometry;
 
-        if(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN))
-            continue;
+        if(MNObject_Type(obj) == MN_NONE || !obj->drawer) continue;
+        if(MNObject_Flags(obj) & MNF_HIDDEN) continue;
 
         Rect_Raw(MNObject_Geometry(obj), &geometry);
 
@@ -1153,10 +1174,10 @@ void MNPage_SetPreviousPage(mn_page_t* page, mn_page_t* prevPage)
     page->previous = prevPage;
 }
 
-mn_object_t* MNPage_FocusObject(mn_page_t* page)
+mn_object_t *MNPage_FocusObject(mn_page_t *page)
 {
-    assert(page);
-    if(0 == page->objectsCount || 0 > page->focus) return NULL;
+    DENG_ASSERT(page != 0);
+    if(!page->objectsCount || page->focus < 0) return 0;
     return &page->objects[page->focus];
 }
 
@@ -1180,6 +1201,19 @@ void MNPage_ClearFocusObject(mn_page_t* page)
         MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
     }
     MNPage_Refocus(page);
+}
+
+int MNPage_CursorSize(mn_page_t *page)
+{
+    mn_object_t *focusObj = MNPage_FocusObject(page);
+    int focusObjHeight = focusObj? Size2_Height(MNObject_Size(focusObj)) : 0;
+
+    // Ensure the cursor is at least as tall as the effective line height for
+    // the page. This is necessary because some mods replace the menu button
+    // graphics with empty and/or tiny images (e.g., Hell Revealed 2).
+    /// @note Handling this correctly would mean separate physical/visual
+    /// geometries for menu widgets.
+    return MAX_OF(focusObjHeight, MNPage_LineHeight(page));
 }
 
 mn_object_t* MNPage_FindObject(mn_page_t* page, int group, int flags)
