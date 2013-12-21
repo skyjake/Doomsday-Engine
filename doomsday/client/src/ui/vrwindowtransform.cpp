@@ -126,7 +126,8 @@ DENG2_PIMPL(VRWindowTransform)
         /// @todo shrunken hud
         // Allocate offscreen buffers - larger than Oculus Rift size, to get adequate resolution at center after warp
         // For some reason, 1.5X looks best, even though objects are ~2.3X unwarped size at center.
-        Canvas::Size textureSize(1920, 1200); // 1.5 * 1280x800
+        float unwarpFactor = 1.5f;
+        Canvas::Size textureSize = Canvas::Size(1280, 800) * unwarpFactor;
         // Canvas::Size textureSize(2560, 1600); // 2 * 1280x800 // Undesirable relative softness at very center of image
         // Canvas::Size textureSize(3200, 2000); // 2.5 * 1280x800 // Softness here too
         unwarpedFB.resize(textureSize);
