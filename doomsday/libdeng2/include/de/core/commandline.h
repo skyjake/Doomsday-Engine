@@ -47,6 +47,16 @@ public:
     /// Execution of the command line failed. @ingroup errors
     DENG2_ERROR(ExecuteError);
 
+    struct ArgWithParams {
+        dint pos; ///< Position of the argument.
+        String arg;
+        QList<String> params;
+
+        ArgWithParams() : pos(0) {}
+        operator dint () const { return pos; }
+        dint size() const { return params.size(); }
+    };
+
 public:
     CommandLine();
 
@@ -109,7 +119,7 @@ public:
      *
      * @return  Index of the argument, if found. Otherwise zero.
      */
-    dint check(String const &arg, dint count = 0) const;
+    ArgWithParams check(String const &arg, dint count = 0) const;
 
     /**
      * Gets the parameter for an argument.

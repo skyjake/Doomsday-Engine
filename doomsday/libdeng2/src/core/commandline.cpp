@@ -179,7 +179,7 @@ void CommandLine::remove(duint pos)
     d->remove(pos);
 }
 
-dint CommandLine::check(String const &arg, dint numParams) const
+CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams) const
 {
     // Do a search for arg.
     Instance::Arguments::const_iterator i = d->arguments.begin();
@@ -188,21 +188,25 @@ dint CommandLine::check(String const &arg, dint numParams) const
     if(i == d->arguments.end())
     {
         // Not found.
-        return 0;
+        return ArgWithParams();
     }
 
     // It was found, check for the number of non-option parameters.
+    ArgWithParams found;
+    found.arg = arg;
     Instance::Arguments::const_iterator k = i;
     while(numParams-- > 0)
     {
         if(++k == d->arguments.end() || isOption(*k))
         {
             // Ran out of arguments, or encountered an option.
-            return 0;
+            return ArgWithParams();
         }
+        found.params.append(*k);
     }
-    
-    return i - d->arguments.begin();
+
+    found.pos = i - d->arguments.begin();
+    return found;
 }
 
 bool CommandLine::getParameter(String const &arg, String &param) const
