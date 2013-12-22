@@ -544,6 +544,16 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         Widget::Children additional;
 
+        // Relocate all popups to the new container (which need to stay on top).
+        foreach(Widget *w, container().children())
+        {
+            if(PopupWidget *pop = w->maybeAs<PopupWidget>())
+            {
+                additional.append(pop);
+                container().remove(*pop);
+            }
+        }
+
         if(enable && !compositor)
         {
             LOG_MSG("Offscreen UI composition enabled");
@@ -555,15 +565,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         else
         {
             DENG2_ASSERT(compositor != 0);
-
-            // Anything remaining in the compositor also needs to be relocated; there could be
-            // some hidden popups. We are about to do delete the compositor, which means all its
-            // remaining children will be deleted, too.
-            additional = compositor->childWidgets();
-            foreach(Widget *w, additional)
-            {
-                compositor->remove(*w);
-            }
+            DENG2_ASSERT(!compositor->childCount());
 
             root.remove(*compositor);
             compositor->guiDeleteLater();
@@ -577,13 +579,15 @@ DENG2_OBSERVES(App,              StartupComplete)
         if(sidebar) container().add(sidebar);
         container().add(notifications);
         container().add(taskBar);
-        container().add(cursor);
 
         // Also the other widgets.
         foreach(Widget *w, additional)
         {
             container().add(w);
         }
+
+        // Fake cursor must be on top.
+        container().add(cursor);
 
         if(mode == Normal)
         {
