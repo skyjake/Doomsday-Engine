@@ -393,6 +393,7 @@ DENG_HEADERS += \
     include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
+    include/ui/dialogs/vrsettingsdialog.h \
     include/ui/editors/rendererappearanceeditor.h \
     include/ui/fi_main.h \
     include/ui/finaleinterpreter.h \
@@ -756,6 +757,7 @@ SOURCES += \
     src/ui/dialogs/messagedialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
+    src/ui/dialogs/vrsettingsdialog.cpp \
     src/ui/dialogs/renderersettingsdialog.cpp \
     src/ui/editors/rendererappearanceeditor.cpp \
     src/ui/fi_main.cpp \

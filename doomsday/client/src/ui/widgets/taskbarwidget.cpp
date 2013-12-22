@@ -28,6 +28,7 @@
 #include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/dialogs/networksettingsdialog.h"
 #include "ui/dialogs/renderersettingsdialog.h"
+#include "ui/dialogs/vrsettingsdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/SubwidgetItem"
@@ -364,6 +365,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
      */
     d->configMenu->items()
             << new ui::SubwidgetItem(style().images().image("renderer"), tr("Renderer"), ui::Left, makePopup<RendererSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("renderer") /* <-todo */, tr("3D & VR"),  ui::Left, makePopup<VRSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(style().images().image("display"),  tr("Video"),    ui::Left, makePopup<VideoSettingsDialog>)
             << new ui::SubwidgetItem(style().images().image("audio"),    tr("Audio"),    ui::Left, makePopup<AudioSettingsDialog>)

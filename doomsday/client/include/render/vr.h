@@ -19,6 +19,7 @@
 #ifndef CLIENT_RENDER_VR_H
 #define CLIENT_RENDER_VR_H
 
+#include "dd_types.h"
 #include "de/Vector"
 
 namespace VR {
