@@ -30,17 +30,28 @@ static int const MAX_VISIBLE_PROFILE_NAME = 50;
 static int const MAX_PROFILE_NAME = 100;
 
 DENG_GUI_PIMPL(ProfilePickerWidget)
+, DENG2_OBSERVES(PanelWidget, Close)
 {
     SettingsRegister &settings;
     String description;
     ButtonWidget *button;
+    PopupMenuWidget *menu;
 
-    Instance(Public *i, SettingsRegister& reg) : Base(i), settings(reg)
+    Instance(Public *i, SettingsRegister& reg)
+        : Base(i)
+        , settings(reg)
+        , button(0)
+        , menu(0)
     {
         self.add(button = new ButtonWidget);
         button->setAction(new SignalAction(thisPublic, SLOT(openMenu())));
 
         updateStyle();
+    }
+
+    ~Instance()
+    {
+        if(menu) menu->audienceForClose -= this;
     }
 
     void updateStyle()
@@ -68,6 +79,11 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
     String currentProfile() const
     {
         return self.selectedItem().data().toString();
+    }
+
+    void panelBeingClosed(PanelWidget &)
+    {
+        menu = 0;
     }
 };
 
@@ -100,10 +116,17 @@ void ProfilePickerWidget::updateStyle()
 
 void ProfilePickerWidget::openMenu()
 {
+    if(d->menu)
+    {
+        // Already open, just close it.
+        d->menu->close();
+        return;
+    }
+
     SettingsRegister &reg = d->settings;
 
-    PopupMenuWidget *popup = new PopupMenuWidget;
-    popup->items()
+    d->menu = new PopupMenuWidget;
+    d->menu->items()
             << new ActionItem(tr("Edit"), new SignalAction(this, SLOT(edit())))
             << new ActionItem(tr("Rename..."), new SignalAction(this, SLOT(rename())))
             << new ui::Item(Item::Separator)
@@ -111,16 +134,16 @@ void ProfilePickerWidget::openMenu()
             << new ui::Item(Item::Separator)
             << new ActionItem(tr("Reset to Defaults..."), new SignalAction(this, SLOT(reset())))
             << new ActionItem(tr("Delete..."), new SignalAction(this, SLOT(remove())));
-    add(popup);
+    add(d->menu);
 
-    ChildWidgetOrganizer const &org = popup->menu().organizer();
+    ChildWidgetOrganizer const &org = d->menu->menu().organizer();
 
     // Enable or disable buttons depending on the selected profile.
     String selProf = selectedItem().data().toString();
     if(reg.isReadOnlyProfile(selProf))
     {
         // Read-only profiles can only be duplicated.
-        popup->items().at(0).setLabel("View");
+        d->menu->items().at(0).setLabel("View");
         org.itemWidget(1)->disable();
         org.itemWidget(5)->disable();
         org.itemWidget(6)->disable();
@@ -136,9 +159,10 @@ void ProfilePickerWidget::openMenu()
         org.itemWidget(0)->disable();
     }
 
-    popup->setDeleteAfterDismissed(true);
-    popup->setAnchorAndOpeningDirection(d->button->rule(), ui::Down);
-    popup->open();
+    d->menu->setDeleteAfterDismissed(true);
+    d->menu->setAnchorAndOpeningDirection(d->button->rule(), ui::Down);
+    d->menu->audienceForClose += d;
+    d->menu->open();
 }
 
 void ProfilePickerWidget::edit()
