@@ -504,84 +504,110 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
     viewdata_t const *viewData = R_ViewData(consoleNum);
 
     vOrigin = viewData->current.origin.xzy();
-    vang    = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
+    vang    = viewData->current.angle() / (float) ANGLE_MAX * 360 - 90; // head tracking included
     vpitch  = viewData->current.pitch * 85.0 / 110.0;
 
     Matrix4f modelView;
 
     if(useAngles)
     {
-        bool scheduledLate = false;
-        float pitch, roll, yaw;
+        //bool scheduledLate = false;
+
+        float yaw   = vang;
+        float pitch = vpitch;
+        float roll  = 0;
+
+        /*
         static float storedPitch, storedRoll, storedYaw;
+        */
 
-        if (VR::viewPositionHeld()) {
-            roll = storedRoll;
+        /*
+        if(VR::viewPositionHeld())
+        {
+            roll  = storedRoll;
             pitch = storedPitch;
-            yaw = storedYaw;
+            yaw   = storedYaw;
         }
-        else {
-            /// Hard code Oculus Rift roll angle directly into OpenGL ModelView matrix
-            /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player model.
-            if ( (VR::mode() == VR::MODE_OCULUS_RIFT) && (VR::hasHeadOrientation()) )
+        else*/
+
+        {
+            /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player
+            /// model.
+
+            /*
+             * Pitch and yaw can be taken directly from the head tracker, as the game is aware of
+             * these values and is syncing with them independently (however, game has more
+             * latency).
+             */
+            if((VR::mode() == VR::MODE_OCULUS_RIFT) && VR::hasHeadOrientation())
             {
-                std::vector<float> pry = VR::getHeadOrientation();
-                if (pry.size() == 3)
+                Vector3f const pry = VR::getHeadOrientation();
+
+                // Use angles directly from the Rift for best response.
+                roll  = -radianToDegree(pry[1]);
+                pitch =  radianToDegree(pry[0]);
+
+#if 0
+
+                static float previousRiftYaw = 0;
+                static float previousVang2 = 0;
+
+                // Desired view angle without interpolation?
+                float vang2 = viewData->latest.angle / (float) ANGLE_MAX *360 - 90;
+
+                // Late-scheduled update
+                scheduledLate = true;
+                roll = -radianToDegree(pry[1]);
+                pitch = radianToDegree(pry[0]);
+
+                // Yaw might have a contribution from mouse/keyboard.
+                // So only late schedule if it seems to be head tracking only.
+                yaw = vang2; // default no late schedule
+                float currentRiftYaw = radianToDegree(pry[2]);
+                float dRiftYaw = currentRiftYaw - previousRiftYaw;
+                while (dRiftYaw > 180) dRiftYaw -= 360;
+                while (dRiftYaw < -180) dRiftYaw += 360;
+                float dVang = vang2 - previousVang2;
+                while (dVang > 180) dVang -= 360;
+                while (dVang < -180) dVang += 360;
+                if (abs(dVang) < 2.0 * abs(dRiftYaw)) // Mostly head motion
                 {
-                    static float previousRiftYaw = 0;
-                    static float previousVang2 = 0;
-
-                    // Desired view angle without interpolation?
-                    float vang2 = viewData->latest.angle / (float) ANGLE_MAX *360 - 90;
-
-                    // Late-scheduled update
-                    scheduledLate = true;
-                    roll = -radianToDegree(pry[1]);
-                    pitch = radianToDegree(pry[0]);
-
-                    // Yaw might have a contribution from mouse/keyboard.
-                    // So only late schedule if it seems to be head tracking only.
-                    yaw = vang2; // default no late schedule
-                    float currentRiftYaw = radianToDegree(pry[2]);
-                    float dRiftYaw = currentRiftYaw - previousRiftYaw;
-                    while (dRiftYaw > 180) dRiftYaw -= 360;
-                    while (dRiftYaw < -180) dRiftYaw += 360;
-                    float dVang = vang2 - previousVang2;
-                    while (dVang > 180) dVang -= 360;
-                    while (dVang < -180) dVang += 360;
-                    if (abs(dVang) < 2.0 * abs(dRiftYaw)) // Mostly head motion
-                    {
-                        yaw = storedYaw + dRiftYaw;
-                        float dy = vang2 - yaw;
-                        while (dy > 180) dy -= 360;
-                        while (dy < -180) dy += 360;
-                        yaw += 0.05 * dy; // ease slowly toward target angle
-                    }
-                    else
-                    {
-                        yaw = vang2; // No interpolation if not from head tracker
-                    }
-
-                    previousRiftYaw = currentRiftYaw;
-                    previousVang2 = vang2;
+                    yaw = storedYaw + dRiftYaw;
+                    float dy = vang2 - yaw;
+                    while (dy > 180) dy -= 360;
+                    while (dy < -180) dy += 360;
+                    yaw += 0.05 * dy; // ease slowly toward target angle
                 }
+                else
+                {
+                    yaw = vang2; // No interpolation if not from head tracker
+                }
+
+                previousRiftYaw = currentRiftYaw;
+                previousVang2 = vang2;
+#endif
             }
-            if (! scheduledLate)
+
+            /*
+            if(!scheduledLate)
             {
                 // Vanilla angle update
-                roll = 0;
+                roll  = 0;
                 pitch = vpitch;
-                yaw = vang;
-            }
+                yaw   = vang;
+            }*/
         }
 
         modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
                     Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
                     Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
 
-        storedRoll = roll;
+        /*
+        // Keep these for possible use in later frames.
+        storedRoll  = roll;
         storedPitch = pitch;
-        storedYaw = yaw;
+        storedYaw   = yaw;
+        */
     }
 
     return (modelView *
@@ -3871,7 +3897,7 @@ void Rend_RenderMap(Map &map)
             binangle_t startAngle = binangle_t(BANG_45 * Rend_FieldOfView() / 90) * (1 + a);
             binangle_t angLen = BANG_180 - startAngle;
 
-            binangle_t viewside = (viewData->current.angle >> (32 - BAMS_BITS)) + startAngle;
+            binangle_t viewside = (viewData->current.angle() >> (32 - BAMS_BITS)) + startAngle;
             C_SafeAddRange(viewside, viewside + angLen);
             C_SafeAddRange(viewside + angLen, viewside + 2 * angLen);
         }

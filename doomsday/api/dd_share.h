@@ -162,7 +162,8 @@ enum {
     DD_FIXEDCOLORMAP_ATTENUATE,
     DD_LAST_VALUE,
 
-    DD_CURRENT_CLIENT_FINALE_ID
+    DD_CURRENT_CLIENT_FINALE_ID,
+    DD_USING_HEAD_TRACKING
 };
 
 /// General constants (not to be used with Get/Set).

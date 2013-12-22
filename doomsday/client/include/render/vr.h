@@ -74,11 +74,6 @@ private:
 
 extern RiftState riftState;
 
-// Sometimes we want viewpoint to remain constant between left and right eye views
-void holdViewPosition();
-void releaseViewPosition();
-bool viewPositionHeld();
-
 // Console variables
 Stereo3DMode mode(); ///< Currently active Stereo3DMode index
 bool modeNeedsStereoGLFormat(Stereo3DMode mode);
@@ -115,8 +110,14 @@ void consoleRegister();
 // True if Oculus Rift is enabled and can report head orientation.
 bool hasHeadOrientation();
 
-// Returns current pitch, roll, yaw angles, in radians, or empty vector if head tracking is not available.
-std::vector<float> getHeadOrientation();
+// Called to allow head orientation to change again.
+void allowHeadOrientationUpdate();
+
+void updateHeadOrientation();
+
+// Returns current pitch, roll, yaw angles, in radians. If no head tracking is available,
+// the returned values are not valid.
+de::Vector3f getHeadOrientation();
 
 // To release memory and resources when done, for tidiness.
 void deleteOculusTracker();

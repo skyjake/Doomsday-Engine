@@ -117,6 +117,17 @@ int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);
 void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove);
 
+/**
+ * Determine the viewing yaw angle for a player. If a body yaw has been
+ * applied to the player, it will be undone here so that during rendering,
+ * the actual head tracking angle can be applied.
+ *
+ * @param playerNum  Player/console number.
+ *
+ * @return View yaw angle.
+ */
+angle_t Player_ViewYawAngle(int playerNum);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

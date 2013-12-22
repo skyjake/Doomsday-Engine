@@ -660,7 +660,7 @@ DENG_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t* mo)
            mo->dPlayer->mo == mo)
         {
             const viewdata_t* vd = R_ViewData(consolePlayer);
-            return vd->current.angle;
+            return vd->current.angle();
         }
     }
 

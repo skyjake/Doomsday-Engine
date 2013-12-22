@@ -55,23 +55,6 @@ float VR::RiftState::fovY() const {
     return fov;
 }
 
-// Sometimes we want viewpoint to remain constant between left and right eye views
-static bool holdView = false;
-void VR::holdViewPosition()
-{
-    holdView = true;
-}
-
-void VR::releaseViewPosition()
-{
-    holdView = false;
-}
-
-bool VR::viewPositionHeld()
-{
-    return holdView;
-}
-
 // Console variables
 
 static int vrMode = (int)VR::MODE_MONO;
@@ -111,14 +94,13 @@ float  VR::eyeShift = 0;
 float  VR::hudDistance = 20.0f;
 float  VR::weaponDistance = 10.0f;
 
-
 /// @param eye: -1 means left eye, +1 means right eye
 /// @return viewpoint eye shift in map units
 float VR::getEyeShift(float eye)
 {
     // 0.95 because eyes are not at top of head
     float mapUnitsPerMeter = Con_GetInteger("player-eyeheight") / ((0.95) *  VR::playerHeight);
-    float result = mapUnitsPerMeter * (eye -  VR::dominantEye) * 0.5 *  VR::ipd;
+    float result = mapUnitsPerMeter * (eye - VR::dominantEye) * 0.5 *  VR::ipd;
     if ( VR::swapEyes != 0)
         result *= -1;
     return result;
@@ -130,7 +112,6 @@ static void vrLatencyChanged()
         VR::setRiftLatency(vrLatency);
     }
 }
-
 
 // Interplay among vrNonRiftFovX, vrRiftFovX, and cameraFov depends on vrMode
 // see also rend_main.cpp
@@ -248,7 +229,6 @@ public:
 
     void update()
     {
-
         OVR::Quatf quaternion;
         if (latency == 0)
             quaternion = pFusionResult->GetOrientation();
@@ -361,22 +341,36 @@ void VR::setRiftLatency(float latency)
 #endif
 }
 
-// Returns current pitch, roll, yaw angles, in radians
-std::vector<float> VR::getHeadOrientation()
+static bool headOrientationUpdateIsAllowed = true;
+
+void VR::allowHeadOrientationUpdate()
 {
-    std::vector<float> result;
+    headOrientationUpdateIsAllowed = true;
+}
+
+void VR::updateHeadOrientation()
+{
 #ifdef DENG_HAVE_OCULUS_API
-    if (! VR::hasHeadOrientation())
-        return result; // empty vector
-    oculusTracker->update();
-    result.push_back(oculusTracker->pitch);
-    result.push_back(oculusTracker->roll);
-    result.push_back(oculusTracker->yaw);
-    return result;
-#else
-    // No API; Return empty vector. You should have called VR::hasHeadOrientation() first...
-    return result;
+    if(headOrientationUpdateIsAllowed && VR::hasHeadOrientation())
+    {
+        oculusTracker->update();
+        headOrientationUpdateIsAllowed = false;
+    }
 #endif
+}
+
+de::Vector3f VR::getHeadOrientation()
+{
+    de::Vector3f result;
+#ifdef DENG_HAVE_OCULUS_API
+    if(VR::hasHeadOrientation())
+    {
+        result[0] = oculusTracker->pitch;
+        result[1] = oculusTracker->roll;
+        result[2] = oculusTracker->yaw;
+    }
+#endif
+    return result;
 }
 
 // To release memory and resources when done, for tidiness.
@@ -390,4 +384,3 @@ void VR::deleteOculusTracker()
     }
 #endif
 }
-

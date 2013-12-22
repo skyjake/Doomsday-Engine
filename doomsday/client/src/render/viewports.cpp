@@ -29,6 +29,7 @@
 #include "clientapp.h"
 #include "edit_bias.h"
 #include "api_render.h"
+#include "render/vr.h"
 
 #include "network/net_demo.h"
 #include "filesys/fs_util.h"
@@ -115,7 +116,7 @@ DENG_EXTERN_C void R_SetViewOrigin(int consoleNum, coord_t const origin[3])
 DENG_EXTERN_C void R_SetViewAngle(int consoleNum, angle_t angle)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    viewDataOfConsole[consoleNum].latest.angle = angle;
+    viewDataOfConsole[consoleNum].latest.setAngle(angle);
 }
 
 #undef R_SetViewPitch
@@ -417,11 +418,13 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
         src->origin = dst->origin;
     }
 
+    /*
     if(abs(int(dst->angle) - int(src->angle)) >= ANGLE_45)
     {
         LOG_DEBUG("R_CheckViewerLimits: Snap camera angle to %08x.") << dst->angle;
         src->angle = dst->angle;
     }
+    */
 }
 
 /**
@@ -444,7 +447,7 @@ viewer_t R_SharpViewer(player_t &player)
          */
         float const distance = 90;
 
-        uint angle = view.angle >> ANGLETOFINESHIFT;
+        uint angle = view.angle() >> ANGLETOFINESHIFT;
         uint pitch = angle_t(LOOKDIR2DEG(view.pitch) / 360 * ANGLE_MAX) >> ANGLETOFINESHIFT;
 
         view.origin -= Vector3d(FIX2FLT(fineCosine[angle]),
@@ -569,7 +572,7 @@ void R_UpdateViewer(int consoleNum)
 
             static OldAngle oldAngle[DDMAXPLAYERS];
             OldAngle *old = &oldAngle[viewPlayer - ddPlayers];
-            float yaw = (double)smoothView.angle / ANGLE_MAX * 360;
+            float yaw = (double)smoothView.angle() / ANGLE_MAX * 360;
 
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
                         "Rdx=%-10.3f Rdy=%-10.3f",
@@ -614,12 +617,14 @@ void R_UpdateViewer(int consoleNum)
     }
 
     // Update viewer.
-    uint const an = vd->current.angle >> ANGLETOFINESHIFT;
+    angle_t const viewYaw = vd->current.angle();
+
+    uint const an = viewYaw >> ANGLETOFINESHIFT;
     vd->viewSin = FIX2FLT(finesine[an]);
     vd->viewCos = FIX2FLT(fineCosine[an]);
 
     // Calculate the front, up and side unit vectors.
-    float const yawRad = ((vd->current.angle / (float) ANGLE_MAX) *2) * PI;
+    float const yawRad = ((viewYaw / (float) ANGLE_MAX) *2) * PI;
     float const pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
 
     // The front vector.
@@ -813,7 +818,7 @@ void R_SetupPlayerSprites()
                 spr->data.model.pitchAngleOffset -= weaponFOVShift * (Rend_FieldOfView() - 90) / 90;
             // Real rotation angles.
             spr->data.model.yaw =
-                viewData->current.angle / (float) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
+                viewData->current.angle() / (float) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
             spr->data.model.pitch = viewData->current.pitch * 85 / 110 + spr->data.model.yawAngleOffset;
             memset(spr->data.model.visOff, 0, sizeof(spr->data.model.visOff));
 
@@ -861,6 +866,10 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
+
+    // Latest possible time to check the real head angles. After this we'll be
+    // using the provided values.
+    VR::updateHeadOrientation();
 
     R_SetupPlayerSprites();
 
@@ -1304,4 +1313,16 @@ D_CMD(ViewGrid)
     DENG2_UNUSED2(src, argc);
     // Recalculate viewports.
     return R_SetViewGrid(String(argv[1]).toInt(), String(argv[2]).toInt());
+}
+
+angle_t viewer_t::angle() const
+{
+    angle_t a = _angle;
+    if(DD_GetInteger(DD_USING_HEAD_TRACKING))
+    {
+        // Apply the actual, current yaw offset. The game has omitted the "body yaw"
+        // portion from the value already.
+        a += (fixed_t)(radianToDegree(VR::getHeadOrientation()[2]) / 180 * ANGLE_180);
+    }
+    return a;
 }

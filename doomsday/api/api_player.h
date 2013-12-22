@@ -126,6 +126,7 @@ typedef struct ddplayer_s {
     float           forwardMove; // Copied from player brain (read only).
     float           sideMove; // Copied from player brain (read only).
     struct mobj_s*  mo; // Pointer to a (game specific) mobj.
+    angle_t         appliedBodyYaw; // Body yaw currently applied
     float           lookDir; // For mouse look.
     int             fixedColorMap; // Can be set to REDCOLORMAP, etc.
     int             extraLight; // So gun flashes light up areas.

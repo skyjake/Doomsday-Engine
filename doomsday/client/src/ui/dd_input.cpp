@@ -1548,14 +1548,20 @@ void DD_ReadJoystick(void)
 
 void DD_ReadHeadTracker(void)
 {
+    // These values are for the input subsystem and gameplay. The renderer will check the head
+    // orientation independently, with as little latency as possible.
+
     // If a head tracking device is connected, the device is marked active.
+    if(!VR::hasHeadOrientation())
+    {
+        I_GetDevice(IDEV_HEAD_TRACKER)->flags &= ~ID_ACTIVE;
+        return;
+    }
     I_GetDevice(IDEV_HEAD_TRACKER)->flags |= ID_ACTIVE;
 
-    /// @todo Access head tracking hardware here and post an event per axis using
-    /// DD_PostEvent() (cf. above for the joystick).
-
-    if (! VR::hasHeadOrientation())
-        return;
+    // Get the latest values.
+    VR::allowHeadOrientationUpdate();
+    VR::updateHeadOrientation();
 
     ddevent_t ev;
 
@@ -1563,21 +1569,14 @@ void DD_ReadHeadTracker(void)
     ev.type = E_AXIS;
     ev.axis.type = EAXIS_ABSOLUTE;
 
-    std::vector<float> pry = VR::getHeadOrientation();
-    if (pry.size() != 3)
-        return;
+    Vector3f const pry = VR::getHeadOrientation();
 
-    // Yaw.
-    // skyjake wrote:
-    // > With "yawhead" and "yawbody", 1.0 means 180 degrees.
+    // Yaw (1.0 means 180 degrees).
     ev.axis.id = 0; // Yaw.
-    // ev.axis.pos = cos(Timer_RealSeconds());
     ev.axis.pos = de::radianToDegree(pry[2]) * 1.0 / 180.0;
     DD_PostEvent(&ev);
 
-    ev.axis.id = 1; // Pitch.
-    // ev.axis.pos = sin(Timer_RealSeconds()/2) * .5f;
-    // 1.0 mean 85 degrees
+    ev.axis.id = 1; // Pitch (1.0 means 85 degrees).
     ev.axis.pos = de::radianToDegree(pry[0]) * 1.0 / 85.0;
     DD_PostEvent(&ev);
 

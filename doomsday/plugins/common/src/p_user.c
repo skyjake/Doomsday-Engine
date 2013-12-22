@@ -1638,6 +1638,7 @@ void P_PlayerThinkLookYaw(player_t* player, timespan_t ticLength)
     P_GetControlState(playerNum, CTL_BODY_YAW, &off, 0);
     yawDelta = off - yaws[playerNum];
     yaws[playerNum] = off;
+    plr->appliedBodyYaw = (fixed_t)(off * ANGLE_180);
     plr->mo->angle += (fixed_t)(yawDelta * ANGLE_180);
 
     // Yaw.

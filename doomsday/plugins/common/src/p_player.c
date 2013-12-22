@@ -1297,3 +1297,22 @@ D_CMD(SpawnMobj)
 
     return true;
 }
+
+angle_t Player_ViewYawAngle(int playerNum)
+{
+    angle_t ang = 0;
+    ddplayer_t *plr = 0;
+
+    if(playerNum < 0 || playerNum >= MAXPLAYERS) return 0;
+
+    plr = players[playerNum].plr;
+    ang = plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(playerNum));
+
+    if(Get(DD_USING_HEAD_TRACKING))
+    {
+        // The actual head yaw angle will be used for rendering.
+        ang -= plr->appliedBodyYaw;
+    }
+
+    return ang;
+}

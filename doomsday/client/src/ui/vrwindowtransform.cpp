@@ -151,14 +151,10 @@ DENG2_PIMPL(VRWindowTransform)
         unwarpedFB.target().setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
-        VR::holdViewPosition(); // Don't (late-schedule) change view direction between eye renders
-
         // Right eye view on right side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
         unwarpedFB.target().setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
-
-        VR::releaseViewPosition(); // OK, you can change the viewpoint henceforth
 
         unwarpedFB.target().unsetActiveRect(true);
 
@@ -286,6 +282,8 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
 
 void VRWindowTransform::drawTransformed()
 {
+    VR::allowHeadOrientationUpdate();
+
     switch(VR::mode())
     {
     // A) Single view type stereo 3D modes here:
@@ -341,7 +339,7 @@ void VRWindowTransform::drawTransformed()
         break;
 
     case VR::MODE_CROSSEYE: // Normal aspect
-        // RIght eye view on left side of screen.
+        // Right eye view on left side of screen.
         VR::eyeShift = VR::getEyeShift(+1);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();

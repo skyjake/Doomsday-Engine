@@ -63,6 +63,7 @@
 #  include "render/rend_font.h"
 #  include "render/rend_main.h"
 #  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
+#  include "render/vr.h"
 #endif
 
 #include "world/entitydef.h"
@@ -2321,6 +2322,9 @@ int DD_GetInteger(int ddvalue)
 
     case DD_DYNLIGHT_TEXTURE:
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
+
+    case DD_USING_HEAD_TRACKING:
+        return VR::mode() == VR::MODE_OCULUS_RIFT && VR::hasHeadOrientation();
 #endif
 
     case DD_NUMLUMPS:

@@ -321,7 +321,7 @@ void D_EndFrame(void)
         if(!plr->plr->inGame || !plr->plr->mo) continue;
 
         // View angles are updated with fractional ticks, so we can just use the current values.
-        R_SetViewAngle(i, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(i)));
+        R_SetViewAngle(i, Player_ViewYawAngle(i));
         R_SetViewPitch(i, plr->plr->lookDir);
     }
 }

@@ -40,27 +40,32 @@ struct viewport_t
 struct viewer_t
 {
     de::Vector3d origin;
-    angle_t angle;
     float pitch;
 
     viewer_t(de::Vector3d const &origin = de::Vector3d(),
              angle_t angle              = 0,
              float pitch                = 0)
         : origin(origin)
-        , angle(angle)
         , pitch(pitch)
+        , _angle(angle)
     {}
     viewer_t(viewer_t const &other)
         : origin(other.origin)
-        , angle(other.angle)
         , pitch(other.pitch)
+        , _angle(other._angle)
     {}
 
     viewer_t lerp(viewer_t const &end, float pos) const {
         return viewer_t(de::lerp(origin, end.origin, pos),
-                        angle + int(pos * (int(end.angle) - int(angle))),
+                        _angle + int(pos * (int(end._angle) - int(_angle))),
                         de::lerp(pitch,  end.pitch,  pos));
     }
+    angle_t angle() const;
+    angle_t angleWithoutHeadTracking() const { return _angle; }
+    void setAngle(angle_t a) { _angle = a; }
+
+private:
+    angle_t _angle;
 };
 
 struct viewdata_t

@@ -290,7 +290,7 @@ void R_UpdateConsoleView(int player)
     viewOrigin[VY] = mo->origin[VY] + plr->viewOffset[VY];
     viewOrigin[VZ] = plr->viewZ + plr->viewOffset[VZ];
     R_SetViewOrigin(player, viewOrigin);
-    R_SetViewAngle(player, mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));
+    R_SetViewAngle(player, Player_ViewYawAngle(player));
     R_SetViewPitch(player, plr->plr->lookDir);
 }
 

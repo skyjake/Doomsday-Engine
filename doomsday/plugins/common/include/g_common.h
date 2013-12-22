@@ -28,7 +28,7 @@
 #include "dd_share.h"
 #include "g_controls.h"
 #include "mobj.h"
-#include "common.h"
+#include "p_player.h"
 
 #if __cplusplus
 extern "C" {
