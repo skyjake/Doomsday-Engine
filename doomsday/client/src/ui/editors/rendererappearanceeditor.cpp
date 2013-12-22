@@ -467,7 +467,7 @@ DENG2_OBSERVES(App, GameChange)
         matGroup->addSpace();
         matGroup->addToggle("rend-tex-filter-ui", tr("User Interface"));
 
-        matGroup->addLabel(tr("Anisotopic Filter:"));
+        matGroup->addLabel(tr("Anisotropic Filter:"));
         matGroup->addChoice("rend-tex-filter-anisotropic")->items()
                 << new ChoiceItem(tr("Best available"), -1)
                 << new ChoiceItem(tr("Off"), 0)
