@@ -30,8 +30,12 @@ using namespace ui;
 
 DENG_GUI_PIMPL(VRSettingsDialog)
 {
-    //CVarToggleWidget *devInfo;
     CVarChoiceWidget *mode;
+    CVarToggleWidget *swapEyes;
+    CVarSliderWidget *dominantEye;
+    CVarSliderWidget *humanHeight;
+    CVarSliderWidget *ipd;
+    CVarSliderWidget *riftPredictionLatency;
 
     Instance(Public *i) : Base(i)
     {
@@ -45,51 +49,57 @@ DENG_GUI_PIMPL(VRSettingsDialog)
                 << new ChoiceItem("Left eye only", VR::MODE_LEFT)
                 << new ChoiceItem("Right eye only", VR::MODE_RIGHT)
                 << new ChoiceItem("Top/bottom", VR::MODE_TOP_BOTTOM)
-                << new ChoiceItem("Side by side", VR::MODE_SIDE_BY_SIDE)
+                << new ChoiceItem("Side-by-side", VR::MODE_SIDE_BY_SIDE)
                 << new ChoiceItem("Parallel", VR::MODE_PARALLEL)
                 << new ChoiceItem("Cross-eye", VR::MODE_CROSSEYE)
                 << new ChoiceItem("Oculus Rift", VR::MODE_OCULUS_RIFT)
                 << new ChoiceItem("Hardware stereo", VR::MODE_QUAD_BUFFERED);
 
-            /* MODE_MONO = 0,
-               MODE_GREEN_MAGENTA,
-               MODE_RED_CYAN,
-               MODE_LEFT,
-               MODE_RIGHT,
-               MODE_TOP_BOTTOM, // 5
-               MODE_SIDE_BY_SIDE,
-               MODE_PARALLEL,
-               MODE_CROSSEYE,
-               MODE_OCULUS_RIFT,
-               MODE_ROW_INTERLEAVED, // 10 // NOT IMPLEMENTED YET
-               MODE_COLUMN_INTERLEAVED, // NOT IMPLEMENTED YET
-               MODE_CHECKERBOARD, // NOT IMPLEMENTED YET
-               MODE_QUAD_BUFFERED,*/
-        //area.add(devInfo = new CVarToggleWidget("net-dev"));
+        area.add(swapEyes    = new CVarToggleWidget("rend-vr-swap-eyes", tr("Swap Eyes")));
+        area.add(dominantEye = new CVarSliderWidget("rend-vr-dominant-eye"));
+        area.add(humanHeight = new CVarSliderWidget("rend-vr-player-height"));
+
+        area.add(ipd = new CVarSliderWidget("rend-vr-ipd"));
+        ipd->setDisplayFactor(1000);
+
+        area.add(riftPredictionLatency = new CVarSliderWidget("rend-vr-rift-latency"));
+        riftPredictionLatency->setDisplayFactor(1000);
     }
 
     void fetch()
     {
-        //devInfo->updateFromCVar();
-        mode->updateFromCVar();
+        foreach(Widget *child, self.area().childWidgets())
+        {
+            if(ICVarWidget *w = child->maybeAs<ICVarWidget>())
+            {
+                w->updateFromCVar();
+            }
+        }
     }
 };
 
 VRSettingsDialog::VRSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
-    heading().setText(tr("VR Settings"));
+    heading().setText(tr("3D & VR Settings"));
 
-    //d->devInfo->setText(tr("Developer Info"));
-
-    LabelWidget *modeLabel = LabelWidget::newWithText(tr("Mode:"), &area());
+    LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Mode:"), &area());
+    LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());
+    LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
+    LabelWidget *ipdLabel      = LabelWidget::newWithText(tr("IPD (mm):"), &area());
+    LabelWidget *latencyLabel  = LabelWidget::newWithText(tr("Prediction Latency:"), &area());
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
-    //layout.setColumnAlignment(0, ui::AlignRight);
+    layout.setColumnAlignment(0, ui::AlignRight);
 
-    layout << *modeLabel << *d->mode;
+    layout << *modeLabel     << *d->mode
+           << Const(0)       << *d->swapEyes
+           << *dominantLabel << *d->dominantEye
+           << *heightLabel   << *d->humanHeight
+           << *ipdLabel      << *d->ipd
+           << *latencyLabel  << *d->riftPredictionLatency;
 
     area().setContentSize(layout.width(), layout.height());
 
@@ -103,7 +113,12 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
 
 void VRSettingsDialog::resetToDefaults()
 {
-    Con_SetInteger("rend-vr-mode", VR::MODE_MONO);
+    Con_SetInteger("rend-vr-mode",          VR::MODE_MONO);
+    Con_SetInteger("rend-vr-swap-eyes",     0);
+    Con_SetFloat  ("rend-vr-dominant-eye",  0);
+    Con_SetFloat  ("rend-vr-player-height", 1.75f);
+    Con_SetFloat  ("rend-vr-ipd",           0.064f);
+    Con_SetFloat  ("rend-vr-rift-latency",  0.030f);
 
     d->fetch();
 }

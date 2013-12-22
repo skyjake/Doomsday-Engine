@@ -82,8 +82,8 @@ float VR::riftLatency() {
 }
 
 // Interpupillary distance in meters
-float VR::ipd = 0.0622f;
-float VR::playerHeight = 1.70f;
+float VR::ipd = .064f; // average male IPD
+float VR::playerHeight = 1.75f;
 float VR::dominantEye = 0.0f;
 byte  VR::swapEyes = 0;
 
@@ -160,13 +160,13 @@ void VR::consoleRegister()
 {
     C_VAR_BYTE  ("rend-vr-autoload-rift-params", & autoLoadRiftParams, 0, 0, 1);
     C_VAR_FLOAT ("rend-vr-dominant-eye",     & VR::dominantEye,   0, -1.0f, 1.0f);
-    C_VAR_FLOAT ("rend-vr-hud-distance",     & VR::hudDistance,           0, 0.01f, 40.0f);
-    C_VAR_FLOAT ("rend-vr-ipd",              & VR::ipd,           0, 0.02f, 0.2f);
+    C_VAR_FLOAT ("rend-vr-hud-distance",     & VR::hudDistance,   0, 0.01f, 40.0f);
+    C_VAR_FLOAT ("rend-vr-ipd",              & VR::ipd,           0, 0.02f, 0.1f);
     C_VAR_INT2  ("rend-vr-mode",             & vrMode,            0, 0, (int)(VR::MODE_MAX_3D_MODE_PLUS_ONE - 1), vrModeChanged);
     C_VAR_FLOAT2("rend-vr-nonrift-fovx",     & vrNonRiftFovX,     0, 5.0f, 270.0f, vrNonRiftFovXChanged);
-    C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 3.0f);
+    C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 2.4f);
     C_VAR_FLOAT2("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f, vrRiftFovXChanged);
-    C_VAR_FLOAT2("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.250f, vrLatencyChanged);
+    C_VAR_FLOAT2("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.100f, vrLatencyChanged);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
 
     C_CMD("loadriftparams", NULL, LoadRiftParams);
