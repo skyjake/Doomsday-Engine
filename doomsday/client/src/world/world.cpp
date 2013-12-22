@@ -84,6 +84,7 @@ static float handDistance = 300; //cvar
 class MapConversionReporter
 : DENG2_OBSERVES(Map, UnclosedSectorFound)
 , DENG2_OBSERVES(Map, OneWayWindowFound)
+, DENG2_OBSERVES(Map, Deletion)
 {
     /// Record "unclosed sectors".
     /// Sector index => world point relatively near to the problem area.
@@ -98,11 +99,56 @@ class MapConversionReporter
     static int const maxWarningsPerType;
 
 public:
-    MapConversionReporter() {}
+    /**
+     * Construct a new conversion reporter.
+     * @param map
+     */
+    MapConversionReporter(Map *map = 0) : _map(0)
+    {
+        setMap(map);
+    }
 
-    inline int unclosedSectorCount() const { return int( _unclosedSectors.size() ); }
-    inline int oneWayWindowCount() const   { return int( _oneWayWindows.size() ); }
+    ~MapConversionReporter()
+    {
+        observeMap(false);
+    }
 
+    /**
+     * Change the map to be reported on. Note that any existing report data is
+     * retained until explicitly cleared.
+     */
+    void setMap(Map *newMap)
+    {
+        if(_map != newMap)
+        {
+            observeMap(false);
+            _map = newMap;
+            observeMap(true);
+        }
+    }
+
+    /// @see setMap(), clearReport()
+    inline void setMapAndClearReport(Map *newMap)
+    {
+        setMap(newMap);
+        clearReport();
+    }
+
+    /// Same as @code setMap(0); @endcode
+    inline void clearMap() { setMap(0); }
+
+    /**
+     * Clear any existing conversion report data.
+     */
+    void clearReport()
+    {
+        _unclosedSectors.clear();
+        _oneWayWindows.clear();
+    }
+
+    /**
+     * Compile and output any existing report data to the message log.
+     */
     void writeLog()
     {
         if(int numToLog = maxWarnings(unclosedSectorCount()))
@@ -143,19 +189,30 @@ public:
     }
 
 protected:
-    // Observes Partitioner UnclosedSectorFound.
+    /// Observes Map UnclosedSectorFound.
     void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
     {
         _unclosedSectors.insert(std::make_pair(sector.indexInArchive(), nearPoint.toVector2i()));
     }
 
-    // Observes Partitioner OneWayWindowFound.
+    /// Observes Map OneWayWindowFound.
     void oneWayWindowFound(Line &line, Sector &backFacingSector)
     {
         _oneWayWindows.insert(std::make_pair(line.indexInArchive(), backFacingSector.indexInArchive()));
     }
 
+    /// Observes Map Deletion.
+    void mapBeingDeleted(Map const &map)
+    {
+        DENG2_ASSERT(&map == _map); // sanity check.
+        DENG2_UNUSED(map);
+        _map = 0;
+    }
+
 private:
+    inline int unclosedSectorCount() const { return int( _unclosedSectors.size() ); }
+    inline int oneWayWindowCount() const   { return int( _oneWayWindows.size() ); }
+
     static inline int maxWarnings(int issueCount)
     {
 #ifdef DENG_DEBUG
@@ -165,6 +222,25 @@ private:
 #endif
     }
 
+    void observeMap(bool yes)
+    {
+        if(!_map) return;
+
+        if(yes)
+        {
+            _map->audienceForDeletion            += this;
+            _map->audienceForOneWayWindowFound   += this;
+            _map->audienceForUnclosedSectorFound += this;
+        }
+        else
+        {
+            _map->audienceForDeletion            -= this;
+            _map->audienceForOneWayWindowFound   -= this;
+            _map->audienceForUnclosedSectorFound -= this;
+        }
+    }
+
+    Map *_map; ///< Map currently being reported on, if any (not owned).
     UnclosedSectorMap _unclosedSectors;
     OneWayWindowMap   _oneWayWindows;
 };
@@ -312,48 +388,39 @@ DENG2_PIMPL(World)
     }
 
     /**
-     * Data for a map load task.
-     */
-    struct MapLoadTaskData
-    {
-        Uri uri;
-        QScopedPointer<Map> map;
-        QScopedPointer<MapConversionReporter> reporter;
-    };
-
-    /**
-     * Attempt JIT conversion of the map data with the help of a plugin.
-     * Note that the map is left in an editable state in case the caller
-     * wishes to perform any further changes.
+     * Attempt JIT conversion of the map data with the help of a plugin. Note that
+     * the map is left in an editable state in case the caller wishes to perform
+     * any further changes.
      *
-     * return @c true if conversion was completed successfully.
+     * @param reporter  Reporter which will observe the conversion process.
+     *
+     * @return  The newly converted map (if any).
      */
-    bool convertMap(MapLoadTaskData &task)
+    Map *convertMap(Uri const &uri, MapConversionReporter *reporter = 0)
     {
         // Record this map if we haven't already.
-        /*MapCacheRecord &record =*/ createCacheRecord(task.uri);
+        /*MapCacheRecord &record =*/ createCacheRecord(uri);
 
         // We require a map converter for this.
         if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
-            return false;
+            return 0;
 
         //LOG_DEBUG("Attempting \"%s\"...") << uri;
 
-        lumpnum_t markerLumpNum = markerLumpNumForPath(task.uri.path());
+        lumpnum_t markerLumpNum = markerLumpNumForPath(uri.path());
         if(markerLumpNum < 0)
-            return false;
+            return 0;
 
         // Initiate the conversion process.
-        MPE_Begin(reinterpret_cast<uri_s const *>(&task.uri));
+        MPE_Begin(reinterpret_cast<uri_s const *>(&uri));
+
         Map *newMap = MPE_Map();
 
-        // Configure a reporter to observe the conversion process.
-        task.reporter.reset(new MapConversionReporter);
-
-        // Connect the reporter to the relevant audiences.
-        /// @todo MapConversionReporter should handle this.
-        newMap->audienceForOneWayWindowFound   += *task.reporter;
-        newMap->audienceForUnclosedSectorFound += *task.reporter;
+        if(reporter)
+        {
+            // Instruct the reporter to begin observing the conversion.
+            reporter->setMap(newMap);
+        }
 
         // Generate and attribute the old unique map id.
         File1 &markerLump       = App_FileSystem().nameIndex().lump(markerLumpNum);
@@ -364,8 +431,8 @@ DENG2_PIMPL(World)
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
-        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s const *>(&task.uri)))
-            return false;
+        if(!DD_CallHooks(HOOK_MAP_CONVERT, 0, (void *) reinterpret_cast<uri_s const *>(&uri)))
+            return 0;
 
         // A converter signalled success.
 
@@ -373,8 +440,7 @@ DENG2_PIMPL(World)
         MPE_End();
 
         // Take ownership of the map.
-        task.map.reset(MPE_TakeMap());
-        return true;
+        return MPE_TakeMap();
     }
 
 #if 0
@@ -397,7 +463,7 @@ DENG2_PIMPL(World)
      *
      * @return @c true if loading completed successfully.
      */
-    bool loadMapFromCache(Uri const &uri)
+    Map *loadMapFromCache(Uri const &uri)
     {
         // Record this map if we haven't already.
         MapCacheRecord &rec = createCacheRecord(uri);
@@ -415,14 +481,14 @@ DENG2_PIMPL(World)
     /**
      * Attempt to load the associated map data.
      *
-     * @return @c true if loading completed successfully.
+     * @return  The loaded map if successful. Ownership given to the caller.
      */
-    bool loadMap(MapLoadTaskData &task)
+    Map *loadMap(Uri const &uri, MapConversionReporter *reporter = 0)
     {
         LOG_AS("World::loadMap");
 
         // Record this map if we haven't already.
-        /*MapCacheRecord &rec =*/ createCacheRecord(task.uri);
+        /*MapCacheRecord &rec =*/ createCacheRecord(uri);
 
         /*if(rec.lastLoadAttemptFailed && !forceRetry)
             return 0;
@@ -430,16 +496,17 @@ DENG2_PIMPL(World)
         // Load from cache?
         if(mapCache && rec.dataAvailable)
         {
-            return loadMapFromCache(task);
+            return loadMapFromCache(uri);
         }*/
 
         // Try a JIT conversion with the help of a plugin.
-        if(convertMap(task))
-            return true;
-
-        LOG_WARNING("Failed conversion of \"%s\".") << task.uri;
-        //rec.lastLoadAttemptFailed = true;
-        return false;
+        Map *map = convertMap(uri, reporter);
+        if(!map)
+        {
+            LOG_WARNING("Failed conversion of \"%s\".") << uri;
+            //rec.lastLoadAttemptFailed = true;
+        }
+        return map;
     }
 
     /**
@@ -704,37 +771,32 @@ DENG2_PIMPL(World)
         ddMapSetup = true;
 
         // Attempt to load in the new map.
-        MapLoadTaskData task; task.uri = uri;
-        if(loadMap(task))
+        MapConversionReporter reporter;
+        Map *newMap = loadMap(uri, &reporter);
+        if(newMap)
         {
             // The map may still be in an editable state -- switch to playable.
-            bool mapIsPlayable = task.map->endEditing();
+            bool mapIsPlayable = newMap->endEditing();
 
-            if(!task.reporter.isNull())
-            {
-                // We are no longer interested in reports about this map.
-                task.map->audienceForOneWayWindowFound   -= *task.reporter;
-                task.map->audienceForUnclosedSectorFound -= *task.reporter;
-            }
+            // Cancel further reports about the map.
+            reporter.setMap(0);
 
             if(!mapIsPlayable)
             {
                 // Darn. Discard the useless data.
-                task.map.reset();
+                delete newMap;
+                newMap = 0;
             }
         }
 
-        // Take ownership of the map (if any) and make current.
-        makeCurrent(task.map.data()? task.map.take() : 0);
+        // This becomes the new current map.
+        makeCurrent(newMap);
 
         // We've finished setting up the map.
         ddMapSetup = false;
 
-        // Output a human-readable log of any issues encountered in the conversion process.
-        if(!task.reporter.isNull())
-        {
-            task.reporter->writeLog();
-        }
+        // Output a human-readable report of any issues encountered during conversion.
+        reporter.writeLog();
 
         return map != 0;
     }
