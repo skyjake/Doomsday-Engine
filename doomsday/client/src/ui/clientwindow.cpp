@@ -230,6 +230,7 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         // Mouse cursor is used with transformed content.
         cursor = new LabelWidget;
+        cursor->setBehavior(Widget::Unhittable);
         cursor->margins().set(""); // no margins
         cursor->setImage(style.images().image("window.cursor"));
         cursor->setAlignment(ui::AlignTopLeft);
