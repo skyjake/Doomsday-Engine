@@ -37,7 +37,9 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     CVarSliderWidget *ipd;
     CVarSliderWidget *riftPredictionLatency;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i)
+        : Base(i)
+        , riftPredictionLatency(0)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -62,8 +64,11 @@ DENG_GUI_PIMPL(VRSettingsDialog)
         area.add(ipd = new CVarSliderWidget("rend-vr-ipd"));
         ipd->setDisplayFactor(1000);
 
-        area.add(riftPredictionLatency = new CVarSliderWidget("rend-vr-rift-latency"));
-        riftPredictionLatency->setDisplayFactor(1000);
+        if(VR::hasHeadOrientation())
+        {
+            area.add(riftPredictionLatency = new CVarSliderWidget("rend-vr-rift-latency"));
+            riftPredictionLatency->setDisplayFactor(1000);
+        }
     }
 
     void fetch()
@@ -84,9 +89,9 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     heading().setText(tr("3D & VR Settings"));
 
     LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Mode:"), &area());
-    LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());
     LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
     LabelWidget *ipdLabel      = LabelWidget::newWithText(tr("IPD (mm):"), &area());
+    LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());
     LabelWidget *latencyLabel  = LabelWidget::newWithText(tr("Prediction Latency:"), &area());
 
     // Layout.
@@ -95,11 +100,15 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     layout.setColumnAlignment(0, ui::AlignRight);
 
     layout << *modeLabel     << *d->mode
-           << Const(0)       << *d->swapEyes
-           << *dominantLabel << *d->dominantEye
            << *heightLabel   << *d->humanHeight
            << *ipdLabel      << *d->ipd
-           << *latencyLabel  << *d->riftPredictionLatency;
+           << *dominantLabel << *d->dominantEye
+           << Const(0)       << *d->swapEyes;
+
+    if(VR::hasHeadOrientation())
+    {
+        layout << *latencyLabel << *d->riftPredictionLatency;
+    }
 
     area().setContentSize(layout.width(), layout.height());
 
