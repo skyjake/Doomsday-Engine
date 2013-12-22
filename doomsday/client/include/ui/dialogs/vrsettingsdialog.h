@@ -33,6 +33,7 @@ public:
 
 public slots:
     void resetToDefaults();
+    void autoConfigForOculusRift();
 
 private:
     DENG2_PRIVATE(d)

@@ -36,10 +36,12 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     CVarSliderWidget *humanHeight;
     CVarSliderWidget *ipd;
     CVarSliderWidget *riftPredictionLatency;
+    ButtonWidget *riftSetup;
 
     Instance(Public *i)
         : Base(i)
         , riftPredictionLatency(0)
+        , riftSetup(0)
     {
         ScrollAreaWidget &area = self.area();
 
@@ -68,6 +70,10 @@ DENG_GUI_PIMPL(VRSettingsDialog)
         {
             area.add(riftPredictionLatency = new CVarSliderWidget("rend-vr-rift-latency"));
             riftPredictionLatency->setDisplayFactor(1000);
+
+            area.add(riftSetup = new ButtonWidget);
+            riftSetup->setText(tr("Auto-Configure"));
+            riftSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForOculusRift())));
         }
     }
 
@@ -92,7 +98,6 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
     LabelWidget *ipdLabel      = LabelWidget::newWithText(tr("IPD (mm):"), &area());
     LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());
-    LabelWidget *latencyLabel  = LabelWidget::newWithText(tr("Prediction Latency:"), &area());
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
@@ -107,7 +112,17 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
 
     if(VR::hasHeadOrientation())
     {
-        layout << *latencyLabel << *d->riftPredictionLatency;
+        LabelWidget *ovrLabel     = LabelWidget::newWithText(_E(1)_E(D) + tr("Oculus Rift"), &area());
+        LabelWidget *latencyLabel = LabelWidget::newWithText(tr("Prediction Latency:"), &area());
+        LabelWidget *utilLabel    = LabelWidget::newWithText(tr("Utilities:"), &area());
+
+        ovrLabel->margins().setTop("gap");
+
+        layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
+
+        layout.append(*ovrLabel, 2);
+        layout << *latencyLabel << *d->riftPredictionLatency
+               << *utilLabel    << *d->riftSetup;
     }
 
     area().setContentSize(layout.width(), layout.height());
@@ -130,5 +145,16 @@ void VRSettingsDialog::resetToDefaults()
     Con_SetFloat  ("rend-vr-rift-latency",  0.030f);
 
     d->fetch();
+}
+
+void VRSettingsDialog::autoConfigForOculusRift()
+{
+    Con_Execute(CMDS_DDAY, "setfullres 1280 800", false, false);
+    Con_Execute(CMDS_DDAY, "bindcontrol lookpitch head-pitch", false, false);
+    Con_Execute(CMDS_DDAY, "bindcontrol yawbody head-yaw", false, false);
+
+    Con_SetInteger("rend-vr-mode", VR::MODE_OCULUS_RIFT);
+    Con_SetInteger("vid-fsaa", 0);
+    //Con_SetInteger("input-sharp", 0);
 }
 
