@@ -219,8 +219,6 @@ void PopupMenuWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
 void PopupMenuWidget::preparePanelForOpening()
 {
-    PopupWidget::preparePanelForOpening();
-
     // Redo the layout.
     menu().updateLayout();
     d->updateItemHitRules();
