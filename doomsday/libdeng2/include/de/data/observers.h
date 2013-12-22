@@ -199,6 +199,7 @@ public:
     /// ownership of the observer instance.
     void add(Type *observer) {
         DENG2_GUARD(this);
+        DENG2_ASSERT(observer != 0);
         _members.insert(observer);
     }
 

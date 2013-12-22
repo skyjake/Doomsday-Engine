@@ -243,6 +243,25 @@ Widget &Widget::add(Widget *child)
     DENG2_ASSERT(child != 0);
     DENG2_ASSERT(child->d->parent == 0);
 
+#ifdef _DEBUG
+    // Can't have double ownership.
+    if(parent())
+    {
+        if(parent()->hasRoot())
+        {
+            DENG2_ASSERT(!parent()->root().isInTree(*child));
+        }
+        else
+        {
+            DENG2_ASSERT(!parent()->isInTree(*child));
+        }
+    }
+    else
+    {
+        DENG2_ASSERT(!isInTree(*child));
+    }
+#endif
+
     child->d->parent = this;
     d->children.append(child);
 
@@ -320,6 +339,20 @@ Widget *Widget::find(String const &name)
     }
 
     return 0;
+}
+
+bool Widget::isInTree(Widget const &child) const
+{
+    if(this == &child) return true;
+
+    DENG2_FOR_EACH_CONST(Instance::Children, i, d->children)
+    {
+        if((*i)->isInTree(child))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 Widget const *Widget::find(String const &name) const
