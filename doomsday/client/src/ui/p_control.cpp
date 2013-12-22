@@ -351,8 +351,15 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // P_ConsoleToLocal() is called here.
     binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
 
-    // Is this not an empty list?
-    return binds && binds->next != binds;
+    // There must be bindings to active input devices.
+    bool gotActiveDevices = false;
+    for(dbinding_t *cb = binds->next; cb != binds; cb = cb->next)
+    {
+        if(I_GetDevice(cb->device, OnlyActiveInputDevice))
+            gotActiveDevices = true;
+    }
+    return gotActiveDevices;
+
 #else
     DENG_UNUSED(playerNum);
     DENG_UNUSED(control);
