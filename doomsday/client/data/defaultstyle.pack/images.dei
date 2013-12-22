@@ -24,6 +24,7 @@ image gear     { path = "graphics/gear.png" }
 image display  { path = "graphics/display.png" }
 image network  { path = "graphics/network.png" }
 image renderer { path = "graphics/renderer.png" }
+image vr       { path = "graphics/vr.png" }
 image input    { path = "graphics/input.png" }
 image audio    { path = "graphics/audio.png" }
 image updater  { path = "graphics/updater.png" }
