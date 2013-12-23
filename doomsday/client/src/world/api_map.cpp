@@ -332,6 +332,8 @@ void *P_ToPtr(int type, int index)
         return App_World().map().sideByIndex(index);
 
     case DMU_SECTOR:
+        if(index < 0 || index >= App_World().map().sectors().size())
+            return 0;
         return App_World().map().sectors().at(index);
 
     case DMU_PLANE: {

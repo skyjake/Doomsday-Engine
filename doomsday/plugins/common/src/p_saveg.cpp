@@ -4725,6 +4725,11 @@ static void readSoundTargets()
     {
         xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong()));
         DENG_ASSERT(xsec != 0);
+        if(!xsec)
+        {
+            DENG_UNUSED(SV_ReadShort());
+            continue;
+        }
 
         xsec->soundTarget = INT2PTR(mobj_t, SV_ReadShort());
         xsec->soundTarget =
