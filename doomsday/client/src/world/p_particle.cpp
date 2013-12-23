@@ -582,6 +582,9 @@ static void P_NewParticle(ptcgen_t *gen)
         // Offset to the real center.
         pt->origin[VZ] += gen->center[VZ];
 
+        // Include bobbing in the spawn height.
+        pt->origin[VZ] -= FLT2FIX(Mobj_BobOffset(gen->source));
+
         // Calculate XY center with mobj angle.
         ang = Mobj_AngleSmoothed(gen->source) + (fixed_t) (FIX2FLT(gen->center[VY]) / 180.0f * ANG180);
         ang2 = (ang + ANG90) >> ANGLETOFINESHIFT;
