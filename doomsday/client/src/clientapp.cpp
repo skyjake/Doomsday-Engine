@@ -208,6 +208,30 @@ DENG2_PIMPL(ClientApp)
                 .define(SReg::IntCVar,   "sound-overlap-stop",  0)
                 .define(SReg::IntCVar,   "music-source",        MUSP_EXT);
     }
+
+#ifdef UNIX
+    void printVersionToStdOut()
+    {
+        printf("%s\n", String("%1 %2")
+               .arg(DOOMSDAY_NICENAME)
+               .arg(DOOMSDAY_VERSION_FULLTEXT)
+               .toLatin1().constData());
+    }
+
+    void printHelpToStdOut()
+    {
+        printVersionToStdOut();
+        printf("Usage: %s [options]\n", self.commandLine().at(0).toLatin1().constData());
+        printf(" -iwad (dir)  Set directory containing IWAD files.\n");
+        printf(" -file (f)    Load one or more PWAD files at startup.\n");
+        printf(" -game (id)   Set game to load at startup.\n");
+        printf(" -nomaximize  Do not maximize window at startup.\n");
+        printf(" -wnd         Start in windowed mode.\n");
+        printf(" -wh (w) (h)  Set window width and height.\n");
+        printf(" --version    Print current version.\n");
+        printf("For more options and information, see \"man doomsday\".\n");
+    }
+#endif
 };
 
 ClientApp::ClientApp(int &argc, char **argv)
@@ -238,6 +262,20 @@ ClientApp::ClientApp(int &argc, char **argv)
 void ClientApp::initialize()
 {
     Libdeng_Init();
+
+#ifdef UNIX
+    // Some common Unix command line options.
+    if(commandLine().has("--version") || commandLine().has("-version"))
+    {
+        d->printVersionToStdOut();
+        ::exit(0);
+    }
+    if(commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
+    {
+        d->printHelpToStdOut();
+        ::exit(0);
+    }
+#endif
 
     d->svLink = new ServerLink;
 

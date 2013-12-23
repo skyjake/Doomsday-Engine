@@ -30,6 +30,7 @@
 
 #include "serverapp.h"
 #include "dd_main.h"
+#include "dd_def.h"
 #include "dd_loop.h"
 #include "con_main.h"
 #include "sys_system.h"
@@ -67,6 +68,27 @@ DENG2_PIMPL(ServerApp)
         Sys_Shutdown();
         DD_Shutdown();
     }
+
+#ifdef UNIX
+    void printVersionToStdOut()
+    {
+        printf("%s\n", String("%1 %2")
+               .arg(DOOMSDAY_NICENAME)
+               .arg(DOOMSDAY_VERSION_FULLTEXT)
+               .toLatin1().constData());
+    }
+
+    void printHelpToStdOut()
+    {
+        printVersionToStdOut();
+        printf("Usage: %s [options]\n", self.commandLine().at(0).toLatin1().constData());
+        printf(" -iwad (dir)  Set directory containing IWAD files.\n");
+        printf(" -file (f)    Load one or more PWAD files at startup.\n");
+        printf(" -game (id)   Set game to load at startup.\n");
+        printf(" --version    Print current version.\n");
+        printf("For more options and information, see \"man doomsday-server\".\n");
+    }
+#endif
 };
 
 ServerApp::ServerApp(int &argc, char **argv)
@@ -108,6 +130,20 @@ ServerApp::~ServerApp()
 void ServerApp::initialize()
 {
     Libdeng_Init();
+
+#ifdef UNIX
+    // Some common Unix command line options.
+    if(commandLine().has("--version") || commandLine().has("-version"))
+    {
+        d->printVersionToStdOut();
+        ::exit(0);
+    }
+    if(commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
+    {
+        d->printHelpToStdOut();
+        ::exit(0);
+    }
+#endif
 
     if(!CommandLine_Exists("-stdout"))
     {
