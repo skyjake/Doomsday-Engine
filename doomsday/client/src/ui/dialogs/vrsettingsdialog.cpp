@@ -154,6 +154,7 @@ void VRSettingsDialog::autoConfigForOculusRift()
     Con_Execute(CMDS_DDAY, "bindcontrol yawbody head-yaw", false, false);
 
     Con_SetInteger("rend-vr-mode", VR::MODE_OCULUS_RIFT);
+    Con_SetFloat  ("view-bob-height", .3f);
     Con_SetInteger("vid-fsaa", 0);
     //Con_SetInteger("input-sharp", 0);
 }
