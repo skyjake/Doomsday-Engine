@@ -55,16 +55,20 @@ using namespace ui;
 
 static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 
-static uint POS_UNLOAD         = 0;
-static uint POS_GAME_SEPARATOR = 1;
+enum MenuItemPositions
+{
+    // DE menu:
+    POS_UNLOAD            = 0,
+    POS_GAME_SEPARATOR    = 1,
 
-static uint POS_RENDERER_SETTINGS = 0;
-static uint POS_CONFIG_SEPARATOR  = 1;
-//static uint POS_VIDEO_SETTINGS    = 2;
-static uint POS_AUDIO_SETTINGS    = 3;
-static uint POS_INPUT_SETTINGS    = 4;
-//static uint POS_NETWORK_SETTINGS  = 5;
-//static uint POS_UPDATER_SETTINGS  = 6;
+    // Config menu:
+    POS_RENDERER_SETTINGS = 0,
+    POS_VR_SETTINGS       = 1,
+    POS_CONFIG_SEPARATOR  = 2,
+
+    POS_AUDIO_SETTINGS    = 4,
+    POS_INPUT_SETTINGS    = 5
+};
 
 DENG_GUI_PIMPL(TaskBarWidget)
 , DENG2_OBSERVES(App, GameChange)
@@ -247,6 +251,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!newGame.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
+        itemWidget(configMenu, POS_VR_SETTINGS).show(!newGame.isNull());
         itemWidget(configMenu, POS_CONFIG_SEPARATOR).show(!newGame.isNull());
         itemWidget(configMenu, POS_AUDIO_SETTINGS).show(!newGame.isNull());
         itemWidget(configMenu, POS_INPUT_SETTINGS).show(!newGame.isNull());
@@ -388,6 +393,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
 
     d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
+    d->itemWidget(d->configMenu, POS_VR_SETTINGS).hide();
     d->itemWidget(d->configMenu, POS_CONFIG_SEPARATOR).hide();
     d->itemWidget(d->configMenu, POS_AUDIO_SETTINGS).hide();
     d->itemWidget(d->configMenu, POS_INPUT_SETTINGS).hide();
