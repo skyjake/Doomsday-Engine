@@ -153,9 +153,16 @@ void VRSettingsDialog::autoConfigForOculusRift()
     Con_Execute(CMDS_DDAY, "bindcontrol lookpitch head-pitch", false, false);
     Con_Execute(CMDS_DDAY, "bindcontrol yawbody head-yaw", false, false);
 
+    /// @todo This would be a good use case for cvar overriding. -jk
+
     Con_SetInteger("rend-vr-mode", VR::MODE_OCULUS_RIFT);
     Con_SetFloat  ("view-bob-height", .3f);
     Con_SetInteger("vid-fsaa", 0);
+    Con_SetFloat  ("vid-gamma", 1.176f);
+    Con_SetFloat  ("vid-contrast", 1.186f);
+    Con_SetFloat  ("vid-bright", .034f);
     //Con_SetInteger("input-sharp", 0);
+
+    d->fetch();
 }
 
