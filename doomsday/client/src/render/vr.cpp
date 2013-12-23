@@ -127,6 +127,12 @@ static void vrModeChanged()
     if (VR::mode() == VR::MODE_OCULUS_RIFT) {
         if(Con_GetFloat("rend-camera-fov") != vrRiftFovX)
             Con_SetFloat("rend-camera-fov", vrRiftFovX);
+
+        if (VR::hasHeadOrientation())
+        {
+            // Update prediction latency.
+            VR::setRiftLatency(vrLatency);
+        }
     }
     else {
         if(Con_GetFloat("rend-camera-fov") != vrNonRiftFovX)
