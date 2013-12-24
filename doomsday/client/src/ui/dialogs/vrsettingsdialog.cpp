@@ -37,6 +37,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     CVarSliderWidget *ipd;
     CVarSliderWidget *riftPredictionLatency;
     ButtonWidget *riftSetup;
+    ButtonWidget *desktopSetup;
 
     Instance(Public *i)
         : Base(i)
@@ -72,8 +73,12 @@ DENG_GUI_PIMPL(VRSettingsDialog)
             riftPredictionLatency->setDisplayFactor(1000);
 
             area.add(riftSetup = new ButtonWidget);
-            riftSetup->setText(tr("Auto-Configure"));
+            riftSetup->setText(tr("Apply Rift Settings"));
             riftSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForOculusRift())));
+
+            area.add(desktopSetup = new ButtonWidget);
+            desktopSetup->setText(tr("Apply Desktop Settings"));
+            desktopSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForDesktop())));
         }
     }
 
@@ -122,7 +127,8 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
 
         layout.append(*ovrLabel, 2);
         layout << *latencyLabel << *d->riftPredictionLatency
-               << *utilLabel    << *d->riftSetup;
+               << *utilLabel    << *d->riftSetup
+               << Const(0)      << *d->desktopSetup;
     }
 
     area().setContentSize(layout.width(), layout.height());
@@ -167,3 +173,15 @@ void VRSettingsDialog::autoConfigForOculusRift()
     d->fetch();
 }
 
+void VRSettingsDialog::autoConfigForDesktop()
+{
+    Con_SetInteger("rend-vr-mode", VR::MODE_MONO);
+    Con_SetFloat  ("vid-gamma", 1);
+    Con_SetFloat  ("vid-contrast", 1);
+    Con_SetFloat  ("vid-bright", 0);
+    Con_SetFloat  ("view-bob-height", 1);
+    Con_SetFloat  ("msg-scale", .8f);
+    Con_SetFloat  ("hud-scale", .6f);
+
+    d->fetch();
+}

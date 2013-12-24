@@ -1552,7 +1552,7 @@ void DD_ReadHeadTracker(void)
     // orientation independently, with as little latency as possible.
 
     // If a head tracking device is connected, the device is marked active.
-    if(!VR::hasHeadOrientation())
+    if(!DD_GetInteger(DD_USING_HEAD_TRACKING))
     {
         I_GetDevice(IDEV_HEAD_TRACKER)->flags &= ~ID_ACTIVE;
         return;
