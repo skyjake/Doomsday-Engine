@@ -165,16 +165,26 @@ DENG2_PIMPL(GLFramebuffer)
 
         if(isMultisampled())
         {
-            // Set up the multisampled target with suitable renderbuffers.
-            multisampleTarget.configure(size, GLTarget::ColorDepthStencil, sampleCount());
-            multisampleTarget.clear(GLTarget::ColorDepthStencil);
+            try
+            {
+                // Set up the multisampled target with suitable renderbuffers.
+                multisampleTarget.configure(size, GLTarget::ColorDepthStencil, sampleCount());
+                multisampleTarget.clear(GLTarget::ColorDepthStencil);
 
-            // Actual drawing occurs in the multisampled target that is then
-            // blitted to the main target.
-            target.setProxy(&multisampleTarget);
+                // Actual drawing occurs in the multisampled target that is then
+                // blitted to the main target.
+                target.setProxy(&multisampleTarget);
+            }
+            catch(GLTarget::ConfigError const &er)
+            {
+                LOG_WARNING("Multisampling not supported:\n  %s") << er.asText();
+                _samples = 1;
+                goto noMultisampling;
+            }
         }
         else
         {
+noMultisampling:
             multisampleTarget.configure();
         }
     }
