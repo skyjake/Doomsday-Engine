@@ -1,6 +1,7 @@
 /** @file render/vr.h  Stereoscopic rendering and Oculus Rift support.
  *
  * @authors Copyright (c) 2013 Christopher Bruns <cmbruns@rotatingpenguin.com>
+ * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
