@@ -17,6 +17,11 @@
     As a special case, if @help_arg{shader} is "none", the post-processing
     shader is faded out and removed.
     
+    Another special case is when @help_arg{shader} is "opacity". This will 
+    set the opacity of the effect to the value of @help_arg{time}. However, 
+    hote that the shader does not necessarily implement opacity as simple 
+    alpha blending.
+    
     @examples
     Fade in the "fx.post.monochrome" shader for player 0 in 2 seconds:
     @code{postfx 0 monochrome 2}    

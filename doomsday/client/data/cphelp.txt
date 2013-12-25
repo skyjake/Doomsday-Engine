@@ -274,7 +274,7 @@ desc = Play a sound effect.
 
 [postfx]
 desc = Set or clear the frame post-processing shader.
-inf = USAGE:\npostfx (console) (shader) [(time)]\nEvery player has their own frame post-processing effects. The first argument specifies which player will be affected.\nThe frame post-processing shader is changed to "fx.post. (shader) ". If (time) is specified, and there is no shader currently in use, the new shader is faded in in (time) seconds. Otherwise the new shader is taken immediately into use.\nAs a special case, if (shader) is "none", the post-processing shader is faded out and removed.\nEXAMPLES:\nFade in the "fx.post.monochrome" shader for player 0 in 2 seconds: 'postfx 0 monochrome 2'
+inf = USAGE:\npostfx (console) (shader) [(time)]\nEvery player has their own frame post-processing effects. The first argument specifies which player will be affected.\nThe frame post-processing shader is changed to "fx.post. (shader) ". If (time) is specified, and there is no shader currently in use, the new shader is faded in in (time) seconds. Otherwise the new shader is taken immediately into use.\nAs a special case, if (shader) is "none", the post-processing shader is faded out and removed.\nAnother special case is when (shader) is "opacity". This will set the opacity of the effect to the value of (time). However, hote that the shader does not necessarily implement opacity as simple alpha blending.\nEXAMPLES:\nFade in the "fx.post.monochrome" shader for player 0 in 2 seconds: 'postfx 0 monochrome 2'
 
 [quit!]
 desc = Exit immediately and return to the OS.
