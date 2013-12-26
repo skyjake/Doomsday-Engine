@@ -25,6 +25,7 @@ Graphics:
 @item Environmental mapping effects for 3D models and world surfaces
 @item World @wikiterm{movement smoothing} (actors, monsters, missiles, surfaces) to remove the original games' limitation of 35 FPS
 @item @wikiterm{Smart texture filtering} using a modified hq2x algorithm
+@item Stereoscopic rendering modes: anaglyph, side-by-side, cross-eye and parallel viewing
 @item Support for Oculus Rift
 }
 
