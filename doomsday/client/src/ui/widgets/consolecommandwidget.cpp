@@ -66,6 +66,8 @@ ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
 
 bool ConsoleCommandWidget::handleEvent(Event const &event)
 {
+    if(isDisabled()) return false;
+
     if(hasFocus())
     {
         // Console bindings override normal event handling.

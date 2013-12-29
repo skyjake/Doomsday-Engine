@@ -86,6 +86,8 @@ void CommandWidget::focusLost()
 
 bool CommandWidget::handleEvent(Event const &event)
 {
+    if(isDisabled()) return false;
+
     if(hasFocus() && event.isKeyDown())
     {
         KeyEvent const &key = event.as<KeyEvent>();

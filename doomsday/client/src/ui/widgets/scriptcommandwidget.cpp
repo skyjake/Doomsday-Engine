@@ -50,6 +50,8 @@ ScriptCommandWidget::ScriptCommandWidget(String const &name)
 
 bool ScriptCommandWidget::handleEvent(Event const &event)
 {
+    if(isDisabled()) return false;
+
     bool wasCompl = autocompletionPopup().isOpen();
     bool eaten = CommandWidget::handleEvent(event);
     if(eaten && wasCompl && event.isKeyDown())
