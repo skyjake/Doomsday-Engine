@@ -186,6 +186,7 @@ class Changes:
             if entry.tags: continue
             # This entry has no tags yet.    
             for tag in allTags:
+                tag = tag.encode('utf-8')
                 p = entry.subject.lower().find(tag.lower())
                 if p < 0: continue
                 if p == 0 or entry.subject[p - 1] not in string.ascii_letters + '-_':
