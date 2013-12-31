@@ -127,7 +127,9 @@ void P_Ticker(timespan_t elapsed)
 
     if(DD_IsSharpTick())
     {
-        Sky_Ticker();
+#ifdef __CLIENT__
+        theSky->runTick();
+#endif
 
         // Check all mobjs (always public).
         map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,

@@ -400,7 +400,6 @@ void GL_Shutdown()
     GL_ShutdownDeferredTask();
     FR_Shutdown();
     Rend_ModelShutdown();
-    Sky_Shutdown();
     LensFx_Shutdown();
     Rend_Reset();
 

@@ -2372,7 +2372,7 @@ void Map::update()
         skyDef = Def_GetSky(mapInfo->skyID);
         if(!skyDef) skyDef = &mapInfo->sky;
     }
-    Sky_Configure(skyDef);
+    theSky->configure(skyDef);
 #endif
 }
 

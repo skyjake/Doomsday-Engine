@@ -419,7 +419,7 @@ void Rend_Register()
     LightDecoration::consoleRegister();
     LightGrid::consoleRegister();
     Lumobj::consoleRegister();
-    Sky_Register();
+    Sky::consoleRegister();
     Rend_ModelRegister();
     Rend_ParticleRegister();
     Rend_RadioRegister();
@@ -450,7 +450,6 @@ static void reportWallSectionDrawn(Line &line)
 void Rend_Init()
 {
     C_Init();
-    Sky_Init();
 }
 
 void Rend_Shutdown()
@@ -709,14 +708,14 @@ Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
 {
     if(rendSkyLight > .001f && cluster.hasSkyMaskedPlane())
     {
-        ColorRawf const *ambientColor = Sky_AmbientColor();
+        Vector3f const &ambientColor = theSky->ambientColor();
 
         if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor.x, .001f) ||
-           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor.y, .001f) ||
-           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor.z, .001f))
+           !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
+           !INRANGE_OF(ambientColor.y, oldSkyAmbientColor.y, .001f) ||
+           !INRANGE_OF(ambientColor.z, oldSkyAmbientColor.z, .001f))
         {
-            skyLightColor = Vector3f(ambientColor->rgb);
+            skyLightColor = ambientColor;
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
@@ -727,7 +726,7 @@ Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
 
             // When the sky light color changes we must update the light grid.
             markLightGridForFullUpdate();
-            oldSkyAmbientColor = Vector3f(ambientColor->rgb);
+            oldSkyAmbientColor = ambientColor;
         }
 
         oldRendSkyLight = rendSkyLight;
@@ -754,14 +753,14 @@ Vector3f const &Rend_SectorLightColor(Sector const &sector)
 {
     if(rendSkyLight > .001f && sectorHasSkyMaskedPlane(sector))
     {
-        ColorRawf const *ambientColor = Sky_AmbientColor();
+        Vector3f const &ambientColor = theSky->ambientColor();
 
         if(rendSkyLight != oldRendSkyLight ||
-           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor.x, .001f) ||
-           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor.y, .001f) ||
-           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor.z, .001f))
+           !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
+           !INRANGE_OF(ambientColor.y, oldSkyAmbientColor.y, .001f) ||
+           !INRANGE_OF(ambientColor.z, oldSkyAmbientColor.z, .001f))
         {
-            skyLightColor = Vector3f(ambientColor->rgb);
+            skyLightColor = ambientColor;
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
@@ -772,7 +771,7 @@ Vector3f const &Rend_SectorLightColor(Sector const &sector)
 
             // When the sky light color changes we must update the light grid.
             markLightGridForFullUpdate();
-            oldSkyAmbientColor = Vector3f(ambientColor->rgb);
+            oldSkyAmbientColor = ambientColor;
         }
 
         oldRendSkyLight = rendSkyLight;
@@ -3530,7 +3529,7 @@ static void drawSky()
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    Sky_Render();
+    theSky->draw();
 
     if(!devRendSkyAlways)
     {

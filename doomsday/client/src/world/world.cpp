@@ -575,7 +575,7 @@ DENG2_PIMPL(World)
             skyDef = Def_GetSky(mapInfo->skyID);
             if(!skyDef) skyDef = &mapInfo->sky;
         }
-        Sky_Configure(skyDef);
+        theSky->configure(skyDef);
 #endif
 
         // Init the thinker lists (public and private).

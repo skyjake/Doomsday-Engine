@@ -3804,7 +3804,7 @@ void ResourceSystem::cacheForCurrentMap()
     }
 
      // Sky models usually have big skins.
-    Sky_Cache();
+    theSky->cacheDrawableAssets();
 
     // Precache model skins?
     if(useModels && precacheSkins)

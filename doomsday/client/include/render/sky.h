@@ -1,6 +1,4 @@
-/** @file sky.h  Sky Sphere and 3D Models
- *
- * This version supports only two sky layers. (More would be a waste of resources?)
+/** @file sky.h  Sky sphere and 3D models.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -23,8 +21,12 @@
 #ifndef DENG_CLIENT_RENDER_SKY_H
 #define DENG_CLIENT_RENDER_SKY_H
 
-#include "color.h"
 #include "Material"
+#include <de/libdeng2.h>
+#include <de/Error>
+#include <de/Observers>
+#include <de/Vector>
+#include <QFlags>
 
 #define MAX_SKY_LAYERS                   ( 2 )
 #define MAX_SKY_MODELS                   ( 32 )
@@ -35,96 +37,251 @@
 #define DEFAULT_SKY_SPHERE_MATERIAL      ( "Textures:SKY1" )
 #define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/// Register the console commands, variables, etc..., of this module.
-void Sky_Register(void);
-
-/// Initialize this module.
-void Sky_Init(void);
-
-/// Shutdown this module.
-void Sky_Shutdown(void);
-
 /**
- * Cache all resources necessary for rendering the current sky.
+ * Logical sky.
+ *
+ * This version supports only two sky layers. (More would be a waste of resources?)
+ *
+ * @ingroup render
  */
-void Sky_Cache(void);
+class Sky
+{
+public:
+    /// Required layer is missing. @ingroup errors
+    DENG2_ERROR(MissingLayerError);
 
-/**
- * Animate the sky.
- */
-void Sky_Ticker(void);
+    /**
+     * Multiple layers can be used for parallax effects.
+     */
+    class Layer
+    {
+    public:
+        /// Notified whenever the layer material changes.
+        DENG2_DEFINE_AUDIENCE(MaterialChange, void skyLayerMaterialChanged(Layer &layer))
 
-/**
- * Configure the sky based on the specified definition if not @c NULL,
- * otherwise, setup using suitable defaults.
- */
-void Sky_Configure(ded_sky_t *sky);
+        /// Notified whenever the active-state changes.
+        DENG2_DEFINE_AUDIENCE(ActiveChange, void skyLayerActiveChanged(Layer &layer))
 
-/// @return  Unique identifier of the current Sky's first active layer.
-int Sky_FirstActiveLayer(void);
+        /// Notified whenever the masked-state changes.
+        DENG2_DEFINE_AUDIENCE(MaskedChange, void skyLayerMaskedChanged(Layer &layer))
 
-/// @return  Current ambient sky color.
-ColorRawf const* Sky_AmbientColor(void);
+        /// @todo make private:
+        enum Flag {
+            Active = 0x1, ///< Layer is active and will be rendered.
+            Masked = 0x2, ///< Mask the layer's texture.
 
-/// @return  Horizon offset for the current Sky.
-float Sky_HorizonOffset(void);
+            DefaultFlags = 0
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
 
-/// @return  Height of the current Sky as a factor [0...1] where @c 1 covers the entire view.
-float Sky_Height(void);
+    public:
+        /**
+         * Construct a new sky layer.
+         */
+        Layer(Material *material = 0);
 
-/// @return  @c true if the identified @a layerId of the current Sky is active.
-boolean Sky_LayerActive(int layerId);
+        /**
+         * Returns @a true of the layer is currently active.
+         *
+         * @see setActive()
+         */
+        bool isActive() const;
 
-/// @return  Fadeout limit for the identified @a layerId of the current Sky.
-float Sky_LayerFadeoutLimit(int layerId);
+        /**
+         * Change the 'active' state of the layer. The ActiveChange audience is
+         * notified whenever the 'active' state changes.
+         *
+         * @see isActive()
+         */
+        Layer &setActive(bool yes);
 
-/// @return  @c true if the identified @a layerId for the current Sky is masked.
-boolean Sky_LayerMasked(int layerId);
+        inline void enable() { setActive(true); }
+        inline void disable() { setActive(false); }
 
-/// @return  Material assigned to the identified @a layerId of the current Sky.
-Material *Sky_LayerMaterial(int layerId);
+        /**
+         * Returns @c true if the layer's material will be masked.
+         *
+         * @see setMasked()
+         */
+        bool isMasked() const;
 
-/// @return  Horizontal offset for the identified @a layerId of the current Sky.
-float Sky_LayerOffset(int layerId);
+        /**
+         * Change the 'masked' state of the layer. The MaskedChange audience is
+         * notified whenever the 'masked' state changes.
+         *
+         * @see isMasked()
+         */
+        Layer &setMasked(bool yes);
 
-/**
- * Change the 'active' state for the identified @a layerId of the current Sky.
- * @post Sky light color is marked for update (deferred).
- */
-void Sky_LayerSetActive(int layerId, boolean yes);
+        /**
+         * Returns the material currently assigned to the layer (if any).
+         */
+        Material *material() const;
 
-/**
- * Change the 'masked' state for the identified @a layerId of the current Sky.
- * @post Sky light color and layer Material are marked for update (deferred).
- */
-void Sky_LayerSetMasked(int layerId, boolean yes);
+        /**
+         * Change the material of the layer. The MaterialChange audience is notified
+         * whenever the material changes.
+         */
+        Layer &setMaterial(Material *newMaterial);
 
-/**
- * Change the fadeout limit for the identified @a layerId of the current Sky.
- * @post Sky light color is marked for update (deferred).
- */
-void Sky_LayerSetFadeoutLimit(int layerId, float limit);
+        /**
+         * Returns the horizontal offset for the layer.
+         */
+        float offset() const;
 
-/**
- * Change the Material assigned to the identified @a layerId of the current Sky.
- * @post Sky light color and layer Material are marked for update (deferred).
- */
-void Sky_LayerSetMaterial(int layerId, Material *material);
+        /**
+         * Change the horizontal offset for the layer.
+         *
+         * @param newOffset  New offset to apply.
+         */
+        Layer &setOffset(float newOffset);
 
-/**
- * Change the horizontal offset for the identified @a layerId of the current Sky.
- */
-void Sky_LayerSetOffset(int layerId, float offset);
+        /**
+         * Returns the fadeout limit for the layer.
+         */
+        float fadeoutLimit() const;
 
-/// Render the current sky.
-void Sky_Render(void);
+        /**
+         * Change the fadeout limit for the layer.
+         *
+         * @param newLimit  New fadeout limit to apply.
+         */
+        Layer &setFadeoutLimit(float newLimit);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+    private:
+        Layer &setFlags(Flags flags, de::FlagOp operation);
+
+        Flags _flags;
+        Material *_material;
+        float _offset;
+        float _fadeoutLimit;
+    };
+
+public:
+    Sky();
+
+    /**
+     * Reconfigure the sky, returning all values to their defaults.
+     */
+    void configureDefault();
+
+    /**
+     * Reconfigure the sky according the specified @a definition if not @c NULL,
+     * otherwise, setup using suitable defaults.
+     */
+    void configure(ded_sky_t *sky);
+
+    /**
+     * Animate the sky.
+     */
+    void runTick();
+
+#ifdef __CLIENT__
+
+    /**
+     * Cache all assets needed for visualizing the sky.
+     */
+    void cacheDrawableAssets();
+
+    /**
+     * Render the sky.
+     */
+    void draw();
+
+#endif // __CLIENT__
+
+    /**
+     * Determines whether the specified sky layer @a index is valid.
+     *
+     * @see layer(), layerPtr()
+     */
+    bool hasLayer(int index) const;
+
+    /**
+     * Lookup a sky layer by it's unique @a index.
+     *
+     * @see hasLayer()
+     */
+    Layer &layer(int index);
+
+    /// @copydoc layer()
+    Layer const &layer(int index) const;
+
+    /**
+     * Returns a pointer to the referenced sky layer; otherwise @c 0.
+     *
+     * @see hasLayer(), layer()
+     */
+    inline Layer *layerPtr(int index) { return hasLayer(index)? &layer(index) : 0; }
+
+    /**
+     * Returns the unique identifier of the sky's first active layer.
+     *
+     * @see Layer::isActive()
+     */
+    int firstActiveLayer() const;
+
+    /**
+     * Returns the horizon offset for the sky.
+     *
+     * @see setHorizonOffset()
+     */
+    float horizonOffset() const;
+
+    /**
+     * Change the horizon offset for the sky.
+     *
+     * @param newOffset  New horizon offset to apply.
+     *
+     * @see horizonOffset()
+     */
+    void setHorizonOffset(float newOffset);
+
+    /**
+     * Returns the height of the sky as a scale factor [0..1] (@c 1 covers the view).
+     *
+     * @see setHeight()
+     */
+    float height() const;
+
+    /**
+     * Change the height scale factor for the sky.
+     *
+     * @param newHeight  New height scale factor to apply (will be normalized).
+     *
+     * @see height()
+     */
+    void setHeight(float newHeight);
+
+    /**
+     * Returns the ambient color of the sky. The ambient color is automatically
+     * calculated by averaging the color information in the configured layer
+     * material textures. Alternatively, this color can be overridden manually
+     * by calling @ref setAmbientColor().
+     */
+    de::Vector3f const &ambientColor() const;
+
+    /**
+     * Override the automatically calculated ambient color.
+     *
+     * @param newColor  New ambient color to apply (will be normalized).
+     *
+     * @see ambientColor()
+     */
+    void setAmbientColor(de::Vector3f const &newColor);
+
+public:
+    /// Register the console commands, variables, etc..., of this module.
+    static void consoleRegister();
+
+private:
+    DENG2_PRIVATE(d)
+};
+Q_DECLARE_OPERATORS_FOR_FLAGS(Sky::Layer::Flags)
+
+typedef Sky::Layer SkyLayer;
+
+/// The One sky (never @c NULL).
+extern Sky *theSky;
 
 #endif // DENG_CLIENT_RENDER_SKY_H

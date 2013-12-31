@@ -96,9 +96,6 @@ void Rend_ConsoleToggleFullscreen()
 void Rend_ConsoleCursorResetBlink()
 {}
 
-void Sky_Ticker()
-{}
-
 void Cl_InitPlayers(void)
 {}
 
