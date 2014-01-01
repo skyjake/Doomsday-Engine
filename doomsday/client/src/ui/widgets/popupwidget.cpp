@@ -21,6 +21,7 @@
 #include "GuiRootWidget"
 #include "ui/style.h"
 #include "ui/clientwindow.h"
+#include "clientapp.h"
 
 #include <de/Drawable>
 #include <de/MouseEvent>
@@ -318,7 +319,13 @@ bool PopupWidget::handleEvent(Event const &event)
         if(event.isKeyDown() && event.as<KeyEvent>().ddKey() == DDKEY_ESCAPE)
         {
             close();
+            return true;
         }
+
+        // Popups should still allow global key bindings to be activated.
+        ClientApp::widgetActions().tryEvent(event, "global");
+
+        // Don't pass it further, though.
         return true;
     }
 
