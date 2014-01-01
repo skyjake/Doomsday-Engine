@@ -21,6 +21,7 @@
 #include <de/Reader>
 #include <de/TextValue>
 #include <de/NumberValue>
+#include <de/App>
 #include <QMap>
 #include <QTimer>
 
@@ -86,7 +87,10 @@ ServerFinder::ServerFinder() : d(new Instance)
         connect(&d->beacon, SIGNAL(found(de::Address, de::Block)), this, SLOT(found(de::Address, de::Block)));
         QTimer::singleShot(1000, this, SLOT(expire()));
 
-        d->beacon.discover(0 /* no timeout */, 2);
+        if(!App::commandLine().has("-nodiscovery"))
+        {
+            d->beacon.discover(0 /* no timeout */, 2);
+        }
     }
     catch(Beacon::PortError const &er)
     {
