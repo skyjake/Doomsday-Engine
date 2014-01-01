@@ -315,6 +315,7 @@ void ServerLink::initiateCommunications()
     else if(d->state == Joining)
     {
         Demo_StopPlayback();
+        BusyMode_FreezeGameForBusyMode();
 
         // Tell the Game that a connection is about to happen.
         // The counterpart (false) call will occur after joining is successfully done.
