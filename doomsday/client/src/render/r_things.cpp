@@ -445,7 +445,7 @@ void R_ProjectSprite(mobj_t *mo)
     }
 
     // Do we need to project a flare source too?
-    if(mo->lumIdx != Lumobj::NoIndex)
+    if(mo->lumIdx != Lumobj::NoIndex && haloMode > 0)
     {
         /// @todo mark this light source visible for LensFx
         try
