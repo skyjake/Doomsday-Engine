@@ -51,8 +51,8 @@ extern "C" {
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_VERSION_BASE   "1.13.0"
-#define DOOMSDAY_VERSION_NUMBER 1,13,0,0 // For WIN32 version info.
+#define DOOMSDAY_VERSION_BASE   "1.13.1"
+#define DOOMSDAY_VERSION_NUMBER 1,13,1,0 // For WIN32 version info.
 //#define DOOMSDAY_RELEASE_NAME   "Example"
 
 /**
@@ -66,7 +66,7 @@ extern "C" {
 /**
  * Copyright string is used in WIN32 binary metadata markup.
  */
-#define DOOMSDAY_COPYRIGHT      "2003-2013, " DENGPROJECT_NICEAUTHOR
+#define DOOMSDAY_COPYRIGHT      "2003-2014, " DENGPROJECT_NICEAUTHOR
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
