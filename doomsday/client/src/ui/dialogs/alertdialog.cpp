@@ -67,14 +67,15 @@ DENG_GUI_PIMPL(AlertDialog)
         // browsing it up and down.
         ScrollAreaWidget &area = self.area();
         alerts = new MenuWidget;
+        alerts->enableScrolling(false);
         alerts->setGridSize(1, ui::Expand, 0, ui::Expand);
         alerts->rule()
                 .setLeftTop(area.contentRule().left(), area.contentRule().top());
         area.setContentSize(alerts->rule().width(), alerts->rule().height());
-        area.margins().setLeft("");
-        area.margins().setRight("");
         area.margins().setBottom("");
         area.add(alerts);
+
+        area.enableIndicatorDraw(true);
 
         alerts->organizer().audienceForWidgetCreation += this;
         alerts->organizer().audienceForWidgetUpdate += this;
@@ -112,7 +113,7 @@ DENG_GUI_PIMPL(AlertDialog)
                 return;
         }
 
-        alerts->items().append(alert);
+        alerts->items().insert(0, alert);
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
@@ -130,6 +131,8 @@ DENG_GUI_PIMPL(AlertDialog)
         label.setOverrideImageSize(style().fonts().font("default").height().value());
         label.setImageAlignment(ui::AlignTop);
         label.setTextAlignment(ui::AlignRight);
+        label.margins().setLeft("");
+        label.margins().setRight("");
         label.margins().setBottom("");
 
         AlertItem const &alert = item.as<AlertItem>();
