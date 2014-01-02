@@ -19,33 +19,217 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/widgets/notificationwidget.h"
 #include "ui/clientwindow.h"
+#include "ui/ListData"
+#include "ui/ActionItem"
+#include "SignalAction"
+
+#include <de/FIFO>
+#include <de/App>
 
 using namespace de;
 
 DENG_GUI_PIMPL(AlertDialog)
+, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
-    ButtonWidget *notification;
+    class AlertItem : public ui::ActionItem
+    {
+    public:
+        AlertItem(String const &msg, Level level)
+            : ui::ActionItem(ShownAsLabel, msg)
+            , _level(level)
+        {}
 
-    Instance(Public *i) : Base(i)
+        Level level() const { return _level; }
+
+    private:
+        Level _level;
+    };
+
+    ButtonWidget *notification;
+    MenuWidget *alerts;
+    bool clearOnDismiss;
+
+    typedef FIFO<AlertItem> Pending;
+    Pending pending;
+
+    Instance(Public *i)
+        : Base(i)
+        , clearOnDismiss(false)
     {
         notification = new ButtonWidget;
         notification->setSizePolicy(ui::Expand, ui::Expand);
         notification->setImage(style().images().image("alert"));
         notification->setOverrideImageSize(style().fonts().font("default").height().value());
+        notification->setAction(new SignalAction(thisPublic, SLOT(showListOfAlerts())));
+
+        // The menu expands with all the alerts, and the dialog's scroll area allows
+        // browsing it up and down.
+        ScrollAreaWidget &area = self.area();
+        alerts = new MenuWidget;
+        alerts->setGridSize(1, ui::Expand, 0, ui::Expand);
+        alerts->rule()
+                .setLeftTop(area.contentRule().left(), area.contentRule().top());
+        area.setContentSize(alerts->rule().width(), alerts->rule().height());
+        area.margins().setLeft("");
+        area.margins().setRight("");
+        area.margins().setBottom("");
+        area.add(alerts);
+
+        alerts->organizer().audienceForWidgetCreation += this;
+        alerts->organizer().audienceForWidgetUpdate += this;
     }
 
     NotificationWidget &notifs()
     {
         return ClientWindow::main().notifications();
     }
+
+    void queueAlert(String const &msg, Level level)
+    {
+        pending.put(new AlertItem(msg, level));
+    }
+
+    bool addPendingAlerts()
+    {
+        bool added = false;
+        while(AlertItem *alert = pending.take())
+        {
+            add(alert);
+            added = true;
+        }
+        return added;
+    }
+
+    void add(AlertItem *alert)
+    {
+        DENG2_ASSERT_IN_MAIN_THREAD();
+
+        // If we already have this, don't re-add.
+        for(ui::Data::Pos i = 0; i < alerts->items().size(); ++i)
+        {
+            if(!alerts->items().at(i).label().compareWithoutCase(alert->label()))
+                return;
+        }
+
+        alerts->items().append(alert);
+    }
+
+    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
+    {
+        // Background is provided by the popup.
+        widget.set(Background());
+
+        LabelWidget &label = widget.as<LabelWidget>();
+
+        // Each alert has an icon identifying the originating subsystem and the level
+        // of the alert.
+        label.setMaximumTextWidth(style().rules().rule("alerts.width").valuei());
+        label.setSizePolicy(ui::Expand, ui::Expand);
+        label.setImage(style().images().image("alert"));
+        label.setOverrideImageSize(style().fonts().font("default").height().value());
+        label.setImageAlignment(ui::AlignTop);
+        label.setTextAlignment(ui::AlignRight);
+        label.margins().setBottom("");
+
+        AlertItem const &alert = item.as<AlertItem>();
+        switch(alert.level())
+        {
+        case Minor:
+            label.setImageColor(Vector4f(style().colors().colorf("text"), .5f));
+            break;
+
+        case Normal:
+            label.setImageColor(style().colors().colorf("text"));
+            break;
+
+        case Major:
+            label.setImageColor(style().colors().colorf("accent"));
+            break;
+        }
+    }
+
+    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    {
+        DENG2_UNUSED(widget);
+        DENG2_UNUSED(item);
+    }
+
+    void showNotification()
+    {
+        // Change color to indicate new alerts.
+        notification->setImageColor(style().colors().colorf("accent"));
+
+        notifs().showOrHide(notification, true);
+    }
+
+    /**
+     * @returns @c true, if the notification was hidden due to the alerts list being
+     * empty.
+     */
+    bool hideIfEmpty()
+    {
+        if(alerts->items().isEmpty())
+        {
+            // No alerts to show.
+            notifs().hideChild(*notification);
+            return true; // was hidden
+        }
+        return false;
+    }
 };
 
 AlertDialog::AlertDialog(String const &name) : d(new Instance(this))
 {
-    d->notifs().showOrHide(d->notification, true);
+    // The dialog is connected to the notification icon.
+    setAnchorAndOpeningDirection(d->notification->rule(), ui::Down);
+
+    buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
+                                      tr("Dismiss All"));
 }
 
-GuiWidget &AlertDialog::notification()
+void AlertDialog::newAlert(String const &message, Level level)
 {
-    return *d->notification;
+    d->queueAlert(message, level);
+}
+
+void AlertDialog::update()
+{
+    DialogWidget::update();
+
+    if(d->addPendingAlerts())
+    {
+        d->showNotification();
+    }
+}
+
+void AlertDialog::showListOfAlerts()
+{
+    if(d->hideIfEmpty()) return;
+
+    // Restore the normal color.
+    d->notification->setImageColor(style().colors().colorf("text"));
+
+    //d->alerts->updateLayout();
+    open();
+}
+
+void AlertDialog::finish(int result)
+{
+    DialogWidget::finish(result);
+
+    // The alerts will be cleared if the dialog is accepted.
+    d->clearOnDismiss = (result != 0);
+}
+
+void AlertDialog::panelDismissed()
+{
+    if(d->clearOnDismiss)
+    {
+        d->clearOnDismiss = false;
+        d->alerts->items().clear();
+        d->hideIfEmpty();
+    }
+
+    DialogWidget::panelDismissed();
 }

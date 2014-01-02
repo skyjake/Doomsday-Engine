@@ -700,6 +700,11 @@ BusyWidget &ClientWindow::busy()
     return *d->busy;
 }
 
+AlertDialog &ClientWindow::alerts()
+{
+    return *d->alerts;
+}
+
 bool ClientWindow::isFPSCounterVisible() const
 {
     return App::config().getb(configName("showFps"));

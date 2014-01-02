@@ -48,6 +48,7 @@ class ConsoleWidget;
 class TaskBarWidget;
 class NotificationWidget;
 class BusyWidget;
+class AlertDialog;
 
 /**
  * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
@@ -77,6 +78,7 @@ public:
     NotificationWidget &notifications();
     GameWidget &game();
     BusyWidget &busy();
+    AlertDialog &alerts();
 
     /**
      * Adds a widget to the widget tree so that it will be displayed over

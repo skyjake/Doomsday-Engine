@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include <de/Log>
+#include <de/LogSink>
 #include <de/DisplayMode>
 #include <de/Error>
 #include <de/ByteArrayFile>
@@ -46,6 +47,8 @@
 #include "ui/inputsystem.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
+#include "ui/dialogs/alertdialog.h"
+#include "ui/styledlogsinkformatter.h"
 #include "updater.h"
 
 #if WIN32
@@ -133,6 +136,41 @@ DENG2_PIMPL(ClientApp)
     Games games;
     World world;
 
+    /**
+     * Log entry sink that passes warning messages to the main window's alert
+     * notification dialog.
+     */
+    struct LogWarningAlarm : public LogSink
+    {
+        StyledLogSinkFormatter formatter;
+
+        LogWarningAlarm()
+            : LogSink(formatter)
+            , formatter(LogEntry::Styled | LogEntry::OmitLevel | LogEntry::Simple)
+        {
+            setMode(OnlyWarningEntries);
+        }
+
+        LogSink &operator << (LogEntry const &entry)
+        {
+            foreach(String msg, formatter.logEntryToTextLines(entry))
+            {
+                ClientApp::alert(msg, entry.level());
+            }
+            return *this;
+        }
+
+        LogSink &operator << (String const &plainText)
+        {
+            ClientApp::alert(plainText);
+            return *this;
+        }
+
+        void flush() {} // not buffered
+    };
+
+    LogWarningAlarm logAlarm;
+
     Instance(Public *i)
         : Base(i)
         , menuBar(0)
@@ -143,10 +181,14 @@ DENG2_PIMPL(ClientApp)
         , svLink(0)
     {
         clientAppSingleton = thisPublic;
+
+        LogBuffer::appBuffer().addSink(logAlarm);
     }
 
     ~Instance()
     {
+        LogBuffer::appBuffer().removeSink(logAlarm);
+
         Sys_Shutdown();
         DD_Shutdown();
 
@@ -360,6 +402,14 @@ void ClientApp::postFrame()
 
     Garbage_Recycle();
     loop().resume();
+}
+
+void ClientApp::alert(String const &msg, LogEntry::Level level)
+{
+    ClientWindow::main().alerts()
+            .newAlert(msg, level >= LogEntry::ERROR?   AlertDialog::Major  :
+                           level == LogEntry::WARNING? AlertDialog::Normal :
+                                                       AlertDialog::Minor);
 }
 
 bool ClientApp::haveApp()

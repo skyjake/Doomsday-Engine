@@ -23,16 +23,51 @@
 
 /**
  * Dialog for listing recent alerts.
+ *
+ * Only one instance of each message is kept in the list.
+ *
+ * Use the static utility method ClientApp::alert() to conveniently add new alerts when
+ * needed.
+ *
+ * @par Thread-safety
+ *
+ * Even though widgets in general should only be manipulated from the main thread,
+ * adding new alerts is thread-safe.
  */
 class AlertDialog : public DialogWidget
 {
+    Q_OBJECT
+
+public:
+    enum Level
+    {
+        Minor  = -1,
+        Normal = 0,
+        Major  = 1
+    };
+
 public:
     AlertDialog(de::String const &name = "alerts");
 
     /**
-     * Returns the notification area widget with which the dialog can be opened.
+     * Adds a new alert. If the same alert is already in the list, the new one is ignored.
+     *
+     * Can be called from any thread. Alerts are put in a queue until the next time the
+     * dialog's update() method is called.
+     *
+     * @param message  Alert message.
+     * @param level    Severity level.
      */
-    GuiWidget &notification();
+    void newAlert(de::String const &message, Level level = Normal);
+
+    void update();
+
+public slots:
+    void showListOfAlerts();
+
+protected:
+    void finish(int result);
+    void panelDismissed();
 
 private:
     DENG2_PRIVATE(d)

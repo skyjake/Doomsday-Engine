@@ -41,6 +41,10 @@ group dialog {
     rule download.width { constant $= UNIT * 115 }
 }
 
+group alerts {
+    rule width { constant $= UNIT * 100 }
+}
+
 group sidebar {
     rule width { constant $= UNIT * 80 }
 }
