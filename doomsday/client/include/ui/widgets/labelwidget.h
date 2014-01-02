@@ -123,6 +123,14 @@ public:
     void setImageFit(ui::ContentFit const &fit);
 
     /**
+     * Sets the maximum width used for text. By default, the maximum width is determined
+     * automatically based on the layout of the label content.
+     *
+     * @param pixels  Maximum width of text, or 0 to determine automatically.
+     */
+    void setMaximumTextWidth(int pixels);
+
+    /**
      * The image's actual size will be overridden by this size.
      * @param size  Image size.
      */

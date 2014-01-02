@@ -43,6 +43,7 @@ public Font::RichFormat::IStyle
     Vector2f overrideImageSize;
     float imageScale;
     Vector4f imageColor;
+    int maxTextWidth;
 
     ConstantRule *width;
     ConstantRule *height;
@@ -65,19 +66,21 @@ public Font::RichFormat::IStyle
     GLUniform uColor;
 
     Instance(Public *i)
-        : Base(i),
-          horizPolicy(Fixed), vertPolicy(Fixed),
-          alignMode(AlignByCombination),
-          align(AlignCenter),
-          textAlign(AlignCenter),
-          lineAlign(AlignCenter),
-          imageAlign(AlignCenter),
-          imageFit(OriginalAspectRatio | FitToSize),
-          imageScale(1),
-          imageColor(1, 1, 1, 1),
-          gapId("label.gap"),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor    ("uColor",     GLUniform::Vec4)
+        : Base(i)
+        , horizPolicy (Fixed)
+        , vertPolicy  (Fixed)
+        , alignMode   (AlignByCombination)
+        , align       (AlignCenter)
+        , textAlign   (AlignCenter)
+        , lineAlign   (AlignCenter)
+        , imageAlign  (AlignCenter)
+        , imageFit    (OriginalAspectRatio | FitToSize)
+        , imageScale  (1)
+        , imageColor  (1, 1, 1, 1)
+        , maxTextWidth(0)
+        , gapId       ("label.gap")
+        , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
+        , uColor      ("uColor",     GLUniform::Vec4)
     {
         width  = new ConstantRule(0);
         height = new ConstantRule(0);
@@ -390,6 +393,11 @@ public Font::RichFormat::IStyle
                 w -= gap + imgSize.x;
             }
         }
+        // Apply an optional manual constraint to the text width.
+        if(maxTextWidth > 0)
+        {
+            return de::min(maxTextWidth, w);
+        }
         return w;
     }
 
@@ -512,6 +520,12 @@ void LabelWidget::setImageAlignment(Alignment const &imageAlign)
 void LabelWidget::setImageFit(ContentFit const &fit)
 {
     d->imageFit = fit;
+}
+
+void LabelWidget::setMaximumTextWidth(int pixels)
+{
+    d->maxTextWidth = pixels;
+    requestGeometry();
 }
 
 void LabelWidget::setOverrideImageSize(Vector2f const &size)
