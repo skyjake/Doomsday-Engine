@@ -20,16 +20,23 @@
 
 using namespace de;
 
-LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
+StyledLogSinkFormatter::StyledLogSinkFormatter()
 {
-    LogEntry::Flags flags = LogEntry::Styled | LogEntry::OmitLevel;
+    _format = LogEntry::Styled | LogEntry::OmitLevel;
 
 #ifndef _DEBUG
     // No metadata in release builds.
-    flags |= LogEntry::Simple;
+    _format |= LogEntry::Simple;
 #endif
+}
 
+StyledLogSinkFormatter::StyledLogSinkFormatter(LogEntry::Flags const &formatFlags)
+    : _format(formatFlags)
+{}
+
+LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
+{
     // This will form a single long line. The line wrapper will
     // then determine how to wrap it onto the available width.
-    return Lines() << entry.asText(flags);
+    return Lines() << entry.asText(_format);
 }
