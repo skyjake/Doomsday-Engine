@@ -192,12 +192,19 @@ public ChildWidgetOrganizer::IFilter
 
     void updateContentHeight()
     {
+        // Determine suitable maximum height.
+        Rule const *maxHeight = holdRef(root().viewHeight());
+        if(self.openingDirection() == ui::Down)
+        {
+            changeRef(maxHeight, *maxHeight - self.anchorY() - style().rules().rule("gap"));
+        }
+
         // The container's height is limited by the height of the view. Normally
         // the dialog tries to show the full height of the content area.
         if(!flags.testFlag(WithHeading))
         {
             self.content().rule().setInput(Rule::Height,
-                                           OperatorRule::minimum(root().viewHeight(),
+                                           OperatorRule::minimum(*maxHeight,
                                                                  area->contentRule().height() +
                                                                  area->margins().bottom() +
                                                                  buttons->rule().height()));
@@ -205,12 +212,14 @@ public ChildWidgetOrganizer::IFilter
         else
         {
             self.content().rule().setInput(Rule::Height,
-                                           OperatorRule::minimum(root().viewHeight(),
+                                           OperatorRule::minimum(*maxHeight,
                                                                  heading->rule().height() +
                                                                  area->contentRule().height() +
                                                                  area->margins().bottom() +
                                                                  buttons->rule().height()));
         }
+
+        releaseRef(maxHeight);
     }
 
     bool isItemAccepted(ChildWidgetOrganizer const &organizer, ui::Data const &data, ui::Data::Pos pos) const
