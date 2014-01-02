@@ -215,11 +215,12 @@ void AlertDialog::update()
 
 void AlertDialog::showListOfAlerts()
 {
-    if(d->hideIfEmpty()) return;
+    if(isOpen() || d->hideIfEmpty()) return;
 
     // Restore the normal color.
     d->notification->setImageColor(style().colors().colorf("text"));
 
+    area().scrollToTop(0);
     open();
 }
 
