@@ -50,12 +50,14 @@ DENG_GUI_PIMPL(AlertDialog)
     MenuWidget *alerts;
     bool clearOnDismiss;
 
+    int maxCount;
     typedef FIFO<AlertItem> Pending;
     Pending pending;
 
     Instance(Public *i)
         : Base(i)
         , clearOnDismiss(false)
+        , maxCount(100)
     {
         notification = new ButtonWidget;
         notification->setSizePolicy(ui::Expand, ui::Expand);
@@ -92,13 +94,19 @@ DENG_GUI_PIMPL(AlertDialog)
 
     bool addPendingAlerts()
     {
-        bool added = false;
+        bool changed = false;
         while(AlertItem *alert = pending.take())
         {
             add(alert);
-            added = true;
+            changed = true;
         }
-        return added;
+        // Remove excess alerts.
+        while(alerts->items().size() > maxCount)
+        {
+            alerts->items().remove(alerts->items().size() - 1);
+            changed = true;
+        }
+        return changed;
     }
 
     void add(AlertItem *alert)
