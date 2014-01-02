@@ -30,7 +30,7 @@
  * static part of the indicator wheel and the status text. The ProgressWidget
  * draws the dynamic, animating part.
  *
- * @par Thread-Safety
+ * @par Thread-safety
  *
  * The status of a ProgressWidget can be updated from any thread. This allows
  * background tasks to update the status during their operations.
