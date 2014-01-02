@@ -160,11 +160,11 @@ public ChildWidgetOrganizer::IFilter
         }
 
         area->rule().setInput(Rule::Height, container->rule().height() -
-                              buttons->rule().height() + area->margins().bottom());
+                              buttons->rule().height() + area->margins().height());
 
         // Buttons below the area.
         buttons->rule()
-                .setInput(Rule::Top, area->rule().bottom() - area->margins().bottom()) // overlap margins
+                .setInput(Rule::Bottom, container->rule().bottom()) // overlap margins
                 .setInput(Rule::Right, self.rule().right());
         extraButtons->rule()
                 .setInput(Rule::Top, buttons->rule().top())
@@ -547,7 +547,8 @@ bool DialogWidget::handleEvent(Event const &event)
     }
     else
     {
-        if((event.type() == Event::MouseButton || event.type() == Event::MousePosition) &&
+        if((event.type() == Event::MouseButton || event.type() == Event::MousePosition ||
+            event.type() == Event::MouseWheel) &&
            hitTest(event))
         {
             // Non-modal dialogs eat mouse clicks/position inside the dialog.
