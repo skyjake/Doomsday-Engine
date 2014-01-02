@@ -47,6 +47,7 @@
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/widgets/progresswidget.h"
 #include "ui/dialogs/coloradjustmentdialog.h"
+#include "ui/dialogs/alertdialog.h"
 #include "CommandAction"
 #include "ui/mouse_qt.h"
 
@@ -78,6 +79,7 @@ DENG2_OBSERVES(App,              StartupComplete)
     GameUIWidget *gameUI;
     TaskBarWidget *taskBar;
     NotificationWidget *notifications;
+    AlertDialog *alerts;
     ColorAdjustmentDialog *colorAdjust;
     LabelWidget *background;
     GameSelectionWidget *gameSelMenu;
@@ -107,6 +109,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         , gameUI(0)
         , taskBar(0)
         , notifications(0)
+        , alerts(0)
         , colorAdjust(0)
         , background(0)
         , gameSelMenu(0)
@@ -201,6 +204,10 @@ DENG2_OBSERVES(App,              StartupComplete)
                 .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
                 .setInput(Rule::Right, game->rule().right() - style.rules().rule("gap"));
         container().add(notifications);
+
+        // Alerts notification and popup.
+        alerts = new AlertDialog;
+        root.add(alerts);
 
         // FPS counter for the notification area.
         fpsCounter = new LabelWidget;

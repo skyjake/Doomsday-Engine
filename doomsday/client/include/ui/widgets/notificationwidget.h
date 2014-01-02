@@ -24,7 +24,7 @@
 /**
  * Notification area.
  *
- * Children the widget are expected to size themselves and allow unrestricted,
+ * Children of the widget are expected to size themselves and allow unrestricted,
  * automatical positioning inside the area. Children can be added and removed
  * dynamically. The notification area is dismissed if there are no visible
  * notifications.
