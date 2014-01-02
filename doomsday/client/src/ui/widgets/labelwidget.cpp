@@ -56,6 +56,7 @@ public Font::RichFormat::IStyle
     ColorBank::Color dimmedColor;
     ColorBank::Color accentColor;
     ColorBank::Color dimAccentColor;
+    Font::RichFormat::IStyle const *richStyle;
 
     TextDrawable glText;
     mutable Vector2ui latestTextSize;
@@ -79,6 +80,7 @@ public Font::RichFormat::IStyle
         , imageColor  (1, 1, 1, 1)
         , maxTextWidth(0)
         , gapId       ("label.gap")
+        , richStyle   (0)
         , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
         , uColor      ("uColor",     GLUniform::Vec4)
     {
@@ -138,11 +140,22 @@ public Font::RichFormat::IStyle
     void richStyleFormat(int contentStyle, float &sizeFactor, Font::RichFormat::Weight &fontWeight,
                          Font::RichFormat::Style &fontStyle, int &colorIndex) const
     {
-        return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        if(richStyle)
+        {
+            richStyle->richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        }
+        else
+        {
+            style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        }
     }
 
     Font const *richStyleFont(Font::RichFormat::Style fontStyle) const
     {
+        if(richStyle)
+        {
+            return richStyle->richStyleFont(fontStyle);
+        }
         return style().richStyleFont(fontStyle);
     }
 
@@ -526,6 +539,11 @@ void LabelWidget::setMaximumTextWidth(int pixels)
 {
     d->maxTextWidth = pixels;
     requestGeometry();
+}
+
+void LabelWidget::setTextStyle(Font::RichFormat::IStyle const *richStyle)
+{
+    d->richStyle = richStyle;
 }
 
 void LabelWidget::setOverrideImageSize(Vector2f const &size)

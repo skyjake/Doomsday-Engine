@@ -131,6 +131,14 @@ public:
     void setMaximumTextWidth(int pixels);
 
     /**
+     * Sets an alternative style for text. By default, the rich text styling comes
+     * from Style.
+     *
+     * @param richStyle  Rich text styling.
+     */
+    void setTextStyle(de::Font::RichFormat::IStyle const *richStyle);
+
+    /**
      * The image's actual size will be overridden by this size.
      * @param size  Image size.
      */
