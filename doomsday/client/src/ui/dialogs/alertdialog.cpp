@@ -21,6 +21,7 @@
 #include "ui/clientwindow.h"
 #include "ui/ListData"
 #include "ui/ActionItem"
+#include "clientapp.h"
 #include "SignalAction"
 
 #include <de/FIFO>
@@ -32,6 +33,7 @@ DENG_GUI_PIMPL(AlertDialog)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
+    /// Data model item representing an alert in the list.
     class AlertItem : public ui::ActionItem
     {
     public:
@@ -46,11 +48,37 @@ DENG_GUI_PIMPL(AlertDialog)
         Level _level;
     };
 
+    /// Rich font styling for alert labels.
+    struct TextStyling : public Font::RichFormat::IStyle
+    {
+        Color richStyleColor(int /*index*/) const
+        {
+            return Color(255, 255, 255, 255); // not used by LabelWidget
+        }
+
+        void richStyleFormat(int contentStyle, float &sizeFactor,
+                             Font::RichFormat::Weight &fontWeight,
+                             Font::RichFormat::Style &fontStyle,
+                             int &colorIndex) const
+        {
+            ClientApp::windowSystem().style()
+                    .richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+
+            if(contentStyle == Font::RichFormat::MajorStyle ||
+               contentStyle == Font::RichFormat::MajorMetaStyle)
+            {
+                // Keep the major style normal-weight.
+                fontWeight = Font::RichFormat::Normal;
+            }
+        }
+    };
+
     ButtonWidget *notification;
     MenuWidget *alerts;
     bool clearOnDismiss;
+    TextStyling styling;
 
-    int maxCount;
+    dsize maxCount;
     typedef FIFO<AlertItem> Pending;
     Pending pending;
 
@@ -132,6 +160,7 @@ DENG_GUI_PIMPL(AlertDialog)
 
         // Each alert has an icon identifying the originating subsystem and the level
         // of the alert.
+        label.setTextStyle(&styling);
         label.setMaximumTextWidth(style().rules().rule("alerts.width").valuei());
         label.setSizePolicy(ui::Expand, ui::Expand);
         label.setImage(style().images().image("alert"));
@@ -154,6 +183,7 @@ DENG_GUI_PIMPL(AlertDialog)
             break;
 
         case Major:
+            label.setTextStyle(0); // use default styling with bold weights
             label.setImageColor(style().colors().colorf("accent"));
             break;
         }
