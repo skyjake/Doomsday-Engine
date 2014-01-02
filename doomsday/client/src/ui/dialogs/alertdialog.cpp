@@ -69,8 +69,7 @@ DENG_GUI_PIMPL(AlertDialog)
         alerts = new MenuWidget;
         alerts->enableScrolling(false);
         alerts->setGridSize(1, ui::Expand, 0, ui::Expand);
-        alerts->rule()
-                .setLeftTop(area.contentRule().left(), area.contentRule().top());
+        alerts->rule().setLeftTop(area.contentRule().left(), area.contentRule().top());
         area.setContentSize(alerts->rule().width(), alerts->rule().height());
         area.margins().setBottom("");
         area.add(alerts);
@@ -213,7 +212,6 @@ void AlertDialog::showListOfAlerts()
     // Restore the normal color.
     d->notification->setImageColor(style().colors().colorf("text"));
 
-    //d->alerts->updateLayout();
     open();
 }
 
