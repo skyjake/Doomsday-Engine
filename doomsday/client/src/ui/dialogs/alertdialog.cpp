@@ -225,7 +225,7 @@ AlertDialog::AlertDialog(String const &name) : d(new Instance(this))
     setAnchorAndOpeningDirection(d->notification->rule(), ui::Down);
 
     buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
-                                      tr("Dismiss All"));
+                                      tr("Clear All"));
 }
 
 void AlertDialog::newAlert(String const &message, Level level)
