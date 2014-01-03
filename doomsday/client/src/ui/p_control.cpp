@@ -350,6 +350,7 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
     binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
+    if(!binds) return false;
 
     // There must be bindings to active input devices.
     bool gotActiveDevices = false;
