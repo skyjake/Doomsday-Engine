@@ -23,6 +23,8 @@
 #include "../math.h"
 
 #include <QString>
+#include <QList>
+#include <QStringList>
 
 namespace de {
 
@@ -92,6 +94,43 @@ struct Range
     }
     QString asText() const {
         return QString("[%1...%2)").arg(start).arg(end);
+    }
+
+    typedef QList< Range<Type> > ContiguousRanges;
+
+    /**
+     * Finds a sequence of contiguous ranges in the input values. Only use with integer types.
+     *
+     * @param values  List of input values. Must be sorted in ascending order.
+     *
+     * @return List of contiguous ranges. As usual, range starts are inclusive and range ends are
+     * exclusive.
+     */
+    static ContiguousRanges findContiguousRanges(QList<Type> const &values) {
+        ContiguousRanges cont;
+        if(values.isEmpty()) return cont;
+        cont.append(Range<Type>(values.first(), values.first() + 1));
+        for(int i = 1; i < values.size(); ++i) {
+            Range<Type> &last = cont.last();
+            if(values.at(i) == last.end) {
+                last.end = values.at(i) + 1;
+            }
+            else {
+                cont.append(Range<Type>(values.at(i), values.at(i) + 1));
+            }
+        }
+        return cont;
+    }
+    static QString contiguousRangesAsText(QList<Type> const &values,
+                                          QString const &separator = ", ") {
+        QStringList msg;
+        foreach(Range<Type> const &range, findContiguousRanges(values)) {
+            if(range.size() == 1)
+                msg << QString::number(range.start);
+            else
+                msg << QString("%1-%2").arg(range.start).arg(range.end - 1);
+        }
+        return msg.join(separator);
     }
 };
 
