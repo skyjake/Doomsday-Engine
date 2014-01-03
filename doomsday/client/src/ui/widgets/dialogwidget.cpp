@@ -111,6 +111,7 @@ public ChildWidgetOrganizer::IFilter
         area = new ScrollAreaWidget("area");
 
         buttons = new MenuWidget("buttons");
+        buttons->margins().setTop("");
         buttons->setItems(buttonItems);
         buttons->items().audienceForAddition += this;
         buttons->items().audienceForRemoval += this;
@@ -119,6 +120,7 @@ public ChildWidgetOrganizer::IFilter
         buttons->organizer().setFilter(*this);
 
         extraButtons = new MenuWidget("extra");
+        extraButtons->margins().setTop("");
         extraButtons->setItems(buttonItems);
         extraButtons->items().audienceForAddition += this;
         extraButtons->items().audienceForRemoval += this;
@@ -160,11 +162,11 @@ public ChildWidgetOrganizer::IFilter
         }
 
         area->rule().setInput(Rule::Height, container->rule().height() -
-                              buttons->rule().height() + area->margins().height());
+                              buttons->rule().height() /*+ area->margins().height()*/);
 
         // Buttons below the area.
         buttons->rule()
-                .setInput(Rule::Bottom, container->rule().bottom()) // overlap margins
+                .setInput(Rule::Bottom, container->rule().bottom())
                 .setInput(Rule::Right, self.rule().right());
         extraButtons->rule()
                 .setInput(Rule::Top, buttons->rule().top())
@@ -180,8 +182,8 @@ public ChildWidgetOrganizer::IFilter
             area->rule().setInput(Rule::Height,
                                   container->rule().height()
                                   - heading->rule().height()
-                                  - buttons->rule().height()
-                                  + area->margins().bottom());
+                                  - buttons->rule().height()/*
+                                  + area->margins().bottom()*/);
         }
 
         container->add(area);
@@ -206,7 +208,7 @@ public ChildWidgetOrganizer::IFilter
             self.content().rule().setInput(Rule::Height,
                                            OperatorRule::minimum(*maxHeight,
                                                                  area->contentRule().height() +
-                                                                 area->margins().bottom() +
+                                                                 area->margins().height() +
                                                                  buttons->rule().height()));
         }
         else
@@ -215,9 +217,11 @@ public ChildWidgetOrganizer::IFilter
                                            OperatorRule::minimum(*maxHeight,
                                                                  heading->rule().height() +
                                                                  area->contentRule().height() +
-                                                                 area->margins().bottom() +
+                                                                 area->margins().height() +
                                                                  buttons->rule().height()));
         }
+
+        qDebug() << "BUTTONS:" << buttons->rule().description();
 
         releaseRef(maxHeight);
     }

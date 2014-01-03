@@ -101,7 +101,6 @@ DENG_GUI_PIMPL(AlertDialog)
         alerts->setGridSize(1, ui::Expand, 0, ui::Expand);
         alerts->rule().setLeftTop(area.contentRule().left(), area.contentRule().top());
         area.setContentSize(alerts->rule().width(), alerts->rule().height());
-        area.margins().setBottom("");
         area.add(alerts);
 
         area.enableIndicatorDraw(true);
