@@ -42,7 +42,6 @@ public:
     void initialize();
 
 public:
-    static bool haveApp();
     static ServerApp &app();
     static ServerSystem &serverSystem();
     static ResourceSystem &resourceSystem();

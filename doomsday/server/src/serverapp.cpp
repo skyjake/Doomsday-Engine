@@ -171,11 +171,6 @@ void ServerApp::initialize()
     DD_FinishInitializationAfterWindowReady();
 }
 
-bool ServerApp::haveApp()
-{
-    return serverAppSingleton != 0;
-}
-
 ServerApp &ServerApp::app()
 {
     DENG2_ASSERT(serverAppSingleton != 0);

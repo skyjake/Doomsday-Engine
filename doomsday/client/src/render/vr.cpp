@@ -118,7 +118,7 @@ static void vrLatencyChanged()
 // see also rend_main.cpp
 static void vrModeChanged()
 {
-    if(ClientWindow::hasMain())
+    if(ClientWindow::mainExists())
     {
         // The logical UI size may need to be changed.
         ClientWindow &win = ClientWindow::main();

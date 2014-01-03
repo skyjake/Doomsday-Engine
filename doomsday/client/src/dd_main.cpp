@@ -454,19 +454,15 @@ void DD_CreateFileSystemSchemes()
 
 ResourceSystem &App_ResourceSystem()
 {
+    if(App::appExists())
+    {
 #ifdef __CLIENT__
-    if(ClientApp::haveApp())
-    {
         return ClientApp::resourceSystem();
-    }
 #endif
-
 #ifdef __SERVER__
-    if(ServerApp::haveApp())
-    {
         return ServerApp::resourceSystem();
-    }
 #endif
+    }
     throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
@@ -1112,30 +1108,22 @@ static int DD_ActivateGameWorker(void *context)
 
 de::Games &App_Games()
 {
+    if(App::appExists())
+    {
 #ifdef __CLIENT__
-    if(ClientApp::haveApp())
-    {
         return ClientApp::games();
-    }
 #endif
-
 #ifdef __SERVER__
-    if(ServerApp::haveApp())
-    {
         return ServerApp::games();
-    }
 #endif
+    }
     throw Error("App_Games", "App not yet initialized");
 }
 
 boolean App_GameLoaded()
 {
-#ifdef __CLIENT__
-    if(!ClientApp::haveApp()) return false;
-#endif
-#ifdef __SERVER__
-    if(!ServerApp::haveApp()) return false;
-#endif
+    if(!App::appExists()) return false;
+
     return !App_CurrentGame().isNull();
 }
 
@@ -1262,7 +1250,7 @@ de::Game &App_CurrentGame()
 bool App_ChangeGame(Game &game, bool allowReload)
 {
 #ifdef __CLIENT__
-    DENG_ASSERT(ClientWindow::hasMain());
+    DENG_ASSERT(ClientWindow::mainExists());
 #endif
 
     //LOG_AS("App_ChangeGame");

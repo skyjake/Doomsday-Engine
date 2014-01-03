@@ -377,7 +377,7 @@ void GL_ShutdownRefresh()
 
 void GL_Shutdown()
 {
-    if(!initGLOk || !ClientWindow::hasMain())
+    if(!initGLOk || !ClientWindow::mainExists())
         return; // Not yet initialized fully.
 
     DENG_ASSERT_IN_MAIN_THREAD();

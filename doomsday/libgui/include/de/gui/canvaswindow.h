@@ -171,7 +171,7 @@ public:
     void *nativeHandle() const;
 
 public:
-    static bool hasMain();
+    static bool mainExists();
     static CanvasWindow &main();
     static void setMain(CanvasWindow *window);
 

@@ -62,7 +62,6 @@ public:
     static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::MESSAGE);
 
 public:
-    static bool haveApp();
     static ClientApp &app();
     static Updater &updater();
     static SettingsRegister &audioSettings();    ///< @todo Belongs in AudioSystem.
