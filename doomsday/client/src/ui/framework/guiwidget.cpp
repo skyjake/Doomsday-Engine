@@ -140,7 +140,7 @@ DENG2_OBSERVES(ui::Margins, Change)
     }
 
     /**
-     * Test if a clipped widget is contained within in its ancestors' clip rectangles.
+     * Test if a clipped widget is contained within its ancestors' clip rectangles.
      */
     bool isClipCulled() const
     {
