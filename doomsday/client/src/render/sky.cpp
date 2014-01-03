@@ -660,40 +660,6 @@ static void drawHemisphereCap()
     glEnd();
 }
 
-static void drawHemisphere()
-{
-#define WRITESKYVERTEX(r_, c_) { \
-    svtx = &skyVertex(r_, c_); \
-    if(ds.texSize.x != 0) \
-       glTexCoord2f((c_) / float(skySphereColumns), (r_) / float(skySphereRows)); \
-    if(ds.fadeout) \
-    { \
-        if((r_) == 0) glColor4f(1, 1, 1, 0); \
-        else          glColor3f(1, 1, 1); \
-    } \
-    else \
-    { \
-        if((r_) == 0) glColor3f(0, 0, 0); \
-        else          glColor3f(1, 1, 1); \
-    } \
-    glVertex3f(svtx->x, svtx->y, svtx->z); \
-}
-
-    Vector3f const *svtx;
-    for(int r = 0; r < skySphereRows; ++r)
-    {
-        glBegin(GL_TRIANGLE_STRIP);
-        WRITESKYVERTEX(r, 0);
-        WRITESKYVERTEX(r + 1, 0);
-        for(int c = 1; c <= skySphereColumns; ++c)
-        {
-            WRITESKYVERTEX(r, c);
-            WRITESKYVERTEX(r + 1, c);
-        }
-        glEnd();
-    }
-}
-
 /**
  * The top row (row 0) is the one that's faded out.
  * There must be at least 4 columns. The preferable number is 4n, where
@@ -854,7 +820,7 @@ static void drawHemisphere(Sky &sky, SphereComponentFlags flags)
 
     if(flags.testFlag(UpperHemisphere) || flags.testFlag(LowerHemisphere))
     {
-        for(int i = firstLayer; i < MAX_SKY_LAYERS; ++i)
+        for(int i = firstLayer; i <= MAX_SKY_LAYERS; ++i)
         {
             if(!sky.layer(i).isActive()) continue;
 
@@ -874,7 +840,36 @@ static void drawHemisphere(Sky &sky, SphereComponentFlags flags)
                 if(yflip) glTranslatef(0, -1, 0);
             }
 
-            drawHemisphere();
+#define WRITESKYVERTEX(r_, c_) { \
+    svtx = &skyVertex(r_, c_); \
+    if(ds.texSize.x != 0) \
+       glTexCoord2f((c_) / float(skySphereColumns), (r_) / float(skySphereRows)); \
+    if(ds.fadeout) \
+    { \
+        if((r_) == 0) glColor4f(1, 1, 1, 0); \
+        else          glColor3f(1, 1, 1); \
+    } \
+    else \
+    { \
+        if((r_) == 0) glColor3f(0, 0, 0); \
+        else          glColor3f(1, 1, 1); \
+    } \
+    glVertex3f(svtx->x, svtx->y, svtx->z); \
+}
+
+            Vector3f const *svtx;
+            for(int r = 0; r < skySphereRows; ++r)
+            {
+                glBegin(GL_TRIANGLE_STRIP);
+                WRITESKYVERTEX(r, 0);
+                WRITESKYVERTEX(r + 1, 0);
+                for(int c = 1; c <= skySphereColumns; ++c)
+                {
+                    WRITESKYVERTEX(r, c);
+                    WRITESKYVERTEX(r + 1, c);
+                }
+                glEnd();
+            }
 
             if(ds.texSize.x != 0)
             {
@@ -882,6 +877,8 @@ static void drawHemisphere(Sky &sky, SphereComponentFlags flags)
                 glPopMatrix();
                 glDisable(GL_TEXTURE_2D);
             }
+
+#undef WRITESKYVERTEX
         }
     }
 
@@ -989,7 +986,6 @@ void Sky::consoleRegister() //static
 
 static void setSkyLayerParams(Sky &sky, int layerIndex, int param, void *data)
 {
-    LOG_AS("R_SkyParams");
     try
     {
         Sky::Layer &layer = sky.layer(layerIndex);
@@ -1020,6 +1016,8 @@ static void setSkyLayerParams(Sky &sky, int layerIndex, int param, void *data)
 #undef R_SkyParams
 DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void *data)
 {
+    LOG_AS("R_SkyParams");
+
     // The whole sky?
     if(layerIndex == DD_SKY)
     {
