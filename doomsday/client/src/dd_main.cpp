@@ -328,13 +328,13 @@ static NativePath steamBasePath()
 #ifdef WIN32
     // The path to Steam can be queried from the registry.
     {
-    QSettings st("HKEY_CURRENT_USER/Software/Valve/Steam/", QSettings::NativeFormat);
+    QSettings st("HKEY_CURRENT_USER\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
     String path = st.value("SteamPath").toString();
     if(!path.isEmpty()) return path;
     }
 
     {
-    QSettings st("HKEY_LOCAL_MACHINE/Software/Valve/Steam/", QSettings::NativeFormat);
+    QSettings st("HKEY_LOCAL_MACHINE\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
     String path = st.value("InstallPath").toString();
     if(!path.isEmpty()) return path;
     }
