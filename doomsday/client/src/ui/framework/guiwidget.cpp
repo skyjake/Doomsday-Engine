@@ -162,8 +162,10 @@ DENG2_OBSERVES(ui::Margins, Change)
 
         if(self.clipped())
         {
+            int const CULL_SAFETY_WIDTH = 100; // avoid pop-in when scrolling
+
             // Clipped widgets are guaranteed to be within their rectangle.
-            return !visibleArea.overlaps(self.rule().recti());
+            return !visibleArea.overlaps(self.rule().recti().expanded(CULL_SAFETY_WIDTH));
         }
         // Otherwise widgets may draw anywhere in the view.
         return visibleArea.isNull();
