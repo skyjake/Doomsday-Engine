@@ -406,10 +406,17 @@ void ClientApp::postFrame()
 
 void ClientApp::alert(String const &msg, LogEntry::Level level)
 {
-    ClientWindow::main().alerts()
-            .newAlert(msg, level >= LogEntry::ERROR?   AlertDialog::Major  :
-                           level == LogEntry::WARNING? AlertDialog::Normal :
-                                                       AlertDialog::Minor);
+    if(ClientWindow::hasMain())
+    {
+        ClientWindow::main().alerts()
+                .newAlert(msg, level >= LogEntry::ERROR?   AlertDialog::Major  :
+                               level == LogEntry::WARNING? AlertDialog::Normal :
+                                                           AlertDialog::Minor);
+    }
+    /**
+     * @todo If there is no window, the alert could be stored until the window becomes
+     * available. -jk
+     */
 }
 
 bool ClientApp::haveApp()
