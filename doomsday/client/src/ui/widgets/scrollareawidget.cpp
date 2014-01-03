@@ -136,6 +136,7 @@ ScrollAreaWidget::ScrollAreaWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
     setBehavior(ChildHitClipping);
+    setBehavior(ChildVisibilityClipping); // enable clip-culling
 
     // Link the content rule into the widget's rectangle.
     d->contentRule.setInput(Rule::Left, rule().left() + margins().left() -

@@ -159,6 +159,7 @@ DENG_GUI_PIMPL(AlertDialog)
 
         // Each alert has an icon identifying the originating subsystem and the level
         // of the alert.
+        label.setBehavior(ContentClipping); // allow clip-culling
         label.setTextStyle(&styling);
         label.setMaximumTextWidth(style().rules().rule("alerts.width").valuei());
         label.setSizePolicy(ui::Expand, ui::Expand);

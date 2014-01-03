@@ -221,8 +221,6 @@ public ChildWidgetOrganizer::IFilter
                                                                  buttons->rule().height()));
         }
 
-        qDebug() << "BUTTONS:" << buttons->rule().description();
-
         releaseRef(maxHeight);
     }
 
