@@ -87,6 +87,9 @@
 #include <de/Log>
 #include <de/memory.h>
 #include <QStringList>
+#ifdef WIN32
+#  include <QSettings>
+#endif
 #ifdef UNIX
 #  include <ctype.h>
 #endif
@@ -320,6 +323,28 @@ FileTypes const &DD_FileTypes()
     return fileTypeMap;
 }
 
+static NativePath steamBasePath()
+{
+#ifdef WIN32
+    // The path to Steam can be queried from the registry.
+    {
+    QSettings st("HKEY_CURRENT_USER/Software/Valve/Steam/", QSettings::NativeFormat);
+    String path = st.value("SteamPath").toString();
+    if(!path.isEmpty()) return path;
+    }
+
+    {
+    QSettings st("HKEY_LOCAL_MACHINE/Software/Valve/Steam/", QSettings::NativeFormat);
+    String path = st.value("InstallPath").toString();
+    if(!path.isEmpty()) return path;
+    }
+#elif MACOSX
+    return NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
+#endif
+    /// @todo Where are steam apps located on Ubuntu?
+    return "";
+}
+
 static void createPackagesScheme()
 {
     FS1::Scheme &scheme = App_FileSystem().createScheme("Packages");
@@ -341,6 +366,34 @@ static void createPackagesScheme()
         LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
     }
 #endif
+
+    // Add paths to games bought with/using Steam.
+    if(!CommandLine_Check("-nosteamapps"))
+    {
+        NativePath steamBase = steamBasePath();
+        if(!steamBase.isEmpty())
+        {
+            NativePath steamPath = steamBase / "SteamApps/common/";
+            LOG_INFO("Using SteamApps path: %s") << steamPath.pretty();
+
+            static String const appDirs[] =
+            {
+                "doom 2/base",
+                "final doom/base",
+                "heretic shadow of the serpent riders/base",
+                "hexen/base",
+                "hexen deathkings of the dark citadel/base",
+                "ultimate doom/base",
+                "DOOM 3 BFG Edition/base/wads",
+                ""
+            };
+            for(int i = 0; !appDirs[i].isEmpty(); ++i)
+            {
+                scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(steamPath / appDirs[i]),
+                                                SearchPath::NoDescend));
+            }
+        }
+    }
 
     // Add the path from the DOOMWADDIR environment variable.
     if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
