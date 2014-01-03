@@ -194,8 +194,11 @@ int D_NetServerClose(int before)
 
 int D_NetConnect(int before)
 {
-    // We do nothing before the actual connection is made.
-    if(before) return true;
+    if(before)
+    {
+        BusyMode_FreezeGameForBusyMode();
+        return true;
+    }
 
     // After connecting we tell the server a bit about ourselves.
     NetCl_SendPlayerInfo();
