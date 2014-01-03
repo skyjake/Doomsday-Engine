@@ -463,6 +463,11 @@ void App::removeSystem(System &system)
     d->systems.removeAll(&system);
 }
 
+bool App::appExists()
+{
+    return singletonApp != 0;
+}
+
 App &App::app()
 {
     return *singletonApp;
