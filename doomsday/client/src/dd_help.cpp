@@ -45,7 +45,7 @@ static HelpStrings helps;
  */
 static void readStrings(File const &file)
 {
-    LOG_VERBOSE("Reading help strings from ") << file.description();
+    LOG_RES_VERBOSE("Reading help strings from ") << file.description();
 
     de::Reader reader(file);
     StringsByType *node = 0;
@@ -165,7 +165,7 @@ void DD_InitHelp()
     }
     catch(Error const &er)
     {
-        LOG_WARNING("") << er.asText();
+        LOG_RES_WARNING("") << er.asText();
     }
 }
 
@@ -182,7 +182,7 @@ void DD_ReadGameHelp()
     }
     catch(Error const &er)
     {
-        LOG_WARNING("") << er.asText();
+        LOG_RES_WARNING("") << er.asText();
     }
 }
 

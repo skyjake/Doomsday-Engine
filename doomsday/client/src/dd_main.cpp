@@ -111,7 +111,7 @@ public:
         if(Zip::recognise(hndl))
         {
             LOG_AS("ZipFileType");
-            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            LOG_RES_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\"");
             return new Zip(hndl, path, info);
         }
         return 0;
@@ -129,7 +129,7 @@ public:
         if(Wad::recognise(hndl))
         {
             LOG_AS("WadFileType");
-            LOG_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\".");
+            LOG_RES_VERBOSE("Interpreted \"" + NativePath(path).pretty() + "\"");
             return new Wad(hndl, path, info);
         }
         return 0;
@@ -366,7 +366,7 @@ static void createPackagesScheme()
     {
         NativePath path = de::App::app().commandLine().startupPath() / fn;
         scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
-        LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
+        LOG_RES_NOTE("Using paths.iwaddir: %s") << path.pretty();
     }
 #endif
 
@@ -377,7 +377,7 @@ static void createPackagesScheme()
         if(!steamBase.isEmpty())
         {
             NativePath steamPath = steamBase / "SteamApps/common/";
-            LOG_INFO("Using SteamApps path: %s") << steamPath.pretty();
+            LOG_RES_NOTE("Using SteamApps path: %s") << steamPath.pretty();
 
             static String const appDirs[] =
             {
@@ -403,7 +403,7 @@ static void createPackagesScheme()
     {
         NativePath path = App::app().commandLine().startupPath() / getenv("DOOMWADDIR");
         scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
-        LOG_INFO("Using DOOMWADDIR: %s") << path.pretty();
+        LOG_RES_NOTE("Using DOOMWADDIR: %s") << path.pretty();
     }
 
     // Add any paths from the DOOMWADPATH environment variable.
@@ -420,7 +420,7 @@ static void createPackagesScheme()
         {
             NativePath path = App::app().commandLine().startupPath() / allPaths[i];
             scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
-            LOG_INFO("Using DOOMWADPATH: %s") << path.pretty();
+            LOG_RES_NOTE("Using DOOMWADPATH: %s") << path.pretty();
         }
 
 #undef SEP_CHAR
@@ -793,7 +793,7 @@ static int DD_LoadGameStartupResourcesWorker(void *context)
     int const numPackages = gameManifests.count(RC_PACKAGE);
     if(numPackages)
     {
-        LOG_MSG("Loading game resources") << (verbose >= 1? ":" : "...");
+        LOG_RES_MSG("Loading game resources") << (verbose >= 1? ":" : "...");
 
         int packageIdx = 0;
         for(GameManifests::const_iterator i = gameManifests.find(RC_PACKAGE);
@@ -1087,7 +1087,7 @@ static int DD_ActivateGameWorker(void *context)
         configFile = App_CurrentGame().mainConfig();
     }
 
-    LOG_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
+    LOG_SCR_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
     Con_ParseCommands2(configFile.toUtf8().constData(), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
 
 #ifdef __CLIENT__
@@ -1197,11 +1197,7 @@ static void populateGameInfo(GameInfo &info, de::Game &game)
 boolean DD_GameInfo(GameInfo *info)
 {
     LOG_AS("DD_GameInfo");
-    if(!info)
-    {
-        LOG_WARNING("Received invalid info (=NULL), ignoring.");
-        return false;
-    }
+    if(!info) return false;
 
     zapPtr(info);
 
@@ -1211,7 +1207,7 @@ boolean DD_GameInfo(GameInfo *info)
         return true;
     }
 
-    LOG_WARNING("No game currently loaded, returning false.");
+    LOG_DEV_WARNING("No game currently loaded");
     return false;
 }
 
@@ -1252,17 +1248,13 @@ void DD_AddGameResource(gameid_t gameId, resourceclassid_t classId, int rflags,
 gameid_t DD_DefineGame(GameDef const *def)
 {
     LOG_AS("DD_DefineGame");
-    if(!def)
-    {
-        LOG_WARNING("Received invalid GameDef (=NULL), ignoring.");
-        return 0; // Invalid id.
-    }
+    if(!def) return 0; // Invalid id.
 
     // Game mode identity keys must be unique. Ensure that is the case.
     try
     {
         /*Game &game =*/ App_Games().byIdentityKey(def->identityKey);
-        LOG_WARNING("Failed adding game \"%s\", identity key '%s' already in use, ignoring.")
+        LOG_WARNING("Ignored new game \"%s\", identity key '%s' already in use")
                 << def->defaultTitle << def->identityKey;
         return 0; // Invalid id.
     }
@@ -1315,7 +1307,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         {
             if(App_GameLoaded())
             {
-                LOG_MSG("%s (%s) - already loaded.")
+                LOG_NOTE("%s (%s) - already loaded.")
                         << game.title() << game.identityKey();
             }
             return true;
@@ -1474,7 +1466,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         // Re-initialize subsystems needed even when in ringzero.
         if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
         {
-            LOG_WARNING("Failed exchanging entrypoints with plugin %i, aborting...")
+            LOG_WARNING("Failed exchanging entrypoints with plugin %i, cannot load game")
                     << int(game.pluginId());
             return false;
         }
@@ -1875,7 +1867,7 @@ boolean DD_Init(void)
         }
         else
         {
-            LOG_WARNING("Cannot dump unknown lump \"%s\", ignoring.") << name;
+            LOG_WARNING("Cannot dump unknown lump \"%s\"") << name;
         }
     }
 
@@ -1892,7 +1884,7 @@ boolean DD_Init(void)
     // Read additional config files that should be processed post engine init.
     if(CommandLine_CheckWith("-parse", 1))
     {
-        LOG_MSG("Parsing additional (pre-init) config files:");
+        LOG_AS("-parse");
         Time begunAt;
         forever
         {
@@ -1902,10 +1894,10 @@ boolean DD_Init(void)
                 break;
             }
 
-            LOG_MSG("  Processing \"%s\"...") << F_PrettyPath(arg);
+            LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
             Con_ParseCommands(arg);
         }
-        LOG_INFO(String("  Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+        LOG_DEBUG(String("Completed in %1 seconds").arg(begunAt.since(), 0, 'g', 2));
     }
 
     // A console command on the command line?
@@ -2011,7 +2003,7 @@ static int DD_StartupWorker(void * /*context*/)
     // Was the change to userdir OK?
     if(CommandLine_CheckWith("-userdir", 1) && !app.usingUserDir)
     {
-        LOG_WARNING("User directory not found (check -userdir).");
+        LOG_WARNING("User directory not found (check -userdir)");
     }
 
     initPathMappings();
@@ -2030,17 +2022,17 @@ static int DD_StartupWorker(void * /*context*/)
     if(CommandLine_CheckWith("-cparse", 1))
     {
         Time begunAt;
+        LOG_AS("-cparse")
 
-        LOG_MSG("Parsing additional (pre-init) config files:");
         forever
         {
             char const *arg = CommandLine_NextAsPath();
             if(!arg || arg[0] == '-') break;
 
-            LOG_MSG("  Processing \"%s\"...") << F_PrettyPath(arg);
+            LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
             Con_ParseCommands(arg);
         }
-        LOG_INFO(String("  Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+        LOG_DEBUG(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
     }
 
     /*

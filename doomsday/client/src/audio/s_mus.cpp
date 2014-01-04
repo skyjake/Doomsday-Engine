@@ -244,7 +244,7 @@ int Mus_GetExt(ded_music_t *def, ddstring_t *retPath)
             return true;
         }
 
-        LOG_WARNING("Music file \"%s\" not found (id '%s').")
+        LOG_AUDIO_WARNING("Music file \"%s\" not found (id '%s')")
             << *reinterpret_cast<de::Uri *>(def->path) << def->id;
     }
 

@@ -306,7 +306,7 @@ boolean GL_EarlyInit()
     if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
 
-    LOG_INFO("Initializing Render subsystem...");
+    LOG_GL_NOTE("Initializing Render subsystem...");
 
     gamma_support = !CommandLine_Check("-noramp");
 

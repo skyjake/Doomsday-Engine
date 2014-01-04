@@ -550,7 +550,7 @@ int S_StartMusic(const char* musicID, boolean looped)
     int idx = Def_GetMusicNum(musicID);
     if(idx < 0)
     {
-        LOG_WARNING("Song \"%s\" not defined, cannot schedule playback.") << musicID;
+        LOG_AUDIO_WARNING("Song \"%s\" not defined, cannot start playback") << musicID;
         return false;
     }
     return S_StartMusicNum(idx, looped);

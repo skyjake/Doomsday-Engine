@@ -439,7 +439,7 @@ de::String AudioDriver_InterfaceDescription()
 
 void AudioDriver_PrintInterfaces(void)
 {
-    LOG_MSG("%s") << AudioDriver_InterfaceDescription();
+    LOG_AUDIO_MSG("%s") << AudioDriver_InterfaceDescription();
 }
 
 /*

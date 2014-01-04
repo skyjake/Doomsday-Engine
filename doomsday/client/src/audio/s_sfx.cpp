@@ -608,7 +608,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
         if(Sfx_StopSoundWithLowerPriority(0, emitter, defs.sounds[sample->id].priority) < 0)
         {
             // Something with a higher priority is playing, can't start now.
-            LOG_MSG("Cannot start ID %i (prio%i), overriden (emitter %i)")
+            LOG_AUDIO_MSG("Cannot start ID %i (prio%i), overridden (emitter %i)")
                 << sample->id << defs.sounds[sample->id].priority << emitter->thinker.id;
 
             return false;
@@ -657,7 +657,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
             {
                 // The new sound can't be played because we were unable to stop
                 // enough channels to accommodate the limitation.
-                LOG_DEBUG("Not playing %i because channels are busy.")
+                LOG_AUDIO_XVERBOSE("Not playing %i because all channels are busy")
                         << sample->id;
                 return false;
             }
@@ -748,7 +748,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
     {
         // A suitable channel was not found.
         END_COP;
-        LOG_DEBUG("Failed to find suitable channel for sample %i.") << sample->id;
+        LOG_AUDIO_XVERBOSE("Failed to find suitable channel for sample %i") << sample->id;
         return false;
     }
 
@@ -878,7 +878,7 @@ void Sfx_StartFrame()
     // Check that the rate is valid.
     if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
     {
-        LOG_DEBUG("Sound-rate corrected to 11025.");
+        LOG_AUDIO_WARNING("\"sound-rate\" corrected to 11025 from invalid value (%i)") << sfxSampleRate;
         sfxSampleRate = 11025;
     }
 
@@ -930,7 +930,7 @@ static void createChannels(int num2D, int bits, int rate)
         ch->buffer = AudioDriver_SFX()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
         if(!ch->buffer)
         {
-            LOG_WARNING("Failed to create buffer for #%i.") << i;
+            LOG_AUDIO_WARNING("Failed to create buffer for #%i") << i;
             continue;
         }
     }
@@ -966,7 +966,7 @@ void Sfx_InitChannels()
         if(numChannels > SFX_MAX_CHANNELS)
             numChannels = SFX_MAX_CHANNELS;
 
-        LOG_MSG("Initialized %i sound effect channels.") << numChannels;
+        LOG_AUDIO_NOTE("Initialized %i sound effect channels") << numChannels;
     }
 
     // Allocate and init the channels.
@@ -1014,10 +1014,8 @@ void Sfx_StartRefresh()
     }
     else
     {
-noRefresh:;
-#ifdef DENG_DEBUG
-        LOG_INFO("Audio driver does not require a refresh thread.");
-#endif
+noRefresh:
+        LOG_DEV_NOTE("Audio driver does not require a refresh thread");
     }
 }
 
@@ -1029,11 +1027,11 @@ boolean Sfx_Init()
     // Check if sound has been disabled with a command line option.
     if(CommandLine_Exists("-nosfx"))
     {
-        LOG_INFO("Sound Effects disabled.");
+        LOG_AUDIO_NOTE("Sound Effects disabled");
         return true;
     }
 
-    LOG_VERBOSE("Initializing Sound Effects subsystem...");
+    LOG_AUDIO_VERBOSE("Initializing Sound Effects subsystem...");
 
     // No interface for SFX playback?
     if(!AudioDriver_SFX()) return false;

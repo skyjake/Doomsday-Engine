@@ -275,11 +275,11 @@ void Map::deleteClPlane(clplane_t *mover)
     int index = clPlaneIndex(mover);
     if(index < 0)
     {
-        LOG_DEBUG("Mover in sector #%i not removed!") << mover->sectorIndex;
+        LOG_MAP_VERBOSE("Mover in sector #%i not removed!") << mover->sectorIndex;
         return;
     }
 
-    LOG_DEBUG("Removing mover [%i] (sector: #%i).") << index << mover->sectorIndex;
+    LOG_MAP_XVERBOSE("Removing mover [%i] (sector: #%i)") << index << mover->sectorIndex;
     thinkers().remove(mover->thinker);
 }
 
@@ -290,11 +290,11 @@ void Map::deleteClPolyobj(clpolyobj_t *mover)
     int index = clPolyobjIndex(mover);
     if(index < 0)
     {
-        LOG_DEBUG("Mover not removed!");
+        LOG_MAP_VERBOSE("Mover not removed!");
         return;
     }
 
-    LOG_DEBUG("Removing mover [%i].") << index;
+    LOG_MAP_XVERBOSE("Removing mover [%i]") << index;
     thinkers().remove(mover->thinker);
 }
 
@@ -312,7 +312,7 @@ void Cl_MoverThinker(clplane_t *mover)
 #ifdef _DEBUG
     if(map.clPlaneIndex(mover) < 0)
     {
-        Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!");
+        LOG_MAP_WARNING("Cl_MoverThinker: Running a mover that is not in activemovers!");
     }
 #endif
 
@@ -380,7 +380,7 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
 
     int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
 
-    LOG_DEBUG("Sector #%i, type:%s, dest:%f, speed:%f")
+    LOG_MAP_XVERBOSE("Sector #%i, type:%s, dest:%f, speed:%f")
             << sectorIndex << (type == CPT_FLOOR? "floor" : "ceiling")
             << dest << speed;
 
@@ -397,7 +397,7 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
            clActivePlanes[i]->sectorIndex == sectorIndex &&
            clActivePlanes[i]->type == type)
         {
-            LOG_DEBUG("Removing existing mover #%i in sector #%i, type %s")
+            LOG_MAP_XVERBOSE("Removing existing mover #%i in sector #%i, type %s")
                     << i << sectorIndex << (type == CPT_FLOOR? "floor" : "ceiling");
 
             deleteClPlane(clActivePlanes[i]);
@@ -409,7 +409,7 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
     {
         if(clActivePlanes[i]) continue;
 
-        LOG_DEBUG("New mover #%i") << i;
+        LOG_MAP_XVERBOSE("New mover #%i") << i;
 
         // Allocate a new clplane_t thinker.
         clplane_t *mov = clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &clActivePlanes[i]);
@@ -482,7 +482,7 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
         //    /* && po->destAngle != -1*/) || !po->angleSpeed)
         if(!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
-            LOG_DEBUG("Mover %i reached end of turn, destAngle=%i.")
+            LOG_MAP_XVERBOSE("Mover %i reached end of turn, destAngle=%i")
                     << mover->number << po->destAngle;
 
             // We'll arrive at the destination.

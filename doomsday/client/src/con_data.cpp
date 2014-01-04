@@ -747,14 +747,11 @@ void Con_AddVariable(cvartemplate_t const *tpl)
     LOG_AS("Con_AddVariable");
 
     DENG_ASSERT(inited);
-    if(!tpl)
-    {
-        LOG_WARNING("Passed invalid value for argument 'tpl', ignoring.");
-        return;
-    }
+    if(!tpl) return;
+
     if(CVT_NULL == tpl->type)
     {
-        LOG_WARNING("Attempt to register variable '%s' as type %s, ignoring.")
+        LOG_SCR_WARNING("Ignored attempt to register variable '%s' as type %s")
             << tpl->path << Str_Text(CVar_TypeName(CVT_NULL));
         return;
     }
@@ -766,12 +763,8 @@ void Con_AddVariable(cvartemplate_t const *tpl)
 void Con_AddVariableList(cvartemplate_t const *tplList)
 {
     DENG_ASSERT(inited);
-    if(!tplList)
-    {
-        Con_Message("Warning: Con_AddVariableList: Passed invalid value for "
-                    "argument 'tplList', ignoring.");
-        return;
-    }
+    if(!tplList) return;
+
     for(; tplList->path; ++tplList)
     {
         if(Con_FindVariable(tplList->path))
@@ -844,7 +837,7 @@ String Con_VarAsStyledText(cvar_t *var, char const *prefix)
 
 void Con_PrintCVar(cvar_t* var, char const *prefix)
 {
-    LOG_MSG("%s") << Con_VarAsStyledText(var, prefix);
+    LOG_SCR_MSG("%s") << Con_VarAsStyledText(var, prefix);
 }
 
 void Con_AddCommand(ccmdtemplate_t const* ccmd)
@@ -1076,14 +1069,14 @@ static void printCommandUsage(ccmd_t *ccmd, bool allOverloads = true)
         while(ccmd->prevOverload) { ccmd = ccmd->prevOverload; }
     }
 
-    LOG_MSG(_E(D) "Usage:");
-    LOG_MSG("  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
+    LOG_SCR_MSG(_E(D) "Usage:");
+    LOG_SCR_MSG("  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
 
     if(allOverloads)
     {
         while((ccmd = ccmd->nextOverload))
         {
-            LOG_MSG("  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
+            LOG_SCR_MSG("  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
         }
     }
 }
@@ -1500,7 +1493,7 @@ static int aproposPrinter(knownword_t const *word, void *matching)
 
         os << tmp;
 
-        LOG_MSG("%s") << str;
+        LOG_SCR_MSG("%s") << str;
     }
 
     return 0;
@@ -1517,12 +1510,12 @@ static void printHelpAbout(char const *query)
     // Try the console commands first.
     if(ccmd_t *ccmd = Con_FindCommand(query))
     {
-        LOG_MSG(_E(b) "%s" _E(.) " (Command)") << ccmd->name;
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " (Command)") << ccmd->name;
 
         HelpId help = DH_Find(ccmd->name);
         if(char const *description = DH_GetString(help, HST_DESCRIPTION))
         {
-            LOG_MSG("") << description;
+            LOG_SCR_MSG("") << description;
         }
 
         printCommandUsage(ccmd); // For all overloaded variants.
@@ -1530,7 +1523,7 @@ static void printHelpAbout(char const *query)
         // Any extra info?
         if(char const *info = DH_GetString(help, HST_INFO))
         {
-            LOG_MSG("  " _E(>) _E(l)) << info;
+            LOG_SCR_MSG("  " _E(>) _E(l)) << info;
         }
         return;
     }
@@ -1538,19 +1531,19 @@ static void printHelpAbout(char const *query)
     if(cvar_t *var = Con_FindVariable(query))
     {
         AutoStr *path = CVar_ComposePath(var);
-        LOG_MSG(_E(b) "%s" _E(.) " (Variable)") << Str_Text(path);
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " (Variable)") << Str_Text(path);
 
         HelpId help = DH_Find(Str_Text(path));
         if(char const *description = DH_GetString(help, HST_DESCRIPTION))
         {
-            LOG_MSG("") << description;
+            LOG_SCR_MSG("") << description;
         }
         return;
     }
 
     if(calias_t *calias = Con_FindAlias(query))
     {
-        LOG_MSG(_E(b) "%s" _E(.) " alias of:\n")
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " alias of:\n")
                 << calias->name << calias->command;
         return;
     }
@@ -1559,20 +1552,20 @@ static void printHelpAbout(char const *query)
     try
     {
         Game &game = App_Games().byIdentityKey(query);
-        LOG_MSG(_E(b) "%s" _E(.) " (IdentityKey)") << game.identityKey();
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " (IdentityKey)") << game.identityKey();
 
-        LOG_MSG("Unique identifier of the " _E(b) "%s" _E(.) " game mode.") << game.title();
-        LOG_MSG("An 'IdentityKey' is used when referencing a game unambiguously from the console and on the command line.");
-        LOG_MSG(_E(D) "Related commands:");
-        LOG_MSG("  " _E(>) "Enter " _E(b) "inspectgame %s" _E(.) " for information and status of this game") << game.identityKey();
-        LOG_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list all installed games and their status");
-        LOG_MSG("  " _E(>) "Enter " _E(b) "load %s" _E(.) " to load the " _E(l) "%s" _E(.) " game mode") << game.identityKey() << game.title();
+        LOG_SCR_MSG("Unique identifier of the " _E(b) "%s" _E(.) " game mode.") << game.title();
+        LOG_SCR_MSG("An 'IdentityKey' is used when referencing a game unambiguously from the console and on the command line.");
+        LOG_SCR_MSG(_E(D) "Related commands:");
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "inspectgame %s" _E(.) " for information and status of this game") << game.identityKey();
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list all installed games and their status");
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "load %s" _E(.) " to load the " _E(l) "%s" _E(.) " game mode") << game.identityKey() << game.title();
         return;
     }
     catch(Games::NotFoundError const &)
     {} // Ignore this error.
 
-    LOG_MSG("There is no help about '%s'.") << query;
+    LOG_SCR_NOTE("There is no help about '%s'") << query;
 }
 
 D_CMD(HelpApropos)
@@ -1589,7 +1582,7 @@ D_CMD(HelpWhat)
 
     if(!String(argv[1]).compareWithoutCase("(what)"))
     {
-        LOG_MSG("You've got to be kidding!");
+        LOG_SCR_MSG("You've got to be kidding!");
         return true;
     }
 
@@ -1639,7 +1632,7 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
         {
             return 0; // Skip overloaded variants.
         }
-        LOG_MSG("%s") << Con_CmdAsStyledText(ccmd);
+        LOG_SCR_MSG("%s") << Con_CmdAsStyledText(ccmd);
         break; }
 
     case WT_CVAR: {
@@ -1652,11 +1645,11 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
         break; }
 
     case WT_CALIAS:
-        LOG_MSG("%s") << Con_AliasAsStyledText((calias_t *) word->data);
+        LOG_SCR_MSG("%s") << Con_AliasAsStyledText((calias_t *) word->data);
         break;
 
     case WT_GAME:
-        LOG_MSG("%s") << Con_GameAsStyledText((Game *) word->data);
+        LOG_SCR_MSG("%s") << Con_GameAsStyledText((Game *) word->data);
         break;
 
     default:
