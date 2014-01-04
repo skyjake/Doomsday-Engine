@@ -1,4 +1,4 @@
-/**\file con_main.cpp
+/**\file con_main.cpp  Console subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,21 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Console Subsystem
- *
- * Should be completely redesigned.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #define DENG_NO_API_MACROS_CONSOLE
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <math.h>
-#include <ctype.h>
 
 #include "de_platform.h"
 
@@ -66,6 +52,12 @@
 #  include "ui/busyvisual.h"
 #  include "updater/downloaddialog.h"
 #endif
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstdarg>
+#include <cmath>
+#include <cctype>
 
 using namespace de;
 
@@ -2057,45 +2049,38 @@ static void printListPath(const ddstring_t* path, int flags, int index)
     Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(path)) : Str_Text(path));
 }
 
-void Con_PrintPathList4(const char* pathList, char delimiter, const char* separator, int flags)
+void Con_PrintPathList(char const *pathList, char delimiter, char const *separator, int flags)
 {
-    assert(pathList && pathList[0]);
-    {
-    const char* p = pathList;
+    DENG_ASSERT(pathList != 0&& pathList[0]);
+
     ddstring_t path;
-    int n = 0;
     Str_Init(&path);
+
+    char const *p = pathList;
+    int n = 0;
     while((p = Str_CopyDelim2(&path, p, delimiter, CDF_OMIT_DELIMITER)))
     {
         printListPath(&path, flags, n++);
         if(separator && !(flags & PPF_MULTILINE) && p && p[0])
+        {
             Con_Printf("%s", separator);
+        }
         if(flags & PPF_MULTILINE)
+        {
             Con_Printf("\n");
+        }
     }
+
     if(Str_Length(&path) != 0)
     {
         printListPath(&path, flags, n++);
         if(flags & PPF_MULTILINE)
+        {
             Con_Printf("\n");
+        }
     }
+
     Str_Free(&path);
-    }
-}
-
-void Con_PrintPathList3(const char* pathList, char delimiter, const char* separator)
-{
-    Con_PrintPathList4(pathList, delimiter, separator, DEFAULT_PRINTPATHFLAGS);
-}
-
-void Con_PrintPathList2(const char* pathList, char delimiter)
-{
-    Con_PrintPathList3(pathList, delimiter, " ");
-}
-
-void Con_PrintPathList(const char* pathList)
-{
-    Con_PrintPathList2(pathList, ';');
 }
 
 #undef Con_Message

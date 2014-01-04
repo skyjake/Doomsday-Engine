@@ -95,12 +95,12 @@ void Con_DataRegister()
 #endif
 }
 
-static int markVariableUserDataFreed(CVarDirectory::Node &node, void *parameters)
+static int markVariableUserDataFreed(CVarDirectory::Node &node, void *context)
 {
-    DENG_ASSERT(parameters);
+    DENG_ASSERT(context);
 
     cvar_t *var = reinterpret_cast<cvar_t *>(node.userPointer());
-    void **ptr = (void **) parameters;
+    void **ptr = (void **) context;
     if(var)
     switch(CVar_Type(var))
     {
@@ -115,11 +115,9 @@ static int markVariableUserDataFreed(CVarDirectory::Node &node, void *parameters
     return 0; // Continue iteration.
 }
 
-static int clearVariable(CVarDirectory::Node& node, void* parameters)
+static int clearVariable(CVarDirectory::Node& node, void * /*context*/)
 {
-    DENG_UNUSED(parameters);
-
-    cvar_t* var = reinterpret_cast<cvar_t*>(node.userPointer());
+    cvar_t *var = reinterpret_cast<cvar_t*>(node.userPointer());
     if(var)
     {
         // Detach our user data from this node.
