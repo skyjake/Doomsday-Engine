@@ -581,7 +581,7 @@ void Sv_GetPackets(void)
 boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
 {
     LOG_AS("Sv_PlayerArrives");
-    LOG_INFO("'%s' has arrived.") << name;
+    LOG_NET_NOTE("'%s' has arrived") << name;
 
     // We need to find the new player a client entry.
     for(int i = 1; i < DDMAXPLAYERS; ++i)

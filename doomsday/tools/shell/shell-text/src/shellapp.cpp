@@ -167,7 +167,7 @@ void ShellApp::openConnection(String const &address)
     LogBuffer::appBuffer().flush();
     d->log->clear();
 
-    LOG_INFO("Opening connection to %s") << address;
+    LOG_NET_NOTE("Opening connection to %s") << address;
 
     // Keep trying to connect to 30 seconds.
     d->link = new Link(address, 30);
@@ -186,7 +186,7 @@ void ShellApp::closeConnection()
 {
     if(d->link)
     {
-        LOG_INFO("Closing existing connection to %s") << d->link->address();
+        LOG_NET_NOTE("Closing existing connection to %s") << d->link->address();
 
         // Get rid of the old connection.
         disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
@@ -277,7 +277,7 @@ void ShellApp::connectToFoundServer()
 {
     String label = d->menu->itemAction(d->menu->cursor()).label();
 
-    LOG_INFO("Selected: ") << label;
+    LOG_NOTE("Selected: ") << label;
 
     openConnection(label.left(label.indexOf('(') - 1));
 }
@@ -286,7 +286,7 @@ void ShellApp::sendCommandToServer(String command)
 {
     if(d->link)
     {
-        LOG_INFO(">") << command;
+        LOG_NOTE(">") << command;
 
         QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
         *d->link << *packet;

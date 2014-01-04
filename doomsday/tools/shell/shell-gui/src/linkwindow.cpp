@@ -482,7 +482,7 @@ void LinkWindow::sendCommandToServer(de::String command)
     if(d->link)
     {
         // Echo the command locally.
-        LogEntry *e = new LogEntry(LogEntry::Important, "", 0, ">",
+        LogEntry *e = new LogEntry(LogEntry::Note, "", 0, ">",
                                    LogEntry::Args() << new LogEntry::Arg(command));
         d->logBuffer.add(e);
 

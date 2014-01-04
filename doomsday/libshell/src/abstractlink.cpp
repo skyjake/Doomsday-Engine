@@ -193,11 +193,11 @@ void AbstractLink::socketDisconnected()
     {
         if(!d->peerAddress.isNull())
         {
-            LOG_INFO("Disconnected from %s") << d->peerAddress;
+            LOG_NET_NOTE("Disconnected from %s") << d->peerAddress;
         }
         else
         {
-            LOG_INFO("Disconnected");
+            LOG_NET_NOTE("Disconnected");
         }
     }
 
