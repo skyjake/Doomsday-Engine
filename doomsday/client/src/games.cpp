@@ -294,6 +294,8 @@ D_CMD(ListGames)
 void Games::consoleRegister() //static
 {
     C_CMD("listgames", "", ListGames);
+
+    Game::consoleRegister();
 }
 
 } // namespace de

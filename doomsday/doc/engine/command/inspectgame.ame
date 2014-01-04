@@ -1,0 +1,6 @@
+@summary{
+    Print detailed information about a registered game to the console.
+}
+@description{
+    Params: inspectgame (identityKey) @cbr For example, 'inspectgame doom1-ultimate'.
+}

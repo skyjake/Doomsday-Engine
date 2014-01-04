@@ -64,8 +64,8 @@ DENG2_PIMPL(ResourceManifest)
     {}
 };
 
-ResourceManifest::ResourceManifest(resourceclassid_t fClass, int fFlags, String *name)
-    : d(new Instance(this, fClass, fFlags))
+ResourceManifest::ResourceManifest(resourceclassid_t resClass, int fFlags, String *name)
+    : d(new Instance(this, resClass, fFlags))
 {
     if(name) addName(*name);
 }
@@ -78,7 +78,7 @@ void ResourceManifest::addName(String newName)
     if(!d->names.contains(newName, Qt::CaseInsensitive))
     {
         d->names.prepend(newName);
-     }
+    }
 }
 
 void ResourceManifest::addIdentityKey(String newIdKey)

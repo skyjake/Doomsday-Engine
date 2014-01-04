@@ -168,6 +168,9 @@ public:
      */
     static void print(Game const &game, int flags);
 
+    /// Register the console commands, variables, etc..., of this module.
+    static void consoleRegister();
+
 private:
     DENG2_PRIVATE(d)
 };

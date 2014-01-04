@@ -161,6 +161,10 @@ desc = Execute a command if the condition is true.
 [inc]
 desc = Add 1 to a cvar.
 
+[inspectgame]
+desc = Print detailed information about a registered game to the console.
+inf = Params: inspectgame (identityKey)\nFor example, 'inspectgame doom1-ultimate'.
+
 [inspectmap]
 desc = Print extended information about the current map to the console.
 

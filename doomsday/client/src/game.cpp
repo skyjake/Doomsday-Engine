@@ -21,7 +21,9 @@
 #include "de_base.h"
 #include "game.h"
 
+#include "con_main.h"
 #include "filesys/manifest.h"
+
 #include <de/Error>
 #include <de/Log>
 #include <QtAlgorithms>
@@ -256,6 +258,45 @@ void Game::print(Game const &game, int flags)
                 game.allStartupFilesFound()? "Complete/Playable" :
                                              "Incomplete/Not playable");
     }
+}
+
+D_CMD(InspectGame)
+{
+    DENG2_UNUSED(src);
+
+    Game *game = 0;
+    if(argc < 2)
+    {
+        // No game identity key was specified - assume the current game.
+        if(!App_GameLoaded())
+        {
+            LOG_WARNING("No game is currently loaded.\nPlease specify the identity-key of the game to inspect.");
+            return false;
+        }
+        game = &App_CurrentGame();
+    }
+    else
+    {
+        String idKey = argv[1];
+        try
+        {
+            game = &App_Games().byIdentityKey(idKey);
+        }
+        catch(Games::NotFoundError const &)
+        {
+            LOG_WARNING("Unknown game '%s'.") << idKey;
+            return false;
+        }
+    }
+
+    Game::print(*game, PGF_EVERYTHING);
+    return true;
+}
+
+void Game::consoleRegister() //static
+{
+    C_CMD("inspectgame", "", InspectGame);
+    C_CMD("inspectgame", "s", InspectGame);
 }
 
 NullGame::NullGame() : Game("" /*null*/, "doomsday", "null-game", "null-game")
