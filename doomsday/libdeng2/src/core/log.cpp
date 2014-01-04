@@ -280,7 +280,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                     "XVerbose",
                     "Verbose",
                     "",
-                    "Important",
+                    "Note",
                     "Warning",
                     "ERROR",
                     "FATAL!"

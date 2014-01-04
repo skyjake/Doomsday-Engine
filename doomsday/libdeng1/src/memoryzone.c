@@ -208,7 +208,7 @@ void Z_Shutdown(void)
         M_Free(vol);
     }
 
-    LogBuffer_Printf(DE2_LOG_INFO,
+    LogBuffer_Printf(DE2_LOG_NOTE,
             "Z_Shutdown: Used %i volumes, total %u bytes.\n", numVolumes, totalMemory);
 
     Sys_DestroyMutex(zoneMutex);

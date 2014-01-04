@@ -56,29 +56,30 @@
 
 // End-user/game audience:
 #define LOG_AT_LEVEL(level, str)        de::LogEntryStager(level, str)
-#define LOG_XVERBOSE(str)               LOG_AT_LEVEL(de::LogEntry::XVerbose,  str)
-#define LOG_VERBOSE(str)                LOG_AT_LEVEL(de::LogEntry::Verbose,   str)
-#define LOG_MSG(str)                    LOG_AT_LEVEL(de::LogEntry::Message,   str)
-#define LOG_INFO(str)                   LOG_AT_LEVEL(de::LogEntry::Important, str)
-#define LOG_WARNING(str)                LOG_AT_LEVEL(de::LogEntry::Warning,   str)
-#define LOG_ERROR(str)                  LOG_AT_LEVEL(de::LogEntry::Error,     str)
-#define LOG_CRITICAL(str)               LOG_AT_LEVEL(de::LogEntry::Critical,  str)
+#define LOG_XVERBOSE(str)               LOG_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_VERBOSE(str)                LOG_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_MSG(str)                    LOG_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_INFO(str)                   LOG_AT_LEVEL(de::LogEntry::Note,     str) // backwards comp
+#define LOG_NOTE(str)                   LOG_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOG_WARNING(str)                LOG_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_ERROR(str)                  LOG_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_CRITICAL(str)               LOG_AT_LEVEL(de::LogEntry::Critical, str)
 
 // Custom combination of audiences:
-#define LOG_XVERBOSE_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::XVerbose,  str)
-#define LOG_VERBOSE_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Verbose,   str)
-#define LOG_MSG_TO(audflags, str)       LOG_AT_LEVEL(audflags | de::LogEntry::Message,   str)
-#define LOG_INFO_TO(audflags, str)      LOG_AT_LEVEL(audflags | de::LogEntry::Important, str)
-#define LOG_WARNING_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Warning,   str)
-#define LOG_ERROR_TO(audflags, str)     LOG_AT_LEVEL(audflags | de::LogEntry::Error,     str)
-#define LOG_CRITICAL_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::Critical,  str)
+#define LOG_XVERBOSE_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::XVerbose, str)
+#define LOG_VERBOSE_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Verbose,  str)
+#define LOG_MSG_TO(audflags, str)       LOG_AT_LEVEL(audflags | de::LogEntry::Message,  str)
+#define LOG_NOTE_TO(audflags, str)      LOG_AT_LEVEL(audflags | de::LogEntry::Note,     str)
+#define LOG_WARNING_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Warning,  str)
+#define LOG_ERROR_TO(audflags, str)     LOG_AT_LEVEL(audflags | de::LogEntry::Error,    str)
+#define LOG_CRITICAL_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::Critical, str)
 
 // Resource developer audience:
 #define LOG_RES_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Resource | level, str)
 #define LOG_RES_XVERBOSE(str)           LOG_RES_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_RES_VERBOSE(str)            LOG_RES_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_RES_MSG(str)                LOG_RES_AT_LEVEL(de::LogEntry::Message,  str)
-#define LOG_RES_INFO(str)               LOG_RES_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_RES_NOTE(str)               LOG_RES_AT_LEVEL(de::LogEntry::Note,     str)
 #define LOG_RES_WARNING(str)            LOG_RES_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_RES_ERROR(str)              LOG_RES_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_RES_CRITICAL(str)           LOG_RES_AT_LEVEL(de::LogEntry::Critical, str)
@@ -88,7 +89,7 @@
 #define LOG_MAP_XVERBOSE(str)           LOG_MAP_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_MAP_VERBOSE(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_MAP_MSG(str)                LOG_MAP_AT_LEVEL(de::LogEntry::Message,  str)
-#define LOG_MAP_INFO(str)               LOG_MAP_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_MAP_NOTE(str)               LOG_MAP_AT_LEVEL(de::LogEntry::Note,     str)
 #define LOG_MAP_WARNING(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_MAP_ERROR(str)              LOG_MAP_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_MAP_CRITICAL(str)           LOG_MAP_AT_LEVEL(de::LogEntry::Critical, str)
@@ -98,7 +99,7 @@
 #define LOG_SCR_XVERBOSE(str)           LOG_SCR_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_SCR_VERBOSE(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_SCR_MSG(str)                LOG_SCR_AT_LEVEL(de::LogEntry::Message,  str)
-#define LOG_SCR_INFO(str)               LOG_SCR_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_SCR_NOTE(str)               LOG_SCR_AT_LEVEL(de::LogEntry::Note,     str)
 #define LOG_SCR_WARNING(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_SCR_ERROR(str)              LOG_SCR_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_SCR_CRITICAL(str)           LOG_SCR_AT_LEVEL(de::LogEntry::Critical, str)
@@ -108,7 +109,7 @@
 #define LOG_AUDIO_XVERBOSE(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_AUDIO_VERBOSE(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_AUDIO_MSG(str)              LOG_AUDIO_AT_LEVEL(de::LogEntry::Message,  str)
-#define LOG_AUDIO_INFO(str)             LOG_AUDIO_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_AUDIO_NOTE(str)             LOG_AUDIO_AT_LEVEL(de::LogEntry::Note,     str)
 #define LOG_AUDIO_WARNING(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_AUDIO_ERROR(str)            LOG_AUDIO_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_AUDIO_CRITICAL(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::Critical, str)
@@ -118,7 +119,7 @@
 #define LOG_GL_XVERBOSE(str)            LOG_GL_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_GL_VERBOSE(str)             LOG_GL_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_GL_MSG(str)                 LOG_GL_AT_LEVEL(de::LogEntry::Message,  str)
-#define LOG_GL_INFO(str)                LOG_GL_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_GL_NOTE(str)                LOG_GL_AT_LEVEL(de::LogEntry::Note,     str)
 #define LOG_GL_WARNING(str)             LOG_GL_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_GL_ERROR(str)               LOG_GL_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_GL_CRITICAL(str)            LOG_GL_AT_LEVEL(de::LogEntry::Critical, str)
@@ -128,7 +129,7 @@
 #define LOG_INPUT_XVERBOSE(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_INPUT_VERBOSE(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_INPUT_MSG(str)              LOG_INPUT_AT_LEVEL(de::LogEntry::Message,  str)
-#define LOG_INPUT_INFO(str)             LOG_INPUT_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_INPUT_NOTE(str)             LOG_INPUT_AT_LEVEL(de::LogEntry::Note,     str)
 #define LOG_INPUT_WARNING(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_INPUT_ERROR(str)            LOG_INPUT_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_INPUT_CRITICAL(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::Critical, str)
@@ -138,7 +139,7 @@
 #define LOG_NET_XVERBOSE(str)           LOG_NET_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_NET_VERBOSE(str)            LOG_NET_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_NET_MSG(str)                LOG_NET_AT_LEVEL(de::LogEntry::Message,  str)
-#define LOG_NET_INFO(str)               LOG_NET_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_NET_NOTE(str)               LOG_NET_AT_LEVEL(de::LogEntry::Note,     str)
 #define LOG_NET_WARNING(str)            LOG_NET_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_NET_ERROR(str)              LOG_NET_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_NET_CRITICAL(str)           LOG_NET_AT_LEVEL(de::LogEntry::Critical, str)
@@ -150,7 +151,7 @@
 #define LOG_DEV_VERBOSE(str)            LOG_DEV_AT_LEVEL(de::LogEntry::Verbose,  str)
 #define LOG_DEBUG(str)                  LOG_DEV_VERBOSE(str) // backwards comp
 #define LOG_DEV_MSG(str)                LOG_DEV_AT_LEVEL(de::LogEntry::Message,  str)
-#define LOG_DEV_INFO(str)               LOG_DEV_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_DEV_NOTE(str)               LOG_DEV_AT_LEVEL(de::LogEntry::Note,     str)
 #define LOG_DEV_WARNING(str)            LOG_DEV_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_DEV_ERROR(str)              LOG_DEV_AT_LEVEL(de::LogEntry::Error,    str)
 
@@ -192,16 +193,19 @@ public:
     /// end-user/player.
     enum Audience
     {
-        Resource = 0x10000,     ///< Resource or resource pack developer (files, etc.)
-        Map      = 0x20000,     ///< Map developer
-        Script   = 0x40000,     ///< Script developer
+        Resource = 0x10000,     /**< Resource or resource pack developer (files, etc.).
+                                     "Resource" is here meant in a wider sense of all the
+                                     external data that Doomsday utilizes. */
+        Map      = 0x20000,     /**< Map developer. Information pertaining to the map and its
+                                     elements, playsim, etc. */
+        Script   = 0x40000,     ///< Script developer.
         GL       = 0x80000,     ///< GL developer (shaders, etc.)
         Audio    = 0x100000,    ///< Audio developer
         Input    = 0x200000,    ///< Input events, devices, etc.
         Network  = 0x400000,    ///< Network connections, packets, etc.
         Dev      = 0x800000,    ///< Native code developer (i.e., the programmer)
 
-        AudienceMask = 0xff0000
+        AudienceMask = 0xfff0000
     };
 
     static String audienceToText(Audience audience)
@@ -246,11 +250,11 @@ public:
         Message = 3,
 
         /**
-         * Important messages are intended for situations that are particularly noteworthy. They
-         * will not cause an alert to be raised, but the information is deemed particularly
+         * Important messages that are intended for situations that are particularly noteworthy.
+         * They will not cause an alert to be raised, but the information is deemed particularly
          * valuable.
          */
-        Important = 4,
+        Note = 4,
 
         /**
          * Warning messages are reserved for error situations that were automatically recovered
@@ -283,14 +287,14 @@ public:
     {
         switch(level)
         {
-        case XVerbose:  return "XVerbose";
-        case Verbose:   return "Verbose";
-        case Message:   return "Message";
-        case Important: return "Important";
-        case Warning:   return "Warning";
-        case Error:     return "Error";
-        case Critical:  return "Critical";
-        default:        return "";
+        case XVerbose: return "XVerbose";
+        case Verbose:  return "Verbose";
+        case Message:  return "Message";
+        case Note:     return "Note";
+        case Warning:  return "Warning";
+        case Error:    return "Error";
+        case Critical: return "Critical";
+        default:       return "";
         }
     }
 

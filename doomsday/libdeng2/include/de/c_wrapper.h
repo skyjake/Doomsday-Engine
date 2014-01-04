@@ -78,7 +78,7 @@ typedef enum logentry_level_e {
     DE2_LOG_XVERBOSE = 1,
     DE2_LOG_VERBOSE,
     DE2_LOG_MESSAGE,
-    DE2_LOG_INFO,
+    DE2_LOG_NOTE,
     DE2_LOG_WARNING,
     DE2_LOG_ERROR,
     DE2_LOG_CRITICAL
