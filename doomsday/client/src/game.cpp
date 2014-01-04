@@ -90,14 +90,37 @@ bool Game::allStartupFilesFound() const
     return true;
 }
 
-void Game::setPluginId(pluginid_t newId)
+Game::Status Game::status() const
 {
-    d->pluginId = newId;
+    if(App_GameLoaded() && &App_CurrentGame() == this)
+    {
+        return Loaded;
+    }
+    if(allStartupFilesFound())
+    {
+        return Complete;
+    }
+    return Incomplete;
+}
+
+String const &Game::statusAsText() const
+{
+    static String const statusTexts[] = {
+        "Loaded",
+        "Complete/Playable",
+        "Incomplete/Not playable",
+    };
+    return statusTexts[int(status())];
 }
 
 pluginid_t Game::pluginId() const
 {
     return d->pluginId;
+}
+
+void Game::setPluginId(pluginid_t newId)
+{
+    d->pluginId = newId;
 }
 
 String const &Game::identityKey() const
@@ -260,10 +283,7 @@ D_CMD(InspectGame)
     LOG_MSG("Other resources:");
     Game::printFiles(*game, 0, false);
 
-    LOG_MSG("Status: ")
-        << (  &App_CurrentGame() == game? "Loaded" :
-            game->allStartupFilesFound()? "Complete/Playable" :
-                                          "Incomplete/Not playable");
+    LOG_MSG("Status: ") << game->statusAsText();
 
     return true;
 }

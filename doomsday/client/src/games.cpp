@@ -227,10 +227,7 @@ static int locateAllResourcesWorker(void *context)
             LOG_MSG("Startup resources:");
             Game::printFiles(*game, FF_STARTUP);
 
-            LOG_MSG("Status: ")
-                << (&App_CurrentGame() == game? "Loaded" :
-                    game->allStartupFilesFound()? "Complete/Playable" :
-                                                  "Incomplete/Not playable");
+            LOG_MSG("Status: ") << game->statusAsText();
         )
         ++n;
     }

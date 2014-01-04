@@ -44,6 +44,13 @@ class ResourceManifest;
 class Game : public de::game::Game
 {
 public:
+    /// Logical game status:
+    enum Status {
+        Loaded,
+        Complete,
+        Incomplete
+    };
+
     typedef QMultiMap<resourceclassid_t, ResourceManifest *> Manifests;
 
 public:
@@ -56,8 +63,30 @@ public:
 
     virtual ~Game();
 
-    /// @return  Unique plugin identifier attributed to that which registered this.
+    /**
+     * Determines the status of the game.
+     *
+     * @see statusAsText()
+     */
+    Status status() const;
+
+    /**
+     * Returns a textual representation of the current game status.
+     *
+     * @see status()
+     */
+    String const &statusAsText() const;
+
+    /**
+     * Returns the unique identifier of the plugin which registered the game.
+     */
     pluginid_t pluginId() const;
+
+    /**
+     * Change the identfier of the plugin associated with this.
+     * @param newId  New identifier.
+     */
+    void setPluginId(pluginid_t newId);
 
     /**
      * Returns the unique identity key of the game.
@@ -83,12 +112,6 @@ public:
      * Returns the name of the binding config file for the game.
      */
     de::Path const &bindingConfig() const;
-
-    /**
-     * Change the identfier of the plugin associated with this.
-     * @param newId  New identifier.
-     */
-    void setPluginId(pluginid_t newId);
 
     /**
      * Add a new manifest to the list of manifests.
