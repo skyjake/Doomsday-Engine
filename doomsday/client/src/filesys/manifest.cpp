@@ -1,4 +1,4 @@
-/** @file manifest.cpp Game Resource Manifest.
+/** @file manifest.cpp  Game resource manifest.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,26 +19,27 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_filesys.h"
+#include "filesys/manifest.h"
+
+#include "con_main.h"
+
+#include "api_filesys.h"
+#include "filesys/fs_main.h"
+#include "filesys/lumpindex.h"
+
 #include "resource/wad.h"
 #include "resource/zip.h"
-#include <de/Path>
 
-#include "filesys/manifest.h"
+#include <de/Path>
 
 using namespace de;
 
 DENG2_PIMPL(ResourceManifest)
 {
-    /// Class of resource.
     resourceclassid_t classId;
 
-    /// @ref fileFlags.
-    int flags;
-
-    /// Potential names for this resource. In precedence order - high (newest) to lowest.
-    QStringList names;
+    int flags;         ///< @ref fileFlags.
+    QStringList names; ///< Known names in precedence order.
 
     /// Vector of resource identifier keys (e.g., file or lump names).
     /// Used for identification purposes.
@@ -52,13 +53,14 @@ DENG2_PIMPL(ResourceManifest)
     /// Set during resource location.
     String foundPath;
 
-    Instance(Public *i, resourceclassid_t _rclass, int rflags) : Base(i),
-        classId(_rclass),
-        flags(rflags & ~FF_FOUND),
-        names(),
-        identityKeys(),
-        foundNameIndex(-1),
-        foundPath()
+    Instance(Public *i, resourceclassid_t rclass, int rflags)
+        : Base(i)
+        , classId(rclass)
+        , flags(rflags & ~FF_FOUND)
+        , names()
+        , identityKeys()
+        , foundNameIndex(-1)
+        , foundPath()
     {}
 };
 
@@ -100,17 +102,18 @@ ResourceManifest &ResourceManifest::addIdentityKey(String newIdentityKey, bool *
     return *this;
 }
 
-typedef enum lumpsizecondition_e {
+enum lumpsizecondition_t
+{
     LSCOND_NONE,
     LSCOND_EQUAL,
     LSCOND_GREATER_OR_EQUAL,
     LSCOND_LESS_OR_EQUAL
-} lumpsizecondition_t;
+};
 
 /**
  * Modifies the idKey so that the size condition is removed.
  */
-static void checkSizeConditionInIdentityKey(String& idKey, lumpsizecondition_t* pCond, size_t* pSize)
+static void checkSizeConditionInIdentityKey(String &idKey, lumpsizecondition_t *pCond, size_t *pSize)
 {
     DENG_ASSERT(pCond != 0);
     DENG_ASSERT(pSize != 0);
@@ -145,7 +148,7 @@ static void checkSizeConditionInIdentityKey(String& idKey, lumpsizecondition_t* 
     idKey.truncate(condPos);
 }
 
-static lumpnum_t lumpNumForIdentityKey(LumpIndex const& lumpIndex, String idKey)
+static lumpnum_t lumpNumForIdentityKey(LumpIndex const &lumpIndex, String idKey)
 {
     if(idKey.isEmpty()) return -1;
 
@@ -349,12 +352,14 @@ QStringList const &ResourceManifest::names() const
 void ResourceManifest::consolePrint(ResourceManifest &manifest, bool showStatus)
 {
     QByteArray names = manifest.names().join(";").toUtf8();
-    bool const resourceFound = !!(manifest.fileFlags() & FF_FOUND);
+    bool const resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
 
     if(showStatus)
+    {
         Con_Printf("%s", !resourceFound? " ! ":"   ");
+    }
 
-    Con_PrintPathList4(names.constData(), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
+    Con_PrintPathList(names.constData(), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
 
     if(showStatus)
     {
