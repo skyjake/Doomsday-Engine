@@ -5,13 +5,15 @@ win32 {
     isEmpty(SDL_DIR) {
         error("dep_sdl: SDL path not defined, check your config_user.pri")
     }
-
+    sdlLibDir = $$SDL_DIR/lib
+    exists($$SDL_DIR/lib/x86): sdlLibDir = $$SDL_DIR/lib/x86
+    
     INCLUDEPATH += $$SDL_DIR/include
-    LIBS += -L$$SDL_DIR/lib -lsdl
+    LIBS += -L$$sdlLibDir -lsdl
 
     # Libraries to copy to the products directory.
     INSTALLS += sdllibs
-    sdllibs.files = $$SDL_DIR/lib/SDL.dll
+    sdllibs.files = $$sdlLibDir/SDL.dll
     sdllibs.path = $$DENG_LIB_DIR
 }
 else:macx {
@@ -39,18 +41,21 @@ else {
         isEmpty(SDL_MIXER_DIR) {
             error("dep_sdl: SDL_mixer path not defined, check your config_user.pri")
         }
+        sdlMixerLibDir = $$SDL_MIXER_DIR/lib
+        exists($$SDL_MIXER_DIR/lib/x86): sdlMixerLibDir = $$SDL_MIXER_DIR/lib/x86
+        
         INCLUDEPATH += $$SDL_MIXER_DIR/include
-        LIBS += -L$$SDL_MIXER_DIR/lib -lsdl_mixer
+        LIBS += -L$$sdlMixerLibDir -lsdl_mixer
 
         # Libraries to copy to the products directory.
         INSTALLS += sdlmixerlibs
         sdlmixerlibs.files = \
-            $$SDL_MIXER_DIR/lib/libogg-0.dll \
-            $$SDL_MIXER_DIR/lib/libvorbis-0.dll \
-            $$SDL_MIXER_DIR/lib/libvorbisfile-3.dll \
-            $$SDL_MIXER_DIR/lib/mikmod.dll \
-            $$SDL_MIXER_DIR/lib/SDL_mixer.dll \
-            $$SDL_MIXER_DIR/lib/smpeg.dll
+            $$sdlMixerLibDir/libogg-0.dll \
+            $$sdlMixerLibDir/libvorbis-0.dll \
+            $$sdlMixerLibDir/libvorbisfile-3.dll \
+            $$sdlMixerLibDir/mikmod.dll \
+            $$sdlMixerLibDir/SDL_mixer.dll \
+            $$sdlMixerLibDir/smpeg.dll
         sdlmixerlibs.path = $$DENG_LIB_DIR
     }
     else:macx {
@@ -63,4 +68,4 @@ else {
     }
 }
 
-}
+} # !deng_nosdl
