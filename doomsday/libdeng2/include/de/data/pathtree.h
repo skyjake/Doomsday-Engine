@@ -300,7 +300,7 @@ public:
     bool remove(Path const &path, ComparisonFlags flags = 0);
 
     /**
-     * Destroy the tree's contents, free'ing all nodes.
+     * Destroy the tree's contents, freeing all nodes.
      */
     void clear();
 
