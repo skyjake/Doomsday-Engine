@@ -339,7 +339,7 @@ de::String Con_AnnotatedConsoleTerms(QStringList terms);
  * Returns a rich formatted, textual representation of the specified console
  * command's argument list, suitable for logging.
  *
- * @param ccmd  The console command to format usage infor for.
+ * @param ccmd  The console command to format usage info for.
  */
 de::String Con_StyledCommandUsage(ccmd_t *ccmd);
 

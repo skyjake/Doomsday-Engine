@@ -1189,7 +1189,7 @@ String Con_StyledCommandUsage(ccmd_t *ccmd)
     }
     if(ccmd->maxArgs == -1)
     {
-        argText = " ...";
+        argText += " ...";
     }
 
     return _E(b) + String(ccmd->name) + _E(.) _E(l) + argText + _E(.);
