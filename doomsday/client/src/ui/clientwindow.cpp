@@ -563,7 +563,7 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         if(enable && !compositor)
         {
-            LOG_MSG("Offscreen UI composition enabled");
+            LOG_GL_VERBOSE("Offscreen UI composition enabled");
 
             compositor = new CompositorWidget;
             compositor->rule().setRect(root.viewRule());
@@ -578,7 +578,7 @@ DENG2_OBSERVES(App,              StartupComplete)
             compositor->guiDeleteLater();
             compositor = 0;
 
-            LOG_MSG("Offscreen UI composition disabled");
+            LOG_GL_VERBOSE("Offscreen UI composition disabled");
         }
 
         container().add(gameUI);
@@ -719,7 +719,7 @@ void ClientWindow::setMode(Mode const &mode)
 
 void ClientWindow::closeEvent(QCloseEvent *ev)
 {
-    LOG_DEBUG("Window is about to close, executing 'quit'.");
+    LOG_DEBUG("Window is about to close, executing 'quit'");
 
     /// @todo autosave and quit?
     Con_Execute(CMDS_DDAY, "quit", true, false);
@@ -733,13 +733,13 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 {
     // Update the capability flags.
     GL_state.features.multisample = canvas.format().sampleBuffers();
-    LOG_DEBUG("GL feature: Multisampling: %b") << GL_state.features.multisample;
+    LOG_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
     if(VR::modeNeedsStereoGLFormat(VR::mode()) && !canvas.format().stereo())
     {
-        LOG_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
+        LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
     }
 
     // Now that the Canvas is ready for drawing we can enable the GameWidget.
@@ -823,19 +823,19 @@ bool ClientWindow::setDefaultGLFormat() // static
     if(VR::modeNeedsStereoGLFormat(VR::mode()))
     {
         // Only use a stereo format for modes that require it.
-        LOG_MSG("Using a stereoscopic format");
+        LOG_GL_MSG("Using a stereoscopic format");
         fmt.setStereo(true);
     }
 
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
         fmt.setSwapInterval(0); // vsync off
-        LOG_DEBUG("vsync off");
+        LOG_GL_VERBOSE("vsync off");
     }
     else
     {
         fmt.setSwapInterval(1);
-        LOG_DEBUG("vsync on");
+        LOG_GL_VERBOSE("vsync on");
     }
 
     // The value of the "vid-fsaa" variable is written to this settings
@@ -844,24 +844,24 @@ bool ClientWindow::setDefaultGLFormat() // static
     bool configured = de::App::config().getb("window.fsaa");
     if(CommandLine_Exists("-nofsaa") || !configured)
     {
-        LOG_DEBUG("multisampling off");
+        LOG_GL_VERBOSE("multisampling off");
     }
     else
     {
         sampleCount = 4; // four samples is fine?
-        LOG_DEBUG("multisampling on (%i samples)") << sampleCount;
+        LOG_GL_VERBOSE("multisampling on (%i samples)") << sampleCount;
     }
     GLFramebuffer::setDefaultMultisampling(sampleCount);
 
     if(fmt != QGLFormat::defaultFormat())
     {
-        LOG_DEBUG("Applying new format...");
+        LOG_GL_VERBOSE("Applying new format...");
         QGLFormat::setDefaultFormat(fmt);
         return true;
     }
     else
     {
-        LOG_DEBUG("New format is the same as before.");
+        LOG_GL_XVERBOSE("New format is the same as before.");
         return false;
     }
 }

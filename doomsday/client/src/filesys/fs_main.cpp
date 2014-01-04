@@ -154,9 +154,7 @@ struct FS1::Instance
             FileIds::iterator place = qLowerBound(fileIds.begin(), fileIds.end(), fileId);
             if(place != fileIds.end() && *place == fileId)
             {
-#if _DEBUG
-                LOG_VERBOSE("Released FileId %s - \"%s\"") << *place << fileId.path();
-#endif
+                LOG_DEV_TRACE_DEBUGONLY("Released FileId %s - \"%s\"", *place << fileId.path());
                 fileIds.erase(place);
                 return true;
             }
@@ -198,7 +196,7 @@ struct FS1::Instance
         try
         {
             FS1::Scheme& scheme = self.scheme(search.scheme());
-            LOG_TRACE("Using scheme '%s'...") << scheme.name();
+            LOG_RES_XVERBOSE("Using scheme '%s'...") << scheme.name();
 
             // Ensure the scheme's index is up to date.
             scheme.rebuild();
@@ -332,7 +330,7 @@ struct FS1::Instance
         // We must have an absolute path.
         path = App_BasePath() / path;
 
-        LOG_TRACE("Trying \"%s\"...") << NativePath(path).pretty();
+        LOG_RES_XVERBOSE("Trying \"%s\"...") << NativePath(path).pretty();
 
         bool const reqNativeFile = mode.contains('f');
 
@@ -560,7 +558,7 @@ de::File1& FS1::find(de::Uri const& search)
         catch(de::Uri::ResolveError const& er)
         {
             // Log but otherwise ignore unresolved paths.
-            LOG_DEBUG(er.asText());
+            LOG_RES_VERBOSE(er.asText());
         }
     }
 
@@ -627,7 +625,7 @@ static void printFileIds(FileIds const& fileIds)
     uint idx = 0;
     DENG2_FOR_EACH_CONST(FileIds, i, fileIds)
     {
-        LOG_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
+        LOG_DEV_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
         ++idx;
     }
 }
@@ -645,7 +643,7 @@ static void printFileList(FS1::FileList& list)
         QByteArray path = file.composePath().toUtf8();
         FileId fileId = FileId::fromPath(path.constData());
 
-        LOG_MSG(" %c%d: %s - \"%s\" (handle: %p)")
+        LOG_DEV_MSG(" %c%d: %s - \"%s\" (handle: %p)")
             << (file.hasStartup()? '*' : ' ') << idx
             << fileId << fileId.path() << (void*)&hndl;
         ++idx;
@@ -659,9 +657,9 @@ int FS1::unloadAllNonStartupFiles()
     // List all open files with their identifiers.
     if(verbose)
     {
-        LOG_MSG("Open files at reset:");
+        LOG_DEV_MSG("Open files at reset:");
         printFileList(d->openFiles);
-        LOG_MSG("End\n");
+        LOG_DEV_MSG("End\n");
     }
 #endif
 
@@ -681,7 +679,7 @@ int FS1::unloadAllNonStartupFiles()
     // Sanity check: look for orphaned identifiers.
     if(!d->fileIds.empty())
     {
-        LOG_MSG("Warning: Orphan FileIds:");
+        LOG_DEV_MSG("Warning: Orphan FileIds:");
         printFileIds(d->fileIds);
     }
 #endif
@@ -700,7 +698,7 @@ bool FS1::checkFileId(de::Uri const& path)
 
 #ifdef _DEBUG
     LOG_AS("FS1::addFileId")
-    LOG_DEBUG("\"%s\" => %s") << fileId.path() << fileId; /* path() is debug-only */
+    LOG_DEV_XVERBOSE("\"%s\" => %s") << fileId.path() << fileId; /* path() is debug-only */
 #endif
 
     d->fileIds.insert(place, fileId);
@@ -999,7 +997,7 @@ bool FS1::accessFile(de::Uri const& search)
     catch(de::Uri::ResolveError const& er)
     {
         // Log but otherwise ignore unresolved paths.
-        LOG_DEBUG(er.asText());
+        LOG_RES_VERBOSE(er.asText());
     }
     return false;
 }
@@ -1038,7 +1036,7 @@ void FS1::addPathLumpMapping(String lumpName, String destination)
         ldm->second = lumpName;
     }
 
-    LOG_VERBOSE("Path \"%s\" now mapped to lump \"%s\"") << NativePath(ldm->first).pretty() << ldm->second;
+    LOG_RES_MSG("Path \"%s\" now mapped to lump \"%s\"") << NativePath(ldm->first).pretty() << ldm->second;
 }
 
 void FS1::clearPathLumpMappings()
@@ -1089,7 +1087,7 @@ void FS1::addPathMapping(String source, String destination)
         pm->first = destination;
     }
 
-    LOG_VERBOSE("Path \"%s\" now mapped to \"%s\"")
+    LOG_RES_MSG("Path \"%s\" now mapped to \"%s\"")
         << NativePath(pm->second).pretty() << NativePath(pm->first).pretty();
 }
 

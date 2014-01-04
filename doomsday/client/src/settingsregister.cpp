@@ -312,7 +312,7 @@ DENG2_OBSERVES(App, GameChange)
     {
         try
         {
-            LOG_DEBUG("Reading setting profiles from %s") << file.description();
+            LOG_RES_VERBOSE("Reading setting profiles from %s") << file.description();
 
             Block raw;
             file >> raw;
@@ -332,7 +332,7 @@ DENG2_OBSERVES(App, GameChange)
                     String profileName = profBlock.keyValue("name").text;
                     if(profileName.isEmpty()) continue; // Skip this one...
 
-                    LOG_DEBUG("Reading profile '%s'") << profileName;
+                    LOG_VERBOSE("Reading profile '%s'") << profileName;
 
                     Profile *prof = addProfile(profileName);
                     if(markReadOnly) prof->readOnly = true;
@@ -354,7 +354,7 @@ DENG2_OBSERVES(App, GameChange)
         }
         catch(Error const &er)
         {
-            LOG_WARNING("Failed to load setting profiles from %s:\n%s")
+            LOG_RES_WARNING("Failed to load setting profiles from %s:\n%s")
                     << file.description() << er.asText();
         }
     }

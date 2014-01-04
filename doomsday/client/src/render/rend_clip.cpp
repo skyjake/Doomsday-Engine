@@ -822,7 +822,8 @@ void C_AddViewRelOcclusion(Vector2d const &from, Vector2d const &to, coord_t hei
     if(bool Failed_C_AddViewRelOcclusion_SideTest = testPos.dot(normal) < 0)
     {
         // Uh-oh.
-        LOG_WARNING("C_AddViewRelOcclusion: Wrong side v1:%s v2:%s eyeOrigin:%s!")
+        LOG_AS("C_AddViewRelOcclusion");
+        LOG_DEV_WARNING("Wrong side v1:%s v2:%s eyeOrigin:%s!")
                 << from.asText() << to.asText()
                 << Vector2d(eyeOrigin).asText();
         DENG_ASSERT(!Failed_C_AddViewRelOcclusion_SideTest);
@@ -1007,10 +1008,10 @@ static void C_OcclusionLister()
     LOG_AS("Clipper");
     for(OccNode *orange = occHead; orange; orange = orange->next)
     {
-        LOG_INFO(QString("%1 => %2 (%i)")
-                 .arg(orange->start, 0, 16)
-                 .arg(orange->end, 0, 16)
-                 .arg((orange->flags & OCNF_TOPHALF) != 0));
+        LOG_MSG(QString("%1 => %2 (%i)")
+                .arg(orange->start, 0, 16)
+                .arg(orange->end, 0, 16)
+                .arg((orange->flags & OCNF_TOPHALF) != 0));
     }
 }
 

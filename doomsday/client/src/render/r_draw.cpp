@@ -85,14 +85,7 @@ static Texture &borderTexture(int borderComp)
 DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
 {
     DENG2_ASSERT(inited);
-    if(!paths)
-    {
-#ifdef DENG_DEBUG
-        LOG_AS("R_SetBorderGfx");
-        LOG_WARNING("Invalid arguments, aborting.");
-#endif
-        return;
-    }
+    if(!paths) return;
 
     for(uint i = 0; i < 9; ++i)
     {
@@ -169,10 +162,8 @@ void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
 {
     if(texture.manifest().schemeName().compareWithoutCase("Patches"))
     {
-#ifdef DENG_DEBUG
         LOG_AS("R_DrawPatch3");
-        LOG_WARNING("Attempted to draw a non-patch [%p], aborting.") << dintptr(&texture);
-#endif
+        LOG_DEV_WARNING("Cannot draw a non-patch [%p]") << dintptr(&texture);
         return;
     }
 

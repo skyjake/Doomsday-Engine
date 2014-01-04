@@ -88,7 +88,7 @@ D_CMD(PostFx)
 
     if(console < 0 || console >= DDMAXPLAYERS)
     {
-        LOG_WARNING("Invalid console %i") << console;
+        LOG_SCR_WARNING("Invalid console %i") << console;
         return false;
     }
 

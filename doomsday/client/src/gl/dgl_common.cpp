@@ -765,7 +765,7 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
     catch(TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ", ignoring.");
+        LOG_RES_WARNING("Cannot use patch ID %i: %s") << id << er.asText();
     }
 }
 

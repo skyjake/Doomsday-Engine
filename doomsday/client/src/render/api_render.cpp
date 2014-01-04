@@ -112,7 +112,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
 
     if(!App_ResourceSystem().hasSprite(spriteId, frame))
     {
-        LOG_WARNING("Invalid sprite id (%i) and/or frame index (%i).")
+        LOG_RES_WARNING("Invalid sprite id (%i) and/or frame index (%i)")
             << spriteId << frame;
         return false;
     }

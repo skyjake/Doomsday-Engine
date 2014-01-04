@@ -372,7 +372,7 @@ void GL_PrepareTextureContent(texturecontent_t &c, GLuint glTexName,
 
             // Announce the normalization.
             de::Uri uri = textureManifest.composeUri();
-            LOG_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).")
+            LOG_GL_VERBOSE("Normalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g)")
                 << uri << baMul << hiMul << loMul;
         }
 

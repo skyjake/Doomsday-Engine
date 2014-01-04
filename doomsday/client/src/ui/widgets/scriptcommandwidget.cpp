@@ -81,7 +81,7 @@ bool ScriptCommandWidget::isAcceptedAsCommand(String const &text)
 
 void ScriptCommandWidget::executeCommand(String const &text)
 {
-    LOG_INFO(_E(1) "$ " _E(>) _E(m)) << text;
+    LOG_SCR_NOTE(_E(1) "$ " _E(>) _E(m)) << text;
 
     try
     {
@@ -90,7 +90,7 @@ void ScriptCommandWidget::executeCommand(String const &text)
     }
     catch(Error const &er)
     {
-        LOG_WARNING("Error in script:\n") << er.asText();
+        LOG_SCR_WARNING("Error in script:\n") << er.asText();
     }
 
     /*

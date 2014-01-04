@@ -149,7 +149,7 @@ Library* Library_New(const char* filePath)
     catch(const de::Error& er)
     {
         Str_Set(lastError, er.asText().toLatin1().constData());
-        LOG_WARNING("Library_New: Error opening \"%s\": ") << filePath << er.asText();
+        LOG_RES_WARNING("Library_New: Error opening \"%s\": ") << filePath << er.asText();
         return 0;
     }
 }

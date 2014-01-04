@@ -102,7 +102,7 @@ struct LumpIndex::Instance
 
         flags &= ~LIF_NEED_REBUILD_HASH;
 
-        LOG_DEBUG("Rebuilt hashMap for LumpIndex %p.") << self;
+        LOG_RES_XVERBOSE("Rebuilt hashMap for LumpIndex %p") << self;
     }
 
     /**

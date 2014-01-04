@@ -1509,11 +1509,11 @@ DEFFC(If)
         if(DD_CallHooks(HOOK_FINALE_EVAL_IF, fi->_id, (void*) &p))
         {
             val = p.returnVal;
-            LOG_DEBUG("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
+            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
         }
         else
         {
-            LOG_DEBUG("HOOK_FINALE_EVAL_IF: no hook (for %s)") << token;
+            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: no hook (for %s)") << token;
         }
     }
     else

@@ -208,7 +208,7 @@ struct FS1::Scheme::Instance
         }
         catch(de::Uri::ResolveError const &er)
         {
-            LOG_DEBUG(er.asText());
+            LOG_RES_VERBOSE(er.asText());
         }
     }
 
@@ -352,7 +352,7 @@ void FS1::Scheme::rebuild()
     if(!d->nameHashIsDirty) return;
 
     LOG_AS("Scheme::rebuild");
-    LOG_DEBUG("Rebuilding '%s'...") << d->name;
+    LOG_DEV_MSG("Rebuilding '%s'...") << d->name;
 
     // uint startTime = Timer_RealMilliseconds();
 
@@ -457,7 +457,7 @@ bool FS1::Scheme::addSearchPath(SearchPath const &search, FS1::PathGroup group)
     // Prepend to the path list - newer paths have priority.
     d->searchPaths.insert(group, search);
 
-    LOG_DEBUG("\"%s\" added to scheme '%s' (group:%s).")
+    LOG_DEV_MSG("\"%s\" added to scheme '%s' (group:%s)")
         << search << name() << nameForPathGroup(group);
 
     return true;
@@ -532,7 +532,7 @@ bool FS1::Scheme::mapPath(String &path) const
 void FS1::Scheme::debugPrint() const
 {
     LOG_AS("Scheme::debugPrint");
-    LOG_DEBUG("[%p]:") << de::dintptr(this);
+    LOG_DEV_MSG("[%p]:") << de::dintptr(this);
 
     uint schemeIdx = 0;
     for(NameHash::hash_type key = 0; key < NameHash::hash_range; ++key)
@@ -542,7 +542,7 @@ void FS1::Scheme::debugPrint() const
         {
             FileRef const &fileRef = node->fileRef;
 
-            LOG_DEBUG("  %u - %u:\"%s\" => %s")
+            LOG_DEV_MSG("  %u - %u:\"%s\" => %s")
                 << schemeIdx << key << fileRef.name()
                 << NativePath(fileRef.directoryNode().path()).pretty();
 
@@ -550,7 +550,7 @@ void FS1::Scheme::debugPrint() const
         }
     }
 
-    LOG_DEBUG("  %u %s in scheme.") << schemeIdx << (schemeIdx == 1? "file" : "files");
+    LOG_DEV_MSG("  %u %s in scheme.") << schemeIdx << (schemeIdx == 1? "file" : "files");
 }
 #endif
 

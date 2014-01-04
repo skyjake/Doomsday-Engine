@@ -120,7 +120,7 @@ static void Mouse_Qt_ShowCursor(bool yes)
 {
     de::Canvas &canvas = WindowSystem::main().canvas();
 
-    LOG_DEBUG("%s cursor (presently visible? %b)")
+    LOG_INPUT_VERBOSE("%s cursor (presently visible? %b)")
             << (yes? "showing" : "hiding") << !cursorHidden;
 
     if(!yes && !cursorHidden)
