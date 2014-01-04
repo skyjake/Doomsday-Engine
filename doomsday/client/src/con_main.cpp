@@ -2017,17 +2017,18 @@ static void conPrintf(int flags, const char* format, va_list args)
 
 void Con_Printf(const char* format, ...)
 {
-    va_list args;
     if(!ConsoleInited || ConsoleSilent)
         return;
     if(!format || !format[0])
         return;
+
+    va_list args;
     va_start(args, format);
     conPrintf(CPF_WHITE, format, args);
     va_end(args);
 }
 
-void Con_FPrintf(int flags, const char* format, ...)
+void Con_FPrintf(int flags, char const *format, ...)
 {
     if(!ConsoleInited || ConsoleSilent)
         return;
@@ -2035,52 +2036,10 @@ void Con_FPrintf(int flags, const char* format, ...)
     if(!format || !format[0])
         return;
 
-    {va_list args;
+    va_list args;
     va_start(args, format);
     conPrintf(flags, format, args);
-    va_end(args);}
-}
-
-static void printListPath(const ddstring_t* path, int flags, int index)
-{
-    assert(path);
-    if(flags & PPF_TRANSFORM_PATH_PRINTINDEX)
-        Con_Printf("%i: ", index);
-    Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(path)) : Str_Text(path));
-}
-
-void Con_PrintPathList(char const *pathList, char delimiter, char const *separator, int flags)
-{
-    DENG_ASSERT(pathList != 0&& pathList[0]);
-
-    ddstring_t path;
-    Str_Init(&path);
-
-    char const *p = pathList;
-    int n = 0;
-    while((p = Str_CopyDelim2(&path, p, delimiter, CDF_OMIT_DELIMITER)))
-    {
-        printListPath(&path, flags, n++);
-        if(separator && !(flags & PPF_MULTILINE) && p && p[0])
-        {
-            Con_Printf("%s", separator);
-        }
-        if(flags & PPF_MULTILINE)
-        {
-            Con_Printf("\n");
-        }
-    }
-
-    if(Str_Length(&path) != 0)
-    {
-        printListPath(&path, flags, n++);
-        if(flags & PPF_MULTILINE)
-        {
-            Con_Printf("\n");
-        }
-    }
-
-    Str_Free(&path);
+    va_end(args);
 }
 
 #undef Con_Message

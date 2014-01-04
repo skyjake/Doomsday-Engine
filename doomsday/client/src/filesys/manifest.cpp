@@ -351,20 +351,26 @@ QStringList const &ResourceManifest::names() const
 
 void ResourceManifest::consolePrint(ResourceManifest &manifest, bool showStatus)
 {
-    QByteArray names = manifest.names().join(";").toUtf8();
     bool const resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
 
-    if(showStatus)
-    {
-        Con_Printf("%s", !resourceFound? " ! ":"   ");
-    }
-
-    Con_PrintPathList(names.constData(), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
+    String text;
 
     if(showStatus)
     {
-        QByteArray foundPath = resourceFound? manifest.resolvedPath(false/*don't try to locate*/).toUtf8() : QByteArray("");
-        Con_Printf(" %s%s", !resourceFound? "- missing" : "- found ", F_PrettyPath(foundPath.constData()));
+        text += (resourceFound? "   " : ":");
     }
-    Con_Printf("\n");
+
+    // Format the resource name list.
+    text += manifest.names().join(" or ");
+
+    if(showStatus)
+    {
+        text += String(" - ") + (resourceFound? "found" : "missing");
+        if(resourceFound)
+        {
+            text += String(" ") + NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty();
+        }
+    }
+
+    LOG_MSG("") << text;
 }

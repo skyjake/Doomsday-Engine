@@ -326,31 +326,6 @@ void Con_Printf(char const *format, ...) PRINTF_F(1,2);
 /// Print a ruler into the console.
 void Con_PrintRuler();
 
-/**
- * @defgroup printPathFlags Print Path Flags
- * @ingroup flags
- */
-/*{@*/
-#define PPF_MULTILINE           0x1 // Use multiple lines.
-#define PPF_TRANSFORM_PATH_MAKEPRETTY 0x2 // Make paths 'prettier'.
-#define PPF_TRANSFORM_PATH_PRINTINDEX 0x4 // Print an index for each path.
-/*}@*/
-
-#define DEFAULT_PRINTPATHFLAGS (PPF_MULTILINE|PPF_TRANSFORM_PATH_MAKEPRETTY|PPF_TRANSFORM_PATH_PRINTINDEX)
-
-/**
- * Prints the passed path list to the console.
- *
- * @todo treat paths as URIs (i.e., resolve symbols).
- *
- * @param pathList   A series of file/resource names/paths separated by @a delimiter.
- * @param delimiter  Path delimiter character.
- * @param separator  Text printed between list entries.
- * @param flags      @ref printPathFlags.
- */
-void Con_PrintPathList(char const *pathList, char delimiter = ';',
-    char const *separator = " ", int flags = DEFAULT_PRINTPATHFLAGS);
-
 void Con_PrintCVar(cvar_t *cvar, char const *prefix);
 
 de::String Con_VarAsStyledText(cvar_t *var, char const *prefix);
