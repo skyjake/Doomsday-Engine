@@ -91,7 +91,7 @@ DENG2_PIMPL(Canvas)
     {
         if(!self.isVisible()/* || mouseDisabled*/) return;
 
-        LOG_DEBUG("grabbing mouse (already grabbed? %b)") << mouseGrabbed;
+        LOG_INPUT_MSG("Grabbing mouse (already grabbed? %b)") << mouseGrabbed;
 
         if(!mouseGrabbed)
         {
@@ -108,7 +108,7 @@ DENG2_PIMPL(Canvas)
     {
         if(!self.isVisible()/* || mouseDisabled*/) return;
 
-        LOG_DEBUG("ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
+        LOG_INPUT_MSG("Ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
 
         if(mouseGrabbed)
         {
@@ -217,8 +217,8 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
     : QGLWidget(parent, shared), d(new Instance(this, parent))
 {
     LOG_AS("Canvas");
-    LOG_DEBUG("swap interval: ") << format().swapInterval();
-    LOG_DEBUG("multisample: %b") << (GLFramebuffer::defaultMultisampling() > 1);
+    LOG_GL_VERBOSE("swap interval: ") << format().swapInterval();
+    LOG_GL_VERBOSE("multisample: %b") << (GLFramebuffer::defaultMultisampling() > 1);
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
@@ -325,7 +325,7 @@ void Canvas::swapBuffers(gl::SwapBufferMode swapMode)
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
-    LOG_DEBUG("Notifying GL init (during paint)");
+    LOG_GL_NOTE("Notifying GL init (during paint)");
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
     getAllOpenGLEntryPoints();
@@ -369,7 +369,7 @@ void Canvas::showEvent(QShowEvent* ev)
     // actually appears on screen.
     if(isVisible() && !d->readyNotified)
     {
-        LOG_DEBUG("Received first show event, scheduling GL ready notification");
+        LOG_GL_XVERBOSE("Received first show event, scheduling GL ready notification");
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
         makeCurrent();
@@ -392,21 +392,21 @@ void Canvas::notifyReady()
     // Print some information.
     QGLFormat const fmt = format();
     if(fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_3))
-        LOG_INFO("OpenGL 3.3 supported");
+        LOG_GL_NOTE("OpenGL 3.3 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_2)))
-        LOG_INFO("OpenGL 3.2 supported");
+        LOG_GL_NOTE("OpenGL 3.2 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_1)))
-        LOG_INFO("OpenGL 3.1 supported");
+        LOG_GL_NOTE("OpenGL 3.1 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_3_0)))
-        LOG_INFO("OpenGL 3.0 supported");
+        LOG_GL_NOTE("OpenGL 3.0 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_1)))
-        LOG_INFO("OpenGL 2.1 supported");
+        LOG_GL_NOTE("OpenGL 2.1 supported");
     else if((fmt.openGLVersionFlags().testFlag(QGLFormat::OpenGL_Version_2_0)))
-        LOG_INFO("OpenGL 2.0 supported");
+        LOG_GL_NOTE("OpenGL 2.0 supported");
     else
-        LOG_WARNING("OpenGL 2.0 is not supported!");
+        LOG_GL_WARNING("OpenGL 2.0 is not supported!");
 
-    LOG_DEBUG("Notifying GL ready");
+    LOG_GL_XVERBOSE("Notifying GL ready");
     DENG2_FOR_AUDIENCE(GLReady, i) i->canvasGLReady(*this);
 
     // This Canvas instance might have been destroyed now.
@@ -423,7 +423,7 @@ void Canvas::paintGL()
 void Canvas::focusInEvent(QFocusEvent*)
 {
     LOG_AS("Canvas");
-    LOG_INFO("Gained focus.");
+    LOG_INPUT_MSG("Gained focus");
 
     DENG2_FOR_AUDIENCE(FocusChange, i) i->canvasFocusChanged(*this, true);
 }
@@ -431,7 +431,7 @@ void Canvas::focusInEvent(QFocusEvent*)
 void Canvas::focusOutEvent(QFocusEvent*)
 {
     LOG_AS("Canvas");
-    LOG_INFO("Lost focus.");
+    LOG_INPUT_MSG("Lost focus");
 
     // Automatically ungrab the mouse if focus is lost.
     d->ungrabMouse();

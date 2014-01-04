@@ -393,7 +393,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
     {
         // Uniform not in the program.
         LOG_AS("applyInProgram");
-        LOG_DEBUG("'%s' not in the program") << d->name.constData();
+        LOG_GL_VERBOSE("'%s' not in the program") << d->name.constData();
         return;
     }
 

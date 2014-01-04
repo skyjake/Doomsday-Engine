@@ -89,7 +89,7 @@ DENG2_PIMPL(CanvasWindow)
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
-        LOG_DEBUG("About to replace Canvas %p with %p")
+        LOG_DEV_VERBOSE("About to replace Canvas %p with %p")
                 << de::dintptr(canvas) << de::dintptr(recreated);
 
         // Copy the audiences of the old canvas.
@@ -121,7 +121,7 @@ DENG2_PIMPL(CanvasWindow)
         // Restore the old focus change audience.
         canvas->audienceForFocusChange = canvasFocusAudience;
 
-        LOG_DEBUG("Canvas replaced with %p") << de::dintptr(canvas);
+        LOG_DEV_VERBOSE("Canvas replaced with %p") << de::dintptr(canvas);
     }
 };
 
@@ -206,7 +206,7 @@ void CanvasWindow::hideEvent(QHideEvent *ev)
 
     QMainWindow::hideEvent(ev);
 
-    LOG_DEBUG("Hide event (hidden:%b)") << isHidden();
+    LOG_GL_VERBOSE("Hide event (hidden:%b)") << isHidden();
 }
 
 void CanvasWindow::canvasGLReady(Canvas &canvas)

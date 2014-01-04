@@ -68,18 +68,18 @@ void GuiApp::notifyDisplayModeChanged()
 
 int GuiApp::execLoop()
 {
-    LOG_MSG("Starting GuiApp event loop...");
+    LOG_DEV_MSG("Starting GuiApp event loop...");
 
     d->loop.start();
     int code = QApplication::exec();
 
-    LOG_MSG("GuiApp event loop exited with code %i") << code;
+    LOG_DEV_NOTE("GuiApp event loop exited with code %i") << code;
     return code;
 }
 
 void GuiApp::stopLoop(int code)
 {
-    LOG_MSG("Stopping GuiApp event loop");
+    LOG_DEV_MSG("Stopping GuiApp event loop");
 
     d->loop.stop();
     return QApplication::exit(code);

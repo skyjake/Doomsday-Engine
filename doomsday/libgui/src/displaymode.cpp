@@ -138,7 +138,7 @@ struct Mode : public DisplayMode
 
     void debugPrint() const
     {
-        LOG_DEBUG("size: %i x %i x %i, rate: %.1f Hz, ratio: %i:%i")
+        LOG_GL_VERBOSE("size: %i x %i x %i, rate: %.1f Hz, ratio: %i:%i")
                 << width << height << depth << refreshRate << ratioX << ratioY;
     }
 };
@@ -214,10 +214,10 @@ int DisplayMode_Init(void)
         modes.insert(mode);
     }
 
-    LOG_DEBUG("Current mode is:");
+    LOG_GL_VERBOSE("Current mode is:");
     originalMode.debugPrint();
 
-    LOG_DEBUG("All available modes:");
+    LOG_GL_VERBOSE("All available modes:");
     for(Modes::iterator i = modes.begin(); i != modes.end(); ++i)
     {
         i->debugPrint();
@@ -235,7 +235,7 @@ void DisplayMode_Shutdown(void)
 
     deinitBindings();
 
-    LOG_INFO("Restoring original display mode due to shutdown.");
+    LOG_GL_NOTE("Restoring original display mode due to shutdown");
 
     // Back to the original mode.
     DisplayMode_Change(&originalMode, false /*release captured*/);
@@ -328,7 +328,7 @@ int DisplayMode_Change(DisplayMode const *mode, int shouldCapture)
 {
     if(Mode::fromCurrent() == *mode && !shouldCapture == !captured)
     {
-        LOG_DEBUG("DisplayMode: Requested mode is the same as current, ignoring.");
+        LOG_GL_XVERBOSE("DisplayMode: Requested mode is the same as current, ignoring request");
 
         // Already in this mode.
         return false;

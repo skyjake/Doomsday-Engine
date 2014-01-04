@@ -154,8 +154,8 @@ DENG2_PIMPL(GLFramebuffer)
         {
             // Alternatively try without depth/stencil texture (some renderer features
             // will not be available!).
-            LOG_WARNING("Texture-based framebuffer failed:\n  %s\n"
-                        "Trying fallback without depth/stencil texture")
+            LOG_GL_WARNING("Texture-based framebuffer failed: %s\n"
+                           "Trying fallback without depth/stencil texture")
                     << er.asText();
 
             target.configure(GLTarget::Color, color, GLTarget::DepthStencil);
@@ -177,7 +177,7 @@ DENG2_PIMPL(GLFramebuffer)
             }
             catch(GLTarget::ConfigError const &er)
             {
-                LOG_WARNING("Multisampling not supported:\n  %s") << er.asText();
+                LOG_GL_WARNING("Multisampling not supported: %s") << er.asText();
                 _samples = 1;
                 goto noMultisampling;
             }
@@ -276,11 +276,11 @@ void GLFramebuffer::glInit()
     // Check for some integral OpenGL functionality.
     if(!GLInfo::extensions().ARB_framebuffer_object)
     {
-        LOG_WARNING("Required GL_ARB_framebuffer_object is missing!");
+        LOG_GL_WARNING("Required GL_ARB_framebuffer_object is missing!");
     }
     if(!GLInfo::extensions().EXT_packed_depth_stencil)
     {
-        LOG_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
+        LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
     }
 
     d->alloc();
