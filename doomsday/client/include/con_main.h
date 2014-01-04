@@ -329,11 +329,8 @@ void Con_PrintRuler();
 void Con_PrintCVar(cvar_t *cvar, char const *prefix);
 
 de::String Con_VarAsStyledText(cvar_t *var, char const *prefix);
-de::String Con_CmdAsStyledText(ccmd_t *cmd);
-de::String Con_AliasAsStyledText(calias_t *alias);
-de::String Con_GameAsStyledText(de::Game *game);
 
-de::String Con_AnnotatedConsoleTerms(QStringList terms);
+de::String Con_CmdAsStyledText(ccmd_t *cmd);
 
 /**
  * Returns a rich formatted, textual representation of the specified console
@@ -341,7 +338,13 @@ de::String Con_AnnotatedConsoleTerms(QStringList terms);
  *
  * @param ccmd  The console command to format usage info for.
  */
-de::String Con_StyledCommandUsage(ccmd_t *ccmd);
+de::String Con_CmdUsageAsStyledText(ccmd_t *ccmd);
+
+de::String Con_AliasAsStyledText(calias_t *alias);
+
+de::String Con_GameAsStyledText(de::Game *game);
+
+de::String Con_AnnotatedConsoleTerms(QStringList terms);
 
 /**
  * Collects all the known words of the console into a Lexicon.

@@ -1077,13 +1077,13 @@ static void printCommandUsage(ccmd_t *ccmd, bool allOverloads = true)
     }
 
     LOG_MSG(_E(D) "Usage:");
-    LOG_MSG("  " _E(>) + Con_StyledCommandUsage(ccmd));
+    LOG_MSG("  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
 
     if(allOverloads)
     {
         while((ccmd = ccmd->nextOverload))
         {
-            LOG_MSG("  " _E(>) + Con_StyledCommandUsage(ccmd));
+            LOG_MSG("  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
         }
     }
 }
@@ -1166,7 +1166,7 @@ boolean Con_IsValidCommand(char const* name)
     return (Con_FindAlias(name) != 0);
 }
 
-String Con_StyledCommandUsage(ccmd_t *ccmd)
+String Con_CmdUsageAsStyledText(ccmd_t *ccmd)
 {
     DENG2_ASSERT(ccmd != 0);
 
