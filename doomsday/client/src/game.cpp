@@ -271,19 +271,18 @@ D_CMD(InspectGame)
 
     DENG2_ASSERT(!game->isNull());
 
-    LOG_MSG("Game: %s - %s") << game->title() << game->author();
-    LOG_MSG("IdentityKey: ") << game->identityKey();
-#ifdef DENG_DEBUG
-    LOG_MSG("PluginId: ") << int(game->pluginId());
-#endif
+    LOG_MSG(_E(1) "%s - %s") << game->title() << game->author();
+    LOG_MSG(_E(l) "IdentityKey: " _E(.) _E(i) "%s " _E(.)
+            _E(l) "PluginId: "    _E(.) _E(i) "%s")
+        << game->identityKey() << int(game->pluginId());
 
-    LOG_MSG("Startup resources:");
+    LOG_MSG(_E(D) "Startup resources:");
     Game::printFiles(*game, FF_STARTUP);
 
-    LOG_MSG("Other resources:");
+    LOG_MSG(_E(D) "Other resources:");
     Game::printFiles(*game, 0, false);
 
-    LOG_MSG("Status: ") << game->statusAsText();
+    LOG_MSG(_E(D) "Status: " _E(.) _E(1)) << game->statusAsText();
 
     return true;
 }
