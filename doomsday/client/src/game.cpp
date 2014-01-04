@@ -185,7 +185,28 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
             ResourceManifest &manifest = **i;
             if(rflags >= 0 && (rflags & manifest.fileFlags()))
             {
-                ResourceManifest::consolePrint(manifest, printStatus);
+                bool const resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
+
+                String text;
+                if(printStatus)
+                {
+                    text += (resourceFound? "   " : " ! ");
+                }
+
+                // Format the resource name list.
+                text += manifest.names().join(" or ");
+
+                if(printStatus)
+                {
+                    text += String(" - ") + (resourceFound? "found" : "missing");
+                    if(resourceFound)
+                    {
+                        text += String(" ") + NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty();
+                    }
+                }
+
+                LOG_MSG("") << text;
+
                 numPrinted += 1;
             }
         }

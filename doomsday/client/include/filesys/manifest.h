@@ -1,7 +1,7 @@
-/** @file manifest.h Logical Resource Manifest
+/** @file manifest.h  Manifest for a logical resource.
  *
- * @author Copyright Â© 2010-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright Â© 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MANIFEST_H
-#define LIBDENG_RESOURCE_MANIFEST_H
+#ifndef DENG_RESOURCE_MANIFEST_H
+#define DENG_RESOURCE_MANIFEST_H
 
+#include "api_uri.h"
 #include <de/String>
 #include <QStringList>
-#include "api_uri.h"
 
 namespace de {
 
@@ -93,19 +93,10 @@ public:
      */
     ResourceManifest &addName(String newName, bool *didAdd = 0);
 
-    /**
-     * Print information about a file to the console.
-     *
-     * @param manifest      Manifest for the file.
-     * @param showStatus    @c true = print loaded/located status for the
-     *                      associated file.
-     */
-    static void consolePrint(ResourceManifest &manifest, bool showStatus = true);
-
 private:
     DENG2_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_MANIFEST_H */
+#endif // DENG_RESOURCE_MANIFEST_H

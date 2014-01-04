@@ -348,29 +348,3 @@ QStringList const &ResourceManifest::names() const
 {
     return d->names;
 }
-
-void ResourceManifest::consolePrint(ResourceManifest &manifest, bool showStatus)
-{
-    bool const resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
-
-    String text;
-
-    if(showStatus)
-    {
-        text += (resourceFound? "   " : ":");
-    }
-
-    // Format the resource name list.
-    text += manifest.names().join(" or ");
-
-    if(showStatus)
-    {
-        text += String(" - ") + (resourceFound? "found" : "missing");
-        if(resourceFound)
-        {
-            text += String(" ") + NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty();
-        }
-    }
-
-    LOG_MSG("") << text;
-}
