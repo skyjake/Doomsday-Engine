@@ -217,49 +217,6 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
     }
 }
 
-void Game::print(Game const &game, int flags)
-{
-    if(game.isNull())
-    {
-        flags &= ~PGF_BANNER;
-    }
-
-    if(flags & PGF_BANNER)
-    {
-        printBanner(game);
-        LOG_MSG("Author: ") << game.author();
-    }
-    else
-    {
-        LOG_MSG("Game: %s - %s") << game.title() << game.author();
-    }
-
-    LOG_MSG("IdentityKey: ") << game.identityKey();
-#ifdef DENG_DEBUG
-    LOG_MSG("PluginId: ") << int(game.pluginId());
-#endif
-
-    if(flags & PGF_LIST_STARTUP_RESOURCES)
-    {
-        LOG_MSG("Startup resources:");
-        printFiles(game, FF_STARTUP, (flags & PGF_STATUS) != 0);
-    }
-
-    if(flags & PGF_LIST_OTHER_RESOURCES)
-    {
-        LOG_MSG("Other resources:");
-        printFiles(game, 0, /*(flags & PGF_STATUS) != 0*/false);
-    }
-
-    if(flags & PGF_STATUS)
-    {
-        LOG_MSG("Status: ")
-            << (&App_CurrentGame() == &game? "Loaded" :
-                game.allStartupFilesFound()? "Complete/Playable" :
-                                             "Incomplete/Not playable");
-    }
-}
-
 D_CMD(InspectGame)
 {
     DENG2_UNUSED(src);
@@ -289,7 +246,25 @@ D_CMD(InspectGame)
         }
     }
 
-    Game::print(*game, PGF_EVERYTHING);
+    DENG2_ASSERT(!game->isNull());
+
+    LOG_MSG("Game: %s - %s") << game->title() << game->author();
+    LOG_MSG("IdentityKey: ") << game->identityKey();
+#ifdef DENG_DEBUG
+    LOG_MSG("PluginId: ") << int(game->pluginId());
+#endif
+
+    LOG_MSG("Startup resources:");
+    Game::printFiles(*game, FF_STARTUP);
+
+    LOG_MSG("Other resources:");
+    Game::printFiles(*game, 0, false);
+
+    LOG_MSG("Status: ")
+        << (  &App_CurrentGame() == game? "Loaded" :
+            game->allStartupFilesFound()? "Complete/Playable" :
+                                          "Incomplete/Not playable");
+
     return true;
 }
 

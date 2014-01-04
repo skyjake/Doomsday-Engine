@@ -221,7 +221,17 @@ static int locateAllResourcesWorker(void *context)
         games->locateStartupResources(*game);
         Con_SetProgress((n + 1) * 200 / games->count() - 1);
 
-        VERBOSE( Game::print(*game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
+        VERBOSE(
+            LOG_MSG("Game: %s - %s") << game->title() << game->author();
+            LOG_MSG("IdentityKey: ") << game->identityKey();
+            LOG_MSG("Startup resources:");
+            Game::printFiles(*game, FF_STARTUP);
+
+            LOG_MSG("Status: ")
+                << (&App_CurrentGame() == game? "Loaded" :
+                    game->allStartupFilesFound()? "Complete/Playable" :
+                                                  "Incomplete/Not playable");
+        )
         ++n;
     }
     BusyMode_WorkerEnd();

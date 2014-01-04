@@ -28,19 +28,6 @@
 #include <de/game/Game>
 #include <QMultiMap>
 
-/**
- * @defgroup printGameFlags  Print Game Flags
- * @ingroup flags
- */
-///@{
-#define PGF_BANNER                 0x1
-#define PGF_STATUS                 0x2
-#define PGF_LIST_STARTUP_RESOURCES 0x4
-#define PGF_LIST_OTHER_RESOURCES   0x8
-
-#define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
-///@}
-
 struct manifest_s;
 struct gamedef_s;
 
@@ -159,14 +146,6 @@ public:
      *                      of each file.
      */
     static void printFiles(Game const &game, int rflags, bool printStatus = true);
-
-    /**
-     * Print extended information about game @a info.
-     *
-     * @param game   Game record to be printed.
-     * @param flags  @ref printGameFlags
-     */
-    static void print(Game const &game, int flags);
 
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
