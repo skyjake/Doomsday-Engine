@@ -39,11 +39,11 @@
 #define OBSOLETE            CVF_NO_ARCHIVE|CVF_HIDE
 
 // Macros for accessing the console variable values through the shared data ptr.
-#define CV_INT(var)         (*(int*) var->ptr)
-#define CV_BYTE(var)        (*(byte*) var->ptr)
-#define CV_FLOAT(var)       (*(float*) var->ptr)
-#define CV_CHARPTR(var)     (*(char**) var->ptr)
-#define CV_URIPTR(var)      (*(Uri**) var->ptr)
+#define CV_INT(var)         (*(int *) var->ptr)
+#define CV_BYTE(var)        (*(byte *) var->ptr)
+#define CV_FLOAT(var)       (*(float *) var->ptr)
+#define CV_CHARPTR(var)     (*(char **) var->ptr)
+#define CV_URIPTR(var)      (*(uri_s **) var->ptr)
 
 struct cbuffer_s;
 

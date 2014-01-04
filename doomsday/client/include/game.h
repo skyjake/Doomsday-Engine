@@ -1,7 +1,7 @@
-/** @file game.h Game mode configuration (metadata, resource files, etc...).
+/** @file game.h  Game mode configuration (metadata, resource files, etc...).
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -50,8 +50,7 @@ class File1;
 class ResourceManifest;
 
 /**
- * Records top-level game configurations registered by the loaded game
- * plugin(s).
+ * Records top-level game configurations registered by the loaded game plugin(s).
  *
  * @ingroup core
  */

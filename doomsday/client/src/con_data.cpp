@@ -24,11 +24,6 @@
 
 #define DENG_NO_API_MACROS_CONSOLE
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <ctype.h>
-
 #include "de_platform.h"
 #include "de_console.h"
 
@@ -43,10 +38,17 @@
 #include <de/memoryzone.h>
 #include <de/memoryblockset.h>
 
+#include <cstdio>
+#include <cstdlib>
+#include <cstdarg>
+#include <cctype>
+
 // Substrings in CVar names are delimited by this character.
 #define CVARDIRECTORY_DELIMITER         '-'
 
-typedef de::UserDataPathTree CVarDirectory;
+using namespace de;
+
+typedef UserDataPathTree CVarDirectory;
 
 D_CMD(HelpWhat);
 D_CMD(HelpApropos);
@@ -57,48 +59,48 @@ D_CMD(ListVars);
 D_CMD(PrintVarStats);
 #endif
 
-static bool inited = false;
+static bool inited;
 
 /// Console variable directory.
-static CVarDirectory* cvarDirectory;
+static CVarDirectory *cvarDirectory;
 
-static ccmd_t* ccmdListHead;
+static ccmd_t *ccmdListHead;
 /// @todo Replace with a data structure that allows for deletion of elements.
-static blockset_t* ccmdBlockSet;
+static blockset_t *ccmdBlockSet;
 /// Running total of the number of uniquely-named commands.
 static uint numUniqueNamedCCmds;
 
 /// @todo Replace with a BST.
 static uint numCAliases;
-static calias_t** caliases;
+static calias_t **caliases;
 
 /// The list of known words (for completion).
 /// @todo Replace with a persistent self-balancing BST (Treap?)?
-static knownword_t* knownWords;
+static knownword_t *knownWords;
 static uint numKnownWords;
 static boolean knownWordsNeedUpdate;
 
-static Str* emptyStr;
-static Uri* emptyUri;
+static ddstring_s *emptyStr;
+static uri_s *emptyUri;
 
-void Con_DataRegister(void)
+void Con_DataRegister()
 {
     C_CMD("help",           "s",    HelpWhat);
     C_CMD("apropos",        "s",    HelpApropos);
     C_CMD("listaliases",    NULL,   ListAliases);
     C_CMD("listcmds",       NULL,   ListCmds);
     C_CMD("listvars",       NULL,   ListVars);
-#if _DEBUG
+#ifdef DENG_DEBUG
     C_CMD("varstats",       NULL,   PrintVarStats);
 #endif
 }
 
-static int markVariableUserDataFreed(CVarDirectory::Node& node, void* parameters)
+static int markVariableUserDataFreed(CVarDirectory::Node &node, void *parameters)
 {
     DENG_ASSERT(parameters);
 
-    cvar_t* var = reinterpret_cast<cvar_t*>(node.userPointer());
-    void** ptr = (void**) parameters;
+    cvar_t *var = reinterpret_cast<cvar_t *>(node.userPointer());
+    void **ptr = (void **) parameters;
     if(var)
     switch(CVar_Type(var))
     {
@@ -133,7 +135,7 @@ static int clearVariable(CVarDirectory::Node& node, void* parameters)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
+                cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
                 M_Free(*ptr); *ptr = Str_Text(emptyStr);
                 break;
 
@@ -142,8 +144,8 @@ static int clearVariable(CVarDirectory::Node& node, void* parameters)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
-                Uri_Delete((Uri*)*ptr); *ptr = emptyUri;
+                cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
+                Uri_Delete((uri_s *)*ptr); *ptr = emptyUri;
                 break;
 
             default: {
@@ -164,9 +166,9 @@ static void clearVariables(void)
 {
     /// If _DEBUG we'll traverse all nodes and verify our clear logic.
 #if _DEBUG
-    de::PathTree::ComparisonFlags flags;
+    PathTree::ComparisonFlags flags;
 #else
-    de::PathTree::ComparisonFlags flags = de::PathTree::NoBranch;
+    PathTree::ComparisonFlags flags = PathTree::NoBranch;
 #endif
     if(!cvarDirectory) return;
 
@@ -177,13 +179,13 @@ static void clearVariables(void)
 /// Construct a new variable from the specified template and add it to the database.
 static cvar_t* addVariable(cvartemplate_t const& tpl)
 {
-    de::Path path(tpl.path, CVARDIRECTORY_DELIMITER);
+    Path path(tpl.path, CVARDIRECTORY_DELIMITER);
     CVarDirectory::Node* node = &cvarDirectory->insert(path);
     cvar_t* newVar;
 
     if(node->userPointer())
     {
-        throw de::Error("Con_AddVariable", "A variable with path '" + de::String(tpl.path) + "' is already known!");
+        throw Error("Con_AddVariable", "A variable with path '" + String(tpl.path) + "' is already known!");
     }
 
     newVar = (cvar_t*) M_Malloc(sizeof *newVar);
@@ -248,7 +250,7 @@ static int compareKnownWordByName(void const *a, void const *b)
     case WT_CALIAS:   textA = AutoStr_FromTextStd(((calias_t *)wA->data)->name); break;
     case WT_CCMD:     textA = AutoStr_FromTextStd(((ccmd_t *)wA->data)->name); break;
     case WT_CVAR:     textA = CVar_ComposePath((cvar_t *)wA->data); break;
-    case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<de::Game *>(wA->data)->identityKey().toUtf8().constData()); break;
+    case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<Game *>(wA->data)->identityKey().toUtf8().constData()); break;
 
     default:
         Con_Error("compareKnownWordByName: Invalid type %i for word A.", wA->type);
@@ -260,7 +262,7 @@ static int compareKnownWordByName(void const *a, void const *b)
     case WT_CALIAS:   textB = AutoStr_FromTextStd(((calias_t *)wB->data)->name); break;
     case WT_CCMD:     textB = AutoStr_FromTextStd(((ccmd_t *)wB->data)->name); break;
     case WT_CVAR:     textB = CVar_ComposePath((cvar_t *)wB->data); break;
-    case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<de::Game *>(wB->data)->identityKey().toUtf8().constData()); break;
+    case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<Game *>(wB->data)->identityKey().toUtf8().constData()); break;
 
     default:
         Con_Error("compareKnownWordByName: Invalid type %i for word B.", wB->type);
@@ -359,7 +361,7 @@ static void updateKnownWords(void)
     countCVarParams.ignoreHidden = true;
     if(cvarDirectory)
     {
-        cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &countCVarParams);
+        cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &countCVarParams);
     }
 
     // Build the known words table.
@@ -390,7 +392,7 @@ static void updateKnownWords(void)
     if(0 != countCVarParams.count)
     {
         /// @note cvars are NOT sorted.
-        cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, addVariableToKnownWords, &knownWordIdx);
+        cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, addVariableToKnownWords, &knownWordIdx);
     }
 
     // Add aliases?
@@ -407,7 +409,7 @@ static void updateKnownWords(void)
     }
 
     // Add games?
-    foreach(de::Game *game, App_Games().all())
+    foreach(Game *game, App_Games().all())
     {
         knownWords[knownWordIdx].type = WT_GAME;
         knownWords[knownWordIdx].data = game;
@@ -444,24 +446,24 @@ int CVar_Flags(const cvar_t* var)
     return var->flags;
 }
 
-AutoStr* CVar_ComposePath(cvar_t const* var)
+AutoStr *CVar_ComposePath(cvar_t const *var)
 {
-    DENG_ASSERT(var);
-    CVarDirectory::Node& node = *reinterpret_cast<CVarDirectory::Node*>(var->directoryNode);
+    DENG_ASSERT(var != 0);
+    CVarDirectory::Node &node = *reinterpret_cast<CVarDirectory::Node *>(var->directoryNode);
     QByteArray path = node.path(CVARDIRECTORY_DELIMITER).toUtf8();
     return AutoStr_FromTextStd(path.constData());
 }
 
-void CVar_SetUri2(cvar_t* var, Uri const* uri, int svFlags)
+void CVar_SetUri2(cvar_t *var, uri_s const *uri, int svFlags)
 {
     DENG_ASSERT(var);
 
-    Uri* newUri;
+    uri_s *newUri;
     bool changed = false;
 
     if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
-        AutoStr* path = CVar_ComposePath(var);
+        AutoStr *path = CVar_ComposePath(var);
         Con_Printf("%s (var) is read-only. It can't be changed (not even with force)\n", Str_Text(path));
         return;
     }
@@ -473,41 +475,49 @@ void CVar_SetUri2(cvar_t* var, Uri const* uri, int svFlags)
     }
 
     if(!CV_URIPTR(var) && !uri)
+    {
         return;
+    }
 
     // Compose the new uri.
     newUri = Uri_Dup(uri);
 
     if(!CV_URIPTR(var) || !Uri_Equality(CV_URIPTR(var), newUri))
+    {
         changed = true;
+    }
 
     // Free the old uri, if one exists.
     if((var->flags & CVF_CAN_FREE) && CV_URIPTR(var))
+    {
         Uri_Delete(CV_URIPTR(var));
+    }
 
     var->flags |= CVF_CAN_FREE;
     CV_URIPTR(var) = newUri;
 
     // Make the change notification callback
-    if(var->notifyChanged != NULL && changed)
+    if(var->notifyChanged && changed)
+    {
         var->notifyChanged();
+    }
 }
 
-void CVar_SetUri(cvar_t* var, Uri const* uri)
+void CVar_SetUri(cvar_t *var, uri_s const *uri)
 {
     CVar_SetUri2(var, uri, 0);
 }
 
-void CVar_SetString2(cvar_t* var, char const* text, int svFlags)
+void CVar_SetString2(cvar_t *var, char const *text, int svFlags)
 {
-    DENG_ASSERT(var);
+    DENG_ASSERT(var != 0);
 
     bool changed = false;
     size_t oldLen, newLen;
 
     if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
-        AutoStr* path = CVar_ComposePath(var);
+        AutoStr *path = CVar_ComposePath(var);
         Con_Printf("%s (var) is read-only. It can't be changed (not even with force)\n", Str_Text(path));
         return;
     }
@@ -716,16 +726,16 @@ char const* CVar_String(cvar_t const* var)
     }
 }
 
-Uri const* CVar_Uri(cvar_t const* var)
+uri_s const *CVar_Uri(cvar_t const *var)
 {
-    DENG_ASSERT(var);
+    DENG_ASSERT(var != 0);
     /// @todo Why not implement in-place string to uri conversion?
     switch(var->type)
     {
     case CVT_URIPTR:   return CV_URIPTR(var);
     default: {
-#if _DEBUG
-        AutoStr* path = CVar_ComposePath(var);
+#ifdef DENG_DEBUG
+        AutoStr *path = CVar_ComposePath(var);
         Con_Message("Warning: CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyUri",
                     Str_Text(path), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
 #endif
@@ -733,7 +743,8 @@ Uri const* CVar_Uri(cvar_t const* var)
     }
 }
 
-void Con_AddVariable(cvartemplate_t const* tpl)
+#undef Con_AddVariable
+void Con_AddVariable(cvartemplate_t const *tpl)
 {
     LOG_AS("Con_AddVariable");
 
@@ -753,7 +764,8 @@ void Con_AddVariable(cvartemplate_t const* tpl)
     addVariable(*tpl);
 }
 
-void Con_AddVariableList(cvartemplate_t const* tplList)
+#undef Con_AddVariableList
+void Con_AddVariableList(cvartemplate_t const *tplList)
 {
     DENG_ASSERT(inited);
     if(!tplList)
@@ -771,15 +783,15 @@ void Con_AddVariableList(cvartemplate_t const* tplList)
     }
 }
 
-cvar_t* Con_FindVariable(char const* path)
+cvar_t *Con_FindVariable(char const *path)
 {
     DENG_ASSERT(inited);
     if(!path || !path[0]) return 0;
 
     try
     {
-        CVarDirectory::Node const &node = cvarDirectory->find(de::Path(path, CVARDIRECTORY_DELIMITER),
-                                                              de::PathTree::NoBranch | de::PathTree::MatchFull);
+        CVarDirectory::Node const &node = cvarDirectory->find(Path(path, CVARDIRECTORY_DELIMITER),
+                                                              PathTree::NoBranch | PathTree::MatchFull);
         return (cvar_t*) node.userPointer();
     }
     catch(CVarDirectory::NotFoundError const&)
@@ -787,15 +799,15 @@ cvar_t* Con_FindVariable(char const* path)
     return 0;
 }
 
-/// @note Part of the Doomsday public API
-cvartype_t Con_GetVariableType(char const* path)
+#undef Con_GetVariableType
+cvartype_t Con_GetVariableType(char const *path)
 {
-    cvar_t* var = Con_FindVariable(path);
+    cvar_t *var = Con_FindVariable(path);
     if(!var) return CVT_NULL;
     return var->type;
 }
 
-de::String Con_VarAsStyledText(cvar_t *var, char const *prefix)
+String Con_VarAsStyledText(cvar_t *var, char const *prefix)
 {
     DENG_ASSERT(inited);
 
@@ -805,7 +817,7 @@ de::String Con_VarAsStyledText(cvar_t *var, char const *prefix)
     if((var->flags & CVF_PROTECTED) || (var->flags & CVF_READ_ONLY))
         equals = ':';
 
-    de::String str;
+    String str;
     QTextStream os(&str);
 
     if(prefix) os << prefix;
@@ -1291,7 +1303,7 @@ static AutoStr *textForKnownWord(knownword_t const *word)
     case WT_CALIAS:   text = AutoStr_FromTextStd(((calias_t *)word->data)->name); break;
     case WT_CCMD:     text = AutoStr_FromTextStd(((ccmd_t *)word->data)->name); break;
     case WT_CVAR:     text = CVar_ComposePath((cvar_t *)word->data); break;
-    case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<de::Game *>(word->data)->identityKey().toUtf8().constData()); break;
+    case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<Game *>(word->data)->identityKey().toUtf8().constData()); break;
 
     default:
         Con_Error("textForKnownWord: Invalid type %i for word.", word->type);
@@ -1455,14 +1467,14 @@ static int aproposPrinter(knownword_t const* word, void* matching)
             "cmd ", "var ", "alias ", "game "
         };
 
-        de::String str;
+        String str;
         QTextStream os(&str);
 
         os << _E(l) << wType[word->type]
            << _E(0) << _E(b) << Str_Text(text) << " " << _E(2) << _E(>);
 
         // Look for a short description.
-        de::String tmp;
+        String tmp;
         if(word->type == WT_CCMD || word->type == WT_CVAR)
         {
             char const* desc = DH_GetString(DH_Find(Str_Text(text)), HST_DESCRIPTION);
@@ -1473,7 +1485,7 @@ static int aproposPrinter(knownword_t const* word, void* matching)
         }
         else if(word->type == WT_GAME)
         {
-            tmp = reinterpret_cast<de::Game *>(word->data)->title();
+            tmp = reinterpret_cast<Game *>(word->data)->title();
         }
 
         os << tmp;
@@ -1484,41 +1496,43 @@ static int aproposPrinter(knownword_t const* word, void* matching)
     return 0;
 }
 
-static void printApropos(char const* matching)
+static void printApropos(char const *matching)
 {
     /// @todo  Extend the search to cover the contents of all help strings (dd_help.c).
-    Con_IterateKnownWords(0, WT_ANY, aproposPrinter, (void*)matching);
+    Con_IterateKnownWords(0, WT_ANY, aproposPrinter, (void *)matching);
 }
 
-static void printHelpAbout(char const* query)
+static void printHelpAbout(char const *query)
 {
     uint found = 0;
 
     // Try the console commands first.
-    if(ccmd_t* ccmd = Con_FindCommand(query))
+    if(ccmd_t *ccmd = Con_FindCommand(query))
     {
         HelpId help = DH_Find(ccmd->name);
-        char const* description = DH_GetString(help, HST_DESCRIPTION);
-        char const* info = DH_GetString(help, HST_INFO);
+        char const *description = DH_GetString(help, HST_DESCRIPTION);
+        char const *info = DH_GetString(help, HST_INFO);
 
         if(description)
+        {
             Con_Printf("%s\n", description);
+        }
 
         // Print usage info for each variant.
         do
         {
             Con_PrintCCmdUsage(ccmd, false);
-            ++found;
-        } while(NULL != (ccmd = ccmd->nextOverload));
+            found += 1;
+        } while((ccmd = ccmd->nextOverload));
 
         // Any extra info?
         if(info)
         {
             // Lets indent for neatness.
             size_t const infoLen = strlen(info);
-            char* line, *infoCopy, *infoCopyBuf = (char*) M_Malloc(infoLen+1);
+            char *line, *infoCopy, *infoCopyBuf = (char *) M_Malloc(infoLen + 1);
 
-            memcpy(infoCopyBuf, info, infoLen+1);
+            std::memcpy(infoCopyBuf, info, infoLen+1);
 
             infoCopy = infoCopyBuf;
             while(*(line = M_StrTok(&infoCopy, "\n")))
@@ -1529,12 +1543,12 @@ static void printHelpAbout(char const* query)
         }
     }
 
-    if(found == 0) // Perhaps its a cvar then?
+    if(!found) // Perhaps its a cvar then?
     {
-        if(cvar_t* var = Con_FindVariable(query))
+        if(cvar_t *var = Con_FindVariable(query))
         {
-            AutoStr* path = CVar_ComposePath(var);
-            char const* description = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION);
+            AutoStr *path = CVar_ComposePath(var);
+            char const *description = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION);
             if(description)
             {
                 Con_Printf("%s\n", description);
@@ -1543,29 +1557,31 @@ static void printHelpAbout(char const* query)
         }
     }
 
-    if(found == 0) // Maybe an alias?
+    if(!found) // Maybe an alias?
     {
-        if(calias_t* calias = Con_FindAlias(query))
+        if(calias_t *calias = Con_FindAlias(query))
         {
             Con_Printf("An alias for:\n%s\n", calias->command);
             found = true;
         }
     }
 
-    if(found == 0) // Perhaps a game?
+    if(!found) // Perhaps a game?
     {
         try
         {
-            de::Game &game = App_Games().byIdentityKey(query);
-            de::Game::print(game, PGF_EVERYTHING);
+            Game &game = App_Games().byIdentityKey(query);
+            Game::print(game, PGF_EVERYTHING);
             found = true;
         }
-        catch(de::Games::NotFoundError const&)
+        catch(Games::NotFoundError const&)
         {} // Ignore this error.
     }
 
-    if(found == 0) // Still not found?
+    if(!found) // Still not found?
+    {
         Con_Printf("There is no help about '%s'.\n", query);
+    }
 }
 
 D_CMD(HelpApropos)
@@ -1589,20 +1605,20 @@ D_CMD(HelpWhat)
     return true;
 }
 
-de::String Con_CmdAsStyledText(ccmd_t *cmd)
+String Con_CmdAsStyledText(ccmd_t *cmd)
 {
     char const *str;
     if((str = DH_GetString(DH_Find(cmd->name), HST_DESCRIPTION)))
     {
-        return de::String(_E(b) "%1 " _E(.) _E(>) _E(2) "%2" _E(.) _E(<)).arg(cmd->name).arg(str);
+        return String(_E(b) "%1 " _E(.) _E(>) _E(2) "%2" _E(.) _E(<)).arg(cmd->name).arg(str);
     }
     else
     {
-        return de::String(_E(b) "%1" _E(.)).arg(cmd->name);
+        return String(_E(b) "%1" _E(.)).arg(cmd->name);
     }
 }
 
-de::String Con_AliasAsStyledText(calias_t *alias)
+String Con_AliasAsStyledText(calias_t *alias)
 {
     QString str;
     QTextStream os(&str);
@@ -1612,10 +1628,10 @@ de::String Con_AliasAsStyledText(calias_t *alias)
     return str;
 }
 
-de::String Con_GameAsStyledText(de::Game *game)
+String Con_GameAsStyledText(Game *game)
 {
     DENG2_ASSERT(game != 0);
-    return de::String(_E(1)) + game->identityKey() + _E(.);
+    return String(_E(1)) + game->identityKey() + _E(.);
 }
 
 static int printKnownWordWorker(knownword_t const *word, void *parameters)
@@ -1648,7 +1664,7 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
         break;
 
     case WT_GAME:
-        LOG_MSG("%s") << Con_GameAsStyledText((de::Game *) word->data);
+        LOG_MSG("%s") << Con_GameAsStyledText((Game *) word->data);
         break;
 
     default:
@@ -1660,98 +1676,98 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
     return 0; // Continue iteration.
 }
 
-/// @note Part of the Doomsday public API.
-void Con_SetUri2(char const* path, Uri const* uri, int svFlags)
+#undef Con_SetUri2
+void Con_SetUri2(char const *path, uri_s const *uri, int svFlags)
 {
     cvar_t* var = Con_FindVariable(path);
     if(!var) return;
     CVar_SetUri2(var, uri, svFlags);
 }
 
-/// @note Part of the Doomsday public API.
-void Con_SetUri(char const* path, Uri const* uri)
+#undef Con_SetUri
+void Con_SetUri(char const *path, uri_s const *uri)
 {
     Con_SetUri2(path, uri, 0);
 }
 
-/// @note Part of the Doomsday public API.
-void Con_SetString2(char const* path, char const* text, int svFlags)
+#undef Con_SetString2
+void Con_SetString2(char const *path, char const *text, int svFlags)
 {
-    cvar_t* var = Con_FindVariable(path);
+    cvar_t *var = Con_FindVariable(path);
     if(!var) return;
     CVar_SetString2(var, text, svFlags);
 }
 
-/// @note Part of the Doomsday public API.
-void Con_SetString(char const* path, char const* text)
+#undef Con_SetString
+void Con_SetString(char const *path, char const *text)
 {
     Con_SetString2(path, text, 0);
 }
 
-/// @note Part of the Doomsday public API.
-void Con_SetInteger2(char const* path, int value, int svFlags)
+#undef Con_SetInteger2
+void Con_SetInteger2(char const *path, int value, int svFlags)
 {
-    cvar_t* var = Con_FindVariable(path);
+    cvar_t *var = Con_FindVariable(path);
     if(!var) return;
     CVar_SetInteger2(var, value, svFlags);
 }
 
-/// @note Part of the Doomsday public API.
-void Con_SetInteger(char const* path, int value)
+#undef Con_SetInteger
+void Con_SetInteger(char const *path, int value)
 {
     Con_SetInteger2(path, value, 0);
 }
 
-/// @note Part of the Doomsday public API.
-void Con_SetFloat2(char const* path, float value, int svFlags)
+#undef Con_SetFloat2
+void Con_SetFloat2(char const *path, float value, int svFlags)
 {
-    cvar_t* var = Con_FindVariable(path);
+    cvar_t *var = Con_FindVariable(path);
     if(!var) return;
     CVar_SetFloat2(var, value, svFlags);
 }
 
-/// @note Part of the Doomsday public API.
-void Con_SetFloat(char const* path, float value)
+#undef Con_SetFloat
+void Con_SetFloat(char const *path, float value)
 {
     Con_SetFloat2(path, value, 0);
 }
 
-/// @note Part of the Doomsday public API.
-int Con_GetInteger(char const* path)
+#undef Con_GetInteger
+int Con_GetInteger(char const *path)
 {
-    cvar_t* var = Con_FindVariable(path);
+    cvar_t *var = Con_FindVariable(path);
     if(!var) return 0;
     return CVar_Integer(var);
 }
 
-/// @note Part of the Doomsday public API.
-float Con_GetFloat(char const* path)
+#undef Con_GetFloat
+float Con_GetFloat(char const *path)
 {
-    cvar_t* var = Con_FindVariable(path);
+    cvar_t *var = Con_FindVariable(path);
     if(!var) return 0;
     return CVar_Float(var);
 }
 
-/// @note Part of the Doomsday public API.
-byte Con_GetByte(char const* path)
+#undef Con_GetByte
+byte Con_GetByte(char const *path)
 {
-    cvar_t* var = Con_FindVariable(path);
+    cvar_t *var = Con_FindVariable(path);
     if(!var) return 0;
     return CVar_Byte(var);
 }
 
-/// @note Part of the Doomsday public API.
-char const* Con_GetString(char const* path)
+#undef Con_GetString
+char const *Con_GetString(char const *path)
 {
-    cvar_t* var = Con_FindVariable(path);
+    cvar_t *var = Con_FindVariable(path);
     if(!var) return Str_Text(emptyStr);
     return CVar_String(var);
 }
 
-/// @note Part of the Doomsday public API.
-Uri const* Con_GetUri(char const* path)
+#undef Con_GetUri
+uri_s const *Con_GetUri(char const *path)
 {
-    cvar_t* var = Con_FindVariable(path);
+    cvar_t *var = Con_FindVariable(path);
     if(!var) return emptyUri;
     return CVar_Uri(var);
 }
@@ -1778,10 +1794,10 @@ D_CMD(ListVars)
     return true;
 }
 
-#if _DEBUG
+#ifdef DENG_DEBUG
 D_CMD(PrintVarStats)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     uint numCVars = 0, numCVarsHidden = 0;
 
@@ -1795,14 +1811,14 @@ D_CMD(PrintVarStats)
         {
             p.count = 0;
             p.type = cvartype_t(i);
-            cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &p);
+            cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &p);
             Con_Printf("%12s: %u\n", Str_Text(CVar_TypeName(p.type)), p.count);
         }
         p.count = 0;
         p.type = cvartype_t(-1);
         p.hidden = true;
 
-        cvarDirectory->traverse(de::PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &p);
+        cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &p);
         numCVars = cvarDirectory->size();
         numCVarsHidden = p.count;
     }
