@@ -812,6 +812,8 @@ bool ClientWindow::setDefaultGLFormat() // static
 
     // Configure the GL settings for all subsequently created canvases.
     QGLFormat fmt;
+    fmt.setProfile(QGLFormat::CompatibilityProfile);
+    fmt.setVersion(2, 1);
     fmt.setDepth(false); // depth and stencil handled in GLFramebuffer
     fmt.setStencil(false);
     //fmt.setDepthBufferSize(16);
