@@ -192,7 +192,7 @@ void Process::execute()
             else
             {
                 // Exception uncaught by all contexts, script execution stops.
-                LOG_INFO("Stopping process: ") << err.asText();
+                LOG_SCR_NOTE("Stopping process: ") << err.asText();
                 stop();
             }
         }

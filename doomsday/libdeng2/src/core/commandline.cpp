@@ -435,7 +435,7 @@ bool CommandLine::execute() const
     qint64 pid = 0;
     if(!QProcess::startDetached(at(0), args, d->initialDir.path(), &pid))
     {
-        LOG_WARNING("Failed to start \"%s\"") << at(0);
+        LOG_ERROR("Failed to start \"%s\"") << at(0);
         return false;
     }
 

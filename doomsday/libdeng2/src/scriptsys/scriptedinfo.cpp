@@ -63,7 +63,7 @@ DENG2_PIMPL(ScriptedInfo)
     {
         processBlock(info.root());
 
-        LOG_DEBUG("Processed contents:\n") << process.globals().asText();
+        LOG_SCR_XVERBOSE("Processed contents:\n") << process.globals().asText();
     }
 
     void processElement(Info::Element const *element)
@@ -223,7 +223,7 @@ DENG2_PIMPL(ScriptedInfo)
                     // Reset to the global namespace.
                     currentNamespace = "";
                 }
-                LOG_TRACE("Namespace set to '%s' on line %i") << currentNamespace << block.lineNumber();
+                LOG_SCR_XVERBOSE("Namespace set to '%s' on line %i") << currentNamespace << block.lineNumber();
             }
             else if(!block.name().isEmpty())
             {

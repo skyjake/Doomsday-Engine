@@ -202,8 +202,8 @@ App::App(NativePath const &appFilePath, QStringList args)
 
     d->appPath = appFilePath;
 
-    LOG_INFO("Application path: ") << d->appPath;
-    LOG_INFO("Enabled log entry level: ") << LogEntry::levelToText(level);
+    LOG_NOTE("Application path: ") << d->appPath;
+    LOG_NOTE("Enabled log entry level: ") << LogEntry::levelToText(level);
 
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command

@@ -107,7 +107,7 @@ void Folder::populate(PopulationBehavior behavior)
         // If the file has a designated feed, ask it about pruning.
         if(file->originFeed() && file->originFeed()->prune(*file))
         {
-            LOG_DEBUG("Pruning \"%s\"") << file->path();
+            LOG_RES_XVERBOSE("Pruning \"%s\"") << file->path();
             mustPrune = true;
         }
         else if(!file->originFeed())
@@ -119,7 +119,7 @@ void Folder::populate(PopulationBehavior behavior)
             {
                 if((*f)->prune(*file))
                 {
-                    LOG_DEBUG("Pruning ") << file->path();
+                    LOG_RES_XVERBOSE("Pruning ") << file->path();
                     mustPrune = true;
                     break;
                 }
@@ -186,7 +186,7 @@ File &Folder::newFile(String const &newPath, FileCreationBehavior behavior)
         }
         catch(Feed::RemoveError const &er)
         {
-            LOG_WARNING("Failed to replace %s: existing file could not be removed.\n")
+            LOG_RES_WARNING("Failed to replace %s: existing file could not be removed.\n")
                     << newPath << er.asText();
         }
     }

@@ -329,7 +329,7 @@ Path PathTree::Node::path(QChar sep) const
 
 #ifdef LIBDENG_STACK_MONITOR
     LOG_AS("pathConstructor");
-    LOG_INFO("Max stack depth: %1 bytes") << maxStackDepth;
+    LOG_DEV_NOTE("Max stack depth: %1 bytes") << maxStackDepth;
 #endif
 
     return Path(args.composedPath, sep);

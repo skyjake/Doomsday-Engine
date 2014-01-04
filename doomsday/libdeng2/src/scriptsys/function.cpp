@@ -233,7 +233,7 @@ void Function::setGlobals(Record *globals)
     }
     else if(d->globals != globals)
     {
-        LOG_WARNING("Function was offered a different namespace.");
+        LOG_SCR_WARNING("Function was offered a different namespace");
     }
 }
 
