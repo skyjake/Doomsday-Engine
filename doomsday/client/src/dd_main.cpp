@@ -90,6 +90,9 @@
 #ifdef WIN32
 #  include <QSettings>
 #endif
+#ifdef MACOSX
+#  include <QDir>
+#endif
 #ifdef UNIX
 #  include <ctype.h>
 #endif
