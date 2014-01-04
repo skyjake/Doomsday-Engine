@@ -99,7 +99,7 @@ public:
      * Enables log entries at or over a level. When a level is disabled, the
      * entries will not be added to the log entry buffer.
      */
-    void enable(LogEntry::Level overLevel = LogEntry::MESSAGE);
+    void enable(LogEntry::Level overLevel = LogEntry::Message);
 
     /**
      * Disables the log.
@@ -107,7 +107,7 @@ public:
      */
     void disable() { enable(LogEntry::MAX_LOG_LEVELS); }
 
-    bool isEnabled(LogEntry::Level overLevel = LogEntry::MESSAGE) const;
+    bool isEnabled(LogEntry::Level overLevel = LogEntry::Message) const;
 
     /**
      * Enables or disables standard output of log messages. When enabled,
@@ -168,7 +168,7 @@ public:
 
     static LogBuffer &appBuffer();
 
-    static bool isAppBufferAvailable();
+    static bool appBufferExists();
 
 public slots:
     /**

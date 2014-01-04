@@ -409,8 +409,8 @@ void ClientApp::alert(String const &msg, LogEntry::Level level)
     if(ClientWindow::mainExists())
     {
         ClientWindow::main().alerts()
-                .newAlert(msg, level >= LogEntry::ERROR?   AlertDialog::Major  :
-                               level == LogEntry::WARNING? AlertDialog::Normal :
+                .newAlert(msg, level >= LogEntry::Error?   AlertDialog::Major  :
+                               level == LogEntry::Warning? AlertDialog::Normal :
                                                            AlertDialog::Minor);
     }
     /**

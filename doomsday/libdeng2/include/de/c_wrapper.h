@@ -74,22 +74,35 @@ DENG2_PUBLIC int CommandLine_IsMatchingAlias(char const *original, char const *o
  * LogBuffer
  */
 // Log levels (see de::Log for description).
-typedef enum legacycore_loglevel_e {
-    DE2_LOG_TRACE,
-    DE2_LOG_DEBUG,
+typedef enum logentry_level_e {
+    DE2_LOG_XVERBOSE = 1,
     DE2_LOG_VERBOSE,
     DE2_LOG_MESSAGE,
     DE2_LOG_INFO,
     DE2_LOG_WARNING,
     DE2_LOG_ERROR,
     DE2_LOG_CRITICAL
-} legacycore_loglevel_t;
+} logentry_level_t;
+
+typedef enum logentry_audience_e {
+    DE2_LOG_RES   = 0x10000,
+    DE2_LOG_MAP   = 0x20000,     ///< Map developer
+    DE2_LOG_SCR   = 0x40000,     ///< Script developer
+    DE2_LOG_GL    = 0x80000,     ///< GL domain (shaders, etc.)
+    DE2_LOG_AUDIO = 0x100000,    ///< Audio domain
+    DE2_LOG_INPUT = 0x200000,    ///< Input domain
+    DE2_LOG_NET   = 0x400000,    ///< Network domain
+    DE2_LOG_DEV   = 0x800000     ///< Native code developer (i.e., the programmer)
+} logentry_audience_t;
+
+#define DE2_LOG_DEBUG   (DE2_LOG_DEV | DE2_LOG_VERBOSE)
+#define DE2_LOG_TRACE   (DE2_LOG_DEV | DE2_LOG_XVERBOSE)
 
 DENG2_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
 DENG2_PUBLIC void LogBuffer_Flush(void);
 DENG2_PUBLIC void LogBuffer_Clear(void);
 DENG2_PUBLIC void LogBuffer_Msg(char const *text);
-DENG2_PUBLIC void LogBuffer_Printf(legacycore_loglevel_t level, char const *format, ...);
+DENG2_PUBLIC void LogBuffer_Printf(int levelAndAudience, char const *format, ...);
 
 /*
  * Info

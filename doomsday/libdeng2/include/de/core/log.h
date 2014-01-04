@@ -54,26 +54,115 @@
     de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
     LOG_AS(__logSectionUtf8.constData());
 
-#define LOG_AT_LEVEL(level, str)    de::LogEntryStager(level, str)
-#define LOG_TRACE(str)              LOG_AT_LEVEL(de::LogEntry::TRACE,    str)
-#define LOG_DEBUG(str)              LOG_AT_LEVEL(de::LogEntry::DEBUG,    str)
-#define LOG_VERBOSE(str)            LOG_AT_LEVEL(de::LogEntry::VERBOSE,  str)
-#define LOG_MSG(str)                LOG_AT_LEVEL(de::LogEntry::MESSAGE,  str)
-#define LOG_INFO(str)               LOG_AT_LEVEL(de::LogEntry::INFO,     str)
-#define LOG_WARNING(str)            LOG_AT_LEVEL(de::LogEntry::WARNING,  str)
-#define LOG_ERROR(str)              LOG_AT_LEVEL(de::LogEntry::ERROR,    str)
-#define LOG_CRITICAL(str)           LOG_AT_LEVEL(de::LogEntry::CRITICAL, str)
+// End-user/game audience:
+#define LOG_AT_LEVEL(level, str)        de::LogEntryStager(level, str)
+#define LOG_XVERBOSE(str)               LOG_AT_LEVEL(de::LogEntry::XVerbose,  str)
+#define LOG_VERBOSE(str)                LOG_AT_LEVEL(de::LogEntry::Verbose,   str)
+#define LOG_MSG(str)                    LOG_AT_LEVEL(de::LogEntry::Message,   str)
+#define LOG_INFO(str)                   LOG_AT_LEVEL(de::LogEntry::Important, str)
+#define LOG_WARNING(str)                LOG_AT_LEVEL(de::LogEntry::Warning,   str)
+#define LOG_ERROR(str)                  LOG_AT_LEVEL(de::LogEntry::Error,     str)
+#define LOG_CRITICAL(str)               LOG_AT_LEVEL(de::LogEntry::Critical,  str)
+
+// Custom combination of audiences:
+#define LOG_XVERBOSE_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::XVerbose,  str)
+#define LOG_VERBOSE_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Verbose,   str)
+#define LOG_MSG_TO(audflags, str)       LOG_AT_LEVEL(audflags | de::LogEntry::Message,   str)
+#define LOG_INFO_TO(audflags, str)      LOG_AT_LEVEL(audflags | de::LogEntry::Important, str)
+#define LOG_WARNING_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Warning,   str)
+#define LOG_ERROR_TO(audflags, str)     LOG_AT_LEVEL(audflags | de::LogEntry::Error,     str)
+#define LOG_CRITICAL_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::Critical,  str)
+
+// Resource developer audience:
+#define LOG_RES_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Resource | level, str)
+#define LOG_RES_XVERBOSE(str)           LOG_RES_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_RES_VERBOSE(str)            LOG_RES_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_RES_MSG(str)                LOG_RES_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_RES_INFO(str)               LOG_RES_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_RES_WARNING(str)            LOG_RES_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_RES_ERROR(str)              LOG_RES_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_RES_CRITICAL(str)           LOG_RES_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Map developer audience:
+#define LOG_MAP_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Map | level, str)
+#define LOG_MAP_XVERBOSE(str)           LOG_MAP_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_MAP_VERBOSE(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_MAP_MSG(str)                LOG_MAP_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_MAP_INFO(str)               LOG_MAP_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_MAP_WARNING(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_MAP_ERROR(str)              LOG_MAP_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_MAP_CRITICAL(str)           LOG_MAP_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Script developer audience:
+#define LOG_SCR_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Script | level, str)
+#define LOG_SCR_XVERBOSE(str)           LOG_SCR_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_SCR_VERBOSE(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_SCR_MSG(str)                LOG_SCR_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_SCR_INFO(str)               LOG_SCR_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_SCR_WARNING(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_SCR_ERROR(str)              LOG_SCR_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_SCR_CRITICAL(str)           LOG_SCR_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Audio audience:
+#define LOG_AUDIO_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Audio | level, str)
+#define LOG_AUDIO_XVERBOSE(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_AUDIO_VERBOSE(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_AUDIO_MSG(str)              LOG_AUDIO_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_AUDIO_INFO(str)             LOG_AUDIO_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_AUDIO_WARNING(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_AUDIO_ERROR(str)            LOG_AUDIO_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_AUDIO_CRITICAL(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Graphics audience:
+#define LOG_GL_AT_LEVEL(level, str)     LOG_AT_LEVEL(de::LogEntry::GL | level, str)
+#define LOG_GL_XVERBOSE(str)            LOG_GL_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_GL_VERBOSE(str)             LOG_GL_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_GL_MSG(str)                 LOG_GL_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_GL_INFO(str)                LOG_GL_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_GL_WARNING(str)             LOG_GL_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_GL_ERROR(str)               LOG_GL_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_GL_CRITICAL(str)            LOG_GL_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Input audience:
+#define LOG_INPUT_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Input | level, str)
+#define LOG_INPUT_XVERBOSE(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_INPUT_VERBOSE(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_INPUT_MSG(str)              LOG_INPUT_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_INPUT_INFO(str)             LOG_INPUT_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_INPUT_WARNING(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_INPUT_ERROR(str)            LOG_INPUT_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_INPUT_CRITICAL(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Network audience:
+#define LOG_NET_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Network | level, str)
+#define LOG_NET_XVERBOSE(str)           LOG_NET_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_NET_VERBOSE(str)            LOG_NET_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_NET_MSG(str)                LOG_NET_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_NET_INFO(str)               LOG_NET_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_NET_WARNING(str)            LOG_NET_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_NET_ERROR(str)              LOG_NET_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_NET_CRITICAL(str)           LOG_NET_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Native code developer audience:
+#define LOG_DEV_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Dev | level, str)
+#define LOG_DEV_XVERBOSE(str)           LOG_DEV_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_TRACE(str)                  LOG_DEV_XVERBOSE(str) // backwards comp
+#define LOG_DEV_VERBOSE(str)            LOG_DEV_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_DEBUG(str)                  LOG_DEV_VERBOSE(str) // backwards comp
+#define LOG_DEV_MSG(str)                LOG_DEV_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_DEV_INFO(str)               LOG_DEV_AT_LEVEL(de::LogEntry::Info,     str)
+#define LOG_DEV_WARNING(str)            LOG_DEV_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_DEV_ERROR(str)              LOG_DEV_AT_LEVEL(de::LogEntry::Error,    str)
 
 #ifdef DENG2_DEBUG
 /**
- * Makes a developer-only TRACE level log entry. Only enabled in debug builds;
- * use this for internal messages that are only useful to / understood by
- * developers when debugging. (Note that parameters differ compared to the
- * normal LOG_* macros.)
+ * Makes a developer-only extra verbose level log entry. Only enabled in debug builds; use this
+ * for internal messages that might have a significant processing overhead. (Note that parameters
+ * differ compared to the normal LOG_* macros.)
  */
-#  define LOG_DEV_TRACE(form, args) LOG_TRACE(form) << args
+#  define LOG_DEV_TRACE_DEBUGONLY(form, args) LOG_TRACE(form) << args
 #else
-#  define LOG_DEV_TRACE(form, args)
+#  define LOG_DEV_TRACE_DEBUGONLY(form, args)
 #endif
 
 #ifdef WIN32
@@ -99,94 +188,120 @@ class LogBuffer;
 class DENG2_PUBLIC LogEntry : public Lockable, public ISerializable
 {
 public:
-    /// Level of the log entry.
+    /// Target audience of the entry (bits). If not given, the entry is intended for the
+    /// end-user/player.
+    enum Audience
+    {
+        Resource = 0x10000,     ///< Resource or resource pack developer (files, etc.)
+        Map      = 0x20000,     ///< Map developer
+        Script   = 0x40000,     ///< Script developer
+        GL       = 0x80000,     ///< GL developer (shaders, etc.)
+        Audio    = 0x100000,    ///< Audio developer
+        Input    = 0x200000,    ///< Input events, devices, etc.
+        Network  = 0x400000,    ///< Network connections, packets, etc.
+        Dev      = 0x800000,    ///< Native code developer (i.e., the programmer)
+
+        AudienceMask = 0xff0000
+    };
+
+    static String audienceToText(Audience audience)
+    {
+        switch(audience)
+        {
+        case Resource: return "Resource";
+        case Map:      return "Map";
+        case Script:   return "Script";
+        case GL:       return "GL";
+        case Audio:    return "Audio";
+        case Input:    return "Input";
+        case Network:  return "Network";
+        case Dev:      return "Dev";
+        default:       return "";
+        }
+    }
+
+    static Audience textToAudience(String text)
+    {
+        for(int i = 16; i < 32; ++i)
+        {
+            if(!audienceToText(Audience(1 << i)).compareWithoutCase(text))
+                return Audience(1 << i);
+        }
+        throw de::Error("Log::textToAudience", "'" + text + "' is not a valid log audience");
+    }
+
+    /// Importance level of the log entry.
     enum Level
     {
         /**
-         * Trace messages are intended for low-level debugging. They should be used
-         * to log which methods are entered and exited, and mark certain points within
-         * methods. Intended only for developers and debug builds.
+         * Verbose messages should be used for logging additional/supplementary information. All
+         * verbose messages can be safely ignored.
          */
-        TRACE = 0,
+        XVerbose = 1,
+        Verbose = 2,
 
         /**
-         * Debug messages are intended for normal debugging. They should be enabled
-         * only in debug builds. An example of a debug message might be a printout of
-         * a ZIP archive's file count and size once an archive has been successfully
-         * opened. Intended only for developers and debug builds.
+         * The base level: normal log entries.
          */
-        DEBUG = 1,
+        Message = 3,
 
         /**
-         * Verbose messages should be used to log technical information that is only
-         * of interest to advanced users. An example of a verbose message could be
-         * the summary of all the defined object types during the launch of a game.
-         * Verbose messages should not be used for anything that produces a large
-         * number of log entries, such as an entry about reading the contents of a
-         * file within a ZIP archive (which would be suitable for the DEBUG level).
+         * Important messages are intended for situations that are particularly noteworthy. They
+         * will not cause an alert to be raised, but the information is deemed particularly
+         * valuable.
          */
-        VERBOSE = 2,
+        Important = 4,
 
         /**
-         * Normal log entries are intended for regular users. An example: message about
-         * which map is being loaded.
+         * Warning messages are reserved for error situations that were automatically recovered
+         * from. A warning might be logged for example when the expected resource could not be
+         * found, and a fallback resource was used instead. Warnings will cause an alert to be
+         * raised so that the target audience is aware of the problem.
          */
-        MESSAGE = 3,
+        Warning = 5,
 
         /**
-         * Info messages are intended for situations that are particularly noteworthy.
-         * An info message should be used for instance when a script has been stopped
-         * because of an uncaught exception occurred during its execution.
+         * Error messages are intended for errors that could not be (fully) recovered from. The
+         * error is grave enough to possibly cause the shutting down of the current game, however
+         * the engine can still remain running. Will cause an alert to be raised so that the
+         * target audience is aware of the problem.
          */
-        INFO = 4,
+        Error = 6,
 
         /**
-         * Warning messages are reserved for recoverable error situations. A warning
-         * might be logged for example when the expected resource could not be found,
-         * and a fallback resource was used instead.
+         * Critical messages are intended for fatal errors that cause the engine to be shut down.
          */
-        WARNING = 5,
+        Critical = 7,
 
-        /**
-         * Error messages are intended for nonrecoverable errors. The error is grave
-         * enough to cause the shutting down of the current game, but the engine can
-         * still remain running.
-         */
-        ERROR = 6,
+        MAX_LOG_LEVELS,
+        LOWEST_LOG_LEVEL = XVerbose,
 
-        /**
-         * Critical messages are intended for fatal errors that cause the engine to be
-         * shut down.
-         */
-        CRITICAL = 7,
-
-        MAX_LOG_LEVELS
-    };
+        LevelMask = 0x7
+    };   
 
     static String levelToText(Level level)
     {
         switch(level)
         {
-        case TRACE:     return "TRACE";
-        case DEBUG:     return "DEBUG";
-        case VERBOSE:   return "VERBOSE";
-        case MESSAGE:   return "MESSAGE";
-        case INFO:      return "INFO";
-        case WARNING:   return "WARNING";
-        case ERROR:     return "ERROR";
-        case CRITICAL:  return "CRITICAL";
+        case XVerbose:  return "XVerbose";
+        case Verbose:   return "Verbose";
+        case Message:   return "Message";
+        case Important: return "Important";
+        case Warning:   return "Warning";
+        case Error:     return "Error";
+        case Critical:  return "Critical";
         default:        return "";
         }
     }
 
     static Level textToLevel(String text)
     {
-        for(int i = TRACE; i < MAX_LOG_LEVELS; ++i)
+        for(int i = XVerbose; i < MAX_LOG_LEVELS; ++i)
         {
             if(!levelToText(Level(i)).compareWithoutCase(text))
                 return Level(i);
         }
-        throw Error("Log::textToLevel", "'" + text + "' is not a valid log level");
+        throw de::Error("Log::textToLevel", "'" + text + "' is not a valid log level");
     }
 
     /**
@@ -202,9 +317,9 @@ public:
         DENG2_ERROR(TypeError);
 
         enum Type {
-            INTEGER,
-            FLOATING_POINT,
-            STRING
+            IntegerArgument,
+            FloatingPointArgument,
+            StringArgument
         };
 
         /**
@@ -234,17 +349,17 @@ public:
         };
 
     public:
-        Arg()                    : _type(INTEGER)        { _data.intValue    = 0; }
-        Arg(dint i)              : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(duint i)             : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(long int i)          : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(long unsigned int i) : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(duint64 i)           : _type(INTEGER)        { _data.intValue    = dint64(i); }
-        Arg(dint64 i)            : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(ddouble d)           : _type(FLOATING_POINT) { _data.floatValue  = d; }
-        Arg(void const *p)       : _type(INTEGER)        { _data.intValue    = dint64(p); }
-        Arg(char const *s)       : _type(STRING)         { _data.stringValue = new String(s); }
-        Arg(String const &s)     : _type(STRING)         { _data.stringValue = new String(s.data(), s.size()); }
+        Arg()                    : _type(IntegerArgument)       { _data.intValue    = 0; }
+        Arg(dint i)              : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(duint i)             : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(long int i)          : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(long unsigned int i) : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(duint64 i)           : _type(IntegerArgument)       { _data.intValue    = dint64(i); }
+        Arg(dint64 i)            : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(ddouble d)           : _type(FloatingPointArgument) { _data.floatValue  = d; }
+        Arg(void const *p)       : _type(IntegerArgument)       { _data.intValue    = dint64(p); }
+        Arg(char const *s)       : _type(StringArgument)        { _data.stringValue = new String(s); }
+        Arg(String const &s)     : _type(StringArgument)        { _data.stringValue = new String(s.data(), s.size()); }
 
         Arg(Base const &arg);
         Arg(Arg const &other);
@@ -253,15 +368,15 @@ public:
 
         inline Type type() const { return _type; }
         inline dint64 intValue() const {
-            DENG2_ASSERT(_type == INTEGER);
+            DENG2_ASSERT(_type == IntegerArgument);
             return _data.intValue;
         }
         inline ddouble floatValue() const {
-            DENG2_ASSERT(_type == FLOATING_POINT);
+            DENG2_ASSERT(_type == FloatingPointArgument);
             return _data.floatValue;
         }
         inline QString stringValue() const {
-            DENG2_ASSERT(_type == STRING);
+            DENG2_ASSERT(_type == StringArgument);
             return *_data.stringValue;
         }
 
@@ -320,7 +435,7 @@ public:
      */
     LogEntry();
 
-    LogEntry(Level level, String const &section, int sectionDepth, String const &format, Args args);
+    LogEntry(duint32 levelAndAudience, String const &section, int sectionDepth, String const &format, Args args);
 
     /**
      * Copy constructor.
@@ -337,7 +452,9 @@ public:
     /// Returns the timestamp of the entry.
     Time when() const { return _when; }
 
-    Level level() const { return _level; }
+    inline duint32 audience() const { return _levelAudience & AudienceMask; }
+
+    inline Level level() const { return Level(_levelAudience & LevelMask); }
 
     /// Returns a reference to the entry's section part. Reference is valid
     /// for the lifetime of the entry.
@@ -367,7 +484,7 @@ private:
 
 private:
     Time _when;
-    Level _level;
+    duint32 _levelAudience;
     String _section;
     int _sectionDepth;
     String _format;
@@ -431,7 +548,7 @@ public:
     void endSection(char const *name);
 
     /**
-     * Creates a new log entry with the default (MESSAGE) level.
+     * Creates a new log entry with the default (Message) level, targeted to the end-user.
      *
      * @param format     Format template of the entry.
      * @param arguments  List of arguments. The entry is given ownership of
@@ -442,12 +559,12 @@ public:
     /**
      * Creates a new log entry with the specified log entry level.
      *
-     * @param level      Level of the entry.
-     * @param format     Format template of the entry.
-     * @param arguments  List of arguments. The entry is given ownership of
-     *                   each Arg instance.
+     * @param levelAndAudience  Level of the entry and target audience bits.
+     * @param format            Format template of the entry.
+     * @param arguments         List of arguments. The entry is given ownership of
+     *                          each Arg instance.
      */
-    LogEntry &enter(LogEntry::Level level, String const &format, LogEntry::Args arguments = LogEntry::Args());
+    LogEntry &enter(duint32 levelAndAudience, String const &format, LogEntry::Args arguments = LogEntry::Args());
 
 public:
     /**
@@ -477,7 +594,7 @@ private:
 class DENG2_PUBLIC LogEntryStager
 {
 public:
-    LogEntryStager(LogEntry::Level level, String const &format);
+    LogEntryStager(duint32 levelAndAudience, String const &format);
 
     /// Appends a new argument to the entry.
     template <typename ValueType>
@@ -498,7 +615,7 @@ public:
 
 private:
     bool _disabled;
-    LogEntry::Level _level;
+    duint32 _level;
     String _format;
     LogEntry::Args _args;
 };

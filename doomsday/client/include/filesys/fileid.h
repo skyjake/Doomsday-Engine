@@ -78,7 +78,7 @@ public:
     String asText() const;
 
     // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
+    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
 
     /// @return Md5hash for this FileId.
     Md5Hash const& md5() const { return md5_; }

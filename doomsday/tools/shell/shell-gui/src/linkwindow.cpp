@@ -91,7 +91,7 @@ DENG2_PIMPL(LinkWindow)
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
 #ifdef _DEBUG
-        logBuffer.enable(LogEntry::DEBUG);
+        logBuffer.enable(LogEntry::Verbose);
 #endif
     }
 
@@ -482,7 +482,7 @@ void LinkWindow::sendCommandToServer(de::String command)
     if(d->link)
     {
         // Echo the command locally.
-        LogEntry *e = new LogEntry(LogEntry::INFO, "", 0, ">",
+        LogEntry *e = new LogEntry(LogEntry::Important, "", 0, ">",
                                    LogEntry::Args() << new LogEntry::Arg(command));
         d->logBuffer.add(e);
 

@@ -64,7 +64,7 @@ DENG2_PIMPL_NOREF(LogBuffer)
     Sinks sinks;
 
     Instance(duint maxEntryCount)
-        : enabledOverLevel(LogEntry::MESSAGE),
+        : enabledOverLevel(LogEntry::Message),
           maxEntryCount(maxEntryCount),
           useStandardOutput(true),
           flushingEnabled(true),
@@ -323,7 +323,7 @@ LogBuffer &LogBuffer::appBuffer()
     return *_appBuffer;
 }
 
-bool LogBuffer::isAppBufferAvailable()
+bool LogBuffer::appBufferExists()
 {
     return _appBuffer != 0;
 }

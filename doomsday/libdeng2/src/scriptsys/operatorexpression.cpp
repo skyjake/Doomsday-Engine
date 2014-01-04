@@ -217,7 +217,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
         case INDEX:
         {
             /*
-            LOG_DEV_TRACE("INDEX: types %s [ %s ] byref:%b",
+            LOG_DEV_TRACE_DEBUGONLY("INDEX: types %s [ %s ] byref:%b",
                           DENG2_TYPE_NAME(*leftValue) << DENG2_TYPE_NAME(*rightValue)
                           << flags().testFlag(ByReference));
                           */

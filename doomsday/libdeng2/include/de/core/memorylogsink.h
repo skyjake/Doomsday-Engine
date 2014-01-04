@@ -32,7 +32,7 @@ namespace de {
 class DENG2_PUBLIC MemoryLogSink : public LogSink, public Lockable
 {
 public:
-    MemoryLogSink(LogEntry::Level minimumLevel = LogEntry::DEBUG);
+    MemoryLogSink(LogEntry::Level minimumLevel = LogEntry::XVerbose);
     ~MemoryLogSink();
 
     LogSink &operator << (LogEntry const &entry);

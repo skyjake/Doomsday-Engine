@@ -55,10 +55,10 @@ bool LogSink::willAccept(LogEntry const &entry) const
         return false;
 
     case OnlyNormalEntries:
-        return entry.level() < LogEntry::WARNING;
+        return entry.level() < LogEntry::Warning;
 
     case OnlyWarningEntries:
-        return entry.level() >= LogEntry::WARNING;
+        return entry.level() >= LogEntry::Warning;
     }
     return false;
 }

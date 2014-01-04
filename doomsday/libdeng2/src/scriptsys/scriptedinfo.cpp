@@ -135,7 +135,7 @@ DENG2_PIMPL(ScriptedInfo)
             ns.add(varName.concatenateMember("__inherit__")) =
                     new TextValue(targetName);
 
-            LOG_DEV_TRACE("setting __inherit__ of %s %s (%p) to %s",
+            LOG_DEV_TRACE_DEBUGONLY("setting __inherit__ of %s %s (%p) to %s",
                           block.blockType() << varName << &block << targetName);
 
             DENG2_ASSERT(!varName.isEmpty());

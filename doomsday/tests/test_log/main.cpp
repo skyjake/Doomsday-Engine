@@ -31,16 +31,16 @@ int main(int argc, char **argv)
         TextApp app(argc, argv);
         app.initSubsystems(App::DisablePlugins);
 
-        for(int i = 0; i < LogEntry::MAX_LOG_LEVELS; ++i)
+        for(int i = LogEntry::LOWEST_LOG_LEVEL; i < LogEntry::MAX_LOG_LEVELS; ++i)
         {
             LogEntry::Level level = LogEntry::Level(i);
             LogBuffer::appBuffer().enable(level);
             LOG_AT_LEVEL(level, "Enabled level ") << LogEntry::levelToText(level);
 
-            for(int k = 0; k < LogEntry::MAX_LOG_LEVELS; ++k)
+            for(int k = LogEntry::LOWEST_LOG_LEVEL; k < LogEntry::MAX_LOG_LEVELS; ++k)
             {
                 LogEntry::Level other = LogEntry::Level(k);
-                LOG_AT_LEVEL(other, "- (currently enabled %8s) entry at level %8s: visible: %b")
+                LOG_AT_LEVEL(other, "- (currently enabled %9s) entry at level %9s: visible: %b")
                         << LogEntry::levelToText(level)
                         << LogEntry::levelToText(other)
                         << LogBuffer::appBuffer().isEnabled(other);

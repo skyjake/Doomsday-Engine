@@ -342,7 +342,7 @@ public:
     void operator << (Reader &from);
 
     // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
+    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
     String asText() const { return asText("", 0); }
 
     // Observes Variable deletion.

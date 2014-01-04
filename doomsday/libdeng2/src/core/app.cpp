@@ -180,11 +180,7 @@ App::App(NativePath const &appFilePath, QStringList args)
     d->logBuffer.enableFlushing(false);
 
     // Set the log message level.
-#ifdef DENG2_DEBUG
-    LogEntry::Level level = LogEntry::DEBUG;
-#else
-    LogEntry::Level level = LogEntry::MESSAGE;
-#endif
+    LogEntry::Level level = LogEntry::Message;
     try
     {
         int pos;
@@ -198,7 +194,7 @@ App::App(NativePath const &appFilePath, QStringList args)
         qWarning("%s", er.asText().toLatin1().constData());
     }
     // Aliases have not been defined at this point.
-    level = de::max(LogEntry::TRACE,
+    level = de::max(LogEntry::XVerbose,
                     LogEntry::Level(level
                                     - d->cmdLine.has("-verbose")
                                     - d->cmdLine.has("-v")));

@@ -88,7 +88,7 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
                 Feed *feed = (*i)->newSubFeed(subFolder->name());
                 if(!feed) continue; // Check next one instead.
 
-                LOG_DEV_TRACE("Creating subfeed \"%s\" from %s",
+                LOG_DEV_TRACE_DEBUGONLY("Creating subfeed \"%s\" from %s",
                               subFolder->name() << (*i)->description());
 
                 subFolder->attach(feed);

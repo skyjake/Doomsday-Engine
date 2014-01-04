@@ -449,7 +449,9 @@ enum ProtocolVersion {
     DENG2_PROTOCOL_1_10_0 = 0,
     DENG2_PROTOCOL_1_11_0_BUILD_926 = 1, // Time serilization changed
     DENG2_PROTOCOL_1_11_0 = 1,
-    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_11_0
+    DENG2_PROTOCOL_1_14_0_BUILD_1099 = 2, // LogEntry serialization changed
+    DENG2_PROTOCOL_1_14_0 = 2,
+    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_1_14_0
 };
 
 //@{

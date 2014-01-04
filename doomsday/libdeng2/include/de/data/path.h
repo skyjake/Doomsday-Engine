@@ -406,7 +406,7 @@ public:
     }
 
     // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
+    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
     String asText() const {
         return toString();
     }

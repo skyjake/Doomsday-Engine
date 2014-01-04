@@ -144,7 +144,7 @@ ShellApp::ShellApp(int &argc, char **argv)
     buf.setMaxEntryCount(50); // buffered here rather than appBuffer
     buf.addSink(d->log->logSink());
 #ifdef _DEBUG
-    buf.enable(LogEntry::DEBUG);
+    buf.enable(LogEntry::Verbose);
 #endif
 
     QStringList args = arguments();

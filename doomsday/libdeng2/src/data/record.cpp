@@ -161,7 +161,7 @@ DENG2_PIMPL(Record)
                 duint32 oldTargetId = value->record()->d->oldUniqueId;
                 if(refMap.contains(oldTargetId))
                 {
-                    LOG_DEV_TRACE("RecordValue %p restored to reference record %i (%p)",
+                    LOG_DEV_TRACE_DEBUGONLY("RecordValue %p restored to reference record %i (%p)",
                                   value << oldTargetId << refMap[oldTargetId]);
 
                     // Relink the value to its target.
@@ -527,7 +527,7 @@ void Record::variableBeingDeleted(Variable &variable)
 {
     DENG2_ASSERT(d->findMemberByPath(variable.name()) != 0);
 
-    LOG_DEV_TRACE("Variable %p deleted, removing from Record %p", &variable << this);
+    LOG_DEV_TRACE_DEBUGONLY("Variable %p deleted, removing from Record %p", &variable << this);
 
     // Remove from our index.
     d->members.remove(variable.name());
