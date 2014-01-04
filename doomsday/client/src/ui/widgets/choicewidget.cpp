@@ -80,6 +80,11 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         updateStyle();
     }
 
+    ~Instance()
+    {
+        choices->items().audienceForRemoval -= this;
+    }
+
     void updateStyle()
     {
         // Popup background color.

@@ -174,6 +174,13 @@ DENG2_PIMPL(MenuWidget)
         setContext(&defaultItems);
     }
 
+    ~Instance()
+    {
+        // Clear the data model first, so possible sub-widgets are deleted at the right time.
+        // Note that we can't clear an external data model.
+        defaultItems.clear();
+    }
+
     void setContext(Data const *ctx)
     {
         if(items)
