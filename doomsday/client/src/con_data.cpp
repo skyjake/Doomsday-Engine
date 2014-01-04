@@ -1040,14 +1040,13 @@ void Con_AddCommandList(ccmdtemplate_t const* cmdList)
     }
 }
 
-ccmd_t* Con_FindCommand(char const* name)
+ccmd_t *Con_FindCommand(char const *name)
 {
     DENG_ASSERT(inited);
     /// @todo Use a faster than O(n) linear search.
     if(name && name[0])
     {
-        ccmd_t* ccmd;
-        for(ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
+        for(ccmd_t *ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
         {
             if(qstricmp(name, ccmd->name)) continue;
 
@@ -1059,17 +1058,46 @@ ccmd_t* Con_FindCommand(char const* name)
     return 0;
 }
 
-ccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args)
+/**
+ * Outputs the usage information for the given ccmd to the console.
+ *
+ * @param ccmd          The ccmd to print the usage info for.
+ * @param allOverloads  @c true= print usage info for all overloaded variants.
+ *                      Otherwise only the info for @a ccmd.
+ */
+static void printCommandUsage(ccmd_t *ccmd, bool allOverloads = true)
+{
+    DENG_ASSERT(inited);
+    if(!ccmd) return;
+
+    if(allOverloads)
+    {
+        // Locate the head of the overload list.
+        while(ccmd->prevOverload) { ccmd = ccmd->prevOverload; }
+    }
+
+    LOG_MSG(_E(D) "Usage:");
+    LOG_MSG("  " _E(>) + Con_StyledCommandUsage(ccmd));
+
+    if(allOverloads)
+    {
+        while((ccmd = ccmd->nextOverload))
+        {
+            LOG_MSG("  " _E(>) + Con_StyledCommandUsage(ccmd));
+        }
+    }
+}
+
+ccmd_t *Con_FindCommandMatchArgs(cmdargs_t *args)
 {
     DENG_ASSERT(inited);
 
     if(!args) return 0;
 
-    ccmd_t* ccmd;
-    if((ccmd = Con_FindCommand(args->argv[0])) != 0)
+    if(ccmd_t *ccmd = Con_FindCommand(args->argv[0]))
     {
         // Check each variant.
-        ccmd_t* variant = ccmd;
+        ccmd_t *variant = ccmd;
         do
         {
             boolean invalidArgs = false;
@@ -1091,18 +1119,18 @@ ccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args)
                 {
                     // Presently we only validate upto the minimum number of args.
                     /// @todo Validate non-required args.
-                    for(int j = 0; j < variant->minArgs && !invalidArgs; ++j)
+                    for(int i = 0; i < variant->minArgs && !invalidArgs; ++i)
                     {
-                        switch(variant->args[j])
+                        switch(variant->args[i])
                         {
                         case CVT_BYTE:
-                            invalidArgs = !M_IsStringValidByte(args->argv[j+1]);
+                            invalidArgs = !M_IsStringValidByte(args->argv[i+1]);
                             break;
                         case CVT_INT:
-                            invalidArgs = !M_IsStringValidInt(args->argv[j+1]);
+                            invalidArgs = !M_IsStringValidInt(args->argv[i+1]);
                             break;
                         case CVT_FLOAT:
-                            invalidArgs = !M_IsStringValidFloat(args->argv[j+1]);
+                            invalidArgs = !M_IsStringValidFloat(args->argv[i+1]);
                             break;
                         default:
                             break;
@@ -1112,12 +1140,13 @@ ccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args)
             }
 
             if(!invalidArgs)
+            {
                 return variant; // This is the one!
-
+            }
         } while((variant = variant->nextOverload) != 0);
 
         // Perhaps the user needs some help.
-        Con_PrintCCmdUsage(ccmd, false);
+        printCommandUsage(ccmd);
     }
 
     // No command found, or none with matching arguments.
@@ -1137,53 +1166,36 @@ boolean Con_IsValidCommand(char const* name)
     return (Con_FindAlias(name) != 0);
 }
 
-void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo)
+String Con_StyledCommandUsage(ccmd_t *ccmd)
 {
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(ccmd != 0);
 
-    if(!ccmd || (ccmd->minArgs == -1 && ccmd->maxArgs == -1))
-        return;
+    if(ccmd->minArgs == -1 && ccmd->maxArgs == -1)
+        return String();
 
     // Print the expected form for this ccmd.
-    Con_Printf("Usage: %s", ccmd->name);
+    String argText;
     for(int i = 0; i < ccmd->minArgs; ++i)
     {
         switch(ccmd->args[i])
         {
-        case CVT_BYTE:      Con_Printf(" (byte)");      break;
-        case CVT_INT:       Con_Printf(" (int)");       break;
-        case CVT_FLOAT:     Con_Printf(" (float)");     break;
-        case CVT_CHARPTR:   Con_Printf(" (string)");    break;
+        case CVT_BYTE:    argText += " (byte)";   break;
+        case CVT_INT:     argText += " (int)";    break;
+        case CVT_FLOAT:   argText += " (float)";  break;
+        case CVT_CHARPTR: argText += " (string)"; break;
+
         default: break;
         }
     }
     if(ccmd->maxArgs == -1)
-        Con_Printf(" ...");
-    Con_Printf("\n");
-
-    if(printInfo)
     {
-        // Check for extra info about this ccmd's usage.
-        char const *info = DH_GetString(DH_Find(ccmd->name), HST_INFO);
-        if(info)
-        {
-            // Lets indent for neatness.
-            size_t const infoLen = strlen(info);
-            char* line, *infoCopy, *infoCopyBuf = (char*) M_Malloc(infoLen+1);
-
-            memcpy(infoCopyBuf, info, infoLen+1);
-
-            infoCopy = infoCopyBuf;
-            while(*(line = M_StrTok(&infoCopy, "\n")))
-            {
-                Con_FPrintf(CPF_LIGHT, "  %s\n", line);
-            }
-            M_Free(infoCopyBuf);
-        }
+        argText = " ...";
     }
+
+    return _E(b) + String(ccmd->name) + _E(.) _E(l) + argText + _E(.);
 }
 
-calias_t* Con_FindAlias(char const* name)
+calias_t *Con_FindAlias(char const *name)
 {
     DENG_ASSERT(inited);
 
@@ -1454,9 +1466,9 @@ void Con_ShutdownDatabases(void)
     inited = false;
 }
 
-static int aproposPrinter(knownword_t const* word, void* matching)
+static int aproposPrinter(knownword_t const *word, void *matching)
 {
-    AutoStr* text = textForKnownWord(word);
+    AutoStr *text = textForKnownWord(word);
 
     // See if 'matching' is anywhere in the known word.
     if(strcasestr(Str_Text(text), (const char*)matching))
@@ -1475,7 +1487,7 @@ static int aproposPrinter(knownword_t const* word, void* matching)
         String tmp;
         if(word->type == WT_CCMD || word->type == WT_CVAR)
         {
-            char const* desc = DH_GetString(DH_Find(Str_Text(text)), HST_DESCRIPTION);
+            char const *desc = DH_GetString(DH_Find(Str_Text(text)), HST_DESCRIPTION);
             if(desc)
             {
                 tmp = desc;
@@ -1502,89 +1514,63 @@ static void printApropos(char const *matching)
 
 static void printHelpAbout(char const *query)
 {
-    uint found = 0;
-
     // Try the console commands first.
     if(ccmd_t *ccmd = Con_FindCommand(query))
     {
-        HelpId help = DH_Find(ccmd->name);
-        char const *description = DH_GetString(help, HST_DESCRIPTION);
-        char const *info = DH_GetString(help, HST_INFO);
+        LOG_MSG(_E(b) "%s" _E(.) " (Command)") << ccmd->name;
 
-        if(description)
+        HelpId help = DH_Find(ccmd->name);
+        if(char const *description = DH_GetString(help, HST_DESCRIPTION))
         {
-            Con_Printf("%s\n", description);
+            LOG_MSG("") << description;
         }
 
-        // Print usage info for each variant.
-        do
-        {
-            Con_PrintCCmdUsage(ccmd, false);
-            found += 1;
-        } while((ccmd = ccmd->nextOverload));
+        printCommandUsage(ccmd); // For all overloaded variants.
 
         // Any extra info?
-        if(info)
+        if(char const *info = DH_GetString(help, HST_INFO))
         {
-            // Lets indent for neatness.
-            size_t const infoLen = strlen(info);
-            char *line, *infoCopy, *infoCopyBuf = (char *) M_Malloc(infoLen + 1);
-
-            std::memcpy(infoCopyBuf, info, infoLen+1);
-
-            infoCopy = infoCopyBuf;
-            while(*(line = M_StrTok(&infoCopy, "\n")))
-            {
-                Con_FPrintf(CPF_LIGHT, "  %s\n", line);
-            }
-            M_Free(infoCopyBuf);
+            LOG_MSG("  " _E(>) _E(l)) << info;
         }
+        return;
     }
 
-    if(!found) // Perhaps its a cvar then?
+    if(cvar_t *var = Con_FindVariable(query))
     {
-        if(cvar_t *var = Con_FindVariable(query))
+        AutoStr *path = CVar_ComposePath(var);
+        LOG_MSG(_E(b) "%s" _E(.) " (Variable)") << Str_Text(path);
+
+        HelpId help = DH_Find(Str_Text(path));
+        if(char const *description = DH_GetString(help, HST_DESCRIPTION))
         {
-            AutoStr *path = CVar_ComposePath(var);
-            char const *description = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION);
-            if(description)
-            {
-                Con_Printf("%s\n", description);
-                found = true;
-            }
+            LOG_MSG("") << description;
         }
+        return;
     }
 
-    if(!found) // Maybe an alias?
+    if(calias_t *calias = Con_FindAlias(query))
     {
-        if(calias_t *calias = Con_FindAlias(query))
-        {
-            Con_Printf("An alias for:\n%s\n", calias->command);
-            found = true;
-        }
+        LOG_MSG(_E(b) "%s" _E(.) " alias of:\n")
+                << calias->name << calias->command;
+        return;
     }
 
-    if(!found) // Perhaps a game?
+    // Perhaps a game?
+    try
     {
-        try
-        {
-            Game &game = App_Games().byIdentityKey(query);
-            Game::print(game, PGF_EVERYTHING);
-            found = true;
-        }
-        catch(Games::NotFoundError const&)
-        {} // Ignore this error.
+        Game &game = App_Games().byIdentityKey(query);
+        Game::print(game, PGF_EVERYTHING);
+        return;
     }
+    catch(Games::NotFoundError const &)
+    {} // Ignore this error.
 
-    if(!found) // Still not found?
-    {
-        Con_Printf("There is no help about '%s'.\n", query);
-    }
+    LOG_MSG("There is no help about '%s'.") << query;
 }
 
 D_CMD(HelpApropos)
 {
-    DENG_UNUSED(argc); DENG_UNUSED(src);
+    DENG2_UNUSED2(argc, src);
 
     printApropos(argv[1]);
     return true;
@@ -1592,13 +1578,14 @@ D_CMD(HelpApropos)
 
 D_CMD(HelpWhat)
 {
-    DENG_UNUSED(argc); DENG_UNUSED(src);
+    DENG2_UNUSED2(argc, src);
 
-    if(!stricmp(argv[1], "(what)"))
+    if(!String(argv[1]).compareWithoutCase("(what)"))
     {
-        Con_Printf("You've got to be kidding!\n");
+        LOG_MSG("You've got to be kidding!");
         return true;
     }
+
     printHelpAbout(argv[1]);
     return true;
 }

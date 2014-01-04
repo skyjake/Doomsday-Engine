@@ -336,13 +336,12 @@ de::String Con_GameAsStyledText(de::Game *game);
 de::String Con_AnnotatedConsoleTerms(QStringList terms);
 
 /**
- * Outputs the usage information for the given ccmd to the console if the
- * ccmd's usage is validated by Doomsday.
+ * Returns a rich formatted, textual representation of the specified console
+ * command's argument list, suitable for logging.
  *
- * @param ccmd  Ptr to the ccmd to print the usage info for.
- * @param printInfo  If @c true, print any additional info we have.
+ * @param ccmd  The console command to format usage infor for.
  */
-void Con_PrintCCmdUsage(ccmd_t *ccmd, boolean printInfo);
+de::String Con_StyledCommandUsage(ccmd_t *ccmd);
 
 /**
  * Collects all the known words of the console into a Lexicon.
