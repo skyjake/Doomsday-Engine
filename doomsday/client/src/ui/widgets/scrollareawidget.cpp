@@ -44,6 +44,7 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 
     Origin origin;
     bool pageKeysEnabled;
+    bool scrollingEnabled;
     Animation scrollOpacity;
     int scrollBarWidth;
     Rectanglef indicatorUv;
@@ -58,16 +59,17 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     GLUniform uColor;
 
     Instance(Public *i)
-        : Base(i),
-          origin(Top),
-          pageKeysEnabled(true),
-          scrollOpacity(0),
-          scrollBarWidth(0),
-          indicatorAnimating(false),
-          scrollBarColorId("accent"),
-          indicatorShown(false),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor    ("uColor",     GLUniform::Vec4)
+        : Base(i)
+        , origin(Top)
+        , pageKeysEnabled(true)
+        , scrollingEnabled(true)
+        , scrollOpacity(0)
+        , scrollBarWidth(0)
+        , indicatorAnimating(false)
+        , scrollBarColorId("accent")
+        , indicatorShown(false)
+        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uColor    ("uColor",     GLUniform::Vec4)
     {
         contentRule.setDebugName("ScrollArea-contentRule");
 
@@ -134,6 +136,7 @@ ScrollAreaWidget::ScrollAreaWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
     setBehavior(ChildHitClipping);
+    setBehavior(ChildVisibilityClipping); // enable clip-culling
 
     // Link the content rule into the widget's rectangle.
     d->contentRule.setInput(Rule::Left, rule().left() + margins().left() -
@@ -356,6 +359,11 @@ bool ScrollAreaWidget::isAtBottom() const
     return d->origin == Bottom && d->y->animation().target() == 0;
 }
 
+void ScrollAreaWidget::enableScrolling(bool enabled)
+{
+    d->scrollingEnabled = enabled;
+}
+
 void ScrollAreaWidget::enablePageKeys(bool enabled)
 {
     d->pageKeysEnabled = enabled;
@@ -369,7 +377,7 @@ void ScrollAreaWidget::enableIndicatorDraw(bool enabled)
 bool ScrollAreaWidget::handleEvent(Event const &event)
 {
     // Mouse wheel scrolling.
-    if(event.type() == Event::MouseWheel && hitTest(event))
+    if(d->scrollingEnabled && event.type() == Event::MouseWheel && hitTest(event))
     {
         MouseEvent const &mouse = event.as<MouseEvent>();
         if(mouse.wheelMotion() == MouseEvent::FineAngle)
@@ -383,7 +391,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
     }
 
     // Page key scrolling.
-    if(event.isKeyDown())
+    if(d->scrollingEnabled && event.isKeyDown())
     {
         KeyEvent const &ev = event.as<KeyEvent>();
 

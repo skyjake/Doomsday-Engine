@@ -43,6 +43,7 @@ public Font::RichFormat::IStyle
     Vector2f overrideImageSize;
     float imageScale;
     Vector4f imageColor;
+    int maxTextWidth;
 
     ConstantRule *width;
     ConstantRule *height;
@@ -55,6 +56,7 @@ public Font::RichFormat::IStyle
     ColorBank::Color dimmedColor;
     ColorBank::Color accentColor;
     ColorBank::Color dimAccentColor;
+    Font::RichFormat::IStyle const *richStyle;
 
     TextDrawable glText;
     mutable Vector2ui latestTextSize;
@@ -65,19 +67,22 @@ public Font::RichFormat::IStyle
     GLUniform uColor;
 
     Instance(Public *i)
-        : Base(i),
-          horizPolicy(Fixed), vertPolicy(Fixed),
-          alignMode(AlignByCombination),
-          align(AlignCenter),
-          textAlign(AlignCenter),
-          lineAlign(AlignCenter),
-          imageAlign(AlignCenter),
-          imageFit(OriginalAspectRatio | FitToSize),
-          imageScale(1),
-          imageColor(1, 1, 1, 1),
-          gapId("label.gap"),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor    ("uColor",     GLUniform::Vec4)
+        : Base(i)
+        , horizPolicy (Fixed)
+        , vertPolicy  (Fixed)
+        , alignMode   (AlignByCombination)
+        , align       (AlignCenter)
+        , textAlign   (AlignCenter)
+        , lineAlign   (AlignCenter)
+        , imageAlign  (AlignCenter)
+        , imageFit    (OriginalAspectRatio | FitToSize)
+        , imageScale  (1)
+        , imageColor  (1, 1, 1, 1)
+        , maxTextWidth(0)
+        , gapId       ("label.gap")
+        , richStyle   (0)
+        , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
+        , uColor      ("uColor",     GLUniform::Vec4)
     {
         width  = new ConstantRule(0);
         height = new ConstantRule(0);
@@ -135,11 +140,22 @@ public Font::RichFormat::IStyle
     void richStyleFormat(int contentStyle, float &sizeFactor, Font::RichFormat::Weight &fontWeight,
                          Font::RichFormat::Style &fontStyle, int &colorIndex) const
     {
-        return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        if(richStyle)
+        {
+            richStyle->richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        }
+        else
+        {
+            style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+        }
     }
 
     Font const *richStyleFont(Font::RichFormat::Style fontStyle) const
     {
+        if(richStyle)
+        {
+            return richStyle->richStyleFont(fontStyle);
+        }
         return style().richStyleFont(fontStyle);
     }
 
@@ -390,6 +406,11 @@ public Font::RichFormat::IStyle
                 w -= gap + imgSize.x;
             }
         }
+        // Apply an optional manual constraint to the text width.
+        if(maxTextWidth > 0)
+        {
+            return de::min(maxTextWidth, w);
+        }
         return w;
     }
 
@@ -512,6 +533,17 @@ void LabelWidget::setImageAlignment(Alignment const &imageAlign)
 void LabelWidget::setImageFit(ContentFit const &fit)
 {
     d->imageFit = fit;
+}
+
+void LabelWidget::setMaximumTextWidth(int pixels)
+{
+    d->maxTextWidth = pixels;
+    requestGeometry();
+}
+
+void LabelWidget::setTextStyle(Font::RichFormat::IStyle const *richStyle)
+{
+    d->richStyle = richStyle;
 }
 
 void LabelWidget::setOverrideImageSize(Vector2f const &size)

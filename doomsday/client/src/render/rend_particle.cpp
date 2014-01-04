@@ -137,24 +137,21 @@ static Path tryFindImage(String name)
 }
 
 // Try to load the texture.
-static byte loadParticleTexture(uint particleTex, bool silent)
+static byte loadParticleTexture(uint particleTex)
 {
     DENG_ASSERT(particleTex < MAX_PTC_TEXTURES);
 
     String particleImageName = String("Particle%1").arg(particleTex, 2, 10, QChar('0'));
     Path foundPath = tryFindImage(particleImageName);
     if(foundPath.isEmpty())
-    {
-        if(!silent)
-        {
-            LOG_WARNING("Failed locating image resource for \"%s\".") << particleImageName;
-        }
         return 0;
-    }
 
     image_t image;
     if(!GL_LoadImage(image, foundPath.toUtf8().constData()))
+    {
+        LOG_WARNING("Failed to load \"%s\"") << foundPath;
         return 0;
+    }
 
     // If 8-bit with no alpha, generate alpha automatically.
     if(image.pixelSize == 1)
@@ -206,13 +203,18 @@ void Rend_ParticleLoadExtraTextures()
     Rend_ParticleReleaseExtraTextures();
     if(!App_GameLoaded()) return;
 
-    bool reported = false;
+    QList<int> loaded;
     for(int i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
-        if(!loadParticleTexture(i, reported))
+        if(loadParticleTexture(i))
         {
-            reported = true;
+            loaded.append(i);
         }
+    }
+
+    if(!loaded.isEmpty())
+    {
+        LOG_INFO("Loaded textures for particle IDs: %s") << Rangei::contiguousRangesAsText(loaded);
     }
 }
 

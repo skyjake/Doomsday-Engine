@@ -162,6 +162,7 @@ DENG_GUI_PIMPL(PanelWidget)
 PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Instance(this))
 {
     setBehavior(ChildHitClipping);
+    setBehavior(ChildVisibilityClipping);
     hide();
 }
 

@@ -48,7 +48,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         area.add(mode = new CVarChoiceWidget("rend-vr-mode"));
         mode->items()
-                << new ChoiceItem("Mono", VR::MODE_MONO)
+                << new ChoiceItem("No stereo", VR::MODE_MONO)
                 << new ChoiceItem("Anaglyph (green/magenta)", VR::MODE_GREEN_MAGENTA)
                 << new ChoiceItem("Anaglyph (red/cyan)", VR::MODE_RED_CYAN)
                 << new ChoiceItem("Left eye only", VR::MODE_LEFT)
@@ -99,7 +99,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
 {
     heading().setText(tr("3D & VR Settings"));
 
-    LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Mode:"), &area());
+    LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Stereo Mode:"), &area());
     LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
     LabelWidget *ipdLabel      = LabelWidget::newWithText(tr("IPD (mm):"), &area());
     LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());

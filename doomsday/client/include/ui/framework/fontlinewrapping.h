@@ -31,7 +31,7 @@
  *
  * Supports indentation of lines, as marked in the RichFormat.
  *
- * @par Thread-Safety
+ * @par Thread-safety
  *
  * FontLineWrapping locks itself automatically when any of its methods are
  * being executed. Instances can be used from multiple threads.

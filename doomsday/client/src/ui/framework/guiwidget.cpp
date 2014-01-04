@@ -139,6 +139,38 @@ DENG2_OBSERVES(ui::Margins, Change)
         }
     }
 
+    /**
+     * Test if a clipped widget is contained within its ancestors' clip rectangles.
+     */
+    bool isClipCulled() const
+    {
+        bool wasClipped = false;
+        Rectanglei visibleArea = self.root().viewRule().recti();
+
+        for(Widget const *w = self.parentWidget(); w; w = w->parent())
+        {
+            if(!w->is<GuiWidget>()) continue;
+
+            // Does this ancestor use child clipping?
+            if(w->behavior().testFlag(ChildVisibilityClipping))
+            {
+                wasClipped = true;
+                visibleArea &= w->as<GuiWidget>().rule().recti();
+            }
+        }
+        if(!wasClipped) return false;
+
+        if(self.clipped())
+        {
+            int const CULL_SAFETY_WIDTH = 100; // avoid pop-in when scrolling
+
+            // Clipped widgets are guaranteed to be within their rectangle.
+            return !visibleArea.overlaps(self.rule().recti().expanded(CULL_SAFETY_WIDTH));
+        }
+        // Otherwise widgets may draw anywhere in the view.
+        return visibleArea.isNull();
+    }
+
     void initBlur()
     {
         if(blurInited) return;
@@ -521,7 +553,7 @@ void GuiWidget::update()
 
 void GuiWidget::draw()
 {
-    if(d->inited && !isHidden() && visibleOpacity() > 0)
+    if(d->inited && !isHidden() && visibleOpacity() > 0 && !d->isClipCulled())
     {
 #ifdef DENG2_DEBUG
         // Detect mistakes in GLState stack usage.

@@ -307,7 +307,7 @@ static bool SBE_Save(char const *name = 0)
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "SkipIf Not %s\n", Str_Text(App_CurrentGame().identityKey()));
+    fprintf(file, "SkipIf Not %s\n", App_CurrentGame().identityKey().toUtf8().constData());
 
     foreach(BiasSource *src, map.biasSources())
     {

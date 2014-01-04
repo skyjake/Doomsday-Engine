@@ -113,6 +113,13 @@ public:
     bool isAtBottom() const;
 
     /**
+     * Enables or disables scrolling. By default, scrolling is enabled.
+     *
+     * @param enabled  @c true to enable scrolling.
+     */
+    void enableScrolling(bool enabled);
+
+    /**
      * Enables or disables scrolling with Page Up/Down keys.
      *
      * @param enabled  @c true to enable Page Up/Down.

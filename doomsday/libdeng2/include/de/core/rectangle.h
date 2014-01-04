@@ -141,14 +141,19 @@ public:
         bottomRight = bottomRight.max(other.bottomRight);
         return *this;
     }
+    inline bool overlaps(RectangleType const &other) const {
+        return !(other.topLeft.x >= bottomRight.x ||
+                 other.topLeft.y >= bottomRight.y ||
+                 other.bottomRight.x <= topLeft.x ||
+                 other.bottomRight.y <= topLeft.y);
+    }
     RectangleType operator & (RectangleType const &other) const {
-        if(other.topLeft.x >= bottomRight.x ||
-           other.topLeft.y >= bottomRight.y ||
-           other.bottomRight.x <= topLeft.x ||
-           other.bottomRight.y <= topLeft.y) return RectangleType(); // disconnected
-
+        if(!overlaps(other)) return RectangleType(); // disconnected
         return RectangleType(topLeft.max(other.topLeft),
                              bottomRight.min(other.bottomRight));
+    }
+    RectangleType &operator &= (RectangleType const &other) {
+        return (*this = *this & other);
     }
     String asText() const {
         return "[" + topLeft.asText() + "->" + bottomRight.asText() +

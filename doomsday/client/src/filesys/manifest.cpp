@@ -1,4 +1,4 @@
-/** @file manifest.cpp Game Resource Manifest.
+/** @file manifest.cpp  Game resource manifest.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,26 +19,27 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_filesys.h"
+#include "filesys/manifest.h"
+
+#include "con_main.h"
+
+#include "api_filesys.h"
+#include "filesys/fs_main.h"
+#include "filesys/lumpindex.h"
+
 #include "resource/wad.h"
 #include "resource/zip.h"
-#include <de/Path>
 
-#include "filesys/manifest.h"
+#include <de/Path>
 
 using namespace de;
 
 DENG2_PIMPL(ResourceManifest)
 {
-    /// Class of resource.
     resourceclassid_t classId;
 
-    /// @ref fileFlags.
-    int flags;
-
-    /// Potential names for this resource. In precedence order - high (newest) to lowest.
-    QStringList names;
+    int flags;         ///< @ref fileFlags.
+    QStringList names; ///< Known names in precedence order.
 
     /// Vector of resource identifier keys (e.g., file or lump names).
     /// Used for identification purposes.
@@ -52,65 +53,57 @@ DENG2_PIMPL(ResourceManifest)
     /// Set during resource location.
     String foundPath;
 
-    Instance(Public *i, resourceclassid_t _rclass, int rflags) : Base(i),
-        classId(_rclass),
-        flags(rflags & ~FF_FOUND),
-        names(),
-        identityKeys(),
-        foundNameIndex(-1),
-        foundPath()
+    Instance(Public *i, resourceclassid_t rclass, int rflags)
+        : Base(i)
+        , classId(rclass)
+        , flags(rflags & ~FF_FOUND)
+        , names()
+        , identityKeys()
+        , foundNameIndex(-1)
+        , foundPath()
     {}
 };
 
-ResourceManifest::ResourceManifest(resourceclassid_t fClass, int fFlags, String *name)
-    : d(new Instance(this, fClass, fFlags))
+ResourceManifest::ResourceManifest(resourceclassid_t resClass, int fFlags, String *name)
+    : d(new Instance(this, resClass, fFlags))
 {
     if(name) addName(*name);
 }
 
-ResourceManifest &ResourceManifest::addName(String newName, bool *didAdd)
+void ResourceManifest::addName(String newName)
 {
+    if(newName.isEmpty()) return;
+
     // Is this name unique? We don't want duplicates.
-    if(newName.isEmpty() || d->names.contains(newName, Qt::CaseInsensitive))
+    if(!d->names.contains(newName, Qt::CaseInsensitive))
     {
-        if(didAdd) *didAdd = false;
-        return *this;
+        d->names.prepend(newName);
     }
-
-    // Add the new name.
-    d->names.prepend(newName);
-
-    if(didAdd) *didAdd = true;
-    return *this;
 }
 
-ResourceManifest &ResourceManifest::addIdentityKey(String newIdentityKey, bool *didAdd)
+void ResourceManifest::addIdentityKey(String newIdKey)
 {
+    if(newIdKey.isEmpty()) return;
+
     // Is this key unique? We don't want duplicates.
-    if(newIdentityKey.isEmpty() || d->identityKeys.contains(newIdentityKey, Qt::CaseInsensitive))
+    if(!d->identityKeys.contains(newIdKey, Qt::CaseInsensitive))
     {
-        if(didAdd) *didAdd = false;
-        return *this;
+        d->identityKeys.append(newIdKey);
     }
-
-    // Add the new key.
-    d->identityKeys.append(newIdentityKey);
-
-    if(didAdd) *didAdd = true;
-    return *this;
 }
 
-typedef enum lumpsizecondition_e {
+enum lumpsizecondition_t
+{
     LSCOND_NONE,
     LSCOND_EQUAL,
     LSCOND_GREATER_OR_EQUAL,
     LSCOND_LESS_OR_EQUAL
-} lumpsizecondition_t;
+};
 
 /**
  * Modifies the idKey so that the size condition is removed.
  */
-static void checkSizeConditionInIdentityKey(String& idKey, lumpsizecondition_t* pCond, size_t* pSize)
+static void checkSizeConditionInIdentityKey(String &idKey, lumpsizecondition_t *pCond, size_t *pSize)
 {
     DENG_ASSERT(pCond != 0);
     DENG_ASSERT(pSize != 0);
@@ -145,7 +138,7 @@ static void checkSizeConditionInIdentityKey(String& idKey, lumpsizecondition_t* 
     idKey.truncate(condPos);
 }
 
-static lumpnum_t lumpNumForIdentityKey(LumpIndex const& lumpIndex, String idKey)
+static lumpnum_t lumpNumForIdentityKey(LumpIndex const &lumpIndex, String idKey)
 {
     if(idKey.isEmpty()) return -1;
 
@@ -259,10 +252,10 @@ static bool validateZip(String const &filePath, QStringList const & /*identityKe
     return false;
 }
 
-ResourceManifest &ResourceManifest::locateFile()
+void ResourceManifest::locateFile()
 {
     // Already found?
-    if(d->flags & FF_FOUND) return *this;
+    if(d->flags & FF_FOUND) return;
 
     // Perform the search.
     int nameIndex = 0;
@@ -299,14 +292,12 @@ ResourceManifest &ResourceManifest::locateFile()
                 break;
             }
         }
-        catch(FS1::NotFoundError const&)
+        catch(FS1::NotFoundError const &)
         {} // Ignore this error.
     }
-
-    return *this;
 }
 
-ResourceManifest &ResourceManifest::forgetFile()
+void ResourceManifest::forgetFile()
 {
     if(d->flags & FF_FOUND)
     {
@@ -314,7 +305,6 @@ ResourceManifest &ResourceManifest::forgetFile()
         d->foundNameIndex = -1;
         d->flags &= ~FF_FOUND;
     }
-    return *this;
 }
 
 String const &ResourceManifest::resolvedPath(bool tryLocate)
@@ -344,22 +334,4 @@ QStringList const &ResourceManifest::identityKeys() const
 QStringList const &ResourceManifest::names() const
 {
     return d->names;
-}
-
-void ResourceManifest::consolePrint(ResourceManifest &manifest, bool showStatus)
-{
-    QByteArray names = manifest.names().join(";").toUtf8();
-    bool const resourceFound = !!(manifest.fileFlags() & FF_FOUND);
-
-    if(showStatus)
-        Con_Printf("%s", !resourceFound? " ! ":"   ");
-
-    Con_PrintPathList4(names.constData(), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
-
-    if(showStatus)
-    {
-        QByteArray foundPath = resourceFound? manifest.resolvedPath(false/*don't try to locate*/).toUtf8() : QByteArray("");
-        Con_Printf(" %s%s", !resourceFound? "- missing" : "- found ", F_PrettyPath(foundPath.constData()));
-    }
-    Con_Printf("\n");
 }

@@ -111,6 +111,7 @@ public ChildWidgetOrganizer::IFilter
         area = new ScrollAreaWidget("area");
 
         buttons = new MenuWidget("buttons");
+        buttons->margins().setTop("");
         buttons->setItems(buttonItems);
         buttons->items().audienceForAddition += this;
         buttons->items().audienceForRemoval += this;
@@ -119,6 +120,7 @@ public ChildWidgetOrganizer::IFilter
         buttons->organizer().setFilter(*this);
 
         extraButtons = new MenuWidget("extra");
+        extraButtons->margins().setTop("");
         extraButtons->setItems(buttonItems);
         extraButtons->items().audienceForAddition += this;
         extraButtons->items().audienceForRemoval += this;
@@ -160,11 +162,11 @@ public ChildWidgetOrganizer::IFilter
         }
 
         area->rule().setInput(Rule::Height, container->rule().height() -
-                              buttons->rule().height() + area->margins().bottom());
+                              buttons->rule().height() /*+ area->margins().height()*/);
 
         // Buttons below the area.
         buttons->rule()
-                .setInput(Rule::Top, area->rule().bottom() - area->margins().bottom()) // overlap margins
+                .setInput(Rule::Bottom, container->rule().bottom())
                 .setInput(Rule::Right, self.rule().right());
         extraButtons->rule()
                 .setInput(Rule::Top, buttons->rule().top())
@@ -180,8 +182,8 @@ public ChildWidgetOrganizer::IFilter
             area->rule().setInput(Rule::Height,
                                   container->rule().height()
                                   - heading->rule().height()
-                                  - buttons->rule().height()
-                                  + area->margins().bottom());
+                                  - buttons->rule().height()/*
+                                  + area->margins().bottom()*/);
         }
 
         container->add(area);
@@ -192,25 +194,34 @@ public ChildWidgetOrganizer::IFilter
 
     void updateContentHeight()
     {
+        // Determine suitable maximum height.
+        Rule const *maxHeight = holdRef(root().viewHeight());
+        if(self.openingDirection() == ui::Down)
+        {
+            changeRef(maxHeight, *maxHeight - self.anchorY() - style().rules().rule("gap"));
+        }
+
         // The container's height is limited by the height of the view. Normally
         // the dialog tries to show the full height of the content area.
         if(!flags.testFlag(WithHeading))
         {
             self.content().rule().setInput(Rule::Height,
-                                           OperatorRule::minimum(root().viewHeight(),
+                                           OperatorRule::minimum(*maxHeight,
                                                                  area->contentRule().height() +
-                                                                 area->margins().bottom() +
+                                                                 area->margins().height() +
                                                                  buttons->rule().height()));
         }
         else
         {
             self.content().rule().setInput(Rule::Height,
-                                           OperatorRule::minimum(root().viewHeight(),
+                                           OperatorRule::minimum(*maxHeight,
                                                                  heading->rule().height() +
                                                                  area->contentRule().height() +
-                                                                 area->margins().bottom() +
+                                                                 area->margins().height() +
                                                                  buttons->rule().height()));
         }
+
+        releaseRef(maxHeight);
     }
 
     bool isItemAccepted(ChildWidgetOrganizer const &organizer, ui::Data const &data, ui::Data::Pos pos) const
@@ -538,7 +549,8 @@ bool DialogWidget::handleEvent(Event const &event)
     }
     else
     {
-        if((event.type() == Event::MouseButton || event.type() == Event::MousePosition) &&
+        if((event.type() == Event::MouseButton || event.type() == Event::MousePosition ||
+            event.type() == Event::MouseWheel) &&
            hitTest(event))
         {
             // Non-modal dialogs eat mouse clicks/position inside the dialog.

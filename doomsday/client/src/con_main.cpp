@@ -1,4 +1,4 @@
-/**\file con_main.cpp
+/**\file con_main.cpp  Console subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,21 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Console Subsystem
- *
- * Should be completely redesigned.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #define DENG_NO_API_MACROS_CONSOLE
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <math.h>
-#include <ctype.h>
 
 #include "de_platform.h"
 
@@ -66,6 +52,12 @@
 #  include "ui/busyvisual.h"
 #  include "updater/downloaddialog.h"
 #endif
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstdarg>
+#include <cmath>
+#include <cctype>
 
 using namespace de;
 
@@ -225,9 +217,6 @@ void Con_Register(void)
     C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1);
     C_VAR_BYTE("con-snapback", &consoleSnapBackOnPrint, 0, 0, 1);
     */
-
-    // Games
-    C_CMD("listgames",      "",     ListGames);
 
     // File
     C_VAR_CHARPTR("file-startup", &startupFiles, 0, 0, 0);
@@ -1287,7 +1276,7 @@ static int completeWord(int mode)
               }
             case WT_GAME: {
                 Game *game = (Game *)(*match)->data;
-                foundWord = Str_Text(game->identityKey());
+                foundWord = game->identityKey().toUtf8().constData();
                 if(printCompletions)
                     Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", foundWord);
                 break;
@@ -1323,7 +1312,7 @@ static int completeWord(int mode)
             AutoStr* foundName = CVar_ComposePath((cvar_t*)completeWord->data);
             str = Str_Text(foundName);
             break; }
-        case WT_GAME: str = Str_Text(reinterpret_cast<Game *>(completeWord->data)->identityKey()); break;
+        case WT_GAME: str = reinterpret_cast<Game *>(completeWord->data)->identityKey().toUtf8().constData(); break;
         default:
             Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
             exit(1); // Unreachable.
@@ -2028,17 +2017,18 @@ static void conPrintf(int flags, const char* format, va_list args)
 
 void Con_Printf(const char* format, ...)
 {
-    va_list args;
     if(!ConsoleInited || ConsoleSilent)
         return;
     if(!format || !format[0])
         return;
+
+    va_list args;
     va_start(args, format);
     conPrintf(CPF_WHITE, format, args);
     va_end(args);
 }
 
-void Con_FPrintf(int flags, const char* format, ...)
+void Con_FPrintf(int flags, char const *format, ...)
 {
     if(!ConsoleInited || ConsoleSilent)
         return;
@@ -2046,59 +2036,10 @@ void Con_FPrintf(int flags, const char* format, ...)
     if(!format || !format[0])
         return;
 
-    {va_list args;
+    va_list args;
     va_start(args, format);
     conPrintf(flags, format, args);
-    va_end(args);}
-}
-
-static void printListPath(const ddstring_t* path, int flags, int index)
-{
-    assert(path);
-    if(flags & PPF_TRANSFORM_PATH_PRINTINDEX)
-        Con_Printf("%i: ", index);
-    Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(path)) : Str_Text(path));
-}
-
-void Con_PrintPathList4(const char* pathList, char delimiter, const char* separator, int flags)
-{
-    assert(pathList && pathList[0]);
-    {
-    const char* p = pathList;
-    ddstring_t path;
-    int n = 0;
-    Str_Init(&path);
-    while((p = Str_CopyDelim2(&path, p, delimiter, CDF_OMIT_DELIMITER)))
-    {
-        printListPath(&path, flags, n++);
-        if(separator && !(flags & PPF_MULTILINE) && p && p[0])
-            Con_Printf("%s", separator);
-        if(flags & PPF_MULTILINE)
-            Con_Printf("\n");
-    }
-    if(Str_Length(&path) != 0)
-    {
-        printListPath(&path, flags, n++);
-        if(flags & PPF_MULTILINE)
-            Con_Printf("\n");
-    }
-    Str_Free(&path);
-    }
-}
-
-void Con_PrintPathList3(const char* pathList, char delimiter, const char* separator)
-{
-    Con_PrintPathList4(pathList, delimiter, separator, DEFAULT_PRINTPATHFLAGS);
-}
-
-void Con_PrintPathList2(const char* pathList, char delimiter)
-{
-    Con_PrintPathList3(pathList, delimiter, " ");
-}
-
-void Con_PrintPathList(const char* pathList)
-{
-    Con_PrintPathList2(pathList, ';');
+    va_end(args);
 }
 
 #undef Con_Message

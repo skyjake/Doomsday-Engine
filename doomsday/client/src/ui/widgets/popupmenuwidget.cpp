@@ -105,8 +105,8 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
                 Vector2i cell = layout.widgetPos(widget);
                 DENG2_ASSERT(cell.x >= 0 && cell.y >= 0);
 
-                // We want items to be hittable throughout the width of the menu,
-                // however restrict this to the item's column if there are multiple.
+                // We want items to be hittable throughout the width of the menu, however
+                // restrict this to the item's column if there are multiple columns.
                 widget.hitRule()
                         .setInput(Rule::Left,  (!cell.x? self.rule().left() :
                                                          layout.columnLeft(cell.x)))

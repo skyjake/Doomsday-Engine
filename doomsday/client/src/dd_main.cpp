@@ -87,6 +87,9 @@
 #include <de/Log>
 #include <de/memory.h>
 #include <QStringList>
+#ifdef WIN32
+#  include <QSettings>
+#endif
 #ifdef UNIX
 #  include <ctype.h>
 #endif
@@ -320,6 +323,28 @@ FileTypes const &DD_FileTypes()
     return fileTypeMap;
 }
 
+static NativePath steamBasePath()
+{
+#ifdef WIN32
+    // The path to Steam can be queried from the registry.
+    {
+    QSettings st("HKEY_CURRENT_USER\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
+    String path = st.value("SteamPath").toString();
+    if(!path.isEmpty()) return path;
+    }
+
+    {
+    QSettings st("HKEY_LOCAL_MACHINE\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
+    String path = st.value("InstallPath").toString();
+    if(!path.isEmpty()) return path;
+    }
+#elif MACOSX
+    return NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
+#endif
+    /// @todo Where are steam apps located on Ubuntu?
+    return "";
+}
+
 static void createPackagesScheme()
 {
     FS1::Scheme &scheme = App_FileSystem().createScheme("Packages");
@@ -341,6 +366,34 @@ static void createPackagesScheme()
         LOG_INFO("Using paths.iwaddir: %s") << path.pretty();
     }
 #endif
+
+    // Add paths to games bought with/using Steam.
+    if(!CommandLine_Check("-nosteamapps"))
+    {
+        NativePath steamBase = steamBasePath();
+        if(!steamBase.isEmpty())
+        {
+            NativePath steamPath = steamBase / "SteamApps/common/";
+            LOG_INFO("Using SteamApps path: %s") << steamPath.pretty();
+
+            static String const appDirs[] =
+            {
+                "doom 2/base",
+                "final doom/base",
+                "heretic shadow of the serpent riders/base",
+                "hexen/base",
+                "hexen deathkings of the dark citadel/base",
+                "ultimate doom/base",
+                "DOOM 3 BFG Edition/base/wads",
+                ""
+            };
+            for(int i = 0; !appDirs[i].isEmpty(); ++i)
+            {
+                scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(steamPath / appDirs[i]),
+                                                SearchPath::NoDescend));
+            }
+        }
+    }
 
     // Add the path from the DOOMWADDIR environment variable.
     if(!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
@@ -454,19 +507,15 @@ void DD_CreateFileSystemSchemes()
 
 ResourceSystem &App_ResourceSystem()
 {
+    if(App::appExists())
+    {
 #ifdef __CLIENT__
-    if(ClientApp::haveApp())
-    {
         return ClientApp::resourceSystem();
-    }
 #endif
-
 #ifdef __SERVER__
-    if(ServerApp::haveApp())
-    {
         return ServerApp::resourceSystem();
-    }
 #endif
+    }
     throw Error("App_ResourceSystem", "App not yet initialized");
 }
 
@@ -1025,23 +1074,18 @@ static int DD_ActivateGameWorker(void *context)
 
     // Parse the game's main config file.
     // If a custom top-level config is specified; let it override.
-    ddstring_t const *configFileName = 0;
-    ddstring_t tmp;
+    Path configFile;
     if(CommandLine_CheckWith("-config", 1))
     {
-        Str_Init(&tmp); Str_Set(&tmp, CommandLine_Next());
-        F_FixSlashes(&tmp, &tmp);
-        configFileName = &tmp;
+        configFile = NativePath(CommandLine_NextAsPath()).withSeparators('/');
     }
     else
     {
-        configFileName = App_CurrentGame().mainConfig();
+        configFile = App_CurrentGame().mainConfig();
     }
 
-    LOG_MSG("Parsing primary config \"%s\"...") << F_PrettyPath(Str_Text(configFileName));
-    Con_ParseCommands2(Str_Text(configFileName), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
-    if(configFileName == &tmp)
-        Str_Free(&tmp);
+    LOG_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
+    Con_ParseCommands2(configFile.toUtf8().constData(), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
 
 #ifdef __CLIENT__
     if(App_GameLoaded())
@@ -1050,7 +1094,7 @@ static int DD_ActivateGameWorker(void *context)
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands2(Str_Text(App_CurrentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands2(App_CurrentGame().bindingConfig().toUtf8().constData(), CPCF_ALLOW_SAVE_BINDINGS);
     }
 #endif
 
@@ -1112,30 +1156,22 @@ static int DD_ActivateGameWorker(void *context)
 
 de::Games &App_Games()
 {
+    if(App::appExists())
+    {
 #ifdef __CLIENT__
-    if(ClientApp::haveApp())
-    {
         return ClientApp::games();
-    }
 #endif
-
 #ifdef __SERVER__
-    if(ServerApp::haveApp())
-    {
         return ServerApp::games();
-    }
 #endif
+    }
     throw Error("App_Games", "App not yet initialized");
 }
 
 boolean App_GameLoaded()
 {
-#ifdef __CLIENT__
-    if(!ClientApp::haveApp()) return false;
-#endif
-#ifdef __SERVER__
-    if(!ServerApp::haveApp()) return false;
-#endif
+    if(!App::appExists()) return false;
+
     return !App_CurrentGame().isNull();
 }
 
@@ -1148,9 +1184,9 @@ void DD_DestroyGames()
 
 static void populateGameInfo(GameInfo &info, de::Game &game)
 {
-    info.identityKey = Str_Text(game.identityKey());
-    info.title       = Str_Text(game.title());
-    info.author      = Str_Text(game.author());
+    info.identityKey = AutoStr_FromTextStd(game.identityKey().toUtf8().constData());
+    info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
+    info.author      = AutoStr_FromTextStd(game.author().toUtf8().constData());
 }
 
 /// @note Part of the Doomsday public API.
@@ -1262,7 +1298,7 @@ de::Game &App_CurrentGame()
 bool App_ChangeGame(Game &game, bool allowReload)
 {
 #ifdef __CLIENT__
-    DENG_ASSERT(ClientWindow::hasMain());
+    DENG_ASSERT(ClientWindow::mainExists());
 #endif
 
     //LOG_AS("App_ChangeGame");
@@ -1277,7 +1313,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
             if(App_GameLoaded())
             {
                 LOG_MSG("%s (%s) - already loaded.")
-                        << Str_Text(game.title()) << Str_Text(game.identityKey());
+                        << game.title() << game.identityKey();
             }
             return true;
         }
@@ -1417,7 +1453,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
     if(!game.isNull())
     {
-        LOG_VERBOSE("Selecting game '%s'...") << Str_Text(game.identityKey());
+        LOG_VERBOSE("Selecting game '%s'...") << game.identityKey();
     }
     else if(!isReload)
     {
@@ -2673,7 +2709,7 @@ D_CMD(Load)
             LOG_WARNING("Failed to locate all required startup resources:");
             Game::printFiles(game, FF_STARTUP);
             LOG_MSG("%s (%s) cannot be loaded.")
-                    << Str_Text(game.title()) << Str_Text(game.identityKey());
+                    << game.title() << game.identityKey();
             return true;
         }
 
@@ -2811,7 +2847,7 @@ D_CMD(Unload)
                 return App_ChangeGame(App_Games().nullGame());
             }
 
-            LOG_MSG("%s is not currently loaded.") << Str_Text(game.identityKey());
+            LOG_MSG("%s is not currently loaded.") << game.identityKey();
             return true;
         }
         catch(Games::NotFoundError const &)
@@ -2917,6 +2953,7 @@ static void consoleRegister()
     DD_RegisterLoop();
     F_Register();
     Con_Register();
+    Games::consoleRegister();
     DH_Register();
     S_Register();
 #ifdef __CLIENT__

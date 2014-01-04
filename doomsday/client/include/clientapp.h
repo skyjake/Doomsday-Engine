@@ -53,8 +53,15 @@ public:
     void preFrame();
     void postFrame();
 
+    /**
+     * Reports a new alert to the user.
+     *
+     * @param msg    Message to show. May contain style escapes.
+     * @param level  Importance of the message.
+     */
+    static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::MESSAGE);
+
 public:
-    static bool haveApp();
     static ClientApp &app();
     static Updater &updater();
     static SettingsRegister &audioSettings();    ///< @todo Belongs in AudioSystem.

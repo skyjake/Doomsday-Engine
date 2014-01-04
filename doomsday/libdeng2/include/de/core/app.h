@@ -127,6 +127,11 @@ public:
      */
     void removeSystem(System &system);
 
+    /**
+     * Determines if an instance of App currently exists.
+     */
+    static bool appExists();
+
     static App &app();
 
     /**

@@ -745,7 +745,7 @@ void NetSv_SendGameState(int flags, int to)
     str = Uri_Resolved(mapUri);
 #ifdef _DEBUG
     Con_Message("NetSv_SendGameState: Game setup: %s %s %s",
-                gameInfo.identityKey, Str_Text(str), gameConfigString);
+                Str_Text(gameInfo.identityKey), Str_Text(str), gameConfigString);
 #endif
 
     // Send an update to all the players in the game.
@@ -758,8 +758,8 @@ void NetSv_SendGameState(int flags, int to)
         Writer_WriteByte(writer, flags);
 
         // Game identity key.
-        Writer_WriteByte(writer, strlen(gameInfo.identityKey));
-        Writer_Write(writer, gameInfo.identityKey, strlen(gameInfo.identityKey));
+        Writer_WriteByte(writer, Str_Length(gameInfo.identityKey));
+        Writer_Write(writer, Str_Text(gameInfo.identityKey), Str_Length(gameInfo.identityKey));
 
         // The current map.
         Uri_Write(mapUri, writer);

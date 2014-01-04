@@ -117,7 +117,7 @@ DENG2_PIMPL(ServerSystem)
         if(!inited) return;
         inited = false;
 
-        if(ServerApp::haveApp())
+        if(ServerApp::appExists())
         {
             App_World().audienceForMapChange -= shellUsers;
         }

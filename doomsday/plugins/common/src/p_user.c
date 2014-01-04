@@ -1620,6 +1620,12 @@ void P_PlayerThinkLookYaw(player_t* player, timespan_t ticLength)
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return;
 
+    if(IS_CLIENT && playerNum != CONSOLEPLAYER)
+    {
+        // This is only for the local player.
+        return;
+    }
+
     // Turn the head?
     P_PlayerThinkHeadTurning(playerNum, ticLength);
 
@@ -1672,6 +1678,12 @@ void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
+
+    if(IS_CLIENT && playerNum != CONSOLEPLAYER)
+    {
+        // This is only for the local player.
+        return;
+    }
 
     // The absolute look pitch overrides CTL_LOOK.
     if(P_IsControlBound(playerNum, CTL_LOOK_PITCH))

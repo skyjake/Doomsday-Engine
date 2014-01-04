@@ -73,7 +73,7 @@ static AutoStr* composeSaveDir(void)
     { GameInfo gameInfo;
     if(DD_GameInfo(&gameInfo))
     {
-        Str_Appendf(dir, SAVEGAME_DEFAULT_DIR "/%s/", gameInfo.identityKey);
+        Str_Appendf(dir, SAVEGAME_DEFAULT_DIR "/%s/", Str_Text(gameInfo.identityKey));
         return dir;
     }}
 

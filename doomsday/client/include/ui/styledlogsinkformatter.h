@@ -28,7 +28,13 @@
 class StyledLogSinkFormatter : public de::LogSink::IFormatter
 {
 public:
+    StyledLogSinkFormatter();
+    StyledLogSinkFormatter(de::LogEntry::Flags const &formatFlags);
+
     Lines logEntryToTextLines(de::LogEntry const &entry);
+
+private:
+    de::LogEntry::Flags _format;
 };
 
 #endif // DENG_CLIENT_STYLEDLOGSINKFORMATTER_H

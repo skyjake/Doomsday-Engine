@@ -267,7 +267,7 @@ void *CanvasWindow::nativeHandle() const
     return reinterpret_cast<void *>(winId());
 }
 
-bool CanvasWindow::hasMain()
+bool CanvasWindow::mainExists()
 {
     return mainWindow != 0;
 }

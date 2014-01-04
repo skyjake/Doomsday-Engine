@@ -3617,7 +3617,7 @@ static AutoStr* composeScreenshotFileName(void)
         return 0; // Unreachable.
     }
 
-    name = Str_Appendf(AutoStr_NewStd(), "%s-", gameInfo.identityKey);
+    name = Str_Appendf(AutoStr_NewStd(), "%s-", Str_Text(gameInfo.identityKey));
     numPos = Str_Length(name);
     { int i;
     for(i = 0; i < 1e6; ++i) // Stop eventually...

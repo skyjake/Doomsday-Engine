@@ -241,6 +241,14 @@ DENG2_PIMPL(MenuWidget)
             lab->setSizePolicy(ui::Expand, ui::Expand);
             return lab;
         }
+        else if(item.semantics().testFlag(Item::ShownAsLabel))
+        {
+            LabelWidget *lab = new LabelWidget;
+            lab->setTextAlignment(ui::AlignRight);
+            lab->setTextLineAlignment(ui::AlignLeft);
+            lab->setSizePolicy(ui::Expand, ui::Expand);
+            return lab;
+        }
         else if(item.semantics().testFlag(Item::ShownAsToggle))
         {
             // We know how to present variable toggles.
@@ -270,6 +278,10 @@ DENG2_PIMPL(MenuWidget)
                 {
                     b.setAction(act->action()->duplicate());
                 }
+            }
+            else if(item.semantics().testFlag(Item::ShownAsLabel))
+            {
+                widget.as<LabelWidget>().setText(item.label());
             }
             else if(item.semantics().testFlag(Item::ShownAsToggle))
             {

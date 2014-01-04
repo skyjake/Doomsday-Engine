@@ -1495,7 +1495,7 @@ DEFFC(If)
     else if(!strnicmp(token, "mode:", 5))
     {
         if(App_GameLoaded())
-            val = !stricmp(token + 5, Str_Text(App_CurrentGame().identityKey()));
+            val = !de::String(token + 5).compareWithoutCase(App_CurrentGame().identityKey());
         else
             val = 0;
     }

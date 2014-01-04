@@ -73,6 +73,9 @@ public:
         /// No events will be dispatched to the children of the widget.
         DisableEventDispatchToChildren = 0x80,
 
+        /// Children of the widget should be clipped when drawing.
+        ChildVisibilityClipping = 0x100,
+
         DefaultBehavior = 0
     };
     Q_DECLARE_FLAGS(Behaviors, Behavior)

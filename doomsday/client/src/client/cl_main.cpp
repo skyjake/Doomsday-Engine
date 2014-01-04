@@ -102,20 +102,14 @@ void Cl_CleanUp()
     GL_SetFilter(false);
 }
 
-/**
- * Sends a hello packet.
- * PCL_HELLO2 includes the Game ID (16 chars).
- */
-void Cl_SendHello(void)
+void Cl_SendHello()
 {
-    char buf[256];
-
     Msg_Begin(PCL_HELLO2);
     Writer_WriteUInt32(msgWriter, clientID);
 
     // The game mode is included in the hello packet.
-    memset(buf, 0, sizeof(buf));
-    strncpy(buf, Str_Text(App_CurrentGame().identityKey()), sizeof(buf) - 1);
+    char buf[256]; zap(buf);
+    strncpy(buf, App_CurrentGame().identityKey().toUtf8().constData(), sizeof(buf) - 1);
 
 #ifdef _DEBUG
     Con_Message("Cl_SendHello: game mode = %s", buf);

@@ -336,11 +336,11 @@ void MPIUpdateServerInfo(ui_object_t *)
             "Errors may occur during game play.", info.loadedFilesCRC, myCrc);
 
     // Show IWAD warning?
-    if(strcmp(info.gameIdentityKey, Str_Text(App_CurrentGame().identityKey())))
+    if(de::String(info.gameIdentityKey).compare(App_CurrentGame().identityKey()))
     {
         UI_FlagGroup(ob_client, 5, UIF_DISABLED, false);
         sprintf(str_sinfo.warning, "Different game in use (you have %s).",
-                Str_Text(App_CurrentGame().identityKey()));
+                App_CurrentGame().identityKey().toUtf8().constData());
     }
     else if(!(lst_found.count >= 1 && lst_found.selection >= 0 &&
         lstit_found[lst_found.selection].data != -1 &&
@@ -457,7 +457,7 @@ static bool isServerSuitable(serverinfo_t const *info)
 {
     return info->canJoin &&
            info->version == DOOMSDAY_VERSION &&
-           !stricmp(info->gameIdentityKey, Str_Text(App_CurrentGame().identityKey()));
+           !de::String(info->gameIdentityKey).compareWithoutCase(App_CurrentGame().identityKey());
 }
 
 /*
@@ -516,7 +516,7 @@ void MPIUpdateServerList(void)
             {
                 Con_Message("Server %s filtered out:", info.name);
                 Con_Message("  remote = %i, local = %i", info.version, DOOMSDAY_VERSION);
-                Con_Message("  remote = %s, local = %s", info.gameIdentityKey, Str_Text(App_CurrentGame().identityKey()));
+                Con_Message("  remote = %s, local = %s", info.gameIdentityKey, App_CurrentGame().identityKey().toUtf8().constData());
                 Con_Message("  can join = %i", info.canJoin);
                 continue;
             }

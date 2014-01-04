@@ -467,6 +467,7 @@ void R_ProjectSprite(mobj_t *mo)
             DENG2_ASSERT(pl != 0);
 
             Lumobj const *lum = cluster.sector().map().lumobj(mo->lumIdx);
+            DENG_ASSERT(lum != 0);
 
             vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
 

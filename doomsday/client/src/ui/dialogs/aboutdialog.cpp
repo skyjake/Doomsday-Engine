@@ -82,7 +82,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
     title->setSizePolicy(ui::Fixed, ui::Expand);
 
     LabelWidget *info = new LabelWidget;
-    String txt = String("%1 (%2-%8)%3\n\n" _E(b) "%4 %5 #%6" _E(.) "\n%7")
+    String txt = String(_E(b) "%4 %5 #%6" _E(.) "\n%7\n\n%1 (%2-%8)%3")
             .arg(ver2.operatingSystem() == "windows"? tr("Windows") :
                  ver2.operatingSystem() == "macx"? tr("Mac OS X") : tr("Unix"))
             .arg(ver2.cpuBits())

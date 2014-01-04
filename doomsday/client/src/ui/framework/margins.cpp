@@ -89,18 +89,19 @@ DENG2_PIMPL(Margins)
     {
         if(!outputs[side]) return;
 
+        // Update the sums.
         if(side == LeftRight || side == SideLeft || side == SideRight)
         {
-            if(inputs[SideLeft] && inputs[SideRight])
+            if(outputs[LeftRight] && inputs[SideLeft] && inputs[SideRight])
             {
-                outputs[side]->setSource(*inputs[SideLeft] + *inputs[SideRight]);
+                outputs[LeftRight]->setSource(*inputs[SideLeft] + *inputs[SideRight]);
             }
         }
         else if(side == TopBottom || side == SideTop || side == SideBottom)
         {
-            if(inputs[SideTop] && inputs[SideBottom])
+            if(outputs[TopBottom] && inputs[SideTop] && inputs[SideBottom])
             {
-                outputs[side]->setSource(*inputs[SideTop] + *inputs[SideBottom]);
+                outputs[TopBottom]->setSource(*inputs[SideTop] + *inputs[SideBottom]);
             }
         }
 

@@ -36,10 +36,11 @@ DENG2_OBSERVES(Action, Triggered)
     bool animating;
 
     Instance(Public *i)
-        : Base(i), state(Up),
-          scale(1.f),
-          frameOpacity(.08f, Animation::Linear),
-          animating(false)
+        : Base(i)
+        , state(Up)
+        , scale(1.f)
+        , frameOpacity(.08f, Animation::Linear)
+        , animating(false)
     {
         setDefaultBackground();
     }

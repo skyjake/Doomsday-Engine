@@ -469,7 +469,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
         // Keep a global pointer to the main window.
         if(id == MAIN_WINDOW_ID)
         {
-            DENG2_ASSERT(!hasMain());
+            DENG2_ASSERT(!mainExists());
             setMain(thisPublic);
         }
 
@@ -877,8 +877,8 @@ String PersistentCanvasWindow::configName(String const &key) const
 
 PersistentCanvasWindow &PersistentCanvasWindow::main()
 {
-    DENG2_ASSERT(hasMain() != 0);
-    if(!hasMain())
+    DENG2_ASSERT(mainExists());
+    if(!mainExists())
     {
         throw InvalidIdError("PersistentCanvasWindow::main",
                              "No window found with id \"" + MAIN_WINDOW_ID + "\"");
