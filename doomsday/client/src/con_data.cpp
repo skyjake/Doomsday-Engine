@@ -1559,7 +1559,14 @@ static void printHelpAbout(char const *query)
     try
     {
         Game &game = App_Games().byIdentityKey(query);
-        Game::print(game, PGF_EVERYTHING);
+        LOG_MSG(_E(b) "%s" _E(.) " (IdentityKey)") << game.identityKey();
+
+        LOG_MSG("Unique identifier of the " _E(b) "%s" _E(.) " game mode.") << game.title();
+        LOG_MSG("An 'IdentityKey' is used when referencing a game unambiguously from the console and on the command line.");
+        LOG_MSG(_E(D) "Related commands:");
+        LOG_MSG("  " _E(>) "Enter " _E(b) "inspectgame %s" _E(.) " for information and status of this game") << game.identityKey();
+        LOG_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list all installed games and their status");
+        LOG_MSG("  " _E(>) "Enter " _E(b) "load %s" _E(.) " to load the " _E(l) "%s" _E(.) " game mode") << game.identityKey() << game.title();
         return;
     }
     catch(Games::NotFoundError const &)
