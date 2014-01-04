@@ -226,9 +226,6 @@ void Con_Register(void)
     C_VAR_BYTE("con-snapback", &consoleSnapBackOnPrint, 0, 0, 1);
     */
 
-    // Games
-    C_CMD("listgames",      "",     ListGames);
-
     // File
     C_VAR_CHARPTR("file-startup", &startupFiles, 0, 0, 0);
 
@@ -1287,7 +1284,7 @@ static int completeWord(int mode)
               }
             case WT_GAME: {
                 Game *game = (Game *)(*match)->data;
-                foundWord = Str_Text(game->identityKey());
+                foundWord = game->identityKey().toUtf8().constData();
                 if(printCompletions)
                     Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", foundWord);
                 break;
@@ -1323,7 +1320,7 @@ static int completeWord(int mode)
             AutoStr* foundName = CVar_ComposePath((cvar_t*)completeWord->data);
             str = Str_Text(foundName);
             break; }
-        case WT_GAME: str = Str_Text(reinterpret_cast<Game *>(completeWord->data)->identityKey()); break;
+        case WT_GAME: str = reinterpret_cast<Game *>(completeWord->data)->identityKey().toUtf8().constData(); break;
         default:
             Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
             exit(1); // Unreachable.

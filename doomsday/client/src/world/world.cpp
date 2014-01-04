@@ -265,7 +265,7 @@ static String composeUniqueMapId(de::File1 &markerLump)
               .arg(markerLump.name().fileNameWithoutExtension())
               .arg(markerLump.container().name().fileNameWithoutExtension())
               .arg(markerLump.container().hasCustom()? "pwad" : "iwad")
-              .arg(Str_Text(App_CurrentGame().identityKey()))
+              .arg(App_CurrentGame().identityKey())
               .toLower();
 }
 
@@ -335,8 +335,9 @@ DENG2_PIMPL(World)
         if(sourcePath.isEmpty()) return String();
 
         // Compose the final path.
-        return mapCacheDir + String(Str_Text(App_CurrentGame().identityKey()))
-               / sourcePath.fileNameWithoutExtension() + '-' + cacheIdForMap(sourcePath);
+        return mapCacheDir + App_CurrentGame().identityKey()
+               / sourcePath.fileNameWithoutExtension()
+               + '-' + cacheIdForMap(sourcePath);
     }
 
     /**

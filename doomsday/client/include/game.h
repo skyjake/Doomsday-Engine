@@ -21,12 +21,12 @@
 #ifndef DENG_GAME_H
 #define DENG_GAME_H
 
-#include <QMultiMap>
-
 #include "api_plugin.h"
-#include <de/ddstring.h>
 #include <de/Error>
+#include <de/Path>
+#include <de/String>
 #include <de/game/Game>
+#include <QMultiMap>
 
 /**
  * @defgroup printGameFlags  Print Game Flags
@@ -64,31 +64,39 @@ public:
     /**
      * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
      * @param configDir     Name of the config directory.
-     * @param title         Default game title.
-     * @param author        Default game author.
      */
-    Game(char const *identityKey, char const *configDir,
-         char const *title = "Unnamed", char const *author = "Unknown");
+    Game(String const &identityKey, Path const &configDir,
+         String const &title = "Unnamed", String const &author = "Unknown");
 
     virtual ~Game();
 
     /// @return  Unique plugin identifier attributed to that which registered this.
     pluginid_t pluginId() const;
 
-    /// @return  String containing the identity key.
-    ddstring_t const *identityKey() const;
+    /**
+     * Returns the unique identity key of the game.
+     */
+    de::String const &identityKey() const;
 
-    /// @return  String containing the default title.
-    ddstring_t const *title() const;
+    /**
+     * Returns the title of the game, as text.
+     */
+    de::String const &title() const;
 
-    /// @return  String containing the default author.
-    ddstring_t const *author() const;
+    /**
+     * Returns the author of the game, as text.
+     */
+    de::String const &author() const;
 
-    /// @return  String containing the name of the main config file.
-    ddstring_t const *mainConfig() const;
+    /**
+     * Returns the name of the main config file for the game.
+     */
+    de::Path const &mainConfig() const;
 
-    /// @return  String containing the name of the binding config file.
-    ddstring_t const *bindingConfig() const;
+    /**
+     * Returns the name of the binding config file for the game.
+     */
+    de::Path const &bindingConfig() const;
 
     /**
      * Change the identfier of the plugin associated with this.
@@ -180,11 +188,11 @@ public:
 public:
     NullGame();
 
-    Game& addManifest(struct manifest_s& /*record*/) {
+    Game &addManifest(struct manifest_s & /*record*/) {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
     }
 
-    bool isRequiredResource(char const* /*absolutePath*/) {
+    bool isRequiredResource(char const * /*absolutePath*/) {
         return false; // Never.
     }
 

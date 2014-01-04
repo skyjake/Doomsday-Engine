@@ -1,7 +1,7 @@
-/** @file games.cpp Specialized collection for a set of logical Games.
+/** @file games.cpp  Specialized collection for a set of logical Games.
  *
- * @authors Copyright &copy; 2012-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,14 +19,20 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_filesys.h"
-#include "filesys/manifest.h"
-#include "resource/zip.h"
-#include <QtAlgorithms>
-#include <de/App>
-
 #include "games.h"
+
+#include "dd_main.h"
+#include "con_main.h"
+#include "con_bar.h"
+
+#include "filesys/fs_main.h"
+#include "filesys/manifest.h"
+
+#include "resource/zip.h"
+
+#include <de/App>
+#include <de/Log>
+#include <QtAlgorithms>
 
 namespace de {
 
@@ -75,8 +81,10 @@ int Games::numPlayable() const
     int count = 0;
     foreach(Game *game, d->games)
     {
-        if(!game->allStartupFilesFound()) continue;
-        ++count;
+        if(game->allStartupFilesFound())
+        {
+            count += 1;
+        }
     }
     return count;
 }
@@ -112,19 +120,18 @@ Game &Games::byId(gameid_t gameId) const
     return *d->games[gameId-1];
 }
 
-Game &Games::byIdentityKey(char const *identityKey) const
+Game &Games::byIdentityKey(String identityKey) const
 {
-    if(identityKey && identityKey[0])
+    if(!identityKey.isEmpty())
     {
         foreach(Game *game, d->games)
         {
-            if(!Str_CompareIgnoreCase(game->identityKey(), identityKey))
+            if(!game->identityKey().compareWithoutCase(identityKey))
                 return *game;
         }
     }
     /// @throw NotFoundError  The specified @a identityKey string is not associated with a game in the collection.
-    throw NotFoundError("Games::byIdentityKey",
-                        QString("There is no Game with identity key \"%1\"").arg(identityKey));
+    throw NotFoundError("Games::byIdentityKey", "No game exists with identity key '" + identityKey + "'");
 }
 
 Game &Games::byIndex(int idx) const
@@ -202,13 +209,13 @@ void Games::locateStartupResources(Game &game)
     }
 }
 
-static int locateAllResourcesWorker(void *parameters)
+static int locateAllResourcesWorker(void *context)
 {
-    Games *games = (Games *) parameters;
+    Games *games = (Games *) context;
     int n = 0;
     foreach(Game *game, games->all())
     {
-        Con_Message("Locating \"%s\"...", Str_Text(game->title()));
+        LOG_MSG("Locating \"%s\"...") << game->title();
 
         games->locateStartupResources(*game);
         Con_SetProgress((n + 1) * 200 / games->count() - 1);
@@ -226,62 +233,66 @@ void Games::locateAllResources()
                                 locateAllResourcesWorker, (void *)this, "Locating game resources...");
 }
 
-} // namespace de
-
 D_CMD(ListGames)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
-    de::Games &games = App_Games();
+    Games &games = App_Games();
     if(!games.count())
     {
-        Con_Printf("No Registered Games.\n");
+        LOG_MSG("No game is currently registered.");
         return true;
     }
-
-    //Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
-    //Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
 
     LOG_MSG(_E(1) "Registered Games:");
     LOG_VERBOSE("Key: %s'!'=Incomplete/Not playable %s'*'=Loaded")
             << _E(>) _E(D) << _E(B);
 
-    Con_PrintRuler();
+    LOG_MSG(_E(R) "\n");
 
-    de::Games::GameList found;
+    Games::GameList found;
     games.collectAll(found);
     // Sort so we get a nice alphabetical list.
     qSort(found.begin(), found.end());
 
-    de::String list;
+    String list;
 
     int numCompleteGames = 0;
-    DENG2_FOR_EACH_CONST(de::Games::GameList, i, found)
+    DENG2_FOR_EACH_CONST(Games::GameList, i, found)
     {
-        de::Game *game = i->game;
+        Game *game = i->game;
         bool isCurrent = (&App_CurrentGame() == game);
 
         if(!list.isEmpty()) list += "\n";
 
-        list += de::String(_E(0)
-                           _E(Ta) "%1%2 "
-                           _E(Tb) "%3 "
-                           _E(Tc) _E(2) "%4 " _E(i) "(%5)")
+        list += String(_E(0)
+                       _E(Ta) "%1%2 "
+                       _E(Tb) "%3 "
+                       _E(Tc) _E(2) "%4 " _E(i) "(%5)")
                 .arg(isCurrent? _E(B) _E(b) :
                      !game->allStartupFilesFound()? _E(D) : "")
                 .arg(isCurrent? "*" : !game->allStartupFilesFound()? "!" : " ")
-                .arg(Str_Text(game->identityKey()))
-                .arg(Str_Text(game->title()))
-                .arg(Str_Text(game->author()));
+                .arg(game->identityKey())
+                .arg(game->title())
+                .arg(game->author());
 
         if(game->allStartupFilesFound())
+        {
             numCompleteGames++;
+        }
     }
     LOG_MSG("%s") << list;
 
-    Con_PrintRuler();
-    Con_Printf("%i of %i games playable.\n", numCompleteGames, games.count());
-    Con_Printf("Use the 'load' command to load a game. For example: \"load gamename\".\n");
+    LOG_MSG(_E(R) "\n");
+    LOG_MSG("%i of %i games playable.") << numCompleteGames << games.count();
+    LOG_MSG("Use the " _E(b) "load" _E(.) "command to load a game. For example: \"load gamename\".");
 
     return true;
 }
+
+void Games::consoleRegister() //static
+{
+    C_CMD("listgames", "", ListGames);
+}
+
+} // namespace de

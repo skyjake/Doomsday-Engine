@@ -144,7 +144,7 @@ DENG2_PIMPL_NOREF(Uri)
                 throw ResolveSymbolError("Uri::resolveSymbol", "Symbol 'Game' did not resolve (no game loaded)");
             }
 
-            return Str_Text(App_CurrentGame().identityKey());
+            return App_CurrentGame().identityKey();
         }
         else if(!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
         {

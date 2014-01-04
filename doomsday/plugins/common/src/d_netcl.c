@@ -99,10 +99,10 @@ void NetCl_UpdateGameState(Reader* msg)
     {
         GameInfo gameInfo;
         DD_GameInfo(&gameInfo);
-        if(strcmp(gameInfo.identityKey, gsGameIdentity))
+        if(Str_Compare(gameInfo.identityKey, gsGameIdentity))
         {
             Con_Message("NetCl_UpdateGameState: Server's game mode (%s) is different than yours (%s).",
-                        gsGameIdentity, gameInfo.identityKey);
+                        gsGameIdentity, Str_Text(gameInfo.identityKey));
             DD_Execute(false, "net disconnect");
             return;
         }

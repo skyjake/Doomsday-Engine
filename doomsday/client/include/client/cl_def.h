@@ -45,7 +45,12 @@ void            Cl_CleanUp(void);
 void            Cl_GetPackets(void);
 void            Cl_Ticker(timespan_t ticLength);
 int             Cl_GameReady(void);
-void            Cl_SendHello(void);
+
+/**
+ * Sends a hello packet.
+ * PCL_HELLO2 includes the Game ID (16 chars).
+ */
+void Cl_SendHello();
 
 #ifdef __cplusplus
 } // extern "C"

@@ -1074,23 +1074,18 @@ static int DD_ActivateGameWorker(void *context)
 
     // Parse the game's main config file.
     // If a custom top-level config is specified; let it override.
-    ddstring_t const *configFileName = 0;
-    ddstring_t tmp;
+    Path configFile;
     if(CommandLine_CheckWith("-config", 1))
     {
-        Str_Init(&tmp); Str_Set(&tmp, CommandLine_Next());
-        F_FixSlashes(&tmp, &tmp);
-        configFileName = &tmp;
+        configFile = NativePath(CommandLine_NextAsPath()).withSeparators('/');
     }
     else
     {
-        configFileName = App_CurrentGame().mainConfig();
+        configFile = App_CurrentGame().mainConfig();
     }
 
-    LOG_MSG("Parsing primary config \"%s\"...") << F_PrettyPath(Str_Text(configFileName));
-    Con_ParseCommands2(Str_Text(configFileName), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
-    if(configFileName == &tmp)
-        Str_Free(&tmp);
+    LOG_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
+    Con_ParseCommands2(configFile.toUtf8().constData(), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
 
 #ifdef __CLIENT__
     if(App_GameLoaded())
@@ -1099,7 +1094,7 @@ static int DD_ActivateGameWorker(void *context)
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands2(Str_Text(App_CurrentGame().bindingConfig()), CPCF_ALLOW_SAVE_BINDINGS);
+        Con_ParseCommands2(App_CurrentGame().bindingConfig().toUtf8().constData(), CPCF_ALLOW_SAVE_BINDINGS);
     }
 #endif
 
@@ -1189,9 +1184,9 @@ void DD_DestroyGames()
 
 static void populateGameInfo(GameInfo &info, de::Game &game)
 {
-    info.identityKey = Str_Text(game.identityKey());
-    info.title       = Str_Text(game.title());
-    info.author      = Str_Text(game.author());
+    info.identityKey = AutoStr_FromTextStd(game.identityKey().toUtf8().constData());
+    info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
+    info.author      = AutoStr_FromTextStd(game.author().toUtf8().constData());
 }
 
 /// @note Part of the Doomsday public API.
@@ -1318,7 +1313,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
             if(App_GameLoaded())
             {
                 LOG_MSG("%s (%s) - already loaded.")
-                        << Str_Text(game.title()) << Str_Text(game.identityKey());
+                        << game.title() << game.identityKey();
             }
             return true;
         }
@@ -1458,7 +1453,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
     if(!game.isNull())
     {
-        LOG_VERBOSE("Selecting game '%s'...") << Str_Text(game.identityKey());
+        LOG_VERBOSE("Selecting game '%s'...") << game.identityKey();
     }
     else if(!isReload)
     {
@@ -2714,7 +2709,7 @@ D_CMD(Load)
             LOG_WARNING("Failed to locate all required startup resources:");
             Game::printFiles(game, FF_STARTUP);
             LOG_MSG("%s (%s) cannot be loaded.")
-                    << Str_Text(game.title()) << Str_Text(game.identityKey());
+                    << game.title() << game.identityKey();
             return true;
         }
 
@@ -2852,7 +2847,7 @@ D_CMD(Unload)
                 return App_ChangeGame(App_Games().nullGame());
             }
 
-            LOG_MSG("%s is not currently loaded.") << Str_Text(game.identityKey());
+            LOG_MSG("%s is not currently loaded.") << game.identityKey();
             return true;
         }
         catch(Games::NotFoundError const &)
@@ -2958,6 +2953,7 @@ static void consoleRegister()
     DD_RegisterLoop();
     F_Register();
     Con_Register();
+    Games::consoleRegister();
     DH_Register();
     S_Register();
 #ifdef __CLIENT__

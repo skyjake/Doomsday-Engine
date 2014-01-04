@@ -21,6 +21,7 @@
 #ifndef DOOMSDAY_API_BASE_H
 #define DOOMSDAY_API_BASE_H
 
+#include <de/str.h>
 #include "apis.h"
 #include "api_uri.h"
 #include "api_resourceclass.h"
@@ -29,27 +30,27 @@
 /// @{
 
 /**
- * Defines the numerous high-level properties of a logical game component.
- * Note that this is POD; no construction or destruction is needed.
+ * Defines the high-level properties of a logical game component. Note that this
+ * is POD; no construction or destruction is needed.
  * @see DD_DefineGame() @ingroup game
  */
 typedef struct gamedef_s {
-   /**
+   /*
     * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
     * - Used during resource location for mode-specific assets.
     * - Sent out in netgames (a client can't connect unless mode strings match).
     */
-    const char* identityKey;
+    char const *identityKey;
 
     /// Name of the config directory.
-    const char* configDir;
+    char const *configDir;
 
     /// Default title. May be overridden later.
-    const char* defaultTitle;
+    char const *defaultTitle;
 
     /// Default author. May be overridden later.
     /// Used for (e.g.) the map author name if not specified in a Map Info definition.
-    const char* defaultAuthor;
+    char const *defaultAuthor;
 } GameDef;
 
 /**
@@ -57,9 +58,9 @@ typedef struct gamedef_s {
  * @see DD_GameInfo() @ingroup game
  */
 typedef struct gameinfo_s {
-    const char* title;
-    const char* author;
-    const char* identityKey;
+    AutoStr *title;
+    AutoStr *author;
+    AutoStr *identityKey;
 } GameInfo;
 
 /// @}
@@ -73,8 +74,8 @@ DENG_API_TYPEDEF(Base) // v1
 
     int (*GetInteger)(int ddvalue);
     void (*SetInteger)(int ddvalue, int parm);
-    void* (*GetVariable)(int ddvalue);
-    void (*SetVariable)(int ddvalue, void* ptr);
+    void *(*GetVariable)(int ddvalue);
+    void (*SetVariable)(int ddvalue, void *ptr);
 
     /**
      * Register a new game.
@@ -86,7 +87,7 @@ DENG_API_TYPEDEF(Base) // v1
      * @note Game registration order defines the order of the automatic game
      * identification/selection logic.
      */
-    gameid_t (*DefineGame)(GameDef const* definition);
+    gameid_t (*DefineGame)(GameDef const *definition);
 
     /**
      * Retrieves the game identifier for a previously defined game.
@@ -96,7 +97,7 @@ DENG_API_TYPEDEF(Base) // v1
      *
      * @return Game identifier.
      */
-    gameid_t (*GameIdForKey)(char const* identityKey);
+    gameid_t (*GameIdForKey)(char const *identityKey);
 
     /**
      * Adds a new resource to the list for the identified @a game.
@@ -118,7 +119,7 @@ DENG_API_TYPEDEF(Base) // v1
      *                  semicolon delimited list of identity keys.
      */
     void (*AddGameResource)(gameid_t game, resourceclassid_t classId, int fFlags,
-                            const char* names, void* params);
+                            char const *names, void *params);
 
     /**
      * Retrieve extended info about the current game.
@@ -127,7 +128,7 @@ DENG_API_TYPEDEF(Base) // v1
      *
      * @return          @c true if successful else @c false (i.e., no game loaded).
      */
-    boolean (*gameInfo)(GameInfo* info);
+    boolean (*gameInfo)(GameInfo *info);
 
     /**
      * Determines whether the current run of the thinkers should be considered a
@@ -151,7 +152,7 @@ DENG_API_TYPEDEF(Base) // v1
      * @param data       Data of the packet.
      * @param length     Length of the data.
      */
-    void (*SendPacket)(int to_player, int type, const void* data, size_t length);
+    void (*SendPacket)(int to_player, int type, void const *data, size_t length);
 
     /**
      * To be called by the game after loading a save state to instruct the engine

@@ -679,7 +679,7 @@ static void DED_CloseReader(void)
  *                      or a game mode.
  * @return              @c true if the condition passes.
  */
-static boolean DED_CheckCondition(const char* cond, boolean expected)
+static boolean DED_CheckCondition(char const *cond, boolean expected)
 {
     boolean value = false;
 
@@ -691,7 +691,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
     else if(isalnum(cond[0]) && App_GameLoaded())
     {
         // A game mode.
-        value = !stricmp(cond, Str_Text(App_CurrentGame().identityKey()));
+        value = !String(cond).compareWithoutCase(App_CurrentGame().identityKey());
     }
 
     return value == expected;

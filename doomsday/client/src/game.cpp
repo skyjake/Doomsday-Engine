@@ -1,4 +1,4 @@
-/** @file game.cpp Game mode configuration (metadata, resource files, etc...).
+/** @file game.cpp  Game mode configuration (metadata, resource files, etc...).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -19,83 +19,49 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_filesys.h"
+#include "game.h"
+
 #include "filesys/manifest.h"
 #include <de/Error>
 #include <de/Log>
 #include <QtAlgorithms>
 
-#include "game.h"
-
 namespace de {
 
 DENG2_PIMPL(Game)
 {
-    /// Unique identifier of the plugin which registered this game.
-    pluginid_t pluginId;
+    pluginid_t pluginId; ///< Unique identifier of the registering plugin.
+    Manifests manifests; ///< Required resource files (e.g., doomu.wad).
+    String identityKey;  ///< Unique game mode identifier (e.g., "doom1-ultimate").
 
-    /// Records for required game files (e.g., doomu.wad).
-    Game::Manifests manifests;
+    String title;        ///< Formatted default title, suitable for printing (e.g., "The Ultimate DOOM").
+    String author;       ///< Formatted default author suitable for printing (e.g., "id Software").
 
-    /// Unique identifier string (e.g., "doom1-ultimate").
-    ddstring_t identityKey;
+    Path mainConfig;     ///< Config file name (e.g., "configs/doom/game.cfg").
+    Path bindingConfig;  ///< Control binding file name (set automatically).
 
-    /// Formatted default title suitable for printing (e.g., "The Ultimate DOOM").
-    ddstring_t title;
-
-    /// Formatted default author suitable for printing (e.g., "id Software").
-    ddstring_t author;
-
-    /// Name of the main config file (e.g., "configs/doom/game.cfg").
-    ddstring_t mainConfig;
-
-    /// Name of the file used for control bindings, set automatically at creation time.
-    ddstring_t bindingConfig;
-
-    Instance(Public &a, char const *_identityKey, char const *configDir)
-        : Base(a), pluginId(0), manifests()
-    {
-        Str_Set(Str_InitStd(&identityKey), _identityKey);
-        //DENG_ASSERT(!Str_IsEmpty(&identityKey));
-
-        Str_InitStd(&title);
-        Str_InitStd(&author);
-
-        Str_Appendf(Str_InitStd(&mainConfig), "configs/%s", configDir);
-        Str_Strip(&mainConfig);
-        F_FixSlashes(&mainConfig, &mainConfig);
-        F_AppendMissingSlash(&mainConfig);
-        Str_Append(&mainConfig, "game.cfg");
-
-        Str_Appendf(Str_InitStd(&bindingConfig), "configs/%s", configDir);
-        Str_Strip(&bindingConfig);
-        F_FixSlashes(&bindingConfig, &bindingConfig);
-        F_AppendMissingSlash(&bindingConfig);
-        Str_Append(&bindingConfig, "player/bindings.cfg");
-    }
+    Instance(Public &a, String const &identityKey, Path const &configDir,
+             String const &title, String const &author)
+        : Base(a)
+        , pluginId     (0) // Not yet assigned.
+        , identityKey  (identityKey)
+        , title        (title)
+        , author       (author)
+        , mainConfig   (Path("configs") / configDir / "game.cfg")
+        , bindingConfig(Path("configs") / configDir / "player/bindings.cfg")
+    {}
 
     ~Instance()
     {
         qDeleteAll(manifests);
-        manifests.clear();
-
-        Str_Free(&identityKey);
-        Str_Free(&mainConfig);
-        Str_Free(&bindingConfig);
-        Str_Free(&title);
-        Str_Free(&author);
     }
 };
 
-Game::Game(char const *identityKey, char const *configDir,
-           char const *title, char const *author)
-    : game::Game(identityKey),
-      d(new Instance(*this, identityKey, configDir))
-{
-    if(title)  Str_Set(&d->title, title);
-    if(author) Str_Set(&d->author, author);
-}
+Game::Game(String const &identityKey, Path const &configDir, String const &title,
+    String const &author)
+    : game::Game(identityKey)
+    , d(new Instance(*this, identityKey, configDir, title, author))
+{}
 
 Game::~Game()
 {}
@@ -134,29 +100,29 @@ pluginid_t Game::pluginId() const
     return d->pluginId;
 }
 
-ddstring_t const *Game::identityKey() const
+String const &Game::identityKey() const
 {
-    return &d->identityKey;
+    return d->identityKey;
 }
 
-ddstring_t const *Game::mainConfig() const
+Path const &Game::mainConfig() const
 {
-    return &d->mainConfig;
+    return d->mainConfig;
 }
 
-ddstring_t const *Game::bindingConfig() const
+Path const &Game::bindingConfig() const
 {
-    return &d->bindingConfig;
+    return d->bindingConfig;
 }
 
-ddstring_t const *Game::title() const
+String const &Game::title() const
 {
-    return &d->title;
+    return d->title;
 }
 
-ddstring_t const *Game::author() const
+String const &Game::author() const
 {
-    return &d->author;
+    return d->author;
 }
 
 Game::Manifests const &Game::manifests() const
@@ -193,14 +159,15 @@ bool Game::isRequiredFile(File1 &file)
 
 Game *Game::fromDef(GameDef const &def)
 {
-    return new Game(def.identityKey, def.configDir, def.defaultTitle, def.defaultAuthor);
+    return new Game(def.identityKey, NativePath(def.configDir).expand().withSeparators('/'),
+                    def.defaultTitle, def.defaultAuthor);
 }
 
 void Game::printBanner(Game const &game)
 {
-    Con_PrintRuler();
-    Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(game.title()));
-    Con_PrintRuler();
+    LOG_MSG(_E(R) "\n");
+    LOG_MSG(_E(1)) << game.title();
+    LOG_MSG(_E(R) "\n");
 }
 
 void Game::printFiles(Game const &game, int rflags, bool printStatus)
@@ -226,51 +193,54 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
 
     if(numPrinted == 0)
     {
-        Con_Printf(" None\n");
+        LOG_MSG(" None");
     }
 }
 
 void Game::print(Game const &game, int flags)
 {
     if(game.isNull())
+    {
         flags &= ~PGF_BANNER;
-
-#ifdef DENG_DEBUG
-    Con_Printf("pluginid:%i\n", int(game.pluginId()));
-#endif
+    }
 
     if(flags & PGF_BANNER)
+    {
         printBanner(game);
-
-    if(!(flags & PGF_BANNER))
-        Con_Printf("Game: %s - ", Str_Text(game.title()));
+        LOG_MSG("Author: ") << game.author();
+    }
     else
-        Con_Printf("Author: ");
-    Con_Printf("%s\n", Str_Text(game.author()));
-    Con_Printf("IdentityKey: %s\n", Str_Text(game.identityKey()));
+    {
+        LOG_MSG("Game: %s - %s") << game.title() << game.author();
+    }
+
+    LOG_MSG("IdentityKey: ") << game.identityKey();
+#ifdef DENG_DEBUG
+    LOG_MSG("pluginid: ") << int(game.pluginId());
+#endif
 
     if(flags & PGF_LIST_STARTUP_RESOURCES)
     {
-        Con_Printf("Startup resources:\n");
+        LOG_MSG("Startup resources:");
         printFiles(game, FF_STARTUP, (flags & PGF_STATUS) != 0);
     }
 
     if(flags & PGF_LIST_OTHER_RESOURCES)
     {
-        Con_Printf("Other resources:\n");
-        Con_Printf("   ");
+        LOG_MSG("Other resources:");
         printFiles(game, 0, /*(flags & PGF_STATUS) != 0*/false);
     }
 
     if(flags & PGF_STATUS)
-        Con_Printf("Status: %s\n",
-                   &App_CurrentGame() == &game? "Loaded" :
-                   game.allStartupFilesFound()? "Complete/Playable" :
-                                                "Incomplete/Not playable");
+    {
+        LOG_MSG("Status: ")
+            << (&App_CurrentGame() == &game? "Loaded" :
+                game.allStartupFilesFound()? "Complete/Playable" :
+                                             "Incomplete/Not playable");
+    }
 }
 
-NullGame::NullGame()
-    : Game("" /*null*/, "doomsday", "null-game", "null-game")
+NullGame::NullGame() : Game("" /*null*/, "doomsday", "null-game", "null-game")
 {}
 
 } // namespace de

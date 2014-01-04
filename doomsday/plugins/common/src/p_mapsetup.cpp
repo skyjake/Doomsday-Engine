@@ -1092,7 +1092,7 @@ char const *P_GetMapAuthor(boolean supressGameAuthor)
 
     GameInfo gameInfo;
     DD_GameInfo(&gameInfo);
-    if((mapIsCustom || supressGameAuthor) && !stricmp(gameInfo.author, author))
+    if((mapIsCustom || supressGameAuthor) && !Str_CompareIgnoreCase(gameInfo.author, author))
         return 0;
 
     return author;

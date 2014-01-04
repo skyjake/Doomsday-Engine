@@ -26,8 +26,6 @@
 #  include <windows.h>
 #endif
 
-#include <stdarg.h>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -48,6 +46,9 @@
 #include "api_internaldata.h"
 
 #include <de/String>
+#include <cstdarg>
+
+using namespace de;
 
 /*
  * The game imports and exports.
@@ -70,25 +71,25 @@ de::String DD_ComposeMainWindowTitle()
 
     if(App_GameLoaded() && gx.GetVariable)
     {
-        title = de::String(Str_Text(App_CurrentGame().title())) + " - " + title;
+        title = App_CurrentGame().title() + " - " + title;
     }
 
     return title;
 }
 #endif
 
-void DD_InitAPI(void)
+void DD_InitAPI()
 {
     GETGAMEAPI GetGameAPI = app.GetGameAPI;
-    memset(&__gx, 0, sizeof(__gx));
+    zap(__gx);
     if(GetGameAPI)
     {
-        game_export_t* gameExPtr = GetGameAPI();
-        memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+        game_export_t *gameExPtr = GetGameAPI();
+        std::memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
     }
 }
 
-void DD_InitCommandLine(void)
+void DD_InitCommandLine()
 {
     CommandLine_Alias("-game", "-g");
     CommandLine_Alias("-defs", "-d");
@@ -114,7 +115,7 @@ void DD_InitCommandLine(void)
     CommandLine_Alias("-verbose", "-v");
 }
 
-void DD_ConsoleInit(void)
+void DD_ConsoleInit()
 {
     // Get the console online ASAP.
     Con_Init();
@@ -129,7 +130,7 @@ void DD_ConsoleInit(void)
     }
 }
 
-void DD_ShutdownAll(void)
+void DD_ShutdownAll()
 {
     FI_Shutdown();
     UI_Shutdown();

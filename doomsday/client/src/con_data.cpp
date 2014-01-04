@@ -237,22 +237,19 @@ static void clearKnownWords(void)
     knownWordsNeedUpdate = false;
 }
 
-static int compareKnownWordByName(void const* a, void const* b)
+static int compareKnownWordByName(void const *a, void const *b)
 {
-    knownword_t const* wA = (knownword_t const*)a;
-    knownword_t const* wB = (knownword_t const*)b;
-    AutoStr* textAString = NULL, *textBString = NULL;
-    char const* textA, *textB;
+    knownword_t const *wA = (knownword_t const *)a;
+    knownword_t const *wB = (knownword_t const *)b;
+    AutoStr *textA = 0, *textB = 0;
 
     switch(wA->type)
     {
-    case WT_CALIAS:   textA = ((calias_t*)wA->data)->name; break;
-    case WT_CCMD:     textA = ((ccmd_t*)wA->data)->name; break;
-    case WT_CVAR:
-        textAString = CVar_ComposePath((cvar_t*)wA->data);
-        textA = Str_Text(textAString);
-        break;
-    case WT_GAME: textA = Str_Text(reinterpret_cast<de::Game*>(wA->data)->identityKey()); break;
+    case WT_CALIAS:   textA = AutoStr_FromTextStd(((calias_t *)wA->data)->name); break;
+    case WT_CCMD:     textA = AutoStr_FromTextStd(((ccmd_t *)wA->data)->name); break;
+    case WT_CVAR:     textA = CVar_ComposePath((cvar_t *)wA->data); break;
+    case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<de::Game *>(wA->data)->identityKey().toUtf8().constData()); break;
+
     default:
         Con_Error("compareKnownWordByName: Invalid type %i for word A.", wA->type);
         exit(1); // Unreachable
@@ -260,19 +257,17 @@ static int compareKnownWordByName(void const* a, void const* b)
 
     switch(wB->type)
     {
-    case WT_CALIAS:   textB = ((calias_t*)wB->data)->name; break;
-    case WT_CCMD:     textB = ((ccmd_t*)wB->data)->name; break;
-    case WT_CVAR:
-        textBString = CVar_ComposePath((cvar_t*)wB->data);
-        textB = Str_Text(textBString);
-        break;
-    case WT_GAME: textB = Str_Text(reinterpret_cast<de::Game*>(wB->data)->identityKey()); break;
+    case WT_CALIAS:   textB = AutoStr_FromTextStd(((calias_t *)wB->data)->name); break;
+    case WT_CCMD:     textB = AutoStr_FromTextStd(((ccmd_t *)wB->data)->name); break;
+    case WT_CVAR:     textB = CVar_ComposePath((cvar_t *)wB->data); break;
+    case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<de::Game *>(wB->data)->identityKey().toUtf8().constData()); break;
+
     default:
         Con_Error("compareKnownWordByName: Invalid type %i for word B.", wB->type);
         exit(1); // Unreachable
     }
 
-    return stricmp(textA, textB);
+    return Str_CompareIgnoreCase(textA, Str_Text(textB));
 }
 
 static boolean removeFromKnownWords(knownwordtype_t type, void* data)
@@ -1287,16 +1282,17 @@ void Con_DeleteAlias(calias_t* cal)
 /**
  * @return New AutoStr with the text of the known word. Caller gets ownership.
  */
-static AutoStr* textForKnownWord(knownword_t const* word)
+static AutoStr *textForKnownWord(knownword_t const *word)
 {
-    AutoStr* text = 0;
+    AutoStr *text = 0;
 
     switch(word->type)
     {
-    case WT_CALIAS:   Str_Set(text = AutoStr_NewStd(), ((calias_t*)word->data)->name); break;
-    case WT_CCMD:     Str_Set(text = AutoStr_NewStd(), ((ccmd_t*)word->data)->name); break;
-    case WT_CVAR:     text = CVar_ComposePath((cvar_t*)word->data); break;
-    case WT_GAME:     Str_Set(text = AutoStr_NewStd(), Str_Text(reinterpret_cast<de::Game*>(word->data)->identityKey())); break;
+    case WT_CALIAS:   text = AutoStr_FromTextStd(((calias_t *)word->data)->name); break;
+    case WT_CCMD:     text = AutoStr_FromTextStd(((ccmd_t *)word->data)->name); break;
+    case WT_CVAR:     text = CVar_ComposePath((cvar_t *)word->data); break;
+    case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<de::Game *>(word->data)->identityKey().toUtf8().constData()); break;
+
     default:
         Con_Error("textForKnownWord: Invalid type %i for word.", word->type);
         exit(1); // Unreachable
@@ -1477,7 +1473,7 @@ static int aproposPrinter(knownword_t const* word, void* matching)
         }
         else if(word->type == WT_GAME)
         {
-            tmp = Str_Text(reinterpret_cast<de::Game*>(word->data)->title());
+            tmp = reinterpret_cast<de::Game *>(word->data)->title();
         }
 
         os << tmp;
@@ -1618,7 +1614,8 @@ de::String Con_AliasAsStyledText(calias_t *alias)
 
 de::String Con_GameAsStyledText(de::Game *game)
 {
-    return de::String(_E(1)) + Str_Text(game->identityKey()) + _E(.);
+    DENG2_ASSERT(game != 0);
+    return de::String(_E(1)) + game->identityKey() + _E(.);
 }
 
 static int printKnownWordWorker(knownword_t const *word, void *parameters)

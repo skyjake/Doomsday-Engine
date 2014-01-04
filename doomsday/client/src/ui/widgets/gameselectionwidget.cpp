@@ -60,13 +60,13 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 
     ui::Item *makeItemForGame(Game &game)
     {
-        String const idKey = Str_Text(game.identityKey());
+        String const idKey = game.identityKey();
 
         CommandAction *loadAction = new CommandAction(String("load ") + idKey);
         String label = String(_E(b) "%1" _E(.)_E(s)_E(C) " %2\n"
                            _E(.)_E(.)_E(l)_E(D) "%3")
-                .arg(Str_Text(game.title()))
-                .arg(Str_Text(game.author()))
+                .arg(game.title())
+                .arg(game.author())
                 .arg(idKey);
 
         GameItem *item = new GameItem(game, label, loadAction);
