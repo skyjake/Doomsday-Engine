@@ -193,9 +193,10 @@ void Games::locateStartupResources(Game &game)
     foreach(ResourceManifest *manifest, game.manifests())
     {
         // We are only interested in startup resources at this time.
-        if(!(manifest->fileFlags() & FF_STARTUP)) continue;
-
-        manifest->locateFile();
+        if(manifest->fileFlags() & FF_STARTUP)
+        {
+            manifest->locateFile();
+        }
     }
 
     if(oldCurrentGame != &game)

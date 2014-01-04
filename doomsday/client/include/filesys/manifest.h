@@ -49,22 +49,40 @@ public:
     /// @return Flags for this file.
     int fileFlags() const;
 
-    /// @return List of "identity keys" used to identify the file.
+    /**
+     * Returns a list of "identity keys" used to identify the resource.
+     */
     QStringList const &identityKeys() const;
 
-    /// @return List of names for the associated file.
+    /**
+     * Add a new file segment identity key to the list for this manifest.
+     *
+     * @param newIdentityKey  New identity key (e.g., a lump/file name).
+     */
+    void addIdentityKey(String newIdentityKey);
+
+    /**
+     * Returns a list of known-names for the associated resource.
+     */
     QStringList const &names() const;
+
+    /**
+     * Add a new file name to the list of names for this manifest.
+     *
+     * @param newName  New name for this file. Newer names have precedence.
+     */
+    void addName(String newName);
 
     /**
      * Attempt to locate this file by systematically resolving and then
      * checking each search path.
      */
-    ResourceManifest &locateFile();
+    void locateFile();
 
     /**
      * "Forget" the currently located file if one has been found.
      */
-    ResourceManifest &forgetFile();
+    void forgetFile();
 
     /**
      * Attempt to resolve a path to (and maybe locate) this file.
@@ -76,22 +94,6 @@ public:
      * @see locateFile()
      */
     String const &resolvedPath(bool tryLocate = true);
-
-    /**
-     * Add a new file segment identity key to the list for this manifest.
-     *
-     * @param newIdentityKey    New identity key (e.g., a lump/file name).
-     * @param didAdd            If not @c =0, the outcome will be written here.
-     */
-    ResourceManifest &addIdentityKey(String newIdentityKey, bool *didAdd = 0);
-
-    /**
-     * Add a new file name to the list of names for this manifest.
-     *
-     * @param newName       New name for this file. Newer names have precedence.
-     * @param didAdd        If not @c =0, the outcome will be written here.
-     */
-    ResourceManifest &addName(String newName, bool *didAdd = 0);
 
 private:
     DENG2_PRIVATE(d)

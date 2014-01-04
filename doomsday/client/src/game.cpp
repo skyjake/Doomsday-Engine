@@ -66,7 +66,7 @@ Game::Game(String const &identityKey, Path const &configDir, String const &title
 Game::~Game()
 {}
 
-Game &Game::addManifest(ResourceManifest &manifest)
+void Game::addManifest(ResourceManifest &manifest)
 {
     // Ensure we don't add duplicates.
     Manifests::const_iterator found = d->manifests.find(manifest.resourceClass(), &manifest);
@@ -74,7 +74,6 @@ Game &Game::addManifest(ResourceManifest &manifest)
     {
         d->manifests.insert(manifest.resourceClass(), &manifest);
     }
-    return *this;
 }
 
 bool Game::allStartupFilesFound() const
@@ -89,10 +88,9 @@ bool Game::allStartupFilesFound() const
     return true;
 }
 
-Game &Game::setPluginId(pluginid_t newId)
+void Game::setPluginId(pluginid_t newId)
 {
     d->pluginId = newId;
-    return *this;
 }
 
 pluginid_t Game::pluginId() const
@@ -206,7 +204,6 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
                 }
 
                 LOG_MSG("") << text;
-
                 numPrinted += 1;
             }
         }
@@ -237,7 +234,7 @@ void Game::print(Game const &game, int flags)
 
     LOG_MSG("IdentityKey: ") << game.identityKey();
 #ifdef DENG_DEBUG
-    LOG_MSG("pluginid: ") << int(game.pluginId());
+    LOG_MSG("PluginId: ") << int(game.pluginId());
 #endif
 
     if(flags & PGF_LIST_STARTUP_RESOURCES)

@@ -101,7 +101,7 @@ public:
      * Change the identfier of the plugin associated with this.
      * @param newId  New identifier.
      */
-    Game &setPluginId(pluginid_t newId);
+    void setPluginId(pluginid_t newId);
 
     /**
      * Add a new manifest to the list of manifests.
@@ -110,7 +110,7 @@ public:
      *
      * @param manifest  Manifest to add.
      */
-    Game &addManifest(ResourceManifest &manifest);
+    void addManifest(ResourceManifest &manifest);
 
     bool allStartupFilesFound() const;
 
@@ -187,7 +187,7 @@ public:
 public:
     NullGame();
 
-    Game &addManifest(struct manifest_s & /*record*/) {
+    void addManifest(struct manifest_s & /*record*/) {
         throw NullObjectError("NullGame::addResource", "Invalid action on null-object");
     }
 

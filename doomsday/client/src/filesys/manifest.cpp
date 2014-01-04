@@ -70,36 +70,26 @@ ResourceManifest::ResourceManifest(resourceclassid_t fClass, int fFlags, String 
     if(name) addName(*name);
 }
 
-ResourceManifest &ResourceManifest::addName(String newName, bool *didAdd)
+void ResourceManifest::addName(String newName)
 {
+    if(newName.isEmpty()) return;
+
     // Is this name unique? We don't want duplicates.
-    if(newName.isEmpty() || d->names.contains(newName, Qt::CaseInsensitive))
+    if(!d->names.contains(newName, Qt::CaseInsensitive))
     {
-        if(didAdd) *didAdd = false;
-        return *this;
-    }
-
-    // Add the new name.
-    d->names.prepend(newName);
-
-    if(didAdd) *didAdd = true;
-    return *this;
+        d->names.prepend(newName);
+     }
 }
 
-ResourceManifest &ResourceManifest::addIdentityKey(String newIdentityKey, bool *didAdd)
+void ResourceManifest::addIdentityKey(String newIdKey)
 {
+    if(newIdKey.isEmpty()) return;
+
     // Is this key unique? We don't want duplicates.
-    if(newIdentityKey.isEmpty() || d->identityKeys.contains(newIdentityKey, Qt::CaseInsensitive))
+    if(!d->identityKeys.contains(newIdKey, Qt::CaseInsensitive))
     {
-        if(didAdd) *didAdd = false;
-        return *this;
+        d->identityKeys.append(newIdKey);
     }
-
-    // Add the new key.
-    d->identityKeys.append(newIdentityKey);
-
-    if(didAdd) *didAdd = true;
-    return *this;
 }
 
 enum lumpsizecondition_t
@@ -262,10 +252,10 @@ static bool validateZip(String const &filePath, QStringList const & /*identityKe
     return false;
 }
 
-ResourceManifest &ResourceManifest::locateFile()
+void ResourceManifest::locateFile()
 {
     // Already found?
-    if(d->flags & FF_FOUND) return *this;
+    if(d->flags & FF_FOUND) return;
 
     // Perform the search.
     int nameIndex = 0;
@@ -302,14 +292,12 @@ ResourceManifest &ResourceManifest::locateFile()
                 break;
             }
         }
-        catch(FS1::NotFoundError const&)
+        catch(FS1::NotFoundError const &)
         {} // Ignore this error.
     }
-
-    return *this;
 }
 
-ResourceManifest &ResourceManifest::forgetFile()
+void ResourceManifest::forgetFile()
 {
     if(d->flags & FF_FOUND)
     {
@@ -317,7 +305,6 @@ ResourceManifest &ResourceManifest::forgetFile()
         d->foundNameIndex = -1;
         d->flags &= ~FF_FOUND;
     }
-    return *this;
 }
 
 String const &ResourceManifest::resolvedPath(bool tryLocate)
