@@ -25,7 +25,7 @@
 
 int main(int argc, char *argv[])
 {
-#ifdef Q_OS_MACX
+#if defined(Q_OS_MACX) && defined(MACOS_10_7)
     if(QSysInfo::MacintoshVersion > QSysInfo::MV_10_8)
     {
         // fix Mac OS X 10.9 (mavericks) font issue
