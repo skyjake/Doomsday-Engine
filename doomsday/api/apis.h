@@ -138,7 +138,8 @@ enum {
     DE_API_URI                  = DE_API_URI_v1,
 
     DE_API_WAD_v1               = 2400,    // 1.10
-    DE_API_WAD                  = DE_API_WAD_v1
+    DE_API_WAD_v2               = 2401,    // 1.14
+    DE_API_WAD                  = DE_API_WAD_v2
 };
 
 /**

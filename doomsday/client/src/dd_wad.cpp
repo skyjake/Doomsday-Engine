@@ -111,24 +111,16 @@ boolean W_LumpIsCustom(lumpnum_t lumpNum)
     return false;
 }
 
-lumpnum_t W_CheckLumpNumForName2(char const* name, boolean silent)
+lumpnum_t W_CheckLumpNumForName(char const* name)
 {
     lumpnum_t lumpNum;
     if(!name || !name[0])
     {
-        if(!silent)
-            VERBOSE2( Con_Message("Warning: W_CheckLumpNumForName: Empty name, returning invalid lumpnum.") )
+        LOG_DEV_WARNING("W_CheckLumpNumForName: Empty lump name, returning invalid lumpnum");
         return -1;
     }
     lumpNum = App_FileSystem().lumpNumForName(name);
-    if(!silent && lumpNum < 0)
-        VERBOSE2( Con_Message("Warning: W_CheckLumpNumForName: Lump \"%s\" not found.", name) )
     return lumpNum;
-}
-
-lumpnum_t W_CheckLumpNumForName(char const* name)
-{
-    return W_CheckLumpNumForName2(name, (verbose < 2));
 }
 
 lumpnum_t W_GetLumpNumForName(char const* name)
@@ -204,7 +196,6 @@ DENG_DECLARE_API(W) =
     W_LumpLastModified,
     W_LumpSourceFile,
     W_LumpIsCustom,
-    W_CheckLumpNumForName2,
     W_CheckLumpNumForName,
     W_GetLumpNumForName,
     W_ReadLump,

@@ -1471,7 +1471,7 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
     return (lumpNum >= 0);
 }
 
@@ -1479,7 +1479,7 @@ DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
 DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
     return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
 
@@ -1487,7 +1487,7 @@ DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
 DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
-    lumpnum_t lumpNum = W_CheckLumpNumForName2(uri.path().toString().toLatin1(), true/*quiet please*/);
+    lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
     if(lumpNum < 0) return AutoStr_NewStd();
     return W_LumpSourceFile(lumpNum);
 }

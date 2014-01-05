@@ -492,12 +492,12 @@ void XG_ReadTypes(void)
     linetypes = 0;
     sectypes = 0;
 
-    XG_ReadXGLump(W_CheckLumpNumForName2("DDXGDATA", true));
+    XG_ReadXGLump(W_CheckLumpNumForName("DDXGDATA"));
 }
 
 linetype_t* XG_GetLumpLine(int id)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < num_linetypes; ++i)
         if(linetypes[i].id == id)

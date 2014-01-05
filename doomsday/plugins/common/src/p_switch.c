@@ -197,7 +197,7 @@ void P_InitSwitchList(void)
 void P_InitSwitchList(void)
 {
     int i, index, episode;
-    lumpnum_t lumpNum = W_CheckLumpNumForName2("SWITCHES", true);
+    lumpnum_t lumpNum = W_CheckLumpNumForName("SWITCHES");
     switchlist_t* sList = switchInfo;
     ddstring_t path;
     Uri* uri;

@@ -217,7 +217,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 void P_InitPicAnims(void)
 {
     { lumpnum_t lumpNum;
-    if((lumpNum = W_CheckLumpNumForName2("ANIMATED", true)) > 0)
+    if((lumpNum = W_CheckLumpNumForName("ANIMATED")) > 0)
     {
         /**
          * We'll support this BOOM extension by reading the data and then

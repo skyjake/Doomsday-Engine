@@ -40,7 +40,7 @@ typedef QMap<MapLumpType, lumpnum_t> MapDataLumps;
 static lumpnum_t locateMapMarkerLumpForUri(Uri const &uri)
 {
     char const *mapId = Str_Text(Uri_Path(&uri));
-    return W_CheckLumpNumForName2(mapId, true /*quiet please*/);
+    return W_CheckLumpNumForName(mapId);
 }
 
 /**
