@@ -154,7 +154,7 @@ struct FS1::Instance
             FileIds::iterator place = qLowerBound(fileIds.begin(), fileIds.end(), fileId);
             if(place != fileIds.end() && *place == fileId)
             {
-                LOG_DEV_TRACE_DEBUGONLY("Released FileId %s - \"%s\"", *place << fileId.path());
+                LOGDEV_RES_XVERBOSE_DEBUGONLY("Released FileId %s - \"%s\"", *place << fileId.path());
                 fileIds.erase(place);
                 return true;
             }
@@ -625,7 +625,7 @@ static void printFileIds(FileIds const& fileIds)
     uint idx = 0;
     DENG2_FOR_EACH_CONST(FileIds, i, fileIds)
     {
-        LOG_DEV_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
+        LOGDEV_RES_MSG("  %u - %s : \"%s\"") << idx << *i << i->path();
         ++idx;
     }
 }
@@ -643,7 +643,7 @@ static void printFileList(FS1::FileList& list)
         QByteArray path = file.composePath().toUtf8();
         FileId fileId = FileId::fromPath(path.constData());
 
-        LOG_DEV_MSG(" %c%d: %s - \"%s\" (handle: %p)")
+        LOGDEV_RES_MSG(" %c%d: %s - \"%s\" (handle: %p)")
             << (file.hasStartup()? '*' : ' ') << idx
             << fileId << fileId.path() << (void*)&hndl;
         ++idx;
@@ -657,9 +657,9 @@ int FS1::unloadAllNonStartupFiles()
     // List all open files with their identifiers.
     if(verbose)
     {
-        LOG_DEV_MSG("Open files at reset:");
+        LOGDEV_RES_MSG("Open files at reset:");
         printFileList(d->openFiles);
-        LOG_DEV_MSG("End\n");
+        LOGDEV_RES_MSG("End\n");
     }
 #endif
 
@@ -679,7 +679,7 @@ int FS1::unloadAllNonStartupFiles()
     // Sanity check: look for orphaned identifiers.
     if(!d->fileIds.empty())
     {
-        LOG_DEV_MSG("Warning: Orphan FileIds:");
+        LOGDEV_RES_MSG("Orphan FileIds:");
         printFileIds(d->fileIds);
     }
 #endif
@@ -696,10 +696,7 @@ bool FS1::checkFileId(de::Uri const& path)
     FileIds::iterator place = qLowerBound(d->fileIds.begin(), d->fileIds.end(), fileId);
     if(place != d->fileIds.end() && *place == fileId) return false;
 
-#ifdef _DEBUG
-    LOG_AS("FS1::addFileId")
-    LOG_DEV_XVERBOSE("\"%s\" => %s") << fileId.path() << fileId; /* path() is debug-only */
-#endif
+    LOGDEV_RES_XVERBOSE_DEBUGONLY("checkFileId \"%s\" => %s", fileId.path() << fileId); /* path() is debug-only */
 
     d->fileIds.insert(place, fileId);
     return true;

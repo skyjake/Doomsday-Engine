@@ -338,7 +338,7 @@ void Cl_MoverThinker(clplane_t *mover)
         remove = true;
     }
 
-    LOG_DEV_TRACE_DEBUGONLY("plane height %f in sector #%i",
+    LOGDEV_MAP_XVERBOSE_DEBUGONLY("plane height %f in sector #%i",
             P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property)
             << mover->sectorIndex);
 

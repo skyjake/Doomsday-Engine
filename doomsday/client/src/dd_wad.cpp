@@ -116,7 +116,7 @@ lumpnum_t W_CheckLumpNumForName(char const* name)
     lumpnum_t lumpNum;
     if(!name || !name[0])
     {
-        LOG_DEV_WARNING("W_CheckLumpNumForName: Empty lump name, returning invalid lumpnum");
+        LOGDEV_RES_WARNING("W_CheckLumpNumForName: Empty lump name, returning invalid lumpnum");
         return -1;
     }
     lumpNum = App_FileSystem().lumpNumForName(name);

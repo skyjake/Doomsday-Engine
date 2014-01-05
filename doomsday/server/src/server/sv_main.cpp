@@ -1124,22 +1124,22 @@ void Sv_ClientCoords(int plrNum)
 
     if(ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
     {
-        LOG_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Setting angles for player %i: %x, %f",
-                                   plrNum << clientAngle << clientLookDir);
+        LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Setting angles for player %i: %x, %f",
+                                     plrNum << clientAngle << clientLookDir);
 
         mo->angle = clientAngle;
         ddpl->lookDir = clientLookDir;
     }
 
-    LOG_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Received coords for player %i: %f, %f, %f",
-                               plrNum << clientPos[VX] << clientPos[VY] << clientPos[VZ]);
+    LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Received coords for player %i: %f, %f, %f",
+                                 plrNum << clientPos[VX] << clientPos[VY] << clientPos[VZ]);
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid. But it must be a valid pos.
     if(Sv_CanTrustClientPos(plrNum))
     {
-        LOG_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f",
-                                   plrNum << clientPos[VX] << clientPos[VY] << clientPos[VZ]);
+        LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f",
+                                     plrNum << clientPos[VX] << clientPos[VY] << clientPos[VZ]);
 
         Smoother_AddPos(clients[plrNum].smoother, clientGameTime,
                         clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);

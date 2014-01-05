@@ -65,7 +65,7 @@ static void readStrings(File const &file)
             String id = line.mid(1, end > 0? end - 1 : -1).trimmed().toLower();
             node = &helps.insert(id, StringsByType()).value();
 
-            LOG_DEV_TRACE_DEBUGONLY("Help node '%s'", id);
+            LOG_TRACE_DEBUGONLY("Help node '%s'", id);
         }
         else if(node && line.contains('=')) // It must be a key?
         {
@@ -125,7 +125,7 @@ static void readStrings(File const &file)
 
             node->insert(type, text);
 
-            LOG_DEV_TRACE_DEBUGONLY("Help string (type %i): \"%s\"", type << text);
+            LOG_TRACE_DEBUGONLY("Help string (type %i): \"%s\"", type << text);
         }
     }
 }

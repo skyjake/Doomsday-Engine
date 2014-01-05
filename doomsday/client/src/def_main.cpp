@@ -980,7 +980,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
     }
     else
     {
-        LOG_DEV_MSG("Texture \"%s\" not yet defined, resultant Material will inherit dimensions") << texUri;
+        LOGDEV_RES_MSG("Texture \"%s\" not yet defined, resultant Material will inherit dimensions") << texUri;
     }
 
     // The first stage is implicit.

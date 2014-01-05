@@ -89,7 +89,7 @@ DENG2_PIMPL(CanvasWindow)
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
-        LOG_DEV_VERBOSE("About to replace Canvas %p with %p")
+        LOGDEV_GL_MSG("About to replace Canvas %p with %p")
                 << de::dintptr(canvas) << de::dintptr(recreated);
 
         // Copy the audiences of the old canvas.
@@ -121,7 +121,7 @@ DENG2_PIMPL(CanvasWindow)
         // Restore the old focus change audience.
         canvas->audienceForFocusChange = canvasFocusAudience;
 
-        LOG_DEV_VERBOSE("Canvas replaced with %p") << de::dintptr(canvas);
+        LOGDEV_GL_MSG("Canvas replaced with %p") << de::dintptr(canvas);
     }
 };
 

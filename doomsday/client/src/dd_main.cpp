@@ -1207,7 +1207,7 @@ boolean DD_GameInfo(GameInfo *info)
         return true;
     }
 
-    LOG_DEV_WARNING("No game currently loaded");
+    LOGDEV_WARNING("No game currently loaded");
     return false;
 }
 

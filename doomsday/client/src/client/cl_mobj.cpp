@@ -260,7 +260,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
 {
     if(!localMobj || !remoteClientMobj)
     {
-        LOG_DEV_VERBOSE("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p") << localMobj << remoteClientMobj;
+        LOGDEV_MAP_VERBOSE("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p") << localMobj << remoteClientMobj;
         return;
     }
 
@@ -273,8 +273,8 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     {
         localMobj->angle = remoteClientMobj->angle;
 
-        LOG_DEV_TRACE_DEBUGONLY("Cl_UpdateRealPlayerMobj: localMobj=%p angle=%x",
-                                localMobj << localMobj->angle);
+        LOGDEV_MAP_XVERBOSE_DEBUGONLY("Cl_UpdateRealPlayerMobj: localMobj=%p angle=%x",
+                                     localMobj << localMobj->angle);
     }
     localMobj->sprite = remoteClientMobj->sprite;
     localMobj->frame = remoteClientMobj->frame;
@@ -595,7 +595,7 @@ boolean ClMobj_Reveal(mobj_t *mo)
         return false;
     }
 
-    LOG_NET_XVERBOSE("clmobj %i 'Hidden' status lifted (z=%f)") << mo->thinker.id << mo->origin[VZ];
+    LOG_MAP_XVERBOSE("clmobj %i 'Hidden' status lifted (z=%f)") << mo->thinker.id << mo->origin[VZ];
 
     info->flags &= ~CLMF_HIDDEN;
 
@@ -608,7 +608,7 @@ boolean ClMobj_Reveal(mobj_t *mo)
         S_StartSoundAtVolume(info->sound, mo, info->volume);
     }
 
-    LOG_DEV_XVERBOSE("Revealing id %i, state %p (%i)")
+    LOGDEV_MAP_XVERBOSE("Revealing id %i, state %p (%i)")
             << mo->thinker.id << mo->state << (int)(mo->state - states);
 
     return true;

@@ -1015,7 +1015,7 @@ void Sfx_StartRefresh()
     else
     {
 noRefresh:
-        LOG_DEV_NOTE("Audio driver does not require a refresh thread");
+        LOGDEV_AUDIO_NOTE("Audio driver does not require a refresh thread");
     }
 }
 

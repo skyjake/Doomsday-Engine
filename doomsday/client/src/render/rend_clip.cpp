@@ -823,7 +823,7 @@ void C_AddViewRelOcclusion(Vector2d const &from, Vector2d const &to, coord_t hei
     {
         // Uh-oh.
         LOG_AS("C_AddViewRelOcclusion");
-        LOG_DEV_WARNING("Wrong side v1:%s v2:%s eyeOrigin:%s!")
+        LOGDEV_GL_WARNING("Wrong side v1:%s v2:%s eyeOrigin:%s!")
                 << from.asText() << to.asText()
                 << Vector2d(eyeOrigin).asText();
         DENG_ASSERT(!Failed_C_AddViewRelOcclusion_SideTest);

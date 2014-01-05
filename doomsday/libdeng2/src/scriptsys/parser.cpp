@@ -557,7 +557,7 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     if(flags.testFlag(HasCondition))
     {
         LOG_AS("parseConditionalCompound");
-        LOG_DEV_TRACE_DEBUGONLY("colon at %i", colon);
+        LOGDEV_SCR_XVERBOSE_DEBUGONLY("colon at %i", colon);
 
         TokenRange conditionRange = range.between(1, colon);
         if(conditionRange.empty())
@@ -619,7 +619,7 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
     TokenRange range = fullRange;
 
     LOG_AS("parseExpression");
-    LOG_DEV_TRACE_DEBUGONLY("", range.asText());
+    LOGDEV_SCR_XVERBOSE_DEBUGONLY("", range.asText());
     
     if(!range.size())
     {

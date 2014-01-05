@@ -54,7 +54,11 @@
     de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
     LOG_AS(__logSectionUtf8.constData());
 
-// End-user/game audience:
+/*
+ * Macros that make a new log entry with a particular set of audience/level bits:
+ */
+
+// End-user/game audience
 #define LOG_AT_LEVEL(level, str)        de::LogEntryStager(level, str)
 #define LOG_XVERBOSE(str)               LOG_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_VERBOSE(str)                LOG_AT_LEVEL(de::LogEntry::Verbose,  str)
@@ -65,7 +69,18 @@
 #define LOG_ERROR(str)                  LOG_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_CRITICAL(str)               LOG_AT_LEVEL(de::LogEntry::Critical, str)
 
-// Custom combination of audiences:
+// Native code developer audience (general domain)
+#define LOGDEV_AT_LEVEL(level, str)     LOG_AT_LEVEL(de::LogEntry::Dev | level, str)
+#define LOGDEV_XVERBOSE(str)            LOGDEV_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_TRACE(str)                  LOGDEV_XVERBOSE(str) // backwards comp
+#define LOGDEV_VERBOSE(str)             LOGDEV_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_DEBUG(str)                  LOGDEV_VERBOSE(str) // backwards comp
+#define LOGDEV_MSG(str)                 LOGDEV_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_NOTE(str)                LOGDEV_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_WARNING(str)             LOGDEV_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_ERROR(str)               LOGDEV_AT_LEVEL(de::LogEntry::Error,    str)
+
+// Custom combination of audiences
 #define LOG_XVERBOSE_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::XVerbose, str)
 #define LOG_VERBOSE_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Verbose,  str)
 #define LOG_MSG_TO(audflags, str)       LOG_AT_LEVEL(audflags | de::LogEntry::Message,  str)
@@ -74,7 +89,7 @@
 #define LOG_ERROR_TO(audflags, str)     LOG_AT_LEVEL(audflags | de::LogEntry::Error,    str)
 #define LOG_CRITICAL_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::Critical, str)
 
-// Resource developer audience:
+// Resource domain
 #define LOG_RES_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Resource | level, str)
 #define LOG_RES_XVERBOSE(str)           LOG_RES_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_RES_VERBOSE(str)            LOG_RES_AT_LEVEL(de::LogEntry::Verbose,  str)
@@ -83,8 +98,16 @@
 #define LOG_RES_WARNING(str)            LOG_RES_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_RES_ERROR(str)              LOG_RES_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_RES_CRITICAL(str)           LOG_RES_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_RES_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Resource | level, str)
+#define LOGDEV_RES_XVERBOSE(str)        LOGDEV_RES_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_RES_VERBOSE(str)         LOGDEV_RES_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_RES_MSG(str)             LOGDEV_RES_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_RES_NOTE(str)            LOGDEV_RES_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_RES_WARNING(str)         LOGDEV_RES_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_RES_ERROR(str)           LOGDEV_RES_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_RES_CRITICAL(str)        LOGDEV_RES_AT_LEVEL(de::LogEntry::Critical, str)
 
-// Map developer audience:
+// Map domain
 #define LOG_MAP_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Map | level, str)
 #define LOG_MAP_XVERBOSE(str)           LOG_MAP_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_MAP_VERBOSE(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Verbose,  str)
@@ -93,8 +116,16 @@
 #define LOG_MAP_WARNING(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_MAP_ERROR(str)              LOG_MAP_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_MAP_CRITICAL(str)           LOG_MAP_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_MAP_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Map | level, str)
+#define LOGDEV_MAP_XVERBOSE(str)        LOGDEV_MAP_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_MAP_VERBOSE(str)         LOGDEV_MAP_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_MAP_MSG(str)             LOGDEV_MAP_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_MAP_NOTE(str)            LOGDEV_MAP_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_MAP_WARNING(str)         LOGDEV_MAP_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_MAP_ERROR(str)           LOGDEV_MAP_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_MAP_CRITICAL(str)        LOGDEV_MAP_AT_LEVEL(de::LogEntry::Critical, str)
 
-// Script developer audience:
+// Script domain
 #define LOG_SCR_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Script | level, str)
 #define LOG_SCR_XVERBOSE(str)           LOG_SCR_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_SCR_VERBOSE(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Verbose,  str)
@@ -103,8 +134,16 @@
 #define LOG_SCR_WARNING(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_SCR_ERROR(str)              LOG_SCR_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_SCR_CRITICAL(str)           LOG_SCR_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_SCR_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Script | level, str)
+#define LOGDEV_SCR_XVERBOSE(str)        LOGDEV_SCR_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_SCR_VERBOSE(str)         LOGDEV_SCR_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_SCR_MSG(str)             LOGDEV_SCR_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_SCR_NOTE(str)            LOGDEV_SCR_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_SCR_WARNING(str)         LOGDEV_SCR_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_SCR_ERROR(str)           LOGDEV_SCR_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_SCR_CRITICAL(str)        LOGDEV_SCR_AT_LEVEL(de::LogEntry::Critical, str)
 
-// Audio audience:
+// Audio domain
 #define LOG_AUDIO_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Audio | level, str)
 #define LOG_AUDIO_XVERBOSE(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_AUDIO_VERBOSE(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Verbose,  str)
@@ -113,8 +152,16 @@
 #define LOG_AUDIO_WARNING(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_AUDIO_ERROR(str)            LOG_AUDIO_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_AUDIO_CRITICAL(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_AUDIO_AT_LEVEL(level, str)   LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Audio | level, str)
+#define LOGDEV_AUDIO_XVERBOSE(str)      LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_AUDIO_VERBOSE(str)       LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_AUDIO_MSG(str)           LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_AUDIO_NOTE(str)          LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_AUDIO_WARNING(str)       LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_AUDIO_ERROR(str)         LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_AUDIO_CRITICAL(str)      LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Critical, str)
 
-// Graphics audience:
+// Graphics domain
 #define LOG_GL_AT_LEVEL(level, str)     LOG_AT_LEVEL(de::LogEntry::GL | level, str)
 #define LOG_GL_XVERBOSE(str)            LOG_GL_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_GL_VERBOSE(str)             LOG_GL_AT_LEVEL(de::LogEntry::Verbose,  str)
@@ -123,8 +170,16 @@
 #define LOG_GL_WARNING(str)             LOG_GL_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_GL_ERROR(str)               LOG_GL_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_GL_CRITICAL(str)            LOG_GL_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_GL_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::GL | level, str)
+#define LOGDEV_GL_XVERBOSE(str)         LOGDEV_GL_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_GL_VERBOSE(str)          LOGDEV_GL_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_GL_MSG(str)              LOGDEV_GL_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_GL_NOTE(str)             LOGDEV_GL_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_GL_WARNING(str)          LOGDEV_GL_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_GL_ERROR(str)            LOGDEV_GL_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_GL_CRITICAL(str)         LOGDEV_GL_AT_LEVEL(de::LogEntry::Critical, str)
 
-// Input audience:
+// Input domain
 #define LOG_INPUT_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Input | level, str)
 #define LOG_INPUT_XVERBOSE(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_INPUT_VERBOSE(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Verbose,  str)
@@ -133,8 +188,16 @@
 #define LOG_INPUT_WARNING(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_INPUT_ERROR(str)            LOG_INPUT_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_INPUT_CRITICAL(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_INPUT_AT_LEVEL(level, str)   LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Input | level, str)
+#define LOGDEV_INPUT_XVERBOSE(str)      LOGDEV_INPUT_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_INPUT_VERBOSE(str)       LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_INPUT_MSG(str)           LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_INPUT_NOTE(str)          LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_INPUT_WARNING(str)       LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_INPUT_ERROR(str)         LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_INPUT_CRITICAL(str)      LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Critical, str)
 
-// Network audience:
+// Network domain
 #define LOG_NET_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Network | level, str)
 #define LOG_NET_XVERBOSE(str)           LOG_NET_AT_LEVEL(de::LogEntry::XVerbose, str)
 #define LOG_NET_VERBOSE(str)            LOG_NET_AT_LEVEL(de::LogEntry::Verbose,  str)
@@ -143,17 +206,14 @@
 #define LOG_NET_WARNING(str)            LOG_NET_AT_LEVEL(de::LogEntry::Warning,  str)
 #define LOG_NET_ERROR(str)              LOG_NET_AT_LEVEL(de::LogEntry::Error,    str)
 #define LOG_NET_CRITICAL(str)           LOG_NET_AT_LEVEL(de::LogEntry::Critical, str)
-
-// Native code developer audience:
-#define LOG_DEV_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Dev | level, str)
-#define LOG_DEV_XVERBOSE(str)           LOG_DEV_AT_LEVEL(de::LogEntry::XVerbose, str)
-#define LOG_TRACE(str)                  LOG_DEV_XVERBOSE(str) // backwards comp
-#define LOG_DEV_VERBOSE(str)            LOG_DEV_AT_LEVEL(de::LogEntry::Verbose,  str)
-#define LOG_DEBUG(str)                  LOG_DEV_VERBOSE(str) // backwards comp
-#define LOG_DEV_MSG(str)                LOG_DEV_AT_LEVEL(de::LogEntry::Message,  str)
-#define LOG_DEV_NOTE(str)               LOG_DEV_AT_LEVEL(de::LogEntry::Note,     str)
-#define LOG_DEV_WARNING(str)            LOG_DEV_AT_LEVEL(de::LogEntry::Warning,  str)
-#define LOG_DEV_ERROR(str)              LOG_DEV_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_NET_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Network | level, str)
+#define LOGDEV_NET_XVERBOSE(str)        LOGDEV_NET_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_NET_VERBOSE(str)         LOGDEV_NET_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_NET_MSG(str)             LOGDEV_NET_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_NET_NOTE(str)            LOGDEV_NET_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_NET_WARNING(str)         LOGDEV_NET_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_NET_ERROR(str)           LOGDEV_NET_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_NET_CRITICAL(str)        LOGDEV_NET_AT_LEVEL(de::LogEntry::Critical, str)
 
 #ifdef DENG2_DEBUG
 /**
@@ -161,11 +221,17 @@
  * for internal messages that might have a significant processing overhead. (Note that parameters
  * differ compared to the normal LOG_* macros.)
  */
-#  define LOG_DEV_TRACE_DEBUGONLY(form, args)       LOG_TRACE(form) << args
-#  define LOG_NET_XVERBOSE_DEBUGONLY(form, args)    LOG_NET_XVERBOSE(form) << args
+#  define LOG_TRACE_DEBUGONLY(form, args)               LOG_TRACE(form) << args
+#  define LOGDEV_MAP_XVERBOSE_DEBUGONLY(form, args)     LOGDEV_MAP_XVERBOSE(form) << args
+#  define LOGDEV_RES_XVERBOSE_DEBUGONLY(form, args)     LOGDEV_RES_XVERBOSE(form) << args
+#  define LOGDEV_SCR_XVERBOSE_DEBUGONLY(form, args)     LOGDEV_SCR_XVERBOSE(form) << args
+#  define LOGDEV_NET_XVERBOSE_DEBUGONLY(form, args)     LOGDEV_NET_XVERBOSE(form) << args
 #else
-#  define LOG_DEV_TRACE_DEBUGONLY(form, args)
-#  define LOG_NET_XVERBOSE_DEBUGONLY(form, args)
+#  define LOG_TRACE_DEBUGONLY(form, args)
+#  define LOGDEV_MAP_XVERBOSE_DEBUGONLY(form, args)
+#  define LOGDEV_RES_XVERBOSE_DEBUGONLY(form, args)
+#  define LOGDEV_SCR_XVERBOSE_DEBUGONLY(form, args)
+#  define LOGDEV_NET_XVERBOSE_DEBUGONLY(form, args)
 #endif
 
 #ifdef WIN32
@@ -191,47 +257,60 @@ class LogBuffer;
 class DENG2_PUBLIC LogEntry : public Lockable, public ISerializable
 {
 public:
-    /// Target audience of the entry (bits). If not given, the entry is intended for the
-    /// end-user/player.
+    /**
+     * Target audience/domain of the entry (bits). If not set, the entry is generic and
+     * intended for the end-user/player.
+     */
     enum Audience
     {
-        Resource = 0x10000,     /**< Resource or resource pack developer (files, etc.).
+        // Domains
+        Resource = 0x10000,     /**< Resource or resource pack domain (files, etc.).
                                      "Resource" is here meant in a wider sense of all the
                                      external data that Doomsday utilizes. */
-        Map      = 0x20000,     /**< Map developer. Information pertaining to the map and its
+        Map      = 0x20000,     /**< Map domain: information pertaining to the map and its
                                      elements, playsim, etc. */
-        Script   = 0x40000,     ///< Script developer.
-        GL       = 0x80000,     ///< GL developer (shaders, etc.)
-        Audio    = 0x100000,    ///< Audio developer
-        Input    = 0x200000,    ///< Input events, devices, etc.
-        Network  = 0x400000,    ///< Network connections, packets, etc.
-        Dev      = 0x800000,    ///< Native code developer (i.e., the programmer)
+        Script   = 0x40000,     ///< Script domain
+        GL       = 0x80000,     ///< Graphics/renderer domain (shaders, etc.)
+        Audio    = 0x100000,    ///< Audio domain
+        Input    = 0x200000,    ///< Input domain: events, devices, etc.
+        Network  = 0x400000,    ///< Network domain: connections, packets, etc.
 
+        // User groups
+        Dev      = 0x800000,    /**< Native code developer (i.e., the programmer); can be
+                                     combined with other flags to mark the entry for devs */
+
+        DomainMask   = 0x07f0000,
         AudienceMask = 0xfff0000
     };
 
     static String audienceToText(Audience audience)
     {
-        switch(audience)
+        String const suffix = (audience & Dev? "Dev" : "");
+        switch(audience & DomainMask)
         {
-        case Resource: return "Resource";
-        case Map:      return "Map";
-        case Script:   return "Script";
-        case GL:       return "GL";
-        case Audio:    return "Audio";
-        case Input:    return "Input";
-        case Network:  return "Network";
-        case Dev:      return "Dev";
-        default:       return "";
+        case Resource: return "Resource" + suffix;
+        case Map:      return "Map" + suffix;
+        case Script:   return "Script" + suffix;
+        case GL:       return "GL" + suffix;
+        case Audio:    return "Audio" + suffix;
+        case Input:    return "Input" + suffix;
+        case Network:  return "Network" + suffix;
+        default:       return suffix;
         }
     }
 
     static Audience textToAudience(String text)
     {
+        duint32 val = 0;
+        if(text.endsWith("Dev"))
+        {
+            val |= Dev;
+            text = text.remove(text.size() - 3);
+        }
         for(int i = 16; i < 32; ++i)
         {
             if(!audienceToText(Audience(1 << i)).compareWithoutCase(text))
-                return Audience(1 << i);
+                return Audience((1 << i) | val);
         }
         throw de::Error("Log::textToAudience", "'" + text + "' is not a valid log audience");
     }

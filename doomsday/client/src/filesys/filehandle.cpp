@@ -135,9 +135,9 @@ FileHandle* FileHandleBuilder::fromLump(File1& lump, bool dontBuffer)
         hndl->d->size = lump.size();
         hndl->d->pos = hndl->d->data = (uint8_t*) M_Malloc(hndl->d->size);
 
-        LOG_DEV_TRACE_DEBUGONLY("[%p] Buffering \"%s:%s\"...", dintptr(hndl)
-                                << NativePath(lump.container().composePath()).pretty()
-                                << NativePath(lump.composePath()).pretty());
+        LOGDEV_RES_XVERBOSE_DEBUGONLY("[%p] Buffering \"%s:%s\"...", dintptr(hndl)
+                                     << NativePath(lump.container().composePath()).pretty()
+                                     << NativePath(lump.composePath()).pretty());
 
         lump.read((uint8_t*)hndl->d->data, 0, lump.size());
     }

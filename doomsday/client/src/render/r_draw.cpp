@@ -163,7 +163,7 @@ void R_DrawPatch(Texture &texture, int x, int y, int w, int h, bool useOffsets)
     if(texture.manifest().schemeName().compareWithoutCase("Patches"))
     {
         LOG_AS("R_DrawPatch3");
-        LOG_DEV_WARNING("Cannot draw a non-patch [%p]") << dintptr(&texture);
+        LOGDEV_GL_WARNING("Cannot draw a non-patch [%p]") << dintptr(&texture);
         return;
     }
 

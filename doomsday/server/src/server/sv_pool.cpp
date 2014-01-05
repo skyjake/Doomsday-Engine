@@ -2289,6 +2289,8 @@ void Sv_NewSideDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
  */
 void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 {
+    LOG_AS("Sv_NewPolyDeltas");
+
     polydelta_t delta;
 
     /// @todo fixme: Do not assume the current map.
@@ -2296,7 +2298,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
-            LOG_NET_XVERBOSE_DEBUGONLY("Sv_NewPolyDeltas: Change in poly %i", i);
+            LOGDEV_NET_XVERBOSE_DEBUGONLY("Change in poly %i", i);
 
             Sv_AddDeltaToPools(&delta, targets);
         }
@@ -2393,7 +2395,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t *emitter, Sector *sourceSector,
     if(isRepeating)
         df |= SNDDF_REPEAT;
 
-    LOG_TRACE("New sound delta: type=%i id=%i flags=%x") << type << id << df;
+    LOGDEV_NET_XVERBOSE("New sound delta: type=%i id=%i flags=%x") << type << id << df;
 
     // This is used by mobj/sector sounds.
     soundDelta.sound = soundId;
