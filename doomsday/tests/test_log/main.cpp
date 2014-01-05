@@ -39,11 +39,15 @@ int main(int argc, char **argv)
 
             for(int k = LogEntry::LOWEST_LOG_LEVEL; k < LogEntry::MAX_LOG_LEVELS; ++k)
             {
-                LogEntry::Level other = LogEntry::Level(k);
-                LOG_AT_LEVEL(other, "- (currently enabled %9s) entry at level %9s: visible: %b")
-                        << LogEntry::levelToText(level)
-                        << LogEntry::levelToText(other)
-                        << LogBuffer::appBuffer().isEnabled(other);
+                for(int d = 0; d < 2; ++d)
+                {
+                    duint32 other = k | (d? LogEntry::Dev : 0);
+                    LOG_AT_LEVEL(other, "- (currently enabled %8s) entry at level %8s (audience %3s): visible: %b")
+                            << LogEntry::levelToText(level)
+                            << LogEntry::levelToText(other)
+                            << LogEntry::audienceToText(other)
+                            << LogBuffer::appBuffer().isEnabled(LogEntry::Level(other));
+                }
             }
         }
     }

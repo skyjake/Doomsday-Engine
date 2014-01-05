@@ -187,12 +187,12 @@ void LogBuffer::add(LogEntry *entry)
 
 void LogBuffer::enable(LogEntry::Level overLevel)
 {
-    d->enabledOverLevel = overLevel;
+    d->enabledOverLevel = (overLevel & LogEntry::LevelMask);
 }
 
 bool LogBuffer::isEnabled(LogEntry::Level overLevel) const
 {
-    return d->enabledOverLevel <= overLevel;
+    return d->enabledOverLevel <= (overLevel & LogEntry::LevelMask);
 }
 
 void LogBuffer::enableStandardOutput(bool yes)

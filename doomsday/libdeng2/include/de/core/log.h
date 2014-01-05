@@ -283,7 +283,7 @@ public:
         AudienceMask = 0xfff0000
     };
 
-    static String audienceToText(Audience audience)
+    static String audienceToText(duint32 audience)
     {
         String const suffix = (audience & Dev? "Dev" : "");
         switch(audience & DomainMask)
@@ -364,9 +364,9 @@ public:
         LevelMask = 0x7
     };   
 
-    static String levelToText(Level level)
+    static String levelToText(duint32 level)
     {
-        switch(level)
+        switch(level & LevelMask)
         {
         case XVerbose: return "XVerbose";
         case Verbose:  return "Verbose";
