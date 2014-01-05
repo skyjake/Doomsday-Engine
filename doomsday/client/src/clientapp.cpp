@@ -106,18 +106,18 @@ Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
         id = QFontDatabase::addApplicationFontFromData(data);
         if(id < 0)
         {
-            LOG_WARNING("Failed to load font:");
+            LOG_RES_WARNING("Failed to load font:");
         }
         else
         {
-            LOG_VERBOSE("Loaded font: %s") << args.at(0)->asText();
+            LOG_RES_VERBOSE("Loaded font: %s") << args.at(0)->asText();
             //qDebug() << args.at(0)->asText();
             //qDebug() << "Families:" << QFontDatabase::applicationFontFamilies(id);
         }
     }
     catch(Error const &er)
     {
-        LOG_WARNING("Failed to load font:\n") << er.asText();
+        LOG_RES_WARNING("Failed to load font:\n") << er.asText();
     }
     return 0;
 }

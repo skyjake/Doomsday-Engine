@@ -312,10 +312,11 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
         // Compose the name of the symbolic event.
         Str_Append(symbolicName, playerControls[control].name);
 
-        VERBOSE( Con_Message("P_MaintainControlDoubleClicks: Triggered plr %i, ctl %i, "
-                             "state %i - threshold %i (%s)",
-                             playerNum, control, newState, nowTime - db->previousClickTime,
-                             Str_Text(symbolicName)) );
+        LOG_AS("P_MaintainControlDoubleClicks");
+        LOG_INPUT_XVERBOSE("Triggered plr %i, ctl %i, "
+                          "state %i - threshold %i (%s)")
+                << playerNum << control << newState << nowTime - db->previousClickTime
+                << Str_Text(symbolicName);
 
         event.device = 0;
         event.type = E_SYMBOLIC;

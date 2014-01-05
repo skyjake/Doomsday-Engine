@@ -197,13 +197,13 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
     // Read in the whole thing.
     size = FileHandle_Length(file);
 
-    DEBUG_Message(("WAV_Load: Loading from \"%s\" (size %i, fpos %i)\n",
-                   F_PrettyPath(Str_Text(F_ComposePath(FileHandle_File_const(file)))),
-                   (int)size, (int)FileHandle_Tell(file)));
+    LOG_AS("WAV_Load");
+    LOG_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
+            << F_PrettyPath(Str_Text(F_ComposePath(FileHandle_File_const(file))))
+            << size
+            << FileHandle_Tell(file);
 
-    data = (uint8_t*)malloc(size);
-    if(!data) Con_Error("WAV_Load: Failed on allocation of %lu bytes for sample load buffer.",
-                (unsigned long) size);
+    data = (uint8_t*) M_Malloc(size);
 
     FileHandle_Read(file, data, size);
     F_Delete(file);
@@ -213,9 +213,9 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
     sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);
     if(!sampledata)
     {
-        Con_Message("WAV_Load: Failed to load %s.", filename);
+        LOG_RES_WARNING("Failed to load \"%s\"") << filename;
     }
 
-    free(data);
+    M_Free(data);
     return sampledata;
 }

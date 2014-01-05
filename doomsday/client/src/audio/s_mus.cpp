@@ -82,11 +82,11 @@ boolean Mus_Init(void)
 
     if(isDedicated || CommandLine_Exists("-nomusic"))
     {
-        Con_Message("Music disabled.");
+        LOG_AUDIO_NOTE("Music disabled");
         return true;
     }
 
-    VERBOSE( Con_Message("Initializing Music subsystem...") );
+    LOG_AUDIO_VERBOSE("Initializing Music subsystem...");
 
     // Let's see which interfaces are available for music playback.
     count = getInterfaces(iMusic);
@@ -103,8 +103,8 @@ boolean Mus_Init(void)
     {
         if(!iMusic[i]->Init())
         {
-            Con_Message("Warning: Failed to initialize %s for music playback.",
-                        Str_Text(AudioDriver_InterfaceName(iMusic[i])));
+            LOG_AUDIO_WARNING("Failed to initialize %s for music playback")
+                    << Str_Text(AudioDriver_InterfaceName(iMusic[i]));
         }
     }
 
@@ -355,7 +355,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
     songID = def - defs.music;
 
-    DEBUG_Message(("Mus_Start: Starting ID:%i looped:%i, currentSong ID:%i\n", songID, looped, currentSong));
+    LOG_AS("Mus_Start");
+    LOG_AUDIO_VERBOSE("Starting ID:%i looped:%i, currentSong ID:%i") << songID << looped << currentSong;
 
     if(songID == currentSong && AudioDriver_Music_IsPlaying())
     {
@@ -410,8 +411,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
             Str_Init(&path);
             if(Mus_GetExt(def, &path))
             {
-                VERBOSE( Con_Message("Attempting to play song '%s' (file \"%s\").",
-                                     def->id, F_PrettyPath(Str_Text(&path))) )
+                LOG_AUDIO_VERBOSE("Attempting to play song '%s' (file \"%s\")")
+                        << def->id << F_PrettyPath(Str_Text(&path));
 
                 // Its an external file.
                 return AudioDriver_Music_PlayFile(Str_Text(&path), looped);
@@ -436,7 +437,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
             break;
 
         default:
-            Con_Error("Mus_Start: Invalid value order[i] = %i.", order[i]);
+            DENG_ASSERT(!"Mus_Start: Invalid value for order[i]");
             break;
         }
     }

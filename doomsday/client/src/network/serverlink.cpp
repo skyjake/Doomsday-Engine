@@ -112,7 +112,7 @@ DENG2_PIMPL(ServerLink)
             discovered.insert(svAddress, svInfo);
 
             // Show the information in the console.
-            LOG_NET_INFO("%i server%s been found")
+            LOG_NET_NOTE("%i server%s been found")
                     << discovered.size()
                     << (discovered.size() != 1 ? "s have" : " has");
 

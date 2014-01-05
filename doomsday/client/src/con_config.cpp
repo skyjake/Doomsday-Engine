@@ -131,7 +131,7 @@ static boolean writeConsoleState(const char* fileName)
     FILE* file;
     if(!fileName || !fileName[0]) return false;
 
-    VERBOSE(Con_Message("Writing state to \"%s\"...", fileName));
+    LOG_VERBOSE("Writing state to \"%s\"...") << fileName;
 
     Str_Init(&nativePath);
     Str_Set(&nativePath, fileName);
@@ -170,7 +170,7 @@ static boolean writeBindingsState(const char* fileName)
     FILE* file;
     if(!fileName || !fileName[0]) return false;
 
-    VERBOSE(Con_Message("Writing bindings to \"%s\"...", fileName));
+    LOG_VERBOSE("Writing bindings to \"%s\"...") << fileName;
 
     Str_Init(&nativePath);
     Str_Set(&nativePath, fileName);
@@ -224,11 +224,11 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
     file = F_Open(fileName, "rt");
     if(!file)
     {
-        VERBOSE(Con_Message("Could not open: \"%s\"", fileName));
+        LOG_SCR_WARNING("Could not open \"%s\"") << fileName;
         return false;
     }
 
-    VERBOSE(Con_Message("Con_ParseCommands: %s (def:%i)", F_PrettyPath(fileName), setdefault));
+    LOG_SCR_VERBOSE("Parsing \"%s\" (setdef:%b)") << F_PrettyPath(fileName) << setdefault;
 
     // This file is filled with console commands.
     // Each line is a command.
@@ -239,7 +239,10 @@ boolean Con_ParseCommands2(const char* fileName, int flags)
         {
             // Execute the commands silently.
             if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
-                Con_Message("%s(%d): error executing command\n \"%s\"", F_PrettyPath(fileName), line, buff);
+            {
+                LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
+                        << F_PrettyPath(fileName) << line << buff;
+            }
         }
 
         if(FileHandle_AtEnd(file)) break;
@@ -282,6 +285,6 @@ D_CMD(WriteConsole)
 {
     DENG2_UNUSED2(src, argc);
 
-    Con_Message("Writing to \"%s\"...", argv[1]);
+    LOG_SCR_MSG("Writing to \"%s\"...") << argv[1];
     return !Con_WriteState(argv[1], NULL);
 }

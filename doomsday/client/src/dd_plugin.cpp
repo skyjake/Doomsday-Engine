@@ -101,7 +101,8 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     initializer = de::function_cast<void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
     if(!initializer)
     {
-        DEBUG_Message(("  loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath));
+        LOG_RES_WARNING("Cannot load plugin \"%s\": no entrypoint called 'DP_Initialize'")
+                << pluginPath;
 
         // Clearly not a Doomsday plugin.
         Library_Delete(plugin);
@@ -113,7 +114,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     plugId = handle - hInstPlug + 1;
     if(!handle)
     {
-        DEBUG_Message(("  loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath));
+        LOG_RES_WARNING("Cannot load \"%s\": too many plugins loaded already loaded") << pluginPath;
 
         Library_Delete(plugin);
         return 0; // Continue iteration.
@@ -311,7 +312,7 @@ DENG_EXTERN_C void Plug_Notify(int notification, void* param)
         // If an update has been downloaded and is ready to go, we should
         // re-show the dialog now that the user has saved the game as
         // prompted.
-        DEBUG_Message(("Plug_Notify: Game saved.\n"));
+        LOG_DEBUG("Plug_Notify: Game saved");
         DownloadDialog::showCompletedDownload();
         break;
     }

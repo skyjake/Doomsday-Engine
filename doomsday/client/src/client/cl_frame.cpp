@@ -240,17 +240,11 @@ void Cl_Frame2Received(int packetType)
     if(packetType == PSV_FIRST_FRAME2)
     {
         gotFirstFrame = true;
-/*#ifdef _DEBUG
-        VERBOSE( Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set) );
-#endif*/
     }
     else if(!gotFirstFrame)
     {
         // Just ignore. If this was a legitimate frame, the server will
         // send it again when it notices no ack is coming.
-/*#ifdef _DEBUG
-        VERBOSE( Con_Printf("==> Ignored set %i\n", set) );
-#endif*/
         return;
     }
 

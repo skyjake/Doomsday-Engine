@@ -208,8 +208,9 @@ void ClMobj_Link(mobj_t *mo)
         // Client mobjs that belong to players remain unlinked.
         return;
     }
-    DEBUG_VERBOSE2_Message(("ClMobj_Link: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
-                            mo->origin[VX], mo->origin[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no"));
+    LOG_MAP_XVERBOSE("ClMobj_Link: id %i, x%f Y%f, solid:%b")
+            << mo->thinker.id << mo->origin[VX] << mo->origin[VY]
+            << (mo->ddFlags & DDMF_SOLID);
 
     Mobj_Link(mo, (mo->ddFlags & DDMF_DONTDRAW ? 0 : MLF_SECTOR) |
                   (mo->ddFlags & DDMF_SOLID ? MLF_BLOCKMAP : 0));
@@ -218,16 +219,18 @@ void ClMobj_Link(mobj_t *mo)
 #undef ClMobj_EnableLocalActions
 void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
 {
+    LOG_AS("ClMobj_EnableLocalActions");
+
     clmoinfo_t *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return;
     if(enable)
     {
-        DEBUG_Message(("ClMobj_EnableLocalActions: Enabled for mobj %i.\n", mo->thinker.id));
+        LOG_NET_VERBOSE("Enabled for clmobj %i") << mo->thinker.id;
         info->flags |= CLMF_LOCAL_ACTIONS;
     }
     else
     {
-        DEBUG_Message(("ClMobj_EnableLocalActions: Disabled for mobj %i.\n", mo->thinker.id));
+        LOG_NET_VERBOSE("Disabled for clmobj %i") << mo->thinker.id;
         info->flags &= ~CLMF_LOCAL_ACTIONS;
     }
 }
@@ -257,7 +260,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
 {
     if(!localMobj || !remoteClientMobj)
     {
-        DEBUG_VERBOSE_Message(("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p\n", localMobj, remoteClientMobj));
+        LOG_DEV_VERBOSE("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p") << localMobj << remoteClientMobj;
         return;
     }
 
@@ -269,9 +272,9 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     if(flags & MDF_ANGLE)
     {
         localMobj->angle = remoteClientMobj->angle;
-#ifdef _DEBUG
-        VERBOSE2( Con_Message("Cl_UpdateRealPlayerMobj: localMobj=%p angle=%x", localMobj, localMobj->angle) );
-#endif
+
+        LOG_DEV_TRACE_DEBUGONLY("Cl_UpdateRealPlayerMobj: localMobj=%p angle=%x",
+                                localMobj << localMobj->angle);
     }
     localMobj->sprite = remoteClientMobj->sprite;
     localMobj->frame = remoteClientMobj->frame;
@@ -516,7 +519,8 @@ void ClMobj_Destroy(mobj_t *mo)
     checkMobjHash();
 #endif
 
-    DEBUG_VERBOSE2_Message(("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id));
+    LOG_AS("ClMobj_Destroy");
+    LOG_NET_XVERBOSE("mobj %i being destroyed") << mo->thinker.id;
 
     CL_ASSERT_CLMOBJ(mo);
     clmoinfo_t *info = ClMobj_GetInfo(mo);
@@ -574,6 +578,8 @@ clmoinfo_t *ClMobj_GetInfo(mobj_t *mo)
 
 boolean ClMobj_Reveal(mobj_t *mo)
 {
+    LOG_AS("Cl_RevealMobj");
+
     clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
@@ -588,9 +594,8 @@ boolean ClMobj_Reveal(mobj_t *mo)
         // Don't reveal just yet. We lack a vital piece of information.
         return false;
     }
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted (z=%f).", mo->thinker.id, mo->origin[VZ]) );
-#endif
+
+    LOG_NET_XVERBOSE("clmobj %i 'Hidden' status lifted (z=%f)") << mo->thinker.id << mo->origin[VZ];
 
     info->flags &= ~CLMF_HIDDEN;
 
@@ -603,10 +608,8 @@ boolean ClMobj_Reveal(mobj_t *mo)
         S_StartSoundAtVolume(info->sound, mo, info->volume);
     }
 
-#ifdef _DEBUG
-    VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
-                         mo->thinker.id, mo->state, (int)(mo->state - states)) );
-#endif
+    LOG_DEV_XVERBOSE("Revealing id %i, state %p (%i)")
+            << mo->thinker.id << mo->state << (int)(mo->state - states);
 
     return true;
 }
@@ -675,9 +678,8 @@ void ClMobj_ReadDelta2(boolean skip)
             fastMom = true;
     }
 
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("Cl_ReadMobjDelta: Reading mobj delta for %i (df:0x%x edf:0x%x skip:%i)", id, df, moreFlags, skip) );
-#endif
+    LOG_NET_XVERBOSE("Reading mobj delta for %i (df:0x%x edf:0x%x skip:%i)")
+            << id << df << moreFlags << skip;
 
     if(!skip)
     {
@@ -686,9 +688,7 @@ void ClMobj_ReadDelta2(boolean skip)
         info = ClMobj_GetInfo(mo);
         if(!mo)
         {
-#ifdef _DEBUG
-            VERBOSE2( Con_Message("Cl_ReadMobjDelta: Creating new clmobj %i (hidden).", id) );
-#endif
+            LOG_NET_XVERBOSE("Creating new clmobj %i (hidden)") << id;
 
             // This is a new ID, allocate a new mobj.
             mo = ClMobj_Create(id);
@@ -918,10 +918,10 @@ void ClMobj_ReadDelta2(boolean skip)
         // Update players.
         if(d->dPlayer)
         {
-#ifdef _DEBUG
-            VERBOSE2( Con_Message("ClMobj_ReadDelta2: Updating player %i local mobj with new clmobj state {%f, %f, %f}.",
-                                  P_GetDDPlayerIdx(d->dPlayer), d->origin[VX], d->origin[VY], d->origin[VZ]) );
-#endif
+            LOG_NET_XVERBOSE("Updating player %i local mobj with new clmobj state {%f, %f, %f}")
+                    << P_GetDDPlayerIdx(d->dPlayer)
+                    << d->origin[VX] << d->origin[VY] << d->origin[VZ];
+
             // Players have real mobjs. The client mobj is hidden (unlinked).
             Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df, onFloor);
         }

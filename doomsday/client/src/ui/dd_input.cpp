@@ -373,7 +373,7 @@ void I_DeviceReset(uint ident)
     inputdev_t* dev = &inputDevices[ident];
     int k;
 
-    DEBUG_VERBOSE_Message(("I_DeviceReset: %s.\n", Str_Text(I_DeviceNameStr(ident))));
+    LOG_INPUT_VERBOSE("Reset input device %s") << Str_Text(I_DeviceNameStr(ident));
 
     for(k = 0; k < (int)dev->numKeys && dev->keys; ++k)
     {
@@ -894,7 +894,7 @@ boolean DD_IgnoreInput(boolean ignore)
 {
     boolean old = ignoreInput;
     ignoreInput = ignore;
-    DEBUG_Message(("DD_IgnoreInput: ignoring=%i\n", ignore));
+    LOG_INPUT_VERBOSE("Ignoring input: %b") << ignore;
     if(!ignore)
     {
         // Clear all the event buffers.
@@ -1325,7 +1325,8 @@ void DD_ReadKeyboard(void)
         assert(sizeof(ev.toggle.text) == sizeof(ke->text));
         memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
 
-        DEBUG_VERBOSE2_Message(("toggle.id: %i/%c [%s:%u]\n", ev.toggle.id, ev.toggle.id, ev.toggle.text, (uint)strlen(ev.toggle.text)));
+        LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u]")
+                << ev.toggle.id << ev.toggle.id << ev.toggle.text << strlen(ev.toggle.text);
 
 #if 0
         // Maintain the repeater table.
@@ -1457,13 +1458,13 @@ void DD_ReadMouse(void)
             if(mouse.buttonDowns[i]-- > 0)
             {
                 ev.toggle.state = ETOG_DOWN;
-                DEBUG_VERBOSE2_Message(("mb %i down\n", i));
+                LOG_INPUT_XVERBOSE("Mouse button %i down") << i;
                 DD_PostEvent(&ev);
             }
             if(mouse.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
-                DEBUG_VERBOSE2_Message(("mb %i up\n", i));
+                LOG_INPUT_XVERBOSE("Mouse button %i up") << i;
                 DD_PostEvent(&ev);
             }
         }
@@ -1499,13 +1500,13 @@ void DD_ReadJoystick(void)
             {
                 ev.toggle.state = ETOG_DOWN;
                 DD_PostEvent(&ev);
-                DEBUG_VERBOSE2_Message(("Joy button %i down\n", i));
+                LOG_INPUT_XVERBOSE("Joy button %i down") << i;
             }
             if(state.buttonUps[i]-- > 0)
             {
                 ev.toggle.state = ETOG_UP;
                 DD_PostEvent(&ev);
-                DEBUG_VERBOSE2_Message(("Joy button %i up\n", i));
+                LOG_INPUT_XVERBOSE("Joy button %i up") << i;
             }
         }
     }
@@ -1557,6 +1558,7 @@ void DD_ReadHeadTracker(void)
         I_GetDevice(IDEV_HEAD_TRACKER)->flags &= ~ID_ACTIVE;
         return;
     }
+
     I_GetDevice(IDEV_HEAD_TRACKER)->flags |= ID_ACTIVE;
 
     // Get the latest values.

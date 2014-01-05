@@ -1281,7 +1281,8 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
 {
     assert(fi);
 
-    DEBUG_VERBOSE2_Message(("FinaleInterpreter_Responder: fi %i, ev %i\n", fi->_id, ev->type));
+    LOG_AS("FinaleInterpreter_Responder");
+    LOG_SCR_XVERBOSE("fi %i, ev %i") << fi->_id << ev->type;
 
     if(fi->flags.suspended)
         return false;

@@ -81,11 +81,11 @@ void Sys_Init(void)
 {
     uint startTime;
 
-    Con_Message("Setting up platform state...");
+    LOG_NOTE("Setting up platform state...");
 
     startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
-    VERBOSE( Con_Message("Initializing Audio subsystem...") )
+    LOG_AUDIO_VERBOSE("Initializing Audio subsystem...");
     S_Init();
 
 #ifdef DENG_CATCH_SIGNALS
@@ -104,10 +104,10 @@ void Sys_Init(void)
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    VERBOSE( Con_Message("Initializing Network subsystem...") )
+    LOG_NET_VERBOSE("Initializing Network subsystem...");
     N_Init();
 
-    VERBOSE2( Con_Message("Sys_Init: Completed in %.2f seconds.", (Timer_RealMilliseconds() - startTime) / 1000.0f) );
+    LOG_XVERBOSE("Sys_Init completed in %.2f seconds") << (Timer_RealMilliseconds() - startTime) / 1000.0f;
 }
 
 boolean Sys_IsShuttingDown(void)

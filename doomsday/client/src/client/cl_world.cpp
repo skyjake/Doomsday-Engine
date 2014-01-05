@@ -309,10 +309,12 @@ void Cl_MoverThinker(clplane_t *mover)
     // Can we think yet?
     if(!Cl_GameReady()) return;
 
+    LOG_AS("Cl_MoverThinker");
+
 #ifdef _DEBUG
     if(map.clPlaneIndex(mover) < 0)
     {
-        LOG_MAP_WARNING("Cl_MoverThinker: Running a mover that is not in activemovers!");
+        LOG_MAP_WARNING("Running a mover that is not in activemovers!");
     }
 #endif
 
@@ -336,9 +338,9 @@ void Cl_MoverThinker(clplane_t *mover)
         remove = true;
     }
 
-    DEBUG_VERBOSE2_Message(("Cl_MoverThinker: plane height %f in sector #%i\n",
-                            P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property),
-                            mover->sectorIndex));
+    LOG_DEV_TRACE_DEBUGONLY("plane height %f in sector #%i",
+            P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property)
+            << mover->sectorIndex);
 
     // Let the game know of this.
     if(gx.SectorHeightChangeNotification)
@@ -349,7 +351,7 @@ void Cl_MoverThinker(clplane_t *mover)
     // Make sure the client didn't get stuck as a result of this move.
     if(freeMove != ClPlayer_IsFreeToMove(consolePlayer))
     {
-        DEBUG_Message(("Cl_MoverThinker: move blocked in sector %i, undoing\n", mover->sectorIndex));
+        LOG_MAP_VERBOSE("move blocked in sector #%i, undoing move") << mover->sectorIndex;
 
         // Something was blocking the way! Go back to original height.
         P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, original);
@@ -364,7 +366,7 @@ void Cl_MoverThinker(clplane_t *mover)
         // Can we remove this thinker?
         if(remove)
         {
-            DEBUG_Message(("Cl_MoverThinker: finished in %i\n", mover->sectorIndex));
+            LOG_MAP_VERBOSE("finished in sector #%i") << mover->sectorIndex;
 
             // It stops.
             P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->dmuPlane | DMU_SPEED, 0);
@@ -527,7 +529,7 @@ clpolyobj_t *Map::newClPolyobj(int polyobjIndex)
     {
         if(clActivePolyobjs[i]) continue;
 
-        LOG_DEBUG("New polymover [%i] for polyobj #%i.") << i << polyobjIndex;
+        LOG_MAP_XVERBOSE("New polymover [%i] for polyobj #%i.") << i << polyobjIndex;
 
         clpolyobj_t *mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &clActivePolyobjs[i]);
         clActivePolyobjs[i] = mover;

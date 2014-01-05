@@ -271,14 +271,16 @@ void N_MasterAnnounceServer(boolean isOpen)
     // Must be a server.
     if(isClient) return;
 
+    LOG_AS("N_MasterAnnounceServer");
+
     if(isOpen && !strlen(netPassword))
     {
-        Con_Message("Cannot announce server as public: no shell password set!\n"
-                    "You must set one with the 'server-password' cvar.");
+        LOG_NET_WARNING("Cannot announce server as public: no shell password set! "
+                        "You must set one with the 'server-password' cvar.");
         return;
     }
 
-    DEBUG_Message(("N_MasterAnnounceServer: Announcing as open=%i.\n", isOpen));
+    LOG_NET_MSG("Announcing server (open:%b)") << isOpen;
 
     // This will be freed by the worker after the request has been made.
     serverinfo_t *info = (serverinfo_t*) M_Calloc(sizeof(*info));

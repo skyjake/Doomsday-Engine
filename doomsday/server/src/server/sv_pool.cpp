@@ -2296,9 +2296,8 @@ void Sv_NewPolyDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
-#ifdef DENG_DEBUG
-            VERBOSE( Con_Message("Sv_NewPolyDeltas: Change in %i", i) );
-#endif
+            LOG_NET_XVERBOSE_DEBUGONLY("Sv_NewPolyDeltas: Change in poly %i", i);
+
             Sv_AddDeltaToPools(&delta, targets);
         }
 

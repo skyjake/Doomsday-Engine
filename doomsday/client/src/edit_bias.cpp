@@ -130,7 +130,7 @@ static void SBE_Begin()
     hueCircle = new HueCircle;
 
     LOG_AS("Bias");
-    LOG_VERBOSE("Editing begins.");
+    LOG_VERBOSE("Editing begins");
 }
 
 static void SBE_End()
@@ -292,13 +292,13 @@ static bool SBE_Save(char const *name = 0)
     FILE *file = fopen(Str_Text(&fileName), "wt");
     if(!file)
     {
-        LOG_WARNING("Failed opening \"%s\". Sources were not saved.")
+        LOG_RES_WARNING("Failed to save light sources to \"%s\": could not open file")
                 << F_PrettyPath(Str_Text(&fileName));
         Str_Free(&fileName);
         return false;
     }
 
-    LOG_VERBOSE("Saving to \"%s\"...") << F_PrettyPath(Str_Text(&fileName));
+    LOG_RES_VERBOSE("Saving to \"%s\"...") << F_PrettyPath(Str_Text(&fileName));
 
     Map &map = App_World().map();
 
@@ -347,7 +347,7 @@ D_CMD(BLEditor)
 
     if(!editActive)
     {
-        LOG_MSG("The bias lighting editor is not active.");
+        LOG_SCR_MSG("The bias lighting editor is not active");
         return false;
     }
 
@@ -441,7 +441,7 @@ D_CMD(BLEditor)
 
     if(which < 0 || which >= map.biasSourceCount())
     {
-        LOG_MSG("Invalid source index #%i") << which;
+        LOG_SCR_WARNING("Invalid source index #%i") << which;
         return false;
     }
 

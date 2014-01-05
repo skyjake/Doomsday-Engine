@@ -161,9 +161,11 @@
  * for internal messages that might have a significant processing overhead. (Note that parameters
  * differ compared to the normal LOG_* macros.)
  */
-#  define LOG_DEV_TRACE_DEBUGONLY(form, args) LOG_TRACE(form) << args
+#  define LOG_DEV_TRACE_DEBUGONLY(form, args)       LOG_TRACE(form) << args
+#  define LOG_NET_XVERBOSE_DEBUGONLY(form, args)    LOG_NET_XVERBOSE(form) << args
 #else
 #  define LOG_DEV_TRACE_DEBUGONLY(form, args)
+#  define LOG_NET_XVERBOSE_DEBUGONLY(form, args)
 #endif
 
 #ifdef WIN32
