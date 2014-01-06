@@ -50,9 +50,7 @@ def setDefaults(d = None)
 
     # Default log filtering.
     def initFilter(flt, level, dev)
-        import Log
         flt.minLevel = level
-        flt.alertLevel = Log.WARNING
         flt.allowDev = dev
     end
     import Log

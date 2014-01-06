@@ -29,6 +29,19 @@ def setDefaults(d)
     # Applies the client's defaults.
     # - d: Record where to set the values.
     
+    # Additional Log defaults.
+    d.log.filterSeparately = False        
+    import Log
+    record d.alert
+    d.alert.generic  = Log.WARNING
+    d.alert.resource = Log.WARNING
+    d.alert.map      = Log.WARNING
+    d.alert.script   = Log.WARNING
+    d.alert.gl       = Log.WARNING
+    d.alert.audio    = Log.WARNING
+    d.alert.input    = Log.WARNING
+    d.alert.network  = Log.WARNING
+    
     # Input defaults.
     record d.input
     record d.input.mouse
