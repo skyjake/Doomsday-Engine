@@ -1047,13 +1047,96 @@ void Sky::draw()
     if(usingFog) glDisable(GL_FOG);
 }
 
+#endif // __CLIENT__
+
+int Sky::property(DmuArgs &args) const
+{
+    switch(args.prop)
+    {
+    case DMU_COLOR: {
+        Vector3f const &ambColor = ambientColor();
+        args.setValue(DDVT_FLOAT, &ambColor.x, 0);
+        args.setValue(DDVT_FLOAT, &ambColor.y, 1);
+        args.setValue(DDVT_FLOAT, &ambColor.z, 2);
+        break; }
+    case DMU_COLOR_RED: {
+        Vector3f const &ambColor = ambientColor();
+        args.setValue(DDVT_FLOAT, &ambColor.x, 0);
+        break; }
+    case DMU_COLOR_GREEN: {
+        Vector3f const &ambColor = ambientColor();
+        args.setValue(DDVT_FLOAT, &ambColor.y, 0);
+        break; }
+    case DMU_COLOR_BLUE: {
+        Vector3f const &ambColor = ambientColor();
+        args.setValue(DDVT_FLOAT, &ambColor.z, 0);
+        break; }
+    case DMU_HEIGHT:
+        args.setValue(DDVT_FLOAT, &d->height, 0);
+        break;
+    case DMU_OFFSET_Y:
+        args.setValue(DDVT_FLOAT, &d->horizonOffset, 0);
+        break;
+
+    default:
+        return MapElement::property(args);
+    }
+
+    return false; // Continue iteration.
+}
+
+int Sky::setProperty(DmuArgs const &args)
+{
+    switch(args.prop)
+    {
+    case DMU_COLOR: {
+        Vector3f newColor;
+        args.value(DDVT_FLOAT, &newColor.x, 0);
+        args.value(DDVT_FLOAT, &newColor.y, 1);
+        args.value(DDVT_FLOAT, &newColor.z, 2);
+        setAmbientColor(newColor);
+        break; }
+    case DMU_COLOR_RED: {
+        Vector3f newColor = ambientColor();
+        args.value(DDVT_FLOAT, &newColor.x, 0);
+        setAmbientColor(newColor);
+        break; }
+    case DMU_COLOR_GREEN: {
+        Vector3f newColor = ambientColor();
+        args.value(DDVT_FLOAT, &newColor.y, 0);
+        setAmbientColor(newColor);
+        break; }
+    case DMU_COLOR_BLUE: {
+        Vector3f newColor = ambientColor();
+        args.value(DDVT_FLOAT, &newColor.z, 0);
+        setAmbientColor(newColor);
+        break; }
+    case DMU_HEIGHT: {
+        float newHeight = d->height;
+        args.value(DDVT_FLOAT, &newHeight, 0);
+        setHeight(newHeight);
+        break; }
+    case DMU_OFFSET_Y: {
+        float newOffset = d->horizonOffset;
+        args.value(DDVT_FLOAT, &newOffset, 0);
+        setHorizonOffset(newOffset);
+        break; }
+
+    default:
+        return MapElement::setProperty(args);
+    }
+
+    return false; // Continue iteration.
+}
+
+#ifdef __CLIENT__
 static void markSkySphereForRebuild()
 {
     // Defer this task until render time, when we can be sure we are in correct thread.
     /// @todo fixme: Update the shared sphere geometry!
     //hemi.needMakeHemisphere = true;
 }
-#endif // __CLIENT__
+#endif
 
 void Sky::consoleRegister() //static
 {
@@ -1106,16 +1189,10 @@ DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void *data)
     // The whole sky?
     if(layerIndex == DD_SKY)
     {
-        switch(param)
+        // Operate on all layers.
+        for(int i = 1; i <= MAX_SKY_LAYERS; ++i)
         {
-        case DD_HEIGHT:  sky.setHeight(*((float *)data)); break;
-        case DD_HORIZON: sky.setHorizonOffset(*((float *)data)); break;
-
-        default: // Operate on all layers.
-            for(int i = 1; i <= MAX_SKY_LAYERS; ++i)
-            {
-                setSkyLayerParams(sky, i, param, data);
-            }
+            setSkyLayerParams(sky, i, param, data);
         }
         return;
     }

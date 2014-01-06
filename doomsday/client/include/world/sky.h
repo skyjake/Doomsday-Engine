@@ -278,6 +278,10 @@ public:
 
 #endif // __CLIENT__
 
+protected:
+    int property(DmuArgs &args) const;
+    int setProperty(DmuArgs const &args);
+
 public:
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
