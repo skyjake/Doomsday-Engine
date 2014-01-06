@@ -476,19 +476,17 @@ void DED_RemoveModel(ded_t* ded, int index)
     ded->models.erase(ded->models.begin() + index);
 }
 
-int DED_AddSky(ded_t* ded, char const* id)
+int DED_AddSky(ded_t *ded, char const *id)
 {
-    ded_sky_t* sky = (ded_sky_t *) DED_NewEntry((void**) &ded->skies, &ded->count.skies, sizeof(ded_sky_t));
-    int i;
+    ded_sky_t *sky = (ded_sky_t *) DED_NewEntry((void **) &ded->skies, &ded->count.skies, sizeof(ded_sky_t));
 
     strcpy(sky->id, id);
     sky->height = DEFAULT_SKY_HEIGHT;
-    for(i = 0; i < NUM_SKY_LAYERS; ++i)
+    for(int i = 0; i < NUM_SKY_LAYERS; ++i)
     {
-        sky->layers[i].offset = DEFAULT_SKY_SPHERE_XOFFSET;
         sky->layers[i].colorLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
     }
-    for(i = 0; i < NUM_SKY_MODELS; ++i)
+    for(int i = 0; i < NUM_SKY_MODELS; ++i)
     {
         sky->models[i].frameInterval = 1;
         sky->models[i].color[0] = 1;
@@ -606,10 +604,9 @@ void DED_RemoveMusic(ded_t* ded, int index)
     DED_DelEntry(index, (void**) &ded->music, &ded->count.music, sizeof(ded_music_t));
 }
 
-int DED_AddMapInfo(ded_t* ded, char const* uri)
+int DED_AddMapInfo(ded_t *ded, char const* uri)
 {
-    ded_mapinfo_t* inf = (ded_mapinfo_t *) DED_NewEntry((void**) &ded->mapInfo, &ded->count.mapInfo, sizeof(ded_mapinfo_t));
-    int i;
+    ded_mapinfo_t *inf = (ded_mapinfo_t *) DED_NewEntry((void **) &ded->mapInfo, &ded->count.mapInfo, sizeof(ded_mapinfo_t));
 
     if(uri) inf->uri = Uri_NewWithPath2(uri, RC_NULL);
     inf->gravity = 1;
@@ -618,17 +615,16 @@ int DED_AddMapInfo(ded_t* ded, char const* uri)
     inf->fogColor[0] = DEFAULT_FOG_COLOR_RED;
     inf->fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
     inf->fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
-    inf->fogDensity = DEFAULT_FOG_DENSITY;
-    inf->fogStart = DEFAULT_FOG_START;
-    inf->fogEnd = DEFAULT_FOG_END;
+    inf->fogDensity  = DEFAULT_FOG_DENSITY;
+    inf->fogStart    = DEFAULT_FOG_START;
+    inf->fogEnd      = DEFAULT_FOG_END;
 
     inf->sky.height = DEFAULT_SKY_HEIGHT;
-    for(i = 0; i < NUM_SKY_LAYERS; ++i)
+    for(int i = 0; i < NUM_SKY_LAYERS; ++i)
     {
-        inf->sky.layers[i].offset = DEFAULT_SKY_SPHERE_XOFFSET;
         inf->sky.layers[i].colorLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
     }
-    for(i = 0; i < NUM_SKY_MODELS; ++i)
+    for(int i = 0; i < NUM_SKY_MODELS; ++i)
     {
         inf->sky.models[i].frameInterval = 1;
         inf->sky.models[i].color[0] = 1;

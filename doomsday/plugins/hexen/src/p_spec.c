@@ -76,16 +76,16 @@ void P_InitLava(void)
 
 void P_InitSky(uint map)
 {
-    int                 ival;
-    float               fval;
+    int ival;
+    float fval;
 
-    sky1Material = P_GetMapSky1Material(map);
-    sky2Material = P_GetMapSky2Material(map);
-    sky1ScrollDelta = P_GetMapSky1ScrollDelta(map);
-    sky2ScrollDelta = P_GetMapSky2ScrollDelta(map);
+    sky1Material     = P_GetMapSky1Material(map);
+    sky2Material     = P_GetMapSky2Material(map);
+    sky1ScrollDelta  = P_GetMapSky1ScrollDelta(map);
+    sky2ScrollDelta  = P_GetMapSky2ScrollDelta(map);
     sky1ColumnOffset = 0;
     sky2ColumnOffset = 0;
-    doubleSky = P_GetMapDoubleSky(map);
+    doubleSky        = P_GetMapDoubleSky(map);
 
     if(!IS_DEDICATED)
     {
@@ -94,8 +94,8 @@ void P_InitSky(uint map)
 
         // Sky2 is layer zero and Sky1 is layer one.
         fval = 0;
-        R_SkyParams(0, DD_OFFSET, &fval);
-        R_SkyParams(1, DD_OFFSET, &fval);
+        R_SkyParams(0, DD_ORIGIN_X, &fval);
+        R_SkyParams(1, DD_ORIGIN_X, &fval);
         if(doubleSky && sky2Material)
         {
             R_SkyParams(0, DD_ENABLE, NULL);
@@ -129,11 +129,8 @@ void P_AnimateSky(void)
     sky1ColumnOffset += sky1ScrollDelta;
     sky2ColumnOffset += sky2ScrollDelta;
 
-    if(!IS_DEDICATED)
-    {
-        R_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
-        R_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
-    }
+    R_SkyParams(1, DD_ORIGIN_X, &sky1ColumnOffset);
+    R_SkyParams(0, DD_ORIGIN_X, &sky2ColumnOffset);
 }
 
 boolean EV_SectorSoundChange(byte* args)

@@ -289,7 +289,7 @@ typedef struct {
 typedef struct {
     ded_flags_t     flags;
     Uri*            material;
-    float           offset;
+    float           origin[2];
     float           colorLimit;
 } ded_skylayer_t;
 

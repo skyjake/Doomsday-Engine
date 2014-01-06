@@ -34,7 +34,6 @@
 
 #define DEFAULT_SKY_HEIGHT               ( .666667f )
 #define DEFAULT_SKY_HORIZON_OFFSET       ( 0 )
-#define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
 #define DEFAULT_SKY_SPHERE_MATERIAL      ( "Textures:SKY1" )
 #define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
 
@@ -129,16 +128,16 @@ public:
         Layer &setMaterial(Material *newMaterial);
 
         /**
-         * Returns the horizontal offset for the layer.
+         * Returns the origin of the layer (x axis is along the horizon).
          */
-        float offset() const;
+        de::Vector2f const &origin() const;
 
         /**
-         * Change the horizontal offset for the layer.
+         * Change the origin of the layer.
          *
-         * @param newOffset  New offset to apply.
+         * @param newOrigin  New origin to apply.
          */
-        Layer &setOffset(float newOffset);
+        Layer &setOrigin(de::Vector2f const &newOrigin);
 
         /**
          * Returns the fadeout limit for the layer.
@@ -157,7 +156,7 @@ public:
 
         Flags _flags;
         Material *_material;
-        float _offset;
+        de::Vector2f _origin;
         float _fadeoutLimit;
     };
 

@@ -1585,35 +1585,33 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
         }
 
         if(ISTOKEN("Sky"))
-        {   // A new sky definition.
-            ded_sky_t* sky;
-            uint sub = 0;
-
+        {
+            // A new sky definition.
             idx = DED_AddSky(ded, "");
-            sky = &ded->skies[idx];
+            ded_sky_t *sky = &ded->skies[idx];
 
             // Should we copy the previous definition?
             if(prevSkyDefIdx >= 0 && bCopyNext)
             {
-                ded_sky_t* prevSky = ded->skies + prevSkyDefIdx;
-                int i;
-
-                memcpy(sky, prevSky, sizeof(*sky));
-                for(i = 0; i < NUM_SKY_LAYERS; ++i)
+                ded_sky_t *prevSky = ded->skies + prevSkyDefIdx;
+                std::memcpy(sky, prevSky, sizeof(*sky));
+                for(int i = 0; i < NUM_SKY_LAYERS; ++i)
                 {
                     if(sky->layers[i].material)
+                    {
                         sky->layers[i].material = Uri_Dup(sky->layers[i].material);
+                    }
                 }
-                for(i = 0; i < NUM_SKY_MODELS; ++i)
+                for(int i = 0; i < NUM_SKY_MODELS; ++i)
                 {
                     sky->models[i].execute = sdup(sky->models[i].execute);
                 }
             }
             prevSkyDefIdx = idx;
-            sub = 0;
+            uint sub = 0;
 
             FINDBEGIN;
-            for(;;)
+            forever
             {
                 READLABEL;
                 RV_STR("ID", sky->id)
@@ -1625,13 +1623,14 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 {
                     ded_skylayer_t *sl = sky->layers + atoi(label+6) - 1;
                     FINDBEGIN;
-                    for(;;)
+                    forever
                     {
                         READLABEL;
                         RV_URI("Material", &sl->material, 0)
                         RV_URI("Texture", &sl->material, "Textures" )
                         RV_FLAGS("Flags", sl->flags, "slf_")
-                        RV_FLT("Offset", sl->offset)
+                        RV_FLT("Offset", sl->origin[0])
+                        RV_VEC("Origin", sl->origin, 2)
                         RV_FLT("Color limit", sl->colorLimit)
                         RV_END
                         CHECKSC;
@@ -1641,7 +1640,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 {
                     ded_skymodel_t *sm = &sky->models[sub];
                     if(sub == NUM_SKY_MODELS)
-                    {   // Too many!
+                    {
+                        // Too many!
                         SetError("Too many Sky models.");
                         retVal = false;
                         goto ded_end_read;
@@ -1649,7 +1649,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     sub++;
 
                     FINDBEGIN;
-                    for(;;)
+                    forever
                     {
                         READLABEL;
                         RV_STR("ID", sm->id)
@@ -1671,21 +1671,18 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
         }
 
         if(ISTOKEN("Map")) // Info
-        {   // A new map info.
-            uint sub;
-            ded_mapinfo_t* mi;
-
+        {
+            // A new map info.
             idx = DED_AddMapInfo(ded, NULL);
-            mi = &ded->mapInfo[idx];
+            ded_mapinfo_t *mi = &ded->mapInfo[idx];
 
             // Should we copy the previous definition?
             if(prevMapInfoDefIdx >= 0 && bCopyNext)
             {
-                const ded_mapinfo_t* prevMapInfo = ded->mapInfo + prevMapInfoDefIdx;
-                uri_s* uri = mi->uri;
-                int i;
+                ded_mapinfo_t const *prevMapInfo = ded->mapInfo + prevMapInfoDefIdx;
+                uri_s *uri = mi->uri;
 
-                memcpy(mi, prevMapInfo, sizeof(*mi));
+                std::memcpy(mi, prevMapInfo, sizeof(*mi));
                 mi->uri = uri;
                 if(prevMapInfo->uri)
                 {
@@ -1696,21 +1693,23 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
 
                 mi->execute = sdup(mi->execute);
-                for(i = 0; i < NUM_SKY_LAYERS; ++i)
+                for(int i = 0; i < NUM_SKY_LAYERS; ++i)
                 {
                     if(mi->sky.layers[i].material)
+                    {
                         mi->sky.layers[i].material = Uri_Dup(mi->sky.layers[i].material);
+                    }
                 }
-                for(i = 0; i < NUM_SKY_MODELS; ++i)
+                for(int i = 0; i < NUM_SKY_MODELS; ++i)
                 {
                     mi->sky.models[i].execute = sdup(mi->sky.models[i].execute);
                 }
             }
             prevMapInfoDefIdx = idx;
-            sub = 0;
+            uint sub = 0;
 
             FINDBEGIN;
-            for(;;)
+            forever
             {
                 READLABEL;
                 RV_URI("ID", &mi->uri, NULL)
@@ -1736,13 +1735,14 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 {
                     ded_skylayer_t *sl = mi->sky.layers + atoi(label+10) - 1;
                     FINDBEGIN;
-                    for(;;)
+                    forever
                     {
                         READLABEL;
                         RV_URI("Material", &sl->material, 0)
                         RV_URI("Texture", &sl->material, "Textures")
                         RV_FLAGS("Flags", sl->flags, "slf_")
-                        RV_FLT("Offset", sl->offset)
+                        RV_FLT("Offset", sl->origin[0])
+                        RV_VEC("Origin", sl->origin, 2)
                         RV_FLT("Color limit", sl->colorLimit)
                         RV_END
                         CHECKSC;
@@ -1751,8 +1751,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 else if(ISLABEL("Sky Model"))
                 {
                     ded_skymodel_t *sm = &mi->sky.models[sub];
+
                     if(sub == NUM_SKY_MODELS)
-                    {   // Too many!
+                    {
+                        // Too many!
                         SetError("Too many Sky models.");
                         retVal = false;
                         goto ded_end_read;
@@ -1760,7 +1762,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     sub++;
 
                     FINDBEGIN;
-                    for(;;)
+                    forever
                     {
                         READLABEL;
                         RV_STR("ID", sm->id)

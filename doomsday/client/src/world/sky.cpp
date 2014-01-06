@@ -62,22 +62,9 @@ static float skyDistance   = 1600; ///< Map units.
 static int skySphereDetail = 6;
 static int skySphereRows   = 3;
 
-#ifdef __CLIENT__
-
-static MaterialVariantSpec const &sphereMaterialSpec(bool masked)
-{
-    return App_ResourceSystem()
-                .materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
-                              0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE,
-                              0, -1, -1, false, true, false, false);
-}
-
-#endif // __CLIENT__
-
 Sky::Layer::Layer(Material *material)
     : _flags(DefaultFlags)
     , _material(material)
-    , _offset(0)
     , _fadeoutLimit(0)
 {}
 
@@ -143,14 +130,14 @@ Sky::Layer &Sky::Layer::setMaterial(Material *newMaterial)
     return *this;
 }
 
-float Sky::Layer::offset() const
+Vector2f const &Sky::Layer::origin() const
 {
-    return _offset;
+    return _origin;
 }
 
-Sky::Layer &Sky::Layer::setOffset(float newOffset)
+Sky::Layer &Sky::Layer::setOrigin(Vector2f const &newOrigin)
 {
-    _offset = newOffset;
+    _origin = newOrigin;
     return *this;
 }
 
@@ -171,6 +158,14 @@ Sky::Layer &Sky::Layer::setFadeoutLimit(float newLimit)
 #undef DrawState
 #endif
 
+static MaterialVariantSpec const &sphereMaterialSpec(bool masked)
+{
+    return App_ResourceSystem()
+                .materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
+                              0, 0, 0, GL_REPEAT, GL_REPEAT,
+                              0, -1, -1, false, true, false, false);
+}
+
 // Hemisphere geometry used with the sky sphere.
 struct HemisphereData
 {
@@ -180,8 +175,8 @@ struct HemisphereData
     struct DrawState
     {
         bool fadeout, texXFlip;
-        Vector2i texSize;
-        float texOffset;
+        Vector2i materialSize;
+        Vector2f materialOrigin;
         Vector3f capColor;
     };
     DrawState ds;
@@ -273,7 +268,7 @@ struct HemisphereData
     void configureDrawState(Sky::Layer const &skyLayer, hemispherecap_t setupCap)
     {
         // Default state is no texture and no fadeout.
-        ds.texSize = Vector2i();
+        ds.materialSize = Vector2i();
         if(setupCap != HC_NONE)
             ds.fadeout = false;
         ds.texXFlip = true;
@@ -300,16 +295,16 @@ struct HemisphereData
             MaterialSnapshot const &ms =
                 mat->prepare(sphereMaterialSpec(skyLayer.isMasked()));
 
-            ds.texSize = ms.texture(MTU_PRIMARY).generalCase().dimensions();
-            if(ds.texSize != Vector2i(0, 0))
+            ds.materialSize = ms.texture(MTU_PRIMARY).generalCase().dimensions();
+            if(ds.materialSize != Vector2i(0, 0))
             {
-                ds.texOffset = skyLayer.offset();
+                ds.materialOrigin = skyLayer.origin();
                 GL_BindTexture(&ms.texture(MTU_PRIMARY));
             }
             else
             {
                 // Disable texturing.
-                ds.texSize = Vector2i();
+                ds.materialSize = Vector2i();
                 GL_SetNoTexture();
             }
 
@@ -412,20 +407,21 @@ struct HemisphereData
                     configureDrawState(skyLayer, HC_NONE);
                 }
 
-                if(ds.texSize.x != 0)
+                if(ds.materialSize.x != 0)
                 {
                     glEnable(GL_TEXTURE_2D);
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
                     glLoadIdentity();
-                    glTranslatef(ds.texOffset / ds.texSize.x, 0, 0);
-                    glScalef(1024.f / ds.texSize.x * (ds.texXFlip? 1 : -1), yflip? -1 : 1, 1);
+                    glTranslatef(ds.materialOrigin.x / ds.materialSize.x,
+                                 ds.materialOrigin.y / ds.materialSize.y, 0);
+                    glScalef(1024.f / ds.materialSize.x * (ds.texXFlip? 1 : -1), yflip? -1 : 1, 1);
                     if(yflip) glTranslatef(0, -1, 0);
                 }
 
 #define WRITESKYVERTEX(r_, c_) { \
     vtx = &vertex(r_, c_); \
-    if(ds.texSize.x != 0) \
+    if(ds.materialSize.x != 0) \
        glTexCoord2f((c_) / float(skySphereColumns), (r_) / float(skySphereRows)); \
     if(ds.fadeout) \
     { \
@@ -454,7 +450,7 @@ struct HemisphereData
                     glEnd();
                 }
 
-                if(ds.texSize.x != 0)
+                if(ds.materialSize.x != 0)
                 {
                     glMatrixMode(GL_TEXTURE);
                     glPopMatrix();
@@ -816,7 +812,7 @@ void Sky::configureDefault()
         Layer &lyr = d->layers[i];
 
         lyr.setMasked(false)
-           .setOffset(DEFAULT_SKY_SPHERE_XOFFSET)
+           .setOrigin(Vector2f(0, 0))
            .setFadeoutLimit(DEFAULT_SKY_SPHERE_FADEOUT_LIMIT)
            .setActive(i == 0);
 
@@ -908,7 +904,7 @@ void Sky::configure(ded_sky_t *def)
         }
 
         lyr.setMasked((lyrDef.flags & Layer::Masked) != 0)
-           .setOffset(lyrDef.offset)
+           .setOrigin(lyrDef.origin)
            .setFadeoutLimit(lyrDef.colorLimit)
            .enable();
 
@@ -1159,7 +1155,8 @@ static void setSkyLayerParams(Sky &sky, int layerIndex, int param, void *data)
         case DD_DISABLE:     layer.disable(); break;
         case DD_MASK:        layer.setMasked(*((int *)data) == DD_YES); break;
         case DD_MATERIAL:    layer.setMaterial((Material *)data); break;
-        case DD_OFFSET:      layer.setOffset(*((float *)data)); break;
+        case DD_ORIGIN_X:    layer.setOrigin(Vector2f(layer.origin().x, *((float *)data))); break;
+        case DD_ORIGIN_Y:    layer.setOrigin(Vector2f(*((float *)data), layer.origin().y)); break;
         case DD_COLOR_LIMIT: layer.setFadeoutLimit(*((float *)data)); break;
 
         default:
