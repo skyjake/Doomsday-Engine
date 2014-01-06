@@ -471,6 +471,7 @@ DENG_HEADERS += \
     include/ui/widgets/sliderwidget.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/togglewidget.h \
+    include/ui/widgets/variablechoicewidget.h \
     include/ui/widgets/variabletogglewidget.h \
     include/ui/windowsystem.h \
     include/ui/windowtransform.h \
@@ -828,6 +829,7 @@ SOURCES += \
     src/ui/widgets/sliderwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/togglewidget.cpp \
+    src/ui/widgets/variablechoicewidget.cpp \
     src/ui/widgets/variabletogglewidget.cpp \
     src/ui/windowsystem.cpp \
     src/ui/windowtransform.cpp \
