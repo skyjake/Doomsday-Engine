@@ -129,7 +129,7 @@ void LogBuffer_EnableStandardOutput(int enable)
 	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
 }
 
-static void logFragmentPrinter(duint32 levelAndAudience, char const *fragment)
+static void logFragmentPrinter(duint32 metadata, char const *fragment)
 {
     static std::string currentLogLine;
 
@@ -138,7 +138,7 @@ static void logFragmentPrinter(duint32 levelAndAudience, char const *fragment)
     std::string::size_type pos;
     while((pos = currentLogLine.find('\n')) != std::string::npos)
     {
-        LOG().enter(levelAndAudience, currentLogLine.substr(0, pos).c_str());
+        LOG().enter(metadata, currentLogLine.substr(0, pos).c_str());
         currentLogLine.erase(0, pos + 1);
     }
 }
@@ -148,17 +148,17 @@ void LogBuffer_Msg(char const *text)
     logFragmentPrinter(de::LogEntry::Message, text);
 }
 
-void LogBuffer_Printf(int levelAndAudience, char const *format, ...)
+void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
 {
+    // If this level is not enabled, just ignore.
+    if(!de::LogBuffer::appBuffer().isEnabled(metadata)) return;
+
     // Validate the level.
-    de::LogEntry::Level logLevel = de::LogEntry::Level(levelAndAudience & de::LogEntry::LevelMask);
+    de::LogEntry::Level logLevel = de::LogEntry::Level(metadata & de::LogEntry::LevelMask);
     if(logLevel < de::LogEntry::XVerbose || logLevel > de::LogEntry::Critical)
     {
         logLevel = de::LogEntry::Message;
     }
-
-    // If this level is not enabled, just ignore.
-    if(!de::LogBuffer::appBuffer().isEnabled(logLevel)) return;
 
     char buffer[2048];
     va_list args;
@@ -166,7 +166,7 @@ void LogBuffer_Printf(int levelAndAudience, char const *format, ...)
     vsprintf(buffer, format, args); /// @todo unsafe
     va_end(args);
 
-    logFragmentPrinter(logLevel | (levelAndAudience & de::LogEntry::AudienceMask), buffer);
+    logFragmentPrinter(logLevel | (metadata & de::LogEntry::ContextMask), buffer);
 }
 
 Info *Info_NewFromString(char const *utf8text)

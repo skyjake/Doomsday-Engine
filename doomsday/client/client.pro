@@ -886,7 +886,8 @@ SOURCES += \
 
 DOOMSDAY_SCRIPTS += \
     modules/appconfig.de \
-    modules/bootstrap.de
+    modules/bootstrap.de \
+    modules/Updater.de
 
 OTHER_FILES += \
     $$DOOMSDAY_SCRIPTS \
@@ -904,6 +905,7 @@ mod.files = \
     $$DOOMSDAY_SCRIPTS \
     $$DENG_MODULES_DIR/Config.de \
     $$DENG_MODULES_DIR/gui.de \
+    $$DENG_MODULES_DIR/Log.de \
     $$DENG_MODULES_DIR/recutil.de
 
 # These fonts may be needed during the initial startup busy mode.

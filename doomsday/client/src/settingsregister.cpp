@@ -139,25 +139,32 @@ DENG2_OBSERVES(App, GameChange)
 
     QVariant getDefaultFromConfig(String const &name)
     {
-        // Get defaults for script values.
-        Script script("record d; import Config; Config.setDefaults(d); d");
-        Process proc(script);
-        proc.execute();
-
-        Record const &confDefaults = *proc.context().evaluator().result()
-                .as<RecordValue>().record();
-
-        DENG2_ASSERT(confDefaults.has(name));
-
-        Variable const &var = confDefaults[name];
-        if(var.value().is<NumberValue>())
+        try
         {
-            return var.value().asNumber();
+            // Get defaults for script values.
+            Script script("record d; import Config; Config.setDefaults(d); d");
+            Process proc(script);
+            proc.execute();
+
+            Record const &confDefaults = *proc.context().evaluator().result()
+                    .as<RecordValue>().record();
+
+            DENG2_ASSERT(confDefaults.has(name));
+
+            Variable const &var = confDefaults[name];
+            if(var.value().is<NumberValue>())
+            {
+                return var.value().asNumber();
+            }
+            else
+            {
+                // Oops, we don't support this yet.
+                DENG2_ASSERT(false);
+            }
         }
-        else
+        catch(Error const &er)
         {
-            // Oops, we don't support this yet.
-            DENG2_ASSERT(false);
+            LOG_WARNING("Failed to find default for \"%s\": %s") << name << er.asText();
         }
         return QVariant();
     }

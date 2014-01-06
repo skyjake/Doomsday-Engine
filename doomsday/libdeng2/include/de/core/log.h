@@ -258,12 +258,13 @@ class DENG2_PUBLIC LogEntry : public Lockable, public ISerializable
 {
 public:
     /**
-     * Target audience/domain of the entry (bits). If not set, the entry is generic and
-     * intended for the end-user/player.
+     * Entry domain (bits) and target audience. If not set, the entry is generic and intended for
+     * the end-user/player.
      */
-    enum Audience
+    enum Context
     {
         // Domains
+        Generic  = 0,           ///< Global domain.
         Resource = 0x10000,     /**< Resource or resource pack domain (files, etc.).
                                      "Resource" is here meant in a wider sense of all the
                                      external data that Doomsday utilizes. */
@@ -276,17 +277,19 @@ public:
         Network  = 0x400000,    ///< Network domain: connections, packets, etc.
 
         // User groups
-        Dev      = 0x800000,    /**< Native code developer (i.e., the programmer); can be
-                                     combined with other flags to mark the entry for devs */
+        Dev      = 0x8000000,   /**< Native code developer (i.e., the programmer); can be
+                                     combined with other flags to mark the entry for devs.
+                                     If bit is not set, the entry is for the end-user. */
 
-        DomainMask   = 0x07f0000,
-        AudienceMask = 0xfff0000
+        AllDomains  = 0x7f0000,
+        DomainMask  = AllDomains,
+        ContextMask = 0xfff0000
     };
 
-    static String audienceToText(duint32 audience)
+    static String contextToText(duint32 context)
     {
-        String const suffix = (audience & Dev? "Dev" : "");
-        switch(audience & DomainMask)
+        String const suffix = (context & Dev? "Dev" : "");
+        switch(context & DomainMask)
         {
         case Resource: return "Resource" + suffix;
         case Map:      return "Map" + suffix;
@@ -299,7 +302,7 @@ public:
         }
     }
 
-    static Audience textToAudience(String text)
+    static Context textToContext(String text)
     {
         duint32 val = 0;
         if(text.endsWith("Dev"))
@@ -309,10 +312,10 @@ public:
         }
         for(int i = 16; i < 32; ++i)
         {
-            if(!audienceToText(Audience(1 << i)).compareWithoutCase(text))
-                return Audience((1 << i) | val);
+            if(!contextToText(LogEntry::Context(1 << i)).compareWithoutCase(text))
+                return LogEntry::Context((1 << i) | val);
         }
-        throw de::Error("Log::textToAudience", "'" + text + "' is not a valid log audience");
+        throw de::Error("Log::textToContext", "'" + text + "' is not a valid log entry context");
     }
 
     /// Importance level of the log entry.
@@ -359,8 +362,8 @@ public:
         Critical = 7,
 
         MAX_LOG_LEVELS,
-        LOWEST_LOG_LEVEL = XVerbose,
 
+        LOWEST_LOG_LEVEL = XVerbose,
         LevelMask = 0x7
     };   
 
@@ -520,7 +523,7 @@ public:
      */
     LogEntry();
 
-    LogEntry(duint32 levelAndAudience, String const &section, int sectionDepth, String const &format, Args args);
+    LogEntry(duint32 metadata, String const &section, int sectionDepth, String const &format, Args args);
 
     /**
      * Copy constructor.
@@ -537,9 +540,9 @@ public:
     /// Returns the timestamp of the entry.
     Time when() const { return _when; }
 
-    inline duint32 audience() const { return _levelAudience & AudienceMask; }
+    inline duint32 audience() const { return _metadata & ContextMask; }
 
-    inline Level level() const { return Level(_levelAudience & LevelMask); }
+    inline Level level() const { return Level(_metadata & LevelMask); }
 
     /// Returns a reference to the entry's section part. Reference is valid
     /// for the lifetime of the entry.
@@ -569,7 +572,7 @@ private:
 
 private:
     Time _when;
-    duint32 _levelAudience;
+    duint32 _metadata;
     String _section;
     int _sectionDepth;
     String _format;
@@ -644,12 +647,12 @@ public:
     /**
      * Creates a new log entry with the specified log entry level.
      *
-     * @param levelAndAudience  Level of the entry and target audience bits.
-     * @param format            Format template of the entry.
-     * @param arguments         List of arguments. The entry is given ownership of
-     *                          each Arg instance.
+     * @param metadata   Level of the entry and context bits.
+     * @param format     Format template of the entry.
+     * @param arguments  List of arguments. The entry is given ownership of
+     *                   each Arg instance.
      */
-    LogEntry &enter(duint32 levelAndAudience, String const &format, LogEntry::Args arguments = LogEntry::Args());
+    LogEntry &enter(duint32 metadata, String const &format, LogEntry::Args arguments = LogEntry::Args());
 
 public:
     /**
@@ -679,7 +682,7 @@ private:
 class DENG2_PUBLIC LogEntryStager
 {
 public:
-    LogEntryStager(duint32 levelAndAudience, String const &format);
+    LogEntryStager(duint32 metadata, String const &format);
 
     /// Appends a new argument to the entry.
     template <typename ValueType>
@@ -694,13 +697,13 @@ public:
     ~LogEntryStager() {
         if(!_disabled) {
             // Ownership of the entries is transferred to the LogEntry.
-            LOG().enter(_level, _format, _args);
+            LOG().enter(_metadata, _format, _args);
         }
     }
 
 private:
     bool _disabled;
-    duint32 _level;
+    duint32 _metadata;
     String _format;
     LogEntry::Args _args;
 };

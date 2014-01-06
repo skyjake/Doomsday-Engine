@@ -34,7 +34,7 @@ int main(int argc, char **argv)
         for(int i = LogEntry::LOWEST_LOG_LEVEL; i < LogEntry::MAX_LOG_LEVELS; ++i)
         {
             LogEntry::Level level = LogEntry::Level(i);
-            LogBuffer::appBuffer().enable(level);
+            app.logFilter().setMinLevel(level);
             LOG_AT_LEVEL(level, "Enabled level ") << LogEntry::levelToText(level);
 
             for(int k = LogEntry::LOWEST_LOG_LEVEL; k < LogEntry::MAX_LOG_LEVELS; ++k)
@@ -42,10 +42,10 @@ int main(int argc, char **argv)
                 for(int d = 0; d < 2; ++d)
                 {
                     duint32 other = k | (d? LogEntry::Dev : 0);
-                    LOG_AT_LEVEL(other, "- (currently enabled %8s) entry at level %8s (audience %3s): visible: %b")
+                    LOG_AT_LEVEL(other, "- (currently enabled %8s) entry at level %8s (context %3s): visible: %b")
                             << LogEntry::levelToText(level)
                             << LogEntry::levelToText(other)
-                            << LogEntry::audienceToText(other)
+                            << LogEntry::contextToText(other)
                             << LogBuffer::appBuffer().isEnabled(LogEntry::Level(other));
                 }
             }

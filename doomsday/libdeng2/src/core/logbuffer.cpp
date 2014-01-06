@@ -19,6 +19,7 @@
 
 #include "de/LogBuffer"
 #include "de/LogSink"
+#include "de/SimpleLogFilter"
 #include "de/FileLogSink"
 #include "de/DebugLogSink"
 #include "de/TextStreamLogSink"
@@ -44,7 +45,8 @@ DENG2_PIMPL_NOREF(LogBuffer)
     typedef QList<LogEntry *> EntryList;
     typedef QSet<LogSink *> Sinks;
 
-    dint enabledOverLevel;
+    SimpleLogFilter defaultFilter;
+    IFilter const *entryFilter;
     dint maxEntryCount;
     bool useStandardOutput;
     bool flushingEnabled;
@@ -64,21 +66,21 @@ DENG2_PIMPL_NOREF(LogBuffer)
     Sinks sinks;
 
     Instance(duint maxEntryCount)
-        : enabledOverLevel(LogEntry::Message),
-          maxEntryCount(maxEntryCount),
-          useStandardOutput(true),
-          flushingEnabled(true),
-          outputFile(0),
-          fileLogSink(0),
+        : entryFilter(&defaultFilter)
+        , maxEntryCount(maxEntryCount)
+        , useStandardOutput(true)
+        , flushingEnabled(true)
+        , outputFile(0)
+        , fileLogSink(0)
 #ifndef WIN32
-          outSink(new QTextStream(stdout)),
-          errSink(new QTextStream(stderr)),
+        , outSink(new QTextStream(stdout))
+        , errSink(new QTextStream(stderr))
 #else
           // Windows GUI apps don't have stdout/stderr.
-          outSink(QtDebugMsg),
-          errSink(QtWarningMsg),
+        , outSink(QtDebugMsg)
+        , errSink(QtWarningMsg)
 #endif
-          autoFlushTimer(0)
+        , autoFlushTimer(0)
     {
         // Standard output enabled by default.
         outSink.setMode(LogSink::OnlyNormalEntries);
@@ -158,6 +160,24 @@ void LogBuffer::latestEntries(Entries &entries, int count) const
     }
 }
 
+void LogBuffer::setEntryFilter(IFilter const *entryFilter)
+{
+    if(entryFilter)
+    {
+        d->entryFilter = entryFilter;
+    }
+    else
+    {
+        d->entryFilter = &d->defaultFilter;
+    }
+}
+
+bool LogBuffer::isEnabled(duint32 entryMetadata) const
+{
+    DENG2_ASSERT(d->entryFilter != 0);
+    return d->entryFilter->isLogEntryAllowed(entryMetadata);
+}
+
 void LogBuffer::setMaxEntryCount(duint maxEntryCount)
 {
     d->maxEntryCount = maxEntryCount;
@@ -183,16 +203,6 @@ void LogBuffer::add(LogEntry *entry)
         // Every now and then the buffer will be flushed.
         d->autoFlushTimer->start(FLUSH_INTERVAL * 1000);
     }
-}
-
-void LogBuffer::enable(LogEntry::Level overLevel)
-{
-    d->enabledOverLevel = (overLevel & LogEntry::LevelMask);
-}
-
-bool LogBuffer::isEnabled(LogEntry::Level overLevel) const
-{
-    return d->enabledOverLevel <= (overLevel & LogEntry::LevelMask);
 }
 
 void LogBuffer::enableStandardOutput(bool yes)

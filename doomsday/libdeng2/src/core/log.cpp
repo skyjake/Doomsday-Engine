@@ -183,11 +183,11 @@ void LogEntry::Arg::operator << (Reader &from)
     }
 }
 
-LogEntry::LogEntry() : _levelAudience(0), _sectionDepth(0), _disabled(true)
+LogEntry::LogEntry() : _metadata(0), _sectionDepth(0), _disabled(true)
 {}
 
-LogEntry::LogEntry(duint32 levelAndAudience, String const &section, int sectionDepth, String const &format, Args args)
-    : _levelAudience(levelAndAudience)
+LogEntry::LogEntry(duint32 metadata, String const &section, int sectionDepth, String const &format, Args args)
+    : _metadata(metadata)
     , _section(section)
     , _sectionDepth(sectionDepth)
     , _format(format)
@@ -204,7 +204,7 @@ LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
     : Lockable()
     , ISerializable()
     , _when(other._when)
-    , _levelAudience(other._levelAudience)
+    , _metadata(other._metadata)
     , _section(other._section)
     , _sectionDepth(other._sectionDepth)
     , _format(other._format)
@@ -397,7 +397,7 @@ void LogEntry::operator >> (Writer &to) const
     to << _when
        << _section
        << _format
-       << duint32(_levelAudience)
+       << duint32(_metadata)
        << dbyte(_sectionDepth)
        << duint32(_defaultFlags);
 
@@ -415,14 +415,14 @@ void LogEntry::operator << (Reader &from)
 
     if(from.version() >= DENG2_PROTOCOL_1_14_0_BUILD_1099)
     {
-        // This version adds audience information to the entry.
-        from.readAs<duint32>(_levelAudience);
+        // This version adds context information to the entry.
+        from.readAs<duint32>(_metadata);
     }
     else
     {
         dbyte oldLevel;
         from >> oldLevel;
-        _levelAudience = oldLevel; // lacks audience information
+        _metadata = oldLevel; // lacks audience information
     }
 
     from.readAs<dbyte>(_sectionDepth)
@@ -486,9 +486,9 @@ LogEntry &Log::enter(String const &format, LogEntry::Args arguments)
     return enter(LogEntry::Message, format, arguments);
 }
 
-LogEntry &Log::enter(duint32 levelAndAudience, String const &format, LogEntry::Args arguments)
+LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args arguments)
 {
-    if(!LogBuffer::appBuffer().isEnabled(LogEntry::Level(levelAndAudience & LogEntry::LevelMask)))
+    if(!LogBuffer::appBuffer().isEnabled(metadata))
     {
         DENG2_ASSERT(arguments.isEmpty());
 
@@ -517,7 +517,7 @@ LogEntry &Log::enter(duint32 levelAndAudience, String const &format, LogEntry::A
     }
 
     // Make a new entry.
-    LogEntry *entry = new LogEntry(levelAndAudience, context, depth, format, arguments);
+    LogEntry *entry = new LogEntry(metadata, context, depth, format, arguments);
     
     // Add it to the application's buffer. The buffer gets ownership.
     LogBuffer::appBuffer().add(entry);
@@ -568,12 +568,11 @@ void Log::disposeThreadLog()
     }
 }
 
-LogEntryStager::LogEntryStager(duint32 levelAndAudience, String const &format)
-    : _level(levelAndAudience)
+LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
+    : _metadata(metadata)
 {
     _disabled = !LogBuffer::appBufferExists() ||
-                !LogBuffer::appBuffer().isEnabled(LogEntry::Level(levelAndAudience &
-                                                                  LogEntry::LevelMask));
+                !LogBuffer::appBuffer().isEnabled(metadata);
     if(!_disabled)
     {
         _format = format;

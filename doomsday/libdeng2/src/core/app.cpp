@@ -26,6 +26,7 @@
 #include "de/DirectoryFeed"
 #include "de/Log"
 #include "de/LogBuffer"
+#include "de/LogFilter"
 #include "de/Module"
 #include "de/NumberValue"
 #include "de/PackageFolder"
@@ -51,6 +52,7 @@ DENG2_PIMPL(App)
 
     CommandLine cmdLine;
 
+    LogFilter logFilter;
     LogBuffer logBuffer;
 
     /// Path of the application executable.
@@ -107,6 +109,8 @@ DENG2_PIMPL(App)
         singletonApp = a;
         mainThread = QThread::currentThread();
 
+        logBuffer.setEntryFilter(&logFilter);
+
         Clock::setAppClock(&clock);
         Animation::setClock(&clock);
 
@@ -124,6 +128,11 @@ DENG2_PIMPL(App)
     ~Instance()
     {
         clock.audienceForTimeChange -= self;
+
+        // Update the log filter in the persistent configuration.
+        Record *filter = new Record;
+        logFilter.write(*filter);
+        config->names().add("log.filter", filter);
 
         delete config;
         Clock::setAppClock(0);
@@ -164,6 +173,54 @@ DENG2_PIMPL(App)
         // Populate the file system.
         fs.refresh();
     }
+
+    void setLogLevelAccordingToOptions()
+    {
+        // Override the log message level.
+        if(cmdLine.has("-loglevel") || cmdLine.has("-verbose") || cmdLine.has("-v") ||
+           cmdLine.has("-vv") || cmdLine.has("-vvv"))
+        {
+            LogEntry::Level level = LogEntry::Message;
+            try
+            {
+                int pos;
+                if((pos = cmdLine.check("-loglevel", 1)) > 0)
+                {
+                    level = LogEntry::textToLevel(cmdLine.at(pos + 1));
+                }
+            }
+            catch(Error const &er)
+            {
+                qWarning("%s", er.asText().toLatin1().constData());
+            }
+
+            // Aliases have not been defined at this point, so check all variants.
+            level = LogEntry::Level(level
+                                    - cmdLine.has("-verbose")
+                                    - cmdLine.has("-v")
+                                    - cmdLine.has("-vv") * 2
+                                    - cmdLine.has("-vvv") * 3);
+
+            if(level < LogEntry::XVerbose)
+            {
+                // Even more verbosity requested, so enable dev messages, too.
+                logFilter.setAllowDev(LogEntry::AllDomains, true);
+                level = LogEntry::XVerbose;
+            }
+
+            logFilter.setMinLevel(LogEntry::AllDomains, level);
+        }
+
+        // Enable developer messages across the board?
+        if(cmdLine.has("-devlog"))
+        {
+            logFilter.setAllowDev(LogEntry::AllDomains, true);
+        }
+        if(cmdLine.has("-nodevlog"))
+        {
+            logFilter.setAllowDev(LogEntry::AllDomains, false);
+        }
+    }
 };
 
 App::App(NativePath const &appFilePath, QStringList args)
@@ -179,31 +236,9 @@ App::App(NativePath const &appFilePath, QStringList args)
     // be flushed (Config.log.file).
     d->logBuffer.enableFlushing(false);
 
-    // Set the log message level.
-    LogEntry::Level level = LogEntry::Message;
-    try
-    {
-        int pos;
-        if((pos = d->cmdLine.check("-loglevel", 1)) > 0)
-        {
-            level = LogEntry::textToLevel(d->cmdLine.at(pos + 1));
-        }
-    }
-    catch(Error const &er)
-    {
-        qWarning("%s", er.asText().toLatin1().constData());
-    }
-    // Aliases have not been defined at this point.
-    level = de::max(LogEntry::XVerbose,
-                    LogEntry::Level(level
-                                    - d->cmdLine.has("-verbose")
-                                    - d->cmdLine.has("-v")));
-    d->logBuffer.enable(level);
-
     d->appPath = appFilePath;
 
     LOG_NOTE("Application path: ") << d->appPath;
-    LOG_NOTE("Enabled log entry level: ") << LogEntry::levelToText(level);
 
 #ifdef MACOSX
     // When the application is started through Finder, we get a special command
@@ -421,12 +456,18 @@ void App::initSubsystems(SubsystemInitFlags flags)
         LOG_WARNING("Failed to set log output file:\n" + er.asText());
     }
 
-    // The level of enabled messages.
-    /**
-     * @todo We are presently controlling the log levels depending on build
-     * configuration, so ignore what the config says.
-     */
-    //logBuf.enable(Log::LogLevel(conf->getui("log.level")));
+    try
+    {
+        // The level of enabled messages.
+        d->logFilter.read(d->config->names().subrecord("log.filter"));
+    }
+    catch(Error const &er)
+    {
+        LOG_WARNING("Failed to apply log filter:\n" + er.asText());
+    }
+
+    // Command line options may override the saved config.
+    d->setLogLevelAccordingToOptions();
 
     // We can start flushing now when the destination is known.
     logBuf.enableFlushing(true);
@@ -467,6 +508,11 @@ bool App::appExists()
 App &App::app()
 {
     return *singletonApp;
+}
+
+LogFilter &App::logFilter()
+{
+    return DENG2_APP->d->logFilter;
 }
 
 CommandLine &App::commandLine()

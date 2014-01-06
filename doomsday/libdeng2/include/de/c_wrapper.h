@@ -102,7 +102,7 @@ DENG2_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
 DENG2_PUBLIC void LogBuffer_Flush(void);
 DENG2_PUBLIC void LogBuffer_Clear(void);
 DENG2_PUBLIC void LogBuffer_Msg(char const *text);
-DENG2_PUBLIC void LogBuffer_Printf(int levelAndAudience, char const *format, ...);
+DENG2_PUBLIC void LogBuffer_Printf(unsigned int metadata, char const *format, ...);
 
 /*
  * Info

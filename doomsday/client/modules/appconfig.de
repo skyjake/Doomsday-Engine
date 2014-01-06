@@ -82,24 +82,16 @@ def setDefaults(d)
 
     # Defaults for the automatic updater.
     record d.updater
-    
-    const d.updater.DAILY      = 0
-    const d.updater.BIWEEKLY   = 1
-    const d.updater.WEEKLY     = 2
-    const d.updater.MONTHLY    = 3
-    const d.updater.AT_STARTUP = 4
-    
-    const d.updater.CHANNEL_STABLE   = 0
-    const d.updater.CHANNEL_UNSTABLE = 1
-    
-    d.updater.frequency = d.updater.WEEKLY
+
+    import Updater
+    d.updater.frequency = Updater.WEEKLY
     if Version.STABLE
-        d.updater.channel = d.updater.CHANNEL_STABLE
+        d.updater.channel = Updater.CHANNEL_STABLE
     else
-        d.updater.channel = d.updater.CHANNEL_UNSTABLE
+        d.updater.channel = Updater.CHANNEL_UNSTABLE
     end
     d.updater.lastChecked = Time("")
-    d.updater.onlyManually = (Version.OS == 'unix')    
+    d.updater.onlyManually = (Version.OS == 'unix')
     d.updater.autoDownload = False
     d.updater.delete = True
     d.updater.downloadPath = "${DEFAULT}"
