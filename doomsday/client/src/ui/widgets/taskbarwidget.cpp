@@ -273,9 +273,6 @@ DENG_GUI_PIMPL(TaskBarWidget)
     }
 };
 
-template <typename ClassName>
-PopupWidget *makePopup() { return new ClassName; }
-
 PopupWidget *makeUpdaterSettings() {
     return new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
 }

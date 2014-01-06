@@ -17,6 +17,7 @@
  */
 
 #include "ui/dialogs/logsettingsdialog.h"
+#include "SignalAction"
 
 using namespace de;
 
@@ -24,11 +25,6 @@ DENG2_PIMPL(LogSettingsDialog)
 {
     Instance(Public *i) : Base(i)
     {}
-
-    void fetch()
-    {
-
-    }
 };
 
 LogSettingsDialog::LogSettingsDialog(String const &name)
@@ -62,13 +58,8 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));
-
-    d->fetch();
 }
 
 void LogSettingsDialog::resetToDefaults()
 {
-
-
-    d->fetch();
 }

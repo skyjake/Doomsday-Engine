@@ -91,4 +91,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
+template <typename ClassName>
+PopupWidget *makePopup() { return new ClassName; }
+
 #endif // DENG_CLIENT_POPUPWIDGET_H
