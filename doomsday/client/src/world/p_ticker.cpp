@@ -26,8 +26,6 @@
 #include "world/map.h"
 #include "world/thinkers.h"
 
-#include "render/sky.h"
-
 using namespace de;
 
 int P_MobjTicker(thinker_t *th, void *context)
@@ -123,16 +121,16 @@ void P_Ticker(timespan_t elapsed)
     if(!App_World().hasMap()) return;
 
     Map &map = App_World().map();
-    if(!map.thinkers().isInited()) return; // Not initialized yet.
 
-    if(DD_IsSharpTick())
+    map.sky().runTick(elapsed);
+
+    if(!map.thinkers().isInited())
     {
-#ifdef __CLIENT__
-        theSky->runTick();
-#endif
-
-        // Check all mobjs (always public).
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               P_MobjTicker);
+        if(DD_IsSharpTick())
+        {
+            // Check all mobjs (always public).
+            map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                                   P_MobjTicker);
+        }
     }
 }

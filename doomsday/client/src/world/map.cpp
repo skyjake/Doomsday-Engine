@@ -68,7 +68,6 @@
 #  include "WallEdge"
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
-#  include "render/sky.h"
 #endif
 
 #include "world/map.h"
@@ -105,6 +104,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     AABoxd bounds; ///< Boundary points which encompass the entire map
 
+    Sky sky;
     QScopedPointer<Thinkers> thinkers;
     Mesh mesh; ///< All map geometries.
 
@@ -1324,6 +1324,11 @@ void Map::setGravity(coord_t newGravity)
     _effectiveGravity = newGravity;
 }
 
+Sky &Map::sky() const
+{
+    return d->sky;
+}
+
 Thinkers &Map::thinkers() const
 {
     if(!d->thinkers.isNull())
@@ -2361,19 +2366,14 @@ void Map::update()
 
     _effectiveGravity = _globalGravity;
 
-#ifdef __CLIENT__
     // Reconfigure the sky.
-    /// @todo Sky needs breaking up into multiple components. There should be
-    /// a representation on server side and a logical entity which the renderer
-    /// visualizes. We also need multiple concurrent skies for BOOM support.
     ded_sky_t *skyDef = 0;
     if(mapInfo)
     {
         skyDef = Def_GetSky(mapInfo->skyID);
         if(!skyDef) skyDef = &mapInfo->sky;
     }
-    theSky->configure(skyDef);
-#endif
+    d->sky.configure(skyDef);
 }
 
 #ifdef __CLIENT__

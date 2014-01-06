@@ -33,7 +33,8 @@
 #include "de_graphics.h"
 #include "dd_def.h"
 #include "def_data.h"
-#include "render/sky.h"
+
+#include "Sky"
 #include <de/memory.h>
 
 // Helper Routines -------------------------------------------------------

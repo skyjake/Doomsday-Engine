@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_SKY_H
-#define DENG_CLIENT_RENDER_SKY_H
+#ifndef DENG_CLIENT_WORLD_SKY_H
+#define DENG_CLIENT_WORLD_SKY_H
 
 #include "Material"
 #include <de/libdeng2.h>
@@ -174,21 +174,7 @@ public:
     /**
      * Animate the sky.
      */
-    void runTick();
-
-#ifdef __CLIENT__
-
-    /**
-     * Cache all assets needed for visualizing the sky.
-     */
-    void cacheDrawableAssets();
-
-    /**
-     * Render the sky.
-     */
-    void draw();
-
-#endif // __CLIENT__
+    void runTick(timespan_t elapsed);
 
     /**
      * Determines whether the specified sky layer @a index is valid.
@@ -254,10 +240,12 @@ public:
     void setHeight(float newHeight);
 
     /**
-     * Returns the ambient color of the sky. The ambient color is automatically
-     * calculated by averaging the color information in the configured layer
-     * material textures. Alternatively, this color can be overridden manually
-     * by calling @ref setAmbientColor().
+     * Returns the ambient color of the sky.
+     *
+     * On client side, the ambient color will be automatically calculated if none is
+     * defined, by averaging  the color information in the configured layer material
+     * textures. Alternatively, this color can be overridden manually by calling
+     * @ref setAmbientColor().
      */
     de::Vector3f const &ambientColor() const;
 
@@ -270,6 +258,22 @@ public:
      */
     void setAmbientColor(de::Vector3f const &newColor);
 
+#ifdef __CLIENT__
+
+    /**
+     * Cache all assets needed for visualizing the sky.
+     */
+    void cacheDrawableAssets();
+
+    /**
+     * Render the sky.
+     *
+     * @todo Extract drawing into a new render-domain component.
+     */
+    void draw();
+
+#endif // __CLIENT__
+
 public:
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
@@ -281,7 +285,4 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Sky::Layer::Flags)
 
 typedef Sky::Layer SkyLayer;
 
-/// The One sky (never @c NULL).
-extern Sky *theSky;
-
-#endif // DENG_CLIENT_RENDER_SKY_H
+#endif // DENG_CLIENT_WORLD_SKY_H

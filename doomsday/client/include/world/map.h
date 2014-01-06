@@ -31,6 +31,7 @@
 
 #include "Line"
 #include "Polyobj"
+#include "Sky"
 
 #ifdef __CLIENT__
 #  include "world/world.h"
@@ -252,6 +253,11 @@ public:
      * Returns the minimum ambient light level for the whole map.
      */
     int ambientLightLevel() const;
+
+    /**
+     * Provides access to the sky for the map.
+     */
+    Sky &sky() const;
 
     /**
      * Provides access to the thinker lists for the map.

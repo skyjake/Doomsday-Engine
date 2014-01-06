@@ -19,24 +19,31 @@
  */
 
 #include "de_base.h"
-#include "render/sky.h"
+#include "world/sky.h"
 
-#include "clientapp.h"
 #include "con_main.h"
 #include "def_data.h"
 #include "client/cl_def.h"
 
-#include "gl/gl_tex.h"
-
-#include "MaterialSnapshot"
-#include "MaterialVariantSpec"
 #include "Texture"
 
-#include "render/rend_main.h"
-#include "render/rend_model.h"
+#ifdef __CLIENT__
+#  include "gl/gl_tex.h"
+
+#  include "MaterialSnapshot"
+#  include "MaterialVariantSpec"
+
+#  include "render/rend_main.h"
+#  include "render/rend_model.h"
+#endif
+
+#include "world/map.h"
+#include "Sky"
 
 #include <de/Log>
-#include <de/Shared>
+#ifdef __CLIENT__
+#  include <de/Shared>
+#endif
 #include <cmath>
 
 using namespace de;
@@ -55,13 +62,17 @@ static float skyDistance   = 1600; ///< Map units.
 static int skySphereDetail = 6;
 static int skySphereRows   = 3;
 
+#ifdef __CLIENT__
+
 static MaterialVariantSpec const &sphereMaterialSpec(bool masked)
 {
-    return ClientApp::resourceSystem()
+    return App_ResourceSystem()
                 .materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
                               0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE,
                               0, -1, -1, false, true, false, false);
 }
+
+#endif // __CLIENT__
 
 Sky::Layer::Layer(Material *material)
     : _flags(DefaultFlags)
@@ -166,7 +177,6 @@ struct HemisphereData
     QVector<Vector3f> vertices; // Crest is up.
     bool needMakeVertices;
 
-    // Sphere draw state paramaters. Global for performance reasons.
     struct DrawState
     {
         bool fadeout, texXFlip;
@@ -274,14 +284,14 @@ struct HemisphereData
 
             if(renderTextures == 2)
             {
-                mat = ClientApp::resourceSystem().materialPtr(de::Uri("System", Path("gray")));
+                mat = App_ResourceSystem().materialPtr(de::Uri("System", Path("gray")));
             }
             else
             {
                 mat = skyLayer.material();
                 if(!mat)
                 {
-                    mat = ClientApp::resourceSystem().materialPtr(de::Uri("System", Path("missing")));
+                    mat = App_ResourceSystem().materialPtr(de::Uri("System", Path("missing")));
                     ds.texXFlip = false;
                 }
             }
@@ -393,11 +403,13 @@ struct HemisphereData
         {
             for(int i = firstLayer; i <= MAX_SKY_LAYERS; ++i)
             {
-                if(!sky.layer(i).isActive()) continue;
+                SkyLayer const &skyLayer = sky.layer(i);
+
+                if(!skyLayer.isActive()) continue;
 
                 if(i != firstLayer)
                 {
-                    configureDrawState(sky.layer(i), HC_NONE);
+                    configureDrawState(skyLayer, HC_NONE);
                 }
 
                 if(ds.texSize.x != 0)
@@ -470,12 +482,6 @@ DENG2_PIMPL(Sky)
 , DENG2_OBSERVES(Layer, ActiveChange)
 , DENG2_OBSERVES(Layer, MaskedChange)
 {
-#ifdef __CLIENT__
-    typedef Shared<HemisphereData> SharedHemisphereData;
-    SharedHemisphereData *res;
-    bool alwaysDrawSphere;
-#endif
-
     Layer layers[MAX_SKY_LAYERS];
     int firstActiveLayer;
     bool needUpdateFirstActiveLayer;
@@ -485,6 +491,11 @@ DENG2_PIMPL(Sky)
     bool ambientColorDefined;    /// @c true= pre-defined in a MapInfo def.
     bool needUpdateAmbientColor; /// @c true= update if not pre-defined.
     Vector3f ambientColor;
+
+#ifdef __CLIENT__
+    typedef Shared<HemisphereData> SharedHemisphereData;
+    SharedHemisphereData *res;
+    bool alwaysDrawSphere;
 
     struct ModelInfo
     {
@@ -497,20 +508,21 @@ DENG2_PIMPL(Sky)
     };
     ModelInfo models[MAX_SKY_MODELS];
     bool haveModels;
+#endif
 
     Instance(Public *i)
         : Base(i)
-#ifdef __CLIENT__
-        , res(0)
-        , alwaysDrawSphere(false)
-#endif
         , firstActiveLayer(-1) /// @c -1 denotes 'no active layers'.
         , needUpdateFirstActiveLayer(true)
         , horizonOffset(0)
         , height(0)
         , ambientColorDefined(false)
         , needUpdateAmbientColor(true)
+#ifdef __CLIENT__
+        , res(0)
+        , alwaysDrawSphere(false)
         , haveModels(false)
+#endif
     {
         for(int i = 0; i < MAX_SKY_LAYERS; ++i)
         {
@@ -519,7 +531,9 @@ DENG2_PIMPL(Sky)
             layers[i].audienceForMaskedChange   += this;
         }
 
+#ifdef __CLIENT__
         zap(models);
+#endif
     }
 
 #ifdef __CLIENT__
@@ -551,22 +565,25 @@ DENG2_PIMPL(Sky)
         }
     }
 
+    /**
+     * @todo Reimplement by rendering the sky to a low-quality cubemap and using
+     * this to obtain the lighting characteristics. Doing it this way we can sample
+     * the lighting of a sky using 3D models, also.
+     */
     void calculateAmbientColor()
     {
         needUpdateAmbientColor = false;
 
         ambientColor = Vector3f(1, 1, 1);
 
+#ifdef __CLIENT__
+        // Only the client can automatically calculate this color.
         if(haveModels && !alwaysDrawSphere) return;
 
         Vector3f avgMaterialColor;
         Vector3f bottomCapColor;
         Vector3f topCapColor;
 
-        /**
-         * @todo Re-implement me by rendering the sky to a low-quality cubemap
-         * and use that to obtain the lighting characteristics.
-         */
         int avgCount = 0;
         for(int i = 0; i < MAX_SKY_LAYERS; ++i)
         {
@@ -582,17 +599,17 @@ DENG2_PIMPL(Sky)
             {
                 Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
                 averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageColorAnalysis));
-                if(!avgColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageColorAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+                if(!avgColor) throw Error("sky::calculateAmbientColor", QString("Texture \"%1\" has no AverageColorAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
 
                 if(i == firstActiveLayer)
                 {
                     averagecolor_analysis_t const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageTopColorAnalysis));
-                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageTopColorAnalysis").arg(tex.manifest().composeUri()));
+                    if(!avgLineColor) throw Error("sky::calculateAmbientColor", QString("Texture \"%1\" has no AverageTopColorAnalysis").arg(tex.manifest().composeUri()));
 
                     topCapColor = Vector3f(avgLineColor->color.rgb);
 
                     avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageBottomColorAnalysis));
-                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageBottomColorAnalysis").arg(tex.manifest().composeUri()));
+                    if(!avgLineColor) throw Error("sky::calculateAmbientColor", QString("Texture \"%1\" has no AverageBottomColorAnalysis").arg(tex.manifest().composeUri()));
 
                     bottomCapColor = Vector3f(avgLineColor->color.rgb);
                 }
@@ -609,8 +626,11 @@ DENG2_PIMPL(Sky)
             ambientColor =
                 (avgMaterialColor + topCapColor + bottomCapColor) / (avgCount + 2);
         }
+
+#endif // __CLIENT__
     }
 
+#ifdef __CLIENT__
     /**
      * Models are set up using the data in the definition.
      */
@@ -649,8 +669,6 @@ DENG2_PIMPL(Sky)
             {} // Ignore this error.
         }
     }
-
-#ifdef __CLIENT__
 
     void drawModels()
     {
@@ -803,7 +821,7 @@ void Sky::configureDefault()
         lyr.setMaterial(0);
         try
         {
-            lyr.setMaterial(ClientApp::resourceSystem().materialPtr(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)));
+            lyr.setMaterial(App_ResourceSystem().materialPtr(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)));
         }
         catch(MaterialManifest::MissingMaterialError const &)
         {} // Ignore this error.
@@ -830,11 +848,20 @@ void Sky::setHeight(float newHeight)
     d->height = de::clamp(0.f, newHeight, 1.f);
 }
 
+static bool useAutomaticAmbientColor()
+{
+#ifdef __CLIENT__
+    return rendSkyLightAuto;
+#else
+    return false;
+#endif
+}
+
 Vector3f const &Sky::ambientColor() const
 {
     static Vector3f const white(1, 1, 1);
 
-    if(d->ambientColorDefined || rendSkyLightAuto)
+    if(d->ambientColorDefined || useAutomaticAmbientColor())
     {
         if(!d->ambientColorDefined)
         {
@@ -887,7 +914,7 @@ void Sky::configure(ded_sky_t *def)
         {
             try
             {
-                lyr.setMaterial(ClientApp::resourceSystem().materialPtr(*matUri));
+                lyr.setMaterial(App_ResourceSystem().materialPtr(*matUri));
             }
             catch(ResourceSystem::MissingManifestError const &er)
             {
@@ -903,13 +930,19 @@ void Sky::configure(ded_sky_t *def)
         setAmbientColor(def->color);
     }
 
+#ifdef __CLIENT__
     // Any sky models to setup? Models will override the normal sphere by default.
     d->setupModels(def);
+#endif
 }
 
-void Sky::runTick()
+void Sky::runTick(timespan_t /*elapsed*/)
 {
-    if(clientPaused || !d->haveModels) return;
+#ifdef __CLIENT__
+    // Animate sky models.
+    if(clientPaused) return;
+    if(!DD_IsSharpTick()) return;
+    if(!d->haveModels) return;
 
     for(int i = 0; i < MAX_SKY_MODELS; ++i)
     {
@@ -932,6 +965,7 @@ void Sky::runTick()
             }
         }
     }
+#endif
 }
 
 #ifdef __CLIENT__
@@ -1011,19 +1045,13 @@ void Sky::draw()
     if(usingFog) glDisable(GL_FOG);
 }
 
-#endif // __CLIENT__
-
-static Sky sky;
-Sky *theSky = &sky;
-
-#ifdef __CLIENT__
 static void markSkySphereForRebuild()
 {
     // Defer this task until render time, when we can be sure we are in correct thread.
     /// @todo fixme: Update the shared sphere geometry!
     //hemi.needMakeHemisphere = true;
 }
-#endif
+#endif // __CLIENT__
 
 void Sky::consoleRegister() //static
 {
@@ -1067,6 +1095,11 @@ static void setSkyLayerParams(Sky &sky, int layerIndex, int param, void *data)
 DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void *data)
 {
     LOG_AS("R_SkyParams");
+
+    if(!App_World().hasMap()) return;
+
+    /// @todo Do not assume the current map.
+    Sky &sky = App_World().map().sky();
 
     // The whole sky?
     if(layerIndex == DD_SKY)

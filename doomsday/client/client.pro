@@ -169,6 +169,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/SequentialLayout \
     include/SettingsRegister \
     include/SignalAction \
+    include/Sky \
     include/SkyFixEdge \
     include/Sprite \
     include/Surface \
@@ -329,7 +330,6 @@ DENG_HEADERS += \
     include/render/rendpoly.h \
     include/render/rendersystem.h \
     include/render/shadowedge.h \
-    include/render/sky.h \
     include/render/skyfixedge.h \
     include/render/surfacedecorator.h \
     include/render/trianglestripbuilder.h \
@@ -520,6 +520,7 @@ DENG_HEADERS += \
     include/world/propertyvalue.h \
     include/world/reject.h \
     include/world/sector.h \
+    include/world/sky.h \
     include/world/surface.h \
     include/world/thinkers.h \
     include/world/vertex.h \
@@ -697,7 +698,6 @@ SOURCES += \
     src/render/rendpoly.cpp \
     src/render/rendersystem.cpp \
     src/render/shadowedge.cpp \
-    src/render/sky.cpp \
     src/render/skyfixedge.cpp \
     src/render/surfacedecorator.cpp \
     src/render/trianglestripbuilder.cpp \
@@ -874,6 +874,7 @@ SOURCES += \
     src/world/reject.cpp \
     src/world/sector.cpp \
     src/world/sectorcluster.cpp \
+    src/world/sky.cpp \
     src/world/surface.cpp \
     src/world/thinkers.cpp \
     src/world/vertex.cpp \

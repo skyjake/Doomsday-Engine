@@ -708,7 +708,7 @@ Vector3f const &Rend_SectorLightColor(SectorCluster const &cluster)
 {
     if(rendSkyLight > .001f && cluster.hasSkyMaskedPlane())
     {
-        Vector3f const &ambientColor = theSky->ambientColor();
+        Vector3f const &ambientColor = cluster.sector().map().sky().ambientColor();
 
         if(rendSkyLight != oldRendSkyLight ||
            !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
@@ -753,7 +753,7 @@ Vector3f const &Rend_SectorLightColor(Sector const &sector)
 {
     if(rendSkyLight > .001f && sectorHasSkyMaskedPlane(sector))
     {
-        Vector3f const &ambientColor = theSky->ambientColor();
+        Vector3f const &ambientColor = sector.map().sky().ambientColor();
 
         if(rendSkyLight != oldRendSkyLight ||
            !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
@@ -3491,8 +3491,12 @@ static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
     popGLStateForPass(mode);
 }
 
-static void drawSky()
+static void drawSky(Sky &sky)
 {
+    DENG_ASSERT(!Sys_GLCheckError());
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
     DrawLists::FoundLists lists;
     ClientApp::renderSystem().drawLists().findAll(SkyMaskGeom, lists);
     if(!devRendSkyAlways && lists.isEmpty())
@@ -3529,7 +3533,7 @@ static void drawSky()
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    theSky->draw();
+    sky.draw();
 
     if(!devRendSkyAlways)
     {
@@ -3645,7 +3649,9 @@ static void drawMasked()
     }
 }
 
-/*
+/**
+ * Render the real surfaces of the visible world.
+ *
  * We have several different paths to accommodate both multitextured details and
  * dynamic lights. Details take precedence (they always cover entire primitives
  * and usually *all* of the surfaces in a scene).
@@ -3655,10 +3661,6 @@ static void drawAllLists()
     DENG_ASSERT(!Sys_GLCheckError());
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    drawSky();
-
-    // Render the real surfaces of the visible world.
 
     /*
      * Pass: Unlit geometries (all normal lists).
@@ -3914,6 +3916,9 @@ void Rend_RenderMap(Map &map)
         // Draw the world!
         traverseBspAndDrawLeafs(&map.bspRoot());
     }
+
+    drawSky(map.sky());
+
     drawAllLists();
 
     // Draw various debugging displays:

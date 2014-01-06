@@ -49,7 +49,6 @@
 #  include "render/projector.h"
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
-#  include "render/sky.h"
 #  include "render/vlight.h"
 #endif
 
@@ -568,7 +567,6 @@ DENG2_PIMPL(World)
 
         map->_effectiveGravity = map->_globalGravity;
 
-#ifdef __CLIENT__
         // Reconfigure the sky.
         ded_sky_t *skyDef = 0;
         if(mapInfo)
@@ -576,8 +574,7 @@ DENG2_PIMPL(World)
             skyDef = Def_GetSky(mapInfo->skyID);
             if(!skyDef) skyDef = &mapInfo->sky;
         }
-        theSky->configure(skyDef);
-#endif
+        map->sky().configure(skyDef);
 
         // Init the thinker lists (public and private).
         map->thinkers().initLists(0x1 | 0x2);
