@@ -50,7 +50,9 @@ def setDefaults(d = None)
 
     # Default log filtering.
     def initFilter(flt, level, dev)
+        import Log
         flt.minLevel = level
+        flt.alertLevel = Log.WARNING
         flt.allowDev = dev
     end
     import Log
@@ -110,23 +112,24 @@ if '__oldversion__' in locals()
         catch: pass
         try
             if __version__[3] >= 1101
+                del log.level
                 # Log constants were moved to the Log module.
-                del d.log.TRACE
-                del d.log.DEBUG
-                del d.log.VERBOSE
-                del d.log.MESSAGE
-                del d.log.INFO
-                del d.log.WARNING
-                del d.log.ERROR
-                del d.log.CRITICAL
+                del log.TRACE
+                del log.DEBUG
+                del log.VERBOSE
+                del log.MESSAGE
+                del log.INFO
+                del log.WARNING
+                del log.ERROR
+                del log.CRITICAL
                 # Updater constants also moved to their own module.
-                del d.updater.DAILY
-                del d.updater.BIWEEKLY
-                del d.updater.WEEKLY
-                del d.updater.MONTHLY
-                del d.updater.AT_STARTUP
-                del d.updater.CHANNEL_STABLE                
-                del d.updater.CHANNEL_UNSTABLE
+                del updater.DAILY
+                del updater.BIWEEKLY
+                del updater.WEEKLY
+                del updater.MONTHLY
+                del updater.AT_STARTUP
+                del updater.CHANNEL_STABLE                
+                del updater.CHANNEL_UNSTABLE
             end
         catch: pass
     end
