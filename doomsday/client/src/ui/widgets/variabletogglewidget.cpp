@@ -28,8 +28,14 @@ DENG2_OBSERVES(Variable,     Change  ),
 DENG2_OBSERVES(ToggleWidget, Toggle  )
 {
     Variable *var;
+    NumberValue activeValue;
+    NumberValue inactiveValue;
 
-    Instance(Public *i, Variable &variable) : Base(i), var(&variable)
+    Instance(Public *i, Variable &variable)
+        : Base(i)
+        , var(&variable)
+        , activeValue(1)
+        , inactiveValue(0)
     {
         updateFromVariable();
 
@@ -52,7 +58,8 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
     {
         if(!var) return;
 
-        self.setToggleState(var->value().isTrue()? Active : Inactive, false /*don't notify*/);
+        self.setToggleState(!var->value().compare(activeValue)? Active : Inactive,
+                            false /*don't notify*/);
     }
 
     void setVariableFromWidget()
@@ -60,7 +67,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle  )
         if(!var) return;
 
         var->audienceForChange -= this;
-        var->set(NumberValue(self.isActive()? true : false));
+        var->set(self.isActive()? activeValue : inactiveValue);
         var->audienceForChange += this;
     }
 
@@ -99,5 +106,17 @@ Variable &VariableToggleWidget::variable() const
                                    "Widget is not associated with a variable");
     }
     return *d->var;
+}
+
+void VariableToggleWidget::setActiveValue(double val)
+{
+    d->activeValue = val;
+    d->updateFromVariable();
+}
+
+void VariableToggleWidget::setInactiveValue(double val)
+{
+    d->inactiveValue = val;
+    d->updateFromVariable();
 }
 

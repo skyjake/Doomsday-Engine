@@ -38,6 +38,9 @@ public:
 
     de::Variable &variable() const;
 
+    void setActiveValue(double val);
+    void setInactiveValue(double val);
+
 private:
     DENG2_PRIVATE(d)
 };

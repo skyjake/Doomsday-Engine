@@ -87,6 +87,8 @@ public:
      */
     void setItems(ui::Data const &items);
 
+    void useDefaultItems();
+
     ChildWidgetOrganizer &organizer();
     ChildWidgetOrganizer const &organizer() const;
 
