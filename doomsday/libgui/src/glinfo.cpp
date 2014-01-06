@@ -114,6 +114,8 @@ DENG2_PIMPL_NOREF(GLInfo)
         ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
 
         ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
+        ext.NV_framebuffer_multisample_coverage
+                                           = query("GL_NV_framebuffer_multisample_coverage");
         ext.NV_texture_env_combine4        = query("GL_NV_texture_env_combine4");
         ext.SGIS_generate_mipmap           = query("GL_SGIS_generate_mipmap");
 

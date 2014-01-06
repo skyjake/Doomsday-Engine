@@ -44,6 +44,7 @@ public:
 
         // Vendor-specific extensions:
         duint32 ATI_texture_env_combine3 : 1;
+        duint32 NV_framebuffer_multisample_coverage : 1;
         duint32 NV_texture_env_combine4 : 1;
         duint32 SGIS_generate_mipmap : 1;
 
