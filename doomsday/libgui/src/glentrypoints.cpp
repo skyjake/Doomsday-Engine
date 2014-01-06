@@ -99,10 +99,10 @@ PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 // Extensions:
 
-PFNGLBLITFRAMEBUFFEREXTPROC                     glBlitFramebufferEXT;
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC      glRenderbufferStorageMultisampleEXT;
+PFNGLBLITFRAMEBUFFEREXTPROC                         glBlitFramebufferEXT;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC          glRenderbufferStorageMultisampleEXT;
 #ifdef GL_NV_framebuffer_multisample_coverage
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENV   glRenderbufferStorageMultisampleCoverageNV;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC   glRenderbufferStorageMultisampleCoverageNV;
 #endif
 
 void getAllOpenGLEntryPoints()
