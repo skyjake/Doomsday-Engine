@@ -120,8 +120,11 @@ LIBGUI_EXTERN_C PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 // Extensions:
 
-LIBGUI_EXTERN_C PFNGLBLITFRAMEBUFFEREXTPROC                 glBlitFramebufferEXT;
-LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC  glRenderbufferStorageMultisampleEXT;
+LIBGUI_EXTERN_C PFNGLBLITFRAMEBUFFEREXTPROC                     glBlitFramebufferEXT;
+LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC      glRenderbufferStorageMultisampleEXT;
+#ifdef GL_NV_framebuffer_multisample_coverage
+LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENV   glRenderbufferStorageMultisampleCoverageNV;
+#endif
 
 void getAllOpenGLEntryPoints();
 

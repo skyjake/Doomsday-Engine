@@ -186,12 +186,25 @@ DENG2_OBSERVES(Asset, Deletion)
 
         if(sampleCount > 1)
         {
-            LOG_GL_VERBOSE("FBO %i: renderbuffer %ix%i is multisampled with %i samples => attachment %i")
-                    << fbo << size.x << size.y << sampleCount
-                    << attachmentToId(attachment);
+#ifdef GL_NV_framebuffer_multisample_coverage
+            if(GLInfo::extensions().NV_framebuffer_multisample_coverage)
+            {
+                LOG_GL_VERBOSE("FBO %i: renderbuffer %ix%i is multisampled with %i CSAA samples => attachment %i")
+                        << fbo << size.x << size.y << sampleCount
+                        << attachmentToId(attachment);
 
-            DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
-            glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
+                glRenderbufferStorageMultisampleCoverageNV(GL_RENDERBUFFER, 8, sampleCount, type, size.x, size.y);
+            }
+            else
+#endif
+            {
+                LOG_GL_VERBOSE("FBO %i: renderbuffer %ix%i is multisampled with %i samples => attachment %i")
+                        << fbo << size.x << size.y << sampleCount
+                        << attachmentToId(attachment);
+
+                DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
+                glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
+            }
         }
         else
         {

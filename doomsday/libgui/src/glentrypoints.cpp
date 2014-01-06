@@ -99,8 +99,11 @@ PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 // Extensions:
 
-PFNGLBLITFRAMEBUFFEREXTPROC                 glBlitFramebufferEXT;
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC  glRenderbufferStorageMultisampleEXT;
+PFNGLBLITFRAMEBUFFEREXTPROC                     glBlitFramebufferEXT;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC      glRenderbufferStorageMultisampleEXT;
+#ifdef GL_NV_framebuffer_multisample_coverage
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENV   glRenderbufferStorageMultisampleCoverageNV;
+#endif
 
 void getAllOpenGLEntryPoints()
 {
@@ -178,6 +181,9 @@ void getAllOpenGLEntryPoints()
 
     GET_PROC_EXT(glBlitFramebufferEXT);
     GET_PROC_EXT(glRenderbufferStorageMultisampleEXT);
+#ifdef GL_NV_framebuffer_multisample_coverage
+    GET_PROC_EXT(glRenderbufferStorageMultisampleCoverageNV);
+#endif
 
     haveProcs = true;
 }
