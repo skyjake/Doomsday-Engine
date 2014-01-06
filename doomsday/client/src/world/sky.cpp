@@ -768,7 +768,9 @@ DENG2_PIMPL(Sky)
     }
 };
 
-Sky::Sky() : d(new Instance(this))
+Sky::Sky()
+    : MapElement(DMU_SKY)
+    , d(new Instance(this))
 {}
 
 bool Sky::hasLayer(int index) const

@@ -343,7 +343,8 @@ enum {
     DMU_PLANE,
     DMU_SURFACE,
     DMU_MATERIAL,
-    DMU_LAST_ELEMENT_TYPE_ID = DMU_MATERIAL,
+    DMU_SKY,
+    DMU_LAST_ELEMENT_TYPE_ID = DMU_SKY,
 
     /*
      * Selection methods:

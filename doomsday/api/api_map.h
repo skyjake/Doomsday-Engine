@@ -102,6 +102,7 @@ struct mobj_s;
 struct plane_s;
 struct sector_s;
 struct side_s;
+struct sky_s;
 struct vertex_s;
 struct material_s;
 struct interceptor_s;
@@ -112,6 +113,7 @@ typedef struct line_s       Line;
 typedef struct plane_s      Plane;
 typedef struct sector_s     Sector;
 typedef struct side_s       Side;
+typedef struct sky_s        Sky;
 typedef struct vertex_s     Vertex;
 typedef struct material_s   Material;
 typedef struct interceptor_s Interceptor;
@@ -119,11 +121,12 @@ typedef struct interceptor_s Interceptor;
 #elif defined __cplusplus
 
 // Foward declarations.
-class Line;
-class Sector;
-class Material;
 class BspLeaf;
 class Interceptor;
+class Line;
+class Material;
+class Sector;
+class Sky;
 
 #endif
 

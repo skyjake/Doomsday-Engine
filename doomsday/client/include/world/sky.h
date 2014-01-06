@@ -21,6 +21,7 @@
 #ifndef DENG_CLIENT_WORLD_SKY_H
 #define DENG_CLIENT_WORLD_SKY_H
 
+#include "MapElement"
 #include "Material"
 #include <de/libdeng2.h>
 #include <de/Error>
@@ -44,8 +45,11 @@
  *
  * @ingroup render
  */
-class Sky
+class Sky : public de::MapElement
 {
+    DENG2_NO_COPY  (Sky)
+    DENG2_NO_ASSIGN(Sky)
+
 public:
     /// Required layer is missing. @ingroup errors
     DENG2_ERROR(MissingLayerError);

@@ -43,6 +43,7 @@
 #include "world/world.h"
 #include "BspLeaf"
 #include "Interceptor"
+#include "Sky"
 
 #ifdef __CLIENT__
 #  include "render/lightgrid.h"
@@ -99,6 +100,7 @@ char const *DMU_Str(uint prop)
         { DMU_PLANE, "DMU_PLANE" },
         { DMU_SURFACE, "DMU_SURFACE" },
         { DMU_MATERIAL, "DMU_MATERIAL" },
+        { DMU_SKY, "DMU_SKY" },
         { DMU_LINE_BY_TAG, "DMU_LINE_BY_TAG" },
         { DMU_SECTOR_BY_TAG, "DMU_SECTOR_BY_TAG" },
         { DMU_LINE_BY_ACT_TAG, "DMU_LINE_BY_ACT_TAG" },
@@ -183,6 +185,7 @@ int DMU_GetType(void const *ptr)
     case DMU_PLANE:
     case DMU_BSPNODE:
     case DMU_SURFACE:
+    case DMU_SKY:
     case DMU_MATERIAL:
         return elem->type();
 
@@ -307,6 +310,10 @@ int P_ToIndex(void const *ptr)
     case DMU_PLANE:
         return elem->as<Plane>().indexInSector();
 
+    case DMU_SKY:
+        // Only one sky per map, currently.
+        return 0;
+
     case DMU_MATERIAL:
         return elem->as<Material>().manifest().id(); // 1-based
 
@@ -348,6 +355,10 @@ void *P_ToPtr(int type, int index)
     case DMU_BSPNODE:
         return App_World().map().bspNodes().at(index);
 
+    case DMU_SKY:
+        // Only one sky per map, currently.
+        return &App_World().map().sky();
+
     case DMU_MATERIAL:
         /// @note @a index is 1-based.
         if(index > 0)
@@ -373,6 +384,7 @@ int P_Count(int type)
     case DMU_BSPNODE:   return App_World().hasMap()? App_World().map().bspNodeCount() : 0;
     case DMU_BSPLEAF:   return App_World().hasMap()? App_World().map().bspLeafCount() : 0;
     case DMU_SECTOR:    return App_World().hasMap()? App_World().map().sectorCount()  : 0;
+    case DMU_SKY:       return 1; // Only one sky per map, currently.
 
     case DMU_MATERIAL:  return (int)App_ResourceSystem().materialCount();
 
@@ -501,6 +513,10 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
         App_FatalError(msg.constData());
         return 0; /* Unreachable */ }
 
+    case DMU_SKY:
+        // Only one sky per map, currently.
+        return callback(&App_World().map().sky(), context);
+
     case DMU_MATERIAL:
         if(index > 0)
             return callback(&App_ResourceSystem().toMaterialManifest(materialid_t(index)).material(), context);
@@ -541,6 +557,7 @@ int P_Callbackp(int type, void *elPtr, int (*callback)(void *p, void *ctx), void
     case DMU_BSPLEAF:
     case DMU_SECTOR:
     case DMU_PLANE:
+    case DMU_SKY:
     case DMU_MATERIAL:
         // Only do the callback if the type is the same as the object's.
         if(type == elem->type())
