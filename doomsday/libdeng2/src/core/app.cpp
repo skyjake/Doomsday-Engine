@@ -208,7 +208,7 @@ DENG2_PIMPL(App)
                 level = LogEntry::XVerbose;
             }
 
-            logFilter.setMinLevel(LogEntry::AllDomains, level);
+            logFilter.setMinLevel(LogEntry::AllDomains, level);            
         }
 
         // Enable developer messages across the board?
@@ -235,6 +235,10 @@ App::App(NativePath const &appFilePath, QStringList args)
     // Do not flush the log buffer until we've found out where messages should
     // be flushed (Config.log.file).
     d->logBuffer.enableFlushing(false);
+
+    // The log filter will be read from Config, but until that time we can use
+    // the options from the command line.
+    d->setLogLevelAccordingToOptions();
 
     d->appPath = appFilePath;
 
@@ -468,6 +472,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     // Command line options may override the saved config.
     d->setLogLevelAccordingToOptions();
+
+    LOGDEV_NOTE("Developer log entries enabled");
 
     // We can start flushing now when the destination is known.
     logBuf.enableFlushing(true);

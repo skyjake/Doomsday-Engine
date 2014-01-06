@@ -194,7 +194,7 @@ LogEntry::LogEntry(duint32 metadata, String const &section, int sectionDepth, St
     , _disabled(false)
     , _args(args)
 {
-    if(!LogBuffer::appBuffer().isEnabled(level()))
+    if(!LogBuffer::appBuffer().isEnabled(metadata))
     {
         _disabled = true;
     }
@@ -573,6 +573,7 @@ LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
 {
     _disabled = !LogBuffer::appBufferExists() ||
                 !LogBuffer::appBuffer().isEnabled(metadata);
+
     if(!_disabled)
     {
         _format = format;

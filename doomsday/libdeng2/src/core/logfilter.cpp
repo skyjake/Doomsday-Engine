@@ -30,9 +30,9 @@ namespace internal {
         AudioFilter,
         InputFilter,
         NetworkFilter,
-        NUM_CONTEXTS
+        NUM_FILTERS
     };
-    static char const *subRecName[NUM_CONTEXTS] = { // for Config
+    static char const *subRecName[NUM_FILTERS] = { // for Config
         "generic",
         "resource",
         "map",
@@ -53,20 +53,22 @@ DENG2_PIMPL_NOREF(LogFilter)
 {
     /// Filtering information for a domain.
     struct Filter {
-        LogEntry::Context contextBit;
+        duint32 domainBit;
         LogEntry::Level minLevel;
         bool allowDev;
 
         Filter()
-            : contextBit(LogEntry::Generic)
+            : domainBit(LogEntry::Generic)
             , minLevel(LogEntry::Message)
             , allowDev(false)
         {}
 
         inline bool checkContextBit(duint32 md) const
         {
-            if(!contextBit && !(md & LogEntry::ContextMask)) return true; // Generic.
-            return (contextBit & md) != 0;
+            int const mdDomain = md & LogEntry::DomainMask;
+            if(!domainBit && (!mdDomain || (mdDomain == LogEntry::AllDomains)))
+                return true; // Generic.
+            return (domainBit & md) != 0;
         }
 
         void read(Record const &rec)
@@ -82,29 +84,29 @@ DENG2_PIMPL_NOREF(LogFilter)
         }
     };
 
-    Filter filterByContext[NUM_CONTEXTS];
+    Filter filterByContext[NUM_FILTERS];
 
     Instance()
     {
-        filterByContext[ResourceFilter].contextBit = LogEntry::Resource;
-        filterByContext[MapFilter].contextBit      = LogEntry::Map;
-        filterByContext[ScriptFilter].contextBit   = LogEntry::Script;
-        filterByContext[GLFilter].contextBit       = LogEntry::GL;
-        filterByContext[AudioFilter].contextBit    = LogEntry::Audio;
-        filterByContext[InputFilter].contextBit    = LogEntry::Input;
-        filterByContext[NetworkFilter].contextBit  = LogEntry::Network;
+        filterByContext[ResourceFilter].domainBit = LogEntry::Resource;
+        filterByContext[MapFilter].domainBit      = LogEntry::Map;
+        filterByContext[ScriptFilter].domainBit   = LogEntry::Script;
+        filterByContext[GLFilter].domainBit       = LogEntry::GL;
+        filterByContext[AudioFilter].domainBit    = LogEntry::Audio;
+        filterByContext[InputFilter].domainBit    = LogEntry::Input;
+        filterByContext[NetworkFilter].domainBit  = LogEntry::Network;
     }
 
     bool isLogEntryAllowed(duint32 md) const
     {
         // Multiple contexts allowed, in which case if any one passes,
         // the entry is allowed.
-        for(uint i = 0; i < NUM_CONTEXTS; ++i)
+        for(uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter const &ftr = filterByContext[i];
             if(ftr.checkContextBit(md))
             {
-                if((md & LogEntry::Dev) && !ftr.allowDev) return false; // No devs.
+                if((md & LogEntry::Dev) && !ftr.allowDev) continue; // No devs.
                 if(ftr.minLevel <= (md & LogEntry::LevelMask))
                     return true;
             }
@@ -115,7 +117,7 @@ DENG2_PIMPL_NOREF(LogFilter)
     LogEntry::Level minLevel(duint32 md) const
     {
         int lev = LogEntry::MAX_LOG_LEVELS;
-        for(uint i = 0; i < NUM_CONTEXTS; ++i)
+        for(uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter const &ftr = filterByContext[i];
             if(ftr.checkContextBit(md))
@@ -128,7 +130,7 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     bool allowDev(duint32 md) const
     {
-        for(uint i = 0; i < NUM_CONTEXTS; ++i)
+        for(uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter const &ftr = filterByContext[i];
             if(ftr.checkContextBit(md))
@@ -141,7 +143,7 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     void setAllowDev(duint32 md, bool allow)
     {
-        for(uint i = 0; i < NUM_CONTEXTS; ++i)
+        for(uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter &ftr = filterByContext[i];
             if(ftr.checkContextBit(md))
@@ -153,7 +155,7 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     void setMinLevel(duint32 md, LogEntry::Level level)
     {
-        for(uint i = 0; i < NUM_CONTEXTS; ++i)
+        for(uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter &ftr = filterByContext[i];
             if(ftr.checkContextBit(md))
@@ -167,7 +169,7 @@ DENG2_PIMPL_NOREF(LogFilter)
     {
         try
         {
-            for(uint i = 0; i < NUM_CONTEXTS; ++i)
+            for(uint i = 0; i < NUM_FILTERS; ++i)
             {
                 filterByContext[i].read(rec.subrecord(subRecName[i]));
             }
@@ -184,7 +186,7 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     void write(Record &rec) const
     {
-        for(uint i = 0; i < NUM_CONTEXTS; ++i)
+        for(uint i = 0; i < NUM_FILTERS; ++i)
         {
             Record *ctx = new Record;
             filterByContext[i].write(*ctx);
