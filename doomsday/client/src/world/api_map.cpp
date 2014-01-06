@@ -305,14 +305,11 @@ int P_ToIndex(void const *ptr)
     case DMU_SECTOR:
     case DMU_BSPLEAF:
     case DMU_BSPNODE:
+    case DMU_SKY:
         return elem->indexInMap();
 
     case DMU_PLANE:
         return elem->as<Plane>().indexInSector();
-
-    case DMU_SKY:
-        // Only one sky per map, currently.
-        return 0;
 
     case DMU_MATERIAL:
         return elem->as<Material>().manifest().id(); // 1-based

@@ -203,17 +203,20 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 #endif
 
     Instance(Public *i, Uri const &uri)
-        : Base            (i),
-          editingEnabled  (true),
-          uri             (uri),
-          bspRoot         (0),
-          lineLinks       (0)
+        : Base            (i)
+        , editingEnabled  (true)
+        , uri             (uri)
+        , bspRoot         (0)
+        , lineLinks       (0)
 #ifdef __CLIENT__
-         ,skyFloorHeight  (DDMAXFLOAT),
-          skyCeilingHeight(DDMINFLOAT)
+        , skyFloorHeight  (DDMAXFLOAT)
+        , skyCeilingHeight(DDMINFLOAT)
 #endif
     {
         zap(oldUniqueId);
+
+        sky.setMap(thisPublic);
+        sky.setIndexInMap(0);
     }
 
     ~Instance()
