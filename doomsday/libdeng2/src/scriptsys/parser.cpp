@@ -619,7 +619,7 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
     TokenRange range = fullRange;
 
     LOG_AS("parseExpression");
-    LOGDEV_SCR_XVERBOSE_DEBUGONLY("", range.asText());
+    LOGDEV_SCR_XVERBOSE_DEBUGONLY("%s (flags:%x)", range.asText() << flags);
     
     if(!range.size())
     {
@@ -631,6 +631,21 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Expression::Fla
     while(range.firstToken().equals(Token::PARENTHESIS_OPEN) && range.closingBracket(0) == range.size() - 1)
     {
         range = range.shrink(1);
+    }
+
+    // Do we have a record declaration in the expression?
+    if(range.firstToken().type() == Token::KEYWORD &&
+       range.firstToken().equals(ScriptLex::RECORD))
+    {
+        LOGDEV_SCR_XVERBOSE_DEBUGONLY("declaration expression: RECORD %s", range.startingFrom(1).asText());
+
+        if(range.size() == 1)
+        {
+            throw MissingTokenError("Parser::parseDeclarationExpression",
+                                    "Expected identifier to follow " + range.firstToken().asText());
+        }
+        return parseExpression(range.startingFrom(1),
+                               flags | Expression::LocalOnly | Expression::NewSubrecord);
     }
 
     TokenRange leftSide = range.between(0, 0);
@@ -673,7 +688,7 @@ ArrayExpression *Parser::parseArrayExpression(TokenRange const &range)
             "Expected brackets for the array expression beginning at " + 
             range.firstToken().asText());
     }    
-    return parseList(range.between(1, range.size() - 1));
+    return parseList(range.shrink(1));
 }
 
 DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
@@ -791,7 +806,16 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
                                              Expression::ByReference : Expression::ByValue);
 
         Expression::Flags rightOpFlags = rightFlags;
-        if(op != MEMBER) rightOpFlags &= ~Expression::ByReference;
+        if(op == MEMBER)
+        {
+            // Don't create new variables for the left side of the member. The only place
+            // where a new variable is created is on the right.
+            leftOpFlags &= ~Expression::NewVariable;
+        }
+        else
+        {
+            rightOpFlags &= ~Expression::ByReference;
+        }
 
         // Binary operation.
         QScopedPointer<Expression> leftOperand(parseExpression(leftSide, leftOpFlags));
