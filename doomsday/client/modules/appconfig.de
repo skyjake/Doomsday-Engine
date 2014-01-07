@@ -24,14 +24,15 @@
 # TODO: make sure the server doesn't run this
 
 import Version
+import Updater
+import Log
 
 def setDefaults(d)
     # Applies the client's defaults.
     # - d: Record where to set the values.
     
     # Additional Log defaults.
-    d.log.filterSeparately = False        
-    import Log
+    d.log.filterBySubsystem = False        
     record d.alert
     d.alert.generic  = Log.WARNING
     d.alert.resource = Log.WARNING
@@ -96,7 +97,6 @@ def setDefaults(d)
     # Defaults for the automatic updater.
     record d.updater
 
-    import Updater
     d.updater.frequency = Updater.WEEKLY
     if Version.STABLE
         d.updater.channel = Updater.CHANNEL_STABLE

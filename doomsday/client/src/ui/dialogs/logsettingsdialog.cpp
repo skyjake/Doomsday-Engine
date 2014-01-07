@@ -19,76 +19,170 @@
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/widgets/variablechoicewidget.h"
 #include "ui/widgets/variabletogglewidget.h"
+#include "ui/widgets/foldpanelwidget.h"
 #include "SignalAction"
 
 #include <de/App>
 
 using namespace de;
 
+struct DomainText {
+    char const *name;
+    char const *label;
+};
+static DomainText const domainText[] = {
+    { "generic",    "Minimum Level" },
+    { "resource",   "Resources" },
+    { "map",        "Map"       },
+    { "script",     "Scripting" },
+    { "gl",         "Graphics"  },
+    { "audio",      "Audio"     },
+    { "input",      "Input"     },
+    { "network",    "Network"   }
+};
+
+#define NUM_DOMAINS (sizeof(domainText)/sizeof(domainText[0]))
+
 DENG2_PIMPL(LogSettingsDialog)
+, DENG2_OBSERVES(ToggleWidget, Toggle)
 {
     ui::ListData levels;
     VariableToggleWidget *separately;
-    struct Domain {
+    FoldPanelWidget *fold;
+    GridLayout foldLayout;
+    struct DomainWidgets
+    {
+        LabelWidget *label;
         VariableChoiceWidget *level;
+        VariableToggleWidget *dev;
         VariableToggleWidget *alert;
     };
-    Domain generic;
-    Domain resource;
-    Domain map;
-    Domain script;
-    Domain gfx;
-    Domain audio;
-    Domain input;
-    Domain network;
+    DomainWidgets domWidgets[NUM_DOMAINS];
 
     Instance(Public *i) : Base(i)
     {
-        self.area().add(separately =
-                new VariableToggleWidget(tr("Filter Separately"), App::config()["log.filterSeparately"]));
+        try
+        {
+            zap(domWidgets);
 
-        levels << new ChoiceItem(tr("X-Verbose"), LogEntry::XVerbose)
-               << new ChoiceItem(tr("Verbose"),   LogEntry::Verbose)
-               << new ChoiceItem(tr("Message"),   LogEntry::Message)
-               << new ChoiceItem(tr("Note"),      LogEntry::Note)
-               << new ChoiceItem(tr("Warning"),   LogEntry::Warning)
-               << new ChoiceItem(tr("Error"),     LogEntry::Error)
-               << new ChoiceItem(tr("Critical"),  LogEntry::Critical);
+            self.area().add(separately =
+                    new VariableToggleWidget(tr("Filter by Subsystem"),
+                                             App::config()["log.filterBySubsystem"]));
 
-        initDomain(generic,  "generic");
-        initDomain(resource, "resource");
-        initDomain(map,      "map");
-        initDomain(script,   "script");
-        initDomain(gfx,      "gl");
-        initDomain(audio,    "audio");
-        initDomain(input,    "input");
-        initDomain(network,  "network");
+            levels << new ChoiceItem(        tr("1 - XVerbose"), LogEntry::XVerbose)
+                   << new ChoiceItem(        tr("2 - Verbose"),  LogEntry::Verbose )
+                   << new ChoiceItem(        tr("3 - Message"),  LogEntry::Message )
+                   << new ChoiceItem(        tr("4 - Note"),     LogEntry::Note    )
+                   << new ChoiceItem(_E(D) + tr("5 - Warning"),  LogEntry::Warning )
+                   << new ChoiceItem(_E(D) + tr("6 - Error"),    LogEntry::Error   )
+                   << new ChoiceItem(_E(D) + tr("7 - Critical"), LogEntry::Critical);
+
+            // Folding panel for the per-domain settings.
+            self.area().add(fold = new FoldPanelWidget);
+            fold->setContent(new GuiWidget);
+            fold->title().hide();
+
+            foldLayout.setLeftTop(fold->content().rule().left(),
+                                  fold->content().rule().top());
+            foldLayout.setGridSize(4, 0);
+            foldLayout.setColumnAlignment(0, ui::AlignRight);
+
+            for(uint i = 0; i < NUM_DOMAINS; ++i)
+            {
+                initDomain(domainText[i],
+                           domWidgets[i],
+                           i == 0? &self.area() : &fold->content());
+            }
+
+            separately->audienceForToggle += this;
+        }
+        catch(Error const &er)
+        {
+            LOGDEV_ERROR("") << er.asText();
+            deinit();
+            throw;
+        }
     }
 
-    void initDomain(Domain &dom, String const &name)
+    void initDomain(DomainText const &dom, DomainWidgets &wgt, GuiWidget *parent)
     {
-        self.area().add(dom.level =
-                new VariableChoiceWidget(App::config()["log.filter." + name + ".minLevel"]));
-        dom.level->popup().menu().setItems(levels);
-        dom.level->updateFromVariable();
+        // Text label.
+        wgt.label = LabelWidget::newWithText(tr(dom.label) + ":", parent);
 
-        self.area().add(dom.alert =
-                new VariableToggleWidget(tr("Alerts"), App::config()["alert." + name]));
-        dom.alert->setActiveValue(LogEntry::Warning);
-        dom.alert->setInactiveValue(LogEntry::MAX_LOG_LEVELS);
+        // Minimum level for log entries.
+        parent->add(wgt.level =
+                new VariableChoiceWidget(App::config()[String("log.filter.%1.minLevel").arg(dom.name)]));
+        wgt.level->popup().menu().setItems(levels);
+        wgt.level->updateFromVariable();
+
+        // Developer messages?
+        parent->add(wgt.dev =
+                new VariableToggleWidget(tr("Dev"), App::config()[String("log.filter.%1.allowDev").arg(dom.name)]));
+
+        // Raise alerts?
+        parent->add(wgt.alert =
+                new VariableToggleWidget(tr("Alerts"), App::config()[String("alert.") + dom.name]));
+        wgt.alert->setActiveValue(LogEntry::Warning);
+        wgt.alert->setInactiveValue(LogEntry::MAX_LOG_LEVELS);
+
+        // Lay out the folding panel's contents.
+        if(parent == &fold->content())
+        {
+            foldLayout << *wgt.label << *wgt.level << *wgt.dev << *wgt.alert;
+        }
     }
 
     ~Instance()
     {
+        deinit();
+    }
+
+    void deinit()
+    {
         // The common 'levels' will be deleted soon.
-        generic.level->popup().menu().useDefaultItems();
-        resource.level->popup().menu().useDefaultItems();
-        map.level->popup().menu().useDefaultItems();
-        script.level->popup().menu().useDefaultItems();
-        gfx.level->popup().menu().useDefaultItems();
-        audio.level->popup().menu().useDefaultItems();
-        input.level->popup().menu().useDefaultItems();
-        network.level->popup().menu().useDefaultItems();
+        for(uint i = 0; i < NUM_DOMAINS; ++i)
+        {
+            if(domWidgets[i].level)
+            {
+                domWidgets[i].level->popup().menu().useDefaultItems();
+            }
+        }
+    }
+
+    void overrideWithGeneric()
+    {
+        Config &cfg = App::config();
+        LogFilter &logf = App::logFilter();
+
+        // Check the generic filter settings.
+        LogEntry::Level minLevel = logf.minLevel(0);
+        bool allowDev = logf.allowDev(0);
+        bool alerts = cfg.getb("alert.generic");
+
+        // Override the individual filters with the generic one.
+        logf.setMinLevel(LogEntry::AllDomains, minLevel);
+        logf.setAllowDev(LogEntry::AllDomains, allowDev);
+
+        // Update the variables (UI updated automatically).
+        logf.write(cfg.names().subrecord("log.filter"));
+        for(uint i = 0; i < NUM_DOMAINS; ++i)
+        {
+            char const *name = domainText[i].name;
+            cfg.set(String("alert.") + name, alerts);
+        }
+    }
+
+    void toggleStateChanged(ToggleWidget &toggle)
+    {
+        if(toggle.isActive())
+        {
+            fold->open();
+        }
+        else
+        {
+            fold->close();
+            overrideWithGeneric();
+        }
     }
 };
 
@@ -97,53 +191,31 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
 {
     heading().setText(tr("Log Filter & Alerts"));
 
-    LabelWidget *levelLabel  = LabelWidget::newWithText(tr("Level:"), &area());
-    LabelWidget *resLabel    = LabelWidget::newWithText(tr("Resources:"), &area());
-    LabelWidget *mapLabel    = LabelWidget::newWithText(tr("Map:"), &area());
-    LabelWidget *scriptLabel = LabelWidget::newWithText(tr("Scripting:"), &area());
-    LabelWidget *glLabel     = LabelWidget::newWithText(tr("Graphics:"), &area());
-    LabelWidget *audioLabel  = LabelWidget::newWithText(tr("Audio:"), &area());
-    LabelWidget *inputLabel  = LabelWidget::newWithText(tr("Input:"), &area());
-    LabelWidget *netLabel    = LabelWidget::newWithText(tr("Network:"), &area());
-
-    /*
-    LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Stereo Mode:"), &area());
-    LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
-    LabelWidget *ipdLabel      = LabelWidget::newWithText(tr("IPD (mm):"), &area());
-    LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());
-    */
-
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
-    layout.setGridSize(3, 0);
+    layout.setGridSize(4, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
 
-    layout << *levelLabel << *d->generic.level << *d->generic.alert
+    layout << *d->domWidgets[0].label
+           << *d->domWidgets[0].level
+           << *d->domWidgets[0].dev
+           << *d->domWidgets[0].alert
            << Const(0);
-    layout.append(*d->separately, 2);
+    layout.append(*d->separately, 3);
+    layout.append(*d->fold, 4);
 
-    layout << *resLabel    << *d->resource.level << *d->resource.alert
-           << *mapLabel    << *d->map.level      << *d->map.alert
-           << *scriptLabel << *d->script.level   << *d->script.alert
-           << *glLabel     << *d->gfx.level      << *d->gfx.alert
-           << *audioLabel  << *d->audio.level    << *d->audio.alert
-           << *inputLabel  << *d->input.level    << *d->input.alert
-           << *netLabel    << *d->network.level  << *d->network.alert;
+    // Fold's layout is complete.
+    d->fold->content().rule().setSize(d->foldLayout.width(), d->foldLayout.height());
 
-    /*
-    layout << *modeLabel     << *d->mode
-           << *heightLabel   << *d->humanHeight
-           << *ipdLabel      << *d->ipd
-           << *dominantLabel << *d->dominantEye
-           << Const(0)       << *d->swapEyes;
-           */
-
+    // Dialog content size.
     area().setContentSize(layout.width(), layout.height());
 
     buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));
+
+    d->toggleStateChanged(*d->separately);
 }
 
 void LogSettingsDialog::resetToDefaults()
