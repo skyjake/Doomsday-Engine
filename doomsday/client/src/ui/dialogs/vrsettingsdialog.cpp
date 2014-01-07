@@ -35,6 +35,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     CVarSliderWidget *dominantEye;
     CVarSliderWidget *humanHeight;
     CVarSliderWidget *ipd;
+    CVarSliderWidget *riftSamples;
     CVarSliderWidget *riftPredictionLatency;
     ButtonWidget *riftSetup;
     ButtonWidget *desktopSetup;
@@ -63,6 +64,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
         area.add(swapEyes    = new CVarToggleWidget("rend-vr-swap-eyes", tr("Swap Eyes")));
         area.add(dominantEye = new CVarSliderWidget("rend-vr-dominant-eye"));
         area.add(humanHeight = new CVarSliderWidget("rend-vr-player-height"));
+        area.add(riftSamples = new CVarSliderWidget("rend-vr-rift-samples"));
 
         area.add(ipd = new CVarSliderWidget("rend-vr-ipd"));
         ipd->setDisplayFactor(1000);
@@ -103,6 +105,8 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
     LabelWidget *ipdLabel      = LabelWidget::newWithText(tr("IPD (mm):"), &area());
     LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());
+    LabelWidget *sampleLabel   = LabelWidget::newWithText(tr("Oculus Rift\nMultisampling:"), &area());
+    sampleLabel->setTextLineAlignment(ui::AlignRight);
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
@@ -113,7 +117,8 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << *heightLabel   << *d->humanHeight
            << *ipdLabel      << *d->ipd
            << *dominantLabel << *d->dominantEye
-           << Const(0)       << *d->swapEyes;
+           << Const(0)       << *d->swapEyes
+           << *sampleLabel   << *d->riftSamples;
 
     if(VR::hasHeadOrientation())
     {
@@ -149,6 +154,7 @@ void VRSettingsDialog::resetToDefaults()
     Con_SetFloat  ("rend-vr-player-height", 1.75f);
     Con_SetFloat  ("rend-vr-ipd",           0.064f);
     Con_SetFloat  ("rend-vr-rift-latency",  0.030f);
+    Con_SetInteger("rend-vr-rift-samples",  2);
 
     d->fetch();
 }

@@ -133,9 +133,9 @@ DENG2_PIMPL(VRWindowTransform)
         unwarpedFB.resize(textureSize);
 
         // Use a little bit of multisampling to smooth out the magnified jagged edges.
-        // Note: Independent of the vid-fsaa setting because this is necessary even when
+        // Note: Independent of the vid-fsaa setting because this is beneficial even when
         // vid-fsaa is disabled.
-        unwarpedFB.setSampleCount(2);
+        unwarpedFB.setSampleCount(VR::riftFramebufferSamples);
         unwarpedFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
 
         // Set render target to offscreen temporarily.

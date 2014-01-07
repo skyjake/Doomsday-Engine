@@ -100,6 +100,8 @@ extern float eyeShift;
 extern float hudDistance; // Distance from player character to screen, in map units (not used in Rift mode, because it's used by frustum shift)
 extern float weaponDistance; // (UNUSED) Distance from player character to weapon sprite, in map units
 
+extern int riftFramebufferSamples; // Multisampling used in unwarped Rift framebuffer
+
 /// @param eye: -1 means left eye, +1 means right eye
 /// @return viewpoint eye shift in map units
 float getEyeShift(float eye);
