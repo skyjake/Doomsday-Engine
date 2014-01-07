@@ -136,7 +136,8 @@ public:
     Variable *remove(Variable &variable);
 
     /**
-     * Adds a new variable to the record with a NoneValue.
+     * Adds a new variable to the record with a NoneValue. If there is an existing
+     * variable with the given name, the old variable is deleted first.
      *
      * @param variableName  Name of the variable.
      *
@@ -146,7 +147,7 @@ public:
 
     /**
      * Adds a number variable to the record. The variable is set up to only accept
-     * number values.
+     * number values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      * @param number  Value of the variable.
@@ -156,8 +157,9 @@ public:
     Variable &addNumber(String const &variableName, Value::Number const &number);
 
     /**
-     * Adds a number variable to the record with a Boolean semantic hint.
-     * The variable is set up to only accept number values.
+     * Adds a number variable to the record with a Boolean semantic hint. The variable is
+     * set up to only accept number values. An existing variable with the same name is
+     * deleted first.
      *
      * @param variableName  Name of the variable.
      * @param booleanValue  Value of the variable (@c true or @c false).
@@ -168,7 +170,7 @@ public:
 
     /**
      * Adds a text variable to the record. The variable is set up to only accept
-     * text values.
+     * text values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      * @param text  Value of the variable.
@@ -181,7 +183,7 @@ public:
 
     /**
      * Adds an array variable to the record. The variable is set up to only accept
-     * array values.
+     * array values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      * @param array         Value for the new variable (ownership taken). If not
@@ -193,7 +195,7 @@ public:
 
     /**
      * Adds a dictionary variable to the record. The variable is set up to only accept
-     * dictionary values.
+     * dictionary values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      *
@@ -203,7 +205,7 @@ public:
 
     /**
      * Adds a block variable to the record. The variable is set up to only accept
-     * block values.
+     * block values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      *
@@ -213,7 +215,7 @@ public:
 
     /**
      * Adds a function variable to the record. The variable is set up to only
-     * accept function values.
+     * accept function values. An existing variable with the same name is deleted first.
      *
      * @param variableName  Name of the variable.
      * @param func          Function. The variable's value will hold a
@@ -225,8 +227,9 @@ public:
     Variable &addFunction(String const &variableName, Function *func);
 
     /**
-     * Adds a new subrecord to the record. Adds a variable named @a name
-     * and gives ownership of @a subrecord to it.
+     * Adds a new subrecord to the record. Adds a variable named @a name and gives
+     * ownership of @a subrecord to it. An existing subrecord with the same name is
+     * deleted first.
      *
      * @param name  Name to use for the subrecord. This must be a valid variable name.
      * @param subrecord  Record to add. This record gets ownership
@@ -237,8 +240,9 @@ public:
     Record &add(String const &name, Record *subrecord);
 
     /**
-     * Adds a new empty subrecord to the record. Adds a variable named @a
-     * name and creates a new record owned by it.
+     * Adds a new empty subrecord to the record. Adds a variable named @a name and
+     * creates a new record owned by it. An existing subrecord with the same name is
+     * deleted first.
      *
      * @param name  Name to use for the subrecord. This must be a valid variable name.
      *
@@ -254,6 +258,36 @@ public:
      * @return  Caller gets ownership of the removed record.
      */
     Record *remove(String const &name);
+
+    /**
+     * Sets the value of a variable, creating the variable if needed.
+     *
+     * @param name   Name of the variable. May contain subrecords using the dot notation.
+     * @param value  Value for the variable.
+     *
+     * @return Variable whose value was set.
+     */
+    Variable &set(String const &name, bool value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, Value::Text const &value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, Value::Number const &value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, dint32 value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, duint32 value);
+
+    /**
+     * Sets the value of a variable, creating the variable if it doesn't exist.
+     *
+     * @param name   Name of the variable. May contain subrecords using the dot notation.
+     * @param value  Array to use as the value of the variable. Ownership taken.
+     */
+    Variable &set(String const &name, ArrayValue *value);
 
     /**
      * Looks up a variable in the record. Variables in subrecords can be accessed

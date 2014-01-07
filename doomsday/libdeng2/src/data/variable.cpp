@@ -62,7 +62,7 @@ Variable &Variable::operator = (Value *v)
     return *this;
 }
 
-void Variable::set(Value *v)
+Variable &Variable::set(Value *v)
 {
     DENG2_ASSERT(v != 0);
 
@@ -94,11 +94,13 @@ void Variable::set(Value *v)
             DENG2_FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
         }
     }
+    return *this;
 }
 
-void Variable::set(Value const &v)
+Variable &Variable::set(Value const &v)
 {
     set(v.duplicate());
+    return *this;
 }
 
 Value const &Variable::value() const

@@ -79,8 +79,8 @@ DENG2_PIMPL_NOREF(LogFilter)
 
         void write(Record &rec) const
         {
-            rec.addNumber ("minLevel", int(minLevel));
-            rec.addBoolean("allowDev", allowDev);
+            rec.set("minLevel", dint(minLevel));
+            rec.set("allowDev", allowDev);
         }
     };
 
@@ -188,9 +188,12 @@ DENG2_PIMPL_NOREF(LogFilter)
     {
         for(uint i = 0; i < NUM_FILTERS; ++i)
         {
-            Record *ctx = new Record;
-            filterByContext[i].write(*ctx);
-            rec.add(subRecName[i], ctx);
+            // Reuse existing subrecords.
+            if(!rec.hasSubrecord(subRecName[i]))
+            {
+                rec.add(subRecName[i], new Record);
+            }
+            filterByContext[i].write(rec.subrecord(subRecName[i]));
         }
     }
 };

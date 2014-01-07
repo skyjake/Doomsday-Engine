@@ -356,7 +356,53 @@ Record *Record::remove(String const &name)
     }
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
 }
-    
+
+Variable &Record::set(String const &name, bool value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(NumberValue(value));
+    }
+    return addBoolean(name, value);
+}
+
+Variable &Record::set(String const &name, Value::Text const &value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(TextValue(value));
+    }
+    return addText(name, value);
+}
+
+Variable &Record::set(String const &name, Value::Number const &value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(NumberValue(value));
+    }
+    return addNumber(name, value);
+}
+
+Variable &Record::set(String const &name, dint32 value)
+{
+    return set(name, Value::Number(value));
+}
+
+Variable &Record::set(String const &name, duint32 value)
+{
+    return set(name, Value::Number(value));
+}
+
+Variable &Record::set(String const &name, ArrayValue *value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(value);
+    }
+    return addArray(name, value);
+}
+
 Variable &Record::operator [] (String const &name)
 {
     return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);
