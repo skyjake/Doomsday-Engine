@@ -264,8 +264,7 @@ void AlertDialog::showLogFilterSettings()
     st->setAnchorAndOpeningDirection(buttonWidget(DialogWidget::Id1)->rule(), ui::Left);
     st->setDeleteAfterDismissed(true);
     connect(this, SIGNAL(closed()), st, SLOT(close()));
-    root().add(st);
-    st->open();
+    st->exec(root());
 }
 
 void AlertDialog::finish(int result)

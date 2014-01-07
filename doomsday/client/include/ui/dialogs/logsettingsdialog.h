@@ -33,6 +33,7 @@ public:
 
 public slots:
     void resetToDefaults();
+    void updateLogFilter();
 
 private:
     DENG2_PRIVATE(d)

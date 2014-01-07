@@ -50,6 +50,7 @@ DENG2_PIMPL(LogSettingsDialog)
     VariableToggleWidget *separately;
     FoldPanelWidget *fold;
     GridLayout foldLayout;
+    IndirectRule *columnWidth; ///< Sync column width in and out of the fold.
     struct DomainWidgets
     {
         LabelWidget *label;
@@ -65,17 +66,19 @@ DENG2_PIMPL(LogSettingsDialog)
         {
             zap(domWidgets);
 
+            columnWidth = new IndirectRule;
+
             self.area().add(separately =
                     new VariableToggleWidget(tr("Filter by Subsystem"),
                                              App::config()["log.filterBySubsystem"]));
 
-            levels << new ChoiceItem(        tr("1 - XVerbose"), LogEntry::XVerbose)
-                   << new ChoiceItem(        tr("2 - Verbose"),  LogEntry::Verbose )
-                   << new ChoiceItem(        tr("3 - Message"),  LogEntry::Message )
-                   << new ChoiceItem(        tr("4 - Note"),     LogEntry::Note    )
-                   << new ChoiceItem(_E(D) + tr("5 - Warning"),  LogEntry::Warning )
-                   << new ChoiceItem(_E(D) + tr("6 - Error"),    LogEntry::Error   )
-                   << new ChoiceItem(_E(D) + tr("7 - Critical"), LogEntry::Critical);
+            levels << new ChoiceItem(_E(C) + tr("1 - X.Verbose"), LogEntry::XVerbose)
+                   << new ChoiceItem(_E(C) + tr("2 - Verbose"),   LogEntry::Verbose )
+                   << new ChoiceItem(        tr("3 - Message"),   LogEntry::Message )
+                   << new ChoiceItem(        tr("4 - Note"),      LogEntry::Note    )
+                   << new ChoiceItem(_E(D) + tr("5 - Warning"),   LogEntry::Warning )
+                   << new ChoiceItem(_E(D) + tr("6 - Error"),     LogEntry::Error   )
+                   << new ChoiceItem(_E(D) + tr("7 - Critical"),  LogEntry::Critical);
 
             // Folding panel for the per-domain settings.
             self.area().add(fold = new FoldPanelWidget);
@@ -85,6 +88,7 @@ DENG2_PIMPL(LogSettingsDialog)
             foldLayout.setLeftTop(fold->content().rule().left(),
                                   fold->content().rule().top());
             foldLayout.setGridSize(4, 0);
+            foldLayout.setColumnFixedWidth(1, *columnWidth);
             foldLayout.setColumnAlignment(0, ui::AlignRight);
 
             for(uint i = 0; i < NUM_DOMAINS; ++i)
@@ -93,6 +97,9 @@ DENG2_PIMPL(LogSettingsDialog)
                            domWidgets[i],
                            i == 0? &self.area() : &fold->content());
             }
+
+            // This'll keep the dialog's size fixed even though the choices change size.
+            columnWidth->setSource(domWidgets[0].level->maximumWidth());
 
             separately->audienceForToggle += this;
         }
@@ -104,6 +111,12 @@ DENG2_PIMPL(LogSettingsDialog)
         }
     }
 
+    ~Instance()
+    {
+        deinit();
+        releaseRef(columnWidth);
+    }
+
     void initDomain(DomainText const &dom, DomainWidgets &wgt, GuiWidget *parent)
     {
         // Text label.
@@ -112,12 +125,16 @@ DENG2_PIMPL(LogSettingsDialog)
         // Minimum level for log entries.
         parent->add(wgt.level =
                 new VariableChoiceWidget(App::config()[String("log.filter.%1.minLevel").arg(dom.name)]));
-        wgt.level->popup().menu().setItems(levels);
+        wgt.level->setItems(levels);
         wgt.level->updateFromVariable();
+        QObject::connect(wgt.level, SIGNAL(selectionChangedByUser(uint)),
+                         thisPublic, SLOT(updateLogFilter()));
 
         // Developer messages?
         parent->add(wgt.dev =
                 new VariableToggleWidget(tr("Dev"), App::config()[String("log.filter.%1.allowDev").arg(dom.name)]));
+        QObject::connect(wgt.dev, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)),
+                         thisPublic, SLOT(updateLogFilter()));
 
         // Raise alerts?
         parent->add(wgt.alert =
@@ -132,11 +149,6 @@ DENG2_PIMPL(LogSettingsDialog)
         }
     }
 
-    ~Instance()
-    {
-        deinit();
-    }
-
     void deinit()
     {
         // The common 'levels' will be deleted soon.
@@ -144,7 +156,7 @@ DENG2_PIMPL(LogSettingsDialog)
         {
             if(domWidgets[i].level)
             {
-                domWidgets[i].level->popup().menu().useDefaultItems();
+                domWidgets[i].level->useDefaultItems();
             }
         }
     }
@@ -155,9 +167,9 @@ DENG2_PIMPL(LogSettingsDialog)
         LogFilter &logf = App::logFilter();
 
         // Check the generic filter settings.
-        LogEntry::Level minLevel = logf.minLevel(0);
-        bool allowDev = logf.allowDev(0);
-        bool alerts = cfg.getb("alert.generic");
+        LogEntry::Level minLevel = LogEntry::Level(domWidgets[0].level->selectedItem().data().toInt());
+        bool allowDev = domWidgets[0].dev->isActive();
+        bool alerts = domWidgets[0].alert->isActive();
 
         // Override the individual filters with the generic one.
         logf.setMinLevel(LogEntry::AllDomains, minLevel);
@@ -168,7 +180,7 @@ DENG2_PIMPL(LogSettingsDialog)
         for(uint i = 0; i < NUM_DOMAINS; ++i)
         {
             char const *name = domainText[i].name;
-            cfg.set(String("alert.") + name, alerts);
+            cfg.set(String("alert.") + name, int(alerts? LogEntry::Warning : LogEntry::MAX_LOG_LEVELS));
         }
     }
 
@@ -176,6 +188,7 @@ DENG2_PIMPL(LogSettingsDialog)
     {
         if(toggle.isActive())
         {
+            overrideWithGeneric();
             fold->open();
         }
         else
@@ -183,6 +196,17 @@ DENG2_PIMPL(LogSettingsDialog)
             fold->close();
             overrideWithGeneric();
         }
+    }
+
+    void updateLogFilter()
+    {
+        if(separately->isInactive())
+        {
+            overrideWithGeneric();
+        }
+
+        // Re-read from Config, which has been changed via the widgets.
+        App::logFilter().read(App::config().names().subrecord("log.filter"));
     }
 };
 
@@ -194,6 +218,7 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(4, 0);
+    layout.setColumnFixedWidth(1, *d->columnWidth);
     layout.setColumnAlignment(0, ui::AlignRight);
 
     layout << *d->domWidgets[0].label
@@ -220,4 +245,9 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
 
 void LogSettingsDialog::resetToDefaults()
 {
+}
+
+void LogSettingsDialog::updateLogFilter()
+{
+    d->updateLogFilter();
 }
