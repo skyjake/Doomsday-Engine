@@ -18,11 +18,12 @@
 
 #include "ui/dialogs/alertdialog.h"
 #include "ui/widgets/notificationwidget.h"
+#include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/ListData"
 #include "ui/ActionItem"
-#include "clientapp.h"
 #include "SignalAction"
+#include "clientapp.h"
 
 #include <de/FIFO>
 #include <de/App>
@@ -225,7 +226,10 @@ AlertDialog::AlertDialog(String const &name) : d(new Instance(this))
     setAnchorAndOpeningDirection(d->notification->rule(), ui::Down);
 
     buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
-                                      tr("Clear All"));
+                                      tr("Clear All"))
+              << new DialogButtonItem(DialogWidget::Action | DialogWidget::Id1,
+                                      style().images().image("gear"),
+                                      new SignalAction(this, SLOT(showLogFilterSettings())));
 }
 
 void AlertDialog::newAlert(String const &message, Level level)
@@ -252,6 +256,16 @@ void AlertDialog::showListOfAlerts()
 
     area().scrollToTop(0);
     open();
+}
+
+void AlertDialog::showLogFilterSettings()
+{
+    LogSettingsDialog *st = new LogSettingsDialog;
+    st->setAnchorAndOpeningDirection(buttonWidget(DialogWidget::Id1)->rule(), ui::Left);
+    st->setDeleteAfterDismissed(true);
+    connect(this, SIGNAL(closed()), st, SLOT(close()));
+    root().add(st);
+    st->open();
 }
 
 void AlertDialog::finish(int result)
