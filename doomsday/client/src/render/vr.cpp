@@ -91,9 +91,10 @@ byte  VR::swapEyes = 0;
 
 // Global variables
 bool  VR::applyFrustumShift = true;
-float  VR::eyeShift = 0;
-float  VR::hudDistance = 20.0f;
-float  VR::weaponDistance = 10.0f;
+float VR::eyeShift = 0;
+float VR::hudDistance = 20.0f;
+int   VR::riftFramebufferSamples = 2;
+float VR::weaponDistance = 10.0f;
 
 /// @param eye: -1 means left eye, +1 means right eye
 /// @return viewpoint eye shift in map units
@@ -174,6 +175,7 @@ void VR::consoleRegister()
     C_VAR_FLOAT ("rend-vr-player-height",    & VR::playerHeight,  0, 1.0f, 2.4f);
     C_VAR_FLOAT2("rend-vr-rift-fovx",        & vrRiftFovX,        0, 5.0f, 270.0f, vrRiftFovXChanged);
     C_VAR_FLOAT2("rend-vr-rift-latency",     & vrLatency,         0, 0.0f, 0.100f, vrLatencyChanged);
+    C_VAR_INT   ("rend-vr-rift-samples",     & VR::riftFramebufferSamples, 0, 1, 4);
     C_VAR_BYTE  ("rend-vr-swap-eyes",        & VR::swapEyes,      0, 0, 1);
 
     C_CMD("loadriftparams", NULL, LoadRiftParams);
