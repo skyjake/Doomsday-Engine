@@ -395,7 +395,7 @@ DENG2_PIMPL(GridLayout)
                 {
                     widget->rule()
                             .clearInput(Rule::Left)
-                            .setInput(Rule::Right, columnRightX(cell.x));
+                            .setInput(Rule::Right, columnRightX(cell.x + cellSpan - 1));
                 }
                 else
                 {
