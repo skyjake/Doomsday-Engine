@@ -54,6 +54,8 @@ public:
     void read(Record const &rec);
     void write(Record &rec) const;
 
+    static String domainRecordName(LogEntry::Context domain);
+
 private:
     DENG2_PRIVATE(d)
 };

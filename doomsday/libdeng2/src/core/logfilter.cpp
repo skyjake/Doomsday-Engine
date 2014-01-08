@@ -231,4 +231,13 @@ void LogFilter::write(Record &rec) const
     d->write(rec);
 }
 
+String LogFilter::domainRecordName(LogEntry::Context domain)
+{
+    for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
+    {
+        if(domain & (1 << i)) return subRecName[i - LogEntry::FirstDomainBit];
+    }
+    return "";
+}
+
 } // namespace de
