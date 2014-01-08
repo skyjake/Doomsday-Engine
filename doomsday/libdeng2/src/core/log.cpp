@@ -254,7 +254,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         // Begin with the timestamp.
         if(flags.testFlag(Styled)) output << TEXT_STYLE_LOG_TIME;
     
-        output << _when.asText(Date::BuildNumberAndTime) << " ";
+        output << _when.asText(Date::BuildNumberAndTimeWithoutHour) << " ";
 
         if(!flags.testFlag(OmitLevel))
         {
@@ -270,8 +270,16 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                     "(ERR)",
                     "(!!!)"
                 };
-                output << qSetPadChar(' ') << qSetFieldWidth(5) << levelNames[level()] <<
-                          qSetFieldWidth(0) << " ";
+                QChar dc = (_metadata & Resource? 'R' :
+                            _metadata & Map?      'M' :
+                            _metadata & Script?   'S' :
+                            _metadata & GL?       'G' :
+                            _metadata & Audio?    'A' :
+                            _metadata & Input?    'I' :
+                            _metadata & Network?  'N' : ' ');
+                if(_metadata & Dev) dc = dc.toLower();
+                output << dc << qSetPadChar(' ') << qSetFieldWidth(5)
+                       << levelNames[level()] << qSetFieldWidth(0) << " ";
             }
             else
             {
@@ -280,7 +288,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                     "XVerbose",
                     "Verbose",
                     "",
-                    "Note",
+                    "Note!",
                     "Warning",
                     "ERROR",
                     "FATAL!"

@@ -125,6 +125,7 @@ public:
     enum Format {
         ISOFormat,
         BuildNumberAndTime,
+        BuildNumberAndTimeWithoutHour,
         FriendlyFormat,
         ISODateOnly,
         CompilerDateTime // Oct  7 2013 03:18:36 (__DATE__ __TIME__)
