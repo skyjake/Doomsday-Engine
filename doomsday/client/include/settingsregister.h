@@ -74,6 +74,9 @@ public:
     /**
      * Defines a new setting in the profile.
      *
+     * The default values of Config variables are taken from Config (so it must already
+     * be initialized).
+     *
      * @param type          Type of setting.
      * @param settingName   Name of the setting.
      * @param defaultValue  Default value of the setting (for cvars).

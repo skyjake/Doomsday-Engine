@@ -127,6 +127,7 @@ DENG2_PIMPL(ClientApp)
 {    
     QScopedPointer<Updater> updater;
     SettingsRegister audioSettings;
+    SettingsRegister logSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
     QScopedPointer<WidgetActions> widgetActions;
@@ -240,7 +241,17 @@ DENG2_PIMPL(ClientApp)
 
     void initSettings()
     {
-        typedef SettingsRegister SReg;
+        typedef SettingsRegister SReg; // convenience
+
+        // Log filter and alert settings.
+        for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
+        {
+            String const name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
+            logSettings
+                    .define(SReg::ConfigVariable, String("log.filter.%1.minLevel").arg(name))
+                    .define(SReg::ConfigVariable, String("log.filter.%1.allowDev").arg(name))
+                    .define(SReg::ConfigVariable, String("alert.%1").arg(name));
+        }
 
         /// @todo These belong in their respective subsystems.
 
@@ -332,7 +343,7 @@ void ClientApp::initialize()
 
     initSubsystems(); // loads Config
 
-    // Set up the log alerts.
+    // Set up the log alerts (observes Config variables).
     d->logAlarm.alertMask.init();
 
     // Create the user's configurations and settings folder, if it doesn't exist.
@@ -437,6 +448,11 @@ Updater &ClientApp::updater()
 {
     DENG2_ASSERT(!app().d->updater.isNull());
     return *app().d->updater;
+}
+
+SettingsRegister &ClientApp::logSettings()
+{
+    return app().d->logSettings;
 }
 
 SettingsRegister &ClientApp::audioSettings()

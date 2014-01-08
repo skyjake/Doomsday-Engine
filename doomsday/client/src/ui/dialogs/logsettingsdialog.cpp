@@ -21,8 +21,7 @@
 #include "ui/widgets/variabletogglewidget.h"
 #include "ui/widgets/foldpanelwidget.h"
 #include "SignalAction"
-
-#include <de/App>
+#include "clientapp.h"
 
 using namespace de;
 
@@ -245,6 +244,7 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
 
 void LogSettingsDialog::resetToDefaults()
 {
+    ClientApp::logSettings().resetToDefaults();
 }
 
 void LogSettingsDialog::updateLogFilter()
