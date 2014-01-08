@@ -53,6 +53,7 @@
 #include <stdio.h>
 #include <cassert>
 #include <iostream>
+#include <de/Log>
 #include "api_console.h"
 
 extern "C" {
@@ -64,15 +65,11 @@ int     DS_Set(int prop, const void* ptr);
 
 }
 
-#ifdef DENG_DSFMOD_DEBUG
-#  define DSFMOD_TRACE(args)  std::cerr << "[dsFMOD] " << args << std::endl;
-#else
-#  define DSFMOD_TRACE(args)
-#endif
+#define DSFMOD_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[dsFMOD] ") << args
 
 #define DSFMOD_ERRCHECK(result) \
     if(result != FMOD_OK) { \
-        printf("[dsFMOD] Error at %s, line %i: (%d) %s\n", __FILE__, __LINE__, result, FMOD_ErrorString(result)); \
+        LOGDEV_AUDIO_WARNING("[dsFMOD] Error at %s, line %i: (%d) %s") << __FILE__ << __LINE__ << result << FMOD_ErrorString(result); \
     }
 
 extern FMOD::System* fmodSystem;

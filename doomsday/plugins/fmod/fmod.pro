@@ -2,6 +2,9 @@
 # Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
 # License: GPLv2 + exception to link against FMOD Ex
 
+# This plugin uses the full libdeng2 C++ API.
+CONFIG += dengplugin_libdeng2_full
+
 include(../config_plugin.pri)
 include(../../dep_fmod.pri)
 
