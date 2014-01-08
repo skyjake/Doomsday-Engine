@@ -195,6 +195,7 @@ DENG_CONVENIENCE_HEADERS += \
 # Private headers.
 DENG_HEADERS += \
     $$DENG_CONVENIENCE_HEADERS \
+    include/alertmask.h \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
     include/audio/m_mus2midi.h \
@@ -580,6 +581,7 @@ else:unix {
 
 # Platform-independent sources.
 SOURCES += \
+    src/alertmask.cpp \
     src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.cpp \

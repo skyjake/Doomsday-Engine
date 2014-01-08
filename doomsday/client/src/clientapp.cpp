@@ -35,6 +35,7 @@
 #include <de/garbage.h>
 
 #include "clientapp.h"
+#include "alertmask.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
@@ -142,6 +143,7 @@ DENG2_PIMPL(ClientApp)
      */
     struct LogWarningAlarm : public LogSink
     {
+        AlertMask alertMask;
         StyledLogSinkFormatter formatter;
 
         LogWarningAlarm()
@@ -153,9 +155,12 @@ DENG2_PIMPL(ClientApp)
 
         LogSink &operator << (LogEntry const &entry)
         {
-            foreach(String msg, formatter.logEntryToTextLines(entry))
+            if(alertMask.shouldRaiseAlert(entry.metadata()))
             {
-                ClientApp::alert(msg, entry.level());
+                foreach(String msg, formatter.logEntryToTextLines(entry))
+                {
+                    ClientApp::alert(msg, entry.level());
+                }
             }
             return *this;
         }
@@ -326,6 +331,9 @@ void ClientApp::initialize()
     DisplayMode_Init();
 
     initSubsystems(); // loads Config
+
+    // Set up the log alerts.
+    d->logAlarm.alertMask.init();
 
     // Create the user's configurations and settings folder, if it doesn't exist.
     fileSystem().makeFolder("/home/configs");

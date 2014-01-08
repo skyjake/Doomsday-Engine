@@ -140,7 +140,7 @@ DENG2_PIMPL(LogSettingsDialog)
         parent->add(wgt.alert =
                 new VariableToggleWidget(tr("Alerts"), App::config()[String("alert.") + dom.name]));
         wgt.alert->setActiveValue(LogEntry::Warning);
-        wgt.alert->setInactiveValue(LogEntry::MAX_LOG_LEVELS);
+        wgt.alert->setInactiveValue(LogEntry::HighestLogLevel + 1);
 
         // Lay out the folding panel's contents.
         if(parent == &fold->content())
@@ -180,7 +180,7 @@ DENG2_PIMPL(LogSettingsDialog)
         for(uint i = 0; i < NUM_DOMAINS; ++i)
         {
             char const *name = domainText[i].name;
-            cfg.set(String("alert.") + name, int(alerts? LogEntry::Warning : LogEntry::MAX_LOG_LEVELS));
+            cfg.set(String("alert.") + name, int(alerts? LogEntry::Warning : (LogEntry::HighestLogLevel + 1)));
         }
     }
 

@@ -53,22 +53,19 @@ DENG2_PIMPL_NOREF(LogFilter)
 {
     /// Filtering information for a domain.
     struct Filter {
-        duint32 domainBit;
+        int domainBit;
         LogEntry::Level minLevel;
         bool allowDev;
 
         Filter()
-            : domainBit(LogEntry::Generic)
+            : domainBit(LogEntry::GenericBit)
             , minLevel(LogEntry::Message)
             , allowDev(false)
         {}
 
         inline bool checkContextBit(duint32 md) const
         {
-            int const mdDomain = md & LogEntry::DomainMask;
-            if(!domainBit && (!mdDomain || (mdDomain == LogEntry::AllDomains)))
-                return true; // Generic.
-            return (domainBit & md) != 0;
+            return (md & (1 << domainBit)) != 0;
         }
 
         void read(Record const &rec)
@@ -88,13 +85,10 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     Instance()
     {
-        filterByContext[ResourceFilter].domainBit = LogEntry::Resource;
-        filterByContext[MapFilter].domainBit      = LogEntry::Map;
-        filterByContext[ScriptFilter].domainBit   = LogEntry::Script;
-        filterByContext[GLFilter].domainBit       = LogEntry::GL;
-        filterByContext[AudioFilter].domainBit    = LogEntry::Audio;
-        filterByContext[InputFilter].domainBit    = LogEntry::Input;
-        filterByContext[NetworkFilter].domainBit  = LogEntry::Network;
+        for(int i = 0; i < NUM_FILTERS; ++i)
+        {
+            filterByContext[i].domainBit = LogEntry::FirstDomainBit + i;
+        }
     }
 
     bool isLogEntryAllowed(duint32 md) const
@@ -116,7 +110,7 @@ DENG2_PIMPL_NOREF(LogFilter)
 
     LogEntry::Level minLevel(duint32 md) const
     {
-        int lev = LogEntry::MAX_LOG_LEVELS;
+        int lev = LogEntry::HighestLogLevel + 1;
         for(uint i = 0; i < NUM_FILTERS; ++i)
         {
             Filter const &ftr = filterByContext[i];
@@ -203,6 +197,7 @@ LogFilter::LogFilter() : d(new Instance)
 
 bool LogFilter::isLogEntryAllowed(duint32 metadata) const
 {
+    DENG2_ASSERT(metadata & LogEntry::DomainMask); // must have a domain
     return d->isLogEntryAllowed(metadata);
 }
 
@@ -234,6 +229,15 @@ void LogFilter::read(Record const &rec)
 void LogFilter::write(Record &rec) const
 {
     d->write(rec);
+}
+
+String LogFilter::domainRecordName(LogEntry::Context domain)
+{
+    for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
+    {
+        if(domain & (1 << i)) return subRecName[i - LogEntry::FirstDomainBit];
+    }
+    return "";
 }
 
 } // namespace de

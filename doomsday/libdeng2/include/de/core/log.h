@@ -258,30 +258,41 @@ class DENG2_PUBLIC LogEntry : public Lockable, public ISerializable
 {
 public:
     /**
-     * Entry domain (bits) and target audience. If not set, the entry is generic and intended for
-     * the end-user/player.
+     * Entry domain (bits) and target audience. If not set, the entry is generic and
+     * intended for the end-user/player.
      */
     enum Context
     {
         // Domains
-        Generic  = 0,           ///< Global domain.
-        Resource = 0x10000,     /**< Resource or resource pack domain (files, etc.).
-                                     "Resource" is here meant in a wider sense of all the
-                                     external data that Doomsday utilizes. */
-        Map      = 0x20000,     /**< Map domain: information pertaining to the map and its
-                                     elements, playsim, etc. */
-        Script   = 0x40000,     ///< Script domain
-        GL       = 0x80000,     ///< Graphics/renderer domain (shaders, etc.)
-        Audio    = 0x100000,    ///< Audio domain
-        Input    = 0x200000,    ///< Input domain: events, devices, etc.
-        Network  = 0x400000,    ///< Network domain: connections, packets, etc.
+        FirstDomainBit  = 16,
+        GenericBit      = FirstDomainBit,
+        ResourceBit,
+        MapBit,
+        ScriptBit,
+        GLBit,
+        AudioBit,
+        InputBit,
+        NetworkBit,
+        LastDomainBit   = NetworkBit,
+
+        Generic  = (1 << GenericBit),   ///< Global domain (bit automatically set if no other domains).
+        Resource = (1 << ResourceBit),  /**< Resource or resource pack domain (files, etc.).
+                                             "Resource" is here meant in a wider sense of all the
+                                             external data that Doomsday utilizes. */
+        Map      = (1 << MapBit),       /**< Map domain: information pertaining to the map and its
+                                             elements, playsim, etc. */
+        Script   = (1 << ScriptBit),    ///< Script domain
+        GL       = (1 << GLBit),        ///< Graphics/renderer domain (shaders, etc.)
+        Audio    = (1 << AudioBit),     ///< Audio domain
+        Input    = (1 << InputBit),     ///< Input domain: events, devices, etc.
+        Network  = (1 << NetworkBit),   ///< Network domain: connections, packets, etc.
 
         // User groups
-        Dev      = 0x8000000,   /**< Native code developer (i.e., the programmer); can be
-                                     combined with other flags to mark the entry for devs.
-                                     If bit is not set, the entry is for the end-user. */
+        Dev      = 0x8000000,           /**< Native code developer (i.e., the programmer); can be
+                                             combined with other flags to mark the entry for devs.
+                                             If bit is not set, the entry is for the end-user. */
 
-        AllDomains  = 0x7f0000,
+        AllDomains  = 0xff0000,
         DomainMask  = AllDomains,
         ContextMask = 0xfff0000
     };
@@ -310,7 +321,7 @@ public:
             val |= Dev;
             text = text.remove(text.size() - 3);
         }
-        for(int i = 16; i < 32; ++i)
+        for(int i = FirstDomainBit; i <= LastDomainBit; ++i)
         {
             if(!contextToText(LogEntry::Context(1 << i)).compareWithoutCase(text))
                 return LogEntry::Context((1 << i) | val);
@@ -361,10 +372,9 @@ public:
          */
         Critical = 7,
 
-        MAX_LOG_LEVELS,
-
-        LOWEST_LOG_LEVEL = XVerbose,
-        LevelMask = 0x7
+        LowestLogLevel  = XVerbose,
+        HighestLogLevel = Critical,
+        LevelMask       = 0x7
     };   
 
     static String levelToText(duint32 level)
@@ -384,7 +394,7 @@ public:
 
     static Level textToLevel(String text)
     {
-        for(int i = XVerbose; i < MAX_LOG_LEVELS; ++i)
+        for(int i = XVerbose; i <= HighestLogLevel; ++i)
         {
             if(!levelToText(Level(i)).compareWithoutCase(text))
                 return Level(i);
@@ -539,6 +549,8 @@ public:
 
     /// Returns the timestamp of the entry.
     Time when() const { return _when; }
+
+    inline duint32 metadata() const { return _metadata; }
 
     inline duint32 audience() const { return _metadata & ContextMask; }
 

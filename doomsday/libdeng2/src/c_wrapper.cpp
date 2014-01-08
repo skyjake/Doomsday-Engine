@@ -145,11 +145,17 @@ static void logFragmentPrinter(duint32 metadata, char const *fragment)
 
 void LogBuffer_Msg(char const *text)
 {
-    logFragmentPrinter(de::LogEntry::Message, text);
+    logFragmentPrinter(de::LogEntry::Generic | de::LogEntry::Message, text);
 }
 
 void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
 {
+    // Automatically apply the generic domain if not specified.
+    if(!(metadata & de::LogEntry::DomainMask))
+    {
+        metadata |= de::LogEntry::Generic;
+    }
+
     // If this level is not enabled, just ignore.
     if(!de::LogBuffer::appBuffer().isEnabled(metadata)) return;
 
