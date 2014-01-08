@@ -375,7 +375,7 @@ DENG2_PIMPL(Id1Map)
             }
         }
 
-        LOG_MAP_NOTE(String("Analyses completed in %1 seconds").arg(begunAt.since(), 0, 'g', 2));
+        LOG_MAP_NOTE("Analyses completed in %.2f seconds") << begunAt.since();
     }
 
     void transferVertexes()
@@ -728,7 +728,7 @@ void Id1Map::transfer(uri_s const &uri)
         d->transferThings();
     MPE_End();
 
-    LOG_MAP_NOTE(String("Transfer completed in %1 seconds").arg(begunAt.since(), 0, 'g', 2));
+    LOGDEV_MAP_VERBOSE("Transfer completed in %.2f seconds") << begunAt.since();
 }
 
 static uint8_t *readPtr;

@@ -208,7 +208,7 @@ struct FS1::Scheme::Instance
         }
         catch(de::Uri::ResolveError const &er)
         {
-            LOG_RES_VERBOSE(er.asText());
+            LOGDEV_RES_VERBOSE(er.asText());
         }
     }
 
@@ -354,7 +354,7 @@ void FS1::Scheme::rebuild()
     LOG_AS("Scheme::rebuild");
     LOGDEV_RES_MSG("Rebuilding '%s'...") << d->name;
 
-    // uint startTime = Timer_RealMilliseconds();
+    Time begunAt;
 
     // (Re)populate the directory and add found files.
     clear();
@@ -365,7 +365,7 @@ void FS1::Scheme::rebuild()
 
     d->nameHashIsDirty = false;
 
-    // LOG_INFO("Completed in %.2f seconds.") << (Timer_RealMilliseconds() - startTime) / 1000.0f;
+    LOGDEV_RES_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 
 /*#if _DEBUG
     PathTree::debugPrint(d->directory);

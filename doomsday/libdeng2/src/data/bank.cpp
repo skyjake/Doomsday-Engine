@@ -144,7 +144,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
             if(data.get())
             {
-                LOG_VERBOSE("Item \"%s\" data cleared from memory (%i bytes)")
+                LOG_RES_VERBOSE("Item \"%s\" data cleared from memory (%i bytes)")
                         << path('.') << data->sizeInMemory();
                 data->aboutToUnload();
                 data.reset();
@@ -193,7 +193,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             // us. This may take an unspecified amount of time.
             QScopedPointer<IData> loaded(bank->loadFromSource(*source));
 
-            LOG_TRACE("Loaded \"%s\" from source in %.2f seconds") << path('.') << startedAt.since();
+            LOG_RES_XVERBOSE("Loaded \"%s\" from source in %.2f seconds") << path('.') << startedAt.since();
 
             if(loaded.data())
             {
@@ -225,14 +225,14 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
                     QScopedPointer<IData> blank(bank->newData());
                     reader >> *blank->asSerializable();
                     setData(blank.take());
-                    LOG_TRACE("Deserialized \"%s\" in %.2f seconds") << path('.') << startedAt.since();
+                    LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds") << path('.') << startedAt.since();
                     return; // Done!
                 }
                 // We cannot use this.
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Failed to deserialize \"%s\":\n") << path('.') << er.asText();
+                LOG_RES_WARNING("Failed to deserialize \"%s\":\n") << path('.') << er.asText();
             }
 
             // Fallback option.
@@ -304,7 +304,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
                 // Externally we use dotted paths.
                 Path const itemPath = path('.');
 
-                LOG_TRACE("Item \"%s\" moved to %s cache")
+                LOGDEV_RES_XVERBOSE("Item \"%s\" moved to %s cache")
                         << itemPath << Cache::formatAsText(toCache.format());
 
                 bank->d->notify(Notification(itemPath, toCache));
@@ -462,7 +462,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Failed to load \"%s\" from source:\n") << _path << er.asText();
+                LOG_RES_WARNING("Failed to load \"%s\" from source:\n") << _path << er.asText();
             }
             // Ensure a blocking load completes.
             item().post();
@@ -474,12 +474,12 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
             {
                 DENG2_ASSERT(_bank.d->serialCache != 0);
 
-                LOG_DEBUG("Serializing \"%s\"") << _path;
+                LOG_RES_XVERBOSE("Serializing \"%s\"") << _path;
                 item().changeCache(*_bank.d->serialCache);
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Failed to serialize \"%s\" to hot storage:\n")
+                LOG_RES_WARNING("Failed to serialize \"%s\" to hot storage:\n")
                         << _path << er.asText();
             }
         }
@@ -488,12 +488,12 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         {
             try
             {
-                LOG_DEBUG("Unloading \"%s\"") << _path;
+                LOGDEV_RES_XVERBOSE("Unloading \"%s\"") << _path;
                 item().changeCache(_bank.d->sourceCache);
             }
             catch(Error const &er)
             {
-                LOG_WARNING("Error when unloading \"%s\":\n")
+                LOG_RES_WARNING("Error when unloading \"%s\":\n")
                         << _path << er.asText();
             }
         }
@@ -637,7 +637,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
                 if(item.isValidSerialTime(hotTime))
                 {
-                    LOG_VERBOSE("Found valid serialized copy of \"%s\"") << item.path('.');
+                    LOGDEV_RES_MSG("Found valid serialized copy of \"%s\"") << item.path('.');
 
                     item.serial = array;
                     best = serialCache;
@@ -854,7 +854,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     item.reset();
     item.unlock();
 
-    LOG_TRACE("Loading \"%s\"...") << path;
+    LOG_RES_XVERBOSE("Loading \"%s\"...") << path;
 
     Time requestedAt;
     d->load(path, Immediately);
@@ -863,11 +863,11 @@ Bank::IData &Bank::data(DotPath const &path) const
     TimeDelta const waitTime = requestedAt.since();
     if(waitTime > 0.0)
     {
-        LOG_DEBUG("\"%s\" loaded (waited %.3f seconds)") << path << waitTime;
+        LOG_RES_VERBOSE("\"%s\" loaded (waited %.3f seconds)") << path << waitTime;
     }
     else
     {
-        LOG_DEBUG("\"%s\" loaded") << path;
+        LOG_RES_VERBOSE("\"%s\" loaded") << path;
     }
 
     item.lock();

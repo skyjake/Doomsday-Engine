@@ -81,7 +81,7 @@ void Sys_Init(void)
 {
     uint startTime;
 
-    LOG_NOTE("Setting up platform state...");
+    LOG_MSG("Setting up platform state...");
 
     startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
 
@@ -107,7 +107,7 @@ void Sys_Init(void)
     LOG_NET_VERBOSE("Initializing Network subsystem...");
     N_Init();
 
-    LOG_XVERBOSE("Sys_Init completed in %.2f seconds") << (Timer_RealMilliseconds() - startTime) / 1000.0f;
+    LOGDEV_VERBOSE("Sys_Init completed in %.2f seconds") << (Timer_RealMilliseconds() - startTime) / 1000.0f;
 }
 
 boolean Sys_IsShuttingDown(void)

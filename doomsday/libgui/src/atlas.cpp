@@ -344,13 +344,13 @@ void Atlas::commit() const
     if(d->mustCommitFull())
     {
         DENG2_ASSERT(d->backing.size() == d->totalSize);
-        LOG_GL_XVERBOSE("Full commit ") << d->backing.size().asText();
+        LOGDEV_GL_XVERBOSE("Full commit ") << d->backing.size().asText();
 
         commitFull(d->backing);
     }
     else
     {
-        LOG_GL_XVERBOSE("Partial commit ") << d->changedArea.asText();
+        LOGDEV_GL_XVERBOSE("Partial commit ") << d->changedArea.asText();
 
         // An extra copy is done to crop to the changed area.
         commit(d->backing.subImage(d->changedArea), d->changedArea.topLeft);

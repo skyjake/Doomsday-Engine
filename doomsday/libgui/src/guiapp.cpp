@@ -92,8 +92,6 @@ Loop &GuiApp::loop()
 
 void GuiApp::loopIteration()
 {
-    //LOG_DEBUG("GuiApp loopIteration @ ") << Time().asText();
-
     // Update the clock time. de::App listens to this clock and will inform
     // subsystems in the order they've been added.
     Clock::appClock().setTime(Time::currentHighPerformanceTime());

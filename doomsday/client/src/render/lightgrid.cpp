@@ -800,7 +800,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         self.markAllForUpdate();
 
         // How much time did we spend?
-        LOG_GL_MSG(String("Completed in %1 seconds").arg(begunAt.since(), 0, 'g', 2));
+        LOG_GL_MSG("Completed in %.2f seconds") << begunAt.since();
     }
 
     /**

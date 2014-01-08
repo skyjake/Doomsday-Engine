@@ -679,7 +679,7 @@ DENG2_PIMPL(World)
         Time begunPrecacheAt;
         App_ResourceSystem().cacheForCurrentMap();
         App_ResourceSystem().processCacheQueue();
-        LOG_INFO(String("Precaching completed in %1 seconds.").arg(begunPrecacheAt.since(), 0, 'g', 2));
+        LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
 
         ClientApp::renderSystem().clearDrawLists();
         R_InitRendPolyPools();

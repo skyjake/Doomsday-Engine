@@ -916,7 +916,7 @@ static void readAllDefinitions()
      */
     Def_ReadLumpDefs();
 
-    LOG_RES_VERBOSE(String("readAllDefinitions: Completed in %1 seconds").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("readAllDefinitions: Completed in %.2f seconds") << begunAt.since();
 }
 
 static AnimGroup const *findAnimGroupForTexture(TextureManifest &textureManifest)

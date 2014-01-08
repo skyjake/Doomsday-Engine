@@ -224,12 +224,12 @@ void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
         LOG_GL_WARNING("XFree86-VidModeExtension not available.");
         return;
     }
-    LOG_DEV_XVERBOSE("event# %i error# %i") << event << error;
+    LOGDEV_GL_XVERBOSE("event# %i error# %i") << event << error;
 
     // Ramp size.
     int rampSize = 0;
     XF86VidModeGetGammaRampSize(dpy, screen, &rampSize);
-    LOG_GL_VERBOSE("Gamma ramp size: %i") << rampSize;
+    LOGDEV_GL_VERBOSE("Gamma ramp size: %i") << rampSize;
     if(!rampSize) return;
 
     ushort* xRamp = new ushort[3 * rampSize];

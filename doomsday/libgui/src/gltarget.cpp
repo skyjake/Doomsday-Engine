@@ -161,15 +161,15 @@ DENG2_OBSERVES(Asset, Deletion)
         glGenFramebuffers(1, &fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-        LOG_GL_VERBOSE("Creating FBO %i") << fbo;
+        LOG_GL_XVERBOSE("Creating FBO %i") << fbo;
     }
 
     void attachTexture(GLTexture &tex, GLenum attachment, int level = 0)
     {
         DENG2_ASSERT(tex.isReady());
 
-        LOG_GL_XVERBOSE("glTex %i (level %i) => FBO %i attachment %i (0x%x)")
-                << tex.glName() << level << fbo << attachmentToId(attachment) << attachment;
+        LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i) => attachment %i")
+                << fbo << tex.glName() << level << attachmentToId(attachment);
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
         LIBGUI_ASSERT_GL_OK();

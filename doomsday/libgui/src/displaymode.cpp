@@ -328,7 +328,8 @@ int DisplayMode_Change(DisplayMode const *mode, int shouldCapture)
 {
     if(Mode::fromCurrent() == *mode && !shouldCapture == !captured)
     {
-        LOG_GL_XVERBOSE("DisplayMode: Requested mode is the same as current, ignoring request");
+        LOG_AS("DisplayMode");
+        LOGDEV_GL_XVERBOSE("Requested mode is the same as current, ignoring request");
 
         // Already in this mode.
         return false;

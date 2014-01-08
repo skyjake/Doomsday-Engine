@@ -1220,7 +1220,7 @@ void Map::initBias()
         addBiasSource(BiasSource::fromDef(*def));
     }
 
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
 void Map::unlinkInMaterialLists(Surface *surface)
@@ -1454,7 +1454,7 @@ void Map::initNodePiles()
     }
 
     // How much time did we spend?
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
 Blockmap const &Map::mobjBlockmap() const
@@ -2168,7 +2168,7 @@ void Map::initSkyFix()
         }
     }
 
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_MAP_VERBOSE("Completed in %.2f seconds.") << begunAt.since();
 }
 
 coord_t Map::skyFix(bool ceiling) const

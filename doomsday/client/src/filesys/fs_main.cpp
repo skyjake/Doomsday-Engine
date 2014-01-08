@@ -558,7 +558,7 @@ de::File1& FS1::find(de::Uri const& search)
         catch(de::Uri::ResolveError const& er)
         {
             // Log but otherwise ignore unresolved paths.
-            LOG_RES_VERBOSE(er.asText());
+            LOGDEV_RES_VERBOSE(er.asText());
         }
     }
 
@@ -606,7 +606,7 @@ String FS1::findPath(de::Uri const& search, int flags, ResourceClass& rclass)
         catch(de::Uri::ResolveError const& er)
         {
             // Log but otherwise ignore unresolved paths.
-            LOG_DEBUG(er.asText());
+            LOGDEV_RES_VERBOSE(er.asText());
         }
     }
 
@@ -994,7 +994,7 @@ bool FS1::accessFile(de::Uri const& search)
     catch(de::Uri::ResolveError const& er)
     {
         // Log but otherwise ignore unresolved paths.
-        LOG_RES_VERBOSE(er.asText());
+        LOGDEV_RES_VERBOSE(er.asText());
     }
     return false;
 }

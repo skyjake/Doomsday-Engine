@@ -452,7 +452,7 @@ struct Zip::Instance
                         }
                         catch(de::Uri::ResolveError const& er)
                         {
-                            LOG_WARNING(er.asText());
+                            LOG_RES_WARNING(er.asText());
                         }
                     }
                 }

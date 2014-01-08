@@ -217,8 +217,8 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
     : QGLWidget(parent, shared), d(new Instance(this, parent))
 {
     LOG_AS("Canvas");
-    LOG_GL_VERBOSE("swap interval: ") << format().swapInterval();
-    LOG_GL_VERBOSE("multisample: %b") << (GLFramebuffer::defaultMultisampling() > 1);
+    LOGDEV_GL_VERBOSE("swap interval: ") << format().swapInterval();
+    LOGDEV_GL_VERBOSE("multisample: %b") << (GLFramebuffer::defaultMultisampling() > 1);
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
@@ -325,7 +325,7 @@ void Canvas::swapBuffers(gl::SwapBufferMode swapMode)
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
-    LOG_GL_NOTE("Notifying GL init (during paint)");
+    LOGDEV_GL_NOTE("Notifying GL init (during paint)");
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
     getAllOpenGLEntryPoints();
@@ -369,7 +369,7 @@ void Canvas::showEvent(QShowEvent* ev)
     // actually appears on screen.
     if(isVisible() && !d->readyNotified)
     {
-        LOG_GL_XVERBOSE("Received first show event, scheduling GL ready notification");
+        LOGDEV_GL_XVERBOSE("Received first show event, scheduling GL ready notification");
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
         makeCurrent();
@@ -406,7 +406,7 @@ void Canvas::notifyReady()
     else
         LOG_GL_WARNING("OpenGL 2.0 is not supported!");
 
-    LOG_GL_XVERBOSE("Notifying GL ready");
+    LOGDEV_GL_XVERBOSE("Notifying GL ready");
     DENG2_FOR_AUDIENCE(GLReady, i) i->canvasGLReady(*this);
 
     // This Canvas instance might have been destroyed now.

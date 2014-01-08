@@ -172,7 +172,7 @@ void CanvasWindow::recreateCanvas()
     d->recreated->setGeometry(d->canvas->geometry());
     d->recreated->show();
 
-    LOG_DEBUG("Canvas recreated, old one still exists.");
+    LOGDEV_GL_MSG("Canvas recreated, old one still exists");
 }
 
 Canvas &CanvasWindow::canvas() const

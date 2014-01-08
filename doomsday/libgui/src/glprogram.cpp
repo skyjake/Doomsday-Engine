@@ -368,7 +368,7 @@ int GLProgram::glUniformLocation(char const *uniformName) const
     if(loc < 0)
     {
         LOG_AS("GLProgram");
-        LOG_GL_VERBOSE("Could not find uniform '%s'") << uniformName;
+        LOGDEV_GL_WARNING("Could not find uniform '%s'") << uniformName;
     }
     return loc;
 }
