@@ -260,7 +260,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         {
             if(!flags.testFlag(Styled))
             {
-                char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
+                char const *levelNames[] = {
                     "", // not used
                     "(vv)",
                     "(v)",
@@ -275,7 +275,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
             }
             else
             {
-                char const *levelNames[LogEntry::MAX_LOG_LEVELS] = {
+                char const *levelNames[] = {
                     "", // not used
                     "XVerbose",
                     "Verbose",
@@ -571,8 +571,14 @@ void Log::disposeThreadLog()
 LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
     : _metadata(metadata)
 {
+    // Automatically set the Generic domain.
+    if(!(_metadata & LogEntry::DomainMask))
+    {
+        _metadata |= LogEntry::Generic;
+    }
+
     _disabled = !LogBuffer::appBufferExists() ||
-                !LogBuffer::appBuffer().isEnabled(metadata);
+                !LogBuffer::appBuffer().isEnabled(_metadata);
 
     if(!_disabled)
     {

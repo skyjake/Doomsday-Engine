@@ -36,13 +36,13 @@ int main(int argc, char **argv)
             bool devMode = j > 0;
             app.logFilter().setAllowDev(devMode);
 
-            for(int i = LogEntry::LOWEST_LOG_LEVEL; i < LogEntry::MAX_LOG_LEVELS; ++i)
+            for(int i = LogEntry::LowestLogLevel; i <= LogEntry::HighestLogLevel; ++i)
             {
                 LogEntry::Level level = LogEntry::Level(i);
                 app.logFilter().setMinLevel(level);
                 LOG_AT_LEVEL(level, "Enabled level %s with dev:%b") << LogEntry::levelToText(level) << devMode;
 
-                for(int k = LogEntry::LOWEST_LOG_LEVEL; k < LogEntry::MAX_LOG_LEVELS; ++k)
+                for(int k = LogEntry::LowestLogLevel; k <= LogEntry::HighestLogLevel; ++k)
                 {
                     for(int d = 0; d < 2; ++d)
                     {
