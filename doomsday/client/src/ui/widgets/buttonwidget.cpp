@@ -29,7 +29,6 @@ DENG2_OBSERVES(Action, Triggered)
 {
     State state;
     DotPath hoverTextColor;
-    DotPath textColor;
     QScopedPointer<Action> action;
     Animation scale;
     Animation frameOpacity;
@@ -62,20 +61,15 @@ DENG2_OBSERVES(Action, Triggered)
             if(!hoverTextColor.isEmpty())
             {
                 // Restore old color.
-                self.setTextColor(textColor);
+                self.setTextModulationColorf(Vector4f(1, 1, 1, 1));
             }
             break;
 
         case Hover:
-            //scale.setValue(1.1f, .15f);
-            //scale.setStyle(Animation::EaseOut);
             frameOpacity.setValue(.4f, .15f);
             if(!hoverTextColor.isEmpty())
             {
-                // Remember the old color.
-                textColor = self.textColorId();
-
-                self.setTextColor(hoverTextColor);
+                self.setTextModulationColorf(style().colors().colorf(hoverTextColor));
             }
             break;
 
@@ -152,7 +146,7 @@ DENG2_OBSERVES(Action, Triggered)
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
 {}
 
-void ButtonWidget::setHoverTextColor(const DotPath &hoverTextId)
+void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId)
 {
     d->hoverTextColor = hoverTextId;
 }

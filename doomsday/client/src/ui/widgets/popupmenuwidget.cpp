@@ -240,7 +240,7 @@ void PopupMenuWidget::panelClosing()
 
     if(d->hover)
     {
-        d->hover->setTextColor("text");
+        d->hover->setTextModulationColorf(Vector4f(1, 1, 1, 1));
         d->hover->setImageColor(style().colors().colorf("text"));
         d->hover = 0;
         requestGeometry();

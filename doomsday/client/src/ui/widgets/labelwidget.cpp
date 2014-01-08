@@ -43,6 +43,7 @@ public Font::RichFormat::IStyle
     Vector2f overrideImageSize;
     float imageScale;
     Vector4f imageColor;
+    Vector4f textGLColor;
     int maxTextWidth;
 
     ConstantRule *width;
@@ -78,6 +79,7 @@ public Font::RichFormat::IStyle
         , imageFit    (OriginalAspectRatio | FitToSize)
         , imageScale  (1)
         , imageColor  (1, 1, 1, 1)
+        , textGLColor (1, 1, 1, 1)
         , maxTextWidth(0)
         , gapId       ("label.gap")
         , richStyle   (0)
@@ -525,6 +527,12 @@ void LabelWidget::setTextLineAlignment(Alignment const &textLineAlign)
     d->lineAlign = textLineAlign;
 }
 
+void LabelWidget::setTextModulationColorf(Vector4f const &colorf)
+{
+    d->textGLColor = colorf;
+    requestGeometry();
+}
+
 void LabelWidget::setImageAlignment(Alignment const &imageAlign)
 {
     d->imageAlign = imageAlign;
@@ -618,7 +626,7 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
         // Shadow + text.
         /*composer.makeVertices(verts, textPos.topLeft + Vector2i(0, 2),
                               lineAlign, Vector4f(0, 0, 0, 1));*/
-        d->glText.makeVertices(verts, layout.text, AlignCenter, d->lineAlign);
+        d->glText.makeVertices(verts, layout.text, AlignCenter, d->lineAlign, d->textGLColor);
     }
 }
 
