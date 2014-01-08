@@ -256,6 +256,33 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     
         output << _when.asText(Date::BuildNumberAndTimeWithoutHour) << " ";
 
+        if(!flags.testFlag(OmitDomain))
+        {
+            QChar dc = (_metadata & Resource? 'R' :
+                        _metadata & Map?      'M' :
+                        _metadata & Script?   'S' :
+                        _metadata & GL?       'G' :
+                        _metadata & Audio?    'A' :
+                        _metadata & Input?    'I' :
+                        _metadata & Network?  'N' : ' ');
+            if(_metadata & Dev)
+            {
+                if(dc != ' ')
+                    dc = dc.toLower();
+                else
+                    dc = '-'; // Generic developer message
+            }
+
+            if(!flags.testFlag(Styled))
+            {
+                output << dc;
+            }
+            else
+            {
+                output << _E(s)_E(C)_E(m) << dc << _E(.) << " ";
+            }
+        }
+
         if(!flags.testFlag(OmitLevel))
         {
             if(!flags.testFlag(Styled))
@@ -270,15 +297,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                     "(ERR)",
                     "(!!!)"
                 };
-                QChar dc = (_metadata & Resource? 'R' :
-                            _metadata & Map?      'M' :
-                            _metadata & Script?   'S' :
-                            _metadata & GL?       'G' :
-                            _metadata & Audio?    'A' :
-                            _metadata & Input?    'I' :
-                            _metadata & Network?  'N' : ' ');
-                if(_metadata & Dev) dc = dc.toLower();
-                output << dc << qSetPadChar(' ') << qSetFieldWidth(5)
+                output << qSetPadChar(' ') << qSetFieldWidth(5)
                        << levelNames[level()] << qSetFieldWidth(0) << " ";
             }
             else
@@ -294,9 +313,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
                     "FATAL!"
                 };
                 output << "\t"
-                    << (level() >= LogEntry::Warning?  TEXT_STYLE_MAJOR_SECTION :
-                        level() <= LogEntry::XVerbose? TEXT_STYLE_MINOR_SECTION :
-                                                       TEXT_STYLE_SECTION)
+                    << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_SECTION :
+                        level() <= LogEntry::Verbose? TEXT_STYLE_MINOR_SECTION :
+                                                      TEXT_STYLE_SECTION)
                     << levelNames[level()] << "\t";
             }
         }
@@ -308,9 +327,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
         if(flags.testFlag(Styled))
         {
             output << TEXT_MARK_INDENT
-                   << (level() >= LogEntry::Warning?  TEXT_STYLE_MAJOR_SECTION :
-                       level() <= LogEntry::XVerbose? TEXT_STYLE_MINOR_SECTION :
-                                                      TEXT_STYLE_SECTION);
+                   << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_SECTION :
+                       level() <= LogEntry::Verbose? TEXT_STYLE_MINOR_SECTION :
+                                                     TEXT_STYLE_SECTION);
         }
 
         // Process the section: shortening and possible abbreviation.
@@ -380,9 +399,9 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
     if(flags.testFlag(Styled))
     {
         output << TEXT_MARK_INDENT
-               << (level() >= LogEntry::Warning?  TEXT_STYLE_MAJOR_MESSAGE :
-                   level() <= LogEntry::XVerbose? TEXT_STYLE_MINOR_MESSAGE :
-                                                  TEXT_STYLE_MESSAGE);
+               << (level() >= LogEntry::Warning? TEXT_STYLE_MAJOR_MESSAGE :
+                   level() <= LogEntry::Verbose? TEXT_STYLE_MINOR_MESSAGE :
+                                                 TEXT_STYLE_MESSAGE);
     }
     
     // Message text with the arguments formatted.

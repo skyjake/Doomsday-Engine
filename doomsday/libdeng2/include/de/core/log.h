@@ -521,7 +521,10 @@ public:
         Remote = 0x20,
 
         /// Entry level is not included in the output.
-        OmitLevel = 0x40
+        OmitLevel = 0x40,
+
+        /// Entry domain is not included in the output.
+        OmitDomain = 0x80
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
