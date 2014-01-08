@@ -571,7 +571,7 @@ static int ReadBlendmode(blendmode_t *dest)
     }
     else
     {
-        LOG_WARNING("Unknown BlendMode '%s' in \"%s\" on line #%i, ignoring (blendmode not changed).")
+        LOG_RES_WARNING("Unknown BlendMode '%s' in \"%s\" on line #%i")
             << flag << (source ? source->fileName : "?") << (source ? source->lineNumber : 0);
     }
 
@@ -579,7 +579,7 @@ static int ReadBlendmode(blendmode_t *dest)
 }
 
 /**
- * @return              @c true, if successful.
+ * @return @c true, if successful.
  */
 static int ReadLabel(char* label)
 {
@@ -881,8 +881,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 idx = Def_GetMobjNum(otherMobjId);
                 if(idx < 0)
                 {
-                    VERBOSE( Con_Message("Warning: Unknown Mobj %s in %s on line #%i, will be ignored.",
-                                         otherMobjId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
+                    LOG_RES_WARNING("Ignoring unknown Mobj %s in %s on line #%i")
+                            << otherMobjId << (source? source->fileName : "?")
+                            << (source? source->lineNumber : 0);
 
                     // We'll read into a dummy definition.
                     memset(&dummyMo, 0, sizeof(dummyMo));
@@ -980,8 +981,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 idx = Def_GetStateNum(otherStateId);
                 if(idx < 0)
                 {
-                    VERBOSE( Con_Message("Warning: Unknown State %s in %s on line #%i, will be ignored.",
-                                         otherStateId, source ? source->fileName : "?", source ? source->lineNumber : 0) )
+                    LOG_RES_WARNING("Ignoring unknown State %s in %s on line #%i")
+                            << otherStateId << (source? source->fileName : "?")
+                            << (source? source->lineNumber : 0);
 
                     // We'll read into a dummy definition.
                     memset(&dummyState, 0, sizeof(dummyState));
@@ -1161,11 +1163,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 mat = Def_GetMaterial(Str_Text(otherMatPath));
                 if(!mat)
                 {
-                    VERBOSE(
-                        AutoStr* path = Uri_ToString(otherMat);
-                        Con_Message("Warning: Unknown Material %s in %s on line #%i, will be ignored.",
-                                    Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
-                        )
+                    LOG_RES_WARNING("Ignoring unknown Material %s in %s on line #%i")
+                            << Str_Text(Uri_ToString(otherMat))
+                            << (source? source->fileName : "?")
+                            << (source? source->lineNumber : 0);
 
                     // We'll read into a dummy definition.
                     idx = -1;

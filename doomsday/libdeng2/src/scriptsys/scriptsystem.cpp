@@ -184,7 +184,8 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
             }
             matching.sort(sortFilesByModifiedAt);
             found = matching.back();
-            LOG_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size()) << " candidates (latest modified).";
+            LOG_SCR_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size())
+                                      << " candidates (latest modified)";
         }
         else
         {

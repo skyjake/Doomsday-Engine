@@ -172,7 +172,7 @@ void BusyWidget::renderTransitionFrame()
     if(d->haveTransitionFrame() && d->frameDrawnAt.since() < TRANSITION_FRAME_VALID_DURATION)
     {
         // We already have a valid frame, no need to render again.
-        LOG_DEBUG("Skipping rendering of transition frame (got one already)");
+        LOG_GL_VERBOSE("Skipping rendering of transition frame (got one already)");
         return;
     }
 
@@ -187,7 +187,7 @@ void BusyWidget::renderTransitionFrame()
 
     Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
 
-    LOG_DEBUG("Rendering transition frame, size ") << grabRect.size().asText();
+    LOG_GL_VERBOSE("Rendering transition frame, size ") << grabRect.size().asText();
 
     /*
     if(BusyMode_IsTransitionAnimated())
@@ -225,7 +225,7 @@ void BusyWidget::releaseTransitionFrame()
 {
     if(d->haveTransitionFrame())
     {
-        LOG_DEBUG("Releasing transition frame");
+        LOG_GL_VERBOSE("Releasing transition frame");
         d->transitionFrame.glDeinit();
     }
 }

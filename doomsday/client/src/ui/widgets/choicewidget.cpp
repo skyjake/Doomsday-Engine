@@ -60,10 +60,13 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     };
 
     PopupMenuWidget *choices;
+    IndirectRule *maxWidth;
     Data::Pos selected; ///< One item is always selected.
 
     Instance(Public *i) : Base(i), selected(Data::InvalidPos)
     {
+        maxWidth = new IndirectRule;
+
         self.setFont("choice.selected");
 
         choices = new PopupMenuWidget;
@@ -83,6 +86,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     ~Instance()
     {
         choices->items().audienceForRemoval -= this;
+        releaseRef(maxWidth);
     }
 
     void updateStyle()
@@ -110,6 +114,21 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         }
     }
 
+    void updateMaximumWidth()
+    {
+        // We'll need to calculate this manually because the fonts keep changing due to
+        // selection and thus we can't just check the current layout.
+        Font const &font = self.font();
+        int widest = 0;
+        for(uint i = 0; i < items().size(); ++i)
+        {
+            EscapeParser esc;
+            esc.parse(items().at(i).label());
+            widest = de::max(widest, font.advanceWidth(esc.plainText()));
+        }
+        maxWidth->setSource(Const(widest) + self.margins().width());
+    }
+
     Data const &items() const
     {
         return choices->items();
@@ -122,6 +141,8 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void contextItemAdded(Data::Pos id, ui::Item const &)
     {
+        updateMaximumWidth();
+
         if(selected >= items().size())
         {
             // If the previous selection was invalid, make a valid one now.
@@ -146,6 +167,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         }
 
         updateButtonWithSelection();
+        updateMaximumWidth();
     }
 
     void contextItemOrderChanged()
@@ -230,6 +252,11 @@ Item const &ChoiceWidget::selectedItem() const
     return d->items().at(d->selected);
 }
 
+Rule const &ChoiceWidget::maximumWidth() const
+{
+    return *d->maxWidth;
+}
+
 void ChoiceWidget::openPopup()
 {
     d->updateItemHighlight();
@@ -239,4 +266,16 @@ void ChoiceWidget::openPopup()
 ui::Data &ChoiceWidget::items()
 {
     return d->choices->items();
+}
+
+void ChoiceWidget::setItems(Data const &items)
+{
+    popup().menu().setItems(items);
+    d->updateMaximumWidth();
+}
+
+void ChoiceWidget::useDefaultItems()
+{
+    popup().menu().useDefaultItems();
+    d->updateMaximumWidth();
 }

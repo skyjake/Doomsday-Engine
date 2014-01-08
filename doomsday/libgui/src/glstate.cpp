@@ -70,7 +70,8 @@ namespace internal
         GLTarget *_target;
         void assetDeleted(Asset &asset) {
             if(&asset == _target) {
-                qDebug() << "GLState: Current target destroyed, clearing pointer";
+                LOG_AS("GLState");
+                LOGDEV_GL_NOTE("Current target destroyed, clearing pointer");
                 _target = 0;
             }
         }

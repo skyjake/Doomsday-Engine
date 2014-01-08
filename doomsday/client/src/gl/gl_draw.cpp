@@ -315,7 +315,7 @@ DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
         filterColor = newColorClamped;
 
         LOG_AS("GL_SetFilterColor");
-        LOG_DEBUG("Now ") << filterColor.asText();
+        LOG_GL_XVERBOSE("%s") << filterColor.asText();
     }
 }
 

@@ -282,7 +282,7 @@ void R_FreeRendVertices(Vector3f *rvertices)
         }
     }
 
-    DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
+    LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
 void R_FreeRendColors(Vector4f *rcolors)
@@ -298,7 +298,7 @@ void R_FreeRendColors(Vector4f *rcolors)
         }
     }
 
-    DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
+    LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
 void R_FreeRendTexCoords(Vector2f *rtexcoords)
@@ -314,7 +314,7 @@ void R_FreeRendTexCoords(Vector2f *rtexcoords)
         }
     }
 
-    DEBUG_Message(("R_FreeRendPoly: Dangling poly ptr!\n"));
+    LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
 void R_DivVerts(Vector3f *dst, Vector3f const *src,

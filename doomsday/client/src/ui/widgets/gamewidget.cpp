@@ -93,7 +93,7 @@ DENG2_PIMPL(GameWidget)
     void updateSize()
     {
         LOG_AS("GameWidget");
-        LOG_TRACE("View resized to ") << self.rule().recti().size().asText();
+        LOG_GL_XVERBOSE("View resized to ") << self.rule().recti().size().asText();
 
         // Update viewports.
         R_SetViewGrid(0, 0);

@@ -208,7 +208,7 @@ void Z_Shutdown(void)
         M_Free(vol);
     }
 
-    LogBuffer_Printf(DE2_LOG_INFO,
+    LogBuffer_Printf(DE2_LOG_NOTE,
             "Z_Shutdown: Used %i volumes, total %u bytes.\n", numVolumes, totalMemory);
 
     Sys_DestroyMutex(zoneMutex);
@@ -677,7 +677,7 @@ void Z_FreeTags(int lowTag, int highTag)
     memblock_t *block, *next;
 
     LogBuffer_Printf(DE2_LOG_DEBUG,
-            "MemoryZone: Free'ing all blocks in tag range:[%i, %i)\n",
+            "MemoryZone: Freeing all blocks in tag range:[%i, %i)\n",
             lowTag, highTag+1);
 
     for(volume = volumeRoot; volume; volume = volume->next)

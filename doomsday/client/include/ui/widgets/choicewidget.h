@@ -60,12 +60,32 @@ public:
 
     ui::Data &items();
 
+    /**
+     * Sets the data model of the choice widget to some existing one. The data must
+     * remain in existence until the ChoiceWidget is deleted.
+     *
+     * @param items  Ownership not taken.
+     */
+    void setItems(ui::Data const &items);
+
+    void useDefaultItems();
+
     PopupMenuWidget &popup();
 
     void setSelected(ui::Data::Pos pos);
 
     ui::Data::Pos selected() const;
     ui::Item const &selectedItem() const;
+
+    /**
+     * Returns a rule that determines what is the maximum width of the widget. This is
+     * the length of the longest item plus margins.
+     *
+     * A choice widget keeps changing its size depending on the selected item. Also, only
+     * the selected item uses the "choice.selected" font, so the maximum width depends on
+     * what is the widest item using that font.
+     */
+    de::Rule const &maximumWidth() const;
 
 public slots:
     void openPopup();

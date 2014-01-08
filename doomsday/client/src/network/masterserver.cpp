@@ -141,12 +141,12 @@ void MasterWorker::nextJob()
         ddstring_t* msg = Str_NewStd();
         Sv_InfoToString((serverinfo_t*)job.data, msg);
 
-        LOG_DEBUG("POST request ") << req.url().toString();
+        LOG_NET_XVERBOSE("POST request ") << req.url().toString();
         foreach(const QByteArray& hdr, req.rawHeaderList())
         {
-            LOG_DEBUG("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+            LOG_NET_XVERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
         }
-        LOG_DEBUG("Request contents:\n%s") << Str_Text(msg);
+        LOG_NET_XVERBOSE("Request contents:\n%s") << Str_Text(msg);
 
         d->network->post(req, QString(Str_Text(msg)).toUtf8());
         Str_Delete(msg);
@@ -154,10 +154,10 @@ void MasterWorker::nextJob()
     else
 #endif
     {
-        LOG_DEBUG("GET request ") << req.url().toString();
+        LOG_NET_XVERBOSE("GET request ") << req.url().toString();
         foreach(const QByteArray& hdr, req.rawHeaderList())
         {
-            LOG_DEBUG("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+            LOG_NET_XVERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
         }
 
         d->network->get(req);
@@ -176,7 +176,7 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
 
     if(reply->error() == QNetworkReply::NoError)
     {
-        LOG_VERBOSE("Got reply.");
+        LOG_NET_XVERBOSE("Got reply");
 
         if(d->currentAction == REQUEST_SERVERS)
         {
@@ -185,7 +185,7 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
     }
     else
     {
-        LOG_WARNING(reply->errorString());
+        LOG_NET_WARNING(reply->errorString());
         /// @todo Log the error.
     }
 
@@ -242,7 +242,7 @@ bool MasterWorker::parseResponse(const QByteArray& response)
         }
     }
 
-    LOG_MSG("Received %i servers.") << serverCount();
+    LOG_NET_MSG("Received %i servers") << serverCount();
 
     Str_Free(&line);
     Str_Free(&msg);
@@ -271,14 +271,16 @@ void N_MasterAnnounceServer(boolean isOpen)
     // Must be a server.
     if(isClient) return;
 
+    LOG_AS("N_MasterAnnounceServer");
+
     if(isOpen && !strlen(netPassword))
     {
-        Con_Message("Cannot announce server as public: no shell password set!\n"
-                    "You must set one with the 'server-password' cvar.");
+        LOG_NET_WARNING("Cannot announce server as public: no shell password set! "
+                        "You must set one with the 'server-password' cvar.");
         return;
     }
 
-    DEBUG_Message(("N_MasterAnnounceServer: Announcing as open=%i.\n", isOpen));
+    LOG_NET_MSG("Announcing server (open:%b)") << isOpen;
 
     // This will be freed by the worker after the request has been made.
     serverinfo_t *info = (serverinfo_t*) M_Calloc(sizeof(*info));

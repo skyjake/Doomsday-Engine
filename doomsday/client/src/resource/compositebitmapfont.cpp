@@ -227,7 +227,7 @@ CompositeBitmapFont *CompositeBitmapFont::fromDef(FontManifest &manifest,
         }
         catch(de::Uri::ResolveError const &er)
         {
-            LOG_WARNING(er.asText());
+            LOG_RES_WARNING(er.asText());
         }
     }
 
@@ -264,7 +264,7 @@ void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t const &newDef)
         }
         catch(de::Uri::ResolveError const& er)
         {
-            LOG_WARNING(er.asText());
+            LOG_RES_WARNING(er.asText());
         }
     }
 }

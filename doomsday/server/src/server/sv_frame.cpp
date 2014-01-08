@@ -515,10 +515,8 @@ void Sv_WriteSectorDelta(const void* deltaPtr)
     }
     if(df & SDF_CEILING_HEIGHT)
     {
-#ifdef _DEBUG
-        VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
-                    delta->delta.id, d->planes[PLN_CEILING].height) );
-#endif
+        LOGDEV_NET_XVERBOSE_DEBUGONLY("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f",
+                                     delta->delta.id << d->planes[PLN_CEILING].height);
 
         Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_CEILING].height) >> 16);
     }

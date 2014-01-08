@@ -515,7 +515,7 @@ void Sfx_CacheHit(int id)
 static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
 {
     LOG_AS("Sfx_Cache");
-    LOG_VERBOSE("Caching sample '%s' (#%i)...") << info->id << id;
+    LOG_AUDIO_VERBOSE("Caching sample '%s' (#%i)...") << info->id << id;
 
     int bytesPer = 0, rate = 0, numSamples = 0;
 
@@ -577,7 +577,7 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
         // Try loading from the lump.
         if(info->lumpNum < 0)
         {
-            LOG_WARNING("Failed to locate lump resource '%s' for sound '%s'.")
+            LOG_AUDIO_WARNING("Failed to locate lump resource '%s' for sound '%s'")
                 << info->lumpName << info->id;
             return 0;
         }
@@ -603,7 +603,7 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
             if(!data)
             {
                 // Abort...
-                LOG_WARNING("Unknown WAV format in lump '%s', aborting.") << info->lumpName;
+                LOG_AUDIO_WARNING("Unknown WAV format in lump '%s'") << info->lumpName;
                 return 0;
             }
 
@@ -650,7 +650,7 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
         }
     }
 
-    LOG_WARNING("Unknown lump '%s' sound format, aborting.") << info->lumpName;
+    LOG_AUDIO_WARNING("Unknown lump '%s' sound format") << info->lumpName;
     return 0;
 }
 
@@ -674,7 +674,7 @@ sfxsample_t *Sfx_Cache(int id)
         return cacheSample(id, info);
     }
 
-    LOG_WARNING("Missing sfxinfo_t for id:%i, ignoring.") << id;
+    LOG_AUDIO_WARNING("Ignoring id:%i (missing sfxinfo_t)") << id;
     return 0;
 }
 

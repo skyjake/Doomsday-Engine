@@ -136,7 +136,7 @@ void LocalServer::start(duint16 port, String const &gameMode, QStringList additi
 
     foreach(String opt, additionalOptions) cmd.append(opt);
 
-    LOG_INFO("Starting local server with port %i using game mode '%s'")
+    LOG_NET_NOTE("Starting local server with port %i using game mode '%s'")
             << port << gameMode;
 
     cmd.execute();

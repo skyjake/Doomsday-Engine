@@ -40,7 +40,7 @@ typedef QMap<MapLumpType, lumpnum_t> MapDataLumps;
 static lumpnum_t locateMapMarkerLumpForUri(Uri const &uri)
 {
     char const *mapId = Str_Text(Uri_Path(&uri));
-    return W_CheckLumpNumForName2(mapId, true /*quiet please*/);
+    return W_CheckLumpNumForName(mapId);
 }
 
 /**
@@ -139,7 +139,7 @@ static Id1Map::Format recognizeMapFormat(MapDataLumps &lumps)
         return Id1Map::UnknownFormat;
     }
 
-    LOG_INFO("Recognized a %s format map.") << Id1Map::formatName(mapFormat);
+    LOG_MAP_MSG("Recognized a %s format map") << Id1Map::formatName(mapFormat);
     return mapFormat;
 }
 

@@ -49,13 +49,10 @@ DENG_API_TYPEDEF(W) // v1
     boolean (*LumpIsCustom)(lumpnum_t lumpNum);
 
     /**
-     * @param name      Name of the lump to search for.
-     * @param silent    Do not print results to the console.
+     * @param name Name of the lump to search for.
      *
      * @return  Unique index of the found lump in the primary lump directory else @c -1 if not found.
      */
-    lumpnum_t (*CheckLumpNumForName2)(char const* name, boolean silent);
-
     lumpnum_t (*CheckLumpNumForName)(char const* name);
 
     /// @note As per W_CheckLumpNumForName but results in a fatal error if not found.
@@ -108,7 +105,6 @@ DENG_API_TYPEDEF(W) // v1
 #define W_LumpLastModified          _api_W.LumpLastModified
 #define W_LumpSourceFile            _api_W.LumpSourceFile
 #define W_LumpIsCustom              _api_W.LumpIsCustom
-#define W_CheckLumpNumForName2      _api_W.CheckLumpNumForName2
 #define W_CheckLumpNumForName       _api_W.CheckLumpNumForName
 #define W_GetLumpNumForName         _api_W.GetLumpNumForName
 #define W_ReadLump                  _api_W.ReadLump

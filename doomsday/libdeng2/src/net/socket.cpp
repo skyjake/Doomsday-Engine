@@ -398,7 +398,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Instanc
         throw ConnectionError("Socket", "Opening the connection to " + address.asText() + " failed: " + msg);
     }
 
-    LOG_MSG("Connection opened to %s") << address.asText();
+    LOG_NET_NOTE("Connection opened to %s") << address.asText();
 
     d->target = address;
 
@@ -412,7 +412,7 @@ void Socket::connect(Address const &address) // non-blocking
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
     LOG_AS("Socket");
-    if(!d->quiet) LOG_MSG("Opening connection to %s") << address.asText();
+    if(!d->quiet) LOG_NET_MSG("Opening connection to %s") << address.asText();
 
     d->socket->connectToHost(address.host(), address.port());
     d->target = address;
@@ -567,7 +567,7 @@ void Socket::hostResolved(QHostInfo const &info)
 {
     if(info.error() != QHostInfo::NoError || info.addresses().isEmpty())
     {
-        LOG_WARNING("Could not resolve host: ") << info.errorString();
+        LOG_NET_ERROR("Could not resolve host: ") << info.errorString();
         emit disconnected();
     }
     else
@@ -635,7 +635,7 @@ void Socket::socketError(QAbstractSocket::SocketError socketError)
     if(socketError != QAbstractSocket::SocketTimeoutError)
     {
         LOG_AS("Socket");
-        if(!d->quiet) LOG_WARNING(d->socket->errorString());
+        if(!d->quiet) LOG_NET_WARNING(d->socket->errorString());
 
         emit disconnected(); //error(socketError);
     }

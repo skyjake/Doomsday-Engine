@@ -341,7 +341,7 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
 #endif
 
     // Not supported!
-    LOG_DEBUG("Not translated: Qt key %i (%x), virtualKey %i, scancode %i")
+    LOG_INPUT_WARNING("Ignored unknown key: Qt key %i (%x), virtualKey %i, scancode %i")
             << qtKey << qtKey << nativeVirtualKey << nativeScanCode;
 
     return 0;

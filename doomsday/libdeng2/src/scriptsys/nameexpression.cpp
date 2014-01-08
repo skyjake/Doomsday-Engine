@@ -46,7 +46,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
 {
     //LOG_AS("NameExpression::evaluate");
     //std::cout << "NameExpression::evaluator: " << _flags.to_string() << "\n";
-    //LOG_DEBUG("path = %s, scope = %x") << _path << evaluator.names();
+    LOGDEV_SCR_XVERBOSE_DEBUGONLY("evaluating name:\"%s\" flags:%x", _identifier << flags());
     
     // Collect the namespaces to search.
     Evaluator::Namespaces spaces;

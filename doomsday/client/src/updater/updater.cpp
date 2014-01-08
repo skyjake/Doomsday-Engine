@@ -172,7 +172,7 @@ DENG2_OBSERVES(App, StartupComplete)
                 QFile file(p);
                 if(file.exists())
                 {
-                    LOG_INFO("Deleting previously installed package: %s") << p;
+                    LOG_NOTE("Deleting previously installed package: %s") << p;
                     file.remove();
                 }
             }
@@ -201,7 +201,7 @@ DENG2_OBSERVES(App, StartupComplete)
         uri += (st.channel() == UpdaterSettings::Stable? "&stable" : "&unstable");
         uri += "&graph";
 
-        LOG_DEBUG("Check URI: ") << uri;
+        LOG_XVERBOSE("Check URI: ") << uri;
         return uri;
     }
 
@@ -334,12 +334,12 @@ DENG2_OBSERVES(App, StartupComplete)
 
         VersionInfo currentVersion;
 
-        LOG_VERBOSE(_E(b) "Received latest version information:\n" _E(.)
+        LOG_MSG(_E(b) "Received latest version information:\n" _E(.)
                     " - version: " _E(>) "%s " _E(2) "(installed version is %s)")
                 << latestVersion.asText()
                 << currentVersion.asText();
-        LOG_VERBOSE(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
-        LOG_VERBOSE(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
+        LOG_MSG(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
+        LOG_MSG(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
 
         if(availableDlg)
         {
@@ -353,7 +353,7 @@ DENG2_OBSERVES(App, StartupComplete)
         // Is this newer than what we're running?
         if(gotUpdate)
         {
-            LOG_INFO("Found an update: " _E(b)) << latestVersion.asText();
+            LOG_NOTE("Found an update: " _E(b)) << latestVersion.asText();
 
             if(!alwaysShowNotification)
             {
@@ -370,7 +370,7 @@ DENG2_OBSERVES(App, StartupComplete)
         }
         else
         {
-            LOG_INFO("You are running the latest available " _E(b) "%s" _E(.) " release.")
+            LOG_NOTE("You are running the latest available " _E(b) "%s" _E(.) " release")
                     << (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
         }
 
@@ -413,7 +413,7 @@ DENG2_OBSERVES(App, StartupComplete)
         // The notification provides access to the download dialog.
         showDownloadNotification();
 
-        LOG_MSG("Download and install.");
+        LOG_MSG("Download and install update");
 
         download = new DownloadDialog(latestPackageUri, latestPackageUri2);
         download->setAnchorAndOpeningDirection(status->rule(), ui::Down);
@@ -597,7 +597,7 @@ void Updater::downloadCompleted(int)
 
 void Updater::downloadFailed(QString message)
 {
-    LOG_INFO("Update cancelled: ") << message;
+    LOG_NOTE("Update cancelled: ") << message;
 }
 
 void Updater::recheck()
@@ -652,7 +652,7 @@ void Updater::printLastUpdated(void)
     String ago = UpdaterSettings().lastCheckAgo();
     if(ago.isEmpty())
     {
-        LOG_MSG("Never checked for updates.");
+        LOG_MSG("Never checked for updates");
     }
     else
     {

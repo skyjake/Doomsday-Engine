@@ -250,7 +250,7 @@ D_CMD(InspectGame)
         // No game identity key was specified - assume the current game.
         if(!App_GameLoaded())
         {
-            LOG_WARNING("No game is currently loaded.\nPlease specify the identity-key of the game to inspect.");
+            LOG_SCR_WARNING("No game is currently loaded.\nPlease specify the identity-key of the game to inspect.");
             return false;
         }
         game = &App_CurrentGame();
@@ -264,25 +264,25 @@ D_CMD(InspectGame)
         }
         catch(Games::NotFoundError const &)
         {
-            LOG_WARNING("Unknown game '%s'.") << idKey;
+            LOG_SCR_WARNING("Unknown game '%s'") << idKey;
             return false;
         }
     }
 
     DENG2_ASSERT(!game->isNull());
 
-    LOG_MSG(_E(1) "%s - %s") << game->title() << game->author();
-    LOG_MSG(_E(l) "IdentityKey: " _E(.) _E(i) "%s " _E(.)
+    LOG_SCR_MSG(_E(1) "%s - %s") << game->title() << game->author();
+    LOG_SCR_MSG(_E(l) "IdentityKey: " _E(.) _E(i) "%s " _E(.)
             _E(l) "PluginId: "    _E(.) _E(i) "%s")
         << game->identityKey() << int(game->pluginId());
 
-    LOG_MSG(_E(D) "Startup resources:");
+    LOG_SCR_MSG(_E(D) "Startup resources:");
     Game::printFiles(*game, FF_STARTUP);
 
-    LOG_MSG(_E(D) "Other resources:");
+    LOG_SCR_MSG(_E(D) "Other resources:");
     Game::printFiles(*game, 0, false);
 
-    LOG_MSG(_E(D) "Status: " _E(.) _E(1)) << game->statusAsText();
+    LOG_SCR_MSG(_E(D) "Status: " _E(.) _E(1)) << game->statusAsText();
 
     return true;
 }

@@ -222,76 +222,32 @@ ArrayValue &Config::geta(String const &name) const
 
 Variable &Config::set(String const &name, bool value)
 {
-    if(names().has(name))
-    {
-        // Change value of existing variable.
-        Variable &var = names()[name];
-        var = new NumberValue(value);
-        return var;
-    }
-    else
-    {
-        // Create a new variable.
-        return names().addBoolean(name, value);
-    }
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, Value::Number const &value)
 {
-    if(names().has(name))
-    {
-        // Change value of existing variable.
-        Variable &var = names()[name];
-        var = new NumberValue(value);
-        return var;
-    }
-    else
-    {
-        // Create a new variable.
-        return names().addBoolean(name, value);
-    }
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, dint value)
 {
-    return set(name, Value::Number(value));
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, duint value)
 {
-    return set(name, Value::Number(value));
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, ArrayValue *value)
 {
-    if(names().has(name))
-    {
-        // Change value of existing variable.
-        Variable &var = names()[name];
-        var = value;
-        return var;
-    }
-    else
-    {
-        // Create a new variable.
-        return names().addArray(name, value);
-    }
+    return names().set(name, value);
 }
 
 Variable &Config::set(String const &name, Value::Text const &value)
 {
-    if(names().has(name))
-    {
-        // Change value of existing variable.
-        Variable &var = names()[name];
-        var = new TextValue(value);
-        return var;
-    }
-    else
-    {
-        // Create a new variable.
-        return names().addText(name, value);
-    }
+    return names().set(name, value);
 }
 
 } // namespace de

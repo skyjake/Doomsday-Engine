@@ -26,7 +26,7 @@ StyledLogSinkFormatter::StyledLogSinkFormatter()
 
 #ifndef _DEBUG
     // No metadata in release builds.
-    _format |= LogEntry::Simple;
+    _format |= LogEntry::Simple | LogEntry::OmitDomain;
 #endif
 }
 

@@ -44,28 +44,6 @@
 
 using namespace de;
 
-#if 0
-/**
- * Logging is routed through DehReader's special case handler.
- */
-#undef LOG_TRACE
-#undef LOG_DEBUG
-#undef LOG_VERBOSE
-#undef LOG_MSG
-#undef LOG_INFO
-#undef LOG_WARNING
-#undef LOG_ERROR
-#undef LOG_CRITICAL
-#define LOG_TRACE(str)      DehReader::log(de::Log::TRACE, str)
-#define LOG_DEBUG(str)      DehReader::log(de::Log::DEBUG, str)
-#define LOG_VERBOSE(str)    DehReader::log(de::Log::VERBOSE, str)
-#define LOG_MSG(str)        DehReader::log(str)
-#define LOG_INFO(str)       DehReader::log(de::Log::INFO, str)
-#define LOG_WARNING(str)    DehReader::log(de::Log::WARNING, str)
-#define LOG_ERROR(str)      DehReader::log(de::Log::ERROR, str)
-#define LOG_CRITICAL(str)   DehReader::log(de::Log::CRITICAL, str)
-#endif
-
 static int stackDepth;
 static const int maxIncludeDepth = MAX_OF(0, DEHREADER_INCLUDE_DEPTH_MAX);
 

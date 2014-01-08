@@ -49,6 +49,26 @@ class DENG2_PUBLIC LogBuffer : public QObject, public Lockable, DENG2_OBSERVES(F
 public:
     typedef QList<LogEntry const *> Entries;
 
+    /**
+     * Interface for objects that filter log entries.
+     */
+    class IFilter
+    {
+    public:
+        virtual ~IFilter() {}
+
+        /**
+         * Determines if a log entry should be allowed into the log buffer
+         * if it has a particular set of metadata. Note that this method
+         * will be called from several threads, so it needs to be thread-safe.
+         *
+         * @param metadata  Entry metadata.
+         *
+         * @return @c true, to allow entering into the buffer.
+         */
+        virtual bool isLogEntryAllowed(duint32 metadata) const = 0;
+    };
+
 public:
     /**
      * Constructs a new log buffer. By default log levels starting with MESSAGE
@@ -96,18 +116,23 @@ public:
     void latestEntries(Entries &entries, int count = 0) const;
 
     /**
-     * Enables log entries at or over a level. When a level is disabled, the
-     * entries will not be added to the log entry buffer.
+     * Sets the filter that determines if a log entry will be permitted into
+     * the buffer.
+     *
+     * @param entryFilter  Filter object. @c NULL to use the default filter.
      */
-    void enable(LogEntry::Level overLevel = LogEntry::MESSAGE);
+    void setEntryFilter(IFilter const *entryFilter);
 
     /**
-     * Disables the log.
-     * @see enable()
+     * Checks if a log entry will be enabled if it has a particular set of
+     * context metadata bits.
+     *
+     * @param entryMetadata  Metadata of an entry.
+     *
+     * @return @c true, if the entry should be added to the buffer. @c false,
+     * if the entry should be ignored.
      */
-    void disable() { enable(LogEntry::MAX_LOG_LEVELS); }
-
-    bool isEnabled(LogEntry::Level overLevel = LogEntry::MESSAGE) const;
+    bool isEnabled(duint32 entryMetadata = LogEntry::Message) const;
 
     /**
      * Enables or disables standard output of log messages. When enabled,
@@ -168,7 +193,7 @@ public:
 
     static LogBuffer &appBuffer();
 
-    static bool isAppBufferAvailable();
+    static bool appBufferExists();
 
 public slots:
     /**

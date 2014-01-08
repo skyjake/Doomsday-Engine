@@ -216,12 +216,12 @@ static void Mouse_Win32_Trap(boolean enabled)
     mouseTrapped = (enabled != 0);
     if(enabled)
     {
-        LOG_DEBUG("Acquiring the mouse");
+        LOG_INPUT_VERBOSE("Acquiring the mouse");
         didMouse->Acquire();
     }
     else
     {
-        LOG_DEBUG("Unacquiring the mouse");
+        LOG_INPUT_VERBOSE("Unacquiring the mouse");
         didMouse->Unacquire();
     }
 }

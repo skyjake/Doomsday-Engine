@@ -265,8 +265,8 @@ static void advanceTime(timespan_t delta)
             // case, we will adjust gameTime slightly so that it syncs again.
             if(oldGameTic == SECONDS_TO_TICKS(gameTime))
             {
-                DEBUG_VERBOSE2_Message(("DD_AdvanceTime: Syncing gameTime with sharp ticks (tic=%i pos=%f)\n",
-                                        oldGameTic, frameTimePos));
+                LOGDEV_XVERBOSE("Syncing gameTime with sharp ticks (tic=%i pos=%f)")
+                        << oldGameTic << frameTimePos;
 
                 // Realign.
                 gameTime = (SECONDS_TO_TICKS(gameTime) + 1) / 35.f;

@@ -59,11 +59,12 @@ public:
      * @param msg    Message to show. May contain style escapes.
      * @param level  Importance of the message.
      */
-    static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::MESSAGE);
+    static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::Message);
 
 public:
     static ClientApp &app();
     static Updater &updater();
+    static SettingsRegister &logSettings();
     static SettingsRegister &audioSettings();    ///< @todo Belongs in AudioSystem.
     static ServerLink &serverLink();
     static InputSystem &inputSystem();

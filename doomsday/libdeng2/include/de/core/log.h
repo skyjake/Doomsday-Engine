@@ -54,26 +54,184 @@
     de::Block __logSectionUtf8 = __logSectionName.toUtf8(); \
     LOG_AS(__logSectionUtf8.constData());
 
-#define LOG_AT_LEVEL(level, str)    de::LogEntryStager(level, str)
-#define LOG_TRACE(str)              LOG_AT_LEVEL(de::LogEntry::TRACE,    str)
-#define LOG_DEBUG(str)              LOG_AT_LEVEL(de::LogEntry::DEBUG,    str)
-#define LOG_VERBOSE(str)            LOG_AT_LEVEL(de::LogEntry::VERBOSE,  str)
-#define LOG_MSG(str)                LOG_AT_LEVEL(de::LogEntry::MESSAGE,  str)
-#define LOG_INFO(str)               LOG_AT_LEVEL(de::LogEntry::INFO,     str)
-#define LOG_WARNING(str)            LOG_AT_LEVEL(de::LogEntry::WARNING,  str)
-#define LOG_ERROR(str)              LOG_AT_LEVEL(de::LogEntry::ERROR,    str)
-#define LOG_CRITICAL(str)           LOG_AT_LEVEL(de::LogEntry::CRITICAL, str)
+/*
+ * Macros that make a new log entry with a particular set of audience/level bits:
+ */
+
+// End-user/game audience
+#define LOG_AT_LEVEL(level, str)        de::LogEntryStager(level, str)
+#define LOG_XVERBOSE(str)               LOG_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_VERBOSE(str)                LOG_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_MSG(str)                    LOG_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_INFO(str)                   LOG_AT_LEVEL(de::LogEntry::Note,     str) // backwards comp
+#define LOG_NOTE(str)                   LOG_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOG_WARNING(str)                LOG_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_ERROR(str)                  LOG_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_CRITICAL(str)               LOG_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Native code developer audience (general domain)
+#define LOGDEV_AT_LEVEL(level, str)     LOG_AT_LEVEL(de::LogEntry::Dev | level, str)
+#define LOGDEV_XVERBOSE(str)            LOGDEV_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_TRACE(str)                  LOGDEV_XVERBOSE(str) // backwards comp
+#define LOGDEV_VERBOSE(str)             LOGDEV_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_DEBUG(str)                  LOGDEV_VERBOSE(str) // backwards comp
+#define LOGDEV_MSG(str)                 LOGDEV_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_NOTE(str)                LOGDEV_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_WARNING(str)             LOGDEV_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_ERROR(str)               LOGDEV_AT_LEVEL(de::LogEntry::Error,    str)
+
+// Custom combination of audiences
+#define LOG_XVERBOSE_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::XVerbose, str)
+#define LOG_VERBOSE_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Verbose,  str)
+#define LOG_MSG_TO(audflags, str)       LOG_AT_LEVEL(audflags | de::LogEntry::Message,  str)
+#define LOG_NOTE_TO(audflags, str)      LOG_AT_LEVEL(audflags | de::LogEntry::Note,     str)
+#define LOG_WARNING_TO(audflags, str)   LOG_AT_LEVEL(audflags | de::LogEntry::Warning,  str)
+#define LOG_ERROR_TO(audflags, str)     LOG_AT_LEVEL(audflags | de::LogEntry::Error,    str)
+#define LOG_CRITICAL_TO(audflags, str)  LOG_AT_LEVEL(audflags | de::LogEntry::Critical, str)
+
+// Resource domain
+#define LOG_RES_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Resource | level, str)
+#define LOG_RES_XVERBOSE(str)           LOG_RES_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_RES_VERBOSE(str)            LOG_RES_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_RES_MSG(str)                LOG_RES_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_RES_NOTE(str)               LOG_RES_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOG_RES_WARNING(str)            LOG_RES_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_RES_ERROR(str)              LOG_RES_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_RES_CRITICAL(str)           LOG_RES_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_RES_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Resource | level, str)
+#define LOGDEV_RES_XVERBOSE(str)        LOGDEV_RES_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_RES_VERBOSE(str)         LOGDEV_RES_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_RES_MSG(str)             LOGDEV_RES_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_RES_NOTE(str)            LOGDEV_RES_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_RES_WARNING(str)         LOGDEV_RES_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_RES_ERROR(str)           LOGDEV_RES_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_RES_CRITICAL(str)        LOGDEV_RES_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Map domain
+#define LOG_MAP_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Map | level, str)
+#define LOG_MAP_XVERBOSE(str)           LOG_MAP_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_MAP_VERBOSE(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_MAP_MSG(str)                LOG_MAP_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_MAP_NOTE(str)               LOG_MAP_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOG_MAP_WARNING(str)            LOG_MAP_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_MAP_ERROR(str)              LOG_MAP_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_MAP_CRITICAL(str)           LOG_MAP_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_MAP_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Map | level, str)
+#define LOGDEV_MAP_XVERBOSE(str)        LOGDEV_MAP_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_MAP_VERBOSE(str)         LOGDEV_MAP_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_MAP_MSG(str)             LOGDEV_MAP_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_MAP_NOTE(str)            LOGDEV_MAP_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_MAP_WARNING(str)         LOGDEV_MAP_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_MAP_ERROR(str)           LOGDEV_MAP_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_MAP_CRITICAL(str)        LOGDEV_MAP_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Script domain
+#define LOG_SCR_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Script | level, str)
+#define LOG_SCR_XVERBOSE(str)           LOG_SCR_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_SCR_VERBOSE(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_SCR_MSG(str)                LOG_SCR_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_SCR_NOTE(str)               LOG_SCR_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOG_SCR_WARNING(str)            LOG_SCR_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_SCR_ERROR(str)              LOG_SCR_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_SCR_CRITICAL(str)           LOG_SCR_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_SCR_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Script | level, str)
+#define LOGDEV_SCR_XVERBOSE(str)        LOGDEV_SCR_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_SCR_VERBOSE(str)         LOGDEV_SCR_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_SCR_MSG(str)             LOGDEV_SCR_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_SCR_NOTE(str)            LOGDEV_SCR_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_SCR_WARNING(str)         LOGDEV_SCR_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_SCR_ERROR(str)           LOGDEV_SCR_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_SCR_CRITICAL(str)        LOGDEV_SCR_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Audio domain
+#define LOG_AUDIO_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Audio | level, str)
+#define LOG_AUDIO_XVERBOSE(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_AUDIO_VERBOSE(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_AUDIO_MSG(str)              LOG_AUDIO_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_AUDIO_NOTE(str)             LOG_AUDIO_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOG_AUDIO_WARNING(str)          LOG_AUDIO_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_AUDIO_ERROR(str)            LOG_AUDIO_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_AUDIO_CRITICAL(str)         LOG_AUDIO_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_AUDIO_AT_LEVEL(level, str)   LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Audio | level, str)
+#define LOGDEV_AUDIO_XVERBOSE(str)      LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_AUDIO_VERBOSE(str)       LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_AUDIO_MSG(str)           LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_AUDIO_NOTE(str)          LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_AUDIO_WARNING(str)       LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_AUDIO_ERROR(str)         LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_AUDIO_CRITICAL(str)      LOGDEV_AUDIO_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Graphics domain
+#define LOG_GL_AT_LEVEL(level, str)     LOG_AT_LEVEL(de::LogEntry::GL | level, str)
+#define LOG_GL_XVERBOSE(str)            LOG_GL_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_GL_VERBOSE(str)             LOG_GL_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_GL_MSG(str)                 LOG_GL_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_GL_NOTE(str)                LOG_GL_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOG_GL_WARNING(str)             LOG_GL_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_GL_ERROR(str)               LOG_GL_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_GL_CRITICAL(str)            LOG_GL_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_GL_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::GL | level, str)
+#define LOGDEV_GL_XVERBOSE(str)         LOGDEV_GL_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_GL_VERBOSE(str)          LOGDEV_GL_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_GL_MSG(str)              LOGDEV_GL_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_GL_NOTE(str)             LOGDEV_GL_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_GL_WARNING(str)          LOGDEV_GL_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_GL_ERROR(str)            LOGDEV_GL_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_GL_CRITICAL(str)         LOGDEV_GL_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Input domain
+#define LOG_INPUT_AT_LEVEL(level, str)  LOG_AT_LEVEL(de::LogEntry::Input | level, str)
+#define LOG_INPUT_XVERBOSE(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_INPUT_VERBOSE(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_INPUT_MSG(str)              LOG_INPUT_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_INPUT_NOTE(str)             LOG_INPUT_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOG_INPUT_WARNING(str)          LOG_INPUT_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_INPUT_ERROR(str)            LOG_INPUT_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_INPUT_CRITICAL(str)         LOG_INPUT_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_INPUT_AT_LEVEL(level, str)   LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Input | level, str)
+#define LOGDEV_INPUT_XVERBOSE(str)      LOGDEV_INPUT_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_INPUT_VERBOSE(str)       LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_INPUT_MSG(str)           LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_INPUT_NOTE(str)          LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_INPUT_WARNING(str)       LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_INPUT_ERROR(str)         LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_INPUT_CRITICAL(str)      LOGDEV_INPUT_AT_LEVEL(de::LogEntry::Critical, str)
+
+// Network domain
+#define LOG_NET_AT_LEVEL(level, str)    LOG_AT_LEVEL(de::LogEntry::Network | level, str)
+#define LOG_NET_XVERBOSE(str)           LOG_NET_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOG_NET_VERBOSE(str)            LOG_NET_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOG_NET_MSG(str)                LOG_NET_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOG_NET_NOTE(str)               LOG_NET_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOG_NET_WARNING(str)            LOG_NET_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOG_NET_ERROR(str)              LOG_NET_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOG_NET_CRITICAL(str)           LOG_NET_AT_LEVEL(de::LogEntry::Critical, str)
+#define LOGDEV_NET_AT_LEVEL(level, str) LOG_AT_LEVEL(de::LogEntry::Dev | de::LogEntry::Network | level, str)
+#define LOGDEV_NET_XVERBOSE(str)        LOGDEV_NET_AT_LEVEL(de::LogEntry::XVerbose, str)
+#define LOGDEV_NET_VERBOSE(str)         LOGDEV_NET_AT_LEVEL(de::LogEntry::Verbose,  str)
+#define LOGDEV_NET_MSG(str)             LOGDEV_NET_AT_LEVEL(de::LogEntry::Message,  str)
+#define LOGDEV_NET_NOTE(str)            LOGDEV_NET_AT_LEVEL(de::LogEntry::Note,     str)
+#define LOGDEV_NET_WARNING(str)         LOGDEV_NET_AT_LEVEL(de::LogEntry::Warning,  str)
+#define LOGDEV_NET_ERROR(str)           LOGDEV_NET_AT_LEVEL(de::LogEntry::Error,    str)
+#define LOGDEV_NET_CRITICAL(str)        LOGDEV_NET_AT_LEVEL(de::LogEntry::Critical, str)
 
 #ifdef DENG2_DEBUG
 /**
- * Makes a developer-only TRACE level log entry. Only enabled in debug builds;
- * use this for internal messages that are only useful to / understood by
- * developers when debugging. (Note that parameters differ compared to the
- * normal LOG_* macros.)
+ * Makes a developer-only extra verbose level log entry. Only enabled in debug builds; use this
+ * for internal messages that might have a significant processing overhead. (Note that parameters
+ * differ compared to the normal LOG_* macros.)
  */
-#  define LOG_DEV_TRACE(form, args) LOG_TRACE(form) << args
+#  define LOG_TRACE_DEBUGONLY(form, args)               LOG_TRACE(form) << args
+#  define LOGDEV_MAP_XVERBOSE_DEBUGONLY(form, args)     LOGDEV_MAP_XVERBOSE(form) << args
+#  define LOGDEV_RES_XVERBOSE_DEBUGONLY(form, args)     LOGDEV_RES_XVERBOSE(form) << args
+#  define LOGDEV_SCR_XVERBOSE_DEBUGONLY(form, args)     LOGDEV_SCR_XVERBOSE(form) << args
+#  define LOGDEV_NET_XVERBOSE_DEBUGONLY(form, args)     LOGDEV_NET_XVERBOSE(form) << args
 #else
-#  define LOG_DEV_TRACE(form, args)
+#  define LOG_TRACE_DEBUGONLY(form, args)
+#  define LOGDEV_MAP_XVERBOSE_DEBUGONLY(form, args)
+#  define LOGDEV_RES_XVERBOSE_DEBUGONLY(form, args)
+#  define LOGDEV_SCR_XVERBOSE_DEBUGONLY(form, args)
+#  define LOGDEV_NET_XVERBOSE_DEBUGONLY(form, args)
 #endif
 
 #ifdef WIN32
@@ -99,94 +257,149 @@ class LogBuffer;
 class DENG2_PUBLIC LogEntry : public Lockable, public ISerializable
 {
 public:
-    /// Level of the log entry.
+    /**
+     * Entry domain (bits) and target audience. If not set, the entry is generic and
+     * intended for the end-user/player.
+     */
+    enum Context
+    {
+        // Domains
+        FirstDomainBit  = 16,
+        GenericBit      = FirstDomainBit,
+        ResourceBit,
+        MapBit,
+        ScriptBit,
+        GLBit,
+        AudioBit,
+        InputBit,
+        NetworkBit,
+        LastDomainBit   = NetworkBit,
+
+        Generic  = (1 << GenericBit),   ///< Global domain (bit automatically set if no other domains).
+        Resource = (1 << ResourceBit),  /**< Resource or resource pack domain (files, etc.).
+                                             "Resource" is here meant in a wider sense of all the
+                                             external data that Doomsday utilizes. */
+        Map      = (1 << MapBit),       /**< Map domain: information pertaining to the map and its
+                                             elements, playsim, etc. */
+        Script   = (1 << ScriptBit),    ///< Script domain
+        GL       = (1 << GLBit),        ///< Graphics/renderer domain (shaders, etc.)
+        Audio    = (1 << AudioBit),     ///< Audio domain
+        Input    = (1 << InputBit),     ///< Input domain: events, devices, etc.
+        Network  = (1 << NetworkBit),   ///< Network domain: connections, packets, etc.
+
+        // User groups
+        Dev      = 0x8000000,           /**< Native code developer (i.e., the programmer); can be
+                                             combined with other flags to mark the entry for devs.
+                                             If bit is not set, the entry is for the end-user. */
+
+        AllDomains  = 0xff0000,
+        DomainMask  = AllDomains,
+        ContextMask = 0xfff0000
+    };
+
+    static String contextToText(duint32 context)
+    {
+        String const suffix = (context & Dev? "Dev" : "");
+        switch(context & DomainMask)
+        {
+        case Resource: return "Resource" + suffix;
+        case Map:      return "Map" + suffix;
+        case Script:   return "Script" + suffix;
+        case GL:       return "GL" + suffix;
+        case Audio:    return "Audio" + suffix;
+        case Input:    return "Input" + suffix;
+        case Network:  return "Network" + suffix;
+        default:       return suffix;
+        }
+    }
+
+    static Context textToContext(String text)
+    {
+        duint32 val = 0;
+        if(text.endsWith("Dev"))
+        {
+            val |= Dev;
+            text = text.remove(text.size() - 3);
+        }
+        for(int i = FirstDomainBit; i <= LastDomainBit; ++i)
+        {
+            if(!contextToText(LogEntry::Context(1 << i)).compareWithoutCase(text))
+                return LogEntry::Context((1 << i) | val);
+        }
+        throw de::Error("Log::textToContext", "'" + text + "' is not a valid log entry context");
+    }
+
+    /// Importance level of the log entry.
     enum Level
     {
         /**
-         * Trace messages are intended for low-level debugging. They should be used
-         * to log which methods are entered and exited, and mark certain points within
-         * methods. Intended only for developers and debug builds.
+         * Verbose messages should be used for logging additional/supplementary information. All
+         * verbose messages can be safely ignored.
          */
-        TRACE = 0,
+        XVerbose = 1,
+        Verbose = 2,
 
         /**
-         * Debug messages are intended for normal debugging. They should be enabled
-         * only in debug builds. An example of a debug message might be a printout of
-         * a ZIP archive's file count and size once an archive has been successfully
-         * opened. Intended only for developers and debug builds.
+         * The base level: normal log entries.
          */
-        DEBUG = 1,
+        Message = 3,
 
         /**
-         * Verbose messages should be used to log technical information that is only
-         * of interest to advanced users. An example of a verbose message could be
-         * the summary of all the defined object types during the launch of a game.
-         * Verbose messages should not be used for anything that produces a large
-         * number of log entries, such as an entry about reading the contents of a
-         * file within a ZIP archive (which would be suitable for the DEBUG level).
+         * Important messages that are intended for situations that are particularly noteworthy.
+         * They will not cause an alert to be raised, but the information is deemed particularly
+         * valuable.
          */
-        VERBOSE = 2,
+        Note = 4,
 
         /**
-         * Normal log entries are intended for regular users. An example: message about
-         * which map is being loaded.
+         * Warning messages are reserved for error situations that were automatically recovered
+         * from. A warning might be logged for example when the expected resource could not be
+         * found, and a fallback resource was used instead. Warnings will cause an alert to be
+         * raised so that the target audience is aware of the problem.
          */
-        MESSAGE = 3,
+        Warning = 5,
 
         /**
-         * Info messages are intended for situations that are particularly noteworthy.
-         * An info message should be used for instance when a script has been stopped
-         * because of an uncaught exception occurred during its execution.
+         * Error messages are intended for errors that could not be (fully) recovered from. The
+         * error is grave enough to possibly cause the shutting down of the current game, however
+         * the engine can still remain running. Will cause an alert to be raised so that the
+         * target audience is aware of the problem.
          */
-        INFO = 4,
+        Error = 6,
 
         /**
-         * Warning messages are reserved for recoverable error situations. A warning
-         * might be logged for example when the expected resource could not be found,
-         * and a fallback resource was used instead.
+         * Critical messages are intended for fatal errors that cause the engine to be shut down.
          */
-        WARNING = 5,
+        Critical = 7,
 
-        /**
-         * Error messages are intended for nonrecoverable errors. The error is grave
-         * enough to cause the shutting down of the current game, but the engine can
-         * still remain running.
-         */
-        ERROR = 6,
+        LowestLogLevel  = XVerbose,
+        HighestLogLevel = Critical,
+        LevelMask       = 0x7
+    };   
 
-        /**
-         * Critical messages are intended for fatal errors that cause the engine to be
-         * shut down.
-         */
-        CRITICAL = 7,
-
-        MAX_LOG_LEVELS
-    };
-
-    static String levelToText(Level level)
+    static String levelToText(duint32 level)
     {
-        switch(level)
+        switch(level & LevelMask)
         {
-        case TRACE:     return "TRACE";
-        case DEBUG:     return "DEBUG";
-        case VERBOSE:   return "VERBOSE";
-        case MESSAGE:   return "MESSAGE";
-        case INFO:      return "INFO";
-        case WARNING:   return "WARNING";
-        case ERROR:     return "ERROR";
-        case CRITICAL:  return "CRITICAL";
-        default:        return "";
+        case XVerbose: return "XVerbose";
+        case Verbose:  return "Verbose";
+        case Message:  return "Message";
+        case Note:     return "Note";
+        case Warning:  return "Warning";
+        case Error:    return "Error";
+        case Critical: return "Critical";
+        default:       return "";
         }
     }
 
     static Level textToLevel(String text)
     {
-        for(int i = TRACE; i < MAX_LOG_LEVELS; ++i)
+        for(int i = XVerbose; i <= HighestLogLevel; ++i)
         {
             if(!levelToText(Level(i)).compareWithoutCase(text))
                 return Level(i);
         }
-        throw Error("Log::textToLevel", "'" + text + "' is not a valid log level");
+        throw de::Error("Log::textToLevel", "'" + text + "' is not a valid log level");
     }
 
     /**
@@ -202,9 +415,9 @@ public:
         DENG2_ERROR(TypeError);
 
         enum Type {
-            INTEGER,
-            FLOATING_POINT,
-            STRING
+            IntegerArgument,
+            FloatingPointArgument,
+            StringArgument
         };
 
         /**
@@ -234,17 +447,17 @@ public:
         };
 
     public:
-        Arg()                    : _type(INTEGER)        { _data.intValue    = 0; }
-        Arg(dint i)              : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(duint i)             : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(long int i)          : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(long unsigned int i) : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(duint64 i)           : _type(INTEGER)        { _data.intValue    = dint64(i); }
-        Arg(dint64 i)            : _type(INTEGER)        { _data.intValue    = i; }
-        Arg(ddouble d)           : _type(FLOATING_POINT) { _data.floatValue  = d; }
-        Arg(void const *p)       : _type(INTEGER)        { _data.intValue    = dint64(p); }
-        Arg(char const *s)       : _type(STRING)         { _data.stringValue = new String(s); }
-        Arg(String const &s)     : _type(STRING)         { _data.stringValue = new String(s.data(), s.size()); }
+        Arg()                    : _type(IntegerArgument)       { _data.intValue    = 0; }
+        Arg(dint i)              : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(duint i)             : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(long int i)          : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(long unsigned int i) : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(duint64 i)           : _type(IntegerArgument)       { _data.intValue    = dint64(i); }
+        Arg(dint64 i)            : _type(IntegerArgument)       { _data.intValue    = i; }
+        Arg(ddouble d)           : _type(FloatingPointArgument) { _data.floatValue  = d; }
+        Arg(void const *p)       : _type(IntegerArgument)       { _data.intValue    = dint64(p); }
+        Arg(char const *s)       : _type(StringArgument)        { _data.stringValue = new String(s); }
+        Arg(String const &s)     : _type(StringArgument)        { _data.stringValue = new String(s.data(), s.size()); }
 
         Arg(Base const &arg);
         Arg(Arg const &other);
@@ -253,15 +466,15 @@ public:
 
         inline Type type() const { return _type; }
         inline dint64 intValue() const {
-            DENG2_ASSERT(_type == INTEGER);
+            DENG2_ASSERT(_type == IntegerArgument);
             return _data.intValue;
         }
         inline ddouble floatValue() const {
-            DENG2_ASSERT(_type == FLOATING_POINT);
+            DENG2_ASSERT(_type == FloatingPointArgument);
             return _data.floatValue;
         }
         inline QString stringValue() const {
-            DENG2_ASSERT(_type == STRING);
+            DENG2_ASSERT(_type == StringArgument);
             return *_data.stringValue;
         }
 
@@ -308,7 +521,10 @@ public:
         Remote = 0x20,
 
         /// Entry level is not included in the output.
-        OmitLevel = 0x40
+        OmitLevel = 0x40,
+
+        /// Entry domain is not included in the output.
+        OmitDomain = 0x80
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -320,7 +536,7 @@ public:
      */
     LogEntry();
 
-    LogEntry(Level level, String const &section, int sectionDepth, String const &format, Args args);
+    LogEntry(duint32 metadata, String const &section, int sectionDepth, String const &format, Args args);
 
     /**
      * Copy constructor.
@@ -337,7 +553,11 @@ public:
     /// Returns the timestamp of the entry.
     Time when() const { return _when; }
 
-    Level level() const { return _level; }
+    inline duint32 metadata() const { return _metadata; }
+
+    inline duint32 audience() const { return _metadata & ContextMask; }
+
+    inline Level level() const { return Level(_metadata & LevelMask); }
 
     /// Returns a reference to the entry's section part. Reference is valid
     /// for the lifetime of the entry.
@@ -367,7 +587,7 @@ private:
 
 private:
     Time _when;
-    Level _level;
+    duint32 _metadata;
     String _section;
     int _sectionDepth;
     String _format;
@@ -431,7 +651,7 @@ public:
     void endSection(char const *name);
 
     /**
-     * Creates a new log entry with the default (MESSAGE) level.
+     * Creates a new log entry with the default (Message) level, targeted to the end-user.
      *
      * @param format     Format template of the entry.
      * @param arguments  List of arguments. The entry is given ownership of
@@ -442,12 +662,12 @@ public:
     /**
      * Creates a new log entry with the specified log entry level.
      *
-     * @param level      Level of the entry.
+     * @param metadata   Level of the entry and context bits.
      * @param format     Format template of the entry.
      * @param arguments  List of arguments. The entry is given ownership of
      *                   each Arg instance.
      */
-    LogEntry &enter(LogEntry::Level level, String const &format, LogEntry::Args arguments = LogEntry::Args());
+    LogEntry &enter(duint32 metadata, String const &format, LogEntry::Args arguments = LogEntry::Args());
 
 public:
     /**
@@ -477,7 +697,7 @@ private:
 class DENG2_PUBLIC LogEntryStager
 {
 public:
-    LogEntryStager(LogEntry::Level level, String const &format);
+    LogEntryStager(duint32 metadata, String const &format);
 
     /// Appends a new argument to the entry.
     template <typename ValueType>
@@ -492,13 +712,13 @@ public:
     ~LogEntryStager() {
         if(!_disabled) {
             // Ownership of the entries is transferred to the LogEntry.
-            LOG().enter(_level, _format, _args);
+            LOG().enter(_metadata, _format, _args);
         }
     }
 
 private:
     bool _disabled;
-    LogEntry::Level _level;
+    duint32 _metadata;
     String _format;
     LogEntry::Args _args;
 };

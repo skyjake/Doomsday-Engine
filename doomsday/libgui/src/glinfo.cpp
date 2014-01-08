@@ -139,7 +139,7 @@ DENG2_PIMPL_NOREF(GLInfo)
             lim.maxTexSize = min(ceilPow2(String(CommandLine_Next()).toInt()),
                                  lim.maxTexSize);
 
-            LOG_INFO("Using requested maximum texture size of %i x %i") << lim.maxTexSize << lim.maxTexSize;
+            LOG_GL_NOTE("Using requested maximum texture size of %i x %i") << lim.maxTexSize << lim.maxTexSize;
         }
 
         inited = true;

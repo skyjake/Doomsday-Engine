@@ -195,6 +195,7 @@ DENG_CONVENIENCE_HEADERS += \
 # Private headers.
 DENG_HEADERS += \
     $$DENG_CONVENIENCE_HEADERS \
+    include/alertmask.h \
     include/audio/audiodriver.h \
     include/audio/audiodriver_music.h \
     include/audio/m_mus2midi.h \
@@ -390,6 +391,7 @@ DENG_HEADERS += \
     include/ui/dialogs/coloradjustmentdialog.h \
     include/ui/dialogs/inputdialog.h \
     include/ui/dialogs/inputsettingsdialog.h \
+    include/ui/dialogs/logsettingsdialog.h \
     include/ui/dialogs/messagedialog.h \
     include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/renderersettingsdialog.h \
@@ -470,6 +472,7 @@ DENG_HEADERS += \
     include/ui/widgets/sliderwidget.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/togglewidget.h \
+    include/ui/widgets/variablechoicewidget.h \
     include/ui/widgets/variabletogglewidget.h \
     include/ui/windowsystem.h \
     include/ui/windowtransform.h \
@@ -578,6 +581,7 @@ else:unix {
 
 # Platform-independent sources.
 SOURCES += \
+    src/alertmask.cpp \
     src/api_uri.cpp \
     src/audio/audiodriver.cpp \
     src/audio/audiodriver_music.cpp \
@@ -756,6 +760,7 @@ SOURCES += \
     src/ui/dialogs/coloradjustmentdialog.cpp \
     src/ui/dialogs/inputdialog.cpp \
     src/ui/dialogs/inputsettingsdialog.cpp \
+    src/ui/dialogs/logsettingsdialog.cpp \
     src/ui/dialogs/messagedialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
@@ -826,6 +831,7 @@ SOURCES += \
     src/ui/widgets/sliderwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/widgets/togglewidget.cpp \
+    src/ui/widgets/variablechoicewidget.cpp \
     src/ui/widgets/variabletogglewidget.cpp \
     src/ui/windowsystem.cpp \
     src/ui/windowtransform.cpp \
@@ -886,7 +892,8 @@ SOURCES += \
 
 DOOMSDAY_SCRIPTS += \
     modules/appconfig.de \
-    modules/bootstrap.de
+    modules/bootstrap.de \
+    modules/Updater.de
 
 OTHER_FILES += \
     $$DOOMSDAY_SCRIPTS \
@@ -904,6 +911,7 @@ mod.files = \
     $$DOOMSDAY_SCRIPTS \
     $$DENG_MODULES_DIR/Config.de \
     $$DENG_MODULES_DIR/gui.de \
+    $$DENG_MODULES_DIR/Log.de \
     $$DENG_MODULES_DIR/recutil.de
 
 # These fonts may be needed during the initial startup busy mode.

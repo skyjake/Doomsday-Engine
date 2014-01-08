@@ -81,7 +81,7 @@ DENG2_PIMPL(RemoteUser)
     {
         if(state == Disconnected) return;
 
-        LOG_INFO("Closing connection to remote user %s (from %s)") << id << address;
+        LOG_NET_NOTE("Closing connection to remote user %s (from %s)") << id << address;
         DENG2_ASSERT(socket->isOpen());
 
         if(state == Joined)

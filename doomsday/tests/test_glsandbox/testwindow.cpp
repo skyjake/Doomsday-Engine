@@ -227,7 +227,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void bankLoaded(DotPath const &path)
     {
-        LOG_INFO("Bank item \"%s\" loaded") << path;
+        LOG_RES_NOTE("Bank item \"%s\" loaded") << path;
         if(path == "rtt.cube")
         {
             DENG2_ASSERT_IN_MAIN_THREAD();
@@ -242,7 +242,7 @@ DENG2_OBSERVES(Bank, Load)
 
     void canvasGLResized(Canvas &cv)
     {
-        LOG_DEBUG("GLResized: %i x %i") << cv.width() << cv.height();
+        LOG_GL_VERBOSE("GLResized: %i x %i") << cv.width() << cv.height();
 
         GLState &st = GLState::current();
         //st.setViewport(Rectangleui::fromSize(cv.size()));

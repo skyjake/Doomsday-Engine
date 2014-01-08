@@ -415,6 +415,6 @@ boolean Dir_SetCurrent(const char* path)
     {
         success = !_chdir(path);
     }
-    LOG_VERBOSE("Changing current directory to \"%s\" %s") << path << (success? "succeeded" : "failed");
+    LOG_RES_VERBOSE("Changing current directory to \"%s\" %s") << path << (success? "succeeded" : "failed");
     return success;
 }

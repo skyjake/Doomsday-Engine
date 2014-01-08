@@ -159,8 +159,6 @@ void Evaluator::clearNames()
 
 void Evaluator::clearResults()
 {
-    //LOG_TRACE("Evaluator::clearResults");
-    
     for(Results::iterator i = _results.begin(); i != _results.end(); ++i)
     {
         delete *i;

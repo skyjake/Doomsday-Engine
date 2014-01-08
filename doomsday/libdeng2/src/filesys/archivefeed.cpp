@@ -58,13 +58,13 @@ DENG2_PIMPL(ArchiveFeed)
         // Open the archive.
         if(bytes)
         {
-            LOG_TRACE("Source %s is a byte array") << f.description();
+            LOG_RES_XVERBOSE("Source %s is a byte array") << f.description();
 
             arch = new ZipArchive(*bytes);
         }
         else
         {
-            LOG_TRACE("Source %s is a stream") << f.description();
+            LOG_RES_XVERBOSE("Source %s is a stream") << f.description();
 
             // The file is just a stream, so we can't rely on the file
             // acting as the physical storage location for Archive.
@@ -84,7 +84,7 @@ DENG2_PIMPL(ArchiveFeed)
             // If modified, the archive is written back to the file.
             if(arch->modified())
             {
-                LOG_MSG("Updating archive in ") << file.description();
+                LOG_RES_MSG("Updating archive in ") << file.description();
 
                 // Make sure we have either a compressed or uncompressed version of
                 // each entry in memory before destroying the source file.
@@ -95,7 +95,7 @@ DENG2_PIMPL(ArchiveFeed)
             }
             else
             {
-                LOG_VERBOSE("Not updating archive in %s (not changed)") << file.description();
+                LOG_RES_VERBOSE("Not updating archive in %s (not changed)") << file.description();
             }
             delete arch;
         }

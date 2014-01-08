@@ -129,7 +129,8 @@ DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
 #ifdef _DEBUG
     if(mo->ddFlags & DDMF_MISSILE)
     {
-        VERBOSE2( Con_Message("Mobj_Destroy: Destroying missile %i.", mo->thinker.id) );
+        LOG_AS("Mobj_Destroy");
+        LOG_MAP_XVERBOSE("Destroying missile %i") << mo->thinker.id;
     }
 #endif
 

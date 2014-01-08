@@ -90,7 +90,7 @@ public:
     void operator << (Reader &from);
 
     // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
+    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
 
 private:
     Type _id;

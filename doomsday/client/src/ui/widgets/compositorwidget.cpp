@@ -57,7 +57,7 @@ DENG_GUI_PIMPL(CompositorWidget)
             texture.setUndefinedImage(root().window().size(), Image::RGBA_8888);
             offscreen.reset(new GLTarget(texture)); //, GLTarget::DepthStencil));
             uTex = texture;
-            LOG_TRACE("Offscreen buffer resized to %s") << texture.size().asText();
+            LOG_GL_XVERBOSE("Offscreen buffer resized to %s") << texture.size().asText();
         }
     }*/
 

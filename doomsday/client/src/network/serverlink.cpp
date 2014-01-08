@@ -103,7 +103,7 @@ DENG2_PIMPL(ServerLink)
             Str_Delete(line);
             Str_Delete(response);
 
-            LOG_DEBUG("Discovered server at ") << svAddress;
+            LOG_NET_VERBOSE("Discovered server at ") << svAddress;
 
             // Update with the correct address.
             strncpy(svInfo.address, svAddress.host().toString().toLatin1(),
@@ -112,7 +112,7 @@ DENG2_PIMPL(ServerLink)
             discovered.insert(svAddress, svInfo);
 
             // Show the information in the console.
-            LOG_INFO("%i server%s been found")
+            LOG_NET_NOTE("%i server%s been found")
                     << discovered.size()
                     << (discovered.size() != 1 ? "s have" : " has");
 
@@ -123,7 +123,7 @@ DENG2_PIMPL(ServerLink)
         }
         else
         {
-            LOG_WARNING("Reply from %s was invalid") << svAddress;
+            LOG_NET_WARNING("Reply from %s was invalid") << svAddress;
         }
 
         return false;
@@ -137,7 +137,7 @@ DENG2_PIMPL(ServerLink)
     {
         if(reply.size() < 5 || reply != "Enter")
         {
-            LOG_WARNING("Server refused connection (received %i bytes instead of \"Enter\")")
+            LOG_NET_WARNING("Server refused connection (received %i bytes instead of \"Enter\")")
                     << reply.size();
             self.disconnect();
             return false;
@@ -218,7 +218,7 @@ void ServerLink::linkDisconnected()
     LOG_AS("ServerLink");
     if(d->state != None)
     {
-        LOG_INFO("Connection to server was disconnected");
+        LOG_NET_NOTE("Connection to server was disconnected");
 
         // Update our state and notify the game.
         disconnect();
@@ -239,7 +239,7 @@ void ServerLink::disconnect()
         if(gx.NetDisconnect)
             gx.NetDisconnect(true);
 
-        LOG_INFO("Link to server %s disconnected") << address();
+        LOG_NET_NOTE("Link to server %s disconnected") << address();
 
         AbstractLink::disconnect();
 
@@ -253,7 +253,7 @@ void ServerLink::disconnect()
     {
         d->state = None;
 
-        LOG_INFO("Connection attempts aborted");
+        LOG_NET_NOTE("Connection attempts aborted");
         AbstractLink::disconnect();
     }
 }

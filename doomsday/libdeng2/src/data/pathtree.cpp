@@ -458,7 +458,7 @@ int PathTree::traverse(ComparisonFlags flags, PathTree::Node const *parent, Path
 #ifdef DENG2_DEBUG
 void PathTree::debugPrint(QChar separator) const
 {
-    LOG_INFO("PathTree [%p]:") << de::dintptr(this);
+    LOGDEV_MSG("PathTree [%p]:") << de::dintptr(this);
     FoundPaths found;
     if(findAllPaths(found, 0, separator))
     {
@@ -466,10 +466,10 @@ void PathTree::debugPrint(QChar separator) const
 
         DENG2_FOR_EACH_CONST(FoundPaths, i, found)
         {
-            LOG_INFO("  %s") << *i;
+            LOGDEV_MSG("  %s") << *i;
         }
     }
-    LOG_INFO("  %i unique %s in the tree.") << found.count() << (found.count() == 1? "path" : "paths");
+    LOGDEV_MSG("  %i unique %s in the tree.") << found.count() << (found.count() == 1? "path" : "paths");
 }
 
 #if 0

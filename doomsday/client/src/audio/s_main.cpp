@@ -329,9 +329,8 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
     {
         if(sfxAvail)
         {
-            VERBOSE(Con_Message
-                    ("S_LocalSoundAtVolumeFrom: Sound %i " "caching failed.",
-                     soundId));
+            LOG_AUDIO_VERBOSE("S_LocalSoundAtVolumeFrom: Caching of sound %i failed")
+                              << soundId;
         }
         return false;
     }
@@ -533,7 +532,7 @@ int S_StartMusicNum(int id, boolean looped)
     if(id < 0 || id >= defs.count.music.num) return false;
     ded_music_t *def = &defs.music[id];
 
-    VERBOSE( Con_Message("Starting music '%s'...", def->id) )
+    LOG_AUDIO_VERBOSE("Starting music '%s'...") << def->id;
 
     return Mus_Start(def, looped);
 
@@ -550,7 +549,7 @@ int S_StartMusic(const char* musicID, boolean looped)
     int idx = Def_GetMusicNum(musicID);
     if(idx < 0)
     {
-        LOG_WARNING("Song \"%s\" not defined, cannot schedule playback.") << musicID;
+        LOG_AUDIO_WARNING("Song \"%s\" not defined, cannot start playback") << musicID;
         return false;
     }
     return S_StartMusicNum(idx, looped);

@@ -64,7 +64,7 @@ public:
 
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const {
-        return LogEntry::Arg::STRING;
+        return LogEntry::Arg::StringArgument;
     }
 };
 

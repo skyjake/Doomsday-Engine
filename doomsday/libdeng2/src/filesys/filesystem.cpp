@@ -57,7 +57,7 @@ void FileSystem::refresh()
     Time startedAt;
     d->root.populate();
 
-    LOG_DEBUG("Completed in %.2f seconds.") << startedAt.since();
+    LOG_RES_VERBOSE("Completed in %.2f seconds") << startedAt.since();
 
     printIndex();
 }
@@ -88,8 +88,8 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
                 Feed *feed = (*i)->newSubFeed(subFolder->name());
                 if(!feed) continue; // Check next one instead.
 
-                LOG_DEV_TRACE("Creating subfeed \"%s\" from %s",
-                              subFolder->name() << (*i)->description());
+                LOGDEV_RES_XVERBOSE_DEBUGONLY("Creating subfeed \"%s\" from %s",
+                                             subFolder->name() << (*i)->description());
 
                 subFolder->attach(feed);
 
@@ -119,7 +119,7 @@ File *FileSystem::interpret(File *sourceData)
     {
         if(LibraryFile::recognize(*sourceData))
         {
-            LOG_VERBOSE("Interpreted ") << sourceData->description() << " as a shared library";
+            LOG_RES_VERBOSE("Interpreted ") << sourceData->description() << " as a shared library";
 
             // It is a shared library intended for Doomsday.
             return new LibraryFile(sourceData);
@@ -128,7 +128,7 @@ File *FileSystem::interpret(File *sourceData)
         {
             try
             {
-                LOG_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
+                LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
 
                 // It is a ZIP archive: we will represent it as a folder.
                 std::auto_ptr<PackageFolder> package(new PackageFolder(*sourceData, sourceData->name()));
@@ -141,21 +141,21 @@ File *FileSystem::interpret(File *sourceData)
             {
                 // Even though it was recognized as an archive, the file
                 // contents may still prove to be corrupted.
-                LOG_WARNING("Archive in %s is invalid") << sourceData->description();
+                LOG_RES_WARNING("Archive in %s is invalid") << sourceData->description();
             }
             catch(IByteArray::OffsetError const &)
             {
-                LOG_WARNING("Archive in %s is truncated") << sourceData->description();
+                LOG_RES_WARNING("Archive in %s is truncated") << sourceData->description();
             }
             catch(IIStream::InputError const &)
             {
-                LOG_WARNING("%s cannot be read") << sourceData->description();
+                LOG_RES_WARNING("%s cannot be read") << sourceData->description();
             }
         }
     }
     catch(Error const &err)
     {
-        LOG_ERROR("") << err.asText();
+        LOG_RES_ERROR("") << err.asText();
 
         // The error is one we don't know how to handle. We were given
         // responsibility of the source file, so it has to be deleted.

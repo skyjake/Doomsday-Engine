@@ -120,8 +120,8 @@ public:
     void mapArgumentValues(ArrayValue const &args, ArgumentValues &values) const;
 
     /**
-     * Sets the global namespace of the function. This is the namespace
-     * where the function was initially created.
+     * Sets the global namespace of the function. This is the namespace where the
+     * function was initially created. Once set, it cannot be changed.
      */
     void setGlobals(Record *globals);
 

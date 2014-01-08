@@ -25,6 +25,7 @@
 #include "../CommandLine"
 #include "../NativePath"
 #include "../LogBuffer"
+#include "../LogFilter"
 #include "../System"
 #include "../FileSystem"
 #include "../ScriptSystem"
@@ -133,6 +134,8 @@ public:
     static bool appExists();
 
     static App &app();
+
+    static LogFilter &logFilter();
 
     /**
      * Returns the command line used to start the application.

@@ -35,6 +35,7 @@
 #include <de/garbage.h>
 
 #include "clientapp.h"
+#include "alertmask.h"
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
@@ -106,18 +107,18 @@ Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
         id = QFontDatabase::addApplicationFontFromData(data);
         if(id < 0)
         {
-            LOG_WARNING("Failed to load font:");
+            LOG_RES_WARNING("Failed to load font:");
         }
         else
         {
-            LOG_VERBOSE("Loaded font: %s") << args.at(0)->asText();
+            LOG_RES_VERBOSE("Loaded font: %s") << args.at(0)->asText();
             //qDebug() << args.at(0)->asText();
             //qDebug() << "Families:" << QFontDatabase::applicationFontFamilies(id);
         }
     }
     catch(Error const &er)
     {
-        LOG_WARNING("Failed to load font:\n") << er.asText();
+        LOG_RES_WARNING("Failed to load font:\n") << er.asText();
     }
     return 0;
 }
@@ -126,6 +127,7 @@ DENG2_PIMPL(ClientApp)
 {    
     QScopedPointer<Updater> updater;
     SettingsRegister audioSettings;
+    SettingsRegister logSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
     QScopedPointer<WidgetActions> widgetActions;
@@ -142,6 +144,7 @@ DENG2_PIMPL(ClientApp)
      */
     struct LogWarningAlarm : public LogSink
     {
+        AlertMask alertMask;
         StyledLogSinkFormatter formatter;
 
         LogWarningAlarm()
@@ -153,9 +156,12 @@ DENG2_PIMPL(ClientApp)
 
         LogSink &operator << (LogEntry const &entry)
         {
-            foreach(String msg, formatter.logEntryToTextLines(entry))
+            if(alertMask.shouldRaiseAlert(entry.metadata()))
             {
-                ClientApp::alert(msg, entry.level());
+                foreach(String msg, formatter.logEntryToTextLines(entry))
+                {
+                    ClientApp::alert(msg, entry.level());
+                }
             }
             return *this;
         }
@@ -235,7 +241,17 @@ DENG2_PIMPL(ClientApp)
 
     void initSettings()
     {
-        typedef SettingsRegister SReg;
+        typedef SettingsRegister SReg; // convenience
+
+        // Log filter and alert settings.
+        for(int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
+        {
+            String const name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
+            logSettings
+                    .define(SReg::ConfigVariable, String("log.filter.%1.minLevel").arg(name))
+                    .define(SReg::ConfigVariable, String("log.filter.%1.allowDev").arg(name))
+                    .define(SReg::ConfigVariable, String("alert.%1").arg(name));
+        }
 
         /// @todo These belong in their respective subsystems.
 
@@ -327,6 +343,9 @@ void ClientApp::initialize()
 
     initSubsystems(); // loads Config
 
+    // Set up the log alerts (observes Config variables).
+    d->logAlarm.alertMask.init();
+
     // Create the user's configurations and settings folder, if it doesn't exist.
     fileSystem().makeFolder("/home/configs");
 
@@ -409,8 +428,8 @@ void ClientApp::alert(String const &msg, LogEntry::Level level)
     if(ClientWindow::mainExists())
     {
         ClientWindow::main().alerts()
-                .newAlert(msg, level >= LogEntry::ERROR?   AlertDialog::Major  :
-                               level == LogEntry::WARNING? AlertDialog::Normal :
+                .newAlert(msg, level >= LogEntry::Error?   AlertDialog::Major  :
+                               level == LogEntry::Warning? AlertDialog::Normal :
                                                            AlertDialog::Minor);
     }
     /**
@@ -429,6 +448,11 @@ Updater &ClientApp::updater()
 {
     DENG2_ASSERT(!app().d->updater.isNull());
     return *app().d->updater;
+}
+
+SettingsRegister &ClientApp::logSettings()
+{
+    return app().d->logSettings;
 }
 
 SettingsRegister &ClientApp::audioSettings()

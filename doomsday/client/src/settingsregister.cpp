@@ -139,25 +139,32 @@ DENG2_OBSERVES(App, GameChange)
 
     QVariant getDefaultFromConfig(String const &name)
     {
-        // Get defaults for script values.
-        Script script("record d; import Config; Config.setDefaults(d); d");
-        Process proc(script);
-        proc.execute();
-
-        Record const &confDefaults = *proc.context().evaluator().result()
-                .as<RecordValue>().record();
-
-        DENG2_ASSERT(confDefaults.has(name));
-
-        Variable const &var = confDefaults[name];
-        if(var.value().is<NumberValue>())
+        try
         {
-            return var.value().asNumber();
+            // Get defaults for script values.
+            Script script("record d; import Config; Config.setDefaults(d); d");
+            Process proc(script);
+            proc.execute();
+
+            Record const &confDefaults = *proc.context().evaluator().result()
+                    .as<RecordValue>().record();
+
+            DENG2_ASSERT(confDefaults.has(name));
+
+            Variable const &var = confDefaults[name];
+            if(var.value().is<NumberValue>())
+            {
+                return var.value().asNumber();
+            }
+            else
+            {
+                // Oops, we don't support this yet.
+                DENG2_ASSERT(false);
+            }
         }
-        else
+        catch(Error const &er)
         {
-            // Oops, we don't support this yet.
-            DENG2_ASSERT(false);
+            LOG_WARNING("Failed to find default for \"%s\": %s") << name << er.asText();
         }
         return QVariant();
     }
@@ -312,7 +319,7 @@ DENG2_OBSERVES(App, GameChange)
     {
         try
         {
-            LOG_DEBUG("Reading setting profiles from %s") << file.description();
+            LOG_RES_VERBOSE("Reading setting profiles from %s") << file.description();
 
             Block raw;
             file >> raw;
@@ -332,7 +339,7 @@ DENG2_OBSERVES(App, GameChange)
                     String profileName = profBlock.keyValue("name").text;
                     if(profileName.isEmpty()) continue; // Skip this one...
 
-                    LOG_DEBUG("Reading profile '%s'") << profileName;
+                    LOG_VERBOSE("Reading profile '%s'") << profileName;
 
                     Profile *prof = addProfile(profileName);
                     if(markReadOnly) prof->readOnly = true;
@@ -354,7 +361,7 @@ DENG2_OBSERVES(App, GameChange)
         }
         catch(Error const &er)
         {
-            LOG_WARNING("Failed to load setting profiles from %s:\n%s")
+            LOG_RES_WARNING("Failed to load setting profiles from %s:\n%s")
                     << file.description() << er.asText();
         }
     }

@@ -178,7 +178,7 @@ de::String Sys_GLDescription()
 
 static void printGLUInfo(void)
 {
-    LOG_MSG("%s") << Sys_GLDescription();
+    LOG_GL_MSG("%s") << Sys_GLDescription();
 
     Sys_GLPrintExtensions();
 }
@@ -400,13 +400,13 @@ static void printExtensions(QStringList extensions)
             }
         }
 
-        LOG_MSG("%s") << str;
+        LOG_GL_MSG("%s") << str;
     }
 }
 
 void Sys_GLPrintExtensions(void)
 {
-    LOG_MSG(_E(b) "OpenGL Extensions:");
+    LOG_GL_MSG(_E(b) "OpenGL Extensions:");
     printExtensions(QString((char const *) glGetString(GL_EXTENSIONS)).split(" ", QString::SkipEmptyParts));
 
 #if WIN32

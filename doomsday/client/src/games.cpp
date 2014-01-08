@@ -221,14 +221,12 @@ static int locateAllResourcesWorker(void *context)
         games->locateStartupResources(*game);
         Con_SetProgress((n + 1) * 200 / games->count() - 1);
 
-        VERBOSE(
-            LOG_MSG("Game: %s - %s") << game->title() << game->author();
-            LOG_MSG("IdentityKey: ") << game->identityKey();
-            LOG_MSG("Startup resources:");
-            Game::printFiles(*game, FF_STARTUP);
+        LOG_VERBOSE("Game: %s - %s") << game->title() << game->author();
+        LOG_VERBOSE("IdentityKey: ") << game->identityKey();
+        LOG_VERBOSE("Startup resources:");
+        Game::printFiles(*game, FF_STARTUP);
 
-            LOG_MSG("Status: ") << game->statusAsText();
-        )
+        LOG_MSG("Status: ") << game->statusAsText();
         ++n;
     }
     BusyMode_WorkerEnd();
@@ -252,11 +250,11 @@ D_CMD(ListGames)
         return true;
     }
 
-    LOG_MSG(_E(1) "Registered Games:");
-    LOG_VERBOSE("Key: %s'!'=Incomplete/Not playable %s'*'=Loaded")
+    LOG_SCR_MSG(_E(1) "Registered Games:");
+    LOG_SCR_VERBOSE("Key: %s'!'=Incomplete/Not playable %s'*'=Loaded")
             << _E(>) _E(D) << _E(B);
 
-    LOG_MSG(_E(R) "\n");
+    LOG_SCR_MSG(_E(R) "\n");
 
     Games::GameList found;
     games.collectAll(found);
@@ -289,11 +287,11 @@ D_CMD(ListGames)
             numCompleteGames++;
         }
     }
-    LOG_MSG("%s") << list;
+    LOG_SCR_MSG("%s") << list;
 
-    LOG_MSG(_E(R) "\n");
-    LOG_MSG("%i of %i games playable.") << numCompleteGames << games.count();
-    LOG_MSG("Use the " _E(b) "load" _E(.) "command to load a game. For example: \"load gamename\".");
+    LOG_SCR_MSG(_E(R) "\n");
+    LOG_SCR_MSG("%i of %i games playable.") << numCompleteGames << games.count();
+    LOG_SCR_MSG("Use the " _E(b) "load" _E(.) "command to load a game. For example: \"load gamename\".");
 
     return true;
 }

@@ -64,6 +64,7 @@ public:
 
 public slots:
     void showListOfAlerts();
+    void showLogFilterSettings();
 
 protected:
     void finish(int result);

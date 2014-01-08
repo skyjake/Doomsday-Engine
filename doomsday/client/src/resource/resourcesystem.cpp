@@ -2069,7 +2069,7 @@ void ResourceSystem::initCompositeTextures()
     Time begunAt;
 
     LOG_AS("ResourceSystem");
-    LOG_VERBOSE("Initializing PatchComposite textures...");
+    LOG_RES_VERBOSE("Initializing PatchComposite textures...");
 
     // Load texture definitions from TEXTURE1/2 lumps.
     CompositeTextures texs = d->loadCompositeTextureDefs();
@@ -2077,7 +2077,7 @@ void ResourceSystem::initCompositeTextures()
 
     DENG_ASSERT(texs.isEmpty());
 
-    LOG_INFO(String("initCompositeTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("initCompositeTextures: Completed in %.2f seconds") << begunAt.since();
 }
 
 void ResourceSystem::initFlatTextures()
@@ -2150,7 +2150,7 @@ void ResourceSystem::initFlatTextures()
     /// @todo Defer until necessary (manifest texture is first referenced).
     d->deriveAllTexturesInScheme("Flats");
 
-    LOG_INFO(String("initFlatTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("initFlatTextures: Completed in %.2f seconds") << begunAt.since();
 }
 
 /// Returns a value in the range [0..Sprite::max_angles] if @a rotCode can be
@@ -2313,7 +2313,7 @@ void ResourceSystem::initSpriteTextures()
     /// @todo Defer until necessary (manifest texture is first referenced).
     d->deriveAllTexturesInScheme("Sprites");
 
-    LOG_INFO(String("initSpriteTextures: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("initSpriteTextures: Completed in %.2f seconds") << begunAt.since();
 }
 
 Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
@@ -3292,7 +3292,7 @@ void ResourceSystem::initModels()
         me->selectNext = closest;
     }
 
-    LOG_INFO(String("Model init completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_MSG("Model init completed in %.2f seconds") << begunAt.since();
 }
 
 int ResourceSystem::indexOf(ModelDef const *modelDef)
@@ -3553,7 +3553,7 @@ void ResourceSystem::initSprites()
     // We're done with the definitions.
     defs.clear();
 
-    LOG_INFO(String("Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
 void ResourceSystem::clearAllColorPalettes()

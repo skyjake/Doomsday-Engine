@@ -217,7 +217,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 void P_InitPicAnims(void)
 {
     { lumpnum_t lumpNum;
-    if((lumpNum = W_CheckLumpNumForName2("ANIMATED", true)) > 0)
+    if((lumpNum = W_CheckLumpNumForName("ANIMATED")) > 0)
     {
         /**
          * We'll support this BOOM extension by reading the data and then
@@ -227,13 +227,15 @@ void P_InitPicAnims(void)
          * Support for this extension should be considered depreciated.
          * All new features should be added, accessed via DED.
          */
-        VERBOSE( Con_Message("Processing lump %s::ANIMATED...", F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum)))) )
+        LogBuffer_Printf(DE2_LOG_RES | DE2_LOG_VERBOSE,
+                         "Processing lump %s:ANIMATED...",
+                         F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum))));
         loadAnimDefs((animdef_t*)W_CacheLump(lumpNum), true);
         W_UnlockLump(lumpNum);
         return;
     }}
 
-    VERBOSE( Con_Message("Registering default texture animations...") );
+    LogBuffer_Printf(DE2_LOG_RES | DE2_LOG_VERBOSE, "Registering default texture animations...");
     loadAnimDefs(animsShared, false);
 }
 

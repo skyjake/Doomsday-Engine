@@ -197,7 +197,7 @@ boolean FI_ScriptIsMenuTrigger(finaleid_t id)
         Con_Error("FI_ScriptIsMenuTrigger: Unknown finaleid %u.", id);
     if(f->active)
     {
-        DEBUG_Message(("IsMenuTrigger: %i\n", FinaleInterpreter_IsMenuTrigger(f->_interpreter)));
+        LOG_SCR_XVERBOSE("IsMenuTrigger: %i") << FinaleInterpreter_IsMenuTrigger(f->_interpreter);
         return FinaleInterpreter_IsMenuTrigger(f->_interpreter);
     }
     return false;

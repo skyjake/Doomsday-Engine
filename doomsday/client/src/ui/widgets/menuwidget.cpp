@@ -411,6 +411,11 @@ void MenuWidget::setItems(Data const &items)
     d->setContext(&items);
 }
 
+void MenuWidget::useDefaultItems()
+{
+    d->setContext(&d->defaultItems);
+}
+
 int MenuWidget::count() const
 {
     return d->countVisible();

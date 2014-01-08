@@ -27,8 +27,8 @@
  * Game message logging and display.
  */
 
-#ifndef LIBCOMMON_HUD_LOG_H
-#define LIBCOMMON_HUD_LOG_H
+#ifndef LIBCOMMON_HULOGDEV_H
+#define LIBCOMMON_HULOGDEV_H
 
 #include "hu_lib.h"
 
@@ -108,4 +108,4 @@ void UILog_Post(uiwidget_t* obj, byte flags, const char* text);
  */
 void UILog_Refresh(uiwidget_t* obj);
 
-#endif /* LIBCOMMON_HUD_LOG_H */
+#endif /* LIBCOMMON_HULOGDEV_H */

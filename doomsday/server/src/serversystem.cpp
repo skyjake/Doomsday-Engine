@@ -83,7 +83,7 @@ DENG2_PIMPL(ServerSystem)
     {
         // Note: re-initialization is allowed, so we don't check for inited now.
 
-        LOG_INFO("Server listening on TCP port ") << port;
+        LOG_NET_NOTE("Server listening on TCP port %i") << port;
 
         deinit();
 

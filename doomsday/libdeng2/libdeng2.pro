@@ -83,6 +83,7 @@ HEADERS += \
     include/de/Library \
     include/de/Log \
     include/de/LogBuffer \
+    include/de/LogFilter \
     include/de/LogSink \
     include/de/Loop \
     include/de/Matrix \
@@ -115,6 +116,7 @@ HEADERS += \
     include/de/core/library.h \
     include/de/core/log.h \
     include/de/core/logbuffer.h \
+    include/de/core/logfilter.h \
     include/de/core/logsink.h \
     include/de/core/loop.h \
     include/de/core/matrix.h \
@@ -152,6 +154,7 @@ SOURCES += \
     src/core/library.cpp \
     src/core/log.cpp \
     src/core/logbuffer.cpp \
+    src/core/logfilter.cpp \
     src/core/logsink.cpp \
     src/core/loop.cpp \
     src/core/memorylogsink.cpp \

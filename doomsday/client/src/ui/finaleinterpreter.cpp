@@ -1281,7 +1281,8 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
 {
     assert(fi);
 
-    DEBUG_VERBOSE2_Message(("FinaleInterpreter_Responder: fi %i, ev %i\n", fi->_id, ev->type));
+    LOG_AS("FinaleInterpreter_Responder");
+    LOG_SCR_XVERBOSE("fi %i, ev %i") << fi->_id << ev->type;
 
     if(fi->flags.suspended)
         return false;
@@ -1509,11 +1510,11 @@ DEFFC(If)
         if(DD_CallHooks(HOOK_FINALE_EVAL_IF, fi->_id, (void*) &p))
         {
             val = p.returnVal;
-            LOG_DEBUG("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
+            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
         }
         else
         {
-            LOG_DEBUG("HOOK_FINALE_EVAL_IF: no hook (for %s)") << token;
+            LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: no hook (for %s)") << token;
         }
     }
     else

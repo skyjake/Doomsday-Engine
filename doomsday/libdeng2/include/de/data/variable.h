@@ -133,7 +133,7 @@ public:
      *
      * @param v  New value. Variable gets ownership.
      */
-    void set(Value *v);
+    Variable &set(Value *v);
 
     /**
      * Sets the value of the variable.
@@ -147,7 +147,7 @@ public:
      *
      * @param v  New value. Variable takes a copy of this.
      */
-    void set(Value const &v);
+    Variable &set(Value const &v);
 
     /**
      * Returns the value of the variable (non-modifiable).

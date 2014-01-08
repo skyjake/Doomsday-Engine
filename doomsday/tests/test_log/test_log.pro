@@ -6,3 +6,4 @@ TARGET = test_log
 SOURCES += main.cpp
 
 deployTest($$TARGET)
+

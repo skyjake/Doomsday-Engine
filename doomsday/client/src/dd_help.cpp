@@ -45,7 +45,7 @@ static HelpStrings helps;
  */
 static void readStrings(File const &file)
 {
-    LOG_VERBOSE("Reading help strings from ") << file.description();
+    LOG_RES_VERBOSE("Reading help strings from ") << file.description();
 
     de::Reader reader(file);
     StringsByType *node = 0;
@@ -65,7 +65,7 @@ static void readStrings(File const &file)
             String id = line.mid(1, end > 0? end - 1 : -1).trimmed().toLower();
             node = &helps.insert(id, StringsByType()).value();
 
-            LOG_DEV_TRACE("Help node '%s'", id);
+            LOG_TRACE_DEBUGONLY("Help node '%s'", id);
         }
         else if(node && line.contains('=')) // It must be a key?
         {
@@ -125,7 +125,7 @@ static void readStrings(File const &file)
 
             node->insert(type, text);
 
-            LOG_DEV_TRACE("Help string (type %i): \"%s\"", type << text);
+            LOG_TRACE_DEBUGONLY("Help string (type %i): \"%s\"", type << text);
         }
     }
 }
@@ -165,7 +165,7 @@ void DD_InitHelp()
     }
     catch(Error const &er)
     {
-        LOG_WARNING("") << er.asText();
+        LOG_RES_WARNING("") << er.asText();
     }
 }
 
@@ -182,7 +182,7 @@ void DD_ReadGameHelp()
     }
     catch(Error const &er)
     {
-        LOG_WARNING("") << er.asText();
+        LOG_RES_WARNING("") << er.asText();
     }
 }
 

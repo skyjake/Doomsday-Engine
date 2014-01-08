@@ -225,16 +225,20 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
 void Function::setGlobals(Record *globals)
 {
     LOG_AS("Function::setGlobals");
+    DENG2_ASSERT(globals != 0);
     
     if(!d->globals)
     {
         d->globals = globals;
         d->globals->audienceForDeletion.add(this);
     }
+    /*
     else if(d->globals != globals)
     {
-        LOG_WARNING("Function was offered a different namespace.");
-    }
+        LOGDEV_SCR_WARNING("Function was offered a different namespace");
+        LOGDEV_SCR_VERBOSE("Function %p's namespace is:\n%s\nOffered namespace is:\n%s")
+                << this << d->globals->asText() << globals->asText();
+    }*/
 }
 
 Record *Function::globals() const

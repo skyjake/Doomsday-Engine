@@ -19,6 +19,7 @@
 #include "ui/widgets/consolewidget.h"
 #include "GuiRootWidget"
 #include "ui/VariableToggleItem"
+#include "ui/SubwidgetItem"
 #include "CommandAction"
 #include "SignalAction"
 #include "ui/widgets/buttonwidget.h"
@@ -27,6 +28,7 @@
 #include "ui/widgets/popupmenuwidget.h"
 #include "ui/widgets/togglewidget.h"
 #include "ui/widgets/logwidget.h"
+#include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
 
 #include <de/App>
@@ -277,6 +279,8 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
             << new ui::ActionItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())))
             << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"])
+            << new ui::Item(ui::Item::Separator)
+            << new ui::SubwidgetItem(tr("Log Filter & Alerts..."), ui::Right, makePopup<LogSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::VariableToggleItem(tr("Doomsday Script"), App::config()["console.script"]);
 

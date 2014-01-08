@@ -106,7 +106,7 @@ public:
     static bool isHostLocal(QHostAddress const &host);
 
     // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
+    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
 
 private:
     DENG2_PRIVATE(d)

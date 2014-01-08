@@ -591,12 +591,7 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
 
 ded_flag_t *Def_GetFlag(char const *flag)
 {
-    if(!flag || !flag[0])
-    {
-        DEBUG_Message(("Attempted Def_GetFlagValue with %s flag argument.\n",
-                       flag? "zero-length" : "<null>"));
-        return 0;
-    }
+    if(!flag || !flag[0]) return 0;
 
     for(int i = defs.count.flags.num - 1; i >= 0; i--)
     {
@@ -643,7 +638,7 @@ int Def_EvalFlags2(char const *ptr)
         }
         else
         {
-            LOG_WARNING("Flag '%s' is not defined (or used out of context).") << flagName;
+            LOG_RES_WARNING("Flag '%s' is not defined (or used out of context)") << flagName;
         }
     }
     return value;
@@ -724,7 +719,7 @@ void Def_ReadProcessDED(char const* path)
     de::Uri path_ = de::Uri(path, RC_NULL);
     if(!App_FileSystem().accessFile(path_))
     {
-        LOG_WARNING("\"%s\" not found!") << NativePath(path_.asText()).pretty();
+        LOG_RES_WARNING("\"%s\" not found!") << NativePath(path_.asText()).pretty();
         return;
     }
 
@@ -732,7 +727,7 @@ void Def_ReadProcessDED(char const* path)
     if(!App_FileSystem().checkFileId(path_))
     {
         // Already handled.
-        LOG_DEBUG("\"%s\" has already been read.") << NativePath(path_.asText()).pretty();
+        LOG_RES_XVERBOSE("\"%s\" has already been read") << NativePath(path_.asText()).pretty();
         return;
     }
 
@@ -779,7 +774,7 @@ static void Def_ReadLumpDefs()
 
     if(verbose && numProcessedLumps > 0)
     {
-        LOG_INFO("Processed %i %s.")
+        LOG_RES_NOTE("Processed %i %s")
             << numProcessedLumps << (numProcessedLumps != 1 ? "lumps" : "lump");
     }
 }
@@ -832,7 +827,7 @@ static void readDefinitionFile(String path)
     if(path.isEmpty()) return;
 
     QByteArray pathUtf8 = path.toUtf8();
-    LOG_VERBOSE("  Processing '%s'...") << F_PrettyPath(pathUtf8.constData());
+    LOG_RES_VERBOSE("Reading '%s'...") << F_PrettyPath(pathUtf8.constData());
     Def_ReadProcessDED(pathUtf8);
 }
 
@@ -921,7 +916,7 @@ static void readAllDefinitions()
      */
     Def_ReadLumpDefs();
 
-    LOG_INFO(String("readAllDefinitions: Completed in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+    LOG_RES_VERBOSE("readAllDefinitions: Completed in %.2f seconds") << begunAt.since();
 }
 
 static AnimGroup const *findAnimGroupForTexture(TextureManifest &textureManifest)
@@ -983,12 +978,10 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
         mat->height = tex.height();
         mat->flags = (tex.isFlagged(Texture::NoDraw)? Material::NoDraw : 0);
     }
-#if _DEBUG
     else
     {
-        LOG_DEBUG("Texture \"%s\" not yet defined, resultant Material will inherit dimensions.") << texUri;
+        LOGDEV_RES_MSG("Texture \"%s\" not yet defined, resultant Material will inherit dimensions") << texUri;
     }
-#endif
 
     // The first stage is implicit.
     int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
@@ -1378,10 +1371,11 @@ static void interpretMaterialDef(ded_material_t const &def)
                 catch(ResourceSystem::MissingManifestError const &er)
                 {
                     // Log but otherwise ignore this error.
-                    LOG_WARNING(er.asText() + ". Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i), ignoring.")
+                    LOG_RES_WARNING("Ignoring unknown texture \"%s\" in Material \"%s\" (layer %i stage %i): %s")
                         << *reinterpret_cast<de::Uri *>(firstLayer.stages[0].texture)
                         << *reinterpret_cast<de::Uri *>(def.uri)
-                        << 0 << 0;
+                        << 0 << 0
+                        << er.asText();
                 }
             }
         }
@@ -1407,13 +1401,13 @@ static void interpretMaterialDef(ded_material_t const &def)
     }
     catch(ResourceSystem::UnknownSchemeError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring material \"%s\", ignoring.")
-            << *reinterpret_cast<de::Uri *>(def.uri);
+        LOG_RES_WARNING("Failed to declare material \"%s\": %s")
+            << *reinterpret_cast<de::Uri *>(def.uri) << er.asText();
     }
     catch(MaterialScheme::InvalidPathError const &er)
     {
-        LOG_WARNING(er.asText() + ". Failed declaring material \"%s\", ignoring.")
-            << *reinterpret_cast<de::Uri *>(def.uri);
+        LOG_RES_WARNING("Failed to declare material \"%s\": %s")
+            << *reinterpret_cast<de::Uri *>(def.uri) << er.asText();
     }
 }
 
@@ -1805,7 +1799,7 @@ void Def_Read()
     }
 
     // Log a summary of the definition database.
-    LOG_MSG(_E(b) "Definitions:");
+    LOG_RES_MSG(_E(b) "Definitions:");
     de::String str;
     QTextStream os(&str);
     os << defCountMsg(defs.count.groups.num, "animation groups");
@@ -1838,7 +1832,7 @@ void Def_Read()
     os << defCountMsg(defs.count.textureEnv.num, "texture environments");
     os << defCountMsg(countMobjInfo.num, "things");
 
-    LOG_MSG("%s") << str.rightStrip();
+    LOG_RES_MSG("%s") << str.rightStrip();
 
     defsInited = true;
 }
@@ -1881,9 +1875,9 @@ static void initMaterialGroup(ded_group_t &def)
         catch(ResourceSystem::MissingManifestError const &er)
         {
             // Log but otherwise ignore this error.
-            LOG_WARNING(er.asText() + ". Unknown material \"%s\" in group def %i, ignoring.")
+            LOG_RES_WARNING("Unknown material \"%s\" in group def %i: %s")
                 << *reinterpret_cast<de::Uri *>(gm->material)
-                << i;
+                << i << er.asText();
         }
     }
 }

@@ -74,7 +74,7 @@ DENG2_PIMPL(LinkWindow)
     QAction *stopAction;
 #ifdef MENU_IN_LINK_WINDOW
     QAction *disconnectAction;
-#endif
+#endif      
 
     Instance(Public &i)
         : Base(i),
@@ -90,9 +90,6 @@ DENG2_PIMPL(LinkWindow)
     {
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
-#ifdef _DEBUG
-        logBuffer.enable(LogEntry::DEBUG);
-#endif
     }
 
     ~Instance()
@@ -482,7 +479,7 @@ void LinkWindow::sendCommandToServer(de::String command)
     if(d->link)
     {
         // Echo the command locally.
-        LogEntry *e = new LogEntry(LogEntry::INFO, "", 0, ">",
+        LogEntry *e = new LogEntry(LogEntry::Generic | LogEntry::Note, "", 0, ">",
                                    LogEntry::Args() << new LogEntry::Arg(command));
         d->logBuffer.add(e);
 

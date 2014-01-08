@@ -224,8 +224,8 @@ void R_ProjectSprite(mobj_t *mo)
     catch(Sprite::MissingViewAngleError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ". Projecting sprite '%i' frame '%i', ignoring.")
-            << mo->sprite << mo->frame;
+        LOG_GL_WARNING("Projecting sprite '%i' frame '%i': %s")
+            << mo->sprite << mo->frame << er.asText();
     }
 
     if(!mat) return;
@@ -519,8 +519,8 @@ void R_ProjectSprite(mobj_t *mo)
         catch(Sprite::MissingViewAngleError const &er)
         {
             // Log but otherwise ignore this error.
-            LOG_WARNING(er.asText() + ". Projecting flare source for sprite '%i' frame '%i', ignoring.")
-                << mo->sprite << mo->frame;
+            LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")
+                << mo->sprite << mo->frame << er.asText();
         }
     }
 }

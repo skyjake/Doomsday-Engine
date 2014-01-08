@@ -138,7 +138,7 @@ bool DirectoryFeed::prune(File &file) const
             if(fileStatus(nativeFile->nativePath()) != nativeFile->status())
             {
                 // It's not up to date.
-                LOG_VERBOSE("%s: status has changed, pruning!") << nativeFile->nativePath();
+                LOG_RES_MSG("Pruning \"%s\": status has changed") << nativeFile->nativePath();
                 return true;
             }
         }
@@ -159,7 +159,7 @@ bool DirectoryFeed::prune(File &file) const
             DirectoryFeed *dirFeed = dynamic_cast<DirectoryFeed *>(subFolder->feeds().front());
             if(dirFeed && !exists(dirFeed->_nativePath))
             {
-                LOG_VERBOSE("%s: no longer exists, pruning!") << _nativePath;
+                LOG_RES_NOTE("Pruning \"%s\": no longer exists") << _nativePath;
                 return true;
             }
         }

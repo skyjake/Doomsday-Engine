@@ -674,8 +674,8 @@ boolean F_Dump(void const* data, size_t size, char const* path)
     FILE* outFile = fopen(Str_Text(nativePath), "wb");
     if(!outFile)
     {
-        Con_Message("Warning: Failed to open \"%s\" for writing (error: %s), aborting.",
-                    F_PrettyPath(Str_Text(nativePath)), strerror(errno));
+        LOG_RES_WARNING("Failed to open \"%s\" for writing: %s")
+                << F_PrettyPath(Str_Text(nativePath)) << strerror(errno);
         return false;
     }
 
@@ -691,7 +691,7 @@ static bool dumpLump(de::File1& lump, String path)
     bool dumpedOk = F_Dump(lump.cache(), lump.info().size, dumpPathUtf8.constData());
     lump.unlock();
     if(!dumpedOk) return false;
-    LOG_VERBOSE("%s dumped to \"%s\"") << lump.name() << NativePath(dumpPath).pretty();
+    LOG_RES_VERBOSE("%s dumped to \"%s\"") << lump.name() << NativePath(dumpPath).pretty();
     return true;
 }
 

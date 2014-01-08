@@ -31,19 +31,29 @@ int main(int argc, char **argv)
         TextApp app(argc, argv);
         app.initSubsystems(App::DisablePlugins);
 
-        for(int i = 0; i < LogEntry::MAX_LOG_LEVELS; ++i)
+        for(int j = 0; j < 2; ++j)
         {
-            LogEntry::Level level = LogEntry::Level(i);
-            LogBuffer::appBuffer().enable(level);
-            LOG_AT_LEVEL(level, "Enabled level ") << LogEntry::levelToText(level);
+            bool devMode = j > 0;
+            app.logFilter().setAllowDev(devMode);
 
-            for(int k = 0; k < LogEntry::MAX_LOG_LEVELS; ++k)
+            for(int i = LogEntry::LowestLogLevel; i <= LogEntry::HighestLogLevel; ++i)
             {
-                LogEntry::Level other = LogEntry::Level(k);
-                LOG_AT_LEVEL(other, "- (currently enabled %8s) entry at level %8s: visible: %b")
-                        << LogEntry::levelToText(level)
-                        << LogEntry::levelToText(other)
-                        << LogBuffer::appBuffer().isEnabled(other);
+                LogEntry::Level level = LogEntry::Level(i);
+                app.logFilter().setMinLevel(level);
+                LOG_AT_LEVEL(level, "Enabled level %s with dev:%b") << LogEntry::levelToText(level) << devMode;
+
+                for(int k = LogEntry::LowestLogLevel; k <= LogEntry::HighestLogLevel; ++k)
+                {
+                    for(int d = 0; d < 2; ++d)
+                    {
+                        duint32 other = k | (d? LogEntry::Dev : 0);
+                        LOG_AT_LEVEL(other, "- (currently enabled %8s) entry at level %8s (context %3s): visible: %b")
+                                << LogEntry::levelToText(level)
+                                << LogEntry::levelToText(other)
+                                << LogEntry::contextToText(other)
+                                << LogBuffer::appBuffer().isEnabled(LogEntry::Level(other));
+                    }
+                }
             }
         }
     }

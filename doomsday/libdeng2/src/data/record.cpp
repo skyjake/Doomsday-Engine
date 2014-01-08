@@ -161,8 +161,8 @@ DENG2_PIMPL(Record)
                 duint32 oldTargetId = value->record()->d->oldUniqueId;
                 if(refMap.contains(oldTargetId))
                 {
-                    LOG_DEV_TRACE("RecordValue %p restored to reference record %i (%p)",
-                                  value << oldTargetId << refMap[oldTargetId]);
+                    LOG_TRACE_DEBUGONLY("RecordValue %p restored to reference record %i (%p)",
+                                        value << oldTargetId << refMap[oldTargetId]);
 
                     // Relink the value to its target.
                     value->setRecord(refMap[oldTargetId]);
@@ -356,7 +356,53 @@ Record *Record::remove(String const &name)
     }
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
 }
-    
+
+Variable &Record::set(String const &name, bool value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(NumberValue(value));
+    }
+    return addBoolean(name, value);
+}
+
+Variable &Record::set(String const &name, Value::Text const &value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(TextValue(value));
+    }
+    return addText(name, value);
+}
+
+Variable &Record::set(String const &name, Value::Number const &value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(NumberValue(value));
+    }
+    return addNumber(name, value);
+}
+
+Variable &Record::set(String const &name, dint32 value)
+{
+    return set(name, Value::Number(value));
+}
+
+Variable &Record::set(String const &name, duint32 value)
+{
+    return set(name, Value::Number(value));
+}
+
+Variable &Record::set(String const &name, ArrayValue *value)
+{
+    if(hasMember(name))
+    {
+        return (*this)[name].set(value);
+    }
+    return addArray(name, value);
+}
+
 Variable &Record::operator [] (String const &name)
 {
     return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);
@@ -527,7 +573,7 @@ void Record::variableBeingDeleted(Variable &variable)
 {
     DENG2_ASSERT(d->findMemberByPath(variable.name()) != 0);
 
-    LOG_DEV_TRACE("Variable %p deleted, removing from Record %p", &variable << this);
+    LOG_TRACE_DEBUGONLY("Variable %p deleted, removing from Record %p", &variable << this);
 
     // Remove from our index.
     d->members.remove(variable.name());

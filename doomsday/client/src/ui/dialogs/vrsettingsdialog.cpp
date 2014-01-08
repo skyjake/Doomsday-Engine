@@ -49,17 +49,17 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         area.add(mode = new CVarChoiceWidget("rend-vr-mode"));
         mode->items()
-                << new ChoiceItem("No stereo", VR::MODE_MONO)
-                << new ChoiceItem("Anaglyph (green/magenta)", VR::MODE_GREEN_MAGENTA)
-                << new ChoiceItem("Anaglyph (red/cyan)", VR::MODE_RED_CYAN)
-                << new ChoiceItem("Left eye only", VR::MODE_LEFT)
-                << new ChoiceItem("Right eye only", VR::MODE_RIGHT)
-                << new ChoiceItem("Top/bottom", VR::MODE_TOP_BOTTOM)
-                << new ChoiceItem("Side-by-side", VR::MODE_SIDE_BY_SIDE)
-                << new ChoiceItem("Parallel", VR::MODE_PARALLEL)
-                << new ChoiceItem("Cross-eye", VR::MODE_CROSSEYE)
-                << new ChoiceItem("Oculus Rift", VR::MODE_OCULUS_RIFT)
-                << new ChoiceItem("Hardware stereo", VR::MODE_QUAD_BUFFERED);
+                << new ChoiceItem(tr("No stereo"), VR::MODE_MONO)
+                << new ChoiceItem(tr("Anaglyph (green/magenta)"), VR::MODE_GREEN_MAGENTA)
+                << new ChoiceItem(tr("Anaglyph (red/cyan)"), VR::MODE_RED_CYAN)
+                << new ChoiceItem(tr("Left eye only"), VR::MODE_LEFT)
+                << new ChoiceItem(tr("Right eye only"), VR::MODE_RIGHT)
+                << new ChoiceItem(tr("Top/bottom"), VR::MODE_TOP_BOTTOM)
+                << new ChoiceItem(tr("Side-by-side"), VR::MODE_SIDE_BY_SIDE)
+                << new ChoiceItem(tr("Parallel"), VR::MODE_PARALLEL)
+                << new ChoiceItem(tr("Cross-eye"), VR::MODE_CROSSEYE)
+                << new ChoiceItem(tr("Oculus Rift"), VR::MODE_OCULUS_RIFT)
+                << new ChoiceItem(tr("Hardware stereo"), VR::MODE_QUAD_BUFFERED);
 
         area.add(swapEyes    = new CVarToggleWidget("rend-vr-swap-eyes", tr("Swap Eyes")));
         area.add(dominantEye = new CVarSliderWidget("rend-vr-dominant-eye"));

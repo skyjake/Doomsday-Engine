@@ -129,7 +129,7 @@ void LogBuffer_EnableStandardOutput(int enable)
 	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
 }
 
-static void logFragmentPrinter(de::LogEntry::Level level, char const *fragment)
+static void logFragmentPrinter(duint32 metadata, char const *fragment)
 {
     static std::string currentLogLine;
 
@@ -138,27 +138,33 @@ static void logFragmentPrinter(de::LogEntry::Level level, char const *fragment)
     std::string::size_type pos;
     while((pos = currentLogLine.find('\n')) != std::string::npos)
     {
-        LOG().enter(level, currentLogLine.substr(0, pos).c_str());
+        LOG().enter(metadata, currentLogLine.substr(0, pos).c_str());
         currentLogLine.erase(0, pos + 1);
     }
 }
 
 void LogBuffer_Msg(char const *text)
 {
-    logFragmentPrinter(de::LogEntry::MESSAGE, text);
+    logFragmentPrinter(de::LogEntry::Generic | de::LogEntry::Message, text);
 }
 
-void LogBuffer_Printf(legacycore_loglevel_t level, char const *format, ...)
+void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
 {
-    // Validate the level.
-    de::LogEntry::Level logLevel = de::LogEntry::Level(level);
-    if(level < DE2_LOG_TRACE || level > DE2_LOG_CRITICAL)
+    // Automatically apply the generic domain if not specified.
+    if(!(metadata & de::LogEntry::DomainMask))
     {
-        logLevel = de::LogEntry::MESSAGE;
+        metadata |= de::LogEntry::Generic;
     }
 
     // If this level is not enabled, just ignore.
-    if(!de::LogBuffer::appBuffer().isEnabled(logLevel)) return;
+    if(!de::LogBuffer::appBuffer().isEnabled(metadata)) return;
+
+    // Validate the level.
+    de::LogEntry::Level logLevel = de::LogEntry::Level(metadata & de::LogEntry::LevelMask);
+    if(logLevel < de::LogEntry::XVerbose || logLevel > de::LogEntry::Critical)
+    {
+        logLevel = de::LogEntry::Message;
+    }
 
     char buffer[2048];
     va_list args;
@@ -166,7 +172,7 @@ void LogBuffer_Printf(legacycore_loglevel_t level, char const *format, ...)
     vsprintf(buffer, format, args); /// @todo unsafe
     va_end(args);
 
-    logFragmentPrinter(logLevel, buffer);
+    logFragmentPrinter(logLevel | (metadata & de::LogEntry::ContextMask), buffer);
 }
 
 Info *Info_NewFromString(char const *utf8text)

@@ -288,17 +288,17 @@ void GL_SetGamma()
 
 static void printConfiguration()
 {
-    LOG_VERBOSE(_E(b) "Render configuration:");
+    LOG_GL_VERBOSE(_E(b) "Render configuration:");
 
-    LOG_VERBOSE("  Multisampling: %b") << GL_state.features.multisample;
+    LOG_GL_VERBOSE("  Multisampling: %b") << GL_state.features.multisample;
     if(GL_state.features.multisample)
     {
-        LOG_VERBOSE("  Multisampling format: %i") << GL_state.multisampleFormat;
+        LOG_GL_VERBOSE("  Multisampling format: %i") << GL_state.multisampleFormat;
     }
-    LOG_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
-    LOG_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
-    LOG_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
-    LOG_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
+    LOG_GL_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
+    LOG_GL_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
+    LOG_GL_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
+    LOG_GL_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
 }
 
 boolean GL_EarlyInit()
@@ -306,7 +306,7 @@ boolean GL_EarlyInit()
     if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
 
-    LOG_INFO("Initializing Render subsystem...");
+    LOG_GL_MSG("Initializing Render subsystem...");
 
     gamma_support = !CommandLine_Check("-noramp");
 
@@ -324,13 +324,13 @@ boolean GL_EarlyInit()
     // Check the maximum texture size.
     if(GLInfo::limits().maxTexSize == 256)
     {
-        LOG_WARNING("Using restricted texture w/h ratio (1:8)");
+        LOG_GL_WARNING("Using restricted texture w/h ratio (1:8)");
         ratioLimit = 8;
     }
     if(CommandLine_Check("-outlines"))
     {
         fillOutlines = false;
-        LOG_INFO("Textures have outlines");
+        LOG_GL_NOTE("Textures have outlines");
     }
 
     renderTextures = !CommandLine_Exists("-notex");
@@ -908,7 +908,7 @@ static void uploadContentUnmanaged(texturecontent_t const &content)
     gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
     if(uploadMethod == gl::Immediate)
     {
-        LOG_DEBUG("Uploading texture (%i:%ix%i) while not busy! Should be precached in busy mode?")
+        LOG_GL_XVERBOSE("Uploading texture (%i:%ix%i) while not busy! Should have been precached in busy mode?")
                 << content.name << content.width << content.height;
     }
 

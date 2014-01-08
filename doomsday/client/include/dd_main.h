@@ -43,20 +43,6 @@
 #include <de/String>
 #include "resourceclass.h"
 
-// Verbose messages.
-#define VERBOSE(code)   { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
-
-#ifdef _DEBUG
-#  define DEBUG_Message(code)           {Con_Message code;}
-#  define DEBUG_VERBOSE_Message(code)   {if(verbose >= 1) {Con_Message code;}}
-#  define DEBUG_VERBOSE2_Message(code)  {if(verbose >= 2) {Con_Message code;}}
-#else
-#  define DEBUG_Message(code)
-#  define DEBUG_VERBOSE_Message(code)
-#  define DEBUG_VERBOSE2_Message(code)
-#endif
-
 struct game_s;
 
 extern int verbose;

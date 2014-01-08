@@ -396,6 +396,8 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     playercontrol_t*    control = 0;
     boolean             justCreated = false;
 
+    LOG_AS("B_BindControl");
+
     // The control description may begin with the local player number.
     str = AutoStr_NewStd();
     ptr = Str_CopyDelim(str, controlDesc, '-');
@@ -404,7 +406,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
         localNum = strtoul(Str_Text(str) + 5, NULL, 10) - 1;
         if(localNum < 0 || localNum >= DDMAXPLAYERS)
         {
-            Con_Message("B_BindControl: Local player number %i is invalid.", localNum);
+            LOG_INPUT_WARNING("Local player number %i is invalid") << localNum;
             return NULL;
         }
 
@@ -417,7 +419,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     control = P_PlayerControlByName(Str_Text(str));
     if(!control)
     {
-        Con_Message("B_BindControl: Player control \"%s\" not defined.", Str_Text(str));
+        LOG_INPUT_WARNING("Player control \"%s\" not defined") << Str_Text(str);
         return NULL;
     }
 
@@ -426,8 +428,9 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     {
         bc = B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME);
     }
-    VERBOSE( Con_Message("B_BindControl: Control '%s' in context '%s' of local player %i to be "
-                         "bound to '%s'.", control->name, bc->name, localNum, device) );
+
+    LOG_INPUT_VERBOSE("Control '%s' in context '%s' of local player %i to be bound to '%s'")
+            << control->name << bc->name << localNum << device;
 
     if((conBin = B_FindControlBinding(bc, control->id)) == NULL)
     {
@@ -497,7 +500,7 @@ D_CMD(BindEventToCommand)
 
     if(b)
     {
-        VERBOSE( Con_Printf("Binding %i created.\n", b->bid) );
+        LOG_SCR_VERBOSE("Binding %i created") <<  b->bid;
     }
 
     return (b != NULL);
@@ -511,7 +514,7 @@ D_CMD(BindControlToDevice)
 
     if(b)
     {
-        VERBOSE( Con_Printf("Binding %i created.\n", b->bid) );
+        LOG_SCR_VERBOSE("Binding %i created") << b->bid;
     }
 
     return (b != NULL);
@@ -645,7 +648,7 @@ boolean B_Responder(ddevent_t* ev)
         echo.type = E_SYMBOLIC;
         echo.symbolic.id = 0;
         echo.symbolic.name = Str_Text(&name);
-        VERBOSE( Con_Message("B_Responder: Symbolic echo: %s", echo.symbolic.name) );
+        LOG_INPUT_XVERBOSE("Symbolic echo: %s") << echo.symbolic.name;
         DD_PostEvent(&echo);
         Str_Free(&name);
         return true;

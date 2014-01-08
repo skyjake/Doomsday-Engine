@@ -112,15 +112,7 @@ public:
 
     void setTextLineAlignment(ui::Alignment const &textLineAlign);
 
-    /**
-     * Sets the alignment of the image when there is both an image
-     * and a text in the label.
-     *
-     * @param imageAlign  Alignment for the image.
-     */
-    void setImageAlignment(ui::Alignment const &imageAlign);
-
-    void setImageFit(ui::ContentFit const &fit);
+    void setTextModulationColorf(de::Vector4f const &colorf);
 
     /**
      * Sets the maximum width used for text. By default, the maximum width is determined
@@ -137,6 +129,16 @@ public:
      * @param richStyle  Rich text styling.
      */
     void setTextStyle(de::Font::RichFormat::IStyle const *richStyle);
+
+    /**
+     * Sets the alignment of the image when there is both an image
+     * and a text in the label.
+     *
+     * @param imageAlign  Alignment for the image.
+     */
+    void setImageAlignment(ui::Alignment const &imageAlign);
+
+    void setImageFit(ui::ContentFit const &fit);
 
     /**
      * The image's actual size will be overridden by this size.

@@ -63,7 +63,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
                 // We can't play sounds from hidden mobjs, because we
                 // aren't sure exactly where they are located.
                 cmo = NULL;
-                LOG_DEBUG("Can't find sound emitter ") << mobjId;
+                LOG_NET_VERBOSE("Can't find sound emitter ") << mobjId;
             }
             else
             {
@@ -81,7 +81,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         }
         else
         {
-            LOG_WARNING("Cl_ReadSoundDelta2: DT_SECTOR_SOUND contains invalid sector index %d, skipping") << index;
+            LOG_NET_WARNING("Received sound delta has invalid sector index %i") << index;
             skip = true;
         }
     }
@@ -92,7 +92,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         side = App_World().map().sideByIndex(index);
         if(!side)
         {
-            LOG_WARNING("Cl_ReadSoundDelta2: DT_SIDE_SOUND contains invalid side index %d, skipping") << index;
+            LOG_NET_WARNING("Received sound delta has invalid side index %i") << index;
             skip = true;
         }
     }
@@ -100,7 +100,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         int index = deltaId;
 
-        LOG_DEBUG("DT_POLY_SOUND: poly=%d") << index;
+        LOG_NET_XVERBOSE("DT_POLY_SOUND: poly=%d") << index;
 
         if(index >= 0 && index < App_World().map().polyobjCount())
         {
@@ -109,8 +109,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         }
         else
         {
-            Con_Message("Cl_ReadSoundDelta2: DT_POLY_SOUND contains "
-                        "invalid polyobj index %d. Skipping.", index);
+            LOG_NET_WARNING("Received sound delta has invalid polyobj index %i") << index;
             skip = true;
         }
     }
@@ -200,7 +199,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         if(type != DT_SOUND && !emitter)
         {
             // Not enough information.
-            LOG_WARNING("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i") << type << sound;
+            LOG_NET_VERBOSE("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i") << type << sound;
             return;
         }
 
