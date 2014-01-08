@@ -57,12 +57,6 @@ DENG2_PIMPL_NOREF(AlertMask)
                 }
             }
         }
-
-        qDebug() << "alert mask:";
-        for(int i = 0; i < 8; ++i)
-        {
-            qDebug() << i << QString::number(mask[i], 16);
-        }
     }
 };
 
