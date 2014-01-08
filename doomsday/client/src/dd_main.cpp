@@ -1254,7 +1254,7 @@ gameid_t DD_DefineGame(GameDef const *def)
     try
     {
         /*Game &game =*/ App_Games().byIdentityKey(def->identityKey);
-        LOG_WARNING("Ignored new game \"%s\", identity key '%s' already in use")
+        LOGDEV_WARNING("Ignored new game \"%s\", identity key '%s' already in use")
                 << def->defaultTitle << def->identityKey;
         return 0; // Invalid id.
     }
@@ -1280,7 +1280,7 @@ gameid_t DD_GameIdForKey(char const *identityKey)
     catch(Games::NotFoundError const &)
     {
         LOG_AS("DD_GameIdForKey");
-        LOG_WARNING("Game \"%s\" is not defined, returning 0.") << identityKey;
+        LOGDEV_WARNING("Game \"%s\" is not defined, returning 0.") << identityKey;
     }
     return 0; // Invalid id.
 }
@@ -1403,7 +1403,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
         { // Tell the plugin it is being unloaded.
             void *unloader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Unload");
-            LOG_DEBUG("Calling DP_Unload (%p)") << de::dintptr(unloader);
+            LOGDEV_MSG("Calling DP_Unload (%p)") << de::dintptr(unloader);
             DD_SetActivePluginId(App_CurrentGame().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
             DD_SetActivePluginId(0);
@@ -1452,7 +1452,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
     else if(!isReload)
     {
-        LOG_VERBOSE("Unloaded game.");
+        LOG_MSG("Unloaded game");
     }
 
     Library_ReleaseGames();
@@ -1466,7 +1466,8 @@ bool App_ChangeGame(Game &game, bool allowReload)
         // Re-initialize subsystems needed even when in ringzero.
         if(!DD_ExchangeGamePluginEntryPoints(game.pluginId()))
         {
-            LOG_WARNING("Failed exchanging entrypoints with plugin %i, cannot load game")
+            LOG_WARNING("Game plugin '%s' is invalid") << game.identityKey();
+            LOGDEV_WARNING("Failed exchanging entrypoints with plugin %i")
                     << int(game.pluginId());
             return false;
         }
@@ -1516,7 +1517,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
             void *loader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Load");
-            LOG_DEBUG("Calling DP_Load (%p)") << de::dintptr(loader);
+            LOGDEV_MSG("Calling DP_Load (%p)") << de::dintptr(loader);
             DD_SetActivePluginId(App_CurrentGame().pluginId());
             if(loader) ((pluginfunc_t)loader)();
             DD_SetActivePluginId(0);
@@ -1608,7 +1609,7 @@ static void DD_AutoLoad()
     int numNewFiles;
     while((numNewFiles = loadFilesFromDataGameAuto()) > 0)
     {
-        LOG_VERBOSE("Autoload round completed with %i new files.") << numNewFiles;
+        LOG_RES_VERBOSE("Autoload round completed with %i new files") << numNewFiles;
     }
 }
 
@@ -1672,7 +1673,7 @@ int DD_EarlyInit()
  */
 void DD_FinishInitializationAfterWindowReady()
 {
-    LOG_DEBUG("Window is ready, finishing initialization");
+    LOGDEV_MSG("Window is ready, finishing initialization");
 
 #ifdef __CLIENT__
 # ifdef WIN32
@@ -1793,7 +1794,7 @@ boolean DD_Init(void)
             directory_t *dir = Dir_FromText(CommandLine_PathAt(p));
             de::Uri uri = de::Uri::fromNativeDirPath(Dir_Path(dir), RC_PACKAGE);
 
-            LOG_DEBUG("User supplied IWAD path: \"%s\"") << Dir_Path(dir);
+            LOG_RES_NOTE("User-supplied IWAD path: \"%s\"") << Dir_Path(dir);
 
             scheme.addSearchPath(SearchPath(uri, SearchPath::NoDescend));
 
@@ -1867,7 +1868,7 @@ boolean DD_Init(void)
         }
         else
         {
-            LOG_WARNING("Cannot dump unknown lump \"%s\"") << name;
+            LOG_RES_WARNING("Cannot dump unknown lump \"%s\"") << name;
         }
     }
 
@@ -2075,10 +2076,10 @@ static int DD_StartupWorker(void * /*context*/)
     Demo_Init();
 #endif
 
-    LOG_MSG("Initializing InFine subsystem...");
+    LOG_RES_VERBOSE("Initializing InFine subsystem...");
     FI_Init();
 
-    LOG_MSG("Initializing UI subsystem...");
+    LOG_VERBOSE("Initializing UI subsystem...");
     UI_Init();
     Con_SetProgress(190);
 
@@ -2765,7 +2766,7 @@ static de::File1 *tryLoadFile(de::Uri const &search, size_t baseOffset)
         if(App_FileSystem().accessFile(search))
         {
             // Must already be loaded.
-            LOG_INFO("\"%s\" already loaded.") << NativePath(search.asText()).pretty();
+            LOG_RES_XVERBOSE("\"%s\" already loaded") << NativePath(search.asText()).pretty();
         }
     }
     return 0;
@@ -2782,13 +2783,13 @@ static bool tryUnloadFile(de::Uri const &search)
         // Do not attempt to unload a resource required by the current game.
         if(App_CurrentGame().isRequiredFile(file))
         {
-            LOG_MSG("\"%s\" is required by the current game."
-                    " Required game files cannot be unloaded in isolation.")
+            LOG_RES_NOTE("\"%s\" is required by the current game."
+                         " Required game files cannot be unloaded in isolation.")
                     << nativePath.pretty();
             return false;
         }
 
-        LOG_VERBOSE("Unloading \"%s\"...") << nativePath.pretty();
+        LOG_RES_VERBOSE("Unloading \"%s\"...") << nativePath.pretty();
 
         App_FileSystem().deindex(file);
         delete &file;

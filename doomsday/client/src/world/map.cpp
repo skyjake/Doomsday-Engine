@@ -1435,10 +1435,9 @@ EntityDatabase &Map::entityDatabase() const
 
 void Map::initNodePiles()
 {
-    Time begunAt;
+    LOG_AS("Map");
 
-    LOG_AS("Map::initNodePiles");
-    LOG_TRACE("Initializing...");
+    Time begunAt;
 
     // Initialize node piles and line rings.
     NP_Init(&d->mobjNodes, 256);  // Allocate a small pile.
@@ -1454,7 +1453,7 @@ void Map::initNodePiles()
     }
 
     // How much time did we spend?
-    LOG_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
+    LOGDEV_MAP_MSG("Initialized node piles in %.2f seconds") << begunAt.since();
 }
 
 Blockmap const &Map::mobjBlockmap() const

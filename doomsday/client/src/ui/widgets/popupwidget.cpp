@@ -107,7 +107,9 @@ DENG_GUI_PIMPL(PopupWidget)
 
         case ui::Right:
             self.rule()
-                    .setInput(Rule::Left, *anchorX + *marker)
+                    .setInput(Rule::Left, OperatorRule::minimum(
+                                  *anchorX + *marker,
+                                  self.root().viewWidth() - self.rule().width() - self.margins().right()))
                     .setInput(Rule::Top,  OperatorRule::clamped(
                                   *anchorY - self.rule().height() / 2,
                                   self.margins().top(),

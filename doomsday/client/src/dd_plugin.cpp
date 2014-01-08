@@ -145,7 +145,7 @@ static boolean unloadPlugin(PluginHandle* handle)
 
 void Plug_LoadAll(void)
 {
-    Con_Message("Initializing plugins...");
+    LOG_RES_VERBOSE("Initializing plugins...");
 
     Library_IterateAvailableLibraries(loadPlugin, 0);
 }

@@ -398,7 +398,7 @@ boolean Con_Init(void)
         return true;
     }
 
-    Con_Message("Initializing the console...");
+    LOG_SCR_VERBOSE("Initializing the console...");
 
     exBuff = NULL;
     exBuffSize = 0;
