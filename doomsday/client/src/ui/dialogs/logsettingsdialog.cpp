@@ -239,7 +239,10 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));
 
-    d->toggleStateChanged(*d->separately);
+    if(d->separately->isActive())
+    {
+        d->fold->open();
+    }
 }
 
 void LogSettingsDialog::resetToDefaults()
