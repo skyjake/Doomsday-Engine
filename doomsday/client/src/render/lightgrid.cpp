@@ -831,14 +831,13 @@ DENG2_OBSERVES(Sector, LightLevelChange)
     }
 
     /// Observes Sector LightLevelChange.
-    void sectorLightLevelChanged(Sector &sector, float /*oldLightLevel*/)
+    void sectorLightLevelChanged(Sector &sector)
     {
         sectorChanged(sector);
     }
 
     /// Observes Sector LightColorChange.
-    void sectorLightColorChanged(Sector &sector, Vector3f const & /*oldLightColor*/,
-                                 int /*changedComponents*/)
+    void sectorLightColorChanged(Sector &sector)
     {
         sectorChanged(sector);
     }
