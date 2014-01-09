@@ -70,7 +70,7 @@ DENG2_PIMPL_NOREF(LogFilter)
 
         void read(Record const &rec)
         {
-            minLevel = LogEntry::Level(rec["minLevel"].value().asNumber());
+            minLevel = LogEntry::Level(dint(rec["minLevel"].value().asNumber()));
             allowDev = rec["allowDev"].value().isTrue();
         }
 
@@ -101,7 +101,7 @@ DENG2_PIMPL_NOREF(LogFilter)
             if(ftr.checkContextBit(md))
             {
                 if((md & LogEntry::Dev) && !ftr.allowDev) continue; // No devs.
-                if(ftr.minLevel <= (md & LogEntry::LevelMask))
+                if(ftr.minLevel <= int(md & LogEntry::LevelMask))
                     return true;
             }
         }

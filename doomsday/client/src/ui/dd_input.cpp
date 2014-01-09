@@ -696,11 +696,10 @@ boolean I_ShiftDown(void)
  */
 void I_TrackInput(ddevent_t *ev)
 {
-    inputdev_t *dev;
-
     if(ev->type == E_FOCUS || ev->type == E_SYMBOLIC)
         return; // Not a tracked device state.
 
+    inputdev_t *dev;
     if((dev = I_GetDevice(ev->device, OnlyActiveInputDevice)) == NULL)
         return;
 
@@ -719,16 +718,12 @@ void I_TrackInput(ddevent_t *ev)
             if(ev->toggle.state == ETOG_DOWN)
             {
                 altDown = true;
-#ifdef WIN32
-                DEBUG_Message(("I_TrackInput: Alt down\n"));
-#endif
+                //qDebug() << "Alt down";
             }
             else if(ev->toggle.state == ETOG_UP)
             {
                 altDown = false;
-#ifdef WIN32
-                DEBUG_Message(("I_TrackInput: Alt up\n"));
-#endif
+                //qDebug() << "Alt up";
             }
         }
     }
