@@ -291,6 +291,8 @@ static size_t FileReader(const char* name, char** buffer)
     size_t length = 0;
     int handle;
 
+    LOG_AS("FileReader");
+
     // First try with LZSS.
     LZFILE *file = lzOpen((char*) name, "rp");
 
@@ -308,9 +310,7 @@ static size_t FileReader(const char* name, char** buffer)
 
             // Allocate more memory.
             newBuf = (char*) Z_Malloc(length + bytesRead, PU_APPSTATIC, 0);
-            if(NULL == newBuf)
-                Con_Error("FileReader: realloc failed.");
-            if(NULL != buf)
+            if(buf != NULL)
             {
                 memcpy(newBuf, buf, length);
                 Z_Free(buf);
@@ -332,15 +332,14 @@ static size_t FileReader(const char* name, char** buffer)
     handle = open(name, O_RDONLY | O_BINARY, 0666);
     if(handle == -1)
     {
-#if _DEBUG
-        Con_Message("Warning:FileReader: Failed opening \"%s\" for reading.", name);
-#endif
+        LOG_RES_WARNING("Failed opening \"%s\" for reading") << name;
         return length;
     }
 
     if(-1 == fstat(handle, &fileinfo))
     {
-        Con_Error("FileReader: Couldn't read file %s\n", name);
+        LOG_RES_ERROR("Couldn't read file \"%s\"") << name;
+        return 0;
     }
 
     length = fileinfo.st_size;
@@ -351,18 +350,14 @@ static size_t FileReader(const char* name, char** buffer)
     }
 
     buf = (char *) Z_Malloc(length, PU_APPSTATIC, 0);
-    if(buf == NULL)
-    {
-        Con_Error("FileReader: Failed on allocation of %lu bytes for file \"%s\".\n",
-                  (unsigned long) length, name);
-    }
+    DENG_ASSERT(buf != 0);
 
-    { size_t bytesRead = read(handle, buf, length);
+    size_t bytesRead = read(handle, buf, length);
     close(handle);
     if(bytesRead < length)
     {
-        Con_Error("FileReader: Couldn't read file \"%s\".\n", name);
-    }}
+        LOG_RES_ERROR("Couldn't read file \"%s\"") << name;
+    }
     *buffer = buf;
 
     return length;
@@ -387,19 +382,15 @@ void M_WriteCommented(FILE *file, const char* text)
  */
 void M_WriteTextEsc(FILE* file, const char* text)
 {
-    if(!file || !text)
-    {
-        Con_Error("Attempted M_WriteTextEsc with invalid reference (%s==0).", !file? "file":"text");
-        return; // Unreachable.
-    }
+    DENG_ASSERT(file && text);
 
-    { size_t i;
+    size_t i;
     for(i = 0; i < strlen(text) && text[i]; ++i)
     {
         if(text[i] == '"' || text[i] == '\\')
             fprintf(file, "\\");
         fprintf(file, "%c", text[i]);
-    }}
+    }
 }
 
 DENG_EXTERN_C int M_ScreenShot(char const *name, int bits)

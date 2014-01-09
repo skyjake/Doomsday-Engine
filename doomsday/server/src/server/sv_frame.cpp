@@ -914,16 +914,7 @@ void Sv_SendFrame(int plrNum)
 
         // Successfully written, increment counter.
         deltaCount++;
-/*
-#ifdef _DEBUG
-if(delta->state == DELTA_UNACKED)
-{
-    Con_Printf("Resend: %i, type%i[%x], set%i, rsid%i\n",
-               delta->id, delta->type, delta->flags,
-               delta->set, delta->resend);
-}
-#endif
-*/
+
         // Update the sent delta's state.
         if(delta->state == DELTA_NEW)
         {

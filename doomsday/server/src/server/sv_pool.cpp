@@ -2082,11 +2082,6 @@ void Sv_NewNullDeltas(cregister_t *reg, boolean doUpdate, pool_t **targets)
 
                 Sv_AddDeltaToPools(&null, targets);
 
-                /*#ifdef _DEBUG
-                   Con_Printf("New null: %i, %s\n", obj->mo.thinker.id,
-                   defs.states[obj->mo.state - states].id);
-                   #endif */
-
                 if(doUpdate)
                 {
                     // Keep the register up to date.
