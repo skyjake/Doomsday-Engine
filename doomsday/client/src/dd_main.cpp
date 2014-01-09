@@ -1075,31 +1075,31 @@ static int DD_ActivateGameWorker(void *context)
         Con_SetProgress(100);
     }
 
-    // Parse the game's main config file.
-    // If a custom top-level config is specified; let it override.
-    Path configFile;
-    if(CommandLine_CheckWith("-config", 1))
-    {
-        configFile = NativePath(CommandLine_NextAsPath()).withSeparators('/');
-    }
-    else
-    {
-        configFile = App_CurrentGame().mainConfig();
-    }
-
-    LOG_SCR_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
-    Con_ParseCommands(configFile.toUtf8().constData(), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
-
-#ifdef __CLIENT__
     if(App_GameLoaded())
     {
+        // Parse the game's main config file.
+        // If a custom top-level config is specified; let it override.
+        Path configFile;
+        if(CommandLine_CheckWith("-config", 1))
+        {
+            configFile = NativePath(CommandLine_NextAsPath()).withSeparators('/');
+        }
+        else
+        {
+            configFile = App_CurrentGame().mainConfig();
+        }
+
+        LOG_SCR_MSG("Parsing primary config \"%s\"...") << NativePath(configFile).pretty();
+        Con_ParseCommands(configFile.toUtf8().constData(), CPCF_SET_DEFAULT | CPCF_ALLOW_SAVE_STATE);
+
+#ifdef __CLIENT__
         // Apply default control bindings for this game.
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
         Con_ParseCommands(App_CurrentGame().bindingConfig().toUtf8().constData(), CPCF_ALLOW_SAVE_BINDINGS);
-    }
 #endif
+    }
 
     if(parms.initiatedBusyMode)
     {
