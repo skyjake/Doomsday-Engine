@@ -18,6 +18,7 @@
  */
 
 #include <doomsday.h>
+#include <de/c_wrapper.h> // libdeng2 C API
 #include "version.h"
 
 /*
@@ -45,7 +46,7 @@ static int ExampleHook(int hookType, int parm, void *data)
     DENG_UNUSED(parm);
     DENG_UNUSED(data);
 
-    Con_Message("ExampleHook: Hook successful!");
+    LogBuffer_Printf(DE2_LOG_DEV, "ExampleHook: Hook successful!\n");
     return true;
 }
 

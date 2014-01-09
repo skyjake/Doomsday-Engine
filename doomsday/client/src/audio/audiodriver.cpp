@@ -150,6 +150,8 @@ static AutoStr* findAudioPluginPath(const char* name)
 
 static boolean loadAudioDriver(driver_t* driver, const char* name)
 {
+    LOG_AS("loadAudioDriver");
+
     boolean ok = false;
 
     if(name && name[0])
@@ -164,7 +166,7 @@ static boolean loadAudioDriver(driver_t* driver, const char* name)
         }
         else
         {
-            Con_Message("Warning: loadAudioDriver: Loading of \"%s\" failed.", name);
+            LOG_AUDIO_WARNING("Loading of \"%s\" failed") << name;
         }
     }
     return ok;
@@ -183,8 +185,9 @@ static const char* getDriverName(audiodriverid_t id)
     };
     if(VALID_AUDIODRIVER_IDENTIFIER(id))
         return audioDriverNames[id];
-    Con_Error("S_GetDriverName: Unknown driver id %i.\n", id);
-    return 0; // Unreachable.
+
+    DENG2_ASSERT(!"S_GetDriverName: Unknown driver id");
+    return ""; // Unreachable.
 }
 
 static audiodriverid_t identifierToDriverId(const char* name)
@@ -193,7 +196,7 @@ static audiodriverid_t identifierToDriverId(const char* name)
     {
         if(!stricmp(name, driverIdentifier[i])) return (audiodriverid_t) i;
     }
-    Con_Message("'%s' is not a valid audio driver name.", name);
+    LOG_AUDIO_ERROR("'%s' is not a valid audio driver name") << name;
     return AUDIOD_INVALID;
 }
 
@@ -212,11 +215,7 @@ static boolean initDriver(audiodriverid_t id)
 {
     driver_t* d = &drivers[id];
 
-    if(!VALID_AUDIODRIVER_IDENTIFIER(id))
-    {
-        Con_Error("initDriver: Unknown audio driver id %i.\n", id);
-        return false;
-    }
+    DENG2_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(id));
 
     assert(!isDriverInited(id));
     memset(d, 0, sizeof(*d));
@@ -263,8 +262,8 @@ static boolean initDriver(audiodriverid_t id)
         break;
 #endif
     default:
-        Con_Error("initDriver: Unknown audio driver id %i.\n", id);
-        return false; // Unreachable.
+        DENG2_ASSERT(!"initDriver: Unknown audio driver id");
+        return false;
     }
 
     // All loaded drivers are automatically initialized so they are ready for use.
@@ -313,7 +312,7 @@ static audiodriverid_t initDriverIfNeeded(const char* identifier)
     {
         initDriver(drvId);
     }
-    assert(VALID_AUDIODRIVER_IDENTIFIER(drvId));
+    DENG2_ASSERT(VALID_AUDIODRIVER_IDENTIFIER(drvId));
     return drvId;
 }
 
@@ -375,7 +374,7 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             drvId = initDriverIfNeeded(CommandLine_At(++p));
             if(!drivers[drvId].sfx.gen.Init)
             {
-                Con_Error("Audio driver '%s' does not provide an SFX interface.\n", getDriverName(drvId));
+                LOG_AUDIO_ERROR("Audio driver '%s' does not provide an SFX interface") << getDriverName(drvId);
             }
             appendInterface(&pos, AUDIO_ISFX, &drivers[drvId].sfx);
             continue;
@@ -387,7 +386,7 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             drvId = initDriverIfNeeded(CommandLine_At(++p));
             if(!drivers[drvId].music.gen.Init)
             {
-                Con_Error("Audio driver '%s' does not provide a Music interface.\n", getDriverName(drvId));
+                LOG_AUDIO_ERROR("Audio driver '%s' does not provide a Music interface") << getDriverName(drvId);
             }
             appendInterface(&pos, AUDIO_IMUSIC, &drivers[drvId].music);
             continue;
@@ -399,7 +398,7 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             drvId = initDriverIfNeeded(CommandLine_At(++p));
             if(!drivers[drvId].cd.gen.Init)
             {
-                Con_Error("Audio driver '%s' does not provide a CD interface.\n", getDriverName(drvId));
+                LOG_AUDIO_ERROR("Audio driver '%s' does not provide a CD interface") << getDriverName(drvId);
             }
             appendInterface(&pos, AUDIO_ICD, &drivers[drvId].cd);
             continue;
@@ -467,7 +466,7 @@ boolean AudioDriver_Init(void)
     ok = initDriver(defaultDriverId);
     if(!ok)
     {
-        Con_Message("Warning: Failed initializing audio driver \"%s\"", getDriverName(defaultDriverId));
+        LOG_AUDIO_WARNING("Failed initializing audio driver \"%s\"") << getDriverName(defaultDriverId);
     }
 
     // Fallback option for the default driver.

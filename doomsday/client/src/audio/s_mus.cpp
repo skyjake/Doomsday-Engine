@@ -318,18 +318,11 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
         // expected.
 
         lumpLength = F_LumpLength(lump);
-        buf = (uint8_t*) malloc(lumpLength);
-        if(!buf)
-        {
-            Con_Message("Warning: Mus_Start: Failed on allocation of %lu bytes for "
-                        "temporary MUS to MIDI conversion buffer.", (unsigned long) lumpLength);
-            return 0;
-        }
-
+        buf = (uint8_t*) M_Malloc(lumpLength);
         file = F_FindFileForLumpNum2(lump, &lumpIdx);
         F_ReadLumpSection(file, lumpIdx, buf, 0, lumpLength);
         M_Mus2Midi((void*)buf, lumpLength, Str_Text(srcFile));
-        free(buf);
+        M_Free(buf);
 
         return AudioDriver_Music_PlayNativeFile(Str_Text(srcFile), looped);
     }
@@ -471,24 +464,24 @@ D_CMD(PlayMusic)
 
     if(!musAvail)
     {
-        Con_Printf("The Music module is not available.\n");
+        LOG_SCR_WARNING("Music subsystem is not available");
         return false;
     }
 
     switch(argc)
     {
     default:
-        Con_Printf("Usage:\n  %s (music-def)\n", argv[0]);
-        Con_Printf("  %s lump (lumpname)\n", argv[0]);
-        Con_Printf("  %s file (filename)\n", argv[0]);
-        Con_Printf("  %s cd (track)\n", argv[0]);
+        LOG_SCR_MSG("Usage:\n  %s (music-def)") << argv[0];
+        LOG_SCR_MSG("  %s lump (lumpname)") << argv[0];
+        LOG_SCR_MSG("  %s file (filename)") << argv[0];
+        LOG_SCR_MSG("  %s cd (track)") << argv[0];
         break;
 
     case 2: {
         int musIdx = Def_GetMusicNum(argv[1]);
         if(musIdx < 0)
         {
-            Con_Printf("Music '%s' not defined.\n", argv[1]);
+            LOG_SCR_WARNING("Music '%s' not defined") << argv[1];
             return false;
         }
 
@@ -515,7 +508,7 @@ D_CMD(PlayMusic)
             {
                 if(!AudioDriver_CD())
                 {
-                    Con_Printf("No CD audio interface available.\n");
+                    LOG_SCR_WARNING("No CD audio interface available");
                     return false;
                 }
 

@@ -136,7 +136,7 @@ static Mix_Music* lastMusic;
 #if _DEBUG
 static void musicPlaybackFinished(void)
 {
-    Con_Printf("DS_SDLMixer: Music playback finished.\n");
+    LOG_AUDIO_VERBOSE("[SDLMixer] Music playback finished");
 }
 #endif
 
@@ -176,7 +176,7 @@ int DS_SDLMixerInit(void)
 
     if(SDL_InitSubSystem(SDL_INIT_AUDIO))
     {
-        Con_Message("Warning:DS_SDLMixerInit: Error initializing SDL AUDIO\n %s", SDL_GetError());
+        LOG_AUDIO_ERROR("Error initializing SDL audio: %s") << SDL_GetError();
         return false;
     }
 
@@ -186,27 +186,29 @@ int DS_SDLMixerInit(void)
     if(SDL_VERSIONNUM(linkVer->major, linkVer->minor, linkVer->patch) >
        SDL_VERSIONNUM(compVer.major, compVer.minor, compVer.patch))
     {
-        Con_Message("Warning:DS_SDLMixerInit: Linked version of SDLMixer (%u.%u.%u) is "
-                    "newer than expected (%u.%u.%u)", linkVer->major, linkVer->minor,
-                    linkVer->patch, compVer.major, compVer.minor, compVer.patch);
+        LOG_AUDIO_WARNING("Linked version of SDL_mixer (%u.%u.%u) is "
+                          "newer than expected (%u.%u.%u)", linkVer->major, linkVer->minor,
+                          linkVer->patch, compVer.major, compVer.minor, compVer.patch);
     }
 
     if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024))
     {
-        Con_Message("Warning:DS_SDLMixerInit: Failed opening mixer %s.", Mix_GetError());
+        LOG_AUDIO_ERROR("Failed initializing SDL_mixer: %s") << Mix_GetError();
         return false;
     }
 
     Mix_QuerySpec(&freq, &format, &channels);
 
-    if(verbose)
-    {   // Announce capabilites.
-        Con_Printf("SDLMixer configuration:\n");
-        Con_Printf("  Output: %s\n", channels > 1? "stereo" : "mono");
-        Con_Printf("  Format: %#x (%#x)\n", format, (uint16_t) AUDIO_S16LSB);
-        Con_Printf("  Frequency: %iHz (%iHz)\n", freq, (int) MIX_DEFAULT_FREQUENCY);
-        Con_Printf("  Initial Channels: %i\n", MIX_CHANNELS);
-    }
+    // Announce capabilites.
+    LOG_AUDIO_VERBOSE("SDLMixer configuration:");
+    LOG_AUDIO_VERBOSE("  " _E(>) "Output: %s\n"
+                      "Format: %#x (%#x)\n"
+                      "Frequency: %iHz (%iHz)"
+                      "Initial Channels: %i")
+            << (channels > 1? "stereo" : "mono")
+            << format << (uint16_t) AUDIO_S16LSB
+            << freq << (int) MIX_DEFAULT_FREQUENCY
+            << MIX_CHANNELS;
 
     // Prepare to play simultaneous sounds.
     /*numChannels =*/ Mix_AllocateChannels(MIX_CHANNELS);
@@ -351,8 +353,8 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), 1);
     if(!buf->ptr)
     {
-        Con_Message("DS_SDLMixer_SFX_Load: Warning, failed loading sample (%s).",
-                    Mix_GetError());
+        LOG_AS("DS_SDLMixer_SFX_Load");
+        LOG_AUDIO_WARNING("Failed loading sample: %s") << Mix_GetError();
     }
 
     if(conv != localBuf)
@@ -557,7 +559,8 @@ int DS_SDLMixer_Music_PlayFile(const char* filename, int looped)
 
     if(!(lastMusic = Mix_LoadMUS(filename)))
     {
-        Con_Message("DS_SDLMixer_Music_PlayFile: Error %s.", Mix_GetError());
+        LOG_AS("DS_SDLMixer_Music_PlayFile");
+        LOG_AUDIO_ERROR("Failed to load music: %s") << Mix_GetError();
         return false;
     }
 

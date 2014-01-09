@@ -80,9 +80,11 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
     chunk_hdr_t riff_chunk;
     wav_format_t wave_format;
 
+    LOG_AS("WAV_MemoryLoad");
+
     if(!WAV_CheckFormat((const char*)data))
     {
-        Con_Message("WAV_MemoryLoad: Not a WAV file.");
+        LOG_RES_WARNING("Not WAV format data");
         return NULL;
     }
 
@@ -123,12 +125,12 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             // Check that it's a format we know how to read.
             if(wave_format.wFormatTag != WAVE_FORMAT_PCM)
             {
-                Con_Message("WAV_MemoryLoad: Unsupported format (%i).", wave_format.wFormatTag);
+                LOG_RES_WARNING("Unsupported format (%i)") << wave_format.wFormatTag;
                 return NULL;
             }
             if(wave_format.wChannels != 1)
             {
-                Con_Message("WAV_MemoryLoad: Too many channels (only mono supported).");
+                LOG_RES_WARNING("Too many channels (only mono supported)");
                 return NULL;
             }
             // Read the extra format information.
@@ -144,7 +146,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             if(wave_format.wBitsPerSample != 8 &&
                wave_format.wBitsPerSample != 16)
             {
-                Con_Message("WAV_MemoryLoad: Not a 8/16 bit WAVE.");
+                LOG_RES_WARNING("Must have 8 or 16 bits per sample");
                 return NULL;
             }
             // Now we know some information about the sample.
@@ -155,7 +157,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
         {
             if(!wave_format.wFormatTag)
             {
-                Con_Message("WAV_MemoryLoad: Malformed WAVE data.");
+                LOG_RES_WARNING("Malformed WAV data");
                 return NULL;
             }
             // Read data chunk.

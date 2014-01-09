@@ -657,7 +657,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
             {
                 // The new sound can't be played because we were unable to stop
                 // enough channels to accommodate the limitation.
-                LOG_AUDIO_XVERBOSE("Not playing %i because all channels are busy")
+                LOG_AUDIO_XVERBOSE("Not playing #%i because all channels are busy")
                         << sample->id;
                 return false;
             }
@@ -1010,7 +1010,9 @@ void Sfx_StartRefresh()
         // Start the refresh thread. It will run until the Sfx module is shut down.
         refreshHandle = Sys_StartThread(Sfx_ChannelRefreshThread, NULL);
         if(!refreshHandle)
-            Con_Error("Sfx_StartRefresh: Failed to start refresh.\n");
+        {
+            throw de::Error("Sfx_StartRefresh", "Failed to start refresh thread.");
+        }
     }
     else
     {

@@ -65,11 +65,11 @@ int     DS_Set(int prop, const void* ptr);
 
 }
 
-#define DSFMOD_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[dsFMOD] ") << args
+#define DSFMOD_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FMOD] ") << args
 
 #define DSFMOD_ERRCHECK(result) \
     if(result != FMOD_OK) { \
-        LOGDEV_AUDIO_WARNING("[dsFMOD] Error at %s, line %i: (%d) %s") << __FILE__ << __LINE__ << result << FMOD_ErrorString(result); \
+        LOGDEV_AUDIO_WARNING("[FMOD] Error at %s, line %i: (%d) %s") << __FILE__ << __LINE__ << result << FMOD_ErrorString(result); \
     }
 
 extern FMOD::System* fmodSystem;

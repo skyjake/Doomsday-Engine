@@ -87,12 +87,12 @@ typedef enum logentry_level_e {
 typedef enum logentry_audience_e {
     DE2_LOG_GENERIC = 0x10000,
     DE2_LOG_RES     = 0x20000,
-    DE2_LOG_MAP     = 0x40000,     ///< Map developer
-    DE2_LOG_SCR     = 0x80000,     ///< Script developer
+    DE2_LOG_MAP     = 0x40000,      ///< Map developer
+    DE2_LOG_SCR     = 0x80000,      ///< Script developer
     DE2_LOG_GL      = 0x100000,     ///< GL domain (shaders, etc.)
-    DE2_LOG_AUDIO   = 0x200000,    ///< Audio domain
-    DE2_LOG_INPUT   = 0x400000,    ///< Input domain
-    DE2_LOG_NET     = 0x800000,    ///< Network domain
+    DE2_LOG_AUDIO   = 0x200000,     ///< Audio domain
+    DE2_LOG_INPUT   = 0x400000,     ///< Input domain
+    DE2_LOG_NET     = 0x800000,     ///< Network domain
     DE2_LOG_DEV     = 0x8000000     ///< Native code developer (i.e., the programmer)
 } logentry_audience_t;
 

@@ -127,7 +127,7 @@ boolean S_Init(void)
     // Try to load the audio driver plugin(s).
     if(!AudioDriver_Init())
     {
-        Con_Message("Music and Sound Effects disabled.");
+        LOG_AUDIO_NOTE("Music and sound effects are disabled");
         return false;
     }
 
@@ -136,7 +136,7 @@ boolean S_Init(void)
 
     if(!sfxOK || !musOK)
     {
-        Con_Message("Errors during audio subsystem initialization.");
+        LOG_AUDIO_NOTE("Errors during audio subsystem initialization");
         return false;
     }
 #endif
@@ -298,12 +298,12 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
        volume <= 0)
         return false; // This won't play...
 
-#if _DEBUG
+    LOG_AS("S_LocalSoundAtVolumeFrom");
+
     if(volume > 1)
     {
-        Con_Message("S_LocalSoundAtVolumeFrom: Warning! Too high volume (%f).", volume);
+        LOGDEV_AUDIO_WARNING("Volume is too high (%f > 1)") << volume;
     }
-#endif
 
     // This is the sound we're going to play.
     if((info = S_GetSoundInfo(soundId, &freq, &volume)) == NULL)
@@ -532,7 +532,7 @@ int S_StartMusicNum(int id, boolean looped)
     if(id < 0 || id >= defs.count.music.num) return false;
     ded_music_t *def = &defs.music[id];
 
-    LOG_AUDIO_VERBOSE("Starting music '%s'...") << def->id;
+    LOG_AUDIO_MSG("Starting music '%s'") << def->id;
 
     return Mus_Start(def, looped);
 
@@ -612,10 +612,10 @@ D_CMD(PlaySound)
 
     if(argc < 2)
     {
-        Con_Printf("Usage: %s (id) (volume) at (x) (y) (z)\n", argv[0]);
-        Con_Printf("(volume) must be in 0..1, but may be omitted.\n");
-        Con_Printf("'at (x) (y) (z)' may also be omitted.\n");
-        Con_Printf("The sound is always played locally.\n");
+        LOG_SCR_MSG("Usage: %s (id) (volume) at (x) (y) (z)") << argv[0];
+        LOG_SCR_MSG("(volume) must be in 0..1, but may be omitted.");
+        LOG_SCR_MSG("'at (x) (y) (z)' may also be omitted.");
+        LOG_SCR_MSG("The sound is always played locally.");
         return true;
     }
 

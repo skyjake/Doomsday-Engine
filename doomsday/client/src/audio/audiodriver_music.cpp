@@ -155,9 +155,9 @@ void AudioDriver_Music_Set(int property, void const *ptr)
         if(!fn || !fn[0]) return; // No path.
 
         if(F_FileExists(fn))
-            Con_Message("Current soundfont set to: \"%s\"", fn);
+            LOG_AUDIO_MSG("Current soundfont set to: \"%s\"") << fn;
         else
-            Con_Message("Warning: Soundfont \"%s\" not found.", fn);
+            LOG_AUDIO_WARNING("Soundfont \"%s\" not found") << fn;
     }
 }
 

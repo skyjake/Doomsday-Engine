@@ -156,15 +156,16 @@ void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
         metadata |= de::LogEntry::Generic;
     }
 
-    // If this level is not enabled, just ignore.
-    if(!de::LogBuffer::appBuffer().isEnabled(metadata)) return;
-
     // Validate the level.
     de::LogEntry::Level logLevel = de::LogEntry::Level(metadata & de::LogEntry::LevelMask);
     if(logLevel < de::LogEntry::XVerbose || logLevel > de::LogEntry::Critical)
     {
-        logLevel = de::LogEntry::Message;
+        metadata &= ~de::LogEntry::LevelMask;
+        metadata |= (logLevel = de::LogEntry::Message);
     }
+
+    // If this level is not enabled, just ignore.
+    if(!de::LogBuffer::appBuffer().isEnabled(metadata)) return;
 
     char buffer[2048];
     va_list args;
