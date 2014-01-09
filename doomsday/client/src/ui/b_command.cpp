@@ -69,6 +69,8 @@ static statecondition_t* B_AllocCommandBindingCondition(evbinding_t* eb)
  */
 boolean B_ParseEvent(evbinding_t* eb, const char* desc)
 {
+    LOG_AS("B_ParseEvent");
+
     AutoStr* str = AutoStr_NewStd();
 
     // First, we expect to encounter a device name.
@@ -167,14 +169,14 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
     }
     else
     {
-        Con_Message("B_ParseEvent: Device \"%s\" unknown.", Str_Text(str));
+        LOG_INPUT_WARNING("Unknown device \"%s\"") << Str_Text(str);
         return false;
     }
 
     // Anything left that wasn't used?
     if(desc)
     {
-        Con_Message("B_ParseEvent: Unrecognized \"%s\".", desc);
+        LOG_INPUT_WARNING("Unrecognized \"%s\"") << desc;
         return false;
     }
 

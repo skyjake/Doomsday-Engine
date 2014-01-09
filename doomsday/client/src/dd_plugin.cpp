@@ -87,7 +87,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     plugin = Library_New(pluginPath);
     if(!plugin)
     {
-        Con_Message("  loadPlugin: Did not load \"%s\" (%s).", pluginPath, Library_LastError());
+        LOG_RES_WARNING("Failed to load \"%s\": %s") << pluginPath << Library_LastError();
         return 0; // Continue iteration.
     }
 
@@ -122,7 +122,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
 
     // This seems to be a Doomsday plugin.
     _splitpath(pluginPath, NULL, NULL, name, NULL);
-    Con_Message("  (id:%i) %s", plugId, name);
+    LOGDEV_MSG("Plugin id:%i name:%s") << plugId << name;
 
     *handle = plugin;
 
@@ -295,8 +295,8 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
     addr = Library_Symbol(hInstPlug[plugIndex], fn);
     if(!addr)
     {
-        Con_Message("DD_FindEntryPoint: Error locating address of \"%s\" (%s).", fn,
-                    Library_LastError());
+        LOGDEV_RES_WARNING("Error getting address of \"%s\": %s")
+                << fn << Library_LastError();
     }
     return addr;
 }

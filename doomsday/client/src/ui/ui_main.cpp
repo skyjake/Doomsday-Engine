@@ -2611,6 +2611,6 @@ D_CMD(UIColor)
         return true;
     }
 
-    Con_Printf("Unknown UI color '%s'.\n", argv[1]);
+    LOG_SCR_ERROR("Unknown UI color '%s'") << argv[1];
     return false;
 }

@@ -369,13 +369,8 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t*
 #undef GL_BeginBorderedProjection
 DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
-    if(!bp)
-    {
-#if _DEBUG
-        Con_Message("Warning: GL_BeginBorderedProjection: Invalid 'bp' argument, ignoring.");
-#endif
-        return;
-    }
+    DENG_ASSERT(bp != 0);
+    if(!bp) return;
 
     if(SCALEMODE_STRETCH == bp->scaleMode) return;
 
@@ -439,13 +434,8 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 #undef GL_EndBorderedProjection
 DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
-    if(!bp)
-    {
-#if _DEBUG
-        Con_Message("Warning: GL_EndBorderedProjection: Invalid 'bp' argument, ignoring.");
-#endif
-        return;
-    }
+    DENG_ASSERT(bp != 0);
+    if(!bp) return;
 
     if(SCALEMODE_STRETCH == bp->scaleMode) return;
 

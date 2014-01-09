@@ -68,6 +68,8 @@ void B_DestroyDeviceBindingList(dbinding_t* listRoot)
 
 boolean B_ParseDevice(dbinding_t* cb, const char* desc)
 {
+    LOG_AS("B_ParseEvent");
+
     AutoStr* str = AutoStr_NewStd();
     ddeventtype_t type;
 
@@ -134,7 +136,7 @@ boolean B_ParseDevice(dbinding_t* cb, const char* desc)
         }
         else
         {
-            Con_Message("B_ParseEvent: Unrecognized \"%s\".", desc);
+            LOG_INPUT_WARNING("Unrecognized \"%s\"") << desc;
             return false;
         }
     }

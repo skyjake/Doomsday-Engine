@@ -356,8 +356,9 @@ DGLuint GL_GetReservedTextureName(void)
 {
     DGLuint name;
 
-    if(!inited)
-        Con_Error("GL_GetReservedTextureName: Deferred GL task system not initialized.");
+    LOG_AS("GL_GetReservedTextureName");
+
+    DENG_ASSERT(inited);
 
     Sys_Lock(deferredMutex);
 
@@ -367,7 +368,7 @@ DGLuint GL_GetReservedTextureName(void)
         while(reservedCount == 0)
         {
             // Wait for someone to refill the names buffer.
-            Con_Message("GL_GetReservedTextureName: Sleeping until new names available.");
+            LOGDEV_GL_MSG("Sleeping until new names available");
             Sys_Sleep(5);
         }
         Sys_Lock(deferredMutex);

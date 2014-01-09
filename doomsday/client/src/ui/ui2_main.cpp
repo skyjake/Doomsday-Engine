@@ -466,9 +466,8 @@ fi_object_t *FI_Object(fi_objectid_t id)
 {
     if(!inited)
     {
-#ifdef _DEBUG
-        Con_Printf("FI_Object: Not initialized yet!\n");
-#endif
+        LOG_AS("FI_Object")
+        LOGDEV_SCR_WARNING("Object %i not initialized yet!") << id;
         return 0;
     }
     return objectsById(&objects, id);
@@ -482,8 +481,8 @@ fi_object_t *FI_NewObject(fi_obtype_e type, char const *name)
     case FI_TEXT: obj = (fi_object_t *) P_CreateText(objectsUniqueId(&objects), name, 0);   break;
     case FI_PIC:  obj = (fi_object_t *) P_CreatePic(objectsUniqueId(&objects), name);       break;
     default:
-        Con_Error("FI_NewObject: Unknown type %i.", type);
-        exit(1); // Unreachable.
+        DENG_ASSERT(!"FI_NewObject: Invalid object type");
+        return 0;
     }
     return objectsAdd(&objects, obj);
 }
@@ -493,9 +492,8 @@ void FI_DeleteObject(fi_object_t *obj)
     DENG_ASSERT(obj);
     if(!inited)
     {
-#ifdef _DEBUG
-        Con_Printf("FI_DeleteObject: Not initialized yet!\n");
-#endif
+        LOG_AS("FI_DeleteObject")
+        LOGDEV_SCR_WARNING("Object not initialized yet!");
         return;
     }
     switch(obj->type)
@@ -503,7 +501,7 @@ void FI_DeleteObject(fi_object_t *obj)
     case FI_PIC:    P_DestroyPic((fidata_pic_t *)obj);   break;
     case FI_TEXT:   P_DestroyText((fidata_text_t *)obj); break;
     default:
-        Con_Error("FI_DeleteObject: Invalid type %i.", int(obj->type));
+        DENG_ASSERT(!"FI_DeleteObject: Invalid object type");
     }
 }
 

@@ -905,6 +905,8 @@ static float parseFloat(char** str)
 
 static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numBreaks)
 {
+    LOG_AS("parseParamaterBlock");
+
     (*strPtr)++;
     while(*(*strPtr) && *(*strPtr) != '}')
     {
@@ -1040,7 +1042,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                     {}
                 }
 
-                Con_Message("Warning: parseParamaterBlock: Unknown font '%s'.", (*strPtr));
+                LOG_GL_WARNING("Unknown font '%s'") << *strPtr;
                 continue;
             }
 
