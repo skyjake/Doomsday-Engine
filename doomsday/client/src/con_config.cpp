@@ -242,7 +242,7 @@ bool Con_ParseCommands(char const *fileName, int flags)
     filehandle_s *file = F_Open(fileName, "rt");
     if(!file)
     {
-        LOG_SCR_WARNING("Could not open \"%s\"") << fileName;
+        LOG_SCR_WARNING("Failed to open \"%s\" for write") << fileName;
         return false;
     }
 

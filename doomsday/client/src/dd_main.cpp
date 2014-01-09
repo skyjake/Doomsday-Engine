@@ -1880,7 +1880,11 @@ boolean DD_Init(void)
     // Try to load the autoexec file. This is done here to make sure everything is
     // initialized: the user can do here anything that s/he'd be able to do in-game
     // provided a game was loaded during startup.
-    Con_ParseCommands("autoexec.cfg");
+    char const *autoexecConfig = "autoexec.cfg";
+    if(F_FileExists(autoexecConfig))
+    {
+        Con_ParseCommands(autoexecConfig);
+    }
 
     // Read additional config files that should be processed post engine init.
     if(CommandLine_CheckWith("-parse", 1))
@@ -2056,7 +2060,11 @@ static int DD_StartupWorker(void * /*context*/)
     Con_SetProgress(60);
 
     // Execute the startup script (Startup.cfg).
-    Con_ParseCommands("startup.cfg");
+    char const *startupConfig = "startup.cfg";
+    if(F_FileExists(startupConfig))
+    {
+        Con_ParseCommands(startupConfig);
+    }
     Con_SetProgress(90);
 
     R_BuildTexGammaLut();
