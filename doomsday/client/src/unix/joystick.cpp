@@ -99,7 +99,6 @@ static void initialize(void)
                 << SDL_JoystickNumButtons(joy)
                 << SDL_JoystickNumHats(joy)
                 << SDL_JoystickNumBalls(joy);
-        }
 
         joyAvailable = true;
     }
