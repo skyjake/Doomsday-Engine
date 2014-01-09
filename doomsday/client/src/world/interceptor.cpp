@@ -1,4 +1,4 @@
-/** @file interceptor.cpp World map element/object ray trace interceptor.
+/** @file interceptor.cpp  World map element/object ray trace interceptor.
  *
  * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -19,15 +19,15 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/memoryzone.h>
-#include <de/vector1.h>
+#include "de_base.h"
+#include "world/interceptor.h"
 
-#include "de_platform.h"
 #include "world/p_object.h"
 
 #include "render/r_main.h" // validCount
 
-#include "world/interceptor.h"
+#include <de/memoryzone.h>
+#include <de/vector1.h>
 
 using namespace de;
 
@@ -72,14 +72,14 @@ DENG2_PIMPL_NOREF(Interceptor)
     vec2d_t fromV1;
     vec2d_t directionV1;
 
-    Instance(traverser_t callback, Vector2d const &from,
-             Vector2d const &to, int flags, void *context)
-        : callback(callback),
-          context(context),
-          from(from),
-          to(to),
-          flags(flags),
-          map(0)
+    Instance(traverser_t callback, Vector2d const &from, Vector2d const &to,
+             int flags, void *context)
+        : callback(callback)
+        , context(context)
+        , from(from)
+        , to(to)
+        , flags(flags)
+        , map(0)
     {
         V2d_Set(fromV1, from.x, from.y);
         V2d_Set(directionV1, to.x - from.x, to.y - from.y);

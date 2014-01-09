@@ -1,4 +1,4 @@
-/** @file vertex.cpp World map vertex.
+/** @file vertex.cpp  World map vertex.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,23 +18,24 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Vector>
+#include "de_base.h"
+#include "world/vertex.h"
 
 #include "Line"
 #include "world/lineowner.h" /// @todo remove me
 #include "Sector"
 
-#include "world/vertex.h"
+#include <de/Vector>
 
 using namespace de;
 
 DENG2_PIMPL(Vertex)
 {
-    /// Position in the map coordinate space.
-    Vector2d origin;
+    Vector2d origin; ///< In map space.
 
     Instance(Public *i, Vector2d const &origin)
-        : Base(i), origin(origin)
+        : Base(i)
+        , origin(origin)
     {}
 
     void notifyOriginChanged(Vector2d const &oldOrigin, int changedComponents)
@@ -60,13 +61,13 @@ DENG2_PIMPL(Vertex)
 };
 
 Vertex::Vertex(Mesh &mesh, Vector2d const &origin)
-    : MapElement(DMU_VERTEX),
-      MeshElement(mesh),
-      _lineOwners(0),
-      _numLineOwners(0),
-      _onesOwnerCount(0),
-      _twosOwnerCount(0),
-      d(new Instance(this, origin))
+    : MapElement(DMU_VERTEX)
+    , MeshElement(mesh)
+    , _lineOwners(0)
+    , _numLineOwners(0)
+    , _onesOwnerCount(0)
+    , _twosOwnerCount(0)
+    , d(new Instance(this, origin))
 {}
 
 Vector2d const &Vertex::origin() const

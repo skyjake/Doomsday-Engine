@@ -1,4 +1,4 @@
-/** @file polyobj.h World map polyobj.
+/** @file polyobj.h  World map polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,16 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#include <QSet>
-#include <QVector>
-
-#include <de/vector1.h>
-
 #include "de_base.h"
+#include "world/polyobj.h"
 
-#include "world/p_object.h"
-#include "world/map.h"
 #include "BspLeaf"
+#include "world/map.h"
+#include "world/p_object.h"
 
 #ifdef __CLIENT__
 #  include "render/rend_main.h" // useBias
@@ -35,7 +31,9 @@
 
 #include "render/r_main.h" // validCount
 
-#include "world/polyobj.h"
+#include <de/vector1.h>
+#include <QSet>
+#include <QVector>
 
 using namespace de;
 
@@ -272,7 +270,7 @@ struct ptrmobjblockingparams_t
 
 static inline bool mobjCanBlockMovement(mobj_t *mo)
 {
-    DENG_ASSERT(mo != 0);
+    DENG2_ASSERT(mo != 0);
     return (mo->ddFlags & DDMF_SOLID) || (mo->dPlayer && !(mo->dPlayer->flags & DDPF_CAMERA));
 }
 

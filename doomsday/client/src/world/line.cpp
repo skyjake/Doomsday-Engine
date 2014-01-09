@@ -1,4 +1,4 @@
-/** @file line.cpp World map line.
+/** @file line.cpp  World map line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "world/line.h"
 
 #include "dd_main.h" // App_Materials(), verbose
@@ -85,9 +85,9 @@ DENG2_PIMPL_NOREF(Line::Side::Segment)
     Instance(HEdge *hedge)
         : hedge(hedge)
 #ifdef __CLIENT__
-         ,lineSideOffset(0),
-          length(0),
-          frontFacing(false)
+        , lineSideOffset(0)
+        , length(0)
+        , frontFacing(false)
 #endif
     {}
 
@@ -100,7 +100,7 @@ DENG2_PIMPL_NOREF(Line::Side::Segment)
      */
     GeometryGroup *geometryGroup(int group, bool canAlloc = true)
     {
-        DENG_ASSERT(group >= 0 && group < 3); // sanity check
+        DENG2_ASSERT(group >= 0 && group < 3); // sanity check
 
         GeometryGroups::iterator foundAt = geomGroups.find(group);
         if(foundAt != geomGroups.end())
@@ -129,10 +129,8 @@ DENG2_PIMPL_NOREF(Line::Side::Segment)
      * side of the surface are taken into consideration.
      */
     void updateBiasContributors(Line::Side const &lineSide,
-        GeometryGroup &geomGroup, int sectionIndex)
+        GeometryGroup &geomGroup, int /*sectionIndex*/)
     {
-        DENG_UNUSED(sectionIndex);
-
         // If the data is already up to date, nothing needs to be done.
         uint lastChangeFrame = lineSide.map().biasLastChangeOnFrame();
         if(geomGroup.biasLastUpdateFrame == lastChangeFrame)
@@ -174,13 +172,13 @@ DENG2_PIMPL_NOREF(Line::Side::Segment)
 };
 
 Line::Side::Segment::Segment(Line::Side &lineSide, HEdge &hedge)
-    : MapElement(DMU_SEGMENT, &lineSide),
-      d(new Instance(&hedge))
+    : MapElement(DMU_SEGMENT, &lineSide)
+    , d(new Instance(&hedge))
 {}
 
 HEdge &Line::Side::Segment::hedge() const
 {
-    DENG_ASSERT(d->hedge != 0);
+    DENG2_ASSERT(d->hedge != 0);
     return *d->hedge;
 }
 
@@ -283,6 +281,12 @@ DENG2_PIMPL_NOREF(Line::Side)
 , DENG2_OBSERVES(Line, FlagsChange)
 #endif
 {
+    int flags;             ///< @ref sdefFlags
+    Sector *sector;        ///< Attributed sector (not owned).
+    Segments segments;     ///< On "this" side, sorted.
+    bool needSortSegments; ///< set to @c true when the list needs sorting.
+    int shadowVisCount;    ///< Framecount of last time shadows were drawn.
+
     struct Sections
     {
         Section middle;
@@ -292,28 +296,13 @@ DENG2_PIMPL_NOREF(Line::Side)
         Sections(Side &side) : middle(side), bottom(side), top(side)
         {}
     };
-
-    /// @ref sdefFlags
-    int flags;
-
-    /// Sections.
     QScopedPointer<Sections> sections;
 
-    /// Attributed sector (not owned).
-    Sector *sector;
-
-    /// The sorted list of segments on this side.
-    Line::Side::Segments segments;
-    bool needSortSegments; ///< set to @c true when the list needs sorting.
-
-    /// Framecount of last time shadows were drawn on this side.
-    int shadowVisCount;
-
     Instance(Sector *sector)
-        : flags(0),
-          sector(sector),
-          needSortSegments(false),
-          shadowVisCount(0)
+        : flags(0)
+        , sector(sector)
+        , needSortSegments(false)
+        , shadowVisCount(0)
     {}
 
     ~Instance()
@@ -375,7 +364,8 @@ DENG2_PIMPL_NOREF(Line::Side)
 };
 
 Line::Side::Side(Line &line, Sector *sector)
-    : MapElement(DMU_SIDE, &line), d(new Instance(sector))
+    : MapElement(DMU_SIDE, &line)
+    , d(new Instance(sector))
 {
 #ifdef __CLIENT__
     line.audienceForFlagsChange += d;
@@ -527,7 +517,7 @@ void Line::Side::updateSoundEmitterOrigin(int sectionId)
     emitter.origin[VX] = lineCenter.x;
     emitter.origin[VY] = lineCenter.y;
 
-    DENG_ASSERT(d->sector != 0);
+    DENG2_ASSERT(d->sector != 0);
     coord_t const ffloor = d->sector->floor().height();
     coord_t const fceil  = d->sector->ceiling().height();
 
@@ -917,57 +907,43 @@ int Line::Side::setProperty(DmuArgs const &args)
 
 DENG2_PIMPL(Line)
 {
-    /// Public DDLF_* flags.
-    int flags;
+    int flags;             ///< Public DDLF_* flags.
+    Vertex *from;          ///< Start vertex (not owned).
+    Vertex *to;            ///< End vertex (not owned).
+    Vector2d direction;    ///< From start to end vertex.
+    binangle_t angle;      ///< Calculated from the direction vector.
+    slopetype_t slopeType; ///< Logical line slope (i.e., world angle) classification.
+    coord_t length;        ///< Accurate length.
 
-    /// Vertexes (not owned):
-    Vertex *from;
-    Vertex *to;
-
-    /// Direction vector from -> to.
-    Vector2d direction;
-
-    /// Calculated from the direction vector.
-    binangle_t angle;
-
-    /// Logical line slope (i.e., world angle) classification.
-    slopetype_t slopeType;
-
-    /// Accurate length.
-    coord_t length;
-
-    /// Bounding box encompassing the map space coordinates of both vertexes.
+    ///< Map space bounding box encompassing both vertexes.
     AABoxd aaBox;
 
     /// Logical sides:
     Side front;
     Side back;
 
-    /// The polyobj which this line defines a section of, if any.
-    Polyobj *polyobj;
-
-    /// Used by legacy algorithms to prevent repeated processing.
-    int validCount;
+    Polyobj *polyobj; ///< Polyobj "this" line defines a section of, if any.
+    int validCount;   ///< Used by legacy algorithms to prevent repeated processing.
 
     /// Whether the line has been mapped by each player yet.
     bool mapped[DDMAXPLAYERS];
 
-    Instance(Public *i, Vertex &from, Vertex &to, int flags,
-             Sector *frontSector, Sector *backSector)
-        : Base(i),
-          flags(flags),
-          from(&from),
-          to(&to),
-          direction(to.origin() - from.origin()),
-          angle(bamsAtan2(int( direction.y ), int( direction.x ))),
-          slopeType(M_SlopeTypeXY(direction.x, direction.y)),
-          length(direction.length()),
-          front(*i, frontSector),
-          back(*i, backSector),
-          polyobj(0),
-          validCount(0)
+    Instance(Public *i, Vertex &from, Vertex &to, int flags, Sector *frontSector,
+             Sector *backSector)
+        : Base(i)
+        , flags(flags)
+        , from(&from)
+        , to(&to)
+        , direction(to.origin() - from.origin())
+        , angle(bamsAtan2(int( direction.y ), int( direction.x )))
+        , slopeType(M_SlopeTypeXY(direction.x, direction.y))
+        , length(direction.length())
+        , front(*i, frontSector)
+        , back(*i, backSector)
+        , polyobj(0)
+        , validCount(0)
     {
-        std::memset(mapped, 0, sizeof(mapped));
+        zap(mapped);
     }
 
     void notifyFlagsChanged(int oldFlags)
@@ -977,11 +953,11 @@ DENG2_PIMPL(Line)
 };
 
 Line::Line(Vertex &from, Vertex &to, int flags, Sector *frontSector, Sector *backSector)
-    : MapElement(DMU_LINE),
-      _vo1(0),
-      _vo2(0),
-      _bspWindowSector(0),
-      d(new Instance(this, from, to, flags, frontSector, backSector))
+    : MapElement(DMU_LINE)
+    , _vo1(0)
+    , _vo2(0)
+    , _bspWindowSector(0)
+    , d(new Instance(this, from, to, flags, frontSector, backSector))
 {
     updateAABox();
 }
@@ -1044,7 +1020,7 @@ Line::Side const &Line::side(int back) const
 
 Vertex &Line::vertex(int to) const
 {
-    DENG_ASSERT((to? d->to : d->from) != 0);
+    DENG2_ASSERT((to? d->to : d->from) != 0);
     return to? *d->to : *d->from;
 }
 
@@ -1264,6 +1240,6 @@ int Line::setProperty(DmuArgs const &args)
 
 LineOwner *Line::vertexOwner(int to) const
 {
-    DENG_ASSERT((to? _vo2 : _vo1) != 0);
+    DENG2_ASSERT((to? _vo2 : _vo1) != 0);
     return to? _vo2 : _vo1;
 }

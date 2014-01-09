@@ -1,4 +1,4 @@
-/** @file huecircle.cpp HueCircle manipulator, for runtime map editing.
+/** @file huecircle.cpp  HueCircle manipulator, for runtime map editing.
  *
  * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-
 #include "de_base.h"
+#include "world/huecircle.h"
+
 #include "m_misc.h" // M_HSVToRGB(), remove me (use QColor)
 
-#include "world/huecircle.h"
+#include <cmath>
 
 using namespace de;
 

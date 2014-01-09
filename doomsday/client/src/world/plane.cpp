@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "world/plane.h"
 
 #include "dd_loop.h" // frameTimePos
@@ -46,15 +46,15 @@ DENG2_PIMPL(Plane)
 #endif
 
     Instance(Public *i, coord_t height)
-        : Base(i),
-          indexInSector(-1),
-          height(height),
-          targetHeight(height),
-          speed(0),
-          surface(dynamic_cast<MapElement &>(*i))
+        : Base(i)
+        , indexInSector(-1)
+        , height(height)
+        , targetHeight(height)
+        , speed(0)
+        , surface(dynamic_cast<MapElement &>(*i))
 #ifdef __CLIENT__
-         ,heightSmoothed(height),
-          heightSmoothedDelta(0)
+        , heightSmoothed(height)
+        , heightSmoothedDelta(0)
 #endif
     {
 #ifdef __CLIENT__
@@ -128,7 +128,8 @@ DENG2_PIMPL(Plane)
 };
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
-    : MapElement(DMU_PLANE, &sector), d(new Instance(this, height))
+    : MapElement(DMU_PLANE, &sector)
+    , d(new Instance(this, height))
 {
     setNormal(normal);
 }

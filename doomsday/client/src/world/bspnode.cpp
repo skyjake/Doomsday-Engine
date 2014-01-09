@@ -1,4 +1,4 @@
-/** @file bspnode.cpp World map BSP node.
+/** @file bspnode.cpp  World map BSP node.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,11 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/vector1.h> /// @todo Remove me
+#include "de_base.h"
+#include "world/bspnode.h"
 
 #include <de/Log>
-
-#include "world/bspnode.h"
+#include <de/vector1.h> /// @todo Remove me
 
 using namespace de;
 
@@ -39,10 +39,10 @@ DENG2_PIMPL_NOREF(BspNode)
     AABoxd rightAABox;
     AABoxd leftAABox;
 
-    Instance(Partition const &partition_)
-        : partition(partition_),
-          rightChild(0),
-          leftChild(0)
+    Instance(Partition const &partition)
+        : partition(partition)
+        , rightChild(0)
+        , leftChild(0)
     {}
 
     inline MapElement **childAdr(int left) {
@@ -54,8 +54,9 @@ DENG2_PIMPL_NOREF(BspNode)
     }
 };
 
-BspNode::BspNode(Partition const &partition_)
-    : MapElement(DMU_BSPNODE), d(new Instance(partition_))
+BspNode::BspNode(Partition const &partition)
+    : MapElement(DMU_BSPNODE)
+    , d(new Instance(partition))
 {
     setRightAABox(0);
     setLeftAABox(0);

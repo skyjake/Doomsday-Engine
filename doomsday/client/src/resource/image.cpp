@@ -311,7 +311,7 @@ uint8_t *Image_LoadFromFile(image_t &img, de::FileHandle &file)
         img.flags |= IMGF_IS_MASKED;
     }
 
-    LOG_VERBOSE("\"%s\" (%s)")
+    LOG_VERBOSE("\"%s\" %s")
             << NativePath(filePath).pretty() << img.size.asText();
 
     return img.pixels;

@@ -635,26 +635,41 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
     if(df & SDF_CEILING_SPEED)
         speed[PLN_CEILING] = FIX2FLT(Reader_ReadByte(msgReader) << (df & SDF_CEILING_SPEED_44 ? 12 : 15));
 
-    if(df & SDF_COLOR_RED)
-        sec->setLightRed(Reader_ReadByte(msgReader) / 255.f);
-    if(df & SDF_COLOR_GREEN)
-        sec->setLightGreen(Reader_ReadByte(msgReader) / 255.f);
-    if(df & SDF_COLOR_BLUE)
-        sec->setLightBlue(Reader_ReadByte(msgReader) / 255.f);
+    if(df & (SDF_COLOR_RED | SDF_COLOR_GREEN | SDF_COLOR_BLUE))
+    {
+        Vector3f newColor = sec->lightColor();
+        if(df & SDF_COLOR_RED)
+            newColor.x = Reader_ReadByte(msgReader) / 255.f;
+        if(df & SDF_COLOR_GREEN)
+            newColor.y = Reader_ReadByte(msgReader) / 255.f;
+        if(df & SDF_COLOR_BLUE)
+            newColor.z = Reader_ReadByte(msgReader) / 255.f;
+        sec->setLightColor(newColor);
+    }
 
-    if(df & SDF_FLOOR_COLOR_RED)
-        sec->floorSurface().setTintRed(Reader_ReadByte(msgReader) / 255.f);
-    if(df & SDF_FLOOR_COLOR_GREEN)
-        sec->floorSurface().setTintGreen(Reader_ReadByte(msgReader) / 255.f);
-    if(df & SDF_FLOOR_COLOR_BLUE)
-        sec->floorSurface().setTintBlue(Reader_ReadByte(msgReader) / 255.f);
+    if(df & (SDF_FLOOR_COLOR_RED | SDF_FLOOR_COLOR_GREEN | SDF_FLOOR_COLOR_BLUE))
+    {
+        Vector3f newColor = sec->floorSurface().tintColor();
+        if(df & SDF_FLOOR_COLOR_RED)
+            newColor.x = Reader_ReadByte(msgReader) / 255.f;
+        if(df & SDF_FLOOR_COLOR_GREEN)
+            newColor.y = Reader_ReadByte(msgReader) / 255.f;
+        if(df & SDF_FLOOR_COLOR_BLUE)
+            newColor.z = Reader_ReadByte(msgReader) / 255.f;
+        sec->floorSurface().setTintColor(newColor);
+    }
 
-    if(df & SDF_CEIL_COLOR_RED)
-        sec->ceilingSurface().setTintRed(Reader_ReadByte(msgReader) / 255.f);
-    if(df & SDF_CEIL_COLOR_GREEN)
-        sec->ceilingSurface().setTintGreen(Reader_ReadByte(msgReader) / 255.f);
-    if(df & SDF_CEIL_COLOR_BLUE)
-        sec->ceilingSurface().setTintBlue(Reader_ReadByte(msgReader) / 255.f);
+    if(df & (SDF_CEIL_COLOR_RED | SDF_CEIL_COLOR_GREEN | SDF_CEIL_COLOR_BLUE))
+    {
+        Vector3f newColor = sec->ceilingSurface().tintColor();
+        if(df & SDF_CEIL_COLOR_RED)
+            newColor.x = Reader_ReadByte(msgReader) / 255.f;
+        if(df & SDF_CEIL_COLOR_GREEN)
+            newColor.y = Reader_ReadByte(msgReader) / 255.f;
+        if(df & SDF_CEIL_COLOR_BLUE)
+            newColor.z = Reader_ReadByte(msgReader) / 255.f;
+        sec->ceilingSurface().setTintColor(newColor);
+    }
 
     // The whole delta has now been read.
 
@@ -760,31 +775,50 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         side->bottom().setMaterial(Cl_FindLocalMaterial(botMat));
     }
 
-    if(df & SIDF_TOP_COLOR_RED)
-        side->top().setTintRed(toprgb[CR]);
-    if(df & SIDF_TOP_COLOR_GREEN)
-        side->top().setTintGreen(toprgb[CG]);
-    if(df & SIDF_TOP_COLOR_BLUE)
-        side->top().setTintBlue(toprgb[CB]);
+    if(df & (SIDF_TOP_COLOR_RED | SIDF_TOP_COLOR_GREEN | SIDF_TOP_COLOR_BLUE))
+    {
+        Vector3f newColor = side->top().tintColor();
+        if(df & SIDF_TOP_COLOR_RED)
+            newColor.x = toprgb[CR];
+        if(df & SIDF_TOP_COLOR_GREEN)
+            newColor.y = toprgb[CG];
+        if(df & SIDF_TOP_COLOR_BLUE)
+            newColor.z = toprgb[CB];
+        side->top().setTintColor(newColor);
+    }
 
-    if(df & SIDF_MID_COLOR_RED)
-        side->middle().setTintRed(midrgba[CR]);
-    if(df & SIDF_MID_COLOR_GREEN)
-        side->middle().setTintGreen(midrgba[CG]);
-    if(df & SIDF_MID_COLOR_BLUE)
-        side->middle().setTintBlue(midrgba[CB]);
+    if(df & (SIDF_MID_COLOR_RED | SIDF_MID_COLOR_GREEN | SIDF_MID_COLOR_BLUE))
+    {
+        Vector3f newColor = side->middle().tintColor();
+        if(df & SIDF_MID_COLOR_RED)
+            newColor.x = midrgba[CR];
+        if(df & SIDF_MID_COLOR_GREEN)
+            newColor.y = midrgba[CG];
+        if(df & SIDF_MID_COLOR_BLUE)
+            newColor.z = midrgba[CB];
+        side->middle().setTintColor(newColor);
+    }
     if(df & SIDF_MID_COLOR_ALPHA)
+    {
         side->middle().setOpacity(midrgba[CA]);
+    }
 
-    if(df & SIDF_BOTTOM_COLOR_RED)
-        side->bottom().setTintRed(bottomrgb[CR]);
-    if(df & SIDF_BOTTOM_COLOR_GREEN)
-        side->bottom().setTintGreen(bottomrgb[CG]);
-    if(df & SIDF_BOTTOM_COLOR_BLUE)
-        side->bottom().setTintBlue(bottomrgb[CB]);
+    if(df & (SIDF_BOTTOM_COLOR_RED | SIDF_BOTTOM_COLOR_GREEN | SIDF_BOTTOM_COLOR_BLUE))
+    {
+        Vector3f newColor = side->bottom().tintColor();
+        if(df & SIDF_BOTTOM_COLOR_RED)
+            newColor.x = bottomrgb[CR];
+        if(df & SIDF_BOTTOM_COLOR_GREEN)
+            newColor.y = bottomrgb[CG];
+        if(df & SIDF_BOTTOM_COLOR_BLUE)
+            newColor.z = bottomrgb[CB];
+        side->bottom().setTintColor(newColor);
+    }
 
     if(df & SIDF_MID_BLENDMODE)
+    {
         side->middle().setBlendMode(blendmode_t(blendmode));
+    }
 
     if(df & SIDF_FLAGS)
     {

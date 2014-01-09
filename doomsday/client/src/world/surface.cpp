@@ -1,4 +1,4 @@
-/** @file surface.cpp World map surface.
+/** @file surface.cpp  World map surface.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
+#include "de_base.h"
 #include "world/surface.h"
 
 #include "de_defs.h" // Def_GetGenerator
@@ -67,14 +67,14 @@ DENG2_PIMPL(Surface)
 #endif
 
     Instance(Public *i)
-        : Base(i),
-          tangentMatrix(Matrix3f::Zero),
-          needUpdateTangentMatrix(false),
-          material(0),
-          materialIsMissingFix(false),
-          opacity(0),
-          blendMode(BM_NORMAL),
-          flags(0)
+        : Base(i)
+        , tangentMatrix(Matrix3f::Zero)
+        , needUpdateTangentMatrix(false)
+        , material(0)
+        , materialIsMissingFix(false)
+        , opacity(0)
+        , blendMode(BM_NORMAL)
+        , flags(0)
     {}
 
     ~Instance()
@@ -105,28 +105,19 @@ DENG2_PIMPL(Surface)
     }
 #endif
 
-    void notifyNormalChanged(Vector3f const &oldNormal)
+    void notifyNormalChanged()
     {
-        // Predetermine which axes have changed.
-        int changedAxes = 0;
-        for(int i = 0; i < 3; ++i)
-        {
-            if(!de::fequal(tangentMatrix.at(i, 2), oldNormal[i]))
-                changedAxes |= (1 << i);
-        }
-
         DENG2_FOR_PUBLIC_AUDIENCE(NormalChange, i)
         {
-            i->normalChanged(self, oldNormal, changedAxes);
+            i->surfaceNormalChanged(self);
         }
     }
 
-    void notifyMaterialOriginChanged(Vector2f const &oldMaterialOrigin,
-                                     int changedComponents)
+    void notifyMaterialOriginChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(MaterialOriginChange, i)
         {
-            i->materialOriginChanged(self, oldMaterialOrigin, changedComponents);
+            i->surfaceMaterialOriginChanged(self);
         }
 
 #ifdef __CLIENT__
@@ -139,46 +130,20 @@ DENG2_PIMPL(Surface)
 #endif
     }
 
-    void notifyMaterialOriginChanged(Vector2f const &oldMaterialOrigin)
-    {
-        // Predetermine which axes have changed.
-        int changedAxes = 0;
-        for(int i = 0; i < 2; ++i)
-        {
-            if(!de::fequal(materialOrigin[i], oldMaterialOrigin[i]))
-                changedAxes |= (1 << i);
-        }
-
-        notifyMaterialOriginChanged(oldMaterialOrigin, changedAxes);
-    }
-
-    void notifyOpacityChanged(float oldOpacity)
+    void notifyOpacityChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(OpacityChange, i)
         {
-            i->opacityChanged(self, oldOpacity);
+            i->surfaceOpacityChanged(self);
         }
     }
 
-    void notifyTintColorChanged(Vector3f const &oldTintColor, int changedComponents)
+    void notifyTintColorChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(TintColorChange, i)
         {
-            i->tintColorChanged(self, oldTintColor, changedComponents);
+            i->surfaceTintColorChanged(self);
         }
-    }
-
-    void notifyTintColorChanged(Vector3f const &oldTintColor)
-    {
-        // Predetermine which components have changed.
-        int changedComponents = 0;
-        for(int i = 0; i < 3; ++i)
-        {
-            if(!de::fequal(tintColor[i], oldTintColor[i]))
-                changedComponents |= (1 << i);
-        }
-
-        notifyTintColorChanged(oldTintColor, changedComponents);
     }
 
     void updateTangentMatrix()
@@ -195,11 +160,11 @@ DENG2_PIMPL(Surface)
 };
 
 Surface::Surface(MapElement &owner, float opacity, Vector3f const &tintColor)
-    : MapElement(DMU_SURFACE, &owner),
+    : MapElement(DMU_SURFACE, &owner)
 #ifdef __CLIENT__
-      _needDecorationUpdate(true),
+    , _needDecorationUpdate(true)
 #endif
-      d(new Instance(this))
+    , d(new Instance(this))
 {
     d->opacity   = opacity;
     d->tintColor = tintColor;
@@ -228,8 +193,7 @@ Surface &Surface::setNormal(Vector3f const &newNormal)
         // We'll need to recalculate the tangents when next referenced.
         d->needUpdateTangentMatrix = true;
 
-        // Notify interested parties of the change.
-        d->notifyNormalChanged(oldNormal);
+        d->notifyNormalChanged();
     }
     return *this;
 }
@@ -278,7 +242,7 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
             d->materialIsMissingFix = true;
 
             // Sides of selfreferencing map lines should never receive fix materials.
-            DENG_ASSERT(!(parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing()));
+            DENG2_ASSERT(!(parent().type() == DMU_SIDE && parent().as<LineSide>().line().isSelfReferencing()));
         }
     }
     else if(newMaterial && d->materialIsMissingFix)
@@ -324,8 +288,6 @@ Surface &Surface::setMaterialOrigin(Vector2f const &newOrigin)
 {
     if(d->materialOrigin != newOrigin)
     {
-        Vector2f oldMaterialOrigin = d->materialOrigin;
-
         d->materialOrigin = newOrigin;
 
 #ifdef __CLIENT__
@@ -339,35 +301,7 @@ Surface &Surface::setMaterialOrigin(Vector2f const &newOrigin)
         }
 #endif
 
-        // Notify interested parties of the change.
-        d->notifyMaterialOriginChanged(oldMaterialOrigin);
-    }
-    return *this;
-}
-
-Surface &Surface::setMaterialOriginComponent(int component, float newPosition)
-{
-    if(!de::fequal(d->materialOrigin[component], newPosition))
-    {
-        Vector2f oldMaterialOrigin = d->materialOrigin;
-
-        d->materialOrigin[component] = newPosition;
-
-#ifdef __CLIENT__
-        // During map setup we'll apply this immediately to the visual origin also.
-        if(ddMapSetup)
-        {
-            d->materialOriginSmoothed[component] = d->materialOrigin[component];
-            d->materialOriginSmoothedDelta[component] = 0;
-
-            d->oldMaterialOrigin[0][component] =
-                d->oldMaterialOrigin[1][component] =
-                    d->materialOrigin[component];
-        }
-#endif
-
-        // Notify interested parties of the change.
-        d->notifyMaterialOriginChanged(oldMaterialOrigin, (1 << component));
+        d->notifyMaterialOriginChanged();
     }
     return *this;
 }
@@ -442,16 +376,13 @@ float Surface::opacity() const
 
 Surface &Surface::setOpacity(float newOpacity)
 {
-    DENG_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane()); // sanity check
+    DENG2_ASSERT(d->isSideMiddle() || d->isSectorExtraPlane()); // sanity check
 
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
     if(!de::fequal(d->opacity, newOpacity))
     {
-        float oldOpacity = d->opacity;
         d->opacity = newOpacity;
-
-        // Notify interested parties of the change.
-        d->notifyOpacityChanged(oldOpacity);
+        d->notifyOpacityChanged();
     }
     return *this;
 }
@@ -469,26 +400,8 @@ Surface &Surface::setTintColor(Vector3f const &newTintColor)
 
     if(d->tintColor != newColorClamped)
     {
-        Vector3f oldTintColor = d->tintColor;
         d->tintColor = newColorClamped;
-
-        // Notify interested parties of the change.
-        d->notifyTintColorChanged(oldTintColor);
-    }
-    return *this;
-}
-
-Surface &Surface::setTintColorComponent(int component, float newStrength)
-{
-    DENG_ASSERT(component >= 0 && component < 3);
-    newStrength = de::clamp(0.f, newStrength, 1.f);
-    if(!de::fequal(d->tintColor[component], newStrength))
-    {
-        Vector3f oldTintColor = d->tintColor;
-        d->tintColor[component] = newStrength;
-
-        // Notify interested parties of the change.
-        d->notifyTintColorChanged(oldTintColor, (1 << component));
+        d->notifyTintColorChanged();
     }
     return *this;
 }
@@ -683,7 +596,7 @@ int Surface::setProperty(DmuArgs const &args)
         break;
 
     case DMU_COLOR: {
-        Vector3f newColor;
+        Vector3f newColor = d->tintColor;
         args.value(DMT_SURFACE_RGBA, &newColor.x, 0);
         args.value(DMT_SURFACE_RGBA, &newColor.y, 1);
         args.value(DMT_SURFACE_RGBA, &newColor.z, 2);
@@ -691,21 +604,21 @@ int Surface::setProperty(DmuArgs const &args)
         break; }
 
     case DMU_COLOR_RED: {
-        float newRed;
-        args.value(DMT_SURFACE_RGBA, &newRed, 0);
-        setTintRed(newRed);
+        Vector3f newColor = d->tintColor;
+        args.value(DMT_SURFACE_RGBA, &newColor.x, 0);
+        setTintColor(newColor);
         break; }
 
     case DMU_COLOR_GREEN: {
-        float newGreen;
-        args.value(DMT_SURFACE_RGBA, &newGreen, 0);
-        setTintGreen(newGreen);
+        Vector3f newColor = d->tintColor;
+        args.value(DMT_SURFACE_RGBA, &newColor.y, 0);
+        setTintColor(newColor);
         break; }
 
     case DMU_COLOR_BLUE: {
-        float newBlue;
-        args.value(DMT_SURFACE_RGBA, &newBlue, 0);
-        setTintBlue(newBlue);
+        Vector3f newColor = d->tintColor;
+        args.value(DMT_SURFACE_RGBA, &newColor.z, 0);
+        setTintColor(newColor);
         break; }
 
     case DMU_ALPHA: {
@@ -721,15 +634,15 @@ int Surface::setProperty(DmuArgs const &args)
         break; }
 
     case DMU_OFFSET_X: {
-        float newOriginX;
-        args.value(DMT_SURFACE_OFFSET, &newOriginX, 0);
-        setMaterialOriginX(newOriginX);
+        Vector2f newOrigin = d->materialOrigin;
+        args.value(DMT_SURFACE_OFFSET, &newOrigin.x, 0);
+        setMaterialOrigin(newOrigin);
         break; }
 
     case DMU_OFFSET_Y: {
-        float newOriginY;
-        args.value(DMT_SURFACE_OFFSET, &newOriginY, 0);
-        setMaterialOriginY(newOriginY);
+        Vector2f newOrigin = d->materialOrigin;
+        args.value(DMT_SURFACE_OFFSET, &newOrigin.y, 0);
+        setMaterialOrigin(newOrigin);
         break; }
 
     case DMU_OFFSET_XY: {

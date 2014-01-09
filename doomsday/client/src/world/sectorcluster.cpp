@@ -1,4 +1,4 @@
-/** @file sectorcluster.cpp World map sector cluster.
+/** @file sectorcluster.cpp  World map sector cluster.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -105,13 +105,13 @@ DENG2_OBSERVES(Plane, HeightChange)
 #endif
 
     Instance(Public *i)
-        : Base(i),
-          needClassify(true),
-          flags(0),
-          mappedVisFloor(0),
-          mappedVisCeiling(0)
+        : Base(i)
+        , needClassify(true)
+        , flags(0)
+        , mappedVisFloor(0)
+        , mappedVisCeiling(0)
 #ifdef __CLIENT__
-         ,needReverbUpdate(true)
+        , needReverbUpdate(true)
 #endif
     {
 #ifdef __CLIENT__
@@ -655,10 +655,8 @@ DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
 
     /// Observes Plane HeightSmoothedChange.
-    void planeHeightSmoothedChanged(Plane &plane, coord_t oldHeight)
+    void planeHeightSmoothedChanged(Plane &plane, coord_t /*oldHeight*/)
     {
-        DENG2_UNUSED(oldHeight);
-
         markDependantSurfacesForDecorationUpdate();
 
         // We may need to update one or both mapped planes.
