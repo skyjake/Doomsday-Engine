@@ -150,8 +150,6 @@ static bool writeConsoleState(Path const &filePath)
 {
     if(filePath.isEmpty()) return false;
 
-    LOG_SCR_VERBOSE("Writing state to \"%s\"...") << filePath;
-
     // Ensure the destination directory exists.
     String fileDir = filePath.toString().fileNamePath();
     if(!fileDir.isEmpty())
@@ -161,6 +159,9 @@ static bool writeConsoleState(Path const &filePath)
 
     if(FILE *file = fopen(filePath.toUtf8().constData(), "wt"))
     {
+        LOG_SCR_VERBOSE("Writing state to \"%s\"...")
+                << NativePath(filePath).pretty();
+
         writeHeaderComment(file);
         fprintf(file, "#\n# CONSOLE VARIABLES\n#\n\n");
         writeVariablesToFile(file);
@@ -182,8 +183,6 @@ static bool writeBindingsState(Path const &filePath)
 {
     if(filePath.isEmpty()) return false;
 
-    LOG_SCR_VERBOSE("Writing bindings to \"%s\"...") << filePath;
-
     // Ensure the destination directory exists.
     String fileDir = filePath.toString().fileNamePath();
     if(!fileDir.isEmpty())
@@ -193,6 +192,9 @@ static bool writeBindingsState(Path const &filePath)
 
     if(FILE *file = fopen(filePath.toUtf8().constData(), "wt"))
     {
+        LOG_SCR_VERBOSE("Writing bindings to \"%s\"...")
+                << NativePath(filePath).pretty();
+
         writeHeaderComment(file);
         B_WriteToFile(file);
         fclose(file);
