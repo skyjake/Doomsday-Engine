@@ -161,16 +161,14 @@ void LogEntry::Arg::setValue(String const &s)
 
 void LogEntry::Arg::setValue(LogEntry::Arg::Base const &arg)
 {
-    clear();
-    _type = arg.logEntryArgType();
-    switch(_type)
+    switch(arg.logEntryArgType())
     {
     case IntegerArgument:
-        _data.intValue = arg.asInt64();
+        setValue(arg.asInt64());
         break;
 
     case FloatingPointArgument:
-        _data.floatValue = arg.asDouble();
+        setValue(arg.asDouble());
         break;
 
     case StringArgument:
