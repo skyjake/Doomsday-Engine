@@ -292,13 +292,6 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     }
 
     localMobj->height = remoteClientMobj->height;
-/*#ifdef _DEBUG
-    if(localMobj->floorClip != remoteClientMobj->floorClip)
-    {
-        Con_Message("Cl_UpdateRealPlayerMobj: Floorclip=%f", remoteClientMobj->floorClip);
-    }
-#endif
-    localMobj->floorClip = remoteClientMobj->floorClip;*/
     localMobj->selector &= ~DDMOBJ_SELECTOR_MASK;
     localMobj->selector |= remoteClientMobj->selector & DDMOBJ_SELECTOR_MASK;
     localMobj->visAngle = remoteClientMobj->angle >> 16;

@@ -35,21 +35,16 @@
 
 using namespace de;
 
-#if _DEBUG
-#  define  W_Error              Con_Error
-#else
-#  define  W_Error              Con_Message
-#endif
-
 size_t W_LumpLength(lumpnum_t lumpNum)
 {
     try
     {
         return App_FileSystem().nameIndex().lump(lumpNum).info().size;
     }
-    catch(LumpIndex::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const &er)
     {
-        W_Error("W_LumpLength: Invalid lumpnum %i.", lumpNum);
+        LOG_AS("W_LumpLength");
+        LOGDEV_RES_ERROR("%s") << er.asText();
     }
     return 0;
 }
@@ -62,9 +57,10 @@ AutoStr* W_LumpName(lumpnum_t lumpNum)
         QByteArray nameUtf8 = name.toUtf8();
         return AutoStr_FromTextStd(nameUtf8.constData());
     }
-    catch(FS1::NotFoundError const&)
+    catch(FS1::NotFoundError const &er)
     {
-        W_Error("W_LumpName: Invalid lumpnum %i.", lumpNum);
+        LOG_AS("W_LumpName");
+        LOGDEV_RES_ERROR("%s") << er.asText();
     }
     return AutoStr_NewStd();
 }
@@ -75,14 +71,15 @@ uint W_LumpLastModified(lumpnum_t lumpNum)
     {
         return App_FileSystem().nameIndex().lump(lumpNum).info().lastModified;
     }
-    catch(LumpIndex::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const &er)
     {
-        W_Error("W_LumpLastModified: Invalid lumpnum %i.", lumpNum);
+        LOG_AS("W_LumpLastModified");
+        LOGDEV_RES_ERROR("%s") << er.asText();
     }
     return 0;
 }
 
-AutoStr* W_LumpSourceFile(lumpnum_t lumpNum)
+AutoStr *W_LumpSourceFile(lumpnum_t lumpNum)
 {
     try
     {
@@ -90,9 +87,10 @@ AutoStr* W_LumpSourceFile(lumpnum_t lumpNum)
         QByteArray path = lump.container().composePath().toUtf8();
         return AutoStr_FromText(path.constData());
     }
-    catch(LumpIndex::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const &er)
     {
-        W_Error("W_LumpSourceFile: Invalid lumpnum %i.", lumpNum);
+        LOG_AS("W_LumpSourceFile");
+        LOGDEV_RES_ERROR("%s") << er.asText();
     }
     return AutoStr_NewStd();
 }
@@ -104,14 +102,15 @@ boolean W_LumpIsCustom(lumpnum_t lumpNum)
         de::File1 const& lump = App_FileSystem().nameIndex().lump(lumpNum);
         return lump.container().hasCustom();
     }
-    catch(LumpIndex::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const &er)
     {
-        W_Error("W_LumpIsCustom: Invalid lumpnum %i.", lumpNum);
+        LOG_AS("W_LumpIsCustom");
+        LOGDEV_RES_ERROR("%s") << er.asText();
     }
     return false;
 }
 
-lumpnum_t W_CheckLumpNumForName(char const* name)
+lumpnum_t W_CheckLumpNumForName(char const *name)
 {
     lumpnum_t lumpNum;
     if(!name || !name[0])
@@ -123,12 +122,12 @@ lumpnum_t W_CheckLumpNumForName(char const* name)
     return lumpNum;
 }
 
-lumpnum_t W_GetLumpNumForName(char const* name)
+lumpnum_t W_GetLumpNumForName(char const *name)
 {
     lumpnum_t lumpNum = W_CheckLumpNumForName(name);
     if(lumpNum < 0)
     {
-        W_Error("W_GetLumpNumForName: Lump \"%s\" not found.", name);
+        LOG_RES_ERROR("Lump \"%s\" not found") << name;
     }
     return lumpNum;
 }
@@ -140,9 +139,10 @@ size_t W_ReadLump(lumpnum_t lumpNum, uint8_t* buffer)
         de::File1& lump = App_FileSystem().nameIndex().lump(lumpNum);
         return lump.read(buffer, 0, lump.size());
     }
-    catch(LumpIndex::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const &er)
     {
-        W_Error("W_ReadLump: Invalid lumpnum %i.", lumpNum);
+        LOG_AS("W_ReadLump");
+        LOGDEV_RES_ERROR("%s") << er.asText();
     }
     return 0;
 }
@@ -154,22 +154,24 @@ size_t W_ReadLumpSection(lumpnum_t lumpNum, uint8_t* buffer, size_t startOffset,
         de::File1& lump = App_FileSystem().nameIndex().lump(lumpNum);
         return lump.read(buffer, startOffset, length);
     }
-    catch(LumpIndex::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const &er)
     {
-        W_Error("W_ReadLumpSection: Invalid lumpnum %i.", lumpNum);
+        LOG_AS("W_ReadLumpSection");
+        LOGDEV_RES_ERROR("%s") << er.asText();
     }
     return 0;
 }
 
-uint8_t const* W_CacheLump(lumpnum_t lumpNum)
+uint8_t const *W_CacheLump(lumpnum_t lumpNum)
 {
     try
     {
         return App_FileSystem().nameIndex().lump(lumpNum).cache();
     }
-    catch(LumpIndex::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const &er)
     {
-        W_Error("W_CacheLump: Invalid lumpnum %i.", lumpNum);
+        LOG_AS("W_CacheLump");
+        LOGDEV_RES_ERROR("%s") << er.asText();
     }
     return NULL;
 }
@@ -180,9 +182,10 @@ void W_UnlockLump(lumpnum_t lumpNum)
     {
         App_FileSystem().nameIndex().lump(lumpNum).unlock();
     }
-    catch(LumpIndex::NotFoundError const&)
+    catch(LumpIndex::NotFoundError const &er)
     {
-        W_Error("W_UnlockLump: Invalid lumpnum %i.", lumpNum);
+        LOG_AS("W_UnlockLump");
+        LOGDEV_RES_ERROR("%s") << er.asText();
     }
     return;
 }

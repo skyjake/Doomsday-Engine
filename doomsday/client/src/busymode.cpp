@@ -169,10 +169,7 @@ static void endTask(BusyTask* task)
     DENG_ASSERT(task);
     DENG_ASSERT_IN_MAIN_THREAD();
 
-    if(verbose)
-    {
-        Con_Message("Con_Busy: Was busy for %.2lf seconds.", busyTime);
-    }
+    LOG_VERBOSE("Busy mode lasted %.2f seconds") << busyTime;
 
     if(busyTaskEndedWithError)
     {

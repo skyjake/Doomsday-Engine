@@ -228,11 +228,6 @@ void Sfx_PurgeLogical(void)
         for(it = logicHash[i].first; it; it = next)
         {
             next = it->next;
-            /*#ifdef _DEBUG
-               Con_Printf("LS:%i orig=%i(%p) %s\n",
-               it->id, it->origin? it->origin->thinker.id : 0,
-               it->origin, it->isRepeating? "[repeat]" : "");
-               #endif */
             if(!it->isRepeating && it->endTime < nowTime)
             {
                 // This has stopped.
