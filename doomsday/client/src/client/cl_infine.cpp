@@ -43,6 +43,8 @@ void Cl_Finale(Reader* msg)
     int len;
     finaleid_t finaleId = Reader_ReadUInt32(msg);
 
+    LOG_AS("Cl_Finale");
+
     if(flags & FINF_SCRIPT)
     {
         // Read the script into map-scope memory. It will be freed
@@ -58,9 +60,7 @@ void Cl_Finale(Reader* msg)
         // Start the script.
         currentFinale = FI_Execute((const char*)script, FF_LOCAL);
         remoteFinale = finaleId;
-#ifdef _DEBUG
-        Con_Message("Cl_Finale: Started finale %i (remote id %i).", currentFinale, remoteFinale);
-#endif
+        LOGDEV_NET_MSG("Started finale %i (remote id %i)") << currentFinale << remoteFinale;
     }
 
     /// @todo Wouldn't hurt to make sure that the server is talking about the
@@ -89,9 +89,7 @@ void Cl_RequestFinaleSkip(void)
     Writer_WriteUInt16(msgWriter, 1); // skip
     Msg_End();
 
-#ifdef _DEBUG
-    Con_Message("Cl_RequestFinaleSkip: Requesting skip on finale %i.", remoteFinale);
-#endif
+    LOGDEV_NET_MSG("Requesting skip on finale %i") << remoteFinale;
 
     Net_SendBuffer(0, 0);
 }

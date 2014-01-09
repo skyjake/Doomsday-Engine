@@ -51,7 +51,7 @@ void Cl_InitID(void)
     if((i = CommandLine_CheckWith("-id", 1)) != 0)
     {
         clientID = strtoul(CommandLine_At(i + 1), 0, 0);
-        Con_Message("Cl_InitID: Using custom id 0x%08x.", clientID);
+        LOG_NET_NOTE("Using custom client ID: 0x%08x") << clientID;
         return;
     }
 
@@ -86,7 +86,7 @@ int Cl_GameReady(void)
 
 void Cl_CleanUp()
 {
-    Con_Printf("Cl_CleanUp.\n");
+    LOG_NET_MSG("Cleaning up client state");
 
     clientPaused = false;
     handshakeReceived = false;
@@ -104,6 +104,8 @@ void Cl_CleanUp()
 
 void Cl_SendHello()
 {
+    LOG_AS("Cl_SendHello");
+
     Msg_Begin(PCL_HELLO2);
     Writer_WriteUInt32(msgWriter, clientID);
 
@@ -111,9 +113,7 @@ void Cl_SendHello()
     char buf[256]; zap(buf);
     strncpy(buf, App_CurrentGame().identityKey().toUtf8().constData(), sizeof(buf) - 1);
 
-#ifdef _DEBUG
-    Con_Message("Cl_SendHello: game mode = %s", buf);
-#endif
+    LOGDEV_NET_VERBOSE("game mode = %s") << buf;
 
     Writer_Write(msgWriter, buf, 16);
     Msg_End();
@@ -129,6 +129,8 @@ void Cl_AnswerHandshake(void)
     float remoteGameTime = Reader_ReadFloat(msgReader);
     int i;
 
+    LOG_AS("Cl_AnswerHandshake");
+
     // Immediately send an acknowledgement. This lets the server evaluate
     // an approximate ping time.
     Msg_Begin(PCL_ACK_SHAKE);
@@ -138,8 +140,8 @@ void Cl_AnswerHandshake(void)
     // Check the version number.
     if(remoteVersion != SV_VERSION)
     {
-        Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)",
-                    SV_VERSION, remoteVersion);
+        LOG_NET_ERROR("Version conflict! (you:%i, server:%i)")
+                << SV_VERSION << remoteVersion;
         Con_Execute(CMDS_DDAY, "net disconnect", false, false);
         Demo_StopPlayback();
         Con_Open(true);
@@ -179,8 +181,8 @@ void Cl_AnswerHandshake(void)
     gameReady = false;
     Cl_InitFrame();
 
-    Con_Message("Cl_AnswerHandshake: myConsole:%i, remoteGameTime:%f.",
-                myConsole, remoteGameTime);
+    LOGDEV_NET_MSG("Answering handshake: myConsole:%i, remoteGameTime:%.2f")
+            << myConsole << remoteGameTime;
 
     /**
      * Tell the game that we have arrived. The map will be changed when the
@@ -210,9 +212,7 @@ void Cl_HandlePlayerInfo(void)
     memset(name, 0, sizeof(name));
     Reader_Read(msgReader, name, len);
 
-#ifdef _DEBUG
-    Con_Message("Cl_HandlePlayerInfo: console:%i name:%s", console, name);
-#endif
+    LOG_NET_VERBOSE("Player %i named \"%s\"") << console << name;
 
     // Is the console number valid?
     if(console >= DDMAXPLAYERS)
@@ -235,7 +235,7 @@ void Cl_HandlePlayerInfo(void)
 
 void Cl_PlayerLeaves(int plrNum)
 {
-    Con_Printf("Cl_PlayerLeaves: player %i has left.\n", plrNum);
+    LOG_NET_NOTE("Player %i has left the game") << plrNum;
     ddPlayers[plrNum].shared.inGame = false;
     gx.NetPlayerEvent(plrNum, DDPE_EXIT, 0);
 }
@@ -299,7 +299,7 @@ void Cl_GetPackets(void)
             // The server updates our time. Latency has been taken into
             // account, so...
             gameTime = Reader_ReadFloat(msgReader);
-            Con_Printf("PSV_SYNC: gameTime=%.3f\n", gameTime);
+            LOGDEV_NET_VERBOSE("PSV_SYNC: gameTime=%.3f") << gameTime;
             DD_ResetTimer();
             break;
 
@@ -377,9 +377,7 @@ void Cl_GetPackets(void)
             }
             else
             {
-#ifdef _DEBUG
-                Con_Message("Cl_GetPackets: Packet (type %i) was discarded!", netBuffer.msg.type);
-#endif
+                LOG_NET_WARNING("Packet was discarded (unknown type %i)") << netBuffer.msg.type;
             }
         }
 
@@ -407,27 +405,28 @@ void Cl_Assertions(int plrNum)
     if(!s->clMobjId || !plr->shared.mo)
         return;
 
+    LOG_AS("Cl_Assertions");
+
     clmo = ClMobj_Find(s->clMobjId);
     if(!clmo)
     {
-        Con_Message("Cl_Assertions: client %i does not have a clmobj yet [%i].", plrNum, s->clMobjId);
+        LOGDEV_NET_NOTE("Client %i does not have a clmobj yet [%i]") << plrNum << s->clMobjId;
         return;
     }
     mo = plr->shared.mo;
 
     /*
-    Con_Message("Assert: client %i, clmo %i (flags 0x%x)",
-                plrNum, clmo->thinker.id, clmo->ddFlags);
-                */
+    ("Assert: client %i, clmo %i (flags 0x%x)", plrNum, clmo->thinker.id, clmo->ddFlags);
+    */
 
     // Make sure the flags are correctly set for a client.
     if(mo->ddFlags & DDMF_REMOTE)
     {
-        Con_Message("Cl_Assertions: client %i, mobj should not be remote!", plrNum);
+        LOGDEV_NET_NOTE("Client %i's mobj should not be remote") << plrNum;
     }
     if(clmo->ddFlags & DDMF_SOLID)
     {
-        Con_Message("Cl_Assertions: client %i, clmobj should not be solid (when player is alive)!", plrNum);
+        LOGDEV_NET_NOTE("Client %i's clmobj should not be solid (when player is alive)") << plrNum;
     }
 }
 

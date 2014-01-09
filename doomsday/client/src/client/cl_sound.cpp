@@ -1,4 +1,4 @@
-/** @file cl_sound.cpp Clientside Sounds.
+﻿/** @file cl_sound.cpp Clientside Sounds.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -187,10 +187,6 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
             info->flags |= CLMF_HIDDEN | CLMF_SOUND;
             info->sound = sound;
             info->volume = volume;
-            /*#ifdef _DEBUG
-               Con_Printf("Cl_ReadSoundDelta2(%i): Queueing: id=%i snd=%i vol=%.2f\n",
-               type, mobjId, sound, volume);
-               #endif */
             // The sound will be started when the clmobj is unhidden.
             return;
         }
@@ -207,9 +203,6 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         // from the real player mobj.
         if(cmo && cmo->thinker.id == ClPlayer_State(consolePlayer)->clMobjId)
         {
-            /*#ifdef _DEBUG
-               Con_Printf("Cl_ReadSoundDelta2(%i): ViewMobj sound...\n", type);
-               #endif */
             emitter = ddPlayers[consolePlayer].shared.mo;
         }
 
@@ -221,16 +214,6 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         }
 
         S_LocalSoundAtVolume(sound | soundFlags, emitter, volume);
-/*#
-ifdef _DEBUG
-Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f",
-           type, sound, flags, volume);
-if(cmo) Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", sector->indexInMap());
-else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
-else Con_Printf("\n");
-#endif
-*/
     }
     else if(sound >= 0)
     {
@@ -239,17 +222,6 @@ else Con_Printf("\n");
         if(emitter)
         {
             S_StopSound(sound, emitter);
-
-/*
-#ifdef _DEBUG
-Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i",
-           type, sound);
-if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", sector->indexInMap());
-else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
-else Con_Printf("\n");
-#endif
-*/
         }
     }
 }
@@ -276,15 +248,16 @@ void Cl_Sound(void)
         sound = Reader_ReadByte(msgReader);
     }
 
+    LOG_AS("Cl_Sound");
+
     // Is the ID valid?
     if(sound < 1 || sound >= defs.count.sounds.num)
     {
-        Con_Message("Cl_Sound: Out of bounds ID %i.", sound);
-        return;                 // Bad sound ID!
+        LOGDEV_NET_WARNING("Invalid sound ID %i") << sound;
+        return;
     }
-#ifdef _DEBUG
-    Con_Printf("Cl_Sound: %i\n", sound);
-#endif
+
+    LOGDEV_NET_XVERBOSE("id %i") << sound;
 
     if(flags & SNDF_VOLUME)
     {
@@ -309,7 +282,7 @@ void Cl_Sound(void)
         int num = (int)Reader_ReadPackedUInt16(msgReader);
         if(num >= App_World().map().sectorCount())
         {
-            Con_Message("Cl_Sound: Invalid sector number %i.", num);
+            LOG_NET_WARNING("Invalid sector number %i") << num;
             return;
         }
         mo = (mobj_t *) &App_World().map().sectors().at(num)->soundEmitter();
@@ -331,9 +304,8 @@ void Cl_Sound(void)
     else
     {
         // Play it from "somewhere".
-#ifdef _DEBUG
-Con_Printf("Cl_Sound: NULL orig sound %i\n", sound);
-#endif
+        LOGDEV_NET_VERBOSE("Unspecified origin for sound %i") << sound;
+
         S_LocalSoundAtVolume(sound, NULL, volume / 127.0f);
     }
 }

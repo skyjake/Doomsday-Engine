@@ -136,7 +136,9 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     if(clmo->thinker.id != state->pendingFixTargetClMobjId)
         return;
 
-    assert(clmo->thinker.id == state->clMobjId);
+    LOG_AS("ClPlayer_ApplyPendingFixes");
+
+    DENG_ASSERT(clmo->thinker.id == state->clMobjId);
 
     if(state->pendingFixes & DDPF_FIXANGLES)
     {
@@ -144,10 +146,9 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         ddpl->fixAcked.angles = ddpl->fixCounter.angles;
         sendAck = true;
 
-#ifdef _DEBUG
-        Con_Message("ClPlayer_ApplyPendingFixes: Applying angle %x to mobj %p and clmo %i...",
-                    state->pendingAngleFix, mo, clmo->thinker.id);
-#endif
+        LOGDEV_NET_MSG("Applying angle %x to mobj %p and clmo %i")
+                << state->pendingAngleFix << mo << clmo->thinker.id;
+
         clmo->angle = mo->angle = state->pendingAngleFix;
         ddpl->lookDir = state->pendingLookDirFix;
     }
@@ -158,11 +159,10 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         ddpl->fixAcked.origin = ddpl->fixCounter.origin;
         sendAck = true;
 
-#ifdef _DEBUG
-        Con_Message("ClPlayer_ApplyPendingFixes: Applying pos (%f, %f, %f) to mobj %p and clmo %i...",
-                    state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ],
-                    mo, clmo->thinker.id);
-#endif
+        LOGDEV_NET_MSG("Applying pos %s to mobj %p and clmo %i")
+                << Vector3d(state->pendingOriginFix).asText()
+                << mo << clmo->thinker.id;
+
         Mobj_SetOrigin(mo, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
         mo->reactionTime = 18;
 
@@ -179,11 +179,10 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         ddpl->fixAcked.mom = ddpl->fixCounter.mom;
         sendAck = true;
 
-#ifdef _DEBUG
-        Con_Message("ClPlayer_ApplyPendingFixes: Applying mom (%f, %f, %f) to mobj %p and clmo %i...",
-                    state->pendingMomFix[VX], state->pendingMomFix[VY], state->pendingMomFix[VZ],
-                    mo, clmo->thinker.id);
-#endif
+        LOGDEV_NET_MSG("Applying mom %s to mobj %p and clmo %i")
+                << Vector3d(state->pendingMomFix).asText()
+                << mo << clmo->thinker.id;
+
         mo->mom[MX] = clmo->mom[VX] = state->pendingMomFix[VX];
         mo->mom[MY] = clmo->mom[VY] = state->pendingMomFix[VY];
         mo->mom[MZ] = clmo->mom[VZ] = state->pendingMomFix[VZ];
@@ -210,6 +209,8 @@ void ClPlayer_HandleFix(void)
     ddplayer_t* ddpl;
     clplayerstate_t* state;
 
+    LOG_AS("Cl_HandlePlayerFix");
+
     // Target player.
     plrNum = Reader_ReadByte(msgReader);
     plr = &ddPlayers[plrNum];
@@ -221,6 +222,8 @@ void ClPlayer_HandleFix(void)
 
     state->pendingFixTargetClMobjId = Reader_ReadUInt16(msgReader);
 
+    LOGDEV_NET_MSG("Fixing player %i") << plrNum;
+
     if(fixes & 1) // fix angles?
     {
         ddpl->fixCounter.angles = Reader_ReadInt32(msgReader);
@@ -228,10 +231,8 @@ void ClPlayer_HandleFix(void)
         state->pendingLookDirFix = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXANGLES;
 
-#ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix angles %i. Angle=%x, lookdir=%f", plrNum,
-                    ddpl->fixAcked.angles, state->pendingAngleFix, state->pendingLookDirFix);
-#endif
+        LOGDEV_NET_VERBOSE("Pending fix angles %i: angle=%x, lookdir=%f")
+                << ddpl->fixAcked.angles << state->pendingAngleFix << state->pendingLookDirFix;
     }
 
     if(fixes & 2) // fix pos?
@@ -242,10 +243,8 @@ void ClPlayer_HandleFix(void)
         state->pendingOriginFix[VZ] = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXORIGIN;
 
-#ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix pos %i. Pos=%f, %f, %f", plrNum,
-                    ddpl->fixAcked.origin, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
-#endif
+        LOGDEV_NET_VERBOSE("Pending fix pos %i: %s")
+                << ddpl->fixAcked.origin << Vector3d(state->pendingOriginFix).asText();
     }
 
     if(fixes & 4) // fix momentum?
@@ -255,6 +254,9 @@ void ClPlayer_HandleFix(void)
         state->pendingMomFix[VY] = Reader_ReadFloat(msgReader);
         state->pendingMomFix[VZ] = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXMOM;
+
+        LOGDEV_NET_VERBOSE("Pending fix momentum %i: %s")
+                << ddpl->fixAcked.mom << Vector3d(state->pendingMomFix).asText();
     }
 
     ClPlayer_ApplyPendingFixes(plrNum);
@@ -321,6 +323,8 @@ void ClPlayer_ReadDelta2(boolean skip)
     ddpsprite_t        *psp;
     unsigned short num, newId;
 
+    LOG_AS("ClPlayer_ReadDelta2");
+
     // The first byte consists of a player number and some flags.
     num = Reader_ReadByte(msgReader);
     df = (num & 0xf0) << 8;
@@ -361,10 +365,9 @@ void ClPlayer_ReadDelta2(boolean skip)
             //info = ClMobj_GetInfo(clmo);
             if(!clmo)
             {
-#ifdef _DEBUG
-                Con_Message("ClPlayer_ReadDelta2: Player %i's new clmobj is %i, but we don't know it yet.",
-                            num, newId);
-#endif
+                LOGDEV_NET_NOTE("Player %i's new clmobj is %i, but we haven't received it yet")
+                        << num << newId;
+
                 // This mobj hasn't yet been sent to us.
                 // We should be receiving the rest of the info very shortly.
                 clmo = ClMobj_Create(s->clMobjId);
@@ -397,36 +400,17 @@ void ClPlayer_ReadDelta2(boolean skip)
             // The update will be made when the mobj data is received.
             if(!justCreated) // && num != consolePlayer)
             {
-#ifdef _DEBUG
-                Con_Message("ClPlayer_ReadDelta2: Copying clmo %i state to real player %i mobj %p.",
-                            newId, num, ddpl->mo);
-#endif
+                LOGDEV_NET_XVERBOSE("Copying clmo %i state to real player %i mobj %p")
+                        << newId << num << ddpl->mo;
+
                 Cl_UpdateRealPlayerMobj(ddpl->mo, clmo, 0xffffffff, true);
             }
-            /*
-            else if(ddpl->mo)
-            {
-                // Update the new client mobj's information from the real
-                // mobj, which is already known.
-#if _DEBUG
-                Con_Message("Cl_RdPlrD2: Pl%i: Copying pos&angle from real mobj to clmobj.", num);
-                Con_Message("  x=%g y=%g z=%g", ddpl->mo->origin[VX], ddpl->mo->origin[VY], ddpl->mo->origin[VZ]);
-#endif
-                clmo->pos[VX] = ddpl->mo->origin[VX];
-                clmo->pos[VY] = ddpl->mo->origin[VY];
-                clmo->pos[VZ] = ddpl->mo->origin[VZ];
-                clmo->angle = ddpl->mo->angle;
-                if(!skip)
-                    ClPlayer_UpdateOrigin(num);
-            }
-            */
 
-#if _DEBUG
-            Con_Message("ClPlr_RdD2: Pl%i: mobj=%i old=%p", num, s->clMobjId, old);
-            Con_Message("  x=%g y=%g z=%g fz=%g cz=%g", clmo->origin[VX],
-                        clmo->origin[VY], clmo->origin[VZ], clmo->floorZ, clmo->ceilingZ);
-            Con_Message("ClPlr_RdD2: pl=%i => moid=%i", (skip? -1 : num), s->clMobjId);
-#endif
+            LOGDEV_NET_VERBOSE("Player %i: mobj=%i old=%p x=%.1f y=%.1f z=%.1f Fz=%.1f Cz=%.1f")
+                    << num << s->clMobjId << old
+                    << clmo->origin[VX] << clmo->origin[VY] << clmo->origin[VZ]
+                    << clmo->floorZ << clmo->ceilingZ;
+            LOGDEV_NET_VERBOSE("Player %i using mobj id %i") << (skip? -1 : num) << s->clMobjId;
         }
     }
 
@@ -468,13 +452,8 @@ void ClPlayer_ReadDelta2(boolean skip)
         {
             ddpl->flags &= ~DDPF_REMOTE_VIEW_FILTER;
         }
-#ifdef _DEBUG
-        Con_Message("ClPlayer_ReadDelta2: Filter color set remotely to (%f,%f,%f,%f)",
-                    ddpl->filterColor[CR],
-                    ddpl->filterColor[CG],
-                    ddpl->filterColor[CB],
-                    ddpl->filterColor[CA]);
-#endif
+        LOG_NET_XVERBOSE("View filter color set remotely to %s")
+                << Vector4f(ddpl->filterColor).asText();
     }
     if(df & PDF_PSPRITES)
     {
