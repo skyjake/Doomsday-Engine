@@ -42,6 +42,8 @@
 
 #include "audio/sys_audiod_sdlmixer.h"
 
+#include <de/Log>
+
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_MIDI_COMMAND    "" //"timidity"
@@ -187,8 +189,9 @@ int DS_SDLMixerInit(void)
        SDL_VERSIONNUM(compVer.major, compVer.minor, compVer.patch))
     {
         LOG_AUDIO_WARNING("Linked version of SDL_mixer (%u.%u.%u) is "
-                          "newer than expected (%u.%u.%u)", linkVer->major, linkVer->minor,
-                          linkVer->patch, compVer.major, compVer.minor, compVer.patch);
+                          "newer than expected (%u.%u.%u)")
+            << linkVer->major << linkVer->minor << linkVer->patch
+            << compVer.major << compVer.minor << compVer.patch;
     }
 
     if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024))
