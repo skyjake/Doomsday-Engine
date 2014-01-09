@@ -436,8 +436,11 @@ void Sv_RegisterSector(dt_sector_t *reg, int number)
         // Surface properties.
         Surface const &surface = plane.surface();
 
+        Vector3f const &tintColor = surface.tintColor();
         for(int c = 0; c < 3; ++c)
-            reg->planes[i].surface.rgba[c] = surface.tintColorComponent(c);
+        {
+            reg->planes[i].surface.rgba[c] = tintColor[c];
+        }
         reg->planes[i].surface.rgba[CA] = surface.opacity();
 
         reg->planes[i].surface.material = surface.materialPtr();
@@ -450,7 +453,7 @@ void Sv_RegisterSector(dt_sector_t *reg, int number)
  */
 void Sv_RegisterSide(dt_side_t *reg, int number)
 {
-    DENG_ASSERT(reg != 0);
+    DENG2_ASSERT(reg != 0);
 
     LineSide *side = App_World().map().sideByIndex(number);
 
@@ -462,9 +465,9 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
 
         for(int c = 0; c < 3; ++c)
         {
-            reg->middle.rgba[c] = side->middle().tintColorComponent(c);
-            reg->bottom.rgba[c] = side->bottom().tintColorComponent(c);
-            reg->top.rgba[c]    = side->top().tintColorComponent(c);
+            reg->middle.rgba[c] = side->middle().tintColor()[c];
+            reg->bottom.rgba[c] = side->bottom().tintColor()[c];
+            reg->top.rgba[c]    = side->top().tintColor()[c];
         }
 
         // Only middle sections support blending.
@@ -643,18 +646,18 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, int number,
     if(r->rgb[2] != s->lightColor().z)
         df |= SDF_COLOR_BLUE;
 
-    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().tintRed())
+    if(r->planes[PLN_FLOOR].surface.rgba[0] != s->floorSurface().tintColor().x)
         df |= SDF_FLOOR_COLOR_RED;
-    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->floorSurface().tintGreen())
+    if(r->planes[PLN_FLOOR].surface.rgba[1] != s->floorSurface().tintColor().y)
         df |= SDF_FLOOR_COLOR_GREEN;
-    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->floorSurface().tintBlue())
+    if(r->planes[PLN_FLOOR].surface.rgba[2] != s->floorSurface().tintColor().z)
         df |= SDF_FLOOR_COLOR_BLUE;
 
-    if(r->planes[PLN_CEILING].surface.rgba[0] != s->ceilingSurface().tintRed())
+    if(r->planes[PLN_CEILING].surface.rgba[0] != s->ceilingSurface().tintColor().x)
         df |= SDF_CEIL_COLOR_RED;
-    if(r->planes[PLN_CEILING].surface.rgba[1] != s->ceilingSurface().tintGreen())
+    if(r->planes[PLN_CEILING].surface.rgba[1] != s->ceilingSurface().tintColor().y)
         df |= SDF_CEIL_COLOR_GREEN;
-    if(r->planes[PLN_CEILING].surface.rgba[2] != s->ceilingSurface().tintBlue())
+    if(r->planes[PLN_CEILING].surface.rgba[2] != s->ceilingSurface().tintColor().z)
         df |= SDF_CEIL_COLOR_BLUE;
 
     // The cases where an immediate change to a plane's height is needed:
@@ -777,46 +780,46 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
                 r->bottom.material = side->bottom().materialPtr();
         }
 
-        if(r->top.rgba[0] != side->top().tintRed())
+        if(r->top.rgba[0] != side->top().tintColor().x)
         {
             df |= SIDF_TOP_COLOR_RED;
             if(doUpdate)
-                r->top.rgba[0] = side->top().tintRed();
+                r->top.rgba[0] = side->top().tintColor().x;
         }
 
-        if(r->top.rgba[1] != side->top().tintGreen())
+        if(r->top.rgba[1] != side->top().tintColor().y)
         {
             df |= SIDF_TOP_COLOR_GREEN;
             if(doUpdate)
-                r->top.rgba[1] = side->top().tintGreen();
+                r->top.rgba[1] = side->top().tintColor().y;
         }
 
-        if(r->top.rgba[2] != side->top().tintBlue())
+        if(r->top.rgba[2] != side->top().tintColor().z)
         {
             df |= SIDF_TOP_COLOR_BLUE;
             if(doUpdate)
-                r->top.rgba[3] = side->top().tintBlue();
+                r->top.rgba[3] = side->top().tintColor().z;
         }
 
-        if(r->middle.rgba[0] != side->middle().tintRed())
+        if(r->middle.rgba[0] != side->middle().tintColor().x)
         {
             df |= SIDF_MID_COLOR_RED;
             if(doUpdate)
-                r->middle.rgba[0] = side->middle().tintRed();
+                r->middle.rgba[0] = side->middle().tintColor().x;
         }
 
-        if(r->middle.rgba[1] != side->middle().tintGreen())
+        if(r->middle.rgba[1] != side->middle().tintColor().y)
         {
             df |= SIDF_MID_COLOR_GREEN;
             if(doUpdate)
-                r->middle.rgba[1] = side->middle().tintGreen();
+                r->middle.rgba[1] = side->middle().tintColor().y;
         }
 
-        if(r->middle.rgba[2] != side->middle().tintBlue())
+        if(r->middle.rgba[2] != side->middle().tintColor().z)
         {
             df |= SIDF_MID_COLOR_BLUE;
             if(doUpdate)
-                r->middle.rgba[3] = side->middle().tintBlue();
+                r->middle.rgba[3] = side->middle().tintColor().z;
         }
 
         if(r->middle.rgba[3] != side->middle().opacity())
@@ -826,25 +829,25 @@ boolean Sv_RegisterCompareSide(cregister_t *reg, uint number,
                 r->middle.rgba[3] = side->middle().opacity();
         }
 
-        if(r->bottom.rgba[0] != side->bottom().tintRed())
+        if(r->bottom.rgba[0] != side->bottom().tintColor().x)
         {
             df |= SIDF_BOTTOM_COLOR_RED;
             if(doUpdate)
-                r->bottom.rgba[0] = side->bottom().tintRed();
+                r->bottom.rgba[0] = side->bottom().tintColor().x;
         }
 
-        if(r->bottom.rgba[1] != side->bottom().tintGreen())
+        if(r->bottom.rgba[1] != side->bottom().tintColor().y)
         {
             df |= SIDF_BOTTOM_COLOR_GREEN;
             if(doUpdate)
-                r->bottom.rgba[1] = side->bottom().tintGreen();
+                r->bottom.rgba[1] = side->bottom().tintColor().y;
         }
 
-        if(r->bottom.rgba[2] != side->bottom().tintBlue())
+        if(r->bottom.rgba[2] != side->bottom().tintColor().z)
         {
             df |= SIDF_BOTTOM_COLOR_BLUE;
             if(doUpdate)
-                r->bottom.rgba[3] = side->bottom().tintBlue();
+                r->bottom.rgba[3] = side->bottom().tintColor().z;
         }
 
         if(r->middle.blendMode != side->middle().blendMode())
