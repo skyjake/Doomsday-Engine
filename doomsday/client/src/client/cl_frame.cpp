@@ -132,93 +132,6 @@ float Cl_FrameGameTime(void)
     return frameGameTime;
 }
 
-#if 0
-/**
- * Add a set number to the history.
- */
-void Cl_HistoryAdd(byte set)
-{
-    setHistory[historyIdx++] = set;
-
-    if(historyIdx >= SET_HISTORY_SIZE)
-        historyIdx -= SET_HISTORY_SIZE;
-}
-
-/**
- * @return              @c true, if the set is found in the recent set
- *                      history.
- */
-boolean Cl_HistoryCheck(byte set)
-{
-    uint        i;
-
-    for(i = 0; i < SET_HISTORY_SIZE; ++i)
-    {
-        if(setHistory[i] == set)
-            return true;
-    }
-    return false;
-}
-
-/**
- * Add a resend ID number to the resend history.
- */
-void Cl_ResendHistoryAdd(byte id)
-{
-    resendHistory[resendHistoryIdx++] = id;
-
-    if(resendHistoryIdx >= RESEND_HISTORY_SIZE)
-        resendHistoryIdx -= RESEND_HISTORY_SIZE;
-}
-
-/**
- * @return              @c true, if the resend ID is found in the history.
- */
-boolean Cl_ResendHistoryCheck(byte id)
-{
-    uint        i;
-
-    for(i = 0; i < RESEND_HISTORY_SIZE; ++i)
-    {
-        if(resendHistory[i] == id)
-            return true;
-    }
-    return false;
-}
-
-/**
- * Converts a set identifier, which ranges from 0...255, into a logical
- * ordinal. Checks for set identifier wraparounds and updates the set
- * ordinal base accordingly.
- */
-uint Cl_ConvertSetToOrdinal(byte set)
-{
-    uint        ordinal = 0;
-
-    if(latestSet > 185 && set < 70)
-    {
-        // We must conclude that wraparound has occured.
-        setOrdinalBase += 256;
-#if _NETDEBUG
-VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
-                     setOrdinalBase) );
-#endif
-    }
-    ordinal = set + setOrdinalBase;
-
-    if(latestSet < 35 && set > 220)
-    {
-        // This is most likely a set that came in before wraparound.
-        ordinal -= 256;
-    }
-    else
-    {
-        latestSet = set;
-    }
-    return ordinal;
-}
-#endif
-
 /**
  * Read a PSV_FRAME2/PSV_FIRST_FRAME2 packet.
  */
@@ -248,44 +161,13 @@ void Cl_Frame2Received(int packetType)
         return;
     }
 
-    /*
-#ifdef _DEBUG
-    VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
-#endif
-    */
-
-#if 0
-    if(packetType != PSV_FIRST_FRAME2)
     {
-        // If this is not the first frame, it will be ignored if it arrives
-        // out of order.
-        uint ordinal = Cl_ConvertSetToOrdinal(set);
-
-        if(ordinal < latestSetOrdinal)
-        {
-            VERBOSE2( Con_Printf("==> Ignored set %i because it arrived out of order.\n",
-                                set) );
-            return;
-        }
-        latestSetOrdinal = ordinal;
-
-        VERBOSE2( Con_Printf("Latest set ordinal is %i.\n", latestSetOrdinal) );
-    }
-#endif
-
-    {
-        //VERBOSE2( Con_Printf("Starting to process deltas in set %i.\n", set) );
-
         // Read and process the message.
         while(!Reader_AtEnd(msgReader))
         {
             deltaType = Reader_ReadByte(msgReader);
             skip = false;
-/*
-#ifdef _DEBUG
-            Con_Message("Received delta %i.", deltaType);
-#endif
-*/
+
             switch(deltaType)
             {
             case DT_CREATE_MOBJ:
@@ -329,17 +211,16 @@ void Cl_Frame2Received(int packetType)
                 break;
 
             default:
-                Con_Error("Cl_Frame2Received: Unknown delta type %i (numtypes=%i; message size %i).\n",
-                          deltaType, NUM_DELTA_TYPES, netBuffer.length);
+                LOG_NET_ERROR("Received unknown delta type %i (message size: %i bytes)")
+                        << deltaType << netBuffer.length;
+                return;
             }
         }
 
-#ifdef _DEBUG
         if(!gotFrame)
         {
-            Con_Message("Cl_Frame2Received: First frame received.");
+            LOGDEV_NET_NOTE("First frame received");
         }
-#endif
 
         // We have now received a frame.
         gotFrame = true;

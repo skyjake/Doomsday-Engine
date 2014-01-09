@@ -393,15 +393,14 @@ void Map::expireClMobjs()
             // Has this mobj timed out?
             if(nowTime - info->time > CLMOBJ_TIMEOUT)
             {
-#ifdef DENG_DEBUG
-                Con_Message("Map::expireClMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].",
-                            mo->thinker.id,
-                            info->time, nowTime,
-                            Def_GetStateName(mo->state),
-                            info->flags & CLMF_UNPREDICTABLE? 'U' : '_',
-                            info->flags & CLMF_HIDDEN? 'H' : '_',
-                            info->flags & CLMF_NULLED? '0' : '_');
-#endif
+                LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
+                        << mo->thinker.id
+                        << info->time << nowTime
+                        << Def_GetStateName(mo->state)
+                        << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
+                        << (info->flags & CLMF_HIDDEN?        'H' : '_')
+                        << (info->flags & CLMF_NULLED?        '0' : '_');
+
                 // Too long. The server will probably never send anything
                 // for this mobj, so get rid of it. (Both unpredictable
                 // and hidden mobjs are not visible or bl/seclinked.)
@@ -779,14 +778,6 @@ void ClMobj_ReadDelta2(boolean skip)
         d->ceilingZ = Reader_ReadFloat(msgReader);
     }
 
-/*#if _DEBUG
-    if((df & MDF_ORIGIN_Z) && d->dPlayer && P_GetDDPlayerIdx(d->dPlayer) != consolePlayer)
-    {
-        Con_Message("ClMobj_ReadDelta2: Player=%i z=%f onFloor=%i", P_GetDDPlayerIdx(d->dPlayer),
-                    d->pos[VZ], onFloor);
-    }
-#endif*/
-
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
@@ -940,17 +931,13 @@ void ClMobj_ReadNullDelta2(boolean skip)
     if(skip)
         return;
 
-#ifdef _DEBUG
-    Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
-#endif
+    LOG_AS("Cl_ReadNullMobjDelta2");
+    LOGDEV_NET_XVERBOSE("Null %i") << id;
 
     if((mo = ClMobj_Find(id)) == NULL)
     {
         // Wasted bandwidth...
-#ifdef _DEBUG
-        Con_Printf("Cl_ReadNullMobjDelta2: Request to remove id %i that has "
-                   "not been received.\n", id);
-#endif
+        LOGDEV_NET_MSG("Request to remove id %i that doesn't exist here") << id;
         return;
     }
 
@@ -963,10 +950,7 @@ void ClMobj_ReadNullDelta2(boolean skip)
     }
     else
     {
-#ifdef _DEBUG
-        Con_Message("ClMobj_ReadNullDelta2: clmobj of player %i deleted.",
-                    P_GetDDPlayerIdx(mo->dPlayer));
-#endif
+        LOGDEV_NET_MSG("clmobj of player %i deleted") << P_GetDDPlayerIdx(mo->dPlayer);
 
         // The clmobjs of players aren't linked.
         ClPlayer_State(P_GetDDPlayerIdx(mo->dPlayer))->clMobjId = 0;

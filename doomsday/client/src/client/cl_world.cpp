@@ -79,15 +79,15 @@ static indextranstable_t xlatMobjState;
 
 void Cl_ReadServerMaterials(void)
 {
+    LOG_AS("Cl_ReadServerMaterials");
+
     if(!serverMaterials)
     {
         serverMaterials = MaterialArchive_NewEmpty(false /*no segment check*/);
     }
     MaterialArchive_Read(serverMaterials, msgReader, -1 /*no forced version*/);
 
-#ifdef _DEBUG
-    Con_Message("Cl_ReadServerMaterials: Received %i materials.", MaterialArchive_Count(serverMaterials));
-#endif
+    LOGDEV_NET_VERBOSE("Received %i materials") << MaterialArchive_Count(serverMaterials);
 }
 
 static void setTableSize(indextranstable_t* table, int size)
@@ -110,9 +110,9 @@ void Cl_ReadServerMobjTypeIDs(void)
     int i;
     StringArray* ar = StringArray_New();
     StringArray_Read(ar, msgReader);
-#ifdef _DEBUG
-    Con_Message("Cl_ReadServerMobjTypeIDs: Received %i mobj type IDs.", StringArray_Size(ar));
-#endif
+
+    LOG_AS("Cl_ReadServerMobjTypeIDs");
+    LOGDEV_NET_VERBOSE("Received %i mobj type IDs") << StringArray_Size(ar);
 
     setTableSize(&xlatMobjType, StringArray_Size(ar));
 
@@ -122,8 +122,8 @@ void Cl_ReadServerMobjTypeIDs(void)
         xlatMobjType.serverToLocal[i] = Def_GetMobjNum(StringArray_At(ar, i));
         if(xlatMobjType.serverToLocal[i] < 0)
         {
-            Con_Message("Could not find '%s' in local thing definitions.",
-                        StringArray_At(ar, i));
+            LOG_NET_WARNING("Could not find '%s' in local thing definitions")
+                    << StringArray_At(ar, i);
         }
     }
 
@@ -135,9 +135,9 @@ void Cl_ReadServerMobjStateIDs(void)
     int i;
     StringArray* ar = StringArray_New();
     StringArray_Read(ar, msgReader);
-#ifdef _DEBUG
-    Con_Message("Cl_ReadServerMobjStateIDs: Received %i mobj state IDs.", StringArray_Size(ar));
-#endif
+
+    LOG_AS("Cl_ReadServerMobjStateIDs");
+    LOGDEV_NET_VERBOSE("Received %i mobj state IDs") << StringArray_Size(ar);
 
     setTableSize(&xlatMobjState, StringArray_Size(ar));
 
@@ -147,8 +147,8 @@ void Cl_ReadServerMobjStateIDs(void)
         xlatMobjState.serverToLocal[i] = Def_GetStateNum(StringArray_At(ar, i));
         if(xlatMobjState.serverToLocal[i] < 0)
         {
-            Con_Message("Could not find '%s' in local state definitions.",
-                        StringArray_At(ar, i));
+            LOG_NET_WARNING("Could not find '%s' in local state definitions")
+                    << StringArray_At(ar, i);
         }
     }
 
@@ -156,14 +156,14 @@ void Cl_ReadServerMobjStateIDs(void)
 }
 
 static Material *Cl_FindLocalMaterial(materialarchive_serialid_t archId)
-{
+{    
     if(!serverMaterials)
     {
         // Can't do it.
-        Con_Message("Cl_FindLocalMaterial: Cannot translate serial id %i, server has not sent its materials!", archId);
+        LOGDEV_NET_WARNING("Cannot translate serial id %i, server has not sent its materials!") << archId;
         return 0;
     }
-    return (Material *)MaterialArchive_Find(serverMaterials, archId, 0);
+    return (Material *) MaterialArchive_Find(serverMaterials, archId, 0);
 }
 
 int Cl_LocalMobjType(int serverMobjType)
@@ -556,7 +556,7 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
     clpolyobj_t *mover = Cl_FindOrMakeActivePoly(number);
     if(!mover)
     {
-        Con_Message("Cl_SetPolyMover: Out of polymovers.");
+        LOGDEV_NET_WARNING("Out of polymovers");
         return;
     }
 
@@ -828,10 +828,6 @@ void Cl_ReadPolyDelta2(boolean skip)
         destAngle = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
     if(df & PODF_ANGSPEED)
         angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
-
-/*#ifdef _DEBUG
-    Con_Message("Cl_ReadPolyDelta2: PO %i, angle %f, speed %f", num, FIX2FLT(destAngle), FIX2FLT(angleSpeed));
-#endif*/
 
     if(skip)
         return;
