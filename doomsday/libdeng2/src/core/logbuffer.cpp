@@ -273,26 +273,24 @@ void LogBuffer::flush()
 
     if(!d->toBeFlushed.isEmpty())
     {
-        try
+        DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
         {
-            DENG2_FOR_EACH(Instance::EntryList, i, d->toBeFlushed)
+            DENG2_GUARD_FOR(**i, guardingCurrentLogEntry);
+            foreach(LogSink *sink, d->sinks)
             {
-                DENG2_GUARD_FOR(**i, guardingCurrentLogEntry);
-
-                foreach(LogSink *sink, d->sinks)
+                if(sink->willAccept(**i))
                 {
-                    if(sink->willAccept(**i))
+                    try
                     {
                         *sink << **i;
                     }
+                    catch(Error const &error)
+                    {
+                        *sink << String("Exception during log flush:\n") +
+                                        error.what() + "\n(the entry format is: '" +
+                                        (*i)->format() + "')";
+                    }
                 }
-            }
-        }
-        catch(Error const &error)
-        {
-            foreach(LogSink *sink, d->sinks)
-            {
-                *sink << "Exception during log flush:\n" << error.what();
             }
         }
 

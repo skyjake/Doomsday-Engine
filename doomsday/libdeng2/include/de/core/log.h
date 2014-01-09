@@ -580,6 +580,8 @@ public:
     /// Returns the number of sub-sections in the entry's section part.
     int sectionDepth() const { return _sectionDepth; }
 
+    String const &format() const { return _format; }
+
     /**
      * Converts the log entry to a string.
      *
