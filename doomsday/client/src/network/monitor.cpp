@@ -53,8 +53,6 @@ void Monitor_Add(const uint8_t* bytes, size_t size)
 
 static void Monitor_Print(void)
 {
-    int i, k;
-
     if(!monitoredBytes)
     {
         LOGDEV_NET_MSG("Nothing has been sent yet");
@@ -63,6 +61,7 @@ static void Monitor_Print(void)
     LOGDEV_NET_MSG("%i bytes sent (%i packets)") << monitoredBytes << monitoredPackets;
     /// @todo The below needs updating. -jk
 #if 0
+    int i, k;
     for(i = 0, k = 0; i < 256; ++i)
     {
         if(!k) Con_Printf("    ");

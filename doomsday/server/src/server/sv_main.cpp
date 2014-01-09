@@ -473,6 +473,7 @@ void Sv_ExecuteCommand(void)
 
     default:
         DENG_ASSERT(!"Sv_ExecuteCommand: Not a command packet!");
+        return;
     }
 
     // Make a copy of the command.
