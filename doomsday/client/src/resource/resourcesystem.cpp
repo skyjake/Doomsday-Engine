@@ -2301,7 +2301,7 @@ void ResourceSystem::initSpriteTextures()
         }
         catch(TextureScheme::InvalidPathError const &er)
         {
-            LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri<< er.asText();
+            LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
         }
     }
 
@@ -2338,7 +2338,7 @@ Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
 Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourceUri,
     Vector2i const &dimensions)
 {
-    LOG_AS("ResourceSystem::DefineTexture");
+    LOG_AS("ResourceSystem::defineTexture");
 
     if(resourceUri.isEmpty()) return 0;
 
@@ -3023,8 +3023,7 @@ AbstractFont *ResourceSystem::newFontFromDef(ded_compositefont_t const &def)
     return 0;
 }
 
-AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri,
-    String filePath)
+AbstractFont *ResourceSystem::newFontFromFile(de::Uri const &uri, String filePath)
 {
     LOG_AS("ResourceSystem::newFontFromFile");
 
@@ -3105,7 +3104,7 @@ Model &ResourceSystem::model(modelid_t id)
         return *model;
     }
     /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ResourceSystem::model", QString("Invalid id %1").arg(id));
+    throw MissingResourceError("ResourceSystem::model", "Invalid id " + String::number(id));
 }
 
 bool ResourceSystem::hasModelDef(de::String id) const
@@ -3148,7 +3147,7 @@ ModelDef &ResourceSystem::modelDef(String id)
         }
     }
     /// @throw MissingModelDefError An unknown model definition was referenced.
-    throw MissingModelDefError("ResourceSystem::modelDef", QString("Invalid id %1").arg(id));
+    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid id " + id);
 }
 
 ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
@@ -3581,7 +3580,7 @@ ColorPalette &ResourceSystem::colorPalette(colorpaletteid_t id) const
         return *found.value();
     }
     /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ResourceSystem::colorPalette", QString("Invalid id %1").arg(id));
+    throw MissingResourceError("ResourceSystem::colorPalette", "Invalid id " + String::number(id));
 }
 
 String ResourceSystem::colorPaletteName(ColorPalette &palette) const
