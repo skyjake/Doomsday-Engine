@@ -57,11 +57,12 @@ static void Monitor_Print(void)
 
     if(!monitoredBytes)
     {
-        Con_Message("Nothing has been sent yet.");
+        LOGDEV_NET_MSG("Nothing has been sent yet");
         return;
     }
-    Con_Message("%u bytes sent (%i packets).", monitoredBytes, monitoredPackets);
-
+    LOGDEV_NET_MSG("%i bytes sent (%i packets)") << monitoredBytes << monitoredPackets;
+    /// @todo The below needs updating. -jk
+#if 0
     for(i = 0, k = 0; i < 256; ++i)
     {
         if(!k) Con_Printf("    ");
@@ -80,6 +81,7 @@ static void Monitor_Print(void)
         }
     }
     if(k) Con_Printf("\n");
+#endif
 }
 
 D_CMD(NetFreqs)
@@ -88,7 +90,7 @@ D_CMD(NetFreqs)
 
     if(argc == 1) // No args?
     {
-        Con_Printf("Usage:\n  %s start (maxsize)\n  %s stop\n  %s print/show\n", argv[0], argv[0], argv[0]);
+        LOG_SCR_NOTE("Usage:\n  %s start (maxsize)\n  %s stop\n  %s print/show") << argv[0] << argv[0] << argv[0];
         return true;
     }
     if(argc == 3 && !strcmp(argv[1], "start"))

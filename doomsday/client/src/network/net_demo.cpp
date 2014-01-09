@@ -368,9 +368,9 @@ void Demo_StopPlayback(void)
     if(!playback)
         return;
 
-    Con_Message("Demo was %.2f seconds (%i tics) long.",
-                (DEMOTIC - demoStartTic) / (float) TICSPERSEC,
-                DEMOTIC - demoStartTic);
+    LOG_MSG("Demo was %.2f seconds (%i tics) long.")
+            << ((DEMOTIC - demoStartTic) / (float) TICSPERSEC)
+            << (DEMOTIC - demoStartTic);
 
     playback = false;
     lzClose(playdemo);

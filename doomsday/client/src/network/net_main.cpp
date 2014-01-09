@@ -332,13 +332,12 @@ void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
 {
     size_t nameLen;
 
-    assert(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
+    DENG_ASSERT(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
     nameLen = strlen(clients[srcPlrNum].name);
 
-#ifdef _DEBUG
-    Con_Message("Net_SendPlayerInfo: src=%i dest=%i name=%s",
-                srcPlrNum, destPlrNum, clients[srcPlrNum].name);
-#endif
+    LOG_AS("Net_SendPlayerInfo");
+    LOGDEV_NET_VERBOSE("src=%i dest=%i name=%s")
+            << srcPlrNum << destPlrNum << clients[srcPlrNum].name;
 
     Msg_Begin(PKT_PLAYER_INFO);
     Writer_WriteByte(msgWriter, srcPlrNum);
@@ -457,13 +456,6 @@ static void Net_DoUpdate(void)
      * any prediction errors can be fixed. Client movement is almost
      * entirely local.
      */
-#ifdef _DEBUG
-    if(netGame && verbose >= 2)
-    {
-        Con_Message("Net_DoUpdate: coordTimer=%i cl:%i shmo:%p", coordTimer,
-                    isClient, ddPlayers[consolePlayer].shared.mo);
-    }
-#endif
 
     coordTimer -= newTics;
     if(isClient && coordTimer <= 0 &&
@@ -572,6 +564,8 @@ void Net_StopGame(void)
 {
     int     i;
 
+    LOG_AS("Net_StopGame");
+
 #ifdef __SERVER__
     if(isServer)
     {
@@ -585,9 +579,8 @@ void Net_StopGame(void)
 #endif
 
 #ifdef __CLIENT__
-# ifdef _DEBUG
-    Con_Message("Net_StopGame: Sending PCL_GOODBYE.");
-# endif
+    LOGDEV_NET_MSG("Sending PCL_GOODBYE");
+
     // We are a connected client.
     Msg_Begin(PCL_GOODBYE);
     Msg_End();
@@ -635,9 +628,8 @@ void Net_StopGame(void)
             ddPlayers[consolePlayer].shared.lookDir;
     }
 
-#ifdef _DEBUG
-    Con_Message("Net_StopGame: Reseting console & view player to zero.");
-#endif
+    LOGDEV_NET_NOTE("Reseting console and view players to zero");
+
     consolePlayer = displayPlayer = 0;
     ddPlayers[0].shared.inGame = true;
     clients[0].ready = true;
@@ -775,16 +767,13 @@ void Net_Ticker(timespan_t time)
             {
                 if(Sv_IsFrameTarget(i))
                 {
-                    Con_Message("%i(rdy%i): avg=%05ims thres=%05ims "
-                                "bwr=%05i maxfs=%05lub unakd=%05i", i,
-                                clients[i].ready, 0, 0,
-                                clients[i].bandwidthRating,
-                                /*clients[i].bwrAdjustTime,*/
-                                (unsigned long) Sv_GetMaxFrameSize(i),
-                                Sv_CountUnackedDeltas(i));
+                    LOGDEV_NET_MSG("%i(rdy%i): avg=%05ims thres=%05ims "
+                                   "bwr=%05i maxfs=%05ib unakd=%05i")
+                            << i << clients[i].ready << 0 << 0
+                            << clients[i].bandwidthRating
+                            << Sv_GetMaxFrameSize(i)
+                            << Sv_CountUnackedDeltas(i);
                 }
-                /*if(ddPlayers[i].inGame)
-                    Con_Message("%i: cmds=%i", i, clients[i].numTics);*/
             }
         }
     }
@@ -819,33 +808,34 @@ void Net_Ticker(timespan_t time)
  */
 void Net_PrintServerInfo(int index, serverinfo_t *info)
 {
+    /// @todo Update table for de::Log. -jk
+    ///
     if(!info)
     {
-        Con_Printf("    %-20s P/M  L Ver:  Game:            Location:\n",
-                   "Name:");
+        LOG_NET_MSG(_E(m)"    %-20s P/M  L Ver:  Game:            Location:") << "Name:";
     }
     else
     {
-        Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n", index,
-                   info->name, info->numPlayers, info->maxPlayers,
-                   info->canJoin ? ' ' : '*', info->version, info->plugin,
-                   info->address, info->port);
-        Con_Printf("    %s p:%ims %-40s\n", info->map, info->ping, info->description);
-        Con_Printf("    %s (crc:%x) %s\n", info->gameIdentityKey, info->loadedFilesCRC, info->gameConfig);
+        LOG_NET_MSG(_E(m)"%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i")
+                << index << info->name << info->numPlayers << info->maxPlayers
+                << (info->canJoin? ' ' : '*') << info->version << info->plugin
+                << info->address << info->port;
+        LOG_NET_MSG("    %s p:%ims %-40s") << info->map << info->ping << info->description;
+        LOG_NET_MSG("    %s (CRC:%x) %s") << info->gameIdentityKey << info->loadedFilesCRC << info->gameConfig;
 
         // Optional: PWADs in use.
         if(info->pwads[0])
-            Con_Printf("    PWADs: %s\n", info->pwads);
+            LOG_NET_MSG("    PWADs: %s") << info->pwads;
 
         // Optional: names of players.
         if(info->clientNames[0])
-            Con_Printf("    Players: %s\n", info->clientNames);
+            LOG_NET_MSG("    Players: %s") << info->clientNames;
 
         // Optional: data values.
         if(info->data[0] || info->data[1] || info->data[2])
         {
-            Con_Printf("    Data: (%08x, %08x, %08x)\n", info->data[0],
-                       info->data[1], info->data[2]);
+            LOG_NET_MSG("    Data: (%08x, %08x, %08x)") << info->data[0]
+                    << info->data[1] << info->data[2];
         }
     }
 }
@@ -881,12 +871,14 @@ D_CMD(Chat)
 
     if(argc == 1)
     {
-        Con_Printf("Usage: %s %s(text)\n", argv[0],
-                   !mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
-        Con_Printf("Chat messages are max. 80 characters long.\n");
-        Con_Printf("Use quotes to get around arg processing.\n");
+        LOG_SCR_NOTE("Usage: %s %s(text)") << argv[0]
+                << (!mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
+        LOG_SCR_MSG("Chat messages are max 80 characters long. Use quotes to get around "
+                    "arg processing.");
         return true;
     }
+
+    LOG_AS("chat (Cmd)");
 
     // Chatting is only possible when connected.
     if(!netGame)
@@ -932,7 +924,7 @@ D_CMD(Chat)
         }
 
     default:
-        Con_Error("CCMD_Chat: Invalid value, mode = %i.", mode);
+        LOG_SCR_ERROR("Invalid value, mode = %i") << mode;
         break;
     }
 
@@ -973,13 +965,13 @@ D_CMD(Kick)
 
     if(!netGame)
     {
-        Con_Printf("This is not a netGame.\n");
+        LOG_SCR_ERROR("This is not a network game");
         return false;
     }
 
     if(!isServer)
     {
-        Con_Printf("This command is for the server only.\n");
+        LOG_SCR_ERROR("This command is for the server only");
         return false;
     }
 

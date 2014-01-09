@@ -70,7 +70,7 @@ void Net_ShowPingSummary(int player)
     }
 
     avgTime /= goodCount;
-    Con_Printf("Plr %i (%s): average ping %.0f ms.\n", player, cl->name, avgTime * 1000);
+    LOG_NET_NOTE("Player %i (%s): average ping %.0f ms") << player << cl->name << (avgTime * 1000);
 }
 
 void Net_SendPing(int player, int count)
@@ -129,9 +129,6 @@ void Net_PingResponse(void)
         // Record the time and send the next ping.
         cl->ping.times[cl->ping.current] =
             (Timer_RealMilliseconds() - time) / 1000.0f;
-        // Show a notification.
-        /*Con_Printf( "Ping to plr %i: %.0f ms.\n", netbuffer.player,
-           cl->ping.times[cl->ping.current] * 1000); */
         // Send the next ping.
         Net_SendPing(netBuffer.player, 0);
     }
@@ -150,14 +147,14 @@ D_CMD(Ping)
 
     if(!netGame)
     {
-        Con_Printf("Ping is only for netgames.\n");
+        LOG_SCR_ERROR("Ping is only for netgames");
         return true;
     }
 
     if(isServer && argc == 1)
     {
-        Con_Printf("Usage: %s (plrnum) (count)\n", argv[0]);
-        Con_Printf("(count) is optional. 4 pings are sent by default.\n");
+        LOG_SCR_NOTE("Usage: %s (plrnum) (count)") << argv[0];
+        LOG_SCR_MSG("(count) is optional. 4 pings are sent by default.");
         return true;
     }
 

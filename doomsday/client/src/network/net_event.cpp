@@ -188,12 +188,12 @@ void N_NETicker(timespan_t time)
                 N_MasterGet(i, &info);
                 Net_PrintServerInfo(i, &info);
             }
-            Con_Printf("%i server%s found.\n", num, num != 1 ? "s were" : " was");
+            LOG_NET_VERBOSE("%i server%s found") << num << (num != 1 ? "s were" : " was");
             N_MARemove();
             break;
 
         default:
-            Con_Error("N_NETicker: Invalid value, act = %i.", (int) act);
+            DENG_ASSERT(!"N_NETicker: Invalid value for 'act'");
             break;
         }
     }
@@ -229,7 +229,7 @@ void N_Update(void)
             break;
 
         default:
-            Con_Error("N_Update: Invalid value, nevent.type = %i.", (int) nevent.type);
+            DENG_ASSERT(!"N_Update: Invalid value");
             break;
         }
     }
@@ -246,8 +246,8 @@ void N_TerminateClient(int console)
     if(!clients[console].connected)
         return;
 
-    Con_Message("N_TerminateClient: '%s' from console %i.",
-                clients[console].name, console);
+    LOG_NET_NOTE("Terminating connection to console %i (player '%s')")
+            << console << clients[console].name;
 
     App_ServerSystem().terminateNode(clients[console].nodeID);
 

@@ -514,10 +514,15 @@ void MPIUpdateServerList(void)
             // Is this suitable?
             if(!isServerSuitable(&info))
             {
-                Con_Message("Server %s filtered out:", info.name);
-                Con_Message("  remote = %i, local = %i", info.version, DOOMSDAY_VERSION);
-                Con_Message("  remote = %s, local = %s", info.gameIdentityKey, App_CurrentGame().identityKey().toUtf8().constData());
-                Con_Message("  can join = %i", info.canJoin);
+                LOG_NET_VERBOSE("Server '%s' filtered out:\n  " _E(>)
+                                "remote:%i local:%i\n"
+                                "remote:%s local:%s\n"
+                                "can join: %b") << info.name
+                                                << info.version
+                                                << DOOMSDAY_VERSION
+                                                << info.gameIdentityKey
+                                                << App_CurrentGame().identityKey()
+                                                << info.canJoin;
                 continue;
             }
 
@@ -651,7 +656,8 @@ void DD_NetSetup(int serverMode)
 {
     if(!App_GameLoaded())
     {
-        Con_Message("%s setup can only be activated when a game is loaded.", serverMode? "Server" : "Client");
+        LOG_NET_ERROR("%s setup can only be activated when a game is loaded")
+                << (serverMode? "Server" : "Client");
         return;
     }
 
