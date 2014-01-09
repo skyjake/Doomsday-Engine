@@ -24,6 +24,7 @@
 #include "de/Guard"
 #include "de/Reader"
 #include "de/Writer"
+#include "de/FIFO"
 #include "logtextstyle.h"
 
 #include <QMap>
@@ -64,8 +65,104 @@ public:
 /// The logs table contains the log of each thread that uses logging.
 static std::auto_ptr<internal::Logs> logsPtr;
 
-LogEntry::Arg::Arg(const LogEntry::Arg::Base &arg) : _type(arg.logEntryArgType())
+/// Unused entry arguments are stored here in the pool.
+static FIFO<LogEntry::Arg> argPool;
+
+LogEntry::Arg::Arg() : _type(IntegerArgument)
 {
+    _data.intValue = 0;
+}
+
+LogEntry::Arg::~Arg()
+{
+    clear();
+}
+
+void LogEntry::Arg::clear()
+{
+    if(_type == StringArgument)
+    {
+        delete _data.stringValue;
+        _data.stringValue = 0;
+        _type = IntegerArgument;
+    }
+}
+
+void LogEntry::Arg::setValue(dint i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(duint i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(long int i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(long unsigned int i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(duint64 i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = dint64(i);
+}
+
+void LogEntry::Arg::setValue(dint64 i)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = i;
+}
+
+void LogEntry::Arg::setValue(ddouble d)
+{
+    clear();
+    _type = FloatingPointArgument;
+    _data.floatValue = d;
+}
+
+void LogEntry::Arg::setValue(void const *p)
+{
+    clear();
+    _type = IntegerArgument;
+    _data.intValue = dint64(p);
+}
+
+void LogEntry::Arg::setValue(char const *s)
+{
+    clear();
+    _type = StringArgument;
+    _data.stringValue = new String(s);
+}
+
+void LogEntry::Arg::setValue(String const &s)
+{
+    clear();
+    _type = StringArgument;
+    // Ensure a deep copy of the string is taken.
+    _data.stringValue = new String(s.data(), s.size());
+}
+
+void LogEntry::Arg::setValue(LogEntry::Arg::Base const &arg)
+{
+    clear();
+    _type = arg.logEntryArgType();
     switch(_type)
     {
     case IntegerArgument:
@@ -76,38 +173,25 @@ LogEntry::Arg::Arg(const LogEntry::Arg::Base &arg) : _type(arg.logEntryArgType()
         _data.floatValue = arg.asDouble();
         break;
 
-    case StringArgument: {
-        String s = arg.asText();
-        _data.stringValue = new String(s.data(), s.size());
-        break; }
-    }
-}
-
-LogEntry::Arg::Arg(Arg const &other)
-    : String::IPatternArg(), ISerializable(), _type(other._type)
-{
-    switch(other._type)
-    {
-    case IntegerArgument:
-        _data.intValue = other._data.intValue;
-        break;
-
-    case FloatingPointArgument:
-        _data.floatValue = other._data.floatValue;
-        break;
-
     case StringArgument:
-        _data.stringValue = new String(*other._data.stringValue);
+        setValue(arg.asText()); // deep copy
         break;
     }
 }
 
-LogEntry::Arg::~Arg()
+LogEntry::Arg &LogEntry::Arg::operator = (Arg const &other)
 {
-    if(_type == StringArgument)
+    clear();
+    if(other._type == StringArgument)
     {
-        delete _data.stringValue;
+        setValue(*other._data.stringValue); // deep copy
     }
+    else
+    {
+        _type = other._type;
+        _data = other._data;
+    }
+    return *this;
 }
 
 ddouble LogEntry::Arg::asNumber() const
@@ -183,6 +267,20 @@ void LogEntry::Arg::operator << (Reader &from)
     }
 }
 
+LogEntry::Arg *LogEntry::Arg::newFromPool()
+{
+    Arg *arg = argPool.take();
+    if(arg) return arg;
+    // Need a new one.
+    return new LogEntry::Arg;
+}
+
+void LogEntry::Arg::returnToPool(Arg *arg)
+{
+    arg->clear();
+    argPool.put(arg);
+}
+
 LogEntry::LogEntry() : _metadata(0), _sectionDepth(0), _disabled(true)
 {}
 
@@ -213,7 +311,9 @@ LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
 {
     DENG2_FOR_EACH_CONST(Args, i, other._args)
     {
-        _args.append(new Arg(**i));
+        Arg *a = Arg::newFromPool();
+        *a = **i;
+        _args.append(a);
     }
 }
 
@@ -221,10 +321,10 @@ LogEntry::~LogEntry()
 {
     DENG2_GUARD(this);
 
-    // The entry has ownership of its args.
+    // Put the arguments back to the shared pool.
     for(Args::iterator i = _args.begin(); i != _args.end(); ++i) 
     {
-        delete *i;
+        Arg::returnToPool(*i);
     }
 }
 

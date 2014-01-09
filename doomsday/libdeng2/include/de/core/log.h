@@ -447,22 +447,27 @@ public:
         };
 
     public:
-        Arg()                    : _type(IntegerArgument)       { _data.intValue    = 0; }
-        Arg(dint i)              : _type(IntegerArgument)       { _data.intValue    = i; }
-        Arg(duint i)             : _type(IntegerArgument)       { _data.intValue    = i; }
-        Arg(long int i)          : _type(IntegerArgument)       { _data.intValue    = i; }
-        Arg(long unsigned int i) : _type(IntegerArgument)       { _data.intValue    = i; }
-        Arg(duint64 i)           : _type(IntegerArgument)       { _data.intValue    = dint64(i); }
-        Arg(dint64 i)            : _type(IntegerArgument)       { _data.intValue    = i; }
-        Arg(ddouble d)           : _type(FloatingPointArgument) { _data.floatValue  = d; }
-        Arg(void const *p)       : _type(IntegerArgument)       { _data.intValue    = dint64(p); }
-        Arg(char const *s)       : _type(StringArgument)        { _data.stringValue = new String(s); }
-        Arg(String const &s)     : _type(StringArgument)        { _data.stringValue = new String(s.data(), s.size()); }
-
-        Arg(Base const &arg);
-        Arg(Arg const &other);
-
+        Arg();
         ~Arg();
+
+        void clear();
+
+        void setValue(dint i);
+        void setValue(duint i);
+        void setValue(long int i);
+        void setValue(long unsigned int i);
+        void setValue(duint64 i);
+        void setValue(dint64 i);
+        void setValue(ddouble d);
+        void setValue(void const *p);
+        void setValue(char const *s);
+        void setValue(String const &s);
+        void setValue(Base const &arg);
+
+        template <typename ValueType>
+        Arg &set(ValueType const &s) { setValue(s); return *this; }
+
+        Arg &operator = (Arg const &other);
 
         inline Type type() const { return _type; }
         inline dint64 intValue() const {
@@ -485,6 +490,15 @@ public:
         // Implements ISerializable.
         void operator >> (Writer &to) const;
         void operator << (Reader &from);
+
+    public:
+        static Arg *newFromPool();
+        static void returnToPool(Arg *arg);
+
+        template <typename ValueType>
+        static inline Arg *newFromPool(ValueType const &v) {
+            return &(newFromPool()->set(v));
+        }
 
     private:
         Type _type;
@@ -702,16 +716,16 @@ public:
     /// Appends a new argument to the entry.
     template <typename ValueType>
     inline LogEntryStager &operator << (ValueType const &v) {
+        // Args are created only if the level is enabled.
         if(!_disabled) {
-            // Args are created only if the level is enabled.
-            _args.append(new LogEntry::Arg(v));
+            _args << LogEntry::Arg::newFromPool(v);
         }
         return *this;
     }
 
     ~LogEntryStager() {
         if(!_disabled) {
-            // Ownership of the entries is transferred to the LogEntry.
+            // Ownership of the args is transferred to the LogEntry.
             LOG().enter(_metadata, _format, _args);
         }
     }

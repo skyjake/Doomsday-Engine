@@ -480,7 +480,7 @@ void LinkWindow::sendCommandToServer(de::String command)
     {
         // Echo the command locally.
         LogEntry *e = new LogEntry(LogEntry::Generic | LogEntry::Note, "", 0, ">",
-                                   LogEntry::Args() << new LogEntry::Arg(command));
+                                   LogEntry::Args() << LogEntry::Arg::newFromPool(command));
         d->logBuffer.add(e);
 
         QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
