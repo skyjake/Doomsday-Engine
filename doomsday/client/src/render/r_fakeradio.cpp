@@ -260,5 +260,5 @@ void Rend_RadioInitForMap(Map &map)
         }
     }
 
-    LOG_GL_MSG("Completed in %1 seconds") << begunAt.since();
+    LOG_GL_MSG("Completed in %.2f seconds") << begunAt.since();
 }
