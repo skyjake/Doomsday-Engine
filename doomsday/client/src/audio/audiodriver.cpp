@@ -374,7 +374,8 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             drvId = initDriverIfNeeded(CommandLine_At(++p));
             if(!drivers[drvId].sfx.gen.Init)
             {
-                LOG_AUDIO_ERROR("Audio driver '%s' does not provide an SFX interface") << getDriverName(drvId);
+                throw de::Error("selectInterfaces", QString("Audio driver '%1' does not provide an SFX interface")
+                                .arg(getDriverName(drvId)));
             }
             appendInterface(&pos, AUDIO_ISFX, &drivers[drvId].sfx);
             continue;
@@ -386,7 +387,8 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             drvId = initDriverIfNeeded(CommandLine_At(++p));
             if(!drivers[drvId].music.gen.Init)
             {
-                LOG_AUDIO_ERROR("Audio driver '%s' does not provide a Music interface") << getDriverName(drvId);
+                throw de::Error("selectInterfaces", QString("Audio driver '%1' does not provide a Music interface")
+                                .arg(getDriverName(drvId)));
             }
             appendInterface(&pos, AUDIO_IMUSIC, &drivers[drvId].music);
             continue;
@@ -398,7 +400,8 @@ static void selectInterfaces(audiodriverid_t defaultDriverId)
             drvId = initDriverIfNeeded(CommandLine_At(++p));
             if(!drivers[drvId].cd.gen.Init)
             {
-                LOG_AUDIO_ERROR("Audio driver '%s' does not provide a CD interface") << getDriverName(drvId);
+                throw de::Error("selectInterfaces", QString("Audio driver '%1' does not provide a CD interface")
+                                .arg(getDriverName(drvId)));
             }
             appendInterface(&pos, AUDIO_ICD, &drivers[drvId].cd);
             continue;
