@@ -1,4 +1,4 @@
-/** @file interceptor.h World map element/object ray trace interceptor.
+/** @file interceptor.h  World map element/object ray trace interceptor.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -19,10 +19,9 @@
 #ifndef DENG_WORLD_MAP_INTERCEPTOR_H
 #define DENG_WORLD_MAP_INTERCEPTOR_H
 
-#include <de/Vector>
-
 #include "world/map.h"
 #include "Line"
+#include <de/Vector>
 
 /**
  * Provides a mechanism for tracing line / world map object/element interception.

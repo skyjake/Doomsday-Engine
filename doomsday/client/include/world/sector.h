@@ -552,9 +552,9 @@ public:
      * the @em boundary of the cluster and is not an "internal" edge.
      */
     SectorClusterCirculator(de::HEdge *hedge = 0)
-        : _hedge(hedge),
-          _current(hedge),
-          _cluster(hedge? getCluster(*hedge) : 0)
+        : _hedge(hedge)
+        , _current(hedge)
+        , _cluster(hedge? getCluster(*hedge) : 0)
     {}
 
     /**

@@ -150,7 +150,7 @@ DENG2_PIMPL(Sector)
     }
 
     // Observes Plane HeightChange.
-    void planeHeightChanged(Plane & /*plane*/, coord_t /*oldHeight*/)
+    void planeHeightChanged(Plane & /*plane*/)
     {
         // Update the z-height origin of our sound emitter right away.
         emitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;

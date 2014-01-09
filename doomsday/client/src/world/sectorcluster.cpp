@@ -608,10 +608,8 @@ DENG2_OBSERVES(Plane, HeightChange)
     }
 
     /// Observes Plane HeightChange.
-    void planeHeightChanged(Plane &plane, coord_t oldHeight)
+    void planeHeightChanged(Plane &plane)
     {
-        DENG2_UNUSED(oldHeight);
-
         // Check if there are any camera players in this sector. If their height
         // is now above the ceiling/below the floor they are now in the void.
         for(int i = 0; i < DDMAXPLAYERS; ++i)
@@ -655,7 +653,7 @@ DENG2_OBSERVES(Plane, HeightChange)
 #ifdef __CLIENT__
 
     /// Observes Plane HeightSmoothedChange.
-    void planeHeightSmoothedChanged(Plane &plane, coord_t /*oldHeight*/)
+    void planeHeightSmoothedChanged(Plane &plane)
     {
         markDependantSurfacesForDecorationUpdate();
 

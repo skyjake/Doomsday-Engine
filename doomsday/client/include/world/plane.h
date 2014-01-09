@@ -1,4 +1,4 @@
-/** @file plane.h World map plane.
+/** @file plane.h  World map plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,12 +21,12 @@
 #ifndef DENG_WORLD_PLANE_H
 #define DENG_WORLD_PLANE_H
 
-#include <de/Observers>
-#include <de/Vector>
-
 #include "dd_share.h" // SoundEmitter
 
 #include "MapElement"
+
+#include <de/Observers>
+#include <de/Vector>
 
 class Sector;
 class Surface;
@@ -42,27 +42,21 @@ class Plane : public de::MapElement
     DENG2_NO_ASSIGN(Plane)
 
 public:
-    /*
-     * Notified when the plane is about to be deleted.
-     */
+    /// Notified when the plane is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
 
-    /*
-     * Notified whenever a @em sharp height change occurs.
-     */
-    DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane, coord_t oldHeight))
+    /// Notified whenever a @em sharp height change occurs.
+    DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane))
 
 #ifdef __CLIENT__
 
-    /*
-     * Notified whenever a @em smoothed height change occurs.
-     */
-    DENG2_DEFINE_AUDIENCE(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane, coord_t oldHeight))
+    /// Notified whenever a @em smoothed height change occurs.
+    DENG2_DEFINE_AUDIENCE(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
 
 #endif
 
-    // Constants:
-    static int const MAX_SMOOTH_MOVE = 64; ///< $smoothplane: Maximum speed for a smoothed plane.
+    /// Maximum speed for a smoothed plane.
+    static int const MAX_SMOOTH_MOVE = 64;
 
 public:
     /**

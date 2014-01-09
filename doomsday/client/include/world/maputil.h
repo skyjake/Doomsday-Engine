@@ -1,4 +1,4 @@
-/** @file maputil.h World map utilities.
+/** @file maputil.h  World map utilities.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>

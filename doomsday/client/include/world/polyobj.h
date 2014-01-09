@@ -1,4 +1,4 @@
-/** @file polyobj.h World map polyobj.
+/** @file polyobj.h  World map polyobj.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,13 +21,12 @@
 #ifndef DENG_WORLD_POLYOBJ_H
 #define DENG_WORLD_POLYOBJ_H
 
-#include <QList>
-
-#include <de/Vector>
-
 #include "dd_share.h"
 
 #include "Mesh"
+
+#include <de/Vector>
+#include <QList>
 
 class BspLeaf;
 class Line;

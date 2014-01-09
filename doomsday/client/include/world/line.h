@@ -1,4 +1,4 @@
-/** @file line.h World map line.
+/** @file line.h  World map line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,15 +21,6 @@
 #ifndef DENG_WORLD_LINE_H
 #define DENG_WORLD_LINE_H
 
-#include <QFlags>
-#include <QList>
-
-#include <de/binangle.h>
-
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
-
 #include "HEdge"
 
 #include "MapElement"
@@ -39,6 +30,13 @@
 #ifdef __CLIENT__
 #  include "BiasSurface"
 #endif
+
+#include <de/Error>
+#include <de/Observers>
+#include <de/Vector>
+#include <de/binangle.h>
+#include <QFlags>
+#include <QList>
 
 class LineOwner;
 class Sector;
@@ -82,9 +80,7 @@ public:
     /// The given side section identifier is invalid. @ingroup errors
     DENG2_ERROR(InvalidSectionIdError);
 
-    /*
-     * Observers to be notified when the flags change.
-     */
+    /// Notified whenever the flags change.
     DENG2_DEFINE_AUDIENCE(FlagsChange, void lineFlagsChanged(Line &line, int oldFlags))
 
     // Logical edge identifiers:
@@ -103,8 +99,7 @@ public:
 
     public:
         // Section identifiers:
-        enum
-        {
+        enum {
             Middle,
             Bottom,
             Top
@@ -113,8 +108,7 @@ public:
         /**
          * Flags used as Section identifiers:
          */
-        enum SectionFlag
-        {
+        enum SectionFlag {
             MiddleFlag  = 0x1,
             BottomFlag  = 0x2,
             TopFlag     = 0x4,

@@ -319,7 +319,7 @@ Vector2f const &Surface::materialOriginSmoothed() const
     return d->materialOriginSmoothed;
 }
 
-Vector2f const &Surface::materialOriginSmoothedDelta() const
+Vector2f const &Surface::materialOriginSmoothedAsDelta() const
 {
     return d->materialOriginSmoothedDelta;
 }

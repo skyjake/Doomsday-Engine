@@ -73,20 +73,20 @@ DENG2_PIMPL(Plane)
 #endif
     }
 
-    void notifyHeightChanged(coord_t oldHeight)
+    void notifyHeightChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(HeightChange, i)
         {
-            i->planeHeightChanged(self, oldHeight);
+            i->planeHeightChanged(self);
         }
     }
 
 #ifdef __CLIENT__
-    void notifySmoothedHeightChanged(coord_t oldHeight)
+    void notifySmoothedHeightChanged()
     {
         DENG2_FOR_PUBLIC_AUDIENCE(HeightSmoothedChange, i)
         {
-            i->planeHeightSmoothedChanged(self, oldHeight);
+            i->planeHeightSmoothedChanged(self);
         }
     }
 #endif
@@ -97,7 +97,6 @@ DENG2_PIMPL(Plane)
         if(de::fequal(newHeight, height))
             return;
 
-        coord_t oldHeight = height;
         height = newHeight;
 
         if(!ddMapSetup)
@@ -114,8 +113,7 @@ DENG2_PIMPL(Plane)
 #endif
         }
 
-        // Notify interested parties of the change.
-        notifyHeightChanged(oldHeight);
+        notifyHeightChanged();
 
 #ifdef __CLIENT__
         if(!ddMapSetup)
@@ -234,9 +232,8 @@ void Plane::lerpSmoothedHeight()
     coord_t newHeightSmoothed = d->height + d->heightSmoothedDelta;
     if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
     {
-        coord_t oldHeightSmoothed = d->heightSmoothed;
         d->heightSmoothed = newHeightSmoothed;
-        d->notifySmoothedHeightChanged(oldHeightSmoothed);
+        d->notifySmoothedHeightChanged();
     }
 }
 
@@ -248,9 +245,8 @@ void Plane::resetSmoothedHeight()
     coord_t newHeightSmoothed = d->oldHeight[0] = d->oldHeight[1] = d->height;
     if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
     {
-        coord_t oldHeightSmoothed = d->heightSmoothed;
         d->heightSmoothed = newHeightSmoothed;
-        d->notifySmoothedHeightChanged(oldHeightSmoothed);
+        d->notifySmoothedHeightChanged();
     }
 }
 

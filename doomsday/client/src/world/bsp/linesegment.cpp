@@ -390,9 +390,8 @@ DENG2_OBSERVES(Vertex, OriginChange)
         back.updateCache();
     }
 
-    void vertexOriginChanged(Vertex &vertex, Vector2d const &oldOrigin, int changedAxes)
+    void vertexOriginChanged(Vertex & /*vertex*/)
     {
-        DENG2_UNUSED3(vertex, oldOrigin, changedAxes);
         front.updateCache();
         back.updateCache();
     }

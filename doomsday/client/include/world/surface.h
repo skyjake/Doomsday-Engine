@@ -55,13 +55,13 @@ public:
     /// Notified when the @em sharp material origin changes.
     DENG2_DEFINE_AUDIENCE(MaterialOriginChange, void surfaceMaterialOriginChanged(Surface &surface))
 
-    /// Notified when the normal vector changes.
+    /// Notified whenever the normal vector changes.
     DENG2_DEFINE_AUDIENCE(NormalChange, void surfaceNormalChanged(Surface &surface))
 
-    /// Notified when the opacity changes.
+    /// Notified whenever the opacity changes.
     DENG2_DEFINE_AUDIENCE(OpacityChange, void surfaceOpacityChanged(Surface &surface))
 
-    /// Notified when the tint color changes.
+    /// Notified whenever the tint color changes.
     DENG2_DEFINE_AUDIENCE(TintColorChange, void surfaceTintColorChanged(Surface &sector))
 
     /// Maximum speed for a smoothed material offset.
@@ -282,7 +282,7 @@ public:
      *
      * @see setMaterialOrigin(), smoothMaterialOrigin()
      */
-    de::Vector2f const &materialOriginSmoothedDelta() const;
+    de::Vector2f const &materialOriginSmoothedAsDelta() const;
 
     /**
      * Perform smoothed material origin interpolation.

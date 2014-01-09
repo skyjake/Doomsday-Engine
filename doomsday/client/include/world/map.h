@@ -1,4 +1,4 @@
-/** @file map.h World map.
+/** @file map.h  World map.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,12 +21,6 @@
 #ifndef DENG_WORLD_MAP_H
 #define DENG_WORLD_MAP_H
 
-#include <QList>
-#include <QSet>
-
-#include <de/Observers>
-#include <de/Vector>
-
 #include "Mesh"
 
 #include "Line"
@@ -41,6 +35,11 @@
 #endif
 
 #include "uri.hh"
+
+#include <de/Observers>
+#include <de/Vector>
+#include <QList>
+#include <QSet>
 
 class BspLeaf;
 class BspNode;
@@ -127,20 +126,14 @@ public:
     DENG2_ERROR(FullError);
 #endif
 
-    /*
-     * Notified when the map is about to be deleted.
-     */
+    /// Notified when the map is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void mapBeingDeleted(Map const &map))
 
-    /*
-     * Notified when a one-way window construct is first found.
-     */
+    /// Notified when a one-way window construct is first found.
     DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
         void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
-    /*
-     * Notified when an unclosed sector is first found.
-     */
+    /// Notified when an unclosed sector is first found.
     DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 

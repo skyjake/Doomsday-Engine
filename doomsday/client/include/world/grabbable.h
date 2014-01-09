@@ -1,4 +1,4 @@
-/** @file grabbable.h Grabbable.
+/** @file grabbable.h  Grabbable.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -54,19 +54,13 @@ public:
     /// Base class for all unlock errors. @ingroup errors
     DENG2_ERROR(UnlockError);
 
-    /*
-     * Notified when the grabbable is about to be deleted.
-     */
+    /// Notified when the grabbable is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void grabbableBeingDeleted(Grabbable &grabbable))
 
-    /*
-     * Notified when the lock state of the grabbable changes.
-     */
+    /// Notified whenever the lock state of the grabbable changes.
     DENG2_DEFINE_AUDIENCE(LockChange, void grabbableLockChanged(Grabbable &grabbable))
 
-    /*
-     * Notified when the origin of the grabbable changes.
-     */
+    /// Notified whenever the origin of the grabbable changes.
     DENG2_DEFINE_AUDIENCE(OriginChange, void grabbableOriginChanged(Grabbable &grabbable))
 
 public:

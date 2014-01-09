@@ -1,4 +1,4 @@
-/** @file vertex.h World map vertex.
+/** @file vertex.h  World map vertex.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -44,12 +44,8 @@ class Vertex : public de::MapElement, public de::MeshElement
     DENG2_NO_ASSIGN(Vertex)
 
 public:
-    /*
-     * Observers to be notified whenever the origin changes.
-     */
-    DENG2_DEFINE_AUDIENCE(OriginChange,
-        void vertexOriginChanged(Vertex &vertex, de::Vector2d const &oldOrigin,
-                                 int changedAxes /*bit-field (0x1=X, 0x2=Y)*/))
+    /// Notified whenever the origin changes.
+    DENG2_DEFINE_AUDIENCE(OriginChange, void vertexOriginChanged(Vertex &vertex))
 
 public: /// @todo Move to the map loader:
     /// Head of the LineOwner rings (an array of [numLineOwners] size). The
@@ -95,37 +91,6 @@ public:
      * @param y  New Y origin in map coordinate space units.
      */
     inline void setOrigin(float x, float y) { return setOrigin(de::Vector2d(x, y)); }
-
-    /**
-     * Change the specified @a component of the origin for the vertex. The OriginChange
-     * audience is notified whenever the origin changes.
-     *
-     * @param component    Index of the component axis (0=X, 1=Y).
-     * @param newPosition  New position for the origin component axis.
-     *
-     * @see setOrigin(), setX(), setY()
-     */
-    void setOriginComponent(int component, coord_t newPosition);
-
-    /**
-     * Change the position of the X axis component of the origin for the vertex.
-     * surface. The OriginChange audience is notified whenever the origin changes.
-     *
-     * @param newPosition  New X axis position for the map origin.
-     *
-     * @see setOriginComponent(), setY()
-     */
-    inline void setX(coord_t newPosition) { setOriginComponent(0, newPosition); }
-
-    /**
-     * Change the position of the Y axis component of the origin for the vertex.
-     * surface. The OriginChange audience is notified whenever the origin changes.
-     *
-     * @param newPosition  New Y axis position for the map origin.
-     *
-     * @see setOriginComponent(), setX()
-     */
-    inline void setY(coord_t newPosition) { setOriginComponent(1, newPosition); }
 
 public: // Deprecated ----------------------------------------------------------
 

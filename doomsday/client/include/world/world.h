@@ -1,4 +1,4 @@
-/** @file world.h World.
+/** @file world.h  World.
  *
  * Ideas for improvement:
  *
@@ -30,12 +30,10 @@
 #ifndef DENG_WORLD_H
 #define DENG_WORLD_H
 
+#include "uri.hh"
 #include <de/libdeng1.h>
-
 #include <de/Error>
 #include <de/Observers>
-
-#include "uri.hh"
 
 #ifdef __CLIENT__
 class Hand;
@@ -59,20 +57,14 @@ public:
     /// No map is currently loaded. @ingroup errors
     DENG2_ERROR(MapError);
 
-    /**
-     * Notified when the "current" map changes.
-     */
+    /// Notified whenever the "current" map changes.
     DENG2_DEFINE_AUDIENCE(MapChange, void worldMapChanged(World &world))
 
 #ifdef __CLIENT__
-    /**
-     * Notified when the "current" frame begins.
-     */
+    /// Notified when a new frame begins.
     DENG2_DEFINE_AUDIENCE(FrameBegin, void worldFrameBegins(World &world, bool resetNextViewer))
 
-    /**
-     * Notified when the "current" frame ends.
-     */
+    /// Notified when the "current" frame ends.
     DENG2_DEFINE_AUDIENCE(FrameEnd, void worldFrameEnds(World &world))
 #endif
 

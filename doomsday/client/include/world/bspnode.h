@@ -1,4 +1,4 @@
-/** @file bspnode.h World map BSP node.
+/** @file bspnode.h  World map BSP node.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -21,12 +21,10 @@
 #ifndef DENG_WORLD_BSPNODE_H
 #define DENG_WORLD_BSPNODE_H
 
-#include <de/aabox.h>
-
-#include <de/Error>
-
 #include "MapElement"
 #include "partition.h"
+#include <de/Error>
+#include <de/aabox.h>
 
 /**
  * Represents a node in the map's binary space partition (BSP) tree. Each node
