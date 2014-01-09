@@ -179,11 +179,11 @@ DENG2_PIMPL(ServerSystem)
 
         if(serverSock)
         {
-            Con_Message("SERVER: Listening on TCP port %i.", serverSock->port());
+            LOG_NOTE("SERVER: Listening on TCP port %i") << serverSock->port();
         }
         else
         {
-            Con_Message("SERVER: No server socket open.");
+            LOG_NOTE("SERVER: No server socket open");
         }
 
         first = true;
@@ -198,35 +198,35 @@ DENG2_PIMPL(ServerSystem)
                 RemoteUser *user = users[cl->nodeID];
                 if(first)
                 {
-                    Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:");
+                    LOG_MSG(_E(m) "P# Name:      Nd Jo Hs Rd Gm Age:");
                     first = false;
                 }
-                Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec",
-                            i, cl->name, cl->nodeID,
-                            user->isJoined()? '*' : ' ',
-                            cl->handshake? '*' : ' ',
-                            cl->ready? '*' : ' ',
-                            plr->shared.inGame? '*' : ' ',
-                            Timer_RealSeconds() - cl->enterTime);
+                LOG_MSG(_E(m) "%2i %-10s %2i %c  %c  %c  %c  %f sec")
+                        << i << cl->name << cl->nodeID
+                        << (user->isJoined()? '*' : ' ')
+                        << (cl->handshake? '*' : ' ')
+                        << (cl->ready? '*' : ' ')
+                        << (plr->shared.inGame? '*' : ' ')
+                        << (Timer_RealSeconds() - cl->enterTime);
             }
         }
         if(first)
         {
-            Con_Message("No clients connected.");
+            LOG_MSG("No clients connected");
         }
 
         if(shellUsers.count())
         {
-            Con_Message("%i shell user%s.",
-                        shellUsers.count(),
-                        shellUsers.count() == 1? "" : "s");
+            LOG_MSG("%i shell user%s")
+                    << shellUsers.count()
+                    << (shellUsers.count() == 1? "" : "s");
         }
 
         N_PrintBufferInfo();
 
-        Con_Message("Configuration:");
-        Con_Message("  Port for hosting games (net-ip-port): %i", Con_GetInteger("net-ip-port"));
-        Con_Message("  Shell password (server-password): \"%s\"", netPassword);
+        LOG_MSG(_E(b) "Configuration:");
+        LOG_MSG("  Port for hosting games (net-ip-port): %i") << Con_GetInteger("net-ip-port");
+        LOG_MSG("  Shell password (server-password): \"%s\"") << netPassword;
     }
 };
 
@@ -277,7 +277,7 @@ void ServerSystem::convertToShellUser(RemoteUser *user)
 
     Socket *socket = user->takeSocket();
 
-    LOG_DEBUG("Remote user %s converted to shell user") << user->id();
+    LOGDEV_NET_VERBOSE("Remote user %s converted to shell user") << user->id();
     user->deleteLater();
 
     d->shellUsers.add(new ShellUser(socket));
@@ -333,11 +333,11 @@ void ServerSystem::userDestroyed()
     RemoteUser *u = static_cast<RemoteUser *>(sender());
 
     LOG_AS("ServerSystem");
-    LOG_VERBOSE("Removing user %s") << u->id();
+    LOGDEV_NET_VERBOSE("Removing user %s") << u->id();
 
     d->users.remove(u->id());
 
-    LOG_DEBUG("%i remote users and %i shell users remain")
+    LOG_NET_VERBOSE("%i remote users and %i shell users remain")
             << d->users.size() << d->shellUsers.count();
 }
 

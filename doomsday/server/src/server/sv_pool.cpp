@@ -157,7 +157,7 @@ void Sv_InitPools(void)
     Sv_RegisterWorld(&initialRegister, true);
 
     // How much time did we spend?
-    LOG_DEBUG("World registered in %.2f seconds.") << startedAt.since();
+    LOG_MAP_VERBOSE("World registered in %.2f seconds") << startedAt.since();
 }
 
 /**
@@ -712,7 +712,8 @@ boolean Sv_RegisterCompareSector(cregister_t *reg, int number,
 #ifdef _DEBUG
     if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
-        Con_Message("Sector %i: ceiling state change noted (target = %f)", number, s->ceiling().targetHeight());
+        LOGDEV_NET_XVERBOSE("Sector %i: ceiling state change noted (target = %f)")
+                << number << s->ceiling().targetHeight();
     }
 #endif
 
@@ -2653,9 +2654,6 @@ boolean Sv_IsPostponedDelta(void* deltaPtr, ownerinfo_t* info)
                 {
                     // Must postpone this Stop Sound delta until this one
                     // has been sent.
-#ifdef _DEBUG
-Con_Printf("POSTPONE: Stop %i\n", delta->id);
-#endif
                     return true;
                 }
             }

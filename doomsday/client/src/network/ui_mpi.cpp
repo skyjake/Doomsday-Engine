@@ -445,7 +445,7 @@ struct ServerDiscoveryObserver : DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
     {
         if(searchMode == SEARCH_CUSTOM && UI_IsActive())
         {
-            LOG_NET_XVERBOSE("ServerDiscoveryObserver notified, updating server list");
+            LOGDEV_NET_XVERBOSE("ServerDiscoveryObserver notified, updating server list");
             MPIUpdateServerList();
         }
     }

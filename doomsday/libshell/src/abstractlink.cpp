@@ -164,7 +164,7 @@ void AbstractLink::send(IByteArray const &data)
 void AbstractLink::socketConnected()
 {
     LOG_AS("AbstractLink");
-    LOG_VERBOSE("Successfully connected to server %s") << d->socket->peerAddress();
+    LOG_NET_VERBOSE("Successfully connected to server %s") << d->socket->peerAddress();
 
     initiateCommunications();
 

@@ -60,7 +60,7 @@ DENG2_PIMPL(RemoteUser)
         address = socket->peerAddress();
         isFromLocal = socket->isLocal();
 
-        LOG_VERBOSE("New remote user %s from socket %s (local:%b)")
+        LOG_NET_MSG("New remote user %s from socket %s (local:%b)")
                 << id << address << isFromLocal;
     }
 
@@ -133,7 +133,7 @@ DENG2_PIMPL(RemoteUser)
             Str_Appendf(&msg, "Info\n");
             Sv_InfoToString(&info, &msg);
 
-            LOG_DEBUG("Info reply:\n%s") << Str_Text(&msg);
+            LOGDEV_NET_VERBOSE("Info reply:\n%s") << Str_Text(&msg);
 
             self << ByteRefArray(Str_Text(&msg), Str_Length(&msg));
 
@@ -201,7 +201,7 @@ DENG2_PIMPL(RemoteUser)
         else
         {
             // Too bad, scoundrel! Goodbye.
-            LOG_WARNING("Received an invalid request from %s.") << id;
+            LOG_NET_WARNING("Received an invalid request from %s") << id;
             self.deleteLater();
             return false;
         }

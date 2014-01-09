@@ -202,7 +202,7 @@ void ShellUser::handleIncomingPackets()
         }
         catch(Error const &er)
         {
-            LOG_WARNING("Error while processing packet from %s:\n%s") << packet->from() << er.asText();
+            LOG_NET_WARNING("Error while processing packet from %s: %s") << packet->from() << er.asText();
         }
     }
 }

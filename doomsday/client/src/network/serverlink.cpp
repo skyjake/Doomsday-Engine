@@ -137,7 +137,8 @@ DENG2_PIMPL(ServerLink)
     {
         if(reply.size() < 5 || reply != "Enter")
         {
-            LOG_NET_WARNING("Server refused connection (received %i bytes instead of \"Enter\")")
+            LOG_NET_WARNING("Server refused connection");
+            LOGDEV_NET_WARNING("Received %i bytes instead of \"Enter\")")
                     << reply.size();
             self.disconnect();
             return false;

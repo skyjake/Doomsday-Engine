@@ -290,7 +290,7 @@ void N_SendPacket(int flags)
     }
     catch(de::Error const &er)
     {
-        LOG_NET_WARNING("N_SendPacket failed: ") << er.asText();
+        LOGDEV_NET_WARNING("N_SendPacket failed: ") << er.asText();
     }
 }
 

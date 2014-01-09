@@ -141,12 +141,12 @@ void MasterWorker::nextJob()
         ddstring_t* msg = Str_NewStd();
         Sv_InfoToString((serverinfo_t*)job.data, msg);
 
-        LOG_NET_XVERBOSE("POST request ") << req.url().toString();
+        LOGDEV_NET_VERBOSE("POST request ") << req.url().toString();
         foreach(const QByteArray& hdr, req.rawHeaderList())
         {
-            LOG_NET_XVERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+            LOGDEV_NET_VERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
         }
-        LOG_NET_XVERBOSE("Request contents:\n%s") << Str_Text(msg);
+        LOGDEV_NET_VERBOSE("Request contents:\n%s") << Str_Text(msg);
 
         d->network->post(req, QString(Str_Text(msg)).toUtf8());
         Str_Delete(msg);
@@ -154,10 +154,10 @@ void MasterWorker::nextJob()
     else
 #endif
     {
-        LOG_NET_XVERBOSE("GET request ") << req.url().toString();
+        LOGDEV_NET_VERBOSE("GET request ") << req.url().toString();
         foreach(const QByteArray& hdr, req.rawHeaderList())
         {
-            LOG_NET_XVERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+            LOGDEV_NET_VERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
         }
 
         d->network->get(req);
@@ -186,7 +186,6 @@ void MasterWorker::requestFinished(QNetworkReply* reply)
     else
     {
         LOG_NET_WARNING(reply->errorString());
-        /// @todo Log the error.
     }
 
     // Continue with the next job.
