@@ -20,14 +20,7 @@
 #ifndef DENG_CLIENT_WORLD_MAP_H
 #define DENG_CLIENT_WORLD_MAP_H
 
-/**
- * Clears the arrays that track active plane and polyobj mover thinkers.
- */
 void Cl_InitTransTables();
-
-/**
- * Removes all the active movers.
- */
 void Cl_ResetTransTables();
 
 /**
