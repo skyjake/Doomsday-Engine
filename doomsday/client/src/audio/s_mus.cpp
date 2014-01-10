@@ -462,9 +462,11 @@ D_CMD(PlayMusic)
 {
     DENG2_UNUSED(src);
 
+    LOG_AS("playmusic (Cmd)");
+
     if(!musAvail)
     {
-        LOG_SCR_WARNING("Music subsystem is not available");
+        LOG_SCR_VERBOSE("Music subsystem is not available");
         return false;
     }
 
@@ -481,7 +483,7 @@ D_CMD(PlayMusic)
         int musIdx = Def_GetMusicNum(argv[1]);
         if(musIdx < 0)
         {
-            LOG_SCR_WARNING("Music '%s' not defined") << argv[1];
+            LOG_RES_WARNING("Music '%s' not defined") << argv[1];
             return false;
         }
 
@@ -508,7 +510,7 @@ D_CMD(PlayMusic)
             {
                 if(!AudioDriver_CD())
                 {
-                    LOG_SCR_WARNING("No CD audio interface available");
+                    LOG_AUDIO_WARNING("No CD audio interface available");
                     return false;
                 }
 

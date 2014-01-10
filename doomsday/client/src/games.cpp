@@ -250,11 +250,11 @@ D_CMD(ListGames)
         return true;
     }
 
-    LOG_SCR_MSG(_E(1) "Registered Games:");
-    LOG_SCR_VERBOSE("Key: %s'!'=Incomplete/Not playable %s'*'=Loaded")
+    LOG_MSG(_E(1) "Registered Games:");
+    LOG_VERBOSE("Key: %s'!'=Incomplete/Not playable %s'*'=Loaded")
             << _E(>) _E(D) << _E(B);
 
-    LOG_SCR_MSG(_E(R) "\n");
+    LOG_MSG(_E(R) "\n");
 
     Games::GameList found;
     games.collectAll(found);
@@ -287,10 +287,10 @@ D_CMD(ListGames)
             numCompleteGames++;
         }
     }
-    LOG_SCR_MSG("%s") << list;
+    LOG_MSG("%s") << list;
 
-    LOG_SCR_MSG(_E(R) "\n");
-    LOG_SCR_MSG("%i of %i games playable.") << numCompleteGames << games.count();
+    LOG_MSG(_E(R) "\n");
+    LOG_MSG("%i of %i games are playable") << numCompleteGames << games.count();
     LOG_SCR_MSG("Use the " _E(b) "load" _E(.) "command to load a game. For example: \"load gamename\".");
 
     return true;

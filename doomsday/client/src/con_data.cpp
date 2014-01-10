@@ -751,7 +751,7 @@ void Con_AddVariable(cvartemplate_t const *tpl)
 
     if(CVT_NULL == tpl->type)
     {
-        LOG_SCR_WARNING("Ignored attempt to register variable '%s' as type %s")
+        LOGDEV_SCR_WARNING("Ignored attempt to register variable '%s' as type %s")
             << tpl->path << Str_Text(CVar_TypeName(CVT_NULL));
         return;
     }

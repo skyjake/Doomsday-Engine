@@ -4231,7 +4231,7 @@ D_CMD(ListMaterials)
     if(!search.scheme().isEmpty() &&
        !App_ResourceSystem().knownMaterialScheme(search.scheme()))
     {
-        LOG_SCR_WARNING("Unknown scheme %s") << search.scheme();
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -4248,7 +4248,7 @@ D_CMD(ListTextures)
     if(!search.scheme().isEmpty() &&
        !App_ResourceSystem().knownTextureScheme(search.scheme()))
     {
-        LOG_SCR_WARNING("Unknown scheme %s") << search.scheme();
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -4265,7 +4265,7 @@ D_CMD(ListFonts)
     if(!search.scheme().isEmpty() &&
        !App_ResourceSystem().knownFontScheme(search.scheme()))
     {
-        LOG_SCR_WARNING("Unknown scheme %s") << search.scheme();
+        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
         return false;
     }
 
@@ -4285,7 +4285,7 @@ D_CMD(PrintMaterialStats)
         MaterialScheme::Index const &index = scheme->index();
 
         uint count = index.count();
-        LOG_SCR_MSG("Scheme: %s (%u %s)")
+        LOG_MSG("Scheme: %s (%u %s)")
             << scheme->name() << count << (count == 1? "material" : "materials");
         index.debugPrintHashDistribution();
         index.debugPrint();
@@ -4297,13 +4297,13 @@ D_CMD(PrintTextureStats)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_SCR_MSG(_E(1) "Texture Statistics:");
+    LOG_MSG(_E(1) "Texture Statistics:");
     foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
     {
         TextureScheme::Index const &index = scheme->index();
 
         uint const count = index.count();
-        LOG_SCR_MSG("Scheme: %s (%u %s)")
+        LOG_MSG("Scheme: %s (%u %s)")
             << scheme->name() << count << (count == 1? "texture" : "textures");
         index.debugPrintHashDistribution();
         index.debugPrint();
@@ -4316,13 +4316,13 @@ D_CMD(PrintFontStats)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_SCR_MSG(_E(1) "Font Statistics:");
+    LOG_MSG(_E(1) "Font Statistics:");
     foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
     {
         FontScheme::Index const &index = scheme->index();
 
         uint const count = index.count();
-        LOG_SCR_MSG("Scheme: %s (%u %s)")
+        LOG_MSG("Scheme: %s (%u %s)")
             << scheme->name() << count << (count == 1? "font" : "fonts");
         index.debugPrintHashDistribution();
         index.debugPrint();

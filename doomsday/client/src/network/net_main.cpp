@@ -961,6 +961,8 @@ D_CMD(Kick)
 
     int     num;
 
+    LOG_AS("kick (Cmd)")
+
     if(!netGame)
     {
         LOG_SCR_ERROR("This is not a network game");
@@ -969,7 +971,7 @@ D_CMD(Kick)
 
     if(!isServer)
     {
-        LOG_SCR_ERROR("This command is for the server only");
+        LOG_SCR_ERROR("Only allowed on the server");
         return false;
     }
 

@@ -347,7 +347,7 @@ D_CMD(BLEditor)
 
     if(!editActive)
     {
-        LOG_SCR_MSG("The bias lighting editor is not active");
+        LOG_WARNING("The bias lighting editor is not active");
         return false;
     }
 
@@ -441,7 +441,7 @@ D_CMD(BLEditor)
 
     if(which < 0 || which >= map.biasSourceCount())
     {
-        LOG_SCR_WARNING("Invalid source index #%i") << which;
+        LOG_SCR_WARNING("Invalid bias light source index %i") << which;
         return false;
     }
 

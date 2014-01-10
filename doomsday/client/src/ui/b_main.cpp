@@ -500,7 +500,7 @@ D_CMD(BindEventToCommand)
 
     if(b)
     {
-        LOG_SCR_VERBOSE("Binding %i created") <<  b->bid;
+        LOG_INPUT_VERBOSE("Binding %i created") <<  b->bid;
     }
 
     return (b != NULL);
@@ -514,7 +514,7 @@ D_CMD(BindControlToDevice)
 
     if(b)
     {
-        LOG_SCR_VERBOSE("Binding %i created") << b->bid;
+        LOG_INPUT_VERBOSE("Binding %i created") << b->bid;
     }
 
     return (b != NULL);

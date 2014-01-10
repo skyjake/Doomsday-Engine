@@ -2320,14 +2320,14 @@ D_CMD(Version)
     //Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
     //Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
 
-    LOG_SCR_NOTE(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
-    LOG_SCR_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
+    LOG_NOTE(_E(D) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT);
+    LOG_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
             "\n" _E(l) "Project: " _E(.) _E(i) DENGPROJECT_HOMEURL);
 
     // Print the version info of the current game if loaded.
     if(App_GameLoaded())
     {
-        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetVariable(DD_PLUGIN_VERSION_LONG);
+        LOG_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetVariable(DD_PLUGIN_VERSION_LONG);
     }
     return true;
 }
