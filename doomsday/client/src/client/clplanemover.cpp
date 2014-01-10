@@ -36,16 +36,17 @@ void ClPlaneMover_Thinker(ClPlaneMover *mover)
     // Can we think yet?
     if(!Cl_GameReady()) return;
 
-    Map &map = App_World().map(); /// @todo Do not assume mover is from the CURRENT map.
+    DENG2_ASSERT(mover->plane != 0);
+    Plane *plane = mover->plane;
 
 #ifdef DENG_DEBUG
-    if(map.clPlaneIndex(mover) < 0)
+    if(plane->map().clPlaneIndex(mover) < 0)
     {
         LOG_MAP_WARNING("Running a mover that is not in activemovers!");
     }
 #endif
 
-    int const dmuPlane = (mover->planeIndex == 0? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
+    int const dmuPlane = (plane->indexInSector() == 0? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
 
     // The move is cancelled if the consolePlayer becomes obstructed.
     bool const freeMove = ClPlayer_IsFreeToMove(consolePlayer);
@@ -53,42 +54,43 @@ void ClPlaneMover_Thinker(ClPlaneMover *mover)
 
     // How's the gap?
     bool remove = false;
-    coord_t const original = P_GetDouble(DMU_SECTOR, mover->sectorIndex, dmuPlane | DMU_HEIGHT);
+    coord_t const original = P_GetDoublep(plane, DMU_HEIGHT);
     if(de::abs(fspeed) > 0 && de::abs(mover->destination - original) > de::abs(fspeed))
     {
         // Do the move.
-        P_SetDouble(DMU_SECTOR, mover->sectorIndex, dmuPlane | DMU_HEIGHT, original + fspeed);
+        P_SetDoublep(plane, DMU_HEIGHT, original + fspeed);
     }
     else
     {
         // We have reached the destination.
-        P_SetDouble(DMU_SECTOR, mover->sectorIndex, dmuPlane | DMU_HEIGHT, mover->destination);
+        P_SetDoublep(plane, DMU_HEIGHT, mover->destination);
 
         // This thinker can now be removed.
         remove = true;
     }
 
     LOGDEV_MAP_XVERBOSE_DEBUGONLY("plane height %f in sector #%i",
-            P_GetDouble(DMU_SECTOR, mover->sectorIndex, dmuPlane | DMU_HEIGHT)
-            << mover->sectorIndex);
+            P_GetDoublep(plane, DMU_HEIGHT)
+            << plane->sector().indexInMap());
 
     // Let the game know of this.
     if(gx.SectorHeightChangeNotification)
     {
-        gx.SectorHeightChangeNotification(mover->sectorIndex);
+        gx.SectorHeightChangeNotification(plane->sector().indexInMap());
     }
 
     // Make sure the client didn't get stuck as a result of this move.
     if(freeMove != ClPlayer_IsFreeToMove(consolePlayer))
     {
-        LOG_MAP_VERBOSE("move blocked in sector #%i, undoing move") << mover->sectorIndex;
+        LOG_MAP_VERBOSE("move blocked in sector #%i, undoing move")
+                << plane->sector().indexInMap();
 
         // Something was blocking the way! Go back to original height.
-        P_SetDouble(DMU_SECTOR, mover->sectorIndex, dmuPlane | DMU_HEIGHT, original);
+        P_SetDoublep(plane, DMU_HEIGHT, original);
 
         if(gx.SectorHeightChangeNotification)
         {
-            gx.SectorHeightChangeNotification(mover->sectorIndex);
+            gx.SectorHeightChangeNotification(plane->sector().indexInMap());
         }
     }
     else
@@ -96,12 +98,13 @@ void ClPlaneMover_Thinker(ClPlaneMover *mover)
         // Can we remove this thinker?
         if(remove)
         {
-            LOG_MAP_VERBOSE("finished in sector #%i") << mover->sectorIndex;
+            LOG_MAP_VERBOSE("finished in sector #%i")
+                    << plane->sector().indexInMap();
 
             // It stops.
-            P_SetDouble(DMU_SECTOR, mover->sectorIndex, dmuPlane | DMU_SPEED, 0);
+            P_SetDoublep(plane, DMU_SPEED, 0);
 
-            map.deleteClPlane(mover);
+            plane->map().deleteClPlane(mover);
         }
     }
 }

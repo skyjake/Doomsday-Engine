@@ -232,11 +232,13 @@ void Map::deleteClPlane(ClPlaneMover *mover)
     int index = clPlaneIndex(mover);
     if(index < 0)
     {
-        LOG_MAP_VERBOSE("Mover in sector #%i not removed!") << mover->sectorIndex;
+        LOG_MAP_VERBOSE("Mover in sector #%i not removed!")
+                << mover->plane->sector().indexInMap();
         return;
     }
 
-    LOG_MAP_XVERBOSE("Removing mover [%i] (sector: #%i)") << index << mover->sectorIndex;
+    LOG_MAP_XVERBOSE("Removing mover [%i] (sector: #%i)")
+            << index << mover->plane->sector().indexInMap();
     thinkers().remove(mover->thinker);
 }
 
@@ -255,29 +257,28 @@ void Map::deleteClPolyobj(ClPolyMover *mover)
     thinkers().remove(mover->thinker);
 }
 
-ClPlaneMover *Map::newClPlane(int sectorIndex, int planeIndex, coord_t dest, float speed)
+ClPlaneMover *Map::newClPlane(Plane &plane, coord_t dest, float speed)
 {
     LOG_AS("Map::newClPlane");
-    LOG_MAP_XVERBOSE("Sector #%i, plane:%i, dest:%f, speed:%f")
-            << sectorIndex << planeIndex << dest << speed;
 
-    int const dmuPlane = (planeIndex == 0? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
-
-    if(sectorIndex < 0 || sectorIndex >= sectorCount())
+    // Ignore planes not currently attributed to the map.
+    if(&plane.map() != this)
     {
-        DENG2_ASSERT(false); // Invalid Sector index.
+        qDebug() << "Ignoring alien plane" << de::dintptr(&plane) << "in Map::newClPlane";
         return 0;
     }
+
+    LOG_MAP_XVERBOSE("Sector #%i, plane:%i, dest:%f, speed:%f")
+            << plane.sector().indexInMap() << plane.indexInSector()
+            << dest << speed;
 
     // Remove any existing movers for the same plane.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(isValidClPlane(i) &&
-           clActivePlanes[i]->sectorIndex == sectorIndex &&
-           clActivePlanes[i]->planeIndex  == planeIndex)
+        if(isValidClPlane(i) && clActivePlanes[i]->plane == &plane)
         {
             LOG_MAP_XVERBOSE("Removing existing mover #%i in sector #%i, plane %i")
-                    << i << sectorIndex << planeIndex;
+                    << i << plane.sector().indexInMap() << plane.indexInSector();
 
             deleteClPlane(clActivePlanes[i]);
         }
@@ -294,20 +295,19 @@ ClPlaneMover *Map::newClPlane(int sectorIndex, int planeIndex, coord_t dest, flo
         ClPlaneMover *mov = clActivePlanes[i] = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, &clActivePlanes[i]);
 
         mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
-        mov->sectorIndex = sectorIndex;
-        mov->planeIndex  = planeIndex;
+        mov->plane       = &plane;
         mov->destination = dest;
         mov->speed       = speed;
 
         // Set the right sign for speed.
-        if(mov->destination < P_GetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_HEIGHT))
+        if(mov->destination < P_GetDoublep(&plane, DMU_HEIGHT))
         {
             mov->speed = -mov->speed;
         }
 
         // Update speed and target height.
-        P_SetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
-        P_SetFloat(DMU_SECTOR, sectorIndex, dmuPlane | DMU_SPEED, speed);
+        P_SetDoublep(&plane, DMU_TARGET_HEIGHT, dest);
+        P_SetFloatp(&plane, DMU_SPEED, speed);
 
         thinkers().add(mov->thinker, false /*not public*/);
 
@@ -361,13 +361,12 @@ ClPolyMover *Map::newClPolyobj(int polyobjIndex)
     return 0; // Not successful.
 }
 
-ClPlaneMover *Map::clPlaneBySectorIndex(int sectorIndex, int planeIndex)
+ClPlaneMover *Map::clPlaneFor(Plane &plane)
 {
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(!isValidClPlane(i)) continue;
-        if(clActivePlanes[i]->sectorIndex != sectorIndex) continue;
-        if(clActivePlanes[i]->planeIndex  != planeIndex) continue;
+        if(clActivePlanes[i]->plane != &plane) continue;
 
         // Found it!
         return clActivePlanes[i];
@@ -463,20 +462,20 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        map.newClPlane(index, Sector::Floor, height[PLN_FLOOR], 0);
+        map.newClPlane(sec->floor(), height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        map.newClPlane(index, Sector::Floor, target[PLN_FLOOR], speed[PLN_FLOOR]);
+        map.newClPlane(sec->floor(), target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        map.newClPlane(index, Sector::Ceiling, height[PLN_CEILING], 0);
+        map.newClPlane(sec->ceiling(), height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        map.newClPlane(index, Sector::Ceiling, target[PLN_CEILING], speed[PLN_CEILING]);
+        map.newClPlane(sec->ceiling(), target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING

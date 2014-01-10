@@ -683,13 +683,13 @@ public:
      *
      * @return  The new mover or @c NULL if arguments are invalid.
      */
-    ClPlaneMover *newClPlane(int sectorIdx, int planeIndex, coord_t dest, float speed);
+    ClPlaneMover *newClPlane(Plane &plane, coord_t dest, float speed);
 
     void deleteClPlane(ClPlaneMover *mover);
 
     int clPlaneIndex(ClPlaneMover *mover);
 
-    ClPlaneMover *clPlaneBySectorIndex(int index, int planeIndex);
+    ClPlaneMover *clPlaneFor(Plane &plane);
 
     bool isValidClPlane(int i);
 

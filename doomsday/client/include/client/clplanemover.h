@@ -21,6 +21,7 @@
 #define DENG_CLIENT_PLANEMOVER_H
 
 #include "api_thinker.h"
+#include "Plane"
 
 /**
  * Plane movement thinker. Makes changes to planes using DMU.
@@ -30,8 +31,7 @@
 struct ClPlaneMover
 {
     thinker_t thinker;
-    int sectorIndex;
-    int planeIndex;
+    Plane *plane;
     coord_t destination;
     float speed;
 };
