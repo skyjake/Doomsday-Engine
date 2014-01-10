@@ -11,7 +11,7 @@ SUBDIRS = \
     build \
     libdeng2
 
-!deng_noclient: SUBDIRS += libgui
+!deng_noclient: SUBDIRS += libgui libappfw
     
 SUBDIRS += \
     libdeng1 \

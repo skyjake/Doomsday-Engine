@@ -1,6 +1,6 @@
-/** @file libgui.h  Common definitions for libgui.
+/** @file libappfw.h  Common definitions for libappfw.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,41 +16,28 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_MAIN_H
-#define LIBGUI_MAIN_H
+#ifndef LIBAPPFW_MAIN_H
+#define LIBAPPFW_MAIN_H
 
 /*
- * The LIBGUI_PUBLIC macro is used for declaring exported symbols. It must be
+ * The LIBAPPFW_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for
- * exporting symbols out of libgui.
+ * exporting symbols out of libappfw.
  */
 #if defined(_WIN32) && defined(_MSC_VER)
-#  ifdef __LIBGUI__
+#  ifdef __LIBAPPFW__
 // This is defined when compiling the library.
-#    define LIBGUI_PUBLIC __declspec(dllexport)
+#    define LIBAPPFW_PUBLIC __declspec(dllexport)
 #  else
-#    define LIBGUI_PUBLIC __declspec(dllimport)
+#    define LIBAPPFW_PUBLIC __declspec(dllimport)
 #  endif
 #else
 // No need to use any special declarators.
-#  define LIBGUI_PUBLIC
-#endif
-
-#ifndef NDEBUG
-#  define LIBGUI_ASSERT_GL_OK() {GLuint _er = glGetError(); if(_er != GL_NO_ERROR) { \
-    qWarning("OpenGL error: 0x%x", _er); DENG2_ASSERT(!"OpenGL operation failed"); }}
-#else
-#  define LIBGUI_ASSERT_GL_OK()
-#endif
-
-#ifdef __cplusplus
-#  define LIBGUI_EXTERN_C extern "C"
-#else
-#  define LIBGUI_EXTERN_C extern
+#  define LIBAPPFW_PUBLIC
 #endif
 
 namespace de {
 
 } // namespace de
 
-#endif // LIBGUI_MAIN_H
+#endif // LIBAPPFW_MAIN_H
