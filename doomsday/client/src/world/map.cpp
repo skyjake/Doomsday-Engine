@@ -198,20 +198,27 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
+
+    ClPlaneMover *clActivePlanes[CLIENT_MAX_MOVERS];
+    ClPolyMover *clActivePolyobjs[CLIENT_MAX_MOVERS];
 #endif
 
     Instance(Public *i, Uri const &uri)
-        : Base            (i),
-          editingEnabled  (true),
-          uri             (uri),
-          bspRoot         (0),
-          lineLinks       (0)
+        : Base            (i)
+        , editingEnabled  (true)
+        , uri             (uri)
+        , bspRoot         (0)
+        , lineLinks       (0)
 #ifdef __CLIENT__
-         ,skyFloorHeight  (DDMAXFLOAT),
-          skyCeilingHeight(DDMINFLOAT)
+        , skyFloorHeight  (DDMAXFLOAT)
+        , skyCeilingHeight(DDMINFLOAT)
 #endif
     {
         zap(oldUniqueId);
+#ifdef __CLIENT__
+        zap(clActivePlanes);
+        zap(clActivePolyobjs);
+#endif
     }
 
     ~Instance()
@@ -1129,8 +1136,6 @@ Map::Map(Uri const &uri) : d(new Instance(this, uri))
 {
 #ifdef __CLIENT__
     zap(clMobjHash);
-    zap(clActivePlanes);
-    zap(clActivePolyobjs);
 #endif
     _globalGravity = 0;
     _effectiveGravity = 0;
@@ -2438,20 +2443,20 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 
 bool Map::isValidClPlane(int i)
 {
-    if(!clActivePlanes[i]) return false;
-    return (clActivePlanes[i]->thinker.function == reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker));
+    if(!d->clActivePlanes[i]) return false;
+    return (d->clActivePlanes[i]->thinker.function == reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker));
 }
 
 bool Map::isValidClPolyobj(int i)
 {
-    if(!clActivePolyobjs[i]) return false;
-    return (clActivePolyobjs[i]->thinker.function == reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker));
+    if(!d->clActivePolyobjs[i]) return false;
+    return (d->clActivePolyobjs[i]->thinker.function == reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker));
 }
 
 void Map::initClMovers()
 {
-    zap(clActivePlanes);
-    zap(clActivePolyobjs);
+    zap(d->clActivePlanes);
+    zap(d->clActivePolyobjs);
 }
 
 void Map::resetClMovers()
@@ -2460,23 +2465,23 @@ void Map::resetClMovers()
     {
         if(isValidClPlane(i))
         {
-            thinkers().remove(clActivePlanes[i]->thinker);
+            thinkers().remove(d->clActivePlanes[i]->thinker);
         }
         if(isValidClPolyobj(i))
         {
-            thinkers().remove(clActivePolyobjs[i]->thinker);
+            thinkers().remove(d->clActivePolyobjs[i]->thinker);
         }
     }
 }
 
 int Map::clPlaneIndex(ClPlaneMover *mover)
 {
-    if(!clActivePlanes) return -1;
+    if(!d->clActivePlanes) return -1;
 
     /// @todo Optimize lookup.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(clActivePlanes[i] == mover)
+        if(d->clActivePlanes[i] == mover)
             return i;
     }
     return -1;
@@ -2484,12 +2489,12 @@ int Map::clPlaneIndex(ClPlaneMover *mover)
 
 int Map::clPolyobjIndex(ClPolyMover *mover)
 {
-    if(!clActivePolyobjs) return -1;
+    if(!d->clActivePolyobjs) return -1;
 
     /// @todo Optimize lookup.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(clActivePolyobjs[i] == mover)
+        if(d->clActivePolyobjs[i] == mover)
             return i;
     }
     return -1;
@@ -2545,24 +2550,24 @@ ClPlaneMover *Map::newClPlane(Plane &plane, coord_t dest, float speed)
     // Remove any existing movers for the same plane.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(isValidClPlane(i) && clActivePlanes[i]->plane == &plane)
+        if(isValidClPlane(i) && d->clActivePlanes[i]->plane == &plane)
         {
             LOG_MAP_XVERBOSE("Removing existing mover #%i in sector #%i, plane %i")
                     << i << plane.sector().indexInMap() << plane.indexInSector();
 
-            deleteClPlane(clActivePlanes[i]);
+            deleteClPlane(d->clActivePlanes[i]);
         }
     }
 
     // Add a new mover.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(clActivePlanes[i]) continue;
+        if(d->clActivePlanes[i]) continue;
 
         LOG_MAP_XVERBOSE("New mover #%i") << i;
 
         // Allocate a new clplane_t thinker.
-        ClPlaneMover *mov = clActivePlanes[i] = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, &clActivePlanes[i]);
+        ClPlaneMover *mov = d->clActivePlanes[i] = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, &d->clActivePlanes[i]);
 
         mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
         mov->plane       = &plane;
@@ -2599,8 +2604,8 @@ ClPolyMover *Map::clPolyobjByPolyobjIndex(int index)
     {
         if(!isValidClPolyobj(i)) continue;
 
-        if(clActivePolyobjs[i]->number == index)
-            return clActivePolyobjs[i];
+        if(d->clActivePolyobjs[i]->number == index)
+            return d->clActivePolyobjs[i];
     }
 
     return 0;
@@ -2613,11 +2618,11 @@ ClPolyMover *Map::newClPolyobj(int polyobjIndex)
     // Take the first unused slot.
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
-        if(clActivePolyobjs[i]) continue;
+        if(d->clActivePolyobjs[i]) continue;
 
         LOG_MAP_XVERBOSE("New polymover [%i] for polyobj #%i.") << i << polyobjIndex;
 
-        ClPolyMover *mover = clActivePolyobjs[i] = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, &clActivePolyobjs[i]);
+        ClPolyMover *mover = d->clActivePolyobjs[i] = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, &d->clActivePolyobjs[i]);
 
         mover->thinker.function = reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker);
         mover->polyobj = polyobjs().at(polyobjIndex);
@@ -2636,10 +2641,10 @@ ClPlaneMover *Map::clPlaneFor(Plane &plane)
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(!isValidClPlane(i)) continue;
-        if(clActivePlanes[i]->plane != &plane) continue;
+        if(d->clActivePlanes[i]->plane != &plane) continue;
 
         // Found it!
-        return clActivePlanes[i];
+        return d->clActivePlanes[i];
     }
     return 0;
 }

@@ -158,9 +158,6 @@ public:
 public: /// @todo make private:
 #ifdef __CLIENT__
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
-
-    ClPlaneMover *clActivePlanes[CLIENT_MAX_MOVERS];
-    ClPolyMover *clActivePolyobjs[CLIENT_MAX_MOVERS];
 #endif
 
     coord_t _globalGravity; // The defined gravity for this map.
