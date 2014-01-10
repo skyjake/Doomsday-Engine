@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/progresswidget.h"
-#include "GuiRootWidget"
+#include "de/ProgressWidget"
+#include "de/GuiRootWidget"
 
 #include <de/Animation>
 #include <de/Lockable>
 
-using namespace de;
+namespace de {
 
 DENG_GUI_PIMPL(ProgressWidget), public Lockable
 {
@@ -72,7 +72,9 @@ DENG_GUI_PIMPL(ProgressWidget), public Lockable
     }
 };
 
-ProgressWidget::ProgressWidget(String const &name) : d(new Instance(this))
+ProgressWidget::ProgressWidget(String const &name)
+    : LabelWidget(name)
+    , d(new Instance(this))
 {
     setTextGap("progress.textgap");
     setSizePolicy(ui::Filled, ui::Filled);
@@ -278,3 +280,5 @@ void ProgressWidget::updateStyle()
 {
     d->updateStyle();
 }
+
+} // namespace de

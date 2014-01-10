@@ -30,7 +30,7 @@
 #include "../ui/Margins"
 #include "../framework/guiwidgetprivate.h"
 
-namespace  {
+namespace de {
 
 class GuiRootWidget;
 class BlurWidget;

@@ -20,11 +20,11 @@
 #define DENG_CLIENT_CONSOLEWIDGET_H
 
 #include <QObject>
+#include <de/GuiWidget>
+#include <de/ButtonWidget>
+#include <de/LogWidget>
 
-#include "GuiWidget"
-#include "buttonwidget.h"
 #include "consolecommandwidget.h"
-#include "logwidget.h"
 
 /**
  * Console command line and message history.
@@ -34,16 +34,16 @@
  *
  * @ingroup gui
  */
-class ConsoleWidget : public GuiWidget
+class ConsoleWidget : public de::GuiWidget
 {
     Q_OBJECT
 
 public:
     ConsoleWidget();
 
-    ButtonWidget &button();
-    CommandWidget &commandLine();
-    LogWidget &log();
+    de::ButtonWidget &button();
+    de::CommandWidget &commandLine();
+    de::LogWidget &log();
 
     de::Rule const &shift();
 

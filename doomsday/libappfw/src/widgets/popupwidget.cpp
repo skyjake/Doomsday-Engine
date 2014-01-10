@@ -16,12 +16,11 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/popupwidget.h"
-#include "ui/widgets/buttonwidget.h"
-#include "GuiRootWidget"
-#include "ui/style.h"
-#include "ui/clientwindow.h"
-#include "clientapp.h"
+#include "de/PopupWidget"
+#include "de/ButtonWidget"
+#include "de/GuiRootWidget"
+#include "de/Style"
+#include "de/BaseGuiApp"
 
 #include <de/Drawable>
 #include <de/MouseEvent>
@@ -29,7 +28,7 @@
 #include <de/math.h>
 #include <QTimer>
 
-using namespace de;
+namespace de {
 
 static TimeDelta const OPENING_ANIM_SPAN = 0.4;
 static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
@@ -328,7 +327,8 @@ bool PopupWidget::handleEvent(Event const &event)
         }
 
         // Popups should still allow global key bindings to be activated.
-        ClientApp::widgetActions().tryEvent(event, "global");
+        root().handleEventAsFallback(event);
+        //ClientApp::widgetActions().tryEvent(event, "global");
 
         // Don't pass it further, though.
         return true;
@@ -435,3 +435,5 @@ void PopupWidget::panelDismissed()
         guiDeleteLater();
     }
 }
+
+} // namespace de

@@ -22,8 +22,9 @@
 #include <de/libdeng2.h>
 #include <de/Action>
 #include <de/Event>
-#include "guiwidget.h"
-#include "../dd_input.h"
+#include <de/GuiWidget>
+
+#include "dd_input.h"
 
 /**
  * User actions bound to widgets. Traditionally called the bindings and binding

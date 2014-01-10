@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "TextDrawable"
+#include "de/TextDrawable"
 
 #include <de/Task>
 #include <de/TaskPool>
 
-using namespace de;
+namespace de {
 
 DENG2_PIMPL(TextDrawable)
 {
@@ -262,3 +262,5 @@ bool TextDrawable::isBeingWrapped() const
 {
     return !d->tasks.isDone();
 }
+
+} // namespace de

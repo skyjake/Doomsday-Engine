@@ -23,6 +23,8 @@
 #include "scrollareawidget.h"
 #include "menuwidget.h"
 
+namespace de {
+
 class GuiRootWidget;
 
 /**
@@ -214,5 +216,7 @@ typedef DialogWidget::ButtonItem DialogButtonItem;
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(DialogWidget::Flags)
 Q_DECLARE_OPERATORS_FOR_FLAGS(DialogWidget::RoleFlags)
+
+} // namespace de
 
 #endif // LIBAPPFW_DIALOGWIDGET_H

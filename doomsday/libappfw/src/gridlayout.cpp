@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "GridLayout"
-#include "SequentialLayout"
+#include "de/GridLayout"
+#include "de/SequentialLayout"
 
 #include <QMap>
 
-using namespace de;
+namespace de {
 
 DENG2_PIMPL(GridLayout)
 {
@@ -715,3 +715,5 @@ void GridLayout::setCellAlignment(Vector2i const &cell, ui::Alignment cellAlign)
 {
     d->cellAlignment[cell] = cellAlign;
 }
+
+} // namespace de

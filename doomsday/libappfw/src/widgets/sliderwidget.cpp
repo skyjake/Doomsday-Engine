@@ -16,16 +16,17 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/sliderwidget.h"
-#include "ui/widgets/dialogwidget.h"
-#include "ui/widgets/lineeditwidget.h"
-#include "TextDrawable"
+#include "de/SliderWidget"
+#include "de/DialogWidget"
+#include "de/LineEditWidget"
+#include "de/TextDrawable"
 
 #include <de/Drawable>
 #include <de/MouseEvent>
 #include <cmath>
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 /**
@@ -635,3 +636,5 @@ void SliderWidget::updateStyle()
 {
     d->updateStyle();
 }
+
+} // namespace de

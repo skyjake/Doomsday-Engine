@@ -16,13 +16,14 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/Data"
-#include "ui/Item"
-#include "ui/widgets/labelwidget.h"
+#include "de/ui/Data"
+#include "de/ui/Item"
+#include "de/LabelWidget"
 
 #include <QtAlgorithms>
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 dsize const Data::InvalidPos = dsize(-1);
@@ -50,3 +51,5 @@ void Data::sort(SortMethod method)
         break;
     }
 }
+
+} // namespace de

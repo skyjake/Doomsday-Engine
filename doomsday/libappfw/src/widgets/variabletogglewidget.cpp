@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/variabletogglewidget.h"
+#include "de/VariableToggleWidget"
 
 #include <de/NumberValue>
 
-using namespace de;
+namespace de {
 
 DENG2_PIMPL(VariableToggleWidget),
 DENG2_OBSERVES(Variable,     Deletion),
@@ -120,3 +120,4 @@ void VariableToggleWidget::setInactiveValue(double val)
     d->updateFromVariable();
 }
 
+} // namespace de

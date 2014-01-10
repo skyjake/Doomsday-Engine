@@ -20,8 +20,8 @@
 #ifndef CLIENTAPP_H
 #define CLIENTAPP_H
 
-#include <de/GuiApp>
-#include <de/GLShaderBank>
+#include <de/BaseGuiApp>
+
 #include "settingsregister.h"
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
@@ -36,7 +36,7 @@
 /**
  * The client application.
  */
-class ClientApp : public de::GuiApp
+class ClientApp : public de::BaseGuiApp
 {
     Q_OBJECT
 

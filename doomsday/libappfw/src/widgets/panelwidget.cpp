@@ -16,18 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/panelwidget.h"
-#include "GuiRootWidget"
-#include "ui/style.h"
-#include "ui/clientwindow.h"
+#include "de/PanelWidget"
+#include "de/GuiRootWidget"
 
 #include <de/Drawable>
 #include <de/MouseEvent>
 #include <de/ScalarRule>
 #include <de/math.h>
+
 #include <QTimer>
 
-using namespace de;
+namespace de {
 
 static TimeDelta const OPENING_ANIM_SPAN = 0.4;
 static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
@@ -344,3 +343,5 @@ void PanelWidget::panelDismissed()
 {
     // nothing to do
 }
+
+} // namespace de

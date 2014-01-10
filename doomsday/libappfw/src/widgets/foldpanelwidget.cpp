@@ -16,12 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/foldpanelwidget.h"
-#include "ProceduralImage"
-#include "DialogContentStylist"
-#include "SignalAction"
+#include "de/FoldPanelWidget"
+#include "de/ProceduralImage"
+#include "de/DialogContentStylist"
+#include "de/SignalAction"
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 DENG2_PIMPL_NOREF(FoldPanelWidget)
@@ -151,3 +152,5 @@ void FoldPanelWidget::panelDismissed()
     DENG2_ASSERT(d->container == 0);
     d->container = takeContent();
 }
+
+} // namespace de

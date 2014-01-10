@@ -30,6 +30,7 @@
 #include "ui/widgets/logwidget.h"
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
+#include "ui/styledlogsinkformatter.h"
 
 #include <de/App>
 #include <de/ScalarRule>
@@ -54,6 +55,7 @@ DENG2_OBSERVES(Variable, Change)
     ScalarRule *horizShift;
     ScalarRule *height;
     ScalarRule *width;
+    StyledLogEntryFormatter formatter;
 
     enum GrabEdge {
         NotGrabbed = 0,
@@ -251,6 +253,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->scriptCmd->setOpacity(.75f);
 
     d->log = new LogWidget("log");
+    d->log->setLogFormatter(d->formatter);
     d->log->rule()
             .setInput(Rule::Left,   rule().left())
             .setInput(Rule::Right,  rule().right())

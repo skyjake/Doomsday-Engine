@@ -16,19 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/lineeditwidget.h"
-#include "ui/widgets/labelwidget.h"
-#include "FontLineWrapping"
-#include "GuiRootWidget"
-#include "GLTextComposer"
-#include "ui/style.h"
+#include "de/LineEditWidget"
+#include "de/LabelWidget"
+#include "de/FontLineWrapping"
+#include "de/GuiRootWidget"
+#include "de/GLTextComposer"
+#include "de/Style"
 
 #include <de/KeyEvent>
 #include <de/MouseEvent>
 #include <de/ScalarRule>
 #include <de/Drawable>
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 static TimeDelta const ANIM_SPAN = .5f;
@@ -479,3 +480,5 @@ void LineEditWidget::autoCompletionEnded(bool)
     // Make sure the underlining is removed.
     requestGeometry();
 }
+
+} // namespace de

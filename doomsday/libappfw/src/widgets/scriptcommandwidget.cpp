@@ -16,14 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de/ScriptCommandWidget"
+#include "de/PopupWidget"
+
 #include <de/Script>
 #include <de/Process>
 #include <de/ScriptLex>
 
-#include "ui/widgets/scriptcommandwidget.h"
-#include "ui/widgets/popupwidget.h"
-
-using namespace de;
+namespace de {
 
 DENG2_PIMPL(ScriptCommandWidget)
 {
@@ -33,7 +33,7 @@ DENG2_PIMPL(ScriptCommandWidget)
     Instance(Public *i) : Base(i)
     {}
 
-    bool shouldShowAsPopup(Error const &er)
+    bool shouldShowAsPopup(Error const &)
     {
         /*if(dynamic_cast<ScriptLex::MismatchedBracketError const *>(&er))
         {
@@ -102,3 +102,5 @@ void ScriptCommandWidget::executeCommand(String const &text)
     }
     */
 }
+
+} // namespace de

@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/variablechoicewidget.h"
+#include "de/VariableChoiceWidget"
 
 #include <de/NumberValue>
 
-using namespace de;
+namespace de {
 
 /// @todo Add support for TextValue in addition to NumberValue.
 DENG2_PIMPL(VariableChoiceWidget),
@@ -100,3 +100,5 @@ void VariableChoiceWidget::setVariableFromWidget()
 {
     d->setVariableFromWidget();
 }
+
+} // namespace de

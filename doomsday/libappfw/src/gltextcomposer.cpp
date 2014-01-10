@@ -16,11 +16,12 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "GLTextComposer"
+#include "de/GLTextComposer"
 
 #include <QList>
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 static Rangei const MAX_VISIBLE_RANGE(0, 0x7fffffff);
@@ -518,3 +519,5 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
         p.y += d->font->lineSpacing().value();
     }
 }
+
+} // namespace de

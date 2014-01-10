@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/style.h"
+#include "de/Style"
 
 #include <de/App>
 #include <de/ScriptSystem>
@@ -24,7 +24,7 @@
 #include <de/Variable>
 #include <de/RecordValue>
 
-using namespace de;
+namespace de {
 
 DENG2_PIMPL(Style)
 {
@@ -173,16 +173,23 @@ Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
     }
 }
 
-static Style *appStyle = 0;
+bool Style::isBlurringAllowed() const
+{
+    return true;
+}
+
+static Style *theAppStyle = 0;
 
 Style &Style::appStyle()
 {
-    DENG2_ASSERT(appStyle != 0);
-    return *appStyle;
+    DENG2_ASSERT(theAppStyle != 0);
+    return *theAppStyle;
 }
 
 void Style::setAppStyle(Style &newStyle)
 {
-    appStyle = &newStyle;
+    theAppStyle = &newStyle;
     /// @todo Notify everybody about the style change. -jk
 }
+
+} // namespace de

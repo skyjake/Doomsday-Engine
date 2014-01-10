@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "SequentialLayout"
+#include "de/SequentialLayout"
 
-using namespace de;
+namespace de {
 
 DENG2_PIMPL(SequentialLayout)
 {
@@ -247,3 +247,5 @@ Rule const &SequentialLayout::height() const
 {
     return *d->totalHeight;
 }
+
+} // namespace de

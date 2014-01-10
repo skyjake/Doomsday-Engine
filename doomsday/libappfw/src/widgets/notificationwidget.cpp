@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/notificationwidget.h"
-#include "SequentialLayout"
+#include "de/NotificationWidget"
+#include "de/SequentialLayout"
 
 #include <de/Drawable>
 #include <de/Matrix>
@@ -26,7 +26,7 @@
 #include <QMap>
 #include <QTimer>
 
-using namespace de;
+namespace de {
 
 static TimeDelta const ANIM_SPAN = .5;
 
@@ -279,3 +279,5 @@ void NotificationWidget::glDeinit()
 {
     d->glDeinit();
 }
+
+} // namespace de

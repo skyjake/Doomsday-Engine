@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ProceduralImage"
+#include "de/ProceduralImage"
 
-using namespace de;
+namespace de {
 
 ProceduralImage::ProceduralImage(Size const &size) : _size(size), _color(1, 1, 1, 1)
 {}
@@ -55,3 +55,5 @@ void ProceduralImage::glDeinit()
 {
     // optional for derived classes
 }
+
+} // namespace de

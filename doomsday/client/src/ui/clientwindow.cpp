@@ -33,19 +33,19 @@
 #include <de/GLState>
 #include <de/GLFramebuffer>
 #include <de/Drawable>
+#include <de/CompositorWidget>
+#include <de/NotificationWidget>
+#include <de/ProgressWidget>
 #include <QCloseEvent>
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/widgets/compositorwidget.h"
 #include "ui/widgets/gamewidget.h"
 #include "ui/widgets/gameuiwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
-#include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
-#include "ui/widgets/progresswidget.h"
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/dialogs/alertdialog.h"
 #include "CommandAction"

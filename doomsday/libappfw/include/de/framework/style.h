@@ -56,6 +56,11 @@ public:
 
     Font const *richStyleFont(Font::RichFormat::Style fontStyle) const;
 
+    /**
+     * Determines if blurred widget backgrounds are allowed.
+     */
+    virtual bool isBlurringAllowed() const;
+
 public:
     /**
      * Returns the current global application UI style.

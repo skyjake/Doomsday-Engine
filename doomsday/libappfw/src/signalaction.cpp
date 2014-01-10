@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "SignalAction"
+#include "de/SignalAction"
 
-using namespace de;
+namespace de {
 
 SignalAction::SignalAction(QObject *target, char const *slot)
     : Action(), _target(target), _slot(slot)
@@ -36,3 +36,5 @@ SignalAction *SignalAction::duplicate() const
 {
     return new SignalAction(_target, _slot);
 }
+
+} // namespace de

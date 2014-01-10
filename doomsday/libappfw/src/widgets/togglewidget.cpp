@@ -16,15 +16,14 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/togglewidget.h"
-#include "ProceduralImage"
-#include "GuiRootWidget"
-#include "ui/style.h"
-#include "clientapp.h"
+#include "de/ToggleWidget"
+#include "de/ProceduralImage"
+#include "de/GuiRootWidget"
+#include "de/Style"
 
 #include <de/Animation>
 
-using namespace de;
+namespace de {
 
 static TimeDelta const SWITCH_ANIM_SPAN = 0.3;
 
@@ -155,3 +154,5 @@ ToggleWidget::ToggleState ToggleWidget::toggleState() const
 {
     return d->state;
 }
+
+} // namespace de

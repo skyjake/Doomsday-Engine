@@ -21,12 +21,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/logwidget.h"
-#include "FontLineWrapping"
-#include "GLTextComposer"
-#include "ui/styledlogsinkformatter.h"
-#include "ui/style.h"
-#include "clientapp.h"
+#include "de/LogWidget"
+#include "de/FontLineWrapping"
+#include "de/GLTextComposer"
+#include "de/Style"
 
 #include <de/KeyEvent>
 #include <de/MouseEvent>
@@ -37,11 +35,13 @@
 #include <de/VertexBuilder>
 #include <de/Task>
 #include <de/TaskPool>
+#include <de/App>
 
 #include <QImage>
 #include <QPainter>
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 DENG_GUI_PIMPL(LogWidget),
@@ -192,7 +192,7 @@ public Font::RichFormat::IStyle
             beginWorkOnNext();
         }
 
-        void addedNewEntry(LogEntry &entry)
+        void addedNewEntry(LogEntry &)
         {
             beginWorkOnNext();
         }
@@ -242,12 +242,14 @@ public Font::RichFormat::IStyle
          */
         void beginWorkOnNext()
         {
+            if(!d->formatter) return; // Must have a formatter.
+
             DENG2_GUARD(this);
 
             while(_width > 0 && _next >= 0 && _next < entryCount())
             {
                 LogEntry const &ent = entry(_next);
-                String const styled = _formatter.logEntryToTextLines(ent).at(0);
+                String const styled = d->formatter->logEntryToTextLines(ent).at(0);
 
                 _pool.start(new WrapTask(*this, _next, styled));
                 _next++;
@@ -257,7 +259,6 @@ public Font::RichFormat::IStyle
     private:
         LogWidget::Instance *d;
         int _maxEntries;
-        StyledLogSinkFormatter _formatter;
         int _next;
         TaskPool _pool;
         int _width;
@@ -324,6 +325,7 @@ public Font::RichFormat::IStyle
     int contentOffsetForDrawing; ///< Set when geometry updated.
 
     // Style.
+    LogSink::IFormatter *formatter;
     Font const *font;
     ColorBank::Color normalColor;
     ColorBank::Color highlightColor;
@@ -349,21 +351,22 @@ public Font::RichFormat::IStyle
     Id scrollTex;
 
     Instance(Public *i)
-        : Base(i),
-          sink(this),
-          cacheWidth(0),
-          cancelRewrap(0),
-          visibleRange(Rangei(-1, -1)),
-          font(0),
-          buf(0),
-          entryAtlas(0),
-          entryAtlasLayoutChanged(false),
-          entryAtlasFull(false),
-          uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4),
-          uTex        ("uTex",       GLUniform::Sampler2D),
-          uShadowColor("uColor",     GLUniform::Vec4),
-          uColor      ("uColor",     GLUniform::Vec4),
-          uBgMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        : Base(i)
+        , sink(this)
+        , cacheWidth(0)
+        , cancelRewrap(0)
+        , visibleRange(Rangei(-1, -1))
+        , formatter(0)
+        , font(0)
+        , buf(0)
+        , entryAtlas(0)
+        , entryAtlasLayoutChanged(false)
+        , entryAtlasFull(false)
+        , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
+        , uTex        ("uTex",       GLUniform::Sampler2D)
+        , uShadowColor("uColor",     GLUniform::Vec4)
+        , uColor      ("uColor",     GLUniform::Vec4)
+        , uBgMvpMatrix("uMvpMatrix", GLUniform::Mat4)
     {
         self.setFont("log.normal");
         updateStyle();
@@ -783,6 +786,11 @@ LogWidget::LogWidget(String const &name)
     LogBuffer::appBuffer().addSink(d->sink);
 }
 
+void LogWidget::setLogFormatter(LogSink::IFormatter &formatter)
+{
+    d->formatter = &formatter;
+}
+
 LogSink &LogWidget::logSink()
 {
     return d->sink;
@@ -853,3 +861,5 @@ void LogWidget::glDeinit()
 {
     d->glDeinit();
 }
+
+} // namespace de

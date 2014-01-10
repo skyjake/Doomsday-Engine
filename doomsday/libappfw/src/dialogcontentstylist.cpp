@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "DialogContentStylist"
-#include "ui/widgets/dialogwidget.h"
-#include "ui/widgets/togglewidget.h"
-#include "ui/widgets/labelwidget.h"
+#include "de/DialogContentStylist"
+#include "de/DialogWidget"
+#include "de/ToggleWidget"
+#include "de/LabelWidget"
 
-using namespace de;
+namespace de {
 
 DialogContentStylist::DialogContentStylist() : _container(0)
 {}
@@ -76,3 +76,5 @@ void DialogContentStylist::applyStyle(GuiWidget &w)
         tog->set(GuiWidget::Background());
     }
 }
+
+} // namespace de

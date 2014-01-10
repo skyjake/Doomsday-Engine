@@ -16,15 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/labelwidget.h"
-#include "TextDrawable"
-#include "AtlasProceduralImage"
+#include "de/LabelWidget"
+#include "de/TextDrawable"
+#include "de/AtlasProceduralImage"
 
 #include <de/Drawable>
 #include <de/AtlasTexture>
 #include <de/ConstantRule>
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 DENG_GUI_PIMPL(LabelWidget),
@@ -682,3 +683,5 @@ LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
     }
     return w;
 }
+
+} // namespace de

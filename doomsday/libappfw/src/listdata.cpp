@@ -16,12 +16,13 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/ListData"
+#include "de/ui/ListData"
 
 #include <QtAlgorithms>
 #include <algorithm>
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 ListData::~ListData()
@@ -139,3 +140,4 @@ void ListData::stableSort(LessThanFunc lessThan)
     }
 }
 
+} // namespace de

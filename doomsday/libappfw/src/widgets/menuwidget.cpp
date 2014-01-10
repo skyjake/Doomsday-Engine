@@ -16,16 +16,17 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/menuwidget.h"
-#include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/variabletogglewidget.h"
-#include "ChildWidgetOrganizer"
-#include "ui/ListData"
-#include "ui/ActionItem"
-#include "ui/SubwidgetItem"
-#include "GridLayout"
+#include "de/MenuWidget"
+#include "de/PopupMenuWidget"
+#include "de/VariableToggleWidget"
+#include "de/ChildWidgetOrganizer"
+#include "de/GridLayout"
+#include "de/ui/ListData"
+#include "de/ui/ActionItem"
+#include "de/ui/SubwidgetItem"
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 DENG2_PIMPL(MenuWidget)
@@ -483,3 +484,5 @@ void MenuWidget::dismissPopups()
         pop->close();
     }
 }
+
+} // namespace de

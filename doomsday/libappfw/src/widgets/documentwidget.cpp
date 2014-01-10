@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/documentwidget.h"
-#include "ui/widgets/progresswidget.h"
-#include "TextDrawable"
+#include "de/DocumentWidget"
+#include "de/ProgressWidget"
+#include "de/TextDrawable"
 
 #include <de/Drawable>
 
-using namespace de;
+namespace de {
 
 static int const ID_BACKGROUND = 1; // does not scroll
 static int const ID_TEXT = 2;       // scrolls
@@ -349,3 +349,5 @@ void DocumentWidget::updateStyle()
 {
     d->updateStyle();
 }
+
+} // namespace de

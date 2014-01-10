@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_ALERTDIALOG_H
 #define DENG_CLIENT_ALERTDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog for listing recent alerts.
@@ -34,7 +34,7 @@
  * Even though widgets in general should only be manipulated from the main thread,
  * adding new alerts is thread-safe.
  */
-class AlertDialog : public DialogWidget
+class AlertDialog : public de::DialogWidget
 {
     Q_OBJECT
 

@@ -17,6 +17,7 @@
  */
 
 #include "de/GuiRootWidget"
+#include "de/GuiWidget"
 #include "de/BaseGuiApp"
 #include "de/Style"
 
@@ -200,8 +201,11 @@ CanvasWindow &GuiRootWidget::window()
 
 void GuiRootWidget::addOnTop(GuiWidget *widget)
 {
+    /// @todo Client-side behavior:
     // The window knows what is the correct top to add to.
-    window().addOnTop(widget);
+    //window().addOnTop(widget);
+
+    add(widget);
 }
 
 AtlasTexture &GuiRootWidget::atlas()
@@ -271,6 +275,9 @@ void GuiRootWidget::routeMouse(Widget *routeTo)
                     << Event::MouseWheel, routeTo);
 }
 
+void GuiRootWidget::dispatchLatestMousePosition()
+{}
+
 bool GuiRootWidget::processEvent(Event const &event)
 {
     if(!RootWidget::processEvent(event))
@@ -284,6 +291,9 @@ bool GuiRootWidget::processEvent(Event const &event)
     }
     return true;
 }
+
+void GuiRootWidget::handleEventAsFallback(Event const &)
+{}
 
 GuiWidget const *GuiRootWidget::globalHitTest(Vector2i const &pos) const
 {

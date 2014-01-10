@@ -33,9 +33,10 @@ win32 {
     include(../dep_directx.pri)
 }
 include(../dep_deng2.pri)
+include(../dep_deng1.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
-include(../dep_deng1.pri)
+include(../dep_appfw.pri)
 include(../dep_rift.pri)
 
 # Definitions ----------------------------------------------------------------
@@ -111,7 +112,6 @@ DENG_API_HEADERS = \
 # Convenience headers.
 DENG_CONVENIENCE_HEADERS += \
     include/AbstractFont \
-    include/AtlasProceduralImage \
     include/BiasDigest \
     include/BiasIllum \
     include/BiasSource \
@@ -122,25 +122,18 @@ DENG_CONVENIENCE_HEADERS += \
     include/BspNode \
     include/CommandAction \
     include/CompositeBitmapFont \
-    include/ChildWidgetOrganizer \
     include/Contact \
     include/ContactSpreader \
     include/Decoration \
-    include/DialogContentStylist \
     include/DrawList \
     include/DrawLists \
     include/EntityDatabase \
     include/Face \
-    include/FontLineWrapping \
     include/FontManifest \
     include/FontScheme \
     include/Game \
     include/Games \
-    include/GLTextComposer \
     include/Grabbable \
-    include/GridLayout \
-    include/GuiRootWidget \
-    include/GuiWidget \
     include/Hand \
     include/HEdge \
     include/HueCircle \
@@ -164,29 +157,17 @@ DENG_CONVENIENCE_HEADERS += \
     include/ModelDef \
     include/Plane \
     include/Polyobj \
-    include/ProceduralImage \
     include/Sector \
-    include/SequentialLayout \
     include/SettingsRegister \
-    include/SignalAction \
     include/SkyFixEdge \
     include/Sprite \
     include/Surface \
     include/SurfaceDecorator \
-    include/TextDrawable \
     include/Texture \
     include/TextureManifest \
     include/TextureScheme \
     include/TextureVariantSpec \
-    include/TriangleStripBuilder \    
-    include/ui/Data \
-    include/ui/Item \
-    include/ui/ListData \
-    include/ui/Margins \
-    include/ui/Stylist \
-    include/ui/SubmenuItem \
-    include/ui/SubwidgetItem \
-    include/ui/VariableToggleItem \
+    include/TriangleStripBuilder \
     include/Vertex \
     include/WallEdge \
     include/WallSpec \
@@ -400,82 +381,32 @@ DENG_HEADERS += \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/dialogs/vrsettingsdialog.h \
     include/ui/editors/rendererappearanceeditor.h \
-    include/ui/fi_main.h \
-    include/ui/finaleinterpreter.h \
-    include/ui/framework/actionitem.h \
-    include/ui/framework/atlasproceduralimage.h \
-    include/ui/framework/commandaction.h \
-    include/ui/framework/childwidgetorganizer.h \
-    include/ui/framework/data.h \
-    include/ui/framework/dialogcontentstylist.h \
-    include/ui/framework/fontlinewrapping.h \
-    include/ui/framework/gltextcomposer.h \
-    include/ui/framework/gridlayout.h \
-    include/ui/framework/guirootwidget.h \
-    include/ui/framework/guiwidget.h \
-    include/ui/framework/guiwidgetprivate.h \
-    include/ui/framework/item.h \
-    include/ui/framework/listdata.h \
-    include/ui/framework/margins.h \
-    include/ui/framework/proceduralimage.h \
-    include/ui/framework/sequentiallayout.h \
-    include/ui/framework/signalaction.h \
-    include/ui/framework/stylist.h \
-    include/ui/framework/submenuitem.h \
-    include/ui/framework/subwidgetitem.h \
-    include/ui/framework/textdrawable.h \
-    include/ui/framework/variabletoggleitem.h \
-    include/ui/framework/widgetactions.h \
-    include/ui/inputsystem.h \
-    include/ui/joystick.h \
-    include/ui/mouse_qt.h \
-    include/ui/nativeui.h \
-    include/ui/p_control.h \
-    include/ui/style.h \
-    include/ui/styledlogsinkformatter.h \
-    include/ui/sys_input.h \
-    include/ui/ui2_main.h \
-    include/ui/ui_main.h \
-    include/ui/ui_panel.h \
-    include/ui/uidefs.h \
-    include/ui/vrwindowtransform.h \
-    include/ui/widgets/blurwidget.h \
     include/ui/widgets/busywidget.h \
-    include/ui/widgets/buttonwidget.h \
-    include/ui/widgets/choicewidget.h \
-    include/ui/widgets/commandwidget.h \
-    include/ui/widgets/compositorwidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
     include/ui/widgets/cvarchoicewidget.h \
     include/ui/widgets/cvarsliderwidget.h \
     include/ui/widgets/cvartogglewidget.h \
-    include/ui/widgets/dialogwidget.h \
-    include/ui/widgets/documentwidget.h \
-    include/ui/widgets/foldpanelwidget.h \
     include/ui/widgets/gameselectionwidget.h \
-    include/ui/widgets/gamewidget.h \
     include/ui/widgets/gameuiwidget.h \
-    include/ui/widgets/gridpopupwidget.h \
+    include/ui/widgets/gamewidget.h \
     include/ui/widgets/icvarwidget.h \
     include/ui/widgets/keygrabberwidget.h \
-    include/ui/widgets/labelwidget.h \
-    include/ui/widgets/lineeditwidget.h \
-    include/ui/widgets/logwidget.h \
-    include/ui/widgets/menuwidget.h \
-    include/ui/widgets/notificationwidget.h \
-    include/ui/widgets/panelwidget.h \
-    include/ui/widgets/popupmenuwidget.h \
-    include/ui/widgets/popupwidget.h \
     include/ui/widgets/profilepickerwidget.h \
-    include/ui/widgets/progresswidget.h \
-    include/ui/widgets/scriptcommandwidget.h \
-    include/ui/widgets/scrollareawidget.h \
-    include/ui/widgets/sliderwidget.h \
     include/ui/widgets/taskbarwidget.h \
-    include/ui/widgets/togglewidget.h \
-    include/ui/widgets/variablechoicewidget.h \
-    include/ui/widgets/variabletogglewidget.h \
+    include/ui/fi_main.h \
+    include/ui/finaleinterpreter.h \
+    include/ui/inputsystem.h \
+    include/ui/joystick.h \
+    include/ui/mouse_qt.h \
+    include/ui/nativeui.h \
+    include/ui/p_control.h \
+    include/ui/styledlogsinkformatter.h \
+    include/ui/sys_input.h \
+    include/ui/ui2_main.h \
+    include/ui/ui_main.h \
+    include/ui/ui_panel.h \
+    include/ui/vrwindowtransform.h \
     include/ui/windowsystem.h \
     include/ui/windowtransform.h \
     include/ui/zonedebug.h \
@@ -773,70 +704,28 @@ SOURCES += \
     src/ui/editors/rendererappearanceeditor.cpp \
     src/ui/fi_main.cpp \
     src/ui/finaleinterpreter.cpp \
-    src/ui/framework/commandaction.cpp \
-    src/ui/framework/childwidgetorganizer.cpp \
-    src/ui/framework/data.cpp \
-    src/ui/framework/dialogcontentstylist.cpp \
-    src/ui/framework/fontlinewrapping.cpp \
-    src/ui/framework/gltextcomposer.cpp \
-    src/ui/framework/gridlayout.cpp \
-    src/ui/framework/guirootwidget.cpp \
-    src/ui/framework/guiwidget.cpp \
-    src/ui/framework/item.cpp \
-    src/ui/framework/listdata.cpp \
-    src/ui/framework/margins.cpp \
-    src/ui/framework/proceduralimage.cpp \
-    src/ui/framework/sequentiallayout.cpp \
-    src/ui/framework/signalaction.cpp \
-    src/ui/framework/textdrawable.cpp \
-    src/ui/framework/widgetactions.cpp \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
     src/ui/p_control.cpp \
-    src/ui/style.cpp \
     src/ui/styledlogsinkformatter.cpp \
     src/ui/sys_input.cpp \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
     src/ui/vrwindowtransform.cpp \
-    src/ui/widgets/blurwidget.cpp \
     src/ui/widgets/busywidget.cpp \
-    src/ui/widgets/buttonwidget.cpp \
-    src/ui/widgets/choicewidget.cpp \
-    src/ui/widgets/commandwidget.cpp \
-    src/ui/widgets/compositorwidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/cvarchoicewidget.cpp \
     src/ui/widgets/cvarsliderwidget.cpp \
     src/ui/widgets/cvartogglewidget.cpp \
-    src/ui/widgets/dialogwidget.cpp \
-    src/ui/widgets/documentwidget.cpp \
-    src/ui/widgets/foldpanelwidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
     src/ui/widgets/gamewidget.cpp \
     src/ui/widgets/gameuiwidget.cpp \
-    src/ui/widgets/gridpopupwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
-    src/ui/widgets/labelwidget.cpp \
-    src/ui/widgets/lineeditwidget.cpp \
-    src/ui/widgets/logwidget.cpp \
-    src/ui/widgets/menuwidget.cpp \
-    src/ui/widgets/notificationwidget.cpp \
-    src/ui/widgets/panelwidget.cpp \
-    src/ui/widgets/popupmenuwidget.cpp \
-    src/ui/widgets/popupwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
-    src/ui/widgets/progresswidget.cpp \
-    src/ui/widgets/scriptcommandwidget.cpp \
-    src/ui/widgets/scrollareawidget.cpp \
-    src/ui/widgets/sliderwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
-    src/ui/widgets/togglewidget.cpp \
-    src/ui/widgets/variablechoicewidget.cpp \
-    src/ui/widgets/variabletogglewidget.cpp \
     src/ui/windowsystem.cpp \
     src/ui/windowtransform.cpp \
     src/ui/zonedebug.cpp \

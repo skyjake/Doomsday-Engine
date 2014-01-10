@@ -19,7 +19,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/scrollareawidget.h"
+#include "de/ScrollAreaWidget"
 
 #include <de/GLState>
 #include <de/KeyEvent>
@@ -27,7 +27,7 @@
 #include <de/Lockable>
 #include <de/Drawable>
 
-using namespace de;
+namespace de {
 
 DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
 {
@@ -562,3 +562,5 @@ void ScrollAreaWidget::postDrawChildren()
 {
     GLState::pop();
 }
+
+} // namespace de

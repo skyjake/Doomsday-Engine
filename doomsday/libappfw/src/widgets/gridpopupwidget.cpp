@@ -16,12 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/gridpopupwidget.h"
+#include "de/GridPopupWidget"
+#include "de/GridLayout"
+#include "de/DialogContentStylist"
 
-#include "GridLayout"
-#include "DialogContentStylist"
-
-using namespace de;
+namespace de {
 
 DENG2_PIMPL_NOREF(GridPopupWidget)
 {
@@ -72,3 +71,5 @@ void GridPopupWidget::commit()
     d->container->rule().setSize(d->layout.width()  + gap * 2,
                                  d->layout.height() + gap * 2);
 }
+
+} // namespace de

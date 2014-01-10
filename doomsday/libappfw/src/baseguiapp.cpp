@@ -20,6 +20,23 @@
 
 namespace de {
 
+DENG2_PIMPL_NOREF(BaseGuiApp)
+{
+    GLShaderBank shaders;
+};
 
+BaseGuiApp::BaseGuiApp(int &argc, char **argv)
+    : GuiApp(argc, argv), d(new Instance)
+{}
+
+BaseGuiApp &BaseGuiApp::app()
+{
+    return static_cast<BaseGuiApp &>(App::app());
+}
+
+GLShaderBank &BaseGuiApp::shaders()
+{
+    return app().d->shaders;
+}
 
 } // namespace de

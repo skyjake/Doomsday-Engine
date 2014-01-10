@@ -293,7 +293,7 @@ DENG2_PIMPL(ClientApp)
 };
 
 ClientApp::ClientApp(int &argc, char **argv)
-    : GuiApp(argc, argv), d(new Instance(this))
+    : BaseGuiApp(argc, argv), d(new Instance(this))
 {
     novideo = false;
 

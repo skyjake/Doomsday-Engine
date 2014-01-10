@@ -20,12 +20,13 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "FontLineWrapping"
+#include "de/FontLineWrapping"
 
 #include <QMap>
 
-using namespace de;
-using namespace de::shell;
+namespace de {
+
+using namespace shell;
 
 static QChar const NEWLINE('\n');
 
@@ -772,3 +773,5 @@ int FontLineWrapping::LineInfo::highestTabStop() const
     }
     return stop;
 }
+
+} // namespace de

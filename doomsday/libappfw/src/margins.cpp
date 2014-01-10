@@ -16,11 +16,13 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/Margins"
-#include "clientapp.h"
+#include "de/ui/Margins"
+#include "de/Style"
 
-using namespace de;
+#include <de/IndirectRule>
+#include <de/OperatorRule>
 
+namespace de {
 namespace ui {
 
 enum Side
@@ -70,7 +72,7 @@ DENG2_PIMPL(Margins)
 
     void setInput(int side, DotPath const &styleId)
     {
-        setInput(side, ClientApp::windowSystem().style().rules().rule(styleId));
+        setInput(side, Style::appStyle().rules().rule(styleId));
     }
 
     void setInput(int side, Rule const &rule)
@@ -248,3 +250,4 @@ Vector4i Margins::toVector() const
 }
 
 } // namespace ui
+} // namespace de

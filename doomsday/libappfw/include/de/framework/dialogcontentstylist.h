@@ -27,6 +27,7 @@
 namespace de {
 
 class DialogWidget;
+class GuiWidget;
 
 /**
  * Sets the style for widgets in a dialog.

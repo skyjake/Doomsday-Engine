@@ -11,14 +11,14 @@ TEMPLATE = lib
 TARGET   = deng_appfw
 VERSION  = $$DENG_VERSION
 
-CONFIG += deng_qtgui
+CONFIG += deng_qtgui deng_qtopengl
 
 include(../dep_deng2.pri)
 include(../dep_deng1.pri) # Garbage
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 
-include(../dep_opengl.pri) # TODO: remove this
+#include(../dep_opengl.pri) # TODO: remove this
 
 DEFINES += __LIBAPPFW__
 INCLUDEPATH += include

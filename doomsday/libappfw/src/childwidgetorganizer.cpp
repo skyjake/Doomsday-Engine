@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ChildWidgetOrganizer"
-#include "ui/widgets/labelwidget.h"
-#include "ui/Item"
+#include "de/ChildWidgetOrganizer"
+#include "de/LabelWidget"
+#include "de/ui/Item"
 
 #include <QMap>
 
-using namespace de;
+namespace de {
 
 static DefaultWidgetFactory defaultWidgetFactory;
 
@@ -300,3 +300,5 @@ void DefaultWidgetFactory::updateItemWidget(GuiWidget &widget, ui::Item const &i
 {
     widget.as<LabelWidget>().setText(item.label());
 }
+
+} // namespace de

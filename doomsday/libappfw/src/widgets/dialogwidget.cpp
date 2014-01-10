@@ -16,19 +16,18 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/dialogwidget.h"
-#include "ui/widgets/togglewidget.h"
-#include "ui/widgets/choicewidget.h"
-#include "GuiRootWidget"
-#include "SignalAction"
-#include "DialogContentStylist"
-#include "dd_main.h"
+#include "de/DialogWidget"
+#include "de/ToggleWidget"
+#include "de/ChoiceWidget"
+#include "de/GuiRootWidget"
+#include "de/SignalAction"
+#include "de/DialogContentStylist"
 
 #include <de/KeyEvent>
 #include <de/MouseEvent>
 #include <QEventLoop>
 
-using namespace de;
+namespace de {
 
 static TimeDelta const FLASH_ANIM_SPAN = 0.75;
 
@@ -377,7 +376,7 @@ public ChildWidgetOrganizer::IFilter
     void updateBackground()
     {
         Background bg = self.background();
-        if(!App_GameLoaded()) // blurring is not yet compatible with game rendering
+        if(Style::appStyle().isBlurringAllowed())
         {
             /// @todo Should use the Style for this.
             bg.type = Background::BlurredWithBorderGlow;
@@ -638,3 +637,5 @@ DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, de::Ac
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, String const &label, de::Action *action)
     : ui::ActionItem(image, label, action), _role(flags)
 {}
+
+} // namespace de

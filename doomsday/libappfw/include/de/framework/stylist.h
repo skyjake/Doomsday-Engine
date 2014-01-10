@@ -21,9 +21,10 @@
 
 #include "libappfw.h"
 
+namespace de {
+
 class GuiWidget;
 
-namespace de {
 namespace ui {
 
 /**

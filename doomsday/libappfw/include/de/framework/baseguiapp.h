@@ -34,7 +34,7 @@ namespace de {
 class LIBAPPFW_PUBLIC BaseGuiApp : public GuiApp
 {
 public:
-    GuiApp(int &argc, char **argv);    
+    BaseGuiApp(int &argc, char **argv);
 
 public:
     static BaseGuiApp &app();

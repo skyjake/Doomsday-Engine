@@ -16,21 +16,20 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/menuwidget.h"
-#include "ui/widgets/togglewidget.h"
-#include "GuiRootWidget"
-#include "ChildWidgetOrganizer"
-#include "ui/Item"
-#include "clientapp.h"
+#include "de/PopupMenuWidget"
+#include "de/MenuWidget"
+#include "de/ToggleWidget"
+#include "de/GuiRootWidget"
+#include "de/ChildWidgetOrganizer"
+#include "de/ui/Item"
 
-using namespace de;
+namespace de {
 
-DENG_GUI_PIMPL(PopupMenuWidget),
-DENG2_OBSERVES(ButtonWidget, StateChange),
-DENG2_OBSERVES(ButtonWidget, Triggered),
-DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation),
-DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+DENG_GUI_PIMPL(PopupMenuWidget)
+, DENG2_OBSERVES(ButtonWidget, StateChange)
+, DENG2_OBSERVES(ButtonWidget, Triggered)
+, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
     ButtonWidget *hover;
     int oldScrollY;
@@ -175,7 +174,7 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
         //qDebug() << "menu scrolling" << scrollY;
 
         // Resend the mouse position so the buttons realize they've moved.
-        ClientApp::windowSystem().dispatchLatestMousePosition();
+        root().dispatchLatestMousePosition();
 
         self.requestGeometry();
     }
@@ -248,3 +247,5 @@ void PopupMenuWidget::panelClosing()
 
     menu().dismissPopups();
 }
+
+} // namespace de

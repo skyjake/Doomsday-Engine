@@ -30,6 +30,9 @@ namespace de {
 /**
  * Scrollable widget for log message history.
  *
+ * You must specify a log entry formatter using setLogFormatter() after creating the
+ * widget. Otherwise the widget won't be able to show any entries.
+ *
  * @ingroup gui
  */
 class LIBAPPFW_PUBLIC LogWidget : public ScrollAreaWidget
@@ -38,6 +41,13 @@ class LIBAPPFW_PUBLIC LogWidget : public ScrollAreaWidget
 
 public:
     LogWidget(String const &name = "");
+
+    /**
+     * Sets the formatter that will be used for formatting log entries for the widget.
+     *
+     * @param formatter  Formatter. Must exist as long as the LogWidget exists.
+     */
+    void setLogFormatter(LogSink::IFormatter &formatter);
 
     /**
      * Returns the log sink that can be connected to a log buffer for receiving
