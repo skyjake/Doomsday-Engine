@@ -49,8 +49,6 @@ void Cl_ReadServerMobjStateIDs();
 int Cl_LocalMobjType(int serverMobjType);
 int Cl_LocalMobjState(int serverMobjState);
 
-void Cl_SetPolyMover(uint number, int move, int rotate);
-
 /**
  * Reads a sector delta from the PSV_FRAME2 message buffer and applies it to the world.
  */

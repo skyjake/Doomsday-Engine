@@ -23,6 +23,7 @@
 
 #include "client/cl_def.h"
 #include "client/cl_player.h"
+#include "client/clplanemover.h"
 
 #include "api_map.h"
 #include "api_materialarchive.h"
@@ -41,22 +42,6 @@
 
 using namespace de;
 
-struct ClPlaneMover
-{
-    thinker_t thinker;
-    int sectorIndex;
-    clplanetype_t type;
-    int property; ///< Floor or ceiling
-    int dmuPlane;
-    coord_t destination;
-    float speed;
-};
-
-/**
- * Plane mover. Makes changes in planes using DMU.
- */
-void ClPlaneMover_Thinker(ClPlaneMover *mover);
-
 struct ClPolyMover
 {
     thinker_t thinker;
@@ -66,7 +51,67 @@ struct ClPolyMover
     bool rotate;
 };
 
-void ClPolyMover_Thinker(ClPolyMover *mover);
+void ClPolyMover_Thinker(ClPolyMover *mover)
+{
+    DENG2_ASSERT(mover != 0);
+
+    LOG_AS("ClPolyMover_Thinker");
+
+    Polyobj *po = mover->polyobj;
+    if(mover->move)
+    {
+        // How much to go?
+        Vector2d delta = Vector2d(po->dest) - Vector2d(po->origin);
+
+        ddouble dist = M_ApproxDistance(delta.x, delta.y);
+        if(dist <= po->speed || de::fequal(po->speed, 0))
+        {
+            // We'll arrive at the destination.
+            mover->move = false;
+        }
+        else
+        {
+            // Adjust deltas to fit speed.
+            delta = (delta / dist) * po->speed;
+        }
+
+        // Do the move.
+        po->move(delta);
+    }
+
+    if(mover->rotate)
+    {
+        // How much to go?
+        int dist = po->destAngle - po->angle;
+        int speed = po->angleSpeed;
+
+        //dist = FIX2FLT(po->destAngle - po->angle);
+        //if(!po->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) po->angleSpeed) >> 4)*/
+        //    /* && po->destAngle != -1*/) || !po->angleSpeed)
+        if(!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
+        {
+            LOG_MAP_XVERBOSE("Mover %i reached end of turn, destAngle=%i")
+                    << mover->number << po->destAngle;
+
+            // We'll arrive at the destination.
+            mover->rotate = false;
+        }
+        else
+        {
+            // Adjust to speed.
+            dist = /*FIX2FLT((int)*/ po->angleSpeed;
+        }
+
+        po->rotate(dist);
+    }
+
+    // Can we get rid of this mover?
+    if(!mover->move && !mover->rotate)
+    {
+        /// @todo Do not assume the move is from the CURRENT map.
+        App_World().map().deleteClPolyobj(mover);
+    }
+}
 
 static MaterialArchive *serverMaterials;
 
@@ -137,7 +182,7 @@ void Cl_ReadServerMobjStateIDs()
     StringArray_Delete(ar);
 }
 
-static Material *Cl_FindLocalMaterial(materialarchive_serialid_t archId)
+Material *Cl_LocalMaterial(materialarchive_serialid_t archId)
 {    
     if(!serverMaterials)
     {
@@ -160,6 +205,35 @@ int Cl_LocalMobjState(int serverMobjState)
     if(serverMobjState < 0 || serverMobjState >= xlatMobjState.size())
         return 0; // Invalid state.
     return xlatMobjState[serverMobjState];
+}
+
+void Cl_WorldInit()
+{
+    if(App_World().hasMap())
+    {
+        App_World().map().initClMovers();
+    }
+
+    serverMaterials = 0;
+    zap(xlatMobjType);
+    zap(xlatMobjState);
+}
+
+void Cl_WorldReset()
+{
+    if(serverMaterials)
+    {
+        MaterialArchive_Delete(serverMaterials);
+        serverMaterials = 0;
+    }
+
+    xlatMobjType.clear();
+    xlatMobjState.clear();
+
+    if(App_World().hasMap())
+    {
+        App_World().map().resetClMovers();
+    }
 }
 
 bool Map::isValidClPlane(int i)
@@ -192,35 +266,6 @@ void Map::resetClMovers()
         {
             thinkers().remove(clActivePolyobjs[i]->thinker);
         }
-    }
-}
-
-void Cl_WorldInit()
-{
-    if(App_World().hasMap())
-    {
-        App_World().map().initClMovers();
-    }
-
-    serverMaterials = 0;
-    zap(xlatMobjType);
-    zap(xlatMobjState);
-}
-
-void Cl_WorldReset()
-{
-    if(serverMaterials)
-    {
-        MaterialArchive_Delete(serverMaterials);
-        serverMaterials = 0;
-    }
-
-    xlatMobjType.clear();
-    xlatMobjState.clear();
-
-    if(App_World().hasMap())
-    {
-        App_World().map().resetClMovers();
     }
 }
 
@@ -280,90 +325,13 @@ void Map::deleteClPolyobj(ClPolyMover *mover)
     thinkers().remove(mover->thinker);
 }
 
-void ClPlaneMover_Thinker(ClPlaneMover *mover)
-{
-    LOG_AS("Cl_MoverThinker");
-
-    Map &map = App_World().map(); /// @todo Do not assume mover is from the CURRENT map.
-
-    // Can we think yet?
-    if(!Cl_GameReady()) return;
-
-#ifdef _DEBUG
-    if(map.clPlaneIndex(mover) < 0)
-    {
-        LOG_MAP_WARNING("Running a mover that is not in activemovers!");
-    }
-#endif
-
-    // The move is cancelled if the consolePlayer becomes obstructed.
-    bool const freeMove = ClPlayer_IsFreeToMove(consolePlayer);
-    float const fspeed = mover->speed;
-
-    // How's the gap?
-    bool remove = false;
-    coord_t const original = P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property);
-    if(de::abs(fspeed) > 0 && de::abs(mover->destination - original) > de::abs(fspeed))
-    {
-        // Do the move.
-        P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, original + fspeed);
-    }
-    else
-    {
-        // We have reached the destination.
-        P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, mover->destination);
-
-        // This thinker can now be removed.
-        remove = true;
-    }
-
-    LOGDEV_MAP_XVERBOSE_DEBUGONLY("plane height %f in sector #%i",
-            P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property)
-            << mover->sectorIndex);
-
-    // Let the game know of this.
-    if(gx.SectorHeightChangeNotification)
-    {
-        gx.SectorHeightChangeNotification(mover->sectorIndex);
-    }
-
-    // Make sure the client didn't get stuck as a result of this move.
-    if(freeMove != ClPlayer_IsFreeToMove(consolePlayer))
-    {
-        LOG_MAP_VERBOSE("move blocked in sector #%i, undoing move") << mover->sectorIndex;
-
-        // Something was blocking the way! Go back to original height.
-        P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, original);
-
-        if(gx.SectorHeightChangeNotification)
-        {
-            gx.SectorHeightChangeNotification(mover->sectorIndex);
-        }
-    }
-    else
-    {
-        // Can we remove this thinker?
-        if(remove)
-        {
-            LOG_MAP_VERBOSE("finished in sector #%i") << mover->sectorIndex;
-
-            // It stops.
-            P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->dmuPlane | DMU_SPEED, 0);
-
-            map.deleteClPlane(mover);
-        }
-    }
-}
-
-ClPlaneMover *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, float speed)
+ClPlaneMover *Map::newClPlane(int sectorIndex, int planeIndex, coord_t dest, float speed)
 {
     LOG_AS("Map::newClPlane");
+    LOG_MAP_XVERBOSE("Sector #%i, plane:%i, dest:%f, speed:%f")
+            << sectorIndex << planeIndex << dest << speed;
 
-    int dmuPlane = (type == CPT_FLOOR ? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
-
-    LOG_MAP_XVERBOSE("Sector #%i, type:%s, dest:%f, speed:%f")
-            << sectorIndex << (type == CPT_FLOOR? "floor" : "ceiling")
-            << dest << speed;
+    int const dmuPlane = (planeIndex == 0? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
 
     if(sectorIndex < 0 || sectorIndex >= sectorCount())
     {
@@ -376,10 +344,10 @@ ClPlaneMover *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest,
     {
         if(isValidClPlane(i) &&
            clActivePlanes[i]->sectorIndex == sectorIndex &&
-           clActivePlanes[i]->type == type)
+           clActivePlanes[i]->planeIndex  == planeIndex)
         {
-            LOG_MAP_XVERBOSE("Removing existing mover #%i in sector #%i, type %s")
-                    << i << sectorIndex << (type == CPT_FLOOR? "floor" : "ceiling");
+            LOG_MAP_XVERBOSE("Removing existing mover #%i in sector #%i, plane %i")
+                    << i << sectorIndex << planeIndex;
 
             deleteClPlane(clActivePlanes[i]);
         }
@@ -396,15 +364,13 @@ ClPlaneMover *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest,
         ClPlaneMover *mov = clActivePlanes[i] = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, &clActivePlanes[i]);
 
         mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
-        mov->type        = type;
         mov->sectorIndex = sectorIndex;
+        mov->planeIndex  = planeIndex;
         mov->destination = dest;
         mov->speed       = speed;
-        mov->property    = dmuPlane | DMU_HEIGHT;
-        mov->dmuPlane    = dmuPlane;
 
         // Set the right sign for speed.
-        if(mov->destination < P_GetDouble(DMU_SECTOR, sectorIndex, mov->property))
+        if(mov->destination < P_GetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_HEIGHT))
         {
             mov->speed = -mov->speed;
         }
@@ -425,68 +391,6 @@ ClPlaneMover *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest,
     }
 
     throw Error("Map::newClPlane", "Exhausted activemovers");
-}
-
-void ClPolyMover_Thinker(ClPolyMover *mover)
-{
-    DENG2_ASSERT(mover != 0);
-
-    LOG_AS("Cl_PolyMoverThinker");
-
-    Polyobj *po = mover->polyobj;
-    if(mover->move)
-    {
-        // How much to go?
-        Vector2d delta = Vector2d(po->dest) - Vector2d(po->origin);
-
-        ddouble dist = M_ApproxDistance(delta.x, delta.y);
-        if(dist <= po->speed || de::fequal(po->speed, 0))
-        {
-            // We'll arrive at the destination.
-            mover->move = false;
-        }
-        else
-        {
-            // Adjust deltas to fit speed.
-            delta = (delta / dist) * po->speed;
-        }
-
-        // Do the move.
-        po->move(delta);
-    }
-
-    if(mover->rotate)
-    {
-        // How much to go?
-        int dist = po->destAngle - po->angle;
-        int speed = po->angleSpeed;
-
-        //dist = FIX2FLT(po->destAngle - po->angle);
-        //if(!po->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) po->angleSpeed) >> 4)*/
-        //    /* && po->destAngle != -1*/) || !po->angleSpeed)
-        if(!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
-        {
-            LOG_MAP_XVERBOSE("Mover %i reached end of turn, destAngle=%i")
-                    << mover->number << po->destAngle;
-
-            // We'll arrive at the destination.
-            mover->rotate = false;
-        }
-        else
-        {
-            // Adjust to speed.
-            dist = /*FIX2FLT((int)*/ po->angleSpeed;
-        }
-
-        po->rotate(dist);
-    }
-
-    // Can we get rid of this mover?
-    if(!mover->move && !mover->rotate)
-    {
-        /// @todo Do not assume the move is from the CURRENT map.
-        App_World().map().deleteClPolyobj(mover);
-    }
 }
 
 ClPolyMover *Map::clPolyobjByPolyobjIndex(int index)
@@ -527,35 +431,13 @@ ClPolyMover *Map::newClPolyobj(int polyobjIndex)
     return 0; // Not successful.
 }
 
-ClPolyMover *Cl_FindOrMakeActivePoly(uint polyobjIndex)
-{
-    ClPolyMover *mover = App_World().map().clPolyobjByPolyobjIndex(polyobjIndex);
-    if(mover) return mover;
-    // Not found; make a new one.
-    return App_World().map().newClPolyobj(polyobjIndex);
-}
-
-void Cl_SetPolyMover(uint number, int move, int rotate)
-{
-    ClPolyMover *mover = Cl_FindOrMakeActivePoly(number);
-    if(!mover)
-    {
-        LOGDEV_NET_WARNING("Out of polymovers");
-        return;
-    }
-
-    // Flag for moving.
-    if(move) mover->move = true;
-    if(rotate) mover->rotate = true;
-}
-
-ClPlaneMover *Map::clPlaneBySectorIndex(int sectorIndex, clplanetype_t type)
+ClPlaneMover *Map::clPlaneBySectorIndex(int sectorIndex, int planeIndex)
 {
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
         if(!isValidClPlane(i)) continue;
         if(clActivePlanes[i]->sectorIndex != sectorIndex) continue;
-        if(clActivePlanes[i]->type != type) continue;
+        if(clActivePlanes[i]->planeIndex  != planeIndex) continue;
 
         // Found it!
         return clActivePlanes[i];
@@ -586,12 +468,12 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     if(df & SDF_FLOOR_MATERIAL)
     {
         P_SetPtrp(sec, DMU_FLOOR_OF_SECTOR | DMU_MATERIAL,
-                  Cl_FindLocalMaterial(Reader_ReadPackedUInt16(msgReader)));
+                  Cl_LocalMaterial(Reader_ReadPackedUInt16(msgReader)));
     }
     if(df & SDF_CEILING_MATERIAL)
     {
         P_SetPtrp(sec, DMU_CEILING_OF_SECTOR | DMU_MATERIAL,
-                  Cl_FindLocalMaterial(Reader_ReadPackedUInt16(msgReader)));
+                  Cl_LocalMaterial(Reader_ReadPackedUInt16(msgReader)));
     }
 
     if(df & SDF_LIGHT)
@@ -651,20 +533,20 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        map.newClPlane(index, CPT_FLOOR, height[PLN_FLOOR], 0);
+        map.newClPlane(index, Sector::Floor, height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        map.newClPlane(index, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
+        map.newClPlane(index, Sector::Floor, target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        map.newClPlane(index, CPT_CEILING, height[PLN_CEILING], 0);
+        map.newClPlane(index, Sector::Ceiling, height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        map.newClPlane(index, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
+        map.newClPlane(index, Sector::Ceiling, target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING
@@ -685,19 +567,19 @@ void Cl_ReadSideDelta(int /*deltaType*/)
     if(df & SIDF_TOP_MATERIAL)
     {
         int matIndex = Reader_ReadPackedUInt16(msgReader);
-        side->top().setMaterial(Cl_FindLocalMaterial(matIndex));
+        side->top().setMaterial(Cl_LocalMaterial(matIndex));
     }
 
     if(df & SIDF_MID_MATERIAL)
     {
         int matIndex = Reader_ReadPackedUInt16(msgReader);
-        side->middle().setMaterial(Cl_FindLocalMaterial(matIndex));
+        side->middle().setMaterial(Cl_LocalMaterial(matIndex));
     }
 
     if(df & SIDF_BOTTOM_MATERIAL)
     {
         int matIndex = Reader_ReadPackedUInt16(msgReader);
-        side->bottom().setMaterial(Cl_FindLocalMaterial(matIndex));
+        side->bottom().setMaterial(Cl_LocalMaterial(matIndex));
     }
 
     if(df & SIDF_LINE_FLAGS)
@@ -761,6 +643,17 @@ void Cl_ReadSideDelta(int /*deltaType*/)
     }
 }
 
+/**
+ * Find the ClPolyMover associated with @a polyobjIndex; otherwise create it.
+ */
+static ClPolyMover *getClPolyMover(uint polyobjIndex)
+{
+    ClPolyMover *mover = App_World().map().clPolyobjByPolyobjIndex(polyobjIndex);
+    if(mover) return mover;
+    // Not found; make a new one.
+    return App_World().map().newClPolyobj(polyobjIndex);
+}
+
 void Cl_ReadPolyDelta()
 {
     /// @todo Do not assume the CURRENT map.
@@ -802,8 +695,12 @@ void Cl_ReadPolyDelta()
         po->destAngle = -1;
     }
 
-    // Update the polyobj's mover thinkers.
-    Cl_SetPolyMover(index, df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED),
-                    df & (PODF_DEST_ANGLE | PODF_ANGSPEED |
-                          PODF_PERPETUAL_ROTATE));
+    // Update/create the polymover thinker.
+    if(ClPolyMover *mover = getClPolyMover(index))
+    {
+        mover->move   = CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED));
+        mover->rotate = CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE));
+        return;
+    }
+    LOGDEV_NET_WARNING("Out of polymovers");
 }

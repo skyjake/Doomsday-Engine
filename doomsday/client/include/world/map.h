@@ -27,6 +27,8 @@
 #include "Polyobj"
 
 #ifdef __CLIENT__
+#  include "client/clplanemover.h"
+
 #  include "world/world.h"
 #  include "p_particle.h"
 
@@ -67,15 +69,6 @@ typedef struct cmhash_s {
 
 #define CLIENT_MAX_MOVERS           1024 // Definitely enough!
 
-/**
- * @ingroup world
- */
-typedef enum {
-    CPT_FLOOR,
-    CPT_CEILING
-} clplanetype_t;
-
-struct ClPlaneMover;
 struct ClPolyMover;
 
 #endif // __CLIENT__
@@ -167,7 +160,7 @@ public: /// @todo make private:
 #ifdef __CLIENT__
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
 
-    struct ClPlaneMover *clActivePlanes[CLIENT_MAX_MOVERS];
+    ClPlaneMover *clActivePlanes[CLIENT_MAX_MOVERS];
     struct ClPolyMover *clActivePolyobjs[CLIENT_MAX_MOVERS];
 #endif
 
@@ -691,13 +684,13 @@ public:
      *
      * @return  The new mover or @c NULL if arguments are invalid.
      */
-    struct ClPlaneMover *newClPlane(int sectorIdx, clplanetype_t type, coord_t dest, float speed);
+    ClPlaneMover *newClPlane(int sectorIdx, int planeIndex, coord_t dest, float speed);
 
-    void deleteClPlane(struct ClPlaneMover *mover);
+    void deleteClPlane(ClPlaneMover *mover);
 
-    int clPlaneIndex(struct ClPlaneMover *mover);
+    int clPlaneIndex(ClPlaneMover *mover);
 
-    struct ClPlaneMover *clPlaneBySectorIndex(int index, clplanetype_t type);
+    ClPlaneMover *clPlaneBySectorIndex(int index, int planeIndex);
 
     bool isValidClPlane(int i);
 
