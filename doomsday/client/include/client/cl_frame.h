@@ -1,4 +1,4 @@
-/** @file
+/** @file cl_frame.h  Client frame reception.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -17,24 +17,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#ifndef DENG_CLIENT_FRAME_H
+#define DENG_CLIENT_FRAME_H
+
+void Cl_InitFrame();
+void Cl_ResetFrame();
+
 /**
- * cl_frame.h: Frame Reception
+ * Read a PSV_FRAME2/PSV_FIRST_FRAME2 packet.
  */
+void Cl_Frame2Received(int packetType);
 
-#ifndef __DOOMSDAY_CLIENT_FRAME_H__
-#define __DOOMSDAY_CLIENT_FRAME_H__
+float Cl_FrameGameTime();
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void            Cl_InitFrame(void);
-void            Cl_ResetFrame(void);
-void            Cl_Frame2Received(int packetType);
-float           Cl_FrameGameTime(void);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif
+#endif // DENG_CLIENT_FRAME_H

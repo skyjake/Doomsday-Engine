@@ -1,8 +1,8 @@
-/** @file cl_mobj.h Clientside map objects.
+/** @file cl_mobj.h  Clientside map objects.
  * @ingroup client
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DOOMSDAY_CLIENT_MOBJ_H__
-#define __DOOMSDAY_CLIENT_MOBJ_H__
+#ifndef DENG_CLIENT_WORLD_MOBJ_H
+#define DENG_CLIENT_WORLD_MOBJ_H
 
 #include "world/p_object.h"
 
@@ -57,18 +57,14 @@
  * gameside mobjs. The last 4 bytes must be CLM_MAGIC.
  */
 typedef struct clmoinfo_s {
-    uint            startMagic; // The client mobj magic number (CLM_MAGIC1).
+    uint startMagic; // The client mobj magic number (CLM_MAGIC1).
     struct clmoinfo_s *next, *prev;
-    int             flags;
-    uint            time; // Time of last update.
-    int             sound; // Queued sound ID.
-    float           volume; // Volume for queued sound.
-    uint            endMagic; // The client mobj magic number (CLM_MAGIC2).
+    int flags;
+    uint time; // Time of last update.
+    int sound; // Queued sound ID.
+    float volume; // Volume for queued sound.
+    uint endMagic; // The client mobj magic number (CLM_MAGIC2).
 } clmoinfo_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Make the real player mobj identical with the client mobj.
@@ -143,16 +139,14 @@ void ClMobj_SetState(mobj_t *mo, int stnum); // needed?
  *
  * For client mobjs that belong to players, updates the real player mobj
  * accordingly.
- *
- * @param skip  If @c true, all read data is ignored.
  */
-void ClMobj_ReadDelta2(boolean skip);
+void ClMobj_ReadDelta();
 
 /**
  * Null mobjs deltas have their own type in a PSV_FRAME2 packet.
  * Here we remove the mobj in question.
  */
-void ClMobj_ReadNullDelta2(boolean skip);
+void ClMobj_ReadNullDelta();
 
 /**
  * Determines whether a mobj is a client mobj.
@@ -163,8 +157,4 @@ void ClMobj_ReadNullDelta2(boolean skip);
  */
 boolean Cl_IsClientMobj(mobj_t *mo); // public
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif
+#endif // DENG_CLIENT_WORLD_MOBJ_H

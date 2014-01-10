@@ -643,24 +643,22 @@ static boolean ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
     return false; // Not stuck.
 }
 
-void ClMobj_ReadDelta2(boolean skip)
+void ClMobj_ReadDelta()
 {
-    boolean     needsLinking = false, justCreated = false;
+    bool needsLinking = false, justCreated = false;
     clmoinfo_t *info = 0;
-    mobj_t     *mo = 0;
-    mobj_t     *d;
-    static mobj_t dummy;
-    int         df = 0;
-    byte        moreFlags = 0, fastMom = false;
-    short       mom;
-    thid_t      id = Reader_ReadUInt16(msgReader);   // Read the ID.
-    boolean     onFloor = false;
-    mobj_t      oldState;
+    mobj_t *mo = 0;
+    mobj_t *d;
+    short mom;
+    thid_t id = Reader_ReadUInt16(msgReader);   // Read the ID.
+    bool onFloor = false;
+    mobj_t oldState;
 
     // Flags.
-    df = Reader_ReadUInt16(msgReader);
+    int df = Reader_ReadUInt16(msgReader);
 
     // More flags?
+    byte moreFlags = 0, fastMom = false;
     if(df & MDF_MORE_FLAGS)
     {
         moreFlags = Reader_ReadByte(msgReader);
@@ -670,63 +668,54 @@ void ClMobj_ReadDelta2(boolean skip)
             fastMom = true;
     }
 
-    LOG_NET_XVERBOSE("Reading mobj delta for %i (df:0x%x edf:0x%x skip:%i)")
-            << id << df << moreFlags << skip;
+    LOG_NET_XVERBOSE("Reading mobj delta for %i (df:0x%x edf:0x%x)")
+            << id << df << moreFlags;
 
-    if(!skip)
+    // Get a mobj for this.
+    mo = ClMobj_Find(id);
+    info = ClMobj_GetInfo(mo);
+    if(!mo)
     {
-        // Get a mobj for this.
-        mo = ClMobj_Find(id);
+        LOG_NET_XVERBOSE("Creating new clmobj %i (hidden)") << id;
+
+        // This is a new ID, allocate a new mobj.
+        mo = ClMobj_Create(id);
         info = ClMobj_GetInfo(mo);
-        if(!mo)
-        {
-            LOG_NET_XVERBOSE("Creating new clmobj %i (hidden)") << id;
+        justCreated = true;
+        needsLinking = true;
 
-            // This is a new ID, allocate a new mobj.
-            mo = ClMobj_Create(id);
-            info = ClMobj_GetInfo(mo);
-            justCreated = true;
-            needsLinking = true;
-
-            // Always create new mobjs as hidden. They will be revealed when
-            // we know enough about them.
-            info->flags |= CLMF_HIDDEN;
-        }
-
-        if(!(info->flags & CLMF_NULLED))
-        {
-            // Now that we've received a delta, the mobj's Predictable again.
-            info->flags &= ~CLMF_UNPREDICTABLE;
-
-            // This clmobj is evidently alive.
-            info->time = Timer_RealMilliseconds();
-        }
-
-        d = mo;
-
-        /*if(d->dPlayer && d->dPlayer == &ddPlayers[consolePlayer])
-        {
-            // Mark the local player known.
-            cmo->flags |= CLMF_KNOWN;
-        }*/
-
-        // Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
-        if(df & (MDF_ORIGIN_X | MDF_ORIGIN_Y | MDF_ORIGIN_Z | MDF_FLAGS) &&
-           !justCreated && !d->dPlayer)
-        {
-            needsLinking = true;
-            ClMobj_Unlink(mo);
-        }
+        // Always create new mobjs as hidden. They will be revealed when
+        // we know enough about them.
+        info->flags |= CLMF_HIDDEN;
     }
-    else
+
+    if(!(info->flags & CLMF_NULLED))
     {
-        // We're skipping.
-        d = &dummy;
-        info = 0;
+        // Now that we've received a delta, the mobj's Predictable again.
+        info->flags &= ~CLMF_UNPREDICTABLE;
+
+        // This clmobj is evidently alive.
+        info->time = Timer_RealMilliseconds();
+    }
+
+    d = mo;
+
+    /*if(d->dPlayer && d->dPlayer == &ddPlayers[consolePlayer])
+    {
+        // Mark the local player known.
+        cmo->flags |= CLMF_KNOWN;
+    }*/
+
+    // Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
+    if(df & (MDF_ORIGIN_X | MDF_ORIGIN_Y | MDF_ORIGIN_Z | MDF_FLAGS) &&
+       !justCreated && !d->dPlayer)
+    {
+        needsLinking = true;
+        ClMobj_Unlink(mo);
     }
 
     // Remember where the mobj used to be in case we need to cancel a move.
-    memcpy(&oldState, d, sizeof(mobj_t));
+    zap(oldState);
 
     // Coordinates with three bytes.
     if(df & MDF_ORIGIN_X)
@@ -807,7 +796,7 @@ void ClMobj_ReadDelta2(boolean skip)
 
         // When local actions are allowed, the assumption is that
         // the client will be doing the state changes.
-        if(!skip && !(info->flags & CLMF_LOCAL_ACTIONS))
+        if(!(info->flags & CLMF_LOCAL_ACTIONS))
         {
             ClMobj_SetState(d, stateIdx);
             info->flags |= CLMF_KNOWN_STATE;
@@ -847,13 +836,7 @@ void ClMobj_ReadDelta2(boolean skip)
     {
         d->type = Cl_LocalMobjType(Reader_ReadInt32(msgReader));
         d->info = &mobjInfo[d->type];
-        assert(d->info);
     }
-
-    // The delta has now been read. We can now skip if necessary.
-    if(skip) return;
-
-    assert(d != &dummy);
 
     // Is it time to remove the Hidden status?
     if(info->flags & CLMF_HIDDEN)
@@ -870,8 +853,7 @@ void ClMobj_ReadDelta2(boolean skip)
     // different than the server-side floor.
     if(!d->dPlayer && onFloor && gx.MobjCheckPositionXYZ)
     {
-        coord_t *floorZ = (coord_t *) gx.GetVariable(DD_TM_FLOOR_Z);
-        if(floorZ)
+        if(coord_t *floorZ = (coord_t *) gx.GetVariable(DD_TM_FLOOR_Z))
         {
             gx.MobjCheckPositionXYZ(d, d->origin[VX], d->origin[VY], DDMAXFLOAT);
             d->origin[VZ] = d->floorZ = *floorZ;
@@ -912,29 +894,23 @@ void ClMobj_ReadDelta2(boolean skip)
     }
 }
 
-void ClMobj_ReadNullDelta2(boolean skip)
+void ClMobj_ReadNullDelta()
 {
-    mobj_t *mo;
-    clmoinfo_t* info;
-    thid_t  id;
-
     // The delta only contains an ID.
-    id = Reader_ReadUInt16(msgReader);
-
-    if(skip)
-        return;
+    thid_t id = Reader_ReadUInt16(msgReader);
 
     LOG_AS("Cl_ReadNullMobjDelta2");
     LOGDEV_NET_XVERBOSE("Null %i") << id;
 
-    if((mo = ClMobj_Find(id)) == NULL)
+    mobj_t *mo = ClMobj_Find(id);
+    if(!mo)
     {
         // Wasted bandwidth...
         LOGDEV_NET_MSG("Request to remove id %i that doesn't exist here") << id;
         return;
     }
 
-    info = ClMobj_GetInfo(mo);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     // Get rid of this mobj.
     if(!mo->dPlayer)

@@ -19,14 +19,8 @@
 
 #define DENG_NO_API_MACROS_THINKER
 
-#include <QList>
-#include <QtAlgorithms>
-
-#include <de/memoryzone.h>
-
 #include "de_base.h"
-#include "world/map.h"
-#include "world/p_object.h"
+#include "world/thinkers.h"
 
 #ifdef __CLIENT__
 #  include "client/cl_mobj.h"
@@ -37,7 +31,12 @@
 #  include "server/sv_pool.h"
 #endif
 
-#include "world/thinkers.h"
+#include "world/map.h"
+#include "world/p_object.h"
+
+#include <de/memoryzone.h>
+#include <QList>
+#include <QtAlgorithms>
 
 boolean Thinker_IsMobjFunc(thinkfunc_t func)
 {

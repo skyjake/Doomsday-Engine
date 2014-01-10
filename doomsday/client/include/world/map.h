@@ -75,8 +75,8 @@ typedef enum {
     CPT_CEILING
 } clplanetype_t;
 
-struct clplane_s;
-struct clpolyobj_s;
+struct clplane_t;
+struct clpolyobj_t;
 
 #endif // __CLIENT__
 
@@ -167,8 +167,8 @@ public: /// @todo make private:
 #ifdef __CLIENT__
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
 
-    struct clplane_s *clActivePlanes[CLIENT_MAX_MOVERS];
-    struct clpolyobj_s *clActivePolyobjs[CLIENT_MAX_MOVERS];
+    struct clplane_t *clActivePlanes[CLIENT_MAX_MOVERS];
+    struct clpolyobj_t *clActivePolyobjs[CLIENT_MAX_MOVERS];
 #endif
 
     coord_t _globalGravity; // The defined gravity for this map.
@@ -691,26 +691,26 @@ public:
      *
      * @return  The new mover or @c NULL if arguments are invalid.
      */
-    struct clplane_s *newClPlane(int sectorIdx, clplanetype_t type, coord_t dest, float speed);
+    struct clplane_t *newClPlane(int sectorIdx, clplanetype_t type, coord_t dest, float speed);
 
-    void deleteClPlane(struct clplane_s *mover);
+    void deleteClPlane(struct clplane_t *mover);
 
-    int clPlaneIndex(struct clplane_s *mover);
+    int clPlaneIndex(struct clplane_t *mover);
 
-    struct clplane_s *clPlaneBySectorIndex(int index, clplanetype_t type);
+    struct clplane_t *clPlaneBySectorIndex(int index, clplanetype_t type);
 
     bool isValidClPlane(int i);
 
     /**
      * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
      */
-    struct clpolyobj_s *newClPolyobj(int polyobjIndex);
+    struct clpolyobj_t *newClPolyobj(int polyobjIndex);
 
-    void deleteClPolyobj(struct clpolyobj_s *mover);
+    void deleteClPolyobj(struct clpolyobj_t *mover);
 
-    int clPolyobjIndex(struct clpolyobj_s *mover);
+    int clPolyobjIndex(struct clpolyobj_t *mover);
 
-    struct clpolyobj_s *clPolyobjByPolyobjIndex(int index);
+    struct clpolyobj_t *clPolyobjByPolyobjIndex(int index);
 
     bool isValidClPolyobj(int i);
 

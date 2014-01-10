@@ -1,4 +1,4 @@
-/** @file
+/** @file cl_infine.cpp  Clientside InFine.
  *
  * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
@@ -17,29 +17,27 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Client-side InFine.
- */
 #include "de_base.h"
+#include "client/cl_infine.h"
+
 #include "de_console.h"
 #include "de_infine.h"
 
-#include "client/cl_infine.h"
 #include "network/net_main.h"
 #include "network/net_msg.h"
 
 static finaleid_t currentFinale = 0;
 static finaleid_t remoteFinale = 0;
 
-finaleid_t Cl_CurrentFinale(void)
+finaleid_t Cl_CurrentFinale()
 {
     return currentFinale;
 }
 
-void Cl_Finale(Reader* msg)
+void Cl_Finale(Reader *msg)
 {
     int flags = Reader_ReadByte(msg);
-    byte* script = 0;
+    byte *script = 0;
     int len;
     finaleid_t finaleId = Reader_ReadUInt32(msg);
 
@@ -81,7 +79,7 @@ void Cl_Finale(Reader* msg)
     if(script) free(script);
 }
 
-void Cl_RequestFinaleSkip(void)
+void Cl_RequestFinaleSkip()
 {
     // First the flags.
     Msg_Begin(PCL_FINALE_REQUEST);

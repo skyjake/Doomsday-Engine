@@ -1,4 +1,4 @@
-/** @file
+/** @file cl_def.h  Client definitions.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -17,34 +17,36 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * cl_def.h: Client Definitions
- */
-
-#ifndef __DOOMSDAY_CLIENT_H__
-#define __DOOMSDAY_CLIENT_H__
+#ifndef DENG_CLIENT_H
+#define DENG_CLIENT_H
 
 #include "world/p_object.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define SHORTP(x)       (*(short*) (x))
 #define USHORTP(x)      (*(unsigned short*) (x))
 
-extern ident_t  clientID;
-extern int      serverTime;
-extern boolean  handshakeReceived;
-extern int      gameReady;
-extern boolean  netLoggedIn;
-extern int      clientPaused;
+DENG_EXTERN_C ident_t clientID;
+DENG_EXTERN_C int serverTime;
+DENG_EXTERN_C boolean handshakeReceived;
+DENG_EXTERN_C int gameReady;
+DENG_EXTERN_C boolean netLoggedIn;
+DENG_EXTERN_C int clientPaused;
 
-void            Cl_InitID(void);
-void            Cl_CleanUp(void);
-void            Cl_GetPackets(void);
-void            Cl_Ticker(timespan_t ticLength);
-int             Cl_GameReady(void);
+void Cl_InitID();
+
+void Cl_CleanUp();
+
+/**
+ * Client's packet handler. Handles all the events the server sends.
+ */
+void Cl_GetPackets();
+
+/**
+ * Client-side game ticker.
+ */
+void Cl_Ticker(timespan_t ticLength);
+
+int Cl_GameReady();
 
 /**
  * Sends a hello packet.
@@ -52,8 +54,4 @@ int             Cl_GameReady(void);
  */
 void Cl_SendHello();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif
+#endif // DENG_CLIENT_H

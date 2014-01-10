@@ -118,7 +118,7 @@ void Cl_InitFrame(void)
 /**
  * Called when the map changes.
  */
-void Cl_ResetFrame(void)
+void Cl_ResetFrame()
 {
     gotFrame = false;
 
@@ -127,24 +127,13 @@ void Cl_ResetFrame(void)
     gotFirstFrame = false;
 }
 
-float Cl_FrameGameTime(void)
+float Cl_FrameGameTime()
 {
     return frameGameTime;
 }
 
-/**
- * Read a PSV_FRAME2/PSV_FIRST_FRAME2 packet.
- */
 void Cl_Frame2Received(int packetType)
 {
-    byte        deltaType;
-    boolean     skip = false;
-#ifdef _NETDEBUG
-    int         deltaCount = 0;
-    int         startOffset;
-    int         deltaLength;
-#endif
-
     // The first thing in the frame is the gameTime.
     frameGameTime = Reader_ReadFloat(msgReader);
 
@@ -161,68 +150,65 @@ void Cl_Frame2Received(int packetType)
         return;
     }
 
+    // Read and process the message.
+    while(!Reader_AtEnd(msgReader))
     {
-        // Read and process the message.
-        while(!Reader_AtEnd(msgReader))
+        byte const deltaType = Reader_ReadByte(msgReader);
+
+        switch(deltaType)
         {
-            deltaType = Reader_ReadByte(msgReader);
-            skip = false;
+        case DT_CREATE_MOBJ:
+            // The mobj will be created/shown.
+            ClMobj_ReadDelta();
+            break;
 
-            switch(deltaType)
-            {
-            case DT_CREATE_MOBJ:
-                // The mobj will be created/shown.
-                ClMobj_ReadDelta2(skip);
-                break;
+        case DT_MOBJ:
+            // The mobj will be hidden if it's not yet Created.
+            ClMobj_ReadDelta();
+            break;
 
-            case DT_MOBJ:
-                // The mobj will be hidden if it's not yet Created.
-                ClMobj_ReadDelta2(skip);
-                break;
+        case DT_NULL_MOBJ:
+            // The mobj will be removed.
+            ClMobj_ReadNullDelta();
+            break;
 
-            case DT_NULL_MOBJ:
-                // The mobj will be removed.
-                ClMobj_ReadNullDelta2(skip);
-                break;
+        case DT_PLAYER:
+            ClPlayer_ReadDelta();
+            break;
 
-            case DT_PLAYER:
-                ClPlayer_ReadDelta2(skip);
-                break;
+        case DT_SECTOR:
+            Cl_ReadSectorDelta(deltaType);
+            break;
 
-            case DT_SECTOR:
-                Cl_ReadSectorDelta2(deltaType, skip);
-                break;
+        //case DT_SIDE_R6: // Old format.
+        case DT_SIDE:
+            Cl_ReadSideDelta(deltaType);
+            break;
 
-            //case DT_SIDE_R6: // Old format.
-            case DT_SIDE:
-                Cl_ReadSideDelta2(deltaType, skip);
-                break;
+        case DT_POLY:
+            Cl_ReadPolyDelta();
+            break;
 
-            case DT_POLY:
-                Cl_ReadPolyDelta2(skip);
-                break;
+        case DT_SOUND:
+        case DT_MOBJ_SOUND:
+        case DT_SECTOR_SOUND:
+        case DT_SIDE_SOUND:
+        case DT_POLY_SOUND:
+            Cl_ReadSoundDelta((deltatype_t) deltaType);
+            break;
 
-            case DT_SOUND:
-            case DT_MOBJ_SOUND:
-            case DT_SECTOR_SOUND:
-            case DT_SIDE_SOUND:
-            case DT_POLY_SOUND:
-                Cl_ReadSoundDelta2((deltatype_t) deltaType, skip);
-                break;
-
-            default:
-                LOG_NET_ERROR("Received unknown delta type %i (message size: %i bytes)")
-                        << deltaType << netBuffer.length;
-                return;
-            }
+        default:
+            LOG_NET_ERROR("Received unknown delta type %i (message size: %i bytes)")
+                    << deltaType << netBuffer.length;
+            return;
         }
-
-        if(!gotFrame)
-        {
-            LOGDEV_NET_NOTE("First frame received");
-        }
-
-        // We have now received a frame.
-        gotFrame = true;
     }
+
+    if(!gotFrame)
+    {
+        LOGDEV_NET_NOTE("First frame received");
+    }
+
+    // We have now received a frame.
+    gotFrame = true;
 }

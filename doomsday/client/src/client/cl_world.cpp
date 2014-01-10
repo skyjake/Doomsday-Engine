@@ -1,5 +1,4 @@
-/** @file cl_world.cpp Clientside world management.
- * @ingroup client
+/** @file cl_world.cpp  Clientside world management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -19,52 +18,58 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
-
 #include "de_base.h"
+#include "client/cl_world.h"
+
 #include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_filesys.h"
 #include "de_defs.h"
 #include "de_misc.h"
+
 #include "api_map.h"
 #include "api_materialarchive.h"
 
 #include "world/map.h"
 #include "world/thinkers.h"
-#include "client/cl_world.h"
+
 #include "r_util.h"
+
+#include <cmath>
 
 using namespace de;
 
 #define MAX_TRANSLATIONS    16384
 
-#define MVF_CEILING         0x1 // Move ceiling.
-#define MVF_SET_FLOORPIC    0x2 // Set floor texture when move done.
+#define MVF_CEILING         0x1 ///< Move ceiling.
+#define MVF_SET_FLOORPIC    0x2 ///< Set floor texture when move done.
 
-typedef struct clplane_s {
-    thinker_t   thinker;
-    int         sectorIndex;
+struct clplane_t
+{
+    thinker_t thinker;
+    int sectorIndex;
     clplanetype_t type;
-    int         property; // floor or ceiling
-    int         dmuPlane;
-    coord_t     destination;
-    float       speed;
-} clplane_t;
+    int property; ///< Floor or ceiling
+    int dmuPlane;
+    coord_t destination;
+    float speed;
+};
 
-typedef struct clpolyobj_s {
-    thinker_t   thinker;
-    int         number;
-    Polyobj    *polyobj;
-    boolean     move;
-    boolean     rotate;
-} clpolyobj_t;
+struct clpolyobj_t
+{
+    thinker_t thinker;
+    int number;
+    Polyobj *polyobj;
+    boolean move;
+    boolean rotate;
+};
 
-typedef struct {
+struct indextranstable_t
+{
     int size;
     int *serverToLocal;
-} indextranstable_t;
+};
 
 /**
  * Plane mover. Makes changes in planes using DMU.
@@ -73,11 +78,11 @@ void Cl_MoverThinker(clplane_t *mover);
 
 void Cl_PolyMoverThinker(clpolyobj_t *mover);
 
-static MaterialArchive* serverMaterials;
+static MaterialArchive *serverMaterials;
 static indextranstable_t xlatMobjType;
 static indextranstable_t xlatMobjState;
 
-void Cl_ReadServerMaterials(void)
+void Cl_ReadServerMaterials()
 {
     LOG_AS("Cl_ReadServerMaterials");
 
@@ -90,12 +95,11 @@ void Cl_ReadServerMaterials(void)
     LOGDEV_NET_VERBOSE("Received %i materials") << MaterialArchive_Count(serverMaterials);
 }
 
-static void setTableSize(indextranstable_t* table, int size)
+static void setTableSize(indextranstable_t *table, int size)
 {
     if(size > 0)
     {
-        table->serverToLocal = (int*) M_Realloc(table->serverToLocal,
-                                                sizeof(*table->serverToLocal) * size);
+        table->serverToLocal = (int *) M_Realloc(table->serverToLocal, sizeof(*table->serverToLocal) * size);
     }
     else
     {
@@ -105,19 +109,19 @@ static void setTableSize(indextranstable_t* table, int size)
     table->size = size;
 }
 
-void Cl_ReadServerMobjTypeIDs(void)
+void Cl_ReadServerMobjTypeIDs()
 {
-    int i;
-    StringArray* ar = StringArray_New();
+    LOG_AS("Cl_ReadServerMobjTypeIDs");
+
+    StringArray *ar = StringArray_New();
     StringArray_Read(ar, msgReader);
 
-    LOG_AS("Cl_ReadServerMobjTypeIDs");
     LOGDEV_NET_VERBOSE("Received %i mobj type IDs") << StringArray_Size(ar);
 
     setTableSize(&xlatMobjType, StringArray_Size(ar));
 
     // Translate the type IDs to local.
-    for(i = 0; i < StringArray_Size(ar); ++i)
+    for(int i = 0; i < StringArray_Size(ar); ++i)
     {
         xlatMobjType.serverToLocal[i] = Def_GetMobjNum(StringArray_At(ar, i));
         if(xlatMobjType.serverToLocal[i] < 0)
@@ -130,19 +134,19 @@ void Cl_ReadServerMobjTypeIDs(void)
     StringArray_Delete(ar);
 }
 
-void Cl_ReadServerMobjStateIDs(void)
+void Cl_ReadServerMobjStateIDs()
 {
-    int i;
-    StringArray* ar = StringArray_New();
+    LOG_AS("Cl_ReadServerMobjStateIDs");
+
+    StringArray *ar = StringArray_New();
     StringArray_Read(ar, msgReader);
 
-    LOG_AS("Cl_ReadServerMobjStateIDs");
     LOGDEV_NET_VERBOSE("Received %i mobj state IDs") << StringArray_Size(ar);
 
     setTableSize(&xlatMobjState, StringArray_Size(ar));
 
     // Translate the type IDs to local.
-    for(i = 0; i < StringArray_Size(ar); ++i)
+    for(int i = 0; i < StringArray_Size(ar); ++i)
     {
         xlatMobjState.serverToLocal[i] = Def_GetStateNum(StringArray_At(ar, i));
         if(xlatMobjState.serverToLocal[i] < 0)
@@ -221,8 +225,8 @@ void Cl_WorldInit()
     }
 
     serverMaterials = 0;
-    std::memset(&xlatMobjType, 0, sizeof(xlatMobjType));
-    std::memset(&xlatMobjState, 0, sizeof(xlatMobjState));
+    zap(xlatMobjType);
+    zap(xlatMobjState);
 }
 
 void Cl_WorldReset()
@@ -300,16 +304,12 @@ void Map::deleteClPolyobj(clpolyobj_t *mover)
 
 void Cl_MoverThinker(clplane_t *mover)
 {
+    LOG_AS("Cl_MoverThinker");
+
     Map &map = App_World().map(); /// @todo Do not assume mover is from the CURRENT map.
-    coord_t original;
-    boolean remove = false;
-    boolean freeMove;
-    float fspeed;
 
     // Can we think yet?
     if(!Cl_GameReady()) return;
-
-    LOG_AS("Cl_MoverThinker");
 
 #ifdef _DEBUG
     if(map.clPlaneIndex(mover) < 0)
@@ -319,12 +319,13 @@ void Cl_MoverThinker(clplane_t *mover)
 #endif
 
     // The move is cancelled if the consolePlayer becomes obstructed.
-    freeMove = ClPlayer_IsFreeToMove(consolePlayer);
-    fspeed = mover->speed;
+    bool const freeMove = ClPlayer_IsFreeToMove(consolePlayer);
+    float const fspeed = mover->speed;
 
     // How's the gap?
-    original = P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property);
-    if(fabs(fspeed) > 0 && fabs(mover->destination - original) > fabs(fspeed))
+    bool remove = false;
+    coord_t const original = P_GetDouble(DMU_SECTOR, mover->sectorIndex, mover->property);
+    if(de::abs(fspeed) > 0 && de::abs(mover->destination - original) > de::abs(fspeed))
     {
         // Do the move.
         P_SetDouble(DMU_SECTOR, mover->sectorIndex, mover->property, original + fspeed);
@@ -388,7 +389,7 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
 
     if(sectorIndex < 0 || sectorIndex >= sectorCount())
     {
-        DENG_ASSERT(false); // Invalid Sector index.
+        DENG2_ASSERT(false); // Invalid Sector index.
         return 0;
     }
 
@@ -415,17 +416,20 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
 
         // Allocate a new clplane_t thinker.
         clplane_t *mov = clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &clActivePlanes[i]);
+
         mov->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_MoverThinker);
-        mov->type = type;
+        mov->type        = type;
         mov->sectorIndex = sectorIndex;
         mov->destination = dest;
-        mov->speed = speed;
-        mov->property = dmuPlane | DMU_HEIGHT;
-        mov->dmuPlane = dmuPlane;
+        mov->speed       = speed;
+        mov->property    = dmuPlane | DMU_HEIGHT;
+        mov->dmuPlane    = dmuPlane;
 
         // Set the right sign for speed.
         if(mov->destination < P_GetDouble(DMU_SECTOR, sectorIndex, mov->property))
+        {
             mov->speed = -mov->speed;
+        }
 
         // Update speed and target height.
         P_SetDouble(DMU_SECTOR, sectorIndex, dmuPlane | DMU_TARGET_HEIGHT, dest);
@@ -434,7 +438,7 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
         thinkers().add(mov->thinker, false /*not public*/);
 
         // Immediate move?
-        if(FEQUAL(speed, 0))
+        if(de::fequal(speed, 0))
         {
             // This will remove the thinker immediately if the move is ok.
             Cl_MoverThinker(mov);
@@ -447,7 +451,7 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
 
 void Cl_PolyMoverThinker(clpolyobj_t *mover)
 {
-    DENG_ASSERT(mover != 0);
+    DENG2_ASSERT(mover != 0);
 
     LOG_AS("Cl_PolyMoverThinker");
 
@@ -531,12 +535,14 @@ clpolyobj_t *Map::newClPolyobj(int polyobjIndex)
 
         LOG_MAP_XVERBOSE("New polymover [%i] for polyobj #%i.") << i << polyobjIndex;
 
-        clpolyobj_t *mover = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &clActivePolyobjs[i]);
-        clActivePolyobjs[i] = mover;
+        clpolyobj_t *mover = clActivePolyobjs[i] = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &clActivePolyobjs[i]);
+
         mover->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker);
         mover->polyobj = polyobjs().at(polyobjIndex);
-        mover->number = polyobjIndex;
+        mover->number  = polyobjIndex;
+
         thinkers().add(mover->thinker, false /*not public*/);
+
         return mover;
     }
 
@@ -579,14 +585,8 @@ clplane_t *Map::clPlaneBySectorIndex(int sectorIndex, clplanetype_t type)
     return 0;
 }
 
-/**
- * Reads a sector delta from the PSV_FRAME2 message buffer and applies it
- * to the world.
- */
-void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
+void Cl_ReadSectorDelta(int /*deltaType*/)
 {
-    DENG_UNUSED(deltaType);
-
     /// @todo Do not assume the CURRENT map.
     Map &map = App_World().map();
 
@@ -696,13 +696,8 @@ void Cl_ReadSectorDelta2(int deltaType, boolean /*skip*/)
 #undef PLN_FLOOR
 }
 
-/**
- * Reads a side delta from the message buffer and applies it to the world.
- */
-void Cl_ReadSideDelta2(int deltaType, boolean skip)
+void Cl_ReadSideDelta(int /*deltaType*/)
 {
-    DENG_UNUSED(deltaType);
-
     ushort num;
 
     int df, topMat = 0, midMat = 0, botMat = 0;
@@ -755,12 +750,8 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     if(df & SIDF_FLAGS)
         sideFlags = Reader_ReadByte(msgReader);
 
-    // Must we skip this?
-    if(skip)
-        return;
-
     LineSide *side = App_World().map().sideByIndex(num);
-    DENG_ASSERT(side != 0);
+    DENG2_ASSERT(side != 0);
 
     if(df & SIDF_TOP_MATERIAL)
     {
@@ -834,55 +825,47 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     }
 }
 
-/**
- * Reads a poly delta from the message buffer and applies it to
- * the world.
- */
-void Cl_ReadPolyDelta2(boolean skip)
+void Cl_ReadPolyDelta()
 {
-    int                 df;
-    unsigned short      num;
-    Polyobj            *po;
-    float               destX = 0, destY = 0;
-    float               speed = 0;
-    int                 destAngle = 0, angleSpeed = 0;
-
-    num = Reader_ReadPackedUInt16(msgReader);
+    ushort const index = Reader_ReadPackedUInt16(msgReader);
 
     // Flags.
-    df = Reader_ReadByte(msgReader);
+    int const df = Reader_ReadByte(msgReader);
+
+    Polyobj *po = App_World().map().polyobjs().at(index);
 
     if(df & PODF_DEST_X)
-        destX = Reader_ReadFloat(msgReader);
+    {
+        po->dest[VX] = Reader_ReadFloat(msgReader);
+    }
+
     if(df & PODF_DEST_Y)
-        destY = Reader_ReadFloat(msgReader);
+    {
+        po->dest[VY] = Reader_ReadFloat(msgReader);
+    }
+
     if(df & PODF_SPEED)
-        speed = Reader_ReadFloat(msgReader);
+    {
+        po->speed = Reader_ReadFloat(msgReader);
+    }
+
     if(df & PODF_DEST_ANGLE)
-        destAngle = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
+    {
+        po->destAngle = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
+    }
+
     if(df & PODF_ANGSPEED)
-        angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
+    {
+        po->angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
+    }
 
-    if(skip)
-        return;
-
-    po = App_World().map().polyobjs().at(num);
-
-    if(df & PODF_DEST_X)
-        po->dest[VX] = destX;
-    if(df & PODF_DEST_Y)
-        po->dest[VY] = destY;
-    if(df & PODF_SPEED)
-        po->speed = speed;
-    if(df & PODF_DEST_ANGLE)
-        po->destAngle = destAngle;
-    if(df & PODF_ANGSPEED)
-        po->angleSpeed = angleSpeed;
     if(df & PODF_PERPETUAL_ROTATE)
+    {
         po->destAngle = -1;
+    }
 
     // Update the polyobj's mover thinkers.
-    Cl_SetPolyMover(num, df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED),
+    Cl_SetPolyMover(index, df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED),
                     df & (PODF_DEST_ANGLE | PODF_ANGSPEED |
                           PODF_PERPETUAL_ROTATE));
 }

@@ -1,4 +1,4 @@
-/** @file cl_player.cpp Clientside Player Management.
+/** @file cl_player.cpp  Clientside player management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/Vector>
-
 #include "de_base.h"
+#include "client/cl_player.h"
+
 #include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
@@ -27,6 +27,8 @@
 #include "def_main.h"
 
 #include "BspLeaf"
+
+#include <de/Vector>
 
 using namespace de;
 
@@ -45,10 +47,7 @@ static float pspY;
 // Console player demo momentum (used to smooth out abrupt momentum changes).
 static float cpMom[3][LOCALCAM_WRITE_TICS];
 
-/**
- * Clears the player state table.
- */
-void Cl_InitPlayers(void)
+void Cl_InitPlayers()
 {
     //fixTics = 0;
     pspY = 0;
@@ -59,7 +58,7 @@ void Cl_InitPlayers(void)
 
 clplayerstate_t *ClPlayer_State(int plrNum)
 {
-    assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
     return &clPlayerStates[plrNum];
 }
 
@@ -201,7 +200,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     }
 }
 
-void ClPlayer_HandleFix(void)
+void ClPlayer_HandleFix()
 {
     int plrNum = 0;
     int fixes = 0;
@@ -262,7 +261,7 @@ void ClPlayer_HandleFix(void)
     ClPlayer_ApplyPendingFixes(plrNum);
 }
 
-void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
+void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
 {
     player_t *plr = &ddPlayers[consolePlayer];
     ddplayer_t *ddpl = &plr->shared;
@@ -308,20 +307,13 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, boolean onground)
     ClPlayer_UpdateOrigin(consolePlayer);
 }
 
-/**
- * Reads a single PSV_FRAME2 player delta from the message buffer and
- * applies it to the player in question.
- */
-void ClPlayer_ReadDelta2(boolean skip)
+void ClPlayer_ReadDelta()
 {
-    static player_t     dummyPlayer;
-    static clplayerstate_t dummyClState;
-
-    int                 df = 0, psdf, i, idx;
-    clplayerstate_t    *s;
-    ddplayer_t         *ddpl;
-    ddpsprite_t        *psp;
-    unsigned short num, newId;
+    int df = 0, psdf, i, idx;
+    clplayerstate_t *s;
+    ddplayer_t *ddpl;
+    ddpsprite_t *psp;
+    ushort num, newId;
 
     LOG_AS("ClPlayer_ReadDelta2");
 
@@ -331,17 +323,8 @@ void ClPlayer_ReadDelta2(boolean skip)
     df |= Reader_ReadByte(msgReader); // Second byte is just flags.
     num &= 0xf; // Clear the upper bits of the number.
 
-    if(!skip)
-    {
-        s = &clPlayerStates[num];
-        ddpl = &ddPlayers[num].shared;
-    }
-    else
-    {
-        // We're skipping, read the data into dummies.
-        s = &dummyClState;
-        ddpl = &dummyPlayer.shared;
-    }
+    s = &clPlayerStates[num];
+    ddpl = &ddPlayers[num].shared;
 
     if(df & PDF_MOBJ)
     {
@@ -351,12 +334,12 @@ void ClPlayer_ReadDelta2(boolean skip)
 
         // Make sure the 'new' mobj is different than the old one;
         // there will be linking problems otherwise.
-        if(!skip && newId != s->clMobjId)
+        if(newId != s->clMobjId)
         {
             // We are now changing the player's mobj.
-            mobj_t* clmo = 0;
+            mobj_t *clmo = 0;
             //clmoinfo_t* info = 0;
-            boolean justCreated = false;
+            bool justCreated = false;
 
             s->clMobjId = newId;
 
@@ -410,7 +393,7 @@ void ClPlayer_ReadDelta2(boolean skip)
                     << num << s->clMobjId << old
                     << clmo->origin[VX] << clmo->origin[VY] << clmo->origin[VZ]
                     << clmo->floorZ << clmo->ceilingZ;
-            LOGDEV_NET_VERBOSE("Player %i using mobj id %i") << (skip? -1 : num) << s->clMobjId;
+            LOGDEV_NET_VERBOSE("Player %i using mobj id %i") << num << s->clMobjId;
         }
     }
 
@@ -437,7 +420,7 @@ void ClPlayer_ReadDelta2(boolean skip)
     }
     if(df & PDF_FILTER)
     {
-        unsigned int filter = Reader_ReadUInt32(msgReader);
+        uint filter = Reader_ReadUInt32(msgReader);
 
         ddpl->filterColor[CR] = (filter & 0xff) / 255.f;
         ddpl->filterColor[CG] = ((filter >> 8) & 0xff) / 255.f;
@@ -489,23 +472,14 @@ void ClPlayer_ReadDelta2(boolean skip)
     }
 }
 
-/**
- * @return  The gameside local mobj of a player.
- */
 mobj_t *ClPlayer_LocalGameMobj(int plrNum)
 {
     return ddPlayers[plrNum].shared.mo;
 }
 
-/**
- * Used by the client plane mover.
- *
- * @return              @c true, if the player is free to move according to
- *                      floorz and ceilingz.
- */
-boolean ClPlayer_IsFreeToMove(int plrNum)
+bool ClPlayer_IsFreeToMove(int plrNum)
 {
-    mobj_t* mo = ClPlayer_LocalGameMobj(plrNum);
+    mobj_t *mo = ClPlayer_LocalGameMobj(plrNum);
     if(!mo) return false;
 
     return (mo->origin[VZ] >= mo->floorZ &&

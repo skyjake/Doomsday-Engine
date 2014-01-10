@@ -1,4 +1,4 @@
-/** @file cl_main.cpp Network Client
+/** @file cl_main.cpp  Network client.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,11 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
 #include "de_base.h"
+#include "client/cl_def.h"
+
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
@@ -32,9 +30,11 @@
 #include "world/map.h"
 #include "render/r_main.h"
 
-using namespace de;
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
-extern int gotFrame;
+using namespace de;
 
 ident_t clientID;
 boolean handshakeReceived = false;
@@ -43,10 +43,10 @@ int serverTime;
 boolean netLoggedIn = false; // Logged in to the server.
 int clientPaused = false; // Set by the server.
 
-void Cl_InitID(void)
+void Cl_InitID()
 {
-    int                 i;
-    FILE*               file;
+    int i;
+    FILE *file;
 
     if((i = CommandLine_CheckWith("-id", 1)) != 0)
     {
@@ -79,7 +79,7 @@ void Cl_InitID(void)
     }
 }
 
-int Cl_GameReady(void)
+int Cl_GameReady()
 {
     return (handshakeReceived && gameReady);
 }
@@ -240,11 +240,7 @@ void Cl_PlayerLeaves(int plrNum)
     gx.NetPlayerEvent(plrNum, DDPE_EXIT, 0);
 }
 
-/**
- * Client's packet handler.
- * Handles all the events the server sends.
- */
-void Cl_GetPackets(void)
+void Cl_GetPackets()
 {
     // All messages come from the server.
     while(Net_GetPacket())
@@ -430,13 +426,8 @@ void Cl_Assertions(int plrNum)
     }
 }
 
-/**
- * Client-side game ticker.
- */
 void Cl_Ticker(timespan_t ticLength)
 {
-    int i;
-
     if(!isClient || !Cl_GameReady() || clientPaused)
         return;
 
@@ -446,7 +437,7 @@ void Cl_Ticker(timespan_t ticLength)
     // the changes from the server) to match the changes. The game ticker
     // has already been run when Cl_Ticker() is called, so let's update the
     // player's clmobj to its updated state.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         if(!ddPlayers[i].shared.inGame) continue;
 
@@ -468,7 +459,7 @@ void Cl_Ticker(timespan_t ticLength)
         ClPlayer_ApplyPendingFixes(i);
         ClPlayer_UpdateOrigin(i);
 
-#ifdef _DEBUG
+#ifdef DENG_DEBUG
         Cl_Assertions(i);
 #endif
     }

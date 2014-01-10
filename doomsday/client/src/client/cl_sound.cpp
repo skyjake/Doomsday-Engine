@@ -1,4 +1,4 @@
-﻿/** @file cl_sound.cpp Clientside Sounds.
+﻿/** @file cl_sound.cpp  Clientside sounds.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -18,35 +18,30 @@
  */
 
 #include "de_base.h"
+#include "client/cl_sound.h"
+
 #include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_audio.h"
 
-#include "client/cl_sound.h"
-
 using namespace de;
 
-/**
- * Read a sound delta from the message buffer and play it.
- * Only used with PSV_FRAME2 packets.
- */
-void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
+void Cl_ReadSoundDelta(deltatype_t type)
 {
-    uint16_t deltaId = 0;
     int sound = 0, soundFlags = 0;
-    byte flags = 0;
-    mobj_t             *cmo = NULL;
-    thid_t              mobjId = 0;
-    Sector             *sector = NULL;
-    Polyobj            *poly = NULL;
-    LineSide         *side = NULL;
-    mobj_t             *emitter = NULL;
-    float               volume = 1;
+    mobj_t *cmo = 0;
+    thid_t mobjId = 0;
+    Sector *sector = 0;
+    Polyobj *poly = 0;
+    LineSide *side = 0;
+    mobj_t *emitter = 0;
+    float volume = 1;
 
-    deltaId = Reader_ReadUInt16(msgReader);
-    flags   = Reader_ReadByte(msgReader);
+    uint16_t deltaId = Reader_ReadUInt16(msgReader);
+    byte flags = Reader_ReadByte(msgReader);
 
+    bool skip = false;
     if(type == DT_SOUND)
     {
         // Delta ID is the sound ID.
@@ -179,7 +174,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         // Do we need to queue this sound?
         if(type == DT_MOBJ_SOUND && !cmo)
         {
-            clmoinfo_t* info = 0;
+            clmoinfo_t *info = 0;
 
             // Create a new Hidden clmobj.
             cmo = ClMobj_Create(mobjId);
