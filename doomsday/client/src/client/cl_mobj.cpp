@@ -24,14 +24,20 @@
 #include "de_base.h"
 #include "client/cl_mobj.h"
 
-#include "de_defs.h"
-#include "de_system.h"
-#include "de_console.h"
-#include "de_network.h"
-#include "de_play.h"
-#include "de_audio.h"
+#include "api_client.h"
+#include "client/cl_player.h"
+#include "client/cl_world.h"
 
+#include "network/net_main.h"
+#include "network/protocol.h"
+
+#include "world/map.h"
+#include "world/p_players.h"
 #include "world/thinkers.h"
+
+#include "api_sound.h"
+
+#include <de/timer.h>
 #include <de/vector1.h>
 #include <cmath>
 

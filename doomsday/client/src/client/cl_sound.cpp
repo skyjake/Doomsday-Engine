@@ -29,6 +29,11 @@ using namespace de;
 
 void Cl_ReadSoundDelta(deltatype_t type)
 {
+    LOG_AS("Cl_ReadSoundDelta");
+
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_World().map();
+
     int sound = 0, soundFlags = 0;
     mobj_t *cmo = 0;
     thid_t mobjId = 0;
@@ -36,10 +41,9 @@ void Cl_ReadSoundDelta(deltatype_t type)
     Polyobj *poly = 0;
     LineSide *side = 0;
     mobj_t *emitter = 0;
-    float volume = 1;
 
-    uint16_t deltaId = Reader_ReadUInt16(msgReader);
-    byte flags = Reader_ReadByte(msgReader);
+    uint16_t const deltaId = Reader_ReadUInt16(msgReader);
+    byte const flags       = Reader_ReadByte(msgReader);
 
     bool skip = false;
     if(type == DT_SOUND)
@@ -70,9 +74,9 @@ void Cl_ReadSoundDelta(deltatype_t type)
     {        
         int index = deltaId;
 
-        if(index >= 0 && index < App_World().map().sectorCount())
+        if(index >= 0 && index < map.sectorCount())
         {
-            sector = App_World().map().sectors().at(index);
+            sector = map.sectors().at(index);
         }
         else
         {
@@ -84,7 +88,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     {
         int index = deltaId;
 
-        side = App_World().map().sideByIndex(index);
+        side = map.sideByIndex(index);
         if(!side)
         {
             LOG_NET_WARNING("Received sound delta has invalid side index %i") << index;
@@ -97,9 +101,9 @@ void Cl_ReadSoundDelta(deltatype_t type)
 
         LOG_NET_XVERBOSE("DT_POLY_SOUND: poly=%d") << index;
 
-        if(index >= 0 && index < App_World().map().polyobjCount())
+        if(index >= 0 && index < map.polyobjCount())
         {
-            poly = App_World().map().polyobjs().at(index);
+            poly = map.polyobjs().at(index);
             emitter = (mobj_t *) poly;
         }
         else
@@ -143,6 +147,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
             emitter = (mobj_t *) &side->bottomSoundEmitter();
     }
 
+    float volume = 1;
     if(flags & SNDDF_VOLUME)
     {
         byte b = Reader_ReadByte(msgReader);
@@ -221,19 +226,17 @@ void Cl_ReadSoundDelta(deltatype_t type)
     }
 }
 
-/**
- * Called when a PSV_FRAME sound packet is received.
- */
-void Cl_Sound(void)
+void Cl_Sound()
 {
-    int sound, volume = 127;
-    coord_t pos[3];
-    byte flags;
-    mobj_t* mo = NULL;
+    LOG_AS("Cl_Sound");
 
-    flags = Reader_ReadByte(msgReader);
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_World().map();
+
+    byte const flags = Reader_ReadByte(msgReader);
 
     // Sound ID.
+    int sound;
     if(flags & SNDF_SHORT_SOUND_ID)
     {
         sound = Reader_ReadUInt16(msgReader);
@@ -242,8 +245,6 @@ void Cl_Sound(void)
     {
         sound = Reader_ReadByte(msgReader);
     }
-
-    LOG_AS("Cl_Sound");
 
     // Is the ID valid?
     if(sound < 1 || sound >= defs.count.sounds.num)
@@ -254,6 +255,7 @@ void Cl_Sound(void)
 
     LOGDEV_NET_XVERBOSE("id %i") << sound;
 
+    int volume = 127;
     if(flags & SNDF_VOLUME)
     {
         volume = Reader_ReadByte(msgReader);
@@ -263,6 +265,7 @@ void Cl_Sound(void)
             sound |= DDSF_NO_ATTENUATION;
         }
     }
+
     if(flags & SNDF_ID)
     {
         thid_t  sourceId = Reader_ReadUInt16(msgReader);
@@ -274,18 +277,19 @@ void Cl_Sound(void)
     }
     else if(flags & SNDF_SECTOR)
     {
-        int num = (int)Reader_ReadPackedUInt16(msgReader);
-        if(num >= App_World().map().sectorCount())
+        int num = int(Reader_ReadPackedUInt16(msgReader));
+        if(num >= map.sectorCount())
         {
             LOG_NET_WARNING("Invalid sector number %i") << num;
             return;
         }
-        mo = (mobj_t *) &App_World().map().sectors().at(num)->soundEmitter();
+        mobj_t *mo = (mobj_t *) &map.sectors().at(num)->soundEmitter();
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }
     else if(flags & SNDF_ORIGIN)
     {
+        coord_t pos[3];
         pos[VX] = Reader_ReadInt16(msgReader);
         pos[VY] = Reader_ReadInt16(msgReader);
         pos[VZ] = Reader_ReadInt16(msgReader);
