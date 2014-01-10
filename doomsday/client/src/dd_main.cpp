@@ -1403,7 +1403,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
         { // Tell the plugin it is being unloaded.
             void *unloader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Unload");
-            LOGDEV_MSG("Calling DP_Unload (%p)") << de::dintptr(unloader);
+            LOGDEV_MSG("Calling DP_Unload %p") << unloader;
             DD_SetActivePluginId(App_CurrentGame().pluginId());
             if(unloader) ((pluginfunc_t)unloader)();
             DD_SetActivePluginId(0);
@@ -1517,7 +1517,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
             void *loader = DD_FindEntryPoint(App_CurrentGame().pluginId(), "DP_Load");
-            LOGDEV_MSG("Calling DP_Load (%p)") << de::dintptr(loader);
+            LOGDEV_MSG("Calling DP_Load %p") << loader;
             DD_SetActivePluginId(App_CurrentGame().pluginId());
             if(loader) ((pluginfunc_t)loader)();
             DD_SetActivePluginId(0);

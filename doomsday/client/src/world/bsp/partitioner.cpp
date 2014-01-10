@@ -443,7 +443,7 @@ DENG2_PIMPL(Partitioner)
 
         //LOG_DEBUG("evalPartition: %p: splits=%d iffy=%d near=%d"
         //          " left=%d+%d right=%d+%d cost=%d.%02d")
-        //    << de::dintptr(&lineSeg) << cost.splits << cost.iffy << cost.nearMiss
+        //    << &lineSeg << cost.splits << cost.iffy << cost.nearMiss
         //    << cost.mapLeft << cost.partLeft << cost.mapRight << cost.partRight
         //    << cost.total / 100 << cost.total % 100;
 
@@ -461,7 +461,7 @@ DENG2_PIMPL(Partitioner)
         foreach(LineSegmentSide *seg, partList.segments())
         {
             //LOG_DEBUG("%sline segment %p sector:%d %s -> %s")
-            //    << (seg->hasMapLineSide()? "" : "mini-") << de::dintptr(*seg)
+            //    << (seg->hasMapLineSide()? "" : "mini-") << seg
             //    << (seg->sector? seg->sector->indexInMap() : -1)
             //    << seg->fromOrigin().asText()
             //    << seg->toOrigin().asText();
@@ -553,7 +553,7 @@ DENG2_PIMPL(Partitioner)
         /*if(best)
         {
             LOG_DEBUG("best %p score: %d.%02d.")
-                << de::dintptr(best) << bestCost.total / 100 << bestCost.total % 100;
+                << best << bestCost.total / 100 << bestCost.total % 100;
         }*/
 
         return best;
@@ -593,11 +593,11 @@ DENG2_PIMPL(Partitioner)
     LineSegmentSide &splitLineSegment(LineSegmentSide &frontLeft,
         Vector2d const &point, bool updateEdgeTips = true)
     {
-        DENG_ASSERT(point != frontLeft.from().origin() &&
-                    point != frontLeft.to().origin());
+        DENG2_ASSERT(point != frontLeft.from().origin() &&
+                     point != frontLeft.to().origin());
 
         //LOG_DEBUG("Splitting line segment %p at %s.")
-        //    << de::dintptr(&frontLeft) << point.asText();
+        //    << &frontLeft << point.asText();
 
         Vertex *newVert = newVertex(point);
 
@@ -1067,9 +1067,9 @@ DENG2_PIMPL(Partitioner)
             hplane.configure(*partSeg);
 
             /*
-            LOG_TRACE("%s, segment side [%p] %i (segment #%i) %s %s.")
+            LOG_TRACE("%s, segment side %p %i (segment #%i) %s %s.")
                 << hplane.partition().asText()
-                << de::dintptr(partSeg)
+                << partSeg
                 << partSeg->lineSideId()
                 << lineSegments.indexOf(&partSeg->line())
                 << partSeg->from().origin().asText()
@@ -1263,8 +1263,8 @@ DENG2_PIMPL(Partitioner)
 
         if(rootNode) // Built Ok.
         {
-            LOG_DEBUG("Clearing unclaimed %s %p.")
-                << (tree.isLeaf()? "leaf" : "node") << de::dintptr(elm);
+            LOG_DEBUG("Clearing unclaimed %s %p")
+                << (tree.isLeaf()? "leaf" : "node") << elm;
         }
 
         if(tree.isLeaf())
@@ -1307,7 +1307,7 @@ DENG2_PIMPL(Partitioner)
             return found.value();
         }
         LOG_DEBUG("Attempted to locate using an unknown element %p (type: %d).")
-            << de::dintptr(ob) << elemType;
+            << ob << elemType;
         return 0;
     }
 
@@ -1384,7 +1384,7 @@ DENG2_PIMPL(Partitioner)
         {
             LOG_DEBUG("Build: %s line segment %p sector: %d %s -> %s")
                 << (seg->hasMapSide()? "map" : "part")
-                << de::dintptr(seg)
+                << seg
                 << (seg->hasSector()? seg->sector().indexInMap() : -1)
                 << seg->from().origin().asText() << seg->to().origin().asText();
         }
@@ -1513,8 +1513,8 @@ void Partitioner::take(MapElement *mapElement)
     if(!d->release(mapElement))
     {
         LOG_AS("Partitioner::release");
-        LOG_DEBUG("Attempted to release an unknown/unowned %s %p.")
-            << DMU_Str(mapElement->type()) << de::dintptr(mapElement);
+        LOG_DEBUG("Attempted to release an unknown/unowned %s %p")
+            << DMU_Str(mapElement->type()) << mapElement;
     }
 }
 

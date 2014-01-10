@@ -162,7 +162,7 @@ ptcgen_t *Generators::linkToList(ptcgen_t *gen, uint listIndex)
             // that logging is pointless (and negatively affecting performance).
             //LOG_AS("Generators::linkToList");
             //LOG_DEBUG("Attempted repeat link of generator %p to list %u.")
-            //        << de::dintptr(gen) << listIndex;
+            //        << gen << listIndex;
 
             return gen; // No, no...
         }

@@ -110,8 +110,8 @@ void Texture::setUserDataPointer(void *newUserData)
     if(d->userData && newUserData)
     {
         LOG_AS("Texture::setUserDataPointer");
-        LOG_DEBUG("User data already present for \"%s\" [%p], will be replaced.")
-            << d->manifest.composeUri() << de::dintptr(this);
+        LOG_DEBUG("User data already present for \"%s\" %p, will be replaced.")
+            << d->manifest.composeUri() << this;
     }
     d->userData = newUserData;
 }
@@ -243,9 +243,9 @@ void Texture::clearVariants()
             String textualVariantSpec = variant->spec().asText();
 
             LOG_AS("Texture::clearVariants")
-            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" [%p]. Perhaps it wasn't released?")
+            LOG_WARNING("GLName (%i) still set for a variant of \"%s\" %p. Perhaps it wasn't released?")
                 << variant->glName() << d->manifest.composeUri()
-                << de::dintptr(this) << textualVariantSpec;
+                << this << textualVariantSpec;
         }
 #endif
 

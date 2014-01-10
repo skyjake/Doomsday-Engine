@@ -532,7 +532,7 @@ bool FS1::Scheme::mapPath(String &path) const
 void FS1::Scheme::debugPrint() const
 {
     LOG_AS("Scheme::debugPrint");
-    LOGDEV_RES_MSG("[%p]:") << de::dintptr(this);
+    LOGDEV_RES_MSG("%p:") << this;
 
     uint schemeIdx = 0;
     for(NameHash::hash_type key = 0; key < NameHash::hash_range; ++key)

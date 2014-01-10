@@ -332,7 +332,7 @@ void BspLeaf::assignExtraMesh(Mesh &newMesh)
 
     if(d->extraMeshes.size() != sizeBefore)
     {
-        LOG_DEBUG("Assigned extra mesh to leaf [%p].") << de::dintptr(this);
+        LOG_DEBUG("Assigned extra mesh to leaf %p") << this;
 
         // Attribute all faces to "this" BSP leaf.
         foreach(Face *face, newMesh.faces())

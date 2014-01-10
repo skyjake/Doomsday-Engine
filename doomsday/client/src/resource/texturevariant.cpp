@@ -570,7 +570,7 @@ uint Texture::Variant::prepare()
         << d->texture.manifest().composeUri() << uint(d->glTexName)
         << (uploadMethod == gl::Immediate? " while not busy!" : "");
     LOG_TRACE("  Content: %s") << Image_Description(image);
-    LOG_TRACE("  Specification [%p]: %s") << de::dintptr(&d->spec) << d->spec.asText();
+    LOG_TRACE("  Specification %p: %s") << &d->spec << d->spec.asText();
 #endif
 
     // Are we setting the logical dimensions to the pixel dimensions

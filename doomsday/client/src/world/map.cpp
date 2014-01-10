@@ -490,8 +490,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             if(!leaf.hasParent())
             {
                 LOG_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
-                    << de::dintptr(&leaf)
-                    << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
+                    << &leaf << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
 
                 // Attribute this leaf directly to the map.
                 leaf.setMap(thisPublic);
@@ -515,8 +514,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                 {
                     LOG_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                                 "is not contiguous (%i gaps/overlaps).\n%s")
-                        << de::dintptr(&leaf)
-                        << leaf.poly().center().asText()
+                        << &leaf << leaf.poly().center().asText()
                         << (leaf.hasParent()? leaf.parent().as<Sector>().indexInArchive() : -1)
                         << discontinuities
                         << leaf.poly().description();
@@ -2506,7 +2504,7 @@ ClPlaneMover *Map::newClPlaneMover(Plane &plane, coord_t dest, float speed)
         if(mover->plane == &plane)
         {
             LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i")
-                    << de::dintptr(mover) << plane.sector().indexInMap()
+                    << mover << plane.sector().indexInMap()
                     << plane.indexInSector();
 
             deleteClPlaneMover(mover);
@@ -2541,7 +2539,7 @@ ClPlaneMover *Map::newClPlaneMover(Plane &plane, coord_t dest, float speed)
         ClPlaneMover_Thinker(mov);
     }
 
-    LOGDEV_MAP_XVERBOSE("New mover #%p") << de::dintptr(mov);
+    LOGDEV_MAP_XVERBOSE("New mover %p") << mov;
     return mov;
 }
 
@@ -2552,7 +2550,7 @@ void Map::deleteClPlaneMover(ClPlaneMover *mover)
     if(!mover) return;
 
     LOGDEV_MAP_XVERBOSE("Removing mover %p (sector: #%i)")
-            << de::dintptr(mover) << mover->plane->sector().indexInMap();
+            << mover << mover->plane->sector().indexInMap();
     thinkers().remove(mover->thinker);
     d->clPlaneMovers.removeOne(mover);
 }
@@ -2581,7 +2579,7 @@ ClPolyMover *Map::clPolyMoverFor(Polyobj &polyobj, bool canCreate)
     thinkers().add(mover->thinker, false /*not public*/);
 
     LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i.")
-            << de::dintptr(mover) << polyobj.indexInMap();
+            << mover << polyobj.indexInMap();
     return mover;
 }
 
@@ -2591,7 +2589,7 @@ void Map::deleteClPolyMover(ClPolyMover *mover)
 
     if(!mover) return;
 
-    LOG_MAP_XVERBOSE("Removing mover %p") << de::dintptr(mover);
+    LOG_MAP_XVERBOSE("Removing mover %p") << mover;
     thinkers().remove(mover->thinker);
     d->clPolyMovers.removeOne(mover);
 }

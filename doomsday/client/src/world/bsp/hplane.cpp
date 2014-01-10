@@ -210,8 +210,8 @@ void HPlane::configure(LineSegmentSide const &newBaseSeg)
     d->para = -d->partition.origin.x * d->partition.direction.x
             -  d->partition.origin.y * d->partition.direction.y;
 
-    //LOG_DEBUG("line segment %p %s.")
-    //    << de::dintptr(&newBaseSeg) << d->partition.asText();
+    //LOG_DEBUG("line segment %p %s")
+    //    << &newBaseSeg << d->partition.asText();
 }
 
 /**
