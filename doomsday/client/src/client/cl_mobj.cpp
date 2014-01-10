@@ -50,123 +50,89 @@ using namespace de;
 /// allow the missile to move free of the shooter. (Quite a hack!)
 #define MISSILE_FREE_MOVE_TIME  1000
 
-/**
- * @return  Pointer to the hash chain with the specified id.
- */
-static cmhash_t *Map_ClMobjHash(Map &map, thid_t id)
+ClMobjHash::ClMobjHash()
 {
-    return &map.clMobjHash[(uint) id % CLIENT_MOBJ_HASH_SIZE];
+    de::zap(_buckets);
 }
 
-/// @note Part of the Doomsday public API.
-static cmhash_t *ClMobj_Hash(thid_t id)
+void ClMobjHash::clear()
 {
-    if(!App_World().hasMap()) return 0;
-    return Map_ClMobjHash(App_World().map(), id);
-}
-
-#ifdef DENG_DEBUG
-static void checkMobjHash()
-{
-    Map &map = App_World().map();
-    for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
+    for(int i = 0; i < SIZE; ++i)
+    for(clmoinfo_t *info = _buckets[i].first; info; info = info->next)
     {
-        int count1 = 0, count2 = 0;
-        clmoinfo_t *info;
-        for(info = map.clMobjHash[i].first; info; info = info->next, count1++)
-        {
-            DENG_ASSERT(ClMobj_MobjForInfo(info) != 0);
-        }
-        for(info = map.clMobjHash[i].last; info; info = info->prev, count2++)
-        {
-            DENG_ASSERT(ClMobj_MobjForInfo(info) != 0);
-        }
-        DENG_ASSERT(count1 == count2);
+        mobj_t *mo = ClMobj_MobjForInfo(info);
+        // Players' clmobjs are not linked anywhere.
+        if(!mo->dPlayer)
+            ClMobj_Unlink(mo);
     }
 }
-#endif
 
-/**
- * Links the clmobj into the client mobj hash table.
- */
-static void ClMobj_LinkInHash(mobj_t *mo, thid_t id)
+void ClMobjHash::insert(mobj_t *mo, thid_t id)
 {
-    /// @todo Do not assume the CURRENT map.
-    cmhash_t *hash = Map_ClMobjHash(App_World().map(), id);
+    if(!mo) return;
+
+    Bucket &bucket = bucketFor(id);
     clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
-#ifdef _DEBUG
-    checkMobjHash();
+#ifdef DENG_DEBUG
+    assertValid();
 #endif
 
     // Set the ID.
     mo->thinker.id = id;
-    info->next = NULL;
+    info->next = 0;
 
-    if(hash->last)
+    if(bucket.last)
     {
-        hash->last->next = info;
-        info->prev = hash->last;
+        bucket.last->next = info;
+        info->prev = bucket.last;
     }
-    hash->last = info;
+    bucket.last = info;
 
-    if(!hash->first)
+    if(!bucket.first)
     {
-        hash->first = info;
+        bucket.first = info;
     }
 
-#ifdef _DEBUG
-    checkMobjHash();
+#ifdef DENG_DEBUG
+    assertValid();
 #endif
 }
 
-/**
- * Unlinks the clmobj from the client mobj hash table.
- */
-static void ClMobj_UnlinkInHash(mobj_t* mo)
+void ClMobjHash::remove(mobj_t *mo)
 {
-    cmhash_t* hash = ClMobj_Hash(mo->thinker.id);
-    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    Bucket &chain = bucketFor(mo->thinker.id);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
-#ifdef _DEBUG
-    checkMobjHash();
+#ifdef DENG_DEBUG
+    assertValid();
 #endif
 
-    if(hash->first == info)
-        hash->first = info->next;
-    if(hash->last == info)
-        hash->last = info->prev;
+    if(chain.first == info)
+        chain.first = info->next;
+    if(chain.last == info)
+        chain.last = info->prev;
     if(info->next)
         info->next->prev = info->prev;
     if(info->prev)
         info->prev->next = info->next;
 
-#ifdef _DEBUG
-    checkMobjHash();
+#ifdef DENG_DEBUG
+    assertValid();
 #endif
 }
 
-mobj_t *ClMobj_MobjForInfo(clmoinfo_t *info)
+mobj_t *ClMobjHash::find(thid_t id) const
 {
-    DENG_ASSERT(info->startMagic == CLM_MAGIC1);
-    DENG_ASSERT(info->endMagic == CLM_MAGIC2);
-
-    return (mobj_t*) ((char*)info + sizeof(clmoinfo_t));
-}
-
-#undef ClMobj_Find
-struct mobj_s *ClMobj_Find(thid_t id)
-{
-    cmhash_t *hash = ClMobj_Hash(id);
-
     if(!id) return 0;
 
     // Scan the existing client mobjs.
-    for(clmoinfo_t *info = hash->first; info; info = info->next)
+    Bucket const &bucket = bucketFor(id);
+    for(clmoinfo_t *info = bucket.first; info; info = info->next)
     {
         mobj_t *mo = ClMobj_MobjForInfo(info);
         if(mo->thinker.id == id)
@@ -177,15 +143,58 @@ struct mobj_s *ClMobj_Find(thid_t id)
     return 0;
 }
 
-int Map::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
+int ClMobjHash::iterator(int (*callback) (struct mobj_s *, void *), void *context)
 {
-    for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
-    for(clmoinfo_t *info = clMobjHash[i].first; info; info = info->next)
+    for(int i = 0; i < SIZE; ++i)
     {
-        int result = callback(ClMobj_MobjForInfo(info), context);
-        if(result) return result;
+        clmoinfo_t *info = _buckets[i].first;
+        while(info)
+        {
+            clmoinfo_t *next = info->next;
+            if(int result = callback(ClMobj_MobjForInfo(info), context))
+                return result;
+            info = next;
+        }
     }
     return true;
+}
+
+#ifdef DENG_DEBUG
+void ClMobjHash::assertValid()
+{
+    for(int i = 0; i < SIZE; ++i)
+    {
+        int count1 = 0, count2 = 0;
+        for(clmoinfo_t *info = _buckets[i].first; info; info = info->next, count1++)
+        {
+            DENG2_ASSERT(ClMobj_MobjForInfo(info) != 0);
+        }
+        for(clmoinfo_t *info = _buckets[i].last; info; info = info->prev, count2++)
+        {
+            DENG2_ASSERT(ClMobj_MobjForInfo(info) != 0);
+        }
+        DENG2_ASSERT(count1 == count2);
+    }
+}
+#endif
+
+mobj_t *ClMobj_MobjForInfo(clmoinfo_t *info)
+{
+    DENG2_ASSERT(info->startMagic == CLM_MAGIC1);
+    DENG2_ASSERT(info->endMagic == CLM_MAGIC2);
+
+    return (mobj_t *) ((char *)info + sizeof(clmoinfo_t));
+}
+
+#undef ClMobj_Find
+struct mobj_s *ClMobj_Find(thid_t id)
+{
+    return App_World().map().clMobjHash.find(id);
+}
+
+int Map::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
+{
+    return clMobjHash.iterator(callback, context);
 }
 
 void ClMobj_Unlink(mobj_t *mo)
@@ -335,153 +344,60 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     }
 }
 
-void Map::initClMobjs()
+void Map::clearClMobjs()
 {
-    zap(clMobjHash);
+    clMobjHash.clear();
 }
 
-void Map::reinitClMobjs()
+/// @return  @c false= Continue iteration.
+static int expireClMobjsWorker(mobj_t *mo, void *context)
 {
-    zap(clMobjHash);
-}
+    uint const nowTime = *static_cast<uint *>(context);
 
-void Map::destroyClMobjs()
-{
-    for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
-    for(clmoinfo_t *info = clMobjHash[i].first; info; info = info->next)
+    // Already deleted?
+    if(mo->thinker.function == (thinkfunc_t)-1)
+        return 0;
+
+    // Don't expire player mobjs.
+    if(mo->dPlayer) return 0;
+
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    DENG2_ASSERT(info != 0);
+
+    if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
     {
-        mobj_t *mo = ClMobj_MobjForInfo(info);
-        // Players' clmobjs are not linked anywhere.
-        if(!mo->dPlayer)
-            ClMobj_Unlink(mo);
+        // Has this mobj timed out?
+        if(nowTime - info->time > CLMOBJ_TIMEOUT)
+        {
+            LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
+                    << mo->thinker.id
+                    << info->time << nowTime
+                    << Def_GetStateName(mo->state)
+                    << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
+                    << (info->flags & CLMF_HIDDEN?        'H' : '_')
+                    << (info->flags & CLMF_NULLED?        '0' : '_');
+
+            // Too long. The server will probably never send anything
+            // for this mobj, so get rid of it. (Both unpredictable
+            // and hidden mobjs are not visible or bl/seclinked.)
+            Mobj_Destroy(mo);
+        }
     }
 
-    reinitClMobjs();
+    return 0;
 }
 
 void Map::expireClMobjs()
 {
     uint nowTime = Timer_RealMilliseconds();
-
-    clmoinfo_t *next = 0;
-
-    // Move all client mobjs.
-    for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
-    for(clmoinfo_t *info = clMobjHash[i].first; info; info = next)
-    {
-        next = info->next;
-
-        mobj_t *mo = ClMobj_MobjForInfo(info);
-
-        // Already deleted?
-        if(mo->thinker.function == (thinkfunc_t)-1) continue;
-
-        // Don't expire player mobjs.
-        if(mo->dPlayer) continue;
-
-        if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
-        {
-            // Has this mobj timed out?
-            if(nowTime - info->time > CLMOBJ_TIMEOUT)
-            {
-                LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
-                        << mo->thinker.id
-                        << info->time << nowTime
-                        << Def_GetStateName(mo->state)
-                        << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
-                        << (info->flags & CLMF_HIDDEN?        'H' : '_')
-                        << (info->flags & CLMF_NULLED?        '0' : '_');
-
-                // Too long. The server will probably never send anything
-                // for this mobj, so get rid of it. (Both unpredictable
-                // and hidden mobjs are not visible or bl/seclinked.)
-                Mobj_Destroy(mo);
-            }
-        }
-    }
-}
-
-/**
- * All client mobjs are moved and animated using the data we have.
- */
-void Cl_PredictMovement(void)
-{
-#if 0
-    clmobj_t           *cmo, *next = NULL;
-    int                 i;
-    int                 moCount = 0;
-    uint                nowTime = Timer_RealMilliseconds();
-
-    predicted_tics++;
-
-    // Move all client mobjs.
-    for(i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)
-    {
-        for(cmo = cmHash[i].first; cmo; cmo = next)
-        {
-            next = cmo->next;
-            moCount++;
-
-            if(cmo->mo.dPlayer != &ddPlayers[consolePlayer].shared &&
-               (cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN)) /*||
-               (cmo->mo.ddFlags & DDMF_MISSILE)*/)
-            {
-                // Has this mobj timed out?
-                if(nowTime - cmo->time > CLMOBJ_TIMEOUT)
-                {
-                    // Too long. The server will probably never send anything
-                    // for this mobj, so get rid of it. (Both unpredictable
-                    // and hidden mobjs are not visible or bl/seclinked.)
-                    Cl_DestroyMobj(cmo);
-                }
-                // We can't predict what Hidden and Unpredictable mobjs do.
-                // Must wait for the next delta to arrive. This mobj won't be
-                // visible until then.
-                continue;
-            }
-
-            // The local player is moved by the common game logic.
-            if(!cmo->mo.dPlayer)
-            {
-                // Linear movement prediction with collisions, then.
-                Cl_MobjMove(cmo);
-            }
-
-            // Tic away.
-            Cl_MobjAnimate(&cmo->mo);
-
-            // Remove mobjs who have reached the NULL state, from whose
-            // bourn no traveller returns.
-            if(cmo->mo.state == states)
-            {
-#ifdef _DEBUG
-                if(!cmo->mo.thinker.id) Con_Error("No clmobj id!!!!\n");
-#endif
-                Cl_DestroyMobj(cmo);
-                continue;
-            }
-
-            // Update the visual angle of the mobj (no SRVO action).
-            cmo->mo.visAngle = cmo->mo.angle >> 16;
-        }
-    }
-#ifdef _DEBUG
-    if(verbose >= 2)
-    {
-        static int timer = 0;
-
-        if(++timer > 5 * 35)
-        {
-            timer = 0;
-            Con_Printf("moCount=%i\n", moCount);
-        }
-    }
-#endif
-#endif
+    clMobjHash.iterator(expireClMobjsWorker, &nowTime);
 }
 
 mobj_t *ClMobj_Create(thid_t id)
 {
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_World().map();
+
     // Allocate enough memory for all the data.
     void *data       = Z_Calloc(sizeof(clmoinfo_t) + MOBJ_SIZE, PU_MAP, 0);
     clmoinfo_t *info = (clmoinfo_t *) data;
@@ -493,24 +409,27 @@ mobj_t *ClMobj_Create(thid_t id)
     info->endMagic = CLM_MAGIC2;
     mo->ddFlags = DDMF_REMOTE;
 
-    ClMobj_LinkInHash(mo, id);
-    App_World().map().thinkers().setMobjId(id); // Mark this ID as used.
+    map.clMobjHash.insert(mo, id);
+    map.thinkers().setMobjId(id); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
     mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
-    App_World().map().thinkers().add(reinterpret_cast<thinker_t &>(*mo));
+    map.thinkers().add(reinterpret_cast<thinker_t &>(*mo));
 
     return mo;
 }
 
 void ClMobj_Destroy(mobj_t *mo)
 {
-#ifdef _DEBUG
-    checkMobjHash();
-#endif
-
     LOG_AS("ClMobj_Destroy");
     LOG_NET_XVERBOSE("mobj %i being destroyed") << mo->thinker.id;
+
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_World().map();
+
+#ifdef DENG_DEBUG
+    map.clMobjHash.assertValid();
+#endif
 
     CL_ASSERT_CLMOBJ(mo);
     clmoinfo_t *info = ClMobj_GetInfo(mo);
@@ -519,15 +438,15 @@ void ClMobj_Destroy(mobj_t *mo)
     S_StopSound(0, mo);
 
     // The ID is free once again.
-    App_World().map().thinkers().setMobjId(mo->thinker.id, false);
-    ClMobj_UnlinkInHash(mo);
+    map.thinkers().setMobjId(mo->thinker.id, false);
+    map.clMobjHash.remove(mo);
     ClMobj_Unlink(mo); // from block/sector
 
     // This will free the entire mobj + info.
     Z_Free(info);
 
-#ifdef _DEBUG
-    checkMobjHash();
+#ifdef DENG_DEBUG
+    map.clMobjHash.assertValid();
 #endif
 }
 
@@ -894,10 +813,13 @@ void ClMobj_ReadDelta()
 
 void ClMobj_ReadNullDelta()
 {
+    LOG_AS("Cl_ReadNullMobjDelta2");
+
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_World().map();
+
     // The delta only contains an ID.
     thid_t id = Reader_ReadUInt16(msgReader);
-
-    LOG_AS("Cl_ReadNullMobjDelta2");
     LOGDEV_NET_XVERBOSE("Null %i") << id;
 
     mobj_t *mo = ClMobj_Find(id);
@@ -928,8 +850,8 @@ void ClMobj_ReadNullDelta()
     info->time = Timer_RealMilliseconds();
     info->flags |= CLMF_UNPREDICTABLE | CLMF_NULLED;
 
-#ifdef _DEBUG
-    checkMobjHash();
+#ifdef DENG_DEBUG
+    map.clMobjHash.assertValid();
 #endif
 }
 

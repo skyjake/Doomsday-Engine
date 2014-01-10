@@ -396,11 +396,7 @@ void Cl_ReadPolyDelta()
     }
 
     // Update/create the polymover thinker.
-    if(ClPolyMover *mover = map.clPolyMoverFor(*po, true/*create if necessary*/))
-    {
-        mover->move   = CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED));
-        mover->rotate = CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE));
-        return;
-    }
-    LOGDEV_NET_WARNING("Out of polymovers");
+    ClPolyMover *mover = map.clPolyMoverFor(*po, true/*create if necessary*/);
+    mover->move   = CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED));
+    mover->rotate = CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE));
 }

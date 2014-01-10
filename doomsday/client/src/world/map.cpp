@@ -200,10 +200,10 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     coord_t skyCeilingHeight;
 
     typedef QList<ClPlaneMover *> ClPlaneMovers;
-    ClPlaneMovers clActivePlanes;
+    ClPlaneMovers clPlaneMovers;
 
     typedef QList<ClPolyMover *> ClPolyMovers;
-    ClPolyMovers clActivePolyobjs;
+    ClPolyMovers clPolyMovers;
 #endif
 
     Instance(Public *i, Uri const &uri)
@@ -244,14 +244,14 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         qDeleteAll(lines);
 
 #ifdef __CLIENT__
-        while(!clActivePlanes.isEmpty())
+        while(!clPlaneMovers.isEmpty())
         {
-            Z_Free(clActivePlanes.takeFirst());
+            Z_Free(clPlaneMovers.takeFirst());
         }
 
-        while(!clActivePolyobjs.isEmpty())
+        while(!clPolyMovers.isEmpty())
         {
-            Z_Free(clActivePolyobjs.takeFirst());
+            Z_Free(clPolyMovers.takeFirst());
         }
 #endif
 
@@ -1145,9 +1145,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
 Map::Map(Uri const &uri) : d(new Instance(this, uri))
 {
-#ifdef __CLIENT__
-    zap(clMobjHash);
-#endif
     _globalGravity = 0;
     _effectiveGravity = 0;
     _ambientLightLevel = 0;
@@ -2452,18 +2449,18 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
     }
 }
 
-void Map::resetClMovers()
+void Map::clearClMovers()
 {
-    while(!d->clActivePlanes.isEmpty())
+    while(!d->clPlaneMovers.isEmpty())
     {
-        ClPlaneMover *mover = d->clActivePlanes.takeFirst();
+        ClPlaneMover *mover = d->clPlaneMovers.takeFirst();
         thinkers().remove(mover->thinker);
         Z_Free(mover);
     }
 
-    while(!d->clActivePolyobjs.isEmpty())
+    while(!d->clPolyMovers.isEmpty())
     {
-        ClPolyMover *mover = d->clActivePolyobjs.takeFirst();
+        ClPolyMover *mover = d->clPolyMovers.takeFirst();
         thinkers().remove(mover->thinker);
         Z_Free(mover);
     }
@@ -2472,7 +2469,7 @@ void Map::resetClMovers()
 ClPlaneMover *Map::clPlaneMoverFor(Plane &plane)
 {
     /// @todo optimize: O(n) lookup.
-    foreach(ClPlaneMover *mover, d->clActivePlanes)
+    foreach(ClPlaneMover *mover, d->clPlaneMovers)
     {
         if(mover->plane == &plane)
             return mover;
@@ -2496,9 +2493,9 @@ ClPlaneMover *Map::newClPlaneMover(Plane &plane, coord_t dest, float speed)
             << dest << speed;
 
     // Remove any existing movers for the same plane.
-    for(int i = 0; i < d->clActivePlanes.count(); ++i)
+    for(int i = 0; i < d->clPlaneMovers.count(); ++i)
     {
-        ClPlaneMover *mover = d->clActivePlanes[i];
+        ClPlaneMover *mover = d->clPlaneMovers[i];
         if(mover->plane == &plane)
         {
             LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i")
@@ -2511,7 +2508,7 @@ ClPlaneMover *Map::newClPlaneMover(Plane &plane, coord_t dest, float speed)
 
     // Add a new mover.
     ClPlaneMover *mov = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, 0);
-    d->clActivePlanes.append(mov);
+    d->clPlaneMovers.append(mov);
 
     mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
     mov->plane       = &plane;
@@ -2550,7 +2547,7 @@ void Map::deleteClPlaneMover(ClPlaneMover *mover)
     LOGDEV_MAP_XVERBOSE("Removing mover %p (sector: #%i)")
             << de::dintptr(mover) << mover->plane->sector().indexInMap();
     thinkers().remove(mover->thinker);
-    d->clActivePlanes.removeOne(mover);
+    d->clPlaneMovers.removeOne(mover);
 }
 
 ClPolyMover *Map::clPolyMoverFor(Polyobj &polyobj, bool canCreate)
@@ -2558,7 +2555,7 @@ ClPolyMover *Map::clPolyMoverFor(Polyobj &polyobj, bool canCreate)
     LOG_AS("Map::clPolyMoverFor");
 
     /// @todo optimize: O(n) lookup.
-    foreach(ClPolyMover *mover, d->clActivePolyobjs)
+    foreach(ClPolyMover *mover, d->clPolyMovers)
     {
         if(mover->polyobj == &polyobj)
             return mover;
@@ -2569,7 +2566,7 @@ ClPolyMover *Map::clPolyMoverFor(Polyobj &polyobj, bool canCreate)
     // Create a new mover.
     ClPolyMover *mover = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, 0);
 
-    d->clActivePolyobjs.append(mover);
+    d->clPolyMovers.append(mover);
 
     mover->thinker.function = reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker);
     mover->polyobj = &polyobj;
@@ -2589,7 +2586,7 @@ void Map::deleteClPolyMover(ClPolyMover *mover)
 
     LOG_MAP_XVERBOSE("Removing mover %p") << de::dintptr(mover);
     thinkers().remove(mover->thinker);
-    d->clActivePolyobjs.removeOne(mover);
+    d->clPolyMovers.removeOne(mover);
 }
 
 #endif // __CLIENT__

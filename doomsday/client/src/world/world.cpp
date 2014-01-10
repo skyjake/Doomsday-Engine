@@ -590,12 +590,7 @@ DENG2_PIMPL(World)
 
 #ifdef __CLIENT__
         // Prepare the client-side data.
-        if(isClient)
-        {
-            map->initClMobjs();
-        }
         Cl_ResetFrame();
-        map->reinitClMobjs();
         Cl_InitPlayers(); // Player data, too.
 
         // Spawn generators for the map.

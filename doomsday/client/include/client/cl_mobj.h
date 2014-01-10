@@ -24,6 +24,72 @@
 #include "world/p_object.h"
 
 /**
+ * @ingroup world
+ */
+class ClMobjHash
+{
+public:
+    /**
+     * The client mobjs are stored into a hash for quickly locating a ClMobj by its identifier.
+     */
+    static int const SIZE = 256;
+
+public:
+    ClMobjHash();
+
+    void clear();
+
+    /**
+     * Links the clmobj into the client mobj hash table.
+     */
+    void insert(mobj_t *mo, thid_t id);
+
+    /**
+     * Unlinks the clmobj from the client mobj hash table.
+     */
+    void remove(mobj_t *mo);
+
+    /**
+     * Searches through the client mobj hash table for the CURRENT map and
+     * returns the clmobj with the specified ID, if that exists. Note that
+     * client mobjs are also linked to the thinkers list.
+     *
+     * @param id  Mobj identifier.
+     *
+     * @return  Pointer to the mobj.
+     */
+    mobj_t *find(thid_t id) const;
+
+    /**
+     * Iterate the client mobj hash, exec the callback on each. Abort if callback
+     * returns non-zero.
+     *
+     * @param callback  Function to callback for each client mobj.
+     * @param context   Data pointer passed to the callback.
+     *
+     * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
+     */
+    int iterator(int (*callback) (struct mobj_s *, void *), void *context = 0);
+
+#ifdef DENG_DEBUG
+    void assertValid();
+#endif
+
+private:
+    struct Bucket {
+        struct clmoinfo_s *first, *last;
+    };
+    Bucket _buckets[SIZE];
+
+    inline Bucket &bucketFor(thid_t id) {
+        return _buckets[(uint) id % SIZE];
+    }
+    inline Bucket const &bucketFor(thid_t id) const {
+        return _buckets[(uint) id % SIZE];
+    }
+};
+
+/**
  * @defgroup clMobjFlags Client Mobj Flags
  * @ingroup flags
  */

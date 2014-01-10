@@ -93,7 +93,7 @@ void Cl_CleanUp()
     if(App_World().hasMap())
     {
         Cl_ResetFrame();
-        App_World().map().destroyClMobjs();
+        App_World().map().clearClMobjs();
     }
 
     Cl_InitPlayers();
@@ -101,7 +101,7 @@ void Cl_CleanUp()
 
     if(App_World().hasMap())
     {
-        App_World().map().resetClMovers();
+        App_World().map().clearClMovers();
     }
 
     GL_SetFilter(false);

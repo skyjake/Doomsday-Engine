@@ -27,6 +27,7 @@
 #include "Polyobj"
 
 #ifdef __CLIENT__
+#  include "client/cl_mobj.h"
 #  include "client/clplanemover.h"
 #  include "client/clpolymover.h"
 
@@ -53,22 +54,7 @@ class Vertex;
 
 #ifdef __CLIENT__
 class BiasTracker;
-
-struct clmoinfo_s;
-
-/**
- * The client mobjs are stored into a hash for quickly locating a ClMobj by its identifier.
- */
-#define CLIENT_MOBJ_HASH_SIZE       (256)
-
-/**
- * @ingroup world
- */
-typedef struct cmhash_s {
-    struct clmoinfo_s *first, *last;
-} cmhash_t;
-
-#endif // __CLIENT__
+#endif
 
 class LineBlockmap;
 
@@ -155,7 +141,7 @@ public:
 
 public: /// @todo make private:
 #ifdef __CLIENT__
-    cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
+    ClMobjHash clMobjHash;
 #endif
 
     coord_t _globalGravity; // The defined gravity for this map.
@@ -638,25 +624,17 @@ public:
      */
     int toIndex(BiasSource const &source) const;
 
-    /// @todo Should be private?
-    void initClMobjs();
-
     /**
      * To be called when the client is shut down.
      * @todo Should be private?
      */
-    void destroyClMobjs();
+    void clearClMobjs();
 
     /**
      * Deletes hidden, unpredictable or nulled mobjs for which we have not received
      * updates in a while.
      */
     void expireClMobjs();
-
-    /**
-     * Reset the client status. To be called when the map changes.
-     */
-    void reinitClMobjs();
 
     /**
      * Iterate the client mobj hash, exec the callback on each. Abort if callback
@@ -669,7 +647,7 @@ public:
      */
     int clMobjIterator(int (*callback) (struct mobj_s *, void *), void *context);
 
-    void resetClMovers();
+    void clearClMovers();
 
     /**
      * Allocate a new client-side plane mover.
