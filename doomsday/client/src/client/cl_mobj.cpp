@@ -143,7 +143,7 @@ mobj_t *ClMobjHash::find(thid_t id) const
     return 0;
 }
 
-int ClMobjHash::iterate(int (*callback) (struct mobj_s *, void *), void *context)
+int ClMobjHash::iterate(int (*callback) (mobj_t *, void *), void *context)
 {
     for(int i = 0; i < SIZE; ++i)
     {
@@ -213,7 +213,7 @@ void ClMobj_Link(mobj_t *mo)
 }
 
 #undef ClMobj_EnableLocalActions
-void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
+void ClMobj_EnableLocalActions(mobj_t *mo, boolean enable)
 {
     LOG_AS("ClMobj_EnableLocalActions");
 
@@ -232,7 +232,7 @@ void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
 }
 
 #undef ClMobj_LocalActionsEnabled
-boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo)
+boolean ClMobj_LocalActionsEnabled(mobj_t *mo)
 {
     clmoinfo_t *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return true;
@@ -241,8 +241,8 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo)
 
 void ClMobj_SetState(mobj_t *mo, int stnum)
 {
-    if(stnum < 0)
-        return;
+    if(stnum < 0) return;
+
     do
     {
         Mobj_SetState(mo, stnum);
@@ -388,9 +388,10 @@ mobj_t *ClMobj_Create(thid_t id)
     mobj_t *mo       = (mobj_t *) ((char *)data + sizeof(clmoinfo_t));
 
     // Initialize the data.
-    info->time = Timer_RealMilliseconds();
+    info->time       = Timer_RealMilliseconds();
     info->startMagic = CLM_MAGIC1;
-    info->endMagic = CLM_MAGIC2;
+    info->endMagic   = CLM_MAGIC2;
+
     mo->ddFlags = DDMF_REMOTE;
 
     map.clMobjHash().insert(mo, id);
@@ -836,13 +837,14 @@ void ClMobj_ReadNullDelta()
 }
 
 #undef ClMobj_Find
-struct mobj_s *ClMobj_Find(thid_t id)
+mobj_t *ClMobj_Find(thid_t id)
 {
+    /// @todo Do not assume the CURRENT map.
     return App_World().map().clMobjHash().find(id);
 }
 
 // cl_player.c
-DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum);
+DENG_EXTERN_C mobj_t* ClPlayer_ClMobj(int plrNum);
 
 DENG_DECLARE_API(Client) =
 {
