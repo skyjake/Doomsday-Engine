@@ -466,7 +466,7 @@ D_CMD(PlayMusic)
 
     if(!musAvail)
     {
-        LOG_SCR_VERBOSE("Music subsystem is not available");
+        LOGDEV_SCR_ERROR("Music subsystem is not available");
         return false;
     }
 

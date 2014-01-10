@@ -1189,7 +1189,8 @@ D_CMD(ListLumps)
         LumpIndex::print(App_FileSystem().nameIndex());
         return true;
     }
-    Con_Printf("WAD module is not presently initialized.\n");
+
+    LOG_SCR_WARNING("File system is not initialized");
     return false;
 }
 

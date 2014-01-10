@@ -838,11 +838,10 @@ void UI2_Drawer(void)
     //borderedprojectionstate_t borderedProjection;
     //boolean bordered;
 
+    LOG_AS("UI2_Drawer");
     if(!inited)
     {
-#ifdef _DEBUG
-        Con_Printf("UI2_Drawer: Not initialized yet!\n");
-#endif
+        LOGDEV_ERROR("Not initialized yet!");
         return;
     }
 
@@ -868,7 +867,7 @@ void UI2_Drawer(void)
 void FIData_PicThink(fi_object_t *obj)
 {
     fidata_pic_t *p = (fidata_pic_t *)obj;
-    if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicThink: Not a FI_PIC.");
+    DENG_ASSERT(obj && obj->type == FI_PIC);
 
     // Call parent thinker.
     FIObject_Think(obj);

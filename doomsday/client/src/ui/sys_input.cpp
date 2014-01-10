@@ -81,7 +81,9 @@ static void Mouse_Init(void)
     if(CommandLine_Check("-nomouse") || novideo)
         return;
 
-    assert(iMouse);
+    LOG_AS("Mouse_Init");
+
+    DENG_ASSERT(iMouse);
     iMouse->init();
 
     // Init was successful.

@@ -52,8 +52,8 @@ static int Mouse_Win32_Init()
 
     if(FAILED(hr))
     {
-        Con_Message("Mouse_Init: Failed to create device (0x%x: %s).",
-                    hr, DirectInput_ErrorMsg(hr));
+        LOGDEV_INPUT_ERROR("Failed to create device (0x%x: %s)")
+                << hr << DirectInput_ErrorMsg(hr);
         return false;
     }
 
@@ -61,8 +61,8 @@ static int Mouse_Win32_Init()
     hr = didMouse->SetDataFormat(&c_dfDIMouse2);
     if(FAILED(hr))
     {
-        Con_Message("Mouse_Init: Failed to set data format (0x%x: %s).",
-                    hr, DirectInput_ErrorMsg(hr));
+        LOGDEV_INPUT_ERROR("Failed to set data format (0x%x: %s)")
+                << hr << DirectInput_ErrorMsg(hr);
         goto kill_mouse;
     }
 
@@ -70,8 +70,8 @@ static int Mouse_Win32_Init()
     hr = didMouse->SetCooperativeLevel(hWnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
     if(FAILED(hr))
     {
-        Con_Message("Mouse_Init: Failed to set co-op level (0x%x: %s).",
-                    hr, DirectInput_ErrorMsg(hr));
+        LOGDEV_INPUT_ERROR("Failed to set co-op level (0x%x: %s)")
+                << hr << DirectInput_ErrorMsg(hr);
         goto kill_mouse;
     }
 

@@ -55,15 +55,15 @@ void R_PrintRendPoolInfo()
 {
     if(!rendInfoRPolys) return;
 
-    Con_Printf("RP Count: %-4i\n", numrendpolys);
+    LOGDEV_GL_MSG("RP Count: %-4i") << numrendpolys;
 
     for(uint i = 0; i < numrendpolys; ++i)
     {
         RPolyData* rp = rendPolys[i];
 
-        Con_Printf("RP: %-4u %c (vtxs=%u t=%c)\n", i,
-                   (rp->inUse? 'Y':'N'), rp->num,
-                   (rp->type == RPT_VERT? 'v' : rp->type == RPT_COLOR?'c' : 't'));
+        LOGDEV_GL_VERBOSE(_E(m) "RP: %-4u %c (vtxs=%i t=%c)")
+                << i << (rp->inUse? 'Y':'N') << rp->num
+                << (rp->type == RPT_VERT? 'v' : rp->type == RPT_COLOR? 'c' : 't');
     }
 }
 
