@@ -52,8 +52,8 @@ static IndexTransTable xlatMobjState;
 void Cl_InitTransTables()
 {
     serverMaterials = 0;
-    zap(xlatMobjType);
-    zap(xlatMobjState);
+    xlatMobjType.clear();
+    xlatMobjState.clear();
 }
 
 void Cl_ResetTransTables()
@@ -244,20 +244,20 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        map.newClPlane(sec->floor(), height[PLN_FLOOR], 0);
+        map.newClPlaneMover(sec->floor(), height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        map.newClPlane(sec->floor(), target[PLN_FLOOR], speed[PLN_FLOOR]);
+        map.newClPlaneMover(sec->floor(), target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        map.newClPlane(sec->ceiling(), height[PLN_CEILING], 0);
+        map.newClPlaneMover(sec->ceiling(), height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        map.newClPlane(sec->ceiling(), target[PLN_CEILING], speed[PLN_CEILING]);
+        map.newClPlaneMover(sec->ceiling(), target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING
@@ -354,17 +354,6 @@ void Cl_ReadSideDelta(int /*deltaType*/)
     }
 }
 
-/**
- * Find the ClPolyMover for @a polyobj; otherwise create it.
- */
-static ClPolyMover *getClPolyMover(Polyobj &polyobj)
-{
-    ClPolyMover *mover = App_World().map().clPolyobjFor(polyobj);
-    if(mover) return mover;
-    // Not found; make a new one.
-    return App_World().map().newClPolyobj(polyobj);
-}
-
 void Cl_ReadPolyDelta()
 {
     /// @todo Do not assume the CURRENT map.
@@ -407,7 +396,7 @@ void Cl_ReadPolyDelta()
     }
 
     // Update/create the polymover thinker.
-    if(ClPolyMover *mover = getClPolyMover(*po))
+    if(ClPolyMover *mover = map.clPolyMoverFor(*po, true/*create if necessary*/))
     {
         mover->move   = CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED));
         mover->rotate = CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE));

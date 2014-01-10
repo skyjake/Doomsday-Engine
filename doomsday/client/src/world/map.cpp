@@ -2469,32 +2469,20 @@ void Map::resetClMovers()
     }
 }
 
-void Map::deleteClPlane(ClPlaneMover *mover)
+ClPlaneMover *Map::clPlaneMoverFor(Plane &plane)
 {
-    LOG_AS("Map::deleteClPlane");
-
-    if(!mover) return;
-
-    LOGDEV_MAP_XVERBOSE("Removing mover %p (sector: #%i)")
-            << de::dintptr(mover) << mover->plane->sector().indexInMap();
-    thinkers().remove(mover->thinker);
-    d->clActivePlanes.removeOne(mover);
+    /// @todo optimize: O(n) lookup.
+    foreach(ClPlaneMover *mover, d->clActivePlanes)
+    {
+        if(mover->plane == &plane)
+            return mover;
+    }
+    return 0; // Not found.
 }
 
-void Map::deleteClPolyobj(ClPolyMover *mover)
+ClPlaneMover *Map::newClPlaneMover(Plane &plane, coord_t dest, float speed)
 {
-    LOG_AS("Map::deleteClPolyobj");
-
-    if(!mover) return;
-
-    LOG_MAP_XVERBOSE("Removing mover %p") << de::dintptr(mover);
-    thinkers().remove(mover->thinker);
-    d->clActivePolyobjs.removeOne(mover);
-}
-
-ClPlaneMover *Map::newClPlane(Plane &plane, coord_t dest, float speed)
-{
-    LOG_AS("Map::newClPlane");
+    LOG_AS("Map::newClPlaneMover");
 
     // Ignore planes not currently attributed to the map.
     if(&plane.map() != this)
@@ -2517,7 +2505,7 @@ ClPlaneMover *Map::newClPlane(Plane &plane, coord_t dest, float speed)
                     << de::dintptr(mover) << plane.sector().indexInMap()
                     << plane.indexInSector();
 
-            deleteClPlane(mover);
+            deleteClPlaneMover(mover);
         }
     }
 
@@ -2553,21 +2541,32 @@ ClPlaneMover *Map::newClPlane(Plane &plane, coord_t dest, float speed)
     return mov;
 }
 
-ClPolyMover *Map::clPolyobjFor(Polyobj &polyobj)
+void Map::deleteClPlaneMover(ClPlaneMover *mover)
 {
+    LOG_AS("Map::deleteClPlaneMover");
+
+    if(!mover) return;
+
+    LOGDEV_MAP_XVERBOSE("Removing mover %p (sector: #%i)")
+            << de::dintptr(mover) << mover->plane->sector().indexInMap();
+    thinkers().remove(mover->thinker);
+    d->clActivePlanes.removeOne(mover);
+}
+
+ClPolyMover *Map::clPolyMoverFor(Polyobj &polyobj, bool canCreate)
+{
+    LOG_AS("Map::clPolyMoverFor");
+
     /// @todo optimize: O(n) lookup.
     foreach(ClPolyMover *mover, d->clActivePolyobjs)
     {
         if(mover->polyobj == &polyobj)
             return mover;
     }
-    return 0; // Not found.
-}
 
-ClPolyMover *Map::newClPolyobj(Polyobj &polyobj)
-{
-    LOG_AS("Map::newClPolyobj");
+    if(!canCreate) return 0; // Not found.
 
+    // Create a new mover.
     ClPolyMover *mover = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, 0);
 
     d->clActivePolyobjs.append(mover);
@@ -2582,16 +2581,17 @@ ClPolyMover *Map::newClPolyobj(Polyobj &polyobj)
     return mover;
 }
 
-ClPlaneMover *Map::clPlaneFor(Plane &plane)
+void Map::deleteClPolyMover(ClPolyMover *mover)
 {
-    /// @todo optimize: O(n) lookup.
-    foreach(ClPlaneMover *mover, d->clActivePlanes)
-    {
-        if(mover->plane == &plane)
-            return mover;
-    }
-    return 0; // Not found.
+    LOG_AS("Map::deleteClPolyMover");
+
+    if(!mover) return;
+
+    LOG_MAP_XVERBOSE("Removing mover %p") << de::dintptr(mover);
+    thinkers().remove(mover->thinker);
+    d->clActivePolyobjs.removeOne(mover);
 }
+
 #endif // __CLIENT__
 
 D_CMD(InspectMap)

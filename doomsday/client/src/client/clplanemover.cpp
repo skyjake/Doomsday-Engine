@@ -95,7 +95,7 @@ void ClPlaneMover_Thinker(ClPlaneMover *mover)
             // It stops.
             P_SetDoublep(plane, DMU_SPEED, 0);
 
-            plane->map().deleteClPlane(mover);
+            plane->map().deleteClPlaneMover(mover);
         }
     }
 }

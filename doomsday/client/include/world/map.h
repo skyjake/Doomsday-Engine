@@ -676,20 +676,20 @@ public:
      *
      * @return  The new mover or @c NULL if arguments are invalid.
      */
-    ClPlaneMover *newClPlane(Plane &plane, coord_t dest, float speed);
+    ClPlaneMover *newClPlaneMover(Plane &plane, coord_t dest, float speed);
 
-    void deleteClPlane(ClPlaneMover *mover);
+    void deleteClPlaneMover(ClPlaneMover *mover);
 
-    ClPlaneMover *clPlaneFor(Plane &plane);
+    ClPlaneMover *clPlaneMoverFor(Plane &plane);
 
     /**
-     * @note Assumes there is no existing ClPolyobj for @a polyobj.
+     * Find/create a ClPolyMover for @a polyobj.
+     *
+     * @param canCreate  @c true= create a new one if not found.
      */
-    ClPolyMover *newClPolyobj(Polyobj &polyobj);
+    ClPolyMover *clPolyMoverFor(Polyobj &polyobj, bool canCreate = false);
 
-    void deleteClPolyobj(ClPolyMover *mover);
-
-    ClPolyMover *clPolyobjFor(Polyobj &polyobj);
+    void deleteClPolyMover(ClPolyMover *mover);
 
     /**
      * Link the given @a surface in all material lists and surface sets which
