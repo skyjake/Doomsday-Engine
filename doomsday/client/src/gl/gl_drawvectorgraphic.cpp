@@ -151,27 +151,12 @@ DENG_EXTERN_C void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale
 {
     Svg* svg = svgForId(id);
 
-    if(!origin)
-    {
-#if _DEBUG
-        if(id != 0)
-            Con_Message("GL_DrawSvg: Invalid origin argument (=NULL), aborting draw.");
-#endif
-        return;
-    }
-    if(!svg)
-    {
-#if _DEBUG
-        if(id != 0)
-            Con_Message("GL_DrawSvg: Unknown SVG id #%u, aborting draw.", (unsigned int)id);
-#endif
-        return;
-    }
+    DENG_ASSERT(origin != 0);
+    DENG_ASSERT(svg != 0);
+
     if(!Svg_Prepare(svg))
     {
-#if _DEBUG
-        Con_Message("GL_DrawSvg: Failed preparing SVG #%u, aborting draw.", (unsigned int)id);
-#endif
+        LOGDEV_GL_ERROR("Cannot draw SVG #%i: failed to prepare") << id;
         return;
     }
     
@@ -208,15 +193,13 @@ DENG_EXTERN_C void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLine
     Svg* svg, *oldSvg;
 
     // Valid id?
-    if(id == 0) Con_Error("R_NewSvg: Invalid id, zero is reserved.");
+    DENG_ASSERT(id != 0);
 
     // A new vector graphic.
     svg = Svg_FromDef(id, lines, numLines);
     if(!svg)
     {
-#if _DEBUG
-        Con_Message("Warning:R_NewSvg: Failed constructing new SVG #%u, aborting.", (unsigned int)id);
-#endif
+        LOGDEV_GL_ERROR("Failed to construct SVG #%i") << id;
         return;
     }
 
