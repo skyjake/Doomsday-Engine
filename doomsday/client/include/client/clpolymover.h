@@ -31,7 +31,6 @@
 struct ClPolyMover
 {
     thinker_t thinker;
-    int number;
     Polyobj *polyobj;
     bool move;
     bool rotate;

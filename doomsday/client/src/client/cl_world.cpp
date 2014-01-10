@@ -49,6 +49,25 @@ typedef QVector<int> IndexTransTable;
 static IndexTransTable xlatMobjType;
 static IndexTransTable xlatMobjState;
 
+void Cl_InitTransTables()
+{
+    serverMaterials = 0;
+    zap(xlatMobjType);
+    zap(xlatMobjState);
+}
+
+void Cl_ResetTransTables()
+{
+    if(serverMaterials)
+    {
+        MaterialArchive_Delete(serverMaterials);
+        serverMaterials = 0;
+    }
+
+    xlatMobjType.clear();
+    xlatMobjState.clear();
+}
+
 void Cl_ReadServerMaterials()
 {
     LOG_AS("Cl_ReadServerMaterials");
@@ -135,35 +154,6 @@ int Cl_LocalMobjState(int serverMobjState)
     if(serverMobjState < 0 || serverMobjState >= xlatMobjState.size())
         return 0; // Invalid state.
     return xlatMobjState[serverMobjState];
-}
-
-void Cl_WorldInit()
-{
-    if(App_World().hasMap())
-    {
-        App_World().map().initClMovers();
-    }
-
-    serverMaterials = 0;
-    zap(xlatMobjType);
-    zap(xlatMobjState);
-}
-
-void Cl_WorldReset()
-{
-    if(serverMaterials)
-    {
-        MaterialArchive_Delete(serverMaterials);
-        serverMaterials = 0;
-    }
-
-    xlatMobjType.clear();
-    xlatMobjState.clear();
-
-    if(App_World().hasMap())
-    {
-        App_World().map().resetClMovers();
-    }
 }
 
 void Cl_ReadSectorDelta(int /*deltaType*/)
@@ -365,14 +355,14 @@ void Cl_ReadSideDelta(int /*deltaType*/)
 }
 
 /**
- * Find the ClPolyMover associated with @a polyobjIndex; otherwise create it.
+ * Find the ClPolyMover for @a polyobj; otherwise create it.
  */
-static ClPolyMover *getClPolyMover(uint polyobjIndex)
+static ClPolyMover *getClPolyMover(Polyobj &polyobj)
 {
-    ClPolyMover *mover = App_World().map().clPolyobjByPolyobjIndex(polyobjIndex);
+    ClPolyMover *mover = App_World().map().clPolyobjFor(polyobj);
     if(mover) return mover;
     // Not found; make a new one.
-    return App_World().map().newClPolyobj(polyobjIndex);
+    return App_World().map().newClPolyobj(polyobj);
 }
 
 void Cl_ReadPolyDelta()
@@ -417,7 +407,7 @@ void Cl_ReadPolyDelta()
     }
 
     // Update/create the polymover thinker.
-    if(ClPolyMover *mover = getClPolyMover(index))
+    if(ClPolyMover *mover = getClPolyMover(*po))
     {
         mover->move   = CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED));
         mover->rotate = CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE));

@@ -560,10 +560,8 @@ void Net_InitGame(void)
     clients[0].lastTransmit = -1;
 }
 
-void Net_StopGame(void)
+void Net_StopGame()
 {
-    int     i;
-
     LOG_AS("Net_StopGame");
 
 #ifdef __SERVER__
@@ -604,10 +602,10 @@ void Net_StopGame(void)
 #endif
 
     // All remote players are forgotten.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t           *plr = &ddPlayers[i];
-        client_t           *cl = &clients[i];
+        player_t *plr = &ddPlayers[i];
+        client_t *cl = &clients[i];
 
         plr->shared.inGame = false;
         cl->ready = cl->connected = false;

@@ -199,8 +199,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
 
-    ClPlaneMover *clActivePlanes[CLIENT_MAX_MOVERS];
-    ClPolyMover *clActivePolyobjs[CLIENT_MAX_MOVERS];
+    typedef QList<ClPlaneMover *> ClPlaneMovers;
+    ClPlaneMovers clActivePlanes;
+
+    typedef QList<ClPolyMover *> ClPolyMovers;
+    ClPolyMovers clActivePolyobjs;
 #endif
 
     Instance(Public *i, Uri const &uri)
@@ -215,10 +218,6 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 #endif
     {
         zap(oldUniqueId);
-#ifdef __CLIENT__
-        zap(clActivePlanes);
-        zap(clActivePolyobjs);
-#endif
     }
 
     ~Instance()
@@ -244,9 +243,21 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
         qDeleteAll(lines);
 
+#ifdef __CLIENT__
+        while(!clActivePlanes.isEmpty())
+        {
+            Z_Free(clActivePlanes.takeFirst());
+        }
+
+        while(!clActivePolyobjs.isEmpty())
+        {
+            Z_Free(clActivePolyobjs.takeFirst());
+        }
+#endif
+
         /// @todo fixme: Free all memory we have ownership of.
         // Client only data:
-        // mobjHash/activePlanes/activePolyobjs
+        // mobjHash/
         // End client only data.
         // mobjNodes/lineNodes/lineLinks
     }
@@ -2441,95 +2452,44 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
     }
 }
 
-bool Map::isValidClPlane(int i)
-{
-    if(!d->clActivePlanes[i]) return false;
-    return (d->clActivePlanes[i]->thinker.function == reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker));
-}
-
-bool Map::isValidClPolyobj(int i)
-{
-    if(!d->clActivePolyobjs[i]) return false;
-    return (d->clActivePolyobjs[i]->thinker.function == reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker));
-}
-
-void Map::initClMovers()
-{
-    zap(d->clActivePlanes);
-    zap(d->clActivePolyobjs);
-}
-
 void Map::resetClMovers()
 {
-    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    while(!d->clActivePlanes.isEmpty())
     {
-        if(isValidClPlane(i))
-        {
-            thinkers().remove(d->clActivePlanes[i]->thinker);
-        }
-        if(isValidClPolyobj(i))
-        {
-            thinkers().remove(d->clActivePolyobjs[i]->thinker);
-        }
+        ClPlaneMover *mover = d->clActivePlanes.takeFirst();
+        thinkers().remove(mover->thinker);
+        Z_Free(mover);
     }
-}
 
-int Map::clPlaneIndex(ClPlaneMover *mover)
-{
-    if(!d->clActivePlanes) return -1;
-
-    /// @todo Optimize lookup.
-    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    while(!d->clActivePolyobjs.isEmpty())
     {
-        if(d->clActivePlanes[i] == mover)
-            return i;
+        ClPolyMover *mover = d->clActivePolyobjs.takeFirst();
+        thinkers().remove(mover->thinker);
+        Z_Free(mover);
     }
-    return -1;
-}
-
-int Map::clPolyobjIndex(ClPolyMover *mover)
-{
-    if(!d->clActivePolyobjs) return -1;
-
-    /// @todo Optimize lookup.
-    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
-    {
-        if(d->clActivePolyobjs[i] == mover)
-            return i;
-    }
-    return -1;
 }
 
 void Map::deleteClPlane(ClPlaneMover *mover)
 {
     LOG_AS("Map::deleteClPlane");
 
-    int index = clPlaneIndex(mover);
-    if(index < 0)
-    {
-        LOG_MAP_VERBOSE("Mover in sector #%i not removed!")
-                << mover->plane->sector().indexInMap();
-        return;
-    }
+    if(!mover) return;
 
-    LOG_MAP_XVERBOSE("Removing mover [%i] (sector: #%i)")
-            << index << mover->plane->sector().indexInMap();
+    LOGDEV_MAP_XVERBOSE("Removing mover %p (sector: #%i)")
+            << de::dintptr(mover) << mover->plane->sector().indexInMap();
     thinkers().remove(mover->thinker);
+    d->clActivePlanes.removeOne(mover);
 }
 
 void Map::deleteClPolyobj(ClPolyMover *mover)
 {
     LOG_AS("Map::deleteClPolyobj");
 
-    int index = clPolyobjIndex(mover);
-    if(index < 0)
-    {
-        LOG_MAP_VERBOSE("Mover not removed!");
-        return;
-    }
+    if(!mover) return;
 
-    LOG_MAP_XVERBOSE("Removing mover [%i]") << index;
+    LOG_MAP_XVERBOSE("Removing mover %p") << de::dintptr(mover);
     thinkers().remove(mover->thinker);
+    d->clActivePolyobjs.removeOne(mover);
 }
 
 ClPlaneMover *Map::newClPlane(Plane &plane, coord_t dest, float speed)
@@ -2548,105 +2508,89 @@ ClPlaneMover *Map::newClPlane(Plane &plane, coord_t dest, float speed)
             << dest << speed;
 
     // Remove any existing movers for the same plane.
-    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    for(int i = 0; i < d->clActivePlanes.count(); ++i)
     {
-        if(isValidClPlane(i) && d->clActivePlanes[i]->plane == &plane)
+        ClPlaneMover *mover = d->clActivePlanes[i];
+        if(mover->plane == &plane)
         {
-            LOG_MAP_XVERBOSE("Removing existing mover #%i in sector #%i, plane %i")
-                    << i << plane.sector().indexInMap() << plane.indexInSector();
+            LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i")
+                    << de::dintptr(mover) << plane.sector().indexInMap()
+                    << plane.indexInSector();
 
-            deleteClPlane(d->clActivePlanes[i]);
+            deleteClPlane(mover);
         }
     }
 
     // Add a new mover.
-    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    ClPlaneMover *mov = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, 0);
+    d->clActivePlanes.append(mov);
+
+    mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
+    mov->plane       = &plane;
+    mov->destination = dest;
+    mov->speed       = speed;
+
+    // Set the right sign for speed.
+    if(mov->destination < P_GetDoublep(&plane, DMU_HEIGHT))
     {
-        if(d->clActivePlanes[i]) continue;
-
-        LOG_MAP_XVERBOSE("New mover #%i") << i;
-
-        // Allocate a new clplane_t thinker.
-        ClPlaneMover *mov = d->clActivePlanes[i] = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, &d->clActivePlanes[i]);
-
-        mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
-        mov->plane       = &plane;
-        mov->destination = dest;
-        mov->speed       = speed;
-
-        // Set the right sign for speed.
-        if(mov->destination < P_GetDoublep(&plane, DMU_HEIGHT))
-        {
-            mov->speed = -mov->speed;
-        }
-
-        // Update speed and target height.
-        P_SetDoublep(&plane, DMU_TARGET_HEIGHT, dest);
-        P_SetFloatp(&plane, DMU_SPEED, speed);
-
-        thinkers().add(mov->thinker, false /*not public*/);
-
-        // Immediate move?
-        if(de::fequal(speed, 0))
-        {
-            // This will remove the thinker immediately if the move is ok.
-            ClPlaneMover_Thinker(mov);
-        }
-        return mov;
+        mov->speed = -mov->speed;
     }
 
-    throw Error("Map::newClPlane", "Exhausted activemovers");
+    // Update speed and target height.
+    P_SetDoublep(&plane, DMU_TARGET_HEIGHT, dest);
+    P_SetFloatp(&plane, DMU_SPEED, speed);
+
+    thinkers().add(mov->thinker, false /*not public*/);
+
+    // Immediate move?
+    if(de::fequal(speed, 0))
+    {
+        // This will remove the thinker immediately if the move is ok.
+        ClPlaneMover_Thinker(mov);
+    }
+
+    LOGDEV_MAP_XVERBOSE("New mover #%p") << de::dintptr(mov);
+    return mov;
 }
 
-ClPolyMover *Map::clPolyobjByPolyobjIndex(int index)
+ClPolyMover *Map::clPolyobjFor(Polyobj &polyobj)
 {
-    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    /// @todo optimize: O(n) lookup.
+    foreach(ClPolyMover *mover, d->clActivePolyobjs)
     {
-        if(!isValidClPolyobj(i)) continue;
-
-        if(d->clActivePolyobjs[i]->number == index)
-            return d->clActivePolyobjs[i];
+        if(mover->polyobj == &polyobj)
+            return mover;
     }
-
-    return 0;
+    return 0; // Not found.
 }
 
-ClPolyMover *Map::newClPolyobj(int polyobjIndex)
+ClPolyMover *Map::newClPolyobj(Polyobj &polyobj)
 {
     LOG_AS("Map::newClPolyobj");
 
-    // Take the first unused slot.
-    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
-    {
-        if(d->clActivePolyobjs[i]) continue;
+    ClPolyMover *mover = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, 0);
 
-        LOG_MAP_XVERBOSE("New polymover [%i] for polyobj #%i.") << i << polyobjIndex;
+    d->clActivePolyobjs.append(mover);
 
-        ClPolyMover *mover = d->clActivePolyobjs[i] = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, &d->clActivePolyobjs[i]);
+    mover->thinker.function = reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker);
+    mover->polyobj = &polyobj;
 
-        mover->thinker.function = reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker);
-        mover->polyobj = polyobjs().at(polyobjIndex);
-        mover->number  = polyobjIndex;
+    thinkers().add(mover->thinker, false /*not public*/);
 
-        thinkers().add(mover->thinker, false /*not public*/);
-
-        return mover;
-    }
-
-    return 0; // Not successful.
+    LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i.")
+            << de::dintptr(mover) << polyobj.indexInMap();
+    return mover;
 }
 
 ClPlaneMover *Map::clPlaneFor(Plane &plane)
 {
-    for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
+    /// @todo optimize: O(n) lookup.
+    foreach(ClPlaneMover *mover, d->clActivePlanes)
     {
-        if(!isValidClPlane(i)) continue;
-        if(d->clActivePlanes[i]->plane != &plane) continue;
-
-        // Found it!
-        return d->clActivePlanes[i];
+        if(mover->plane == &plane)
+            return mover;
     }
-    return 0;
+    return 0; // Not found.
 }
 #endif // __CLIENT__
 

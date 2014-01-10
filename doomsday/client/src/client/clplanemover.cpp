@@ -39,13 +39,6 @@ void ClPlaneMover_Thinker(ClPlaneMover *mover)
     DENG2_ASSERT(mover->plane != 0);
     Plane *plane = mover->plane;
 
-#ifdef DENG_DEBUG
-    if(plane->map().clPlaneIndex(mover) < 0)
-    {
-        LOG_MAP_WARNING("Running a mover that is not in activemovers!");
-    }
-#endif
-
     // The move is cancelled if the consolePlayer becomes obstructed.
     bool const freeMove = ClPlayer_IsFreeToMove(consolePlayer);
     float const fspeed = mover->speed;

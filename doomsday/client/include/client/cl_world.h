@@ -23,12 +23,12 @@
 /**
  * Clears the arrays that track active plane and polyobj mover thinkers.
  */
-void Cl_WorldInit();
+void Cl_InitTransTables();
 
 /**
  * Removes all the active movers.
  */
-void Cl_WorldReset();
+void Cl_ResetTransTables();
 
 /**
  * Handles the PSV_MATERIAL_ARCHIVE packet sent by the server. The list of

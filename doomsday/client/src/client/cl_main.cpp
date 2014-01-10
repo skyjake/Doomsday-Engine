@@ -97,7 +97,13 @@ void Cl_CleanUp()
     }
 
     Cl_InitPlayers();
-    Cl_WorldReset();
+    Cl_ResetTransTables();
+
+    if(App_World().hasMap())
+    {
+        App_World().map().resetClMovers();
+    }
+
     GL_SetFilter(false);
 }
 
@@ -190,7 +196,7 @@ void Cl_AnswerHandshake()
 
     // Prepare the client-side data.
     Cl_InitPlayers();
-    Cl_WorldInit();
+    Cl_InitTransTables();
 
     // Get ready for ticking.
     DD_ResetTimer();

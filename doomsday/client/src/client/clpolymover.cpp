@@ -68,8 +68,8 @@ void ClPolyMover_Thinker(ClPolyMover *mover)
         //    /* && po->destAngle != -1*/) || !po->angleSpeed)
         if(!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
-            LOG_MAP_XVERBOSE("Mover %i reached end of turn, destAngle=%i")
-                    << mover->number << po->destAngle;
+            LOGDEV_MAP_XVERBOSE("Mover %p reached end of turn, destAngle=%i")
+                    << de::dintptr(mover) << po->destAngle;
 
             // We'll arrive at the destination.
             mover->rotate = false;

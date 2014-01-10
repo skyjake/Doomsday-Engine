@@ -68,8 +68,6 @@ typedef struct cmhash_s {
     struct clmoinfo_s *first, *last;
 } cmhash_t;
 
-#define CLIENT_MAX_MOVERS           1024 // Definitely enough!
-
 #endif // __CLIENT__
 
 class LineBlockmap;
@@ -671,8 +669,6 @@ public:
      */
     int clMobjIterator(int (*callback) (struct mobj_s *, void *), void *context);
 
-    void initClMovers();
-
     void resetClMovers();
 
     /**
@@ -684,24 +680,16 @@ public:
 
     void deleteClPlane(ClPlaneMover *mover);
 
-    int clPlaneIndex(ClPlaneMover *mover);
-
     ClPlaneMover *clPlaneFor(Plane &plane);
 
-    bool isValidClPlane(int i);
-
     /**
-     * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
+     * @note Assumes there is no existing ClPolyobj for @a polyobj.
      */
-    ClPolyMover *newClPolyobj(int polyobjIndex);
+    ClPolyMover *newClPolyobj(Polyobj &polyobj);
 
     void deleteClPolyobj(ClPolyMover *mover);
 
-    int clPolyobjIndex(ClPolyMover *mover);
-
-    ClPolyMover *clPolyobjByPolyobjIndex(int index);
-
-    bool isValidClPolyobj(int i);
+    ClPolyMover *clPolyobjFor(Polyobj &polyobj);
 
     /**
      * Link the given @a surface in all material lists and surface sets which
