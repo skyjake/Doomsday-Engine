@@ -257,8 +257,8 @@ static int PIT_CrossLine(Line *line, void *context)
              parm.crossAABox.minY > aaBox->maxY))
         {
             // Line blocks trajectory?
-            return    Line_PointOnSide(line, parm.crossMobj->origin) < 0
-                   != Line_PointOnSide(line, parm.destination)       < 0;
+            return    (Line_PointOnSide(line, parm.crossMobj->origin) < 0)
+                   != (Line_PointOnSide(line, parm.destination)       < 0);
         }
     }
 
@@ -1688,6 +1688,9 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
     if(icpt->type == ICPT_LINE)
     {
         bool lineWasHit = false;
+#ifdef __JHEXEN__
+        DENG_UNUSED(lineWasHit);
+#endif
 
         Line *line = icpt->line;
         xline_t *xline = P_ToXLine(line);
