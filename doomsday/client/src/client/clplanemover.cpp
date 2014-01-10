@@ -46,8 +46,6 @@ void ClPlaneMover_Thinker(ClPlaneMover *mover)
     }
 #endif
 
-    int const dmuPlane = (plane->indexInSector() == 0? DMU_FLOOR_OF_SECTOR : DMU_CEILING_OF_SECTOR);
-
     // The move is cancelled if the consolePlayer becomes obstructed.
     bool const freeMove = ClPlayer_IsFreeToMove(consolePlayer);
     float const fspeed = mover->speed;
