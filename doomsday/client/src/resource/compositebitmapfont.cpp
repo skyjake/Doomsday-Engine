@@ -61,7 +61,7 @@ DENG2_PIMPL(CompositeBitmapFont)
 
     Glyph &glyph(uchar ch)
     {
-        if(ch >= MAX_CHARS) return missingGlyph;
+        //if(ch >= MAX_CHARS) return missingGlyph;
         if(!glyphs[ch].haveSourceImage) return missingGlyph;
         return glyphs[ch];
     }
@@ -122,7 +122,7 @@ patchid_t CompositeBitmapFont::glyphPatch(uchar ch)
 
 void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
 {
-    if(ch >= MAX_CHARS) return;
+    //if(ch >= MAX_CHARS) return;
     d->glyphs[ch].patch = App_ResourceSystem().declarePatch(encodedPatchName);
 
     // We'll need to rebuild the prepared GL resources.

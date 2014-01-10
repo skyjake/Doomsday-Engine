@@ -2683,6 +2683,7 @@ static void SV_ReadLine(Line *li)
 
     // A type byte?
     lineclass_t type;
+
 #if __JHEXEN__
     if(mapVersion < 4)
 #else
@@ -2691,6 +2692,10 @@ static void SV_ReadLine(Line *li)
         type = lc_normal;
     else
         type = lineclass_t(SV_ReadByte());
+
+#ifdef __JHEXEN__
+    DENG_UNUSED(type);
+#endif
 
     // A version byte?
     int ver;

@@ -920,7 +920,7 @@ static void createChannels(int num2D, int bits, int rate)
     LOG_AS("Sfx_CreateChannels");
 
     // Change the primary buffer's format to match the channel format.
-    float parm[2] = { bits, rate };
+    float parm[2] = { float(bits), float(rate) };
     AudioDriver_SFX()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
     // Try to create a buffer for each channel.
