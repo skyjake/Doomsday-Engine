@@ -1,4 +1,4 @@
-/** @file cl_mobj.cpp Client map objects.
+/** @file cl_mobj.cpp  Client map objects.
  * @ingroup client
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,13 +19,11 @@
  * 02110-1301 USA</small>
  */
 
-#include <math.h>
-
 #define DENG_NO_API_MACROS_CLIENT
 
-#include <de/vector1.h>
-
 #include "de_base.h"
+#include "client/cl_mobj.h"
+
 #include "de_defs.h"
 #include "de_system.h"
 #include "de_console.h"
@@ -34,6 +32,8 @@
 #include "de_audio.h"
 
 #include "world/thinkers.h"
+#include <de/vector1.h>
+#include <cmath>
 
 using namespace de;
 
@@ -50,8 +50,6 @@ using namespace de;
 /// allow the missile to move free of the shooter. (Quite a hack!)
 #define MISSILE_FREE_MOVE_TIME  1000
 
-extern int gotFrame; ///< @todo Remove this...
-
 /**
  * @return  Pointer to the hash chain with the specified id.
  */
@@ -67,8 +65,8 @@ static cmhash_t *ClMobj_Hash(thid_t id)
     return Map_ClMobjHash(App_World().map(), id);
 }
 
-#ifdef _DEBUG
-void checkMobjHash()
+#ifdef DENG_DEBUG
+static void checkMobjHash()
 {
     Map &map = App_World().map();
     for(int i = 0; i < CLIENT_MOBJ_HASH_SIZE; ++i)

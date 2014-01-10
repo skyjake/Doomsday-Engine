@@ -26,8 +26,10 @@
 #include "network/net_main.h"
 #include "network/net_msg.h"
 
-static finaleid_t currentFinale = 0;
-static finaleid_t remoteFinale = 0;
+#include <de/memory.h>
+
+static finaleid_t currentFinale;
+static finaleid_t remoteFinale;
 
 finaleid_t Cl_CurrentFinale()
 {
@@ -36,19 +38,19 @@ finaleid_t Cl_CurrentFinale()
 
 void Cl_Finale(Reader *msg)
 {
-    int flags = Reader_ReadByte(msg);
-    byte *script = 0;
-    int len;
-    finaleid_t finaleId = Reader_ReadUInt32(msg);
-
     LOG_AS("Cl_Finale");
+
+    byte *script = 0;
+
+    int const flags           = Reader_ReadByte(msg);
+    finaleid_t const finaleId = Reader_ReadUInt32(msg);
 
     if(flags & FINF_SCRIPT)
     {
         // Read the script into map-scope memory. It will be freed
         // when the next map is loaded.
-        len = Reader_ReadUInt32(msg);
-        script = (byte *) malloc(len + 1);
+        int len = Reader_ReadUInt32(msg);
+        script = (byte *) M_Malloc(len + 1);
         Reader_Read(msg, script, len);
         script[len] = 0;
     }
@@ -76,7 +78,7 @@ void Cl_Finale(Reader *msg)
         FI_ScriptRequestSkip(currentFinale);
     }
 
-    if(script) free(script);
+    if(script) M_Free(script);
 }
 
 void Cl_RequestFinaleSkip()

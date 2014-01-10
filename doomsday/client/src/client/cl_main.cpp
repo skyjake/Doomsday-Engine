@@ -37,18 +37,15 @@
 using namespace de;
 
 ident_t clientID;
-boolean handshakeReceived = false;
-int gameReady = false;
+boolean handshakeReceived;
+int gameReady;
 int serverTime;
-boolean netLoggedIn = false; // Logged in to the server.
-int clientPaused = false; // Set by the server.
+boolean netLoggedIn; // Logged in to the server.
+int clientPaused; // Set by the server.
 
 void Cl_InitID()
 {
-    int i;
-    FILE *file;
-
-    if((i = CommandLine_CheckWith("-id", 1)) != 0)
+    if(int i = CommandLine_CheckWith("-id", 1))
     {
         clientID = strtoul(CommandLine_At(i + 1), 0, 0);
         LOG_NET_NOTE("Using custom client ID: 0x%08x") << clientID;
@@ -57,7 +54,7 @@ void Cl_InitID()
 
     // Read the client ID number file.
     srand(time(NULL));
-    if((file = fopen("client.id", "rb")) != NULL)
+    if(FILE *file = fopen("client.id", "rb"))
     {
         if(fread(&clientID, sizeof(clientID), 1, file))
         {
@@ -67,12 +64,14 @@ void Cl_InitID()
         }
         fclose(file);
     }
+
     // Ah-ha, we need to generate a new ID.
     clientID = (ident_t)
         ULONG(Timer_RealMilliseconds() * rand() + (rand() & 0xfff) +
               ((rand() & 0xfff) << 12) + ((rand() & 0xff) << 24));
+
     // Write it to the file.
-    if((file = fopen("client.id", "wb")) != NULL)
+    if(FILE *file = fopen("client.id", "wb"))
     {
         fwrite(&clientID, sizeof(clientID), 1, file);
         fclose(file);
@@ -121,15 +120,14 @@ void Cl_SendHello()
     Net_SendBuffer(0, 0);
 }
 
-void Cl_AnswerHandshake(void)
+void Cl_AnswerHandshake()
 {
-    byte remoteVersion = Reader_ReadByte(msgReader);
-    byte myConsole = Reader_ReadByte(msgReader);
-    uint playersInGame = Reader_ReadUInt32(msgReader);
-    float remoteGameTime = Reader_ReadFloat(msgReader);
-    int i;
-
     LOG_AS("Cl_AnswerHandshake");
+
+    byte remoteVersion   = Reader_ReadByte(msgReader);
+    byte myConsole       = Reader_ReadByte(msgReader);
+    uint playersInGame   = Reader_ReadUInt32(msgReader);
+    float remoteGameTime = Reader_ReadFloat(msgReader);
 
     // Immediately send an acknowledgement. This lets the server evaluate
     // an approximate ping time.
@@ -150,7 +148,7 @@ void Cl_AnswerHandshake(void)
 
     // Update time and player ingame status.
     gameTime = remoteGameTime;
-    for(i = 0; i < DDMAXPLAYERS; ++i)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         /// @todo With multiple local players, must clear only the appropriate flags.
         ddPlayers[i].shared.flags &= ~DDPF_LOCAL;
@@ -184,7 +182,7 @@ void Cl_AnswerHandshake(void)
     LOGDEV_NET_MSG("Answering handshake: myConsole:%i, remoteGameTime:%.2f")
             << myConsole << remoteGameTime;
 
-    /**
+    /*
      * Tell the game that we have arrived. The map will be changed when the
      * game's handshake arrives (handled in the game).
      */
@@ -200,16 +198,14 @@ void Cl_AnswerHandshake(void)
     Con_Executef(CMDS_DDAY, true, "setcon %i", consolePlayer);
 }
 
-void Cl_HandlePlayerInfo(void)
+void Cl_HandlePlayerInfo()
 {
-    player_t* plr;
-    boolean present;
     byte console = Reader_ReadByte(msgReader);
-    size_t len = Reader_ReadUInt16(msgReader);
-    char name[PLAYERNAMELEN];
 
+    size_t len = Reader_ReadUInt16(msgReader);
     len = MIN_OF(PLAYERNAMELEN - 1, len);
-    memset(name, 0, sizeof(name));
+
+    char name[PLAYERNAMELEN]; zap(name);
     Reader_Read(msgReader, name, len);
 
     LOG_NET_VERBOSE("Player %i named \"%s\"") << console << name;
@@ -218,8 +214,8 @@ void Cl_HandlePlayerInfo(void)
     if(console >= DDMAXPLAYERS)
         return;
 
-    plr = &ddPlayers[console];
-    present = plr->shared.inGame;
+    player_t *plr = &ddPlayers[console];
+    bool present = plr->shared.inGame;
     plr->shared.inGame = true;
 
     strcpy(clients[console].name, name);
@@ -251,27 +247,20 @@ void Cl_GetPackets()
         // a game is in progress.
         if(Cl_GameReady())
         {
-            boolean handled = true;
-
             switch(netBuffer.msg.type)
             {
             case PSV_FIRST_FRAME2:
             case PSV_FRAME2:
                 Cl_Frame2Received(netBuffer.msg.type);
-                break;
+                Msg_EndRead();
+                continue; // Get the next packet.
 
             case PSV_SOUND:
                 Cl_Sound();
-                break;
-
-            default:
-                handled = false;
-            }
-
-            if(handled)
-            {
                 Msg_EndRead();
                 continue; // Get the next packet.
+
+            default: break;
             }
         }
 
@@ -323,8 +312,7 @@ void Cl_GetPackets()
             Cl_PlayerLeaves(Reader_ReadByte(msgReader));
             break;
 
-        case PKT_CHAT:
-        {
+        case PKT_CHAT: {
             int msgfrom = Reader_ReadByte(msgReader);
             int mask = Reader_ReadUInt32(msgReader);
             DENG_UNUSED(mask);
@@ -335,16 +323,14 @@ void Cl_GetPackets()
             Net_ShowChatMessage(msgfrom, msg);
             gx.NetPlayerEvent(msgfrom, DDPE_CHAT_MESSAGE, msg);
             M_Free(msg);
-            break;
-        }
+            break; }
 
         case PSV_SERVER_CLOSE:  // We should quit?
             netLoggedIn = false;
             Con_Execute(CMDS_DDAY, "net disconnect", true, false);
             break;
 
-        case PSV_CONSOLE_TEXT:
-        {
+        case PSV_CONSOLE_TEXT: {
             uint32_t conFlags = Reader_ReadUInt32(msgReader);
             uint16_t textLen = Reader_ReadUInt16(msgReader);
             char *text = (char *) M_Malloc(textLen + 1);
@@ -352,8 +338,7 @@ void Cl_GetPackets()
             text[textLen] = 0;
             Con_FPrintf(conFlags, "%s", text);
             M_Free(text);
-            break;
-        }
+            break; }
 
         case PKT_LOGIN:
             // Server responds to our login request. Let's see if we
@@ -385,11 +370,13 @@ void Cl_GetPackets()
  * Check the state of the client on engineside. This is a debugging utility
  * and only gets called when _DEBUG is defined.
  */
-void Cl_Assertions(int plrNum)
+static void assertPlayerIsValid(int plrNum)
 {
-    player_t           *plr;
-    mobj_t             *clmo, *mo;
-    clplayerstate_t    *s;
+    LOG_AS("Client.assertPlayerIsValid");
+
+    player_t *plr;
+    mobj_t *clmo, *mo;
+    clplayerstate_t *s;
 
     if(!isClient || !Cl_GameReady() || clientPaused) return;
     if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
@@ -401,12 +388,10 @@ void Cl_Assertions(int plrNum)
     if(!s->clMobjId || !plr->shared.mo)
         return;
 
-    LOG_AS("Cl_Assertions");
-
     clmo = ClMobj_Find(s->clMobjId);
     if(!clmo)
     {
-        LOGDEV_NET_NOTE("Client %i does not have a clmobj yet [%i]") << plrNum << s->clMobjId;
+        LOGDEV_NET_NOTE("Player %i does not have a clmobj yet [%i]") << plrNum << s->clMobjId;
         return;
     }
     mo = plr->shared.mo;
@@ -418,11 +403,11 @@ void Cl_Assertions(int plrNum)
     // Make sure the flags are correctly set for a client.
     if(mo->ddFlags & DDMF_REMOTE)
     {
-        LOGDEV_NET_NOTE("Client %i's mobj should not be remote") << plrNum;
+        LOGDEV_NET_NOTE("Player %i's mobj should not be remote") << plrNum;
     }
     if(clmo->ddFlags & DDMF_SOLID)
     {
-        LOGDEV_NET_NOTE("Client %i's clmobj should not be solid (when player is alive)") << plrNum;
+        LOGDEV_NET_NOTE("Player %i's clmobj should not be solid (when player is alive)") << plrNum;
     }
 }
 
@@ -460,7 +445,7 @@ void Cl_Ticker(timespan_t ticLength)
         ClPlayer_UpdateOrigin(i);
 
 #ifdef DENG_DEBUG
-        Cl_Assertions(i);
+        assertPlayerIsValid(i);
 #endif
     }
 
