@@ -27,9 +27,9 @@
 
 DENG_EXTERN_C ident_t clientID;
 DENG_EXTERN_C int serverTime;
-DENG_EXTERN_C boolean handshakeReceived;
+DENG_EXTERN_C bool handshakeReceived;
 DENG_EXTERN_C int gameReady;
-DENG_EXTERN_C boolean netLoggedIn;
+DENG_EXTERN_C bool netLoggedIn;
 DENG_EXTERN_C int clientPaused;
 
 void Cl_InitID();

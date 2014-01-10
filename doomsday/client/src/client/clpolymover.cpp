@@ -23,7 +23,6 @@
 #include "client/cl_def.h"
 #include "client/cl_player.h"
 
-#include "world/world.h"
 #include "world/map.h"
 #include "world/p_players.h"
 

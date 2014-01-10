@@ -20,16 +20,21 @@
 #include "de_base.h"
 #include "client/cl_def.h"
 
-#include "de_console.h"
-#include "de_system.h"
-#include "de_network.h"
-#include "de_graphics.h"
-#include "de_misc.h"
-#include "de_play.h"
+#include "api_client.h"
+#include "client/cl_frame.h"
+#include "client/cl_infine.h"
+#include "client/cl_player.h"
+#include "client/cl_sound.h"
+#include "client/cl_world.h"
+
+#include "con_main.h"
+
+#include "network/net_demo.h"
 
 #include "world/map.h"
-#include "render/r_main.h"
+#include "world/p_players.h"
 
+#include <de/timer.h>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -37,10 +42,10 @@
 using namespace de;
 
 ident_t clientID;
-boolean handshakeReceived;
+bool handshakeReceived;
 int gameReady;
 int serverTime;
-boolean netLoggedIn; // Logged in to the server.
+bool netLoggedIn; // Logged in to the server.
 int clientPaused; // Set by the server.
 
 void Cl_InitID()
@@ -321,7 +326,7 @@ void Cl_GetPackets()
         case PKT_CHAT: {
             int msgfrom = Reader_ReadByte(msgReader);
             int mask = Reader_ReadUInt32(msgReader);
-            DENG_UNUSED(mask);
+            DENG2_UNUSED(mask);
             size_t len = Reader_ReadUInt16(msgReader);
             char *msg = (char *) M_Malloc(len + 1);
             Reader_Read(msgReader, msg, len);
@@ -347,9 +352,8 @@ void Cl_GetPackets()
             break; }
 
         case PKT_LOGIN:
-            // Server responds to our login request. Let's see if we
-            // were successful.
-            netLoggedIn = Reader_ReadByte(msgReader);
+            // Server responds to our login request. Let's see if we were successful.
+            netLoggedIn = CPP_BOOL(Reader_ReadByte(msgReader));
             break;
 
         case PSV_FINALE:
@@ -380,27 +384,23 @@ static void assertPlayerIsValid(int plrNum)
 {
     LOG_AS("Client.assertPlayerIsValid");
 
-    player_t *plr;
-    mobj_t *clmo, *mo;
-    clplayerstate_t *s;
-
     if(!isClient || !Cl_GameReady() || clientPaused) return;
     if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
 
-    plr = &ddPlayers[plrNum];
-    s = ClPlayer_State(plrNum);
+    player_t *plr = &ddPlayers[plrNum];
+    clplayerstate_t *s = ClPlayer_State(plrNum);
 
     // Must have a mobj!
     if(!s->clMobjId || !plr->shared.mo)
         return;
 
-    clmo = ClMobj_Find(s->clMobjId);
+    mobj_t *clmo = ClMobj_Find(s->clMobjId);
     if(!clmo)
     {
         LOGDEV_NET_NOTE("Player %i does not have a clmobj yet [%i]") << plrNum << s->clMobjId;
         return;
     }
-    mo = plr->shared.mo;
+    mobj_t *mo = plr->shared.mo;
 
     /*
     ("Assert: client %i, clmo %i (flags 0x%x)", plrNum, clmo->thinker.id, clmo->ddFlags);

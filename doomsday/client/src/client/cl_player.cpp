@@ -20,12 +20,13 @@
 #include "de_base.h"
 #include "client/cl_player.h"
 
-#include "de_console.h"
-#include "de_network.h"
-#include "de_play.h"
+#include "api_client.h"
 
-#include "def_main.h"
+#include "network/net_main.h"
+#include "network/protocol.h"
 
+#include "world/map.h"
+#include "world/p_players.h"
 #include "BspLeaf"
 
 #include <de/Vector>
@@ -51,9 +52,9 @@ void Cl_InitPlayers()
 {
     //fixTics = 0;
     pspY = 0;
-    memset(&clPlayerStates, 0, sizeof(clPlayerStates));
-    //memset(fixPos, 0, sizeof(fixPos));
-    memset(cpMom, 0, sizeof(cpMom));
+    de::zap(clPlayerStates);
+    //de::zap(fixPos);
+    de::zap(cpMom);
 }
 
 clplayerstate_t *ClPlayer_State(int plrNum)
@@ -62,32 +63,10 @@ clplayerstate_t *ClPlayer_State(int plrNum)
     return &clPlayerStates[plrNum];
 }
 
-/**
- * Thrust (with a multiplier).
- */
-void Cl_ThrustMul(mobj_t *mo, angle_t angle, float move, float thmul)
-{
-    // Make a fine angle.
-    angle >>= ANGLETOFINESHIFT;
-    move *= thmul;
-    mo->mom[MX] += move * FIX2FLT(fineCosine[angle]);
-    mo->mom[MY] += move * FIX2FLT(finesine[angle]);
-}
-
-void Cl_Thrust(mobj_t *mo, angle_t angle, float move)
-{
-    Cl_ThrustMul(mo, angle, move, 1);
-}
-
-/**
- * @param plrNum  Player number.
- *
- * @return  The engineside client mobj of a player, representing a remote mobj on the server.
- */
 #undef ClPlayer_ClMobj
-DENG_EXTERN_C struct mobj_s* ClPlayer_ClMobj(int plrNum)
+DENG_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
 {
-    assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
     return ClMobj_Find(clPlayerStates[plrNum].clMobjId);
 }
 
@@ -111,7 +90,7 @@ void ClPlayer_UpdateOrigin(int plrNum)
 
     // The player's client mobj is not linked to any lists, so position
     // can be updated without any hassles.
-    memcpy(remoteClientMobj->origin, localMobj->origin, sizeof(localMobj->origin));
+    std::memcpy(remoteClientMobj->origin, localMobj->origin, sizeof(localMobj->origin));
     Mobj_Link(remoteClientMobj, 0); // Update bspLeaf pointer.
     remoteClientMobj->floorZ = localMobj->floorZ;
     remoteClientMobj->ceilingZ = localMobj->ceilingZ;
@@ -122,20 +101,20 @@ void ClPlayer_UpdateOrigin(int plrNum)
 
 void ClPlayer_ApplyPendingFixes(int plrNum)
 {
+    LOG_AS("ClPlayer_ApplyPendingFixes");
+
     clplayerstate_t *state = ClPlayer_State(plrNum);
-    player_t        *plr = &ddPlayers[plrNum];
-    mobj_t          *clmo = ClPlayer_ClMobj(plrNum);
-    ddplayer_t      *ddpl = &plr->shared;
-    mobj_t          *mo = ddpl->mo;
-    boolean          sendAck = false;
+    player_t *plr = &ddPlayers[plrNum];
+    mobj_t *clmo = ClPlayer_ClMobj(plrNum);
+    ddplayer_t *ddpl = &plr->shared;
+    mobj_t *mo = ddpl->mo;
+    bool sendAck = false;
 
     // If either mobj is missing, the fix cannot be applied yet.
     if(!mo || !clmo) return;
 
     if(clmo->thinker.id != state->pendingFixTargetClMobjId)
         return;
-
-    LOG_AS("ClPlayer_ApplyPendingFixes");
 
     DENG_ASSERT(clmo->thinker.id == state->clMobjId);
 
@@ -202,22 +181,16 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
 
 void ClPlayer_HandleFix()
 {
-    int plrNum = 0;
-    int fixes = 0;
-    player_t* plr;
-    ddplayer_t* ddpl;
-    clplayerstate_t* state;
-
     LOG_AS("Cl_HandlePlayerFix");
 
     // Target player.
-    plrNum = Reader_ReadByte(msgReader);
-    plr = &ddPlayers[plrNum];
-    ddpl = &plr->shared;
-    state = ClPlayer_State(plrNum);
+    int plrNum = Reader_ReadByte(msgReader);
+    player_t *plr = &ddPlayers[plrNum];
+    ddplayer_t *ddpl = &plr->shared;
+    clplayerstate_t *state = ClPlayer_State(plrNum);
 
     // What to fix?
-    fixes = Reader_ReadUInt32(msgReader);
+    int fixes = Reader_ReadUInt32(msgReader);
 
     state->pendingFixTargetClMobjId = Reader_ReadUInt16(msgReader);
 
@@ -309,13 +282,10 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
 
 void ClPlayer_ReadDelta()
 {
-    int df = 0, psdf, i, idx;
-    clplayerstate_t *s;
-    ddplayer_t *ddpl;
-    ddpsprite_t *psp;
-    ushort num, newId;
-
     LOG_AS("ClPlayer_ReadDelta2");
+
+    int df = 0;
+    ushort num;
 
     // The first byte consists of a player number and some flags.
     num = Reader_ReadByte(msgReader);
@@ -323,14 +293,13 @@ void ClPlayer_ReadDelta()
     df |= Reader_ReadByte(msgReader); // Second byte is just flags.
     num &= 0xf; // Clear the upper bits of the number.
 
-    s = &clPlayerStates[num];
-    ddpl = &ddPlayers[num].shared;
+    clplayerstate_t *s = &clPlayerStates[num];
+    ddplayer_t *ddpl = &ddPlayers[num].shared;
 
     if(df & PDF_MOBJ)
     {
-        mobj_t *old = ClMobj_Find(s->clMobjId);
-
-        newId = Reader_ReadUInt16(msgReader);
+        mobj_t *old  = ClMobj_Find(s->clMobjId);
+        ushort newId = Reader_ReadUInt16(msgReader);
 
         // Make sure the 'new' mobj is different than the old one;
         // there will be linking problems otherwise.
@@ -398,26 +367,38 @@ void ClPlayer_ReadDelta()
     }
 
     if(df & PDF_FORWARDMOVE)
+    {
         s->forwardMove = (char) Reader_ReadByte(msgReader) * 2048;
+    }
+
     if(df & PDF_SIDEMOVE)
+    {
         s->sideMove = (char) Reader_ReadByte(msgReader) * 2048;
+    }
+
     if(df & PDF_ANGLE)
     {
         //s->angle = Reader_ReadByte(msgReader) << 24;
         DENG_UNUSED(Reader_ReadByte(msgReader));
     }
+
     if(df & PDF_TURNDELTA)
     {
         s->turnDelta = ((char) Reader_ReadByte(msgReader) << 24) / 16;
     }
+
     if(df & PDF_FRICTION)
+    {
         s->friction = Reader_ReadByte(msgReader) << 8;
+    }
+
     if(df & PDF_EXTRALIGHT)
     {
-        i = Reader_ReadByte(msgReader);
-        ddpl->fixedColorMap = i & 7;
-        ddpl->extraLight = i & 0xf8;
+        int val = Reader_ReadByte(msgReader);
+        ddpl->fixedColorMap = val & 7;
+        ddpl->extraLight    = val & 0xf8;
     }
+
     if(df & PDF_FILTER)
     {
         uint filter = Reader_ReadUInt32(msgReader);
@@ -438,18 +419,22 @@ void ClPlayer_ReadDelta()
         LOG_NET_XVERBOSE("View filter color set remotely to %s")
                 << Vector4f(ddpl->filterColor).asText();
     }
+
     if(df & PDF_PSPRITES)
     {
-        for(i = 0; i < 2; ++i)
+        for(int i = 0; i < 2; ++i)
         {
             // First the flags.
-            psdf = Reader_ReadByte(msgReader);
-            psp = ddpl->pSprites + i;
+            int psdf = Reader_ReadByte(msgReader);
+            ddpsprite_t *psp = ddpl->pSprites + i;
+
             if(psdf & PSDF_STATEPTR)
             {
-                idx = Reader_ReadPackedUInt16(msgReader);
+                int idx = Reader_ReadPackedUInt16(msgReader);
                 if(!idx)
+                {
                     psp->statePtr = 0;
+                }
                 else if(idx < countStates.num)
                 {
                     psp->statePtr = states + (idx - 1);
@@ -458,11 +443,20 @@ void ClPlayer_ReadDelta()
             }
 
             /*if(psdf & PSDF_LIGHT)
-                psp->light = Reader_ReadByte(msgReader) / 255.0f;*/
+            {
+                psp->light = Reader_ReadByte(msgReader) / 255.0f;
+            }*/
+
             if(psdf & PSDF_ALPHA)
+            {
                 psp->alpha = Reader_ReadByte(msgReader) / 255.0f;
+            }
+
             if(psdf & PSDF_STATE)
+            {
                 psp->state = Reader_ReadByte(msgReader);
+            }
+
             if(psdf & PSDF_OFFSET)
             {
                 psp->offset[VX] = (char) Reader_ReadByte(msgReader) * 2;

@@ -28,6 +28,9 @@
  */
 void Cl_ReadSoundDelta(deltatype_t type);
 
+/**
+ * Called when a PSV_FRAME sound packet is received.
+ */
 void Cl_Sound();
 
 #endif // DENG_CLIENT_SOUND_H

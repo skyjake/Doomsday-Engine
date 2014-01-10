@@ -44,6 +44,11 @@ DENG_API_TYPEDEF(Client)
      */
     boolean (*Mobj_IsValid)(struct mobj_s *mo);
 
+    /**
+     * @param plrNum  Player number.
+     *
+     * @return  The engineside client mobj of a player, representing a remote mobj on the server.
+     */
     struct mobj_s* (*Mobj_PlayerMobj)(int plrNum);
 }
 DENG_API_T(Client);
