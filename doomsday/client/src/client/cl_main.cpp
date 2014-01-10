@@ -93,7 +93,7 @@ void Cl_CleanUp()
     if(App_World().hasMap())
     {
         Cl_ResetFrame();
-        App_World().map().clearClMobjs();
+        App_World().map().clMobjHash().clear();
     }
 
     Cl_InitPlayers();

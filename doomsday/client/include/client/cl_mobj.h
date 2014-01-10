@@ -24,14 +24,13 @@
 #include "world/p_object.h"
 
 /**
+ * Client mobjs are stored into a hash for fast lookup by it's identifier.
+ *
  * @ingroup world
  */
 class ClMobjHash
 {
 public:
-    /**
-     * The client mobjs are stored into a hash for quickly locating a ClMobj by its identifier.
-     */
     static int const SIZE = 256;
 
 public:
@@ -69,7 +68,7 @@ public:
      *
      * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
      */
-    int iterator(int (*callback) (struct mobj_s *, void *), void *context = 0);
+    int iterate(int (*callback) (struct mobj_s *, void *), void *context = 0);
 
 #ifdef DENG_DEBUG
     void assertValid();

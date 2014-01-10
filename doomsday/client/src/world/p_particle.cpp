@@ -1267,7 +1267,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
                 // Client's should also check the client mobjs.
                 if(isClient)
                 {
-                    App_World().map().clMobjIterator(PIT_ClientMobjParticles, gen);
+                    App_World().map().clMobjHash().iterate(PIT_ClientMobjParticles, gen);
                 }
 #endif
                 App_World().map().thinkers()

@@ -199,6 +199,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
     coord_t skyFloorHeight;
     coord_t skyCeilingHeight;
 
+    ClMobjHash clMobjHash;
+
     typedef QList<ClPlaneMover *> ClPlaneMovers;
     ClPlaneMovers clPlaneMovers;
 
@@ -1301,6 +1303,11 @@ void Map::spreadAllContacts(AABoxd const &region)
     d->lumobjContactBlockmap->
         spread(AABoxd(region.minX - Lumobj::radiusMax(), region.minY - Lumobj::radiusMax(),
                       region.maxX + Lumobj::radiusMax(), region.maxY + Lumobj::radiusMax()));
+}
+
+ClMobjHash &Map::clMobjHash()
+{
+    return d->clMobjHash;
 }
 
 #endif // __CLIENT__

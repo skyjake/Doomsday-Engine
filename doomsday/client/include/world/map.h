@@ -140,10 +140,6 @@ public:
 #endif
 
 public: /// @todo make private:
-#ifdef __CLIENT__
-    ClMobjHash clMobjHash;
-#endif
-
     coord_t _globalGravity; // The defined gravity for this map.
     coord_t _effectiveGravity; // The effective gravity for this map.
 
@@ -625,27 +621,10 @@ public:
     int toIndex(BiasSource const &source) const;
 
     /**
-     * To be called when the client is shut down.
-     * @todo Should be private?
-     */
-    void clearClMobjs();
-
-    /**
      * Deletes hidden, unpredictable or nulled mobjs for which we have not received
      * updates in a while.
      */
     void expireClMobjs();
-
-    /**
-     * Iterate the client mobj hash, exec the callback on each. Abort if callback
-     * returns non-zero.
-     *
-     * @param callback  Function to callback for each client mobj.
-     * @param context   Data pointer passed to the callback.
-     *
-     * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
-     */
-    int clMobjIterator(int (*callback) (struct mobj_s *, void *), void *context);
 
     void clearClMovers();
 
@@ -781,6 +760,11 @@ public: /// @todo Make private:
      * Initialize the map object => BSP leaf "contact" blockmaps.
      */
     void initContactBlockmaps();
+
+    /**
+     * Provides access to the client mobj hash.
+     */
+    ClMobjHash &clMobjHash();
 #endif // __CLIENT__
 
 public:

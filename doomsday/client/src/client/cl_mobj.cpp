@@ -103,7 +103,7 @@ void ClMobjHash::insert(mobj_t *mo, thid_t id)
 
 void ClMobjHash::remove(mobj_t *mo)
 {
-    Bucket &chain = bucketFor(mo->thinker.id);
+    Bucket &bucket = bucketFor(mo->thinker.id);
     clmoinfo_t *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
@@ -112,10 +112,10 @@ void ClMobjHash::remove(mobj_t *mo)
     assertValid();
 #endif
 
-    if(chain.first == info)
-        chain.first = info->next;
-    if(chain.last == info)
-        chain.last = info->prev;
+    if(bucket.first == info)
+        bucket.first = info->next;
+    if(bucket.last == info)
+        bucket.last = info->prev;
     if(info->next)
         info->next->prev = info->prev;
     if(info->prev)
@@ -143,7 +143,7 @@ mobj_t *ClMobjHash::find(thid_t id) const
     return 0;
 }
 
-int ClMobjHash::iterator(int (*callback) (struct mobj_s *, void *), void *context)
+int ClMobjHash::iterate(int (*callback) (struct mobj_s *, void *), void *context)
 {
     for(int i = 0; i < SIZE; ++i)
     {
@@ -184,17 +184,6 @@ mobj_t *ClMobj_MobjForInfo(clmoinfo_t *info)
     DENG2_ASSERT(info->endMagic == CLM_MAGIC2);
 
     return (mobj_t *) ((char *)info + sizeof(clmoinfo_t));
-}
-
-#undef ClMobj_Find
-struct mobj_s *ClMobj_Find(thid_t id)
-{
-    return App_World().map().clMobjHash.find(id);
-}
-
-int Map::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
-{
-    return clMobjHash.iterator(callback, context);
 }
 
 void ClMobj_Unlink(mobj_t *mo)
@@ -344,11 +333,6 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     }
 }
 
-void Map::clearClMobjs()
-{
-    clMobjHash.clear();
-}
-
 /// @return  @c false= Continue iteration.
 static int expireClMobjsWorker(mobj_t *mo, void *context)
 {
@@ -390,7 +374,7 @@ static int expireClMobjsWorker(mobj_t *mo, void *context)
 void Map::expireClMobjs()
 {
     uint nowTime = Timer_RealMilliseconds();
-    clMobjHash.iterator(expireClMobjsWorker, &nowTime);
+    clMobjHash().iterate(expireClMobjsWorker, &nowTime);
 }
 
 mobj_t *ClMobj_Create(thid_t id)
@@ -409,7 +393,7 @@ mobj_t *ClMobj_Create(thid_t id)
     info->endMagic = CLM_MAGIC2;
     mo->ddFlags = DDMF_REMOTE;
 
-    map.clMobjHash.insert(mo, id);
+    map.clMobjHash().insert(mo, id);
     map.thinkers().setMobjId(id); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
@@ -428,7 +412,7 @@ void ClMobj_Destroy(mobj_t *mo)
     Map &map = App_World().map();
 
 #ifdef DENG_DEBUG
-    map.clMobjHash.assertValid();
+    map.clMobjHash().assertValid();
 #endif
 
     CL_ASSERT_CLMOBJ(mo);
@@ -439,14 +423,14 @@ void ClMobj_Destroy(mobj_t *mo)
 
     // The ID is free once again.
     map.thinkers().setMobjId(mo->thinker.id, false);
-    map.clMobjHash.remove(mo);
+    map.clMobjHash().remove(mo);
     ClMobj_Unlink(mo); // from block/sector
 
     // This will free the entire mobj + info.
     Z_Free(info);
 
 #ifdef DENG_DEBUG
-    map.clMobjHash.assertValid();
+    map.clMobjHash().assertValid();
 #endif
 }
 
@@ -487,7 +471,7 @@ clmoinfo_t *ClMobj_GetInfo(mobj_t *mo)
 
 boolean ClMobj_Reveal(mobj_t *mo)
 {
-    LOG_AS("Cl_RevealMobj");
+    LOG_AS("ClMobj_Reveal");
 
     clmoinfo_t *info = ClMobj_GetInfo(mo);
 
@@ -562,17 +546,11 @@ static boolean ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 
 void ClMobj_ReadDelta()
 {
-    bool needsLinking = false, justCreated = false;
-    clmoinfo_t *info = 0;
-    mobj_t *mo = 0;
-    mobj_t *d;
-    short mom;
-    thid_t id = Reader_ReadUInt16(msgReader);   // Read the ID.
-    bool onFloor = false;
-    mobj_t oldState;
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_World().map();
 
-    // Flags.
-    int df = Reader_ReadUInt16(msgReader);
+    thid_t const id = Reader_ReadUInt16(msgReader); // Read the ID.
+    int const df    = Reader_ReadUInt16(msgReader); // Flags.
 
     // More flags?
     byte moreFlags = 0, fastMom = false;
@@ -589,8 +567,9 @@ void ClMobj_ReadDelta()
             << id << df << moreFlags;
 
     // Get a mobj for this.
-    mo = ClMobj_Find(id);
-    info = ClMobj_GetInfo(mo);
+    mobj_t *mo = map.clMobjHash().find(id);
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    bool needsLinking = false, justCreated = false;
     if(!mo)
     {
         LOG_NET_XVERBOSE("Creating new clmobj %i (hidden)") << id;
@@ -615,7 +594,7 @@ void ClMobj_ReadDelta()
         info->time = Timer_RealMilliseconds();
     }
 
-    d = mo;
+    mobj_t *d = mo;
 
     /*if(d->dPlayer && d->dPlayer == &ddPlayers[consolePlayer])
     {
@@ -632,7 +611,8 @@ void ClMobj_ReadDelta()
     }
 
     // Remember where the mobj used to be in case we need to cancel a move.
-    zap(oldState);
+    mobj_t oldState; zap(oldState);
+    bool onFloor = false;
 
     // Coordinates with three bytes.
     if(df & MDF_ORIGIN_X)
@@ -680,17 +660,17 @@ void ClMobj_ReadDelta()
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
-        mom = Reader_ReadInt16(msgReader);
+        short mom = Reader_ReadInt16(msgReader);
         d->mom[MX] = FIX2FLT(fastMom? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
     if(df & MDF_MOM_Y)
     {
-        mom = Reader_ReadInt16(msgReader);
+        short mom = Reader_ReadInt16(msgReader);
         d->mom[MY] = FIX2FLT(fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
     if(df & MDF_MOM_Z)
     {
-        mom = Reader_ReadInt16(msgReader);
+        short mom = Reader_ReadInt16(msgReader);
         d->mom[MZ] = FIX2FLT(fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
 
@@ -813,7 +793,7 @@ void ClMobj_ReadDelta()
 
 void ClMobj_ReadNullDelta()
 {
-    LOG_AS("Cl_ReadNullMobjDelta2");
+    LOG_AS("ClMobj_ReadNullDelta");
 
     /// @todo Do not assume the CURRENT map.
     Map &map = App_World().map();
@@ -822,7 +802,7 @@ void ClMobj_ReadNullDelta()
     thid_t id = Reader_ReadUInt16(msgReader);
     LOGDEV_NET_XVERBOSE("Null %i") << id;
 
-    mobj_t *mo = ClMobj_Find(id);
+    mobj_t *mo = map.clMobjHash().find(id);
     if(!mo)
     {
         // Wasted bandwidth...
@@ -851,8 +831,14 @@ void ClMobj_ReadNullDelta()
     info->flags |= CLMF_UNPREDICTABLE | CLMF_NULLED;
 
 #ifdef DENG_DEBUG
-    map.clMobjHash.assertValid();
+    map.clMobjHash().assertValid();
 #endif
+}
+
+#undef ClMobj_Find
+struct mobj_s *ClMobj_Find(thid_t id)
+{
+    return App_World().map().clMobjHash().find(id);
 }
 
 // cl_player.c
