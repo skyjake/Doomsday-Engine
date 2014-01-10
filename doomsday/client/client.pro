@@ -217,6 +217,7 @@ DENG_HEADERS += \
     include/client/cl_sound.h \
     include/client/cl_world.h \
     include/client/clplanemover.h \
+    include/client/clpolymover.h \
     include/clientapp.h \
     include/color.h \
     include/con_bar.h \
@@ -604,6 +605,7 @@ SOURCES += \
     src/client/cl_sound.cpp \
     src/client/cl_world.cpp \
     src/client/clplanemover.cpp \
+    src/client/clpolymover.cpp \
     src/clientapp.cpp \
     src/color.cpp \
     src/con_bar.cpp \

@@ -28,6 +28,7 @@
 
 #ifdef __CLIENT__
 #  include "client/clplanemover.h"
+#  include "client/clpolymover.h"
 
 #  include "world/world.h"
 #  include "p_particle.h"
@@ -68,8 +69,6 @@ typedef struct cmhash_s {
 } cmhash_t;
 
 #define CLIENT_MAX_MOVERS           1024 // Definitely enough!
-
-struct ClPolyMover;
 
 #endif // __CLIENT__
 
@@ -161,7 +160,7 @@ public: /// @todo make private:
     cmhash_t clMobjHash[CLIENT_MOBJ_HASH_SIZE];
 
     ClPlaneMover *clActivePlanes[CLIENT_MAX_MOVERS];
-    struct ClPolyMover *clActivePolyobjs[CLIENT_MAX_MOVERS];
+    ClPolyMover *clActivePolyobjs[CLIENT_MAX_MOVERS];
 #endif
 
     coord_t _globalGravity; // The defined gravity for this map.
@@ -697,13 +696,13 @@ public:
     /**
      * @note Assumes there is no existing ClPolyobj for Polyobj @a index.
      */
-    struct ClPolyMover *newClPolyobj(int polyobjIndex);
+    ClPolyMover *newClPolyobj(int polyobjIndex);
 
-    void deleteClPolyobj(struct ClPolyMover *mover);
+    void deleteClPolyobj(ClPolyMover *mover);
 
-    int clPolyobjIndex(struct ClPolyMover *mover);
+    int clPolyobjIndex(ClPolyMover *mover);
 
-    struct ClPolyMover *clPolyobjByPolyobjIndex(int index);
+    ClPolyMover *clPolyobjByPolyobjIndex(int index);
 
     bool isValidClPolyobj(int i);
 
