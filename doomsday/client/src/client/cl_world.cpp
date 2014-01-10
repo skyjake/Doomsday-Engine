@@ -21,31 +21,27 @@
 #include "de_base.h"
 #include "client/cl_world.h"
 
-#include "de_console.h"
-#include "de_network.h"
-#include "de_play.h"
-#include "de_filesys.h"
-#include "de_defs.h"
-#include "de_misc.h"
+#include "client/cl_def.h"
+#include "client/cl_player.h"
 
 #include "api_map.h"
 #include "api_materialarchive.h"
 
+#include "network/net_msg.h"
+#include "network/protocol.h"
+
+#include "Surface"
 #include "world/map.h"
+#include "world/p_players.h"
 #include "world/thinkers.h"
 
-#include "r_util.h"
-
+#include <de/memoryzone.h>
+#include <QVector>
 #include <cmath>
 
 using namespace de;
 
-#define MAX_TRANSLATIONS    16384
-
-#define MVF_CEILING         0x1 ///< Move ceiling.
-#define MVF_SET_FLOORPIC    0x2 ///< Set floor texture when move done.
-
-struct clplane_t
+struct ClPlaneMover
 {
     thinker_t thinker;
     int sectorIndex;
@@ -56,31 +52,27 @@ struct clplane_t
     float speed;
 };
 
-struct clpolyobj_t
+/**
+ * Plane mover. Makes changes in planes using DMU.
+ */
+void ClPlaneMover_Thinker(ClPlaneMover *mover);
+
+struct ClPolyMover
 {
     thinker_t thinker;
     int number;
     Polyobj *polyobj;
-    boolean move;
-    boolean rotate;
+    bool move;
+    bool rotate;
 };
 
-struct indextranstable_t
-{
-    int size;
-    int *serverToLocal;
-};
-
-/**
- * Plane mover. Makes changes in planes using DMU.
- */
-void Cl_MoverThinker(clplane_t *mover);
-
-void Cl_PolyMoverThinker(clpolyobj_t *mover);
+void ClPolyMover_Thinker(ClPolyMover *mover);
 
 static MaterialArchive *serverMaterials;
-static indextranstable_t xlatMobjType;
-static indextranstable_t xlatMobjState;
+
+typedef QVector<int> IndexTransTable;
+static IndexTransTable xlatMobjType;
+static IndexTransTable xlatMobjState;
 
 void Cl_ReadServerMaterials()
 {
@@ -95,20 +87,6 @@ void Cl_ReadServerMaterials()
     LOGDEV_NET_VERBOSE("Received %i materials") << MaterialArchive_Count(serverMaterials);
 }
 
-static void setTableSize(indextranstable_t *table, int size)
-{
-    if(size > 0)
-    {
-        table->serverToLocal = (int *) M_Realloc(table->serverToLocal, sizeof(*table->serverToLocal) * size);
-    }
-    else
-    {
-        M_Free(table->serverToLocal);
-        table->serverToLocal = 0;
-    }
-    table->size = size;
-}
-
 void Cl_ReadServerMobjTypeIDs()
 {
     LOG_AS("Cl_ReadServerMobjTypeIDs");
@@ -118,13 +96,13 @@ void Cl_ReadServerMobjTypeIDs()
 
     LOGDEV_NET_VERBOSE("Received %i mobj type IDs") << StringArray_Size(ar);
 
-    setTableSize(&xlatMobjType, StringArray_Size(ar));
+    xlatMobjType.resize(StringArray_Size(ar));
 
     // Translate the type IDs to local.
     for(int i = 0; i < StringArray_Size(ar); ++i)
     {
-        xlatMobjType.serverToLocal[i] = Def_GetMobjNum(StringArray_At(ar, i));
-        if(xlatMobjType.serverToLocal[i] < 0)
+        xlatMobjType[i] = Def_GetMobjNum(StringArray_At(ar, i));
+        if(xlatMobjType[i] < 0)
         {
             LOG_NET_WARNING("Could not find '%s' in local thing definitions")
                     << StringArray_At(ar, i);
@@ -143,13 +121,13 @@ void Cl_ReadServerMobjStateIDs()
 
     LOGDEV_NET_VERBOSE("Received %i mobj state IDs") << StringArray_Size(ar);
 
-    setTableSize(&xlatMobjState, StringArray_Size(ar));
+    xlatMobjState.resize(StringArray_Size(ar));
 
     // Translate the type IDs to local.
     for(int i = 0; i < StringArray_Size(ar); ++i)
     {
-        xlatMobjState.serverToLocal[i] = Def_GetStateNum(StringArray_At(ar, i));
-        if(xlatMobjState.serverToLocal[i] < 0)
+        xlatMobjState[i] = Def_GetStateNum(StringArray_At(ar, i));
+        if(xlatMobjState[i] < 0)
         {
             LOG_NET_WARNING("Could not find '%s' in local state definitions")
                     << StringArray_At(ar, i);
@@ -172,28 +150,28 @@ static Material *Cl_FindLocalMaterial(materialarchive_serialid_t archId)
 
 int Cl_LocalMobjType(int serverMobjType)
 {
-    if(serverMobjType < 0 || serverMobjType >= xlatMobjType.size)
+    if(serverMobjType < 0 || serverMobjType >= xlatMobjType.size())
         return 0; // Invalid type.
-    return xlatMobjType.serverToLocal[serverMobjType];
+    return xlatMobjType[serverMobjType];
 }
 
 int Cl_LocalMobjState(int serverMobjState)
 {
-    if(serverMobjState < 0 || serverMobjState >= xlatMobjState.size)
+    if(serverMobjState < 0 || serverMobjState >= xlatMobjState.size())
         return 0; // Invalid state.
-    return xlatMobjState.serverToLocal[serverMobjState];
+    return xlatMobjState[serverMobjState];
 }
 
 bool Map::isValidClPlane(int i)
 {
     if(!clActivePlanes[i]) return false;
-    return (clActivePlanes[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_MoverThinker));
+    return (clActivePlanes[i]->thinker.function == reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker));
 }
 
 bool Map::isValidClPolyobj(int i)
 {
     if(!clActivePolyobjs[i]) return false;
-    return (clActivePolyobjs[i]->thinker.function == reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker));
+    return (clActivePolyobjs[i]->thinker.function == reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker));
 }
 
 void Map::initClMovers()
@@ -237,8 +215,8 @@ void Cl_WorldReset()
         serverMaterials = 0;
     }
 
-    setTableSize(&xlatMobjType, 0);
-    setTableSize(&xlatMobjState, 0);
+    xlatMobjType.clear();
+    xlatMobjState.clear();
 
     if(App_World().hasMap())
     {
@@ -246,7 +224,7 @@ void Cl_WorldReset()
     }
 }
 
-int Map::clPlaneIndex(clplane_t *mover)
+int Map::clPlaneIndex(ClPlaneMover *mover)
 {
     if(!clActivePlanes) return -1;
 
@@ -259,7 +237,7 @@ int Map::clPlaneIndex(clplane_t *mover)
     return -1;
 }
 
-int Map::clPolyobjIndex(clpolyobj_t *mover)
+int Map::clPolyobjIndex(ClPolyMover *mover)
 {
     if(!clActivePolyobjs) return -1;
 
@@ -272,7 +250,7 @@ int Map::clPolyobjIndex(clpolyobj_t *mover)
     return -1;
 }
 
-void Map::deleteClPlane(clplane_t *mover)
+void Map::deleteClPlane(ClPlaneMover *mover)
 {
     LOG_AS("Map::deleteClPlane");
 
@@ -287,7 +265,7 @@ void Map::deleteClPlane(clplane_t *mover)
     thinkers().remove(mover->thinker);
 }
 
-void Map::deleteClPolyobj(clpolyobj_t *mover)
+void Map::deleteClPolyobj(ClPolyMover *mover)
 {
     LOG_AS("Map::deleteClPolyobj");
 
@@ -302,7 +280,7 @@ void Map::deleteClPolyobj(clpolyobj_t *mover)
     thinkers().remove(mover->thinker);
 }
 
-void Cl_MoverThinker(clplane_t *mover)
+void ClPlaneMover_Thinker(ClPlaneMover *mover)
 {
     LOG_AS("Cl_MoverThinker");
 
@@ -377,7 +355,7 @@ void Cl_MoverThinker(clplane_t *mover)
     }
 }
 
-clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, float speed)
+ClPlaneMover *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, float speed)
 {
     LOG_AS("Map::newClPlane");
 
@@ -415,9 +393,9 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
         LOG_MAP_XVERBOSE("New mover #%i") << i;
 
         // Allocate a new clplane_t thinker.
-        clplane_t *mov = clActivePlanes[i] = (clplane_t *) Z_Calloc(sizeof(clplane_t), PU_MAP, &clActivePlanes[i]);
+        ClPlaneMover *mov = clActivePlanes[i] = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, &clActivePlanes[i]);
 
-        mov->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_MoverThinker);
+        mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
         mov->type        = type;
         mov->sectorIndex = sectorIndex;
         mov->destination = dest;
@@ -441,7 +419,7 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
         if(de::fequal(speed, 0))
         {
             // This will remove the thinker immediately if the move is ok.
-            Cl_MoverThinker(mov);
+            ClPlaneMover_Thinker(mov);
         }
         return mov;
     }
@@ -449,7 +427,7 @@ clplane_t *Map::newClPlane(int sectorIndex, clplanetype_t type, coord_t dest, fl
     throw Error("Map::newClPlane", "Exhausted activemovers");
 }
 
-void Cl_PolyMoverThinker(clpolyobj_t *mover)
+void ClPolyMover_Thinker(ClPolyMover *mover)
 {
     DENG2_ASSERT(mover != 0);
 
@@ -511,7 +489,7 @@ void Cl_PolyMoverThinker(clpolyobj_t *mover)
     }
 }
 
-clpolyobj_t *Map::clPolyobjByPolyobjIndex(int index)
+ClPolyMover *Map::clPolyobjByPolyobjIndex(int index)
 {
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
@@ -524,7 +502,7 @@ clpolyobj_t *Map::clPolyobjByPolyobjIndex(int index)
     return 0;
 }
 
-clpolyobj_t *Map::newClPolyobj(int polyobjIndex)
+ClPolyMover *Map::newClPolyobj(int polyobjIndex)
 {
     LOG_AS("Map::newClPolyobj");
 
@@ -535,9 +513,9 @@ clpolyobj_t *Map::newClPolyobj(int polyobjIndex)
 
         LOG_MAP_XVERBOSE("New polymover [%i] for polyobj #%i.") << i << polyobjIndex;
 
-        clpolyobj_t *mover = clActivePolyobjs[i] = (clpolyobj_t *) Z_Calloc(sizeof(clpolyobj_t), PU_MAP, &clActivePolyobjs[i]);
+        ClPolyMover *mover = clActivePolyobjs[i] = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, &clActivePolyobjs[i]);
 
-        mover->thinker.function = reinterpret_cast<thinkfunc_t>(Cl_PolyMoverThinker);
+        mover->thinker.function = reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker);
         mover->polyobj = polyobjs().at(polyobjIndex);
         mover->number  = polyobjIndex;
 
@@ -549,9 +527,9 @@ clpolyobj_t *Map::newClPolyobj(int polyobjIndex)
     return 0; // Not successful.
 }
 
-clpolyobj_t *Cl_FindOrMakeActivePoly(uint polyobjIndex)
+ClPolyMover *Cl_FindOrMakeActivePoly(uint polyobjIndex)
 {
-    clpolyobj_t *mover = App_World().map().clPolyobjByPolyobjIndex(polyobjIndex);
+    ClPolyMover *mover = App_World().map().clPolyobjByPolyobjIndex(polyobjIndex);
     if(mover) return mover;
     // Not found; make a new one.
     return App_World().map().newClPolyobj(polyobjIndex);
@@ -559,7 +537,7 @@ clpolyobj_t *Cl_FindOrMakeActivePoly(uint polyobjIndex)
 
 void Cl_SetPolyMover(uint number, int move, int rotate)
 {
-    clpolyobj_t *mover = Cl_FindOrMakeActivePoly(number);
+    ClPolyMover *mover = Cl_FindOrMakeActivePoly(number);
     if(!mover)
     {
         LOGDEV_NET_WARNING("Out of polymovers");
@@ -571,7 +549,7 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
     if(rotate) mover->rotate = true;
 }
 
-clplane_t *Map::clPlaneBySectorIndex(int sectorIndex, clplanetype_t type)
+ClPlaneMover *Map::clPlaneBySectorIndex(int sectorIndex, clplanetype_t type)
 {
     for(int i = 0; i < CLIENT_MAX_MOVERS; ++i)
     {
@@ -598,12 +576,9 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     float speed[2]  = { 0, 0 };
 
     // Sector index number.
-    ushort num = Reader_ReadUInt16(msgReader);
-
-#ifdef _DEBUG
-    DENG_ASSERT(num < map.sectorCount());
-#endif
-    Sector *sec = map.sectors().at(num);
+    int const index = Reader_ReadUInt16(msgReader);
+    DENG2_ASSERT(index < map.sectorCount());
+    Sector *sec = map.sectors().at(index);
 
     // Flags.
     int df = Reader_ReadPackedUInt32(msgReader);
@@ -676,20 +651,20 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        map.newClPlane(num, CPT_FLOOR, height[PLN_FLOOR], 0);
+        map.newClPlane(index, CPT_FLOOR, height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        map.newClPlane(num, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
+        map.newClPlane(index, CPT_FLOOR, target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        map.newClPlane(num, CPT_CEILING, height[PLN_CEILING], 0);
+        map.newClPlane(index, CPT_CEILING, height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        map.newClPlane(num, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
+        map.newClPlane(index, CPT_CEILING, target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING
@@ -698,83 +673,50 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
 
 void Cl_ReadSideDelta(int /*deltaType*/)
 {
-    ushort num;
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_World().map();
 
-    int df, topMat = 0, midMat = 0, botMat = 0;
-    int blendmode = 0;
-    byte lineFlags = 0, sideFlags = 0;
-    float toprgb[3] = {0,0,0}, midrgba[4] = {0,0,0,0};
-    float bottomrgb[3] = {0,0,0};
+    int const index = Reader_ReadUInt16(msgReader);
+    int const df    = Reader_ReadPackedUInt32(msgReader); // Flags.
 
-    // First read all the data.
-    num = Reader_ReadUInt16(msgReader);
-
-    // Flags.
-    df = Reader_ReadPackedUInt32(msgReader);
-
-    if(df & SIDF_TOP_MATERIAL)
-        topMat = Reader_ReadPackedUInt16(msgReader);
-    if(df & SIDF_MID_MATERIAL)
-        midMat = Reader_ReadPackedUInt16(msgReader);
-    if(df & SIDF_BOTTOM_MATERIAL)
-        botMat = Reader_ReadPackedUInt16(msgReader);
-    if(df & SIDF_LINE_FLAGS)
-        lineFlags = Reader_ReadByte(msgReader);
-
-    if(df & SIDF_TOP_COLOR_RED)
-        toprgb[CR] = Reader_ReadByte(msgReader) / 255.f;
-    if(df & SIDF_TOP_COLOR_GREEN)
-        toprgb[CG] = Reader_ReadByte(msgReader) / 255.f;
-    if(df & SIDF_TOP_COLOR_BLUE)
-        toprgb[CB] = Reader_ReadByte(msgReader) / 255.f;
-
-    if(df & SIDF_MID_COLOR_RED)
-        midrgba[CR] = Reader_ReadByte(msgReader) / 255.f;
-    if(df & SIDF_MID_COLOR_GREEN)
-        midrgba[CG] = Reader_ReadByte(msgReader) / 255.f;
-    if(df & SIDF_MID_COLOR_BLUE)
-        midrgba[CB] = Reader_ReadByte(msgReader) / 255.f;
-    if(df & SIDF_MID_COLOR_ALPHA)
-        midrgba[CA] = Reader_ReadByte(msgReader) / 255.f;
-
-    if(df & SIDF_BOTTOM_COLOR_RED)
-        bottomrgb[CR] = Reader_ReadByte(msgReader) / 255.f;
-    if(df & SIDF_BOTTOM_COLOR_GREEN)
-        bottomrgb[CG] = Reader_ReadByte(msgReader) / 255.f;
-    if(df & SIDF_BOTTOM_COLOR_BLUE)
-        bottomrgb[CB] = Reader_ReadByte(msgReader) / 255.f;
-
-    if(df & SIDF_MID_BLENDMODE)
-        blendmode = Reader_ReadInt32(msgReader);
-
-    if(df & SIDF_FLAGS)
-        sideFlags = Reader_ReadByte(msgReader);
-
-    LineSide *side = App_World().map().sideByIndex(num);
+    LineSide *side = map.sideByIndex(index);
     DENG2_ASSERT(side != 0);
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        side->top().setMaterial(Cl_FindLocalMaterial(topMat));
+        int matIndex = Reader_ReadPackedUInt16(msgReader);
+        side->top().setMaterial(Cl_FindLocalMaterial(matIndex));
     }
+
     if(df & SIDF_MID_MATERIAL)
     {
-        side->middle().setMaterial(Cl_FindLocalMaterial(midMat));
+        int matIndex = Reader_ReadPackedUInt16(msgReader);
+        side->middle().setMaterial(Cl_FindLocalMaterial(matIndex));
     }
+
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        side->bottom().setMaterial(Cl_FindLocalMaterial(botMat));
+        int matIndex = Reader_ReadPackedUInt16(msgReader);
+        side->bottom().setMaterial(Cl_FindLocalMaterial(matIndex));
+    }
+
+    if(df & SIDF_LINE_FLAGS)
+    {
+        // The delta includes the entire lowest byte.
+        int lineFlags = Reader_ReadByte(msgReader);
+        Line &line = side->line();
+        line.setFlags((line.flags() & ~0xff) | lineFlags, de::ReplaceFlags);
     }
 
     if(df & (SIDF_TOP_COLOR_RED | SIDF_TOP_COLOR_GREEN | SIDF_TOP_COLOR_BLUE))
     {
         Vector3f newColor = side->top().tintColor();
         if(df & SIDF_TOP_COLOR_RED)
-            newColor.x = toprgb[CR];
+            newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if(df & SIDF_TOP_COLOR_GREEN)
-            newColor.y = toprgb[CG];
+            newColor.y = Reader_ReadByte(msgReader) / 255.f;
         if(df & SIDF_TOP_COLOR_BLUE)
-            newColor.z = toprgb[CB];
+            newColor.z = Reader_ReadByte(msgReader) / 255.f;
         side->top().setTintColor(newColor);
     }
 
@@ -782,57 +724,53 @@ void Cl_ReadSideDelta(int /*deltaType*/)
     {
         Vector3f newColor = side->middle().tintColor();
         if(df & SIDF_MID_COLOR_RED)
-            newColor.x = midrgba[CR];
+            newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if(df & SIDF_MID_COLOR_GREEN)
-            newColor.y = midrgba[CG];
+            newColor.y = Reader_ReadByte(msgReader) / 255.f;
         if(df & SIDF_MID_COLOR_BLUE)
-            newColor.z = midrgba[CB];
+            newColor.z = Reader_ReadByte(msgReader) / 255.f;
         side->middle().setTintColor(newColor);
     }
     if(df & SIDF_MID_COLOR_ALPHA)
     {
-        side->middle().setOpacity(midrgba[CA]);
+        side->middle().setOpacity(Reader_ReadByte(msgReader) / 255.f);
     }
 
     if(df & (SIDF_BOTTOM_COLOR_RED | SIDF_BOTTOM_COLOR_GREEN | SIDF_BOTTOM_COLOR_BLUE))
     {
         Vector3f newColor = side->bottom().tintColor();
         if(df & SIDF_BOTTOM_COLOR_RED)
-            newColor.x = bottomrgb[CR];
+            newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if(df & SIDF_BOTTOM_COLOR_GREEN)
-            newColor.y = bottomrgb[CG];
+            newColor.y = Reader_ReadByte(msgReader) / 255.f;
         if(df & SIDF_BOTTOM_COLOR_BLUE)
-            newColor.z = bottomrgb[CB];
+            newColor.z = Reader_ReadByte(msgReader) / 255.f;
         side->bottom().setTintColor(newColor);
     }
 
     if(df & SIDF_MID_BLENDMODE)
     {
-        side->middle().setBlendMode(blendmode_t(blendmode));
+        side->middle().setBlendMode(blendmode_t(Reader_ReadInt32(msgReader)));
     }
 
     if(df & SIDF_FLAGS)
     {
         // The delta includes the entire lowest byte.
-        side->setFlags((side->flags() & ~0xff) | int(sideFlags), de::ReplaceFlags);
-    }
-
-    if(df & SIDF_LINE_FLAGS)
-    {
-        Line &line = side->line();
-        // The delta includes the entire lowest byte.
-        line.setFlags((line.flags() & ~0xff) | int(lineFlags), de::ReplaceFlags);
+        int sideFlags = Reader_ReadByte(msgReader);
+        side->setFlags((side->flags() & ~0xff) | sideFlags, de::ReplaceFlags);
     }
 }
 
 void Cl_ReadPolyDelta()
 {
-    ushort const index = Reader_ReadPackedUInt16(msgReader);
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_World().map();
 
-    // Flags.
-    int const df = Reader_ReadByte(msgReader);
+    int const index = Reader_ReadPackedUInt16(msgReader);
+    int const df    = Reader_ReadByte(msgReader); // Flags.
 
-    Polyobj *po = App_World().map().polyobjs().at(index);
+    DENG2_ASSERT(index < map.polyobjCount());
+    Polyobj *po = map.polyobjs().at(index);
 
     if(df & PODF_DEST_X)
     {
