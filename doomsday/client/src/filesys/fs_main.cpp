@@ -1095,8 +1095,7 @@ void FS1::clearPathMappings()
 
 void FS1::printDirectory(Path path)
 {
-    QByteArray pathUtf8 = NativePath(path).pretty().toUtf8();
-    Con_Message("Directory: %s", pathUtf8.constData());
+    LOG_RES_MSG(_E(b) "Directory: %s") << NativePath(path).pretty();
 
     // We are interested in *everything*.
     path = path / "*";
@@ -1108,8 +1107,7 @@ void FS1::printDirectory(Path path)
 
         DENG2_FOR_EACH_CONST(PathList, i, found)
         {
-            QByteArray foundPath = NativePath(i->path).pretty().toUtf8();
-            Con_Message("  %s", foundPath.constData());
+            LOG_RES_MSG("  %s") << NativePath(i->path).pretty();
         }
     }
 }
@@ -1172,10 +1170,9 @@ D_CMD(DumpLump)
         {
             return F_DumpLump(lumpNum);
         }
-        Con_Printf("No such lump.\n");
+        LOG_RES_ERROR("No such lump");
         return false;
     }
-    Con_Printf("WAD module is not presently initialized.\n");
     return false;
 }
 
@@ -1190,7 +1187,6 @@ D_CMD(ListLumps)
         return true;
     }
 
-    LOG_SCR_WARNING("File system is not initialized");
     return false;
 }
 
@@ -1199,7 +1195,7 @@ D_CMD(ListFiles)
 {
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
-    Con_Printf("Loaded Files (in load order):\n");
+    LOG_RES_MSG(_E(b) "Loaded Files " _E(l) "(in load order)" _E(w) ":");
 
     size_t totalFiles = 0, totalPackages = 0;
     if(fileSystem)
@@ -1224,19 +1220,18 @@ D_CMD(ListFiles)
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
             }
 
-            QByteArray path = de::NativePath(file.composePath()).pretty().toUtf8();
-            Con_Printf("\"%s\" (%i %s%s)", path.constData(),
-                       fileCount, fileCount != 1 ? "files" : "file",
-                       (file.hasStartup()? ", startup" : ""));
-            if(0 != crc)
-                Con_Printf(" [%08x]", crc);
-            Con_Printf("\n");
+            LOG_RES_MSG(" %s " _E(2)_E(>) "(%i %s%s)%s")
+                    << de::NativePath(file.composePath()).pretty()
+                    << fileCount << (fileCount != 1 ? "files" : "file")
+                    << (file.hasStartup()? ", startup" : "")
+                    << (crc? QString(" [%1]").arg(crc, 0, 16) : "");
 
             totalFiles += size_t(fileCount);
             ++totalPackages;
         }
     }
-    Con_Printf("Total: %lu files in %lu packages.\n", (unsigned long) totalFiles, (unsigned long)totalPackages);
+    LOG_RES_MSG(_E(b)"Total: " _E(.) "%i files in %i packages")
+            << totalFiles << totalPackages;
     return true;
 }
 

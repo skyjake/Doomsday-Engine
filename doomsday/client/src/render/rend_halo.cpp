@@ -393,9 +393,9 @@ D_CMD(FlareConfig)
     }
     else
     {
-        Con_Printf("Usage:\n");
-        Con_Printf("  %s list\n", argv[0]);
-        Con_Printf("  %s (num) pos/size/alpha/tex (val)\n", argv[0]);
+        LOG_SCR_MSG("Usage:\n"
+                    "  %s list\n"
+                    "  %s (num) pos/size/alpha/tex (val)") << argv[0] << argv[0];
     }
 
     return true;

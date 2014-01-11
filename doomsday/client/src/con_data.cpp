@@ -1069,8 +1069,7 @@ static void printCommandUsage(ccmd_t *ccmd, bool allOverloads = true)
         while(ccmd->prevOverload) { ccmd = ccmd->prevOverload; }
     }
 
-    LOG_SCR_MSG(_E(D) "Usage:");
-    LOG_SCR_MSG("  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
+    LOG_SCR_NOTE(_E(b) "Usage:" _E(.) "\n  " _E(>) + Con_CmdUsageAsStyledText(ccmd));
 
     if(allOverloads)
     {

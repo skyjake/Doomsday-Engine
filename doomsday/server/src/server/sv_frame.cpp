@@ -147,9 +147,6 @@ void Sv_TransmitFrame(void)
 
         if(clients[i].ready) // && clients[i].updateCount > 0)
         {
-/*#ifdef _DEBUG
-            Con_Message("Sv_TransmitFrame: Sending at tic %i to plr %i", lastTransmitTic, i);
-#endif*/
             // A frame will be sent to this client. If the client
             // doesn't send ticcmds, the updatecount will eventually
             // decrease back to zero.

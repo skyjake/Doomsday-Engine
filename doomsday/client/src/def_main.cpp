@@ -827,7 +827,7 @@ static void readDefinitionFile(String path)
     if(path.isEmpty()) return;
 
     QByteArray pathUtf8 = path.toUtf8();
-    LOG_RES_VERBOSE("Reading '%s'...") << F_PrettyPath(pathUtf8.constData());
+    LOG_RES_VERBOSE("Reading \"%s\"") << F_PrettyPath(pathUtf8.constData());
     Def_ReadProcessDED(pathUtf8);
 }
 
@@ -1434,6 +1434,8 @@ static void clearFontDefinitionLinks()
 
 void Def_Read()
 {
+    LOG_AS("Def_Read");
+
     if(defsInited)
     {
         // We've already initialized the definitions once.
@@ -1459,7 +1461,7 @@ void Def_Read()
     generateMaterialDefs();
 
     // Read all definitions files and lumps.
-    Con_Message("Parsing definition files%s", verbose >= 1? ":" : "...");
+    LOG_RES_MSG("Parsing definition files...");
     readAllDefinitions();
 
     // Any definition hooks?
@@ -1637,7 +1639,7 @@ void Def_Read()
             // It's probably a bias light definition, then?
             if(!defs.lights[i].uniqueMapID[0])
             {
-                Con_Message("Warning: Def_Read: Undefined state '%s' in Light definition.", defs.lights[i].state);
+                LOG_RES_WARNING("Undefined state '%s' in Light definition") << defs.lights[i].state;
             }
             continue;
         }
@@ -2352,22 +2354,27 @@ int Def_Set(int type, int index, int value, const void* ptr)
     ded_music_t* musdef = 0;
     int i;
 
+    LOG_AS("Def_Set");
+
     switch(type)
     {
     case DD_DEF_TEXT:
         if(index < 0 || index >= defs.count.text.num)
-            Con_Error("Def_Set: Text index %i is invalid.\n", index);
-
+        {
+            DENG_ASSERT(!"Def_Set: Text index is invalid");
+            return false;
+        }
         defs.text[index].text = (char*) M_Realloc(defs.text[index].text, strlen((char*)ptr) + 1);
         strcpy(defs.text[index].text, (char const*) ptr);
         break;
 
     case DD_DEF_STATE: {
         ded_state_t* stateDef;
-
         if(index < 0 || index >= defs.count.states.num)
-            Con_Error("Def_Set: State index %i is invalid.\n", index);
-
+        {
+            DENG_ASSERT(!"Def_Set: State index is invalid");
+            return false;
+        }
         stateDef = &defs.states[index];
         switch(value)
         {
@@ -2376,7 +2383,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
 
             if(sprite < 0 || sprite >= defs.count.sprites.num)
             {
-                Con_Message("Warning: Def_Set: Unknown sprite index %i.", sprite);
+                LOGDEV_RES_WARNING("Unknown sprite index %i") << sprite;
                 break;
             }
 
@@ -2393,7 +2400,10 @@ int Def_Set(int type, int index, int value, const void* ptr)
 
     case DD_DEF_SOUND:
         if(index < 0 || index >= countSounds.num)
-            Con_Error("Warning: Def_Set: Sound index %i is invalid.\n", index);
+        {
+            DENG_ASSERT(!"Sound index is invalid");
+            return false;
+        }
 
         switch(value)
         {
@@ -2405,8 +2415,8 @@ int Def_Set(int type, int index, int value, const void* ptr)
                 sounds[index].lumpNum = App_FileSystem().lumpNumForName(sounds[index].lumpName);
                 if(sounds[index].lumpNum < 0)
                 {
-                    Con_Message("Warning: Def_Set: Unknown sound lump name \"%s\", sound (#%i) will be inaudible.",
-                                sounds[index].lumpName, index);
+                    LOG_RES_WARNING("Unknown sound lump name \"%s\"; sound #%i will be inaudible")
+                            << sounds[index].lumpName << index;
                 }
             }
             else
@@ -2432,7 +2442,10 @@ int Def_Set(int type, int index, int value, const void* ptr)
             musdef = defs.music + index;
         }
         else
-            Con_Error("Def_Set: Music index %i is invalid.\n", index);
+        {
+            DENG_ASSERT(!"Def_Set: Music index is invalid");
+            return false;
+        }
 
         // Which key to set?
         switch(value)
@@ -2519,17 +2532,17 @@ D_CMD(ListMobjs)
 
     if(defs.count.mobjs.num <= 0)
     {
-        Con_Message("There are currently no mobjtypes defined/loaded.");
+        LOG_RES_MSG("No mobjtypes defined/loaded");
         return true;
     }
 
-    Con_Printf("Registered Mobjs (ID | Name):\n");
+    LOG_RES_MSG(_E(b) "Registered Mobjs (ID | Name):");
     for(int i = 0; i < defs.count.mobjs.num; ++i)
     {
         if(defs.mobjs[i].name[0])
-            Con_Printf(" %s | %s\n", defs.mobjs[i].id, defs.mobjs[i].name);
+            LOG_RES_MSG(" %s | %s") << defs.mobjs[i].id << defs.mobjs[i].name;
         else
-            Con_Printf(" %s | (Unnamed)\n", defs.mobjs[i].id);
+            LOG_RES_MSG(" %s | " _E(l) "(Unnamed)") << defs.mobjs[i].id;
     }
 
     return true;

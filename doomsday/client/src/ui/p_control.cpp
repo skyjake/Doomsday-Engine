@@ -455,13 +455,14 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int control)
 {
     playercontrol_t* pc = P_PlayerControlById(control);
 
-    assert(pc);
+    DENG_ASSERT(pc);
+
+    LOG_AS("P_Impulse");
 
     // Check that this is really an impulse control.
     if(pc->type != CTLT_IMPULSE)
     {
-        Con_Message("P_Impulse: Control '%s' is not an impulse control.",
-                    pc->name);
+        LOG_INPUT_WARNING("Control '%s' is not an impulse control") << pc->name;
         return;
     }
 
@@ -555,8 +556,8 @@ D_CMD(Impulse)
 
     if(argc < 2 || argc > 3)
     {
-        Con_Printf("Usage:\n  %s (impulse-name)\n  %s (impulse-name) (player-ordinal)\n",
-                   argv[0], argv[0]);
+        LOG_SCR_NOTE("Usage:\n  %s (impulse-name)\n  %s (impulse-name) (player-ordinal)")
+                << argv[0] << argv[0];
         return true;
     }
     if(argc == 3)

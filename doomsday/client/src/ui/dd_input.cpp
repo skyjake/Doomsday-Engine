@@ -1429,17 +1429,16 @@ void DD_ReadMouse(void)
     }
 
     // Some very verbose output about mouse buttons.
-    if(verbose >= 3)
+    for(i = 0; i < IMB_MAXBUTTONS; ++i)
+    {
+        if(mouse.buttonDowns[i] || mouse.buttonUps[i])
+            break;
+    }
+    if(i < IMB_MAXBUTTONS)
     {
         for(i = 0; i < IMB_MAXBUTTONS; ++i)
         {
-            if(mouse.buttonDowns[i] || mouse.buttonUps[i])
-                break;
-        }
-        if(i < IMB_MAXBUTTONS)
-        {
-            for(i = 0; i < IMB_MAXBUTTONS; ++i)
-                Con_Message("[%02i] %i/%i", i, mouse.buttonDowns[i], mouse.buttonUps[i]);
+            LOGDEV_INPUT_XVERBOSE("[%02i] %i/%i") << i << mouse.buttonDowns[i] << mouse.buttonUps[i];
         }
     }
 
@@ -2264,108 +2263,19 @@ void Rend_AllInputDeviceStateVisuals(void)
 
 static void I_PrintAxisConfig(inputdev_t* device, inputdevaxis_t* axis)
 {
-    Con_Printf("%s-%s Config:\n"
-               "  Type: %s\n"
-               //"  Filter: %i\n"
-               "  Dead Zone: %g\n"
-               "  Scale: %g\n"
-               "  Flags: (%s%s)\n",
-               device->name, axis->name,
-               (axis->type == IDAT_STICK? "STICK" : "POINTER"),
-               /*axis->filter,*/
-               axis->deadZone, axis->scale,
-               ((axis->flags & IDA_DISABLED)? "|disabled":""),
-               ((axis->flags & IDA_INVERT)? "|inverted":""));
+    LOG_INPUT_MSG("  " _E(>) "%s-%s Config:\n"
+                  "  Type: %s\n"
+                  //"  Filter: %i\n"
+                  "  Dead Zone: %f\n"
+                  "  Scale: %f\n"
+                  "  Flags: (%s%s)")
+            << device->name << axis->name
+            << (axis->type == IDAT_STICK? "STICK" : "POINTER")
+                  /*axis->filter,*/
+            << axis->deadZone << axis->scale
+            << ((axis->flags & IDA_DISABLED)? "|disabled":"")
+            << ((axis->flags & IDA_INVERT)? "|inverted":"");
 }
-
-#if 0
-D_CMD(AxisPrintConfig)
-{
-    uint deviceID, axisID;
-    inputdev_t* device;
-    inputdevaxis_t* axis;
-
-    if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
-    {
-        Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
-        return false;
-    }
-
-    device = I_GetDevice(deviceID);
-    axis   = I_GetAxisByID(device, axisID);
-    I_PrintAxisConfig(device, axis);
-
-    return true;
-}
-
-D_CMD(AxisChangeOption)
-{
-    uint deviceID, axisID;
-    inputdev_t* device;
-    inputdevaxis_t* axis;
-
-    if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
-    {
-        Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
-        return false;
-    }
-
-    device = I_GetDevice(deviceID);
-    axis   = I_GetAxisByID(device, axisID);
-
-    // Options:
-    if(!stricmp(argv[2], "disable") || !stricmp(argv[2], "off"))
-    {
-        axis->flags |= IDA_DISABLED;
-    }
-    else if(!stricmp(argv[2], "enable") || !stricmp(argv[2], "on"))
-    {
-        axis->flags &= ~IDA_DISABLED;
-    }
-    else if(!stricmp(argv[2], "invert")) // toggle
-    {
-        axis->flags ^= IDA_INVERT;
-    }
-
-    // Unknown option name.
-    return true;
-}
-
-D_CMD(AxisChangeValue)
-{
-    uint deviceID, axisID;
-    inputdevaxis_t* axis;
-    inputdev_t* device;
-
-    if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
-    {
-        Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
-        return false;
-    }
-
-    device = I_GetDevice(deviceID);
-    axis   = I_GetAxisByID(device, axisID);
-    if(axis)
-    {
-        // Values:
-        if(!stricmp(argv[2], "filter"))
-        {
-            axis->filter = strtod(argv[3], 0);
-        }
-        else if(!stricmp(argv[2], "deadzone") || !stricmp(argv[2], "dead zone"))
-        {
-            axis->deadZone = strtod(argv[3], 0);
-        }
-        else if(!stricmp(argv[2], "scale"))
-        {
-            axis->scale = strtod(argv[3], 0);
-        }
-    }
-
-    // Unknown value name?
-    return true;
-}
-#endif
 
 /**
  * Console command to list all of the available input devices+axes.
@@ -2377,18 +2287,18 @@ D_CMD(ListInputDevices)
     inputdev_t* dev;
     uint i, j;
 
-    Con_Printf("Input Devices:\n");
+    LOG_INPUT_MSG(_E(b) "Input Devices:");
     for(i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
         dev = &inputDevices[i];
         if(!dev->name || !(dev->flags & ID_ACTIVE))
             continue;
 
-        Con_Printf("%s (%i keys, %i axes)\n", dev->name, dev->numKeys, dev->numAxes);
+        LOG_INPUT_MSG(_E(D) "%s" _E(.) " (%i keys, %i axes)") << dev->name << dev->numKeys << dev->numAxes;
 
         for(j = 0; j < dev->numAxes; ++j)
         {
-            Con_Printf("  Axis #%i: %s\n", j, dev->axes[j].name);
+            LOG_INPUT_MSG("  Axis #%i: %s") << j << dev->axes[j].name;
             I_PrintAxisConfig(dev, &dev->axes[j]);
         }
     }

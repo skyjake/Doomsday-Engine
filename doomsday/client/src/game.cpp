@@ -271,7 +271,7 @@ D_CMD(InspectGame)
 
     DENG2_ASSERT(!game->isNull());
 
-    LOG_MSG(_E(1) "%s - %s") << game->title() << game->author();
+    LOG_MSG(_E(b) "%s - %s") << game->title() << game->author();
     LOG_MSG(_E(l) "IdentityKey: " _E(.) _E(i) "%s " _E(.)
             _E(l) "PluginId: "    _E(.) _E(i) "%s")
         << game->identityKey() << int(game->pluginId());

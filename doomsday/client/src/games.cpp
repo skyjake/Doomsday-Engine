@@ -250,7 +250,7 @@ D_CMD(ListGames)
         return true;
     }
 
-    LOG_MSG(_E(1) "Registered Games:");
+    LOG_MSG(_E(b) "Registered Games:");
     LOG_VERBOSE("Key: %s'!'=Incomplete/Not playable %s'*'=Loaded")
             << _E(>) _E(D) << _E(B);
 
@@ -291,7 +291,7 @@ D_CMD(ListGames)
 
     LOG_MSG(_E(R) "\n");
     LOG_MSG("%i of %i games are playable") << numCompleteGames << games.count();
-    LOG_SCR_MSG("Use the " _E(b) "load" _E(.) "command to load a game. For example: \"load gamename\".");
+    LOG_SCR_MSG("Use the " _E(b) "load" _E(.) " command to load a game. For example: \"load gamename\".");
 
     return true;
 }

@@ -2270,7 +2270,7 @@ D_CMD(Help)
 
     //Con_PrintRuler();
 
-    LOG_SCR_NOTE(_E(1) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
+    LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
 
 #define TABBED(A, B) "\n" _E(Ta) _E(b) "  " << A << " " _E(.) _E(Tb) << B
 

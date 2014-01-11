@@ -574,15 +574,15 @@ void R_UpdateViewer(int consoleNum)
             OldAngle *old = &oldAngle[viewPlayer - ddPlayers];
             float yaw = (double)smoothView.angle() / ANGLE_MAX * 360;
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
-                        "Rdx=%-10.3f Rdy=%-10.3f",
-                        SECONDS_TO_TICKS(gameTime),
-                        frameTimePos,
-                        sysTime - old->time,
-                        yaw - old->yaw,
-                        smoothView.pitch - old->pitch,
-                        (yaw - old->yaw) / (sysTime - old->time),
-                        (smoothView.pitch - old->pitch) / (sysTime - old->time));
+            LOGDEV_MSG("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
+                       "Rdx=%-10.3f Rdy=%-10.3f")
+                    << SECONDS_TO_TICKS(gameTime)
+                    << frameTimePos
+                    << sysTime - old->time
+                    << yaw - old->yaw
+                    << smoothView.pitch - old->pitch
+                    << (yaw - old->yaw) / (sysTime - old->time)
+                    << (smoothView.pitch - old->pitch) / (sysTime - old->time);
 
             old->yaw   = yaw;
             old->pitch = smoothView.pitch;
@@ -600,16 +600,15 @@ void R_UpdateViewer(int consoleNum)
             static OldPos oldPos[DDMAXPLAYERS];
             OldPos *old = &oldPos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f",
-                        //"Rdx=%-10.3f Rdy=%-10.3f\n",
-                        SECONDS_TO_TICKS(gameTime),
-                        frameTimePos,
-                        sysTime - old->time,
-                        smoothView.origin.x - old->pos.x,
-                        smoothView.origin.y - old->pos.y,
-                        smoothView.origin.z - old->pos.z,
-                        (smoothView.origin.x - old->pos.x) / (sysTime - old->time),
-                        (smoothView.origin.y - old->pos.y) / (sysTime - old->time));
+            LOGDEV_MSG("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f")
+                    << SECONDS_TO_TICKS(gameTime)
+                    << frameTimePos
+                    << sysTime - old->time
+                    << smoothView.origin.x - old->pos.x
+                    << smoothView.origin.y - old->pos.y
+                    << smoothView.origin.z - old->pos.z
+                    << (smoothView.origin.x - old->pos.x) / (sysTime - old->time)
+                    << (smoothView.origin.y - old->pos.y) / (sysTime - old->time);
 
             old->pos  = smoothView.origin;
             old->time = sysTime;
@@ -656,7 +655,7 @@ void R_SetupFrame(player_t *player)
 
     if(showFrameTimePos)
     {
-        Con_Printf("frametime = %f\n", frameTimePos);
+        LOGDEV_VERBOSE("frametime = %f") << frameTimePos;
     }
 
     // Handle extralight (used to light up the world momentarily (used for
@@ -933,20 +932,6 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
         player->shared.mo->ddFlags = oldFlags;
     }
 
-    // Should we be counting triangles?
-    /*if(rendInfoTris)
-    {
-        // This count includes all triangles drawn since R_SetupFrame.
-        Con_Printf("Tris: %-4i (Mdl=%-4i)\n", polyCounter, modelTriCount);
-        modelTriCount = 0;
-        polyCounter = 0;
-    }*/
-
-    /*if(rendInfoLums)
-    {
-        Con_Printf("LumObjs: %-4i\n", LO_GetNumLuminous());
-    }*/
-
     R_PrintRendPoolInfo();
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
@@ -960,8 +945,8 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
         float time = sysTime - devCameraMovementStartTime;
         float elapsed = time - prevTime;
 
-        Con_Message("%f,%f,%f,%f,%f", Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs,
-                    time, elapsed, speed/elapsed, speed/elapsed - prevSpeed);
+        LOGDEV_MSG("%f,%f,%f,%f,%f") << Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs
+                                     << time << elapsed << speed/elapsed << speed/elapsed - prevSpeed;
 
         V3f_Copy(prevPos, vd->current.pos);
         prevSpeed = speed/elapsed;

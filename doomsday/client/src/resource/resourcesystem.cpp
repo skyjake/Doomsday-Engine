@@ -4279,7 +4279,7 @@ D_CMD(PrintMaterialStats)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_MSG(_E(1) "Material Statistics:");
+    LOG_MSG(_E(b) "Material Statistics:");
     foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
     {
         MaterialScheme::Index const &index = scheme->index();
@@ -4297,7 +4297,7 @@ D_CMD(PrintTextureStats)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_MSG(_E(1) "Texture Statistics:");
+    LOG_MSG(_E(b) "Texture Statistics:");
     foreach(TextureScheme *scheme, App_ResourceSystem().allTextureSchemes())
     {
         TextureScheme::Index const &index = scheme->index();
@@ -4316,7 +4316,7 @@ D_CMD(PrintFontStats)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    LOG_MSG(_E(1) "Font Statistics:");
+    LOG_MSG(_E(b) "Font Statistics:");
     foreach(FontScheme *scheme, App_ResourceSystem().allFontSchemes())
     {
         FontScheme::Index const &index = scheme->index();

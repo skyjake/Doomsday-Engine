@@ -353,7 +353,7 @@ D_CMD(InspectTexture)
             variantCountText = de::String(" (x%1)").arg(texture.variantCount());
 #endif
 
-            LOG_MSG("Texture " _E(1) "%s" _E(.) "%s"
+            LOG_MSG("Texture " _E(b) "%s" _E(.) "%s"
                     "\n" _E(l) "Dimensions: " _E(.) _E(i) "%s" _E(.)
                      " " _E(l) "Source: "     _E(.) _E(i) "%s")
                 << manifest.composeUri()
@@ -383,7 +383,7 @@ D_CMD(InspectTexture)
                             " " _E(l) "GLName: " _E(.) _E(i) "%i" _E(.)
                             " " _E(l) "Coords: " _E(.) _E(i) "%s" _E(.)
                             _E(R)
-                            "\n" _E(1) "Specification:" _E(.) "%s")
+                            "\n" _E(b) "Specification:" _E(.) "%s")
                         << variantIdx
                         << variant->sourceDescription()
                         << (variant->isMasked()? "yes":"no")

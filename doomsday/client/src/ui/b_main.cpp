@@ -353,8 +353,8 @@ void B_DeleteMatching(bcontext_t* bc, evbinding_t* eventBinding,
 
         if(bid)
         {
-            Con_Message("B_BindCommand: Deleting binding %i, it has been overridden by "
-                        "binding %i.", bid, eventBinding? eventBinding->bid : deviceBinding->bid);
+            LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
+                    << bid << (eventBinding? eventBinding->bid : deviceBinding->bid);
             B_DeleteBinding(bc, bid);
         }
     }
@@ -552,7 +552,7 @@ D_CMD(ClearBindings)
 
     for(i = 0; i < B_ContextCount(); ++i)
     {
-        Con_Printf("Clearing binding context '%s'...\n", B_ContextByPos(i)->name);
+        LOG_INPUT_MSG("Clearing binding context '%s'") << B_ContextByPos(i)->name;
         B_ClearContext(B_ContextByPos(i));
     }
 
@@ -565,15 +565,15 @@ D_CMD(DeleteBindingById)
 {
     DENG2_UNUSED2(src, argc);
 
-    int                 bid = strtoul(argv[1], NULL, 10);
+    int bid = strtoul(argv[1], NULL, 10);
 
     if(B_Delete(bid))
     {
-        Con_Printf("Binding %i deleted successfully.\n", bid);
+        LOG_INPUT_MSG("Binding %i deleted") << bid;
     }
     else
     {
-        Con_Printf("Cannot delete binding %i, it was not found.\n", bid);
+        LOG_INPUT_ERROR("Cannot delete binding %i: not found") << bid;
     }
 
     return true;
@@ -598,14 +598,14 @@ D_CMD(ActivateBindingContext)
 
     if(!bc)
     {
-        Con_Printf("Binding context '%s' does not exist.\n", argv[1]);
+        LOG_INPUT_WARNING("Binding context '%s' does not exist") << argv[1];
         return false;
     }
 
     if(bc->flags & BCF_PROTECTED)
     {
-        Con_Message("Binding Context '%s' is protected. It can not be manually %s.", bc->name,
-                    doActivate? "activated" : "deactivated");
+        LOG_INPUT_ERROR("Binding context '%s' is protected and cannot be manually %s")
+                << bc->name << (doActivate? "activated" : "deactivated");
         return false;
     }
 
