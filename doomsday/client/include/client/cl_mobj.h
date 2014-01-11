@@ -67,6 +67,11 @@ struct ClMobjInfo
     uint endMagic; // The client mobj magic number (CLM_MAGIC2).
 
     ClMobjInfo();
+
+    /**
+     * Returns the mobj_t instance associated with the client mobj.
+     */
+    mobj_t *mobj();
 };
 
 /**
@@ -78,8 +83,6 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
                              dd_bool onFloor);
 
 ClMobjInfo *ClMobj_GetInfo(mobj_t *mo);
-
-mobj_t *ClMobj_MobjForInfo(ClMobjInfo *info);
 
 /**
  * Call for Hidden client mobjs to make then visible.
@@ -132,6 +135,6 @@ void ClMobj_ReadNullDelta();
  *
  * @return  @c true, if the mobj is a client mobj; otherwise @c false.
  */
-dd_bool Cl_IsClientMobj(mobj_t *mo); // public
+dd_bool Cl_IsClientMobj(mobj_t *mo);
 
 #endif // DENG_CLIENT_WORLD_MOBJ_H

@@ -21,10 +21,7 @@
 #include "de_base.h"
 #include "client/cl_world.h"
 
-#include "client/cl_def.h"
 #include "client/cl_player.h"
-#include "client/clplanemover.h"
-#include "client/clpolymover.h"
 
 #include "api_map.h"
 #include "api_materialarchive.h"
@@ -34,12 +31,8 @@
 
 #include "Surface"
 #include "world/map.h"
-#include "world/p_players.h"
-#include "world/thinkers.h"
 
-#include <de/memoryzone.h>
 #include <QVector>
-#include <cmath>
 
 using namespace de;
 

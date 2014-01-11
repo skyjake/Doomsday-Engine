@@ -32,10 +32,12 @@ void ClMobjHash::clear()
     for(int i = 0; i < SIZE; ++i)
     for(ClMobjInfo *info = _buckets[i].first; info; info = info->next)
     {
-        mobj_t *mo = ClMobj_MobjForInfo(info);
+        mobj_t *mo = info->mobj();
         // Players' clmobjs are not linked anywhere.
         if(!mo->dPlayer)
+        {
             ClMobj_Unlink(mo);
+        }
     }
 }
 
@@ -106,9 +108,11 @@ mobj_t *ClMobjHash::find(thid_t id) const
     Bucket const &bucket = bucketFor(id);
     for(ClMobjInfo *info = bucket.first; info; info = info->next)
     {
-        mobj_t *mo = ClMobj_MobjForInfo(info);
+        mobj_t *mo = info->mobj();
         if(mo->thinker.id == id)
+        {
             return mo;
+        }
     }
 
     // Not found!
@@ -123,7 +127,7 @@ int ClMobjHash::iterate(int (*callback) (mobj_t *, void *), void *context)
         while(info)
         {
             ClMobjInfo *next = info->next;
-            if(int result = callback(ClMobj_MobjForInfo(info), context))
+            if(int result = callback(info->mobj(), context))
                 return result;
             info = next;
         }
@@ -139,11 +143,11 @@ void ClMobjHash::assertValid() const
         int count1 = 0, count2 = 0;
         for(ClMobjInfo *info = _buckets[i].first; info; info = info->next, count1++)
         {
-            DENG2_ASSERT(ClMobj_MobjForInfo(info) != 0);
+            DENG2_ASSERT(info->mobj() != 0);
         }
         for(ClMobjInfo *info = _buckets[i].last; info; info = info->prev, count2++)
         {
-            DENG2_ASSERT(ClMobj_MobjForInfo(info) != 0);
+            DENG2_ASSERT(info->mobj() != 0);
         }
         DENG2_ASSERT(count1 == count2);
     }

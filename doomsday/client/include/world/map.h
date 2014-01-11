@@ -794,7 +794,7 @@ public: /// @todo Make private:
     void deleteClMobj(mobj_t *mo);
 
     /**
-     * Iterate all client mobjs, making a callback for each. Iteration ends if
+     * Iterate all client mobjs, making a callback for each. Iteration ends if a
      * callback returns a non-zero value.
      *
      * @param callback  Function to callback for each client mobj.

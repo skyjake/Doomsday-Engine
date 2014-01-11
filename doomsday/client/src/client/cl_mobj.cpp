@@ -33,7 +33,6 @@
 
 #include "world/map.h"
 #include "world/p_players.h"
-#include "world/thinkers.h"
 
 #include "api_sound.h"
 
@@ -58,12 +57,12 @@ ClMobjInfo::ClMobjInfo()
     , endMagic  (CLM_MAGIC2)
 {}
 
-mobj_t *ClMobj_MobjForInfo(ClMobjInfo *info)
+mobj_t *ClMobjInfo::mobj()
 {
-    DENG2_ASSERT(info->startMagic == CLM_MAGIC1);
-    DENG2_ASSERT(info->endMagic == CLM_MAGIC2);
+    DENG2_ASSERT(startMagic == CLM_MAGIC1);
+    DENG2_ASSERT(endMagic == CLM_MAGIC2);
 
-    return (mobj_t *) ((char *)info + sizeof(ClMobjInfo));
+    return reinterpret_cast<mobj_t *>((char *)this + sizeof(ClMobjInfo));
 }
 
 void ClMobj_Unlink(mobj_t *mo)
@@ -239,6 +238,7 @@ dd_bool ClMobj_IsValid(mobj_t *mo)
 
 ClMobjInfo *ClMobj_GetInfo(mobj_t *mo)
 {
+    DENG2_ASSERT(mo != 0);
     ClMobjInfo *info = (ClMobjInfo *) ((char *)mo - sizeof(ClMobjInfo));
     if(!mo || info->startMagic != CLM_MAGIC1 || info->endMagic != CLM_MAGIC2)
     {
@@ -622,7 +622,7 @@ mobj_t *ClMobj_Find(thid_t id)
 }
 
 // cl_player.c
-DENG_EXTERN_C mobj_t* ClPlayer_ClMobj(int plrNum);
+DENG_EXTERN_C mobj_t *ClPlayer_ClMobj(int plrNum);
 
 DENG_DECLARE_API(Client) =
 {

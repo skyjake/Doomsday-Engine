@@ -376,9 +376,10 @@ void Cl_GetPackets()
     }
 }
 
+#ifdef DENG_DEBUG
+
 /**
- * Check the state of the client on engineside. This is a debugging utility
- * and only gets called when _DEBUG is defined.
+ * Check the state of the client on engineside. A debugging utility.
  */
 static void assertPlayerIsValid(int plrNum)
 {
@@ -416,6 +417,8 @@ static void assertPlayerIsValid(int plrNum)
         LOGDEV_NET_NOTE("Player %i's clmobj should not be solid (when player is alive)") << plrNum;
     }
 }
+
+#endif // DENG_DEBUG
 
 void Cl_Ticker(timespan_t ticLength)
 {

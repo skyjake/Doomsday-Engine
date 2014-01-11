@@ -45,9 +45,9 @@ typedef void (*thinkfunc_t) (void *);
  */
 typedef struct thinker_s {
     struct thinker_s *prev, *next;
-    thinkfunc_t     function;
-    dd_bool         inStasis;
-    thid_t          id; ///< Only used for mobjs (zero is not an ID).
+    thinkfunc_t function;
+    dd_bool inStasis;
+    thid_t id; ///< Only used for mobjs (zero is not an ID).
 } thinker_t;
 
 DENG_API_TYPEDEF(Thinker)
@@ -56,8 +56,8 @@ DENG_API_TYPEDEF(Thinker)
 
     void (*Init)(void);
     void (*Run)(void);
-    void (*Add)(thinker_t* th);
-    void (*Remove)(thinker_t* th);
+    void (*Add)(thinker_t *th);
+    void (*Remove)(thinker_t *th);
 
     /**
      * Change the 'in stasis' state of a thinker (stop it from thinking).
@@ -67,7 +67,7 @@ DENG_API_TYPEDEF(Thinker)
      */
     void (*SetStasis)(thinker_t *th, dd_bool on);
 
-    int (*Iterate)(thinkfunc_t func, int (*callback) (thinker_t*, void*), void* context);
+    int (*Iterate)(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context);
 }
 DENG_API_T(Thinker);
 
