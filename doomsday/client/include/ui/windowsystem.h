@@ -26,10 +26,11 @@
 #include <de/System>
 #include <de/String>
 #include <de/Vector>
+#include <de/Style>
+
 #include "SettingsRegister"
 
 class ClientWindow;
-class Style;
 
 /**
  * Window management subsystem.
@@ -98,7 +99,7 @@ public:
     /**
      * Returns the window system's UI style.
      */
-    Style &style();
+    de::Style &style();
 
     /**
      * Dispatches a mouse position event with the latest mouse position. This

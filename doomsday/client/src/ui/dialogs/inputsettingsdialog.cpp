@@ -19,13 +19,13 @@
 #include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
-#include "ui/widgets/variabletogglewidget.h"
-#include "ui/widgets/gridpopupwidget.h"
 #include "ui/widgets/keygrabberwidget.h"
-
 #include "clientapp.h"
 #include "con_main.h"
-#include "SignalAction"
+
+#include <de/VariableToggleWidget>
+#include <de/GridPopupWidget>
+#include <de/SignalAction>
 
 using namespace de;
 using namespace ui;

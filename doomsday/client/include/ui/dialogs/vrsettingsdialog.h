@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_VRSETTINGSDIALOG_H
 #define DENG_CLIENT_VRSETTINGSDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog for modifying VR settings.
  */
-class VRSettingsDialog : public DialogWidget
+class VRSettingsDialog : public de::DialogWidget
 {
     Q_OBJECT
 

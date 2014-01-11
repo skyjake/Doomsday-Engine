@@ -366,16 +366,15 @@ DENG_HEADERS += \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
     include/ui/clientwindow.h \
+    include/ui/commandaction.h \
     include/ui/dd_input.h \
     include/ui/dd_ui.h \
     include/ui/dialogs/aboutdialog.h \
     include/ui/dialogs/alertdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
     include/ui/dialogs/coloradjustmentdialog.h \
-    include/ui/dialogs/inputdialog.h \
     include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/logsettingsdialog.h \
-    include/ui/dialogs/messagedialog.h \
     include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
@@ -688,15 +687,14 @@ SOURCES += \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
     src/ui/clientwindow.cpp \
+    src/ui/commandaction.cpp \
     src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/alertdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
     src/ui/dialogs/coloradjustmentdialog.cpp \
-    src/ui/dialogs/inputdialog.cpp \
     src/ui/dialogs/inputsettingsdialog.cpp \
     src/ui/dialogs/logsettingsdialog.cpp \
-    src/ui/dialogs/messagedialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
     src/ui/dialogs/vrsettingsdialog.cpp \

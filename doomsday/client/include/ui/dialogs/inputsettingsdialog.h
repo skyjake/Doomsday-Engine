@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_INPUTSETTINGSDIALOG_H
 #define DENG_CLIENT_INPUTSETTINGSDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog for modifying input settings.
  */
-class InputSettingsDialog : public DialogWidget
+class InputSettingsDialog : public de::DialogWidget
 {
     Q_OBJECT
 

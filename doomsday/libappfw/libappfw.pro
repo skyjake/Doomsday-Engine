@@ -18,8 +18,6 @@ include(../dep_deng1.pri) # Garbage
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 
-#include(../dep_opengl.pri) # TODO: remove this
-
 DEFINES += __LIBAPPFW__
 INCLUDEPATH += include
 
@@ -55,10 +53,12 @@ HEADERS += \
     include/de/GridPopupWidget \
     include/de/GuiRootWidget \
     include/de/GuiWidget \
+    include/de/InputDialog \
     include/de/LabelWidget \
     include/de/LineEditWidget \
     include/de/LogWidget \
     include/de/MenuWidget \
+    include/de/MessageDialog \
     include/de/NotificationWidget \
     include/de/PanelWidget \
     include/de/PopupMenuWidget \
@@ -119,10 +119,12 @@ HEADERS += \
     include/de/widgets/documentwidget.h \
     include/de/widgets/foldpanelwidget.h \
     include/de/widgets/gridpopupwidget.h \
+    include/de/widgets/inputdialog.h \
     include/de/widgets/labelwidget.h \
     include/de/widgets/lineeditwidget.h \
     include/de/widgets/logwidget.h \
     include/de/widgets/menuwidget.h \
+    include/de/widgets/messagedialog.h \
     include/de/widgets/notificationwidget.h \
     include/de/widgets/panelwidget.h \
     include/de/widgets/popupmenuwidget.h \
@@ -163,10 +165,12 @@ SOURCES += \
     src/widgets/documentwidget.cpp \
     src/widgets/foldpanelwidget.cpp \
     src/widgets/gridpopupwidget.cpp \
+    src/widgets/inputdialog.cpp \
     src/widgets/labelwidget.cpp \
     src/widgets/lineeditwidget.cpp \
     src/widgets/logwidget.cpp \
     src/widgets/menuwidget.cpp \
+    src/widgets/messagedialog.cpp \
     src/widgets/notificationwidget.cpp \
     src/widgets/panelwidget.cpp \
     src/widgets/popupmenuwidget.cpp \

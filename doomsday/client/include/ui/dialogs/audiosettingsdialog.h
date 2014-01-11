@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_AUDIOSETTINGSDIALOG_H
 #define DENG_CLIENT_AUDIOSETTINGSDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog for modifying video settings.
  */
-class AudioSettingsDialog : public DialogWidget
+class AudioSettingsDialog : public de::DialogWidget
 {
     Q_OBJECT
 

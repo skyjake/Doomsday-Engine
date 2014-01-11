@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
 #define DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
 
-#include "ui/widgets/panelwidget.h"
+#include <de/PanelWidget>
 
 /**
  * Editor for modifying the settings for the renderer's visual appearance.
@@ -28,7 +28,7 @@
  *
  * @see ClientApp::rendererAppearanceSettings()
  */
-class RendererAppearanceEditor : public PanelWidget
+class RendererAppearanceEditor : public de::PanelWidget
 {
     Q_OBJECT
 

@@ -19,14 +19,14 @@
 #ifndef DENG_CLIENT_CVARCHOICEWIDGET_H
 #define DENG_CLIENT_CVARCHOICEWIDGET_H
 
-#include "choicewidget.h"
+#include <de/ChoiceWidget>
 #include "icvarwidget.h"
 
 /**
  * Console variable choice for integer-type cvars with a limited number of
  * valid settings. The choice items' user data is used as the cvar value.
  */
-class CVarChoiceWidget : public ChoiceWidget, public ICVarWidget
+class CVarChoiceWidget : public de::ChoiceWidget, public ICVarWidget
 {
     Q_OBJECT
 

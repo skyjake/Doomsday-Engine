@@ -88,13 +88,11 @@ struct viewdata_t
     float windowInter;
 };
 
-namespace ui {
-    enum ViewPortLayer {
-        Player3DViewLayer,
-        ViewBorderLayer,
-        HUDLayer
-    };
-}
+enum ViewPortLayer {
+    Player3DViewLayer,
+    ViewBorderLayer,
+    HUDLayer
+};
 
 DENG_EXTERN_C int      rendInfoTris;
 DENG_EXTERN_C boolean  firstFrameAfterLoad;
@@ -111,7 +109,7 @@ void R_ResetFrameCount();
 /**
  * Render all view ports in the viewport grid.
  */
-void R_RenderViewPorts(ui::ViewPortLayer layer);
+void R_RenderViewPorts(ViewPortLayer layer);
 
 /**
  * Render a blank view for the specified player.

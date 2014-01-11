@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_PROFILEPICKERWIDGET_H
 #define DENG_CLIENT_PROFILEPICKERWIDGET_H
 
-#include "choicewidget.h"
+#include <de/ChoiceWidget>
 #include "SettingsRegister"
 
 /**
@@ -29,7 +29,7 @@
  * responsible for laying it out appropriately. However, by default it is
  * attached to the right edge of the profile picker choice widget.
  */
-class ProfilePickerWidget : public ChoiceWidget
+class ProfilePickerWidget : public de::ChoiceWidget
 {
     Q_OBJECT
 

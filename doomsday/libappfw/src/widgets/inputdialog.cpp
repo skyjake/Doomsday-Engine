@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/dialogs/inputdialog.h"
+#include "de/InputDialog"
 
-using namespace de;
+namespace de {
 
 DENG2_PIMPL_NOREF(InputDialog)
 {
@@ -56,3 +56,5 @@ void InputDialog::panelClosing()
     MessageDialog::panelClosing();
     root().setFocus(0);
 }
+
+} // namespace de

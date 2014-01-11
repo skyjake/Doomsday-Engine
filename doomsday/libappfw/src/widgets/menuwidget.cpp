@@ -202,13 +202,13 @@ DENG2_PIMPL(MenuWidget)
         organizer.setContext(*items); // recreates widgets
     }
 
-    void contextItemAdded(Data::Pos id, Item const &)
+    void contextItemAdded(Data::Pos, Item const &)
     {
         // Make sure we determine the layout for the new item.
         needLayout = true;
     }
 
-    void contextItemRemoved(Data::Pos id, Item &)
+    void contextItemRemoved(Data::Pos, Item &)
     {
         // Make sure we determine the layout after this item is gone.
         needLayout = true;
@@ -223,7 +223,7 @@ DENG2_PIMPL(MenuWidget)
     /*
      * Menu items are represented as buttons and labels.
      */
-    GuiWidget *makeItemWidget(Item const &item, GuiWidget const *parent)
+    GuiWidget *makeItemWidget(Item const &item, GuiWidget const *)
     {
         if(item.semantics().testFlag(Item::ShownAsButton))
         {

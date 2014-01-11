@@ -181,7 +181,9 @@ DENG2_OBSERVES(Widget, ChildRemoval)
     }
 };
 
-NotificationWidget::NotificationWidget(String const &name) : d(new Instance(this))
+NotificationWidget::NotificationWidget(String const &name)
+    : GuiWidget(name)
+    , d(new Instance(this))
 {
     // Initially the widget is empty.
     rule().setSize(Const(0), Const(0));

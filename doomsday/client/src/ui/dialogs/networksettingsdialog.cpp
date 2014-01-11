@@ -23,7 +23,8 @@
 
 #include "de_audio.h"
 #include "con_main.h"
-#include "SignalAction"
+
+#include <de/SignalAction>
 
 using namespace de;
 using namespace ui;

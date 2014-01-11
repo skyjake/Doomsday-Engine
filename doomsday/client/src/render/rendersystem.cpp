@@ -233,7 +233,7 @@ RenderSystem::RenderSystem() : d(new Instance(this))
 
 GLShaderBank &RenderSystem::shaders()
 {
-    return d->shaderBank;
+    return BaseGuiApp::shaders();
 }
 
 ImageBank &RenderSystem::images()

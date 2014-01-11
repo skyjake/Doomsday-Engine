@@ -1,4 +1,4 @@
-/** @file messagedialog.h Dialog for showing a message.
+/** @file inputdialog.h  Dialog for querying a string text from the user.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -13,34 +13,35 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_MESSAGEDIALOG_H
-#define DENG_CLIENT_MESSAGEDIALOG_H
+#ifndef LIBAPPFW_INPUTDIALOG_H
+#define LIBAPPFW_INPUTDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include "../MessageDialog"
+#include "../LineEditWidget"
+
+namespace de {
 
 /**
- * Dialog for showing a message.
+ * Dialog for querying a string of text from the user.
  */
-class MessageDialog : public DialogWidget
+class LIBAPPFW_PUBLIC InputDialog : public MessageDialog
 {
 public:
-    MessageDialog(de::String const &name = "");
+    InputDialog(String const &name = "");
 
-    LabelWidget &title();
-    LabelWidget &message();
+    LineEditWidget &editor();
 
 protected:
-    /**
-     * Derived classes should call this after they add or remove widgets in the
-     * dialog content area.
-     */
-    void updateLayout();
+    void preparePanelForOpening();
+    void panelClosing();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_MESSAGEDIALOG_H
+} // namespace de
+
+#endif // LIBAPPFW_INPUTDIALOG_H

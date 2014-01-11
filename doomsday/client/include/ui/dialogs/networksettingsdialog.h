@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_NETWORKSETTINGSDIALOG_H
 #define DENG_CLIENT_NETWORKSETTINGSDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog for modifying network settings.
  */
-class NetworkSettingsDialog : public DialogWidget
+class NetworkSettingsDialog : public de::DialogWidget
 {
     Q_OBJECT
 

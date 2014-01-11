@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_LOGSETTINGSDIALOG_H
 #define DENG_CLIENT_LOGSETTINGSDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog for modifying log filter and alert settings.
  */
-class LogSettingsDialog : public DialogWidget
+class LogSettingsDialog : public de::DialogWidget
 {
     Q_OBJECT
 

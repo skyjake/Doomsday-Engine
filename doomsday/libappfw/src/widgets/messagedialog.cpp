@@ -16,10 +16,11 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "ui/dialogs/messagedialog.h"
-#include "SequentialLayout"
+#include "de/MessageDialog"
+#include "de/SequentialLayout"
 
-using namespace de;
+namespace de {
+
 using namespace ui;
 
 DENG_GUI_PIMPL(MessageDialog)
@@ -68,7 +69,8 @@ DENG_GUI_PIMPL(MessageDialog)
 };
 
 MessageDialog::MessageDialog(String const &name)
-    : DialogWidget(name), d(new Instance(this))
+    : DialogWidget(name)
+    , d(new Instance(this))
 {}
 
 LabelWidget &MessageDialog::title()
@@ -85,3 +87,5 @@ void MessageDialog::updateLayout()
 {
     d->updateLayout();
 }
+
+} // namespace de

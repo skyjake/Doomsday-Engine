@@ -23,6 +23,7 @@
 
 #include <de/PersistentCanvasWindow>
 #include <de/GuiRootWidget>
+#include <de/NotificationWidget>
 
 #include "resource/image.h"
 #include "ui/widgets/gamewidget.h"
@@ -46,7 +47,6 @@
 
 class ConsoleWidget;
 class TaskBarWidget;
-class NotificationWidget;
 class BusyWidget;
 class AlertDialog;
 
@@ -75,7 +75,7 @@ public:
     de::GuiRootWidget &root();
     TaskBarWidget &taskBar();
     ConsoleWidget &console();
-    NotificationWidget &notifications();
+    de::NotificationWidget &notifications();
     GameWidget &game();
     BusyWidget &busy();
     AlertDialog &alerts();

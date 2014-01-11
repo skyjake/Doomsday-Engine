@@ -18,19 +18,20 @@
 
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/dialogs/renderersettingsdialog.h"
-#include "ui/widgets/buttonwidget.h"
-#include "ui/widgets/scrollareawidget.h"
-#include "ui/widgets/foldpanelwidget.h"
 #include "ui/widgets/profilepickerwidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/clientwindow.h"
-#include "DialogContentStylist"
-#include "SequentialLayout"
-#include "SignalAction"
 #include "clientapp.h"
 #include "con_main.h"
+
+#include <de/ButtonWidget>
+#include <de/ScrollAreaWidget>
+#include <de/FoldPanelWidget>
+#include <de/DialogContentStylist>
+#include <de/SequentialLayout>
+#include <de/SignalAction>
 
 using namespace de;
 using namespace ui;

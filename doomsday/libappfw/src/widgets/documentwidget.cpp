@@ -251,7 +251,9 @@ public Font::RichFormat::IStyle
     }
 };
 
-DocumentWidget::DocumentWidget(String const &name) : d(new Instance(this))
+DocumentWidget::DocumentWidget(String const &name)
+    : ScrollAreaWidget(name)
+    , d(new Instance(this))
 {
     setWidthPolicy(ui::Expand);
 
