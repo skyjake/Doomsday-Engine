@@ -85,13 +85,13 @@ static void postEventsFromInputDevices(void);
 int     repWait1 = 15, repWait2 = 3;
 //int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;    // milliseconds
 unsigned int  mouseFreq = 0;
-boolean shiftDown = false, altDown = false;
+dd_bool shiftDown = false, altDown = false;
 
 inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
 //-------------------------------------------------------------------------
 
-static boolean ignoreInput = false;
+static dd_bool ignoreInput = false;
 
 static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
 
@@ -117,7 +117,7 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 static float oldPOV = IJOY_POV_CENTER;
 
 static char* eventStrings[MAXEVENTS];
-static boolean uiMouseMode = false; // Can mouse data be modified?
+static dd_bool uiMouseMode = false; // Can mouse data be modified?
 
 static byte useSharpInputEvents = true; ///< cvar
 
@@ -500,7 +500,7 @@ inputdevhat_t* I_GetHatByID(inputdev_t* device, uint id)
     return &device->hats[id-1];
 }
 
-boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
+dd_bool I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
 {
     char name[30];
     char const *ptr;
@@ -686,7 +686,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
     a->assoc.flags &= ~IDAF_EXPIRED;
 }
 
-boolean I_ShiftDown(void)
+dd_bool I_ShiftDown(void)
 {
     return shiftDown;
 }
@@ -804,7 +804,7 @@ void I_ClearDeviceContextAssociations(void)
     }
 }
 
-boolean I_IsKeyDown(inputdev_t* dev, uint id)
+dd_bool I_IsKeyDown(inputdev_t* dev, uint id)
 {
     if(dev && id < dev->numKeys)
     {
@@ -885,9 +885,9 @@ static void clearQueue(eventqueue_t* q)
     q->head = q->tail;
 }
 
-boolean DD_IgnoreInput(boolean ignore)
+dd_bool DD_IgnoreInput(dd_bool ignore)
 {
-    boolean old = ignoreInput;
+    dd_bool old = ignoreInput;
     ignoreInput = ignore;
     LOG_INPUT_VERBOSE("Ignoring input: %b") << ignore;
     if(!ignore)
@@ -1118,9 +1118,9 @@ static void updateDeviceAxes(timespan_t ticLength)
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
-static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, boolean updateAxes)
+static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, dd_bool updateAxes)
 {
-    const boolean callGameResponders = App_GameLoaded();
+    const dd_bool callGameResponders = App_GameLoaded();
     ddevent_t* ddev;
 
     while((ddev = nextFromQueue(q)))
@@ -1353,7 +1353,7 @@ void DD_ReadKeyboard(void)
 /**
  * Change between normal and UI mousing modes.
  */
-void I_SetUIMouseMode(boolean on)
+void I_SetUIMouseMode(dd_bool on)
 {
     uiMouseMode = on;
 }

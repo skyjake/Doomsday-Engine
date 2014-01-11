@@ -133,7 +133,7 @@ typedef enum {
 typedef struct classinfo_s{
     playerclass_t plrClass;
     char*       niceName;
-    boolean     userSelectable;
+    dd_bool     userSelectable;
     mobjtype_t  mobjType;
     int         normalState;
     int         runState;

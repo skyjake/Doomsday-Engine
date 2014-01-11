@@ -108,7 +108,7 @@ void G_RendSpecialFilter(int player, const RectRaw* region)
     DGL_BlendMode(BM_NORMAL);
 }
 
-boolean R_ViewFilterColor(float rgba[4], int filter)
+dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {
     if(!rgba)
         return false;

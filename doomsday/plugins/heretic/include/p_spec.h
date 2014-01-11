@@ -72,7 +72,7 @@ void P_AddAmbientSfx(int sequence);
  */
 void P_AmbientSound(void);
 
-boolean         P_ActivateLine(Line* ld, mobj_t* mo, int side,
+dd_bool         P_ActivateLine(Line* ld, mobj_t* mo, int side,
                                int activationType);
 
 void            P_PlayerInSpecialSector(player_t* player);
@@ -97,7 +97,7 @@ result_e        T_MovePlane(Sector* sector, float speed, coord_t dest,
 
 int             EV_BuildStairs(Line* line, stair_e type);
 
-boolean         P_UseSpecialLine2(mobj_t* mo, Line* line, int side);
+dd_bool         P_UseSpecialLine2(mobj_t* mo, Line* line, int side);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -108,7 +108,7 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int maulatorSeconds = 25;
-boolean fastMonsters = false;
+dd_bool fastMonsters = false;
 
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309f)
@@ -150,7 +150,7 @@ void P_NoiseAlert(mobj_t* target, mobj_t *emitter)
     P_RecursiveSound(target, Mobj_Sector(emitter), 0);
 }
 
-boolean P_CheckMeleeRange(mobj_t* actor, boolean midrange)
+dd_bool P_CheckMeleeRange(mobj_t* actor, dd_bool midrange)
 {
     mobj_t* pl;
     coord_t dist, range;
@@ -188,7 +188,7 @@ boolean P_CheckMeleeRange(mobj_t* actor, boolean midrange)
     return true;
 }
 
-boolean P_CheckMissileRange(mobj_t* mo)
+dd_bool P_CheckMissileRange(mobj_t* mo)
 {
     coord_t dist;
 
@@ -234,11 +234,11 @@ boolean P_CheckMissileRange(mobj_t* mo)
  *
  * @return              @c false, if the move is blocked.
  */
-boolean P_Move(mobj_t* mo)
+dd_bool P_Move(mobj_t* mo)
 {
     coord_t tryPos[2], step[2];
     Line* ld;
-    boolean good;
+    dd_bool good;
 
     if(mo->flags2 & MF2_BLASTED)
         return true;
@@ -311,7 +311,7 @@ boolean P_Move(mobj_t* mo)
  *
  * @return              @c false, if blocked by either a wall or an actor.
  */
-boolean P_TryWalk(mobj_t *actor)
+dd_bool P_TryWalk(mobj_t *actor)
 {
     if(!P_Move(actor))
     {
@@ -405,7 +405,7 @@ typedef struct {
     coord_t             maxDistance;
     int                 minHealth;
     int                 compFlags;
-    boolean             checkLOS;
+    dd_bool             checkLOS;
     mobj_t*             checkMinotaurTracer;
     byte                randomSkip;
 } findmobjparams_t;
@@ -457,7 +457,7 @@ static int findMobj(thinker_t* th, void* context)
     return true; // Stop iteration.
 }
 
-boolean P_LookForMonsters(mobj_t* mo)
+dd_bool P_LookForMonsters(mobj_t* mo)
 {
     findmobjparams_t    params;
 
@@ -494,7 +494,7 @@ boolean P_LookForMonsters(mobj_t* mo)
  *
  * @return              @c true, if a player was targeted.
  */
-boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
+dd_bool P_LookForPlayers(mobj_t* actor, dd_bool allAround)
 {
     // If in single player and player is dead, look for monsters.
     if(!IS_NETGAME && players[0].health <= 0)
@@ -723,7 +723,7 @@ void C_DECL A_UnSetReflective(mobj_t *actor)
 /**
  * @return              @c true, if the pig morphs.
  */
-boolean P_UpdateMorphedMonster(mobj_t* actor, int tics)
+dd_bool P_UpdateMorphedMonster(mobj_t* actor, int tics)
 {
     mobj_t* fog;
     coord_t pos[3];
@@ -1402,7 +1402,7 @@ void C_DECL A_Explode(mobj_t* actor)
 {
     int damage;
     coord_t distance;
-    boolean damageSelf;
+    dd_bool damageSelf;
 
     damage = 128;
     distance = 128;
@@ -2639,7 +2639,7 @@ void C_DECL A_Demon2Death(mobj_t *mo)
 /**
  * Sink a mobj incrementally into the floor.
  */
-boolean A_SinkMobj(mobj_t *mo)
+dd_bool A_SinkMobj(mobj_t *mo)
 {
     if(mo->floorClip < mo->info->height)
     {
@@ -2664,9 +2664,9 @@ boolean A_SinkMobj(mobj_t *mo)
 /**
  * Raise a mobj incrementally from the floor to.
  */
-boolean A_RaiseMobj(mobj_t *mo)
+dd_bool A_RaiseMobj(mobj_t *mo)
 {
-    boolean         done = true;
+    dd_bool         done = true;
 
     // Raise a mobj from the ground.
     if(mo->floorClip > 0)

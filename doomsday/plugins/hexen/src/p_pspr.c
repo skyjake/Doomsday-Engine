@@ -1877,7 +1877,7 @@ void C_DECL A_FireConePL1(player_t *plr, pspdef_t *psp)
     int         i, damage;
     angle_t     angle;
     mobj_t     *pmo, *mo;
-    boolean     conedone = false;
+    dd_bool     conedone = false;
 
     if(IS_CLIENT) return;
 

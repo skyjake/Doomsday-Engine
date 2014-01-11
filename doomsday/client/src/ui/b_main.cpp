@@ -394,7 +394,7 @@ dbinding_t* B_BindControl(const char* controlDesc, const char* device)
     AutoStr*            str = 0;
     const char*         ptr = 0;
     playercontrol_t*    control = 0;
-    boolean             justCreated = false;
+    dd_bool             justCreated = false;
 
     LOG_AS("B_BindControl");
 
@@ -479,7 +479,7 @@ dbinding_t* B_GetControlDeviceBindings(int localNum, int control,
     return NULL;
 }
 
-boolean B_Delete(int bid)
+dd_bool B_Delete(int bid)
 {
     int                 i;
 
@@ -593,7 +593,7 @@ D_CMD(ActivateBindingContext)
 {
     DENG2_UNUSED2(src, argc);
 
-    boolean doActivate = !stricmp(argv[0], "activatebcontext");
+    dd_bool doActivate = !stricmp(argv[0], "activatebcontext");
     bcontext_t* bc = B_ContextByName(argv[1]);
 
     if(!bc)
@@ -621,7 +621,7 @@ D_CMD(ActivateBindingContext)
  *
  * @return              @c true, If an action was executed.
  */
-boolean B_Responder(ddevent_t* ev)
+dd_bool B_Responder(ddevent_t* ev)
 {
     if(symbolicEchoMode && ev->type != E_SYMBOLIC)
     {
@@ -658,7 +658,7 @@ boolean B_Responder(ddevent_t* ev)
 }
 
 
-const char* B_ShortNameForKey2(int ddKey, boolean forceLowercase)
+const char* B_ShortNameForKey2(int ddKey, dd_bool forceLowercase)
 {
     static char nameBuffer[40];
     uint idx;

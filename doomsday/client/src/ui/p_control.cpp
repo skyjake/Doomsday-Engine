@@ -95,7 +95,7 @@ typedef enum doubleclickstate_s {
  * threshold. This is to allow double-clicks also from the numeric controls.
  */
 typedef struct doubleclick_s {
-    boolean triggered;                      // True if double-click has been detected.
+    dd_bool triggered;                      // True if double-click has been detected.
     uint    previousClickTime;              // Previous time an activation occurred.
     doubleclickstate_t lastState;           // State at the previous time the check was made.
     doubleclickstate_t previousClickState;  // Previous click state. When duplicated, triggers

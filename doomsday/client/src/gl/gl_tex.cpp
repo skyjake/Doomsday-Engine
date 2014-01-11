@@ -751,8 +751,8 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
     }
 }
 
-boolean GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palette,
-    boolean applyTexGamma, uint8_t const *in, int informat, int width, int height)
+dd_bool GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palette,
+    dd_bool applyTexGamma, uint8_t const *in, int informat, int width, int height)
 {
     DENG2_ASSERT(in && out && palette);
 
@@ -796,7 +796,7 @@ boolean GL_PalettizeImage(uint8_t *out, int outformat, ColorPalette const *palet
     return false;
 }
 
-boolean GL_QuantizeImageToPalette(uint8_t *out, int outformat, ColorPalette const *palette,
+dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, ColorPalette const *palette,
     uint8_t const *in, int informat, int width, int height)
 {
     DENG2_ASSERT(out != 0 && in != 0 && palette != 0);
@@ -870,7 +870,7 @@ void GL_DeSaturatePalettedImage(uint8_t *pixels, ColorPalette const &palette,
 }
 
 void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
-    ColorPalette const &palette, boolean hasAlpha, ColorRawf *color)
+    ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color)
 {
     DENG2_ASSERT(data != 0 && color != 0);
 
@@ -989,7 +989,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
 }
 
 void FindAverageColorIdx(uint8_t const *data, int w, int h, ColorPalette const &palette,
-    boolean hasAlpha, ColorRawf *color)
+    dd_bool hasAlpha, ColorRawf *color)
 {
     DENG2_ASSERT(data != 0 && color != 0);
 
@@ -1369,7 +1369,7 @@ void Desaturate(uint8_t* pixels, int width, int height, int comps)
     }
 }
 
-void AmplifyLuma(uint8_t* pixels, int width, int height, boolean hasAlpha)
+void AmplifyLuma(uint8_t* pixels, int width, int height, dd_bool hasAlpha)
 {
     assert(pixels);
     {

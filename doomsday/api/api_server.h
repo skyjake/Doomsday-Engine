@@ -31,7 +31,7 @@ DENG_API_TYPEDEF(Server)
      * Determines whether the coordinates sent by a player are valid at the
      * moment.
      */
-    boolean (*CanTrustClientPos)(int player);
+    dd_bool (*CanTrustClientPos)(int player);
 }
 DENG_API_T(Server);
 

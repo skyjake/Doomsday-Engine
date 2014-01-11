@@ -62,12 +62,12 @@
 
 int verbose;
 
-boolean devParm; // checkparm of -devparm
-boolean noMonstersParm; // checkparm of -nomonsters
-boolean respawnParm; // checkparm of -respawn
-//boolean fastParm; // checkparm of -fast
-boolean turboParm; // checkparm of -turbo
-boolean randomClassParm; // checkparm of -randclass
+dd_bool devParm; // checkparm of -devparm
+dd_bool noMonstersParm; // checkparm of -nomonsters
+dd_bool respawnParm; // checkparm of -respawn
+//dd_bool fastParm; // checkparm of -fast
+dd_bool turboParm; // checkparm of -turbo
+dd_bool randomClassParm; // checkparm of -randclass
 
 float turboMul; // Multiplier for turbo.
 
@@ -95,7 +95,7 @@ char* borderGraphics[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean autoStart = false;
+static dd_bool autoStart = false;
 static uint startEpisode = 0;
 static uint startMap = 0;
 static playerclass_t startPlayerClass = PCLASS_NONE;

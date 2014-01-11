@@ -57,7 +57,7 @@
 
 #define ANG5                (ANG90/18)
 
-boolean onground;
+dd_bool onground;
 
 int maxHealth; // 100
 #if __JDOOM__ || __JDOOM64__
@@ -264,9 +264,9 @@ void P_Thrust(player_t *player, angle_t angle, coord_t move)
  * Returns true if the player is currently standing on ground
  * or on top of another mobj.
  */
-boolean P_IsPlayerOnGround(player_t* player)
+dd_bool P_IsPlayerOnGround(player_t* player)
 {
-    boolean onground = (player->plr->mo->origin[VZ] <= player->plr->mo->floorZ);
+    dd_bool onground = (player->plr->mo->origin[VZ] <= player->plr->mo->floorZ);
 
 #if __JHEXEN__
     if((player->plr->mo->onMobj) && !onground)
@@ -790,7 +790,7 @@ void P_MorphThink(player_t *player)
 # endif
 }
 
-boolean P_UndoPlayerMorph(player_t* player)
+dd_bool P_UndoPlayerMorph(player_t* player)
 {
     mobj_t* fog = 0, *mo = 0, *pmo = 0;
     coord_t pos[3];
@@ -974,7 +974,7 @@ void P_PlayerThinkAttackLunge(player_t *player)
  * @return              @c true, if thinking should be stopped. Otherwise,
  *                      @c false.
  */
-boolean P_PlayerThinkDeath(player_t *player)
+dd_bool P_PlayerThinkDeath(player_t *player)
 {
     if(player->playerState == PST_DEAD)
     {
@@ -1735,9 +1735,9 @@ void P_PlayerThinkUpdateControls(player_t* player)
     ddplayer_t         *dp = player->plr;
     float               vel, off, offsetSensitivity = 100;
     int                 i;
-    boolean             strafe = false;
+    dd_bool             strafe = false;
     playerbrain_t      *brain = &player->brain;
-    boolean             oldAttack = brain->attack;
+    dd_bool             oldAttack = brain->attack;
 
     if(IS_DEDICATED) return;
 

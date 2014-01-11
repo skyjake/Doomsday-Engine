@@ -33,7 +33,7 @@
 #include "monitor.h"
 #include "serverlink.h"
 
-extern boolean  allowSending;
+extern dd_bool  allowSending;
 extern int      maxQueuePackets;
 
 extern char    *nptIPAddress;
@@ -44,7 +44,7 @@ ServerLink &Net_ServerLink(void);
 void    N_Register(void);
 void    N_PrintInfo(void);
 int     N_GetHostCount(void);
-boolean N_GetHostInfo(int index, struct serverinfo_s *info);
+dd_bool N_GetHostInfo(int index, struct serverinfo_s *info);
 void    N_PrintNetworkStatus(void);
 
 #endif /* LIBDENG_SYSTEM_NETWORK_H */

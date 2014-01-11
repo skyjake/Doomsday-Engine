@@ -24,10 +24,10 @@
 
 #include "common.h"
 
-DENG_EXTERN_C boolean tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
+DENG_EXTERN_C dd_bool tmFloatOk; ///< @c true= move would be ok if within "tmFloorZ - tmCeilingZ".
 DENG_EXTERN_C coord_t tmFloorZ;
 DENG_EXTERN_C coord_t tmCeilingZ;
-DENG_EXTERN_C boolean tmFellDown;
+DENG_EXTERN_C dd_bool tmFellDown;
 DENG_EXTERN_C Line *tmCeilingLine;
 DENG_EXTERN_C Line *tmFloorLine;
 DENG_EXTERN_C Line *tmBlockingLine;
@@ -53,7 +53,7 @@ extern "C" {
  * @return  @c true iff an unobstructed line of sight exists from @a beholder
  * to the @a target.
  */
-boolean P_CheckSight(mobj_t const *beholder, mobj_t const *target);
+dd_bool P_CheckSight(mobj_t const *beholder, mobj_t const *target);
 
 /**
  * This is purely informative, nothing is modified (except things picked up).
@@ -71,10 +71,10 @@ boolean P_CheckSight(mobj_t const *beholder, mobj_t const *target);
  *  tmCeilingZ
  *  tmDropoffZ - the lowest point contacted (monsters won't move to a drop off)
  */
-boolean P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z);
-boolean P_CheckPosition(mobj_t *thing, coord_t const pos[3]);
+dd_bool P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z);
+dd_bool P_CheckPosition(mobj_t *thing, coord_t const pos[3]);
 
-boolean P_CheckPositionXY(mobj_t *thing, coord_t x, coord_t y);
+dd_bool P_CheckPositionXY(mobj_t *thing, coord_t x, coord_t y);
 
 /**
  * Source is the creature that caused the explosion at @a bomb.
@@ -82,7 +82,7 @@ boolean P_CheckPositionXY(mobj_t *thing, coord_t x, coord_t y);
  * @param afflictSource  @c true= the @a source is not immune to damage.
  */
 #if __JHEXEN__
-void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance, boolean afflictSource);
+void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance, dd_bool afflictSource);
 #else
 void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance);
 #endif
@@ -100,12 +100,12 @@ void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance);
  *
  * @return  @c true iff the move was successful.
  */
-boolean P_TryMoveXYZ(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
+dd_bool P_TryMoveXYZ(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
 
 #if !__JHEXEN__
-boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y, boolean dropoff, boolean slide);
+dd_bool P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff, dd_bool slide);
 #else
-boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y);
+dd_bool P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y);
 #endif
 
 /**
@@ -113,7 +113,7 @@ boolean P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y);
  *
  * @return  @c true iff the move was successful.
  */
-boolean P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, boolean alwaysStomp);
+dd_bool P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, dd_bool alwaysStomp);
 
 void P_TelefragMobjsTouchingPlayers(void);
 
@@ -139,7 +139,7 @@ void P_UseLines(player_t *player);
  * @param crush   Hexen: amount of crush damage to apply.
  *                Other games: apply fixed crush damage if @c > 0.
  */
-boolean P_ChangeSector(Sector *sector, int crush);
+dd_bool P_ChangeSector(Sector *sector, int crush);
 
 /**
  * This is called by the engine when it needs to change sector heights without
@@ -173,14 +173,14 @@ coord_t P_GetGravity(void);
  * different sides of the blocking line. If so, return true otherwise
  * false.
  */
-boolean P_CheckSides(mobj_t *actor, coord_t x, coord_t y);
+dd_bool P_CheckSides(mobj_t *actor, coord_t x, coord_t y);
 
 #if __JHERETIC__ || __JHEXEN__
 /**
  * @param mo  The mobj whoose position to test.
- * @return boolean  @c true iff the mobj is not blocked by anything.
+ * @return dd_bool  @c true iff the mobj is not blocked by anything.
  */
-boolean P_TestMobjLocation(mobj_t *mobj);
+dd_bool P_TestMobjLocation(mobj_t *mobj);
 #endif
 
 #if __JHEXEN__
@@ -199,9 +199,9 @@ void P_ThrustSpike(mobj_t *mobj);
  *
  * @param player    The player using the puzzle item.
  * @param itemType  The type of item to try to use.
- * @return boolean  true if the puzzle item was used.
+ * @return dd_bool  true if the puzzle item was used.
  */
-boolean P_UsePuzzleItem(player_t *player, int itemType);
+dd_bool P_UsePuzzleItem(player_t *player, int itemType);
 #endif
 
 #ifdef __cplusplus

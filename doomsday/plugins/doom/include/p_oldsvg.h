@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-boolean SV_RecogniseState_Dm_v19(Str const *path, SaveInfo *info);
+dd_bool SV_RecogniseState_Dm_v19(Str const *path, SaveInfo *info);
 
 /**
  * @return  @c 0 on success else error code.

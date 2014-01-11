@@ -32,7 +32,7 @@
 
 D_CMD(MsgResponse);
 
-static boolean awaitingResponse;
+static dd_bool awaitingResponse;
 static int messageToPrint; // 1 = message to be printed.
 static msgresponse_t messageResponse;
 
@@ -230,12 +230,12 @@ int Hu_MsgResponder(event_t* ev)
     return true;
 }
 
-boolean Hu_IsMessageActive(void)
+dd_bool Hu_IsMessageActive(void)
 {
     return messageToPrint;
 }
 
-boolean Hu_IsMessageActiveWithCallback(msgfunc_t callback)
+dd_bool Hu_IsMessageActiveWithCallback(msgfunc_t callback)
 {
     return messageToPrint && msgCallback == callback;
 }

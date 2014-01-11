@@ -52,7 +52,7 @@ xsector_t *xsectors;
 xline_t *xlines;
 
 // If true we are in the process of setting up a map
-boolean mapSetup;
+dd_bool mapSetup;
 
 xline_t *P_ToXLine(Line *line)
 {
@@ -75,7 +75,7 @@ xline_t *P_GetXLine(int idx)
     return &xlines[idx];
 }
 
-void P_SetLineAutomapVisibility(int player, int lineIdx, boolean visible)
+void P_SetLineAutomapVisibility(int player, int lineIdx, dd_bool visible)
 {
     Line *line = (Line *)P_ToPtr(DMU_LINE, lineIdx);
     xline_t *xline;
@@ -192,7 +192,7 @@ int applySurfaceColor(void *obj, void *context)
 }
 #endif
 
-static boolean checkMapSpotSpawnFlags(mapspot_t const *spot)
+static dd_bool checkMapSpotSpawnFlags(mapspot_t const *spot)
 {
 #if __JHEXEN__
     /// @todo Move to classinfo_t
@@ -256,7 +256,7 @@ static boolean checkMapSpotSpawnFlags(mapspot_t const *spot)
 /**
  * Determines if a client is allowed to spawn a thing of type @a doomEdNum.
  */
-static boolean P_IsClientAllowedToSpawn(int doomEdNum)
+static dd_bool P_IsClientAllowedToSpawn(int doomEdNum)
 {
     switch(doomEdNum)
     {
@@ -281,7 +281,7 @@ static boolean P_IsClientAllowedToSpawn(int doomEdNum)
 /**
  * Should we auto-spawn one or more mobjs from the specified map spot?
  */
-static boolean checkMapSpotAutoSpawn(mapspot_t const *spot)
+static dd_bool checkMapSpotAutoSpawn(mapspot_t const *spot)
 {
 #if __JHERETIC__
     // Ambient sound sequence activator?
@@ -1075,7 +1075,7 @@ patchid_t P_FindMapTitlePatch(uint episode, uint map)
     return 0;
 }
 
-char const *P_GetMapAuthor(boolean supressGameAuthor)
+char const *P_GetMapAuthor(dd_bool supressGameAuthor)
 {
     char const *author = (char const *) DD_GetVariable(DD_MAP_AUTHOR);
     if(!author || !author[0])
@@ -1086,7 +1086,7 @@ char const *P_GetMapAuthor(boolean supressGameAuthor)
     Uri *uri = G_ComposeMapUri(gameEpisode, gameMap);
     AutoStr *path = Uri_Resolved(uri);
 
-    boolean mapIsCustom = P_MapIsCustom(Str_Text(path));
+    dd_bool mapIsCustom = P_MapIsCustom(Str_Text(path));
 
     Uri_Delete(uri);
 

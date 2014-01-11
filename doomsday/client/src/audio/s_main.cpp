@@ -80,7 +80,7 @@ byte sfxOneSoundPerEmitter = false; // Traditional Doomsday behavior: allows sou
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean noRndPitch;
+static dd_bool noRndPitch;
 
 // CODE --------------------------------------------------------------------
 
@@ -111,10 +111,10 @@ void S_Register(void)
 #endif
 }
 
-boolean S_Init(void)
+dd_bool S_Init(void)
 {
 #ifdef __CLIENT__
-    boolean sfxOK, musOK;
+    dd_bool sfxOK, musOK;
 #endif
 
     if(CommandLine_Exists("-nosound") || CommandLine_Exists("-noaudio"))
@@ -264,7 +264,7 @@ sfxinfo_t* S_GetSoundInfo(int soundID, float* freq, float* volume)
 /**
  * @return              @c true, if the specified ID is a repeating sound.
  */
-boolean S_IsRepeating(int idFlags)
+dd_bool S_IsRepeating(int idFlags)
 {
     sfxinfo_t*          info;
 
@@ -288,7 +288,7 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t *origin,
     sfxinfo_t*          info;
     float               freq = 1;
     int                 result;
-    boolean             isRepeating = false;
+    dd_bool             isRepeating = false;
 
     // A dedicated server never starts any local sounds (only logical sounds in the LSM).
     if(isDedicated || BusyMode_Active())
@@ -522,7 +522,7 @@ int S_IsPlaying(int soundID, mobj_t* emitter)
 }
 
 #undef S_StartMusicNum
-int S_StartMusicNum(int id, boolean looped)
+int S_StartMusicNum(int id, dd_bool looped)
 {
 #ifdef __CLIENT__
 
@@ -543,7 +543,7 @@ int S_StartMusicNum(int id, boolean looped)
 }
 
 #undef S_StartMusic
-int S_StartMusic(const char* musicID, boolean looped)
+int S_StartMusic(const char* musicID, dd_bool looped)
 {
     LOG_AS("S_StartMusic");
     int idx = Def_GetMusicNum(musicID);
@@ -564,7 +564,7 @@ void S_StopMusic(void)
 }
 
 #undef S_PauseMusic
-void S_PauseMusic(boolean paused)
+void S_PauseMusic(dd_bool paused)
 {
 #ifdef __CLIENT__
     Mus_Pause(paused);
@@ -606,7 +606,7 @@ D_CMD(PlaySound)
     DENG2_UNUSED(src);
 
     coord_t fixedPos[3];
-    boolean useFixedPos = false;
+    dd_bool useFixedPos = false;
     float volume = 1;
     int p, id = 0;
 

@@ -74,7 +74,7 @@ typedef enum {
 #define CCH_ITEMS_PRCNT     0x10
 #define CCH_SECRETS_PRCNT   0x20
 
-// WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
+// WARNING: Do not use the dd_bool type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
 
 typedef struct jheretic_config_s {

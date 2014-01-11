@@ -270,7 +270,7 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
 
     if(flags & PSF2_OWNED_WEAPONS)
     {
-        boolean val;
+        dd_bool val;
 
         k = Reader_ReadUInt16(msg);
         for(i = 0; i < NUM_WEAPON_TYPES; ++i)
@@ -522,7 +522,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         for(i = 0; i < NUM_KEY_TYPES; ++i)
         {
-            boolean val = (b & (1 << i)) != 0;
+            dd_bool val = (b & (1 << i)) != 0;
 
             // Maybe unhide the HUD?
             if(val && !pl->keys[i])
@@ -553,7 +553,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
     if(flags & PSF_OWNED_WEAPONS)
     {
-        boolean val;
+        dd_bool val;
 
         b = Reader_ReadByte(msg);
         for(i = 0; i < NUM_WEAPON_TYPES; ++i)
@@ -604,7 +604,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
     if(flags & PSF_PENDING_WEAPON || flags & PSF_READY_WEAPON)
     {
-        boolean wasUndefined = (pl->plr->flags & DDPF_UNDEFINED_WEAPON) != 0;
+        dd_bool wasUndefined = (pl->plr->flags & DDPF_UNDEFINED_WEAPON) != 0;
 
         b = Reader_ReadByte(msg);
         if(flags & PSF_PENDING_WEAPON)

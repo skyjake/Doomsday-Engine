@@ -113,7 +113,7 @@ static char ctrlMus2Midi[NUM_MUS_CTRLS] = {
     121  ///< Reset all controllers.
 };
 
-static boolean getNextEvent(midi_event_t* ev)
+static dd_bool getNextEvent(midi_event_t* ev)
 {
     int i;
     mus_event_t evDesc;
@@ -223,7 +223,7 @@ static boolean getNextEvent(midi_event_t* ev)
     return true;
 }
 
-boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
+dd_bool M_Mus2Midi(void* data, size_t length, const char* outFile)
 {
     unsigned char buffer[80];
     int i, trackSizeOffset, trackSize;

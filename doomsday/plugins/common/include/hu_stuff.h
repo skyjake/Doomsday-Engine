@@ -87,7 +87,7 @@ extern patchid_t pInvPageRight[2];
 extern const char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
-extern boolean shiftdown;
+extern dd_bool shiftdown;
 extern const char shiftXForm[];
 extern patchid_t borderPatches[8];
 
@@ -98,9 +98,9 @@ void HU_WakeWidgets(int player);
 void Hu_UnloadData(void);
 
 void Hu_MapTitleDrawer(const RectRaw* portGeometry);
-void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor);
-boolean Hu_IsMapTitleVisible(void);
-boolean Hu_IsStatusBarVisible(int player);
+void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor);
+dd_bool Hu_IsMapTitleVisible(void);
+dd_bool Hu_IsStatusBarVisible(int player);
 
 void Hu_FogEffectTicker(timespan_t time);
 void Hu_FogEffectSetAlphaTarget(float alpha);
@@ -190,7 +190,7 @@ void WI_DrawPatchXY(patchid_t patchId, const char* replacement, int x, int y);
  * Misc specialised elements:
  */
 
-void M_DrawGlowBar(const float a[2], const float b[2], float thickness, boolean left, boolean right, boolean caps, float red, float green, float blue, float alpha);
+void M_DrawGlowBar(const float a[2], const float b[2], float thickness, dd_bool left, dd_bool right, dd_bool caps, float red, float green, float blue, float alpha);
 
 #ifdef __cplusplus
 } // extern "C"

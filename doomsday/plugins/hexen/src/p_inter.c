@@ -111,79 +111,79 @@ typedef enum {
 typedef struct iteminfo_s {
     itemtype_t          type;
     short               flags; // IIF_* flags.
-    boolean            (*giveFunc) (player_t*);
+    dd_bool            (*giveFunc) (player_t*);
     textenum_t          pickupMsg;
     sfxenum_t           pickupSound;
 } iteminfo_t;
 
 static void setDormantItem(mobj_t* mo);
 
-static boolean pickupHealthVial(player_t* plr);
-static boolean pickupMesh(player_t* plr);
-static boolean pickupShield(player_t* plr);
-static boolean pickupHelmet(player_t* plr);
-static boolean pickupAmulet(player_t* plr);
-static boolean pickupSteelKey(player_t* plr);
-static boolean pickupCaveKey(player_t* plr);
-static boolean pickupAxeKey(player_t* plr);
-static boolean pickupFireKey(player_t* plr);
-static boolean pickupEmeraldKey(player_t* plr);
-static boolean pickupDungeonKey(player_t* plr);
-static boolean pickupSilverKey(player_t* plr);
-static boolean pickupRustedKey(player_t* plr);
-static boolean pickupHornKey(player_t* plr);
-static boolean pickupSwampKey(player_t* plr);
-static boolean pickupCastleKey(player_t* plr);
-static boolean pickupQuartzFlask(player_t* plr);
-static boolean pickupWings(player_t* plr);
-static boolean pickupDefender(player_t* plr);
-static boolean pickupServant(player_t* plr);
-static boolean pickupPorkalator(player_t* plr);
-static boolean pickupMysticUrn(player_t* plr);
-static boolean pickupAmbitIncant(player_t* plr);
-static boolean pickupTorch(player_t* plr);
-static boolean pickupChaosDevice(player_t* plr);
-static boolean pickupBanishDevice(player_t* plr);
-static boolean pickupFletchette(player_t* plr);
-static boolean pickupBootsOfSpeed(player_t* plr);
-static boolean pickupKraterOfMight(player_t* plr);
-static boolean pickupBracers(player_t* plr);
-static boolean pickupRepulsion(player_t* plr);
-static boolean pickupSkull(player_t* plr);
-static boolean pickupBigGem(player_t* plr);
-static boolean pickupRedGem(player_t* plr);
-static boolean pickupGreenGem1(player_t* plr);
-static boolean pickupGreenGem2(player_t* plr);
-static boolean pickupBlueGem1(player_t* plr);
-static boolean pickupBlueGem2(player_t* plr);
-static boolean pickupBook1(player_t* plr);
-static boolean pickupBook2(player_t* plr);
-static boolean pickupSkull2(player_t* plr);
-static boolean pickupFWeapon(player_t* plr);
-static boolean pickupCWeapon(player_t* plr);
-static boolean pickupMWeapon(player_t* plr);
-static boolean pickupGear1(player_t* plr);
-static boolean pickupGear2(player_t* plr);
-static boolean pickupGear3(player_t* plr);
-static boolean pickupGear4(player_t* plr);
-static boolean pickupBlueMana(player_t* plr);
-static boolean pickupGreenMana(player_t* plr);
-static boolean pickupCombinedMana(player_t* plr);
-static boolean pickupFrostShards(player_t* plr);
-static boolean pickupArcOfDeath(player_t* plr);
-static boolean pickupAxe(player_t* plr);
-static boolean pickupHammer(player_t* plr);
-static boolean pickupSerpentStaff(player_t* plr);
-static boolean pickupFireStorm(player_t* plr);
-static boolean pickupQuietus1(player_t* plr);
-static boolean pickupQuietus2(player_t* plr);
-static boolean pickupQuietus3(player_t* plr);
-static boolean pickupWraithVerge1(player_t* plr);
-static boolean pickupWraithVerge2(player_t* plr);
-static boolean pickupWraithVerge3(player_t* plr);
-static boolean pickupBloodScourge1(player_t* plr);
-static boolean pickupBloodScourge2(player_t* plr);
-static boolean pickupBloodScourge3(player_t* plr);
+static dd_bool pickupHealthVial(player_t* plr);
+static dd_bool pickupMesh(player_t* plr);
+static dd_bool pickupShield(player_t* plr);
+static dd_bool pickupHelmet(player_t* plr);
+static dd_bool pickupAmulet(player_t* plr);
+static dd_bool pickupSteelKey(player_t* plr);
+static dd_bool pickupCaveKey(player_t* plr);
+static dd_bool pickupAxeKey(player_t* plr);
+static dd_bool pickupFireKey(player_t* plr);
+static dd_bool pickupEmeraldKey(player_t* plr);
+static dd_bool pickupDungeonKey(player_t* plr);
+static dd_bool pickupSilverKey(player_t* plr);
+static dd_bool pickupRustedKey(player_t* plr);
+static dd_bool pickupHornKey(player_t* plr);
+static dd_bool pickupSwampKey(player_t* plr);
+static dd_bool pickupCastleKey(player_t* plr);
+static dd_bool pickupQuartzFlask(player_t* plr);
+static dd_bool pickupWings(player_t* plr);
+static dd_bool pickupDefender(player_t* plr);
+static dd_bool pickupServant(player_t* plr);
+static dd_bool pickupPorkalator(player_t* plr);
+static dd_bool pickupMysticUrn(player_t* plr);
+static dd_bool pickupAmbitIncant(player_t* plr);
+static dd_bool pickupTorch(player_t* plr);
+static dd_bool pickupChaosDevice(player_t* plr);
+static dd_bool pickupBanishDevice(player_t* plr);
+static dd_bool pickupFletchette(player_t* plr);
+static dd_bool pickupBootsOfSpeed(player_t* plr);
+static dd_bool pickupKraterOfMight(player_t* plr);
+static dd_bool pickupBracers(player_t* plr);
+static dd_bool pickupRepulsion(player_t* plr);
+static dd_bool pickupSkull(player_t* plr);
+static dd_bool pickupBigGem(player_t* plr);
+static dd_bool pickupRedGem(player_t* plr);
+static dd_bool pickupGreenGem1(player_t* plr);
+static dd_bool pickupGreenGem2(player_t* plr);
+static dd_bool pickupBlueGem1(player_t* plr);
+static dd_bool pickupBlueGem2(player_t* plr);
+static dd_bool pickupBook1(player_t* plr);
+static dd_bool pickupBook2(player_t* plr);
+static dd_bool pickupSkull2(player_t* plr);
+static dd_bool pickupFWeapon(player_t* plr);
+static dd_bool pickupCWeapon(player_t* plr);
+static dd_bool pickupMWeapon(player_t* plr);
+static dd_bool pickupGear1(player_t* plr);
+static dd_bool pickupGear2(player_t* plr);
+static dd_bool pickupGear3(player_t* plr);
+static dd_bool pickupGear4(player_t* plr);
+static dd_bool pickupBlueMana(player_t* plr);
+static dd_bool pickupGreenMana(player_t* plr);
+static dd_bool pickupCombinedMana(player_t* plr);
+static dd_bool pickupFrostShards(player_t* plr);
+static dd_bool pickupArcOfDeath(player_t* plr);
+static dd_bool pickupAxe(player_t* plr);
+static dd_bool pickupHammer(player_t* plr);
+static dd_bool pickupSerpentStaff(player_t* plr);
+static dd_bool pickupFireStorm(player_t* plr);
+static dd_bool pickupQuietus1(player_t* plr);
+static dd_bool pickupQuietus2(player_t* plr);
+static dd_bool pickupQuietus3(player_t* plr);
+static dd_bool pickupWraithVerge1(player_t* plr);
+static dd_bool pickupWraithVerge2(player_t* plr);
+static dd_bool pickupWraithVerge3(player_t* plr);
+static dd_bool pickupBloodScourge1(player_t* plr);
+static dd_bool pickupBloodScourge2(player_t* plr);
+static dd_bool pickupBloodScourge3(player_t* plr);
 
 int TextKeyMessages[] = {
     TXT_TXT_KEY_STEEL,
@@ -276,7 +276,7 @@ void P_HideSpecialThing(mobj_t *thing)
     P_MobjChangeState(thing, S_HIDESPECIAL1);
 }
 
-static boolean giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
+static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
     int oldAmmo;
 
@@ -330,7 +330,7 @@ static boolean giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
     return true;
 }
 
-boolean P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
+dd_bool P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
     int gaveAmmos = 0;
 
@@ -352,11 +352,11 @@ boolean P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
     return gaveAmmos  != 0;
 }
 
-static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType,
+static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType,
                              playerclass_t matchClass)
 {
     ammotype_t ammoType = (weaponType == WT_SECOND)? AT_BLUEMANA : AT_GREENMANA;
-    boolean gaveWeapon = false, gaveAmmo = false;
+    dd_bool gaveWeapon = false, gaveAmmo = false;
 
     DENG_ASSERT(plr != 0);
     DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
@@ -393,7 +393,7 @@ static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType,
     return (gaveWeapon || gaveAmmo);
 }
 
-boolean P_GiveWeapon2(player_t *plr, weapontype_t weaponType, playerclass_t matchClass)
+dd_bool P_GiveWeapon2(player_t *plr, weapontype_t weaponType, playerclass_t matchClass)
 {
     int gaveWeapons = 0;
 
@@ -415,15 +415,15 @@ boolean P_GiveWeapon2(player_t *plr, weapontype_t weaponType, playerclass_t matc
     return gaveWeapons != 0;
 }
 
-boolean P_GiveWeapon(player_t *plr, weapontype_t weaponType)
+dd_bool P_GiveWeapon(player_t *plr, weapontype_t weaponType)
 {
     DENG_ASSERT(plr != 0);
     return P_GiveWeapon2(plr, weaponType, plr->class_);
 }
 
-boolean P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchClass)
+dd_bool P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchClass)
 {
-    boolean gaveAmmo = false;
+    dd_bool gaveAmmo = false;
 
     if(plr->class_ != matchClass)
     {
@@ -488,18 +488,18 @@ boolean P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchCla
     return true;
 }
 
-boolean P_GiveWeaponPiece(player_t *plr, int pieceValue)
+dd_bool P_GiveWeaponPiece(player_t *plr, int pieceValue)
 {
     DENG_ASSERT(plr != 0);
     return P_GiveWeaponPiece2(plr, pieceValue, plr->class_);
 }
 
-static int maxPlayerHealth(boolean morphed)
+static int maxPlayerHealth(dd_bool morphed)
 {
     return morphed? MAXMORPHHEALTH : maxHealth;
 }
 
-boolean P_GiveHealth(player_t *player, int amount)
+dd_bool P_GiveHealth(player_t *player, int amount)
 {
     int healthLimit = maxPlayerHealth(player->morphTics != 0);
 
@@ -523,7 +523,7 @@ boolean P_GiveHealth(player_t *player, int amount)
     return true;
 }
 
-static boolean giveOneArmor(player_t *plr, armortype_t armorType)
+static dd_bool giveOneArmor(player_t *plr, armortype_t armorType)
 {
     int points;
 
@@ -542,7 +542,7 @@ static boolean giveOneArmor(player_t *plr, armortype_t armorType)
     return true;
 }
 
-boolean P_GiveArmor(player_t *plr, armortype_t armorType)
+dd_bool P_GiveArmor(player_t *plr, armortype_t armorType)
 {
     int gaveArmors = 0;
 
@@ -564,7 +564,7 @@ boolean P_GiveArmor(player_t *plr, armortype_t armorType)
     return gaveArmors != 0;
 }
 
-boolean P_GiveArmorAlt(player_t *plr, armortype_t armorType, int amount)
+dd_bool P_GiveArmorAlt(player_t *plr, armortype_t armorType, int amount)
 {
     int hits, totalArmor;
 
@@ -590,7 +590,7 @@ boolean P_GiveArmorAlt(player_t *plr, armortype_t armorType, int amount)
     return true;
 }
 
-static boolean giveOneKey(player_t *plr, keytype_t keyType)
+static dd_bool giveOneKey(player_t *plr, keytype_t keyType)
 {
     DENG_ASSERT(plr != 0);
     DENG_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
@@ -608,7 +608,7 @@ static boolean giveOneKey(player_t *plr, keytype_t keyType)
     return true;
 }
 
-boolean P_GiveKey(player_t *plr, keytype_t keyType)
+dd_bool P_GiveKey(player_t *plr, keytype_t keyType)
 {
     int gaveKeys = 0;
 
@@ -630,9 +630,9 @@ boolean P_GiveKey(player_t *plr, keytype_t keyType)
     return gaveKeys != 0;
 }
 
-boolean P_GivePower(player_t *plr, powertype_t power)
+dd_bool P_GivePower(player_t *plr, powertype_t power)
 {
-    boolean retval = false;
+    dd_bool retval = false;
 
     plr->update |= PSF_POWERS;
 
@@ -706,7 +706,7 @@ boolean P_GivePower(player_t *plr, powertype_t power)
     return retval;
 }
 
-boolean P_GiveItem(player_t *plr, inventoryitemtype_t item)
+dd_bool P_GiveItem(player_t *plr, inventoryitemtype_t item)
 {
     if(plr)
         return P_InventoryGive(plr - players, item, false);
@@ -846,257 +846,257 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
     return IT_NONE;
 }
 
-static boolean pickupHealthVial(player_t *plr)
+static dd_bool pickupHealthVial(player_t *plr)
 {
     return P_GiveHealth(plr, 10);
 }
 
-static boolean pickupMesh(player_t *plr)
+static dd_bool pickupMesh(player_t *plr)
 {
     return P_GiveArmor(plr, ARMOR_ARMOR);
 }
 
-static boolean pickupShield(player_t *plr)
+static dd_bool pickupShield(player_t *plr)
 {
     return P_GiveArmor(plr, ARMOR_SHIELD);
 }
 
-static boolean pickupHelmet(player_t *plr)
+static dd_bool pickupHelmet(player_t *plr)
 {
     return P_GiveArmor(plr, ARMOR_HELMET);
 }
 
-static boolean pickupAmulet(player_t *plr)
+static dd_bool pickupAmulet(player_t *plr)
 {
     return P_GiveArmor(plr, ARMOR_AMULET);
 }
 
-static boolean pickupSteelKey(player_t *plr)
+static dd_bool pickupSteelKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY1);
 }
 
-static boolean pickupCaveKey(player_t *plr)
+static dd_bool pickupCaveKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY2);
 }
 
-static boolean pickupAxeKey(player_t *plr)
+static dd_bool pickupAxeKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY3);
 }
 
-static boolean pickupFireKey(player_t *plr)
+static dd_bool pickupFireKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY4);
 }
 
-static boolean pickupEmeraldKey(player_t *plr)
+static dd_bool pickupEmeraldKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY5);
 }
 
-static boolean pickupDungeonKey(player_t *plr)
+static dd_bool pickupDungeonKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY6);
 }
 
-static boolean pickupSilverKey(player_t *plr)
+static dd_bool pickupSilverKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY7);
 }
 
-static boolean pickupRustedKey(player_t *plr)
+static dd_bool pickupRustedKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY8);
 }
 
-static boolean pickupHornKey(player_t *plr)
+static dd_bool pickupHornKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEY9);
 }
 
-static boolean pickupSwampKey(player_t *plr)
+static dd_bool pickupSwampKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEYA);
 }
 
-static boolean pickupCastleKey(player_t *plr)
+static dd_bool pickupCastleKey(player_t *plr)
 {
     return P_GiveKey(plr, KT_KEYB);
 }
 
-static boolean pickupQuartzFlask(player_t *plr)
+static dd_bool pickupQuartzFlask(player_t *plr)
 {
     return P_GiveItem(plr, IIT_HEALTH);
 }
 
-static boolean pickupWings(player_t *plr)
+static dd_bool pickupWings(player_t *plr)
 {
     return P_GiveItem(plr, IIT_FLY);
 }
 
-static boolean pickupDefender(player_t *plr)
+static dd_bool pickupDefender(player_t *plr)
 {
     return P_GiveItem(plr, IIT_INVULNERABILITY);
 }
 
-static boolean pickupServant(player_t *plr)
+static dd_bool pickupServant(player_t *plr)
 {
     return P_GiveItem(plr, IIT_SUMMON);
 }
 
-static boolean pickupPorkalator(player_t *plr)
+static dd_bool pickupPorkalator(player_t *plr)
 {
     return P_GiveItem(plr, IIT_EGG);
 }
 
-static boolean pickupMysticUrn(player_t *plr)
+static dd_bool pickupMysticUrn(player_t *plr)
 {
     return P_GiveItem(plr, IIT_SUPERHEALTH);
 }
 
-static boolean pickupAmbitIncant(player_t *plr)
+static dd_bool pickupAmbitIncant(player_t *plr)
 {
     return P_GiveItem(plr, IIT_HEALINGRADIUS);
 }
 
-static boolean pickupTorch(player_t *plr)
+static dd_bool pickupTorch(player_t *plr)
 {
     return P_GiveItem(plr, IIT_TORCH);
 }
 
-static boolean pickupChaosDevice(player_t *plr)
+static dd_bool pickupChaosDevice(player_t *plr)
 {
     return P_GiveItem(plr, IIT_TELEPORT);
 }
 
-static boolean pickupBanishDevice(player_t *plr)
+static dd_bool pickupBanishDevice(player_t *plr)
 {
     return P_GiveItem(plr, IIT_TELEPORTOTHER);
 }
 
-static boolean pickupFletchette(player_t *plr)
+static dd_bool pickupFletchette(player_t *plr)
 {
     return P_GiveItem(plr, IIT_POISONBAG);
 }
 
-static boolean pickupBootsOfSpeed(player_t *plr)
+static dd_bool pickupBootsOfSpeed(player_t *plr)
 {
     return P_GiveItem(plr, IIT_SPEED);
 }
 
-static boolean pickupKraterOfMight(player_t *plr)
+static dd_bool pickupKraterOfMight(player_t *plr)
 {
     return P_GiveItem(plr, IIT_BOOSTMANA);
 }
 
-static boolean pickupBracers(player_t *plr)
+static dd_bool pickupBracers(player_t *plr)
 {
     return P_GiveItem(plr, IIT_BOOSTARMOR);
 }
 
-static boolean pickupRepulsion(player_t *plr)
+static dd_bool pickupRepulsion(player_t *plr)
 {
     return P_GiveItem(plr, IIT_BLASTRADIUS);
 }
 
-static boolean pickupSkull(player_t *plr)
+static dd_bool pickupSkull(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZSKULL);
 }
 
-static boolean pickupBigGem(player_t *plr)
+static dd_bool pickupBigGem(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMBIG);
 }
 
-static boolean pickupRedGem(player_t *plr)
+static dd_bool pickupRedGem(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMRED);
 }
 
-static boolean pickupGreenGem1(player_t *plr)
+static dd_bool pickupGreenGem1(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMGREEN1);
 }
 
-static boolean pickupGreenGem2(player_t *plr)
+static dd_bool pickupGreenGem2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMGREEN2);
 }
 
-static boolean pickupBlueGem1(player_t *plr)
+static dd_bool pickupBlueGem1(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMBLUE1);
 }
 
-static boolean pickupBlueGem2(player_t *plr)
+static dd_bool pickupBlueGem2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEMBLUE2);
 }
 
-static boolean pickupBook1(player_t *plr)
+static dd_bool pickupBook1(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZBOOK1);
 }
 
-static boolean pickupBook2(player_t *plr)
+static dd_bool pickupBook2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZBOOK2);
 }
 
-static boolean pickupSkull2(player_t *plr)
+static dd_bool pickupSkull2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZSKULL2);
 }
 
-static boolean pickupFWeapon(player_t *plr)
+static dd_bool pickupFWeapon(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZFWEAPON);
 }
 
-static boolean pickupCWeapon(player_t *plr)
+static dd_bool pickupCWeapon(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZCWEAPON);
 }
 
-static boolean pickupMWeapon(player_t *plr)
+static dd_bool pickupMWeapon(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZMWEAPON);
 }
 
-static boolean pickupGear1(player_t *plr)
+static dd_bool pickupGear1(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEAR1);
 }
 
-static boolean pickupGear2(player_t *plr)
+static dd_bool pickupGear2(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEAR2);
 }
 
-static boolean pickupGear3(player_t *plr)
+static dd_bool pickupGear3(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEAR3);
 }
 
-static boolean pickupGear4(player_t *plr)
+static dd_bool pickupGear4(player_t *plr)
 {
     return P_GiveItem(plr, IIT_PUZZGEAR4);
 }
 
-static boolean pickupBlueMana(player_t *plr)
+static dd_bool pickupBlueMana(player_t *plr)
 {
     return P_GiveAmmo(plr, AT_BLUEMANA, 15);
 }
 
-static boolean pickupGreenMana(player_t *plr)
+static dd_bool pickupGreenMana(player_t *plr)
 {
     return P_GiveAmmo(plr, AT_GREENMANA, 15);
 }
 
-static boolean pickupCombinedMana(player_t *plr)
+static dd_bool pickupCombinedMana(player_t *plr)
 {
     if(!P_GiveAmmo(plr, AT_BLUEMANA, 20))
     {
@@ -1111,7 +1111,7 @@ static boolean pickupCombinedMana(player_t *plr)
     return true;
 }
 
-static boolean pickupWeapon(player_t *plr, weapontype_t weaponType,
+static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
                             playerclass_t matchClass)
 {
     DENG_ASSERT(plr != 0);
@@ -1129,82 +1129,82 @@ static boolean pickupWeapon(player_t *plr, weapontype_t weaponType,
     return P_GiveWeapon2(plr, weaponType, matchClass);
 }
 
-static boolean pickupFrostShards(player_t *plr)
+static dd_bool pickupFrostShards(player_t *plr)
 {
     return pickupWeapon(plr, WT_SECOND, PCLASS_MAGE);
 }
 
-static boolean pickupArcOfDeath(player_t *plr)
+static dd_bool pickupArcOfDeath(player_t *plr)
 {
     return pickupWeapon(plr, WT_THIRD, PCLASS_MAGE);
 }
 
-static boolean pickupAxe(player_t *plr)
+static dd_bool pickupAxe(player_t *plr)
 {
     return pickupWeapon(plr, WT_SECOND, PCLASS_FIGHTER);
 }
 
-static boolean pickupHammer(player_t *plr)
+static dd_bool pickupHammer(player_t *plr)
 {
     return pickupWeapon(plr, WT_THIRD, PCLASS_FIGHTER);
 }
 
-static boolean pickupSerpentStaff(player_t *plr)
+static dd_bool pickupSerpentStaff(player_t *plr)
 {
     return pickupWeapon(plr, WT_SECOND, PCLASS_CLERIC);
 }
 
-static boolean pickupFireStorm(player_t *plr)
+static dd_bool pickupFireStorm(player_t *plr)
 {
     return pickupWeapon(plr, WT_THIRD, PCLASS_CLERIC);
 }
 
-static boolean pickupQuietus1(player_t *plr)
+static dd_bool pickupQuietus1(player_t *plr)
 {
     return P_GiveWeaponPiece2(plr, WPIECE1, PCLASS_FIGHTER);
 }
 
-static boolean pickupQuietus2(player_t *plr)
+static dd_bool pickupQuietus2(player_t *plr)
 {
     return P_GiveWeaponPiece2(plr, WPIECE2, PCLASS_FIGHTER);
 }
 
-static boolean pickupQuietus3(player_t *plr)
+static dd_bool pickupQuietus3(player_t *plr)
 {
     return P_GiveWeaponPiece2(plr, WPIECE3, PCLASS_FIGHTER);
 }
 
-static boolean pickupWraithVerge1(player_t *plr)
+static dd_bool pickupWraithVerge1(player_t *plr)
 {
     return P_GiveWeaponPiece2(plr, WPIECE1, PCLASS_CLERIC);
 }
 
-static boolean pickupWraithVerge2(player_t *plr)
+static dd_bool pickupWraithVerge2(player_t *plr)
 {
     return P_GiveWeaponPiece2(plr, WPIECE2, PCLASS_CLERIC);
 }
 
-static boolean pickupWraithVerge3(player_t *plr)
+static dd_bool pickupWraithVerge3(player_t *plr)
 {
     return P_GiveWeaponPiece2(plr, WPIECE3, PCLASS_CLERIC);
 }
 
-static boolean pickupBloodScourge1(player_t *plr)
+static dd_bool pickupBloodScourge1(player_t *plr)
 {
     return P_GiveWeaponPiece2(plr, WPIECE1, PCLASS_MAGE);
 }
 
-static boolean pickupBloodScourge2(player_t *plr)
+static dd_bool pickupBloodScourge2(player_t *plr)
 {
     return P_GiveWeaponPiece2(plr, WPIECE2, PCLASS_MAGE);
 }
 
-static boolean pickupBloodScourge3(player_t *plr)
+static dd_bool pickupBloodScourge3(player_t *plr)
 {
     return P_GiveWeaponPiece2(plr, WPIECE3, PCLASS_MAGE);
 }
 
-static boolean giveItem(player_t *plr, itemtype_t item)
+static dd_bool giveItem(player_t *plr, itemtype_t item)
 {
     iteminfo_t const *info = &items[item];
     int oldPieces = plr->pieces;
@@ -1278,7 +1278,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     player_t* player;
     coord_t delta;
     itemtype_t item;
-    boolean wasUsed = false, removeItem = false;
+    dd_bool wasUsed = false, removeItem = false;
 
     if(IS_CLIENT) return;
 
@@ -1717,7 +1717,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
 /**
  * @return              @c true, if the player gets turned into a pig.
  */
-boolean P_MorphPlayer(player_t* player)
+dd_bool P_MorphPlayer(player_t* player)
 {
     mobj_t* pmo, *fog, *beastMo;
     coord_t pos[3];
@@ -1766,7 +1766,7 @@ boolean P_MorphPlayer(player_t* player)
     return true;
 }
 
-boolean P_MorphMonster(mobj_t* actor)
+dd_bool P_MorphMonster(mobj_t* actor)
 {
     mobj_t* master, *monster, *fog;
     mobjtype_t moType;
@@ -1907,7 +1907,7 @@ void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
 }
 
 int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                 int damageP, boolean stomping)
+                 int damageP, dd_bool stomping)
 {
     return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
 }
@@ -1924,7 +1924,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  *                          creature or @c NULL.
  */
 int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP,
-    boolean stomping, boolean skipNetworkCheck)
+    dd_bool stomping, dd_bool skipNetworkCheck)
 {
     uint an;
     angle_t angle;
@@ -2444,7 +2444,7 @@ int P_FallingDamage(player_t* player)
 }
 
 int P_PoisonDamage(player_t* player, mobj_t* source, int damage,
-                   boolean playPainSound)
+                   dd_bool playPainSound)
 {
     int             originalHealth;
     mobj_t*         target, *inflictor;

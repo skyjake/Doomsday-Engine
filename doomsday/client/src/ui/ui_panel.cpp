@@ -684,7 +684,7 @@ void CP_DrawBorder(ui_object_t* ob)
     HelpId help_ptr;
     Point2Raw origin;
     Size2Raw size;
-    boolean shown;
+    dd_bool shown;
 
     UIFrame_Drawer(ob);
 
@@ -829,7 +829,7 @@ int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)
 
 void CP_KeyGrabDrawer(ui_object_t* ob)
 {
-    boolean sel = (ob->flags & UIF_FOCUS) != 0;
+    dd_bool sel = (ob->flags & UIF_FOCUS) != 0;
     float alpha = (ob->flags & UIF_DISABLED ? .2f : 1);
     char buf[80];
     byte key = Con_GetByte(ob->text);

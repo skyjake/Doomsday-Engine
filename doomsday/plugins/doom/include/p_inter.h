@@ -35,7 +35,7 @@
  *
  * @return  @c true iff the power was given.
  */
-boolean P_GivePower(player_t *player, powertype_t powerType);
+dd_bool P_GivePower(player_t *player, powertype_t powerType);
 
 /**
  * @param player     Player to relieve of the power.
@@ -43,7 +43,7 @@ boolean P_GivePower(player_t *player, powertype_t powerType);
  *
  * @return  @c true iff the power was taken.
  */
-boolean P_TakePower(player_t *player, powertype_t powerType);
+dd_bool P_TakePower(player_t *player, powertype_t powerType);
 
 /**
  * @param player     Player to toggle a power for.
@@ -51,7 +51,7 @@ boolean P_TakePower(player_t *player, powertype_t powerType);
  *
  * @return  @c true iff the power was toggled.
  */
-boolean P_TogglePower(player_t *player, powertype_t powerType);
+dd_bool P_TogglePower(player_t *player, powertype_t powerType);
 
 /**
  * Give key(s) to the specified player. If a key is successfully given a short
@@ -64,7 +64,7 @@ boolean P_TogglePower(player_t *player, powertype_t powerType);
  *
  * @return  @c true iff at least one new key was given (not already owned).
  */
-boolean P_GiveKey(player_t *player, keytype_t keyType);
+dd_bool P_GiveKey(player_t *player, keytype_t keyType);
 
 /**
  * Give ammo(s) to the specified player. If a ammo is successfully given the
@@ -87,14 +87,14 @@ boolean P_GiveKey(player_t *player, keytype_t keyType);
  *
  * @return  @c true iff at least one new round was given (not already owned).
  */
-boolean P_GiveAmmo(player_t *player, ammotype_t ammoType, int numClips);
+dd_bool P_GiveAmmo(player_t *player, ammotype_t ammoType, int numClips);
 
 /**
  * @param player    Player to receive the health.
  *
  * @return  @c true iff at least some of the health was given.
  */
-boolean P_GiveHealth(player_t *player, int amount);
+dd_bool P_GiveHealth(player_t *player, int amount);
 
 /**
  * @param player    Player to receive the backpack.
@@ -104,11 +104,11 @@ void P_GiveBackpack(player_t *player);
 /**
  * The weapon name may have a MF_DROPPED flag ored in.
  */
-boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped);
+dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped);
 
 /**
  * @return  @c true iff the armor was given.
  */
-boolean P_GiveArmor(player_t *player, int type, int points);
+dd_bool P_GiveArmor(player_t *player, int type, int points);
 
 #endif // LIBDOOM_P_INTER_H

@@ -133,7 +133,7 @@ static int loadPlugin(void* libraryFile, const char* fileName, const char* plugi
     return 0; // Continue iteration.
 }
 
-static boolean unloadPlugin(PluginHandle* handle)
+static dd_bool unloadPlugin(PluginHandle* handle)
 {
     assert(handle);
     if(!*handle) return false;

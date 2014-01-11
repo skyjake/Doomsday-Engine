@@ -55,11 +55,11 @@ typedef struct joystate_s {
 
 void Joystick_Register(void);
 
-boolean Joystick_Init(void);
+dd_bool Joystick_Init(void);
 
 void Joystick_Shutdown(void);
 
-boolean Joystick_IsPresent(void);
+dd_bool Joystick_IsPresent(void);
 
 void Joystick_GetState(joystate_t* state);
 

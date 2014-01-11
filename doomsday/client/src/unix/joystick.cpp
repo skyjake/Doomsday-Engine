@@ -38,9 +38,9 @@
 int     joydevice = 0;          // Joystick index to use (cvar)
 byte    useJoystickCvar = true; // Joystick input enabled? (cvar)
 
-static boolean joyInited;
+static dd_bool joyInited;
 static byte joyAvailable; // Input enabled from a source?
-static boolean joyButtonWasDown[IJOY_MAXBUTTONS];
+static dd_bool joyButtonWasDown[IJOY_MAXBUTTONS];
 
 #ifndef DENG_NO_SDL
 static SDL_Joystick *joy;
@@ -110,7 +110,7 @@ static void initialize(void)
 }
 #endif
 
-boolean Joystick_Init(void)
+dd_bool Joystick_Init(void)
 {
 #ifndef DENG_NO_SDL
     if(joyInited) return true; // Already initialized.
@@ -138,7 +138,7 @@ void Joystick_Shutdown(void)
 #endif
 }
 
-boolean Joystick_IsPresent(void)
+dd_bool Joystick_IsPresent(void)
 {
     return joyAvailable;
 }

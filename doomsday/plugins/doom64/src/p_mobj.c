@@ -116,7 +116,7 @@ void P_MobjMoveXY(mobj_t* mo)
 {
     coord_t pos[3], mom[3];
     player_t* player;
-    boolean largeNegative;
+    dd_bool largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
@@ -381,7 +381,7 @@ void P_MobjMoveZ(mobj_t *mo)
     // The floor.
     if(mo->origin[VZ] <= mo->floorZ)
     {   // Hit the floor.
-        boolean             movingDown;
+        dd_bool             movingDown;
 
         // Note (id):
         //  somebody left this after the setting momz to 0,
@@ -881,7 +881,7 @@ void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle)
  * @return              @c true, if the missile is at a valid location else
  *                      @c false
  */
-boolean P_CheckMissileSpawn(mobj_t* mo)
+dd_bool P_CheckMissileSpawn(mobj_t* mo)
 {
     mo->tics -= P_Random() & 3;
     if(mo->tics < 1)

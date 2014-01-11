@@ -35,7 +35,7 @@ public: /// @todo make private
     uint prop;
     int modifiers; /// Property modifiers (e.g., line of sector)
     valuetype_t valueType;
-    boolean *booleanValues;
+    dd_bool *booleanValues;
     byte *byteValues;
     int *intValues;
     fixed_t *fixedValues;

@@ -73,8 +73,8 @@ typedef struct acsheader_s {
 
 static void StartOpenACS(int number, int infoIndex, const int* address);
 static void ScriptFinished(int number);
-static boolean TagBusy(int tag);
-static boolean AddToACSStore(uint map, int number, const byte* args);
+static dd_bool TagBusy(int tag);
+static dd_bool AddToACSStore(uint map, int number, const byte* args);
 static int GetACSIndex(int number);
 static void Push(int value);
 static int Pop(void);
@@ -374,7 +374,7 @@ void P_CheckACSStore(uint map)
  *                      @c 0 = Current map. Otherwise 1-based index of the
  *                      map to start on (will be deferred).
  */
-boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
+dd_bool P_StartACS(int number, uint map, byte* args, mobj_t* activator,
                    Line* line, int side)
 {
     int i, infoIndex;
@@ -436,7 +436,7 @@ boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
     return true;
 }
 
-static boolean AddToACSStore(uint map, int number, const byte* args)
+static dd_bool AddToACSStore(uint map, int number, const byte* args)
 {
     acsstore_t* store;
 
@@ -471,7 +471,7 @@ static boolean AddToACSStore(uint map, int number, const byte* args)
     return true;
 }
 
-boolean P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
+dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
 {
     int         i;
     int         lock;
@@ -505,7 +505,7 @@ boolean P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
     return P_StartACS(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
 }
 
-boolean P_TerminateACS(int number, uint map)
+dd_bool P_TerminateACS(int number, uint map)
 {
     int         infoIndex;
 
@@ -525,7 +525,7 @@ boolean P_TerminateACS(int number, uint map)
     return true;
 }
 
-boolean P_SuspendACS(int number, uint map)
+dd_bool P_SuspendACS(int number, uint map)
 {
     int         infoIndex;
 
@@ -647,7 +647,7 @@ static void ScriptFinished(int number)
     }
 }
 
-static boolean TagBusy(int tag)
+static dd_bool TagBusy(int tag)
 {
     int k;
     Sector *sec;
@@ -1799,7 +1799,7 @@ static int CmdSetLineBlocking(void)
 {
     Line*               line;
     int                 lineTag;
-    boolean             blocking;
+    dd_bool             blocking;
     iterlist_t*         list;
 
     blocking = Pop()? DDLF_BLOCKING : 0;

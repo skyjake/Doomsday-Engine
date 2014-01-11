@@ -68,23 +68,23 @@ using namespace de;
 void GL_SetGamma();
 
 extern int maxnumnodes;
-extern boolean fillOutlines;
+extern dd_bool fillOutlines;
 
 int     defResX = 640, defResY = 480, defBPP = 32;
 int     defFullscreen = true;
 
 int     numTexUnits = 1;
-boolean envModAdd; // TexEnv: modulate and add is available.
+dd_bool envModAdd; // TexEnv: modulate and add is available.
 int     test3dfx = 0;
 int     r_detail = true; // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
 float   glNearClip, glFarClip;
 
-static boolean initGLOk = false;
-static boolean initFullGLOk = false;
+static dd_bool initGLOk = false;
+static dd_bool initFullGLOk = false;
 
-static boolean gamma_support = false;
+static dd_bool gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
 
 static int fogModeDefault = 0;
@@ -153,12 +153,12 @@ void GL_Register()
     C_CMD      ("centerwindow",     "",     CenterWindow);
 }
 
-boolean GL_IsInited()
+dd_bool GL_IsInited()
 {
     return initGLOk;
 }
 
-boolean GL_IsFullyInited()
+dd_bool GL_IsFullyInited()
 {
     return initFullGLOk;
 }
@@ -301,7 +301,7 @@ static void printConfiguration()
     LOG_GL_VERBOSE("  Texture NPOT: %b") << GL_state.features.texNonPowTwo;
 }
 
-boolean GL_EarlyInit()
+dd_bool GL_EarlyInit()
 {
     if(novideo) return true;
     if(initGLOk) return true; // Already initialized.
@@ -451,7 +451,7 @@ void GL_Init2DState()
     glFogfv(GL_FOG_COLOR, fogColor);
 }
 
-void GL_SwitchTo3DState(boolean push_state, viewport_t const *port, viewdata_t const *viewData)
+void GL_SwitchTo3DState(dd_bool push_state, viewport_t const *port, viewdata_t const *viewData)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -790,7 +790,7 @@ int GL_NumMipmapLevels(int width, int height)
     return numLevels;
 }
 
-boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
+dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool isMipMapped,
     int *optWidth, int *optHeight)
 {
     DENG_ASSERT(optWidth && optHeight);
@@ -1226,7 +1226,7 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
 
     int region[4];
     FindClipRegionNonAlpha(buffer, width, height, pixelSize, region);
-    boolean zeroAreaRegion = (region[0] > region[1] || region[2] > region[3]);
+    dd_bool zeroAreaRegion = (region[0] > region[1] || region[2] > region[3]);
     if(zeroAreaRegion) return;
 
     /*
@@ -1266,7 +1266,7 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int pixelSiz
         for(x = region[0]; x <= region[1]; ++x, src += pixelSize, alphaSrc++)
         {
             // Alpha pixels don't count. Why? -ds
-            boolean const pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
+            dd_bool const pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
                                                 pixelSize == 4?    src[3] < 255 : false);
 
             if(pixelIsTransparent) continue;

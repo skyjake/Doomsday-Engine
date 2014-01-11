@@ -76,7 +76,7 @@ void P_ExplodeMissile(mobj_t *mo)
 
 void P_FloorBounceMissile(mobj_t* mo)
 {
-    boolean             shouldSplash = P_HitFloor(mo);
+    dd_bool             shouldSplash = P_HitFloor(mo);
 
     if(shouldSplash)
     {
@@ -199,7 +199,7 @@ int P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta)
  *
  * @return              @c true, if target was tracked.
  */
-boolean P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
+dd_bool P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
 {
     int dir;
     uint an;
@@ -253,7 +253,7 @@ boolean P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
     return true;
 }
 
-static __inline boolean isInWalkState(player_t* pl)
+static __inline dd_bool isInWalkState(player_t* pl)
 {
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 }
@@ -912,7 +912,7 @@ void P_MobjThinker(void *thinkerPtr)
     {
         int i;
         coord_t z, frac[3];
-        boolean changexy;
+        dd_bool changexy;
 
         // Handle movement.
         if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || !FEQUAL(mobj->mom[MZ], 0) ||
@@ -1251,7 +1251,7 @@ void P_SpawnBloodSplatter2(coord_t x, coord_t y, coord_t z, mobj_t* originator)
     }
 }
 
-boolean P_HitFloor(mobj_t *thing)
+dd_bool P_HitFloor(mobj_t *thing)
 {
     mobj_t *mo;
     int smallsplash = false;
@@ -1578,7 +1578,7 @@ void P_BlastRadius(player_t* pl)
 typedef struct {
     coord_t origin[2];
     coord_t maxDistance;
-    boolean effective;
+    dd_bool effective;
 } radiusgiveparams_t;
 
 static int radiusGiveArmor(thinker_t* th, void* context)
@@ -1664,7 +1664,7 @@ static int radiusGiveMana(thinker_t* th, void* context)
 /**
  * Do class specific effect for everyone in radius
  */
-boolean P_HealRadius(player_t* player)
+dd_bool P_HealRadius(player_t* player)
 {
     mobj_t*             pmo = player->plr->mo;
     radiusgiveparams_t  params;
@@ -1699,7 +1699,7 @@ boolean P_HealRadius(player_t* player)
  * @return  @c true, if the missile is at a valid spawn point,
  *          otherwise explodes it and return @c false.
  */
-boolean P_CheckMissileSpawn(mobj_t *mo)
+dd_bool P_CheckMissileSpawn(mobj_t *mo)
 {
     // Move a little forward so an angle can be computed if it
     // immediately explodes
@@ -1933,7 +1933,7 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     coord_t pos[3];
     float fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float movfac = 1, slope;
-    boolean dontAim = cfg.noAutoAim;
+    dd_bool dontAim = cfg.noAutoAim;
     int spawnFlags = 0;
     mobj_t *missile;
 
@@ -2028,7 +2028,7 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t origAngle)
     coord_t pos[3];
     float fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float slope, movfac = 1;
-    boolean dontAim = cfg.noAutoAim;
+    dd_bool dontAim = cfg.noAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;
@@ -2081,7 +2081,7 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     angle_t angle;
     float slope, movfac = 1;
     float fangle = LOOKDIR2RAD(source->player->plr->lookDir);
-    boolean dontAim = cfg.noAutoAim;
+    dd_bool dontAim = cfg.noAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;

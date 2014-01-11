@@ -120,25 +120,25 @@ int SV_ParseSlotIdentifier(char const *str);
 /**
  * Returns @c true iff @a slot is a valid logical save slot.
  */
-boolean SV_IsValidSlot(int slot);
+dd_bool SV_IsValidSlot(int slot);
 
 /**
  * Returns @c true iff @a slot is user-writable save slot (i.e., its not one
  * of the special slots such as @em auto).
  */
-boolean SV_IsUserWritableSlot(int slot);
+dd_bool SV_IsUserWritableSlot(int slot);
 
 /**
  * Returns @c true iff a game-save is present for logical save @a slot.
  */
-boolean SV_IsSlotUsed(int slot);
+dd_bool SV_IsSlotUsed(int slot);
 
 #if __JHEXEN__
 /**
  * Returns @c true iff a game-save is present and serialized @a map state is
  * present for logical save @a slot.
  */
-boolean SV_HxHaveMapStateForSlot(int slot, uint map);
+dd_bool SV_HxHaveMapStateForSlot(int slot, uint map);
 #endif
 
 /**
@@ -172,14 +172,14 @@ void SV_CopySlot(int sourceSlot, int destSlot);
  *
  * @return  @c true iff the game state was saved successfully.
  */
-boolean SV_SaveGame(int slot, char const *name);
+dd_bool SV_SaveGame(int slot, char const *name);
 
 /**
  * Load the game state associated with the specified @a slot number.
  *
  * @return  @c true iff the game state was loaded successfully.
  */
-boolean SV_LoadGame(int slot);
+dd_bool SV_LoadGame(int slot);
 
 #if !__JHEXEN__
 /**

@@ -86,7 +86,7 @@ int         DS_SDLMixer_Music_PlayFile(const char* fileName, int looped);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean sdlInitOk = false;
+dd_bool sdlInitOk = false;
 
 audiodriver_t audiod_sdlmixer = {
     DS_SDLMixerInit,
@@ -125,10 +125,10 @@ audiointerface_music_t audiod_sdlmixer_music = { {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int numChannels;
-static boolean* usedChannels;
+static dd_bool* usedChannels;
 
 static Mix_Music* lastMusic;
-//static boolean playingMusic = false;
+//static dd_bool playingMusic = false;
 
 // CODE --------------------------------------------------------------------
 

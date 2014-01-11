@@ -137,7 +137,7 @@ typedef struct clmoinfo_s {
  * (The real mobj was created by the Game.)
  */
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags,
-                             boolean onFloor);
+                             dd_bool onFloor);
 
 /**
  * Create a new client mobj.
@@ -175,7 +175,7 @@ mobj_t *ClMobj_MobjForInfo(clmoinfo_t *info);
  *
  * @return  @c true, if the mobj was revealed.
  */
-boolean ClMobj_Reveal(mobj_t *cmo);
+dd_bool ClMobj_Reveal(mobj_t *cmo);
 
 /**
  * Unlinks the mobj from sectorlinks and if the object is solid,
@@ -220,6 +220,6 @@ void ClMobj_ReadNullDelta();
  *
  * @return  @c true, if the mobj is a client mobj; otherwise @c false.
  */
-boolean Cl_IsClientMobj(mobj_t *mo); // public
+dd_bool Cl_IsClientMobj(mobj_t *mo); // public
 
 #endif // DENG_CLIENT_WORLD_MOBJ_H

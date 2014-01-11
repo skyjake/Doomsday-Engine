@@ -49,7 +49,7 @@ DENG_API_TYPEDEF(Busy)
     de_api_t api;
 
     /// @return  @c true if we are currently busy.
-    boolean (*Active)(void);
+    dd_bool (*Active)(void);
 
     /// @return  Amount of time we have been busy (if not busy, @c 0).
     timespan_t (*ElapsedTime)(void);

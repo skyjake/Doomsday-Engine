@@ -56,7 +56,7 @@ void Dir_Delete(directory_t* dir);
  * @return  @c true if the directories @a a and @a b are considered equal
  *      (i.e., their paths match exactly).
  */
-boolean Dir_IsEqual(directory_t* dir, directory_t* other);
+dd_bool Dir_IsEqual(directory_t* dir, directory_t* other);
 
 /**
  * @return  "Raw" version of the present path.
@@ -116,13 +116,13 @@ void Dir_MakeAbsolutePath(char* path, size_t len);
  * Check that the given directory exists. If it doesn't, create it.
  * @return  @c true if successful.
  */
-boolean Dir_mkpath(const char* path);
+dd_bool Dir_mkpath(const char* path);
 
 /**
  * Attempt to change the current working directory to the path defined.
  * @return  @c true if the change was successful.
  */
-boolean Dir_SetCurrent(const char* path);
+dd_bool Dir_SetCurrent(const char* path);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -29,7 +29,7 @@
 
 #define BUFFERED_MUSIC_FILE      "dd-buffered-song"
 
-static boolean needBufFileSwitch = false;
+static dd_bool needBufFileSwitch = false;
 
 static AutoStr *composeBufferedMusicFilename(int id, char const *ext)
 {
@@ -47,13 +47,13 @@ static void musicSet(audiointerface_music_t *iMusic, int property, void const *p
     d->Set(property, ptr);
 }
 
-static int musicPlayNativeFile(audiointerface_music_t *iMusic, char const *fileName, boolean looped)
+static int musicPlayNativeFile(audiointerface_music_t *iMusic, char const *fileName, dd_bool looped)
 {
     if(!iMusic->PlayFile) return 0;
     return iMusic->PlayFile(fileName, looped);
 }
 
-static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lump, boolean looped)
+static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lump, dd_bool looped)
 {
     if(!iMusic->Play || !iMusic->SongBuffer)
     {
@@ -80,7 +80,7 @@ static int musicPlayLump(audiointerface_music_t *iMusic, lumpnum_t lump, boolean
     return iMusic->Play(looped);
 }
 
-static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNativePath, boolean looped)
+static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNativePath, dd_bool looped)
 {
     FileHandle *file = F_Open(virtualOrNativePath, "rb");
     if(!file) return 0;
@@ -111,12 +111,12 @@ static int musicPlayFile(audiointerface_music_t *iMusic, char const *virtualOrNa
     return iMusic->Play(looped);
 }
 
-static int musicPlayCDTrack(audiointerface_cd_t *iCD, int track, boolean looped)
+static int musicPlayCDTrack(audiointerface_cd_t *iCD, int track, dd_bool looped)
 {
     return iCD->Play(track, looped);
 }
 
-static boolean musicIsPlaying(audiointerface_music_t *iMusic)
+static dd_bool musicIsPlaying(audiointerface_music_t *iMusic)
 {
     return iMusic->gen.Get(MUSIP_PLAYING, 0);
 }
@@ -161,7 +161,7 @@ void AudioDriver_Music_Set(int property, void const *ptr)
     }
 }
 
-int AudioDriver_Music_PlayNativeFile(char const *fileName, boolean looped)
+int AudioDriver_Music_PlayNativeFile(char const *fileName, dd_bool looped)
 {
     void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
@@ -173,7 +173,7 @@ int AudioDriver_Music_PlayNativeFile(char const *fileName, boolean looped)
     return false;
 }
 
-int AudioDriver_Music_PlayLump(lumpnum_t lump, boolean looped)
+int AudioDriver_Music_PlayLump(lumpnum_t lump, dd_bool looped)
 {
     void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
@@ -185,7 +185,7 @@ int AudioDriver_Music_PlayLump(lumpnum_t lump, boolean looped)
     return false;
 }
 
-int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, boolean looped)
+int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, dd_bool looped)
 {
     void* ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC, ifs);
@@ -197,7 +197,7 @@ int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, boolean looped)
     return false;
 }
 
-int AudioDriver_Music_PlayCDTrack(int track, boolean looped)
+int AudioDriver_Music_PlayCDTrack(int track, dd_bool looped)
 {
     void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_ICD, ifs);
@@ -209,7 +209,7 @@ int AudioDriver_Music_PlayCDTrack(int track, boolean looped)
     return false;
 }
 
-boolean AudioDriver_Music_IsPlaying()
+dd_bool AudioDriver_Music_IsPlaying()
 {
     void *ifs[MAX_AUDIO_INTERFACES];
     int i, count = AudioDriver_FindInterfaces(AUDIO_IMUSIC_OR_ICD, ifs);

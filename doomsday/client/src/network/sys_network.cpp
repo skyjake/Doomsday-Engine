@@ -45,7 +45,7 @@ ServerLink &Net_ServerLink(void)
     return ClientApp::app().serverLink();
 }
 
-boolean N_GetHostInfo(int index, struct serverinfo_s *info)
+dd_bool N_GetHostInfo(int index, struct serverinfo_s *info)
 {
     return Net_ServerLink().foundServerInfo(index, info);
 }

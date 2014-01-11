@@ -38,7 +38,7 @@ mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
     return P_SpawnMobjXYZ(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
-boolean P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean spawnFog)
+dd_bool P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, dd_bool spawnFog)
 {
     coord_t oldpos[3], aboveFloor, fogDelta;
     angle_t oldAngle;
@@ -196,7 +196,7 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-boolean EV_Teleport(Line* line, int side, mobj_t* mo, boolean spawnFog)
+dd_bool EV_Teleport(Line* line, int side, mobj_t* mo, dd_bool spawnFog)
 {
     mobj_t* dest;
 

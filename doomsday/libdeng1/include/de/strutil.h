@@ -96,18 +96,18 @@ DENG_PUBLIC char* M_StrTok(char** cursor, const char *delimiters);
 
 DENG_PUBLIC char* M_TrimmedFloat(float val);
 
-DENG_PUBLIC boolean M_IsComment(const char* text);
+DENG_PUBLIC dd_bool M_IsComment(const char* text);
 
 DENG_PUBLIC void M_ForceUppercase(char *text);
 
 /// @return  @c true if @a string can be interpreted as a valid integer.
-DENG_PUBLIC boolean M_IsStringValidInt(const char* str);
+DENG_PUBLIC dd_bool M_IsStringValidInt(const char* str);
 
 /// @return  @c true if @a string can be interpreted as a valid byte.
-DENG_PUBLIC boolean M_IsStringValidByte(const char* str);
+DENG_PUBLIC dd_bool M_IsStringValidByte(const char* str);
 
 /// @return  @c true if @a string can be interpreted as a valid floating-point value.
-DENG_PUBLIC boolean M_IsStringValidFloat(const char* str);
+DENG_PUBLIC dd_bool M_IsStringValidFloat(const char* str);
 
 #ifdef __cplusplus
 } // extern "C"

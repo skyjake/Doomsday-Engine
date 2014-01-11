@@ -65,7 +65,7 @@ struct rendpspriteparams_t
 
     Material *mat;
     float texOffset[2];
-    boolean texFlip[2]; // {X, Y} Flip along the specified axis.
+    dd_bool texFlip[2]; // {X, Y} Flip along the specified axis.
 
     float ambientColor[4];
     uint vLightListIdx;
@@ -82,15 +82,15 @@ struct drawspriteparams_t
     coord_t center[3]; // The real center point.
     coord_t srvo[3]; // Short-range visual offset.
     coord_t distance; // Distance from viewer.
-    boolean viewAligned;
+    dd_bool viewAligned;
 
 // Appearance
-    boolean noZWrite;
+    dd_bool noZWrite;
     blendmode_t blendMode;
 
     // Material:
     void *material; /// MaterialVariant
-    boolean matFlip[2]; // [S, T] Flip along the specified axis.
+    dd_bool matFlip[2]; // [S, T] Flip along the specified axis.
 
     // Lighting/color:
     float ambientColor[4];
@@ -126,7 +126,7 @@ struct drawflareparams_t
     float xOff;
     DGLuint tex; // Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
     float mul; // Flare brightness factor.
-    boolean isDecoration;
+    dd_bool isDecoration;
     int lumIdx;
 };
 

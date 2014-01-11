@@ -87,7 +87,7 @@ extern "C" {
 #define MENU_CURSOR_TICSPERFRAME    8
 
 extern int menuTime;
-extern boolean menuNominatingQuickSaveSlot;
+extern dd_bool menuNominatingQuickSaveSlot;
 
 /// Register the console commands, variables, etc..., of this module.
 void Hu_MenuRegister(void);
@@ -117,7 +117,7 @@ void Hu_MenuLoadResources(void);
 void Hu_MenuTicker(timespan_t ticLength);
 
 /// @return  @c true if the menu is presently visible.
-boolean Hu_MenuIsVisible(void);
+dd_bool Hu_MenuIsVisible(void);
 
 mn_page_t* Hu_MenuFindPageByName(const char* name);
 
@@ -165,7 +165,7 @@ int Hu_MenuFallbackResponder(event_t* ev);
 /**
  * @return  @c true iff the menu is currently active (open).
  */
-boolean Hu_MenuIsActive(void);
+dd_bool Hu_MenuIsActive(void);
 
 /**
  * @return  Current alpha level of the menu.
@@ -187,14 +187,14 @@ mn_page_t* Hu_MenuActivePage(void);
 /**
  * Change the current active page.
  */
-void Hu_MenuSetActivePage2(mn_page_t* page, boolean canReactivate);
+void Hu_MenuSetActivePage2(mn_page_t* page, dd_bool canReactivate);
 void Hu_MenuSetActivePage(mn_page_t* page);
 
 /**
  * Initialize a new singleplayer game according to the options set via the menu.
  * @param confirmed  If @c true this game configuration has already been confirmed.
  */
-void Hu_MenuInitNewGame(boolean confirmed);
+void Hu_MenuInitNewGame(dd_bool confirmed);
 
 void Hu_MenuUpdateGameSaveWidgets(void);
 

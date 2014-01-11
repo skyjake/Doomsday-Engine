@@ -123,7 +123,7 @@ int     isClient; // true if this computer is a client
 // Gotframe is true if a frame packet has been received.
 int     gotFrame = false;
 
-boolean firstNetUpdate = true;
+dd_bool firstNetUpdate = true;
 
 byte    monitorMsgQueue = false;
 byte    netShowLatencies = false;
@@ -134,7 +134,7 @@ float   netConnectTimeout = 10;
 float   netSimulatedLatencySeconds = 0;
 
 // Local packets are stored into this buffer.
-boolean reboundPacket;
+dd_bool reboundPacket;
 netbuffer_t reboundStore;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -282,7 +282,7 @@ void Net_SendBuffer(int toPlayer, int spFlags)
 /**
  * @return @c false, if there are no packets waiting.
  */
-boolean Net_GetPacket(void)
+dd_bool Net_GetPacket(void)
 {
     if(reboundPacket) // Local packets rebound.
     {
@@ -408,7 +408,7 @@ void Net_ResetTimer(void)
 /**
  * @return @c true, if the specified player is a real, local player.
  */
-boolean Net_IsLocalPlayer(int plrNum)
+dd_bool Net_IsLocalPlayer(int plrNum)
 {
     player_t *plr = &ddPlayers[plrNum];
 
@@ -661,7 +661,7 @@ int Net_TimeDelta(byte now, byte then)
 
 #ifdef __CLIENT__
 /// @return  @c true iff a demo is currently being recorded.
-static boolean recordingDemo(void)
+static dd_bool recordingDemo(void)
 {
     int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -908,7 +908,7 @@ D_CMD(Chat)
 
     case 2: // chatTo
         {
-        boolean     found = false;
+        dd_bool     found = false;
 
         for(i = 0; i < DDMAXPLAYERS && !found; ++i)
         {
@@ -1183,7 +1183,7 @@ D_CMD(Net)
 {
     DENG2_UNUSED(src);
 
-    boolean success = true;
+    dd_bool success = true;
 
     if(argc == 1) // No args?
     {
@@ -1319,7 +1319,7 @@ D_CMD(Net)
  * Extracts the label and value from a string.  'max' is the maximum
  * allowed length of a token, including terminating \0.
  */
-static boolean tokenize(char const *line, char *label, char *value, int max)
+static dd_bool tokenize(char const *line, char *label, char *value, int max)
 {
     const char *src = line;
     const char *colon = strchr(src, ':');
@@ -1367,7 +1367,7 @@ void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info)
 #undef COPY_STR
 }
 
-boolean Net_StringToServerInfo(const char *valuePair, serverinfo_t *info)
+dd_bool Net_StringToServerInfo(const char *valuePair, serverinfo_t *info)
 {
     char label[SVINFO_TOKEN_LEN], value[SVINFO_TOKEN_LEN];
 

@@ -26,7 +26,7 @@
 #include "common.h"
 
 // If true we are in the process of setting up a map.
-DENG_EXTERN_C boolean mapSetup;
+DENG_EXTERN_C dd_bool mapSetup;
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,7 +50,7 @@ char const *P_GetMapNiceName(void);
 
 patchid_t P_FindMapTitlePatch(uint episode, uint map);
 
-char const *P_GetMapAuthor(boolean supressGameAuthor);
+char const *P_GetMapAuthor(dd_bool supressGameAuthor);
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets(void);

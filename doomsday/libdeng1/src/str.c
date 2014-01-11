@@ -420,7 +420,7 @@ size_t Str_Size(Str const *str)
     return strlen(Str_Text(str));
 }
 
-boolean Str_IsEmpty(const ddstring_t *str)
+dd_bool Str_IsEmpty(const ddstring_t *str)
 {
     DENG_ASSERT(str);
     return Str_Length(str) == 0;
@@ -468,7 +468,7 @@ ddstring_t *Str_CopyOrClear(ddstring_t *dest, const ddstring_t *src)
 ddstring_t *Str_StripLeft2(ddstring_t *str, int *count)
 {
     int i, num;
-    boolean isDone;
+    dd_bool isDone;
 
     DENG_ASSERT(str);
     if(!str) return 0;
@@ -557,7 +557,7 @@ ddstring_t *Str_Strip(ddstring_t *str)
     return Str_Strip2(str, NULL/*not interested in the stripped character count*/);
 }
 
-boolean Str_EndsWith(Str *ds, char const *text)
+dd_bool Str_EndsWith(Str *ds, char const *text)
 {
     size_t len = strlen(text);
     if(Str_Size(ds) < len) return false;
@@ -694,7 +694,7 @@ void Str_Truncate(ddstring_t *str, int position)
 /// @note Derived from Qt's QByteArray q_toPercentEncoding
 ddstring_t *Str_PercentEncode2(ddstring_t *str, char const *excludeChars, char const *includeChars)
 {
-    boolean didEncode = false;
+    dd_bool didEncode = false;
     int i, span, begin, len;
     ddstring_t buf;
 

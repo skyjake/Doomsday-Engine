@@ -119,7 +119,7 @@ static int stairQueueTail;
 result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
                      int crush, int isCeiling, int direction)
 {
-    boolean flag;
+    dd_bool flag;
     coord_t lastpos;
     coord_t floorheight, ceilingheight;
     int ptarget = (isCeiling? DMU_CEILING_TARGET_HEIGHT : DMU_FLOOR_TARGET_HEIGHT);
@@ -1403,7 +1403,7 @@ int EV_DoDonut(Line *line)
 #if __JHEXEN__
 static int stopFloorCrush(thinker_t* th, void* context)
 {
-    boolean*            found = (boolean*) context;
+    dd_bool*            found = (dd_bool*) context;
     floor_t*        floor = (floor_t *) th;
 
     if(floor->type == FT_RAISEFLOORCRUSH)
@@ -1421,7 +1421,7 @@ static int stopFloorCrush(thinker_t* th, void* context)
 
 int EV_FloorCrushStop(Line* line, byte* args)
 {
-    boolean             found = false;
+    dd_bool             found = false;
 
     Thinker_Iterate(T_MoveFloor, stopFloorCrush, &found);
 
@@ -1441,7 +1441,7 @@ int EV_DoFloorAndCeiling(Line* line, int ftype, int ctype)
 # else
     int                 tag = P_ToXLine(line)->tag;
 # endif
-    boolean             floor, ceiling;
+    dd_bool             floor, ceiling;
     Sector*             sec = NULL;
     iterlist_t*         list;
 

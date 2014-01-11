@@ -71,7 +71,7 @@ void    IN_DrawDMStats(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean intermission;
+dd_bool intermission;
 
 int     interState = 0;
 int     interTime = -1;
@@ -84,7 +84,7 @@ static int bcnt;
 // Contains information passed into intermission.
 static wbstartstruct_t *wbs;
 
-static boolean skipIntermission;
+static dd_bool skipIntermission;
 
 static int oldInterTime = 0;
 static gametype_t gameType;

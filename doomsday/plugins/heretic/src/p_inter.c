@@ -48,7 +48,7 @@ int backpackAmmo[NUM_AMMO_TYPES] = { 10, 5, 10, 20, 1, 0 };
 // Number of rounds to give for each weapon type.
 int getWeaponAmmo[NUM_WEAPON_TYPES] = { 0, 25, 10, 30, 50, 2, 50, 0 };
 
-static boolean giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
+static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
     DENG_ASSERT(plr != 0);
     DENG_ASSERT((ammoType >= 0 && ammoType < NUM_AMMO_TYPES) || ammoType == AT_NOAMMO);
@@ -91,7 +91,7 @@ static boolean giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
     return true;
 }
 
-boolean P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
+dd_bool P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
     int gaveAmmos = 0;
 
@@ -113,10 +113,10 @@ boolean P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
     return gaveAmmos  != 0;
 }
 
-static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType)
+static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType)
 {
     int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
-    boolean gaveAmmo = false, gaveWeapon = false;
+    dd_bool gaveAmmo = false, gaveWeapon = false;
     weaponinfo_t const *wpnInfo;
     ammotype_t i;
 
@@ -165,7 +165,7 @@ static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType)
     return (gaveWeapon || gaveAmmo);
 }
 
-boolean P_GiveWeapon(player_t *plr, weapontype_t weaponType)
+dd_bool P_GiveWeapon(player_t *plr, weapontype_t weaponType)
 {
     int gaveWeapons = 0;
 
@@ -187,12 +187,12 @@ boolean P_GiveWeapon(player_t *plr, weapontype_t weaponType)
     return gaveWeapons != 0;
 }
 
-static int maxPlayerHealth(boolean morphed)
+static int maxPlayerHealth(dd_bool morphed)
 {
     return morphed? MAXCHICKENHEALTH : maxHealth;
 }
 
-boolean P_GiveHealth(player_t *player, int amount)
+dd_bool P_GiveHealth(player_t *player, int amount)
 {
     int healthLimit = maxPlayerHealth(player->morphTics != 0);
 
@@ -216,7 +216,7 @@ boolean P_GiveHealth(player_t *player, int amount)
     return true;
 }
 
-boolean P_GiveArmor(player_t *player, int armorType, int armorPoints)
+dd_bool P_GiveArmor(player_t *player, int armorType, int armorPoints)
 {
     DENG_ASSERT(player != 0);
 
@@ -232,7 +232,7 @@ boolean P_GiveArmor(player_t *player, int armorType, int armorPoints)
     return true;
 }
 
-static boolean giveOneKey(player_t *plr, keytype_t keyType)
+static dd_bool giveOneKey(player_t *plr, keytype_t keyType)
 {
     DENG_ASSERT(plr != 0);
     DENG_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
@@ -250,7 +250,7 @@ static boolean giveOneKey(player_t *plr, keytype_t keyType)
     return true;
 }
 
-boolean P_GiveKey(player_t *plr, keytype_t keyType)
+dd_bool P_GiveKey(player_t *plr, keytype_t keyType)
 {
     int gaveKeys = 0;
 
@@ -295,9 +295,9 @@ void P_GiveBackpack(player_t *plr)
     P_SetMessage(plr, 0, TXT_ITEMBAGOFHOLDING);
 }
 
-boolean P_GivePower(player_t *player, powertype_t powerType)
+dd_bool P_GivePower(player_t *player, powertype_t powerType)
 {
-    boolean retval = false;
+    dd_bool retval = false;
 
     DENG_ASSERT(player != 0);
     DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
@@ -375,7 +375,7 @@ boolean P_GivePower(player_t *player, powertype_t powerType)
     return retval;
 }
 
-boolean P_TakePower(player_t *player, powertype_t powerType)
+dd_bool P_TakePower(player_t *player, powertype_t powerType)
 {
     DENG_ASSERT(player != 0);
     DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
@@ -410,7 +410,7 @@ boolean P_TakePower(player_t *player, powertype_t powerType)
     return true;
 }
 
-boolean P_TogglePower(player_t *player, powertype_t powerType)
+dd_bool P_TogglePower(player_t *player, powertype_t powerType)
 {
     DENG_ASSERT(player != 0);
     DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
@@ -546,10 +546,10 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
  *
  * @return  @c true if the player picked up the weapon.
  */
-static boolean pickupWeapon(player_t *plr, weapontype_t weaponType,
+static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
     char const *pickupMessage)
 {
-    boolean pickedWeapon;
+    dd_bool pickedWeapon;
 
     DENG_ASSERT(plr != 0);
     DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
@@ -585,7 +585,7 @@ static boolean pickupWeapon(player_t *plr, weapontype_t weaponType,
  *
  * @return  @c true iff the item should be destroyed.
  */
-static boolean pickupItem(player_t *plr, itemtype_t item, int quantity)
+static dd_bool pickupItem(player_t *plr, itemtype_t item, int quantity)
 {
     if(!plr)
         return false;
@@ -1064,7 +1064,7 @@ static void killMobj(mobj_t *source, mobj_t *target)
     target->tics -= P_Random() & 3;
 }
 
-boolean P_MorphPlayer(player_t *player)
+dd_bool P_MorphPlayer(player_t *player)
 {
     mobj_t *pmo, *fog, *chicken;
     coord_t pos[3];
@@ -1128,7 +1128,7 @@ boolean P_MorphPlayer(player_t *player)
     return true;
 }
 
-static boolean morphMonster(mobj_t *actor)
+static dd_bool morphMonster(mobj_t *actor)
 {
     mobj_t *fog, *chicken, *target;
     mobjtype_t moType;
@@ -1178,7 +1178,7 @@ static boolean morphMonster(mobj_t *actor)
     return true;
 }
 
-static boolean autoUseChaosDevice(player_t *player)
+static dd_bool autoUseChaosDevice(player_t *player)
 {
     int plrnum = player - players;
 
@@ -1252,7 +1252,7 @@ static void autoUseHealth(player_t *player, int saveHealth)
 }
 
 int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                  int damageP, boolean stomping, boolean skipNetworkCheck)
+                  int damageP, dd_bool stomping, dd_bool skipNetworkCheck)
 {
     angle_t angle;
     int saved, originalHealth;
@@ -1643,7 +1643,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 }
 
 int P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
-                 int damageP, boolean stomping)
+                 int damageP, dd_bool stomping)
 {
     return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
 }

@@ -193,7 +193,7 @@ void G_PreInit(gameid_t gameId)
 /**
  * Called by the engine to initiate a soft-shutdown request.
  */
-boolean G_TryShutdown(void)
+dd_bool G_TryShutdown(void)
 {
     G_QuitGame();
     return true;

@@ -587,7 +587,7 @@ enum { MX, MY, MZ };
     coord_t         floorZ; /* highest contacted floor */ \
     coord_t         ceilingZ; /* lowest contacted ceiling */ \
     struct mobj_s  *onMobj; /* the mobj this one is on top of. */ \
-    boolean         wallHit; /* the mobj is hitting a wall. */ \
+    dd_bool         wallHit; /* the mobj is hitting a wall. */ \
     struct ddplayer_s *dPlayer; /* NULL if not a player mobj. */ \
     coord_t         srvo[3]; /* short-range visual offset (xyz) */ \
     short           visAngle; /* visual angle ("angle-servo") */ \
@@ -625,7 +625,7 @@ enum { MX, MY, MZ };
     void           *_originalPts; /* Used as the base for the rotations. */ \
     void           *_prevPts; /* Use to restore the old point values. */ \
     double          speed; /* Movement speed. */ \
-    boolean         crush; /* Should the polyobj attempt to crush mobjs? */ \
+    dd_bool         crush; /* Should the polyobj attempt to crush mobjs? */ \
     int             seqType; \
     uint            _origIndex;
 

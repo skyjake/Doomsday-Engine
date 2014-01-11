@@ -174,7 +174,7 @@ typedef enum {
 typedef struct classinfo_s{
     playerclass_t plrClass;
     const char* niceName;
-    boolean     userSelectable;
+    dd_bool     userSelectable;
     mobjtype_t  mobjType;
     int         normalState;
     int         runState;
@@ -381,7 +381,7 @@ DENG_EXTERN_C fixed_t finesine[5 * FINEANGLES / 4];
 DENG_EXTERN_C fixed_t *finecosine;
 
 // Set if homebrew PWAD stuff has been added.
-DENG_EXTERN_C boolean  modifiedgame;
+DENG_EXTERN_C dd_bool  modifiedgame;
 
 #define MAX_PLAYER_STARTS   (8)
 
@@ -400,14 +400,14 @@ void            SC_Open(const char* name);
 void            SC_OpenLump(lumpnum_t lumpNum);
 void            SC_OpenFile(const char* name);
 void            SC_Close(void);
-boolean         SC_GetString(void);
+dd_bool         SC_GetString(void);
 void            SC_MustGetString(void);
 void            SC_MustGetStringName(char* name);
-boolean         SC_GetNumber(void);
+dd_bool         SC_GetNumber(void);
 void            SC_MustGetNumber(void);
 void            SC_UnGet(void);
 
-boolean         SC_Compare(char* text);
+dd_bool         SC_Compare(char* text);
 int             SC_MatchString(char** strings);
 int             SC_MustMatchString(char** strings);
 void            SC_ScriptError(char* message);
@@ -419,9 +419,9 @@ void            SC_ScriptError(char* message);
 DENG_EXTERN_C char* sc_String;
 DENG_EXTERN_C int sc_Number;
 DENG_EXTERN_C int sc_Line;
-DENG_EXTERN_C boolean sc_End;
-DENG_EXTERN_C boolean sc_Crossed;
-DENG_EXTERN_C boolean sc_FileScripts;
+DENG_EXTERN_C dd_bool sc_End;
+DENG_EXTERN_C dd_bool sc_Crossed;
+DENG_EXTERN_C dd_bool sc_FileScripts;
 DENG_EXTERN_C const char* sc_ScriptsDir;
 
 #endif // __H2DEF_H__

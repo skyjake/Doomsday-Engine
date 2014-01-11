@@ -69,7 +69,7 @@ typedef struct {
     coord_t bottomHeight;
     coord_t topHeight;
     float speed;
-    boolean crush;
+    dd_bool crush;
     ceilingstate_e state;
     ceilingstate_e oldState;
     int tag; // id.

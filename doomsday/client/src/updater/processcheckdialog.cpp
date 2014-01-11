@@ -44,7 +44,7 @@ static bool isProcessRunning(char const *name)
     return false;
 }
 
-boolean Updater_AskToStopProcess(char const *processName, char const *message)
+dd_bool Updater_AskToStopProcess(char const *processName, char const *message)
 {
     while(isProcessRunning(processName))
     {

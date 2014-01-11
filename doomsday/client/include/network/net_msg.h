@@ -41,7 +41,7 @@ extern "C" {
 void Msg_Begin(int type);
 void Msg_End(void);
 
-boolean Msg_BeingWritten(void);
+dd_bool Msg_BeingWritten(void);
 
 /**
  * Begin reading a message from netBuffer. If a message is currently being

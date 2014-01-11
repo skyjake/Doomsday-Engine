@@ -59,9 +59,9 @@
 char* sc_String;
 int sc_Number;
 int sc_Line;
-boolean sc_End;
-boolean sc_Crossed;
-boolean sc_FileScripts = false;
+dd_bool sc_End;
+dd_bool sc_Crossed;
+dd_bool sc_FileScripts = false;
 const char* sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -71,9 +71,9 @@ static const char* ScriptBuffer;
 static const char* ScriptPtr;
 static const char* ScriptEndPtr;
 static char StringBuffer[MAX_STRING_SIZE];
-static boolean ScriptOpen = false;
+static dd_bool ScriptOpen = false;
 static size_t ScriptSize;
-static boolean AlreadyGot = false;
+static dd_bool AlreadyGot = false;
 
 // CODE --------------------------------------------------------------------
 
@@ -180,10 +180,10 @@ void SC_Close(void)
     ScriptOpen = false;
 }
 
-boolean SC_GetString(void)
+dd_bool SC_GetString(void)
 {
     char*               text;
-    boolean             foundToken;
+    dd_bool             foundToken;
 
     checkOpen();
     if(AlreadyGot)
@@ -296,7 +296,7 @@ void SC_MustGetStringName(char* name)
     }
 }
 
-boolean SC_GetNumber(void)
+dd_bool SC_GetNumber(void)
 {
     char*               stopper;
 
@@ -364,7 +364,7 @@ int SC_MustMatchString(char** strings)
     return i;
 }
 
-boolean SC_Compare(char* text)
+dd_bool SC_Compare(char* text)
 {
     if(strcasecmp(text, sc_String) == 0)
     {

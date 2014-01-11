@@ -79,7 +79,7 @@ void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
     P_RecursiveSound(target, Mobj_Sector(emitter), 0);
 }
 
-static boolean checkMeleeRange(mobj_t *actor)
+static dd_bool checkMeleeRange(mobj_t *actor)
 {
     mobj_t *pl;
     coord_t dist, range;
@@ -109,7 +109,7 @@ static boolean checkMeleeRange(mobj_t *actor)
     return true;
 }
 
-static boolean checkMissileRange(mobj_t* actor)
+static dd_bool checkMissileRange(mobj_t* actor)
 {
     coord_t dist;
 
@@ -154,11 +154,11 @@ static boolean checkMissileRange(mobj_t* actor)
  *
  * @return              @c false, if the move is blocked.
  */
-static boolean moveMobj(mobj_t *actor, boolean dropoff)
+static dd_bool moveMobj(mobj_t *actor, dd_bool dropoff)
 {
     coord_t pos[3], step[3];
     Line *ld;
-    boolean good;
+    dd_bool good;
 
     if(actor->moveDir == DI_NODIR)
         return false;
@@ -246,7 +246,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
  * If move is either clear or blocked only by a door, returns TRUE and sets...
  * If a door is in the way, an OpenDoor call is made to start it opening.
  */
-static boolean tryMoveMobj(mobj_t *actor)
+static dd_bool tryMoveMobj(mobj_t *actor)
 {
     // $dropoff_fix
     if(!moveMobj(actor, false))
@@ -389,7 +389,7 @@ static int PIT_AvoidDropoff(Line *line, void *context)
  *
  * @return  @c true iff the direction was changed to avoid a drop off.
  */
-static boolean shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
+static dd_bool shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
 {
     pit_avoiddropoff_params_t parm;
 
@@ -423,7 +423,7 @@ static boolean shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
 static void newChaseDir(mobj_t *mobj)
 {
     vec2d_t chaseDir;
-    boolean avoiding;
+    dd_bool avoiding;
 
     DENG_ASSERT(mobj != 0);
 
@@ -1150,7 +1150,7 @@ void C_DECL A_SpidRefire(mobj_t *actor)
 /**
  * d64tc: BspiAttack. Throw projectile.
  */
-void BabyFire(mobj_t* actor, int type, boolean right)
+void BabyFire(mobj_t* actor, int type, dd_bool right)
 {
 #define BSPISPREAD                  (ANG90/8) //its cheap but it works
 #define BABY_DELTAANGLE             (85*ANGLE_1)

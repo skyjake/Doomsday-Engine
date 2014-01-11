@@ -94,7 +94,7 @@ typedef struct apifunc_s {
     } param;
 } apifunc_t;
 
-static boolean inited = false;
+static dd_bool inited = false;
 static mutex_t deferredMutex;
 static DGLuint reservedTextureNames[NUM_RESERVED_TEXTURENAMES];
 static volatile int reservedCount = 0;
@@ -213,7 +213,7 @@ static void processTask(deferredtask_t *task)
         break;
 
     case DTT_SET_VSYNC:
-        GL_SetVSync(*(boolean*)task->data);
+        GL_SetVSync(*(dd_bool*)task->data);
         break;
 
     case DTT_FUNC_PTR_E:
@@ -459,7 +459,7 @@ void GL_DeferTextureUpload(struct texturecontent_s const *content)
     enqueueTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
 }
 
-void GL_DeferSetVSync(boolean enableVSync)
+void GL_DeferSetVSync(dd_bool enableVSync)
 {
     enqueueTask(DTT_SET_VSYNC, M_MemDup(&enableVSync, sizeof(enableVSync)));
 }

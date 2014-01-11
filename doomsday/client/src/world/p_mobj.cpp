@@ -153,7 +153,7 @@ void P_MobjRecycle(mobj_t* mo)
     unusedMobjs = mo;
 }
 
-boolean Mobj_IsSectorLinked(mobj_t *mo)
+dd_bool Mobj_IsSectorLinked(mobj_t *mo)
 {
     return mo != 0 && mo->_bspLeaf != 0 && mo->sPrev != 0;
 }
@@ -206,7 +206,7 @@ Vector3d Mobj_Center(mobj_t &mobj)
     return Vector3d(mobj.origin[0], mobj.origin[1], mobj.origin[2] + mobj.height / 2);
 }
 
-boolean Mobj_SetOrigin(struct mobj_s *mo, coord_t x, coord_t y, coord_t z)
+dd_bool Mobj_SetOrigin(struct mobj_s *mo, coord_t x, coord_t y, coord_t z)
 {
     if(!gx.MobjTryMoveXYZ)
     {
@@ -295,7 +295,7 @@ DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
 
 #ifdef __CLIENT__
 
-boolean Mobj_OriginBehindVisPlane(mobj_t *mo)
+dd_bool Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
     if(!mo || !Mobj_HasCluster(*mo))
         return false;

@@ -100,8 +100,8 @@ struct _GUID DSPROPSETID_EAX20_BufferProperties = {
 };
 #endif
 
-static boolean initOk = false;
-static boolean hasEAX = false;
+static dd_bool initOk = false;
+static dd_bool hasEAX = false;
 static float unitsPerMeter = 1;
 static float headYaw, headPitch; // In radians.
 static ALCdevice* device = 0;

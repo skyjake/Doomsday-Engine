@@ -232,7 +232,7 @@ void P_DestroyLineTagLists()
     numLineTagLists = 0;
 }
 
-iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
+iterlist_t *P_GetLineIterListForTag(int tag, dd_bool createNewList)
 {
     // Do we have an existing list for this tag?
     for(uint i = 0; i < numLineTagLists; ++i)
@@ -286,7 +286,7 @@ void P_DestroySectorTagLists()
     numSectorTagLists = 0;
 }
 
-iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
+iterlist_t *P_GetSectorIterListForTag(int tag, dd_bool createNewList)
 {
     // Do we have an existing list for this tag?
     for(uint i = 0; i < numSectorTagLists; ++i)

@@ -74,7 +74,7 @@ typedef struct plat_s {
     int             count;
     platstate_e     state;
     platstate_e     oldState;
-    boolean         crush;
+    dd_bool         crush;
     int             tag;
     plattype_e      type;
 } plat_t;

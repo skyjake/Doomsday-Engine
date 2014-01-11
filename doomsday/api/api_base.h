@@ -128,7 +128,7 @@ DENG_API_TYPEDEF(Base) // v1
      *
      * @return          @c true if successful else @c false (i.e., no game loaded).
      */
-    boolean (*gameInfo)(GameInfo *info);
+    dd_bool (*gameInfo)(GameInfo *info);
 
     /**
      * Determines whether the current run of the thinkers should be considered a
@@ -141,7 +141,7 @@ DENG_API_TYPEDEF(Base) // v1
      *
      * @ingroup playsim
      */
-    boolean (*IsSharpTick)(void);
+    dd_bool (*IsSharpTick)(void);
 
     /**
      * Send a packet over the network.

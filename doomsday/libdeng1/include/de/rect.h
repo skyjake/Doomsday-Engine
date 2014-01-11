@@ -60,7 +60,7 @@ DENG_PUBLIC Rect *Rect_CopyRaw(Rect *rect, RectRaw const *rawRect);
 
 DENG_PUBLIC RectRaw *Rect_Raw(Rect const *rect, RectRaw *rawRect);
 
-DENG_PUBLIC boolean Rect_IsNull(Rect const *rect);
+DENG_PUBLIC dd_bool Rect_IsNull(Rect const *rect);
 
 DENG_PUBLIC Point2 const *Rect_Origin(Rect const *rect);
 DENG_PUBLIC int Rect_X(Rect const *rect);
@@ -95,7 +95,7 @@ DENG_PUBLIC Rect *Rect_Normalize(Rect *rect);
 DENG_PUBLIC Rect *Rect_Unite(Rect *rect, Rect const *other);
 DENG_PUBLIC Rect *Rect_UniteRaw(Rect *rect, RectRaw const *other);
 
-DENG_PUBLIC boolean Rect_Equality(Rect const *rect, Rect const *other);
+DENG_PUBLIC dd_bool Rect_Equality(Rect const *rect, Rect const *other);
 
 /**
  * Static non-members.
@@ -129,7 +129,7 @@ DENG_PUBLIC Rectf *Rectf_CopyRaw(Rectf *r, RectRawf const *rawRect);
 
 DENG_PUBLIC RectRawf *Rectf_Raw(Rectf const *rect, RectRawf *rawRect);
 
-DENG_PUBLIC boolean Rectf_IsNull(Rectf const *rect);
+DENG_PUBLIC dd_bool Rectf_IsNull(Rectf const *rect);
 
 DENG_PUBLIC Point2f const *Rectf_Origin(Rectf const *rect);
 DENG_PUBLIC double Rectf_X(Rectf const *rect);
@@ -163,7 +163,7 @@ DENG_PUBLIC Rectf *Rectf_Normalize(Rectf *rect);
 DENG_PUBLIC Rectf *Rectf_Unite(Rectf *rect, Rectf const *other);
 DENG_PUBLIC Rectf *Rectf_UniteRaw(Rectf *rect, RectRawf const *other);
 
-DENG_PUBLIC boolean Rectf_Equality(Rectf const *rect, Rectf const *other);
+DENG_PUBLIC dd_bool Rectf_Equality(Rectf const *rect, Rectf const *other);
 
 /**
  * Static non-members:

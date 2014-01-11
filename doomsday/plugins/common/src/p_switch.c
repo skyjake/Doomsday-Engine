@@ -368,8 +368,8 @@ static int chooseDefaultSound(switchlist_t const* info)
 #endif
 }
 
-boolean P_ToggleSwitch2(Side* side, SideSection section, int sound,
-    boolean silent, int tics)
+dd_bool P_ToggleSwitch2(Side* side, SideSection section, int sound,
+    dd_bool silent, int tics)
 {
     const int sectionFlags = DMU_FLAG_FOR_SIDESECTION(section);
     Material* mat, *current;
@@ -405,7 +405,7 @@ boolean P_ToggleSwitch2(Side* side, SideSection section, int sound,
     return false;
 }
 
-boolean P_ToggleSwitch(Side* side, int sound, boolean silent, int tics)
+dd_bool P_ToggleSwitch(Side* side, int sound, dd_bool silent, int tics)
 {
     if(P_ToggleSwitch2(side, SS_TOP, sound, silent, tics))
         return true;
@@ -420,7 +420,7 @@ boolean P_ToggleSwitch(Side* side, int sound, boolean silent, int tics)
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-boolean P_UseSpecialLine(mobj_t* activator, Line* line, int side)
+dd_bool P_UseSpecialLine(mobj_t* activator, Line* line, int side)
 {
     // Extended functionality overrides old.
     if(XL_UseLine(line, side, activator))

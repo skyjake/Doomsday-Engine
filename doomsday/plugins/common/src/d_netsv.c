@@ -52,7 +52,7 @@
 #define SOUND_VICTORY           SOUND_COUNTDOWN
 
 typedef struct maprule_s {
-    boolean     usetime, usefrags;
+    dd_bool     usetime, usefrags;
     int         time;           // Minutes.
     int         frags;          // Maximum frags for one player.
 } maprule_t;
@@ -242,7 +242,7 @@ int NetSv_ScanCycle(int index, maprule_t* rules)
     int         m;
 #endif
     char        tmp[3], lump[10];
-    boolean     clear = false, has_random = false;
+    dd_bool     clear = false, has_random = false;
     maprule_t   dummy;
 
     if(!rules)
@@ -666,7 +666,7 @@ void NetSv_Intermission(int flags, int state, int time)
 /**
  * The actual script is sent to the clients. 'script' can be NULL.
  */
-void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numConds)
+void NetSv_Finale(int flags, const char* script, const dd_bool* conds, byte numConds)
 {
     size_t scriptLen = 0;
     Writer* writer;
@@ -848,7 +848,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
  * More player state information. Had to be separate because of backwards
  * compatibility.
  */
-void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean reliable)
+void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, dd_bool reliable)
 {
     int         pType = (srcPlrNum == destPlrNum ? GPT_CONSOLEPLAYER_STATE2 : GPT_PLAYER_STATE2);
     player_t   *pl = &players[srcPlrNum];
@@ -895,7 +895,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean re
                    Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean reliable)
+void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, dd_bool reliable)
 {
     int         pType = (srcPlrNum == destPlrNum ? GPT_CONSOLEPLAYER_STATE : GPT_PLAYER_STATE);
     player_t   *pl = &players[srcPlrNum];
@@ -1205,7 +1205,7 @@ int NetSv_GetFrags(int pl)
 /**
  * Send one of the kill messages, depending on the weapon of the killer.
  */
-void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
+void NetSv_KillMessage(player_t *killer, player_t *fragged, dd_bool stomping)
 {
 #if __JDOOM__ || __JDOOM64__
     char buf[500], *in, tmp[2];
@@ -1521,7 +1521,7 @@ void NetSv_LoadGame(unsigned int game_id)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendMessageEx(int plrNum, char const *msg, boolean yellow)
+void NetSv_SendMessageEx(int plrNum, char const *msg, dd_bool yellow)
 {
     Writer *writer;
 

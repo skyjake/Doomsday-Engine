@@ -89,7 +89,7 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 /// Script state stack.
-static boolean finaleStackInited = false;
+static dd_bool finaleStackInited = false;
 static uint finaleStackSize = 0;
 static fi_state_t* finaleStack = 0;
 static fi_state_t remoteFinaleState; // For the client.
@@ -165,7 +165,7 @@ static fi_state_t* stateForFinaleId(finaleid_t id)
     return 0;
 }
 
-static boolean stackHasDefId(const char* defId)
+static dd_bool stackHasDefId(const char* defId)
 {
     uint i;
     for(i = 0; i < finaleStackSize; ++i)
@@ -372,7 +372,7 @@ void FI_StackExecuteWithId(const char* scriptSrc, int flags, finale_mode_t mode,
     }
 }
 
-boolean FI_StackActive(void)
+dd_bool FI_StackActive(void)
 {
     fi_state_t* s;
     if(!finaleStackInited) Con_Error("FI_StackActive: Not initialized yet!");
@@ -383,7 +383,7 @@ boolean FI_StackActive(void)
     return false;
 }
 
-static void stackClear(boolean ignoreSuspendedScripts)
+static void stackClear(dd_bool ignoreSuspendedScripts)
 {
     fi_state_t* s;
     assert(finaleStackInited);
@@ -624,7 +624,7 @@ int FI_PrivilegedResponder(const void* ev)
     return false;
 }
 
-boolean FI_IsMenuTrigger(void)
+dd_bool FI_IsMenuTrigger(void)
 {
     fi_state_t* s;
     if(!finaleStackInited) Con_Error("FI_IsMenuTrigger: Not initialized yet!");
@@ -635,7 +635,7 @@ boolean FI_IsMenuTrigger(void)
     return false;
 }
 
-boolean FI_RequestSkip(void)
+dd_bool FI_RequestSkip(void)
 {
     fi_state_t* s;
     if(!finaleStackInited) Con_Error("FI_RequestSkip: Not initialized yet!");

@@ -49,7 +49,7 @@
 #define SKYCHANGE_SPECIAL       200
 
 static void P_LightningFlash(void);
-static boolean CheckedLockedDoor(mobj_t* mo, byte lock);
+static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock);
 
 mobj_t lavaInflictor;
 
@@ -59,9 +59,9 @@ float sky1ColumnOffset;
 float sky2ColumnOffset;
 float sky1ScrollDelta;
 float sky2ScrollDelta;
-boolean doubleSky;
+dd_bool doubleSky;
 
-static boolean mapHasLightning;
+static dd_bool mapHasLightning;
 static int nextLightningFlash;
 static int lightningFlash;
 static float* lightningLightLevels;
@@ -136,9 +136,9 @@ void P_AnimateSky(void)
     }
 }
 
-boolean EV_SectorSoundChange(byte* args)
+dd_bool EV_SectorSoundChange(byte* args)
 {
-    boolean             rtn = false;
+    dd_bool             rtn = false;
     Sector*             sec = NULL;
     iterlist_t*         list;
 
@@ -160,7 +160,7 @@ boolean EV_SectorSoundChange(byte* args)
     return rtn;
 }
 
-static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
+static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock)
 {
     extern int  TextKeyMessages[11];
     char        LockedBuffer[80];
@@ -184,7 +184,7 @@ static boolean CheckedLockedDoor(mobj_t* mo, byte lock)
     return true;
 }
 
-boolean EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
+dd_bool EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
 {
     inventoryitemtype_t  type;
 
@@ -200,10 +200,10 @@ boolean EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-boolean P_ExecuteLineSpecial(int special, byte* args, Line* line,
+dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line,
                              int side, mobj_t* mo)
 {
-    boolean             success;
+    dd_bool             success;
 
 #ifdef _DEBUG
     Con_Message("P_ExecuteLineSpecial: special=%i mo=%i", special, mo? mo->thinker.id : 0);
@@ -610,11 +610,11 @@ boolean P_ExecuteLineSpecial(int special, byte* args, Line* line,
     return success;
 }
 
-boolean P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
+dd_bool P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
 {
     int             lineActivation;
-    boolean         repeat;
-    boolean         buttonSuccess;
+    dd_bool         repeat;
+    dd_bool         buttonSuccess;
     xline_t        *xline = P_ToXLine(line);
 
     if(IS_CLIENT)
@@ -824,7 +824,7 @@ void P_SpawnAllSpecialThinkers(void)
     P_SpawnLineSpecialThinkers();
 }
 
-static boolean isLightningSector(Sector* sec)
+static dd_bool isLightningSector(Sector* sec)
 {
     xsector_t*              xsec = P_ToXSector(sec);
 
@@ -847,7 +847,7 @@ static void P_LightningFlash(void)
 {
     int i;
     float *tempLight;
-    boolean foundSec;
+    dd_bool foundSec;
     float flashLight;
 
     if(lightningFlash)

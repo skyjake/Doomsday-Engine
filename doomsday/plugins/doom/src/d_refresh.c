@@ -114,7 +114,7 @@ void G_UpdateSpecialFilter(int player)
 #endif
 }
 
-boolean R_ViewFilterColor(float rgba[4], int filter)
+dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {
     if(!rgba) return false;
 

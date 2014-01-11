@@ -54,12 +54,12 @@ DENG_API_TYPEDEF(F)
      *
      * @return  @c true if successful.
      */
-    boolean         (*MakePath)(const char* path);
+    dd_bool         (*MakePath)(const char* path);
 
     void            (*FileName)(Str* dst, const char* src);
     void            (*ExtractFileBase)(char* dst, const char* path, size_t len);
     const char*     (*FindFileExtension)(const char* path);
-    boolean         (*TranslatePath)(ddstring_t* dst, const Str* src);
+    dd_bool         (*TranslatePath)(ddstring_t* dst, const Str* src);
 
     /**
      * @warning Not thread-safe!
@@ -68,7 +68,7 @@ DENG_API_TYPEDEF(F)
     const char*     (*PrettyPath)(const char* path);
 
     size_t          (*ReadFile)(const char* path, char** buffer);
-    boolean         (*WriteFile)(const char* path, const char* source, size_t length);
+    dd_bool         (*WriteFile)(const char* path, const char* source, size_t length);
 }
 DENG_API_T(F);
 

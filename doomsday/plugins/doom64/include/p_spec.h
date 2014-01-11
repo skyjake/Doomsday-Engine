@@ -67,7 +67,7 @@ void P_SpawnAllSpecialThinkers(void);
 
 void P_ThunderSector(void); // jd64
 
-boolean P_ActivateLine(Line *ld, mobj_t *mo, int side, int activationType);
+dd_bool P_ActivateLine(Line *ld, mobj_t *mo, int side, int activationType);
 
 void P_PlayerInSpecialSector(player_t *player);
 
@@ -89,7 +89,7 @@ result_e T_MovePlane(Sector *sector, float speed, coord_t dest, int crush,
 
 int EV_DoDonut(Line *line);
 
-boolean P_UseSpecialLine2(mobj_t *mo, Line *line, int side);
+dd_bool P_UseSpecialLine2(mobj_t *mo, Line *line, int side);
 
 #ifdef __cplusplus
 } // extern "C"

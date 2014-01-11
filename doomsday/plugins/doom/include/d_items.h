@@ -51,7 +51,7 @@ typedef struct {
 
     int             ammoType[NUM_AMMO_TYPES]; // required ammo types.
     int             perShot[NUM_AMMO_TYPES]; // Ammo used per shot of each type.
-    boolean         autoFire; // (True)= fire when raised if fire held.
+    dd_bool         autoFire; // (True)= fire when raised if fire held.
     int             states[NUM_WEAPON_STATE_NAMES];
     int             raiseSound; // Sound played when weapon is raised.
     int             readySound; // Sound played WHILE weapon is readyied

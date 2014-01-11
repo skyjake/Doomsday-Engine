@@ -93,7 +93,7 @@ typedef struct fogeffectdata_s {
     float           alpha, targetAlpha;
     fogeffectlayer_t layers[2];
     float           joinY;
-    boolean         scrollDir;
+    dd_bool         scrollDir;
 } fogeffectdata_t;
 
 fontid_t fonts[NUM_GAME_FONTS];
@@ -103,7 +103,7 @@ fontid_t fonts[NUM_GAME_FONTS];
 const char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
-boolean shiftdown = false;
+dd_bool shiftdown = false;
 const char shiftXForm[] = {
     0,
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -930,7 +930,7 @@ void Hu_FogEffectTicker(timespan_t ticLength)
 }
 
 void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
-    boolean left, boolean right, boolean caps, float red, float green,
+    dd_bool left, dd_bool right, dd_bool caps, float red, float green,
     float blue, float alpha)
 {
     float length, delta[2], normal[2], unit[2];
@@ -1385,8 +1385,8 @@ static void drawFogEffect(void)
 
 void Hu_Drawer(void)
 {
-    boolean menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
-    boolean pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
+    dd_bool menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
+    dd_bool pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
 
     if(!menuOrMessageVisible && !pauseGraphicVisible)
         return;
@@ -1449,7 +1449,7 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
     fogEffectData.targetAlpha = MINMAX_OF(0, alpha, 1);
 }
 
-boolean Hu_IsStatusBarVisible(int player)
+dd_bool Hu_IsStatusBarVisible(int player)
 {
 #ifdef __JDOOM64__
     DENG_UNUSED(player);
@@ -1484,7 +1484,7 @@ int Hu_MapTitleFirstLineHeight(void)
 }
 #endif
 
-boolean Hu_IsMapTitleAuthorVisible(void)
+dd_bool Hu_IsMapTitleAuthorVisible(void)
 {
     char const *author = P_GetMapAuthor(cfg.hideIWADAuthor);
     return author != 0 && (actualMapTime <= 6 * TICSPERSEC);
@@ -1503,7 +1503,7 @@ int Hu_MapTitleHeight(void)
 #endif
 }
 
-void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
+void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
     char const *lname = 0, *lauthor = 0;
     float y = 0;
@@ -1564,14 +1564,14 @@ void Hu_DrawMapTitle(float alpha, boolean mapIdInsteadOfAuthor)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-boolean Hu_IsMapTitleVisible(void)
+dd_bool Hu_IsMapTitleVisible(void)
 {
     if(!cfg.mapTitle) return false;
 
     return (actualMapTime < 6 * 35) || ST_AutomapIsActive(DISPLAYPLAYER);
 }
 
-static boolean needToRespectStatusBarHeightWhenAutomapOpen(void)
+static dd_bool needToRespectStatusBarHeightWhenAutomapOpen(void)
 {
 #ifndef __JDOOM64__
     return Hu_IsStatusBarVisible(DISPLAYPLAYER);
@@ -1580,7 +1580,7 @@ static boolean needToRespectStatusBarHeightWhenAutomapOpen(void)
     return false;
 }
 
-static boolean needToRespectHudSizeWhenAutomapOpen(void)
+static dd_bool needToRespectHudSizeWhenAutomapOpen(void)
 {
 #ifdef __JDOOM__
     if(cfg.hudShown[HUD_FACE] && !Hu_IsStatusBarVisible(DISPLAYPLAYER) &&

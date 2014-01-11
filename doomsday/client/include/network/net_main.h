@@ -202,8 +202,8 @@ typedef struct {
 
     // Demo recording file (being recorded if not NULL).
     LZFILE         *demo;
-    boolean         recording;
-    boolean         recordPaused;
+    dd_bool         recording;
+    dd_bool         recordPaused;
 
     // Movement smoother.
     Smoother*       smoother;
@@ -215,16 +215,16 @@ typedef struct {
 extern char    *serverName, *serverInfo, *playerName;
 extern int      serverData[];
 
-extern boolean  firstNetUpdate;
+extern dd_bool  firstNetUpdate;
 extern int      resendStart;      // set when server needs our tics
 extern int      resendCount;
 extern int      oldEnterTics;
 extern int      numClMobjs;
-extern boolean  masterAware;
+extern dd_bool  masterAware;
 extern int      netGame;
 extern int      realTics, availableTics;
 extern int      isServer, isClient;
-extern boolean  allowNetTraffic; // Should net traffic be allowed?
+extern dd_bool  allowNetTraffic; // Should net traffic be allowed?
 extern float    netSimulatedLatencySeconds;
 extern client_t clients[DDMAXPLAYERS];
 extern int      gotFrame;
@@ -234,7 +234,7 @@ void            Net_Init(void);
 void            Net_Shutdown(void);
 void            Net_DestroyArrays(void);
 void            Net_AllocClientBuffers(int clientId);
-boolean         Net_GetPacket(void);
+dd_bool         Net_GetPacket(void);
 void            Net_SendBuffer(int to_player, int sp_flags);
 void            Net_SendPlayerInfo(int srcPlrNum, int destPlrNum);
 void            Net_InitGame(void);
@@ -255,7 +255,7 @@ void            Net_Ticker(timespan_t time);
  */
 void Net_Drawer(void);
 
-boolean         Net_IsLocalPlayer(int pNum);
+dd_bool         Net_IsLocalPlayer(int pNum);
 
 void            Net_PrintServerInfo(int index, serverinfo_t *info);
 
@@ -263,7 +263,7 @@ void            Net_PrintServerInfo(int index, serverinfo_t *info);
  * Converts textual data to a serverinfo struct. Returns true if the
  * label/value pair is recognized.
  */
-boolean Net_StringToServerInfo(char const *valuePair, serverinfo_t *info);
+dd_bool Net_StringToServerInfo(char const *valuePair, serverinfo_t *info);
 
 void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info);
 

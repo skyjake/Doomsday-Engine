@@ -460,7 +460,7 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
     return None;
 }
 
-static boolean palettedIsMasked(uint8_t const *pixels, int width, int height)
+static dd_bool palettedIsMasked(uint8_t const *pixels, int width, int height)
 {
     DENG2_ASSERT(pixels != 0);
     // Jump to the start of the alpha data.

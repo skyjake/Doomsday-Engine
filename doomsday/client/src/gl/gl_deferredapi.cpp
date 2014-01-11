@@ -26,7 +26,7 @@
 #include <de/concurrency.h>
 #include "gl/gl_defer.h"
 
-static boolean __inline mustDefer(void)
+static dd_bool __inline mustDefer(void)
 {
     return !Sys_InMainThread();
 }

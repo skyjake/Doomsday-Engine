@@ -102,9 +102,9 @@ void T_FloorWaggle(waggle_t* waggle)
     P_ChangeSector(waggle->sector, 1 /*crush damage*/);
 }
 
-boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer)
+dd_bool EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer)
 {
-    boolean retCode = false;
+    dd_bool retCode = false;
     Sector* sec = NULL;
     waggle_t* waggle;
     iterlist_t* list;

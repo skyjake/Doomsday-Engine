@@ -50,7 +50,7 @@ typedef struct pcontrolstate_s {
     // Looking around.
     float           targetLookOffset;
     float           lookOffset;
-    boolean         mlookPressed;
+    dd_bool         mlookPressed;
 
     // For accelerative turning:
     float           turnheld;
@@ -438,7 +438,7 @@ float G_GetLookOffset(int pnum)
 #if 0
 char G_MakeLookDelta(float offset)
 {
-    boolean minus = offset < 0;
+    dd_bool minus = offset < 0;
 
     offset = sqrt(fabs(offset)) * DELTAMUL;
     if(minus)
@@ -617,10 +617,10 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 {
     float elapsedTics = elapsedTime * 35;
 
-    boolean pausestate = Pause_IsPaused();
+    dd_bool pausestate = Pause_IsPaused();
     int     i;
-    boolean strafe = 0;
-    boolean bstrafe = 0;
+    dd_bool strafe = 0;
+    dd_bool bstrafe = 0;
     int     speed = 0;
     int     turnSpeed = 0, fwdMoveSpeed = 0, sideMoveSpeed = 0;
     int     forward = 0;

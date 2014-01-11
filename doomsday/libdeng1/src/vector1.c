@@ -185,7 +185,7 @@ float V2f_Project(pvec2f_t dest, const_pvec2f_t a, const_pvec2f_t b)
     return div;
 }
 
-boolean V2f_IsParallel(const_pvec2f_t a, const_pvec2f_t b)
+dd_bool V2f_IsParallel(const_pvec2f_t a, const_pvec2f_t b)
 {
 #define EPSILON .9999f
 
@@ -204,7 +204,7 @@ boolean V2f_IsParallel(const_pvec2f_t a, const_pvec2f_t b)
 #undef EPSILON
 }
 
-boolean V2f_IsZero(const_pvec2f_t vec)
+dd_bool V2f_IsZero(const_pvec2f_t vec)
 {
     return vec[VX] == 0 && vec[VY] == 0;
 }
@@ -269,7 +269,7 @@ float V2f_Intercept(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f_t c,
     return V2f_Intersection(a, ab, c, cd, point);
 }
 
-boolean V2f_Intercept2(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f_t c,
+dd_bool V2f_Intercept2(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f_t c,
     const_pvec2f_t d, pvec2f_t point, float* abFrac, float* cdFrac)
 {
     float ab, cd;
@@ -527,7 +527,7 @@ double V2d_ProjectOnLine(pvec2d_t dest, const_pvec2d_t point,
     return div;
 }
 
-boolean V2d_IsParallel(const_pvec2d_t a, const_pvec2d_t b)
+dd_bool V2d_IsParallel(const_pvec2d_t a, const_pvec2d_t b)
 {
 #define EPSILON .99999999
 
@@ -546,7 +546,7 @@ boolean V2d_IsParallel(const_pvec2d_t a, const_pvec2d_t b)
 #undef EPSILON
 }
 
-boolean V2d_IsZero(const_pvec2d_t vec)
+dd_bool V2d_IsZero(const_pvec2d_t vec)
 {
     return vec[VX] == 0 && vec[VY] == 0;
 }
@@ -604,7 +604,7 @@ double V2d_Intercept(const_pvec2d_t a, const_pvec2d_t b, const_pvec2d_t c,
     return V2d_Intersection(a, ab, c, cd, point);
 }
 
-boolean V2d_Intercept2(const_pvec2d_t a, const_pvec2d_t b, const_pvec2d_t c,
+dd_bool V2d_Intercept2(const_pvec2d_t a, const_pvec2d_t b, const_pvec2d_t c,
     const_pvec2d_t d, pvec2d_t point, double* abFrac, double* cdFrac)
 {
     double ab, cd;
@@ -812,7 +812,7 @@ int V3f_MajorAxis(const_pvec3f_t vec)
     return axis;
 }
 
-boolean V3f_IsZero(const_pvec3f_t vec)
+dd_bool V3f_IsZero(const_pvec3f_t vec)
 {
     return vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0;
 }
@@ -1022,7 +1022,7 @@ int V3d_MajorAxis(const_pvec3d_t vec)
     return axis;
 }
 
-boolean V3d_IsZero(const_pvec3d_t vec)
+dd_bool V3d_IsZero(const_pvec3d_t vec)
 {
     return vec[VX] == 0 && vec[VY] == 0 && vec[VZ] == 0;
 }
@@ -1167,7 +1167,7 @@ void V4f_Subtract(pvec4f_t dest, const_pvec4f_t src1, const_pvec4f_t src2)
     dest[3] = src1[3] - src2[3];
 }
 
-boolean V4f_IsZero(const_pvec4f_t vec)
+dd_bool V4f_IsZero(const_pvec4f_t vec)
 {
     return vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0;
 }
@@ -1256,7 +1256,7 @@ void V4d_Subtract(pvec4d_t dest, const_pvec4d_t src1, const_pvec4d_t src2)
     dest[3] = src1[3] - src2[3];
 }
 
-boolean V4d_IsZero(const_pvec4d_t vec)
+dd_bool V4d_IsZero(const_pvec4d_t vec)
 {
     return vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0;
 }

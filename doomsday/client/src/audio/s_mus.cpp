@@ -45,8 +45,8 @@ static void Mus_UpdateSoundFont(void);
 static int     musPreference = MUSP_EXT;
 static char*   soundFontPath = (char*) "";
 
-static boolean musAvail = false;
-static boolean musicPaused = false;
+static dd_bool musAvail = false;
+static dd_bool musicPaused = false;
 static int     currentSong = -1;
 
 static int getInterfaces(audiointerface_music_generic_t** ifs)
@@ -72,7 +72,7 @@ void Mus_Register(void)
  *
  * @return  @c true, if no errors occur.
  */
-boolean Mus_Init(void)
+dd_bool Mus_Init(void)
 {
     audiointerface_music_generic_t* iMusic[MAX_AUDIO_INTERFACES];
     int i, count;
@@ -171,7 +171,7 @@ void Mus_SetVolume(float vol)
 /**
  * Pauses or resumes the music.
  */
-void Mus_Pause(boolean doPause)
+void Mus_Pause(dd_bool doPause)
 {
     audiointerface_music_generic_t* iMusic[MAX_AUDIO_INTERFACES];
     int i, count;
@@ -206,7 +206,7 @@ void Mus_Stop(void)
 /**
  * @return: @c true, if the specified lump contains a MUS song.
  */
-boolean Mus_IsMUSLump(lumpnum_t lumpNum)
+dd_bool Mus_IsMUSLump(lumpnum_t lumpNum)
 {
     char buf[4];
     int lumpIdx;
@@ -294,7 +294,7 @@ int Mus_GetCD(ded_music_t *def)
  * @return 1, if music was started. 0, if attempted to start but failed.
  *         -1, if it was MUS data and @a canPlayMUS says we can't play it.
  */
-int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
+int Mus_StartLump(lumpnum_t lump, dd_bool looped, dd_bool canPlayMUS)
 {
     if(!AudioDriver_Music_Available() || lump < 0) return 0;
 
@@ -339,7 +339,7 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
  *
  * @return              Non-zero if the song is successfully played.
  */
-int Mus_Start(ded_music_t* def, boolean looped)
+int Mus_Start(ded_music_t* def, dd_bool looped)
 {
     int i, order[3], songID;
     ddstring_t path;
@@ -389,7 +389,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
     // Try to start the song.
     for(i = 0; i < 3; ++i)
     {
-        boolean canPlayMUS = true;
+        dd_bool canPlayMUS = true;
 
         switch(order[i])
         {

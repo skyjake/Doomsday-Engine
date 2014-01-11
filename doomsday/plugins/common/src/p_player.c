@@ -157,7 +157,7 @@ void P_FreeWeaponSlots(void)
     }
 }
 
-boolean P_SetWeaponSlot(weapontype_t type, byte slot)
+dd_bool P_SetWeaponSlot(weapontype_t type, byte slot)
 {
     byte                currentSlot;
 
@@ -186,7 +186,7 @@ byte P_GetWeaponSlot(weapontype_t type)
     return 0;
 }
 
-weapontype_t P_WeaponSlotCycle(weapontype_t type, boolean prev)
+weapontype_t P_WeaponSlotCycle(weapontype_t type, dd_bool prev)
 {
     if(type >= WT_FIRST && type < NUM_WEAPON_TYPES)
     {
@@ -234,7 +234,7 @@ weapontype_t P_WeaponSlotCycle(weapontype_t type, boolean prev)
  * @return              Non-zero if no weapon is bound to the slot @a slot,
  *                      or callback @a callback signals an end to iteration.
  */
-int P_IterateWeaponsBySlot(byte slot, boolean reverse,
+int P_IterateWeaponsBySlot(byte slot, dd_bool reverse,
                            int (*callback) (weapontype_t, void* context),
                            void* context)
 {
@@ -327,7 +327,7 @@ int P_CountPlayersInGame(void)
  *
  * @return  @c true, if the player is walking.
  */
-boolean P_PlayerInWalkState(player_t* pl)
+dd_bool P_PlayerInWalkState(player_t* pl)
 {
     if(!pl->plr->mo) return false;
 
@@ -410,14 +410,14 @@ void P_ShotAmmo(player_t *player)
  * @return              The weapon we changed to OR WT_NOCHANGE.
  */
 weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
-                                 ammotype_t ammo, boolean force)
+                                 ammotype_t ammo, dd_bool force)
 {
     int                 i, lvl, pclass;
     ammotype_t          ammotype;
     weapontype_t        candidate;
     weapontype_t        returnval = WT_NOCHANGE;
     weaponinfo_t       *winf;
-    boolean             found;
+    dd_bool             found;
 
     if(IS_NETWORK_SERVER)
     {
@@ -443,7 +443,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
 
     if(weapon == WT_NOCHANGE && ammo == AT_NOAMMO) // Out of ammo.
     {
-        boolean good;
+        dd_bool good;
 
         // Note we have no auto-logical choice for a forced change.
         // Preferences are set by the user.
@@ -610,10 +610,10 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
  *
  * @return              @c true, if there is enough ammo to fire.
  */
-boolean P_CheckAmmo(player_t* plr)
+dd_bool P_CheckAmmo(player_t* plr)
 {
     int                 fireMode;
-    boolean             good;
+    dd_bool             good;
     ammotype_t          i;
     weaponinfo_t*       wInfo;
 
@@ -672,7 +672,7 @@ boolean P_CheckAmmo(player_t* plr)
  * @param player        The player to work with.
  * @param prev          Search direction @c true = previous, @c false = next.
  */
-weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
+weapontype_t P_PlayerFindWeapon(player_t* player, dd_bool prev)
 {
     weapontype_t*       list, w = 0, initial;
     int                 lvl, i;

@@ -113,7 +113,7 @@ static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
 static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
     texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
+    dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
 {
     DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
@@ -636,8 +636,8 @@ DENG2_PIMPL(ResourceSystem)
 
     TextureVariantSpec *textureSpec(texturevariantusagecontext_t tc, int flags,
         byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
-        int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
-        boolean noStretch, boolean toAlpha)
+        int magFilter, int anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
+        dd_bool noStretch, dd_bool toAlpha)
     {
         static TextureVariantSpec tpl;
         tpl.type = TST_GENERAL;
@@ -2821,8 +2821,8 @@ void ResourceSystem::pruneUnusedTextureSpecs()
 
 TextureVariantSpec const &ResourceSystem::textureSpec(texturevariantusagecontext_t tc,
     int flags, byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
-    int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
-    boolean noStretch, boolean toAlpha)
+    int magFilter, int anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
+    dd_bool noStretch, dd_bool toAlpha)
 {
     TextureVariantSpec *tvs =
         d->textureSpec(tc, flags, border, tClass, tMap, wrapS, wrapT, minFilter,

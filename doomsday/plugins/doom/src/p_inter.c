@@ -48,7 +48,7 @@ int clipAmmo[NUM_AMMO_TYPES] = {10, 4, 20, 1};
 // Maximum number of rounds for each ammo type.
 int maxAmmo[NUM_AMMO_TYPES] = {200, 50, 300, 50};
 
-static boolean giveOneAmmo(player_t *plr, ammotype_t ammoType, int numClips)
+static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numClips)
 {
     int numRounds = 0;
 
@@ -99,7 +99,7 @@ static boolean giveOneAmmo(player_t *plr, ammotype_t ammoType, int numClips)
     return true;
 }
 
-boolean P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numClips)
+dd_bool P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numClips)
 {
     int gaveAmmos = 0;
 
@@ -121,12 +121,12 @@ boolean P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numClips)
     return gaveAmmos  != 0;
 }
 
-static boolean shouldForceWeaponChange(boolean dropped)
+static dd_bool shouldForceWeaponChange(dd_bool dropped)
 {
     return IS_NETGAME && deathmatch == 1 && !dropped;
 }
 
-static int numAmmoClipsToGiveWithWeapon(boolean dropped)
+static int numAmmoClipsToGiveWithWeapon(dd_bool dropped)
 {
     // Dropped weapons only ever give one clip.
     if(dropped) return 1;
@@ -135,10 +135,10 @@ static int numAmmoClipsToGiveWithWeapon(boolean dropped)
     return (IS_NETGAME && deathmatch == 1)? 5 : 2;
 }
 
-static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType, boolean dropped)
+static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType, dd_bool dropped)
 {
     int numClips = numAmmoClipsToGiveWithWeapon(dropped);
-    boolean gaveAmmo = false, gaveWeapon = false;
+    dd_bool gaveAmmo = false, gaveWeapon = false;
     weaponinfo_t const *wpnInfo;
     ammotype_t i;
 
@@ -188,7 +188,7 @@ static boolean giveOneWeapon(player_t *plr, weapontype_t weaponType, boolean dro
     return (gaveWeapon || gaveAmmo);
 }
 
-boolean P_GiveWeapon(player_t *plr, weapontype_t weaponType, boolean dropped)
+dd_bool P_GiveWeapon(player_t *plr, weapontype_t weaponType, dd_bool dropped)
 {
     int gaveWeapons = 0;
 
@@ -210,7 +210,7 @@ boolean P_GiveWeapon(player_t *plr, weapontype_t weaponType, boolean dropped)
     return gaveWeapons != 0;
 }
 
-boolean P_GiveHealth(player_t *player, int amount)
+dd_bool P_GiveHealth(player_t *player, int amount)
 {
     if(player->health >= maxHealth)
         return false;
@@ -228,7 +228,7 @@ boolean P_GiveHealth(player_t *player, int amount)
     return true;
 }
 
-boolean P_GiveArmor(player_t* plr, int type, int points)
+dd_bool P_GiveArmor(player_t* plr, int type, int points)
 {
     if(plr->armorPoints >= points)
         return false; // Don't pick up.
@@ -242,7 +242,7 @@ boolean P_GiveArmor(player_t* plr, int type, int points)
     return true;
 }
 
-static boolean giveOneKey(player_t *plr, keytype_t keyType)
+static dd_bool giveOneKey(player_t *plr, keytype_t keyType)
 {
     DENG_ASSERT(plr != 0);
     DENG_ASSERT(keyType >= KT_FIRST && keyType < NUM_KEY_TYPES);
@@ -260,7 +260,7 @@ static boolean giveOneKey(player_t *plr, keytype_t keyType)
     return true;
 }
 
-boolean P_GiveKey(player_t *plr, keytype_t keyType)
+dd_bool P_GiveKey(player_t *plr, keytype_t keyType)
 {
     int gaveKeys = 0;
 
@@ -305,7 +305,7 @@ void P_GiveBackpack(player_t *plr)
     P_SetMessage(plr, 0, GOTBACKPACK);
 }
 
-boolean P_GivePower(player_t *player, powertype_t powerType)
+dd_bool P_GivePower(player_t *player, powertype_t powerType)
 {
     DENG_ASSERT(player != 0);
     DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
@@ -367,7 +367,7 @@ boolean P_GivePower(player_t *player, powertype_t powerType)
     return true;
 }
 
-boolean P_TakePower(player_t *player, powertype_t powerType)
+dd_bool P_TakePower(player_t *player, powertype_t powerType)
 {
     DENG_ASSERT(player != 0);
     DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
@@ -402,7 +402,7 @@ boolean P_TakePower(player_t *player, powertype_t powerType)
     return true;
 }
 
-boolean P_TogglePower(player_t *player, powertype_t powerType)
+dd_bool P_TogglePower(player_t *player, powertype_t powerType)
 {
     DENG_ASSERT(player != 0);
     DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
@@ -520,10 +520,10 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
  *
  * @return  @c true if the player picked up the weapon.
  */
-static boolean pickupWeapon(player_t *plr, weapontype_t weaponType,
-    boolean dropped, char const *pickupMessage)
+static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
+    dd_bool dropped, char const *pickupMessage)
 {
-    boolean pickedWeapon;
+    dd_bool pickedWeapon;
 
     DENG_ASSERT(plr != 0);
     DENG_ASSERT(weaponType >= WT_FIRST && weaponType < NUM_WEAPON_TYPES);
@@ -559,7 +559,7 @@ static boolean pickupWeapon(player_t *plr, weapontype_t weaponType,
  *
  * @return  @c true iff the item should be destroyed.
  */
-static boolean pickupItem(player_t *plr, itemtype_t item, boolean dropped)
+static dd_bool pickupItem(player_t *plr, itemtype_t item, dd_bool dropped)
 {
     if(!plr)
         return false;
@@ -953,7 +953,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
         player->bonusCount += BONUSADD;
 }
 
-void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
+void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
 {
     mobjtype_t          item;
     mobj_t*             mo;
@@ -1073,7 +1073,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 }
 
 int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                 int damageP, boolean stomping)
+                 int damageP, dd_bool stomping)
 {
     return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
 }
@@ -1091,7 +1091,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
  * @return              Actual amount of damage done.
  */
 int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                  int damageP, boolean stomping, boolean skipNetworkCheck)
+                  int damageP, dd_bool stomping, dd_bool skipNetworkCheck)
 {
     angle_t             angle;
     int                 saved, originalHealth;

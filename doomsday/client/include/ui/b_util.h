@@ -60,16 +60,16 @@ typedef struct statecondition_s {
     } flags;
 } statecondition_t;
 
-boolean     B_ParseToggleState(const char* toggleName, ebstate_t* state);
-boolean     B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos);
-boolean     B_ParseKeyId(const char* desc, int* id);
-boolean     B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id);
-boolean     B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id);
-boolean     B_ParseAnglePosition(const char* desc, float* pos);
-boolean     B_ParseStateCondition(statecondition_t* cond, const char* desc);
-boolean     B_CheckAxisPos(ebstate_t test, float testPos, float pos);
-boolean     B_CheckCondition(statecondition_t* cond, int localNum, struct bcontext_s* context);
-boolean     B_EqualConditions(const statecondition_t* a, const statecondition_t* b);
+dd_bool     B_ParseToggleState(const char* toggleName, ebstate_t* state);
+dd_bool     B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos);
+dd_bool     B_ParseKeyId(const char* desc, int* id);
+dd_bool     B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id);
+dd_bool     B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id);
+dd_bool     B_ParseAnglePosition(const char* desc, float* pos);
+dd_bool     B_ParseStateCondition(statecondition_t* cond, const char* desc);
+dd_bool     B_CheckAxisPos(ebstate_t test, float testPos, float pos);
+dd_bool     B_CheckCondition(statecondition_t* cond, int localNum, struct bcontext_s* context);
+dd_bool     B_EqualConditions(const statecondition_t* a, const statecondition_t* b);
 void        B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str);
 void        B_AppendToggleStateToString(ebstate_t state, ddstring_t* str);
 void        B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str);

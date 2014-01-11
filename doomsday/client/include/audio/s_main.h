@@ -55,7 +55,7 @@ void S_Register(void);
  *
  * @return  @c true, if there were no errors.
  */
-boolean S_Init(void);
+dd_bool S_Init(void);
 
 /**
  * Shutdown the whole sound system (Sfx + Mus).

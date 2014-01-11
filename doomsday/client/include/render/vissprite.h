@@ -93,7 +93,7 @@ typedef struct vispsprite_s {
         struct vispsprite_sprite_s {
             BspLeaf *bspLeaf;
             float alpha;
-            boolean isFullBright;
+            dd_bool isFullBright;
         } sprite;
         struct vispsprite_model_s {
             BspLeaf *bspLeaf;
@@ -103,12 +103,12 @@ typedef struct vispsprite_s {
             int selector;
             int pClass; // player class (used in translation)
             coord_t floorClip;
-            boolean stateFullBright;
-            boolean viewAligned;    // Align to view plane.
+            dd_bool stateFullBright;
+            dd_bool viewAligned;    // Align to view plane.
             coord_t secFloor, secCeil;
             float alpha;
             coord_t visOff[3]; // Last-minute offset to coords.
-            boolean floorAdjust; // Allow moving sprite to match visible floor.
+            dd_bool floorAdjust; // Allow moving sprite to match visible floor.
 
             ModelDef *mf, *nextMF;
             float yaw, pitch;

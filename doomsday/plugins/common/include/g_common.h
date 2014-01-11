@@ -42,7 +42,7 @@ enum {
     JOYAXIS_LOOK
 };
 
-extern boolean singledemo;
+extern dd_bool singledemo;
 
 void G_Register(void);
 
@@ -66,7 +66,7 @@ void G_StartHelp(void);
 
 void G_EndGame(void);
 
-boolean G_QuitInProgress(void);
+dd_bool G_QuitInProgress(void);
 
 /**
  * @param map           Logical map number (i.e., not a warp/translated number).
@@ -89,7 +89,7 @@ void G_BeginMap(void);
  * @param mapEntryPoint Logical map entry point on the new map.
  * @param secretExit    @c true if the exit taken was marked as 'secret'.
  */
-void G_LeaveMap(uint newMap, uint mapEntryPoint, boolean secretExit);
+void G_LeaveMap(uint newMap, uint mapEntryPoint, dd_bool secretExit);
 
 /**
  * Compose a Uri for the identified @a episode and @a map combination.
@@ -110,7 +110,7 @@ Uri* G_ComposeMapUri(uint episode, uint map);
  *
  * @return  @c true= The original @a episode and @a map value pair were already valid.
  */
-boolean G_ValidateMap(uint* episode, uint* map);
+dd_bool G_ValidateMap(uint* episode, uint* map);
 
 /**
  * Return the next map according to the default map progression.
@@ -121,7 +121,7 @@ boolean G_ValidateMap(uint* episode, uint* map);
  *
  * @return  The next map.
  */
-uint G_GetNextMap(uint episode, uint map, boolean secretExit);
+uint G_GetNextMap(uint episode, uint map, dd_bool secretExit);
 
 /// @return  Logical map number.
 uint G_GetMapNumber(uint episode, uint map);

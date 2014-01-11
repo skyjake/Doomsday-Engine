@@ -47,24 +47,24 @@ extern int gaLoadGameSlot;
 
 extern player_t players[MAXPLAYERS];
 
-extern boolean gameInProgress;
+extern dd_bool gameInProgress;
 extern skillmode_t gameSkill;
 extern uint gameEpisode;
 extern uint gameMap;
 extern uint gameMapEntryPoint;
 
 extern uint nextMap; // If non zero this will be the next map.
-extern boolean secretExit;
+extern dd_bool secretExit;
 extern int totalKills, totalItems, totalSecret;
-extern boolean deathmatch;
-extern boolean respawnMonsters;
-extern boolean paused;
-extern boolean precache;
-extern boolean customPal;
+extern dd_bool deathmatch;
+extern dd_bool respawnMonsters;
+extern dd_bool paused;
+extern dd_bool precache;
+extern dd_bool customPal;
 extern wbstartstruct_t wmInfo;
 extern int bodyQueueSlot;
 extern int mapStartTic;
-extern boolean briefDisabled;
+extern dd_bool briefDisabled;
 
 extern int gsvMapMusic;
 
@@ -82,17 +82,17 @@ void            G_DeferredPlayDemo(char* demo);
 void            G_QuitGame(void);
 
 /// @return  @c true = loading is presently possible.
-boolean G_IsLoadGamePossible(void);
+dd_bool G_IsLoadGamePossible(void);
 
 /**
  * To be called to schedule a load game-save action.
  * @param slot  Logical identifier of the save slot to use.
  * @return  @c true iff @a slot is in use and loading is presently possible.
  */
-boolean G_LoadGame(int slot);
+dd_bool G_LoadGame(int slot);
 
 /// @return  @c true = saving is presently possible.
-boolean G_IsSaveGamePossible(void);
+dd_bool G_IsSaveGamePossible(void);
 
 /**
  * To be called to schedule a save game-save action.
@@ -102,8 +102,8 @@ boolean G_IsSaveGamePossible(void);
  *      If an empty string a new name will be generated automatically.
  * @return  @c true iff @a slot is valid and saving is presently possible.
  */
-boolean G_SaveGame2(int slot, const char* name);
-boolean G_SaveGame(int slot);
+dd_bool G_SaveGame2(int slot, const char* name);
+dd_bool G_SaveGame(int slot);
 
 void            G_StopDemo(void);
 

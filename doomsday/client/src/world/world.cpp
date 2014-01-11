@@ -247,7 +247,7 @@ private:
 
 int const MapConversionReporter::maxWarningsPerType = 10;
 
-boolean ddMapSetup;
+dd_bool ddMapSetup;
 
 // Should we be caching successfully loaded maps?
 //static byte mapCache = true; // cvar

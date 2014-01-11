@@ -252,7 +252,7 @@ void *P_AllocDummy(int type, void *extraData)
 }
 
 #undef P_IsDummy
-boolean P_IsDummy(void const *dummy)
+dd_bool P_IsDummy(void const *dummy)
 {
     return dummyType(dummy) != DMU_NONE;
 }
@@ -780,7 +780,7 @@ static int setPropertyWorker(void *elPtr, void *context)
 }
 
 #undef P_SetBool
-void P_SetBool(int type, int index, uint prop, boolean param)
+void P_SetBool(int type, int index, uint prop, dd_bool param)
 {
     DmuArgs args(type, prop);
     args.valueType = DDVT_BOOL;
@@ -854,7 +854,7 @@ void P_SetPtr(int type, int index, uint prop, void *param)
 }
 
 #undef P_SetBoolv
-void P_SetBoolv(int type, int index, uint prop, boolean *params)
+void P_SetBoolv(int type, int index, uint prop, dd_bool *params)
 {
     DmuArgs args(type, prop);
     args.valueType = DDVT_BOOL;
@@ -928,7 +928,7 @@ void P_SetPtrv(int type, int index, uint prop, void *params)
 /* pointer-based write functions */
 
 #undef P_SetBoolp
-void P_SetBoolp(void *ptr, uint prop, boolean param)
+void P_SetBoolp(void *ptr, uint prop, dd_bool param)
 {
     DmuArgs args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
@@ -1002,7 +1002,7 @@ void P_SetPtrp(void *ptr, uint prop, void *param)
 }
 
 #undef P_SetBoolpv
-void P_SetBoolpv(void *ptr, uint prop, boolean *params)
+void P_SetBoolpv(void *ptr, uint prop, dd_bool *params)
 {
     DmuArgs args(DMU_GetType(ptr), prop);
     args.valueType = DDVT_BOOL;
@@ -1082,9 +1082,9 @@ static int getPropertyWorker(void *elPtr, void *context)
 /* index-based read functions */
 
 #undef P_GetBool
-boolean P_GetBool(int type, int index, uint prop)
+dd_bool P_GetBool(int type, int index, uint prop)
 {
-    boolean returnValue = false;
+    dd_bool returnValue = false;
     DmuArgs args(type, prop);
     args.valueType = DDVT_BOOL;
     args.booleanValues = &returnValue;
@@ -1170,7 +1170,7 @@ void *P_GetPtr(int type, int index, uint prop)
 }
 
 #undef P_GetBoolv
-void P_GetBoolv(int type, int index, uint prop, boolean *params)
+void P_GetBoolv(int type, int index, uint prop, dd_bool *params)
 {
     DmuArgs args(type, prop);
     args.valueType = DDVT_BOOL;
@@ -1244,9 +1244,9 @@ void P_GetPtrv(int type, int index, uint prop, void *params)
 /* pointer-based read functions */
 
 #undef P_GetBoolp
-boolean P_GetBoolp(void *ptr, uint prop)
+dd_bool P_GetBoolp(void *ptr, uint prop)
 {
-    boolean returnValue = false;
+    dd_bool returnValue = false;
 
     if(ptr)
     {
@@ -1372,7 +1372,7 @@ void *P_GetPtrp(void *ptr, uint prop)
 }
 
 #undef P_GetBoolpv
-void P_GetBoolpv(void *ptr, uint prop, boolean *params)
+void P_GetBoolpv(void *ptr, uint prop, dd_bool *params)
 {
     if(ptr)
     {
@@ -1468,7 +1468,7 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 }
 
 #undef P_MapExists
-DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
+DENG_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
@@ -1476,7 +1476,7 @@ DENG_EXTERN_C boolean P_MapExists(char const *uriCString)
 }
 
 #undef P_MapIsCustom
-DENG_EXTERN_C boolean P_MapIsCustom(char const *uriCString)
+DENG_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 {
     de::Uri uri(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName(uri.path().toString().toLatin1());
@@ -1493,7 +1493,7 @@ DENG_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 }
 
 #undef P_MapChange
-DENG_EXTERN_C boolean P_MapChange(char const *uriCString)
+DENG_EXTERN_C dd_bool P_MapChange(char const *uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
@@ -1519,7 +1519,7 @@ DENG_EXTERN_C boolean P_MapChange(char const *uriCString)
         }
     }
 
-    return (boolean) App_World().changeMap(de::Uri(uriCString, RC_NULL));
+    return (dd_bool) App_World().changeMap(de::Uri(uriCString, RC_NULL));
 }
 
 #undef P_CountMapObjs
@@ -1644,7 +1644,7 @@ DENG_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
 }
 
 #undef P_CheckLineSight
-DENG_EXTERN_C boolean P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
+DENG_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
     coord_t topSlope, int flags)
 {
     if(App_World().hasMap())
@@ -1677,7 +1677,7 @@ DENG_EXTERN_C LineOpening const *Interceptor_Opening(Interceptor const *trace)
 }
 
 #undef Interceptor_AdjustOpening
-DENG_EXTERN_C boolean Interceptor_AdjustOpening(Interceptor *trace, Line *line)
+DENG_EXTERN_C dd_bool Interceptor_AdjustOpening(Interceptor *trace, Line *line)
 {
     if(!trace) return false;
     return trace->adjustOpening(line);
@@ -1743,21 +1743,21 @@ DENG_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
 }
 
 #undef Polyobj_Move
-DENG_EXTERN_C boolean Polyobj_Move(Polyobj *po, const_pvec3d_t xy)
+DENG_EXTERN_C dd_bool Polyobj_Move(Polyobj *po, const_pvec3d_t xy)
 {
     if(!po) return false;
     return po->move(xy);
 }
 
 #undef Polyobj_MoveXY
-DENG_EXTERN_C boolean Polyobj_MoveXY(Polyobj *po, coord_t x, coord_t y)
+DENG_EXTERN_C dd_bool Polyobj_MoveXY(Polyobj *po, coord_t x, coord_t y)
 {
     if(!po) return false;
     return po->move(x, y);
 }
 
 #undef Polyobj_Rotate
-DENG_EXTERN_C boolean Polyobj_Rotate(Polyobj *po, angle_t angle)
+DENG_EXTERN_C dd_bool Polyobj_Rotate(Polyobj *po, angle_t angle)
 {
     if(!po) return false;
     return po->rotate(angle);

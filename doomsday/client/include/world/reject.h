@@ -36,7 +36,7 @@ class Map;
  * special effects. For example it is possible to make a player completely
  * invissible in certain sectors.
  *
- * The format of the table is a simple matrix of boolean values, a (true)
+ * The format of the table is a simple matrix of dd_bool values, a (true)
  * value indicates that it is impossible for mobjs in sector A to see mobjs
  * in sector B (and vice-versa). A (false) value indicates that a
  * line-of-sight MIGHT be possible and a more accurate (thus more expensive)

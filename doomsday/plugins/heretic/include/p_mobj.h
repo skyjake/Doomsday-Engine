@@ -196,7 +196,7 @@ typedef struct mobj_s {
     int             intFlags;       // $dropoff_fix: internal flags
     coord_t         dropOffZ;       // $dropoff_fix
     short           gear;           // used in torque simulation
-    boolean         wallRun;        // true = last move was the result of a wallrun
+    dd_bool         wallRun;        // true = last move was the result of a wallrun
 
     // no matter what (even if shot)
     struct player_s *player;        // only valid if type == MT_PLAYER
@@ -241,7 +241,7 @@ void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t *originator);
  *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest, boolean checkSpawn);
+mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest, dd_bool checkSpawn);
 
 /**
  * Tries to aim at a nearby monster if 'source' is a player. Else aim is

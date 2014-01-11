@@ -103,7 +103,7 @@ typedef struct ddevent_s {
             const char*     name;       // Symbolic name of the event.
         } symbolic;
         struct {
-            boolean         gained;     // Gained or lost focus.
+            dd_bool         gained;     // Gained or lost focus.
             int             inWindow;   // Window where the focus change occurred (index).
         } focus;
     };
@@ -192,11 +192,11 @@ typedef struct inputdev_s {
 
 extern int      repWait1, repWait2;
 extern int      keyRepeatDelay1, keyRepeatDelay2;   // milliseconds
-extern boolean  shiftDown, altDown;
+extern dd_bool  shiftDown, altDown;
 
 void        DD_RegisterInput(void);
 void        DD_InitInput(void);
-boolean     DD_IgnoreInput(boolean ignore);
+dd_bool     DD_IgnoreInput(dd_bool ignore);
 
 void        DD_ReadKeyboard(void);
 void        DD_ReadMouse(void);
@@ -225,7 +225,7 @@ void        I_ShutdownInputDevices(void);
 void        I_ClearDeviceContextAssociations(void);
 void        I_DeviceReset(uint ident);
 void        I_ResetAllDevices(void);
-boolean     I_ShiftDown(void);
+dd_bool     I_ShiftDown(void);
 
 enum InputDeviceGetMode {
     ActiveOrInactiveInputDevice,
@@ -269,7 +269,7 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
  *
  * @return  @c false, if the string is invalid.
  */
-boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis);
+dd_bool I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis);
 
 /**
  * Retrieve the index of a device's axis by name.
@@ -314,7 +314,7 @@ inputdevkey_t* I_GetKeyByID(inputdev_t* device, uint id);
 /**
  * @return  The key state from the downKeys array.
  */
-boolean I_IsKeyDown(inputdev_t* device, uint id);
+dd_bool I_IsKeyDown(inputdev_t* device, uint id);
 
 /**
  * Retrieve a ptr to the device hat specified by id.
@@ -326,7 +326,7 @@ boolean I_IsKeyDown(inputdev_t* device, uint id);
  */
 inputdevhat_t* I_GetHatByID(inputdev_t* device, uint id);
 
-void        I_SetUIMouseMode(boolean on);
+void        I_SetUIMouseMode(dd_bool on);
 void        I_TrackInput(ddevent_t *ev);
 
 #if _DEBUG

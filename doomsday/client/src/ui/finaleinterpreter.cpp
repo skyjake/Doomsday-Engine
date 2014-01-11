@@ -407,7 +407,7 @@ static uint objectIndexInNamespace(fi_namespace_t* names, fi_object_t* obj)
     return 0;
 }
 
-static __inline boolean objectInNamespace(fi_namespace_t* names, fi_object_t* obj)
+static __inline dd_bool objectInNamespace(fi_namespace_t* names, fi_object_t* obj)
 {
     return objectIndexInNamespace(names, obj) != 0;
 }
@@ -580,7 +580,7 @@ static fi_operand_t* prepareCommandOperands(finaleinterpreter_t* fi, const comma
     for(op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
     {
         const char charCode = *opRover;
-        boolean opHasDefaultValue, haveValue;
+        dd_bool opHasDefaultValue, haveValue;
 
         op->type = operandTypeForCharCode(charCode);
         opHasDefaultValue = (opRover < cmd->operands + (strlen(cmd->operands) - 2) && opRover[1] == '(');
@@ -675,7 +675,7 @@ static fi_operand_t* prepareCommandOperands(finaleinterpreter_t* fi, const comma
     return operands;
 }
 
-static boolean skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
+static dd_bool skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
 {
     if((fi->_skipNext && !cmd->flags.when_condition_skipping) ||
        ((fi->_skipping || fi->_gotoSkip) && !cmd->flags.when_skipping))
@@ -695,10 +695,10 @@ static boolean skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
 /**
  * Execute one (the next) command, advance script cursor.
  */
-static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString,
+static dd_bool executeCommand(finaleinterpreter_t* fi, const char* commandString,
     int directive)
 {
-    boolean didSkip = false;
+    dd_bool didSkip = false;
 
     // Semicolon terminates DO-blocks.
     if(!strcmp(commandString, ";"))
@@ -722,7 +722,7 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
     {const command_t* cmd;
     if((cmd = findCommand(commandString)))
     {
-        boolean requiredOperands;
+        dd_bool requiredOperands;
         fi_operand_t* ops = NULL;
         int numOps = 0;
 
@@ -780,7 +780,7 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
     return !didSkip;
 }
 
-static boolean executeNextCommand(finaleinterpreter_t* fi)
+static dd_bool executeNextCommand(finaleinterpreter_t* fi)
 {
     const char* token;
     if((token = nextToken(fi)))
@@ -927,7 +927,7 @@ static void destroyEventHandler(finaleinterpreter_t* fi, fi_handler_t* h)
  *          a) Existing handler associated with unique @a code.
  *          b) New object with unique @a code.
  */
-static boolean getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
+static dd_bool getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
 {
     // First, try to find an existing handler.
     if(findEventHandler(fi, ev))
@@ -1131,7 +1131,7 @@ void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
     FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
 }
 
-boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
 {
     assert(fi);
     if(fi->flags.paused || fi->flags.can_skip)
@@ -1143,31 +1143,31 @@ boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
     return (fi->flags.show_menu != 0);
 }
 
-boolean FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi)
 {
     assert(fi);
     return (fi->flags.suspended != 0);
 }
 
-void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, boolean yes)
+void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, dd_bool yes)
 {
     assert(fi);
     fi->flags.can_skip = yes;
 }
 
-boolean FinaleInterpreter_CanSkip(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_CanSkip(finaleinterpreter_t* fi)
 {
     assert(fi);
     return (fi->flags.can_skip != 0);
 }
 
-boolean FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi)
 {
     assert(fi);
     return fi->_cmdExecuted;
 }
 
-static boolean runTic(finaleinterpreter_t* fi)
+static dd_bool runTic(finaleinterpreter_t* fi)
 {
     ddhook_finale_script_ticker_paramaters_t params;
     memset(&params, 0, sizeof(params));
@@ -1177,7 +1177,7 @@ static boolean runTic(finaleinterpreter_t* fi)
     return params.runTick;
 }
 
-boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
 {
     assert(fi);
 
@@ -1223,7 +1223,7 @@ boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
     return (fi->_gotoEnd || (last && fi->flags.can_skip));}
 }
 
-boolean FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker)
+dd_bool FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker)
 {
     assert(fi && marker);
 
@@ -1246,7 +1246,7 @@ boolean FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* mark
     return true;
 }
 
-boolean FinaleInterpreter_Skip(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_Skip(finaleinterpreter_t* fi)
 {
     assert(fi);
 
@@ -1486,7 +1486,7 @@ DEFFC(UnsetKey)
 DEFFC(If)
 {
     const char* token = OP_CSTRING(0);
-    boolean val = false;
+    dd_bool val = false;
 
     // Built-in conditions.
     if(!stricmp(token, "netgame"))

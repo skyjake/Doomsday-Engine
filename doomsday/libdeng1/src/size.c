@@ -57,7 +57,7 @@ void Size2_Delete(Size2 *s)
     M_Free(s);
 }
 
-boolean Size2_IsNull(Size2 const *s)
+dd_bool Size2_IsNull(Size2 const *s)
 {
     DENG_ASSERT(s);
     return s->raw.width == 0 && s->raw.height == 0;
@@ -115,7 +115,7 @@ void Size2_Sum(Size2 *s, Size2 const *other)
     s->raw.height += Size2_Height(other);
 }
 
-boolean Size2_Equality(Size2 const *s, Size2 const *other)
+dd_bool Size2_Equality(Size2 const *s, Size2 const *other)
 {
     DENG_ASSERT(s && other);
     return s == other || (s->raw.width  == Size2_Width(other) &&
@@ -147,7 +147,7 @@ void Size2f_Delete(Size2f *s)
     M_Free(s);
 }
 
-boolean Size2f_IsNull(Size2f const *s)
+dd_bool Size2f_IsNull(Size2f const *s)
 {
     DENG_ASSERT(s);
     return s->raw.width == 0 && s->raw.height == 0;
@@ -205,7 +205,7 @@ void Size2f_Sum(Size2f *s, Size2f const *other)
     s->raw.height += Size2f_Height(other);
 }
 
-boolean Size2f_Equality(Size2f const *s, Size2f const *other)
+dd_bool Size2f_Equality(Size2f const *s, Size2f const *other)
 {
     DENG_ASSERT(s && other);
     return s == other || (s->raw.width  == Size2f_Width(other) &&

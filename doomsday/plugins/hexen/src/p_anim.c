@@ -28,9 +28,9 @@
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 
-static void parseAnimGroup(boolean isTexture, boolean isCustom)
+static void parseAnimGroup(dd_bool isTexture, dd_bool isCustom)
 {
-    boolean ignore = true, done;
+    dd_bool ignore = true, done;
     int groupNumber = 0;
     int texNumBase = -1;
     ddstring_t path;
@@ -119,7 +119,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
 void P_InitPicAnims(void)
 {
     lumpnum_t lumpNum = W_CheckLumpNumForName("ANIMDEFS");
-    boolean isCustom, isTexture = false; // Shut up compiler!
+    dd_bool isCustom, isTexture = false; // Shut up compiler!
 
     if(lumpNum == -1) return;
     isCustom = W_LumpIsCustom(lumpNum);

@@ -117,7 +117,7 @@ void Sys_MarkAsMainThread(void)
     mainThreadId = Sys_CurrentThreadId();
 }
 
-boolean Sys_InMainThread(void)
+dd_bool Sys_InMainThread(void)
 {
     return mainThreadId == Sys_CurrentThreadId();
 }

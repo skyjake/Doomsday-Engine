@@ -48,7 +48,7 @@ typedef struct job_s {
 char*   masterAddress = const_cast<char*>("www.dengine.net"); /// @todo refactor cvars
 int     masterPort    = 0; // Defaults to port 80.
 char*   masterPath    = const_cast<char*>("/master.php"); /// @todo refactor cvars
-boolean masterAware   = false;
+dd_bool masterAware   = false;
 
 static QString masterUrl(const char* suffix = 0)
 {
@@ -264,7 +264,7 @@ void N_MasterShutdown(void)
     worker = 0;
 }
 
-void N_MasterAnnounceServer(boolean isOpen)
+void N_MasterAnnounceServer(dd_bool isOpen)
 {
 #ifdef __SERVER__
     // Must be a server.

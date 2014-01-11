@@ -75,8 +75,8 @@ typedef struct player_s {
 
     // Power ups. invinc and invis are tic counters.
     int             powers[NUM_POWER_TYPES];
-    boolean         keys[NUM_KEY_TYPES];
-    boolean         backpack;
+    dd_bool         keys[NUM_KEY_TYPES];
+    dd_bool         backpack;
 
     int             frags[MAXPLAYERS];
     weapontype_t    readyWeapon;
@@ -85,7 +85,7 @@ typedef struct player_s {
     weapontype_t    pendingWeapon;
 
     struct playerweapon_s {
-        boolean         owned;
+        dd_bool         owned;
     } weapons[NUM_WEAPON_TYPES];
     struct playerammo_s {
         int             owned;
@@ -121,12 +121,12 @@ typedef struct player_s {
     pspdef_t        pSprites[NUMPSPRITES];
 
     // True if secret map has been done.
-    boolean         didSecret;
+    dd_bool         didSecret;
 
     int             jumpTics; // The player can jump if this counter is zero.
     int             airCounter;
     int             rebornWait; // The player can be reborn if this counter is zero.
-    boolean         centering; // The player's view pitch is centering back to zero.
+    dd_bool         centering; // The player's view pitch is centering back to zero.
     int             update, startSpot;
 
     float           viewOffset[3]; // Relative to position of the player mobj.
@@ -147,7 +147,7 @@ typedef struct player_s {
 // Structure passed e.g. to WI_Init(wb)
 //
 typedef struct {
-    boolean         inGame; // Whether the player is in game.
+    dd_bool         inGame; // Whether the player is in game.
 
     // Player stats, kills, collected items etc.
     int             kills;
@@ -160,7 +160,7 @@ typedef struct {
 
 typedef struct {
     uint            episode;
-    boolean         didSecret; // If true, splash the secret level.
+    dd_bool         didSecret; // If true, splash the secret level.
     uint            currentMap, nextMap; // This and next maps.
     int             maxKills;
     int             maxItems;

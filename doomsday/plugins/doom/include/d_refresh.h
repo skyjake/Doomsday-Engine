@@ -50,7 +50,7 @@ void D_EndFrame(void);
  */
 void R_SetAllDoomsdayFlags(void);
 
-boolean R_ViewFilterColor(float rgba[4], int filter);
+dd_bool R_ViewFilterColor(float rgba[4], int filter);
 void R_UpdateViewFilter(int player);
 
 #ifdef __cplusplus

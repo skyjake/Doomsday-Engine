@@ -154,7 +154,7 @@ static void Mouse_Qt_DeinitTrap()
     Mouse_Qt_ShowCursor(true);
 }
 
-static void Mouse_Qt_Trap(boolean enabled)
+static void Mouse_Qt_Trap(dd_bool enabled)
 {
     if(mouseTrapped == CPP_BOOL(enabled)) return;
 
@@ -171,7 +171,7 @@ static void Mouse_Qt_Trap(boolean enabled)
     }
 }
 
-void Mouse_Qt_SubmitButton(int button, boolean isDown)
+void Mouse_Qt_SubmitButton(int button, dd_bool isDown)
 {
     if(button < 0 || button >= IMB_MAXBUTTONS) return; // Ignore...
 

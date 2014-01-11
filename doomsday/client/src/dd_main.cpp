@@ -694,7 +694,7 @@ static int listFilesFromDataGameAuto(ddstring_t ***list, size_t *listSize)
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
+dd_bool DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId)
 {
     if(pluginId != 0)
     {
@@ -740,7 +740,7 @@ static void loadResource(ResourceManifest &manifest)
 struct ddgamechange_params_t
 {
     /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.
-    boolean initiatedBusyMode;
+    dd_bool initiatedBusyMode;
 };
 
 static int DD_BeginGameChangeWorker(void *context)
@@ -1171,7 +1171,7 @@ de::Games &App_Games()
     throw Error("App_Games", "App not yet initialized");
 }
 
-boolean App_GameLoaded()
+dd_bool App_GameLoaded()
 {
     if(!App::appExists()) return false;
 
@@ -1194,7 +1194,7 @@ static void populateGameInfo(GameInfo &info, de::Game &game)
 
 /// @note Part of the Doomsday public API.
 #undef DD_GameInfo
-boolean DD_GameInfo(GameInfo *info)
+dd_bool DD_GameInfo(GameInfo *info)
 {
     LOG_AS("DD_GameInfo");
     if(!info) return false;
@@ -1592,7 +1592,7 @@ World &App_World()
 #endif
 }
 
-boolean DD_IsShuttingDown()
+dd_bool DD_IsShuttingDown()
 {
     return Sys_IsShuttingDown();
 }
@@ -1710,7 +1710,7 @@ void DD_FinishInitializationAfterWindowReady()
  *
  * @return  @c true on success, @c false if an error occurred.
  */
-boolean DD_Init(void)
+dd_bool DD_Init(void)
 {
 #ifdef _DEBUG
     // Type size check.
@@ -2124,7 +2124,7 @@ static int DD_DummyWorker(void * /*context*/)
 
 void DD_CheckTimeDemo()
 {
-    static boolean checked = false;
+    static dd_bool checked = false;
 
     if(!checked)
     {
@@ -2228,7 +2228,7 @@ void DD_UpdateEngineState()
     }
 
 #ifdef __CLIENT__
-    boolean hadFog = usingFog;
+    dd_bool hadFog = usingFog;
 
     GL_TotalReset();
     GL_TotalRestore(); // Bring GL back online.
@@ -2978,7 +2978,7 @@ static void consoleRegister()
 }
 
 // dd_loop.c
-DENG_EXTERN_C boolean DD_IsSharpTick(void);
+DENG_EXTERN_C dd_bool DD_IsSharpTick(void);
 
 // net_main.c
 DENG_EXTERN_C void Net_SendPacket(int to_player, int type, const void* data, size_t length);

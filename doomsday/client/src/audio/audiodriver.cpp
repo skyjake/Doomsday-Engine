@@ -148,11 +148,11 @@ static AutoStr* findAudioPluginPath(const char* name)
     return 0;
 }
 
-static boolean loadAudioDriver(driver_t* driver, const char* name)
+static dd_bool loadAudioDriver(driver_t* driver, const char* name)
 {
     LOG_AS("loadAudioDriver");
 
-    boolean ok = false;
+    dd_bool ok = false;
 
     if(name && name[0])
     {
@@ -200,7 +200,7 @@ static audiodriverid_t identifierToDriverId(const char* name)
     return AUDIOD_INVALID;
 }
 
-static boolean isDriverInited(audiodriverid_t id)
+static dd_bool isDriverInited(audiodriverid_t id)
 {
     if(!VALID_AUDIODRIVER_IDENTIFIER(id)) return false;
     return drivers[id].interface.Init != 0;
@@ -211,7 +211,7 @@ static boolean isDriverInited(audiodriverid_t id)
  *
  * @return  @c true iff successful.
  */
-static boolean initDriver(audiodriverid_t id)
+static dd_bool initDriver(audiodriverid_t id)
 {
     driver_t* d = &drivers[id];
 
@@ -445,7 +445,7 @@ void AudioDriver_PrintInterfaces(void)
 }
 
 /*
-static boolean initInterface(audiointerface_base_t* interface)
+static dd_bool initInterface(audiointerface_base_t* interface)
 {
     if(!interface) return true;
     if(interface->Init)
@@ -456,10 +456,10 @@ static boolean initInterface(audiointerface_base_t* interface)
 }
 */
 
-boolean AudioDriver_Init(void)
+dd_bool AudioDriver_Init(void)
 {
     audiodriverid_t defaultDriverId;
-    boolean ok = false;
+    dd_bool ok = false;
 
     memset(activeInterfaces, 0, sizeof(activeInterfaces));
 
@@ -562,7 +562,7 @@ audiointerface_sfx_generic_t* AudioDriver_SFX(void)
     return (audiointerface_sfx_generic_t*) ifs[0];
 }
 
-boolean AudioDriver_Music_Available(void)
+dd_bool AudioDriver_Music_Available(void)
 {
     return AudioDriver_FindInterfaces(AUDIO_IMUSIC, NULL) > 0;
 }

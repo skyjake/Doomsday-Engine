@@ -92,7 +92,7 @@ DENG_EXTERN_C void R_SetViewPitch(int consoleNum, float pitch);
 DENG_EXTERN_C int R_ViewWindowGeometry(int consoleNum, RectRaw *geometry);
 DENG_EXTERN_C int R_ViewWindowOrigin(int consoleNum, Point2Raw *origin);
 DENG_EXTERN_C int R_ViewWindowSize(int consoleNum, Size2Raw *size);
-DENG_EXTERN_C void R_SetViewWindowGeometry(int consoleNum, RectRaw const *geometry, boolean interpolate);
+DENG_EXTERN_C void R_SetViewWindowGeometry(int consoleNum, RectRaw const *geometry, dd_bool interpolate);
 DENG_EXTERN_C int R_ViewPortGeometry(int consoleNum, RectRaw *geometry);
 DENG_EXTERN_C int R_ViewPortOrigin(int consoleNum, Point2Raw *origin);
 DENG_EXTERN_C int R_ViewPortSize(int consoleNum, Size2Raw *size);
@@ -102,7 +102,7 @@ DENG_EXTERN_C void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);
 
 #undef R_GetSpriteInfo
-DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *info)
+DENG_EXTERN_C dd_bool R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *info)
 {
     LOG_AS("Rend.GetSpriteInfo");
 
@@ -158,7 +158,7 @@ DENG_EXTERN_C boolean R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
 }
 
 // r_util.c
-DENG_EXTERN_C boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
+DENG_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
 DENG_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
 DENG_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 

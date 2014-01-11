@@ -219,7 +219,7 @@ void ClMobj_Link(mobj_t *mo)
 }
 
 #undef ClMobj_EnableLocalActions
-void ClMobj_EnableLocalActions(mobj_t *mo, boolean enable)
+void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 {
     LOG_AS("ClMobj_EnableLocalActions");
 
@@ -238,7 +238,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, boolean enable)
 }
 
 #undef ClMobj_LocalActionsEnabled
-boolean ClMobj_LocalActionsEnabled(mobj_t *mo)
+dd_bool ClMobj_LocalActionsEnabled(mobj_t *mo)
 {
     clmoinfo_t *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return true;
@@ -258,7 +258,7 @@ void ClMobj_SetState(mobj_t *mo, int stnum)
 }
 
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
-                             int flags, boolean onFloor)
+                             int flags, dd_bool onFloor)
 {
     if(!localMobj || !remoteClientMobj)
     {
@@ -441,13 +441,13 @@ void ClMobj_Destroy(mobj_t *mo)
 #endif
 }
 
-boolean Cl_IsClientMobj(mobj_t *mo)
+dd_bool Cl_IsClientMobj(mobj_t *mo)
 {
     return ClMobj_GetInfo(mo) != 0;
 }
 
 #undef ClMobj_IsValid
-boolean ClMobj_IsValid(mobj_t *mo)
+dd_bool ClMobj_IsValid(mobj_t *mo)
 {
     clmoinfo_t *info = ClMobj_GetInfo(mo);
 
@@ -476,7 +476,7 @@ clmoinfo_t *ClMobj_GetInfo(mobj_t *mo)
     return info;
 }
 
-boolean ClMobj_Reveal(mobj_t *mo)
+dd_bool ClMobj_Reveal(mobj_t *mo)
 {
     LOG_AS("ClMobj_Reveal");
 
@@ -520,7 +520,7 @@ boolean ClMobj_Reveal(mobj_t *mo)
  *
  * @param mo  Client mobj (must be solid).
  */
-static boolean ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
+static dd_bool ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 {
     if(!(mo->ddFlags & DDMF_SOLID) || mo->dPlayer)
         return false;

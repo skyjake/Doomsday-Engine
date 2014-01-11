@@ -57,7 +57,7 @@ DENG_EXTERN_C float viewsidex, viewsidey;
 DENG_EXTERN_C float fogColor[4];
 
 DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
-DENG_EXTERN_C boolean usingFog;
+DENG_EXTERN_C dd_bool usingFog;
 
 DENG_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
 DENG_EXTERN_C int renderWireframe;
@@ -110,10 +110,10 @@ DENG_EXTERN_C int texMagMode, texAniso;
 DENG_EXTERN_C int useSmartFilter;
 DENG_EXTERN_C int texMagMode;
 DENG_EXTERN_C int glmode[6];
-DENG_EXTERN_C boolean fillOutlines;
-DENG_EXTERN_C boolean noHighResTex;
-DENG_EXTERN_C boolean noHighResPatches;
-DENG_EXTERN_C boolean highResWithPWAD;
+DENG_EXTERN_C dd_bool fillOutlines;
+DENG_EXTERN_C dd_bool noHighResTex;
+DENG_EXTERN_C dd_bool noHighResPatches;
+DENG_EXTERN_C dd_bool highResWithPWAD;
 DENG_EXTERN_C byte loadExtAlways;
 
 DENG_EXTERN_C byte devRendSkyAlways;

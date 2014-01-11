@@ -362,7 +362,7 @@ void Server_Register(void)
 #endif
 }
 
-boolean N_ServerOpen(void)
+dd_bool N_ServerOpen(void)
 {
     App_ServerSystem().start(Server_ListenPort());
 
@@ -387,7 +387,7 @@ boolean N_ServerOpen(void)
     return true;
 }
 
-boolean N_ServerClose(void)
+dd_bool N_ServerClose(void)
 {
     if(!App_ServerSystem().isListening()) return true;
 

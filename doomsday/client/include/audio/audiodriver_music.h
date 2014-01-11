@@ -39,13 +39,13 @@ extern "C" {
 
 void AudioDriver_Music_Set(int property, void const *ptr);
 
-int AudioDriver_Music_PlayNativeFile(const char* fileName, boolean looped);
+int AudioDriver_Music_PlayNativeFile(const char* fileName, dd_bool looped);
 
-int AudioDriver_Music_PlayLump(lumpnum_t lump, boolean looped);
+int AudioDriver_Music_PlayLump(lumpnum_t lump, dd_bool looped);
 
-int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, boolean looped);
+int AudioDriver_Music_PlayFile(const char* virtualOrNativePath, dd_bool looped);
 
-int AudioDriver_Music_PlayCDTrack(int track, boolean looped);
+int AudioDriver_Music_PlayCDTrack(int track, dd_bool looped);
 
 /**
  * Determines if music is currently playing on any of the Music or CD audio
@@ -53,7 +53,7 @@ int AudioDriver_Music_PlayCDTrack(int track, boolean looped);
  *
  * @return @c true if music is playing.
  */
-boolean AudioDriver_Music_IsPlaying(void);
+dd_bool AudioDriver_Music_IsPlaying(void);
 
 /**
  * Tells the audio driver to choose a new name for the buffer filename, if a

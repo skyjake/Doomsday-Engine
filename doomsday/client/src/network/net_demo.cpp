@@ -53,9 +53,9 @@ typedef struct {
 #pragma pack()
 
 typedef struct {
-    boolean         first;
+    dd_bool         first;
     int             begintime;
-    boolean         canwrite; /// @c false until Handshake packet.
+    dd_bool         canwrite; /// @c false until Handshake packet.
     int             cameratimer;
     int             pausetime;
     float           fov;
@@ -89,7 +89,7 @@ int viewangleDelta = 0;
 float lookdirDelta = 0;
 float posDelta[3];
 float demoFrameZ, demoZ;
-boolean demoOnGround;
+dd_bool demoOnGround;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -119,7 +119,7 @@ void Demo_Init(void)
  * Open a demo file and begin recording.
  * Returns false if the recording can't be begun.
  */
-boolean Demo_BeginRecording(const char* fileName, int plrNum)
+dd_bool Demo_BeginRecording(const char* fileName, int plrNum)
 {
     DENG_UNUSED(fileName);
     DENG_UNUSED(plrNum);
@@ -307,7 +307,7 @@ void Demo_BroadcastPacket(void)
         Demo_WritePacket(i);
 }
 
-boolean Demo_BeginPlayback(const char* fileName)
+dd_bool Demo_BeginPlayback(const char* fileName)
 {
     ddstring_t buf;
 
@@ -396,7 +396,7 @@ void Demo_StopPlayback(void)
         Sys_Quit();
 }
 
-boolean Demo_ReadPacket(void)
+dd_bool Demo_ReadPacket(void)
 {
     static byte     ptime;
     int             nowtime = DEMOTIC;
@@ -455,7 +455,7 @@ void Demo_WriteLocalCamera(int plrNum)
     mobj_t* mo = ddpl->mo;
     fixed_t x, y, z;
     byte flags;
-    boolean incfov = false; //(writeInfo[plrNum].fov != fieldOfView);
+    dd_bool incfov = false; //(writeInfo[plrNum].fov != fieldOfView);
     const viewdata_t* viewData = R_ViewData(plrNum);
 
     if(!mo)

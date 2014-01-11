@@ -78,7 +78,7 @@ static calias_t **caliases;
 /// @todo Replace with a persistent self-balancing BST (Treap?)?
 static knownword_t *knownWords;
 static uint numKnownWords;
-static boolean knownWordsNeedUpdate;
+static dd_bool knownWordsNeedUpdate;
 
 static ddstring_s *emptyStr;
 static uri_s *emptyUri;
@@ -270,7 +270,7 @@ static int compareKnownWordByName(void const *a, void const *b)
     return Str_CompareIgnoreCase(textA, Str_Text(textB));
 }
 
-static boolean removeFromKnownWords(knownwordtype_t type, void* data)
+static dd_bool removeFromKnownWords(knownwordtype_t type, void* data)
 {
     DENG_ASSERT(VALID_KNOWNWORDTYPE(type) && data != 0);
 
@@ -301,8 +301,8 @@ static boolean removeFromKnownWords(knownwordtype_t type, void* data)
 typedef struct {
     uint count;
     cvartype_t type;
-    boolean hidden;
-    boolean ignoreHidden;
+    dd_bool hidden;
+    dd_bool ignoreHidden;
 } countvariableparams_t;
 
 static int countVariable(CVarDirectory::Node& node, void* parameters)
@@ -857,7 +857,7 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
     {
         size_t l, len;
         cvartype_t type = CVT_NULL;
-        boolean unlimitedArgs;
+        dd_bool unlimitedArgs;
         char c;
 
         len = strlen(ccmd->argTemplate);
@@ -947,7 +947,7 @@ void Con_AddCommand(ccmdtemplate_t const* ccmd)
     { ccmd_t* other;
     if((other = Con_FindCommand(ccmd->name)) != 0)
     {
-        boolean unique = true;
+        dd_bool unique = true;
 
         // The ccmd being registered is NOT a deng validated ccmd
         // and there is already an existing ccmd by this name?
@@ -1093,7 +1093,7 @@ ccmd_t *Con_FindCommandMatchArgs(cmdargs_t *args)
         ccmd_t *variant = ccmd;
         do
         {
-            boolean invalidArgs = false;
+            dd_bool invalidArgs = false;
 
             // Are we validating the arguments?
             // Note that strings are considered always valid.
@@ -1146,7 +1146,7 @@ ccmd_t *Con_FindCommandMatchArgs(cmdargs_t *args)
     return 0;
 }
 
-boolean Con_IsValidCommand(char const* name)
+dd_bool Con_IsValidCommand(char const* name)
 {
     if(!name || !name[0])
         return false;
@@ -1194,7 +1194,7 @@ calias_t *Con_FindAlias(char const *name)
 
     uint bottomIdx, topIdx, pivot;
     calias_t* cal;
-    boolean isDone;
+    dd_bool isDone;
     int result;
 
     if(numCAliases == 0) return 0;

@@ -79,7 +79,7 @@ static playerstart_t *deathmatchStarts;
  */
 static int playerRespawnAsClass[MAXPLAYERS];
 
-static boolean fuzzySpawnPosition(coord_t *x, coord_t *y, coord_t *z, angle_t *angle,
+static dd_bool fuzzySpawnPosition(coord_t *x, coord_t *y, coord_t *z, angle_t *angle,
     int *spawnFlags)
 {
 #define XOFFSET         (33) // Player radius = 16
@@ -134,7 +134,7 @@ void P_SetPlayerRespawnClass(int plrNum, playerclass_t pc)
     playerRespawnAsClass[plrNum] = pc;
 }
 
-playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, boolean clear)
+playerclass_t P_ClassForPlayerWhenRespawning(int plrNum, dd_bool clear)
 {
 #if __JHEXEN__
     playerclass_t pClass = cfg.playerClass[plrNum];
@@ -250,7 +250,7 @@ void P_Shutdown()
 #endif
 }
 
-void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
+void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, dd_bool deathmatch,
                          mapspotid_t spot)
 {
     playerstart_t *start;
@@ -296,7 +296,7 @@ void P_DestroyPlayerStarts()
     numPlayerDMStarts = 0;
 }
 
-playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, boolean deathmatch)
+playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathmatch)
 {
     DENG_UNUSED(entryPoint);
 
@@ -337,7 +337,7 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, boolean deathma
 #endif
 }
 
-uint P_GetNumPlayerStarts(boolean deathmatch)
+uint P_GetNumPlayerStarts(dd_bool deathmatch)
 {
     if(deathmatch)
         return numPlayerDMStarts;
@@ -411,7 +411,7 @@ void P_DealPlayerStarts(uint entryPoint)
 }
 
 void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord_t z,
-    angle_t angle, int spawnFlags, boolean makeCamera, boolean pickupItems)
+    angle_t angle, int spawnFlags, dd_bool makeCamera, dd_bool pickupItems)
 {
     plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS - 1);
 
@@ -565,13 +565,13 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
 }
 
 static void spawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y,
-    coord_t z, angle_t angle, int spawnFlags, boolean makeCamera, boolean doTeleSpark,
-    boolean doTeleFrag)
+    coord_t z, angle_t angle, int spawnFlags, dd_bool makeCamera, dd_bool doTeleSpark,
+    dd_bool doTeleFrag)
 {
 #if __JDOOM__ || __JDOOM64__
-    boolean queueBody = (plrNum >= 0? true : false);
+    dd_bool queueBody = (plrNum >= 0? true : false);
 #endif
-    boolean pickupItems = true;
+    dd_bool pickupItems = true;
 
     /* $voodoodolls */
     if(plrNum < 0)
@@ -678,7 +678,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     // Save player state?
 #if __JHEXEN__
     int oldKeys = 0, oldPieces = 0;
-    boolean oldWeaponOwned[NUM_WEAPON_TYPES];
+    dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
     if(!IS_CLIENT)
     {
         // Cooperative net-play, retain keys and weapons
@@ -701,10 +701,10 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     coord_t pos[3] = { 0, 0, 0 };
     angle_t angle = 0;
     int spawnFlags = 0;
-    boolean makeCamera = false;
+    dd_bool makeCamera = false;
 
     uint entryPoint = gameMapEntryPoint;
-    boolean foundSpot = false;
+    dd_bool foundSpot = false;
     playerstart_t const *assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
     if(assigned)
@@ -854,7 +854,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 #endif
 }
 
-boolean P_CheckSpot(coord_t x, coord_t y)
+dd_bool P_CheckSpot(coord_t x, coord_t y)
 {
 #if __JHEXEN__
 #define DUMMY_TYPE      MT_PLAYER_FIGHTER
@@ -870,7 +870,7 @@ boolean P_CheckSpot(coord_t x, coord_t y)
     dummy->flags &= ~MF_PICKUP;
     //dummy->flags2 &= ~MF2_PASSMOBJ;
 
-    boolean result = P_CheckPosition(dummy, pos);
+    dd_bool result = P_CheckPosition(dummy, pos);
 
     P_MobjRemove(dummy, true);
 
@@ -959,7 +959,7 @@ void P_SpawnPlayers()
             coord_t pos[3];
             angle_t angle;
             int spawnFlags;
-            boolean spawnAsCamera;
+            dd_bool spawnAsCamera;
 
             if(start)
             {

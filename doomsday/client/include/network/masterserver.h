@@ -86,7 +86,7 @@ void N_MasterShutdown(void);
  *                          visible on the server list for other clients to
  *                          find by querying the server list.
  */
-void N_MasterAnnounceServer(boolean isOpen);
+void N_MasterAnnounceServer(dd_bool isOpen);
 
 /**
  * Requests the list of open servers from the master.

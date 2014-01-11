@@ -162,7 +162,7 @@ Str *StringArray_StringAt(StringArray *ar, int index)
     return *ar->array[index];
 }
 
-boolean StringArray_Contains(StringArray const *ar, char const *str)
+dd_bool StringArray_Contains(StringArray const *ar, char const *str)
 {
     return StringArray_IndexOf(ar, str) >= 0;
 }

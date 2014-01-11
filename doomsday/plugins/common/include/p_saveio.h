@@ -69,14 +69,14 @@ const char* SV_ClientSavePath(void);
 LZFILE* SV_OpenFile(Str const *filePath, char const *mode);
 void SV_CloseFile(void);
 LZFILE* SV_File(void);
-boolean SV_ExistingFile(Str const *filePath);
+dd_bool SV_ExistingFile(Str const *filePath);
 int SV_RemoveFile(Str const *filePath);
 void SV_CopyFile(Str const *srcPath, Str const *destPath);
 
 #if __JHEXEN__
 saveptr_t* SV_HxSavePtr(void);
 void SV_HxSetSaveEndPtr(void *endPtr);
-boolean SV_HxBytesLeft(void);
+dd_bool SV_HxBytesLeft(void);
 #endif // __JHEXEN__
 
 /**

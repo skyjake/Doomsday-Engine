@@ -37,7 +37,7 @@ void Sys_Init(void);
 void Sys_Shutdown(void);
 
 /// @return  @c true if shutdown is in progress.
-boolean Sys_IsShuttingDown(void);
+dd_bool Sys_IsShuttingDown(void);
 
 int Sys_CriticalMessage(const char* msg);
 int Sys_CriticalMessagef(const char* format, ...) PRINTF_F(1,2);
@@ -54,10 +54,10 @@ void Sys_Sleep(int millisecs);
  */
 void Sys_BlockUntilRealTime(uint realTimeMs);
 
-void Sys_ShowCursor(boolean show);
+void Sys_ShowCursor(dd_bool show);
 void Sys_HideMouse(void);
 #if 0
-void Sys_MessageBox(const char* msg, boolean iserror);
+void Sys_MessageBox(const char* msg, dd_bool iserror);
 void Sys_OpenTextEditor(const char* filename);
 #endif
 

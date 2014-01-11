@@ -54,7 +54,7 @@ float devCameraMovementStartTimeRealSecs = 0;
 
 D_CMD(ViewGrid);
 
-boolean firstFrameAfterLoad;
+dd_bool firstFrameAfterLoad;
 
 static int loadInStartupMode = false;
 static int rendCameraSmooth = true; // Smoothed by default.
@@ -203,7 +203,7 @@ DENG_EXTERN_C int R_ViewWindowSize(int player, Size2Raw *size)
  * refresh only.
  */
 #undef R_SetViewWindowGeometry
-DENG_EXTERN_C void R_SetViewWindowGeometry(int player, RectRaw const *geometry, boolean interpolate)
+DENG_EXTERN_C void R_SetViewWindowGeometry(int player, RectRaw const *geometry, dd_bool interpolate)
 {
     int p = P_ConsoleToLocal(player);
     if(p < 0) return;
@@ -741,7 +741,7 @@ void R_SetupPlayerSprites()
     SectorCluster &cluster = Mobj_Cluster(*mo);
 
     // Determine if we should be drawing all the psprites full bright?
-    boolean isFullBright = (levelFullBright != 0);
+    dd_bool isFullBright = (levelFullBright != 0);
     if(!isFullBright)
     {
         ddpsprite_t *psp = ddpl->pSprites;

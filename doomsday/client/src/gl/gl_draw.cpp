@@ -291,13 +291,13 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
     glEnd();
 }
 
-boolean GL_FilterIsVisible()
+dd_bool GL_FilterIsVisible()
 {
     return (drawFilter && filterColor.w > 0);
 }
 
 #undef GL_SetFilter
-DENG_EXTERN_C void GL_SetFilter(boolean enabled)
+DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
 {
     drawFilter = CPP_BOOL(enabled);
 }

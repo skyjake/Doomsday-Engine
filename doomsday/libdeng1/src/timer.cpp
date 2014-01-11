@@ -65,7 +65,7 @@ void Timer_Init(void)
 
 unsigned int Timer_RealMilliseconds(void)
 {
-    static boolean first = true;
+    static dd_bool first = true;
     static unsigned int start;
 #ifdef WIN32
     DWORD return_time, now;

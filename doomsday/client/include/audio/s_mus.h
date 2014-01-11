@@ -39,10 +39,10 @@ enum {
 };
 
 void Mus_Register(void);
-boolean Mus_Init(void);
+dd_bool Mus_Init(void);
 void Mus_Shutdown(void);
 void Mus_SetVolume(float vol);
-void Mus_Pause(boolean doPause);
+void Mus_Pause(dd_bool doPause);
 void Mus_StartFrame(void);
 
 /**
@@ -52,9 +52,9 @@ void Mus_StartFrame(void);
  *
  * @return  Non-zero if the song is successfully played.
  */
-int Mus_Start(ded_music_t* def, boolean looped);
+int Mus_Start(ded_music_t* def, dd_bool looped);
 
-int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS);
+int Mus_StartLump(lumpnum_t lump, dd_bool looped, dd_bool canPlayMUS);
 
 void Mus_Stop(void);
 

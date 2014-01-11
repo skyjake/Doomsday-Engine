@@ -313,8 +313,8 @@ typedef struct {
 // State data for each line.
 typedef struct {
     linetype_t      info; // Type definition.
-    boolean         active;
-    boolean         disabled; // If true, skip all processing.
+    dd_bool         active;
+    dd_bool         disabled; // If true, skip all processing.
     int             timer;
     int             tickerTimer;
     void*           activator;
@@ -349,14 +349,14 @@ void            XL_SetLineType(Line* line, int id);
 linetype_t*     XL_GetType(int id);
 int             XL_LineEvent(int evType, int lineType, Line* line,
                              int sideNum, void* data);
-void            XL_ActivateLine(boolean activating, linetype_t* info,
+void            XL_ActivateLine(dd_bool activating, linetype_t* info,
                                 Line* line, int sideNum,
                                 struct mobj_s* data, int evType);
 int             XL_TraverseLines(Line* line, int reftype, int ref,
                                  void* context, void* context2, struct mobj_s* activator,
                                  int (C_DECL *func)());
 int             XL_TraversePlanes(Line* line, int reftype, int ref,
-                                  void* context, void* context2, boolean travSectors,
+                                  void* context, void* context2, dd_bool travSectors,
                                   struct mobj_s* activator,
                                   int (C_DECL *func)());
 

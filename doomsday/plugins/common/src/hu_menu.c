@@ -136,7 +136,7 @@ static void updatePageObjects(mn_page_t* page);
 
 static void Hu_MenuUpdateCursorState(void);
 
-static boolean Hu_MenuHasCursorRotation(mn_object_t* obj);
+static dd_bool Hu_MenuHasCursorRotation(mn_object_t* obj);
 
 cvarbutton_t mnCVarButtons[] = {
     { 0, "ctl-aim-noauto" },
@@ -277,10 +277,10 @@ cvarbutton_t mnCVarButtons[] = {
 };
 
 int menuTime = 0;
-boolean menuNominatingQuickSaveSlot = false;
+dd_bool menuNominatingQuickSaveSlot = false;
 
 static mn_page_t* menuActivePage = NULL;
-static boolean menuActive = false;
+static dd_bool menuActive = false;
 
 static float mnAlpha = 0; // Alpha level for the entire menu.
 static float mnTargetAlpha = 0; // Target alpha for the entire UI.
@@ -293,10 +293,10 @@ static int mnPlrClass = PCLASS_FIGHTER;
 
 static int frame = 0; // Used by any graphic animations that need to be pumped.
 
-static boolean colorWidgetActive = false;
+static dd_bool colorWidgetActive = false;
 
 // Present cursor state.
-static boolean cursorHasRotation = false;
+static dd_bool cursorHasRotation = false;
 static float cursorAngle = 0;
 static int cursorAnimCounter = 0;
 static int cursorAnimFrame = 0;
@@ -639,7 +639,7 @@ static mn_object_t HudMenuObjects[] = {
     { MN_NONE }
 };
 
-static boolean inited = false;
+static dd_bool inited = false;
 
 typedef struct {
     mn_page_t* page;
@@ -712,7 +712,7 @@ void Hu_MenuRegister(void)
         Con_AddCommand(menuCCmds + i);
 }
 
-static boolean chooseCloseMethod(void)
+static dd_bool chooseCloseMethod(void)
 {
     // If we aren't using a transition then we can close normally and allow our
     // own menu fade-out animation to be used instead.
@@ -738,7 +738,7 @@ mn_page_t* Hu_MenuFindPageByName(const char* name)
 
 /// @todo Make this state an object property flag.
 /// @return  @c true if the rotation of a cursor on this object should be animated.
-static boolean Hu_MenuHasCursorRotation(mn_object_t* obj)
+static dd_bool Hu_MenuHasCursorRotation(mn_object_t* obj)
 {
     assert(obj);
     return (!(MNObject_Flags(obj) & MNF_DISABLED) &&
@@ -4513,7 +4513,7 @@ void Hu_MenuShutdown(void)
     inited = false;
 }
 
-boolean Hu_MenuIsActive(void)
+dd_bool Hu_MenuIsActive(void)
 {
     return menuActive;
 }
@@ -4599,7 +4599,7 @@ mn_page_t* Hu_MenuActivePage(void)
     return menuActivePage;
 }
 
-void Hu_MenuSetActivePage2(mn_page_t* page, boolean canReactivate)
+void Hu_MenuSetActivePage2(mn_page_t* page, dd_bool canReactivate)
 {
     if(!menuActive) return;
     if(!page) return;
@@ -4630,7 +4630,7 @@ void Hu_MenuSetActivePage(mn_page_t* page)
     Hu_MenuSetActivePage2(page, false/*don't reactivate*/);
 }
 
-boolean Hu_MenuIsVisible(void)
+dd_bool Hu_MenuIsVisible(void)
 {
     return (menuActive || mnAlpha > .0001f);
 }
@@ -4746,7 +4746,7 @@ void Hu_MenuDrawer(void)
 #define OVERLAY_DARKEN          .7f
 
     dgl_borderedprojectionstate_t bp;
-    boolean showFocusCursor = true;
+    dd_bool showFocusCursor = true;
     mn_object_t* focusObj;
 
     if(!Hu_MenuIsVisible()) return;
@@ -6441,7 +6441,7 @@ int Hu_MenuConfirmInitNewGame(msgresponse_t response, int userValue, void* userP
 }
 #endif
 
-void Hu_MenuInitNewGame(boolean confirmed)
+void Hu_MenuInitNewGame(dd_bool confirmed)
 {
 #if __JDOOM__
     if(!confirmed && SM_NIGHTMARE == mnSkillmode)

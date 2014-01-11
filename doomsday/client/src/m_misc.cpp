@@ -98,7 +98,7 @@ void M_ReadLine(char* buffer, size_t len, FileHandle* file)
 {
     size_t p;
     char ch;
-    boolean isDone;
+    dd_bool isDone;
 
     memset(buffer, 0, len);
     p = 0;
@@ -262,7 +262,7 @@ int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[], double const l
 #undef NORMALIZE
 }
 
-DENG_EXTERN_C boolean M_WriteFile(const char* name, const char* source, size_t length)
+DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t length)
 {
     int handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
     size_t count;
@@ -454,7 +454,7 @@ void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
     }
 }
 
-boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
+dd_bool M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
     timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
@@ -471,7 +471,7 @@ boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
     return false;
 }
 
-boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
+dd_bool M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
     timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);

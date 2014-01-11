@@ -33,7 +33,7 @@ extern "C" {
 typedef struct playercontrol_s {
     int     id;
     controltype_t type;
-    boolean isTriggerable; ///< Accepts triggered states in addition to active ones.
+    dd_bool isTriggerable; ///< Accepts triggered states in addition to active ones.
     char*   name;
     char*   bindContextName;
 } playercontrol_t;

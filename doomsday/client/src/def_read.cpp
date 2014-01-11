@@ -120,7 +120,7 @@ using namespace de;
 typedef struct dedsource_s {
     const char*     buffer;
     const char*     pos;
-    boolean         atEnd;
+    dd_bool         atEnd;
     int             lineNumber;
     const char*     fileName;
     int             version; // v6 does not require semicolons.
@@ -198,7 +198,7 @@ static int FUngetC(int ch)
 static void SkipComment(void)
 {
     int                 ch = FGetC();
-    boolean             seq = false;
+    dd_bool             seq = false;
 
     if(ch == '\n')
         return; // Comment ends right away.
@@ -679,9 +679,9 @@ static void DED_CloseReader(void)
  *                      or a game mode.
  * @return              @c true if the condition passes.
  */
-static boolean DED_CheckCondition(char const *cond, boolean expected)
+static dd_bool DED_CheckCondition(char const *cond, dd_bool expected)
 {
-    boolean value = false;
+    dd_bool value = false;
 
     if(cond[0] == '-')
     {
@@ -753,7 +753,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("SkipIf"))
         {
-            boolean expected = true;
+            dd_bool expected = true;
 
             ReadToken();
             if(ISTOKEN("Not"))
@@ -782,7 +782,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("IncludeIf")) // An optional include.
         {
-            boolean expected = true;
+            dd_bool expected = true;
 
             ReadToken();
             if(ISTOKEN("Not"))
@@ -861,7 +861,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
         {
-            boolean bModify = false;
+            dd_bool bModify = false;
             ded_mobj_t* mo, dummyMo;
 
             ReadToken();
@@ -961,7 +961,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("State"))
         {
-            boolean bModify = false;
+            dd_bool bModify = false;
             ded_state_t* st, dummyState;
 
             ReadToken();

@@ -55,7 +55,7 @@ typedef struct fr_state_attributes_s {
     int shadowOffsetX, shadowOffsetY;
     float shadowStrength;
     float glitterStrength;
-    boolean caseScale;
+    dd_bool caseScale;
 } fr_state_attributes_t;
 
 // Used with FR_LoadDefaultAttribs
@@ -89,8 +89,8 @@ typedef struct {
     int tracking;
     float leading;
     int lastLineHeight;
-    boolean typeIn;
-    boolean caseScale;
+    dd_bool typeIn;
+    dd_bool caseScale;
     struct {
         float scale, offset;
     } caseMod[2]; // 1=upper, 0=lower
@@ -134,7 +134,7 @@ void FR_Shutdown(void)
     inited = false;
 }
 
-boolean FR_Available(void)
+dd_bool FR_Available(void)
 {
     return inited;
 }
@@ -407,14 +407,14 @@ void FR_SetGlitterStrength(float value)
 }
 
 #undef FR_CaseScale
-boolean FR_CaseScale(void)
+dd_bool FR_CaseScale(void)
 {
     errorIfNotInited("FR_CaseScale");
     return currentAttribs()->caseScale;
 }
 
 #undef FR_SetCaseScale
-void FR_SetCaseScale(boolean value)
+void FR_SetCaseScale(dd_bool value)
 {
     errorIfNotInited("FR_SetCaseScale");
     currentAttribs()->caseScale = value;
@@ -539,11 +539,11 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 
     AbstractFont *font = &App_ResourceSystem().font(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
-    boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
-    boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
-    boolean noShadow  = (sat->shadowStrength  <= 0 || (textFlags & DTF_NO_SHADOW)  != 0 ||
+    dd_bool noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
+    dd_bool noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
+    dd_bool noShadow  = (sat->shadowStrength  <= 0 || (textFlags & DTF_NO_SHADOW)  != 0 ||
                          font->flags().testFlag(AbstractFont::Shadowed));
-    boolean noCharacter = (textFlags & DTF_NO_CHARACTER) != 0;
+    dd_bool noCharacter = (textFlags & DTF_NO_CHARACTER) != 0;
     float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
     float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
     float flashColor[3] = { 0, 0, 0 };
@@ -869,7 +869,7 @@ static float parseFloat(char** str)
  *      "<whitespace> = <whitespace> [|"]<string>[|"]"
  * </pre>
  */
- static boolean parseString(char** str, char* buf, size_t bufLen)
+ static dd_bool parseString(char** str, char* buf, size_t bufLen)
 {
     size_t len;
     char* end;
@@ -1116,7 +1116,7 @@ static void freeTextBuffer(void)
 int FR_TextWidth(const char* string)
 {
     int w, maxWidth = -1;
-    boolean skipping = false, escaped = false;
+    dd_bool skipping = false, escaped = false;
     const char* ch;
     size_t i, len;
 
@@ -1181,7 +1181,7 @@ int FR_TextWidth(const char* string)
 int FR_TextHeight(const char* string)
 {
     int h, currentLineHeight;
-    boolean skip = false;
+    dd_bool skip = false;
     const char* ch;
     size_t i, len;
 
@@ -1249,7 +1249,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     size_t charCount;
     float origColor[4];
     char* str, *end;
-    boolean escaped = false;
+    dd_bool escaped = false;
 
     errorIfNotInited("FR_DrawText");
 
@@ -1306,7 +1306,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 float lastLeading = state.leading;
                 float lastShadowStrength = state.shadowStrength;
                 float lastGlitterStrength = state.glitterStrength;
-                boolean lastCaseScale = state.caseScale;
+                dd_bool lastCaseScale = state.caseScale;
                 float lastRGBA[4];
                 int numBreaks = 0;
 

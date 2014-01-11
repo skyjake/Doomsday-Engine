@@ -59,7 +59,7 @@ typedef struct {
     /// Interpreter for this script.
     finaleinterpreter_t* _interpreter;
     /// Interpreter is active?
-    boolean active;
+    dd_bool active;
 } finale_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -77,7 +77,7 @@ void                P_DestroyFinale(finale_t* f);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean inited = false;
+static dd_bool inited = false;
 
 /// Scripts.
 static uint finalesSize;
@@ -162,7 +162,7 @@ void P_DestroyFinale(finale_t* f)
     }}
 }
 
-boolean FI_ScriptRequestSkip(finaleid_t id)
+dd_bool FI_ScriptRequestSkip(finaleid_t id)
 {
     finale_t* f;
     if(!inited)
@@ -187,7 +187,7 @@ int FI_ScriptFlags(finaleid_t id)
     return f->flags;
 }
 
-boolean FI_ScriptIsMenuTrigger(finaleid_t id)
+dd_bool FI_ScriptIsMenuTrigger(finaleid_t id)
 {
     finale_t* f;
     if(!inited)
@@ -203,7 +203,7 @@ boolean FI_ScriptIsMenuTrigger(finaleid_t id)
     return false;
 }
 
-boolean FI_ScriptActive(finaleid_t id)
+dd_bool FI_ScriptActive(finaleid_t id)
 {
     finale_t* f;
     if(!inited)
@@ -258,7 +258,7 @@ void FI_Shutdown(void)
     inited = false;
 }
 
-boolean FI_ScriptCmdExecuted(finaleid_t id)
+dd_bool FI_ScriptCmdExecuted(finaleid_t id)
 {
     finale_t* f;
     if(!inited)
@@ -415,7 +415,7 @@ void FI_ScriptResume(finaleid_t id)
     FinaleInterpreter_Resume(f->_interpreter);
 }
 
-boolean FI_ScriptSuspended(finaleid_t id)
+dd_bool FI_ScriptSuspended(finaleid_t id)
 {
     finale_t* f;
     if(!inited)

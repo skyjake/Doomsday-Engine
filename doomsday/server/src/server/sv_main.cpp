@@ -182,7 +182,7 @@ int Sv_Latency(byte cmdtime)
  */
 /* $unifiedangles */
 /*
-void Sv_FixLocalAngles(boolean clearFixAnglesFlag)
+void Sv_FixLocalAngles(dd_bool clearFixAnglesFlag)
 {
     ddplayer_t *pl;
     int         i;
@@ -442,7 +442,7 @@ void Sv_ExecuteCommand(void)
     int flags;
     byte cmdSource;
     unsigned short len;
-    boolean silent;
+    dd_bool silent;
     char *cmd = 0;
 
     LOG_AS("Sv_ExecuteCommand");
@@ -575,7 +575,7 @@ void Sv_GetPackets(void)
  * Assign a new console to the player. Returns true if successful.
  * Called by N_Update().
  */
-boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
+dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
 {
     LOG_AS("Sv_PlayerArrives");
     LOG_NET_NOTE("'%s' has arrived") << name;
@@ -628,7 +628,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char const *name)
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
     int                 plrNum = N_IdentifyPlayer(nodeID);
-    boolean             wasInGame;
+    dd_bool             wasInGame;
     player_t           *plr;
     client_t           *cl;
 
@@ -677,7 +677,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 /**
  * The player will be sent the introductory handshake packets.
  */
-void Sv_Handshake(int plrNum, boolean newPlayer)
+void Sv_Handshake(int plrNum, dd_bool newPlayer)
 {
     StringArray* ar;
     int i;
@@ -1021,7 +1021,7 @@ int Sv_GetNumConnected(void)
  * an arbitrary amount of data to clients with no regard to the available
  * bandwidth.
  */
-boolean Sv_CheckBandwidth(int /*playerNumber*/)
+dd_bool Sv_CheckBandwidth(int /*playerNumber*/)
 {
     return true;
     /*
@@ -1079,7 +1079,7 @@ void Sv_ClientCoords(int plrNum)
     float               clientPos[3];
     angle_t             clientAngle;
     float               clientLookDir;
-    boolean             onFloor = false;
+    dd_bool             onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
     if(!mo || !ddpl->inGame || (ddpl->flags & DDPF_DEAD))
@@ -1133,7 +1133,7 @@ void Sv_ClientCoords(int plrNum)
     }
 }
 
-boolean Sv_CanTrustClientPos(int plrNum)
+dd_bool Sv_CanTrustClientPos(int plrNum)
 {
     player_t* plr = &ddPlayers[plrNum];
     ddplayer_t* ddpl = &plr->shared;

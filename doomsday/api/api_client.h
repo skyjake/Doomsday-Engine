@@ -26,12 +26,12 @@ DENG_API_TYPEDEF(Client)
      * @param mo  Client mobj.
      * @param enable  @c true to enable local actions, @c false to disable.
      */
-    void (*Mobj_EnableLocalActions)(struct mobj_s *mo, boolean enable);
+    void (*Mobj_EnableLocalActions)(struct mobj_s *mo, dd_bool enable);
 
     /**
      * Determines if local action functions are enabled for client mobj @a mo.
      */
-    boolean (*Mobj_LocalActionsEnabled)(struct mobj_s *mo);
+    dd_bool (*Mobj_LocalActionsEnabled)(struct mobj_s *mo);
 
     /**
      * Determines whether a client mobj is valid for playsim.
@@ -42,7 +42,7 @@ DENG_API_TYPEDEF(Client)
      *
      * @return  @c true, if the mobj is a client mobj; otherwise @c false.
      */
-    boolean (*Mobj_IsValid)(struct mobj_s *mo);
+    dd_bool (*Mobj_IsValid)(struct mobj_s *mo);
 
     /**
      * @param plrNum  Player number.

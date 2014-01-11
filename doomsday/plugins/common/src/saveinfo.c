@@ -135,7 +135,7 @@ void SaveInfo_Configure(SaveInfo *info)
 #endif
 }
 
-boolean SaveInfo_IsLoadable(SaveInfo *info)
+dd_bool SaveInfo_IsLoadable(SaveInfo *info)
 {
     DENG_ASSERT(info != 0);
 
@@ -252,7 +252,7 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
     if(hdr->version < 13)
     {
         // In DOOM the high bit of the skill mode byte is also used for the
-        // "fast" game rule boolean. There is more confusion in that SM_NOTHINGS
+        // "fast" game rule dd_bool. There is more confusion in that SM_NOTHINGS
         // will result in 0xff and thus always set the fast bit.
         //
         // Here we decipher this assuming that if the skill mode is invalid then

@@ -197,7 +197,7 @@ typedef struct mobj_s {
     int             intFlags;       // internal flags
     coord_t         dropOffZ;       // $dropoff_fix
     short           gear;           // used in torque simulation
-    boolean         wallRun;        // true = last move was the result of a wallrun
+    dd_bool         wallRun;        // true = last move was the result of a wallrun
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER

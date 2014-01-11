@@ -132,7 +132,7 @@ void FileHandle_Delete(FileHandle* hndl);
 
 void FileHandle_Close(FileHandle* hndl);
 
-boolean FileHandle_IsValid(FileHandle const* hndl);
+dd_bool FileHandle_IsValid(FileHandle const* hndl);
 
 size_t FileHandle_Length(FileHandle* hndl);
 
@@ -142,7 +142,7 @@ size_t FileHandle_Read(FileHandle* hndl, uint8_t* buffer, size_t count);
 
 unsigned char FileHandle_GetC(FileHandle* hndl);
 
-boolean FileHandle_AtEnd(FileHandle* hndl);
+dd_bool FileHandle_AtEnd(FileHandle* hndl);
 
 size_t FileHandle_Tell(FileHandle* hndl);
 

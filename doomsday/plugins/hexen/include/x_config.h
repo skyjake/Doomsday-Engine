@@ -61,7 +61,7 @@ typedef enum {
 // This struct should be cleaned up. Currently some of the data isn't
 // even used any more.
 
-// WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
+// WARNING: Do not use the dd_bool type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
 
 typedef struct {

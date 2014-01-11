@@ -54,7 +54,7 @@ static byte* savePtr;
 static byte* saveBuffer;
 static Reader* svReader;
 
-static boolean SV_OpenFile_Hr_v13(const char* filePath);
+static dd_bool SV_OpenFile_Hr_v13(const char* filePath);
 static void    SV_CloseFile_Hr_v13(void);
 static Reader* SV_NewReader_Hr_v13(void);
 
@@ -508,7 +508,7 @@ typedef struct {
     Sector* sector;
     fixed_t bottomheight, topheight;
     fixed_t speed;
-    boolean crush;
+    dd_bool crush;
     int direction; /// 1= up, 0= waiting, -1= down
     int tag'
     int olddirection;
@@ -587,7 +587,7 @@ static int SV_ReadFloor(floor_t *floor)
 typedef struct {
     thinker_t   thinker;        // was 12 bytes
     floortype_e type;           // was 32bit int
-    boolean     crush;
+    dd_bool     crush;
     Sector     *sector;
     int         direction;
     int         newspecial;
@@ -639,7 +639,7 @@ typedef struct {
     int         count;
     platstate_e     status;         // was 32bit int
     platstate_e     oldStatus;      // was 32bit int
-    boolean     crush;
+    dd_bool     crush;
     int         tag;
     plattype_e  type;           // was 32bit int
 } v13_plat_t;
@@ -973,9 +973,9 @@ static void SaveInfo_Read_Hr_v13(SaveInfo* info, Reader* reader)
     info->gameId  = 0; // None.
 }
 
-static boolean SV_OpenFile_Hr_v13(const char* filePath)
+static dd_bool SV_OpenFile_Hr_v13(const char* filePath)
 {
-    boolean fileOpened;
+    dd_bool fileOpened;
 #if _DEBUG
     if(saveBuffer)
         Con_Error("SV_OpenFile_Hr_v13: A save state file has already been opened!");
@@ -999,7 +999,7 @@ static Reader* SV_NewReader_Hr_v13(void)
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-boolean SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info)
+dd_bool SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info)
 {
     DENG_ASSERT(path != 0 && info != 0);
 
@@ -1008,7 +1008,7 @@ boolean SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info)
     if(SV_OpenFile_Hr_v13(Str_Text(path)))
     {
         Reader *svReader = SV_NewReader_Hr_v13();
-        boolean result = false;
+        dd_bool result = false;
 
         /// @todo Use the 'version' string as the "magic" identifier.
         /*char vcheck[VERSIONSIZE];

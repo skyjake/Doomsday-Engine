@@ -46,7 +46,7 @@ DENG_API_TYPEDEF(W) // v1
     AutoStr* (*LumpSourceFile)(lumpnum_t lumpNum);
 
     /// @return  @c true iff the data associated with @a lumpNum does not originate from the current game.
-    boolean (*LumpIsCustom)(lumpnum_t lumpNum);
+    dd_bool (*LumpIsCustom)(lumpnum_t lumpNum);
 
     /**
      * @param name Name of the lump to search for.

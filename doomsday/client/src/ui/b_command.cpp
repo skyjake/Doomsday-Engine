@@ -67,7 +67,7 @@ static statecondition_t* B_AllocCommandBindingCondition(evbinding_t* eb)
 /**
  * Parse the main part of the event descriptor, with no conditions included.
  */
-boolean B_ParseEvent(evbinding_t* eb, const char* desc)
+dd_bool B_ParseEvent(evbinding_t* eb, const char* desc)
 {
     LOG_AS("B_ParseEvent");
 
@@ -193,7 +193,7 @@ boolean B_ParseEvent(evbinding_t* eb, const char* desc)
  *
  * @return  @c true, if successful; otherwise @c false.
  */
-boolean B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
+dd_bool B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
 {
     AutoStr* str = AutoStr_NewStd();
 

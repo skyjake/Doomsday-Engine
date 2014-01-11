@@ -39,7 +39,7 @@ enum RPolyDataType
 
 struct RPolyData
 {
-    boolean inUse;
+    dd_bool inUse;
     RPolyDataType type;
     uint num;
     void* data;
@@ -85,7 +85,7 @@ void R_InitRendPolyPools()
 Vector3f *R_AllocRendVertices(uint num)
 {
     uint idx;
-    boolean found = false;
+    dd_bool found = false;
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {
@@ -147,7 +147,7 @@ Vector3f *R_AllocRendVertices(uint num)
 Vector4f *R_AllocRendColors(uint num)
 {
     uint idx;
-    boolean found = false;
+    dd_bool found = false;
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {
@@ -209,7 +209,7 @@ Vector4f *R_AllocRendColors(uint num)
 Vector2f *R_AllocRendTexCoords(uint num)
 {
     uint idx;
-    boolean found = false;
+    dd_bool found = false;
 
     for(idx = 0; idx < maxrendpolys; ++idx)
     {

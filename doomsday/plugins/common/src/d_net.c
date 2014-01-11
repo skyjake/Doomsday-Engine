@@ -33,7 +33,7 @@ D_CMD(SetClass);
 #endif
 D_CMD(LocalMessage);
 
-static void D_NetMessageEx(int player, const char* msg, boolean playSound);
+static void D_NetMessageEx(int player, const char* msg, dd_bool playSound);
 
 extern int netSvAllowSendMsg;
 
@@ -251,7 +251,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 
     if(peType == DDPE_ARRIVAL)
     {
-        boolean showmsg = true;
+        dd_bool showmsg = true;
 
         if(IS_SERVER)
         {
@@ -331,7 +331,7 @@ int D_NetWorldEvent(int type, int parm, void* data)
     //
     case DDWE_HANDSHAKE:
         {
-        boolean newPlayer = *((boolean*) data);
+        dd_bool newPlayer = *((dd_bool*) data);
 
         // A new player is entering the game. We as a server should send him
         // the handshake packet(s) to update his world.
@@ -495,7 +495,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
     {
         weapontype_t wt = (weapontype_t) Reader_ReadInt16(reader);
         ammotype_t at = (ammotype_t) Reader_ReadInt16(reader);
-        boolean force = (Reader_ReadByte(reader) != 0);
+        dd_bool force = (Reader_ReadByte(reader) != 0);
         P_MaybeChangeWeapon(&players[CONSOLEPLAYER], wt, at, force);
         break;
     }
@@ -614,7 +614,7 @@ void D_ChatSound(void)
  * @param player        Player number to send the message to.
  * @param playSound     @c true = play the chat sound.
  */
-static void D_NetMessageEx(int player, const char* msg, boolean playSound)
+static void D_NetMessageEx(int player, const char* msg, dd_bool playSound)
 {
     player_t *plr;
 
@@ -664,7 +664,7 @@ void D_NetMessageNoSound(int player, const char* msg)
  *                          should be done else, process the damage as
  *                          normally.
  */
-boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
+dd_bool D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                         int damage)
 {
     int sourcePlrNum = -1;

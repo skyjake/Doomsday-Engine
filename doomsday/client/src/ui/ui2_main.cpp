@@ -48,7 +48,7 @@ void P_DestroyText(fidata_text_t *text);
 fidata_pic_t *P_CreatePic(fi_objectid_t id, char const *name);
 void P_DestroyPic(fidata_pic_t* pic);
 
-static boolean inited = false;
+static dd_bool inited = false;
 static uint numPages;
 static fi_page_t **pages;
 
@@ -258,7 +258,7 @@ static void picFrameDeleteXImage(fidata_pic_frame_t *f)
     f->texRef.tex = 0;
 }
 
-static fidata_pic_frame_t *createPicFrame(fi_pic_type_t type, int tics, void *texRef, short sound, boolean flagFlipH)
+static fidata_pic_frame_t *createPicFrame(fi_pic_type_t type, int tics, void *texRef, short sound, dd_bool flagFlipH)
 {
     fidata_pic_frame_t * f = (fidata_pic_frame_t *) Z_Malloc(sizeof(*f), PU_APPSTATIC, 0);
     f->flags.flip = flagFlipH;
@@ -641,13 +641,13 @@ void FIPage_Drawer(fi_page_t *p)
 #endif
 }
 
-void FIPage_MakeVisible(fi_page_t *p, boolean yes)
+void FIPage_MakeVisible(fi_page_t *p, dd_bool yes)
 {
     if(!p) Con_Error("FIPage_MakeVisible: Invalid page.");
     p->flags.hidden = !yes;
 }
 
-void FIPage_Pause(fi_page_t *p, boolean yes)
+void FIPage_Pause(fi_page_t *p, dd_bool yes)
 {
     if(!p) Con_Error("FIPage_Pause: Invalid page.");
     p->flags.paused = yes;
@@ -674,7 +674,7 @@ void FIPage_Ticker(fi_page_t *p, timespan_t /*ticLength*/)
     }
 }
 
-boolean FIPage_HasObject(fi_page_t *p, fi_object_t *obj)
+dd_bool FIPage_HasObject(fi_page_t *p, fi_object_t *obj)
 {
     if(!p) Con_Error("FIPage_HasObject: Invalid page.");
     return objectsIsPresent(&p->_objects, obj);
@@ -836,7 +836,7 @@ static void setupModelParamsForFIObject(rendmodelparams_t *params,
 void UI2_Drawer(void)
 {
     //borderedprojectionstate_t borderedProjection;
-    //boolean bordered;
+    //dd_bool bordered;
 
     LOG_AS("UI2_Drawer");
     if(!inited)
@@ -916,7 +916,7 @@ void FIData_PicThink(fi_object_t *obj)
 }
 
 #ifdef __CLIENT__
-static int buildGeometry(float const /*dimensions*/[3], boolean flipTextureS,
+static int buildGeometry(float const /*dimensions*/[3], dd_bool flipTextureS,
     Vector4f const &bottomColor, Vector4f const &topColor, Vector3f **posCoords,
     Vector4f **colorCoords, Vector2f **texCoords)
 {
@@ -977,9 +977,9 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     vec3f_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2f_t texScale = { 1, 1 };
     vec2f_t rotateCenter = { .5f, .5f };
-    boolean showEdges = true, flipTextureS = false;
-    boolean mustPopTextureMatrix = false;
-    boolean textureEnabled = false;
+    dd_bool showEdges = true, flipTextureS = false;
+    dd_bool mustPopTextureMatrix = false;
+    dd_bool textureEnabled = false;
     int numVerts;
     Vector3f *posCoords;
     Vector4f *colorCoords;
@@ -1209,7 +1209,7 @@ void FIData_PicDraw(fi_object_t *obj, const float offset[3])
 }
 
 uint FIData_PicAppendFrame(fi_object_t *obj, fi_pic_type_t type, int tics, void *texRef, short sound,
-    boolean flagFlipH)
+    dd_bool flagFlipH)
 {
     fidata_pic_t * p = (fidata_pic_t *)obj;
     if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicAppendFrame: Not a FI_PIC.");

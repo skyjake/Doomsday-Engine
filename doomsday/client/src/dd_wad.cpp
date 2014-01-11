@@ -95,7 +95,7 @@ AutoStr *W_LumpSourceFile(lumpnum_t lumpNum)
     return AutoStr_NewStd();
 }
 
-boolean W_LumpIsCustom(lumpnum_t lumpNum)
+dd_bool W_LumpIsCustom(lumpnum_t lumpNum)
 {
     try
     {

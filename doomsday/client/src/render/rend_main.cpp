@@ -112,7 +112,7 @@ D_CMD(TexReset);
 
 int useBias; // Shadow Bias enabled? cvar
 
-boolean usingFog; // Is the fog in use?
+dd_bool usingFog; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
 byte smoothTexAnim = true;
@@ -154,15 +154,15 @@ int filterUI   = 1;
 int texQuality = TEXQ_BEST;
 
 int ratioLimit = 0; // Zero if none.
-boolean fillOutlines = true;
+dd_bool fillOutlines = true;
 int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
 int filterSprites = true;
 int texMagMode = 1; // Linear.
 int texAniso = -1; // Use best.
 
-boolean noHighResTex = false;
-boolean noHighResPatches = false;
-boolean highResWithPWAD = false;
+dd_bool noHighResTex = false;
+dd_bool noHighResPatches = false;
+dd_bool highResWithPWAD = false;
 byte loadExtAlways = false; // Always check for extres (cvar)
 
 float texGamma = 0;

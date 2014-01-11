@@ -67,7 +67,7 @@ typedef enum xgsegenum_e {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean xgDataLumps = false;
+dd_bool xgDataLumps = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -331,7 +331,7 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
     int lc = 0, sc = 0, i;
     sectortype_t* sec;
     linetype_t* li;
-    boolean done = false;
+    dd_bool done = false;
     size_t len;
     uint8_t* buf;
 

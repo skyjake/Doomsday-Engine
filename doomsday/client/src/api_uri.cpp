@@ -155,7 +155,7 @@ Uri* Uri_Copy(Uri* uri, Uri const* other)
 }
 
 #undef Uri_Equality
-boolean Uri_Equality(Uri const* uri, Uri const* other)
+dd_bool Uri_Equality(Uri const* uri, Uri const* other)
 {
     SELF_CONST(uri);
     DENG_ASSERT(other);
@@ -163,7 +163,7 @@ boolean Uri_Equality(Uri const* uri, Uri const* other)
 }
 
 #undef Uri_IsEmpty
-boolean Uri_IsEmpty(Uri const* uri)
+dd_bool Uri_IsEmpty(Uri const* uri)
 {
     SELF_CONST(uri);
     return self->isEmpty();

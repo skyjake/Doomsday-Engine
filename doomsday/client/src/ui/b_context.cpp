@@ -304,7 +304,7 @@ void B_ClearContext(bcontext_t* bc)
     B_DestroyControlBindingList(&bc->controlBinds);
 }
 
-void B_ActivateContext(bcontext_t* bc, boolean doActivate)
+void B_ActivateContext(bcontext_t* bc, dd_bool doActivate)
 {
     if(!bc)
         return;
@@ -327,7 +327,7 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
     }
 }
 
-void B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire)
+void B_AcquireKeyboard(bcontext_t* bc, dd_bool doAcquire)
 {
     bc->flags &= ~BCF_ACQUIRE_KEYBOARD;
     if(doAcquire)
@@ -335,7 +335,7 @@ void B_AcquireKeyboard(bcontext_t* bc, boolean doAcquire)
     B_UpdateDeviceStateAssociations();
 }
 
-void B_AcquireAll(bcontext_t* bc, boolean doAcquire)
+void B_AcquireAll(bcontext_t* bc, dd_bool doAcquire)
 {
     bc->flags &= ~BCF_ACQUIRE_ALL;
     if(doAcquire)
@@ -490,7 +490,7 @@ void B_DestroyControlBindingList(controlbinding_t* listRoot)
 /**
  * @return  @c true, if the binding was found and deleted.
  */
-boolean B_DeleteBinding(bcontext_t* bc, int bid)
+dd_bool B_DeleteBinding(bcontext_t* bc, int bid)
 {
     int                 i;
     evbinding_t*        eb = 0;
@@ -703,7 +703,7 @@ int B_BindingsForControl(int localPlayer, const char* controlName,
     return numFound;
 }
 
-boolean B_AreConditionsEqual(int count1, const statecondition_t* conds1,
+dd_bool B_AreConditionsEqual(int count1, const statecondition_t* conds1,
                              int count2, const statecondition_t* conds2)
 {
     int i, k;
@@ -713,7 +713,7 @@ boolean B_AreConditionsEqual(int count1, const statecondition_t* conds1,
 
     for(i = 0; i < count1; ++i)
     {
-        boolean found = false;
+        dd_bool found = false;
         for(k = 0; k < count2; ++k)
         {
             if(B_EqualConditions(conds1 + i, conds2 + k))
@@ -731,7 +731,7 @@ boolean B_AreConditionsEqual(int count1, const statecondition_t* conds1,
  * Looks through context @a bc and looks for a binding that matches either
  * @a match1 or @a match2.
  */
-boolean B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
+dd_bool B_FindMatchingBinding(bcontext_t* bc, evbinding_t* match1,
                               dbinding_t* match2, evbinding_t** evResult,
                               dbinding_t** dResult)
 {

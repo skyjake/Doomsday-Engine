@@ -75,8 +75,8 @@
 void P_CalcHeight(player_t* plr)
 {
     int plrNum = plr - players;
-    boolean airborne;
-    boolean morphed = false;
+    dd_bool airborne;
+    dd_bool morphed = false;
     ddplayer_t* ddplr = plr->plr;
     mobj_t* pmo = ddplr->mo;
     coord_t target, step;

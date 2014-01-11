@@ -52,7 +52,7 @@ static byte* savePtr;
 static byte* saveBuffer;
 static Reader* svReader;
 
-static boolean SV_OpenFile_Dm_v19(const char* filePath);
+static dd_bool SV_OpenFile_Dm_v19(const char* filePath);
 static void    SV_CloseFile_Dm_v19(void);
 static Reader* SV_NewReader_Dm_v19(void);
 
@@ -488,7 +488,7 @@ typedef struct {
     fixed_t bottomheight;
     fixed_t topheight;
     fixed_t speed;
-    boolean crush;
+    dd_bool crush;
     int     direction;
     int     tag;
     int     olddirection;
@@ -566,7 +566,7 @@ static int SV_v19_ReadFloor(floor_t *floor)
 typedef struct {
     thinker_t thinker; // was 12 bytes
     floortype_e type; // was 32bit int
-    boolean crush;
+    dd_bool crush;
     Sector *sector;
     int     direction;
     int     newspecial;
@@ -618,7 +618,7 @@ typedef struct {
     int     count;
     platstate_e  status; // was 32bit int
     platstate_e  oldstatus; // was 32bit int
-    boolean crush;
+    dd_bool crush;
     int     tag;
     plattype_e type; // was 32bit int
 } v19_plat_t;
@@ -961,9 +961,9 @@ static void SaveInfo_Read_Dm_v19(SaveInfo* info, Reader* reader)
     info->gameId  = 0; // None.
 }
 
-static boolean SV_OpenFile_Dm_v19(const char* filePath)
+static dd_bool SV_OpenFile_Dm_v19(const char* filePath)
 {
-    boolean fileOpened;
+    dd_bool fileOpened;
 #if _DEBUG
     if(saveBuffer)
         Con_Error("SV_OpenFile_Dm_v19: A save state file has already been opened!");
@@ -987,7 +987,7 @@ static Reader *SV_NewReader_Dm_v19(void)
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-boolean SV_RecogniseState_Dm_v19(Str const *path, SaveInfo *info)
+dd_bool SV_RecogniseState_Dm_v19(Str const *path, SaveInfo *info)
 {
     DENG_ASSERT(path != 0 && info != 0);
 
@@ -996,7 +996,7 @@ boolean SV_RecogniseState_Dm_v19(Str const *path, SaveInfo *info)
     if(SV_OpenFile_Dm_v19(Str_Text(path)))
     {
         Reader *svReader = SV_NewReader_Dm_v19();
-        boolean result = false;
+        dd_bool result = false;
 
         /// @todo Use the 'version' string as the "magic" identifier.
         /*char vcheck[VERSIONSIZE];

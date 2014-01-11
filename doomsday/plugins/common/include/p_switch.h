@@ -61,8 +61,8 @@ void P_InitSwitchList(void);
  * @param tics          @c <= 0 = A permanent change.
  *                      @c  > 0 = Change back after this many tics.
  */
-boolean P_ToggleSwitch2(Side* side, SideSection ssurfaceID, int sound,
-    boolean silent, int tics);
+dd_bool P_ToggleSwitch2(Side* side, SideSection ssurfaceID, int sound,
+    dd_bool silent, int tics);
 
 /**
  * @param side          Side where the switch to be changed is found.
@@ -74,13 +74,13 @@ boolean P_ToggleSwitch2(Side* side, SideSection ssurfaceID, int sound,
  * @param tics          @c <= 0 = A permanent change.
  *                      @c  > 0 = Change back after this many tics.
  */
-boolean P_ToggleSwitch(Side* side, int sound, boolean silent, int tics);
+dd_bool P_ToggleSwitch(Side* side, int sound, dd_bool silent, int tics);
 
 /**
  * To be called to execute any action(s) assigned to the specified Line's
  * special.
  */
-boolean P_UseSpecialLine(mobj_t* activator, Line* line, int side);
+dd_bool P_UseSpecialLine(mobj_t* activator, Line* line, int side);
 
 void T_MaterialChanger(void *materialChangedThinker);
 

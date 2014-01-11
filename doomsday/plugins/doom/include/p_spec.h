@@ -57,7 +57,7 @@ void P_SpawnSectorSpecialThinkers(void);
 void P_SpawnLineSpecialThinkers(void);
 void P_SpawnAllSpecialThinkers(void);
 
-boolean         P_ActivateLine(Line *ld, mobj_t *mo, int side,
+dd_bool         P_ActivateLine(Line *ld, mobj_t *mo, int side,
                                int activationType);
 
 void            P_PlayerInSpecialSector(player_t *player);
@@ -81,7 +81,7 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest, int crush,
 
 int EV_BuildStairs(Line* line, stair_e type);
 
-boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side);
+dd_bool P_UseSpecialLine2(mobj_t* mo, Line* line, int side);
 
 #ifdef __cplusplus
 } // extern "C"

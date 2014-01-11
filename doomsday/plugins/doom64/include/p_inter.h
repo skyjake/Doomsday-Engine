@@ -44,17 +44,17 @@ DENG_EXTERN_C int clipAmmo[];
 extern "C" {
 #endif
 
-boolean         P_GivePower(player_t* plr, int);
-boolean         P_TakePower(player_t* plr, int power);
+dd_bool         P_GivePower(player_t* plr, int);
+dd_bool         P_TakePower(player_t* plr, int power);
 void            P_GiveKey(player_t* plr, keytype_t keyType);
-boolean         P_GiveBody(player_t* plr, int num);
+dd_bool         P_GiveBody(player_t* plr, int num);
 void            P_GiveBackpack(player_t* plr);
-boolean         P_GiveWeapon(player_t* plr, weapontype_t weapon, boolean dropped);
-boolean         P_GiveArmor(player_t* plr, int type, int points);
+dd_bool         P_GiveWeapon(player_t* plr, weapontype_t weapon, dd_bool dropped);
+dd_bool         P_GiveArmor(player_t* plr, int type, int points);
 
 void            P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
-int             P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
-int             P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
+int             P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, dd_bool stomping);
+int             P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, dd_bool stomping, dd_bool skipNetworkCheck);
 
 #ifdef __cplusplus
 } // extern "C"

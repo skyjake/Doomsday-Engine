@@ -95,7 +95,7 @@ enum ViewPortLayer {
 };
 
 DENG_EXTERN_C int      rendInfoTris;
-DENG_EXTERN_C boolean  firstFrameAfterLoad;
+DENG_EXTERN_C dd_bool  firstFrameAfterLoad;
 
 /**
  * Register console variables.

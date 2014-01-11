@@ -67,7 +67,7 @@ void P_SpawnTelefog(mobj_t *mo, void * /*context*/)
 # endif
 }
 
-void P_MobjRemove(mobj_t *mo, boolean noRespawn)
+void P_MobjRemove(mobj_t *mo, dd_bool noRespawn)
 {
 #if !defined(__JDOOM__) && !defined(__JDOOM64__)
     DENG_UNUSED(noRespawn);
@@ -205,14 +205,14 @@ void P_MobjClearSRVO(mobj_t *mo)
     std::memset(mo->srvo, 0, sizeof(mo->srvo));
 }
 
-boolean P_MobjIsCamera(mobj_t const *mo)
+dd_bool P_MobjIsCamera(mobj_t const *mo)
 {
     // Client mobjs do not have thinkers and thus cannot be cameras.
     return (mo && mo->thinker.function && mo->player &&
             (mo->player->plr->flags & DDPF_CAMERA));
 }
 
-boolean Mobj_IsCrunchable(mobj_t *mobj)
+dd_bool Mobj_IsCrunchable(mobj_t *mobj)
 {
     DENG_ASSERT(mobj != 0);
 
@@ -225,7 +225,7 @@ boolean Mobj_IsCrunchable(mobj_t *mobj)
 #endif
 }
 
-boolean Mobj_IsDroppedItem(mobj_t *mobj)
+dd_bool Mobj_IsDroppedItem(mobj_t *mobj)
 {
     DENG_ASSERT(mobj != 0);
 #if __JHEXEN__

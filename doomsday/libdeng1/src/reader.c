@@ -49,7 +49,7 @@ struct reader_s
     size_t size;            // Size of the data buffer.
     size_t pos;             // Current position in the buffer.
 
-    boolean useCustomFuncs;
+    dd_bool useCustomFuncs;
     readerfuncs_t func;
 };
 
@@ -58,7 +58,7 @@ static uint32_t Reader_8(Reader *reader, int shift)
     return reader->data[reader->pos++] << shift;
 }
 
-static boolean Reader_Check(Reader const *reader, size_t len)
+static dd_bool Reader_Check(Reader const *reader, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One byte for the code.
@@ -137,7 +137,7 @@ void Reader_SetPos(Reader *reader, size_t newPos)
     Reader_Check(reader, 0);
 }
 
-boolean Reader_AtEnd(Reader const *reader)
+dd_bool Reader_AtEnd(Reader const *reader)
 {
     Reader_Check(reader, 0);
     if(reader->useCustomFuncs) return false;

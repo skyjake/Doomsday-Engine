@@ -54,7 +54,7 @@ extern "C" {
 #endif
 
 void T_FloorWaggle(waggle_t* waggle);
-boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer);
+dd_bool EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -46,7 +46,7 @@ extern "C" {
 #endif
 
 void T_BuildPillar(pillar_t* pillar);
-int EV_BuildPillar(Line* line, byte* args, boolean crush);
+int EV_BuildPillar(Line* line, byte* args, dd_bool crush);
 int EV_OpenPillar(Line* line, byte* args);
 
 #ifdef __cplusplus

@@ -50,7 +50,7 @@ void Con_SetProgress(int progress);
  */
 //float Con_GetProgress(void);
 
-boolean Con_IsProgressAnimationCompleted(void);
+dd_bool Con_IsProgressAnimationCompleted(void);
 
 #ifdef __cplusplus
 } // extern "C"

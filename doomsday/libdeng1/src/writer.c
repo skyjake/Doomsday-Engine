@@ -44,14 +44,14 @@ struct writer_s
     byte *data;             // The data buffer.
     size_t size;            // Size of the data buffer.
     size_t pos;             // Current position in the buffer.
-    boolean isDynamic;      // The buffer will be reallocated when needed.
+    dd_bool isDynamic;      // The buffer will be reallocated when needed.
     size_t maxDynamicSize;  // Zero for unlimited.
 
-    boolean useCustomFuncs; // Validity checks are skipped (callbacks' responsibility).
+    dd_bool useCustomFuncs; // Validity checks are skipped (callbacks' responsibility).
     writerfuncs_t func;     // Callbacks for write operations.
 };
 
-static boolean Writer_Check(Writer const *writer, size_t len)
+static dd_bool Writer_Check(Writer const *writer, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One extra byte for the check code.

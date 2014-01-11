@@ -52,7 +52,7 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl);
  *
  * @return  @c true if the player is thought to be in the void.
  */
-boolean P_IsInVoid(player_t *p);
+dd_bool P_IsInVoid(player_t *p);
 
 short P_LookDirToShort(float lookDir);
 float P_ShortToLookDir(short s);

@@ -139,7 +139,7 @@ void T_RotatePoly(void *polyThinker)
     }
 }
 
-boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean overRide)
+dd_bool EV_RotatePoly(Line *line, byte *args, int direction, dd_bool overRide)
 {
     DENG_UNUSED(line);
     DENG_ASSERT(args != 0);
@@ -276,7 +276,7 @@ void T_MovePoly(void *polyThinker)
     }
 }
 
-boolean EV_MovePoly(Line *line, byte *args, boolean timesEight, boolean override)
+dd_bool EV_MovePoly(Line *line, byte *args, dd_bool timesEight, dd_bool override)
 {
     DENG_UNUSED(line);
     DENG_ASSERT(args != 0);
@@ -474,7 +474,7 @@ void T_PolyDoor(void *polyDoorThinker)
     }
 }
 
-boolean EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type)
+dd_bool EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type)
 {
     DENG_UNUSED(line);
     DENG_ASSERT(args != 0);
@@ -671,7 +671,7 @@ void PO_InitForMap()
     }
 }
 
-boolean PO_Busy(int tag)
+dd_bool PO_Busy(int tag)
 {
     Polyobj *po = Polyobj_ByTag(tag);
     return (po && po->specialData);

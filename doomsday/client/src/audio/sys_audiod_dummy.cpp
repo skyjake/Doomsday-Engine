@@ -94,7 +94,7 @@ audiointerface_sfx_t audiod_dummy_sfx = { {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean inited;
+static dd_bool inited;
 
 // CODE --------------------------------------------------------------------
 

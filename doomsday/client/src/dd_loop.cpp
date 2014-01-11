@@ -67,15 +67,15 @@ byte processSharpEventsAfterTickers = true;
 timespan_t sysTime, gameTime, demoTime;
 //timespan_t frameStartTime;
 
-boolean stopTime = false; // If true the time counters won't be incremented
-boolean tickUI = false; // If true the UI will be tick'd
-boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
+dd_bool stopTime = false; // If true the time counters won't be incremented
+dd_bool tickUI = false; // If true the UI will be tick'd
+dd_bool tickFrame = true; // If false frame tickers won't be tick'd (unless netGame)
 
 static int gameLoopExitCode = 0;
 
 static double lastRunTicsTime;
-static boolean firstTic = true;
-static boolean tickIsSharp = false;
+static dd_bool firstTic = true;
+static dd_bool tickIsSharp = false;
 
 #define NUM_FRAMETIME_DELTAS    200
 static int timeDeltas[NUM_FRAMETIME_DELTAS];
@@ -111,12 +111,12 @@ float DD_GetFrameRate()
 }
 
 #undef DD_IsSharpTick
-DENG_EXTERN_C boolean DD_IsSharpTick(void)
+DENG_EXTERN_C dd_bool DD_IsSharpTick(void)
 {
     return tickIsSharp;
 }
 
-boolean DD_IsFrameTimeAdvancing(void)
+dd_bool DD_IsFrameTimeAdvancing(void)
 {
     if(BusyMode_Active()) return false;
     return tickFrame || netGame;

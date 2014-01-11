@@ -65,13 +65,13 @@ typedef int pluginid_t;
 /// Paramaters for HOOK_FINALE_EVAL_IF
 typedef struct {
     const char* token;
-    boolean     returnVal;
+    dd_bool     returnVal;
 } ddhook_finale_script_evalif_paramaters_t;
 
 /// Paramaters for HOOK_FINALE_SCRIPT_TICKER
 typedef struct {
-    boolean runTick;
-    boolean canSkip;
+    dd_bool runTick;
+    dd_bool canSkip;
 } ddhook_finale_script_ticker_paramaters_t;
 
 /// Paramaters for HOOK_VIEWPORT_RESHAPE

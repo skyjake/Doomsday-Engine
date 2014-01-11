@@ -1256,7 +1256,7 @@ void C_DECL A_DeathBallImpact(mobj_t* ball)
     int i;
     mobj_t* target;
     angle_t angle;
-    boolean newAngle;
+    dd_bool newAngle;
 
     if(ball->origin[VZ] <= ball->floorZ && P_HitFloor(ball))
     {

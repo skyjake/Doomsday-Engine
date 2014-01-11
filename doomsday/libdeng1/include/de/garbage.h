@@ -64,7 +64,7 @@ DENG_PUBLIC void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor);
  *
  * @return @c true if the pointer is in the trash.
  */
-DENG_PUBLIC boolean Garbage_IsTrashed(void const *ptr);
+DENG_PUBLIC dd_bool Garbage_IsTrashed(void const *ptr);
 
 /**
  * Removes a region from the current thread's collector, if it is still there.

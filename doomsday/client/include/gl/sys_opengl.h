@@ -89,7 +89,7 @@ typedef struct gl_state_s {
     int multisampleFormat;
 
     /// Current state:
-    boolean currentUseFog;
+    dd_bool currentUseFog;
     float currentLineWidth;
     float currentPointSize;
 
@@ -148,12 +148,12 @@ extern PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT;
 #define GL_ATI_texture_env_combine3     1
 #endif
 
-boolean Sys_GLPreInit(void);
+dd_bool Sys_GLPreInit(void);
 
 /**
  * Initializes our OpenGL interface. Called once during engine statup.
  */
-boolean Sys_GLInitialize(void);
+dd_bool Sys_GLInitialize(void);
 
 /**
  * Close our OpenGL interface for good. Called once during engine shutdown.
@@ -170,7 +170,7 @@ void Sys_GLConfigureDefaultState(void);
  */
 void Sys_GLPrintExtensions(void);
 
-boolean Sys_GLCheckError(void);
+dd_bool Sys_GLCheckError(void);
 
 #endif // __CLIENT__
 

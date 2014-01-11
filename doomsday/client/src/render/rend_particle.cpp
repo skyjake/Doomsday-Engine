@@ -59,8 +59,8 @@ int particleNearLimit = 0;
 float particleDiffuse = 4;
 
 static size_t numParts;
-static boolean hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
-static boolean hasPointTexs[NUM_TEX_NAMES];
+static dd_bool hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
+static dd_bool hasPointTexs[NUM_TEX_NAMES];
 static byte visiblePtcGens[Generators::GENERATORS_MAX];
 
 static size_t orderSize = 0;
@@ -88,7 +88,7 @@ static int markPtcGenVisible(ptcgen_t *gen, void *parameters)
     return false; // Continue iteration.
 }
 
-static boolean isPtcGenVisible(ptcgen_t const *gen)
+static dd_bool isPtcGenVisible(ptcgen_t const *gen)
 {
     return visiblePtcGens[gens->generatorId(gen)];
 }
@@ -524,7 +524,7 @@ static void lineUnitVector(Line const &line, pvec2f_t unitVec)
     }
 }
 
-static void renderParticles(int rtype, boolean withBlend)
+static void renderParticles(int rtype, dd_bool withBlend)
 {
     ushort primType = GL_QUADS;
     blendmode_t mode = BM_NORMAL, newMode;
@@ -589,7 +589,7 @@ static void renderParticles(int rtype, boolean withBlend)
         ded_ptcstage_t const *dst, *nextDst;
         float size, color[4], center[3], mark, invMark;
         float dist, maxdist;
-        boolean flatOnPlane = false, flatOnWall = false;
+        dd_bool flatOnPlane = false, flatOnWall = false;
         short stageType;
 
         gen = gens->generator(slot->ptcGenID);
@@ -690,9 +690,9 @@ static void renderParticles(int rtype, boolean withBlend)
 
         glColor4fv(color);
 
-        boolean nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
+        dd_bool nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
 
-        boolean nearPlane = false;
+        dd_bool nearPlane = false;
         if(SectorCluster *cluster = pt->bspLeaf->clusterPtr())
         {
             if(FLT2FIX(cluster->  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pt->origin[VZ] ||
@@ -851,7 +851,7 @@ static void renderParticles(int rtype, boolean withBlend)
     }
 }
 
-static void renderPass(boolean useBlending)
+static void renderPass(dd_bool useBlending)
 {
     int i;
     assert(!Sys_GLCheckError());

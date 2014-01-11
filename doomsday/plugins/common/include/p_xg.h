@@ -25,7 +25,7 @@
 #include "p_xgsec.h"
 
 DENG_EXTERN_C int xgDev;
-DENG_EXTERN_C boolean xgDataLumps;
+DENG_EXTERN_C dd_bool xgDataLumps;
 
 #ifdef __cplusplus
 extern "C" {

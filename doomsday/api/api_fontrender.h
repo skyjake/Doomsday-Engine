@@ -141,9 +141,9 @@ DENG_API_TYPEDEF(FR)
     void (*SetGlitterStrength)(float value);
 
     /// @return  Current case scale (attribute).
-    boolean (*CaseScale)(void);
+    dd_bool (*CaseScale)(void);
 
-    void (*SetCaseScale)(boolean value);
+    void (*SetCaseScale)(dd_bool value);
 
     /**
      * Text blocks (possibly formatted and/or multi-line text):

@@ -144,7 +144,7 @@ int Def_Get(int type, const char* id, void* out);
  */
 int Def_Set(int type, int index, int value, const void* ptr);
 
-boolean Def_SameStateSequence(state_t* snew, state_t* sold);
+dd_bool Def_SameStateSequence(state_t* snew, state_t* sold);
 
 /**
  * Compiles a list of all the defined mobj types. Indices in this list

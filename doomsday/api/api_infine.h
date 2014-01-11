@@ -75,7 +75,7 @@ DENG_API_TYPEDEF(Infine)
     /**
      * @return  @c true iff the specified Finale is active.
      */
-    boolean (*ScriptActive)(finaleid_t id);
+    dd_bool (*ScriptActive)(finaleid_t id);
 
     /**
      * @return  @ref finaleFlags.
@@ -100,22 +100,22 @@ DENG_API_TYPEDEF(Infine)
     /**
      * @return  @c true iff the specified Finale is currently suspended.
      */
-    boolean (*ScriptSuspended)(finaleid_t id);
+    dd_bool (*ScriptSuspended)(finaleid_t id);
 
     /**
      * @return  @c true iff the skip request was successful.
      */
-    boolean (*ScriptRequestSkip)(finaleid_t id);
+    dd_bool (*ScriptRequestSkip)(finaleid_t id);
 
     /**
      * @return  @c true iff command interpretation has begun.
      */
-    boolean (*ScriptCmdExecuted)(finaleid_t id);
+    dd_bool (*ScriptCmdExecuted)(finaleid_t id);
 
     /**
      * @return  @c true iff the "menu trigger" is currently active.
      */
-    boolean (*ScriptIsMenuTrigger)(finaleid_t id);
+    dd_bool (*ScriptIsMenuTrigger)(finaleid_t id);
 
     int (*ScriptResponder)(finaleid_t id, const void* ev);
 }

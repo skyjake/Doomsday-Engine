@@ -213,7 +213,7 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
-boolean DD_Win32_Init(void)
+dd_bool DD_Win32_Init(void)
 {
     BOOL failed = TRUE;
 

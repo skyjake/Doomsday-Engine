@@ -180,8 +180,8 @@ static unsigned int countItems(const playerinventory_t* inv,
     return countItems2(inv, type);
 }
 
-static boolean useItem(playerinventory_t* inv, inventoryitemtype_t type,
-                       boolean panic)
+static dd_bool useItem(playerinventory_t* inv, inventoryitemtype_t type,
+                       dd_bool panic)
 {
     int                 plrnum;
     const invitem_t*    item;
@@ -217,7 +217,7 @@ static boolean useItem(playerinventory_t* inv, inventoryitemtype_t type,
     return didUseItem;
 }
 
-static boolean giveItem(playerinventory_t* inv, inventoryitemtype_t type)
+static dd_bool giveItem(playerinventory_t* inv, inventoryitemtype_t type)
 {
     unsigned int        count = countItems(inv, type);
     inventoryitem_t*    item;
@@ -437,7 +437,7 @@ int P_InventorySetReadyItem(int player, inventoryitemtype_t type)
 
     if(type == IIT_NONE || countItems(inv, type))
     {   // A valid ready request.
-        boolean             mustEquip = true;
+        dd_bool             mustEquip = true;
 
         if(type != IIT_NONE)
         {

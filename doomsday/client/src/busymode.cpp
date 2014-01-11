@@ -43,34 +43,34 @@
 static void BusyMode_Exit(void);
 
 static QEventLoop* eventLoop;
-static volatile boolean busyDoneCopy;
+static volatile dd_bool busyDoneCopy;
 static timespan_t busyTime;
-static boolean busyWillAnimateTransition;
-static boolean busyWasIgnoringInput;
+static dd_bool busyWillAnimateTransition;
+static dd_bool busyWasIgnoringInput;
 
 #endif // __CLIENT__
 
-static boolean busyModeAllowed = true; ///< Can we enter busy mode?
-static boolean busyInited;
-static volatile boolean busyDone;
+static dd_bool busyModeAllowed = true; ///< Can we enter busy mode?
+static dd_bool busyInited;
+static volatile dd_bool busyDone;
 
 static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
 static BusyTask* busyTask; // Current task.
 static thread_t busyThread;
 static timespan_t accumulatedBusyTime; // Never cleared.
-static boolean busyTaskEndedWithError;
+static dd_bool busyTaskEndedWithError;
 static char busyError[256];
 
 #ifdef __CLIENT__
-static boolean animatedTransitionActive(int busyMode)
+static dd_bool animatedTransitionActive(int busyMode)
 {
     return (!novideo && !isDedicated && !netGame && !(busyMode & BUSYF_STARTUP) &&
             rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION));
 }
 #endif
 
-boolean BusyMode_Active(void)
+dd_bool BusyMode_Active(void)
 {
     return busyInited;
 }
@@ -81,9 +81,9 @@ timespan_t BusyMode_ElapsedTime(void)
     return accumulatedBusyTime;
 }
 
-boolean BusyMode_IsWorkerThread(uint threadId)
+dd_bool BusyMode_IsWorkerThread(uint threadId)
 {
-    boolean result;
+    dd_bool result;
     if(!BusyMode_Active() || !busyThread) return false;
 
     /// @todo Is locking necessary?
@@ -93,7 +93,7 @@ boolean BusyMode_IsWorkerThread(uint threadId)
     return result;
 }
 
-boolean BusyMode_InWorkerThread(void)
+dd_bool BusyMode_InWorkerThread(void)
 {
     return BusyMode_IsWorkerThread(Sys_CurrentThreadId());
 }
@@ -230,13 +230,13 @@ static int runTask(BusyTask* task)
 }
 
 #ifdef __CLIENT__
-boolean BusyMode_IsTransitionAnimated(void)
+dd_bool BusyMode_IsTransitionAnimated(void)
 {
     return busyWillAnimateTransition;
 }
 #endif
 
-void BusyMode_SetAllowed(boolean allow)
+void BusyMode_SetAllowed(dd_bool allow)
 {
     busyModeAllowed = allow;
 }
@@ -464,7 +464,7 @@ void BusyMode_Loop(void)
 {
     if(!busyTask || !BusyMode_Active()) return;
 
-    boolean canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
+    dd_bool canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
     timespan_t oldTime;
 
     // Post and discard all input events.

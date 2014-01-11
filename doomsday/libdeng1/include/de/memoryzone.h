@@ -61,7 +61,7 @@ extern "C" {
 /**
  * Determines if the memory zone is available for allocations.
  */
-DENG_PUBLIC boolean Z_IsInited(void);
+DENG_PUBLIC dd_bool Z_IsInited(void);
 
 /**
  * You can pass a NULL user if the tag is < PU_PURGELEVEL.
@@ -125,7 +125,7 @@ DENG_PUBLIC int Z_GetTag(void *ptr);
  * @return @c true, if @a ptr points to a valid allocated memory block
  * inside the zone.
  */
-DENG_PUBLIC boolean Z_Contains(void *ptr);
+DENG_PUBLIC dd_bool Z_Contains(void *ptr);
 
 /**
  * Copies @a text into a buffer allocated from the zone.

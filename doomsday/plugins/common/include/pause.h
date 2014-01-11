@@ -48,19 +48,19 @@ void Pause_Ticker(void);
  *
  * @return @c true, if the event was processed.
  */
-boolean Pause_Responder(event_t *ev);
+dd_bool Pause_Responder(event_t *ev);
 
 /**
  * Determines if the game is currently paused.
  */
-boolean Pause_IsPaused(void);
+dd_bool Pause_IsPaused(void);
 
 /**
  * Determines if the game has been paused by the user rather than by force or
  * implicitly when the menu is open. The "PAUSED" indicator should only be
  * drawn when the game is paused by the user.
  */
-boolean Pause_IsUserPaused(void);
+dd_bool Pause_IsUserPaused(void);
 
 /**
  * Sets the user-requested pause mode.
@@ -68,7 +68,7 @@ boolean Pause_IsUserPaused(void);
  * @param yes  @c true, if the user has requested pause and game time
  *             should be paused. @c false, to unpause.
  */
-void Pause_Set(boolean yes);
+void Pause_Set(dd_bool yes);
 
 /**
  * Starts a forced pause period. Game time will not progress during the pause,

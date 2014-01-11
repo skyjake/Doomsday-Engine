@@ -117,7 +117,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * Returns true if the path component of the URI is empty; otherwise false.
      * @param uri  Uri instance.
      */
-    boolean (*IsEmpty)(Uri const* uri);
+    dd_bool (*IsEmpty)(Uri const* uri);
 
     /**
      * Clears the uri, returning it to an empty state.
@@ -220,7 +220,7 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param uri  Uri instance.
      * @param other  Other uri instance.
      */
-    boolean (*Equality)(Uri const* uri, Uri const* other);
+    dd_bool (*Equality)(Uri const* uri, Uri const* other);
 
     /**
      * Serialize @a uri using @a writer.

@@ -29,7 +29,7 @@
 #include <de/c_wrapper.h>
 
 static LPDIRECTINPUTDEVICE8 didMouse;
-static boolean mouseTrapped;
+static dd_bool mouseTrapped;
 static DIMOUSESTATE2 mstate; ///< Polled state.
 
 static int Mouse_Win32_Init()
@@ -208,7 +208,7 @@ static void Mouse_Win32_GetState(mousestate_t* state)
     oldZ = (int) mstate.lZ;
 }
 
-static void Mouse_Win32_Trap(boolean enabled)
+static void Mouse_Win32_Trap(dd_bool enabled)
 {
     LOG_AS("Mouse_Win32");
     DENG_ASSERT(didMouse);

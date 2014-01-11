@@ -34,7 +34,7 @@
 
 #include "h_player.h"
 
-extern boolean intermission;
+extern dd_bool intermission;
 extern int interState;
 extern int interTime;
 

@@ -29,7 +29,7 @@
 
 #include "network/net_main.h" // netGame
 
-boolean B_ParseToggleState(const char* toggleName, ebstate_t* state)
+dd_bool B_ParseToggleState(const char* toggleName, ebstate_t* state)
 {
     if(!strlen(toggleName) || !strcasecmp(toggleName, "down"))
     {
@@ -61,7 +61,7 @@ boolean B_ParseToggleState(const char* toggleName, ebstate_t* state)
     return false; // Not recognized.
 }
 
-boolean B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos)
+dd_bool B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos)
 {
     if(!strncasecmp(desc, "within", 6) && strlen(desc) > 6)
     {
@@ -91,7 +91,7 @@ boolean B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos)
     return true;
 }
 
-boolean B_ParseModifierId(const char* desc, int* id)
+dd_bool B_ParseModifierId(const char* desc, int* id)
 {
     *id = strtoul(desc, NULL, 10) - 1 + CTL_MODIFIER_1;
     if(*id < CTL_MODIFIER_1 || *id > CTL_MODIFIER_4)
@@ -102,7 +102,7 @@ boolean B_ParseModifierId(const char* desc, int* id)
     return true;
 }
 
-boolean B_ParseKeyId(const char* desc, int* id)
+dd_bool B_ParseKeyId(const char* desc, int* id)
 {
     // The possibilies: symbolic key name, or "codeNNN".
     if(!strncasecmp(desc, "code", 4) && strlen(desc) == 7)
@@ -136,7 +136,7 @@ boolean B_ParseKeyId(const char* desc, int* id)
     return true;
 }
 
-boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
+dd_bool B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
 {
     // Maybe it's one of the buttons?
     *id = I_GetKeyByName(I_GetDevice(IDEV_MOUSE), desc);
@@ -171,7 +171,7 @@ boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
     return true;
 }
 
-boolean B_ParseDeviceAxisTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
+dd_bool B_ParseDeviceAxisTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
 {
     inputdev_t *dev = I_GetDevice(device);
 
@@ -186,7 +186,7 @@ boolean B_ParseDeviceAxisTypeAndId(uint device, const char* desc, ddeventtype_t*
     return true;
 }
 
-boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
+dd_bool B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
 {
     if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6)
     {
@@ -224,7 +224,7 @@ boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
     return true;
 }
 
-boolean B_ParseAnglePosition(const char* desc, float* pos)
+dd_bool B_ParseAnglePosition(const char* desc, float* pos)
 {
     if(!strcasecmp(desc, "center"))
     {
@@ -245,7 +245,7 @@ boolean B_ParseAnglePosition(const char* desc, float* pos)
 /**
  * Parse a state condition.
  */
-boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
+dd_bool B_ParseStateCondition(statecondition_t* cond, const char* desc)
 {
     AutoStr* str = AutoStr_NewStd();
     ddeventtype_t type;
@@ -396,7 +396,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     return true;
 }
 
-boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
+dd_bool B_CheckAxisPos(ebstate_t test, float testPos, float pos)
 {
     switch(test)
     {
@@ -426,9 +426,9 @@ boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
     return true;
 }
 
-boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* context)
+dd_bool B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* context)
 {
-    boolean fulfilled = !cond->flags.negate;
+    dd_bool fulfilled = !cond->flags.negate;
     inputdev_t *dev = I_GetDevice(cond->device);
 
     switch(cond->type)
@@ -473,7 +473,7 @@ boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* conte
     return !fulfilled;
 }
 
-boolean B_EqualConditions(const statecondition_t* a, const statecondition_t* b)
+dd_bool B_EqualConditions(const statecondition_t* a, const statecondition_t* b)
 {
     return (a->device == b->device &&
             a->type == b->type &&

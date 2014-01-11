@@ -268,8 +268,8 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
 
     assert(src);
     {
-    boolean wrapH = (flags & ICF_UPSCALE_SAMPLE_WRAPH) != 0;
-    boolean wrapV = (flags & ICF_UPSCALE_SAMPLE_WRAPV) != 0;
+    dd_bool wrapH = (flags & ICF_UPSCALE_SAMPLE_WRAPH) != 0;
+    dd_bool wrapV = (flags & ICF_UPSCALE_SAMPLE_WRAPV) != 0;
     int pattern, flag, BpL, xA, xB, yA, yB;
     uint8_t* pOut, *dst;
     uint32_t w[10];

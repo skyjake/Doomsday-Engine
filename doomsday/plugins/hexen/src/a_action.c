@@ -583,7 +583,7 @@ void C_DECL A_CheckThrowBomb(mobj_t* actor)
  *      args[4]     TID of map thing for focus of quake
  */
 
-boolean A_LocalQuake(byte* args, mobj_t* actor)
+dd_bool A_LocalQuake(byte* args, mobj_t* actor)
 {
     mobj_t* focus, *target;
     int lastfound = 0;

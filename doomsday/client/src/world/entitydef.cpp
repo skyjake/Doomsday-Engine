@@ -251,13 +251,13 @@ static MapEntityDef *findMapEntityDef(int identifier, char const *entityName,
 }
 
 #undef P_RegisterMapObj
-DENG_EXTERN_C boolean P_RegisterMapObj(int identifier, char const *name)
+DENG_EXTERN_C dd_bool P_RegisterMapObj(int identifier, char const *name)
 {
     return findMapEntityDef(identifier, name, true /*do create*/) != 0;
 }
 
 #undef P_RegisterMapObjProperty
-DENG_EXTERN_C boolean P_RegisterMapObjProperty(int entityId, int propertyId,
+DENG_EXTERN_C dd_bool P_RegisterMapObjProperty(int entityId, int propertyId,
                                                char const *propertyName, valuetype_t type)
 {
     try

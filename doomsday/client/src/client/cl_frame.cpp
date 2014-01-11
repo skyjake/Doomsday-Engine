@@ -58,7 +58,7 @@ extern int gotFrame;
 // Set to true when the PSV_FIRST_FRAME2 packet is received.
 // Until then, all PSV_FRAME2 packets are ignored (they must be
 // from the wrong map).
-boolean gotFirstFrame;
+dd_bool gotFirstFrame;
 
 //int     predicted_tics;
 

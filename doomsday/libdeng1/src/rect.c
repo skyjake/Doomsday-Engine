@@ -99,7 +99,7 @@ RectRaw *Rect_Raw(Rect const *r, RectRaw *rawRect)
     return rawRect;
 }
 
-boolean Rect_IsNull(Rect const *r)
+dd_bool Rect_IsNull(Rect const *r)
 {
     DENG_ASSERT(r);
     return Size2_IsNull(r->size);
@@ -347,7 +347,7 @@ RectRaw *Rect_United(Rect const *rect, Rect const *other, RectRaw *united)
     return united;
 }
 
-boolean Rect_Equality(Rect const *r, Rect const *other)
+dd_bool Rect_Equality(Rect const *r, Rect const *other)
 {
     DENG_ASSERT(r);
     if(!other) return false;
@@ -422,7 +422,7 @@ RectRawf *Rectf_Raw(Rectf const *r, RectRawf *rawRect)
     return rawRect;
 }
 
-boolean Rectf_IsNull(Rectf const *r)
+dd_bool Rectf_IsNull(Rectf const *r)
 {
     DENG_ASSERT(r);
     return Size2f_IsNull(r->size);
@@ -670,7 +670,7 @@ RectRawf *Rectf_United(Rectf const *rect, Rectf const *other, RectRawf *united)
     return united;
 }
 
-boolean Rectf_Equality(Rectf const *r, Rectf const *other)
+dd_bool Rectf_Equality(Rectf const *r, Rectf const *other)
 {
     DENG_ASSERT(r);
     if(!other) return false;

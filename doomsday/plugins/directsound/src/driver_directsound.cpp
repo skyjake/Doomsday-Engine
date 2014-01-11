@@ -97,14 +97,14 @@ static void     commitEAXDeferred(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-static boolean initOk = false;
+static dd_bool initOk = false;
 
 static LPDIRECTSOUND8 dsound = NULL;
 static LPDIRECTSOUNDBUFFER primary = NULL;
 static LPDIRECTSOUND3DLISTENER8 dsListener = NULL;
 static LPKSPROPERTYSET propertySet = NULL;
-static boolean ignoreEAXErrors = false;
-static boolean canSetPSF = true;
+static dd_bool ignoreEAXErrors = false;
+static dd_bool canSetPSF = true;
 
 static DWORD failedProps[MAX_FAILED_PROPS];
 static int verbose = 0;
@@ -161,7 +161,7 @@ static IDirectSound3DBuffer8* get3DBuffer(IDirectSoundBuffer8* buf8)
  * @param prop          Property id (constant) to be checked.
  * @return              @c true, if supported.
  */
-static boolean queryEAXSupport(int prop)
+static dd_bool queryEAXSupport(int prop)
 {
 #define EAXSUP          (KSPROPERTY_SUPPORT_GET | KSPROPERTY_SUPPORT_SET)
 
@@ -209,9 +209,9 @@ int DS_Init(void)
     HWND                hWnd;
     HRESULT             hr;
     //uint                numHW3DBuffers = 0;
-    boolean             useEAX, eaxAvailable = false,
+    dd_bool             useEAX, eaxAvailable = false,
                         primaryBuffer3D = false, primaryBufferHW = false;
-    boolean             haveInstance = false;
+    dd_bool             haveInstance = false;
 
     if(dsound)
         return true; // Already initialized?
@@ -384,7 +384,7 @@ int DS_Init(void)
         if(propertySet)
         {
             size_t              i = 0;
-            boolean             ok = true;
+            dd_bool             ok = true;
 
             while(ok && eaxProps[i].prop != DSPROPERTY_EAXLISTENER_NONE)
             {
@@ -703,7 +703,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
 }
 
 /*
-static boolean InRange(uint pos, uint start, uint end)
+static dd_bool InRange(uint pos, uint start, uint end)
 {
     if(end > start)
     {
@@ -1021,7 +1021,7 @@ static void setEAXFailed(DWORD prop)
 /**
  * @return              @c true, if the specified property has failed.
  */
-static boolean hasEAXFailed(DWORD prop)
+static dd_bool hasEAXFailed(DWORD prop)
 {
     int                 i;
 
@@ -1035,7 +1035,7 @@ static boolean hasEAXFailed(DWORD prop)
 /**
  * @return              @c true, if an EAX error should be reported.
  */
-static boolean reportEAXError(DWORD prop, HRESULT hr)
+static dd_bool reportEAXError(DWORD prop, HRESULT hr)
 {
     if(ignoreEAXErrors)
         return false;

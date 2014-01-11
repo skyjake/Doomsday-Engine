@@ -52,9 +52,9 @@ PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT = NULL;
 PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT = NULL;
 #endif
 
-static boolean doneEarlyInit = false;
-static boolean inited = false;
-static boolean firstTimeInit = true;
+static dd_bool doneEarlyInit = false;
+static dd_bool inited = false;
+static dd_bool firstTimeInit = true;
 
 static void initialize(void)
 {
@@ -183,7 +183,7 @@ static void printGLUInfo(void)
     Sys_GLPrintExtensions();
 }
 
-boolean Sys_GLPreInit(void)
+dd_bool Sys_GLPreInit(void)
 {
     if(novideo) return true;
     if(doneEarlyInit) return true; // Already been here??
@@ -207,7 +207,7 @@ boolean Sys_GLPreInit(void)
     return true;
 }
 
-boolean Sys_GLInitialize(void)
+dd_bool Sys_GLInitialize(void)
 {
     if(novideo) return true;
 
@@ -421,7 +421,7 @@ void Sys_GLPrintExtensions(void)
 #endif
 }
 
-boolean Sys_GLCheckError()
+dd_bool Sys_GLCheckError()
 {
 #ifdef DENG_DEBUG
     if(!novideo)

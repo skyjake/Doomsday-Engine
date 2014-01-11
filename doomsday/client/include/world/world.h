@@ -161,6 +161,6 @@ private:
 
 } // namespace de
 
-DENG_EXTERN_C boolean ddMapSetup;
+DENG_EXTERN_C dd_bool ddMapSetup;
 
 #endif // DENG_WORLD_H

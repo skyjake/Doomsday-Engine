@@ -320,7 +320,7 @@ void GL_ModulateTexture(int mode)
     glBlendEquationEXT(op);
 }*/
 
-void GL_SetVSync(boolean on)
+void GL_SetVSync(dd_bool on)
 {
     // Outside the main thread we'll need to defer the call.
     if(!Sys_InMainThread())
@@ -349,7 +349,7 @@ void GL_SetVSync(boolean on)
 #endif
 }
 
-void GL_SetMultisample(boolean on)
+void GL_SetMultisample(dd_bool on)
 {
     if(!GL_state.features.multisample) return;
 
@@ -394,7 +394,7 @@ DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
 }
 
 #undef DGL_GetIntegerv
-boolean DGL_GetIntegerv(int name, int *v)
+dd_bool DGL_GetIntegerv(int name, int *v)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -458,7 +458,7 @@ int DGL_GetInteger(int name)
 }
 
 #undef DGL_SetInteger
-boolean DGL_SetInteger(int name, int value)
+dd_bool DGL_SetInteger(int name, int value)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -481,7 +481,7 @@ boolean DGL_SetInteger(int name, int value)
 }
 
 #undef DGL_GetFloatv
-boolean DGL_GetFloatv(int name, float *v)
+dd_bool DGL_GetFloatv(int name, float *v)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -541,7 +541,7 @@ float DGL_GetFloat(int name)
 }
 
 #undef DGL_SetFloat
-boolean DGL_SetFloat(int name, float value)
+dd_bool DGL_SetFloat(int name, float value)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -885,7 +885,7 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
 // dgl_draw.cpp
 DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode);
 DENG_EXTERN_C void DGL_End(void);
-DENG_EXTERN_C boolean DGL_NewList(DGLuint list, int mode);
+DENG_EXTERN_C dd_bool DGL_NewList(DGLuint list, int mode);
 DENG_EXTERN_C DGLuint DGL_EndList(void);
 DENG_EXTERN_C void DGL_CallList(DGLuint list);
 DENG_EXTERN_C void DGL_DeleteLists(DGLuint list, int range);
@@ -920,7 +920,7 @@ DENG_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int 
 
 // gl_draw.cpp
 DENG_EXTERN_C void GL_UseFog(int yes);
-DENG_EXTERN_C void GL_SetFilter(boolean enable);
+DENG_EXTERN_C void GL_SetFilter(dd_bool enable);
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a);
 DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
 DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);

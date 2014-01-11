@@ -53,7 +53,7 @@
 
 int novideo;                // if true, stay in text mode for debugging
 
-static boolean appShutdown = false; ///< Set to true when we should exit (normally).
+static dd_bool appShutdown = false; ///< Set to true when we should exit (normally).
 
 #ifdef DENG_CATCH_SIGNALS
 /**
@@ -110,7 +110,7 @@ void Sys_Init(void)
     LOGDEV_VERBOSE("Sys_Init completed in %.2f seconds") << (Timer_RealMilliseconds() - startTime) / 1000.0f;
 }
 
-boolean Sys_IsShuttingDown(void)
+dd_bool Sys_IsShuttingDown(void)
 {
     return appShutdown;
 }
@@ -241,7 +241,7 @@ void Sys_BlockUntilRealTime(uint realTimeMs)
     }
 }
 
-void Sys_ShowCursor(boolean show)
+void Sys_ShowCursor(dd_bool show)
 {
 #ifdef WIN32
     ShowCursor(show);

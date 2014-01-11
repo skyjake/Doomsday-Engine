@@ -48,9 +48,9 @@ typedef struct teaminfo_s {
 static teaminfo_t teamInfo[NUMTEAMS];
 
 // Used to accelerate or skip a stage.
-static boolean advanceState;
+static dd_bool advanceState;
 
-static boolean drawYouAreHere = false;
+static dd_bool drawYouAreHere = false;
 
 static int spState, dmState, ngState;
 
@@ -291,7 +291,7 @@ static void initDeathmatchStats(void)
 static void updateDeathmatchStats(void)
 {
     int i, j;
-    boolean stillTicking;
+    dd_bool stillTicking;
 
     if(advanceState && dmState != 4)
     {
@@ -490,7 +490,7 @@ static void initNetgameStats(void)
 
 static void updateNetgameStats(void)
 {
-    boolean stillTicking;
+    dd_bool stillTicking;
     int i, fsum;
 
     if(advanceState && ngState != 10)

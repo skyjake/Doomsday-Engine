@@ -45,10 +45,10 @@
 #define SFX_MAX_CHANNELS        (256)
 #define SFX_LOWEST_PRIORITY     (-1000)
 
-void Sfx_3DMode(boolean activate);
+void Sfx_3DMode(dd_bool activate);
 void Sfx_SampleFormat(int newBits, int newRate);
 
-boolean sfxAvail = false;
+dd_bool sfxAvail = false;
 
 int sfxMaxChannels = 16;
 int sfxDedicated2D = 4;
@@ -65,7 +65,7 @@ static mobj_t *listener;
 static SectorCluster *listenerCluster;
 
 static thread_t refreshHandle;
-static volatile boolean allowRefresh, refreshing;
+static volatile dd_bool allowRefresh, refreshing;
 
 static byte refMonitor;
 
@@ -126,7 +126,7 @@ int C_DECL Sfx_ChannelRefreshThread(void *parm)
 
 #endif // __CLIENT__
 
-void Sfx_AllowRefresh(boolean allow)
+void Sfx_AllowRefresh(dd_bool allow)
 {
     if(!sfxAvail) return;
     if(allowRefresh == allow) return; // No change.
@@ -557,7 +557,7 @@ void Sfx_GetChannelPriorities(float* prios)
         prios[i] = Sfx_ChannelPriority(channels + i);
 }
 
-sfxchannel_t* Sfx_ChannelFindVacant(boolean use3D, int bytes, int rate,
+sfxchannel_t* Sfx_ChannelFindVacant(dd_bool use3D, int bytes, int rate,
                                     int sampleID)
 {
     int                 i;
@@ -1021,7 +1021,7 @@ noRefresh:
     }
 }
 
-boolean Sfx_Init()
+dd_bool Sfx_Init()
 {
     // Already initialized?
     if(sfxAvail) return true;
@@ -1113,7 +1113,7 @@ void Sfx_RecreateChannels(void)
  * Swaps between 2D and 3D sound modes. Called automatically by
  * Sfx_StartFrame when cvar changes.
  */
-void Sfx_3DMode(boolean activate)
+void Sfx_3DMode(dd_bool activate)
 {
     static int old3DMode = false;
 

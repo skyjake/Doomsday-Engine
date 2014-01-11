@@ -131,13 +131,13 @@ D_CMD(WarpMap);
 
 void    G_PlayerReborn(int player);
 void    G_DoReborn(int playernum);
-boolean G_StartDebriefing();
+dd_bool G_StartDebriefing();
 
 typedef struct {
     Uri* mapUri;
     uint episode;
     uint map;
-    boolean revisit;
+    dd_bool revisit;
 } loadmap_params_t;
 int     G_DoLoadMap(loadmap_params_t* params);
 
@@ -174,7 +174,7 @@ game_config_t cfg; // The global cfg.
 
 skillmode_t dSkill; // Default.
 
-boolean gameInProgress;
+dd_bool gameInProgress;
 skillmode_t gameSkill;
 uint gameEpisode;
 uint gameMap;
@@ -186,7 +186,7 @@ uint nextMapEntryPoint;
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-boolean secretExit;
+dd_bool secretExit;
 #endif
 
 #if __JHEXEN__
@@ -194,21 +194,21 @@ uint mapHub = 0;
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-boolean respawnMonsters;
+dd_bool respawnMonsters;
 #endif
-boolean monsterInfight;
+dd_bool monsterInfight;
 
-boolean deathmatch; // Only if started as net death.
+dd_bool deathmatch; // Only if started as net death.
 player_t players[MAXPLAYERS];
 
 int mapStartTic; // Game tic at map start.
 int totalKills, totalItems, totalSecret; // For intermission.
 
-boolean singledemo; // Quit after playing a demo from cmdline.
-boolean briefDisabled = false;
+dd_bool singledemo; // Quit after playing a demo from cmdline.
+dd_bool briefDisabled = false;
 
-boolean precache = true; // If @c true, load all graphics at start.
-boolean customPal = false; // If @c true, a non-IWAD palette is in use.
+dd_bool precache = true; // If @c true, load all graphics at start.
+dd_bool customPal = false; // If @c true, a non-IWAD palette is in use.
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 wbstartstruct_t wmInfo; // Params for world map / intermission.
@@ -216,7 +216,7 @@ wbstartstruct_t wmInfo; // Params for world map / intermission.
 
 // Game Action Variables:
 int gaSaveGameSlot = 0;
-boolean gaSaveGameGenerateName = true;
+dd_bool gaSaveGameGenerateName = true;
 ddstring_t* gaSaveGameName;
 int gaLoadGameSlot = 0;
 
@@ -421,7 +421,7 @@ static uint dMap;
 static uint dMapEntryPoint;
 
 static gameaction_t gameAction;
-static boolean quitInProgress;
+static dd_bool quitInProgress;
 
 void G_Register(void)
 {
@@ -446,7 +446,7 @@ void G_Register(void)
 #endif
 }
 
-boolean G_QuitInProgress(void)
+dd_bool G_QuitInProgress(void)
 {
     return quitInProgress;
 }
@@ -1054,8 +1054,8 @@ int G_UIResponder(event_t* ev)
  */
 void G_ChangeGameState(gamestate_t state)
 {
-    boolean gameUIActive = false;
-    boolean gameActive = true;
+    dd_bool gameUIActive = false;
+    dd_bool gameActive = true;
 
     if(G_QuitInProgress()) return;
 
@@ -1097,7 +1097,7 @@ void G_ChangeGameState(gamestate_t state)
     }
 }
 
-boolean G_StartFinale(const char* script, int flags, finale_mode_t mode, const char* defId)
+dd_bool G_StartFinale(const char* script, int flags, finale_mode_t mode, const char* defId)
 {
     assert(script && script[0]);
     { uint i;
@@ -1296,7 +1296,7 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
 
 int G_DoLoadMap(loadmap_params_t *p)
 {
-    boolean hasMapInfo = false;
+    dd_bool hasMapInfo = false;
     ddmapinfo_t mapInfo;
 
     DENG_ASSERT(p);
@@ -1790,7 +1790,7 @@ void G_PlayerLeaveMap(int player)
     int flightPower;
 #endif
     player_t* p = &players[player];
-    boolean newCluster;
+    dd_bool newCluster;
 
 #if __JHEXEN__
     newCluster = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
@@ -1943,7 +1943,7 @@ void G_PlayerReborn(int player)
     int             i;
 #endif
 #if __JHERETIC__
-    boolean         secret = false;
+    dd_bool         secret = false;
     int             spot;
 #elif __JHEXEN__
     uint            worldTimer;
@@ -2206,9 +2206,9 @@ static void G_InitNewGame(void)
 }
 
 #if __JDOOM__ || __JDOOM64__
-static void G_ApplyGameRuleFastMonsters(boolean fast)
+static void G_ApplyGameRuleFastMonsters(dd_bool fast)
 {
-    static boolean oldFast = false;
+    static dd_bool oldFast = false;
     int i;
 
     // Only modify when the rule changes state.
@@ -2227,9 +2227,9 @@ static void G_ApplyGameRuleFastMonsters(boolean fast)
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-static void G_ApplyGameRuleFastMissiles(boolean fast)
+static void G_ApplyGameRuleFastMissiles(dd_bool fast)
 {
-    static boolean oldFast = false;
+    static dd_bool oldFast = false;
     int i;
 
     // Only modify when the rule changes state.
@@ -2276,7 +2276,7 @@ static void G_ApplyGameRules(skillmode_t skill)
     // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
     {
-        boolean fastMonsters = fastParm;
+        dd_bool fastMonsters = fastParm;
 # if __JDOOM__
         if(gameSkill == SM_NIGHTMARE) fastMonsters = true;
 # endif
@@ -2287,7 +2287,7 @@ static void G_ApplyGameRules(skillmode_t skill)
     // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
-        boolean fastMissiles = fastParm;
+        dd_bool fastMissiles = fastParm;
 # if !__JDOOM64__
         if(gameSkill == SM_NIGHTMARE) fastMissiles = true;
 # endif
@@ -2301,7 +2301,7 @@ static void G_ApplyGameRules(skillmode_t skill)
     }
 }
 
-void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
+void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 {
     if(IS_CLIENT || (cyclingMaps && mapCycleNoExit)) return;
 
@@ -2338,7 +2338,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 /**
  * @return              @c true, if the game has been completed.
  */
-boolean G_IfVictory(void)
+dd_bool G_IfVictory(void)
 {
 #if __JDOOM64__
     if(gameMap == 27)
@@ -2534,7 +2534,7 @@ void G_PrepareWIData(void)
  * Attempts to start the map debriefing InFine.
  * @return @c true, if InFine started; otherwise @c false.
  */
-boolean G_StartDebriefing()
+dd_bool G_StartDebriefing()
 {
     ddfinale_t fin;
 
@@ -2601,12 +2601,12 @@ void G_DoLeaveMap(void)
 {
 #if __JHEXEN__
     playerbackup_t playerBackup[MAXPLAYERS];
-    boolean oldRandomClassParm;
+    dd_bool oldRandomClassParm;
 #endif
     loadmap_params_t p;
     ddfinale_t fin;
-    boolean revisit = false;
-    boolean hasBrief;
+    dd_bool revisit = false;
+    dd_bool hasBrief;
 
     // Unpause the current game.
     Pause_End();
@@ -2798,12 +2798,12 @@ void G_DoRestartMap(void)
 #endif
 }
 
-boolean G_IsLoadGamePossible(void)
+dd_bool G_IsLoadGamePossible(void)
 {
     return !(IS_CLIENT && !Get(DD_PLAYBACK));
 }
 
-boolean G_LoadGame(int slot)
+dd_bool G_LoadGame(int slot)
 {
     if(!G_IsLoadGamePossible()) return false;
 
@@ -2832,7 +2832,7 @@ boolean G_LoadGame(int slot)
 void G_DoLoadGame(void)
 {
 #if __JHEXEN__
-    boolean mustCopyBaseToAutoSlot = (gaLoadGameSlot != AUTO_SLOT);
+    dd_bool mustCopyBaseToAutoSlot = (gaLoadGameSlot != AUTO_SLOT);
 #endif
 
     G_SetGameAction(GA_NONE);
@@ -2847,7 +2847,7 @@ void G_DoLoadGame(void)
 #endif
 }
 
-boolean G_IsSaveGamePossible(void)
+dd_bool G_IsSaveGamePossible(void)
 {
     player_t* player;
 
@@ -2860,7 +2860,7 @@ boolean G_IsSaveGamePossible(void)
     return true;
 }
 
-boolean G_SaveGame2(int slot, const char* name)
+dd_bool G_SaveGame2(int slot, const char* name)
 {
     if(0 > slot || slot >= NUMSAVESLOTS) return false;
     if(!G_IsSaveGamePossible()) return false;
@@ -2884,7 +2884,7 @@ boolean G_SaveGame2(int slot, const char* name)
     return true;
 }
 
-boolean G_SaveGame(int slot)
+dd_bool G_SaveGame(int slot)
 {
     return G_SaveGame2(slot, NULL);
 }
@@ -2942,7 +2942,7 @@ void G_DoSaveGame(void)
 {
     savestateworker_params_t p;
     const char* name;
-    boolean didSave;
+    dd_bool didSave;
 
     if(gaSaveGameName && !Str_IsEmpty(gaSaveGameName))
     {
@@ -3052,7 +3052,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 
     {
         loadmap_params_t p;
-        boolean hasBrief;
+        dd_bool hasBrief;
         ddfinale_t fin;
 
         p.mapUri        = G_ComposeMapUri(gameEpisode, gameMap);
@@ -3168,9 +3168,9 @@ Uri* G_ComposeMapUri(uint episode, uint map)
     return Uri_NewWithPath2(mapId, RC_NULL);
 }
 
-boolean G_ValidateMap(uint *episode, uint *map)
+dd_bool G_ValidateMap(uint *episode, uint *map)
 {
-    boolean ok = true;
+    dd_bool ok = true;
     AutoStr *path;
     Uri *uri;
 
@@ -3254,7 +3254,7 @@ boolean G_ValidateMap(uint *episode, uint *map)
     return ok;
 }
 
-uint G_GetNextMap(uint episode, uint map, boolean secretExit)
+uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
 {
 #if __JHEXEN__
     return G_GetMapNumber(episode, P_GetMapNextMap(map));
@@ -3559,7 +3559,7 @@ void G_StopDemo(void)
 
 int Hook_DemoStop(int hookType, int val, void* paramaters)
 {
-    boolean aborted = val != 0;
+    dd_bool aborted = val != 0;
 
     G_ChangeGameState(GS_WAITING);
 
@@ -3689,7 +3689,7 @@ int loadGameConfirmResponse(msgresponse_t response, int userValue, void* userPoi
 
 D_CMD(LoadGame)
 {
-    const boolean confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
+    const dd_bool confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
     int slot;
 
     if(G_QuitInProgress()) return false;
@@ -3773,7 +3773,7 @@ int saveGameConfirmResponse(msgresponse_t response, int userValue, void* userPoi
 
 D_CMD(SaveGame)
 {
-    const boolean confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    const dd_bool confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
     player_t* player = &players[CONSOLEPLAYER];
     int slot;
 
@@ -3806,7 +3806,7 @@ D_CMD(SaveGame)
     if(SV_IsUserWritableSlot(slot))
     {
         // A known slot identifier.
-        const boolean slotIsUsed = SV_IsSlotUsed(slot);
+        const dd_bool slotIsUsed = SV_IsSlotUsed(slot);
         SaveInfo* info = SV_SaveInfoForSlot(slot);
         ddstring_t localName, *name;
         AutoStr* msg;
@@ -3855,7 +3855,7 @@ D_CMD(QuickSaveGame)
     return DD_Execute(true, "savegame quick");
 }
 
-boolean G_DeleteSaveGame(int slot)
+dd_bool G_DeleteSaveGame(int slot)
 {
     SaveInfo* info;
 
@@ -3893,7 +3893,7 @@ int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void* u
 
 D_CMD(DeleteGameSave)
 {
-    const boolean confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    const dd_bool confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
     player_t* player = &players[CONSOLEPLAYER];
     int slot;
 
@@ -3976,7 +3976,7 @@ D_CMD(ListMaps)
  */
 D_CMD(WarpMap)
 {
-    boolean const forceNewGameSession = IS_NETGAME != 0;
+    dd_bool const forceNewGameSession = IS_NETGAME != 0;
     uint epsd, map, i;
 
     // Only server operators can warp maps in network games.

@@ -231,7 +231,7 @@ DENG_PUBLIC int Str_Length(Str const *ds);
  */
 DENG_PUBLIC size_t Str_Size(Str const *ds);
 
-DENG_PUBLIC boolean Str_IsEmpty(Str const *ds);
+DENG_PUBLIC dd_bool Str_IsEmpty(Str const *ds);
 
 /**
  * This is safe for all strings.
@@ -308,7 +308,7 @@ DENG_PUBLIC Str *Str_ReplaceAll(Str *ds, char from, char to);
  *
  * @return  @c true, if the string is found.
  */
-DENG_PUBLIC boolean Str_EndsWith(Str *ds, char const *text);
+DENG_PUBLIC dd_bool Str_EndsWith(Str *ds, char const *text);
 
 /**
  * Extract a line of text from the source.

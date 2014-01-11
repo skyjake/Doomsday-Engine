@@ -80,7 +80,7 @@ typedef struct {
 
 void T_Door(void *doorThinkerPtr);
 
-boolean EV_VerticalDoor(Line* li, mobj_t* mo);
+dd_bool EV_VerticalDoor(Line* li, mobj_t* mo);
 
 #if __JHEXEN__
 int EV_DoDoor(Line* li, byte* args, doortype_e type);

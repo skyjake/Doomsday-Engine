@@ -94,7 +94,7 @@ de::Vector3d Mobj_Center(mobj_t &mobj);
  *
  * @note Internal to the engine.
  */
-boolean Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
+dd_bool Mobj_SetOrigin(mobj_t *mobj, coord_t x, coord_t y, coord_t z);
 
 /**
  * Returns the map BSP leaf at the origin of the mobj. Note that the mobj must
@@ -142,7 +142,7 @@ SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj);
  * used to determine whether this origin should be adjusted with respect to
  * smoothed plane movement.
  */
-boolean Mobj_OriginBehindVisPlane(mobj_t *mobj);
+dd_bool Mobj_OriginBehindVisPlane(mobj_t *mobj);
 
 /**
  * To be called when lumobjs are disabled to perform necessary bookkeeping.
@@ -187,7 +187,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mobj, ModelDef **nextModef = 0,
 
 coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
 
-boolean Mobj_IsSectorLinked(mobj_t *mobj);
+dd_bool Mobj_IsSectorLinked(mobj_t *mobj);
 
 /**
  * @return  The current floatbob offset for the mobj, if the mobj is flagged

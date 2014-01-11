@@ -485,7 +485,7 @@ static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
  * message and play a sound before returning @c false.
  * Else, NOT a locked door and can be opened, return @c true.
  */
-static boolean tryLockedDoor(Line *line, player_t *p)
+static dd_bool tryLockedDoor(Line *line, player_t *p)
 {
     xline_t *xline = P_ToXLine(line);
 
@@ -567,7 +567,7 @@ static boolean tryLockedDoor(Line *line, player_t *p)
  * message and play a sound before returning @c false.
  * Else, NOT a locked door and can be opened, return @c true.
  */
-static boolean tryLockedManualDoor(Line* line, mobj_t* mo)
+static dd_bool tryLockedManualDoor(Line* line, mobj_t* mo)
 {
     xline_t*            xline = P_ToXLine(line);
     player_t*           p;
@@ -695,7 +695,7 @@ int EV_DoLockedDoor(Line *line, doortype_e type, mobj_t *thing)
 /**
  * Open a door manually, no tag value.
  */
-boolean EV_VerticalDoor(Line* line, mobj_t* mo)
+dd_bool EV_VerticalDoor(Line* line, mobj_t* mo)
 {
     xline_t*            xline;
     xsector_t*          xsec;

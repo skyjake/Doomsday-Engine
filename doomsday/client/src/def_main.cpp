@@ -59,7 +59,7 @@ typedef struct {
 void Def_ReadProcessDED(const char* filename);
 
 ded_t defs; // The main definitions database.
-boolean firstDED;
+dd_bool firstDED;
 
 sprname_t* sprNames; // Sprite name list.
 ded_count_t countSprNames;
@@ -85,7 +85,7 @@ ded_count_t countStateLights;
 ded_ptcgen_t** statePtcGens; // A pointer for each State.
 ded_count_t countStatePtcGens;
 
-static boolean defsInited = false;
+static dd_bool defsInited = false;
 static mobjinfo_t* gettingFor;
 
 xgclass_t nullXgClassLinks; // Used when none defined.
@@ -1962,7 +1962,7 @@ void Def_PostInit()
  * Can we reach 'snew' if we start searching from 'sold'?
  * Take a maximum of 16 steps.
  */
-boolean Def_SameStateSequence(state_t* snew, state_t* sold)
+dd_bool Def_SameStateSequence(state_t* snew, state_t* sold)
 {
     int it, target = snew - states, start = sold - states;
     int count = 0;

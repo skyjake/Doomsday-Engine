@@ -45,11 +45,11 @@ extern "C" {
 #endif
 
 void            N_MAPost(masteraction_t act);
-boolean         N_MADone(void);
+dd_bool         N_MADone(void);
 void            N_MAClear(void);
 
 void            N_NEPost(netevent_t * nev);
-boolean         N_NEPending(void);
+dd_bool         N_NEPending(void);
 void            N_NETicker(timespan_t time);
 
 void            N_TerminateClient(int console);

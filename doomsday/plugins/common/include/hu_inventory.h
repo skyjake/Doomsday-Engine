@@ -39,11 +39,11 @@ void            Hu_InventoryRegister(void);
 void            Hu_InventoryInit(void);
 void            Hu_InventoryTicker(void);
 
-void            Hu_InventoryOpen(int player, boolean show);
-boolean         Hu_InventoryIsOpen(int player);
-boolean         Hu_InventorySelect(int player, inventoryitemtype_t type);
-boolean         Hu_InventoryMove(int player, int dir, boolean canWrap,
-                                 boolean silent);
+void            Hu_InventoryOpen(int player, dd_bool show);
+dd_bool         Hu_InventoryIsOpen(int player);
+dd_bool         Hu_InventorySelect(int player, inventoryitemtype_t type);
+dd_bool         Hu_InventoryMove(int player, int dir, dd_bool canWrap,
+                                 dd_bool silent);
 void            Hu_InventoryDraw(int player, int x, int y, float textAlpha, float iconAlpha);
 void            Hu_InventoryDraw2(int player, int x, int y, float alpha);
 

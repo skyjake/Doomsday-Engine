@@ -434,7 +434,7 @@ void FileHandle_Close(struct filehandle_s* hndl)
     self->close();
 }
 
-boolean FileHandle_IsValid(struct filehandle_s const* hndl)
+dd_bool FileHandle_IsValid(struct filehandle_s const* hndl)
 {
     SELF_CONST(hndl);
     return self->isValid();
@@ -464,7 +464,7 @@ unsigned char FileHandle_GetC(struct filehandle_s* hndl)
     return self->getC();
 }
 
-boolean FileHandle_AtEnd(struct filehandle_s* hndl)
+dd_bool FileHandle_AtEnd(struct filehandle_s* hndl)
 {
     SELF(hndl);
     return self->atEnd();

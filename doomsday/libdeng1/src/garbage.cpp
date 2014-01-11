@@ -139,7 +139,7 @@ void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor)
     g->allocs[ptr] = destructor;
 }
 
-boolean Garbage_IsTrashed(void const *ptr)
+dd_bool Garbage_IsTrashed(void const *ptr)
 {
     if(!garbages) return false;
     Garbage *g = garbageForThread(Sys_CurrentThreadId());

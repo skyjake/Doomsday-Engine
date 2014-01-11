@@ -65,10 +65,10 @@ extern int gameDataFormat;
 
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);
-boolean DD_Init(void);
+dd_bool DD_Init(void);
 
 /// @return  @c true if shutdown is in progress.
-boolean DD_IsShuttingDown(void);
+dd_bool DD_IsShuttingDown(void);
 
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
@@ -108,7 +108,7 @@ void DD_SetActivePluginId(pluginid_t id);
  */
 pluginid_t DD_ActivePluginId(void);
 
-boolean DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
+dd_bool DD_ExchangeGamePluginEntryPoints(pluginid_t pluginId);
 
 /**
  * Locate the address of the named, exported procedure in the plugin.
@@ -159,7 +159,7 @@ de::ResourceClass &App_ResourceClass(de::String className);
 de::ResourceClass &App_ResourceClass(resourceclassid_t classId);
 
 /// @return  @c true iff there is presently a game loaded.
-boolean App_GameLoaded();
+dd_bool App_GameLoaded();
 
 /// @return  The current game from the application's global collection.
 de::Game &App_CurrentGame();

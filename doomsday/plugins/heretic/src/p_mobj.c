@@ -134,7 +134,7 @@ int P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta)
  *
  * @return              @c true, if target was tracked else @c false.
  */
-boolean P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
+dd_bool P_SeekerMissile(mobj_t* actor, angle_t thresh, angle_t turnMax)
 {
     int dir;
     uint an;
@@ -253,7 +253,7 @@ void P_MobjMoveXY(mobj_t *mo)
 {
     coord_t pos[2], mom[2];
     player_t *player;
-    boolean largeNegative;
+    dd_bool largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
@@ -503,7 +503,7 @@ void P_MobjMoveZ(mobj_t *mo)
     // The floor.
     if(mo->origin[VZ] <= mo->floorZ)
     {   // Hit the floor.
-        boolean             movingDown;
+        dd_bool             movingDown;
 
         // Note (id):
         //  somebody left this after the setting mom[MZ] to 0,
@@ -697,7 +697,7 @@ void P_MobjThinker(void *thinkerPtr)
         int i;
         coord_t frac[3];
         coord_t z;
-        boolean changexy;
+        dd_bool changexy;
 
         // Handle movement
         if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || !FEQUAL(mobj->mom[MZ], 0) ||
@@ -777,7 +777,7 @@ void P_MobjThinker(void *thinkerPtr)
         // Detect moves into invalid positions.
         /*
 #if _DEBUG
-        boolean beforeOk = P_CheckPosition(mobj, mobj->origin);
+        dd_bool beforeOk = P_CheckPosition(mobj, mobj->origin);
 #endif
         */
 
@@ -1124,7 +1124,7 @@ void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator)
 /**
  * @return @c true, if mobj contacted a non-solid floor.
  */
-boolean P_HitFloor(mobj_t* thing)
+dd_bool P_HitFloor(mobj_t* thing)
 {
     mobj_t* mo;
     const terraintype_t* tt;
@@ -1213,7 +1213,7 @@ boolean P_HitFloor(mobj_t* thing)
  * @return  @c true, if the missile is at a valid spawn point,
  *          otherwise; explode it and return @false.
  */
-boolean P_CheckMissileSpawn(mobj_t *mo)
+dd_bool P_CheckMissileSpawn(mobj_t *mo)
 {
     // Move a little forward so an angle can be computed if it immediately
     // explodes
@@ -1242,7 +1242,7 @@ boolean P_CheckMissileSpawn(mobj_t *mo)
     return true;
 }
 
-mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, boolean checkSpawn)
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, dd_bool checkSpawn)
 {
     coord_t pos[3];
     mobj_t* th = 0;

@@ -61,7 +61,7 @@ DENG_PUBLIC void Point2_Delete(Point2 *point);
 
 DENG_PUBLIC Point2Raw *Point2_Raw(Point2 const *point, Point2Raw *rawPoint);
 
-DENG_PUBLIC boolean Point2_IsNull(Point2 const *point);
+DENG_PUBLIC dd_bool Point2_IsNull(Point2 const *point);
 
 DENG_PUBLIC int Point2_X(Point2 const *point);
 DENG_PUBLIC int Point2_Y(Point2 const *point);
@@ -79,7 +79,7 @@ DENG_PUBLIC void Point2_TranslateY(Point2 *point, int y);
 
 DENG_PUBLIC void Point2_Sum(Point2 *point, Point2 const *other);
 
-DENG_PUBLIC boolean Point2_Equality(Point2 const *point, Point2 const *other);
+DENG_PUBLIC dd_bool Point2_Equality(Point2 const *point, Point2 const *other);
 
 /**
  * 2D point with floating point values. A handy POD structure for easy
@@ -114,7 +114,7 @@ DENG_PUBLIC void Point2f_Delete(Point2f *point);
 
 DENG_PUBLIC Point2Rawf *Point2f_Raw(Point2f const *point, Point2Rawf *rawPoint);
 
-DENG_PUBLIC boolean Point2f_IsNull(Point2f const *point);
+DENG_PUBLIC dd_bool Point2f_IsNull(Point2f const *point);
 
 DENG_PUBLIC double Point2f_X(Point2f const *point);
 DENG_PUBLIC double Point2f_Y(Point2f const *point);
@@ -132,7 +132,7 @@ DENG_PUBLIC void Point2f_TranslateY(Point2f *point, double y);
 
 DENG_PUBLIC void Point2f_Sum(Point2f *point, Point2f const *other);
 
-DENG_PUBLIC boolean Point2f_Equality(Point2f const *point, Point2f const *other);
+DENG_PUBLIC dd_bool Point2f_Equality(Point2f const *point, Point2f const *other);
 
 /**
  * 3D point with integer values. A handy POD structure for easy manipulation of
@@ -165,7 +165,7 @@ DENG_PUBLIC void Point3_Delete(Point3 *point);
 
 DENG_PUBLIC Point3Raw *Point3_Raw(Point3 const *point, Point3Raw *rawPoint);
 
-DENG_PUBLIC boolean Point3_IsNull(Point3 const *point);
+DENG_PUBLIC dd_bool Point3_IsNull(Point3 const *point);
 
 DENG_PUBLIC int Point3_X(Point3 const *point);
 DENG_PUBLIC int Point3_Y(Point3 const *point);
@@ -185,7 +185,7 @@ DENG_PUBLIC void Point3_TranslateZ(Point3 *point, int z);
 
 DENG_PUBLIC void Point3_Sum(Point3 *point, Point3 const *other);
 
-DENG_PUBLIC boolean Point3_Equality(Point3 const *point, Point3 const *other);
+DENG_PUBLIC dd_bool Point3_Equality(Point3 const *point, Point3 const *other);
 
 /**
  * 3D point with floating point values. A handy POD structure for easy
@@ -219,7 +219,7 @@ DENG_PUBLIC void Point3f_Delete(Point3f *point);
 
 DENG_PUBLIC Point3Rawf *Point3f_Raw(Point3f const *point, Point3Rawf *rawPoint);
 
-DENG_PUBLIC boolean Point3f_IsNull(Point3f const *point);
+DENG_PUBLIC dd_bool Point3f_IsNull(Point3f const *point);
 
 DENG_PUBLIC double Point3f_X(Point3f const *point);
 DENG_PUBLIC double Point3f_Y(Point3f const *point);
@@ -239,7 +239,7 @@ DENG_PUBLIC void Point3f_TranslateZ(Point3f *point, double z);
 
 DENG_PUBLIC void Point3f_Sum(Point3f *point, Point3f const *other);
 
-DENG_PUBLIC boolean Point3f_Equality(Point3f const *point, Point3f const *other);
+DENG_PUBLIC dd_bool Point3f_Equality(Point3f const *point, Point3f const *other);
 
 #ifdef __cplusplus
 } // extern "C"

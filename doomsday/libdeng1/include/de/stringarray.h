@@ -167,7 +167,7 @@ DENG_PUBLIC Str *StringArray_StringAt(StringArray *ar, int index);
  *
  * @note Performance is O(n).
  */
-DENG_PUBLIC boolean StringArray_Contains(StringArray const *ar, char const *str);
+DENG_PUBLIC dd_bool StringArray_Contains(StringArray const *ar, char const *str);
 
 /**
  * Serializes the array of strings using @a writer.

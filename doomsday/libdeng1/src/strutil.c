@@ -134,11 +134,11 @@ char* M_SkipLine(char* str)
     return str;
 }
 
-boolean M_IsStringValidInt(const char* str)
+dd_bool M_IsStringValidInt(const char* str)
 {
     size_t i, len;
     const char* c;
-    boolean isBad;
+    dd_bool isBad;
 
     if(!str)
         return false;
@@ -158,7 +158,7 @@ boolean M_IsStringValidInt(const char* str)
     return !isBad;
 }
 
-boolean M_IsStringValidByte(const char* str)
+dd_bool M_IsStringValidByte(const char* str)
 {
     if(M_IsStringValidInt(str))
     {
@@ -169,11 +169,11 @@ boolean M_IsStringValidByte(const char* str)
     return false;
 }
 
-boolean M_IsStringValidFloat(const char* str)
+dd_bool M_IsStringValidFloat(const char* str)
 {
     size_t i, len;
     const char* c;
-    boolean isBad, foundDP = false;
+    dd_bool isBad, foundDP = false;
 
     if(!str)
         return false;
@@ -200,7 +200,7 @@ boolean M_IsStringValidFloat(const char* str)
     return !isBad;
 }
 
-boolean M_IsComment(const char* buffer)
+dd_bool M_IsComment(const char* buffer)
 {
     int i = 0;
 
@@ -256,7 +256,7 @@ char* M_StrCatQuoted(char* dest, const char* src, size_t len)
 char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
                       char separator, size_t bufLength)
 {
-    boolean         isEmpty = !buf[0];
+    dd_bool         isEmpty = !buf[0];
     size_t          length;
 
     // How long is this name?

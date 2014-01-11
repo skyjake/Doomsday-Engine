@@ -30,7 +30,7 @@
 using namespace de;
 
 #undef Textures_UniqueId2
-DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, boolean quiet)
+DENG_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, dd_bool quiet)
 {
     LOG_AS("Textures_UniqueId");
     if(!_uri) return -1;
@@ -206,7 +206,7 @@ DENG_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
 
 #undef R_GetColorPaletteRGBubv
 DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t rgb[3],
-    boolean applyTexGamma)
+    dd_bool applyTexGamma)
 {
     LOG_AS("R_GetColorPaletteRGBubv");
 
@@ -241,7 +241,7 @@ DENG_EXTERN_C void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int color
 
 #undef R_GetColorPaletteRGBf
 DENG_EXTERN_C void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorIdx, float rgb[3],
-    boolean applyTexGamma)
+    dd_bool applyTexGamma)
 {
     LOG_AS("R_GetColorPaletteRGBf");
 
@@ -319,7 +319,7 @@ DENG_EXTERN_C patchid_t R_DeclarePatch(char const *encodedName)
 }
 
 #undef R_GetPatchInfo
-DENG_EXTERN_C boolean R_GetPatchInfo(patchid_t id, patchinfo_t *info)
+DENG_EXTERN_C dd_bool R_GetPatchInfo(patchid_t id, patchinfo_t *info)
 {
     DENG2_ASSERT(info);
     LOG_AS("R_GetPatchInfo");

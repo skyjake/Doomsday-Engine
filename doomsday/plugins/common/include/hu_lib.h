@@ -276,7 +276,7 @@ int MNObject_Font(mn_object_t* obj);
 /// @return  Index of the color used from the owning/active page.
 int MNObject_Color(mn_object_t* obj);
 
-boolean MNObject_IsGroupMember(const mn_object_t* obj, int group);
+dd_bool MNObject_IsGroupMember(const mn_object_t* obj, int group);
 
 int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e command);
 
@@ -288,7 +288,7 @@ const mn_actioninfo_t* MNObject_Action(mn_object_t*obj, mn_actionid_t action);
 
 /// @return  @c true if this object has a registered executeable action
 /// associated with the unique identifier @a action.
-boolean MNObject_HasAction(mn_object_t* obj, mn_actionid_t action);
+dd_bool MNObject_HasAction(mn_object_t* obj, mn_actionid_t action);
 
 /**
  * Execute the action associated with @a id
@@ -528,7 +528,7 @@ int MNText_SetFlags(mn_object_t* ob, flagop_t op, int flags);
  * Buttons.
  */
 typedef struct mndata_button_s {
-    boolean staydownMode; /// @c true= this is operating in two-state "staydown" mode.
+    dd_bool staydownMode; /// @c true= this is operating in two-state "staydown" mode.
 
     void* data;
 
@@ -657,7 +657,7 @@ int MNList_Selection(mn_object_t* ob);
 int MNList_ItemData(const mn_object_t* obj, int index);
 
 /// @return  @c true if the currently selected item is presently visible.
-boolean MNList_SelectionIsVisible(mn_object_t* ob);
+dd_bool MNList_SelectionIsVisible(mn_object_t* ob);
 
 /// @return  Index of the found item associated with @a dataValue else -1.
 int MNList_FindItem(const mn_object_t* ob, int dataValue);
@@ -683,7 +683,7 @@ void MNListInline_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
  * @param itemIndex  Index of the new selection.
  * @return  @c true if the selected item changed.
  */
-boolean MNList_SelectItem(mn_object_t* ob, int flags, int itemIndex);
+dd_bool MNList_SelectItem(mn_object_t* ob, int flags, int itemIndex);
 
 /**
  * Change the currently selected item by looking up its data value.
@@ -691,7 +691,7 @@ boolean MNList_SelectItem(mn_object_t* ob, int flags, int itemIndex);
  * @param dataValue  Value associated to the candidate item being selected.
  * @return  @c true if the selected item changed.
  */
-boolean MNList_SelectItemByValue(mn_object_t* ob, int flags, int itemIndex);
+dd_bool MNList_SelectItemByValue(mn_object_t* ob, int flags, int itemIndex);
 
 /**
  * Color preview box.
@@ -704,7 +704,7 @@ typedef struct mndata_colorbox_s {
     /// dimensions will be used instead.
     int width, height;
     float r, g, b, a;
-    boolean rgbaMode;
+    dd_bool rgbaMode;
     void* data1;
     void* data2;
     void* data3;
@@ -720,7 +720,7 @@ int MNColorBox_CommandResponder(mn_object_t* ob, menucommand_e command);
 void MNColorBox_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 /// @return  @c true if this colorbox is operating in RGBA mode.
-boolean MNColorBox_RGBAMode(mn_object_t* ob);
+dd_bool MNColorBox_RGBAMode(mn_object_t* ob);
 
 /// @return  Current red color component.
 float MNColorBox_Redf(const mn_object_t* ob);
@@ -749,33 +749,33 @@ float MNColorBox_Alphaf(const mn_object_t* ob);
  *              is not operating in "rgba mode".
  * @return  @c true if the current color changed.
  */
-boolean MNColorBox_SetColor4fv(mn_object_t* ob, int flags, float rgba[4]);
-boolean MNColorBox_SetColor4f(mn_object_t* ob, int flags, float red, float green,
+dd_bool MNColorBox_SetColor4fv(mn_object_t* ob, int flags, float rgba[4]);
+dd_bool MNColorBox_SetColor4f(mn_object_t* ob, int flags, float red, float green,
     float blue, float alpha);
 
 /// Change the current red color component.
 /// @return  @c true if the value changed.
-boolean MNColorBox_SetRedf(mn_object_t* ob, int flags, float red);
+dd_bool MNColorBox_SetRedf(mn_object_t* ob, int flags, float red);
 
 /// Change the current green color component.
 /// @return  @c true if the value changed.
-boolean MNColorBox_SetGreenf(mn_object_t* ob, int flags, float green);
+dd_bool MNColorBox_SetGreenf(mn_object_t* ob, int flags, float green);
 
 /// Change the current blue color component.
 /// @return  @c true if the value changed.
-boolean MNColorBox_SetBluef(mn_object_t* ob, int flags, float blue);
+dd_bool MNColorBox_SetBluef(mn_object_t* ob, int flags, float blue);
 
 /// Change the current alpha value. Note: will be NOP if this colorbox
 /// is not operating in "rgba mode".
 /// @return  @c true if the value changed.
-boolean MNColorBox_SetAlphaf(mn_object_t* ob, int flags, float alpha);
+dd_bool MNColorBox_SetAlphaf(mn_object_t* ob, int flags, float alpha);
 
 /**
  * Copy the current color from @a other.
  * @param flags  @ref mncolorboxSetColorFlags
  * @return  @c true if the current color changed.
  */
-boolean MNColorBox_CopyColor(mn_object_t* ob, int flags, const mn_object_t* otherObj);
+dd_bool MNColorBox_CopyColor(mn_object_t* ob, int flags, const mn_object_t* otherObj);
 
 /**
  * Graphical slider.
@@ -802,7 +802,7 @@ typedef struct mndata_slider_s {
     float min, max;
     float value;
     float step; // Button step.
-    boolean floatMode; // Otherwise only integers are allowed.
+    dd_bool floatMode; // Otherwise only integers are allowed.
     /// \todo Turn this into a property record or something.
     void* data1;
     void* data2;
@@ -889,7 +889,7 @@ short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
 mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
 
-void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor);
+void MN_DrawPage(mn_page_t* page, float alpha, dd_bool showFocusCursor);
 
 /**
  * Execute a menu navigation/action command.
@@ -1092,12 +1092,12 @@ typedef struct {
     int faceIndex; // Current face index, used by wFaces.
     int lastAttackDown;
     int priority;
-    boolean oldWeaponsOwned[NUM_WEAPON_TYPES];
+    dd_bool oldWeaponsOwned[NUM_WEAPON_TYPES];
 } guidata_face_t;
 #endif
 
 typedef struct {
-    boolean keyBoxes[NUM_KEY_TYPES];
+    dd_bool keyBoxes[NUM_KEY_TYPES];
 } guidata_keys_t;
 
 #if __JDOOM__ || __JHERETIC__
@@ -1202,7 +1202,7 @@ typedef struct {
 
 typedef struct {
     patchid_t patchId;
-    boolean hitCenterFrame;
+    dd_bool hitCenterFrame;
 } guidata_flight_t;
 #endif
 

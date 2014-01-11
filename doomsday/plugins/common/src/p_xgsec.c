@@ -228,7 +228,7 @@ void XF_Init(Sector *sec, function_t *fn, char *func, int min, int max,
     fn->oldValue = -scale + offset;
 }
 
-int C_DECL XLTrav_LineAngle(Line* line, boolean dummy, void* context,
+int C_DECL XLTrav_LineAngle(Line* line, dd_bool dummy, void* context,
     void* context2, mobj_t* activator)
 {
     Sector* sec = (Sector *) context;
@@ -416,7 +416,7 @@ void XS_PlaneSound(Plane* pln, int soundId)
     S_PlaneSound(pln, soundId);
 }
 
-void XS_MoverStopped(xgplanemover_t *mover, boolean done)
+void XS_MoverStopped(xgplanemover_t *mover, dd_bool done)
 {
     xline_t    *origin = P_ToXLine(mover->origin);
 
@@ -472,9 +472,9 @@ void XS_PlaneMover(xgplanemover_t* mover)
     coord_t ceil  = P_GetDoublep(mover->sector, DMU_CEILING_HEIGHT);
     coord_t floor = P_GetDoublep(mover->sector, DMU_FLOOR_HEIGHT);
     xsector_t* xsec = P_ToXSector(mover->sector);
-    boolean docrush = (mover->flags & PMF_CRUSH) != 0;
-    boolean follows = (mover->flags & PMF_OTHER_FOLLOWS) != 0;
-    boolean setorig = (mover->flags & PMF_SET_ORIGINAL) != 0;
+    dd_bool docrush = (mover->flags & PMF_CRUSH) != 0;
+    dd_bool follows = (mover->flags & PMF_OTHER_FOLLOWS) != 0;
+    dd_bool setorig = (mover->flags & PMF_SET_ORIGINAL) != 0;
 
     // Play movesound when timer goes to zero.
     if(mover->timer-- <= 0)
@@ -584,7 +584,7 @@ void XS_PlaneMover(xgplanemover_t* mover)
 
 typedef struct {
     Sector*             sec;
-    boolean             ceiling;
+    dd_bool             ceiling;
 } stopplanemoverparams_t;
 
 static int stopPlaneMover(thinker_t* th, void* context)
@@ -606,7 +606,7 @@ static int stopPlaneMover(thinker_t* th, void* context)
  * Returns a new thinker for handling the specified plane. Removes any
  * existing thinkers associated with the plane.
  */
-xgplanemover_t *XS_GetPlaneMover(Sector *sec, boolean ceiling)
+xgplanemover_t *XS_GetPlaneMover(Sector *sec, dd_bool ceiling)
 {
     xgplanemover_t*     mover;
     stopplanemoverparams_t params;
@@ -626,7 +626,7 @@ xgplanemover_t *XS_GetPlaneMover(Sector *sec, boolean ceiling)
     return mover;
 }
 
-void XS_ChangePlaneMaterial(Sector *sector, boolean ceiling,
+void XS_ChangePlaneMaterial(Sector *sector, dd_bool ceiling,
                             Material* mat, float *rgb)
 {
     XG_Dev("XS_ChangePlaneMaterial: Sector %i, %s, texture %i",
@@ -738,7 +738,7 @@ int XS_TextureHeight(Line* line, int part)
     int minfloor = 0, maxfloor = 0, maxceil = 0;
     Sector* front = P_GetPtrp(line, DMU_FRONT_SECTOR);
     Sector* back = P_GetPtrp(line, DMU_BACK_SECTOR);
-    boolean twosided = front && back;
+    dd_bool twosided = front && back;
     Material* mat;
 
     if(part != LWS_MID && !twosided)
@@ -950,7 +950,7 @@ int findSectorExtremalMaterialHeight(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-boolean XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
+dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
     coord_t* height, Material** mat, Sector** planeSector)
 {
     Material* otherMat;
@@ -1218,7 +1218,7 @@ boolean XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
     if(ref >= SPREF_MIN_BOTTOM_MATERIAL && ref <= SPREF_MAX_TOP_MATERIAL)
     {
         int part;
-        boolean findMin;
+        dd_bool findMin;
         findsectorextremalmaterialheightparams_t params;
 
         // Which part of the wall are we looking at?
@@ -1320,7 +1320,7 @@ boolean XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
  * should be chosen (the same way it works for FIND(act)TAGGED). If that
  * happens to be zero - so be it.
  */
-int C_DECL XSTrav_HighestSectorType(Sector *sec, boolean ceiling,
+int C_DECL XSTrav_HighestSectorType(Sector *sec, dd_bool ceiling,
                                     void *context, void *context2,
                                     mobj_t *activator)
 {
@@ -1342,7 +1342,7 @@ void XS_InitMovePlane(Line *line)
     xline->xg->idata = true; // Play sound.
 };
 
-int C_DECL XSTrav_MovePlane(Sector *sector, boolean ceiling, void *context,
+int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
                             void *context2, mobj_t *activator)
 {
     Line*           line = (Line *) context;
@@ -1351,7 +1351,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, boolean ceiling, void *context,
     int             st;
     Material*       mat;
     xline_t*        xline = P_ToXLine(line);
-    boolean         playsound;
+    dd_bool         playsound;
 
     playsound = xline->xg->idata;
 
@@ -1487,7 +1487,7 @@ void XS_InitStairBuilder(Line *line)
     }
 }
 
-boolean XS_DoBuild(Sector* sector, boolean ceiling, Line* origin,
+dd_bool XS_DoBuild(Sector* sector, dd_bool ceiling, Line* origin,
                    linetype_t* info, uint stepcount)
 {
     static coord_t firstheight;
@@ -1632,11 +1632,11 @@ static void markBuiltSectors(void)
     }
 }
 
-static boolean spreadBuildToNeighborAll(Line *origin, linetype_t *info,
-    boolean picstop, boolean ceiling, Material *myMat, int stepCount)
+static dd_bool spreadBuildToNeighborAll(Line *origin, linetype_t *info,
+    dd_bool picstop, dd_bool ceiling, Material *myMat, int stepCount)
 {
     int i;
-    boolean result = false;
+    dd_bool result = false;
     spreadbuildparams_t params;
 
     params.baseMat = myMat;
@@ -1735,12 +1735,12 @@ int findBuildNeighbor(void* ptr, void* context)
     return false; // Continue iteration.
 }
 
-boolean spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
-    boolean picstop, boolean ceiling, Material *myMat, int stepcount,
+dd_bool spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
+    dd_bool picstop, dd_bool ceiling, Material *myMat, int stepcount,
     Sector *foundSec)
 {
     int i;
-    boolean result = false;
+    dd_bool result = false;
     findbuildneighborparams_t params;
 
     params.baseMat = myMat;
@@ -1783,7 +1783,7 @@ boolean spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
     return result;
 }
 
-int C_DECL XSTrav_BuildStairs(Sector* sector, boolean ceiling,
+int C_DECL XSTrav_BuildStairs(Sector* sector, dd_bool ceiling,
                               void* context, void* context2,
                               mobj_t* activator)
 {
@@ -1791,8 +1791,8 @@ int C_DECL XSTrav_BuildStairs(Sector* sector, boolean ceiling,
     Line*               origin = (Line *) context;
     linetype_t*         info = context2;
     Sector*             foundSec = NULL;
-    boolean             picstop = info->iparm[2] != 0;
-    boolean             spread = info->iparm[3] != 0;
+    dd_bool             picstop = info->iparm[2] != 0;
+    dd_bool             spread = info->iparm[3] != 0;
     Material*           myMat;
 
     XG_Dev("XSTrav_BuildStairs: Sector %i, %s", P_ToIndex(sector),
@@ -1810,7 +1810,7 @@ int C_DECL XSTrav_BuildStairs(Sector* sector, boolean ceiling,
 
     if(spread)
     {
-        boolean             found;
+        dd_bool             found;
 
         do
         {
@@ -1824,7 +1824,7 @@ int C_DECL XSTrav_BuildStairs(Sector* sector, boolean ceiling,
     }
     else
     {
-        boolean             found;
+        dd_bool             found;
 
         do
         {
@@ -1847,7 +1847,7 @@ int C_DECL XSTrav_BuildStairs(Sector* sector, boolean ceiling,
     return true; // Continue searching for planes...
 }
 
-int C_DECL XSTrav_SectorSound(Sector* sec, boolean ceiling, void* context,
+int C_DECL XSTrav_SectorSound(Sector* sec, dd_bool ceiling, void* context,
     void* context2, mobj_t* activator)
 {
     linetype_t* info = context2;
@@ -1868,7 +1868,7 @@ int C_DECL XSTrav_SectorSound(Sector* sec, boolean ceiling, void* context,
     return true;
 }
 
-int C_DECL XSTrav_PlaneMaterial(Sector *sec, boolean ceiling,
+int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling,
                                 void *context, void *context2,
                                 mobj_t *activator)
 {
@@ -1903,7 +1903,7 @@ int C_DECL XSTrav_PlaneMaterial(Sector *sec, boolean ceiling,
     return true;
 }
 
-int C_DECL XSTrav_SectorType(Sector* sec, boolean ceiling,
+int C_DECL XSTrav_SectorType(Sector* sec, dd_bool ceiling,
                              void* context, void* context2,
                              mobj_t* activator)
 {
@@ -1913,7 +1913,7 @@ int C_DECL XSTrav_SectorType(Sector* sec, boolean ceiling,
     return true;
 }
 
-int C_DECL XSTrav_SectorLight(Sector* sector, boolean ceiling,
+int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool ceiling,
                               void* context, void* context2,
                               mobj_t* activator)
 {
@@ -2056,7 +2056,7 @@ int C_DECL XSTrav_SectorLight(Sector* sector, boolean ceiling,
     return true;
 }
 
-int C_DECL XSTrav_MimicSector(Sector *sector, boolean ceiling,
+int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool ceiling,
                               void *context, void *context2,
                               mobj_t *activator)
 {
@@ -2118,11 +2118,11 @@ int C_DECL XSTrav_MimicSector(Sector *sector, boolean ceiling,
     return true;
 }
 
-int C_DECL XSTrav_Teleport(Sector* sector, boolean ceiling, void* context,
+int C_DECL XSTrav_Teleport(Sector* sector, dd_bool ceiling, void* context,
                            void* context2, mobj_t* thing)
 {
     mobj_t*         mo = NULL;
-    boolean         ok = false;
+    dd_bool         ok = false;
     linetype_t*     info = context2;
 
     // Don't teleport things marked noteleport!
@@ -2336,7 +2336,7 @@ float XF_GetValue(function_t * fn, int pos)
  * Repeat counting is handled here.
  * Poke should be true only if fn->pos is really about to move.
  */
-int XF_FindNextPos(function_t *fn, int pos, boolean poke, Sector *sec)
+int XF_FindNextPos(function_t *fn, int pos, dd_bool poke, Sector *sec)
 {
     int         startpos = pos;
     int         c;
@@ -2518,7 +2518,7 @@ void XS_UpdatePlanes(Sector* sec)
     int i;
     xgsector_t* xg;
     function_t* fn;
-    boolean docrush;
+    dd_bool docrush;
 
     xg = P_ToXSector(sec)->xg;
     docrush = (xg->info.flags & STF_CRUSH) != 0;
@@ -2671,14 +2671,14 @@ void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
     P_FreeDummyLine(dummyLine);
 }
 
-static boolean checkChainRequirements(Sector* sec, mobj_t* mo, int ch,
-                                      boolean* activating)
+static dd_bool checkChainRequirements(Sector* sec, mobj_t* mo, int ch,
+                                      dd_bool* activating)
 {
     xgsector_t*         xg;
     sectortype_t*       info;
     player_t*           player = mo->player;
     int                 flags;
-    boolean             typePasses = false;
+    dd_bool             typePasses = false;
 
     xg = P_ToXSector(sec)->xg;
     info = &xg->info;
@@ -2739,7 +2739,7 @@ int XSTrav_SectorChain(thinker_t *th, void *context)
 
     if(params->sec == Mobj_Sector(mo))
     {
-        boolean activating;
+        dd_bool activating;
 
         if(checkChainRequirements(params->sec, mo, params->data, &activating))
             XS_DoChain(params->sec, params->data, activating, mo);
@@ -3061,9 +3061,9 @@ D_CMD(DumpXG)
  */
 D_CMD(MovePlane)
 {
-    boolean isCeiling = !stricmp(argv[0], "moveceil");
-    boolean isBoth = !stricmp(argv[0], "movesec");
-    boolean isOffset = false, isCrusher = false;
+    dd_bool isCeiling = !stricmp(argv[0], "moveceil");
+    dd_bool isBoth = !stricmp(argv[0], "movesec");
+    dd_bool isOffset = false, isCrusher = false;
     Sector* sector = NULL;
     coord_t units = 0;
     float speed = FRACUNIT;

@@ -141,11 +141,11 @@ void T_Light(light_t *light)
     }
 }
 
-boolean EV_SpawnLight(Line *line, byte *arg, lighttype_t type)
+dd_bool EV_SpawnLight(Line *line, byte *arg, lighttype_t type)
 {
     int         arg1, arg2, arg3, arg4;
-    boolean     think = false;
-    boolean     rtn = false;
+    dd_bool     think = false;
+    dd_bool     rtn = false;
     light_t    *light;
     Sector     *sec = NULL;
     iterlist_t *list;

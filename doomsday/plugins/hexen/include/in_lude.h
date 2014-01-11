@@ -32,7 +32,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-extern boolean  intermission;
+extern dd_bool  intermission;
 extern int interState;
 
 /// To be called to register the console commands and variables of this module.

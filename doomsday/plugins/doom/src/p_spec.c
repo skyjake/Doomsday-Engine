@@ -142,9 +142,9 @@ static animdef_t animsShared[] = {
  * The standard list of switches and animations is contained in the example
  * source text file DEFSWANI.DAT also in the BOOM util distribution.
  */
-static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
+static void loadAnimDefs(animdef_t* animDefs, dd_bool isCustom)
 {
-    boolean lastIsTexture = false; // Shut up compiler!
+    dd_bool lastIsTexture = false; // Shut up compiler!
     ddstring_t framePath, startPath, endPath;
     Uri* frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
     Uri* startUri = Uri_New();
@@ -158,7 +158,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
     // Read structures until -1 is found
     for(i = 0; animDefs[i].istexture != -1 ; ++i)
     {
-        boolean isTexture = animDefs[i].istexture != 0;
+        dd_bool isTexture = animDefs[i].istexture != 0;
         int groupNum, ticsPerFrame, numFrames;
         int startFrame, endFrame, n;
 
@@ -248,7 +248,7 @@ void P_InitPicAnims(void)
     loadAnimDefs(animsShared, false);
 }
 
-boolean P_ActivateLine(Line* ld, mobj_t* mo, int side, int actType)
+dd_bool P_ActivateLine(Line* ld, mobj_t* mo, int side, int actType)
 {
     // Clients do not activate lines.
     if(IS_CLIENT) return false;
@@ -290,7 +290,7 @@ static void crossSpecialLine(Line* line, int side, mobj_t* thing)
     // Triggers that other things can activate.
     if(!thing->player)
     {
-        boolean ok = false;
+        dd_bool ok = false;
 
         // Things that should NOT trigger specials...
         switch(thing->type)
@@ -914,7 +914,7 @@ void P_SpawnAllSpecialThinkers(void)
     P_SpawnLineSpecialThinkers();
 }
 
-boolean P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
+dd_bool P_UseSpecialLine2(mobj_t* mo, Line* line, int side)
 {
     xline_t*            xline = P_ToXLine(line);
 

@@ -61,7 +61,7 @@ using namespace de;
 #define TOP                     (1)
 
 typedef struct edge_s {
-    boolean done;
+    dd_bool done;
     Line *line;
     Sector *sector;
     float length;

@@ -62,12 +62,12 @@ enum {
 };
 
 typedef struct {
-    boolean inited;
-    boolean stopped;
+    dd_bool inited;
+    dd_bool stopped;
     int hideTics;
     float hideAmount;
     float alpha; // Fullscreen hud alpha value.
-    boolean statusbarActive; // Whether the HUD is on.
+    dd_bool statusbarActive; // Whether the HUD is on.
     int automapCheatLevel; /// \todo Belongs in player state?
 
     int widgetGroupIds[NUM_UIWIDGET_GROUPS];
@@ -75,7 +75,7 @@ typedef struct {
     int chatWidgetId;
     int logWidgetId;
 
-    boolean firstTime;  // ST_Start() has just been called.
+    dd_bool firstTime;  // ST_Start() has just been called.
     int currentFragsCount; // Number of frags so far in deathmatch.
 
     // Other:
@@ -199,7 +199,7 @@ int ST_Responder(event_t* ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    const boolean isSharpTic = DD_IsSharpTick();
+    const dd_bool isSharpTic = DD_IsSharpTick();
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -303,7 +303,7 @@ void ST_doRefresh(int player)
 }
 
 void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
-    float scale, float alpha, boolean flip, int* drawnWidth, int* drawnHeight)
+    float scale, float alpha, dd_bool flip, int* drawnWidth, int* drawnHeight)
 {
     spriteinfo_t info;
 
@@ -881,7 +881,7 @@ int ST_ChatResponder(int player, event_t* ev)
     return false;
 }
 
-boolean ST_ChatIsActive(int player)
+dd_bool ST_ChatIsActive(int player)
 {
     uiwidget_t* obj = ST_UIChatForPlayer(player);
     if(NULL != obj)
@@ -944,21 +944,21 @@ void ST_LogUpdateAlignment(void)
 #endif
 }
 
-void ST_AutomapOpen(int player, boolean yes, boolean fast)
+void ST_AutomapOpen(int player, dd_bool yes, dd_bool fast)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return;
     UIAutomap_Open(obj, yes, fast);
 }
 
-boolean ST_AutomapIsActive(int player)
+dd_bool ST_AutomapIsActive(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
     return UIAutomap_Active(obj);
 }
 
-boolean ST_AutomapObscures2(int player, const RectRaw* region)
+dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -989,7 +989,7 @@ boolean ST_AutomapObscures2(int player, const RectRaw* region)
     return false;
 }
 
-boolean ST_AutomapObscures(int player, int x, int y, int width, int height)
+dd_bool ST_AutomapObscures(int player, int x, int y, int width, int height)
 {
     RectRaw rect;
     rect.origin.x = x;
@@ -1027,7 +1027,7 @@ int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z)
     return newPoint;
 }
 
-boolean ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z)
+dd_bool ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -1051,7 +1051,7 @@ float ST_AutomapOpacity(int player)
     return UIAutomap_Opacity(obj);
 }
 
-void ST_SetAutomapCameraRotation(int player, boolean on)
+void ST_SetAutomapCameraRotation(int player, dd_bool on)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return;
@@ -1084,14 +1084,14 @@ void ST_SetAutomapCheatLevel(int player, int level)
     setAutomapCheatLevel(obj, level);
 }
 
-void ST_RevealAutomap(int player, boolean on)
+void ST_RevealAutomap(int player, dd_bool on)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return;
     UIAutomap_SetReveal(obj, on);
 }
 
-boolean ST_AutomapHasReveal(int player)
+dd_bool ST_AutomapHasReveal(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;

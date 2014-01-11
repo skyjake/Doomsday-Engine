@@ -50,7 +50,7 @@ typedef struct {
     int             tics;
     int             waitTics;
     podoortype_t    type;
-    boolean         close;
+    dd_bool         close;
 } polydoor_t;
 
 typedef struct polyobj_s {
@@ -77,21 +77,21 @@ extern "C" {
  */
 void PO_InitForMap(void);
 
-boolean PO_Busy(int tag);
+dd_bool PO_Busy(int tag);
 
-boolean PO_FindAndCreatePolyobj(int tag, boolean crush, float startX, float startY);
+dd_bool PO_FindAndCreatePolyobj(int tag, dd_bool crush, float startX, float startY);
 
 void T_PolyDoor(void *pd);
 
 void T_RotatePoly(void *pe);
 
-boolean EV_RotatePoly(Line *line, byte *args, int direction, boolean override);
+dd_bool EV_RotatePoly(Line *line, byte *args, int direction, dd_bool override);
 
 void T_MovePoly(void *pe);
 
-boolean EV_MovePoly(Line *line, byte *args, boolean timesEight, boolean override);
+dd_bool EV_MovePoly(Line *line, byte *args, dd_bool timesEight, dd_bool override);
 
-boolean EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type);
+dd_bool EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type);
 
 #ifdef __cplusplus
 } // extern "C"

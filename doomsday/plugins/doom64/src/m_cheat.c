@@ -74,7 +74,7 @@ void Cht_GiveAmmoFunc(player_t* plr);
 void Cht_GiveKeysFunc(player_t* plr);
 void Cht_NoClipFunc(player_t* plr);
 void Cht_GiveArmorFunc(player_t* plr);
-boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat);
+dd_bool Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -86,7 +86,7 @@ boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat);
 
 // CODE --------------------------------------------------------------------
 
-static boolean cheatsEnabled(void)
+static dd_bool cheatsEnabled(void)
 {
     return !IS_NETGAME;
 }
@@ -153,7 +153,7 @@ void Cht_NoClipFunc(player_t* plr)
     P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
 }
 
-boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
+dd_bool Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
 {
     static const char args[] = { 'v', 's', 'i', 'r', 'a', 'l' };
     size_t i, numArgs = sizeof(args) / sizeof(args[0]);

@@ -39,16 +39,16 @@
 
 /// Enables or disables busy mode; if disabled, work is done synchronously
 /// in the main thread.
-void BusyMode_SetAllowed(boolean allow);
+void BusyMode_SetAllowed(dd_bool allow);
 
 /// @return  @c true if specified thread is the current busy task worker.
-boolean BusyMode_IsWorkerThread(uint threadId);
+dd_bool BusyMode_IsWorkerThread(uint threadId);
 
 /// @return  @c true if the current thread is the busy task worker.
-boolean BusyMode_InWorkerThread(void);
+dd_bool BusyMode_InWorkerThread(void);
 
 #ifdef __CLIENT__
-boolean BusyMode_IsTransitionAnimated(void);
+dd_bool BusyMode_IsTransitionAnimated(void);
 #endif
 
 /// @return  Current busy task, else @c NULL.

@@ -47,9 +47,9 @@ void            NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, floa
 void            NetSv_SendMessage(int plrNum, const char *msg);
 void            NetSv_SendYellowMessage(int plrNum, const char *msg);
 void            NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
-                                      boolean reliable);
+                                      dd_bool reliable);
 void            NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum,
-                                       int flags, boolean reliable);
+                                       int flags, dd_bool reliable);
 void            NetSv_TellCycleRulesToPlayerAfterTics(int destPlr, int tics);
 void            NetSv_PlayerMobjImpulse(mobj_t* mobj, float mx, float my, float mz);
 void            NetSv_Sound(mobj_t *origin, int sound_id, int toPlr);   // toPlr=0: broadcast.
@@ -57,7 +57,7 @@ void            NetSv_SoundAtVolume(mobj_t *origin, int sound_id, int volume,
                                     int toPlr);
 void            NetSv_Intermission(int flags, int state, int time);
 /*
-void            NetSv_Finale(int flags, const char* script, const boolean* conds,
+void            NetSv_Finale(int flags, const char* script, const dd_bool* conds,
                              byte numConds); // moved to engine
  */
 void            NetSv_ChangePlayerInfo(int from, Reader* reader);
@@ -67,7 +67,7 @@ void            NetSv_SaveGame(unsigned int game_id);
 void            NetSv_LoadGame(unsigned int game_id);
 void            NetSv_LoadReply(int plnum, int console);
 void            NetSv_FragsForAll(player_t* player);
-void            NetSv_KillMessage(player_t* killer, player_t* fragged, boolean stomping);
+void            NetSv_KillMessage(player_t* killer, player_t* fragged, dd_bool stomping);
 void            NetSv_UpdateGameConfigDescription(void);
 
 /**

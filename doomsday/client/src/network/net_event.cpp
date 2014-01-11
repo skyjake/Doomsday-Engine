@@ -62,7 +62,7 @@ void N_MAPost(masteraction_t act)
 /**
  * Get a master action command from the queue.
  */
-boolean N_MAGet(masteraction_t *act)
+dd_bool N_MAGet(masteraction_t *act)
 {
     // Empty queue?
     if(mqHead == mqTail)
@@ -93,7 +93,7 @@ void N_MAClear(void)
 /**
  * @return              @c true, if the master action command queue is empty.
  */
-boolean N_MADone(void)
+dd_bool N_MADone(void)
 {
     return (mqHead == mqTail);
 }
@@ -116,7 +116,7 @@ void N_NEPost(netevent_t * nev)
  * @return              @c true if there are net events waiting to be
  *                      processed.
  */
-boolean N_NEPending(void)
+dd_bool N_NEPending(void)
 {
     return neqHead != neqTail;
 }
@@ -126,7 +126,7 @@ boolean N_NEPending(void)
  *
  * @return              @c true, if an event was returned.
  */
-boolean N_NEGet(netevent_t *nev)
+dd_bool N_NEGet(netevent_t *nev)
 {
     // Empty queue?
     if(!N_NEPending())

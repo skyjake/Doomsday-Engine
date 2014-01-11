@@ -51,7 +51,7 @@ typedef struct sfxchannel_s {
     int             startTime; // When was the channel last started?
 } sfxchannel_t;
 
-extern boolean sfxAvail;
+extern dd_bool sfxAvail;
 extern float sfxReverbStrength;
 extern int sfxMaxCacheKB, sfxMaxCacheTics;
 extern int sfx3D, sfx16Bit, sfxSampleRate;
@@ -61,7 +61,7 @@ extern int sfx3D, sfx16Bit, sfxSampleRate;
  * drivers and the channels, and initializing the sound cache. Returns
  * true if the module is operational after the init.
  */
-boolean Sfx_Init(void);
+dd_bool Sfx_Init(void);
 
 /**
  * Shut down the whole Sfx module: drivers, channel buffers and the cache.
@@ -79,7 +79,7 @@ void Sfx_Reset(void);
  * allowRefresh). We still have to see if a refresh is being made and wait
  * for it to stop. Then we can suspend the refresh thread.
  */
-void Sfx_AllowRefresh(boolean allow);
+void Sfx_AllowRefresh(dd_bool allow);
 
 /**
  * Must be done before the map is changed (from P_SetupMap, via

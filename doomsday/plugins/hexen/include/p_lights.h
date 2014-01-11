@@ -76,7 +76,7 @@ void            P_SpawnPhasedLight(Sector* sec, float base, int index);
 void            T_Light(light_t* light);
 void            P_SpawnLightSequence(Sector* sec, int indexStep);
 
-boolean         EV_SpawnLight(Line* line, byte* arg, lighttype_t type);
+dd_bool         EV_SpawnLight(Line* line, byte* arg, lighttype_t type);
 
 #ifdef __cplusplus
 } // extern "C"

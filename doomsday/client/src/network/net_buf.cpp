@@ -34,7 +34,7 @@
 
 #define MSG_MUTEX_NAME  "MsgQueueMutex"
 
-boolean allowSending;
+dd_bool allowSending;
 netbuffer_t netBuffer;
 
 // The message queue: list of incoming messages waiting for processing.
@@ -94,7 +94,7 @@ void N_Shutdown(void)
  *
  * @return          @c true, if successful.
  */
-boolean N_LockQueue(boolean doAcquire)
+dd_bool N_LockQueue(dd_bool doAcquire)
 {
     if(doAcquire)
         Sys_Lock(msgMutex);
@@ -343,7 +343,7 @@ netmessage_t *N_GetNextMessage(void)
  *
  * @return          @c true, if a message successfull.
  */
-boolean N_GetPacket(void)
+dd_bool N_GetPacket(void)
 {
     netmessage_t *msg;
 

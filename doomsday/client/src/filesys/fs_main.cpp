@@ -1301,7 +1301,7 @@ void F_ResetFileIds(void)
     App_FileSystem().resetFileIds();
 }
 
-boolean F_CheckFileId(char const* nativePath)
+dd_bool F_CheckFileId(char const* nativePath)
 {
     return App_FileSystem().checkFileId(de::Uri::fromNativePath(nativePath));
 }
@@ -1335,7 +1335,7 @@ void F_ReleaseFile(struct file1_s* file)
     App_FileSystem().releaseFile(*reinterpret_cast<de::File1*>(file));
 }
 
-struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, boolean allowDuplicate)
+struct filehandle_s* F_Open3(char const* nativePath, char const* mode, size_t baseOffset, dd_bool allowDuplicate)
 {
     try
     {
@@ -1370,7 +1370,7 @@ struct filehandle_s* F_OpenLump(lumpnum_t lumpNum)
     return 0;
 }
 
-boolean F_IsValidLumpNum(lumpnum_t lumpNum)
+dd_bool F_IsValidLumpNum(lumpnum_t lumpNum)
 {
     return App_FileSystem().nameIndex().isValidIndex(lumpNum);
 }
@@ -1437,7 +1437,7 @@ AutoStr* F_ComposePath(struct file1_s const* _file)
     return AutoStr_FromTextStd(path.constData());
 }
 
-void F_SetCustom(struct file1_s* file, boolean yes)
+void F_SetCustom(struct file1_s* file, dd_bool yes)
 {
     if(!file) return;
     reinterpret_cast<de::File1*>(file)->setCustom(CPP_BOOL(yes));
@@ -1544,7 +1544,7 @@ AutoStr* F_ComposeLumpFilePath(lumpnum_t lumpNum)
     return AutoStr_NewStd();
 }
 
-boolean F_LumpIsCustom(lumpnum_t lumpNum)
+dd_bool F_LumpIsCustom(lumpnum_t lumpNum)
 {
     try
     {
@@ -1672,16 +1672,16 @@ uint F_LoadedFilesCRC(void)
 // fs_util.cpp
 extern int F_FileExists(char const *path);
 extern uint F_GetLastModified(char const *path);
-extern boolean F_MakePath(char const *path);
+extern dd_bool F_MakePath(char const *path);
 extern void F_FileName(ddstring_t *dst, char const *src);
 extern void F_ExtractFileBase(char *dest, char const *path, size_t len);
 extern const char* F_FindFileExtension(char const *path);
-extern boolean F_TranslatePath(ddstring_t *dst, ddstring_t const *src);
+extern dd_bool F_TranslatePath(ddstring_t *dst, ddstring_t const *src);
 extern const char* F_PrettyPath(char const *path);
 
 // m_misc.c
 DENG_EXTERN_C size_t M_ReadFile(char const *name, char **buffer);
-DENG_EXTERN_C boolean M_WriteFile(char const *name, char const *source, size_t length);
+DENG_EXTERN_C dd_bool M_WriteFile(char const *name, char const *source, size_t length);
 
 DENG_DECLARE_API(F) =
 {

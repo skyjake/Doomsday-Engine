@@ -94,7 +94,7 @@ typedef enum {
 typedef struct {
     thinker_t       thinker;
     floortype_e     type;
-    boolean         crush;
+    dd_bool         crush;
     Sector*         sector;
     floorstate_e    state;
     int             newSpecial;

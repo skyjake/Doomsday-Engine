@@ -41,7 +41,7 @@
  * @return  @c true, if the process has been stopped. Otherwise @c false,
  * the process is still running.
  */
-boolean Updater_AskToStopProcess(char const *processName, char const *message);
+dd_bool Updater_AskToStopProcess(char const *processName, char const *message);
 
 #endif // WIN32
 

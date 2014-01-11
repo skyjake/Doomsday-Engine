@@ -165,7 +165,7 @@ typedef struct {
     blendmode_t blendMode;
     float glowStrength, glowSize;
     glowtype_t glow;
-    boolean scaleWithView;
+    dd_bool scaleWithView;
 } automapcfg_lineinfo_t;
 
 typedef struct automapcfg_s {
@@ -181,7 +181,7 @@ typedef struct automapcfg_s {
 void ST_InitAutomapConfig(void);
 automapcfg_t* ST_AutomapConfig(void);
 
-void AM_GetMapColor(float* rgb, const float* uColor, int palidx, boolean customPal);
+void AM_GetMapColor(float* rgb, const float* uColor, int palidx, dd_bool customPal);
 
 const automapcfg_lineinfo_t* AM_GetInfoForLine(automapcfg_t* mcfg, automapcfg_objectname_t name);
 

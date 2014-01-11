@@ -21,7 +21,6 @@
 
 #include <de/Script>
 #include <de/Process>
-#include <de/ScriptLex>
 
 namespace de {
 

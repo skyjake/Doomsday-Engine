@@ -112,12 +112,12 @@ void Pause_Register(void)
     C_VAR_INT("game-pause-mapstart-tics", &gamePauseAfterMapStartTics, 0,            -1, 70);
 }
 
-boolean Pause_IsPaused(void)
+dd_bool Pause_IsPaused(void)
 {
     return (paused != 0) || (!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()));
 }
 
-boolean Pause_IsUserPaused(void)
+dd_bool Pause_IsUserPaused(void)
 {
     return (paused != 0) && !(paused & PAUSEF_FORCED_PERIOD);
 }
@@ -132,7 +132,7 @@ D_CMD(Pause)
     return true;
 }
 
-void Pause_Set(boolean yes)
+void Pause_Set(dd_bool yes)
 {
     // Can we start a pause?
     if(Hu_MenuIsActive() || Hu_IsMessageActive() || IS_CLIENT)
@@ -164,7 +164,7 @@ void Pause_Ticker(void)
     checkForcedPeriod();
 }
 
-boolean Pause_Responder(event_t *ev)
+dd_bool Pause_Responder(event_t *ev)
 {
     if(ev->type == EV_FOCUS)
     {

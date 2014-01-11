@@ -89,7 +89,7 @@ de::gl::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *conten
  */
 void GL_DeferTextureUpload(struct texturecontent_s const *content);
 
-void GL_DeferSetVSync(boolean enableVSync);
+void GL_DeferSetVSync(dd_bool enableVSync);
 
 #ifdef __cplusplus
 extern "C" {

@@ -55,7 +55,7 @@ void IterList_Clear(iterlist_t *list);
 
 int IterList_Size(iterlist_t *list);
 
-boolean IterList_Empty(iterlist_t *list);
+dd_bool IterList_Empty(iterlist_t *list);
 
 /// @return  Current pointer being pointed at.
 void* IterList_MoveIterator(iterlist_t *list);

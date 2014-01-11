@@ -712,8 +712,8 @@ public:
      */
     TextureVariantSpec const &textureSpec(texturevariantusagecontext_t tc,
         int flags, byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
-        int magFilter, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
-        boolean noStretch, boolean toAlpha);
+        int magFilter, int anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
+        dd_bool noStretch, dd_bool toAlpha);
 
     /**
      * Prepare a TextureVariantSpecification according to usage context. If the

@@ -28,13 +28,13 @@
 #include "dd_version.h"
 #include "network/net_main.h"
 
+#include <de/ProgressWidget>
+#include <de/SignalAction>
+#include <de/Log>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDir>
 #include <QUrl>
-#include <de/ProgressWidget>
-#include <de/SignalAction>
-#include <de/Log>
 
 #ifdef WIN32
 #  undef open

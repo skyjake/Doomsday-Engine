@@ -131,12 +131,12 @@ DENG_PUBLIC float V2f_Project(pvec2f_t dest, const_pvec2f_t a, const_pvec2f_t b)
 /**
  * @return  @c true, if the two vectors are parallel.
  */
-DENG_PUBLIC boolean V2f_IsParallel(const_pvec2f_t a, const_pvec2f_t b);
+DENG_PUBLIC dd_bool V2f_IsParallel(const_pvec2f_t a, const_pvec2f_t b);
 
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-DENG_PUBLIC boolean V2f_IsZero(const_pvec2f_t vec);
+DENG_PUBLIC dd_bool V2f_IsZero(const_pvec2f_t vec);
 
 /**
  * The line must be exactly one unit long!
@@ -160,7 +160,7 @@ DENG_PUBLIC float V2f_Intercept(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f
 /**
  * @return  @c true, if the two lines intercept.
  */
-DENG_PUBLIC boolean V2f_Intercept2(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f_t c, const_pvec2f_t d, pvec2f_t point, float *abFrac, float *cdFrac);
+DENG_PUBLIC dd_bool V2f_Intercept2(const_pvec2f_t a, const_pvec2f_t b, const_pvec2f_t c, const_pvec2f_t d, pvec2f_t point, float *abFrac, float *cdFrac);
 
 /**
  * Linear interpolation between a and b, by c.
@@ -299,12 +299,12 @@ DENG_PUBLIC double V2d_ProjectOnLine(pvec2d_t dest, const_pvec2d_t point,
 /**
  * @return  @c true, if the two vectors are parallel.
  */
-DENG_PUBLIC boolean V2d_IsParallel(const_pvec2d_t a, const_pvec2d_t b);
+DENG_PUBLIC dd_bool V2d_IsParallel(const_pvec2d_t a, const_pvec2d_t b);
 
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-DENG_PUBLIC boolean V2d_IsZero(const_pvec2d_t vec);
+DENG_PUBLIC dd_bool V2d_IsZero(const_pvec2d_t vec);
 
 /**
  * Determine where the two lines cross each other.  Notice that the
@@ -323,7 +323,7 @@ DENG_PUBLIC double V2d_Intercept(const_pvec2d_t a, const_pvec2d_t b, const_pvec2
 /**
  * @return  @c true, if the two lines intercept.
  */
-DENG_PUBLIC boolean V2d_Intercept2(const_pvec2d_t a, const_pvec2d_t b, const_pvec2d_t c, const_pvec2d_t d, pvec2d_t point, double *abFrac, double *cdFrac);
+DENG_PUBLIC dd_bool V2d_Intercept2(const_pvec2d_t a, const_pvec2d_t b, const_pvec2d_t c, const_pvec2d_t d, pvec2d_t point, double *abFrac, double *cdFrac);
 
 /**
  * Linear interpolation between a and b, by c.
@@ -454,7 +454,7 @@ DENG_PUBLIC int V3f_MajorAxis(const_pvec3f_t vec);
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-DENG_PUBLIC boolean V3f_IsZero(const_pvec3f_t vec);
+DENG_PUBLIC dd_bool V3f_IsZero(const_pvec3f_t vec);
 
 /**
  * Linear interpolation between a and b, by c.
@@ -562,7 +562,7 @@ int V3d_MajorAxis(const_pvec3d_t vec);
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-DENG_PUBLIC boolean V3d_IsZero(const_pvec3d_t vec);
+DENG_PUBLIC dd_bool V3d_IsZero(const_pvec3d_t vec);
 
 /**
  * Linear interpolation between a and b, by c.
@@ -639,7 +639,7 @@ DENG_PUBLIC void V4f_Subtract(pvec4f_t dest, const_pvec4f_t src1, const_pvec4f_t
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-DENG_PUBLIC boolean V4f_IsZero(const_pvec4f_t vec);
+DENG_PUBLIC dd_bool V4f_IsZero(const_pvec4f_t vec);
 
 /**
  * Linear interpolation between a and b, by c.
@@ -698,7 +698,7 @@ DENG_PUBLIC void V4d_Subtract(pvec4d_t dest, const_pvec4d_t src1, const_pvec4d_t
 /**
  * @return  @c true, if the vector is a zero vector.
  */
-DENG_PUBLIC boolean V4d_IsZero(const_pvec4d_t vec);
+DENG_PUBLIC dd_bool V4d_IsZero(const_pvec4d_t vec);
 
 /**
  * Linear interpolation between a and b, by c.

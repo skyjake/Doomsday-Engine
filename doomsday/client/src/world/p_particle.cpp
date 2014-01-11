@@ -69,7 +69,7 @@ float particleSpawnRate = 1; // Unmodified.
 
 static AABoxd mbox;
 static fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
-static boolean tmcross;
+static dd_bool tmcross;
 static Line *ptcHitLine;
 
 static int releaseGeneratorParticles(ptcgen_t *gen, void *parameters)

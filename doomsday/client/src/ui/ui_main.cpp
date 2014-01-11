@@ -50,14 +50,14 @@ static int listThumbPos(ui_object_t* ob);
 static void strCpyLen(char* dest, const char* src, int maxWidth);
 
 extern int glMaxTexSize;
-extern boolean stopTime;
-extern boolean tickUI;
-//extern boolean drawGame;
+extern dd_bool stopTime;
+extern dd_bool tickUI;
+//extern dd_bool drawGame;
 
 fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
-static boolean uiActive; /// The user interface is active.
-static boolean uiNoMouse;
+static dd_bool uiActive; /// The user interface is active.
+static dd_bool uiNoMouse;
 static ui_page_t* uiCurrentPage = 0; /// Currently active page.
 static int uiFontHgt; /// Height of the UI font.
 static int uiCX, uiCY; /// Cursor position.
@@ -70,7 +70,7 @@ static float uiAlpha = 1.0; /// Main alpha for the entire UI.
 static float uiTargetAlpha = 1.0; // Target alpha for the entire UI.
 
 /// The game view should be drawn while the UI active.
-static boolean uiDrawGame = false;
+static dd_bool uiDrawGame = false;
 
 static float uiCursorWidthMul = 0.75;
 static float uiCursorHeightMul = 0.75;
@@ -89,7 +89,7 @@ static ui_color_t ui_colors[NUM_UI_COLORS] = {
     /* UIC_HELP */      { .4f, .4f, .52f }
 };
 
-static boolean allowEscape; /// Allow the user to exit a ui page using the escape key.
+static dd_bool allowEscape; /// Allow the user to exit a ui page using the escape key.
 
 void UI_Register(void)
 {
@@ -204,7 +204,7 @@ de::MaterialVariantSpec const &UI_MaterialSpec(int texSpecFlags)
                                              1, 1, 0, false, false, false, false);
 }
 
-void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame, boolean noescape)
+void UI_PageInit(dd_bool halttime, dd_bool tckui, dd_bool tckframe, dd_bool drwgame, dd_bool noescape)
 {
     if(uiActive)
         return;
@@ -279,7 +279,7 @@ void UI_End(void)
     }
 }
 
-boolean UI_IsActive(void)
+dd_bool UI_IsActive(void)
 {
     return uiActive;
 }
@@ -816,7 +816,7 @@ int UIPage_Responder(ui_page_t* page, ddevent_t* ev)
 
 void UIPage_Ticker(ui_page_t* page)
 {
-    boolean fadedAway = false;
+    dd_bool fadedAway = false;
     ui_object_t* ob;
     uint i;
 
@@ -1027,7 +1027,7 @@ void UIButton_Drawer(ui_object_t* ob)
     int act = (ob->flags & UIF_ACTIVE) != 0;
     int click = (ob->flags & UIF_CLICKED) != 0;
     Point2Raw labelOrigin;
-    boolean down = act || click;
+    dd_bool down = act || click;
     ui_color_t back;
     float t = ob->timer / 15.0f;
     float alpha = (dis ? .2f : 1);
@@ -1597,7 +1597,7 @@ int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
 {
     uidata_slider_t* dat = (uidata_slider_t*) ob->data;
     float oldvalue = dat->value;
-    boolean used = false;
+    dd_bool used = false;
     int i, butw, inw;
 
     if(ob->flags & UIF_CLICKED)
@@ -1765,7 +1765,7 @@ void UISlider_Ticker(ui_object_t* ob)
 void UISlider_Drawer(ui_object_t* ob)
 {
     uidata_slider_t* dat = (uidata_slider_t*) ob->data;
-    boolean dis = (ob->flags & UIF_DISABLED) != 0;
+    dd_bool dis = (ob->flags & UIF_DISABLED) != 0;
     int inwidth  = ob->geometry.size.width  - UI_BAR_BORDER * 2;
     int inheight = ob->geometry.size.height - UI_BAR_BORDER * 2;
     int butw = UISlider_ButtonWidth(ob);
@@ -2197,7 +2197,7 @@ int UI_TextOutWrapEx(const char* text, const Point2Raw* origin, const Size2Raw* 
     }
 }
 
-void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, boolean filled,
+void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd_bool filled,
     ui_color_t* topColor, ui_color_t* bottomColor, float alpha, float bottomAlpha)
 {
     float s[2] = { 0, 1 }, t[2] = { 0, 1 };
@@ -2419,13 +2419,13 @@ void UI_DrawHorizTriangle(const Point2Raw* origin, int radius, ui_color_t* hi, u
     glEnd();
 }
 
-void UI_DefaultButtonBackground(ui_color_t* col, boolean down)
+void UI_DefaultButtonBackground(ui_color_t* col, dd_bool down)
 {
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), col, down ? .1f : .5f);
 }
 
 void UI_DrawButton(const Point2Raw* origin, const Size2Raw* size, int border, float alpha,
-    ui_color_t* background, boolean down, boolean disabled, int arrow)
+    ui_color_t* background, dd_bool down, dd_bool disabled, int arrow)
 {
     int inside, boff = down ? 2 : 0;
     ui_color_t back;

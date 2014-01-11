@@ -96,13 +96,13 @@ void FI_StackClear(void);
 void FI_StackClearAll(void);
 
 /// @return  @c true if there is one or more active Finale on the stack.
-boolean FI_StackActive(void);
+dd_bool FI_StackActive(void);
 
 /// @return  @c true iff the skip was done.
-boolean FI_RequestSkip(void);
+dd_bool FI_RequestSkip(void);
 
 /// @return  @c true iff the event should open the menu.
-boolean FI_IsMenuTrigger(void);
+dd_bool FI_IsMenuTrigger(void);
 
 int FI_PrivilegedResponder(const void* ev);
 

@@ -171,7 +171,7 @@ static memvolume_t *createVolume(size_t volumeSize)
     return vol;
 }
 
-boolean Z_IsInited(void)
+dd_bool Z_IsInited(void)
 {
     return zoneMutex != 0;
 }
@@ -347,12 +347,12 @@ void Z_Free(void *ptr)
     freeBlock(ptr, 0);
 }
 
-static __inline boolean isFreeBlock(memblock_t *block)
+static __inline dd_bool isFreeBlock(memblock_t *block)
 {
     return !block->user;
 }
 
-static __inline boolean isRootBlock(memvolume_t *vol, memblock_t *block)
+static __inline dd_bool isRootBlock(memvolume_t *vol, memblock_t *block)
 {
     return block == &vol->zone->blockList;
 }
@@ -389,7 +389,7 @@ static __inline memblock_t *rewindRover(memvolume_t *vol, memblock_t *rover, int
     return base;
 }
 
-static boolean isVolumeTooFull(memvolume_t *vol)
+static dd_bool isVolumeTooFull(memvolume_t *vol)
 {
     return vol->allocatedBytes > vol->size * .95f;
 }
@@ -467,7 +467,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
     for(volume = volumeRoot; ; volume = volume->next)
     {
         uint numChecked = 0;
-        boolean gotoNextVolume = false;
+        dd_bool gotoNextVolume = false;
 
         if(volume == NULL)
         {
@@ -709,7 +709,7 @@ void Z_CheckHeap(void)
 {
     memvolume_t *volume;
     memblock_t *block;
-    boolean     isDone;
+    dd_bool     isDone;
 
     LogBuffer_Printf(DE2_LOG_TRACE, "Z_CheckHeap\n");
 
@@ -866,7 +866,7 @@ int Z_GetTag(void *ptr)
     return block->tag;
 }
 
-boolean Z_Contains(void *ptr)
+dd_bool Z_Contains(void *ptr)
 {
     memvolume_t *volume;
     memblock_t *block = Z_GetBlock(ptr);

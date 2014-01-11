@@ -135,9 +135,9 @@ static void determineGlobalPaths(application_t* app)
     F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
-boolean DD_Unix_Init(void)
+dd_bool DD_Unix_Init(void)
 {
-    boolean failed = true;
+    dd_bool failed = true;
 
     memset(&app, 0, sizeof(app));
 

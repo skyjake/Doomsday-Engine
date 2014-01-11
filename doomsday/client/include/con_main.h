@@ -167,7 +167,7 @@ DENG_EXTERN_C byte consoleDump;
 void Con_Register();
 void Con_DataRegister();
 
-boolean Con_Init();
+dd_bool Con_Init();
 void Con_Shutdown();
 
 void Con_InitDatabases();
@@ -240,7 +240,7 @@ void Con_DeleteAlias(calias_t *cal);
 /**
  * @return  @c true iff @a name matches a known command or alias name.
  */
-boolean Con_IsValidCommand(char const *name);
+dd_bool Con_IsValidCommand(char const *name);
 
 /**
  * Attempt to execute a console command.
@@ -252,7 +252,7 @@ boolean Con_IsValidCommand(char const *name);
  *
  * @return  Non-zero if successful else @c 0.
  */
-int Con_Execute(byte src, char const *command, int silent, boolean netCmd);
+int Con_Execute(byte src, char const *command, int silent, dd_bool netCmd);
 int Con_Executef(byte src, int silent, char const *command, ...) PRINTF_F(3,4);
 
 /**

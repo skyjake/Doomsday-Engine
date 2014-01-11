@@ -43,7 +43,7 @@
 
 float quitDarkenOpacity = 0;
 
-boolean R_ViewFilterColor(float rgba[4], int filter)
+dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {
     if(!rgba) return false;
 
@@ -181,7 +181,7 @@ void R_UpdateViewFilter(int player)
 void G_RendPlayerView(int player)
 {
     player_t* plr = &players[player];
-    boolean special200 = false;
+    dd_bool special200 = false;
     float pspriteOffsetY;
 
     if(!plr->plr->mo)

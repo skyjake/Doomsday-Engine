@@ -29,7 +29,7 @@
 
 using namespace de;
 
-static inline boolean isRealMobj(const mobj_t* base)
+static inline dd_bool isRealMobj(const mobj_t* base)
 {
     return base && base->thinker.id != 0;
 }

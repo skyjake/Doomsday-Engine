@@ -102,7 +102,7 @@ uidata_slider_t sld_player_limit =
 
 uidata_listitem_t lstit_found[MAX_FOUND];
 
-static boolean mode_buttons[2] = { true, false };
+static dd_bool mode_buttons[2] = { true, false };
 
 //static uidata_edit_t ed_server = { str_server, 100 };
 //static uidata_edit_t ed_desc = { str_desc, 200 };
@@ -216,8 +216,8 @@ static ui_object_t ob_client[] = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static searchmode_t searchMode = SEARCH_MASTER;
-//static boolean lookedForHosts = false;
-static boolean retrieving = false;
+//static dd_bool lookedForHosts = false;
+static dd_bool retrieving = false;
 static unsigned int myCrc = 0;
 static char warningString[256];
 
@@ -233,7 +233,7 @@ void MPIChooseMode(ui_object_t *ob)
     memset(mode_buttons, 0, sizeof(mode_buttons));
     UI_FlagGroup(ob_client, 1, UIF_ACTIVE, UIFG_CLEAR);
     UI_FlagGroup(ob_client, 2, UIF_ACTIVE, UIFG_CLEAR);
-    *(boolean *) ob->data = true;
+    *(dd_bool *) ob->data = true;
     ob->flags |= UIF_ACTIVE;
 
     // Hide/show the option controls.

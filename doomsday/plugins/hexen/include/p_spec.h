@@ -47,8 +47,8 @@ void P_SpawnSectorSpecialThinkers(void);
 void P_SpawnLineSpecialThinkers(void);
 void P_SpawnAllSpecialThinkers(void);
 
-boolean P_ExecuteLineSpecial(int special, byte* args, Line* line, int side, mobj_t* mo);
-boolean P_ActivateLine(Line* ld, mobj_t* mo, int side, int activationType);
+dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line, int side, mobj_t* mo);
+dd_bool P_ActivateLine(Line* ld, mobj_t* mo, int side, int activationType);
 
 void P_PlayerInSpecialSector(player_t* plr);
 void P_PlayerOnSpecialFloor(player_t* plr);
@@ -83,18 +83,18 @@ int         EV_FloorCrushStop(Line *line, byte *args);
 
 #define TELEFOGHEIGHTF          (32)
 
-boolean     P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean useFog);
-boolean     EV_Teleport(int tid, mobj_t *thing, boolean fog);
+dd_bool     P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, dd_bool useFog);
+dd_bool     EV_Teleport(int tid, mobj_t *thing, dd_bool fog);
 void        P_ArtiTele(player_t *player);
 
 extern mobjtype_t TranslateThingType[];
 
-boolean     EV_ThingProjectile(byte *args, boolean gravity);
-boolean     EV_ThingSpawn(byte *args, boolean fog);
-boolean     EV_ThingActivate(int tid);
-boolean     EV_ThingDeactivate(int tid);
-boolean     EV_ThingRemove(int tid);
-boolean     EV_ThingDestroy(int tid);
+dd_bool     EV_ThingProjectile(byte *args, dd_bool gravity);
+dd_bool     EV_ThingSpawn(byte *args, dd_bool fog);
+dd_bool     EV_ThingActivate(int tid);
+dd_bool     EV_ThingDeactivate(int tid);
+dd_bool     EV_ThingRemove(int tid);
+dd_bool     EV_ThingDestroy(int tid);
 
 void P_InitSky(uint map);
 void P_AnimateSky(void);

@@ -101,7 +101,7 @@ public:
      *
      * The DialogButtonItem typedef is provided for convenience.
      */
-    class ButtonItem : public ui::ActionItem
+    class LIBAPPFW_PUBLIC ButtonItem : public ui::ActionItem
     {
     public:
         /**

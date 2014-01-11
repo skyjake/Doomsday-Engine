@@ -87,7 +87,7 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh);
 
 // PUBLIC DATA DECLARATIONS ------------------------------------------------
 
-boolean intermission;
+dd_bool intermission;
 int interState = 0;
 int overrideHubMsg = 0; // Override the hub transition message when 1.
 
@@ -96,7 +96,7 @@ int overrideHubMsg = 0; // Override the hub transition message when 1.
 // Used for timing of background animation.
 static int bcnt;
 
-static boolean skipIntermission;
+static dd_bool skipIntermission;
 static int interTime = -1;
 static gametype_t gameType;
 static int cnt;
@@ -290,7 +290,7 @@ void IN_SkipToNext(void)
  */
 static void CheckForSkip(void)
 {
-    static boolean      triedToSkip;
+    static dd_bool      triedToSkip;
 
     int                 i;
     player_t           *player;
@@ -382,11 +382,11 @@ void IN_Drawer(void)
 
 static void drawDeathTally(void)
 {
-    static boolean showTotals;
+    static dd_bool showTotals;
 
     fixed_t xPos, yPos, xDelta, yDelta, xStart, scale;
     int i, j, x, y;
-    boolean bold;
+    dd_bool bold;
 
     DGL_Enable(DGL_TEXTURE_2D);
 

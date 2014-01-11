@@ -35,7 +35,7 @@
 #include "saveinfo.h"
 #include "api_materialarchive.h"
 
-static boolean inited;
+static dd_bool inited;
 static LZFILE* savefile;
 static ddstring_t savePath; // e.g., "savegame/"
 #if !__JHEXEN__
@@ -123,7 +123,7 @@ void SV_ConfigureSavePaths(void)
     assert(inited);
     {
     AutoStr* saveDir = composeSaveDir();
-    boolean savePathExists;
+    dd_bool savePathExists;
 
     Str_Set(&savePath, Str_Text(saveDir));
 #if !__JHEXEN__
@@ -164,7 +164,7 @@ void SV_CloseFile(void)
     }
 }
 
-boolean SV_ExistingFile(Str const *filePath)
+dd_bool SV_ExistingFile(Str const *filePath)
 {
     FILE *fp;
     if((fp = fopen(Str_Text(filePath), "rb")))
@@ -218,7 +218,7 @@ void SV_HxSetSaveEndPtr(void *endPtr)
     saveEndPtr = endPtr;
 }
 
-boolean SV_HxBytesLeft(void)
+dd_bool SV_HxBytesLeft(void)
 {
     return (byte *) saveEndPtr - saveptr.b;
 }

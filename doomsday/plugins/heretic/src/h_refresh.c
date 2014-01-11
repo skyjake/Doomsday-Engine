@@ -82,7 +82,7 @@ void G_RendSpecialFilter(int player, const RectRaw* region)
     DGL_BlendMode(BM_NORMAL);
 }
 
-boolean R_ViewFilterColor(float rgba[4], int filter)
+dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {
     if(!rgba)
         return false;
@@ -166,7 +166,7 @@ void G_RendPlayerView(int player)
 {
     player_t* plr = &players[player];
     float pspriteOffsetY;
-    boolean isFullBright = (plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
+    dd_bool isFullBright = (plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
                             (plr->powers[PT_INVULNERABILITY] & 8);
 
     if(IS_CLIENT)

@@ -188,7 +188,7 @@ typedef struct {
     float min, max;
     float value;
     float step; /// Button step.
-    boolean floatmode; /// Otherwise only integers are allowed.
+    dd_bool floatmode; /// Otherwise only integers are allowed.
     void* data;
     char* zerotext;
     byte button[3]; /// Button states (0=normal, 1=down).
@@ -210,13 +210,13 @@ char const *UI_ChooseVariableFont(fontstyle_t style);
 #endif
 
 /// Called when entering a UI page.
-void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame, boolean noescape);
+void UI_PageInit(dd_bool halttime, dd_bool tckui, dd_bool tckframe, dd_bool drwgame, dd_bool noescape);
 
 /// Called upon exiting a ui page.
 void UI_End(void);
 
 /// @return  @c true, if the UI is currently active.
-boolean UI_IsActive(void);
+dd_bool UI_IsActive(void);
 
 /// @return  Ptr to the current UI page if active.
 ui_page_t* UI_CurrentPage(void);
@@ -393,7 +393,7 @@ void UI_Gradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t* top,
 void UI_GradientEx(const Point2Raw* origin, const Size2Raw* size, int border, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
 void UI_HorizGradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t* left, ui_color_t* right, float leftAlpha, float rightAlpha);
 void UI_DrawRect(const Point2Raw* origin, const Size2Raw* size, int brd, ui_color_t* color, float alpha);
-void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int brd, boolean filled, ui_color_t* top, ui_color_t* bottom, float alpha, float bottomAlpha);
+void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int brd, dd_bool filled, ui_color_t* top, ui_color_t* bottom, float alpha, float bottomAlpha);
 void UI_DrawTriangle(const Point2Raw* origin, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t* low, float alpha);
 
 /**
@@ -402,7 +402,7 @@ void UI_DrawTriangle(const Point2Raw* origin, int radius, ui_color_t* hi, ui_col
  */
 void UI_DrawHorizTriangle(const Point2Raw* origin, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t *low, float alpha);
 
-void UI_DrawButton(const Point2Raw* origin, const Size2Raw* size, int border, float alpha, ui_color_t* background, boolean down, boolean disabled, int arrow);
+void UI_DrawButton(const Point2Raw* origin, const Size2Raw* size, int border, float alpha, ui_color_t* background, dd_bool down, dd_bool disabled, int arrow);
 
 /// Draw shadowed text.
 void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha);

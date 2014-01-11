@@ -191,7 +191,7 @@ static int mapVersion;
 static saveheader_t const *hdr;
 
 static playerheader_t playerHeader;
-static boolean playerHeaderOK;
+static dd_bool playerHeaderOK;
 
 static mobj_t **thingArchive;
 static uint thingArchiveSize;
@@ -651,7 +651,7 @@ void SV_ClearSlot(int slot)
     updateSaveInfo(path, findSaveInfoForSlot(slot));
 }
 
-boolean SV_IsValidSlot(int slot)
+dd_bool SV_IsValidSlot(int slot)
 {
     if(slot == AUTO_SLOT) return true;
 #if __JHEXEN__
@@ -660,7 +660,7 @@ boolean SV_IsValidSlot(int slot)
     return (slot >= 0  && slot < NUMSAVESLOTS);
 }
 
-boolean SV_IsUserWritableSlot(int slot)
+dd_bool SV_IsUserWritableSlot(int slot)
 {
     if(slot == AUTO_SLOT) return false;
 #if __JHEXEN__
@@ -826,7 +826,7 @@ int SV_SlotForSaveName(char const *name)
     return saveSlot;
 }
 
-boolean SV_IsSlotUsed(int slot)
+dd_bool SV_IsSlotUsed(int slot)
 {
     DENG_ASSERT(inited);
     if(SV_ExistingFile(composeGameSavePathForSlot(slot)))
@@ -838,7 +838,7 @@ boolean SV_IsSlotUsed(int slot)
 }
 
 #if __JHEXEN__
-boolean SV_HxHaveMapStateForSlot(int slot, uint map)
+dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
     AutoStr *path = composeGameSavePathForSlot2(slot, (int)map+1);
     if(!path || Str_IsEmpty(path)) return false;
@@ -2284,7 +2284,7 @@ static void writePlayers()
     SV_EndSegment();
 }
 
-static void readPlayers(boolean *infile, boolean *loaded)
+static void readPlayers(dd_bool *infile, dd_bool *loaded)
 {
     DENG_ASSERT(infile && loaded);
 
@@ -3181,7 +3181,7 @@ static int SV_ReadFloor(floor_t *floor)
         floor->sector       = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
         DENG_ASSERT(floor->sector != 0);
 
-        floor->crush        = boolean(SV_ReadByte());
+        floor->crush        = dd_bool(SV_ReadByte());
         floor->state        = floorstate_e(SV_ReadLong());
         floor->newSpecial   = SV_ReadLong();
 
@@ -3331,7 +3331,7 @@ static int SV_ReadPlat(plat_t *plat)
 
         plat->state     = platstate_e(SV_ReadByte());
         plat->oldState  = platstate_e(SV_ReadByte());
-        plat->crush     = (boolean) SV_ReadByte();
+        plat->crush     = (dd_bool) SV_ReadByte();
 
         plat->tag = SV_ReadLong();
     }
@@ -4674,7 +4674,7 @@ static void readBrain()
     {
         numTargets      = SV_ReadShort();
         brain.targetOn  = SV_ReadShort();
-        brain.easy      = (boolean)SV_ReadByte();
+        brain.easy      = (dd_bool)SV_ReadByte();
     }
     else
     {
@@ -5189,7 +5189,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     // player is not in the savegame file, he will be notified. The data for
     // players who were saved but are not currently in the game will be
     // discarded.
-    boolean loaded[MAXPLAYERS], infile[MAXPLAYERS];
+    dd_bool loaded[MAXPLAYERS], infile[MAXPLAYERS];
     readPlayers(infile, loaded);
 
 #if __JHEXEN__
@@ -5229,7 +5229,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     // Notify the players that weren't in the savegame.
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        boolean notLoaded = false;
+        dd_bool notLoaded = false;
 
 #if __JHEXEN__
         if(players[i].plr->inGame)
@@ -5340,7 +5340,7 @@ static int loadStateWorker(Str const *path, SaveInfo &saveInfo)
     return 0; // Success.
 }
 
-boolean SV_LoadGame(int slot)
+dd_bool SV_LoadGame(int slot)
 {
     DENG_ASSERT(inited);
 
@@ -5646,7 +5646,7 @@ static SaveInfo *createSaveInfo(char const *name)
     return info;
 }
 
-boolean SV_SaveGame(int slot, char const *name)
+dd_bool SV_SaveGame(int slot, char const *name)
 {
     DENG_ASSERT(inited);
     DENG_ASSERT(name != 0);
@@ -5776,8 +5776,8 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
         player_t *plr = players + i;
         ddplayer_t *ddplr = plr->plr;
         int oldKeys = 0, oldPieces = 0;
-        boolean oldWeaponOwned[NUM_WEAPON_TYPES];
-        boolean wasReborn;
+        dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
+        dd_bool wasReborn;
 
         if(!ddplr->inGame) continue;
 

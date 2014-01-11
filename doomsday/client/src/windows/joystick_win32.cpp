@@ -59,7 +59,7 @@ static BOOL CALLBACK enumJoysticks(LPCDIDEVICEINSTANCE lpddi, void* ref)
     return DIENUM_CONTINUE;
 }
 
-boolean Joystick_Init()
+dd_bool Joystick_Init()
 {
     int joyProp[] = {
         DIJOFS_X, DIJOFS_Y, DIJOFS_Z,
@@ -179,7 +179,7 @@ void Joystick_Shutdown(void)
     DirectInput_KillDevice(&didJoy);
 }
 
-boolean Joystick_IsPresent(void)
+dd_bool Joystick_IsPresent(void)
 {
     return (didJoy != 0);
 }

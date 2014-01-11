@@ -88,11 +88,11 @@ enum {
         : src == CMDS_SCRIPT? "an action command" : "???")
 
 typedef struct execbuff_s {
-    boolean used;               // Is this in use?
+    dd_bool used;               // Is this in use?
     timespan_t when;            // System time when to execute the command.
     byte    source;             // Where the command came from
                                 // (console input, a cfg file etc..)
-    boolean isNetCmd;           // Command was sent over the net to us.
+    dd_bool isNetCmd;           // Command was sent over the net to us.
     char    subCmd[1024];       // A single command w/args.
 } execbuff_t;
 
@@ -118,10 +118,10 @@ D_CMD(InspectMobj);
 D_CMD(DebugCrash);
 D_CMD(DebugError);
 
-static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd);
+static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd);
 static void Con_SplitIntoSubCommands(const char *command,
                                      timespan_t markerOffset, byte src,
-                                     boolean isNetCmd);
+                                     dd_bool isNetCmd);
 
 static void Con_ClearExecBuffer(void);
 
@@ -144,15 +144,15 @@ char* prbuff = NULL; // Print buffer, used by conPrintf.
 //static uint oldCmdsSize = 0, oldCmdsMax = 0;
 //static uint ocPos; // How many cmds from the last in the oldCmds buffer.
 
-static boolean ConsoleInited;   // Has Con_Init() been called?
+static dd_bool ConsoleInited;   // Has Con_Init() been called?
 
-//static boolean ConsoleActive;   // Is the console active?
+//static dd_bool ConsoleActive;   // Is the console active?
 //static timespan_t ConsoleTime;  // How many seconds has the console been open?
 
 //static char cmdLine[CMDLINE_SIZE+1]; // The command line.
 //static uint cmdCursor;          // Position of the cursor on the command line.
-//static boolean cmdInsMode;      // Are we in insert input mode.
-//static boolean conInputLock;    // While locked, most user input is disabled.
+//static dd_bool cmdInsMode;      // Are we in insert input mode.
+//static dd_bool conInputLock;    // While locked, most user input is disabled.
 
 static execbuff_t* exBuff;
 static int exBuffSize;
@@ -388,7 +388,7 @@ static void clearCommandHistory(void)
 }
 #endif
 
-boolean Con_Init(void)
+dd_bool Con_Init(void)
 {
     if(ConsoleInited)
     {
@@ -462,17 +462,17 @@ void Con_Shutdown(void)
 }
 
 #if 0
-boolean Con_IsActive(void)
+dd_bool Con_IsActive(void)
 {
     return ConsoleActive;
 }
 
-boolean Con_IsLocked(void)
+dd_bool Con_IsLocked(void)
 {
     return conInputLock;
 }
 
-boolean Con_InputMode(void)
+dd_bool Con_InputMode(void)
 {
     return cmdInsMode;
 }
@@ -614,7 +614,7 @@ static void Con_Send(const char *command, byte src, int silent)
 #endif // __CLIENT__
 
 static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
-                         byte source, boolean isNetCmd)
+                         byte source, dd_bool isNetCmd)
 {
     execbuff_t *ptr = NULL;
     int     i;
@@ -652,11 +652,11 @@ static void Con_ClearExecBuffer(void)
  *
  * @return          @c false, if an executed command fails.
  */
-static boolean Con_CheckExecBuffer(void)
+static dd_bool Con_CheckExecBuffer(void)
 {
 #define BUFFSIZE 256
-    boolean allDone;
-    boolean ret = true;
+    dd_bool allDone;
+    dd_bool ret = true;
     int     i, count = 0;
     char    storage[BUFFSIZE];
 
@@ -771,7 +771,7 @@ static void expandWithArguments(char **expCommand, cmdargs_t *args)
 /**
  * The command is executed forthwith!!
  */
-static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
+static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
 {
     cmdargs_t   args;
     ccmd_t   *ccmd;
@@ -809,7 +809,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     if(ccmd != NULL)
     {
         // Found a match. Are we allowed to execute?
-        boolean canExecute = true;
+        dd_bool canExecute = true;
 
         // Trying to issue a command requiring a loaded game?
         // dj: This should be considered a short-term solution. Ideally we want some namespacing mechanics.
@@ -946,7 +946,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     cvar = Con_FindVariable(args.argv[0]);
     if(cvar != NULL)
     {
-        boolean out_of_range = false, setting = false, hasCallback;
+        dd_bool out_of_range = false, setting = false, hasCallback;
 
         /**
          * \note Change notification callback execution may invoke
@@ -959,7 +959,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
            (args.argc == 3 && !stricmp(args.argv[1], "force")))
         {
             char* argptr = args.argv[args.argc - 1];
-            boolean forced = args.argc == 3;
+            dd_bool forced = args.argc == 3;
 
             setting = true;
             if(cvar->flags & CVF_READ_ONLY)
@@ -1090,7 +1090,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
  */
 static void Con_SplitIntoSubCommands(const char *command,
                                      timespan_t markerOffset, byte src,
-                                     boolean isNetCmd)
+                                     dd_bool isNetCmd)
 {
 #define BUFFSIZE        2048
 
@@ -1239,9 +1239,9 @@ static int completeWord(int mode)
     else
     {
         // Completion Mode 2: Print the possible completions
-        boolean printCompletions = (numMatches > 1? true : false);
+        dd_bool printCompletions = (numMatches > 1? true : false);
         const knownword_t** match;
-        boolean updated = false;
+        dd_bool updated = false;
 
         if(printCompletions)
             Con_Printf("Completions:\n");
@@ -1411,7 +1411,7 @@ int DD_Execute(int silent, const char* command)
     return Con_Execute(CMDS_GAME, command, silent, false);
 }
 
-int Con_Execute(byte src, const char *command, int silent, boolean netCmd)
+int Con_Execute(byte src, const char *command, int silent, dd_bool netCmd)
 {
     int             ret;
 
@@ -1609,7 +1609,7 @@ static void insertOnCommandLine(byte ch)
 }
 #endif
 
-boolean Con_Responder(const ddevent_t* ev)
+dd_bool Con_Responder(const ddevent_t* ev)
 {
 #ifdef __CLIENT__
     // The console is only interested in keyboard toggle events.
@@ -2074,7 +2074,7 @@ void Con_Message(char const *message, ...)
 
 void Con_Error(char const *error, ...)
 {
-    static boolean errorInProgress = false;
+    static dd_bool errorInProgress = false;
 
     //int i, numBufLines;
     char buff[2048], err[256];
@@ -2194,7 +2194,7 @@ void Con_AbnormalShutdown(char const *message)
 static void Con_Alias(char *aName, char *command)
 {
     calias_t *cal = Con_FindAlias(aName);
-    boolean remove = false;
+    dd_bool remove = false;
 
     // Will we remove this alias?
     if(command == NULL)
@@ -2444,7 +2444,7 @@ D_CMD(Echo)
     return true;
 }
 
-static boolean cvarAddSub(const char* name, float delta, boolean force)
+static dd_bool cvarAddSub(const char* name, float delta, dd_bool force)
 {
     cvar_t* cvar = Con_FindVariable(name);
     float val;
@@ -2481,7 +2481,7 @@ D_CMD(AddSub)
 {
     DENG2_UNUSED(src);
 
-    boolean             force = false;
+    dd_bool             force = false;
     float               delta = 0;
 
     if(argc <= 2)
@@ -2509,7 +2509,7 @@ D_CMD(IncDec)
 {
     DENG2_UNUSED(src);
 
-    boolean force = false;
+    dd_bool force = false;
     cvar_t* cvar;
     float val;
 
@@ -2579,7 +2579,7 @@ D_CMD(If)
     };
     uint        i, oper;
     cvar_t     *var;
-    boolean     isTrue = false;
+    dd_bool     isTrue = false;
 
     if(argc != 5 && argc != 6)
     {

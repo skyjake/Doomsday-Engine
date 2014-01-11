@@ -47,7 +47,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct mapinfo_s {
-    boolean         fromMAPINFO;    ///< The data for this was read from the MAPINFO lump.
+    dd_bool         fromMAPINFO;    ///< The data for this was read from the MAPINFO lump.
     short           cluster;
     uint            warpTrans;
     uint            nextMap;
@@ -57,8 +57,8 @@ typedef struct mapinfo_s {
     materialid_t    sky2Material;
     float           sky1ScrollDelta;
     float           sky2ScrollDelta;
-    boolean         doubleSky;
-    boolean         lightning;
+    dd_bool         doubleSky;
+    dd_bool         lightning;
     int             fadetable;
     char            songLump[10];
 } mapinfo_t;
@@ -548,7 +548,7 @@ float P_GetMapSky2ScrollDelta(uint map)
  *
  * @return              @c true, if the map is set to doublesky.
  */
-boolean P_GetMapDoubleSky(uint map)
+dd_bool P_GetMapDoubleSky(uint map)
 {
     return MapInfo[qualifyMap(map)].doubleSky;
 }
@@ -560,7 +560,7 @@ boolean P_GetMapDoubleSky(uint map)
  *
  * @return              @c true, if the map is set to lightning.
  */
-boolean P_GetMapLightning(uint map)
+dd_bool P_GetMapLightning(uint map)
 {
     return MapInfo[qualifyMap(map)].lightning;
 }

@@ -76,8 +76,8 @@ int             Hu_MsgResponder(event_t* ev);
  */
 void            Hu_MsgDrawer(void);
 
-boolean         Hu_IsMessageActive(void);
-boolean         Hu_IsMessageActiveWithCallback(msgfunc_t callback);
+dd_bool         Hu_IsMessageActive(void);
+dd_bool         Hu_IsMessageActiveWithCallback(msgfunc_t callback);
 
 /**
  * Begin a new game state message/question.

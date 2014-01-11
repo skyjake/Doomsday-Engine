@@ -30,7 +30,7 @@
 #define DEFAULT_SCALE               (1)
 #define DEFAULT_ANGLE               (0)
 
-static boolean inited = false;
+static dd_bool inited = false;
 static uint svgCount;
 static Svg** svgs;
 

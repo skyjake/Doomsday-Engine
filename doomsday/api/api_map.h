@@ -234,9 +234,9 @@ DENG_API_TYPEDEF(Map)
      * @param uri  Uri identifying the map to be searched for.
      * @return  @c true: a known and loadable map.
      */
-    boolean         (*Exists)(char const *uri);
+    dd_bool         (*Exists)(char const *uri);
 
-    boolean         (*IsCustom)(char const *uri);
+    dd_bool         (*IsCustom)(char const *uri);
 
     /**
      * Retrieve the name of the source file containing the map referenced by @a
@@ -253,7 +253,7 @@ DENG_API_TYPEDEF(Map)
      * @param uri  Uri identifying the map to change to.
      * @return  @c true= map was changed successfully.
      */
-    boolean         (*Change)(char const *uri);
+    dd_bool         (*Change)(char const *uri);
 
     // Lines
 
@@ -367,12 +367,12 @@ DENG_API_TYPEDEF(Map)
 
     // Polyobjs
 
-    boolean         (*PO_MoveXY)(struct polyobj_s *po, coord_t x, coord_t y);
+    dd_bool         (*PO_MoveXY)(struct polyobj_s *po, coord_t x, coord_t y);
 
     /**
      * Rotate @a polyobj in the map coordinate space.
      */
-    boolean         (*PO_Rotate)(struct polyobj_s *po, angle_t angle);
+    dd_bool         (*PO_Rotate)(struct polyobj_s *po, angle_t angle);
 
     /**
      * Link @a polyobj to the current map. To be called after moving, rotating
@@ -433,7 +433,7 @@ DENG_API_TYPEDEF(Map)
      * @return  @c true if the traverser function returns @c true for all
      *          visited lines.
      */
-    boolean         (*CheckLineSight)(coord_t const from[3], coord_t const to[3],
+    dd_bool         (*CheckLineSight)(coord_t const from[3], coord_t const to[3],
                                       coord_t bottomSlope, coord_t topSlope, int flags);
 
     /**
@@ -458,7 +458,7 @@ DENG_API_TYPEDEF(Map)
      * @return  @c true iff after the adjustment the opening range is positive,
      * i.e., the top Z coordinate is greater than the bottom Z.
      */
-    boolean         (*I_AdjustOpening)(Interceptor *trace, Line *line);
+    dd_bool         (*I_AdjustOpening)(Interceptor *trace, Line *line);
 
     /*
      * Map Updates (DMU):
@@ -562,7 +562,7 @@ DENG_API_TYPEDEF(Map)
     /**
      * Determines if a map data object is a dummy.
      */
-    boolean         (*IsDummy)(MapElementPtrConst dummy);
+    dd_bool         (*IsDummy)(MapElementPtrConst dummy);
 
     /**
      * Returns the extra data pointer of the dummy, or NULL if the object is not
@@ -580,7 +580,7 @@ DENG_API_TYPEDEF(Map)
     float           (*GetGMOFloat)(int entityId, int elementIndex, int propertyId);
 
     /* index-based write functions */
-    void            (*SetBool)(int type, int index, uint prop, boolean param);
+    void            (*SetBool)(int type, int index, uint prop, dd_bool param);
     void            (*SetByte)(int type, int index, uint prop, byte param);
     void            (*SetInt)(int type, int index, uint prop, int param);
     void            (*SetFixed)(int type, int index, uint prop, fixed_t param);
@@ -589,7 +589,7 @@ DENG_API_TYPEDEF(Map)
     void            (*SetDouble)(int type, int index, uint prop, double param);
     void            (*SetPtr)(int type, int index, uint prop, void *param);
 
-    void            (*SetBoolv)(int type, int index, uint prop, boolean *params);
+    void            (*SetBoolv)(int type, int index, uint prop, dd_bool *params);
     void            (*SetBytev)(int type, int index, uint prop, byte *params);
     void            (*SetIntv)(int type, int index, uint prop, int *params);
     void            (*SetFixedv)(int type, int index, uint prop, fixed_t *params);
@@ -599,7 +599,7 @@ DENG_API_TYPEDEF(Map)
     void            (*SetPtrv)(int type, int index, uint prop, void *params);
 
     /* pointer-based write functions */
-    void            (*SetBoolp)(MapElementPtr ptr, uint prop, boolean param);
+    void            (*SetBoolp)(MapElementPtr ptr, uint prop, dd_bool param);
     void            (*SetBytep)(MapElementPtr ptr, uint prop, byte param);
     void            (*SetIntp)(MapElementPtr ptr, uint prop, int param);
     void            (*SetFixedp)(MapElementPtr ptr, uint prop, fixed_t param);
@@ -608,7 +608,7 @@ DENG_API_TYPEDEF(Map)
     void            (*SetDoublep)(MapElementPtr ptr, uint prop, double param);
     void            (*SetPtrp)(MapElementPtr ptr, uint prop, void* param);
 
-    void            (*SetBoolpv)(MapElementPtr ptr, uint prop, boolean *params);
+    void            (*SetBoolpv)(MapElementPtr ptr, uint prop, dd_bool *params);
     void            (*SetBytepv)(MapElementPtr ptr, uint prop, byte *params);
     void            (*SetIntpv)(MapElementPtr ptr, uint prop, int *params);
     void            (*SetFixedpv)(MapElementPtr ptr, uint prop, fixed_t *params);
@@ -618,7 +618,7 @@ DENG_API_TYPEDEF(Map)
     void            (*SetPtrpv)(MapElementPtr ptr, uint prop, void *params);
 
     /* index-based read functions */
-    boolean         (*GetBool)(int type, int index, uint prop);
+    dd_bool         (*GetBool)(int type, int index, uint prop);
     byte            (*GetByte)(int type, int index, uint prop);
     int             (*GetInt)(int type, int index, uint prop);
     fixed_t         (*GetFixed)(int type, int index, uint prop);
@@ -627,7 +627,7 @@ DENG_API_TYPEDEF(Map)
     double          (*GetDouble)(int type, int index, uint prop);
     void*           (*GetPtr)(int type, int index, uint prop);
 
-    void            (*GetBoolv)(int type, int index, uint prop, boolean *params);
+    void            (*GetBoolv)(int type, int index, uint prop, dd_bool *params);
     void            (*GetBytev)(int type, int index, uint prop, byte *params);
     void            (*GetIntv)(int type, int index, uint prop, int *params);
     void            (*GetFixedv)(int type, int index, uint prop, fixed_t *params);
@@ -637,7 +637,7 @@ DENG_API_TYPEDEF(Map)
     void            (*GetPtrv)(int type, int index, uint prop, void *params);
 
     /* pointer-based read functions */
-    boolean         (*GetBoolp)(MapElementPtr ptr, uint prop);
+    dd_bool         (*GetBoolp)(MapElementPtr ptr, uint prop);
     byte            (*GetBytep)(MapElementPtr ptr, uint prop);
     int             (*GetIntp)(MapElementPtr ptr, uint prop);
     fixed_t         (*GetFixedp)(MapElementPtr ptr, uint prop);
@@ -646,7 +646,7 @@ DENG_API_TYPEDEF(Map)
     double          (*GetDoublep)(MapElementPtr ptr, uint prop);
     void*           (*GetPtrp)(MapElementPtr ptr, uint prop);
 
-    void            (*GetBoolpv)(MapElementPtr ptr, uint prop, boolean *params);
+    void            (*GetBoolpv)(MapElementPtr ptr, uint prop, dd_bool *params);
     void            (*GetBytepv)(MapElementPtr ptr, uint prop, byte *params);
     void            (*GetIntpv)(MapElementPtr ptr, uint prop, int *params);
     void            (*GetFixedpv)(MapElementPtr ptr, uint prop, fixed_t *params);

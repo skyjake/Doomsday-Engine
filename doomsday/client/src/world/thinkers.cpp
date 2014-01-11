@@ -38,7 +38,7 @@
 #include <QList>
 #include <QtAlgorithms>
 
-boolean Thinker_IsMobjFunc(thinkfunc_t func)
+dd_bool Thinker_IsMobjFunc(thinkfunc_t func)
 {
     return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
 }
@@ -430,7 +430,7 @@ void Thinker_Remove(thinker_t *th)
 }
 
 #undef Thinker_SetStasis
-void Thinker_SetStasis(thinker_t *th, boolean on)
+void Thinker_SetStasis(thinker_t *th, dd_bool on)
 {
     if(th)
     {

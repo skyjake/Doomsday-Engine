@@ -58,7 +58,7 @@ static int cdInited = false;
 
 // Currently playing track info:
 static int cdCurrentTrack = 0;
-static boolean cdLooping;
+static dd_bool cdLooping;
 static double cdStartTime, cdPauseTime, cdTrackLength;
 
 // CODE --------------------------------------------------------------------

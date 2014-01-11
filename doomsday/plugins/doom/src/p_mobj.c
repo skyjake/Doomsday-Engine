@@ -87,7 +87,7 @@ coord_t P_MobjGetFriction(mobj_t *mo)
     return XS_Friction(Mobj_Sector(mo));
 }
 
-static __inline boolean isInWalkState(player_t *pl)
+static __inline dd_bool isInWalkState(player_t *pl)
 {
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 }
@@ -116,7 +116,7 @@ void P_MobjMoveXY(mobj_t* mo)
 {
     coord_t pos[3], mom[3];
     player_t* player;
-    boolean largeNegative;
+    dd_bool largeNegative;
 
     // $democam: cameramen have their own movement code.
     if(P_CameraXYMovement(mo))
@@ -313,7 +313,7 @@ void P_MobjMoveZ(mobj_t* mo)
 
     if(targetZ < floorZ)
     {   // Hit the floor (or another mobj).
-        boolean             movingDown;
+        dd_bool             movingDown;
         // Note (id):
         //  somebody left this after the setting momz to 0,
         //  kinda useless there.
@@ -859,7 +859,7 @@ void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle)
  * @return              @c true, if the missile is at a valid location else
  *                      @c false
  */
-boolean P_CheckMissileSpawn(mobj_t* th)
+dd_bool P_CheckMissileSpawn(mobj_t* th)
 {
     th->tics -= P_Random() & 3;
     if(th->tics < 1)

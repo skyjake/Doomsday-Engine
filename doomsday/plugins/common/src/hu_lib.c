@@ -48,7 +48,7 @@
 extern int menuTime;
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
-static boolean inited = false;
+static dd_bool inited = false;
 
 static int numWidgets;
 static uiwidget_t* widgets;
@@ -94,7 +94,7 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
-static void lerpColor(float* dst, const float* a, const float* b, float t, boolean rgbaMode)
+static void lerpColor(float* dst, const float* a, const float* b, float t, dd_bool rgbaMode)
 {
     if(t <= 0)
     {
@@ -815,7 +815,7 @@ static void updatePageObjectGeometries(mn_page_t* page)
 }
 
 /// @return  @c true iff this object is drawable (potentially visible).
-boolean MNObject_IsDrawable(mn_object_t* ob)
+dd_bool MNObject_IsDrawable(mn_object_t* ob)
 {
     return !(MNObject_Type(ob) == MN_NONE || !ob->drawer || (MNObject_Flags(ob) & MNF_HIDDEN));
 }
@@ -1018,7 +1018,7 @@ static void drawPageHeading(mn_page_t* page, const Point2Raw* offset)
     FR_PopAttrib();
 }
 
-void MN_DrawPage(mn_page_t *page, float alpha, boolean showFocusCursor)
+void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
 {
     mn_object_t *focusObj;
     int i, focusObjHeight;
@@ -1144,7 +1144,7 @@ void MN_DrawPage(mn_page_t *page, float alpha, boolean showFocusCursor)
     }
 }
 
-static boolean MNActionInfo_IsActionExecuteable(mn_actioninfo_t* info)
+static dd_bool MNActionInfo_IsActionExecuteable(mn_actioninfo_t* info)
 {
     assert(info);
     return (info->callback != 0);
@@ -1249,7 +1249,7 @@ static mn_object_t* MNPage_ObjectByIndex(mn_page_t* page, int idx)
 }
 
 /// @pre @a ob is a child of @a page.
-static void MNPage_GiveChildFocus(mn_page_t* page, mn_object_t* ob, boolean allowRefocus)
+static void MNPage_GiveChildFocus(mn_page_t* page, mn_object_t* ob, dd_bool allowRefocus)
 {
     assert(page && ob);
 
@@ -1363,7 +1363,7 @@ void MNPage_Initialize(mn_page_t* page)
             mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
             if(btn->staydownMode)
             {
-                const boolean activate = (*(char*) ob->data1);
+                const dd_bool activate = (*(char*) ob->data1);
                 MNObject_SetFlags(ob, (activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
             }
             break; }
@@ -1600,7 +1600,7 @@ int MNObject_Color(mn_object_t* ob)
     return ob->_pageColorIdx;
 }
 
-boolean MNObject_IsGroupMember(const mn_object_t* ob, int group)
+dd_bool MNObject_IsGroupMember(const mn_object_t* ob, int group)
 {
     assert(ob);
     return (ob->_group == group);
@@ -1646,7 +1646,7 @@ const mn_actioninfo_t* MNObject_Action(mn_object_t* ob, mn_actionid_t id)
     return MNObject_FindActionInfoForId(ob, id);
 }
 
-boolean MNObject_HasAction(mn_object_t* ob, mn_actionid_t id)
+dd_bool MNObject_HasAction(mn_object_t* ob, mn_actionid_t id)
 {
     mn_actioninfo_t* info = MNObject_FindActionInfoForId(ob, id);
     return (info && MNActionInfo_IsActionExecuteable(info));
@@ -2196,7 +2196,7 @@ void MNList_Ticker(mn_object_t* ob)
 void MNList_Drawer(mn_object_t* ob, const Point2Raw* _origin)
 {
     const mndata_list_t* list = (mndata_list_t*)ob->_typedata;
-    const boolean flashSelection = ((ob->_flags & MNF_ACTIVE) && MNList_SelectionIsVisible(ob));
+    const dd_bool flashSelection = ((ob->_flags & MNF_ACTIVE) && MNList_SelectionIsVisible(ob));
     const float* color = rs.textColors[ob->_pageColorIdx];
     float dimColor[4], flashColor[4], t = flashSelection? 1 : 0;
     Point2Raw origin;
@@ -2330,7 +2330,7 @@ int MNList_Selection(mn_object_t* obj)
     return list->selection;
 }
 
-boolean MNList_SelectionIsVisible(mn_object_t* obj)
+dd_bool MNList_SelectionIsVisible(mn_object_t* obj)
 {
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
@@ -2371,7 +2371,7 @@ int MNList_FindItem(const mn_object_t* obj, int dataValue)
     return -1;
 }
 
-boolean MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex)
+dd_bool MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     int oldSelection = list->selection;
@@ -2389,7 +2389,7 @@ boolean MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex)
     return true;
 }
 
-boolean MNList_SelectItemByValue(mn_object_t* obj, int flags, int dataValue)
+dd_bool MNList_SelectItemByValue(mn_object_t* obj, int flags, int dataValue)
 {
     return MNList_SelectItem(obj, flags, MNList_FindItem(obj, dataValue));
 }
@@ -2561,7 +2561,7 @@ void MNButton_Drawer(mn_object_t* ob, const Point2Raw* origin)
     //int dis   = (obj->_flags & MNF_DISABLED) != 0;
     //int act   = (obj->_flags & MNF_ACTIVE)   != 0;
     //int click = (obj->_flags & MNF_CLICKED)  != 0;
-    //boolean down = act || click;
+    //dd_bool down = act || click;
     const fontid_t fontId = rs.textFonts[ob->_pageFontIdx];
     float color[4], t = (ob->_flags & MNF_FOCUS)? 1 : 0;
     assert(ob->_type == MN_BUTTON);
@@ -2605,7 +2605,7 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 
     if(cmd == MCMD_SELECT)
     {
-        boolean justActivated = false;
+        dd_bool justActivated = false;
         if(!(obj->_flags & MNF_ACTIVE))
         {
             justActivated = true;
@@ -2669,7 +2669,7 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     //int dis = (obj->_flags & MNF_DISABLED) != 0;
     //int act = (obj->_flags & MNF_ACTIVE)   != 0;
     //int click = (obj->_flags & MNF_CLICKED) != 0;
-    //boolean down = act || click;
+    //dd_bool down = act || click;
     const char* text = btn->text;
     Size2Raw size;
 
@@ -2963,7 +2963,7 @@ void MNColorBox_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     }
 }
 
-boolean MNColorBox_RGBAMode(mn_object_t* obj)
+dd_bool MNColorBox_RGBAMode(mn_object_t* obj)
 {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     assert(obj->_type == MN_COLORBOX);
@@ -2998,7 +2998,7 @@ float MNColorBox_Alphaf(const mn_object_t* obj)
     return (cbox->rgbaMode? cbox->a : 1.0f);
 }
 
-boolean MNColorBox_SetRedf(mn_object_t* obj, int flags, float red)
+dd_bool MNColorBox_SetRedf(mn_object_t* obj, int flags, float red)
 {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     float oldRed = cbox->r;
@@ -3016,7 +3016,7 @@ boolean MNColorBox_SetRedf(mn_object_t* obj, int flags, float red)
     return false;
 }
 
-boolean MNColorBox_SetGreenf(mn_object_t* obj, int flags, float green)
+dd_bool MNColorBox_SetGreenf(mn_object_t* obj, int flags, float green)
 {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     float oldGreen = cbox->g;
@@ -3034,7 +3034,7 @@ boolean MNColorBox_SetGreenf(mn_object_t* obj, int flags, float green)
     return false;
 }
 
-boolean MNColorBox_SetBluef(mn_object_t* obj, int flags, float blue)
+dd_bool MNColorBox_SetBluef(mn_object_t* obj, int flags, float blue)
 {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     float oldBlue = cbox->b;
@@ -3052,7 +3052,7 @@ boolean MNColorBox_SetBluef(mn_object_t* obj, int flags, float blue)
     return false;
 }
 
-boolean MNColorBox_SetAlphaf(mn_object_t* obj, int flags, float alpha)
+dd_bool MNColorBox_SetAlphaf(mn_object_t* obj, int flags, float alpha)
 {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     assert(obj->_type == MN_COLORBOX);
@@ -3073,7 +3073,7 @@ boolean MNColorBox_SetAlphaf(mn_object_t* obj, int flags, float alpha)
     return false;
 }
 
-boolean MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float green,
+dd_bool MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float green,
     float blue, float alpha)
 {
     //mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
@@ -3094,13 +3094,13 @@ boolean MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float gree
     return true;
 }
 
-boolean MNColorBox_SetColor4fv(mn_object_t* obj, int flags, float rgba[4])
+dd_bool MNColorBox_SetColor4fv(mn_object_t* obj, int flags, float rgba[4])
 {
     if(!rgba) return false;
     return MNColorBox_SetColor4f(obj, flags, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 }
 
-boolean MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* other)
+dd_bool MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* other)
 {
     assert(obj->_type == MN_COLORBOX);
     if(!other)
@@ -3286,7 +3286,7 @@ int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-static __inline boolean valueIsOne(float value, boolean floatMode)
+static __inline dd_bool valueIsOne(float value, dd_bool floatMode)
 {
     if(floatMode)
     {
@@ -3295,7 +3295,7 @@ static __inline boolean valueIsOne(float value, boolean floatMode)
     return (value > 0 && 1 == (int)(value + .5f));
 }
 
-static char* composeTextualValue(float value, boolean floatMode, int precision,
+static char* composeTextualValue(float value, dd_bool floatMode, int precision,
     size_t bufSize, char* buf)
 {
     assert(0 != bufSize && buf);
@@ -3311,14 +3311,14 @@ static char* composeTextualValue(float value, boolean floatMode, int precision,
     return buf;
 }
 
-static char* composeValueString(float value, float defaultValue, boolean floatMode,
+static char* composeValueString(float value, float defaultValue, dd_bool floatMode,
     int precision, const char* defaultString, const char* templateString,
     const char* onethSuffix, const char* nthSuffix, size_t bufSize, char* buf)
 {
-    const boolean haveTemplateString = (templateString && templateString[0]);
-    const boolean haveDefaultString  = (defaultString && defaultString[0]);
-    const boolean haveOnethSuffix    = (onethSuffix && onethSuffix[0]);
-    const boolean haveNthSuffix      = (nthSuffix && nthSuffix[0]);
+    const dd_bool haveTemplateString = (templateString && templateString[0]);
+    const dd_bool haveDefaultString  = (defaultString && defaultString[0]);
+    const dd_bool haveOnethSuffix    = (onethSuffix && onethSuffix[0]);
+    const dd_bool haveNthSuffix      = (nthSuffix && nthSuffix[0]);
     const char* suffix = NULL;
     char textualValue[11];
     assert(0 != bufSize && buf);

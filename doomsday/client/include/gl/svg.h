@@ -52,7 +52,7 @@ void Svg_Delete(Svg* svg);
 
 void Svg_Draw(Svg* svg);
 
-boolean Svg_Prepare(Svg* svg);
+dd_bool Svg_Prepare(Svg* svg);
 
 void Svg_Unload(Svg* svg);
 

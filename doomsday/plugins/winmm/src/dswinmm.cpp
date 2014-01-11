@@ -40,7 +40,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct mixerdata_s {
-    boolean available;
+    dd_bool available;
     MIXERLINE line;
     MIXERLINECONTROLS controls;
     MIXERCONTROL volume;
@@ -58,7 +58,7 @@ typedef struct mixerdata_s {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean initedOk = false;
+static dd_bool initedOk = false;
 static int verbose = 0;
 
 static int midiAvail = false;

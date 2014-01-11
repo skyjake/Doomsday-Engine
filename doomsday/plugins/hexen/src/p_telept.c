@@ -104,7 +104,7 @@ mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle)
     return P_SpawnMobjXYZ(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
-boolean P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean useFog)
+dd_bool P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, dd_bool useFog)
 {
     coord_t oldpos[3], aboveFloor, fogDelta;
     unsigned int an;
@@ -209,7 +209,7 @@ boolean P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, boolean useF
     return true;
 }
 
-boolean EV_Teleport(int tid, mobj_t* thing, boolean fog)
+dd_bool EV_Teleport(int tid, mobj_t* thing, dd_bool fog)
 {
     int                 i, count, searcher;
     mobj_t*             mo = 0;

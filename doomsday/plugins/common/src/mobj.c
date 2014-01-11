@@ -66,7 +66,7 @@ static coord_t getFriction(mobj_t *mo)
     return P_MobjGetFriction(mo);
 }
 
-boolean Mobj_IsVoodooDoll(mobj_t const *mo)
+dd_bool Mobj_IsVoodooDoll(mobj_t const *mo)
 {
     if(!mo) return false;
     return (mo->player && mo->player->plr->mo != mo);
@@ -75,10 +75,10 @@ boolean Mobj_IsVoodooDoll(mobj_t const *mo)
 void Mobj_XYMoveStopping(mobj_t* mo)
 {
     player_t* player = mo->player;
-    boolean isVoodooDoll = false;
-    boolean belowWalkStop = false;
-    boolean belowStandSpeed = false;
-    boolean isMovingPlayer = false;
+    dd_bool isVoodooDoll = false;
+    dd_bool belowWalkStop = false;
+    dd_bool belowStandSpeed = false;
+    dd_bool isMovingPlayer = false;
 
     assert(mo != 0);
 
@@ -161,7 +161,7 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     }
 }
 
-boolean Mobj_IsPlayerClMobj(mobj_t* mo)
+dd_bool Mobj_IsPlayerClMobj(mobj_t* mo)
 {
     if(IS_CLIENT)
     {
@@ -176,16 +176,16 @@ boolean Mobj_IsPlayerClMobj(mobj_t* mo)
     return false;
 }
 
-boolean Mobj_IsPlayer(mobj_t const *mo)
+dd_bool Mobj_IsPlayer(mobj_t const *mo)
 {
     if(!mo) return false;
     return (mo->player != 0);
 }
 
-boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround)
+dd_bool Mobj_LookForPlayers(mobj_t* mo, dd_bool allAround)
 {
     const int playerCount = P_CountPlayersInGame();
-    boolean foundTarget = false;
+    dd_bool foundTarget = false;
     int from, to, cand, tries = 0;
 
     // Nobody to target?
@@ -267,7 +267,7 @@ boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround)
  * Determines if it is allowed to execute the action function of @a mo.
  * @return @c true, if allowed.
  */
-static boolean shouldCallAction(mobj_t *mobj)
+static dd_bool shouldCallAction(mobj_t *mobj)
 {
     if(IS_CLIENT)
     {
@@ -282,7 +282,7 @@ static boolean shouldCallAction(mobj_t *mobj)
     return false;
 }
 
-static boolean changeMobjState(mobj_t *mobj, statenum_t stateNum, boolean doCallAction)
+static dd_bool changeMobjState(mobj_t *mobj, statenum_t stateNum, dd_bool doCallAction)
 {
     state_t *st;
 
@@ -317,12 +317,12 @@ static boolean changeMobjState(mobj_t *mobj, statenum_t stateNum, boolean doCall
     return mobj->thinker.function != (thinkfunc_t) NOPFUNC;
 }
 
-boolean P_MobjChangeState(mobj_t *mobj, statenum_t stateNum)
+dd_bool P_MobjChangeState(mobj_t *mobj, statenum_t stateNum)
 {
     return changeMobjState(mobj, stateNum, true /*call action functions*/);
 }
 
-boolean P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum)
+dd_bool P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum)
 {
     return changeMobjState(mobj, stateNum, false /*don't call action functions*/);
 }

@@ -92,12 +92,12 @@ extern "C" {
 #endif
 
 void            P_LoadACScripts(int lump);
-boolean         P_StartACS(int number, uint map, byte* args,
+dd_bool         P_StartACS(int number, uint map, byte* args,
                            mobj_t* activator, Line* line, int side);
-boolean         P_StartLockedACS(Line* line, byte* args, mobj_t* mo,
+dd_bool         P_StartLockedACS(Line* line, byte* args, mobj_t* mo,
                                  int side);
-boolean         P_TerminateACS(int number, uint map);
-boolean         P_SuspendACS(int number, uint map);
+dd_bool         P_TerminateACS(int number, uint map);
+dd_bool         P_SuspendACS(int number, uint map);
 void            T_InterpretACS(acs_t* script);
 void            P_TagFinished(int tag);
 void            P_ACSPolyobjFinished(int tag);

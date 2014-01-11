@@ -60,11 +60,11 @@ typedef struct {
     player_t* plr;
     // The type of object we want to draw. If @c -1, draw only line specials.
     int objType;
-    boolean addToLists;
+    dd_bool addToLists;
 } uiautomap_rendstate_t;
 uiautomap_rendstate_t rs;
 
-boolean freezeMapRLs = false;
+dd_bool freezeMapRLs = false;
 
 // if -1 no background image will be drawn.
 #if __JDOOM__ || __JDOOM64__
@@ -240,8 +240,8 @@ void UIAutomap_Reset(uiwidget_t* obj)
  */
 static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     const float color[4], glowtype_t glowType, float glowStrength, float glowSize,
-    boolean glowOnly, boolean scaleGlowWithView, boolean caps, blendmode_t blend,
-    boolean drawNormal, boolean addToLists)
+    dd_bool glowOnly, dd_bool scaleGlowWithView, dd_bool caps, blendmode_t blend,
+    dd_bool drawNormal, dd_bool addToLists)
 {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
@@ -693,7 +693,7 @@ static int drawMapLinesForBspLeafWorker(BspLeaf *bspLeaf, void *context)
  *
  * @params objType      Type of map object being drawn.
  */
-static void drawMapLines(uiwidget_t *obj, int objType, boolean addToLists)
+static void drawMapLines(uiwidget_t *obj, int objType, dd_bool addToLists)
 {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj && obj->type == GUI_AUTOMAP);
@@ -725,7 +725,7 @@ static void drawMapLines(uiwidget_t *obj, int objType, boolean addToLists)
 }
 
 static void rendLinedef(Line *line, float r, float g, float b, float a,
-    blendmode_t blendMode, boolean drawNormal)
+    blendmode_t blendMode, dd_bool drawNormal)
 {
     float length = P_GetFloatp(line, DMU_LENGTH);
 
@@ -1008,7 +1008,7 @@ static int rendThingPoint(mobj_t* mo, void* context)
     if(!(mo->flags & MF_NOSECTOR))
     {
         svgid_t vgId = p->vgId;
-        boolean isVisible = false;
+        dd_bool isVisible = false;
         float* color = p->rgb, angle;
         float keyColorRGB[3];
 
@@ -1065,7 +1065,7 @@ static void rendThingPoints(uiwidget_t* obj)
     Mobj_BoxIterator(&aaBox, rendThingPoint, &params);
 }
 
-static boolean interceptEdge(coord_t point[2], coord_t const startA[2], coord_t const endA[2],
+static dd_bool interceptEdge(coord_t point[2], coord_t const startA[2], coord_t const endA[2],
     coord_t const startB[2], coord_t const endB[2])
 {
     coord_t directionA[2];
@@ -1553,7 +1553,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_PopMatrix();
 }
 
-boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
+dd_bool UIAutomap_Open(uiwidget_t* obj, dd_bool yes, dd_bool fast)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -1904,15 +1904,15 @@ void UIAutomap_CameraOrigin(uiwidget_t* obj, coord_t* x, coord_t* y)
     if(y) *y = am->viewY;
 }
 
-boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, coord_t x, coord_t y)
+dd_bool UIAutomap_SetCameraOrigin(uiwidget_t* obj, coord_t x, coord_t y)
 {
     return UIAutomap_SetCameraOrigin2(obj, x, y, false);
 }
 
-boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, coord_t x, coord_t y, boolean forceInstantly)
+dd_bool UIAutomap_SetCameraOrigin2(uiwidget_t* obj, coord_t x, coord_t y, dd_bool forceInstantly)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    boolean instantChange = forceInstantly;
+    dd_bool instantChange = forceInstantly;
     assert(obj->type == GUI_AUTOMAP);
 
     // Already at this target?
@@ -1950,12 +1950,12 @@ boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, coord_t x, coord_t y, boolea
     return true;
 }
 
-boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, coord_t x, coord_t y)
+dd_bool UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, coord_t x, coord_t y)
 {
     return UIAutomap_TranslateCameraOrigin2(obj, x, y, false);
 }
 
-boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, coord_t x, coord_t y, boolean forceInstantly)
+dd_bool UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, coord_t x, coord_t y, dd_bool forceInstantly)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -1980,7 +1980,7 @@ float UIAutomap_CameraAngle(uiwidget_t* obj)
     return am->angle;
 }
 
-boolean UIAutomap_SetCameraAngle(uiwidget_t* obj, float angle)
+dd_bool UIAutomap_SetCameraAngle(uiwidget_t* obj, float angle)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -1994,7 +1994,7 @@ boolean UIAutomap_SetCameraAngle(uiwidget_t* obj, float angle)
     return true;
 }
 
-boolean UIAutomap_SetScale(uiwidget_t* obj, float scale)
+dd_bool UIAutomap_SetScale(uiwidget_t* obj, float scale)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2016,7 +2016,7 @@ boolean UIAutomap_SetScale(uiwidget_t* obj, float scale)
     return true;
 }
 
-boolean UIAutomap_Active(uiwidget_t* obj)
+dd_bool UIAutomap_Active(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2024,7 +2024,7 @@ boolean UIAutomap_Active(uiwidget_t* obj)
     return am->active;
 }
 
-boolean UIAutomap_Reveal(uiwidget_t* obj)
+dd_bool UIAutomap_Reveal(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2032,10 +2032,10 @@ boolean UIAutomap_Reveal(uiwidget_t* obj)
     return am->reveal;
 }
 
-boolean UIAutomap_SetReveal(uiwidget_t* obj, boolean yes)
+dd_bool UIAutomap_SetReveal(uiwidget_t* obj, dd_bool yes)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    boolean oldReveal = am->reveal;
+    dd_bool oldReveal = am->reveal;
     assert(obj->type == GUI_AUTOMAP);
 
     am->reveal = yes;
@@ -2131,7 +2131,7 @@ int UIAutomap_AddPoint(uiwidget_t* obj, coord_t x, coord_t y, coord_t z)
     return newIdx;
 }
 
-boolean UIAutomap_PointOrigin(const uiwidget_t* obj, int pointIdx, coord_t* x, coord_t* y, coord_t* z)
+dd_bool UIAutomap_PointOrigin(const uiwidget_t* obj, int pointIdx, coord_t* x, coord_t* y, coord_t* z)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2149,7 +2149,7 @@ boolean UIAutomap_PointOrigin(const uiwidget_t* obj, int pointIdx, coord_t* x, c
     return false;
 }
 
-boolean UIAutomap_ZoomMax(uiwidget_t* obj)
+dd_bool UIAutomap_ZoomMax(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2157,10 +2157,10 @@ boolean UIAutomap_ZoomMax(uiwidget_t* obj)
     return am->forceMaxScale;
 }
 
-boolean UIAutomap_SetZoomMax(uiwidget_t* obj, boolean on)
+dd_bool UIAutomap_SetZoomMax(uiwidget_t* obj, dd_bool on)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    boolean oldZoomMax = am->forceMaxScale;
+    dd_bool oldZoomMax = am->forceMaxScale;
     assert(obj->type == GUI_AUTOMAP);
 
     if(am->updateViewScale)
@@ -2175,7 +2175,7 @@ boolean UIAutomap_SetZoomMax(uiwidget_t* obj, boolean on)
     return (oldZoomMax != am->forceMaxScale);
 }
 
-boolean UIAutomap_PanMode(uiwidget_t* obj)
+dd_bool UIAutomap_PanMode(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2183,10 +2183,10 @@ boolean UIAutomap_PanMode(uiwidget_t* obj)
     return am->pan;
 }
 
-boolean UIAutomap_SetPanMode(uiwidget_t* obj, boolean on)
+dd_bool UIAutomap_SetPanMode(uiwidget_t* obj, dd_bool on)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    boolean oldPanMode = am->pan;
+    dd_bool oldPanMode = am->pan;
     assert(obj->type == GUI_AUTOMAP);
 
     am->pan = on;
@@ -2210,7 +2210,7 @@ mobj_t* UIAutomap_FollowMobj(uiwidget_t* obj)
     return NULL;
 }
 
-boolean UIAutomap_CameraRotation(uiwidget_t* obj)
+dd_bool UIAutomap_CameraRotation(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
@@ -2218,10 +2218,10 @@ boolean UIAutomap_CameraRotation(uiwidget_t* obj)
     return am->rotate;
 }
 
-boolean UIAutomap_SetCameraRotation(uiwidget_t* obj, boolean on)
+dd_bool UIAutomap_SetCameraRotation(uiwidget_t* obj, dd_bool on)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    boolean oldRotate = am->rotate;
+    dd_bool oldRotate = am->rotate;
     assert(obj->type == GUI_AUTOMAP);
 
     am->rotate = on;
@@ -2236,7 +2236,7 @@ float UIAutomap_Opacity(const uiwidget_t* obj)
     return am->alpha;
 }
 
-boolean UIAutomap_SetOpacity(uiwidget_t* obj, float value)
+dd_bool UIAutomap_SetOpacity(uiwidget_t* obj, float value)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);

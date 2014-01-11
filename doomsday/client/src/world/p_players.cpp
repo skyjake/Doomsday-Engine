@@ -111,7 +111,7 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl)
     return -1;
 }
 
-boolean P_IsInVoid(player_t *player)
+dd_bool P_IsInVoid(player_t *player)
 {
     if(!player) return false;
     ddplayer_t *ddpl = &player->shared;

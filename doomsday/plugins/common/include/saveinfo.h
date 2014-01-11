@@ -81,7 +81,7 @@ void SaveInfo_Configure(SaveInfo *info);
  * Returns @a true if the game state is compatibile with the current game session
  * and @em should be loadable.
  */
-boolean SaveInfo_IsLoadable(SaveInfo *info);
+dd_bool SaveInfo_IsLoadable(SaveInfo *info);
 
 /**
  * Serializes the save info using @a writer.

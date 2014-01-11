@@ -104,23 +104,23 @@ void        P_PostMorphWeapon(player_t* plr, weapontype_t weapon);
 void        P_TeleportOther(mobj_t* victim);
 void        P_ArtiTeleportOther(player_t* plr);
 void        ResetBlasted(mobj_t* mo);
-boolean     P_UndoPlayerMorph(player_t* plr);
+dd_bool     P_UndoPlayerMorph(player_t* plr);
 
 void        P_ThrustMobj(mobj_t* mo, angle_t angle, coord_t move);
 int         P_FaceMobj(mobj_t* source, mobj_t* target, angle_t* delta);
-boolean     P_SeekerMissile(mobj_t* mo, angle_t thresh, angle_t turnMax);
+dd_bool     P_SeekerMissile(mobj_t* mo, angle_t thresh, angle_t turnMax);
 void        P_MobjThinker(void *mo);
-boolean     P_HealRadius(player_t* plr);
+dd_bool     P_HealRadius(player_t* plr);
 void        P_BlastRadius(player_t* plr);
 
-boolean     P_CheckMissileSpawn(mobj_t* mo);
+dd_bool     P_CheckMissileSpawn(mobj_t* mo);
 coord_t     P_MobjGetFriction(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
-boolean     P_HitFloor(mobj_t* mo);
+dd_bool     P_HitFloor(mobj_t* mo);
 
 void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
 int         P_Massacre(void);
-boolean     P_LookForMonsters(mobj_t* mo);
+dd_bool     P_LookForMonsters(mobj_t* mo);
 
 void        P_InitCorpseQueue(void);
 void        P_AddCorpseToQueue(mobj_t* mo);
@@ -129,16 +129,16 @@ void        P_RemoveCorpseInQueue(mobj_t* mo);
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 void        P_PoisonPlayer(player_t* plr, mobj_t* poisoner, int poison);
 
-int         P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
-int         P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
+int         P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, dd_bool stomping);
+int         P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, dd_bool stomping, dd_bool skipNetworkCheck);
 int         P_FallingDamage(player_t* plr);
 int         P_PoisonDamage(player_t* plr, mobj_t* source, int damage,
-                           boolean playPainSound);
+                           dd_bool playPainSound);
 
-boolean     A_LocalQuake(byte* args, mobj_t* victim);
+dd_bool     A_LocalQuake(byte* args, mobj_t* victim);
 void C_DECL A_BridgeRemove(mobj_t* actor);
-boolean     A_RaiseMobj(mobj_t* mo);
-boolean     A_SinkMobj(mobj_t* mo);
+dd_bool     A_RaiseMobj(mobj_t* mo);
+dd_bool     A_SinkMobj(mobj_t* mo);
 void C_DECL A_NoBlocking(mobj_t* mo);
 
 #ifdef __cplusplus

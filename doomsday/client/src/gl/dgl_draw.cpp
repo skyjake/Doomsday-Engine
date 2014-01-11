@@ -34,10 +34,10 @@ using namespace de;
 static int primLevel = 0;
 static DGLuint inList = 0;
 #ifdef _DEBUG
-static boolean inPrim = false;
+static dd_bool inPrim = false;
 #endif
 
-boolean GL_NewList(DGLuint list, int mode)
+dd_bool GL_NewList(DGLuint list, int mode)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -319,7 +319,7 @@ DENG_EXTERN_C void DGL_End(void)
 }
 
 #undef DGL_NewList
-DENG_EXTERN_C boolean DGL_NewList(DGLuint list, int mode)
+DENG_EXTERN_C dd_bool DGL_NewList(DGLuint list, int mode)
 {
     return GL_NewList(list, mode);
 }
