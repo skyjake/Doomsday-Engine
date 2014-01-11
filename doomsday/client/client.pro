@@ -365,6 +365,7 @@ DENG_HEADERS += \
     include/ui/b_main.h \
     include/ui/b_util.h \
     include/ui/busyvisual.h \
+    include/ui/clientrootwidget.h \
     include/ui/clientwindow.h \
     include/ui/commandaction.h \
     include/ui/dd_input.h \
@@ -380,6 +381,7 @@ DENG_HEADERS += \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/dialogs/vrsettingsdialog.h \
     include/ui/editors/rendererappearanceeditor.h \
+    include/ui/widgetactions.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
@@ -686,6 +688,7 @@ SOURCES += \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
     src/ui/busyvisual.cpp \
+    src/ui/clientrootwidget.cpp \
     src/ui/clientwindow.cpp \
     src/ui/commandaction.cpp \
     src/ui/dd_input.cpp \
@@ -712,6 +715,7 @@ SOURCES += \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
     src/ui/vrwindowtransform.cpp \
+    src/ui/widgetactions.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \

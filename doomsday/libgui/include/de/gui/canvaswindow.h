@@ -57,6 +57,8 @@ class LIBGUI_PUBLIC CanvasWindow : public QMainWindow,
 public:
     typedef Vector2ui Size;
 
+    DENG2_AS_IS_METHODS()
+
 public:
     CanvasWindow();
 

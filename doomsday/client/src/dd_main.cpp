@@ -34,6 +34,7 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
+#  include "updater.h"
 #  include <de/DisplayMode>
 #endif
 
@@ -48,7 +49,6 @@
 #include "de_audio.h"
 
 #include "edit_bias.h"
-#include "updater.h"
 
 #include "gl/svg.h"
 #ifdef __CLIENT__

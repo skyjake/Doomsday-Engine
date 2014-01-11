@@ -22,9 +22,9 @@
 #define CLIENT_CLIENTWINDOW_H
 
 #include <de/PersistentCanvasWindow>
-#include <de/GuiRootWidget>
 #include <de/NotificationWidget>
 
+#include "ui/clientrootwidget.h"
 #include "resource/image.h"
 #include "ui/widgets/gamewidget.h"
 
@@ -72,7 +72,7 @@ public:
 public:
     ClientWindow(de::String const &id = "main");
 
-    de::GuiRootWidget &root();
+    ClientRootWidget &root();
     TaskBarWidget &taskBar();
     ConsoleWidget &console();
     de::NotificationWidget &notifications();

@@ -25,6 +25,7 @@
  */
 
 #include "ui/clientwindow.h"
+#include "ui/clientrootwidget.h"
 #include "clientapp.h"
 #include <de/DisplayMode>
 #include <de/NumberValue>
@@ -73,7 +74,7 @@ DENG2_OBSERVES(App,              StartupComplete)
     Mode mode;
 
     /// Root of the nomal UI widgets of this window.
-    GuiRootWidget root;
+    ClientRootWidget root;
     CompositorWidget *compositor;
     GameWidget *game;
     GameUIWidget *gameUI;
@@ -670,7 +671,7 @@ ClientWindow::ClientWindow(String const &id)
     d->setupUI();
 }
 
-GuiRootWidget &ClientWindow::root()
+ClientRootWidget &ClientWindow::root()
 {
     return d->root;
 }

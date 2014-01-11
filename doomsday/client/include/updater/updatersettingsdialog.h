@@ -23,12 +23,12 @@
 #ifndef DENG_CLIENT_UPDATERSETTINGSDIALOG_H
 #define DENG_CLIENT_UPDATERSETTINGSDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog for configuring the settings of the automatic updater.
  */
-class UpdaterSettingsDialog : public DialogWidget
+class UpdaterSettingsDialog : public de::DialogWidget
 {
     Q_OBJECT
 

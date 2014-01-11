@@ -328,7 +328,6 @@ bool PopupWidget::handleEvent(Event const &event)
 
         // Popups should still allow global key bindings to be activated.
         root().handleEventAsFallback(event);
-        //ClientApp::widgetActions().tryEvent(event, "global");
 
         // Don't pass it further, though.
         return true;

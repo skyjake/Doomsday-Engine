@@ -201,10 +201,6 @@ CanvasWindow &GuiRootWidget::window()
 
 void GuiRootWidget::addOnTop(GuiWidget *widget)
 {
-    /// @todo Client-side behavior:
-    // The window knows what is the correct top to add to.
-    //window().addOnTop(widget);
-
     add(widget);
 }
 

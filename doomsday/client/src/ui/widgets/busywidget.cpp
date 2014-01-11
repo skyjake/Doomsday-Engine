@@ -214,7 +214,7 @@ void BusyWidget::renderTransitionFrame()
     //d->transitionTex.reset(new GLTexture); //grabbed, grabRect.size() / 2));
     //d->transitionTex->setUndefinedImage(grabRect.size(), Image::RGB_888);
 
-    root().window().drawGameContent();
+    root().window().as<ClientWindow>().drawGameContent();
 
     GLState::pop().apply();
 

@@ -24,9 +24,10 @@
 
 #include <de/Image>
 
+namespace de {
+
 class PopupWidget;
 
-namespace de {
 namespace ui {
 
 /**

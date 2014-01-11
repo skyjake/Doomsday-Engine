@@ -19,12 +19,14 @@
  */
 
 #include "updater/processcheckdialog.h"
-#include "ui/dialogs//messagedialog.h"
 #include "ui/clientwindow.h"
 
 #include <QProcess>
+#include <de/MessageDialog>
 
 #ifdef WIN32
+
+using namespace de;
 
 static bool isProcessRunning(char const *name)
 {

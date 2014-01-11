@@ -54,13 +54,6 @@ public:
      */
     CanvasWindow &window();
 
-    /**
-     * Adds a widget over all others.
-     *
-     * @param widget  Widget to add on top.
-     */
-    virtual void addOnTop(GuiWidget *widget);
-
     AtlasTexture &atlas();
     GLUniform &uAtlas();
     Id solidWhitePixel() const;
@@ -79,22 +72,7 @@ public:
 
     void routeMouse(Widget *routeTo);
 
-    /**
-     * Sends the current mouse position as a mouse event, just like the mouse would've
-     * been moved.
-     */
-    virtual void dispatchLatestMousePosition();
-
     bool processEvent(Event const &event);
-
-    /**
-     * If the event is not used by any widget, this will be called so the application may
-     * still handle the event for other, non-widget-related purposes. No widget will be
-     * offered the event after this is called.
-     *
-     * @param event  Event.
-     */
-    virtual void handleEventAsFallback(Event const &event);
 
     /**
      * Finds the widget that occupies the given point, looking through the entire tree. The
@@ -117,6 +95,28 @@ public:
      * @param until  Widget to stop drawing at. @a until is not drawn.
      */
     void drawUntil(Widget &until);
+
+    /**
+     * Adds a widget over all others.
+     *
+     * @param widget  Widget to add on top.
+     */
+    virtual void addOnTop(GuiWidget *widget);
+
+    /**
+     * Sends the current mouse position as a mouse event, just like the mouse would've
+     * been moved.
+     */
+    virtual void dispatchLatestMousePosition();
+
+    /**
+     * If the event is not used by any widget, this will be called so the application may
+     * still handle the event for other, non-widget-related purposes. No widget will be
+     * offered the event after this is called.
+     *
+     * @param event  Event.
+     */
+    virtual void handleEventAsFallback(Event const &event);
 
 private:
     DENG2_PRIVATE(d)

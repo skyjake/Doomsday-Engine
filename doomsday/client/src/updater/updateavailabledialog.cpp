@@ -23,13 +23,13 @@
 #include "updater/updateavailabledialog.h"
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
-#include "ui/widgets/progresswidget.h"
-#include "ui/widgets/togglewidget.h"
-#include "SignalAction"
 #include "clientapp.h"
 #include "versioninfo.h"
 #include <de/GuiApp>
 #include <de/Log>
+#include <de/ProgressWidget>
+#include <de/ToggleWidget>
+#include <de/SignalAction>
 #include <QUrl>
 #include <QDesktopServices>
 
