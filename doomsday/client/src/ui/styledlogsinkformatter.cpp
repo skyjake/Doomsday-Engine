@@ -36,7 +36,16 @@ StyledLogSinkFormatter::StyledLogSinkFormatter(LogEntry::Flags const &formatFlag
 
 LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 {
+    LogEntry::Flags form = _format;
+    if(!(entry.context() & LogEntry::Dev))
+    {
+        // The sections refer to names of native code functions, etc.
+        // These are relevant only to developers. Non-dev messages must be
+        // clear enough to understand without the sections.
+        form |= LogEntry::OmitSection;
+    }
+
     // This will form a single long line. The line wrapper will
     // then determine how to wrap it onto the available width.
-    return Lines() << entry.asText(_format);
+    return Lines() << entry.asText(form);
 }

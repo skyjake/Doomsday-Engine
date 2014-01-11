@@ -569,7 +569,7 @@ public:
 
     inline duint32 metadata() const { return _metadata; }
 
-    inline duint32 audience() const { return _metadata & ContextMask; }
+    inline duint32 context() const { return _metadata & ContextMask; }
 
     inline Level level() const { return Level(_metadata & LevelMask); }
 
