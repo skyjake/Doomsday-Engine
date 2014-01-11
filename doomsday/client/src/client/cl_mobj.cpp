@@ -47,15 +47,6 @@ using namespace de;
 #define UNFIXED8_8(x)   (((x) << 16) / 256)
 #define UNFIXED10_6(x)  (((x) << 16) / 64)
 
-/// Milliseconds it takes for Unpredictable and Hidden mobjs to be
-/// removed from the hash. Under normal circumstances, the special
-/// status should be removed fairly quickly.
-#define CLMOBJ_TIMEOUT  4000    ///< milliseconds
-
-/// Missiles don't hit mobjs only after a short delay. This'll
-/// allow the missile to move free of the shooter. (Quite a hack!)
-#define MISSILE_FREE_MOVE_TIME  1000
-
 ClMobjHash::ClMobjHash()
 {
     de::zap(_buckets);
@@ -337,50 +328,6 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
         if(localMobj->origin[VZ] < localMobj->floorZ)
             localMobj->origin[VZ] = localMobj->floorZ;
     }
-}
-
-/// @return  @c false= Continue iteration.
-static int expireClMobjsWorker(mobj_t *mo, void *context)
-{
-    uint const nowTime = *static_cast<uint *>(context);
-
-    // Already deleted?
-    if(mo->thinker.function == (thinkfunc_t)-1)
-        return 0;
-
-    // Don't expire player mobjs.
-    if(mo->dPlayer) return 0;
-
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
-    DENG2_ASSERT(info != 0);
-
-    if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
-    {
-        // Has this mobj timed out?
-        if(nowTime - info->time > CLMOBJ_TIMEOUT)
-        {
-            LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
-                    << mo->thinker.id
-                    << info->time << nowTime
-                    << Def_GetStateName(mo->state)
-                    << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
-                    << (info->flags & CLMF_HIDDEN?        'H' : '_')
-                    << (info->flags & CLMF_NULLED?        '0' : '_');
-
-            // Too long. The server will probably never send anything
-            // for this mobj, so get rid of it. (Both unpredictable
-            // and hidden mobjs are not visible or bl/seclinked.)
-            Mobj_Destroy(mo);
-        }
-    }
-
-    return 0;
-}
-
-void Map::expireClMobjs()
-{
-    uint nowTime = Timer_RealMilliseconds();
-    clMobjHash().iterate(expireClMobjsWorker, &nowTime);
 }
 
 mobj_t *ClMobj_Create(thid_t id)

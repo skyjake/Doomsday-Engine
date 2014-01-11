@@ -73,6 +73,13 @@
 
 static int bspSplitFactor = 7; // cvar
 
+#ifdef __CLIENT__
+/// Milliseconds it takes for Unpredictable and Hidden mobjs to be
+/// removed from the hash. Under normal circumstances, the special
+/// status should be removed fairly quickly.
+#define CLMOBJ_TIMEOUT  4000
+#endif
+
 namespace de {
 
 struct EditableElements
@@ -2452,6 +2459,50 @@ void Map::worldFrameBegins(World &world, bool resetNextViewer)
 
         d->linkAllContacts();
     }
+}
+
+/// @return  @c false= Continue iteration.
+static int expireClMobjsWorker(mobj_t *mo, void *context)
+{
+    uint const nowTime = *static_cast<uint *>(context);
+
+    // Already deleted?
+    if(mo->thinker.function == (thinkfunc_t)-1)
+        return 0;
+
+    // Don't expire player mobjs.
+    if(mo->dPlayer) return 0;
+
+    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    DENG2_ASSERT(info != 0);
+
+    if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
+    {
+        // Has this mobj timed out?
+        if(nowTime - info->time > CLMOBJ_TIMEOUT)
+        {
+            LOGDEV_MAP_MSG("Mobj %i has expired (%i << %i), in state %s [%c%c%c]")
+                    << mo->thinker.id
+                    << info->time << nowTime
+                    << Def_GetStateName(mo->state)
+                    << (info->flags & CLMF_UNPREDICTABLE? 'U' : '_')
+                    << (info->flags & CLMF_HIDDEN?        'H' : '_')
+                    << (info->flags & CLMF_NULLED?        '0' : '_');
+
+            // Too long. The server will probably never send anything
+            // for this mobj, so get rid of it. (Both unpredictable
+            // and hidden mobjs are not visible or bl/seclinked.)
+            Mobj_Destroy(mo);
+        }
+    }
+
+    return 0;
+}
+
+void Map::expireClMobjs()
+{
+    uint nowTime = Timer_RealMilliseconds();
+    d->clMobjHash.iterate(expireClMobjsWorker, &nowTime);
 }
 
 void Map::clearClMovers()
