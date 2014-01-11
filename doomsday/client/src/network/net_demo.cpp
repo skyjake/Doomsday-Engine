@@ -385,8 +385,8 @@ void Demo_StopPlayback(void)
         if(!diff)
             diff = 1;
         // Print summary and exit.
-        Con_Message("Timedemo results: %i game tics in %.1f seconds", r_framecounter, diff);
-        Con_Message("%f FPS", r_framecounter / diff);
+        LOG_MSG("Timedemo results: %i game tics in %.1f seconds", r_framecounter, diff);
+        LOG_MSG("%f FPS", r_framecounter / diff);
         Sys_Quit();
     }
     */
@@ -433,11 +433,6 @@ dd_bool Demo_ReadPacket(void)
     netBuffer.msg.type = lzGetC(playdemo);
     lzRead(netBuffer.msg.data, (long) netBuffer.length, playdemo);
     //netBuffer.cursor = netBuffer.msg.data;
-
-/*#if _DEBUG
-Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
-           hdr.angle, hdr.lookdir, hdr.length, netBuffer.msg.type);
-#endif*/
 
     // Read the next packet time.
     ptime = lzGetC(playdemo);
@@ -636,7 +631,7 @@ D_CMD(PlayDemo)
 {
     DENG2_UNUSED2(src, argc);
 
-    Con_Printf("Playing demo \"%s\"...\n", argv[1]);
+    LOG_MSG("Playing demo \"%s\"...") << argv[1];
     return Demo_BeginPlayback(argv[1]);
 }
 
@@ -648,28 +643,27 @@ D_CMD(RecordDemo)
 
     if(argc == 3 && isClient)
     {
-        Con_Printf("Clients can only record the consolePlayer.\n");
+        LOG_ERROR("Clients can only record the consolePlayer");
         return true;
     }
 
     if(isClient && argc != 2)
     {
-        Con_Printf("Usage: %s (fileName)\n", argv[0]);
+        LOG_SCR_NOTE("Usage: %s (fileName)") << argv[0];
         return true;
     }
 
     if(isServer && (argc < 2 || argc > 3))
     {
-        Con_Printf("Usage: %s (fileName) (plnum)\n", argv[0]);
-        Con_Printf("(plnum) is the player which will be recorded.\n");
+        LOG_SCR_NOTE("Usage: %s (fileName) (plnum)") << argv[0];
+        LOG_SCR_MSG("(plnum) is the player which will be recorded.");
         return true;
     }
 
     if(argc == 3)
         plnum = atoi(argv[2]);
 
-    Con_Printf("Recording demo of player %i to \"%s\".\n", plnum, argv[1]);
-
+    LOG_MSG("Recording demo of player %i to \"%s\"") << plnum << argv[1];
     return Demo_BeginRecording(argv[1], plnum);
 }
 
@@ -684,18 +678,18 @@ D_CMD(PauseDemo)
 
     if(!clients[plnum].recording)
     {
-        Con_Printf("Not recording for player %i.\n", plnum);
+        LOG_ERROR("Not recording for player %i") << plnum;
         return false;
     }
     if(clients[plnum].recordPaused)
     {
         Demo_ResumeRecording(plnum);
-        Con_Printf("Demo recording of player %i resumed.\n", plnum);
+        LOG_MSG("Demo recording of player %i resumed") << plnum;
     }
     else
     {
         Demo_PauseRecording(plnum);
-        Con_Printf("Demo recording of player %i paused.\n", plnum);
+        LOG_MSG("Demo recording of player %i paused") << plnum;
     }
     return true;
 }
@@ -708,7 +702,7 @@ D_CMD(StopDemo)
 
     if(argc > 2)
     {
-        Con_Printf("Usage: stopdemo (plrnum)\n");
+        LOG_SCR_NOTE("Usage: stopdemo (plrnum)");
         return true;
     }
     if(argc == 2)
@@ -717,8 +711,8 @@ D_CMD(StopDemo)
     if(!playback && !clients[plnum].recording)
         return true;
 
-    Con_Printf("Demo %s of player %i stopped.\n",
-               clients[plnum].recording ? "recording" : "playback", plnum);
+    LOG_MSG("Demo %s of player %i stopped.")
+            << (clients[plnum].recording ? "recording" : "playback") << plnum;
 
     if(playback)
     {   // Aborted.

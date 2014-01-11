@@ -525,28 +525,21 @@ D_CMD(ClearControlAccumulation)
  */
 D_CMD(ListPlayerControls)
 {
-    /*
-    uint        i, j;
-    char        buf[MAX_DESCRIPTOR_LENGTH+1];
+    LOG_MSG(_E(b) "Player Controls:");
+    LOG_MSG("%i controls have been defined") << playerControlCount;
 
-    Con_Message("Player Controls:");
-    for(i = 0; i < NUM_CONTROL_CLASSES; ++i)
+    for(int i = 0; i < playerControlCount; ++i)
     {
-        controlclass_t *cClass = &ctlClass[i];
+        playercontrol_t *pc = &playerControls[i];
 
-        if(cClass->count > 0)
-        {
-            Con_Message("%i %s:", cClass->count,
-                        ctlClassNames[i][cClass->count > 1]);
-            for(j = 0; j < cClass->count; ++j)
-            {
-                strncpy(buf, cClass->desc[j].name, sizeof(buf) - 1);
-                strlwr(buf);
-                buf[strlen(cClass->desc[j].name)] = 0;
-                Con_Message("  %s", buf);
-            }
-        }
-    }*/
+        LOG_MSG("ID %i: " _E(>) "%s (%s)\n"
+                "type:%s triggerable:%b")
+                << pc->id
+                << pc->name
+                << pc->bindContextName
+                << (pc->type == CTLT_IMPULSE? "Impulse" : "Numeric")
+                << pc->isTriggerable;
+    }
     return true;
 }
 

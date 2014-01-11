@@ -59,28 +59,27 @@ static void Monitor_Print(void)
         return;
     }
     LOGDEV_NET_MSG("%i bytes sent (%i packets)") << monitoredBytes << monitoredPackets;
-    /// @todo The below needs updating. -jk
-#if 0
     int i, k;
     for(i = 0, k = 0; i < 256; ++i)
     {
-        if(!k) Con_Printf("    ");
+        // LogBuffer_Printf uses manual newlines.
 
-        Con_Printf("%10.10lf", (double)(monitor[i]) / (double)monitoredBytes);
+        if(!k) LogBuffer_Printf(DE2_LOG_DEV, "    ");
+
+        LogBuffer_Printf(DE2_LOG_DEV, "%10.10f", (double)(monitor[i]) / (double)monitoredBytes);
 
         // Break lines.
         if(++k == 4)
         {
             k = 0;
-            Con_Printf(",\n");
+            LogBuffer_Printf(DE2_LOG_DEV, ",\n");
         }
         else
         {
-            Con_Printf(", ");
+            LogBuffer_Printf(DE2_LOG_DEV, ", ");
         }
     }
-    if(k) Con_Printf("\n");
-#endif
+    if(k) LogBuffer_Printf(DE2_LOG_DEV, "\n");
 }
 
 D_CMD(NetFreqs)
