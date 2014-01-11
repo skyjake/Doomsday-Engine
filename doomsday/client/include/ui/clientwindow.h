@@ -22,8 +22,9 @@
 #define CLIENT_CLIENTWINDOW_H
 
 #include <de/PersistentCanvasWindow>
+#include <de/NotificationWidget>
 
-#include "GuiRootWidget"
+#include "ui/clientrootwidget.h"
 #include "resource/image.h"
 #include "ui/widgets/gamewidget.h"
 
@@ -46,7 +47,6 @@
 
 class ConsoleWidget;
 class TaskBarWidget;
-class NotificationWidget;
 class BusyWidget;
 class AlertDialog;
 
@@ -72,10 +72,10 @@ public:
 public:
     ClientWindow(de::String const &id = "main");
 
-    GuiRootWidget &root();
+    ClientRootWidget &root();
     TaskBarWidget &taskBar();
     ConsoleWidget &console();
-    NotificationWidget &notifications();
+    de::NotificationWidget &notifications();
     GameWidget &game();
     BusyWidget &busy();
     AlertDialog &alerts();
@@ -87,7 +87,7 @@ public:
      * @param widget  Widget to add on top of others. Ownership of the
      *                widget taken by the new parent.
      */
-    void addOnTop(GuiWidget *widget);
+    void addOnTop(de::GuiWidget *widget);
 
     /**
      * Installs a sidebar widget into the window. If there is an existing
@@ -99,7 +99,7 @@ public:
      *                  of the widget.
      * @param sidebar   Widget to install, or @c NULL to remove the sidebar.
      */
-    void setSidebar(SidebarLocation location, GuiWidget *sidebar);
+    void setSidebar(SidebarLocation location, de::GuiWidget *sidebar);
 
     void unsetSidebar(SidebarLocation location) { setSidebar(location, 0); }
 

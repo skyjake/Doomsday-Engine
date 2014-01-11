@@ -76,8 +76,8 @@ DENG2_PIMPL(GameWidget)
             // Notify the world that a new render frame has begun.
             App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
-            R_RenderViewPorts(ui::Player3DViewLayer);
-            R_RenderViewPorts(ui::ViewBorderLayer);
+            R_RenderViewPorts(Player3DViewLayer);
+            R_RenderViewPorts(ViewBorderLayer);
 
             // End any open DGL sequence.
             DGL_End();
@@ -157,7 +157,7 @@ void GameWidget::update()
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
     // Request update of window contents.
-    root().window().draw();
+    root().as<ClientRootWidget>().window().draw();
 
     // After the first frame, start timedemo.
     //DD_CheckTimeDemo();
@@ -194,9 +194,11 @@ bool GameWidget::handleEvent(Event const &event)
      * submit as Latin1.
      */
 
+    ClientWindow &window = root().window().as<ClientWindow>();
+
     if(event.type() == Event::MouseButton && !root().window().canvas().isMouseTrapped())
     {
-        if(!root().window().hasSidebar())
+        if(!window.hasSidebar())
         {
             // If the mouse is not trapped, we will just eat button clicks which
             // will prevent them from reaching the legacy input system.
@@ -209,8 +211,8 @@ bool GameWidget::handleEvent(Event const &event)
         {
         case MouseClickFinished:
             // Click completed on the widget, trap the mouse.
-            root().window().canvas().trapMouse();
-            root().window().taskBar().close();
+            window.canvas().trapMouse();
+            window.taskBar().close();
             root().setFocus(0); // Allow input to reach here.
             break;
 

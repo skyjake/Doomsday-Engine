@@ -19,13 +19,13 @@
 #ifndef DENG_CLIENT_KEYGRABBERWIDGET_H
 #define DENG_CLIENT_KEYGRABBERWIDGET_H
 
-#include "labelwidget.h"
+#include <de/LabelWidget>
 
 /**
  * When focused, grabs key events and shows the key event data. However, Esc is
  * never grabbed.
  */
-class KeyGrabberWidget : public LabelWidget
+class KeyGrabberWidget : public de::LabelWidget
 {
 public:
     KeyGrabberWidget(de::String const &name = "");

@@ -23,10 +23,10 @@
 #ifndef DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
 #define DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
 
-#include "ui/dialogs/messagedialog.h"
+#include <de/MessageDialog>
 #include "versioninfo.h"
 
-class UpdateAvailableDialog : public MessageDialog
+class UpdateAvailableDialog : public de::MessageDialog
 {
     Q_OBJECT
 

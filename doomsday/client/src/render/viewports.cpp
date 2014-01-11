@@ -1022,12 +1022,12 @@ static void clearViewPorts()
     glClear(bits);
 }
 
-void R_RenderViewPorts(ui::ViewPortLayer layer)
+void R_RenderViewPorts(ViewPortLayer layer)
 {
     int oldDisplay = displayPlayer;
 
     // First clear the viewport.
-    if(layer == ui::Player3DViewLayer)
+    if(layer == Player3DViewLayer)
     {
         clearViewPorts();
     }
@@ -1044,7 +1044,7 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
 
             if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_ORIGIN))
             {
-                if(layer == ui::Player3DViewLayer)
+                if(layer == Player3DViewLayer)
                 {
                     R_RenderBlankView();
                 }
@@ -1069,18 +1069,18 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
 
             switch(layer)
             {
-            case ui::Player3DViewLayer:
+            case Player3DViewLayer:
                 R_UpdateViewer(vp->console);
                 LensFx_BeginFrame(vp->console);
                 gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 0/*layer #0*/);
                 LensFx_EndFrame();
                 break;
 
-            case ui::ViewBorderLayer:
+            case ViewBorderLayer:
                 R_RenderPlayerViewBorder();
                 break;
 
-            case ui::HUDLayer:
+            case HUDLayer:
                 gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 1/*layer #1*/);
                 break;
             }
@@ -1092,7 +1092,7 @@ void R_RenderViewPorts(ui::ViewPortLayer layer)
         }
     }
 
-    if(layer == ui::Player3DViewLayer)
+    if(layer == Player3DViewLayer)
     {
         // Increment the internal frame count. This does not
         // affect the window's FPS counter.

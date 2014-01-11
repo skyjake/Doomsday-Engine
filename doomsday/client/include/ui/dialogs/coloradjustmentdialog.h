@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_COLORADJUSTMENTDIALOG_H
 #define DENG_CLIENT_COLORADJUSTMENTDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog for gamma, etc. adjustments.
  */
-class ColorAdjustmentDialog : public DialogWidget
+class ColorAdjustmentDialog : public de::DialogWidget
 {
     Q_OBJECT
 

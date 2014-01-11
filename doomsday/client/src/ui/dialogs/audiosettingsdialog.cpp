@@ -20,15 +20,16 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
-#include "ui/widgets/gridpopupwidget.h"
 
 #include "clientapp.h"
 #include "de_audio.h"
 #include "con_main.h"
-#include "SignalAction"
+
+#include <de/SignalAction>
+#include <de/GridPopupWidget>
 
 using namespace de;
-using namespace ui;
+using namespace de::ui;
 
 DENG_GUI_PIMPL(AudioSettingsDialog)
 {

@@ -17,11 +17,7 @@
  */
 
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/labelwidget.h"
-#include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
-#include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/blurwidget.h"
 #include "ui/dialogs/aboutdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/dialogs/audiosettingsdialog.h"
@@ -31,11 +27,8 @@
 #include "ui/dialogs/vrsettingsdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
-#include "ui/SubwidgetItem"
-#include "GuiRootWidget"
-#include "SequentialLayout"
+#include "ui/clientrootwidget.h"
 #include "CommandAction"
-#include "SignalAction"
 #include "client/cl_def.h" // clientPaused
 
 #include "ui/ui_main.h"
@@ -46,6 +39,12 @@
 #include <de/Drawable>
 #include <de/GLBuffer>
 #include <de/ScalarRule>
+#include <de/SignalAction>
+#include <de/ui/SubwidgetItem>
+#include <de/SequentialLayout>
+#include <de/ButtonWidget>
+#include <de/PopupMenuWidget>
+#include <de/BlurWidget>
 
 #include "versioninfo.h"
 #include "dd_main.h"
@@ -462,9 +461,10 @@ void TaskBarWidget::drawContent()
 bool TaskBarWidget::handleEvent(Event const &event)
 {
     Canvas &canvas = root().window().canvas();
+    ClientWindow &window = root().window().as<ClientWindow>();
 
     if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
-       !root().window().hasSidebar())
+       !window.hasSidebar())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
         MouseEvent const &mouse = event.as<MouseEvent>();
@@ -484,7 +484,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 canvas.trapMouse();
             }
 
-            root().window().taskBar().close();
+            window.taskBar().close();
             return true;
         }
     }
@@ -525,7 +525,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
                 if(key.modifiers().testFlag(KeyEvent::Shift) ||
                    !App_GameLoaded())
                 {
-                    if(!root().window().hasSidebar())
+                    if(!window.hasSidebar())
                     {
                         // Automatically focus the command line, unless an editor is open.
                         root().setFocus(&d->console->commandLine());
@@ -608,7 +608,7 @@ void TaskBarWidget::close()
         emit closed();
 
         // Retrap the mouse if it was trapped when opening.
-        if(hasRoot() && App_GameLoaded() && !root().window().hasSidebar())
+        if(hasRoot() && App_GameLoaded() && !root().window().as<ClientWindow>().hasSidebar())
         {
             Canvas &canvas = root().window().canvas();
             if(d->mouseWasTrappedWhenOpening)

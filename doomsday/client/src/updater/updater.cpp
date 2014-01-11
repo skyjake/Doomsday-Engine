@@ -51,10 +51,7 @@
 #include "ui/nativeui.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
-#include "SignalAction"
 #include "ui/widgets/taskbarwidget.h"
-#include "ui/widgets/progresswidget.h"
-#include "ui/widgets/notificationwidget.h"
 #include "updater.h"
 #include "updater/downloaddialog.h"
 #include "updater/processcheckdialog.h"
@@ -67,6 +64,8 @@
 #include <de/Time>
 #include <de/Date>
 #include <de/Log>
+#include <de/SignalAction>
+#include <de/NotificationWidget>
 #include <de/data/json.h>
 
 using namespace de;

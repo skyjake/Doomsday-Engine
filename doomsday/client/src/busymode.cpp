@@ -147,11 +147,11 @@ static void beginTask(BusyTask* task)
     Sys_Unlock(busy_Mutex);
     busyInited = true;
 
-    ProgressWidget &prog = ClientWindow::main().busy().progress();
+    de::ProgressWidget &prog = ClientWindow::main().busy().progress();
     prog.show();
     prog.setText(task->name);
-    prog.setMode(task->mode & BUSYF_ACTIVITY? ProgressWidget::Indefinite :
-                                              ProgressWidget::Ranged);
+    prog.setMode(task->mode & BUSYF_ACTIVITY? de::ProgressWidget::Indefinite :
+                                              de::ProgressWidget::Ranged);
 
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.

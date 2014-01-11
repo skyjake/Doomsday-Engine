@@ -22,7 +22,7 @@
 /*
  * The LIBGUI_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for
- * exporting symbols out of libshell.
+ * exporting symbols out of libgui.
  */
 #if defined(_WIN32) && defined(_MSC_VER)
 #  ifdef __LIBGUI__

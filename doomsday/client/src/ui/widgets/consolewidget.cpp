@@ -17,24 +17,24 @@
  */
 
 #include "ui/widgets/consolewidget.h"
-#include "GuiRootWidget"
-#include "ui/VariableToggleItem"
-#include "ui/SubwidgetItem"
 #include "CommandAction"
-#include "SignalAction"
-#include "ui/widgets/buttonwidget.h"
 #include "ui/widgets/consolecommandwidget.h"
-#include "ui/widgets/scriptcommandwidget.h"
-#include "ui/widgets/popupmenuwidget.h"
-#include "ui/widgets/togglewidget.h"
-#include "ui/widgets/logwidget.h"
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
+#include "ui/styledlogsinkformatter.h"
 
 #include <de/App>
 #include <de/ScalarRule>
 #include <de/KeyEvent>
 #include <de/MouseEvent>
+#include <de/ui/VariableToggleItem>
+#include <de/ui/SubwidgetItem>
+#include <de/SignalAction>
+#include <de/ButtonWidget>
+#include <de/ScriptCommandWidget>
+#include <de/PopupMenuWidget>
+#include <de/ToggleWidget>
+#include <de/LogWidget>
 #include <QCursor>
 
 using namespace de;
@@ -54,6 +54,7 @@ DENG2_OBSERVES(Variable, Change)
     ScalarRule *horizShift;
     ScalarRule *height;
     ScalarRule *width;
+    StyledLogSinkFormatter formatter;
 
     enum GrabEdge {
         NotGrabbed = 0,
@@ -251,6 +252,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->scriptCmd->setOpacity(.75f);
 
     d->log = new LogWidget("log");
+    d->log->setLogFormatter(d->formatter);
     d->log->rule()
             .setInput(Rule::Left,   rule().left())
             .setInput(Rule::Right,  rule().right())

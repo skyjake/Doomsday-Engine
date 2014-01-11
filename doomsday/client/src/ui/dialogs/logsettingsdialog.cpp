@@ -17,11 +17,12 @@
  */
 
 #include "ui/dialogs/logsettingsdialog.h"
-#include "ui/widgets/variablechoicewidget.h"
-#include "ui/widgets/variabletogglewidget.h"
-#include "ui/widgets/foldpanelwidget.h"
-#include "SignalAction"
 #include "clientapp.h"
+
+#include <de/VariableChoiceWidget>
+#include <de/VariableToggleWidget>
+#include <de/FoldPanelWidget>
+#include <de/SignalAction>
 
 using namespace de;
 

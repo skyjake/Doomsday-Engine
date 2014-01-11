@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_RENDERERSETTINGSDIALOG_H
 #define DENG_CLIENT_RENDERERSETTINGSDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 /**
  * Dialog for modifying input settings.
  */
-class RendererSettingsDialog : public DialogWidget
+class RendererSettingsDialog : public de::DialogWidget
 {
     Q_OBJECT
 

@@ -20,14 +20,14 @@
 #ifndef CLIENT_GAMEWIDGET_H
 #define CLIENT_GAMEWIDGET_H
 
-#include "GuiWidget"
+#include <de/GuiWidget>
 
 /**
  * Widget for drawing the game world.
  *
  * @ingroup gui
  */
-class GameWidget : public GuiWidget
+class GameWidget : public de::GuiWidget
 {
 public:
     GameWidget(de::String const &name = "game");

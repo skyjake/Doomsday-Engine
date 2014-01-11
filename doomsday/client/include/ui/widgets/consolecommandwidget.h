@@ -19,7 +19,7 @@
 #ifndef DENG_CLIENT_CONSOLECOMMANDWIDGET_H
 #define DENG_CLIENT_CONSOLECOMMANDWIDGET_H
 
-#include "commandwidget.h"
+#include <de/CommandWidget>
 
 /**
  * Text editor with a history buffer. Entered commands are executed as console
@@ -30,7 +30,7 @@
  *
  * @ingroup gui
  */
-class ConsoleCommandWidget : public CommandWidget
+class ConsoleCommandWidget : public de::CommandWidget
 {
 public:
     ConsoleCommandWidget(de::String const &name = "");

@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_GAMEUIWIDGET_H
 #define DENG_CLIENT_GAMEUIWIDGET_H
 
-#include "GuiWidget"
+#include <de/GuiWidget>
 
 /**
  * Widget that encapsulates game-side UI elements.
  */
-class GameUIWidget : public GuiWidget
+class GameUIWidget : public de::GuiWidget
 {
 public:
     GameUIWidget();

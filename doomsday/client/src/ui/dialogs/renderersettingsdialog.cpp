@@ -23,13 +23,14 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/editors/rendererappearanceeditor.h"
 #include "ui/widgets/profilepickerwidget.h"
-#include "ui/widgets/gridpopupwidget.h"
-#include "ui/dialogs/inputdialog.h"
-#include "GridLayout"
-#include "SignalAction"
-#include "DialogContentStylist"
 #include "con_main.h"
 #include "clientapp.h"
+
+#include <de/GridPopupWidget>
+#include <de/GridLayout>
+#include <de/SignalAction>
+#include <de/DialogContentStylist>
+#include <de/InputDialog>
 
 using namespace de;
 using namespace ui;

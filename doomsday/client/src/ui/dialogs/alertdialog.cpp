@@ -17,16 +17,16 @@
  */
 
 #include "ui/dialogs/alertdialog.h"
-#include "ui/widgets/notificationwidget.h"
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
-#include "ui/ListData"
-#include "ui/ActionItem"
-#include "SignalAction"
 #include "clientapp.h"
 
 #include <de/FIFO>
 #include <de/App>
+#include <de/NotificationWidget>
+#include <de/SignalAction>
+#include <de/ui/ListData>
+#include <de/ui/ActionItem>
 
 using namespace de;
 

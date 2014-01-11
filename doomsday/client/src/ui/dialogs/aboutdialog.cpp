@@ -17,12 +17,6 @@
  */
 
 #include "ui/dialogs/aboutdialog.h"
-#include "SequentialLayout"
-#include "SignalAction"
-#include "ui/widgets/labelwidget.h"
-#include "ui/widgets/popupwidget.h"
-#include "ui/widgets/documentwidget.h"
-#include "ui/style.h"
 #include "gl/sys_opengl.h"
 #include "audio/audiodriver.h"
 #include "clientapp.h"
@@ -31,6 +25,12 @@
 #include "dd_def.h"
 
 #include <de/Version>
+#include <de/SequentialLayout>
+#include <de/SignalAction>
+#include <de/LabelWidget>
+#include <de/PopupWidget>
+#include <de/DocumentWidget>
+#include <de/Style>
 
 using namespace de;
 

@@ -39,9 +39,9 @@
 #ifdef __CLIENT__
 #  include "render/r_draw.h"
 #  include "render/rend_main.h"
+#  include "updater.h"
 #endif
 #include "render/r_main.h"
-#include "updater.h"
 
 #include "api_internaldata.h"
 

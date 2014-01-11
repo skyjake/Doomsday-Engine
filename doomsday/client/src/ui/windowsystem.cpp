@@ -19,10 +19,10 @@
 #include "de_platform.h"
 #include "ui/windowsystem.h"
 #include "ui/clientwindow.h"
-#include "ui/style.h"
 #include "gl/gl_main.h"
 #include "clientapp.h"
 
+#include <de/Style>
 #include <QMap>
 
 using namespace de;
@@ -46,6 +46,7 @@ DENG2_PIMPL(WindowSystem)
                 .define(SettingsRegister::IntCVar,        "vid-vsync", 1);
 
         style.load(App::fileSystem().find("defaultstyle.pack").path());
+        Style::setAppStyle(style); // use as global style
     }
 
     ~Instance()

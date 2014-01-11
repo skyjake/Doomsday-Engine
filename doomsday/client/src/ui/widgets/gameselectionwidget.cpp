@@ -17,12 +17,12 @@
  */
 
 #include "ui/widgets/gameselectionwidget.h"
-#include "ui/ActionItem"
 #include "CommandAction"
 #include "clientapp.h"
 #include "games.h"
 #include "dd_main.h"
 
+#include <de/ui/ActionItem>
 #include <QMap>
 
 using namespace de;

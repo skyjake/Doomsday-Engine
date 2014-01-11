@@ -23,9 +23,7 @@
 #include "de_platform.h"
 #include "updater/downloaddialog.h"
 #include "updater/updatersettings.h"
-#include "ui/widgets/progresswidget.h"
 #include "ui/widgets/taskbarwidget.h"
-#include "SignalAction"
 #include "ui/clientwindow.h"
 #include "dd_version.h"
 #include "network/net_main.h"
@@ -34,7 +32,8 @@
 #include <QNetworkReply>
 #include <QDir>
 #include <QUrl>
-
+#include <de/ProgressWidget>
+#include <de/SignalAction>
 #include <de/Log>
 
 #ifdef WIN32
@@ -43,7 +42,7 @@
 
 using namespace de;
 
-static DownloadDialog* downloadInProgress;
+static DownloadDialog *downloadInProgress;
 
 DENG2_PIMPL(DownloadDialog)
 {

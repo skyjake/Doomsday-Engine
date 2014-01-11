@@ -23,7 +23,7 @@
 #ifndef DENG_CLIENT_DOWNLOADDIALOG_H
 #define DENG_CLIENT_DOWNLOADDIALOG_H
 
-#include "ui/widgets/dialogwidget.h"
+#include <de/DialogWidget>
 
 class QNetworkReply;
 
@@ -31,7 +31,7 @@ class QNetworkReply;
  * Dialog for downloading an update in the background and then starting
  * the (re)installation process.
  */
-class DownloadDialog : public DialogWidget
+class DownloadDialog : public de::DialogWidget
 {
     Q_OBJECT
 

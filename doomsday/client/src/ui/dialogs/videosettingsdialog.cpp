@@ -17,18 +17,18 @@
  */
 
 #include "ui/dialogs/videosettingsdialog.h"
-#include "ui/widgets/variabletogglewidget.h"
 #include "ui/widgets/cvartogglewidget.h"
-#include "ui/widgets/choicewidget.h"
 #include "ui/widgets/taskbarwidget.h"
-#include "SequentialLayout"
-#include "GridLayout"
-#include "CommandAction"
-#include "SignalAction"
 #include "ui/clientwindow.h"
+#include "CommandAction"
 #include "con_main.h"
 #include "clientapp.h"
 
+#include <de/VariableToggleWidget>
+#include <de/ChoiceWidget>
+#include <de/SequentialLayout>
+#include <de/GridLayout>
+#include <de/SignalAction>
 #include <de/DisplayMode>
 #include <QPoint>
 

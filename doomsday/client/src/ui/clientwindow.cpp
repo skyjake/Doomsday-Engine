@@ -25,6 +25,7 @@
  */
 
 #include "ui/clientwindow.h"
+#include "ui/clientrootwidget.h"
 #include "clientapp.h"
 #include <de/DisplayMode>
 #include <de/NumberValue>
@@ -33,19 +34,19 @@
 #include <de/GLState>
 #include <de/GLFramebuffer>
 #include <de/Drawable>
+#include <de/CompositorWidget>
+#include <de/NotificationWidget>
+#include <de/ProgressWidget>
 #include <QCloseEvent>
 
 #include "gl/sys_opengl.h"
 #include "gl/gl_main.h"
-#include "ui/widgets/compositorwidget.h"
 #include "ui/widgets/gamewidget.h"
 #include "ui/widgets/gameuiwidget.h"
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
-#include "ui/widgets/notificationwidget.h"
 #include "ui/widgets/gameselectionwidget.h"
-#include "ui/widgets/progresswidget.h"
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/dialogs/alertdialog.h"
 #include "CommandAction"
@@ -73,7 +74,7 @@ DENG2_OBSERVES(App,              StartupComplete)
     Mode mode;
 
     /// Root of the nomal UI widgets of this window.
-    GuiRootWidget root;
+    ClientRootWidget root;
     CompositorWidget *compositor;
     GameWidget *game;
     GameUIWidget *gameUI;
@@ -670,7 +671,7 @@ ClientWindow::ClientWindow(String const &id)
     d->setupUI();
 }
 
-GuiRootWidget &ClientWindow::root()
+ClientRootWidget &ClientWindow::root()
 {
     return d->root;
 }

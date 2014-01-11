@@ -41,7 +41,7 @@ DENG2_PIMPL(GameUIWidget)
     {
         if(App_GameLoaded())
         {
-            R_RenderViewPorts(ui::HUDLayer);
+            R_RenderViewPorts(HUDLayer);
 
             if(!(UI_IsActive() && UI_Alpha() >= 1.0))
             {
