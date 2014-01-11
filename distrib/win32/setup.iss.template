@@ -93,6 +93,7 @@ Source: "bin\deng1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components:
 Source: "bin\deng2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_shell.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\deng_appfw.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
