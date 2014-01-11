@@ -291,7 +291,7 @@ D_CMD(ListGames)
 
     LOG_MSG(_E(R) "\n");
     LOG_MSG("%i of %i games are playable") << numCompleteGames << games.count();
-    LOG_SCR_MSG("Use the " _E(b) "load" _E(.) " command to load a game. For example: \"load gamename\".");
+    LOG_SCR_MSG("Use the " _E(b) "load" _E(.) " command to load a game, for example: \"load gamename\"");
 
     return true;
 }

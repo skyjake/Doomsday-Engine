@@ -4083,7 +4083,7 @@ static int printTextureIndex2(TextureScheme *scheme, Path const &like,
     {
         String info = String("%1: %2%3")
                         .arg(idx, numFoundDigits)
-                        .arg(manifest->hasTexture()? _E(1) : _E(2))
+                        .arg(manifest->hasTexture()? _E(0) : _E(2))
                         .arg(manifest->description(composeUriFlags));
 
         LOG_RES_MSG("  " _E(>)) << info;
@@ -4124,7 +4124,7 @@ static void printTextureIndex(de::Uri const &search,
             }
         }
     }
-    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "texture" : "textures in total");
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s") << printTotal << (printTotal == 1? "texture" : "textures in total");
 }
 
 #ifdef __CLIENT__

@@ -940,9 +940,8 @@ static dd_bool getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, con
 
 static void stopScript(finaleinterpreter_t* fi)
 {
-#ifdef _DEBUG
-    Con_Printf("Finale End - id:%i '%.30s'\n", fi->_id, fi->_scriptBegin);
-#endif
+    LOGDEV_SCR_MSG("Finale End - id:%i '%.30s'") << fi->_id << fi->_scriptBegin;
+
     fi->flags.stopped = true;
 
 #ifdef __SERVER__
@@ -1488,6 +1487,8 @@ DEFFC(If)
     const char* token = OP_CSTRING(0);
     dd_bool val = false;
 
+    LOG_AS("FIC_If");
+
     // Built-in conditions.
     if(!stricmp(token, "netgame"))
     {
@@ -1519,7 +1520,7 @@ DEFFC(If)
     }
     else
     {
-        Con_Message("FIC_If: Unknown condition '%s'.", token);
+        LOG_SCR_WARNING("Unknown condition '%s'") << token;
     }
 
     // Skip the next command if the value is false.
@@ -1562,6 +1563,7 @@ DEFFC(Image)
     lumpnum_t lumpNum = F_LumpNumForName(name);
     rawtex_t* rawTex;
 
+    LOG_AS("FIC_Image");
     FIData_PicClearAnimation(obj);
 
     rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
@@ -1570,7 +1572,8 @@ DEFFC(Image)
         FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
     }
-    Con_Message("FIC_Image: Warning, missing lump '%s'.", name);
+
+    LOG_SCR_WARNING("Missing lump '%s'") << name;
 }
 
 DEFFC(ImageAt)
@@ -1582,6 +1585,7 @@ DEFFC(ImageAt)
     lumpnum_t lumpNum = F_LumpNumForName(name);
     rawtex_t* rawTex;
 
+    LOG_AS("FIC_ImageAt");
     AnimatorVector3_Init(obj->pos, x, y, 0);
     FIData_PicClearAnimation(obj);
 
@@ -1591,7 +1595,8 @@ DEFFC(ImageAt)
         FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
     }
-    Con_Message("FIC_ImageAt: Warning, missing lump '%s'.", name);
+
+    LOG_SCR_WARNING("Missing lump '%s'") << name;
 }
 
 #ifdef __CLIENT__
@@ -1622,6 +1627,8 @@ static DGLuint loadAndPrepareExtTexture(char const *fileName)
 
 DEFFC(XImage)
 {
+    LOG_AS("FIC_XImage");
+
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
 #ifdef __CLIENT__
     char const *fileName = OP_CSTRING(1);
@@ -1637,7 +1644,7 @@ DEFFC(XImage)
     }
     else
     {
-        Con_Message("FIC_XImage: Warning, missing graphic '%s'.", fileName);
+        LOG_SCR_WARNING("Missing graphic '%s'") << fileName;
     }
 #endif // __CLIENT__
 }
@@ -1648,6 +1655,7 @@ DEFFC(Patch)
     char const *encodedName = OP_CSTRING(3);
     patchid_t patchId;
 
+    LOG_AS("FIC_Patch");
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
     FIData_PicClearAnimation(obj);
 
@@ -1658,7 +1666,7 @@ DEFFC(Patch)
     }
     else
     {
-        Con_Message("FIC_Patch: Warning, missing Patch '%s'.", encodedName);
+        LOG_SCR_WARNING("Missing Patch '%s'") << encodedName;
     }
 }
 
@@ -1669,10 +1677,11 @@ DEFFC(SetPatch)
     fidata_pic_frame_t *f;
     patchid_t patchId;
 
+    LOG_AS("FIC_SetPatch");
     patchId = R_DeclarePatch(encodedName);
     if(patchId == 0)
     {
-        Con_Message("FIC_SetPatch: Warning, missing Patch '%s'.", encodedName);
+        LOG_SCR_WARNING("Missing Patch '%s'") << encodedName;
         return;
     }
 
@@ -1705,10 +1714,11 @@ DEFFC(Anim)
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
     patchid_t patchId;
 
+    LOG_AS("FIC_Anim");
     patchId = R_DeclarePatch(encodedName);
     if(patchId == 0)
     {
-        Con_Message("FIC_Anim: Warning, Patch '%s' not found.", encodedName);
+        LOG_SCR_WARNING("Patch '%s' not found") << encodedName;
         return;
     }
 
@@ -1723,13 +1733,14 @@ DEFFC(AnimImage)
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
     lumpnum_t lumpNum = F_LumpNumForName(encodedName);
     rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
+    LOG_AS("FIC_AnimImage");
     if(rawTex)
     {
         FIData_PicAppendFrame(obj, PFT_RAW, tics, &rawTex->lumpNum, 0, false);
         ((fidata_pic_t *)obj)->animComplete = false;
         return;
     }
-    Con_Message("FIC_AnimImage: Warning, lump '%s' not found.", encodedName);
+    LOG_SCR_WARNING("Lump '%s' not found") << encodedName;
 }
 
 DEFFC(Repeat)
@@ -1812,7 +1823,6 @@ DEFFC(ObjectRGB)
     rgb[CB] = OP_FLOAT(3);
     switch(obj->type)
     {
-    default: Con_Error("FinaleInterpreter::FIC_ObjectRGB: Unknown type %i.", (int) obj->type);
     case FI_TEXT:
         FIData_TextSetColor(obj, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         break;
@@ -1823,8 +1833,10 @@ DEFFC(ObjectRGB)
         AnimatorVector3_Set(p->otherColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         AnimatorVector3_Set(p->edgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         AnimatorVector3_Set(p->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
+        break; }
+    default:
+        DENG_ASSERT(!"FIC_ObjectRGB: Unknown object type");
         break;
-      }
     }
 }
 
@@ -1837,7 +1849,6 @@ DEFFC(ObjectAlpha)
     alpha = OP_FLOAT(1);
     switch(obj->type)
     {
-    default: Con_Error("FinaleInterpreter::FIC_ObjectAlpha: Unknown type %i.", (int) obj->type);
     case FI_TEXT:
         FIData_TextSetAlpha(obj, alpha, fi->_inTime);
         break;
@@ -1845,8 +1856,10 @@ DEFFC(ObjectAlpha)
         fidata_pic_t* p = (fidata_pic_t*)obj;
         Animator_Set(&p->color[3], alpha, fi->_inTime);
         Animator_Set(&p->otherColor[3], alpha, fi->_inTime);
+        break; }
+    default:
+        DENG_ASSERT(!"FIC_ObjectAlpha: Unknown object type");
         break;
-      }
     }
 }
 
@@ -2092,9 +2105,7 @@ DEFFC(TextFromLump)
         size_t bufSize = 2 * lumpSize + 1, i;
         char* str, *out;
 
-        str = (char*) calloc(1, bufSize);
-        if(!str)
-            Con_Error("FinaleInterpreter::FIC_TextFromLump: Failed on allocation of %lu bytes for text formatting translation buffer.", (unsigned long) bufSize);
+        str = (char*) M_Calloc(bufSize);
 
         for(i = 0, out = str; i < lumpSize; ++i)
         {
@@ -2157,6 +2168,7 @@ DEFFC(PredefinedColor)
 DEFFC(PredefinedFont)
 {
 #ifdef __CLIENT__
+    LOG_AS("FIC_PredefinedFont");
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
     {
@@ -2166,9 +2178,8 @@ DEFFC(PredefinedFont)
         return;
     }
 
-    { AutoStr* fontPath = Uri_ToString(OP_URI(1));
-    Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.", Str_Text(fontPath));
-    }
+    AutoStr *fontPath = Uri_ToString(OP_URI(1));
+    LOG_SCR_WARNING("Unknown font '%s'") << Str_Text(fontPath);
 #endif
 }
 
@@ -2236,6 +2247,7 @@ DEFFC(TextLineHeight)
 DEFFC(Font)
 {
 #ifdef __CLIENT__
+    LOG_AS("FIC_Font");
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
@@ -2244,9 +2256,8 @@ DEFFC(Font)
         return;
     }
 
-    { AutoStr* fontPath = Uri_ToString(OP_URI(1));
-    Con_Message("FIC_Font: Warning, unknown font '%s'.", Str_Text(fontPath));
-    }
+    AutoStr* fontPath = Uri_ToString(OP_URI(1));
+    LOG_SCR_WARNING("Unknown font '%s'") << Str_Text(fontPath);
 #endif
 }
 
