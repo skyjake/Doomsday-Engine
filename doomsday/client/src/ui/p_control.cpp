@@ -532,13 +532,13 @@ D_CMD(ListPlayerControls)
     {
         playercontrol_t *pc = &playerControls[i];
 
-        LOG_MSG("ID %i: " _E(>) "%s (%s)\n"
-                "type:%s triggerable:%b")
+        LOG_MSG("ID %i: " _E(>)_E(b) "%s " _E(.) "(%s) "
+                _E(l) "%s%s")
                 << pc->id
                 << pc->name
                 << pc->bindContextName
-                << (pc->type == CTLT_IMPULSE? "Impulse" : "Numeric")
-                << pc->isTriggerable;
+                << (pc->isTriggerable? "triggerable " : "")
+                << (pc->type == CTLT_IMPULSE? "impulse" : "numeric");
     }
     return true;
 }
