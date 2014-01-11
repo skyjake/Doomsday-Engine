@@ -47,140 +47,23 @@ using namespace de;
 #define UNFIXED8_8(x)   (((x) << 16) / 256)
 #define UNFIXED10_6(x)  (((x) << 16) / 64)
 
-ClMobjHash::ClMobjHash()
-{
-    de::zap(_buckets);
-}
+ClMobjInfo::ClMobjInfo()
+    : startMagic(CLM_MAGIC1)
+    , next      (0)
+    , prev      (0)
+    , flags     (0)
+    , time      (Timer_RealMilliseconds())
+    , sound     (0)
+    , volume    (0)
+    , endMagic  (CLM_MAGIC2)
+{}
 
-void ClMobjHash::clear()
-{
-    for(int i = 0; i < SIZE; ++i)
-    for(clmoinfo_t *info = _buckets[i].first; info; info = info->next)
-    {
-        mobj_t *mo = ClMobj_MobjForInfo(info);
-        // Players' clmobjs are not linked anywhere.
-        if(!mo->dPlayer)
-            ClMobj_Unlink(mo);
-    }
-}
-
-void ClMobjHash::insert(mobj_t *mo, thid_t id)
-{
-    if(!mo) return;
-
-    Bucket &bucket = bucketFor(id);
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
-
-    CL_ASSERT_CLMOBJ(mo);
-
-#ifdef DENG_DEBUG
-    assertValid();
-#endif
-
-    // Set the ID.
-    mo->thinker.id = id;
-    info->next = 0;
-
-    if(bucket.last)
-    {
-        bucket.last->next = info;
-        info->prev = bucket.last;
-    }
-    bucket.last = info;
-
-    if(!bucket.first)
-    {
-        bucket.first = info;
-    }
-
-#ifdef DENG_DEBUG
-    assertValid();
-#endif
-}
-
-void ClMobjHash::remove(mobj_t *mo)
-{
-    Bucket &bucket = bucketFor(mo->thinker.id);
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
-
-    CL_ASSERT_CLMOBJ(mo);
-
-#ifdef DENG_DEBUG
-    assertValid();
-#endif
-
-    if(bucket.first == info)
-        bucket.first = info->next;
-    if(bucket.last == info)
-        bucket.last = info->prev;
-    if(info->next)
-        info->next->prev = info->prev;
-    if(info->prev)
-        info->prev->next = info->next;
-
-#ifdef DENG_DEBUG
-    assertValid();
-#endif
-}
-
-mobj_t *ClMobjHash::find(thid_t id) const
-{
-    if(!id) return 0;
-
-    // Scan the existing client mobjs.
-    Bucket const &bucket = bucketFor(id);
-    for(clmoinfo_t *info = bucket.first; info; info = info->next)
-    {
-        mobj_t *mo = ClMobj_MobjForInfo(info);
-        if(mo->thinker.id == id)
-            return mo;
-    }
-
-    // Not found!
-    return 0;
-}
-
-int ClMobjHash::iterate(int (*callback) (mobj_t *, void *), void *context)
-{
-    for(int i = 0; i < SIZE; ++i)
-    {
-        clmoinfo_t *info = _buckets[i].first;
-        while(info)
-        {
-            clmoinfo_t *next = info->next;
-            if(int result = callback(ClMobj_MobjForInfo(info), context))
-                return result;
-            info = next;
-        }
-    }
-    return true;
-}
-
-#ifdef DENG_DEBUG
-void ClMobjHash::assertValid()
-{
-    for(int i = 0; i < SIZE; ++i)
-    {
-        int count1 = 0, count2 = 0;
-        for(clmoinfo_t *info = _buckets[i].first; info; info = info->next, count1++)
-        {
-            DENG2_ASSERT(ClMobj_MobjForInfo(info) != 0);
-        }
-        for(clmoinfo_t *info = _buckets[i].last; info; info = info->prev, count2++)
-        {
-            DENG2_ASSERT(ClMobj_MobjForInfo(info) != 0);
-        }
-        DENG2_ASSERT(count1 == count2);
-    }
-}
-#endif
-
-mobj_t *ClMobj_MobjForInfo(clmoinfo_t *info)
+mobj_t *ClMobj_MobjForInfo(ClMobjInfo *info)
 {
     DENG2_ASSERT(info->startMagic == CLM_MAGIC1);
     DENG2_ASSERT(info->endMagic == CLM_MAGIC2);
 
-    return (mobj_t *) ((char *)info + sizeof(clmoinfo_t));
+    return (mobj_t *) ((char *)info + sizeof(ClMobjInfo));
 }
 
 void ClMobj_Unlink(mobj_t *mo)
@@ -190,7 +73,7 @@ void ClMobj_Unlink(mobj_t *mo)
 
 void ClMobj_Link(mobj_t *mo)
 {
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -214,7 +97,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 {
     LOG_AS("ClMobj_EnableLocalActions");
 
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return;
     if(enable)
     {
@@ -231,7 +114,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 #undef ClMobj_LocalActionsEnabled
 dd_bool ClMobj_LocalActionsEnabled(mobj_t *mo)
 {
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return true;
     return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
@@ -330,64 +213,6 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     }
 }
 
-mobj_t *ClMobj_Create(thid_t id)
-{
-    /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
-
-    // Allocate enough memory for all the data.
-    void *data       = Z_Calloc(sizeof(clmoinfo_t) + MOBJ_SIZE, PU_MAP, 0);
-    clmoinfo_t *info = (clmoinfo_t *) data;
-    mobj_t *mo       = (mobj_t *) ((char *)data + sizeof(clmoinfo_t));
-
-    // Initialize the data.
-    info->time       = Timer_RealMilliseconds();
-    info->startMagic = CLM_MAGIC1;
-    info->endMagic   = CLM_MAGIC2;
-
-    mo->ddFlags = DDMF_REMOTE;
-
-    map.clMobjHash().insert(mo, id);
-    map.thinkers().setMobjId(id); // Mark this ID as used.
-
-    // Client mobjs are full-fludged game mobjs as well.
-    mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
-    map.thinkers().add(reinterpret_cast<thinker_t &>(*mo));
-
-    return mo;
-}
-
-void ClMobj_Destroy(mobj_t *mo)
-{
-    LOG_AS("ClMobj_Destroy");
-    LOG_NET_XVERBOSE("mobj %i being destroyed") << mo->thinker.id;
-
-    /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
-
-#ifdef DENG_DEBUG
-    map.clMobjHash().assertValid();
-#endif
-
-    CL_ASSERT_CLMOBJ(mo);
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
-
-    // Stop any sounds originating from this mobj.
-    S_StopSound(0, mo);
-
-    // The ID is free once again.
-    map.thinkers().setMobjId(mo->thinker.id, false);
-    map.clMobjHash().remove(mo);
-    ClMobj_Unlink(mo); // from block/sector
-
-    // This will free the entire mobj + info.
-    Z_Free(info);
-
-#ifdef DENG_DEBUG
-    map.clMobjHash().assertValid();
-#endif
-}
-
 dd_bool Cl_IsClientMobj(mobj_t *mo)
 {
     return ClMobj_GetInfo(mo) != 0;
@@ -396,7 +221,7 @@ dd_bool Cl_IsClientMobj(mobj_t *mo)
 #undef ClMobj_IsValid
 dd_bool ClMobj_IsValid(mobj_t *mo)
 {
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
 
     if(!Cl_IsClientMobj(mo)) return true;
     if(info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE))
@@ -412,9 +237,9 @@ dd_bool ClMobj_IsValid(mobj_t *mo)
     return true;
 }
 
-clmoinfo_t *ClMobj_GetInfo(mobj_t *mo)
+ClMobjInfo *ClMobj_GetInfo(mobj_t *mo)
 {
-    clmoinfo_t *info = (clmoinfo_t *) ((char *)mo - sizeof(clmoinfo_t));
+    ClMobjInfo *info = (ClMobjInfo *) ((char *)mo - sizeof(ClMobjInfo));
     if(!mo || info->startMagic != CLM_MAGIC1 || info->endMagic != CLM_MAGIC2)
     {
         // There is no valid info block preceding the mobj.
@@ -427,7 +252,7 @@ dd_bool ClMobj_Reveal(mobj_t *mo)
 {
     LOG_AS("ClMobj_Reveal");
 
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -520,16 +345,16 @@ void ClMobj_ReadDelta()
     LOG_NET_XVERBOSE("Reading mobj delta for %i (df:0x%x edf:0x%x)")
             << id << df << moreFlags;
 
-    // Get a mobj for this.
-    mobj_t *mo = map.clMobjHash().find(id);
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    // Get the client mobj for this.
+    mobj_t *mo = map.clMobjFor(id);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
     bool needsLinking = false, justCreated = false;
     if(!mo)
     {
         LOG_NET_XVERBOSE("Creating new clmobj %i (hidden)") << id;
 
         // This is a new ID, allocate a new mobj.
-        mo = ClMobj_Create(id);
+        mo = map.clMobjFor(id, true/*create*/);
         info = ClMobj_GetInfo(mo);
         justCreated = true;
         needsLinking = true;
@@ -756,7 +581,7 @@ void ClMobj_ReadNullDelta()
     thid_t id = Reader_ReadUInt16(msgReader);
     LOGDEV_NET_XVERBOSE("Null %i") << id;
 
-    mobj_t *mo = map.clMobjHash().find(id);
+    mobj_t *mo = map.clMobjFor(id);
     if(!mo)
     {
         // Wasted bandwidth...
@@ -764,7 +589,7 @@ void ClMobj_ReadNullDelta()
         return;
     }
 
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
 
     // Get rid of this mobj.
     if(!mo->dPlayer)
@@ -793,7 +618,7 @@ void ClMobj_ReadNullDelta()
 mobj_t *ClMobj_Find(thid_t id)
 {
     /// @todo Do not assume the CURRENT map.
-    return App_World().map().clMobjHash().find(id);
+    return App_World().map().clMobjFor(id);
 }
 
 // cl_player.c

@@ -769,7 +769,7 @@ D_CMD(InspectMobj)
     thid_t id = 0;
     char const *moType = "Mobj";
 #ifdef __CLIENT__
-    clmoinfo_t* info = 0;
+    ClMobjInfo* info = 0;
 #endif
 
     if(argc != 2)

@@ -53,6 +53,10 @@
 #include "world/thinkers.h"
 #include "world/world.h" // ddMapSetup
 
+#ifdef __CLIENT__
+#  include "api_sound.h"
+#endif
+
 #include "render/r_main.h" // validCount
 #ifdef __CLIENT__
 #  include "BiasDigest"
@@ -1310,7 +1314,80 @@ void Map::spreadAllContacts(AABoxd const &region)
                       region.maxX + Lumobj::radiusMax(), region.maxY + Lumobj::radiusMax()));
 }
 
-ClMobjHash &Map::clMobjHash()
+void Map::clearClMobjs()
+{
+    d->clMobjHash.clear();
+}
+
+mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
+{
+    LOG_AS("Map::clMobjFor");
+
+    if(mobj_t *clmo = d->clMobjHash.find(id))
+    {
+        return clmo;
+    }
+
+    if(!canCreate) return 0;
+
+    // Create a new client mobj.
+    // Allocate enough memory for all the data.
+    void *data       = Z_Malloc(sizeof(ClMobjInfo) + MOBJ_SIZE, PU_MAP, 0);
+    ClMobjInfo *info = new (data) ClMobjInfo;
+    DENG2_UNUSED(info);
+    mobj_t *mo       = (mobj_t *) ((char *)data + sizeof(ClMobjInfo));
+
+    zapPtr(mo);
+    mo->ddFlags = DDMF_REMOTE;
+
+    d->clMobjHash.insert(mo, id);
+    d->thinkers->setMobjId(id); // Mark this ID as used.
+
+    // Client mobjs are full-fludged game mobjs as well.
+    mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
+    d->thinkers->add(reinterpret_cast<thinker_t &>(*mo));
+
+    return mo;
+}
+
+void Map::deleteClMobj(mobj_t *mo)
+{
+    LOG_AS("Map::deleteClMobj");
+
+    if(!mo) return;
+
+    LOG_NET_XVERBOSE("mobj %i being destroyed") << mo->thinker.id;
+
+#ifdef DENG_DEBUG
+    d->clMobjHash.assertValid();
+#endif
+
+    CL_ASSERT_CLMOBJ(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
+
+    // Stop any sounds originating from this mobj.
+    S_StopSound(0, mo);
+
+    // The ID is free once again.
+    d->thinkers->setMobjId(mo->thinker.id, false);
+    d->clMobjHash.remove(mo);
+    ClMobj_Unlink(mo); // from block/sector
+
+    info->~ClMobjInfo();
+    // This will free the entire mobj + info.
+    Z_Free(info);
+
+#ifdef DENG_DEBUG
+    d->clMobjHash.assertValid();
+#endif
+}
+
+int Map::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
+{
+    return d->clMobjHash.iterate(callback, context);
+}
+
+ClMobjHash const &Map::clMobjHash() const
 {
     return d->clMobjHash;
 }
@@ -2473,7 +2550,7 @@ static int expireClMobjsWorker(mobj_t *mo, void *context)
     // Don't expire player mobjs.
     if(mo->dPlayer) return 0;
 
-    clmoinfo_t *info = ClMobj_GetInfo(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
     DENG2_ASSERT(info != 0);
 
     if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)

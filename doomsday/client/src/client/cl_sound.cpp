@@ -56,7 +56,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
         mobjId = deltaId;
         if((cmo = ClMobj_Find(mobjId)) != NULL)
         {
-            clmoinfo_t* info = ClMobj_GetInfo(cmo);
+            ClMobjInfo* info = ClMobj_GetInfo(cmo);
             if(info->flags & CLMF_HIDDEN)
             {
                 // We can't play sounds from hidden mobjs, because we
@@ -179,10 +179,10 @@ void Cl_ReadSoundDelta(deltatype_t type)
         // Do we need to queue this sound?
         if(type == DT_MOBJ_SOUND && !cmo)
         {
-            clmoinfo_t *info = 0;
+            ClMobjInfo *info = 0;
 
             // Create a new Hidden clmobj.
-            cmo = ClMobj_Create(mobjId);
+            cmo = map.clMobjFor(mobjId, true/*create*/);
             info = ClMobj_GetInfo(cmo);
             info->flags |= CLMF_HIDDEN | CLMF_SOUND;
             info->sound = sound;

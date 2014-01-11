@@ -754,7 +754,7 @@ static void P_NewParticle(ptcgen_t *gen)
 int PIT_ClientMobjParticles(mobj_t *cmo, void *context)
 {
     ptcgen_t *gen = (ptcgen_t *) context;
-    clmoinfo_t *info = ClMobj_GetInfo(cmo);
+    ClMobjInfo *info = ClMobj_GetInfo(cmo);
 
     // If the clmobj is not valid at the moment, don't do anything.
     if(info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))
@@ -1267,7 +1267,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
                 // Client's should also check the client mobjs.
                 if(isClient)
                 {
-                    App_World().map().clMobjHash().iterate(PIT_ClientMobjParticles, gen);
+                    App_World().map().clMobjIterator(PIT_ClientMobjParticles, gen);
                 }
 #endif
                 App_World().map().thinkers()

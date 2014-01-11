@@ -284,6 +284,9 @@ void ClPlayer_ReadDelta()
 {
     LOG_AS("ClPlayer_ReadDelta2");
 
+    /// @todo Do not assume the CURRENT map.
+    Map &map = App_World().map();
+
     int df = 0;
     ushort num;
 
@@ -298,7 +301,7 @@ void ClPlayer_ReadDelta()
 
     if(df & PDF_MOBJ)
     {
-        mobj_t *old  = ClMobj_Find(s->clMobjId);
+        mobj_t *old  = map.clMobjFor(s->clMobjId);
         ushort newId = Reader_ReadUInt16(msgReader);
 
         // Make sure the 'new' mobj is different than the old one;
@@ -313,7 +316,7 @@ void ClPlayer_ReadDelta()
             s->clMobjId = newId;
 
             // Find the new mobj.
-            clmo = ClMobj_Find(s->clMobjId);
+            clmo = map.clMobjFor(s->clMobjId);
             //info = ClMobj_GetInfo(clmo);
             if(!clmo)
             {
@@ -322,7 +325,7 @@ void ClPlayer_ReadDelta()
 
                 // This mobj hasn't yet been sent to us.
                 // We should be receiving the rest of the info very shortly.
-                clmo = ClMobj_Create(s->clMobjId);
+                clmo = map.clMobjFor(s->clMobjId, true/*create*/);
                 //info = ClMobj_GetInfo(clmo);
                 /*
                 if(num == consolePlayer)

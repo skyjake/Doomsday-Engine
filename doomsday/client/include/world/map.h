@@ -27,7 +27,7 @@
 #include "Polyobj"
 
 #ifdef __CLIENT__
-#  include "client/cl_mobj.h"
+#  include "client/clmobjhash.h"
 #  include "client/clplanemover.h"
 #  include "client/clpolymover.h"
 
@@ -762,9 +762,52 @@ public: /// @todo Make private:
     void initContactBlockmaps();
 
     /**
-     * Provides access to the client mobj hash.
+     * Destroys all clientside clmobjs in the map. To be called when a network
+     * game ends.
      */
-    ClMobjHash &clMobjHash();
+    void clearClMobjs();
+
+    /**
+     * Find/create a client mobj with the unique identifier @a id.
+     *
+     * Memory layout of a client mobj:
+     * - client mobj magic1 (4 bytes)
+     * - engineside clmobj info
+     * - client mobj magic2 (4 bytes)
+     * - gameside mobj (mobjSize bytes) <- this is returned from the function
+     *
+     * To check whether a given mobj_t is a clmobj_t, just check the presence of
+     * the client mobj magic number (by calling Cl_IsClientMobj()).
+     * The clmoinfo_s can then be accessed with ClMobj_GetInfo().
+     *
+     * @param id  Identifier of the client mobj. Every client mobj has a unique
+     *            identifier.
+     *
+     * @return  Pointer to the gameside mobj.
+     */
+    mobj_t *clMobjFor(thid_t id, bool canCreate = false) const;
+
+    /**
+     * Destroys the client mobj. Before this is called, the client mobj should be
+     * unlinked from the thinker list by calling @ref thinkers().remove()
+     */
+    void deleteClMobj(mobj_t *mo);
+
+    /**
+     * Iterate all client mobjs, making a callback for each. Iteration ends if
+     * callback returns a non-zero value.
+     *
+     * @param callback  Function to callback for each client mobj.
+     * @param context   Data pointer passed to the callback.
+     *
+     * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
+     */
+    int clMobjIterator(int (*callback) (mobj_t *, void *), void *context = 0);
+
+    /**
+     * Provides readonly access to the client mobj hash.
+     */
+    ClMobjHash const &clMobjHash() const;
 #endif // __CLIENT__
 
 public:

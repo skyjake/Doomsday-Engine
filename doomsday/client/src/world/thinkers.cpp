@@ -337,10 +337,8 @@ void unlinkThinkerFromList(thinker_t *th)
     th->prev->next = th->next;
 }
 
-static int runThinker(thinker_t *th, void *context)
+static int runThinker(thinker_t *th, void * /*context*/)
 {
-    DENG_UNUSED(context);
-
     // Thinker cannot think when in stasis.
     if(!th->inStasis)
     {
@@ -361,7 +359,8 @@ static int runThinker(thinker_t *th, void *context)
                 else
                 {
                     // Delete the client mobj.
-                    ClMobj_Destroy(mo);
+                    /// @todo Do not assume the CURRENT map.
+                    App_World().map().deleteClMobj(mo);
                 }
 #else
                 P_MobjRecycle(mo);
