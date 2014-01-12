@@ -72,7 +72,8 @@ enum {
     DE_API_CLIENT               = DE_API_CLIENT_v1,
 
     DE_API_CONSOLE_v1           = 400,     // 1.10
-    DE_API_CONSOLE              = DE_API_CONSOLE_v1,
+    DE_API_CONSOLE_v2           = 401,     // 1.14
+    DE_API_CONSOLE              = DE_API_CONSOLE_v2,
 
     DE_API_DEFINITIONS_v1       = 500,     // 1.10
     DE_API_DEFINITIONS          = DE_API_DEFINITIONS_v1,

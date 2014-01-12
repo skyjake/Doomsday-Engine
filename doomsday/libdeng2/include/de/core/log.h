@@ -333,8 +333,8 @@ public:
     enum Level
     {
         /**
-         * Verbose messages should be used for logging additional/supplementary information. All
-         * verbose messages can be safely ignored.
+         * Verbose messages should be used for logging additional/supplementary
+         * information. All verbose messages can be safely ignored.
          */
         XVerbose = 1,
         Verbose = 2,
@@ -345,30 +345,31 @@ public:
         Message = 3,
 
         /**
-         * Important messages that are intended for situations that are particularly noteworthy.
-         * They will not cause an alert to be raised, but the information is deemed particularly
-         * valuable.
+         * Important messages that are intended for situations that are particularly
+         * noteworthy. They will not cause an alert to be raised, but the information is
+         * deemed particularly valuable.
          */
         Note = 4,
 
         /**
-         * Warning messages are reserved for error situations that were automatically recovered
-         * from. A warning might be logged for example when the expected resource could not be
-         * found, and a fallback resource was used instead. Warnings will cause an alert to be
-         * raised so that the target audience is aware of the problem.
+         * Warning messages are reserved for error situations that were automatically
+         * recovered from. A warning might be logged for example when the expected
+         * resource could not be found, and a fallback resource was used instead.
+         * Warnings will cause an alert to be raised so that the target audience is aware
+         * of the problem.
          */
         Warning = 5,
 
         /**
-         * Error messages are intended for errors that could not be (fully) recovered from. The
-         * error is grave enough to possibly cause the shutting down of the current game, however
-         * the engine can still remain running. Will cause an alert to be raised so that the
-         * target audience is aware of the problem.
+         * Error messages are intended for errors that could not be recovered from: the
+         * attempted operation had to be cancelled entirely. Will cause an alert to be
+         * raised so that the target audience is aware of the problem.
          */
         Error = 6,
 
         /**
-         * Critical messages are intended for fatal errors that cause the engine to be shut down.
+         * Critical messages are intended for fatal errors that force the game to be
+         * unloaded or the entire engine to be shut down.
          */
         Critical = 7,
 

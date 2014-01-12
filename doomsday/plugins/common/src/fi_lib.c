@@ -654,7 +654,7 @@ D_CMD(StartFinale)
         return false;
     if(!Def_Get(DD_DEF_FINALE, argv[1], &fin))
     {
-        Con_Printf("Script '%s' is not defined.\n", argv[1]);
+        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "Script '%s' is not defined.\n", argv[1]);
         return false;
     }
     G_SetGameAction(GA_NONE);

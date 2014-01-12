@@ -774,7 +774,7 @@ D_CMD(InspectMobj)
 
     if(argc != 2)
     {
-        Con_Printf("Usage: %s (mobj-id)\n", argv[0]);
+        LOG_SCR_NOTE("Usage: %s (mobj-id)") << argv[0];
         return true;
     }
 
@@ -785,7 +785,7 @@ D_CMD(InspectMobj)
     mo = App_World().map().thinkers().mobjById(id);
     if(!mo)
     {
-        Con_Printf("Mobj with id %i not found.\n", id);
+        LOG_MAP_ERROR("Mobj with id %i not found") << id;
         return false;
     }
 
@@ -794,39 +794,35 @@ D_CMD(InspectMobj)
     if(info) moType = "CLMOBJ";
 #endif
 
-    Con_Printf("%s %i [%p] State:%s (%i)\n", moType, id, mo, Def_GetStateName(mo->state), (int)(mo->state - states));
-    Con_Printf("Type:%s (%i) Info:[%p]", Def_GetMobjName(mo->type), mo->type, mo->info);
-    if(mo->info)
-    {
-        Con_Printf(" (%i)\n", (int)(mo->info - mobjInfo));
-    }
-    else
-    {
-        Con_Printf("\n");
-    }
-    Con_Printf("Tics:%i ddFlags:%08x\n", mo->tics, mo->ddFlags);
+    LOG_MAP_MSG("%s %i [%p] State:%s (%i)")
+            << moType << id << mo << Def_GetStateName(mo->state) << (int)(mo->state - states);
+    LOG_MAP_MSG("Type:%s (%i) Info:[%p] %s")
+            << Def_GetMobjName(mo->type) << mo->type << mo->info
+            << (mo->info? QString(" (%1)").arg(mo->info - mobjInfo) : "");
+    LOG_MAP_MSG("Tics:%i ddFlags:%08x") << mo->tics << mo->ddFlags;
 #ifdef __CLIENT__
     if(info)
     {
-        Con_Printf("Cltime:%i (now:%i) Flags:%04x\n", info->time, Timer_RealMilliseconds(), info->flags);
+        LOG_MAP_MSG("Cltime:%i (now:%i) Flags:%04x") << info->time << Timer_RealMilliseconds() << info->flags;
     }
 #endif
-    Con_Printf("Flags:%08x Flags2:%08x Flags3:%08x\n", mo->flags, mo->flags2, mo->flags3);
-    Con_Printf("Height:%f Radius:%f\n", mo->height, mo->radius);
-    Con_Printf("Angle:%x Pos:(%f,%f,%f) Mom:(%f,%f,%f)\n",
-               mo->angle,
-               mo->origin[0], mo->origin[1], mo->origin[2],
-               mo->mom[0], mo->mom[1], mo->mom[2]);
-    Con_Printf("FloorZ:%f CeilingZ:%f\n", mo->floorZ, mo->ceilingZ);
+    LOG_MAP_MSG("Flags:%08x Flags2:%08x Flags3:%08x") << mo->flags << mo->flags2 << mo->flags3;
+    LOG_MAP_MSG("Height:%f Radius:%f") << mo->height << mo->radius;
+    LOG_MAP_MSG("Angle:%x Pos:%s Mom:%s")
+            << mo->angle
+            << Vector3d(mo->origin).asText()
+            << Vector3d(mo->mom).asText();
+    LOG_MAP_MSG("FloorZ:%f CeilingZ:%f") << mo->floorZ << mo->ceilingZ;
     if(SectorCluster *cluster = Mobj_ClusterPtr(*mo))
     {
-        Con_Printf("Sector:%i (FloorZ:%f CeilingZ:%f)\n",
-                   cluster->sector().indexInMap(),
-                   cluster->floor().height(), cluster->ceiling().height());
+        LOG_MAP_MSG("Sector:%i (FloorZ:%f CeilingZ:%f)")
+                << cluster->sector().indexInMap()
+                << cluster->floor().height()
+                << cluster->ceiling().height();
     }
     if(mo->onMobj)
     {
-        Con_Printf("onMobj:%i\n", mo->onMobj->thinker.id);
+        LOG_MAP_MSG("onMobj:%i") << mo->onMobj->thinker.id;
     }
 
     return true;

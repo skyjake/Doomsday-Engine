@@ -57,7 +57,7 @@ dd_bool B_ParseToggleState(const char* toggleName, ebstate_t* state)
         return true;
     }
 
-    Con_Message("B_ParseToggleState: \"%s\" is not a toggle state.", toggleName);
+    LOG_INPUT_WARNING("\"%s\" is not a toggle state") << toggleName;
     return false; // Not recognized.
 }
 
@@ -85,7 +85,7 @@ dd_bool B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos)
     }
     else
     {
-        Con_Message("B_ParseAxisPosition: Axis position \"%s\" is invalid.", desc);
+        LOG_INPUT_WARNING("Axis position \"%s\" is invalid") << desc;
         return false;
     }
     return true;
@@ -104,6 +104,8 @@ dd_bool B_ParseModifierId(const char* desc, int* id)
 
 dd_bool B_ParseKeyId(const char* desc, int* id)
 {
+    LOG_AS("B_ParseKeyId");
+
     // The possibilies: symbolic key name, or "codeNNN".
     if(!strncasecmp(desc, "code", 4) && strlen(desc) == 7)
     {
@@ -118,7 +120,7 @@ dd_bool B_ParseKeyId(const char* desc, int* id)
             *id = strtoul(desc + 4, NULL, 10);
             if(*id <= 0 || *id > 255)
             {
-                Con_Message("B_ParseKeyId: Key code %i out of range.", *id);
+                LOGDEV_INPUT_WARNING("Key code %i out of range") << *id;
                 return false;
             }
         }
@@ -129,7 +131,7 @@ dd_bool B_ParseKeyId(const char* desc, int* id)
         *id = B_KeyForShortName(desc);
         if(!*id)
         {
-            Con_Message("B_ParseKeyId: Unknown key \"%s\".", desc);
+            LOG_INPUT_WARNING("Unknown key \"%s\"") << desc;
             return false;
         }
     }
@@ -153,7 +155,7 @@ dd_bool B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
         *id = strtoul(desc + 6, NULL, 10) - 1;
         if(*id < 0 || (uint)*id >= I_GetDevice(IDEV_MOUSE)->numKeys)
         {
-            Con_Message("B_ParseMouseTypeAndId: Button %i does not exist.", *id);
+            LOG_INPUT_WARNING("Mouse button %i does not exist") << *id;
             return false;
         }
     }
@@ -164,7 +166,7 @@ dd_bool B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
         *id = I_GetAxisByName(I_GetDevice(IDEV_MOUSE), desc);
         if(*id < 0)
         {
-            Con_Message("B_ParseMouseTypeAndId: Axis \"%s\" is not defined.", desc);
+            LOG_INPUT_WARNING("Mouse axis \"%s\" does not exist") << desc;
             return false;
         }
     }
@@ -179,8 +181,7 @@ dd_bool B_ParseDeviceAxisTypeAndId(uint device, const char* desc, ddeventtype_t*
     *id = I_GetAxisByName(dev, desc);
     if(*id < 0)
     {
-        Con_Message("B_ParseDeviceAxisTypeAndId: Axis \"%s\" is not defined in device '%s'.",
-                    desc, dev->name);
+        LOG_INPUT_WARNING("Axis \"%s\" is not defined in device '%s'") << desc << dev->name;
         return false;
     }
     return true;
@@ -194,7 +195,7 @@ dd_bool B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
         *id = strtoul(desc + 6, NULL, 10) - 1;
         if(*id < 0 || (uint)*id >= I_GetDevice(device)->numKeys)
         {
-            Con_Message("B_ParseJoystickTypeAndId: Button %i does not exist in joystick.", *id);
+            LOG_INPUT_WARNING("Joystick button %i does not exist") << *id;
             return false;
         }
     }
@@ -204,7 +205,7 @@ dd_bool B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
         *id = strtoul(desc + 3, NULL, 10) - 1;
         if(*id < 0 || (uint)*id >= I_GetDevice(device)->numHats)
         {
-            Con_Message("B_ParseJoystickTypeAndId: Hat %i does not exist in joystick.", *id);
+            LOG_INPUT_WARNING("Joystick hat %i does not exist") << *id;
             return false;
         }
     }
@@ -236,7 +237,7 @@ dd_bool B_ParseAnglePosition(const char* desc, float* pos)
     }
     else
     {
-        Con_Message("B_ParseAnglePosition: Angle position \"%s\" invalid.", desc);
+        LOG_INPUT_WARNING("Angle position \"%s\" is invalid") << desc;
         return false;
     }
     return true;
@@ -365,7 +366,7 @@ dd_bool B_ParseStateCondition(statecondition_t* cond, const char* desc)
     }
     else
     {
-        Con_Message("B_ParseEvent: Device \"%s\" unknown.", Str_Text(str));
+        LOG_INPUT_WARNING("Unknown input device \"%s\"") << Str_Text(str);
         return false;
     }
 
@@ -373,8 +374,7 @@ dd_bool B_ParseStateCondition(statecondition_t* cond, const char* desc)
     if(cond->type == SCT_TOGGLE_STATE &&
        cond->state != EBTOG_UP && cond->state != EBTOG_DOWN)
     {
-        Con_Message("B_ParseStateCondition: \"%s\": Toggle condition can only be 'up' or 'down'.",
-                    desc);
+        LOG_INPUT_WARNING("\"%s\": Toggle condition can only be 'up' or 'down'") << desc;
         return false;
     }
 
@@ -388,7 +388,7 @@ dd_bool B_ParseStateCondition(statecondition_t* cond, const char* desc)
     // Anything left that wasn't used?
     if(desc)
     {
-        Con_Message("B_ParseStateCondition: Unrecognized \"%s\".", desc);
+        LOG_INPUT_WARNING("Unrecognized condition \"%s\"") << desc;
         return false;
     }
 

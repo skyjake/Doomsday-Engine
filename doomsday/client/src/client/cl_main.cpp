@@ -347,7 +347,8 @@ void Cl_GetPackets()
             char *text = (char *) M_Malloc(textLen + 1);
             Reader_Read(msgReader, text, textLen);
             text[textLen] = 0;
-            Con_FPrintf(conFlags, "%s", text);
+            DENG_UNUSED(conFlags);
+            LOG_NOTE("%s") << text;
             M_Free(text);
             break; }
 

@@ -58,13 +58,8 @@ DENG_API_TYPEDEF(Con)
     void (*SetUri)(char const* name, Uri const* uri);
 
     void (*Message)(char const* message, ...);
-
-    void (*Printf)(char const* format, ...);
-    void (*FPrintf)(int flags, char const* format, ...);
     void (*PrintRuler)(void);
     void (*Error)(char const* error, ...);
-
-    void (*SetPrintFilter)(con_textfilter_t filter);
 
     int (*Execute)(int silent, char const* command);
     int (*Executef)(int silent, char const* command, ...);
@@ -99,13 +94,8 @@ DENG_API_T(Con);
 #define Con_SetUri              _api_Con.SetUri
 
 #define Con_Message             _api_Con.Message
-
-#define Con_Printf              _api_Con.Printf
-#define Con_FPrintf             _api_Con.FPrintf
 #define Con_PrintRuler          _api_Con.PrintRuler
 #define Con_Error               _api_Con.Error
-
-#define Con_SetPrintFilter      _api_Con.SetPrintFilter
 
 #define DD_Execute              _api_Con.Execute
 #define DD_Executef             _api_Con.Executef

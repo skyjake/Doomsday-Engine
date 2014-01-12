@@ -407,25 +407,25 @@ D_CMD(CheatGive)
 
     if(argc != 2 && argc != 3)
     {
-        Con_Printf("Usage:\n  give (stuff)\n");
-        Con_Printf("  give (stuff) (plr)\n");
-        Con_Printf("Stuff consists of one or more of (type:id). "
+        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_NOTE, "Usage:\n  give (stuff)\n");
+        LogBuffer_Printf(DE2_LOG_SCR, "  give (stuff) (plr)\n");
+        LogBuffer_Printf(DE2_LOG_SCR, "Stuff consists of one or more of (type:id). "
                    "If no id; give all of type:\n");
-        Con_Printf(" a - ammo\n");
-        Con_Printf(" b - berserk\n");
-        Con_Printf(" f - the power of flight\n");
-        Con_Printf(" g - light amplification visor\n");
-        Con_Printf(" h - health\n");
-        Con_Printf(" i - invulnerability\n");
-        Con_Printf(" k - key cards/skulls\n");
-        Con_Printf(" m - computer area map\n");
-        Con_Printf(" p - backpack full of ammo\n");
-        Con_Printf(" r - armor\n");
-        Con_Printf(" s - radiation shielding suit\n");
-        Con_Printf(" v - invisibility\n");
-        Con_Printf(" w - weapons\n");
-        Con_Printf("Example: 'give arw' corresponds the cheat IDFA.\n");
-        Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " a - ammo\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " b - berserk\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " f - the power of flight\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " g - light amplification visor\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " h - health\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " i - invulnerability\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " k - key cards/skulls\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " m - computer area map\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " p - backpack full of ammo\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " r - armor\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " s - radiation shielding suit\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " v - invisibility\n");
+        LogBuffer_Printf(DE2_LOG_SCR, " w - weapons\n");
+        LogBuffer_Printf(DE2_LOG_SCR, "Example: 'give arw' corresponds the cheat IDFA.\n");
+        LogBuffer_Printf(DE2_LOG_SCR, "Example: 'give w2k1' gives weapon two and key one.\n");
         return true;
     }
 
@@ -438,7 +438,7 @@ D_CMD(CheatGive)
 
     if(G_GameState() != GS_MAP)
     {
-        Con_Printf("Can only \"give\" when in a game!\n");
+        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "Can only \"give\" when in a game!\n");
         return true;
     }
 
@@ -465,7 +465,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
                     {
-                        Con_Printf("Unknown ammo #%d (valid range %d-%d).\n",
+                        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "Unknown ammo #%d (valid range %d-%d)\n",
                                    (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
                         break;
                     }
@@ -521,7 +521,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
                     {
-                        Con_Printf("Unknown key #%d (valid range %d-%d).\n",
+                        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "Unknown key #%d (valid range %d-%d)\n",
                                    (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
                         break;
                     }
@@ -575,7 +575,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
                     {
-                        Con_Printf("Unknown weapon #%d (valid range %d-%d).\n",
+                        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "Unknown weapon #%d (valid range %d-%d)\n",
                                    (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
                         break;
                     }
@@ -591,7 +591,7 @@ D_CMD(CheatGive)
             break;
 
         default: // Unrecognized.
-            Con_Printf("What do you mean, '%c'?\n", buf[i]);
+            LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "Cannot give '%c': unknown letter\n", buf[i]);
             break;
         }
     }
@@ -601,7 +601,7 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    Con_Printf("%i monsters killed.\n", P_Massacre());
+    LogBuffer_Printf(DE2_LOG_MAP, "%i monsters killed\n", P_Massacre());
     return true;
 }
 
@@ -622,7 +622,7 @@ D_CMD(CheatLeaveMap)
     if(G_GameState() != GS_MAP)
     {
         S_LocalSound(SFX_OOF, NULL);
-        Con_Printf("Can only exit a map when in a game!\n");
+        LogBuffer_Printf(DE2_LOG_ERROR | DE2_LOG_MAP, "Can only exit a map when in a game!\n");
         return true;
     }
 

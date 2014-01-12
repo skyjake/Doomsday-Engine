@@ -408,38 +408,36 @@ int DS_Init(void)
         {
             useEAX = false;
 
-            if(verbose)
-                Con_Message("dsDirectSound::DS_Init: Failed retrieving property set.");
+            LogBuffer_Printf(DE2_LOG_DEV | DE2_LOG_AUDIO | DE2_LOG_WARNING,
+                             "dsDirectSound::DS_Init: Failed retrieving property set.\n");
         }
     }
 
     // Announce capabilites:
-    Con_Printf("DirectSound configuration:\n");
-    Con_Printf("  Primary Buffer: %s (%s)\n", (primaryBuffer3D? "3D" : "2D"),
+    LogBuffer_Printf(DE2_LOG_AUDIO, "DirectSound configuration:\n");
+    LogBuffer_Printf(DE2_LOG_AUDIO, "  Primary Buffer: %s (%s)\n", (primaryBuffer3D? "3D" : "2D"),
                (primaryBufferHW? "hardware" : "software"));
-    Con_Printf("  Hardware Buffers: %i\n", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
-    Con_Printf("  DSP: %s", eaxAvailable? "EAX 2.0" : "None");
+    LogBuffer_Printf(DE2_LOG_AUDIO, "  Hardware Buffers: %i\n", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
+    LogBuffer_Printf(DE2_LOG_AUDIO, "  DSP: %s", eaxAvailable? "EAX 2.0" : "None");
     if(eaxAvailable)
-        Con_Printf(" (%s)", useEAX? "enabled" : "disabled");
-    Con_Printf("\n");
+        LogBuffer_Printf(DE2_LOG_AUDIO, " (%s)", useEAX? "enabled" : "disabled");
+    LogBuffer_Printf(DE2_LOG_AUDIO, "\n");
 
     if(eaxAvailable)
     {
-        size_t              i;
-
-        Con_Printf("  EAX Listner Environment:\n");
-        for(i = 0; eaxProps[i].prop != DSPROPERTY_EAXLISTENER_NONE; ++i)
+        LogBuffer_Printf(DE2_LOG_AUDIO, "  EAX Listner Environment:\n");
+        for(size_t i = 0; eaxProps[i].prop != DSPROPERTY_EAXLISTENER_NONE; ++i)
         {
             const eaxproperty_t* p = &eaxProps[i];
 
-            Con_Message("    %s: %s", p->name,
-                        queryEAXSupport(p->prop)? "Present" : "Not available");
+            LogBuffer_Printf(DE2_LOG_AUDIO, "    %s: %s", p->name,
+                        queryEAXSupport(p->prop)? "Present\n" : "Not available\n");
         }
     }
 
     // Success!
-    if(verbose)
-        Con_Message("dsDirectSound::DS_Init: Initialization complete, OK.");
+    LogBuffer_Printf(DE2_LOG_AUDIO | DE2_LOG_VERBOSE | DE2_LOG_DEV,
+                     "dsDirectSound::DS_Init: Initialization complete, OK.\n");
     return true;
 
 #undef NUMBUFFERS_HW_3D

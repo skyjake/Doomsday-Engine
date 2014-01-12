@@ -3029,33 +3029,6 @@ void XS_Update(void)
     }
 }
 
-#if 0 // no longer supported in 1.8.7
-/*
- * Write XG types into a binary file.
- */
-D_CMD(DumpXG)
-{
-    FILE   *file;
-
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (file)\n", argv[0]);
-        Con_Printf("Writes XG line and sector types to the file.\n");
-        return true;
-    }
-
-    file = fopen(argv[1], "wb");
-    if(!file)
-    {
-        Con_Printf("Can't open \"%s\" for writing.\n", argv[1]);
-        return false;
-    }
-    XG_WriteTypes(file);
-    fclose(file);
-    return true;
-}
-#endif
-
 /**
  * $moveplane: Command line interface to the plane mover.
  */
@@ -3073,17 +3046,17 @@ D_CMD(MovePlane)
 
     if(argc < 2)
     {
-        Con_Printf("Usage: %s (opts)\n", argv[0]);
-        Con_Printf("Opts can be:\n");
-        Con_Printf("  here [crush] [off] (z/units) [speed]\n");
-        Con_Printf("  at (x) (y) [crush] [off] (z/units) [speed]\n");
-        Con_Printf("  tag (sector-tag) [crush] [off] (z/units) [speed]\n");
+        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_NOTE, "Usage: %s (opts)\n", argv[0]);
+        LogBuffer_Printf(DE2_LOG_SCR, "Opts can be:\n");
+        LogBuffer_Printf(DE2_LOG_SCR, "  here [crush] [off] (z/units) [speed]\n");
+        LogBuffer_Printf(DE2_LOG_SCR, "  at (x) (y) [crush] [off] (z/units) [speed]\n");
+        LogBuffer_Printf(DE2_LOG_SCR, "  tag (sector-tag) [crush] [off] (z/units) [speed]\n");
         return true;
     }
 
     if(IS_CLIENT)
     {
-        Con_Printf("Clients can't move planes.\n");
+        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "Clients can't move planes\n");
         return false;
     }
 
@@ -3125,7 +3098,7 @@ D_CMD(MovePlane)
     }
     else
     {   // Unknown mode.
-        Con_Printf("Unknown mode.\n");
+        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "Unknown mode\n");
         return false;
     }
 
@@ -3135,7 +3108,7 @@ D_CMD(MovePlane)
     // No more arguments?
     if(argc == p)
     {
-        Con_Printf("Ceiling = %g\nFloor = %g\n", ceilingheight, floorheight);
+        LogBuffer_Printf(DE2_LOG_MAP, "Ceiling = %g\nFloor = %g\n", ceilingheight, floorheight);
         return true;
     }
 
@@ -3160,7 +3133,7 @@ D_CMD(MovePlane)
     }
     else
     {
-        Con_Printf("You must specify Z-units.\n");
+        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "You must specify Z-units\n");
         return false; // Required parameter missing.
     }
 

@@ -1556,7 +1556,7 @@ D_CMD(DisplayModeInfo)
                 .arg(win->isCentered()       ? "yes" : "no")
                 .arg(win->isMaximized()      ? "yes" : "no");
 
-    Con_Message(str.toUtf8().constData());
+    LOG_GL_MSG("%s") << str;
     return true;
 }
 
@@ -1564,19 +1564,21 @@ D_CMD(ListDisplayModes)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    Con_Message("There are %i display modes available:", DisplayMode_Count());
+    LOG_GL_MSG("There are %i display modes available:") << DisplayMode_Count();
     for(int i = 0; i < DisplayMode_Count(); ++i)
     {
         DisplayMode const *mode = DisplayMode_ByIndex(i);
         if(mode->refreshRate > 0)
         {
-            Con_Message("  %i x %i x %i (%i:%i, refresh: %.1f Hz)", mode->width, mode->height,
-                        mode->depth, mode->ratioX, mode->ratioY, mode->refreshRate);
+            LOG_GL_MSG("  %i x %i x %i " _E(>) "(%i:%i, refresh: %.1f Hz)")
+                    << mode->width << mode->height << mode->depth
+                    << mode->ratioX << mode->ratioY << mode->refreshRate;
         }
         else
         {
-            Con_Message("  %i x %i x %i (%i:%i)", mode->width, mode->height,
-                        mode->depth, mode->ratioX, mode->ratioY);
+            LOG_GL_MSG("  %i x %i x %i (%i:%i)")
+                    << mode->width << mode->height << mode->depth
+                    << mode->ratioX << mode->ratioY;
         }
     }
     return true;
@@ -1587,7 +1589,7 @@ D_CMD(UpdateGammaRamp)
     DENG2_UNUSED3(src, argc, argv);
 
     GL_SetGamma();
-    Con_Message("Gamma ramp set.");
+    LOG_GL_VERBOSE("Gamma ramp set");
     return true;
 }
 
@@ -1597,24 +1599,24 @@ D_CMD(Fog)
 
     if(argc == 1)
     {
-        Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);
-        Con_Printf("Commands: on, off, mode, color, start, end, density.\n");
-        Con_Printf("Modes: linear, exp, exp2.\n");
-        Con_Printf("Color is given as RGB (0-255).\n");
-        Con_Printf("Start and end are for linear fog, density for exponential.\n");
+        LOG_SCR_NOTE("Usage: %s (cmd) (args)") << argv[0];
+        LOG_SCR_MSG("Commands: on, off, mode, color, start, end, density");
+        LOG_SCR_MSG("Modes: linear, exp, exp2");
+        LOG_SCR_MSG("Color is given as RGB (0-255)");
+        LOG_SCR_MSG("Start and end are for linear fog, density for exponential fog.");
         return true;
     }
 
     if(!stricmp(argv[1], "on"))
     {
         GL_UseFog(true);
-        Con_Printf("Fog is now active.\n");
+        LOG_GL_VERBOSE("Fog is now active");
         return true;
     }
     if(!stricmp(argv[1], "off"))
     {
         GL_UseFog(false);
-        Con_Printf("Fog is now disabled.\n");
+        LOG_GL_VERBOSE("Fog is now disabled");
         return true;
     }
     if(!stricmp(argv[1], "color") && argc == 5)
@@ -1626,25 +1628,25 @@ D_CMD(Fog)
         fogColor[3] = 1;
 
         glFogfv(GL_FOG_COLOR, fogColor);
-        Con_Printf("Fog color set.\n");
+        LOG_GL_VERBOSE("Fog color set");
         return true;
     }
     if(!stricmp(argv[1], "start") && argc == 3)
     {
         glFogf(GL_FOG_START, (GLfloat) strtod(argv[2], NULL));
-        Con_Printf("Fog start distance set.\n");
+        LOG_GL_VERBOSE("Fog start distance set");
         return true;
     }
     if(!stricmp(argv[1], "end") && argc == 3)
     {
         glFogf(GL_FOG_END, (GLfloat) strtod(argv[2], NULL));
-        Con_Printf("Fog end distance set.\n");
+        LOG_GL_VERBOSE("Fog end distance set");
         return true;
     }
     if(!stricmp(argv[1], "density") && argc == 3)
     {
         glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], NULL));
-        Con_Printf("Fog density set.\n");
+        LOG_GL_VERBOSE("Fog density set");
         return true;
     }
     if(!stricmp(argv[1], "mode") && argc == 3)
@@ -1652,19 +1654,19 @@ D_CMD(Fog)
         if(!stricmp(argv[2], "linear"))
         {
             glFogi(GL_FOG_MODE, GL_LINEAR);
-            Con_Printf("Fog mode set to linear.\n");
+            LOG_GL_VERBOSE("Fog mode set to linear");
             return true;
         }
         if(!stricmp(argv[2], "exp"))
         {
             glFogi(GL_FOG_MODE, GL_EXP);
-            Con_Printf("Fog mode set to exp.\n");
+            LOG_GL_VERBOSE("Fog mode set to exp");
             return true;
         }
         if(!stricmp(argv[2], "exp2"))
         {
             glFogi(GL_FOG_MODE, GL_EXP2);
-            Con_Printf("Fog mode set to exp2.\n");
+            LOG_GL_VERBOSE("Fog mode set to exp2");
             return true;
         }
     }

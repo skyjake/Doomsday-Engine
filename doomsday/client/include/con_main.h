@@ -314,15 +314,6 @@ AutoStr *Con_KnownWordToString(knownword_t const *word);
  */
 void Con_Message(char const *message, ...) PRINTF_F(1,2);
 
-/**
- * Print a text fragment (manual/no line breaks) to the console.
- *
- * @param flags   @ref consolePrintFlags
- * @param format  Format for the output using printf() formatting syntax.
- */
-void Con_FPrintf(int flags, char const *format, ...) PRINTF_F(2,3);
-void Con_Printf(char const *format, ...) PRINTF_F(1,2);
-
 /// Print a ruler into the console.
 void Con_PrintRuler();
 

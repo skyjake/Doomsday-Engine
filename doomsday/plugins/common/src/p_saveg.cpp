@@ -2331,9 +2331,7 @@ static void readPlayers(dd_bool *infile, dd_bool *loaded)
                     loaded[k] = true;
                     // Later references to the player number 'i' must be translated!
                     saveToRealPlayerNum[i] = k;
-#if _DEBUG
-                    Con_Printf("readPlayers: Saved %i is now %i.\n", i, k);
-#endif
+                    LogBuffer_Printf(DE2_LOG_DEV | DE2_LOG_MAP, "readPlayers: saved %i is now %i\n", i, k);
                     break;
                 }
             }
@@ -5539,9 +5537,7 @@ static void readMapState()
 #if __JHEXEN__
     DENG_ASSERT(path != 0);
 
-#ifdef _DEBUG
-    Con_Printf("readMapState: Opening file %s\n", Str_Text(path));
-#endif
+    LogBuffer_Printf(DE2_LOG_DEV | DE2_LOG_MAP, "readMapState: Opening file \"%s\"\n", Str_Text(path));
 
     // Load the file
     size_t bufferSize = M_ReadFile(Str_Text(path), (char**)&saveBuffer);

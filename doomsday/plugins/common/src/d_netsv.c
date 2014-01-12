@@ -1618,7 +1618,7 @@ D_CMD(MapCycle)
 
     if(!IS_SERVER)
     {
-        Con_Printf("Only allowed for a server.\n");
+        LogBuffer_Printf(DE2_LOG_ERROR | DE2_LOG_SCR, "Only allowed for a server.\n");
         return false;
     }
 
@@ -1628,7 +1628,7 @@ D_CMD(MapCycle)
         map = NetSv_ScanCycle(cycleIndex = 0, 0);
         if(map < 0)
         {
-            Con_Printf("MapCycle \"%s\" is invalid.\n", mapCycle);
+            LogBuffer_Printf(DE2_LOG_ERROR | DE2_LOG_SCR, "MapCycle \"%s\" is invalid.\n", mapCycle);
             return false;
         }
         for(i = 0; i < MAXPLAYERS; ++i)

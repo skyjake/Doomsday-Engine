@@ -385,7 +385,9 @@ void Net_ShowChatMessage(int plrNum, const char* message)
 {
     const char* fromName = (plrNum > 0? clients[plrNum].name : "[sysop]");
     const char* sep      = (plrNum > 0? ":"                  : "");
-    Con_FPrintf(!plrNum? SV_CONSOLE_PRINT_FLAGS : CPF_GREEN, "%s%s %s\n", fromName, sep, message);
+    LOG_NOTE("%s%s%s %s")
+            << (!plrNum? _E(1) : _E(D))
+            << fromName << sep << message;
 }
 
 /**
@@ -978,13 +980,13 @@ D_CMD(Kick)
     num = atoi(argv[1]);
     if(num < 1 || num >= DDMAXPLAYERS)
     {
-        Con_Printf("Invalid client number.\n");
+        LOG_NET_ERROR("Invalid client number");
         return false;
     }
 
     if(netRemoteUser == num)
     {
-        Con_Printf("Can't kick the client who's logged in.\n");
+        LOG_NET_ERROR("Can't kick the client who's logged in");
         return false;
     }
 
@@ -1054,13 +1056,15 @@ D_CMD(MakeCamera)
     // Create a new local player.
     int cp;
 
+    LOG_AS("makecam (Cmd)");
+
     cp = atoi(argv[1]);
     if(cp < 0 || cp >= DDMAXPLAYERS)
         return false;
 
     if(clients[cp].connected)
     {
-        Con_Printf("Client %i already connected.\n", cp);
+        LOG_ERROR("Client %i already connected") << cp;
         return false;
     }
 
@@ -1101,33 +1105,10 @@ D_CMD(SetConsole)
     return true;
 }
 
-#if 0
-void Net_FinishConnection(int nodeId, const byte* data, int size)
-{
-    serverinfo_t info;
-
-    Con_Message("Net_FinishConnection: Got reply with %i bytes.", size);
-
-    // Parse the response for server info.
-    N_ClientHandleResponseToInfoQuery(nodeId, data, size);
-
-    if(N_GetHostInfo(0, &info))
-    {
-        // Found something!
-        //Net_PrintServerInfo(0, NULL);
-        //Net_PrintServerInfo(0, &info);
-        Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
-    }
-    else
-    {
-        Con_Message("Net_FinishConnection: Failed to retrieve server info.");
-    }
-}
-#endif
-
 int Net_StartConnection(const char* address, int port)
 {
-    Con_Message("Net_StartConnection: Connecting to %s (port %i)...", address, port);
+    LOG_AS("Net_StartConnection");
+    LOG_NET_MSG("Connecting to %s (port %i)...") << address << port;
 
     // Start searching at the specified location.
     Net_ServerLink().connectDomain(de::String("%1:%2").arg(address).arg(port), 7 /*timeout*/);
@@ -1147,15 +1128,15 @@ D_CMD(Connect)
 
     if(argc < 2 || argc > 3)
     {
-        Con_Printf("Usage: %s (ip-address) [port]\n", argv[0]);
-        Con_Printf("A TCP/IP connection is created to the given server.\n");
-        Con_Printf("If a port is not specified port zero will be used.\n");
+        LOG_SCR_NOTE("Usage: %s (ip-address) [port]") << argv[0];
+        LOG_SCR_MSG("A TCP/IP connection is created to the given server. If a port is not "
+                    "specified port zero will be used.");
         return true;
     }
 
     if(netGame)
     {
-        Con_Printf("Already connected.\n");
+        LOG_NET_ERROR("Already connected");
         return false;
     }
 
@@ -1187,22 +1168,22 @@ D_CMD(Net)
 
     if(argc == 1) // No args?
     {
-        Con_Printf("Usage: %s (cmd/args)\n", argv[0]);
-        Con_Printf("Commands:\n");
-        Con_Printf("  init\n");
-        Con_Printf("  shutdown\n");
-        Con_Printf("  info\n");
-        Con_Printf("  request\n");
+        LOG_SCR_NOTE("Usage: %s (cmd/args)") << argv[0];
+        LOG_SCR_MSG("Commands:");
+        LOG_SCR_MSG("  init");
+        LOG_SCR_MSG("  shutdown");
+        LOG_SCR_MSG("  info");
+        LOG_SCR_MSG("  request");
 #ifdef __CLIENT__
-        Con_Printf("  setup client\n");
-        Con_Printf("  search (address) [port]   (local or targeted query)\n");
-        Con_Printf("  servers   (asks the master server)\n");
-        Con_Printf("  connect (idx)\n");
-        Con_Printf("  mconnect (m-idx)\n");
-        Con_Printf("  disconnect\n");
+        LOG_SCR_MSG("  setup client");
+        LOG_SCR_MSG("  search (address) [port]   (local or targeted query)");
+        LOG_SCR_MSG("  servers   (asks the master server)");
+        LOG_SCR_MSG("  connect (idx)");
+        LOG_SCR_MSG("  mconnect (m-idx)");
+        LOG_SCR_MSG("  disconnect");
 #endif
 #ifdef __SERVER__
-        Con_Printf("  announce\n");
+        LOG_SCR_MSG("  announce");
 #endif
         return true;
     }
@@ -1226,32 +1207,32 @@ D_CMD(Net)
         else if(!stricmp(argv[1], "info"))
         {
             N_PrintNetworkStatus();
-            Con_Message("Network game: %s", netGame ? "yes" : "no");
-            Con_Message("This is console %i (local player %i).", consolePlayer, P_ConsoleToLocal(consolePlayer));
+            LOG_NET_MSG("Network game: %b") << netGame;
+            LOG_NET_MSG("This is console %i (local player %i)") << consolePlayer << P_ConsoleToLocal(consolePlayer);
         }
 #ifdef __CLIENT__
         else if(!stricmp(argv[1], "disconnect"))
         {
             if(!netGame)
             {
-                Con_Message("This client is not connected to a server.");
+                LOG_NET_ERROR("This client is not connected to a server");
                 return false;
             }
 
             if(!isClient)
             {
-                Con_Message("This is not a client.");
+                LOG_NET_ERROR("This is not a client");
                 return false;
             }
 
             Net_ServerLink().disconnect();
 
-            Con_Message("Disconnected.");
+            LOG_NET_NOTE("Disconnected");
         }
 #endif
         else
         {
-            Con_Message("Bad arguments.");
+            LOG_SCR_ERROR("Invalid arguments");
             return false; // Bad args.
         }
     }
@@ -1267,7 +1248,7 @@ D_CMD(Net)
         {
             if(netGame)
             {
-                Con_Message("Already connected.");
+                LOG_NET_ERROR("Already connected");
                 return false;
             }
 

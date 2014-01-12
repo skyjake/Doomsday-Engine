@@ -231,7 +231,6 @@ void Sv_HandlePlayerInfoFromClient(client_t* sender)
     len = MIN_OF(PLAYERNAMELEN - 1, len); // there is a maximum size
     Reader_Read(msgReader, sender->name, len);
     sender->name[len] = 0;
-    Con_FPrintf(CPF_TRANSMIT | SV_CONSOLE_PRINT_FLAGS, "%s renamed to %s.\n", oldName, sender->name);
 
     LOG_NET_NOTE("Player %s renamed to %s") << oldName << sender->name;
 
@@ -274,9 +273,8 @@ void Sv_HandlePacket(void)
                 if(clients[i].connected && clients[i].id == id)
                 {
                     // Send a message to everybody.
-                    Con_FPrintf(CPF_TRANSMIT | SV_CONSOLE_PRINT_FLAGS,
-                                "New client connection refused: Duplicate ID "
-                                "(%08x). From=%i, i=%i\n", id, from, i);
+                    LOG_NET_WARNING("New client connection refused: duplicate ID (%08x)") << id;
+                    LOGDEV_NET_WARNING("ID conflict from=%i, i=%i") << from << i;
                     N_TerminateClient(from);
                     break;
                 }

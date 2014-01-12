@@ -190,12 +190,12 @@ struct Huffman
                 LOG_MSG("%03i: (%07i) ", i, (int) (6e6 * freqs[i]));
                 for(k = 0; k < huffCodes[i].length; ++k)
                 {
-                    Con_Printf("%c", huffCodes[i].code & (1 << k) ? '1' : '0');
+                    LogBuffer_Printf(0, "%c", huffCodes[i].code & (1 << k) ? '1' : '0');
                 }
-                Con_Printf("\n");
+                LogBuffer_Printf(0, "\n");
             }
-            Con_Message("realbits=%f, huffbits=%f (%f%%)", realBits, huffBits,
-                        huffBits / realBits * 100);
+            LOG_MSG("realbits=%f, huffbits=%f (%f%%)")
+                    << realBits <<huffBits << huffBits / realBits * 100;
         }
 #endif
     }

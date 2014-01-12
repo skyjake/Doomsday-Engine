@@ -1160,7 +1160,7 @@ static void printMapBanner(void)
 {
     const char* name = P_GetMapNiceName();
 
-    Con_Printf("\n");
+    LogBuffer_Printf(DE2_LOG_MAP, "\n");
     if(name)
     {
         char buf[64];
@@ -1169,7 +1169,7 @@ static void printMapBanner(void)
 #else
         dd_snprintf(buf, 64, "Map %u: %s", gameMap+1, name);
 #endif
-        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "%s\n", buf);
+        LogBuffer_Printf(DE2_LOG_MAP, "%s\n", buf);
     }
 
 #if !__JHEXEN__
@@ -1183,12 +1183,12 @@ static void printMapBanner(void)
     if(!lauthor)
         lauthor = unknownAuthorStr;
 
-    Con_FPrintf(CPF_LIGHT|CPF_BLUE, "Author: %s\n", lauthor);
+    LogBuffer_Printf(DE2_LOG_MAP, "Author: %s\n", lauthor);
 
     Uri_Delete(uri);
     }
 #endif
-    Con_Printf("\n");
+    LogBuffer_Printf(DE2_LOG_MAP, "\n");
 }
 
 void G_BeginMap(void)
@@ -3420,14 +3420,14 @@ void G_PrintFormattedMapList(uint episode, char const** files, uint count)
         {
             // Print a range.
             len = i - rangeStart;
-            Con_Printf("  "); // Indentation.
+            LogBuffer_Printf(DE2_LOG_MAP, "  "); // Indentation.
             if(len <= 2)
             {
                 for(k = rangeStart; k < i; ++k)
                 {
                     Uri* mapUri = G_ComposeMapUri(episode, k);
                     AutoStr* path = Uri_ToString(mapUri);
-                    Con_Printf("%s%s", Str_Text(path), (k != i - 1) ? "," : "");
+                    LogBuffer_Printf(DE2_LOG_MAP, "%s%s", Str_Text(path), (k != i - 1) ? "," : "");
                     Uri_Delete(mapUri);
                 }
             }
@@ -3436,15 +3436,15 @@ void G_PrintFormattedMapList(uint episode, char const** files, uint count)
                 Uri* mapUri = G_ComposeMapUri(episode, rangeStart);
                 AutoStr* path = Uri_ToString(mapUri);
 
-                Con_Printf("%s-", Str_Text(path));
+                LogBuffer_Printf(DE2_LOG_MAP, "%s-", Str_Text(path));
                 Uri_Delete(mapUri);
 
                 mapUri = G_ComposeMapUri(episode, i-1);
                 path = Uri_ToString(mapUri);
-                Con_Printf("%s", Str_Text(path));
+                LogBuffer_Printf(DE2_LOG_MAP, "%s", Str_Text(path));
                 Uri_Delete(mapUri);
             }
-            Con_Printf(": %s\n", F_PrettyPath(current));
+            LogBuffer_Printf(DE2_LOG_MAP, ": %s\n", F_PrettyPath(current));
 
             // Moving on to a different file.
             current = files[i];

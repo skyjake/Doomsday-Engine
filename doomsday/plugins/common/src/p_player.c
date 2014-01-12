@@ -807,8 +807,11 @@ void P_SetMessage(player_t* pl, int flags, const char* msg)
 
     ST_LogPost(pl - players, flags, msg);
 
-    if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
-        Con_FPrintf(CPF_CYAN, "%s\n", msg);
+    if(pl == &players[CONSOLEPLAYER])
+    {
+        LogBuffer_Printf(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE),
+                         "%s\n", msg);
+    }
 
     // Servers are responsible for sending these messages to the clients.
     NetSv_SendMessage(pl - players, msg);
@@ -833,8 +836,11 @@ void P_SetYellowMessage(player_t* pl, int flags, const char* msg)
 
     ST_LogPost(pl - players, flags, Str_Text(buf));
 
-    if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
-        Con_FPrintf(CPF_CYAN, "%s\n", msg);
+    if(pl == &players[CONSOLEPLAYER])
+    {
+        LogBuffer_Printf(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE),
+                         "%s\n", msg);
+    }
 
     // Servers are responsible for sending these messages to the clients.
     /// @todo We shouldn't need to send the format string along with every
@@ -1013,7 +1019,7 @@ D_CMD(SetCamera)
     p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
-        Con_Printf("Invalid console number %i.\n", p);
+        LogBuffer_Printf(DE2_LOG_SCR| DE2_LOG_ERROR, "Invalid console number %i\n", p);
         return false;
     }
 
@@ -1155,21 +1161,21 @@ D_CMD(MakeLocal)
 
     if(G_GameState() != GS_MAP)
     {
-        Con_Printf("You must be in a game to create a local player.\n");
+        LogBuffer_Printf(DE2_LOG_ERROR | DE2_LOG_MAP, "You must be in a game to create a local player.\n");
         return false;
     }
 
     p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
-        Con_Printf("Invalid console number %i.\n", p);
+        LogBuffer_Printf(DE2_LOG_ERROR | DE2_LOG_SCR, "Invalid console number %i.\n", p);
         return false;
     }
     plr = &players[p];
 
     if(plr->plr->inGame)
     {
-        Con_Printf("Player %i is already in the game.\n", p);
+        LogBuffer_Printf(DE2_LOG_ERROR | DE2_LOG_MAP, "Player %i is already in the game.\n", p);
         return false;
     }
 
@@ -1194,8 +1200,8 @@ D_CMD(PrintPlayerCoords)
     if(!(mo = players[CONSOLEPLAYER].plr->mo))
         return false;
 
-    Con_Printf("Console %i: X=%g Y=%g Z=%g\n", CONSOLEPLAYER,
-               mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
+    LogBuffer_Printf(DE2_LOG_MAP, "Console %i: X=%g Y=%g Z=%g\n", CONSOLEPLAYER,
+                     mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 
     return true;
 }
@@ -1203,7 +1209,7 @@ D_CMD(PrintPlayerCoords)
 D_CMD(CycleSpy)
 {
     //// @todo The engine should do this.
-    Con_Printf("Spying not allowed.\n");
+    LogBuffer_Printf(DE2_LOG_MAP | DE2_LOG_ERROR, "Spying not allowed.\n");
 #if 0
     if(G_GameState() == GS_MAP && !deathmatch)
     {   // Cycle the display player.
@@ -1231,16 +1237,16 @@ D_CMD(SpawnMobj)
 
     if(argc != 5 && argc != 6)
     {
-        Con_Printf("Usage: %s (type) (x) (y) (z) (angle)\n", argv[0]);
-        Con_Printf("Type must be a defined Thing ID or Name.\n");
-        Con_Printf("Z is an offset from the floor, 'floor', 'ceil' or 'random'.\n");
-        Con_Printf("Angle (0..360) is optional.\n");
+        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_NOTE, "Usage: %s (type) (x) (y) (z) (angle)\n", argv[0]);
+        LogBuffer_Printf(DE2_LOG_SCR, "Type must be a defined Thing ID or Name.\n");
+        LogBuffer_Printf(DE2_LOG_SCR, "Z is an offset from the floor, 'floor', 'ceil' or 'random'.\n");
+        LogBuffer_Printf(DE2_LOG_SCR, "Angle (0..360) is optional.\n");
         return true;
     }
 
     if(IS_CLIENT)
     {
-        Con_Printf("%s can't be used by clients.\n", argv[0]);
+        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "%s can't be used by clients\n", argv[0]);
         return false;
     }
 
@@ -1250,7 +1256,7 @@ D_CMD(SpawnMobj)
         // Try to find it by name instead.
         if((type = Def_Get(DD_DEF_MOBJ_BY_NAME, argv[1], 0)) < 0)
         {
-            Con_Printf("Undefined thing type %s.\n", argv[1]);
+            LogBuffer_Printf(DE2_LOG_RES | DE2_LOG_ERROR, "Undefined thing type %s\n", argv[1]);
             return false;
         }
     }
