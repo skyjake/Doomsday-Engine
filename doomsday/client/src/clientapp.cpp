@@ -136,7 +136,7 @@ DENG2_PIMPL(ClientApp)
     WindowSystem *winSys;
     ServerLink *svLink;
     Games games;
-    World world;
+    WorldSystem *worldSys;
 
     /**
      * Log entry sink that passes warning messages to the main window's alert
@@ -185,6 +185,7 @@ DENG2_PIMPL(ClientApp)
         , renderSys(0)
         , resourceSys(0)
         , winSys(0)
+        , worldSys(0)
         , svLink(0)
     {
         clientAppSingleton = thisPublic;
@@ -200,6 +201,7 @@ DENG2_PIMPL(ClientApp)
         DD_Shutdown();
 
         delete svLink;
+        delete worldSys;
         delete winSys;
         delete renderSys;
         delete resourceSys;
@@ -391,6 +393,10 @@ void ClientApp::initialize()
     addSystem(*d->inputSys);
     d->widgetActions.reset(new WidgetActions);
 
+    // Create the world system.
+    d->worldSys = new WorldSystem;
+    addSystem(*d->worldSys);
+
     // Finally, run the bootstrap script.
     scriptSystem().importModule("bootstrap");
 
@@ -506,9 +512,11 @@ Games &ClientApp::games()
     return app().d->games;
 }
 
-World &ClientApp::world()
+WorldSystem &ClientApp::worldSystem()
 {
-    return app().d->world;
+    ClientApp &a = ClientApp::app();
+    DENG2_ASSERT(a.d->worldSys != 0);
+    return *a.d->worldSys;
 }
 
 void ClientApp::openHomepageInBrowser()

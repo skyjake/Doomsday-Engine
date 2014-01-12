@@ -53,7 +53,7 @@
 #  include "render/billboard.h" // Rend_SpriteMaterialSpec
 #  include "render/sky.h"
 
-#  include "world/world.h"
+#  include "world/worldsystem.h"
 #  include "world/map.h"
 #  include "world/p_object.h"
 #  include "world/thinkers.h"
@@ -3747,7 +3747,7 @@ void ResourceSystem::cacheForCurrentMap()
     // Don't precache when playing a demo (why not? -ds).
     if(playback) return;
 
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     if(precacheMapMaterials)
     {

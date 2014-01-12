@@ -1,4 +1,4 @@
-/** @file world.cpp  World.
+/** @file worldsystem.cpp  World subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -19,7 +19,7 @@
  */
 
 #include "de_platform.h"
-#include "world/world.h"
+#include "world/worldsystem.h"
 
 #include "de_defs.h"
 #include "de_play.h"
@@ -272,7 +272,7 @@ static String composeUniqueMapId(de::File1 &markerLump)
 /// Determine the identity key for maps loaded from the specified @a sourcePath.
 static String cacheIdForMap(String const &sourcePath)
 {
-    DENG_ASSERT(!sourcePath.isEmpty());
+    DENG2_ASSERT(!sourcePath.isEmpty());
 
     ushort id = 0;
     for(int i = 0; i < sourcePath.size(); ++i)
@@ -285,7 +285,7 @@ static String cacheIdForMap(String const &sourcePath)
 
 namespace de {
 
-DENG2_PIMPL(World)
+DENG2_PIMPL(WorldSystem)
 {
     /**
      * Information about a map in the cache.
@@ -316,7 +316,7 @@ DENG2_PIMPL(World)
     {
         DENG2_FOR_PUBLIC_AUDIENCE(MapChange, i)
         {
-            i->worldMapChanged(self);
+            i->worldSystemMapChanged();
         }
     }
 
@@ -486,7 +486,7 @@ DENG2_PIMPL(World)
      */
     Map *loadMap(Uri const &uri, MapConversionReporter *reporter = 0)
     {
-        LOG_AS("World::loadMap");
+        LOG_AS("WorldSystem::loadMap");
 
         // Record this map if we haven't already.
         /*MapCacheRecord &rec =*/ createCacheRecord(uri);
@@ -822,34 +822,30 @@ DENG2_PIMPL(World)
 #endif
 };
 
-World::World() : d(new Instance(this))
+WorldSystem::WorldSystem() : d(new Instance(this))
 {}
 
-void World::consoleRegister() // static
+void WorldSystem::timeChanged(Clock const &)
 {
-    //C_VAR_BYTE ("map-cache", &mapCache, 0, 0, 1);
-#ifdef __CLIENT__
-    C_VAR_FLOAT("edit-bias-grab-distance", &handDistance, 0, 10, 1000);
-#endif
-    Map::consoleRegister();
+    // Nothing to do.
 }
 
-bool World::hasMap() const
+bool WorldSystem::hasMap() const
 {
     return d->map != 0;
 }
 
-Map &World::map() const
+Map &WorldSystem::map() const
 {
     if(d->map)
     {
         return *d->map;
     }
     /// @throw MapError Attempted with no map loaded.
-    throw MapError("World::map", "No map is currently loaded");
+    throw MapError("WorldSystem::map", "No map is currently loaded");
 }
 
-bool World::changeMap(de::Uri const &uri)
+bool WorldSystem::changeMap(de::Uri const &uri)
 {
     // Switch to busy mode (if we haven't already) except when simply unloading.
     if(!uri.isEmpty() && !BusyMode_Active())
@@ -873,7 +869,7 @@ bool World::changeMap(de::Uri const &uri)
     }
 }
 
-void World::reset()
+void WorldSystem::reset()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
@@ -904,7 +900,7 @@ void World::reset()
     unloadMap();
 }
 
-void World::update()
+void WorldSystem::update()
 {
 #ifdef __CLIENT__
     P_UpdateParticleGens(); // Defs might've changed.
@@ -929,7 +925,7 @@ void World::update()
     }
 }
 
-void World::advanceTime(timespan_t delta)
+void WorldSystem::advanceTime(timespan_t delta)
 {
 #ifdef __CLIENT__
     if(clientPaused) return;
@@ -937,13 +933,13 @@ void World::advanceTime(timespan_t delta)
     d->time += delta;
 }
 
-timespan_t World::time() const
+timespan_t WorldSystem::time() const
 {
     return d->time;
 }
 
 #ifdef __CLIENT__
-Hand &World::hand(coord_t *distance) const
+Hand &WorldSystem::hand(coord_t *distance) const
 {
     // Time to create the hand?
     if(d->hand.isNull())
@@ -962,13 +958,13 @@ Hand &World::hand(coord_t *distance) const
     return *d->hand;
 }
 
-void World::beginFrame(bool resetNextViewer)
+void WorldSystem::beginFrame(bool resetNextViewer)
 {
     // Notify interested parties that a new frame has begun.
-    DENG2_FOR_AUDIENCE(FrameBegin, i) i->worldFrameBegins(*this, resetNextViewer);
+    DENG2_FOR_AUDIENCE(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
 }
 
-void World::endFrame()
+void WorldSystem::endFrame()
 {
     if(d->map && !d->hand.isNull())
     {
@@ -983,9 +979,18 @@ void World::endFrame()
     }
 
     // Notify interested parties that the current frame has ended.
-    DENG2_FOR_AUDIENCE(FrameEnd, i) i->worldFrameEnds(*this);
+    DENG2_FOR_AUDIENCE(FrameEnd, i) i->worldSystemFrameEnds();
 }
 
 #endif // __CLIENT__
+
+void WorldSystem::consoleRegister() // static
+{
+    //C_VAR_BYTE ("map-cache", &mapCache, 0, 0, 1);
+#ifdef __CLIENT__
+    C_VAR_FLOAT("edit-bias-grab-distance", &handDistance, 0, 10, 1000);
+#endif
+    Map::consoleRegister();
+}
 
 } // namespace de

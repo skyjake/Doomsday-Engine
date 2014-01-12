@@ -86,6 +86,6 @@ void ClPolyMover_Thinker(ClPolyMover *mover)
     if(!mover->move && !mover->rotate)
     {
         /// @todo Do not assume the move is from the CURRENT map.
-        App_World().map().deleteClPolyMover(mover);
+        App_WorldSystem().map().deleteClPolyMover(mover);
     }
 }

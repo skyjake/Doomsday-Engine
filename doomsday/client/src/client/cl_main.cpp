@@ -95,18 +95,18 @@ void Cl_CleanUp()
     clientPaused = false;
     handshakeReceived = false;
 
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
         Cl_ResetFrame();
-        App_World().map().clearClMobjs();
+        App_WorldSystem().map().clearClMobjs();
     }
 
     Cl_InitPlayers();
     Cl_ResetTransTables();
 
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        App_World().map().clearClMovers();
+        App_WorldSystem().map().clearClMovers();
     }
 
     GL_SetFilter(false);
@@ -459,9 +459,9 @@ void Cl_Ticker(timespan_t ticLength)
 #endif
     }
 
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        App_World().map().expireClMobjs();
+        App_WorldSystem().map().expireClMobjs();
     }
 }
 

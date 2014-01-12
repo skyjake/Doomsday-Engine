@@ -1,4 +1,4 @@
-/** @file world.h  World.
+/** @file worldsystem.h  World subsystem.
  *
  * Ideas for improvement:
  *
@@ -27,13 +27,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_H
-#define DENG_WORLD_H
+#ifndef DENG_WORLDSYSTEM_H
+#define DENG_WORLDSYSTEM_H
 
 #include "uri.hh"
 #include <de/libdeng1.h>
 #include <de/Error>
 #include <de/Observers>
+#include <de/System>
 
 #ifdef __CLIENT__
 class Hand;
@@ -45,34 +46,32 @@ class Map;
 
 /**
  * @ingroup world
- *
- * @todo Derive from de::System
  */
-class World
+class WorldSystem : public de::System
 {
-    DENG2_NO_COPY  (World)
-    DENG2_NO_ASSIGN(World)
-
 public:
     /// No map is currently loaded. @ingroup errors
     DENG2_ERROR(MapError);
 
     /// Notified whenever the "current" map changes.
-    DENG2_DEFINE_AUDIENCE(MapChange, void worldMapChanged(World &world))
+    DENG2_DEFINE_AUDIENCE(MapChange, void worldSystemMapChanged())
 
 #ifdef __CLIENT__
     /// Notified when a new frame begins.
-    DENG2_DEFINE_AUDIENCE(FrameBegin, void worldFrameBegins(World &world, bool resetNextViewer))
+    DENG2_DEFINE_AUDIENCE(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
 
     /// Notified when the "current" frame ends.
-    DENG2_DEFINE_AUDIENCE(FrameEnd, void worldFrameEnds(World &world))
+    DENG2_DEFINE_AUDIENCE(FrameEnd, void worldSystemFrameEnds())
 #endif
 
 public:
     /**
-     * Construct a new world with no "current" map.
+     * Construct a new world system (no map is loaded by default).
      */
-    World();
+    WorldSystem();
+
+    // System.
+    void timeChanged(de::Clock const &);
 
     /**
      * To be called to register the commands and variables of this module.

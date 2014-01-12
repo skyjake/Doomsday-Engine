@@ -264,7 +264,7 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
         Mobj_Link(mo, MLF_SECTOR | MLF_BLOCKMAP);
     }
 
-    mo->_bspLeaf = &App_World().map().bspLeafAt_FixedPrecision(Mobj_Origin(*mo));
+    mo->_bspLeaf = &App_WorldSystem().map().bspLeafAt_FixedPrecision(Mobj_Origin(*mo));
     mo->floorZ   = Mobj_Sector(mo)->floor().height();
     mo->ceilingZ = Mobj_Sector(mo)->ceiling().height();
 
@@ -285,7 +285,7 @@ void ClPlayer_ReadDelta()
     LOG_AS("ClPlayer_ReadDelta2");
 
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     int df = 0;
     ushort num;

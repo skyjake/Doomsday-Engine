@@ -112,7 +112,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
     mo->ddFlags = ddflags;
     mo->lumIdx = -1;
     mo->thinker.function = function;
-    App_World().map().thinkers().add(mo->thinker);
+    App_WorldSystem().map().thinkers().add(mo->thinker);
 
     return mo;
 }
@@ -139,7 +139,7 @@ DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
 
     S_StopSound(0, mo);
 
-    App_World().map().thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
+    App_WorldSystem().map().thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
 }
 
 /**
@@ -530,7 +530,7 @@ ModelDef *Mobj_ModelDef(mobj_t const &mo, ModelDef **retNextModef, float *retInt
             offset = M_CycleIntoRange(MOBJ_TO_ID(&mo), duration);
         }
 
-        interp = M_CycleIntoRange(App_World().time() / duration + offset, 1);
+        interp = M_CycleIntoRange(App_WorldSystem().time() / duration + offset, 1);
         worldTime = true;
     }
     else
@@ -687,7 +687,7 @@ coord_t Mobj_BobOffset(mobj_t *mo)
 {
     if(mo->ddFlags & DDMF_BOB)
     {
-        return (sin(MOBJ_TO_ID(mo) + App_World().time() / 1.8286 * 2 * PI) * 8);
+        return (sin(MOBJ_TO_ID(mo) + App_WorldSystem().time() / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }
@@ -765,13 +765,6 @@ D_CMD(InspectMobj)
 {
     DENG2_UNUSED(src);
 
-    mobj_t* mo = 0;
-    thid_t id = 0;
-    char const *moType = "Mobj";
-#ifdef __CLIENT__
-    ClMobjInfo* info = 0;
-#endif
-
     if(argc != 2)
     {
         LOG_SCR_NOTE("Usage: %s (mobj-id)") << argv[0];
@@ -779,18 +772,19 @@ D_CMD(InspectMobj)
     }
 
     // Get the ID.
-    id = strtol(argv[1], NULL, 10);
+    thid_t id = strtol(argv[1], NULL, 10);
 
     // Find the mobj.
-    mo = App_World().map().thinkers().mobjById(id);
+    mobj_t *mo = App_WorldSystem().map().thinkers().mobjById(id);
     if(!mo)
     {
         LOG_MAP_ERROR("Mobj with id %i not found") << id;
         return false;
     }
 
+    char const *moType = "Mobj";
 #ifdef __CLIENT__
-    info = ClMobj_GetInfo(mo);
+    ClMobjInfo *info = ClMobj_GetInfo(mo);
     if(info) moType = "CLMOBJ";
 #endif
 

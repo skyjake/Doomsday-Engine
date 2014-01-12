@@ -268,9 +268,9 @@ static bool firstBspLeaf; // No range checking for the first one.
 
 static void markLightGridForFullUpdate()
 {
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = App_WorldSystem().map();
         if(map.hasLightGrid())
             map.lightGrid().markAllForUpdate();
     }
@@ -284,9 +284,9 @@ static int unlinkMobjLumobjWorker(thinker_t *th, void *)
 
 static void unlinkMobjLumobjs()
 {
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = App_WorldSystem().map();
         map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
                                unlinkMobjLumobjWorker);
     }
@@ -461,9 +461,9 @@ void Rend_Shutdown()
 void Rend_Reset()
 {
     R_ClearViewData();
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        App_World().map().removeAllLumobjs();
+        App_WorldSystem().map().removeAllLumobjs();
     }
     if(dlBBox)
     {
@@ -4002,7 +4002,7 @@ static String labelForSource(BiasSource *s)
 {
     if(!s || !editShowIndices) return String();
     /// @todo Don't assume the current map.
-    return String::number(App_World().map().toIndex(*s));
+    return String::number(App_WorldSystem().map().toIndex(*s));
 }
 
 static void drawSource(BiasSource *s)
@@ -4080,7 +4080,7 @@ static void drawBiasEditingVisuals(Map &map)
     }
 
     coord_t handDistance;
-    Hand &hand = App_World().hand(&handDistance);
+    Hand &hand = App_WorldSystem().hand(&handDistance);
 
     // Grabbed sources blink yellow.
     Vector4f grabbedColor;
@@ -4155,13 +4155,13 @@ void Rend_UpdateLightModMatrix()
 
     zap(lightModRange);
 
-    if(!App_World().hasMap())
+    if(!App_WorldSystem().hasMap())
     {
         rAmbient = 0;
         return;
     }
 
-    int mapAmbient = App_World().map().ambientLightLevel();
+    int mapAmbient = App_WorldSystem().map().ambientLightLevel();
     if(mapAmbient > ambientLight)
     {
         rAmbient = mapAmbient;

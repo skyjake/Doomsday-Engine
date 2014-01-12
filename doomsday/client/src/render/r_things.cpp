@@ -24,7 +24,7 @@
 #include "render/r_things.h"
 
 #include "de_render.h"
-#include "dd_main.h" // App_World()
+#include "dd_main.h" // App_WorldSystem()
 #include "dd_loop.h" // frameTimePos
 #include "def_main.h" // states
 
@@ -321,7 +321,7 @@ void R_ProjectSprite(mobj_t *mo)
         }
         else if(mf->testSubFlag(0, MFF_SPIN))
         {
-            yaw = modelSpinSpeed * 70 * App_World().time() + MOBJ_TO_ID(mo) % 360;
+            yaw = modelSpinSpeed * 70 * App_WorldSystem().time() + MOBJ_TO_ID(mo) % 360;
         }
         else if(mf->testSubFlag(0, MFF_MOVEMENT_YAW))
         {

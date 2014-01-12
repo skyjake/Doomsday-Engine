@@ -29,7 +29,7 @@
 
 #include "world/map.h"
 #include "Plane"
-#include "world/world.h" // ddMapSetup
+#include "world/worldsystem.h" // ddMapSetup
 
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"

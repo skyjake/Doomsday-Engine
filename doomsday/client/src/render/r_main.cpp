@@ -110,7 +110,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     }
     else
     {
-        Map &map = ClientApp::world().map();
+        Map &map = ClientApp::worldSystem().map();
 
         if(useBias && map.hasLightGrid())
         {
@@ -231,7 +231,7 @@ static void setupModelParamsForVisPSprite(drawmodelparams_t *params, vispsprite_
     }
     else
     {
-        Map &map = ClientApp::world().map();
+        Map &map = ClientApp::worldSystem().map();
 
         if(useBias && map.hasLightGrid())
         {

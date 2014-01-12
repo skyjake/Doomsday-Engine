@@ -152,7 +152,7 @@ int Cl_LocalMobjState(int serverMobjState)
 void Cl_ReadSectorDelta(int /*deltaType*/)
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
 #define PLN_FLOOR   0
 #define PLN_CEILING 1
@@ -260,7 +260,7 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
 void Cl_ReadSideDelta(int /*deltaType*/)
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     int const index = Reader_ReadUInt16(msgReader);
     int const df    = Reader_ReadPackedUInt32(msgReader); // Flags.
@@ -350,7 +350,7 @@ void Cl_ReadSideDelta(int /*deltaType*/)
 void Cl_ReadPolyDelta()
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     int const index = Reader_ReadPackedUInt16(msgReader);
     int const df    = Reader_ReadByte(msgReader); // Flags.

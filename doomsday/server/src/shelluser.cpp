@@ -117,9 +117,9 @@ void ShellUser::sendGameState()
     // Check the map's information.
     String mapId;
     String mapTitle;
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
-        Map &map = App_World().map();
+        Map &map = App_WorldSystem().map();
 
         mapId = map.uri().resolvedRef();
 
@@ -135,11 +135,11 @@ void ShellUser::sendGameState()
 
 void ShellUser::sendMapOutline()
 {
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
     QScopedPointer<shell::MapOutlinePacket> packet(new shell::MapOutlinePacket);
 
-    foreach(Line *line, App_World().map().lines())
+    foreach(Line *line, App_WorldSystem().map().lines())
     {
         packet->addLine(Vector2i(line->fromOrigin().x, line->fromOrigin().y),
                         Vector2i(line->toOrigin().x, line->toOrigin().y),
@@ -152,7 +152,7 @@ void ShellUser::sendMapOutline()
 
 void ShellUser::sendPlayerInfo()
 {
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
     QScopedPointer<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
 

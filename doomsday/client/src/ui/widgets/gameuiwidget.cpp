@@ -62,9 +62,9 @@ DENG2_PIMPL(GameUIWidget)
         /*
          * Draw debug information.
          */
-        if(App_World().hasMap() && App_World().map().hasLightGrid())
+        if(App_WorldSystem().hasMap() && App_WorldSystem().map().hasLightGrid())
         {
-            App_World().map().lightGrid().drawDebugVisual();
+            App_WorldSystem().map().lightGrid().drawDebugVisual();
         }
         Net_Drawer();
         S_Drawer();

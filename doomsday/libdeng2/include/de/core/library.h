@@ -38,7 +38,7 @@ class Audio;
 class Map;
 class Object;
 class User;
-class World;
+class WorldSystem;
 
 /**
  * The Library class allows loading shared library files
@@ -104,7 +104,7 @@ public:
     /**
      * Constructs a new game world.
      */
-    typedef World *(*deng_NewWorld)(void);
+    typedef WorldSystem *(*deng_NewWorld)(void);
 
     /**
      * Constructs a new game map.

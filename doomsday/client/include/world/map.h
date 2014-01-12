@@ -31,7 +31,7 @@
 #  include "client/clplanemover.h"
 #  include "client/clpolymover.h"
 
-#  include "world/world.h"
+#  include "world/worldsystem.h"
 #  include "p_particle.h"
 
 #  include "BiasSource"
@@ -75,7 +75,7 @@ class Thinkers;
  */
 class Map
 #ifdef __CLIENT__
-: DENG2_OBSERVES(World, FrameBegin)
+: DENG2_OBSERVES(WorldSystem, FrameBegin)
 #endif
 {
     DENG2_NO_COPY  (Map)
@@ -716,8 +716,8 @@ public:
     void spreadAllContacts(AABoxd const &region);
 
 protected:
-    /// Observes World FrameBegin
-    void worldFrameBegins(World &world, bool resetNextViewer);
+    /// Observes WorldSystem FrameBegin
+    void worldSystemFrameBegins(bool resetNextViewer);
 
 #endif // __CLIENT__
 

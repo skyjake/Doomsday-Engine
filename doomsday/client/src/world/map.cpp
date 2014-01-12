@@ -51,7 +51,7 @@
 #  include "ContactSpreader"
 #endif
 #include "world/thinkers.h"
-#include "world/world.h" // ddMapSetup
+#include "world/worldsystem.h" // ddMapSetup
 
 #ifdef __CLIENT__
 #  include "api_sound.h"
@@ -2476,9 +2476,9 @@ void Map::update()
 }
 
 #ifdef __CLIENT__
-void Map::worldFrameBegins(World &world, bool resetNextViewer)
+void Map::worldSystemFrameBegins(bool resetNextViewer)
 {
-    DENG2_ASSERT(&world.map() == this); // Sanity check.
+    DENG2_ASSERT(&App_WorldSystem().map() == this); // Sanity check.
 
     // Interpolate the map ready for drawing view(s) of it.
     d->lerpTrackedPlanes(resetNextViewer);
@@ -2728,14 +2728,14 @@ D_CMD(InspectMap)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!App_World().hasMap())
+    if(!App_WorldSystem().hasMap())
     {
         LOG_WARNING("No map is currently loaded.");
         return false;
     }
 
     // Print summary information about the current map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
 #define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
 

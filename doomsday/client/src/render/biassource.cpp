@@ -20,7 +20,7 @@
 #include "de_base.h"
 #include "def_data.h"
 
-#include "world/world.h"
+#include "world/worldsystem.h"
 #include "world/map.h"
 #include "BspLeaf"
 #include "Sector"
@@ -91,7 +91,7 @@ DENG2_PIMPL(BiasSource)
     {
         if(bspLeaf) return;
         /// @todo Do not assume the current map.
-        bspLeaf = &App_World().map().bspLeafAt(origin);
+        bspLeaf = &App_WorldSystem().map().bspLeafAt(origin);
 
         bool newInVoidState = !(bspLeaf->polyContains(origin));
         if(inVoid != newInVoidState)

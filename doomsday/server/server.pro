@@ -256,7 +256,7 @@ DENG_HEADERS += \
     $$SRC/include/world/surface.h \
     $$SRC/include/world/thinkers.h \
     $$SRC/include/world/vertex.h \
-    $$SRC/include/world/world.h \
+    $$SRC/include/world/worldsystem.h \
 
 INCLUDEPATH += \
     include \
@@ -422,7 +422,7 @@ SOURCES += \
     $$SRC/src/world/surface.cpp \
     $$SRC/src/world/thinkers.cpp \
     $$SRC/src/world/vertex.cpp \
-    $$SRC/src/world/world.cpp
+    $$SRC/src/world/worldsystem.cpp
 
 OTHER_FILES += \
     data/cphelp.txt \

@@ -151,7 +151,7 @@ void N_NETicker(timespan_t time)
 
         // Update master every 2 minutes.
         if(masterAware && App_ServerSystem().isListening() &&
-           App_World().hasMap() && masterHeartbeat < 0)
+           App_WorldSystem().hasMap() && masterHeartbeat < 0)
         {
             masterHeartbeat = MASTER_HEARTBEAT;
             N_MasterAnnounceServer(true);

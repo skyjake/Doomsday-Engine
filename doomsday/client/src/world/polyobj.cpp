@@ -140,7 +140,7 @@ void Polyobj::link()
     if(!_bspLeaf)
     {
         /// @todo Do not assume polyobj is from the CURRENT map.
-        App_World().map().link(*this);
+        App_WorldSystem().map().link(*this);
 
         // Find the center point of the polyobj.
         Vector2d avg;
@@ -151,7 +151,7 @@ void Polyobj::link()
         avg /= lineCount();
 
         // Given the center point determine in which BSP leaf the polyobj resides.
-        _bspLeaf = &App_World().map().bspLeafAt(avg);
+        _bspLeaf = &App_WorldSystem().map().bspLeafAt(avg);
         _bspLeaf->link(*this);
     }
 }

@@ -31,7 +31,7 @@
 #include "WidgetActions"
 #include "updater.h"
 #include "Games"
-#include "world/world.h"
+#include "world/worldsystem.h"
 
 /**
  * The client application.
@@ -73,7 +73,7 @@ public:
     static ResourceSystem &resourceSystem();
     static WidgetActions &widgetActions();
     static de::Games &games();
-    static de::World &world();
+    static de::WorldSystem &worldSystem();
 
 public slots:
     void openHomepageInBrowser();

@@ -237,13 +237,13 @@ void Rend_ParticleReleaseExtraTextures()
 void Rend_ParticleInitForNewFrame()
 {
     // Which set of generators are we using for this frame?
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
         /**
          * @todo If rendering multiple maps per frame, this would have to be
          * set from the map rendering function. -jk
          */
-        gens = &App_World().map().generators();
+        gens = &App_WorldSystem().map().generators();
     }
     else
     {
@@ -885,7 +885,7 @@ static void renderPass(dd_bool useBlending)
 void Rend_RenderParticles()
 {
     if(!useParticles) return;
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
     // No visible particles at all?
     if(!listVisibleParticles()) return;

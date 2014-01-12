@@ -97,7 +97,7 @@ static int destroyGenerator(ptcgen_t *gen, void *parameters)
     DENG_UNUSED(parameters);
 
     /// @todo Do not assume generator is from the CURRENT map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
     map.generators().unlink(gen);
     map.thinkers().remove(gen->thinker);
 
@@ -139,7 +139,7 @@ static Generators::ptcgenid_t findIdForNewGenerator(Generators &gens)
 static ptcgen_t *P_NewGenerator()
 {
     /// @todo fixme: Do not assume the current map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
     Generators &gens = map.generators();
     Generators::ptcgenid_t id = findIdForNewGenerator(gens);
     if(id)
@@ -196,9 +196,9 @@ void P_PtcInitForMap(Map &map)
 void P_MapSpawnPlaneParticleGens()
 {
     if(isDedicated || !useParticles) return;
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
-    foreach(Sector *sector, App_World().map().sectors())
+    foreach(Sector *sector, App_WorldSystem().map().sectors())
     {
         Plane &floor = sector->floor();
         P_SpawnPlaneParticleGen(Def_GetGenerator(floor.surface().composeMaterialUri()), &floor);
@@ -235,11 +235,11 @@ void P_CreatePtcGenLinks()
     }
 #endif
 
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
 BEGIN_PROF(PROF_PTCGEN_LINK);
 
-    Generators &gens = App_World().map().generators();
+    Generators &gens = App_WorldSystem().map().generators();
     gens.emptyLists();
 
     if(useParticles)
@@ -730,7 +730,7 @@ static void P_NewParticle(ptcgen_t *gen)
     {
         /// @todo fixme: Do not assume the current map.
         Vector2d ptOrigin(FIX2FLT(pt->origin[VX]), FIX2FLT(pt->origin[VY]));
-        pt->bspLeaf = &App_World().map().bspLeafAt(ptOrigin);
+        pt->bspLeaf = &App_WorldSystem().map().bspLeafAt(ptOrigin);
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
         if(!pt->bspLeaf->hasPoly())
@@ -905,7 +905,7 @@ static void P_SpinParticle(ptcgen_t *gen, particle_t *pt)
     static int const pitchSigns[4] = { 1, -1,  1, -1 };
 
     ded_ptcstage_t const *stDef = &gen->def->stages[pt->stage];
-    Map &map = App_World().map(); /// @todo Do not assume generator is from the CURRENT map.
+    Map &map = App_WorldSystem().map(); /// @todo Do not assume generator is from the CURRENT map.
     uint const index = pt - &gen->ptcs[map.generators().generatorId(gen) / 8];
 
     int yawSign   =   yawSigns[index % 4];
@@ -943,7 +943,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
 
     // Changes to momentum.
     /// @todo Do not assume generator is from the CURRENT map.
-    pt->mov[VZ] -= FixedMul(FLT2FIX(App_World().map().gravity()), st->gravity);
+    pt->mov[VZ] -= FixedMul(FLT2FIX(App_WorldSystem().map().gravity()), st->gravity);
 
     // Vector force.
     if(stDef->vectorForce[VX] != 0 || stDef->vectorForce[VY] != 0 ||
@@ -1166,7 +1166,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     /// @todo Don't assume the current map.
 
     validCount++;
-    if(App_World().map().lineBoxIterator(mbox, PIT_CheckLinePtc))
+    if(App_WorldSystem().map().lineBoxIterator(mbox, PIT_CheckLinePtc))
     {
         fixed_t normal[2], dotp;
 
@@ -1212,7 +1212,7 @@ static void P_MoveParticle(ptcgen_t *gen, particle_t *pt)
     // Should we update the sector pointer?
     if(tmcross)
     {
-        pt->bspLeaf = &App_World().map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
+        pt->bspLeaf = &App_WorldSystem().map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
         if(!pt->bspLeaf->hasPoly())
@@ -1233,7 +1233,7 @@ void P_PtcGenThinker(ptcgen_t *gen)
 
     // Source has been destroyed?
     /// @todo Do not assume generator is from the CURRENT map.
-    if(!(gen->flags & PGF_UNTRIGGERED) && !App_World().map().thinkers().isUsedMobjId(gen->srcid))
+    if(!(gen->flags & PGF_UNTRIGGERED) && !App_WorldSystem().map().thinkers().isUsedMobjId(gen->srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
         gen->source = 0;
@@ -1267,10 +1267,10 @@ void P_PtcGenThinker(ptcgen_t *gen)
                 // Client's should also check the client mobjs.
                 if(isClient)
                 {
-                    App_World().map().clMobjIterator(PIT_ClientMobjParticles, gen);
+                    App_WorldSystem().map().clMobjIterator(PIT_ClientMobjParticles, gen);
                 }
 #endif
-                App_World().map().thinkers()
+                App_WorldSystem().map().thinkers()
                     .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1 /*mobjs are public*/,
                              manyNewParticles, gen);
 
@@ -1356,7 +1356,7 @@ void P_SpawnMapParticleGens(Map &map)
             continue;
 
         // Are we still spawning using this generator?
-        if(def->spawnAge > 0 && App_World().time() > def->spawnAge) continue;
+        if(def->spawnAge > 0 && App_WorldSystem().time() > def->spawnAge) continue;
 
         ptcgen_t *gen = P_NewGenerator();
         if(!gen) return; // No more generators.
@@ -1522,10 +1522,10 @@ static int updateGenerator(ptcgen_t *gen, void *parameters)
 
 void P_UpdateParticleGens()
 {
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
     // Update existing generators.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     map.generators().iterate(updateGenerator);
 

@@ -31,7 +31,7 @@
 #include "dd_types.h"
 #include "resource/resourcesystem.h"
 #include "Games"
-#include "world/world.h"
+#include "world/worldsystem.h"
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include "filesys/sys_direc.h"
@@ -146,6 +146,9 @@ de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
 /// @return  The application's global ResourceSystem.
 ResourceSystem &App_ResourceSystem();
 
+/// @return  The application's global WorldSystem.
+de::WorldSystem &App_WorldSystem();
+
 /**
  * Convenient method of returning a resource class from the application's global
  * resource system.
@@ -171,9 +174,6 @@ bool App_ChangeGame(de::Game &game, bool allowReload = false);
 
 /// @return  The application's global Games (collection).
 de::Games &App_Games();
-
-/// @return  The application's global World.
-de::World &App_World();
 
 fontschemeid_t DD_ParseFontSchemeName(char const *str);
 

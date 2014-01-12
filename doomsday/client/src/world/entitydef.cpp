@@ -321,11 +321,11 @@ static void setValue(void *dst, valuetype_t dstType, PropertyValue const &pvalue
 DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 {
     byte returnVal = 0;
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
         try
         {
-            EntityDatabase &db = App_World().map().entityDatabase();
+            EntityDatabase &db = App_WorldSystem().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_BYTE, db.property(propDef, elementIndex));
@@ -342,11 +342,11 @@ DENG_EXTERN_C byte P_GetGMOByte(int entityId, int elementIndex, int propertyId)
 DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId)
 {
     short returnVal = 0;
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
         try
         {
-            EntityDatabase &db = App_World().map().entityDatabase();
+            EntityDatabase &db = App_WorldSystem().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_SHORT, db.property(propDef, elementIndex));
@@ -363,11 +363,11 @@ DENG_EXTERN_C short P_GetGMOShort(int entityId, int elementIndex, int propertyId
 DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 {
     int returnVal = 0;
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
         try
         {
-            EntityDatabase &db = App_World().map().entityDatabase();
+            EntityDatabase &db = App_WorldSystem().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_INT, db.property(propDef, elementIndex));
@@ -384,11 +384,11 @@ DENG_EXTERN_C int P_GetGMOInt(int entityId, int elementIndex, int propertyId)
 DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int propertyId)
 {
     fixed_t returnVal = 0;
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
         try
         {
-            EntityDatabase &db = App_World().map().entityDatabase();
+            EntityDatabase &db = App_WorldSystem().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_FIXED, db.property(propDef, elementIndex));
@@ -405,11 +405,11 @@ DENG_EXTERN_C fixed_t P_GetGMOFixed(int entityId, int elementIndex, int property
 DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int propertyId)
 {
     angle_t returnVal = 0;
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
         try
         {
-            EntityDatabase &db = App_World().map().entityDatabase();
+            EntityDatabase &db = App_WorldSystem().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_ANGLE, db.property(propDef, elementIndex));
@@ -426,11 +426,11 @@ DENG_EXTERN_C angle_t P_GetGMOAngle(int entityId, int elementIndex, int property
 DENG_EXTERN_C float P_GetGMOFloat(int entityId, int elementIndex, int propertyId)
 {
     float returnVal = 0;
-    if(App_World().hasMap())
+    if(App_WorldSystem().hasMap())
     {
         try
         {
-            EntityDatabase &db = App_World().map().entityDatabase();
+            EntityDatabase &db = App_WorldSystem().map().entityDatabase();
             MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
 
             setValue(&returnVal, DDVT_FLOAT, db.property(propDef, elementIndex));

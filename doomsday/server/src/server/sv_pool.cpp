@@ -417,7 +417,7 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
  */
 void Sv_RegisterSector(dt_sector_t *reg, int number)
 {
-    Sector *sector = App_World().map().sectors().at(number);
+    Sector *sector = App_WorldSystem().map().sectors().at(number);
 
     reg->lightLevel = sector->lightLevel();
     for(int i = 0; i < 3; ++i)
@@ -455,7 +455,7 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
 {
     DENG2_ASSERT(reg != 0);
 
-    LineSide *side = App_World().map().sideByIndex(number);
+    LineSide *side = App_WorldSystem().map().sideByIndex(number);
 
     if(side->hasSections())
     {
@@ -487,7 +487,7 @@ void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 {
     DENG_ASSERT(reg != 0);
 
-    Polyobj *poly = App_World().map().polyobjs().at(number);
+    Polyobj *poly = App_WorldSystem().map().polyobjs().at(number);
 
     reg->dest[VX]   = poly->dest[VX];
     reg->dest[VY]   = poly->dest[VY];
@@ -629,7 +629,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number,
                                  sectordelta_t *d, byte doUpdate)
 {
     dt_sector_t *r = &reg->sectors[number];
-    Sector const *s = App_World().map().sectors().at(number);
+    Sector const *s = App_WorldSystem().map().sectors().at(number);
     int df = 0;
 
     // Determine which data is different.
@@ -751,7 +751,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number,
 dd_bool Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
-    LineSide const *side = App_World().map().sideByIndex(number);
+    LineSide const *side = App_WorldSystem().map().sideByIndex(number);
     dt_side_t *r = &reg->sides[number];
     byte lineFlags = side->line().flags() & 0xff;
     byte sideFlags = side->flags() & 0xff;
@@ -946,7 +946,7 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 {
     DENG_ASSERT(reg != 0);
 
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     de::zapPtr(reg);
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -1503,7 +1503,7 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, dd_bool isRea
     coord_t z;
 
     /// @todo Do not assume mobj is from the CURRENT map.
-    if(isReal && !App_World().map().thinkers().isUsedMobjId(mo->thinker.id))
+    if(isReal && !App_WorldSystem().map().thinkers().isUsedMobjId(mo->thinker.id))
     {
         // This mobj does not exist any more!
         return DDMAXFLOAT;
@@ -1530,7 +1530,7 @@ coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, dd_bool isRea
  */
 coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 {
-    Sector const *sector = App_World().map().sectors().at(index);
+    Sector const *sector = App_WorldSystem().map().sectors().at(index);
 
     return M_ApproxDistance3(info->origin[VX] - sector->soundEmitter().origin[VX],
                              info->origin[VY] - sector->soundEmitter().origin[VY],
@@ -1539,7 +1539,7 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
-    LineSide const *side = App_World().map().sideByIndex(index);
+    LineSide const *side = App_WorldSystem().map().sideByIndex(index);
 
     SoundEmitter const &emitter = (deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
                                      : deltaFlags & SNDDF_SIDE_TOP? side->topSoundEmitter()
@@ -1581,7 +1581,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_SIDE)
     {
-        LineSide *side = App_World().map().sideByIndex(delta->id);
+        LineSide *side = App_WorldSystem().map().sideByIndex(delta->id);
         Line &line = side->line();
         return M_ApproxDistance(info->origin[VX] - line.center().x,
                                 info->origin[VY] - line.center().y);
@@ -1589,7 +1589,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY)
     {
-        Polyobj *po = App_World().map().polyobjs().at(delta->id);
+        Polyobj *po = App_WorldSystem().map().polyobjs().at(delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }
@@ -1612,7 +1612,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        Polyobj *po = App_World().map().polyobjs().at(delta->id);
+        Polyobj *po = App_WorldSystem().map().polyobjs().at(delta->id);
         return M_ApproxDistance(info->origin[VX] - po->origin[VX],
                                 info->origin[VY] - po->origin[VY]);
     }
@@ -2074,7 +2074,7 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
             next = obj->next;
 
             /// @todo Do not assume mobj is from the CURRENT map.
-            if(!App_World().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
+            if(!App_WorldSystem().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2142,7 +2142,7 @@ void Sv_NewMobjDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     parm.doUpdate = doUpdate;
     parm.targets = targets;
 
-    App_World().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+    App_WorldSystem().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                          0x1 /*mobjs are public*/, newMobjDelta, &parm);
 }
 
@@ -2234,7 +2234,7 @@ void Sv_NewSectorDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
     sectordelta_t delta;
 
-    for(int i = 0; i < App_World().map().sectorCount(); ++i)
+    for(int i = 0; i < App_WorldSystem().map().sectorCount(); ++i)
     {
         if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2253,7 +2253,7 @@ void Sv_NewSideDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     static uint numShifts = 2, shift = 0;
 
     /// @todo fixme: Do not assume the current map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
@@ -2293,7 +2293,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     polydelta_t delta;
 
     /// @todo fixme: Do not assume the current map.
-    for(int i = 0; i < App_World().map().polyobjCount(); ++i)
+    for(int i = 0; i < App_WorldSystem().map().polyobjCount(); ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {

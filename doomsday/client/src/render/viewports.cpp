@@ -506,9 +506,9 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    if(ClientApp::world().hasMap())
+    if(ClientApp::worldSystem().hasMap())
     {
-        Map &map = ClientApp::world().map();
+        Map &map = ClientApp::worldSystem().map();
         map.updateTrackedPlanes();
         map.updateScrollingSurfaces();
     }
@@ -889,9 +889,9 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true, currentViewport, vd);
 
-    if(ClientApp::world().hasMap())
+    if(ClientApp::worldSystem().hasMap())
     {
-        Rend_RenderMap(ClientApp::world().map());
+        Rend_RenderMap(ClientApp::worldSystem().map());
     }
 
     // Orthogonal projection to the view window.
@@ -1115,7 +1115,7 @@ void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes)
 double R_ViewerLumobjDistance(int idx)
 {
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::worldSystem().map().lumobjCount())
     {
         return luminousDist[idx];
     }
@@ -1128,7 +1128,7 @@ bool R_ViewerLumobjIsClipped(int idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::worldSystem().map().lumobjCount())
     {
         return CPP_BOOL(luminousClipped[idx]);
     }
@@ -1141,7 +1141,7 @@ bool R_ViewerLumobjIsHidden(int idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if(idx >= 0 && idx < ClientApp::worldSystem().map().lumobjCount())
     {
         return luminousClipped[idx] == 2;
     }
@@ -1166,7 +1166,7 @@ void R_BeginFrame()
      */
     Rend_ProjectorReset();
 
-    Map &map = ClientApp::world().map();
+    Map &map = ClientApp::worldSystem().map();
 
     bspLeafsVisible.resize(map.bspLeafCount());
     bspLeafsVisible.fill(false);

@@ -96,7 +96,7 @@ DENG2_PIMPL(ServerSystem)
         // Update the beacon with the new port.
         beacon.start(port);
 
-        App_World().audienceForMapChange += shellUsers;
+        App_WorldSystem().audienceForMapChange += shellUsers;
 
         inited = true;
         return true;
@@ -119,7 +119,7 @@ DENG2_PIMPL(ServerSystem)
 
         if(ServerApp::appExists())
         {
-            App_World().audienceForMapChange -= shellUsers;
+            App_WorldSystem().audienceForMapChange -= shellUsers;
         }
 
         beacon.stop();
@@ -144,7 +144,7 @@ DENG2_PIMPL(ServerSystem)
             lastBeaconUpdateAt = clock.time();
 
             // Update the status message in the server's presence beacon.
-            if(serverSock && App_World().hasMap())
+            if(serverSock && App_WorldSystem().hasMap())
             {
                 serverinfo_t info;
                 Sv_GetInfo(&info);

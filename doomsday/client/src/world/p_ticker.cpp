@@ -120,9 +120,9 @@ void P_Ticker(timespan_t elapsed)
     materialsTicker(elapsed);
 #endif
 
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
     if(!map.thinkers().isInited()) return; // Not initialized yet.
 
     if(DD_IsSharpTick())

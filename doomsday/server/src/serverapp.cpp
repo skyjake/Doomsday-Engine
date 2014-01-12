@@ -55,7 +55,7 @@ DENG2_PIMPL(ServerApp)
     QScopedPointer<ServerSystem> serverSystem;
     ResourceSystem resourceSys;
     Games games;
-    World world;
+    WorldSystem worldSys;
 
     Instance(Public *i)
         : Base(i)
@@ -114,6 +114,7 @@ ServerApp::ServerApp(int &argc, char **argv)
     addSystem(*d->serverSystem);
 
     addSystem(d->resourceSys);
+    addSystem(d->worldSys);
 
     // We must presently set the current game manually (the collection is global).
     setGame(d->games.nullGame());
@@ -192,7 +193,7 @@ Games &ServerApp::games()
     return app().d->games;
 }
 
-World &ServerApp::world()
+WorldSystem &ServerApp::worldSystem()
 {
-    return app().d->world;
+    return app().d->worldSys;
 }

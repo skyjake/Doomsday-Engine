@@ -74,10 +74,8 @@ int ShellUsers::count() const
     return d->users.size();
 }
 
-void ShellUsers::worldMapChanged(World &world)
+void ShellUsers::worldSystemMapChanged()
 {
-    DENG2_UNUSED(world);
-
     foreach(ShellUser *user, d->users)
     {
         user->sendGameState();

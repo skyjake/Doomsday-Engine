@@ -237,7 +237,7 @@ Vector3f const &Hand::editColor() const
     return d->editColor;
 }
 
-void Hand::worldFrameEnds(World & /*world*/)
+void Hand::worldFrameEnds(WorldSystem & /*world*/)
 {
     if(grabbedCount())
     {

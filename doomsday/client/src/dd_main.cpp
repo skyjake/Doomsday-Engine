@@ -71,7 +71,7 @@
 #ifdef __CLIENT__
 #  include "Contact"
 #endif
-#include "world/world.h"
+#include "world/worldsystem.h"
 
 #include "ui/ui_main.h"
 #include "ui/ui2_main.h"
@@ -530,6 +530,20 @@ de::ResourceClass &App_ResourceClass(String className)
 de::ResourceClass &App_ResourceClass(resourceclassid_t classId)
 {
     return App_ResourceSystem().resClass(classId);
+}
+
+WorldSystem &App_WorldSystem()
+{
+    if(App::appExists())
+    {
+#ifdef __CLIENT__
+        return ClientApp::worldSystem();
+#endif
+#ifdef __SERVER__
+        return ServerApp::worldSystem();
+#endif
+    }
+    throw Error("App_WorldSystem", "App not yet initialized");
 }
 
 static void addToPathList(ddstring_t ***list, size_t *listSize, char const *rawPath)
@@ -1385,7 +1399,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         B_InitialContextActivations();
 #endif
         // Reset the world back to it's initial state (unload the map, reset players, etc...).
-        App_World().reset();
+        App_WorldSystem().reset();
 
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
 
@@ -1579,17 +1593,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 
     return true;
-}
-
-World &App_World()
-{
-#ifdef __CLIENT__
-    return ClientApp::world();
-#endif
-
-#ifdef __SERVER__
-    return ServerApp::world();
-#endif
 }
 
 dd_bool DD_IsShuttingDown()
@@ -2171,7 +2174,7 @@ static int DD_UpdateEngineStateWorker(void *context)
 
     Def_PostInit();
 
-    App_World().update();
+    App_WorldSystem().update();
 
 #ifdef __CLIENT__
     // Recalculate the light range mod matrix.
@@ -2371,9 +2374,9 @@ int DD_GetInteger(int ddvalue)
         return F_LumpCount();
 
     case DD_MAP_MUSIC:
-        if(App_World().hasMap())
+        if(App_WorldSystem().hasMap())
         {
-            de::Uri mapUri = App_World().map().uri();
+            de::Uri mapUri = App_WorldSystem().map().uri();
             if(ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri)))
             {
                 return Def_GetMusicNum(mapInfo->music);
@@ -2428,13 +2431,13 @@ void *DD_GetVariable(int ddvalue)
         return &gx;
 
     case DD_POLYOBJ_COUNT:
-        value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
+        value = App_WorldSystem().hasMap()? App_WorldSystem().map().polyobjCount() : 0;
         return &value;
 
     case DD_MAP_NAME:
-        if(App_World().hasMap())
+        if(App_WorldSystem().hasMap())
         {
-            de::Uri mapUri = App_World().map().uri();
+            de::Uri mapUri = App_WorldSystem().map().uri();
             ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             if(mapInfo && mapInfo->name[0])
             {
@@ -2449,9 +2452,9 @@ void *DD_GetVariable(int ddvalue)
         return NULL;
 
     case DD_MAP_AUTHOR:
-        if(App_World().hasMap())
+        if(App_WorldSystem().hasMap())
         {
-            de::Uri mapUri = App_World().map().uri();
+            de::Uri mapUri = App_WorldSystem().map().uri();
             ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
             if(mapInfo && mapInfo->author[0])
             {
@@ -2461,19 +2464,19 @@ void *DD_GetVariable(int ddvalue)
         return NULL;
 
     case DD_MAP_MIN_X:
-        valueD = App_World().hasMap()? App_World().map().bounds().minX : 0;
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().minX : 0;
         return &valueD;
 
     case DD_MAP_MIN_Y:
-        valueD = App_World().hasMap()? App_World().map().bounds().minY : 0;
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().minY : 0;
         return &valueD;
 
     case DD_MAP_MAX_X:
-        valueD = App_World().hasMap()? App_World().map().bounds().maxX : 0;
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().maxX : 0;
         return &valueD;
 
     case DD_MAP_MAX_Y:
-        valueD = App_World().hasMap()? App_World().map().bounds().maxY : 0;
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().maxY : 0;
         return &valueD;
 
     case DD_PSPRITE_OFFSET_X:
@@ -2489,7 +2492,7 @@ void *DD_GetVariable(int ddvalue)
         return &cplrThrustMul;*/
 
     case DD_GRAVITY:
-        valueD = App_World().hasMap()? App_World().map().gravity() : 0;
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().gravity() : 0;
         return &valueD;
 
 #ifdef __CLIENT__
@@ -2550,8 +2553,8 @@ void DD_SetVariable(int ddvalue, void *parm)
             return;*/
 
         case DD_GRAVITY:
-            if(App_World().hasMap())
-                App_World().map().setGravity(*(coord_t*) parm);
+            if(App_WorldSystem().hasMap())
+                App_WorldSystem().map().setGravity(*(coord_t*) parm);
             return;
 
         case DD_PSPRITE_OFFSET_X:
@@ -2973,7 +2976,7 @@ static void consoleRegister()
 #endif
     ResourceSystem::consoleRegister();
     Net_Register();
-    World::consoleRegister();
+    WorldSystem::consoleRegister();
     FI_Register();
 }
 
@@ -2988,11 +2991,11 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 {
     DENG2_UNUSED2(mode, flags);
 
-    if(!App_World().hasMap()) return; // Huh?
+    if(!App_WorldSystem().hasMap()) return; // Huh?
 
     // Perform map setup again. Its possible that after loading we now
     // have more HOMs to fix, etc..
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
 #ifdef __CLIENT__
     map.initSkyFix();

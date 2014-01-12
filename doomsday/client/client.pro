@@ -461,7 +461,7 @@ DENG_HEADERS += \
     include/world/surface.h \
     include/world/thinkers.h \
     include/world/vertex.h \
-    include/world/world.h
+    include/world/worldsystem.h
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
@@ -780,7 +780,7 @@ SOURCES += \
     src/world/surface.cpp \
     src/world/thinkers.cpp \
     src/world/vertex.cpp \
-    src/world/world.cpp
+    src/world/worldsystem.cpp
 
 !deng_nosdlmixer:!deng_nosdl {
     HEADERS += include/audio/sys_audiod_sdlmixer.h

@@ -101,7 +101,7 @@ void SBE_SetHueCircle(bool activate = true)
     if(activate == editHueCircle) return;
 
     // The circle can only be activated when something is grabbed.
-    if(activate && App_World().hand().isEmpty()) return;
+    if(activate && App_WorldSystem().hand().isEmpty()) return;
 
     editHueCircle = activate;
 
@@ -137,7 +137,7 @@ static void SBE_End()
 {
     if(!editActive) return;
 
-    App_World().hand().ungrab();
+    App_WorldSystem().hand().ungrab();
 
     delete hueCircle; hueCircle = 0;
     editHueCircle = false;
@@ -155,13 +155,13 @@ static void SBE_End()
 static void SBE_Clear()
 {
     DENG_ASSERT(editActive);
-    App_World().map().removeAllBiasSources();
+    App_WorldSystem().map().removeAllBiasSources();
 }
 
 static void SBE_Delete(int which)
 {
     DENG_ASSERT(editActive);
-    App_World().map().removeBiasSource(which);
+    App_WorldSystem().map().removeBiasSource(which);
 }
 
 static BiasSource *SBE_New()
@@ -169,8 +169,8 @@ static BiasSource *SBE_New()
     DENG_ASSERT(editActive);
     try
     {
-        Hand &hand = App_World().hand();
-        BiasSource &source = App_World().map().addBiasSource(hand.origin());
+        Hand &hand = App_WorldSystem().hand();
+        BiasSource &source = App_WorldSystem().map().addBiasSource(hand.origin());
 
         // Update the edit properties.
         hand.setEditIntensity(source.intensity());
@@ -194,8 +194,8 @@ static BiasSource *SBE_Dupe(BiasSource const &other)
     DENG_ASSERT(editActive);
     try
     {
-        Hand &hand = App_World().hand();
-        BiasSource &source = App_World().map().addBiasSource(other); // A copy is made.
+        Hand &hand = App_WorldSystem().hand();
+        BiasSource &source = App_WorldSystem().map().addBiasSource(other); // A copy is made.
 
         source.setOrigin(hand.origin());
 
@@ -219,8 +219,8 @@ static BiasSource *SBE_Dupe(BiasSource const &other)
 static void SBE_Grab(int which)
 {
     DENG_ASSERT(editActive);
-    Hand &hand = App_World().hand();
-    if(BiasSource *source = App_World().map().biasSource(which))
+    Hand &hand = App_WorldSystem().hand();
+    if(BiasSource *source = App_WorldSystem().map().biasSource(which))
     {
         if(hand.isEmpty())
         {
@@ -236,8 +236,8 @@ static void SBE_Grab(int which)
 static void SBE_Ungrab(int which)
 {
     DENG_ASSERT(editActive);
-    Hand &hand = App_World().hand();
-    if(BiasSource *source = App_World().map().biasSource(which))
+    Hand &hand = App_WorldSystem().hand();
+    if(BiasSource *source = App_WorldSystem().map().biasSource(which))
     {
         hand.ungrab(*source);
     }
@@ -250,8 +250,8 @@ static void SBE_Ungrab(int which)
 static void SBE_SetLock(int which, bool enable = true)
 {
     DENG_ASSERT(editActive);
-    Hand &hand = App_World().hand();
-    if(BiasSource *source = App_World().map().biasSource(which))
+    Hand &hand = App_WorldSystem().hand();
+    if(BiasSource *source = App_WorldSystem().map().biasSource(which))
     {
         if(enable) source->lock();
         else       source->unlock();
@@ -274,7 +274,7 @@ static bool SBE_Save(char const *name = 0)
     ddstring_t fileName; Str_Init(&fileName);
     if(!name || !name[0])
     {
-        String mapPath = App_World().map().uri().resolvedRef() + ".ded";
+        String mapPath = App_WorldSystem().map().uri().resolvedRef() + ".ded";
         Str_Set(&fileName, mapPath.toUtf8().constData());
     }
     else
@@ -300,7 +300,7 @@ static bool SBE_Save(char const *name = 0)
 
     LOG_RES_VERBOSE("Saving to \"%s\"...") << F_PrettyPath(Str_Text(&fileName));
 
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     char const *uid = map.oldUniqueId();
     fprintf(file, "# %i Bias Lights for %s\n\n", map.biasSourceCount(), uid);
@@ -375,9 +375,9 @@ D_CMD(BLEditor)
         return true;
     }
 
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
     coord_t handDistance;
-    Hand &hand = App_World().hand(&handDistance);
+    Hand &hand = App_WorldSystem().hand(&handDistance);
 
     if(!qstricmp(cmd, "new"))
     {
@@ -540,7 +540,7 @@ static void drawInfoBox(BiasSource *s, int rightX, String const title, float alp
     drawText(title, origin, UI_Color(UIC_TITLE), alpha);
     origin.y += th;
 
-    int sourceIndex = App_World().map().toIndex(*s);
+    int sourceIndex = App_WorldSystem().map().toIndex(*s);
     coord_t distance = (s->origin() - vOrigin.xzy()).length();
     float minLight, maxLight;
     s->lightLevels(minLight, maxLight);
@@ -575,8 +575,8 @@ static void drawLightGauge(Vector2i const &origin, int height = 255)
     static float minLevel = 0, maxLevel = 0;
     static Sector *lastSector = 0;
 
-    Hand &hand = App_World().hand();
-    Map &map = App_World().map();
+    Hand &hand = App_WorldSystem().hand();
+    Map &map = App_WorldSystem().map();
 
     BiasSource *src;
     if(!hand.isEmpty())
@@ -669,10 +669,10 @@ void SBE_DrawGui()
 
     if(!editActive || editHidden) return;
 
-    if(!App_World().hasMap()) return;
+    if(!App_WorldSystem().hasMap()) return;
 
-    Map &map = App_World().map();
-    Hand &hand = App_World().hand();
+    Map &map = App_WorldSystem().map();
+    Hand &hand = App_WorldSystem().hand();
 
     DENG_ASSERT_IN_MAIN_THREAD();
 

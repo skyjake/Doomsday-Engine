@@ -23,7 +23,7 @@
 
 #include "dd_loop.h" // frameTimePos
 #include "world/map.h"
-#include "world/world.h" /// ddMapSetup
+#include "world/worldsystem.h" /// ddMapSetup
 #include "Surface"
 #include "Sector"
 #include <de/Log>

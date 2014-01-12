@@ -32,7 +32,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     LOG_AS("Cl_ReadSoundDelta");
 
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     int sound = 0, soundFlags = 0;
     mobj_t *cmo = 0;
@@ -231,7 +231,7 @@ void Cl_Sound()
     LOG_AS("Cl_Sound");
 
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    Map &map = App_WorldSystem().map();
 
     byte const flags = Reader_ReadByte(msgReader);
 
