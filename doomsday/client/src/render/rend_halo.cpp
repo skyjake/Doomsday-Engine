@@ -393,9 +393,9 @@ D_CMD(FlareConfig)
     }
     else
     {
-        LOG_SCR_MSG("Usage:\n"
-                    "  %s list\n"
-                    "  %s (num) pos/size/alpha/tex (val)") << argv[0] << argv[0];
+        LOG_SCR_NOTE("Usage:\n"
+                     "  %s list\n"
+                     "  %s (num) pos/size/alpha/tex (val)") << argv[0] << argv[0];
     }
 
     return true;

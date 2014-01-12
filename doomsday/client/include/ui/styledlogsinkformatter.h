@@ -33,8 +33,17 @@ public:
 
     Lines logEntryToTextLines(de::LogEntry const &entry);
 
+    /**
+     * Omits the log entry section information if the entry is marked as
+     * a non-developer entry. The default is @c true.
+     *
+     * @param omit  Omit section.
+     */
+    void setOmitSectionIfNonDev(bool omit);
+
 private:
     de::LogEntry::Flags _format;
+    bool _omitSectionIfNonDev;
 };
 
 #endif // DENG_CLIENT_STYLEDLOGSINKFORMATTER_H

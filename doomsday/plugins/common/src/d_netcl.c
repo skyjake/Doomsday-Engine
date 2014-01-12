@@ -83,10 +83,9 @@ void NetCl_UpdateGameState(Reader* msg)
 
     gsGravity = Reader_ReadFloat(msg);
 
-    VERBOSE(
-        AutoStr* str = Uri_ToString(mapUri);
-        Con_Message("NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"", gsFlags, Str_Text(str));
-    )
+    App_Log(DE2_DEV_NET_NOTE,
+            "NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"",
+            gsFlags, Str_Text(Uri_ToString(mapUri)));
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
@@ -101,8 +100,8 @@ void NetCl_UpdateGameState(Reader* msg)
         DD_GameInfo(&gameInfo);
         if(Str_Compare(gameInfo.identityKey, gsGameIdentity))
         {
-            Con_Message("NetCl_UpdateGameState: Server's game mode (%s) is different than yours (%s).",
-                        gsGameIdentity, Str_Text(gameInfo.identityKey));
+            App_Log(DE2_NET_ERROR, "Game mismatch: server's game mode (%s) is different than yours (%s)",
+                    gsGameIdentity, Str_Text(gameInfo.identityKey));
             DD_Execute(false, "net disconnect");
             return;
         }
@@ -116,21 +115,23 @@ void NetCl_UpdateGameState(Reader* msg)
 
     // Some statistics.
 #if __JHEXEN__
-    Con_Message("Game state: Map=%u Skill=%i %s", gsMap+1, gsSkill,
-                deathmatch == 1 ? "Deathmatch" : deathmatch ==
-                2 ? "Deathmatch2" : "Co-op");
+    App_Log(DE2_NET_NOTE,
+            "Game state: Map=%u Skill=%i %s", gsMap+1, gsSkill,
+            deathmatch == 1 ? "Deathmatch" :
+            deathmatch == 2 ? "Deathmatch2" : "Co-op");
 #else
-    Con_Message("Game state: Map=%u Episode=%u Skill=%i %s", gsMap+1,
-                gsEpisode+1, gsSkill,
-                deathmatch == 1 ? "Deathmatch" : deathmatch ==
-                2 ? "Deathmatch2" : "Co-op");
+    App_Log(DE2_NET_NOTE,
+            "Game state: Map=%u Episode=%u Skill=%i %s", gsMap+1,
+            gsEpisode+1, gsSkill,
+            deathmatch == 1 ? "Deathmatch" :
+            deathmatch == 2 ? "Deathmatch2" : "Co-op");
 #endif
 #if !__JHEXEN__
-    Con_Message("  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f",
-                respawnMonsters ? "yes" : "no", !noMonstersParm ? "yes" : "no",
-                gsJumping ? "yes" : "no", gsGravity);
+    App_Log(DE2_NET_NOTE, "  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f",
+            respawnMonsters ? "yes" : "no", !noMonstersParm ? "yes" : "no",
+            gsJumping ? "yes" : "no", gsGravity);
 #else
-    Con_Message("  Monsters=%s Jumping=%s Gravity=%.1f",
+    App_Log(DE2_NET_NOTE, "  Monsters=%s Jumping=%s Gravity=%.1f",
                 !noMonstersParm ? "yes" : "no",
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
@@ -187,8 +188,10 @@ void NetCl_UpdateGameState(Reader* msg)
             float my = Reader_ReadFloat(msg);
             float mz = Reader_ReadFloat(msg);
             angle_t angle = Reader_ReadUInt32(msg);
-            Con_Message("NetCl_UpdateGameState: Got camera init, but player has no mobj.");
-            Con_Message("  Pos=%f,%f,%f Angle=%x", mx, my, mz, angle);
+
+            App_Log(DE2_DEV_NET_WARNING,
+                    "NetCl_UpdateGameState: Got camera init, but player has no mobj; "
+                    "pos=%f,%f,%f Angle=%x", mx, my, mz, angle);
         }
     }
 
@@ -211,9 +214,7 @@ void NetCl_MobjImpulse(Reader* msg)
         return;
     }
 
-#ifdef _DEBUG
-    Con_Message("NetCl_MobjImpulse: Player %i, clmobj %i", CONSOLEPLAYER, id);
-#endif
+    App_Log(DE2_DEV_NET_VERBOSE, "NetCl_MobjImpulse: Player %i, clmobj %i", CONSOLEPLAYER, id);
 
     // Apply to the local mobj.
     mo->mom[MX] += Reader_ReadFloat(msg);

@@ -178,12 +178,12 @@ void CompositeBitmapFont::glInit()
         catch(TextureManifest::MissingTextureError const &er)
         {
             // Log but otherwise ignore this error.
-            LOG_WARNING(er.asText() + ", ignoring.");
+            LOG_RES_WARNING(er.asText() + ", ignoring.");
         }
         catch(TextureScheme::NotFoundError const &er)
         {
             // Log but otherwise ignore this error.
-            LOG_WARNING(er.asText() + ", ignoring.");
+            LOG_RES_WARNING(er.asText() + ", ignoring.");
         }
     }
 

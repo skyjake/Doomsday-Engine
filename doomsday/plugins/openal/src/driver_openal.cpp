@@ -54,6 +54,8 @@
 #include "api_audiod_sfx.h"
 #include "doomsday.h"
 
+#include <de/c_wrapper.h>
+
 DENG_DECLARE_API(Con);
 
 #define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
@@ -150,7 +152,7 @@ int DS_Init(void)
     device = alcOpenDevice(NULL);
     if(!device)
     {
-        Con_Message("OpenAL init failed (default playback device).");
+        App_Log(DE2_AUDIO_ERROR, "OpenAL init failed (using default playback device)");
         return false;
     }
 

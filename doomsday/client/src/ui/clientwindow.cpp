@@ -734,7 +734,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 {
     // Update the capability flags.
     GL_state.features.multisample = canvas.format().sampleBuffers();
-    LOG_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
+    LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
@@ -824,19 +824,19 @@ bool ClientWindow::setDefaultGLFormat() // static
     if(VR::modeNeedsStereoGLFormat(VR::mode()))
     {
         // Only use a stereo format for modes that require it.
-        LOG_GL_MSG("Using a stereoscopic format");
+        LOG_GL_MSG("Using a stereoscopic frame buffer format");
         fmt.setStereo(true);
     }
 
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
         fmt.setSwapInterval(0); // vsync off
-        LOG_GL_VERBOSE("vsync off");
+        LOG_GL_VERBOSE("Vertical sync off");
     }
     else
     {
         fmt.setSwapInterval(1);
-        LOG_GL_VERBOSE("vsync on");
+        LOG_GL_VERBOSE("Vertical sync on");
     }
 
     // The value of the "vid-fsaa" variable is written to this settings
@@ -845,12 +845,12 @@ bool ClientWindow::setDefaultGLFormat() // static
     bool configured = de::App::config().getb("window.fsaa");
     if(CommandLine_Exists("-nofsaa") || !configured)
     {
-        LOG_GL_VERBOSE("multisampling off");
+        LOG_GL_VERBOSE("Multisampling off");
     }
     else
     {
         sampleCount = 4; // four samples is fine?
-        LOG_GL_VERBOSE("multisampling on (%i samples)") << sampleCount;
+        LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
     }
     GLFramebuffer::setDefaultMultisampling(sampleCount);
 
@@ -862,7 +862,7 @@ bool ClientWindow::setDefaultGLFormat() // static
     }
     else
     {
-        LOG_GL_XVERBOSE("New format is the same as before.");
+        LOG_GL_XVERBOSE("New format is the same as before");
         return false;
     }
 }

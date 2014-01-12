@@ -1902,7 +1902,7 @@ dd_bool DD_Init(void)
             LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
             Con_ParseCommands(arg);
         }
-        LOG_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
+        LOGDEV_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
     }
 
     // A console command on the command line?
@@ -2037,7 +2037,7 @@ static int DD_StartupWorker(void * /*context*/)
             LOG_MSG("Additional (pre-init) config file \"%s\"") << F_PrettyPath(arg);
             Con_ParseCommands(arg);
         }
-        LOG_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
+        LOGDEV_SCR_VERBOSE("Completed in %.2f seconds") << begunAt.since();
     }
 
     /*

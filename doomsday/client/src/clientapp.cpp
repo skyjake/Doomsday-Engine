@@ -151,6 +151,7 @@ DENG2_PIMPL(ClientApp)
             : LogSink(formatter)
             , formatter(LogEntry::Styled | LogEntry::OmitLevel | LogEntry::Simple)
         {
+            //formatter.setOmitSectionIfNonDev(false); // always show section
             setMode(OnlyWarningEntries);
         }
 

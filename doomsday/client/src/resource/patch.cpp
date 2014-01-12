@@ -202,7 +202,7 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
             postCount += i->count();
         }
 
-        LOG_INFO("Inequal heights, logical: %i != actual: %i (%i %s).")
+        LOGDEV_RES_NOTE("Inequal heights, logical: %i != actual: %i (%i %s)")
             << meta.logicalDimensions.y << meta.dimensions.y
             << postCount << (postCount == 1? "post" : "posts");
     }

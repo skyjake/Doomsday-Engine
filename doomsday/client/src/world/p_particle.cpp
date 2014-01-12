@@ -189,7 +189,7 @@ void P_PtcInitForMap(Map &map)
     P_SpawnTypeParticleGens();
     P_SpawnMapParticleGens(map);
 
-    LOG_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
+    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
 /// @todo fixme: Do not assume the current map.

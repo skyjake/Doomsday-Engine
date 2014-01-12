@@ -175,7 +175,7 @@ bool Rend_ModelExpandVertexBuffers(uint numVertices)
 #ifdef DENG_DEBUG
         if(!announcedVertexBufferMaxBreach)
         {
-            LOG_WARNING("Attempted to expand to %u vertices (max %u), ignoring.")
+            LOGDEV_GL_WARNING("Attempted to expand to %u vertices (max %u)")
                 << numVertices << RENDER_MAX_MODEL_VERTS;
             announcedVertexBufferMaxBreach = true;
         }

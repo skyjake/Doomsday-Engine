@@ -200,7 +200,7 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
     size = FileHandle_Length(file);
 
     LOG_AS("WAV_Load");
-    LOG_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
+    LOGDEV_RES_XVERBOSE("Loading from \"%s\" (size %i, fpos %i)")
             << F_PrettyPath(Str_Text(F_ComposePath(FileHandle_File_const(file))))
             << size
             << FileHandle_Tell(file);

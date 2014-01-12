@@ -428,7 +428,7 @@ void H_PostInit(void)
         if(scale > 400)
             scale = 400;
 
-        Con_Message("turbo scale: %i%%", scale);
+        App_Log(DE2_MAP_NOTE, "Turbo scale: %i%%", scale);
         turboMul = scale / 100.f;
     }
 
@@ -470,8 +470,8 @@ void H_PostInit(void)
     // Are we autostarting?
     if(autoStart)
     {
-        Con_Message("Warp to Episode %d, Map %d, Skill %d", startEpisode+1,
-                    startMap+1, startSkill + 1);
+        App_Log(DE2_LOG_NOTE, "Autostart in Episode %d, Map %d, Skill %d",
+                startEpisode + 1, startMap + 1, startSkill + 1);
     }
 
     // Validate episode and map.

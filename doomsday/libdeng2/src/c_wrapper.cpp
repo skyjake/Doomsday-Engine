@@ -67,16 +67,6 @@ static void logFragmentPrinter(duint32 metadata, char const *fragment)
     }
 }
 
-void App_Timer(unsigned int milliseconds, void (*callback)(void))
-{
-    de::Loop::timer(de::TimeDelta::fromMilliSeconds(milliseconds), callback);
-}
-
-void App_FatalError(char const *msg)
-{
-    DENG2_APP->handleUncaughtException(msg);
-}
-
 void App_Log(unsigned int metadata, char const *format, ...)
 {
     if(!checkLogEntryMetadata(metadata)) return;
@@ -97,6 +87,16 @@ void App_Log(unsigned int metadata, char const *format, ...)
     }
 
     logFragmentPrinter(metadata, buffer);
+}
+
+void App_Timer(unsigned int milliseconds, void (*callback)(void))
+{
+    de::Loop::timer(de::TimeDelta::fromMilliSeconds(milliseconds), callback);
+}
+
+void App_FatalError(char const *msg)
+{
+    DENG2_APP->handleUncaughtException(msg);
 }
 
 void CommandLine_Alias(char const *longname, char const *shortname)

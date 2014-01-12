@@ -109,7 +109,7 @@ void GL_TexReset()
     if(!initedOk) return;
 
     App_ResourceSystem().releaseAllGLTextures();
-    LOG_GL_MSG("All GL textures deleted");
+    LOG_GL_VERBOSE("Released all GL textures");
 
     bool useBusyMode = !BusyMode_Active();
     if(useBusyMode)
@@ -397,5 +397,5 @@ void GL_ReleaseTexturesForRawImages()
             raw->tex = 0;
         }
     }
-    LOG_GL_MSG("All GL textures for RawTextures deleted");
+    LOG_GL_VERBOSE("Released all GL textures for raw images");
 }

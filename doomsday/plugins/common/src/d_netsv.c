@@ -410,9 +410,7 @@ void NetSv_TellCycleRulesToPlayer(int destPlr)
 
     if(!cyclingMaps) return;
 
-#ifdef _DEBUG
-    Con_Message("NetSv_TellCycleRulesToPlayer: %i", destPlr);
-#endif
+    App_Log(DE2_DEV_NET_VERBOSE, "NetSv_TellCycleRulesToPlayer: %i", destPlr);
 
     // Get the rules of the current map.
     NetSv_ScanCycle(cycleIndex, &rules);
@@ -473,7 +471,7 @@ void NetSv_MapCycleTicker(void)
                 if(NetSv_ScanCycle(cycleIndex = 0, &rules) < 0)
                 {
                     // Hmm?! Abort cycling.
-                    Con_Message("NetSv_CheckCycling: All of a sudden MapCycle is invalid!");
+                    App_Log(DE2_MAP_WARNING, "All of a sudden MapCycle is invalid; stopping cycle");
                     DD_Execute(false, "endcycle");
                     return;
                 }
@@ -533,7 +531,7 @@ void NetSv_MapCycleTicker(void)
                 if(map < 0)
                 {
                     // Hmm?! Abort cycling.
-                    Con_Message("NetSv_CheckCycling: All of a sudden MapCycle is invalid!");
+                    App_Log(DE2_MAP_WARNING, "All of a sudden MapCycle is invalid; stopping cycle");
                     DD_Execute(false, "endcycle");
                     return;
                 }
@@ -556,9 +554,8 @@ void NetSv_ResetPlayerFrags(int plrNum)
     int i;
     player_t* plr = &players[plrNum];
 
-#ifdef _DEBUG
-    Con_Message("NetSv_ResetPlayerFrags: Player %i.", plrNum);
-#endif
+    App_Log(DE2_DEV_NET_VERBOSE, "NetSv_ResetPlayerFrags: Player %i", plrNum);
+
     memset(plr->frags, 0, sizeof(plr->frags));
 
     // The frag count is dependent on the others' frags.
@@ -578,7 +575,7 @@ void NetSv_NewPlayerEnters(int plrNum)
 {
     player_t* plr = &players[plrNum];
 
-    Con_Message("NetSv_NewPlayerEnters: spawning player %i.", plrNum);
+    App_Log(DE2_DEV_NET_MSG, "NetSv_NewPlayerEnters: player %i", plrNum);
 
     plr->playerState = PST_REBORN;  // Force an init.
 
@@ -601,9 +598,9 @@ void NetSv_NewPlayerEnters(int plrNum)
         if((start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false)))
         {
             const mapspot_t* spot = &mapSpots[start->spot];
-#ifdef _DEBUG
-            Con_Message("NetSv_NewPlayerEnters: Spawning player with angle:%x", spot->angle);
-#endif
+
+            App_Log(DE2_DEV_NET_MSG, "NetSv_NewPlayerEnters: Spawning player with angle:%x", spot->angle);
+
             P_SpawnPlayer(plrNum, pClass, spot->origin[VX], spot->origin[VY],
                           spot->origin[VZ], spot->angle, spot->flags,
                           false, true);
@@ -743,10 +740,9 @@ void NetSv_SendGameState(int flags, int to)
 
     // Print a short message that describes the game state.
     str = Uri_Resolved(mapUri);
-#ifdef _DEBUG
-    Con_Message("NetSv_SendGameState: Game setup: %s %s %s",
-                Str_Text(gameInfo.identityKey), Str_Text(str), gameConfigString);
-#endif
+
+    App_Log(DE2_NET_NOTE, "Sending game setup: %s %s %s",
+            Str_Text(gameInfo.identityKey), Str_Text(str), gameConfigString);
 
     // Send an update to all the players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -830,10 +826,10 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
 
     if(!IS_SERVER) return;
 
-#ifdef _DEBUG
-    Con_Message("NetSv_SendPlayerSpawnPosition: Player #%i pos:[%g, %g, %g] angle:%x",
-        plrNum, x, y, z, angle);
-#endif
+    App_Log(DE2_DEV_NET_MSG,
+            "NetSv_SendPlayerSpawnPosition: Player #%i pos:[%g, %g, %g] angle:%x",
+            plrNum, x, y, z, angle);
+
     writer = D_NetWrite();
     Writer_WriteFloat(writer, x);
     Writer_WriteFloat(writer, y);
@@ -907,9 +903,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, dd_bool rel
        (destPlrNum >= 0 && destPlrNum < MAXPLAYERS && !players[destPlrNum].plr->inGame))
         return;
 
-#ifdef _DEBUG
-    Con_Message("NetSv_SendPlayerState: src=%i, dest=%i, flags=%x", srcPlrNum, destPlrNum, flags);
-#endif
+    App_Log(DE2_DEV_NET_MSG, "NetSv_SendPlayerState: src=%i, dest=%i, flags=%x", srcPlrNum, destPlrNum, flags);
 
     writer = D_NetWrite();
 
@@ -1090,9 +1084,10 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, dd_bool rel
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     if(flags & PSF_MORPH_TIME)
     {
-#ifdef _DEBUG
-        Con_Message("NetSv_SendPlayerState: Player %i, sending morph tics as %i seconds.", srcPlrNum, (pl->morphTics + 34) / 35);
-#endif
+        App_Log(DE2_DEV_NET_MSG,
+                "NetSv_SendPlayerState: Player %i, sending morph tics as %i seconds",
+                srcPlrNum, (pl->morphTics + 34) / 35);
+
         // Send as seconds.
         Writer_WriteByte(writer, (pl->morphTics + 34) / 35);
     }
@@ -1121,9 +1116,7 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
     writer = D_NetWrite();
     Writer_WriteByte(writer, whose);
     Writer_WriteByte(writer, cfg.playerColor[whose]);
-/*#ifdef _DEBUG
-    Con_Message("NetSv_SendPlayerInfo: To %i, player %i's color is %i.", to_whom, whose, cfg.playerColor[whose]);
-#endif*/
+
 #if __JHERETIC__ || __JHEXEN__
     Writer_WriteByte(writer, cfg.playerClass[whose]); // current class
 #endif
@@ -1144,10 +1137,9 @@ void NetSv_ChangePlayerInfo(int from, Reader* msg)
     newClass = Reader_ReadByte(msg);
     P_SetPlayerRespawnClass(from, newClass); // requesting class change?
 
-#ifdef _DEBUG
-    Con_Message("NetSv_ChangePlayerInfo: pl%i, col=%i, requested class=%i",
-                from, cfg.playerColor[from], newClass);
-#endif
+    App_Log(DE2_DEV_NET_NOTE,
+            "NetSv_ChangePlayerInfo: pl%i, col=%i, requested class=%i",
+            from, cfg.playerColor[from], newClass);
 
     // The 'colorMap' variable controls the setting of the color
     // translation flags when the player is (re)spawned.
@@ -1160,13 +1152,12 @@ void NetSv_ChangePlayerInfo(int from, Reader* msg)
         pl->plr->mo->flags |= cfg.playerColor[from] << MF_TRANSSHIFT;
     }
 
-#ifdef _DEBUG
     if(pl->plr->mo)
     {
-        Con_Message("Player %i mo %i translation flags %x", from, pl->plr->mo->thinker.id,
-                    (pl->plr->mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
+        App_Log(DE2_DEV_NET_XVERBOSE,
+                "Player %i mo %i translation flags %x", from, pl->plr->mo->thinker.id,
+                (pl->plr->mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
     }
-#endif
 
     // Re-deal start spots.
     P_DealPlayerStarts(0);
@@ -1254,9 +1245,8 @@ void NetSv_SendPlayerClass(int plrNum, char cls)
 {
     Writer* writer;
 
-#ifdef _DEBUG
-    Con_Message("NetSv_SendPlayerClass: Player %i has class %i.", plrNum, cls);
-#endif
+    App_Log(DE2_DEV_NET_MSG, "NetSv_SendPlayerClass: Player %i has class %i", plrNum, cls);
+
     writer = D_NetWrite();
     Writer_WriteByte(writer, cls);
     Net_SendPacket(plrNum, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
@@ -1374,9 +1364,8 @@ static void NetSv_FireWeaponCallback(mobj_t* mo, void* param)
 
 static void NetSv_HitFloorCallback(mobj_t* mo, void* param)
 {
-#ifdef _DEBUG
-    Con_Message("NetSv_HitFloorCallback: mo %i", mo->thinker.id);
-#endif
+    App_Log(DE2_DEV_NET_XVERBOSE, "NetSv_HitFloorCallback: mo %i", mo->thinker.id);
+
     P_HitFloor(mo);
 }
 
@@ -1425,12 +1414,11 @@ void NetSv_DoAction(int player, Reader* msg)
     lookDir = Reader_ReadFloat(msg);
     actionParam = Reader_ReadInt32(msg);
 
-#ifdef _DEBUG
-    Con_Message("NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
-                "angle=%x lookDir=%g weapon=%i",
-                player, type, pos[VX], pos[VY], pos[VZ],
-                angle, lookDir, actionParam);
-#endif
+    App_Log(DE2_DEV_NET_VERBOSE,
+            "NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
+            "angle=%x lookDir=%g weapon=%i",
+            player, type, pos[VX], pos[VY], pos[VZ],
+            angle, lookDir, actionParam);
 
     if(G_GameState() != GS_MAP)
     {
@@ -1438,9 +1426,7 @@ void NetSv_DoAction(int player, Reader* msg)
         {
             if(type == GPA_USE || type == GPA_FIRE)
             {
-#ifdef _DEBUG
-                Con_Message("NetSv_DoAction: Intermission accelerate.");
-#endif
+                App_Log(DE2_NET_MSG, "Intermission skip requested");
                 IN_SkipToNext();
             }
         }
@@ -1487,10 +1473,9 @@ void NetSv_DoDamage(int player, Reader* msg)
     thid_t inflictor = Reader_ReadUInt16(msg);
     thid_t source = Reader_ReadUInt16(msg);
 
-#ifdef _DEBUG
-    Con_Message("NetSv_DoDamage: Client %i requests damage %i on %i via %i by %i.",
-                player, damage, target, inflictor, source);
-#endif
+    App_Log(DE2_DEV_NET_XVERBOSE,
+            "NetSv_DoDamage: Client %i requests damage %i on %i via %i by %i",
+            player, damage, target, inflictor, source);
 
     P_DamageMobj2(Mobj_ById(target), Mobj_ById(inflictor), Mobj_ById(source), damage,
                   false /*not stomping*/, true /*just do it*/);
@@ -1532,9 +1517,7 @@ void NetSv_SendMessageEx(int plrNum, char const *msg, dd_bool yellow)
         if(!players[plrNum].plr->inGame)
             return;
 
-#ifdef _DEBUG
-    Con_Message("NetSv_SendMessageEx: '%s'", msg);
-#endif
+    App_Log(DE2_DEV_NET_VERBOSE, "NetSv_SendMessageEx: '%s'", msg);
 
     if(plrNum == DDSP_ALL_PLAYERS)
     {
@@ -1568,10 +1551,9 @@ void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return;
 
-#ifdef _DEBUG
-    Con_Message("NetSv_MaybeChangeWeapon: Plr=%i Weapon=%i Ammo=%i Force=%i",
-                plrNum, weapon, ammo, force);
-#endif
+    App_Log(DE2_DEV_NET_VERBOSE,
+            "NetSv_MaybeChangeWeapon: Plr=%i Weapon=%i Ammo=%i Force=%i",
+            plrNum, weapon, ammo, force);
 
     writer = D_NetWrite();
     Writer_WriteInt16(writer, weapon);
@@ -1618,7 +1600,7 @@ D_CMD(MapCycle)
 
     if(!IS_SERVER)
     {
-        App_Log(DE2_LOG_SCR_ERROR, "Only allowed for a server.\n");
+        App_Log(DE2_SCR_ERROR, "Only allowed for a server.\n");
         return false;
     }
 
@@ -1628,7 +1610,7 @@ D_CMD(MapCycle)
         map = NetSv_ScanCycle(cycleIndex = 0, 0);
         if(map < 0)
         {
-            App_Log(DE2_LOG_SCR_ERROR, "MapCycle \"%s\" is invalid.\n", mapCycle);
+            App_Log(DE2_SCR_ERROR, "MapCycle \"%s\" is invalid.\n", mapCycle);
             return false;
         }
         for(i = 0; i < MAXPLAYERS; ++i)

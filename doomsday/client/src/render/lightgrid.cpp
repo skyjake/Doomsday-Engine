@@ -696,7 +696,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
             sector->audienceForLightColorChange += this;
         }
 
-        LOG_GL_MSG("%i light blocks (%u bytes)")
+        LOGDEV_GL_MSG("%i light blocks (%u bytes)")
             << numBlocks << (sizeof(LightBlock) * numBlocks);
 
         // We're done with sector samples completely.
@@ -800,7 +800,7 @@ DENG2_OBSERVES(Sector, LightLevelChange)
         self.markAllForUpdate();
 
         // How much time did we spend?
-        LOG_GL_MSG("Completed in %.2f seconds") << begunAt.since();
+        LOGDEV_GL_MSG("Completed in %.2f seconds") << begunAt.since();
     }
 
     /**

@@ -469,7 +469,7 @@ DENG2_PIMPL(WallEdge), public IHPlane
         EventIndex index = 0;
         foreach(Event const *icpt, *events)
         {
-            LOG_DEBUG(" %u: >%1.2f ") << (index++) << icpt->distance();
+            LOGDEV_MAP_MSG(" %u: >%1.2f ") << (index++) << icpt->distance();
         }
     }
 #endif

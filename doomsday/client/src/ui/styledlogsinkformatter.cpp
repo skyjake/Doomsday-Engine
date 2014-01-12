@@ -21,6 +21,7 @@
 using namespace de;
 
 StyledLogSinkFormatter::StyledLogSinkFormatter()
+    : _omitSectionIfNonDev(true)
 {
     _format = LogEntry::Styled | LogEntry::OmitLevel;
 
@@ -31,13 +32,14 @@ StyledLogSinkFormatter::StyledLogSinkFormatter()
 }
 
 StyledLogSinkFormatter::StyledLogSinkFormatter(LogEntry::Flags const &formatFlags)
-    : _format(formatFlags)
+    : _format(formatFlags),
+      _omitSectionIfNonDev(true)
 {}
 
 LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 {
     LogEntry::Flags form = _format;
-    if(!(entry.context() & LogEntry::Dev))
+    if(_omitSectionIfNonDev && !(entry.context() & LogEntry::Dev))
     {
         // The sections refer to names of native code functions, etc.
         // These are relevant only to developers. Non-dev messages must be
@@ -48,4 +50,9 @@ LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry 
     // This will form a single long line. The line wrapper will
     // then determine how to wrap it onto the available width.
     return Lines() << entry.asText(form);
+}
+
+void StyledLogSinkFormatter::setOmitSectionIfNonDev(bool omit)
+{
+    _omitSectionIfNonDev = omit;
 }

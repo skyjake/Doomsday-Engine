@@ -67,7 +67,7 @@ int DS_Init(void)
     fsSynth = new_fluid_synth(fsConfig);
     if(!fsSynth)
     {
-        Con_Message("Failed to create FluidSynth synthesizer.");
+        App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to create synthesizer");
         return false;
     }
 
@@ -82,7 +82,7 @@ int DS_Init(void)
     fsDriver = new_fluid_audio_driver(fsConfig, fsSynth);
     if(!fsDriver)
     {
-        Con_Message("Failed to create FluidSynth audio driver '%s'.", driverName);
+        App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to load audio driver '%s'", driverName);
         return false;
     }
 #else

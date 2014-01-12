@@ -107,7 +107,6 @@ static dd_bool ignoreEAXErrors = false;
 static dd_bool canSetPSF = true;
 
 static DWORD failedProps[MAX_FAILED_PROPS];
-static int verbose = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -216,11 +215,7 @@ int DS_Init(void)
     if(dsound)
         return true; // Already initialized?
 
-    // Are we in verbose mode?
-    verbose = CommandLine_Exists("-verbose");
-
-    if(verbose)
-        Con_Message("dsDirectSound::DS_Init: Initializing Direct Sound...");
+    App_Log(DE2_AUDIO_VERBOSE, "[DirectSound] Initializing Direct Sound...");
 
     // Can we set the Primary Sound Format?
     canSetPSF = !CommandLine_Exists("-nopsf");
@@ -228,8 +223,8 @@ int DS_Init(void)
 
     if(!(hWnd = (HWND) DD_GetVariable(DD_WINDOW_HANDLE)))
     {
-        Con_Error("dsDirectSound::DS_Init: Cannot initialize DirectSound "
-                  "at this time (main window unavailable).");
+        App_Log(DE2_AUDIO_ERROR, "[DirectSound] Cannot initialize DirectSound: "
+                "main window unavailable");
         return false;
     }
 
@@ -244,8 +239,7 @@ int DS_Init(void)
         }
         else
         {
-            if(verbose)
-                Con_Message("dsDirectSound::DS_Init: EAX couldn't be initialized (0x%x).", hr);
+            App_Log(DE2_AUDIO_VERBOSE, "[DirectSound] EAX could not be initialized (0x%x)", hr);
         }
     }
 
@@ -258,7 +252,7 @@ int DS_Init(void)
         }
         else
         {
-            Con_Message("dsDirectSound::DS_Init: Failed to create the DS8 instance (0x%x).", hr);
+            App_Log(DE2_AUDIO_ERROR, "[DirectSound] Failed to create the DS8 instance (0x%x)", hr);
         }
     }
 
@@ -270,7 +264,7 @@ int DS_Init(void)
     // Set cooperative level.
     if((hr = dsound->SetCooperativeLevel(hWnd, DSSCL_PRIORITY)) != DS_OK)
     {
-        Con_Message("dsDirectSound::DS_Init: Failed to set cooperative level (0x%x).", hr);
+        App_Log(DE2_AUDIO_ERROR, "[DirectSound] Failed to set cooperative level (0x%x)", hr);
         return false;
     }
 
@@ -278,7 +272,7 @@ int DS_Init(void)
     dsoundCaps.dwSize = sizeof(dsoundCaps);
     if((hr = dsound->GetCaps(&dsoundCaps)) != DS_OK)
     {
-        Con_Message("dsDirectSound::DS_Init: Failed querying device caps (0x%x).", hr);
+        App_Log(DE2_AUDIO_ERROR, "[DirectSound] Failed querying device caps (0x%x)", hr);
         return false;
     }
 
@@ -311,7 +305,7 @@ int DS_Init(void)
 
         if((hr = dsound->CreateSoundBuffer(&desc, &primary, NULL)) != DS_OK)
         {
-            Con_Message("dsDirectSound::DS_Init: Failed creating primary (2D) buffer (0x%x).", hr);
+            App_Log(DE2_AUDIO_ERROR, "[DirectSound] Failed creating primary (2D) buffer (0x%x)", hr);
             return false;
         }
 
@@ -327,8 +321,7 @@ int DS_Init(void)
             primary->QueryInterface(IID_IDirectSound3DListener,
                                     (LPVOID*) &dsListener)))
         {
-            if(verbose)
-                Con_Message("dsDirectSound::DS_Init: 3D listener not available (0x%x).", hr);
+            App_Log(DE2_DEV_AUDIO_MSG, "[DirectSound] 3D listener not available (0x%x)", hr);
         }
     }
 
@@ -545,8 +538,8 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     buf_object8 = createBuffer(&desc);
     if(!buf_object8)
     {
-        Con_Message("dsDirectSound::DS_SFX_CreateBuffer: Failed creating buffer [rate:%i bits:%i].",
-                    rate, bits);
+        App_Log(DE2_AUDIO_WARNING, "[DirectSound] Failed to create buffer (rate:%i bits:%i)",
+                rate, bits);
         return NULL;
     }
 
@@ -556,7 +549,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
         buf_object3d = get3DBuffer(buf_object8);
         if(!buf_object3d)
         {
-            Con_Message("dsDirectSound::DS_SFX_CreateBuffer: Failed to retrieve 3D interface.");
+            App_Log(DE2_AUDIO_WARNING,"[DirectSound] Failed to get a 3D interface for audio buffer");
             buf_object8->Release();
             return NULL;
         }
@@ -789,11 +782,6 @@ void DS_SFX_Refresh(sfxbuffer_t* buf)
 
     if(FAILED(hr))
         return; // Give up.
-
-/*#if _DEBUG
-Con_Message("C%i, B%i, W%i (p%i)", buf->cursor, write_bytes, buf->written, play);
-Con_Message("  (d1=%p b=%i d2=%p b=%i)", data[0], bytes[0], data[1], bytes[1]);
-#endif*/
 
     // Copy in two parts: as much sample data as we've got, and then zeros.
     for(i = 0; i < 2 && data[i]; ++i)
@@ -1057,8 +1045,8 @@ static void setEAXdw(DWORD prop, int value)
                               0, &value, sizeof(DWORD))))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("setEAXdw (prop:%i value:%i) failed. Result: %x.",
-                        prop, value, hr);
+            App_Log(DE2_DEV_AUDIO_WARNING, "setEAXdw (prop:%i value:%i) failed. Result: %x",
+                    prop, value, hr);
     }
 }
 
@@ -1072,8 +1060,8 @@ static void setEAXf(DWORD prop, float value)
                               0, &value, sizeof(float))))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("setEAXf (prop:%i value:%f) failed. Result: %x.",
-                        prop, value, hr);
+            App_Log(DE2_DEV_AUDIO_WARNING,"setEAXf (prop:%i value:%f) failed. Result: %x",
+                    prop, value, hr);
     }
 }
 
@@ -1092,8 +1080,8 @@ static void mulEAXdw(DWORD prop, float mul)
                               &retBytes)))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("mulEAXdw (prop:%i) get failed. Result: %x.",
-                        prop, hr & 0xffff);
+            App_Log(DE2_DEV_AUDIO_WARNING, "mulEAXdw (prop:%i) get failed. Result: %x",
+                    prop, hr & 0xffff);
     }
 
     setEAXdw(prop, volLinearToLog(pow(10, value / 2000.0f) * mul));
@@ -1114,8 +1102,8 @@ static void mulEAXf(DWORD prop, float mul, float min, float max)
                               &retBytes)))
     {
         if(reportEAXError(prop, hr))
-            Con_Message("mulEAXf (prop:%i) get failed. Result: %x.",
-                        prop, hr & 0xffff);
+            App_Log(DE2_DEV_AUDIO_WARNING,
+                    "mulEAXf (prop:%i) get failed. Result: %x", prop, hr & 0xffff);
     }
 
     value *= mul;

@@ -473,7 +473,7 @@ D_CMD(PlayMusic)
     switch(argc)
     {
     default:
-        LOG_SCR_MSG("Usage:\n  %s (music-def)") << argv[0];
+        LOG_SCR_NOTE("Usage:\n  %s (music-def)") << argv[0];
         LOG_SCR_MSG("  %s lump (lumpname)") << argv[0];
         LOG_SCR_MSG("  %s file (filename)") << argv[0];
         LOG_SCR_MSG("  %s cd (track)") << argv[0];

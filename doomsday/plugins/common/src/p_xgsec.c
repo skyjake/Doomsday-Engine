@@ -3046,7 +3046,7 @@ D_CMD(MovePlane)
 
     if(argc < 2)
     {
-        App_Log(DE2_LOG_SCR_NOTE, "Usage: %s (opts)\n", argv[0]);
+        App_Log(DE2_SCR_NOTE, "Usage: %s (opts)\n", argv[0]);
         App_Log(DE2_LOG_SCR, "Opts can be:\n");
         App_Log(DE2_LOG_SCR, "  here [crush] [off] (z/units) [speed]\n");
         App_Log(DE2_LOG_SCR, "  at (x) (y) [crush] [off] (z/units) [speed]\n");
@@ -3056,7 +3056,7 @@ D_CMD(MovePlane)
 
     if(IS_CLIENT)
     {
-        App_Log(DE2_LOG_SCR_ERROR, "Clients can't move planes\n");
+        App_Log(DE2_SCR_ERROR, "Clients can't move planes\n");
         return false;
     }
 
@@ -3098,7 +3098,7 @@ D_CMD(MovePlane)
     }
     else
     {   // Unknown mode.
-        App_Log(DE2_LOG_SCR_ERROR, "Unknown mode\n");
+        App_Log(DE2_SCR_ERROR, "Unknown mode\n");
         return false;
     }
 
@@ -3133,7 +3133,7 @@ D_CMD(MovePlane)
     }
     else
     {
-        App_Log(DE2_LOG_SCR_ERROR, "You must specify Z-units\n");
+        App_Log(DE2_SCR_ERROR, "You must specify Z-units\n");
         return false; // Required parameter missing.
     }
 

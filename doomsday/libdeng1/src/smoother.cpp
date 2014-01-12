@@ -211,9 +211,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
 
     if(!Smoother_IsValid(sm))
     {
-/*#ifdef _DEBUG
-        Con_Message("Smoother_Evaluate: sm=%p not valid!", sm);
-#endif*/
+        LOGDEV_XVERBOSE("Smoother %p not valid!") << sm;
         return false;
     }
 
@@ -223,11 +221,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         xyz[VX] = past->xyz[VX];
         xyz[VY] = past->xyz[VY];
         xyz[VZ] = past->xyz[VZ];
-/*#if _DEBUG
-        Con_Message("Smoother_Evaluate: falling behind");
-        ((Smoother *)sm)->prevEval[0] = xyz[0];
-        ((Smoother *)sm)->prevEval[1] = xyz[1];
-#endif*/
+        LOGDEV_XVERBOSE("Smoother %p falling behind") << sm;
         return true;
     }
     //DENG_ASSERT(sm->at <= now->time);
@@ -237,11 +231,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         xyz[VX] = now->xyz[VX];
         xyz[VY] = now->xyz[VY];
         xyz[VZ] = now->xyz[VZ];
-/*#if _DEBUG
-        Con_Message("Smoother_Evaluate: stalling");
-        ((Smoother *)sm)->prevEval[0] = xyz[0];
-        ((Smoother *)sm)->prevEval[1] = xyz[1];
-#endif*/
+        LOGDEV_XVERBOSE("Smoother %p stalling") << sm;
         return true;
     }
 
@@ -260,7 +250,8 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         if(dt > 0)
         {
             float diff[2] = { xyz[0] - sm->prevEval[0], xyz[1] - sm->prevEval[1] };
-            Con_Message("Smoother_Evaluate: [%05.3f] diff = %+06.3f  %+06.3f", dt, diff[0]/dt, diff[1]/dt);
+            LOGDEV_MSG("Smoother_Evaluate: [%05.3f] diff = %06.3f  %06.3f")
+                << dt << diff[0]/dt << diff[1]/dt;
             ((Smoother *)sm)->prevEval[0] = xyz[0];
             ((Smoother *)sm)->prevEval[1] = xyz[1];
         }

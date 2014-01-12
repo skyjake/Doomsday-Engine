@@ -908,7 +908,8 @@ static void uploadContentUnmanaged(texturecontent_t const &content)
     gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
     if(uploadMethod == gl::Immediate)
     {
-        LOG_GL_XVERBOSE("Uploading texture (%i:%ix%i) while not busy! Should have been precached in busy mode?")
+        LOGDEV_GL_XVERBOSE("Uploading texture (%i:%ix%i) while not busy! "
+                           "Should have been precached in busy mode?")
                 << content.name << content.width << content.height;
     }
 

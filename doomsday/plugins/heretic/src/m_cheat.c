@@ -391,13 +391,13 @@ D_CMD(CheatGive)
 
     if(G_GameState() != GS_MAP)
     {
-        App_Log(DE2_LOG_SCR_ERROR, "Can only \"give\" when in a game!\n");
+        App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!\n");
         return true;
     }
 
     if(argc != 2 && argc != 3)
     {
-        App_Log(DE2_LOG_SCR_NOTE, "Usage:\n  give (stuff)\n");
+        App_Log(DE2_SCR_NOTE, "Usage:\n  give (stuff)\n");
         App_Log(DE2_LOG_SCR, "  give (stuff) (plr)\n");
         App_Log(DE2_LOG_SCR, "Stuff consists of one or more of (type:id). "
                 "If no id; give all of type:\n");
@@ -459,7 +459,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
                     {
-                        App_Log(DE2_LOG_SCR_ERROR, "Unknown ammo #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown ammo #%d (valid range %d-%d)\n",
                                    (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
                         break;
                     }
@@ -486,7 +486,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < IIT_FIRST || idx >= NUM_INVENTORYITEM_TYPES)
                     {
-                        App_Log(DE2_LOG_SCR_ERROR, "Unknown item #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown item #%d (valid range %d-%d)\n",
                                    (int)idx, IIT_FIRST, NUM_INVENTORYITEM_TYPES-1);
                         break;
                     }
@@ -536,7 +536,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
                     {
-                        App_Log(DE2_LOG_SCR_ERROR, "Unknown key #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown key #%d (valid range %d-%d)\n",
                                    (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
                         break;
                     }
@@ -571,7 +571,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < 0 || idx >= 3)
                     {
-                        App_Log(DE2_LOG_SCR_ERROR, "Unknown armor type #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown armor type #%d (valid range %d-%d)\n",
                                    (int)idx, 0, 3-1);
                         break;
                     }
@@ -610,7 +610,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
                     {
-                        App_Log(DE2_LOG_SCR_ERROR, "Unknown weapon #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown weapon #%d (valid range %d-%d)\n",
                                    (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
                         break;
                     }
@@ -626,7 +626,7 @@ D_CMD(CheatGive)
             break;
 
         default: // Unrecognized.
-            App_Log(DE2_LOG_SCR_ERROR, "Cannot give '%c': unknown letter\n", buf[i]);
+            App_Log(DE2_SCR_ERROR, "Cannot give '%c': unknown letter\n", buf[i]);
             break;
         }
     }
@@ -684,22 +684,21 @@ D_CMD(CheatWhere)
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
     Uri_Delete(mapUri);
 
-    // Also print some information to the console.
-    Con_Message("%s", textBuffer);
+    App_Log(DE2_MAP_NOTE, textBuffer);
 
     sector = Mobj_Sector(plr->plr->mo);
     uri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  FloorZ:%g Material:%s", P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(path));
+    App_Log(DE2_MAP_MSG, "FloorZ:%g Material:%s", P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(path));
     Uri_Delete(uri);
 
     uri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  CeilingZ:%g Material:%s", P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(path));
+    App_Log(DE2_MAP_MSG, "CeilingZ:%g Material:%s", P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(path));
     Uri_Delete(uri);
 
-    Con_Message("Player height:%g Player radius:%g",
-                plr->plr->mo->height, plr->plr->mo->radius);
+    App_Log(DE2_MAP_MSG, "Player height:%g Player radius:%g",
+            plr->plr->mo->height, plr->plr->mo->radius);
 
     return true;
 }

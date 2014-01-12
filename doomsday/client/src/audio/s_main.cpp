@@ -612,7 +612,7 @@ D_CMD(PlaySound)
 
     if(argc < 2)
     {
-        LOG_SCR_MSG("Usage: %s (id) (volume) at (x) (y) (z)") << argv[0];
+        LOG_SCR_NOTE("Usage: %s (id) (volume) at (x) (y) (z)") << argv[0];
         LOG_SCR_MSG("(volume) must be in 0..1, but may be omitted.");
         LOG_SCR_MSG("'at (x) (y) (z)' may also be omitted.");
         LOG_SCR_MSG("The sound is always played locally.");

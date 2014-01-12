@@ -319,7 +319,7 @@ void BitmapFont::glInit()
         // Upload the texture.
         if(!novideo && !isDedicated)
         {
-            LOG_DEBUG("Uploading atlas texture for \"%s\"...")
+            LOG_GL_XVERBOSE("Uploading atlas texture for \"%s\"...")
                 << manifest().composeUri();
 
             d->texGLName = GL_NewTextureWithParams(DGL_RGBA, d->texDimensions.x, d->texDimensions.y,

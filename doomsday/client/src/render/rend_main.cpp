@@ -323,7 +323,7 @@ static void texGammaChanged()
 {
     R_BuildTexGammaLut();
     GL_TexReset();
-    //LOG_MSG("Gamma correction set to %f.") << texGamma;
+    LOG_GL_MSG("Texture gamma correction set to %f") << texGamma;
 }
 
 static void mipmappingChanged()

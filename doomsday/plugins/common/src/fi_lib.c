@@ -654,7 +654,7 @@ D_CMD(StartFinale)
         return false;
     if(!Def_Get(DD_DEF_FINALE, argv[1], &fin))
     {
-        App_Log(DE2_LOG_SCR_ERROR, "Script '%s' is not defined.\n", argv[1]);
+        App_Log(DE2_SCR_ERROR, "Script '%s' is not defined.\n", argv[1]);
         return false;
     }
     G_SetGameAction(GA_NONE);

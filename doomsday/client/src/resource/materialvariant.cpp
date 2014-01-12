@@ -58,10 +58,8 @@ DENG2_PIMPL(Material::Variant)
         DENG2_ASSERT(newSnapshot);
         if(!snapshot.isNull())
         {
-#ifdef DENG_DEBUG
             LOG_AS("Material::Variant::AttachSnapshot");
-            LOG_WARNING("A snapshot is already attached to %p, it will be replaced") << this;
-#endif
+            LOGDEV_RES_WARNING("A snapshot is already attached to %p, it will be replaced") << this;
         }
         snapshot.reset(newSnapshot);
     }

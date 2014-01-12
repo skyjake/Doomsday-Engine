@@ -574,7 +574,7 @@ void Sky::configure(ded_sky_t *def)
             catch(ResourceSystem::MissingManifestError const &er)
             {
                 // Log but otherwise ignore this error.
-                LOG_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default.")
+                LOG_RES_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default.")
                     << *matUri << i;
             }
         }
@@ -1001,15 +1001,15 @@ static void setSkyLayerParams(Sky &sky, int layerIndex, int param, void *data)
 
         default:
             // Log but otherwise ignore this error.
-            LOG_WARNING("Bad parameter %i. Failed configuring sky layer #%i, ignoring.")
-                << param << layerIndex;
+            LOG_GL_WARNING("Failed configuring sky layer #%i: bad parameter %i")
+                    << layerIndex << param;
         }
     }
     catch(Sky::MissingLayerError const &er)
     {
         // Log but otherwise ignore this error.
-        LOG_WARNING(er.asText() + ". Failed configuring sky layer #%i, ignoring.")
-            << layerIndex;
+        LOG_GL_WARNING("Failed configuring sky layer #%i: %s")
+                << layerIndex << er.asText();
     }
 }
 

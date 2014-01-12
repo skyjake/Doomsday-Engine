@@ -46,7 +46,7 @@ lumpnum_t PatchName::lumpNum()
         catch(FS1::NotFoundError const &er)
         {
             // Log but otherwise ignore this error.
-            LOG_WARNING(er.asText() + ", ignoring.");
+            LOG_RES_WARNING(er.asText() + ", ignoring.");
         }
     }
     return lumpNum_;

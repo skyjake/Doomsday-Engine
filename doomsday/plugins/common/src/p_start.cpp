@@ -616,8 +616,8 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y,
  */
 void P_SpawnClient(int plrNum)
 {
-    App_Log(DE2_LOG_VERBOSE | DE2_LOG_MAP,
-            "Spawning client player mobj (for player %i; console player is %i)\n",
+    App_Log(DE2_MAP_VERBOSE,
+            "Spawning client player mobj (for player %i; console player is %i)",
             plrNum, CONSOLEPLAYER);
 
     // The server will fix the player's position and angles soon after.
@@ -651,7 +651,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
     player_t *p = &players[plrNum];
 
-    App_Log(DE2_LOG_DEV | DE2_LOG_MAP, "P_RebornPlayer: player %i (class %i)\n", plrNum, pClass);
+    App_Log(DE2_DEV_MAP_MSG, "P_RebornPlayer: player %i (class %i)", plrNum, pClass);
 
     if(p->plr->mo)
     {
@@ -662,8 +662,8 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 
     if(G_GameState() != GS_MAP)
     {
-        App_Log(DE2_LOG_DEV | DE2_LOG_MAP | DE2_LOG_ERROR,
-                "P_RebornPlayer: Game state is %i, won't spawn\n", G_GameState());
+        App_Log(DE2_DEV_MAP_ERROR,
+                "P_RebornPlayer: Game state is %i, won't spawn", G_GameState());
         return; // Nothing else to do.
     }
 
@@ -713,7 +713,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
         if(P_CheckSpot(spot->origin[VX], spot->origin[VY]))
         {
             // Appropriate player start spot is open.
-            App_Log(DE2_LOG_MAP | DE2_LOG_DEV, "- spawning at assigned spot\n");
+            App_Log(DE2_DEV_MAP_MSG, "- spawning at assigned spot");
 
             pos[VX]    = spot->origin[VX];
             pos[VY]    = spot->origin[VY];
@@ -728,7 +728,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!foundSpot)
     {
-        App_Log(DE2_LOG_MAP | DE2_LOG_DEV, "- force spawning at %i\n", p->startSpot);
+        App_Log(DE2_DEV_MAP_MSG, "- force spawning at %i\n", p->startSpot);
 
         if(assigned)
         {

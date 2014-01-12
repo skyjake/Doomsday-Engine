@@ -149,7 +149,7 @@ static byte loadParticleTexture(uint particleTex)
     image_t image;
     if(!GL_LoadImage(image, foundPath.toUtf8().constData()))
     {
-        LOG_WARNING("Failed to load \"%s\"") << foundPath;
+        LOG_RES_WARNING("Failed to load \"%s\"") << foundPath;
         return 0;
     }
 
@@ -214,7 +214,7 @@ void Rend_ParticleLoadExtraTextures()
 
     if(!loaded.isEmpty())
     {
-        LOG_INFO("Loaded textures for particle IDs: %s") << Rangei::contiguousRangesAsText(loaded);
+        LOG_GL_NOTE("Loaded textures for particle IDs: %s") << Rangei::contiguousRangesAsText(loaded);
     }
 }
 

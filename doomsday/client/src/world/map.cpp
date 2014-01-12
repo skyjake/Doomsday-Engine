@@ -1242,7 +1242,7 @@ void Map::initBias()
         addBiasSource(BiasSource::fromDef(*def));
     }
 
-    LOG_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
+    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
 void Map::unlinkInMaterialLists(Surface *surface)
@@ -2267,7 +2267,7 @@ void Map::initSkyFix()
         }
     }
 
-    LOG_MAP_VERBOSE("Completed in %.2f seconds.") << begunAt.since();
+    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds.") << begunAt.since();
 }
 
 coord_t Map::skyFix(bool ceiling) const
