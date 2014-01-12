@@ -89,7 +89,7 @@ static dd_bool Writer_Check(Writer const *writer, size_t len)
             if((int)writer->pos <= (int)writer->size - (int)len)
                 return true;
         }
-        LogBuffer_Printf(DE2_LOG_ERROR,
+        App_Log(DE2_LOG_ERROR,
             "Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.\n",
                 (unsigned long) writer->pos,
                 (unsigned long) len,
@@ -326,7 +326,7 @@ void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
 {
     if(v & 0x8000)
     {
-        LogBuffer_Printf(DE2_LOG_ERROR,
+        App_Log(DE2_LOG_ERROR,
             "Writer_WritePackedUInt16: Cannot write %i (%x).\n", v, v);
         return;
     }

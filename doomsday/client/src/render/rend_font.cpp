@@ -174,7 +174,6 @@ void FR_SetFont(fontid_t num)
         }
         catch(ResourceSystem::UnknownFontIdError const &)
         {}
-        //LogBuffer_Printf(DE2_LOG_WARNING, "Requested invalid font %i.\n", num);
     }
     else
     {

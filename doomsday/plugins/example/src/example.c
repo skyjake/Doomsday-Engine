@@ -46,7 +46,7 @@ static int ExampleHook(int hookType, int parm, void *data)
     DENG_UNUSED(parm);
     DENG_UNUSED(data);
 
-    LogBuffer_Printf(DE2_LOG_DEV, "ExampleHook: Hook successful!\n");
+    App_Log(DE2_LOG_DEV, "ExampleHook: Hook successful!");
     return true;
 }
 

@@ -1160,7 +1160,7 @@ static void printMapBanner(void)
 {
     const char* name = P_GetMapNiceName();
 
-    LogBuffer_Printf(DE2_LOG_MAP, "\n");
+    App_Log(DE2_LOG_MAP, "");
     if(name)
     {
         char buf[64];
@@ -1169,7 +1169,7 @@ static void printMapBanner(void)
 #else
         dd_snprintf(buf, 64, "Map %u: %s", gameMap+1, name);
 #endif
-        LogBuffer_Printf(DE2_LOG_MAP, "%s\n", buf);
+        App_Log(DE2_LOG_MAP, "%s\n", buf);
     }
 
 #if !__JHEXEN__
@@ -1183,12 +1183,12 @@ static void printMapBanner(void)
     if(!lauthor)
         lauthor = unknownAuthorStr;
 
-    LogBuffer_Printf(DE2_LOG_MAP, "Author: %s\n", lauthor);
+    App_Log(DE2_LOG_MAP, "Author: %s\n", lauthor);
 
     Uri_Delete(uri);
     }
 #endif
-    LogBuffer_Printf(DE2_LOG_MAP, "\n");
+    App_Log(DE2_LOG_MAP, "");
 }
 
 void G_BeginMap(void)

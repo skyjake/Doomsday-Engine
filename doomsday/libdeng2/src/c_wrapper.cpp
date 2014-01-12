@@ -33,6 +33,40 @@
 
 #define DENG2_COMMANDLINE()     DENG2_APP->commandLine()
 
+static bool checkLogEntryMetadata(unsigned int &metadata)
+{
+    // Automatically apply the generic domain if not specified.
+    if(!(metadata & de::LogEntry::DomainMask))
+    {
+        metadata |= de::LogEntry::Generic;
+    }
+
+    // Validate the level.
+    de::LogEntry::Level logLevel = de::LogEntry::Level(metadata & de::LogEntry::LevelMask);
+    if(logLevel < de::LogEntry::XVerbose || logLevel > de::LogEntry::Critical)
+    {
+        metadata &= ~de::LogEntry::LevelMask;
+        metadata |= de::LogEntry::Message;
+    }
+
+    // If this level is not enabled, just ignore.
+    return de::LogBuffer::appBuffer().isEnabled(metadata);
+}
+
+static void logFragmentPrinter(duint32 metadata, char const *fragment)
+{
+    static std::string currentLogLine;
+
+    currentLogLine += fragment;
+
+    std::string::size_type pos;
+    while((pos = currentLogLine.find('\n')) != std::string::npos)
+    {
+        LOG().enter(metadata, currentLogLine.substr(0, pos).c_str());
+        currentLogLine.erase(0, pos + 1);
+    }
+}
+
 void App_Timer(unsigned int milliseconds, void (*callback)(void))
 {
     de::Loop::timer(de::TimeDelta::fromMilliSeconds(milliseconds), callback);
@@ -41,6 +75,28 @@ void App_Timer(unsigned int milliseconds, void (*callback)(void))
 void App_FatalError(char const *msg)
 {
     DENG2_APP->handleUncaughtException(msg);
+}
+
+void App_Log(unsigned int metadata, char const *format, ...)
+{
+    if(!checkLogEntryMetadata(metadata)) return;
+
+    char buffer[0x2000];
+    va_list args;
+    va_start(args, format);
+    size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
+    va_end(args);
+    DENG2_ASSERT(nc < sizeof(buffer) - 2);
+    if(!nc) return;
+
+    // Make sure there's a newline in the end.
+    if(buffer[nc - 1] != '\n')
+    {
+        buffer[nc++] = '\n';
+        buffer[nc] = 0;
+    }
+
+    logFragmentPrinter(metadata, buffer);
 }
 
 void CommandLine_Alias(char const *longname, char const *shortname)
@@ -129,51 +185,18 @@ void LogBuffer_EnableStandardOutput(int enable)
 	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
 }
 
-static void logFragmentPrinter(duint32 metadata, char const *fragment)
-{
-    static std::string currentLogLine;
-
-    currentLogLine += fragment;
-
-    std::string::size_type pos;
-    while((pos = currentLogLine.find('\n')) != std::string::npos)
-    {
-        LOG().enter(metadata, currentLogLine.substr(0, pos).c_str());
-        currentLogLine.erase(0, pos + 1);
-    }
-}
-
-void LogBuffer_Msg(char const *text)
-{
-    logFragmentPrinter(de::LogEntry::Generic | de::LogEntry::Message, text);
-}
-
 void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
 {
-    // Automatically apply the generic domain if not specified.
-    if(!(metadata & de::LogEntry::DomainMask))
-    {
-        metadata |= de::LogEntry::Generic;
-    }
+    if(!checkLogEntryMetadata(metadata)) return;
 
-    // Validate the level.
-    de::LogEntry::Level logLevel = de::LogEntry::Level(metadata & de::LogEntry::LevelMask);
-    if(logLevel < de::LogEntry::XVerbose || logLevel > de::LogEntry::Critical)
-    {
-        metadata &= ~de::LogEntry::LevelMask;
-        metadata |= (logLevel = de::LogEntry::Message);
-    }
-
-    // If this level is not enabled, just ignore.
-    if(!de::LogBuffer::appBuffer().isEnabled(metadata)) return;
-
-    char buffer[2048];
+    char buffer[0x2000];
     va_list args;
     va_start(args, format);
-    vsprintf(buffer, format, args); /// @todo unsafe
+    size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
     va_end(args);
+    DENG2_ASSERT(nc < sizeof(buffer) - 1);
 
-    logFragmentPrinter(logLevel | (metadata & de::LogEntry::ContextMask), buffer);
+    logFragmentPrinter(metadata, buffer);
 }
 
 Info *Info_NewFromString(char const *utf8text)

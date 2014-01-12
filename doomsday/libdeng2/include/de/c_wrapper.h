@@ -54,6 +54,7 @@ extern "C" {
  */
 DENG2_PUBLIC void App_Timer(unsigned int milliseconds, void (*callback)(void));
 DENG2_PUBLIC void App_FatalError(char const *msg);
+DENG2_PUBLIC void App_Log(unsigned int metadata, char const *format, ...);
 
 /*
  * CommandLine
@@ -229,7 +230,6 @@ logentry_metadata_t;
 DENG2_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
 DENG2_PUBLIC void LogBuffer_Flush(void);
 DENG2_PUBLIC void LogBuffer_Clear(void);
-DENG2_PUBLIC void LogBuffer_Msg(char const *text); // note: manual newlines
 DENG2_PUBLIC void LogBuffer_Printf(unsigned int metadata, char const *format, ...); // note: manual newlines
 
 /*

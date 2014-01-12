@@ -77,12 +77,12 @@ void Library_Shutdown(void)
 void Library_ReleaseGames(void)
 {
 #ifdef UNIX
+    LOG_AS("Library_ReleaseGames");
     foreach(Library* lib, loadedLibs)
     {
         if(lib->isGamePlugin)
         {
-            LogBuffer_Printf(DE2_LOG_DEBUG,
-                    "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
+            LOGDEV_RES_VERBOSE("Closing '%s'") << Str_Text(lib->path);
 
             // Close the Library.
             DENG_ASSERT(lib->file);
@@ -99,8 +99,7 @@ static void reopenLibraryIfNeeded(Library* lib)
 
     if(!lib->file->loaded())
     {
-        LogBuffer_Printf(DE2_LOG_DEBUG,
-                "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
+        LOGDEV_RES_XVERBOSE("Re-opening '%s'") << Str_Text(lib->path);
 
         // Make sure the Library gets opened again now.
         lib->file->library();
@@ -227,6 +226,7 @@ void* Library_Symbol(Library* lib, const char* symbolName)
 {
     try
     {
+        LOG_AS("Library_Symbol");
         DENG_ASSERT(lib);
 #ifdef UNIX
         reopenLibraryIfNeeded(lib);

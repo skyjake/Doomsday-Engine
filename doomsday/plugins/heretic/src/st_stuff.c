@@ -3087,7 +3087,7 @@ void ST_ToggleAutomapMaxZoom(int player)
     if(!obj) return;
     if(UIAutomap_SetZoomMax(obj, !UIAutomap_ZoomMax(obj)))
     {
-        LogBuffer_Printf(0, "Maximum zoom %s in automap\n", UIAutomap_ZoomMax(obj)? "ON":"OFF");
+        App_Log(0, "Maximum zoom %s in automap\n", UIAutomap_ZoomMax(obj)? "ON":"OFF");
     }
 }
 

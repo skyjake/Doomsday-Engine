@@ -408,16 +408,16 @@ int DS_Init(void)
         {
             useEAX = false;
 
-            LogBuffer_Printf(DE2_LOG_DEV | DE2_LOG_AUDIO | DE2_LOG_WARNING,
-                             "dsDirectSound::DS_Init: Failed retrieving property set.\n");
+            App_Log(DE2_LOG_DEV | DE2_LOG_AUDIO | DE2_LOG_WARNING,
+                    "dsDirectSound::DS_Init: Failed retrieving property set.\n");
         }
     }
 
     // Announce capabilites:
-    LogBuffer_Printf(DE2_LOG_AUDIO, "DirectSound configuration:\n");
-    LogBuffer_Printf(DE2_LOG_AUDIO, "  Primary Buffer: %s (%s)\n", (primaryBuffer3D? "3D" : "2D"),
-               (primaryBufferHW? "hardware" : "software"));
-    LogBuffer_Printf(DE2_LOG_AUDIO, "  Hardware Buffers: %i\n", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
+    App_Log(DE2_LOG_AUDIO, "DirectSound configuration:\n");
+    App_Log(DE2_LOG_AUDIO, "  Primary Buffer: %s (%s)\n", (primaryBuffer3D? "3D" : "2D"),
+            (primaryBufferHW? "hardware" : "software"));
+    App_Log(DE2_LOG_AUDIO, "  Hardware Buffers: %i\n", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
     LogBuffer_Printf(DE2_LOG_AUDIO, "  DSP: %s", eaxAvailable? "EAX 2.0" : "None");
     if(eaxAvailable)
         LogBuffer_Printf(DE2_LOG_AUDIO, " (%s)", useEAX? "enabled" : "disabled");
@@ -425,18 +425,18 @@ int DS_Init(void)
 
     if(eaxAvailable)
     {
-        LogBuffer_Printf(DE2_LOG_AUDIO, "  EAX Listner Environment:\n");
+        App_Log(DE2_LOG_AUDIO, "  EAX Listner Environment:\n");
         for(size_t i = 0; eaxProps[i].prop != DSPROPERTY_EAXLISTENER_NONE; ++i)
         {
             const eaxproperty_t* p = &eaxProps[i];
 
-            LogBuffer_Printf(DE2_LOG_AUDIO, "    %s: %s", p->name,
-                        queryEAXSupport(p->prop)? "Present\n" : "Not available\n");
+            App_Log(DE2_LOG_AUDIO, "    %s: %s", p->name,
+                    queryEAXSupport(p->prop)? "Present\n" : "Not available\n");
         }
     }
 
     // Success!
-    LogBuffer_Printf(DE2_LOG_AUDIO | DE2_LOG_VERBOSE | DE2_LOG_DEV,
+    App_Log(DE2_LOG_AUDIO | DE2_LOG_VERBOSE | DE2_LOG_DEV,
                      "dsDirectSound::DS_Init: Initialization complete, OK.\n");
     return true;
 

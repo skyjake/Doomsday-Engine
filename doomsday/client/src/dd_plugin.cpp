@@ -207,16 +207,6 @@ DENG_EXTERN_C int Plug_RemoveHook(int hookType, hookfunc_t hook)
 {
     int i, type = HOOKMASK(hookType);
 
-    /*
-    if(currentPlugin)
-    {
-        LogBuffer_Printf(DE2_LOG_WARNING,
-            "Plug_RemoveHook: Failed to remove hook %p of type %i; currently processing a hook.\n",
-            hook, hookType);
-        return false;
-    }
-    */
-
     // The type must be good.
     if(type < 0 || type >= NUM_HOOK_TYPES)
         return false;

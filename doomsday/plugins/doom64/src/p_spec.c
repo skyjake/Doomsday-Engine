@@ -227,15 +227,15 @@ void P_InitPicAnims(void)
          * Support for this extension should be considered depreciated.
          * All new features should be added, accessed via DED.
          */
-        LogBuffer_Printf(DE2_LOG_RES | DE2_LOG_VERBOSE,
-                         "Processing lump %s:ANIMATED...",
-                         F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum))));
+        App_Log(DE2_LOG_RES | DE2_LOG_VERBOSE,
+                "Processing lump %s:ANIMATED...",
+                F_PrettyPath(Str_Text(W_LumpSourceFile(lumpNum))));
         loadAnimDefs((animdef_t*)W_CacheLump(lumpNum), true);
         W_UnlockLump(lumpNum);
         return;
     }}
 
-    LogBuffer_Printf(DE2_LOG_RES | DE2_LOG_VERBOSE, "Registering default texture animations...");
+    App_Log(DE2_LOG_RES | DE2_LOG_VERBOSE, "Registering default texture animations...");
     loadAnimDefs(animsShared, false);
 }
 

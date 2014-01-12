@@ -3046,17 +3046,17 @@ D_CMD(MovePlane)
 
     if(argc < 2)
     {
-        LogBuffer_Printf(DE2_LOG_SCR_NOTE, "Usage: %s (opts)\n", argv[0]);
-        LogBuffer_Printf(DE2_LOG_SCR, "Opts can be:\n");
-        LogBuffer_Printf(DE2_LOG_SCR, "  here [crush] [off] (z/units) [speed]\n");
-        LogBuffer_Printf(DE2_LOG_SCR, "  at (x) (y) [crush] [off] (z/units) [speed]\n");
-        LogBuffer_Printf(DE2_LOG_SCR, "  tag (sector-tag) [crush] [off] (z/units) [speed]\n");
+        App_Log(DE2_LOG_SCR_NOTE, "Usage: %s (opts)\n", argv[0]);
+        App_Log(DE2_LOG_SCR, "Opts can be:\n");
+        App_Log(DE2_LOG_SCR, "  here [crush] [off] (z/units) [speed]\n");
+        App_Log(DE2_LOG_SCR, "  at (x) (y) [crush] [off] (z/units) [speed]\n");
+        App_Log(DE2_LOG_SCR, "  tag (sector-tag) [crush] [off] (z/units) [speed]\n");
         return true;
     }
 
     if(IS_CLIENT)
     {
-        LogBuffer_Printf(DE2_LOG_SCR_ERROR, "Clients can't move planes\n");
+        App_Log(DE2_LOG_SCR_ERROR, "Clients can't move planes\n");
         return false;
     }
 
@@ -3098,7 +3098,7 @@ D_CMD(MovePlane)
     }
     else
     {   // Unknown mode.
-        LogBuffer_Printf(DE2_LOG_SCR_ERROR, "Unknown mode\n");
+        App_Log(DE2_LOG_SCR_ERROR, "Unknown mode\n");
         return false;
     }
 
@@ -3108,7 +3108,7 @@ D_CMD(MovePlane)
     // No more arguments?
     if(argc == p)
     {
-        LogBuffer_Printf(DE2_LOG_MAP, "Ceiling = %g\nFloor = %g\n", ceilingheight, floorheight);
+        App_Log(DE2_LOG_MAP, "Ceiling = %g\nFloor = %g\n", ceilingheight, floorheight);
         return true;
     }
 
@@ -3133,7 +3133,7 @@ D_CMD(MovePlane)
     }
     else
     {
-        LogBuffer_Printf(DE2_LOG_SCR_ERROR, "You must specify Z-units\n");
+        App_Log(DE2_LOG_SCR_ERROR, "You must specify Z-units\n");
         return false; // Required parameter missing.
     }
 

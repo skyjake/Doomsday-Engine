@@ -1023,7 +1023,7 @@ void Con_PrintRuler(void)
     if(ConsoleSilent)
         return;
 
-    LogBuffer_Msg(_E(R) "\n");
+    LOG_MSG(_E(R));
 }
 
 /// @param flags  @ref consolePrintFlags
