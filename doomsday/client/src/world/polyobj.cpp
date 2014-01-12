@@ -112,7 +112,13 @@ void Polyobj::setCollisionCallback(void (*func) (mobj_t *mobj, void *line, void 
     collisionCallback = func;
 }
 
-de::Mesh &Polyobj::mesh() const
+Map &Polyobj::map() const
+{
+    /// @todo Do not assume the CURRENT map.
+    return App_WorldSystem().map();
+}
+
+Mesh &Polyobj::mesh() const
 {
     return *static_cast<de::Mesh *>(_mesh);
 }
@@ -139,8 +145,7 @@ void Polyobj::link()
 {
     if(!_bspLeaf)
     {
-        /// @todo Do not assume polyobj is from the CURRENT map.
-        App_WorldSystem().map().link(*this);
+        map().link(*this);
 
         // Find the center point of the polyobj.
         Vector2d avg;
@@ -151,7 +156,7 @@ void Polyobj::link()
         avg /= lineCount();
 
         // Given the center point determine in which BSP leaf the polyobj resides.
-        _bspLeaf = &App_WorldSystem().map().bspLeafAt(avg);
+        _bspLeaf = &map().bspLeafAt(avg);
         _bspLeaf->link(*this);
     }
 }

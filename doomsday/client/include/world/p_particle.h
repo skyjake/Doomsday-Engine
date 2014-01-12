@@ -135,6 +135,13 @@ typedef struct ptcgen_s {
     int count; // Number of particles.
     particle_t *ptcs; // List of particles.
     ptcstage_t *stages;
+
+    /**
+     * Returns the map in which the generator exists.
+     *
+     * @see Thinker_Map()
+     */
+    de::Map &map() const;
 } ptcgen_t;
 
 /**

@@ -1498,12 +1498,11 @@ uint Sv_DeltaAge(const delta_t* delta)
  * Approximate the distance to the given sector. Set 'mayBeGone' to true
  * if the mobj may have been destroyed and should not be processed.
  */
-coord_t Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, dd_bool isReal)
+coord_t Sv_MobjDistance(mobj_t const *mo, ownerinfo_t const *info, dd_bool isReal)
 {
     coord_t z;
 
-    /// @todo Do not assume mobj is from the CURRENT map.
-    if(isReal && !App_WorldSystem().map().thinkers().isUsedMobjId(mo->thinker.id))
+    if(isReal && !Mobj_Map(*mo).thinkers().isUsedMobjId(mo->thinker.id))
     {
         // This mobj does not exist any more!
         return DDMAXFLOAT;

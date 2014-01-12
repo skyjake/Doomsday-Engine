@@ -24,6 +24,12 @@
 
 #include "api_base.h"
 
+#ifdef __DOOMSDAY__
+namespace de {
+class Map;
+}
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -82,8 +88,9 @@ DENG_API_T(Thinker);
 
 #ifdef __DOOMSDAY__
 DENG_USING_API(Thinker);
-// Not part of the public API.
+// Not part of the public API:
 dd_bool Thinker_IsMobjFunc(thinkfunc_t func);
+de::Map &Thinker_Map(thinker_t const &th);
 #endif
 
 ///@}

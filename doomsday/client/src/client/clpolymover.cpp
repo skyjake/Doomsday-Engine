@@ -85,7 +85,6 @@ void ClPolyMover_Thinker(ClPolyMover *mover)
     // Can we get rid of this mover?
     if(!mover->move && !mover->rotate)
     {
-        /// @todo Do not assume the move is from the CURRENT map.
-        App_WorldSystem().map().deleteClPolyMover(mover);
+        Thinker_Map(mover->thinker).deleteClPolyMover(mover);
     }
 }

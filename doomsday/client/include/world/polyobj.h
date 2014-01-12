@@ -64,6 +64,11 @@ public:
     ~polyobj_s();
 
     /**
+     * Returns the map in which the polyobj exists.
+     */
+    de::Map &map() const;
+
+    /**
      * Provides access to the mesh owned by the polyobj.
      */
     de::Mesh &mesh() const;

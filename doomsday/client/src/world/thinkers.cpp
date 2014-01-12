@@ -43,6 +43,12 @@ dd_bool Thinker_IsMobjFunc(thinkfunc_t func)
     return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
 }
 
+de::Map &Thinker_Map(thinker_t const & /*th*/)
+{
+    /// @todo Do not assume the current map.
+    return App_WorldSystem().map();
+}
+
 namespace de {
 
 struct ThinkerList
@@ -359,8 +365,7 @@ static int runThinker(thinker_t *th, void * /*context*/)
                 else
                 {
                     // Delete the client mobj.
-                    /// @todo Do not assume the CURRENT map.
-                    App_WorldSystem().map().deleteClMobj(mo);
+                    Mobj_Map(*mo).deleteClMobj(mo);
                 }
 #else
                 P_MobjRecycle(mo);
@@ -415,17 +420,15 @@ void Thinker_Run()
 #undef Thinker_Add
 void Thinker_Add(thinker_t *th)
 {
-    /// @todo fixme: Do not assume the current map.
-    if(!th || !App_WorldSystem().hasMap()) return;
-    App_WorldSystem().map().thinkers().add(*th);
+    if(!th) return;
+    Thinker_Map(*th).thinkers().add(*th);
 }
 
 #undef Thinker_Remove
 void Thinker_Remove(thinker_t *th)
 {
-    /// @todo fixme: Do not assume the current map.
-    if(!th || !App_WorldSystem().hasMap()) return;
-    App_WorldSystem().map().thinkers().remove(*th);
+    if(!th) return;
+    Thinker_Map(*th).thinkers().remove(*th);
 }
 
 #undef Thinker_SetStasis

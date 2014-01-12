@@ -67,6 +67,15 @@ mobj_t *P_MobjCreate(thinkfunc_t function, de::Vector3d const &origin, angle_t a
 void P_MobjRecycle(mobj_t *mobj);
 
 /**
+ * Returns the map in which the mobj exists. Note that a mobj may exist in a map
+ * while not being @em linked into data structures such as the blockmap and sectors.
+ * To determine whether the mobj is linked, call @ref Mobj_IsLinked().
+ *
+ * @see Thinker_Map()
+ */
+de::Map &Mobj_Map(mobj_t const &mobj);
+
+/**
  * Returns @c true iff the mobj has been linked into the map. The only time this
  * is not true is if @ref Mobj_SetOrigin() has not yet been called.
  *

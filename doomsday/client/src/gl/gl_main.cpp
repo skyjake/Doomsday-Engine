@@ -679,9 +679,13 @@ void GL_TotalRestore()
 
     // Restore map's fog settings.
     if(!mapInfo || !(mapInfo->flags & MIF_FOG))
+    {
         R_SetupFogDefaults();
+    }
     else
+    {
         R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
+    }
 
 #if _DEBUG
     Z_CheckHeap();

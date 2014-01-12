@@ -112,7 +112,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
     mo->ddFlags = ddflags;
     mo->lumIdx = -1;
     mo->thinker.function = function;
-    App_WorldSystem().map().thinkers().add(mo->thinker);
+    Mobj_Map(*mo).thinkers().add(mo->thinker);
 
     return mo;
 }
@@ -139,7 +139,7 @@ DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
 
     S_StopSound(0, mo);
 
-    App_WorldSystem().map().thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
+    Mobj_Map(*mo).thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
 }
 
 /**
@@ -254,6 +254,11 @@ DENG_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mo, coord_t origin[3])
         }
     }
 #endif
+}
+
+de::Map &Mobj_Map(mobj_t const &mobj)
+{
+    return Thinker_Map(mobj.thinker);
 }
 
 bool Mobj_IsLinked(mobj_t const &mobj)
