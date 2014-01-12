@@ -136,6 +136,9 @@ DENG2_PIMPL(GLFramebuffer)
     {
         if(!self.isReady() || size == Size()) return;
 
+        LOGDEV_GL_VERBOSE("Reconfiguring framebuffer: %s ms:%i")
+                << size.asText() << sampleCount();
+
         // Configure textures for the framebuffer.
         color.setUndefinedImage(size, colorFormat);
         color.setWrap(gl::ClampToEdge, gl::ClampToEdge);

@@ -917,7 +917,7 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     img.pixels = (uint8_t *) malloc(grabbed.byteCount());
     std::memcpy(img.pixels, grabbed.constBits(), grabbed.byteCount());
 
-    LOG_DEBUG("Canvas: grabbed %i x %i, byteCount:%i depth:%i format:%i")
+    LOGDEV_GL_MSG("Grabbed Canvas contents %i x %i, byteCount:%i depth:%i format:%i")
             << grabbed.width() << grabbed.height()
             << grabbed.byteCount() << grabbed.depth() << grabbed.format();
 
