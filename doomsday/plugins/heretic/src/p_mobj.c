@@ -454,10 +454,11 @@ void P_MobjMoveZ(mobj_t *mo)
     {
         if(!P_CheckPosition(mo, mo->origin))
         {
-#ifdef _DEBUG
-            Con_Message("Floating thing %i has gotten stuck! onmobj=%i z=%f flz=%f tmfz=%f",
-                        mo->thinker.id, mo->onMobj? mo->onMobj->thinker.id : 0, mo->origin[VZ], mo->floorZ, tmFloorZ);
-#endif
+            App_Log(DE2_DEV_MAP_WARNING, "Floating thing %i has gotten stuck!");
+            App_Log(DE2_DEV_MAP_MSG, "  onmobj=%i z=%f flz=%f tmfz=%f", mo->thinker.id,
+                    mo->onMobj? mo->onMobj->thinker.id : 0, mo->origin[VZ],
+                    mo->floorZ, tmFloorZ);
+
             if(mo->origin[VZ] < tmFloorZ)
             {
                 mo->origin[VZ] = mo->floorZ = tmFloorZ;
@@ -1076,16 +1077,12 @@ void P_RepositionMace(mobj_t *mo)
     Sector *sector;
 
     DENG_ASSERT(mo && mo->type == MT_WMACE);
-#if _DEBUG
-    Con_Message("P_RepositionMace: Repositioning mobj [%p], thinkerId:%i.", mo, mo->thinker.id);
-#endif
+    App_Log(DE2_DEV_MAP_MSG, "P_RepositionMace: Repositioning mobj [%p], thinkerId:%i", mo, mo->thinker.id);
 
     mapSpot = P_ChooseRandomMaceSpot();
     if(!mapSpot)
     {
-#if _DEBUG
-        Con_Message("P_RepositionMace: Failed to choose a map spot, aborting...");
-#endif
+        App_Log(DE2_DEV_MAP_WARNING, "P_RepositionMace: Failed to choose a map spot, aborting...");
         return;
     }
 
@@ -1102,10 +1099,8 @@ void P_RepositionMace(mobj_t *mo)
     }
     P_MobjLink(mo);
 
-#if _DEBUG
-    Con_Message("P_RepositionMace: Mobj [%p], thinkerId:%i - now at (%.2f, %.2f, %.2f).",
-                mo, mo->thinker.id, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
-#endif
+    App_Log(DE2_DEV_MAP_MSG, "P_RepositionMace: Mobj [%p], thinkerId:%i - now at (%.2f, %.2f, %.2f)",
+            mo, mo->thinker.id, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 }
 
 void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* originator)

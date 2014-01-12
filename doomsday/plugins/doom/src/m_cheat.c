@@ -684,20 +684,20 @@ D_CMD(CheatWhere)
     Uri_Delete(mapUri);
 
     // Also print some information to the console.
-    Con_Message("%s", textBuffer);
+    App_Log(DE2_MAP_NOTE, "%s", textBuffer);
 
     sector = Mobj_Sector(plr->plr->mo);
     uri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  FloorZ:%g Material:%s", P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(path));
+    App_Log(DE2_MAP_MSG, "FloorZ:%g Material:%s", P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(path));
     Uri_Delete(uri);
 
     uri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
     path = Uri_ToString(uri);
-    Con_Message("  CeilingZ:%g Material:%s", P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(path));
+    App_Log(DE2_MAP_MSG, "CeilingZ:%g Material:%s", P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(path));
     Uri_Delete(uri);
 
-    Con_Message("Player height:%g Player radius:%g",
+    App_Log(DE2_MAP_MSG, "Player height:%g Player radius:%g",
                 plr->plr->mo->height, plr->plr->mo->radius);
 
     return true;

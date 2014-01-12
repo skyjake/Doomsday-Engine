@@ -205,9 +205,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line,
 {
     dd_bool             success;
 
-#ifdef _DEBUG
-    Con_Message("P_ExecuteLineSpecial: special=%i mo=%i", special, mo? mo->thinker.id : 0);
-#endif
+    App_Log(DE2_MAP_VERBOSE, "Executing line special %i, mobj:%i", special, mo? mo->thinker.id : 0);
 
     success = false;
     switch(special)

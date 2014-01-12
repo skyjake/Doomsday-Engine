@@ -937,8 +937,8 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
     else
     {
-        Con_Message("P_TouchSpecialMobj: Unknown gettable thing %i.",
-                    (int) special->type);
+        App_Log(DE2_MAP_WARNING, "P_TouchSpecialMobj: Unknown gettable thing %i",
+                (int) special->type);
     }
 
     if(special->flags & MF_COUNTITEM)

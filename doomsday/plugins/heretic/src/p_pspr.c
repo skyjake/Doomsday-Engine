@@ -582,10 +582,8 @@ void P_BringUpWeapon(struct player_s* player)
 
     wminfo = WEAPON_INFO(raiseWeapon, player->class_, (player->powers[PT_WEAPONLEVEL2]? 1:0));
 
-#if _DEBUG
-    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
-                (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
-#endif
+    App_Log(DE2_MAP_XVERBOSE, "P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
+            (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
@@ -598,9 +596,7 @@ void P_FireWeapon(player_t *player)
     statenum_t          attackState;
     int                 lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
-#ifdef _DEBUG
-    Con_Message("P_FireWeapon: player %i", (int)(player - players));
-#endif
+    App_Log(DE2_DEV_MAP_XVERBOSE, "P_FireWeapon: player %i", (int)(player - players));
 
     if(!P_CheckAmmo(player))
         return;
@@ -608,9 +604,8 @@ void P_FireWeapon(player_t *player)
     NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
-#ifdef _DEBUG
-    Con_Message("P_FireWeapon: Setting player %i to attack state.", (int)(player - players));
-#endif
+    App_Log(DE2_DEV_MAP_XVERBOSE, "P_FireWeapon: Setting player %i to attack state",
+            (int)(player - players));
 
     if(player->refire)
         attackState = weaponInfo[player->readyWeapon][player->class_].mode[lvl].states[WSN_ATTACK_HOLD];
@@ -1911,9 +1906,7 @@ void C_DECL A_Egg(mobj_t* mo)
     if(!mo->player)
         return;
 
-#ifdef _DEBUG
-    Con_Message("A_Egg: Spawning EGGFXs.");
-#endif
+    App_Log(DE2_DEV_MAP_MSG, "A_Egg: Spawning EGGFXs");
 
 #if __JHEXEN__
     P_SpawnPlayerMissile(MT_EGGFX, mo);

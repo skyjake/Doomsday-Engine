@@ -409,10 +409,8 @@ void P_BringUpWeapon(player_t* player)
 
     wminfo = WEAPON_INFO(raiseWeapon, player->class_, 0);
 
-#if _DEBUG
-    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
-                (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
-#endif
+    App_Log(DE2_MAP_XVERBOSE, "P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i",
+            (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);

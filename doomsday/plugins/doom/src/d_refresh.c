@@ -174,7 +174,9 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
     }
 
     if(filter)
-        Con_Message("R_ViewFilterColor: Real strange filter number: %d.", filter);
+    {
+        App_Log(DE2_GL_WARNING, "Invalid view filter number: %d", filter);
+    }
 
     return false;
 }
@@ -187,12 +189,7 @@ void R_UpdateViewFilter(int player)
     int palette = 0;
 
     if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: R_UpdateViewFilter: Invalid player #%i, ignoring.", player);
-#endif
         return;
-    }
 
     // Not currently present?
     if(!plr->plr->inGame) return;
@@ -344,7 +341,6 @@ void Mobj_UpdateColorMap(mobj_t* mo)
     if(mo->flags & MF_TRANSLATION)
     {
         mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
-        //Con_Message("Mobj %i color tmap:%i", mo->thinker.id, mo->tmap);
     }
     else
     {

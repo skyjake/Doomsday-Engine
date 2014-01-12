@@ -445,8 +445,8 @@ void D_PostInit(void)
     // Are we autostarting?
     if(autoStart)
     {
-        Con_Message("Warp to Episode %d, Map %d, Skill %d", startEpisode+1,
-                    startMap+1, startSkill);
+        App_Log(DE2_LOG_NOTE, "Warp to Episode %d, Map %d, Skill %d", startEpisode+1,
+                startMap+1, startSkill);
     }
 
     // Validate episode and map.

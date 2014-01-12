@@ -114,12 +114,7 @@ void R_UpdateViewFilter(int player)
     if(IS_DEDICATED && !player) return;
 
     if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: R_UpdateViewFilter: Invalid player #%i, ignoring.", player);
-#endif
         return;
-    }
 
     // Not currently present?
     if(!plr->plr->inGame) return;

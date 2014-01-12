@@ -147,7 +147,7 @@ static IDirectSound3DBuffer8* get3DBuffer(IDirectSoundBuffer8* buf8)
     if(FAILED(hr = buf8->QueryInterface(IID_IDirectSound3DBuffer8,
                                         (LPVOID*) &buf3d)))
     {
-        Con_Message("dsDirectSound::get3DBuffer: Failed to get 3D interface (0x%x).", hr);
+        App_Log(DE2_DEV_AUDIO_WARNING, "[DirectSound] get3DBuffer: Failed to get 3D interface (0x%x)", hr);
         buf3d = NULL;
     }
 
