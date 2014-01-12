@@ -1168,7 +1168,7 @@ D_CMD(MakeLocal)
     p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
-        LogBuffer_Printf(DE2_LOG_ERROR | DE2_LOG_SCR, "Invalid console number %i.\n", p);
+        LogBuffer_Printf(DE2_LOG_SCR_ERROR, "Invalid console number %i.\n", p);
         return false;
     }
     plr = &players[p];
@@ -1237,7 +1237,7 @@ D_CMD(SpawnMobj)
 
     if(argc != 5 && argc != 6)
     {
-        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_NOTE, "Usage: %s (type) (x) (y) (z) (angle)\n", argv[0]);
+        LogBuffer_Printf(DE2_LOG_SCR_NOTE, "Usage: %s (type) (x) (y) (z) (angle)\n", argv[0]);
         LogBuffer_Printf(DE2_LOG_SCR, "Type must be a defined Thing ID or Name.\n");
         LogBuffer_Printf(DE2_LOG_SCR, "Z is an offset from the floor, 'floor', 'ceil' or 'random'.\n");
         LogBuffer_Printf(DE2_LOG_SCR, "Angle (0..360) is optional.\n");
@@ -1246,7 +1246,7 @@ D_CMD(SpawnMobj)
 
     if(IS_CLIENT)
     {
-        LogBuffer_Printf(DE2_LOG_SCR | DE2_LOG_ERROR, "%s can't be used by clients\n", argv[0]);
+        LogBuffer_Printf(DE2_LOG_SCR_ERROR, "%s can't be used by clients\n", argv[0]);
         return false;
     }
 
