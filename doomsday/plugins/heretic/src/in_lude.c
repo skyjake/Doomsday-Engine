@@ -418,6 +418,22 @@ void IN_UnloadPics(void)
     /* Nothing to do...*/
 }
 
+static void nextIntermissionState()
+{
+    if(interState == 2)
+    {
+        // Prepare for busy mode.
+        BusyMode_FreezeGameForBusyMode();
+    }
+    interState++;
+}
+
+static void endIntermissionGoToNextLevel()
+{
+    BusyMode_FreezeGameForBusyMode();
+    interState = 3;
+}
+
 void IN_Ticker(void)
 {
     if(!intermission)
@@ -441,11 +457,12 @@ void IN_Ticker(void)
     interTime++;
     if(oldInterTime < interTime)
     {
-        interState++;
+        nextIntermissionState();
+
         if(wbs->episode > 2 && interState >= 1)
         {
             // Extended Wad levels:  skip directly to the next level
-            interState = 3;
+            endIntermissionGoToNextLevel();
         }
 
         switch(interState)
@@ -493,7 +510,7 @@ void IN_Ticker(void)
             return;
         }
 
-        interState = 3;
+        endIntermissionGoToNextLevel();
         cnt = 10;
         skipIntermission = false;
         S_StartSound(SFX_DORCLS, NULL);
@@ -562,10 +579,10 @@ void IN_Drawer(void)
     {
         return;
     }
-    if(interState == 3)
+    /*if(interState == 3)
     {
         return;
-    }
+    }*/
 
     if(oldInterState != 2 && interState == 2)
     {
