@@ -71,7 +71,7 @@ struct Generator
 {
     /**
      * Particle animation is defined as a sequence of (perhaps interpolated)
-     * property value stages->
+     * property value stages.
      */
     struct ParticleStage
     {
@@ -171,7 +171,7 @@ struct Generator
     void configureFromDef(ded_ptcgen_t const *def);
 
     /**
-     * Spawn and move the generated particles.
+     * Generate and/or move the particles.
      */
     void runTick();
 

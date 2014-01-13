@@ -54,7 +54,6 @@
 #include "Hand"
 #include "Surface"
 #include "world/map.h"
-#include "world/generators.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #include "Contact"
@@ -4818,19 +4817,14 @@ static void drawSoundEmitters(Map &map)
     }
 }
 
-// Currently active Generators collection.
-static Generators *gens;
-
 static String labelForGenerator(Generator const *gen)
 {
-    DENG_ASSERT(gen != 0);
+    DENG2_ASSERT(gen != 0);
     return String("%1").arg(gen->id());
 }
 
-static int drawGenerator(Generator *gen, void *context)
+static int drawGenerator(Generator *gen, void * /*context*/)
 {
-    DENG2_UNUSED(context);
-
 #define MAX_GENERATOR_DIST  2048
 
     if(gen->source || gen->flags.testFlag(Generator::Untriggered))

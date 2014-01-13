@@ -35,7 +35,7 @@
 #include "BspLeaf"
 #include "Line"
 #include "Plane"
-#include "world/generators.h"
+#include "world/generators.h" // Generators::GENERATORS_MAX
 #include "world/map.h"
 
 #include "render/rend_main.h"

@@ -26,9 +26,6 @@
 #include "world/worldsystem.h" /// ddMapSetup
 #include "Surface"
 #include "Sector"
-#ifdef __CLIENT__
-#  include "world/generators.h"
-#endif
 #include <de/Log>
 
 using namespace de;
@@ -128,7 +125,7 @@ DENG2_PIMPL(Plane)
     }
 
 #ifdef __CLIENT__
-    struct generatorbyplaneiterator_params_t
+    struct findgeneratorworker_params_t
     {
         Plane *plane;
         Generator *found;
@@ -136,7 +133,7 @@ DENG2_PIMPL(Plane)
 
     static int findGeneratorWorker(Generator *gen, void *context)
     {
-        generatorbyplaneiterator_params_t *p = (generatorbyplaneiterator_params_t *)context;
+        findgeneratorworker_params_t *p = (findgeneratorworker_params_t *)context;
         if(gen->plane == p->plane)
         {
             p->found = gen;
@@ -148,7 +145,7 @@ DENG2_PIMPL(Plane)
     /// @todo Cache this result.
     Generator *findGenerator()
     {
-        generatorbyplaneiterator_params_t parm;
+        findgeneratorworker_params_t parm;
         parm.plane = thisPublic;
         parm.found = 0;
         self.map().generatorIterator(findGeneratorWorker, &parm);
