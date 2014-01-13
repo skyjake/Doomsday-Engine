@@ -29,6 +29,7 @@
 #include <de/rect.h>
 
 class BspLeaf;
+struct Generator;
 class Lumobj;
 
 struct viewport_t
@@ -163,6 +164,20 @@ bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf);
  * @see R_ViewerBspLeafIsVisible()
  */
 void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes = true);
+
+/**
+ * Returns @c true iff the (particle) generator is marked as visible for the current frame.
+ *
+ * @see R_ViewerGeneratorMarkVisible()
+ */
+bool R_ViewerGeneratorIsVisible(Generator const &generator);
+
+/**
+ * Mark the (particle) generator as visible for the current frame.
+ *
+ * @see R_ViewerGeneratorIsVisible()
+ */
+void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes = true);
 
 /// @return  Distance in map space units between the lumobj and viewer.
 double R_ViewerLumobjDistance(int idx);

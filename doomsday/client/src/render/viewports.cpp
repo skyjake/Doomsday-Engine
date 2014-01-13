@@ -71,6 +71,8 @@ static byte *luminousClipped;
 static uint *luminousOrder;
 static QBitArray bspLeafsVisible;
 
+static QBitArray generatorsVisible(Map::MAX_GENERATORS);
+
 static viewdata_t viewDataOfConsole[DDMAXPLAYERS]; // Indexed by console number.
 
 static int frameCount; // Just for profiling purposes.
@@ -1112,6 +1114,16 @@ void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes)
     bspLeafsVisible.setBit(bspLeaf.indexInMap(), yes);
 }
 
+bool R_ViewerGeneratorIsVisible(Generator const &generator)
+{
+    return generatorsVisible.testBit(generator.id());
+}
+
+void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes)
+{
+    generatorsVisible.setBit(generator.id(), yes);
+}
+
 double R_ViewerLumobjDistance(int idx)
 {
     /// @todo Do not assume the current map.
@@ -1170,6 +1182,9 @@ void R_BeginFrame()
 
     bspLeafsVisible.resize(map.bspLeafCount());
     bspLeafsVisible.fill(false);
+
+    // Clear all generator visibility flags.
+    generatorsVisible.fill(false);
 
     int numLuminous = map.lumobjCount();
     if(!(numLuminous > 0)) return;

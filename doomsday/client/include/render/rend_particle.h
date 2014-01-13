@@ -45,17 +45,6 @@ void Rend_ParticleLoadExtraTextures();
 void Rend_ParticleReleaseExtraTextures();
 
 /**
- * Prepare for rendering a new view of the world.
- */
-void Rend_ParticleInitForNewFrame();
-
-/**
- * The given sector is visible. All PGs in it should be rendered.
- * Scans PG links.
- */
-void Rend_ParticleMarkInSectorVisible(Sector *sector);
-
-/**
  * Render all the visible particle generators.
  * We must render all particles ordered back->front, or otherwise
  * particles from one generator will obscure particles from another.

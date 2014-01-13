@@ -2906,6 +2906,12 @@ static void projectLeafSprites()
     leaf->setLastSpriteProjectFrame(R_FrameCount());
 }
 
+static int generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
+{
+    R_ViewerGeneratorMarkVisible(*generator);
+    return 0; // Continue iteration.
+}
+
 /**
  * @pre Assumes the leaf is at least partially visible.
  */
@@ -2941,8 +2947,11 @@ static void drawCurrentLeaf()
         clipLeafLumobjsBySight();
     }
 
-    // Mark particle generators in the sector visible.
-    Rend_ParticleMarkInSectorVisible(leaf->sectorPtr());
+    // Mark generators in the sector visible.
+    if(useParticles)
+    {
+        leaf->map().generatorListIterator(leaf->sector().indexInMap(), generatorMarkVisibleWorker);
+    }
 
     /*
      * Sprites for this BSP leaf have to be drawn.
@@ -3882,9 +3891,6 @@ void Rend_RenderMap(Map &map)
 
         // Make vissprites of all the visible decorations.
         generateDecorationFlares(map);
-
-        // Clear particle generator visibilty info.
-        Rend_ParticleInitForNewFrame();
 
         viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
         eyeOrigin = viewData->current.origin;

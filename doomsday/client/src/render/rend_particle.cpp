@@ -59,7 +59,6 @@ float particleDiffuse = 4;
 static size_t numParts;
 static dd_bool hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
 static dd_bool hasPointTexs[NUM_TEX_NAMES];
-static byte visibleGenerators[Map::MAX_GENERATORS];
 
 static size_t orderSize;
 static porder_t *order;
@@ -72,17 +71,6 @@ void Rend_ParticleRegister()
     C_VAR_FLOAT("rend-particle-rate",              &particleSpawnRate, 0,              0, 5);
     C_VAR_FLOAT("rend-particle-diffuse",           &particleDiffuse,   CVF_NO_MAX,     0, 0);
     C_VAR_INT  ("rend-particle-visible-near",      &particleNearLimit, CVF_NO_MAX,     0, 0);
-}
-
-int R_ViewerMarkGeneratorVisible(Generator *gen, void * /*context*/)
-{
-    visibleGenerators[gen->id()] = true;
-    return false; // Continue iteration.
-}
-
-dd_bool R_ViewerGeneratorIsVisible(Generator const *gen)
-{
-    return visibleGenerators[gen->id()];
 }
 
 static float pointDist(fixed_t const c[3])
@@ -223,25 +211,10 @@ void Rend_ParticleReleaseExtraTextures()
     de::zap(ptctexname);
 }
 
-void Rend_ParticleInitForNewFrame()
-{
-    if(!useParticles) return;
-
-    // Clear all visibility flags.
-    de::zap(visibleGenerators);
-}
-
-void Rend_ParticleMarkInSectorVisible(Sector *sector)
-{
-    if(!useParticles || !sector) return;
-
-    sector->map().generatorListIterator(sector->indexInMap(), R_ViewerMarkGeneratorVisible);
-}
-
 /**
  * Sorts in descending order.
  */
-static int C_DECL comparePOrder(const void* pt1, const void* pt2)
+static int comparePOrder(void const *pt1, void const *pt2)
 {
     if(((porder_t *) pt1)->distance > ((porder_t *) pt2)->distance) return -1;
     else if(((porder_t *) pt1)->distance < ((porder_t *) pt2)->distance) return 1;
@@ -276,7 +249,7 @@ static void expandOrderBuffer(size_t max)
 
 static int countActiveGeneratorParticlesWorker(Generator *gen, void *context)
 {
-    if(R_ViewerGeneratorIsVisible(gen))
+    if(R_ViewerGeneratorIsVisible(*gen))
     {
         size_t &count = *(size_t *) context;
         ParticleInfo const *pinfo = gen->particleInfo();
@@ -295,7 +268,7 @@ static int populateSortBuffer(Generator *gen, void *context)
 {
     size_t *sortIndex = (size_t *) context;
 
-    if(!R_ViewerGeneratorIsVisible(gen))
+    if(!R_ViewerGeneratorIsVisible(*gen))
         return false; // Continue iteration.
 
     ded_ptcgen_t const *def = gen->def;
