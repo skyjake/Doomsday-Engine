@@ -1144,7 +1144,6 @@ dd_bool P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
                     (thing->onMobj->flags & MF_SOLID) != 0,
                     thing, thing->thinker.id);
         }
-#endif
     }
 
 #if __JHEXEN__

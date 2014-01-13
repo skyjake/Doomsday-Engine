@@ -215,12 +215,12 @@ public:
     void logPatchInfo()
     {
         // Log reader settings and patch version information.
-        LOG_INFO("Patch version: %i Doom version: %i\nNoText: %b")
+        LOG_RES_MSG("DeHackEd patch version: %i, Doom version: %i\nNoText: %b")
             << patchVersion << doomVersion << bool(flags & NoText);
 
         if(patchVersion != 6)
         {
-            LOG_WARNING("Unknown patch version. Unexpected results may occur.") << patchVersion;
+            LOG_WARNING("Unknown DeHackEd patch version, unexpected results may occur") << patchVersion;
         }
     }
 
@@ -638,7 +638,7 @@ public:
                 if(!file.open(QFile::ReadOnly | QFile::Text))
                 {
                     LOG_AS("parseInclude");
-                    LOG_WARNING("Failed opening \"%s\" for read, aborting...") << filePath;
+                    LOG_RES_WARNING("Failed opening \"%s\" for read, aborting...") << filePath;
                 }
                 else
                 {
@@ -647,7 +647,7 @@ public:
                     deh.append(QChar(0));
                     file.close();
 
-                    LOG_INFO("Including \"%s\"...") << F_PrettyPath(filePath.toUtf8().constData());
+                    LOG_RES_VERBOSE("Including \"%s\"...") << F_PrettyPath(filePath.toUtf8().constData());
 
                     try
                     {
@@ -662,7 +662,7 @@ public:
             else
             {
                 LOG_AS("parseInclude");
-                LOG_WARNING("Include directive missing filename, ignoring.");
+                LOG_RES_WARNING("DeHackEd Include directive missing filename");
             }
         }
     }

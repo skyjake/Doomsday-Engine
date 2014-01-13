@@ -1985,7 +1985,7 @@ dd_bool DD_Init(void)
         //Con_Execute(CMDS_DDAY, "conopen", true, false);
         if(!CommandLine_Exists("-noautoselect"))
         {
-            LOG_INFO("Automatic game selection failed");
+            LOG_WARNING("Game could not be selected automatically");
         }
         /// @todo Whether or not to list the games depends on whether the app
         /// has a graphical interface. The graphical client will display the

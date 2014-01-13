@@ -87,7 +87,7 @@ LineSegmentSide *HPlane::Intercept::afterLineSegment() const
 #ifdef DENG_DEBUG
 void HPlane::Intercept::debugPrint() const
 {
-    LOG_INFO("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
+    LOGDEV_MAP_MSG("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
         << vertex().indexInMap()
         << vertex().origin().asText()
         << (_before && _before->hasSector()? _before->sector().indexInArchive() : -1)

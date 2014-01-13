@@ -77,7 +77,7 @@ DENG2_PIMPL(Id1Map)
 
     bool loadVertexes(reader_s &reader, int numElements)
     {
-        LOG_TRACE("Processing vertexes...");
+        LOGDEV_MAP_XVERBOSE("Processing vertexes...");
         for(int n = 0; n < numElements; ++n)
         {
             switch(format)
@@ -100,7 +100,7 @@ DENG2_PIMPL(Id1Map)
 
     bool loadLineDefs(reader_s &reader, int numElements)
     {
-        LOG_TRACE("Processing line definitions...");
+        LOGDEV_MAP_XVERBOSE("Processing line definitions...");
         if(numElements)
         {
             lines.reserve(lines.size() + numElements);
@@ -126,7 +126,7 @@ DENG2_PIMPL(Id1Map)
 
     bool loadSideDefs(reader_s &reader, int numElements)
     {
-        LOG_TRACE("Processing side definitions...");
+        LOGDEV_MAP_XVERBOSE("Processing side definitions...");
         if(numElements)
         {
             sides.reserve(sides.size() + numElements);
@@ -151,7 +151,7 @@ DENG2_PIMPL(Id1Map)
 
     bool loadSectors(reader_s &reader, int numElements)
     {
-        LOG_TRACE("Processing sectors...");
+        LOGDEV_MAP_XVERBOSE("Processing sectors...");
         if(numElements)
         {
             sectors.reserve(sectors.size() + numElements);
@@ -175,7 +175,7 @@ DENG2_PIMPL(Id1Map)
 
     bool loadThings(reader_s &reader, int numElements)
     {
-        LOG_TRACE("Processing things...");
+        LOGDEV_MAP_XVERBOSE("Processing things...");
         if(numElements)
         {
             things.reserve(things.size() + numElements);
@@ -201,7 +201,7 @@ DENG2_PIMPL(Id1Map)
 
     bool loadSurfaceTints(reader_s &reader, int numElements)
     {
-        LOG_TRACE("Processing surface tints...");
+        LOGDEV_MAP_XVERBOSE("Processing surface tints...");
         if(numElements)
         {
             surfaceTints.reserve(surfaceTints.size() + numElements);
@@ -303,7 +303,7 @@ DENG2_PIMPL(Id1Map)
                 {
                     if(i->xArgs[1] <= 0)
                     {
-                        LOG_WARNING("Linedef missing (probably #%d) in explicit polyobj (tag:%d).") << n + 1 << tag;
+                        LOG_MAP_WARNING("Linedef missing (probably #%d) in explicit polyobj (tag:%d)") << n + 1 << tag;
                         return false;
                     }
 
@@ -329,7 +329,7 @@ DENG2_PIMPL(Id1Map)
                 {
                     if(i->xType == PO_LINE_EXPLICIT && i->xArgs[0] == tag)
                     {
-                        LOG_WARNING("Linedef missing (#%d) in explicit polyobj (tag:%d).") << n << tag;
+                        LOG_MAP_WARNING("Linedef missing (#%d) in explicit polyobj (tag:%d)") << n << tag;
                         return false;
                     }
                 }
@@ -343,7 +343,7 @@ DENG2_PIMPL(Id1Map)
 
         if(polyLines.isEmpty())
         {
-            LOG_WARNING("Failed to locate a single line for polyobj (tag:%d).") << tag;
+            LOG_MAP_WARNING("Failed to locate a single line for polyobj (tag:%d)") << tag;
             return false;
         }
 
@@ -363,7 +363,7 @@ DENG2_PIMPL(Id1Map)
 
         if(format == HexenFormat)
         {
-            LOG_TRACE("Locating polyobjs...");
+            LOGDEV_MAP_XVERBOSE("Locating polyobjs...");
             DENG2_FOR_EACH(Things, i, things)
             {
                 // A polyobj anchor?
@@ -375,12 +375,12 @@ DENG2_PIMPL(Id1Map)
             }
         }
 
-        LOG_MAP_NOTE("Analyses completed in %.2f seconds") << begunAt.since();
+        LOGDEV_MAP_MSG("Analyses completed in %.2f seconds") << begunAt.since();
     }
 
     void transferVertexes()
     {
-        LOG_TRACE("Transfering vertexes...");
+        LOGDEV_MAP_XVERBOSE("Transfering vertexes...");
         int const numVertexes = vertexCount();
         int *indices = new int[numVertexes];
         for(int i = 0; i < numVertexes; ++i)
@@ -393,7 +393,7 @@ DENG2_PIMPL(Id1Map)
 
     void transferSectors()
     {
-        LOG_TRACE("Transfering sectors...");
+        LOGDEV_MAP_XVERBOSE("Transfering sectors...");
 
         DENG2_FOR_EACH(Sectors, i, sectors)
         {
@@ -421,7 +421,7 @@ DENG2_PIMPL(Id1Map)
 
     void transferLinesAndSides()
     {
-        LOG_TRACE("Transfering lines and sides...");
+        LOGDEV_MAP_XVERBOSE("Transfering lines and sides...");
         DENG2_FOR_EACH(Lines, i, lines)
         {
             mside_t *front = ((i)->sides[RIGHT] >= 0? &sides[(i)->sides[RIGHT]] : 0);
@@ -493,7 +493,7 @@ DENG2_PIMPL(Id1Map)
     {
         if(surfaceTints.empty()) return;
 
-        LOG_TRACE("Transfering surface tints...");
+        LOGDEV_MAP_XVERBOSE("Transfering surface tints...");
         DENG2_FOR_EACH(SurfaceTints, i, surfaceTints)
         {
             int idx = i - surfaceTints.begin();
@@ -511,7 +511,7 @@ DENG2_PIMPL(Id1Map)
     {
         if(polyobjs.empty()) return;
 
-        LOG_TRACE("Transfering polyobjs...");
+        LOGDEV_MAP_XVERBOSE("Transfering polyobjs...");
         DENG2_FOR_EACH(Polyobjs, i, polyobjs)
         {
             MPE_PolyobjCreate(i->lineIndices.constData(), i->lineIndices.count(),
@@ -525,7 +525,7 @@ DENG2_PIMPL(Id1Map)
     {
         if(things.empty()) return;
 
-        LOG_TRACE("Transfering things...");
+        LOGDEV_MAP_XVERBOSE("Transfering things...");
         DENG2_FOR_EACH(Things, i, things)
         {
             int idx = i - things.begin();

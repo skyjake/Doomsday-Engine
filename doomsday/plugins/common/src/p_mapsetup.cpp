@@ -579,8 +579,8 @@ static void spawnMapObjects()
             }
 
             App_Log(DE2_DEV_MAP_XVERBOSE, "Spawning mobj at (%g, %g, %g) angle:%i ednum:%i flags:%x",
-                    spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
-                    spot->doomedNum, spot->flags);
+                    spot->origin[VX], spot->origin[VY], spot->origin[VZ], spot->angle,
+                    spot->doomEdNum, spot->flags);
 
             if(mobj_t *mo = P_SpawnMobj(type, spot->origin, spot->angle, spot->flags))
             {

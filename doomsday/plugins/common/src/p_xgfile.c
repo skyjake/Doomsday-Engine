@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <de/memory.h>
 
 #if __JDOOM__
 #  include "jdoom.h"

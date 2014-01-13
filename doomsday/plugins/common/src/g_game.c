@@ -3948,7 +3948,7 @@ D_CMD(CycleTextureGamma)
 
 D_CMD(ListMaps)
 {
-    App_Log(DE2_LOG_MSG, "Available maps:");
+    App_Log(DE2_LOG_MESSAGE, "Available maps:");
     G_PrintMapList();
     return true;
 }

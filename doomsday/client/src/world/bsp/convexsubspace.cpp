@@ -168,7 +168,7 @@ struct Continuity
 #ifdef DENG_DEBUG
     void debugPrint() const
     {
-        LOG_INFO("Continuity %p (sector:%i, coverage:%f, discord:%i)")
+        LOGDEV_MAP_MSG("Continuity %p (sector:%i, coverage:%f, discord:%i)")
             << this
             << (sector? sector->indexInArchive() : -1)
             << coverage

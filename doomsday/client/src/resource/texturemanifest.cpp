@@ -68,9 +68,6 @@ Texture *TextureManifest::derive()
     }
     else
     {
-/*#ifdef DENG_DEBUG
-        LOG_INFO("\"%s\" already has an existing texture, reconfiguring.") << composeUri();
-#endif*/
         Texture *tex = &texture();
 
         /// @todo Materials and Surfaces should be notified of this!

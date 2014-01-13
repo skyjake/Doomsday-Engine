@@ -251,7 +251,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             {
                 return &linkStore[linkStoreCursor++];
             }
-            LOG_WARNING("Exhausted generator link storage");
+            LOG_MAP_WARNING("Exhausted generator link storage");
             return 0;
         }
     };
@@ -567,7 +567,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
             if(!leaf.hasParent())
             {
-                LOG_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
+                LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
                     << &leaf << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
 
                 // Attribute this leaf directly to the map.
@@ -590,7 +590,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
                 if(discontinuities)
                 {
-                    LOG_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
+                    LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
                                 "is not contiguous (%i gaps/overlaps).\n%s")
                         << &leaf << leaf.poly().center().asText()
                         << (leaf.hasParent()? leaf.parent().as<Sector>().indexInArchive() : -1)
@@ -629,7 +629,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // It begins...
         Time begunAt;
 
-        LOG_TRACE("Building BSP for \"%s\" with split cost factor %d...")
+        LOGDEV_MAP_XVERBOSE("Building BSP for \"%s\" with split cost factor %d...")
             << uri << bspSplitFactor;
 
         // First we'll scan for so-called "one-way window" constructs and mark
@@ -659,8 +659,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             // Build a BSP!
             BspTreeNode *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
 
-            LOG_INFO("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes."
-                     "\nTree balance is %d:%d.")
+            LOG_MAP_VERBOSE("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes. "
+                            "Tree balance is %d:%d.")
                     << partitioner.numNodes()    << partitioner.numLeafs()
                     << partitioner.numSegments() << partitioner.numVertexes()
                     << (rootNode->isLeaf()? 0 : rootNode->right().height())
@@ -728,11 +728,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
         catch(Error const &er)
         {
-            LOG_WARNING("%s.") << er.asText();
+            LOG_MAP_WARNING("%s.") << er.asText();
         }
 
         // How much time did we spend?
-        LOG_INFO(String("BSP built in %1 seconds.").arg(begunAt.since(), 0, 'g', 2));
+        LOGDEV_MAP_VERBOSE("BSP built in %.2f seconds") << begunAt.since();
 
         return bspRoot != 0;
     }
@@ -761,7 +761,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             new LineBlockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                     bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_INFO("Line blockmap dimensions:")
+        LOG_MAP_VERBOSE("Line blockmap dimensions:")
             << lineBlockmap->dimensions().asText();
 
         // Populate the blockmap.
@@ -781,7 +781,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_INFO("Mobj blockmap dimensions:")
+        LOG_MAP_VERBOSE("Mobj blockmap dimensions:")
             << mobjBlockmap->dimensions().asText();
     }
 
@@ -902,7 +902,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_INFO("Polyobj blockmap dimensions:")
+        LOG_MAP_VERBOSE("Polyobj blockmap dimensions:")
             << polyobjBlockmap->dimensions().asText();
     }
 
@@ -919,7 +919,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_INFO("BSP leaf blockmap dimensions:")
+        LOG_MAP_VERBOSE("BSP leaf blockmap dimensions:")
             << bspLeafBlockmap->dimensions().asText();
 
         // Populate the blockmap.
@@ -1308,7 +1308,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                         {
                             // Warning message disabled as these are occuring so thick and fast
                             // that logging is pointless (and negatively affecting performance).
-                            //LOG_DEBUG("Attempted repeat link of generator %p to list %u.")
+                            //LOGDEV_MAP_VERBOSE("Attempted repeat link of generator %p to list %u.")
                             //        << gen << listIndex;
                             found = true; // No, no...
                         }
@@ -1496,7 +1496,7 @@ void Map::initGenerators()
     Time begunAt;
     P_SpawnTypeParticleGens(*this);
     P_SpawnMapParticleGens(*this);
-    LOG_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
+    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
 void Map::clearClMobjs()
@@ -2970,7 +2970,7 @@ D_CMD(InspectMap)
 
     if(!App_WorldSystem().hasMap())
     {
-        LOG_WARNING("No map is currently loaded.");
+        LOG_MAP_WARNING("No map is currently loaded");
         return false;
     }
 
@@ -2979,7 +2979,7 @@ D_CMD(InspectMap)
 
 #define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
 
-    LOG_MSG(_E(b) "Current map elements:");
+    LOG_MAP_MSG(_E(b) "Current map elements:");
     String str;
     QTextStream os(&str);
     os << TABBED(map.vertexCount(),  "Vertexes");
@@ -2989,7 +2989,7 @@ D_CMD(InspectMap)
     os << TABBED(map.bspNodeCount(), "BSP Nodes");
     os << TABBED(map.bspLeafCount(), "BSP Leafs");
 
-    LOG_INFO("%s") << str.rightStrip();
+    LOG_MAP_MSG("%s") << str.rightStrip();
 
     return true;
 
@@ -3242,7 +3242,7 @@ void buildVertexLineOwnerRings(Map::Vertexes const &vertexes, Map::Lines &editab
         last->_angle = last->angle() - firstAngle;
 
 /*#ifdef DENG2_DEBUG
-        LOG_VERBOSE("Vertex #%i: line owners #%i")
+        LOG_MAP_VERBOSE("Vertex #%i: line owners #%i")
             << editmap.vertexes.indexOf(v) << v->lineOwnerCount();
 
         LineOwner const *base = v->firstLineOwner();
@@ -3250,7 +3250,7 @@ void buildVertexLineOwnerRings(Map::Vertexes const &vertexes, Map::Lines &editab
         uint idx = 0;
         do
         {
-            LOG_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
+            LOG_MAP_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
                 << idx << cur->prev().line().indexInMap() << cur->line().indexInMap()
                 << cur->next().line().indexInMap() << BANG2DEG(cur->angle());
 
@@ -3405,7 +3405,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
             line->updateAABox();
         }
 
-        LOG_INFO("Pruned %d vertexes (%d equivalents, %d unused).")
+        LOGDEV_MAP_NOTE("Pruned %d vertexes (%d equivalents, %d unused).")
             << prunedCount << (prunedCount - numUnused) << numUnused;
     }
 }
@@ -3417,8 +3417,8 @@ bool Map::endEditing()
     d->editingEnabled = false;
 
     LOG_AS("Map");
-    LOG_VERBOSE("Editing ended.");
-    LOG_DEBUG("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors.")
+    LOG_MAP_VERBOSE("Editing ended.");
+    LOGDEV_MAP_VERBOSE("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors.")
         << d->mesh.vertexCount()        << d->editable.lines.count()
         << d->editable.polyobjs.count() << d->editable.sectors.count();
 
@@ -3488,7 +3488,7 @@ bool Map::endEditing()
 
     // Determine the map bounds.
     d->updateBounds();
-    LOG_INFO("Geometry bounds:") << Rectangled(d->bounds.min, d->bounds.max).asText();
+    LOG_MAP_VERBOSE("Geometry bounds:") << Rectangled(d->bounds.min, d->bounds.max).asText();
 
     // Build a line blockmap.
     d->initLineBlockmap();

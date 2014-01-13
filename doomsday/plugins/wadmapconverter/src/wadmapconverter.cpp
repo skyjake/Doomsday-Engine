@@ -53,7 +53,7 @@ static lumpnum_t locateMapMarkerLumpForUri(Uri const &uri)
 static void collectMapLumps(MapDataLumps &lumps, lumpnum_t startLump)
 {
     LOG_AS("WadMapConverter");
-    LOG_TRACE("Locating data lumps...");
+    LOG_RES_XVERBOSE("Locating data lumps...");
 
     if(startLump < 0) return;
 
@@ -192,7 +192,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
         catch(Id1Map::LoadError const &er)
         {
             LOG_AS("WadMapConverter");
-            LOG_WARNING("Load error: %s\nAborting conversion...") << er.asText();
+            LOG_MAP_ERROR("Load error: %s") << er.asText();
         }
     }
 
