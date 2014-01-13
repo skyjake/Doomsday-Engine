@@ -63,7 +63,6 @@ namespace de {
 class Blockmap;
 class EntityDatabase;
 #ifdef __CLIENT__
-class Generators;
 class LightGrid;
 #endif
 class Thinkers;
@@ -510,12 +509,36 @@ public:
     }
 
     /**
-     * Retrieve a pointer to the Generators collection for the map. If no collection
-     * has yet been constructed a new empty collection will be initialized.
-     *
-     * @return  Generators collection for the map.
+     * Attempt to spawn a new (particle) generator for the map. If no free identifier
+     * is available then @c 0 is returned.
      */
-    Generators &generators();
+    Generator *newGenerator();
+
+    void unlink(Generator &generator);
+
+    /**
+     * Iterate over all generators in the map making a callback for each. Iteration
+     * ends when all generators have been processed or a callback returns non-zero.
+     *
+     * @param callback  Callback to make for each iteration.
+     * @param context   User data to be passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int generatorIterator(int (*callback) (Generator *, void *), void *context = 0);
+
+    /**
+     * Iterate over all generators in the map which are present in the identified
+     * list making a callback for each. Iteration ends when all targeted generators
+     * have been processed or a callback returns non-zero.
+     *
+     * @param listIndex  Index of the list to traverse.
+     * @param callback   Callback to make for each iteration.
+     * @param context    User data to be passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int generatorListIterator(uint listIndex, int (*callback) (Generator *, void *), void *context = 0);
 
     /**
      * Add a new lumobj to the map (a copy is made).

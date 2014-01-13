@@ -1,4 +1,4 @@
-/** @file rend_particle.h Particle Effect Rendering.
+/** @file rend_particle.h  Particle effect rendering.
  *
  * @ingroup render
  *
@@ -22,6 +22,8 @@
 
 #ifndef DENG_CLIENT_RENDER_PARTICLE_H
 #define DENG_CLIENT_RENDER_PARTICLE_H
+
+#include "world/map.h"
 
 class Sector;
 
@@ -59,6 +61,6 @@ void Rend_ParticleMarkInSectorVisible(Sector *sector);
  * particles from one generator will obscure particles from another.
  * This would be especially bad with smoke trails.
  */
-void Rend_RenderParticles();
+void Rend_RenderParticles(de::Map &map);
 
 #endif // DENG_CLIENT_RENDER_PARTICLE_H

@@ -1151,6 +1151,74 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
     }
 
+    /**
+     * Perform lazy initialization of the generator collection.
+     */
+    Generators &getGenerators()
+    {
+        // Time to initialize a new collection?
+        if(generators.isNull())
+        {
+            generators.reset(new Generators(self.sectorCount()));
+        }
+        return *generators;
+    }
+
+    static int findOldestGeneratorWorker(Generator *gen, void *context)
+    {
+        Generator **oldest = (Generator **)context;
+        if(!gen->isStatic() && (!(*oldest) || gen->age > (*oldest)->age))
+        {
+            *oldest = gen;
+        }
+        return false; // Continue iteration.
+    }
+
+    Generator::Id findIdForNewGenerator()
+    {
+        Generators &gens = getGenerators();
+
+        // Prefer allocating a new generator if we've a spare id.
+        Generator::Id id = gens.nextAvailableId();
+        if(id >= 0) return id + 1;
+
+        // See if there is an existing generator we can supplant.
+        /// @todo Optimize: Generators could maintain an age-sorted list.
+        Generator *oldest = 0;
+        gens.iterate(findOldestGeneratorWorker, &oldest);
+        if(oldest) return oldest->id() + 1; // 1-based index.
+
+        return 0; // None found.
+    }
+
+    static int linkGeneratorParticlesWorker(Generator *gen, void *context)
+    {
+        Instance *inst = static_cast<Instance *>(context);
+        /// @todo Overkill?
+        ParticleInfo const *pInfo = gen->particleInfo();
+        for(int i = 0; i < gen->count; ++i, pInfo++)
+        {
+            if(pInfo->stage < 0 || !pInfo->bspLeaf)
+                continue;
+
+            inst->getGenerators().linkToList(gen, pInfo->bspLeaf->sector().indexInMap());
+        }
+        return 0; // Continue iteration.
+    }
+
+    /**
+     * Link all generated particles into the map so that they will be drawn.
+     */
+    void linkAllParticles()
+    {
+        Generators &gens = getGenerators();
+        gens.emptyLists();
+
+        if(useParticles)
+        {
+            gens.iterate(linkGeneratorParticlesWorker, this);
+        }
+    }
 #endif // __CLIENT__
 };
 
@@ -2281,14 +2349,46 @@ void Map::setSkyFix(bool ceiling, coord_t newHeight)
     else        d->skyFloorHeight   = newHeight;
 }
 
-Generators &Map::generators()
+Generator *Map::newGenerator()
 {
-    // Time to initialize a new collection?
-    if(d->generators.isNull())
+    Generator::Id id = d->findIdForNewGenerator();
+    if(!id) return 0; // Failed; too many generators?
+
+    // If there is already a generator with that id - remove it.
+    if(Generator *gen = d->generators->find(id - 1))
     {
-        d->generators.reset(new Generators(sectorCount()));
+        Generator_Delete(gen);
     }
-    return *d->generators;
+
+    /// @todo Linear allocation when in-game is not good...
+    Generator *gen = (Generator *) Z_Calloc(sizeof(Generator), PU_MAP, 0);
+
+    // Link the thinker to the list of (private) thinkers.
+    gen->thinker.function = (thinkfunc_t) Generator_Thinker;
+    d->thinkers->add(gen->thinker, false /*not public*/);
+
+    // Link the generator into this collection.
+    d->generators->link(gen, id - 1);
+
+    gen->setId(id);
+
+    return gen;
+}
+
+void Map::unlink(Generator &generator)
+{
+    d->getGenerators().unlink(&generator);
+}
+
+int Map::generatorIterator(int (*callback) (Generator *, void *), void *context)
+{
+    return d->getGenerators().iterate(callback, context);
+}
+
+int Map::generatorListIterator(uint listIndex, int (*callback) (Generator *, void *),
+    void *context)
+{
+    return d->getGenerators().iterateList(listIndex, callback, context);
 }
 
 Lumobj &Map::addLumobj(Lumobj const &lumobj)
@@ -2531,9 +2631,7 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
 
         d->generateMobjContacts();
 
-        // Link all active particle generators into the world.
-        P_CreatePtcGenLinks();
-
+        d->linkAllParticles();
         d->linkAllContacts();
     }
 }

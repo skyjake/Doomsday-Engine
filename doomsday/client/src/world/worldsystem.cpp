@@ -667,7 +667,7 @@ DENG2_PIMPL(WorldSystem)
         map->initLightGrid();
         map->initSkyFix();
         map->buildMaterialLists();
-        P_MapSpawnPlaneParticleGens();
+        P_MapSpawnPlaneParticleGens(*map);
 
         // Precaching from 100 to 200.
         Con_SetProgress(100);
@@ -903,7 +903,10 @@ void WorldSystem::reset()
 void WorldSystem::update()
 {
 #ifdef __CLIENT__
-    P_UpdateParticleGens(); // Defs might've changed.
+    if(d->map)
+    {
+        P_UpdateParticleGens(*d->map); // Defs might've changed.
+    }
 #endif
 
     // Reset the archived map cache (the available maps may have changed).

@@ -1,4 +1,4 @@
-/** @file p_particle.h World map generator management (particles).
+/** @file p_particle.h  World map generator management (particles).
  *
  * @ingroup world
  *
@@ -24,14 +24,13 @@
 #define DENG_CLIENT_WORLD_P_PARTICLE_H
 
 #include <de/Vector>
-
 #include "def_data.h"
+#include "map.h"
 
 class BspLeaf;
 class Line;
 class Plane;
-
-#include "map.h"
+struct mobj_s;
 
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        300
@@ -39,35 +38,7 @@ class Plane;
 // Maximum number of particle models (not instances).
 #define MAX_PTC_MODELS          100
 
-/**
- * @defgroup generatorFlags  Generator Flags
- * @ingroup flags
- */
-///@{
-#define PGF_STATIC              0x1 ///< Can't be replaced by anything.
-#define PGF_RELATIVE_VELOCITY   0x2 ///< Particles inherit source's velocity.
-#define PGF_SPAWN_ONLY          0x4 ///< Generator is spawned only when source is being spawned.
-#define PGF_RELATIVE_VECTOR     0x8 ///< Rotate spawn vector w/mobj angle.
-#define PGF_ADD_BLEND           0x10 ///< Render using additive blending.
-#define PGF_FLOOR_SPAWN         0x20 ///< Flat-trig: spawn on floor.
-#define PGF_CEILING_SPAWN       0x40 ///< Flat-trig: spawn on ceiling.
-#define PGF_SPACE_SPAWN         0x80 ///< Flat-trig: spawn in air.
-#define PGF_PARTS_PER_128       0x100 ///< Definition specifies a density.
-#define PGF_MODEL_ONLY          0x200 ///< Only spawn if source is a 3D model.
-#define PGF_SCALED_RATE         0x400 ///< Spawn rate affected by a factor.
-#define PGF_GROUP               0x800 ///< Triggered by all in anim group.
-#define PGF_SUB_BLEND           0x1000 ///< Subtractive blending.
-#define PGF_REVSUB_BLEND        0x2000 ///< Reverse subtractive blending.
-#define PGF_MUL_BLEND           0x4000 ///< Multiplicative blending.
-#define PGF_INVMUL_BLEND        0x8000 ///< Inverse multiplicative blending.
-#define PGF_STATE_CHAIN         0x10000 ///< Chain after existing state gen(s).
-
-// Runtime generator flags:
-#define PGF_UNTRIGGERED         0x8000000
-///@}
-
-// Particle types
-typedef enum {
+enum ParticleType {
     PTC_NONE,
     PTC_POINT,
     PTC_LINE,
@@ -75,66 +46,105 @@ typedef enum {
     PTC_TEXTURE = 100,
     // ...followed by MAX_PTC_TEXTURES types.
     PTC_MODEL = 1000
-} ptc_type_e;
+};
 
 /**
- * @defgroup particleFlags  Particle Flags
- * @ingroup flags
+ * POD structure used when querying the current state of a particle.
  */
-///@{
-#define PTCF_STAGE_TOUCH        0x1 ///< Touching ends current stage.
-#define PTCF_DIE_TOUCH          0x2 ///< Dies from first touch.
-#define PTCF_BRIGHT             0x4 ///< Fullbright.
-#define PTCF_SHADING            0x8 ///< Pseudo-3D.
-#define PTCF_PLANE_FLAT         0x10 ///< Touches a plane => render as flat.
-#define PTCF_STAGE_WALL_TOUCH   0x20 ///< Touch a wall => end stage.
-#define PTCF_STAGE_FLAT_TOUCH   0x40 ///< Touch a flat => end stage.
-#define PTCF_WALL_FLAT          0x80 ///< Touches a wall => render as flat.
-#define PTCF_SPHERE_FORCE       0x100
-#define PTCF_ZERO_YAW           0x200 ///< Set particle yaw to zero.
-#define PTCF_ZERO_PITCH         0x400 ///< Set particle pitch to zero.
-#define PTCF_RANDOM_YAW         0x800
-#define PTCF_RANDOM_PITCH       0x1000
-///@}
-
-typedef struct {
-    int stage; // -1 => particle doesn't exist
+struct ParticleInfo
+{
+    int stage;         ///< -1 => particle doesn't exist
     short tics;
-    fixed_t origin[3]; // Coordinates.
-    fixed_t mov[3]; // Momentum.
-    BspLeaf *bspLeaf; // Updated when needed.
-    Line *contact; // Updated when lines hit/avoided.
-    ushort yaw, pitch; // Rotation angles (0-65536 => 0-360).
-} particle_t;
+    fixed_t origin[3]; ///< Coordinates.
+    fixed_t mov[3];    ///< Momentum.
+    BspLeaf *bspLeaf;  ///< Updated when needed.
+    Line *contact;     ///< Updated when lines hit/avoided.
+    ushort yaw, pitch; ///< Rotation angles (0-65536 => 0-360).
+};
 
-typedef struct {
-    short type;
-    short flags;
-    fixed_t resistance;
-    fixed_t bounce;
-    fixed_t radius;
-    fixed_t gravity;
-} ptcstage_t;
+/**
+ * Particle generator.
+ *
+ * @ingroup world
+ */
+struct Generator
+{
+    /**
+     * Particle animation is defined as a sequence of (perhaps interpolated)
+     * property value stages->
+     */
+    struct ParticleStage
+    {
+        enum Flag
+        {
+            StageTouch     = 0x1,   ///< Touching ends current stage.
+            DieTouch       = 0x2,   ///< Dies from first touch.
+            Bright         = 0x4,   ///< Fullbright.
+            Shading        = 0x8,   ///< Pseudo-3D.
+            PlaneFlat      = 0x10,  ///< Touches a plane => render as flat.
+            StageWallTouch = 0x20,  ///< Touch a wall => end stage.
+            StageFlatTouch = 0x40,  ///< Touch a flat => end stage.
+            WallFlat       = 0x80,  ///< Touches a wall => render as flat.
+            SphereForce    = 0x100,
+            ZeroYaw        = 0x200, ///< Set particle yaw to zero.
+            ZeroPitch      = 0x400, ///< Set particle pitch to zero.
+            RandomYaw      = 0x800,
+            RandomPitch    = 0x1000
+        };
+        Q_DECLARE_FLAGS(Flags, Flag)
 
-// Particle Generator
-typedef struct ptcgen_s {
-    thinker_t thinker; // Func = P_PtcGenThinker
-    Plane *plane; // Flat-triggered.
-    struct ded_ptcgen_s const *def; // The definition of this generator.
-    struct mobj_s *source; // If mobj-triggered.
-    int srcid; // Source mobj ID.
-    int type; // Type-triggered; mobj type number (-1=none).
-    int type2; // Type-triggered; alternate type.
-    fixed_t center[3]; // Used by untriggered/damage gens.
-    fixed_t vector[3]; // Converted from the definition.
-    int flags; // PGF_* flags.
+        short type;
+        Flags flags;
+        fixed_t resistance;
+        fixed_t bounce;
+        fixed_t radius;
+        fixed_t gravity;
+    };
+
+    enum Flag
+    {
+        Static               = 0x1,     ///< Can't be replaced by anything.
+        RelativeVelocity     = 0x2,     ///< Particles inherit source's velocity.
+        SpawnOnly            = 0x4,     ///< Generator is spawned only when source is being spawned.
+        RelativeVector       = 0x8,     ///< Rotate spawn vector w/mobj angle.
+        BlendAdditive        = 0x10,    ///< Render using additive blending.
+        SpawnFloor           = 0x20,    ///< Flat-trig: spawn on floor.
+        SpawnCeiling         = 0x40,    ///< Flat-trig: spawn on ceiling.
+        SpawnSpace           = 0x80,    ///< Flat-trig: spawn in air.
+        Density              = 0x100,   ///< Definition specifies a density.
+        ModelOnly            = 0x200,   ///< Only spawn if source is a 3D model.
+        ScaledRate           = 0x400,   ///< Spawn rate affected by a factor.
+        Group                = 0x800,   ///< Triggered by all in anim group.
+        BlendSubtract        = 0x1000,  ///< Subtractive blending.
+        BlendReverseSubtract = 0x2000,  ///< Reverse subtractive blending.
+        BlendMultiply        = 0x4000,  ///< Multiplicative blending.
+        BlendInverseMultiply = 0x8000,  ///< Inverse multiplicative blending.
+        StateChain           = 0x10000, ///< Chain after existing state gen(s).
+
+        // Runtime generator flags:
+        Untriggered          = 0x8000000
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+    /// Unique identifier associated with each generator.
+    typedef short Id;
+
+    thinker_t thinker;         ///< Func = P_PtcGenThinker
+    Plane *plane;              ///< Flat-triggered.
+    ded_ptcgen_t const *def;   ///< The definition of this generator.
+    struct mobj_s *source;     ///< If mobj-triggered.
+    int srcid;                 ///< Source mobj ID.
+    int type;                  ///< Type-triggered; mobj type number (-1=none).
+    int type2;                 ///< Type-triggered; alternate type.
+    fixed_t center[3];         ///< Used by untriggered/damage gens.
+    fixed_t vector[3];         ///< Converted from the definition.
+    Flags flags;
     float spawnCount;
     float spawnRateMultiplier;
-    int spawnCP; // Spawn cursor.
+    int spawnCP;               ///< Spawn cursor.
     int age;
-    int count; // Number of particles.
-    particle_t *ptcs; // List of particles.
-    ptcstage_t *stages;
+    int count;                 ///< Number of particles generated thus far.
+    ParticleStage *stages;
 
     /**
      * Returns the map in which the generator exists.
@@ -142,12 +152,93 @@ typedef struct ptcgen_s {
      * @see Thinker_Map()
      */
     de::Map &map() const;
-} ptcgen_t;
 
-/**
- * Determine the @em approximate origin of the generator in map space.
- */
-de::Vector3d Generator_Origin(ptcgen_t &gen);
+    /**
+     * Returns the unique identifier of the generator.
+     */
+    Id id() const;
+
+    /**
+     * Change the unique identifier of the generator.
+     *
+     * @param newId  New identifier to apply.
+     */
+    void setId(Id newId);
+
+    /**
+     * Set gen->count prior to calling this function.
+     */
+    void configureFromDef(ded_ptcgen_t const *def);
+
+    /**
+     * Spawn and move the generated particles.
+     */
+    void runTick();
+
+    /**
+     * Run the generator's thinker for the given number of @a tics.
+     */
+    void presimulate(int tics);
+
+    /**
+     * Determine the @em approximate origin of the generator in map space.
+     */
+    de::Vector3d origin() const;
+
+    /**
+     * Returns @c true iff the generator is @em static, meaning it will not be
+     * replaced under any circumstances.
+     */
+    bool isStatic() const;
+
+    /**
+     * Returns the currently configured blending mode for the generator.
+     */
+    blendmode_t blendmode() const;
+
+    /**
+     * Provides readonly access to the generator particle info data.
+     */
+    ParticleInfo const *particleInfo() const;
+
+public: /// @todo make private:
+    /**
+     * Clears all memory used for manipulating the generated particles.
+     */
+    void clearParticles();
+
+    /**
+     * Attempt to spawn a new particle.
+     */
+    ParticleInfo *newParticle();
+
+    /**
+     * The movement is done in two steps:
+     * Z movement is done first. Skyflat kills the particle.
+     * XY movement checks for hits with solid walls (no backsector).
+     * This is supposed to be fast and simple (but not too simple).
+     */
+    void moveParticle(ParticleInfo *pt);
+
+    void spinParticle(ParticleInfo *pt);
+
+    /**
+     * A particle may be "projected" onto the floor or ceiling of a sector.
+     */
+    float particleZ(ParticleInfo const *pt) const;
+
+private:
+    Id _id;               ///< Unique in the map.
+    ParticleInfo *_pinfo; ///< Info about each generated particle.
+};
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Generator::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Generator::ParticleStage::Flags)
+
+typedef Generator::ParticleStage GeneratorParticleStage;
+
+void Generator_Delete(Generator *gen);
+void Generator_Thinker(Generator *gen);
 
 DENG_EXTERN_C byte useParticles;
 DENG_EXTERN_C int maxParticles;
@@ -156,33 +247,33 @@ DENG_EXTERN_C float particleSpawnRate;
 void P_PtcInitForMap(de::Map &map);
 
 /**
- * Attempt to spawn all flat-triggered particle generators for the current map.
+ * Attempt to spawn all flat-triggered particle generators for the @a map.
  * To be called after map setup is completed.
  *
  * @note Cannot presently be done in P_PtcInitForMap as this is called during
  *       initial Map load and before any saved game has been loaded.
  */
-void P_MapSpawnPlaneParticleGens(void);
-
-/**
- * Link all active particle generators into the world.
- */
-void P_CreatePtcGenLinks(void);
-
-/**
- * Creates a new mobj-triggered particle generator based on the given
- * definition. The generator is added to the list of active ptcgens.
- */
-void P_SpawnMobjParticleGen(struct ded_ptcgen_s const *def, struct mobj_s *source);
+void P_MapSpawnPlaneParticleGens(de::Map &map);
 
 /**
  * Spawns all type-triggered particle generators, regardless of whether
  * the type of mobj exists in the map or not (mobjs might be dynamically
  * created).
  */
-void P_SpawnTypeParticleGens(void);
+void P_SpawnTypeParticleGens(de::Map &map);
 
 void P_SpawnMapParticleGens(de::Map &map);
+
+/**
+ * Update existing generators in the map following an engine reset.
+ */
+void P_UpdateParticleGens(de::Map &map);
+
+/**
+ * Creates a new mobj-triggered particle generator based on the given
+ * definition. The generator is added to the list of active ptcgens.
+ */
+void P_SpawnMobjParticleGen(ded_ptcgen_t const *def, struct mobj_s *source);
 
 void P_SpawnMapDamageParticleGen(struct mobj_s *mo, struct mobj_s *inflictor, int amount);
 
@@ -190,12 +281,7 @@ void P_SpawnMapDamageParticleGen(struct mobj_s *mo, struct mobj_s *inflictor, in
  * Creates a new flat-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-void P_SpawnPlaneParticleGen(struct ded_ptcgen_s const *def, Plane *plane);
-
-/**
- * Called after a reset once the definitions have been re-read.
- */
-void P_UpdateParticleGens(void);
+void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane);
 
 /**
  * Takes care of consistent variance.
@@ -203,10 +289,5 @@ void P_UpdateParticleGens(void);
  * The variance can be negative (results will be larger).
  */
 float P_GetParticleRadius(ded_ptcstage_t const *stageDef, int ptcIndex);
-
-/**
- * A particle may be attached to the floor or ceiling of the sector.
- */
-float P_GetParticleZ(particle_t const *pt);
 
 #endif // DENG_CLIENT_WORLD_P_PARTICLE_H

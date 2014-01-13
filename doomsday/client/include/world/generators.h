@@ -36,9 +36,6 @@ namespace de {
 class Generators
 {
 public:
-    /// Unique identifier associated with each generator in the collection.
-    typedef short ptcgenid_t;
-
     /// Maximum number of ptcgen_ts supported by a Generators instance.
     static int const GENERATORS_MAX = 512;
 
@@ -63,7 +60,7 @@ public:
      * @param id  Unique id of the generator to lookup.
      * @return  Pointer to ptcgen iff found, else @c NULL.
      */
-    ptcgen_t *generator(ptcgenid_t id) const;
+    Generator *find(Generator::Id id) const;
 
     /**
      * Lookup the unique id of @a generator in this collection.
@@ -71,14 +68,14 @@ public:
      * @param generator   Generator to lookup an id for.
      * @return  The unique id if found else @c -1 iff if @a generator is not linked.
      */
-    ptcgenid_t generatorId(ptcgen_t const *generator) const;
+    Generator::Id idFor(Generator const *generator) const;
 
     /**
      * Retrieve the next available generator id.
      *
      * @return  The next available id else @c -1 iff there are no unused ids.
      */
-    ptcgenid_t nextAvailableId() const;
+    Generator::Id nextAvailableId() const;
 
     /**
      * Link a generator into this collection. Ownership does NOT transfer to
@@ -89,7 +86,7 @@ public:
      *
      * @return  Same as @a generator for caller convenience.
      */
-    ptcgen_t *link(ptcgen_t *generator, ptcgenid_t slot);
+    Generator *link(Generator *generator, Generator::Id slot);
 
     /**
      * Unlink a generator from this collection. Ownership is unaffected.
@@ -97,7 +94,7 @@ public:
      * @param generator   Generator to be unlinked.
      * @return  Same as @a generator for caller convenience.
      */
-    ptcgen_t *unlink(ptcgen_t *generator);
+    Generator *unlink(Generator *generator);
 
     /**
      * Empty all generator link lists.
@@ -112,7 +109,7 @@ public:
      *
      * @return  Same as @a generator for caller convenience.
      */
-    ptcgen_t *linkToList(ptcgen_t *generator, uint listIndex);
+    Generator *linkToList(Generator *generator, uint listIndex);
 
     /**
      * Iterate over all generators in the collection making a callback for each.
@@ -120,11 +117,11 @@ public:
      * non-zero.
      *
      * @param callback  Callback to make for each iteration.
-     * @param parameters  User data to be passed to the callback.
+     * @param context   User data to be passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int iterate(int (*callback) (ptcgen_t *, void *), void *parameters = 0);
+    int iterate(int (*callback) (Generator *, void *), void *context = 0);
 
     /**
      * Iterate over all generators in the collection which are present on the identified
@@ -132,12 +129,12 @@ public:
      * been processed or a callback returns non-zero.
      *
      * @param listIndex  Index of the list to traverse.
-     * @param callback  Callback to make for each iteration.
-     * @param parameters  User data to be passed to the callback.
+     * @param callback   Callback to make for each iteration.
+     * @param context    User data to be passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int iterateList(uint listIndex, int (*callback) (ptcgen_t *, void *), void *parameters = 0);
+    int iterateList(uint listIndex, int (*callback) (Generator *, void *), void *context = 0);
 
 private:
     DENG2_PRIVATE(d)

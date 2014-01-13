@@ -26,6 +26,9 @@
 #include "world/worldsystem.h" /// ddMapSetup
 #include "Surface"
 #include "Sector"
+#ifdef __CLIENT__
+#  include "world/generators.h"
+#endif
 #include <de/Log>
 
 using namespace de;
@@ -123,6 +126,35 @@ DENG2_PIMPL(Plane)
         }
 #endif
     }
+
+#ifdef __CLIENT__
+    struct generatorbyplaneiterator_params_t
+    {
+        Plane *plane;
+        Generator *found;
+    };
+
+    static int findGeneratorWorker(Generator *gen, void *context)
+    {
+        generatorbyplaneiterator_params_t *p = (generatorbyplaneiterator_params_t *)context;
+        if(gen->plane == p->plane)
+        {
+            p->found = gen;
+            return true; // Stop iteration.
+        }
+        return false; // Continue iteration.
+    }
+
+    /// @todo Cache this result.
+    Generator *findGenerator()
+    {
+        generatorbyplaneiterator_params_t parm;
+        parm.plane = thisPublic;
+        parm.found = 0;
+        self.map().generatorIterator(findGeneratorWorker, &parm);
+        return parm.found;
+    }
+#endif
 };
 
 Plane::Plane(Sector &sector, Vector3f const &normal, coord_t height)
@@ -265,6 +297,20 @@ void Plane::updateHeightTracking()
     }
 }
 
+bool Plane::hasGenerator() const
+{
+    return d->findGenerator() != 0;
+}
+
+Generator &Plane::generator() const
+{
+    if(Generator *gen = d->findGenerator())
+    {
+        return *gen;
+    }
+    /// @throw MissingGeneratorError No generator is attached.
+    throw MissingGeneratorError("Plane::generator", "No generator is attached");
+}
 #endif // __CLIENT__
 
 int Plane::property(DmuArgs &args) const

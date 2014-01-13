@@ -3851,7 +3851,8 @@ static void drawAllLists()
     drawMasked();
 
     // Draw particles.
-    Rend_RenderParticles();
+    /// @todo Do not assume the CURRENT map.
+    Rend_RenderParticles(App_WorldSystem().map());
 
     if(usingFog)
     {
@@ -4820,21 +4821,21 @@ static void drawSoundEmitters(Map &map)
 // Currently active Generators collection.
 static Generators *gens;
 
-static String labelForGenerator(ptcgen_t const *gen)
+static String labelForGenerator(Generator const *gen)
 {
     DENG_ASSERT(gen != 0);
-    return String("%1").arg(gens->generatorId(gen));
+    return String("%1").arg(gen->id());
 }
 
-static int drawGenerator(ptcgen_t *gen, void *context)
+static int drawGenerator(Generator *gen, void *context)
 {
     DENG2_UNUSED(context);
 
 #define MAX_GENERATOR_DIST  2048
 
-    if(gen->source || (gen->flags & PGF_UNTRIGGERED))
+    if(gen->source || gen->flags.testFlag(Generator::Untriggered))
     {
-        Vector3d const origin   = Generator_Origin(*gen);
+        Vector3d const origin   = gen->origin();
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_GENERATOR_DIST)
         {
@@ -4855,9 +4856,7 @@ static int drawGenerator(ptcgen_t *gen, void *context)
 static void drawGenerators(Map &map)
 {
     if(!devDrawGenerators) return;
-
-    gens = &map.generators();
-    gens->iterate(drawGenerator);
+    map.generatorIterator(drawGenerator);
 }
 
 static void drawPoint(Vector3d const &origin, float opacity)

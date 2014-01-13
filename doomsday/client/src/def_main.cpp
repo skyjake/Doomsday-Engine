@@ -1765,7 +1765,7 @@ void Def_Read()
             continue; // Not state triggered, then...
 
         // Link the definition to the state.
-        if(pg->flags & PGF_STATE_CHAIN)
+        if(pg->flags & Generator::StateChain)
         {
             // Add to the chain.
             pg->stateNext = statePtcGens[st];

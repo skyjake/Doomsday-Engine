@@ -25,11 +25,17 @@
 
 #include "MapElement"
 
+#ifdef __CLIENT__
+#  include <de/Error>
+#endif
 #include <de/Observers>
 #include <de/Vector>
 
 class Sector;
 class Surface;
+#ifdef __CLIENT__
+struct Generator;
+#endif
 
 /**
  * World map sector plane.
@@ -42,6 +48,11 @@ class Plane : public de::MapElement
     DENG2_NO_ASSIGN(Plane)
 
 public:
+#ifdef __CLIENT__
+    /// No generator is attached. @ingroup errors
+    DENG2_ERROR(MissingGeneratorError);
+#endif
+
     /// Notified when the plane is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
 
@@ -195,6 +206,20 @@ public:
      * @see targetHeight()
      */
     void updateHeightTracking();
+
+    /**
+     * Returns @c true iff a generator is attached to the plane.
+     *
+     * @see generator()
+     */
+    bool hasGenerator() const;
+
+    /**
+     * Returns the generator attached to the plane.
+     *
+     * @see hasGenerator()
+     */
+    Generator &generator() const;
 
 #endif // __CLIENT__
 

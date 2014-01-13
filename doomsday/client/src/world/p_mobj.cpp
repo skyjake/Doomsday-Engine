@@ -181,7 +181,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
     // Check for a ptcgen trigger.
     for(ded_ptcgen_t *pg = statePtcGens[statenum]; pg; pg = pg->stateNext)
     {
-        if(!(pg->flags & PGF_SPAWN_ONLY) || spawning)
+        if(!(pg->flags & Generator::SpawnOnly) || spawning)
         {
             // We are allowed to spawn the generator.
             P_SpawnMobjParticleGen(pg, mobj);
