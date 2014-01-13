@@ -39,7 +39,6 @@
 #include "../../doom64/include/doomdef.h"
 #include "../../doom64/include/dstrings.h"
 #include "../../doom64/include/g_game.h"
-#include "../../doom64/include/g_ctrl.h"
 #include "../../doom64/include/doomtype.h"
 #include "../../doom64/include/info.h"
 #include "../../doom64/include/m_cheat.h"

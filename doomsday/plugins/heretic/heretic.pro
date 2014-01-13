@@ -34,7 +34,6 @@ HEADERS += \
     include/doomdata.h \
     include/doomdef.h \
     include/dstrings.h \
-    include/g_ctrl.h \
     include/g_game.h \
     include/h_api.h \
     include/h_config.h \
@@ -73,7 +72,6 @@ HEADERS += \
 
 SOURCES += \
     src/acfnlink.c \
-    src/g_ctrl.c \
     src/h_api.c \
     src/h_console.c \
     src/h_main.c \

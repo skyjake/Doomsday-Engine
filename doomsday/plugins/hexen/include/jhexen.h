@@ -34,7 +34,6 @@
 #include "../../hexen/include/a_action.h"
 #include "../../hexen/include/acfnlink.h"
 #include "../../hexen/include/h2def.h"
-#include "../../hexen/include/g_ctrl.h"
 #include "../../hexen/include/g_game.h"
 #include "../../hexen/include/in_lude.h"
 #include "../../hexen/include/m_cheat.h"

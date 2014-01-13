@@ -42,7 +42,6 @@
 #include "../../doom/include/doomtype.h"
 #include "../../doom/include/dstrings.h"
 #include "../../doom/include/g_game.h"
-#include "../../doom/include/g_ctrl.h"
 #include "../../doom/include/info.h"
 #include "../../doom/include/m_cheat.h"
 #include "../../doom/include/m_random.h"

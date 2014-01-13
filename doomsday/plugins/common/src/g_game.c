@@ -497,7 +497,6 @@ void G_CommonPreInit(void)
     }
 
     G_RegisterBindClasses();
-    G_RegisterPlayerControls();
     P_RegisterMapObjs();
 
     R_LoadVectorGraphics();

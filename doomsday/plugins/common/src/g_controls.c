@@ -412,15 +412,7 @@ D_CMD(DefaultGameBinds)
  */
 void G_RegisterBindClasses(void)
 {
-/*
-    uint        i;
-
-    Con_Message("G_PreInit: Registering Bind Classes...");
-
-    for(i = 0; BindClasses[i].name; ++i)
-        DD_AddBindClass(BindClasses + i);
- */
-    // FIXME: Move the game's binding class creation here.
+    /// @todo Move the game's binding class creation here.
 }
 
 /**

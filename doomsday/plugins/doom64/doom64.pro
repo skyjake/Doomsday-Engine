@@ -43,7 +43,6 @@ HEADERS += \
     include/doomdef.h \
     include/doomtype.h \
     include/dstrings.h \
-    include/g_ctrl.h \
     include/g_game.h \
     include/info.h \
     include/jdoom64.h \
@@ -71,7 +70,6 @@ SOURCES += \
     src/d_items.c \
     src/d_main.c \
     src/d_refresh.c \
-    src/g_ctrl.c \
     src/m_cheat.c \
     src/m_random.c \
     src/p_enemy.c \

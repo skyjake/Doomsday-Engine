@@ -33,7 +33,6 @@ HEADERS += \
     include/a_action.h \
     include/acfnlink.h \
     include/dstrings.h \
-    include/g_ctrl.h \
     include/g_game.h \
     include/h2def.h \
     include/in_lude.h \
@@ -79,7 +78,6 @@ HEADERS += \
 SOURCES += \
     src/a_action.c \
     src/acfnlink.c \
-    src/g_ctrl.c \
     src/h2_main.c \
     src/hconsole.c \
     src/hrefresh.c \
