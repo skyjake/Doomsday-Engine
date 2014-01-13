@@ -201,7 +201,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
         Generator *activeGens[MAX_GENERATORS];
 
-        uint linkStoreSize;
+        // We can link 64 generators each into four lists each before running out of links.
+        static int const LINKSTORE_SIZE = 4 * MAX_GENERATORS;
         ListNode *linkStore;
         uint linkStoreCursor;
 
@@ -209,21 +210,12 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // Array of list heads containing links from linkStore to generators in activeGens.
         ListNode **lists;
 
-        /**
-         * Construct a new generators collection.
-         *
-         * @param listCount  Number of lists the collection must support.
-         */
-        Generators(uint listCount)
-            : // We can link 64 generators each into four lists each before running out of links.
-              linkStoreSize(4 * MAX_GENERATORS)
-            , linkStore((ListNode *) Z_Malloc(sizeof(ListNode) * linkStoreSize, PU_MAP, 0))
+        Generators()
+            : linkStore(0)
             , linkStoreCursor(0)
-            , listsSize(listCount)
-            , lists((ListNode **) Z_Calloc(sizeof(ListNode*) * listsSize, PU_MAP, 0))
-        {
-            zap(activeGens);
-        }
+            , listsSize(0)
+            , lists(0)
+        {}
 
         ~Generators()
         {
@@ -232,204 +224,21 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
 
         /**
-         * Clear all ptcgen_t references in this collection.
+         * Resize the collection.
          *
-         * @warning Does nothing about any memory allocated for said instances.
+         * @param listCount  Number of lists the collection must support.
          */
-        void clear()
+        void resize(uint listCount)
         {
-            emptyLists();
-            zap(activeGens);
-        }
-
-        /**
-         * Retrieve the generator associated with the unique @a generatorId
-         *
-         * @param id  Unique id of the generator to lookup.
-         * @return  Pointer to ptcgen iff found, else @c NULL.
-         */
-        Generator *find(Generator::Id id) const
-        {
-            if(id >= 0 && id < MAX_GENERATORS)
+            if(!linkStore)
             {
-                return activeGens[id];
-            }
-            return 0; // Not found.
-        }
-
-        /**
-         * Lookup the unique id of @a generator in this collection.
-         *
-         * @param generator   Generator to lookup an id for.
-         * @return  The unique id if found else @c -1 iff if @a generator is not linked.
-         */
-        Generator::Id idFor(Generator const *gen) const
-        {
-            if(gen)
-            {
-                for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
-                {
-                    if(activeGens[i] == gen)
-                        return i;
-                }
-            }
-            return -1; // Not found.
-        }
-
-        /**
-         * Retrieve the next available generator id.
-         *
-         * @return  The next available id else @c -1 iff there are no unused ids.
-         */
-        Generator::Id nextAvailableId() const
-        {
-            /// @todo Optimize: Cache this result.
-            for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
-            {
-                if(!activeGens[i])
-                    return i;
-            }
-            return -1; // None available.
-        }
-
-        /**
-         * Link a generator into this collection. Ownership does NOT transfer to
-         * the collection.
-         *
-         * @param gen   Generator to link.
-         * @param slot  Logical slot into which the generator will be linked.
-         *
-         * @return  Same as @a generator for caller convenience.
-         */
-        Generator *link(Generator *gen, Generator::Id slot)
-        {
-            if(gen && slot < MAX_GENERATORS)
-            {
-                // Sanity check - generator is not already linked.
-                DENG2_ASSERT(idFor(gen) < 0);
-
-                activeGens[slot] = gen;
-            }
-            return gen;
-        }
-
-        /**
-         * Unlink a generator from this collection. Ownership is unaffected.
-         *
-         * @param gen   Generator to be unlinked.
-         *
-         * @return  Same as @a gen for caller convenience.
-         */
-        Generator *unlink(Generator *gen)
-        {
-            if(gen)
-            {
-                for(Generator::Id i = 0; i < Map::MAX_GENERATORS; ++i)
-                {
-                    if(activeGens[i] == gen)
-                    {
-                        activeGens[i] = 0;
-                        break;
-                    }
-                }
-            }
-            return gen;
-        }
-
-        /**
-         * Empty all generator link lists.
-         */
-        void emptyLists()
-        {
-            if(!lists) return;
-
-            std::memset(lists, 0, sizeof(*lists) * listsSize);
-            linkStoreCursor = 0;
-        }
-
-        /**
-         * Link the a sector with a generator.
-         *
-         * @param gen        Generator to link with the identified list.
-         * @param listIndex  Index of the list to link the generator on.
-         *
-         * @return  Same as @a gen for caller convenience.
-         */
-        Generator *linkToList(Generator *gen, uint listIndex)
-        {
-            DENG2_ASSERT(listIndex < listsSize);
-
-            // Sanity check - generator is one from this collection.
-            DENG2_ASSERT(idFor(gen) >= 0);
-
-            // Must check that it isn't already there...
-            for(ListNode *it = lists[listIndex]; it; it = it->next)
-            {
-                if(it->gen == gen)
-                {
-                    // Warning message disabled as these are occuring so thick and fast
-                    // that logging is pointless (and negatively affecting performance).
-                    //LOG_AS("Generators::linkToList");
-                    //LOG_DEBUG("Attempted repeat link of generator %p to list %u.")
-                    //        << gen << listIndex;
-
-                    return gen; // No, no...
-                }
+                linkStore = (ListNode *) Z_Malloc(sizeof(*linkStore) * LINKSTORE_SIZE, PU_MAP, 0);
+                linkStoreCursor = 0;
+                zap(activeGens);
             }
 
-            // We need a new link.
-            if(ListNode *link = newLink())
-            {
-                link->gen = gen;
-                link->next = lists[listIndex];
-                lists[listIndex] = link;
-            }
-
-            return gen;
-        }
-
-        /**
-         * Iterate over all generators in the collection making a callback for each.
-         * Iteration ends when all generators have been processed or a callback returns
-         * non-zero.
-         *
-         * @param callback  Callback to make for each iteration.
-         * @param context   User data to be passed to the callback.
-         *
-         * @return  @c 0 iff iteration completed wholly.
-         */
-        int iterate(int (*callback) (Generator *, void *), void *context = 0)
-        {
-            for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
-            {
-                // Only consider active generators.
-                if(!activeGens[i]) continue;
-
-                if(int result = callback(activeGens[i], context))
-                    return result;
-            }
-            return 0; // Continue iteration.
-        }
-
-        /**
-         * Iterate over all generators in the collection which are present on the identified
-         * list making a callback for each. Iteration ends when all targeted generators have
-         * been processed or a callback returns non-zero.
-         *
-         * @param listIndex  Index of the list to traverse.
-         * @param callback   Callback to make for each iteration.
-         * @param context    User data to be passed to the callback.
-         *
-         * @return  @c 0 iff iteration completed wholly.
-         */
-        int iterateList(uint listIndex, int (*callback) (Generator *, void *), void *context = 0)
-        {
-            for(ListNode *it = lists[listIndex]; it; it = it->next)
-            {
-                if(int result = callback(it->gen, context))
-                    return result;
-            }
-            return 0; // Continue iteration.
+            listsSize = listCount;
+            lists = (ListNode **) Z_Realloc(lists, sizeof(ListNode*) * listsSize, PU_MAP);
         }
 
         /**
@@ -437,9 +246,10 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
          */
         ListNode *newLink()
         {
-            if(linkStoreCursor < linkStoreSize)
+            if(linkStoreCursor < LINKSTORE_SIZE)
+            {
                 return &linkStore[linkStoreCursor++];
-
+            }
             LOG_WARNING("Exhausted generator link storage");
             return 0;
         }
@@ -1415,7 +1225,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // Time to initialize a new collection?
         if(generators.isNull())
         {
-            generators.reset(new Generators(self.sectorCount()));
+            generators.reset(new Generators);
+            generators->resize(sectors.count());
         }
         return *generators;
     }
@@ -1430,18 +1241,29 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         return false; // Continue iteration.
     }
 
+    /**
+     * Lookup the next available generator id.
+     *
+     * @todo Optimize: Cache this result.
+     *
+     * @return  The next available id else @c 0 iff there are no unused ids.
+     */
     Generator::Id findIdForNewGenerator()
     {
         Generators &gens = getGenerators();
 
         // Prefer allocating a new generator if we've a spare id.
-        Generator::Id id = gens.nextAvailableId();
-        if(id >= 0) return id + 1;
+        Generator::Id id = 0;
+        for(; id < MAX_GENERATORS; ++id)
+        {
+            if(!gens.activeGens[id]) break;
+        }
+        if(id < MAX_GENERATORS) return id + 1;
 
         // See if there is an existing generator we can supplant.
         /// @todo Optimize: Generators could maintain an age-sorted list.
         Generator *oldest = 0;
-        gens.iterate(findOldestGeneratorWorker, &oldest);
+        self.generatorIterator(findOldestGeneratorWorker, &oldest);
         if(oldest) return oldest->id() + 1; // 1-based index.
 
         return 0; // None found.
@@ -1449,7 +1271,8 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
     static int linkGeneratorParticlesWorker(Generator *gen, void *context)
     {
-        Instance *inst = static_cast<Instance *>(context);
+        Generators &gens = static_cast<Instance *>(context)->getGenerators();
+
         /// @todo Overkill?
         ParticleInfo const *pInfo = gen->particleInfo();
         for(int i = 0; i < gen->count; ++i, pInfo++)
@@ -1457,7 +1280,29 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             if(pInfo->stage < 0 || !pInfo->bspLeaf)
                 continue;
 
-            inst->getGenerators().linkToList(gen, pInfo->bspLeaf->sector().indexInMap());
+            int listIndex = pInfo->bspLeaf->sector().indexInMap();
+            DENG2_ASSERT((unsigned)listIndex < gens.listsSize);
+
+            // Must check that it isn't already there...
+            for(Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+            {
+                if(it->gen == gen)
+                {
+                    // Warning message disabled as these are occuring so thick and fast
+                    // that logging is pointless (and negatively affecting performance).
+                    //LOG_DEBUG("Attempted repeat link of generator %p to list %u.")
+                    //        << gen << listIndex;
+                    continue; // No, no...
+                }
+            }
+
+            // We need a new link.
+            if(Generators::ListNode *link = gens.newLink())
+            {
+                link->gen  = gen;
+                link->next = gens.lists[listIndex];
+                gens.lists[listIndex] = link;
+            }
         }
         return 0; // Continue iteration.
     }
@@ -1467,12 +1312,17 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
      */
     void linkAllParticles()
     {
+        //LOG_AS("Map::linkAllParticles");
+
         Generators &gens = getGenerators();
-        gens.emptyLists();
+
+        // Empty all generator lists.
+        std::memset(gens.lists, 0, sizeof(*gens.lists) * gens.listsSize);
+        gens.linkStoreCursor = 0;
 
         if(useParticles)
         {
-            gens.iterate(linkGeneratorParticlesWorker, this);
+            self.generatorIterator(linkGeneratorParticlesWorker, this);
         }
     }
 #endif // __CLIENT__
@@ -2610,41 +2460,66 @@ Generator *Map::newGenerator()
     Generator::Id id = d->findIdForNewGenerator();
     if(!id) return 0; // Failed; too many generators?
 
+    Instance::Generators &gens = d->getGenerators();
+
     // If there is already a generator with that id - remove it.
-    if(Generator *gen = d->generators->find(id - 1))
+    if(id > 0 && id <= MAX_GENERATORS)
     {
-        Generator_Delete(gen);
+        Generator_Delete(gens.activeGens[id - 1]);
     }
 
     /// @todo Linear allocation when in-game is not good...
     Generator *gen = (Generator *) Z_Calloc(sizeof(Generator), PU_MAP, 0);
 
+    gen->setId(id);
+
     // Link the thinker to the list of (private) thinkers.
     gen->thinker.function = (thinkfunc_t) Generator_Thinker;
     d->thinkers->add(gen->thinker, false /*not public*/);
 
-    // Link the generator into this collection.
-    d->generators->link(gen, id - 1);
-
-    gen->setId(id);
+    // Link the generator into the collection.
+    gens.activeGens[id - 1] = gen;
 
     return gen;
 }
 
 void Map::unlink(Generator &generator)
 {
-    d->getGenerators().unlink(&generator);
+    Instance::Generators &gens = d->getGenerators();
+    for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
+    {
+        if(gens.activeGens[i] == &generator)
+        {
+            gens.activeGens[i] = 0;
+            break;
+        }
+    }
 }
 
 int Map::generatorIterator(int (*callback) (Generator *, void *), void *context)
 {
-    return d->getGenerators().iterate(callback, context);
+    Instance::Generators &gens = d->getGenerators();
+    for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
+    {
+        // Only consider active generators.
+        if(!gens.activeGens[i]) continue;
+
+        if(int result = callback(gens.activeGens[i], context))
+            return result;
+    }
+    return 0; // Continue iteration.
 }
 
 int Map::generatorListIterator(uint listIndex, int (*callback) (Generator *, void *),
     void *context)
 {
-    return d->getGenerators().iterateList(listIndex, callback, context);
+    Instance::Generators &gens = d->getGenerators();
+    for(Instance::Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+    {
+        if(int result = callback(it->gen, context))
+            return result;
+    }
+    return 0; // Continue iteration.
 }
 
 Lumobj &Map::addLumobj(Lumobj const &lumobj)
