@@ -1231,20 +1231,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         return *generators;
     }
 
-    static int findOldestGeneratorWorker(Generator *gen, void *context)
-    {
-        Generator **oldest = (Generator **)context;
-        if(!gen->isStatic() && (!(*oldest) || gen->age > (*oldest)->age))
-        {
-            *oldest = gen;
-        }
-        return false; // Continue iteration.
-    }
-
     /**
      * Lookup the next available generator id.
      *
      * @todo Optimize: Cache this result.
+     * @todo Optimize: We could maintain an age-sorted list of generators.
      *
      * @return  The next available id else @c 0 iff there are no unused ids.
      */
@@ -1260,55 +1251,26 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         }
         if(id < MAX_GENERATORS) return id + 1;
 
-        // See if there is an existing generator we can supplant.
-        /// @todo Optimize: Generators could maintain an age-sorted list.
+        // See if there is an active, non-static generator we can supplant.
         Generator *oldest = 0;
-        self.generatorIterator(findOldestGeneratorWorker, &oldest);
-        if(oldest) return oldest->id() + 1; // 1-based index.
-
-        return 0; // None found.
-    }
-
-    static int linkGeneratorParticlesWorker(Generator *gen, void *context)
-    {
-        Generators &gens = static_cast<Instance *>(context)->getGenerators();
-
-        /// @todo Overkill?
-        ParticleInfo const *pInfo = gen->particleInfo();
-        for(int i = 0; i < gen->count; ++i, pInfo++)
+        for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
         {
-            if(pInfo->stage < 0 || !pInfo->bspLeaf)
-                continue;
+            Generator *gen = gens.activeGens[i];
+            if(!gen || gen->isStatic()) continue;
 
-            int listIndex = pInfo->bspLeaf->sector().indexInMap();
-            DENG2_ASSERT((unsigned)listIndex < gens.listsSize);
-
-            // Must check that it isn't already there...
-            for(Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+            if(!oldest || gen->age > oldest->age)
             {
-                if(it->gen == gen)
-                {
-                    // Warning message disabled as these are occuring so thick and fast
-                    // that logging is pointless (and negatively affecting performance).
-                    //LOG_DEBUG("Attempted repeat link of generator %p to list %u.")
-                    //        << gen << listIndex;
-                    continue; // No, no...
-                }
-            }
-
-            // We need a new link.
-            if(Generators::ListNode *link = gens.newLink())
-            {
-                link->gen  = gen;
-                link->next = gens.lists[listIndex];
-                gens.lists[listIndex] = link;
+                oldest = gen;
             }
         }
-        return 0; // Continue iteration.
+
+        return (oldest? oldest->id() + 1 /*1-based index*/ : 0);
     }
 
     /**
      * Link all generated particles into the map so that they will be drawn.
+     *
+     * @todo Overkill?
      */
     void linkAllParticles()
     {
@@ -1322,7 +1284,43 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
         if(useParticles)
         {
-            self.generatorIterator(linkGeneratorParticlesWorker, this);
+            for(Generator::Id id = 0; id < MAX_GENERATORS; ++id)
+            {
+                // Only consider active generators.
+                Generator *gen = gens.activeGens[id];
+                if(!gen) continue;
+
+                ParticleInfo const *pInfo = gen->particleInfo();
+                for(int i = 0; i < gen->count; ++i, pInfo++)
+                {
+                    if(pInfo->stage < 0 || !pInfo->bspLeaf)
+                        continue;
+
+                    int listIndex = pInfo->bspLeaf->sector().indexInMap();
+                    DENG2_ASSERT((unsigned)listIndex < gens.listsSize);
+
+                    // Must check that it isn't already there...
+                    for(Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+                    {
+                        if(it->gen == gen)
+                        {
+                            // Warning message disabled as these are occuring so thick and fast
+                            // that logging is pointless (and negatively affecting performance).
+                            //LOG_DEBUG("Attempted repeat link of generator %p to list %u.")
+                            //        << gen << listIndex;
+                            continue; // No, no...
+                        }
+                    }
+
+                    // We need a new link.
+                    if(Generators::ListNode *link = gens.newLink())
+                    {
+                        link->gen  = gen;
+                        link->next = gens.lists[listIndex];
+                        gens.lists[listIndex] = link;
+                    }
+                }
+            }
         }
     }
 #endif // __CLIENT__
