@@ -1,2 +1,2 @@
-#include "widgets/messagedialog.h"
+#include "dialogs/messagedialog.h"
 

@@ -85,6 +85,8 @@ HEADERS += \
     include/de/VariableChoiceWidget \
     include/de/VariableToggleWidget \
     \
+    include/de/dialogs/inputdialog.h \
+    include/de/dialogs/messagedialog.h \
     include/de/framework/actionitem.h \
     include/de/framework/atlasproceduralimage.h \
     include/de/framework/baseguiapp.h \
@@ -120,12 +122,10 @@ HEADERS += \
     include/de/widgets/documentwidget.h \
     include/de/widgets/foldpanelwidget.h \
     include/de/widgets/gridpopupwidget.h \
-    include/de/widgets/inputdialog.h \
     include/de/widgets/labelwidget.h \
     include/de/widgets/lineeditwidget.h \
     include/de/widgets/logwidget.h \
     include/de/widgets/menuwidget.h \
-    include/de/widgets/messagedialog.h \
     include/de/widgets/notificationwidget.h \
     include/de/widgets/panelwidget.h \
     include/de/widgets/popupmenuwidget.h \
@@ -144,6 +144,8 @@ SOURCES += \
     src/childwidgetorganizer.cpp \
     src/data.cpp \
     src/dialogcontentstylist.cpp \
+    src/dialogs/inputdialog.cpp \
+    src/dialogs/messagedialog.cpp \
     src/fontlinewrapping.cpp \
     src/gltextcomposer.cpp \
     src/gridlayout.cpp \
@@ -166,12 +168,10 @@ SOURCES += \
     src/widgets/documentwidget.cpp \
     src/widgets/foldpanelwidget.cpp \
     src/widgets/gridpopupwidget.cpp \
-    src/widgets/inputdialog.cpp \
     src/widgets/labelwidget.cpp \
     src/widgets/lineeditwidget.cpp \
     src/widgets/logwidget.cpp \
     src/widgets/menuwidget.cpp \
-    src/widgets/messagedialog.cpp \
     src/widgets/notificationwidget.cpp \
     src/widgets/panelwidget.cpp \
     src/widgets/popupmenuwidget.cpp \

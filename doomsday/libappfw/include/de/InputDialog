@@ -1,2 +1,2 @@
-#include "widgets/inputdialog.h"
+#include "dialogs/inputdialog.h"
 

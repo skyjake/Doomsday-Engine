@@ -1,4 +1,4 @@
-/** @file inputdialog.h  Dialog for querying a string text from the user.
+/** @file inputdialog.h  Dialog for querying a string of text from the user.
  *
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
