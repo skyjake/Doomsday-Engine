@@ -271,7 +271,7 @@ void Hu_MenuInitControlsPage(void)
     mndata_text_t* texts;
     mn_page_t* page;
 
-    VERBOSE( Con_Message("Hu_MenuInitControlsPage: Creating controls items.") )
+    App_Log(DE2_DEV_VERBOSE, "Hu_MenuInitControlsPage: Creating controls items");
 
     textCount = 0;
     bindingsCount = 0;
@@ -719,7 +719,7 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
             if((!strcmp(bindContext, "menu") || !strcmp(bindContext, "shortcut")) &&
                !strcmp(symbol + 5, "key-delete-down"))
             {
-                Con_Message("The Delete key in the Menu context is reserved for deleting bindings.");
+                App_Log(DE2_INPUT_ERROR, "The Delete key in the Menu context is reserved for deleting bindings");
                 return false;
             }
         }
@@ -795,7 +795,7 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
             sprintf(cmd, "bindcontrol {%s} {%s%s}", binds->controlName, temp3, extra);
         }
 
-        VERBOSE( Con_Message("MNBindings_PrivilegedResponder: %s", cmd) );
+        App_Log(DE2_DEV_INPUT_MSG, "MNBindings_PrivilegedResponder: %s", cmd);
         DD_Execute(true, cmd);
 
         // We've finished the grab.

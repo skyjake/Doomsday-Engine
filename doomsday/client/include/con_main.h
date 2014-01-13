@@ -304,19 +304,6 @@ knownword_t const **Con_CollectKnownWordsMatchingWord(char const *word,
 
 AutoStr *Con_KnownWordToString(knownword_t const *word);
 
-/**
- * Print a 'global' message (to stdout and the console) consisting of (at least)
- * one full line of text.
- *
- * @param message  Message with printf() formatting syntax for arguments.
- *                 The terminating line break character may be omitted, however
- *                 the message cannot be continued in a subsequent call.
- */
-void Con_Message(char const *message, ...) PRINTF_F(1,2);
-
-/// Print a ruler into the console.
-void Con_PrintRuler();
-
 void Con_PrintCVar(cvar_t *cvar, char const *prefix);
 
 de::String Con_VarAsStyledText(cvar_t *var, char const *prefix);

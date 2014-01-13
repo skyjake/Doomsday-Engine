@@ -69,7 +69,7 @@ static void endPause(void)
 {
     if(paused)
     {
-        VERBOSE( Con_Message("Pause ends (state:%x).", paused) );
+        App_Log(DE2_LOG_VERBOSE, "Pause ends (state:%x)", paused);
 
         forcedPeriodTicsRemaining = 0;
 
@@ -153,7 +153,7 @@ void Pause_SetForcedPeriod(int tics)
 {
     if(tics <= 0) return;
 
-    VERBOSE( Con_Message("Forced pause for %i tics.", tics) );
+    App_Log(DE2_LOG_MSG, "Forced pause for %i tics", tics);
 
     forcedPeriodTicsRemaining = tics;
     beginPause(PAUSEF_FORCED_PERIOD);

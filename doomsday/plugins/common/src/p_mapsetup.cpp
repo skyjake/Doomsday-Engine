@@ -491,7 +491,8 @@ static void initMapSpots()
 
         if(numDMStarts < playerCount)
         {
-            Con_Message("P_SetupMap: Player count (%i) exceeds deathmatch spots (%i).", playerCount, numDMStarts);
+            App_Log(DE2_MAP_WARNING, "Not enough deathmatch spots in map (%i players, %i DM spots)",
+                    playerCount, numDMStarts);
         }
     }
 }
@@ -538,9 +539,8 @@ mapspot_t const *P_ChooseRandomMaceSpot()
             continue;
         }
 
-#if _DEBUG
-        Con_Message("P_ChooseRandomMaceSpot: Chosen map spot id:%u.", mapSpotId);
-#endif
+        App_Log(DE2_DEV_MAP_MSG, "P_ChooseRandomMaceSpot: Chosen map spot id:%u.", mapSpotId);
+
         return mapSpot;
     }
 
@@ -578,11 +578,9 @@ static void spawnMapObjects()
                 }
             }
 
-/*#if _DEBUG
-            Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i",
+            App_Log(DE2_DEV_MAP_XVERBOSE, "Spawning mobj at (%g, %g, %g) angle:%i ednum:%i flags:%x",
                     spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
                     spot->doomedNum, spot->flags);
-#endif*/
 
             if(mobj_t *mo = P_SpawnMobj(type, spot->origin, spot->angle, spot->flags))
             {
@@ -614,8 +612,8 @@ static void spawnMapObjects()
         }
         else
         {
-            Con_Message("Warning: Unknown DoomEdNum %i at [%g, %g, %g].", spot->doomEdNum,
-                        spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
+            App_Log(DE2_MAP_WARNING, "Unknown DoomEdNum %i at (%g, %g, %g)",
+                    spot->doomEdNum, spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
         }
     }
 
@@ -628,10 +626,8 @@ static void spawnMapObjects()
         {
             if(mapspot_t const *spot = P_ChooseRandomMaceSpot())
             {
-# if _DEBUG
-                Con_Message("spawnMapObjects: Spawning Firemace at (%.2f, %.2f, %.2f).",
-                            spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
-# endif
+                App_Log(DE2_DEV_MAP_VERBOSE, "spawnMapObjects: Spawning Firemace at (%g, %g, %g)",
+                        spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
 
                 P_SpawnMobjXYZ(MT_WMACE, spot->origin[VX], spot->origin[VY], 0,
                                spot->angle, MSF_Z_FLOOR);

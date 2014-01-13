@@ -634,10 +634,8 @@ void R_LoadColorPalettes(void)
         }
         xlatNum++;
 
-#ifdef _DEBUG
-        Con_Message("Reading translation table '%s' as tclass=%i tmap=%i.",
-                    Str_Text(&lumpName), cl, i);
-#endif
+        App_Log(DE2_DEV_RES_MSG, "Reading translation table '%s' as tclass=%i tmap=%i",
+                Str_Text(&lumpName), cl, i);
 
         if(-1 != (lumpNum = W_CheckLumpNumForName(Str_Text(&lumpName))))
         {
@@ -870,7 +868,7 @@ void R_InitRefresh(void)
 {
     if(IS_DEDICATED) return;
 
-    VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.") );
+    App_Log(DE2_RES_VERBOSE, "Loading data for refresh...");
 
     // Setup the view border.
     cfg.screenBlocks = cfg.setBlocks;
@@ -910,17 +908,17 @@ void R_InitHud(void)
     Hu_LoadData();
 
 #if __JHERETIC__ || __JHEXEN__
-    VERBOSE( Con_Message("Initializing inventory...") )
+    App_Log(DE2_LOG_VERBOSE, "Initializing inventory...");
     Hu_InventoryInit();
 #endif
 
-    VERBOSE2( Con_Message("Initializing statusbar...") )
+    App_Log(DE2_LOG_VERBOSE, "Initializing statusbar...");
     ST_Init();
 
-    VERBOSE2( Con_Message("Initializing menu...") )
+    App_Log(DE2_LOG_VERBOSE, "Initializing menu...");
     Hu_MenuInit();
 
-    VERBOSE2( Con_Message("Initializing status-message/question system...") )
+    App_Log(DE2_LOG_VERBOSE, "Initializing status-message/question system...");
     Hu_MsgInit();
 }
 
@@ -942,10 +940,10 @@ void G_CommonPostInit(void)
     XG_ReadTypes();
 #endif
 
-    VERBOSE( Con_Message("Initializing playsim...") )
+    App_Log(DE2_LOG_VERBOSE, "Initializing playsim...");
     P_Init();
 
-    VERBOSE( Con_Message("Initializing head-up displays...") )
+    App_Log(DE2_LOG_VERBOSE, "Initializing head-up displays...");
     R_InitHud();
 
     G_InitEventSequences();
@@ -1059,14 +1057,15 @@ void G_ChangeGameState(gamestate_t state)
     if(G_QuitInProgress()) return;
 
     if(state < 0 || state >= NUM_GAME_STATES)
-        Con_Error("G_ChangeGameState: Invalid state %i.\n", (int) state);
+    {
+        DENG_ASSERT(!"G_ChangeGameState: Invalid state");
+        return;
+    }
 
     if(gameState != state)
     {
-#if _DEBUG
-        // Log gamestate changes in debug builds, with verbose.
-        Con_Message("G_ChangeGameState: New state %s.", getGameStateStr(state));
-#endif
+        App_Log(DE2_DEV_NOTE, "Game state changed to %s", getGameStateStr(state));
+
         gameState = state;
     }
 
@@ -1148,7 +1147,7 @@ void G_StartHelp(void)
         G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "help");
         return;
     }
-    Con_Message("Warning: InFine script 'help' not defined, ignoring.");
+    App_Log(DE2_SCR_WARNING, "InFine script 'help' not defined");
 }
 
 /**
@@ -1237,7 +1236,7 @@ void G_EndGame(void)
     {
         if(IS_NETGAME && IS_SERVER)
         {
-            Con_Message("%s", ENDNOGAME);
+            App_Log(DE2_NET_ERROR, "%s", ENDNOGAME);
         }
         else
         {
@@ -1653,9 +1652,8 @@ static void rebornPlayers(void)
                 }
 
                 // Let's get rid of the mobj.
-#ifdef _DEBUG
-                Con_Message("rebornPlayers: Removing player %i's mobj.", i);
-#endif
+                App_Log(DE2_DEV_MAP_MSG, "rebornPlayers: Removing player %i's mobj", i);
+
                 P_MobjRemove(mo, true);
                 ddplr->mo = NULL;
             }
@@ -1951,13 +1949,12 @@ void G_PlayerReborn(int player)
     if(player < 0 || player >= MAXPLAYERS)
         return; // Wha?
 
-#ifdef _DEBUG
-    Con_Message("G_PlayerReborn: reseting player %i", player);
-#endif
+    App_Log(DE2_DEV_MAP_NOTE, "G_PlayerReborn: reseting player %i", player);
 
     p = &players[player];
 
-    assert(sizeof(p->frags) == sizeof(frags));
+    DENG_ASSERT(sizeof(p->frags) == sizeof(frags));
+
     memcpy(frags, p->frags, sizeof(frags));
     killcount = p->killCount;
     itemcount = p->itemCount;
@@ -2028,7 +2025,7 @@ void G_PlayerReborn(int player)
         int k;
         for(k = 0; k < NUM_WEAPON_TYPES; ++k)
         {
-            Con_Message("Player %i owns wpn %i: %i", player, k, p->weapons[k].owned);
+            App_Log(DE2_DEV_MAP_MSG, "Player %i owns wpn %i: %i", player, k, p->weapons[k].owned);
         }
     }
 #endif
@@ -2815,7 +2812,7 @@ dd_bool G_LoadGame(int slot)
 
     if(!SV_IsSlotUsed(slot))
     {
-        Con_Message("Warning:G_LoadGame: Save slot #%i is not in use, aborting load.", slot);
+        App_Log(DE2_RES_ERROR, "Cannot load from save slot #%i: not in use", slot);
         return false;
     }
 
@@ -3268,7 +3265,7 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
         case 17: return 30;
         case 31: return 0;
         default:
-            Con_Message("G_NextMap: Warning - No secret exit on map %u!", map+1);
+            App_Log(DE2_MAP_WARNING, "No secret exit on map %u!", map + 1);
             break;
         }
     }
@@ -3296,7 +3293,7 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
             case 14: return 30;
             case 30: return 31;
             default:
-               Con_Message("G_NextMap: Warning - No secret exit on map %u!", map+1);
+               App_Log(DE2_MAP_WARNING, "No secret exit on map %u!", map+1);
                break;
             }
         }
@@ -3641,7 +3638,8 @@ void G_DoScreenShot(void)
         return;
     }
 
-    Con_Message("Failed to write screenshot \"%s\".", fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
+    App_Log(DE2_RES_ERROR, "Failed to write screenshot \"%s\"",
+            fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
 }
 
 static void openLoadMenu(void)
@@ -3734,15 +3732,15 @@ D_CMD(LoadGame)
     }
 
     // Clearly the caller needs some assistance...
-    Con_Message("Failed to determine game-save slot from \"%s\"", argv[1]);
+    App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
 
     // We'll open the load menu if caller is the console.
     // Reasoning: User attempted to load a named game-save however the name
     // specified didn't match anything known. Opening the load menu allows
     // the user to see the names of the known game-saves.
-    if(CMDS_CONSOLE == src)
+    if(src == CMDS_CONSOLE)
     {
-        Con_Message("Opening game-save load menu...");
+        App_Log(DE2_SCR_MSG, "Opening Load Game menu...");
         openLoadMenu();
         return true;
     }
@@ -3780,7 +3778,7 @@ D_CMD(SaveGame)
 
     if(IS_CLIENT || IS_NETWORK_SERVER)
     {
-        Con_Message("Network savegames are not supported at the moment.");
+        App_Log(DE2_LOG_ERROR, "Network savegames are not supported at the moment");
         return false;
     }
 
@@ -3840,9 +3838,9 @@ D_CMD(SaveGame)
 
     // Clearly the caller needs some assistance...
     if(!SV_IsValidSlot(slot))
-        Con_Message("Failed to determine game-save slot from \"%s\".", argv[1]);
+        App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     else
-        Con_Message("Game-save slot #%i is non-user-writable.", slot);
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
 
     // No action means the command failed.
     return false;
@@ -3922,9 +3920,9 @@ D_CMD(DeleteGameSave)
 
     // Clearly the caller needs some assistance...
     if(!SV_IsValidSlot(slot))
-        Con_Message("Failed to determine game-save slot from \"%s\".", argv[1]);
+        App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     else
-        Con_Message("Game-save slot #%i is non-user-writable.", slot);
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
 
     // No action means the command failed.
     return false;
@@ -3950,7 +3948,7 @@ D_CMD(CycleTextureGamma)
 
 D_CMD(ListMaps)
 {
-    Con_Message("Available maps:");
+    App_Log(DE2_LOG_MSG, "Available maps:");
     G_PrintMapList();
     return true;
 }

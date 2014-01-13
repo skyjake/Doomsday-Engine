@@ -635,7 +635,7 @@ void SV_ClearSlot(int slot)
     if(announceOnClearingSlot(slot))
     {
         AutoStr *ident = SV_ComposeSlotIdentifier(slot);
-        Con_Message("Clearing save slot %s", Str_Text(ident));
+        App_Log(DE2_RES_MSG, "Clearing save slot %s", Str_Text(ident));
     }
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
@@ -852,17 +852,13 @@ void SV_CopySlot(int sourceSlot, int destSlot)
 
     if(!SV_IsValidSlot(sourceSlot))
     {
-#if _DEBUG
-        Con_Message("Warning: SV_CopySlot: Source slot %i invalid, save game not copied.", sourceSlot);
-#endif
+        DENG_ASSERT(!"SV_CopySlot: Source slot invalid");
         return;
     }
 
     if(!SV_IsValidSlot(destSlot))
     {
-#if _DEBUG
-        Con_Message("Warning: SV_CopySlot: Dest slot %i invalid, save game not copied.", destSlot);
-#endif
+        DENG_ASSERT(!"SV_CopySlot: Dest slot invalid");
         return;
     }
 
@@ -1103,7 +1099,7 @@ mobj_t *SV_GetArchiveThing(ThingSerialId thingId, void *address)
 
         if(thingId < 1 || (unsigned) thingId > thingArchiveSize)
         {
-            Con_Message("SV_GetArchiveThing: Invalid thing Id %i??", thingId);
+            App_Log(DE2_RES_WARNING, "SV_GetArchiveThing: Invalid thing Id %i", thingId);
             return 0;
         }
 
@@ -5354,11 +5350,11 @@ dd_bool SV_LoadGame(int slot)
     AutoStr *path = composeGameSavePathForSlot(slot);
     if(Str_IsEmpty(path))
     {
-        Con_Message("Warning: Path \"%s\" is unreachable, game not loaded.", SV_SavePath());
+        App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable", SV_SavePath());
         return false;
     }
 
-    VERBOSE( Con_Message("Attempting load of game-save slot #%i...", slot) )
+    App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slot);
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot.
@@ -5380,7 +5376,7 @@ dd_bool SV_LoadGame(int slot)
     }
     else
     {
-        Con_Message("Warning: Failed loading game-save slot #%i.", slot);
+        App_Log(DE2_RES_WARNING, "Failed loading save slot #%i", slot);
     }
 
     return !loadError;
@@ -5404,7 +5400,7 @@ void SV_SaveGameClient(uint gameId)
     gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(gameSavePath, "wp"))
     {
-        Con_Message("Warning: SV_SaveGameClient: Failed opening \"%s\" for writing.", Str_Text(gameSavePath));
+        App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing", Str_Text(gameSavePath));
         return;
     }
 
@@ -5464,7 +5460,7 @@ void SV_LoadGameClient(uint gameId)
     gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(gameSavePath, "rp"))
     {
-        Con_Message("Warning: SV_LoadGameClient: Failed opening \"%s\" for reading.", Str_Text(gameSavePath));
+        App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading", Str_Text(gameSavePath));
         return;
     }
 
@@ -5476,7 +5472,7 @@ void SV_LoadGameClient(uint gameId)
     {
         SaveInfo_Delete(saveInfo);
         SV_CloseFile();
-        Con_Message("SV_LoadGameClient: Bad magic!");
+        App_Log(DE2_RES_ERROR, "Client save file format not recognized");
         return;
     }
 
@@ -5541,9 +5537,9 @@ static void readMapState()
 
     // Load the file
     size_t bufferSize = M_ReadFile(Str_Text(path), (char**)&saveBuffer);
-    if(0 == bufferSize)
+    if(!bufferSize)
     {
-        Con_Message("Warning: readMapState: Failed opening \"%s\" for reading.", Str_Text(path));
+        App_Log(DE2_RES_ERROR, "readMapState: Failed opening \"%s\" for reading", Str_Text(path));
         return;
     }
 
@@ -5561,9 +5557,7 @@ static void readMapState()
 
 static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 {
-#if _DEBUG
-    VERBOSE( Con_Message("saveStateWorker: Attempting save game to \"%s\".", Str_Text(path)) )
-#endif
+    App_Log(DE2_LOG_VERBOSE, "saveStateWorker: Attempting save game to \"%s\"", Str_Text(path));
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
@@ -5655,19 +5649,19 @@ dd_bool SV_SaveGame(int slot, char const *name)
 
     if(!SV_IsValidSlot(slot))
     {
-        Con_Message("Warning: Invalid slot '%i' specified, game not saved.", slot);
+        DENG_ASSERT(!"Invalid slot '%i' specified");
         return false;
     }
     if(!name[0])
     {
-        Con_Message("Warning: Empty name specified for slot #%i, game not saved.", slot);
+        DENG_ASSERT(!"Empty name specified for slot");
         return false;
     }
 
     AutoStr *path = composeGameSavePathForSlot(logicalSlot);
     if(Str_IsEmpty(path))
     {
-        Con_Message("Warning: Path \"%s\" is unreachable, game not saved.", SV_SavePath());
+        App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable", SV_SavePath());
         return false;
     }
 
@@ -5694,7 +5688,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
 
         if(saveError == SV_INVALIDFILENAME)
         {
-            Con_Message("Warning: Failed opening \"%s\" for writing.", Str_Text(path));
+            App_Log(DE2_RES_ERROR, "Failed opening \"%s\" for writing", Str_Text(path));
         }
     }
 

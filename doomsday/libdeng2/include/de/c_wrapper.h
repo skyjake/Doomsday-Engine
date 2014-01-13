@@ -74,6 +74,8 @@ DENG2_PUBLIC int CommandLine_IsMatchingAlias(char const *original, char const *o
 /*
  * LogBuffer
  */
+#define DE2_ESC(StringLiteral) "\x1b" StringLiteral
+
 // Log levels (see de::Log for description).
 typedef enum logentry_metadata_e
 {

@@ -1136,16 +1136,14 @@ dd_bool P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
             return false;
         }
 
-#if _DEBUG
-        VERBOSE2(
-            if(thing->onMobj)
-            {
-                Con_Message("thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]", thing->onMobj,
-                            thing->onMobj->thinker.id,
-                            (thing->onMobj->flags & MF_SOLID)!=0,
-                            thing, thing->thinker.id);
-            }
-        );
+        if(thing->onMobj)
+        {
+            App_Log(DE2_DEV_MAP_XVERBOSE,
+                    "thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]", thing->onMobj,
+                    thing->onMobj->thinker.id,
+                    (thing->onMobj->flags & MF_SOLID) != 0,
+                    thing, thing->thinker.id);
+        }
 #endif
     }
 
@@ -1480,15 +1478,15 @@ static dd_bool P_TryMove2(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff)
                         P_ActivateLine(line, thing, oldSide, SPAC_PCROSS);
                     }
 #else
-#ifdef _DEBUG
+
                     if(!IS_CLIENT && thing->player)
                     {
-                        Con_Message("P_TryMove2: Mobj %i crossing line %i from %f,%f to %f,%f",
-                                    thing->thinker.id, P_ToIndex(line),
-                                    oldPos[VX], oldPos[VY],
-                                    thing->origin[VX], thing->origin[VY]);
+                        App_Log(DE2_DEV_MAP_VERBOSE, "P_TryMove2: Mobj %i crossing line %i from %f,%f to %f,%f",
+                                thing->thinker.id, P_ToIndex(line),
+                                oldPos[VX], oldPos[VY],
+                                thing->origin[VX], thing->origin[VY]);
                     }
-#endif
+
                     P_ActivateLine(line, thing, oldSide, SPAC_CROSS);
 #endif
                 }
@@ -2388,9 +2386,8 @@ void P_UseLines(player_t *player)
 
     if(IS_CLIENT)
     {
-#ifdef _DEBUG
-        Con_Message("P_UseLines: Sending a use request for player %i.", int(player - players));
-#endif
+        App_Log(DE2_DEV_NET_VERBOSE, "P_UseLines: Sending a use request for player %i", int(player - players));
+
         NetCl_PlayerActionRequest(player, GPA_USE, 0);
         return;
     }
@@ -2608,13 +2605,11 @@ void P_SlideMove(mobj_t *mo)
                              mo->origin[VY] + tmMove[MY], true, true));
 #endif
 
-#ifdef _DEBUG
     // Didn't move?
     if(mo->player && mo->origin[VX] == oldOrigin[VX] && mo->origin[VY] == oldOrigin[VY])
     {
-        Con_Message("P_SlideMove: Mobj pos stays the same.");
+        App_Log(DE2_DEV_MAP_MSG, "P_SlideMove: Mobj %i pos stays the same", mo->thinker.id);
     }
-#endif
 }
 
 /**

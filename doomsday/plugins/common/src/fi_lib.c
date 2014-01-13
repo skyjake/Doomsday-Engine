@@ -128,9 +128,8 @@ static void initStateConditions(fi_state_t* s)
 
     // Current hub has been completed?
     s->conditions.leave_hub = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
-# ifdef _DEBUG
-    Con_Message("Infine state condition: leave_hub=%i", s->conditions.leave_hub);
-# endif
+
+    App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);
 #else
     s->conditions.secret = secretExit;
     // Only Hexen has hubs.
@@ -155,10 +154,10 @@ static fi_state_t* stateForFinaleId(finaleid_t id)
     {
         if(remoteFinaleState.finaleId)
         {
-#ifdef _DEBUG
-            VERBOSE2( Con_Message("stateForFinaleId: Finale %i is remote, using server's state (id %i).",
-                                  id, remoteFinaleState.finaleId) );
-#endif
+            App_Log(DE2_DEV_SCR_XVERBOSE,
+                    "stateForFinaleId: Finale %i is remote, using server's state (id %i)",
+                                  id, remoteFinaleState.finaleId);
+
             return &remoteFinaleState;
         }
     }
@@ -241,10 +240,9 @@ void NetCl_UpdateFinaleState(Reader* msg)
         if(i == 1) s->conditions.leave_hub = cond;
     }
 
-#ifdef _DEBUG
-    Con_Message("NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hud=%i",
-                s->finaleId, s->mode, s->conditions.secret, s->conditions.leave_hub);
-#endif
+    App_Log(DE2_DEV_SCR_MSG,
+            "NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hud=%i",
+            s->finaleId, s->mode, s->conditions.secret, s->conditions.leave_hub);
 }
 
 void FI_StackInit(void)
@@ -290,12 +288,12 @@ void FI_StackExecuteWithId(const char* scriptSrc, int flags, finale_mode_t mode,
     finaleid_t finaleId;
     int i, fontIdx;
 
-    if(!finaleStackInited) Con_Error("FI_StackExecute: Not initialized yet!");
+    DENG_ASSERT(finaleStackInited);
 
     // Should we ignore this?
     if(defId && stackHasDefId(defId))
     {
-        Con_Message("There already is a finale running with ID \"%s\"; won't execute again.", defId);
+        App_Log(DE2_SCR_NOTE, "Finale ID \"%s\" is already running, won't execute again", defId);
         return;
     }
 
@@ -427,10 +425,9 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
 
     if(IS_CLIENT && s == &remoteFinaleState)
     {
-#ifdef _DEBUG
-        Con_Message("Hook_FinaleScriptStop: Clientside script stopped, clearing remote state.");
+        App_Log(DE2_DEV_SCR_MSG, "Hook_FinaleScriptStop: Clientside script stopped, clearing remote state");
         memset(&remoteFinaleState, 0, sizeof(remoteFinaleState));
-#endif
+
         return true;
     }
 

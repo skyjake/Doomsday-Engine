@@ -83,7 +83,7 @@ void NetCl_UpdateGameState(Reader* msg)
 
     gsGravity = Reader_ReadFloat(msg);
 
-    App_Log(DE2_DEV_NET_NOTE,
+    App_Log(DE2_DEV_MAP_NOTE,
             "NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"",
             gsFlags, Str_Text(Uri_ToString(mapUri)));
 
@@ -115,19 +115,19 @@ void NetCl_UpdateGameState(Reader* msg)
 
     // Some statistics.
 #if __JHEXEN__
-    App_Log(DE2_NET_NOTE,
+    App_Log(DE2_LOG_NOTE,
             "Game state: Map=%u Skill=%i %s", gsMap+1, gsSkill,
             deathmatch == 1 ? "Deathmatch" :
             deathmatch == 2 ? "Deathmatch2" : "Co-op");
 #else
-    App_Log(DE2_NET_NOTE,
+    App_Log(DE2_LOG_NOTE,
             "Game state: Map=%u Episode=%u Skill=%i %s", gsMap+1,
             gsEpisode+1, gsSkill,
             deathmatch == 1 ? "Deathmatch" :
             deathmatch == 2 ? "Deathmatch2" : "Co-op");
 #endif
 #if !__JHEXEN__
-    App_Log(DE2_NET_NOTE, "  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f",
+    App_Log(DE2_LOG_NOTE, "  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f",
             respawnMonsters ? "yes" : "no", !noMonstersParm ? "yes" : "no",
             gsJumping ? "yes" : "no", gsGravity);
 #else
@@ -214,7 +214,7 @@ void NetCl_MobjImpulse(Reader* msg)
         return;
     }
 
-    App_Log(DE2_DEV_NET_VERBOSE, "NetCl_MobjImpulse: Player %i, clmobj %i", CONSOLEPLAYER, id);
+    App_Log(DE2_DEV_MAP_VERBOSE, "NetCl_MobjImpulse: Player %i, clmobj %i", CONSOLEPLAYER, id);
 
     // Apply to the local mobj.
     mo->mom[MX] += Reader_ReadFloat(msg);
@@ -234,13 +234,11 @@ void NetCl_PlayerSpawnPosition(Reader* msg)
     z = Reader_ReadFloat(msg);
     angle = Reader_ReadUInt32(msg);
 
-#ifdef _DEBUG
-    Con_Message("NetCl_PlayerSpawnPosition: Got spawn position %f, %f, %f facing %x",
-                x, y, z, angle);
-#endif
+    App_Log(DE2_DEV_MAP_NOTE, "Got player spawn position (%g, %g, %g) facing %x",
+            x, y, z, angle);
 
     mo = p->plr->mo;
-    assert(mo != 0);
+    DENG_ASSERT(mo != 0);
 
     P_TryMoveXYZ(mo, x, y, z);
     mo->angle = angle;
@@ -256,9 +254,7 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
 
     if(!Get(DD_GAME_READY))
     {
-#ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState2: Discarded because game isn't ready.");
-#endif
+        App_Log(DE2_DEV_NET_WARNING, "NetCl_UpdatePlayerState2: game isn't ready yet!");
         return;
     }
 
@@ -296,11 +292,9 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
         pl->armorType = b >> 4;
 #endif
 
-#ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState2: New state = %s",
-                    pl->playerState == PST_LIVE?  "PST_LIVE" :
-                    pl->playerState == PST_DEAD? "PST_DEAD" : "PST_REBORN");
-#endif
+        App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState2: New player state = %s",
+                pl->playerState == PST_LIVE? "PST_LIVE" :
+                pl->playerState == PST_DEAD? "PST_DEAD" : "PST_REBORN");
 
         // Player state changed?
         if(oldPlayerState != pl->playerState)
@@ -311,9 +305,9 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
                 // Becoming alive again...
                 // After being reborn, the server will tell us the new weapon.
                 pl->plr->flags |= DDPF_UNDEFINED_WEAPON;
-#ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState2: Player %i: Marking weapon as undefined.", (int)(pl - players));
-#endif
+
+                App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState2: Player %i: Marking weapon as undefined",
+                        (int)(pl - players));
 
                 pl->plr->flags &= ~DDPF_DEAD;
             }
@@ -351,12 +345,6 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
     flags = Reader_ReadUInt16(msg);
 
-    /*
-#ifdef _DEBUG
-    VERBOSE( Con_Message("NetCl_UpdatePlayerState: fl=%x", flags) );
-#endif
-    */
-
     if(flags & PSF_STATE)       // and armor type (the same bit)
     {
         b = Reader_ReadByte(msg);
@@ -390,9 +378,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
         }
         else
         {
-#if _DEBUG
-            Con_Message("FIXME: NetCl_UpdatePlayerState: Player mobj not yet allocated at this time, ignoring.");
-#endif
+            App_Log(DE2_DEV_MAP_ERROR, "NetCl_UpdatePlayerState: Player mobj not yet allocated at this time");
         }
     }
 
@@ -499,17 +485,15 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
                     pl->plr->mo->flags |= MF_NOGRAVITY;
                     pl->flyHeight = 10;
                     pl->powers[i] = val;
-#ifdef _DEBUG
-                    Con_Message("NetCl_UpdatePlayerState: Local mobj flight enabled.");
-#endif
+
+                    App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState: Local mobj flight enabled");
                 }
 
                 // Should we reveal the map?
                 if(val && i == PT_ALLMAP && plrNum == CONSOLEPLAYER)
                 {
-#ifdef _DEBUG
-                    Con_Message("NetCl_UpdatePlayerState: Revealing automap.");
-#endif
+                    App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState: Revealing automap");
+
                     ST_RevealAutomap(plrNum, true);
                 }
             }
@@ -597,10 +581,8 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
         pl->itemCount   = Reader_ReadByte(msg);
         pl->secretCount = Reader_ReadByte(msg);
 
-#ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState: kills=%i, items=%i, secrets=%i",
-                    pl->killCount, pl->itemCount, pl->secretCount);
-#endif
+        App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState: kills=%i, items=%i, secrets=%i",
+                pl->killCount, pl->itemCount, pl->secretCount);
     }
 
     if(flags & PSF_PENDING_WEAPON || flags & PSF_READY_WEAPON)
@@ -615,18 +597,17 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
                 int weapon = b & 0xf;
                 if(weapon != WT_NOCHANGE)
                 {
+                    App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState: Weapon already known, "
+                            "using an impulse to switch to %i", weapon);
+
                     P_Impulse(pl - players, CTL_WEAPON1 + weapon);
-#ifdef _DEBUG
-                    Con_Message("NetCl_UpdatePlayerState: Weapon already known, using an impulse to switch to %i.", weapon);
-#endif
                 }
             }
             else
             {
                 pl->pendingWeapon = b & 0xf;
-#ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState: pendingweapon=%i", pl->pendingWeapon);
-#endif
+
+                App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState: pendingweapon=%i", pl->pendingWeapon);
             }
 
             pl->plr->flags &= ~DDPF_UNDEFINED_WEAPON;
@@ -637,16 +618,12 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             if(wasUndefined)
             {
                 pl->readyWeapon = b >> 4;
-#ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState: readyweapon=%i", pl->readyWeapon);
-#endif
+                App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState: readyweapon=%i", pl->readyWeapon);
             }
             else
             {
-#ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState: Readyweapon already known (%i), not setting server's value %i.",
-                            pl->readyWeapon, b >> 4);
-#endif
+                App_Log(DE2_DEV_MAP_NOTE, "NetCl_UpdatePlayerState: Readyweapon already known (%i), "
+                        "not setting server's value %i", pl->readyWeapon, b >> 4);
             }
 
             pl->plr->flags &= ~DDPF_UNDEFINED_WEAPON;
@@ -654,9 +631,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
         if(!(pl->plr->flags & DDPF_UNDEFINED_WEAPON) && wasUndefined)
         {
-#ifdef _DEBUG
-            Con_Message("NetCl_UpdatePlayerState: Weapon was undefined, bringing it up now.");
-#endif
+            App_Log(DE2_DEV_MAP_NOTE, "NetCl_UpdatePlayerState: Weapon was undefined, bringing it up now");
 
             // Bring it up now.
             P_BringUpWeapon(pl);
@@ -672,9 +647,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
     if(flags & PSF_MORPH_TIME)
     {
         pl->morphTics = Reader_ReadByte(msg) * 35;
-#ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState: Player %i morphtics = %i", plrNum, pl->morphTics);
-#endif
+        App_Log(DE2_DEV_MAP_MSG, "NetCl_UpdatePlayerState: Player %i morphtics = %i", plrNum, pl->morphTics);
     }
 #endif
 
@@ -848,9 +821,9 @@ void NetCl_UpdatePlayerInfo(Reader *msg)
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i", num, cfg.playerColor[num]);
+    App_Log(DE2_MAP_VERBOSE, "Player %i color set to %i", num, cfg.playerColor[num]);
 #else
-    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i", num, cfg.playerColor[num], cfg.playerClass[num]);
+    App_Log(DE2_MAP_VERBOSE, "Player %i color set to %i and class to %i", num, cfg.playerColor[num], cfg.playerClass[num]);
 #endif
 }
 
@@ -931,9 +904,8 @@ void NetCl_CheatRequest(const char *command)
 void NetCl_UpdateJumpPower(Reader* msg)
 {
     netJumpPower = Reader_ReadFloat(msg);
-#ifdef _DEBUG
-    Con_Message("NetCl_UpdateJumpPower: %g", netJumpPower);
-#endif
+
+    App_Log(DE2_LOG_VERBOSE, "Jump power: %g", netJumpPower);
 }
 
 void NetCl_FloorHitRequest(player_t* player)
@@ -947,9 +919,7 @@ void NetCl_FloorHitRequest(player_t* player)
     mo = player->plr->mo;
     msg = D_NetWrite();
 
-#ifdef _DEBUG
-    Con_Message("NetCl_FloorHitRequest: Player %i.", (int)(player - players));
-#endif
+    App_Log(DE2_DEV_MAP_VERBOSE, "NetCl_FloorHitRequest: Player %i", (int)(player - players));
 
     // Include the position and momentum of the hit.
     Writer_WriteFloat(msg, mo->origin[VX]);
@@ -978,10 +948,8 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
 
     msg = D_NetWrite();
 
-#ifdef _DEBUG
-    Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.",
-                (int)(player - players), actionType);
-#endif
+    App_Log(DE2_DEV_NET_VERBOSE, "NetCl_PlayerActionRequest: Player %i, action %i",
+            (int)(player - players), actionType);
 
     // Type of the request.
     Writer_WriteInt32(msg, actionType);
@@ -1037,19 +1005,15 @@ void NetCl_LocalMobjState(Reader* msg)
 
     if(!(mo = ClMobj_Find(mobjId)))
     {
-#ifdef _DEBUG
-        Con_Message("NetCl_LocalMobjState: ClMobj %i not found.", mobjId);
+        App_Log(DE2_DEV_MAP_NOTE, "NetCl_LocalMobjState: ClMobj %i not found", mobjId);
         return;
-#endif
     }
 
     // Let it run the sequence locally.
     ClMobj_EnableLocalActions(mo, true);
 
-#ifdef _DEBUG
-    Con_Message("NetCl_LocalMobjState: ClMobj %i => state %i (target:%i, special1:%i)",
-                mobjId, newState, targetId, special1);
-#endif
+    App_Log(DE2_DEV_MAP_VERBOSE, "ClMobj %i => state %i (target:%i, special1:%i)",
+            mobjId, newState, targetId, special1);
 
     if(!targetId)
     {
@@ -1073,11 +1037,10 @@ void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int 
 
     msg = D_NetWrite();
 
-#ifdef _DEBUG
-    Con_Message("NetCl_DamageRequest: Damage %i on target=%i via inflictor=%i by source=%i.",
-                damage, target->thinker.id, inflictor? inflictor->thinker.id : 0,
-                source? source->thinker.id : 0);
-#endif
+    App_Log(DE2_DEV_NET_MSG,
+            "NetCl_DamageRequest: Damage %i on target=%i via inflictor=%i by source=%i",
+            damage, target->thinker.id, inflictor? inflictor->thinker.id : 0,
+            source? source->thinker.id : 0);
 
     // Amount of damage.
     Writer_WriteInt32(msg, damage);
@@ -1097,9 +1060,7 @@ void NetCl_UpdateTotalCounts(Reader *msg)
     totalItems  = Reader_ReadInt32(msg);
     totalSecret = Reader_ReadInt32(msg);
 
-#ifdef _DEBUG
-    Con_Message("NetCl_UpdateTotalCounts: kills=%i, items=%i, secrets=%i",
-                totalKills, totalItems, totalSecret);
-#endif
+    App_Log(DE2_DEV_NET_MSG, "NetCl_UpdateTotalCounts: kills=%i, items=%i, secrets=%i",
+            totalKills, totalItems, totalSecret);
 #endif
 }

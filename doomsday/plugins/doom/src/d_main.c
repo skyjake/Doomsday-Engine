@@ -553,7 +553,7 @@ void D_PostInit(void)
         if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
             App_Log(DE2_LOG_NOTE, "Autostart in Map %d, Skill %d", startMap+1, startSkill);
         else
-            App_Log(DE2_LOG_NOTE, "Autostat in Episode %d, Map %d, Skill %d", startEpisode+1, startMap+1, startSkill);
+            App_Log(DE2_LOG_NOTE, "Autostart in Episode %d, Map %d, Skill %d", startEpisode+1, startMap+1, startSkill);
     }
 
     // Validate episode and map.

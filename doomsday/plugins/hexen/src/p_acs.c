@@ -257,8 +257,11 @@ void P_LoadACScripts(int lump)
     acsinfo_t* info;
     int i;
 
-    VERBOSE( Con_Message("Loading ACS bytecode lump %s:%s (#%i)...",
-                         F_PrettyPath(Str_Text(W_LumpSourceFile(lump))), Str_Text(W_LumpName(lump)), lump) )
+    App_Log(DE2_SCR_VERBOSE,
+            "Loading ACS bytecode lump %s:%s (#%i)...",
+            F_PrettyPath(Str_Text(W_LumpSourceFile(lump))),
+            Str_Text(W_LumpName(lump)), lump);
+
     ACScriptCount = 0;
 
     if(lumpLength >= sizeof(acsheader_t))
@@ -278,7 +281,7 @@ void P_LoadACScripts(int lump)
     if(ACScriptCount == 0 || IS_CLIENT)
     {
         // Empty/Invalid lump.
-        Con_Message("Warning: P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.", lump);
+        App_Log(DE2_SCR_WARNING, "Lump #%i does not appear to be valid ACS bytecode data", lump);
         return;
     }
 
@@ -381,12 +384,7 @@ dd_bool P_StartACS(int number, uint map, byte* args, mobj_t* activator,
     acs_t* script;
     aste_t* statePtr;
 
-#ifdef _DEBUG
-    if(IS_CLIENT)
-    {
-        Con_Message("P_StartACS: Client is attempting to start a script!");
-    }
-#endif
+    DENG_ASSERT(!IS_CLIENT);
 
     NewScript = NULL;
     if(map && map-1 != gameMap)
@@ -1874,8 +1872,8 @@ D_CMD(ScriptInfo)
         if(whichOne != -1 && whichOne != aptr->number)
             continue;
 
-        Con_Message("%d %s (a: %d, w: %d)", aptr->number,
-                    scriptStates[aptr->state], aptr->argCount, aptr->waitValue);
+        App_Log(DE2_SCR_MSG, "%d %s (a: %d, w: %d)", aptr->number,
+                scriptStates[aptr->state], aptr->argCount, aptr->waitValue);
     }
 
     return true;

@@ -261,10 +261,8 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, dd_bool deathmatch,
             Z_Realloc(deathmatchStarts, sizeof(playerstart_t) * ++numPlayerDMStarts, PU_MAP);
         start = &deathmatchStarts[numPlayerDMStarts - 1];
 
-#ifdef _DEBUG
-        Con_Message("P_CreatePlayerStart: DM #%i plrNum=%i entryPoint=%i spot=%i",
+        App_Log(DE2_DEV_MAP_VERBOSE, "P_CreatePlayerStart: DM #%i plrNum=%i entryPoint=%i spot=%i",
                 numPlayerDMStarts - 1, defaultPlrNum, entryPoint, spot);
-#endif
     }
     else
     {
@@ -272,10 +270,8 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, dd_bool deathmatch,
             Z_Realloc(playerStarts, sizeof(playerstart_t) * ++numPlayerStarts, PU_MAP);
         start = &playerStarts[numPlayerStarts - 1];
 
-#ifdef _DEBUG
-        Con_Message("P_CreatePlayerStart: Normal #%i plrNum=%i entryPoint=%i spot=%i",
-                    numPlayerStarts - 1, defaultPlrNum, entryPoint, spot);
-#endif
+        App_Log(DE2_DEV_MAP_VERBOSE, "P_CreatePlayerStart: Normal #%i plrNum=%i entryPoint=%i spot=%i",
+                numPlayerStarts - 1, defaultPlrNum, entryPoint, spot);
     }
 
     start->plrNum     = defaultPlrNum;
@@ -351,7 +347,7 @@ void P_DealPlayerStarts(uint entryPoint)
 
     if(!numPlayerStarts)
     {
-        Con_Message("Warning: Zero player starts found, players will spawn as cameras.");
+        App_Log(DE2_MAP_WARNING, "No player starts found, players will spawn as cameras");
         return;
     }
 
@@ -381,10 +377,8 @@ void P_DealPlayerStarts(uint entryPoint)
                 // A match!
                 pl->startSpot = k;
                 // Keep looking.
-#ifdef _DEBUG
-                Con_Message(" - playerStart %i matches: spot=%i entryPoint=%i",
-                            k, spotNumber, entryPoint);
-#endif
+                App_Log(DE2_DEV_MAP_XVERBOSE, "PlayerStart %i matches: spot=%i entryPoint=%i",
+                        k, spotNumber, entryPoint);
             }
         }
 
@@ -396,8 +390,7 @@ void P_DealPlayerStarts(uint entryPoint)
         }
     }
 
-#ifdef _DEBUG
-    Con_Message("Player starting spots:");
+    App_Log(DE2_DEV_MAP_MSG, "Player starting spots:");
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t *pl = &players[i];
@@ -405,9 +398,8 @@ void P_DealPlayerStarts(uint entryPoint)
         if(!pl->plr->inGame)
             continue;
 
-        Con_Message("- pl%i: color %i, spot %i", i, cfg.playerColor[i], pl->startSpot);
+        App_Log(DE2_DEV_MAP_MSG, "- pl%i: color %i, spot %i", i, cfg.playerColor[i], pl->startSpot);
     }
-#endif
 }
 
 void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord_t z,
@@ -428,11 +420,9 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
                   "(class:%i) pos:[%g, %g, %g] angle:%i.", plrNum, pClass,
                   x, y, z, angle);
 
-#ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player #%i spawned pos:[%g, %g, %g] angle:%x floorz:%g mobjid:%i",
-                plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ], mo->angle, mo->floorZ,
-                mo->thinker.id);
-#endif
+    App_Log(DE2_DEV_MAP_MSG, "P_SpawnPlayer: Player #%i spawned pos:(%g, %g, %g) angle:%x floorz:%g mobjid:%i",
+            plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ], mo->angle, mo->floorZ,
+            mo->thinker.id);
 
     player_t *p = &players[plrNum];
     if(p->playerState == PST_REBORN)
@@ -459,10 +449,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
         mo->flags |= cfg.playerColor[plrNum] << MF_TRANSSHIFT;
     */
 
-#ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player #%i spawning with color translation %i.",
-                plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
-#endif
+    App_Log(DE2_DEV_MAP_VERBOSE, "Player #%i spawning with color translation %i",
+            plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
 
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXORIGIN | DDPF_FIXMOM;
@@ -498,7 +486,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        VERBOSE( Con_Message("Player #%i spawned as a camera.", plrNum) )
+        App_Log(DE2_MAP_MSG, "Player #%i spawned as a camera", plrNum);
 
         p->plr->mo->origin[VZ] += (coord_t) cfg.plrViewHeight;
         p->viewHeight = 0;
@@ -755,9 +743,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 #else
     if(!foundSpot)
     {
-#ifdef _DEBUG
-        Con_Message("P_RebornPlayer: Trying other spots for %i.", plrNum);
-#endif
+        App_Log(DE2_DEV_MAP_MSG, "P_RebornPlayer: Trying other spots for %i", plrNum);
 
         // Try to spawn at one of the other player start spots.
         for(int i = 0; i < MAXPLAYERS; ++i)
@@ -777,14 +763,13 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 
                     foundSpot = true;
 
-#ifdef _DEBUG
-                    Con_Message("P_RebornPlayer: Spot [%f, %f] selected.", spot->origin[VX], spot->origin[VY]);
-#endif
+                    App_Log(DE2_DEV_MAP_MSG, "P_RebornPlayer: Spot (%g, %g) selected",
+                            spot->origin[VX], spot->origin[VY]);
                     break;
                 }
-#ifdef _DEBUG
-                Con_Message("P_RebornPlayer: Spot [%f, %f] is not available.", spot->origin[VX], spot->origin[VY]);
-#endif
+
+                App_Log(DE2_DEV_MAP_VERBOSE, "P_RebornPlayer: Spot (%g, %g) is unavailable",
+                        spot->origin[VX], spot->origin[VY]);
             }
         }
     }
@@ -812,10 +797,8 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     }
 #endif
 
-#ifdef _DEBUG
-    Con_Message("P_RebornPlayer: Spawning player at (%f,%f,%f) angle:%x.",
-                pos[VX], pos[VY], pos[VZ], angle);
-#endif
+    App_Log(DE2_DEV_MAP_NOTE, "Multiplayer-spawning player at (%f,%f,%f) angle:%x",
+            pos[VX], pos[VY], pos[VZ], angle);
 
     spawnPlayer(plrNum, pClass, pos[VX], pos[VY], pos[VZ], angle,
                 spawnFlags, makeCamera, true, true);
@@ -839,11 +822,9 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     GetDefInt("Multiplayer|Reborn|Blue mana",  &p->ammo[AT_BLUEMANA].owned);
     GetDefInt("Multiplayer|Reborn|Green mana", &p->ammo[AT_GREENMANA].owned);
 
-#ifdef _DEBUG
-    Con_Message("P_RebornPlayerInMultiplayer: Giving mana (b:%i g:%i) to player %i; "
-                "also old weapons, with best weapon %i", p->ammo[AT_BLUEMANA].owned,
-                p->ammo[AT_GREENMANA].owned, plrNum, bestWeapon);
-#endif
+    App_Log(DE2_MAP_VERBOSE, "Player %i reborn in multiplayer: giving mana (b:%i g:%i); "
+            "also old weapons, with best weapon %i", plrNum, p->ammo[AT_BLUEMANA].owned,
+            p->ammo[AT_GREENMANA].owned, bestWeapon);
 
     if(bestWeapon)
     {
@@ -881,9 +862,8 @@ dd_bool P_CheckSpot(coord_t x, coord_t y)
 #if __JHERETIC__
 void P_AddMaceSpot(mapspotid_t id)
 {
-#ifdef _DEBUG
-    Con_Message("P_AddMaceSpot: Added mace spot %u", id);
-#endif
+    App_Log(DE2_DEV_MAP_VERBOSE, "P_AddMaceSpot: Added mace spot %u", id);
+
     maceSpots = (mapspotid_t *)Z_Realloc(maceSpots, sizeof(mapspotid_t) * ++maceSpotCount, PU_MAP);
     maceSpots[maceSpotCount-1] = id;
 }
@@ -987,9 +967,7 @@ void P_SpawnPlayers()
                         pos[VX], pos[VY], pos[VZ], angle, spawnFlags,
                         spawnAsCamera, false, true);
 
-#ifdef _DEBUG
-            Con_Message("P_SpawnPlayers: Player %i at %f, %f, %f", i, pos[VX], pos[VY], pos[VZ]);
-#endif
+            App_Log(DE2_DEV_MAP_MSG, "Player %i spawned at (%g, %g, %g)", i, pos[VX], pos[VY], pos[VZ]);
         }
     }
 
@@ -1157,9 +1135,7 @@ static int turnMobjToNearestLine(thinker_t *th, void *context)
     //       custom comparison func for Thinker_Iterate...
     if(mo->type != type) return false;
 
-#ifdef _DEBUG
-    VERBOSE( Con_Message("Checking mo %i...", mo->thinker.id) );
-#endif
+    App_Log(DE2_MAP_XVERBOSE, "Checking mo %i for auto-turning...", mo->thinker.id);
 
     AABoxd aaBox(mo->origin[VX] - 50, mo->origin[VY] - 50,
                  mo->origin[VX] + 50, mo->origin[VY] + 50);
@@ -1175,15 +1151,12 @@ static int turnMobjToNearestLine(thinker_t *th, void *context)
     if(parm.line)
     {
         mo->angle = P_GetAnglep(parm.line, DMU_ANGLE) - ANGLE_90;
-#ifdef _DEBUG
-        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i angle=%x", mo->thinker.id, mo->angle) );
-#endif
+        App_Log(DE2_MAP_VERBOSE, "Turning mobj to nearest line: mo=%i angle=%x",  mo->thinker.id, mo->angle);
     }
     else
     {
-#ifdef _DEBUG
-        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i => no nearest line found", mo->thinker.id) );
-#endif
+        App_Log(DE2_DEV_MAP_XVERBOSE, "Turning mobj to nearest line: mo=%i => no nearest line found",
+                mo->thinker.id);
     }
 
     return false;

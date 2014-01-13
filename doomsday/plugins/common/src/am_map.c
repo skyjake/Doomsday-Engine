@@ -255,7 +255,7 @@ static void initAutomapConfig(automapcfg_t* mcfg)
 
 void ST_InitAutomapConfig(void)
 {
-    VERBOSE2( Con_Message("Initializing automap...") )
+    App_Log(DE2_LOG_XVERBOSE, "Initializing automap...");
     initAutomapConfig(&automapCFG);
 }
 

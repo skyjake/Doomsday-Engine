@@ -579,9 +579,7 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
         return false;
     inv = &inventories[player];
 
-#ifdef _DEBUG
-    Con_Message("P_InventoryUse: Player %i using item %i", player, type);
-#endif
+    App_Log(DE2_DEV_MAP_VERBOSE, "P_InventoryUse: Player %i using item %i", player, type);
 
     if(IS_CLIENT)
     {

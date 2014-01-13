@@ -129,7 +129,8 @@ public:
                     int arg = ch[1] - '0';
                     if(arg < 1 || arg > 9)
                     {
-                        Con_Message("Warning: EventSequence: Bad suffix %c in sequence %s, sequence truncated.", ch[1], _sequence);
+                        App_Log(DE2_DEV_WARNING, "EventSequence: Sequence %s truncated due to bad suffix %c",
+                                _sequence, ch[1]);
                         len = ch - _sequence;
                         break;
                     }

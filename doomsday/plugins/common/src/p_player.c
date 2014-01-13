@@ -426,10 +426,9 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         return WT_NOCHANGE;
     }
 
-#ifdef _DEBUG
-    Con_Message("P_MaybeChangeWeapon: plr %i, weapon %i, ammo %i, force %i",
-                (int)(player - players), weapon, ammo, force);
-#endif
+    App_Log(DE2_DEV_MAP_XVERBOSE,
+            "P_MaybeChangeWeapon: plr %i, weapon %i, ammo %i, force %i",
+            (int)(player - players), weapon, ammo, force);
 
     // Assume weapon power level zero.
     lvl = 0;
@@ -589,9 +588,9 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     // Choosen a weapon to change to?
     if(returnval != WT_NOCHANGE)
     {
-#ifdef _DEBUG
-        Con_Message("P_MaybeChangeWeapon: Decided to change to weapon %i.", returnval);
-#endif
+        App_Log(DE2_DEV_MAP_XVERBOSE, "P_MaybeChangeWeapon: Player %i decided to change to weapon %i",
+                (int)(player - players), returnval);
+
         player->pendingWeapon = returnval;
 
         if(IS_CLIENT)

@@ -1018,14 +1018,6 @@ void Con_Open(int yes)
 #endif  
 }
 
-void Con_PrintRuler(void)
-{
-    if(ConsoleSilent)
-        return;
-
-    LOG_MSG(_E(R));
-}
-
 /// @param flags  @ref consolePrintFlags
 static void conPrintf(int flags, const char* format, va_list args)
 {
@@ -1062,20 +1054,6 @@ static void conPrintf(int flags, const char* format, va_list args)
             Sv_SendText(netRemoteUser, flags | SV_CONSOLE_PRINT_FLAGS, text);
     }
 #endif
-}
-
-#undef Con_Message
-void Con_Message(char const *message, ...)
-{
-    if(ConsoleSilent)
-        return;
-    if(!message || !message[0])
-        return;
-
-    va_list args;
-    va_start(args, message);
-    conPrintf(0, message, args);
-    va_end(args);
 }
 
 void Con_Error(char const *error, ...)
@@ -1261,8 +1239,6 @@ D_CMD(Help)
 #  define UP_DOWN_ARROW "Up/Down Arrow"
 #endif
 
-    //Con_PrintRuler();
-
     LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console");
 
 #define TABBED(A, B) "\n" _E(Ta) _E(b) "  " << A << " " _E(.) _E(Tb) << B
@@ -1284,7 +1260,6 @@ D_CMD(Help)
     LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listcmds" _E(.) " to list available commands");
     LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listgames" _E(.) " to list installed games and their status");
     LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "listvars" _E(.) " to list available variables");
-    //Con_PrintRuler();
 
 #undef TABBED
 
@@ -1738,8 +1713,6 @@ DENG_DECLARE_API(Con) =
     Con_SetUri2,
     Con_SetUri,
 
-    Con_Message,
-    Con_PrintRuler,
     Con_Error,
 
     DD_Execute,

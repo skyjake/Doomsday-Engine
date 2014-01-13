@@ -714,7 +714,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
 
     if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES))
     {
-        Con_Message("Warning: P_SpawnMobj: Attempt to spawn unknown mobj type %i, ignoring.", type);
+        App_Log(DE2_MAP_ERROR, "Attempt to spawn unknown mobj type %i", type);
         return NULL;
     }
 

@@ -324,9 +324,7 @@ void P_InitMapInfo(void)
             }
         }
 
-#ifdef _DEBUG
-        Con_Message("MAPINFO: map%i \"%s\" warp:%i", map, info->name, info->warpTrans);
-#endif
+        App_Log(DE2_DEV_RES_MSG, "MAPINFO: map%i \"%s\" warp:%i", map, info->name, info->warpTrans);
 
         mapMax = map > mapMax ? map : mapMax;
     }
@@ -354,9 +352,7 @@ static void setSongCDTrack(int index, int track)
 {
     int         cdTrack = track;
 
-#ifdef _DEBUG
-    Con_Message("setSongCDTrack: index=%i, track=%i", index, track);
-#endif
+    App_Log(DE2_DEV_RES_VERBOSE, "setSongCDTrack: index=%i, track=%i", index, track);
 
     // Set the internal array.
     cdNonMapTracks[index] = cdTrack;
@@ -384,25 +380,20 @@ uint P_TranslateMapIfExists(uint map)
         {
             if(info->cluster)
             {
-#ifdef _DEBUG
-                Con_Message("P_TranslateMapIfExists: warp %i translated to logical %i, cluster %i", map, i, info->cluster);
-#endif
+                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to logical map %i, cluster %i", map, i, info->cluster);
                 return i;
             }
             else
             {
-#ifdef _DEBUG
-                Con_Message("P_TranslateMapIfExists: warp %i matches logical %i, but it has no cluster", map, i);
-#endif
+                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches logical map %i, but it has no cluster", map, i);
                 matchedWithoutCluster = i;
             }
         }
     }
 
-#ifdef _DEBUG
-    Con_Message("P_TranslateMapIfExists: could not find warp %i, translating to logical %i",
-                map, matchedWithoutCluster);
-#endif
+    App_Log(DE2_DEV_MAP_NOTE, "Could not find warp %i, translating to logical map %i (without cluster)",
+            map, matchedWithoutCluster);
+
     return matchedWithoutCluster;
 }
 

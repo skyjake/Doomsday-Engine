@@ -93,7 +93,7 @@ static void openScriptLump(lumpnum_t lumpNum)
 
     if(lumpNum < 0 || lumpNum >= Get(DD_NUMLUMPS))
     {
-        Con_Message("Warning: SC_OpenLump: Invalid lump #%i, ignoring.", lumpNum);
+        App_Log(DE2_DEV_SCR_WARNING, "openScriptLump: Invalid script lump #%i", lumpNum);
         return;
     }
 
@@ -121,9 +121,9 @@ static void openScriptFile(const char* name)
     SC_Close();
 
     ScriptSize = M_ReadFile(name, &bufferHandle);
-    if(0 == ScriptSize)
+    if(!ScriptSize)
     {
-        Con_Message("Warning: SC_Open: Failed opening \"%s\" for reading.", name);
+        App_Log(DE2_RES_WARNING, "Failed to open ACS script file \"%s\" for reading", name);
         return;
     }
 

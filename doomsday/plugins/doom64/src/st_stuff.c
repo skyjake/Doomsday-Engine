@@ -144,17 +144,11 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: ST_HUDUnHide: Invalid player #%i, ignoring.", player);
-#endif
         return;
-    }
+
     if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
     {
-#if _DEBUG
-        Con_Message("Warning: ST_HUDUnHide: Invalid event type %i, ignoring.", (int) ev);
-#endif
+        DENG_ASSERT(!"ST_HUDUnHide: Invalid event type");
         return;
     }
 
@@ -616,13 +610,8 @@ void ST_Drawer(int player)
 {
     hudstate_t* hud;
 
-    if(player < 0 || player >= MAXPLAYERS)
-    {
-#if _DEBUG
-        Con_Message("Warning: ST_Drawer: Invalid player #%i, ignoring.", player);
-#endif
-        return;
-    }
+    if(player < 0 || player >= MAXPLAYERS) return;
+
     if(!players[player].plr->inGame) return;
 
     R_UpdateViewFilter(player);
@@ -1143,7 +1132,7 @@ D_CMD(ChatOpen)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i, valid range: [0..%i).", destination, NUMTEAMS);
+            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
             return false;
         }
     }
@@ -1193,9 +1182,9 @@ D_CMD(ChatSendMacro)
 
     if(argc < 2 || argc > 3)
     {
-        Con_Message("Usage: %s (team) (macro number)", argv[0]);
-        Con_Message("Send a chat macro to other player(s).\n"
-                    "If (team) is omitted, the message will be sent to all players.");
+        App_Log(DE2_SCR_NOTE, "Usage: %s (team) (macro number)", argv[0]);
+        App_Log(DE2_SCR_MSG, "Send a chat macro to other player(s). "
+                "If (team) is omitted, the message will be sent to all players.");
         return true;
     }
 
@@ -1210,7 +1199,7 @@ D_CMD(ChatSendMacro)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i, valid range: [0..%i).", destination, NUMTEAMS);
+            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
             return false;
         }
     }
@@ -1218,7 +1207,7 @@ D_CMD(ChatSendMacro)
     macroId = UIChat_ParseMacroId(argc == 3? argv[2] : argv[1]);
     if(-1 == macroId)
     {
-        Con_Message("Invalid macro id.");
+        App_Log(DE2_SCR_ERROR, "Invalid macro id");
         return false;
     }
 

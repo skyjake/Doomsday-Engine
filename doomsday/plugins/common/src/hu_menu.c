@@ -4451,9 +4451,7 @@ mn_page_t* Hu_MenuNewPage(const char* name, const Point2Raw* origin, int flags,
 {
     if(!name || !name[0])
     {
-#if _DEBUG
-        Con_Message("Warning: Hu_MenuNewPage: Attempt to create page with invalid name '%s', ignoring.", name);
-#endif
+        DENG_ASSERT(!"Hu_MenuNewPage: Attempt to create page with an invalid name");
         return NULL;
     }
 

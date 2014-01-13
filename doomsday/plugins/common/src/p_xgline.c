@@ -387,7 +387,7 @@ void XG_Dev(const char* format, ...)
     va_start(args, format);
     dd_vsnprintf(buffer, sizeof(buffer), format, args);
     strcat(buffer, "\n");
-    Con_Message("%s", buffer);
+    App_Log(DE2_MAP_MSG, "%s", buffer);
     va_end(args);
 }
 

@@ -628,7 +628,7 @@ void PO_InitForMap()
     return; // Disabled -- awaiting line argument translation.
 #endif
 
-    Con_Message("PO_InitForMap: Initializing polyobjects.");
+    App_Log(DE2_DEV_MAP_VERBOSE, "Initializing polyobjects for map...");
 
     // thrustMobj will handle polyobj <-> mobj interaction.
     Polyobj_SetCallback(thrustMobj);
@@ -662,11 +662,11 @@ void PO_InitForMap()
         {
             po->crush = (spot->doomEdNum == PO_SPAWNCRUSH_DOOMEDNUM? 1 : 0);
             Polyobj_MoveXY(po, -po->origin[VX] + spot->origin[VX],
-                                -po->origin[VY] + spot->origin[VY]);
+                               -po->origin[VY] + spot->origin[VY]);
         }
         else
         {
-            Con_Message("Warning: Missing spawn spot for PolyObj #%i, ignoring.", i);
+            App_Log(DE2_MAP_WARNING, "Missing spawn spot for PolyObj #%i", i);
         }
     }
 }

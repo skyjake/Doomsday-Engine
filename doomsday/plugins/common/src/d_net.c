@@ -267,7 +267,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         else
         {
             // Client responds to new player?
-            App_Log(DE2_NET_NOTE, "Player %i has arrived in the game", plrNumber);
+            App_Log(DE2_LOG_NOTE, "Player %i has arrived in the game", plrNumber);
             G_DoReborn(plrNumber);
             //players[plrNumber].playerstate = PST_REBORN;
         }
@@ -283,7 +283,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     {
         AutoStr *str = AutoStr_New();
 
-        App_Log(DE2_NET_NOTE, "Player %i has left the game", plrNumber);
+        App_Log(DE2_LOG_NOTE, "Player %i has left the game", plrNumber);
 
         players[plrNumber].playerState = PST_GONE;
 
@@ -534,19 +534,19 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         int newClass = Reader_ReadByte(reader);
         int oldClass = plr->class_;
         plr->class_ = newClass;
-        App_Log(DE2_DEV_NET_MSG, "Player %i class changed to %i", CONSOLEPLAYER, plr->class_);
+        App_Log(DE2_DEV_MAP_MSG, "Player %i class changed to %i", CONSOLEPLAYER, plr->class_);
 #if __JHERETIC__
         if(oldClass != newClass)
         {
             if(newClass == PCLASS_CHICKEN)
             {
-                App_Log(DE2_DEV_NET_VERBOSE, "Player %i activating morph", CONSOLEPLAYER);
+                App_Log(DE2_DEV_MAP_VERBOSE, "Player %i activating morph", CONSOLEPLAYER);
 
                 P_ActivateMorphWeapon(plr);
             }
             else if(oldClass == PCLASS_CHICKEN)
             {
-                App_Log(DE2_DEV_NET_VERBOSE, "Player %i post-morph weapon %i", CONSOLEPLAYER, plr->readyWeapon);
+                App_Log(DE2_DEV_MAP_VERBOSE, "Player %i post-morph weapon %i", CONSOLEPLAYER, plr->readyWeapon);
 
                 // The morph has ended.
                 P_PostMorphWeapon(plr, plr->readyWeapon);

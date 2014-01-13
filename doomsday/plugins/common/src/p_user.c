@@ -327,13 +327,6 @@ void P_PlayerRemoteMove(player_t *player)
     mobj_t *mo = player->plr->mo;
     coord_t xyz[3];
 
-    /*
-#ifdef _DEBUG
-    Con_Message("P_PlayerRemoteMove: player=%i IS_NETGAME=%i mo=%p smoother=%p IS_CLIENT=%i IS_SERVER=%i CNSPLR=%i",
-                plrNum, IS_NETGAME, mo, smoother, IS_CLIENT, IS_SERVER, CONSOLEPLAYER);
-#endif
-    */
-
     if(!IS_NETGAME || !mo || !smoother)
         return;
 
@@ -375,35 +368,32 @@ void P_PlayerRemoteMove(player_t *player)
                 {
                     // It successfully moved to the right XY coords.
                     mo->origin[VZ] = mo->floorZ;
-#ifdef _DEBUG
-                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)",
-                                         plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]) );
-#endif
+
+                    App_Log(DE2_DEV_MAP_XVERBOSE,
+                            "Player %i: Smooth move to %f, %f, %f (floorz)",
+                            plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
                 }
                 else
                 {
-#ifdef _DEBUG
-                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f",
-                                          plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]) );
-#endif
+                    App_Log(DE2_DEV_MAP_XVERBOSE,
+                            "Player %i: Smooth move to %f, %f, %f",
+                            plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
                 }
             }
 
             if(players[plrNum].plr->flags & DDPF_FIXORIGIN)
             {
                 // The player must have teleported.
-#ifdef _DEBUG
-                Con_Message("P_PlayerRemoteMove: Player %i: Clearing smoother because of FIXPOS.", plrNum);
-#endif
+                App_Log(DE2_DEV_MAP_MSG, "Player %i: Clearing smoother because of FIXPOS", plrNum);
+
                 Smoother_Clear(smoother);
             }
         }
         else
         {
-#ifdef _DEBUG
-            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!",
-                        plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
-#endif
+            App_Log(DE2_DEV_MAP_NOTE,
+                    "P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!",
+                    plrNum, mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
         }
     }
 }
@@ -698,9 +688,8 @@ void P_PlayerReborn(player_t* player)
 
     if(plrNum == CONSOLEPLAYER)
     {
-#ifdef _DEBUG
-        Con_Message("P_PlayerReborn: Console player reborn, reseting InFine.");
-#endif
+        App_Log(DE2_DEV_SCR_MSG, "Reseting Infine due to console player being reborn");
+
         // Clear the currently playing script, if any.
         FI_StackClear();
     }
@@ -1245,8 +1234,8 @@ void P_PlayerThinkWeapons(player_t* player)
 
             if(!player->weapons[newweapon].owned)
             {
-                Con_Message("P_PlayerThinkWeapons: Player %i tried to change to unowned weapon %i!",
-                            (int)(player - players), newweapon);
+                App_Log(DE2_MAP_WARNING, "Player %i tried to change to unowned weapon %i!",
+                        (int)(player - players), newweapon);
                 newweapon = WT_NOCHANGE;
             }
         }
@@ -1298,10 +1287,9 @@ void P_PlayerThinkWeapons(player_t* player)
                 // Send a notification to the server.
                 NetCl_PlayerActionRequest(player, GPA_CHANGE_WEAPON, newweapon);
             }
-#ifdef _DEBUG
-            Con_Message("P_PlayerThinkWeapons: Player %i changing weapon to %i (brain thinks %i).",
-                        (int)(player - players), newweapon, brain->changeWeapon);
-#endif
+            App_Log(DE2_DEV_MAP_VERBOSE, "Player %i changing weapon to %i (brain thinks %i)",
+                    (int)(player - players), newweapon, brain->changeWeapon);
+
             player->pendingWeapon = newweapon;
             brain->changeWeapon = WT_NOCHANGE;
         }
@@ -1901,14 +1889,14 @@ void P_PlayerThinkAssertions(player_t* player)
         {
             if(!(mo->ddFlags & DDMF_SOLID))
             {
-                Con_Message("P_PlayerThinkAssertions: player %i, mobj should be solid when alive!", plrNum);
+                App_Log(DE2_DEV_MAP_NOTE, "P_PlayerThinkAssertions: player %i, mobj should be solid when alive!", plrNum);
             }
         }
         else if(player->playerState == PST_DEAD)
         {
             if(mo->ddFlags & DDMF_SOLID)
             {
-                Con_Message("P_PlayerThinkAssertions: player %i, mobj should not be solid when dead!", plrNum);
+                App_Log(DE2_DEV_MAP_NOTE, "P_PlayerThinkAssertions: player %i, mobj should not be solid when dead!", plrNum);
             }
         }
     }

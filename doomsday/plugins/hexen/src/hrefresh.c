@@ -181,7 +181,7 @@ void G_RendPlayerView(int player)
 
     if(!plr->plr->mo)
     {
-        Con_Message("rendPlayerView: Rendering view of player %i, who has no mobj!", player);
+        App_Log(DE2_DEV_GL_ERROR, "Rendering view of player %i, who has no mobj!", player);
         return;
     }
 

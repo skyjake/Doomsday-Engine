@@ -323,9 +323,7 @@ void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other)
 
     if(!other || other == obj)
     {
-#if _DEBUG
-        Con_Message("Warning: UIGroup::AddWidget: Attempt to add invalid widget %s, ignoring.", obj? "(this)" : "(null)");
-#endif
+        DENG_ASSERT(!"UIGroup::AddWidget: Attempt to add invalid widget");
         return;
     }
 
@@ -1328,12 +1326,10 @@ void MNPage_Refocus(mn_page_t* page)
         {
             MNPage_GiveChildFocus(page, page->objects + giveFocus, false);
         }
-#if _DEBUG
         else
         {
-            Con_Message("Warning: MNPage::Refocus: No focusable object on page.");
+            App_Log(DE2_DEV_WARNING, "MNPage::Refocus: No focusable object on page");
         }
-#endif
     }
     else
     {
@@ -1433,12 +1429,10 @@ fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
 
 void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId)
 {
-    assert(page);
+    DENG_ASSERT(page);
     if(!VALID_MNPAGE_FONTID(id))
     {
-#if _DEBUG
-        Con_Message("MNPage::SetPredefinedFont: Invalid font id #%i, ignoring.", id);
-#endif
+        DENG_ASSERT(!"MNPage::SetPredefinedFont: Invalid font id");
         return;
     }
     page->fonts[id] = fontId;

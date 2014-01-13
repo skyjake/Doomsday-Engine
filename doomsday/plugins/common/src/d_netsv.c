@@ -575,7 +575,7 @@ void NetSv_NewPlayerEnters(int plrNum)
 {
     player_t* plr = &players[plrNum];
 
-    App_Log(DE2_DEV_NET_MSG, "NetSv_NewPlayerEnters: player %i", plrNum);
+    App_Log(DE2_DEV_MSG, "NetSv_NewPlayerEnters: player %i", plrNum);
 
     plr->playerState = PST_REBORN;  // Force an init.
 
@@ -599,7 +599,7 @@ void NetSv_NewPlayerEnters(int plrNum)
         {
             const mapspot_t* spot = &mapSpots[start->spot];
 
-            App_Log(DE2_DEV_NET_MSG, "NetSv_NewPlayerEnters: Spawning player with angle:%x", spot->angle);
+            App_Log(DE2_DEV_MAP_MSG, "NetSv_NewPlayerEnters: Spawning player with angle:%x", spot->angle);
 
             P_SpawnPlayer(plrNum, pClass, spot->origin[VX], spot->origin[VY],
                           spot->origin[VZ], spot->angle, spot->flags,
@@ -1364,7 +1364,7 @@ static void NetSv_FireWeaponCallback(mobj_t* mo, void* param)
 
 static void NetSv_HitFloorCallback(mobj_t* mo, void* param)
 {
-    App_Log(DE2_DEV_NET_XVERBOSE, "NetSv_HitFloorCallback: mo %i", mo->thinker.id);
+    App_Log(DE2_DEV_MAP_XVERBOSE, "NetSv_HitFloorCallback: mo %i", mo->thinker.id);
 
     P_HitFloor(mo);
 }
@@ -1414,7 +1414,7 @@ void NetSv_DoAction(int player, Reader* msg)
     lookDir = Reader_ReadFloat(msg);
     actionParam = Reader_ReadInt32(msg);
 
-    App_Log(DE2_DEV_NET_VERBOSE,
+    App_Log(DE2_DEV_MAP_VERBOSE,
             "NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
             "angle=%x lookDir=%g weapon=%i",
             player, type, pos[VX], pos[VY], pos[VZ],
@@ -1473,7 +1473,7 @@ void NetSv_DoDamage(int player, Reader* msg)
     thid_t inflictor = Reader_ReadUInt16(msg);
     thid_t source = Reader_ReadUInt16(msg);
 
-    App_Log(DE2_DEV_NET_XVERBOSE,
+    App_Log(DE2_DEV_MAP_XVERBOSE,
             "NetSv_DoDamage: Client %i requests damage %i on %i via %i by %i",
             player, damage, target, inflictor, source);
 
@@ -1600,7 +1600,7 @@ D_CMD(MapCycle)
 
     if(!IS_SERVER)
     {
-        App_Log(DE2_SCR_ERROR, "Only allowed for a server.\n");
+        App_Log(DE2_SCR_ERROR, "Only allowed for a server");
         return false;
     }
 

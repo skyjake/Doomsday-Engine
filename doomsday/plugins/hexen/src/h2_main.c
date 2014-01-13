@@ -401,10 +401,10 @@ void X_PostInit(void)
 
     P_InitMapMusicInfo(); // Init music fields in mapinfo.
 
-    Con_Message("Parsing SNDINFO...");
+    App_Log(DE2_RES_VERBOSE, "Parsing SNDINFO...");
     S_ParseSndInfoLump();
 
-    Con_Message("SN_InitSequenceScript: Registering sound sequences.");
+    App_Log(DE2_DEV_RES_VERBOSE, "SN_InitSequenceScript: Registering sound sequences");
     SN_InitSequenceScript();
 
     // Load a saved game?
@@ -430,11 +430,11 @@ void X_PostInit(void)
         playerclass_t pClass = (playerclass_t)atoi(CommandLine_At(p + 1));
         if(!VALID_PLAYER_CLASS(pClass))
         {
-            Con_Message("Warning: Invalid player class id=%d specified with -class, ignoring.", (int)pClass);
+            App_Log(DE2_LOG_WARNING, "Invalid player class id=%d specified with -class", (int)pClass);
         }
         else if(!PCLASS_INFO(pClass)->userSelectable)
         {
-            Con_Message("Warning: Non-user-selectable player class id=%d specified with -class, ignoring.", (int)pClass);
+            App_Log(DE2_LOG_WARNING, "Non-user-selectable player class id=%d specified with -class", (int)pClass);
         }
         else
         {
@@ -444,7 +444,7 @@ void X_PostInit(void)
 
     if(startPlayerClass != PCLASS_NONE)
     {
-        Con_Message("Player Class: '%s'", PCLASS_INFO(startPlayerClass)->niceName);
+        App_Log(DE2_LOG_NOTE, "Player Class: '%s'", PCLASS_INFO(startPlayerClass)->niceName);
         cfg.playerClass[CONSOLEPLAYER] = startPlayerClass;
         autoStart = true;
     }

@@ -169,8 +169,8 @@ static void loadAnimDefs(animdef_t* animDefs, dd_bool isCustom)
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
         if(numFrames < 2)
         {
-            Con_Message("Warning: loadAnimDefs: Bad cycle from '%s' to '%s' in sequence #%i, ignoring.",
-                        animDefs[i].startname, animDefs[i].endname, i);
+            App_Log(DE2_RES_WARNING, "loadAnimDefs: Bad cycle from '%s' to '%s' in sequence #%i",
+                    animDefs[i].startname, animDefs[i].endname, i);
             continue;
         }
 
@@ -185,11 +185,11 @@ static void loadAnimDefs(animdef_t* animDefs, dd_bool isCustom)
          */
         ticsPerFrame = LONG(animDefs[i].speed);
 
-        if(verbose > (isCustom? 1 : 2))
         {
             AutoStr* from = Uri_ToString(startUri);
             AutoStr* to = Uri_ToString(endUri);
-            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i", i, Str_Text(from), Str_Text(to), ticsPerFrame);
+            App_Log(isCustom? DE2_RES_VERBOSE : DE2_RES_XVERBOSE,
+                    "  %d: From:\"%s\" To:\"%s\" Tics:%i", i, Str_Text(from), Str_Text(to), ticsPerFrame);
         }
 
         // Find an animation group for this.

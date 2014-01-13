@@ -393,9 +393,10 @@ void SN_UpdateActiveSequences(void)
             if(!sndPlaying)
             {
                 node->currentSoundID = *(node->sequencePtr + 1);
-#ifdef _DEBUG
-                Con_Message("SS_CMD_PLAY: StartSound %s: %p", SequenceTranslate[node->sequence].name, node->mobj);
-#endif
+
+                App_Log(DE2_DEV_AUDIO_VERBOSE, "SS_CMD_PLAY: StartSound %s: %p",
+                        SequenceTranslate[node->sequence].name, node->mobj);
+
                 S_StartSoundAtVolume(node->currentSoundID, node->mobj,
                                      node->volume / 127.0f);
             }
@@ -413,10 +414,10 @@ void SN_UpdateActiveSequences(void)
         case SS_CMD_PLAYREPEAT:
             if(!sndPlaying)
             {
-#ifdef _DEBUG
-                Con_Message("SS_CMD_PLAYREPEAT: StartSound id=%i, %s: %p",
-                            node->currentSoundID, SequenceTranslate[node->sequence].name, node->mobj);
-#endif
+                App_Log(DE2_DEV_AUDIO_VERBOSE,
+                        "SS_CMD_PLAYREPEAT: StartSound id=%i, %s: %p",
+                        node->currentSoundID, SequenceTranslate[node->sequence].name, node->mobj);
+
                 node->currentSoundID = *(node->sequencePtr + 1);
 
                 S_StartSoundAtVolume(node->currentSoundID | DDSF_REPEAT,

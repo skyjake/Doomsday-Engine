@@ -340,12 +340,10 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
 
     xgDataLumps = true;
 
-    Con_Message("XG_ReadTypes: Reading XG types from DDXGDATA.");
+    App_Log(DE2_RES_MSG, "Reading XG types from DDXGDATA");
 
     len = W_LumpLength(lumpNum);
-    buf = (uint8_t*) malloc(len);
-    if(NULL == buf)
-        Con_Error("XG_ReadTypes: Failed on allocation of %lu bytes for temporary buffer.", (unsigned long) len);
+    buf = (uint8_t*) M_Malloc(len);
     W_ReadLump(lumpNum, buf);
 
     readptr = (byte*)buf;
@@ -475,7 +473,7 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
         }
     }
 
-    free(buf);
+    M_Free(buf);
 }
 
 /**
