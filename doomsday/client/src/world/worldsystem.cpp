@@ -159,7 +159,7 @@ public:
             for(int i = 0; i < numToLog; ++i, ++it)
             {
                 if(i != 0) str += "\n";
-                str += String("Sector #%1 is unclosed near %2.")
+                str += String("Sector #%1 is unclosed near %2")
                            .arg(it->first).arg(it->second.asText());
             }
 

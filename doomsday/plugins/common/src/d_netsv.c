@@ -732,7 +732,7 @@ void NetSv_SendGameState(int flags, int to)
     Uri* mapUri;
     AutoStr* str;
 
-    if(IS_CLIENT)
+    if(!IS_NETWORK_SERVER)
         return;
 
     DD_GameInfo(&gameInfo);

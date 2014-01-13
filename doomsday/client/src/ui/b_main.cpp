@@ -552,7 +552,7 @@ D_CMD(ClearBindings)
 
     for(i = 0; i < B_ContextCount(); ++i)
     {
-        LOG_INPUT_MSG("Clearing binding context '%s'") << B_ContextByPos(i)->name;
+        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << B_ContextByPos(i)->name;
         B_ClearContext(B_ContextByPos(i));
     }
 

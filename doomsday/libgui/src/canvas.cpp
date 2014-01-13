@@ -108,10 +108,10 @@ DENG2_PIMPL(Canvas)
     {
         if(!self.isVisible()/* || mouseDisabled*/) return;
 
-        LOG_INPUT_MSG("Ungrabbing mouse (presently grabbed? %b)") << mouseGrabbed;
-
         if(mouseGrabbed)
         {
+            LOG_INPUT_VERBOSE("Ungrabbing mouse") << mouseGrabbed;
+
             // Tell the mouse driver that the mouse is untrapped.
             mouseGrabbed = false;
 

@@ -1158,16 +1158,16 @@ static void printMapBanner(void)
 {
     const char* name = P_GetMapNiceName();
 
-    App_Log(DE2_LOG_MAP, "");
+    App_Log(DE2_LOG_MAP, DE2_ESC(R));
     if(name)
     {
         char buf[64];
 #if __JHEXEN__
-        dd_snprintf(buf, 64, "Map %u (%u): %s", P_GetMapWarpTrans(gameMap)+1, gameMap+1, name);
+        dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", P_GetMapWarpTrans(gameMap)+1, gameMap+1, name);
 #else
-        dd_snprintf(buf, 64, "Map %u: %s", gameMap+1, name);
+        dd_snprintf(buf, 64, "Map %u: " DE2_ESC(b) "%s", gameMap+1, name);
 #endif
-        App_Log(DE2_LOG_MAP, "%s\n", buf);
+        App_Log(DE2_LOG_MAP, "%s", buf);
     }
 
 #if !__JHEXEN__
@@ -1181,7 +1181,7 @@ static void printMapBanner(void)
     if(!lauthor)
         lauthor = unknownAuthorStr;
 
-    App_Log(DE2_LOG_MAP, "Author: %s\n", lauthor);
+    App_Log(DE2_MAP_VERBOSE, "Author: %s", lauthor);
 
     Uri_Delete(uri);
     }

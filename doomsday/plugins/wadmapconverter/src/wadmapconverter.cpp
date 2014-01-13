@@ -139,7 +139,7 @@ static Id1Map::Format recognizeMapFormat(MapDataLumps &lumps)
         return Id1Map::UnknownFormat;
     }
 
-    LOG_MAP_MSG("Recognized a %s format map") << Id1Map::formatName(mapFormat);
+    LOG_MAP_MSG("Recognized %s format map") << Id1Map::formatName(mapFormat);
     return mapFormat;
 }
 
