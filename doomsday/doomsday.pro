@@ -9,15 +9,12 @@ TEMPLATE = subdirs
 CONFIG += ordered
 SUBDIRS = \
     build \
-    libdeng2
-
-!deng_noclient: SUBDIRS += libgui libappfw
-    
-SUBDIRS += \
+    libdeng2 \
     libdeng1 \
     libshell
 
-macx|!deng_noclient: SUBDIRS += client
+!deng_noclient:      SUBDIRS += libgui libappfw
+!deng_noclient|macx: SUBDIRS += client
 
 SUBDIRS += \
     server \
