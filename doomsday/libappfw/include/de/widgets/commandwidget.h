@@ -79,7 +79,7 @@ protected:
 signals:
     void gotFocus();
     void lostFocus();
-    void commandEntered(String const &command);
+    void commandEntered(de::String const &command);
 
 private:
     DENG2_PRIVATE(d)

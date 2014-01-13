@@ -791,7 +791,9 @@ void Generator::spinParticle(ParticleInfo &pinfo)
     static int const pitchSigns[4] = { 1, -1,  1, -1 };
 
     ded_ptcstage_t const *stDef = &def->stages[pinfo.stage];
-    uint const spinIndex        = (&pinfo - &_pinfo[id() / 8]) % 4;
+    uint const spinIndex        = uint(&pinfo - &_pinfo[id() / 8]) % 4;
+
+    DENG_ASSERT(spinIndex < 4);
 
     int const yawSign   =   yawSigns[spinIndex];
     int const pitchSign = pitchSigns[spinIndex];

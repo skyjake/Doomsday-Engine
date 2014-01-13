@@ -1167,7 +1167,7 @@ static void printMapBanner(void)
 #else
         dd_snprintf(buf, 64, "Map %u: " DE2_ESC(b) "%s", gameMap+1, name);
 #endif
-        App_Log(DE2_LOG_MAP, "%s", buf);
+        App_Log(DE2_MAP_NOTE, "%s", buf);
     }
 
 #if !__JHEXEN__
