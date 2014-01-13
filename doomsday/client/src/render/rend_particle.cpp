@@ -45,12 +45,8 @@ using namespace de;
 // Point + custom textures.
 #define NUM_TEX_NAMES (MAX_PTC_TEXTURES)
 
-struct porder_t
-{
-    Generator *generator;
-    int ptID; // Particle id.
-    float distance;
-};
+byte useParticles = true;
+int maxParticles = 0; // Unlimited.
 
 DGLuint pointTex, ptctexname[MAX_PTC_TEXTURES];
 int particleNearLimit;
@@ -60,15 +56,20 @@ static size_t numParts;
 static dd_bool hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
 static dd_bool hasPointTexs[NUM_TEX_NAMES];
 
-static size_t orderSize;
+struct porder_t
+{
+    Generator *generator;
+    int ptID; // Particle id.
+    float distance;
+};
 static porder_t *order;
+static size_t orderSize;
 
 void Rend_ParticleRegister()
 {
     // Cvars
     C_VAR_BYTE ("rend-particle",                   &useParticles,      0,              0, 1);
     C_VAR_INT  ("rend-particle-max",               &maxParticles,      CVF_NO_MAX,     0, 0);
-    C_VAR_FLOAT("rend-particle-rate",              &particleSpawnRate, 0,              0, 5);
     C_VAR_FLOAT("rend-particle-diffuse",           &particleDiffuse,   CVF_NO_MAX,     0, 0);
     C_VAR_INT  ("rend-particle-visible-near",      &particleNearLimit, CVF_NO_MAX,     0, 0);
 }
@@ -251,15 +252,7 @@ static int countActiveGeneratorParticlesWorker(Generator *gen, void *context)
 {
     if(R_ViewerGeneratorIsVisible(*gen))
     {
-        size_t &count = *(size_t *) context;
-        ParticleInfo const *pinfo = gen->particleInfo();
-        for(int p = 0; p < gen->count; ++p, pinfo++)
-        {
-            if(pinfo->stage >= 0)
-            {
-                count += 1;
-            }
-        }
+        *static_cast<size_t *>(context) += gen->activeParticleCount();
     }
     return false; // Continue iteration.
 }
@@ -278,7 +271,7 @@ static int populateSortBuffer(Generator *gen, void *context)
         if(pinfo->stage < 0 || !pinfo->bspLeaf)
             continue;
 
-        // Is the particle's sector visible?
+        // Is the BSP leaf at the particle's origin visible?
         if(!R_ViewerBspLeafIsVisible(*pinfo->bspLeaf))
             continue; // No; this particle can't be seen.
 
@@ -320,9 +313,13 @@ static int populateSortBuffer(Generator *gen, void *context)
         }
 
         if(gen->flags.testFlag(Generator::BlendAdditive))
+        {
             hasBlend = true;
+        }
         else
+        {
             hasNoBlend = true;
+        }
     }
 
     return false; // Continue iteration.
@@ -545,7 +542,9 @@ static void renderParticles(int rtype, bool withBlend)
         short stageType = st->type;
         if(stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES &&
            0 == ptctexname[stageType - PTC_TEXTURE])
+        {
             stageType = PTC_POINT;
+        }
 
         // Only render one type of particles.
         if((rtype == PTC_MODEL && dst->model < 0) ||
@@ -661,7 +660,7 @@ static void renderParticles(int rtype, bool withBlend)
         float center[3];
         center[VX] = FIX2FLT(pinfo->origin[VX]);
         center[VZ] = FIX2FLT(pinfo->origin[VY]);
-        center[VY] = gen->particleZ(pinfo);
+        center[VY] = gen->particleZ(*pinfo);
 
         if(!flatOnPlane && !flatOnWall)
         {

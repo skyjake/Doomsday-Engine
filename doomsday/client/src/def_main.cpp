@@ -1,10 +1,8 @@
-/** @file def_main.cpp
+/** @file def_main.cpp  Definitions Subsystem.
  *
- * Definitions Subsystem.
- *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,13 +19,11 @@
  * 02110-1301 USA</small>
  */
 
-#include <string.h>
-#include <ctype.h>
-
-#include <de/NativePath>
-#include <QTextStream>
+#define DENG_NO_API_MACROS_DEFINITIONS
 
 #include "de_base.h"
+#include "def_main.h"
+
 #include "de_system.h"
 #include "de_platform.h"
 #include "de_console.h"
@@ -39,12 +35,19 @@
 #include "de_resource.h"
 
 #include "world/p_particle.h"
+#ifdef __CLIENT__
+#  include "render/rend_particle.h"
+#endif
 
-#define DENG_NO_API_MACROS_DEFINITIONS
 #include "api_def.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
+
+#include <de/NativePath>
+#include <QTextStream>
+#include <cctype>
+#include <cstring>
 
 using namespace de;
 

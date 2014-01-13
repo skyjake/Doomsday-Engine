@@ -25,7 +25,25 @@
 
 #include "world/map.h"
 
-class Sector;
+// Maximum number of particle textures (not instances).
+#define MAX_PTC_TEXTURES        300
+
+// Maximum number of particle models (not instances).
+#define MAX_PTC_MODELS          100
+
+enum ParticleType
+{
+    PTC_NONE,
+    PTC_POINT,
+    PTC_LINE,
+    // New types can be added here.
+    PTC_TEXTURE = 100,
+    // ...followed by MAX_PTC_TEXTURES types.
+    PTC_MODEL = 1000
+};
+
+DENG_EXTERN_C byte useParticles;
+DENG_EXTERN_C int maxParticles;
 
 void Rend_ParticleRegister();
 

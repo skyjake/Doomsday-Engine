@@ -65,6 +65,7 @@
 #  include "WallEdge"
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
+#  include "render/rend_particle.h"
 #  include "render/sky.h"
 #endif
 
@@ -1300,6 +1301,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                     DENG2_ASSERT((unsigned)listIndex < gens.listsSize);
 
                     // Must check that it isn't already there...
+                    bool found = false;
                     for(Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
                     {
                         if(it->gen == gen)
@@ -1308,9 +1310,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
                             // that logging is pointless (and negatively affecting performance).
                             //LOG_DEBUG("Attempted repeat link of generator %p to list %u.")
                             //        << gen << listIndex;
-                            continue; // No, no...
+                            found = true; // No, no...
                         }
                     }
+
+                    if(found) continue;
 
                     // We need a new link.
                     if(Generators::ListNode *link = gens.newLink())
@@ -1484,6 +1488,15 @@ void Map::spreadAllContacts(AABoxd const &region)
     d->lumobjContactBlockmap->
         spread(AABoxd(region.minX - Lumobj::radiusMax(), region.minY - Lumobj::radiusMax(),
                       region.maxX + Lumobj::radiusMax(), region.maxY + Lumobj::radiusMax()));
+}
+
+void Map::initGenerators()
+{
+    LOG_AS("Map::initGenerators");
+    Time begunAt;
+    P_SpawnTypeParticleGens(*this);
+    P_SpawnMapParticleGens(*this);
+    LOG_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
 }
 
 void Map::clearClMobjs()

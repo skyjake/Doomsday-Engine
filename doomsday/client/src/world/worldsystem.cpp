@@ -593,9 +593,8 @@ DENG2_PIMPL(WorldSystem)
         Cl_ResetFrame();
         Cl_InitPlayers(); // Player data, too.
 
-        // Spawn generators for the map.
-        /// @todo Defer until after finalization.
-        P_PtcInitForMap(*map);
+        /// @todo Defer initial generator spawn until after finalization.
+        map->initGenerators();
 #endif
 
         // The game may need to perform it's own finalization now that the

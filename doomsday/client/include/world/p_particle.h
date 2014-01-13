@@ -32,22 +32,6 @@ class Line;
 class Plane;
 struct mobj_s;
 
-// Maximum number of particle textures (not instances).
-#define MAX_PTC_TEXTURES        300
-
-// Maximum number of particle models (not instances).
-#define MAX_PTC_MODELS          100
-
-enum ParticleType {
-    PTC_NONE,
-    PTC_POINT,
-    PTC_LINE,
-    // New types can be added here.
-    PTC_TEXTURE = 100,
-    // ...followed by MAX_PTC_TEXTURES types.
-    PTC_MODEL = 1000
-};
-
 /**
  * POD structure used when querying the current state of a particle.
  */
@@ -197,6 +181,11 @@ struct Generator
     blendmode_t blendmode() const;
 
     /**
+     * Returns the total number of active particles for the generator.
+     */
+    int activeParticleCount() const;
+
+    /**
      * Provides readonly access to the generator particle info data.
      */
     ParticleInfo const *particleInfo() const;
@@ -209,8 +198,10 @@ public: /// @todo make private:
 
     /**
      * Attempt to spawn a new particle.
+     *
+     * @return  Index of the newly spawned particle; otherwise @c -1.
      */
-    ParticleInfo *newParticle();
+    int newParticle();
 
     /**
      * The movement is done in two steps:
@@ -218,14 +209,20 @@ public: /// @todo make private:
      * XY movement checks for hits with solid walls (no backsector).
      * This is supposed to be fast and simple (but not too simple).
      */
-    void moveParticle(ParticleInfo *pt);
+    void moveParticle(int index);
 
-    void spinParticle(ParticleInfo *pt);
+    void spinParticle(ParticleInfo &pt);
 
     /**
      * A particle may be "projected" onto the floor or ceiling of a sector.
      */
-    float particleZ(ParticleInfo const *pt) const;
+    float particleZ(ParticleInfo const &pt) const;
+
+public:
+    /**
+     * Register the console commands, variables, etc..., of this module.
+     */
+    static void consoleRegister();
 
 private:
     Id _id;               ///< Unique in the map.
@@ -239,12 +236,6 @@ typedef Generator::ParticleStage GeneratorParticleStage;
 
 void Generator_Delete(Generator *gen);
 void Generator_Thinker(Generator *gen);
-
-DENG_EXTERN_C byte useParticles;
-DENG_EXTERN_C int maxParticles;
-DENG_EXTERN_C float particleSpawnRate;
-
-void P_PtcInitForMap(de::Map &map);
 
 /**
  * Attempt to spawn all flat-triggered particle generators for the @a map.

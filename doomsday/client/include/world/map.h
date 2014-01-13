@@ -788,6 +788,12 @@ public: /// @todo Make private:
     void initContactBlockmaps();
 
     /**
+     * Spawn all generators for the map which should be initialized automatically
+     * during map setup.
+     */
+    void initGenerators();
+
+    /**
      * Destroys all clientside clmobjs in the map. To be called when a network
      * game ends.
      */

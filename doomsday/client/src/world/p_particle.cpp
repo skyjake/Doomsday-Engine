@@ -22,11 +22,14 @@
 #include "de_platform.h"
 #include "world/p_particle.h"
 
-#include "de_base.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_audio.h"
 #include "clientapp.h"
+
+#include "con_main.h"
+#include "dd_main.h"
+#include "dd_def.h"
 #include "m_misc.h"
 
 #include "Face"
@@ -37,6 +40,7 @@
 
 #include "render/r_main.h" // validCount
 #include "render/rend_model.h"
+#include "render/rend_particle.h"
 
 #include <de/String>
 #include <de/Time>
@@ -54,14 +58,7 @@ using namespace de;
 #define VECSUB(a,b)         ( a[VX] -= b[VX], a[VY] -= b[VY] )
 #define VECCPY(a,b)         ( a[VX] = b[VX], a[VY] = b[VY] )
 
-byte useParticles = true;
-int maxParticles = 0; // Unlimited.
-float particleSpawnRate = 1; // Unmodified.
-
-static AABoxd mbox;
-static fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
-static dd_bool tmcross;
-static Line *ptcHitLine;
+static float particleSpawnRate = 1; // Unmodified (cvar).
 
 /**
  * The offset is spherical and random.
@@ -140,20 +137,6 @@ void Generator::clearParticles()
     _pinfo = 0;
 }
 
-void P_PtcInitForMap(Map &map)
-{
-    Time begunAt;
-
-    LOG_AS("P_PtcInitForMap");
-
-    // Spawn all type-triggered particle generators.
-    // Let's hope there aren't too many...
-    P_SpawnTypeParticleGens(map);
-    P_SpawnMapParticleGens(map);
-
-    LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
-}
-
 void P_MapSpawnPlaneParticleGens(Map &map)
 {
     if(isDedicated || !useParticles) return;
@@ -221,7 +204,7 @@ void Generator::presimulate(int tics)
 {
     for(; tics > 0; tics--)
     {
-        Generator_Thinker(this);
+        runTick();
     }
 
     // Reset age so presim doesn't affect it.
@@ -243,6 +226,19 @@ blendmode_t Generator::blendmode() const
     return BM_NORMAL;
 }
 
+int Generator::activeParticleCount() const
+{
+    int numActive = 0;
+    for(int i = 0; i < count; ++i)
+    {
+        if(_pinfo[i].stage >= 0)
+        {
+            numActive += 1;
+        }
+    }
+    return numActive;
+}
+
 ParticleInfo const *Generator::particleInfo() const
 {
     return _pinfo;
@@ -252,7 +248,7 @@ void P_SpawnMobjParticleGen(ded_ptcgen_t const *def, mobj_t *source)
 {
     DENG2_ASSERT(def != 0 && source != 0);
 
-    if(isDedicated || !useParticles)return;
+    if(isDedicated || !useParticles) return;
 
     Generator *gen = Mobj_Map(*source).newGenerator();
     if(!gen) return;
@@ -354,7 +350,7 @@ static void P_ParticleSound(fixed_t pos[3], ded_embsound_t *sound)
     S_LocalSoundAtVolumeFrom(sound->id, NULL, orig, sound->volume);
 }
 
-ParticleInfo *Generator::newParticle()
+int Generator::newParticle()
 {
 #ifdef __CLIENT__
     // Check for model-only generators.
@@ -365,7 +361,7 @@ ParticleInfo *Generator::newParticle()
         mf = Mobj_ModelDef(*source, &nextmf, &inter);
         if(((!mf || !useModels) && def->flags & ModelOnly) ||
            (mf && useModels && mf->flags & MFF_NO_PARTICLES))
-            return 0;
+            return -1;
     }
 
     // Keep the spawn cursor in the valid range.
@@ -373,6 +369,8 @@ ParticleInfo *Generator::newParticle()
     {
         spawnCP -= count;
     }
+
+    int const newParticleIdx = spawnCP;
 
     // Set the particle's data.
     ParticleInfo *pinfo = _pinfo + spawnCP;
@@ -548,7 +546,7 @@ ParticleInfo *Generator::newParticle()
         if(!bspLeaf || !bspLeaf->hasPoly())
         {
             pinfo->stage = -1;
-            return 0;
+            return -1;
         }
 
         AABoxd const &leafAABox = bspLeaf->poly().aaBox();
@@ -572,7 +570,7 @@ ParticleInfo *Generator::newParticle()
         if(tries == 10) // No good place found?
         {
             pinfo->stage = -1; // Damn.
-            return 0;
+            return -1;
         }
     }
     else if(flags & Untriggered)
@@ -603,16 +601,16 @@ ParticleInfo *Generator::newParticle()
         if(!pinfo->bspLeaf->hasPoly())
         {
             pinfo->stage = -1;
-            return 0;
+            return -1;
         }
     }
 
     // Play a stage sound?
     P_ParticleSound(pinfo->origin, &def->stages[pinfo->stage].sound);
 
-    return pinfo;
+    return newParticleIdx;
 #else  // !__CLIENT__
-    return 0;
+    return -1;
 #endif
 }
 
@@ -664,18 +662,26 @@ static int manyNewParticlesWorker(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-static int checkLineWorker(Line *ld, void * /*context*/)
+struct checklineworker_params_t
 {
-    DENG2_ASSERT(ld != 0);
+    AABoxd mbox;
+    fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
+    bool tmcross;
+    Line *ptcHitLine;
+};
+
+static int checkLineWorker(Line *ld, void *context)
+{
+    checklineworker_params_t &parm = *static_cast<checklineworker_params_t *>(context);
 
     // Does the bounding box miss the line completely?
-    if(mbox.maxX <= ld->aaBox().minX || mbox.minX >= ld->aaBox().maxX ||
-       mbox.maxY <= ld->aaBox().minY || mbox.minY >= ld->aaBox().maxY)
+    if(parm.mbox.maxX <= ld->aaBox().minX || parm.mbox.minX >= ld->aaBox().maxX ||
+       parm.mbox.maxY <= ld->aaBox().minY || parm.mbox.minY >= ld->aaBox().maxY)
         return false;
 
     // Movement must cross the line.
-    if((ld->pointOnSide(Vector2d(FIX2FLT(tmpx1), FIX2FLT(tmpy1))) < 0) ==
-       (ld->pointOnSide(Vector2d(FIX2FLT(tmpx2), FIX2FLT(tmpy2))) < 0))
+    if((ld->pointOnSide(Vector2d(FIX2FLT(parm.tmpx1), FIX2FLT(parm.tmpy1))) < 0) ==
+       (ld->pointOnSide(Vector2d(FIX2FLT(parm.tmpx2), FIX2FLT(parm.tmpy2))) < 0))
         return false;
 
     /*
@@ -684,7 +690,7 @@ static int checkLineWorker(Line *ld, void * /*context*/)
 
     // Bounce if we hit a solid wall.
     /// @todo fixme: What about "one-way" window lines?
-    ptcHitLine = ld;
+    parm.ptcHitLine = ld;
     if(!ld->hasBackSector()) return true; // Boing!
 
     Sector *front = ld->frontSectorPtr();
@@ -694,22 +700,30 @@ static int checkLineWorker(Line *ld, void * /*context*/)
     /// @todo Use R_OpenRange()
     fixed_t ceil;
     if(front->ceiling().height() < back->ceiling().height())
+    {
         ceil = FLT2FIX(front->ceiling().height());
+    }
     else
+    {
         ceil = FLT2FIX(back->ceiling().height());
+    }
 
     fixed_t floor;
     if(front->floor().height() > back->floor().height())
+    {
         floor = FLT2FIX(front->floor().height());
+    }
     else
+    {
         floor = FLT2FIX(back->floor().height());
+    }
 
     // There is a backsector. We possibly might hit something.
-    if(tmpz - tmprad < floor || tmpz + tmprad > ceil)
+    if(parm.tmpz - parm.tmprad < floor || parm.tmpz + parm.tmprad > ceil)
         return true; // Boing!
 
     // There is a possibility that the new position is in a new sector.
-    tmcross = true; // Afterwards, update the sector pointer.
+    parm.tmcross = true; // Afterwards, update the sector pointer.
 
     // False alarm, continue checking.
     return false;
@@ -745,67 +759,66 @@ static int P_TouchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
 
 float P_GetParticleRadius(ded_ptcstage_t const *def, int ptcIDX)
 {
-    static float const rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
-        .5625f, .0625f, 1, .6875f, .625f, .4375f, .8125f, .1875f,
-        .9375f, .25f
-    };
-
-    if(!def->radiusVariance)
-        return def->radius;
-
-    return (rnd[ptcIDX & 0xf] * def->radiusVariance +
-            (1 - def->radiusVariance)) * def->radius;
+    if(def->radiusVariance)
+    {
+        static float const rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
+            .5625f, .0625f, 1, .6875f, .625f, .4375f, .8125f, .1875f,
+            .9375f, .25f
+        };
+        return (rnd[ptcIDX & 0xf] * def->radiusVariance +
+                (1 - def->radiusVariance)) * def->radius;
+    }
+    return def->radius;
 }
 
-float Generator::particleZ(ParticleInfo const *pinfo) const
+float Generator::particleZ(ParticleInfo const &pinfo) const
 {
-    DENG2_ASSERT(pinfo != 0);
-
-    SectorCluster &cluster = pinfo->bspLeaf->cluster();
-    if(pinfo->origin[VZ] == DDMAXINT)
+    SectorCluster &cluster = pinfo.bspLeaf->cluster();
+    if(pinfo.origin[VZ] == DDMAXINT)
+    {
         return cluster.visCeiling().heightSmoothed() - 2;
-    else if(pinfo->origin[VZ] == DDMININT)
+    }
+    if(pinfo.origin[VZ] == DDMININT)
+    {
         return (cluster.visFloor().heightSmoothed() + 2);
-
-    return FIX2FLT(pinfo->origin[VZ]);
+    }
+    return FIX2FLT(pinfo.origin[VZ]);
 }
 
-void Generator::spinParticle(ParticleInfo *pinfo)
+void Generator::spinParticle(ParticleInfo &pinfo)
 {
     static int const yawSigns[4]   = { 1,  1, -1, -1 };
     static int const pitchSigns[4] = { 1, -1,  1, -1 };
 
-    ded_ptcstage_t const *stDef = &def->stages[pinfo->stage];
-    uint const index = pinfo - &_pinfo[id() / 8];
+    ded_ptcstage_t const *stDef = &def->stages[pinfo.stage];
+    uint const spinIndex        = (&pinfo - &_pinfo[id() / 8]) % 4;
 
-    int yawSign   =   yawSigns[index % 4];
-    int pitchSign = pitchSigns[index % 4];
+    int const yawSign   =   yawSigns[spinIndex];
+    int const pitchSign = pitchSigns[spinIndex];
 
     if(stDef->spin[0] != 0)
     {
-        pinfo->yaw   += 65536 * yawSign   * stDef->spin[0] / (360 * TICSPERSEC);
+        pinfo.yaw   += 65536 * yawSign   * stDef->spin[0] / (360 * TICSPERSEC);
     }
     if(stDef->spin[1] != 0)
     {
-        pinfo->pitch += 65536 * pitchSign * stDef->spin[1] / (360 * TICSPERSEC);
+        pinfo.pitch += 65536 * pitchSign * stDef->spin[1] / (360 * TICSPERSEC);
     }
 
-    pinfo->yaw   *= 1 - stDef->spinResistance[0];
-    pinfo->pitch *= 1 - stDef->spinResistance[1];
+    pinfo.yaw   *= 1 - stDef->spinResistance[0];
+    pinfo.pitch *= 1 - stDef->spinResistance[1];
 }
 
-void Generator::moveParticle(ParticleInfo *pinfo)
+void Generator::moveParticle(int index)
 {
-    DENG2_ASSERT(pinfo != 0);
+    DENG2_ASSERT(index >= 0 && index < count);
 
-    ParticleStage *st = &stages[pinfo->stage];
+    ParticleInfo *pinfo   = &_pinfo[index];
+    ParticleStage *st     = &stages[pinfo->stage];
     ded_ptcstage_t *stDef = &def->stages[pinfo->stage];
-    bool zBounce = false, hitFloor = false;
-    vec2d_t point;
-    fixed_t x, y, z, hardRadius = st->radius / 2;
 
     // Particle rotates according to spin speed.
-    spinParticle(pinfo);
+    spinParticle(*pinfo);
 
     // Changes to momentum.
     /// @todo Do not assume generator is from the CURRENT map.
@@ -833,7 +846,7 @@ void Generator::moveParticle(ParticleInfo *pinfo)
         {
             delta[VX] = FIX2FLT(pinfo->origin[VX]) - source->origin[VX];
             delta[VY] = FIX2FLT(pinfo->origin[VY]) - source->origin[VY];
-            delta[VZ] = particleZ(pinfo) - (source->origin[VZ] + FIX2FLT(center[VZ]));
+            delta[VZ] = particleZ(*pinfo) - (source->origin[VZ] + FIX2FLT(center[VZ]));
         }
         else
         {
@@ -853,7 +866,6 @@ void Generator::moveParticle(ParticleInfo *pinfo)
         delta[VZ] *= 1.2f;
 
         float dist = M_ApproxDistancef(M_ApproxDistancef(delta[VX], delta[VY]), delta[VZ]);
-
         if(dist != 0)
         {
             // Radial force pushes the particles on the surface of a sphere.
@@ -894,6 +906,7 @@ void Generator::moveParticle(ParticleInfo *pinfo)
     // The exception is plane flat particles, which are rendered flat
     // against planes. They are almost entirely soft when it comes to plane
     // collisions.
+    fixed_t hardRadius = st->radius / 2;
     if((st->type == PTC_POINT || (st->type >= PTC_TEXTURE && st->type < PTC_TEXTURE + MAX_PTC_TEXTURES)) &&
        st->flags.testFlag(ParticleStage::PlaneFlat))
     {
@@ -901,7 +914,8 @@ void Generator::moveParticle(ParticleInfo *pinfo)
     }
 
     // Check the new Z position only if not stuck to a plane.
-    z = pinfo->origin[VZ] + pinfo->mov[VZ];
+    fixed_t z = pinfo->origin[VZ] + pinfo->mov[VZ];
+    bool zBounce = false, hitFloor = false;
     if(pinfo->origin[VZ] != DDMININT && pinfo->origin[VZ] != DDMAXINT && pinfo->bspLeaf)
     {
         SectorCluster &cluster = pinfo->bspLeaf->cluster();
@@ -964,10 +978,11 @@ void Generator::moveParticle(ParticleInfo *pinfo)
     // - Check if the movement crosses any solid lines.
     // - If it does, quit when first one contacted and apply appropriate
     //   bounce (result depends on the angle of the contacted wall).
-    x = pinfo->origin[VX] + pinfo->mov[VX];
-    y = pinfo->origin[VY] + pinfo->mov[VY];
+    fixed_t x = pinfo->origin[VX] + pinfo->mov[VX];
+    fixed_t y = pinfo->origin[VY] + pinfo->mov[VY];
 
-    tmcross = false; // Has crossed potential sector boundary?
+    checklineworker_params_t clParm; zap(clParm);
+    clParm.tmcross = false; // Has crossed potential sector boundary?
 
     // XY movement can be skipped if the particle is not moving on the
     // XY plane.
@@ -982,18 +997,27 @@ void Generator::moveParticle(ParticleInfo *pinfo)
 
             if(front && back && abs(pinfo->mov[VZ]) < FRACUNIT / 2)
             {
-                coord_t pz = particleZ(pinfo);
-                coord_t fz, cz;
+                coord_t const pz = particleZ(*pinfo);
 
+                coord_t fz;
                 if(front->floor().height() > back->floor().height())
+                {
                     fz = front->floor().height();
+                }
                 else
+                {
                     fz = back->floor().height();
+                }
 
+                coord_t cz;
                 if(front->ceiling().height() < back->ceiling().height())
+                {
                     cz = front->ceiling().height();
+                }
                 else
+                {
                     cz = back->ceiling().height();
+                }
 
                 // If the particle is in the opening of a 2-sided line, it's
                 // quite likely that it shouldn't be here...
@@ -1010,28 +1034,29 @@ void Generator::moveParticle(ParticleInfo *pinfo)
         goto quit_iteration;
     }
 
-    // We're moving in XY, so if we don't hit anything there can't be any
-    // line contact.
-    pinfo->contact = NULL;
+    // We're moving in XY, so if we don't hit anything there can't be any line contact.
+    pinfo->contact = 0;
 
     // Bounding box of the movement line.
-    tmpz = z;
-    tmprad = hardRadius;
-    tmpx1 = pinfo->origin[VX];
-    tmpx2 = x;
-    tmpy1 = pinfo->origin[VY];
-    tmpy2 = y;
+    clParm.tmpz = z;
+    clParm.tmprad = hardRadius;
+    clParm.tmpx1 = pinfo->origin[VX];
+    clParm.tmpx2 = x;
+    clParm.tmpy1 = pinfo->origin[VY];
+    clParm.tmpy2 = y;
+
+    vec2d_t point;
     V2d_Set(point, FIX2FLT(MIN_OF(x, pinfo->origin[VX]) - st->radius),
                    FIX2FLT(MIN_OF(y, pinfo->origin[VY]) - st->radius));
-    V2d_InitBox(mbox.arvec2, point);
+    V2d_InitBox(clParm.mbox.arvec2, point);
     V2d_Set(point, FIX2FLT(MAX_OF(x, pinfo->origin[VX]) + st->radius),
                    FIX2FLT(MAX_OF(y, pinfo->origin[VY]) + st->radius));
-    V2d_AddToBox(mbox.arvec2, point);
+    V2d_AddToBox(clParm.mbox.arvec2, point);
 
     // Iterate the lines in the contacted blocks.
 
     validCount++;
-    if(map().lineBoxIterator(mbox, checkLineWorker))
+    if(map().lineBoxIterator(clParm.mbox, checkLineWorker, &clParm))
     {
         fixed_t normal[2], dotp;
 
@@ -1046,8 +1071,8 @@ void Generator::moveParticle(ParticleInfo *pinfo)
         // - Multiply with bounce.
 
         // Calculate the normal.
-        normal[VX] = -FLT2FIX(ptcHitLine->direction().x);
-        normal[VY] = -FLT2FIX(ptcHitLine->direction().y);
+        normal[VX] = -FLT2FIX(clParm.ptcHitLine->direction().x);
+        normal[VY] = -FLT2FIX(clParm.ptcHitLine->direction().y);
 
         if(!normal[VX] && !normal[VY])
             goto quit_iteration;
@@ -1062,10 +1087,10 @@ void Generator::moveParticle(ParticleInfo *pinfo)
         // Continue from the old position.
         x = pinfo->origin[VX];
         y = pinfo->origin[VY];
-        tmcross = false; // Sector can't change if XY doesn't.
+        clParm.tmcross = false; // Sector can't change if XY doesn't.
 
         // This line is the latest contacted line.
-        pinfo->contact = ptcHitLine;
+        pinfo->contact = clParm.ptcHitLine;
         goto quit_iteration;
     }
 
@@ -1075,7 +1100,7 @@ void Generator::moveParticle(ParticleInfo *pinfo)
     pinfo->origin[VY] = y;
 
     // Should we update the sector pointer?
-    if(tmcross)
+    if(clParm.tmcross)
     {
         pinfo->bspLeaf = &map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
 
@@ -1091,7 +1116,7 @@ void Generator::moveParticle(ParticleInfo *pinfo)
 void Generator::runTick()
 {
     // Source has been destroyed?
-    if(!(flags & Generator::Untriggered) && !map().thinkers().isUsedMobjId(srcid))
+    if(!flags.testFlag(Untriggered) && !map().thinkers().isUsedMobjId(srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
         source = 0;
@@ -1109,7 +1134,7 @@ void Generator::runTick()
     float newParts = 0;
     if((age <= def->spawnAge || def->spawnAge < 0) &&
        (source || plane || type >= 0 || type == DED_PTCGEN_ANY_MOBJ_TYPE ||
-        (flags & Generator::Untriggered)))
+        flags.testFlag(Untriggered)))
     {
         newParts = def->spawnRate * spawnRateMultiplier;
 
@@ -1172,8 +1197,13 @@ void Generator::runTick()
         }
 
         // Try to move.
-        moveParticle(pinfo);
+        moveParticle(i);
     }
+}
+
+void Generator::consoleRegister() //static
+{
+    C_VAR_FLOAT("rend-particle-rate", &particleSpawnRate, 0, 0, 5);
 }
 
 void Generator_Thinker(Generator *gen)

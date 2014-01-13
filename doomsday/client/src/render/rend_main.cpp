@@ -421,6 +421,7 @@ void Rend_Register()
     Sky::consoleRegister();
     Rend_ModelRegister();
     Rend_ParticleRegister();
+    Generator::consoleRegister();
     Rend_RadioRegister();
     Rend_SpriteRegister();
     LensFx_Register();
@@ -3658,7 +3659,7 @@ static void drawMasked()
  * dynamic lights. Details take precedence (they always cover entire primitives
  * and usually *all* of the surfaces in a scene).
  */
-static void drawAllLists()
+static void drawAllLists(Map &map)
 {
     DENG_ASSERT(!Sys_GLCheckError());
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -3859,8 +3860,7 @@ static void drawAllLists()
     drawMasked();
 
     // Draw particles.
-    /// @todo Do not assume the CURRENT map.
-    Rend_RenderParticles(App_WorldSystem().map());
+    Rend_RenderParticles(map);
 
     if(usingFog)
     {
@@ -3920,7 +3920,7 @@ void Rend_RenderMap(Map &map)
         // Draw the world!
         traverseBspAndDrawLeafs(&map.bspRoot());
     }
-    drawAllLists();
+    drawAllLists(map);
 
     // Draw various debugging displays:
     drawAllSurfaceTangentVectors(map);
