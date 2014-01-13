@@ -436,7 +436,6 @@ DENG_HEADERS += \
     include/world/dmuargs.h \
     include/world/entitydatabase.h \
     include/world/entitydef.h \
-    include/world/generators.h \
     include/world/grabbable.h \
     include/world/hand.h \
     include/world/huecircle.h \
@@ -755,7 +754,6 @@ SOURCES += \
     src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
     src/world/entitydef.cpp \
-    src/world/generators.cpp \
     src/world/grabbable.cpp \
     src/world/hand.cpp \
     src/world/huecircle.cpp \

@@ -511,7 +511,7 @@ ParticleInfo *Generator::newParticle()
                          FLT2FIX(sector->ceiling().height() -
                                  sector->floor().height()) - 2 * radius);
         }
-        else if(flags & SpawnFloor ||
+        else if((flags & SpawnFloor) ||
                 (!(flags & (SpawnFloor | SpawnCeiling)) &&
                  plane->isSectorFloor()))
         {

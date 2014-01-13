@@ -35,7 +35,6 @@
 #include "BspLeaf"
 #include "Line"
 #include "Plane"
-#include "world/generators.h" // Generators::GENERATORS_MAX
 #include "world/map.h"
 
 #include "render/rend_main.h"
@@ -44,7 +43,7 @@
 using namespace de;
 
 // Point + custom textures.
-#define NUM_TEX_NAMES           (MAX_PTC_TEXTURES)
+#define NUM_TEX_NAMES (MAX_PTC_TEXTURES)
 
 struct porder_t
 {
@@ -54,16 +53,16 @@ struct porder_t
 };
 
 DGLuint pointTex, ptctexname[MAX_PTC_TEXTURES];
-int particleNearLimit = 0;
+int particleNearLimit;
 float particleDiffuse = 4;
 
 static size_t numParts;
 static dd_bool hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
 static dd_bool hasPointTexs[NUM_TEX_NAMES];
-static byte visibleGenerators[Generators::GENERATORS_MAX];
+static byte visibleGenerators[Map::MAX_GENERATORS];
 
-static size_t orderSize = 0;
-static porder_t *order = NULL;
+static size_t orderSize;
+static porder_t *order;
 
 void Rend_ParticleRegister()
 {
