@@ -23,6 +23,7 @@ win32 {
     INSTALLS += gfx
 }
 else:macx {
+    linkBinaryToBundledLibdeng2($${TARGET}.app/Contents/MacOS/$${TARGET})
     linkBinaryToBundledLibdengGui($${TARGET}.app/Contents/MacOS/$${TARGET})
 
     gfx.path = Contents/Resources/graphics
