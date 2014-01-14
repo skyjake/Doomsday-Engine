@@ -34,6 +34,7 @@ HEADERS += \
     include/de/NumberValue \
     include/de/Path \
     include/de/PathTree \
+    include/de/Property \
     include/de/Reader \
     include/de/Record \
     include/de/RecordValue \
@@ -86,6 +87,7 @@ HEADERS += \
     include/de/data/observers.h \
     include/de/data/path.h \
     include/de/data/pathtree.h \
+    include/de/data/property.h \
     include/de/data/reader.h \
     include/de/data/record.h \
     include/de/data/recordvalue.h \
