@@ -22,24 +22,11 @@
 #include <de/Canvas>
 #include <de/Drawable>
 #include <de/GLInfo>
+#include <de/Property>
 
 namespace de {
 
-struct DefaultSampleCount {
-    int samples;
-
-    DENG2_DEFINE_AUDIENCE(Change, void defaultSampleCountChanged())
-
-    DefaultSampleCount() : samples(1) {}
-    void set(int value) {
-        samples = value;
-        DENG2_FOR_AUDIENCE(Change, i) {
-            i->defaultSampleCountChanged();
-        }
-    }
-};
-
-static DefaultSampleCount defaultSampleCount;
+DENG2_STATIC_PROPERTY(DefaultSampleCount, int)
 
 DENG2_PIMPL(GLFramebuffer)
 , DENG2_OBSERVES(DefaultSampleCount, Change)
@@ -65,17 +52,17 @@ DENG2_PIMPL(GLFramebuffer)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uBufTex   ("uTex",       GLUniform::Sampler2D)
     {
-        defaultSampleCount.audienceForChange += this;
+        pDefaultSampleCount.audienceForChange += this;
     }
 
     ~Instance()
     {
-        defaultSampleCount.audienceForChange -= this;
+        pDefaultSampleCount.audienceForChange -= this;
     }
 
     int sampleCount() const
     {
-        if(_samples <= 0) return defaultSampleCount.samples;
+        if(_samples <= 0) return pDefaultSampleCount;
         return _samples;
     }
 
@@ -89,7 +76,7 @@ DENG2_PIMPL(GLFramebuffer)
         return sampleCount() > 1;
     }
 
-    void defaultSampleCountChanged()
+    void valueOfDefaultSampleCountChanged()
     {
         reconfigure();
     }
@@ -358,9 +345,9 @@ bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
     LOG_AS("GLFramebuffer");
 
     int const newCount = max(1, sampleCount);
-    if(defaultSampleCount.samples != newCount)
+    if(pDefaultSampleCount != newCount)
     {
-        defaultSampleCount.set(newCount);
+        pDefaultSampleCount = newCount;
         return true;
     }
     return false;
@@ -368,7 +355,7 @@ bool GLFramebuffer::setDefaultMultisampling(int sampleCount)
 
 int GLFramebuffer::defaultMultisampling()
 {
-    return defaultSampleCount.samples;
+    return pDefaultSampleCount;
 }
 
 } // namespace de
