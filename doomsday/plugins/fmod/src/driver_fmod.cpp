@@ -134,7 +134,7 @@ int DS_Init(void)
     // Print the credit required by FMOD license.
     LOG_AUDIO_NOTE("FMOD Sound System (c) Firelight Technologies Pty, Ltd., 1994-2013");
 
-    DSFMOD_TRACE("DS_Init: FMOD initialized.");
+    LOGDEV_AUDIO_VERBOSE("[FMOD] Initialized");
     return true;
 }
 
