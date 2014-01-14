@@ -210,10 +210,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
     now = &sm->now;
 
     if(!Smoother_IsValid(sm))
-    {
-        LOGDEV_XVERBOSE("Smoother %p not valid!") << sm;
         return false;
-    }
 
     if(sm->at < past->time)
     {

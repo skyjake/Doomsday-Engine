@@ -106,12 +106,15 @@ if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     	@executable_path/../Frameworks/libintl.8.dylib $DSFS
 fi
 
-if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/4" ]; then
-	echo "Fixing Qt 4 frameworks..."
-	ln -fs Versions/4/QtCore    $APPDIR/Frameworks/QtCore.framework/QtCore
-	ln -fs Versions/4/QtGui     $APPDIR/Frameworks/QtGui.framework/QtGui
-	ln -fs Versions/4/QtNetwork $APPDIR/Frameworks/QtNetwork.framework/QtNetwork
-	ln -fs Versions/4/QtOpenGL  $APPDIR/Frameworks/QtOpenGL.framework/QtOpenGL
+qtVer=`qmake -query QT_VERSION`
+QT_MAJOR=${qtVer:0:1}
+
+if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/$QT_MAJOR" ]; then
+	echo "Fixing Qt $QT_MAJOR frameworks..."
+	ln -fs Versions/$QT_MAJOR/QtCore    $APPDIR/Frameworks/QtCore.framework/QtCore
+	ln -fs Versions/$QT_MAJOR/QtGui     $APPDIR/Frameworks/QtGui.framework/QtGui
+	ln -fs Versions/$QT_MAJOR/QtNetwork $APPDIR/Frameworks/QtNetwork.framework/QtNetwork
+	ln -fs Versions/$QT_MAJOR/QtOpenGL  $APPDIR/Frameworks/QtOpenGL.framework/QtOpenGL
 fi
 
 echo "Bundling Doomsday Shell.app..."
@@ -124,11 +127,11 @@ mkdir -p "$APPDIR/Frameworks"
 $CP libdeng2/libdeng2*dylib      "$APPDIR/Frameworks"
 $CP libshell/libdeng_shell*dylib "$APPDIR/Frameworks"
 
-if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/4" ]; then
-	echo "Fixing Qt 4 frameworks..."
-	ln -fs Versions/4/QtCore    "$APPDIR/Frameworks/QtCore.framework/QtCore"
-	ln -fs Versions/4/QtGui     "$APPDIR/Frameworks/QtGui.framework/QtGui"
-	ln -fs Versions/4/QtNetwork "$APPDIR/Frameworks/QtNetwork.framework/QtNetwork"
+if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/$QT_MAJOR" ]; then
+	echo "Fixing Qt $QT_MAJOR frameworks..."
+	ln -fs Versions/$QT_MAJOR/QtCore    "$APPDIR/Frameworks/QtCore.framework/QtCore"
+	ln -fs Versions/$QT_MAJOR/QtGui     "$APPDIR/Frameworks/QtGui.framework/QtGui"
+	ln -fs Versions/$QT_MAJOR/QtNetwork "$APPDIR/Frameworks/QtNetwork.framework/QtNetwork"
 fi
 
 echo "Bundling done."
