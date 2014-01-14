@@ -100,6 +100,7 @@ HEADERS += \
 
 HEADERS += \
     include/de/c_wrapper.h \
+    include/de/charsymbols.h \
     include/de/error.h \
     include/de/libdeng2.h \
     include/de/math.h \
