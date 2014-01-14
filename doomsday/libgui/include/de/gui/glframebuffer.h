@@ -94,6 +94,9 @@ public:
     /**
      * Sets the default sample count for all frame buffers.
      *
+     * All existing GLFramebuffer instances that have been set to use the default sample
+     * count will be updated to use the new count (i.e., contents lost).
+     *
      * @param sampleCount  Sample count.
      *
      * @return @c true, iff the default value was changed.
