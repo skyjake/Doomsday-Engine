@@ -107,8 +107,8 @@ String const &Game::statusAsText() const
 {
     static String const statusTexts[] = {
         "Loaded",
-        "Complete/Playable",
-        "Incomplete/Not playable",
+        "Playable",
+        "Not playable (incomplete resources)",
     };
     return statusTexts[int(status())];
 }
@@ -213,31 +213,34 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
                 String text;
                 if(printStatus)
                 {
-                    text += (resourceFound? "   " : " ! ");
+                    text += (resourceFound? "   " : _E(1) " ! " _E(.));
                 }
 
                 // Format the resource name list.
-                text += manifest.names().join(" or ");
+                text += String(_E(>) "%1%2")
+                        .arg(!resourceFound? _E(D) : "")
+                        .arg(manifest.names().join(_E(l) " or " _E(.)));
 
                 if(printStatus)
                 {
-                    text += String(" - ") + (resourceFound? "found" : "missing");
+                    text += String(": ") + _E(>) + (!resourceFound? _E(b) "missing " _E(.) : "");
                     if(resourceFound)
                     {
-                        text += String(" ") + NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty();
+                        text += String(_E(2) "\"%1\"").arg(NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty());
                     }
                 }
 
-                LOG_MSG("") << text;
+                LOG_RES_MSG("") << text;
                 numPrinted += 1;
             }
         }
     }
 
+    /*
     if(numPrinted == 0)
     {
-        LOG_MSG(" None");
-    }
+        LOG_RES_MSG("   None");
+    }*/
 }
 
 D_CMD(InspectGame)
@@ -282,7 +285,7 @@ D_CMD(InspectGame)
     LOG_MSG(_E(D) "Other resources:");
     Game::printFiles(*game, 0, false);
 
-    LOG_MSG(_E(D) "Status: " _E(.) _E(1)) << game->statusAsText();
+    LOG_MSG(_E(D) "Status: " _E(.) _E(b)) << game->statusAsText();
 
     return true;
 }

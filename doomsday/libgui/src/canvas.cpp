@@ -423,7 +423,7 @@ void Canvas::paintGL()
 void Canvas::focusInEvent(QFocusEvent*)
 {
     LOG_AS("Canvas");
-    LOG_INPUT_MSG("Gained focus");
+    LOG_INPUT_VERBOSE("Gained focus");
 
     DENG2_FOR_AUDIENCE(FocusChange, i) i->canvasFocusChanged(*this, true);
 }
@@ -431,7 +431,7 @@ void Canvas::focusInEvent(QFocusEvent*)
 void Canvas::focusOutEvent(QFocusEvent*)
 {
     LOG_AS("Canvas");
-    LOG_INPUT_MSG("Lost focus");
+    LOG_INPUT_VERBOSE("Lost focus");
 
     // Automatically ungrab the mouse if focus is lost.
     d->ungrabMouse();

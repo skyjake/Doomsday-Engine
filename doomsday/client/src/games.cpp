@@ -32,6 +32,7 @@
 
 #include <de/App>
 #include <de/Log>
+#include <de/charsymbols.h>
 #include <QtAlgorithms>
 
 namespace de {
@@ -216,17 +217,16 @@ static int locateAllResourcesWorker(void *context)
     int n = 0;
     foreach(Game *game, games->all())
     {
-        LOG_MSG("Locating \"%s\"...") << game->title();
+        LOG_RES_MSG("Locating " _E(b) "\"%s\"" _E(.) "...") << game->title();
 
         games->locateStartupResources(*game);
         Con_SetProgress((n + 1) * 200 / games->count() - 1);
 
-        LOG_VERBOSE("Game: %s - %s") << game->title() << game->author();
-        LOG_VERBOSE("IdentityKey: ") << game->identityKey();
-        LOG_VERBOSE("Startup resources:");
+        LOG_RES_VERBOSE(_E(l) "  Game: " _E(.)_E(>) "%s - %s") << game->title() << game->author();
+        LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game->identityKey();
         Game::printFiles(*game, FF_STARTUP);
 
-        LOG_MSG("Status: ") << game->statusAsText();
+        LOG_RES_MSG("   " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game->statusAsText();
         ++n;
     }
     BusyMode_WorkerEnd();

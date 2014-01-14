@@ -79,11 +79,9 @@ static void C_DECL handler(int s)
  */
 void Sys_Init(void)
 {
-    uint startTime;
+    de::Time begunAt;
 
-    LOG_MSG("Setting up platform state...");
-
-    startTime = (verbose >= 2? Timer_RealMilliseconds() : 0);
+    LOG_VERBOSE("Setting up platform state...");
 
     LOG_AUDIO_VERBOSE("Initializing Audio subsystem...");
     S_Init();
@@ -107,7 +105,7 @@ void Sys_Init(void)
     LOG_NET_VERBOSE("Initializing Network subsystem...");
     N_Init();
 
-    LOGDEV_VERBOSE("Sys_Init completed in %.2f seconds") << (Timer_RealMilliseconds() - startTime) / 1000.0f;
+    LOGDEV_VERBOSE("Sys_Init completed in %.2f seconds") << begunAt.since();
 }
 
 dd_bool Sys_IsShuttingDown(void)
