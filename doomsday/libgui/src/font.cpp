@@ -21,6 +21,7 @@
 #include <de/ConstantRule>
 #include <de/EscapeParser>
 #include <QFontMetrics>
+#include <QFontDatabase>
 #include <QImage>
 #include <QPainter>
 
@@ -504,6 +505,9 @@ DENG2_PIMPL(Font)
     ConstantRule *lineSpacingRule;
     int ascent;
 
+    enum AltFamilyId { AltFamilyLight, AltFamilyBold, NUM_ALTS };
+    String altFamily[NUM_ALTS];
+
     Instance(Public *i) : Base(i), ascent(0)
     {
         createRules();
@@ -511,8 +515,35 @@ DENG2_PIMPL(Font)
 
     Instance(Public *i, QFont const &qfont) : Base(i), font(qfont)
     {
+#if 0
+        // Development aid: list all available fonts and styles.
+        QFontDatabase db;
+        foreach(QString fam, db.families())
+        {
+            qDebug() << "FONT FAMILY:" << fam;
+            qDebug() << "\tStyles:" << db.styles(fam);
+        }
+#endif
+
         createRules();
         updateMetrics();
+    }
+
+    void setAltFamily(RichFormat::Weight weight, String const &family)
+    {
+        switch(weight)
+        {
+        case RichFormat::Light:
+            altFamily[AltFamilyLight] = family;
+            break;
+
+        case RichFormat::Bold:
+            altFamily[AltFamilyBold] = family;
+            break;
+
+        default:
+            break;
+        }
     }
 
     void createRules()
@@ -541,17 +572,27 @@ DENG2_PIMPL(Font)
         lineSpacingRule->set(metrics->lineSpacing());
     }
 
+    /**
+     * Produces a font based on this one but with the attribute modifications applied
+     * from a rich format range.
+     *
+     * @param rich  Rich formatting.
+     *
+     * @return  Font with applied formatting.
+     */
     QFont alteredFont(RichFormat::Iterator const &rich) const
     {
         if(!rich.isDefault())
         {
             QFont mod = font;
 
+            // Size change.
             if(!fequal(rich.sizeFactor(), 1.f))
             {
                 mod.setPointSizeF(mod.pointSizeF() * rich.sizeFactor());
             }
 
+            // Style change (including monospace).
             switch(rich.style())
             {
             case RichFormat::OriginalStyle:
@@ -581,11 +622,22 @@ DENG2_PIMPL(Font)
                 break;
             }
 
+            // Weight change.
             if(rich.weight() != RichFormat::OriginalWeight)
             {
                 mod.setWeight(rich.weight() == RichFormat::Normal? QFont::Normal :
                               rich.weight() == RichFormat::Bold?   QFont::Bold   :
                                                                    QFont::Light);
+
+                // Some weights may require an alternate font family.
+                if(rich.weight() == RichFormat::Light && !altFamily[AltFamilyLight].isEmpty())
+                {
+                    mod.setFamily(altFamily[AltFamilyLight]);
+                }
+                else if(rich.weight() == RichFormat::Bold && !altFamily[AltFamilyBold].isEmpty())
+                {
+                    mod.setFamily(altFamily[AltFamilyBold]);
+                }
             }
             return mod;
         }
@@ -614,6 +666,11 @@ Font::Font(QFont const &font) : d(new Instance(this, font))
 QFont Font::toQFont() const
 {
     return d->font;
+}
+
+void Font::setAltFamily(RichFormat::Weight weight, String const &familyName)
+{
+    d->setAltFamily(weight, familyName);
 }
 
 Rectanglei Font::measure(String const &textLine) const
