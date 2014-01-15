@@ -32,7 +32,7 @@
 #  include "client/clpolymover.h"
 
 #  include "world/worldsystem.h"
-#  include "p_particle.h"
+#  include "Generator"
 
 #  include "BiasSource"
 #  include "Lumobj"
@@ -792,6 +792,15 @@ public: /// @todo Make private:
      * during map setup.
      */
     void initGenerators();
+
+    /**
+     * Attempt to spawn all flat-triggered particle generators for the map.
+     * To be called after map setup is completed.
+     *
+     * @note Cannot presently be done in @ref initGenerators() as this is called
+     *       during initial Map load and before any saved game has been loaded.
+     */
+    void spawnPlaneParticleGens();
 
     /**
      * Destroys all clientside clmobjs in the map. To be called when a network

@@ -591,8 +591,8 @@ static void renderParticles(int rtype, bool withBlend)
         float mark = 1 - invMark;
 
         // Calculate size and color.
-        float size = P_GetParticleRadius(dst, slot->ptID) * invMark
-                   + P_GetParticleRadius(nextDst, slot->ptID) * mark;
+        float size = dst->particleRadius(slot->ptID) * invMark
+                   + nextDst->particleRadius(slot->ptID) * mark;
 
         // Infinitely small?
         if(!size) continue;

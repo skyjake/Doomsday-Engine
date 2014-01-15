@@ -38,10 +38,10 @@
 #include "gl/svg.h"
 #ifdef __CLIENT__
 #  include "render/r_draw.h"
+#  include "render/r_main.h"
 #  include "render/rend_main.h"
 #  include "updater.h"
 #endif
-#include "render/r_main.h"
 
 #include "api_internaldata.h"
 

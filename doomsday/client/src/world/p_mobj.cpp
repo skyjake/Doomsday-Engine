@@ -1,4 +1,4 @@
-/** @file p_mobj.cpp World map objects.
+/** @file p_mobj.cpp  World map objects.
  *
  * Various routines for moving mobjs, collision and Z checking.
  *
@@ -21,11 +21,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-
-#include <de/Error>
-
 #include "de_base.h"
+#include "world/p_object.h"
+
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
@@ -35,7 +33,10 @@
 #include "de_audio.h"
 
 #include "def_main.h"
-#include "render/r_main.h" // validCount
+
+#include "world/worldsystem.h" // validCount
+#include "world/thinkers.h"
+#include "BspLeaf"
 
 #ifdef __CLIENT__
 #  include "Lumobj"
@@ -47,8 +48,8 @@
 #  include "gl/gl_tex.h"
 #endif
 
-#include "world/thinkers.h"
-#include "BspLeaf"
+#include <de/Error>
+#include <cmath>
 
 using namespace de;
 
@@ -184,7 +185,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
         if(!(pg->flags & Generator::SpawnOnly) || spawning)
         {
             // We are allowed to spawn the generator.
-            P_SpawnMobjParticleGen(pg, mobj);
+            Mobj_SpawnParticleGen(mobj, pg);
         }
     }
 #endif
@@ -296,6 +297,92 @@ DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
 {
     if(!mobj) return 0;
     return Mobj_BspLeafAtOrigin(*mobj).sectorPtr();
+}
+
+void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
+{
+#ifdef __CLIENT__
+    DENG2_ASSERT(def != 0 && source != 0);
+
+    //if(!useParticles) return;
+
+    Generator *gen = Mobj_Map(*source).newGenerator();
+    if(!gen) return;
+
+    /*LOG_INFO("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)")
+        << def->state << (def - defs.ptcgens) << defs.states[source->state-states].id
+        << defs.mobjs[source->type].id << source;*/
+
+    // Initialize the particle generator.
+    gen->count = def->particles;
+    // Size of source sector might determine count.
+    if(def->flags & Generator::ScaledRate)
+    {
+        gen->spawnRateMultiplier = Mobj_BspLeafAtOrigin(*source).sector().roughArea() / (128 * 128);
+    }
+    else
+    {
+        gen->spawnRateMultiplier = 1;
+    }
+
+    gen->configureFromDef(def);
+    gen->source = source;
+    gen->srcid = source->thinker.id;
+
+    // Is there a need to pre-simulate?
+    gen->presimulate(def->preSim);
+#else
+    DENG2_UNUSED2(source, def);
+#endif
+}
+
+#undef Mobj_SpawnDamageParticleGen
+DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
+{
+#ifdef __CLIENT__
+    if(!mo || !inflictor || amount <= 0) return;
+
+    // Are particles allowed?
+    //if(!useParticles) return;
+
+    ded_ptcgen_t const *def = Def_GetDamageGenerator(mo->type);
+    if(def)
+    {
+        Generator *gen = Mobj_Map(*mo).newGenerator();
+        if(!gen) return; // No more generators.
+
+        gen->count = def->particles;
+        gen->configureFromDef(def);
+        gen->flags |= Generator::Untriggered;
+
+        gen->spawnRateMultiplier = de::max(amount, 1);
+
+        // Calculate appropriate center coordinates.
+        gen->center[VX] += FLT2FIX(mo->origin[VX]);
+        gen->center[VY] += FLT2FIX(mo->origin[VY]);
+        gen->center[VZ] += FLT2FIX(mo->origin[VZ] + mo->height / 2);
+
+        // Calculate launch vector.
+        vec3f_t vecDelta;
+        V3f_Set(vecDelta, inflictor->origin[VX] - mo->origin[VX],
+                inflictor->origin[VY] - mo->origin[VY],
+                (inflictor->origin[VZ] - inflictor->height / 2) - (mo->origin[VZ] + mo->height / 2));
+
+        vec3f_t vector;
+        V3f_SetFixed(vector, gen->vector[VX], gen->vector[VY], gen->vector[VZ]);
+        V3f_Sum(vector, vector, vecDelta);
+        V3f_Normalize(vector);
+
+        gen->vector[VX] = FLT2FIX(vector[VX]);
+        gen->vector[VY] = FLT2FIX(vector[VY]);
+        gen->vector[VZ] = FLT2FIX(vector[VZ]);
+
+        // Is there a need to pre-simulate?
+        gen->presimulate(def->preSim);
+    }
+#else
+    DENG2_UNUSED3(mo, inflictor, amount);
+#endif
 }
 
 #ifdef __CLIENT__

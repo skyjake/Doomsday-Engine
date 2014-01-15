@@ -32,7 +32,7 @@
 #include "Sector"
 #include "Vertex"
 
-#include "render/r_main.h" /// validCount @todo Remove me
+#include "world/worldsystem.h" /// validCount @todo Remove me
 
 #include "world/bsp/convexsubspace.h"
 #include "world/bsp/edgetip.h"
@@ -52,18 +52,13 @@ namespace de {
 
 using namespace bsp;
 
-typedef QHash<MapElement *, BspTreeNode *> BspElementMap;
-typedef QList<ConvexSubspace>              ConvexSubspaces;
-typedef QHash<Vertex *, EdgeTips>          EdgeTipSetMap;
-typedef QList<LineSegment *>               LineSegments;
-typedef QList<Line *>                      Lines;
-
 DENG2_PIMPL(Partitioner)
 {
     /// Cost factor attributed to splitting a line segment.
     int splitCostFactor;
 
     /// The index-ordered set of map lines we are building BSP data for (not owned).
+    typedef QList<Line *> Lines;
     Lines lines;
 
     /// The mesh from which we'll assign (construct) new geometries(not owned).
@@ -76,12 +71,15 @@ DENG2_PIMPL(Partitioner)
     int numVertexes;
 
     /// Line segments in the plane.
+    typedef QList<LineSegment *> LineSegments;
     LineSegments lineSegments;
 
     /// Convex subspaces in the plane.
+    typedef QList<ConvexSubspace> ConvexSubspaces;
     ConvexSubspaces convexSubspaces;
 
     /// A set of EdgeTips for each unique line segment vertex.
+    typedef QHash<Vertex *, EdgeTips> EdgeTipSetMap;
     EdgeTipSetMap edgeTipSets;
 
     /// Root node of the internal binary tree used to guide the partitioning
@@ -90,17 +88,18 @@ DENG2_PIMPL(Partitioner)
 
     /// Mapping table which relates built BSP map elements to their counterpart
     /// in the internal tree.
+    typedef QHash<MapElement *, BspTreeNode *> BspElementMap;
     BspElementMap treeNodeMap;
 
     /// The "current" binary space half-plane.
     HPlane hplane;
 
     Instance(Public *i, int splitCostFactor)
-      : Base(i),
-        splitCostFactor(splitCostFactor),
-        mesh(0),
-        numNodes(0), numLeafs(0), numSegments(0), numVertexes(0),
-        rootNode(0)
+      : Base(i)
+      , splitCostFactor(splitCostFactor)
+      , mesh(0)
+      , numNodes(0), numLeafs(0), numSegments(0), numVertexes(0)
+      , rootNode(0)
     {}
 
     ~Instance() { clear(); }

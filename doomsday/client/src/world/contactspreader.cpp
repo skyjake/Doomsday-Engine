@@ -28,7 +28,8 @@
 #include "Sector"
 #include "Surface"
 
-#include "render/r_main.h" // validCount
+#include "world/worldsystem.h" // validCount
+
 #include "render/rend_main.h" // Rend_mapSurfaceMaterialSpec
 #include "WallEdge"
 #include "MaterialSnapshot"

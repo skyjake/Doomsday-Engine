@@ -22,34 +22,27 @@
 #include "render/r_main.h"
 
 #include "dd_def.h" // finesine
-#ifdef __CLIENT__
-#  include "clientapp.h"
+#include "clientapp.h"
 
-#  include "render/billboard.h"
-#  include "render/rend_main.h"
-#  include "render/vissprite.h"
-#  include "render/vlight.h"
+#include "render/billboard.h"
+#include "render/rend_main.h"
+#include "render/vissprite.h"
+#include "render/vlight.h"
 
-#  include "MaterialSnapshot"
+#include "MaterialSnapshot"
 
-#  include "world/map.h"
-#  include "world/p_players.h"
-#  include "BspLeaf"
+#include "world/map.h"
+#include "world/p_players.h"
+#include "BspLeaf"
 
-#  include <de/GLState>
-#  include <de/vector1.h>
-#endif
+#include <de/GLState>
+#include <de/vector1.h>
 
 using namespace de;
-
-int validCount = 1; // Increment every time a check is made.
 
 int levelFullBright;
 int weaponOffsetScaleY = 1000;
 int psp3d;
-
-// Precalculated math tables.
-fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 
 float pspLightLevelMultiplier = 1;
 float pspOffset[2];
@@ -60,8 +53,6 @@ float pspOffset[2];
 float weaponFOVShift    = 45;
 float weaponOffsetScale = 0.3183f; // 1/Pi
 byte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
-
-#ifdef __CLIENT__
 
 static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 {
@@ -299,5 +290,3 @@ void Rend_Draw3DPlayerSprites()
         Rend_DrawModel(parms);
     }
 }
-
-#endif // __CLIENT__

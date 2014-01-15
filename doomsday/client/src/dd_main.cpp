@@ -56,10 +56,10 @@
 #  include "gl/gl_texmanager.h"
 #endif
 
-#include "render/r_main.h" // R_Init, R_ResetViewer
 #ifdef __CLIENT__
 #  include "render/cameralensfx.h"
 #  include "render/r_draw.h" // R_InitViewWindow
+#  include "render/r_main.h" // R_Init, R_ResetViewer
 #  include "render/rend_font.h"
 #  include "render/rend_main.h"
 #  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
@@ -2303,7 +2303,11 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #endif
     {0, 0},
     {0, 0}, //{&mouseInverseY, &mouseInverseY},
+#ifdef __CLIENT__
     {&levelFullBright, &levelFullBright},
+#else
+    {0, 0},
+#endif
     {&CmdReturnValue, 0},
 #ifdef __CLIENT__
     {&gameReady, &gameReady},
@@ -2324,10 +2328,11 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
 #ifdef __CLIENT__
     {&clientPaused, &clientPaused},
+    {&weaponOffsetScaleY, &weaponOffsetScaleY},
 #else
     {0, 0},
+    {0, 0},
 #endif
-    {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&gameDataFormat, &gameDataFormat},
 #ifdef __CLIENT__
     {&gameDrawHUD, 0},
@@ -2479,6 +2484,14 @@ void *DD_GetVariable(int ddvalue)
         valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().maxY : 0;
         return &valueD;
 
+    /*case DD_CPLAYER_THRUST_MUL:
+        return &cplrThrustMul;*/
+
+    case DD_GRAVITY:
+        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().gravity() : 0;
+        return &valueD;
+
+#ifdef __CLIENT__
     case DD_PSPRITE_OFFSET_X:
         return &pspOffset[VX];
 
@@ -2488,14 +2501,6 @@ void *DD_GetVariable(int ddvalue)
     case DD_PSPRITE_LIGHTLEVEL_MULTIPLIER:
         return &pspLightLevelMultiplier;
 
-    /*case DD_CPLAYER_THRUST_MUL:
-        return &cplrThrustMul;*/
-
-    case DD_GRAVITY:
-        valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().gravity() : 0;
-        return &valueD;
-
-#ifdef __CLIENT__
     case DD_TORCH_RED:
         return &torchColor.x;
 
@@ -2557,6 +2562,7 @@ void DD_SetVariable(int ddvalue, void *parm)
                 App_WorldSystem().map().setGravity(*(coord_t*) parm);
             return;
 
+#ifdef __CLIENT__
         case DD_PSPRITE_OFFSET_X:
             pspOffset[VX] = *(float *) parm;
             return;
@@ -2569,7 +2575,6 @@ void DD_SetVariable(int ddvalue, void *parm)
             pspLightLevelMultiplier = *(float *) parm;
             return;
 
-#ifdef __CLIENT__
         case DD_TORCH_RED:
             torchColor.x = de::clamp(0.f, *((float*) parm), 1.f);
             return;

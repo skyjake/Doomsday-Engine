@@ -24,8 +24,8 @@
 #include "gl/gl_tex.h" // averagealpha_analysis_t, etc...
 #ifdef __CLIENT__
 #  include "render/r_draw.h" // Rend_PatchTextureSpec()
+#  include "render/r_main.h" // texGammaLut
 #endif
-#include "render/r_main.h" // texGammaLut
 
 using namespace de;
 

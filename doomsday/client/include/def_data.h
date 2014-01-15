@@ -83,6 +83,13 @@ typedef struct ded_ptcstage_s {
     ded_string_t    endFrameName;
     short           frame, endFrame;
     ded_embsound_t  sound, hitSound;
+
+    /**
+     * Takes care of consistent variance.
+     * Currently only used visually, collisions use the constant radius.
+     * The variance can be negative (results will be larger).
+     */
+    float particleRadius(int ptcIDX) const;
 } ded_ptcstage_t;
 
 typedef struct ded_count_s {

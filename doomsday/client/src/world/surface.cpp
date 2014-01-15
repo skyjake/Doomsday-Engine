@@ -269,9 +269,8 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
             {
                 de::Uri uri = d->material->manifest().composeUri();
                 ded_ptcgen_t const *def = Def_GetGenerator(reinterpret_cast<uri_s *>(&uri));
-                P_SpawnPlaneParticleGen(def, &parent().as<Plane>());
+                parent().as<Plane>().spawnParticleGen(def);
             }
-
         }
     }
 #endif // __CLIENT__

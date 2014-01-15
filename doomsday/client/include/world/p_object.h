@@ -25,6 +25,8 @@
 #  error Attempted to include internal Doomsday p_object.h from a game
 #endif
 
+#include "api_map.h"
+#include "def_data.h"
 #ifdef __CLIENT__
 #  include "ModelDef"
 #  include "Sprite"
@@ -142,6 +144,12 @@ SectorCluster &Mobj_Cluster(mobj_t const &mobj);
  * @see Mobj_HasCluster()
  */
 SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj);
+
+/**
+ * Creates a new mobj-triggered particle generator based on the given
+ * definition. The generator is added to the list of active ptcgens.
+ */
+void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def);
 
 #ifdef __CLIENT__
 

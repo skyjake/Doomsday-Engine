@@ -21,15 +21,14 @@
 #include "de_base.h"
 #include "world/polyobj.h"
 
-#include "BspLeaf"
+#include "world/worldsystem.h" // validCount
 #include "world/map.h"
 #include "world/p_object.h"
+#include "BspLeaf"
 
 #ifdef __CLIENT__
 #  include "render/rend_main.h" // useBias
 #endif
-
-#include "render/r_main.h" // validCount
 
 #include <de/vector1.h>
 #include <QSet>

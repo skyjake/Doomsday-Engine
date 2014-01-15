@@ -34,7 +34,7 @@
 #include "de_filesys.h"
 #include "de_resource.h"
 
-#include "world/p_particle.h"
+#include "Generator"
 #ifdef __CLIENT__
 #  include "render/rend_particle.h"
 #endif

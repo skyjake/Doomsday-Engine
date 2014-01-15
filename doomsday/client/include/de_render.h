@@ -22,13 +22,12 @@
 #ifndef DOOMSDAY_CLIENT_RENDERER
 #define DOOMSDAY_CLIENT_RENDERER
 
-#include "render/r_main.h"
-
 #ifdef __CLIENT__
 #include "render/viewports.h"
 #include "render/lightgrid.h"
 #include "render/projector.h"
 #include "render/r_draw.h"
+#include "render/r_main.h"
 #include "render/r_things.h"
 #include "render/rend_clip.h"
 #include "render/rend_halo.h"

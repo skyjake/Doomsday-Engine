@@ -23,13 +23,12 @@
 
 #include "Face"
 
+#include "world/worldsystem.h" /// For validCount, @todo Remove me.
 #include "BspLeaf"
 #include "BspNode"
 #include "Line"
 #include "Polyobj"
 #include "Sector"
-
-#include "render/r_main.h" /// For validCount, @todo Remove me.
 
 #include <de/aabox.h>
 #include <de/fixedpoint.h>
