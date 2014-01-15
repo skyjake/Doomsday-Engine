@@ -4,25 +4,29 @@
 # - weight: normal bold light
 # - style: normal italic
 
-script { import Version, gui }
+script { 
+    import Version, gui 
+    # Load the Open Sans font contained in this pack.
+    def loadOpenSans()
+        import App, Path
+        fontDir = Path.fileNamePath(__file__) / "fonts"
+        # Sadly, light fonts seem to not work in Qt presently.
+        for style in ['Regular', 'Bold', 'Italic', 'BoldItalic']  #'Light', 'LightItalic'
+            App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
+        end    
+    end
+}
 
 group {
     condition: Version.OS == 'windows'
     
+    script { loadOpenSans() }
+
     font default {
         family: Open Sans
         size: 12pt
         weight: normal
-        style: normal
-    
-        script {
-            # Load the Open Sans font contained in this pack.
-            import App, Path
-            fontDir = Path.fileNamePath(__file__) / "fonts"
-            for style in ['Regular', 'Bold', 'Italic', 'BoldItalic']
-                App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
-            end
-        }
+        style: normal    
     }
     
     font monospace inherits default {
@@ -33,9 +37,11 @@ group {
 
 group {
     condition: Version.OS == 'macx'
+
+    script { loadOpenSans() }
     
     font default {
-        family: Helvetica Neue
+        family: Open Sans
         size: 16pt
         weight: normal
         style: normal
