@@ -195,6 +195,7 @@ void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
     size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
     va_end(args);
     DENG2_ASSERT(nc < sizeof(buffer) - 1);
+    DENG2_UNUSED(nc);
 
     logFragmentPrinter(metadata, buffer);
 }
