@@ -3440,7 +3440,7 @@ void G_PrintFormattedMapList(uint episode, char const** files, uint count)
                 LogBuffer_Printf(DE2_LOG_MAP, "%s", Str_Text(path));
                 Uri_Delete(mapUri);
             }
-            LogBuffer_Printf(DE2_LOG_MAP, ": %s\n", F_PrettyPath(current));
+            LogBuffer_Printf(DE2_LOG_MAP, " " DE2_ESC(2) DE2_ESC(>) "%s\n", F_PrettyPath(current));
 
             // Moving on to a different file.
             current = files[i];
@@ -3948,7 +3948,7 @@ D_CMD(CycleTextureGamma)
 
 D_CMD(ListMaps)
 {
-    App_Log(DE2_LOG_MESSAGE, "Available maps:");
+    App_Log(DE2_RES_MSG, "Available maps:");
     G_PrintMapList();
     return true;
 }

@@ -91,10 +91,10 @@ DENG2_PIMPL(Canvas)
     {
         if(!self.isVisible()/* || mouseDisabled*/) return;
 
-        LOG_INPUT_MSG("Grabbing mouse (already grabbed? %b)") << mouseGrabbed;
-
         if(!mouseGrabbed)
         {
+            LOG_INPUT_VERBOSE("Grabbing mouse") << mouseGrabbed;
+
             mouseGrabbed = true;
 
             DENG2_FOR_PUBLIC_AUDIENCE(MouseStateChange, i)
