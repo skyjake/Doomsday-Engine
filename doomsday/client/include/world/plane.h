@@ -22,6 +22,9 @@
 #define DENG_WORLD_PLANE_H
 
 #include "dd_share.h" // SoundEmitter
+#ifdef __CLIENT__
+#  include "def_main.h"
+#endif
 
 #include "MapElement"
 
@@ -220,6 +223,13 @@ public:
      * @see hasGenerator()
      */
     Generator &generator() const;
+
+    /**
+     * Creates a new flat-triggered particle generator based on the given
+     * definition. Note that it may @em not be "this" plane to which the resultant
+     * generator is attached as the definition may override this.
+     */
+    void spawnParticleGen(ded_ptcgen_t const *def);
 
 #endif // __CLIENT__
 

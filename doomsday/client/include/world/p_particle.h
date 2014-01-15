@@ -237,48 +237,4 @@ typedef Generator::ParticleStage GeneratorParticleStage;
 void Generator_Delete(Generator *gen);
 void Generator_Thinker(Generator *gen);
 
-/**
- * Attempt to spawn all flat-triggered particle generators for the @a map.
- * To be called after map setup is completed.
- *
- * @note Cannot presently be done in P_PtcInitForMap as this is called during
- *       initial Map load and before any saved game has been loaded.
- */
-void P_MapSpawnPlaneParticleGens(de::Map &map);
-
-/**
- * Spawns all type-triggered particle generators, regardless of whether
- * the type of mobj exists in the map or not (mobjs might be dynamically
- * created).
- */
-void P_SpawnTypeParticleGens(de::Map &map);
-
-void P_SpawnMapParticleGens(de::Map &map);
-
-/**
- * Update existing generators in the map following an engine reset.
- */
-void P_UpdateParticleGens(de::Map &map);
-
-/**
- * Creates a new mobj-triggered particle generator based on the given
- * definition. The generator is added to the list of active ptcgens.
- */
-void P_SpawnMobjParticleGen(ded_ptcgen_t const *def, struct mobj_s *source);
-
-void P_SpawnMapDamageParticleGen(struct mobj_s *mo, struct mobj_s *inflictor, int amount);
-
-/**
- * Creates a new flat-triggered particle generator based on the given
- * definition. The generator is added to the list of active ptcgens.
- */
-void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane);
-
-/**
- * Takes care of consistent variance.
- * Currently only used visually, collisions use the constant radius.
- * The variance can be negative (results will be larger).
- */
-float P_GetParticleRadius(ded_ptcstage_t const *stageDef, int ptcIndex);
-
 #endif // DENG_CLIENT_WORLD_P_PARTICLE_H

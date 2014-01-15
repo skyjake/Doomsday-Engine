@@ -794,6 +794,15 @@ public: /// @todo Make private:
     void initGenerators();
 
     /**
+     * Attempt to spawn all flat-triggered particle generators for the map.
+     * To be called after map setup is completed.
+     *
+     * @note Cannot presently be done in @ref initGenerators() as this is called
+     *       during initial Map load and before any saved game has been loaded.
+     */
+    void spawnPlaneParticleGens();
+
+    /**
      * Destroys all clientside clmobjs in the map. To be called when a network
      * game ends.
      */

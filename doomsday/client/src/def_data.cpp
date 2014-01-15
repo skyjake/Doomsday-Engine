@@ -38,6 +38,20 @@
 
 // Helper Routines -------------------------------------------------------
 
+float ded_ptcstage_t::particleRadius(int ptcIDX) const
+{
+    if(radiusVariance)
+    {
+        static float const rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
+            .5625f, .0625f, 1, .6875f, .625f, .4375f, .8125f, .1875f,
+            .9375f, .25f
+        };
+        return (rnd[ptcIDX & 0xf] * radiusVariance +
+                (1 - radiusVariance)) * radius;
+    }
+    return radius;
+}
+
 void* DED_NewEntries(void** ptr, ded_count_t* cnt, size_t elemSize, int count)
 {
     void* np;

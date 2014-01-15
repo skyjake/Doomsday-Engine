@@ -64,7 +64,7 @@ static float particleSpawnRate = 1; // Unmodified (cvar).
  * The offset is spherical and random.
  * Low and High should be positive.
  */
-static void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high)
+static void uncertainPosition(fixed_t *pos, fixed_t low, fixed_t high)
 {
     if(!low)
     {
@@ -93,15 +93,6 @@ static void P_Uncertain(fixed_t *pos, fixed_t low, fixed_t high)
             pos[i] += FixedMul(vec[i], off);
         }
     }
-}
-
-void Generator_Delete(Generator *gen)
-{
-    if(!gen) return;
-    gen->map().unlink(*gen);
-    gen->map().thinkers().remove(gen->thinker);
-    gen->clearParticles();
-    // The generator itself is free'd when it's next turn for thinking comes.
 }
 
 Map &Generator::map() const
@@ -135,20 +126,6 @@ void Generator::clearParticles()
 {
     Z_Free(_pinfo);
     _pinfo = 0;
-}
-
-void P_MapSpawnPlaneParticleGens(Map &map)
-{
-    if(isDedicated || !useParticles) return;
-
-    foreach(Sector *sector, map.sectors())
-    {
-        Plane &floor = sector->floor();
-        P_SpawnPlaneParticleGen(Def_GetGenerator(floor.surface().composeMaterialUri()), &floor);
-
-        Plane &ceiling = sector->ceiling();
-        P_SpawnPlaneParticleGen(Def_GetGenerator(ceiling.surface().composeMaterialUri()), &ceiling);
-    }
 }
 
 void Generator::configureFromDef(ded_ptcgen_t const *newDef)
@@ -189,7 +166,7 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
     // Apply a random component to the spawn vector.
     if(def->initVectorVariance > 0)
     {
-        P_Uncertain(vector, 0, FLT2FIX(def->initVectorVariance));
+        uncertainPosition(vector, 0, FLT2FIX(def->initVectorVariance));
     }
 
     // Mark unused.
@@ -244,83 +221,7 @@ ParticleInfo const *Generator::particleInfo() const
     return _pinfo;
 }
 
-void P_SpawnMobjParticleGen(ded_ptcgen_t const *def, mobj_t *source)
-{
-    DENG2_ASSERT(def != 0 && source != 0);
-
-    if(isDedicated || !useParticles) return;
-
-    Generator *gen = Mobj_Map(*source).newGenerator();
-    if(!gen) return;
-
-    /*LOG_INFO("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)")
-        << def->state << (def - defs.ptcgens) << defs.states[source->state-states].id
-        << defs.mobjs[source->type].id << source;*/
-
-    // Initialize the particle generator.
-    gen->count = def->particles;
-    // Size of source sector might determine count.
-    if(def->flags & Generator::ScaledRate)
-    {
-        gen->spawnRateMultiplier = Mobj_BspLeafAtOrigin(*source).sector().roughArea() / (128 * 128);
-    }
-    else
-    {
-        gen->spawnRateMultiplier = 1;
-    }
-
-    gen->configureFromDef(def);
-    gen->source = source;
-    gen->srcid = source->thinker.id;
-
-    // Is there a need to pre-simulate?
-    gen->presimulate(def->preSim);
-}
-
-void P_SpawnPlaneParticleGen(ded_ptcgen_t const *def, Plane *plane)
-{
-    if(isDedicated || !useParticles) return;
-    if(!def || !plane) return;
-
-    // Only planes in sectors with volume on the world X/Y axis can support generators.
-    if(!plane->sector().sideCount()) return;
-
-    // Plane we spawn relative to may not be this one.
-    int relPlane = plane->indexInSector();
-    if(def->flags & Generator::SpawnCeiling)
-        relPlane = Sector::Ceiling;
-    if(def->flags & Generator::SpawnFloor)
-        relPlane = Sector::Floor;
-
-    plane = &plane->sector().plane(relPlane);
-
-    // Only one generator per plane.
-    if(plane->hasGenerator()) return;
-
-    // Are we out of generators?
-    Generator *gen = plane->map().newGenerator();
-    if(!gen) return;
-
-    gen->count = def->particles;
-    // Size of source sector might determine count.
-    if(def->flags & Generator::Density)
-    {
-        gen->spawnRateMultiplier = plane->sector().roughArea() / (128 * 128);
-    }
-    else
-    {
-        gen->spawnRateMultiplier = 1;
-    }
-
-    // Initialize the particle generator.
-    gen->configureFromDef(def);
-    gen->plane = plane;
-
-    // Is there a need to pre-simulate?
-    gen->presimulate(def->preSim);
-}
-
-static void P_SetParticleAngles(ParticleInfo *pinfo, int flags)
+static void setParticleAngles(ParticleInfo *pinfo, int flags)
 {
     DENG2_ASSERT(pinfo != 0);
 
@@ -334,7 +235,7 @@ static void P_SetParticleAngles(ParticleInfo *pinfo, int flags)
         pinfo->pitch = RNG_RandFloat() * 65536;
 }
 
-static void P_ParticleSound(fixed_t pos[3], ded_embsound_t *sound)
+static void particleSound(fixed_t pos[3], ded_embsound_t *sound)
 {
     DENG2_ASSERT(pos != 0 && sound != 0);
 
@@ -442,7 +343,7 @@ int Generator::newParticle()
         pinfo->origin[VY] = FLT2FIX(source->origin[VY]);
         pinfo->origin[VZ] = FLT2FIX(source->origin[VZ] - source->floorClip);
 
-        P_Uncertain(pinfo->origin, FLT2FIX(def->spawnRadiusMin), FLT2FIX(def->spawnRadius));
+        uncertainPosition(pinfo->origin, FLT2FIX(def->spawnRadiusMin), FLT2FIX(def->spawnRadius));
 
         // Offset to the real center.
         pinfo->origin[VZ] += center[VZ];
@@ -579,12 +480,12 @@ int Generator::newParticle()
         pinfo->origin[VX] = center[VX];
         pinfo->origin[VY] = center[VY];
         pinfo->origin[VZ] = center[VZ];
-        P_Uncertain(pinfo->origin, FLT2FIX(def->spawnRadiusMin),
+        uncertainPosition(pinfo->origin, FLT2FIX(def->spawnRadiusMin),
                     FLT2FIX(def->spawnRadius));
     }
 
     // Initial angles for the particle.
-    P_SetParticleAngles(pinfo, def->stages[pinfo->stage].flags);
+    setParticleAngles(pinfo, def->stages[pinfo->stage].flags);
 
     // The other place where this gets updated is after moving over
     // a two-sided line.
@@ -606,7 +507,7 @@ int Generator::newParticle()
     }
 
     // Play a stage sound?
-    P_ParticleSound(pinfo->origin, &def->stages[pinfo->stage].sound);
+    particleSound(pinfo->origin, &def->stages[pinfo->stage].sound);
 
     return newParticleIdx;
 #else  // !__CLIENT__
@@ -732,11 +633,11 @@ static int checkLineWorker(Line *ld, void *context)
 /**
  * Particle touches something solid. Returns false iff the particle dies.
  */
-static int P_TouchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
+static int touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
     ded_ptcstage_t *stageDef, bool touchWall)
 {
     // Play a hit sound.
-    P_ParticleSound(pinfo->origin, &stageDef->hitSound);
+    particleSound(pinfo->origin, &stageDef->hitSound);
 
     if(stage->flags.testFlag(Generator::ParticleStage::DieTouch))
     {
@@ -755,20 +656,6 @@ static int P_TouchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
 
     // Particle survives the touch.
     return true;
-}
-
-float P_GetParticleRadius(ded_ptcstage_t const *def, int ptcIDX)
-{
-    if(def->radiusVariance)
-    {
-        static float const rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
-            .5625f, .0625f, 1, .6875f, .625f, .4375f, .8125f, .1875f,
-            .9375f, .25f
-        };
-        return (rnd[ptcIDX & 0xf] * def->radiusVariance +
-                (1 - def->radiusVariance)) * def->radius;
-    }
-    return def->radius;
 }
 
 float Generator::particleZ(ParticleInfo const &pinfo) const
@@ -931,7 +818,7 @@ void Generator::moveParticle(int index)
                 return;
             }
 
-            if(!P_TouchParticle(pinfo, st, stDef, false))
+            if(!touchParticle(pinfo, st, stDef, false))
                 return;
 
             z = FLT2FIX(cluster.visCeiling().heightSmoothed()) - hardRadius;
@@ -948,7 +835,7 @@ void Generator::moveParticle(int index)
                 return;
             }
 
-            if(!P_TouchParticle(pinfo, st, stDef, false))
+            if(!touchParticle(pinfo, st, stDef, false))
                 return;
 
             z = FLT2FIX(cluster.visFloor().heightSmoothed()) + hardRadius;
@@ -1063,7 +950,7 @@ void Generator::moveParticle(int index)
         fixed_t normal[2], dotp;
 
         // Must survive the touch.
-        if(!P_TouchParticle(pinfo, st, stDef, true))
+        if(!touchParticle(pinfo, st, stDef, true))
             return;
 
         // There was a hit! Calculate bounce vector.
@@ -1192,10 +1079,10 @@ void Generator::runTick()
             pinfo->tics = def->stages[pinfo->stage].tics * (1 - def->stages[pinfo->stage].variance * RNG_RandFloat());
 
             // Change in particle angles?
-            P_SetParticleAngles(pinfo, def->stages[pinfo->stage].flags);
+            setParticleAngles(pinfo, def->stages[pinfo->stage].flags);
 
             // Play a sound?
-            P_ParticleSound(pinfo->origin, &def->stages[pinfo->stage].sound);
+            particleSound(pinfo->origin, &def->stages[pinfo->stage].sound);
         }
 
         // Try to move.
@@ -1208,217 +1095,17 @@ void Generator::consoleRegister() //static
     C_VAR_FLOAT("rend-particle-rate", &particleSpawnRate, 0, 0, 5);
 }
 
+void Generator_Delete(Generator *gen)
+{
+    if(!gen) return;
+    gen->map().unlink(*gen);
+    gen->map().thinkers().remove(gen->thinker);
+    gen->clearParticles();
+    // The generator itself is free'd when it's next turn for thinking comes.
+}
+
 void Generator_Thinker(Generator *gen)
 {
     DENG2_ASSERT(gen != 0);
     gen->runTick();
-}
-
-void P_SpawnTypeParticleGens(Map &map)
-{
-    if(isDedicated || !useParticles) return;
-
-    ded_ptcgen_t *def = defs.ptcGens;
-    for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
-    {
-        if(def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0)
-            continue;
-
-        Generator *gen = map.newGenerator();
-        if(!gen) return; // No more generators.
-
-        // Initialize the particle generator.
-        gen->count = def->particles;
-        gen->spawnRateMultiplier = 1;
-
-        gen->configureFromDef(def);
-        gen->type = def->typeNum;
-        gen->type2 = def->type2Num;
-
-        // Is there a need to pre-simulate?
-        gen->presimulate(def->preSim);
-    }
-}
-
-void P_SpawnMapParticleGens(Map &map)
-{
-    if(isDedicated || !useParticles) return;
-
-    ded_ptcgen_t *def = defs.ptcGens;
-    for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
-    {
-        if(!def->map) continue;
-
-        de::Uri mapUri = map.uri();
-        if(!Uri_Equality(def->map, reinterpret_cast<uri_s *>(&mapUri)))
-            continue;
-
-        // Are we still spawning using this generator?
-        if(def->spawnAge > 0 && App_WorldSystem().time() > def->spawnAge)
-            continue;
-
-        Generator *gen = map.newGenerator();
-        if(!gen) return; // No more generators.
-
-        // Initialize the particle generator.
-        gen->count = def->particles;
-        gen->spawnRateMultiplier = 1;
-
-        gen->configureFromDef(def);
-        gen->flags |= Generator::Untriggered;
-
-        // Is there a need to pre-simulate?
-        gen->presimulate(def->preSim);
-    }
-}
-
-void P_SpawnMapDamageParticleGen(mobj_t *mo, mobj_t *inflictor, int amount)
-{
-    // Are particles allowed?
-    if(isDedicated || !useParticles) return;
-
-    if(!mo || !inflictor || amount <= 0) return;
-
-    ded_ptcgen_t const *def = Def_GetDamageGenerator(mo->type);
-    if(def)
-    {
-        Generator *gen = Mobj_Map(*mo).newGenerator();
-        if(!gen) return; // No more generators.
-
-        gen->count = def->particles;
-        gen->configureFromDef(def);
-        gen->flags |= Generator::Untriggered;
-
-        gen->spawnRateMultiplier = de::max(amount, 1);
-
-        // Calculate appropriate center coordinates.
-        gen->center[VX] += FLT2FIX(mo->origin[VX]);
-        gen->center[VY] += FLT2FIX(mo->origin[VY]);
-        gen->center[VZ] += FLT2FIX(mo->origin[VZ] + mo->height / 2);
-
-        // Calculate launch vector.
-        vec3f_t vecDelta;
-        V3f_Set(vecDelta, inflictor->origin[VX] - mo->origin[VX],
-                inflictor->origin[VY] - mo->origin[VY],
-                (inflictor->origin[VZ] - inflictor->height / 2) - (mo->origin[VZ] + mo->height / 2));
-
-        vec3f_t vector;
-        V3f_SetFixed(vector, gen->vector[VX], gen->vector[VY], gen->vector[VZ]);
-        V3f_Sum(vector, vector, vecDelta);
-        V3f_Normalize(vector);
-
-        gen->vector[VX] = FLT2FIX(vector[VX]);
-        gen->vector[VY] = FLT2FIX(vector[VY]);
-        gen->vector[VZ] = FLT2FIX(vector[VZ]);
-
-        // Is there a need to pre-simulate?
-        gen->presimulate(def->preSim);
-    }
-}
-
-static int findDefForGeneratorWorker(Generator *gen, void * /*context*/)
-{
-    // Search for a suitable definition.
-    ded_ptcgen_t *def = defs.ptcGens;
-    for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
-    {
-        // A type generator?
-        if(def->typeNum == DED_PTCGEN_ANY_MOBJ_TYPE && gen->type == DED_PTCGEN_ANY_MOBJ_TYPE)
-        {
-            return i+1; // Stop iteration.
-        }
-        if(def->typeNum >= 0 &&
-           (gen->type == def->typeNum || gen->type2 == def->type2Num))
-        {
-            return i+1; // Stop iteration.
-        }
-
-        // A damage generator?
-        if(gen->source && gen->source->type == def->damageNum)
-        {
-            return i+1; // Stop iteration.
-        }
-
-        // A flat generator?
-        if(gen->plane && def->material)
-        {
-            try
-            {
-                Material *defMat = &ClientApp::resourceSystem().material(*reinterpret_cast<de::Uri const *>(def->material));
-
-                Material *mat = gen->plane->surface().materialPtr();
-                if(def->flags & Generator::SpawnFloor)
-                    mat = gen->plane->sector().floorSurface().materialPtr();
-                if(def->flags & Generator::SpawnCeiling)
-                    mat = gen->plane->sector().ceilingSurface().materialPtr();
-
-                // Is this suitable?
-                if(mat == defMat)
-                {
-                    return i + 1; // 1-based index.
-                }
-
-#if 0 /// @todo $revise-texture-animation
-                if(def->flags & PGF_GROUP)
-                {
-                    // Generator triggered by all materials in the animation.
-                    if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat) &&
-                       &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
-                    {
-                        // Both are in this animation! This def will do.
-                        return i + 1; // 1-based index.
-                    }
-                }
-#endif
-            }
-            catch(MaterialManifest::MissingMaterialError const &)
-            {} // Ignore this error.
-            catch(ResourceSystem::MissingManifestError const &)
-            {} // Ignore this error.
-        }
-
-        // A state generator?
-        if(gen->source && def->state[0] &&
-           gen->source->state - states == Def_GetStateNum(def->state))
-        {
-            return i + 1; // 1-based index.
-        }
-    }
-
-    return 0; // Not found.
-}
-
-static int updateGeneratorWorker(Generator *gen, void * /*context*/)
-{
-    DENG2_ASSERT(gen != 0);
-
-    // Map generators cannot be updated (we have no means to reliably
-    // identify them), so destroy them.
-    if(gen->flags & Generator::Untriggered)
-    {
-        Generator_Delete(gen);
-        return false; // Continue iteration.
-    }
-
-    if(int defIndex = findDefForGeneratorWorker(gen, 0/*no params*/))
-    {
-        // Update the generator using the new definition.
-        ded_ptcgen_t *def = defs.ptcGens + (defIndex-1);
-        gen->def = def;
-    }
-    else
-    {
-        // Nothing else we can do, destroy it.
-        Generator_Delete(gen);
-    }
-
-    return false; // Continue iteration.
-}
-
-void P_UpdateParticleGens(Map &map)
-{
-    map.generatorIterator(updateGeneratorWorker);
-
-    // Re-spawn map generators.
-    P_SpawnMapParticleGens(map);
 }

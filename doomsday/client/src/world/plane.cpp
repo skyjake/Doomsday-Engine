@@ -308,6 +308,54 @@ Generator &Plane::generator() const
     /// @throw MissingGeneratorError No generator is attached.
     throw MissingGeneratorError("Plane::generator", "No generator is attached");
 }
+
+void Plane::spawnParticleGen(ded_ptcgen_t const *def)
+{
+    //if(!useParticles) return;
+
+    if(!def) return;
+
+    // Plane we spawn relative to may not be this one.
+    int relPlane = indexInSector();
+    if(def->flags & Generator::SpawnCeiling)
+        relPlane = Sector::Ceiling;
+    if(def->flags & Generator::SpawnFloor)
+        relPlane = Sector::Floor;
+
+    if(relPlane != indexInSector())
+    {
+        sector().plane(relPlane).spawnParticleGen(def);
+        return;
+    }
+
+    // Only planes in sectors with volume on the world X/Y axis can support generators.
+    if(!sector().sideCount()) return;
+
+    // Only one generator per plane.
+    if(hasGenerator()) return;
+
+    // Are we out of generators?
+    Generator *gen = map().newGenerator();
+    if(!gen) return;
+
+    gen->count = def->particles;
+    // Size of source sector might determine count.
+    if(def->flags & Generator::Density)
+    {
+        gen->spawnRateMultiplier = sector().roughArea() / (128 * 128);
+    }
+    else
+    {
+        gen->spawnRateMultiplier = 1;
+    }
+
+    // Initialize the particle generator.
+    gen->configureFromDef(def);
+    gen->plane = this;
+
+    // Is there a need to pre-simulate?
+    gen->presimulate(def->preSim);
+}
 #endif // __CLIENT__
 
 int Plane::property(DmuArgs &args) const

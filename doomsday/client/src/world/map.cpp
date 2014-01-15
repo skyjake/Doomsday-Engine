@@ -342,6 +342,11 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         // mobjNodes/lineNodes/lineLinks
     }
 
+    inline WorldSystem &worldSys()
+    {
+        return App_WorldSystem();
+    }
+
     /**
      * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
      */
@@ -1268,6 +1273,179 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
         return (oldest? oldest->id() + 1 /*1-based index*/ : 0);
     }
 
+    void spawnMapParticleGens()
+    {
+        //if(!useParticles) return;
+
+        ded_ptcgen_t *def = defs.ptcGens;
+        for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+        {
+            if(!def->map) continue;
+
+            if(!Uri_Equality(def->map, reinterpret_cast<uri_s *>(&uri)))
+                continue;
+
+            // Are we still spawning using this generator?
+            if(def->spawnAge > 0 && worldSys().time() > def->spawnAge)
+                continue;
+
+            Generator *gen = self.newGenerator();
+            if(!gen) return; // No more generators.
+
+            // Initialize the particle generator.
+            gen->count = def->particles;
+            gen->spawnRateMultiplier = 1;
+
+            gen->configureFromDef(def);
+            gen->flags |= Generator::Untriggered;
+
+            // Is there a need to pre-simulate?
+            gen->presimulate(def->preSim);
+        }
+    }
+
+    /**
+     * Spawns all type-triggered particle generators, regardless of whether
+     * the type of mobj exists in the map or not (mobjs might be dynamically
+     * created).
+     */
+    void spawnTypeParticleGens()
+    {
+        //if(!useParticles) return;
+
+        ded_ptcgen_t *def = defs.ptcGens;
+        for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+        {
+            if(def->typeNum != DED_PTCGEN_ANY_MOBJ_TYPE && def->typeNum < 0)
+                continue;
+
+            Generator *gen = self.newGenerator();
+            if(!gen) return; // No more generators.
+
+            // Initialize the particle generator.
+            gen->count = def->particles;
+            gen->spawnRateMultiplier = 1;
+
+            gen->configureFromDef(def);
+            gen->type = def->typeNum;
+            gen->type2 = def->type2Num;
+
+            // Is there a need to pre-simulate?
+            gen->presimulate(def->preSim);
+        }
+    }
+
+    int findDefForGenerator(Generator *gen)
+    {
+        DENG2_ASSERT(gen != 0);
+
+        // Search for a suitable definition.
+        ded_ptcgen_t *def = defs.ptcGens;
+        for(int i = 0; i < defs.count.ptcGens.num; ++i, def++)
+        {
+            // A type generator?
+            if(def->typeNum == DED_PTCGEN_ANY_MOBJ_TYPE && gen->type == DED_PTCGEN_ANY_MOBJ_TYPE)
+            {
+                return i+1; // Stop iteration.
+            }
+            if(def->typeNum >= 0 &&
+               (gen->type == def->typeNum || gen->type2 == def->type2Num))
+            {
+                return i+1; // Stop iteration.
+            }
+
+            // A damage generator?
+            if(gen->source && gen->source->type == def->damageNum)
+            {
+                return i+1; // Stop iteration.
+            }
+
+            // A flat generator?
+            if(gen->plane && def->material)
+            {
+                try
+                {
+                    Material *defMat = &App_ResourceSystem().material(*reinterpret_cast<de::Uri const *>(def->material));
+
+                    Material *mat = gen->plane->surface().materialPtr();
+                    if(def->flags & Generator::SpawnFloor)
+                        mat = gen->plane->sector().floorSurface().materialPtr();
+                    if(def->flags & Generator::SpawnCeiling)
+                        mat = gen->plane->sector().ceilingSurface().materialPtr();
+
+                    // Is this suitable?
+                    if(mat == defMat)
+                    {
+                        return i + 1; // 1-based index.
+                    }
+
+#if 0 /// @todo $revise-texture-animation
+                    if(def->flags & PGF_GROUP)
+                    {
+                        // Generator triggered by all materials in the animation.
+                        if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat) &&
+                           &Material_AnimGroup(defMat) == &Material_AnimGroup(mat))
+                        {
+                            // Both are in this animation! This def will do.
+                            return i + 1; // 1-based index.
+                        }
+                    }
+#endif
+                }
+                catch(MaterialManifest::MissingMaterialError const &)
+                {} // Ignore this error.
+                catch(ResourceSystem::MissingManifestError const &)
+                {} // Ignore this error.
+            }
+
+            // A state generator?
+            if(gen->source && def->state[0] &&
+               gen->source->state - states == Def_GetStateNum(def->state))
+            {
+                return i + 1; // 1-based index.
+            }
+        }
+
+        return 0; // Not found.
+    }
+
+    /**
+     * Update existing generators in the map following an engine reset.
+     */
+    void updateParticleGens()
+    {
+        Generators &gens = getGenerators();
+        for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
+        {
+            // Only consider active generators.
+            Generator *gen = gens.activeGens[i];
+            if(!gen) continue;
+
+            // Map generators cannot be updated (we have no means to reliably
+            // identify them), so destroy them.
+            if(gen->flags & Generator::Untriggered)
+            {
+                Generator_Delete(gen);
+                continue; // Continue iteration.
+            }
+
+            if(int defIndex = findDefForGenerator(gen))
+            {
+                // Update the generator using the new definition.
+                ded_ptcgen_t *def = defs.ptcGens + (defIndex-1);
+                gen->def = def;
+            }
+            else
+            {
+                // Nothing else we can do, destroy it.
+                Generator_Delete(gen);
+            }
+        }
+
+        // Re-spawn map generators.
+        spawnMapParticleGens();
+    }
+
     /**
      * Link all generated particles into the map so that they will be drawn.
      *
@@ -1494,9 +1672,23 @@ void Map::initGenerators()
 {
     LOG_AS("Map::initGenerators");
     Time begunAt;
-    P_SpawnTypeParticleGens(*this);
-    P_SpawnMapParticleGens(*this);
+    d->spawnTypeParticleGens();
+    d->spawnMapParticleGens();
     LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
+}
+
+void Map::spawnPlaneParticleGens()
+{
+    //if(!useParticles) return;
+
+    foreach(Sector *sector, d->sectors)
+    {
+        Plane &floor = sector->floor();
+        floor.spawnParticleGen(Def_GetGenerator(floor.surface().composeMaterialUri()));
+
+        Plane &ceiling = sector->ceiling();
+        ceiling.spawnParticleGen(Def_GetGenerator(ceiling.surface().composeMaterialUri()));
+    }
 }
 
 void Map::clearClMobjs()
@@ -2649,6 +2841,8 @@ uint Map::biasLastChangeOnFrame() const
 void Map::update()
 {
 #ifdef __CLIENT__
+    d->updateParticleGens(); // Defs might've changed.
+
     // Update all surfaces.
     foreach(Sector *sector, d->sectors)
     foreach(Plane *plane, sector->planes())
@@ -2720,7 +2914,7 @@ void Map::update()
 #ifdef __CLIENT__
 void Map::worldSystemFrameBegins(bool resetNextViewer)
 {
-    DENG2_ASSERT(&App_WorldSystem().map() == this); // Sanity check.
+    DENG2_ASSERT(&d->worldSys().map() == this); // Sanity check.
 
     // Interpolate the map ready for drawing view(s) of it.
     d->lerpTrackedPlanes(resetNextViewer);
