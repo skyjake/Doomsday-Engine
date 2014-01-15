@@ -273,6 +273,7 @@ DENG2_PIMPL(GuiWidget)
         GLState::push()
                 .setTarget(blurFB[0]->target())
                 .setViewport(Rectangleui::fromSize(blurSize));
+        blurFB[0]->target().clear(GLTarget::Depth);
         self.root().drawUntil(self);
         GLState::pop();
 

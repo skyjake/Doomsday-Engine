@@ -21,6 +21,7 @@
 #include "ui/clientwindow.h"
 #include "gl/gl_main.h"
 #include "clientapp.h"
+#include "dd_main.h"
 
 #include <de/Style>
 #include <QMap>
@@ -31,9 +32,15 @@ DENG2_PIMPL(WindowSystem)
 {
     SettingsRegister settings;
 
+    struct ClientStyle : public Style {
+        bool isBlurringAllowed() const {
+            return !App_GameLoaded();
+        }
+    };
+
     typedef QMap<String, ClientWindow *> Windows;
     Windows windows;
-    Style style;
+    ClientStyle style;
 
     // Mouse motion.
     bool mouseMoved;

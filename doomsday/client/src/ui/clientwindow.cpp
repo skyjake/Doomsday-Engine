@@ -263,18 +263,16 @@ DENG2_OBSERVES(App,              StartupComplete)
             //game->hide();
             background->show();
             gameSelMenu->show();
-            taskBar->console().enableBlur();
         }
         else
         {
             //game->show();
             background->hide();
             gameSelMenu->hide();
-
-            // For the time being, blurring is not compatible with the
-            // legacy OpenGL rendering.
-            taskBar->console().enableBlur(false);
         }
+
+        // Check with Style if blurring is allowed.
+        taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
     }
 
     void setMode(Mode const &newMode)
