@@ -32,7 +32,7 @@
 #  include "client/clpolymover.h"
 
 #  include "world/worldsystem.h"
-#  include "p_particle.h"
+#  include "Generator"
 
 #  include "BiasSource"
 #  include "Lumobj"

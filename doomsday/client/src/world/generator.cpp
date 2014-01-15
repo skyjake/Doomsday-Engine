@@ -1,4 +1,4 @@
-/** @file p_particle.cpp  World map generator management (particles).
+/** @file generator.cpp  World map (particle) generator.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,7 +20,7 @@
  */
 
 #include "de_platform.h"
-#include "world/p_particle.h"
+#include "world/generator.h"
 
 #include "de_network.h"
 #include "de_play.h"

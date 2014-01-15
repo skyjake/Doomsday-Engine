@@ -1,4 +1,4 @@
-/** @file p_particle.h  World map generator management (particles).
+/** @file generator.h  World map (particle) generator management.
  *
  * @ingroup world
  *
@@ -20,12 +20,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_WORLD_P_PARTICLE_H
-#define DENG_CLIENT_WORLD_P_PARTICLE_H
+#ifndef DENG_CLIENT_WORLD_GENERATOR_H
+#define DENG_CLIENT_WORLD_GENERATOR_H
 
-#include <de/Vector>
 #include "def_data.h"
 #include "map.h"
+#include <de/Vector>
 
 class BspLeaf;
 class Line;
@@ -237,4 +237,4 @@ typedef Generator::ParticleStage GeneratorParticleStage;
 void Generator_Delete(Generator *gen);
 void Generator_Thinker(Generator *gen);
 
-#endif // DENG_CLIENT_WORLD_P_PARTICLE_H
+#endif // DENG_CLIENT_WORLD_GENERATOR_H

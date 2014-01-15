@@ -133,6 +133,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/FontScheme \
     include/Game \
     include/Games \
+    include/Generator \
     include/Grabbable \
     include/Hand \
     include/HEdge \
@@ -436,6 +437,7 @@ DENG_HEADERS += \
     include/world/dmuargs.h \
     include/world/entitydatabase.h \
     include/world/entitydef.h \
+    include/world/generator.h \
     include/world/grabbable.h \
     include/world/hand.h \
     include/world/huecircle.h \
@@ -449,7 +451,6 @@ DENG_HEADERS += \
     include/world/mapobject.h \
     include/world/maputil.h \
     include/world/p_object.h \
-    include/world/p_particle.h \
     include/world/p_players.h \
     include/world/p_ticker.h \
     include/world/plane.h \
@@ -754,6 +755,7 @@ SOURCES += \
     src/world/dmuargs.cpp \
     src/world/entitydatabase.cpp \
     src/world/entitydef.cpp \
+    src/world/generator.cpp \
     src/world/grabbable.cpp \
     src/world/hand.cpp \
     src/world/huecircle.cpp \
@@ -766,7 +768,6 @@ SOURCES += \
     src/world/mapobject.cpp \
     src/world/maputil.cpp \
     src/world/p_mobj.cpp \
-    src/world/p_particle.cpp \
     src/world/p_players.cpp \
     src/world/p_ticker.cpp \
     src/world/plane.cpp \
