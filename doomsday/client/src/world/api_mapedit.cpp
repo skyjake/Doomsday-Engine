@@ -62,13 +62,13 @@ static StringPool *materialDict;
  * material dictionary.
  *
  * @param internId    Unique id associated with the reference.
- * @param parameters  If a uint pointer operate in "count" mode (total written
+ * @param context     If a uint pointer operate in "count" mode (total written
  *                    here). Else operate in "print" mode.
  * @return Always @c 0 (for use as an iterator).
  */
-static int printMissingMaterialWorker(StringPool::Id internId, void *parameters)
+static int printMissingMaterialWorker(StringPool::Id internId, void *context)
 {
-    int *count = (int *)parameters;
+    int *count = (int *)context;
 
     // A valid id?
     if(materialDict->string(internId))
@@ -87,10 +87,11 @@ static int printMissingMaterialWorker(StringPool::Id internId, void *parameters)
                 // Print mode.
                 int const refCount = materialDict->userValue(internId);
                 String const &materialUri = materialDict->string(internId);
-                LOG_MSG(" %4i x \"%s\"") << refCount << materialUri;
+                LOG_RES_WARNING("Found %4i x unknown material \"%s\"") << refCount << materialUri;
             }
         }
     }
+
     return 0; // Continue iteration.
 }
 
@@ -111,17 +112,10 @@ static void clearMaterialDict()
  */
 static void printMissingMaterialsInDict()
 {
-    // Initialized?
-    if(!materialDict) return;
-
-    // Count missing materials.
-    int numMissing = 0;
-    materialDict->iterate(printMissingMaterialWorker, &numMissing);
-    if(!numMissing) return;
-
-    LOG_WARNING("Found %i unknown %s:") << numMissing << (numMissing == 1? "material":"materials");
-    // List the missing materials.
-    materialDict->iterate(printMissingMaterialWorker, 0);
+    if(materialDict)
+    {
+        materialDict->iterate(printMissingMaterialWorker);
+    }
 }
 
 /**
