@@ -38,6 +38,8 @@
 #include "Surface"
 #include "Vertex"
 
+#include "world/worldsystem.h" // ddMapSetup, validCount
+
 #include "world/bsp/partitioner.h"
 
 #include "world/blockmap.h"
@@ -50,13 +52,11 @@
 #  include "ContactSpreader"
 #endif
 #include "world/thinkers.h"
-#include "world/worldsystem.h" // ddMapSetup
 
 #ifdef __CLIENT__
 #  include "api_sound.h"
 #endif
 
-#include "render/r_main.h" // validCount
 #ifdef __CLIENT__
 #  include "BiasDigest"
 #  include "LightDecoration"

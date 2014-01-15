@@ -70,6 +70,8 @@
 
 using namespace de;
 
+int validCount = 1; // Increment every time a check is made.
+
 #ifdef __CLIENT__
 static float handDistance = 300; //cvar
 #endif

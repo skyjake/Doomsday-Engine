@@ -22,9 +22,8 @@
 #include "de_base.h"
 #include "world/interceptor.h"
 
+#include "world/worldsystem.h" // validCount
 #include "world/p_object.h"
-
-#include "render/r_main.h" // validCount
 
 #include <de/memoryzone.h>
 #include <de/vector1.h>

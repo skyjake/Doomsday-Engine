@@ -1,4 +1,4 @@
-/** @file p_mobj.cpp World map objects.
+/** @file p_mobj.cpp  World map objects.
  *
  * Various routines for moving mobjs, collision and Z checking.
  *
@@ -21,11 +21,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
-
-#include <de/Error>
-
 #include "de_base.h"
+#include "world/p_object.h"
+
 #include "de_console.h"
 #include "de_system.h"
 #include "de_network.h"
@@ -35,7 +33,10 @@
 #include "de_audio.h"
 
 #include "def_main.h"
-#include "render/r_main.h" // validCount
+
+#include "world/worldsystem.h" // validCount
+#include "world/thinkers.h"
+#include "BspLeaf"
 
 #ifdef __CLIENT__
 #  include "Lumobj"
@@ -47,8 +48,8 @@
 #  include "gl/gl_tex.h"
 #endif
 
-#include "world/thinkers.h"
-#include "BspLeaf"
+#include <de/Error>
+#include <cmath>
 
 using namespace de;
 

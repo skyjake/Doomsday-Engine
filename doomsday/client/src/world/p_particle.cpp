@@ -34,11 +34,11 @@
 
 #include "Face"
 
+#include "world/worldsystem.h" // validCount
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "api_map.h"
 
-#include "render/r_main.h" // validCount
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
 

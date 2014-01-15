@@ -30,7 +30,7 @@
 #include "Sector"
 #include "world/bsp/linesegment.h"
 
-#include "render/r_main.h" /// validCount @todo Remove me
+#include "world/worldsystem.h" /// validCount @todo Remove me
 
 #include "world/bsp/convexsubspace.h"
 

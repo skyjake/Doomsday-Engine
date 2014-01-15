@@ -42,14 +42,9 @@
 
 using namespace de;
 
-int validCount = 1; // Increment every time a check is made.
-
 int levelFullBright;
 int weaponOffsetScaleY = 1000;
 int psp3d;
-
-// Precalculated math tables.
-fixed_t *fineCosine = &finesine[FINEANGLES / 4];
 
 float pspLightLevelMultiplier = 1;
 float pspOffset[2];

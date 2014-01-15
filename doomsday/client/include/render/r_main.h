@@ -23,8 +23,6 @@
 
 #include "dd_types.h"
 
-DENG_EXTERN_C int      validCount;
-
 DENG_EXTERN_C int      levelFullBright;
 
 DENG_EXTERN_C float    pspOffset[2], pspLightLevelMultiplier;
