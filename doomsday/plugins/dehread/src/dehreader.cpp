@@ -1381,7 +1381,7 @@ public:
             {
                 if(line.beginsWith("par", Qt::CaseInsensitive))
                 {
-                    const String argStr = line.substr(3).leftStrip();
+                    String const argStr = line.substr(3).leftStrip();
                     if(argStr.isEmpty())
                     {
                         throw SyntaxError("parseParsBex", String("Expected format expression on line #%1")
@@ -1397,8 +1397,16 @@ public:
                      * three arguments and then apply atoi()-like de::String::toIntLeft()
                      * on the last.
                      */
-                    const int maxArgs = 3;
+                    int const maxArgs = 3;
                     QStringList args = splitMax(argStr, ' ', maxArgs);
+
+                    // If the third argument is a comment remove it.
+                    if(args.size() == 3)
+                    {
+                        if(String(args.at(2)).beginsWith('#'))
+                            args.removeAt(2);
+                    }
+
                     if(args.size() < 2)
                     {
                         throw SyntaxError("parseParsBex", String("Invalid format string \"%1\" on line #%2")
@@ -1412,10 +1420,10 @@ public:
                     float parTime = float(String(args.at(arg++)).toInt(0, 10, String::AllowSuffix));
 
                     // Apply.
-                    uri_s* uri    = composeMapUri(episode, map);
-                    AutoStr* path = Uri_ToString(uri);
+                    uri_s *uri    = composeMapUri(episode, map);
+                    AutoStr *path = Uri_ToString(uri);
 
-                    ded_mapinfo_t* def;
+                    ded_mapinfo_t *def;
                     int idx = mapInfoDefForUri(*uri, &def);
                     if(idx >= 0)
                     {
@@ -1430,7 +1438,7 @@ public:
                     Uri_Delete(uri);
                 }
             }
-            catch(const SyntaxError& er)
+            catch(SyntaxError const &er)
             {
                 LOG_WARNING("%s, ignoring.") << er.asText();
             }
