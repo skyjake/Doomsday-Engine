@@ -1264,7 +1264,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             Generator *gen = gens.activeGens[i];
             if(!gen || gen->isStatic()) continue;
 
-            if(!oldest || gen->age > oldest->age)
+            if(!oldest || gen->age() > oldest->age())
             {
                 oldest = gen;
             }
@@ -1297,7 +1297,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
             gen->spawnRateMultiplier = 1;
 
             gen->configureFromDef(def);
-            gen->flags |= Generator::Untriggered;
+            gen->setUntriggered();
 
             // Is there a need to pre-simulate?
             gen->presimulate(def->preSim);
@@ -1423,7 +1423,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 
             // Map generators cannot be updated (we have no means to reliably
             // identify them), so destroy them.
-            if(gen->flags & Generator::Untriggered)
+            if(gen->isUntriggered())
             {
                 Generator_Delete(gen);
                 continue; // Continue iteration.

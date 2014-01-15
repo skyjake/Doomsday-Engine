@@ -353,14 +353,14 @@ DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, in
 
         gen->count = def->particles;
         gen->configureFromDef(def);
-        gen->flags |= Generator::Untriggered;
+        gen->setUntriggered();
 
         gen->spawnRateMultiplier = de::max(amount, 1);
 
         // Calculate appropriate center coordinates.
-        gen->center[VX] += FLT2FIX(mo->origin[VX]);
-        gen->center[VY] += FLT2FIX(mo->origin[VY]);
-        gen->center[VZ] += FLT2FIX(mo->origin[VZ] + mo->height / 2);
+        gen->originAtSpawn[VX] += FLT2FIX(mo->origin[VX]);
+        gen->originAtSpawn[VY] += FLT2FIX(mo->origin[VY]);
+        gen->originAtSpawn[VZ] += FLT2FIX(mo->origin[VZ] + mo->height / 2);
 
         // Calculate launch vector.
         vec3f_t vecDelta;

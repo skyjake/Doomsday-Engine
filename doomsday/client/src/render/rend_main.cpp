@@ -4833,7 +4833,7 @@ static int drawGenerator(Generator *gen, void * /*context*/)
 {
 #define MAX_GENERATOR_DIST  2048
 
-    if(gen->source || gen->flags.testFlag(Generator::Untriggered))
+    if(gen->source || gen->isUntriggered())
     {
         Vector3d const origin   = gen->origin();
         ddouble const distToEye = (eyeOrigin - origin).length();

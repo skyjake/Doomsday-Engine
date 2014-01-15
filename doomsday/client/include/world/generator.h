@@ -1,7 +1,5 @@
 /** @file generator.h  World map (particle) generator.
  *
- * @ingroup world
- *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
@@ -34,6 +32,8 @@ struct mobj_s;
 
 /**
  * POD structure used when querying the current state of a particle.
+ *
+ * @ingroup world
  */
 struct ParticleInfo
 {
@@ -103,16 +103,14 @@ struct Generator
         BlendReverseSubtract = 0x2000,  ///< Reverse subtractive blending.
         BlendMultiply        = 0x4000,  ///< Multiplicative blending.
         BlendInverseMultiply = 0x8000,  ///< Inverse multiplicative blending.
-        StateChain           = 0x10000, ///< Chain after existing state gen(s).
-
-        // Runtime generator flags:
-        Untriggered          = 0x8000000
+        StateChain           = 0x10000  ///< Chain after existing state gen(s).
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
     /// Unique identifier associated with each generator.
     typedef short Id;
 
+public: /// @todo make private:
     thinker_t thinker;         ///< Func = P_PtcGenThinker
     Plane *plane;              ///< Flat-triggered.
     ded_ptcgen_t const *def;   ///< The definition of this generator.
@@ -120,16 +118,13 @@ struct Generator
     int srcid;                 ///< Source mobj ID.
     int type;                  ///< Type-triggered; mobj type number (-1=none).
     int type2;                 ///< Type-triggered; alternate type.
-    fixed_t center[3];         ///< Used by untriggered/damage gens.
+    fixed_t originAtSpawn[3];        ///< Used by untriggered/damage gens.
     fixed_t vector[3];         ///< Converted from the definition.
-    Flags flags;
-    float spawnCount;
     float spawnRateMultiplier;
-    int spawnCP;               ///< Spawn cursor.
-    int age;
     int count;                 ///< Number of particles generated thus far.
     ParticleStage *stages;
 
+public:
     /**
      * Returns the map in which the generator exists.
      *
@@ -165,7 +160,17 @@ struct Generator
     void presimulate(int tics);
 
     /**
+     * Returns the age of the generator (time since spawn), in tics.
+     */
+    int age() const;
+
+    /**
      * Determine the @em approximate origin of the generator in map space.
+     *
+     * @note In the case of generator attached to a mobj this is the @em current,
+     * unsmoothed origin of the mobj offset by the @em initial origin at generator
+     * spawn time. For all other types of generator the initial origin at generator
+     * spawn time is returned.
      */
     de::Vector3d origin() const;
 
@@ -176,12 +181,22 @@ struct Generator
     bool isStatic() const;
 
     /**
+     * Returns @c true iff the generator is @em untriggered.
+     */
+    bool isUntriggered() const;
+
+    /**
+     * Change the @em untriggered state of the generator.
+     */
+    void setUntriggered(bool yes = true);
+
+    /**
      * Returns the currently configured blending mode for the generator.
      */
     blendmode_t blendmode() const;
 
     /**
-     * Returns the total number of active particles for the generator.
+     * Returns the total number of @em active particles for the generator.
      */
     int activeParticleCount() const;
 
@@ -226,6 +241,11 @@ public:
 
 private:
     Id _id;               ///< Unique in the map.
+    Flags _flags;
+    int _age;             ///< Time since spawn, in tics.
+    float _spawnCount;
+    bool _untriggered;    ///< @c true= consider this as not yet triggered.
+    int _spawnCP;         ///< Particle spawn cursor.
     ParticleInfo *_pinfo; ///< Info about each generated particle.
 };
 

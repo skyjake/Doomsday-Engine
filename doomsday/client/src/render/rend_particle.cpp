@@ -312,7 +312,7 @@ static int populateSortBuffer(Generator *gen, void *context)
             hasModels = true;
         }
 
-        if(gen->flags.testFlag(Generator::BlendAdditive))
+        if(gen->blendmode() == BM_ADD)
         {
             hasBlend = true;
         }
@@ -557,7 +557,7 @@ static void renderParticles(int rtype, bool withBlend)
            0 == ptctexname[rtype - PTC_TEXTURE])
             continue;
 
-        if(!gen->flags.testFlag(Generator::BlendAdditive) == withBlend)
+        if((gen->blendmode() != BM_ADD) == withBlend)
             continue;
 
         if(rtype != PTC_MODEL && !withBlend)

@@ -22,31 +22,27 @@
 #include "de_platform.h"
 #include "world/generator.h"
 
-#include "de_network.h"
-#include "de_play.h"
-#include "de_audio.h"
 #include "clientapp.h"
-
 #include "con_main.h"
-#include "dd_main.h"
 #include "dd_def.h"
-#include "m_misc.h"
-
 #include "Face"
 
 #include "world/worldsystem.h" // validCount
 #include "world/thinkers.h"
 #include "BspLeaf"
-#include "api_map.h"
+#include "Surface"
 
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
+
+#include "api_sound.h"
 
 #include <de/String>
 #include <de/Time>
 #include <de/fixedpoint.h>
 #include <de/memoryzone.h>
 #include <de/timer.h>
+#include <de/vector1.h>
 #include <cmath>
 
 using namespace de;
@@ -110,16 +106,21 @@ void Generator::setId(Id newId)
     _id = newId;
 }
 
+int Generator::age() const
+{
+    return _age;
+}
+
 Vector3d Generator::origin() const
 {
     if(source)
     {
         Vector3d origin(source->origin);
-        origin.z += -source->floorClip + FIX2FLT(center[VZ]);
+        origin.z += -source->floorClip + FIX2FLT(originAtSpawn[VZ]);
         return origin;
     }
 
-    return Vector3d(FIX2FLT(center[VX]), FIX2FLT(center[VY]), FIX2FLT(center[VZ]));
+    return Vector3d(FIX2FLT(originAtSpawn[VX]), FIX2FLT(originAtSpawn[VY]), FIX2FLT(originAtSpawn[VZ]));
 }
 
 void Generator::clearParticles()
@@ -139,7 +140,7 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
     type   = type2 = -1;
 
     def    = newDef;
-    flags  = Flags(def->flags);
+    _flags = Flags(def->flags);
     _pinfo = (ParticleInfo *) Z_Calloc(sizeof(ParticleInfo) * count, PU_MAP, 0);
     stages = (ParticleStage *) Z_Calloc(sizeof(ParticleStage) * def->stageCount.num, PU_MAP, 0);
 
@@ -159,7 +160,7 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
     // Init some data.
     for(int i = 0; i < 3; ++i)
     {
-        center[i] = FLT2FIX(def->center[i]);
+        originAtSpawn[i] = FLT2FIX(def->center[i]);
         vector[i] = FLT2FIX(def->vector[i]);
     }
 
@@ -185,21 +186,32 @@ void Generator::presimulate(int tics)
     }
 
     // Reset age so presim doesn't affect it.
-    age = 0;
+    _age = 0;
 }
 
 bool Generator::isStatic() const
 {
-    return flags.testFlag(Static);
+    return _flags.testFlag(Static);
+}
+
+bool Generator::isUntriggered() const
+{
+    return _untriggered;
+}
+
+void Generator::setUntriggered(bool yes)
+{
+    _untriggered = yes;
 }
 
 blendmode_t Generator::blendmode() const
 {
-    if(flags.testFlag(BlendAdditive))        return BM_ADD;
-    if(flags.testFlag(BlendSubtract))        return BM_SUBTRACT;
-    if(flags.testFlag(BlendReverseSubtract)) return BM_REVERSE_SUBTRACT;
-    if(flags.testFlag(BlendMultiply))        return BM_MUL;
-    if(flags.testFlag(BlendInverseMultiply)) return BM_INVERSE_MUL;
+    /// @todo Translate these old flags once, during definition parsing -ds
+    if(_flags.testFlag(BlendAdditive))        return BM_ADD;
+    if(_flags.testFlag(BlendSubtract))        return BM_SUBTRACT;
+    if(_flags.testFlag(BlendReverseSubtract)) return BM_REVERSE_SUBTRACT;
+    if(_flags.testFlag(BlendMultiply))        return BM_MUL;
+    if(_flags.testFlag(BlendInverseMultiply)) return BM_INVERSE_MUL;
     return BM_NORMAL;
 }
 
@@ -266,15 +278,15 @@ int Generator::newParticle()
     }
 
     // Keep the spawn cursor in the valid range.
-    if(++spawnCP >= count)
+    if(++_spawnCP >= count)
     {
-        spawnCP -= count;
+        _spawnCP -= count;
     }
 
-    int const newParticleIdx = spawnCP;
+    int const newParticleIdx = _spawnCP;
 
     // Set the particle's data.
-    ParticleInfo *pinfo = _pinfo + spawnCP;
+    ParticleInfo *pinfo = &_pinfo[_spawnCP];
     pinfo->stage = 0;
     if(RNG_RandFloat() < def->altStartVariance)
     {
@@ -315,7 +327,7 @@ int Generator::newParticle()
     // The source is a mobj?
     if(source)
     {
-        if(flags & RelativeVector)
+        if(_flags & RelativeVector)
         {
             // Rotate the vector using the source angle.
             float temp[3];
@@ -331,7 +343,7 @@ int Generator::newParticle()
             pinfo->mov[VY] = FLT2FIX(temp[VY]);
         }
 
-        if(flags & RelativeVelocity)
+        if(_flags & RelativeVelocity)
         {
             pinfo->mov[VX] += FLT2FIX(source->mom[MX]);
             pinfo->mov[VY] += FLT2FIX(source->mom[MY]);
@@ -346,18 +358,18 @@ int Generator::newParticle()
         uncertainPosition(pinfo->origin, FLT2FIX(def->spawnRadiusMin), FLT2FIX(def->spawnRadius));
 
         // Offset to the real center.
-        pinfo->origin[VZ] += center[VZ];
+        pinfo->origin[VZ] += originAtSpawn[VZ];
 
         // Include bobbing in the spawn height.
         pinfo->origin[VZ] -= FLT2FIX(Mobj_BobOffset(source));
 
         // Calculate XY center with mobj angle.
-        angle_t const angle = Mobj_AngleSmoothed(source) + (fixed_t) (FIX2FLT(center[VY]) / 180.0f * ANG180);
+        angle_t const angle = Mobj_AngleSmoothed(source) + (fixed_t) (FIX2FLT(originAtSpawn[VY]) / 180.0f * ANG180);
         uint const an       = angle >> ANGLETOFINESHIFT;
         uint const an2      = (angle + ANG90) >> ANGLETOFINESHIFT;
 
-        pinfo->origin[VX] += FixedMul(fineCosine[an], center[VX]);
-        pinfo->origin[VY] += FixedMul(finesine[an], center[VX]);
+        pinfo->origin[VX] += FixedMul(fineCosine[an], originAtSpawn[VX]);
+        pinfo->origin[VY] += FixedMul(finesine[an], originAtSpawn[VX]);
 
         // There might be an offset from the model of the mobj.
         if(mf && (mf->testSubFlag(0, MFF_PARTICLE_SUB1) || def->subModel >= 0))
@@ -402,7 +414,7 @@ int Generator::newParticle()
         Sector const *sector = &plane->sector();
 
         // Choose a random spot inside the sector, on the spawn plane.
-        if(flags & SpawnSpace)
+        if(_flags & SpawnSpace)
         {
             pinfo->origin[VZ] =
                 FLT2FIX(sector->floor().height()) + radius +
@@ -410,8 +422,8 @@ int Generator::newParticle()
                          FLT2FIX(sector->ceiling().height() -
                                  sector->floor().height()) - 2 * radius);
         }
-        else if((flags & SpawnFloor) ||
-                (!(flags & (SpawnFloor | SpawnCeiling)) &&
+        else if((_flags & SpawnFloor) ||
+                (!(_flags & (SpawnFloor | SpawnCeiling)) &&
                  plane->isSectorFloor()))
         {
             // Spawn on the floor.
@@ -474,14 +486,14 @@ int Generator::newParticle()
             return -1;
         }
     }
-    else if(flags & Untriggered)
+    else if(isUntriggered())
     {
         // The center position is the spawn origin.
-        pinfo->origin[VX] = center[VX];
-        pinfo->origin[VY] = center[VY];
-        pinfo->origin[VZ] = center[VZ];
+        pinfo->origin[VX] = originAtSpawn[VX];
+        pinfo->origin[VY] = originAtSpawn[VY];
+        pinfo->origin[VZ] = originAtSpawn[VZ];
         uncertainPosition(pinfo->origin, FLT2FIX(def->spawnRadiusMin),
-                    FLT2FIX(def->spawnRadius));
+                          FLT2FIX(def->spawnRadius));
     }
 
     // Initial angles for the particle.
@@ -727,7 +739,7 @@ void Generator::moveParticle(int index)
     // Only applicable to sourced or untriggered generators. For other
     // types it's difficult to define the center coordinates.
     if(st->flags.testFlag(ParticleStage::SphereForce) &&
-       (source || flags & Untriggered))
+       (source || isUntriggered()))
     {
         float delta[3];
 
@@ -735,13 +747,13 @@ void Generator::moveParticle(int index)
         {
             delta[VX] = FIX2FLT(pinfo->origin[VX]) - source->origin[VX];
             delta[VY] = FIX2FLT(pinfo->origin[VY]) - source->origin[VY];
-            delta[VZ] = particleZ(*pinfo) - (source->origin[VZ] + FIX2FLT(center[VZ]));
+            delta[VZ] = particleZ(*pinfo) - (source->origin[VZ] + FIX2FLT(originAtSpawn[VZ]));
         }
         else
         {
             for(int i = 0; i < 3; ++i)
             {
-                delta[i] = FIX2FLT(pinfo->origin[i] - center[i]);
+                delta[i] = FIX2FLT(pinfo->origin[i] - originAtSpawn[i]);
             }
         }
 
@@ -1005,7 +1017,7 @@ void Generator::moveParticle(int index)
 void Generator::runTick()
 {
     // Source has been destroyed?
-    if(!flags.testFlag(Untriggered) && !map().thinkers().isUsedMobjId(srcid))
+    if(!isUntriggered() && !map().thinkers().isUsedMobjId(srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
         source = 0;
@@ -1013,7 +1025,7 @@ void Generator::runTick()
 
     // Time to die?
     DENG2_ASSERT(def != 0);
-    if(++age > def->maxAge && def->maxAge >= 0)
+    if(++_age > def->maxAge && def->maxAge >= 0)
     {
         Generator_Delete(this);
         return;
@@ -1021,17 +1033,17 @@ void Generator::runTick()
 
     // Spawn new particles?
     float newParts = 0;
-    if((age <= def->spawnAge || def->spawnAge < 0) &&
+    if((_age <= def->spawnAge || def->spawnAge < 0) &&
        (source || plane || type >= 0 || type == DED_PTCGEN_ANY_MOBJ_TYPE ||
-        flags.testFlag(Untriggered)))
+        isUntriggered()))
     {
         newParts = def->spawnRate * spawnRateMultiplier;
 
         newParts *= particleSpawnRate *
             (1 - def->spawnRateVariance * RNG_RandFloat());
 
-        spawnCount += newParts;
-        while(spawnCount >= 1)
+        _spawnCount += newParts;
+        while(_spawnCount >= 1)
         {
             // Spawn a new particle.
             if(type == DED_PTCGEN_ANY_MOBJ_TYPE || type >= 0) // Type-triggered?
@@ -1055,7 +1067,7 @@ void Generator::runTick()
                 newParticle();
             }
 
-            spawnCount--;
+            _spawnCount--;
         }
     }
 
