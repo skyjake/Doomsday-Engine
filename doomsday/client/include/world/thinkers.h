@@ -101,4 +101,7 @@ private:
 
 } // namespace de
 
+dd_bool Thinker_IsMobjFunc(thinkfunc_t func);
+de::Map &Thinker_Map(thinker_t const &th);
+
 #endif // DENG_WORLD_THINKERS_H

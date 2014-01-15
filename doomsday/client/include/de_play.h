@@ -41,6 +41,7 @@
 #include "world/p_object.h"
 #include "world/p_ticker.h"
 #include "world/p_players.h"
+#include "world/thinkers.h"
 #include "Material"
 #include "ui/p_control.h"
 #include "r_util.h"

@@ -1019,6 +1019,7 @@ void Con_Open(int yes)
 #endif  
 }
 
+/*
 /// @param flags  @ref consolePrintFlags
 static void conPrintf(int flags, const char* format, va_list args)
 {
@@ -1056,6 +1057,7 @@ static void conPrintf(int flags, const char* format, va_list args)
     }
 #endif
 }
+*/
 
 void Con_Error(char const *error, ...)
 {
