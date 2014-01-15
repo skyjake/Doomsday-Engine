@@ -23,15 +23,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <memory>
-
-#include <de/vector1.h> // remove me
-#include <de/mathutil.h> // M_InverseAngle
-
-#include <QtAlgorithms>
-
-#include <de/Error>
-#include <de/Log>
+#include "de_platform.h"
+#include "world/bsp/hplane.h"
 
 #include "Line"
 #include "Sector"
@@ -41,7 +34,12 @@
 #include "world/bsp/linesegment.h"
 #include "world/bsp/partitioner.h"
 
-#include "world/bsp/hplane.h"
+#include <de/Error>
+#include <de/Log>
+#include <de/vector1.h> // remove me
+#include <de/mathutil.h> // M_InverseAngle
+#include <QtAlgorithms>
+#include <memory>
 
 namespace de {
 namespace bsp {

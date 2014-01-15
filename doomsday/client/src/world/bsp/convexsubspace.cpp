@@ -1,4 +1,4 @@
-/** @file world/bsp/convexsubspace.cpp BSP Builder Convex Subspace.
+/** @file world/bsp/convexsubspace.cpp  BSP Builder Convex Subspace.
  *
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
@@ -17,9 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <QHash>
-#include <QSet>
-#include <QtAlgorithms>
+#include "de_platform.h"
+#include "world/bsp/convexsubspace.h"
 
 #include "Face"
 #include "HEdge"
@@ -32,9 +31,10 @@
 
 #include "world/worldsystem.h" /// validCount @todo Remove me
 
-#include "world/bsp/convexsubspace.h"
-
 #include <de/Log>
+#include <QHash>
+#include <QSet>
+#include <QtAlgorithms>
 
 /// Smallest difference between two angles before being considered equal (in degrees).
 static coord_t const ANG_EPSILON = 1.0 / 1024.0;

@@ -1,4 +1,4 @@
-/** @file generator.h  World map (particle) generator management.
+/** @file generator.h  World map (particle) generator.
  *
  * @ingroup world
  *
