@@ -223,7 +223,7 @@ public:
      * @return  @c 0 iff iteration completed wholly. Otherwise the non-zero value
      *          returned by @a callback.
      */
-    int iterate(int (*callback)(Id, void *), void *data) const;
+    int iterate(int (*callback)(Id, void *), void *data = 0) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
