@@ -38,10 +38,11 @@ group {
 group {
     condition: Version.OS == 'macx'
 
-    script { loadOpenSans() }
+    #script { loadOpenSans() }
     
     font default {
-        family: Open Sans
+        family: Helvetica Neue
+        #family: Open Sans
         size: 16pt
         weight: normal
         style: normal
