@@ -226,7 +226,7 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
                     text += String(": ") + _E(>) + (!resourceFound? _E(b) "missing " _E(.) : "");
                     if(resourceFound)
                     {
-                        text += String(_E(2) "\"%1\"").arg(NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty());
+                        text += String(_E(C) "\"%1\"").arg(NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty());
                     }
                 }
 
