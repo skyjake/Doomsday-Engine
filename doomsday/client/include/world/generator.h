@@ -228,10 +228,10 @@ public: /// @todo make private:
 
     void spinParticle(ParticleInfo &pt);
 
-    /**
-     * A particle may be "projected" onto the floor or ceiling of a sector.
-     */
     float particleZ(ParticleInfo const &pt) const;
+
+    de::Vector3f particleOrigin(ParticleInfo const &pt) const;
+    de::Vector3f particleMomentum(ParticleInfo const &pt) const;
 
 public:
     /**

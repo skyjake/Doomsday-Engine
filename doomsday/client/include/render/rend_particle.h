@@ -43,7 +43,6 @@ enum ParticleType
 };
 
 DENG_EXTERN_C byte useParticles;
-DENG_EXTERN_C int maxParticles;
 
 void Rend_ParticleRegister();
 

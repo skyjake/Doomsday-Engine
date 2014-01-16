@@ -323,6 +323,11 @@ public:
         z *= scalar;
         return *this;
     }
+    inline Vector3 &operator *= (Vector3 const &other) {
+        Vector2<Type>::operator *= (other);
+        z *= other.z;
+        return *this;
+    }
     inline Vector3 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }
@@ -530,6 +535,11 @@ public:
     inline Vector4 &operator *= (ddouble scalar) {
         Vector3<Type>::operator *= (scalar);
         w *= scalar;
+        return *this;
+    }
+    inline Vector4 &operator *= (Vector4 const &other) {
+        Vector3<Type>::operator *= (other);
+        w *= other.w;
         return *this;
     }
     Vector4 operator / (ddouble scalar) const {

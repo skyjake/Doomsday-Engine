@@ -19,15 +19,13 @@
  */
 
 #include "de_base.h"
-#include "de_console.h"
-#include "de_filesys.h"
-#include "de_graphics.h"
-#include "de_render.h"
-#include "de_misc.h"
-#include "de_play.h"
-#include "de_ui.h"
+#include "render/rend_particle.h"
 
-#include "resource/image.h"
+#include "clientapp.h"
+#include "con_main.h"
+#include "r_util.h"
+
+#include "filesys/fs_main.h"
 
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
@@ -36,8 +34,16 @@
 #include "Line"
 #include "Plane"
 #include "world/map.h"
+#include "world/p_players.h"
 
+#include "resource/image.h"
+
+#include "render/r_main.h"
 #include "render/rend_main.h"
+#include "render/rend_model.h"
+#include "render/vlight.h"
+
+#include <de/vector1.h>
 #include <cstdlib>
 
 using namespace de;
@@ -45,25 +51,29 @@ using namespace de;
 // Point + custom textures.
 #define NUM_TEX_NAMES (MAX_PTC_TEXTURES)
 
-byte useParticles = true;
-int maxParticles = 0; // Unlimited.
+static DGLuint pointTex, ptctexname[MAX_PTC_TEXTURES];
 
-DGLuint pointTex, ptctexname[MAX_PTC_TEXTURES];
-int particleNearLimit;
-float particleDiffuse = 4;
+static bool hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
+static bool hasPointTexs[NUM_TEX_NAMES];
 
-static size_t numParts;
-static dd_bool hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
-static dd_bool hasPointTexs[NUM_TEX_NAMES];
-
-struct porder_t
+struct OrderedParticle
 {
     Generator *generator;
     int ptID; // Particle id.
     float distance;
 };
-static porder_t *order;
+static OrderedParticle *order;
 static size_t orderSize;
+
+static size_t numParts;
+
+/*
+ * Console variables:
+ */
+byte useParticles = true;
+static int maxParticles; ///< @c 0= Unlimited.
+static int particleNearLimit;
+static float particleDiffuse = 4;
 
 void Rend_ParticleRegister()
 {
@@ -117,7 +127,7 @@ static Path tryFindImage(String name)
 // Try to load the texture.
 static byte loadParticleTexture(uint particleTex)
 {
-    DENG_ASSERT(particleTex < MAX_PTC_TEXTURES);
+    DENG2_ASSERT(particleTex < MAX_PTC_TEXTURES);
 
     String particleImageName = String("Particle%1").arg(particleTex, 2, 10, QChar('0'));
     Path foundPath = tryFindImage(particleImageName);
@@ -192,7 +202,7 @@ void Rend_ParticleLoadExtraTextures()
 
     if(!loaded.isEmpty())
     {
-        LOG_GL_NOTE("Loaded textures for particle IDs: %s") << Rangei::contiguousRangesAsText(loaded);
+        LOG_RES_NOTE("Loaded textures for particle IDs: %s") << Rangei::contiguousRangesAsText(loaded);
     }
 }
 
@@ -217,8 +227,8 @@ void Rend_ParticleReleaseExtraTextures()
  */
 static int comparePOrder(void const *pt1, void const *pt2)
 {
-    if(((porder_t *) pt1)->distance > ((porder_t *) pt2)->distance) return -1;
-    else if(((porder_t *) pt1)->distance < ((porder_t *) pt2)->distance) return 1;
+    if(((OrderedParticle *) pt1)->distance > ((OrderedParticle *) pt2)->distance) return -1;
+    else if(((OrderedParticle *) pt1)->distance < ((OrderedParticle *) pt2)->distance) return 1;
     // Highly unlikely (but possible)...
     return 0;
 }
@@ -244,7 +254,7 @@ static void expandOrderBuffer(size_t max)
 
     if(orderSize > currentSize)
     {
-        order = (porder_t *) Z_Realloc(order, sizeof(porder_t) * orderSize, PU_APPSTATIC);
+        order = (OrderedParticle *) Z_Realloc(order, sizeof(OrderedParticle) * orderSize, PU_APPSTATIC);
     }
 }
 
@@ -283,7 +293,7 @@ static int populateSortBuffer(Generator *gen, void *context)
             continue; // Too near.
 
         // This particle is visible. Add it to the sort buffer.
-        porder_t *slot = &order[(*sortIndex)++];
+        OrderedParticle *slot = &order[(*sortIndex)++];
 
         slot->generator = gen;
         slot->ptID      = p;
@@ -355,64 +365,66 @@ static int listVisibleParticles(Map &map)
     numParts = numVisibleParticles;
 
     // Sort the order list back->front. A quicksort is fast enough.
-    qsort(order, numParts, sizeof(porder_t), comparePOrder);
+    qsort(order, numParts, sizeof(OrderedParticle), comparePOrder);
 
     return true;
 }
 
-static void setupModelParamsForParticle(drawmodelparams_t *params,
+static void setupModelParamsForParticle(drawmodelparams_t &parm,
     ParticleInfo const *pinfo, GeneratorParticleStage const *st,
-    ded_ptcstage_t const *dst, const_pvec3f_t origin, float dist, float size,
+    ded_ptcstage_t const *dst, Vector3f const &origin, float dist, float size,
     float mark, float alpha)
 {
-    // Render the particle as a model.
-    params->origin[VX] = origin[VX];
-    params->origin[VY] = origin[VZ];
-    params->origin[VZ] = params->gzt = origin[VY];
-    params->distance = dist;
+    zap(parm);
 
-    params->extraScale = size; // Extra scaling factor.
-    params->mf = &App_ResourceSystem().modelDef(dst->model);
-    params->alwaysInterpolate = true;
+    // Render the particle as a model.
+    parm.origin[VX] = origin.x;
+    parm.origin[VY] = origin.z;
+    parm.origin[VZ] = parm.gzt = origin.y;
+    parm.distance = dist;
+
+    parm.extraScale = size; // Extra scaling factor.
+    parm.mf = &ClientApp::resourceSystem().modelDef(dst->model);
+    parm.alwaysInterpolate = true;
 
     int frame;
     if(dst->endFrame < 0)
     {
         frame = dst->frame;
-        params->inter = 0;
+        parm.inter = 0;
     }
     else
     {
         frame = dst->frame + (dst->endFrame - dst->frame) * mark;
-        params->inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
+        parm.inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
     }
 
-    App_ResourceSystem().setModelDefFrame(*params->mf, frame);
+    ClientApp::resourceSystem().setModelDefFrame(*parm.mf, frame);
     // Set the correct orientation for the particle.
-    if(params->mf->testSubFlag(0, MFF_MOVEMENT_YAW))
+    if(parm.mf->testSubFlag(0, MFF_MOVEMENT_YAW))
     {
-        params->yaw = R_MovementXYYaw(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]));
+        parm.yaw = R_MovementXYYaw(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]));
     }
     else
     {
-        params->yaw = pinfo->yaw / 32768.0f * 180;
+        parm.yaw = pinfo->yaw / 32768.0f * 180;
     }
 
-    if(params->mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
+    if(parm.mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
     {
-        params->pitch = R_MovementXYZPitch(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]), FIX2FLT(pinfo->mov[2]));
+        parm.pitch = R_MovementXYZPitch(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]), FIX2FLT(pinfo->mov[2]));
     }
     else
     {
-        params->pitch = pinfo->pitch / 32768.0f * 180;
+        parm.pitch = pinfo->pitch / 32768.0f * 180;
     }
 
-    params->ambientColor[CA] = alpha;
+    parm.ambientColor[CA] = alpha;
 
     if(st->flags.testFlag(GeneratorParticleStage::Bright) || levelFullBright)
     {
-        params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
-        params->vLightListIdx = 0;
+        parm.ambientColor[CR] = parm.ambientColor[CG] = parm.ambientColor[CB] = 1;
+        parm.vLightListIdx = 0;
     }
     else
     {
@@ -420,8 +432,8 @@ static void setupModelParamsForParticle(drawmodelparams_t *params,
 
         if(useBias && map.hasLightGrid())
         {
-            Vector3f tmp = map.lightGrid().evaluate(params->origin);
-            V3f_Set(params->ambientColor, tmp.x, tmp.y, tmp.z);
+            Vector3f tmp = map.lightGrid().evaluate(parm.origin);
+            V3f_Set(parm.ambientColor, tmp.x, tmp.y, tmp.z);
         }
         else
         {
@@ -430,7 +442,7 @@ static void setupModelParamsForParticle(drawmodelparams_t *params,
             Vector3f const &secColor = Rend_SectorLightColor(cluster);
 
             // Apply distance attenuation.
-            lightLevel = Rend_AttenuateLightLevel(params->distance, lightLevel);
+            lightLevel = Rend_AttenuateLightLevel(parm.distance, lightLevel);
 
             // Add extra light.
             lightLevel = de::clamp(0.f, lightLevel + Rend_ExtraLightDelta(), 1.f);
@@ -440,18 +452,18 @@ static void setupModelParamsForParticle(drawmodelparams_t *params,
             // Determine the final ambientColor in affect.
             for(int i = 0; i < 3; ++i)
             {
-                params->ambientColor[i] = lightLevel * secColor[i];
+                parm.ambientColor[i] = lightLevel * secColor[i];
             }
         }
 
-        Rend_ApplyTorchLight(params->ambientColor, params->distance);
+        Rend_ApplyTorchLight(parm.ambientColor, parm.distance);
 
         collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin       = Vector3d(params->origin);
-        lparams.bspLeaf      = &map.bspLeafAt(Vector2d(origin[VX], origin[VY]));
-        lparams.ambientColor = Vector3f(params->ambientColor);
+        lparams.origin       = Vector3d(parm.origin);
+        lparams.bspLeaf      = &map.bspLeafAt(lparams.origin);
+        lparams.ambientColor = Vector3f(parm.ambientColor);
 
-        params->vLightListIdx = R_CollectAffectingLights(&lparams);
+        parm.vLightListIdx = R_CollectAffectingLights(&lparams);
     }
 }
 
@@ -462,18 +474,14 @@ static void setupModelParamsForParticle(drawmodelparams_t *params,
  *
  * @param unitVect  Unit vector is written here.
  */
-static void lineUnitVector(Line const &line, pvec2f_t unitVec)
+static Vector2f lineUnitVector(Line const &line)
 {
     coord_t len = M_ApproxDistance(line.direction().x, line.direction().y);
     if(len)
     {
-        unitVec[VX] = line.direction().x / len;
-        unitVec[VY] = line.direction().y / len;
+        return line.direction() / len;
     }
-    else
-    {
-        unitVec[VX] = unitVec[VY] = 0;
-    }
+    return Vector2f(0, 0);
 }
 
 static void renderParticles(int rtype, bool withBlend)
@@ -532,12 +540,12 @@ static void renderParticles(int rtype, bool withBlend)
     blendmode_t mode = BM_NORMAL, newMode;
     for(; i < numParts; ++i)
     {
-        porder_t const *slot      = &order[i];
+        OrderedParticle const *slot      = &order[i];
         Generator const *gen      = slot->generator;
         ParticleInfo const *pinfo = &gen->particleInfo()[slot->ptID];
 
         GeneratorParticleStage const *st = &gen->stages[pinfo->stage];
-        ded_ptcstage_t const *dst        = &gen->def->stages[pinfo->stage];
+        ded_ptcstage_t const *stDef      = &gen->def->stages[pinfo->stage];
 
         short stageType = st->type;
         if(stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES &&
@@ -547,7 +555,7 @@ static void renderParticles(int rtype, bool withBlend)
         }
 
         // Only render one type of particles.
-        if((rtype == PTC_MODEL && dst->model < 0) ||
+        if((rtype == PTC_MODEL && stDef->model < 0) ||
            (rtype != PTC_MODEL && stageType != rtype))
         {
             continue;
@@ -574,70 +582,71 @@ static void renderParticles(int rtype, bool withBlend)
         }
 
         // Is there a next stage for this particle?
-        ded_ptcstage_t const *nextDst;
+        ded_ptcstage_t const *nextStDef;
         if(pinfo->stage >= gen->def->stageCount.num - 1 ||
            !gen->stages[pinfo->stage + 1].type)
         {
             // There is no "next stage". Use the current one.
-            nextDst = gen->def->stages + pinfo->stage;
+            nextStDef = gen->def->stages + pinfo->stage;
         }
         else
         {
-            nextDst = gen->def->stages + (pinfo->stage + 1);
+            nextStDef = gen->def->stages + (pinfo->stage + 1);
         }
 
         // Where is intermark?
-        float invMark = pinfo->tics / (float) dst->tics;
-        float mark = 1 - invMark;
+        float const inter = 1 - float(pinfo->tics) / stDef->tics;
 
         // Calculate size and color.
-        float size = dst->particleRadius(slot->ptID) * invMark
-                   + nextDst->particleRadius(slot->ptID) * mark;
+        float size = de::lerp(    stDef->particleRadius(slot->ptID),
+                              nextStDef->particleRadius(slot->ptID), inter);
 
         // Infinitely small?
         if(!size) continue;
 
-        float color[4];
-        for(int c = 0; c < 4; ++c)
+        Vector4f color = de::lerp(Vector4f(stDef->color),
+                                  Vector4f(nextStDef->color), inter);
+
+        if(!st->flags.testFlag(GeneratorParticleStage::Bright) && !levelFullBright)
         {
-            color[c] = dst->color[c] * invMark + nextDst->color[c] * mark;
-            if(!st->flags.testFlag(GeneratorParticleStage::Bright) && c < 3 && !levelFullBright)
+            // This is a simplified version of sectorlight (no distance
+            // attenuation or range compression).
+            if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
             {
-                // This is a simplified version of sectorlight (no distance
-                // attenuation or range compression).
-                if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
-                {
-                    color[c] *= cluster->sector().lightLevel();
-                }
+                float const lightLevel = cluster->sector().lightLevel();
+                color *= Vector4f(lightLevel, lightLevel, lightLevel, 1);
             }
         }
 
-        float maxdist = gen->def->maxDist;
-        float dist = order[i].distance;
+        float const maxDist = gen->def->maxDist;
+        float const dist    = order[i].distance;
 
         // Far diffuse?
-        if(maxdist)
+        if(maxDist)
         {
-            if(dist > maxdist * .75f)
-                color[3] *= 1 - (dist - maxdist * .75f) / (maxdist * .25f);
+            if(dist > maxDist * .75f)
+            {
+                color.w *= 1 - (dist - maxDist * .75f) / (maxDist * .25f);
+            }
         }
-
         // Near diffuse?
         if(particleDiffuse > 0)
         {
             if(dist < particleDiffuse * size)
-                color[3] -= 1 - dist / (particleDiffuse * size);
+            {
+                color.w -= 1 - dist / (particleDiffuse * size);
+            }
         }
 
         // Fully transparent?
-        if(color[3] <= 0)
+        if(color.w <= 0)
             continue;
 
-        glColor4fv(color);
+        glColor4f(color.x, color.y, color.z, color.w);
 
-        dd_bool nearWall = (pinfo->contact && !pinfo->mov[VX] && !pinfo->mov[VY]);
+        bool nearWall = (pinfo->contact && !pinfo->mov[VX] && !pinfo->mov[VY]);
 
-        dd_bool nearPlane = false;
+        bool nearPlane = false;
         if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
         {
             if(FLT2FIX(cluster->  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo->origin[VZ] ||
@@ -647,7 +656,7 @@ static void renderParticles(int rtype, bool withBlend)
             }
         }
 
-        dd_bool flatOnPlane = false, flatOnWall = false;
+        bool flatOnPlane = false, flatOnWall = false;
         if(stageType == PTC_POINT ||
            (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES))
         {
@@ -657,26 +666,19 @@ static void renderParticles(int rtype, bool withBlend)
                 flatOnWall = true;
         }
 
-        float center[3];
-        center[VX] = FIX2FLT(pinfo->origin[VX]);
-        center[VZ] = FIX2FLT(pinfo->origin[VY]);
-        center[VY] = gen->particleZ(*pinfo);
+        Vector3f center = gen->particleOrigin(*pinfo).xzy();
 
         if(!flatOnPlane && !flatOnWall)
         {
-            center[VX] += frameTimePos * FIX2FLT(pinfo->mov[VX]);
-            center[VZ] += frameTimePos * FIX2FLT(pinfo->mov[VY]);
-            if(!nearPlane)
-                center[VY] += frameTimePos * FIX2FLT(pinfo->mov[VZ]);
+            Vector3f offset(frameTimePos, nearPlane? 0 : frameTimePos, frameTimePos);
+            center += offset * gen->particleMomentum(*pinfo).xzy();
         }
 
-        // Model particles are rendered using the normal model rendering
-        // routine.
-        if(rtype == PTC_MODEL && dst->model >= 0)
+        // Model particles are rendered using the normal model rendering routine.
+        if(rtype == PTC_MODEL && stDef->model >= 0)
         {
-            drawmodelparams_t parms; zap(parms);
-            setupModelParamsForParticle(&parms, pinfo, st, dst, center, dist, size, mark, color[CA]);
-
+            drawmodelparams_t parms;
+            setupModelParamsForParticle(parms, pinfo, st, stDef, center, dist, size, inter, color.w);
             Rend_DrawModel(parms);
             continue;
         }
@@ -688,16 +690,16 @@ static void renderParticles(int rtype, bool withBlend)
             if(flatOnPlane)
             {
                 glTexCoord2f(0, 0);
-                glVertex3f(center[VX] - size, center[VY], center[VZ] - size);
+                glVertex3f(center.x - size, center.y, center.z - size);
 
                 glTexCoord2f(1, 0);
-                glVertex3f(center[VX] + size, center[VY], center[VZ] - size);
+                glVertex3f(center.x + size, center.y, center.z - size);
 
                 glTexCoord2f(1, 1);
-                glVertex3f(center[VX] + size, center[VY], center[VZ] + size);
+                glVertex3f(center.x + size, center.y, center.z + size);
 
                 glTexCoord2f(0, 1);
-                glVertex3f(center[VX] - size, center[VY], center[VZ] + size);
+                glVertex3f(center.x - size, center.y, center.z + size);
             }
             // Flat against a wall, then?
             else if(flatOnWall)
@@ -725,55 +727,54 @@ static void renderParticles(int rtype, bool withBlend)
                     projected[VY] += diff[VY] / dist * gap;
                 }
 
-                DENG_ASSERT(pinfo->contact != 0);
-                float unitvec[2];
-                lineUnitVector(*pinfo->contact, unitvec);
+                DENG2_ASSERT(pinfo->contact != 0);
+                Vector2f unitVec = lineUnitVector(*pinfo->contact);
 
                 glTexCoord2f(0, 0);
-                glVertex3d(projected[VX] - size * unitvec[VX], center[VY] - size,
-                           projected[VY] - size * unitvec[VY]);
+                glVertex3d(projected[VX] - size * unitVec.x, center.y - size,
+                           projected[VY] - size * unitVec.y);
 
                 glTexCoord2f(1, 0);
-                glVertex3d(projected[VX] - size * unitvec[VX], center[VY] + size,
-                           projected[VY] - size * unitvec[VY]);
+                glVertex3d(projected[VX] - size * unitVec.x, center.y + size,
+                           projected[VY] - size * unitVec.y);
 
                 glTexCoord2f(1, 1);
-                glVertex3d(projected[VX] + size * unitvec[VX], center[VY] + size,
-                           projected[VY] + size * unitvec[VY]);
+                glVertex3d(projected[VX] + size * unitVec.x, center.y + size,
+                           projected[VY] + size * unitVec.y);
 
                 glTexCoord2f(0, 1);
-                glVertex3d(projected[VX] + size * unitvec[VX], center[VY] - size,
-                           projected[VY] + size * unitvec[VY]);
+                glVertex3d(projected[VX] + size * unitVec.x, center.y - size,
+                           projected[VY] + size * unitVec.y);
             }
             else
             {
                 glTexCoord2f(0, 0);
-                glVertex3f(center[VX] + size * leftoff[VX],
-                           center[VY] + size * leftoff[VY] / 1.2f,
-                           center[VZ] + size * leftoff[VZ]);
+                glVertex3f(center.x + size * leftoff[VX],
+                           center.y + size * leftoff[VY] / 1.2f,
+                           center.z + size * leftoff[VZ]);
 
                 glTexCoord2f(1, 0);
-                glVertex3f(center[VX] + size * rightoff[VX],
-                           center[VY] + size * rightoff[VY] / 1.2f,
-                           center[VZ] + size * rightoff[VZ]);
+                glVertex3f(center.x + size * rightoff[VX],
+                           center.y + size * rightoff[VY] / 1.2f,
+                           center.z + size * rightoff[VZ]);
 
                 glTexCoord2f(1, 1);
-                glVertex3f(center[VX] - size * leftoff[VX],
-                           center[VY] - size * leftoff[VY] / 1.2f,
-                           center[VZ] - size * leftoff[VZ]);
+                glVertex3f(center.x - size * leftoff[VX],
+                           center.y - size * leftoff[VY] / 1.2f,
+                           center.z - size * leftoff[VZ]);
 
                 glTexCoord2f(0, 1);
-                glVertex3f(center[VX] - size * rightoff[VX],
-                           center[VY] - size * rightoff[VY] / 1.2f,
-                           center[VZ] - size * rightoff[VZ]);
+                glVertex3f(center.x - size * rightoff[VX],
+                           center.y - size * rightoff[VY] / 1.2f,
+                           center.z - size * rightoff[VZ]);
             }
         }
         else // It's a line.
         {
-            glVertex3f(center[VX], center[VY], center[VZ]);
-            glVertex3f(center[VX] - FIX2FLT(pinfo->mov[VX]),
-                       center[VY] - FIX2FLT(pinfo->mov[VZ]),
-                       center[VZ] - FIX2FLT(pinfo->mov[VY]));
+            glVertex3f(center.x, center.y, center.z);
+            glVertex3f(center.x - FIX2FLT(pinfo->mov[VX]),
+                       center.y - FIX2FLT(pinfo->mov[VZ]),
+                       center.z - FIX2FLT(pinfo->mov[VY]));
         }
     }
 

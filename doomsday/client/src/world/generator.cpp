@@ -684,6 +684,16 @@ float Generator::particleZ(ParticleInfo const &pinfo) const
     return FIX2FLT(pinfo.origin[VZ]);
 }
 
+Vector3f Generator::particleOrigin(ParticleInfo const &pt) const
+{
+    return Vector3f(FIX2FLT(pt.origin[VX]), FIX2FLT(pt.origin[VY]), particleZ(pt));
+}
+
+Vector3f Generator::particleMomentum(ParticleInfo const &pt) const
+{
+    return Vector3f(FIX2FLT(pt.mov[VX]), FIX2FLT(pt.mov[VY]), FIX2FLT(pt.mov[VZ]));
+}
+
 void Generator::spinParticle(ParticleInfo &pinfo)
 {
     static int const yawSigns[4]   = { 1,  1, -1, -1 };
