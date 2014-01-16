@@ -37,7 +37,7 @@
 
 static bool inited = false;
 static DisplayColorTransfer originalColorTransfer;
-static de::Record *bindings;
+static de::Binder binder;
 
 static float differenceToOriginalHz(float hz);
 
@@ -174,25 +174,6 @@ static de::Value *Binding_DisplayMode_OriginalMode(de::Context &, de::Function::
     return dict;
 }
 
-static void initBindings()
-{
-    de::Function::registerNativeEntryPoint("DisplayMode_OriginalMode", Binding_DisplayMode_OriginalMode);
-
-    bindings = new de::Record;
-    bindings->addFunction("originalMode",
-            de::refless(new de::Function("DisplayMode_OriginalMode"))).setReadOnly();
-
-    de::App::scriptSystem().addNativeModule("DisplayMode", *bindings);
-}
-
-static void deinitBindings()
-{
-    delete bindings; // App observes
-    bindings = 0;
-
-    de::Function::unregisterNativeEntryPoint("DisplayMode_OriginalMode");
-}
-
 int DisplayMode_Init(void)
 {
     if(inited) return true;
@@ -223,7 +204,9 @@ int DisplayMode_Init(void)
         i->debugPrint();
     }
 
-    initBindings();
+    // Script bindings.
+    binder.initNew() << DENG2_FUNC_NOARG(DisplayMode_OriginalMode, "originalMode");
+    de::App::scriptSystem().addNativeModule("DisplayMode", binder.module());
 
     inited = true;
     return true;
@@ -233,7 +216,7 @@ void DisplayMode_Shutdown(void)
 {
     if(!inited) return;
 
-    deinitBindings();
+    binder.deinit();
 
     LOG_GL_NOTE("Restoring original display mode due to shutdown");
 

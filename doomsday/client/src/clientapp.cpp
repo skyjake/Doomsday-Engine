@@ -76,7 +76,7 @@ static void continueInitWithEventLoopRunning()
     ClientApp::updater().setupUI();
 }
 
-Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
+static Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
 {
     if(App_CurrentGame().isNull())
     {
@@ -88,7 +88,7 @@ Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
     return new TextValue(name);
 }
 
-Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
+static Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
 {
     LOG_AS("ClientApp");
 
@@ -125,6 +125,7 @@ Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
 
 DENG2_PIMPL(ClientApp)
 {    
+    Binder binder;
     QScopedPointer<Updater> updater;
     SettingsRegister audioSettings;
     SettingsRegister logSettings;
@@ -208,24 +209,6 @@ DENG2_PIMPL(ClientApp)
         delete inputSys;
         delete menuBar;
         clientAppSingleton = 0;
-
-        deinitScriptBindings();
-    }
-
-    void initScriptBindings()
-    {
-        Function::registerNativeEntryPoint("App_GamePlugin", Binding_App_GamePlugin);
-        Function::registerNativeEntryPoint("App_LoadFont", Binding_App_LoadFont);
-
-        Record &appModule = self.scriptSystem().nativeModule("App");
-        appModule.addFunction("gamePlugin", refless(new Function("App_GamePlugin"))).setReadOnly();
-        appModule.addFunction("loadFont",   refless(new Function("App_LoadFont", Function::Arguments() << "fileName"))).setReadOnly();
-    }
-
-    void deinitScriptBindings()
-    {
-        Function::unregisterNativeEntryPoint("App_GamePlugin");
-        Function::unregisterNativeEntryPoint("App_LoadFont");
     }
 
     /**
@@ -317,7 +300,9 @@ ClientApp::ClientApp(int &argc, char **argv)
     // We must presently set the current game manually (the collection is global).
     setGame(d->games.nullGame());
 
-    d->initScriptBindings();
+    d->binder.init(scriptSystem().nativeModule("App"))
+            << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
+            << DENG2_FUNC       (App_LoadFont,   "loadFont", "fileName");
 }
 
 void ClientApp::initialize()

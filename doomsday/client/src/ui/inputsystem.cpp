@@ -53,6 +53,7 @@ static Value *Binding_InputSystem_BindEvent(Context &, Function::ArgumentValues 
 
 DENG2_PIMPL(InputSystem)
 {
+    Binder binder;
     SettingsRegister settings;
     Record *scriptBindings;
 
@@ -68,23 +69,14 @@ DENG2_PIMPL(InputSystem)
                 .define(SettingsRegister::IntCVar,        "input-sharp", 1);
 
         // Initialize script bindings.
-        Function::registerNativeEntryPoint("InputSystem_BindEvent", Binding_InputSystem_BindEvent);
+        binder.initNew()
+                << DENG2_FUNC(InputSystem_BindEvent, "bindEvent", "event" << "command");
 
-        scriptBindings = new Record;
-        scriptBindings->addFunction("bindEvent",
-                refless(new Function("InputSystem_BindEvent",
-                                     Function::Arguments() << "event" << "command"))).setReadOnly();
-
-        App::scriptSystem().addNativeModule("Input", *scriptBindings);
+        App::scriptSystem().addNativeModule("Input", binder.module());
 
         // Initialize the system.
         DD_InitInput();
-
-        if(!I_Init())
-        {
-            Con_Error("Failed to initialize Input subsystem.\n");
-        }
-
+        I_Init();
         I_InitVirtualInputDevices();
     }
 
@@ -93,10 +85,6 @@ DENG2_PIMPL(InputSystem)
         // Shutdown.
         I_ShutdownInputDevices();
         I_Shutdown();
-
-        // Deinit script bindings.
-        delete scriptBindings; // App observes
-        Function::unregisterNativeEntryPoint("InputSystem_BindEvent");
     }
 };
 
