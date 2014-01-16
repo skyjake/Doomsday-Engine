@@ -358,4 +358,63 @@ Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
     return found.value();
 }
 
+Function *NativeFunctionSpec::make() const
+{
+    Function::registerNativeEntryPoint(_nativeName, _entryPoint);
+    return new Function(_nativeName, _argNames);
+}
+
+Binder::Binder(Record *module) : _module(module), _isOwned(false)
+{}
+
+Binder::~Binder()
+{
+    deinit();
+}
+
+Binder &Binder::init(Record &module)
+{
+    _module = &module;
+    return *this;
+}
+
+Binder &Binder::initNew()
+{
+    DENG2_ASSERT(!_isOwned);
+    _isOwned = true;
+    _module = new Record;
+    return *this;
+}
+
+void Binder::deinit()
+{
+    if(_isOwned)
+    {
+        delete _module;
+        _module = 0;
+        _isOwned = false;
+    }
+    foreach(String const &name, _boundEntryPoints)
+    {
+        Function::unregisterNativeEntryPoint(name);
+    }
+    _boundEntryPoints.clear();
+}
+
+Record &Binder::module() const
+{
+    DENG2_ASSERT(_module != 0);
+    return *_module;
+}
+
+Binder &Binder::operator << (NativeFunctionSpec const &spec)
+{
+    if(_module)
+    {
+        _boundEntryPoints.insert(spec.nativeName());
+        *_module << spec;
+    }
+    return *this;
+}
+
 } // namespace de

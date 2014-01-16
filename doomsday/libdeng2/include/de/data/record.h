@@ -34,6 +34,7 @@ namespace de {
 
 class ArrayValue;
 class Function;
+class NativeFunctionSpec;
 
 /**
  * A set of variables. A record may have any number of subrecords. Note
@@ -370,6 +371,15 @@ public:
      *          has some other value than FunctionValue.
      */
     Function const *function(String const &name) const;
+
+    /**
+     * Adds a new native function to the record according to the specification.
+     *
+     * @param spec  Native function specification.
+     *
+     * @return  Reference to this record.
+     */
+    Record &operator << (NativeFunctionSpec const &spec);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

@@ -579,6 +579,12 @@ void Record::variableBeingDeleted(Variable &variable)
     d->members.remove(variable.name());
 }
 
+Record &Record::operator << (NativeFunctionSpec const &spec)
+{
+    addFunction(spec.name(), refless(spec.make())).setReadOnly();
+    return *this;
+}
+
 QTextStream &operator << (QTextStream &os, Record const &record)
 {
     return os << record.asText();
