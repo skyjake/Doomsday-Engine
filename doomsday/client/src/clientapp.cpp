@@ -115,6 +115,12 @@ static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &a
     return 0;
 }
 
+static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
+{
+    Sys_Quit();
+    return 0;
+}
+
 DENG2_PIMPL(ClientApp)
 {    
     Binder binder;
@@ -294,7 +300,8 @@ ClientApp::ClientApp(int &argc, char **argv)
 
     d->binder.init(scriptSystem().nativeModule("App"))
             << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
-            << DENG2_FUNC       (App_LoadFont,   "loadFont", "fileName");
+            << DENG2_FUNC       (App_LoadFont,   "loadFont", "fileName")
+            << DENG2_FUNC_NOARG (App_Quit,       "quit");
 }
 
 void ClientApp::initialize()
