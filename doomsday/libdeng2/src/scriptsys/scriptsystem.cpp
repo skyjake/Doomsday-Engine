@@ -29,7 +29,7 @@
 
 namespace de {
 
-Value *Binding_Path_FileNamePath(Context &, Function::ArgumentValues const &args)
+Value *Function_Path_FileNamePath(Context &, Function::ArgumentValues const &args)
 {
     return new TextValue(args.at(0)->asText().fileNamePath());
 }

@@ -247,10 +247,10 @@ private:
 };
 
 #define DENG2_FUNC_NOARG(Name, ScriptMemberName) \
-    de::NativeFunctionSpec(Binding_ ## Name, # Name, ScriptMemberName)
+    de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName)
 
 #define DENG2_FUNC(Name, ScriptMemberName, Args) \
-    de::NativeFunctionSpec(Binding_ ## Name, # Name, ScriptMemberName, de::Function::Arguments() << Args)
+    de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName, de::Function::Arguments() << Args)
 
 /**
  * Utility that keeps track of which entry points have been bound and unregisters

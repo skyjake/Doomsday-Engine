@@ -29,7 +29,7 @@
 
 using namespace de;
 
-static Value *Binding_InputSystem_BindEvent(Context &, Function::ArgumentValues const &args)
+static Value *Function_InputSystem_BindEvent(Context &, Function::ArgumentValues const &args)
 {
     String eventDesc = args[0]->asText();
     String command   = args[1]->asText();

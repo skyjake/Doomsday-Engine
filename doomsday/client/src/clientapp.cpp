@@ -76,7 +76,7 @@ static void continueInitWithEventLoopRunning()
     ClientApp::updater().setupUI();
 }
 
-static Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &)
+static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const &)
 {
     if(App_CurrentGame().isNull())
     {
@@ -88,7 +88,7 @@ static Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &
     return new TextValue(name);
 }
 
-static Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
+static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &args)
 {
     LOG_AS("ClientApp");
     try

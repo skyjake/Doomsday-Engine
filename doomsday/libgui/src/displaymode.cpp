@@ -154,7 +154,7 @@ static float differenceToOriginalHz(float hz)
     return qAbs(hz - originalMode.refreshRate);
 }
 
-static de::Value *Binding_DisplayMode_OriginalMode(de::Context &, de::Function::ArgumentValues const &)
+static de::Value *Function_DisplayMode_OriginalMode(de::Context &, de::Function::ArgumentValues const &)
 {
     using de::NumberValue;
     using de::TextValue;
