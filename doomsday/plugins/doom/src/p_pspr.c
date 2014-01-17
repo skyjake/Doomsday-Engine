@@ -128,9 +128,7 @@ void P_SetPsprite(player_t* player, int position, statenum_t stnum)
  */
 void P_BringUpWeapon(player_t* player)
 {
-#if _DEBUG
-    const weapontype_t oldPendingWeapon = player->pendingWeapon;
-#endif
+    weapontype_t const oldPendingWeapon = player->pendingWeapon;
 
     weaponmodeinfo_t* wminfo = NULL;
     weapontype_t raiseWeapon;

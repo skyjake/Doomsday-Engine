@@ -553,9 +553,7 @@ void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
  */
 void P_BringUpWeapon(struct player_s* player)
 {
-#if _DEBUG
-    const weapontype_t oldPendingWeapon = player->pendingWeapon;
-#endif
+    weapontype_t const oldPendingWeapon = player->pendingWeapon;
 
     weaponmodeinfo_t* wminfo = NULL;
     weapontype_t raiseWeapon;

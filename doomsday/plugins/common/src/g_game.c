@@ -990,21 +990,20 @@ gamestate_t G_GameState(void)
     return gameState;
 }
 
-#if _DEBUG
-static const char* getGameStateStr(gamestate_t state)
+static char const *getGameStateStr(gamestate_t state)
 {
     struct statename_s {
         gamestate_t     state;
         const char*     name;
     } stateNames[] =
     {
-        {GS_MAP, "GS_MAP"},
-        {GS_INTERMISSION, "GS_INTERMISSION"},
-        {GS_FINALE, "GS_FINALE"},
-        {GS_STARTUP, "GS_STARTUP"},
-        {GS_WAITING, "GS_WAITING"},
-        {GS_INFINE, "GS_INFINE"},
-        {-1, NULL}
+        { GS_MAP,          "GS_MAP" },
+        { GS_INTERMISSION, "GS_INTERMISSION" },
+        { GS_FINALE,       "GS_FINALE" },
+        { GS_STARTUP,      "GS_STARTUP" },
+        { GS_WAITING,      "GS_WAITING" },
+        { GS_INFINE,       "GS_INFINE" },
+        { -1,              NULL }
     };
     uint                i;
 
@@ -1014,7 +1013,6 @@ static const char* getGameStateStr(gamestate_t state)
 
     return NULL;
 }
-#endif
 
 /**
  * Called when the gameui binding context is active. Triggers the menu.

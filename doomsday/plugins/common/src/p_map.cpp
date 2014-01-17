@@ -2499,9 +2499,8 @@ void P_SlideMove(mobj_t *mo)
 {
     if(!mo) return; // Huh?
 
-#ifdef _DEBUG
-    vec2d_t oldOrigin; V2d_Copy(oldOrigin, mo->origin);
-#endif
+    vec2d_t oldOrigin;
+    V2d_Copy(oldOrigin, mo->origin);
 
     vec2d_t leadPos  = { 0, 0 };
     vec2d_t trailPos = { 0, 0 };
