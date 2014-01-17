@@ -31,18 +31,13 @@ namespace de {
 
 Value *Binding_Path_FileNamePath(Context &, Function::ArgumentValues const &args)
 {
-    // We must have one argument.
-    if(args.size() != 1)
-    {
-        throw Function::WrongArgumentsError("Binding_Path_FileNamePath",
-                                            "Expected one argument");
-    }
-
     return new TextValue(args.at(0)->asText().fileNamePath());
 }
 
 DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
 {
+    Binder binder;
+
     /// Built-in special modules. These are constructed by native code and thus not
     /// parsed from any script.
     typedef QMap<String, Record *> NativeModules; // not owned
@@ -78,13 +73,10 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         }
 
         // Setup the Path module.
-        {
-            Function::registerNativeEntryPoint("Path_FileNamePath", Binding_Path_FileNamePath);
+        binder.init(pathModule)
+                << DENG2_FUNC(Path_FileNamePath, "fileNamePath", "path");
 
-            Record &mod = pathModule;
-            mod.addFunction("fileNamePath", refless(new Function("Path_FileNamePath", Function::Arguments() << "path"))).setReadOnly();
-            addNativeModule("Path", mod);
-        }
+        addNativeModule("Path", pathModule);
     }
 
     ~Instance()
@@ -95,8 +87,6 @@ DENG2_PIMPL(ScriptSystem), DENG2_OBSERVES(Record, Deletion)
         {
             i.value()->audienceForDeletion -= this;
         }
-
-        Function::unregisterNativeEntryPoint("Path_FileNamePath");
     }
 
     void addNativeModule(String const &name, Record &module)

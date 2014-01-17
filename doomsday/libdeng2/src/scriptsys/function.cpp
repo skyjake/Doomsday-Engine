@@ -358,6 +358,8 @@ Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
     return found.value();
 }
 
+//----------------------------------------------------------------------------
+
 Function *NativeFunctionSpec::make() const
 {
     Function::registerNativeEntryPoint(_nativeName, _entryPoint);

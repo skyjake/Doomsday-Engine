@@ -91,14 +91,6 @@ static Value *Binding_App_GamePlugin(Context &, Function::ArgumentValues const &
 static Value *Binding_App_LoadFont(Context &, Function::ArgumentValues const &args)
 {
     LOG_AS("ClientApp");
-
-    // We must have one argument.
-    if(args.size() != 1)
-    {
-        throw Function::WrongArgumentsError("Binding_App_LoadFont",
-                                            "Expected one argument");
-    }
-
     try
     {
         // Try to load the specific font.

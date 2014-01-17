@@ -31,13 +31,6 @@ using namespace de;
 
 static Value *Binding_InputSystem_BindEvent(Context &, Function::ArgumentValues const &args)
 {
-    // We must have two arguments.
-    if(args.size() != 2)
-    {
-        throw Function::WrongArgumentsError("Binding_InputSystem_BindEvent",
-                                            "Expected two arguments");
-    }
-
     String eventDesc = args[0]->asText();
     String command   = args[1]->asText();
 
