@@ -225,14 +225,14 @@ public:
     /**
      * Retrieves the index of files of a particular type.
      *
-     * @param typeIdentifier  Type identifier to look for. Use the TYPE_NAME() macro.
+     * @param typeIdentifier  Type identifier to look for. Use the DENG2_TYPE_NAME() macro.
      *
      * @return A subset of the main index containing only the entries of
      * the given type.
      *
      * For example, to look up the index for NativeFile instances:
      * @code
-     * FS::Index &nativeFileIndex = App::fileSystem().indexFor(TYPE_NAME(NativeFile));
+     * FS::Index &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
      * @endcode
      */
     Index const &indexFor(String const &typeIdentifier) const;

@@ -233,7 +233,7 @@ void* Library_Symbol(Library* lib, const char* symbolName)
 #endif
         return lib->file->library().address(symbolName);
     }
-    catch(const de::Library::SymbolMissingError& er)
+    catch(de::Library::SymbolMissingError const &er)
     {
         Str_Set(lastError, er.asText().toLatin1().constData());
         return 0;
