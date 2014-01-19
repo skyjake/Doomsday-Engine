@@ -298,6 +298,8 @@ bool PopupWidget::handleEvent(Event const &event)
                      */
                     if(GuiWidget const *hit = root().globalHitTest(mouse.pos()))
                     {
+                        DENG2_ASSERT(hit != this); // !inside
+
                         if(hit->isEnabled() && hit->isVisible())
                         {
                             // Replay the click on this widget.

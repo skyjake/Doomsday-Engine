@@ -370,7 +370,8 @@ DENG2_OBSERVES(App,              StartupComplete)
         MouseEvent ev = event;
 
         // Translate mouse coordinates for direct interaction.
-        if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton)
+        if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton ||
+           ev.type() == Event::MouseWheel)
         {
             ev.setPos(contentXf.windowToLogicalCoords(event.pos()).toVector2i());
         }
