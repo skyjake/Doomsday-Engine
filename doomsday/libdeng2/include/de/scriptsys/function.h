@@ -217,7 +217,7 @@ private:
  *
  * @ingroup script
  */
-class NativeFunctionSpec
+class DENG2_PUBLIC NativeFunctionSpec
 {
 public:
     NativeFunctionSpec(Function::NativeEntryPoint entryPoint,
@@ -257,7 +257,7 @@ private:
  * them when the instance is destroyed. Use as a member in a class that registers
  * native entry points.
  */
-class Binder
+class DENG2_PUBLIC Binder
 {
 public:
     /**
