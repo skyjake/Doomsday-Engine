@@ -70,6 +70,11 @@ public:
     de::Partition const &partition() const;
 
     /**
+     * Calculates the height of this BSP subtree (note result is not cached).
+     */
+    size_t height() const;
+
+    /**
      * Returns @c true iff the specified child is configured.
      */
     bool hasChild(int left) const;
@@ -91,7 +96,14 @@ public:
      *
      * @see hasChild()
      */
-    de::MapElement &child(int left) const;
+    de::MapElement &child(int left);
+    de::MapElement const &child(int left) const;
+
+    inline de::MapElement &right() { return child(Right); }
+    inline de::MapElement const &right() const { return child(Right); }
+
+    inline de::MapElement &left() { return child(Left); }
+    inline de::MapElement const &left() const { return child(Left); }
 
     /**
      * Returns a pointer to the specified child of the BSP node, which may be
@@ -101,7 +113,10 @@ public:
      *
      * @see hasChild()
      */
-    inline de::MapElement *childPtr(int left) const {
+    inline de::MapElement *childPtr(int left) {
+        return hasChild(left)? &child(left) : 0;
+    }
+    inline de::MapElement const *childPtr(int left) const {
         return hasChild(left)? &child(left) : 0;
     }
 

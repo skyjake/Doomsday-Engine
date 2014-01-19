@@ -67,12 +67,24 @@ Partition const &BspNode::partition() const
     return d->partition;
 }
 
+size_t BspNode::height() const
+{
+    DENG2_ASSERT(hasLeft() || hasRight());
+    size_t rHeight = 0;
+    if(hasRight() && right().type() == DMU_BSPNODE)
+        rHeight = right().as<BspNode>().height();
+    size_t lHeight = 0;
+    if(hasLeft() && left().type() == DMU_BSPNODE)
+        lHeight = left().as<BspNode>().height();
+    return (rHeight> lHeight? rHeight : lHeight) + 1;
+}
+
 bool BspNode::hasChild(int left) const
 {
     return *d->childAdr(left) != 0;
 }
 
-MapElement &BspNode::child(int left) const
+MapElement &BspNode::child(int left)
 {
     if(MapElement *childElm = *d->childAdr(left))
     {
@@ -80,6 +92,11 @@ MapElement &BspNode::child(int left) const
     }
     /// @throw MissingChildError  The specified child element is missing.
     throw MissingChildError("BspNode::child", QString("No %1 child is configured").arg(left? "left" : "right"));
+}
+
+MapElement const &BspNode::child(int left) const
+{
+    return const_cast<MapElement &>(const_cast<BspNode *>(this)->child(left));
 }
 
 void BspNode::setChild(int left, MapElement *newChild)
