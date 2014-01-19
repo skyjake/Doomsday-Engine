@@ -86,6 +86,26 @@ struct ThinkerList
         sentinel.prev = &th;
     }
 
+    int count(int *numInStasis) const
+    {
+        int num = 0;
+        thinker_t *th = sentinel.next;
+        while(th != &sentinel && th)
+        {
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
+            DENG_ASSERT(th->next != 0);
+            DENG_ASSERT(th->prev != 0);
+#endif
+            num += 1;
+            if(numInStasis && th->inStasis)
+            {
+                (*numInStasis) += 1;
+            }
+            th = th->next;
+        }
+        return num;
+    }
+
     int iterate(int (*callback) (thinker_t *, void *), void *parameters = 0)
     {
         int result = false;
@@ -335,6 +355,20 @@ int Thinkers::iterate(thinkfunc_t func, byte flags,
         if(result) break;
     }
     return result;
+}
+
+int Thinkers::count(int *numInStasis) const
+{
+    int total = 0;
+    if(isInited())
+    {
+        for(int i = 0; i < d->lists.count(); ++i)
+        {
+            ThinkerList *list = d->lists[i];
+            total += list->count(numInStasis);
+        }
+    }
+    return total;
 }
 
 void unlinkThinkerFromList(thinker_t *th)

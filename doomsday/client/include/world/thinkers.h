@@ -95,6 +95,15 @@ public:
      */
     void setMobjId(thid_t id, bool inUse = true);
 
+    /**
+     * Returns the total number of thinkers (of any type) in the collection.
+     *
+     * @param numInStasis  If not @c NULL, the number of thinkers in stasis will
+     *                     be added to the current value (caller must ensure to
+     *                     initialize this).
+     */
+    int count(int *numInStasis = 0) const;
+
 private:
     DENG2_PRIVATE(d)
 };
