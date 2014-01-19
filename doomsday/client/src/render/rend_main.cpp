@@ -2997,7 +2997,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
     while(bspElement->type() != DMU_BSPLEAF)
     {
         // Descend deeper into the nodes.
-        BspNode const &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspElement->as<BspNode>();
 
         // Decide which side the view point is on.
         int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;

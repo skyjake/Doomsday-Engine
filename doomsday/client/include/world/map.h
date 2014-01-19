@@ -336,6 +336,11 @@ public:
     Blockmap const &bspLeafBlockmap() const;
 
     /**
+     * Returns @c true iff a BSP tree is available for the map.
+     */
+    bool hasBspRoot() const;
+
+    /**
      * Returns the root element for the map's BSP tree.
      */
     MapElement &bspRoot() const;
@@ -542,6 +547,11 @@ public:
      * @return  @c 0 iff iteration completed wholly.
      */
     int generatorListIterator(uint listIndex, int (*callback) (Generator *, void *), void *context = 0);
+
+    /**
+     * Returns the total number of @em active generators in the map.
+     */
+    int generatorCount() const;
 
     /**
      * Add a new lumobj to the map (a copy is made).
@@ -850,6 +860,18 @@ public: /// @todo Make private:
      */
     ClMobjHash const &clMobjHash() const;
 #endif // __CLIENT__
+
+    /**
+     * Returns a rich formatted, textual summary of the map's elements, suitable
+     * for logging.
+     */
+    de::String elementSummaryAsStyledText() const;
+
+    /**
+     * Returns a rich formatted, textual summary of the map's objects, suitable
+     * for logging.
+     */
+    de::String objectSummaryAsStyledText() const;
 
 public:
     /*

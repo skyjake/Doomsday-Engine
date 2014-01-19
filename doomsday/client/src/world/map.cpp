@@ -1520,6 +1520,11 @@ Mesh const &Map::mesh() const
     return d->mesh;
 }
 
+bool Map::hasBspRoot() const
+{
+    return d->bspRoot != 0;
+}
+
 MapElement &Map::bspRoot() const
 {
     if(d->bspRoot)
@@ -2493,7 +2498,7 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspElement->as<BspNode>();
 
         int side = bspNode.partition().pointOnSide(point) < 0;
 
@@ -2516,7 +2521,7 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
     MapElement *bspElement = d->bspRoot;
     while(bspElement->type() != DMU_BSPLEAF)
     {
-        BspNode const &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspElement->as<BspNode>();
         Partition const &partition = bspNode.partition();
 
         fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
@@ -2684,6 +2689,21 @@ Generator *Map::newGenerator()
     gens.activeGens[id - 1] = gen;
 
     return gen;
+}
+
+int Map::generatorCount() const
+{
+    if(d->generators.isNull()) return 0;
+    int count = 0;
+    Instance::Generators &gens = d->getGenerators();
+    for(Generator::Id i = 0; i < MAX_GENERATORS; ++i)
+    {
+        if(gens.activeGens[i])
+        {
+            count += 1;
+        }
+    }
+    return count;
 }
 
 void Map::unlink(Generator &generator)
@@ -3158,32 +3178,145 @@ void Map::deleteClPolyMover(ClPolyMover *mover)
 
 #endif // __CLIENT__
 
+String Map::elementSummaryAsStyledText() const
+{
+#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
+
+    String str;
+    QTextStream os(&str);
+
+    if(lineCount())    os << TABBED(lineCount(),    "Lines");
+    //if(sideCount())    os << TABBED(sideCount(),    "Sides");
+    if(sectorCount())  os << TABBED(sectorCount(),  "Sectors");
+    if(vertexCount())  os << TABBED(vertexCount(),  "Vertexes");
+    if(polyobjCount()) os << TABBED(polyobjCount(), "Polyobjs");
+
+    return str.rightStrip();
+
+#undef TABBED
+}
+
+String Map::objectSummaryAsStyledText() const
+{
+#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
+
+    int thCountInStasis = 0;
+    int thCount = thinkers().count(&thCountInStasis);
+
+    String str;
+    QTextStream os(&str);
+
+    if(thCount)           os << TABBED(thCount,            String("Thinkers (%1 in stasis)").arg(thCountInStasis));
+#ifdef __CLIENT__
+    if(biasSourceCount()) os << TABBED(biasSourceCount(),  "Bias Sources");
+    if(generatorCount())  os << TABBED(generatorCount(),   "Generators");
+    if(lumobjCount())     os << TABBED(lumobjCount(),      "Lumobjs");
+#endif
+
+    return str.rightStrip();
+
+#undef TABBED
+}
+
+static int bspTreeHeight(MapElement const &bspElem)
+{
+    if(bspElem.is<BspNode>())
+    {
+        return bspElem.as<BspNode>().height();
+    }
+    return 0;
+}
+
+static String bspTreeDescription(Map const &map)
+{
+    if(map.hasBspRoot())
+    {
+        String desc = String("%1 nodes, %2 leafs")
+                          .arg(map.bspNodeCount())
+                          .arg(map.bspLeafCount());
+        if(map.bspRoot().is<BspNode>())
+        {
+            BspNode const &bspRootNode = map.bspRoot().as<BspNode>();
+            desc += String(" (balance is %1:%2)")
+                        .arg(bspRootNode.hasRight()? bspTreeHeight(bspRootNode.right()) : 0)
+                        .arg(bspRootNode.hasLeft() ? bspTreeHeight(bspRootNode.left ()) : 0);
+        }
+        return desc;
+    }
+    return "";
+}
+
 D_CMD(InspectMap)
 {
     DENG2_UNUSED3(src, argc, argv);
 
+    LOG_AS("inspectmap (Cmd)");
+
     if(!App_WorldSystem().hasMap())
     {
-        LOG_MAP_WARNING("No map is currently loaded");
+        LOG_SCR_WARNING("No map is currently loaded");
         return false;
     }
 
-    // Print summary information about the current map.
     Map &map = App_WorldSystem().map();
+    LOG_SCR_NOTE(_E(b) "%s" _E(.)) << Con_GetString("map-name");
+    LOG_SCR_MSG("\n");
 
-#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
+    LOG_SCR_MSG(    _E(l) "Uri: "     _E(.) _E(i) "%s"/*_E(.)
+                " " _E(l) "OldUid: "  _E(.) _E(i) "%s" _E(.)*/)
+            << map.uri().asText()/*
+            << map.oldUniqueId()*/;
 
-    LOG_MAP_MSG(_E(b) "Current map elements:");
-    String str;
-    QTextStream os(&str);
-    os << TABBED(map.vertexCount(),  "Vertexes");
-    os << TABBED(map.lineCount(),    "Lines");
-    os << TABBED(map.polyobjCount(), "Polyobjs");
-    os << TABBED(map.sectorCount(),  "Sectors");
-    os << TABBED(map.bspNodeCount(), "BSP Nodes");
-    os << TABBED(map.bspLeafCount(), "BSP Leafs");
+    LOG_SCR_MSG(_E(l) "Music: " _E(.) _E(i) "%i") << Con_GetInteger("map-music");
+    LOG_SCR_MSG("\n");
 
-    LOG_MAP_MSG("%s") << str.rightStrip();
+    if(map.isEditable())
+    {
+        LOG_MSG(_E(D) "Editing Enabled");
+    }
+
+    LOG_SCR_MSG(_E(D) "Elements:");
+    LOG_SCR_MSG("%s") << map.elementSummaryAsStyledText();
+
+    if(map.thinkers().isInited())
+    {
+        LOG_SCR_MSG(_E(D) "Objects:");
+        LOG_SCR_MSG("%s") << map.objectSummaryAsStyledText();
+    }
+
+    LOG_SCR_MSG(_E(R) "\n");
+
+    Vector2d geometryDimensions = Vector2d(map.bounds().max) - Vector2d(map.bounds().min);
+    LOG_SCR_MSG(_E(l) "Geometry dimensions: " _E(.) _E(i)) << geometryDimensions.asText();
+
+    if(map.hasBspRoot())
+    {
+        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << bspTreeDescription(map);
+    }
+
+    if(!map.bspLeafBlockmap().isNull())
+    {
+        LOG_SCR_MSG(_E(l) "BSP leaf blockmap: " _E(.) _E(i)) << map.bspLeafBlockmap().dimensions().asText();
+    }
+    if(!map.lineBlockmap().isNull())
+    {
+        LOG_SCR_MSG(_E(l) "Line blockmap: "     _E(.) _E(i)) << map.lineBlockmap().dimensions().asText();
+    }
+    if(!map.mobjBlockmap().isNull())
+    {
+        LOG_SCR_MSG(_E(l) "Mobj blockmap: "     _E(.) _E(i)) << map.mobjBlockmap().dimensions().asText();
+    }
+    if(!map.polyobjBlockmap().isNull())
+    {
+        LOG_SCR_MSG(_E(l) "Polyobj blockmap: "  _E(.) _E(i)) << map.polyobjBlockmap().dimensions().asText();
+    }
+
+#ifdef __CLIENT__
+    if(map.hasLightGrid())
+    {
+        LOG_SCR_MSG(_E(l) "LightGrid: " _E(.) _E(i)) << map.lightGrid().dimensions().asText();
+    }
+#endif
 
     return true;
 

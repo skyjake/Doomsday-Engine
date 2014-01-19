@@ -545,7 +545,8 @@ DENG2_PIMPL(WorldSystem)
 #endif
 
         // Print summary information about this map.
-        Con_Execute(CMDS_DDAY, "inspectmap", true, false);
+        LOG_MAP_MSG(_E(b) "Current map elements:");
+        LOG_MAP_MSG("%s") << map->elementSummaryAsStyledText();
 
         // See what MapInfo says about this map.
         ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s const *>(&map->uri()));
