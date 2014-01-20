@@ -1031,30 +1031,101 @@ static void P_ResetWorldState()
 #endif
 }
 
-char const *P_GetMapNiceName()
+char const *P_MapTitle(uint episode, uint map)
 {
-    char const *lname = (char *) DD_GetVariable(DD_MAP_NAME);
+    char const *title = "";
+
+    Uri *mapUri = G_ComposeMapUri(episode, map);
+
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(mapUri)), &mapInfo))
+    {
+        if(mapInfo.name[0])
+        {
+            // Perhaps the title string is a reference to a Text definition?
+            void *ptr;
+            if(Def_Get(DD_DEF_TEXT, mapInfo.name, &ptr) != -1)
+            {
+                title = (char const *) ptr; // Yes, use the resolved text string.
+            }
+            else
+            {
+                title = mapInfo.name;
+            }
+        }
+    }
+    Uri_Delete(mapUri);
+
 #if __JHEXEN__
-    // In Hexen we can also look in MAPINFO for the map name.
-    if(!lname)
-        lname = P_GetMapName(gameMap);
+    // In Hexen we can also look in MAPINFO for the map title.
+    if(!title)
+    {
+        title = P_MapInfoMapTitle(map);
+    }
 #endif
 
-    if(!lname || !lname[0])
-        return NULL;
+    if(!title || !title[0])
+        return 0;
 
     // Skip the "ExMx" part, if present.
-    if(char const *ptr = strchr(lname, ':'))
+    if(char const *ptr = strchr(title, ':'))
     {
-        lname = ptr + 1;
-        while(*lname && isspace(*lname))
-            lname++;
+        title = ptr + 1;
+        while(*title && isspace(*title))
+        {
+            title++;
+        }
     }
 
-    return lname;
+    return title;
 }
 
-patchid_t P_FindMapTitlePatch(uint episode, uint map)
+char const *P_MapAuthor(uint episode, uint map, dd_bool supressGameAuthor)
+{
+    char const *author = "";
+
+    Uri *mapUri   = G_ComposeMapUri(episode, map);
+    AutoStr *path = Uri_Resolved(mapUri);
+
+    // Perhaps a MapInfo definition exists for the map?
+    ddmapinfo_t mapInfo;
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(mapUri)), &mapInfo))
+    {
+        if(mapInfo.author[0])
+        {
+            author = mapInfo.author;
+        }
+    }
+    Uri_Delete(mapUri);
+
+    if(!author || !author[0])
+        return 0;
+
+    // Should we suppress the author?
+    /// @todo Do not do this here.
+    GameInfo gameInfo;
+    DD_GameInfo(&gameInfo);
+    if(supressGameAuthor || P_MapIsCustom(Str_Text(path)))
+    {
+        if(!Str_CompareIgnoreCase(gameInfo.author, author))
+            return 0;
+    }
+
+    return author;
+}
+
+char const *P_CurrentMapTitle()
+{
+    return P_MapTitle(gameEpisode, gameMap);
+}
+
+char const *P_CurrentMapAuthor(dd_bool supressGameAuthor)
+{
+    return P_MapAuthor(gameEpisode, gameMap, supressGameAuthor);
+}
+
+patchid_t P_MapTitlePatch(uint episode, uint map)
 {
 #if __JDOOM__ || __JDOOM64__
 #  if __JDOOM__
@@ -1069,29 +1140,6 @@ patchid_t P_FindMapTitlePatch(uint episode, uint map)
     DENG_UNUSED(map);
 #endif
     return 0;
-}
-
-char const *P_GetMapAuthor(dd_bool supressGameAuthor)
-{
-    char const *author = (char const *) DD_GetVariable(DD_MAP_AUTHOR);
-    if(!author || !author[0])
-        return 0;
-
-    // Should we suppress the author?
-    /// @todo Do not do this here.
-    Uri *uri = G_ComposeMapUri(gameEpisode, gameMap);
-    AutoStr *path = Uri_Resolved(uri);
-
-    dd_bool mapIsCustom = P_MapIsCustom(Str_Text(path));
-
-    Uri_Delete(uri);
-
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
-    if((mapIsCustom || supressGameAuthor) && !Str_CompareIgnoreCase(gameInfo.author, author))
-        return 0;
-
-    return author;
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__

@@ -2666,7 +2666,7 @@ void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     const float scale = .75f;
     const float textAlpha = uiRendState->pageAlpha;
-    const char* text = P_GetMapNiceName();
+    const char* text = P_CurrentMapTitle();
     assert(obj->type == GUI_MAPNAME);
 
     if(!text) return;
@@ -2689,7 +2689,7 @@ void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
 void MapName_UpdateGeometry(uiwidget_t* obj)
 {
-    const char* text = P_GetMapNiceName();
+    const char* text = P_CurrentMapTitle();
     const float scale = .75f;
     Size2Raw textSize;
     assert(obj->type == GUI_MAPNAME);

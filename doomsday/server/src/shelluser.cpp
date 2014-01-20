@@ -123,10 +123,9 @@ void ShellUser::sendGameState()
 
         mapId = map.uri().resolvedRef();
 
-        /// @todo DD_GetVariable() is not an appropriate place to ask for this --
+        /// @todo A cvar is not an appropriate place to ask for this --
         /// should be moved to the Map class.
-        char const *name = reinterpret_cast<char const *>(DD_GetVariable(DD_MAP_NAME));
-        if(name) mapTitle = name;
+        mapTitle = Con_GetString("map-name");
     }
 
     QScopedPointer<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));

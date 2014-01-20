@@ -3259,20 +3259,30 @@ D_CMD(InspectMap)
     }
 
     Map &map = App_WorldSystem().map();
-    LOG_SCR_NOTE(_E(b) "%s" _E(.)) << Con_GetString("map-name");
+
+    LOG_SCR_NOTE(_E(b) "%s - %s")
+            << Con_GetString("map-name")
+            << Con_GetString("map-author");
     LOG_SCR_MSG("\n");
 
-    LOG_SCR_MSG(    _E(l) "Uri: "     _E(.) _E(i) "%s"/*_E(.)
-                " " _E(l) "OldUid: "  _E(.) _E(i) "%s" _E(.)*/)
-            << map.uri().asText()/*
-            << map.oldUniqueId()*/;
+    LOG_SCR_MSG(    _E(l) "Uri: "    _E(.) _E(i) "%s" _E(.)
+              /*" " _E(l) "OldUid: " _E(.) _E(i) "%s" _E(.)*/
+                    _E(l) "Music: "  _E(.) _E(i) "%i")
+            << map.uri().asText()
+            /*<< map.oldUniqueId()*/
+            << Con_GetInteger("map-music");
 
-    LOG_SCR_MSG(_E(l) "Music: " _E(.) _E(i) "%i") << Con_GetInteger("map-music");
+    if(P_MapIsCustom(map.uri().asText().toUtf8().constData()))
+    {
+        NativePath sourceFile(Str_Text(P_MapSourceFile(map.uri().asText().toUtf8().constData())));
+        LOG_SCR_MSG(_E(l) "Source: " _E(.) _E(i) "\"%s\"") << sourceFile.pretty();
+    }
+
     LOG_SCR_MSG("\n");
 
     if(map.isEditable())
     {
-        LOG_MSG(_E(D) "Editing Enabled");
+        LOG_MSG(_E(D) "Editing " _E(b) "Enabled");
     }
 
     LOG_SCR_MSG(_E(D) "Elements:");

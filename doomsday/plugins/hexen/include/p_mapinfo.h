@@ -71,7 +71,16 @@ uint            P_GetMapWarpTrans(uint map);
 uint            P_GetMapNextMap(uint map);
 materialid_t    P_GetMapSky1Material(uint map);
 materialid_t    P_GetMapSky2Material(uint map);
-char*           P_GetMapName(uint map);
+
+/**
+ * Lookip the title of the specified @a map in MAPINFO.
+ *
+ * @param map  Logical number of the map to lookup.
+ *
+ * @return  Full title of the map.
+ */
+char const *P_MapInfoMapTitle(uint map);
+
 float           P_GetMapSky1ScrollDelta(uint map);
 float           P_GetMapSky2ScrollDelta(uint map);
 dd_bool         P_GetMapDoubleSky(uint map);

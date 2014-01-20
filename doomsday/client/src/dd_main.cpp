@@ -2439,35 +2439,6 @@ void *DD_GetVariable(int ddvalue)
         value = App_WorldSystem().hasMap()? App_WorldSystem().map().polyobjCount() : 0;
         return &value;
 
-    case DD_MAP_NAME:
-        if(App_WorldSystem().hasMap())
-        {
-            de::Uri mapUri = App_WorldSystem().map().uri();
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-            if(mapInfo && mapInfo->name[0])
-            {
-                int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
-                if(id != -1)
-                {
-                    return defs.text[id].text;
-                }
-                return mapInfo->name;
-            }
-        }
-        return NULL;
-
-    case DD_MAP_AUTHOR:
-        if(App_WorldSystem().hasMap())
-        {
-            de::Uri mapUri = App_WorldSystem().map().uri();
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(reinterpret_cast<uri_s *>(&mapUri));
-            if(mapInfo && mapInfo->author[0])
-            {
-                return mapInfo->author;
-            }
-        }
-        return NULL;
-
     case DD_MAP_MIN_X:
         valueD = App_WorldSystem().hasMap()? App_WorldSystem().map().bounds().minX : 0;
         return &valueD;

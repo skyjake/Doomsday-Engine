@@ -27,20 +27,15 @@
  * Intermission/stat screens - jHeretic specific.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
-#include <string.h>
-
 #include "jheretic.h"
 
 #include "hu_stuff.h"
 #include "d_net.h"
 #include "am_map.h"
+#include "p_mapsetup.h"
 #include "p_tick.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
+#include <string.h>
 
 typedef enum gametype_e {
     SINGLE,
@@ -54,10 +49,6 @@ typedef struct teaminfo_s {
     int             totalFrags;
 } teaminfo_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 void    IN_DrawOldLevel(void);
 void    IN_DrawYAH(void);
 void    IN_DrawStatBack(void);
@@ -65,18 +56,10 @@ void    IN_DrawSingleStats(void);
 void    IN_DrawCoopStats(void);
 void    IN_DrawDMStats(void);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 dd_bool intermission;
 
 int     interState = 0;
 int     interTime = -1;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Used for timing of background animation.
 static int bcnt;
@@ -152,8 +135,6 @@ static Point2Raw YAHspot[3][9] = {
      }
 };
 
-// CODE --------------------------------------------------------------------
-
 void WI_Register(void)
 {
     cvartemplate_t cvars[] = {
@@ -190,7 +171,7 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, f
     }
 }
 
-void WI_initVariables(wbstartstruct_t * wbstartstruct)
+void WI_initVariables(wbstartstruct_t *wbstartstruct)
 {
     wbs = wbstartstruct;
 
@@ -680,7 +661,7 @@ void IN_DrawOldLevel(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
@@ -734,7 +715,7 @@ void IN_DrawYAH(void)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
-    FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->nextMap), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
@@ -769,7 +750,7 @@ void IN_DrawSingleStats(void)
     FR_DrawTextXY3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -881,7 +862,7 @@ void IN_DrawSingleStats(void)
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->nextMap), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -908,7 +889,7 @@ void IN_DrawCoopStats(void)
     FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);

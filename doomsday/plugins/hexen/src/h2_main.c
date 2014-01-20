@@ -466,7 +466,7 @@ void X_PostInit(void)
     // Are we autostarting?
     if(autoStart)
     {
-        App_Log(DE2_LOG_NOTE, "Autostart in Map %d (\"%s\":%d), Skill %d", warpMap+1, P_GetMapName(startMap), startMap+1, startSkill + 1);
+        App_Log(DE2_LOG_NOTE, "Autostart in Map %d (%d), Skill %d", warpMap+1, startMap+1, startSkill + 1);
     }
 
     // Validate episode and map.

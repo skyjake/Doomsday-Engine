@@ -46,11 +46,12 @@ void P_FinalizeMapChange(Uri const *uri);
  */
 void P_SetupMap(Uri *uri);
 
-char const *P_GetMapNiceName(void);
+char const *P_MapAuthor(uint episode, uint map, dd_bool supressGameAuthor);
+char const *P_MapTitle(uint episode, uint map);
+patchid_t P_MapTitlePatch(uint episode, uint map);
 
-patchid_t P_FindMapTitlePatch(uint episode, uint map);
-
-char const *P_GetMapAuthor(dd_bool supressGameAuthor);
+char const *P_CurrentMapAuthor(dd_bool supressGameAuthor);
+char const *P_CurrentMapTitle(void);
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets(void);

@@ -424,14 +424,7 @@ void P_PutMapSongLump(uint map, char *lumpName)
     strncpy(MapInfo[map].songLump, lumpName, sizeof(MapInfo[map].songLump));
 }
 
-/**
- * Retrieve the name of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              Ptr to string containing the name of the map.
- */
-char *P_GetMapName(uint map)
+char const *P_MapInfoMapTitle(uint map)
 {
     return MapInfo[qualifyMap(map)].name;
 }

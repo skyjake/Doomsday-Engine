@@ -531,7 +531,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     const float scale = .75f;
     const float textAlpha = uiRendState->pageAlpha;
     const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_GetMapNiceName());
+    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_CurrentMapTitle());
 
     if(!text && 0 == patch) return;
 
@@ -556,7 +556,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
 void MapName_UpdateGeometry(uiwidget_t* obj)
 {
     const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_GetMapNiceName());
+    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_CurrentMapTitle());
     const float scale = .75f;
     patchinfo_t info;
     assert(obj && obj->type == GUI_MAPNAME);

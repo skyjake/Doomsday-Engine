@@ -32,6 +32,7 @@
 
 #include "hu_stuff.h"
 #include "d_net.h"
+#include "p_mapsetup.h"
 #include "p_start.h"
 
 #define NUMMAPS                 (9)
@@ -121,19 +122,9 @@ static void drawFinishedTitle(void)
 {
     int x = SCREENWIDTH/2, y = WI_TITLEY;
     uint mapNum = wbs->currentMap;
-    char* mapName = (char*) DD_GetVariable(DD_MAP_NAME);
+    char const *mapTitle = P_CurrentMapTitle();
     patchid_t patchId;
     patchinfo_t info;
-
-    // Skip the Map #.
-    if(mapName)
-    {
-        char* ptr = strchr(mapName, ':');
-        if(ptr)
-        {
-            mapName = M_SkipWhite(ptr + 1);
-        }
-    }
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -142,7 +133,7 @@ static void drawFinishedTitle(void)
 
     // Draw <MapName>
     patchId = (mapNum < pMapNamesSize? pMapNames[mapNum] : 0);
-    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    WI_DrawPatchXY3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapTitle), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.geometry.size.height) / 4;
 
