@@ -256,6 +256,8 @@ private:
  * Utility that keeps track of which entry points have been bound and unregisters
  * them when the instance is destroyed. Use as a member in a class that registers
  * native entry points.
+ *
+ * @ingroup script
  */
 class DENG2_PUBLIC Binder
 {
