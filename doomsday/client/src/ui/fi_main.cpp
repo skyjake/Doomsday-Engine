@@ -121,6 +121,9 @@ static void stopFinale(finale_t* f)
 {
     if(!f || !f->active)
         return;
+
+    LOGDEV_SCR_VERBOSE("Stopping finaleid %i") << f->id;
+
     f->active = false;
     P_DestroyFinaleInterpreter(f->_interpreter);
 }
@@ -327,6 +330,7 @@ finaleid_t FI_Execute(const char* script, int flags)
 void FI_ScriptTerminate(finaleid_t id)
 {
     DENG_ASSERT(inited);
+    LOGDEV_SCR_VERBOSE("Terminating finaleid %i") << id;
     finale_t *f = getFinaleById(id);
     if(!f) return;
     if(f->active)

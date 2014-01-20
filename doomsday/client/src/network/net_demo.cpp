@@ -338,7 +338,7 @@ dd_bool Demo_BeginPlayback(const char* fileName)
     playdemo = lzOpen(Str_Text(&buf), "rp");
     Str_Free(&buf);
     if(!playdemo)
-        return true; /// @todo Demos not working currently, so no need to report error. -jk
+        return false;
 
     // OK, let's begin the demo.
     playback = true;

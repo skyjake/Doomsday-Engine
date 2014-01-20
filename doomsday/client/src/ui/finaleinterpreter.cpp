@@ -2299,14 +2299,18 @@ DEFFC(TextScale)
 
 DEFFC(PlayDemo)
 {
+    /// @todo Demos are not supported at the moment. -jk
+#if 0
     // While playing a demo we suspend command interpretation.
     FinaleInterpreter_Suspend(fi);
 
     // Start the demo.
     if(!Con_Executef(CMDS_DDAY, true, "playdemo \"%s\"", OP_CSTRING(0)))
-    {   // Demo playback failed. Here we go again...
+    {
+        // Demo playback failed. Here we go again...
         FinaleInterpreter_Resume(fi);
     }
+#endif
 }
 
 DEFFC(Command)

@@ -522,8 +522,7 @@ void GLTarget::glBind() const
 
 void GLTarget::glRelease() const
 {
-    glBindFramebuffer(GLInfo::extensions().EXT_framebuffer_blit?
-                          GL_DRAW_FRAMEBUFFER_EXT : GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // both read and write FBOs
 
     d->updateFromProxy();
 }
