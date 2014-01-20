@@ -1033,7 +1033,7 @@ static void P_ResetWorldState()
 
 char const *P_MapTitle(uint episode, uint map)
 {
-    char const *title;
+    char const *title = 0;
 
     Uri *mapUri = G_ComposeMapUri(episode, map);
 
@@ -1083,7 +1083,7 @@ char const *P_MapTitle(uint episode, uint map)
 
 char const *P_MapAuthor(uint episode, uint map, dd_bool supressGameAuthor)
 {
-    char const *author;
+    char const *author = 0;
 
     Uri *mapUri   = G_ComposeMapUri(episode, map);
     AutoStr *path = Uri_Resolved(mapUri);
