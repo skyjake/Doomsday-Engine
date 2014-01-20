@@ -73,7 +73,7 @@ materialid_t    P_GetMapSky1Material(uint map);
 materialid_t    P_GetMapSky2Material(uint map);
 
 /**
- * Lookip the title of the specified @a map in MAPINFO.
+ * Lookup the title of the specified @a map in MAPINFO.
  *
  * @param map  Logical number of the map to lookup.
  *
