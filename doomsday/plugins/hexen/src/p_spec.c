@@ -64,7 +64,7 @@ dd_bool doubleSky;
 static dd_bool mapHasLightning;
 static int nextLightningFlash;
 static int lightningFlash;
-static float* lightningLightLevels;
+static float *lightningLightLevels;
 
 void P_InitLava(void)
 {
@@ -76,16 +76,17 @@ void P_InitLava(void)
 
 void P_InitSky(uint map)
 {
-    int                 ival;
-    float               fval;
+    int ival;
+    float fval;
 
-    sky1Material = P_GetMapSky1Material(map);
-    sky2Material = P_GetMapSky2Material(map);
-    sky1ScrollDelta = P_GetMapSky1ScrollDelta(map);
-    sky2ScrollDelta = P_GetMapSky2ScrollDelta(map);
+    mapinfo_t const *mapInfo = P_MapInfo(map);
+    sky1Material     = mapInfo->sky1Material;
+    sky2Material     = mapInfo->sky2Material;
+    sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
+    sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
     sky1ColumnOffset = 0;
     sky2ColumnOffset = 0;
-    doubleSky = P_GetMapDoubleSky(map);
+    doubleSky        = mapInfo->doubleSky;
 
     if(!IS_DEDICATED)
     {
@@ -995,7 +996,7 @@ void P_InitLightning(void)
 {
     int i, secCount;
 
-    if(!P_GetMapLightning(gameMap))
+    if(!P_MapInfo(gameMap)->lightning)
     {
         mapHasLightning = false;
         lightningFlash = 0;

@@ -1,67 +1,35 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_mapinfo.c  Hexen MAPINFO parsing.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * p_mapinfo.c: MAPINFO lump support.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
+#include "jhexen.h"
+#include "p_mapinfo.h"
+#include "r_common.h"
 #include <stdio.h>
 #include <string.h>
 
-#include "jhexen.h"
-
-#include "r_common.h"
-
-// MACROS ------------------------------------------------------------------
-
 #define MAPINFO_SCRIPT_NAME "MAPINFO"
 
-#define UNKNOWN_MAP_NAME "DEVELOPMENT MAP"
-#define DEFAULT_SONG_LUMP "DEFSONG"
-#define DEFAULT_FADE_TABLE "COLORMAP"
-
-// TYPES -------------------------------------------------------------------
-
-typedef struct mapinfo_s {
-    dd_bool         fromMAPINFO;    ///< The data for this was read from the MAPINFO lump.
-    short           cluster;
-    uint            warpTrans;
-    uint            nextMap;
-    short           cdTrack;
-    char            name[32];
-    materialid_t    sky1Material;
-    materialid_t    sky2Material;
-    float           sky1ScrollDelta;
-    float           sky2ScrollDelta;
-    dd_bool         doubleSky;
-    dd_bool         lightning;
-    int             fadetable;
-    char            songLump[10];
-} mapinfo_t;
+#define UNKNOWN_MAP_NAME    "DEVELOPMENT MAP"
+#define DEFAULT_SONG_LUMP   "DEFSONG"
+#define DEFAULT_FADE_TABLE  "COLORMAP"
 
 enum {
     MCMD_NONE,
@@ -82,21 +50,6 @@ enum {
     MCMD_CD_TITLETRACK,
     NUM_MAP_CMDS
 };
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void setSongCDTrack(int index, int track);
-static uint qualifyMap(uint map);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static mapinfo_t MapInfo[99];
 static uint mapCount;
@@ -119,6 +72,7 @@ static char *mapCmdNames[] = {
     "CD_TITLE_TRACK",
     NULL
 };
+
 static int mapCmdIDs[] = {
     MCMD_SKY1,
     MCMD_SKY2,
@@ -139,7 +93,7 @@ static int mapCmdIDs[] = {
 
 static int cdNonMapTracks[6]; // Non-map specific song cd track numbers
 
-static char* cdSongDefIDs[] =  // Music defs that correspond the above.
+static char *cdSongDefIDs[] = // Music defs that correspond the above.
 {
     "startup",
     "hall",
@@ -149,41 +103,55 @@ static char* cdSongDefIDs[] =  // Music defs that correspond the above.
     "hexen"
 };
 
-// CODE --------------------------------------------------------------------
+static uint qualifyMap(uint map)
+{
+    return (map >= mapCount) ? 0 : map;
+}
 
-/**
- * Initializes the MapInfo database.
- * All MAPINFO lumps are then parsed and stored into the database.
- *
- * Called by P_Init()
- */
+static void setSongCDTrack(int index, int track)
+{
+    int cdTrack = track;
+
+    App_Log(DE2_DEV_RES_VERBOSE, "setSongCDTrack: index=%i, track=%i", index, track);
+
+    // Set the internal array.
+    cdNonMapTracks[index] = cdTrack;
+
+    // Update the corresponding Doomsday definition.
+    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, cdSongDefIDs[index], 0),
+            DD_CD_TRACK, &cdTrack);
+}
+
 void P_InitMapInfo(void)
 {
     uint map, mapMax = 0;
     int mcmdValue;
     char songMulch[10];
     mapinfo_t defMapInfo;
-    mapinfo_t* info;
+    mapinfo_t *info;
 
     memset(&MapInfo, 0, sizeof(MapInfo));
 
     // Configure the defaults
-    defMapInfo.fromMAPINFO = false; // just default values
-    defMapInfo.cluster = 0;
-    defMapInfo.warpTrans = 0;
-    defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
-    defMapInfo.cdTrack = 1;
-    defMapInfo.sky1Material = Materials_ResolveUriCString(gameMode == hexen_demo || gameMode == hexen_betademo? "Textures:SKY2" : "Textures:SKY1");
-    defMapInfo.sky2Material = defMapInfo.sky1Material;
+    defMapInfo.usingDefaults   = true;
+
+    defMapInfo.cluster         = 0;
+    defMapInfo.warpTrans       = 0;
+    defMapInfo.nextMap         = 0; // Always go to map 0 if not specified.
+    defMapInfo.cdTrack         = 1;
+    defMapInfo.sky1Material    = Materials_ResolveUriCString(gameMode == hexen_demo || gameMode == hexen_betademo? "Textures:SKY2" : "Textures:SKY1");
+    defMapInfo.sky2Material    = defMapInfo.sky1Material;
     defMapInfo.sky1ScrollDelta = 0;
     defMapInfo.sky2ScrollDelta = 0;
-    defMapInfo.doubleSky = false;
-    defMapInfo.lightning = false;
-    defMapInfo.fadetable = W_GetLumpNumForName(DEFAULT_FADE_TABLE);
-    strcpy(defMapInfo.name, UNKNOWN_MAP_NAME);
+    defMapInfo.doubleSky       = false;
+    defMapInfo.lightning       = false;
+    defMapInfo.fadeTable       = W_GetLumpNumForName(DEFAULT_FADE_TABLE);
+    strcpy(defMapInfo.title, UNKNOWN_MAP_NAME);
 
     for(map = 0; map < 99; ++map)
+    {
         MapInfo[map].warpTrans = 0;
+    }
 
     SC_Open(MAPINFO_SCRIPT_NAME);
     while(SC_GetString())
@@ -209,14 +177,14 @@ void P_InitMapInfo(void)
         strcpy(info->songLump, songMulch);
 
         // This information has been parsed from MAPINFO.
-        info->fromMAPINFO = true;
+        info->usingDefaults = false;
 
         // The warp translation defaults to the map number
         info->warpTrans = map;
 
         // Map name must follow the number
         SC_MustGetString();
-        strcpy(info->name, sc_String);
+        strcpy(info->title, sc_String);
 
         // Process optional tokens
         while(SC_GetString())
@@ -262,7 +230,7 @@ void P_InitMapInfo(void)
 
             case MCMD_SKY1: {
                 ddstring_t path;
-                Uri* uri;
+                Uri *uri;
 
                 SC_MustGetString();
                 Str_Init(&path);
@@ -276,11 +244,11 @@ void P_InitMapInfo(void)
 
                 SC_MustGetNumber();
                 info->sky1ScrollDelta = (float) sc_Number / 256;
-                break;
-              }
+                break; }
+
             case MCMD_SKY2: {
                 ddstring_t path;
-                Uri* uri;
+                Uri *uri;
 
                 SC_MustGetString();
                 Str_Init(&path);
@@ -294,8 +262,8 @@ void P_InitMapInfo(void)
 
                 SC_MustGetNumber();
                 info->sky2ScrollDelta = (float) sc_Number / 256;
-                break;
-              }
+                break; }
+
             case MCMD_DOUBLESKY:
                 info->doubleSky = true;
                 break;
@@ -306,7 +274,7 @@ void P_InitMapInfo(void)
 
             case MCMD_FADETABLE:
                 SC_MustGetString();
-                info->fadetable = W_GetLumpNumForName(sc_String);
+                info->fadeTable = W_GetLumpNumForName(sc_String);
                 break;
 
             case MCMD_CD_STARTTRACK:
@@ -324,7 +292,7 @@ void P_InitMapInfo(void)
             }
         }
 
-        App_Log(DE2_DEV_RES_MSG, "MAPINFO: map%i \"%s\" warp:%i", map, info->name, info->warpTrans);
+        App_Log(DE2_DEV_RES_MSG, "MAPINFO: map%i \"%s\" warp:%i", map, info->title, info->warpTrans);
 
         mapMax = map > mapMax ? map : mapMax;
     }
@@ -333,9 +301,6 @@ void P_InitMapInfo(void)
     mapCount = mapMax+1;
 }
 
-/**
- * Special early initializer needed to start sound before R_InitRefresh()
- */
 void P_InitMapMusicInfo(void)
 {
     uint i;
@@ -348,23 +313,14 @@ void P_InitMapMusicInfo(void)
     mapCount = 98;
 }
 
-static void setSongCDTrack(int index, int track)
+mapinfo_t *P_MapInfo(uint map)
 {
-    int         cdTrack = track;
-
-    App_Log(DE2_DEV_RES_VERBOSE, "setSongCDTrack: index=%i, track=%i", index, track);
-
-    // Set the internal array.
-    cdNonMapTracks[index] = cdTrack;
-
-    // Update the corresponding Doomsday definition.
-    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, cdSongDefIDs[index], 0),
-            DD_CD_TRACK, &cdTrack);
+    return &MapInfo[qualifyMap(map)];
 }
 
-static __inline uint qualifyMap(uint map)
+uint P_MapInfoCount()
 {
-    return (map >= mapCount) ? 0 : map;
+    return mapCount;
 }
 
 uint P_TranslateMapIfExists(uint map)
@@ -374,8 +330,8 @@ uint P_TranslateMapIfExists(uint map)
 
     for(i = 0; i < 99; ++i)
     {
-        const mapinfo_t* info = &MapInfo[i];
-        if(!info->fromMAPINFO) continue; // Ignoring, undefined values.
+        mapinfo_t const *info = &MapInfo[i];
+        if(info->usingDefaults) continue; // Ignoring, undefined values.
         if(info->warpTrans == map)
         {
             if(info->cluster)
@@ -408,168 +364,6 @@ uint P_TranslateMap(uint map)
     return translated;
 }
 
-/**
- * Set the song lump name of a map.
- *
- * NOTE: Cannot be used to alter the default map #0.
- *
- * @param map           The map (logical number) to be changed.
- * @param lumpName      The lumpName to be set.
- */
-void P_PutMapSongLump(uint map, char *lumpName)
-{
-    if(map >= mapCount)
-        return;
-
-    strncpy(MapInfo[map].songLump, lumpName, sizeof(MapInfo[map].songLump));
-}
-
-char const *P_MapInfoMapTitle(uint map)
-{
-    return MapInfo[qualifyMap(map)].name;
-}
-
-/**
- * Retrieve the cluster number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The cluster number of the map.
- */
-int P_GetMapCluster(uint map)
-{
-    return (int) MapInfo[qualifyMap(map)].cluster;
-}
-
-/**
- * Retrieve the CD track number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The CD track number for the map.
- */
-int P_GetMapCDTrack(uint map)
-{
-    return (int) MapInfo[qualifyMap(map)].cdTrack;
-}
-
-/**
- * Retrieve the map warp number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The warp number of the map.
- */
-uint P_GetMapWarpTrans(uint map)
-{
-    return MapInfo[qualifyMap(map)].warpTrans;
-}
-
-/**
- * Retrieve the next map number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The next map number of the map.
- */
-uint P_GetMapNextMap(uint map)
-{
-    return MapInfo[qualifyMap(map)].nextMap;
-}
-
-/**
- * Retrieve the sky1 material of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The sky1 material num of the map.
- */
-materialid_t P_GetMapSky1Material(uint map)
-{
-    return MapInfo[qualifyMap(map)].sky1Material;
-}
-
-/**
- * Retrieve the sky2 material of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The sky2 material num of the map.
- */
-materialid_t P_GetMapSky2Material(uint map)
-{
-    return MapInfo[qualifyMap(map)].sky2Material;
-}
-
-/**
- * Retrieve the sky1 scroll delta of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The sky1 scroll delta of the map.
- */
-float P_GetMapSky1ScrollDelta(uint map)
-{
-    return MapInfo[qualifyMap(map)].sky1ScrollDelta;
-}
-
-/**
- * Retrieve the sky2 scroll delta of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The sky2 scroll delta of the map.
- */
-float P_GetMapSky2ScrollDelta(uint map)
-{
-    return MapInfo[qualifyMap(map)].sky2ScrollDelta;
-}
-
-/**
- * Retrieve the value of the double sky property of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              @c true, if the map is set to doublesky.
- */
-dd_bool P_GetMapDoubleSky(uint map)
-{
-    return MapInfo[qualifyMap(map)].doubleSky;
-}
-
-/**
- * Retrieve the value of the lighting property of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              @c true, if the map is set to lightning.
- */
-dd_bool P_GetMapLightning(uint map)
-{
-    return MapInfo[qualifyMap(map)].lightning;
-}
-
-/**
- * Retrieve the fadetable lump id of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The lump id used for the fadetable for the map.
- */
-int P_GetMapFadeTable(uint map)
-{
-    return MapInfo[qualifyMap(map)].fadetable;
-}
-
-/**
- * Retrieve the song lump name for the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              @c NULL, if the map is set to use the
- *                      default song lump, else a ptr to a string
- *                      containing the name of the song lump.
- */
 char *P_GetMapSongLump(uint map)
 {
     if(!strcasecmp(MapInfo[qualifyMap(map)].songLump, DEFAULT_SONG_LUMP))
@@ -582,73 +376,31 @@ char *P_GetMapSongLump(uint map)
     }
 }
 
-/**
- * Retrieve the CD start track number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The CD start track number of the map.
- */
 int P_GetCDStartTrack(void)
 {
     return cdNonMapTracks[MCMD_CD_STARTTRACK - MCMD_CD_STARTTRACK];
 }
 
-/**
- * Retrieve the CD end1 track number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The CD end1 track number of the map.
- */
 int P_GetCDEnd1Track(void)
 {
     return cdNonMapTracks[MCMD_CD_END1TRACK - MCMD_CD_STARTTRACK];
 }
 
-/**
- * Retrieve the CD end2 track number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The CD end2 track number of the map.
- */
 int P_GetCDEnd2Track(void)
 {
     return cdNonMapTracks[MCMD_CD_END2TRACK - MCMD_CD_STARTTRACK];
 }
 
-/**
- * Retrieve the CD end3 track number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The CD end3 track number of the map.
- */
 int P_GetCDEnd3Track(void)
 {
     return cdNonMapTracks[MCMD_CD_END3TRACK - MCMD_CD_STARTTRACK];
 }
 
-/**
- * Retrieve the CD intermission track number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The CD intermission number of the map.
- */
 int P_GetCDIntermissionTrack(void)
 {
     return cdNonMapTracks[MCMD_CD_INTERTRACK - MCMD_CD_STARTTRACK];
 }
 
-/**
- * Retrieve the CD title track number of the given map.
- *
- * @param map           The map (logical number) to be queried.
- *
- * @return              The CD title track number of the map.
- */
 int P_GetCDTitleTrack(void)
 {
     return cdNonMapTracks[MCMD_CD_TITLETRACK - MCMD_CD_STARTTRACK];

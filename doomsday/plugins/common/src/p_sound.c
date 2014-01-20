@@ -32,7 +32,7 @@ void S_MapMusic(uint episode, uint map)
 {
 #ifdef __JHEXEN__
     int idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    int cdTrack = P_GetMapCDTrack(map);
+    int cdTrack = P_MapInfo(map)->cdTrack;
 
     // Update the 'currentmap' music definition.
 
@@ -113,11 +113,19 @@ void S_ParseSndInfoLump(void)
                 }
                 else if(!stricmp(sc_String, "$MAP"))
                 {
+                    uint map;
+                    char const *lumpName;
+
                     SC_MustGetNumber();
+                    map = sc_Number - 1;
+
                     SC_MustGetString();
-                    if(sc_Number - 1 >= 0)
+                    lumpName = sc_String;
+
+                    if(map >= 0 && map >= P_MapInfoCount())
                     {
-                        P_PutMapSongLump(sc_Number - 1, sc_String);
+                        mapinfo_t *mapInfo = P_MapInfo(map);
+                        strncpy(mapInfo->songLump, lumpName, sizeof(mapInfo->songLump));
                     }
                 }
                 continue;

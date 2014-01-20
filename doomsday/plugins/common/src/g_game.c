@@ -1163,7 +1163,7 @@ static void printMapBanner(void)
     {
         char buf[64];
 #if __JHEXEN__
-        dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", P_GetMapWarpTrans(gameMap)+1, gameMap+1, title);
+        dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", P_MapInfo(gameMap)->warpTrans + 1, gameMap + 1, title);
 #else
         dd_snprintf(buf, 64, "Map %u: " DE2_ESC(b) "%s", gameMap+1, title);
 #endif
@@ -1272,7 +1272,7 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
     }
 
 #if __JHEXEN__
-    fadeTable = P_GetMapFadeTable(gameMap);
+    fadeTable = P_MapInfo(gameMap)->fadetable;
     if(fadeTable == W_GetLumpNumForName("COLORMAP"))
     {
         // We don't want fog in this case.
@@ -1768,7 +1768,7 @@ void G_PlayerLeaveMap(int player)
     dd_bool newCluster;
 
 #if __JHEXEN__
-    newCluster = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
+    newCluster = (P_MapInfo(gameMap)->cluster != P_MapInfo(nextMap)->cluster);
 #else
     newCluster = true;
 #endif
@@ -2603,7 +2603,7 @@ void G_DoLeaveMap(void)
     if(deathmatch) revisit = false;
 
     // Same cluster?
-    if(P_GetMapCluster(gameMap) == P_GetMapCluster(nextMap))
+    if(P_MapInfo(gameMap)->cluster == P_MapInfo(nextMap)->cluster)
     {
         if(!deathmatch)
         {
@@ -3224,7 +3224,10 @@ dd_bool G_ValidateMap(uint *episode, uint *map)
 uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
 {
 #if __JHEXEN__
-    return G_GetMapNumber(episode, P_GetMapNextMap(map));
+    return G_GetMapNumber(episode, P_MapInfo(map)->nextMap);
+
+    DENG_UNUSED(secretExit);
+
 #elif __JDOOM64__
     if(secretExit)
     {
@@ -3457,7 +3460,7 @@ int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&
        !(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT) &&
-       P_GetMapCluster(map) != P_GetMapCluster(nextMap))
+       P_MapInfo(map)->cluster != P_MapInfo(nextMap)->cluster)
     {
         return false;
     }

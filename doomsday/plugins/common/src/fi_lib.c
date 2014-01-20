@@ -127,7 +127,7 @@ static void initStateConditions(fi_state_t* s)
     s->conditions.secret = false;
 
     // Current hub has been completed?
-    s->conditions.leave_hub = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
+    s->conditions.leave_hub = (P_MapInfo(gameMap)->cluster != P_MapInfo(nextMap)->cluster);
 
     App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);
 #else
