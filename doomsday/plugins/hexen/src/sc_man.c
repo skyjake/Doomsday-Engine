@@ -351,19 +351,6 @@ int SC_MatchString(char** strings)
     return -1;
 }
 
-int SC_MustMatchString(char** strings)
-{
-    int                 i;
-
-    i = SC_MatchString(strings);
-    if(i == -1)
-    {
-        SC_ScriptError(NULL);
-    }
-
-    return i;
-}
-
 dd_bool SC_Compare(char* text)
 {
     if(strcasecmp(text, sc_String) == 0)

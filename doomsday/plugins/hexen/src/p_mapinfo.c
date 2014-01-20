@@ -25,83 +25,20 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAPINFO_SCRIPT_NAME "MAPINFO"
-
-#define UNKNOWN_MAP_NAME    "DEVELOPMENT MAP"
-#define DEFAULT_SONG_LUMP   "DEFSONG"
-#define DEFAULT_FADE_TABLE  "COLORMAP"
-
 enum {
-    MCMD_NONE,
-    MCMD_SKY1,
-    MCMD_SKY2,
-    MCMD_LIGHTNING,
-    MCMD_FADETABLE,
-    MCMD_DOUBLESKY,
-    MCMD_CLUSTER,
-    MCMD_WARPTRANS,
-    MCMD_NEXT,
-    MCMD_CDTRACK,
-    MCMD_CD_STARTTRACK,
-    MCMD_CD_END1TRACK,
-    MCMD_CD_END2TRACK,
-    MCMD_CD_END3TRACK,
-    MCMD_CD_INTERTRACK,
-    MCMD_CD_TITLETRACK,
-    NUM_MAP_CMDS
+    CD_START,
+    CD_END1,
+    CD_END2,
+    CD_END3,
+    CD_INTERLUDE,
+    CD_TITLE,
+    NUM_CD_TRACKS
 };
+
+static int cdTracks[NUM_CD_TRACKS]; // Non-map specific song cd track numbers
 
 static mapinfo_t MapInfo[99];
 static uint mapCount;
-
-static char *mapCmdNames[] = {
-    "SKY1",
-    "SKY2",
-    "DOUBLESKY",
-    "LIGHTNING",
-    "FADETABLE",
-    "CLUSTER",
-    "WARPTRANS",
-    "NEXT",
-    "CDTRACK",
-    "CD_START_TRACK",
-    "CD_END1_TRACK",
-    "CD_END2_TRACK",
-    "CD_END3_TRACK",
-    "CD_INTERMISSION_TRACK",
-    "CD_TITLE_TRACK",
-    NULL
-};
-
-static int mapCmdIDs[] = {
-    MCMD_SKY1,
-    MCMD_SKY2,
-    MCMD_DOUBLESKY,
-    MCMD_LIGHTNING,
-    MCMD_FADETABLE,
-    MCMD_CLUSTER,
-    MCMD_WARPTRANS,
-    MCMD_NEXT,
-    MCMD_CDTRACK,
-    MCMD_CD_STARTTRACK,
-    MCMD_CD_END1TRACK,
-    MCMD_CD_END2TRACK,
-    MCMD_CD_END3TRACK,
-    MCMD_CD_INTERTRACK,
-    MCMD_CD_TITLETRACK
-};
-
-static int cdNonMapTracks[6]; // Non-map specific song cd track numbers
-
-static char *cdSongDefIDs[] = // Music defs that correspond the above.
-{
-    "startup",
-    "hall",
-    "orb",
-    "chess",
-    "hub",
-    "hexen"
-};
 
 static uint qualifyMap(uint map)
 {
@@ -110,22 +47,29 @@ static uint qualifyMap(uint map)
 
 static void setSongCDTrack(int index, int track)
 {
+    static char *defaultTracks[] = {
+        "startup",
+        "hall",
+        "orb",
+        "chess",
+        "hub",
+        "hexen"
+    };
     int cdTrack = track;
 
     App_Log(DE2_DEV_RES_VERBOSE, "setSongCDTrack: index=%i, track=%i", index, track);
 
     // Set the internal array.
-    cdNonMapTracks[index] = cdTrack;
+    cdTracks[index] = cdTrack;
 
     // Update the corresponding Doomsday definition.
-    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, cdSongDefIDs[index], 0),
+    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, defaultTracks[index], 0),
             DD_CD_TRACK, &cdTrack);
 }
 
 void P_InitMapInfo(void)
 {
     uint map, mapMax = 0;
-    int mcmdValue;
     char songMulch[10];
     mapinfo_t defMapInfo;
     mapinfo_t *info;
@@ -145,15 +89,15 @@ void P_InitMapInfo(void)
     defMapInfo.sky2ScrollDelta = 0;
     defMapInfo.doubleSky       = false;
     defMapInfo.lightning       = false;
-    defMapInfo.fadeTable       = W_GetLumpNumForName(DEFAULT_FADE_TABLE);
-    strcpy(defMapInfo.title, UNKNOWN_MAP_NAME);
+    defMapInfo.fadeTable       = W_GetLumpNumForName("COLORMAP");
+    strcpy(defMapInfo.title, "DEVELOPMENT MAP"); // Unknown.
 
     for(map = 0; map < 99; ++map)
     {
         MapInfo[map].warpTrans = 0;
     }
 
-    SC_Open(MAPINFO_SCRIPT_NAME);
+    SC_Open("MAPINFO");
     while(SC_GetString())
     {
         if(SC_Compare("MAP") == false)
@@ -190,45 +134,14 @@ void P_InitMapInfo(void)
         while(SC_GetString())
         {
             if(SC_Compare("MAP"))
-            {   // Start next map definition.
+            {
+                // Start of the next map definition.
                 SC_UnGet();
                 break;
             }
 
-            mcmdValue = mapCmdIDs[SC_MustMatchString(mapCmdNames)];
-            switch(mcmdValue)
+            if(SC_Compare("SKY1"))
             {
-            case MCMD_CLUSTER:
-                SC_MustGetNumber();
-                if(sc_Number < 1)
-                {
-                    char buf[40];
-                    dd_snprintf(buf, 40, "Invalid cluster %i", sc_Number);
-                    SC_ScriptError(buf);
-                }
-                info->cluster = sc_Number;
-                break;
-
-            case MCMD_WARPTRANS:
-                SC_MustGetNumber();
-                if(sc_Number < 1 || sc_Number > 99)
-                    SC_ScriptError(NULL);
-                info->warpTrans = (unsigned) sc_Number - 1;
-                break;
-
-            case MCMD_NEXT:
-                SC_MustGetNumber();
-                if(sc_Number < 1 || sc_Number > 99)
-                    SC_ScriptError(NULL);
-                info->nextMap = (unsigned) sc_Number - 1;
-                break;
-
-            case MCMD_CDTRACK:
-                SC_MustGetNumber();
-                info->cdTrack = sc_Number;
-                break;
-
-            case MCMD_SKY1: {
                 ddstring_t path;
                 Uri *uri;
 
@@ -244,9 +157,10 @@ void P_InitMapInfo(void)
 
                 SC_MustGetNumber();
                 info->sky1ScrollDelta = (float) sc_Number / 256;
-                break; }
-
-            case MCMD_SKY2: {
+                continue;
+            }
+            if(SC_Compare("SKY2"))
+            {
                 ddstring_t path;
                 Uri *uri;
 
@@ -262,34 +176,98 @@ void P_InitMapInfo(void)
 
                 SC_MustGetNumber();
                 info->sky2ScrollDelta = (float) sc_Number / 256;
-                break; }
-
-            case MCMD_DOUBLESKY:
+                continue;
+            }
+            if(SC_Compare("DOUBLESKY"))
+            {
                 info->doubleSky = true;
-                break;
-
-            case MCMD_LIGHTNING:
+                continue;
+            }
+            if(SC_Compare("LIGHTNING"))
+            {
                 info->lightning = true;
-                break;
-
-            case MCMD_FADETABLE:
+                continue;
+            }
+            if(SC_Compare("FADETABLE"))
+            {
                 SC_MustGetString();
                 info->fadeTable = W_GetLumpNumForName(sc_String);
-                break;
-
-            case MCMD_CD_STARTTRACK:
-            case MCMD_CD_END1TRACK:
-            case MCMD_CD_END2TRACK:
-            case MCMD_CD_END3TRACK:
-            case MCMD_CD_INTERTRACK:
-            case MCMD_CD_TITLETRACK:
-                SC_MustGetNumber();
-                setSongCDTrack(mcmdValue - MCMD_CD_STARTTRACK, sc_Number);
-                break;
-
-            default:
-                break;
+                continue;
             }
+            if(SC_Compare("CLUSTER"))
+            {
+                SC_MustGetNumber();
+                if(sc_Number < 1)
+                {
+                    char buf[40];
+                    dd_snprintf(buf, 40, "Invalid cluster %i", sc_Number);
+                    SC_ScriptError(buf);
+                }
+                info->cluster = sc_Number;
+                continue;
+            }
+            if(SC_Compare("WARPTRANS"))
+            {
+                SC_MustGetNumber();
+                if(sc_Number < 1 || sc_Number > 99)
+                    SC_ScriptError(NULL);
+                info->warpTrans = (unsigned) sc_Number - 1;
+                continue;
+            }
+            if(SC_Compare("NEXT"))
+            {
+                SC_MustGetNumber();
+                if(sc_Number < 1 || sc_Number > 99)
+                    SC_ScriptError(NULL);
+                info->nextMap = (unsigned) sc_Number - 1;
+                continue;
+            }
+            if(SC_Compare("CDTRACK"))
+            {
+                SC_MustGetNumber();
+                info->cdTrack = sc_Number;
+                continue;
+            }
+
+            if(SC_Compare("CD_START_TRACK"))
+            {
+                SC_MustGetNumber();
+                setSongCDTrack(CD_START, sc_Number);
+                continue;
+            }
+            if(SC_Compare("CD_END1_TRACK"))
+            {
+                SC_MustGetNumber();
+                setSongCDTrack(CD_END1, sc_Number);
+                continue;
+            }
+            if(SC_Compare("CD_END2_TRACK"))
+            {
+                SC_MustGetNumber();
+                setSongCDTrack(CD_END2, sc_Number);
+                continue;
+            }
+            if(SC_Compare("CD_END3_TRACK"))
+            {
+                SC_MustGetNumber();
+                setSongCDTrack(CD_END3, sc_Number);
+                continue;
+            }
+            if(SC_Compare("CD_INTERMISSION_TRACK"))
+            {
+                SC_MustGetNumber();
+                setSongCDTrack(CD_INTERLUDE, sc_Number);
+                continue;
+            }
+            if(SC_Compare("CD_TITLE_TRACK"))
+            {
+                SC_MustGetNumber();
+                setSongCDTrack(CD_TITLE, sc_Number);
+                continue;
+            }
+
+            // An unrecognized label.
+            SC_ScriptError(NULL);
         }
 
         App_Log(DE2_DEV_RES_MSG, "MAPINFO: map%i \"%s\" warp:%i", map, info->title, info->warpTrans);
@@ -307,7 +285,7 @@ void P_InitMapMusicInfo(void)
 
     for(i = 0; i < 99; ++i)
     {
-        strcpy(MapInfo[i].songLump, DEFAULT_SONG_LUMP);
+        strcpy(MapInfo[i].songLump, "DEFSONG");
     }
 
     mapCount = 98;
@@ -366,7 +344,7 @@ uint P_TranslateMap(uint map)
 
 char *P_GetMapSongLump(uint map)
 {
-    if(!strcasecmp(MapInfo[qualifyMap(map)].songLump, DEFAULT_SONG_LUMP))
+    if(!strcasecmp(MapInfo[qualifyMap(map)].songLump, "DEFSONG"))
     {
         return NULL;
     }
@@ -378,30 +356,30 @@ char *P_GetMapSongLump(uint map)
 
 int P_GetCDStartTrack(void)
 {
-    return cdNonMapTracks[MCMD_CD_STARTTRACK - MCMD_CD_STARTTRACK];
+    return cdTracks[CD_START];
 }
 
 int P_GetCDEnd1Track(void)
 {
-    return cdNonMapTracks[MCMD_CD_END1TRACK - MCMD_CD_STARTTRACK];
+    return cdTracks[CD_END1];
 }
 
 int P_GetCDEnd2Track(void)
 {
-    return cdNonMapTracks[MCMD_CD_END2TRACK - MCMD_CD_STARTTRACK];
+    return cdTracks[CD_END2];
 }
 
 int P_GetCDEnd3Track(void)
 {
-    return cdNonMapTracks[MCMD_CD_END3TRACK - MCMD_CD_STARTTRACK];
+    return cdTracks[CD_END3];
 }
 
 int P_GetCDIntermissionTrack(void)
 {
-    return cdNonMapTracks[MCMD_CD_INTERTRACK - MCMD_CD_STARTTRACK];
+    return cdTracks[CD_INTERLUDE];
 }
 
 int P_GetCDTitleTrack(void)
 {
-    return cdNonMapTracks[MCMD_CD_TITLETRACK - MCMD_CD_STARTTRACK];
+    return cdTracks[CD_TITLE];
 }

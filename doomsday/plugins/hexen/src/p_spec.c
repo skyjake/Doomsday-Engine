@@ -84,9 +84,9 @@ void P_InitSky(uint map)
     sky2Material     = mapInfo->sky2Material;
     sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
     sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
-    sky1ColumnOffset = 0;
-    sky2ColumnOffset = 0;
     doubleSky        = mapInfo->doubleSky;
+
+    sky1ColumnOffset = sky2ColumnOffset = 0;
 
     if(!IS_DEDICATED)
     {

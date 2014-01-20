@@ -409,7 +409,6 @@ void            SC_UnGet(void);
 
 dd_bool         SC_Compare(char* text);
 int             SC_MatchString(char** strings);
-int             SC_MustMatchString(char** strings);
 void            SC_ScriptError(char* message);
 
 #ifdef __cplusplus
