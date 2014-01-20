@@ -1272,7 +1272,7 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
     }
 
 #if __JHEXEN__
-    fadeTable = P_MapInfo(gameMap)->fadetable;
+    fadeTable = P_MapInfo(gameMap)->fadeTable;
     if(fadeTable == W_GetLumpNumForName("COLORMAP"))
     {
         // We don't want fog in this case.
