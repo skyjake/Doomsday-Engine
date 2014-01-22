@@ -25,6 +25,7 @@
 #include "ui/dialogs/networksettingsdialog.h"
 #include "ui/dialogs/renderersettingsdialog.h"
 #include "ui/dialogs/vrsettingsdialog.h"
+#include "ui/dialogs/multiplayerdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/clientrootwidget.h"
@@ -57,8 +58,8 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 enum MenuItemPositions
 {
     // DE menu:
-    POS_UNLOAD            = 0,
-    POS_GAME_SEPARATOR    = 1,
+    POS_UNLOAD            = 2,
+    POS_GAME_SEPARATOR    = 3,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -375,8 +376,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::SubwidgetItem(style().images().image("updater"),  tr("Updater"),  ui::Left, makeUpdaterSettings);
 
     d->mainMenu->items()
-            << unloadMenu // hidden with null-game
-            << new ui::Item(ui::Item::Separator) // hidden with null-game
+            << new ui::SubwidgetItem(tr("Multiplayer..."), ui::Left, makePopup<MultiplayerDialog>)
+            << new ui::Item(ui::Item::Separator)
+            << unloadMenu                           // hidden with null-game
+            << new ui::Item(ui::Item::Separator)    // hidden with null-game
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)
