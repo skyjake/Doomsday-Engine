@@ -282,6 +282,11 @@ QList<Address> ServerLink::foundServers() const
     return d->allFound().keys();
 }
 
+bool ServerLink::isFound(Address const &host) const
+{
+    return d->allFound().contains(host);
+}
+
 bool ServerLink::foundServerInfo(int index, serverinfo_t *info) const
 {
     Instance::Servers all = d->allFound();

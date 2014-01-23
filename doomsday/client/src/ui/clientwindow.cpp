@@ -311,6 +311,11 @@ DENG2_OBSERVES(App,              StartupComplete)
         mode = newMode;
     }
 
+    /**
+     * Completes the initialization of the main window. This is called only after the
+     * window is created and visible, so that OpenGL operations and actions on the native
+     * window can be performed without restrictions.
+     */
     void finishMainWindowInit()
     {
 #ifdef MACOSX

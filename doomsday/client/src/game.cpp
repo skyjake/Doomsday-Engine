@@ -128,6 +128,28 @@ String const &Game::identityKey() const
     return d->identityKey;
 }
 
+String Game::logoImageId() const
+{
+    String idKey = identityKey();
+
+    /// @todo The name of the plugin should be accessible via the plugin loader.
+    String plugName;
+    if(idKey.contains("heretic"))
+    {
+        plugName = "libheretic";
+    }
+    else if(idKey.contains("hexen"))
+    {
+        plugName = "libhexen";
+    }
+    else
+    {
+        plugName = "libdoom";
+    }
+
+    return "logo.game." + plugName;
+}
+
 Path const &Game::mainConfig() const
 {
     return d->mainConfig;

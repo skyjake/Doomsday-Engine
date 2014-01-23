@@ -114,6 +114,11 @@ public:
     de::Path const &bindingConfig() const;
 
     /**
+     * Returns the identifier of the Style logo image to represent this game.
+     */
+    de::String logoImageId() const;
+
+    /**
      * Add a new manifest to the list of manifests.
      *
      * @note Registration order defines load order (among files of the same class).

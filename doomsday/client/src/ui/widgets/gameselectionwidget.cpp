@@ -85,9 +85,9 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
         {
             plugName = "libdoom";
         }
-        if(style().images().has("logo.game." + plugName))
+        if(style().images().has(game.logoImageId()))
         {
-            item->setImage(style().images().image("logo.game." + plugName));
+            item->setImage(style().images().image(game.logoImageId()));
         }
 
         return item;

@@ -64,6 +64,8 @@ public:
 
     QList<de::Address> foundServers() const;
 
+    bool isFound(de::Address const &host) const;
+
     bool foundServerInfo(de::Address const &host, serverinfo_t *info) const;
 
     bool foundServerInfo(int index, serverinfo_t *info) const;
