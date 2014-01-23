@@ -17,6 +17,7 @@
  */
 
 #include "ui/dialogs/multiplayerdialog.h"
+#include <de/SignalAction>
 
 using namespace de;
 
@@ -31,8 +32,25 @@ DENG2_PIMPL(MultiplayerDialog)
 MultiplayerDialog::MultiplayerDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
-    heading().setText(tr("Multiplayer Games"));
+    heading().setText(tr("Multiplayer"));
+
+    LabelWidget *lab = LabelWidget::newWithText(tr("Games from Master Server and local network:"), &area());
+
+    GridLayout layout(area().contentRule().left(), area().contentRule().top());
+    layout.setGridSize(1, 0);
+    //layout.setColumnAlignment(0, ui::AlignRight);
+
+    layout << *lab;
+
+    area().setContentSize(layout.width(), layout.height());
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"));
+            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
+            << new DialogButtonItem(DialogWidget::Action, style().images().image("gear"),
+                                    new SignalAction(this, SLOT(showSettings())));
+}
+
+void MultiplayerDialog::showSettings()
+{
+
 }

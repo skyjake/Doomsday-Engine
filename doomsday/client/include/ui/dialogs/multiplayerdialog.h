@@ -28,8 +28,13 @@
  */
 class MultiplayerDialog : public de::DialogWidget
 {
+    Q_OBJECT
+
 public:
     MultiplayerDialog(de::String const &name = "multiplayer");
+
+public slots:
+    void showSettings();
 
 private:
     DENG2_PRIVATE(d)
