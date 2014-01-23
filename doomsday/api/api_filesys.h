@@ -68,6 +68,17 @@ DENG_API_TYPEDEF(F)
     const char*     (*PrettyPath)(const char* path);
 
     size_t          (*ReadFile)(const char* path, char** buffer);
+
+    /**
+     * Attempt to read a file on the specified @a path into a text string.
+     *
+     * @param path      Path to search for the file on.
+     * @param isCustom  If not @c 0, the @em is-custom status of the found file is
+     *                  written here (i.e., @c true= the file was @em not loaded
+     *                  from some resource of the current game).
+     */
+    AutoStr*        (*ReadFileIntoString)(Str const *path, dd_bool *isCustom);
+
     dd_bool         (*WriteFile)(const char* path, const char* source, size_t length);
 }
 DENG_API_T(F);
@@ -83,6 +94,7 @@ DENG_API_T(F);
 #define F_TranslatePath         _api_F.TranslatePath
 #define F_PrettyPath            _api_F.PrettyPath
 #define M_ReadFile              _api_F.ReadFile
+#define M_ReadFileIntoString    _api_F.ReadFileIntoString
 #define M_WriteFile             _api_F.WriteFile
 #endif
 

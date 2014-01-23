@@ -1,4 +1,4 @@
-/** @file m_misc.cpp
+/** @file m_misc.cpp  Miscellanous utility routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -17,11 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Miscellanous Routines.
- */
-
-// HEADER FILES ------------------------------------------------------------
+#define DENG_NO_API_MACROS_FILESYS
 
 #include "de_platform.h"
 
@@ -45,10 +41,6 @@
 #  define O_BINARY 0
 #endif
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <math.h>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -59,10 +51,13 @@
 
 #include "lzss.h"
 
+#include <de/str.h>
+#include <cstdlib>
+#include <cctype>
+#include <cmath>
+
 #undef M_WriteFile
 #undef M_ReadFile
-
-// MACROS ------------------------------------------------------------------
 
 #define SLOPERANGE      2048
 #define SLOPEBITS       11
@@ -74,25 +69,9 @@
 #define write _write
 #endif
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static size_t FileReader(char const* name, char** buffer);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
 extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 void M_ReadLine(char* buffer, size_t len, FileHandle* file)
 {
@@ -282,6 +261,47 @@ DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t l
 DENG_EXTERN_C size_t M_ReadFile(const char* name, char** buffer)
 {
     return FileReader(name, buffer);
+}
+
+DENG_EXTERN_C AutoStr* M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
+{
+    if(isCustom) *isCustom = false;
+
+    if(Str_StartsWith(path, "Lumps:"))
+    {
+        lumpnum_t lumpNum = W_CheckLumpNumForName(Str_Text(path) + 6);
+        if(lumpNum < 0) return 0;
+
+        if(isCustom) *isCustom = W_LumpIsCustom(lumpNum);
+
+        // Ignore zero-length scripts.
+        size_t lumpLen = W_LumpLength(lumpNum);
+        if(!lumpLen) return 0;
+
+        // Ensure the resulting string is terminated.
+        AutoStr *string = Str_PartAppend(AutoStr_New(), (char *)W_CacheLump(lumpNum), 0, lumpLen);
+        W_UnlockLump(lumpNum);
+
+        if(Str_IsEmpty(string))
+            return 0;
+
+        return string;
+    }
+
+    char *readBuf = 0;
+    if(size_t bytesRead = M_ReadFile(Str_Text(path), &readBuf))
+    {
+        // Ensure the resulting string is terminated.
+        AutoStr *string = Str_PartAppend(AutoStr_New(), readBuf, 0, int(bytesRead));
+        Z_Free(readBuf);
+
+        if(Str_IsEmpty(string))
+            return 0;
+
+        return string;
+    }
+
+    return 0;
 }
 
 static size_t FileReader(const char* name, char** buffer)
