@@ -1,12 +1,10 @@
-/**
- * @file p_sound.h
- * id tech 1 sound playback functionality for the play simulation.
+/** @file p_sound.h  id Tech 1 sound playback functionality.
  *
  * @ingroup play
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,38 +26,49 @@
 
 #include "doomsday.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Start the song for the specified map.
  */
 void S_MapMusic(uint episode, uint map);
 
 /**
- * Doom-like sector sounds: when a new sound starts, stop any existing
- * sounds from other origins in this Sector.
+ * Doom-like sector sounds: when a new sound starts, stop any existing sounds from
+ * other origins in this Sector.
  *
- * @param sec           Sector to use as the origin of the sound.
- * @param id            ID number of the sound to be played.
+ * @param sec  Sector to use as the origin of the sound.
+ * @param id   ID number of the sound to be played.
  */
 void S_SectorSound(Sector* sec, int id);
 
 /**
- * @param sec           Sector in which to stop sounds.
+ * @param sec  Sector in which to stop sounds.
  */
 void S_SectorStopSounds(Sector* sec);
 
 /**
- * Doom-like sector sounds: when a new sound starts, stop any existing
- * sounds from other origins in the same Sector.
+ * Doom-like sector sounds: when a new sound starts, stop any existing sounds from
+ * other origins in the same Sector.
  *
- * @param plane         Plane to use as the origin of the sound.
- * @param id            ID number of the sound to be played.
+ * @param plane  Plane to use as the origin of the sound.
+ * @param id     ID number of the sound to be played.
  */
-void S_PlaneSound(Plane* pln, int id);
+void S_PlaneSound(Plane *pln, int id);
 
 #ifdef __JHEXEN__
-int S_GetSoundID(const char* name);
+int S_GetSoundID(char const *name);
 
-void S_ParseSndInfoLump(void);
+/**
+ * Attempt to parse the script on the identified @a path as "sound definition" data.
+ */
+void SndInfoParser(Str const *path);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif // LIBCOMMON_PLAY_SOUND_H

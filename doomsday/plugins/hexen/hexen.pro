@@ -98,7 +98,7 @@ SOURCES += \
     src/p_telept.c \
     src/p_things.c \
     src/p_waggle.c \
-    src/sn_sonix.c \
+    src/sn_sonix.cpp \
     src/st_stuff.c \
     src/tables.c \
     src/x_api.c

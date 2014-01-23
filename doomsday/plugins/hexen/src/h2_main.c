@@ -377,11 +377,12 @@ void X_PostInit(void)
 
     P_InitMapInfo(); // Init music fields in mapinfo.
 
-    App_Log(DE2_RES_VERBOSE, "Parsing SNDINFO...");
-    S_ParseSndInfoLump();
+    // Process sound definitions.
+    SndInfoParser(AutoStr_FromText("Lumps:SNDINFO"));
 
-    App_Log(DE2_DEV_RES_VERBOSE, "SN_InitSequenceScript: Registering sound sequences");
-    SN_InitSequenceScript();
+    // Process sound sequence scripts.
+    SndSeqParser(sc_FileScripts? Str_Appendf(AutoStr_New(), "%sSNDSEQ.txt", sc_ScriptsDir)
+                               : AutoStr_FromText("Lumps:SNDSEQ"));
 
     // Load a saved game?
     p = CommandLine_CheckWith("-loadgame", 1);
