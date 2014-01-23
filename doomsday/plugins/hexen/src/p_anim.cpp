@@ -64,17 +64,8 @@ void AnimDefsParser(Str const *path)
         // string(texture-scheme) string(texture-path)
         if(char const *scheme = textureScheme(lexer.token()))
         {
-            if(!lexer.readToken()) // Name.
-            {
-                lexer.scriptError("Missing string");
-            }
-
-            Uri *uri = Uri_SetScheme(Uri_New(), scheme);
-            AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_NewStd(), lexer.token()));
-            Uri_SetPath(uri, Str_Text(path));
-
+            Uri *uri = lexer.readTextureUri(scheme);
             int const texNumBase = Textures_UniqueId2(uri, !isCustom);
-
             Uri_Delete(uri);
 
             bool const ignore = (texNumBase == -1);
@@ -88,18 +79,18 @@ void AnimDefsParser(Str const *path)
             {
                 if(!Str_CompareIgnoreCase(lexer.token(), "pic"))
                 {
-                    int picNum = lexer.mustGetNumber();
+                    int picNum = lexer.readNumber();
 
                     int min = 0, max = 0;
-                    Str const *label = lexer.mustGetString();
+                    Str const *label = lexer.readString();
                     if(!Str_CompareIgnoreCase(label, "tics"))
                     {
-                        min = lexer.mustGetNumber();
+                        min = lexer.readNumber();
                     }
                     else if(!Str_CompareIgnoreCase(label, "rand"))
                     {
-                        min = lexer.mustGetNumber();
-                        max = lexer.mustGetNumber();
+                        min = lexer.readNumber();
+                        max = lexer.readNumber();
                     }
                     else
                     {

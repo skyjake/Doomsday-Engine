@@ -93,21 +93,6 @@ int S_GetSoundID(char const *name)
     return Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
 }
 
-static AutoStr *parseLumpName(HexLex &lexer)
-{
-    return AutoStr_FromText(Str_Text(lexer.mustGetString()));
-}
-
-static uint parseMapNumber(HexLex &lexer)
-{
-    return lexer.mustGetNumber() - 1;
-}
-
-static int parseSoundId(HexLex &lexer)
-{
-    return Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.token()), 0);
-}
-
 void SndInfoParser(Str const *path)
 {
     AutoStr *script = M_ReadFileIntoString(path, 0);
@@ -127,15 +112,15 @@ void SndInfoParser(Str const *path)
                 // Used in combination with the -devsnd command line argument to
                 // redirect the loading of sounds to a directory in the local file
                 // system.
-                lexer.mustGetString();
+                lexer.readString();
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "$map"))
             {
                 // $map int(map-number) string(lump-name)
                 // Associate a music lump to a map.
-                uint const map          = parseMapNumber(lexer);
-                AutoStr const *lumpName = parseLumpName(lexer);
+                uint const map          = lexer.readMapNumber();
+                AutoStr const *lumpName = lexer.readLumpName();
 
                 if(map >= 0 && map >= P_MapInfoCount())
                 {
@@ -150,10 +135,12 @@ void SndInfoParser(Str const *path)
                 continue;
             }
 
+            lexer.unreadToken();
+
             // string(sound-id) string(lump-name | '?')
             // A sound definition.
-            int const soundId       = parseSoundId(lexer);
-            AutoStr const *lumpName = parseLumpName(lexer);
+            int const soundId       = lexer.readSoundId();
+            AutoStr const *lumpName = lexer.readLumpName();
 
             if(soundId)
             {

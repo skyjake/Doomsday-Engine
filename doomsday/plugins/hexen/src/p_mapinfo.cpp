@@ -1,4 +1,4 @@
-/** @file p_mapinfo.c  Hexen MAPINFO parsing.
+/** @file p_mapinfo.cpp  Hexen MAPINFO parsing.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -22,8 +22,8 @@
 #include "jhexen.h"
 #include "p_mapinfo.h"
 #include "hexlex.h"
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 enum {
     CD_START,
@@ -107,37 +107,37 @@ void MapInfoParser(Str const *path)
         {
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_start_track"))
             {
-                setSongCDTrack(CD_START, lexer.mustGetNumber());
+                setSongCDTrack(CD_START, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_end1_track"))
             {
-                setSongCDTrack(CD_END1, lexer.mustGetNumber());
+                setSongCDTrack(CD_END1, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_end2_track"))
             {
-                setSongCDTrack(CD_END2, lexer.mustGetNumber());
+                setSongCDTrack(CD_END2, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_end3_track"))
             {
-                setSongCDTrack(CD_END3, lexer.mustGetNumber());
+                setSongCDTrack(CD_END3, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_intermission_track"))
             {
-                setSongCDTrack(CD_INTERLUDE, lexer.mustGetNumber());
+                setSongCDTrack(CD_INTERLUDE, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_title_track"))
             {
-                setSongCDTrack(CD_TITLE, lexer.mustGetNumber());
+                setSongCDTrack(CD_TITLE, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "map"))
             {
-                int tmap = lexer.mustGetNumber();
+                int tmap = lexer.readNumber();
                 if(tmap < 1 || tmap > 99)
                 {
                     lexer.scriptError();
@@ -163,7 +163,7 @@ void MapInfoParser(Str const *path)
                 info->warpTrans = map;
 
                 // Map name must follow the number.
-                strcpy(info->title, Str_Text(lexer.mustGetString()));
+                strcpy(info->title, Str_Text(lexer.readString()));
 
                 // Process optional tokens.
                 while(lexer.readToken())
@@ -171,7 +171,7 @@ void MapInfoParser(Str const *path)
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky1"))
                     {
                         ddstring_t path; Str_InitStd(&path);
-                        Str_PercentEncode(Str_Copy(&path, lexer.mustGetString()));
+                        Str_PercentEncode(Str_Copy(&path, lexer.readString()));
 
                         Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
                         Uri_SetPath(uri, Str_Text(&path));
@@ -179,13 +179,13 @@ void MapInfoParser(Str const *path)
                         Uri_Delete(uri);
                         Str_Free(&path);
 
-                        info->sky1ScrollDelta = (float) lexer.mustGetNumber() / 256;
+                        info->sky1ScrollDelta = (float) lexer.readNumber() / 256;
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky2"))
                     {
                         ddstring_t path; Str_InitStd(&path);
-                        Str_PercentEncode(Str_Copy(&path, lexer.mustGetString()));
+                        Str_PercentEncode(Str_Copy(&path, lexer.readString()));
 
                         Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
                         Uri_SetPath(uri, Str_Text(&path));
@@ -193,7 +193,7 @@ void MapInfoParser(Str const *path)
                         Uri_Delete(uri);
                         Str_Free(&path);
 
-                        info->sky2ScrollDelta = (float) lexer.mustGetNumber() / 256;
+                        info->sky2ScrollDelta = (float) lexer.readNumber() / 256;
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "doublesky"))
@@ -208,12 +208,12 @@ void MapInfoParser(Str const *path)
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "fadetable"))
                     {
-                        info->fadeTable = W_GetLumpNumForName(Str_Text(lexer.mustGetString()));
+                        info->fadeTable = W_GetLumpNumForName(Str_Text(lexer.readString()));
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))
                     {
-                        info->cluster = lexer.mustGetNumber();
+                        info->cluster = lexer.readNumber();
                         if(info->cluster < 1)
                         {
                             char buf[40];
@@ -224,7 +224,7 @@ void MapInfoParser(Str const *path)
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "warptrans"))
                     {
-                        int mapWarpNum =  lexer.mustGetNumber();
+                        int mapWarpNum =  lexer.readNumber();
                         if(mapWarpNum < 1 || mapWarpNum > 99)
                             lexer.scriptError();
                         info->warpTrans = (unsigned) mapWarpNum - 1;
@@ -232,7 +232,7 @@ void MapInfoParser(Str const *path)
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "next"))
                     {
-                        int mapId = lexer.mustGetNumber();
+                        int mapId = lexer.readNumber();
                         if(mapId < 1 || mapId > 99)
                             lexer.scriptError();
                         info->nextMap = (unsigned) mapId - 1;
@@ -240,7 +240,7 @@ void MapInfoParser(Str const *path)
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "cdtrack"))
                     {
-                        info->cdTrack = lexer.mustGetNumber();
+                        info->cdTrack = lexer.readNumber();
                         continue;
                     }
 

@@ -300,8 +300,8 @@ DENG_PUBLIC Str *Str_Strip(Str *ds);
 DENG_PUBLIC Str *Str_ReplaceAll(Str *ds, char from, char to);
 
 /**
- * Determines if the string starts starts with the given substring. The comparison
- * is done case sensitively.
+ * Determines if the string starts with the given substring. The comparison is done
+ * case sensitively.
  *
  * @param ds    String instance.
  * @param text  Text to look for at the start of @a ds.

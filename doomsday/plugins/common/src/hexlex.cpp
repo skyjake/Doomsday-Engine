@@ -1,4 +1,4 @@
-/** @file hexlex.cpp  Hexen definition/script syntax.
+/** @file hexlex.cpp  HLexical analyzer for Hexen definition/script syntax.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -29,7 +29,7 @@
 
 void HexLex::checkOpen()
 {
-    if(!_script) Con_Error("RavHexParser: No script to parse!");
+    if(!_script) Con_Error("HexLex: No script to parse!");
 }
 
 bool HexLex::atEnd()
@@ -166,7 +166,7 @@ bool HexLex::readToken()
     return true;
 }
 
-Str const *HexLex::mustGetString()
+Str const *HexLex::readString()
 {
     if(!readToken())
     {
@@ -175,7 +175,7 @@ Str const *HexLex::mustGetString()
     return &_token;
 }
 
-int HexLex::mustGetNumber()
+int HexLex::readNumber()
 {
     checkOpen();
 
@@ -188,15 +188,55 @@ int HexLex::mustGetNumber()
     _tokenAsNumber = strtol(Str_Text(&_token), &stopper, 0);
     if(*stopper != 0)
     {
-        Con_Error("RavHexParser: Bad numeric constant \"%s\".\n"
-                  "File: \"%s\", Line: %i",
+        Con_Error("HexLex: Non-numeric constant '%s' in \"%s\" on line #%i",
                   Str_Text(&_token), F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber);
     }
 
     return _tokenAsNumber;
 }
 
-/// @note Assumes there is a valid string in sc_String.
+Uri *HexLex::readTextureUri(char const *defaultScheme)
+{
+    if(!readToken()) // Name.
+    {
+        scriptError("Missing texture Uri");
+    }
+
+    Uri *uri = Uri_SetScheme(Uri_New(), defaultScheme);
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_NewStd(), &_token));
+    Uri_SetPath(uri, Str_Text(path));
+    return uri;
+}
+
+AutoStr *HexLex::readLumpName()
+{
+    return AutoStr_FromText(Str_Text(readString()));
+}
+
+uint HexLex::readMapNumber()
+{
+    uint num = readNumber();
+    return num > 0? num - 1 : num;
+}
+
+int HexLex::readSoundId()
+{
+    return Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(readString()), 0);
+}
+
+int HexLex::readSoundIndex()
+{
+    char const *name = Str_Text(readString());
+    int i = Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
+    if(!i)
+    {
+        AutoStr *msg = Str_Appendf(AutoStr_New(), "Unknown sound '%s'", name);
+        scriptError(Str_Text(msg));
+    }
+    return i;
+}
+
+// @note Assumes there is a valid string in sc_String.
 void HexLex::unreadToken()
 {
     _alreadyGot = true;
@@ -214,7 +254,7 @@ int HexLex::lineNumber() const
 
 void HexLex::scriptError(char const *message)
 {
-    Con_Error("RavHexParser: Error in script \"%s\" on line #%i.\n%s",
+    Con_Error("HexLex: Error in \"%s\" on line #%i.\n%s",
               F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber, message);
 }
 

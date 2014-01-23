@@ -274,7 +274,7 @@ DENG_EXTERN_C AutoStr* M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
 
         if(isCustom) *isCustom = W_LumpIsCustom(lumpNum);
 
-        // Ignore zero-length scripts.
+        // Ignore zero-length lumps.
         size_t lumpLen = W_LumpLength(lumpNum);
         if(!lumpLen) return 0;
 
@@ -295,6 +295,7 @@ DENG_EXTERN_C AutoStr* M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
         AutoStr *string = Str_PartAppend(AutoStr_New(), readBuf, 0, int(bytesRead));
         Z_Free(readBuf);
 
+        // Ignore zero-length files.
         if(Str_IsEmpty(string))
             return 0;
 

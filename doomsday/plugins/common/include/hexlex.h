@@ -1,4 +1,4 @@
-/** @file hexlex.h  Laxical analyzer for Hexen definition/script syntax.
+/** @file hexlex.h  Lexical analyzer for Hexen definition/script syntax.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -43,13 +43,18 @@ public:
     void parse(Str const *script, Str const *sourcePath);
 
     bool readToken();
-
     Str const *token();
 
     void unreadToken();
 
-    Str const *mustGetString();
-    int mustGetNumber();
+    Str const *readString();
+    int readNumber();
+
+    AutoStr *readLumpName();
+    int readSoundId();
+    int readSoundIndex();
+    uint readMapNumber();
+    Uri *readTextureUri(char const *defaultScheme);
 
     int lineNumber() const;
 
