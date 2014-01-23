@@ -84,7 +84,7 @@ SOURCES += \
     src/m_cheat.c \
     src/m_random.c \
     src/p_acs.c \
-    src/p_anim.c \
+    src/p_anim.cpp \
     src/p_enemy.c \
     src/p_inter.c \
     src/p_lights.c \
