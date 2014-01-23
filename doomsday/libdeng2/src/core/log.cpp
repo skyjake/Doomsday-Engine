@@ -377,7 +377,7 @@ String LogEntry::asText(Flags const &formattingFlags, int shortenSection) const
             }
             else
             {
-                output << _E(s)_E(C)_E(m) << dc << _E(.) << " ";
+                output << _E(s)_E(E)_E(m) << dc << _E(.) << " ";
             }
         }
 
