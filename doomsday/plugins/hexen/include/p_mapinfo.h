@@ -51,15 +51,14 @@ extern "C" {
 #endif
 
 /**
- * Initializes the MapInfo database.
- * All MAPINFO lumps are then parsed and stored into the database.
+ * Special early initializer needed to start sound before R_InitRefresh()
  */
 void P_InitMapInfo(void);
 
 /**
- * Special early initializer needed to start sound before R_InitRefresh()
+ * Populate the MapInfo database by parsing the MAPINFO lump.
  */
-void P_InitMapMusicInfo(void);
+void MapInfoParser(Str const *path);
 
 /**
  * Returns MAPINFO data for the specified @a map, or the default if not valid.

@@ -187,7 +187,8 @@ void P_Update()
     P_InitInventory();
 #endif
 #if __JHEXEN__
-    P_InitMapInfo();
+    MapInfoParser(sc_FileScripts? Str_Appendf(AutoStr_New(), "%sMAPINFO.txt", sc_ScriptsDir)
+                                : AutoStr_FromText("Lumps:MAPINFO"));
 #endif
     P_InitSwitchList();
     P_InitTerrainTypes();

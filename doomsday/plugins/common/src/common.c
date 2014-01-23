@@ -23,6 +23,9 @@
 #include "common.h"
 #include "g_common.h"
 
+dd_bool sc_FileScripts = false;
+char const *sc_ScriptsDir = "";
+
 int Common_GetInteger(int id)
 {
     switch(id)

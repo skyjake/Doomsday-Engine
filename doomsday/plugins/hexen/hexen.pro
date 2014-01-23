@@ -88,7 +88,7 @@ SOURCES += \
     src/p_enemy.c \
     src/p_inter.c \
     src/p_lights.c \
-    src/p_mapinfo.c \
+    src/p_mapinfo.cpp \
     src/p_maputl.c \
     src/p_mobj.c \
     src/p_pillar.c \
@@ -98,7 +98,6 @@ SOURCES += \
     src/p_telept.c \
     src/p_things.c \
     src/p_waggle.c \
-    src/sc_man.c \
     src/sn_sonix.c \
     src/st_stuff.c \
     src/tables.c \

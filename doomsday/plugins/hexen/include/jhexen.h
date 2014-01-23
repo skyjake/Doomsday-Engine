@@ -57,7 +57,6 @@
 #include "../../hexen/include/r_defs.h"
 #include "../../hexen/include/r_local.h"
 #include "../../hexen/include/s_sequence.h"
-#include "../../hexen/include/sc_man.h"
 #include "../../hexen/include/st_stuff.h"
 #include "../../hexen/include/textdefs.h"
 #include "../../hexen/include/version.h"
