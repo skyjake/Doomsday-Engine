@@ -300,6 +300,17 @@ DENG_PUBLIC Str *Str_Strip(Str *ds);
 DENG_PUBLIC Str *Str_ReplaceAll(Str *ds, char from, char to);
 
 /**
+ * Determines if the string starts starts with the given substring. The comparison
+ * is done case sensitively.
+ *
+ * @param ds    String instance.
+ * @param text  Text to look for at the start of @a ds.
+ *
+ * @return  @c true, if the string is found.
+ */
+DENG_PUBLIC dd_bool Str_StartsWith(Str const *ds, char const *text);
+
+/**
  * Determines if the string ends with a specific suffic. The comparison is done
  * case sensitively.
  *
@@ -308,7 +319,7 @@ DENG_PUBLIC Str *Str_ReplaceAll(Str *ds, char from, char to);
  *
  * @return  @c true, if the string is found.
  */
-DENG_PUBLIC dd_bool Str_EndsWith(Str *ds, char const *text);
+DENG_PUBLIC dd_bool Str_EndsWith(Str const *ds, char const *text);
 
 /**
  * Extract a line of text from the source.
