@@ -59,7 +59,6 @@ HEADERS += \
     include/r_defs.h \
     include/r_local.h \
     include/s_sequence.h \
-    include/sc_man.h \
     include/st_stuff.h \
     include/textdefs.h \
     include/version.h \

@@ -22,6 +22,7 @@ HEADERS += \
     $$common_inc/g_eventsequence.h \
     $$common_inc/g_update.h \
     $$common_inc/gl_drawpatch.h \
+    $$common_inc/hexlex.h \
     $$common_inc/hu_automap.h \
     $$common_inc/hu_chat.h \
     $$common_inc/hu_inventory.h \
@@ -79,6 +80,7 @@ SOURCES += \
     $$common_src/g_game.c \
     $$common_src/g_update.c \
     $$common_src/gl_drawpatch.c \
+    $$common_src/hexlex.cpp \
     $$common_src/hu_automap.c \
     $$common_src/hu_chat.c \
     $$common_src/hu_inventory.c \

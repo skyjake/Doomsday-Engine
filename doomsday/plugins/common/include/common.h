@@ -42,6 +42,9 @@
 
 #include "pause.h"
 
+DENG_EXTERN_C dd_bool sc_FileScripts;
+DENG_EXTERN_C char const *sc_ScriptsDir;
+
 int Common_GetInteger(int id);
 
 #endif // LIBCOMMON_GAME_INCLUDES
