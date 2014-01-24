@@ -56,8 +56,7 @@ void AnimDefsParser(Str const *path)
 
     App_Log(DE2_RES_VERBOSE, "Parsing \"%s\"...", F_PrettyPath(Str_Text(path)));
 
-    HexLex lexer;
-    lexer.parse(script, path);
+    HexLex lexer(script, path);
 
     while(lexer.readToken())
     {

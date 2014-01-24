@@ -44,7 +44,7 @@ void HexLex::syntaxError(char const *message)
               F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber, message);
 }
 
-HexLex::HexLex()
+HexLex::HexLex(Str const *script, Str const *sourcePath)
     : _script(0)
     , _readPos(0)
     , _lineNumber(0)
@@ -53,6 +53,15 @@ HexLex::HexLex()
 {
     Str_InitStd(&_sourcePath);
     Str_InitStd(&_token);
+
+    if(script)
+    {
+        parse(script);
+    }
+    if(sourcePath)
+    {
+        setSourcePath(sourcePath);
+    }
 }
 
 HexLex::~HexLex()
@@ -61,10 +70,17 @@ HexLex::~HexLex()
     Str_Free(&_token);
 }
 
-void HexLex::parse(Str const *script, Str const *sourcePath)
+void HexLex::parse(Str const *script)
 {
     _script       = script;
+    _readPos      = 0;
+    _lineNumber   = 1;
+    _alreadyGot   = false;
+    Str_Clear(&_token);
+}
 
+void HexLex::setSourcePath(Str const *sourcePath)
+{
     if(!sourcePath)
     {
         Str_Clear(&_sourcePath);
@@ -73,11 +89,6 @@ void HexLex::parse(Str const *script, Str const *sourcePath)
     {
         Str_Copy(&_sourcePath, sourcePath);
     }
-
-    Str_Clear(&_token);
-    _readPos      = 0;
-    _lineNumber   = 1;
-    _alreadyGot   = false;
 }
 
 bool HexLex::readToken()

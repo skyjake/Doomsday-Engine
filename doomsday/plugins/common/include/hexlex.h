@@ -30,21 +30,46 @@
 class HexLex
 {
 public:
-    HexLex();
+    /**
+     * Construct a new lexer and optionally prepare a script for parsing.
+     *
+     * @param script      If non-zero, prepare this script for parsing.
+     * @param sourcePath  If non-zerp, set this as the script source path.
+     */
+    HexLex(Str const *script = 0, Str const *sourcePath = 0);
     ~HexLex();
 
     /**
      * Prepare a new script for parsing. It is assumed that the @a script data
      * remains available until parsing is completed (or the script is replaced).
      *
-     * @param script      The script source to be parsed.
-     * @param sourcePath  Used to identify the script in log messages. A copy is made.
+     * @param script  The script source to be parsed.
      */
-    void parse(Str const *script, Str const *sourcePath);
+    void parse(Str const *script);
 
+    /**
+     * Change the source path used to identify the script in log messages.
+     *
+     * @param sourcePath  New source path to apply. A copy is made.
+     */
+    void setSourcePath(Str const *sourcePath = 0);
+
+    /**
+     * Attempt to read the next token from the script. @c true is returned if a
+     * token was parsed (or the previously parsed token was @em unread); otherwise
+     * @c false is returned (e.g., the end of the script was reached).
+     */
     bool readToken();
+
+    /**
+     * Returns a copy of the last read token.
+     */
     Str const *token();
 
+    /**
+     * Mark the last read token as @em unread, so that it will be re-read as the
+     * next read token.
+     */
     void unreadToken();
 
     Str const *readString();
@@ -55,6 +80,9 @@ public:
     uint readMapNumber();
     Uri *readTextureUri(char const *defaultScheme);
 
+    /**
+     * Returns the line number at the current position in the script.
+     */
     int lineNumber() const;
 
 private:
