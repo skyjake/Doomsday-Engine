@@ -25,17 +25,12 @@
 #include <cstdio>
 #include <cstring>
 
-enum {
-    CD_START,
-    CD_END1,
-    CD_END2,
-    CD_END3,
-    CD_INTERLUDE,
-    CD_TITLE,
-    NUM_CD_TRACKS
-};
-
-static int cdTracks[NUM_CD_TRACKS]; // Non-map specific song cd track numbers
+#define MUSIC_STARTUP      "startup"
+#define MUSIC_ENDING1      "hall"
+#define MUSIC_ENDING2      "orb"
+#define MUSIC_ENDING3      "chess"
+#define MUSIC_INTERMISSION "hub"
+#define MUSIC_TITLE        "hexen"
 
 static mapinfo_t MapInfo[99];
 static uint mapCount;
@@ -45,26 +40,13 @@ static uint qualifyMap(uint map)
     return (map >= mapCount) ? 0 : map;
 }
 
-static void setSongCDTrack(int index, int track)
+static void setMusicCDTrack(char const *musicId, int track)
 {
-    static char const *defaultTracks[NUM_CD_TRACKS] = {
-        "startup",
-        "hall",
-        "orb",
-        "chess",
-        "hub",
-        "hexen"
-    };
+    App_Log(DE2_DEV_RES_VERBOSE, "setSongCDTrack: musicId=%s, track=%i", musicId, track);
+
+    // Update the corresponding Music definition.
     int cdTrack = track;
-
-    App_Log(DE2_DEV_RES_VERBOSE, "setSongCDTrack: index=%i, track=%i", index, track);
-
-    // Set the internal array.
-    cdTracks[index] = cdTrack;
-
-    // Update the corresponding Doomsday definition.
-    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, defaultTracks[index], 0),
-            DD_CD_TRACK, &cdTrack);
+    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, musicId, 0), DD_CD_TRACK, &cdTrack);
 }
 
 void MapInfoParser(Str const *path)
@@ -106,32 +88,32 @@ void MapInfoParser(Str const *path)
         {
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_start_track"))
             {
-                setSongCDTrack(CD_START, lexer.readNumber());
+                setMusicCDTrack(MUSIC_STARTUP, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_end1_track"))
             {
-                setSongCDTrack(CD_END1, lexer.readNumber());
+                setMusicCDTrack(MUSIC_ENDING1, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_end2_track"))
             {
-                setSongCDTrack(CD_END2, lexer.readNumber());
+                setMusicCDTrack(MUSIC_ENDING2, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_end3_track"))
             {
-                setSongCDTrack(CD_END3, lexer.readNumber());
+                setMusicCDTrack(MUSIC_ENDING3, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_intermission_track"))
             {
-                setSongCDTrack(CD_INTERLUDE, lexer.readNumber());
+                setMusicCDTrack(MUSIC_INTERMISSION, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "cd_title_track"))
             {
-                setSongCDTrack(CD_TITLE, lexer.readNumber());
+                setMusicCDTrack(MUSIC_TITLE, lexer.readNumber());
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "map"))
@@ -343,34 +325,4 @@ char *P_GetMapSongLump(uint map)
     {
         return MapInfo[qualifyMap(map)].songLump;
     }
-}
-
-int P_GetCDStartTrack()
-{
-    return cdTracks[CD_START];
-}
-
-int P_GetCDEnd1Track()
-{
-    return cdTracks[CD_END1];
-}
-
-int P_GetCDEnd2Track()
-{
-    return cdTracks[CD_END2];
-}
-
-int P_GetCDEnd3Track()
-{
-    return cdTracks[CD_END3];
-}
-
-int P_GetCDIntermissionTrack()
-{
-    return cdTracks[CD_INTERLUDE];
-}
-
-int P_GetCDTitleTrack()
-{
-    return cdTracks[CD_TITLE];
 }

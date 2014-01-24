@@ -103,48 +103,6 @@ uint P_TranslateMap(uint map);
  */
 char *P_GetMapSongLump(uint map);
 
-/**
- * Retrieve the CD start track number.
- *
- * @return  The CD start track number
- */
-int P_GetCDStartTrack(void);
-
-/**
- * Retrieve the CD end1 track number.
- *
- * @return  The CD end1 track number.
- */
-int P_GetCDEnd1Track(void);
-
-/**
- * Retrieve the CD end2 track number.
- *
- * @return  The CD end2 track number.
- */
-int P_GetCDEnd2Track(void);
-
-/**
- * Retrieve the CD end3 track number.
- *
- * @return  The CD end3 track number.
- */
-int P_GetCDEnd3Track(void);
-
-/**
- * Retrieve the CD intermission track number.
- *
- * @return  The CD intermission track number.
- */
-int P_GetCDIntermissionTrack(void);
-
-/**
- * Retrieve the CD title track number.
- *
- * @return  The CD title track number.
- */
-int P_GetCDTitleTrack(void);
-
 #if __cplusplus
 } // extern "C"
 #endif
