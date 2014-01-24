@@ -1,4 +1,4 @@
-/** @file hexlex.cpp  HLexical analyzer for Hexen definition/script syntax.
+/** @file hexlex.cpp  Lexical analyzer for Hexen definition/script syntax.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -38,11 +38,16 @@ bool HexLex::atEnd()
     return (_readPos >= Str_Length(_script));
 }
 
+void HexLex::syntaxError(char const *message)
+{
+    Con_Error("HexLex: SyntaxError in \"%s\" on line #%i.\n%s",
+              F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber, message);
+}
+
 HexLex::HexLex()
     : _script(0)
     , _readPos(0)
     , _lineNumber(0)
-    , _tokenAsNumber(0)
     , _alreadyGot(false)
     , _multiline(false)
 {
@@ -170,7 +175,7 @@ Str const *HexLex::readString()
 {
     if(!readToken())
     {
-        scriptError("Missing string");
+        syntaxError("Missing string");
     }
     return &_token;
 }
@@ -181,25 +186,25 @@ int HexLex::readNumber()
 
     if(!readToken())
     {
-        scriptError("Missing integer");
+        syntaxError("Missing integer");
     }
 
     char *stopper;
-    _tokenAsNumber = strtol(Str_Text(&_token), &stopper, 0);
+    int number = strtol(Str_Text(&_token), &stopper, 0);
     if(*stopper != 0)
     {
         Con_Error("HexLex: Non-numeric constant '%s' in \"%s\" on line #%i",
                   Str_Text(&_token), F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber);
     }
 
-    return _tokenAsNumber;
+    return number;
 }
 
 Uri *HexLex::readTextureUri(char const *defaultScheme)
 {
     if(!readToken()) // Name.
     {
-        scriptError("Missing texture Uri");
+        syntaxError("Missing texture Uri");
     }
 
     Uri *uri = Uri_SetScheme(Uri_New(), defaultScheme);
@@ -219,21 +224,9 @@ uint HexLex::readMapNumber()
     return num > 0? num - 1 : num;
 }
 
-int HexLex::readSoundId()
-{
-    return Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(readString()), 0);
-}
-
 int HexLex::readSoundIndex()
 {
-    char const *name = Str_Text(readString());
-    int i = Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
-    if(!i)
-    {
-        AutoStr *msg = Str_Appendf(AutoStr_New(), "Unknown sound '%s'", name);
-        scriptError(Str_Text(msg));
-    }
-    return i;
+    return Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(readString()), 0);
 }
 
 // @note Assumes there is a valid string in sc_String.
@@ -250,16 +243,4 @@ Str const *HexLex::token()
 int HexLex::lineNumber() const
 {
     return _lineNumber;
-}
-
-void HexLex::scriptError(char const *message)
-{
-    Con_Error("HexLex: Error in \"%s\" on line #%i.\n%s",
-              F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber, message);
-}
-
-void HexLex::scriptError()
-{
-    AutoStr *msg = Str_Appendf(AutoStr_NewStd(), "Unexpected token '%s'", Str_Text(&_token));
-    scriptError(Str_Text(msg));
 }

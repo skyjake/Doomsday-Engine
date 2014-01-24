@@ -94,7 +94,9 @@ void AnimDefsParser(Str const *path)
                     }
                     else
                     {
-                        lexer.scriptError();
+                        // Found an unexpected token.
+                        Con_Error("AnimDefsParser: Unexpected token '%s' in \"%s\" on line #%i",
+                                  lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
                     }
 
                     if(!ignore)
@@ -123,6 +125,7 @@ void AnimDefsParser(Str const *path)
         }
 
         // Found an unexpected token.
-        lexer.scriptError();
+        Con_Error("AnimDefsParser: Unexpected token '%s' in \"%s\" on line #%i",
+                  lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
     }
 }

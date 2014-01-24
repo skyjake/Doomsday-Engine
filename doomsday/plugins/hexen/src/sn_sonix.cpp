@@ -121,7 +121,9 @@ void SndSeqParser(Str const *path)
         {
             if(inSequence != -1)
             {
-                lexer.scriptError("SndSeqParser: Nested Script Error");
+                // Found an unexpected token.
+                Con_Error("SndSeqParser: Unexpected token '%s' in \"%s\" on line #%i",
+                          lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
             }
 
             tempDataStart = (int *) Z_Calloc(SS_TEMPBUFFER_SIZE, PU_GAMESTATIC, NULL);
@@ -136,7 +138,7 @@ void SndSeqParser(Str const *path)
 
             if(i == SS_MAX_SCRIPTS)
             {
-                Con_Error("Number of SS Scripts >= SS_MAX_SCRIPTS");
+                Con_Error("SndSeqParser: Number of SS Scripts >= SS_MAX_SCRIPTS");
             }
 
             for(int k = 0; k < SEQ_NUMSEQ; ++k)
@@ -234,7 +236,8 @@ void SndSeqParser(Str const *path)
         }
 
         // Found an unexpected token.
-        lexer.scriptError();
+        Con_Error("SndSeqParser: Unexpected token '%s' in \"%s\" on line #%i",
+                  lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
     }
 }
 

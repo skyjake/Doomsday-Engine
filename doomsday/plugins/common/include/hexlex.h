@@ -51,19 +51,16 @@ public:
     int readNumber();
 
     AutoStr *readLumpName();
-    int readSoundId();
     int readSoundIndex();
     uint readMapNumber();
     Uri *readTextureUri(char const *defaultScheme);
 
     int lineNumber() const;
 
-    void scriptError();
-    void scriptError(char const *message);
-
 private:
     void checkOpen();
     bool atEnd();
+    void syntaxError(char const *message);
 
     Str _sourcePath;    ///< Used to identify the source in error messages.
 
@@ -72,7 +69,6 @@ private:
     int _lineNumber;
 
     Str _token;
-    int _tokenAsNumber;
     bool _alreadyGot;
     bool _multiline;    ///< @c true= current token spans multiple lines.
 };

@@ -140,7 +140,8 @@ void MapInfoParser(Str const *path)
                 int tmap = lexer.readNumber();
                 if(tmap < 1 || tmap > 99)
                 {
-                    lexer.scriptError();
+                    Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
+                              lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
                 }
 
                 uint map = (unsigned) tmap - 1;
@@ -216,9 +217,8 @@ void MapInfoParser(Str const *path)
                         info->cluster = lexer.readNumber();
                         if(info->cluster < 1)
                         {
-                            char buf[40];
-                            dd_snprintf(buf, 40, "Invalid cluster %i", info->cluster);
-                            lexer.scriptError(buf);
+                            Con_Error("MapInfoParser: Invalid cluster number '%s' in \"%s\" on line #%i",
+                                      lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
                         }
                         continue;
                     }
@@ -226,16 +226,23 @@ void MapInfoParser(Str const *path)
                     {
                         int mapWarpNum =  lexer.readNumber();
                         if(mapWarpNum < 1 || mapWarpNum > 99)
-                            lexer.scriptError();
+                        {
+                            Con_Error("MapInfoParser: Invalid map warp-number '%s' in \"%s\" on line #%i",
+                                      lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
+                        }
+
                         info->warpTrans = (unsigned) mapWarpNum - 1;
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "next"))
                     {
-                        int mapId = lexer.readNumber();
-                        if(mapId < 1 || mapId > 99)
-                            lexer.scriptError();
-                        info->nextMap = (unsigned) mapId - 1;
+                        int map = lexer.readNumber();
+                        if(map < 1 || map > 99)
+                        {
+                            Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
+                                      lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
+                        }
+                        info->nextMap = (unsigned) map - 1;
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "cdtrack"))
@@ -255,7 +262,8 @@ void MapInfoParser(Str const *path)
             }
 
             // Found an unexpected token.
-            lexer.scriptError();
+            Con_Error("MapInfoParser: Unexpected token '%s' in \"%s\" on line #%i",
+                      lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
         }
     }
     else

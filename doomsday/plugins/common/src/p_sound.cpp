@@ -139,12 +139,12 @@ void SndInfoParser(Str const *path)
 
             // string(sound-id) string(lump-name | '?')
             // A sound definition.
-            int const soundId       = lexer.readSoundId();
+            int const soundIndex    = lexer.readSoundIndex();
             AutoStr const *lumpName = lexer.readLumpName();
 
-            if(soundId)
+            if(soundIndex)
             {
-                Def_Set(DD_DEF_SOUND, soundId,
+                Def_Set(DD_DEF_SOUND, soundIndex,
                         DD_LUMP, Str_At(lumpName, 0) == '?' ? "default" : Str_Text(lumpName));
             }
         }
