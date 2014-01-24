@@ -34,7 +34,9 @@ public:
      * Construct a new lexer and optionally prepare a script for parsing.
      *
      * @param script      If non-zero, prepare this script for parsing.
-     * @param sourcePath  If non-zerp, set this as the script source path.
+     * @param sourcePath  If non-zero, set this as the script source path.
+     *
+     * @see parse(), setSourcePath()
      */
     HexLex(Str const *script = 0, Str const *sourcePath = 0);
     ~HexLex();
@@ -62,15 +64,15 @@ public:
     bool readToken();
 
     /**
-     * Returns a copy of the last read token.
-     */
-    Str const *token();
-
-    /**
      * Mark the last read token as @em unread, so that it will be re-read as the
      * next read token.
      */
     void unreadToken();
+
+    /**
+     * Returns a copy of the last read token.
+     */
+    Str const *token();
 
     Str const *readString();
     int readNumber();

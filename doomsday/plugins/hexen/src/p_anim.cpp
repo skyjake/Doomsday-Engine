@@ -101,15 +101,10 @@ void AnimDefsParser(Str const *path)
                     if(!ignore)
                     {
                         Uri *frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
-
-                        ddstring_t framePath; Str_InitStd(&framePath);
-                        Str_Appendf(&framePath, "%s:%i", scheme, texNumBase + picNum - 1);
-
-                        Uri_SetPath(frameUrn, Str_Text(&framePath));
+                        Uri_SetPath(frameUrn, Str_Text(Str_Appendf(AutoStr_NewStd(), "%s:%i", scheme, texNumBase + picNum - 1)));
 
                         R_AddAnimGroupFrame(groupNumber, frameUrn, min, (max > 0? max - min : 0));
 
-                        Str_Free(&framePath);
                         Uri_Delete(frameUrn);
                     }
 

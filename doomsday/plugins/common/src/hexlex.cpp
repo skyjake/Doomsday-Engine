@@ -20,7 +20,6 @@
  */
 
 #include "hexlex.h"
-#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 
@@ -213,7 +212,7 @@ int HexLex::readNumber()
 
 Uri *HexLex::readTextureUri(char const *defaultScheme)
 {
-    if(!readToken()) // Name.
+    if(!readToken())
     {
         syntaxError("Missing texture Uri");
     }
@@ -240,9 +239,12 @@ int HexLex::readSoundIndex()
     return Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(readString()), 0);
 }
 
-// @note Assumes there is a valid string in sc_String.
 void HexLex::unreadToken()
 {
+    if(_readPos == 0)
+    {
+        return;
+    }
     _alreadyGot = true;
 }
 
