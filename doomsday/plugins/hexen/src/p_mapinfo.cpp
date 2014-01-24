@@ -35,16 +35,13 @@
 static mapinfo_t MapInfo[99];
 static uint mapCount;
 
-static uint qualifyMap(uint map)
-{
-    return (map >= mapCount) ? 0 : map;
-}
-
+/**
+ * Update the Music definition @a musicId with the specified CD @a track number.
+ */
 static void setMusicCDTrack(char const *musicId, int track)
 {
-    App_Log(DE2_DEV_RES_VERBOSE, "setSongCDTrack: musicId=%s, track=%i", musicId, track);
+    App_Log(DE2_DEV_RES_VERBOSE, "setMusicCDTrack: musicId=%s, track=%i", musicId, track);
 
-    // Update the corresponding Music definition.
     int cdTrack = track;
     Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, musicId, 0), DD_CD_TRACK, &cdTrack);
 }
@@ -267,12 +264,7 @@ void P_InitMapInfo()
 
 mapinfo_t *P_MapInfo(uint map)
 {
-    return &MapInfo[qualifyMap(map)];
-}
-
-uint P_MapInfoCount()
-{
-    return mapCount;
+    return &MapInfo[(map >= mapCount) ? 0 : map];
 }
 
 uint P_TranslateMapIfExists(uint map)
@@ -313,16 +305,4 @@ uint P_TranslateMap(uint map)
         return 0;
     }
     return translated;
-}
-
-char *P_GetMapSongLump(uint map)
-{
-    if(!strcasecmp(MapInfo[qualifyMap(map)].songLump, "DEFSONG"))
-    {
-        return NULL;
-    }
-    else
-    {
-        return MapInfo[qualifyMap(map)].songLump;
-    }
 }

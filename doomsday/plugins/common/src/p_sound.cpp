@@ -25,13 +25,18 @@
 
 #include "dmu_lib.h"
 #include "hexlex.h"
+#ifdef __JHEXEN__
+#  include "p_mapinfo.h"
+#endif
 
 void S_MapMusic(uint episode, uint map)
 {
 #ifdef __JHEXEN__
+    mapinfo_t const *mapInfo = P_MapInfo(map);
+
     int const defIndex = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    int const cdTrack  = P_MapInfo(map)->cdTrack;
-    char const *lump   = P_GetMapSongLump(map);
+    int const cdTrack  = mapInfo->cdTrack;
+    char const *lump   = strcasecmp(mapInfo->songLump, "DEFSONG")? mapInfo->songLump : 0;
 
     // Update the 'currentmap' music definition.
 
@@ -121,9 +126,8 @@ void SndInfoParser(Str const *path)
                 uint const map          = lexer.readMapNumber();
                 AutoStr const *lumpName = lexer.readLumpName();
 
-                if(map >= 0 && map >= P_MapInfoCount())
+                if(mapinfo_t *mapInfo = P_MapInfo(map))
                 {
-                    mapinfo_t *mapInfo = P_MapInfo(map);
                     strncpy(mapInfo->songLump, Str_Text(lumpName), sizeof(mapInfo->songLump));
                 }
                 continue;

@@ -65,11 +65,6 @@ void MapInfoParser(Str const *path);
  */
 mapinfo_t *P_MapInfo(uint map);
 
-/**
- * Returns the total number of MapInfo definitions.
- */
-uint P_MapInfoCount();
-
 #define P_INVALID_LOGICAL_MAP   0xffffffff
 
 /**
@@ -92,16 +87,6 @@ uint P_TranslateMapIfExists(uint map);
  * found, returns 0 (first available logical map).
  */
 uint P_TranslateMap(uint map);
-
-/**
- * Retrieve the song lump name for the given map.
- *
- * @param map  The map (logical number) to be queried.
- *
- * @return  @c NULL, if the map is set to use the default song lump, else a ptr
- * to a string containing the name of the song lump.
- */
-char *P_GetMapSongLump(uint map);
 
 #if __cplusplus
 } // extern "C"
