@@ -4737,90 +4737,6 @@ static void readSoundTargets()
 #endif
 }
 
-static void writeSoundSequences()
-{
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_SOUNDS);
-
-    SV_WriteLong(ActiveSequences);
-    for(seqnode_t *node = SequenceListHead; node; node = node->next)
-    {
-        SV_WriteByte(1); // Write a version byte.
-
-        SV_WriteLong(node->sequence);
-        SV_WriteLong(node->delayTics);
-        SV_WriteLong(node->volume);
-        SV_WriteLong(SN_GetSequenceOffset(node->sequence, node->sequencePtr));
-        SV_WriteLong(node->currentSoundID);
-
-        int i = 0;
-        if(node->mobj)
-        {
-            for(; i < numpolyobjs; ++i)
-            {
-                if(node->mobj == (mobj_t *) Polyobj_ById(i))
-                {
-                    break;
-                }
-            }
-        }
-
-        int difference;
-        if(i == numpolyobjs)
-        {
-            // The sound's emitter is the sector, not the polyobj itself.
-            difference = P_ToIndex(Sector_AtPoint_FixedPrecision(node->mobj->origin));
-            SV_WriteLong(0); // 0 -- sector sound origin.
-        }
-        else
-        {
-            SV_WriteLong(1); // 1 -- polyobj sound origin
-            difference = i;
-        }
-
-        SV_WriteLong(difference);
-    }
-#endif
-}
-
-static void readSoundSequences()
-{
-#if __JHEXEN__
-    SV_AssertSegment(ASEG_SOUNDS);
-
-    // Reload and restart all sound sequences
-    int numSequences = SV_ReadLong();
-
-    for(int i = 0; i < numSequences; ++i)
-    {
-        /*int ver =*/ (mapVersion >= 3)? SV_ReadByte() : 0;
-
-        int sequence    = SV_ReadLong();
-        int delayTics   = SV_ReadLong();
-        int volume      = SV_ReadLong();
-        int seqOffset   = SV_ReadLong();
-
-        int soundID     = SV_ReadLong();
-        int polySnd     = SV_ReadLong();
-        int secNum      = SV_ReadLong();
-
-        mobj_t *sndMobj = 0;
-        if(!polySnd)
-        {
-            sndMobj = (mobj_t*)P_GetPtr(DMU_SECTOR, secNum, DMU_EMITTER);
-        }
-        else
-        {
-            Polyobj *po = Polyobj_ById(secNum);
-            if(po) sndMobj = (mobj_t*) po;
-        }
-
-        SN_StartSequence(sndMobj, sequence);
-        SN_ChangeNodeData(i, seqOffset, delayTics, volume, soundID);
-    }
-#endif
-}
-
 static void writeScripts()
 {
 #if __JHEXEN__
@@ -4996,7 +4912,9 @@ static void writeMap()
         writeMapElements();
         writeThinkers();
         writeScripts();
-        writeSoundSequences();
+#if __JHEXEN__
+        SN_WriteSequences();
+#endif
         writeMisc();
         writeBrain();
         writeSoundTargets();
@@ -5031,7 +4949,9 @@ static void readMap()
         readMapElements();
         readThinkers();
         readScripts();
-        readSoundSequences();
+#if __JHEXEN__
+        SN_ReadSequences(mapVersion);
+#endif
         readMisc();
         readBrain();
         readSoundTargets();

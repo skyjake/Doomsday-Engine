@@ -22,13 +22,16 @@
 #include "jhexen.h"
 #include "s_sequence.h"
 
+#include "dmu_lib.h"
 #include "g_common.h"
 #include "hexlex.h"
-#include <string.h>
+#include "p_saveio.h"
+#include "polyobjs.h"
+#include <cstdio>
+#include <cstring>
 
 #define SS_MAX_SCRIPTS          64
 #define SS_TEMPBUFFER_SIZE      1024
-#define SS_SEQUENCE_NAME_LENGTH 32
 
 typedef enum sscmds_e {
     SS_CMD_NONE,
@@ -43,11 +46,22 @@ typedef enum sscmds_e {
     SS_CMD_END
 } sscmds_t;
 
-int ActiveSequences;
-seqnode_t *SequenceListHead;
+struct seqnode_t
+{
+    int *sequencePtr;
+    int sequence;
+    mobj_t *mobj;
+    int currentSoundID;
+    int delayTics;
+    int volume;
+    int stopSound;
+
+    seqnode_t *prev;
+    seqnode_t *next;
+};
 
 static struct sstranslation_s {
-    char name[SS_SEQUENCE_NAME_LENGTH];
+    char name[32];
     int scriptNum;
     int stopSound;
 } SequenceTranslate[SEQ_NUMSEQ] = {
@@ -74,15 +88,27 @@ static struct sstranslation_s {
     { "Wind", 0, 0 }
 };
 
-static int *SequenceData[SS_MAX_SCRIPTS];
+static int activeSequenceCount;
+static seqnode_t *sequences;
+
+static int *sequenceData[SS_MAX_SCRIPTS];
 
 static void initSequenceData()
 {
+    std::memset(sequenceData, 0, sizeof(*sequenceData) * SS_MAX_SCRIPTS);
+    activeSequenceCount = 0;
+}
+
+static int nextUnusedSequence()
+{
     for(int i = 0; i < SS_MAX_SCRIPTS; ++i)
     {
-        SequenceData[i] = 0;
+        if(!sequenceData[i])
+        {
+            return i;
+        }
     }
-    ActiveSequences = 0;
+    return -1;
 }
 
 /**
@@ -110,15 +136,15 @@ void SndSeqParser(Str const *path)
 
     HexLex lexer(script, path);
 
-    int i = SS_MAX_SCRIPTS;
+    int seqNumber = -1;
+    int seqCommmandIndex = -1;
 
-    int inSequence = -1;
     int *tempDataStart = 0, *tempDataPtr = 0;
     while(lexer.readToken())
     {
         if(Str_At(lexer.token(), 0) == ':')
         {
-            if(inSequence != -1)
+            if(seqCommmandIndex != -1)
             {
                 // Found an unexpected token.
                 Con_Error("SndSeqParser: Unexpected token '%s' in \"%s\" on line #%i",
@@ -127,32 +153,26 @@ void SndSeqParser(Str const *path)
 
             tempDataStart = (int *) Z_Calloc(SS_TEMPBUFFER_SIZE, PU_GAMESTATIC, NULL);
             tempDataPtr = tempDataStart;
-            for(i = 0; i < SS_MAX_SCRIPTS; ++i)
-            {
-                if(SequenceData[i] == NULL)
-                {
-                    break;
-                }
-            }
 
-            if(i == SS_MAX_SCRIPTS)
+            seqNumber = nextUnusedSequence();
+            if(seqNumber < 0)
             {
                 Con_Error("SndSeqParser: Number of SS Scripts >= SS_MAX_SCRIPTS");
             }
 
-            for(int k = 0; k < SEQ_NUMSEQ; ++k)
+            for(int i = 0; i < SEQ_NUMSEQ; ++i)
             {
-                if(!strcasecmp(SequenceTranslate[k].name, Str_Text(lexer.token()) + 1))
+                if(!strcasecmp(SequenceTranslate[i].name, Str_Text(lexer.token()) + 1))
                 {
-                    SequenceTranslate[k].scriptNum = i;
-                    inSequence = k;
+                    SequenceTranslate[i].scriptNum = seqNumber;
+                    seqCommmandIndex = i;
                     break;
                 }
             }
             continue; // parse the next command
         }
 
-        if(inSequence == -1)
+        if(seqCommmandIndex == -1)
         {
             continue;
         }
@@ -161,10 +181,10 @@ void SndSeqParser(Str const *path)
         {
             *tempDataPtr++ = SS_CMD_END;
             int dataSize = (tempDataPtr - tempDataStart) * sizeof(int);
-            SequenceData[i] = (int *) Z_Malloc(dataSize, PU_GAMESTATIC, NULL);
-            memcpy(SequenceData[i], tempDataStart, dataSize);
+            sequenceData[seqNumber] = (int *) Z_Malloc(dataSize, PU_GAMESTATIC, NULL);
+            std::memcpy(sequenceData[seqNumber], tempDataStart, dataSize);
             Z_Free(tempDataStart);
-            inSequence = -1;
+            seqCommmandIndex = -1;
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "playrepeat"))
@@ -229,7 +249,7 @@ void SndSeqParser(Str const *path)
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "stopsound"))
         {
-            SequenceTranslate[inSequence].stopSound = lexer.readSoundIndex();
+            SequenceTranslate[seqCommmandIndex].stopSound = lexer.readSoundIndex();
             *tempDataPtr++ = SS_CMD_STOPSOUND;
             continue;
         }
@@ -240,6 +260,11 @@ void SndSeqParser(Str const *path)
     }
 }
 
+int SN_ActiveSequenceCount()
+{
+    return activeSequenceCount;
+}
+
 void SN_StartSequence(mobj_t *mobj, int sequence)
 {
     if(!mobj) return;
@@ -248,26 +273,26 @@ void SN_StartSequence(mobj_t *mobj, int sequence)
 
     seqnode_t *node = (seqnode_t *) Z_Calloc(sizeof(*node), PU_GAMESTATIC, NULL);
 
-    node->sequencePtr = SequenceData[SequenceTranslate[sequence].scriptNum];
+    node->sequencePtr = sequenceData[SequenceTranslate[sequence].scriptNum];
     node->sequence    = sequence;
     node->mobj        = mobj;
     node->delayTics   = 0;
     node->stopSound   = SequenceTranslate[sequence].stopSound;
     node->volume      = 127; // Start at max volume
 
-    if(!SequenceListHead)
+    if(!sequences)
     {
-        SequenceListHead = node;
+        sequences = node;
         node->next = node->prev = 0;
     }
     else
     {
-        SequenceListHead->prev = node;
-        node->next = SequenceListHead;
+        sequences->prev = node;
+        node->next = sequences;
         node->prev = 0;
-        SequenceListHead = node;
+        sequences = node;
     }
-    ActiveSequences++;
+    activeSequenceCount++;
 }
 
 void SN_StartSequenceInSec(Sector *sector, int seqBase)
@@ -305,7 +330,7 @@ void SN_StopSequence(mobj_t *mobj)
 
     seqnode_t *node;
     seqnode_t *next = 0;
-    for(node = SequenceListHead; node; node = next)
+    for(node = sequences; node; node = next)
     {
         next = node->next;
 
@@ -317,9 +342,9 @@ void SN_StopSequence(mobj_t *mobj)
                 S_StartSoundAtVolume(node->stopSound, mobj, node->volume / 127.0f);
             }
 
-            if(SequenceListHead == node)
+            if(sequences == node)
             {
-                SequenceListHead = node->next;
+                sequences = node->next;
             }
 
             if(node->prev)
@@ -333,20 +358,20 @@ void SN_StopSequence(mobj_t *mobj)
             }
 
             Z_Free(node);
-            ActiveSequences--;
+            activeSequenceCount--;
         }
     }
 }
 
 void SN_UpdateActiveSequences()
 {
-    if(!ActiveSequences || paused)
+    if(!activeSequenceCount || paused)
     {
         // No sequences currently playing/game is paused
         return;
     }
 
-    for(seqnode_t *node = SequenceListHead; node; node = node->next)
+    for(seqnode_t *node = sequences; node; node = node->next)
     {
         if(node->delayTics)
         {
@@ -355,7 +380,7 @@ void SN_UpdateActiveSequences()
         }
 
         // If ID is zero, S_IsPlaying returns true if any sound is playing.
-        dd_bool sndPlaying = (node->currentSoundID ? S_IsPlaying(node->currentSoundID, node->mobj) : false);
+        bool sndPlaying = (node->currentSoundID ? CPP_BOOL(S_IsPlaying(node->currentSoundID, node->mobj)) : false);
 
         switch(*node->sequencePtr)
         {
@@ -416,15 +441,14 @@ void SN_UpdateActiveSequences()
             break;
 
         case SS_CMD_STOPSOUND:
-            // Wait until something else stops the sequence
+            // Wait until something else stops the sequence.
             break;
 
         case SS_CMD_END:
             SN_StopSequence(node->mobj);
             break;
 
-        default:
-            break;
+        default: break;
         }
     }
 }
@@ -434,24 +458,24 @@ void SN_StopAllSequences()
     seqnode_t *node;
     seqnode_t *next = 0;
 
-    for(node = SequenceListHead; node; node = next)
+    for(node = sequences; node; node = next)
     {
         next = node->next;
-        node->stopSound = 0;    // don't play any stop sounds
+        node->stopSound = 0; // Do not play stop sounds.
         SN_StopSequence(node->mobj);
     }
 }
 
 int SN_GetSequenceOffset(int sequence, int *sequencePtr)
 {
-    return (sequencePtr - SequenceData[SequenceTranslate[sequence].scriptNum]);
+    return (sequencePtr - sequenceData[SequenceTranslate[sequence].scriptNum]);
 }
 
 void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume,
     int currentSoundID)
 {
     int n = 0;
-    seqnode_t *node = SequenceListHead;
+    seqnode_t *node = sequences;
     while(node && n < nodeNum)
     {
         node = node->next;
@@ -463,4 +487,84 @@ void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume,
     node->volume          = volume;
     node->sequencePtr    += seqOffset;
     node->currentSoundID  = currentSoundID;
+}
+
+void SN_WriteSequences()
+{
+    SV_BeginSegment(ASEG_SOUNDS);
+
+    SV_WriteLong(activeSequenceCount);
+    for(seqnode_t *node = sequences; node; node = node->next)
+    {
+        SV_WriteByte(1); // Write a version byte.
+
+        SV_WriteLong(node->sequence);
+        SV_WriteLong(node->delayTics);
+        SV_WriteLong(node->volume);
+        SV_WriteLong(SN_GetSequenceOffset(node->sequence, node->sequencePtr));
+        SV_WriteLong(node->currentSoundID);
+
+        int i = 0;
+        if(node->mobj)
+        {
+            for(; i < numpolyobjs; ++i)
+            {
+                if(node->mobj == (mobj_t *) Polyobj_ById(i))
+                {
+                    break;
+                }
+            }
+        }
+
+        int difference;
+        if(i == numpolyobjs)
+        {
+            // The sound's emitter is the sector, not the polyobj itself.
+            difference = P_ToIndex(Sector_AtPoint_FixedPrecision(node->mobj->origin));
+            SV_WriteLong(0); // 0 -- sector sound origin.
+        }
+        else
+        {
+            SV_WriteLong(1); // 1 -- polyobj sound origin
+            difference = i;
+        }
+
+        SV_WriteLong(difference);
+    }
+}
+
+void SN_ReadSequences(int mapVersion)
+{
+    SV_AssertSegment(ASEG_SOUNDS);
+
+    // Reload and restart all sound sequences
+    int numSequences = SV_ReadLong();
+
+    for(int i = 0; i < numSequences; ++i)
+    {
+        /*int ver =*/ (mapVersion >= 3)? SV_ReadByte() : 0;
+
+        int sequence    = SV_ReadLong();
+        int delayTics   = SV_ReadLong();
+        int volume      = SV_ReadLong();
+        int seqOffset   = SV_ReadLong();
+
+        int soundID     = SV_ReadLong();
+        int polySnd     = SV_ReadLong();
+        int secNum      = SV_ReadLong();
+
+        mobj_t *sndMobj = 0;
+        if(!polySnd)
+        {
+            sndMobj = (mobj_t*)P_GetPtr(DMU_SECTOR, secNum, DMU_EMITTER);
+        }
+        else
+        {
+            Polyobj *po = Polyobj_ById(secNum);
+            if(po) sndMobj = (mobj_t*) po;
+        }
+
+        SN_StartSequence(sndMobj, sequence);
+        SN_ChangeNodeData(i, seqOffset, delayTics, volume, soundID);
+    }
 }

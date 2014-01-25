@@ -48,7 +48,7 @@ static void setMusicCDTrack(char const *musicId, int track)
 
 void MapInfoParser(Str const *path)
 {
-    memset(&MapInfo, 0, sizeof(MapInfo));
+    std::memset(&MapInfo, 0, sizeof(MapInfo));
 
     // Configure the defaults
     mapinfo_t defMapInfo;

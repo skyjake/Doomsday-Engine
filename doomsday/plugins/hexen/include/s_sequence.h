@@ -67,21 +67,6 @@ typedef enum {
     SEQTYPE_NUMSEQ
 } seqtype_t;
 
-typedef struct seqnode_s {
-    int* sequencePtr;
-    int sequence;
-    mobj_t* mobj;
-    int currentSoundID;
-    int delayTics;
-    int volume;
-    int stopSound;
-    struct seqnode_s* prev;
-    struct seqnode_s* next;
-} seqnode_t;
-
-DENG_EXTERN_C int ActiveSequences;
-DENG_EXTERN_C seqnode_t* SequenceListHead;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -91,6 +76,7 @@ extern "C" {
  */
 void SndSeqParser(Str const *path);
 
+int SN_ActiveSequenceCount(void);
 void SN_StartSequence(mobj_t *mobj, int sequence);
 void SN_StartSequenceInSec(Sector *sector, int seqBase);
 void SN_StartSequenceName(mobj_t *mobj, char const *name);
@@ -104,6 +90,9 @@ int SN_GetSequenceOffset(int sequence, int *sequencePtr);
  * @param nodeNum  @c 0= the first node.
  */
 void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume, int currentSoundID);
+
+void SN_WriteSequences();
+void SN_ReadSequences(int mapVersion);
 
 #ifdef __cplusplus
 } // extern "C"
