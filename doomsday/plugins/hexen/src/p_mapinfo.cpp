@@ -54,9 +54,8 @@ void MapInfoParser(Str const *path)
     mapInfos.clear();
     uint logicalMapIndex = 0;
 
-    // Configure the defaults
+    // Prepare a default-configured definition, for one-shot initialization.
     mapinfo_t defMapInfo;
-    defMapInfo.usingDefaults   = true;
 
     defMapInfo.map             = -1; // Unknown.
     defMapInfo.cluster         = 0;
@@ -131,9 +130,6 @@ void MapInfoParser(Str const *path)
 
                     // Initialize with the default values.
                     std::memcpy(info, &defMapInfo, sizeof(*info));
-
-                    // This information has been parsed from MAPINFO.
-                    info->usingDefaults = false;
 
                     // Assign a logical map index.
                     info->map = logicalMapIndex++;
@@ -269,8 +265,6 @@ uint P_TranslateMapIfExists(uint map)
     for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
         mapinfo_t const &info = i->second;
-
-        if(info.usingDefaults) continue; // Ignoring, undefined values.
 
         if(info.warpTrans == map)
         {

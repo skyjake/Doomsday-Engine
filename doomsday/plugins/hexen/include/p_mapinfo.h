@@ -29,8 +29,6 @@
 #include "doomsday.h"
 
 typedef struct mapinfo_s {
-    dd_bool      usingDefaults; ///< @c true= this definition was @em not read from MAPINFO.
-
     uint         map; ///< Logical map number.
     short        cluster;
     uint         warpTrans;
