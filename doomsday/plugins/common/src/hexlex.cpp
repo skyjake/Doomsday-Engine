@@ -71,10 +71,10 @@ HexLex::~HexLex()
 
 void HexLex::parse(Str const *script)
 {
-    _script       = script;
-    _readPos      = 0;
-    _lineNumber   = 1;
-    _alreadyGot   = false;
+    _script     = script;
+    _readPos    = 0;
+    _lineNumber = 1;
+    _alreadyGot = false;
     Str_Clear(&_token);
 }
 
@@ -181,19 +181,22 @@ bool HexLex::readToken()
     return true;
 }
 
-Str const *HexLex::readString()
+void HexLex::unreadToken()
 {
-    if(!readToken())
+    if(_readPos == 0)
     {
-        syntaxError("Missing string");
+        return;
     }
+    _alreadyGot = true;
+}
+
+Str const *HexLex::token()
+{
     return &_token;
 }
 
 int HexLex::readNumber()
 {
-    checkOpen();
-
     if(!readToken())
     {
         syntaxError("Missing integer");
@@ -210,6 +213,15 @@ int HexLex::readNumber()
     return number;
 }
 
+Str const *HexLex::readString()
+{
+    if(!readToken())
+    {
+        syntaxError("Missing string");
+    }
+    return &_token;
+}
+
 Uri *HexLex::readUri(char const *defaultScheme)
 {
     if(!readToken())
@@ -220,20 +232,6 @@ Uri *HexLex::readUri(char const *defaultScheme)
     Uri *uri = Uri_SetScheme(Uri_New(), defaultScheme);
     Uri_SetPath(uri, Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&_token)))));
     return uri;
-}
-
-void HexLex::unreadToken()
-{
-    if(_readPos == 0)
-    {
-        return;
-    }
-    _alreadyGot = true;
-}
-
-Str const *HexLex::token()
-{
-    return &_token;
 }
 
 int HexLex::lineNumber() const
