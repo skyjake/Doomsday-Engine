@@ -130,10 +130,15 @@ void SndInfoParser(Str const *path)
                 }
                 continue;
             }
+            if(!Str_CompareIgnoreCase(lexer.token(), "$registered")) // Unused.
+            {
+                continue;
+            }
             if(Str_At(lexer.token(), 0) == '$')
             {
-                // Ignore all other unknown commands. (Vanilla parser compat).
-                continue;
+                // Found an unknown command.
+                Con_Error("SndInfoParser: Unknown command '%s' in \"%s\" on line #%i",
+                          lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
             }
 
             lexer.unreadToken();
