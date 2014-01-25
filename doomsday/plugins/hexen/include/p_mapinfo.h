@@ -30,10 +30,10 @@
 
 typedef struct mapinfo_s {
     uint         map; ///< Logical map number.
-    short        cluster;
+    int          cluster;
     uint         warpTrans;
     uint         nextMap;
-    short        cdTrack;
+    int          cdTrack;
     char         title[32];
     materialid_t sky1Material;
     materialid_t sky2Material;

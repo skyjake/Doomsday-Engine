@@ -78,7 +78,6 @@ public:
     int readNumber();
 
     int readSoundIndex();
-    uint readMapNumber();
     Uri *readUri(char const *defaultScheme = "");
 
     /**

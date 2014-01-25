@@ -1060,7 +1060,7 @@ char const *P_MapTitle(uint episode, uint map)
     // In Hexen we can also look in MAPINFO for the map title.
     if(!title)
     {
-        if(mapinfo_t *mapInfo = P_MapInfo(mapUri))
+        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
         {
             title = mapInfo->title;
         }

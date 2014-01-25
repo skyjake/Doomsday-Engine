@@ -1006,7 +1006,7 @@ void P_InitLightning(void)
 {
     int i, secCount;
     Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    mapinfo_t *mapInfo = P_MapInfo(mapUri);
+    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
     Uri_Delete(mapUri);
 
     if(!mapInfo || !mapInfo->lightning)

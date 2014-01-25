@@ -139,7 +139,7 @@ void MapInfoParser(Str const *path)
                 }
                 Uri_Delete(mapUri);
 
-                // Map name must follow the number.
+                // Map title must follow the number.
                 strcpy(info->title, Str_Text(lexer.readString()));
 
                 // Process optional tokens.
@@ -198,7 +198,6 @@ void MapInfoParser(Str const *path)
                             Con_Error("MapInfoParser: Invalid map warp-number '%s' in \"%s\" on line #%i",
                                       lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
                         }
-
                         info->warpTrans = (unsigned) mapWarpNum - 1;
                         continue;
                     }

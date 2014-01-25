@@ -26,6 +26,7 @@
 #include "dmu_lib.h"
 #include "hexlex.h"
 #ifdef __JHEXEN__
+#  include "g_common.h"
 #  include "p_mapinfo.h"
 #endif
 
@@ -121,15 +122,18 @@ void SndInfoParser(Str const *path)
             {
                 // $map int(map-number) string(lump-name)
                 // Associate a music lump to a map.
-                Uri *mapUri         = lexer.readUri();
+                int mapNumber       = lexer.readNumber();
                 Str const *lumpName = lexer.readString();
 
-                if(mapinfo_t *mapInfo = P_MapInfo(mapUri))
+                if(mapNumber > 0)
                 {
-                    strncpy(mapInfo->songLump, Str_Text(lumpName), sizeof(mapInfo->songLump));
+                    Uri *mapUri = G_ComposeMapUri(0, mapNumber - 1);
+                    if(mapinfo_t *mapInfo = P_MapInfo(mapUri))
+                    {
+                        strncpy(mapInfo->songLump, Str_Text(lumpName), sizeof(mapInfo->songLump));
+                    }
+                    Uri_Delete(mapUri);
                 }
-
-                Uri_Delete(mapUri);
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "$registered")) // Unused.

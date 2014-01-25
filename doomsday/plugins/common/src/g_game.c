@@ -1157,7 +1157,7 @@ static void printMapBanner(void)
     {
         char buf[64];
 #if __JHEXEN__
-        mapinfo_t *mapInfo = P_MapInfo(mapUri);
+        mapinfo_t const *mapInfo = P_MapInfo(mapUri);
         int warpNum = (mapInfo? mapInfo->warpTrans : -1);
         dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", warpNum + 1, gameMap + 1, title);
 #else
@@ -1265,7 +1265,7 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
 #if __JHEXEN__
     {
         Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-        mapinfo_t *mapInfo = P_MapInfo(mapUri);
+        mapinfo_t const *mapInfo = P_MapInfo(mapUri);
         if(mapInfo)
         {
             int fadeTable = mapInfo->fadeTable;
