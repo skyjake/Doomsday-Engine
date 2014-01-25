@@ -209,7 +209,7 @@ void SV_WriteXGPlaneMover(thinker_t* th)
 /**
  * Reads the plane mover thinker.
  */
-int SV_ReadXGPlaneMover(xgplanemover_t* mov)
+int SV_ReadXGPlaneMover(xgplanemover_t* mov, int mapVersion)
 {
     byte ver = SV_ReadByte(); // Version.
 

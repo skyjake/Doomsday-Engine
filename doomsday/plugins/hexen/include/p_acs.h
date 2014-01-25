@@ -33,62 +33,6 @@
 #define MAX_ACS_WORLD_VARS      64
 #define ACS_STACK_DEPTH         32
 
-typedef enum aste_e {
-    ASTE_INACTIVE,
-    ASTE_RUNNING,
-    ASTE_SUSPENDED,
-    ASTE_WAITING_FOR_TAG,
-    ASTE_WAITING_FOR_POLY,
-    ASTE_WAITING_FOR_SCRIPT,
-    ASTE_TERMINATING
-} aste_t;
-
-typedef struct acsinfo_s {
-    int number;
-    int const *address;
-    int argCount;
-    aste_t state;
-    int waitValue;
-} acsinfo_t;
-
-typedef struct acs_s {
-    thinker_t thinker;
-    mobj_t *activator;
-    Line *line;
-    int side;
-    int number;
-    int infoIndex;
-    int delayCount;
-    int stack[ACS_STACK_DEPTH];
-    int stackPtr;
-    int vars[MAX_ACS_SCRIPT_VARS];
-    int const *ip;
-} acs_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void T_InterpretACS(acs_t *script);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-typedef struct acsstore_s {
-    uint map;     ///< Target map.
-    int script;   ///< Script number on target map.
-    byte args[4]; ///< Padded to 4 for alignment.
-} acsstore_t;
-
-DENG_EXTERN_C int ACScriptCount;
-DENG_EXTERN_C byte const *ActionCodeBase;
-DENG_EXTERN_C acsinfo_t *ACSInfo;
-DENG_EXTERN_C int MapVars[MAX_ACS_MAP_VARS];
-DENG_EXTERN_C int WorldVars[MAX_ACS_WORLD_VARS];
-DENG_EXTERN_C int ACSStoreSize;
-DENG_EXTERN_C acsstore_t *ACSStore;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -116,6 +60,43 @@ void P_ReadGlobalACScriptData(int saveVersion);
 
 void P_WriteMapACScriptData();
 void P_ReadMapACScriptData();
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+/**
+ * Action script thinker.
+ */
+typedef struct acs_s {
+    thinker_t thinker;
+    mobj_t *activator;
+    Line *line;
+    int side;
+    int number;
+    int infoIndex;
+    int delayCount;
+    int stack[ACS_STACK_DEPTH];
+    int stackPtr;
+    int vars[MAX_ACS_SCRIPT_VARS];
+    int const *ip;
+} acs_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void ACScript_Thinker(acs_t *script);
+
+/**
+ * Serialize this thinker to the currently open save file.
+ */
+void ACScript_Write(acs_t const *script);
+
+/**
+ * Deserialize the thinker from the currently open save file.
+ */
+int ACScript_Read(acs_t *script, int mapVersion);
 
 #ifdef __cplusplus
 } // extern "C"
