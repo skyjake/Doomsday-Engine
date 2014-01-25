@@ -1514,8 +1514,10 @@ void G_DoQuitGame(void)
 #undef QUITWAIT_MILLISECONDS
 }
 
-void G_QueMapMusic(uint episode, uint map)
+void G_QueMapMusic(Uri const *mapUri)
 {
+    DENG_ASSERT(mapUri != 0);
+
 #if __JHEXEN__
     /**
      * @note Kludge: Due to the way music is managed with Hexen, unless
@@ -1534,12 +1536,7 @@ void G_QueMapMusic(uint episode, uint map)
     //S_StartMusic("chess", true); // Waiting-for-map-load song
 #endif
 
-    {
-        Uri *mapUri = G_ComposeMapUri(episode, map);
-        S_MapMusic(mapUri);
-        Uri_Delete(mapUri);
-    }
-
+    S_MapMusic(mapUri);
     S_PauseMusic(true);
 }
 
@@ -2694,7 +2691,7 @@ void G_DoLeaveMap(void)
     hasBrief = G_BriefingEnabled(p.mapUri, &fin);
     if(!hasBrief)
     {
-        G_QueMapMusic(p.episode, p.map);
+        G_QueMapMusic(p.mapUri);
     }
 
     gameMap = p.map;
@@ -2777,7 +2774,7 @@ void G_DoRestartMap(void)
     p.revisit    = false; // Don't reload save state.
 
     // This is a restart, so we won't brief again.
-    G_QueMapMusic(gameEpisode, gameMap);
+    G_QueMapMusic(p.mapUri);
 
     // If we're the server, let clients know the map will change.
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
@@ -3051,7 +3048,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
         hasBrief = G_BriefingEnabled(p.mapUri, &fin);
         if(!hasBrief)
         {
-            G_QueMapMusic(gameEpisode, gameMap);
+            G_QueMapMusic(p.mapUri);
         }
 
         // If we're the server, let clients know the map will change.

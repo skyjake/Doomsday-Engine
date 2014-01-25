@@ -96,7 +96,7 @@ dd_bool     EV_ThingDeactivate(int tid);
 dd_bool     EV_ThingRemove(int tid);
 dd_bool     EV_ThingDestroy(int tid);
 
-void P_InitSky(uint map);
+void P_InitSky(Uri const *mapUri);
 void P_AnimateSky(void);
 
 #ifdef __cplusplus

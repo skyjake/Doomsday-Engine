@@ -1,30 +1,23 @@
-/**\file in_lude.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file in_lude.c  Heretic intermission/stat screens.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @todo optimize: Do not repeatedly compose map URIs.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Intermission/stat screens - jHeretic specific.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "jheretic.h"
@@ -655,13 +648,15 @@ void IN_DrawStatBack(void)
 
 void IN_DrawOldLevel(void)
 {
+    Uri *oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
+
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(oldMapUri), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
@@ -702,10 +697,13 @@ void IN_DrawOldLevel(void)
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
+
+    Uri_Delete(oldMapUri);
 }
 
 void IN_DrawYAH(void)
 {
+    Uri *nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
     uint i;
 
     FR_SetFont(FID(GF_FONTA));
@@ -715,7 +713,7 @@ void IN_DrawYAH(void)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
-    FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->nextMap), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(nextMapUri), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
@@ -729,9 +727,12 @@ void IN_DrawYAH(void)
     }
 
     if(!(interTime & 16) || interState == 3)
-    {   // Draw the destination 'X'
+    {
+        // Draw the destination 'X'
         GL_DrawPatch(dpGoingThere, &YAHspot[wbs->episode][wbs->nextMap]);
     }
+
+    Uri_Delete(nextMapUri);
 }
 
 void IN_DrawSingleStats(void)
@@ -739,6 +740,8 @@ void IN_DrawSingleStats(void)
 #define TRACKING                (1)
 
     static int sounds;
+
+    Uri *oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
     char buf[20];
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -750,7 +753,7 @@ void IN_DrawSingleStats(void)
     FR_DrawTextXY3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(oldMapUri), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -758,6 +761,8 @@ void IN_DrawSingleStats(void)
     FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
+
+    Uri_Delete(oldMapUri); oldMapUri = 0;
 
     if(interTime < 30)
     {
@@ -854,6 +859,8 @@ void IN_DrawSingleStats(void)
     }
     else
     {
+        Uri *nextMapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
+
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTA));
@@ -862,11 +869,13 @@ void IN_DrawSingleStats(void)
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->nextMap), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(P_MapTitle(nextMapUri), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
         skipIntermission = false;
+
+        Uri_Delete(nextMapUri);
     }
 
 #undef TRACKING
@@ -878,6 +887,7 @@ void IN_DrawCoopStats(void)
 
     static int sounds;
 
+    Uri *oldMapUri = G_ComposeMapUri(wbs->episode, wbs->currentMap);
     int i, ypos;
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -889,7 +899,7 @@ void IN_DrawCoopStats(void)
     FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(P_MapTitle(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_MapTitle(oldMapUri), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -939,6 +949,8 @@ void IN_DrawCoopStats(void)
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
+
+    Uri_Delete(oldMapUri);
 
 #undef TRACKING
 }

@@ -80,18 +80,17 @@ void P_InitLava(void)
     lavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
-void P_InitSky(uint map)
+void P_InitSky(Uri const *mapUri)
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, map);
     mapinfo_t const *mapInfo = P_MapInfo(mapUri);
-
-    sky1Material     = mapInfo->sky1Material;
-    sky2Material     = mapInfo->sky2Material;
-    sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
-    sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
-    doubleSky        = mapInfo->doubleSky;
-
-    Uri_Delete(mapUri);
+    if(mapInfo)
+    {
+        sky1Material     = mapInfo->sky1Material;
+        sky2Material     = mapInfo->sky2Material;
+        sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
+        sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
+        doubleSky        = mapInfo->doubleSky;
+    }
 
     sky1ColumnOffset = sky2ColumnOffset = 0;
 
