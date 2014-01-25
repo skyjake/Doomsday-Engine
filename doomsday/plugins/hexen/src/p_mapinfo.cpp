@@ -128,20 +128,20 @@ void MapInfoParser(Str const *path)
                 {
                     // A new map info.
                     info = &mapInfos[Str_Text(Uri_Compose(mapUri))];
+
+                    // Initialize with the default values.
+                    std::memcpy(info, &defMapInfo, sizeof(*info));
+
+                    // This information has been parsed from MAPINFO.
+                    info->usingDefaults = false;
+
+                    // Assign a logical map index.
+                    info->map = logicalMapIndex++;
+
+                    // The warp translation defaults to the map number.
+                    info->warpTrans = tmap - 1;
                 }
                 Uri_Delete(mapUri);
-
-                // Copy defaults to current map definition.
-                std::memcpy(info, &defMapInfo, sizeof(*info));
-
-                // This information has been parsed from MAPINFO.
-                info->usingDefaults = false;
-
-                // Assign a logical map index.
-                info->map = logicalMapIndex++;
-
-                // The warp translation defaults to the map number.
-                info->warpTrans = tmap - 1;
 
                 // Map name must follow the number.
                 strcpy(info->title, Str_Text(lexer.readString()));
