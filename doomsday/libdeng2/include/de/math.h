@@ -87,6 +87,7 @@ inline Type round(dfloat const &value) {
     return Type(std::floor(value + 0.5f));
 }
 
+inline dint   roundi(dfloat const &value) { return round<int>(value);   }
 inline dfloat roundf(dfloat const &value) { return round<float>(value); }
 
 template <typename Type>

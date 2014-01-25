@@ -37,12 +37,6 @@ QtNativeFont::QtNativeFont(String const &family)
     : NativeFont(family), d(new Instance)
 {}
 
-QtNativeFont::QtNativeFont(QtNativeFont const &other)
-    : NativeFont(other), d(new Instance)
-{
-    d->font = other.d->font;
-}
-
 QtNativeFont::QtNativeFont(QFont const &font)
     : NativeFont(font.family()), d(new Instance)
 {
@@ -50,6 +44,12 @@ QtNativeFont::QtNativeFont(QFont const &font)
     setSize(font.pointSizeF());
     setWeight(font.weight());
     setStyle(font.italic()? Italic : Regular);
+}
+
+QtNativeFont::QtNativeFont(QtNativeFont const &other)
+    : NativeFont(other), d(new Instance)
+{
+    d->font = other.d->font;
 }
 
 QtNativeFont &QtNativeFont::operator = (QtNativeFont const &other)

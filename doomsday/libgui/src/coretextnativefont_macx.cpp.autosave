@@ -1,0 +1,146 @@
+/** @file coretextnativefont_macx.cpp
+ *
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
+ */
+
+#include "coretextnativefont_macx.h"
+
+#include <QFont>
+#include <CoreText/CoreText.h>
+
+namespace de {
+
+DENG2_PIMPL(CoreTextNativeFont)
+{
+    CTFontRef font;
+    float ascent;
+    float descent;
+    float height;
+    float lineSpacing;
+
+    Instance(Public *i)
+        : Base(i)
+        , font(0)
+        , ascent(0)
+        , descent(0)
+        , height(0)
+        , lineSpacing(0)
+    {}
+
+    ~Instance()
+    {
+        release();
+    }
+
+    void release()
+    {
+        if(font)
+        {
+            CFRelease(font);
+            font = 0;
+        }
+    }
+
+    void updateFontAndMetrics()
+    {
+        release();
+        
+        
+    }
+};
+
+} // namespace de
+
+namespace de {
+
+CoreTextNativeFont::CoreTextNativeFont(String const &family)
+    : NativeFont(family), d(new Instance(this))
+{}
+
+CoreTextNativeFont::CoreTextNativeFont(QFont const &font)
+    : NativeFont(font.family()), d(new Instance(this))
+{
+    setSize(font.pointSizeF());
+    setWeight(font.weight());
+    setStyle(font.italic()? Italic : Regular);
+}
+
+CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
+    : NativeFont(other), d(new Instance(this))
+{
+    /// @todo copy font
+}
+
+CoreTextNativeFont &CoreTextNativeFont::operator = (CoreTextNativeFont const &other)
+{
+    NativeFont::operator = (other);
+
+    /// @todo copy font
+
+    setState(NotReady);
+    return *this;
+}
+
+void CoreTextNativeFont::commit() const
+{
+    d->updateFontAndMetrics();
+}
+
+int CoreTextNativeFont::nativeFontAscent() const
+{
+    return roundi(d->ascent);
+}
+
+int CoreTextNativeFont::nativeFontDescent() const
+{
+    return roundi(d->descent);
+}
+
+int CoreTextNativeFont::nativeFontHeight() const
+{
+    return roundi(d->height);
+}
+
+int CoreTextNativeFont::nativeFontLineSpacing() const
+{
+    return roundi(d->lineSpacing);
+}
+
+Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
+{
+    Rectanglei rect;
+
+    return rect;
+}
+
+int CoreTextNativeFont::nativeFontWidth(String const &text) const
+{
+    return 0;
+}
+
+QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
+                                               Vector4ub const &foreground,
+                                               Vector4ub const &background) const
+{
+    Rectanglei const bounds = measure(text);
+
+    QImage img(QSize(bounds.width(), bounds.height()),
+               QImage::Format_ARGB32);
+
+    return img;
+}
+
+} // namespace de
