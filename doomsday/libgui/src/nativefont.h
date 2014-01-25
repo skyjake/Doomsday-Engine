@@ -19,6 +19,8 @@
 #ifndef LIBGUI_NATIVEFONT_H
 #define LIBGUI_NATIVEFONT_H
 
+#include "de/gui/libgui.h"
+
 #include <de/String>
 #include <de/Asset>
 #include <de/Rectangle>

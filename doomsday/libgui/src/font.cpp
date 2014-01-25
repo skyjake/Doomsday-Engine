@@ -25,24 +25,16 @@
 #include <QImage>
 #include <QPainter>
 
-#if defined(WIN32) || defined(MACOSX)
-#  define LIBGUI_ACCURATE_TEXT_BOUNDS
-#endif
-
 namespace de {
 
 DENG2_PIMPL(Font)
 {
     QtNativeFont font;
-    //QScopedPointer<QFontMetrics> metrics;
     ConstantRule *heightRule;
     ConstantRule *ascentRule;
     ConstantRule *descentRule;
     ConstantRule *lineSpacingRule;
     int ascent;
-
-    //enum AltFamilyId { AltFamilyLight, AltFamilyBold, NUM_ALTS };
-    //String altFamily[NUM_ALTS];
 
     Instance(Public *i) : Base(i), ascent(0)
     {
@@ -65,24 +57,6 @@ DENG2_PIMPL(Font)
         updateMetrics();
     }
 
-    /*
-    void setAltFamily(RichFormat::Weight weight, String const &family)
-    {
-        switch(weight)
-        {
-        case RichFormat::Light:
-            altFamily[AltFamilyLight] = family;
-            break;
-
-        case RichFormat::Bold:
-            altFamily[AltFamilyBold] = family;
-            break;
-
-        default:
-            break;
-        }
-    }*/
-
     void createRules()
     {
         heightRule      = new ConstantRule(0);
@@ -93,8 +67,6 @@ DENG2_PIMPL(Font)
 
     void updateMetrics()
     {
-        //metrics.reset(new QFontMetrics(font));
-
         ascent = font.ascent();
         if(font.weight() != NativeFont::Normal)
         {
@@ -167,33 +139,11 @@ DENG2_PIMPL(Font)
                 mod.setWeight(rich.weight() == RichFormat::Normal? NativeFont::Normal :
                               rich.weight() == RichFormat::Bold?   NativeFont::Bold   :
                                                                    NativeFont::Light);
-
-                /*
-                // Some weights may require an alternate font family.
-                if(rich.weight() == RichFormat::Light && !altFamily[AltFamilyLight].isEmpty())
-                {
-                    mod.setFamily(altFamily[AltFamilyLight]);
-                }
-                else if(rich.weight() == RichFormat::Bold && !altFamily[AltFamilyBold].isEmpty())
-                {
-                    mod.setFamily(altFamily[AltFamilyBold]);
-                }
-                */
             }
             return mod;
         }
         return font;
     }
-
-    /*
-    QFontMetrics alteredMetrics(RichFormat::Iterator const &rich) const
-    {
-        if(!rich.isDefault())
-        {
-            return QFontMetrics(alteredFont(rich));
-        }
-        return *metrics;
-    }*/
 };
 
 Font::Font() : d(new Instance(this))
@@ -202,24 +152,8 @@ Font::Font() : d(new Instance(this))
 Font::Font(Font const &other) : d(new Instance(this, other.d->font))
 {}
 
-/*Font::Font(NativeFont const &font) : d(new Instance(this, ))
-{
-
-}*/
-
 Font::Font(QFont const &font) : d(new Instance(this, font))
 {}
-
-/*QFont Font::toQFont() const
-{
-    return d->font;
-}*/
-
-/*
-void Font::setAltFamily(RichFormat::Weight weight, String const &familyName)
-{
-    d->setAltFamily(weight, familyName);
-}*/
 
 Rectanglei Font::measure(String const &textLine) const
 {
@@ -296,14 +230,13 @@ QImage Font::rasterize(String const &textLine,
                             d->metrics->height());
 #endif
 
-    //QColor fgColor(foreground.x, foreground.y, foreground.z, foreground.w);
     QColor bgColor(background.x, background.y, background.z, background.w);
 
     Vector4ub fg = foreground;
     Vector4ub bg = background;
 
-    QImage img(QSize(bounds.width() + 1,
-                     de::max(duint(d->font.height()), bounds.height()) + 1),
+    QImage img(QSize(bounds.width(),
+                     de::max(duint(d->font.height()), bounds.height())),
                QImage::Format_ARGB32);
     img.fill(bgColor.rgba());
 
@@ -325,8 +258,6 @@ QImage Font::rasterize(String const &textLine,
         {
             fg = foreground;
             bg = background;
-            //painter.setPen(fgColor);
-            //painter.setBrush(bgColor);
         }
         else
         {
@@ -334,28 +265,21 @@ QImage Font::rasterize(String const &textLine,
 
             if(iter.colorIndex() != RichFormat::OriginalColor)
             {
-                //RichFormat::IStyle::Color styleColor = iter.color();
-                fg = iter.color(); //styleColor;QColor const fg(styleColor.x, styleColor.y, styleColor.z, styleColor.w);
+                fg = iter.color();
                 bg = Vector4ub(fg, 0);
-                //painter.setPen(fg);
-                //painter.setBrush(bg);
             }
             else
             {
                 fg = foreground;
                 bg = background;
-                //painter.setPen(fgColor);
-                //painter.setBrush(bgColor);
             }
         }
-        //painter.setFont(font);
 
         String const part = textLine.substr(iter.range());
 
         QImage fragment = font.rasterize(part, fg, bg);
         Rectanglei const bounds = font.measure(part);
 
-        //painter.drawText(advance, d->ascent, part);
         painter.drawImage(QPoint(advance + bounds.left(), d->ascent + bounds.top()), fragment);
         advance += font.width(part);
     }

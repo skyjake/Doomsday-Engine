@@ -62,21 +62,7 @@ DENG2_PIMPL(FontBank)
             String const style = def["style"];
             font.setStyle(style == "italic"? QFont::StyleItalic : QFont::StyleNormal);
 
-            Font *loaded = new Font(font);
-
-            /*
-            // Alternate families.
-            if(def.has("alt.family.light"))
-            {
-                loaded->setAltFamily(Font::RichFormat::Light, def["alt.family.light"]);
-            }
-            if(def.has("alt.family.bold"))
-            {
-                loaded->setAltFamily(Font::RichFormat::Bold, def["alt.family.bold"]);
-            }
-            */
-
-            return loaded;
+            return new Font(font);
         }
     };
 

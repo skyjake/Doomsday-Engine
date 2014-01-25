@@ -1,4 +1,4 @@
-/** @file qtnativefont.h
+/** @file qtnativefont.h  Qt-based native font.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -28,7 +28,6 @@ class QtNativeFont : public NativeFont
 public:
     QtNativeFont(String const &family = "");
     QtNativeFont(QtNativeFont const &other);
-
     QtNativeFont(QFont const &font);
 
     QtNativeFont &operator = (QtNativeFont const &other);

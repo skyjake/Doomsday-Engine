@@ -1,4 +1,4 @@
-/** @file qtnativefont.cpp
+/** @file qtnativefont.cpp  Qt-based native font.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -112,7 +112,7 @@ QImage QtNativeFont::nativeFontRasterize(String const &text,
                                          Vector4ub const &foreground,
                                          Vector4ub const &background) const
 {
-#ifdef Q_OS_MAC
+#ifdef LIBGUI_ACCURATE_TEXT_BOUNDS
     Rectanglei const bounds = measure(text);
 #else
     Rectanglei const bounds(0,
@@ -125,7 +125,6 @@ QImage QtNativeFont::nativeFontRasterize(String const &text,
     QColor const bgColor(background.x, background.y, background.z, background.w);
 
     QImage img(QSize(bounds.width() + 1, bounds.height() + 1),
-               //de::max(duint(d->metrics.height()), bounds.height())),
                QImage::Format_ARGB32);
 
     img.fill(bgColor.rgba());
@@ -136,7 +135,7 @@ QImage QtNativeFont::nativeFontRasterize(String const &text,
     painter.setFont(d->font);
     painter.setPen(fgColor);
     painter.setBrush(bgColor);
-    painter.drawText(-bounds.left(), -bounds.top() /*d->metrics->ascent()*/, text);
+    painter.drawText(-bounds.left(), -bounds.top(), text);
 
     return img;
 }
