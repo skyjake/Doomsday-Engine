@@ -270,11 +270,11 @@ uint P_TranslateMapIfExists(uint map)
         {
             if(info.cluster)
             {
-                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to logical map %i, cluster %i", map, i, info.cluster);
+                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to logical map %i, cluster %i", map, info.map, info.cluster);
                 return info.map;
             }
 
-            App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches logical map %i, but it has no cluster", map, i);
+            App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches logical map %i, but it has no cluster", map, info.map);
             matchedWithoutCluster = info.map;
         }
     }
