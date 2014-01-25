@@ -4737,138 +4737,6 @@ static void readSoundTargets()
 #endif
 }
 
-static void writeScripts()
-{
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_SCRIPTS);
-
-    for(int i = 0; i < ACScriptCount; ++i)
-    {
-        SV_WriteShort(ACSInfo[i].state);
-        SV_WriteShort(ACSInfo[i].waitValue);
-    }
-
-    for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
-    {
-        SV_WriteLong(MapVars[i]);
-    }
-#endif
-}
-
-static void readScripts()
-{
-#if __JHEXEN__
-    SV_AssertSegment(ASEG_SCRIPTS);
-
-    for(int i = 0; i < ACScriptCount; ++i)
-    {
-        ACSInfo[i].state     = aste_t(SV_ReadShort());
-        ACSInfo[i].waitValue = SV_ReadShort();
-    }
-
-    for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
-    {
-        MapVars[i] = SV_ReadLong();
-    }
-#endif
-}
-
-static void writeGlobalScriptData()
-{
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
-
-    SV_WriteByte(3); // version byte
-
-    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
-        SV_WriteLong(WorldVars[i]);
-
-    SV_WriteLong(ACSStoreSize);
-    for(int i = 0; i < ACSStoreSize; ++i)
-    {
-        acsstore_t const *store = &ACSStore[i];
-
-        SV_WriteLong(store->map);
-        SV_WriteLong(store->script);
-        for(int k = 0; k < 4; ++k)
-            SV_WriteByte(store->args[k]);
-    }
-#endif
-}
-
-static void readGlobalScriptData()
-{
-#if __JHEXEN__
-
-    int ver = 1;
-    if(hdr->version >= 7)
-    {
-        SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
-        ver = SV_ReadByte();
-    }
-
-    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
-        WorldVars[i] = SV_ReadLong();
-
-    if(ver >= 3)
-    {
-        ACSStoreSize = SV_ReadLong();
-        if(ACSStoreSize)
-        {
-            if(ACSStore)
-                ACSStore = reinterpret_cast<acsstore_t *>(Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC));
-            else
-                ACSStore = reinterpret_cast<acsstore_t *>(Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0));
-
-            for(int i = 0; i < ACSStoreSize; ++i)
-            {
-                acsstore_t *store = &ACSStore[i];
-
-                store->map = SV_ReadLong();
-                store->script = SV_ReadLong();
-                for(int k = 0; k < 4; ++k)
-                    store->args[k] = SV_ReadByte();
-            }
-        }
-    }
-    else
-    {
-        // Old format.
-        acsstore_t tempStore[20];
-
-        ACSStoreSize = 0;
-        for(int i = 0; i < 20; ++i)
-        {
-            int map = SV_ReadLong();
-            acsstore_t *store = &tempStore[map < 0? 19 : ACSStoreSize++];
-
-            store->map = map < 0? 0 : map-1;
-            store->script = SV_ReadLong();
-            for(int k = 0; k < 4; ++k)
-                store->args[k] = SV_ReadByte();
-        }
-
-        if(hdr->version < 7)
-            SV_Seek(12); // Junk.
-
-        if(ACSStoreSize)
-        {
-            if(ACSStore)
-                ACSStore = reinterpret_cast<acsstore_t *>(Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC));
-            else
-                ACSStore = reinterpret_cast<acsstore_t *>(Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0));
-            std::memcpy(ACSStore, tempStore, sizeof(acsstore_t) * ACSStoreSize);
-        }
-    }
-
-    if(!ACSStoreSize && ACSStore)
-    {
-        Z_Free(ACSStore); ACSStore = 0;
-    }
-
-#endif // __JHEXEN__
-}
-
 static void writeMisc()
 {
 #if __JHEXEN__
@@ -4911,8 +4779,8 @@ static void writeMap()
 
         writeMapElements();
         writeThinkers();
-        writeScripts();
 #if __JHEXEN__
+        P_WriteMapACScriptData();
         SN_WriteSequences();
 #endif
         writeMisc();
@@ -4948,8 +4816,8 @@ static void readMap()
 
         readMapElements();
         readThinkers();
-        readScripts();
 #if __JHEXEN__
+        P_ReadMapACScriptData();
         SN_ReadSequences(mapVersion);
 #endif
         readMisc();
@@ -5076,7 +4944,9 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     respawnMonsters = hdr->respawnMonsters;
 #endif
 
-    readGlobalScriptData();
+#if __JHEXEN__
+    P_ReadGlobalACScriptData(hdr->version);
+#endif
 
     /*
      * Load the map and configure some game settings.
@@ -5498,7 +5368,9 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     SaveInfo_Write(saveInfo, svWriter);
     Writer_Delete(svWriter); svWriter = 0;
 
-    writeGlobalScriptData();
+#if __JHEXEN__
+    P_WriteGlobalACScriptData();
+#endif
 
     // Set the mobj archive numbers.
     initThingArchiveForSave();

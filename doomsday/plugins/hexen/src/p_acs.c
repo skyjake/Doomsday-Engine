@@ -1,32 +1,23 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_acs.c  Hexen "ACS" scripting system.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <string.h>
-#include <stdio.h>
 
 #include "jhexen.h"
 
@@ -35,10 +26,11 @@
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
+#include "p_saveio.h"
 #include "p_sound.h"
 #include "polyobjs.h"
-
-// MACROS ------------------------------------------------------------------
+#include <string.h>
+#include <stdio.h>
 
 #define SCRIPT_CONTINUE 0
 #define SCRIPT_STOP 1
@@ -55,8 +47,6 @@
 #define S_POP ACScript->stack[--ACScript->stackPtr]
 #define S_PUSH(x) ACScript->stack[ACScript->stackPtr++] = x
 
-// TYPES -------------------------------------------------------------------
-
 #pragma pack(1)
 typedef struct acsheader_s {
     int32_t marker;
@@ -64,12 +54,6 @@ typedef struct acsheader_s {
     int32_t code;
 } acsheader_t;
 #pragma pack()
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void StartOpenACS(int number, int infoIndex, const int* address);
 static void ScriptFinished(int number);
@@ -186,27 +170,21 @@ static int CmdEndPrintBold(void);
 
 static void ThingCount(int type, int tid);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 int ACScriptCount;
-const byte* ActionCodeBase;
-acsinfo_t* ACSInfo;
+byte const *ActionCodeBase;
+acsinfo_t *ACSInfo;
 int MapVars[MAX_ACS_MAP_VARS];
 int WorldVars[MAX_ACS_WORLD_VARS];
 int ACSStoreSize;
-acsstore_t* ACSStore;
+acsstore_t *ACSStore;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static acs_t* ACScript;
-static const int* PCodePtr;
+static acs_t *ACScript;
+static int const *PCodePtr;
 static byte SpecArgs[8];
 static int ACStringCount;
-static char const** ACStrings;
+static char const **ACStrings;
 static char PrintBuffer[PRINT_BUFFER_SIZE];
-static acs_t* NewScript;
+static acs_t *NewScript;
 
 static char ErrorMsg[128];
 
@@ -1851,6 +1829,150 @@ static int CmdSetLineSpecial(void)
     }
 
     return SCRIPT_CONTINUE;
+}
+
+void P_WriteGlobalACScriptData()
+{
+    int i;
+
+    SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
+
+    SV_WriteByte(3); // version byte
+
+    for(i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+    {
+        SV_WriteLong(WorldVars[i]);
+    }
+
+    SV_WriteLong(ACSStoreSize);
+    for(i = 0; i < ACSStoreSize; ++i)
+    {
+        acsstore_t const *store = &ACSStore[i];
+        int k;
+
+        SV_WriteLong(store->map);
+        SV_WriteLong(store->script);
+        for(k = 0; k < 4; ++k)
+        {
+            SV_WriteByte(store->args[k]);
+        }
+    }
+}
+
+void P_ReadGlobalACScriptData(int saveVersion)
+{
+    int ver = 1;
+    int i, k;
+
+    if(saveVersion >= 7)
+    {
+        SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
+        ver = SV_ReadByte();
+    }
+
+    for(i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+    {
+        WorldVars[i] = SV_ReadLong();
+    }
+
+    if(ver >= 3)
+    {
+        ACSStoreSize = SV_ReadLong();
+        if(ACSStoreSize)
+        {
+            if(ACSStore)
+                ACSStore = (acsstore_t *) Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
+            else
+                ACSStore = (acsstore_t *) Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0);
+
+            for(i = 0; i < ACSStoreSize; ++i)
+            {
+                acsstore_t *store = &ACSStore[i];
+
+                store->map = SV_ReadLong();
+                store->script = SV_ReadLong();
+                for(k = 0; k < 4; ++k)
+                {
+                    store->args[k] = SV_ReadByte();
+                }
+            }
+        }
+    }
+    else
+    {
+        // Old format.
+        acsstore_t tempStore[20];
+
+        ACSStoreSize = 0;
+        for(i = 0; i < 20; ++i)
+        {
+            int map = SV_ReadLong();
+            acsstore_t *store = &tempStore[map < 0? 19 : ACSStoreSize++];
+
+            store->map = map < 0? 0 : map-1;
+            store->script = SV_ReadLong();
+            for(k = 0; k < 4; ++k)
+            {
+                store->args[k] = SV_ReadByte();
+            }
+        }
+
+        if(saveVersion < 7)
+        {
+            SV_Seek(12); // Junk.
+        }
+
+        if(ACSStoreSize)
+        {
+            if(ACSStore)
+                ACSStore = (acsstore_t *) Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
+            else
+                ACSStore = (acsstore_t *) Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0);
+
+            memcpy(ACSStore, tempStore, sizeof(acsstore_t) * ACSStoreSize);
+        }
+    }
+
+    if(!ACSStoreSize && ACSStore)
+    {
+        Z_Free(ACSStore); ACSStore = 0;
+    }
+}
+
+void P_WriteMapACScriptData()
+{
+    int i;
+
+    SV_BeginSegment(ASEG_SCRIPTS);
+
+    for(i = 0; i < ACScriptCount; ++i)
+    {
+        SV_WriteShort(ACSInfo[i].state);
+        SV_WriteShort(ACSInfo[i].waitValue);
+    }
+
+    for(i = 0; i < MAX_ACS_MAP_VARS; ++i)
+    {
+        SV_WriteLong(MapVars[i]);
+    }
+}
+
+void P_ReadMapACScriptData()
+{
+    int i;
+
+    SV_AssertSegment(ASEG_SCRIPTS);
+
+    for(i = 0; i < ACScriptCount; ++i)
+    {
+        ACSInfo[i].state     = (aste_t) SV_ReadShort();
+        ACSInfo[i].waitValue = SV_ReadShort();
+    }
+
+    for(i = 0; i < MAX_ACS_MAP_VARS; ++i)
+    {
+        MapVars[i] = SV_ReadLong();
+    }
 }
 
 // Console commands.
