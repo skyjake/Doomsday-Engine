@@ -63,7 +63,7 @@ void AnimDefsParser(Str const *path)
         // string(texture-scheme) string(texture-path)
         if(char const *scheme = textureScheme(lexer.token()))
         {
-            Uri *uri = lexer.readTextureUri(scheme);
+            Uri *uri = lexer.readUri(scheme);
             int const texNumBase = Textures_UniqueId2(uri, !isCustom);
             Uri_Delete(uri);
 

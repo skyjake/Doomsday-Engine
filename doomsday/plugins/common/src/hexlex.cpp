@@ -210,22 +210,16 @@ int HexLex::readNumber()
     return number;
 }
 
-Uri *HexLex::readTextureUri(char const *defaultScheme)
+Uri *HexLex::readUri(char const *defaultScheme)
 {
     if(!readToken())
     {
-        syntaxError("Missing texture Uri");
+        syntaxError("Missing uri");
     }
 
     Uri *uri = Uri_SetScheme(Uri_New(), defaultScheme);
-    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_NewStd(), &_token));
-    Uri_SetPath(uri, Str_Text(path));
+    Uri_SetPath(uri, Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&_token)))));
     return uri;
-}
-
-AutoStr *HexLex::readLumpName()
-{
-    return AutoStr_FromText(Str_Text(readString()));
 }
 
 uint HexLex::readMapNumber()

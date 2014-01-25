@@ -149,30 +149,22 @@ void MapInfoParser(Str const *path)
                 {
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky1"))
                     {
-                        ddstring_t path; Str_InitStd(&path);
-                        Str_PercentEncode(Str_Copy(&path, lexer.readString()));
+                        Uri *uri = lexer.readUri("Textures");
 
-                        Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
-                        Uri_SetPath(uri, Str_Text(&path));
-                        info->sky1Material = Materials_ResolveUri(uri);
-                        Uri_Delete(uri);
-                        Str_Free(&path);
-
+                        info->sky1Material    = Materials_ResolveUri(uri);
                         info->sky1ScrollDelta = (float) lexer.readNumber() / 256;
+
+                        Uri_Delete(uri);
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "sky2"))
                     {
-                        ddstring_t path; Str_InitStd(&path);
-                        Str_PercentEncode(Str_Copy(&path, lexer.readString()));
+                        Uri *uri = lexer.readUri("Textures");
 
-                        Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
-                        Uri_SetPath(uri, Str_Text(&path));
-                        info->sky2Material = Materials_ResolveUri(uri);
-                        Uri_Delete(uri);
-                        Str_Free(&path);
-
+                        info->sky2Material    = Materials_ResolveUri(uri);
                         info->sky2ScrollDelta = (float) lexer.readNumber() / 256;
+
+                        Uri_Delete(uri);
                         continue;
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "doublesky"))

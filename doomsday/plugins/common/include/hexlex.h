@@ -77,10 +77,9 @@ public:
     Str const *readString();
     int readNumber();
 
-    AutoStr *readLumpName();
     int readSoundIndex();
     uint readMapNumber();
-    Uri *readTextureUri(char const *defaultScheme);
+    Uri *readUri(char const *defaultScheme);
 
     /**
      * Returns the line number at the current position in the script.
