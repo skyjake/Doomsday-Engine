@@ -227,7 +227,7 @@ QImage Font::rasterize(String const &textLine,
 #else
     Rectanglei const bounds(0, 0,
                             advanceWidth(textLine, format),
-                            d->metrics->height());
+                            d->font.height());
 #endif
 
     QColor bgColor(background.x, background.y, background.z, background.w);
