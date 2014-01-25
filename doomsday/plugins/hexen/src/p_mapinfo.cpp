@@ -20,10 +20,13 @@
  */
 
 #include "jhexen.h"
+#include "g_common.h"
 #include "p_mapinfo.h"
 #include "hexlex.h"
 #include <cstdio>
-#include <cstring>
+#include <sstream>
+#include <string.h>
+#include <map>
 
 #define MUSIC_STARTUP      "startup"
 #define MUSIC_ENDING1      "hall"
@@ -32,8 +35,8 @@
 #define MUSIC_INTERMISSION "hub"
 #define MUSIC_TITLE        "hexen"
 
-static mapinfo_t MapInfo[99];
-static uint mapCount;
+typedef std::map<std::string, mapinfo_t> MapInfos;
+static MapInfos mapInfos;
 
 /**
  * Update the Music definition @a musicId with the specified CD @a track number.
@@ -48,12 +51,14 @@ static void setMusicCDTrack(char const *musicId, int track)
 
 void MapInfoParser(Str const *path)
 {
-    std::memset(&MapInfo, 0, sizeof(MapInfo));
+    mapInfos.clear();
+    uint logicalMapIndex = 0;
 
     // Configure the defaults
     mapinfo_t defMapInfo;
     defMapInfo.usingDefaults   = true;
 
+    defMapInfo.map             = -1; // Unknown.
     defMapInfo.cluster         = 0;
     defMapInfo.warpTrans       = 0;
     defMapInfo.nextMap         = 0; // Always go to map 0 if not specified.
@@ -66,12 +71,7 @@ void MapInfoParser(Str const *path)
     defMapInfo.lightning       = false;
     defMapInfo.fadeTable       = W_GetLumpNumForName("COLORMAP");
     strcpy(defMapInfo.title, "DEVELOPMENT MAP"); // Unknown.
-
-    for(uint map = 0; map < 99; ++map)
-    {
-        MapInfo[map].warpTrans = 0;
-    }
-    uint mapMax = 0;
+    strcpy(defMapInfo.songLump, "DEFSONG"); // Unknown.
 
     AutoStr *script = M_ReadFileIntoString(path, 0);
 
@@ -116,30 +116,32 @@ void MapInfoParser(Str const *path)
             if(!Str_CompareIgnoreCase(lexer.token(), "map"))
             {
                 int tmap = lexer.readNumber();
-                if(tmap < 1 || tmap > 99)
+                if(tmap < 1)
                 {
                     Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
                               lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
                 }
 
-                uint map = (unsigned) tmap - 1;
-                mapinfo_t *info = &MapInfo[map];
-
-                // Save song lump name.
-                char songMulch[10];
-                strcpy(songMulch, info->songLump);
+                Uri *mapUri = G_ComposeMapUri(0, tmap - 1);
+                mapinfo_t *info = P_MapInfo(mapUri);
+                if(!info)
+                {
+                    // A new map info.
+                    info = &mapInfos[Str_Text(Uri_Compose(mapUri))];
+                }
+                Uri_Delete(mapUri);
 
                 // Copy defaults to current map definition.
-                memcpy(info, &defMapInfo, sizeof(*info));
-
-                // Restore song lump name.
-                strcpy(info->songLump, songMulch);
+                std::memcpy(info, &defMapInfo, sizeof(*info));
 
                 // This information has been parsed from MAPINFO.
                 info->usingDefaults = false;
 
+                // Assign a logical map index.
+                info->map = logicalMapIndex++;
+
                 // The warp translation defaults to the map number.
-                info->warpTrans = map;
+                info->warpTrans = tmap - 1;
 
                 // Map name must follow the number.
                 strcpy(info->title, Str_Text(lexer.readString()));
@@ -195,7 +197,7 @@ void MapInfoParser(Str const *path)
                     if(!Str_CompareIgnoreCase(lexer.token(), "warptrans"))
                     {
                         int mapWarpNum =  lexer.readNumber();
-                        if(mapWarpNum < 1 || mapWarpNum > 99)
+                        if(mapWarpNum < 1)
                         {
                             Con_Error("MapInfoParser: Invalid map warp-number '%s' in \"%s\" on line #%i",
                                       lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
@@ -207,7 +209,7 @@ void MapInfoParser(Str const *path)
                     if(!Str_CompareIgnoreCase(lexer.token(), "next"))
                     {
                         int map = lexer.readNumber();
-                        if(map < 1 || map > 99)
+                        if(map < 1)
                         {
                             Con_Error("MapInfoParser: Invalid map number '%s' in \"%s\" on line #%i",
                                       lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
@@ -225,9 +227,6 @@ void MapInfoParser(Str const *path)
                     break;
                 }
 
-                App_Log(DE2_DEV_RES_MSG, "MAPINFO: map%i title: \"%s\" warp: %i", map, info->title, info->warpTrans);
-                mapMax = map > mapMax ? map : mapMax;
-
                 continue;
             }
 
@@ -241,44 +240,48 @@ void MapInfoParser(Str const *path)
         App_Log(DE2_RES_WARNING, "MapInfoParser: Failed to open definition/script file \"%s\" for reading", F_PrettyPath(Str_Text(path)));
     }
 
-    mapCount = mapMax + 1;
-}
-
-void P_InitMapInfo()
-{
-    for(uint i = 0; i < 99; ++i)
+#ifdef DENG_DEBUG
+    for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
-        strcpy(MapInfo[i].songLump, "DEFSONG");
+        mapinfo_t const &info = i->second;
+        App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" map: %i warp: %i }",
+                                 i->first.c_str(), info.title, info.map, info.warpTrans);
     }
-
-    mapCount = 98;
+#endif
 }
 
-mapinfo_t *P_MapInfo(uint map)
+mapinfo_t *P_MapInfo(Uri const *mapUri)
 {
-    return &MapInfo[(map >= mapCount) ? 0 : map];
+    DENG_ASSERT(mapUri != 0);
+    std::string mapPath(Str_Text(Uri_Compose(mapUri)));
+    MapInfos::iterator found = mapInfos.find(mapPath);
+    if(found != mapInfos.end())
+    {
+        return &found->second;
+    }
+    return 0;
 }
 
 uint P_TranslateMapIfExists(uint map)
 {
     uint matchedWithoutCluster = P_INVALID_LOGICAL_MAP;
 
-    for(uint i = 0; i < 99; ++i)
+    for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
-        mapinfo_t const *info = &MapInfo[i];
+        mapinfo_t const &info = i->second;
 
-        if(info->usingDefaults) continue; // Ignoring, undefined values.
+        if(info.usingDefaults) continue; // Ignoring, undefined values.
 
-        if(info->warpTrans == map)
+        if(info.warpTrans == map)
         {
-            if(info->cluster)
+            if(info.cluster)
             {
-                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to logical map %i, cluster %i", map, i, info->cluster);
-                return i;
+                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to logical map %i, cluster %i", map, i, info.cluster);
+                return info.map;
             }
 
             App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches logical map %i, but it has no cluster", map, i);
-            matchedWithoutCluster = i;
+            matchedWithoutCluster = info.map;
         }
     }
 

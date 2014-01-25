@@ -33,7 +33,7 @@ extern "C" {
 /**
  * Start the song for the specified map.
  */
-void S_MapMusic(uint episode, uint map);
+void S_MapMusic(Uri const *mapUri);
 
 /**
  * Doom-like sector sounds: when a new sound starts, stop any existing sounds from
@@ -42,12 +42,12 @@ void S_MapMusic(uint episode, uint map);
  * @param sec  Sector to use as the origin of the sound.
  * @param id   ID number of the sound to be played.
  */
-void S_SectorSound(Sector* sec, int id);
+void S_SectorSound(Sector *sec, int id);
 
 /**
  * @param sec  Sector in which to stop sounds.
  */
-void S_SectorStopSounds(Sector* sec);
+void S_SectorStopSounds(Sector *sec);
 
 /**
  * Doom-like sector sounds: when a new sound starts, stop any existing sounds from

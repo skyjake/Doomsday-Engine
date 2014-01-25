@@ -46,7 +46,7 @@ void P_FinalizeMapChange(Uri const *uri);
  */
 void P_SetupMap(Uri *uri);
 
-char const *P_MapAuthor(uint episode, uint map, dd_bool supressGameAuthor);
+char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor);
 char const *P_MapTitle(uint episode, uint map);
 patchid_t P_MapTitlePatch(uint episode, uint map);
 

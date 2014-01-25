@@ -79,7 +79,7 @@ public:
 
     int readSoundIndex();
     uint readMapNumber();
-    Uri *readUri(char const *defaultScheme);
+    Uri *readUri(char const *defaultScheme = "");
 
     /**
      * Returns the line number at the current position in the script.

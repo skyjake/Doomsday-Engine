@@ -132,7 +132,11 @@ void G_UpdateState(int step)
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        S_MapMusic(gameEpisode, gameMap);
+        {
+            Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+            S_MapMusic(mapUri);
+            Uri_Delete(mapUri);
+        }
 #endif
         break;
 

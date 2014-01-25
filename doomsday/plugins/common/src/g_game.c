@@ -1,34 +1,24 @@
-/**\file g_game.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file g_game.c  Top-level (common) game routines.
  *
- *\author Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Top-level (common) game routines.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
 #include <assert.h>
@@ -70,8 +60,11 @@
 #include "p_start.h"
 #include "p_inventory.h"
 #if __JHERETIC__ || __JHEXEN__
-# include "p_inventory.h"
-# include "hu_inventory.h"
+#  include "hu_inventory.h"
+#  include "p_inventory.h"
+#endif
+#if __JHEXEN__
+#  include "p_mapinfo.h"
 #endif
 #include "d_net.h"
 
@@ -1156,6 +1149,7 @@ void G_StartHelp(void)
  */
 static void printMapBanner(void)
 {
+    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
     char const *title = P_CurrentMapTitle();
 
     App_Log(DE2_LOG_MAP, DE2_ESC(R));
@@ -1163,7 +1157,9 @@ static void printMapBanner(void)
     {
         char buf[64];
 #if __JHEXEN__
-        dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", P_MapInfo(gameMap)->warpTrans + 1, gameMap + 1, title);
+        mapinfo_t *mapInfo = P_MapInfo(mapUri);
+        int warpNum = (mapInfo? mapInfo->warpTrans : -1);
+        dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", warpNum + 1, gameMap + 1, title);
 #else
         dd_snprintf(buf, 64, "Map %u: " DE2_ESC(b) "%s", gameMap+1, title);
 #endif
@@ -1172,19 +1168,18 @@ static void printMapBanner(void)
 
 #if !__JHEXEN__
     {
-    Uri *uri = G_ComposeMapUri(gameEpisode, gameMap);
-    AutoStr *path = Uri_Compose(uri);
+    AutoStr *path = Uri_Compose(mapUri);
     char const *author;
 
     author = P_CurrentMapAuthor(P_MapIsCustom(Str_Text(path)));
     if(!author) author = "Unknown";
 
     App_Log(DE2_MAP_VERBOSE, "Author: %s", author);
-
-    Uri_Delete(uri);
     }
 #endif
     App_Log(DE2_LOG_MAP, "");
+
+    Uri_Delete(mapUri);
 }
 
 void G_BeginMap(void)
@@ -1256,10 +1251,6 @@ void G_EndGame(void)
 /// @param mapInfo  Can be @c NULL.
 static void initFogForMap(ddmapinfo_t *mapInfo)
 {
-#if __JHEXEN__
-    int fadeTable;
-#endif
-
     if(IS_DEDICATED) return;
 
     if(!mapInfo || !(mapInfo->flags & MIF_FOG))
@@ -1272,20 +1263,28 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
     }
 
 #if __JHEXEN__
-    fadeTable = P_MapInfo(gameMap)->fadeTable;
-    if(fadeTable == W_GetLumpNumForName("COLORMAP"))
     {
-        // We don't want fog in this case.
-        GL_UseFog(false);
-    }
-    else
-    {
-        // Probably fog ... don't use fullbright sprites
-        if(fadeTable == W_GetLumpNumForName("FOGMAP"))
+        Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+        mapinfo_t *mapInfo = P_MapInfo(mapUri);
+        if(mapInfo)
         {
-            // Tell the renderer to turn on the fog.
-            GL_UseFog(true);
+            int fadeTable = mapInfo->fadeTable;
+            if(fadeTable == W_GetLumpNumForName("COLORMAP"))
+            {
+                // We don't want fog in this case.
+                GL_UseFog(false);
+            }
+            else
+            {
+                // Probably fog ... don't use fullbright sprites
+                if(fadeTable == W_GetLumpNumForName("FOGMAP"))
+                {
+                    // Tell the renderer to turn on the fog.
+                    GL_UseFog(true);
+                }
+            }
         }
+        Uri_Delete(mapUri);
     }
 #endif
 }
@@ -1534,7 +1533,13 @@ void G_QueMapMusic(uint episode, uint map)
     S_StopMusic();
     //S_StartMusic("chess", true); // Waiting-for-map-load song
 #endif
-    S_MapMusic(episode, map);
+
+    {
+        Uri *mapUri = G_ComposeMapUri(episode, map);
+        S_MapMusic(mapUri);
+        Uri_Delete(mapUri);
+    }
+
     S_PauseMusic(true);
 }
 
@@ -1764,13 +1769,19 @@ void G_PlayerLeaveMap(int player)
     uint i;
     int flightPower;
 #endif
-    player_t* p = &players[player];
-    dd_bool newCluster;
+    player_t *p = &players[player];
+    dd_bool newCluster = true;
 
 #if __JHEXEN__
-    newCluster = (P_MapInfo(gameMap)->cluster != P_MapInfo(nextMap)->cluster);
-#else
-    newCluster = true;
+    {
+        Uri *mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+
+        newCluster = (P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster);
+
+        Uri_Delete(nextMapUri);
+        Uri_Delete(mapUri);
+    }
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -2510,13 +2521,16 @@ void G_PrepareWIData(void)
  */
 dd_bool G_StartDebriefing()
 {
+    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
     ddfinale_t fin;
 
-    if(G_DebriefingEnabled(gameEpisode, gameMap, &fin) &&
+    if(G_DebriefingEnabled(mapUri, &fin) &&
        G_StartFinale(fin.script, 0, FIMODE_AFTER, 0))
     {
+        Uri_Delete(mapUri);
         return true;
     }
+    Uri_Delete(mapUri);
     return false;
 }
 
@@ -2595,7 +2609,7 @@ void G_DoLeaveMap(void)
     G_ValidateMap(&gameEpisode, &nextMap);
 
 #if __JHEXEN__
-    /**
+    /*
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
@@ -2603,24 +2617,31 @@ void G_DoLeaveMap(void)
     if(deathmatch) revisit = false;
 
     // Same cluster?
-    if(P_MapInfo(gameMap)->cluster == P_MapInfo(nextMap)->cluster)
     {
-        if(!deathmatch)
+        Uri *mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+        if(P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster)
         {
-            // Save current map.
-            SV_HxSaveClusterMap();
+            if(!deathmatch)
+            {
+                // Save current map.
+                SV_HxSaveClusterMap();
+            }
         }
-    }
-    else // Entering new cluster.
-    {
-        if(!deathmatch)
+        else // Entering new cluster.
         {
-            SV_ClearSlot(BASE_SLOT);
+            if(!deathmatch)
+            {
+                SV_ClearSlot(BASE_SLOT);
+            }
+
+            // Re-apply the game rules.
+            /// @todo Necessary?
+            G_ApplyGameRules(gameSkill);
         }
 
-        // Re-apply the game rules.
-        /// @todo Necessary?
-        G_ApplyGameRules(gameSkill);
+        Uri_Delete(nextMapUri);
+        Uri_Delete(mapUri);
     }
 
     // Take a copy of the player objects (they will be cleared in the process
@@ -2670,7 +2691,7 @@ void G_DoLeaveMap(void)
     p.map     = nextMap;
     p.revisit = revisit;
 
-    hasBrief = G_BriefingEnabled(p.episode, p.map, &fin);
+    hasBrief = G_BriefingEnabled(p.mapUri, &fin);
     if(!hasBrief)
     {
         G_QueMapMusic(p.episode, p.map);
@@ -3027,7 +3048,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
         p.map           = gameMap;
         p.revisit       = false;
 
-        hasBrief = G_BriefingEnabled(gameEpisode, gameMap, &fin);
+        hasBrief = G_BriefingEnabled(p.mapUri, &fin);
         if(!hasBrief)
         {
             G_QueMapMusic(gameEpisode, gameMap);
@@ -3224,7 +3245,10 @@ dd_bool G_ValidateMap(uint *episode, uint *map)
 uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
 {
 #if __JHEXEN__
-    return G_GetMapNumber(episode, P_MapInfo(map)->nextMap);
+    Uri *mapUri = G_ComposeMapUri(episode, map);
+    int nextMap = G_GetMapNumber(episode, P_MapInfo(mapUri)->nextMap);
+    Uri_Delete(mapUri);
+    return nextMap;
 
     DENG_UNUSED(secretExit);
 
@@ -3421,48 +3445,38 @@ void G_PrintMapList(void)
     }
 }
 
-/**
- * Check if there is a finale before the map.
- * Returns true if a finale was found.
- */
-int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
+int G_BriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
 {
-    AutoStr* mapPath;
-    Uri* mapUri;
-    int result;
+    DENG_ASSERT(mapUri != 0);
 
     // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled || G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+    if(briefDisabled)
+        return false;
+
+    if(G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
         return false;
 
     // Is there such a finale definition?
-    mapUri = G_ComposeMapUri(episode, map);
-    mapPath = Uri_Compose(mapUri);
-    result = Def_Get(DD_DEF_FINALE_BEFORE, Str_Text(mapPath), fin);
-    Uri_Delete(mapUri);
-    return result;
+    return Def_Get(DD_DEF_FINALE_BEFORE, Str_Text(Uri_Compose(mapUri)), fin);
 }
 
-/**
- * Check if there is a finale after the map.
- * Returns true if a finale was found.
- */
-int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
+int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
 {
-    AutoStr* mapPath;
-    Uri* mapUri;
-    int result;
-
     // If we're already in the INFINE state, don't start a finale.
     if(briefDisabled)
         return false;
 
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&
-       !(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT) &&
-       P_MapInfo(map)->cluster != P_MapInfo(nextMap)->cluster)
+       !(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT))
     {
-        return false;
+        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+        if(P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster)
+        {
+            Uri_Delete(nextMapUri);
+            return false;
+        }
+        Uri_Delete(nextMapUri);
     }
 #endif
 
@@ -3470,11 +3484,7 @@ int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
         return false;
 
     // Is there such a finale definition?
-    mapUri = G_ComposeMapUri(episode, map);
-    mapPath = Uri_Compose(mapUri);
-    result = Def_Get(DD_DEF_FINALE_AFTER, Str_Text(mapPath), fin);
-    Uri_Delete(mapUri);
-    return result;
+    return Def_Get(DD_DEF_FINALE_AFTER, Str_Text(Uri_Compose(mapUri)), fin);
 }
 
 /**

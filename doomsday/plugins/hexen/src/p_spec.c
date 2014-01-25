@@ -82,20 +82,24 @@ void P_InitLava(void)
 
 void P_InitSky(uint map)
 {
-    int ival;
-    float fval;
+    Uri *mapUri = G_ComposeMapUri(gameEpisode, map);
+    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
 
-    mapinfo_t const *mapInfo = P_MapInfo(map);
     sky1Material     = mapInfo->sky1Material;
     sky2Material     = mapInfo->sky2Material;
     sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
     sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
     doubleSky        = mapInfo->doubleSky;
 
+    Uri_Delete(mapUri);
+
     sky1ColumnOffset = sky2ColumnOffset = 0;
 
     if(!IS_DEDICATED)
     {
+        int ival;
+        float fval;
+
         // First disable all sky layers.
         R_SkyParams(DD_SKY, DD_DISABLE, NULL);
 
@@ -1001,8 +1005,11 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
+    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapinfo_t *mapInfo = P_MapInfo(mapUri);
+    Uri_Delete(mapUri);
 
-    if(!P_MapInfo(gameMap)->lightning)
+    if(!mapInfo || !mapInfo->lightning)
     {
         mapHasLightning = false;
         lightningFlash = 0;

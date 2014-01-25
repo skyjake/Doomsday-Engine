@@ -23,8 +23,6 @@
 #include "animdefsparser.h"
 
 #include "hexlex.h"
-#include "p_mapsetup.h"
-#include "p_mapspec.h"
 
 static char const *textureScheme(Str const *string)
 {

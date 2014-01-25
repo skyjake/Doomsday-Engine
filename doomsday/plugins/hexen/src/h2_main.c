@@ -375,8 +375,6 @@ void X_PostInit(void)
         sc_ScriptsDir = CommandLine_At(p + 1);
     }
 
-    P_InitMapInfo(); // Init music fields in mapinfo.
-
     // Process sound definitions.
     SndInfoParser(AutoStr_FromText("Lumps:SNDINFO"));
 

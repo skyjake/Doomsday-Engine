@@ -29,14 +29,16 @@
 #  include "p_mapinfo.h"
 #endif
 
-void S_MapMusic(uint episode, uint map)
+void S_MapMusic(Uri const *mapUri)
 {
+    DENG_ASSERT(mapUri != 0);
+
 #ifdef __JHEXEN__
-    mapinfo_t const *mapInfo = P_MapInfo(map);
+    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
     int const cdTrack = mapInfo->cdTrack;
     char const *lump  = strcasecmp(mapInfo->songLump, "DEFSONG")? mapInfo->songLump : 0;
 
-    App_Log(DE2_RES_VERBOSE, "S_MapMusic: Episode %i, map %i, lump %s", episode, map, lump);
+    App_Log(DE2_RES_VERBOSE, "S_MapMusic: %s lump: %s", Str_Text(Uri_Compose(mapUri)), lump);
 
     // Update the 'currentmap' music definition.
     int const defIndex = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
@@ -49,7 +51,6 @@ void S_MapMusic(uint episode, uint map)
         gsvMapMusic = defIndex;
     }
 #else
-    Uri *mapUri = G_ComposeMapUri(episode, map);
     AutoStr *mapPath = Uri_Compose(mapUri);
     ddmapinfo_t mapInfo;
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &mapInfo))
@@ -60,7 +61,6 @@ void S_MapMusic(uint episode, uint map)
             gsvMapMusic = mapInfo.music;
         }
     }
-    Uri_Delete(mapUri);
 #endif
 }
 
@@ -121,13 +121,15 @@ void SndInfoParser(Str const *path)
             {
                 // $map int(map-number) string(lump-name)
                 // Associate a music lump to a map.
-                uint const map      = lexer.readMapNumber();
+                Uri *mapUri         = lexer.readUri();
                 Str const *lumpName = lexer.readString();
 
-                if(mapinfo_t *mapInfo = P_MapInfo(map))
+                if(mapinfo_t *mapInfo = P_MapInfo(mapUri))
                 {
                     strncpy(mapInfo->songLump, Str_Text(lumpName), sizeof(mapInfo->songLump));
                 }
+
+                Uri_Delete(mapUri);
                 continue;
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "$registered")) // Unused.

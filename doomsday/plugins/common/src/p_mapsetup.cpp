@@ -1055,15 +1055,19 @@ char const *P_MapTitle(uint episode, uint map)
             }
         }
     }
-    Uri_Delete(mapUri);
 
 #if __JHEXEN__
     // In Hexen we can also look in MAPINFO for the map title.
     if(!title)
     {
-        title = P_MapInfo(map)->title;
+        if(mapinfo_t *mapInfo = P_MapInfo(mapUri))
+        {
+            title = mapInfo->title;
+        }
     }
 #endif
+
+    Uri_Delete(mapUri);
 
     if(!title || !title[0])
         return 0;
@@ -1081,23 +1085,21 @@ char const *P_MapTitle(uint episode, uint map)
     return title;
 }
 
-char const *P_MapAuthor(uint episode, uint map, dd_bool supressGameAuthor)
+char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
 {
     char const *author = 0;
 
-    Uri *mapUri   = G_ComposeMapUri(episode, map);
-    AutoStr *path = Uri_Resolved(mapUri);
+    AutoStr *path = mapUri? Uri_Resolved(mapUri) : 0;
+
+    if(!path || Str_IsEmpty(path))
+        return 0;
 
     // Perhaps a MapInfo definition exists for the map?
     ddmapinfo_t mapInfo;
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(mapUri)), &mapInfo))
     {
-        if(mapInfo.author[0])
-        {
-            author = mapInfo.author;
-        }
+        author = mapInfo.author;
     }
-    Uri_Delete(mapUri);
 
     if(!author || !author[0])
         return 0;
@@ -1122,7 +1124,10 @@ char const *P_CurrentMapTitle()
 
 char const *P_CurrentMapAuthor(dd_bool supressGameAuthor)
 {
-    return P_MapAuthor(gameEpisode, gameMap, supressGameAuthor);
+    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    char const *author = P_MapAuthor(mapUri, supressGameAuthor);
+    Uri_Delete(mapUri);
+    return author;
 }
 
 patchid_t P_MapTitlePatch(uint episode, uint map)

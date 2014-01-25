@@ -31,6 +31,7 @@
 typedef struct mapinfo_s {
     dd_bool      usingDefaults; ///< @c true= this definition was @em not read from MAPINFO.
 
+    uint         map; ///< Logical map number.
     short        cluster;
     uint         warpTrans;
     uint         nextMap;
@@ -51,19 +52,14 @@ extern "C" {
 #endif
 
 /**
- * Special early initializer needed to start sound before R_InitRefresh()
- */
-void P_InitMapInfo(void);
-
-/**
  * Populate the MapInfo database by parsing the MAPINFO lump.
  */
 void MapInfoParser(Str const *path);
 
 /**
- * Returns MAPINFO data for the specified @a map, or the default if not valid.
+ * Returns MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
  */
-mapinfo_t *P_MapInfo(uint map);
+mapinfo_t *P_MapInfo(Uri const *mapUri);
 
 #define P_INVALID_LOGICAL_MAP   0xffffffff
 
