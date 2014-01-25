@@ -125,6 +125,7 @@ SOURCES +=  \
     src/displaymode.cpp \
     src/drawable.cpp \
     src/font.cpp \
+    src/font_richformat.cpp \
     src/fontbank.cpp \
     src/glbuffer.cpp \
     src/glentrypoints.cpp \
