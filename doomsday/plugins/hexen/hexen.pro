@@ -41,7 +41,6 @@ HEADERS += \
     include/m_cheat.h \
     include/m_random.h \
     include/p_acs.h \
-    include/p_anim.h \
     include/p_enemy.h \
     include/p_inter.h \
     include/p_lights.h \
@@ -84,7 +83,6 @@ SOURCES += \
     src/m_cheat.c \
     src/m_random.c \
     src/p_acs.c \
-    src/p_anim.cpp \
     src/p_enemy.c \
     src/p_inter.c \
     src/p_lights.c \

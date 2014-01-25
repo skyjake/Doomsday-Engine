@@ -10,6 +10,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$common_inc/am_map.h \
+    $$common_inc/animdefsparser.h \
     $$common_inc/common.h \
     $$common_inc/d_net.h \
     $$common_inc/d_netcl.h \
@@ -68,6 +69,7 @@ HEADERS += \
 
 SOURCES += \
     $$common_src/am_map.c \
+    $$common_src/animdefsparser.cpp \
     $$common_src/common.c \
     $$common_src/d_net.c \
     $$common_src/d_netcl.c \

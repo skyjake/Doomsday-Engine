@@ -1,4 +1,4 @@
-/** @file p_anim.cpp  Parser for Hexen ANIMDEFS.
+/** @file animdefsparser.cpp  Parser for Hexen ANIMDEFS.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "jhexen.h"
-#include "p_anim.h"
+#include "common.h"
+#include "animdefsparser.h"
 
 #include "hexlex.h"
 #include "p_mapsetup.h"

@@ -39,7 +39,6 @@
 #include "../../hexen/include/m_cheat.h"
 #include "../../hexen/include/m_random.h"
 #include "../../hexen/include/p_acs.h"
-#include "../../hexen/include/p_anim.h"
 #include "../../hexen/include/p_enemy.h"
 #include "../../hexen/include/p_inter.h"
 #include "../../hexen/include/p_lights.h"
