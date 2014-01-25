@@ -33,15 +33,13 @@ void S_MapMusic(uint episode, uint map)
 {
 #ifdef __JHEXEN__
     mapinfo_t const *mapInfo = P_MapInfo(map);
-
-    int const defIndex = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    int const cdTrack  = mapInfo->cdTrack;
-    char const *lump   = strcasecmp(mapInfo->songLump, "DEFSONG")? mapInfo->songLump : 0;
-
-    // Update the 'currentmap' music definition.
+    int const cdTrack = mapInfo->cdTrack;
+    char const *lump  = strcasecmp(mapInfo->songLump, "DEFSONG")? mapInfo->songLump : 0;
 
     App_Log(DE2_RES_VERBOSE, "S_MapMusic: Episode %i, map %i, lump %s", episode, map, lump);
 
+    // Update the 'currentmap' music definition.
+    int const defIndex = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
     Def_Set(DD_DEF_MUSIC, defIndex, DD_LUMP,     lump);
     Def_Set(DD_DEF_MUSIC, defIndex, DD_CD_TRACK, &cdTrack);
 
