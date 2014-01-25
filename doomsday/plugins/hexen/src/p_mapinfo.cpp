@@ -52,31 +52,31 @@ static void setMusicCDTrack(char const *musicId, int track)
 void MapInfoParser(Str const *path)
 {
     mapInfos.clear();
-    uint logicalMapIndex = 0;
-
-    // Prepare a default-configured definition, for one-shot initialization.
-    mapinfo_t defMapInfo;
-
-    defMapInfo.map             = -1; // Unknown.
-    defMapInfo.cluster         = 0;
-    defMapInfo.warpTrans       = 0;
-    defMapInfo.nextMap         = 0; // Always go to map 0 if not specified.
-    defMapInfo.cdTrack         = 1;
-    defMapInfo.sky1Material    = Materials_ResolveUriCString(gameMode == hexen_demo || gameMode == hexen_betademo? "Textures:SKY2" : "Textures:SKY1");
-    defMapInfo.sky2Material    = defMapInfo.sky1Material;
-    defMapInfo.sky1ScrollDelta = 0;
-    defMapInfo.sky2ScrollDelta = 0;
-    defMapInfo.doubleSky       = false;
-    defMapInfo.lightning       = false;
-    defMapInfo.fadeTable       = W_GetLumpNumForName("COLORMAP");
-    strcpy(defMapInfo.title, "DEVELOPMENT MAP"); // Unknown.
-    strcpy(defMapInfo.songLump, "DEFSONG"); // Unknown.
 
     AutoStr *script = M_ReadFileIntoString(path, 0);
 
     if(script && !Str_IsEmpty(script))
     {
         App_Log(DE2_RES_VERBOSE, "Parsing \"%s\"...", F_PrettyPath(Str_Text(path)));
+
+        // Prepare a default-configured definition, for one-shot initialization.
+        mapinfo_t defMapInfo;
+        defMapInfo.map             = -1; // Unknown.
+        defMapInfo.cluster         = 0;
+        defMapInfo.warpTrans       = 0;
+        defMapInfo.nextMap         = 0; // Always go to map 0 if not specified.
+        defMapInfo.cdTrack         = 1;
+        defMapInfo.sky1Material    = Materials_ResolveUriCString(gameMode == hexen_demo || gameMode == hexen_betademo? "Textures:SKY2" : "Textures:SKY1");
+        defMapInfo.sky2Material    = defMapInfo.sky1Material;
+        defMapInfo.sky1ScrollDelta = 0;
+        defMapInfo.sky2ScrollDelta = 0;
+        defMapInfo.doubleSky       = false;
+        defMapInfo.lightning       = false;
+        defMapInfo.fadeTable       = W_GetLumpNumForName("COLORMAP");
+        strcpy(defMapInfo.title, "DEVELOPMENT MAP"); // Unknown.
+        strcpy(defMapInfo.songLump, "DEFSONG"); // Unknown.
+
+        uint logicalMapIndex = 0;
 
         HexLex lexer(script, path);
 

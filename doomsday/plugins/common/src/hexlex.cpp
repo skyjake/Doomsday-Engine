@@ -222,11 +222,6 @@ Uri *HexLex::readUri(char const *defaultScheme)
     return uri;
 }
 
-int HexLex::readSoundIndex()
-{
-    return Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(readString()), 0);
-}
-
 void HexLex::unreadToken()
 {
     if(_readPos == 0)

@@ -151,7 +151,7 @@ void SndInfoParser(Str const *path)
 
             // string(sound-id) string(lump-name | '?')
             // A sound definition.
-            int const soundIndex = lexer.readSoundIndex();
+            int const soundIndex = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
             Str const *lumpName  = lexer.readString();
 
             if(soundIndex)
