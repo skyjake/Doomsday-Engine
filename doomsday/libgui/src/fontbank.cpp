@@ -64,6 +64,7 @@ DENG2_PIMPL(FontBank)
 
             Font *loaded = new Font(font);
 
+            /*
             // Alternate families.
             if(def.has("alt.family.light"))
             {
@@ -73,6 +74,7 @@ DENG2_PIMPL(FontBank)
             {
                 loaded->setAltFamily(Font::RichFormat::Bold, def["alt.family.bold"]);
             }
+            */
 
             return loaded;
         }

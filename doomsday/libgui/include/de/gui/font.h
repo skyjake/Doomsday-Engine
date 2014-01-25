@@ -35,6 +35,8 @@
 
 namespace de {
 
+class NativeFont;
+
 /**
  * Font with metrics.
  */
@@ -267,9 +269,10 @@ public:
     Font();
 
     Font(Font const &other);
+    //Font(NativeFont const &font);
     Font(QFont const &font);
 
-    QFont toQFont() const;
+    //QFont toQFont() const;
 
     /**
      * Sets the font family name to be used if the font weight is changed. By default it
@@ -278,7 +281,7 @@ public:
      * @param weight      Weight for the alternative family.
      * @param familyName  Name of the alternative family.
      */
-    void setAltFamily(RichFormat::Weight weight, String const &familyName);
+    //void setAltFamily(RichFormat::Weight weight, String const &familyName);
 
     /**
      * Determines the size of the given line of text, i.e., how large an area
@@ -338,8 +341,6 @@ public:
     Rule const &ascent() const;
     Rule const &descent() const;
     Rule const &lineSpacing() const;
-
-    int xHeight() const;
 
 private:
     DENG2_PRIVATE(d)

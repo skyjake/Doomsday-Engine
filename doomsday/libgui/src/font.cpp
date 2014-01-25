@@ -17,6 +17,7 @@
  */
 
 #include "de/Font"
+#include "qtnativefont.h"
 
 #include <de/ConstantRule>
 #include <QFontMetrics>
@@ -32,23 +33,23 @@ namespace de {
 
 DENG2_PIMPL(Font)
 {
-    QFont font;
-    QScopedPointer<QFontMetrics> metrics;
+    QtNativeFont font;
+    //QScopedPointer<QFontMetrics> metrics;
     ConstantRule *heightRule;
     ConstantRule *ascentRule;
     ConstantRule *descentRule;
     ConstantRule *lineSpacingRule;
     int ascent;
 
-    enum AltFamilyId { AltFamilyLight, AltFamilyBold, NUM_ALTS };
-    String altFamily[NUM_ALTS];
+    //enum AltFamilyId { AltFamilyLight, AltFamilyBold, NUM_ALTS };
+    //String altFamily[NUM_ALTS];
 
     Instance(Public *i) : Base(i), ascent(0)
     {
         createRules();
     }
 
-    Instance(Public *i, QFont const &qfont) : Base(i), font(qfont)
+    Instance(Public *i, QtNativeFont const &qfont) : Base(i), font(qfont)
     {
 #if 0
         // Development aid: list all available fonts and styles.
@@ -64,6 +65,7 @@ DENG2_PIMPL(Font)
         updateMetrics();
     }
 
+    /*
     void setAltFamily(RichFormat::Weight weight, String const &family)
     {
         switch(weight)
@@ -79,7 +81,7 @@ DENG2_PIMPL(Font)
         default:
             break;
         }
-    }
+    }*/
 
     void createRules()
     {
@@ -91,20 +93,22 @@ DENG2_PIMPL(Font)
 
     void updateMetrics()
     {
-        metrics.reset(new QFontMetrics(font));
+        //metrics.reset(new QFontMetrics(font));
 
-        ascent = metrics->ascent();
-        if(font.weight() != QFont::Normal)
+        ascent = font.ascent();
+        if(font.weight() != NativeFont::Normal)
         {
             // Use the ascent of the normal weight for non-normal weights;
             // we need to align content to baseline regardless of weight.
-            ascent = QFontMetrics(QFont(font.family(), font.pointSize())).ascent();
+            QtNativeFont normalized(font);
+            normalized.setWeight(NativeFont::Normal);
+            ascent = normalized.ascent();
         }
 
         ascentRule->set(ascent);
-        descentRule->set(metrics->descent());
-        heightRule->set(metrics->height());
-        lineSpacingRule->set(metrics->lineSpacing());
+        descentRule->set(font.descent());
+        heightRule->set(font.height());
+        lineSpacingRule->set(font.lineSpacing());
     }
 
     /**
@@ -115,16 +119,16 @@ DENG2_PIMPL(Font)
      *
      * @return  Font with applied formatting.
      */
-    QFont alteredFont(RichFormat::Iterator const &rich) const
+    QtNativeFont alteredFont(RichFormat::Iterator const &rich) const
     {
         if(!rich.isDefault())
         {
-            QFont mod = font;
+            QtNativeFont mod = font;
 
             // Size change.
             if(!fequal(rich.sizeFactor(), 1.f))
             {
-                mod.setPointSizeF(mod.pointSizeF() * rich.sizeFactor());
+                mod.setSize(mod.size() * rich.sizeFactor());
             }
 
             // Style change (including monospace).
@@ -135,12 +139,12 @@ DENG2_PIMPL(Font)
 
             case RichFormat::Regular:
                 mod.setFamily(font.family());
-                mod.setItalic(false);
+                mod.setStyle(NativeFont::Regular);
                 break;
 
             case RichFormat::Italic:
                 mod.setFamily(font.family());
-                mod.setItalic(true);
+                mod.setStyle(NativeFont::Italic);
                 break;
 
             case RichFormat::Monospace:
@@ -149,9 +153,9 @@ DENG2_PIMPL(Font)
                     if(Font const *altFont = rich.format.format().style().richStyleFont(rich.style()))
                     {
                         mod.setFamily(altFont->d->font.family());
-                        mod.setItalic(altFont->d->font.italic());
+                        mod.setStyle (altFont->d->font.style());
                         mod.setWeight(altFont->d->font.weight());
-                        mod.setPointSizeF(altFont->d->font.pointSizeF());
+                        mod.setSize  (altFont->d->font.size());
                     }
                 }
                 break;
@@ -160,10 +164,11 @@ DENG2_PIMPL(Font)
             // Weight change.
             if(rich.weight() != RichFormat::OriginalWeight)
             {
-                mod.setWeight(rich.weight() == RichFormat::Normal? QFont::Normal :
-                              rich.weight() == RichFormat::Bold?   QFont::Bold   :
-                                                                   QFont::Light);
+                mod.setWeight(rich.weight() == RichFormat::Normal? NativeFont::Normal :
+                              rich.weight() == RichFormat::Bold?   NativeFont::Bold   :
+                                                                   NativeFont::Light);
 
+                /*
                 // Some weights may require an alternate font family.
                 if(rich.weight() == RichFormat::Light && !altFamily[AltFamilyLight].isEmpty())
                 {
@@ -173,12 +178,14 @@ DENG2_PIMPL(Font)
                 {
                     mod.setFamily(altFamily[AltFamilyBold]);
                 }
+                */
             }
             return mod;
         }
         return font;
     }
 
+    /*
     QFontMetrics alteredMetrics(RichFormat::Iterator const &rich) const
     {
         if(!rich.isDefault())
@@ -186,7 +193,7 @@ DENG2_PIMPL(Font)
             return QFontMetrics(alteredFont(rich));
         }
         return *metrics;
-    }
+    }*/
 };
 
 Font::Font() : d(new Instance(this))
@@ -195,18 +202,24 @@ Font::Font() : d(new Instance(this))
 Font::Font(Font const &other) : d(new Instance(this, other.d->font))
 {}
 
+/*Font::Font(NativeFont const &font) : d(new Instance(this, ))
+{
+
+}*/
+
 Font::Font(QFont const &font) : d(new Instance(this, font))
 {}
 
-QFont Font::toQFont() const
+/*QFont Font::toQFont() const
 {
     return d->font;
-}
+}*/
 
+/*
 void Font::setAltFamily(RichFormat::Weight weight, String const &familyName)
 {
     d->setAltFamily(weight, familyName);
-}
+}*/
 
 Rectanglei Font::measure(String const &textLine) const
 {
@@ -224,23 +237,16 @@ Rectanglei Font::measure(String const &textLine, RichFormatRef const &format) co
         iter.next();
         if(iter.range().isEmpty()) continue;
 
-        QFontMetrics const metrics = d->alteredMetrics(iter);
+        QtNativeFont const altFont = d->alteredFont(iter);
 
         String const part = textLine.substr(iter.range());
-        Rectanglei rect = Rectanglei::fromQRect(metrics.boundingRect(part));
-
-        if(rect.height() == 0)
-        {
-            // It seems measuring the bounds of a Tab character produces
-            // strange results (position 100000?).
-            rect = Rectanglei(0, 0, rect.width(), 0);
-        }
+        Rectanglei rect = altFont.measure(part);
 
         // Combine to the total bounds.
         rect.moveTopLeft(Vector2i(advance, rect.top()));
         bounds |= rect;
 
-        advance += metrics.width(part);
+        advance += altFont.width(part);
     }
 
     return bounds;
@@ -260,8 +266,7 @@ int Font::advanceWidth(String const &textLine, RichFormatRef const &format) cons
         iter.next();
         if(iter.range().isEmpty()) continue;
 
-        QFontMetrics const metrics = d->alteredMetrics(iter);
-        advance += metrics.width(textLine.substr(iter.range()));
+        advance += d->alteredFont(iter).width(textLine.substr(iter.range()));
     }
     return advance;
 }
@@ -291,17 +296,22 @@ QImage Font::rasterize(String const &textLine,
                             d->metrics->height());
 #endif
 
-    QColor fgColor(foreground.x, foreground.y, foreground.z, foreground.w);
+    //QColor fgColor(foreground.x, foreground.y, foreground.z, foreground.w);
     QColor bgColor(background.x, background.y, background.z, background.w);
 
+    Vector4ub fg = foreground;
+    Vector4ub bg = background;
+
     QImage img(QSize(bounds.width() + 1,
-                     de::max(duint(d->metrics->height()), bounds.height()) + 1),
+                     de::max(duint(d->font.height()), bounds.height()) + 1),
                QImage::Format_ARGB32);
     img.fill(bgColor.rgba());
 
     QPainter painter(&img);
     painter.setCompositionMode(QPainter::CompositionMode_Source);
 
+    // Composite the final image by drawing each rich range first into a separate
+    // bitmap and then drawing those into the final image.
     int advance = 0;
     RichFormat::Iterator iter(format);
     while(iter.hasNext())
@@ -309,12 +319,14 @@ QImage Font::rasterize(String const &textLine,
         iter.next();
         if(iter.range().isEmpty()) continue;
 
-        QFont font = d->font;
+        QtNativeFont font = d->font;
 
         if(iter.isDefault())
         {
-            painter.setPen(fgColor);
-            painter.setBrush(bgColor);
+            fg = foreground;
+            bg = background;
+            //painter.setPen(fgColor);
+            //painter.setBrush(bgColor);
         }
         else
         {
@@ -322,23 +334,30 @@ QImage Font::rasterize(String const &textLine,
 
             if(iter.colorIndex() != RichFormat::OriginalColor)
             {
-                RichFormat::IStyle::Color styleColor = iter.color();
-                QColor const fg(styleColor.x, styleColor.y, styleColor.z, styleColor.w);
-                QColor const bg(styleColor.x, styleColor.y, styleColor.z, 0);
-                painter.setPen(fg);
-                painter.setBrush(bg);
+                //RichFormat::IStyle::Color styleColor = iter.color();
+                fg = iter.color(); //styleColor;QColor const fg(styleColor.x, styleColor.y, styleColor.z, styleColor.w);
+                bg = Vector4ub(fg, 0);
+                //painter.setPen(fg);
+                //painter.setBrush(bg);
             }
             else
             {
-                painter.setPen(fgColor);
-                painter.setBrush(bgColor);
+                fg = foreground;
+                bg = background;
+                //painter.setPen(fgColor);
+                //painter.setBrush(bgColor);
             }
         }
-        painter.setFont(font);
+        //painter.setFont(font);
 
         String const part = textLine.substr(iter.range());
-        painter.drawText(advance, d->ascent, part);
-        advance += QFontMetrics(font).width(part);
+
+        QImage fragment = font.rasterize(part, fg, bg);
+        Rectanglei const bounds = font.measure(part);
+
+        //painter.drawText(advance, d->ascent, part);
+        painter.drawImage(QPoint(advance + bounds.left(), d->ascent + bounds.top()), fragment);
+        advance += font.width(part);
     }
     return img;
 }
@@ -361,11 +380,6 @@ Rule const &Font::descent() const
 Rule const &Font::lineSpacing() const
 {
     return *d->lineSpacingRule;
-}
-
-int Font::xHeight() const
-{
-    return d->metrics->xHeight();
 }
 
 } // namespace de

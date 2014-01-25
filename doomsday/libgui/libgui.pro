@@ -145,8 +145,12 @@ SOURCES +=  \
     src/kdtreeatlasallocator.cpp \
     src/keyevent.cpp \
     src/mouseevent.cpp \
+    src/nativefont.cpp \
+    src/nativefont.h \
+    src/qtnativefont.h \
     src/persistentcanvaswindow.cpp \
-    src/rowatlasallocator.cpp
+    src/rowatlasallocator.cpp \
+    src/qtnativefont.cpp
 
 # DisplayMode
 !deng_nodisplaymode {
