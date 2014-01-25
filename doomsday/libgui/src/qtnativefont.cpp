@@ -115,10 +115,9 @@ QImage QtNativeFont::nativeFontRasterize(String const &text,
 #ifdef LIBGUI_ACCURATE_TEXT_BOUNDS
     Rectanglei const bounds = measure(text);
 #else
-    Rectanglei const bounds(0,
-                            -d->metrics->ascent(),
-                            d->metrics->width(text),
-                            d->metrics->descent());
+    Rectanglei const bounds(Vector2i(0, -d->metrics->ascent()),
+                            Vector2i(d->metrics->width(text),
+                                     d->metrics->descent()));
 #endif
 
     QColor const fgColor(foreground.x, foreground.y, foreground.z, foreground.w);
