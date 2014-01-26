@@ -50,45 +50,54 @@
 #define S_POP activeScript->stack[--activeScript->stackPtr]
 #define S_PUSH(x) activeScript->stack[activeScript->stackPtr++] = x
 
-typedef enum aste_e {
-    ASTE_INACTIVE,
-    ASTE_RUNNING,
-    ASTE_SUSPENDED,
-    ASTE_WAITING_FOR_TAG,
-    ASTE_WAITING_FOR_POLY,
-    ASTE_WAITING_FOR_SCRIPT,
-    ASTE_TERMINATING
-} aste_t;
+enum ACScriptState
+{
+    Inactive,
+    Running,
+    Suspended,
+    WaitingForTag,
+    WaitingForPolyobj,
+    WaitingForScript,
+    Terminating
+};
 
-typedef struct acsinfo_s {
+struct acsinfo_t
+{
     int number;
     int const *address;
     int argCount;
-    aste_t state;
+    ACScriptState state;
     int waitValue;
-} acsinfo_t;
+};
 
-typedef struct acsstore_s {
+/**
+ * A deferred task is enqueued when a script is started on map not currently loaded.
+ */
+struct DeferredTask
+{
     uint map;     ///< Target map.
     int script;   ///< Script number on target map.
     byte args[4]; ///< Padded to 4 for alignment.
-} acsstore_t;
+};
+static int deferredTasksSize;
+static DeferredTask *deferredTasks;
 
 /**
  * Bytecode header. Read directly from the map lump.
  */
 #pragma pack(1)
-typedef struct acsheader_s {
+struct BytecodeHeader
+{
     int32_t marker;
     int32_t infoOffset;
     int32_t code;
-} acsheader_t;
+};
 #pragma pack()
 
 static void StartOpenACS(int number, int infoIndex, int const *address);
 static void ScriptFinished(int number);
 static dd_bool TagBusy(int tag);
-static dd_bool AddToACSStore(uint map, int number, byte const *args);
+static dd_bool newDeferredTask(uint map, int number, byte const *args);
 static int GetACSIndex(int number);
 static void Push(int value);
 static int Pop();
@@ -205,8 +214,6 @@ static byte const *ActionCodeBase;
 static acsinfo_t *ACSInfo;
 static int MapVars[MAX_ACS_MAP_VARS];
 static int WorldVars[MAX_ACS_WORLD_VARS];
-static int ACSStoreSize;
-static acsstore_t *ACSStore;
 
 static int const *PCodePtr;
 static byte SpecArgs[8];
@@ -267,11 +274,11 @@ void P_LoadACScripts(int lump)
             Str_Text(W_LumpName(lump)), lump);
 
     int const *buffer = 0;
-    if(lumpLength >= sizeof(acsheader_t))
+    if(lumpLength >= sizeof(BytecodeHeader))
     {
         void *region = Z_Malloc(lumpLength, PU_MAP, 0);
         W_ReadLump(lump, (uint8_t *)region);
-        acsheader_t const *header = (acsheader_t const *) region;
+        BytecodeHeader const *header = (BytecodeHeader const *) region;
         ActionCodeBase = (byte const *) header;
 
         if(LONG(header->infoOffset) < (int)lumpLength)
@@ -301,11 +308,11 @@ void P_LoadACScripts(int lump)
         {                       // Auto-activate
             info->number -= OPEN_SCRIPTS_BASE;
             StartOpenACS(info->number, i, info->address);
-            info->state = ASTE_RUNNING;
+            info->state = Running;
         }
         else
         {
-            info->state = ASTE_INACTIVE;
+            info->state = Inactive;
         }
     }
 
@@ -333,45 +340,54 @@ static void StartOpenACS(int number, int infoIndex, int const *address)
     Thinker_Add(&script->thinker);
 }
 
-void P_CheckACScriptStore(uint map)
+void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
 {
-    int const origSize = ACSStoreSize;
+    //DENG_ASSERT(mapUri != 0);
+
+    if(deathmatch)
+    {
+        /// @todo Do we really want to disallow deferred ACS tasks in deathmatch?
+        /// What is the actual intention here? -ds
+        return;
+    }
+
+    int const origSize = deferredTasksSize;
 
     int i = 0;
-    while(i < ACSStoreSize)
+    while(i < deferredTasksSize)
     {
-        acsstore_t *store = &ACSStore[i];
+        DeferredTask *task = &deferredTasks[i];
 
-        if(store->map != map)
+        if(task->map != map)
         {
             i++;
             continue;
         }
 
-        P_StartACScript(store->script, 0, store->args, NULL, NULL, 0);
+        P_StartACScript(task->script, 0, task->args, NULL, NULL, 0);
         if(newScript)
         {
             newScript->delayCount = TICRATE;
         }
 
-        ACSStoreSize -= 1;
-        if(i == ACSStoreSize)
+        deferredTasksSize -= 1;
+        if(i == deferredTasksSize)
             break;
 
-        memmove(&ACSStore[i], &ACSStore[i + 1], sizeof(acsstore_t) * (ACSStoreSize - i));
+        memmove(&deferredTasks[i], &deferredTasks[i + 1], sizeof(DeferredTask) * (deferredTasksSize - i));
     }
 
-    if(ACSStoreSize == origSize)
+    if(deferredTasksSize == origSize)
         return;
 
-    if(ACSStoreSize)
+    if(deferredTasksSize)
     {
-        ACSStore = (acsstore_t *) Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
+        deferredTasks = (DeferredTask *) Z_Realloc(deferredTasks, sizeof(DeferredTask) * deferredTasksSize, PU_GAMESTATIC);
         return;
     }
 
-    Z_Free(ACSStore);
-    ACSStore = 0;
+    Z_Free(deferredTasks);
+    deferredTasks = 0;
 }
 
 dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Line *line,
@@ -384,7 +400,7 @@ dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Lin
     {
         // Script is not for the current map.
         // Add it to the store to be started when that map is next entered.
-        return AddToACSStore(map-1, number, args);
+        return newDeferredTask(map-1, number, args);
     }
 
     int infoIndex = GetACSIndex(number);
@@ -396,15 +412,15 @@ dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Lin
         return false;
     }
 
-    aste_t *statePtr = &ACSInfo[infoIndex].state;
-    if(*statePtr == ASTE_SUSPENDED)
+    ACScriptState *statePtr = &ACSInfo[infoIndex].state;
+    if(*statePtr == Suspended)
     {
         // Resume a suspended script.
-        *statePtr = ASTE_RUNNING;
+        *statePtr = Running;
         return true;
     }
 
-    if(*statePtr != ASTE_INACTIVE)
+    if(*statePtr != Inactive)
     {
         // Script is already executing.
         return false;
@@ -424,35 +440,35 @@ dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Lin
         script->vars[i] = args[i];
     }
 
-    *statePtr = ASTE_RUNNING;
+    *statePtr = Running;
     Thinker_Add(&script->thinker);
     newScript = script;
     return true;
 }
 
-static dd_bool AddToACSStore(uint map, int number, byte const *args)
+static dd_bool newDeferredTask(uint map, int number, byte const *args)
 {
-    if(ACSStoreSize)
+    if(deferredTasksSize)
     {
         // Don't allow duplicates.
-        for(int i = 0; i < ACSStoreSize; ++i)
+        for(int i = 0; i < deferredTasksSize; ++i)
         {
-            acsstore_t &store = ACSStore[i];
-            if(store.script == number && store.map == map)
+            DeferredTask &task = deferredTasks[i];
+            if(task.script == number && task.map == map)
             {
                 return false;
             }
         }
 
-        ACSStore = (acsstore_t *) Z_Realloc(ACSStore, ++ACSStoreSize * sizeof(acsstore_t), PU_GAMESTATIC);
+        deferredTasks = (DeferredTask *) Z_Realloc(deferredTasks, ++deferredTasksSize * sizeof(DeferredTask), PU_GAMESTATIC);
     }
     else
     {
-        ACSStore = (acsstore_t *) Z_Malloc(sizeof(acsstore_t), PU_GAMESTATIC, 0);
-        ACSStoreSize = 1;
+        deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask), PU_GAMESTATIC, 0);
+        deferredTasksSize = 1;
     }
 
-    acsstore_t *store = &ACSStore[ACSStoreSize-1];
+    DeferredTask *store = &deferredTasks[deferredTasksSize-1];
 
     store->map     = map;
     store->script  = number;
@@ -471,9 +487,9 @@ dd_bool P_TerminateACScript(int number, uint /*map*/)
     {
         acsinfo_t &info = ACSInfo[infoIndex];
         // Some states disallow termination.
-        if(info.state != ASTE_INACTIVE && info.state != ASTE_TERMINATING)
+        if(info.state != Inactive && info.state != Terminating)
         {
-            ACSInfo[infoIndex].state = ASTE_TERMINATING;
+            ACSInfo[infoIndex].state = Terminating;
             return true;
         }
     }
@@ -487,10 +503,10 @@ dd_bool P_SuspendACScript(int number, uint map)
     {
         acsinfo_t &info = ACSInfo[infoIndex];
         // Some states disallow suspension.
-        if(info.state != ASTE_INACTIVE && info.state != ASTE_SUSPENDED &&
-           info.state != ASTE_TERMINATING)
+        if(info.state != Inactive && info.state != Suspended &&
+           info.state != Terminating)
         {
-            ACSInfo[infoIndex].state = ASTE_SUSPENDED;
+            ACSInfo[infoIndex].state = Suspended;
             return true;
         }
     }
@@ -500,23 +516,23 @@ dd_bool P_SuspendACScript(int number, uint map)
 void P_InitACScript()
 {
     memset(WorldVars, 0, sizeof(WorldVars));
-    Z_Free(ACSStore); ACSStore = 0;
-    ACSStoreSize = 0;
+    Z_Free(deferredTasks); deferredTasks = 0;
+    deferredTasksSize = 0;
 }
 
 void ACScript_Thinker(ACScript *script)
 {
     DENG_ASSERT(script != 0);
 
-    if(ACSInfo[script->infoIndex].state == ASTE_TERMINATING)
+    if(ACSInfo[script->infoIndex].state == Terminating)
     {
-        ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
+        ACSInfo[script->infoIndex].state = Inactive;
         ScriptFinished(activeScript->number);
         Thinker_Remove(&activeScript->thinker);
         return;
     }
 
-    if(ACSInfo[script->infoIndex].state != ASTE_RUNNING)
+    if(ACSInfo[script->infoIndex].state != Running)
     {
         return;
     }
@@ -539,7 +555,7 @@ void ACScript_Thinker(ACScript *script)
     activeScript->ip = PCodePtr;
     if(action == SCRIPT_TERMINATE)
     {
-        ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
+        ACSInfo[script->infoIndex].state = Inactive;
         ScriptFinished(activeScript->number);
         Thinker_Remove(&activeScript->thinker);
     }
@@ -665,9 +681,9 @@ void P_ACScriptTagFinished(int tag)
     for(int i = 0; i < ACScriptCount; ++i)
     {
         acsinfo_t &info = ACSInfo[i];
-        if(info.state == ASTE_WAITING_FOR_TAG && info.waitValue == tag)
+        if(info.state == WaitingForTag && info.waitValue == tag)
         {
-            info.state = ASTE_RUNNING;
+            info.state = Running;
         }
     }
 }
@@ -679,9 +695,9 @@ void P_ACScriptPolyobjFinished(int tag)
     for(int i = 0; i < ACScriptCount; ++i)
     {
         acsinfo_t &info = ACSInfo[i];
-        if(info.state == ASTE_WAITING_FOR_POLY && info.waitValue == tag)
+        if(info.state == WaitingForPolyobj && info.waitValue == tag)
         {
-            ACSInfo[i].state = ASTE_RUNNING;
+            ACSInfo[i].state = Running;
         }
     }
 }
@@ -691,9 +707,9 @@ static void ScriptFinished(int number)
     for(int i = 0; i < ACScriptCount; ++i)
     {
         acsinfo_t &info = ACSInfo[i];
-        if(info.state == ASTE_WAITING_FOR_SCRIPT && info.waitValue == number)
+        if(info.state == WaitingForScript && info.waitValue == number)
         {
-            info.state = ASTE_RUNNING;
+            info.state = Running;
         }
     }
 }
@@ -765,7 +781,7 @@ static int CmdTerminate()
 
 static int CmdSuspend()
 {
-    ACSInfo[activeScript->infoIndex].state = ASTE_SUSPENDED;
+    ACSInfo[activeScript->infoIndex].state = Suspended;
     return SCRIPT_STOP;
 }
 
@@ -1271,28 +1287,28 @@ static void ThingCount(int type, int tid)
 static int CmdTagWait()
 {
     ACSInfo[activeScript->infoIndex].waitValue = Pop();
-    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_TAG;
+    ACSInfo[activeScript->infoIndex].state = WaitingForTag;
     return SCRIPT_STOP;
 }
 
 static int CmdTagWaitDirect()
 {
     ACSInfo[activeScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_TAG;
+    ACSInfo[activeScript->infoIndex].state = WaitingForTag;
     return SCRIPT_STOP;
 }
 
 static int CmdPolyWait()
 {
     ACSInfo[activeScript->infoIndex].waitValue = Pop();
-    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_POLY;
+    ACSInfo[activeScript->infoIndex].state = WaitingForPolyobj;
     return SCRIPT_STOP;
 }
 
 static int CmdPolyWaitDirect()
 {
     ACSInfo[activeScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_POLY;
+    ACSInfo[activeScript->infoIndex].state = WaitingForPolyobj;
     return SCRIPT_STOP;
 }
 
@@ -1495,14 +1511,14 @@ static int CmdLineSide()
 static int CmdScriptWait()
 {
     ACSInfo[activeScript->infoIndex].waitValue = Pop();
-    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_SCRIPT;
+    ACSInfo[activeScript->infoIndex].state = WaitingForScript;
     return SCRIPT_STOP;
 }
 
 static int CmdScriptWaitDirect()
 {
     ACSInfo[activeScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_SCRIPT;
+    ACSInfo[activeScript->infoIndex].state = WaitingForScript;
     return SCRIPT_STOP;
 }
 
@@ -1812,10 +1828,11 @@ void P_WriteGlobalACScriptData()
         SV_WriteLong(WorldVars[i]);
     }
 
-    SV_WriteLong(ACSStoreSize);
-    for(int i = 0; i < ACSStoreSize; ++i)
+    // Serialize the deferred task queue.
+    SV_WriteLong(deferredTasksSize);
+    for(int i = 0; i < deferredTasksSize; ++i)
     {
-        acsstore_t const *store = &ACSStore[i];
+        DeferredTask const *store = &deferredTasks[i];
         SV_WriteLong(store->map);
         SV_WriteLong(store->script);
         for(int k = 0; k < 4; ++k)
@@ -1840,25 +1857,26 @@ void P_ReadGlobalACScriptData(int saveVersion)
         WorldVars[i] = SV_ReadLong();
     }
 
+    // Deserialize the deferred task queue.
     if(ver >= 3)
     {
-        ACSStoreSize = SV_ReadLong();
-        if(ACSStoreSize)
+        deferredTasksSize = SV_ReadLong();
+        if(deferredTasksSize)
         {
-            if(ACSStore)
-                ACSStore = (acsstore_t *) Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
+            if(deferredTasks)
+                deferredTasks = (DeferredTask *) Z_Realloc(deferredTasks, sizeof(DeferredTask) * deferredTasksSize, PU_GAMESTATIC);
             else
-                ACSStore = (acsstore_t *) Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0);
+                deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask) * deferredTasksSize, PU_GAMESTATIC, 0);
 
-            for(int i = 0; i < ACSStoreSize; ++i)
+            for(int i = 0; i < deferredTasksSize; ++i)
             {
-                acsstore_t *store = &ACSStore[i];
+                DeferredTask *task = &deferredTasks[i];
 
-                store->map    = SV_ReadLong();
-                store->script = SV_ReadLong();
+                task->map    = SV_ReadLong();
+                task->script = SV_ReadLong();
                 for(int k = 0; k < 4; ++k)
                 {
-                    store->args[k] = SV_ReadByte();
+                    task->args[k] = SV_ReadByte();
                 }
             }
         }
@@ -1866,19 +1884,19 @@ void P_ReadGlobalACScriptData(int saveVersion)
     else
     {
         // Old format.
-        acsstore_t tempStore[20];
+        DeferredTask tempTasks[20];
 
-        ACSStoreSize = 0;
+        deferredTasksSize = 0;
         for(int i = 0; i < 20; ++i)
         {
-            int map           = SV_ReadLong();
-            acsstore_t *store = &tempStore[map < 0? 19 : ACSStoreSize++];
+            int map            = SV_ReadLong();
+            DeferredTask *task = &tempTasks[map < 0? 19 : deferredTasksSize++];
 
-            store->map    = map < 0? 0 : map-1;
-            store->script = SV_ReadLong();
+            task->map    = map < 0? 0 : map-1;
+            task->script = SV_ReadLong();
             for(int k = 0; k < 4; ++k)
             {
-                store->args[k] = SV_ReadByte();
+                task->args[k] = SV_ReadByte();
             }
         }
 
@@ -1887,20 +1905,20 @@ void P_ReadGlobalACScriptData(int saveVersion)
             SV_Seek(12); // Junk.
         }
 
-        if(ACSStoreSize)
+        if(deferredTasksSize)
         {
-            if(ACSStore)
-                ACSStore = (acsstore_t *) Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
+            if(deferredTasks)
+                deferredTasks = (DeferredTask *) Z_Realloc(deferredTasks, sizeof(DeferredTask) * deferredTasksSize, PU_GAMESTATIC);
             else
-                ACSStore = (acsstore_t *) Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0);
+                deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask) * deferredTasksSize, PU_GAMESTATIC, 0);
 
-            memcpy(ACSStore, tempStore, sizeof(acsstore_t) * ACSStoreSize);
+            memcpy(deferredTasks, tempTasks, sizeof(DeferredTask) * deferredTasksSize);
         }
     }
 
-    if(!ACSStoreSize && ACSStore)
+    if(!deferredTasksSize && deferredTasks)
     {
-        Z_Free(ACSStore); ACSStore = 0;
+        Z_Free(deferredTasks); deferredTasks = 0;
     }
 }
 
@@ -1926,7 +1944,7 @@ void P_ReadMapACScriptData()
 
     for(int i = 0; i < ACScriptCount; ++i)
     {
-        ACSInfo[i].state     = (aste_t) SV_ReadShort();
+        ACSInfo[i].state     = (ACScriptState) SV_ReadShort();
         ACSInfo[i].waitValue = SV_ReadShort();
     }
 

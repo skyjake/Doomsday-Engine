@@ -60,9 +60,10 @@ void P_ACScriptTagFinished(int tag);
 void P_ACScriptPolyobjFinished(int tag);
 
 /**
- * Scans the ACS store and executes all scripts belonging to the current map.
+ * To be called when the current map changes to activate any deferred scripts which
+ * should now begin/resume.
  */
-void P_CheckACScriptStore(uint map);
+void P_ACScriptRunDeferredTasks(uint map/*Uri const *map*/);
 
 void P_WriteGlobalACScriptData(void);
 void P_ReadGlobalACScriptData(int saveVersion);
