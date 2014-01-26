@@ -332,6 +332,7 @@ public Font::RichFormat::IStyle
     ColorBank::Color dimmedColor;
     ColorBank::Color accentColor;
     ColorBank::Color dimAccentColor;
+    ColorBank::Color altAccentColor;
 
     // GL objects.
     VertexBuf *buf;
@@ -411,6 +412,7 @@ public Font::RichFormat::IStyle
         dimmedColor    = st.colors().color("log.dimmed");
         accentColor    = st.colors().color("log.accent");
         dimAccentColor = st.colors().color("log.dimaccent");
+        altAccentColor = st.colors().color("log.altaccent");
 
         self.set(Background(st.colors().colorf("background")));
     }
@@ -434,6 +436,9 @@ public Font::RichFormat::IStyle
 
         case Font::RichFormat::DimAccentColor:
             return dimAccentColor;
+
+        case Font::RichFormat::AltAccentColor:
+            return altAccentColor;
         }
     }
 

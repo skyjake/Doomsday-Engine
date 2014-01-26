@@ -30,6 +30,7 @@
 
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "animdefsparser.h"
 #include "p_inventory.h"
 #include "p_player.h"
 #include "p_map.h"
@@ -66,6 +67,11 @@ static int nextLightningFlash;
 static int lightningFlash;
 static float *lightningLightLevels;
 
+void P_InitPicAnims(void)
+{
+    AnimDefsParser(AutoStr_FromText("Lumps:ANIMDEFS"));
+}
+
 void P_InitLava(void)
 {
     memset(&lavaInflictor, 0, sizeof(mobj_t));
@@ -74,22 +80,25 @@ void P_InitLava(void)
     lavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
-void P_InitSky(uint map)
+void P_InitSky(Uri const *mapUri)
 {
-    int ival;
-    float fval;
-
-    mapinfo_t const *mapInfo = P_MapInfo(map);
-    sky1Material     = mapInfo->sky1Material;
-    sky2Material     = mapInfo->sky2Material;
-    sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
-    sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
-    doubleSky        = mapInfo->doubleSky;
+    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
+    if(mapInfo)
+    {
+        sky1Material     = mapInfo->sky1Material;
+        sky2Material     = mapInfo->sky2Material;
+        sky1ScrollDelta  = mapInfo->sky1ScrollDelta;
+        sky2ScrollDelta  = mapInfo->sky2ScrollDelta;
+        doubleSky        = mapInfo->doubleSky;
+    }
 
     sky1ColumnOffset = sky2ColumnOffset = 0;
 
     if(!IS_DEDICATED)
     {
+        int ival;
+        float fval;
+
         // First disable all sky layers.
         R_SkyParams(DD_SKY, DD_DISABLE, NULL);
 
@@ -995,8 +1004,11 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
+    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
+    Uri_Delete(mapUri);
 
-    if(!P_MapInfo(gameMap)->lightning)
+    if(!mapInfo || !mapInfo->lightning)
     {
         mapHasLightning = false;
         lightningFlash = 0;

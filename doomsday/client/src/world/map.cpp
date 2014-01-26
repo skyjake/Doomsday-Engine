@@ -3227,13 +3227,13 @@ static int bspTreeHeight(MapElement const &bspElem)
     return 0;
 }
 
-static String bspTreeDescription(Map const &map)
+static String bspTreeSummary(Map const &map)
 {
     if(map.hasBspRoot())
     {
-        String desc = String("%1 nodes, %2 leafs")
-                          .arg(map.bspNodeCount())
-                          .arg(map.bspLeafCount());
+        String desc = String("%1 leafs, %2 nodes")
+                          .arg(map.bspLeafCount())
+                          .arg(map.bspNodeCount());
         if(map.bspRoot().is<BspNode>())
         {
             BspNode const &bspRootNode = map.bspRoot().as<BspNode>();
@@ -3301,7 +3301,7 @@ D_CMD(InspectMap)
 
     if(map.hasBspRoot())
     {
-        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << bspTreeDescription(map);
+        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << bspTreeSummary(map);
     }
 
     if(!map.bspLeafBlockmap().isNull())

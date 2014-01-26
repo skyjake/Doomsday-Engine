@@ -1,9 +1,8 @@
-/**
- * @file common.c
- * Top-level libcommon routines.
+/** @file animdefsparser.h  Parser for Hexen ANIMDEFS.
  *
- * @authors Copyright &copy; 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,24 +19,22 @@
  * 02110-1301 USA</small>
  */
 
-#include "common.h"
-#include "g_common.h"
+#ifndef LIBHEXEN_ANIMDEFSPARSER_H
+#define LIBHEXEN_ANIMDEFSPARSER_H
 
-dd_bool sc_FileScripts = false;
-char const *sc_ScriptsDir = "";
+#include "doomsday.h"
 
-int Common_GetInteger(int id)
-{
-    switch(id)
-    {
-    case DD_GAME_RECOMMENDS_SAVING:
-        // The engine will use this as a hint whether to remind the user to
-        // manually save the game before, e.g., upgrading to a new version.
-        return G_GameState() == GS_MAP;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    default:
-        break;
-    }
-    return 0;
-}
+/**
+ * Attempt to parse the script on the identified @a path as "animation definition" data.
+ */
+void AnimDefsParser(Str const *path);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBHEXEN_ANIMDEFSPARSER_H

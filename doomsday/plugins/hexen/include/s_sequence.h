@@ -1,34 +1,26 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file s_sequence.h  Sound sequence scripts.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * s_sequence.h: Sound sequences.
- */
-
-#ifndef __S_SEQUENCE_H__
-#define __S_SEQUENCE_H__
+#ifndef LIBHEXEN_AUDIO_SOUNDSEQUENCE_H
+#define LIBHEXEN_AUDIO_SOUNDSEQUENCE_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -75,39 +67,35 @@ typedef enum {
     SEQTYPE_NUMSEQ
 } seqtype_t;
 
-typedef struct seqnode_s {
-    int*            sequencePtr;
-    int             sequence;
-    mobj_t*         mobj;
-    int             currentSoundID;
-    int             delayTics;
-    int             volume;
-    int             stopSound;
-    struct seqnode_s* prev;
-    struct seqnode_s* next;
-} seqnode_t;
-
-DENG_EXTERN_C int ActiveSequences;
-DENG_EXTERN_C seqnode_t* SequenceListHead;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void            SN_InitSequenceScript(void);
-void            SN_StartSequence(mobj_t* mobj, int sequence);
-void            SN_StartSequenceInSec(Sector* sector, int seqBase);
-void            SN_StartSequenceName(mobj_t* mobj, const char* name);
-void            SN_StopSequence(mobj_t* mobj);
-void            SN_StopSequenceInSec(Sector* sector);
-void            SN_UpdateActiveSequences(void);
-void            SN_StopAllSequences(void);
-int             SN_GetSequenceOffset(int sequence, int* sequencePtr);
-void            SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics,
-                                  int volume, int currentSoundID);
+/**
+ * Attempt to parse the script on the identified @a path as "sound sequence script" data.
+ */
+void SndSeqParser(Str const *path);
+
+int SN_ActiveSequenceCount(void);
+void SN_StartSequence(mobj_t *mobj, int sequence);
+void SN_StartSequenceInSec(Sector *sector, int seqBase);
+void SN_StartSequenceName(mobj_t *mobj, char const *name);
+void SN_StopSequence(mobj_t *mobj);
+void SN_StopSequenceInSec(Sector *sector);
+void SN_UpdateActiveSequences(void);
+void SN_StopAllSequences(void);
+int SN_GetSequenceOffset(int sequence, int *sequencePtr);
+
+/**
+ * @param nodeNum  @c 0= the first node.
+ */
+void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume, int currentSoundID);
+
+void SN_WriteSequences();
+void SN_ReadSequences(int mapVersion);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif
+#endif // LIBHEXEN_AUDIO_SOUNDSEQUENCE_H

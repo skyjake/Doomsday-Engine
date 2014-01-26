@@ -107,8 +107,17 @@ dd_bool G_SaveGame(int slot);
 
 void            G_StopDemo(void);
 
-int             G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin);
-int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
+/**
+ * Check if there is a finale before the map.
+ * Returns true if a finale was found.
+ */
+int G_BriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
+
+/**
+ * Check if there is a finale after the map.
+ * Returns true if a finale was found.
+ */
+int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
 
 void            G_DoReborn(int playernum);
 void            G_PlayerReborn(int player);

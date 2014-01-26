@@ -219,6 +219,7 @@ enum {
     DD_PLUGIN_HOMEURL,
     DD_PLUGIN_DOCSURL,
     DD_DEF_ACTION,
+    DD_DEF_MUSIC_CDTRACK,
 
     // Non-integer/special values for Set/Get
     DD_UNUSED9, // DD_TRANSLATIONTABLES_ADDRESS,

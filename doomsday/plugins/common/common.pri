@@ -10,6 +10,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$common_inc/am_map.h \
+    $$common_inc/animdefsparser.h \
     $$common_inc/common.h \
     $$common_inc/d_net.h \
     $$common_inc/d_netcl.h \
@@ -22,6 +23,7 @@ HEADERS += \
     $$common_inc/g_eventsequence.h \
     $$common_inc/g_update.h \
     $$common_inc/gl_drawpatch.h \
+    $$common_inc/hexlex.h \
     $$common_inc/hu_automap.h \
     $$common_inc/hu_chat.h \
     $$common_inc/hu_inventory.h \
@@ -67,6 +69,7 @@ HEADERS += \
 
 SOURCES += \
     $$common_src/am_map.c \
+    $$common_src/animdefsparser.cpp \
     $$common_src/common.c \
     $$common_src/d_net.c \
     $$common_src/d_netcl.c \
@@ -79,6 +82,7 @@ SOURCES += \
     $$common_src/g_game.c \
     $$common_src/g_update.c \
     $$common_src/gl_drawpatch.c \
+    $$common_src/hexlex.cpp \
     $$common_src/hu_automap.c \
     $$common_src/hu_chat.c \
     $$common_src/hu_inventory.c \
@@ -105,7 +109,7 @@ SOURCES += \
     $$common_src/p_saveg.cpp \
     $$common_src/p_saveio.c \
     $$common_src/p_scroll.c \
-    $$common_src/p_sound.c \
+    $$common_src/p_sound.cpp \
     $$common_src/p_start.cpp \
     $$common_src/p_switch.c \
     $$common_src/p_terraintype.c \

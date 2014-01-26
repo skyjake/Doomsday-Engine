@@ -1676,6 +1676,7 @@ extern const char* F_PrettyPath(char const *path);
 
 // m_misc.c
 DENG_EXTERN_C size_t M_ReadFile(char const *name, char **buffer);
+DENG_EXTERN_C AutoStr* M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom);
 DENG_EXTERN_C dd_bool M_WriteFile(char const *name, char const *source, size_t length);
 
 DENG_DECLARE_API(F) =
@@ -1692,5 +1693,6 @@ DENG_DECLARE_API(F) =
     F_TranslatePath,
     F_PrettyPath,
     M_ReadFile,
+    M_ReadFileIntoString,
     M_WriteFile
 };

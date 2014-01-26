@@ -557,7 +557,14 @@ ddstring_t *Str_Strip(ddstring_t *str)
     return Str_Strip2(str, NULL/*not interested in the stripped character count*/);
 }
 
-dd_bool Str_EndsWith(Str *ds, char const *text)
+dd_bool Str_StartsWith(Str const *ds, char const *text)
+{
+    size_t len = strlen(text);
+    if(Str_Size(ds) < len) return false;
+    return !strncmp(ds->str, text, len);
+}
+
+dd_bool Str_EndsWith(Str const *ds, char const *text)
 {
     size_t len = strlen(text);
     if(Str_Size(ds) < len) return false;

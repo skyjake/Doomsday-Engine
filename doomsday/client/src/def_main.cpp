@@ -293,6 +293,21 @@ int Def_GetSoundNumForName(const char* name)
     return 0;
 }
 
+ded_music_t* Def_GetMusic(char const *id)
+{
+    if(id && id[0] && defs.count.music.num)
+    {
+        for(int i = 0; i < defs.count.music.num; ++i)
+        {
+            if(!stricmp(defs.music[i].id, id))
+            {
+                return &defs.music[i];
+            }
+        }
+    }
+    return 0;
+}
+
 int Def_GetMusicNum(const char* id)
 {
     int idx = -1;
@@ -2213,6 +2228,13 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_MUSIC:
         return Def_GetMusicNum(id);
+
+    case DD_DEF_MUSIC_CDTRACK:
+        if(ded_music_t *music = Def_GetMusic(id))
+        {
+            return music->cdTrack;
+        }
+        return false;
 
     case DD_DEF_MAP_INFO: {
         ddmapinfo_t *mout;

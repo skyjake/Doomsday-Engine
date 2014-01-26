@@ -29,12 +29,11 @@
 #include "doomsday.h"
 
 typedef struct mapinfo_s {
-    dd_bool      usingDefaults; ///< @c true= this definition was @em not read from MAPINFO.
-
-    short        cluster;
+    uint         map; ///< Logical map number.
+    int          cluster;
     uint         warpTrans;
     uint         nextMap;
-    short        cdTrack;
+    int          cdTrack;
     char         title[32];
     materialid_t sky1Material;
     materialid_t sky2Material;
@@ -51,25 +50,14 @@ extern "C" {
 #endif
 
 /**
- * Initializes the MapInfo database.
- * All MAPINFO lumps are then parsed and stored into the database.
+ * Populate the MapInfo database by parsing the MAPINFO lump.
  */
-void P_InitMapInfo(void);
+void MapInfoParser(Str const *path);
 
 /**
- * Special early initializer needed to start sound before R_InitRefresh()
+ * Returns MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
  */
-void P_InitMapMusicInfo(void);
-
-/**
- * Returns MAPINFO data for the specified @a map, or the default if not valid.
- */
-mapinfo_t *P_MapInfo(uint map);
-
-/**
- * Returns the total number of MapInfo definitions.
- */
-uint P_MapInfoCount();
+mapinfo_t *P_MapInfo(Uri const *mapUri);
 
 #define P_INVALID_LOGICAL_MAP   0xffffffff
 
@@ -93,58 +81,6 @@ uint P_TranslateMapIfExists(uint map);
  * found, returns 0 (first available logical map).
  */
 uint P_TranslateMap(uint map);
-
-/**
- * Retrieve the song lump name for the given map.
- *
- * @param map  The map (logical number) to be queried.
- *
- * @return  @c NULL, if the map is set to use the default song lump, else a ptr
- * to a string containing the name of the song lump.
- */
-char *P_GetMapSongLump(uint map);
-
-/**
- * Retrieve the CD start track number.
- *
- * @return  The CD start track number
- */
-int P_GetCDStartTrack(void);
-
-/**
- * Retrieve the CD end1 track number.
- *
- * @return  The CD end1 track number.
- */
-int P_GetCDEnd1Track(void);
-
-/**
- * Retrieve the CD end2 track number.
- *
- * @return  The CD end2 track number.
- */
-int P_GetCDEnd2Track(void);
-
-/**
- * Retrieve the CD end3 track number.
- *
- * @return  The CD end3 track number.
- */
-int P_GetCDEnd3Track(void);
-
-/**
- * Retrieve the CD intermission track number.
- *
- * @return  The CD intermission track number.
- */
-int P_GetCDIntermissionTrack(void);
-
-/**
- * Retrieve the CD title track number.
- *
- * @return  The CD title track number.
- */
-int P_GetCDTitleTrack(void);
 
 #if __cplusplus
 } // extern "C"

@@ -156,7 +156,7 @@ void Style::richStyleFormat(int contentStyle,
         sizeFactor = .8f;
         fontWeight = Font::RichFormat::Light;
         fontStyle  = Font::RichFormat::OriginalStyle;
-        colorIndex = Font::RichFormat::DimAccentColor;
+        colorIndex = Font::RichFormat::AltAccentColor;
         break;
     }
 }

@@ -41,7 +41,6 @@ HEADERS += \
     include/m_cheat.h \
     include/m_random.h \
     include/p_acs.h \
-    include/p_anim.h \
     include/p_enemy.h \
     include/p_inter.h \
     include/p_lights.h \
@@ -59,7 +58,6 @@ HEADERS += \
     include/r_defs.h \
     include/r_local.h \
     include/s_sequence.h \
-    include/sc_man.h \
     include/st_stuff.h \
     include/textdefs.h \
     include/version.h \
@@ -85,11 +83,10 @@ SOURCES += \
     src/m_cheat.c \
     src/m_random.c \
     src/p_acs.c \
-    src/p_anim.c \
     src/p_enemy.c \
     src/p_inter.c \
     src/p_lights.c \
-    src/p_mapinfo.c \
+    src/p_mapinfo.cpp \
     src/p_maputl.c \
     src/p_mobj.c \
     src/p_pillar.c \
@@ -99,8 +96,7 @@ SOURCES += \
     src/p_telept.c \
     src/p_things.c \
     src/p_waggle.c \
-    src/sc_man.c \
-    src/sn_sonix.c \
+    src/sn_sonix.cpp \
     src/st_stuff.c \
     src/tables.c \
     src/x_api.c

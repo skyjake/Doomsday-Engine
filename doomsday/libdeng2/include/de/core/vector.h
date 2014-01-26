@@ -484,6 +484,9 @@ public:
     Vector4<dbyte> toVector4ub() const {
         return Vector4<dbyte>(dbyte(Vector3<Type>::x), dbyte(Vector3<Type>::y), dbyte(Vector3<Type>::z), dbyte(w));
     }
+    Vector4<dfloat> toVector4f() const {
+        return Vector4<dfloat>(dfloat(Vector3<Type>::x), dfloat(Vector3<Type>::y), dfloat(Vector3<Type>::z), dfloat(w));
+    }
     Type &operator [] (int index) {
         DENG2_ASSERT(index >= 0 && index <= 3);
         Type *ptrs[] = { &(this->Vector2<Type>::x),
@@ -633,6 +636,9 @@ public:
     }
     Vector2<Type> xy() const { return *this; }
     Vector2<Type> zw() const { return Vector2<Type>(Vector3<Type>::z, w); }
+    Vector4<Type> zyxw() const {
+        return Vector4<Type>(Vector3<Type>::z, Vector3<Type>::y, Vector3<Type>::x, w);
+    }
 public:
     Type w;
 };

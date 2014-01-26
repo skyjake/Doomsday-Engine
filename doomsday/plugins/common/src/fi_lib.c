@@ -1,33 +1,22 @@
-/**\file fi_lib.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file fi_lib.c  InFine Helper routines and LIFO "script stack".
  *
- *\author Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Helper routines and LIFO "script stack" functionality for use with
- * Doomsday's InFine API.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
 #include <assert.h>
@@ -43,10 +32,6 @@
 #include "d_net.h"
 
 #include "fi_lib.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct {
     byte secret:1;
@@ -69,24 +54,12 @@ typedef struct {
     char defId[64];
 } fi_state_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(StartFinale);
 D_CMD(StopFinale);
 
 int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters);
 int Hook_FinaleScriptTicker(int hookType, int finalId, void* paramaters);
 int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 /// Script state stack.
 static dd_bool finaleStackInited = false;
@@ -103,8 +76,6 @@ static ccmdtemplate_t ccmds[] = {
     { NULL }
 };
 
-// CODE --------------------------------------------------------------------
-
 void FI_StackRegister(void)
 {
     int i;
@@ -112,7 +83,7 @@ void FI_StackRegister(void)
         Con_AddCommand(ccmds + i);
 }
 
-static void initStateConditions(fi_state_t* s)
+static void initStateConditions(fi_state_t *s)
 {
     // Only the server is able to figure out the truth values of all the conditions.
     if(IS_CLIENT)
@@ -127,7 +98,15 @@ static void initStateConditions(fi_state_t* s)
     s->conditions.secret = false;
 
     // Current hub has been completed?
-    s->conditions.leave_hub = (P_MapInfo(gameMap)->cluster != P_MapInfo(nextMap)->cluster);
+    {
+        Uri *currentMapUri = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *nextMapUri    = G_ComposeMapUri(gameEpisode, nextMap);
+
+        s->conditions.leave_hub = (P_MapInfo(currentMapUri)->cluster != P_MapInfo(nextMapUri)->cluster);
+
+        Uri_Delete(nextMapUri);
+        Uri_Delete(currentMapUri);
+    }
 
     App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);
 #else
@@ -470,10 +449,14 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
     else if(mode == FIMODE_BEFORE) // A briefing has ended.
     {
         // Its time to start the map; que music and begin!
-        S_MapMusic(gameEpisode, gameMap);
+        Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+
+        S_MapMusic(mapUri);
         HU_WakeWidgets(-1 /* all players */);
         G_BeginMap();
         Pause_End(); // skip forced period
+
+        Uri_Delete(mapUri);
     }
     return true;
 }

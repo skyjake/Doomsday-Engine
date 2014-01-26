@@ -128,8 +128,6 @@ dd_bool     P_CheckMissileSpawn(mobj_t* missile);
 void        P_MobjMoveZ(mobj_t* mo);
 void        P_ExplodeMissile(mobj_t* mo);
 
-char const *P_GetShortMapName(uint episode, uint map);
-
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 

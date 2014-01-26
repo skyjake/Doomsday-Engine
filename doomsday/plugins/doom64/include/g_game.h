@@ -108,8 +108,8 @@ dd_bool G_SaveGame(int slot);
 
 void            G_StopDemo(void);
 
-int             G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin);
-int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
+int G_BriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
+int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
 
 // Confusing no?
 void            G_DoReborn(int playernum);

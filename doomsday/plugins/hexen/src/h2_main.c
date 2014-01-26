@@ -1,37 +1,24 @@
-/**\file h2_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file h2_main.c  Hexen specifc game initialization.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Game initialization - Hexen specifc.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <assert.h>
-#include <string.h>
 
 #include "jhexen.h"
 
@@ -46,19 +33,8 @@
 #include "p_saveg.h"
 #include "p_sound.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+#include <assert.h>
+#include <string.h>
 
 int verbose;
 
@@ -347,9 +323,9 @@ void X_PreInit(void)
  */
 void X_PostInit(void)
 {
-    AutoStr* path;
+    AutoStr *path;
     int p, warpMap;
-    Uri* uri;
+    Uri *uri;
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();
@@ -399,19 +375,18 @@ void X_PostInit(void)
         sc_ScriptsDir = CommandLine_At(p + 1);
     }
 
-    P_InitMapMusicInfo(); // Init music fields in mapinfo.
+    // Process sound definitions.
+    SndInfoParser(AutoStr_FromText("Lumps:SNDINFO"));
 
-    App_Log(DE2_RES_VERBOSE, "Parsing SNDINFO...");
-    S_ParseSndInfoLump();
-
-    App_Log(DE2_DEV_RES_VERBOSE, "SN_InitSequenceScript: Registering sound sequences");
-    SN_InitSequenceScript();
+    // Process sound sequence scripts.
+    SndSeqParser(sc_FileScripts? Str_Appendf(AutoStr_New(), "%sSNDSEQ.txt", sc_ScriptsDir)
+                               : AutoStr_FromText("Lumps:SNDSEQ"));
 
     // Load a saved game?
     p = CommandLine_CheckWith("-loadgame", 1);
     if(p != 0)
     {
-        const int saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
+        int const saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
         if(SV_IsUserWritableSlot(saveSlot) && G_LoadGame(saveSlot))
         {
             // No further initialization is to be done.

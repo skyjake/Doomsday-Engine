@@ -99,6 +99,11 @@ public:
     bool isEmpty() const;
 
     /**
+     * Returns the maximum grid size. These values were given to setGridSize().
+     */
+    Vector2i maxGridSize() const;
+
+    /**
      * Returns the actual grid size in columns and rows. This depends on how
      * many widgets have been added to the grid.
      */

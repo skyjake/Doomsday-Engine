@@ -457,18 +457,13 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
             continue;
             */
 
-#ifdef MACOSX
-#  define COMPRESSION_THRESHOLD 1
-#else
-#  define COMPRESSION_THRESHOLD 4
-#endif
-
         Instance::Line::Segment &seg = line.segs.last();
-        if(seg.right() > d->wraps->maximumWidth() + COMPRESSION_THRESHOLD)
+        int const leeway = 3;
+        if(seg.right() > d->wraps->maximumWidth() + leeway)
         {
-            // Needs compressing (up to 15%).
+            // Needs compressing (up to 10%).
             seg.compressed = true;
-            seg.width = de::max(int(seg.width * .85f), d->wraps->maximumWidth() - seg.x);
+            seg.width = de::max(int(seg.width * .9f), d->wraps->maximumWidth() + leeway - seg.x);
         }
     }
 
