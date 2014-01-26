@@ -1,4 +1,4 @@
-/** @file p_acs.h  Hexen "ACS" scripting system.
+/** @file acscript.h  Hexen "ACS" scripting system.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -27,6 +27,7 @@
 #endif
 
 #include "jhexen.h"
+#include "p_mobj.h"
 
 #define MAX_ACS_SCRIPT_VARS     10
 #define MAX_ACS_MAP_VARS        32
@@ -39,6 +40,10 @@ extern "C" {
 
 void P_LoadACScripts(int lump);
 
+/**
+ * @param map  Map number on which the script is being started on.
+ *             @c 0 = Current map. Otherwise 1-based index of the map to start on (deferred).
+ */
 dd_bool P_StartACS(int number, uint map, byte *args, mobj_t *activator, Line *line, int side);
 
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side);
@@ -53,13 +58,16 @@ void P_ACSPolyobjFinished(int tag);
 
 void P_ACSInitNewGame(void);
 
+/**
+ * Scans the ACS store and executes all scripts belonging to the current map.
+ */
 void P_CheckACSStore(uint map);
 
-void P_WriteGlobalACScriptData();
+void P_WriteGlobalACScriptData(void);
 void P_ReadGlobalACScriptData(int saveVersion);
 
-void P_WriteMapACScriptData();
-void P_ReadMapACScriptData();
+void P_WriteMapACScriptData(void);
+void P_ReadMapACScriptData(void);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -89,7 +97,7 @@ extern "C" {
 void ACScript_Thinker(acs_t *script);
 
 /**
- * Serialize this thinker to the currently open save file.
+ * Serialize the thinker to the currently open save file.
  */
 void ACScript_Write(acs_t const *script);
 

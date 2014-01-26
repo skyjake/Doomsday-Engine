@@ -32,6 +32,7 @@ INCLUDEPATH += include
 HEADERS += \
     include/a_action.h \
     include/acfnlink.h \
+    include/acscript.h \
     include/dstrings.h \
     include/g_game.h \
     include/h2def.h \
@@ -40,7 +41,6 @@ HEADERS += \
     include/jhexen.h \
     include/m_cheat.h \
     include/m_random.h \
-    include/p_acs.h \
     include/p_enemy.h \
     include/p_inter.h \
     include/p_lights.h \
@@ -76,13 +76,13 @@ HEADERS += \
 SOURCES += \
     src/a_action.c \
     src/acfnlink.c \
+    src/acscript.cpp \
     src/h2_main.c \
     src/hconsole.c \
     src/hrefresh.c \
     src/in_lude.c \
     src/m_cheat.c \
     src/m_random.c \
-    src/p_acs.c \
     src/p_enemy.c \
     src/p_inter.c \
     src/p_lights.c \

@@ -29,7 +29,7 @@
 #include "g_common.h"
 
 #ifdef __JHEXEN__
-#  include "p_acs.h"
+#  include "acscript.h"
 #endif
 
 #include "polyobjs.h"

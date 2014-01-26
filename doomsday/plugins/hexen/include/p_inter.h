@@ -26,6 +26,8 @@
 
 #include "x_player.h"
 
+DENG_EXTERN_C int TextKeyMessages[];
+
 dd_bool P_GiveAmmo(player_t *player, ammotype_t ammoType, int numRounds);
 
 dd_bool P_GiveKey(player_t *player, keytype_t keyType);
