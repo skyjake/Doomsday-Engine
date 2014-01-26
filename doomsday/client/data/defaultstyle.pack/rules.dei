@@ -36,9 +36,10 @@ group slider {
 group dialog {
     rule gap { constant $= UNIT * 2 }
 
-    rule about.width    { constant $= UNIT * 80 }
-    rule message.width  { constant $= UNIT * 115 }
-    rule download.width { constant $= UNIT * 115 }
+    rule about.width       { constant $= UNIT * 80 }
+    rule message.width     { constant $= UNIT * 115 }
+    rule download.width    { constant $= UNIT * 115 }
+    rule multiplayer.width { constant $= UNIT * 80 }
 }
 
 group alerts {

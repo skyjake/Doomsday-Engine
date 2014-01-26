@@ -70,9 +70,12 @@ DENG_GUI_PIMPL(MultiplayerDialog)
         //LabelWidget *info;
         ButtonWidget *extra;
         ButtonWidget *join;
+        QScopedPointer<SequentialLayout> layout;
 
         ServerWidget()
         {
+            setBehavior(ContentClipping);
+
             add(title = new LabelWidget);
             //add(info  = new LabelWidget);
             add(extra = new ButtonWidget);
@@ -82,9 +85,12 @@ DENG_GUI_PIMPL(MultiplayerDialog)
             join->setText(tr("Join"));
 
             title->setSizePolicy(ui::Expand, ui::Expand);
+            title->setAppearanceAnimation(LabelWidget::AppearGrowVertically, 0.5);
+            title->setAlignment(ui::AlignTop);
             title->setTextAlignment(ui::AlignRight);
             title->setTextLineAlignment(ui::AlignLeft);
             title->setImageAlignment(ui::AlignTop);
+            title->setMaximumTextWidth(style().rules().rule("dialog.multiplayer.width").valuei());
 
             //info->setSizePolicy(ui::Expand, ui::Expand);
             extra->setSizePolicy(ui::Expand, ui::Expand);
@@ -92,9 +98,9 @@ DENG_GUI_PIMPL(MultiplayerDialog)
 
             join->disable();
 
-            SequentialLayout layout(rule().left(), rule().top(), ui::Right);
-            layout << *title << *extra << *join;
-            rule().setSize(layout.width(), layout.height());
+            layout.reset(new SequentialLayout(rule().left(), rule().top(), ui::Right));
+            *layout << *title << *extra << *join;
+            rule().setSize(layout->width(), title->rule().height());
         }
 
         void updateFromItem(ServerListItem const &item)
