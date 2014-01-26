@@ -194,6 +194,61 @@ public:
     }
 
     /**
+     * Start all scripts flagged to begin immediately "on open".
+     */
+    void startOpenScripts()
+    {
+        // Each is allotted 1 second for initialization.
+        for(int i = 0; i < _scriptCount; ++i)
+        {
+            BytecodeScriptInfo &info = _scriptInfo[i];
+
+            if(info.number >= OPEN_SCRIPTS_BASE)
+            {
+                info.number -= OPEN_SCRIPTS_BASE;
+                newACScript(info, TICSPERSEC);
+                info.state = Running;
+            }
+        }
+    }
+
+    /**
+     * Start/resume the specified script.
+     *
+     * @return  Pointer to the @em newly-started script thinker; otherwise @c 0.
+     */
+    ACScript *startScript(int scriptNumber, byte *args, mobj_t *activator, Line *line, int side)
+    {
+        BytecodeScriptInfo &info = scriptInfo(scriptNumber);
+
+        if(info.state == Suspended)
+        {
+            // Resume a suspended script.
+            info.state = Running;
+            return 0;
+        }
+
+        if(info.state != Inactive)
+        {
+            // Script is already executing.
+            return 0;
+        }
+
+        ACScript *script = newACScript(info);
+
+        script->activator = activator;
+        script->line      = line;
+        script->side      = side;
+        for(int i = 0; i < info.argCount; ++i)
+        {
+            script->vars[i] = args[i];
+        }
+        info.state = Running;
+
+        return script;
+    }
+
+    /**
      * Returns @c true iff @a scriptNumber is a known entrypoint.
      */
     bool hasScriptEntrypoint(int scriptNumber)
@@ -214,7 +269,7 @@ public:
      */
     BytecodeScriptInfo &scriptInfo(int scriptNumber)
     {
-        DENG_ASSERT(scriptNumber > 0 && scriptNumber <= _scriptCount);
+        DENG_ASSERT(scriptNumber >= 0 && scriptNumber < _scriptCount);
         return _scriptInfo[scriptNumber];
     }
 
@@ -222,6 +277,24 @@ public:
         return hasScriptEntrypoint(scriptNumber)? &scriptInfo(scriptNumber) : 0;
     }
 
+    /**
+     * Provides readonly access to a string constant from the loaded bytecode.
+     */
+    char const *string(int stringNumber)
+    {
+        DENG_ASSERT(stringNumber >= 0 && stringNumber < _stringCount);
+        return _strings[stringNumber];
+    }
+
+    /**
+     * Provides readonly access to the loaded bytecode.
+     */
+    byte const *bytecode() const
+    {
+        return _pcode;
+    }
+
+private:
     /**
      * Returns the logical index of a @a scriptNumber; otherwise @c -1.
      */
@@ -238,26 +311,21 @@ public:
         return -1;
     }
 
-    /**
-     * Provides readonly access to a string constant from the loaded bytecode.
-     */
-    char const *string(int id)
+    ACScript *newACScript(BytecodeScriptInfo &info, int delayCount = 0)
     {
-        if(id < 0 || id > _stringCount)
-            return 0;
+        ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
+        script->thinker.function = (thinkfunc_t) ACScript_Thinker;
 
-        return _strings[id];
+        script->number     = info.number;
+        script->infoIndex  = scriptInfoIndex(info.number);
+        script->ip         = info.address;
+        script->delayCount = delayCount;
+
+        Thinker_Add(&script->thinker);
+
+        return script;
     }
 
-    /**
-     * Provides readonly access to the loaded bytecode.
-     */
-    byte const *bytecode() const
-    {
-        return _pcode;
-    }
-
-private:
     byte const *_pcode; ///< Start of the loaded bytecode.
 
     int _scriptCount; ///< Number of script entrypoints.
@@ -267,13 +335,12 @@ private:
     char const **_strings;
 };
 
-/// The One ACS interpretor instance.
+/// The One ACS interpreter instance.
 static Interpreter interp;
 
-static void startOpenACS(int number, int infoIndex, int const *address);
 static void scriptFinished(int number);
-static dd_bool tagBusy(int tag);
-static dd_bool newDeferredTask(uint map, int number, byte const *args);
+static bool tagBusy(int tag);
+static bool newDeferredTask(uint map, int number, byte const *args);
 
 static void push(int value);
 static int pop();
@@ -436,31 +503,7 @@ void P_LoadACScripts(lumpnum_t lump)
     memset(MapVars, 0, sizeof(MapVars));
 
     // Start all scripts flagged to begin immediately.
-    for(int i = 0; i < interp.scriptCount(); ++i)
-    {
-        BytecodeScriptInfo &info = interp.scriptInfo(i);
-
-        if(info.number >= OPEN_SCRIPTS_BASE)
-        {
-            info.number -= OPEN_SCRIPTS_BASE;
-            startOpenACS(info.number, i, info.address);
-            info.state = Running;
-        }
-    }
-}
-
-static void startOpenACS(int number, int infoIndex, int const *address)
-{
-    ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
-    script->number = number;
-
-    // World objects are allotted 1 second for initialization
-    script->delayCount = TICRATE;
-
-    script->infoIndex = infoIndex;
-    script->ip        = address;
-    script->thinker.function = (thinkfunc_t) ACScript_Thinker;
-    Thinker_Add(&script->thinker);
+    interp.startOpenScripts();
 }
 
 void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
@@ -535,42 +578,12 @@ dd_bool P_StartACScript(int scriptNumber, uint map, byte *args, mobj_t *activato
         return false;
     }
 
-    int infoIndex = interp.scriptInfoIndex(scriptNumber);
-    ACScriptState *statePtr = &interp.scriptInfo(infoIndex).state;
-    if(*statePtr == Suspended)
-    {
-        // Resume a suspended script.
-        *statePtr = Running;
-        return true;
-    }
+    newScript = interp.startScript(scriptNumber, args, activator, line, side);
 
-    if(*statePtr != Inactive)
-    {
-        // Script is already executing.
-        return false;
-    }
-
-    ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
-
-    script->number    = scriptNumber;
-    script->infoIndex = infoIndex;
-    script->activator = activator;
-    script->line      = line;
-    script->side      = side;
-    script->ip        = interp.scriptInfo(infoIndex).address;
-    script->thinker.function = (thinkfunc_t) ACScript_Thinker;
-    for(int i = 0; i < interp.scriptInfo(infoIndex).argCount; ++i)
-    {
-        script->vars[i] = args[i];
-    }
-
-    *statePtr = Running;
-    Thinker_Add(&script->thinker);
-    newScript = script;
     return true;
 }
 
-static dd_bool newDeferredTask(uint map, int scriptNumber, byte const *args)
+static bool newDeferredTask(uint map, int scriptNumber, byte const *args)
 {
     if(deferredTasksSize)
     {
@@ -680,7 +693,7 @@ static void scriptFinished(int number)
     }
 }
 
-static dd_bool tagBusy(int tag)
+static bool tagBusy(int tag)
 {
     // NOTE: We can't use the sector tag lists here as we might already be
     // in an iteration at a higher level.
@@ -1717,8 +1730,8 @@ static int cmdSetLineTexture()
 
 static int cmdSetLineBlocking()
 {
-    dd_bool blocking = pop()? DDLF_BLOCKING : 0;
-    int lineTag      = pop();
+    int lineFlags = pop()? DDLF_BLOCKING : 0;
+    int lineTag   = pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1728,7 +1741,7 @@ static int cmdSetLineBlocking()
         Line *line;
         while((line = (Line *) IterList_MoveIterator(list)))
         {
-            P_SetIntp(line, DMU_FLAGS, (P_GetIntp(line, DMU_FLAGS) & ~DDLF_BLOCKING) | blocking);
+            P_SetIntp(line, DMU_FLAGS, (P_GetIntp(line, DMU_FLAGS) & ~DDLF_BLOCKING) | lineFlags);
         }
     }
 
