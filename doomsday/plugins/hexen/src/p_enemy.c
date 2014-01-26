@@ -4245,7 +4245,7 @@ void C_DECL A_KoraxChase(mobj_t* actor)
             P_Teleport(actor, spot->origin[VX], spot->origin[VY], spot->angle, true);
         }
 
-        P_StartACS(249, 0, args, actor, NULL, 0);
+        P_StartACScript(249, 0, args, actor, NULL, 0);
         actor->special2 = 1; // Don't run again.
 
         return;
@@ -4322,7 +4322,7 @@ void C_DECL A_KoraxBonePop(mobj_t* actor)
     if(mo)
         KSpiritInit(mo, actor);
 
-    P_StartACS(255, 0, args, actor, NULL, 0); // Death script.
+    P_StartACScript(255, 0, args, actor, NULL, 0); // Death script.
 }
 
 void KSpiritInit(mobj_t* spirit, mobj_t* korax)
@@ -4510,7 +4510,7 @@ void C_DECL A_KoraxCommand(mobj_t* mo)
     }
 
     assert(scriptNumber >= 0);
-    P_StartACS(scriptNumber, 0, args, mo, NULL, 0);
+    P_StartACScript(scriptNumber, 0, args, mo, NULL, 0);
 }
 
 void C_DECL A_KSpiritWeave(mobj_t* mo)

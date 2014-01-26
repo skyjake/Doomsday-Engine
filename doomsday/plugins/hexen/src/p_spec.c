@@ -210,6 +210,40 @@ dd_bool EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
+dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
+{
+    byte newArgs[5];
+    int i, lock;
+
+    DENG_ASSERT(args != 0);
+
+    if(!mo->player)
+    {
+        return false;
+    }
+
+    lock = args[4];
+    if(lock)
+    {
+        if(!(mo->player->keys & (1 << (lock - 1))))
+        {
+            char LockedBuffer[80];
+            sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
+            P_SetMessage(mo->player, 0, LockedBuffer);
+            S_StartSound(SFX_DOOR_LOCKED, mo);
+            return false;
+        }
+    }
+
+    for(i = 0; i < 4; ++i)
+    {
+        newArgs[i] = args[i];
+    }
+    newArgs[4] = 0;
+
+    return P_StartACScript(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
+}
+
 dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line,
                              int side, mobj_t* mo)
 {
@@ -486,15 +520,15 @@ dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line,
         break;
 
     case 80: // ACS_Execute
-        success = P_StartACS(args[0], args[1], &args[2], mo, line, side);
+        success = P_StartACScript(args[0], args[1], &args[2], mo, line, side);
         break;
 
     case 81: // ACS_Suspend
-        success = P_SuspendACS(args[0], args[1]);
+        success = P_SuspendACScript(args[0], args[1]);
         break;
 
     case 82: // ACS_Terminate
-        success = P_TerminateACS(args[0], args[1]);
+        success = P_TerminateACScript(args[0], args[1]);
         break;
 
     case 83: // ACS_LockedExecute

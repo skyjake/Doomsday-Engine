@@ -1444,7 +1444,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         if(target->type == MT_SORCBOSS)
         {
             dummy = 0;
-            P_StartACS(target->special, 0, (byte *) &dummy, target, NULL, 0);
+            P_StartACScript(target->special, 0, (byte *) &dummy, target, NULL, 0);
         }
         else
         {

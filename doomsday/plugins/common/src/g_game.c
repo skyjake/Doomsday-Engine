@@ -2183,7 +2183,7 @@ static void G_InitNewGame(void)
     SV_ClearSlot(AUTO_SLOT);
 
 #if __JHEXEN__
-    P_ACSInitNewGame();
+    P_InitACScript();
 #endif
 }
 
@@ -2729,7 +2729,7 @@ void G_DoLeaveMap(void)
     // Launch waiting scripts.
     if(!deathmatch)
     {
-        P_CheckACSStore(gameMap);
+        P_CheckACScriptStore(gameMap);
     }
 #endif
 

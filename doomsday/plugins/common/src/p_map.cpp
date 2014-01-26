@@ -3195,7 +3195,7 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
             return true; // Item type doesn't match.
         }
 
-        P_StartACS(xline->arg2, 0, &xline->arg3, parm.useMobj, icpt->line, 0);
+        P_StartACScript(xline->arg2, 0, &xline->arg3, parm.useMobj, icpt->line, 0);
         xline->special = 0;
 
         parm.activated = true;
@@ -3214,7 +3214,7 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
             return false; // Item type doesn't match...
         }
 
-        P_StartACS(icpt->mobj->args[1], 0, &icpt->mobj->args[2], parm.useMobj, NULL, 0);
+        P_StartACScript(icpt->mobj->args[1], 0, &icpt->mobj->args[2], parm.useMobj, NULL, 0);
         icpt->mobj->special = 0;
 
         parm.activated = true;

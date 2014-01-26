@@ -46,9 +46,9 @@
 #define TEXTURE_MIDDLE 1
 #define TEXTURE_BOTTOM 2
 
-#define S_DROP ACScript->stackPtr--
-#define S_POP ACScript->stack[--ACScript->stackPtr]
-#define S_PUSH(x) ACScript->stack[ACScript->stackPtr++] = x
+#define S_DROP activeScript->stackPtr--
+#define S_POP activeScript->stack[--activeScript->stackPtr]
+#define S_PUSH(x) activeScript->stack[activeScript->stackPtr++] = x
 
 typedef enum aste_e {
     ASTE_INACTIVE,
@@ -208,13 +208,14 @@ static int WorldVars[MAX_ACS_WORLD_VARS];
 static int ACSStoreSize;
 static acsstore_t *ACSStore;
 
-static acs_t *ACScript;
 static int const *PCodePtr;
 static byte SpecArgs[8];
 static int ACStringCount;
 static char const **ACStrings;
 static char PrintBuffer[PRINT_BUFFER_SIZE];
-static acs_t *NewScript;
+
+static ACScript *activeScript;
+static ACScript *newScript;
 
 static char ErrorMsg[128];
 
@@ -320,7 +321,7 @@ void P_LoadACScripts(int lump)
 
 static void StartOpenACS(int number, int infoIndex, int const *address)
 {
-    acs_t *script = (acs_t *) Z_Calloc(sizeof(*script), PU_MAP, 0);
+    ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
     script->number = number;
 
     // World objects are allotted 1 second for initialization
@@ -332,7 +333,7 @@ static void StartOpenACS(int number, int infoIndex, int const *address)
     Thinker_Add(&script->thinker);
 }
 
-void P_CheckACSStore(uint map)
+void P_CheckACScriptStore(uint map)
 {
     int const origSize = ACSStoreSize;
 
@@ -347,10 +348,10 @@ void P_CheckACSStore(uint map)
             continue;
         }
 
-        P_StartACS(store->script, 0, store->args, NULL, NULL, 0);
-        if(NewScript)
+        P_StartACScript(store->script, 0, store->args, NULL, NULL, 0);
+        if(newScript)
         {
-            NewScript->delayCount = TICRATE;
+            newScript->delayCount = TICRATE;
         }
 
         ACSStoreSize -= 1;
@@ -373,12 +374,12 @@ void P_CheckACSStore(uint map)
     ACSStore = 0;
 }
 
-dd_bool P_StartACS(int number, uint map, byte *args, mobj_t *activator, Line *line,
+dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Line *line,
     int side)
 {
     DENG_ASSERT(!IS_CLIENT);
 
-    NewScript = NULL;
+    newScript = NULL;
     if(map && map-1 != gameMap)
     {
         // Script is not for the current map.
@@ -409,7 +410,7 @@ dd_bool P_StartACS(int number, uint map, byte *args, mobj_t *activator, Line *li
         return false;
     }
 
-    acs_t *script = (acs_t *) Z_Calloc(sizeof(*script), PU_MAP, 0);
+    ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
 
     script->number    = number;
     script->infoIndex = infoIndex;
@@ -425,7 +426,7 @@ dd_bool P_StartACS(int number, uint map, byte *args, mobj_t *activator, Line *li
 
     *statePtr = ASTE_RUNNING;
     Thinker_Add(&script->thinker);
-    NewScript = script;
+    newScript = script;
     return true;
 }
 
@@ -463,38 +464,7 @@ static dd_bool AddToACSStore(uint map, int number, byte const *args)
     return true;
 }
 
-dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
-{
-    DENG_ASSERT(args != 0);
-
-    if(!mo->player)
-    {
-        return false;
-    }
-
-    if(int const lock = args[4])
-    {
-        if(!(mo->player->keys & (1 << (lock - 1))))
-        {
-            char LockedBuffer[80];
-            sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
-            P_SetMessage(mo->player, 0, LockedBuffer);
-            S_StartSound(SFX_DOOR_LOCKED, mo);
-            return false;
-        }
-    }
-
-    byte newArgs[5];
-    for(int i = 0; i < 4; ++i)
-    {
-        newArgs[i] = args[i];
-    }
-    newArgs[4] = 0;
-
-    return P_StartACS(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
-}
-
-dd_bool P_TerminateACS(int number, uint /*map*/)
+dd_bool P_TerminateACScript(int number, uint /*map*/)
 {
     int infoIndex = GetACSIndex(number);
     if(infoIndex >= 0)
@@ -510,7 +480,7 @@ dd_bool P_TerminateACS(int number, uint /*map*/)
     return false;
 }
 
-dd_bool P_SuspendACS(int number, uint map)
+dd_bool P_SuspendACScript(int number, uint map)
 {
     int infoIndex = GetACSIndex(number);
     if(infoIndex >= 0)
@@ -527,22 +497,22 @@ dd_bool P_SuspendACS(int number, uint map)
     return false;
 }
 
-void P_ACSInitNewGame()
+void P_InitACScript()
 {
     memset(WorldVars, 0, sizeof(WorldVars));
     Z_Free(ACSStore); ACSStore = 0;
     ACSStoreSize = 0;
 }
 
-void ACScript_Thinker(acs_t *script)
+void ACScript_Thinker(ACScript *script)
 {
     DENG_ASSERT(script != 0);
 
     if(ACSInfo[script->infoIndex].state == ASTE_TERMINATING)
     {
         ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
-        ScriptFinished(ACScript->number);
-        Thinker_Remove(&ACScript->thinker);
+        ScriptFinished(activeScript->number);
+        Thinker_Remove(&activeScript->thinker);
         return;
     }
 
@@ -556,9 +526,9 @@ void ACScript_Thinker(acs_t *script)
         script->delayCount--;
         return;
     }
-    ACScript = script;
+    activeScript = script;
 
-    PCodePtr = ACScript->ip;
+    PCodePtr = activeScript->ip;
     int action = 0;
     do
     {
@@ -566,16 +536,16 @@ void ACScript_Thinker(acs_t *script)
         action = PCodeCmds[cmd] ();
     } while(action == SCRIPT_CONTINUE);
 
-    ACScript->ip = PCodePtr;
+    activeScript->ip = PCodePtr;
     if(action == SCRIPT_TERMINATE)
     {
         ACSInfo[script->infoIndex].state = ASTE_INACTIVE;
-        ScriptFinished(ACScript->number);
-        Thinker_Remove(&ACScript->thinker);
+        ScriptFinished(activeScript->number);
+        Thinker_Remove(&activeScript->thinker);
     }
 }
 
-void ACScript_Write(acs_t const *th)
+void ACScript_Write(ACScript const *th)
 {
     DENG_ASSERT(th != 0);
 
@@ -599,7 +569,7 @@ void ACScript_Write(acs_t const *th)
     SV_WriteLong(((byte const *)th->ip) - ActionCodeBase);
 }
 
-int ACScript_Read(acs_t *th, int mapVersion)
+int ACScript_Read(ACScript *th, int mapVersion)
 {
     DENG_ASSERT(th != 0);
 
@@ -688,7 +658,7 @@ int ACScript_Read(acs_t *th, int mapVersion)
     return true; // Add this thinker.
 }
 
-void P_TagFinished(int tag)
+void P_ACScriptTagFinished(int tag)
 {
     if(TagBusy(tag)) return;
 
@@ -702,7 +672,7 @@ void P_TagFinished(int tag)
     }
 }
 
-void P_ACSPolyobjFinished(int tag)
+void P_ACScriptPolyobjFinished(int tag)
 {
     if(PO_Busy(tag)) return;
 
@@ -765,22 +735,22 @@ static int GetACSIndex(int number)
 
 static void Push(int value)
 {
-    ACScript->stack[ACScript->stackPtr++] = value;
+    activeScript->stack[activeScript->stackPtr++] = value;
 }
 
 static int Pop()
 {
-    return ACScript->stack[--ACScript->stackPtr];
+    return activeScript->stack[--activeScript->stackPtr];
 }
 
 static int Top()
 {
-    return ACScript->stack[ACScript->stackPtr - 1];
+    return activeScript->stack[activeScript->stackPtr - 1];
 }
 
 static void Drop()
 {
-    ACScript->stackPtr--;
+    activeScript->stackPtr--;
 }
 
 static int CmdNOP()
@@ -795,7 +765,7 @@ static int CmdTerminate()
 
 static int CmdSuspend()
 {
-    ACSInfo[ACScript->infoIndex].state = ASTE_SUSPENDED;
+    ACSInfo[activeScript->infoIndex].state = ASTE_SUSPENDED;
     return SCRIPT_STOP;
 }
 
@@ -809,8 +779,8 @@ static int CmdLSpec1()
 {
     int special = LONG(*PCodePtr++);
     SpecArgs[0] = Pop();
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -820,8 +790,8 @@ static int CmdLSpec2()
     int special = LONG(*PCodePtr++);
     SpecArgs[1] = Pop();
     SpecArgs[0] = Pop();
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -832,8 +802,8 @@ static int CmdLSpec3()
     SpecArgs[2] = Pop();
     SpecArgs[1] = Pop();
     SpecArgs[0] = Pop();
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -845,8 +815,8 @@ static int CmdLSpec4()
     SpecArgs[2] = Pop();
     SpecArgs[1] = Pop();
     SpecArgs[0] = Pop();
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -859,8 +829,8 @@ static int CmdLSpec5()
     SpecArgs[2] = Pop();
     SpecArgs[1] = Pop();
     SpecArgs[0] = Pop();
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -869,8 +839,8 @@ static int CmdLSpec1Direct()
 {
     int special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -880,8 +850,8 @@ static int CmdLSpec2Direct()
     int special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
     SpecArgs[1] = LONG(*PCodePtr++);
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -892,8 +862,8 @@ static int CmdLSpec3Direct()
     SpecArgs[0] = LONG(*PCodePtr++);
     SpecArgs[1] = LONG(*PCodePtr++);
     SpecArgs[2] = LONG(*PCodePtr++);
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -905,8 +875,8 @@ static int CmdLSpec4Direct()
     SpecArgs[1] = LONG(*PCodePtr++);
     SpecArgs[2] = LONG(*PCodePtr++);
     SpecArgs[3] = LONG(*PCodePtr++);
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -919,8 +889,8 @@ static int CmdLSpec5Direct()
     SpecArgs[2] = LONG(*PCodePtr++);
     SpecArgs[3] = LONG(*PCodePtr++);
     SpecArgs[4] = LONG(*PCodePtr++);
-    P_ExecuteLineSpecial(special, SpecArgs, ACScript->line, ACScript->side,
-                         ACScript->activator);
+    P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
+                         activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
@@ -1000,7 +970,7 @@ static int CmdGE()
 
 static int CmdAssignScriptVar()
 {
-    ACScript->vars[LONG(*PCodePtr++)] = Pop();
+    activeScript->vars[LONG(*PCodePtr++)] = Pop();
     return SCRIPT_CONTINUE;
 }
 
@@ -1018,7 +988,7 @@ static int CmdAssignWorldVar()
 
 static int CmdPushScriptVar()
 {
-    Push(ACScript->vars[LONG(*PCodePtr++)]);
+    Push(activeScript->vars[LONG(*PCodePtr++)]);
     return SCRIPT_CONTINUE;
 }
 
@@ -1036,7 +1006,7 @@ static int CmdPushWorldVar()
 
 static int CmdAddScriptVar()
 {
-    ACScript->vars[LONG(*PCodePtr++)] += Pop();
+    activeScript->vars[LONG(*PCodePtr++)] += Pop();
     return SCRIPT_CONTINUE;
 }
 
@@ -1054,7 +1024,7 @@ static int CmdAddWorldVar()
 
 static int CmdSubScriptVar()
 {
-    ACScript->vars[LONG(*PCodePtr++)] -= Pop();
+    activeScript->vars[LONG(*PCodePtr++)] -= Pop();
     return SCRIPT_CONTINUE;
 }
 
@@ -1072,7 +1042,7 @@ static int CmdSubWorldVar()
 
 static int CmdMulScriptVar()
 {
-    ACScript->vars[LONG(*PCodePtr++)] *= Pop();
+    activeScript->vars[LONG(*PCodePtr++)] *= Pop();
     return SCRIPT_CONTINUE;
 }
 
@@ -1090,7 +1060,7 @@ static int CmdMulWorldVar()
 
 static int CmdDivScriptVar()
 {
-    ACScript->vars[LONG(*PCodePtr++)] /= Pop();
+    activeScript->vars[LONG(*PCodePtr++)] /= Pop();
     return SCRIPT_CONTINUE;
 }
 
@@ -1108,7 +1078,7 @@ static int CmdDivWorldVar()
 
 static int CmdModScriptVar()
 {
-    ACScript->vars[LONG(*PCodePtr++)] %= Pop();
+    activeScript->vars[LONG(*PCodePtr++)] %= Pop();
     return SCRIPT_CONTINUE;
 }
 
@@ -1126,7 +1096,7 @@ static int CmdModWorldVar()
 
 static int CmdIncScriptVar()
 {
-    ACScript->vars[LONG(*PCodePtr++)]++;
+    activeScript->vars[LONG(*PCodePtr++)]++;
     return SCRIPT_CONTINUE;
 }
 
@@ -1144,7 +1114,7 @@ static int CmdIncWorldVar()
 
 static int CmdDecScriptVar()
 {
-    ACScript->vars[LONG(*PCodePtr++)]--;
+    activeScript->vars[LONG(*PCodePtr++)]--;
     return SCRIPT_CONTINUE;
 }
 
@@ -1187,13 +1157,13 @@ static int CmdDrop()
 
 static int CmdDelay()
 {
-    ACScript->delayCount = Pop();
+    activeScript->delayCount = Pop();
     return SCRIPT_STOP;
 }
 
 static int CmdDelayDirect()
 {
-    ACScript->delayCount = LONG(*PCodePtr++);
+    activeScript->delayCount = LONG(*PCodePtr++);
     return SCRIPT_STOP;
 }
 
@@ -1300,29 +1270,29 @@ static void ThingCount(int type, int tid)
 
 static int CmdTagWait()
 {
-    ACSInfo[ACScript->infoIndex].waitValue = Pop();
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_TAG;
+    ACSInfo[activeScript->infoIndex].waitValue = Pop();
+    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_TAG;
     return SCRIPT_STOP;
 }
 
 static int CmdTagWaitDirect()
 {
-    ACSInfo[ACScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_TAG;
+    ACSInfo[activeScript->infoIndex].waitValue = LONG(*PCodePtr++);
+    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_TAG;
     return SCRIPT_STOP;
 }
 
 static int CmdPolyWait()
 {
-    ACSInfo[ACScript->infoIndex].waitValue = Pop();
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_POLY;
+    ACSInfo[activeScript->infoIndex].waitValue = Pop();
+    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_POLY;
     return SCRIPT_STOP;
 }
 
 static int CmdPolyWaitDirect()
 {
-    ACSInfo[ACScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_POLY;
+    ACSInfo[activeScript->infoIndex].waitValue = LONG(*PCodePtr++);
+    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_POLY;
     return SCRIPT_STOP;
 }
 
@@ -1443,7 +1413,7 @@ static int CmdChangeCeilingDirect()
 
 static int CmdRestart()
 {
-    PCodePtr = ACSInfo[ACScript->infoIndex].address;
+    PCodePtr = ACSInfo[activeScript->infoIndex].address;
     return SCRIPT_CONTINUE;
 }
 
@@ -1518,29 +1488,29 @@ static int CmdIfNotGoto()
 
 static int CmdLineSide()
 {
-    Push(ACScript->side);
+    Push(activeScript->side);
     return SCRIPT_CONTINUE;
 }
 
 static int CmdScriptWait()
 {
-    ACSInfo[ACScript->infoIndex].waitValue = Pop();
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_SCRIPT;
+    ACSInfo[activeScript->infoIndex].waitValue = Pop();
+    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_SCRIPT;
     return SCRIPT_STOP;
 }
 
 static int CmdScriptWaitDirect()
 {
-    ACSInfo[ACScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[ACScript->infoIndex].state = ASTE_WAITING_FOR_SCRIPT;
+    ACSInfo[activeScript->infoIndex].waitValue = LONG(*PCodePtr++);
+    ACSInfo[activeScript->infoIndex].state = ASTE_WAITING_FOR_SCRIPT;
     return SCRIPT_STOP;
 }
 
 static int CmdClearLineSpecial()
 {
-    if(ACScript->line)
+    if(activeScript->line)
     {
-        P_ToXLine(ACScript->line)->special = 0;
+        P_ToXLine(activeScript->line)->special = 0;
     }
     return SCRIPT_CONTINUE;
 }
@@ -1567,9 +1537,9 @@ static int CmdBeginPrint()
 
 static int CmdEndPrint()
 {
-    if(ACScript->activator && ACScript->activator->player)
+    if(activeScript->activator && activeScript->activator->player)
     {
-        P_SetMessage(ACScript->activator->player, 0, PrintBuffer);
+        P_SetMessage(activeScript->activator->player, 0, PrintBuffer);
     }
     else
     {
@@ -1667,9 +1637,9 @@ static int CmdTimer()
 static int CmdSectorSound()
 {
     mobj_t *mobj = 0;
-    if(ACScript->line)
+    if(activeScript->line)
     {
-        Sector *front = (Sector *) P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
+        Sector *front = (Sector *) P_GetPtrp(activeScript->line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
     int volume = Pop();
@@ -1725,9 +1695,9 @@ static int CmdAmbientSound()
 static int CmdSoundSequence()
 {
     mobj_t *mobj = 0;
-    if(ACScript->line)
+    if(activeScript->line)
     {
-        Sector *front = (Sector *) P_GetPtrp(ACScript->line, DMU_FRONT_SECTOR);
+        Sector *front = (Sector *) P_GetPtrp(activeScript->line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
     SN_StartSequenceName(mobj, GetACString(Pop()));

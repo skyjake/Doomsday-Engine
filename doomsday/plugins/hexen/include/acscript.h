@@ -38,30 +38,31 @@
 extern "C" {
 #endif
 
+/**
+ * To be called when a new game session begins to initialize ACS scripting.
+ */
+void P_InitACScript(void);
+
 void P_LoadACScripts(int lump);
 
 /**
  * @param map  Map number on which the script is being started on.
  *             @c 0 = Current map. Otherwise 1-based index of the map to start on (deferred).
  */
-dd_bool P_StartACS(int number, uint map, byte *args, mobj_t *activator, Line *line, int side);
+dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Line *line, int side);
 
-dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side);
+dd_bool P_TerminateACScript(int number, uint map);
 
-dd_bool P_TerminateACS(int number, uint map);
+dd_bool P_SuspendACScript(int number, uint map);
 
-dd_bool P_SuspendACS(int number, uint map);
+void P_ACScriptTagFinished(int tag);
 
-void P_TagFinished(int tag);
-
-void P_ACSPolyobjFinished(int tag);
-
-void P_ACSInitNewGame(void);
+void P_ACScriptPolyobjFinished(int tag);
 
 /**
  * Scans the ACS store and executes all scripts belonging to the current map.
  */
-void P_CheckACSStore(uint map);
+void P_CheckACScriptStore(uint map);
 
 void P_WriteGlobalACScriptData(void);
 void P_ReadGlobalACScriptData(int saveVersion);
@@ -76,7 +77,7 @@ void P_ReadMapACScriptData(void);
 /**
  * Action script thinker.
  */
-typedef struct acs_s {
+typedef struct acscript_s {
     thinker_t thinker;
     mobj_t *activator;
     Line *line;
@@ -88,23 +89,23 @@ typedef struct acs_s {
     int stackPtr;
     int vars[MAX_ACS_SCRIPT_VARS];
     int const *ip;
-} acs_t;
+} ACScript;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void ACScript_Thinker(acs_t *script);
+void ACScript_Thinker(ACScript *script);
 
 /**
  * Serialize the thinker to the currently open save file.
  */
-void ACScript_Write(acs_t const *script);
+void ACScript_Write(ACScript const *script);
 
 /**
  * Deserialize the thinker from the currently open save file.
  */
-int ACScript_Read(acs_t *script, int mapVersion);
+int ACScript_Read(ACScript *script, int mapVersion);
 
 #ifdef __cplusplus
 } // extern "C"
