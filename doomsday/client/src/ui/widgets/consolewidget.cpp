@@ -85,7 +85,7 @@ DENG2_OBSERVES(Variable, Change)
         width      = new ScalarRule(style().rules().rule("console.width").valuei());
         height     = new ScalarRule(0);
 
-        grabWidth  = style().rules().rule("unit").valuei();
+        grabWidth  = style().rules().rule("gap").valuei();
 
         App::config()["console.script"].audienceForChange += this;
     }
