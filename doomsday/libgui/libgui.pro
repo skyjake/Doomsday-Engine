@@ -151,11 +151,11 @@ SOURCES +=  \
     src/qtnativefont.h \
     src/persistentcanvaswindow.cpp \
     src/rowatlasallocator.cpp \
-    src/qtnativefont.cpp \
-    src/coretextnativefont_macx.cpp
+    src/qtnativefont.cpp
 
 macx: SOURCES += \
-    src/coretextnativefont_macx.h
+    src/coretextnativefont_macx.h \
+    src/coretextnativefont_macx.cpp
 
 # DisplayMode
 !deng_nodisplaymode {
