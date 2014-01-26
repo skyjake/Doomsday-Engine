@@ -178,6 +178,7 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
         case 'C': // Dimmed color
         case 'D': // Accent color
         case 'E': // Dim Accent color
+        case 'F': // Alternative Accent color
             stack.last().colorIndex = ch - 'A';
             break;
 
