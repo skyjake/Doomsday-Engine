@@ -61,7 +61,10 @@ dsize Value::size() const
 Value const &Value::element(Value const &/*index*/) const
 {
     /// @throw IllegalError Value cannot be indexed.
-    throw IllegalError("Value::element", "Value cannot be indexed");
+    throw IllegalError("Value::element",
+                       String("Value cannot be indexed (%1 \"%2\")")
+                       .arg(typeid(*this).name())
+                       .arg(asText()));
 }
 
 Value &Value::element(Value const &/*index*/)

@@ -49,6 +49,12 @@ namespace de
                 self.setState(Ready);
             }
         }
+
+        void markNotReady()
+        {
+            self.setState(NotReady);
+            cachedText.clear();
+        }
     };
 }
 
@@ -66,35 +72,41 @@ NativeFont::NativeFont(String const &family) : d(new Instance(this))
 
 NativeFont::NativeFont(NativeFont const &other) : d(new Instance(this))
 {
+    *this = other;
+}
+
+NativeFont &NativeFont::operator = (NativeFont const &other)
+{
     d->family = other.d->family;
-    d->size   = other.d->size;
     d->style  = other.d->style;
+    d->size   = other.d->size;
     d->weight = other.d->weight;
-    setState(NotReady);
+    d->markNotReady();
+    return *this;
 }
 
 void NativeFont::setFamily(String const &family)
 {
     d->family = family;
-    setState(NotReady);
+    d->markNotReady();
 }
 
 void NativeFont::setSize(dfloat size)
 {
     d->size = size;
-    setState(NotReady);
+    d->markNotReady();
 }
 
 void NativeFont::setStyle(Style style)
 {
     d->style = style;
-    setState(NotReady);
+    d->markNotReady();
 }
 
 void NativeFont::setWeight(dint weight)
 {
     d->weight = weight;
-    setState(NotReady);
+    d->markNotReady();
 }
 
 String NativeFont::family() const
@@ -186,16 +198,6 @@ QImage NativeFont::rasterize(String const &text,
 {
     d->prepare();
     return nativeFontRasterize(text, foreground, background);
-}
-
-NativeFont &NativeFont::operator = (NativeFont const &other)
-{
-    d->family = other.d->family;
-    d->style  = other.d->style;
-    d->size   = other.d->size;
-    d->weight = other.d->weight;
-    setState(NotReady);
-    return *this;
 }
 
 } // namespace de
