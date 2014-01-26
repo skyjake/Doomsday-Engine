@@ -636,6 +636,9 @@ public:
     }
     Vector2<Type> xy() const { return *this; }
     Vector2<Type> zw() const { return Vector2<Type>(Vector3<Type>::z, w); }
+    Vector4<Type> zyxw() const {
+        return Vector4<Type>(Vector3<Type>::z, Vector3<Type>::y, Vector3<Type>::x, w);
+    }
 public:
     Type w;
 };
