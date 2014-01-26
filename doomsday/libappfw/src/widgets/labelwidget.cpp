@@ -49,6 +49,9 @@ public Font::RichFormat::IStyle
 
     ConstantRule *width;
     ConstantRule *height;
+    ScalarRule *appearSize;
+    LabelWidget::AppearanceAnimation appearType;
+    TimeDelta appearSpan;
 
     // Style.
     Vector4i margin;
@@ -83,6 +86,9 @@ public Font::RichFormat::IStyle
         , imageColor  (1, 1, 1, 1)
         , textGLColor (1, 1, 1, 1)
         , maxTextWidth(0)
+        , appearSize  (new ScalarRule(0))
+        , appearType  (AppearInstantly)
+        , appearSpan  (0.0)
         , gapId       ("label.gap")
         , richStyle   (0)
         , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
@@ -99,6 +105,7 @@ public Font::RichFormat::IStyle
     {
         releaseRef(width);
         releaseRef(height);
+        releaseRef(appearSize);
     }
 
     void updateStyle()
@@ -432,6 +439,18 @@ public Font::RichFormat::IStyle
         height->set(combined.height() + margin.y + margin.w);
     }
 
+    void updateAppearanceAnimation()
+    {
+        if(appearType != AppearInstantly)
+        {
+            float const target = (appearType == AppearGrowHorizontally? width->value() : height->value());
+            if(!fequal(appearSize->animation().target(), target))
+            {
+                appearSize->set(target, appearSpan);
+            }
+        }
+    }
+
     void updateGeometry()
     {
         // Update the image on the atlas.
@@ -591,6 +610,7 @@ void LabelWidget::update()
     GuiWidget::update();
 
     d->updateSize();
+    d->updateAppearanceAnimation();
 }
 
 void LabelWidget::drawContent()
@@ -675,6 +695,30 @@ void LabelWidget::setHeightPolicy(SizePolicy policy)
     else
     {
         rule().clearInput(Rule::Height);
+    }
+}
+
+void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span)
+{
+    d->appearType = method;
+    d->appearSpan = span;
+
+    switch(d->appearType)
+    {
+    case AppearInstantly:
+        if(d->horizPolicy == Expand) rule().setInput(Rule::Width,  *d->width);
+        if(d->vertPolicy  == Expand) rule().setInput(Rule::Height, *d->height);
+        break;
+
+    case AppearGrowHorizontally:
+        if(d->horizPolicy == Expand) rule().setInput(Rule::Width,  *d->appearSize);
+        if(d->vertPolicy  == Expand) rule().setInput(Rule::Height, *d->height);
+        break;
+
+    case AppearGrowVertically:
+        if(d->horizPolicy == Expand) rule().setInput(Rule::Width,  *d->width);
+        if(d->vertPolicy  == Expand) rule().setInput(Rule::Height, *d->appearSize);
+        break;
     }
 }
 
