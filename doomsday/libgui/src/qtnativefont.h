@@ -19,7 +19,7 @@
 #ifndef LIBGUI_QTNATIVEFONT_H
 #define LIBGUI_QTNATIVEFONT_H
 
-#include "nativefont.h"
+#include "de/NativeFont"
 
 namespace de {
 

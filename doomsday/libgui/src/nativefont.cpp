@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "nativefont.h"
+#include "de/NativeFont"
 
 namespace de
 {

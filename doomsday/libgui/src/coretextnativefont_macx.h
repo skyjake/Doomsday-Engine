@@ -19,7 +19,7 @@
 #ifndef LIBGUI_CORETEXTNATIVEFONT_H
 #define LIBGUI_CORETEXTNATIVEFONT_H
 
-#include "nativefont.h"
+#include "de/NativeFont"
 
 namespace de {
 

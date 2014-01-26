@@ -19,7 +19,7 @@
 #ifndef LIBGUI_NATIVEFONT_H
 #define LIBGUI_NATIVEFONT_H
 
-#include "de/gui/libgui.h"
+#include "libgui.h"
 
 #include <de/String>
 #include <de/Asset>
@@ -31,10 +31,13 @@
 namespace de {
 
 /**
- * Provides the means to access the platform's native fonts, measure the bounds of
- * a string of text, and draw the text onto an Image.
+ * Provides the means to access the platform's native fonts, measure the bounds of a
+ * string of text, and draw the text onto an Image. This is an abstract base class for
+ * concrete implementations of native fonts.
+ *
+ * @ingroup gl
  */
-class NativeFont : public Asset
+class LIBGUI_PUBLIC NativeFont : public Asset
 {
 public:
     enum Style

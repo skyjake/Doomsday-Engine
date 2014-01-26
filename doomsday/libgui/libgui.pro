@@ -74,6 +74,7 @@ HEADERS += \
     include/de/KeyEventSource \
     include/de/MouseEvent \
     include/de/MouseEventSource \
+    include/de/NativeFont \
     include/de/PersistentCanvasWindow \
     include/de/RowAtlasAllocator \
     include/de/VertexBuilder \
@@ -110,6 +111,7 @@ HEADERS += \
     include/de/gui/libgui.h \
     include/de/gui/mouseevent.h \
     include/de/gui/mouseeventsource.h \
+    include/de/gui/nativefont.h \
     include/de/gui/opengl.h \
     include/de/gui/persistentcanvaswindow.h \
     include/de/gui/rowatlasallocator.h \
@@ -146,7 +148,6 @@ SOURCES +=  \
     src/keyevent.cpp \
     src/mouseevent.cpp \
     src/nativefont.cpp \
-    src/nativefont.h \
     src/qtnativefont.h \
     src/persistentcanvaswindow.cpp \
     src/rowatlasallocator.cpp \
