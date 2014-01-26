@@ -43,7 +43,7 @@ extern "C" {
  */
 void P_InitACScript(void);
 
-void P_LoadACScripts(int lump);
+void P_LoadACScripts(lumpnum_t lump);
 
 /**
  * @param map  Map number on which the script is being started on.

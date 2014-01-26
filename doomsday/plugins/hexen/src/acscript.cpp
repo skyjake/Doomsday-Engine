@@ -31,8 +31,8 @@
 #include "p_saveio.h"
 #include "p_sound.h"
 #include "polyobjs.h"
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <cstdio>
 
 #define SCRIPT_CONTINUE 0
 #define SCRIPT_STOP 1
@@ -61,17 +61,22 @@ enum ACScriptState
     Terminating
 };
 
-struct acsinfo_t
+static char const *scriptStateAsText(ACScriptState state)
 {
-    int number;
-    int const *address;
-    int argCount;
-    ACScriptState state;
-    int waitValue;
-};
+    char const *names[] = {
+        "Inactive",
+        "Running",
+        "Suspended",
+        "Waiting for tag",
+        "Waiting for polyobj",
+        "Waiting for script",
+        "Terminating"
+    };
+    return names[state];
+}
 
 /**
- * A deferred task is enqueued when a script is started on map not currently loaded.
+ * A deferred task is enqueued when a script is started on a map not currently loaded.
  */
 struct DeferredTask
 {
@@ -94,131 +99,298 @@ struct BytecodeHeader
 };
 #pragma pack()
 
-static void StartOpenACS(int number, int infoIndex, int const *address);
-static void ScriptFinished(int number);
-static dd_bool TagBusy(int tag);
+/**
+ * Stores information about a script function entrypoint.
+ */
+struct BytecodeScriptInfo
+{
+    int number;
+    int const *address;
+    int argCount;
+
+    // Current state:
+    /// @todo Move to a separate array, in Interpreter
+    ACScriptState state;
+    int waitValue;
+};
+
+/**
+ * Action-Code Script Interpreter (ACS).
+ */
+class Interpreter
+{
+public:
+    Interpreter()
+        : _pcode(0)
+        , _scriptCount(0)
+        , _scriptInfo(0)
+        , _stringCount(0)
+        , _strings(0)
+    {}
+
+    /**
+     * Load new ACS bytecode from the specified @a lump.
+     */
+    void loadBytecode(lumpnum_t lump)
+    {
+        DENG_ASSERT(!IS_CLIENT);
+
+        size_t const lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
+
+        App_Log(DE2_SCR_VERBOSE, "Loading ACS bytecode lump %s:%s (#%i)...",
+                F_PrettyPath(Str_Text(W_LumpSourceFile(lump))),
+                Str_Text(W_LumpName(lump)), lump);
+
+        _scriptCount = 0;
+
+        int const *buffer = 0;
+        if(lumpLength >= sizeof(BytecodeHeader))
+        {
+            void *region = Z_Malloc(lumpLength, PU_MAP, 0);
+            W_ReadLump(lump, (uint8_t *)region);
+            BytecodeHeader const *header = (BytecodeHeader const *) region;
+            _pcode = (byte const *) header;
+
+            if(LONG(header->infoOffset) < (int)lumpLength)
+            {
+                buffer = (int *) ((byte const *) header + LONG(header->infoOffset));
+                _scriptCount = LONG(*buffer++);
+            }
+        }
+
+        if(!_scriptCount)
+        {
+            // Empty/Invalid lump.
+            App_Log(DE2_SCR_WARNING, "Lump #%i does not appear to be valid ACS bytecode data", lump);
+            return;
+        }
+
+        _scriptInfo = (BytecodeScriptInfo *) Z_Malloc(_scriptCount * sizeof(BytecodeScriptInfo), PU_MAP, 0);
+        memset(_scriptInfo, 0, _scriptCount * sizeof(BytecodeScriptInfo));
+
+        BytecodeScriptInfo *info = _scriptInfo;
+        for(int i = 0; i < _scriptCount; ++i, info++)
+        {
+            info->number   = LONG(*buffer++);
+            info->address  = (int const *)(_pcode + LONG(*buffer++));
+            info->argCount = LONG(*buffer++);
+            info->state    = Inactive;
+        }
+
+        _stringCount = LONG(*buffer++);
+        _strings = (char const **) Z_Malloc(_stringCount * sizeof(char *), PU_MAP, 0);
+        for(int i = 0; i < _stringCount; ++i)
+        {
+            _strings[i] = (char const *)(_pcode + LONG(*buffer++));
+        }
+    }
+
+    /**
+     * Returns the total number of script entrypoints in the loaded bytecode.
+     */
+    int scriptCount() const
+    {
+        return _scriptCount;
+    }
+
+    /**
+     * Returns @c true iff @a scriptNumber is a known entrypoint.
+     */
+    bool hasScriptEntrypoint(int scriptNumber)
+    {
+        for(int i = 0; i < _scriptCount; ++i)
+        {
+            BytecodeScriptInfo &info = _scriptInfo[i];
+            if(info.number == scriptNumber)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Lookup the info structure for the specified @a scriptNumber (entrypoint).
+     */
+    BytecodeScriptInfo &scriptInfo(int scriptNumber)
+    {
+        DENG_ASSERT(scriptNumber > 0 && scriptNumber <= _scriptCount);
+        return _scriptInfo[scriptNumber];
+    }
+
+    inline BytecodeScriptInfo *scriptInfoPtr(int scriptNumber) {
+        return hasScriptEntrypoint(scriptNumber)? &scriptInfo(scriptNumber) : 0;
+    }
+
+    /**
+     * Returns the logical index of a @a scriptNumber; otherwise @c -1.
+     */
+    int scriptInfoIndex(int scriptNumber)
+    {
+        for(int i = 0; i < _scriptCount; ++i)
+        {
+            BytecodeScriptInfo &info = _scriptInfo[i];
+            if(info.number == scriptNumber)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Provides readonly access to a string constant from the loaded bytecode.
+     */
+    char const *string(int id)
+    {
+        if(id < 0 || id > _stringCount)
+            return 0;
+
+        return _strings[id];
+    }
+
+    /**
+     * Provides readonly access to the loaded bytecode.
+     */
+    byte const *bytecode() const
+    {
+        return _pcode;
+    }
+
+private:
+    byte const *_pcode; ///< Start of the loaded bytecode.
+
+    int _scriptCount; ///< Number of script entrypoints.
+    BytecodeScriptInfo *_scriptInfo;
+
+    int _stringCount;
+    char const **_strings;
+};
+
+/// The One ACS interpretor instance.
+static Interpreter interp;
+
+static void startOpenACS(int number, int infoIndex, int const *address);
+static void scriptFinished(int number);
+static dd_bool tagBusy(int tag);
 static dd_bool newDeferredTask(uint map, int number, byte const *args);
-static int GetACSIndex(int number);
-static void Push(int value);
-static int Pop();
-static int Top();
-static void Drop();
 
-static int CmdNOP();
-static int CmdTerminate();
-static int CmdSuspend();
-static int CmdPushNumber();
-static int CmdLSpec1();
-static int CmdLSpec2();
-static int CmdLSpec3();
-static int CmdLSpec4();
-static int CmdLSpec5();
-static int CmdLSpec1Direct();
-static int CmdLSpec2Direct();
-static int CmdLSpec3Direct();
-static int CmdLSpec4Direct();
-static int CmdLSpec5Direct();
-static int CmdAdd();
-static int CmdSubtract();
-static int CmdMultiply();
-static int CmdDivide();
-static int CmdModulus();
-static int CmdEQ();
-static int CmdNE();
-static int CmdLT();
-static int CmdGT();
-static int CmdLE();
-static int CmdGE();
-static int CmdAssignScriptVar();
-static int CmdAssignMapVar();
-static int CmdAssignWorldVar();
-static int CmdPushScriptVar();
-static int CmdPushMapVar();
-static int CmdPushWorldVar();
-static int CmdAddScriptVar();
-static int CmdAddMapVar();
-static int CmdAddWorldVar();
-static int CmdSubScriptVar();
-static int CmdSubMapVar();
-static int CmdSubWorldVar();
-static int CmdMulScriptVar();
-static int CmdMulMapVar();
-static int CmdMulWorldVar();
-static int CmdDivScriptVar();
-static int CmdDivMapVar();
-static int CmdDivWorldVar();
-static int CmdModScriptVar();
-static int CmdModMapVar();
-static int CmdModWorldVar();
-static int CmdIncScriptVar();
-static int CmdIncMapVar();
-static int CmdIncWorldVar();
-static int CmdDecScriptVar();
-static int CmdDecMapVar();
-static int CmdDecWorldVar();
-static int CmdGoto();
-static int CmdIfGoto();
-static int CmdDrop();
-static int CmdDelay();
-static int CmdDelayDirect();
-static int CmdRandom();
-static int CmdRandomDirect();
-static int CmdThingCount();
-static int CmdThingCountDirect();
-static int CmdTagWait();
-static int CmdTagWaitDirect();
-static int CmdPolyWait();
-static int CmdPolyWaitDirect();
-static int CmdChangeFloor();
-static int CmdChangeFloorDirect();
-static int CmdChangeCeiling();
-static int CmdChangeCeilingDirect();
-static int CmdRestart();
-static int CmdAndLogical();
-static int CmdOrLogical();
-static int CmdAndBitwise();
-static int CmdOrBitwise();
-static int CmdEorBitwise();
-static int CmdNegateLogical();
-static int CmdLShift();
-static int CmdRShift();
-static int CmdUnaryMinus();
-static int CmdIfNotGoto();
-static int CmdLineSide();
-static int CmdScriptWait();
-static int CmdScriptWaitDirect();
-static int CmdClearLineSpecial();
-static int CmdCaseGoto();
-static int CmdBeginPrint();
-static int CmdEndPrint();
-static int CmdPrintString();
-static int CmdPrintNumber();
-static int CmdPrintCharacter();
-static int CmdPlayerCount();
-static int CmdGameType();
-static int CmdGameSkill();
-static int CmdTimer();
-static int CmdSectorSound();
-static int CmdAmbientSound();
-static int CmdSoundSequence();
-static int CmdSetLineTexture();
-static int CmdSetLineBlocking();
-static int CmdSetLineSpecial();
-static int CmdThingSound();
-static int CmdEndPrintBold();
+static void push(int value);
+static int pop();
+static int top();
+static void drop();
 
-static void ThingCount(int type, int tid);
+static int cmdNOP();
+static int cmdTerminate();
+static int cmdSuspend();
+static int cmdPushNumber();
+static int cmdLSpec1();
+static int cmdLSpec2();
+static int cmdLSpec3();
+static int cmdLSpec4();
+static int cmdLSpec5();
+static int cmdLSpec1Direct();
+static int cmdLSpec2Direct();
+static int cmdLSpec3Direct();
+static int cmdLSpec4Direct();
+static int cmdLSpec5Direct();
+static int cmdAdd();
+static int cmdSubtract();
+static int cmdMultiply();
+static int cmdDivide();
+static int cmdModulus();
+static int cmdEQ();
+static int cmdNE();
+static int cmdLT();
+static int cmdGT();
+static int cmdLE();
+static int cmdGE();
+static int cmdAssignScriptVar();
+static int cmdAssignMapVar();
+static int cmdAssignWorldVar();
+static int cmdPushScriptVar();
+static int cmdPushMapVar();
+static int cmdPushWorldVar();
+static int cmdAddScriptVar();
+static int cmdAddMapVar();
+static int cmdAddWorldVar();
+static int cmdSubScriptVar();
+static int cmdSubMapVar();
+static int cmdSubWorldVar();
+static int cmdMulScriptVar();
+static int cmdMulMapVar();
+static int cmdMulWorldVar();
+static int cmdDivScriptVar();
+static int cmdDivMapVar();
+static int cmdDivWorldVar();
+static int cmdModScriptVar();
+static int cmdModMapVar();
+static int cmdModWorldVar();
+static int cmdIncScriptVar();
+static int cmdIncMapVar();
+static int cmdIncWorldVar();
+static int cmdDecScriptVar();
+static int cmdDecMapVar();
+static int cmdDecWorldVar();
+static int cmdGoto();
+static int cmdIfGoto();
+static int cmdDrop();
+static int cmdDelay();
+static int cmdDelayDirect();
+static int cmdRandom();
+static int cmdRandomDirect();
+static int cmdThingCount();
+static int cmdThingCountDirect();
+static int cmdTagWait();
+static int cmdTagWaitDirect();
+static int cmdPolyWait();
+static int cmdPolyWaitDirect();
+static int cmdChangeFloor();
+static int cmdChangeFloorDirect();
+static int cmdChangeCeiling();
+static int cmdChangeCeilingDirect();
+static int cmdRestart();
+static int cmdAndLogical();
+static int cmdOrLogical();
+static int cmdAndBitwise();
+static int cmdOrBitwise();
+static int cmdEorBitwise();
+static int cmdNegateLogical();
+static int cmdLShift();
+static int cmdRShift();
+static int cmdUnaryMinus();
+static int cmdIfNotGoto();
+static int cmdLineSide();
+static int cmdScriptWait();
+static int cmdScriptWaitDirect();
+static int cmdClearLineSpecial();
+static int cmdCaseGoto();
+static int cmdBeginPrint();
+static int cmdEndPrint();
+static int cmdPrintString();
+static int cmdPrintNumber();
+static int cmdPrintCharacter();
+static int cmdPlayerCount();
+static int cmdGameType();
+static int cmdGameSkill();
+static int cmdTimer();
+static int cmdSectorSound();
+static int cmdAmbientSound();
+static int cmdSoundSequence();
+static int cmdSetLineTexture();
+static int cmdSetLineBlocking();
+static int cmdSetLineSpecial();
+static int cmdThingSound();
+static int cmdEndPrintBold();
 
-static int ACScriptCount;
-static byte const *ActionCodeBase;
-static acsinfo_t *ACSInfo;
+static void thingCount(int type, int tid);
+
 static int MapVars[MAX_ACS_MAP_VARS];
 static int WorldVars[MAX_ACS_WORLD_VARS];
 
 static int const *PCodePtr;
 static byte SpecArgs[8];
-static int ACStringCount;
-static char const **ACStrings;
+
 static char PrintBuffer[PRINT_BUFFER_SIZE];
 
 static ACScript *activeScript;
@@ -228,105 +400,56 @@ static char ErrorMsg[128];
 
 static int (*PCodeCmds[]) () =
 {
-    CmdNOP, CmdTerminate, CmdSuspend, CmdPushNumber, CmdLSpec1, CmdLSpec2,
-    CmdLSpec3, CmdLSpec4, CmdLSpec5, CmdLSpec1Direct, CmdLSpec2Direct,
-    CmdLSpec3Direct, CmdLSpec4Direct, CmdLSpec5Direct, CmdAdd,
-    CmdSubtract, CmdMultiply, CmdDivide, CmdModulus, CmdEQ, CmdNE,
-    CmdLT, CmdGT, CmdLE, CmdGE, CmdAssignScriptVar, CmdAssignMapVar,
-    CmdAssignWorldVar, CmdPushScriptVar, CmdPushMapVar,
-    CmdPushWorldVar, CmdAddScriptVar, CmdAddMapVar, CmdAddWorldVar,
-    CmdSubScriptVar, CmdSubMapVar, CmdSubWorldVar, CmdMulScriptVar,
-    CmdMulMapVar, CmdMulWorldVar, CmdDivScriptVar, CmdDivMapVar,
-    CmdDivWorldVar, CmdModScriptVar, CmdModMapVar, CmdModWorldVar,
-    CmdIncScriptVar, CmdIncMapVar, CmdIncWorldVar, CmdDecScriptVar,
-    CmdDecMapVar, CmdDecWorldVar, CmdGoto, CmdIfGoto, CmdDrop,
-    CmdDelay, CmdDelayDirect, CmdRandom, CmdRandomDirect,
-    CmdThingCount, CmdThingCountDirect, CmdTagWait, CmdTagWaitDirect,
-    CmdPolyWait, CmdPolyWaitDirect, CmdChangeFloor,
-    CmdChangeFloorDirect, CmdChangeCeiling, CmdChangeCeilingDirect,
-    CmdRestart, CmdAndLogical, CmdOrLogical, CmdAndBitwise,
-    CmdOrBitwise, CmdEorBitwise, CmdNegateLogical, CmdLShift,
-    CmdRShift, CmdUnaryMinus, CmdIfNotGoto, CmdLineSide, CmdScriptWait,
-    CmdScriptWaitDirect, CmdClearLineSpecial, CmdCaseGoto,
-    CmdBeginPrint, CmdEndPrint, CmdPrintString, CmdPrintNumber,
-    CmdPrintCharacter, CmdPlayerCount, CmdGameType, CmdGameSkill,
-    CmdTimer, CmdSectorSound, CmdAmbientSound, CmdSoundSequence,
-    CmdSetLineTexture, CmdSetLineBlocking, CmdSetLineSpecial,
-    CmdThingSound, CmdEndPrintBold
+    cmdNOP, cmdTerminate, cmdSuspend, cmdPushNumber, cmdLSpec1, cmdLSpec2,
+    cmdLSpec3, cmdLSpec4, cmdLSpec5, cmdLSpec1Direct, cmdLSpec2Direct,
+    cmdLSpec3Direct, cmdLSpec4Direct, cmdLSpec5Direct, cmdAdd,
+    cmdSubtract, cmdMultiply, cmdDivide, cmdModulus, cmdEQ, cmdNE,
+    cmdLT, cmdGT, cmdLE, cmdGE, cmdAssignScriptVar, cmdAssignMapVar,
+    cmdAssignWorldVar, cmdPushScriptVar, cmdPushMapVar,
+    cmdPushWorldVar, cmdAddScriptVar, cmdAddMapVar, cmdAddWorldVar,
+    cmdSubScriptVar, cmdSubMapVar, cmdSubWorldVar, cmdMulScriptVar,
+    cmdMulMapVar, cmdMulWorldVar, cmdDivScriptVar, cmdDivMapVar,
+    cmdDivWorldVar, cmdModScriptVar, cmdModMapVar, cmdModWorldVar,
+    cmdIncScriptVar, cmdIncMapVar, cmdIncWorldVar, cmdDecScriptVar,
+    cmdDecMapVar, cmdDecWorldVar, cmdGoto, cmdIfGoto, cmdDrop,
+    cmdDelay, cmdDelayDirect, cmdRandom, cmdRandomDirect,
+    cmdThingCount, cmdThingCountDirect, cmdTagWait, cmdTagWaitDirect,
+    cmdPolyWait, cmdPolyWaitDirect, cmdChangeFloor,
+    cmdChangeFloorDirect, cmdChangeCeiling, cmdChangeCeilingDirect,
+    cmdRestart, cmdAndLogical, cmdOrLogical, cmdAndBitwise,
+    cmdOrBitwise, cmdEorBitwise, cmdNegateLogical, cmdLShift,
+    cmdRShift, cmdUnaryMinus, cmdIfNotGoto, cmdLineSide, cmdScriptWait,
+    cmdScriptWaitDirect, cmdClearLineSpecial, cmdCaseGoto,
+    cmdBeginPrint, cmdEndPrint, cmdPrintString, cmdPrintNumber,
+    cmdPrintCharacter, cmdPlayerCount, cmdGameType, cmdGameSkill,
+    cmdTimer, cmdSectorSound, cmdAmbientSound, cmdSoundSequence,
+    cmdSetLineTexture, cmdSetLineBlocking, cmdSetLineSpecial,
+    cmdThingSound, cmdEndPrintBold
 };
 
-char const *GetACString(int id)
+void P_LoadACScripts(lumpnum_t lump)
 {
-    if(id < 0 || id > ACStringCount)
-        return 0;
+    if(IS_CLIENT) return;
 
-    return ACStrings[id];
-}
-
-void P_LoadACScripts(int lump)
-{
-    size_t const lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
-
-    ACScriptCount = 0;
-
-    App_Log(DE2_SCR_VERBOSE, "Loading ACS bytecode lump %s:%s (#%i)...",
-            F_PrettyPath(Str_Text(W_LumpSourceFile(lump))),
-            Str_Text(W_LumpName(lump)), lump);
-
-    int const *buffer = 0;
-    if(lumpLength >= sizeof(BytecodeHeader))
-    {
-        void *region = Z_Malloc(lumpLength, PU_MAP, 0);
-        W_ReadLump(lump, (uint8_t *)region);
-        BytecodeHeader const *header = (BytecodeHeader const *) region;
-        ActionCodeBase = (byte const *) header;
-
-        if(LONG(header->infoOffset) < (int)lumpLength)
-        {
-            buffer = (int *) ((byte const *) header + LONG(header->infoOffset));
-            ACScriptCount = LONG(*buffer++);
-        }
-    }
-
-    if(ACScriptCount == 0 || IS_CLIENT)
-    {
-        // Empty/Invalid lump.
-        App_Log(DE2_SCR_WARNING, "Lump #%i does not appear to be valid ACS bytecode data", lump);
-        return;
-    }
-
-    ACSInfo = (acsinfo_t *) Z_Malloc(ACScriptCount * sizeof(acsinfo_t), PU_MAP, 0);
-    memset(ACSInfo, 0, ACScriptCount * sizeof(acsinfo_t));
-
-    acsinfo_t *info = ACSInfo;
-    for(int i = 0; i < ACScriptCount; ++i, info++)
-    {
-        info->number   = LONG(*buffer++);
-        info->address  = (int const *)(ActionCodeBase + LONG(*buffer++));
-        info->argCount = LONG(*buffer++);
-        if(info->number >= OPEN_SCRIPTS_BASE)
-        {                       // Auto-activate
-            info->number -= OPEN_SCRIPTS_BASE;
-            StartOpenACS(info->number, i, info->address);
-            info->state = Running;
-        }
-        else
-        {
-            info->state = Inactive;
-        }
-    }
-
-    ACStringCount = LONG(*buffer++);
-    ACStrings = (char const **) Z_Malloc(ACStringCount * sizeof(char *), PU_MAP, 0);
-    for(int i = 0; i < ACStringCount; ++i)
-    {
-        ACStrings[i] = (char const *)(ActionCodeBase + LONG(*buffer++));
-    }
+    interp.loadBytecode(lump);
 
     memset(MapVars, 0, sizeof(MapVars));
+
+    // Start all scripts flagged to begin immediately.
+    for(int i = 0; i < interp.scriptCount(); ++i)
+    {
+        BytecodeScriptInfo &info = interp.scriptInfo(i);
+
+        if(info.number >= OPEN_SCRIPTS_BASE)
+        {
+            info.number -= OPEN_SCRIPTS_BASE;
+            startOpenACS(info.number, i, info.address);
+            info.state = Running;
+        }
+    }
 }
 
-static void StartOpenACS(int number, int infoIndex, int const *address)
+static void startOpenACS(int number, int infoIndex, int const *address)
 {
     ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
     script->number = number;
@@ -390,29 +513,30 @@ void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
     deferredTasks = 0;
 }
 
-dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Line *line,
-    int side)
+dd_bool P_StartACScript(int scriptNumber, uint map, byte *args, mobj_t *activator,
+    Line *line, int side)
 {
     DENG_ASSERT(!IS_CLIENT);
 
-    newScript = NULL;
-    if(map && map-1 != gameMap)
+    newScript = 0;
+
+    if(map && map - 1 != gameMap)
     {
         // Script is not for the current map.
         // Add it to the store to be started when that map is next entered.
-        return newDeferredTask(map-1, number, args);
+        return newDeferredTask(map - 1, scriptNumber, args);
     }
 
-    int infoIndex = GetACSIndex(number);
-    if(infoIndex == -1)
+    if(!interp.hasScriptEntrypoint(scriptNumber))
     {
         // Script not found.
-        sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", number);
+        sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", scriptNumber);
         P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, ErrorMsg);
         return false;
     }
 
-    ACScriptState *statePtr = &ACSInfo[infoIndex].state;
+    int infoIndex = interp.scriptInfoIndex(scriptNumber);
+    ACScriptState *statePtr = &interp.scriptInfo(infoIndex).state;
     if(*statePtr == Suspended)
     {
         // Resume a suspended script.
@@ -428,14 +552,14 @@ dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Lin
 
     ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
 
-    script->number    = number;
+    script->number    = scriptNumber;
     script->infoIndex = infoIndex;
     script->activator = activator;
     script->line      = line;
     script->side      = side;
-    script->ip        = ACSInfo[infoIndex].address;
+    script->ip        = interp.scriptInfo(infoIndex).address;
     script->thinker.function = (thinkfunc_t) ACScript_Thinker;
-    for(int i = 0; i < ACSInfo[infoIndex].argCount; ++i)
+    for(int i = 0; i < interp.scriptInfo(infoIndex).argCount; ++i)
     {
         script->vars[i] = args[i];
     }
@@ -446,7 +570,7 @@ dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Lin
     return true;
 }
 
-static dd_bool newDeferredTask(uint map, int number, byte const *args)
+static dd_bool newDeferredTask(uint map, int scriptNumber, byte const *args)
 {
     if(deferredTasksSize)
     {
@@ -454,7 +578,7 @@ static dd_bool newDeferredTask(uint map, int number, byte const *args)
         for(int i = 0; i < deferredTasksSize; ++i)
         {
             DeferredTask &task = deferredTasks[i];
-            if(task.script == number && task.map == map)
+            if(task.script == scriptNumber && task.map == map)
             {
                 return false;
             }
@@ -471,7 +595,7 @@ static dd_bool newDeferredTask(uint map, int number, byte const *args)
     DeferredTask *store = &deferredTasks[deferredTasksSize-1];
 
     store->map     = map;
-    store->script  = number;
+    store->script  = scriptNumber;
     store->args[0] = args[0];
     store->args[1] = args[1];
     store->args[2] = args[2];
@@ -480,33 +604,29 @@ static dd_bool newDeferredTask(uint map, int number, byte const *args)
     return true;
 }
 
-dd_bool P_TerminateACScript(int number, uint /*map*/)
+dd_bool P_TerminateACScript(int scriptNumber, uint /*map*/)
 {
-    int infoIndex = GetACSIndex(number);
-    if(infoIndex >= 0)
+    if(BytecodeScriptInfo *info = interp.scriptInfoPtr(scriptNumber))
     {
-        acsinfo_t &info = ACSInfo[infoIndex];
         // Some states disallow termination.
-        if(info.state != Inactive && info.state != Terminating)
+        if(info->state != Inactive && info->state != Terminating)
         {
-            ACSInfo[infoIndex].state = Terminating;
+            info->state = Terminating;
             return true;
         }
     }
     return false;
 }
 
-dd_bool P_SuspendACScript(int number, uint map)
+dd_bool P_SuspendACScript(int scriptNumber, uint /*map*/)
 {
-    int infoIndex = GetACSIndex(number);
-    if(infoIndex >= 0)
+    if(BytecodeScriptInfo *info = interp.scriptInfoPtr(scriptNumber))
     {
-        acsinfo_t &info = ACSInfo[infoIndex];
         // Some states disallow suspension.
-        if(info.state != Inactive && info.state != Suspended &&
-           info.state != Terminating)
+        if(info->state != Inactive && info->state != Suspended &&
+           info->state != Terminating)
         {
-            ACSInfo[infoIndex].state = Suspended;
+            info->state = Suspended;
             return true;
         }
     }
@@ -520,167 +640,13 @@ void P_InitACScript()
     deferredTasksSize = 0;
 }
 
-void ACScript_Thinker(ACScript *script)
-{
-    DENG_ASSERT(script != 0);
-
-    if(ACSInfo[script->infoIndex].state == Terminating)
-    {
-        ACSInfo[script->infoIndex].state = Inactive;
-        ScriptFinished(activeScript->number);
-        Thinker_Remove(&activeScript->thinker);
-        return;
-    }
-
-    if(ACSInfo[script->infoIndex].state != Running)
-    {
-        return;
-    }
-
-    if(script->delayCount)
-    {
-        script->delayCount--;
-        return;
-    }
-    activeScript = script;
-
-    PCodePtr = activeScript->ip;
-    int action = 0;
-    do
-    {
-        int const cmd = LONG(*PCodePtr++);
-        action = PCodeCmds[cmd] ();
-    } while(action == SCRIPT_CONTINUE);
-
-    activeScript->ip = PCodePtr;
-    if(action == SCRIPT_TERMINATE)
-    {
-        ACSInfo[script->infoIndex].state = Inactive;
-        ScriptFinished(activeScript->number);
-        Thinker_Remove(&activeScript->thinker);
-    }
-}
-
-void ACScript_Write(ACScript const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    SV_WriteLong(SV_ThingArchiveId(th->activator));
-    SV_WriteLong(P_ToIndex(th->line));
-    SV_WriteLong(th->side);
-    SV_WriteLong(th->number);
-    SV_WriteLong(th->infoIndex);
-    SV_WriteLong(th->delayCount);
-    for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
-    {
-        SV_WriteLong(th->stack[i]);
-    }
-    SV_WriteLong(th->stackPtr);
-    for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
-    {
-        SV_WriteLong(th->vars[i]);
-    }
-    SV_WriteLong(((byte const *)th->ip) - ActionCodeBase);
-}
-
-int ACScript_Read(ACScript *th, int mapVersion)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        th->activator       = (mobj_t *) SV_ReadLong();
-        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
-
-        int temp = SV_ReadLong();
-        if(temp >= 0)
-        {
-            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
-            DENG_ASSERT(th->line != 0);
-        }
-        else
-        {
-            th->line        = 0;
-        }
-
-        th->side            = SV_ReadLong();
-        th->number          = SV_ReadLong();
-        th->infoIndex       = SV_ReadLong();
-        th->delayCount      = SV_ReadLong();
-
-        for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
-        {
-            th->stack[i] = SV_ReadLong();
-        }
-
-        th->stackPtr        = SV_ReadLong();
-
-        for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
-        {
-            th->vars[i] = SV_ReadLong();
-        }
-
-        th->ip              = (int *) (ActionCodeBase + SV_ReadLong());
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized acs_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        th->activator       = (mobj_t*) SV_ReadLong();
-        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
-
-        int temp = SV_ReadLong();
-        if(temp >= 0)
-        {
-            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
-            DENG_ASSERT(th->line != 0);
-        }
-        else
-        {
-            th->line        = 0;
-        }
-
-        th->side            = SV_ReadLong();
-        th->number          = SV_ReadLong();
-        th->infoIndex       = SV_ReadLong();
-        th->delayCount      = SV_ReadLong();
-
-        for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
-        {
-            th->stack[i] = SV_ReadLong();
-        }
-
-        th->stackPtr        = SV_ReadLong();
-
-        for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
-        {
-            th->vars[i] = SV_ReadLong();
-        }
-
-        th->ip              = (int *) (ActionCodeBase + SV_ReadLong());
-    }
-
-    th->thinker.function = (thinkfunc_t) ACScript_Thinker;
-
-    return true; // Add this thinker.
-}
-
 void P_ACScriptTagFinished(int tag)
 {
-    if(TagBusy(tag)) return;
+    if(tagBusy(tag)) return;
 
-    for(int i = 0; i < ACScriptCount; ++i)
+    for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        acsinfo_t &info = ACSInfo[i];
+        BytecodeScriptInfo &info = interp.scriptInfo(i);
         if(info.state == WaitingForTag && info.waitValue == tag)
         {
             info.state = Running;
@@ -692,21 +658,21 @@ void P_ACScriptPolyobjFinished(int tag)
 {
     if(PO_Busy(tag)) return;
 
-    for(int i = 0; i < ACScriptCount; ++i)
+    for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        acsinfo_t &info = ACSInfo[i];
+        BytecodeScriptInfo &info = interp.scriptInfo(i);
         if(info.state == WaitingForPolyobj && info.waitValue == tag)
         {
-            ACSInfo[i].state = Running;
+            info.state = Running;
         }
     }
 }
 
-static void ScriptFinished(int number)
+static void scriptFinished(int number)
 {
-    for(int i = 0; i < ACScriptCount; ++i)
+    for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        acsinfo_t &info = ACSInfo[i];
+        BytecodeScriptInfo &info = interp.scriptInfo(i);
         if(info.state == WaitingForScript && info.waitValue == number)
         {
             info.state = Running;
@@ -714,7 +680,7 @@ static void ScriptFinished(int number)
     }
 }
 
-static dd_bool TagBusy(int tag)
+static dd_bool tagBusy(int tag)
 {
     // NOTE: We can't use the sector tag lists here as we might already be
     // in an iteration at a higher level.
@@ -733,125 +699,109 @@ static dd_bool TagBusy(int tag)
     return false;
 }
 
-/**
- * @return  The index of a script number else @c -1,.
- */
-static int GetACSIndex(int number)
-{
-    for(int i = 0; i < ACScriptCount; ++i)
-    {
-        acsinfo_t &info = ACSInfo[i];
-        if(info.number == number)
-        {
-            return i;
-        }
-    }
-    return -1;
-}
-
-static void Push(int value)
+static void push(int value)
 {
     activeScript->stack[activeScript->stackPtr++] = value;
 }
 
-static int Pop()
+static int pop()
 {
     return activeScript->stack[--activeScript->stackPtr];
 }
 
-static int Top()
+static int top()
 {
     return activeScript->stack[activeScript->stackPtr - 1];
 }
 
-static void Drop()
+static void drop()
 {
     activeScript->stackPtr--;
 }
 
-static int CmdNOP()
+static int cmdNOP()
 {
     return SCRIPT_CONTINUE;
 }
 
-static int CmdTerminate()
+static int cmdTerminate()
 {
     return SCRIPT_TERMINATE;
 }
 
-static int CmdSuspend()
+static int cmdSuspend()
 {
-    ACSInfo[activeScript->infoIndex].state = Suspended;
+    interp.scriptInfo(activeScript->infoIndex).state = Suspended;
     return SCRIPT_STOP;
 }
 
-static int CmdPushNumber()
+static int cmdPushNumber()
 {
-    Push(LONG(*PCodePtr++));
+    push(LONG(*PCodePtr++));
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec1()
+static int cmdLSpec1()
 {
     int special = LONG(*PCodePtr++);
-    SpecArgs[0] = Pop();
+    SpecArgs[0] = pop();
     P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
                          activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec2()
+static int cmdLSpec2()
 {
     int special = LONG(*PCodePtr++);
-    SpecArgs[1] = Pop();
-    SpecArgs[0] = Pop();
+    SpecArgs[1] = pop();
+    SpecArgs[0] = pop();
     P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
                          activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec3()
+static int cmdLSpec3()
 {
     int special = LONG(*PCodePtr++);
-    SpecArgs[2] = Pop();
-    SpecArgs[1] = Pop();
-    SpecArgs[0] = Pop();
+    SpecArgs[2] = pop();
+    SpecArgs[1] = pop();
+    SpecArgs[0] = pop();
     P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
                          activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec4()
+static int cmdLSpec4()
 {
     int special = LONG(*PCodePtr++);
-    SpecArgs[3] = Pop();
-    SpecArgs[2] = Pop();
-    SpecArgs[1] = Pop();
-    SpecArgs[0] = Pop();
+    SpecArgs[3] = pop();
+    SpecArgs[2] = pop();
+    SpecArgs[1] = pop();
+    SpecArgs[0] = pop();
     P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
                          activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec5()
+static int cmdLSpec5()
 {
     int special = LONG(*PCodePtr++);
-    SpecArgs[4] = Pop();
-    SpecArgs[3] = Pop();
-    SpecArgs[2] = Pop();
-    SpecArgs[1] = Pop();
-    SpecArgs[0] = Pop();
+    SpecArgs[4] = pop();
+    SpecArgs[3] = pop();
+    SpecArgs[2] = pop();
+    SpecArgs[1] = pop();
+    SpecArgs[0] = pop();
     P_ExecuteLineSpecial(special, SpecArgs, activeScript->line, activeScript->side,
                          activeScript->activator);
 
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec1Direct()
+static int cmdLSpec1Direct()
 {
     int special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
@@ -861,7 +811,7 @@ static int CmdLSpec1Direct()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec2Direct()
+static int cmdLSpec2Direct()
 {
     int special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
@@ -872,7 +822,7 @@ static int CmdLSpec2Direct()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec3Direct()
+static int cmdLSpec3Direct()
 {
     int special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
@@ -884,7 +834,7 @@ static int CmdLSpec3Direct()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec4Direct()
+static int cmdLSpec4Direct()
 {
     int special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
@@ -897,7 +847,7 @@ static int CmdLSpec4Direct()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLSpec5Direct()
+static int cmdLSpec5Direct()
 {
     int special = LONG(*PCodePtr++);
     SpecArgs[0] = LONG(*PCodePtr++);
@@ -911,252 +861,252 @@ static int CmdLSpec5Direct()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAdd()
+static int cmdAdd()
 {
-    Push(Pop() + Pop());
+    push(pop() + pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdSubtract()
+static int cmdSubtract()
 {
-    int operand2 = Pop();
-    Push(Pop() - operand2);
+    int operand2 = pop();
+    push(pop() - operand2);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdMultiply()
+static int cmdMultiply()
 {
-    Push(Pop() * Pop());
+    push(pop() * pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdDivide()
+static int cmdDivide()
 {
-    int operand2 = Pop();
-    Push(Pop() / operand2);
+    int operand2 = pop();
+    push(pop() / operand2);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdModulus()
+static int cmdModulus()
 {
-    int operand2 = Pop();
-    Push(Pop() % operand2);
+    int operand2 = pop();
+    push(pop() % operand2);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdEQ()
+static int cmdEQ()
 {
-    Push(Pop() == Pop());
+    push(pop() == pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdNE()
+static int cmdNE()
 {
-    Push(Pop() != Pop());
+    push(pop() != pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLT()
+static int cmdLT()
 {
-    int operand2 = Pop();
-    Push(Pop() < operand2);
+    int operand2 = pop();
+    push(pop() < operand2);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdGT()
+static int cmdGT()
 {
-    int operand2 = Pop();
-    Push(Pop() > operand2);
+    int operand2 = pop();
+    push(pop() > operand2);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLE()
+static int cmdLE()
 {
-    int operand2 = Pop();
-    Push(Pop() <= operand2);
+    int operand2 = pop();
+    push(pop() <= operand2);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdGE()
+static int cmdGE()
 {
-    int operand2 = Pop();
-    Push(Pop() >= operand2);
+    int operand2 = pop();
+    push(pop() >= operand2);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAssignScriptVar()
+static int cmdAssignScriptVar()
 {
-    activeScript->vars[LONG(*PCodePtr++)] = Pop();
+    activeScript->vars[LONG(*PCodePtr++)] = pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAssignMapVar()
+static int cmdAssignMapVar()
 {
-    MapVars[LONG(*PCodePtr++)] = Pop();
+    MapVars[LONG(*PCodePtr++)] = pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAssignWorldVar()
+static int cmdAssignWorldVar()
 {
-    WorldVars[LONG(*PCodePtr++)] = Pop();
+    WorldVars[LONG(*PCodePtr++)] = pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdPushScriptVar()
+static int cmdPushScriptVar()
 {
-    Push(activeScript->vars[LONG(*PCodePtr++)]);
+    push(activeScript->vars[LONG(*PCodePtr++)]);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdPushMapVar()
+static int cmdPushMapVar()
 {
-    Push(MapVars[LONG(*PCodePtr++)]);
+    push(MapVars[LONG(*PCodePtr++)]);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdPushWorldVar()
+static int cmdPushWorldVar()
 {
-    Push(WorldVars[LONG(*PCodePtr++)]);
+    push(WorldVars[LONG(*PCodePtr++)]);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAddScriptVar()
+static int cmdAddScriptVar()
 {
-    activeScript->vars[LONG(*PCodePtr++)] += Pop();
+    activeScript->vars[LONG(*PCodePtr++)] += pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAddMapVar()
+static int cmdAddMapVar()
 {
-    MapVars[LONG(*PCodePtr++)] += Pop();
+    MapVars[LONG(*PCodePtr++)] += pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAddWorldVar()
+static int cmdAddWorldVar()
 {
-    WorldVars[LONG(*PCodePtr++)] += Pop();
+    WorldVars[LONG(*PCodePtr++)] += pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdSubScriptVar()
+static int cmdSubScriptVar()
 {
-    activeScript->vars[LONG(*PCodePtr++)] -= Pop();
+    activeScript->vars[LONG(*PCodePtr++)] -= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdSubMapVar()
+static int cmdSubMapVar()
 {
-    MapVars[LONG(*PCodePtr++)] -= Pop();
+    MapVars[LONG(*PCodePtr++)] -= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdSubWorldVar()
+static int cmdSubWorldVar()
 {
-    WorldVars[LONG(*PCodePtr++)] -= Pop();
+    WorldVars[LONG(*PCodePtr++)] -= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdMulScriptVar()
+static int cmdMulScriptVar()
 {
-    activeScript->vars[LONG(*PCodePtr++)] *= Pop();
+    activeScript->vars[LONG(*PCodePtr++)] *= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdMulMapVar()
+static int cmdMulMapVar()
 {
-    MapVars[LONG(*PCodePtr++)] *= Pop();
+    MapVars[LONG(*PCodePtr++)] *= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdMulWorldVar()
+static int cmdMulWorldVar()
 {
-    WorldVars[LONG(*PCodePtr++)] *= Pop();
+    WorldVars[LONG(*PCodePtr++)] *= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdDivScriptVar()
+static int cmdDivScriptVar()
 {
-    activeScript->vars[LONG(*PCodePtr++)] /= Pop();
+    activeScript->vars[LONG(*PCodePtr++)] /= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdDivMapVar()
+static int cmdDivMapVar()
 {
-    MapVars[LONG(*PCodePtr++)] /= Pop();
+    MapVars[LONG(*PCodePtr++)] /= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdDivWorldVar()
+static int cmdDivWorldVar()
 {
-    WorldVars[LONG(*PCodePtr++)] /= Pop();
+    WorldVars[LONG(*PCodePtr++)] /= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdModScriptVar()
+static int cmdModScriptVar()
 {
-    activeScript->vars[LONG(*PCodePtr++)] %= Pop();
+    activeScript->vars[LONG(*PCodePtr++)] %= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdModMapVar()
+static int cmdModMapVar()
 {
-    MapVars[LONG(*PCodePtr++)] %= Pop();
+    MapVars[LONG(*PCodePtr++)] %= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdModWorldVar()
+static int cmdModWorldVar()
 {
-    WorldVars[LONG(*PCodePtr++)] %= Pop();
+    WorldVars[LONG(*PCodePtr++)] %= pop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdIncScriptVar()
+static int cmdIncScriptVar()
 {
     activeScript->vars[LONG(*PCodePtr++)]++;
     return SCRIPT_CONTINUE;
 }
 
-static int CmdIncMapVar()
+static int cmdIncMapVar()
 {
     MapVars[LONG(*PCodePtr++)]++;
     return SCRIPT_CONTINUE;
 }
 
-static int CmdIncWorldVar()
+static int cmdIncWorldVar()
 {
     WorldVars[LONG(*PCodePtr++)]++;
     return SCRIPT_CONTINUE;
 }
 
-static int CmdDecScriptVar()
+static int cmdDecScriptVar()
 {
     activeScript->vars[LONG(*PCodePtr++)]--;
     return SCRIPT_CONTINUE;
 }
 
-static int CmdDecMapVar()
+static int cmdDecMapVar()
 {
     MapVars[LONG(*PCodePtr++)]--;
     return SCRIPT_CONTINUE;
 }
 
-static int CmdDecWorldVar()
+static int cmdDecWorldVar()
 {
     WorldVars[LONG(*PCodePtr++)]--;
     return SCRIPT_CONTINUE;
 }
 
-static int CmdGoto()
+static int cmdGoto()
 {
-    PCodePtr = (int *) (ActionCodeBase + LONG(*PCodePtr));
+    PCodePtr = (int *) (interp.bytecode() + LONG(*PCodePtr));
     return SCRIPT_CONTINUE;
 }
 
-static int CmdIfGoto()
+static int cmdIfGoto()
 {
-    if(Pop())
+    if(pop())
     {
-        PCodePtr = (int *) (ActionCodeBase + LONG(*PCodePtr));
+        PCodePtr = (int *) (interp.bytecode() + LONG(*PCodePtr));
     }
     else
     {
@@ -1165,51 +1115,51 @@ static int CmdIfGoto()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdDrop()
+static int cmdDrop()
 {
-    Drop();
+    drop();
     return SCRIPT_CONTINUE;
 }
 
-static int CmdDelay()
+static int cmdDelay()
 {
-    activeScript->delayCount = Pop();
+    activeScript->delayCount = pop();
     return SCRIPT_STOP;
 }
 
-static int CmdDelayDirect()
+static int cmdDelayDirect()
 {
     activeScript->delayCount = LONG(*PCodePtr++);
     return SCRIPT_STOP;
 }
 
-static int CmdRandom()
+static int cmdRandom()
 {
-    int high = Pop();
-    int low  = Pop();
-    Push(low + (P_Random() % (high - low + 1)));
+    int high = pop();
+    int low  = pop();
+    push(low + (P_Random() % (high - low + 1)));
     return SCRIPT_CONTINUE;
 }
 
-static int CmdRandomDirect()
+static int cmdRandomDirect()
 {
     int low  = LONG(*PCodePtr++);
     int high = LONG(*PCodePtr++);
-    Push(low + (P_Random() % (high - low + 1)));
+    push(low + (P_Random() % (high - low + 1)));
     return SCRIPT_CONTINUE;
 }
 
-static int CmdThingCount()
+static int cmdThingCount()
 {
-    int tid = Pop();
-    ThingCount(Pop(), tid);
+    int tid = pop();
+    thingCount(pop(), tid);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdThingCountDirect()
+static int cmdThingCountDirect()
 {
     int type = LONG(*PCodePtr++);
-    ThingCount(type, LONG(*PCodePtr++));
+    thingCount(type, LONG(*PCodePtr++));
     return SCRIPT_CONTINUE;
 }
 
@@ -1237,7 +1187,7 @@ static int countMobjOfType(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-static void ThingCount(int type, int tid)
+static void thingCount(int type, int tid)
 {
     // Nothing to count?
     if(!(type + tid)) return;
@@ -1281,41 +1231,41 @@ static void ThingCount(int type, int tid)
         count = params.count;
     }
 
-    Push(count);
+    push(count);
 }
 
-static int CmdTagWait()
+static int cmdTagWait()
 {
-    ACSInfo[activeScript->infoIndex].waitValue = Pop();
-    ACSInfo[activeScript->infoIndex].state = WaitingForTag;
+    interp.scriptInfo(activeScript->infoIndex).waitValue = pop();
+    interp.scriptInfo(activeScript->infoIndex).state = WaitingForTag;
     return SCRIPT_STOP;
 }
 
-static int CmdTagWaitDirect()
+static int cmdTagWaitDirect()
 {
-    ACSInfo[activeScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[activeScript->infoIndex].state = WaitingForTag;
+    interp.scriptInfo(activeScript->infoIndex).waitValue = LONG(*PCodePtr++);
+    interp.scriptInfo(activeScript->infoIndex).state = WaitingForTag;
     return SCRIPT_STOP;
 }
 
-static int CmdPolyWait()
+static int cmdPolyWait()
 {
-    ACSInfo[activeScript->infoIndex].waitValue = Pop();
-    ACSInfo[activeScript->infoIndex].state = WaitingForPolyobj;
+    interp.scriptInfo(activeScript->infoIndex).waitValue = pop();
+    interp.scriptInfo(activeScript->infoIndex).state = WaitingForPolyobj;
     return SCRIPT_STOP;
 }
 
-static int CmdPolyWaitDirect()
+static int cmdPolyWaitDirect()
 {
-    ACSInfo[activeScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[activeScript->infoIndex].state = WaitingForPolyobj;
+    interp.scriptInfo(activeScript->infoIndex).waitValue = LONG(*PCodePtr++);
+    interp.scriptInfo(activeScript->infoIndex).state = WaitingForPolyobj;
     return SCRIPT_STOP;
 }
 
-static int CmdChangeFloor()
+static int cmdChangeFloor()
 {
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+    Str_PercentEncode(Str_Set(&path, interp.string(pop())));
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
     Str_Free(&path);
@@ -1323,7 +1273,7 @@ static int CmdChangeFloor()
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    int tag = Pop();
+    int tag = pop();
 
     if(iterlist_t *list = P_GetSectorIterListForTag(tag, false))
     {
@@ -1340,12 +1290,12 @@ static int CmdChangeFloor()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdChangeFloorDirect()
+static int cmdChangeFloorDirect()
 {
     int tag = LONG(*PCodePtr++);
 
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
+    Str_PercentEncode(Str_Set(&path, interp.string(LONG(*PCodePtr++))));
 
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
@@ -1369,10 +1319,10 @@ static int CmdChangeFloorDirect()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdChangeCeiling()
+static int cmdChangeCeiling()
 {
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+    Str_PercentEncode(Str_Set(&path, interp.string(pop())));
 
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
@@ -1381,7 +1331,7 @@ static int CmdChangeCeiling()
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    int tag = Pop();
+    int tag = pop();
 
     if(iterlist_t *list = P_GetSectorIterListForTag(tag, false))
     {
@@ -1398,12 +1348,12 @@ static int CmdChangeCeiling()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdChangeCeilingDirect()
+static int cmdChangeCeilingDirect()
 {
     int tag = LONG(*PCodePtr++);
 
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
+    Str_PercentEncode(Str_Set(&path, interp.string(LONG(*PCodePtr++))));
 
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
@@ -1427,102 +1377,102 @@ static int CmdChangeCeilingDirect()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdRestart()
+static int cmdRestart()
 {
-    PCodePtr = ACSInfo[activeScript->infoIndex].address;
+    PCodePtr = interp.scriptInfo(activeScript->infoIndex).address;
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAndLogical()
+static int cmdAndLogical()
 {
-    Push(Pop() && Pop());
+    push(pop() && pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdOrLogical()
+static int cmdOrLogical()
 {
-    Push(Pop() || Pop());
+    push(pop() || pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAndBitwise()
+static int cmdAndBitwise()
 {
-    Push(Pop() & Pop());
+    push(pop() & pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdOrBitwise()
+static int cmdOrBitwise()
 {
-    Push(Pop() | Pop());
+    push(pop() | pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdEorBitwise()
+static int cmdEorBitwise()
 {
-    Push(Pop() ^ Pop());
+    push(pop() ^ pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdNegateLogical()
+static int cmdNegateLogical()
 {
-    Push(!Pop());
+    push(!pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLShift()
+static int cmdLShift()
 {
-    int operand2 = Pop();
-    Push(Pop() << operand2);
+    int operand2 = pop();
+    push(pop() << operand2);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdRShift()
+static int cmdRShift()
 {
-    int operand2 = Pop();
-    Push(Pop() >> operand2);
+    int operand2 = pop();
+    push(pop() >> operand2);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdUnaryMinus()
+static int cmdUnaryMinus()
 {
-    Push(-Pop());
+    push(-pop());
     return SCRIPT_CONTINUE;
 }
 
-static int CmdIfNotGoto()
+static int cmdIfNotGoto()
 {
-    if(Pop())
+    if(pop())
     {
         PCodePtr++;
     }
     else
     {
-        PCodePtr = (int *) (ActionCodeBase + LONG(*PCodePtr));
+        PCodePtr = (int *) (interp.bytecode() + LONG(*PCodePtr));
     }
     return SCRIPT_CONTINUE;
 }
 
-static int CmdLineSide()
+static int cmdLineSide()
 {
-    Push(activeScript->side);
+    push(activeScript->side);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdScriptWait()
+static int cmdScriptWait()
 {
-    ACSInfo[activeScript->infoIndex].waitValue = Pop();
-    ACSInfo[activeScript->infoIndex].state = WaitingForScript;
+    interp.scriptInfo(activeScript->infoIndex).waitValue = pop();
+    interp.scriptInfo(activeScript->infoIndex).state = WaitingForScript;
     return SCRIPT_STOP;
 }
 
-static int CmdScriptWaitDirect()
+static int cmdScriptWaitDirect()
 {
-    ACSInfo[activeScript->infoIndex].waitValue = LONG(*PCodePtr++);
-    ACSInfo[activeScript->infoIndex].state = WaitingForScript;
+    interp.scriptInfo(activeScript->infoIndex).waitValue = LONG(*PCodePtr++);
+    interp.scriptInfo(activeScript->infoIndex).state = WaitingForScript;
     return SCRIPT_STOP;
 }
 
-static int CmdClearLineSpecial()
+static int cmdClearLineSpecial()
 {
     if(activeScript->line)
     {
@@ -1531,12 +1481,12 @@ static int CmdClearLineSpecial()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdCaseGoto()
+static int cmdCaseGoto()
 {
-    if(Top() == LONG(*PCodePtr++))
+    if(top() == LONG(*PCodePtr++))
     {
-        PCodePtr = (int *) (ActionCodeBase + LONG(*PCodePtr));
-        Drop();
+        PCodePtr = (int *) (interp.bytecode() + LONG(*PCodePtr));
+        drop();
     }
     else
     {
@@ -1545,13 +1495,13 @@ static int CmdCaseGoto()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdBeginPrint()
+static int cmdBeginPrint()
 {
     *PrintBuffer = 0;
     return SCRIPT_CONTINUE;
 }
 
-static int CmdEndPrint()
+static int cmdEndPrint()
 {
     if(activeScript->activator && activeScript->activator->player)
     {
@@ -1572,7 +1522,7 @@ static int CmdEndPrint()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdEndPrintBold()
+static int cmdEndPrintBold()
 {
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
@@ -1584,40 +1534,40 @@ static int CmdEndPrintBold()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdPrintString()
+static int cmdPrintString()
 {
-    strcat(PrintBuffer, GetACString(Pop()));
+    strcat(PrintBuffer, interp.string(pop()));
     return SCRIPT_CONTINUE;
 }
 
-static int CmdPrintNumber()
+static int cmdPrintNumber()
 {
     char tempStr[16];
-    sprintf(tempStr, "%d", Pop());
+    sprintf(tempStr, "%d", pop());
     strcat(PrintBuffer, tempStr);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdPrintCharacter()
+static int cmdPrintCharacter()
 {
     char *bufferEnd = PrintBuffer + strlen(PrintBuffer);
-    *bufferEnd++ = Pop();
+    *bufferEnd++ = pop();
     *bufferEnd = 0;
     return SCRIPT_CONTINUE;
 }
 
-static int CmdPlayerCount()
+static int cmdPlayerCount()
 {
     int count = 0;
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         count += players[i].plr->inGame;
     }
-    Push(count);
+    push(count);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdGameType()
+static int cmdGameType()
 {
     int gametype;
 
@@ -1633,24 +1583,24 @@ static int CmdGameType()
     {
         gametype = GAME_NET_COOPERATIVE;
     }
-    Push(gametype);
+    push(gametype);
 
     return SCRIPT_CONTINUE;
 }
 
-static int CmdGameSkill()
+static int cmdGameSkill()
 {
-    Push((int)gameSkill);
+    push((int)gameSkill);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdTimer()
+static int cmdTimer()
 {
-    Push(mapTime);
+    push(mapTime);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdSectorSound()
+static int cmdSectorSound()
 {
     mobj_t *mobj = 0;
     if(activeScript->line)
@@ -1658,17 +1608,17 @@ static int CmdSectorSound()
         Sector *front = (Sector *) P_GetPtrp(activeScript->line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
-    int volume = Pop();
+    int volume = pop();
 
-    S_StartSoundAtVolume(S_GetSoundID(GetACString(Pop())), mobj, volume / 127.0f);
+    S_StartSoundAtVolume(S_GetSoundID(interp.string(pop())), mobj, volume / 127.0f);
     return SCRIPT_CONTINUE;
 }
 
-static int CmdThingSound()
+static int cmdThingSound()
 {
-    int volume   = Pop();
-    int sound    = S_GetSoundID(GetACString(Pop()));
-    int tid      = Pop();
+    int volume   = pop();
+    int sound    = S_GetSoundID(interp.string(pop()));
+    int tid      = pop();
     int searcher = -1;
 
     mobj_t *mobj;
@@ -1680,12 +1630,12 @@ static int CmdThingSound()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdAmbientSound()
+static int cmdAmbientSound()
 {
     mobj_t *mobj = 0; // For 3D positioning.
     mobj_t *plrmo = players[DISPLAYPLAYER].plr->mo;
 
-    int volume = Pop();
+    int volume = pop();
 
     // If we are playing 3D sounds, create a temporary source mobj for the sound.
     if(cfg.snd3D && plrmo)
@@ -1702,13 +1652,13 @@ static int CmdAmbientSound()
         }
     }
 
-    int sound = S_GetSoundID(GetACString(Pop()));
+    int sound = S_GetSoundID(interp.string(pop()));
     S_StartSoundAtVolume(sound, mobj, volume / 127.0f);
 
     return SCRIPT_CONTINUE;
 }
 
-static int CmdSoundSequence()
+static int cmdSoundSequence()
 {
     mobj_t *mobj = 0;
     if(activeScript->line)
@@ -1716,15 +1666,15 @@ static int CmdSoundSequence()
         Sector *front = (Sector *) P_GetPtrp(activeScript->line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
-    SN_StartSequenceName(mobj, GetACString(Pop()));
+    SN_StartSequenceName(mobj, interp.string(pop()));
 
     return SCRIPT_CONTINUE;
 }
 
-static int CmdSetLineTexture()
+static int cmdSetLineTexture()
 {
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+    Str_PercentEncode(Str_Set(&path, interp.string(pop())));
 
     Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
@@ -1733,9 +1683,9 @@ static int CmdSetLineTexture()
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    int position = Pop();
-    int side     = Pop();
-    int lineTag  = Pop();
+    int position = pop();
+    int side     = pop();
+    int lineTag  = pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1765,10 +1715,10 @@ static int CmdSetLineTexture()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdSetLineBlocking()
+static int cmdSetLineBlocking()
 {
-    dd_bool blocking = Pop()? DDLF_BLOCKING : 0;
-    int lineTag      = Pop();
+    dd_bool blocking = pop()? DDLF_BLOCKING : 0;
+    int lineTag      = pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1785,15 +1735,15 @@ static int CmdSetLineBlocking()
     return SCRIPT_CONTINUE;
 }
 
-static int CmdSetLineSpecial()
+static int cmdSetLineSpecial()
 {
-    int arg5    = Pop();
-    int arg4    = Pop();
-    int arg3    = Pop();
-    int arg2    = Pop();
-    int arg1    = Pop();
-    int special = Pop();
-    int lineTag = Pop();
+    int arg5    = pop();
+    int arg4    = pop();
+    int arg3    = pop();
+    int arg2    = pop();
+    int arg1    = pop();
+    int special = pop();
+    int lineTag = pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1832,12 +1782,12 @@ void P_WriteGlobalACScriptData()
     SV_WriteLong(deferredTasksSize);
     for(int i = 0; i < deferredTasksSize; ++i)
     {
-        DeferredTask const *store = &deferredTasks[i];
-        SV_WriteLong(store->map);
-        SV_WriteLong(store->script);
+        DeferredTask const *task = &deferredTasks[i];
+        SV_WriteLong(task->map);
+        SV_WriteLong(task->script);
         for(int k = 0; k < 4; ++k)
         {
-            SV_WriteByte(store->args[k]);
+            SV_WriteByte(task->args[k]);
         }
     }
 }
@@ -1926,10 +1876,11 @@ void P_WriteMapACScriptData()
 {
     SV_BeginSegment(ASEG_SCRIPTS);
 
-    for(int i = 0; i < ACScriptCount; ++i)
+    for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        SV_WriteShort(ACSInfo[i].state);
-        SV_WriteShort(ACSInfo[i].waitValue);
+        BytecodeScriptInfo &info = interp.scriptInfo(i);
+        SV_WriteShort(info.state);
+        SV_WriteShort(info.waitValue);
     }
 
     for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
@@ -1942,10 +1893,12 @@ void P_ReadMapACScriptData()
 {
     SV_AssertSegment(ASEG_SCRIPTS);
 
-    for(int i = 0; i < ACScriptCount; ++i)
+    for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        ACSInfo[i].state     = (ACScriptState) SV_ReadShort();
-        ACSInfo[i].waitValue = SV_ReadShort();
+        BytecodeScriptInfo &info = interp.scriptInfo(i);
+
+        info.state     = (ACScriptState) SV_ReadShort();
+        info.waitValue = SV_ReadShort();
     }
 
     for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
@@ -1954,24 +1907,174 @@ void P_ReadMapACScriptData()
     }
 }
 
+void ACScript_Thinker(ACScript *script)
+{
+    DENG_ASSERT(script != 0);
+
+    BytecodeScriptInfo &info = interp.scriptInfo(script->infoIndex);
+    if(info.state == Terminating)
+    {
+        info.state = Inactive;
+        scriptFinished(activeScript->number);
+        Thinker_Remove(&activeScript->thinker);
+        return;
+    }
+
+    if(info.state != Running)
+    {
+        return;
+    }
+
+    if(script->delayCount)
+    {
+        script->delayCount--;
+        return;
+    }
+    activeScript = script;
+
+    PCodePtr = activeScript->ip;
+    int action = 0;
+    do
+    {
+        int const cmd = LONG(*PCodePtr++);
+        action = PCodeCmds[cmd] ();
+    } while(action == SCRIPT_CONTINUE);
+
+    activeScript->ip = PCodePtr;
+    if(action == SCRIPT_TERMINATE)
+    {
+        interp.scriptInfo(script->infoIndex).state = Inactive;
+        scriptFinished(activeScript->number);
+        Thinker_Remove(&activeScript->thinker);
+    }
+}
+
+void ACScript_Write(ACScript const *th)
+{
+    DENG_ASSERT(th != 0);
+
+    SV_WriteByte(1); // Write a version byte.
+
+    SV_WriteLong(SV_ThingArchiveId(th->activator));
+    SV_WriteLong(P_ToIndex(th->line));
+    SV_WriteLong(th->side);
+    SV_WriteLong(th->number);
+    SV_WriteLong(th->infoIndex);
+    SV_WriteLong(th->delayCount);
+    for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
+    {
+        SV_WriteLong(th->stack[i]);
+    }
+    SV_WriteLong(th->stackPtr);
+    for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
+    {
+        SV_WriteLong(th->vars[i]);
+    }
+    SV_WriteLong(((byte const *)th->ip) - interp.bytecode());
+}
+
+int ACScript_Read(ACScript *th, int mapVersion)
+{
+    DENG_ASSERT(th != 0);
+
+    if(mapVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ SV_ReadByte(); // version byte.
+
+        th->activator       = (mobj_t *) SV_ReadLong();
+        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
+
+        int temp = SV_ReadLong();
+        if(temp >= 0)
+        {
+            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
+            DENG_ASSERT(th->line != 0);
+        }
+        else
+        {
+            th->line        = 0;
+        }
+
+        th->side            = SV_ReadLong();
+        th->number          = SV_ReadLong();
+        th->infoIndex       = SV_ReadLong();
+        th->delayCount      = SV_ReadLong();
+
+        for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
+        {
+            th->stack[i] = SV_ReadLong();
+        }
+
+        th->stackPtr        = SV_ReadLong();
+
+        for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
+        {
+            th->vars[i] = SV_ReadLong();
+        }
+
+        th->ip              = (int *) (interp.bytecode() + SV_ReadLong());
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized acs_t
+        // Padding at the start (an old thinker_t struct)
+        thinker_t junk;
+        SV_Read(&junk, (size_t) 16);
+
+        // Start of used data members.
+        th->activator       = (mobj_t*) SV_ReadLong();
+        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
+
+        int temp = SV_ReadLong();
+        if(temp >= 0)
+        {
+            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
+            DENG_ASSERT(th->line != 0);
+        }
+        else
+        {
+            th->line        = 0;
+        }
+
+        th->side            = SV_ReadLong();
+        th->number          = SV_ReadLong();
+        th->infoIndex       = SV_ReadLong();
+        th->delayCount      = SV_ReadLong();
+
+        for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
+        {
+            th->stack[i] = SV_ReadLong();
+        }
+
+        th->stackPtr        = SV_ReadLong();
+
+        for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
+        {
+            th->vars[i] = SV_ReadLong();
+        }
+
+        th->ip              = (int *) (interp.bytecode() + SV_ReadLong());
+    }
+
+    th->thinker.function = (thinkfunc_t) ACScript_Thinker;
+
+    return true; // Add this thinker.
+}
+
 D_CMD(ScriptInfo)
 {
-    char const *scriptStates[] = {
-        "Inactive", "Running", "Suspended", "Waiting for tag",
-        "Waiting for poly", "Waiting for script", "Terminating"
-    };
-
     int whichOne = argc == 2? atoi(argv[1]) : -1;
 
-    for(int i = 0; i < ACScriptCount; ++i)
+    for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        acsinfo_t *aptr = ACSInfo + i;
+        BytecodeScriptInfo &info = interp.scriptInfo(i);
 
-        if(whichOne != -1 && whichOne != aptr->number)
+        if(whichOne != -1 && whichOne != info.number)
             continue;
 
-        App_Log(DE2_SCR_MSG, "%d %s (a: %d, w: %d)", aptr->number,
-                scriptStates[aptr->state], aptr->argCount, aptr->waitValue);
+        App_Log(DE2_SCR_MSG, "%d %s (a: %d, w: %d)", info.number,
+                scriptStateAsText(info.state), info.argCount, info.waitValue);
     }
 
     return true;
