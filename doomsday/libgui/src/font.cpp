@@ -17,7 +17,6 @@
  */
 
 #include "de/Font"
-#include "qtnativefont.h"
 
 #include <de/ConstantRule>
 #include <QFontMetrics>
@@ -25,11 +24,19 @@
 #include <QImage>
 #include <QPainter>
 
+#ifdef MACOSX
+#  include "coretextnativefont_macx.h"
+namespace de { typedef CoreTextNativeFont PlatformFont; }
+#else
+#  include "qtnativefont.h"
+namespace de { typedef QtNativeFont PlatformFont; }
+#endif
+
 namespace de {
 
 DENG2_PIMPL(Font)
 {
-    QtNativeFont font;
+    PlatformFont font;
     ConstantRule *heightRule;
     ConstantRule *ascentRule;
     ConstantRule *descentRule;
@@ -41,7 +48,7 @@ DENG2_PIMPL(Font)
         createRules();
     }
 
-    Instance(Public *i, QtNativeFont const &qfont) : Base(i), font(qfont)
+    Instance(Public *i, PlatformFont const &qfont) : Base(i), font(qfont)
     {
 #if 0
         // Development aid: list all available fonts and styles.
@@ -72,7 +79,7 @@ DENG2_PIMPL(Font)
         {
             // Use the ascent of the normal weight for non-normal weights;
             // we need to align content to baseline regardless of weight.
-            QtNativeFont normalized(font);
+            PlatformFont normalized(font);
             normalized.setWeight(NativeFont::Normal);
             ascent = normalized.ascent();
         }
@@ -91,11 +98,11 @@ DENG2_PIMPL(Font)
      *
      * @return  Font with applied formatting.
      */
-    QtNativeFont alteredFont(RichFormat::Iterator const &rich) const
+    PlatformFont alteredFont(RichFormat::Iterator const &rich) const
     {
         if(!rich.isDefault())
         {
-            QtNativeFont mod = font;
+            PlatformFont mod = font;
 
             // Size change.
             if(!fequal(rich.sizeFactor(), 1.f))
@@ -171,7 +178,7 @@ Rectanglei Font::measure(String const &textLine, RichFormatRef const &format) co
         iter.next();
         if(iter.range().isEmpty()) continue;
 
-        QtNativeFont const altFont = d->alteredFont(iter);
+        PlatformFont const altFont = d->alteredFont(iter);
 
         String const part = textLine.substr(iter.range());
         Rectanglei rect = altFont.measure(part);
@@ -252,7 +259,7 @@ QImage Font::rasterize(String const &textLine,
         iter.next();
         if(iter.range().isEmpty()) continue;
 
-        QtNativeFont font = d->font;
+        PlatformFont font = d->font;
 
         if(iter.isDefault())
         {
