@@ -458,11 +458,12 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
             */
 
         Instance::Line::Segment &seg = line.segs.last();
-        if(seg.right() > d->wraps->maximumWidth() + 1)
+        int const leeway = 3;
+        if(seg.right() > d->wraps->maximumWidth() + leeway)
         {
             // Needs compressing (up to 10%).
             seg.compressed = true;
-            seg.width = de::max(int(seg.width * .9f), d->wraps->maximumWidth() + 1 - seg.x);
+            seg.width = de::max(int(seg.width * .9f), d->wraps->maximumWidth() + leeway - seg.x);
         }
     }
 
