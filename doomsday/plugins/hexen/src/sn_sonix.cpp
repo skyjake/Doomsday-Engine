@@ -192,7 +192,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAYREPEAT;
-            *tempDataPtr++ = lexer.readSoundIndex();
+            *tempDataPtr++ = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "playtime"))
@@ -200,7 +200,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = lexer.readSoundIndex();
+            *tempDataPtr++ = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
             *tempDataPtr++ = SS_CMD_DELAY;
             *tempDataPtr++ = lexer.readNumber();
             continue;
@@ -210,7 +210,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = lexer.readSoundIndex();
+            *tempDataPtr++ = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
             *tempDataPtr++ = SS_CMD_WAITUNTILDONE;
             continue;
         }
@@ -219,7 +219,7 @@ void SndSeqParser(Str const *path)
             verifySequencePtr(tempDataStart, tempDataPtr);
 
             *tempDataPtr++ = SS_CMD_PLAY;
-            *tempDataPtr++ = lexer.readSoundIndex();
+            *tempDataPtr++ = Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
             continue;
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "delayrand"))
@@ -249,7 +249,8 @@ void SndSeqParser(Str const *path)
         }
         if(!Str_CompareIgnoreCase(lexer.token(), "stopsound"))
         {
-            SequenceTranslate[seqCommmandIndex].stopSound = lexer.readSoundIndex();
+            SequenceTranslate[seqCommmandIndex].stopSound =
+                    Def_Get(DD_DEF_SOUND_BY_NAME, Str_Text(lexer.readString()), 0);
             *tempDataPtr++ = SS_CMD_STOPSOUND;
             continue;
         }

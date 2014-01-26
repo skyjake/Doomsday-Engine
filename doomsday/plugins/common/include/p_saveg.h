@@ -68,7 +68,7 @@ extern "C" {
 #endif
 
 typedef void (*WriteThinkerFunc)(thinker_t *);
-typedef int (*ReadThinkerFunc)(thinker_t *);
+typedef int (*ReadThinkerFunc)(thinker_t *, int mapVersion);
 
 /// Register the console commands and variables of this module.
 void SV_Register(void);

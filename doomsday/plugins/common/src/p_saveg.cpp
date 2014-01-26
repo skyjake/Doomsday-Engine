@@ -118,54 +118,52 @@ SideArchive &SV_SideArchive();
 static bool recogniseGameState(Str const *path, SaveInfo *info);
 
 static void SV_WriteMobj(mobj_t const *mobj);
-static int SV_ReadMobj(thinker_t *th);
+static int SV_ReadMobj(thinker_t *th, int mapVersion);
 static void SV_WriteCeiling(ceiling_t const *ceiling);
-static int SV_ReadCeiling(ceiling_t *ceiling);
+static int SV_ReadCeiling(ceiling_t *ceiling, int mapVersion);
 static void SV_WriteDoor(door_t const *door);
-static int SV_ReadDoor(door_t *door);
+static int SV_ReadDoor(door_t *door, int mapVersion);
 static void SV_WriteFloor(floor_t const *floor);
-static int SV_ReadFloor(floor_t *floor);
+static int SV_ReadFloor(floor_t *floor, int mapVersion);
 static void SV_WritePlat(plat_t const *plat);
-static int SV_ReadPlat(plat_t *plat);
+static int SV_ReadPlat(plat_t *plat, int mapVersion);
 static void SV_WriteMaterialChanger(materialchanger_t const *mchanger);
-static int SV_ReadMaterialChanger(materialchanger_t *mchanger);
+static int SV_ReadMaterialChanger(materialchanger_t *mchanger, int mapVersion);
 
 #if __JHEXEN__
 static void SV_WriteLight(light_t const *light);
-static int SV_ReadLight(light_t *light);
+static int SV_ReadLight(light_t *light, int mapVersion);
 static void SV_WritePhase(phase_t const *phase);
-static int SV_ReadPhase(phase_t *phase);
-static void SV_WriteScript(acs_t const *script);
-static int SV_ReadScript(acs_t *script);
+static int SV_ReadPhase(phase_t *phase, int mapVersion);
 static void SV_WriteDoorPoly(polydoor_t const *polydoor);
-static int SV_ReadDoorPoly(polydoor_t *polydoor);
+static int SV_ReadDoorPoly(polydoor_t *polydoor, int mapVersion);
 static void SV_WriteMovePoly(polyevent_t const *movepoly);
-static int SV_ReadMovePoly(polyevent_t *movepoly);
+static int SV_ReadMovePoly(polyevent_t *movepoly, int mapVersion);
 static void SV_WriteRotatePoly(polyevent_t const *rotatepoly);
-static int SV_ReadRotatePoly(polyevent_t *rotatepoly);
+static int SV_ReadRotatePoly(polyevent_t *rotatepoly, int mapVersion);
 static void SV_WritePillar(pillar_t const *pillar);
-static int SV_ReadPillar(pillar_t *pillar);
+static int SV_ReadPillar(pillar_t *pillar, int mapVersion);
 static void SV_WriteFloorWaggle(waggle_t const *floorwaggle);
-static int SV_ReadFloorWaggle(waggle_t *floorwaggle);
+static int SV_ReadFloorWaggle(waggle_t *floorwaggle, int mapVersion);
 #else
 static void SV_WriteFlash(lightflash_t const *flash);
-static int SV_ReadFlash(lightflash_t *flash);
+static int SV_ReadFlash(lightflash_t *flash, int mapVersion);
 static void SV_WriteStrobe(strobe_t const *strobe);
-static int SV_ReadStrobe(strobe_t *strobe);
+static int SV_ReadStrobe(strobe_t *strobe, int mapVersion);
 static void SV_WriteGlow(glow_t const *glow);
-static int SV_ReadGlow(glow_t *glow);
+static int SV_ReadGlow(glow_t *glow, int mapVersion);
 # if __JDOOM__ || __JDOOM64__
 static void SV_WriteFlicker(fireflicker_t const *flicker);
-static int SV_ReadFlicker(fireflicker_t *flicker);
+static int SV_ReadFlicker(fireflicker_t *flicker, int mapVersion);
 # endif
 
 # if __JDOOM64__
 static void SV_WriteBlink(lightblink_t const *flicker);
-static int SV_ReadBlink(lightblink_t *flicker);
+static int SV_ReadBlink(lightblink_t *flicker, int mapVersion);
 # endif
 #endif
 static void SV_WriteScroll(scroll_t const *scroll);
-static int SV_ReadScroll(scroll_t *scroll);
+static int SV_ReadScroll(scroll_t *scroll, int mapVersion);
 
 #if __JHEXEN__
 static void readMapState(Str const *path);
@@ -262,10 +260,10 @@ static ThinkerClassInfo thinkerInfo[] = {
 #if __JHEXEN__
     {
      TC_INTERPRET_ACS,
-     (thinkfunc_t) T_InterpretACS,
+     (thinkfunc_t) ACScript_Thinker,
      0,
-     (WriteThinkerFunc)SV_WriteScript,
-     (ReadThinkerFunc)SV_ReadScript,
+     (WriteThinkerFunc)ACScript_Write,
+     (ReadThinkerFunc)ACScript_Read,
      sizeof(acs_t)
     },
     {
@@ -1890,7 +1888,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
  * Always returns @c false as a thinker will have already been allocated in
  * the mobj creation process.
  */
-static int SV_ReadMobj(thinker_t* th)
+static int SV_ReadMobj(thinker_t* th, int /*mapVersion*/)
 {
     int ver;
     mobj_t* mo = (mobj_t*) th;
@@ -2964,7 +2962,7 @@ static void SV_WriteCeiling(ceiling_t const *ceiling)
     SV_WriteByte((byte) ceiling->oldState);
 }
 
-static int SV_ReadCeiling(ceiling_t *ceiling)
+static int SV_ReadCeiling(ceiling_t *ceiling, int /*mapVersion*/)
 {
 #if __JHEXEN__
     if(mapVersion >= 4)
@@ -3070,7 +3068,7 @@ static void SV_WriteDoor(door_t const *door)
     SV_WriteLong(door->topCountDown);
 }
 
-static int SV_ReadDoor(door_t *door)
+static int SV_ReadDoor(door_t *door, int /*mapVersion*/)
 {
     DENG_ASSERT(door != 0);
 
@@ -3158,7 +3156,7 @@ static void SV_WriteFloor(floor_t const *floor)
 #endif
 }
 
-static int SV_ReadFloor(floor_t *floor)
+static int SV_ReadFloor(floor_t *floor, int /*mapVersion*/)
 {
     DENG_ASSERT(floor != 0);
 
@@ -3289,7 +3287,7 @@ static void SV_WritePlat(plat_t const *plat)
     SV_WriteLong(plat->tag);
 }
 
-static int SV_ReadPlat(plat_t *plat)
+static int SV_ReadPlat(plat_t *plat, int /*mapVersion*/)
 {
     DENG_ASSERT(plat != 0);
 
@@ -3385,7 +3383,7 @@ static void SV_WriteLight(light_t const *th)
     SV_WriteLong(th->count);
 }
 
-static int SV_ReadLight(light_t *th)
+static int SV_ReadLight(light_t *th, int /*mapVersion*/)
 {
     DENG_ASSERT(th != 0);
 
@@ -3444,7 +3442,7 @@ static void SV_WritePhase(phase_t const *th)
     SV_WriteLong((int) (255.0f * th->baseValue));
 }
 
-static int SV_ReadPhase(phase_t *th)
+static int SV_ReadPhase(phase_t *th, int /*mapVersion*/)
 {
     DENG_ASSERT(th != 0);
 
@@ -3480,107 +3478,6 @@ static int SV_ReadPhase(phase_t *th)
     return true; // Add this thinker.
 }
 
-static void SV_WriteScript(acs_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    SV_WriteLong(SV_ThingArchiveId(th->activator));
-    SV_WriteLong(P_ToIndex(th->line));
-    SV_WriteLong(th->side);
-    SV_WriteLong(th->number);
-    SV_WriteLong(th->infoIndex);
-    SV_WriteLong(th->delayCount);
-    for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
-        SV_WriteLong(th->stack[i]);
-    SV_WriteLong(th->stackPtr);
-    for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
-        SV_WriteLong(th->vars[i]);
-    SV_WriteLong(((byte const *)th->ip) - ActionCodeBase);
-}
-
-static int SV_ReadScript(acs_t *th)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        th->activator       = (mobj_t*) SV_ReadLong();
-        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
-
-        int temp = SV_ReadLong();
-        if(temp >= 0)
-        {
-            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
-            DENG_ASSERT(th->line != 0);
-        }
-        else
-        {
-            th->line        = 0;
-        }
-
-        th->side            = SV_ReadLong();
-        th->number          = SV_ReadLong();
-        th->infoIndex       = SV_ReadLong();
-        th->delayCount      = SV_ReadLong();
-
-        for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
-            th->stack[i] = SV_ReadLong();
-
-        th->stackPtr        = SV_ReadLong();
-
-        for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
-            th->vars[i] = SV_ReadLong();
-
-        th->ip              = (int *) (ActionCodeBase + SV_ReadLong());
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized acs_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        th->activator       = (mobj_t*) SV_ReadLong();
-        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
-
-        int temp = SV_ReadLong();
-        if(temp >= 0)
-        {
-            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
-            DENG_ASSERT(th->line != 0);
-        }
-        else
-        {
-            th->line        = 0;
-        }
-
-        th->side            = SV_ReadLong();
-        th->number          = SV_ReadLong();
-        th->infoIndex       = SV_ReadLong();
-        th->delayCount      = SV_ReadLong();
-
-        for(int i = 0; i < ACS_STACK_DEPTH; ++i)
-            th->stack[i] = SV_ReadLong();
-
-        th->stackPtr        = SV_ReadLong();
-
-        for(int i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
-            th->vars[i] = SV_ReadLong();
-
-        th->ip              = (int *) (ActionCodeBase + SV_ReadLong());
-    }
-
-    th->thinker.function = (thinkfunc_t) T_InterpretACS;
-
-    return true; // Add this thinker.
-}
-
 static void SV_WriteDoorPoly(polydoor_t const *th)
 {
     DENG_ASSERT(th != 0);
@@ -3604,7 +3501,7 @@ static void SV_WriteDoorPoly(polydoor_t const *th)
     SV_WriteByte(th->close);
 }
 
-static int SV_ReadDoorPoly(polydoor_t *th)
+static int SV_ReadDoorPoly(polydoor_t *th, int /*mapVersion*/)
 {
     DENG_ASSERT(th != 0);
 
@@ -3669,7 +3566,7 @@ static void SV_WriteMovePoly(polyevent_t const *th)
     SV_WriteLong(FLT2FIX(th->speed[VY]));
 }
 
-static int SV_ReadMovePoly(polyevent_t *th)
+static int SV_ReadMovePoly(polyevent_t *th, int /*mapVersion*/)
 {
     DENG_ASSERT(th != 0);
 
@@ -3724,7 +3621,7 @@ static void SV_WriteRotatePoly(polyevent_t const *th)
     SV_WriteLong(FLT2FIX(th->speed[VY]));
 }
 
-static int SV_ReadRotatePoly(polyevent_t *th)
+static int SV_ReadRotatePoly(polyevent_t *th, int /*mapVersion*/)
 {
     DENG_ASSERT(th != 0);
 
@@ -3780,7 +3677,7 @@ static void SV_WritePillar(pillar_t const *th)
     SV_WriteLong(th->crush);
 }
 
-static int SV_ReadPillar(pillar_t *th)
+static int SV_ReadPillar(pillar_t *th, int /*mapVersion*/)
 {
     DENG_ASSERT(th != 0);
 
@@ -3847,7 +3744,7 @@ static void SV_WriteFloorWaggle(waggle_t const *th)
     SV_WriteLong(th->state);
 }
 
-static int SV_ReadFloorWaggle(waggle_t *th)
+static int SV_ReadFloorWaggle(waggle_t *th, int /*mapVersion*/)
 {
     DENG_ASSERT(th != 0);
 
@@ -3916,7 +3813,7 @@ static void SV_WriteFlash(lightflash_t const *flash)
     SV_WriteLong(flash->minTime);
 }
 
-static int SV_ReadFlash(lightflash_t *flash)
+static int SV_ReadFlash(lightflash_t *flash, int /*mapVersion*/)
 {
     DENG_ASSERT(flash != 0);
 
@@ -3975,7 +3872,7 @@ static void SV_WriteStrobe(strobe_t const *strobe)
     SV_WriteLong(strobe->brightTime);
 }
 
-static int SV_ReadStrobe(strobe_t *strobe)
+static int SV_ReadStrobe(strobe_t *strobe, int /*mapVersion*/)
 {
     DENG_ASSERT(strobe != 0);
 
@@ -4031,7 +3928,7 @@ static void SV_WriteGlow(glow_t const *glow)
     SV_WriteLong(glow->direction);
 }
 
-static int SV_ReadGlow(glow_t *glow)
+static int SV_ReadGlow(glow_t *glow, int /*mapVersion*/)
 {
     DENG_ASSERT(glow != 0);
 
@@ -4087,7 +3984,7 @@ static void SV_WriteFlicker(fireflicker_t const *flicker)
  * T_FireFlicker was added to save games in ver5, therefore we don't have
  * an old format to support.
  */
-static int SV_ReadFlicker(fireflicker_t *flicker)
+static int SV_ReadFlicker(fireflicker_t *flicker, int /*mapVersion*/)
 {
     DENG_ASSERT(flicker != 0);
 
@@ -4128,7 +4025,7 @@ static void SV_WriteBlink(lightblink_t const *blink)
  * T_LightBlink was added to save games in ver5, therefore we don't have an
  * old format to support
  */
-static int SV_ReadBlink(lightblink_t *blink)
+static int SV_ReadBlink(lightblink_t *blink, int /*mapVersion*/)
 {
     DENG_ASSERT(blink != 0);
 
@@ -4168,7 +4065,7 @@ static void SV_WriteMaterialChanger(materialchanger_t const *mchanger)
     SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, mchanger->material));
 }
 
-static int SV_ReadMaterialChanger(materialchanger_t *mchanger)
+static int SV_ReadMaterialChanger(materialchanger_t *mchanger, int /*mapVersion*/)
 {
     DENG_ASSERT(mchanger != 0);
 
@@ -4222,7 +4119,7 @@ static void SV_WriteScroll(scroll_t const *scroll)
     SV_WriteLong(FLT2FIX(scroll->offset[1]));
 }
 
-static int SV_ReadScroll(scroll_t *scroll)
+static int SV_ReadScroll(scroll_t *scroll, int /*mapVersion*/)
 {
     DENG_ASSERT(scroll != 0);
 
@@ -4512,6 +4409,12 @@ static void relinkThinkers()
 static void readThinkers()
 {
 #if __JHEXEN__
+    int const arcMapVersion = mapVersion;
+#else
+    int const arcMapVersion = hdr->version;
+#endif
+
+#if __JHEXEN__
     bool const formatHasStasisInfo = (mapVersion >= 6);
 #else
     bool const formatHasStasisInfo = (hdr->version >= 6);
@@ -4613,7 +4516,7 @@ static void readThinkers()
 
         bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(SV_ReadByte()) : false);
 
-        if(thInfo->readFunc(th))
+        if(thInfo->readFunc(th, arcMapVersion))
         {
             Thinker_Add(th);
         }
@@ -4737,138 +4640,6 @@ static void readSoundTargets()
 #endif
 }
 
-static void writeScripts()
-{
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_SCRIPTS);
-
-    for(int i = 0; i < ACScriptCount; ++i)
-    {
-        SV_WriteShort(ACSInfo[i].state);
-        SV_WriteShort(ACSInfo[i].waitValue);
-    }
-
-    for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
-    {
-        SV_WriteLong(MapVars[i]);
-    }
-#endif
-}
-
-static void readScripts()
-{
-#if __JHEXEN__
-    SV_AssertSegment(ASEG_SCRIPTS);
-
-    for(int i = 0; i < ACScriptCount; ++i)
-    {
-        ACSInfo[i].state     = aste_t(SV_ReadShort());
-        ACSInfo[i].waitValue = SV_ReadShort();
-    }
-
-    for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
-    {
-        MapVars[i] = SV_ReadLong();
-    }
-#endif
-}
-
-static void writeGlobalScriptData()
-{
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
-
-    SV_WriteByte(3); // version byte
-
-    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
-        SV_WriteLong(WorldVars[i]);
-
-    SV_WriteLong(ACSStoreSize);
-    for(int i = 0; i < ACSStoreSize; ++i)
-    {
-        acsstore_t const *store = &ACSStore[i];
-
-        SV_WriteLong(store->map);
-        SV_WriteLong(store->script);
-        for(int k = 0; k < 4; ++k)
-            SV_WriteByte(store->args[k]);
-    }
-#endif
-}
-
-static void readGlobalScriptData()
-{
-#if __JHEXEN__
-
-    int ver = 1;
-    if(hdr->version >= 7)
-    {
-        SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
-        ver = SV_ReadByte();
-    }
-
-    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
-        WorldVars[i] = SV_ReadLong();
-
-    if(ver >= 3)
-    {
-        ACSStoreSize = SV_ReadLong();
-        if(ACSStoreSize)
-        {
-            if(ACSStore)
-                ACSStore = reinterpret_cast<acsstore_t *>(Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC));
-            else
-                ACSStore = reinterpret_cast<acsstore_t *>(Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0));
-
-            for(int i = 0; i < ACSStoreSize; ++i)
-            {
-                acsstore_t *store = &ACSStore[i];
-
-                store->map = SV_ReadLong();
-                store->script = SV_ReadLong();
-                for(int k = 0; k < 4; ++k)
-                    store->args[k] = SV_ReadByte();
-            }
-        }
-    }
-    else
-    {
-        // Old format.
-        acsstore_t tempStore[20];
-
-        ACSStoreSize = 0;
-        for(int i = 0; i < 20; ++i)
-        {
-            int map = SV_ReadLong();
-            acsstore_t *store = &tempStore[map < 0? 19 : ACSStoreSize++];
-
-            store->map = map < 0? 0 : map-1;
-            store->script = SV_ReadLong();
-            for(int k = 0; k < 4; ++k)
-                store->args[k] = SV_ReadByte();
-        }
-
-        if(hdr->version < 7)
-            SV_Seek(12); // Junk.
-
-        if(ACSStoreSize)
-        {
-            if(ACSStore)
-                ACSStore = reinterpret_cast<acsstore_t *>(Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC));
-            else
-                ACSStore = reinterpret_cast<acsstore_t *>(Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0));
-            std::memcpy(ACSStore, tempStore, sizeof(acsstore_t) * ACSStoreSize);
-        }
-    }
-
-    if(!ACSStoreSize && ACSStore)
-    {
-        Z_Free(ACSStore); ACSStore = 0;
-    }
-
-#endif // __JHEXEN__
-}
-
 static void writeMisc()
 {
 #if __JHEXEN__
@@ -4911,8 +4682,8 @@ static void writeMap()
 
         writeMapElements();
         writeThinkers();
-        writeScripts();
 #if __JHEXEN__
+        P_WriteMapACScriptData();
         SN_WriteSequences();
 #endif
         writeMisc();
@@ -4948,8 +4719,8 @@ static void readMap()
 
         readMapElements();
         readThinkers();
-        readScripts();
 #if __JHEXEN__
+        P_ReadMapACScriptData();
         SN_ReadSequences(mapVersion);
 #endif
         readMisc();
@@ -5076,7 +4847,9 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     respawnMonsters = hdr->respawnMonsters;
 #endif
 
-    readGlobalScriptData();
+#if __JHEXEN__
+    P_ReadGlobalACScriptData(hdr->version);
+#endif
 
     /*
      * Load the map and configure some game settings.
@@ -5498,7 +5271,9 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     SaveInfo_Write(saveInfo, svWriter);
     Writer_Delete(svWriter); svWriter = 0;
 
-    writeGlobalScriptData();
+#if __JHEXEN__
+    P_WriteGlobalACScriptData();
+#endif
 
     // Set the mobj archive numbers.
     initThingArchiveForSave();

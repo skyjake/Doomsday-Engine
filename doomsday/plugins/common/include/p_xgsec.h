@@ -189,7 +189,7 @@ void            XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane mo
 void            SV_WriteXGSector(Sector *sec);
 void            SV_ReadXGSector(Sector *sec);
 void            SV_WriteXGPlaneMover(thinker_t *th);
-int             SV_ReadXGPlaneMover(xgplanemover_t* mov);
+int             SV_ReadXGPlaneMover(xgplanemover_t* mov, int mapVersion);
 
 D_CMD(MovePlane);
 

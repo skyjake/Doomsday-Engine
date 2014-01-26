@@ -596,6 +596,11 @@ bool GridLayout::isEmpty() const
     return !size();
 }
 
+Vector2i GridLayout::maxGridSize() const
+{
+    return Vector2i(d->maxCols, d->maxRows);
+}
+
 Vector2i GridLayout::gridSize() const
 {
     return d->gridSize();

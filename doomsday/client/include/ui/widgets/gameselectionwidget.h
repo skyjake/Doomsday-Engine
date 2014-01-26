@@ -29,6 +29,9 @@ class GameSelectionWidget : public de::MenuWidget
 public:
     GameSelectionWidget(de::String const &name = "gameselection");
 
+    // Events.
+    void viewResized();
+
 private:
     DENG2_PRIVATE(d)
 };

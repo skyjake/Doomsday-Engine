@@ -885,7 +885,7 @@ void P_FinalizeMapChange(Uri const *uri)
 #endif
 
 #if __JHEXEN__
-    P_InitSky(gameMap);
+    P_InitSky(uri);
 #endif
 
     // Preload resources we'll likely need but which aren't present (usually) in the map.
@@ -1031,11 +1031,10 @@ static void P_ResetWorldState()
 #endif
 }
 
-char const *P_MapTitle(uint episode, uint map)
+char const *P_MapTitle(Uri const *mapUri)
 {
+    DENG_ASSERT(mapUri != 0);
     char const *title = 0;
-
-    Uri *mapUri = G_ComposeMapUri(episode, map);
 
     // Perhaps a MapInfo definition exists for the map?
     ddmapinfo_t mapInfo;
@@ -1060,14 +1059,12 @@ char const *P_MapTitle(uint episode, uint map)
     // In Hexen we can also look in MAPINFO for the map title.
     if(!title)
     {
-        if(mapinfo_t *mapInfo = P_MapInfo(mapUri))
+        if(mapinfo_t const *mapInfo = P_MapInfo(mapUri))
         {
             title = mapInfo->title;
         }
     }
 #endif
-
-    Uri_Delete(mapUri);
 
     if(!title || !title[0])
         return 0;
@@ -1119,7 +1116,10 @@ char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
 
 char const *P_CurrentMapTitle()
 {
-    return P_MapTitle(gameEpisode, gameMap);
+    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    char const *title = P_MapTitle(mapUri);
+    Uri_Delete(mapUri);
+    return title;
 }
 
 char const *P_CurrentMapAuthor(dd_bool supressGameAuthor)

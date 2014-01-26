@@ -63,6 +63,9 @@ int S_GetSoundID(char const *name);
 
 /**
  * Attempt to parse the script on the identified @a path as "sound definition" data.
+ *
+ * Important: This should never be called @em before MapInfoParser, as this may need
+ * to patch those definitions...
  */
 void SndInfoParser(Str const *path);
 #endif

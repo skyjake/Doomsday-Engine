@@ -74,11 +74,8 @@ public:
      */
     Str const *token();
 
-    Str const *readString();
     int readNumber();
-
-    int readSoundIndex();
-    uint readMapNumber();
+    Str const *readString();
     Uri *readUri(char const *defaultScheme = "");
 
     /**
