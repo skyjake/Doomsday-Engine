@@ -130,3 +130,20 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
 {
     setGridSize(3, ui::Filled, 6, ui::Filled);
 }
+
+void GameSelectionWidget::viewResized()
+{
+    MenuWidget::viewResized();
+
+    // If the view is too small, we'll want to reduce the number of items in the menu.
+    int const maxWidth  = style().rules().rule("gameselection.max.width").valuei();
+    int const maxHeight = style().rules().rule("gameselection.max.height").valuei();
+
+    Vector2i suitable(clamp(1, 3 * rule().width().valuei() / maxWidth,   3),
+                      clamp(1, 8 * rule().height().valuei() / maxHeight, 6));
+
+    if(layout().maxGridSize() != suitable)
+    {
+        setGridSize(suitable.x, ui::Filled, suitable.y, ui::Filled);
+    }
+}
