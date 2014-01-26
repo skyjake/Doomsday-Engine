@@ -58,6 +58,7 @@ public Font::RichFormat::IStyle
     ColorBank::Color dimmedColor;
     ColorBank::Color accentColor;
     ColorBank::Color dimAccentColor;
+    ColorBank::Color altAccentColor;
     Font::RichFormat::IStyle const *richStyle;
 
     TextDrawable glText;
@@ -112,6 +113,7 @@ public Font::RichFormat::IStyle
         dimmedColor    = st.colors().color("label.dimmed");
         accentColor    = st.colors().color("label.accent");
         dimAccentColor = st.colors().color("label.dimaccent");
+        altAccentColor = st.colors().color("label.altaccent");
 
         glText.setFont(self.font());
 
@@ -137,6 +139,9 @@ public Font::RichFormat::IStyle
 
         case Font::RichFormat::DimAccentColor:
             return dimAccentColor;
+
+        case Font::RichFormat::AltAccentColor:
+            return altAccentColor;
         }
     }
 

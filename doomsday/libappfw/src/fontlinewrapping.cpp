@@ -223,60 +223,6 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return false;
     }
 
-#if 0 // old algorithm disabled -- now using a character-based maxWrap
-    int findMaxWrapWithStep(int const stepSize, int const begin, int end,
-                            int const availableWidth,
-                            int *wrapPosMax)
-    {
-        int bestEnd = end;
-        int stepCounter = stepSize;
-
-        if(wrapPosMax) *wrapPosMax = begin + 1;
-
-        while(end < text.size() && text.at(end) != NEWLINE)
-        {
-            ++end;
-
-            if(!--stepCounter)
-            {
-                stepCounter = stepSize;
-
-                if(rangeAdvanceWidth(Rangei(begin, end)) > availableWidth)
-                {
-                    // Went too far.
-                    if(wrapPosMax) *wrapPosMax = --end;
-                    break;
-                }
-                // We have verified this fits in the available width.
-                bestEnd = end;
-            }
-        }
-        return bestEnd;
-    }
-
-    /**
-     * Starting at @a begin, find the furthest position that still fits inside
-     * @a availableWidth.
-     *
-     * @param begin           Start position of the text line.
-     * @param availableWidth  Available width in pixels for the line.
-     * @param wrapPosMax      Default breaking position for the line if no
-     *                        earlier suitable positions (e.g., whitespace)
-     *                        is found. However, at least @a begin + 1.
-     *
-     * @return Furthest position that fits in the width. May be equal to @a
-     * begin, if the width is very narrow.
-     */
-    int findMaxWrap(int const begin, int const availableWidth, int &wrapPosMax)
-    {
-        // Crude search.
-        int end = findMaxWrapWithStep(8, begin, begin, availableWidth, NULL);
-
-        // Accurate search.
-        return findMaxWrapWithStep(1, begin, end, availableWidth, &wrapPosMax);
-    }
-#else
-
     int findMaxWrap(int begin, int availableWidth) const
     {
         int width = 0;
@@ -292,9 +238,15 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
             width += charWidth;
             ++end;
         }
+        // Fine-tune the result to be accurate (kerning is ignored and rouding errors
+        // affect the end result when checking width character by character).
+        while(end > begin && rangeAdvanceWidth(Rangei(begin, end)) > availableWidth)
+        {
+            // Came out too long.
+            end--;
+        }
         return end;
     }
-#endif
 
     bool isWrappable(int at)
     {

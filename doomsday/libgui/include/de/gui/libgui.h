@@ -36,6 +36,10 @@
 #  define LIBGUI_PUBLIC
 #endif
 
+#if defined(WIN32) || defined(MACOSX)
+#  define LIBGUI_ACCURATE_TEXT_BOUNDS
+#endif
+
 #ifndef NDEBUG
 #  define LIBGUI_ASSERT_GL_OK() {GLuint _er = glGetError(); if(_er != GL_NO_ERROR) { \
     qWarning("OpenGL error: 0x%x", _er); DENG2_ASSERT(!"OpenGL operation failed"); }}

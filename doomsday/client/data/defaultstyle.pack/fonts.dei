@@ -38,11 +38,29 @@ group {
 group {
     condition: Version.OS == 'macx'
 
-    #script { loadOpenSans() }
+    script {
+        # Define mappings for native font styles and weights.
+        import App
+        App.addFontMapping("Helvetica Neue", {
+            ['regular', 25]: 'HelveticaNeue-Light',
+            ['regular', 50]: 'HelveticaNeue',
+            ['regular', 75]: 'HelveticaNeue-Bold',
+            ['italic',  25]: 'HelveticaNeue-LightItalic',
+            ['italic',  50]: 'HelveticaNeue-Italic',
+            ['italic',  75]: 'HelveticaNeue-BoldItalic'
+        })
+        App.addFontMapping("Menlo", {
+            ['regular', 25]: 'Menlo-Regular',
+            ['regular', 50]: 'Menlo-Regular',
+            ['regular', 75]: 'Menlo-Bold',
+            ['italic',  25]: 'Menlo-Italic',
+            ['italic',  50]: 'Menlo-Italic',
+            ['italic',  75]: 'Menlo-BoldItalic'
+        })
+    }
     
     font default {
         family: Helvetica Neue
-        #family: Open Sans
         size: 16pt
         weight: normal
         style: normal

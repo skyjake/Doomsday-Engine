@@ -129,7 +129,7 @@ void MapInfoParser(Str const *path)
                     info = &mapInfos[Str_Text(Uri_Compose(mapUri))];
 
                     // Initialize with the default values.
-                    std::memcpy(info, &defMapInfo, sizeof(*info));
+                    memcpy(info, &defMapInfo, sizeof(*info));
 
                     // Assign a logical map index.
                     info->map = logicalMapIndex++;
