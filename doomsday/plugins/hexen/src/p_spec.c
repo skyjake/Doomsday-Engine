@@ -244,14 +244,12 @@ dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
     return P_StartACScript(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
 }
 
-dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line,
-                             int side, mobj_t* mo)
+dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
 {
-    dd_bool             success;
+    dd_bool success = false;
 
     App_Log(DE2_MAP_VERBOSE, "Executing line special %i, mobj:%i", special, mo? mo->thinker.id : 0);
 
-    success = false;
     switch(special)
     {
     case 1: // Poly Start Line

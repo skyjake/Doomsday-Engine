@@ -50,11 +50,11 @@ void P_SpawnAllSpecialThinkers(void);
 
 dd_bool P_SectorTagIsBusy(int tag);
 
-dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line, int side, mobj_t* mo);
-dd_bool P_ActivateLine(Line* ld, mobj_t* mo, int side, int activationType);
+dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo);
+dd_bool P_ActivateLine(Line* ld, mobj_t *mo, int side, int activationType);
 
-void P_PlayerInSpecialSector(player_t* plr);
-void P_PlayerOnSpecialFloor(player_t* plr);
+void P_PlayerInSpecialSector(player_t *plr);
+void P_PlayerOnSpecialFloor(player_t *plr);
 
 /**
  * Parse an ANIMDEFS definition for flat/texture animations.

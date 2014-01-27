@@ -75,6 +75,8 @@ void P_ReadMapACScriptData(void);
 } // extern "C"
 #endif
 
+class Interpreter;
+
 /**
  * Action script thinker.
  */
@@ -89,28 +91,15 @@ typedef struct acscript_s {
     int stack[ACS_STACK_DEPTH];
     int stackPtr;
     int vars[MAX_ACS_SCRIPT_VARS];
-    int const *ip;
+    int const *pcodePtr;
 
 #ifdef __cplusplus
-    void push(int value)
-    {
-        stack[stackPtr++] = value;
-    }
+    Interpreter &interpreter() const;
 
-    int pop()
-    {
-        return stack[--stackPtr];
-    }
-
-    int top()
-    {
-        return stack[stackPtr - 1];
-    }
-
-    void drop()
-    {
-        stackPtr--;
-    }
+    void push(int value);
+    int pop();
+    int top() const;
+    void drop();
 #endif
 } ACScript;
 

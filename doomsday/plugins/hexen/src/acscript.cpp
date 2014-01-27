@@ -93,8 +93,8 @@ struct BytecodeScriptInfo
     };
 
     int flags;
-    int number;
-    int const *address;
+    int scriptNumber;
+    int const *pcodePtr;
     int argCount;
 
     // Current state:
@@ -161,16 +161,18 @@ public:
         BytecodeScriptInfo *info = _scriptInfo;
         for(int i = 0; i < _scriptCount; ++i, info++)
         {
-            info->number   = LONG(*buffer++);
-            info->address  = (int const *)(_pcode + LONG(*buffer++));
-            info->argCount = LONG(*buffer++);
-            info->state    = Inactive;
+            info->scriptNumber = LONG(*buffer++);
+            info->pcodePtr     = (int const *)(_pcode + LONG(*buffer++));
+            info->argCount     = LONG(*buffer++);
+            info->state        = Inactive;
 
-            if(info->number >= OPEN_SCRIPTS_BASE)
+            if(info->scriptNumber >= OPEN_SCRIPTS_BASE)
             {
                 info->flags |= BytecodeScriptInfo::Open;
-                info->number -= OPEN_SCRIPTS_BASE;
+                info->scriptNumber -= OPEN_SCRIPTS_BASE;
             }
+
+            DENG_ASSERT(info->argCount < MAX_ACS_SCRIPT_VARS);
         }
 
         _stringCount = LONG(*buffer++);
@@ -214,8 +216,16 @@ public:
      *
      * @return  Pointer to the @em newly-started script thinker; otherwise @c 0.
      */
-    ACScript *startScript(int scriptNumber, byte *args, mobj_t *activator, Line *line, int side)
+    ACScript *startScript(int scriptNumber, byte *args, mobj_t *activator = 0,
+        Line *line = 0, int side = 0)
     {
+        if(!hasScriptEntrypoint(scriptNumber))
+        {
+            // Script not found.
+            App_Log(DE2_SCR_WARNING, "ACS: Unknown script #%i", scriptNumber);
+            return 0;
+        }
+
         BytecodeScriptInfo &info = scriptInfo(scriptNumber);
 
         if(info.state == Suspended)
@@ -253,7 +263,7 @@ public:
         for(int i = 0; i < _scriptCount; ++i)
         {
             BytecodeScriptInfo &info = _scriptInfo[i];
-            if(info.number == scriptNumber)
+            if(info.scriptNumber == scriptNumber)
             {
                 return true;
             }
@@ -340,7 +350,7 @@ private:
         for(int i = 0; i < _scriptCount; ++i)
         {
             BytecodeScriptInfo &info = _scriptInfo[i];
-            if(info.number == scriptNumber)
+            if(info.scriptNumber == scriptNumber)
             {
                 return i;
             }
@@ -353,10 +363,10 @@ private:
         ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
         script->thinker.function = (thinkfunc_t) ACScript_Thinker;
 
-        script->number     = info.number;
-        script->infoIndex  = scriptInfoIndex(info.number);
-        script->ip         = info.address;
-        script->delayCount = delayCount;
+        script->number       = info.scriptNumber;
+        script->infoIndex    = scriptInfoIndex(info.scriptNumber);
+        script->pcodePtr = info.pcodePtr;
+        script->delayCount   = delayCount;
 
         Thinker_Add(&script->thinker);
 
@@ -375,25 +385,22 @@ private:
 static int MapVars[MAX_ACS_MAP_VARS];
 static int WorldVars[MAX_ACS_WORLD_VARS];
 
-static int const *PCodePtr;
-static byte SpecArgs[8];
+static byte SpecArgs[5];
 
 #define PRINT_BUFFER_SIZE 256
 static char PrintBuffer[PRINT_BUFFER_SIZE];
 
-static ACScript *newScript;
-
-static char ErrorMsg[128];
-
 /// The One ACS interpreter instance.
 static Interpreter interp;
 
+/// POD structure passed to bytecode commands.
 struct CommandArgs
 {
     ACScript *script;
     BytecodeScriptInfo *scriptInfo;
 };
 
+/// Bytecode command return value.
 enum CommandResult
 {
     Continue,
@@ -406,10 +413,13 @@ typedef CommandResult (*CommandFunc) (CommandArgs const &args);
 /// Helper macro for declaring an ACS command function.
 #define ACS_COMMAND(Name) CommandResult cmd##Name(CommandArgs const &args)
 
-#define S_PUSH(value) args.script->push(value)
-#define S_POP()       args.script->pop()
-#define S_TOP()       args.script->top()
-#define S_DROP()      args.script->drop()
+/// ACS command helper macros:
+#define S_INTERPRETER() args.script->interpreter()
+#define S_PCODEPTR      args.script->pcodePtr
+#define S_PUSH(value)   args.script->push(value)
+#define S_POP()         args.script->pop()
+#define S_TOP()         args.script->top()
+#define S_DROP()        args.script->drop()
 
 ACS_COMMAND(NOP)
 {
@@ -429,13 +439,13 @@ ACS_COMMAND(Suspend)
 
 ACS_COMMAND(PushNumber)
 {
-    S_PUSH(LONG(*PCodePtr++));
+    S_PUSH(LONG(*S_PCODEPTR++));
     return Continue;
 }
 
 ACS_COMMAND(LSpec1)
 {
-    int special = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
     SpecArgs[0] = S_POP();
     P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
                          args.script->activator);
@@ -445,7 +455,7 @@ ACS_COMMAND(LSpec1)
 
 ACS_COMMAND(LSpec2)
 {
-    int special = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
     SpecArgs[1] = S_POP();
     SpecArgs[0] = S_POP();
     P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
@@ -456,7 +466,7 @@ ACS_COMMAND(LSpec2)
 
 ACS_COMMAND(LSpec3)
 {
-    int special = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
     SpecArgs[2] = S_POP();
     SpecArgs[1] = S_POP();
     SpecArgs[0] = S_POP();
@@ -468,7 +478,7 @@ ACS_COMMAND(LSpec3)
 
 ACS_COMMAND(LSpec4)
 {
-    int special = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
     SpecArgs[3] = S_POP();
     SpecArgs[2] = S_POP();
     SpecArgs[1] = S_POP();
@@ -481,7 +491,7 @@ ACS_COMMAND(LSpec4)
 
 ACS_COMMAND(LSpec5)
 {
-    int special = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
     SpecArgs[4] = S_POP();
     SpecArgs[3] = S_POP();
     SpecArgs[2] = S_POP();
@@ -495,8 +505,8 @@ ACS_COMMAND(LSpec5)
 
 ACS_COMMAND(LSpec1Direct)
 {
-    int special = LONG(*PCodePtr++);
-    SpecArgs[0] = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
+    SpecArgs[0] = LONG(*S_PCODEPTR++);
     P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
                          args.script->activator);
 
@@ -505,9 +515,9 @@ ACS_COMMAND(LSpec1Direct)
 
 ACS_COMMAND(LSpec2Direct)
 {
-    int special = LONG(*PCodePtr++);
-    SpecArgs[0] = LONG(*PCodePtr++);
-    SpecArgs[1] = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
+    SpecArgs[0] = LONG(*S_PCODEPTR++);
+    SpecArgs[1] = LONG(*S_PCODEPTR++);
     P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
                          args.script->activator);
 
@@ -516,10 +526,10 @@ ACS_COMMAND(LSpec2Direct)
 
 ACS_COMMAND(LSpec3Direct)
 {
-    int special = LONG(*PCodePtr++);
-    SpecArgs[0] = LONG(*PCodePtr++);
-    SpecArgs[1] = LONG(*PCodePtr++);
-    SpecArgs[2] = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
+    SpecArgs[0] = LONG(*S_PCODEPTR++);
+    SpecArgs[1] = LONG(*S_PCODEPTR++);
+    SpecArgs[2] = LONG(*S_PCODEPTR++);
     P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
                          args.script->activator);
 
@@ -528,11 +538,11 @@ ACS_COMMAND(LSpec3Direct)
 
 ACS_COMMAND(LSpec4Direct)
 {
-    int special = LONG(*PCodePtr++);
-    SpecArgs[0] = LONG(*PCodePtr++);
-    SpecArgs[1] = LONG(*PCodePtr++);
-    SpecArgs[2] = LONG(*PCodePtr++);
-    SpecArgs[3] = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
+    SpecArgs[0] = LONG(*S_PCODEPTR++);
+    SpecArgs[1] = LONG(*S_PCODEPTR++);
+    SpecArgs[2] = LONG(*S_PCODEPTR++);
+    SpecArgs[3] = LONG(*S_PCODEPTR++);
     P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
                          args.script->activator);
 
@@ -541,12 +551,12 @@ ACS_COMMAND(LSpec4Direct)
 
 ACS_COMMAND(LSpec5Direct)
 {
-    int special = LONG(*PCodePtr++);
-    SpecArgs[0] = LONG(*PCodePtr++);
-    SpecArgs[1] = LONG(*PCodePtr++);
-    SpecArgs[2] = LONG(*PCodePtr++);
-    SpecArgs[3] = LONG(*PCodePtr++);
-    SpecArgs[4] = LONG(*PCodePtr++);
+    int special = LONG(*S_PCODEPTR++);
+    SpecArgs[0] = LONG(*S_PCODEPTR++);
+    SpecArgs[1] = LONG(*S_PCODEPTR++);
+    SpecArgs[2] = LONG(*S_PCODEPTR++);
+    SpecArgs[3] = LONG(*S_PCODEPTR++);
+    SpecArgs[4] = LONG(*S_PCODEPTR++);
     P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
                          args.script->activator);
 
@@ -628,169 +638,169 @@ ACS_COMMAND(GE)
 
 ACS_COMMAND(AssignScriptVar)
 {
-    args.script->vars[LONG(*PCodePtr++)] = S_POP();
+    args.script->vars[LONG(*S_PCODEPTR++)] = S_POP();
     return Continue;
 }
 
 ACS_COMMAND(AssignMapVar)
 {
-    MapVars[LONG(*PCodePtr++)] = S_POP();
+    MapVars[LONG(*S_PCODEPTR++)] = S_POP();
     return Continue;
 }
 
 ACS_COMMAND(AssignWorldVar)
 {
-    WorldVars[LONG(*PCodePtr++)] = S_POP();
+    WorldVars[LONG(*S_PCODEPTR++)] = S_POP();
     return Continue;
 }
 
 ACS_COMMAND(PushScriptVar)
 {
-    S_PUSH(args.script->vars[LONG(*PCodePtr++)]);
+    S_PUSH(args.script->vars[LONG(*S_PCODEPTR++)]);
     return Continue;
 }
 
 ACS_COMMAND(PushMapVar)
 {
-    S_PUSH(MapVars[LONG(*PCodePtr++)]);
+    S_PUSH(MapVars[LONG(*S_PCODEPTR++)]);
     return Continue;
 }
 
 ACS_COMMAND(PushWorldVar)
 {
-    S_PUSH(WorldVars[LONG(*PCodePtr++)]);
+    S_PUSH(WorldVars[LONG(*S_PCODEPTR++)]);
     return Continue;
 }
 
 ACS_COMMAND(AddScriptVar)
 {
-    args.script->vars[LONG(*PCodePtr++)] += S_POP();
+    args.script->vars[LONG(*S_PCODEPTR++)] += S_POP();
     return Continue;
 }
 
 ACS_COMMAND(AddMapVar)
 {
-    MapVars[LONG(*PCodePtr++)] += S_POP();
+    MapVars[LONG(*S_PCODEPTR++)] += S_POP();
     return Continue;
 }
 
 ACS_COMMAND(AddWorldVar)
 {
-    WorldVars[LONG(*PCodePtr++)] += S_POP();
+    WorldVars[LONG(*S_PCODEPTR++)] += S_POP();
     return Continue;
 }
 
 ACS_COMMAND(SubScriptVar)
 {
-    args.script->vars[LONG(*PCodePtr++)] -= S_POP();
+    args.script->vars[LONG(*S_PCODEPTR++)] -= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(SubMapVar)
 {
-    MapVars[LONG(*PCodePtr++)] -= S_POP();
+    MapVars[LONG(*S_PCODEPTR++)] -= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(SubWorldVar)
 {
-    WorldVars[LONG(*PCodePtr++)] -= S_POP();
+    WorldVars[LONG(*S_PCODEPTR++)] -= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(MulScriptVar)
 {
-    args.script->vars[LONG(*PCodePtr++)] *= S_POP();
+    args.script->vars[LONG(*S_PCODEPTR++)] *= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(MulMapVar)
 {
-    MapVars[LONG(*PCodePtr++)] *= S_POP();
+    MapVars[LONG(*S_PCODEPTR++)] *= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(MulWorldVar)
 {
-    WorldVars[LONG(*PCodePtr++)] *= S_POP();
+    WorldVars[LONG(*S_PCODEPTR++)] *= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(DivScriptVar)
 {
-    args.script->vars[LONG(*PCodePtr++)] /= S_POP();
+    args.script->vars[LONG(*S_PCODEPTR++)] /= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(DivMapVar)
 {
-    MapVars[LONG(*PCodePtr++)] /= S_POP();
+    MapVars[LONG(*S_PCODEPTR++)] /= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(DivWorldVar)
 {
-    WorldVars[LONG(*PCodePtr++)] /= S_POP();
+    WorldVars[LONG(*S_PCODEPTR++)] /= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(ModScriptVar)
 {
-    args.script->vars[LONG(*PCodePtr++)] %= S_POP();
+    args.script->vars[LONG(*S_PCODEPTR++)] %= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(ModMapVar)
 {
-    MapVars[LONG(*PCodePtr++)] %= S_POP();
+    MapVars[LONG(*S_PCODEPTR++)] %= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(ModWorldVar)
 {
-    WorldVars[LONG(*PCodePtr++)] %= S_POP();
+    WorldVars[LONG(*S_PCODEPTR++)] %= S_POP();
     return Continue;
 }
 
 ACS_COMMAND(IncScriptVar)
 {
-    args.script->vars[LONG(*PCodePtr++)]++;
+    args.script->vars[LONG(*S_PCODEPTR++)]++;
     return Continue;
 }
 
 ACS_COMMAND(IncMapVar)
 {
-    MapVars[LONG(*PCodePtr++)]++;
+    MapVars[LONG(*S_PCODEPTR++)]++;
     return Continue;
 }
 
 ACS_COMMAND(IncWorldVar)
 {
-    WorldVars[LONG(*PCodePtr++)]++;
+    WorldVars[LONG(*S_PCODEPTR++)]++;
     return Continue;
 }
 
 ACS_COMMAND(DecScriptVar)
 {
-    args.script->vars[LONG(*PCodePtr++)]--;
+    args.script->vars[LONG(*S_PCODEPTR++)]--;
     return Continue;
 }
 
 ACS_COMMAND(DecMapVar)
 {
-    MapVars[LONG(*PCodePtr++)]--;
+    MapVars[LONG(*S_PCODEPTR++)]--;
     return Continue;
 }
 
 ACS_COMMAND(DecWorldVar)
 {
-    WorldVars[LONG(*PCodePtr++)]--;
+    WorldVars[LONG(*S_PCODEPTR++)]--;
     return Continue;
 }
 
 ACS_COMMAND(Goto)
 {
-    PCodePtr = (int *) (interp.bytecode() + LONG(*PCodePtr));
+    S_PCODEPTR = (int *) (S_INTERPRETER().bytecode() + LONG(*S_PCODEPTR));
     return Continue;
 }
 
@@ -798,11 +808,11 @@ ACS_COMMAND(IfGoto)
 {
     if(S_POP())
     {
-        PCodePtr = (int *) (interp.bytecode() + LONG(*PCodePtr));
+        S_PCODEPTR = (int *) (S_INTERPRETER().bytecode() + LONG(*S_PCODEPTR));
     }
     else
     {
-        PCodePtr++;
+        S_PCODEPTR++;
     }
     return Continue;
 }
@@ -821,7 +831,7 @@ ACS_COMMAND(Delay)
 
 ACS_COMMAND(DelayDirect)
 {
-    args.script->delayCount = LONG(*PCodePtr++);
+    args.script->delayCount = LONG(*S_PCODEPTR++);
     return Stop;
 }
 
@@ -835,8 +845,8 @@ ACS_COMMAND(Random)
 
 ACS_COMMAND(RandomDirect)
 {
-    int low  = LONG(*PCodePtr++);
-    int high = LONG(*PCodePtr++);
+    int low  = LONG(*S_PCODEPTR++);
+    int high = LONG(*S_PCODEPTR++);
     S_PUSH(low + (P_Random() % (high - low + 1)));
     return Continue;
 }
@@ -855,8 +865,8 @@ ACS_COMMAND(ThingCount)
 
 ACS_COMMAND(ThingCountDirect)
 {
-    int type = LONG(*PCodePtr++);
-    int tid  = LONG(*PCodePtr++);
+    int type = LONG(*S_PCODEPTR++);
+    int tid  = LONG(*S_PCODEPTR++);
     // Anything to count?
     if(type + tid)
     {
@@ -874,7 +884,7 @@ ACS_COMMAND(TagWait)
 
 ACS_COMMAND(TagWaitDirect)
 {
-    args.scriptInfo->waitValue = LONG(*PCodePtr++);
+    args.scriptInfo->waitValue = LONG(*S_PCODEPTR++);
     args.scriptInfo->state = WaitingForTag;
     return Stop;
 }
@@ -888,7 +898,7 @@ ACS_COMMAND(PolyWait)
 
 ACS_COMMAND(PolyWaitDirect)
 {
-    args.scriptInfo->waitValue = LONG(*PCodePtr++);
+    args.scriptInfo->waitValue = LONG(*S_PCODEPTR++);
     args.scriptInfo->state = WaitingForPolyobj;
     return Stop;
 }
@@ -896,7 +906,7 @@ ACS_COMMAND(PolyWaitDirect)
 ACS_COMMAND(ChangeFloor)
 {
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, interp.string(S_POP())));
+    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(S_POP())));
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
     Str_Free(&path);
@@ -923,10 +933,10 @@ ACS_COMMAND(ChangeFloor)
 
 ACS_COMMAND(ChangeFloorDirect)
 {
-    int tag = LONG(*PCodePtr++);
+    int tag = LONG(*S_PCODEPTR++);
 
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, interp.string(LONG(*PCodePtr++))));
+    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
 
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
@@ -953,7 +963,7 @@ ACS_COMMAND(ChangeFloorDirect)
 ACS_COMMAND(ChangeCeiling)
 {
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, interp.string(S_POP())));
+    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(S_POP())));
 
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
@@ -981,10 +991,10 @@ ACS_COMMAND(ChangeCeiling)
 
 ACS_COMMAND(ChangeCeilingDirect)
 {
-    int tag = LONG(*PCodePtr++);
+    int tag = LONG(*S_PCODEPTR++);
 
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, interp.string(LONG(*PCodePtr++))));
+    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
 
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
@@ -1010,7 +1020,7 @@ ACS_COMMAND(ChangeCeilingDirect)
 
 ACS_COMMAND(Restart)
 {
-    PCodePtr = args.scriptInfo->address;
+    S_PCODEPTR = args.scriptInfo->pcodePtr;
     return Continue;
 }
 
@@ -1074,11 +1084,11 @@ ACS_COMMAND(IfNotGoto)
 {
     if(S_POP())
     {
-        PCodePtr++;
+        S_PCODEPTR++;
     }
     else
     {
-        PCodePtr = (int *) (interp.bytecode() + LONG(*PCodePtr));
+        S_PCODEPTR = (int *) (S_INTERPRETER().bytecode() + LONG(*S_PCODEPTR));
     }
     return Continue;
 }
@@ -1098,7 +1108,7 @@ ACS_COMMAND(ScriptWait)
 
 ACS_COMMAND(ScriptWaitDirect)
 {
-    args.scriptInfo->waitValue = LONG(*PCodePtr++);
+    args.scriptInfo->waitValue = LONG(*S_PCODEPTR++);
     args.scriptInfo->state = WaitingForScript;
     return Stop;
 }
@@ -1114,14 +1124,14 @@ ACS_COMMAND(ClearLineSpecial)
 
 ACS_COMMAND(CaseGoto)
 {
-    if(S_TOP() == LONG(*PCodePtr++))
+    if(S_TOP() == LONG(*S_PCODEPTR++))
     {
-        PCodePtr = (int *) (interp.bytecode() + LONG(*PCodePtr));
+        S_PCODEPTR = (int *) (S_INTERPRETER().bytecode() + LONG(*S_PCODEPTR));
         S_DROP();
     }
     else
     {
-        PCodePtr++;
+        S_PCODEPTR++;
     }
     return Continue;
 }
@@ -1167,7 +1177,7 @@ ACS_COMMAND(EndPrintBold)
 
 ACS_COMMAND(PrintString)
 {
-    strcat(PrintBuffer, interp.string(S_POP()));
+    strcat(PrintBuffer, S_INTERPRETER().string(S_POP()));
     return Continue;
 }
 
@@ -1241,14 +1251,14 @@ ACS_COMMAND(SectorSound)
     }
     int volume = S_POP();
 
-    S_StartSoundAtVolume(S_GetSoundID(interp.string(S_POP())), mobj, volume / 127.0f);
+    S_StartSoundAtVolume(S_GetSoundID(S_INTERPRETER().string(S_POP())), mobj, volume / 127.0f);
     return Continue;
 }
 
 ACS_COMMAND(ThingSound)
 {
     int volume   = S_POP();
-    int sound    = S_GetSoundID(interp.string(S_POP()));
+    int sound    = S_GetSoundID(S_INTERPRETER().string(S_POP()));
     int tid      = S_POP();
     int searcher = -1;
 
@@ -1283,7 +1293,7 @@ ACS_COMMAND(AmbientSound)
         }
     }
 
-    int sound = S_GetSoundID(interp.string(S_POP()));
+    int sound = S_GetSoundID(S_INTERPRETER().string(S_POP()));
     S_StartSoundAtVolume(sound, mobj, volume / 127.0f);
 
     return Continue;
@@ -1297,7 +1307,7 @@ ACS_COMMAND(SoundSequence)
         Sector *front = (Sector *) P_GetPtrp(args.script->line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
-    SN_StartSequenceName(mobj, interp.string(S_POP()));
+    SN_StartSequenceName(mobj, S_INTERPRETER().string(S_POP()));
 
     return Continue;
 }
@@ -1309,7 +1319,7 @@ ACS_COMMAND(SetLineTexture)
 #define TEXTURE_BOTTOM 2
 
     ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, interp.string(S_POP())));
+    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(S_POP())));
 
     Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
     Uri_SetPath(uri, Str_Text(&path));
@@ -1505,11 +1515,9 @@ void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
             continue;
         }
 
-        P_StartACScript(task->script, 0, task->args, NULL, NULL, 0);
-        if(newScript)
-        {
-            newScript->delayCount = TICRATE;
-        }
+        ACScript *script = interp.startScript(task->script, task->args);
+        DENG_ASSERT(script != 0);
+        script->delayCount = TICSPERSEC;
 
         deferredTasksSize -= 1;
         if(i == deferredTasksSize)
@@ -1536,8 +1544,6 @@ dd_bool P_StartACScript(int scriptNumber, uint map, byte *args, mobj_t *activato
 {
     DENG_ASSERT(!IS_CLIENT);
 
-    newScript = 0;
-
     if(map && map - 1 != gameMap)
     {
         // Script is not for the current map.
@@ -1545,17 +1551,7 @@ dd_bool P_StartACScript(int scriptNumber, uint map, byte *args, mobj_t *activato
         return newDeferredTask(map - 1, scriptNumber, args);
     }
 
-    if(!interp.hasScriptEntrypoint(scriptNumber))
-    {
-        // Script not found.
-        sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", scriptNumber);
-        P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, ErrorMsg);
-        return false;
-    }
-
-    newScript = interp.startScript(scriptNumber, args, activator, line, side);
-
-    return true;
+    return interp.startScript(scriptNumber, args, activator, line, side) != 0;
 }
 
 dd_bool P_TerminateACScript(int scriptNumber, uint /*map*/)
@@ -1762,6 +1758,31 @@ void P_ReadMapACScriptData()
     }
 }
 
+Interpreter &ACScript::interpreter() const
+{
+    return interp;
+}
+
+void ACScript::push(int value)
+{
+    stack[stackPtr++] = value;
+}
+
+int ACScript::pop()
+{
+    return stack[--stackPtr];
+}
+
+int ACScript::top() const
+{
+    return stack[stackPtr - 1];
+}
+
+void ACScript::drop()
+{
+    stackPtr--;
+}
+
 void ACScript_Thinker(ACScript *script)
 {
     DENG_ASSERT(script != 0);
@@ -1787,13 +1808,10 @@ void ACScript_Thinker(ACScript *script)
     CommandArgs args;
     args.script     = script;
     args.scriptInfo = &info;
-    PCodePtr        = script->ip;
 
     int action;
-    while((action = PCodeCmds[LONG(*PCodePtr++)](args)) == Continue)
+    while((action = PCodeCmds[LONG(*script->pcodePtr++)](args)) == Continue)
     {}
-
-    script->ip = PCodePtr;
 
     if(action == Terminate)
     {
@@ -1822,7 +1840,7 @@ void ACScript_Write(ACScript const *th)
     {
         SV_WriteLong(th->vars[i]);
     }
-    SV_WriteLong(((byte const *)th->ip) - interp.bytecode());
+    SV_WriteLong(((byte const *)th->pcodePtr) - interp.bytecode());
 }
 
 int ACScript_Read(ACScript *th, int mapVersion)
@@ -1865,7 +1883,7 @@ int ACScript_Read(ACScript *th, int mapVersion)
             th->vars[i] = SV_ReadLong();
         }
 
-        th->ip              = (int *) (interp.bytecode() + SV_ReadLong());
+        th->pcodePtr        = (int *) (interp.bytecode() + SV_ReadLong());
     }
     else
     {
@@ -1906,7 +1924,7 @@ int ACScript_Read(ACScript *th, int mapVersion)
             th->vars[i] = SV_ReadLong();
         }
 
-        th->ip              = (int *) (interp.bytecode() + SV_ReadLong());
+        th->pcodePtr        = (int *) (interp.bytecode() + SV_ReadLong());
     }
 
     th->thinker.function = (thinkfunc_t) ACScript_Thinker;
@@ -1922,10 +1940,10 @@ D_CMD(ScriptInfo)
     {
         BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
 
-        if(whichOne != -1 && whichOne != info.number)
+        if(whichOne != -1 && whichOne != info.scriptNumber)
             continue;
 
-        App_Log(DE2_SCR_MSG, "%d %s (a: %d, w: %d)", info.number,
+        App_Log(DE2_SCR_MSG, "%d %s (a: %d, w: %d)", info.scriptNumber,
                 scriptStateAsText(info.state), info.argCount, info.waitValue);
     }
 
