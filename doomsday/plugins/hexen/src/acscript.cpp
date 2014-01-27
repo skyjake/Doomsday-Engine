@@ -88,137 +88,329 @@ struct BytecodeScriptInfo
     int waitValue;
 };
 
-/**
- * Action-Code Script (ACS) bytecode interpreter.
- */
-class Interpreter
+int ACScriptInterpreter::scriptInfoIndex(int scriptNumber)
 {
-public:
-    int mapVars[MAX_ACS_MAP_VARS];
-    int worldVars[MAX_ACS_WORLD_VARS];
-
-    Interpreter()
-        : _pcode(0)
-        , _scriptCount(0)
-        , _scriptInfo(0)
-        , _stringCount(0)
-        , _strings(0)
-        , _deferredTasksSize(0)
-        , _deferredTasks(0)
-    {}
-
-    /**
-     * Load new ACS bytecode from the specified @a lump.
-     */
-    void loadBytecode(lumpnum_t lump)
+    for(int i = 0; i < _scriptCount; ++i)
     {
+        BytecodeScriptInfo &info = _scriptInfo[i];
+        if(info.scriptNumber == scriptNumber)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const *args, int delayCount)
+{
+    // Is the script is already executing?
+    if(info.state != Inactive) return 0;
+
+    ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
+    script->thinker.function = (thinkfunc_t) ACScript_Thinker;
+
+    script->number     = info.scriptNumber;
+    script->infoIndex  = scriptInfoIndex(info.scriptNumber);
+    script->pcodePtr   = info.pcodePtr;
+    script->delayCount = delayCount;
+
+    for(int i = 0; i < info.argCount; ++i)
+    {
+        DENG_ASSERT(args != 0);
+        script->vars[i] = args[i];
+    }
+
+    Thinker_Add(&script->thinker);
+
+    info.state = Running;
+
+    return script;
+}
+
+bool ACScriptInterpreter::newDeferredTask(uint map, int scriptNumber, byte const *args)
+{
+    if(_deferredTasksSize)
+    {
+        // Don't allow duplicates.
+        for(int i = 0; i < _deferredTasksSize; ++i)
+        {
+            DeferredTask &task = _deferredTasks[i];
+            if(task.scriptNumber == scriptNumber && task.map == map)
+            {
+                return false;
+            }
+        }
+
+        _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, ++_deferredTasksSize * sizeof(DeferredTask), PU_GAMESTATIC);
+    }
+    else
+    {
+        _deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask), PU_GAMESTATIC, 0);
+        _deferredTasksSize = 1;
+    }
+
+    DeferredTask *task = &_deferredTasks[_deferredTasksSize - 1];
+
+    task->map          = map;
+    task->scriptNumber = scriptNumber;
+    task->args[0]      = args[0];
+    task->args[1]      = args[1];
+    task->args[2]      = args[2];
+    task->args[3]      = args[3];
+
+    return true;
+}
+
+ACScriptInterpreter::ACScriptInterpreter()
+    : _pcode(0)
+    , _scriptCount(0)
+    , _scriptInfo(0)
+    , _stringCount(0)
+    , _strings(0)
+    , _deferredTasksSize(0)
+    , _deferredTasks(0)
+{}
+
+void ACScriptInterpreter::loadBytecode(lumpnum_t lump)
+{
 #define OPEN_SCRIPTS_BASE 1000
 
-        DENG_ASSERT(!IS_CLIENT);
+    DENG_ASSERT(!IS_CLIENT);
 
-        size_t const lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
+    size_t const lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
 
-        App_Log(DE2_SCR_VERBOSE, "Loading ACS bytecode lump %s:%s (#%i)...",
-                F_PrettyPath(Str_Text(W_LumpSourceFile(lump))),
-                Str_Text(W_LumpName(lump)), lump);
+    App_Log(DE2_SCR_VERBOSE, "Loading ACS bytecode lump %s:%s (#%i)...",
+            F_PrettyPath(Str_Text(W_LumpSourceFile(lump))),
+            Str_Text(W_LumpName(lump)), lump);
 
-        _scriptCount = 0;
+    _scriptCount = 0;
 
-        int const *readBuf = 0;
-        if(lumpLength >= sizeof(BytecodeHeader))
+    int const *readBuf = 0;
+    if(lumpLength >= sizeof(BytecodeHeader))
+    {
+        void *region = Z_Malloc(lumpLength, PU_MAP, 0);
+        W_ReadLump(lump, (uint8_t *)region);
+        BytecodeHeader const *header = (BytecodeHeader const *) region;
+        _pcode = (byte const *) header;
+
+        if(LONG(header->infoOffset) < (int)lumpLength)
         {
-            void *region = Z_Malloc(lumpLength, PU_MAP, 0);
-            W_ReadLump(lump, (uint8_t *)region);
-            BytecodeHeader const *header = (BytecodeHeader const *) region;
-            _pcode = (byte const *) header;
+            readBuf = (int *) ((byte const *) header + LONG(header->infoOffset));
+            _scriptCount = LONG(*readBuf++);
+        }
+    }
 
-            if(LONG(header->infoOffset) < (int)lumpLength)
-            {
-                readBuf = (int *) ((byte const *) header + LONG(header->infoOffset));
-                _scriptCount = LONG(*readBuf++);
-            }
+    if(!_scriptCount)
+    {
+        // Empty/Invalid lump.
+        App_Log(DE2_SCR_WARNING, "Lump #%i does not appear to be valid ACS bytecode data", lump);
+        return;
+    }
+
+    _scriptInfo = (BytecodeScriptInfo *) Z_Calloc(_scriptCount * sizeof(*_scriptInfo), PU_MAP, 0);
+
+    BytecodeScriptInfo *info = _scriptInfo;
+    for(int i = 0; i < _scriptCount; ++i, info++)
+    {
+        info->scriptNumber = LONG(*readBuf++);
+        info->pcodePtr     = (int const *)(_pcode + LONG(*readBuf++));
+        info->argCount     = LONG(*readBuf++);
+        info->state        = Inactive;
+
+        if(info->scriptNumber >= OPEN_SCRIPTS_BASE)
+        {
+            info->flags |= BytecodeScriptInfo::Open;
+            info->scriptNumber -= OPEN_SCRIPTS_BASE;
         }
 
-        if(!_scriptCount)
-        {
-            // Empty/Invalid lump.
-            App_Log(DE2_SCR_WARNING, "Lump #%i does not appear to be valid ACS bytecode data", lump);
-            return;
-        }
+        DENG_ASSERT(info->argCount <= MAX_ACS_SCRIPT_VARS);
+    }
 
-        _scriptInfo = (BytecodeScriptInfo *) Z_Calloc(_scriptCount * sizeof(*_scriptInfo), PU_MAP, 0);
-
-        BytecodeScriptInfo *info = _scriptInfo;
-        for(int i = 0; i < _scriptCount; ++i, info++)
-        {
-            info->scriptNumber = LONG(*readBuf++);
-            info->pcodePtr     = (int const *)(_pcode + LONG(*readBuf++));
-            info->argCount     = LONG(*readBuf++);
-            info->state        = Inactive;
-
-            if(info->scriptNumber >= OPEN_SCRIPTS_BASE)
-            {
-                info->flags |= BytecodeScriptInfo::Open;
-                info->scriptNumber -= OPEN_SCRIPTS_BASE;
-            }
-
-            DENG_ASSERT(info->argCount <= MAX_ACS_SCRIPT_VARS);
-        }
-
-        _stringCount = LONG(*readBuf++);
-        _strings = (Str *) Z_Malloc(_stringCount * sizeof(*_strings), PU_MAP, 0);
-        for(int i = 0; i < _stringCount; ++i)
-        {
-            Str_InitStatic(&_strings[i], (char const *)(_pcode + LONG(*readBuf++)));
-        }
+    _stringCount = LONG(*readBuf++);
+    _strings = (Str *) Z_Malloc(_stringCount * sizeof(*_strings), PU_MAP, 0);
+    for(int i = 0; i < _stringCount; ++i)
+    {
+        Str_InitStatic(&_strings[i], (char const *)(_pcode + LONG(*readBuf++)));
+    }
 
 #undef OPEN_SCRIPTS_BASE
-    }
+}
 
-    /**
-     * Returns the total number of script entrypoints in the loaded bytecode.
-     */
-    int scriptCount() const
+int ACScriptInterpreter::scriptCount() const
+{
+    return _scriptCount;
+}
+
+void ACScriptInterpreter::startOpenScripts()
+{
+    DENG_ASSERT(!IS_CLIENT);
+
+    // Each is allotted 1 second for initialization.
+    for(int i = 0; i < _scriptCount; ++i)
     {
-        return _scriptCount;
-    }
+        BytecodeScriptInfo &info = _scriptInfo[i];
 
-    /**
-     * Start all scripts flagged to begin immediately "on open".
-     */
-    void startOpenScripts()
-    {
-        DENG_ASSERT(!IS_CLIENT);
-
-        // Each is allotted 1 second for initialization.
-        for(int i = 0; i < _scriptCount; ++i)
+        if(info.flags & BytecodeScriptInfo::Open)
         {
-            BytecodeScriptInfo &info = _scriptInfo[i];
-
-            if(info.flags & BytecodeScriptInfo::Open)
-            {
-                ACScript *script = newACScript(info, 0/*no args*/, TICSPERSEC);
-                DENG_ASSERT(script != 0);
-                DENG_UNUSED(script);
-            }
+            ACScript *script = newACScript(info, 0/*no args*/, TICSPERSEC);
+            DENG_ASSERT(script != 0);
+            DENG_UNUSED(script);
         }
     }
+}
 
-    /**
-     * Start/resume the specified script.
-     *
-     * @return  @c true iff a script was newly started (or deferred).
-     */
-    bool startScript(int scriptNumber, uint map, byte *args, mobj_t *activator = 0,
-        Line *line = 0, int side = 0)
+bool ACScriptInterpreter::startScript(int scriptNumber, uint map, byte *args, mobj_t *activator,
+    Line *line, int side)
+{
+    DENG_ASSERT(!IS_CLIENT);
+
+    if(map && map - 1 != gameMap)
     {
-        DENG_ASSERT(!IS_CLIENT);
+        // Script is not for the current map.
+        // Add it to the store to be started when that map is next entered.
+        return newDeferredTask(map - 1, scriptNumber, args);
+    }
 
-        if(map && map - 1 != gameMap)
+    if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
+    {
+        // Resume a suspended script?
+        if(info->state == Suspended)
         {
-            // Script is not for the current map.
-            // Add it to the store to be started when that map is next entered.
-            return newDeferredTask(map - 1, scriptNumber, args);
+            info->state = Running;
+            return true;
+        }
+        else if(ACScript *script = newACScript(*info, args))
+        {
+            script->activator = activator;
+            script->line      = line;
+            script->side      = side;
+            return true;
+        }
+    }
+    else
+    {
+        // Script not found.
+        App_Log(DE2_SCR_WARNING, "ACS: Unknown script #%i", scriptNumber);
+    }
+
+    return false; // Perhaps its already executing?
+}
+
+bool ACScriptInterpreter::suspendScript(int scriptNumber, uint /*map*/)
+{
+    if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
+    {
+        // Some states disallow suspension.
+        if(info->state != Inactive && info->state != Suspended &&
+           info->state != Terminating)
+        {
+            info->state = Suspended;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ACScriptInterpreter::terminateScript(int scriptNumber, uint /*map*/)
+{
+    if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
+    {
+        // Some states disallow termination.
+        if(info->state != Inactive && info->state != Terminating)
+        {
+            info->state = Terminating;
+            return true;
+        }
+    }
+    return false;
+}
+
+void ACScriptInterpreter::tagFinished(int tag)
+{
+    if(P_SectorTagIsBusy(tag)) return;
+
+    for(int i = 0; i < _scriptCount; ++i)
+    {
+        BytecodeScriptInfo &info = _scriptInfo[i];
+        if(info.state == WaitingForTag && info.waitValue == tag)
+        {
+            info.state = Running;
+        }
+    }
+}
+
+void ACScriptInterpreter::polyobjFinished(int tag)
+{
+    if(P_SectorTagIsBusy(tag)) return;
+
+    for(int i = 0; i < _scriptCount; ++i)
+    {
+        BytecodeScriptInfo &info = _scriptInfo[i];
+        if(info.state == WaitingForPolyobj && info.waitValue == tag)
+        {
+            info.state = Running;
+        }
+    }
+}
+
+bool ACScriptInterpreter::hasScriptEntrypoint(int scriptNumber)
+{
+    for(int i = 0; i < _scriptCount; ++i)
+    {
+        BytecodeScriptInfo &info = _scriptInfo[i];
+        if(info.scriptNumber == scriptNumber)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+BytecodeScriptInfo &ACScriptInterpreter::scriptInfo(int scriptNumber)
+{
+    return _scriptInfo[scriptInfoIndex(scriptNumber)];
+}
+
+Str const *ACScriptInterpreter::string(int stringNumber) const
+{
+    DENG_ASSERT(stringNumber >= 0 && stringNumber < _stringCount);
+    return &_strings[stringNumber];
+}
+
+byte const *ACScriptInterpreter::bytecode() const
+{
+    return _pcode;
+}
+
+void ACScriptInterpreter::clearDeferredTasks()
+{
+    Z_Free(_deferredTasks); _deferredTasks = 0;
+    _deferredTasksSize = 0;
+}
+
+void ACScriptInterpreter::runDeferredTasks(uint map/*Uri const *mapUri*/)
+{
+    //DENG_ASSERT(mapUri != 0);
+
+    if(deathmatch)
+    {
+        /// @todo Do we really want to disallow deferred ACS tasks in deathmatch?
+        /// What is the actual intention here? -ds
+        return;
+    }
+
+    int const origSize = _deferredTasksSize;
+
+    int i = 0;
+    while(i < _deferredTasksSize)
+    {
+        DeferredTask *task = &_deferredTasks[i];
+        int scriptNumber = task->scriptNumber;
+
+        if(task->map != map)
+        {
+            i++;
+            continue;
         }
 
         if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
@@ -227,417 +419,208 @@ public:
             if(info->state == Suspended)
             {
                 info->state = Running;
-                return true;
-            }
-            else if(ACScript *script = newACScript(*info, args))
-            {
-                script->activator = activator;
-                script->line      = line;
-                script->side      = side;
-                return true;
-            }
-        }
-        else
-        {
-            // Script not found.
-            App_Log(DE2_SCR_WARNING, "ACS: Unknown script #%i", scriptNumber);
-        }
-
-        return false; // Perhaps its already executing?
-    }
-
-    /**
-     * Returns @c true iff @a scriptNumber is a known entrypoint.
-     */
-    bool hasScriptEntrypoint(int scriptNumber)
-    {
-        for(int i = 0; i < _scriptCount; ++i)
-        {
-            BytecodeScriptInfo &info = _scriptInfo[i];
-            if(info.scriptNumber == scriptNumber)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Lookup the info structure for the specified @a scriptNumber (entrypoint).
-     */
-    BytecodeScriptInfo &scriptInfo(int scriptNumber)
-    {
-        return _scriptInfo[scriptInfoIndex(scriptNumber)];
-    }
-
-    inline BytecodeScriptInfo *scriptInfoPtr(int scriptNumber) {
-        return hasScriptEntrypoint(scriptNumber)? &scriptInfo(scriptNumber) : 0;
-    }
-
-    /**
-     * Provides readonly access to a string constant from the loaded bytecode.
-     */
-    Str const *string(int stringNumber)
-    {
-        DENG_ASSERT(stringNumber >= 0 && stringNumber < _stringCount);
-        return &_strings[stringNumber];
-    }
-
-    /**
-     * Provides readonly access to the loaded bytecode.
-     */
-    byte const *bytecode() const
-    {
-        return _pcode;
-    }
-
-    void clearDeferredTasks()
-    {
-        Z_Free(_deferredTasks); _deferredTasks = 0;
-        _deferredTasksSize = 0;
-    }
-
-    void runDeferredTasks(uint map/*Uri const *mapUri*/)
-    {
-        //DENG_ASSERT(mapUri != 0);
-
-        if(deathmatch)
-        {
-            /// @todo Do we really want to disallow deferred ACS tasks in deathmatch?
-            /// What is the actual intention here? -ds
-            return;
-        }
-
-        int const origSize = _deferredTasksSize;
-
-        int i = 0;
-        while(i < _deferredTasksSize)
-        {
-            DeferredTask *task = &_deferredTasks[i];
-            int scriptNumber = task->scriptNumber;
-
-            if(task->map != map)
-            {
-                i++;
-                continue;
-            }
-
-            if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
-            {
-                // Resume a suspended script?
-                if(info->state == Suspended)
-                {
-                    info->state = Running;
-                }
-                else
-                {
-                    newACScript(*info, task->args, TICSPERSEC);
-                }
             }
             else
             {
-                App_Log(DE2_SCR_WARNING, "ACS: Unknown script #%i", scriptNumber);
-            }
-
-            _deferredTasksSize -= 1;
-            if(i == _deferredTasksSize)
-                break;
-
-            memmove(&_deferredTasks[i], &_deferredTasks[i + 1], sizeof(DeferredTask) * (_deferredTasksSize - i));
-        }
-
-        if(_deferredTasksSize == origSize)
-            return;
-
-        if(_deferredTasksSize)
-        {
-            _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
-            return;
-        }
-
-        Z_Free(_deferredTasks);
-        _deferredTasks = 0;
-    }
-
-    /**
-     * To be called when the specified @a script is to be formally terminated.
-     * All other scripts waiting on this are notified.
-     *
-     * @param script  The script to be formally terminated. Note that the script
-     *                is considered free'd after calling this and pointers to it
-     *                should be considered invalid.
-     */
-    void scriptFinished(ACScript *script)
-    {
-        if(!script) return;
-
-        // This script has now finished.
-        scriptInfoFor(script).state = Inactive;
-
-        // Notify any scripts which are waiting for this script to finish.
-        for(int i = 0; i < _scriptCount; ++i)
-        {
-            BytecodeScriptInfo &info = _scriptInfo[i];
-            if(info.state == WaitingForScript && info.waitValue == script->number)
-            {
-                info.state = Running;
-            }
-        }
-
-        Thinker_Remove(&script->thinker);
-    }
-
-    void writeWorldScriptData()
-    {
-        SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
-
-        SV_WriteByte(3); // version byte
-
-        for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
-        {
-            SV_WriteLong(worldVars[i]);
-        }
-
-        // Serialize the deferred task queue.
-        SV_WriteLong(_deferredTasksSize);
-        for(int i = 0; i < _deferredTasksSize; ++i)
-        {
-            DeferredTask const *task = &_deferredTasks[i];
-            SV_WriteLong(task->map);
-            SV_WriteLong(task->scriptNumber);
-            for(int k = 0; k < 4; ++k)
-            {
-                SV_WriteByte(task->args[k]);
-            }
-        }
-    }
-
-    void readWorldScriptData(int saveVersion)
-    {
-        int ver = 1;
-
-        if(saveVersion >= 7)
-        {
-            SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
-            ver = SV_ReadByte();
-        }
-
-        for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
-        {
-            worldVars[i] = SV_ReadLong();
-        }
-
-        // Deserialize the deferred task queue.
-        if(ver >= 3)
-        {
-            _deferredTasksSize = SV_ReadLong();
-            if(_deferredTasksSize)
-            {
-                if(_deferredTasks)
-                    _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
-                else
-                    _deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC, 0);
-
-                for(int i = 0; i < _deferredTasksSize; ++i)
-                {
-                    DeferredTask *task = &_deferredTasks[i];
-
-                    task->map          = SV_ReadLong();
-                    task->scriptNumber = SV_ReadLong();
-                    for(int k = 0; k < 4; ++k)
-                    {
-                        task->args[k] = SV_ReadByte();
-                    }
-                }
+                newACScript(*info, task->args, TICSPERSEC);
             }
         }
         else
         {
-            // Old format.
-            DeferredTask tempTasks[20];
+            App_Log(DE2_SCR_WARNING, "ACS: Unknown script #%i", scriptNumber);
+        }
 
-            _deferredTasksSize = 0;
-            for(int i = 0; i < 20; ++i)
+        _deferredTasksSize -= 1;
+        if(i == _deferredTasksSize)
+            break;
+
+        memmove(&_deferredTasks[i], &_deferredTasks[i + 1], sizeof(DeferredTask) * (_deferredTasksSize - i));
+    }
+
+    if(_deferredTasksSize == origSize)
+        return;
+
+    if(_deferredTasksSize)
+    {
+        _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
+        return;
+    }
+
+    Z_Free(_deferredTasks);
+    _deferredTasks = 0;
+}
+
+void ACScriptInterpreter::scriptFinished(ACScript *script)
+{
+    if(!script) return;
+
+    // This script has now finished.
+    scriptInfoFor(script).state = Inactive;
+
+    // Notify any scripts which are waiting for this script to finish.
+    for(int i = 0; i < _scriptCount; ++i)
+    {
+        BytecodeScriptInfo &info = _scriptInfo[i];
+        if(info.state == WaitingForScript && info.waitValue == script->number)
+        {
+            info.state = Running;
+        }
+    }
+
+    Thinker_Remove(&script->thinker);
+}
+
+void ACScriptInterpreter::writeWorldScriptData()
+{
+    SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
+
+    SV_WriteByte(3); // version byte
+
+    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+    {
+        SV_WriteLong(worldVars[i]);
+    }
+
+    // Serialize the deferred task queue.
+    SV_WriteLong(_deferredTasksSize);
+    for(int i = 0; i < _deferredTasksSize; ++i)
+    {
+        DeferredTask const *task = &_deferredTasks[i];
+        SV_WriteLong(task->map);
+        SV_WriteLong(task->scriptNumber);
+        for(int k = 0; k < 4; ++k)
+        {
+            SV_WriteByte(task->args[k]);
+        }
+    }
+}
+
+void ACScriptInterpreter::readWorldScriptData(int saveVersion)
+{
+    int ver = 1;
+
+    if(saveVersion >= 7)
+    {
+        SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
+        ver = SV_ReadByte();
+    }
+
+    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+    {
+        worldVars[i] = SV_ReadLong();
+    }
+
+    // Deserialize the deferred task queue.
+    if(ver >= 3)
+    {
+        _deferredTasksSize = SV_ReadLong();
+        if(_deferredTasksSize)
+        {
+            if(_deferredTasks)
+                _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
+            else
+                _deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC, 0);
+
+            for(int i = 0; i < _deferredTasksSize; ++i)
             {
-                int map            = SV_ReadLong();
-                DeferredTask *task = &tempTasks[map < 0? 19 : _deferredTasksSize++];
+                DeferredTask *task = &_deferredTasks[i];
 
-                task->map          = map < 0? 0 : map-1;
+                task->map          = SV_ReadLong();
                 task->scriptNumber = SV_ReadLong();
                 for(int k = 0; k < 4; ++k)
                 {
                     task->args[k] = SV_ReadByte();
                 }
             }
+        }
+    }
+    else
+    {
+        // Old format.
+        DeferredTask tempTasks[20];
 
-            if(saveVersion < 7)
+        _deferredTasksSize = 0;
+        for(int i = 0; i < 20; ++i)
+        {
+            int map            = SV_ReadLong();
+            DeferredTask *task = &tempTasks[map < 0? 19 : _deferredTasksSize++];
+
+            task->map          = map < 0? 0 : map-1;
+            task->scriptNumber = SV_ReadLong();
+            for(int k = 0; k < 4; ++k)
             {
-                SV_Seek(12); // Junk.
-            }
-
-            if(_deferredTasksSize)
-            {
-                if(_deferredTasks)
-                    _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
-                else
-                    _deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC, 0);
-
-                memcpy(_deferredTasks, tempTasks, sizeof(DeferredTask) * _deferredTasksSize);
+                task->args[k] = SV_ReadByte();
             }
         }
 
-        if(!_deferredTasksSize && _deferredTasks)
+        if(saveVersion < 7)
         {
-            Z_Free(_deferredTasks); _deferredTasks = 0;
-        }
-    }
-
-    void writeMapScriptData()
-    {
-        SV_BeginSegment(ASEG_SCRIPTS);
-
-        for(int i = 0; i < _scriptCount; ++i)
-        {
-            BytecodeScriptInfo &info = _scriptInfo[i];
-            SV_WriteShort(info.state);
-            SV_WriteShort(info.waitValue);
+            SV_Seek(12); // Junk.
         }
 
-        for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
-        {
-            SV_WriteLong(mapVars[i]);
-        }
-    }
-
-    void readMapScriptData()
-    {
-        SV_AssertSegment(ASEG_SCRIPTS);
-
-        for(int i = 0; i < _scriptCount; ++i)
-        {
-            BytecodeScriptInfo &info = _scriptInfo[i];
-
-            info.state     = (ACScriptState) SV_ReadShort();
-            info.waitValue = SV_ReadShort();
-        }
-
-        for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
-        {
-            mapVars[i] = SV_ReadLong();
-        }
-    }
-
-public: /// @todo make private:
-    BytecodeScriptInfo &scriptInfoByIndex(int index)
-    {
-        DENG_ASSERT(index >= 0 && index < _scriptCount);
-        return _scriptInfo[index];
-    }
-
-    BytecodeScriptInfo &scriptInfoFor(ACScript *script)
-    {
-        DENG_ASSERT(script != 0);
-        return scriptInfoByIndex(script->infoIndex);
-    }
-
-private:
-    /**
-     * A deferred task is enqueued when a script is started on a map not currently loaded.
-     */
-    struct DeferredTask
-    {
-        uint map;         ///< Target map.
-        int scriptNumber; ///< On the target map.
-        byte args[4];
-    };
-
-    bool newDeferredTask(uint map, int scriptNumber, byte const *args)
-    {
         if(_deferredTasksSize)
         {
-            // Don't allow duplicates.
-            for(int i = 0; i < _deferredTasksSize; ++i)
-            {
-                DeferredTask &task = _deferredTasks[i];
-                if(task.scriptNumber == scriptNumber && task.map == map)
-                {
-                    return false;
-                }
-            }
+            if(_deferredTasks)
+                _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
+            else
+                _deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC, 0);
 
-            _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, ++_deferredTasksSize * sizeof(DeferredTask), PU_GAMESTATIC);
+            memcpy(_deferredTasks, tempTasks, sizeof(DeferredTask) * _deferredTasksSize);
         }
-        else
-        {
-            _deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask), PU_GAMESTATIC, 0);
-            _deferredTasksSize = 1;
-        }
-
-        DeferredTask *task = &_deferredTasks[_deferredTasksSize - 1];
-
-        task->map          = map;
-        task->scriptNumber = scriptNumber;
-        task->args[0]      = args[0];
-        task->args[1]      = args[1];
-        task->args[2]      = args[2];
-        task->args[3]      = args[3];
-
-        return true;
     }
 
-    /**
-     * Returns the logical index of a @a scriptNumber; otherwise @c -1.
-     */
-    int scriptInfoIndex(int scriptNumber)
+    if(!_deferredTasksSize && _deferredTasks)
     {
-        for(int i = 0; i < _scriptCount; ++i)
-        {
-            BytecodeScriptInfo &info = _scriptInfo[i];
-            if(info.scriptNumber == scriptNumber)
-            {
-                return i;
-            }
-        }
-        return -1;
+        Z_Free(_deferredTasks); _deferredTasks = 0;
     }
+}
 
-    ACScript *newACScript(BytecodeScriptInfo &info, byte const *args, int delayCount = 0)
+void ACScriptInterpreter::writeMapScriptData()
+{
+    SV_BeginSegment(ASEG_SCRIPTS);
+
+    for(int i = 0; i < _scriptCount; ++i)
     {
-        // Is the script is already executing?
-        if(info.state != Inactive) return 0;
-
-        ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
-        script->thinker.function = (thinkfunc_t) ACScript_Thinker;
-
-        script->number     = info.scriptNumber;
-        script->infoIndex  = scriptInfoIndex(info.scriptNumber);
-        script->pcodePtr   = info.pcodePtr;
-        script->delayCount = delayCount;
-
-        for(int i = 0; i < info.argCount; ++i)
-        {
-            DENG_ASSERT(args != 0);
-            script->vars[i] = args[i];
-        }
-
-        Thinker_Add(&script->thinker);
-
-        info.state = Running;
-
-        return script;
+        BytecodeScriptInfo &info = _scriptInfo[i];
+        SV_WriteShort(info.state);
+        SV_WriteShort(info.waitValue);
     }
 
-    byte const *_pcode; ///< Start of the loaded bytecode.
+    for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
+    {
+        SV_WriteLong(mapVars[i]);
+    }
+}
 
-    int _scriptCount; ///< Number of script entrypoints.
-    BytecodeScriptInfo *_scriptInfo;
+void ACScriptInterpreter::readMapScriptData()
+{
+    SV_AssertSegment(ASEG_SCRIPTS);
 
-    int _stringCount;
-    Str *_strings;
+    for(int i = 0; i < _scriptCount; ++i)
+    {
+        BytecodeScriptInfo &info = _scriptInfo[i];
 
-    int _deferredTasksSize;
-    DeferredTask *_deferredTasks;
-};
+        info.state     = (ACScriptState) SV_ReadShort();
+        info.waitValue = SV_ReadShort();
+    }
+
+    for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
+    {
+        mapVars[i] = SV_ReadLong();
+    }
+}
+
+BytecodeScriptInfo &ACScriptInterpreter::scriptInfoByIndex(int index)
+{
+    DENG_ASSERT(index >= 0 && index < _scriptCount);
+    return _scriptInfo[index];
+}
+
+BytecodeScriptInfo &ACScriptInterpreter::scriptInfoFor(ACScript *script)
+{
+    DENG_ASSERT(script != 0);
+    return scriptInfoByIndex(script->infoIndex);
+}
 
 static byte SpecArgs[5];
 
@@ -645,7 +628,7 @@ static byte SpecArgs[5];
 static char PrintBuffer[PRINT_BUFFER_SIZE];
 
 /// The One ACS interpreter instance.
-static Interpreter interp;
+static ACScriptInterpreter interp;
 
 /// POD structure passed to bytecode commands.
 struct CommandArgs
@@ -1680,6 +1663,12 @@ static CommandFunc PCodeCmds[] =
     cmdThingSound, cmdEndPrintBold
 };
 
+void P_InitACScript()
+{
+    memset(interp.worldVars, 0, sizeof(interp.worldVars));
+    interp.clearDeferredTasks();
+}
+
 void P_LoadACScripts(lumpnum_t lump)
 {
     if(IS_CLIENT) return;
@@ -1703,67 +1692,24 @@ dd_bool P_StartACScript(int scriptNumber, uint map, byte *args, mobj_t *activato
     return interp.startScript(scriptNumber, map, args, activator, line, side);
 }
 
-dd_bool P_TerminateACScript(int scriptNumber, uint /*map*/)
+dd_bool P_TerminateACScript(int scriptNumber, uint map)
 {
-    if(BytecodeScriptInfo *info = interp.scriptInfoPtr(scriptNumber))
-    {
-        // Some states disallow termination.
-        if(info->state != Inactive && info->state != Terminating)
-        {
-            info->state = Terminating;
-            return true;
-        }
-    }
-    return false;
+    return interp.terminateScript(scriptNumber, map);
 }
 
-dd_bool P_SuspendACScript(int scriptNumber, uint /*map*/)
+dd_bool P_SuspendACScript(int scriptNumber, uint map)
 {
-    if(BytecodeScriptInfo *info = interp.scriptInfoPtr(scriptNumber))
-    {
-        // Some states disallow suspension.
-        if(info->state != Inactive && info->state != Suspended &&
-           info->state != Terminating)
-        {
-            info->state = Suspended;
-            return true;
-        }
-    }
-    return false;
-}
-
-void P_InitACScript()
-{
-    memset(interp.worldVars, 0, sizeof(interp.worldVars));
-    interp.clearDeferredTasks();
+    return interp.suspendScript(scriptNumber, map);
 }
 
 void P_ACScriptTagFinished(int tag)
 {
-    if(P_SectorTagIsBusy(tag)) return;
-
-    for(int i = 0; i < interp.scriptCount(); ++i)
-    {
-        BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
-        if(info.state == WaitingForTag && info.waitValue == tag)
-        {
-            info.state = Running;
-        }
-    }
+    interp.tagFinished(tag);
 }
 
 void P_ACScriptPolyobjFinished(int tag)
 {
-    if(P_SectorTagIsBusy(tag)) return;
-
-    for(int i = 0; i < interp.scriptCount(); ++i)
-    {
-        BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
-        if(info.state == WaitingForPolyobj && info.waitValue == tag)
-        {
-            info.state = Running;
-        }
-    }
+    interp.polyobjFinished(tag);
 }
 
 void P_WriteGlobalACScriptData()
@@ -1786,7 +1732,7 @@ void P_ReadMapACScriptData()
     interp.readMapScriptData();
 }
 
-Interpreter &ACScript::interpreter() const
+ACScriptInterpreter &ACScript::interpreter() const
 {
     return interp;
 }
