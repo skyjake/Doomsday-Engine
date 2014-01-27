@@ -58,8 +58,7 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 enum MenuItemPositions
 {
     // DE menu:
-    POS_UNLOAD            = 2,
-    POS_GAME_SEPARATOR    = 3,
+    POS_UNLOAD            = 5,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -248,7 +247,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         updateStatus();
 
         itemWidget(mainMenu, POS_UNLOAD).show(!newGame.isNull());
-        itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!newGame.isNull());
+        //itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!newGame.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
         itemWidget(configMenu, POS_VR_SETTINGS).show(!newGame.isNull());
@@ -378,18 +377,17 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->items()
             << new ui::SubwidgetItem(tr("Multiplayer..."), ui::Left, makePopup<MultiplayerDialog>)
             << new ui::Item(ui::Item::Separator)
-            << unloadMenu                           // hidden with null-game
-            << new ui::Item(ui::Item::Separator)    // hidden with null-game
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)
+            << unloadMenu                           // hidden with null-game
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
     add(d->configMenu);
     add(d->mainMenu);
 
     d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
-    d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
+    //d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
 
     d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
     d->itemWidget(d->configMenu, POS_VR_SETTINGS).hide();
