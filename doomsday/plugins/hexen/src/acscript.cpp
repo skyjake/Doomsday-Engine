@@ -188,6 +188,8 @@ public:
      */
     void startOpenScripts()
     {
+        DENG_ASSERT(!IS_CLIENT);
+
         // Each is allotted 1 second for initialization.
         for(int i = 0; i < _scriptCount; ++i)
         {
@@ -195,8 +197,9 @@ public:
 
             if(info.flags & BytecodeScriptInfo::Open)
             {
-                newACScript(info, TICSPERSEC);
-                info.state = Running;
+                ACScript *script = newACScript(info, 0/*no args*/, TICSPERSEC);
+                DENG_ASSERT(script != 0);
+                DENG_UNUSED(script);
             }
         }
     }
@@ -204,9 +207,9 @@ public:
     /**
      * Start/resume the specified script.
      *
-     * @return  Pointer to the @em newly-started script thinker; otherwise @c 0.
+     * @return  @c true iff a script was newly started (or deferred).
      */
-    ACScript *startScript(int scriptNumber, uint map, byte *args, mobj_t *activator = 0,
+    bool startScript(int scriptNumber, uint map, byte *args, mobj_t *activator = 0,
         Line *line = 0, int side = 0)
     {
         DENG_ASSERT(!IS_CLIENT);
@@ -215,44 +218,32 @@ public:
         {
             // Script is not for the current map.
             // Add it to the store to be started when that map is next entered.
-            newDeferredTask(map - 1, scriptNumber, args);
-            return 0;
+            return newDeferredTask(map - 1, scriptNumber, args);
         }
 
-        if(!hasScriptEntrypoint(scriptNumber))
+        if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
+        {
+            // Resume a suspended script?
+            if(info->state == Suspended)
+            {
+                info->state = Running;
+                return true;
+            }
+            else if(ACScript *script = newACScript(*info, args))
+            {
+                script->activator = activator;
+                script->line      = line;
+                script->side      = side;
+                return true;
+            }
+        }
+        else
         {
             // Script not found.
             App_Log(DE2_SCR_WARNING, "ACS: Unknown script #%i", scriptNumber);
-            return 0;
         }
 
-        BytecodeScriptInfo &info = scriptInfo(scriptNumber);
-
-        if(info.state == Suspended)
-        {
-            // Resume a suspended script.
-            info.state = Running;
-            return 0;
-        }
-
-        if(info.state != Inactive)
-        {
-            // Script is already executing.
-            return 0;
-        }
-
-        ACScript *script = newACScript(info);
-
-        script->activator = activator;
-        script->line      = line;
-        script->side      = side;
-        for(int i = 0; i < info.argCount; ++i)
-        {
-            script->vars[i] = args[i];
-        }
-        info.state = Running;
-
-        return script;
+        return false; // Perhaps its already executing?
     }
 
     /**
@@ -323,6 +314,7 @@ public:
         while(i < _deferredTasksSize)
         {
             DeferredTask *task = &_deferredTasks[i];
+            int scriptNumber = task->scriptNumber;
 
             if(task->map != map)
             {
@@ -330,9 +322,22 @@ public:
                 continue;
             }
 
-            ACScript *script = startScript(task->scriptNumber, map, task->args);
-            DENG_ASSERT(script != 0);
-            script->delayCount = TICSPERSEC;
+            if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
+            {
+                // Resume a suspended script?
+                if(info->state == Suspended)
+                {
+                    info->state = Running;
+                }
+                else
+                {
+                    newACScript(*info, task->args, TICSPERSEC);
+                }
+            }
+            else
+            {
+                App_Log(DE2_SCR_WARNING, "ACS: Unknown script #%i", scriptNumber);
+            }
 
             _deferredTasksSize -= 1;
             if(i == _deferredTasksSize)
@@ -596,8 +601,11 @@ private:
         return -1;
     }
 
-    ACScript *newACScript(BytecodeScriptInfo &info, int delayCount = 0)
+    ACScript *newACScript(BytecodeScriptInfo &info, byte const *args, int delayCount = 0)
     {
+        // Is the script is already executing?
+        if(info.state != Inactive) return 0;
+
         ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
         script->thinker.function = (thinkfunc_t) ACScript_Thinker;
 
@@ -606,7 +614,15 @@ private:
         script->pcodePtr   = info.pcodePtr;
         script->delayCount = delayCount;
 
+        for(int i = 0; i < info.argCount; ++i)
+        {
+            DENG_ASSERT(args != 0);
+            script->vars[i] = args[i];
+        }
+
         Thinker_Add(&script->thinker);
+
+        info.state = Running;
 
         return script;
     }
@@ -1684,7 +1700,7 @@ void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
 dd_bool P_StartACScript(int scriptNumber, uint map, byte *args, mobj_t *activator,
     Line *line, int side)
 {
-    return interp.startScript(scriptNumber, map, args, activator, line, side) != 0;
+    return interp.startScript(scriptNumber, map, args, activator, line, side);
 }
 
 dd_bool P_TerminateACScript(int scriptNumber, uint /*map*/)
