@@ -75,7 +75,9 @@ void P_ReadMapACScriptData(void);
 } // extern "C"
 #endif
 
+#ifdef __cplusplus
 class Interpreter;
+#endif
 
 /**
  * Action script thinker.

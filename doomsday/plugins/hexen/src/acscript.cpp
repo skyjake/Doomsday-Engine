@@ -25,12 +25,9 @@
 #include "dmu_lib.h"
 #include "p_player.h"
 #include "p_map.h"
-#include "p_mapsetup.h"
-#include "p_mapspec.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
 #include "p_sound.h"
-#include "polyobjs.h"
 #include <cstring>
 #include <cstdio>
 
@@ -65,7 +62,7 @@ static char const *scriptStateAsText(ACScriptState state)
 struct DeferredTask
 {
     uint map;     ///< Target map.
-    int script;   ///< Script number on target map.
+    int scriptNumber;   ///< Script number on target map.
     byte args[4]; ///< Padded to 4 for alignment.
 };
 static int deferredTasksSize;
@@ -134,7 +131,7 @@ public:
 
         _scriptCount = 0;
 
-        int const *buffer = 0;
+        int const *readBuf = 0;
         if(lumpLength >= sizeof(BytecodeHeader))
         {
             void *region = Z_Malloc(lumpLength, PU_MAP, 0);
@@ -144,8 +141,8 @@ public:
 
             if(LONG(header->infoOffset) < (int)lumpLength)
             {
-                buffer = (int *) ((byte const *) header + LONG(header->infoOffset));
-                _scriptCount = LONG(*buffer++);
+                readBuf = (int *) ((byte const *) header + LONG(header->infoOffset));
+                _scriptCount = LONG(*readBuf++);
             }
         }
 
@@ -161,9 +158,9 @@ public:
         BytecodeScriptInfo *info = _scriptInfo;
         for(int i = 0; i < _scriptCount; ++i, info++)
         {
-            info->scriptNumber = LONG(*buffer++);
-            info->pcodePtr     = (int const *)(_pcode + LONG(*buffer++));
-            info->argCount     = LONG(*buffer++);
+            info->scriptNumber = LONG(*readBuf++);
+            info->pcodePtr     = (int const *)(_pcode + LONG(*readBuf++));
+            info->argCount     = LONG(*readBuf++);
             info->state        = Inactive;
 
             if(info->scriptNumber >= OPEN_SCRIPTS_BASE)
@@ -172,14 +169,14 @@ public:
                 info->scriptNumber -= OPEN_SCRIPTS_BASE;
             }
 
-            DENG_ASSERT(info->argCount < MAX_ACS_SCRIPT_VARS);
+            DENG_ASSERT(info->argCount <= MAX_ACS_SCRIPT_VARS);
         }
 
-        _stringCount = LONG(*buffer++);
-        _strings = (char const **) Z_Malloc(_stringCount * sizeof(char *), PU_MAP, 0);
+        _stringCount = LONG(*readBuf++);
+        _strings = (Str *) Z_Malloc(_stringCount * sizeof(Str), PU_MAP, 0);
         for(int i = 0; i < _stringCount; ++i)
         {
-            _strings[i] = (char const *)(_pcode + LONG(*buffer++));
+            Str_InitStatic(&_strings[i], (char const *)(_pcode + LONG(*readBuf++)));
         }
 
 #undef OPEN_SCRIPTS_BASE
@@ -286,10 +283,10 @@ public:
     /**
      * Provides readonly access to a string constant from the loaded bytecode.
      */
-    char const *string(int stringNumber)
+    Str const *string(int stringNumber)
     {
         DENG_ASSERT(stringNumber >= 0 && stringNumber < _stringCount);
-        return _strings[stringNumber];
+        return &_strings[stringNumber];
     }
 
     /**
@@ -363,10 +360,10 @@ private:
         ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
         script->thinker.function = (thinkfunc_t) ACScript_Thinker;
 
-        script->number       = info.scriptNumber;
-        script->infoIndex    = scriptInfoIndex(info.scriptNumber);
-        script->pcodePtr = info.pcodePtr;
-        script->delayCount   = delayCount;
+        script->number     = info.scriptNumber;
+        script->infoIndex  = scriptInfoIndex(info.scriptNumber);
+        script->pcodePtr   = info.pcodePtr;
+        script->delayCount = delayCount;
 
         Thinker_Add(&script->thinker);
 
@@ -379,7 +376,7 @@ private:
     BytecodeScriptInfo *_scriptInfo;
 
     int _stringCount;
-    char const **_strings;
+    Str *_strings;
 };
 
 static int MapVars[MAX_ACS_MAP_VARS];
@@ -905,11 +902,8 @@ ACS_COMMAND(PolyWaitDirect)
 
 ACS_COMMAND(ChangeFloor)
 {
-    ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(S_POP())));
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(&path));
-    Str_Free(&path);
+    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())))));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -935,12 +929,8 @@ ACS_COMMAND(ChangeFloorDirect)
 {
     int tag = LONG(*S_PCODEPTR++);
 
-    ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
-
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(&path));
-    Str_Free(&path);
+    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))))));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -962,12 +952,8 @@ ACS_COMMAND(ChangeFloorDirect)
 
 ACS_COMMAND(ChangeCeiling)
 {
-    ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(S_POP())));
-
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(&path));
-    Str_Free(&path);
+    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())))));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -993,12 +979,8 @@ ACS_COMMAND(ChangeCeilingDirect)
 {
     int tag = LONG(*S_PCODEPTR++);
 
-    ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
-
     Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(&path));
-    Str_Free(&path);
+    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))))));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1177,7 +1159,7 @@ ACS_COMMAND(EndPrintBold)
 
 ACS_COMMAND(PrintString)
 {
-    strcat(PrintBuffer, S_INTERPRETER().string(S_POP()));
+    strcat(PrintBuffer, Str_Text(S_INTERPRETER().string(S_POP())));
     return Continue;
 }
 
@@ -1251,14 +1233,14 @@ ACS_COMMAND(SectorSound)
     }
     int volume = S_POP();
 
-    S_StartSoundAtVolume(S_GetSoundID(S_INTERPRETER().string(S_POP())), mobj, volume / 127.0f);
+    S_StartSoundAtVolume(S_GetSoundID(Str_Text(S_INTERPRETER().string(S_POP()))), mobj, volume / 127.0f);
     return Continue;
 }
 
 ACS_COMMAND(ThingSound)
 {
     int volume   = S_POP();
-    int sound    = S_GetSoundID(S_INTERPRETER().string(S_POP()));
+    int sound    = S_GetSoundID(Str_Text(S_INTERPRETER().string(S_POP())));
     int tid      = S_POP();
     int searcher = -1;
 
@@ -1293,7 +1275,7 @@ ACS_COMMAND(AmbientSound)
         }
     }
 
-    int sound = S_GetSoundID(S_INTERPRETER().string(S_POP()));
+    int sound = S_GetSoundID(Str_Text(S_INTERPRETER().string(S_POP())));
     S_StartSoundAtVolume(sound, mobj, volume / 127.0f);
 
     return Continue;
@@ -1307,7 +1289,7 @@ ACS_COMMAND(SoundSequence)
         Sector *front = (Sector *) P_GetPtrp(args.script->line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
-    SN_StartSequenceName(mobj, S_INTERPRETER().string(S_POP()));
+    SN_StartSequenceName(mobj, Str_Text(S_INTERPRETER().string(S_POP())));
 
     return Continue;
 }
@@ -1318,12 +1300,8 @@ ACS_COMMAND(SetLineTexture)
 #define TEXTURE_MIDDLE 1
 #define TEXTURE_BOTTOM 2
 
-    ddstring_t path; Str_Init(&path);
-    Str_PercentEncode(Str_Set(&path, S_INTERPRETER().string(S_POP())));
-
     Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(&path));
-    Str_Free(&path);
+    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())))));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1453,7 +1431,7 @@ static bool newDeferredTask(uint map, int scriptNumber, byte const *args)
         for(int i = 0; i < deferredTasksSize; ++i)
         {
             DeferredTask &task = deferredTasks[i];
-            if(task.script == scriptNumber && task.map == map)
+            if(task.scriptNumber == scriptNumber && task.map == map)
             {
                 return false;
             }
@@ -1467,14 +1445,14 @@ static bool newDeferredTask(uint map, int scriptNumber, byte const *args)
         deferredTasksSize = 1;
     }
 
-    DeferredTask *store = &deferredTasks[deferredTasksSize-1];
+    DeferredTask *task = &deferredTasks[deferredTasksSize-1];
 
-    store->map     = map;
-    store->script  = scriptNumber;
-    store->args[0] = args[0];
-    store->args[1] = args[1];
-    store->args[2] = args[2];
-    store->args[3] = args[3];
+    task->map          = map;
+    task->scriptNumber = scriptNumber;
+    task->args[0]      = args[0];
+    task->args[1]      = args[1];
+    task->args[2]      = args[2];
+    task->args[3]      = args[3];
 
     return true;
 }
@@ -1515,7 +1493,7 @@ void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
             continue;
         }
 
-        ACScript *script = interp.startScript(task->script, task->args);
+        ACScript *script = interp.startScript(task->scriptNumber, task->args);
         DENG_ASSERT(script != 0);
         script->delayCount = TICSPERSEC;
 
@@ -1635,7 +1613,7 @@ void P_WriteGlobalACScriptData()
     {
         DeferredTask const *task = &deferredTasks[i];
         SV_WriteLong(task->map);
-        SV_WriteLong(task->script);
+        SV_WriteLong(task->scriptNumber);
         for(int k = 0; k < 4; ++k)
         {
             SV_WriteByte(task->args[k]);
@@ -1673,8 +1651,8 @@ void P_ReadGlobalACScriptData(int saveVersion)
             {
                 DeferredTask *task = &deferredTasks[i];
 
-                task->map    = SV_ReadLong();
-                task->script = SV_ReadLong();
+                task->map          = SV_ReadLong();
+                task->scriptNumber = SV_ReadLong();
                 for(int k = 0; k < 4; ++k)
                 {
                     task->args[k] = SV_ReadByte();
@@ -1693,8 +1671,8 @@ void P_ReadGlobalACScriptData(int saveVersion)
             int map            = SV_ReadLong();
             DeferredTask *task = &tempTasks[map < 0? 19 : deferredTasksSize++];
 
-            task->map    = map < 0? 0 : map-1;
-            task->script = SV_ReadLong();
+            task->map          = map < 0? 0 : map-1;
+            task->scriptNumber = SV_ReadLong();
             for(int k = 0; k < 4; ++k)
             {
                 task->args[k] = SV_ReadByte();
