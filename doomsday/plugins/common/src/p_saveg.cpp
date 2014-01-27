@@ -264,7 +264,7 @@ static ThinkerClassInfo thinkerInfo[] = {
      0,
      (WriteThinkerFunc)ACScript_Write,
      (ReadThinkerFunc)ACScript_Read,
-     sizeof(acs_t)
+     sizeof(ACScript)
     },
     {
      TC_FLOOR_WAGGLE,
