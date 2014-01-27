@@ -29,6 +29,7 @@
 #  define DENG2_CHAR_DOWN_ARROW          "\u2193"
 #  define DENG2_CHAR_UP_DOWN_ARROW       DENG2_CHAR_UP_ARROW " / " DENG2_CHAR_DOWN_ARROW
 #  define DENG2_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
+#  define DENG2_CHAR_MDASH               "\u2014"
 #elif UNIX
 #  define DENG2_CHAR_CONTROL_KEY         "Ctrl-"
 #  define DENG2_CHAR_SHIFT_KEY           "\u21e7"
@@ -36,6 +37,7 @@
 #  define DENG2_CHAR_DOWN_ARROW          "\u2193"
 #  define DENG2_CHAR_UP_DOWN_ARROW       DENG2_CHAR_UP_ARROW " / " DENG2_CHAR_DOWN_ARROW
 #  define DENG2_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
+#  define DENG2_CHAR_MDASH               "\u2014"
 #else
 #  define DENG2_CHAR_CONTROL_KEY         "Ctrl-"
 #  define DENG2_CHAR_SHIFT_KEY           "Shift-"
@@ -43,6 +45,7 @@
 #  define DENG2_CHAR_DOWN_ARROW          "Down Arrow"
 #  define DENG2_CHAR_UP_DOWN_ARROW       "Up/Down Arrow"
 #  define DENG2_CHAR_RIGHT_DOUBLEARROW   "=>"
+#  define DENG2_CHAR_MDASH               "-"
 #endif
 
 #endif // LIBDENG2_CHARSYMBOLS_H
