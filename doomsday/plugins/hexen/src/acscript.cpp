@@ -94,6 +94,11 @@ struct BytecodeHeader
  */
 struct BytecodeScriptInfo
 {
+    enum Flag {
+        Open = 0x1
+    };
+
+    int flags;
     int number;
     int const *address;
     int argCount;
@@ -105,7 +110,7 @@ struct BytecodeScriptInfo
 };
 
 /**
- * Action-Code Script Interpreter (ACS).
+ * Action-Code Script (ACS) bytecode interpreter.
  */
 class Interpreter
 {
@@ -123,6 +128,8 @@ public:
      */
     void loadBytecode(lumpnum_t lump)
     {
+#define OPEN_SCRIPTS_BASE 1000
+
         DENG_ASSERT(!IS_CLIENT);
 
         size_t const lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
@@ -155,8 +162,7 @@ public:
             return;
         }
 
-        _scriptInfo = (BytecodeScriptInfo *) Z_Malloc(_scriptCount * sizeof(BytecodeScriptInfo), PU_MAP, 0);
-        memset(_scriptInfo, 0, _scriptCount * sizeof(BytecodeScriptInfo));
+        _scriptInfo = (BytecodeScriptInfo *) Z_Calloc(_scriptCount * sizeof(BytecodeScriptInfo), PU_MAP, 0);
 
         BytecodeScriptInfo *info = _scriptInfo;
         for(int i = 0; i < _scriptCount; ++i, info++)
@@ -165,6 +171,12 @@ public:
             info->address  = (int const *)(_pcode + LONG(*buffer++));
             info->argCount = LONG(*buffer++);
             info->state    = Inactive;
+
+            if(info->number >= OPEN_SCRIPTS_BASE)
+            {
+                info->flags |= BytecodeScriptInfo::Open;
+                info->number -= OPEN_SCRIPTS_BASE;
+            }
         }
 
         _stringCount = LONG(*buffer++);
@@ -173,6 +185,8 @@ public:
         {
             _strings[i] = (char const *)(_pcode + LONG(*buffer++));
         }
+
+#undef OPEN_SCRIPTS_BASE
     }
 
     /**
@@ -188,22 +202,17 @@ public:
      */
     void startOpenScripts()
     {
-#define OPEN_SCRIPTS_BASE 1000
-
         // Each is allotted 1 second for initialization.
         for(int i = 0; i < _scriptCount; ++i)
         {
             BytecodeScriptInfo &info = _scriptInfo[i];
 
-            if(info.number >= OPEN_SCRIPTS_BASE)
+            if(info.flags & BytecodeScriptInfo::Open)
             {
-                info.number -= OPEN_SCRIPTS_BASE;
                 newACScript(info, TICSPERSEC);
                 info.state = Running;
             }
         }
-
-#undef OPEN_SCRIPTS_BASE
     }
 
     /**
@@ -263,8 +272,7 @@ public:
      */
     BytecodeScriptInfo &scriptInfo(int scriptNumber)
     {
-        DENG_ASSERT(scriptNumber >= 0 && scriptNumber < _scriptCount);
-        return _scriptInfo[scriptNumber];
+        return _scriptInfo[scriptInfoIndex(scriptNumber)];
     }
 
     inline BytecodeScriptInfo *scriptInfoPtr(int scriptNumber) {
@@ -301,7 +309,7 @@ public:
         if(!script) return;
 
         // This script has now finished.
-        scriptInfo(script->infoIndex).state = Inactive;
+        scriptInfoByIndex(script->infoIndex).state = Inactive;
 
         // Notify any scripts which are waiting for this script to finish.
         for(int i = 0; i < _scriptCount; ++i)
@@ -314,6 +322,13 @@ public:
         }
 
         Thinker_Remove(&script->thinker);
+    }
+
+public: /// @todo make private:
+    BytecodeScriptInfo &scriptInfoByIndex(int index)
+    {
+        DENG_ASSERT(index >= 0 && index < _scriptCount);
+        return _scriptInfo[index];
     }
 
 private:
@@ -690,7 +705,7 @@ void P_ACScriptTagFinished(int tag)
 
     for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        BytecodeScriptInfo &info = interp.scriptInfo(i);
+        BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
         if(info.state == WaitingForTag && info.waitValue == tag)
         {
             info.state = Running;
@@ -704,7 +719,7 @@ void P_ACScriptPolyobjFinished(int tag)
 
     for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        BytecodeScriptInfo &info = interp.scriptInfo(i);
+        BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
         if(info.state == WaitingForPolyobj && info.waitValue == tag)
         {
             info.state = Running;
@@ -763,7 +778,7 @@ static ACS_COMMAND(Terminate)
 
 static ACS_COMMAND(Suspend)
 {
-    interp.scriptInfo(activeScript->infoIndex).state = Suspended;
+    interp.scriptInfoByIndex(activeScript->infoIndex).state = Suspended;
     return Stop;
 }
 
@@ -1268,29 +1283,29 @@ static void thingCount(int type, int tid)
 
 static ACS_COMMAND(TagWait)
 {
-    interp.scriptInfo(activeScript->infoIndex).waitValue = pop();
-    interp.scriptInfo(activeScript->infoIndex).state = WaitingForTag;
+    interp.scriptInfoByIndex(activeScript->infoIndex).waitValue = pop();
+    interp.scriptInfoByIndex(activeScript->infoIndex).state = WaitingForTag;
     return Stop;
 }
 
 static ACS_COMMAND(TagWaitDirect)
 {
-    interp.scriptInfo(activeScript->infoIndex).waitValue = LONG(*PCodePtr++);
-    interp.scriptInfo(activeScript->infoIndex).state = WaitingForTag;
+    interp.scriptInfoByIndex(activeScript->infoIndex).waitValue = LONG(*PCodePtr++);
+    interp.scriptInfoByIndex(activeScript->infoIndex).state = WaitingForTag;
     return Stop;
 }
 
 static ACS_COMMAND(PolyWait)
 {
-    interp.scriptInfo(activeScript->infoIndex).waitValue = pop();
-    interp.scriptInfo(activeScript->infoIndex).state = WaitingForPolyobj;
+    interp.scriptInfoByIndex(activeScript->infoIndex).waitValue = pop();
+    interp.scriptInfoByIndex(activeScript->infoIndex).state = WaitingForPolyobj;
     return Stop;
 }
 
 static ACS_COMMAND(PolyWaitDirect)
 {
-    interp.scriptInfo(activeScript->infoIndex).waitValue = LONG(*PCodePtr++);
-    interp.scriptInfo(activeScript->infoIndex).state = WaitingForPolyobj;
+    interp.scriptInfoByIndex(activeScript->infoIndex).waitValue = LONG(*PCodePtr++);
+    interp.scriptInfoByIndex(activeScript->infoIndex).state = WaitingForPolyobj;
     return Stop;
 }
 
@@ -1411,7 +1426,7 @@ static ACS_COMMAND(ChangeCeilingDirect)
 
 static ACS_COMMAND(Restart)
 {
-    PCodePtr = interp.scriptInfo(activeScript->infoIndex).address;
+    PCodePtr = interp.scriptInfoByIndex(activeScript->infoIndex).address;
     return Continue;
 }
 
@@ -1492,15 +1507,15 @@ static ACS_COMMAND(LineSide)
 
 static ACS_COMMAND(ScriptWait)
 {
-    interp.scriptInfo(activeScript->infoIndex).waitValue = pop();
-    interp.scriptInfo(activeScript->infoIndex).state = WaitingForScript;
+    interp.scriptInfoByIndex(activeScript->infoIndex).waitValue = pop();
+    interp.scriptInfoByIndex(activeScript->infoIndex).state = WaitingForScript;
     return Stop;
 }
 
 static ACS_COMMAND(ScriptWaitDirect)
 {
-    interp.scriptInfo(activeScript->infoIndex).waitValue = LONG(*PCodePtr++);
-    interp.scriptInfo(activeScript->infoIndex).state = WaitingForScript;
+    interp.scriptInfoByIndex(activeScript->infoIndex).waitValue = LONG(*PCodePtr++);
+    interp.scriptInfoByIndex(activeScript->infoIndex).state = WaitingForScript;
     return Stop;
 }
 
@@ -1918,7 +1933,7 @@ void P_WriteMapACScriptData()
 
     for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        BytecodeScriptInfo &info = interp.scriptInfo(i);
+        BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
         SV_WriteShort(info.state);
         SV_WriteShort(info.waitValue);
     }
@@ -1935,7 +1950,7 @@ void P_ReadMapACScriptData()
 
     for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        BytecodeScriptInfo &info = interp.scriptInfo(i);
+        BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
 
         info.state     = (ACScriptState) SV_ReadShort();
         info.waitValue = SV_ReadShort();
@@ -1951,7 +1966,7 @@ void ACScript_Thinker(ACScript *script)
 {
     DENG_ASSERT(script != 0);
 
-    BytecodeScriptInfo &info = interp.scriptInfo(script->infoIndex);
+    BytecodeScriptInfo &info = interp.scriptInfoByIndex(script->infoIndex);
     if(info.state == Terminating)
     {
         interp.scriptFinished(script);
@@ -2103,7 +2118,7 @@ D_CMD(ScriptInfo)
 
     for(int i = 0; i < interp.scriptCount(); ++i)
     {
-        BytecodeScriptInfo &info = interp.scriptInfo(i);
+        BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
 
         if(whichOne != -1 && whichOne != info.number)
             continue;
