@@ -238,9 +238,10 @@ dd_bool ClMobj_IsValid(mobj_t *mo)
 
 ClMobjInfo *ClMobj_GetInfo(mobj_t *mo)
 {
-    DENG2_ASSERT(mo != 0);
+    if(!mo) return 0;
+
     ClMobjInfo *info = (ClMobjInfo *) ((char *)mo - sizeof(ClMobjInfo));
-    if(!mo || info->startMagic != CLM_MAGIC1 || info->endMagic != CLM_MAGIC2)
+    if(info->startMagic != CLM_MAGIC1 || info->endMagic != CLM_MAGIC2)
     {
         // There is no valid info block preceding the mobj.
         return 0;

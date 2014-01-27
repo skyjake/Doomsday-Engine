@@ -230,9 +230,9 @@ DENG2_PIMPL(ClientApp)
         Sys_Shutdown();
         DD_Shutdown();
 
-        delete svLink;
         delete worldSys;
         delete winSys;
+        delete svLink;
         delete renderSys;
         delete resourceSys;
         delete inputSys;
