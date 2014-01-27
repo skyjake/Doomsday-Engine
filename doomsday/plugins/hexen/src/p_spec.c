@@ -866,6 +866,24 @@ void P_SpawnAllSpecialThinkers(void)
     P_SpawnLineSpecialThinkers();
 }
 
+dd_bool P_SectorTagIsBusy(int tag)
+{
+    /// @note The sector tag lists cannot be used here as an iteration at a higher
+    /// level may already be in progress.
+    int i;
+    for(i = 0; i < numsectors; ++i)
+    {
+        Sector *sec     = (Sector *) P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
+
+        if(xsec->tag == tag && xsec->specialData)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 static dd_bool isLightningSector(Sector* sec)
 {
     xsector_t*              xsec = P_ToXSector(sec);

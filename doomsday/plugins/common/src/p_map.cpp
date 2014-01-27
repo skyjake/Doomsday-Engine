@@ -3253,3 +3253,71 @@ dd_bool P_UsePuzzleItem(player_t *player, int itemType)
     return parm.activated;
 }
 #endif
+
+#ifdef __JHEXEN__
+struct countmobjoftypeparams_t
+{
+    mobjtype_t type;
+    int count;
+};
+
+static int countMobjOfType(thinker_t *th, void *context)
+{
+    countmobjoftypeparams_t *params = (countmobjoftypeparams_t *) context;
+    mobj_t *mo = (mobj_t *) th;
+
+    // Does the type match?
+    if(mo->type != params->type)
+        return false; // Continue iteration.
+
+    // Minimum health requirement?
+    if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
+        return false; // Continue iteration.
+
+    params->count++;
+
+    return false; // Continue iteration.
+}
+
+int P_MobjCount(int type, int tid)
+{
+    if(!type && !tid) return 0;
+
+    mobjtype_t moType = TranslateThingType[type];
+
+    if(tid)
+    {
+        // Count mobjs by TID.
+        int count = 0;
+        mobj_t *mo;
+        int searcher = -1;
+
+        while((mo = P_FindMobjFromTID(tid, &searcher)))
+        {
+            if(type == 0)
+            {
+                // Just count TIDs.
+                count++;
+            }
+            else if(moType == mo->type)
+            {
+                // Don't count dead monsters.
+                if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
+                {
+                    continue;
+                }
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // Count mobjs by type only.
+    countmobjoftypeparams_t params;
+    params.type  = moType;
+    params.count = 0;
+    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
+
+    return params.count;
+}
+#endif // __JHEXEN__

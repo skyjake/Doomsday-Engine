@@ -202,7 +202,16 @@ void P_ThrustSpike(mobj_t *mobj);
  * @return dd_bool  true if the puzzle item was used.
  */
 dd_bool P_UsePuzzleItem(player_t *player, int itemType);
-#endif
+
+/**
+ * Count mobjs in the current map which meet the specified criteria.
+ *
+ * @param type  Mobj type.
+ * @param tid   Thinker id.
+ */
+int P_MobjCount(int type, int tid);
+
+#endif // __JHEXEN__
 
 #ifdef __cplusplus
 } // extern "C"

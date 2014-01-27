@@ -35,6 +35,7 @@
 #define MO_TELEPORTMAN          14
 
 DENG_EXTERN_C mobj_t lavaInflictor;
+DENG_EXTERN_C mobjtype_t TranslateThingType[];
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,6 +47,8 @@ void P_InitLava(void);
 void P_SpawnSectorSpecialThinkers(void);
 void P_SpawnLineSpecialThinkers(void);
 void P_SpawnAllSpecialThinkers(void);
+
+dd_bool P_SectorTagIsBusy(int tag);
 
 dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line, int side, mobj_t* mo);
 dd_bool P_ActivateLine(Line* ld, mobj_t* mo, int side, int activationType);
@@ -86,8 +89,6 @@ int         EV_FloorCrushStop(Line *line, byte *args);
 dd_bool     P_Teleport(mobj_t* mo, coord_t x, coord_t y, angle_t angle, dd_bool useFog);
 dd_bool     EV_Teleport(int tid, mobj_t *thing, dd_bool fog);
 void        P_ArtiTele(player_t *player);
-
-extern mobjtype_t TranslateThingType[];
 
 dd_bool     EV_ThingProjectile(byte *args, dd_bool gravity);
 dd_bool     EV_ThingSpawn(byte *args, dd_bool fog);
