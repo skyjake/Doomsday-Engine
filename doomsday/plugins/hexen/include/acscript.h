@@ -90,6 +90,28 @@ typedef struct acscript_s {
     int stackPtr;
     int vars[MAX_ACS_SCRIPT_VARS];
     int const *ip;
+
+#ifdef __cplusplus
+    void push(int value)
+    {
+        stack[stackPtr++] = value;
+    }
+
+    int pop()
+    {
+        return stack[--stackPtr];
+    }
+
+    int top()
+    {
+        return stack[stackPtr - 1];
+    }
+
+    void drop()
+    {
+        stackPtr--;
+    }
+#endif
 } ACScript;
 
 #ifdef __cplusplus
