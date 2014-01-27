@@ -66,7 +66,7 @@ void T_BuildPillar(pillar_t *pillar)
     {
         P_ToXSector(pillar->sector)->specialData = NULL;
         SN_StopSequenceInSec(pillar->sector);
-        P_TagFinished(P_ToXSector(pillar->sector)->tag);
+        P_ACScriptTagFinished(P_ToXSector(pillar->sector)->tag);
         Thinker_Remove(&pillar->thinker);
     }
 }

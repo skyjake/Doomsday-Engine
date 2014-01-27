@@ -2183,7 +2183,7 @@ static void G_InitNewGame(void)
     SV_ClearSlot(AUTO_SLOT);
 
 #if __JHEXEN__
-    P_ACSInitNewGame();
+    P_InitACScript();
 #endif
 }
 
@@ -2701,7 +2701,6 @@ void G_DoLeaveMap(void)
     NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
     G_DoLoadMap(&p);
-    Uri_Delete(p.mapUri);
 
     if(hasBrief)
     {
@@ -2727,16 +2726,15 @@ void G_DoLeaveMap(void)
     randomClassParm = oldRandomClassParm;
 
     // Launch waiting scripts.
-    if(!deathmatch)
-    {
-        P_CheckACSStore(gameMap);
-    }
+    P_ACScriptRunDeferredTasks(gameMap/*p.mapUri*/);
 #endif
+
+    Uri_Delete(p.mapUri);
 
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
     if(!IS_NETGAME && !deathmatch)
     {
-        AutoStr* name = G_GenerateSaveGameName();
+        AutoStr *name = G_GenerateSaveGameName();
         savestateworker_params_t p;
 
         p.name = Str_Text(name);

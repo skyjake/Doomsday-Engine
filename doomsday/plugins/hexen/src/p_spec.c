@@ -210,14 +210,46 @@ dd_bool EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line,
-                             int side, mobj_t* mo)
+dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
 {
-    dd_bool             success;
+    byte newArgs[5];
+    int i, lock;
+
+    DENG_ASSERT(args != 0);
+
+    if(!mo->player)
+    {
+        return false;
+    }
+
+    lock = args[4];
+    if(lock)
+    {
+        if(!(mo->player->keys & (1 << (lock - 1))))
+        {
+            char LockedBuffer[80];
+            sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
+            P_SetMessage(mo->player, 0, LockedBuffer);
+            S_StartSound(SFX_DOOR_LOCKED, mo);
+            return false;
+        }
+    }
+
+    for(i = 0; i < 4; ++i)
+    {
+        newArgs[i] = args[i];
+    }
+    newArgs[4] = 0;
+
+    return P_StartACScript(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
+}
+
+dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
+{
+    dd_bool success = false;
 
     App_Log(DE2_MAP_VERBOSE, "Executing line special %i, mobj:%i", special, mo? mo->thinker.id : 0);
 
-    success = false;
     switch(special)
     {
     case 1: // Poly Start Line
@@ -486,15 +518,15 @@ dd_bool P_ExecuteLineSpecial(int special, byte* args, Line* line,
         break;
 
     case 80: // ACS_Execute
-        success = P_StartACS(args[0], args[1], &args[2], mo, line, side);
+        success = P_StartACScript(args[0], args[1], &args[2], mo, line, side);
         break;
 
     case 81: // ACS_Suspend
-        success = P_SuspendACS(args[0], args[1]);
+        success = P_SuspendACScript(args[0], args[1]);
         break;
 
     case 82: // ACS_Terminate
-        success = P_TerminateACS(args[0], args[1]);
+        success = P_TerminateACScript(args[0], args[1]);
         break;
 
     case 83: // ACS_LockedExecute
@@ -830,6 +862,24 @@ void P_SpawnAllSpecialThinkers(void)
 {
     P_SpawnSectorSpecialThinkers();
     P_SpawnLineSpecialThinkers();
+}
+
+dd_bool P_SectorTagIsBusy(int tag)
+{
+    /// @note The sector tag lists cannot be used here as an iteration at a higher
+    /// level may already be in progress.
+    int i;
+    for(i = 0; i < numsectors; ++i)
+    {
+        Sector *sec     = (Sector *) P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
+
+        if(xsec->tag == tag && xsec->specialData)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 static dd_bool isLightningSector(Sector* sec)

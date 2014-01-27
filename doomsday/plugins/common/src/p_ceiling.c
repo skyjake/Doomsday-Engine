@@ -93,7 +93,7 @@ static void stopCeiling(ceiling_t* ceiling)
 {
     P_ToXSector(ceiling->sector)->specialData = NULL;
 #if __JHEXEN__
-    P_TagFinished(P_ToXSector(ceiling->sector)->tag);
+    P_ACScriptTagFinished(P_ToXSector(ceiling->sector)->tag);
 #endif
     Thinker_Remove(&ceiling->thinker);
 }

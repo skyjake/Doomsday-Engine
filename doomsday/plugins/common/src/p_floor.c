@@ -424,7 +424,7 @@ void T_MoveFloor(void *floorThinkerPtr)
         }
 #endif
 #if __JHEXEN__
-        P_TagFinished(P_ToXSector(floor->sector)->tag);
+        P_ACScriptTagFinished(P_ToXSector(floor->sector)->tag);
 #endif
         Thinker_Remove(&floor->thinker);
     }
@@ -1411,7 +1411,7 @@ static int stopFloorCrush(thinker_t* th, void* context)
         // Completely remove the crushing floor
         SN_StopSequence(P_GetPtrp(floor->sector, DMU_EMITTER));
         P_ToXSector(floor->sector)->specialData = NULL;
-        P_TagFinished(P_ToXSector(floor->sector)->tag);
+        P_ACScriptTagFinished(P_ToXSector(floor->sector)->tag);
         Thinker_Remove(&floor->thinker);
         (*found) = true;
     }

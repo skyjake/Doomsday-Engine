@@ -96,7 +96,7 @@ static void stopPlat(plat_t* plat)
 {
     P_ToXSector(plat->sector)->specialData = NULL;
 #if __JHEXEN__
-    P_TagFinished(P_ToXSector(plat->sector)->tag);
+    P_ACScriptTagFinished(P_ToXSector(plat->sector)->tag);
 #endif
     Thinker_Remove(&plat->thinker);
 }

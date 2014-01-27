@@ -29,7 +29,7 @@
 #include "g_common.h"
 
 #ifdef __JHEXEN__
-#  include "p_acs.h"
+#  include "acscript.h"
 #endif
 
 #include "polyobjs.h"
@@ -57,7 +57,7 @@ static int findMirrorPolyobj(int tag)
 static void notifyPolyobjFinished(int tag)
 {
 #if __JHEXEN__
-    P_ACSPolyobjFinished(tag);
+    P_ACScriptPolyobjFinished(tag);
 #else
     DENG_UNUSED(tag);
 #endif

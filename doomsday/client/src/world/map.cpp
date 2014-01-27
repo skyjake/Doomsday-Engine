@@ -1719,7 +1719,7 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
     DENG2_UNUSED(info);
     mobj_t *mo       = (mobj_t *) ((char *)data + sizeof(ClMobjInfo));
 
-    zapPtr(mo);
+    std::memset(mo, 0, MOBJ_SIZE);
     mo->ddFlags = DDMF_REMOTE;
 
     d->clMobjHash.insert(mo, id);
