@@ -420,7 +420,7 @@ de::String AudioDriver_InterfaceDescription()
     de::String str;
     QTextStream os(&str);
 
-    os << _E(b) "Audio configuration" _E(2) " (by decreasing priority):\n" _E(.)_E(.);
+    os << _E(b) "Audio configuration:\n" _E(.);
 
     for(int i = MAX_AUDIO_INTERFACES - 1; i >= 0; --i)
     {
