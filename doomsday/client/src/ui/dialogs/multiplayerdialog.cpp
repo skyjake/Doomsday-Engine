@@ -21,9 +21,11 @@
 #include "clientapp.h"
 #include "dd_main.h"
 
+#include <de/charsymbols.h>
 #include <de/SignalAction>
 #include <de/SequentialLayout>
 #include <de/ChildWidgetOrganizer>
+#include <de/DocumentWidget>
 #include <de/ui/Item>
 
 using namespace de;
@@ -67,17 +69,17 @@ DENG_GUI_PIMPL(MultiplayerDialog)
     struct ServerWidget : public GuiWidget
     {
         LabelWidget *title;
-        //LabelWidget *info;
         ButtonWidget *extra;
         ButtonWidget *join;
         QScopedPointer<SequentialLayout> layout;
+        PopupWidget *popup;
+        DocumentWidget *info;
 
         ServerWidget()
         {
             setBehavior(ContentClipping);
 
             add(title = new LabelWidget);
-            //add(info  = new LabelWidget);
             add(extra = new ButtonWidget);
             add(join  = new ButtonWidget);
 
@@ -89,10 +91,9 @@ DENG_GUI_PIMPL(MultiplayerDialog)
             title->setAlignment(ui::AlignTop);
             title->setTextAlignment(ui::AlignRight);
             title->setTextLineAlignment(ui::AlignLeft);
-            title->setImageAlignment(ui::AlignTop);
+            title->setImageAlignment(ui::AlignCenter);
             title->setMaximumTextWidth(style().rules().rule("dialog.multiplayer.width").valuei());
 
-            //info->setSizePolicy(ui::Expand, ui::Expand);
             extra->setSizePolicy(ui::Expand, ui::Expand);
             join->setSizePolicy(ui::Expand, ui::Expand);
 
@@ -101,6 +102,16 @@ DENG_GUI_PIMPL(MultiplayerDialog)
             layout.reset(new SequentialLayout(rule().left(), rule().top(), ui::Right));
             *layout << *title << *extra << *join;
             rule().setSize(layout->width(), title->rule().height());
+
+            // Extra info popup.
+            popup = new PopupWidget;
+            popup->useInfoStyle();
+            popup->setContent(info = new DocumentWidget);
+            info->setMaximumLineWidth(style().rules().rule("dialog.multiplayer.width").valuei());
+            popup->setAnchorAndOpeningDirection(extra->rule(), ui::Left);
+            add(popup);
+
+            extra->setAction(new SignalAction(popup, SLOT(open())));
         }
 
         void updateFromItem(ServerListItem const &item)
@@ -114,14 +125,41 @@ DENG_GUI_PIMPL(MultiplayerDialog)
                     title->setImage(style().images().image(svGame.logoImageId()));
                 }
 
-                title->setText(String(_E(1) "%1%2" _E(2) "%3"
-                                      _E(.)_E(.)_E(l)_E(D) "\n%4\n%5/%6 players")
-                               .arg(item.info().name)
-                               .arg(!String(item.info().description).isEmpty()? "\n" : "")
-                               .arg(item.info().description)
-                               .arg(item.info().gameConfig)
-                               .arg(item.info().numPlayers)
-                               .arg(item.info().maxPlayers));
+                serverinfo_t const &sv = item.info();
+
+                title->setText(String(_E(1) "%1 " _E(.)_E(2) "(%5/%6)" _E(.) "\n%2"
+                                      _E(D)_E(l) "\n%7 %4")
+                               .arg(sv.name)
+                               .arg(svGame.title())
+                               .arg(sv.gameConfig)
+                               .arg(sv.numPlayers)
+                               .arg(sv.maxPlayers)
+                               .arg(sv.map));
+
+                // Extra information.
+#define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
+                info->setText(String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
+                                     TABBED("Joinable:", "%5")
+                                     TABBED("Players:", "%3 / %4%13")
+                                     TABBED("Game:", "%9\n%10\n%12 %11")
+                                     TABBED("PWADs:", "%14")
+                                     TABBED("Address:", "%6:%7")
+                                     TABBED("Ping:", "%8 ms (approx)"))
+                              .arg(sv.name)
+                              .arg(sv.description)
+                              .arg(sv.numPlayers)
+                              .arg(sv.maxPlayers)
+                              .arg(sv.canJoin? "Yes" : "No") // 5
+                              .arg(sv.address)
+                              .arg(sv.port)
+                              .arg(sv.ping)
+                              .arg(sv.plugin)
+                              .arg(sv.gameIdentityKey) // 10
+                              .arg(sv.gameConfig)
+                              .arg(sv.map)
+                              .arg(!String(sv.clientNames).isEmpty()? String(_E(2) " (%1)" _E(.)).arg(sv.clientNames) : "")
+                              .arg(String(sv.pwads).isEmpty()? String(DENG2_CHAR_MDASH) : String(sv.pwads))); // 14
+#undef TABBED
             }
             catch(Error const &)
             {
@@ -160,8 +198,6 @@ DENG_GUI_PIMPL(MultiplayerDialog)
 
     void linkDiscoveryUpdate(ServerLink const &link)
     {
-        qDebug() << "discovery" << link.foundServerCount();
-
         // Remove obsolete entries.
         for(ui::Data::Pos idx = 0; idx < list->items().size(); ++idx)
         {
