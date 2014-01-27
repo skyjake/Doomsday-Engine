@@ -171,6 +171,11 @@ Action *ButtonWidget::action() const
     return d->action.data();
 }
 
+Action *ButtonWidget::takeAction()
+{
+    return d->action.take();
+}
+
 ButtonWidget::State ButtonWidget::state() const
 {
     return d->state;

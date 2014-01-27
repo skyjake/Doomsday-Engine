@@ -1321,7 +1321,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         {
             if(App_GameLoaded())
             {
-                LOG_NOTE("%s (%s) - already loaded.")
+                LOG_NOTE("%s (%s) is already loaded")
                         << game.title() << game.identityKey();
             }
             return true;

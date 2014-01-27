@@ -78,6 +78,7 @@ public:
     void setAction(Action *action);
 
     Action *action() const;
+    Action *takeAction();
 
     State state() const;
 

@@ -20,6 +20,9 @@
 #include "network/serverlink.h"
 #include "clientapp.h"
 #include "dd_main.h"
+#include "con_main.h"
+#include "CommandAction"
+#include "ui/widgets/taskbarwidget.h"
 
 #include <de/charsymbols.h>
 #include <de/SignalAction>
@@ -75,6 +78,46 @@ DENG_GUI_PIMPL(MultiplayerDialog)
         PopupWidget *popup;
         DocumentWidget *info;
 
+        struct JoinAction : public Action
+        {
+        public:
+            JoinAction(serverinfo_t const &sv, ButtonWidget *owner)
+                : _owner(owner)
+            {
+                _gameId = sv.gameIdentityKey;
+                _cmd = String("connect %1 %2").arg(sv.address).arg(sv.port);
+            }
+
+            void trigger()
+            {
+                Action::trigger();
+
+                BusyMode_FreezeGameForBusyMode();
+
+                // Closing the taskbar will cause this action to be deleted. Let's take
+                // ownership of the action so we can delete after we're done.
+                _owner->takeAction();
+
+                ClientWindow::main().taskBar().close();
+
+                App_ChangeGame(App_Games().byIdentityKey(_gameId), false /*no reload*/);
+                Con_Execute(CMDS_DDAY, _cmd.toLatin1(), false, false);
+
+                delete this;
+            }
+
+            Action *duplicate() const
+            {
+                DENG2_ASSERT(!"JoinAction: cannot duplicate");
+                return 0;
+            }
+
+        private:
+            ButtonWidget *_owner;
+            String _gameId;
+            String _cmd;
+        };
+
         ServerWidget()
         {
             setBehavior(ContentClipping);
@@ -108,7 +151,7 @@ DENG_GUI_PIMPL(MultiplayerDialog)
             popup->useInfoStyle();
             popup->setContent(info = new DocumentWidget);
             info->setMaximumLineWidth(style().rules().rule("dialog.multiplayer.width").valuei());
-            popup->setAnchorAndOpeningDirection(extra->rule(), ui::Left);
+            popup->setAnchorAndOpeningDirection(extra->rule(), ui::Up);
             add(popup);
 
             extra->setAction(new SignalAction(popup, SLOT(open())));
@@ -126,6 +169,12 @@ DENG_GUI_PIMPL(MultiplayerDialog)
                 }
 
                 serverinfo_t const &sv = item.info();
+
+                join->enable(sv.canJoin);
+                if(sv.canJoin)
+                {
+                    join->setAction(new JoinAction(sv, join));
+                }
 
                 title->setText(String(_E(1) "%1 " _E(.)_E(2) "(%5/%6)" _E(.) "\n%2"
                                       _E(D)_E(l) "\n%7 %4")

@@ -247,13 +247,12 @@ DENG_GUI_PIMPL(TaskBarWidget)
         updateStatus();
 
         itemWidget(mainMenu, POS_UNLOAD).show(!newGame.isNull());
-        //itemWidget(mainMenu, POS_GAME_SEPARATOR).show(!newGame.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
-        itemWidget(configMenu, POS_VR_SETTINGS).show(!newGame.isNull());
-        itemWidget(configMenu, POS_CONFIG_SEPARATOR).show(!newGame.isNull());
-        itemWidget(configMenu, POS_AUDIO_SETTINGS).show(!newGame.isNull());
-        itemWidget(configMenu, POS_INPUT_SETTINGS).show(!newGame.isNull());
+        itemWidget(configMenu, POS_VR_SETTINGS)      .show(!newGame.isNull());
+        itemWidget(configMenu, POS_CONFIG_SEPARATOR) .show(!newGame.isNull());
+        itemWidget(configMenu, POS_AUDIO_SETTINGS)   .show(!newGame.isNull());
+        itemWidget(configMenu, POS_INPUT_SETTINGS)   .show(!newGame.isNull());
 
         configMenu->menu().updateLayout();
         mainMenu->menu().updateLayout(); // Include/exclude shown/hidden menu items.
