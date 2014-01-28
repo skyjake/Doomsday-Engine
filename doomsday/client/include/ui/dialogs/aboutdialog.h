@@ -31,10 +31,6 @@ class AboutDialog : public de::DialogWidget
 public:
     AboutDialog();
 
-protected slots:
-    void showGLInfo();
-    void showAudioInfo();
-
 private:
     DENG2_PRIVATE(d)
 };

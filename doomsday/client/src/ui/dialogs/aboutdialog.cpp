@@ -28,33 +28,26 @@
 #include <de/SequentialLayout>
 #include <de/SignalAction>
 #include <de/LabelWidget>
-#include <de/PopupWidget>
-#include <de/DocumentWidget>
+#include <de/DocumentPopupWidget>
 #include <de/Style>
 
 using namespace de;
 
 DENG2_PIMPL(AboutDialog)
 {
-    PopupWidget *glPopup;
-    PopupWidget *audioPopup;
+    DocumentPopupWidget *glPopup;
+    DocumentPopupWidget *audioPopup;
 
     Instance(Public *i) : Base(i)
     {
         // Popup with GL info.
-        glPopup = new PopupWidget;
-        glPopup->useInfoStyle();
-        DocumentWidget *doc = new DocumentWidget;
-        doc->setText(Sys_GLDescription());
-        glPopup->setContent(doc);
+        glPopup = new DocumentPopupWidget;
+        glPopup->document().setText(Sys_GLDescription());
         self.add(glPopup);
 
         // Popup with audio info.
-        audioPopup = new PopupWidget;
-        audioPopup->useInfoStyle();
-        doc = new DocumentWidget;
-        doc->setText(AudioDriver_InterfaceDescription());
-        audioPopup->setContent(doc);
+        audioPopup = new DocumentPopupWidget;
+        audioPopup->document().setText(AudioDriver_InterfaceDescription());
         self.add(audioPopup);
     }
 };
@@ -111,21 +104,11 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Instance(this))
 
     buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("GL"), new SignalAction(this, SLOT(showGLInfo())))
-            << new DialogButtonItem(DialogWidget::Action, tr("Audio"), new SignalAction(this, SLOT(showAudioInfo())))
+            << new DialogButtonItem(DialogWidget::Action, tr("GL"), new SignalAction(d->glPopup, SLOT(open())))
+            << new DialogButtonItem(DialogWidget::Action, tr("Audio"), new SignalAction(d->audioPopup, SLOT(open())))
             << new DialogButtonItem(DialogWidget::Action, tr("Homepage..."), new SignalAction(&ClientApp::app(), SLOT(openHomepageInBrowser())));
 
     // The popups are anchored to their button.
     d->glPopup->setAnchorAndOpeningDirection(buttonWidget(tr("GL")).rule(), ui::Up);
     d->audioPopup->setAnchorAndOpeningDirection(buttonWidget(tr("Audio")).rule(), ui::Up);
-}
-
-void AboutDialog::showGLInfo()
-{
-    d->glPopup->open();
-}
-
-void AboutDialog::showAudioInfo()
-{
-    d->audioPopup->open();
 }

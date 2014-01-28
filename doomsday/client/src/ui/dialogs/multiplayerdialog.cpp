@@ -28,7 +28,7 @@
 #include <de/SignalAction>
 #include <de/SequentialLayout>
 #include <de/ChildWidgetOrganizer>
-#include <de/DocumentWidget>
+#include <de/DocumentPopupWidget>
 #include <de/ui/Item>
 
 using namespace de;
@@ -75,8 +75,7 @@ DENG_GUI_PIMPL(MultiplayerDialog)
         ButtonWidget *extra;
         ButtonWidget *join;
         QScopedPointer<SequentialLayout> layout;
-        PopupWidget *popup;
-        DocumentWidget *info;
+        DocumentPopupWidget *info;
 
         struct JoinAction : public Action
         {
@@ -147,14 +146,12 @@ DENG_GUI_PIMPL(MultiplayerDialog)
             rule().setSize(layout->width(), title->rule().height());
 
             // Extra info popup.
-            popup = new PopupWidget;
-            popup->useInfoStyle();
-            popup->setContent(info = new DocumentWidget);
-            info->setMaximumLineWidth(style().rules().rule("dialog.multiplayer.width").valuei());
-            popup->setAnchorAndOpeningDirection(extra->rule(), ui::Up);
-            add(popup);
+            info = new DocumentPopupWidget;
+            info->document().setMaximumLineWidth(style().rules().rule("dialog.multiplayer.width").valuei());
+            info->setAnchorAndOpeningDirection(extra->rule(), ui::Up);
+            add(info);
 
-            extra->setAction(new SignalAction(popup, SLOT(open())));
+            extra->setAction(new SignalAction(info, SLOT(open())));
         }
 
         void updateFromItem(ServerListItem const &item)
@@ -187,13 +184,14 @@ DENG_GUI_PIMPL(MultiplayerDialog)
 
                 // Extra information.
 #define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
-                info->setText(String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
-                                     TABBED("Joinable:", "%5")
-                                     TABBED("Players:", "%3 / %4%13")
-                                     TABBED("Game:", "%9\n%10\n%12 %11")
-                                     TABBED("PWADs:", "%14")
-                                     TABBED("Address:", "%6:%7")
-                                     TABBED("Ping:", "%8 ms (approx)"))
+                info->document()
+                        .setText(String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
+                                        TABBED("Joinable:", "%5")
+                                        TABBED("Players:", "%3 / %4%13")
+                                        TABBED("Game:", "%9\n%10\n%12 %11")
+                                        TABBED("PWADs:", "%14")
+                                        TABBED("Address:", "%6:%7")
+                                        TABBED("Ping:", "%8 ms (approx)"))
                               .arg(sv.name)
                               .arg(sv.description)
                               .arg(sv.numPlayers)
