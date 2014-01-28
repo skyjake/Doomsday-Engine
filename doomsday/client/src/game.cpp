@@ -26,6 +26,7 @@
 
 #include <de/Error>
 #include <de/Log>
+#include <de/charsymbols.h>
 #include <QtAlgorithms>
 
 namespace de {
@@ -111,6 +112,23 @@ String const &Game::statusAsText() const
         "Not playable (incomplete resources)",
     };
     return statusTexts[int(status())];
+}
+
+String Game::description() const
+{
+    return String(_E(b) "%1 - %2\n" _E(.)
+                  _E(l) "IdentityKey: " _E(.)_E(i) "%3 " _E(.)
+                  _E(l) "PluginId: "    _E(.)_E(i) "%4\n" _E(.)
+                  _E(D) "Startup resources:\n" _E(.) "%5\n"
+                  _E(D) "Other resources:\n" _E(.) "%6\n"
+                  _E(D) "Status: " _E(.) "%7")
+            .arg(title())
+            .arg(author())
+            .arg(identityKey())
+            .arg(int(pluginId()))
+            .arg(filesAsText(FF_STARTUP))
+            .arg(filesAsText(0, false))
+            .arg(statusAsText());
 }
 
 pluginid_t Game::pluginId() const
@@ -215,25 +233,26 @@ void Game::printBanner(Game const &game)
     LOG_MSG(_E(R) "\n");
 }
 
-void Game::printFiles(Game const &game, int rflags, bool printStatus)
+String Game::filesAsText(int rflags, bool withStatus) const
 {
-    int numPrinted = 0;
+    String text;
 
     // Group output by resource class.
-    Manifests const &manifests = game.manifests();
+    Manifests const &manifs = manifests();
     for(uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourceclassid_t const classId = resourceclassid_t(i);
-        for(Manifests::const_iterator i = manifests.find(classId);
-            i != manifests.end() && i.key() == classId; ++i)
+        for(Manifests::const_iterator i = manifs.find(classId);
+            i != manifs.end() && i.key() == classId; ++i)
         {
             ResourceManifest &manifest = **i;
             if(rflags >= 0 && (rflags & manifest.fileFlags()))
             {
                 bool const resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
 
-                String text;
-                if(printStatus)
+                if(!text.isEmpty()) text += "\n" _E(0);
+
+                if(withStatus)
                 {
                     text += (resourceFound? "   " : _E(1) " ! " _E(.));
                 }
@@ -243,26 +262,29 @@ void Game::printFiles(Game const &game, int rflags, bool printStatus)
                         .arg(!resourceFound? _E(D) : "")
                         .arg(manifest.names().join(_E(l) " or " _E(.)));
 
-                if(printStatus)
+                if(withStatus)
                 {
                     text += String(": ") + _E(>) + (!resourceFound? _E(b) "missing " _E(.) : "");
                     if(resourceFound)
                     {
                         text += String(_E(C) "\"%1\"").arg(NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty());
                     }
+                    text += _E(<);
                 }
 
-                LOG_RES_MSG("") << text;
-                numPrinted += 1;
+                text += _E(<);
             }
         }
     }
 
-    /*
-    if(numPrinted == 0)
-    {
-        LOG_RES_MSG("   None");
-    }*/
+    if(text.isEmpty()) return "   " DENG2_CHAR_MDASH;
+
+    return text;
+}
+
+void Game::printFiles(Game const &game, int rflags, bool printStatus)
+{
+    LOG_RES_MSG("") << game.filesAsText(rflags, printStatus);
 }
 
 D_CMD(InspectGame)
@@ -296,6 +318,9 @@ D_CMD(InspectGame)
 
     DENG2_ASSERT(!game->isNull());
 
+    LOG_MSG("") << game->description();
+
+/*
     LOG_MSG(_E(b) "%s - %s") << game->title() << game->author();
     LOG_MSG(_E(l) "IdentityKey: " _E(.) _E(i) "%s " _E(.)
             _E(l) "PluginId: "    _E(.) _E(i) "%s")
@@ -308,6 +333,7 @@ D_CMD(InspectGame)
     Game::printFiles(*game, 0, false);
 
     LOG_MSG(_E(D) "Status: " _E(.) _E(b)) << game->statusAsText();
+    */
 
     return true;
 }

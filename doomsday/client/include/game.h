@@ -78,6 +78,12 @@ public:
     String const &statusAsText() const;
 
     /**
+     * Returns information about the game as styled text. Printed by "inspectgame",
+     * for instance.
+     */
+    String description() const;
+
+    /**
      * Returns the unique identifier of the plugin which registered the game.
      */
     pluginid_t pluginId() const;
@@ -165,14 +171,15 @@ public:
     static void printBanner(Game const &game);
 
     /**
-     * Print the list of resource files for @a Game.
+     * Composes a list of the resource files of the game.
      *
-     * @param game          Game to list the files of.
-     * @param rflags        Only consider files whose @ref fileFlags match
-     *                      this value. If @c <0 the flags are ignored.
-     * @param printStatus   @c true to  include the current availability/load status
-     *                      of each file.
+     * @param rflags      Only consider files whose @ref fileFlags match
+     *                    this value. If @c <0 the flags are ignored.
+     * @param withStatus  @c true to  include the current availability/load status
+     *                    of each file.
      */
+    String filesAsText(int rflags, bool withStatus = true) const;
+
     static void printFiles(Game const &game, int rflags, bool printStatus = true);
 
     /// Register the console commands, variables, etc..., of this module.
