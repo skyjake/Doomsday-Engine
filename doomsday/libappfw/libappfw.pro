@@ -46,6 +46,7 @@ HEADERS += \
     include/de/DialogContentStylist \
     include/de/DialogWidget \
     include/de/DocumentWidget \
+    include/de/DocumentPopupWidget \
     include/de/FoldPanelWidget \
     include/de/FontLineWrapping \
     include/de/framework \
@@ -120,6 +121,7 @@ HEADERS += \
     include/de/widgets/compositorwidget.h \
     include/de/widgets/dialogwidget.h \
     include/de/widgets/documentwidget.h \
+    include/de/widgets/documentpopupwidget.h \
     include/de/widgets/foldpanelwidget.h \
     include/de/widgets/gridpopupwidget.h \
     include/de/widgets/labelwidget.h \
@@ -166,6 +168,7 @@ SOURCES += \
     src/widgets/compositorwidget.cpp \
     src/widgets/dialogwidget.cpp \
     src/widgets/documentwidget.cpp \
+    src/widgets/documentpopupwidget.cpp \
     src/widgets/foldpanelwidget.cpp \
     src/widgets/gridpopupwidget.cpp \
     src/widgets/labelwidget.cpp \
