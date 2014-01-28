@@ -67,6 +67,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     String text;                ///< Plain text.
     Font::RichFormat format;
     int indent;                 ///< Current left indentation (in pixels).
+    QList<int> prevIndents;
     int tabStop;
 
     Instance() : font(0), maxWidth(0), indent(0), tabStop(0) {}
@@ -105,24 +106,32 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         return 0;
     }
 
-    int rangeIndentMarkWidth(Rangei const &range) const
+    void updateIndentMarkWidth(Rangei const &range)
     {
         Font::RichFormatRef rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
-        int markWidth = 0;
+        int const origIndent = indent;
         while(iter.hasNext())
         {
             iter.next();
             if(iter.markIndent())
             {
-                markWidth = rangeAdvanceWidth(Rangei(0, iter.range().start) + range.start);
+                prevIndents.append(indent);
+                indent = origIndent + rangeAdvanceWidth(Rangei(0, iter.range().start) + range.start);
             }
+
             if(iter.resetIndent())
             {
-                markWidth = -indent;
+                if(!prevIndents.isEmpty())
+                {
+                    indent = prevIndents.takeLast();
+                }
+                else
+                {
+                    indent = 0;
+                }
             }
         }
-        return markWidth;
     }
 
     /**
@@ -186,7 +195,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
         }
 
         // Check for possible indent for following lines.
-        indent += rangeIndentMarkWidth(range);
+        updateIndentMarkWidth(range);
 
         return line;
     }
@@ -288,7 +297,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     Lines wrapRange(Rangei const &rangeToWrap, int maxWidth, int subsequentMaxWidth = 0,
                     int initialIndent = 0)
     {
-        int const MIN_LINE_WIDTH = 120;
+        int const MIN_LINE_WIDTH = 150;
         bool const isTabbed = (subsequentMaxWidth > 0);
 
         indent    = initialIndent;
@@ -307,8 +316,15 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
                 if(!isTabbed)
                 {
                     // Regular non-tabbed line -- there is no room for this indent,
-                    // so reduce it.
-                    indent = de::max(0, mw - MIN_LINE_WIDTH);
+                    // fall back to the previous one.
+                    if(prevIndents.isEmpty())
+                    {
+                        indent = 0;
+                    }
+                    else
+                    {
+                        indent = prevIndents.last();
+                    }
                 }
                 else
                 {
@@ -520,6 +536,7 @@ void FontLineWrapping::reset()
 
     d->clearLines();
     d->indent = 0;
+    d->prevIndents.clear();
     d->tabStop = 0;
 }
 

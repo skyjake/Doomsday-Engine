@@ -114,12 +114,12 @@ DENG2_OBSERVES(EscapeParser, EscapeSequence)
                 Format form = stack.takeLast();
                 stack.last().tabStop = form.tabStop; // Retain tab stop.
                 stack.last().markIndent = form.markIndent;
-                //stack.last().resetIndent = form.resetIndent;
             }
             break;
 
         case '>':
             stack.last().markIndent = true;
+            handlePlainText(Rangei(0, 0));
             break;
 
         case '<':
