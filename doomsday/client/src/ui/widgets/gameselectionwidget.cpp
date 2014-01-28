@@ -129,7 +129,7 @@ public ChildWidgetOrganizer::IWidgetFactory
 
             info->setWidthPolicy(ui::Expand);
             info->setAlignment(ui::AlignBottom);
-            info->setText(_E(s) + tr("..."));
+            info->setText(_E(s)_E(B) + tr("..."));
 
             add(popup = new DocumentPopupWidget);
             popup->setAnchorAndOpeningDirection(info->rule(), ui::Up);

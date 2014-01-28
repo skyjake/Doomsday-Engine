@@ -254,7 +254,7 @@ String Game::filesAsText(int rflags, bool withStatus) const
 
                 if(withStatus)
                 {
-                    text += (resourceFound? "   " : _E(1) " ! " _E(.));
+                    text += (resourceFound? " - " : _E(1) " ! " _E(.));
                 }
 
                 // Format the resource name list.
@@ -267,7 +267,7 @@ String Game::filesAsText(int rflags, bool withStatus) const
                     text += String(": ") + _E(>) + (!resourceFound? _E(b) "missing " _E(.) : "");
                     if(resourceFound)
                     {
-                        text += String(_E(C) "\"%1\"").arg(NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty());
+                        text += String(_E(C) "\"%1\"" _E(.)).arg(NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty());
                     }
                     text += _E(<);
                 }
@@ -277,7 +277,7 @@ String Game::filesAsText(int rflags, bool withStatus) const
         }
     }
 
-    if(text.isEmpty()) return "   " DENG2_CHAR_MDASH;
+    if(text.isEmpty()) return " none";
 
     return text;
 }
