@@ -23,14 +23,19 @@
 #include "dd_main.h"
 
 #include <de/ui/ActionItem>
+#include <de/DocumentPopupWidget>
+#include <de/SignalAction>
+#include <de/FIFO>
 #include <QMap>
+
+#include "CommandAction"
 
 using namespace de;
 
 DENG_GUI_PIMPL(GameSelectionWidget),
 DENG2_OBSERVES(Games, Addition),
 DENG2_OBSERVES(App, StartupComplete),
-DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+public ChildWidgetOrganizer::IWidgetFactory
 {
     /// ActionItem with a Game member.
     struct GameItem : public ui::ActionItem {
@@ -39,12 +44,14 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
         Game const &game;
     };
 
+    FIFO<Game> pendingGames;
+
     Instance(Public *i) : Base(i)
     {
         App_Games().audienceForAddition += this;
         App::app().audienceForStartupComplete += this;
 
-        self.organizer().audienceForWidgetCreation += this;
+        self.organizer().setWidgetFactory(*this);
     }
 
     ~Instance()
@@ -55,7 +62,16 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 
     void gameAdded(Game &game)
     {
-        self.items().append(makeItemForGame(game));
+        // Called from a non-UI thread.
+        pendingGames.put(&game);
+    }
+
+    void addPendingGames()
+    {
+        while(Game *game = pendingGames.take())
+        {
+            self.items().append(makeItemForGame(*game));
+        }
     }
 
     ui::Item *makeItemForGame(Game &game)
@@ -63,10 +79,10 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
         String const idKey = game.identityKey();
 
         CommandAction *loadAction = new CommandAction(String("load ") + idKey);
-        String label = String(_E(b) "%1" _E(.)_E(s)_E(C) " %2\n"
-                           _E(.)_E(.)_E(l)_E(D) "%3")
+        String label = String(_E(b) "%1" _E(.) /*_E(s)_E(C) " %2\n" _E(.)_E(.)*/ "\n"
+                              _E(l)_E(D) "%2")
                 .arg(game.title())
-                .arg(game.author())
+                //.arg(game.author())
                 .arg(idKey);
 
         GameItem *item = new GameItem(game, label, loadAction);
@@ -93,15 +109,67 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
         return item;
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
+    struct GameWidget : public GuiWidget, DENG2_OBSERVES(ButtonWidget, Press)
     {
-        ButtonWidget &b = widget.as<ButtonWidget>();
+        ButtonWidget *load;
+        ButtonWidget *info;
+        DocumentPopupWidget *popup;
+        Game const *game;
 
-        b.setBehavior(Widget::ContentClipping);
-        b.setAlignment(ui::AlignLeft);
-        b.setTextLineAlignment(ui::AlignLeft);
-        b.setHeightPolicy(ui::Expand);
-        b.disable();
+        GameWidget() : game(0)
+        {
+            add(load = new ButtonWidget);
+            add(info = new ButtonWidget);
+
+            load->disable();
+            load->setBehavior(Widget::ContentClipping);
+            load->setAlignment(ui::AlignLeft);
+            load->setTextAlignment(ui::AlignRight);
+            load->setTextLineAlignment(ui::AlignLeft);
+
+            info->setWidthPolicy(ui::Expand);
+            info->setAlignment(ui::AlignBottom);
+            info->setText(_E(s) + tr("..."));
+
+            add(popup = new DocumentPopupWidget);
+            popup->setAnchorAndOpeningDirection(info->rule(), ui::Up);
+            popup->document().setMaximumLineWidth(popup->style().rules().rule("document.popup.width").valuei());
+            info->audienceForPress += this;
+
+            // Button for extra information.
+            load->rule()
+                    .setInput(Rule::Left,   rule().left())
+                    .setInput(Rule::Top,    rule().top())
+                    .setInput(Rule::Bottom, rule().bottom())
+                    .setInput(Rule::Right,  info->rule().left());
+            info->rule()
+                    .setInput(Rule::Top,    rule().top())
+                    .setInput(Rule::Right,  rule().right())
+                    .setInput(Rule::Bottom, rule().bottom());
+        }
+
+        void buttonPressed(ButtonWidget &)
+        {
+            popup->document().setText(game->description());
+            popup->open();
+        }
+    };
+
+    GuiWidget *makeItemWidget(ui::Item const &, GuiWidget const *)
+    {
+        return new GameWidget;
+    }
+
+    void updateItemWidget(GuiWidget &widget, ui::Item const &item)
+    {
+        GameWidget &w = widget.as<GameWidget>();
+        GameItem const &it = item.as<GameItem>();
+
+        w.game = &it.game;
+
+        w.load->setImage(it.image());
+        w.load->setText(it.label());
+        w.load->setAction(it.action()->duplicate());
     }
 
     void appStartupCompleted()
@@ -115,10 +183,8 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
         {
             GameItem const &item = self.items().at(i).as<GameItem>();
 
-            GuiWidget *w = self.organizer().itemWidget(item);
-            DENG2_ASSERT(w != 0);
-
-            w->enable(item.game.allStartupFilesFound());
+            GameWidget &w = self.organizer().itemWidget(item)->as<GameWidget>();
+            w.load->enable(item.game.allStartupFilesFound());
         }
 
         self.items().sort();
@@ -128,7 +194,12 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 GameSelectionWidget::GameSelectionWidget(String const &name)
     : MenuWidget(name), d(new Instance(this))
 {
+    layout().setColumnPadding(style().rules().rule("unit"));
     setGridSize(3, ui::Filled, 6, ui::Filled);
+
+    // We want the full menu to be visible even when it doesn't fit the
+    // designated area.
+    unsetBehavior(ChildVisibilityClipping);
 }
 
 void GameSelectionWidget::viewResized()
@@ -146,4 +217,11 @@ void GameSelectionWidget::viewResized()
     {
         setGridSize(suitable.x, ui::Filled, suitable.y, ui::Filled);
     }
+}
+
+void GameSelectionWidget::update()
+{
+    d->addPendingGames();
+
+    MenuWidget::update();
 }

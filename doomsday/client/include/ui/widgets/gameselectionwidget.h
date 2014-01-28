@@ -31,6 +31,7 @@ public:
 
     // Events.
     void viewResized();
+    void update();
 
 private:
     DENG2_PRIVATE(d)
