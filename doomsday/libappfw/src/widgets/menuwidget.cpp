@@ -452,6 +452,11 @@ GridLayout const &MenuWidget::layout() const
     return d->layout;
 }
 
+GridLayout &MenuWidget::layout()
+{
+    return d->layout;
+}
+
 ChildWidgetOrganizer &MenuWidget::organizer()
 {
     return d->organizer;

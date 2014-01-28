@@ -555,12 +555,18 @@ void ScrollAreaWidget::drawContent()
 
 void ScrollAreaWidget::preDrawChildren()
 {
-    GLState::push().setNormalizedScissor(normalizedRect());
+    if(behavior().testFlag(ChildVisibilityClipping))
+    {
+        GLState::push().setNormalizedScissor(normalizedRect());
+    }
 }
 
 void ScrollAreaWidget::postDrawChildren()
 {
-    GLState::pop();
+    if(behavior().testFlag(ChildVisibilityClipping))
+    {
+        GLState::pop();
+    }
 }
 
 } // namespace de
