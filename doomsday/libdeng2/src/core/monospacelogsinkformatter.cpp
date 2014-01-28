@@ -60,6 +60,7 @@ struct TabFiller
             {
                 lines << current;
                 current.clear();
+                current.reserve(80); // Prepare for per-character appending.
             }
             else
             {
