@@ -396,6 +396,7 @@ DENG_HEADERS += \
     include/ui/widgets/gamewidget.h \
     include/ui/widgets/icvarwidget.h \
     include/ui/widgets/keygrabberwidget.h \
+    include/ui/widgets/multiplayermenuwidget.h \
     include/ui/widgets/profilepickerwidget.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/fi_main.h \
@@ -730,6 +731,7 @@ SOURCES += \
     src/ui/widgets/gamewidget.cpp \
     src/ui/widgets/gameuiwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
+    src/ui/widgets/multiplayermenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/windowsystem.cpp \

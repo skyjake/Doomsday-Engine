@@ -157,6 +157,8 @@ DENG2_PIMPL(ServerLink)
         // Call game's NetConnect.
         gx.NetConnect(false);
 
+        DENG2_FOR_PUBLIC_AUDIENCE(Join, i) i->networkGameJoined();
+
         // G'day mate!  The client is responsible for beginning the
         // handshake.
         Cl_SendHello();
@@ -239,6 +241,8 @@ void ServerLink::disconnect()
         // Tell the Game that a disconnection is about to happen.
         if(gx.NetDisconnect)
             gx.NetDisconnect(true);
+
+        DENG2_FOR_AUDIENCE(Leave, i) i->networkGameLeft();
 
         LOG_NET_NOTE("Link to server %s disconnected") << address();
 
