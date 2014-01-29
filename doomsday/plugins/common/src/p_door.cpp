@@ -1,62 +1,43 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_door.cpp  Vertical door (opening/closing) thinker.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * @authors Copyright © 1999-2000 Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * p_doors.c : Vertical doors (opening/closing).
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <string.h>
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
+#include "p_door.h"
 
 #include "dmu_lib.h"
 #include "p_player.h"
 #include "p_mapspec.h"
-#include "p_door.h"
 #if __JDOOM64__
 #  include "p_ceiling.h"
 #  include "p_floor.h"
 #  include "p_inventory.h"
 #endif
 #include "p_sound.h"
-
-// MACROS ------------------------------------------------------------------
+#include <cstring>
 
 // Sounds played by the doors when changing state.
 // jHexen uses sound sequences, so it's are defined as 'SFX_NONE'.
@@ -90,29 +71,14 @@
 # define SFX_DOORLOCKED        (SFX_NONE)
 #endif
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 void T_Door(void *doorThinkerPtr)
 {
-    door_t* door = doorThinkerPtr;
-    xsector_t*          xsec;
-    result_e            res;
+    door_t *door = (door_t *)doorThinkerPtr;
+    DENG_ASSERT(door != 0);
 
-    xsec = P_ToXSector(door->sector);
+    xsector_t *xsec = P_ToXSector(door->sector);
+
+    result_e res;
 
     switch(door->state)
     {
@@ -133,23 +99,23 @@ void T_Door(void *doorThinkerPtr)
             case DT_BLAZERAISE:
 # endif
                 door->state = DS_DOWN; // Time to go back down.
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORBLAZECLOSE);
+                S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORBLAZECLOSE);
                 break;
 #endif
             case DT_NORMAL:
                 door->state = DS_DOWN; // Time to go back down.
 #if __JHEXEN__
-                SN_StartSequence(P_GetPtrp(door->sector, DMU_EMITTER),
+                SN_StartSequence((mobj_t *)P_GetPtrp(door->sector, DMU_EMITTER),
                                  SEQ_DOOR_STONE + xsec->seqType);
 #else
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSING);
+                S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSING);
 #endif
                 break;
 
             case DT_CLOSE30THENOPEN:
                 door->state = DS_UP;
 #if !__JHEXEN__
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
+                S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
 #endif
                 break;
 
@@ -168,7 +134,7 @@ void T_Door(void *doorThinkerPtr)
                 door->state = DS_UP;
                 door->type = DT_NORMAL;
 #if !__JHEXEN__
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
+                S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
 #endif
                 break;
 
@@ -187,14 +153,14 @@ void T_Door(void *doorThinkerPtr)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_GetPtrp(door->sector, DMU_EMITTER));
+            SN_StopSequence((mobj_t *)P_GetPtrp(door->sector, DMU_EMITTER));
 #endif
             switch(door->type)
             {
 #if __JDOOM64__
             case DT_INSTANTRAISE:  //jd64
             case DT_INSTANTCLOSE:  //jd64
-                P_ToXSector(door->sector)->specialData = NULL;
+                P_ToXSector(door->sector)->specialData = 0;
                 Thinker_Remove(&door->thinker); // Unlink and free.
                 break;
 #endif
@@ -205,25 +171,25 @@ void T_Door(void *doorThinkerPtr)
             case DT_BLAZERAISE:
             case DT_BLAZECLOSE:
 # endif
-                xsec->specialData = NULL;
+                xsec->specialData = 0;
                 Thinker_Remove(&door->thinker); // Unlink and free.
 
                 // DOOMII BUG:
                 // This is what causes blazing doors to produce two closing
                 // sounds as one has already been played when the door starts
                 // to close (above)
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORBLAZECLOSE);
+                S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORBLAZECLOSE);
                 break;
 #endif
             case DT_NORMAL:
             case DT_CLOSE:
-                xsec->specialData = NULL;
+                xsec->specialData = 0;
 #if __JHEXEN__
                 P_ACScriptTagFinished(P_ToXSector(door->sector)->tag);
 #endif
                 Thinker_Remove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSED);
+                S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSED);
 #endif
                 break;
 
@@ -252,7 +218,7 @@ void T_Door(void *doorThinkerPtr)
             default:
                 door->state = DS_UP;
 #if !__JHEXEN__
-                S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
+                S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
 #endif
                 break;
             }
@@ -267,7 +233,7 @@ void T_Door(void *doorThinkerPtr)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_GetPtrp(door->sector, DMU_EMITTER));
+            SN_StopSequence((mobj_t *)P_GetPtrp(door->sector, DMU_EMITTER));
 #endif
             switch(door->type)
             {
@@ -289,7 +255,7 @@ void T_Door(void *doorThinkerPtr)
             case DT_BLAZEOPEN:
 #endif
             case DT_NORMAL:
-                door->state = DS_WAIT; // Wait at top.
+                door->state        = DS_WAIT; // Wait at top.
                 door->topCountDown = door->topWait;
                 break;
 
@@ -298,13 +264,13 @@ void T_Door(void *doorThinkerPtr)
 #endif
             case DT_CLOSE30THENOPEN:
             case DT_OPEN:
-                xsec->specialData = NULL;
+                xsec->specialData = 0;
 #if __JHEXEN__
                 P_ACScriptTagFinished(P_ToXSector(door->sector)->tag);
 #endif
                 Thinker_Remove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
-                S_StopSound(0, (mobj_t*) P_GetPtrp(door->sector, DMU_CEILING_EMITTER));
+                S_StopSound(0, (mobj_t *) P_GetPtrp(door->sector, DMU_CEILING_EMITTER));
 #endif
                 break;
 
@@ -321,41 +287,38 @@ void T_Door(void *doorThinkerPtr)
 
 static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 {
-    int         rtn = 0, sound;
-    xsector_t  *xsec;
-    Sector     *sec = NULL;
-    door_t     *door;
-    iterlist_t *list;
+    iterlist_t *list = P_GetSectorIterListForTag(tag, false);
+    if(!list) return 0;
 
-    list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return rtn;
+    int rtn = 0;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
-    while((sec = IterList_MoveIterator(list)) != NULL)
+
+    Sector *sec;
+    while((sec = (Sector *) IterList_MoveIterator(list)))
     {
-        xsec = P_ToXSector(sec);
+        xsector_t *xsec = P_ToXSector(sec);
 
         if(xsec->specialData)
             continue;
 
         // new door thinker
         rtn = 1;
-        door = Z_Calloc(sizeof(*door), PU_MAP, 0);
+        door_t *door = (door_t *)Z_Calloc(sizeof(*door), PU_MAP, 0);
         door->thinker.function = T_Door;
         Thinker_Add(&door->thinker);
         xsec->specialData = door;
 
-        door->sector = sec;
-        door->type = type;
+        door->sector  = sec;
+        door->type    = type;
         door->topWait = topwait;
-        door->speed = speed;
+        door->speed   = speed;
 
 #if __JHEXEN__
-        sound = SEQ_DOOR_STONE + P_ToXSector(door->sector)->seqType;
+        int sound = SEQ_DOOR_STONE + P_ToXSector(door->sector)->seqType;
 #else
-        sound = 0;
+        int sound = 0;
 #endif
 
         switch(type)
@@ -422,10 +385,10 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 
         // Play a sound?
 #if __JHEXEN__
-        SN_StartSequence(P_GetPtrp(door->sector, DMU_EMITTER), sound);
+        SN_StartSequence((mobj_t *)P_GetPtrp(door->sector, DMU_EMITTER), sound);
 #else
         if(sound)
-            S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), sound);
+            S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), sound);
 #endif
     }
     return rtn;
@@ -445,7 +408,7 @@ int EV_DoDoor(Line *line, doortype_e type)
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
+static void sendNeedKeyMessage(player_t *p, textenum_t msgTxt, int keyNum)
 {
     char buf[160], *in, tmp[2];
 
@@ -567,22 +530,21 @@ static dd_bool tryLockedDoor(Line *line, player_t *p)
  * message and play a sound before returning @c false.
  * Else, NOT a locked door and can be opened, return @c true.
  */
-static dd_bool tryLockedManualDoor(Line* line, mobj_t* mo)
+static dd_bool tryLockedManualDoor(Line *line, mobj_t *mo)
 {
-    xline_t*            xline = P_ToXLine(line);
-    player_t*           p;
+    xline_t *xline = P_ToXLine(line);
 #if !__JHEXEN__
-    int                 keyNum = -1;
-    textenum_t          msgTxt = 0;
-    sfxenum_t           sfxNum = 0;
+    int keyNum = -1;
+    textenum_t msgTxt = NUMTEXT;
+    sfxenum_t sfxNum = SFX_NONE;
 #endif
 
     if(!mo || !xline)
         return false;
 
-    p = mo->player;
-
 #if !__JHEXEN__
+    player_t *p = mo->player;
+
     switch(xline->special)
     {
     case 26:
@@ -695,22 +657,16 @@ int EV_DoLockedDoor(Line *line, doortype_e type, mobj_t *thing)
 /**
  * Open a door manually, no tag value.
  */
-dd_bool EV_VerticalDoor(Line* line, mobj_t* mo)
+dd_bool EV_VerticalDoor(Line *line, mobj_t *mo)
 {
-    xline_t*            xline;
-    xsector_t*          xsec;
-    Sector*             sec;
-    door_t*             door;
-
-    sec = P_GetPtrp(line, DMU_BACK_SECTOR);
-    if(!sec)
-        return false;
+    Sector *sec = (Sector *)P_GetPtrp(line, DMU_BACK_SECTOR);
+    if(!sec) return false;
 
     if(!tryLockedManualDoor(line, mo))
         return false; // Mobj cannot open this door.
 
-    xsec = P_ToXSector(sec);
-    xline = P_ToXLine(line);
+    xsector_t *xsec = P_ToXSector(sec);
+    xline_t *xline  = P_ToXLine(line);
 
     // If the sector has an active thinker, use it.
     if(xsec->specialData)
@@ -718,7 +674,7 @@ dd_bool EV_VerticalDoor(Line* line, mobj_t* mo)
 #if __JHEXEN__
         return false;
 #else
-        door = xsec->specialData;
+        door_t *door = (door_t *)xsec->specialData;
         switch(xline->special)
         {
         case 1:
@@ -752,16 +708,17 @@ dd_bool EV_VerticalDoor(Line* line, mobj_t* mo)
     }
 
     // New door thinker.
-    door = Z_Calloc(sizeof(*door), PU_MAP, 0);
+    door_t *door = (door_t *) Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = T_Door;
     Thinker_Add(&door->thinker);
+
     xsec->specialData = door;
-    door->sector = sec;
-    door->state = DS_UP;
+    door->sector      = sec;
+    door->state       = DS_UP;
 
     // Play a sound?
 #if __JHEXEN__
-    SN_StartSequence(P_GetPtrp(door->sector, DMU_EMITTER),
+    SN_StartSequence((mobj_t *)P_GetPtrp(door->sector, DMU_EMITTER),
                      SEQ_DOOR_STONE + P_ToXSector(door->sector)->seqType);
 #else
     switch(xline->special)
@@ -775,19 +732,19 @@ dd_bool EV_VerticalDoor(Line* line, mobj_t* mo)
     case 527: // jd64
 #  endif
         // BLAZING DOOR RAISE/OPEN
-        S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORBLAZEOPEN);
+        S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORBLAZEOPEN);
         break;
 # endif
 
     case 1:
     case 31:
         // NORMAL DOOR SOUND
-        S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
+        S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
         break;
 
     default:
         // LOCKED DOOR SOUND
-        S_PlaneSound(P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
+        S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOOROPEN);
         break;
     }
 #endif
@@ -872,41 +829,37 @@ dd_bool EV_VerticalDoor(Line* line, mobj_t* mo)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 void P_SpawnDoorCloseIn30(Sector *sec)
 {
-    door_t *door;
-
-    door = Z_Calloc(sizeof(*door), PU_MAP, 0);
+    door_t *door = (door_t *)Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = T_Door;
     Thinker_Add(&door->thinker);
 
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 
-    door->sector = sec;
-    door->state = DS_WAIT;
-    door->type = DT_NORMAL;
-    door->speed = DOORSPEED;
+    door->sector       = sec;
+    door->state        = DS_WAIT;
+    door->type         = DT_NORMAL;
+    door->speed        = DOORSPEED;
     door->topCountDown = 30 * TICSPERSEC;
-    door->topHeight = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
+    door->topHeight    = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
 }
 
 void P_SpawnDoorRaiseIn5Mins(Sector *sec)
 {
-    door_t           *door;
-
-    door = Z_Calloc(sizeof(*door), PU_MAP, 0);
+    door_t *door = (door_t *)Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = T_Door;
     Thinker_Add(&door->thinker);
 
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 
-    door->sector = sec;
-    door->state = DS_INITIALWAIT;
-    door->type = DT_RAISEIN5MINS;
-    door->speed = DOORSPEED;
+    door->sector       = sec;
+    door->state        = DS_INITIALWAIT;
+    door->type         = DT_RAISEIN5MINS;
+    door->speed        = DOORSPEED;
     P_FindSectorSurroundingLowestCeiling(sec, (coord_t) MAXINT, &door->topHeight);
-    door->topHeight -= 4;
-    door->topWait = DOORWAIT;
+    door->topHeight   -= 4;
+    door->topWait      = DOORWAIT;
     door->topCountDown = 5 * 60 * TICSPERSEC;
 }
 #endif

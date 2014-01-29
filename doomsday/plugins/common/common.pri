@@ -97,7 +97,7 @@ SOURCES += \
     $$common_src/pause.c \
     $$common_src/p_actor.cpp \
     $$common_src/p_ceiling.cpp \
-    $$common_src/p_door.c \
+    $$common_src/p_door.cpp \
     $$common_src/p_floor.cpp \
     $$common_src/p_inventory.c \
     $$common_src/p_iterlist.c \
