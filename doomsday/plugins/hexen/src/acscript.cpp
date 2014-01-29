@@ -470,7 +470,7 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
     Thinker_Remove(&script->thinker);
 }
 
-void ACScriptInterpreter::writeWorldScriptData()
+void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
 {
     SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
 
@@ -495,7 +495,7 @@ void ACScriptInterpreter::writeWorldScriptData()
     }
 }
 
-void ACScriptInterpreter::readWorldScriptData(int saveVersion)
+void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
 {
     int ver = 1;
 
@@ -575,7 +575,7 @@ void ACScriptInterpreter::readWorldScriptData(int saveVersion)
     }
 }
 
-void ACScriptInterpreter::writeMapScriptData()
+void ACScriptInterpreter::writeMapScriptData(Writer *writer)
 {
     SV_BeginSegment(ASEG_SCRIPTS);
 
@@ -592,7 +592,7 @@ void ACScriptInterpreter::writeMapScriptData()
     }
 }
 
-void ACScriptInterpreter::readMapScriptData()
+void ACScriptInterpreter::readMapScriptData(Reader *reader)
 {
     SV_AssertSegment(ASEG_SCRIPTS);
 
@@ -1634,7 +1634,7 @@ ACS_COMMAND(SetLineSpecial)
     return Continue;
 }
 
-static CommandFunc PCodeCmds[] =
+static CommandFunc pcodeCmds[] =
 {
     cmdNOP, cmdTerminate, cmdSuspend, cmdPushNumber, cmdLSpec1, cmdLSpec2,
     cmdLSpec3, cmdLSpec4, cmdLSpec5, cmdLSpec1Direct, cmdLSpec2Direct,
@@ -1712,24 +1712,24 @@ void P_ACScriptPolyobjFinished(int tag)
     interp.polyobjFinished(tag);
 }
 
-void P_WriteGlobalACScriptData()
+void P_WriteGlobalACScriptData(Writer *writer)
 {
-    interp.writeWorldScriptData();
+    interp.writeWorldScriptData(writer);
 }
 
-void P_ReadGlobalACScriptData(int saveVersion)
+void P_ReadGlobalACScriptData(Reader *reader, int saveVersion)
 {
-    interp.readWorldScriptData(saveVersion);
+    interp.readWorldScriptData(reader, saveVersion);
 }
 
-void P_WriteMapACScriptData()
+void P_WriteMapACScriptData(Writer *writer)
 {
-    interp.writeMapScriptData();
+    interp.writeMapScriptData(writer);
 }
 
-void P_ReadMapACScriptData()
+void P_ReadMapACScriptData(Reader *reader)
 {
-    interp.readMapScriptData();
+    interp.readMapScriptData(reader);
 }
 
 ACScriptInterpreter &ACScript::interpreter() const

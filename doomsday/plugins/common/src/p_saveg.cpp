@@ -166,9 +166,9 @@ static void SV_WriteScroll(scroll_t const *scroll);
 static int SV_ReadScroll(scroll_t *scroll, int mapVersion);
 
 #if __JHEXEN__
-static void readMapState(Str const *path);
+static void readMapState(Reader *reader, Str const *path);
 #else
-static void readMapState();
+static void readMapState(Reader *reader);
 #endif
 
 static bool inited = false;
@@ -667,26 +667,24 @@ dd_bool SV_IsUserWritableSlot(int slot)
     return SV_IsValidSlot(slot);
 }
 
-static void SV_SaveInfo_Read(SaveInfo *info)
+static void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
 {
-    Reader *svReader = SV_NewReader();
 #if __JHEXEN__
     // Read the magic byte to determine the high-level format.
-    int magic = Reader_ReadInt32(svReader);
+    int magic = Reader_ReadInt32(reader);
     SV_HxSavePtr()->b -= 4; // Rewind the stream.
 
     if((!IS_NETWORK_CLIENT && magic != MY_SAVE_MAGIC) ||
        ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
     {
         // Perhaps the old v9 format?
-        SaveInfo_Read_Hx_v9(info, svReader);
+        SaveInfo_Read_Hx_v9(info, reader);
     }
     else
 #endif
     {
-        SaveInfo_Read(info, svReader);
+        SaveInfo_Read(info, reader);
     }
-    Reader_Delete(svReader);
 }
 
 static bool recogniseNativeState(Str const *path, SaveInfo *info)
@@ -708,7 +706,9 @@ static bool recogniseNativeState(Str const *path, SaveInfo *info)
         return false;
 #endif
 
-    SV_SaveInfo_Read(info);
+    Reader *reader = SV_NewReader();
+    SV_SaveInfo_Read(info, reader);
+    Reader_Delete(reader);
 
 #if __JHEXEN__
     Z_Free(saveBuffer);
@@ -2899,39 +2899,45 @@ static int SV_ReadPolyObj()
 }
 #endif
 
-static void writeMapElements()
+static void writeMapElements(Writer *writer)
 {
-    Writer *svWriter = SV_NewWriter();
-    MaterialArchive_Write(materialArchive, svWriter);
-    Writer_Delete(svWriter);
-
     SV_BeginSegment(ASEG_MAP_ELEMENTS);
 
     for(int i = 0; i < numsectors; ++i)
+    {
         SV_WriteSector((Sector *)P_ToPtr(DMU_SECTOR, i));
+    }
 
     for(int i = 0; i < numlines; ++i)
+    {
         SV_WriteLine((Line *)P_ToPtr(DMU_LINE, i));
+    }
 
 #if __JHEXEN__
     SV_BeginSegment(ASEG_POLYOBJS);
     SV_WriteLong(numpolyobjs);
     for(int i = 0; i < numpolyobjs; ++i)
+    {
         SV_WritePolyObj(Polyobj_ById(i));
+    }
 #endif
 }
 
-static void readMapElements()
+static void readMapElements(Reader *reader)
 {
     SV_AssertSegment(ASEG_MAP_ELEMENTS);
 
     // Load sectors.
     for(int i = 0; i < numsectors; ++i)
+    {
         SV_ReadSector((Sector *)P_ToPtr(DMU_SECTOR, i));
+    }
 
     // Load lines.
     for(int i = 0; i < numlines; ++i)
+    {
         SV_ReadLine((Line *)P_ToPtr(DMU_LINE, i));
+    }
 
 #if __JHEXEN__
     // Load polyobjects.
@@ -2940,7 +2946,9 @@ static void readMapElements()
     long const writtenPolyobjCount = SV_ReadLong();
     DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
     for(int i = 0; i < writtenPolyobjCount; ++i)
+    {
         SV_ReadPolyObj();
+    }
 #endif
 }
 
@@ -4169,8 +4177,8 @@ static int SV_ReadScroll(scroll_t *scroll, int /*mapVersion*/)
  */
 static int writeThinker(thinker_t *th, void *context)
 {
-    DENG_ASSERT(th != 0);
-    DENG_UNUSED(context);
+    DENG_ASSERT(th != 0 && context != 0);
+    Writer *writer = (Writer *) context;
 
     // We are only concerned with thinkers we have save info for.
     ThinkerClassInfo *thInfo = infoForThinker(*th);
@@ -4192,7 +4200,7 @@ static int writeThinker(thinker_t *th, void *context)
     SV_WriteByte(th->inStasis? 1 : 0); // In stasis?
 
     // Write the thinker data.
-    thInfo->writeFunc(th);
+    thInfo->writeFunc(th, writer);
 
     return false; // Continue iteration.
 }
@@ -4205,7 +4213,7 @@ static int writeThinker(thinker_t *th, void *context)
  *
  * @note Some thinker classes are NEVER saved by clients.
  */
-static void writeThinkers()
+static void writeThinkers(Writer *writer)
 {
     SV_BeginSegment(ASEG_THINKERS);
     {
@@ -4214,7 +4222,7 @@ static void writeThinkers()
 #endif
 
         // Serialize qualifying thinkers.
-        Thinker_Iterate(0/*all thinkers*/, writeThinker, 0/*no parameters*/);
+        Thinker_Iterate(0/*all thinkers*/, writeThinker, writer);
     }
     SV_WriteByte(TC_END);
 }
@@ -4406,7 +4414,7 @@ static void relinkThinkers()
 /**
  * Deserializes and then spawns thinkers for both client and server.
  */
-static void readThinkers()
+static void readThinkers(Reader *reader)
 {
 #if __JHEXEN__
     int const arcMapVersion = mapVersion;
@@ -4516,7 +4524,7 @@ static void readThinkers()
 
         bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(SV_ReadByte()) : false);
 
-        if(thInfo->readFunc(th, arcMapVersion))
+        if(thInfo->readFunc(th, reader, arcMapVersion))
         {
             Thinker_Add(th);
         }
@@ -4536,7 +4544,7 @@ static void readThinkers()
     relinkThinkers();
 }
 
-static void writeBrain()
+static void writeBrain(Writer *writer)
 {
 #if __JDOOM__
     // Not for us?
@@ -4550,11 +4558,13 @@ static void writeBrain()
 
     // Write the mobj references using the mobj archive.
     for(int i = 0; i < brain.numTargets; ++i)
+    {
         SV_WriteShort(SV_ThingArchiveId(brain.targets[i]));
+    }
 #endif
 }
 
-static void readBrain()
+static void readBrain(Reader *reader)
 {
 #if __JDOOM__
     // Not for us?
@@ -4587,7 +4597,7 @@ static void readBrain()
 #endif
 }
 
-static void writeSoundTargets()
+static void writeSoundTargets(Writer *writer)
 {
 #if !__JHEXEN__
     // Not for us?
@@ -4610,7 +4620,7 @@ static void writeSoundTargets()
 #endif
 }
 
-static void readSoundTargets()
+static void readSoundTargets(Reader *reader)
 {
 #if !__JHEXEN__
     // Not for us?
@@ -4640,7 +4650,7 @@ static void readSoundTargets()
 #endif
 }
 
-static void writeMisc()
+static void writeMisc(Writer *writer)
 {
 #if __JHEXEN__
     SV_BeginSegment(ASEG_MISC);
@@ -4652,7 +4662,7 @@ static void writeMisc()
 #endif
 }
 
-static void readMisc()
+static void readMisc(Reader *reader)
 {
 #if __JHEXEN__
     SV_AssertSegment(ASEG_MISC);
@@ -4664,7 +4674,7 @@ static void readMisc()
 #endif
 }
 
-static void writeMap()
+static void writeMap(Writer *writer)
 {
 #if !__JHEXEN__
     // Clear the sound target count (determined while saving sectors).
@@ -4680,20 +4690,21 @@ static void writeMap()
         SV_WriteLong(mapTime);
 #endif
 
-        writeMapElements();
-        writeThinkers();
+        MaterialArchive_Write(materialArchive, writer);
+        writeMapElements(writer);
+        writeThinkers(writer);
 #if __JHEXEN__
-        P_WriteMapACScriptData();
-        SN_WriteSequences();
+        P_WriteMapACScriptData(writer);
+        SN_WriteSequences(writer);
 #endif
-        writeMisc();
-        writeBrain();
-        writeSoundTargets();
+        writeMisc(writer);
+        writeBrain(writer);
+        writeSoundTargets(writer);
     }
     SV_EndSegment();
 }
 
-static void readMap()
+static void readMap(Reader *reader)
 {
     sideArchive = new SideArchive;
 
@@ -4711,21 +4722,17 @@ static void readMap()
 #if !__JHEXEN__
         if(hdr->version >= 4)
 #endif
-        {
-            Reader *svReader = SV_NewReader();
-            MaterialArchive_Read(materialArchive, svReader, materialArchiveVersion());
-            Reader_Delete(svReader);
-        }
 
-        readMapElements();
-        readThinkers();
+        MaterialArchive_Read(materialArchive, reader, materialArchiveVersion());
+        readMapElements(reader);
+        readThinkers(reader);
 #if __JHEXEN__
-        P_ReadMapACScriptData();
-        SN_ReadSequences(mapVersion);
+        P_ReadMapACScriptData(reader);
+        SN_ReadSequences(reader, mapVersion);
 #endif
-        readMisc();
-        readBrain();
-        readSoundTargets();
+        readMisc(reader);
+        readBrain(reader);
+        readSoundTargets(reader);
     }
     SV_AssertSegment(ASEG_END);
 
@@ -4816,11 +4823,13 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     if(!openGameSaveFile(path, false))
         return 1; // Failed?
 
+    Reader *reader = SV_NewReader();
+
     // Read the header again.
     /// @todo Seek past the header straight to the game state.
     {
         SaveInfo *tmp = SaveInfo_New();
-        SV_SaveInfo_Read(tmp);
+        SV_SaveInfo_Read(tmp, reader);
         SaveInfo_Delete(tmp);
     }
 
@@ -4848,7 +4857,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 #endif
 
 #if __JHEXEN__
-    P_ReadGlobalACScriptData(hdr->version);
+    P_ReadGlobalACScriptData(reader, hdr->version);
 #endif
 
     /*
@@ -4892,9 +4901,9 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 
     // Load the current map state.
 #if __JHEXEN__
-    readMapState(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
+    readMapState(reader, composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
 #else
-    readMapState();
+    readMapState(reader);
 #endif
 
 #if !__JHEXEN__
@@ -4971,6 +4980,8 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     // In netgames, the server tells the clients about this.
     NetSv_LoadGame(SaveInfo_GameId(saveInfo));
 #endif
+
+    Reader_Delete(reader);
 
     return 0;
 }
@@ -5102,11 +5113,8 @@ void SV_SaveGameClient(uint gameId)
     SaveInfo_SetGameId(saveInfo, gameId);
     SaveInfo_Configure(saveInfo);
 
-    {
-        Writer *svWriter = SV_NewWriter();
-        SaveInfo_Write(saveInfo, svWriter);
-        Writer_Delete(svWriter);
-    }
+    Writer *writer = SV_NewWriter();
+    SaveInfo_Write(saveInfo, writer);
 
     // Some important information.
     // Our position and look angles.
@@ -5123,12 +5131,13 @@ void SV_SaveGameClient(uint gameId)
     // Create and populate the MaterialArchive.
     materialArchive = MaterialArchive_New(false);
 
-    writeMap();
+    writeMap(writer);
     /// @todo No consistency bytes in client saves?
 
     clearMaterialArchive();
 
     SV_CloseFile();
+    Writer_Delete(writer);
     SaveInfo_Delete(saveInfo);
 #else
     DENG_UNUSED(gameId);
@@ -5158,11 +5167,13 @@ void SV_LoadGameClient(uint gameId)
     }
 
     saveInfo = SaveInfo_New();
-    SV_SaveInfo_Read(saveInfo);
+    Reader *reader = SV_NewReader();
+    SV_SaveInfo_Read(saveInfo, reader);
 
     hdr = SaveInfo_Header(saveInfo);
     if(hdr->magic != MY_CLIENT_SAVE_MAGIC)
     {
+        Reader_Delete(reader);
         SaveInfo_Delete(saveInfo);
         SV_CloseFile();
         App_Log(DE2_RES_ERROR, "Client save file format not recognized");
@@ -5206,11 +5217,12 @@ void SV_LoadGameClient(uint gameId)
      */
     materialArchive = MaterialArchive_New(false);
 
-    readMap();
+    readMap(reader);
 
     clearMaterialArchive();
 
     SV_CloseFile();
+    Reader_Delete(reader);
     SaveInfo_Delete(saveInfo);
 #else
     DENG_UNUSED(gameId);
@@ -5218,9 +5230,9 @@ void SV_LoadGameClient(uint gameId)
 }
 
 #if __JHEXEN__
-static void readMapState(Str const *path)
+static void readMapState(Reader *reader, Str const *path)
 #else
-static void readMapState()
+static void readMapState(Reader *reader)
 #endif
 {
 #if __JHEXEN__
@@ -5240,7 +5252,7 @@ static void readMapState()
     SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
 #endif
 
-    readMap();
+    readMap(reader);
 
 #if __JHEXEN__
     clearThingArchive();
@@ -5267,12 +5279,11 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     /*
      * Write the game session header.
      */
-    Writer *svWriter = SV_NewWriter();
-    SaveInfo_Write(saveInfo, svWriter);
-    Writer_Delete(svWriter); svWriter = 0;
+    Writer *writer = SV_NewWriter();
+    SaveInfo_Write(saveInfo, writer);
 
 #if __JHEXEN__
-    P_WriteGlobalACScriptData();
+    P_WriteGlobalACScriptData(writer);
 #endif
 
     // Set the mobj archive numbers.
@@ -5305,7 +5316,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     SV_OpenFile(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1), "wp");
 #endif
 
-    writeMap();
+    writeMap(writer);
 
     SV_WriteConsistencyBytes(); // To be absolutely sure...
     SV_CloseFile();
@@ -5314,6 +5325,8 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 #if !__JHEXEN___
     clearThingArchive();
 #endif
+
+    Writer_Delete(writer);
 
     return SV_OK;
 }
@@ -5400,15 +5413,19 @@ void SV_HxSaveClusterMap()
     // Set the mobj archive numbers
     initThingArchiveForSave(true /*exclude players*/);
 
+    Writer *writer = SV_NewWriter();
+
     // Create and populate the MaterialArchive.
     materialArchive = MaterialArchive_New(true);
 
-    writeMap();
+    writeMap(writer);
 
     clearMaterialArchive();
 
     // Close the output file
     SV_CloseFile();
+
+    Writer_Delete(writer);
 }
 
 void SV_HxLoadClusterMap()
@@ -5422,10 +5439,14 @@ void SV_HxLoadClusterMap()
     // Create the MaterialArchive.
     materialArchive = MaterialArchive_NewEmpty(true);
 
+    Reader *reader = SV_NewReader();
+
     // Been here before, load the previous map state.
-    readMapState(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
+    readMapState(reader, composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
 
     clearMaterialArchive();
+
+    Reader_Delete(reader);
 }
 
 void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS])
