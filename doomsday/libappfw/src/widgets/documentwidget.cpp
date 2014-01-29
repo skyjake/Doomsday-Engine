@@ -58,14 +58,14 @@ public Font::RichFormat::IStyle
     GLState clippedTextState;
 
     Instance(Public *i)
-        : Base(i),
-          progress(0),
-          widthPolicy(ui::Expand),
-          maxLineWidth(1000),
-          oldScrollY(0),
-          uMvpMatrix      ("uMvpMatrix", GLUniform::Mat4),
-          uScrollMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor          ("uColor",     GLUniform::Vec4)
+        : Base(i)
+        , progress(0)
+        , widthPolicy(ui::Expand)
+        , maxLineWidth(1000)
+        , oldScrollY(0)
+        , uMvpMatrix      ("uMvpMatrix", GLUniform::Mat4)
+        , uScrollMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uColor          ("uColor",     GLUniform::Vec4)
     {
         updateStyle();
 

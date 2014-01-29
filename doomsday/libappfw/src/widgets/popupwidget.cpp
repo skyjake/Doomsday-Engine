@@ -73,7 +73,6 @@ DENG_GUI_PIMPL(PopupWidget)
                 .clearInput(Rule::AnchorX)
                 .clearInput(Rule::AnchorY);
 
-        // Let's first try the requested direction.
         switch(self.openingDirection())
         {
         case ui::Up:
