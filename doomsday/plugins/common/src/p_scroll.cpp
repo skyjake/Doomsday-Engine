@@ -1,10 +1,8 @@
-/**
- * @file p_scroll.c
- * Common surface material scroll thinker. @ingroup libcommon
+/** @file p_scroll.cpp  Common surface material scroll thinker.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,20 +20,19 @@
  */
 
 #include "common.h"
+#include "p_scroll.h"
 #include "dmu_lib.h"
 
-#include "p_scroll.h"
-
-void T_Scroll(scroll_t* s)
+void T_Scroll(scroll_t *s)
 {
-    DENG_ASSERT(s);
+    DENG_ASSERT(s != 0);
 
     if(FEQUAL(s->offset[0], 0) && FEQUAL(s->offset[1], 0)) return;
 
     // Side surface(s)?
     if(DMU_GetType(s->dmuObject) == DMU_SIDE)
     {
-        Side* side = s->dmuObject;
+        Side *side = (Side *)s->dmuObject;
 
         if(s->elementBits & (1 << SS_TOP))
         {
@@ -52,52 +49,53 @@ void T_Scroll(scroll_t* s)
     }
     else // Sector plane-surface(s).
     {
-        Sector* sector = s->dmuObject;
+        Sector *sector = (Sector *)s->dmuObject;
         if(s->elementBits & (1 << PLN_FLOOR))
         {
-            Plane* plane = P_GetPtrp(sector, DMU_FLOOR_PLANE);
+            Plane *plane = (Plane *)P_GetPtrp(sector, DMU_FLOOR_PLANE);
             P_TranslatePlaneMaterialOrigin(plane, s->offset);
         }
         if(s->elementBits & (1 << PLN_CEILING))
         {
-            Plane* plane = P_GetPtrp(sector, DMU_CEILING_PLANE);
+            Plane *plane = (Plane *)P_GetPtrp(sector, DMU_CEILING_PLANE);
             P_TranslatePlaneMaterialOrigin(plane, s->offset);
         }
     }
 }
 
-static scroll_t* spawnMaterialOriginScroller(void* dmuObject, int elementBits, float offsetXY[2])
+static scroll_t *spawnMaterialOriginScroller(void *dmuObject, int elementBits, float offsetXY[2])
 {
-    scroll_t* scroll;
-
     // Don't spawn a scroller with an invalid map object reference.
-    if(!dmuObject || elementBits <= 0) return NULL;
+    if(!dmuObject || elementBits <= 0) return 0;
 
     // Don't spawn a scroller with a zero-length offset vector.
-    if(FEQUAL(offsetXY[0], 0) && FEQUAL(offsetXY[1], 0)) return NULL;
+    if(FEQUAL(offsetXY[0], 0) && FEQUAL(offsetXY[1], 0))
+    {
+        return 0;
+    }
 
-    scroll = Z_Calloc(sizeof(*scroll), PU_MAP, 0);
+    scroll_t *scroll = (scroll_t *)Z_Calloc(sizeof(*scroll), PU_MAP, 0);
     scroll->thinker.function = (thinkfunc_t) T_Scroll;
     Thinker_Add(&scroll->thinker);
 
-    scroll->dmuObject = dmuObject;
+    scroll->dmuObject   = dmuObject;
     scroll->elementBits = elementBits;
-    scroll->offset[0] = offsetXY[0];
-    scroll->offset[1] = offsetXY[1];
+    scroll->offset[0]   = offsetXY[0];
+    scroll->offset[1]   = offsetXY[1];
 
     return scroll;
 }
 
-scroll_t* P_SpawnSideMaterialOriginScroller(Side* side, short special)
+scroll_t *P_SpawnSideMaterialOriginScroller(Side *side, short special)
 {
     int elementBits;
     float offset[2];
 
-    if(!side) return NULL;
+    if(!side) return 0;
 
     switch(special)
     {
-    default: return NULL; // Not a scroller.
+    default: return 0; // Not a scroller.
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     case 48:  ///< Tagless, scroll left.
@@ -130,7 +128,7 @@ scroll_t* P_SpawnSideMaterialOriginScroller(Side* side, short special)
 #if __JHEXEN__
     case 100:  ///< Tagless, scroll left at speed.
     case 101: {  ///< Tagless, scroll right at speed.
-        xline_t* xline = P_ToXLine(P_GetPtrp(side, DMU_LINE));
+        xline_t *xline = P_ToXLine((Line *)P_GetPtrp(side, DMU_LINE));
         float speed = FIX2FLT(xline->arg1 << 10);
         offset[0] = (special == 100? speed : -speed);
         offset[1] = 0;
@@ -138,7 +136,7 @@ scroll_t* P_SpawnSideMaterialOriginScroller(Side* side, short special)
 
     case 102: ///< Tagless, scroll up at speed.
     case 103: {  ///< Tagless, scroll down speed.
-        xline_t* xline = P_ToXLine(P_GetPtrp(side, DMU_LINE));
+        xline_t *xline = P_ToXLine((Line *)P_GetPtrp(side, DMU_LINE));
         float speed = FIX2FLT(xline->arg1 << 10);
         offset[0] = 0;
         offset[1] = (special == 102? speed : -speed);
@@ -153,27 +151,29 @@ scroll_t* P_SpawnSideMaterialOriginScroller(Side* side, short special)
 #endif
     }
 
-    elementBits  = (1 << SS_MIDDLE) | (1 << SS_BOTTOM) | (1 << SS_TOP);
+    elementBits = (1 << SS_MIDDLE) | (1 << SS_BOTTOM) | (1 << SS_TOP);
     return spawnMaterialOriginScroller(side, elementBits, offset);
 }
 
-scroll_t* P_SpawnSectorMaterialOriginScroller(Sector* sector, uint planeId, short special)
+scroll_t *P_SpawnSectorMaterialOriginScroller(Sector *sector, uint planeId, short special)
 {
 #define SCROLLUNIT (8.f/35*2)
 
+    // Don't spawn a scroller with an invalid surface reference.
+    if(!sector || !(planeId == PLN_FLOOR || planeId == PLN_CEILING))
+    {
+        return 0;
+    }
+
+    /// @todo $nplanes
+#if __JHERETIC__ || __JHEXEN__
     int elementBits;
     float offset[2];
 
-    // Don't spawn a scroller with an invalid surface reference.
-    if(!sector || !(planeId == PLN_FLOOR || planeId == PLN_CEILING)) return NULL;
-
-    /// @todo $nplanes
-
     switch(special)
     {
-    default: return NULL; // Not a scroller.
+    default: return 0; // Not a scroller.
 
-#if __JHERETIC__ || __JHEXEN__
 # if __JHERETIC__
     case 25: ///< Scroll north.
     case 26:
@@ -263,7 +263,6 @@ scroll_t* P_SpawnSectorMaterialOriginScroller(Sector* sector, uint planeId, shor
 # endif
         offset[1] = 0;
         break;
-#endif // __JHERETIC__ || __JHEXEN__
 
 #if __JHERETIC__
     case 4: ///< Scroll east (lava damage).
@@ -305,6 +304,9 @@ scroll_t* P_SpawnSectorMaterialOriginScroller(Sector* sector, uint planeId, shor
 
     elementBits = 1 << planeId;
     return spawnMaterialOriginScroller(sector, elementBits, offset);
+#endif // __JHERETIC__ || __JHEXEN__
+
+    return 0;
 
 #undef SCROLLUNIT
 }

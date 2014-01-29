@@ -96,22 +96,22 @@ SOURCES += \
     $$common_src/mobj.c \
     $$common_src/pause.c \
     $$common_src/p_actor.cpp \
-    $$common_src/p_ceiling.c \
+    $$common_src/p_ceiling.cpp \
     $$common_src/p_door.c \
-    $$common_src/p_floor.c \
+    $$common_src/p_floor.cpp \
     $$common_src/p_inventory.c \
     $$common_src/p_iterlist.c \
     $$common_src/p_map.cpp \
     $$common_src/p_mapsetup.cpp \
     $$common_src/p_mapspec.c \
-    $$common_src/p_plat.c \
+    $$common_src/p_plat.cpp \
     $$common_src/p_player.c \
     $$common_src/p_saveg.cpp \
     $$common_src/p_saveio.c \
-    $$common_src/p_scroll.c \
+    $$common_src/p_scroll.cpp \
     $$common_src/p_sound.cpp \
     $$common_src/p_start.cpp \
-    $$common_src/p_switch.c \
+    $$common_src/p_switch.cpp \
     $$common_src/p_terraintype.c \
     $$common_src/p_tick.c \
     $$common_src/p_user.c \

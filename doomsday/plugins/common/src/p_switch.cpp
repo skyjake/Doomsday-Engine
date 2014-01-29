@@ -1,12 +1,10 @@
-/**
- * @file p_switch.c
- * Common playsim routines relating to switches.
+/** @file p_switch.cpp  Common playsim routines relating to switches.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- * @authors Copyright &copy; 1999-2000 Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- * @authors Copyright &copy; 1993-1996 id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * @authors Copyright © 1999-2000 Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,21 +21,14 @@
  * 02110-1301 USA</small>
  */
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
+#include "p_switch.h"
 
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "p_plat.h"
 #include "p_sound.h"
-#include "p_switch.h"
+#include <de/memory.h>
 
 /**
  * This struct is used to provide byte offsets when reading a custom
@@ -142,39 +133,36 @@ switchlist_t switchInfo[] = {
 };
 #endif
 
-static Material** switchlist;
+static Material **switchlist; /// @todo fixme: Never free'd!
 static int max_numswitches;
 static int numswitches;
 
 #if __JHEXEN__
-void P_InitSwitchList(void)
+void P_InitSwitchList()
 {
-    int i, index;
-    ddstring_t path;
-    Uri* uri = Uri_New();
-    Uri_SetScheme(uri, "Textures");
+    Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
 
-    Str_Init(&path);
+    AutoStr *path = AutoStr_NewStd();
 
-    for(index = 0, i = 0; ; ++i)
+    int index = 0;
+    for(int i = 0; ; ++i)
     {
         if(index+1 >= max_numswitches)
         {
-            switchlist = realloc(switchlist, sizeof(*switchlist) *
+            switchlist = (Material **) M_Realloc(switchlist, sizeof(*switchlist) *
                 (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
         if(!switchInfo[i].soundID) break;
 
-        Str_PercentEncode(Str_StripRight(Str_Set(&path, switchInfo[i].name1)));
-        Uri_SetPath(uri, Str_Text(&path));
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        Str_PercentEncode(Str_StripRight(Str_Set(path, switchInfo[i].name1)));
+        Uri_SetPath(uri, Str_Text(path));
+        switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
-        Str_PercentEncode(Str_StripRight(Str_Set(&path, switchInfo[i].name2)));
-        Uri_SetPath(uri, Str_Text(&path));
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        Str_PercentEncode(Str_StripRight(Str_Set(path, switchInfo[i].name2)));
+        Uri_SetPath(uri, Str_Text(path));
+        switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     }
-    Str_Free(&path);
     Uri_Delete(uri);
 
     numswitches = index / 2;
@@ -194,13 +182,13 @@ void P_InitSwitchList(void)
  *
  * @todo Implement a better method for creating new switches.
  */
-void P_InitSwitchList(void)
+void P_InitSwitchList()
 {
     int i, index, episode;
     lumpnum_t lumpNum = W_CheckLumpNumForName("SWITCHES");
-    switchlist_t* sList = switchInfo;
+    switchlist_t *sList = switchInfo;
     ddstring_t path;
-    Uri* uri;
+    Uri *uri;
 
 # if __JHERETIC__
     if(gameMode == heretic_shareware)
@@ -237,7 +225,7 @@ void P_InitSwitchList(void)
     {
         if(index+1 >= max_numswitches)
         {
-            switchlist = realloc(switchlist, sizeof(*switchlist) * (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
+            switchlist = (Material **) M_Realloc(switchlist, sizeof(*switchlist) * (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
         if(SHORT(sList[i].episode) <= episode)
@@ -246,11 +234,11 @@ void P_InitSwitchList(void)
 
             Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name1)));
             Uri_SetPath(uri, Str_Text(&path));
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+            switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
             Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name2)));
             Uri_SetPath(uri, Str_Text(&path));
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+            switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
             App_Log(lumpNum >= 0? DE2_RES_VERBOSE : DE2_RES_XVERBOSE,
                     "  %d: Epi:%d A:\"%s\" B:\"%s\"", i, SHORT(sList[i].episode),
@@ -269,12 +257,11 @@ void P_InitSwitchList(void)
 }
 #endif
 
-static Material* findSwitch(Material* mat, const switchlist_t** info)
+static Material* findSwitch(Material *mat, const switchlist_t** info)
 {
-    int i;
-    if(!mat) return NULL;
+    if(!mat) return 0;
 
-    for(i = 0; i < numswitches * 2; ++i)
+    for(int i = 0; i < numswitches * 2; ++i)
     {
         if(switchlist[i] == mat)
         {
@@ -286,53 +273,51 @@ static Material* findSwitch(Material* mat, const switchlist_t** info)
         }
     }
 
-    return NULL;
+    return 0;
 }
 
 void T_MaterialChanger(void *materialChangerThinker)
 {
-    materialchanger_t* mchanger = materialChangerThinker;
+    materialchanger_t *mchanger = (materialchanger_t *)materialChangerThinker;
 
     if(!(--mchanger->timer))
     {
-        const int sectionFlags = DMU_FLAG_FOR_SIDESECTION(mchanger->section);
+        int const sectionFlags = DMU_FLAG_FOR_SIDESECTION(mchanger->section);
 
         P_SetPtrp(mchanger->side, sectionFlags | DMU_MATERIAL, mchanger->material);
 
 #if __JDOOM__ || __JDOOM64__
-        S_SectorSound(P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWTCHN);
+        S_SectorSound((Sector *)P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWTCHN);
 #elif __JHERETIC__
-        S_SectorSound(P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWITCH);
+        S_SectorSound((Sector *)P_GetPtrp(mchanger->side, DMU_SECTOR), SFX_SWITCH);
 #endif
 
         Thinker_Remove(&mchanger->thinker);
     }
 }
 
-static void spawnMaterialChanger(Side* side, SideSection section,
-    Material* mat, int tics)
+static void spawnMaterialChanger(Side *side, SideSection section, Material *mat, int tics)
 {
-    materialchanger_t* mchanger;
-
-    mchanger = Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
+    materialchanger_t *mchanger = (materialchanger_t *)Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
     mchanger->thinker.function = T_MaterialChanger;
     Thinker_Add(&mchanger->thinker);
 
-    mchanger->side = side;
-    mchanger->section = section;
+    mchanger->side     = side;
+    mchanger->section  = section;
     mchanger->material = mat;
-    mchanger->timer = tics;
+    mchanger->timer    = tics;
 }
 
-typedef struct {
-    Side* side;
-    SideSection section;
-} findmaterialchangerparams_t;
-
-static int findMaterialChanger(thinker_t* th, void* parameters)
+struct findmaterialchangerparams_t
 {
-    materialchanger_t* mchanger = (materialchanger_t*) th;
-    findmaterialchangerparams_t* params = (findmaterialchangerparams_t*) parameters;
+    Side *side;
+    SideSection section;
+};
+
+static int findMaterialChanger(thinker_t *th, void *context)
+{
+    materialchanger_t *mchanger = (materialchanger_t *) th;
+    findmaterialchangerparams_t *params = (findmaterialchangerparams_t *) context;
 
     if(mchanger->side == params->side &&
        mchanger->section == params->section)
@@ -341,22 +326,20 @@ static int findMaterialChanger(thinker_t* th, void* parameters)
     return false; // Keep looking.
 }
 
-static void startButton(Side* side, SideSection section,
-    Material* mat, int tics)
+static void startButton(Side *side, SideSection section, Material *mat, int tics)
 {
-    findmaterialchangerparams_t params;
-
-    params.side = side;
-    params.section = section;
+    findmaterialchangerparams_t parm;
+    parm.side    = side;
+    parm.section = section;
 
     // See if a material change has already been queued.
-    if(Thinker_Iterate(T_MaterialChanger, findMaterialChanger, &params))
-        return;
-
-    spawnMaterialChanger(side, section, mat, tics);
+    if(!Thinker_Iterate(T_MaterialChanger, findMaterialChanger, &parm))
+    {
+        spawnMaterialChanger(side, section, mat, tics);
+    }
 }
 
-static int chooseDefaultSound(switchlist_t const* info)
+static int chooseDefaultSound(switchlist_t const *info)
 {
     /// @todo Get these defaults from switchinfo.
 #if __JHEXEN__
@@ -368,17 +351,13 @@ static int chooseDefaultSound(switchlist_t const* info)
 #endif
 }
 
-dd_bool P_ToggleSwitch2(Side* side, SideSection section, int sound,
-    dd_bool silent, int tics)
+dd_bool P_ToggleSwitch2(Side *side, SideSection section, int sound, dd_bool silent, int tics)
 {
-    const int sectionFlags = DMU_FLAG_FOR_SIDESECTION(section);
-    Material* mat, *current;
-    const switchlist_t* info;
+    int const sectionFlags = DMU_FLAG_FOR_SIDESECTION(section);
+    Material *current = (Material *)P_GetPtrp(side, sectionFlags | DMU_MATERIAL);
 
-    current = P_GetPtrp(side, sectionFlags | DMU_MATERIAL);
-
-    mat = findSwitch(current, &info);
-    if(mat)
+    switchlist_t const *info;
+    if(Material *mat = findSwitch(current, &info))
     {
         if(!silent)
         {
@@ -387,7 +366,7 @@ dd_bool P_ToggleSwitch2(Side* side, SideSection section, int sound,
                 sound = chooseDefaultSound(info);
             }
 
-            S_SectorSound(P_GetPtrp(side, DMU_SECTOR), sound);
+            S_SectorSound((Sector *)P_GetPtrp(side, DMU_SECTOR), sound);
         }
 
         P_SetPtrp(side, sectionFlags | DMU_MATERIAL, mat);
@@ -405,7 +384,7 @@ dd_bool P_ToggleSwitch2(Side* side, SideSection section, int sound,
     return false;
 }
 
-dd_bool P_ToggleSwitch(Side* side, int sound, dd_bool silent, int tics)
+dd_bool P_ToggleSwitch(Side *side, int sound, dd_bool silent, int tics)
 {
     if(P_ToggleSwitch2(side, SS_TOP, sound, silent, tics))
         return true;
@@ -420,7 +399,7 @@ dd_bool P_ToggleSwitch(Side* side, int sound, dd_bool silent, int tics)
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-dd_bool P_UseSpecialLine(mobj_t* activator, Line* line, int side)
+dd_bool P_UseSpecialLine(mobj_t *activator, Line *line, int side)
 {
     // Extended functionality overrides old.
     if(XL_UseLine(line, side, activator))

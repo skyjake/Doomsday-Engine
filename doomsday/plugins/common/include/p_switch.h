@@ -1,10 +1,8 @@
-/**
- * @file p_switch.h
- * Common playsim routines relating to switches.
+/** @file p_switch.h  Common playsim routines relating to switches.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,10 +26,6 @@
 #include "p_mobj.h"
 #include "dmu_lib.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
 typedef struct {
@@ -39,8 +33,12 @@ typedef struct {
     int timer;
     Side* side;
     SideSection section;
-    Material* material;
+    Material *material;
 } materialchanger_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Called at game initialization or when the engine's state must be updated
@@ -61,7 +59,7 @@ void P_InitSwitchList(void);
  * @param tics          @c <= 0 = A permanent change.
  *                      @c  > 0 = Change back after this many tics.
  */
-dd_bool P_ToggleSwitch2(Side* side, SideSection ssurfaceID, int sound,
+dd_bool P_ToggleSwitch2(Side *side, SideSection ssurfaceID, int sound,
     dd_bool silent, int tics);
 
 /**
@@ -74,13 +72,13 @@ dd_bool P_ToggleSwitch2(Side* side, SideSection ssurfaceID, int sound,
  * @param tics          @c <= 0 = A permanent change.
  *                      @c  > 0 = Change back after this many tics.
  */
-dd_bool P_ToggleSwitch(Side* side, int sound, dd_bool silent, int tics);
+dd_bool P_ToggleSwitch(Side *side, int sound, dd_bool silent, int tics);
 
 /**
  * To be called to execute any action(s) assigned to the specified Line's
  * special.
  */
-dd_bool P_UseSpecialLine(mobj_t* activator, Line* line, int side);
+dd_bool P_UseSpecialLine(mobj_t *activator, Line *line, int side);
 
 void T_MaterialChanger(void *materialChangedThinker);
 
