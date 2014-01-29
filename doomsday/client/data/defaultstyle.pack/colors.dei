@@ -90,6 +90,6 @@ group document {
     color normal    { rgb $= gui.colorMix(inverted.text.rgb, [1, 1, 1], 0.2) }
     color highlight { rgb $= inverted.text.rgb }
     color dimmed    { rgb <0.5, 0.5, 0.5> }
-    color accent    { rgb $= accent.rgb }
+    color accent    { rgb $= inverted.accent.rgb }
     color dimaccent { rgb <0.85, 0.68, 0.34> }
 }
