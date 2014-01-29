@@ -53,7 +53,9 @@
 #include "p_savedef.h"
 #include "dmu_archiveindex.h"
 #include "polyobjs.h"
-
+#if __JHEXEN__
+#  include "acscript.h"
+#endif
 #include "p_saveg.h"
 
 using namespace dmu_lib;
@@ -206,6 +208,20 @@ static int numSoundTargets;
 static MaterialArchive *materialArchive;
 static SideArchive *sideArchive;
 
+#if __JHEXEN__
+static void writeACScript(thinker_t *th, Writer *writer)
+{
+    ACScript *script = (ACScript *)th;
+    script->write(writer);
+}
+
+static int readACScript(thinker_t *th, Reader *reader, int mapVersion)
+{
+    ACScript *script = (ACScript *)th;
+    return script->read(reader, mapVersion);
+}
+#endif
+
 static ThinkerClassInfo thinkerInfo[] = {
     {
       TC_MOBJ,
@@ -262,8 +278,8 @@ static ThinkerClassInfo thinkerInfo[] = {
      TC_INTERPRET_ACS,
      (thinkfunc_t) ACScript_Thinker,
      0,
-     (WriteThinkerFunc)ACScript_Write,
-     (ReadThinkerFunc)ACScript_Read,
+     (WriteThinkerFunc)writeACScript,
+     (ReadThinkerFunc)readACScript,
      sizeof(ACScript)
     },
     {

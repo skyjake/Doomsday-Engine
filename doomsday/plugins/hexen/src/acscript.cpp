@@ -1737,6 +1737,41 @@ ACScriptInterpreter &ACScript::interpreter() const
     return interp;
 }
 
+void ACScript::runTick()
+{
+    ACScriptInterpreter &interp = interpreter();
+    BytecodeScriptInfo &info = interp.scriptInfoFor(this);
+    if(info.state == Terminating)
+    {
+        interp.scriptFinished(this);
+        return;
+    }
+
+    if(info.state != Running)
+    {
+        return;
+    }
+
+    if(delayCount)
+    {
+        delayCount--;
+        return;
+    }
+
+    CommandArgs args;
+    args.script     = this;
+    args.scriptInfo = &info;
+
+    int action;
+    while((action = pcodeCmds[LONG(*pcodePtr++)](args)) == Continue)
+    {}
+
+    if(action == Terminate)
+    {
+        interp.scriptFinished(this);
+    }
+}
+
 void ACScript::push(int value)
 {
     stack[stackPtr++] = value;
@@ -1760,148 +1795,114 @@ void ACScript::drop()
 void ACScript_Thinker(ACScript *script)
 {
     DENG_ASSERT(script != 0);
-
-    BytecodeScriptInfo &info = interp.scriptInfoFor(script);
-    if(info.state == Terminating)
-    {
-        interp.scriptFinished(script);
-        return;
-    }
-
-    if(info.state != Running)
-    {
-        return;
-    }
-
-    if(script->delayCount)
-    {
-        script->delayCount--;
-        return;
-    }
-
-    CommandArgs args;
-    args.script     = script;
-    args.scriptInfo = &info;
-
-    int action;
-    while((action = PCodeCmds[LONG(*script->pcodePtr++)](args)) == Continue)
-    {}
-
-    if(action == Terminate)
-    {
-        interp.scriptFinished(script);
-    }
+    script->runTick();
 }
 
-void ACScript_Write(ACScript const *th)
+void ACScript::write(Writer *writer) const
 {
-    DENG_ASSERT(th != 0);
+    Writer_WriteByte(writer, 1); // Write a version byte.
 
-    SV_WriteByte(1); // Write a version byte.
-
-    SV_WriteLong(SV_ThingArchiveId(th->activator));
-    SV_WriteLong(P_ToIndex(th->line));
-    SV_WriteLong(th->side);
-    SV_WriteLong(th->number);
-    SV_WriteLong(th->infoIndex);
-    SV_WriteLong(th->delayCount);
+    Writer_WriteInt32(writer, SV_ThingArchiveId(activator));
+    Writer_WriteInt32(writer, P_ToIndex(line));
+    Writer_WriteInt32(writer, side);
+    Writer_WriteInt32(writer, number);
+    Writer_WriteInt32(writer, infoIndex);
+    Writer_WriteInt32(writer, delayCount);
     for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
     {
-        SV_WriteLong(th->stack[i]);
+        Writer_WriteInt32(writer, stack[i]);
     }
-    SV_WriteLong(th->stackPtr);
+    Writer_WriteInt32(writer, stackPtr);
     for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
     {
-        SV_WriteLong(th->vars[i]);
+        Writer_WriteInt32(writer, vars[i]);
     }
-    SV_WriteLong(((byte const *)th->pcodePtr) - interp.bytecode());
+    Writer_WriteInt32(writer, ((byte const *)pcodePtr) - interpreter().bytecode());
 }
 
-int ACScript_Read(ACScript *th, int mapVersion)
+int ACScript::read(Reader *reader, int mapVersion)
 {
-    DENG_ASSERT(th != 0);
-
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
 
-        th->activator       = (mobj_t *) SV_ReadLong();
-        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
+        activator       = (mobj_t *) Reader_ReadInt32(reader);
+        activator       = SV_GetArchiveThing(PTR2INT(activator), &activator);
 
         int temp = SV_ReadLong();
         if(temp >= 0)
         {
-            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
-            DENG_ASSERT(th->line != 0);
+            line        = (Line *)P_ToPtr(DMU_LINE, temp);
+            DENG_ASSERT(line != 0);
         }
         else
         {
-            th->line        = 0;
+            line        = 0;
         }
 
-        th->side            = SV_ReadLong();
-        th->number          = SV_ReadLong();
-        th->infoIndex       = SV_ReadLong();
-        th->delayCount      = SV_ReadLong();
+        side            = Reader_ReadInt32(reader);
+        number          = Reader_ReadInt32(reader);
+        infoIndex       = Reader_ReadInt32(reader);
+        delayCount      = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
         {
-            th->stack[i] = SV_ReadLong();
+            stack[i] = Reader_ReadInt32(reader);
         }
 
-        th->stackPtr        = SV_ReadLong();
+        stackPtr        = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
         {
-            th->vars[i] = SV_ReadLong();
+            vars[i] = Reader_ReadInt32(reader);
         }
 
-        th->pcodePtr        = (int *) (interp.bytecode() + SV_ReadLong());
+        pcodePtr        = (int *) (interpreter().bytecode() + Reader_ReadInt32(reader));
     }
     else
     {
         // Its in the old pre V4 format which serialized acs_t
         // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
 
         // Start of used data members.
-        th->activator       = (mobj_t*) SV_ReadLong();
-        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
+        activator       = (mobj_t *) Reader_ReadInt32(reader);
+        activator       = SV_GetArchiveThing(PTR2INT(activator), &activator);
 
-        int temp = SV_ReadLong();
+        int temp = Reader_ReadInt32(reader);
         if(temp >= 0)
         {
-            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
-            DENG_ASSERT(th->line != 0);
+            line        = (Line *)P_ToPtr(DMU_LINE, temp);
+            DENG_ASSERT(line != 0);
         }
         else
         {
-            th->line        = 0;
+            line        = 0;
         }
 
-        th->side            = SV_ReadLong();
-        th->number          = SV_ReadLong();
-        th->infoIndex       = SV_ReadLong();
-        th->delayCount      = SV_ReadLong();
+        side            = Reader_ReadInt32(reader);
+        number          = Reader_ReadInt32(reader);
+        infoIndex       = Reader_ReadInt32(reader);
+        delayCount      = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
         {
-            th->stack[i] = SV_ReadLong();
+            stack[i] = Reader_ReadInt32(reader);
         }
 
-        th->stackPtr        = SV_ReadLong();
+        stackPtr        = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
         {
-            th->vars[i] = SV_ReadLong();
+            vars[i] = Reader_ReadInt32(reader);
         }
 
-        th->pcodePtr        = (int *) (interp.bytecode() + SV_ReadLong());
+        pcodePtr        = (int *) (interpreter().bytecode() + Reader_ReadInt32(reader));
     }
 
-    th->thinker.function = (thinkfunc_t) ACScript_Thinker;
+    thinker.function = (thinkfunc_t) ACScript_Thinker;
 
     return true; // Add this thinker.
 }
