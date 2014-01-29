@@ -83,7 +83,7 @@ struct BytecodeScriptInfo
     int argCount;
 
     // Current state:
-    /// @todo Move to a separate array, in Interpreter
+    /// @todo Move to a separate array, in ACScriptInterpreter
     ACScriptState state;
     int waitValue;
 };
@@ -1142,8 +1142,8 @@ ACS_COMMAND(PolyWaitDirect)
 
 ACS_COMMAND(ChangeFloor)
 {
-    Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())));
+    Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1169,8 +1169,8 @@ ACS_COMMAND(ChangeFloorDirect)
 {
     int tag = LONG(*S_PCODEPTR++);
 
-    Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
+    Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1192,8 +1192,8 @@ ACS_COMMAND(ChangeFloorDirect)
 
 ACS_COMMAND(ChangeCeiling)
 {
-    Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())));
+    Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1219,8 +1219,8 @@ ACS_COMMAND(ChangeCeilingDirect)
 {
     int tag = LONG(*S_PCODEPTR++);
 
-    Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
+    Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1540,8 +1540,8 @@ ACS_COMMAND(SetLineTexture)
 #define TEXTURE_MIDDLE 1
 #define TEXTURE_BOTTOM 2
 
-    Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())));
+    Uri *uri = Uri_NewWithPath3("Textures", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
