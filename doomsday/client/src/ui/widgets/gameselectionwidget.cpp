@@ -32,10 +32,10 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(GameSelectionWidget),
-DENG2_OBSERVES(Games, Addition),
-DENG2_OBSERVES(App, StartupComplete),
-public ChildWidgetOrganizer::IWidgetFactory
+DENG_GUI_PIMPL(GameSelectionWidget)
+, DENG2_OBSERVES(Games, Addition)
+, DENG2_OBSERVES(App, StartupComplete)
+, public ChildWidgetOrganizer::IWidgetFactory
 {
     /// ActionItem with a Game member.
     struct GameItem : public ui::ActionItem {
@@ -109,7 +109,10 @@ public ChildWidgetOrganizer::IWidgetFactory
         return item;
     }
 
-    struct GameWidget : public GuiWidget, DENG2_OBSERVES(ButtonWidget, Press)
+    struct GameWidget
+            : public GuiWidget
+            , DENG2_OBSERVES(ButtonWidget, Press)
+            , DENG2_OBSERVES(App, GameUnload)
     {
         ButtonWidget *load;
         ButtonWidget *info;
@@ -146,10 +149,29 @@ public ChildWidgetOrganizer::IWidgetFactory
                     .setInput(Rule::Top,    rule().top())
                     .setInput(Rule::Right,  rule().right())
                     .setInput(Rule::Bottom, rule().bottom());
+
+            App::app().audienceForGameUnload += this;
         }
 
-        void buttonPressed(ButtonWidget &)
+        ~GameWidget()
         {
+            App::app().audienceForGameUnload -= this;
+        }
+
+        void aboutToUnloadGame(game::Game const &)
+        {
+            popup->close(0);
+        }
+
+        void buttonPressed(ButtonWidget &bt)
+        {
+            /*
+            // Show information about the game.
+            popup->setAnchorAndOpeningDirection(
+                        bt.rule(),
+                        bt.rule().top().valuei() + bt.rule().height().valuei() / 2 <
+                        bt.root().viewRule().height().valuei() / 2?
+                            ui::Down : ui::Up);*/
             popup->document().setText(game->description());
             popup->open();
         }
