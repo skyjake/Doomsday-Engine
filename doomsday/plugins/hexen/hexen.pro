@@ -89,13 +89,13 @@ SOURCES += \
     src/p_mapinfo.cpp \
     src/p_maputl.c \
     src/p_mobj.c \
-    src/p_pillar.c \
+    src/p_pillar.cpp \
     src/p_pspr.c \
     src/p_setup.c \
     src/p_spec.c \
     src/p_telept.c \
     src/p_things.c \
-    src/p_waggle.c \
+    src/p_waggle.cpp \
     src/sn_sonix.cpp \
     src/st_stuff.c \
     src/tables.c \
