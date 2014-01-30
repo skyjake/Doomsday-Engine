@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_BASEGUIAPP_H
 #define LIBAPPFW_BASEGUIAPP_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 
 #include <de/GuiApp>
 #include <de/GLShaderBank>

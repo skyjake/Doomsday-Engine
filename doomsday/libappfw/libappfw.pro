@@ -18,6 +18,7 @@ include(../dep_deng1.pri) # Garbage
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_opengl.pri)
+include(../dep_rift.pri)
 
 DEFINES += __LIBAPPFW__
 INCLUDEPATH += include
@@ -25,12 +26,6 @@ INCLUDEPATH += include
 win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
-}
-else:macx {
-    #useFramework(Cocoa)
-}
-else:unix {
-    #LIBS += -lX11
 }
 
 # Public headers.
@@ -101,7 +96,6 @@ HEADERS += \
     include/de/framework/guiwidget.h \
     include/de/framework/guiwidgetprivate.h \
     include/de/framework/item.h \
-    include/de/framework/libappfw.h \
     include/de/framework/listdata.h \
     include/de/framework/margins.h \
     include/de/framework/proceduralimage.h \
@@ -113,7 +107,9 @@ HEADERS += \
     include/de/framework/subwidgetitem.h \
     include/de/framework/textdrawable.h \
     include/de/framework/variabletoggleitem.h \
+    include/de/libappfw.h \
     include/de/ui/defs.h \
+    include/de/vr/oculusrift.h \
     include/de/widgets/blurwidget.h \
     include/de/widgets/buttonwidget.h \
     include/de/widgets/choicewidget.h \
@@ -161,6 +157,7 @@ SOURCES += \
     src/signalaction.cpp \
     src/style.cpp \
     src/textdrawable.cpp \
+    src/vr/oculusrift.cpp \
     src/widgets/blurwidget.cpp \
     src/widgets/buttonwidget.cpp \
     src/widgets/choicewidget.cpp \

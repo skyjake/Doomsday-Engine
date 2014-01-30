@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_UI_STYLIST_H
 #define LIBAPPFW_UI_STYLIST_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 
 namespace de {
 

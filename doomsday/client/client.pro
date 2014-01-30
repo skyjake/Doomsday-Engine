@@ -37,7 +37,6 @@ include(../dep_deng1.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_appfw.pri)
-include(../dep_rift.pri)
 
 # Definitions ----------------------------------------------------------------
 

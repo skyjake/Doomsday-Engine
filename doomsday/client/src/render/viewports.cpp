@@ -872,7 +872,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     // Latest possible time to check the real head angles. After this we'll be
     // using the provided values.
-    vrCfg.ovr().update();
+    vrCfg.oculusRift().update();
 
     R_SetupPlayerSprites();
 
@@ -1324,7 +1324,7 @@ angle_t viewer_t::angle() const
     {
         // Apply the actual, current yaw offset. The game has omitted the "body yaw"
         // portion from the value already.
-        a += (fixed_t)(radianToDegree(vrCfg.ovr().headOrientation()[2]) / 180 * ANGLE_180);
+        a += (fixed_t)(radianToDegree(vrCfg.oculusRift().headOrientation()[2]) / 180 * ANGLE_180);
     }
     return a;
 }

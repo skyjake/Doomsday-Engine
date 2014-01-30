@@ -540,9 +540,9 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
              * these values and is syncing with them independently (however, game has more
              * latency).
              */
-            if((vrCfg.mode() == VRConfig::ModeOculusRift) && vrCfg.ovr().isReady())
+            if((vrCfg.mode() == VRConfig::ModeOculusRift) && vrCfg.oculusRift().isReady())
             {
-                Vector3f const pry = vrCfg.ovr().headOrientation();
+                Vector3f const pry = vrCfg.oculusRift().headOrientation();
 
                 // Use angles directly from the Rift for best response.
                 roll  = -radianToDegree(pry[1]);

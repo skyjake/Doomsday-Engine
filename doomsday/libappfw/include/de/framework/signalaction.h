@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_SIGNALACTION_H
 #define LIBAPPFW_SIGNALACTION_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 #include <de/Action>
 #include <QObject>
 

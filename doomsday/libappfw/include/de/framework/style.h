@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_STYLE_H
 #define LIBAPPFW_STYLE_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 #include <de/RuleBank>
 #include <de/FontBank>
 #include <de/ColorBank>

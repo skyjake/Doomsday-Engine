@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_UI_DATAITEM_H
 #define LIBAPPFW_UI_DATAITEM_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 #include <de/Observers>
 #include <de/String>
 

@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_UI_DEFS_H
 #define LIBAPPFW_UI_DEFS_H
 
-#include "../framework/libappfw.h"
+#include "../libappfw.h"
 #include <QFlags>
 #include <de/math.h>
 

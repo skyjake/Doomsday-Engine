@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_ATLASPROCEDURALIMAGE_H
 #define LIBAPPFW_ATLASPROCEDURALIMAGE_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 #include "../ProceduralImage"
 #include "../GuiWidget"
 #include "../GuiRootWidget"

@@ -9,10 +9,10 @@ exists($${LIBOVR_DIR}/Include/OVR.h) {
         LIBS += shell32.lib winmm.lib
     }
     macx {
-        # ACK! Must rebuild libovr with RTTI (TODO)
         deng_debug: LIBS += $${LIBOVR_DIR}/Lib/MacOS/Debug/libovr.a
               else: LIBS += $${LIBOVR_DIR}/Lib/MacOS/Release/libovr.a
-        LIBS += -framework IOKit
+        useFramework(Cocoa)
+        useFramework(IOKit)
     }
     # For linux, you need to install libxinerama-dev and libudev-dev
     linux-g++|linux-g++-32 {

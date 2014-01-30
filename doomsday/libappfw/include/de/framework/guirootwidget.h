@@ -26,7 +26,7 @@
 #include <de/Matrix>
 #include <de/CanvasWindow>
 
-#include "libappfw.h"
+#include "../libappfw.h"
 
 namespace de {
 

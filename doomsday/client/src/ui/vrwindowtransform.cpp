@@ -168,11 +168,11 @@ DENG2_PIMPL(VRWindowTransform)
                 .setDepthTest(false);
 
         // Copy contents of offscreen buffer to normal screen.
-        uOculusDistortionScale = vrCfg.ovr().distortionScale();
-        uOculusScreenSize = vrCfg.ovr().screenSize();
-        uOculusLensSeparation = vrCfg.ovr().lensSeparationDistance();
-        uOculusHmdWarpParam = vrCfg.ovr().hmdWarpParam();
-        uOculusChromAbParam = vrCfg.ovr().chromAbParam();
+        uOculusDistortionScale = vrCfg.oculusRift().distortionScale();
+        uOculusScreenSize = vrCfg.oculusRift().screenSize();
+        uOculusLensSeparation = vrCfg.oculusRift().lensSeparationDistance();
+        uOculusHmdWarpParam = vrCfg.oculusRift().hmdWarpParam();
+        uOculusChromAbParam = vrCfg.oculusRift().chromAbParam();
         //
         oculusRift.draw();
 
@@ -216,7 +216,7 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize
     case VRConfig::ModeOculusRift:
         /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
         // Adjust effective UI size for stereoscopic rendering.
-        size.x = size.y * vrCfg.ovr().aspect();
+        size.x = size.y * vrCfg.oculusRift().aspect();
         size *= 1.0f; // Use a large font in taskbar
         break;
 
@@ -282,7 +282,7 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
 
 void VRWindowTransform::drawTransformed()
 {
-    vrCfg.ovr().allowUpdate();
+    vrCfg.oculusRift().allowUpdate();
 
     switch(vrCfg.mode())
     {

@@ -22,7 +22,7 @@
 
 #include "dd_types.h"
 
-#include <de/Vector>
+#include <de/OculusRift>
 
 namespace de {
 
@@ -55,61 +55,11 @@ public:
         NUM_STEREO_MODES
     };
 
-    /**
-     * State parameters for Oculus Rift.
-     */
-    class OculusRift {
-    public:
-        OculusRift();
-
-        bool init();
-
-        void deinit();
-
-        void setRiftLatency(float latency);
-
-        // True if Oculus Rift is enabled and can report head orientation.
-        bool isReady() const;
-
-        void update();
-
-        // Called to allow head orientation to change again.
-        void allowUpdate();
-
-        // Returns current pitch, roll, yaw angles, in radians. If no head tracking is available,
-        // the returned values are not valid.
-        Vector3f headOrientation() const;
-
-        float interpupillaryDistance() const;
-
-        // Use screen size instead of resolution in case non-square pixels?
-        float aspect() const { return 0.5f * _screenSize.x / _screenSize.y; }
-        Vector2f const &screenSize() const { return _screenSize; }
-        Vector4f const &chromAbParam() const { return _chromAbParam; }
-        float distortionScale() const;
-        float fovX() const; // in degrees
-        float fovY() const; // in degrees
-        Vector4f const &hmdWarpParam() const { return _hmdWarpParam; }
-        float lensSeparationDistance() const { return _lensSeparationDistance; }
-
-    private:
-        DENG2_PRIVATE(d)
-
-        Vector2f _screenSize;
-        float _lensSeparationDistance;
-        Vector4f _hmdWarpParam;
-        Vector4f _chromAbParam;
-        float _eyeToScreenDistance;
-
-    public:
-        float riftLatency;
-    };
-
 public:
     VRConfig();
 
-    OculusRift &ovr();
-    OculusRift const &ovr() const;
+    OculusRift &oculusRift();
+    OculusRift const &oculusRift() const;
 
     /// Currently active stereo rendering mode.
     StereoMode mode() const;
@@ -156,9 +106,6 @@ namespace VR {
 void consoleRegister();
 
 float riftFovX(); ///< Horizontal field of view in Oculus Rift in degrees
-
-// To release memory and resources when done, for tidiness.
-//void deleteOculusTracker();
 
 // Load Oculus Rift parameters via Rift SDK
 bool loadRiftParameters();
