@@ -562,7 +562,7 @@ Matrix4f GL_GetProjectionMatrix()
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
-    if (vrCfg.mode() == VRConfig::ModeOculusRift)
+    if (vrCfg.mode() == VRConfig::OculusRift)
     {
         aspect = vrCfg.oculusRift().aspect();
         // A little trigonometry to apply aspect ratio to angles

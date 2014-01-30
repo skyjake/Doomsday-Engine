@@ -98,6 +98,11 @@ public:
         }
     }
 
+    float latency() const
+    {
+        return _latency;
+    }
+
     // Head orientation state, refreshed by call to update();
     float pitch, roll, yaw;
 
@@ -119,7 +124,7 @@ DENG2_PIMPL(OculusRift)
     Vector4f hmdWarpParam;
     Vector4f chromAbParam;
     float eyeToScreenDistance;
-
+    float latency;
     float ipd;
     bool headOrientationUpdateIsAllowed;
 
@@ -134,6 +139,7 @@ DENG2_PIMPL(OculusRift)
         , hmdWarpParam(1.0f, 0.220f, 0.240f, 0.000f)
         , chromAbParam(0.996f, -0.004f, 1.014f, 0.0f)
         , eyeToScreenDistance(0.041f)
+        , latency(.030f)
         , ipd(.064f)
         , headOrientationUpdateIsAllowed(true)
 #ifdef DENG_HAVE_OCULUS_API
@@ -190,9 +196,7 @@ DENG2_PIMPL(OculusRift)
     }
 };
 
-OculusRift::OculusRift()
-    : d(new Instance(this))
-    , riftLatency(.030f)
+OculusRift::OculusRift() : d(new Instance(this))
 {}
 
 bool OculusRift::init()
@@ -235,7 +239,7 @@ float OculusRift::lensSeparationDistance() const
     return d->lensSeparationDistance;
 }
 
-void OculusRift::setRiftLatency(float latency)
+void OculusRift::setPredictionLatency(float latency)
 {
 #ifdef DENG_HAVE_OCULUS_API
     if(isReady())
@@ -243,6 +247,17 @@ void OculusRift::setRiftLatency(float latency)
         d->oculusTracker->setLatency(latency);
     }
 #endif
+}
+
+float OculusRift::predictionLatency() const
+{
+#ifdef DENG_HAVE_OCULUS_API
+    if(isReady())
+    {
+        return d->oculusTracker->latency();
+    }
+#endif
+    return 0;
 }
 
 // True if Oculus Rift is enabled and can report head orientation.

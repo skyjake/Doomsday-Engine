@@ -50,17 +50,17 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         area.add(mode = new CVarChoiceWidget("rend-vr-mode"));
         mode->items()
-                << new ChoiceItem(tr("No stereo"),                VRConfig::ModeMono)
-                << new ChoiceItem(tr("Anaglyph (green/magenta)"), VRConfig::ModeGreenMagenta)
-                << new ChoiceItem(tr("Anaglyph (red/cyan)"),      VRConfig::ModeRedCyan)
-                << new ChoiceItem(tr("Left eye only"),            VRConfig::ModeLeftOnly)
-                << new ChoiceItem(tr("Right eye only"),           VRConfig::ModeRightOnly)
-                << new ChoiceItem(tr("Top/bottom"),               VRConfig::ModeTopBottom)
-                << new ChoiceItem(tr("Side-by-side"),             VRConfig::ModeSideBySide)
-                << new ChoiceItem(tr("Parallel"),                 VRConfig::ModeParallel)
-                << new ChoiceItem(tr("Cross-eye"),                VRConfig::ModeCrossEye)
-                << new ChoiceItem(tr("Oculus Rift"),              VRConfig::ModeOculusRift)
-                << new ChoiceItem(tr("Hardware stereo"),          VRConfig::ModeQuadBuffered);
+                << new ChoiceItem(tr("No stereo"),                VRConfig::Mono)
+                << new ChoiceItem(tr("Anaglyph (green/magenta)"), VRConfig::GreenMagenta)
+                << new ChoiceItem(tr("Anaglyph (red/cyan)"),      VRConfig::RedCyan)
+                << new ChoiceItem(tr("Left eye only"),            VRConfig::LeftOnly)
+                << new ChoiceItem(tr("Right eye only"),           VRConfig::RightOnly)
+                << new ChoiceItem(tr("Top/bottom"),               VRConfig::TopBottom)
+                << new ChoiceItem(tr("Side-by-side"),             VRConfig::SideBySide)
+                << new ChoiceItem(tr("Parallel"),                 VRConfig::Parallel)
+                << new ChoiceItem(tr("Cross-eye"),                VRConfig::CrossEye)
+                << new ChoiceItem(tr("Oculus Rift"),              VRConfig::OculusRift)
+                << new ChoiceItem(tr("Hardware stereo"),          VRConfig::QuadBuffered);
 
         area.add(swapEyes    = new CVarToggleWidget("rend-vr-swap-eyes", tr("Swap Eyes")));
         area.add(dominantEye = new CVarSliderWidget("rend-vr-dominant-eye"));
@@ -149,7 +149,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
 
 void VRSettingsDialog::resetToDefaults()
 {
-    Con_SetInteger("rend-vr-mode",          VRConfig::ModeMono);
+    Con_SetInteger("rend-vr-mode",          VRConfig::Mono);
     Con_SetInteger("rend-vr-swap-eyes",     0);
     Con_SetFloat  ("rend-vr-dominant-eye",  0);
     Con_SetFloat  ("rend-vr-player-height", 1.75f);
@@ -168,7 +168,7 @@ void VRSettingsDialog::autoConfigForOculusRift()
 
     /// @todo This would be a good use case for cvar overriding. -jk
 
-    Con_SetInteger("rend-vr-mode", VRConfig::ModeOculusRift);
+    Con_SetInteger("rend-vr-mode", VRConfig::OculusRift);
     Con_SetInteger("vid-fsaa", 0);
     Con_SetFloat  ("vid-gamma", 1.176f);
     Con_SetFloat  ("vid-contrast", 1.186f);
@@ -182,7 +182,7 @@ void VRSettingsDialog::autoConfigForOculusRift()
 
 void VRSettingsDialog::autoConfigForDesktop()
 {
-    Con_SetInteger("rend-vr-mode", VRConfig::ModeMono);
+    Con_SetInteger("rend-vr-mode", VRConfig::Mono);
     Con_SetFloat  ("vid-gamma", 1);
     Con_SetFloat  ("vid-contrast", 1);
     Con_SetFloat  ("vid-bright", 0);

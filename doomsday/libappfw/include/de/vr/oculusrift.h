@@ -36,10 +36,12 @@ public:
 
     void deinit();
 
-    // True if Oculus Rift is enabled and can report head orientation.
+    /**
+     * Checks if Oculus Rift is enabled and can report head orientation.
+     */
     bool isReady() const;
 
-    void setRiftLatency(float latency);
+    void setPredictionLatency(float latency);
 
     // Called to allow head orientation to change again.
     void allowUpdate();
@@ -49,6 +51,8 @@ public:
     // Returns current pitch, roll, yaw angles, in radians. If no head tracking is available,
     // the returned values are not valid.
     Vector3f headOrientation() const;
+
+    float predictionLatency() const;
 
     float interpupillaryDistance() const;
 
@@ -65,9 +69,6 @@ public:
 
 private:
     DENG2_PRIVATE(d)
-
-public:
-    float riftLatency; /// @todo refactor away
 };
 
 } // namespace de

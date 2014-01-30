@@ -620,7 +620,7 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         if(!compositor) return;
 
-        if(vrCfg.mode() == VRConfig::ModeOculusRift)
+        if(vrCfg.mode() == VRConfig::OculusRift)
         {
             compositor->setCompositeProjection(Matrix4f::ortho(-1.1f, 2.2f, -1.1f, 2.2f));
         }
@@ -634,7 +634,7 @@ DENG2_OBSERVES(App,              StartupComplete)
     void updateMouseCursor()
     {
         // The cursor is only needed if the content is warped.
-        cursor->show(!self.canvas().isMouseTrapped() && vrCfg.mode() == VRConfig::ModeOculusRift);
+        cursor->show(!self.canvas().isMouseTrapped() && vrCfg.mode() == VRConfig::OculusRift);
 
         if(cursor->isVisible())
         {
@@ -877,7 +877,7 @@ void ClientWindow::draw()
     ClientApp::app().loop().pause();
 
     // Offscreen composition is only needed in Oculus Rift mode.
-    d->enableCompositor(vrCfg.mode() == VRConfig::ModeOculusRift);
+    d->enableCompositor(vrCfg.mode() == VRConfig::OculusRift);
 
     if(d->performDeferredTasks() == Instance::AbortFrame)
     {

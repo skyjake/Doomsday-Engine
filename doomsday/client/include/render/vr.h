@@ -38,28 +38,28 @@ public:
      */
     enum StereoMode
     {
-        ModeMono, // 0
-        ModeGreenMagenta,
-        ModeRedCyan,
-        ModeLeftOnly,
-        ModeRightOnly,
-        ModeTopBottom, // 5
-        ModeSideBySide,
-        ModeParallel,
-        ModeCrossEye,
-        ModeOculusRift,
-        ModeRowInterleaved, // 10   // NOT IMPLEMENTED YET
-        ModeColumnInterleaved,      // NOT IMPLEMENTED YET
-        ModeCheckerboard,           // NOT IMPLEMENTED YET
-        ModeQuadBuffered,
+        Mono, // 0
+        GreenMagenta,
+        RedCyan,
+        LeftOnly,
+        RightOnly,
+        TopBottom, // 5
+        SideBySide,
+        Parallel,
+        CrossEye,
+        OculusRift,
+        RowInterleaved, // 10   // NOT IMPLEMENTED YET
+        ColumnInterleaved,      // NOT IMPLEMENTED YET
+        Checkerboard,           // NOT IMPLEMENTED YET
+        QuadBuffered,
         NUM_STEREO_MODES
     };
 
 public:
     VRConfig();
 
-    OculusRift &oculusRift();
-    OculusRift const &oculusRift() const;
+    de::OculusRift &oculusRift();
+    de::OculusRift const &oculusRift() const;
 
     /// Currently active stereo rendering mode.
     StereoMode mode() const;

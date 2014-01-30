@@ -206,14 +206,14 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize
     switch(vrCfg.mode())
     {
     // Left-right screen split modes
-    case VRConfig::ModeCrossEye:
-    case VRConfig::ModeParallel:
+    case VRConfig::CrossEye:
+    case VRConfig::Parallel:
         // Adjust effective UI size for stereoscopic rendering.
         size.y *= 2;
         size *= .75f; // Make it a bit bigger.
         break;
 
-    case VRConfig::ModeOculusRift:
+    case VRConfig::OculusRift:
         /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
         // Adjust effective UI size for stereoscopic rendering.
         size.x = size.y * vrCfg.oculusRift().aspect();
@@ -221,8 +221,8 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize
         break;
 
     // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them
-    case VRConfig::ModeTopBottom:
-    case VRConfig::ModeSideBySide:
+    case VRConfig::TopBottom:
+    case VRConfig::SideBySide:
     default:
         break;
     }
@@ -244,10 +244,10 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
     switch(vrCfg.mode())
     {
     // Left-right screen split modes
-    case VRConfig::ModeSideBySide:
-    case VRConfig::ModeCrossEye:
-    case VRConfig::ModeParallel:
-    case VRConfig::ModeOculusRift:
+    case VRConfig::SideBySide:
+    case VRConfig::CrossEye:
+    case VRConfig::Parallel:
+    case VRConfig::OculusRift:
         // Make it possible to access both frames.
         if(pos.x >= size.x/2)
         {
@@ -260,7 +260,7 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
         break;
 
     // Top-bottom screen split modes
-    case VRConfig::ModeTopBottom:
+    case VRConfig::TopBottom:
         // Make it possible to access both frames.
         if(pos.y >= size.y/2)
         {
@@ -287,25 +287,25 @@ void VRWindowTransform::drawTransformed()
     switch(vrCfg.mode())
     {
     // A) Single view type stereo 3D modes here:
-    case VRConfig::ModeMono:
+    case VRConfig::Mono:
         // Non-stereoscopic frame.
         d->drawContent();
         break;
 
-    case VRConfig::ModeLeftOnly:
+    case VRConfig::LeftOnly:
         // Left eye view
         vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->drawContent();
         break;
 
-    case VRConfig::ModeRightOnly:
+    case VRConfig::RightOnly:
         // Right eye view
         vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         d->drawContent();
         break;
 
     // B) Split-screen type stereo 3D modes here:
-    case VRConfig::ModeTopBottom: // Left goes on top
+    case VRConfig::TopBottom: // Left goes on top
         // Left eye view on top of screen.
         vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->target().setActiveRect(Rectangleui(0, 0, d->width(), d->height()/2), true);
@@ -316,7 +316,7 @@ void VRWindowTransform::drawTransformed()
         d->drawContent();
         break;
 
-    case VRConfig::ModeSideBySide: // Squished aspect
+    case VRConfig::SideBySide: // Squished aspect
         // Left eye view on left side of screen.
         vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
@@ -327,7 +327,7 @@ void VRWindowTransform::drawTransformed()
         d->drawContent();
         break;
 
-    case VRConfig::ModeParallel: // Normal aspect
+    case VRConfig::Parallel: // Normal aspect
         // Left eye view on left side of screen.
         vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
@@ -338,7 +338,7 @@ void VRWindowTransform::drawTransformed()
         d->drawContent();
         break;
 
-    case VRConfig::ModeCrossEye: // Normal aspect
+    case VRConfig::CrossEye: // Normal aspect
         // Right eye view on left side of screen.
         vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
@@ -349,12 +349,12 @@ void VRWindowTransform::drawTransformed()
         d->drawContent();
         break;
 
-    case VRConfig::ModeOculusRift:
+    case VRConfig::OculusRift:
         d->vrDrawOculusRift();
         break;
 
     // Overlaid type stereo 3D modes below:
-    case VRConfig::ModeGreenMagenta:
+    case VRConfig::GreenMagenta:
         // Left eye view
         vrCfg.eyeShift = vrCfg.getEyeShift(-1);        
         GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha).apply(); // Left eye view green
@@ -366,7 +366,7 @@ void VRWindowTransform::drawTransformed()
         GLState::pop().apply();
         break;
 
-    case VRConfig::ModeRedCyan:
+    case VRConfig::RedCyan:
         // Left eye view
         vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha).apply(); // Left eye view red
@@ -378,7 +378,7 @@ void VRWindowTransform::drawTransformed()
         GLState::pop().apply();
         break;
 
-    case VRConfig::ModeQuadBuffered:
+    case VRConfig::QuadBuffered:
         if(d->canvas().format().stereo())
         {
             // Left eye view
@@ -398,7 +398,7 @@ void VRWindowTransform::drawTransformed()
         }
         break;
 
-    case VRConfig::ModeRowInterleaved:
+    case VRConfig::RowInterleaved:
     {
         // Use absolute screen position of window to determine whether the
         // first scan line is odd or even.
@@ -416,8 +416,8 @@ void VRWindowTransform::drawTransformed()
         break;
     }
 
-    case VRConfig::ModeColumnInterleaved: /// @todo implement column interleaved stereo 3D after row intleaved is working correctly...
-    case VRConfig::ModeCheckerboard: /// @todo implement checker stereo 3D after row intleaved is working correctly ...
+    case VRConfig::ColumnInterleaved: /// @todo implement column interleaved stereo 3D after row intleaved is working correctly...
+    case VRConfig::Checkerboard: /// @todo implement checker stereo 3D after row intleaved is working correctly ...
     default:
         // Non-stereoscopic frame.
         d->drawContent();
