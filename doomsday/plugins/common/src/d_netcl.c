@@ -54,6 +54,8 @@ void NetCl_UpdateGameState(Reader* msg)
     byte gsSkill = 0;
     coord_t gsGravity = 0;
 
+    BusyMode_FreezeGameForBusyMode();
+
     gsFlags = Reader_ReadByte(msg);
 
     // Game identity key.
