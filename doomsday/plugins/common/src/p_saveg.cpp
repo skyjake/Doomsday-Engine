@@ -194,8 +194,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_XGMOVER,
       (thinkfunc_t) XS_PlaneMover,
       0,
-      (WriteThinkerFunc) SV_WriteXGPlaneMover,
-      (ReadThinkerFunc) SV_ReadXGPlaneMover,
+      (WriteThinkerFunc)writeThinkerAs<xgplanemover_t>,
+      (ReadThinkerFunc)readThinkerAs<xgplanemover_t>,
       sizeof(xgplanemover_t)
     },
 #endif

@@ -171,81 +171,76 @@ void SV_ReadXGSector(Sector *sec)
     SV_ReadXGFunction(xg, &xg->light);
 }
 
-void SV_WriteXGPlaneMover(thinker_t *th)
+void xgplanemover_t::write(Writer *writer) const
 {
-    xgplanemover_t *mov = (xgplanemover_t *) th;
+    Writer_WriteByte(writer, 3); // Version.
 
-    SV_WriteByte(3); // Version.
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+    Writer_WriteByte(writer, ceiling);
+    Writer_WriteInt32(writer, flags);
 
-    SV_WriteLong(P_ToIndex(mov->sector));
-    SV_WriteByte(mov->ceiling);
-    SV_WriteLong(mov->flags);
-
-    int i = P_ToIndex(mov->origin);
+    int i = P_ToIndex(origin);
     if(i >= 0 && i < numlines) // Is it a real line?
         i++;
     else // No.
         i = 0;
 
-    SV_WriteLong(i); // Zero means there is no origin.
+    Writer_WriteInt32(writer, i); // Zero means there is no origin.
 
-    SV_WriteLong(FLT2FIX(mov->destination));
-    SV_WriteLong(FLT2FIX(mov->speed));
-    SV_WriteLong(FLT2FIX(mov->crushSpeed));
-    SV_WriteLong(MaterialArchive_FindUniqueSerialId(SV_MaterialArchive(), mov->setMaterial));
-    SV_WriteLong(mov->setSectorType);
-    SV_WriteLong(mov->startSound);
-    SV_WriteLong(mov->endSound);
-    SV_WriteLong(mov->moveSound);
-    SV_WriteLong(mov->minInterval);
-    SV_WriteLong(mov->maxInterval);
-    SV_WriteLong(mov->timer);
+    Writer_WriteInt32(writer, FLT2FIX(destination));
+    Writer_WriteInt32(writer, FLT2FIX(speed));
+    Writer_WriteInt32(writer, FLT2FIX(crushSpeed));
+    Writer_WriteInt32(writer, MaterialArchive_FindUniqueSerialId(SV_MaterialArchive(), setMaterial));
+    Writer_WriteInt32(writer, setSectorType);
+    Writer_WriteInt32(writer, startSound);
+    Writer_WriteInt32(writer, endSound);
+    Writer_WriteInt32(writer, moveSound);
+    Writer_WriteInt32(writer, minInterval);
+    Writer_WriteInt32(writer, maxInterval);
+    Writer_WriteInt32(writer, timer);
 }
 
-/**
- * Reads the plane mover thinker.
- */
-int SV_ReadXGPlaneMover(xgplanemover_t *mov, int mapVersion)
+int xgplanemover_t::read(Reader *reader, int mapVersion)
 {
-    byte ver = SV_ReadByte(); // Version.
+    byte ver = Reader_ReadByte(reader); // Version.
 
-    mov->sector      = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-    mov->ceiling     = SV_ReadByte();
-    mov->flags       = SV_ReadLong();
+    sector      = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+    ceiling     = Reader_ReadByte(reader);
+    flags       = Reader_ReadInt32(reader);
 
     int lineIndex = SV_ReadLong();
     if(lineIndex > 0)
-        mov->origin  = (Line *)P_ToPtr(DMU_LINE, lineIndex - 1);
+        origin  = (Line *)P_ToPtr(DMU_LINE, lineIndex - 1);
 
-    mov->destination = FIX2FLT(SV_ReadLong());
-    mov->speed       = FIX2FLT(SV_ReadLong());
-    mov->crushSpeed  = FIX2FLT(SV_ReadLong());
+    destination = FIX2FLT(Reader_ReadInt32(reader));
+    speed       = FIX2FLT(Reader_ReadInt32(reader));
+    crushSpeed  = FIX2FLT(Reader_ReadInt32(reader));
 
     if(ver >= 3)
     {
-        mov->setMaterial = SV_GetArchiveMaterial(SV_ReadLong(), 0);
+        setMaterial = SV_GetArchiveMaterial(Reader_ReadInt32(reader), 0);
     }
     else
     {
         // Flat number is an absolute lump index.
         Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
         ddstring_t name; Str_Init(&name);
-        F_FileName(&name, Str_Text(W_LumpName(SV_ReadLong())));
+        F_FileName(&name, Str_Text(W_LumpName(Reader_ReadInt32(reader))));
         Uri_SetPath(uri, Str_Text(&name));
-        mov->setMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        setMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
         Str_Free(&name);
     }
 
-    mov->setSectorType = SV_ReadLong();
-    mov->startSound    = SV_ReadLong();
-    mov->endSound      = SV_ReadLong();
-    mov->moveSound     = SV_ReadLong();
-    mov->minInterval   = SV_ReadLong();
-    mov->maxInterval   = SV_ReadLong();
-    mov->timer         = SV_ReadLong();
+    setSectorType = Reader_ReadInt32(reader);
+    startSound    = Reader_ReadInt32(reader);
+    endSound      = Reader_ReadInt32(reader);
+    moveSound     = Reader_ReadInt32(reader);
+    minInterval   = Reader_ReadInt32(reader);
+    maxInterval   = Reader_ReadInt32(reader);
+    timer         = Reader_ReadInt32(reader);
 
-    mov->thinker.function = (thinkfunc_t) XS_PlaneMover;
+    thinker.function = (thinkfunc_t) XS_PlaneMover;
 
     return true; // Add this thinker.
 }

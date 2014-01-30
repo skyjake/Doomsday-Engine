@@ -139,6 +139,11 @@ typedef struct {
     int moveSound; // Sound to play while moving.
     int minInterval, maxInterval; // Sound playing intervals.
     int timer; // Counts down to zero.
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } xgplanemover_t;
 
 #ifdef __cplusplus
@@ -185,10 +190,6 @@ void XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
 void SV_WriteXGSector(Sector *sec);
 
 void SV_ReadXGSector(Sector *sec);
-
-void SV_WriteXGPlaneMover(thinker_t *th);
-
-int SV_ReadXGPlaneMover(xgplanemover_t* mov, int mapVersion);
 
 D_CMD(MovePlane);
 
