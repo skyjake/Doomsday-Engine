@@ -291,14 +291,16 @@ static void unlinkMobjLumobjs()
     }
 }
 
-static void fieldOfViewChanged() {
-    if (VR::mode() == VR::MODE_OCULUS_RIFT) {
-        if (Con_GetFloat("rend-vr-rift-fovx") != fieldOfView)
+static void fieldOfViewChanged()
+{
+    if(vrCfg.mode() == VRConfig::ModeOculusRift)
+    {
+        if(Con_GetFloat("rend-vr-rift-fovx") != fieldOfView)
             Con_SetFloat("rend-vr-rift-fovx", fieldOfView);
     }
     else
     {
-        if (Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
+        if(Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
             Con_SetFloat("rend-vr-nonrift-fovx", fieldOfView);
     }
 }
@@ -484,7 +486,7 @@ bool Rend_IsMTexDetails()
 
 float Rend_FieldOfView()
 {
-    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+    if(vrCfg.mode() == VRConfig::ModeOculusRift)
     {
         // fieldOfView = VR::riftFovX(); // Update for culling
         // return VR::riftFovX();
@@ -538,9 +540,9 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
              * these values and is syncing with them independently (however, game has more
              * latency).
              */
-            if((VR::mode() == VR::MODE_OCULUS_RIFT) && VR::hasHeadOrientation())
+            if((vrCfg.mode() == VRConfig::ModeOculusRift) && vrCfg.ovr().isReady())
             {
-                Vector3f const pry = VR::getHeadOrientation();
+                Vector3f const pry = vrCfg.ovr().headOrientation();
 
                 // Use angles directly from the Rift for best response.
                 roll  = -radianToDegree(pry[1]);

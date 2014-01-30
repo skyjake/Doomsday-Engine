@@ -192,7 +192,7 @@ void GL_DoUpdate()
 
     // Blit screen to video.
     ClientWindow::main().swapBuffers(
-                VR::modeNeedsStereoGLFormat(VR::mode())? gl::SwapStereoBuffers : gl::SwapMonoBuffer);
+                VRConfig::modeNeedsStereoGLFormat(vrCfg.mode())? gl::SwapStereoBuffers : gl::SwapMonoBuffer);
 
     // We will arrive here always at the same time in relation to the displayed
     // frame: it is a good time to update the mouse state.
@@ -562,9 +562,9 @@ Matrix4f GL_GetProjectionMatrix()
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
-    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+    if (vrCfg.mode() == VRConfig::ModeOculusRift)
     {
-        aspect = VR::riftState.aspect();
+        aspect = vrCfg.ovr().aspect();
         // A little trigonometry to apply aspect ratio to angles
         float x = tan(0.5 * de::degreeToRadian(Rend_FieldOfView()));
         yfov = de::radianToDegree(2.0 * atan2(x/aspect, 1.0f));
@@ -586,15 +586,15 @@ Matrix4f GL_GetProjectionMatrix()
      * applies the viewpoint shift.
      */
     float frustumShift = 0;
-    if (VR::applyFrustumShift)
+    if (vrCfg.applyFrustumShift)
     {
-        frustumShift = VR::eyeShift * glNearClip / VR::hudDistance;
+        frustumShift = vrCfg.eyeShift * glNearClip / vrCfg.hudDistance;
     }
 
     return Matrix4f::frustum(-fW - frustumShift, fW - frustumShift,
                              -fH, fH,
                              glNearClip, glFarClip) *
-           Matrix4f::translate(Vector3f(-VR::eyeShift, 0, 0)) *
+           Matrix4f::translate(Vector3f(-vrCfg.eyeShift, 0, 0)) *
            Matrix4f::scale(Vector3f(1, 1, -1));
 }
 

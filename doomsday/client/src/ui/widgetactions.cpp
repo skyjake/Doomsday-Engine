@@ -66,8 +66,8 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
 
 bool WidgetActions::tryEvent(ddevent_t const *ev)
 {
-    std::auto_ptr<Action> act(B_ActionForEvent(ev));
-    if(act.get())
+    QScopedPointer<Action> act(B_ActionForEvent(ev));
+    if(act.data())
     {
         act->trigger();
         return true;

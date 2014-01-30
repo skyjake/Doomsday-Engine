@@ -620,7 +620,7 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         if(!compositor) return;
 
-        if(VR::mode() == VR::MODE_OCULUS_RIFT)
+        if(vrCfg.mode() == VRConfig::ModeOculusRift)
         {
             compositor->setCompositeProjection(Matrix4f::ortho(-1.1f, 2.2f, -1.1f, 2.2f));
         }
@@ -634,7 +634,7 @@ DENG2_OBSERVES(App,              StartupComplete)
     void updateMouseCursor()
     {
         // The cursor is only needed if the content is warped.
-        cursor->show(!self.canvas().isMouseTrapped() && VR::mode() == VR::MODE_OCULUS_RIFT);
+        cursor->show(!self.canvas().isMouseTrapped() && vrCfg.mode() == VRConfig::ModeOculusRift);
 
         if(cursor->isVisible())
         {
@@ -742,7 +742,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
-    if(VR::modeNeedsStereoGLFormat(VR::mode()) && !canvas.format().stereo())
+    if(VRConfig::modeNeedsStereoGLFormat(vrCfg.mode()) && !canvas.format().stereo())
     {
         LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
     }
@@ -825,7 +825,7 @@ bool ClientWindow::setDefaultGLFormat() // static
     //fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
 
-    if(VR::modeNeedsStereoGLFormat(VR::mode()))
+    if(VRConfig::modeNeedsStereoGLFormat(vrCfg.mode()))
     {
         // Only use a stereo format for modes that require it.
         LOG_GL_MSG("Using a stereoscopic frame buffer format");
@@ -877,7 +877,7 @@ void ClientWindow::draw()
     ClientApp::app().loop().pause();
 
     // Offscreen composition is only needed in Oculus Rift mode.
-    d->enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
+    d->enableCompositor(vrCfg.mode() == VRConfig::ModeOculusRift);
 
     if(d->performDeferredTasks() == Instance::AbortFrame)
     {

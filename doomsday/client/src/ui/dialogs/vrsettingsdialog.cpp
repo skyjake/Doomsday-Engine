@@ -50,17 +50,17 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         area.add(mode = new CVarChoiceWidget("rend-vr-mode"));
         mode->items()
-                << new ChoiceItem(tr("No stereo"), VR::MODE_MONO)
-                << new ChoiceItem(tr("Anaglyph (green/magenta)"), VR::MODE_GREEN_MAGENTA)
-                << new ChoiceItem(tr("Anaglyph (red/cyan)"), VR::MODE_RED_CYAN)
-                << new ChoiceItem(tr("Left eye only"), VR::MODE_LEFT)
-                << new ChoiceItem(tr("Right eye only"), VR::MODE_RIGHT)
-                << new ChoiceItem(tr("Top/bottom"), VR::MODE_TOP_BOTTOM)
-                << new ChoiceItem(tr("Side-by-side"), VR::MODE_SIDE_BY_SIDE)
-                << new ChoiceItem(tr("Parallel"), VR::MODE_PARALLEL)
-                << new ChoiceItem(tr("Cross-eye"), VR::MODE_CROSSEYE)
-                << new ChoiceItem(tr("Oculus Rift"), VR::MODE_OCULUS_RIFT)
-                << new ChoiceItem(tr("Hardware stereo"), VR::MODE_QUAD_BUFFERED);
+                << new ChoiceItem(tr("No stereo"),                VRConfig::ModeMono)
+                << new ChoiceItem(tr("Anaglyph (green/magenta)"), VRConfig::ModeGreenMagenta)
+                << new ChoiceItem(tr("Anaglyph (red/cyan)"),      VRConfig::ModeRedCyan)
+                << new ChoiceItem(tr("Left eye only"),            VRConfig::ModeLeftOnly)
+                << new ChoiceItem(tr("Right eye only"),           VRConfig::ModeRightOnly)
+                << new ChoiceItem(tr("Top/bottom"),               VRConfig::ModeTopBottom)
+                << new ChoiceItem(tr("Side-by-side"),             VRConfig::ModeSideBySide)
+                << new ChoiceItem(tr("Parallel"),                 VRConfig::ModeParallel)
+                << new ChoiceItem(tr("Cross-eye"),                VRConfig::ModeCrossEye)
+                << new ChoiceItem(tr("Oculus Rift"),              VRConfig::ModeOculusRift)
+                << new ChoiceItem(tr("Hardware stereo"),          VRConfig::ModeQuadBuffered);
 
         area.add(swapEyes    = new CVarToggleWidget("rend-vr-swap-eyes", tr("Swap Eyes")));
         area.add(dominantEye = new CVarSliderWidget("rend-vr-dominant-eye"));
@@ -70,7 +70,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
         area.add(ipd = new CVarSliderWidget("rend-vr-ipd"));
         ipd->setDisplayFactor(1000);
 
-        if(VR::hasHeadOrientation())
+        if(vrCfg.ovr().isReady())
         {
             area.add(riftPredictionLatency = new CVarSliderWidget("rend-vr-rift-latency"));
             riftPredictionLatency->setDisplayFactor(1000);
@@ -121,7 +121,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << Const(0)       << *d->swapEyes
            << *sampleLabel   << *d->riftSamples;
 
-    if(VR::hasHeadOrientation())
+    if(vrCfg.ovr().isReady())
     {
         LabelWidget *ovrLabel     = LabelWidget::newWithText(_E(1)_E(D) + tr("Oculus Rift"), &area());
         LabelWidget *latencyLabel = LabelWidget::newWithText(tr("Prediction Latency:"), &area());
@@ -149,7 +149,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
 
 void VRSettingsDialog::resetToDefaults()
 {
-    Con_SetInteger("rend-vr-mode",          VR::MODE_MONO);
+    Con_SetInteger("rend-vr-mode",          VRConfig::ModeMono);
     Con_SetInteger("rend-vr-swap-eyes",     0);
     Con_SetFloat  ("rend-vr-dominant-eye",  0);
     Con_SetFloat  ("rend-vr-player-height", 1.75f);
@@ -168,7 +168,7 @@ void VRSettingsDialog::autoConfigForOculusRift()
 
     /// @todo This would be a good use case for cvar overriding. -jk
 
-    Con_SetInteger("rend-vr-mode", VR::MODE_OCULUS_RIFT);
+    Con_SetInteger("rend-vr-mode", VRConfig::ModeOculusRift);
     Con_SetInteger("vid-fsaa", 0);
     Con_SetFloat  ("vid-gamma", 1.176f);
     Con_SetFloat  ("vid-contrast", 1.186f);
@@ -182,7 +182,7 @@ void VRSettingsDialog::autoConfigForOculusRift()
 
 void VRSettingsDialog::autoConfigForDesktop()
 {
-    Con_SetInteger("rend-vr-mode", VR::MODE_MONO);
+    Con_SetInteger("rend-vr-mode", VRConfig::ModeMono);
     Con_SetFloat  ("vid-gamma", 1);
     Con_SetFloat  ("vid-contrast", 1);
     Con_SetFloat  ("vid-bright", 0);

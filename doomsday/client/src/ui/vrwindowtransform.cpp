@@ -121,7 +121,7 @@ DENG2_PIMPL(VRWindowTransform)
      */
     void vrDrawOculusRift()
     {
-        VR::applyFrustumShift = false;
+        vrCfg.applyFrustumShift = false;
 
         /// @todo shrunken hud
         // Allocate offscreen buffers - larger than Oculus Rift size, to get adequate resolution at center after warp
@@ -135,7 +135,7 @@ DENG2_PIMPL(VRWindowTransform)
         // Use a little bit of multisampling to smooth out the magnified jagged edges.
         // Note: Independent of the vid-fsaa setting because this is beneficial even when
         // vid-fsaa is disabled.
-        unwarpedFB.setSampleCount(VR::riftFramebufferSamples);
+        unwarpedFB.setSampleCount(vrCfg.riftFramebufferSamples);
         unwarpedFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
 
         // Set render target to offscreen temporarily.
@@ -147,12 +147,12 @@ DENG2_PIMPL(VRWindowTransform)
         unwarpedFB.target().clear(GLTarget::ColorDepth);
 
         // Left eye view on left side of screen.
-        VR::eyeShift = VR::getEyeShift(-1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         unwarpedFB.target().setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         // Right eye view on right side of screen.
-        VR::eyeShift = VR::getEyeShift(+1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         unwarpedFB.target().setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
@@ -168,11 +168,11 @@ DENG2_PIMPL(VRWindowTransform)
                 .setDepthTest(false);
 
         // Copy contents of offscreen buffer to normal screen.
-        uOculusDistortionScale = VR::riftState.distortionScale();
-        uOculusScreenSize = VR::riftState.screenSize();
-        uOculusLensSeparation = VR::riftState.lensSeparationDistance();
-        uOculusHmdWarpParam = VR::riftState.hmdWarpParam();
-        uOculusChromAbParam = VR::riftState.chromAbParam();
+        uOculusDistortionScale = vrCfg.ovr().distortionScale();
+        uOculusScreenSize = vrCfg.ovr().screenSize();
+        uOculusLensSeparation = vrCfg.ovr().lensSeparationDistance();
+        uOculusHmdWarpParam = vrCfg.ovr().hmdWarpParam();
+        uOculusChromAbParam = vrCfg.ovr().chromAbParam();
         //
         oculusRift.draw();
 
@@ -181,7 +181,7 @@ DENG2_PIMPL(VRWindowTransform)
 
         GLState::pop().apply();
 
-        VR::applyFrustumShift = true; // restore default
+        vrCfg.applyFrustumShift = true; // restore default
     }
 };
 
@@ -203,26 +203,26 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize
 {
     Canvas::Size size = physicalCanvasSize;
 
-    switch(VR::mode())
+    switch(vrCfg.mode())
     {
     // Left-right screen split modes
-    case VR::MODE_CROSSEYE:
-    case VR::MODE_PARALLEL:
+    case VRConfig::ModeCrossEye:
+    case VRConfig::ModeParallel:
         // Adjust effective UI size for stereoscopic rendering.
         size.y *= 2;
         size *= .75f; // Make it a bit bigger.
         break;
 
-    case VR::MODE_OCULUS_RIFT:
+    case VRConfig::ModeOculusRift:
         /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
         // Adjust effective UI size for stereoscopic rendering.
-        size.x = size.y * VR::riftState.aspect();
+        size.x = size.y * vrCfg.ovr().aspect();
         size *= 1.0f; // Use a large font in taskbar
         break;
 
     // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them
-    case VR::MODE_TOP_BOTTOM:
-    case VR::MODE_SIDE_BY_SIDE:
+    case VRConfig::ModeTopBottom:
+    case VRConfig::ModeSideBySide:
     default:
         break;
     }
@@ -241,13 +241,13 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
     Vector2f const viewSize = Vector2f(window().root().viewWidth().value(),
                                        window().root().viewHeight().value());
 
-    switch(VR::mode())
+    switch(vrCfg.mode())
     {
     // Left-right screen split modes
-    case VR::MODE_SIDE_BY_SIDE:
-    case VR::MODE_CROSSEYE:
-    case VR::MODE_PARALLEL:
-    case VR::MODE_OCULUS_RIFT:
+    case VRConfig::ModeSideBySide:
+    case VRConfig::ModeCrossEye:
+    case VRConfig::ModeParallel:
+    case VRConfig::ModeOculusRift:
         // Make it possible to access both frames.
         if(pos.x >= size.x/2)
         {
@@ -260,7 +260,7 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
         break;
 
     // Top-bottom screen split modes
-    case VR::MODE_TOP_BOTTOM:
+    case VRConfig::ModeTopBottom:
         // Make it possible to access both frames.
         if(pos.y >= size.y/2)
         {
@@ -282,112 +282,112 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
 
 void VRWindowTransform::drawTransformed()
 {
-    VR::allowHeadOrientationUpdate();
+    vrCfg.ovr().allowUpdate();
 
-    switch(VR::mode())
+    switch(vrCfg.mode())
     {
     // A) Single view type stereo 3D modes here:
-    case VR::MODE_MONO:
+    case VRConfig::ModeMono:
         // Non-stereoscopic frame.
         d->drawContent();
         break;
 
-    case VR::MODE_LEFT:
+    case VRConfig::ModeLeftOnly:
         // Left eye view
-        VR::eyeShift = VR::getEyeShift(-1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->drawContent();
         break;
 
-    case VR::MODE_RIGHT:
+    case VRConfig::ModeRightOnly:
         // Right eye view
-        VR::eyeShift = VR::getEyeShift(+1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         d->drawContent();
         break;
 
     // B) Split-screen type stereo 3D modes here:
-    case VR::MODE_TOP_BOTTOM: // Left goes on top
+    case VRConfig::ModeTopBottom: // Left goes on top
         // Left eye view on top of screen.
-        VR::eyeShift = VR::getEyeShift(-1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->target().setActiveRect(Rectangleui(0, 0, d->width(), d->height()/2), true);
         d->drawContent();
         // Right eye view on bottom of screen.
-        VR::eyeShift = VR::getEyeShift(+1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         d->target().setActiveRect(Rectangleui(0, d->height()/2, d->width(), d->height()/2), true);
         d->drawContent();
         break;
 
-    case VR::MODE_SIDE_BY_SIDE: // Squished aspect
+    case VRConfig::ModeSideBySide: // Squished aspect
         // Left eye view on left side of screen.
-        VR::eyeShift = VR::getEyeShift(-1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();
         // Right eye view on right side of screen.
-        VR::eyeShift = VR::getEyeShift(+1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         d->target().setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
         d->drawContent();
         break;
 
-    case VR::MODE_PARALLEL: // Normal aspect
+    case VRConfig::ModeParallel: // Normal aspect
         // Left eye view on left side of screen.
-        VR::eyeShift = VR::getEyeShift(-1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();
         // Right eye view on right side of screen.
-        VR::eyeShift = VR::getEyeShift(+1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         d->target().setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
         d->drawContent();
         break;
 
-    case VR::MODE_CROSSEYE: // Normal aspect
+    case VRConfig::ModeCrossEye: // Normal aspect
         // Right eye view on left side of screen.
-        VR::eyeShift = VR::getEyeShift(+1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();
         // Left eye view on right side of screen.
-        VR::eyeShift = VR::getEyeShift(-1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->target().setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
         d->drawContent();
         break;
 
-    case VR::MODE_OCULUS_RIFT:
+    case VRConfig::ModeOculusRift:
         d->vrDrawOculusRift();
         break;
 
     // Overlaid type stereo 3D modes below:
-    case VR::MODE_GREEN_MAGENTA:
+    case VRConfig::ModeGreenMagenta:
         // Left eye view
-        VR::eyeShift = VR::getEyeShift(-1);        
+        vrCfg.eyeShift = vrCfg.getEyeShift(-1);        
         GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha).apply(); // Left eye view green
         d->drawContent();
         // Right eye view
-        VR::eyeShift = VR::getEyeShift(+1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         GLState::current().setColorMask(gl::WriteRed | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view magenta
         d->drawContent();
         GLState::pop().apply();
         break;
 
-    case VR::MODE_RED_CYAN:
+    case VRConfig::ModeRedCyan:
         // Left eye view
-        VR::eyeShift = VR::getEyeShift(-1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha).apply(); // Left eye view red
         d->drawContent();
         // Right eye view
-        VR::eyeShift = VR::getEyeShift(+1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         GLState::current().setColorMask(gl::WriteGreen | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view cyan
         d->drawContent();
         GLState::pop().apply();
         break;
 
-    case VR::MODE_QUAD_BUFFERED:
+    case VRConfig::ModeQuadBuffered:
         if(d->canvas().format().stereo())
         {
             // Left eye view
-            VR::eyeShift = VR::getEyeShift(-1);
+            vrCfg.eyeShift = vrCfg.getEyeShift(-1);
             d->drawContent();
             d->canvas().framebuffer().swapBuffers(d->canvas(), gl::SwapStereoLeftBuffer);
 
             // Right eye view
-            VR::eyeShift = VR::getEyeShift(+1);
+            vrCfg.eyeShift = vrCfg.getEyeShift(+1);
             d->drawContent();
             d->canvas().framebuffer().swapBuffers(d->canvas(), gl::SwapStereoRightBuffer);
         }
@@ -398,7 +398,7 @@ void VRWindowTransform::drawTransformed()
         }
         break;
 
-    case VR::MODE_ROW_INTERLEAVED:
+    case VRConfig::ModeRowInterleaved:
     {
         // Use absolute screen position of window to determine whether the
         // first scan line is odd or even.
@@ -408,16 +408,16 @@ void VRWindowTransform::drawTransformed()
         DENG_UNUSED(rowParityIsEven);
         /// @todo - use row parity in shader or stencil, to actually interleave rows.
         // Left eye view
-        VR::eyeShift = VR::getEyeShift(-1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
         d->drawContent();
         // Right eye view
-        VR::eyeShift = VR::getEyeShift(+1);
+        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
         d->drawContent();
         break;
     }
 
-    case VR::MODE_COLUMN_INTERLEAVED: /// @todo implement column interleaved stereo 3D after row intleaved is working correctly...
-    case VR::MODE_CHECKERBOARD: /// @todo implement checker stereo 3D after row intleaved is working correctly ...
+    case VRConfig::ModeColumnInterleaved: /// @todo implement column interleaved stereo 3D after row intleaved is working correctly...
+    case VRConfig::ModeCheckerboard: /// @todo implement checker stereo 3D after row intleaved is working correctly ...
     default:
         // Non-stereoscopic frame.
         d->drawContent();
@@ -426,5 +426,5 @@ void VRWindowTransform::drawTransformed()
 
     // Restore default VR dynamic parameters
     d->target().unsetActiveRect(true);
-    VR::eyeShift = 0;
+    vrCfg.eyeShift = 0;
 }

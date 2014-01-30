@@ -21,112 +21,144 @@
 #define CLIENT_RENDER_VR_H
 
 #include "dd_types.h"
-#include "de/Vector"
 
-namespace VR {
+#include <de/Vector>
 
-/// Menu of stereoscopic 3D modes available. Oculus Rift is the star player, but there
-/// are many other options.
-/// The order shown here determines the integer value in the console.
-/// @todo - Add an additional console command to support symbolic versions of these mode settings
-enum Stereo3DMode {
-    MODE_MONO = 0,
-    MODE_GREEN_MAGENTA,
-    MODE_RED_CYAN,
-    MODE_LEFT,
-    MODE_RIGHT,
-    MODE_TOP_BOTTOM, // 5
-    MODE_SIDE_BY_SIDE,
-    MODE_PARALLEL,
-    MODE_CROSSEYE,
-    MODE_OCULUS_RIFT,
-    MODE_ROW_INTERLEAVED, // 10 // NOT IMPLEMENTED YET
-    MODE_COLUMN_INTERLEAVED, // NOT IMPLEMENTED YET
-    MODE_CHECKERBOARD, // NOT IMPLEMENTED YET
-    MODE_QUAD_BUFFERED,
-    //
-    MODE_MAX_3D_MODE_PLUS_ONE
-};
+namespace de {
 
-
-class RiftState {
+/**
+ * Virtual reality configuration settings.
+ */
+class VRConfig
+{
 public:
-    RiftState();
+    /**
+     * Stereoscopic 3D rendering mode. This enumeration determines the integer value in
+     * the console variable.
+     */
+    enum StereoMode
+    {
+        ModeMono, // 0
+        ModeGreenMagenta,
+        ModeRedCyan,
+        ModeLeftOnly,
+        ModeRightOnly,
+        ModeTopBottom, // 5
+        ModeSideBySide,
+        ModeParallel,
+        ModeCrossEye,
+        ModeOculusRift,
+        ModeRowInterleaved, // 10   // NOT IMPLEMENTED YET
+        ModeColumnInterleaved,      // NOT IMPLEMENTED YET
+        ModeCheckerboard,           // NOT IMPLEMENTED YET
+        ModeQuadBuffered,
+        NUM_STEREO_MODES
+    };
 
-    // Use screen size instead of resolution in case non-square pixels?
-    float aspect() const {return 0.5f * hScreenSize() / vScreenSize();}
-    const de::Vector4f& chromAbParam() const {return m_chromAbParam;}
-    float distortionScale() const;
-    float fovX() const; // in degrees
-    float fovY() const; // in degrees
-    const de::Vector4f& hmdWarpParam() const {return m_hmdWarpParam;}
-    float hScreenSize() const {return m_screenSize[0];}
-    float lensSeparationDistance() const {return m_lensSeparationDistance;}
-    bool loadRiftParameters();
-    const de::Vector2f& screenSize() const {return m_screenSize;}
-    float vScreenSize() const {return m_screenSize[1];}
+    /**
+     * State parameters for Oculus Rift.
+     */
+    class OculusRift {
+    public:
+        OculusRift();
+
+        bool init();
+
+        void deinit();
+
+        void setRiftLatency(float latency);
+
+        // True if Oculus Rift is enabled and can report head orientation.
+        bool isReady() const;
+
+        void update();
+
+        // Called to allow head orientation to change again.
+        void allowUpdate();
+
+        // Returns current pitch, roll, yaw angles, in radians. If no head tracking is available,
+        // the returned values are not valid.
+        Vector3f headOrientation() const;
+
+        float interpupillaryDistance() const;
+
+        // Use screen size instead of resolution in case non-square pixels?
+        float aspect() const { return 0.5f * _screenSize.x / _screenSize.y; }
+        Vector2f const &screenSize() const { return _screenSize; }
+        Vector4f const &chromAbParam() const { return _chromAbParam; }
+        float distortionScale() const;
+        float fovX() const; // in degrees
+        float fovY() const; // in degrees
+        Vector4f const &hmdWarpParam() const { return _hmdWarpParam; }
+        float lensSeparationDistance() const { return _lensSeparationDistance; }
+
+    private:
+        DENG2_PRIVATE(d)
+
+        Vector2f _screenSize;
+        float _lensSeparationDistance;
+        Vector4f _hmdWarpParam;
+        Vector4f _chromAbParam;
+        float _eyeToScreenDistance;
+
+    public:
+        float riftLatency;
+    };
+
+public:
+    VRConfig();
+
+    OculusRift &ovr();
+    OculusRift const &ovr() const;
+
+    /// Currently active stereo rendering mode.
+    StereoMode mode() const;
+
+    static bool modeNeedsStereoGLFormat(StereoMode mode);
+
+    /// @param eye: -1 means left eye, +1 means right eye
+    /// @return viewpoint eye shift in map units
+    float getEyeShift(float eye) const;
+
+    void setEyeHeightInMapUnits(float eyeHeightInMapUnits);
 
 private:
-    de::Vector2f m_screenSize;
-    float m_lensSeparationDistance;
-    de::Vector4f m_hmdWarpParam;
-    de::Vector4f m_chromAbParam;
-    float m_eyeToScreenDistance;
+    DENG2_PRIVATE(d)
+
+public:
+    int vrMode;
+    float ipd; ///< Interpupillary distance in meters
+    float playerHeight; ///< Human player's real world height in meters
+    float dominantEye; ///< Kludge for aim-down-weapon-sight modes
+    bool swapEyes; ///< When true, inverts stereoscopic effect
+
+    // Unlike most 3D modes, Oculus Rift typically uses no frustum shift.
+    // (or if we did, it would be different and complicated)
+    bool applyFrustumShift;
+
+    // local viewpoint relative eye position in map units,
+    // VR::eyeShift is ordinarily set from VR::getEyeShift()
+    float eyeShift;
+
+    float hudDistance; // Distance from player character to screen, in map units (not used in Rift mode, because it's used by frustum shift)
+    float weaponDistance; // (UNUSED) Distance from player character to weapon sprite, in map units
+
+    int riftFramebufferSamples; // Multisampling used in unwarped Rift framebuffer
 };
 
-extern RiftState riftState;
+} // namespace de
 
-// Console variables
-Stereo3DMode mode(); ///< Currently active Stereo3DMode index
-bool modeNeedsStereoGLFormat(Stereo3DMode mode);
-float riftFovX(); ///< Horizontal field of view in Oculus Rift in degrees
-float riftLatency(); ///< Estimated head-motion->photons latency, in seconds
+extern de::VRConfig vrCfg;
 
-extern float ipd; ///< Interpupillary distance in meters
-extern float playerHeight; ///< Human player's real world height in meters
-extern float dominantEye; ///< Kludge for aim-down-weapon-sight modes
-extern byte  swapEyes; ///< When true, inverts stereoscopic effect
-
-// Variables below are global, but not user visible //
-
-// Unlike most 3D modes, Oculus Rift typically uses no frustum shift.
-// (or if we did, it would be different and complicated)
-extern bool applyFrustumShift;
-
-// local viewpoint relative eye position in map units,
-// VR::eyeShift is ordinarily set from VR::getEyeShift()
-extern float eyeShift;
-
-extern float hudDistance; // Distance from player character to screen, in map units (not used in Rift mode, because it's used by frustum shift)
-extern float weaponDistance; // (UNUSED) Distance from player character to weapon sprite, in map units
-
-extern int riftFramebufferSamples; // Multisampling used in unwarped Rift framebuffer
-
-/// @param eye: -1 means left eye, +1 means right eye
-/// @return viewpoint eye shift in map units
-float getEyeShift(float eye);
+namespace VR {
 
 // Register console variables
 void consoleRegister();
 
-// Head tracking API
-
-// True if Oculus Rift is enabled and can report head orientation.
-bool hasHeadOrientation();
-
-// Called to allow head orientation to change again.
-void allowHeadOrientationUpdate();
-
-void updateHeadOrientation();
-
-// Returns current pitch, roll, yaw angles, in radians. If no head tracking is available,
-// the returned values are not valid.
-de::Vector3f getHeadOrientation();
+float riftFovX(); ///< Horizontal field of view in Oculus Rift in degrees
 
 // To release memory and resources when done, for tidiness.
-void deleteOculusTracker();
-
-void setRiftLatency(float latency);
+//void deleteOculusTracker();
 
 // Load Oculus Rift parameters via Rift SDK
 bool loadRiftParameters();

@@ -1556,8 +1556,8 @@ void DD_ReadHeadTracker(void)
     I_GetDevice(IDEV_HEAD_TRACKER)->flags |= ID_ACTIVE;
 
     // Get the latest values.
-    VR::allowHeadOrientationUpdate();
-    VR::updateHeadOrientation();
+    vrCfg.ovr().allowUpdate();
+    vrCfg.ovr().update();
 
     ddevent_t ev;
 
@@ -1565,7 +1565,7 @@ void DD_ReadHeadTracker(void)
     ev.type = E_AXIS;
     ev.axis.type = EAXIS_ABSOLUTE;
 
-    Vector3f const pry = VR::getHeadOrientation();
+    Vector3f const pry = vrCfg.ovr().headOrientation();
 
     // Yaw (1.0 means 180 degrees).
     ev.axis.id = 0; // Yaw.
