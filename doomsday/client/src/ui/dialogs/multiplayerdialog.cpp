@@ -212,7 +212,10 @@ DENG_GUI_PIMPL(MultiplayerDialog)
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
-        return new ServerWidget;
+        ServerWidget *w = new ServerWidget;
+        // Automatically close the info popup if the dialog is closed.
+        QObject::connect(thisPublic, SIGNAL(closed()), w->info, SLOT(close()));
+        return w;
     }
 
     void updateItemWidget(GuiWidget &widget, ui::Item const &item)
