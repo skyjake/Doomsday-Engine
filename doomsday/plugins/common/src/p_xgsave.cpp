@@ -1,10 +1,7 @@
-/**
- * @file p_xgsave.c: Extended Generalized Line Types.
+/** @file p_xgsave.cpp  XG data/thinker (de)serialization.
  *
- * Implements: Saving and loading routines for the XG data/thinkers.
- *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,22 +26,18 @@
 #include "p_saveg.h"
 #include "p_xg.h"
 
-void SV_WriteXGLine(Line* li)
+void SV_WriteXGLine(Line *li)
 {
-    xgline_t* xg;
-    linetype_t* info;
-
-    xg = P_ToXLine(li)->xg;
-    info = &xg->info;
+    xgline_t *xg     = P_ToXLine(li)->xg;
+    linetype_t *info = &xg->info;
 
     // Version byte.
     SV_WriteByte(1);
 
-    /**
-     * Remember, savegames are applied on top of an initialized map.
-     * No strings are saved, because they are all const strings
-     * defined either in the maps's DDXGDATA lump or a DED file.
-     * During loading, XL_SetLineType is called with the id in the savegame.
+    /*
+     * Remember, savegames are applied on top of an initialized map. No strings are saved,
+     * because they are all const strings defined either in the maps's DDXGDATA lump or a
+     * DED file. During loading, XL_SetLineType is called with the id in the savegame.
      */
 
     SV_WriteLong(info->id);
@@ -54,17 +47,16 @@ void SV_WriteXGLine(Line* li)
     SV_WriteByte(xg->disabled);
     SV_WriteLong(xg->timer);
     SV_WriteLong(xg->tickerTimer);
-    SV_WriteShort(SV_ThingArchiveId(xg->activator));
+    SV_WriteShort(SV_ThingArchiveId((mobj_t *)xg->activator));
     SV_WriteLong(xg->idata);
     SV_WriteFloat(xg->fdata);
     SV_WriteLong(xg->chIdx);
     SV_WriteFloat(xg->chTimer);
 }
 
-void SV_ReadXGLine(Line* li)
+void SV_ReadXGLine(Line *li)
 {
-    xgline_t* xg;
-    xline_t* xline = P_ToXLine(li);
+    xline_t *xline = P_ToXLine(li);
 
     // Read version.
     SV_ReadByte();
@@ -72,30 +64,31 @@ void SV_ReadXGLine(Line* li)
     // This'll set all the correct string pointers and other data.
     XL_SetLineType(li, SV_ReadLong());
 
-    if(!xline || !xline->xg)
-        Con_Error("SV_ReadXGLine: Bad XG line!\n");
+    DENG_ASSERT(xline != 0);
+    DENG_ASSERT(xline->xg != 0);
 
-    xg = xline->xg;
+    xgline_t *xg = xline->xg;
 
     xg->info.actCount = SV_ReadLong();
-    xg->active = SV_ReadByte();
-    xg->disabled = SV_ReadByte();
-    xg->timer = SV_ReadLong();
+
+    xg->active      = SV_ReadByte();
+    xg->disabled    = SV_ReadByte();
+    xg->timer       = SV_ReadLong();
     xg->tickerTimer = SV_ReadLong();
 
     // Will be updated later.
-    xg->activator = INT2PTR(void, SV_ReadShort());
+    xg->activator   = INT2PTR(void, SV_ReadShort());
 
-    xg->idata = SV_ReadLong();
-    xg->fdata = SV_ReadFloat();
-    xg->chIdx = SV_ReadLong();
-    xg->chTimer = SV_ReadFloat();
+    xg->idata       = SV_ReadLong();
+    xg->fdata       = SV_ReadFloat();
+    xg->chIdx       = SV_ReadLong();
+    xg->chTimer     = SV_ReadFloat();
 }
 
 /**
  * @param fn  This function must belong to XG sector @a xg.
  */
-void SV_WriteXGFunction(xgsector_t* xg, function_t* fn)
+void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
 {
     // Version byte.
     SV_WriteByte(1);
@@ -112,29 +105,26 @@ void SV_WriteXGFunction(xgsector_t* xg, function_t* fn)
 /**
  * @param fn  This function must belong to XG sector @a xg.
  */
-void SV_ReadXGFunction(xgsector_t* xg, function_t* fn)
+void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
 {
     // Version byte.
     SV_ReadByte();
 
-    fn->flags = SV_ReadLong();
-    fn->pos = SV_ReadShort();
-    fn->repeat = SV_ReadShort();
-    fn->timer = SV_ReadShort();
+    fn->flags    = SV_ReadLong();
+    fn->pos      = SV_ReadShort();
+    fn->repeat   = SV_ReadShort();
+    fn->timer    = SV_ReadShort();
     fn->maxTimer = SV_ReadShort();
-    fn->value = SV_ReadFloat();
+    fn->value    = SV_ReadFloat();
     fn->oldValue = SV_ReadFloat();
 }
 
-void SV_WriteXGSector(Sector* sec)
+void SV_WriteXGSector(Sector *sec)
 {
-    xgsector_t* xg;
-    sectortype_t* info;
-    xsector_t* xsec = P_ToXSector(sec);
-    int i;
+    xsector_t *xsec = P_ToXSector(sec);
 
-    xg = xsec->xg;
-    info = &xg->info;
+    xgsector_t *xg     = xsec->xg;
+    sectortype_t *info = &xg->info;
 
     // Version byte.
     SV_WriteByte(1);
@@ -144,40 +134,46 @@ void SV_WriteXGSector(Sector* sec)
     SV_Write(xg->chainTimer, sizeof(xg->chainTimer));
     SV_WriteLong(xg->timer);
     SV_WriteByte(xg->disabled);
-    for(i = 0; i < 3; ++i)
+    for(int i = 0; i < 3; ++i)
+    {
         SV_WriteXGFunction(xg, &xg->rgb[i]);
-    for(i = 0; i < 2; ++i)
+    }
+    for(int i = 0; i < 2; ++i)
+    {
         SV_WriteXGFunction(xg, &xg->plane[i]);
+    }
     SV_WriteXGFunction(xg, &xg->light);
 }
 
 void SV_ReadXGSector(Sector *sec)
 {
-    int         i;
-    xgsector_t *xg;
-    xsector_t  *xsec = P_ToXSector(sec);
+    xsector_t *xsec = P_ToXSector(sec);
 
     // Version byte.
     SV_ReadByte();
 
     // This'll init all the data.
     XS_SetSectorType(sec, SV_ReadLong());
-    xg = xsec->xg;
+
+    xgsector_t *xg = xsec->xg;
     SV_Read(xg->info.count, sizeof(xg->info.count));
     SV_Read(xg->chainTimer, sizeof(xg->chainTimer));
-    xg->timer = SV_ReadLong();
+    xg->timer    = SV_ReadLong();
     xg->disabled = SV_ReadByte();
-    for(i = 0; i < 3; ++i)
+    for(int i = 0; i < 3; ++i)
+    {
         SV_ReadXGFunction(xg, &xg->rgb[i]);
-    for(i = 0; i < 2; ++i)
+    }
+    for(int i = 0; i < 2; ++i)
+    {
         SV_ReadXGFunction(xg, &xg->plane[i]);
+    }
     SV_ReadXGFunction(xg, &xg->light);
 }
 
-void SV_WriteXGPlaneMover(thinker_t* th)
+void SV_WriteXGPlaneMover(thinker_t *th)
 {
-    xgplanemover_t* mov = (xgplanemover_t*) th;
-    int i;
+    xgplanemover_t *mov = (xgplanemover_t *) th;
 
     SV_WriteByte(3); // Version.
 
@@ -185,7 +181,7 @@ void SV_WriteXGPlaneMover(thinker_t* th)
     SV_WriteByte(mov->ceiling);
     SV_WriteLong(mov->flags);
 
-    i = P_ToIndex(mov->origin);
+    int i = P_ToIndex(mov->origin);
     if(i >= 0 && i < numlines) // Is it a real line?
         i++;
     else // No.
@@ -209,23 +205,21 @@ void SV_WriteXGPlaneMover(thinker_t* th)
 /**
  * Reads the plane mover thinker.
  */
-int SV_ReadXGPlaneMover(xgplanemover_t* mov, int mapVersion)
+int SV_ReadXGPlaneMover(xgplanemover_t *mov, int mapVersion)
 {
     byte ver = SV_ReadByte(); // Version.
 
-    mov->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
-    mov->ceiling = SV_ReadByte();
-    mov->flags = SV_ReadLong();
+    mov->sector      = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    mov->ceiling     = SV_ReadByte();
+    mov->flags       = SV_ReadLong();
 
-    {
     int lineIndex = SV_ReadLong();
     if(lineIndex > 0)
-        mov->origin = P_ToPtr(DMU_LINE, lineIndex - 1);
-    }
+        mov->origin  = (Line *)P_ToPtr(DMU_LINE, lineIndex - 1);
 
     mov->destination = FIX2FLT(SV_ReadLong());
-    mov->speed = FIX2FLT(SV_ReadLong());
-    mov->crushSpeed = FIX2FLT(SV_ReadLong());
+    mov->speed       = FIX2FLT(SV_ReadLong());
+    mov->crushSpeed  = FIX2FLT(SV_ReadLong());
 
     if(ver >= 3)
     {
@@ -234,25 +228,25 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov, int mapVersion)
     else
     {
         // Flat number is an absolute lump index.
-        Uri* uri = Uri_NewWithPath2("Flats:", RC_NULL);
-        ddstring_t name;
-        Str_Init(&name);
+        Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
+        ddstring_t name; Str_Init(&name);
         F_FileName(&name, Str_Text(W_LumpName(SV_ReadLong())));
         Uri_SetPath(uri, Str_Text(&name));
-        mov->setMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        mov->setMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
         Str_Free(&name);
     }
 
     mov->setSectorType = SV_ReadLong();
-    mov->startSound = SV_ReadLong();
-    mov->endSound = SV_ReadLong();
-    mov->moveSound = SV_ReadLong();
-    mov->minInterval = SV_ReadLong();
-    mov->maxInterval = SV_ReadLong();
-    mov->timer = SV_ReadLong();
+    mov->startSound    = SV_ReadLong();
+    mov->endSound      = SV_ReadLong();
+    mov->moveSound     = SV_ReadLong();
+    mov->minInterval   = SV_ReadLong();
+    mov->maxInterval   = SV_ReadLong();
+    mov->timer         = SV_ReadLong();
 
     mov->thinker.function = (thinkfunc_t) XS_PlaneMover;
+
     return true; // Add this thinker.
 }
 

@@ -118,7 +118,7 @@ SOURCES += \
     $$common_src/p_view.c \
     $$common_src/p_xgfile.c \
     $$common_src/p_xgline.c \
-    $$common_src/p_xgsave.c \
+    $$common_src/p_xgsave.cpp \
     $$common_src/p_xgsec.c \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
