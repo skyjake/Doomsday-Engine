@@ -429,7 +429,7 @@ void Rend_Register()
     LensFx_Register();
     fx::Vignette::consoleRegister();
     fx::LensFlares::consoleRegister();
-    VR::consoleRegister();
+    VR_ConsoleRegister();
 }
 
 static void reportWallSectionDrawn(Line &line)

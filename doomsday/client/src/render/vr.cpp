@@ -1,7 +1,7 @@
 /** @file render/vr.cpp  Stereoscopic rendering and Oculus Rift support.
  *
+ * @authors Copyright (c) 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright (c) 2013 Christopher Bruns <cmbruns@rotatingpenguin.com>
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,74 +20,6 @@
 #include "de_console.h"
 #include "render/vr.h"
 
-#include <de/OculusRift>
-
-namespace de {
-
-DENG2_PIMPL(VRConfig)
-{
-    de::OculusRift ovr;
-    float eyeHeightInMapUnits;
-
-    Instance(Public *i)
-        : Base(i)
-        , eyeHeightInMapUnits(41)
-    {}
-};
-
-VRConfig::VRConfig()
-    : d(new Instance(this))
-    , vrMode(Mono)
-    , ipd(.064f) // average male IPD
-    , playerHeight(1.75f)
-    , dominantEye(0.0f)
-    , swapEyes(0)
-    , applyFrustumShift(true)
-    , eyeShift(0)
-    , hudDistance(20.0f)
-    , weaponDistance(10)
-    , riftFramebufferSamples(2)
-{}
-
-OculusRift &VRConfig::oculusRift()
-{
-    return d->ovr;
-}
-
-OculusRift const &VRConfig::oculusRift() const
-{
-    return d->ovr;
-}
-
-VRConfig::StereoMode VRConfig::mode() const
-{
-    return (StereoMode) vrMode;
-}
-
-bool VRConfig::modeNeedsStereoGLFormat(StereoMode mode)
-{
-    return mode == QuadBuffered;
-}
-
-void VRConfig::setEyeHeightInMapUnits(float eyeHeightInMapUnits)
-{
-    d->eyeHeightInMapUnits = eyeHeightInMapUnits;
-}
-
-float VRConfig::getEyeShift(float eye) const
-{
-    // 0.95 because eyes are not at top of head
-    float mapUnitsPerMeter = d->eyeHeightInMapUnits / (0.95 * playerHeight);
-    float result = mapUnitsPerMeter * (eye - dominantEye) * 0.5 * ipd;
-    if(swapEyes)
-    {
-        result *= -1;
-    }
-    return result;
-}
-
-} // namespace de
-
 de::VRConfig vrCfg; // global
 
 static float vrRiftFovX    = 114.8f;
@@ -95,7 +27,7 @@ static float vrNonRiftFovX = 95.f;
 static float riftLatency   = .030f;
 static byte autoLoadRiftParams = 1;
 
-float VR::riftFovX()
+float VR_RiftFovX()
 {
     return vrRiftFovX;
 }
@@ -151,10 +83,10 @@ static void vrNonRiftFovXChanged()
 
 D_CMD(LoadRiftParams)
 {
-    return VR::loadRiftParameters();
+    return VR_LoadRiftParameters();
 }
 
-void VR::consoleRegister()
+void VR_ConsoleRegister()
 {
     C_VAR_BYTE  ("rend-vr-autoload-rift-params", &autoLoadRiftParams, 0, 0, 1);
     C_VAR_FLOAT2("rend-vr-nonrift-fovx",         &vrNonRiftFovX,      0, 5.0f, 270.0f, vrNonRiftFovXChanged);
@@ -176,7 +108,7 @@ void VR::consoleRegister()
 
 /// @todo warping
 
-bool VR::loadRiftParameters()
+bool VR_LoadRiftParameters()
 {
     de::OculusRift &ovr = vrCfg.oculusRift();
 

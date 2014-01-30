@@ -742,7 +742,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
-    if(VRConfig::modeNeedsStereoGLFormat(vrCfg.mode()) && !canvas.format().stereo())
+    if(vrCfg.needsStereoGLFormat() && !canvas.format().stereo())
     {
         LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
     }
@@ -825,7 +825,7 @@ bool ClientWindow::setDefaultGLFormat() // static
     //fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
 
-    if(VRConfig::modeNeedsStereoGLFormat(vrCfg.mode()))
+    if(vrCfg.needsStereoGLFormat())
     {
         // Only use a stereo format for modes that require it.
         LOG_GL_MSG("Using a stereoscopic frame buffer format");

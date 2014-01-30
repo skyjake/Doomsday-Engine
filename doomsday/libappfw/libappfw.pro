@@ -57,6 +57,7 @@ HEADERS += \
     include/de/MenuWidget \
     include/de/MessageDialog \
     include/de/NotificationWidget \
+    include/de/OculusRift \
     include/de/PanelWidget \
     include/de/PopupMenuWidget \
     include/de/PopupWidget \
@@ -80,6 +81,7 @@ HEADERS += \
     include/de/ui/VariableToggleItem \
     include/de/VariableChoiceWidget \
     include/de/VariableToggleWidget \
+    include/de/VRConfig \
     \
     include/de/dialogs/inputdialog.h \
     include/de/dialogs/messagedialog.h \
@@ -110,6 +112,7 @@ HEADERS += \
     include/de/libappfw.h \
     include/de/ui/defs.h \
     include/de/vr/oculusrift.h \
+    include/de/vr/vrconfig.h \
     include/de/widgets/blurwidget.h \
     include/de/widgets/buttonwidget.h \
     include/de/widgets/choicewidget.h \
@@ -134,7 +137,8 @@ HEADERS += \
     include/de/widgets/sliderwidget.h \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
-    include/de/widgets/variabletogglewidget.h
+    include/de/widgets/variabletogglewidget.h \
+    include/de/vr/vrconfig.h
 
 # Sources and private headers.
 SOURCES += \
@@ -158,6 +162,7 @@ SOURCES += \
     src/style.cpp \
     src/textdrawable.cpp \
     src/vr/oculusrift.cpp \
+    src/vr/vrconfig.cpp \
     src/widgets/blurwidget.cpp \
     src/widgets/buttonwidget.cpp \
     src/widgets/choicewidget.cpp \

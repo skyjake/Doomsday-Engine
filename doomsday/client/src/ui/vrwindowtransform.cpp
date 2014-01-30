@@ -121,7 +121,7 @@ DENG2_PIMPL(VRWindowTransform)
      */
     void vrDrawOculusRift()
     {
-        vrCfg.applyFrustumShift = false;
+        vrCfg.enableFrustumShift(false);
 
         /// @todo shrunken hud
         // Allocate offscreen buffers - larger than Oculus Rift size, to get adequate resolution at center after warp
@@ -147,12 +147,12 @@ DENG2_PIMPL(VRWindowTransform)
         unwarpedFB.target().clear(GLTarget::ColorDepth);
 
         // Left eye view on left side of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
+        vrCfg.setCurrentEye(VRConfig::LeftEye);
         unwarpedFB.target().setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
         // Right eye view on right side of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+        vrCfg.setCurrentEye(VRConfig::RightEye);
         unwarpedFB.target().setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
         drawContent();
 
@@ -181,7 +181,7 @@ DENG2_PIMPL(VRWindowTransform)
 
         GLState::pop().apply();
 
-        vrCfg.applyFrustumShift = true; // restore default
+        vrCfg.enableFrustumShift(); // restore default
     }
 };
 
@@ -294,57 +294,57 @@ void VRWindowTransform::drawTransformed()
 
     case VRConfig::LeftOnly:
         // Left eye view
-        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
+        vrCfg.setCurrentEye(VRConfig::LeftEye);
         d->drawContent();
         break;
 
     case VRConfig::RightOnly:
         // Right eye view
-        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+        vrCfg.setCurrentEye(VRConfig::RightEye);
         d->drawContent();
         break;
 
     // B) Split-screen type stereo 3D modes here:
     case VRConfig::TopBottom: // Left goes on top
         // Left eye view on top of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
+        vrCfg.setCurrentEye(VRConfig::LeftEye);
         d->target().setActiveRect(Rectangleui(0, 0, d->width(), d->height()/2), true);
         d->drawContent();
         // Right eye view on bottom of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+        vrCfg.setCurrentEye(VRConfig::RightEye);
         d->target().setActiveRect(Rectangleui(0, d->height()/2, d->width(), d->height()/2), true);
         d->drawContent();
         break;
 
     case VRConfig::SideBySide: // Squished aspect
         // Left eye view on left side of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
+        vrCfg.setCurrentEye(VRConfig::LeftEye);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();
         // Right eye view on right side of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+        vrCfg.setCurrentEye(VRConfig::RightEye);
         d->target().setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
         d->drawContent();
         break;
 
     case VRConfig::Parallel: // Normal aspect
         // Left eye view on left side of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
+        vrCfg.setCurrentEye(VRConfig::LeftEye);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();
         // Right eye view on right side of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+        vrCfg.setCurrentEye(VRConfig::RightEye);
         d->target().setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
         d->drawContent();
         break;
 
     case VRConfig::CrossEye: // Normal aspect
         // Right eye view on left side of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+        vrCfg.setCurrentEye(VRConfig::RightEye);
         d->target().setActiveRect(Rectangleui(0, 0, d->width()/2, d->height()), true);
         d->drawContent();
         // Left eye view on right side of screen.
-        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
+        vrCfg.setCurrentEye(VRConfig::LeftEye);
         d->target().setActiveRect(Rectangleui(d->width()/2, 0, d->width()/2, d->height()), true);
         d->drawContent();
         break;
@@ -356,11 +356,11 @@ void VRWindowTransform::drawTransformed()
     // Overlaid type stereo 3D modes below:
     case VRConfig::GreenMagenta:
         // Left eye view
-        vrCfg.eyeShift = vrCfg.getEyeShift(-1);        
+        vrCfg.setCurrentEye(VRConfig::LeftEye);
         GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha).apply(); // Left eye view green
         d->drawContent();
         // Right eye view
-        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+        vrCfg.setCurrentEye(VRConfig::RightEye);
         GLState::current().setColorMask(gl::WriteRed | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view magenta
         d->drawContent();
         GLState::pop().apply();
@@ -368,11 +368,11 @@ void VRWindowTransform::drawTransformed()
 
     case VRConfig::RedCyan:
         // Left eye view
-        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
+        vrCfg.setCurrentEye(VRConfig::LeftEye);
         GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha).apply(); // Left eye view red
         d->drawContent();
         // Right eye view
-        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+        vrCfg.setCurrentEye(VRConfig::RightEye);
         GLState::current().setColorMask(gl::WriteGreen | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view cyan
         d->drawContent();
         GLState::pop().apply();
@@ -382,12 +382,12 @@ void VRWindowTransform::drawTransformed()
         if(d->canvas().format().stereo())
         {
             // Left eye view
-            vrCfg.eyeShift = vrCfg.getEyeShift(-1);
+            vrCfg.setCurrentEye(VRConfig::LeftEye);
             d->drawContent();
             d->canvas().framebuffer().swapBuffers(d->canvas(), gl::SwapStereoLeftBuffer);
 
             // Right eye view
-            vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+            vrCfg.setCurrentEye(VRConfig::RightEye);
             d->drawContent();
             d->canvas().framebuffer().swapBuffers(d->canvas(), gl::SwapStereoRightBuffer);
         }
@@ -408,10 +408,10 @@ void VRWindowTransform::drawTransformed()
         DENG_UNUSED(rowParityIsEven);
         /// @todo - use row parity in shader or stencil, to actually interleave rows.
         // Left eye view
-        vrCfg.eyeShift = vrCfg.getEyeShift(-1);
+        vrCfg.setCurrentEye(VRConfig::LeftEye);
         d->drawContent();
         // Right eye view
-        vrCfg.eyeShift = vrCfg.getEyeShift(+1);
+        vrCfg.setCurrentEye(VRConfig::RightEye);
         d->drawContent();
         break;
     }
@@ -426,5 +426,5 @@ void VRWindowTransform::drawTransformed()
 
     // Restore default VR dynamic parameters
     d->target().unsetActiveRect(true);
-    vrCfg.eyeShift = 0;
+    vrCfg.setCurrentEye(VRConfig::NeitherEye);
 }

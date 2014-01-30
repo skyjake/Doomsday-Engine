@@ -21,95 +21,16 @@
 #define CLIENT_RENDER_VR_H
 
 #include "dd_types.h"
-
-#include <de/OculusRift>
-
-namespace de {
-
-/**
- * Virtual reality configuration settings.
- */
-class VRConfig
-{
-public:
-    /**
-     * Stereoscopic 3D rendering mode. This enumeration determines the integer value in
-     * the console variable.
-     */
-    enum StereoMode
-    {
-        Mono, // 0
-        GreenMagenta,
-        RedCyan,
-        LeftOnly,
-        RightOnly,
-        TopBottom, // 5
-        SideBySide,
-        Parallel,
-        CrossEye,
-        OculusRift,
-        RowInterleaved, // 10   // NOT IMPLEMENTED YET
-        ColumnInterleaved,      // NOT IMPLEMENTED YET
-        Checkerboard,           // NOT IMPLEMENTED YET
-        QuadBuffered,
-        NUM_STEREO_MODES
-    };
-
-public:
-    VRConfig();
-
-    de::OculusRift &oculusRift();
-    de::OculusRift const &oculusRift() const;
-
-    /// Currently active stereo rendering mode.
-    StereoMode mode() const;
-
-    static bool modeNeedsStereoGLFormat(StereoMode mode);
-
-    /// @param eye: -1 means left eye, +1 means right eye
-    /// @return viewpoint eye shift in map units
-    float getEyeShift(float eye) const;
-
-    void setEyeHeightInMapUnits(float eyeHeightInMapUnits);
-
-private:
-    DENG2_PRIVATE(d)
-
-public:
-    int vrMode;
-    float ipd; ///< Interpupillary distance in meters
-    float playerHeight; ///< Human player's real world height in meters
-    float dominantEye; ///< Kludge for aim-down-weapon-sight modes
-    bool swapEyes; ///< When true, inverts stereoscopic effect
-
-    // Unlike most 3D modes, Oculus Rift typically uses no frustum shift.
-    // (or if we did, it would be different and complicated)
-    bool applyFrustumShift;
-
-    // local viewpoint relative eye position in map units,
-    // VR::eyeShift is ordinarily set from VR::getEyeShift()
-    float eyeShift;
-
-    float hudDistance; // Distance from player character to screen, in map units (not used in Rift mode, because it's used by frustum shift)
-    float weaponDistance; // (UNUSED) Distance from player character to weapon sprite, in map units
-
-    int riftFramebufferSamples; // Multisampling used in unwarped Rift framebuffer
-};
-
-} // namespace de
+#include <de/VRConfig>
 
 extern de::VRConfig vrCfg;
 
-namespace VR {
-
 // Register console variables
-void consoleRegister();
+void VR_ConsoleRegister();
 
-float riftFovX(); ///< Horizontal field of view in Oculus Rift in degrees
+float VR_RiftFovX(); ///< Horizontal field of view in Oculus Rift in degrees
 
 // Load Oculus Rift parameters via Rift SDK
-bool loadRiftParameters();
-
-} // namespace VR
+bool VR_LoadRiftParameters();
 
 #endif // CLIENT_RENDER_VR_H
