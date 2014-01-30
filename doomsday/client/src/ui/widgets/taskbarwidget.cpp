@@ -403,7 +403,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::SubwidgetItem(style().images().image("updater"),  tr("Updater"),  ui::Left, makeUpdaterSettings);
 
     d->mainMenu->items()
-            << new ui::SubwidgetItem(tr("Multiplayer..."), ui::Left, makePopup<MultiplayerDialog>)
+            << new ui::SubwidgetItem(tr("Multiplayer Games..."), ui::Left, makePopup<MultiplayerDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))

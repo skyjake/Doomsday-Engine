@@ -21,6 +21,7 @@
 #include "CommandAction"
 
 #include <de/ui/ActionItem>
+#include <de/ui/SubwidgetItem>
 
 using namespace de;
 

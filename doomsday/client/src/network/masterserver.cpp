@@ -237,7 +237,7 @@ bool MasterWorker::parseResponse(const QByteArray& response)
 
         if(info)
         {
-            Net_StringToServerInfo(Str_Text(&line), info);
+            ServerInfo_FromString(info, Str_Text(&line));
         }
     }
 

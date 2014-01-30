@@ -183,30 +183,7 @@ DENG_GUI_PIMPL(MultiplayerDialog)
                                .arg(sv.map));
 
                 // Extra information.
-#define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
-                info->document()
-                        .setText(String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
-                                        TABBED("Joinable:", "%5")
-                                        TABBED("Players:", "%3 / %4%13")
-                                        TABBED("Game:", "%9\n%10\n%12 %11")
-                                        TABBED("PWADs:", "%14")
-                                        TABBED("Address:", "%6:%7")
-                                        TABBED("Ping:", "%8 ms (approx)"))
-                              .arg(sv.name)
-                              .arg(sv.description)
-                              .arg(sv.numPlayers)
-                              .arg(sv.maxPlayers)
-                              .arg(sv.canJoin? "Yes" : "No") // 5
-                              .arg(sv.address)
-                              .arg(sv.port)
-                              .arg(sv.ping)
-                              .arg(sv.plugin)
-                              .arg(sv.gameIdentityKey) // 10
-                              .arg(sv.gameConfig)
-                              .arg(sv.map)
-                              .arg(!String(sv.clientNames).isEmpty()? String(_E(2) " (%1)" _E(.)).arg(sv.clientNames) : "")
-                              .arg(String(sv.pwads).isEmpty()? String(DENG2_CHAR_MDASH) : String(sv.pwads))); // 14
-#undef TABBED
+                info->document().setText(ServerInfo_AsStyledText(&sv));
             }
             catch(Error const &)
             {
@@ -284,7 +261,7 @@ DENG_GUI_PIMPL(MultiplayerDialog)
 MultiplayerDialog::MultiplayerDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
-    heading().setText(tr("Multiplayer"));
+    heading().setText(tr("Multiplayer Games"));
 
     LabelWidget *lab = LabelWidget::newWithText(tr("Games from Master Server and local network:"), &area());
 

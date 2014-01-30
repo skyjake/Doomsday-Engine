@@ -96,7 +96,7 @@ DENG2_PIMPL(ServerLink)
             do
             {
                 ch = Str_GetLine(line, ch);
-                Net_StringToServerInfo(Str_Text(line), &svInfo);
+                ServerInfo_FromString(&svInfo, Str_Text(line));
             }
             while(*ch);
 
@@ -116,8 +116,8 @@ DENG2_PIMPL(ServerLink)
                     << discovered.size()
                     << (discovered.size() != 1 ? "s have" : " has");
 
-            Net_PrintServerInfo(0, NULL);
-            Net_PrintServerInfo(0, &svInfo);
+            ServerInfo_Print(NULL, 0);
+            ServerInfo_Print(&svInfo, 0);
 
             notifyDiscoveryUpdate();
         }
@@ -174,7 +174,7 @@ DENG2_PIMPL(ServerLink)
         foreach(Address sv, finder.foundServers())
         {
             serverinfo_t info;
-            Net_RecordToServerInfo(finder.messageFromServer(sv), &info);
+            ServerInfo_FromRecord(&info, finder.messageFromServer(sv));
 
             // Update the address in the info, which is missing because this
             // information didn't come from the master.
