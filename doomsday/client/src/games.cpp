@@ -226,7 +226,7 @@ static int locateAllResourcesWorker(void *context)
         LOG_RES_VERBOSE(_E(l) "  IdentityKey: " _E(.)_E(>)) << game->identityKey();
         Game::printFiles(*game, FF_STARTUP);
 
-        LOG_RES_MSG("   " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game->statusAsText();
+        LOG_RES_MSG(" " DENG2_CHAR_RIGHT_DOUBLEARROW " ") << game->statusAsText();
         ++n;
     }
     BusyMode_WorkerEnd();

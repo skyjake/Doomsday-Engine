@@ -1,6 +1,6 @@
-/** @file aboutdialog.h Information about the Doomsday Client.
+/** @file multiplayermenuwidget.h
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -13,26 +13,26 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_ABOUTDIALOG_H
-#define DENG_CLIENT_ABOUTDIALOG_H
+#ifndef DENG_CLIENT_MULTIPLAYERMENUWIDGET_H
+#define DENG_CLIENT_MULTIPLAYERMENUWIDGET_H
 
-#include <de/DialogWidget>
+#include <de/PopupMenuWidget>
 
 /**
- * Dialog that shows information about the client.
+ * Popup menu that appears in the task bar when joined to a multiplayer game.
+ *
+ * @ingroup ui
  */
-class AboutDialog : public de::DialogWidget
+class MultiplayerMenuWidget : public de::PopupMenuWidget
 {
-    Q_OBJECT
-
 public:
-    AboutDialog();
+    MultiplayerMenuWidget();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_ABOUTDIALOG_H
+#endif // DENG_CLIENT_MULTIPLAYERMENUWIDGET_H

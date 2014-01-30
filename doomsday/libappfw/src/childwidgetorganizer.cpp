@@ -20,6 +20,7 @@
 #include "de/LabelWidget"
 #include "de/ui/Item"
 
+#include <de/App>
 #include <QMap>
 
 namespace de {
@@ -84,6 +85,7 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void addItemWidget(ui::Data::Pos pos, bool alwaysAppend = false)
     {
+        DENG2_ASSERT_IN_MAIN_THREAD(); // widgets should only be manipulated in UI thread
         DENG2_ASSERT(factory != 0);
 
         if(filter)

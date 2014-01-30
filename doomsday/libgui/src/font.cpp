@@ -24,7 +24,7 @@
 #include <QImage>
 #include <QPainter>
 
-#ifdef MACOSX
+#if defined(MACOSX) && defined(MACOS_10_7)
 #  include "coretextnativefont_macx.h"
 namespace de { typedef CoreTextNativeFont PlatformFont; }
 #else

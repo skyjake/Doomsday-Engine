@@ -120,7 +120,7 @@ static void initialize(void)
 #endif
 }
 
-#define TABBED(A, B)  _E(Ta) "  " A " " _E(Tb) << B << "\n"
+#define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
 
 de::String Sys_GLDescription()
 {

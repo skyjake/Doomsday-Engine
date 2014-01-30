@@ -16,7 +16,8 @@ group label {
 rule scrollarea.bar { constant $= UNIT }
 
 group document {
-    rule progress { constant $= UNIT * 30 }
+    rule progress    { constant $= UNIT * 30 }
+    rule popup.width { constant $= UNIT * 120 }
 }
 
 group editor {
@@ -36,9 +37,10 @@ group slider {
 group dialog {
     rule gap { constant $= UNIT * 2 }
 
-    rule about.width    { constant $= UNIT * 80 }
-    rule message.width  { constant $= UNIT * 115 }
-    rule download.width { constant $= UNIT * 115 }
+    rule about.width       { constant $= UNIT * 80 }
+    rule message.width     { constant $= UNIT * 115 }
+    rule download.width    { constant $= UNIT * 115 }
+    rule multiplayer.width { constant $= UNIT * 80 }
 }
 
 group alerts {
@@ -59,7 +61,7 @@ group console {
 }
 
 group gameselection {
-    rule max.width  { constant $= UNIT * 200 }
+    rule max.width  { constant $= UNIT * 215 }
     rule max.height { constant $= UNIT * 150 }
 }
 

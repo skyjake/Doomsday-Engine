@@ -333,10 +333,9 @@ DENG2_OBSERVES(App, StartupComplete)
 
         VersionInfo currentVersion;
 
-        LOG_MSG(_E(b) "Received latest version information:\n" _E(.)
-                    " - version: " _E(>) "%s " _E(2) "(installed version is %s)")
-                << latestVersion.asText()
-                << currentVersion.asText();
+        LOG_MSG(_E(b) "Received version information:\n" _E(.)
+                " - installed version: " _E(>) "%s ") << currentVersion.asText();
+        LOG_MSG(" - latest version: " _E(>) "%s") << latestVersion.asText();
         LOG_MSG(" - package: " _E(>) _E(i) "%s") << latestPackageUri;
         LOG_MSG(" - change log: " _E(>) _E(i) "%s") << latestLogUri;
 

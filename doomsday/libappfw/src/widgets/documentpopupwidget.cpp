@@ -1,6 +1,6 @@
-/** @file aboutdialog.h Information about the Doomsday Client.
+/** @file documentpopupwidget.cpp
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -13,26 +13,33 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_ABOUTDIALOG_H
-#define DENG_CLIENT_ABOUTDIALOG_H
+#include "de/DocumentPopupWidget"
 
-#include <de/DialogWidget>
+namespace de {
 
-/**
- * Dialog that shows information about the client.
- */
-class AboutDialog : public de::DialogWidget
+DENG2_PIMPL_NOREF(DocumentPopupWidget)
 {
-    Q_OBJECT
-
-public:
-    AboutDialog();
-
-private:
-    DENG2_PRIVATE(d)
+    DocumentWidget *doc;
 };
 
-#endif // DENG_CLIENT_ABOUTDIALOG_H
+DocumentPopupWidget::DocumentPopupWidget(String const &name)
+    : PopupWidget(name), d(new Instance)
+{
+    useInfoStyle();
+    setContent(d->doc = new DocumentWidget);
+}
+
+DocumentWidget &DocumentPopupWidget::document()
+{
+    return *d->doc;
+}
+
+DocumentWidget const &DocumentPopupWidget::document() const
+{
+    return *d->doc;
+}
+
+} // namespace de

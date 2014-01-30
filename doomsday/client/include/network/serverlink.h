@@ -37,6 +37,9 @@ class ServerLink : public de::shell::AbstractLink
 public:
     DENG2_DEFINE_AUDIENCE(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
 
+    DENG2_DEFINE_AUDIENCE(Join,  void networkGameJoined())
+    DENG2_DEFINE_AUDIENCE(Leave, void networkGameLeft())
+
 public:
     ServerLink();
 
@@ -63,6 +66,8 @@ public:
     int foundServerCount() const;
 
     QList<de::Address> foundServers() const;
+
+    bool isFound(de::Address const &host) const;
 
     bool foundServerInfo(de::Address const &host, serverinfo_t *info) const;
 

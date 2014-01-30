@@ -204,8 +204,12 @@ DENG2_PIMPL(LogSettingsDialog)
         {
             overrideWithGeneric();
         }
-
         // Re-read from Config, which has been changed via the widgets.
+        applyFilterFromConfig();
+    }
+
+    void applyFilterFromConfig()
+    {
         App::logFilter().read(App::config().names().subrecord("log.filter"));
     }
 };
@@ -249,6 +253,8 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
 void LogSettingsDialog::resetToDefaults()
 {
     ClientApp::logSettings().resetToDefaults();
+
+    d->applyFilterFromConfig();
 }
 
 void LogSettingsDialog::updateLogFilter()

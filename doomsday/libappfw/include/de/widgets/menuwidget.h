@@ -121,6 +121,8 @@ public:
      */
     GridLayout const &layout() const;
 
+    GridLayout &layout();
+
     // Events.
     void update();
     bool handleEvent(Event const &event);

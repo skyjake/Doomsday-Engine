@@ -164,6 +164,8 @@ DENG_GUI_PIMPL(AlertDialog)
         label.setTextStyle(&styling);
         label.setMaximumTextWidth(style().rules().rule("alerts.width").valuei());
         label.setSizePolicy(ui::Expand, ui::Expand);
+        label.setAppearanceAnimation(LabelWidget::AppearGrowVertically, 0.5);
+        label.setAlignment(ui::AlignBottom);
         label.setImage(style().images().image("alert"));
         label.setOverrideImageSize(style().fonts().font("default").height().value());
         label.setImageAlignment(ui::AlignTop);

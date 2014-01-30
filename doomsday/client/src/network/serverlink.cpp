@@ -96,7 +96,7 @@ DENG2_PIMPL(ServerLink)
             do
             {
                 ch = Str_GetLine(line, ch);
-                Net_StringToServerInfo(Str_Text(line), &svInfo);
+                ServerInfo_FromString(&svInfo, Str_Text(line));
             }
             while(*ch);
 
@@ -116,8 +116,8 @@ DENG2_PIMPL(ServerLink)
                     << discovered.size()
                     << (discovered.size() != 1 ? "s have" : " has");
 
-            Net_PrintServerInfo(0, NULL);
-            Net_PrintServerInfo(0, &svInfo);
+            ServerInfo_Print(NULL, 0);
+            ServerInfo_Print(&svInfo, 0);
 
             notifyDiscoveryUpdate();
         }
@@ -157,6 +157,8 @@ DENG2_PIMPL(ServerLink)
         // Call game's NetConnect.
         gx.NetConnect(false);
 
+        DENG2_FOR_PUBLIC_AUDIENCE(Join, i) i->networkGameJoined();
+
         // G'day mate!  The client is responsible for beginning the
         // handshake.
         Cl_SendHello();
@@ -172,7 +174,7 @@ DENG2_PIMPL(ServerLink)
         foreach(Address sv, finder.foundServers())
         {
             serverinfo_t info;
-            Net_RecordToServerInfo(finder.messageFromServer(sv), &info);
+            ServerInfo_FromRecord(&info, finder.messageFromServer(sv));
 
             // Update the address in the info, which is missing because this
             // information didn't come from the master.
@@ -240,6 +242,8 @@ void ServerLink::disconnect()
         if(gx.NetDisconnect)
             gx.NetDisconnect(true);
 
+        DENG2_FOR_AUDIENCE(Leave, i) i->networkGameLeft();
+
         LOG_NET_NOTE("Link to server %s disconnected") << address();
 
         AbstractLink::disconnect();
@@ -280,6 +284,11 @@ int ServerLink::foundServerCount() const
 QList<Address> ServerLink::foundServers() const
 {
     return d->allFound().keys();
+}
+
+bool ServerLink::isFound(Address const &host) const
+{
+    return d->allFound().contains(host);
 }
 
 bool ServerLink::foundServerInfo(int index, serverinfo_t *info) const

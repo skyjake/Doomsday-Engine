@@ -73,12 +73,12 @@ DENG_GUI_PIMPL(PopupWidget)
                 .clearInput(Rule::AnchorX)
                 .clearInput(Rule::AnchorY);
 
-        // Let's first try the requested direction.
         switch(self.openingDirection())
         {
         case ui::Up:
             self.rule()
-                    .setInput(Rule::Bottom, *anchorY - *marker)
+                    .setInput(Rule::Bottom, OperatorRule::maximum(
+                                  *anchorY - *marker, self.rule().height()))
                     .setInput(Rule::Left, OperatorRule::clamped(
                                   *anchorX - self.rule().width() / 2,
                                   self.margins().left(),
@@ -406,6 +406,7 @@ void PopupWidget::preparePanelForOpening()
 
     // Reparent the popup into the root widget, on top of everything else.
     d->realParent = Widget::parent();
+    DENG2_ASSERT(d->realParent != 0);
     d->realParent->audienceForDeletion += d;
     d->realParent->remove(*this);
     d->realParent->root().as<GuiRootWidget>().addOnTop(this);

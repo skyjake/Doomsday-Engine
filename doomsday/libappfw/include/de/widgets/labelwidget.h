@@ -170,6 +170,28 @@ public:
     void setWidthPolicy(ui::SizePolicy policy);
     void setHeightPolicy(ui::SizePolicy policy);
 
+    enum AppearanceAnimation {
+        AppearInstantly,
+        AppearGrowHorizontally,
+        AppearGrowVertically
+    };
+
+    /**
+     * Sets the way the label's content affects its size.
+     *
+     * @param method  Method of appearance:
+     * - AppearInstantly: The size is unaffected by the content's state.
+     *                    This is the default.
+     * - AppearGrowHorizontally: The widget's width is initially zero, but when the
+     *                    content is ready for drawing, the width will animate
+     *                    to the appropriate width in the specified time span.
+     * - AppearGrowVertically: The widget's height is initially zero, but when the
+     *                    content is ready for drawing, the height will animate
+     *                    to the appropriate height in the specified time span.
+     * @param span  Animation time span for the appearance.
+     */
+    void setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span = 0.0);
+
     // Events.
     void viewResized();
     void update();

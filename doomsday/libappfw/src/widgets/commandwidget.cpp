@@ -17,8 +17,7 @@
  */
 
 #include "de/CommandWidget"
-#include "de/DocumentWidget"
-#include "de/PopupWidget"
+#include "de/DocumentPopupWidget"
 #include "de/Style"
 
 #include <de/shell/EditorHistory>
@@ -29,28 +28,23 @@ namespace de {
 DENG_GUI_PIMPL(CommandWidget)
 {
     shell::EditorHistory history;
-    DocumentWidget *completions;
-    PopupWidget *popup; ///< Popup for autocompletions.
+    DocumentPopupWidget *popup; ///< Popup for autocompletions.
     bool allowReshow;   ///< Contents must still be valid.
 
     Instance(Public *i) : Base(i), history(i), allowReshow(false)
     {
         // Popup for autocompletions.
-        completions = new DocumentWidget;
-        completions->setMaximumLineWidth(640);
-        completions->setScrollBarColor("inverted.accent");
-
-        popup = new PopupWidget;
-        popup->useInfoStyle();
-        popup->setContent(completions);
+        popup = new DocumentPopupWidget;
+        popup->document().setMaximumLineWidth(640);
+        popup->document().setScrollBarColor("inverted.accent");
 
         // Height for the content: depends on the document height (plus margins), but at
         // most 400; never extend outside the view, though.
-        completions->rule().setInput(Rule::Height,
+        popup->document().rule().setInput(Rule::Height,
                 OperatorRule::minimum(
                     OperatorRule::minimum(style().rules().rule("editor.completion.height"),
-                                          completions->contentRule().height() +
-                                          completions->margins().height()),
+                                          popup->document().contentRule().height() +
+                                          popup->document().margins().height()),
                     self.rule().top() - style().rules().rule("gap")));
 
         self.add(popup);
@@ -159,8 +153,8 @@ void CommandWidget::closeAutocompletionPopup()
 
 void CommandWidget::showAutocompletionPopup(String const &completionsText)
 {
-    d->completions->setText(completionsText);
-    d->completions->scrollToTop(0);
+    d->popup->document().setText(completionsText);
+    d->popup->document().scrollToTop(0);
 
     d->popup->setAnchorX(cursorRect().middle().x);
     d->popup->setAnchorY(rule().top());

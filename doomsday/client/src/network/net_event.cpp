@@ -180,13 +180,13 @@ void N_NETicker(timespan_t time)
             break;
 
         case MAC_LIST:
-            Net_PrintServerInfo(0, NULL);
+            ServerInfo_Print(NULL, 0);
             num = i = N_MasterGet(0, 0);
             while(--i >= 0)
             {
                 serverinfo_t info;
                 N_MasterGet(i, &info);
-                Net_PrintServerInfo(i, &info);
+                ServerInfo_Print(&info, i);
             }
             LOG_NET_VERBOSE("%i server%s found") << num << (num != 1 ? "s were" : " was");
             N_MARemove();

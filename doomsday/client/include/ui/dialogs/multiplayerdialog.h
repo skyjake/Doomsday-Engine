@@ -1,6 +1,6 @@
-/** @file aboutdialog.h Information about the Doomsday Client.
+/** @file multiplayerdialog.h  Dialog for listing found servers and joining games.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -13,26 +13,31 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_ABOUTDIALOG_H
-#define DENG_CLIENT_ABOUTDIALOG_H
+#ifndef DENG_CLIENT_MULTIPLAYERDIALOG_H
+#define DENG_CLIENT_MULTIPLAYERDIALOG_H
 
 #include <de/DialogWidget>
 
 /**
- * Dialog that shows information about the client.
+ * Dialog for listing found multiplayer servers and joining games.
+ *
+ * Servers can be found via the Master Server, LAN Beacon, and manual IP address.
  */
-class AboutDialog : public de::DialogWidget
+class MultiplayerDialog : public de::DialogWidget
 {
     Q_OBJECT
 
 public:
-    AboutDialog();
+    MultiplayerDialog(de::String const &name = "multiplayer");
+
+public slots:
+    void showSettings();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_ABOUTDIALOG_H
+#endif // DENG_CLIENT_MULTIPLAYERDIALOG_H

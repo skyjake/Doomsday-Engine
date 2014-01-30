@@ -306,9 +306,10 @@ String Time::asText(Format format) const
         {
             return d->dateTime.toString(Qt::TextDate);
         }
-        else if(format == BuildNumberAndTimeWithoutHour)
+        else if(format == BuildNumberAndSecondsSinceStart)
         {
-            return QString("#%1 ").arg(asBuildNumber(), -4) + d->dateTime.toString("mm:ss.zzz");
+            return QString("#%1 %2").arg(asBuildNumber(), -4)
+                    .arg(highPerfTimer.elapsed(), 7, 'f', 3, '0');
         }
         else
         {

@@ -378,6 +378,7 @@ DENG_HEADERS += \
     include/ui/dialogs/coloradjustmentdialog.h \
     include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/logsettingsdialog.h \
+    include/ui/dialogs/multiplayerdialog.h \
     include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
@@ -395,6 +396,7 @@ DENG_HEADERS += \
     include/ui/widgets/gamewidget.h \
     include/ui/widgets/icvarwidget.h \
     include/ui/widgets/keygrabberwidget.h \
+    include/ui/widgets/multiplayermenuwidget.h \
     include/ui/widgets/profilepickerwidget.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/fi_main.h \
@@ -700,6 +702,7 @@ SOURCES += \
     src/ui/dialogs/coloradjustmentdialog.cpp \
     src/ui/dialogs/inputsettingsdialog.cpp \
     src/ui/dialogs/logsettingsdialog.cpp \
+    src/ui/dialogs/multiplayerdialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
     src/ui/dialogs/vrsettingsdialog.cpp \
@@ -728,6 +731,7 @@ SOURCES += \
     src/ui/widgets/gamewidget.cpp \
     src/ui/widgets/gameuiwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
+    src/ui/widgets/multiplayermenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/windowsystem.cpp \
