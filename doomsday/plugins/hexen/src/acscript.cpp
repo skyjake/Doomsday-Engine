@@ -474,23 +474,23 @@ void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
 {
     SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
 
-    SV_WriteByte(3); // version byte
+    Writer_WriteByte(writer, 3); // version byte
 
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
-        SV_WriteLong(worldVars[i]);
+        Writer_WriteInt32(writer, worldVars[i]);
     }
 
     // Serialize the deferred task queue.
-    SV_WriteLong(_deferredTasksSize);
+    Writer_WriteInt32(writer, _deferredTasksSize);
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
         DeferredTask const *task = &_deferredTasks[i];
-        SV_WriteLong(task->map);
-        SV_WriteLong(task->scriptNumber);
+        Writer_WriteInt32(writer, task->map);
+        Writer_WriteInt32(writer, task->scriptNumber);
         for(int k = 0; k < 4; ++k)
         {
-            SV_WriteByte(task->args[k]);
+            Writer_WriteByte(writer, task->args[k]);
         }
     }
 }
@@ -502,18 +502,18 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
     if(saveVersion >= 7)
     {
         SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
-        ver = SV_ReadByte();
+        ver = Reader_ReadByte(reader);
     }
 
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
-        worldVars[i] = SV_ReadLong();
+        worldVars[i] = Reader_ReadInt32(reader);
     }
 
     // Deserialize the deferred task queue.
     if(ver >= 3)
     {
-        _deferredTasksSize = SV_ReadLong();
+        _deferredTasksSize = Reader_ReadInt32(reader);
         if(_deferredTasksSize)
         {
             if(_deferredTasks)
@@ -525,11 +525,11 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
             {
                 DeferredTask *task = &_deferredTasks[i];
 
-                task->map          = SV_ReadLong();
-                task->scriptNumber = SV_ReadLong();
+                task->map          = Reader_ReadInt32(reader);
+                task->scriptNumber = Reader_ReadInt32(reader);
                 for(int k = 0; k < 4; ++k)
                 {
-                    task->args[k] = SV_ReadByte();
+                    task->args[k] = Reader_ReadByte(reader);
                 }
             }
         }
@@ -542,14 +542,14 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
         _deferredTasksSize = 0;
         for(int i = 0; i < 20; ++i)
         {
-            int map            = SV_ReadLong();
+            int map            = Reader_ReadInt32(reader);
             DeferredTask *task = &tempTasks[map < 0? 19 : _deferredTasksSize++];
 
             task->map          = map < 0? 0 : map-1;
-            task->scriptNumber = SV_ReadLong();
+            task->scriptNumber = Reader_ReadInt32(reader);
             for(int k = 0; k < 4; ++k)
             {
-                task->args[k] = SV_ReadByte();
+                task->args[k] = Reader_ReadByte(reader);
             }
         }
 
@@ -582,13 +582,13 @@ void ACScriptInterpreter::writeMapScriptData(Writer *writer)
     for(int i = 0; i < _scriptCount; ++i)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
-        SV_WriteShort(info.state);
-        SV_WriteShort(info.waitValue);
+        Writer_WriteInt16(writer, info.state);
+        Writer_WriteInt16(writer, info.waitValue);
     }
 
     for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
     {
-        SV_WriteLong(mapVars[i]);
+        Writer_WriteInt32(writer, mapVars[i]);
     }
 }
 
@@ -600,13 +600,13 @@ void ACScriptInterpreter::readMapScriptData(Reader *reader)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
 
-        info.state     = (ACScriptState) SV_ReadShort();
-        info.waitValue = SV_ReadShort();
+        info.state     = ACScriptState( Reader_ReadInt16(reader) );
+        info.waitValue = Reader_ReadInt16(reader);
     }
 
     for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
     {
-        mapVars[i] = SV_ReadLong();
+        mapVars[i] = Reader_ReadInt32(reader);
     }
 }
 
