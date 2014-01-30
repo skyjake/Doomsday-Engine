@@ -482,7 +482,8 @@ int EV_DoDoor(Line *line, doortype_e type)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 static void sendNeedKeyMessage(player_t *p, textenum_t msgTxt, int keyNum)
 {
-    char buf[160], *in, tmp[2];
+    char buf[160], tmp[2];
+    char const *in;
 
     buf[0] = 0;
     tmp[1] = 0;
