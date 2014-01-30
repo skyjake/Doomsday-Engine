@@ -23,6 +23,8 @@
 #define LIBDENG_THINKER_H
 
 #include "api_base.h"
+#include <de/reader.h>
+#include <de/writer.h>
 
 #ifdef __DOOMSDAY__
 namespace de {

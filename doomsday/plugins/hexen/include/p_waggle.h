@@ -22,6 +22,8 @@
 #ifndef LIBHEXEN_P_WAGGLE_H
 #define LIBHEXEN_P_WAGGLE_H
 
+#include "doomsday.h"
+
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
@@ -43,6 +45,11 @@ typedef struct {
     coord_t scaleDelta;
     int ticker;
     wagglestate_e state;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } waggle_t;
 
 #ifdef __cplusplus

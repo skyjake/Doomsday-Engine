@@ -64,6 +64,11 @@ typedef struct {
     doorstate_e state;
     int topWait; // Tics to wait at the top.
     int topCountDown;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } door_t;
 
 #ifdef __cplusplus

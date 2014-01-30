@@ -101,7 +101,7 @@ int ACScriptInterpreter::scriptInfoIndex(int scriptNumber)
     return -1;
 }
 
-ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const *args, int delayCount)
+ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const args[], int delayCount)
 {
     // Is the script is already executing?
     if(info.state != Inactive) return 0;
@@ -127,7 +127,7 @@ ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const 
     return script;
 }
 
-bool ACScriptInterpreter::newDeferredTask(uint map, int scriptNumber, byte const *args)
+bool ACScriptInterpreter::newDeferredTask(uint map, int scriptNumber, byte const args[])
 {
     if(_deferredTasksSize)
     {
@@ -259,8 +259,8 @@ void ACScriptInterpreter::startOpenScripts()
     }
 }
 
-bool ACScriptInterpreter::startScript(int scriptNumber, uint map, byte *args, mobj_t *activator,
-    Line *line, int side)
+bool ACScriptInterpreter::startScript(int scriptNumber, uint map, byte const args[],
+    mobj_t *activator, Line *line, int side)
 {
     DENG_ASSERT(!IS_CLIENT);
 
@@ -1686,7 +1686,7 @@ void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
     interp.runDeferredTasks(map);
 }
 
-dd_bool P_StartACScript(int scriptNumber, uint map, byte *args, mobj_t *activator,
+dd_bool P_StartACScript(int scriptNumber, uint map, byte const args[], mobj_t *activator,
     Line *line, int side)
 {
     return interp.startScript(scriptNumber, map, args, activator, line, side);

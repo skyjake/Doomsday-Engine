@@ -228,6 +228,112 @@ void T_MoveCeiling(void *ceilingThinkerPtr)
     }
 }
 
+void ceiling_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 2); // Write a version byte.
+
+    Writer_WriteByte(writer, (byte) type);
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt16(writer, (int)bottomHeight);
+    Writer_WriteInt16(writer, (int)topHeight);
+    Writer_WriteInt32(writer, FLT2FIX(speed));
+
+    Writer_WriteByte(writer, crush);
+
+    Writer_WriteByte(writer, (byte) state);
+    Writer_WriteInt32(writer, tag);
+    Writer_WriteByte(writer, (byte) oldState);
+}
+
+int ceiling_t::read(Reader *reader, int mapVersion)
+{
+#if __JHEXEN__
+    if(mapVersion >= 4)
+#else
+    if(mapVersion >= 5)
+#endif
+    {
+        // Note: the thinker class byte has already been read.
+        int ver = Reader_ReadByte(reader); // version byte.
+
+        thinker.function = T_MoveCeiling;
+
+#if !__JHEXEN__
+        // Should we put this into stasis?
+        if(mapVersion == 5)
+        {
+            if(!Reader_ReadByte(reader))
+                Thinker_SetStasis(&thinker, true);
+        }
+#endif
+
+        type         = (ceilingtype_e) Reader_ReadByte(reader);
+
+        sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        bottomHeight = (float) Reader_ReadInt16(reader);
+        topHeight    = (float) Reader_ReadInt16(reader);
+        speed        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+        crush        = Reader_ReadByte(reader);
+
+        if(ver == 2)
+            state    = ceilingstate_e(Reader_ReadByte(reader));
+        else
+            state    = ceilingstate_e(Reader_ReadInt32(reader) == -1? CS_DOWN : CS_UP);
+
+        tag          = Reader_ReadInt32(reader);
+
+        if(ver == 2)
+            oldState = ceilingstate_e(Reader_ReadByte(reader));
+        else
+            state    = (Reader_ReadInt32(reader) == -1? CS_DOWN : CS_UP);
+    }
+    else
+    {
+        // Its in the old format which serialized ceiling_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+#if __JHEXEN__
+        // A 32bit pointer to sector, serialized.
+        sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        type         = ceilingtype_e(Reader_ReadInt32(reader));
+#else
+        type         = ceilingtype_e(Reader_ReadInt32(reader));
+
+        // A 32bit pointer to sector, serialized.
+        sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+#endif
+
+        bottomHeight = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        topHeight    = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        speed        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+        crush        = Reader_ReadInt32(reader);
+        state        = (Reader_ReadInt32(reader) == -1? CS_DOWN : CS_UP);
+        tag          = Reader_ReadInt32(reader);
+        oldState     = (Reader_ReadInt32(reader) == -1? CS_DOWN : CS_UP);
+
+        thinker.function = T_MoveCeiling;
+#if !__JHEXEN__
+        if(!((thinker_t *)junk)->function)
+            Thinker_SetStasis(&thinker, true);
+#endif
+    }
+
+    P_ToXSector(sector)->specialData = this;
+
+    return true; // Add this thinker.
+}
+
 #if __JDOOM64__
 static int EV_DoCeiling2(Line *line, int tag, float basespeed, ceilingtype_e type)
 #elif __JHEXEN__

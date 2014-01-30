@@ -75,6 +75,73 @@ void T_FloorWaggle(waggle_t *waggle)
     P_ChangeSector(waggle->sector, 1 /*crush damage*/);
 }
 
+void waggle_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt32(writer, FLT2FIX(originalHeight));
+    Writer_WriteInt32(writer, FLT2FIX(accumulator));
+    Writer_WriteInt32(writer, FLT2FIX(accDelta));
+    Writer_WriteInt32(writer, FLT2FIX(targetScale));
+    Writer_WriteInt32(writer, FLT2FIX(scale));
+    Writer_WriteInt32(writer, FLT2FIX(scaleDelta));
+    Writer_WriteInt32(writer, ticker);
+    Writer_WriteInt32(writer, state);
+}
+
+int waggle_t::read(Reader *reader, int mapVersion)
+{
+    if(mapVersion >= 4)
+    {
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        // Start of used data members.
+        sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        originalHeight  = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        accumulator     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        accDelta        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        targetScale     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        scale           = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        scaleDelta      = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        ticker          = Reader_ReadInt32(reader);
+        state           = wagglestate_e(Reader_ReadInt32(reader));
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized waggle_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        originalHeight  = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        accumulator     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        accDelta        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        targetScale     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        scale           = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        scaleDelta      = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        ticker          = Reader_ReadInt32(reader);
+        state           = wagglestate_e(Reader_ReadInt32(reader));
+    }
+
+    thinker.function = (thinkfunc_t) T_FloorWaggle;
+
+    P_ToXSector(sector)->specialData = this;
+
+    return true; // Add this thinker.
+}
+
 dd_bool EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer)
 {
     iterlist_t *list = P_GetSectorIterListForTag(tag, false);

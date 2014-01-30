@@ -199,6 +199,98 @@ void T_PlatRaise(void *platThinkerPtr)
     }
 }
 
+void plat_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    Writer_WriteByte(writer, (byte) type);
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt32(writer, FLT2FIX(speed));
+    Writer_WriteInt16(writer, (int)low);
+    Writer_WriteInt16(writer, (int)high);
+
+    Writer_WriteInt32(writer, wait);
+    Writer_WriteInt32(writer, count);
+
+    Writer_WriteByte(writer, (byte) state);
+    Writer_WriteByte(writer, (byte) oldState);
+    Writer_WriteByte(writer, (byte) crush);
+
+    Writer_WriteInt32(writer, tag);
+}
+
+int plat_t::read(Reader *reader, int mapVersion)
+{
+#if __JHEXEN__
+    if(mapVersion >= 4)
+#else
+    if(mapVersion >= 5)
+#endif
+    {   // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        thinker.function = T_PlatRaise;
+
+#if !__JHEXEN__
+        // Should we put this into stasis?
+        if(mapVersion == 5)
+        {
+            if(!Reader_ReadByte(reader))
+                Thinker_SetStasis(&thinker, true);
+        }
+#endif
+
+        type      = plattype_e(Reader_ReadByte(reader));
+        sector    = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+        speed     = FIX2FLT(Reader_ReadInt32(reader));
+        low       = (float) Reader_ReadInt16(reader);
+        high      = (float) Reader_ReadInt16(reader);
+        wait      = Reader_ReadInt32(reader);
+        count     = Reader_ReadInt32(reader);
+        state     = platstate_e(Reader_ReadByte(reader));
+        oldState  = platstate_e(Reader_ReadByte(reader));
+        crush     = (dd_bool) Reader_ReadByte(reader);
+        tag       = Reader_ReadInt32(reader);
+    }
+    else
+    {
+        // Its in the old format which serialized plat_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector    = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        speed     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        low       = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        high      = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+        wait      = Reader_ReadInt32(reader);
+        count     = Reader_ReadInt32(reader);
+        state     = platstate_e(Reader_ReadInt32(reader));
+        oldState  = platstate_e(Reader_ReadInt32(reader));
+        crush     = Reader_ReadInt32(reader);
+        tag       = Reader_ReadInt32(reader);
+        type      = plattype_e(Reader_ReadInt32(reader));
+
+        thinker.function = T_PlatRaise;
+#if !__JHEXEN__
+        if(!((thinker_t *)junk)->function)
+            Thinker_SetStasis(&thinker, true);
+#endif
+    }
+
+    P_ToXSector(sector)->specialData = this;
+
+    return true; // Add this thinker.
+}
+
 #if __JHEXEN__
 static int doPlat(Line* line, int tag, byte* args, plattype_e type, int amount)
 #else

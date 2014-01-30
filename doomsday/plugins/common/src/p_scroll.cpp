@@ -22,6 +22,7 @@
 #include "common.h"
 #include "p_scroll.h"
 #include "dmu_lib.h"
+#include "p_saveg.h"
 
 void T_Scroll(scroll_t *s)
 {
@@ -61,6 +62,58 @@ void T_Scroll(scroll_t *s)
             P_TranslatePlaneMaterialOrigin(plane, s->offset);
         }
     }
+}
+
+void scroll_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    // Write a type byte. For future use (e.g., scrolling plane surface
+    // materials as well as side surface materials).
+    Writer_WriteByte(writer, DMU_GetType(dmuObject));
+    Writer_WriteInt32(writer, P_ToIndex(dmuObject));
+    Writer_WriteInt32(writer, elementBits);
+    Writer_WriteInt32(writer, FLT2FIX(offset[0]));
+    Writer_WriteInt32(writer, FLT2FIX(offset[1]));
+}
+
+int scroll_t::read(Reader *reader, int mapVersion)
+{
+    /*int ver =*/ Reader_ReadByte(reader); // version byte.
+    // Note: the thinker class byte has already been read.
+
+    if(Reader_ReadByte(reader) == DMU_SIDE) // Type byte.
+    {
+        int sideIndex = (int) Reader_ReadInt32(reader);
+
+        if(mapVersion >= 12)
+        {
+            dmuObject = (Side *)P_ToPtr(DMU_SIDE, sideIndex);
+        }
+        else
+        {
+            // Side index is actually a DMU_ARCHIVE_INDEX.
+            dmuObject = (Side *)SV_SideArchive().at(sideIndex);
+        }
+
+        DENG_ASSERT(dmuObject != 0);
+    }
+    else // Sector plane-surface.
+    {
+        dmuObject = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(dmuObject != 0);
+    }
+
+    elementBits = Reader_ReadInt32(reader);
+    offset[0]   = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+    offset[1]   = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+    thinker.function = (thinkfunc_t) T_Scroll;
+
+    return true; // Add this thinker.
 }
 
 static scroll_t *spawnMaterialOriginScroller(void *dmuObject, int elementBits, float offsetXY[2])

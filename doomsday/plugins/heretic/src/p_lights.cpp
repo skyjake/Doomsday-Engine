@@ -49,6 +49,63 @@ void T_LightFlash(lightflash_t *flash)
     }
 }
 
+void lightflash_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt32(writer, count);
+    Writer_WriteInt32(writer, (int) (255.0f * maxLight));
+    Writer_WriteInt32(writer, (int) (255.0f * minLight));
+    Writer_WriteInt32(writer, maxTime);
+    Writer_WriteInt32(writer, minTime);
+}
+
+int lightflash_t::read(Reader *reader, int mapVersion)
+{
+    if(mapVersion >= 5)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        // Start of used data members.
+        sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        count        = Reader_ReadInt32(reader);
+        maxLight     = (float) Reader_ReadInt32(reader) / 255.0f;
+        minLight     = (float) Reader_ReadInt32(reader) / 255.0f;
+        maxTime      = Reader_ReadInt32(reader);
+        minTime      = Reader_ReadInt32(reader);
+    }
+    else
+    {
+        // Its in the old pre V5 format which serialized lightflash_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        count        = Reader_ReadInt32(reader);
+        maxLight     = (float) Reader_ReadInt32(reader) / 255.0f;
+        minLight     = (float) Reader_ReadInt32(reader) / 255.0f;
+        maxTime      = Reader_ReadInt32(reader);
+        minTime      = Reader_ReadInt32(reader);
+    }
+
+    thinker.function = (thinkfunc_t) T_LightFlash;
+
+    return true; // Add this thinker.
+}
+
 /**
  * After the map has been loaded, scan each sector for specials that spawn
  * thinkers.
@@ -99,6 +156,62 @@ void T_StrobeFlash(strobe_t *flash)
         P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->minLight);
         flash->count = flash->darkTime;
     }
+}
+
+void strobe_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt32(writer, count);
+    Writer_WriteInt32(writer, (int) (255.0f * maxLight));
+    Writer_WriteInt32(writer, (int) (255.0f * minLight));
+    Writer_WriteInt32(writer, darkTime);
+    Writer_WriteInt32(writer, brightTime);
+}
+
+int strobe_t::read(Reader *reader, int mapVersion)
+{
+    if(mapVersion >= 5)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        count       = Reader_ReadInt32(reader);
+        maxLight    = (float) Reader_ReadInt32(reader) / 255.0f;
+        minLight    = (float) Reader_ReadInt32(reader) / 255.0f;
+        darkTime    = Reader_ReadInt32(reader);
+        brightTime  = Reader_ReadInt32(reader);
+    }
+    else
+    {
+        // Its in the old pre V5 format which serialized strobe_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        count       = Reader_ReadInt32(reader);
+        minLight    = (float) Reader_ReadInt32(reader) / 255.0f;
+        maxLight    = (float) Reader_ReadInt32(reader) / 255.0f;
+        darkTime    = Reader_ReadInt32(reader);
+        brightTime  = Reader_ReadInt32(reader);
+    }
+
+    thinker.function = (thinkfunc_t) T_StrobeFlash;
+
+    return true; // Add this thinker.
 }
 
 /**
@@ -240,6 +353,56 @@ void T_Glow(glow_t *g)
     }
 
     P_SetFloatp(g->sector, DMU_LIGHT_LEVEL, lightlevel);
+}
+
+void glow_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt32(writer, (int) (255.0f * maxLight));
+    Writer_WriteInt32(writer, (int) (255.0f * minLight));
+    Writer_WriteInt32(writer, direction);
+}
+
+int glow_t::read(Reader *reader, int mapVersion)
+{
+    if(mapVersion >= 5)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        maxLight      = (float) Reader_ReadInt32(reader) / 255.0f;
+        minLight      = (float) Reader_ReadInt32(reader) / 255.0f;
+        direction     = Reader_ReadInt32(reader);
+    }
+    else
+    {
+        // Its in the old pre V5 format which serialized strobe_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        minLight      = (float) Reader_ReadInt32(reader) / 255.0f;
+        maxLight      = (float) Reader_ReadInt32(reader) / 255.0f;
+        direction     = Reader_ReadInt32(reader);
+    }
+
+    thinker.function = (thinkfunc_t) T_Glow;
+
+    return true; // Add this thinker.
 }
 
 void P_SpawnGlowingLight(Sector *sector)

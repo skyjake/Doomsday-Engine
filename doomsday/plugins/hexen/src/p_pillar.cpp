@@ -43,6 +43,68 @@ void T_BuildPillar(pillar_t *pillar)
     }
 }
 
+void pillar_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt32(writer, FLT2FIX(ceilingSpeed));
+    Writer_WriteInt32(writer, FLT2FIX(floorSpeed));
+    Writer_WriteInt32(writer, FLT2FIX(floorDest));
+    Writer_WriteInt32(writer, FLT2FIX(ceilingDest));
+    Writer_WriteInt32(writer, direction);
+    Writer_WriteInt32(writer, crush);
+}
+
+int pillar_t::read(Reader *reader, int mapVersion)
+{
+    if(mapVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        // Start of used data members.
+        sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        ceilingSpeed    = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        floorSpeed      = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        floorDest       = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        ceilingDest     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        direction       = Reader_ReadInt32(reader);
+        crush           = Reader_ReadInt32(reader);
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized pillar_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        ceilingSpeed    = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        floorSpeed      = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        floorDest       = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        ceilingDest     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        direction       = Reader_ReadInt32(reader);
+        crush           = Reader_ReadInt32(reader);
+    }
+
+    thinker.function = (thinkfunc_t) T_BuildPillar;
+
+    P_ToXSector(sector)->specialData = this;
+
+    return true; // Add this thinker.
+}
+
 int EV_BuildPillar(Line *line, byte *args, dd_bool crush)
 {
     iterlist_t *list = P_GetSectorIterListForTag((int) args[0], false);

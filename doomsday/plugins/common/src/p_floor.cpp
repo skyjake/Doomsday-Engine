@@ -34,6 +34,7 @@
 #include "p_ceiling.h"
 #endif
 #include "p_sound.h"
+#include "p_saveg.h"
 
 #if __JHERETIC__
 # define SFX_FLOORMOVE          (SFX_DORMOV)
@@ -392,6 +393,140 @@ void T_MoveFloor(void *floorThinkerPtr)
 #endif
         Thinker_Remove(&floor->thinker);
     }
+}
+
+void floor_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 3); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteByte(writer, (byte) type);
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteByte(writer, (byte) crush);
+
+    Writer_WriteInt32(writer, (int) state);
+    Writer_WriteInt32(writer, newSpecial);
+
+    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(SV_MaterialArchive(), material));
+
+    Writer_WriteInt16(writer, (int) floorDestHeight);
+    Writer_WriteInt32(writer, FLT2FIX(speed));
+
+#if __JHEXEN__
+    Writer_WriteInt32(writer, delayCount);
+    Writer_WriteInt32(writer, delayTotal);
+    Writer_WriteInt32(writer, FLT2FIX(stairsDelayHeight));
+    Writer_WriteInt32(writer, FLT2FIX(stairsDelayHeightDelta));
+    Writer_WriteInt32(writer, FLT2FIX(resetHeight));
+    Writer_WriteInt16(writer, resetDelay);
+    Writer_WriteInt16(writer, resetDelayCount);
+#endif
+}
+
+int floor_t::read(Reader *reader, int mapVersion)
+{
+#if __JHEXEN__
+    if(mapVersion >= 4)
+#else
+    if(mapVersion >= 5)
+#endif
+    {   // Note: the thinker class byte has already been read.
+        byte ver = SV_ReadByte(); // version byte.
+
+        type                   = floortype_e(Reader_ReadByte(reader));
+        sector                 = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+        crush                  = dd_bool(Reader_ReadByte(reader));
+        state                  = floorstate_e(Reader_ReadInt32(reader));
+        newSpecial             = Reader_ReadInt32(reader);
+
+        if(ver >= 2)
+        {
+            material = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 0);
+        }
+        else
+        {
+            // Flat number is an absolute lump index.
+            Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
+            ddstring_t name; Str_Init(&name);
+            F_FileName(&name, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
+            Uri_SetPath(uri, Str_Text(&name));
+            material = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+            Uri_Delete(uri);
+            Str_Free(&name);
+        }
+
+        floorDestHeight        = (float) Reader_ReadInt16(reader);
+        speed                  = FIX2FLT(Reader_ReadInt32(reader));
+
+#if __JHEXEN__
+        delayCount             = Reader_ReadInt32(reader);
+        delayTotal             = Reader_ReadInt32(reader);
+        stairsDelayHeight      = FIX2FLT(Reader_ReadInt32(reader));
+        stairsDelayHeightDelta = FIX2FLT(Reader_ReadInt32(reader));
+        resetHeight            = FIX2FLT(Reader_ReadInt32(reader));
+        resetDelay             = Reader_ReadInt16(reader);
+        resetDelayCount        = Reader_ReadInt16(reader);
+#endif
+    }
+    else
+    {
+        // Its in the old format which serialized floor_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+#if __JHEXEN__
+        // A 32bit pointer to sector, serialized.
+        sector                 = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        type                   = floortype_e(Reader_ReadInt32(reader));
+        crush                  = Reader_ReadInt32(reader);
+#else
+        type                   = floortype_e(Reader_ReadInt32(reader));
+        crush                  = Reader_ReadInt32(reader);
+
+        // A 32bit pointer to sector, serialized.
+        sector                 = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+#endif
+        state                  = floorstate_e(Reader_ReadInt32(reader));
+        newSpecial             = Reader_ReadInt32(reader);
+
+        // Flat number is an absolute lump index.
+        Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
+        ddstring_t name; Str_Init(&name);
+        F_FileName(&name, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
+        Uri_SetPath(uri, Str_Text(&name));
+        material               = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        Uri_Delete(uri);
+        Str_Free(&name);
+
+        floorDestHeight        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        speed                  = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+#if __JHEXEN__
+        delayCount             = Reader_ReadInt32(reader);
+        delayTotal             = Reader_ReadInt32(reader);
+        stairsDelayHeight      = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        stairsDelayHeightDelta = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        resetHeight            = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        resetDelay             = Reader_ReadInt16(reader);
+        resetDelayCount        = Reader_ReadInt16(reader);
+        /*textureChange        =*/ Reader_ReadByte(reader);
+#endif
+    }
+
+    P_ToXSector(sector)->specialData = this;
+    thinker.function = T_MoveFloor;
+
+    return true; // Add this thinker.
 }
 
 struct findlineinsectorsmallestbottommaterialparams_t

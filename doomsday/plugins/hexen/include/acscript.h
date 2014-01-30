@@ -28,8 +28,6 @@
 
 #include "jhexen.h"
 #include "p_mobj.h"
-#include <de/reader.h>
-#include <de/writer.h>
 
 #define MAX_ACS_SCRIPT_VARS     10
 #define MAX_ACS_MAP_VARS        32
@@ -127,8 +125,8 @@ public:
      *
      * @return  @c true iff a script was newly started (or deferred).
      */
-    bool startScript(int scriptNumber, uint map, byte *args, mobj_t *activator = 0,
-        Line *line = 0, int side = 0);
+    bool startScript(int scriptNumber, uint map, byte const args[4],
+                     mobj_t *activator = 0, Line *line = 0, int side = 0);
 
     bool suspendScript(int scriptNumber, uint map);
 
@@ -190,13 +188,13 @@ public: /// @todo make private:
 
     BytecodeScriptInfo &scriptInfoFor(ACScript *script);
 
-private:
     /**
      * Returns the logical index of a @a scriptNumber; otherwise @c -1.
      */
     int scriptInfoIndex(int scriptNumber);
 
-    ACScript *newACScript(BytecodeScriptInfo &info, byte const *args, int delayCount = 0);
+private:
+    ACScript *newACScript(BytecodeScriptInfo &info, byte const args[4], int delayCount = 0);
 
     /**
      * A deferred task is enqueued when a script is started on a map not currently loaded.
@@ -208,7 +206,7 @@ private:
         byte args[4];
     };
 
-    bool newDeferredTask(uint map, int scriptNumber, byte const *args);
+    bool newDeferredTask(uint map, int scriptNumber, byte const args[4]);
 
     byte const *_pcode; ///< Start of the loaded bytecode.
 
@@ -234,7 +232,7 @@ void P_InitACScript(void);
 
 void P_LoadACScripts(lumpnum_t lump);
 
-dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Line *line, int side);
+dd_bool P_StartACScript(int number, uint map, byte const args[4], mobj_t *activator, Line *line, int side);
 
 dd_bool P_TerminateACScript(int number, uint map);
 

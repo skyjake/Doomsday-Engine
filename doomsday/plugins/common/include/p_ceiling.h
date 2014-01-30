@@ -22,6 +22,8 @@
 #ifndef LIBCOMMON_THINKER_CEILING_H
 #define LIBCOMMON_THINKER_CEILING_H
 
+#include "doomsday.h"
+
 #define CEILSPEED           (1)
 #define CEILWAIT            (150)
 
@@ -64,6 +66,11 @@ typedef struct {
     ceilingstate_e state;
     ceilingstate_e oldState;
     int tag; // id.
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } ceiling_t;
 
 #ifdef __cplusplus

@@ -31,9 +31,14 @@
 typedef struct {
     thinker_t thinker;
     int timer;
-    Side* side;
+    Side *side;
     SideSection section;
     Material *material;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } materialchanger_t;
 
 #ifdef __cplusplus

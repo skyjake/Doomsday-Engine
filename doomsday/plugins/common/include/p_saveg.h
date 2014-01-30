@@ -21,6 +21,9 @@
 #ifndef LIBCOMMON_SAVESTATE_H
 #define LIBCOMMON_SAVESTATE_H
 
+#ifdef __cplusplus
+#include "dmu_archiveindex.h"
+#endif
 #include "p_saveio.h"
 
 /**
@@ -270,6 +273,8 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS], uint 
 
 #ifdef __cplusplus
 } // extern "C"
+
+dmu_lib::SideArchive &SV_SideArchive();
 #endif
 
 #endif // LIBCOMMON_SAVESTATE_H

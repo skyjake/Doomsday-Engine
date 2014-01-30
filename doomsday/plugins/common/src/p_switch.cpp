@@ -28,6 +28,7 @@
 #include "dmu_lib.h"
 #include "p_plat.h"
 #include "p_sound.h"
+#include "p_saveg.h"
 #include <de/memory.h>
 
 /**
@@ -294,6 +295,51 @@ void T_MaterialChanger(void *materialChangerThinker)
 
         Thinker_Remove(&mchanger->thinker);
     }
+}
+
+void materialchanger_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    // Write a type byte. For future use (e.g., changing plane surface
+    // materials as well as side surface materials).
+    Writer_WriteByte(writer, 0);
+    Writer_WriteInt32(writer, timer);
+    Writer_WriteInt32(writer, P_ToIndex(side));
+    Writer_WriteByte(writer, (byte) section);
+    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(SV_MaterialArchive(), material));
+}
+
+int materialchanger_t::read(Reader *reader, int mapVersion)
+{
+    /*int ver =*/ Reader_ReadByte(reader);
+    // Note: the thinker class byte has already been read.
+
+    /*byte type =*/ Reader_ReadByte(reader);
+
+    timer = Reader_ReadInt32(reader);
+
+    int sideIndex = (int) Reader_ReadInt32(reader);
+    if(mapVersion >= 12)
+    {
+        side = (Side *)P_ToPtr(DMU_SIDE, sideIndex);
+    }
+    else
+    {
+        // Side index is actually a DMU_ARCHIVE_INDEX.
+        side = (Side *)SV_SideArchive().at(sideIndex);
+    }
+    DENG_ASSERT(side != 0);
+
+    section = (SideSection) Reader_ReadByte(reader);
+    material = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 0);
+
+    thinker.function = T_MaterialChanger;
+
+    return true; // Add this thinker.
 }
 
 static void spawnMaterialChanger(Side *side, SideSection section, Material *mat, int tics)

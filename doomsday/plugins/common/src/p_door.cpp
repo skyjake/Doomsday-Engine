@@ -285,6 +285,78 @@ void T_Door(void *doorThinkerPtr)
     }
 }
 
+void door_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteByte(writer, (byte) type);
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt16(writer, (int)topHeight);
+    Writer_WriteInt32(writer, FLT2FIX(speed));
+
+    Writer_WriteInt32(writer, state);
+    Writer_WriteInt32(writer, topWait);
+    Writer_WriteInt32(writer, topCountDown);
+}
+
+int door_t::read(Reader *reader, int mapVersion)
+{
+#if __JHEXEN__
+    if(mapVersion >= 4)
+#else
+    if(mapVersion >= 5)
+#endif
+    {   // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        type          = doortype_e(Reader_ReadByte(reader));
+        sector        = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        topHeight     = (float) Reader_ReadInt16(reader);
+        speed         = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+        state         = doorstate_e(Reader_ReadInt32(reader));
+        topWait       = Reader_ReadInt32(reader);
+        topCountDown  = Reader_ReadInt32(reader);
+    }
+    else
+    {
+        // Its in the old format which serialized door_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+#if __JHEXEN__
+        // A 32bit pointer to sector, serialized.
+        sector        = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        type          = doortype_e(Reader_ReadInt32(reader));
+#else
+        type          = doortype_e(Reader_ReadInt32(reader));
+
+        // A 32bit pointer to sector, serialized.
+        sector        = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+#endif
+        topHeight     = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        speed         = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+        state         = doorstate_e(Reader_ReadInt32(reader));
+        topWait       = Reader_ReadInt32(reader);
+        topCountDown  = Reader_ReadInt32(reader);
+    }
+
+    P_ToXSector(sector)->specialData = this;
+    thinker.function = T_Door;
+
+    return true; // Add this thinker.
+}
+
 static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 {
     iterlist_t *list = P_GetSectorIterListForTag(tag, false);

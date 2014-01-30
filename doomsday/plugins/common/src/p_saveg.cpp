@@ -115,57 +115,15 @@ typedef enum {
     NUM_LINECLASSES
 } lineclass_t;
 
-SideArchive &SV_SideArchive();
-
 static bool recogniseGameState(Str const *path, SaveInfo *info);
 
 static void SV_WriteMobj(mobj_t const *mobj);
 static int SV_ReadMobj(thinker_t *th, int mapVersion);
-static void SV_WriteCeiling(ceiling_t const *ceiling);
-static int SV_ReadCeiling(ceiling_t *ceiling, int mapVersion);
-static void SV_WriteDoor(door_t const *door);
-static int SV_ReadDoor(door_t *door, int mapVersion);
-static void SV_WriteFloor(floor_t const *floor);
-static int SV_ReadFloor(floor_t *floor, int mapVersion);
-static void SV_WritePlat(plat_t const *plat);
-static int SV_ReadPlat(plat_t *plat, int mapVersion);
-static void SV_WriteMaterialChanger(materialchanger_t const *mchanger);
-static int SV_ReadMaterialChanger(materialchanger_t *mchanger, int mapVersion);
 
 #if __JHEXEN__
-static void SV_WriteLight(light_t const *light);
-static int SV_ReadLight(light_t *light, int mapVersion);
-static void SV_WritePhase(phase_t const *phase);
-static int SV_ReadPhase(phase_t *phase, int mapVersion);
-static void SV_WriteDoorPoly(polydoor_t const *polydoor);
-static int SV_ReadDoorPoly(polydoor_t *polydoor, int mapVersion);
 static void SV_WriteMovePoly(polyevent_t const *movepoly);
 static int SV_ReadMovePoly(polyevent_t *movepoly, int mapVersion);
-static void SV_WriteRotatePoly(polyevent_t const *rotatepoly);
-static int SV_ReadRotatePoly(polyevent_t *rotatepoly, int mapVersion);
-static void SV_WritePillar(pillar_t const *pillar);
-static int SV_ReadPillar(pillar_t *pillar, int mapVersion);
-static void SV_WriteFloorWaggle(waggle_t const *floorwaggle);
-static int SV_ReadFloorWaggle(waggle_t *floorwaggle, int mapVersion);
-#else
-static void SV_WriteFlash(lightflash_t const *flash);
-static int SV_ReadFlash(lightflash_t *flash, int mapVersion);
-static void SV_WriteStrobe(strobe_t const *strobe);
-static int SV_ReadStrobe(strobe_t *strobe, int mapVersion);
-static void SV_WriteGlow(glow_t const *glow);
-static int SV_ReadGlow(glow_t *glow, int mapVersion);
-# if __JDOOM__ || __JDOOM64__
-static void SV_WriteFlicker(fireflicker_t const *flicker);
-static int SV_ReadFlicker(fireflicker_t *flicker, int mapVersion);
-# endif
-
-# if __JDOOM64__
-static void SV_WriteBlink(lightblink_t const *flicker);
-static int SV_ReadBlink(lightblink_t *flicker, int mapVersion);
-# endif
 #endif
-static void SV_WriteScroll(scroll_t const *scroll);
-static int SV_ReadScroll(scroll_t *scroll, int mapVersion);
 
 #if __JHEXEN__
 static void readMapState(Reader *reader, Str const *path);
@@ -208,19 +166,19 @@ static int numSoundTargets;
 static MaterialArchive *materialArchive;
 static SideArchive *sideArchive;
 
-#if __JHEXEN__
-static void writeACScript(thinker_t *th, Writer *writer)
+template <typename Type>
+static void writeThinkerAs(thinker_t const *th, Writer *writer)
 {
-    ACScript *script = (ACScript *)th;
-    script->write(writer);
+    Type *t = (Type*)th;
+    t->write(writer);
 }
 
-static int readACScript(thinker_t *th, Reader *reader, int mapVersion)
+template <typename Type>
+static int readThinkerAs(thinker_t *th, Reader *reader, int mapVersion)
 {
-    ACScript *script = (ACScript *)th;
-    return script->read(reader, mapVersion);
+    Type *t = (Type *)th;
+    return t->read(reader, mapVersion);
 }
-#endif
 
 static ThinkerClassInfo thinkerInfo[] = {
     {
@@ -245,32 +203,32 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_CEILING,
       T_MoveCeiling,
       0,
-      (WriteThinkerFunc) SV_WriteCeiling,
-      (ReadThinkerFunc) SV_ReadCeiling,
+      (WriteThinkerFunc)writeThinkerAs<ceiling_t>,
+      (ReadThinkerFunc)readThinkerAs<ceiling_t>,
       sizeof(ceiling_t)
     },
     {
       TC_DOOR,
       T_Door,
       0,
-      (WriteThinkerFunc) SV_WriteDoor,
-      (ReadThinkerFunc) SV_ReadDoor,
+      (WriteThinkerFunc)writeThinkerAs<door_t>,
+      (ReadThinkerFunc)readThinkerAs<door_t>,
       sizeof(door_t)
     },
     {
       TC_FLOOR,
       T_MoveFloor,
       0,
-      (WriteThinkerFunc) SV_WriteFloor,
-      (ReadThinkerFunc) SV_ReadFloor,
+      (WriteThinkerFunc)writeThinkerAs<floor_t>,
+      (ReadThinkerFunc)readThinkerAs<floor_t>,
       sizeof(floor_t)
     },
     {
       TC_PLAT,
       T_PlatRaise,
       0,
-      (WriteThinkerFunc) SV_WritePlat,
-      (ReadThinkerFunc) SV_ReadPlat,
+      (WriteThinkerFunc)writeThinkerAs<plat_t>,
+      (ReadThinkerFunc)readThinkerAs<plat_t>,
       sizeof(plat_t)
     },
 #if __JHEXEN__
@@ -278,48 +236,48 @@ static ThinkerClassInfo thinkerInfo[] = {
      TC_INTERPRET_ACS,
      (thinkfunc_t) ACScript_Thinker,
      0,
-     (WriteThinkerFunc)writeACScript,
-     (ReadThinkerFunc)readACScript,
+     (WriteThinkerFunc)writeThinkerAs<ACScript>,
+     (ReadThinkerFunc)readThinkerAs<ACScript>,
      sizeof(ACScript)
     },
     {
      TC_FLOOR_WAGGLE,
      (thinkfunc_t) T_FloorWaggle,
      0,
-     (WriteThinkerFunc)SV_WriteFloorWaggle,
-     (ReadThinkerFunc)SV_ReadFloorWaggle,
+     (WriteThinkerFunc)writeThinkerAs<waggle_t>,
+     (ReadThinkerFunc)readThinkerAs<waggle_t>,
      sizeof(waggle_t)
     },
     {
      TC_LIGHT,
      (thinkfunc_t) T_Light,
      0,
-     (WriteThinkerFunc)SV_WriteLight,
-     (ReadThinkerFunc)SV_ReadLight,
+     (WriteThinkerFunc)writeThinkerAs<light_t>,
+     (ReadThinkerFunc)readThinkerAs<light_t>,
      sizeof(light_t)
     },
     {
      TC_PHASE,
      (thinkfunc_t) T_Phase,
      0,
-     (WriteThinkerFunc)SV_WritePhase,
-     (ReadThinkerFunc)SV_ReadPhase,
+     (WriteThinkerFunc)writeThinkerAs<phase_t>,
+     (ReadThinkerFunc)readThinkerAs<phase_t>,
      sizeof(phase_t)
     },
     {
      TC_BUILD_PILLAR,
      (thinkfunc_t) T_BuildPillar,
      0,
-     (WriteThinkerFunc)SV_WritePillar,
-     (ReadThinkerFunc)SV_ReadPillar,
+     (WriteThinkerFunc)writeThinkerAs<pillar_t>,
+     (ReadThinkerFunc)readThinkerAs<pillar_t>,
      sizeof(pillar_t)
     },
     {
      TC_ROTATE_POLY,
      T_RotatePoly,
      0,
-     (WriteThinkerFunc)SV_WriteRotatePoly,
-     (ReadThinkerFunc)SV_ReadRotatePoly,
+     (WriteThinkerFunc)writeThinkerAs<polyevent_t>,
+     (ReadThinkerFunc)readThinkerAs<polyevent_t>,
      sizeof(polyevent_t)
     },
     {
@@ -334,8 +292,8 @@ static ThinkerClassInfo thinkerInfo[] = {
      TC_POLY_DOOR,
      T_PolyDoor,
      0,
-     (WriteThinkerFunc)SV_WriteDoorPoly,
-     (ReadThinkerFunc)SV_ReadDoorPoly,
+     (WriteThinkerFunc)writeThinkerAs<polydoor_t>,
+     (ReadThinkerFunc)readThinkerAs<polydoor_t>,
      sizeof(polydoor_t)
     },
 #else
@@ -343,24 +301,24 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_FLASH,
       (thinkfunc_t) T_LightFlash,
       0,
-      (WriteThinkerFunc) SV_WriteFlash,
-      (ReadThinkerFunc) SV_ReadFlash,
+      (WriteThinkerFunc)writeThinkerAs<lightflash_t>,
+      (ReadThinkerFunc)readThinkerAs<lightflash_t>,
       sizeof(lightflash_t)
     },
     {
       TC_STROBE,
       (thinkfunc_t) T_StrobeFlash,
       0,
-      (WriteThinkerFunc) SV_WriteStrobe,
-      (ReadThinkerFunc) SV_ReadStrobe,
+      (WriteThinkerFunc)writeThinkerAs<strobe_t>,
+      (ReadThinkerFunc)readThinkerAs<strobe_t>,
       sizeof(strobe_t)
     },
     {
       TC_GLOW,
       (thinkfunc_t) T_Glow,
       0,
-      (WriteThinkerFunc) SV_WriteGlow,
-      (ReadThinkerFunc) SV_ReadGlow,
+      (WriteThinkerFunc)writeThinkerAs<glow_t>,
+      (ReadThinkerFunc)readThinkerAs<glow_t>,
       sizeof(glow_t)
     },
 # if __JDOOM__ || __JDOOM64__
@@ -368,8 +326,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_FLICKER,
       (thinkfunc_t) T_FireFlicker,
       0,
-      (WriteThinkerFunc) SV_WriteFlicker,
-      (ReadThinkerFunc) SV_ReadFlicker,
+      (WriteThinkerFunc)writeThinkerAs<fireflicker_t>,
+      (ReadThinkerFunc)readThinkerAs<fireflicker_t>,
       sizeof(fireflicker_t)
     },
 # endif
@@ -378,8 +336,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_BLINK,
       (thinkfunc_t) T_LightBlink,
       0,
-      (WriteThinkerFunc) SV_WriteBlink,
-      (ReadThinkerFunc) SV_ReadBlink,
+      (WriteThinkerFunc)writeThinkerAs<lightblink_t>,
+      (ReadThinkerFunc)readThinkerAs<lightblink_t>,
       sizeof(lightblink_t)
     },
 # endif
@@ -388,17 +346,17 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_MATERIALCHANGER,
       T_MaterialChanger,
       0,
-      (WriteThinkerFunc) SV_WriteMaterialChanger,
-      (ReadThinkerFunc) SV_ReadMaterialChanger,
+      (WriteThinkerFunc)writeThinkerAs<materialchanger_t>,
+      (ReadThinkerFunc)readThinkerAs<materialchanger_t>,
       sizeof(materialchanger_t)
     },
     {
-        TC_SCROLL,
-        (thinkfunc_t) T_Scroll,
-        0,
-        (WriteThinkerFunc) SV_WriteScroll,
-        (ReadThinkerFunc) SV_ReadScroll,
-        sizeof(scroll_t)
+      TC_SCROLL,
+      (thinkfunc_t) T_Scroll,
+      0,
+      (WriteThinkerFunc)writeThinkerAs<scroll_t>,
+      (ReadThinkerFunc)readThinkerAs<scroll_t>,
+      sizeof(scroll_t)
     },
     { TC_NULL, NULL, 0, NULL, NULL, 0 }
 };
@@ -2968,611 +2926,7 @@ static void readMapElements(Reader *reader)
 #endif
 }
 
-static void SV_WriteCeiling(ceiling_t const *ceiling)
-{
-    SV_WriteByte(2); // Write a version byte.
-
-    SV_WriteByte((byte) ceiling->type);
-    SV_WriteLong(P_ToIndex(ceiling->sector));
-
-    SV_WriteShort((int)ceiling->bottomHeight);
-    SV_WriteShort((int)ceiling->topHeight);
-    SV_WriteLong(FLT2FIX(ceiling->speed));
-
-    SV_WriteByte(ceiling->crush);
-
-    SV_WriteByte((byte) ceiling->state);
-    SV_WriteLong(ceiling->tag);
-    SV_WriteByte((byte) ceiling->oldState);
-}
-
-static int SV_ReadCeiling(ceiling_t *ceiling, int /*mapVersion*/)
-{
 #if __JHEXEN__
-    if(mapVersion >= 4)
-#else
-    if(hdr->version >= 5)
-#endif
-    {
-        // Note: the thinker class byte has already been read.
-        int ver = SV_ReadByte(); // version byte.
-
-        ceiling->thinker.function = T_MoveCeiling;
-
-#if !__JHEXEN__
-        // Should we put this into stasis?
-        if(hdr->version == 5)
-        {
-            if(!SV_ReadByte())
-                Thinker_SetStasis(&ceiling->thinker, true);
-        }
-#endif
-
-        ceiling->type         = (ceilingtype_e) SV_ReadByte();
-
-        ceiling->sector       = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(ceiling->sector != 0);
-
-        ceiling->bottomHeight = (float) SV_ReadShort();
-        ceiling->topHeight    = (float) SV_ReadShort();
-        ceiling->speed        = FIX2FLT((fixed_t) SV_ReadLong());
-
-        ceiling->crush        = SV_ReadByte();
-
-        if(ver == 2)
-            ceiling->state    = ceilingstate_e(SV_ReadByte());
-        else
-            ceiling->state    = ceilingstate_e(SV_ReadLong() == -1? CS_DOWN : CS_UP);
-
-        ceiling->tag          = SV_ReadLong();
-
-        if(ver == 2)
-            ceiling->oldState = ceilingstate_e(SV_ReadByte());
-        else
-            ceiling->state    = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
-    }
-    else
-    {
-        // Its in the old format which serialized ceiling_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-#if __JHEXEN__
-        // A 32bit pointer to sector, serialized.
-        ceiling->sector       = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(ceiling->sector != 0);
-
-        ceiling->type         = ceilingtype_e(SV_ReadLong());
-#else
-        ceiling->type         = ceilingtype_e(SV_ReadLong());
-
-        // A 32bit pointer to sector, serialized.
-        ceiling->sector       = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(ceiling->sector != 0);
-#endif
-
-        ceiling->bottomHeight = FIX2FLT((fixed_t) SV_ReadLong());
-        ceiling->topHeight    = FIX2FLT((fixed_t) SV_ReadLong());
-        ceiling->speed        = FIX2FLT((fixed_t) SV_ReadLong());
-
-        ceiling->crush        = SV_ReadLong();
-        ceiling->state        = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
-        ceiling->tag          = SV_ReadLong();
-        ceiling->oldState     = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
-
-        ceiling->thinker.function = T_MoveCeiling;
-#if !__JHEXEN__
-        if(!junk.function)
-            Thinker_SetStasis(&ceiling->thinker, true);
-#endif
-    }
-
-    P_ToXSector(ceiling->sector)->specialData = ceiling;
-    return true; // Add this thinker.
-}
-
-static void SV_WriteDoor(door_t const *door)
-{
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteByte((byte) door->type);
-
-    SV_WriteLong(P_ToIndex(door->sector));
-
-    SV_WriteShort((int)door->topHeight);
-    SV_WriteLong(FLT2FIX(door->speed));
-
-    SV_WriteLong(door->state);
-    SV_WriteLong(door->topWait);
-    SV_WriteLong(door->topCountDown);
-}
-
-static int SV_ReadDoor(door_t *door, int /*mapVersion*/)
-{
-    DENG_ASSERT(door != 0);
-
-#if __JHEXEN__
-    if(mapVersion >= 4)
-#else
-    if(hdr->version >= 5)
-#endif
-    {   // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        door->type          = doortype_e(SV_ReadByte());
-        door->sector        = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(door->sector != 0);
-
-        door->topHeight     = (float) SV_ReadShort();
-        door->speed         = FIX2FLT((fixed_t) SV_ReadLong());
-
-        door->state         = doorstate_e(SV_ReadLong());
-        door->topWait       = SV_ReadLong();
-        door->topCountDown  = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old format which serialized door_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-#if __JHEXEN__
-        // A 32bit pointer to sector, serialized.
-        door->sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        door->type          = doortype_e(SV_ReadLong());
-#else
-        door->type          = doortype_e(SV_ReadLong());
-
-        // A 32bit pointer to sector, serialized.
-        door->sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-#endif
-        door->topHeight     = FIX2FLT((fixed_t) SV_ReadLong());
-        door->speed         = FIX2FLT((fixed_t) SV_ReadLong());
-
-        door->state         = doorstate_e(SV_ReadLong());
-        door->topWait       = SV_ReadLong();
-        door->topCountDown  = SV_ReadLong();
-    }
-
-    P_ToXSector(door->sector)->specialData = door;
-    door->thinker.function = T_Door;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WriteFloor(floor_t const *floor)
-{
-    DENG_ASSERT(floor != 0);
-
-    SV_WriteByte(3); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteByte((byte) floor->type);
-
-    SV_WriteLong(P_ToIndex(floor->sector));
-
-    SV_WriteByte((byte) floor->crush);
-
-    SV_WriteLong((int) floor->state);
-    SV_WriteLong(floor->newSpecial);
-
-    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, floor->material));
-
-    SV_WriteShort((int) floor->floorDestHeight);
-    SV_WriteLong(FLT2FIX(floor->speed));
-
-#if __JHEXEN__
-    SV_WriteLong(floor->delayCount);
-    SV_WriteLong(floor->delayTotal);
-    SV_WriteLong(FLT2FIX(floor->stairsDelayHeight));
-    SV_WriteLong(FLT2FIX(floor->stairsDelayHeightDelta));
-    SV_WriteLong(FLT2FIX(floor->resetHeight));
-    SV_WriteShort(floor->resetDelay);
-    SV_WriteShort(floor->resetDelayCount);
-#endif
-}
-
-static int SV_ReadFloor(floor_t *floor, int /*mapVersion*/)
-{
-    DENG_ASSERT(floor != 0);
-
-#if __JHEXEN__
-    if(mapVersion >= 4)
-#else
-    if(hdr->version >= 5)
-#endif
-    {   // Note: the thinker class byte has already been read.
-        byte ver = SV_ReadByte(); // version byte.
-
-        floor->type         = floortype_e(SV_ReadByte());
-
-        floor->sector       = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(floor->sector != 0);
-
-        floor->crush        = dd_bool(SV_ReadByte());
-        floor->state        = floorstate_e(SV_ReadLong());
-        floor->newSpecial   = SV_ReadLong();
-
-        if(ver >= 2)
-        {
-            floor->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
-        }
-        else
-        {
-            // Flat number is an absolute lump index.
-            Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-            ddstring_t name;
-            Str_Init(&name);
-            F_FileName(&name, Str_Text(W_LumpName(SV_ReadShort())));
-            Uri_SetPath(uri, Str_Text(&name));
-            floor->material = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
-            Uri_Delete(uri);
-            Str_Free(&name);
-        }
-
-        floor->floorDestHeight = (float) SV_ReadShort();
-        floor->speed        = FIX2FLT(SV_ReadLong());
-
-#if __JHEXEN__
-        floor->delayCount   = SV_ReadLong();
-        floor->delayTotal   = SV_ReadLong();
-        floor->stairsDelayHeight = FIX2FLT(SV_ReadLong());
-        floor->stairsDelayHeightDelta = FIX2FLT(SV_ReadLong());
-        floor->resetHeight  = FIX2FLT(SV_ReadLong());
-        floor->resetDelay   = SV_ReadShort();
-        floor->resetDelayCount = SV_ReadShort();
-#endif
-    }
-    else
-    {
-        // Its in the old format which serialized floor_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-#if __JHEXEN__
-        // A 32bit pointer to sector, serialized.
-        floor->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(floor->sector != 0);
-
-        floor->type         = floortype_e(SV_ReadLong());
-        floor->crush        = SV_ReadLong();
-#else
-        floor->type         = floortype_e(SV_ReadLong());
-        floor->crush        = SV_ReadLong();
-
-        // A 32bit pointer to sector, serialized.
-        floor->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(floor->sector != 0);
-#endif
-        floor->state        = floorstate_e(SV_ReadLong());
-        floor->newSpecial   = SV_ReadLong();
-
-        // Flat number is an absolute lump index.
-        Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-        ddstring_t name;
-        Str_Init(&name);
-        F_FileName(&name, Str_Text(W_LumpName(SV_ReadShort())));
-        Uri_SetPath(uri, Str_Text(&name));
-        floor->material     = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
-        Uri_Delete(uri);
-        Str_Free(&name);
-
-        floor->floorDestHeight = FIX2FLT((fixed_t) SV_ReadLong());
-        floor->speed        = FIX2FLT((fixed_t) SV_ReadLong());
-
-#if __JHEXEN__
-        floor->delayCount   = SV_ReadLong();
-        floor->delayTotal   = SV_ReadLong();
-        floor->stairsDelayHeight = FIX2FLT((fixed_t) SV_ReadLong());
-        floor->stairsDelayHeightDelta = FIX2FLT((fixed_t) SV_ReadLong());
-        floor->resetHeight  = FIX2FLT((fixed_t) SV_ReadLong());
-        floor->resetDelay   = SV_ReadShort();
-        floor->resetDelayCount = SV_ReadShort();
-        /*floor->textureChange =*/ SV_ReadByte();
-#endif
-    }
-
-    P_ToXSector(floor->sector)->specialData = floor;
-    floor->thinker.function = T_MoveFloor;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WritePlat(plat_t const *plat)
-{
-    DENG_ASSERT(plat != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    SV_WriteByte((byte) plat->type);
-
-    SV_WriteLong(P_ToIndex(plat->sector));
-
-    SV_WriteLong(FLT2FIX(plat->speed));
-    SV_WriteShort((int)plat->low);
-    SV_WriteShort((int)plat->high);
-
-    SV_WriteLong(plat->wait);
-    SV_WriteLong(plat->count);
-
-    SV_WriteByte((byte) plat->state);
-    SV_WriteByte((byte) plat->oldState);
-    SV_WriteByte((byte) plat->crush);
-
-    SV_WriteLong(plat->tag);
-}
-
-static int SV_ReadPlat(plat_t *plat, int /*mapVersion*/)
-{
-    DENG_ASSERT(plat != 0);
-
-#if __JHEXEN__
-    if(mapVersion >= 4)
-#else
-    if(hdr->version >= 5)
-#endif
-    {   // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        plat->thinker.function = T_PlatRaise;
-
-#if !__JHEXEN__
-        // Should we put this into stasis?
-        if(hdr->version == 5)
-        {
-        if(!SV_ReadByte())
-            Thinker_SetStasis(&plat->thinker, true);
-        }
-#endif
-
-        plat->type      = plattype_e(SV_ReadByte());
-        plat->sector    = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(plat->sector != 0);
-
-        plat->speed     = FIX2FLT(SV_ReadLong());
-        plat->low       = (float) SV_ReadShort();
-        plat->high      = (float) SV_ReadShort();
-
-        plat->wait      = SV_ReadLong();
-        plat->count     = SV_ReadLong();
-
-        plat->state     = platstate_e(SV_ReadByte());
-        plat->oldState  = platstate_e(SV_ReadByte());
-        plat->crush     = (dd_bool) SV_ReadByte();
-
-        plat->tag = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old format which serialized plat_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        plat->sector    = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(plat->sector != 0);
-
-        plat->speed     = FIX2FLT((fixed_t) SV_ReadLong());
-        plat->low       = FIX2FLT((fixed_t) SV_ReadLong());
-        plat->high      = FIX2FLT((fixed_t) SV_ReadLong());
-
-        plat->wait      = SV_ReadLong();
-        plat->count     = SV_ReadLong();
-        plat->state     = platstate_e(SV_ReadLong());
-        plat->oldState  = platstate_e(SV_ReadLong());
-        plat->crush     = SV_ReadLong();
-        plat->tag       = SV_ReadLong();
-        plat->type      = plattype_e(SV_ReadLong());
-
-        plat->thinker.function = T_PlatRaise;
-#if !__JHEXEN__
-        if(!junk.function)
-            Thinker_SetStasis(&plat->thinker, true);
-#endif
-    }
-
-    P_ToXSector(plat->sector)->specialData = plat;
-    return true; // Add this thinker.
-}
-
-#if __JHEXEN__
-static void SV_WriteLight(light_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteByte((byte) th->type);
-
-    SV_WriteLong(P_ToIndex(th->sector));
-
-    SV_WriteLong((int) (255.0f * th->value1));
-    SV_WriteLong((int) (255.0f * th->value2));
-    SV_WriteLong(th->tics1);
-    SV_WriteLong(th->tics2);
-    SV_WriteLong(th->count);
-}
-
-static int SV_ReadLight(light_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        th->type        = (lighttype_t) SV_ReadByte();
-
-        th->sector      = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->value1      = (float) SV_ReadLong() / 255.0f;
-        th->value2      = (float) SV_ReadLong() / 255.0f;
-        th->tics1       = SV_ReadLong();
-        th->tics2       = SV_ReadLong();
-        th->count       = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized light_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        th->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->type        = lighttype_t(SV_ReadLong());
-        th->value1      = (float) SV_ReadLong() / 255.0f;
-        th->value2      = (float) SV_ReadLong() / 255.0f;
-        th->tics1       = SV_ReadLong();
-        th->tics2       = SV_ReadLong();
-        th->count       = SV_ReadLong();
-    }
-
-    th->thinker.function = (thinkfunc_t) T_Light;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WritePhase(phase_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(th->sector));
-
-    SV_WriteLong(th->index);
-    SV_WriteLong((int) (255.0f * th->baseValue));
-}
-
-static int SV_ReadPhase(phase_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        th->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->index       = SV_ReadLong();
-        th->baseValue   = (float) SV_ReadLong() / 255.0f;
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized phase_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        th->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->index       = SV_ReadLong();
-        th->baseValue   = (float) SV_ReadLong() / 255.0f;
-    }
-
-    th->thinker.function = (thinkfunc_t) T_Phase;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WriteDoorPoly(polydoor_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    SV_WriteByte(th->type);
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(th->polyobj);
-    SV_WriteLong(th->intSpeed);
-    SV_WriteLong(th->dist);
-    SV_WriteLong(th->totalDist);
-    SV_WriteLong(th->direction);
-    SV_WriteLong(FLT2FIX(th->speed[VX]));
-    SV_WriteLong(FLT2FIX(th->speed[VY]));
-    SV_WriteLong(th->tics);
-    SV_WriteLong(th->waitTics);
-    SV_WriteByte(th->close);
-}
-
-static int SV_ReadDoorPoly(polydoor_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        th->type        = podoortype_t(SV_ReadByte());
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->totalDist   = SV_ReadLong();
-        th->direction   = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
-        th->tics        = SV_ReadLong();
-        th->waitTics    = SV_ReadLong();
-        th->close       = SV_ReadByte();
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized polydoor_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->totalDist   = SV_ReadLong();
-        th->direction   = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
-        th->tics        = SV_ReadLong();
-        th->waitTics    = SV_ReadLong();
-        th->type        = podoortype_t(SV_ReadByte());
-        th->close       = SV_ReadByte();
-    }
-
-    th->thinker.function = T_PolyDoor;
-
-    return true; // Add this thinker.
-}
-
 static void SV_WriteMovePoly(polyevent_t const *th)
 {
     DENG_ASSERT(th != 0);
@@ -3627,564 +2981,7 @@ static int SV_ReadMovePoly(polyevent_t *th, int /*mapVersion*/)
 
     return true; // Add this thinker.
 }
-
-static void SV_WriteRotatePoly(polyevent_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(th->polyobj);
-    SV_WriteLong(th->intSpeed);
-    SV_WriteLong(th->dist);
-    SV_WriteLong(th->fangle);
-    SV_WriteLong(FLT2FIX(th->speed[VX]));
-    SV_WriteLong(FLT2FIX(th->speed[VY]));
-}
-
-static int SV_ReadRotatePoly(polyevent_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->fangle      = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized polyevent_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->fangle      = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
-    }
-
-    th->thinker.function = T_RotatePoly;
-    return true; // Add this thinker.
-}
-
-static void SV_WritePillar(pillar_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(th->sector));
-
-    SV_WriteLong(FLT2FIX(th->ceilingSpeed));
-    SV_WriteLong(FLT2FIX(th->floorSpeed));
-    SV_WriteLong(FLT2FIX(th->floorDest));
-    SV_WriteLong(FLT2FIX(th->ceilingDest));
-    SV_WriteLong(th->direction);
-    SV_WriteLong(th->crush);
-}
-
-static int SV_ReadPillar(pillar_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        th->sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->ceilingSpeed    = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floorSpeed      = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floorDest       = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ceilingDest     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->direction       = SV_ReadLong();
-        th->crush           = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized pillar_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        th->sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->ceilingSpeed    = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floorSpeed      = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floorDest       = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ceilingDest     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->direction       = SV_ReadLong();
-        th->crush           = SV_ReadLong();
-    }
-
-    th->thinker.function = (thinkfunc_t) T_BuildPillar;
-
-    P_ToXSector(th->sector)->specialData = th;
-    return true; // Add this thinker.
-}
-
-static void SV_WriteFloorWaggle(waggle_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(th->sector));
-
-    SV_WriteLong(FLT2FIX(th->originalHeight));
-    SV_WriteLong(FLT2FIX(th->accumulator));
-    SV_WriteLong(FLT2FIX(th->accDelta));
-    SV_WriteLong(FLT2FIX(th->targetScale));
-    SV_WriteLong(FLT2FIX(th->scale));
-    SV_WriteLong(FLT2FIX(th->scaleDelta));
-    SV_WriteLong(th->ticker);
-    SV_WriteLong(th->state);
-}
-
-static int SV_ReadFloorWaggle(waggle_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        th->sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->originalHeight  = FIX2FLT((fixed_t) SV_ReadLong());
-        th->accumulator     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->accDelta        = FIX2FLT((fixed_t) SV_ReadLong());
-        th->targetScale     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->scale           = FIX2FLT((fixed_t) SV_ReadLong());
-        th->scaleDelta      = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ticker          = SV_ReadLong();
-        th->state           = wagglestate_e(SV_ReadLong());
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized waggle_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        th->sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->originalHeight  = FIX2FLT((fixed_t) SV_ReadLong());
-        th->accumulator     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->accDelta        = FIX2FLT((fixed_t) SV_ReadLong());
-        th->targetScale     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->scale           = FIX2FLT((fixed_t) SV_ReadLong());
-        th->scaleDelta      = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ticker          = SV_ReadLong();
-        th->state           = wagglestate_e(SV_ReadLong());
-    }
-
-    th->thinker.function = (thinkfunc_t) T_FloorWaggle;
-
-    P_ToXSector(th->sector)->specialData = th;
-    return true; // Add this thinker.
-}
 #endif // __JHEXEN__
-
-#if !__JHEXEN__
-static void SV_WriteFlash(lightflash_t const *flash)
-{
-    DENG_ASSERT(flash != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(flash->sector));
-
-    SV_WriteLong(flash->count);
-    SV_WriteLong((int) (255.0f * flash->maxLight));
-    SV_WriteLong((int) (255.0f * flash->minLight));
-    SV_WriteLong(flash->maxTime);
-    SV_WriteLong(flash->minTime);
-}
-
-static int SV_ReadFlash(lightflash_t *flash, int /*mapVersion*/)
-{
-    DENG_ASSERT(flash != 0);
-
-    if(hdr->version >= 5)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        flash->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(flash->sector != 0);
-
-        flash->count        = SV_ReadLong();
-        flash->maxLight     = (float) SV_ReadLong() / 255.0f;
-        flash->minLight     = (float) SV_ReadLong() / 255.0f;
-        flash->maxTime      = SV_ReadLong();
-        flash->minTime      = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V5 format which serialized lightflash_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        flash->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(flash->sector != 0);
-
-        flash->count        = SV_ReadLong();
-        flash->maxLight     = (float) SV_ReadLong() / 255.0f;
-        flash->minLight     = (float) SV_ReadLong() / 255.0f;
-        flash->maxTime      = SV_ReadLong();
-        flash->minTime      = SV_ReadLong();
-    }
-
-    flash->thinker.function = (thinkfunc_t) T_LightFlash;
-    return true; // Add this thinker.
-}
-
-static void SV_WriteStrobe(strobe_t const *strobe)
-{
-    DENG_ASSERT(strobe != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(strobe->sector));
-
-    SV_WriteLong(strobe->count);
-    SV_WriteLong((int) (255.0f * strobe->maxLight));
-    SV_WriteLong((int) (255.0f * strobe->minLight));
-    SV_WriteLong(strobe->darkTime);
-    SV_WriteLong(strobe->brightTime);
-}
-
-static int SV_ReadStrobe(strobe_t *strobe, int /*mapVersion*/)
-{
-    DENG_ASSERT(strobe != 0);
-
-    if(hdr->version >= 5)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        strobe->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(strobe->sector != 0);
-
-        strobe->count       = SV_ReadLong();
-        strobe->maxLight    = (float) SV_ReadLong() / 255.0f;
-        strobe->minLight    = (float) SV_ReadLong() / 255.0f;
-        strobe->darkTime    = SV_ReadLong();
-        strobe->brightTime  = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V5 format which serialized strobe_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        strobe->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(strobe->sector != 0);
-
-        strobe->count       = SV_ReadLong();
-        strobe->minLight    = (float) SV_ReadLong() / 255.0f;
-        strobe->maxLight    = (float) SV_ReadLong() / 255.0f;
-        strobe->darkTime    = SV_ReadLong();
-        strobe->brightTime  = SV_ReadLong();
-    }
-
-    strobe->thinker.function = (thinkfunc_t) T_StrobeFlash;
-    return true; // Add this thinker.
-}
-
-static void SV_WriteGlow(glow_t const *glow)
-{
-    DENG_ASSERT(glow != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(glow->sector));
-
-    SV_WriteLong((int) (255.0f * glow->maxLight));
-    SV_WriteLong((int) (255.0f * glow->minLight));
-    SV_WriteLong(glow->direction);
-}
-
-static int SV_ReadGlow(glow_t *glow, int /*mapVersion*/)
-{
-    DENG_ASSERT(glow != 0);
-
-    if(hdr->version >= 5)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        glow->sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(glow->sector != 0);
-
-        glow->maxLight      = (float) SV_ReadLong() / 255.0f;
-        glow->minLight      = (float) SV_ReadLong() / 255.0f;
-        glow->direction     = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V5 format which serialized strobe_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        glow->sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(glow->sector != 0);
-
-        glow->minLight      = (float) SV_ReadLong() / 255.0f;
-        glow->maxLight      = (float) SV_ReadLong() / 255.0f;
-        glow->direction     = SV_ReadLong();
-    }
-
-    glow->thinker.function = (thinkfunc_t) T_Glow;
-    return true; // Add this thinker.
-}
-
-# if __JDOOM__ || __JDOOM64__
-static void SV_WriteFlicker(fireflicker_t const *flicker)
-{
-    DENG_ASSERT(flicker != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(flicker->sector));
-
-    SV_WriteLong((int) (255.0f * flicker->maxLight));
-    SV_WriteLong((int) (255.0f * flicker->minLight));
-}
-
-/**
- * T_FireFlicker was added to save games in ver5, therefore we don't have
- * an old format to support.
- */
-static int SV_ReadFlicker(fireflicker_t *flicker, int /*mapVersion*/)
-{
-    DENG_ASSERT(flicker != 0);
-
-    /*int ver =*/ SV_ReadByte(); // version byte.
-
-    // Note: the thinker class byte has already been read.
-    flicker->sector         = (Sector*)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-    DENG_ASSERT(flicker->sector != 0);
-
-    flicker->maxLight       = (float) SV_ReadLong() / 255.0f;
-    flicker->minLight       = (float) SV_ReadLong() / 255.0f;
-
-    flicker->thinker.function = (thinkfunc_t) T_FireFlicker;
-    return true; // Add this thinker.
-}
-# endif
-
-# if __JDOOM64__
-static void SV_WriteBlink(lightblink_t const *blink)
-{
-    DENG_ASSERT(blink != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(blink->sector));
-
-    SV_WriteLong(blink->count);
-    SV_WriteLong((int) (255.0f * blink->maxLight));
-    SV_WriteLong((int) (255.0f * blink->minLight));
-    SV_WriteLong(blink->maxTime);
-    SV_WriteLong(blink->minTime);
-}
-
-/**
- * T_LightBlink was added to save games in ver5, therefore we don't have an
- * old format to support
- */
-static int SV_ReadBlink(lightblink_t *blink, int /*mapVersion*/)
-{
-    DENG_ASSERT(blink != 0);
-
-    /*int ver =*/ SV_ReadByte(); // version byte.
-
-    // Note: the thinker class byte has already been read.
-    blink->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-    DENG_ASSERT(blink->sector != 0);
-
-    blink->count        = SV_ReadLong();
-    blink->maxLight     = (float) SV_ReadLong() / 255.0f;
-    blink->minLight     = (float) SV_ReadLong() / 255.0f;
-    blink->maxTime      = SV_ReadLong();
-    blink->minTime      = SV_ReadLong();
-
-    blink->thinker.function = (thinkfunc_t) T_LightBlink;
-    return true; // Add this thinker.
-}
-# endif
-#endif // !__JHEXEN__
-
-static void SV_WriteMaterialChanger(materialchanger_t const *mchanger)
-{
-    DENG_ASSERT(mchanger != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    // Write a type byte. For future use (e.g., changing plane surface
-    // materials as well as side surface materials).
-    SV_WriteByte(0);
-    SV_WriteLong(mchanger->timer);
-    SV_WriteLong(P_ToIndex(mchanger->side));
-    SV_WriteByte((byte) mchanger->section);
-    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, mchanger->material));
-}
-
-static int SV_ReadMaterialChanger(materialchanger_t *mchanger, int /*mapVersion*/)
-{
-    DENG_ASSERT(mchanger != 0);
-
-    /*int ver =*/ SV_ReadByte();
-    // Note: the thinker class byte has already been read.
-
-    /*byte type =*/ SV_ReadByte();
-
-    mchanger->timer = SV_ReadLong();
-
-    int sideIndex = (int) SV_ReadLong();
-#if __JHEXEN__
-    if(mapVersion >= 12)
-
-#else
-    if(hdr->version >= 12)
-#endif
-    {
-        mchanger->side = (Side *)P_ToPtr(DMU_SIDE, sideIndex);
-    }
-    else
-    {
-        // Side index is actually a DMU_ARCHIVE_INDEX.
-        mchanger->side = (Side *)SV_SideArchive().at(sideIndex);
-    }
-    DENG_ASSERT(mchanger->side != 0);
-
-    mchanger->section = (SideSection) SV_ReadByte();
-    mchanger->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
-
-    mchanger->thinker.function = T_MaterialChanger;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WriteScroll(scroll_t const *scroll)
-{
-    DENG_ASSERT(scroll != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    // Write a type byte. For future use (e.g., scrolling plane surface
-    // materials as well as side surface materials).
-    SV_WriteByte(DMU_GetType(scroll->dmuObject));
-    SV_WriteLong(P_ToIndex(scroll->dmuObject));
-    SV_WriteLong(scroll->elementBits);
-    SV_WriteLong(FLT2FIX(scroll->offset[0]));
-    SV_WriteLong(FLT2FIX(scroll->offset[1]));
-}
-
-static int SV_ReadScroll(scroll_t *scroll, int /*mapVersion*/)
-{
-    DENG_ASSERT(scroll != 0);
-
-    /*int ver =*/ SV_ReadByte(); // version byte.
-    // Note: the thinker class byte has already been read.
-
-    if(SV_ReadByte() == DMU_SIDE) // Type byte.
-    {
-        int sideIndex = (int) SV_ReadLong();
-
-#if __JHEXEN__
-        if(mapVersion >= 12)
-
-#else
-        if(hdr->version >= 12)
-#endif
-        {
-            scroll->dmuObject = (Side *)P_ToPtr(DMU_SIDE, sideIndex);
-        }
-        else
-        {
-            // Side index is actually a DMU_ARCHIVE_INDEX.
-            scroll->dmuObject = (Side *)SV_SideArchive().at(sideIndex);
-        }
-
-        DENG_ASSERT(scroll->dmuObject != 0);
-    }
-    else // Sector plane-surface.
-    {
-        scroll->dmuObject = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(scroll->dmuObject != 0);
-    }
-
-    scroll->elementBits = SV_ReadLong();
-    scroll->offset[0] = FIX2FLT((fixed_t) SV_ReadLong());
-    scroll->offset[1] = FIX2FLT((fixed_t) SV_ReadLong());
-
-    scroll->thinker.function = (thinkfunc_t) T_Scroll;
-
-    return true; // Add this thinker.
-}
 
 /**
  * Serializes the specified thinker and writes it to save state.

@@ -22,6 +22,8 @@
 #ifndef LIBHEXEN_P_PILLAR_H
 #define LIBHEXEN_P_PILLAR_H
 
+#include "doomsday.h"
+
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
@@ -35,6 +37,11 @@ typedef struct {
     coord_t ceilingDest;
     int direction;
     int crush;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } pillar_t;
 
 #ifdef __cplusplus

@@ -114,6 +114,66 @@ void T_Light(light_t *light)
     }
 }
 
+void light_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteByte(writer, (byte)type);
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt32(writer, (int) (255.0f * value1));
+    Writer_WriteInt32(writer, (int) (255.0f * value2));
+    Writer_WriteInt32(writer, tics1);
+    Writer_WriteInt32(writer, tics2);
+    Writer_WriteInt32(writer, count);
+}
+
+int light_t::read(Reader *reader, int mapVersion)
+{
+    if(mapVersion >= 4)
+    {
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        type        = (lighttype_t) Reader_ReadByte(reader);
+
+        sector      = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        value1      = (float) Reader_ReadInt32(reader) / 255.0f;
+        value2      = (float) Reader_ReadInt32(reader) / 255.0f;
+        tics1       = Reader_ReadInt32(reader);
+        tics2       = Reader_ReadInt32(reader);
+        count       = Reader_ReadInt32(reader);
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized light_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        type        = lighttype_t(Reader_ReadInt32(reader));
+        value1      = (float) Reader_ReadInt32(reader) / 255.0f;
+        value2      = (float) Reader_ReadInt32(reader) / 255.0f;
+        tics1       = Reader_ReadInt32(reader);
+        tics2       = Reader_ReadInt32(reader);
+        count       = Reader_ReadInt32(reader);
+    }
+
+    thinker.function = (thinkfunc_t) T_Light;
+
+    return true; // Add this thinker.
+}
+
 dd_bool EV_SpawnLight(Line *line, byte *arg, lighttype_t type)
 {
     int arg1, arg2, arg3, arg4;
@@ -233,6 +293,53 @@ void T_Phase(phase_t *phase)
     phase->index = (phase->index + 1) & 63;
     P_SectorSetLight(phase->sector,
                      phase->baseValue + phaseTable[phase->index]);
+}
+
+void phase_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt32(writer, index);
+    Writer_WriteInt32(writer, (int) (255.0f * baseValue));
+}
+
+int phase_t::read(Reader *reader, int mapVersion)
+{
+    if(mapVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        index       = Reader_ReadInt32(reader);
+        baseValue   = (float) Reader_ReadInt32(reader) / 255.0f;
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized phase_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        // A 32bit pointer to sector, serialized.
+        sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        index       = Reader_ReadInt32(reader);
+        baseValue   = (float) Reader_ReadInt32(reader) / 255.0f;
+    }
+
+    thinker.function = (thinkfunc_t) T_Phase;
+
+    return true; // Add this thinker.
 }
 
 void P_SpawnPhasedLight(Sector *sector, float base, int index)

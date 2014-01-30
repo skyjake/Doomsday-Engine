@@ -22,6 +22,8 @@
 #ifndef LIBCOMMON_THINKER_FLOOR_H
 #define LIBCOMMON_THINKER_FLOOR_H
 
+#include "doomsday.h"
+
 #define FLOORSPEED          (1)
 
 typedef enum {
@@ -99,6 +101,11 @@ typedef struct {
     coord_t resetHeight;
     short resetDelay;
     short resetDelayCount;
+#endif
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
 #endif
 } floor_t;
 

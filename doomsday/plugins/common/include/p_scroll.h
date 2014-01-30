@@ -29,6 +29,11 @@ typedef struct {
   void *dmuObject; ///< Affected DMU object (either a sector or a side).
   int elementBits; ///< Identifies which subelements of the dmuObject are affected.
   float offset[2]; ///< [x, y] scroll vector delta.
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } scroll_t;
 
 #ifdef __cplusplus
