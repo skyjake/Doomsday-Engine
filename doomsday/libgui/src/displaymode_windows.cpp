@@ -116,6 +116,8 @@ int DisplayMode_Native_Change(const DisplayMode* mode, int shouldCapture)
 
 void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
+    if(!de::CanvasWindow::mainExists()) return;
+
     HWND hWnd = (HWND) de::CanvasWindow::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
