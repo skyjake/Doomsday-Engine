@@ -490,7 +490,7 @@ void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume,
     node->currentSoundID  = currentSoundID;
 }
 
-void SN_WriteSequences()
+void SN_WriteSequences(Writer *writer)
 {
     SV_BeginSegment(ASEG_SOUNDS);
 
@@ -534,7 +534,7 @@ void SN_WriteSequences()
     }
 }
 
-void SN_ReadSequences(int mapVersion)
+void SN_ReadSequences(Reader *reader, int mapVersion)
 {
     SV_AssertSegment(ASEG_SOUNDS);
 

@@ -1,10 +1,8 @@
-/**
- * @file p_scroll.h
- * Common surface material scroll thinker. @ingroup libcommon
+/** @file p_scroll.h  Common surface material scroll thinker.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,22 +24,27 @@
 
 #include "doomsday.h"
 
+typedef struct {
+  thinker_t thinker;
+  void *dmuObject; ///< Affected DMU object (either a sector or a side).
+  int elementBits; ///< Identifies which subelements of the dmuObject are affected.
+  float offset[2]; ///< [x, y] scroll vector delta.
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
+} scroll_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct {
-  thinker_t thinker;
-  void* dmuObject; ///< Affected DMU object (either a sector or a side).
-  int elementBits; ///< Identifies which subelements of the dmuObject are affected.
-  float offset[2]; ///< [x, y] scroll vector delta.
-} scroll_t;
+void T_Scroll(scroll_t *scroll);
 
-void T_Scroll(scroll_t* scroll);
+scroll_t *P_SpawnSideMaterialOriginScroller(Side *side, short special);
 
-scroll_t* P_SpawnSideMaterialOriginScroller(Side* side, short special);
-
-scroll_t* P_SpawnSectorMaterialOriginScroller(Sector* sector, uint planeId, short special);
+scroll_t *P_SpawnSectorMaterialOriginScroller(Sector *sector, uint planeId, short special);
 
 #ifdef __cplusplus
 } // extern "C"
