@@ -34,6 +34,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include "doomsday.h"
 #include "p_terraintype.h"
 #include "h_think.h"
 #include "info.h"
@@ -217,6 +218,11 @@ typedef struct mobj_s {
 
     int             turnTime;       // $visangle-facetarget
     int             corpseTics;     // $vanish: how long has this been dead?
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } mobj_t;
 
 #ifdef __cplusplus

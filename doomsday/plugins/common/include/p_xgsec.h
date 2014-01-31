@@ -187,9 +187,9 @@ xgplanemover_t *XS_GetPlaneMover(Sector *sector, dd_bool ceiling);
 
 void XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
 
-void SV_WriteXGSector(Sector *sec);
+void SV_WriteXGSector(Sector *sec, Writer *writer);
 
-void SV_ReadXGSector(Sector *sec);
+void SV_ReadXGSector(Sector *sec, Reader *reader, int mapVersion);
 
 D_CMD(MovePlane);
 

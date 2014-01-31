@@ -26,10 +26,9 @@
 #include "p_saveg.h"
 #include "p_xg.h"
 
-void SV_WriteXGLine(Line *li)
+void SV_WriteXGLine(Line *li, Writer *writer)
 {
-    xgline_t *xg     = P_ToXLine(li)->xg;
-    linetype_t *info = &xg->info;
+    xline_t *xline = P_ToXLine(li);
 
     // Version byte.
     SV_WriteByte(1);
@@ -40,86 +39,88 @@ void SV_WriteXGLine(Line *li)
      * DED file. During loading, XL_SetLineType is called with the id in the savegame.
      */
 
-    SV_WriteLong(info->id);
-    SV_WriteLong(info->actCount);
+    DENG_ASSERT(xline->xg != 0);
+    xgline_t *xg = xline->xg;
+    linetype_t *info = &xg->info;
 
-    SV_WriteByte(xg->active);
-    SV_WriteByte(xg->disabled);
-    SV_WriteLong(xg->timer);
-    SV_WriteLong(xg->tickerTimer);
-    SV_WriteShort(SV_ThingArchiveId((mobj_t *)xg->activator));
-    SV_WriteLong(xg->idata);
-    SV_WriteFloat(xg->fdata);
-    SV_WriteLong(xg->chIdx);
-    SV_WriteFloat(xg->chTimer);
+    Writer_WriteInt32(writer, info->id);
+    Writer_WriteInt32(writer, info->actCount);
+
+    Writer_WriteByte(writer, xg->active);
+    Writer_WriteByte(writer, xg->disabled);
+    Writer_WriteInt32(writer, xg->timer);
+    Writer_WriteInt32(writer, xg->tickerTimer);
+    Writer_WriteInt16(writer, SV_ThingArchiveId((mobj_t *)xg->activator));
+    Writer_WriteInt32(writer, xg->idata);
+    Writer_WriteFloat(writer, xg->fdata);
+    Writer_WriteInt32(writer, xg->chIdx);
+    Writer_WriteFloat(writer, xg->chTimer);
 }
 
-void SV_ReadXGLine(Line *li)
+void SV_ReadXGLine(Line *li, Reader *reader, int /*mapVersion*/)
 {
     xline_t *xline = P_ToXLine(li);
 
     // Read version.
-    SV_ReadByte();
+    Reader_ReadByte(reader);
 
     // This'll set all the correct string pointers and other data.
-    XL_SetLineType(li, SV_ReadLong());
+    XL_SetLineType(li, Reader_ReadInt32(reader));
 
-    DENG_ASSERT(xline != 0);
     DENG_ASSERT(xline->xg != 0);
-
     xgline_t *xg = xline->xg;
 
-    xg->info.actCount = SV_ReadLong();
+    xg->info.actCount = Reader_ReadInt32(reader);
 
-    xg->active      = SV_ReadByte();
-    xg->disabled    = SV_ReadByte();
-    xg->timer       = SV_ReadLong();
-    xg->tickerTimer = SV_ReadLong();
+    xg->active      = Reader_ReadByte(reader);
+    xg->disabled    = Reader_ReadByte(reader);
+    xg->timer       = Reader_ReadInt32(reader);
+    xg->tickerTimer = Reader_ReadInt32(reader);
 
     // Will be updated later.
-    xg->activator   = INT2PTR(void, SV_ReadShort());
+    xg->activator   = INT2PTR(void, Reader_ReadInt16(reader));
 
-    xg->idata       = SV_ReadLong();
-    xg->fdata       = SV_ReadFloat();
-    xg->chIdx       = SV_ReadLong();
-    xg->chTimer     = SV_ReadFloat();
+    xg->idata       = Reader_ReadInt32(reader);
+    xg->fdata       = Reader_ReadFloat(reader);
+    xg->chIdx       = Reader_ReadInt32(reader);
+    xg->chTimer     = Reader_ReadFloat(reader);
 }
 
 /**
  * @param fn  This function must belong to XG sector @a xg.
  */
-void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
+void SV_WriteXGFunction(xgsector_t *xg, function_t *fn, Writer *writer)
 {
     // Version byte.
-    SV_WriteByte(1);
+    Writer_WriteByte(writer, 1);
 
-    SV_WriteLong(fn->flags);
-    SV_WriteShort(fn->pos);
-    SV_WriteShort(fn->repeat);
-    SV_WriteShort(fn->timer);
-    SV_WriteShort(fn->maxTimer);
-    SV_WriteFloat(fn->value);
-    SV_WriteFloat(fn->oldValue);
+    Writer_WriteInt32(writer, fn->flags);
+    Writer_WriteInt16(writer, fn->pos);
+    Writer_WriteInt16(writer, fn->repeat);
+    Writer_WriteInt16(writer, fn->timer);
+    Writer_WriteInt16(writer, fn->maxTimer);
+    Writer_WriteFloat(writer, fn->value);
+    Writer_WriteFloat(writer, fn->oldValue);
 }
 
 /**
  * @param fn  This function must belong to XG sector @a xg.
  */
-void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
+void SV_ReadXGFunction(xgsector_t *xg, function_t *fn, Reader *reader, int mapVersion)
 {
     // Version byte.
-    SV_ReadByte();
+    Reader_ReadByte(reader);
 
-    fn->flags    = SV_ReadLong();
-    fn->pos      = SV_ReadShort();
-    fn->repeat   = SV_ReadShort();
-    fn->timer    = SV_ReadShort();
-    fn->maxTimer = SV_ReadShort();
-    fn->value    = SV_ReadFloat();
-    fn->oldValue = SV_ReadFloat();
+    fn->flags    = Reader_ReadInt32(reader);
+    fn->pos      = Reader_ReadInt16(reader);
+    fn->repeat   = Reader_ReadInt16(reader);
+    fn->timer    = Reader_ReadInt16(reader);
+    fn->maxTimer = Reader_ReadInt16(reader);
+    fn->value    = Reader_ReadFloat(reader);
+    fn->oldValue = Reader_ReadFloat(reader);
 }
 
-void SV_WriteXGSector(Sector *sec)
+void SV_WriteXGSector(Sector *sec, Writer *writer)
 {
     xsector_t *xsec = P_ToXSector(sec);
 
@@ -127,48 +128,48 @@ void SV_WriteXGSector(Sector *sec)
     sectortype_t *info = &xg->info;
 
     // Version byte.
-    SV_WriteByte(1);
+    Writer_WriteByte(writer, 1);
 
-    SV_WriteLong(info->id);
-    SV_Write(info->count, sizeof(info->count));
-    SV_Write(xg->chainTimer, sizeof(xg->chainTimer));
-    SV_WriteLong(xg->timer);
-    SV_WriteByte(xg->disabled);
+    Writer_WriteInt32(writer, info->id);
+    Writer_Write(writer, info->count, sizeof(info->count));
+    Writer_Write(writer, xg->chainTimer, sizeof(xg->chainTimer));
+    Writer_WriteInt32(writer, xg->timer);
+    Writer_WriteByte(writer, xg->disabled);
     for(int i = 0; i < 3; ++i)
     {
-        SV_WriteXGFunction(xg, &xg->rgb[i]);
+        SV_WriteXGFunction(xg, &xg->rgb[i], writer);
     }
     for(int i = 0; i < 2; ++i)
     {
-        SV_WriteXGFunction(xg, &xg->plane[i]);
+        SV_WriteXGFunction(xg, &xg->plane[i], writer);
     }
-    SV_WriteXGFunction(xg, &xg->light);
+    SV_WriteXGFunction(xg, &xg->light, writer);
 }
 
-void SV_ReadXGSector(Sector *sec)
+void SV_ReadXGSector(Sector *sec, Reader *reader, int mapVersion)
 {
     xsector_t *xsec = P_ToXSector(sec);
 
     // Version byte.
-    SV_ReadByte();
+    Reader_ReadByte(reader);
 
     // This'll init all the data.
-    XS_SetSectorType(sec, SV_ReadLong());
+    XS_SetSectorType(sec, Reader_ReadInt32(reader));
 
     xgsector_t *xg = xsec->xg;
-    SV_Read(xg->info.count, sizeof(xg->info.count));
-    SV_Read(xg->chainTimer, sizeof(xg->chainTimer));
-    xg->timer    = SV_ReadLong();
-    xg->disabled = SV_ReadByte();
+    Reader_Read(reader, xg->info.count, sizeof(xg->info.count));
+    Reader_Read(reader, xg->chainTimer, sizeof(xg->chainTimer));
+    xg->timer    = Reader_ReadInt32(reader);
+    xg->disabled = Reader_ReadByte(reader);
     for(int i = 0; i < 3; ++i)
     {
-        SV_ReadXGFunction(xg, &xg->rgb[i]);
+        SV_ReadXGFunction(xg, &xg->rgb[i], reader, mapVersion);
     }
     for(int i = 0; i < 2; ++i)
     {
-        SV_ReadXGFunction(xg, &xg->plane[i]);
+        SV_ReadXGFunction(xg, &xg->plane[i], reader, mapVersion);
     }
-    SV_ReadXGFunction(xg, &xg->light);
+    SV_ReadXGFunction(xg, &xg->light, reader, mapVersion);
 }
 
 void xgplanemover_t::write(Writer *writer) const
@@ -208,7 +209,7 @@ int xgplanemover_t::read(Reader *reader, int mapVersion)
     ceiling     = Reader_ReadByte(reader);
     flags       = Reader_ReadInt32(reader);
 
-    int lineIndex = SV_ReadLong();
+    int lineIndex = Reader_ReadInt32(reader);
     if(lineIndex > 0)
         origin  = (Line *)P_ToPtr(DMU_LINE, lineIndex - 1);
 

@@ -30,6 +30,7 @@
 #ifndef __XG_LINETYPE_H__
 #define __XG_LINETYPE_H__
 
+#include "doomsday.h"
 #include "xgclass.h"
 
 // Line events.
@@ -335,45 +336,40 @@ extern "C" {
 #endif
 
 // Register the XG classnames for XGdev
-void            XG_Register(void);
+void XG_Register(void);
 
 // Initialize extended lines for the map.
-void            XL_Init(void);
+void XL_Init(void);
 // Called when reseting engine state.
-void            XL_Update(void);
+void XL_Update(void);
 
-void            XL_Thinker(void *xlThinkerPtr);
+void XL_Thinker(void *xlThinkerPtr);
 
-void            XL_SetLineType(Line* line, int id);
+void XL_SetLineType(Line* line, int id);
 
-linetype_t*     XL_GetType(int id);
-int             XL_LineEvent(int evType, int lineType, Line* line,
-                             int sideNum, void* data);
-void            XL_ActivateLine(dd_bool activating, linetype_t* info,
-                                Line* line, int sideNum,
-                                struct mobj_s* data, int evType);
-int             XL_TraverseLines(Line* line, int reftype, int ref,
-                                 void* context, void* context2, struct mobj_s* activator,
-                                 int (C_DECL *func)());
-int             XL_TraversePlanes(Line* line, int reftype, int ref,
-                                  void* context, void* context2, dd_bool travSectors,
-                                  struct mobj_s* activator,
-                                  int (C_DECL *func)());
+linetype_t *XL_GetType(int id);
+
+int XL_LineEvent(int evType, int lineType, Line *line, int sideNum, void *data);
+
+void XL_ActivateLine(dd_bool activating, linetype_t *info, Line *line, int sideNum,
+    struct mobj_s *activator, int evType);
+
+int XL_TraverseLines(Line *line, int reftype, int ref, void *context, void *context2,
+    struct mobj_s *activator, int (C_DECL *func)());
+
+int XL_TraversePlanes(Line *line, int reftype, int ref, void *context, void *context2,
+    dd_bool travSectors, struct mobj_s *activator, int (C_DECL *func)());
 
 // Return false if the event was processed.
-int             XL_CrossLine(Line* line, int sideNum,
-                             struct mobj_s* thing);
-int             XL_UseLine(Line* line, int sideNum,
-                           struct mobj_s* thing);
-int             XL_ShootLine(Line* line, int sideNum,
-                             struct mobj_s* thing);
-int             XL_HitLine(Line* line, int sideNum,
-                           struct mobj_s* thing);
+int XL_CrossLine(Line *line, int sideNum, struct mobj_s *thing);
+int XL_UseLine(Line *line, int sideNum, struct mobj_s *thing);
+int XL_ShootLine(Line *line, int sideNum, struct mobj_s *thing);
+int XL_HitLine(Line *line, int sideNum, struct mobj_s *thing);
 
-int             XG_RandomInt(int min, int max);
+int XG_RandomInt(int min, int max);
 
-void            SV_WriteXGLine(Line* li);
-void            SV_ReadXGLine(Line* li);
+void SV_WriteXGLine(Line *li, Writer *writer);
+void SV_ReadXGLine(Line *li, Reader *reader, int mapVersion);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -178,10 +178,10 @@ public:
     void scriptFinished(ACScript *script);
 
     void writeWorldScriptData(Writer *writer);
-    void readWorldScriptData(Reader *reader, int saveVersion);
+    void readWorldScriptData(Reader *reader, int mapVersion);
 
     void writeMapScriptData(Writer *writer);
-    void readMapScriptData(Reader *reader);
+    void readMapScriptData(Reader *reader, int mapVersion);
 
 public: /// @todo make private:
     BytecodeScriptInfo &scriptInfoByIndex(int index);
@@ -245,10 +245,10 @@ void P_ACScriptPolyobjFinished(int tag);
 void P_ACScriptRunDeferredTasks(uint map/*Uri const *map*/);
 
 void P_WriteGlobalACScriptData(Writer *writer);
-void P_ReadGlobalACScriptData(Reader *reader, int saveVersion);
+void P_ReadGlobalACScriptData(Reader *reader, int mapVersion);
 
 void P_WriteMapACScriptData(Writer *writer);
-void P_ReadMapACScriptData(Reader *reader);
+void P_ReadMapACScriptData(Reader *reader, int mapVersion);
 
 #ifdef __cplusplus
 } // extern "C"

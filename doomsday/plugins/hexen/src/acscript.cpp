@@ -495,11 +495,11 @@ void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
     }
 }
 
-void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
+void ACScriptInterpreter::readWorldScriptData(Reader *reader, int mapVersion)
 {
     int ver = 1;
 
-    if(saveVersion >= 7)
+    if(mapVersion >= 7)
     {
         SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
         ver = Reader_ReadByte(reader);
@@ -553,7 +553,7 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
             }
         }
 
-        if(saveVersion < 7)
+        if(mapVersion < 7)
         {
             SV_Seek(12); // Junk.
         }
@@ -592,7 +592,7 @@ void ACScriptInterpreter::writeMapScriptData(Writer *writer)
     }
 }
 
-void ACScriptInterpreter::readMapScriptData(Reader *reader)
+void ACScriptInterpreter::readMapScriptData(Reader *reader, int /*mapVersion*/)
 {
     SV_AssertSegment(ASEG_SCRIPTS);
 
@@ -1717,9 +1717,9 @@ void P_WriteGlobalACScriptData(Writer *writer)
     interp.writeWorldScriptData(writer);
 }
 
-void P_ReadGlobalACScriptData(Reader *reader, int saveVersion)
+void P_ReadGlobalACScriptData(Reader *reader, int mapVersion)
 {
-    interp.readWorldScriptData(reader, saveVersion);
+    interp.readWorldScriptData(reader, mapVersion);
 }
 
 void P_WriteMapACScriptData(Writer *writer)
@@ -1727,9 +1727,9 @@ void P_WriteMapACScriptData(Writer *writer)
     interp.writeMapScriptData(writer);
 }
 
-void P_ReadMapACScriptData(Reader *reader)
+void P_ReadMapACScriptData(Reader *reader, int mapVersion)
 {
-    interp.readMapScriptData(reader);
+    interp.readMapScriptData(reader, mapVersion);
 }
 
 ACScriptInterpreter &ACScript::interpreter() const
@@ -1830,7 +1830,7 @@ int ACScript::read(Reader *reader, int mapVersion)
         activator       = (mobj_t *) Reader_ReadInt32(reader);
         activator       = SV_GetArchiveThing(PTR2INT(activator), &activator);
 
-        int temp = SV_ReadLong();
+        int temp = Reader_ReadInt32(reader);
         if(temp >= 0)
         {
             line        = (Line *)P_ToPtr(DMU_LINE, temp);

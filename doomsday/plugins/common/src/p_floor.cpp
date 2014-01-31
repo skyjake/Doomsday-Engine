@@ -435,7 +435,7 @@ int floor_t::read(Reader *reader, int mapVersion)
     if(mapVersion >= 5)
 #endif
     {   // Note: the thinker class byte has already been read.
-        byte ver = SV_ReadByte(); // version byte.
+        byte ver = Reader_ReadByte(reader); // version byte.
 
         type                   = floortype_e(Reader_ReadByte(reader));
         sector                 = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));

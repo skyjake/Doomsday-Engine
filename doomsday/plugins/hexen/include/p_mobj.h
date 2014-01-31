@@ -33,6 +33,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "doomsday.h"
 #include "p_terraintype.h"
 
 #define NOMOM_THRESHOLD     (0.0001) // (integer) 0
@@ -206,6 +207,11 @@ typedef struct mobj_s {
 
     // Used by lightning zap
     struct mobj_s*  lastEnemy;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } mobj_t;
 
 #ifdef __cplusplus
