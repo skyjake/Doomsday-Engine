@@ -324,6 +324,7 @@ void Writer_Write(Writer *writer, void const *buffer, size_t len)
 
 void Writer_WritePackedUInt16(Writer *writer, uint16_t v)
 {
+    DENG_ASSERT(!(v & 0x8000));
     if(v & 0x8000)
     {
         App_Log(DE2_LOG_ERROR,
