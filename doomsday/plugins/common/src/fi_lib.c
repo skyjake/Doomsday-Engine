@@ -85,45 +85,49 @@ void FI_StackRegister(void)
 
 static void initStateConditions(fi_state_t *s)
 {
+    // Set the presets.
+    s->conditions.secret = false;
+#if !__JHEXEN__
+    s->conditions.leave_hub = false;
+#endif
+
     // Only the server is able to figure out the truth values of all the conditions.
-    if(IS_CLIENT)
-    {
-        // Set the presets.
-        s->conditions.secret = false;
-        s->conditions.leave_hub = false;
-        return;
-    }
+    if(IS_CLIENT) return;
 
 #if __JHEXEN__
     s->conditions.secret = false;
-
-    // Current hub has been completed?
-    {
-        Uri *currentMapUri = G_ComposeMapUri(gameEpisode, gameMap);
-        Uri *nextMapUri    = G_ComposeMapUri(gameEpisode, nextMap);
-
-        s->conditions.leave_hub = (P_MapInfo(currentMapUri)->cluster != P_MapInfo(nextMapUri)->cluster);
-
-        Uri_Delete(nextMapUri);
-        Uri_Delete(currentMapUri);
-    }
-
-    App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);
 #else
     s->conditions.secret = secretExit;
-    // Only Hexen has hubs.
-    s->conditions.leave_hub = false;
+#endif
+
+#if __JHEXEN__
+    // Leaving the current cluster?
+    {
+        Uri *curMapUri  = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+
+        mapinfo_t *curMapInfo = P_MapInfo(curMapUri);
+        mapinfo_t *nextMapInfo = P_MapInfo(nextMapUri);
+        if(curMapInfo && nextMapInfo)
+        {
+            s->conditions.leave_hub = (curMapInfo->cluster != nextMapInfo->cluster);
+        }
+
+        Uri_Delete(nextMapUri);
+        Uri_Delete(curMapUri);
+    }
+    App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);
 #endif
 }
 
-static fi_state_t* stateForFinaleId(finaleid_t id)
+static fi_state_t *stateForFinaleId(finaleid_t id)
 {
     if(finaleStackInited)
     {
         uint i;
         for(i = 0; i < finaleStackSize; ++i)
         {
-            fi_state_t* s = &finaleStack[i];
+            fi_state_t *s = &finaleStack[i];
             if(s->finaleId == id)
                 return s;
         }
