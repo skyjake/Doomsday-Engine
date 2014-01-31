@@ -390,10 +390,14 @@ static int chooseDefaultSound(switchlist_t const *info)
     /// @todo Get these defaults from switchinfo.
 #if __JHEXEN__
     return info->soundID;
-#elif __JHERETIC__
-    return SFX_SWITCH;
 #else
+#  if __JHERETIC__
+    return SFX_SWITCH;
+#  else
     return SFX_SWTCHN;
+# endif
+
+    DENG_UNUSED(info);
 #endif
 }
 

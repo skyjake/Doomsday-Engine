@@ -105,7 +105,7 @@ int pillar_t::read(Reader *reader, int mapVersion)
     return true; // Add this thinker.
 }
 
-int EV_BuildPillar(Line *line, byte *args, dd_bool crush)
+int EV_BuildPillar(Line * /*line*/, byte *args, dd_bool crush)
 {
     iterlist_t *list = P_GetSectorIterListForTag((int) args[0], false);
     if(!list) return 0;

@@ -660,11 +660,13 @@ typedef CommandResult (*CommandFunc) (CommandArgs const &args);
 
 ACS_COMMAND(NOP)
 {
+    DENG_UNUSED(args);
     return Continue;
 }
 
 ACS_COMMAND(Terminate)
 {
+    DENG_UNUSED(args);
     return Terminate;
 }
 
@@ -1360,6 +1362,7 @@ ACS_COMMAND(CaseGoto)
 
 ACS_COMMAND(BeginPrint)
 {
+    DENG_UNUSED(args);
     *PrintBuffer = 0;
     return Continue;
 }
@@ -1387,6 +1390,7 @@ ACS_COMMAND(EndPrint)
 
 ACS_COMMAND(EndPrintBold)
 {
+    DENG_UNUSED(args);
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->inGame)
@@ -1909,6 +1913,8 @@ int ACScript::read(Reader *reader, int mapVersion)
 
 D_CMD(ScriptInfo)
 {
+    DENG_UNUSED(src);
+
     int whichOne = argc == 2? atoi(argv[1]) : -1;
 
     for(int i = 0; i < interp.scriptCount(); ++i)

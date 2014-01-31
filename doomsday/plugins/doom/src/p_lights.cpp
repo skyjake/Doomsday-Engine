@@ -65,7 +65,7 @@ void fireflicker_t::write(Writer *writer) const
  * T_FireFlicker was added to save games in ver5, therefore we don't have
  * an old format to support.
  */
-int fireflicker_t::read(Reader *reader, int mapVersion)
+int fireflicker_t::read(Reader *reader, int /*mapVersion*/)
 {
     /*int ver =*/ Reader_ReadByte(reader); // version byte.
 

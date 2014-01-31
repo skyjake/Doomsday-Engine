@@ -89,7 +89,7 @@ void SV_ReadXGLine(Line *li, Reader *reader, int /*mapVersion*/)
 /**
  * @param fn  This function must belong to XG sector @a xg.
  */
-void SV_WriteXGFunction(xgsector_t *xg, function_t *fn, Writer *writer)
+void SV_WriteXGFunction(xgsector_t * /*xg*/, function_t *fn, Writer *writer)
 {
     // Version byte.
     Writer_WriteByte(writer, 1);
@@ -106,7 +106,7 @@ void SV_WriteXGFunction(xgsector_t *xg, function_t *fn, Writer *writer)
 /**
  * @param fn  This function must belong to XG sector @a xg.
  */
-void SV_ReadXGFunction(xgsector_t *xg, function_t *fn, Reader *reader, int mapVersion)
+void SV_ReadXGFunction(xgsector_t * /*xg*/, function_t *fn, Reader *reader, int /*mapVersion*/)
 {
     // Version byte.
     Reader_ReadByte(reader);

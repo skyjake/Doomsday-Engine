@@ -506,7 +506,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 }
 
 #if __JHEXEN__
-int EV_DoCeiling(Line *line, byte *args, ceilingtype_e type)
+int EV_DoCeiling(Line * /*line*/, byte *args, ceilingtype_e type)
 #else
 int EV_DoCeiling(Line *line, ceilingtype_e type)
 #endif

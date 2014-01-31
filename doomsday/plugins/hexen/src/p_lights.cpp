@@ -174,7 +174,7 @@ int light_t::read(Reader *reader, int mapVersion)
     return true; // Add this thinker.
 }
 
-dd_bool EV_SpawnLight(Line *line, byte *arg, lighttype_t type)
+dd_bool EV_SpawnLight(Line * /*line*/, byte *arg, lighttype_t type)
 {
     int arg1, arg2, arg3, arg4;
 

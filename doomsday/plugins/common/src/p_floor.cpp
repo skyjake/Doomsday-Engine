@@ -663,9 +663,9 @@ static Sector *findSectorSurroundingAtFloorHeight(Sector *sec, coord_t height)
 #endif
 
 #if __JHEXEN__
-int EV_DoFloor(Line* line, byte* args, floortype_e floortype)
+int EV_DoFloor(Line * /*line*/, byte* args, floortype_e floortype)
 #else
-int EV_DoFloor(Line* line, floortype_e floortype)
+int EV_DoFloor(Line *line, floortype_e floortype)
 #endif
 {
 #if !__JHEXEN__
@@ -1323,10 +1323,10 @@ static void processStairSector(Sector *sec, int type, coord_t height,
 #endif
 
 /**
- * @param direction     Positive = up. Negative = down.
+ * @param direction  Positive = up. Negative = down.
  */
 #if __JHEXEN__
-int EV_BuildStairs(Line *line, byte *args, int direction, stairs_e stairsType)
+int EV_BuildStairs(Line * /*line*/, byte *args, int direction, stairs_e stairsType)
 {
     // Set global stairs variables
     stairData.textureChange = 0;
@@ -1505,7 +1505,7 @@ static int stopFloorCrush(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-int EV_FloorCrushStop(Line *line, byte *args)
+int EV_FloorCrushStop(Line * /*line*/, byte * /*args*/)
 {
     dd_bool found = false;
 

@@ -467,7 +467,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 }
 
 #if __JHEXEN__
-int EV_DoDoor(Line *line, byte *args, doortype_e type)
+int EV_DoDoor(Line * /*line*/, byte *args, doortype_e type)
 {
     return EV_DoDoor2((int) args[0], (float) args[1] * (1.0 / 8),
                       (int) args[2], type);

@@ -292,9 +292,9 @@ int plat_t::read(Reader *reader, int mapVersion)
 }
 
 #if __JHEXEN__
-static int doPlat(Line* line, int tag, byte* args, plattype_e type, int amount)
+static int doPlat(Line * /*line*/, int tag, byte *args, plattype_e type, int /*amount*/)
 #else
-static int doPlat(Line* line, int tag, plattype_e type, int amount)
+static int doPlat(Line *line, int tag, plattype_e type, int amount)
 #endif
 {
 #if !__JHEXEN__
