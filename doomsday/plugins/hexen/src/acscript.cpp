@@ -83,7 +83,7 @@ struct BytecodeScriptInfo
     int argCount;
 
     // Current state:
-    /// @todo Move to a separate array, in Interpreter
+    /// @todo Move to a separate array, in ACScriptInterpreter
     ACScriptState state;
     int waitValue;
 };
@@ -101,7 +101,7 @@ int ACScriptInterpreter::scriptInfoIndex(int scriptNumber)
     return -1;
 }
 
-ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const *args, int delayCount)
+ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const args[], int delayCount)
 {
     // Is the script is already executing?
     if(info.state != Inactive) return 0;
@@ -127,7 +127,7 @@ ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const 
     return script;
 }
 
-bool ACScriptInterpreter::newDeferredTask(uint map, int scriptNumber, byte const *args)
+bool ACScriptInterpreter::newDeferredTask(uint map, int scriptNumber, byte const args[])
 {
     if(_deferredTasksSize)
     {
@@ -259,8 +259,8 @@ void ACScriptInterpreter::startOpenScripts()
     }
 }
 
-bool ACScriptInterpreter::startScript(int scriptNumber, uint map, byte *args, mobj_t *activator,
-    Line *line, int side)
+bool ACScriptInterpreter::startScript(int scriptNumber, uint map, byte const args[],
+    mobj_t *activator, Line *line, int side)
 {
     DENG_ASSERT(!IS_CLIENT);
 
@@ -470,50 +470,50 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
     Thinker_Remove(&script->thinker);
 }
 
-void ACScriptInterpreter::writeWorldScriptData()
+void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
 {
     SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
 
-    SV_WriteByte(3); // version byte
+    Writer_WriteByte(writer, 3); // version byte
 
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
-        SV_WriteLong(worldVars[i]);
+        Writer_WriteInt32(writer, worldVars[i]);
     }
 
     // Serialize the deferred task queue.
-    SV_WriteLong(_deferredTasksSize);
+    Writer_WriteInt32(writer, _deferredTasksSize);
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
         DeferredTask const *task = &_deferredTasks[i];
-        SV_WriteLong(task->map);
-        SV_WriteLong(task->scriptNumber);
+        Writer_WriteInt32(writer, task->map);
+        Writer_WriteInt32(writer, task->scriptNumber);
         for(int k = 0; k < 4; ++k)
         {
-            SV_WriteByte(task->args[k]);
+            Writer_WriteByte(writer, task->args[k]);
         }
     }
 }
 
-void ACScriptInterpreter::readWorldScriptData(int saveVersion)
+void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
 {
     int ver = 1;
 
     if(saveVersion >= 7)
     {
         SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
-        ver = SV_ReadByte();
+        ver = Reader_ReadByte(reader);
     }
 
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
-        worldVars[i] = SV_ReadLong();
+        worldVars[i] = Reader_ReadInt32(reader);
     }
 
     // Deserialize the deferred task queue.
     if(ver >= 3)
     {
-        _deferredTasksSize = SV_ReadLong();
+        _deferredTasksSize = Reader_ReadInt32(reader);
         if(_deferredTasksSize)
         {
             if(_deferredTasks)
@@ -525,11 +525,11 @@ void ACScriptInterpreter::readWorldScriptData(int saveVersion)
             {
                 DeferredTask *task = &_deferredTasks[i];
 
-                task->map          = SV_ReadLong();
-                task->scriptNumber = SV_ReadLong();
+                task->map          = Reader_ReadInt32(reader);
+                task->scriptNumber = Reader_ReadInt32(reader);
                 for(int k = 0; k < 4; ++k)
                 {
-                    task->args[k] = SV_ReadByte();
+                    task->args[k] = Reader_ReadByte(reader);
                 }
             }
         }
@@ -542,14 +542,14 @@ void ACScriptInterpreter::readWorldScriptData(int saveVersion)
         _deferredTasksSize = 0;
         for(int i = 0; i < 20; ++i)
         {
-            int map            = SV_ReadLong();
+            int map            = Reader_ReadInt32(reader);
             DeferredTask *task = &tempTasks[map < 0? 19 : _deferredTasksSize++];
 
             task->map          = map < 0? 0 : map-1;
-            task->scriptNumber = SV_ReadLong();
+            task->scriptNumber = Reader_ReadInt32(reader);
             for(int k = 0; k < 4; ++k)
             {
-                task->args[k] = SV_ReadByte();
+                task->args[k] = Reader_ReadByte(reader);
             }
         }
 
@@ -575,24 +575,24 @@ void ACScriptInterpreter::readWorldScriptData(int saveVersion)
     }
 }
 
-void ACScriptInterpreter::writeMapScriptData()
+void ACScriptInterpreter::writeMapScriptData(Writer *writer)
 {
     SV_BeginSegment(ASEG_SCRIPTS);
 
     for(int i = 0; i < _scriptCount; ++i)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
-        SV_WriteShort(info.state);
-        SV_WriteShort(info.waitValue);
+        Writer_WriteInt16(writer, info.state);
+        Writer_WriteInt16(writer, info.waitValue);
     }
 
     for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
     {
-        SV_WriteLong(mapVars[i]);
+        Writer_WriteInt32(writer, mapVars[i]);
     }
 }
 
-void ACScriptInterpreter::readMapScriptData()
+void ACScriptInterpreter::readMapScriptData(Reader *reader)
 {
     SV_AssertSegment(ASEG_SCRIPTS);
 
@@ -600,13 +600,13 @@ void ACScriptInterpreter::readMapScriptData()
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
 
-        info.state     = (ACScriptState) SV_ReadShort();
-        info.waitValue = SV_ReadShort();
+        info.state     = ACScriptState( Reader_ReadInt16(reader) );
+        info.waitValue = Reader_ReadInt16(reader);
     }
 
     for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
     {
-        mapVars[i] = SV_ReadLong();
+        mapVars[i] = Reader_ReadInt32(reader);
     }
 }
 
@@ -1142,8 +1142,8 @@ ACS_COMMAND(PolyWaitDirect)
 
 ACS_COMMAND(ChangeFloor)
 {
-    Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())));
+    Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1169,8 +1169,8 @@ ACS_COMMAND(ChangeFloorDirect)
 {
     int tag = LONG(*S_PCODEPTR++);
 
-    Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
+    Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1192,8 +1192,8 @@ ACS_COMMAND(ChangeFloorDirect)
 
 ACS_COMMAND(ChangeCeiling)
 {
-    Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())));
+    Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1219,8 +1219,8 @@ ACS_COMMAND(ChangeCeilingDirect)
 {
     int tag = LONG(*S_PCODEPTR++);
 
-    Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
+    Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1540,8 +1540,8 @@ ACS_COMMAND(SetLineTexture)
 #define TEXTURE_MIDDLE 1
 #define TEXTURE_BOTTOM 2
 
-    Uri *uri = Uri_NewWithPath2("Textures:", RC_NULL);
-    Uri_SetPath(uri, Str_Text(Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())));
+    Uri *uri = Uri_NewWithPath3("Textures", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
@@ -1634,7 +1634,7 @@ ACS_COMMAND(SetLineSpecial)
     return Continue;
 }
 
-static CommandFunc PCodeCmds[] =
+static CommandFunc pcodeCmds[] =
 {
     cmdNOP, cmdTerminate, cmdSuspend, cmdPushNumber, cmdLSpec1, cmdLSpec2,
     cmdLSpec3, cmdLSpec4, cmdLSpec5, cmdLSpec1Direct, cmdLSpec2Direct,
@@ -1686,7 +1686,7 @@ void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
     interp.runDeferredTasks(map);
 }
 
-dd_bool P_StartACScript(int scriptNumber, uint map, byte *args, mobj_t *activator,
+dd_bool P_StartACScript(int scriptNumber, uint map, byte const args[], mobj_t *activator,
     Line *line, int side)
 {
     return interp.startScript(scriptNumber, map, args, activator, line, side);
@@ -1712,29 +1712,64 @@ void P_ACScriptPolyobjFinished(int tag)
     interp.polyobjFinished(tag);
 }
 
-void P_WriteGlobalACScriptData()
+void P_WriteGlobalACScriptData(Writer *writer)
 {
-    interp.writeWorldScriptData();
+    interp.writeWorldScriptData(writer);
 }
 
-void P_ReadGlobalACScriptData(int saveVersion)
+void P_ReadGlobalACScriptData(Reader *reader, int saveVersion)
 {
-    interp.readWorldScriptData(saveVersion);
+    interp.readWorldScriptData(reader, saveVersion);
 }
 
-void P_WriteMapACScriptData()
+void P_WriteMapACScriptData(Writer *writer)
 {
-    interp.writeMapScriptData();
+    interp.writeMapScriptData(writer);
 }
 
-void P_ReadMapACScriptData()
+void P_ReadMapACScriptData(Reader *reader)
 {
-    interp.readMapScriptData();
+    interp.readMapScriptData(reader);
 }
 
 ACScriptInterpreter &ACScript::interpreter() const
 {
     return interp;
+}
+
+void ACScript::runTick()
+{
+    ACScriptInterpreter &interp = interpreter();
+    BytecodeScriptInfo &info = interp.scriptInfoFor(this);
+    if(info.state == Terminating)
+    {
+        interp.scriptFinished(this);
+        return;
+    }
+
+    if(info.state != Running)
+    {
+        return;
+    }
+
+    if(delayCount)
+    {
+        delayCount--;
+        return;
+    }
+
+    CommandArgs args;
+    args.script     = this;
+    args.scriptInfo = &info;
+
+    int action;
+    while((action = pcodeCmds[LONG(*pcodePtr++)](args)) == Continue)
+    {}
+
+    if(action == Terminate)
+    {
+        interp.scriptFinished(this);
+    }
 }
 
 void ACScript::push(int value)
@@ -1760,148 +1795,114 @@ void ACScript::drop()
 void ACScript_Thinker(ACScript *script)
 {
     DENG_ASSERT(script != 0);
-
-    BytecodeScriptInfo &info = interp.scriptInfoFor(script);
-    if(info.state == Terminating)
-    {
-        interp.scriptFinished(script);
-        return;
-    }
-
-    if(info.state != Running)
-    {
-        return;
-    }
-
-    if(script->delayCount)
-    {
-        script->delayCount--;
-        return;
-    }
-
-    CommandArgs args;
-    args.script     = script;
-    args.scriptInfo = &info;
-
-    int action;
-    while((action = PCodeCmds[LONG(*script->pcodePtr++)](args)) == Continue)
-    {}
-
-    if(action == Terminate)
-    {
-        interp.scriptFinished(script);
-    }
+    script->runTick();
 }
 
-void ACScript_Write(ACScript const *th)
+void ACScript::write(Writer *writer) const
 {
-    DENG_ASSERT(th != 0);
+    Writer_WriteByte(writer, 1); // Write a version byte.
 
-    SV_WriteByte(1); // Write a version byte.
-
-    SV_WriteLong(SV_ThingArchiveId(th->activator));
-    SV_WriteLong(P_ToIndex(th->line));
-    SV_WriteLong(th->side);
-    SV_WriteLong(th->number);
-    SV_WriteLong(th->infoIndex);
-    SV_WriteLong(th->delayCount);
+    Writer_WriteInt32(writer, SV_ThingArchiveId(activator));
+    Writer_WriteInt32(writer, P_ToIndex(line));
+    Writer_WriteInt32(writer, side);
+    Writer_WriteInt32(writer, number);
+    Writer_WriteInt32(writer, infoIndex);
+    Writer_WriteInt32(writer, delayCount);
     for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
     {
-        SV_WriteLong(th->stack[i]);
+        Writer_WriteInt32(writer, stack[i]);
     }
-    SV_WriteLong(th->stackPtr);
+    Writer_WriteInt32(writer, stackPtr);
     for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
     {
-        SV_WriteLong(th->vars[i]);
+        Writer_WriteInt32(writer, vars[i]);
     }
-    SV_WriteLong(((byte const *)th->pcodePtr) - interp.bytecode());
+    Writer_WriteInt32(writer, ((byte const *)pcodePtr) - interpreter().bytecode());
 }
 
-int ACScript_Read(ACScript *th, int mapVersion)
+int ACScript::read(Reader *reader, int mapVersion)
 {
-    DENG_ASSERT(th != 0);
-
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
 
-        th->activator       = (mobj_t *) SV_ReadLong();
-        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
+        activator       = (mobj_t *) Reader_ReadInt32(reader);
+        activator       = SV_GetArchiveThing(PTR2INT(activator), &activator);
 
         int temp = SV_ReadLong();
         if(temp >= 0)
         {
-            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
-            DENG_ASSERT(th->line != 0);
+            line        = (Line *)P_ToPtr(DMU_LINE, temp);
+            DENG_ASSERT(line != 0);
         }
         else
         {
-            th->line        = 0;
+            line        = 0;
         }
 
-        th->side            = SV_ReadLong();
-        th->number          = SV_ReadLong();
-        th->infoIndex       = SV_ReadLong();
-        th->delayCount      = SV_ReadLong();
+        side            = Reader_ReadInt32(reader);
+        number          = Reader_ReadInt32(reader);
+        infoIndex       = Reader_ReadInt32(reader);
+        delayCount      = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
         {
-            th->stack[i] = SV_ReadLong();
+            stack[i] = Reader_ReadInt32(reader);
         }
 
-        th->stackPtr        = SV_ReadLong();
+        stackPtr        = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
         {
-            th->vars[i] = SV_ReadLong();
+            vars[i] = Reader_ReadInt32(reader);
         }
 
-        th->pcodePtr        = (int *) (interp.bytecode() + SV_ReadLong());
+        pcodePtr        = (int *) (interpreter().bytecode() + Reader_ReadInt32(reader));
     }
     else
     {
         // Its in the old pre V4 format which serialized acs_t
         // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
 
         // Start of used data members.
-        th->activator       = (mobj_t*) SV_ReadLong();
-        th->activator       = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
+        activator       = (mobj_t *) Reader_ReadInt32(reader);
+        activator       = SV_GetArchiveThing(PTR2INT(activator), &activator);
 
-        int temp = SV_ReadLong();
+        int temp = Reader_ReadInt32(reader);
         if(temp >= 0)
         {
-            th->line        = (Line *)P_ToPtr(DMU_LINE, temp);
-            DENG_ASSERT(th->line != 0);
+            line        = (Line *)P_ToPtr(DMU_LINE, temp);
+            DENG_ASSERT(line != 0);
         }
         else
         {
-            th->line        = 0;
+            line        = 0;
         }
 
-        th->side            = SV_ReadLong();
-        th->number          = SV_ReadLong();
-        th->infoIndex       = SV_ReadLong();
-        th->delayCount      = SV_ReadLong();
+        side            = Reader_ReadInt32(reader);
+        number          = Reader_ReadInt32(reader);
+        infoIndex       = Reader_ReadInt32(reader);
+        delayCount      = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
         {
-            th->stack[i] = SV_ReadLong();
+            stack[i] = Reader_ReadInt32(reader);
         }
 
-        th->stackPtr        = SV_ReadLong();
+        stackPtr        = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
         {
-            th->vars[i] = SV_ReadLong();
+            vars[i] = Reader_ReadInt32(reader);
         }
 
-        th->pcodePtr        = (int *) (interp.bytecode() + SV_ReadLong());
+        pcodePtr        = (int *) (interpreter().bytecode() + Reader_ReadInt32(reader));
     }
 
-    th->thinker.function = (thinkfunc_t) ACScript_Thinker;
+    thinker.function = (thinkfunc_t) ACScript_Thinker;
 
     return true; // Add this thinker.
 }

@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_PLAY_ACS_H
-#define LIBHEXEN_PLAY_ACS_H
+#ifndef LIBHEXEN_PLAY_ACSCRIPT_H
+#define LIBHEXEN_PLAY_ACSCRIPT_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -35,37 +35,6 @@
 #define ACS_STACK_DEPTH         32
 
 #ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * To be called when a new game session begins to initialize ACS scripting.
- */
-void P_InitACScript(void);
-
-void P_LoadACScripts(lumpnum_t lump);
-
-dd_bool P_StartACScript(int number, uint map, byte *args, mobj_t *activator, Line *line, int side);
-
-dd_bool P_TerminateACScript(int number, uint map);
-
-dd_bool P_SuspendACScript(int number, uint map);
-
-void P_ACScriptTagFinished(int tag);
-
-void P_ACScriptPolyobjFinished(int tag);
-
-void P_ACScriptRunDeferredTasks(uint map/*Uri const *map*/);
-
-void P_WriteGlobalACScriptData(void);
-void P_ReadGlobalACScriptData(int saveVersion);
-
-void P_WriteMapACScriptData(void);
-void P_ReadMapACScriptData(void);
-
-#ifdef __cplusplus
-} // extern "C"
-
 class ACScriptInterpreter;
 #endif
 
@@ -88,11 +57,25 @@ typedef struct acscript_s {
 #ifdef __cplusplus
     ACScriptInterpreter &interpreter() const;
 
+    void runTick();
+
+    /**
+     * Serialize the thinker to the currently open save file.
+     */
+    void write(Writer *writer) const;
+
+    /**
+     * Deserialize the thinker from the currently open save file.
+     */
+    int read(Reader *reader, int mapVersion);
+
+public: /// @todo make private:
     void push(int value);
     int pop();
     int top() const;
     void drop();
-#endif
+
+#endif // __cplusplus
 } ACScript;
 
 #ifdef __cplusplus
@@ -101,19 +84,11 @@ extern "C" {
 
 void ACScript_Thinker(ACScript *script);
 
-/**
- * Serialize the thinker to the currently open save file.
- */
-void ACScript_Write(ACScript const *script);
-
-/**
- * Deserialize the thinker from the currently open save file.
- */
-int ACScript_Read(ACScript *script, int mapVersion);
-
 #ifdef __cplusplus
 } // extern "C"
+#endif
 
+#ifdef __cplusplus
 struct BytecodeScriptInfo;
 
 /**
@@ -150,8 +125,8 @@ public:
      *
      * @return  @c true iff a script was newly started (or deferred).
      */
-    bool startScript(int scriptNumber, uint map, byte *args, mobj_t *activator = 0,
-        Line *line = 0, int side = 0);
+    bool startScript(int scriptNumber, uint map, byte const args[4],
+                     mobj_t *activator = 0, Line *line = 0, int side = 0);
 
     bool suspendScript(int scriptNumber, uint map);
 
@@ -202,24 +177,24 @@ public:
      */
     void scriptFinished(ACScript *script);
 
-    void writeWorldScriptData();
-    void readWorldScriptData(int saveVersion);
+    void writeWorldScriptData(Writer *writer);
+    void readWorldScriptData(Reader *reader, int saveVersion);
 
-    void writeMapScriptData();
-    void readMapScriptData();
+    void writeMapScriptData(Writer *writer);
+    void readMapScriptData(Reader *reader);
 
 public: /// @todo make private:
     BytecodeScriptInfo &scriptInfoByIndex(int index);
 
     BytecodeScriptInfo &scriptInfoFor(ACScript *script);
 
-private:
     /**
      * Returns the logical index of a @a scriptNumber; otherwise @c -1.
      */
     int scriptInfoIndex(int scriptNumber);
 
-    ACScript *newACScript(BytecodeScriptInfo &info, byte const *args, int delayCount = 0);
+private:
+    ACScript *newACScript(BytecodeScriptInfo &info, byte const args[4], int delayCount = 0);
 
     /**
      * A deferred task is enqueued when a script is started on a map not currently loaded.
@@ -231,7 +206,7 @@ private:
         byte args[4];
     };
 
-    bool newDeferredTask(uint map, int scriptNumber, byte const *args);
+    bool newDeferredTask(uint map, int scriptNumber, byte const args[4]);
 
     byte const *_pcode; ///< Start of the loaded bytecode.
 
@@ -246,4 +221,37 @@ private:
 };
 #endif
 
-#endif // LIBHEXEN_PLAY_ACS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * To be called when a new game session begins to initialize ACS scripting.
+ */
+void P_InitACScript(void);
+
+void P_LoadACScripts(lumpnum_t lump);
+
+dd_bool P_StartACScript(int number, uint map, byte const args[4], mobj_t *activator, Line *line, int side);
+
+dd_bool P_TerminateACScript(int number, uint map);
+
+dd_bool P_SuspendACScript(int number, uint map);
+
+void P_ACScriptTagFinished(int tag);
+
+void P_ACScriptPolyobjFinished(int tag);
+
+void P_ACScriptRunDeferredTasks(uint map/*Uri const *map*/);
+
+void P_WriteGlobalACScriptData(Writer *writer);
+void P_ReadGlobalACScriptData(Reader *reader, int saveVersion);
+
+void P_WriteMapACScriptData(Writer *writer);
+void P_ReadMapACScriptData(Reader *reader);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBHEXEN_PLAY_ACSCRIPT_H

@@ -276,6 +276,57 @@ void T_MovePoly(void *polyThinker)
     }
 }
 
+void polyevent_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, polyobj);
+    Writer_WriteInt32(writer, intSpeed);
+    Writer_WriteInt32(writer, dist);
+    Writer_WriteInt32(writer, fangle);
+    Writer_WriteInt32(writer, FLT2FIX(speed[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(speed[VY]));
+}
+
+int polyevent_t::read(Reader *reader, int mapVersion)
+{
+    if(mapVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        // Start of used data members.
+        polyobj     = Reader_ReadInt32(reader);
+        intSpeed    = Reader_ReadInt32(reader);
+        dist        = Reader_ReadInt32(reader);
+        fangle      = Reader_ReadInt32(reader);
+        speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized polyevent_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        polyobj     = Reader_ReadInt32(reader);
+        intSpeed    = Reader_ReadInt32(reader);
+        dist        = Reader_ReadInt32(reader);
+        fangle      = Reader_ReadInt32(reader);
+        speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    }
+
+    thinker.function = T_RotatePoly;
+
+    return true; // Add this thinker.
+}
+
 dd_bool EV_MovePoly(Line *line, byte *args, dd_bool timesEight, dd_bool override)
 {
     DENG_UNUSED(line);
@@ -472,6 +523,73 @@ void T_PolyDoor(void *polyDoorThinker)
     default:
         break;
     }
+}
+
+void polydoor_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    Writer_WriteByte(writer, type);
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, polyobj);
+    Writer_WriteInt32(writer, intSpeed);
+    Writer_WriteInt32(writer, dist);
+    Writer_WriteInt32(writer, totalDist);
+    Writer_WriteInt32(writer, direction);
+    Writer_WriteInt32(writer, FLT2FIX(speed[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(speed[VY]));
+    Writer_WriteInt32(writer, tics);
+    Writer_WriteInt32(writer, waitTics);
+    Writer_WriteByte(writer, close);
+}
+
+int polydoor_t::read(Reader *reader, int mapVersion)
+{
+    if(mapVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        // Start of used data members.
+        type        = podoortype_t(Reader_ReadByte(reader));
+        polyobj     = Reader_ReadInt32(reader);
+        intSpeed    = Reader_ReadInt32(reader);
+        dist        = Reader_ReadInt32(reader);
+        totalDist   = Reader_ReadInt32(reader);
+        direction   = Reader_ReadInt32(reader);
+        speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+        tics        = Reader_ReadInt32(reader);
+        waitTics    = Reader_ReadInt32(reader);
+        close       = Reader_ReadByte(reader);
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized polydoor_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        polyobj     = Reader_ReadInt32(reader);
+        intSpeed    = Reader_ReadInt32(reader);
+        dist        = Reader_ReadInt32(reader);
+        totalDist   = Reader_ReadInt32(reader);
+        direction   = Reader_ReadInt32(reader);
+        speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+        tics        = Reader_ReadInt32(reader);
+        waitTics    = Reader_ReadInt32(reader);
+        type        = podoortype_t(Reader_ReadByte(reader));
+        close       = Reader_ReadByte(reader);
+    }
+
+    thinker.function = T_PolyDoor;
+
+    return true; // Add this thinker.
 }
 
 dd_bool EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type)

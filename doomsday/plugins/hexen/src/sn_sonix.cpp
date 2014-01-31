@@ -490,20 +490,20 @@ void SN_ChangeNodeData(int nodeNum, int seqOffset, int delayTics, int volume,
     node->currentSoundID  = currentSoundID;
 }
 
-void SN_WriteSequences()
+void SN_WriteSequences(Writer *writer)
 {
     SV_BeginSegment(ASEG_SOUNDS);
 
-    SV_WriteLong(activeSequenceCount);
+    Writer_WriteInt32(writer, activeSequenceCount);
     for(seqnode_t *node = sequences; node; node = node->next)
     {
-        SV_WriteByte(1); // Write a version byte.
+        Writer_WriteByte(writer, 1); // Write a version byte.
 
-        SV_WriteLong(node->sequence);
-        SV_WriteLong(node->delayTics);
-        SV_WriteLong(node->volume);
-        SV_WriteLong(SN_GetSequenceOffset(node->sequence, node->sequencePtr));
-        SV_WriteLong(node->currentSoundID);
+        Writer_WriteInt32(writer, node->sequence);
+        Writer_WriteInt32(writer, node->delayTics);
+        Writer_WriteInt32(writer, node->volume);
+        Writer_WriteInt32(writer, SN_GetSequenceOffset(node->sequence, node->sequencePtr));
+        Writer_WriteInt32(writer, node->currentSoundID);
 
         int i = 0;
         if(node->mobj)
@@ -522,37 +522,37 @@ void SN_WriteSequences()
         {
             // The sound's emitter is the sector, not the polyobj itself.
             difference = P_ToIndex(Sector_AtPoint_FixedPrecision(node->mobj->origin));
-            SV_WriteLong(0); // 0 -- sector sound origin.
+            Writer_WriteInt32(writer, 0); // 0 -- sector sound origin.
         }
         else
         {
-            SV_WriteLong(1); // 1 -- polyobj sound origin
+            Writer_WriteInt32(writer, 1); // 1 -- polyobj sound origin
             difference = i;
         }
 
-        SV_WriteLong(difference);
+        Writer_WriteInt32(writer, difference);
     }
 }
 
-void SN_ReadSequences(int mapVersion)
+void SN_ReadSequences(Reader *reader, int mapVersion)
 {
     SV_AssertSegment(ASEG_SOUNDS);
 
     // Reload and restart all sound sequences
-    int numSequences = SV_ReadLong();
+    int numSequences = Reader_ReadInt32(reader);
 
     for(int i = 0; i < numSequences; ++i)
     {
-        /*int ver =*/ (mapVersion >= 3)? SV_ReadByte() : 0;
+        /*int ver =*/ (mapVersion >= 3)? Reader_ReadByte(reader) : 0;
 
-        int sequence    = SV_ReadLong();
-        int delayTics   = SV_ReadLong();
-        int volume      = SV_ReadLong();
-        int seqOffset   = SV_ReadLong();
+        int sequence    = Reader_ReadInt32(reader);
+        int delayTics   = Reader_ReadInt32(reader);
+        int volume      = Reader_ReadInt32(reader);
+        int seqOffset   = Reader_ReadInt32(reader);
 
-        int soundID     = SV_ReadLong();
-        int polySnd     = SV_ReadLong();
-        int secNum      = SV_ReadLong();
+        int soundID     = Reader_ReadInt32(reader);
+        int polySnd     = Reader_ReadInt32(reader);
+        int secNum      = Reader_ReadInt32(reader);
 
         mobj_t *sndMobj = 0;
         if(!polySnd)

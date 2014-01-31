@@ -1,56 +1,36 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_ceiling.cpp  Moving ceilings (lowering, crushing, raising).
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * @authors Copyright © 1999-2000 Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * p_ceilings.c : Moving ceilings (lowering, crushing, raising).
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
+#include "p_ceiling.h"
 
 #include "dmu_lib.h"
 #include "p_mapspec.h"
 #include "p_sound.h"
 #include "p_start.h"
 #include "p_tick.h"
-#include "p_ceiling.h"
-
-// MACROS ------------------------------------------------------------------
 
 // Sounds played by the ceilings when changing state or moving.
 // jHexen uses sound sequences, so it's are defined as 'SFX_NONE'.
@@ -68,30 +48,14 @@
 # define SFX_CEILINGSTOP        (SFX_NONE)
 #endif
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 /**
  * Called when a moving ceiling needs to be removed.
  *
  * @param ceiling       Ptr to the ceiling to be stopped.
  */
-static void stopCeiling(ceiling_t* ceiling)
+static void stopCeiling(ceiling_t *ceiling)
 {
-    P_ToXSector(ceiling->sector)->specialData = NULL;
+    P_ToXSector(ceiling->sector)->specialData = 0;
 #if __JHEXEN__
     P_ACScriptTagFinished(P_ToXSector(ceiling->sector)->tag);
 #endif
@@ -100,8 +64,8 @@ static void stopCeiling(ceiling_t* ceiling)
 
 void T_MoveCeiling(void *ceilingThinkerPtr)
 {
-    ceiling_t* ceiling = ceilingThinkerPtr;
-    result_e            res;
+    ceiling_t *ceiling = (ceiling_t *)ceilingThinkerPtr;
+    result_e res;
 
     switch(ceiling->state)
     {
@@ -115,14 +79,14 @@ void T_MoveCeiling(void *ceilingThinkerPtr)
         if(!(mapTime & 7))
         {
 # if __JHERETIC__
-            S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
+            S_PlaneSound((Plane *)P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
 # else
             switch(ceiling->type)
             {
             case CT_SILENTCRUSHANDRAISE:
                 break;
             default:
-                S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
+                S_PlaneSound((Plane *)P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
                 break;
             }
 # endif
@@ -132,7 +96,7 @@ void T_MoveCeiling(void *ceilingThinkerPtr)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_GetPtrp(ceiling->sector, DMU_EMITTER));
+            SN_StopSequence((mobj_t *)P_GetPtrp(ceiling->sector, DMU_EMITTER));
 #endif
             switch(ceiling->type)
             {
@@ -145,7 +109,7 @@ void T_MoveCeiling(void *ceilingThinkerPtr)
                 break;
 # if !__JHERETIC__
             case CT_SILENTCRUSHANDRAISE:
-                S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGSTOP);
+                S_PlaneSound((Plane *)P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGSTOP);
 # endif
             case CT_CRUSHANDRAISEFAST:
 #endif
@@ -176,14 +140,14 @@ void T_MoveCeiling(void *ceilingThinkerPtr)
         if(!(mapTime & 7))
         {
 # if __JHERETIC__
-            S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
+            S_PlaneSound((Plane *)P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
 # else
             switch(ceiling->type)
             {
             case CT_SILENTCRUSHANDRAISE:
                 break;
             default:
-                S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
+                S_PlaneSound((Plane *)P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGMOVE);
             }
 # endif
         }
@@ -192,13 +156,13 @@ void T_MoveCeiling(void *ceilingThinkerPtr)
         if(res == pastdest)
         {
 #if __JHEXEN__
-            SN_StopSequence(P_GetPtrp(ceiling->sector, DMU_EMITTER));
+            SN_StopSequence((mobj_t *)P_GetPtrp(ceiling->sector, DMU_EMITTER));
 #endif
             switch(ceiling->type)
             {
 #if __JDOOM__ || __JDOOM64__
             case CT_SILENTCRUSHANDRAISE:
-                S_PlaneSound(P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGSTOP);
+                S_PlaneSound((Plane *)P_GetPtrp(ceiling->sector, DMU_CEILING_PLANE), SFX_CEILINGSTOP);
                 ceiling->speed = CEILSPEED;
                 ceiling->state = CS_UP;
                 break;
@@ -264,37 +228,139 @@ void T_MoveCeiling(void *ceilingThinkerPtr)
     }
 }
 
+void ceiling_t::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 2); // Write a version byte.
+
+    Writer_WriteByte(writer, (byte) type);
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteInt16(writer, (int)bottomHeight);
+    Writer_WriteInt16(writer, (int)topHeight);
+    Writer_WriteInt32(writer, FLT2FIX(speed));
+
+    Writer_WriteByte(writer, crush);
+
+    Writer_WriteByte(writer, (byte) state);
+    Writer_WriteInt32(writer, tag);
+    Writer_WriteByte(writer, (byte) oldState);
+}
+
+int ceiling_t::read(Reader *reader, int mapVersion)
+{
+#if __JHEXEN__
+    if(mapVersion >= 4)
+#else
+    if(mapVersion >= 5)
+#endif
+    {
+        // Note: the thinker class byte has already been read.
+        int ver = Reader_ReadByte(reader); // version byte.
+
+        thinker.function = T_MoveCeiling;
+
+#if !__JHEXEN__
+        // Should we put this into stasis?
+        if(mapVersion == 5)
+        {
+            if(!Reader_ReadByte(reader))
+                Thinker_SetStasis(&thinker, true);
+        }
+#endif
+
+        type         = (ceilingtype_e) Reader_ReadByte(reader);
+
+        sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        bottomHeight = (float) Reader_ReadInt16(reader);
+        topHeight    = (float) Reader_ReadInt16(reader);
+        speed        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+        crush        = Reader_ReadByte(reader);
+
+        if(ver == 2)
+            state    = ceilingstate_e(Reader_ReadByte(reader));
+        else
+            state    = ceilingstate_e(Reader_ReadInt32(reader) == -1? CS_DOWN : CS_UP);
+
+        tag          = Reader_ReadInt32(reader);
+
+        if(ver == 2)
+            oldState = ceilingstate_e(Reader_ReadByte(reader));
+        else
+            state    = (Reader_ReadInt32(reader) == -1? CS_DOWN : CS_UP);
+    }
+    else
+    {
+        // Its in the old format which serialized ceiling_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+#if __JHEXEN__
+        // A 32bit pointer to sector, serialized.
+        sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        type         = ceilingtype_e(Reader_ReadInt32(reader));
+#else
+        type         = ceilingtype_e(Reader_ReadInt32(reader));
+
+        // A 32bit pointer to sector, serialized.
+        sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+#endif
+
+        bottomHeight = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        topHeight    = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        speed        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+        crush        = Reader_ReadInt32(reader);
+        state        = (Reader_ReadInt32(reader) == -1? CS_DOWN : CS_UP);
+        tag          = Reader_ReadInt32(reader);
+        oldState     = (Reader_ReadInt32(reader) == -1? CS_DOWN : CS_UP);
+
+        thinker.function = T_MoveCeiling;
+#if !__JHEXEN__
+        if(!((thinker_t *)junk)->function)
+            Thinker_SetStasis(&thinker, true);
+#endif
+    }
+
+    P_ToXSector(sector)->specialData = this;
+
+    return true; // Add this thinker.
+}
+
 #if __JDOOM64__
-static int EV_DoCeiling2(Line* line, int tag, float basespeed,
-                         ceilingtype_e type)
+static int EV_DoCeiling2(Line *line, int tag, float basespeed, ceilingtype_e type)
 #elif __JHEXEN__
-static int EV_DoCeiling2(byte* arg, int tag, float basespeed, ceilingtype_e type)
+static int EV_DoCeiling2(byte *arg, int tag, float basespeed, ceilingtype_e type)
 #else
 static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #endif
 {
-    int             rtn = 0;
-    xsector_t*      xsec;
-    Sector*         sec = NULL;
-    ceiling_t*      ceiling;
-    iterlist_t*     list;
+    iterlist_t *list = P_GetSectorIterListForTag(tag, false);
+    if(!list) return 0;
 
-    list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return rtn;
+    int rtn = 0;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
-    while((sec = IterList_MoveIterator(list)) != NULL)
+
+    Sector *sec = 0;
+    while((sec = (Sector *)IterList_MoveIterator(list)))
     {
-        xsec = P_ToXSector(sec);
+        xsector_t *xsec = P_ToXSector(sec);
 
         if(xsec->specialData)
             continue;
 
         // new door thinker
         rtn = 1;
-        ceiling = Z_Calloc(sizeof(*ceiling), PU_MAP, 0);
+        ceiling_t *ceiling = (ceiling_t *)Z_Calloc(sizeof(*ceiling), PU_MAP, 0);
 
         ceiling->thinker.function = T_MoveCeiling;
         Thinker_Add(&ceiling->thinker);
@@ -359,8 +425,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
         case CT_CUSTOM: // jd64
             {
             //bitmip? wha?
-            Side* front = P_GetPtrp(line, DMU_FRONT);
-            Side* back = P_GetPtrp(line, DMU_BACK);
+            Side *front = (Side *)P_GetPtrp(line, DMU_FRONT);
+            Side *back = (Side *)P_GetPtrp(line, DMU_BACK);
             coord_t bitmipL = 0, bitmipR = 0;
 
             bitmipL = P_GetDoublep(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
@@ -431,7 +497,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 #if __JHEXEN__
         if(rtn)
         {
-            SN_StartSequence(P_GetPtrp(ceiling->sector, DMU_EMITTER),
+            SN_StartSequence((mobj_t *)P_GetPtrp(ceiling->sector, DMU_EMITTER),
                              SEQ_PLATFORM + P_ToXSector(ceiling->sector)->seqType);
         }
 #endif
@@ -439,9 +505,6 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
     return rtn;
 }
 
-/**
- * Move a ceiling up/down.
- */
 #if __JHEXEN__
 int EV_DoCeiling(Line *line, byte *args, ceilingtype_e type)
 #else
@@ -452,7 +515,7 @@ int EV_DoCeiling(Line *line, ceilingtype_e type)
     return EV_DoCeiling2(args, (int) args[0], (float) args[1] * (1.0 / 8),
                          type);
 #else
-    int         rtn = 0;
+    int rtn = 0;
     // Reactivate in-stasis ceilings...for certain types.
     switch(type)
     {
@@ -476,15 +539,16 @@ int EV_DoCeiling(Line *line, ceilingtype_e type)
 }
 
 #if !__JHEXEN__
-typedef struct {
-    short               tag;
-    int                 count;
-} activateceilingparams_t;
-
-static int activateCeiling(thinker_t* th, void* context)
+struct activateceilingparams_t
 {
-    ceiling_t* ceiling = (ceiling_t*) th;
-    activateceilingparams_t* params = (activateceilingparams_t*) context;
+    short tag;
+    int count;
+};
+
+static int activateCeiling(thinker_t *th, void *context)
+{
+    ceiling_t *ceiling = (ceiling_t *) th;
+    activateceilingparams_t *params = (activateceilingparams_t *) context;
 
     if(ceiling->tag == (int) params->tag && ceiling->thinker.inStasis)
     {
@@ -496,13 +560,6 @@ static int activateCeiling(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-/**
- * Reactivates all stopped crushers with the right tag.
- *
- * @param tag           Tag of ceilings to activate.
- *
- * @return              @c true, if a ceiling is activated.
- */
 int P_CeilingActivate(short tag)
 {
     activateceilingparams_t params;
@@ -515,28 +572,30 @@ int P_CeilingActivate(short tag)
 }
 #endif
 
-typedef struct {
-    short               tag;
-    int                 count;
-} deactivateceilingparams_t;
-
-static int deactivateCeiling(thinker_t* th, void* context)
+struct deactivateceilingparams_t
 {
-    ceiling_t*          ceiling = (ceiling_t*) th;
-    deactivateceilingparams_t* params =
-        (deactivateceilingparams_t*) context;
+    short tag;
+    int count;
+};
+
+static int deactivateCeiling(thinker_t *th, void *context)
+{
+    ceiling_t *ceiling = (ceiling_t *) th;
+    deactivateceilingparams_t *params = (deactivateceilingparams_t *) context;
 
 #if __JHEXEN__
     if(ceiling->tag == (int) params->tag)
-    {   // Destroy it.
-        SN_StopSequence(P_GetPtrp(ceiling->sector, DMU_EMITTER));
+    {
+        // Destroy it.
+        SN_StopSequence((mobj_t *)P_GetPtrp(ceiling->sector, DMU_EMITTER));
         stopCeiling(ceiling);
         params->count++;
         return true; // Stop iteration.
     }
 #else
     if(!ceiling->thinker.inStasis && ceiling->tag == (int) params->tag)
-    {   // Put it into stasis.
+    {
+        // Put it into stasis.
         ceiling->oldState = ceiling->state;
         Thinker_SetStasis(&ceiling->thinker, true);
         params->count++;
@@ -545,13 +604,6 @@ static int deactivateCeiling(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-/**
- * Stops all active ceilings with the right tag.
- *
- * @param tag           Tag of ceilings to stop.
- *
- * @return              @c true, if a ceiling put in stasis.
- */
 int P_CeilingDeactivate(short tag)
 {
     deactivateceilingparams_t params;
