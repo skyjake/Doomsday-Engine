@@ -38,7 +38,9 @@ DENG2_PIMPL(VRConfig)
         , eyeHeightInMapUnits(41)
         , eyeShift(0)
         , frustumShift(true)
-    {}
+    {
+        ovr.init();
+    }
 };
 
 VRConfig::VRConfig()

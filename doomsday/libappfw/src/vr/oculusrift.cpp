@@ -19,6 +19,10 @@
 
 #include "de/OculusRift"
 
+#include <de/Lockable>
+#include <de/Guard>
+#include <de/App>
+
 #ifdef DENG_HAVE_OCULUS_API
 #  include <OVR.h>
 #endif
@@ -35,14 +39,18 @@ public:
         , yaw(0)
         , _latency(0)
     {
+#ifdef DENG2_DEBUG
+        OVR::System::Init(OVR::Log::ConfigureDefaultLog(OVR::LogMask_All));
+#else
         OVR::System::Init();
+#endif
         _fusionResult = new OVR::SensorFusion();
         _manager = *OVR::DeviceManager::Create();
         _hmd = *_manager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
         if(_hmd)
         {
             _infoLoaded = _hmd->GetDeviceInfo(&_info);
-            _sensor = _hmd->GetSensor();
+            _sensor = *_hmd->GetSensor();
         }
         else
         {
@@ -64,21 +72,27 @@ public:
         OVR::System::Destroy();
     }
 
-    OVR::HMDInfo const &getInfo() const {
+    OVR::HMDInfo const &getInfo() const
+    {
         return _info;
     }
 
-    bool isGood() const {
+    bool isGood() const
+    {
         return _sensor.GetPtr() != NULL;
     }
 
     void update()
     {
         OVR::Quatf quaternion;
-        if (_latency == 0)
+        if(_latency == 0)
+        {
             quaternion = _fusionResult->GetOrientation();
+        }
         else
+        {
             quaternion = _fusionResult->GetPredictedOrientation();
+        }
         quaternion.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
     }
 
@@ -86,6 +100,7 @@ public:
     {
         if (_latency == lat)
             return; // no change
+
         _latency = lat;
         if (_latency == 0)
         {
@@ -118,8 +133,9 @@ private:
 };
 #endif
 
-DENG2_PIMPL(OculusRift)
+DENG2_PIMPL(OculusRift), public Lockable
 {
+    bool inited;
     Vector2f screenSize;
     float lensSeparationDistance;
     Vector4f hmdWarpParam;
@@ -135,6 +151,7 @@ DENG2_PIMPL(OculusRift)
 
     Instance(Public *i)
         : Base(i)
+        , inited(false)
         , screenSize(0.14976f, 0.09360f)
         , lensSeparationDistance(0.0635f)
         , hmdWarpParam(1.0f, 0.220f, 0.240f, 0.000f)
@@ -150,16 +167,20 @@ DENG2_PIMPL(OculusRift)
 
     ~Instance()
     {
+        DENG2_GUARD(this);
         deinit();
     }
 
-    bool init()
+    void init()
     {
+        if(inited) return;
+        inited = true;
+
 #ifdef DENG_HAVE_OCULUS_API
-        if(oculusTracker)
-        {
-            return oculusTracker->isGood(); // Already inited.
-        }
+        DENG2_GUARD(this);
+
+        DENG2_ASSERT_IN_MAIN_THREAD();
+        DENG2_ASSERT(!oculusTracker);
 
         oculusTracker = new OculusTracker;
 
@@ -180,17 +201,18 @@ DENG2_PIMPL(OculusRift)
                         info.ChromaAbCorrection[2],
                         info.ChromaAbCorrection[3]);
             eyeToScreenDistance = info.EyeToScreenDistance;
-            return true;
         }
-        return false;
-#else
-        return false;
 #endif
     }
 
     void deinit()
     {
+        if(!inited) return;
+        inited = false;
+
 #ifdef DENG_HAVE_OCULUS_API
+        DENG2_GUARD(this);
+
         delete oculusTracker;
         oculusTracker = 0;
 #endif
@@ -202,7 +224,8 @@ OculusRift::OculusRift() : d(new Instance(this))
 
 bool OculusRift::init()
 {
-    return d->init();
+    d->init();
+    return isReady();
 }
 
 void OculusRift::deinit()
@@ -243,6 +266,7 @@ float OculusRift::lensSeparationDistance() const
 void OculusRift::setPredictionLatency(float latency)
 {
 #ifdef DENG_HAVE_OCULUS_API
+    DENG2_GUARD(d);
     if(isReady())
     {
         d->oculusTracker->setLatency(latency);
@@ -253,6 +277,7 @@ void OculusRift::setPredictionLatency(float latency)
 float OculusRift::predictionLatency() const
 {
 #ifdef DENG_HAVE_OCULUS_API
+    DENG2_GUARD(d);
     if(isReady())
     {
         return d->oculusTracker->latency();
@@ -265,13 +290,9 @@ float OculusRift::predictionLatency() const
 bool OculusRift::isReady() const
 {
 #ifdef DENG_HAVE_OCULUS_API
-    if(!d->oculusTracker)
-    {
-        if(!d->init()) return false;
-    }
-    return d->oculusTracker->isGood();
+    DENG2_GUARD(d);
+    return d->inited && d->oculusTracker->isGood();
 #else
-    // No API; No head tracking.
     return false;
 #endif
 }
@@ -284,6 +305,8 @@ void OculusRift::allowUpdate()
 void OculusRift::update()
 {
 #ifdef DENG_HAVE_OCULUS_API
+    DENG2_GUARD(d);
+
     if(d->headOrientationUpdateIsAllowed && isReady())
     {
         d->oculusTracker->update();
@@ -296,6 +319,7 @@ Vector3f OculusRift::headOrientation() const
 {
     de::Vector3f result;
 #ifdef DENG_HAVE_OCULUS_API
+    DENG2_GUARD(d);
     if(isReady())
     {
         result[0] = d->oculusTracker->pitch;

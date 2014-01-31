@@ -312,6 +312,11 @@ void App::setGame(game::Game &game)
 
 bool App::inMainThread()
 {
+    if(!App::appExists())
+    {
+        // No app even created yet, must be main thread.
+        return true;
+    }
     return DENG2_APP->d->mainThread == QThread::currentThread();
 }
 
