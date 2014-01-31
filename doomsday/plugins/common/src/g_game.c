@@ -2617,7 +2617,7 @@ void G_DoLeaveMap(void)
     {
         Uri *mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster)
+        if(P_MapInfo(mapUri)->cluster == P_MapInfo(nextMapUri)->cluster)
         {
             if(!deathmatch)
             {
