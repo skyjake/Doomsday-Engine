@@ -31,31 +31,6 @@
 #include <cstring>
 #include <cstdio>
 
-enum ACScriptState
-{
-    Inactive,
-    Running,
-    Suspended,
-    WaitingForTag,
-    WaitingForPolyobj,
-    WaitingForScript,
-    Terminating
-};
-
-static char const *scriptStateAsText(ACScriptState state)
-{
-    char const *names[] = {
-        "Inactive",
-        "Running",
-        "Suspended",
-        "Waiting for tag",
-        "Waiting for polyobj",
-        "Waiting for script",
-        "Terminating"
-    };
-    return names[state];
-}
-
 /**
  * Bytecode header. Read directly from the map lump.
  */
@@ -84,7 +59,7 @@ struct BytecodeScriptInfo
 
     // Current state:
     /// @todo Move to a separate array, in ACScriptInterpreter
-    ACScriptState state;
+    ACScriptInterpreter::ScriptState state;
     int waitValue;
 };
 
@@ -600,7 +575,7 @@ void ACScriptInterpreter::readMapScriptData(Reader *reader, int /*mapVersion*/)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
 
-        info.state     = ACScriptState( Reader_ReadInt16(reader) );
+        info.state     = ScriptState( Reader_ReadInt16(reader) );
         info.waitValue = Reader_ReadInt16(reader);
     }
 
@@ -672,7 +647,7 @@ ACS_COMMAND(Terminate)
 
 ACS_COMMAND(Suspend)
 {
-    args.scriptInfo->state = Suspended;
+    args.scriptInfo->state = ACScriptInterpreter::Suspended;
     return Stop;
 }
 
@@ -1117,28 +1092,28 @@ ACS_COMMAND(ThingCountDirect)
 ACS_COMMAND(TagWait)
 {
     args.scriptInfo->waitValue = S_POP();
-    args.scriptInfo->state = WaitingForTag;
+    args.scriptInfo->state = ACScriptInterpreter::WaitingForTag;
     return Stop;
 }
 
 ACS_COMMAND(TagWaitDirect)
 {
     args.scriptInfo->waitValue = LONG(*S_PCODEPTR++);
-    args.scriptInfo->state = WaitingForTag;
+    args.scriptInfo->state = ACScriptInterpreter::WaitingForTag;
     return Stop;
 }
 
 ACS_COMMAND(PolyWait)
 {
     args.scriptInfo->waitValue = S_POP();
-    args.scriptInfo->state = WaitingForPolyobj;
+    args.scriptInfo->state = ACScriptInterpreter::WaitingForPolyobj;
     return Stop;
 }
 
 ACS_COMMAND(PolyWaitDirect)
 {
     args.scriptInfo->waitValue = LONG(*S_PCODEPTR++);
-    args.scriptInfo->state = WaitingForPolyobj;
+    args.scriptInfo->state = ACScriptInterpreter::WaitingForPolyobj;
     return Stop;
 }
 
@@ -1326,14 +1301,14 @@ ACS_COMMAND(LineSide)
 ACS_COMMAND(ScriptWait)
 {
     args.scriptInfo->waitValue = S_POP();
-    args.scriptInfo->state = WaitingForScript;
+    args.scriptInfo->state = ACScriptInterpreter::WaitingForScript;
     return Stop;
 }
 
 ACS_COMMAND(ScriptWaitDirect)
 {
     args.scriptInfo->waitValue = LONG(*S_PCODEPTR++);
-    args.scriptInfo->state = WaitingForScript;
+    args.scriptInfo->state = ACScriptInterpreter::WaitingForScript;
     return Stop;
 }
 
@@ -1745,13 +1720,13 @@ void ACScript::runTick()
 {
     ACScriptInterpreter &interp = interpreter();
     BytecodeScriptInfo &info = interp.scriptInfoFor(this);
-    if(info.state == Terminating)
+    if(info.state == ACScriptInterpreter::Terminating)
     {
         interp.scriptFinished(this);
         return;
     }
 
-    if(info.state != Running)
+    if(info.state != ACScriptInterpreter::Running)
     {
         return;
     }
@@ -1796,11 +1771,7 @@ void ACScript::drop()
     stackPtr--;
 }
 
-void ACScript_Thinker(ACScript *script)
-{
-    DENG_ASSERT(script != 0);
-    script->runTick();
-}
+
 
 void ACScript::write(Writer *writer) const
 {
@@ -1911,21 +1882,85 @@ int ACScript::read(Reader *reader, int mapVersion)
     return true; // Add this thinker.
 }
 
-D_CMD(ScriptInfo)
+AutoStr *ACScriptInterpreter::scriptName(int scriptNumber)
+{
+    BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber);
+    if(!info)
+    {
+        return AutoStr_FromTextStd("(invalid-scriptnumber)");
+    }
+    bool const open = (info->flags & BytecodeScriptInfo::Open) != 0;
+    return Str_Appendf(AutoStr_NewStd(), "#%i%s", scriptNumber, open? " (Open)" : "");
+}
+
+AutoStr *ACScriptInterpreter::scriptDescription(int scriptNumber)
+{
+    BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber);
+    if(!info)
+    {
+        return AutoStr_FromTextStd("(invalid-scriptnumber)");
+    }
+
+    char const *stateLabels[] = {
+        "Inactive",
+        "Running",
+        "Suspended",
+        "Waiting for tag",
+        "Waiting for polyobj",
+        "Waiting for script",
+        "Terminating"
+    };
+
+    return Str_Appendf(AutoStr_NewStd(), "ACScript " DE2_ESC(b) "%s\n"
+                                         DE2_ESC(l) "State: " DE2_ESC(.) DE2_ESC(i) "%s" DE2_ESC(.)
+                                         DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) "%i",
+                                         Str_Text(scriptName(scriptNumber)),
+                                         stateLabels[info->state], info->waitValue);
+}
+
+void ACScript_Thinker(ACScript *script)
+{
+    DENG_ASSERT(script != 0);
+    script->runTick();
+}
+
+D_CMD(InspectACScript)
 {
     DENG_UNUSED(src);
 
-    int whichOne = argc == 2? atoi(argv[1]) : -1;
+    if(!interp.scriptCount())
+    {
+        App_Log(DE2_SCR_MSG, "No ACScripts are currently loaded.");
+        return true;
+    }
 
+    int whichOne = atoi(argv[1]);
+    if(!interp.hasScriptEntrypoint(whichOne))
+    {
+        App_Log(DE2_SCR_WARNING, "Unknown ACScript #%i", whichOne);
+        return false;
+    }
+
+    App_Log(DE2_SCR_MSG, "%s", Str_Text(interp.scriptDescription(whichOne)));
+    return true;
+}
+
+D_CMD(ListACScripts)
+{
+    DENG_UNUSED(src);
+
+    if(!interp.scriptCount())
+    {
+        App_Log(DE2_SCR_MSG, "No ACScripts are currently loaded.");
+        return true;
+    }
+
+    App_Log(DE2_SCR_MSG, "Available ACScripts:");
     for(int i = 0; i < interp.scriptCount(); ++i)
     {
         BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
-
-        if(whichOne != -1 && whichOne != info.scriptNumber)
-            continue;
-
-        App_Log(DE2_SCR_MSG, "%d %s (a: %d, w: %d)", info.scriptNumber,
-                scriptStateAsText(info.state), info.argCount, info.waitValue);
+        App_Log(DE2_SCR_MSG, "%s - args: %i",
+                             Str_Text(interp.scriptName(info.scriptNumber)), info.argCount);
     }
 
     return true;

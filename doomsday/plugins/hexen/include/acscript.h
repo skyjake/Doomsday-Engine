@@ -100,6 +100,18 @@ public:
     int mapVars[MAX_ACS_MAP_VARS];
     int worldVars[MAX_ACS_WORLD_VARS];
 
+    /// Logical script states:
+    enum ScriptState {
+        Inactive,
+        Running,
+        Suspended,
+        WaitingForTag,
+        WaitingForPolyobj,
+        WaitingForScript,
+        Terminating
+    };
+
+public:
     ACScriptInterpreter();
 
     /**
@@ -177,6 +189,17 @@ public:
      */
     void scriptFinished(ACScript *script);
 
+    /**
+     * Composes the human-friendly, textual name of the identified @a scriptNumber.
+     */
+    AutoStr *scriptName(int scriptNumber);
+
+    /**
+     * Composes a human-friendly, styled, textual description of the current status
+     * of the identified @a scriptNumber.
+     */
+    AutoStr *scriptDescription(int scriptNumber);
+
     void writeWorldScriptData(Writer *writer);
     void readWorldScriptData(Reader *reader, int mapVersion);
 
@@ -188,12 +211,12 @@ public: /// @todo make private:
 
     BytecodeScriptInfo &scriptInfoFor(ACScript *script);
 
+private:
     /**
      * Returns the logical index of a @a scriptNumber; otherwise @c -1.
      */
     int scriptInfoIndex(int scriptNumber);
 
-private:
     ACScript *newACScript(BytecodeScriptInfo &info, byte const args[4], int delayCount = 0);
 
     /**
