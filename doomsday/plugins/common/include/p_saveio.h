@@ -58,23 +58,23 @@ void SV_InitIO(void);
 void SV_ShutdownIO(void);
 
 void SV_ConfigureSavePaths(void);
-const char* SV_SavePath(void);
+char const *SV_SavePath(void);
 #if !__JHEXEN__
-const char* SV_ClientSavePath(void);
+char const *SV_ClientSavePath(void);
 #endif
 
 /*
  * File management
  */
-LZFILE* SV_OpenFile(Str const *filePath, char const *mode);
+LZFILE *SV_OpenFile(Str const *filePath, char const *mode);
 void SV_CloseFile(void);
-LZFILE* SV_File(void);
+LZFILE *SV_File(void);
 dd_bool SV_ExistingFile(Str const *filePath);
 int SV_RemoveFile(Str const *filePath);
 void SV_CopyFile(Str const *srcPath, Str const *destPath);
 
 #if __JHEXEN__
-saveptr_t* SV_HxSavePtr(void);
+saveptr_t *SV_HxSavePtr(void);
 void SV_HxSetSaveEndPtr(void *endPtr);
 dd_bool SV_HxBytesLeft(void);
 #endif // __JHEXEN__
@@ -107,10 +107,11 @@ void SV_ReadConsistencyBytes(void);
  */
 void SV_Seek(uint offset);
 
+#if 0
 /*
  * Writing and reading values
  */
-void SV_Write(const void* data, int len);
+void SV_Write(void const *data, int len);
 void SV_WriteByte(byte val);
 #if __JHEXEN__
 void SV_WriteShort(unsigned short val);
@@ -124,14 +125,15 @@ void SV_WriteLong(long val);
 #endif
 void SV_WriteFloat(float val);
 
-void SV_Read(void* data, int len);
+void SV_Read(void *data, int len);
 byte SV_ReadByte(void);
 short SV_ReadShort(void);
 long SV_ReadLong(void);
 float SV_ReadFloat(void);
+#endif
 
-Writer* SV_NewWriter(void);
-Reader* SV_NewReader(void);
+Writer *SV_NewWriter(void);
+Reader *SV_NewReader(void);
 
 #ifdef __cplusplus
 } // extern "C"

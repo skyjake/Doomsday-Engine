@@ -119,7 +119,7 @@ static void SV_WriteMobj(thinker_t *th, Writer *writer);
 static int SV_ReadMobj(thinker_t *th, Reader *reader, int mapVersion);
 
 #if __JHEXEN__
-static void SV_WriteMovePoly(polyevent_t const *movepoly);
+static void SV_WriteMovePoly(polyevent_t const *movepoly, Writer *writer);
 static int SV_ReadMovePoly(polyevent_t *movepoly, Reader *reader, int mapVersion);
 #endif
 
@@ -1129,39 +1129,39 @@ static void SV_WritePlayer(int playernum, Writer *writer)
 
     // Version number. Increase when you make changes to the player data
     // segment format.
-    SV_WriteByte(6);
+    Writer_WriteByte(writer, 6);
 
 #if __JHEXEN__
     // Class.
-    SV_WriteByte(cfg.playerClass[playernum]);
+    Writer_WriteByte(writer, cfg.playerClass[playernum]);
 #endif
 
-    SV_WriteLong(p->playerState);
+    Writer_WriteInt32(writer, p->playerState);
 #if __JHEXEN__
-    SV_WriteLong(p->class_);    // 2nd class...?
+    Writer_WriteInt32(writer, p->class_);    // 2nd class...?
 #endif
-    SV_WriteLong(FLT2FIX(p->viewZ));
-    SV_WriteLong(FLT2FIX(p->viewHeight));
-    SV_WriteLong(FLT2FIX(p->viewHeightDelta));
+    Writer_WriteInt32(writer, FLT2FIX(p->viewZ));
+    Writer_WriteInt32(writer, FLT2FIX(p->viewHeight));
+    Writer_WriteInt32(writer, FLT2FIX(p->viewHeightDelta));
 #if !__JHEXEN__
-    SV_WriteFloat(dp->lookDir);
+    Writer_WriteFloat(writer, dp->lookDir);
 #endif
-    SV_WriteLong(FLT2FIX(p->bob));
+    Writer_WriteInt32(writer, FLT2FIX(p->bob));
 #if __JHEXEN__
-    SV_WriteLong(p->flyHeight);
-    SV_WriteFloat(dp->lookDir);
-    SV_WriteLong(p->centering);
+    Writer_WriteInt32(writer, p->flyHeight);
+    Writer_WriteFloat(writer, dp->lookDir);
+    Writer_WriteInt32(writer, p->centering);
 #endif
-    SV_WriteLong(p->health);
+    Writer_WriteInt32(writer, p->health);
 
 #if __JHEXEN__
     for(i = 0; i < getPlayerHeader()->numArmorTypes; ++i)
     {
-        SV_WriteLong(p->armorPoints[i]);
+        Writer_WriteInt32(writer, p->armorPoints[i]);
     }
 #else
-    SV_WriteLong(p->armorPoints);
-    SV_WriteLong(p->armorType);
+    Writer_WriteInt32(writer, p->armorPoints);
+    Writer_WriteInt32(writer, p->armorType);
 #endif
 
 #if __JDOOM64__ || __JHEXEN__
@@ -1169,89 +1169,89 @@ static void SV_WritePlayer(int playernum, Writer *writer)
     {
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
 
-        SV_WriteLong(type);
-        SV_WriteLong(P_InventoryCount(playernum, type));
+        Writer_WriteInt32(writer, type);
+        Writer_WriteInt32(writer, P_InventoryCount(playernum, type));
     }
-    SV_WriteLong(P_InventoryReadyItem(playernum));
+    Writer_WriteInt32(writer, P_InventoryReadyItem(playernum));
 #endif
 
     for(i = 0; i < getPlayerHeader()->numPowers; ++i)
     {
-        SV_WriteLong(p->powers[i]);
+        Writer_WriteInt32(writer, p->powers[i]);
     }
 
 #if __JHEXEN__
-    SV_WriteLong(p->keys);
+    Writer_WriteInt32(writer, p->keys);
 #else
     for(i = 0; i < getPlayerHeader()->numKeys; ++i)
     {
-        SV_WriteLong(p->keys[i]);
+        Writer_WriteInt32(writer, p->keys[i]);
     }
 #endif
 
 #if __JHEXEN__
-    SV_WriteLong(p->pieces);
+    Writer_WriteInt32(writer, p->pieces);
 #else
-    SV_WriteLong(p->backpack);
+    Writer_WriteInt32(writer, p->backpack);
 #endif
 
     for(i = 0; i < getPlayerHeader()->numFrags; ++i)
     {
-        SV_WriteLong(p->frags[i]);
+        Writer_WriteInt32(writer, p->frags[i]);
     }
 
-    SV_WriteLong(p->readyWeapon);
-    SV_WriteLong(p->pendingWeapon);
+    Writer_WriteInt32(writer, p->readyWeapon);
+    Writer_WriteInt32(writer, p->pendingWeapon);
 
     for(i = 0; i < getPlayerHeader()->numWeapons; ++i)
     {
-        SV_WriteLong(p->weapons[i].owned);
+        Writer_WriteInt32(writer, p->weapons[i].owned);
     }
 
     for(i = 0; i < getPlayerHeader()->numAmmoTypes; ++i)
     {
-        SV_WriteLong(p->ammo[i].owned);
+        Writer_WriteInt32(writer, p->ammo[i].owned);
 #if !__JHEXEN__
-        SV_WriteLong(p->ammo[i].max);
+        Writer_WriteInt32(writer, p->ammo[i].max);
 #endif
     }
 
-    SV_WriteLong(p->attackDown);
-    SV_WriteLong(p->useDown);
+    Writer_WriteInt32(writer, p->attackDown);
+    Writer_WriteInt32(writer, p->useDown);
 
-    SV_WriteLong(p->cheats);
+    Writer_WriteInt32(writer, p->cheats);
 
-    SV_WriteLong(p->refire);
+    Writer_WriteInt32(writer, p->refire);
 
-    SV_WriteLong(p->killCount);
-    SV_WriteLong(p->itemCount);
-    SV_WriteLong(p->secretCount);
+    Writer_WriteInt32(writer, p->killCount);
+    Writer_WriteInt32(writer, p->itemCount);
+    Writer_WriteInt32(writer, p->secretCount);
 
-    SV_WriteLong(p->damageCount);
-    SV_WriteLong(p->bonusCount);
+    Writer_WriteInt32(writer, p->damageCount);
+    Writer_WriteInt32(writer, p->bonusCount);
 #if __JHEXEN__
-    SV_WriteLong(p->poisonCount);
+    Writer_WriteInt32(writer, p->poisonCount);
 #endif
 
-    SV_WriteLong(dp->extraLight);
-    SV_WriteLong(dp->fixedColorMap);
-    SV_WriteLong(p->colorMap);
+    Writer_WriteInt32(writer, dp->extraLight);
+    Writer_WriteInt32(writer, dp->fixedColorMap);
+    Writer_WriteInt32(writer, p->colorMap);
 
     for(i = 0; i < numPSprites; ++i)
     {
-        pspdef_t       *psp = &p->pSprites[i];
+        pspdef_t *psp = &p->pSprites[i];
 
-        SV_WriteLong(PTR2INT(psp->state));
-        SV_WriteLong(psp->tics);
-        SV_WriteLong(FLT2FIX(psp->pos[VX]));
-        SV_WriteLong(FLT2FIX(psp->pos[VY]));
+        Writer_WriteInt32(writer, PTR2INT(psp->state));
+        Writer_WriteInt32(writer, psp->tics);
+        Writer_WriteInt32(writer, FLT2FIX(psp->pos[VX]));
+        Writer_WriteInt32(writer, FLT2FIX(psp->pos[VY]));
     }
 
 #if !__JHEXEN__
-    SV_WriteLong(p->didSecret);
+    Writer_WriteInt32(writer, p->didSecret);
 
     // Added in ver 2 with __JDOOM__
-    SV_WriteLong(p->flyHeight);
+    Writer_WriteInt32(writer, p->flyHeight);
 #endif
 
 #if __JHERETIC__
@@ -1259,27 +1259,27 @@ static void SV_WritePlayer(int playernum, Writer *writer)
     {
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
 
-        SV_WriteLong(type);
-        SV_WriteLong(P_InventoryCount(playernum, type));
+        Writer_WriteInt32(writer, type);
+        Writer_WriteInt32(writer, P_InventoryCount(playernum, type));
     }
-    SV_WriteLong(P_InventoryReadyItem(playernum));
-    SV_WriteLong(p->chickenPeck);
+    Writer_WriteInt32(writer, P_InventoryReadyItem(playernum));
+    Writer_WriteInt32(writer, p->chickenPeck);
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    SV_WriteLong(p->morphTics);
+    Writer_WriteInt32(writer, p->morphTics);
 #endif
 
-    SV_WriteLong(p->airCounter);
+    Writer_WriteInt32(writer, p->airCounter);
 
 #if __JHEXEN__
-    SV_WriteLong(p->jumpTics);
-    SV_WriteLong(p->worldTimer);
+    Writer_WriteInt32(writer, p->jumpTics);
+    Writer_WriteInt32(writer, p->worldTimer);
 #elif __JHERETIC__
-    SV_WriteLong(p->flameCount);
+    Writer_WriteInt32(writer, p->flameCount);
 
     // Added in ver 2
-    SV_WriteByte(p->class_);
+    Writer_WriteByte(writer, p->class_);
 #endif
 }
 
@@ -2128,32 +2128,32 @@ static void writePlayerHeader(Writer *writer)
     playerheader_t *ph = &playerHeader;
 
     SV_BeginSegment(ASEG_PLAYER_HEADER);
-    SV_WriteByte(2); // version byte
+    Writer_WriteByte(writer, 2); // version byte
 
-    ph->numPowers = NUM_POWER_TYPES;
-    ph->numKeys = NUM_KEY_TYPES;
-    ph->numFrags = MAXPLAYERS;
-    ph->numWeapons = NUM_WEAPON_TYPES;
-    ph->numAmmoTypes = NUM_AMMO_TYPES;
-    ph->numPSprites = NUMPSPRITES;
+    ph->numPowers       = NUM_POWER_TYPES;
+    ph->numKeys         = NUM_KEY_TYPES;
+    ph->numFrags        = MAXPLAYERS;
+    ph->numWeapons      = NUM_WEAPON_TYPES;
+    ph->numAmmoTypes    = NUM_AMMO_TYPES;
+    ph->numPSprites     = NUMPSPRITES;
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     ph->numInvItemTypes = NUM_INVENTORYITEM_TYPES;
 #endif
 #if __JHEXEN__
-    ph->numArmorTypes = NUMARMOR;
+    ph->numArmorTypes   = NUMARMOR;
 #endif
 
-    SV_WriteLong(ph->numPowers);
-    SV_WriteLong(ph->numKeys);
-    SV_WriteLong(ph->numFrags);
-    SV_WriteLong(ph->numWeapons);
-    SV_WriteLong(ph->numAmmoTypes);
-    SV_WriteLong(ph->numPSprites);
+    Writer_WriteInt32(writer, ph->numPowers);
+    Writer_WriteInt32(writer, ph->numKeys);
+    Writer_WriteInt32(writer, ph->numFrags);
+    Writer_WriteInt32(writer, ph->numWeapons);
+    Writer_WriteInt32(writer, ph->numAmmoTypes);
+    Writer_WriteInt32(writer, ph->numPSprites);
 #if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
-    SV_WriteLong(ph->numInvItemTypes);
+    Writer_WriteInt32(writer, ph->numInvItemTypes);
 #endif
 #if __JHEXEN__
-    SV_WriteLong(ph->numArmorTypes);
+    Writer_WriteInt32(writer, ph->numArmorTypes);
 #endif
 
     playerHeaderOK = true;
@@ -2346,43 +2346,43 @@ static void SV_WriteSector(Sector *sec, Writer *writer)
         type = sc_normal;
 
     // Type byte.
-    SV_WriteByte(type);
+    Writer_WriteByte(writer, type);
 
     // Version.
     // 2: Surface colors.
     // 3: Surface flags.
-    SV_WriteByte(3); // write a version byte.
+    Writer_WriteByte(writer, 3); // write a version byte.
 
-    SV_WriteShort(floorheight);
-    SV_WriteShort(ceilingheight);
-    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, floorMaterial));
-    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, ceilingMaterial));
-    SV_WriteShort(floorFlags);
-    SV_WriteShort(ceilingFlags);
+    Writer_WriteInt16(writer, floorheight);
+    Writer_WriteInt16(writer, ceilingheight);
+    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, floorMaterial));
+    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, ceilingMaterial));
+    Writer_WriteInt16(writer, floorFlags);
+    Writer_WriteInt16(writer, ceilingFlags);
 #if __JHEXEN__
-    SV_WriteShort((short) lightlevel);
+    Writer_WriteInt16(writer, (short) lightlevel);
 #else
-    SV_WriteByte(lightlevel);
+    Writer_WriteByte(writer, lightlevel);
 #endif
 
     float rgb[3];
     P_GetFloatpv(sec, DMU_COLOR, rgb);
     for(i = 0; i < 3; ++i)
-        SV_WriteByte((byte)(255.f * rgb[i]));
+        Writer_WriteByte(writer, (byte)(255.f * rgb[i]));
 
     P_GetFloatpv(sec, DMU_FLOOR_COLOR, rgb);
     for(i = 0; i < 3; ++i)
-        SV_WriteByte((byte)(255.f * rgb[i]));
+        Writer_WriteByte(writer, (byte)(255.f * rgb[i]));
 
     P_GetFloatpv(sec, DMU_CEILING_COLOR, rgb);
     for(i = 0; i < 3; ++i)
-        SV_WriteByte((byte)(255.f * rgb[i]));
+        Writer_WriteByte(writer, (byte)(255.f * rgb[i]));
 
-    SV_WriteShort(xsec->special);
-    SV_WriteShort(xsec->tag);
+    Writer_WriteInt16(writer, xsec->special);
+    Writer_WriteInt16(writer, xsec->tag);
 
 #if __JHEXEN__
-    SV_WriteShort(xsec->seqType);
+    Writer_WriteInt16(writer, xsec->seqType);
 #endif
 
     if(type == sc_ploff
@@ -2391,10 +2391,10 @@ static void SV_WriteSector(Sector *sec, Writer *writer)
 #endif
        )
     {
-        SV_WriteFloat(flooroffx);
-        SV_WriteFloat(flooroffy);
-        SV_WriteFloat(ceiloffx);
-        SV_WriteFloat(ceiloffy);
+        Writer_WriteFloat(writer, flooroffx);
+        Writer_WriteFloat(writer, flooroffy);
+        Writer_WriteFloat(writer, ceiloffx);
+        Writer_WriteFloat(writer, ceiloffy);
     }
 
 #if !__JHEXEN__
@@ -2563,7 +2563,7 @@ static void SV_WriteLine(Line *li, Writer *writer)
     else
 #endif
         type = lc_normal;
-    SV_WriteByte(type);
+    Writer_WriteByte(writer, type);
 
     // Version.
     // 2: Per surface texture offsets.
@@ -2571,24 +2571,24 @@ static void SV_WriteLine(Line *li, Writer *writer)
     // 3: "Mapped by player" values.
     // 3: Surface flags.
     // 4: Engine-side line flags.
-    SV_WriteByte(4); // Write a version byte
+    Writer_WriteByte(writer, 4); // Write a version byte
 
-    SV_WriteShort(P_GetIntp(li, DMU_FLAGS));
-    SV_WriteShort(xli->flags);
+    Writer_WriteInt16(writer, P_GetIntp(li, DMU_FLAGS));
+    Writer_WriteInt16(writer, xli->flags);
 
     for(int i = 0; i < MAXPLAYERS; ++i)
-        SV_WriteByte(xli->mapped[i]);
+        Writer_WriteByte(writer, xli->mapped[i]);
 
 #if __JHEXEN__
-    SV_WriteByte(xli->special);
-    SV_WriteByte(xli->arg1);
-    SV_WriteByte(xli->arg2);
-    SV_WriteByte(xli->arg3);
-    SV_WriteByte(xli->arg4);
-    SV_WriteByte(xli->arg5);
+    Writer_WriteByte(writer, xli->special);
+    Writer_WriteByte(writer, xli->arg1);
+    Writer_WriteByte(writer, xli->arg2);
+    Writer_WriteByte(writer, xli->arg3);
+    Writer_WriteByte(writer, xli->arg4);
+    Writer_WriteByte(writer, xli->arg5);
 #else
-    SV_WriteShort(xli->special);
-    SV_WriteShort(xli->tag);
+    Writer_WriteInt16(writer, xli->special);
+    Writer_WriteInt16(writer, xli->tag);
 #endif
 
     // For each side
@@ -2598,35 +2598,35 @@ static void SV_WriteLine(Line *li, Writer *writer)
         Side *si = (Side *)P_GetPtrp(li, (i? DMU_BACK:DMU_FRONT));
         if(!si) continue;
 
-        SV_WriteShort(P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_X));
-        SV_WriteShort(P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_Y));
-        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_X));
-        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_Y));
-        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_X));
-        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_Y));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_X));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_Y));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_X));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_Y));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_X));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_Y));
 
-        SV_WriteShort(P_GetIntp(si, DMU_TOP_FLAGS));
-        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_FLAGS));
-        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_FLAGS));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_TOP_FLAGS));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_MIDDLE_FLAGS));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_BOTTOM_FLAGS));
 
-        SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
-        SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
-        SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
+        Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
+        Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
+        Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
         for(int k = 0; k < 3; ++k)
-            SV_WriteByte((byte)(255 * rgba[k]));
+            Writer_WriteByte(writer, (byte)(255 * rgba[k]));
 
         P_GetFloatpv(si, DMU_BOTTOM_COLOR, rgba);
         for(int k = 0; k < 3; ++k)
-            SV_WriteByte((byte)(255 * rgba[k]));
+            Writer_WriteByte(writer, (byte)(255 * rgba[k]));
 
         P_GetFloatpv(si, DMU_MIDDLE_COLOR, rgba);
         for(int k = 0; k < 4; ++k)
-            SV_WriteByte((byte)(255 * rgba[k]));
+            Writer_WriteByte(writer, (byte)(255 * rgba[k]));
 
-        SV_WriteLong(P_GetIntp(si, DMU_MIDDLE_BLENDMODE));
-        SV_WriteShort(P_GetIntp(si, DMU_FLAGS));
+        Writer_WriteInt32(writer, P_GetIntp(si, DMU_MIDDLE_BLENDMODE));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_FLAGS));
     }
 
 #if !__JHEXEN__
@@ -2927,21 +2927,21 @@ static void readMapElements(Reader *reader, int mapVersion)
 }
 
 #if __JHEXEN__
-static void SV_WriteMovePoly(polyevent_t const *th)
+static void SV_WriteMovePoly(polyevent_t const *th, Writer *writer)
 {
     DENG_ASSERT(th != 0);
 
-    SV_WriteByte(1); // Write a version byte.
+    Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
     // is present as we ALWAYS add one when loading.
 
-    SV_WriteLong(th->polyobj);
-    SV_WriteLong(th->intSpeed);
-    SV_WriteLong(th->dist);
-    SV_WriteLong(th->fangle);
-    SV_WriteLong(FLT2FIX(th->speed[VX]));
-    SV_WriteLong(FLT2FIX(th->speed[VY]));
+    Writer_WriteInt32(writer, th->polyobj);
+    Writer_WriteInt32(writer, th->intSpeed);
+    Writer_WriteInt32(writer, th->dist);
+    Writer_WriteInt32(writer, th->fangle);
+    Writer_WriteInt32(writer, FLT2FIX(th->speed[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(th->speed[VY]));
 }
 
 static int SV_ReadMovePoly(polyevent_t *th, Reader *reader, int mapVersion)
@@ -3009,8 +3009,8 @@ static int writeThinker(thinker_t *th, void *context)
         return false;
 
     // Write the header block for this thinker.
-    SV_WriteByte(thInfo->thinkclass); // Thinker type byte.
-    SV_WriteByte(th->inStasis? 1 : 0); // In stasis?
+    Writer_WriteByte(writer, thInfo->thinkclass); // Thinker type byte.
+    Writer_WriteByte(writer, th->inStasis? 1 : 0); // In stasis?
 
     // Write the thinker data.
     thInfo->writeFunc(th, writer);
@@ -3031,13 +3031,13 @@ static void writeThinkers(Writer *writer)
     SV_BeginSegment(ASEG_THINKERS);
     {
 #if __JHEXEN__
-        SV_WriteLong(thingArchiveSize); // number of mobjs.
+        Writer_WriteInt32(writer, thingArchiveSize); // number of mobjs.
 #endif
 
         // Serialize qualifying thinkers.
         Thinker_Iterate(0/*all thinkers*/, writeThinker, writer);
     }
-    SV_WriteByte(TC_END);
+    Writer_WriteByte(writer, TC_END);
 }
 
 static int restoreMobjLinks(thinker_t *th, void *parameters)
@@ -3408,7 +3408,7 @@ static void writeSoundTargets(Writer *writer)
     if(!IS_SERVER) return;
 
     // Write the total number.
-    SV_WriteLong(numSoundTargets);
+    Writer_WriteInt32(writer, numSoundTargets);
 
     // Write the mobj references using the mobj archive.
     for(int i = 0; i < numsectors; ++i)
@@ -3417,8 +3417,8 @@ static void writeSoundTargets(Writer *writer)
 
         if(xsec->soundTarget)
         {
-            SV_WriteLong(i);
-            SV_WriteShort(SV_ThingArchiveId(xsec->soundTarget));
+            Writer_WriteInt32(writer, i);
+            Writer_WriteInt16(writer, SV_ThingArchiveId(xsec->soundTarget));
         }
     }
 #endif
@@ -3461,7 +3461,7 @@ static void writeMisc(Writer *writer)
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        SV_WriteLong(localQuakeHappening[i]);
+        Writer_WriteInt32(writer, localQuakeHappening[i]);
     }
 #endif
 }
@@ -3488,10 +3488,10 @@ static void writeMap(Writer *writer)
     SV_BeginSegment(ASEG_MAP_HEADER2);
     {
 #if __JHEXEN__
-        SV_WriteByte(MY_SAVE_VERSION); // Map version also.
+        Writer_WriteByte(writer, MY_SAVE_VERSION); // Map version also.
 
         // Write the map timer
-        SV_WriteLong(mapTime);
+        Writer_WriteInt32(writer, mapTime);
 #endif
 
         MaterialArchive_Write(materialArchive, writer);
@@ -3928,13 +3928,13 @@ void SV_SaveGameClient(uint gameId)
 
     // Some important information.
     // Our position and look angles.
-    SV_WriteLong(FLT2FIX(mo->origin[VX]));
-    SV_WriteLong(FLT2FIX(mo->origin[VY]));
-    SV_WriteLong(FLT2FIX(mo->origin[VZ]));
-    SV_WriteLong(FLT2FIX(mo->floorZ));
-    SV_WriteLong(FLT2FIX(mo->ceilingZ));
-    SV_WriteLong(mo->angle); /* $unifiedangles */
-    SV_WriteFloat(pl->plr->lookDir); /* $unifiedangles */
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VY]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VZ]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->floorZ));
+    Writer_WriteInt32(writer, FLT2FIX(mo->ceilingZ));
+    Writer_WriteInt32(writer, mo->angle); /* $unifiedangles */
+    Writer_WriteFloat(writer, pl->plr->lookDir); /* $unifiedangles */
     writePlayerHeader(writer);
     SV_WritePlayer(CONSOLEPLAYER, writer);
 
@@ -4100,7 +4100,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     initThingArchiveForSave();
 
 #if !__JHEXEN__
-    SV_WriteLong(thingArchiveSize);
+    Writer_WriteInt32(writer, thingArchiveSize);
 #endif
 
     // Create and populate the MaterialArchive.

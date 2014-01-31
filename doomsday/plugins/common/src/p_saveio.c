@@ -224,66 +224,6 @@ dd_bool SV_HxBytesLeft(void)
 }
 #endif
 
-void SV_AssertSegment(int segmentId)
-{
-    errorIfNotInited("SV_AssertSegment");
-#if __JHEXEN__
-    if(segmentId == ASEG_END && SV_HxBytesLeft() < 4)
-    {
-        App_Log(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)\n");
-        return;
-    }
-    if(SV_ReadLong() != segmentId)
-    {
-        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
-    }
-#endif
-}
-
-void SV_AssertMapSegment(savestatesegment_t *retSegmentId)
-{
-#if __JHEXEN__
-    int segmentId = SV_ReadLong();
-    if(segmentId != ASEG_MAP_HEADER2 && segmentId != ASEG_MAP_HEADER)
-        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
-
-    if(retSegmentId) *retSegmentId = segmentId;
-#else
-    SV_AssertSegment(ASEG_MAP_HEADER2);
-    if(retSegmentId) *retSegmentId = ASEG_MAP_HEADER2;
-#endif
-}
-
-void SV_BeginSegment(int segType)
-{
-    errorIfNotInited("SV_BeginSegment");
-#if __JHEXEN__
-    SV_WriteLong(segType);
-#endif
-}
-
-void SV_EndSegment()
-{
-    SV_BeginSegment(ASEG_END);
-}
-
-void SV_WriteConsistencyBytes()
-{
-#if !__JHEXEN__
-    SV_WriteByte(CONSISTENCY);
-#endif
-}
-
-void SV_ReadConsistencyBytes()
-{
-#if !__JHEXEN__
-    if(SV_ReadByte() != CONSISTENCY)
-    {
-        Con_Error("Corrupt save game: Consistency test failed.");
-    }
-#endif
-}
-
 void SV_Seek(uint offset)
 {
     errorIfNotInited("SV_SetPos");
@@ -394,6 +334,66 @@ float SV_ReadFloat(void)
     assert(sizeof(float) == 4);
     memcpy(&returnValue, &val, 4);
     return returnValue;
+#endif
+}
+
+void SV_AssertSegment(int segmentId)
+{
+    errorIfNotInited("SV_AssertSegment");
+#if __JHEXEN__
+    if(segmentId == ASEG_END && SV_HxBytesLeft() < 4)
+    {
+        App_Log(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)\n");
+        return;
+    }
+    if(SV_ReadLong() != segmentId)
+    {
+        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
+    }
+#endif
+}
+
+void SV_AssertMapSegment(savestatesegment_t *retSegmentId)
+{
+#if __JHEXEN__
+    int segmentId = SV_ReadLong();
+    if(segmentId != ASEG_MAP_HEADER2 && segmentId != ASEG_MAP_HEADER)
+        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
+
+    if(retSegmentId) *retSegmentId = segmentId;
+#else
+    SV_AssertSegment(ASEG_MAP_HEADER2);
+    if(retSegmentId) *retSegmentId = ASEG_MAP_HEADER2;
+#endif
+}
+
+void SV_BeginSegment(int segType)
+{
+    errorIfNotInited("SV_BeginSegment");
+#if __JHEXEN__
+    SV_WriteLong(segType);
+#endif
+}
+
+void SV_EndSegment()
+{
+    SV_BeginSegment(ASEG_END);
+}
+
+void SV_WriteConsistencyBytes()
+{
+#if !__JHEXEN__
+    SV_WriteByte(CONSISTENCY);
+#endif
+}
+
+void SV_ReadConsistencyBytes()
+{
+#if !__JHEXEN__
+    if(SV_ReadByte() != CONSISTENCY)
+    {
+        Con_Error("Corrupt save game: Consistency test failed.");
+    }
 #endif
 }
 

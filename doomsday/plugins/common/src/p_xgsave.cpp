@@ -31,7 +31,7 @@ void SV_WriteXGLine(Line *li, Writer *writer)
     xline_t *xline = P_ToXLine(li);
 
     // Version byte.
-    SV_WriteByte(1);
+    Writer_WriteByte(writer, 1);
 
     /*
      * Remember, savegames are applied on top of an initialized map. No strings are saved,
