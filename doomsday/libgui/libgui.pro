@@ -153,7 +153,7 @@ SOURCES +=  \
     src/rowatlasallocator.cpp \
     src/qtnativefont.cpp
 
-macx: SOURCES += \
+macx:!deng_macx6_32bit_64bit: SOURCES += \
     src/coretextnativefont_macx.h \
     src/coretextnativefont_macx.cpp
 
