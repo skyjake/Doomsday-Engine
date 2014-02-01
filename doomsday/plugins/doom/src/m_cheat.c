@@ -719,6 +719,6 @@ D_CMD(CheatLeaveMap)
         return true;
     }
 
-    G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
+    G_LeaveMap(G_NextLogicalMapNumber(false), 0, false);
     return true;
 }

@@ -104,7 +104,7 @@ void P_DoTick(void)
     {
         if(!--timerGame)
         {
-            G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
+            G_LeaveMap(G_NextLogicalMapNumber(false), 0, false);
         }
     }
 

@@ -1944,7 +1944,7 @@ void C_DECL A_CyberDeath(mobj_t* actor)
     }
     else if(gameMap == 34)
     {
-        G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
+        G_LeaveMap(G_NextLogicalMapNumber(false), 0, false);
     }
 }
 
@@ -2067,7 +2067,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
         return;
     }
 
-    G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
+    G_LeaveMap(G_NextLogicalMapNumber(false), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)

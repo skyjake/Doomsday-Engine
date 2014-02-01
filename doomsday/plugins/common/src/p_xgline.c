@@ -1763,7 +1763,7 @@ int C_DECL XLTrav_LeaveMap(Line* line, dd_bool dummy, void* context,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, true), 0, true);
+        G_LeaveMap(G_NextLogicalMapNumber(true), 0, true);
         return false;
     }
 
@@ -1800,7 +1800,7 @@ int C_DECL XLTrav_LeaveMap(Line* line, dd_bool dummy, void* context,
     }
     else
     {
-        map = G_GetNextMap(gameEpisode, gameMap, false);
+        map = G_NextLogicalMapNumber(false);
     }
 
     G_LeaveMap(map, 0, false);

@@ -2444,7 +2444,7 @@ void G_DoMapCompleted(void)
 # endif
 
     // Determine the next map.
-    nextMap = G_GetNextMap(gameEpisode, gameMap, secretExit);
+    nextMap = G_NextLogicalMapNumber(secretExit);
 #endif
 
     // Time for an intermission.
@@ -3125,6 +3125,11 @@ uint G_LogicalMapNumber(uint episode, uint map)
 #endif
 }
 
+uint G_CurrentLogicalMapNumber(void)
+{
+    return G_LogicalMapNumber(gameEpisode, gameMap);
+}
+
 Uri *G_ComposeMapUri(uint episode, uint map)
 {
     lumpname_t mapId;
@@ -3344,6 +3349,11 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
         return map + 1; // Go to next map.
     }
 #endif
+}
+
+uint G_NextLogicalMapNumber(dd_bool secretExit)
+{
+    return G_GetNextMap(gameEpisode, gameMap, secretExit);
 }
 
 /**

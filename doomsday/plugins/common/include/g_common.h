@@ -134,7 +134,13 @@ dd_bool G_ValidateMap(uint *episode, uint *map);
 uint G_GetNextMap(uint episode, uint map, dd_bool secretExit);
 
 /// @return  Logical map number.
+uint G_NextLogicalMapNumber(dd_bool secretExit);
+
+/// @return  Logical map number.
 uint G_LogicalMapNumber(uint episode, uint map);
+
+/// @return  Logical map number.
+uint G_CurrentLogicalMapNumber(void);
 
 AutoStr *G_GenerateSaveGameName(void);
 
