@@ -56,6 +56,7 @@ public:
 
     Ranged range() const;
     ddouble value() const;
+    int precision() const;
     ddouble displayFactor() const;
 
     // Events.
