@@ -595,6 +595,42 @@ BytecodeScriptInfo &ACScriptInterpreter::scriptInfoByIndex(int index)
     return _scriptInfo[index];
 }
 
+AutoStr *ACScriptInterpreter::scriptName(int scriptNumber)
+{
+    BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber);
+    if(!info)
+    {
+        return AutoStr_FromTextStd("(invalid-scriptnumber)");
+    }
+    bool const open = (info->flags & BytecodeScriptInfo::Open) != 0;
+    return Str_Appendf(AutoStr_NewStd(), "#%i%s", scriptNumber, open? " (Open)" : "");
+}
+
+AutoStr *ACScriptInterpreter::scriptDescription(int scriptNumber)
+{
+    BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber);
+    if(!info)
+    {
+        return AutoStr_FromTextStd("(invalid-scriptnumber)");
+    }
+
+    char const *stateLabels[] = {
+        "Inactive",
+        "Running",
+        "Suspended",
+        "Waiting for tag",
+        "Waiting for polyobj",
+        "Waiting for script",
+        "Terminating"
+    };
+
+    return Str_Appendf(AutoStr_NewStd(), "ACScript " DE2_ESC(b) "%s\n"
+                                         DE2_ESC(l) "State: " DE2_ESC(.) DE2_ESC(i) "%s" DE2_ESC(.)
+                                         DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) "%i",
+                                         Str_Text(scriptName(scriptNumber)),
+                                         stateLabels[info->state], info->waitValue);
+}
+
 static byte SpecArgs[5];
 
 #define PRINT_BUFFER_SIZE 256
@@ -633,14 +669,14 @@ ACS_COMMAND(Suspend)
 
 ACS_COMMAND(PushNumber)
 {
-    acs.push(LONG(*acs.pcodePtr++));
+    acs.locals.push(LONG(*acs.pcodePtr++));
     return Continue;
 }
 
 ACS_COMMAND(LSpec1)
 {
     int special = LONG(*acs.pcodePtr++);
-    SpecArgs[0] = acs.pop();
+    SpecArgs[0] = acs.locals.pop();
     P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side, acs.activator);
 
     return Continue;
@@ -649,8 +685,8 @@ ACS_COMMAND(LSpec1)
 ACS_COMMAND(LSpec2)
 {
     int special = LONG(*acs.pcodePtr++);
-    SpecArgs[1] = acs.pop();
-    SpecArgs[0] = acs.pop();
+    SpecArgs[1] = acs.locals.pop();
+    SpecArgs[0] = acs.locals.pop();
     P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side, acs.activator);
 
     return Continue;
@@ -659,9 +695,9 @@ ACS_COMMAND(LSpec2)
 ACS_COMMAND(LSpec3)
 {
     int special = LONG(*acs.pcodePtr++);
-    SpecArgs[2] = acs.pop();
-    SpecArgs[1] = acs.pop();
-    SpecArgs[0] = acs.pop();
+    SpecArgs[2] = acs.locals.pop();
+    SpecArgs[1] = acs.locals.pop();
+    SpecArgs[0] = acs.locals.pop();
     P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side, acs.activator);
 
     return Continue;
@@ -670,10 +706,10 @@ ACS_COMMAND(LSpec3)
 ACS_COMMAND(LSpec4)
 {
     int special = LONG(*acs.pcodePtr++);
-    SpecArgs[3] = acs.pop();
-    SpecArgs[2] = acs.pop();
-    SpecArgs[1] = acs.pop();
-    SpecArgs[0] = acs.pop();
+    SpecArgs[3] = acs.locals.pop();
+    SpecArgs[2] = acs.locals.pop();
+    SpecArgs[1] = acs.locals.pop();
+    SpecArgs[0] = acs.locals.pop();
     P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side, acs.activator);
 
     return Continue;
@@ -682,11 +718,11 @@ ACS_COMMAND(LSpec4)
 ACS_COMMAND(LSpec5)
 {
     int special = LONG(*acs.pcodePtr++);
-    SpecArgs[4] = acs.pop();
-    SpecArgs[3] = acs.pop();
-    SpecArgs[2] = acs.pop();
-    SpecArgs[1] = acs.pop();
-    SpecArgs[0] = acs.pop();
+    SpecArgs[4] = acs.locals.pop();
+    SpecArgs[3] = acs.locals.pop();
+    SpecArgs[2] = acs.locals.pop();
+    SpecArgs[1] = acs.locals.pop();
+    SpecArgs[0] = acs.locals.pop();
     P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side,
                          acs.activator);
 
@@ -755,200 +791,200 @@ ACS_COMMAND(LSpec5Direct)
 
 ACS_COMMAND(Add)
 {
-    acs.push(acs.pop() + acs.pop());
+    acs.locals.push(acs.locals.pop() + acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(Subtract)
 {
-    int operand2 = acs.pop();
-    acs.push(acs.pop() - operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() - operand2);
     return Continue;
 }
 
 ACS_COMMAND(Multiply)
 {
-    acs.push(acs.pop() * acs.pop());
+    acs.locals.push(acs.locals.pop() * acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(Divide)
 {
-    int operand2 = acs.pop();
-    acs.push(acs.pop() / operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() / operand2);
     return Continue;
 }
 
 ACS_COMMAND(Modulus)
 {
-    int operand2 = acs.pop();
-    acs.push(acs.pop() % operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() % operand2);
     return Continue;
 }
 
 ACS_COMMAND(EQ)
 {
-    acs.push(acs.pop() == acs.pop());
+    acs.locals.push(acs.locals.pop() == acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(NE)
 {
-    acs.push(acs.pop() != acs.pop());
+    acs.locals.push(acs.locals.pop() != acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(LT)
 {
-    int operand2 = acs.pop();
-    acs.push(acs.pop() < operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() < operand2);
     return Continue;
 }
 
 ACS_COMMAND(GT)
 {
-    int operand2 = acs.pop();
-    acs.push(acs.pop() > operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() > operand2);
     return Continue;
 }
 
 ACS_COMMAND(LE)
 {
-    int operand2 = acs.pop();
-    acs.push(acs.pop() <= operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() <= operand2);
     return Continue;
 }
 
 ACS_COMMAND(GE)
 {
-    int operand2 = acs.pop();
-    acs.push(acs.pop() >= operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() >= operand2);
     return Continue;
 }
 
 ACS_COMMAND(AssignScriptVar)
 {
-    acs.vars[LONG(*acs.pcodePtr++)] = acs.pop();
+    acs.vars[LONG(*acs.pcodePtr++)] = acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(AssignMapVar)
 {
-    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] = acs.pop();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] = acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(AssignWorldVar)
 {
-    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] = acs.pop();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] = acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(PushScriptVar)
 {
-    acs.push(acs.vars[LONG(*acs.pcodePtr++)]);
+    acs.locals.push(acs.vars[LONG(*acs.pcodePtr++)]);
     return Continue;
 }
 
 ACS_COMMAND(PushMapVar)
 {
-    acs.push(acs.interpreter().mapVars[LONG(*acs.pcodePtr++)]);
+    acs.locals.push(acs.interpreter().mapVars[LONG(*acs.pcodePtr++)]);
     return Continue;
 }
 
 ACS_COMMAND(PushWorldVar)
 {
-    acs.push(acs.interpreter().worldVars[LONG(*acs.pcodePtr++)]);
+    acs.locals.push(acs.interpreter().worldVars[LONG(*acs.pcodePtr++)]);
     return Continue;
 }
 
 ACS_COMMAND(AddScriptVar)
 {
-    acs.vars[LONG(*acs.pcodePtr++)] += acs.pop();
+    acs.vars[LONG(*acs.pcodePtr++)] += acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(AddMapVar)
 {
-    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] += acs.pop();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] += acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(AddWorldVar)
 {
-    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] += acs.pop();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] += acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(SubScriptVar)
 {
-    acs.vars[LONG(*acs.pcodePtr++)] -= acs.pop();
+    acs.vars[LONG(*acs.pcodePtr++)] -= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(SubMapVar)
 {
-    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] -= acs.pop();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] -= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(SubWorldVar)
 {
-    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] -= acs.pop();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] -= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(MulScriptVar)
 {
-    acs.vars[LONG(*acs.pcodePtr++)] *= acs.pop();
+    acs.vars[LONG(*acs.pcodePtr++)] *= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(MulMapVar)
 {
-    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] *= acs.pop();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] *= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(MulWorldVar)
 {
-    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] *= acs.pop();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] *= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(DivScriptVar)
 {
-    acs.vars[LONG(*acs.pcodePtr++)] /= acs.pop();
+    acs.vars[LONG(*acs.pcodePtr++)] /= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(DivMapVar)
 {
-    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] /= acs.pop();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] /= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(DivWorldVar)
 {
-    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] /= acs.pop();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] /= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(ModScriptVar)
 {
-    acs.vars[LONG(*acs.pcodePtr++)] %= acs.pop();
+    acs.vars[LONG(*acs.pcodePtr++)] %= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(ModMapVar)
 {
-    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] %= acs.pop();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] %= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(ModWorldVar)
 {
-    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] %= acs.pop();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] %= acs.locals.pop();
     return Continue;
 }
 
@@ -996,7 +1032,7 @@ ACS_COMMAND(Goto)
 
 ACS_COMMAND(IfGoto)
 {
-    if(acs.pop())
+    if(acs.locals.pop())
     {
         acs.pcodePtr = (int *) (acs.interpreter().bytecode() + LONG(*acs.pcodePtr));
     }
@@ -1009,13 +1045,13 @@ ACS_COMMAND(IfGoto)
 
 ACS_COMMAND(Drop)
 {
-    acs.drop();
+    acs.locals.drop();
     return Continue;
 }
 
 ACS_COMMAND(Delay)
 {
-    acs.delayCount = acs.pop();
+    acs.delayCount = acs.locals.pop();
     return Stop;
 }
 
@@ -1027,9 +1063,9 @@ ACS_COMMAND(DelayDirect)
 
 ACS_COMMAND(Random)
 {
-    int high = acs.pop();
-    int low  = acs.pop();
-    acs.push(low + (P_Random() % (high - low + 1)));
+    int high = acs.locals.pop();
+    int low  = acs.locals.pop();
+    acs.locals.push(low + (P_Random() % (high - low + 1)));
     return Continue;
 }
 
@@ -1037,18 +1073,18 @@ ACS_COMMAND(RandomDirect)
 {
     int low  = LONG(*acs.pcodePtr++);
     int high = LONG(*acs.pcodePtr++);
-    acs.push(low + (P_Random() % (high - low + 1)));
+    acs.locals.push(low + (P_Random() % (high - low + 1)));
     return Continue;
 }
 
 ACS_COMMAND(ThingCount)
 {
-    int tid  = acs.pop();
-    int type = acs.pop();
+    int tid  = acs.locals.pop();
+    int type = acs.locals.pop();
     // Anything to count?
     if(type + tid)
     {
-        acs.push(P_MobjCount(type, tid));
+        acs.locals.push(P_MobjCount(type, tid));
     }
     return Continue;
 }
@@ -1060,14 +1096,14 @@ ACS_COMMAND(ThingCountDirect)
     // Anything to count?
     if(type + tid)
     {
-        acs.push(P_MobjCount(type, tid));
+        acs.locals.push(P_MobjCount(type, tid));
     }
     return Continue;
 }
 
 ACS_COMMAND(TagWait)
 {
-    acs.info().waitValue = acs.pop();
+    acs.info().waitValue = acs.locals.pop();
     acs.info().state = ACScriptInterpreter::WaitingForTag;
     return Stop;
 }
@@ -1081,7 +1117,7 @@ ACS_COMMAND(TagWaitDirect)
 
 ACS_COMMAND(PolyWait)
 {
-    acs.info().waitValue = acs.pop();
+    acs.info().waitValue = acs.locals.pop();
     acs.info().state = ACScriptInterpreter::WaitingForPolyobj;
     return Stop;
 }
@@ -1095,13 +1131,13 @@ ACS_COMMAND(PolyWaitDirect)
 
 ACS_COMMAND(ChangeFloor)
 {
-    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(acs.pop())));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(acs.locals.pop())));
     Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    int tag = acs.pop();
+    int tag = acs.locals.pop();
 
     if(iterlist_t *list = P_GetSectorIterListForTag(tag, false))
     {
@@ -1145,13 +1181,13 @@ ACS_COMMAND(ChangeFloorDirect)
 
 ACS_COMMAND(ChangeCeiling)
 {
-    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(acs.pop())));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(acs.locals.pop())));
     Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    int tag = acs.pop();
+    int tag = acs.locals.pop();
 
     if(iterlist_t *list = P_GetSectorIterListForTag(tag, false))
     {
@@ -1201,63 +1237,63 @@ ACS_COMMAND(Restart)
 
 ACS_COMMAND(AndLogical)
 {
-    acs.push(acs.pop() && acs.pop());
+    acs.locals.push(acs.locals.pop() && acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(OrLogical)
 {
-    acs.push(acs.pop() || acs.pop());
+    acs.locals.push(acs.locals.pop() || acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(AndBitwise)
 {
-    acs.push(acs.pop() & acs.pop());
+    acs.locals.push(acs.locals.pop() & acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(OrBitwise)
 {
-    acs.push(acs.pop() | acs.pop());
+    acs.locals.push(acs.locals.pop() | acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(EorBitwise)
 {
-    acs.push(acs.pop() ^ acs.pop());
+    acs.locals.push(acs.locals.pop() ^ acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(NegateLogical)
 {
-    acs.push(!acs.pop());
+    acs.locals.push(!acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(LShift)
 {
-    int operand2 = acs.pop();
-    acs.push(acs.pop() << operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() << operand2);
     return Continue;
 }
 
 ACS_COMMAND(RShift)
 {
-    int operand2 = acs.pop();
-    acs.push(acs.pop() >> operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() >> operand2);
     return Continue;
 }
 
 ACS_COMMAND(UnaryMinus)
 {
-    acs.push(-acs.pop());
+    acs.locals.push(-acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(IfNotGoto)
 {
-    if(acs.pop())
+    if(acs.locals.pop())
     {
         acs.pcodePtr++;
     }
@@ -1270,13 +1306,13 @@ ACS_COMMAND(IfNotGoto)
 
 ACS_COMMAND(LineSide)
 {
-    acs.push(acs.side);
+    acs.locals.push(acs.side);
     return Continue;
 }
 
 ACS_COMMAND(ScriptWait)
 {
-    acs.info().waitValue = acs.pop();
+    acs.info().waitValue = acs.locals.pop();
     acs.info().state = ACScriptInterpreter::WaitingForScript;
     return Stop;
 }
@@ -1299,10 +1335,10 @@ ACS_COMMAND(ClearLineSpecial)
 
 ACS_COMMAND(CaseGoto)
 {
-    if(acs.top() == LONG(*acs.pcodePtr++))
+    if(acs.locals.top() == LONG(*acs.pcodePtr++))
     {
         acs.pcodePtr = (int *) (acs.interpreter().bytecode() + LONG(*acs.pcodePtr));
-        acs.drop();
+        acs.locals.drop();
     }
     else
     {
@@ -1354,14 +1390,14 @@ ACS_COMMAND(EndPrintBold)
 
 ACS_COMMAND(PrintString)
 {
-    strcat(PrintBuffer, Str_Text(acs.interpreter().string(acs.pop())));
+    strcat(PrintBuffer, Str_Text(acs.interpreter().string(acs.locals.pop())));
     return Continue;
 }
 
 ACS_COMMAND(PrintNumber)
 {
     char tempStr[16];
-    sprintf(tempStr, "%d", acs.pop());
+    sprintf(tempStr, "%d", acs.locals.pop());
     strcat(PrintBuffer, tempStr);
     return Continue;
 }
@@ -1369,7 +1405,7 @@ ACS_COMMAND(PrintNumber)
 ACS_COMMAND(PrintCharacter)
 {
     char *bufferEnd = PrintBuffer + strlen(PrintBuffer);
-    *bufferEnd++ = acs.pop();
+    *bufferEnd++ = acs.locals.pop();
     *bufferEnd = 0;
     return Continue;
 }
@@ -1381,7 +1417,7 @@ ACS_COMMAND(PlayerCount)
     {
         count += players[i].plr->inGame;
     }
-    acs.push(count);
+    acs.locals.push(count);
     return Continue;
 }
 
@@ -1401,20 +1437,20 @@ ACS_COMMAND(GameType)
     {
         gametype = 1; // cooperative
     }
-    acs.push(gametype);
+    acs.locals.push(gametype);
 
     return Continue;
 }
 
 ACS_COMMAND(GameSkill)
 {
-    acs.push((int)gameSkill);
+    acs.locals.push((int)gameSkill);
     return Continue;
 }
 
 ACS_COMMAND(Timer)
 {
-    acs.push(mapTime);
+    acs.locals.push(mapTime);
     return Continue;
 }
 
@@ -1426,17 +1462,17 @@ ACS_COMMAND(SectorSound)
         Sector *front = (Sector *) P_GetPtrp(acs.line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
-    int volume = acs.pop();
+    int volume = acs.locals.pop();
 
-    S_StartSoundAtVolume(S_GetSoundID(Str_Text(acs.interpreter().string(acs.pop()))), mobj, volume / 127.0f);
+    S_StartSoundAtVolume(S_GetSoundID(Str_Text(acs.interpreter().string(acs.locals.pop()))), mobj, volume / 127.0f);
     return Continue;
 }
 
 ACS_COMMAND(ThingSound)
 {
-    int volume   = acs.pop();
-    int sound    = S_GetSoundID(Str_Text(acs.interpreter().string(acs.pop())));
-    int tid      = acs.pop();
+    int volume   = acs.locals.pop();
+    int sound    = S_GetSoundID(Str_Text(acs.interpreter().string(acs.locals.pop())));
+    int tid      = acs.locals.pop();
     int searcher = -1;
 
     mobj_t *mobj;
@@ -1453,7 +1489,7 @@ ACS_COMMAND(AmbientSound)
     mobj_t *mobj = 0; // For 3D positioning.
     mobj_t *plrmo = players[DISPLAYPLAYER].plr->mo;
 
-    int volume = acs.pop();
+    int volume = acs.locals.pop();
 
     // If we are playing 3D sounds, create a temporary source mobj for the sound.
     if(cfg.snd3D && plrmo)
@@ -1470,7 +1506,7 @@ ACS_COMMAND(AmbientSound)
         }
     }
 
-    int sound = S_GetSoundID(Str_Text(acs.interpreter().string(acs.pop())));
+    int sound = S_GetSoundID(Str_Text(acs.interpreter().string(acs.locals.pop())));
     S_StartSoundAtVolume(sound, mobj, volume / 127.0f);
 
     return Continue;
@@ -1484,7 +1520,7 @@ ACS_COMMAND(SoundSequence)
         Sector *front = (Sector *) P_GetPtrp(acs.line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
-    SN_StartSequenceName(mobj, Str_Text(acs.interpreter().string(acs.pop())));
+    SN_StartSequenceName(mobj, Str_Text(acs.interpreter().string(acs.locals.pop())));
 
     return Continue;
 }
@@ -1495,15 +1531,15 @@ ACS_COMMAND(SetLineTexture)
 #define TEXTURE_MIDDLE 1
 #define TEXTURE_BOTTOM 2
 
-    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(acs.pop())));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(acs.locals.pop())));
     Uri *uri = Uri_NewWithPath3("Textures", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    int position = acs.pop();
-    int side     = acs.pop();
-    int lineTag  = acs.pop();
+    int position = acs.locals.pop();
+    int side     = acs.locals.pop();
+    int lineTag  = acs.locals.pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1539,8 +1575,8 @@ ACS_COMMAND(SetLineTexture)
 
 ACS_COMMAND(SetLineBlocking)
 {
-    int lineFlags = acs.pop()? DDLF_BLOCKING : 0;
-    int lineTag   = acs.pop();
+    int lineFlags = acs.locals.pop()? DDLF_BLOCKING : 0;
+    int lineTag   = acs.locals.pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1559,13 +1595,13 @@ ACS_COMMAND(SetLineBlocking)
 
 ACS_COMMAND(SetLineSpecial)
 {
-    int arg5    = acs.pop();
-    int arg4    = acs.pop();
-    int arg3    = acs.pop();
-    int arg2    = acs.pop();
-    int arg1    = acs.pop();
-    int special = acs.pop();
-    int lineTag = acs.pop();
+    int arg5    = acs.locals.pop();
+    int arg4    = acs.locals.pop();
+    int arg3    = acs.locals.pop();
+    int arg2    = acs.locals.pop();
+    int arg1    = acs.locals.pop();
+    int special = acs.locals.pop();
+    int lineTag = acs.locals.pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1659,24 +1695,32 @@ void ACScript::runTick()
     }
 }
 
-void ACScript::push(int value)
+void ACScript::Stack::push(int value)
 {
-    stack[stackPtr++] = value;
+    if(height == ACS_STACK_DEPTH)
+        App_Log(DE2_SCR_ERROR, "ACScript::Stack::push: Overflow");
+    values[height++] = value;
 }
 
-int ACScript::pop()
+int ACScript::Stack::pop()
 {
-    return stack[--stackPtr];
+    if(height == 0)
+        App_Log(DE2_SCR_ERROR, "ACScript::Stack::pop: Underflow");
+    return values[--height];
 }
 
-int ACScript::top() const
+int ACScript::Stack::top() const
 {
-    return stack[stackPtr - 1];
+    if(height == 0)
+        App_Log(DE2_SCR_ERROR, "ACScript::Stack::top: Underflow");
+    return values[height - 1];
 }
 
-void ACScript::drop()
+void ACScript::Stack::drop()
 {
-    stackPtr--;
+    if(height == 0)
+        App_Log(DE2_SCR_ERROR, "ACScript::Stack::drop: Underflow");
+    height--;
 }
 
 void ACScript::write(Writer *writer) const
@@ -1690,9 +1734,9 @@ void ACScript::write(Writer *writer) const
     Writer_WriteInt32(writer, delayCount);
     for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
     {
-        Writer_WriteInt32(writer, stack[i]);
+        Writer_WriteInt32(writer, locals.values[i]);
     }
-    Writer_WriteInt32(writer, stackPtr);
+    Writer_WriteInt32(writer, locals.height);
     for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
     {
         Writer_WriteInt32(writer, vars[i]);
@@ -1731,10 +1775,9 @@ int ACScript::read(Reader *reader, int mapVersion)
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
         {
-            stack[i] = Reader_ReadInt32(reader);
+            locals.values[i] = Reader_ReadInt32(reader);
         }
-
-        stackPtr   = Reader_ReadInt32(reader);
+        locals.height = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
         {
@@ -1772,10 +1815,9 @@ int ACScript::read(Reader *reader, int mapVersion)
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
         {
-            stack[i] = Reader_ReadInt32(reader);
+            locals.values[i] = Reader_ReadInt32(reader);
         }
-
-        stackPtr   = Reader_ReadInt32(reader);
+        locals.height = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
         {
@@ -1788,42 +1830,6 @@ int ACScript::read(Reader *reader, int mapVersion)
     thinker.function = (thinkfunc_t) ACScript_Thinker;
 
     return true; // Add this thinker.
-}
-
-AutoStr *ACScriptInterpreter::scriptName(int scriptNumber)
-{
-    BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber);
-    if(!info)
-    {
-        return AutoStr_FromTextStd("(invalid-scriptnumber)");
-    }
-    bool const open = (info->flags & BytecodeScriptInfo::Open) != 0;
-    return Str_Appendf(AutoStr_NewStd(), "#%i%s", scriptNumber, open? " (Open)" : "");
-}
-
-AutoStr *ACScriptInterpreter::scriptDescription(int scriptNumber)
-{
-    BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber);
-    if(!info)
-    {
-        return AutoStr_FromTextStd("(invalid-scriptnumber)");
-    }
-
-    char const *stateLabels[] = {
-        "Inactive",
-        "Running",
-        "Suspended",
-        "Waiting for tag",
-        "Waiting for polyobj",
-        "Waiting for script",
-        "Terminating"
-    };
-
-    return Str_Appendf(AutoStr_NewStd(), "ACScript " DE2_ESC(b) "%s\n"
-                                         DE2_ESC(l) "State: " DE2_ESC(.) DE2_ESC(i) "%s" DE2_ESC(.)
-                                         DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) "%i",
-                                         Str_Text(scriptName(scriptNumber)),
-                                         stateLabels[info->state], info->waitValue);
 }
 
 /// The One ACS interpreter instance.

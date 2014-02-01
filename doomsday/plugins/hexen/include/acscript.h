@@ -49,8 +49,17 @@ typedef struct acscript_s {
     int side;
     BytecodeScriptInfo *_info;
     int delayCount;
-    int stack[ACS_STACK_DEPTH];
-    int stackPtr;
+    struct Stack { // Local value stack.
+        int values[ACS_STACK_DEPTH];
+        int height;
+
+#ifdef __cplusplus
+        void push(int value);
+        int pop();
+        int top() const;
+        void drop();
+#endif
+    } locals;
     int vars[MAX_ACS_SCRIPT_VARS];
     int const *pcodePtr;
 
@@ -70,13 +79,6 @@ typedef struct acscript_s {
      * Deserialize the thinker from the currently open save file.
      */
     int read(Reader *reader, int mapVersion);
-
-public: /// @todo make private:
-    void push(int value);
-    int pop();
-    int top() const;
-    void drop();
-
 #endif // __cplusplus
 } ACScript;
 
