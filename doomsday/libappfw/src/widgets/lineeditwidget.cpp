@@ -44,10 +44,10 @@ DENG_GUI_PIMPL(LineEditWidget)
     FontLineWrapping &wraps;
     LabelWidget *hint;
     bool signalOnEnter;
+    bool firstUpdateAfterCreation;
 
     // Style.
     Font const *font;
-    int margin;
     Time blinkTime;
     Animation hovering;
 
@@ -59,16 +59,16 @@ DENG_GUI_PIMPL(LineEditWidget)
     GLUniform uCursorColor;
 
     Instance(Public *i)
-        : Base(i),
-          wraps(static_cast<FontLineWrapping &>(i->lineWraps())),
-          hint(0),
-          signalOnEnter(false),
-          font(0),
-          margin(0),
-          hovering(0, Animation::Linear),
-          uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4),
-          uColor      ("uColor",     GLUniform::Vec4),
-          uCursorColor("uColor",     GLUniform::Vec4)
+        : Base(i)
+        , wraps(static_cast<FontLineWrapping &>(i->lineWraps()))
+        , hint(0)
+        , signalOnEnter(false)
+        , firstUpdateAfterCreation(true)
+        , font(0)
+        , hovering(0, Animation::Linear)
+        , uMvpMatrix  ("uMvpMatrix", GLUniform::Mat4)
+        , uColor      ("uColor",     GLUniform::Vec4)
+        , uCursorColor("uColor",     GLUniform::Vec4)
     {
         height = new ScalarRule(0);
 
@@ -89,7 +89,6 @@ DENG_GUI_PIMPL(LineEditWidget)
     void updateStyle()
     {
         font   = &self.font();
-        margin = style().rules().rule("gap").valuei();
 
         updateBackground();
 
@@ -104,7 +103,7 @@ DENG_GUI_PIMPL(LineEditWidget)
     int calculateHeight()
     {
         int const hgt = de::max(font->height().valuei(), wraps.totalHeightInPixels());
-        return hgt + 2 * margin;
+        return hgt + self.margins().height().valuei();
     }
 
     void updateProjection()
@@ -214,7 +213,8 @@ DENG_GUI_PIMPL(LineEditWidget)
 
     inline Rectanglei contentRect() const
     {
-        return self.rule().recti().shrunk(margin);
+        Vector4i const margins = self.margins().toVector();
+        return self.rule().recti().adjusted(margins.xy(), -margins.zw());
     }
 };
 
@@ -345,6 +345,13 @@ void LineEditWidget::update()
 
     // Rewrap content if necessary.
     updateLineWraps(WrapUnlessWrappedAlready);
+
+    if(d->firstUpdateAfterCreation)
+    {
+        // Don't animate height immediately after creation.
+        d->firstUpdateAfterCreation = false;
+        d->height->finish();
+    }
 }
 
 void LineEditWidget::drawContent()
@@ -450,7 +457,7 @@ shell::AbstractLineEditor::KeyModifiers LineEditWidget::modifiersFromKeyEvent(Ke
 
 int LineEditWidget::maximumWidth() const
 {
-    return rule().recti().width() - 2 * d->margin;
+    return rule().recti().width() - margins().width().valuei();
 }
 
 void LineEditWidget::numberOfLinesChanged(int /*lineCount*/)
