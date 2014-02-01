@@ -214,6 +214,9 @@ dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
 {
     byte newArgs[5];
     int i, lock;
+    dd_bool success;
+    int mapNumber;
+    Uri *mapUri;
 
     DENG_ASSERT(args != 0);
 
@@ -241,7 +244,18 @@ dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
     }
     newArgs[4] = 0;
 
-    return Game_ACScriptInterpreter_StartScript(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
+    mapNumber = newArgs[1]; // logical
+    mapUri = mapNumber? G_ComposeMapUri(gameEpisode, mapNumber - 1) : 0;
+    success = Game_ACScriptInterpreter_StartScript(newArgs[0], mapUri, &newArgs[2], mo, line, side);
+    Uri_Delete(mapUri);
+
+    return success;
+}
+
+static Uri *mapUriFromLogicalNumber(int number)
+{
+    if(!number) return 0; // current map.
+    return G_ComposeMapUri(gameEpisode, number - 1);
 }
 
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
@@ -517,17 +531,23 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         }
         break;
 
-    case 80: // ACS_Execute
-        success = Game_ACScriptInterpreter_StartScript(args[0], args[1], &args[2], mo, line, side);
-        break;
+    case 80: /* ACS_Execute */ {
+        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter_StartScript(args[0], mapUri, &args[2], mo, line, side);
+        Uri_Delete(mapUri);
+        break; }
 
-    case 81: // ACS_Suspend
-        success = Game_ACScriptInterpreter_SuspendScript(args[0], args[1]);
-        break;
+    case 81: /* ACS_Suspend */ {
+        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter_SuspendScript(args[0], mapUri);
+        Uri_Delete(mapUri);
+        break; }
 
-    case 82: // ACS_Terminate
-        success = Game_ACScriptInterpreter_TerminateScript(args[0], args[1]);
-        break;
+    case 82: /* ACS_Terminate */ {
+        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter_TerminateScript(args[0], mapUri);
+        Uri_Delete(mapUri);
+        break; }
 
     case 83: // ACS_LockedExecute
         success = P_StartLockedACS(line, args, mo, side);

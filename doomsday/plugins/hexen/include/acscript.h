@@ -137,12 +137,12 @@ public:
      *
      * @return  @c true iff a script was newly started (or deferred).
      */
-    bool startScript(int scriptNumber, uint map, byte const args[4],
+    bool startScript(int scriptNumber, Uri const *mapUri, byte const args[4],
                      mobj_t *activator = 0, Line *line = 0, int side = 0);
 
-    bool suspendScript(int scriptNumber, uint map);
+    bool suspendScript(int scriptNumber, Uri const *mapUri);
 
-    bool terminateScript(int scriptNumber, uint map);
+    bool terminateScript(int scriptNumber, Uri const *mapUri);
 
     void tagFinished(int tag);
     void polyobjFinished(int tag);
@@ -177,7 +177,7 @@ public:
      * To be called when the current map changes to activate any deferred scripts
      * which should now begin/resume.
      */
-    void runDeferredTasks(uint map/*Uri const *mapUri*/);
+    void runDeferredTasks(Uri const *mapUri);
 
     /**
      * To be called when the specified @a script is to be formally terminated.
@@ -224,12 +224,15 @@ private:
      */
     struct DeferredTask
     {
-        uint map;         ///< Target map.
+        Uri *mapUri;      ///< Target map.
         int scriptNumber; ///< On the target map.
         byte args[4];
+
+        void write(Writer *write) const;
+        void read(Reader *reader, int segmentVersion);
     };
 
-    bool newDeferredTask(uint map, int scriptNumber, byte const args[4]);
+    bool newDeferredTask(Uri const *mapUri, int scriptNumber, byte const args[4]);
 
     byte const *_pcode; ///< Start of the loaded bytecode.
 
@@ -259,13 +262,14 @@ extern "C" {
  */
 void Game_InitACScriptsForNewGame(void);
 
-dd_bool Game_ACScriptInterpreter_StartScript(int number, uint map, byte const args[4], mobj_t *activator, Line *line, int side);
+dd_bool Game_ACScriptInterpreter_StartScript(int scriptNumber, Uri const *mapUri,
+    byte const args[4], mobj_t *activator, Line *line, int side);
 
-dd_bool Game_ACScriptInterpreter_TerminateScript(int number, uint map);
+dd_bool Game_ACScriptInterpreter_TerminateScript(int scriptNumber, Uri const *mapUri);
 
-dd_bool Game_ACScriptInterpreter_SuspendScript(int number, uint map);
+dd_bool Game_ACScriptInterpreter_SuspendScript(int scriptNumber, Uri const *mapUri);
 
-void Game_ACScriptInterpreter_RunDeferredTasks(uint map/*Uri const *map*/);
+void Game_ACScriptInterpreter_RunDeferredTasks(Uri const *mapUri);
 
 #ifdef __cplusplus
 } // extern "C"

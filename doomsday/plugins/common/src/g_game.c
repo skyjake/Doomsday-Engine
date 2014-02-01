@@ -125,9 +125,9 @@ void    G_DoReborn(int playernum);
 dd_bool G_StartDebriefing();
 
 typedef struct {
-    Uri* mapUri;
-    uint episode;
-    uint map;
+    Uri *mapUri;
+    //uint episode;
+    //uint map;
     dd_bool revisit;
 } loadmap_params_t;
 int     G_DoLoadMap(loadmap_params_t* params);
@@ -2684,8 +2684,8 @@ void G_DoLeaveMap(void)
 #endif
 
     p.mapUri  = G_ComposeMapUri(gameEpisode, nextMap);
-    p.episode = gameEpisode;
-    p.map     = nextMap;
+    //p.episode = gameEpisode;
+    //p.map     = nextMap;
     p.revisit = revisit;
 
     hasBrief = G_BriefingEnabled(p.mapUri, &fin);
@@ -2694,7 +2694,7 @@ void G_DoLeaveMap(void)
         G_QueMapMusic(p.mapUri);
     }
 
-    gameMap = p.map;
+    gameMap = nextMap;
 
     // If we're the server, let clients know the map will change.
     NetSv_UpdateGameConfigDescription();
@@ -2726,7 +2726,7 @@ void G_DoLeaveMap(void)
     randomClassParm = oldRandomClassParm;
 
     // Launch waiting scripts.
-    Game_ACScriptInterpreter_RunDeferredTasks(gameMap/*p.mapUri*/);
+    Game_ACScriptInterpreter_RunDeferredTasks(p.mapUri);
 #endif
 
     Uri_Delete(p.mapUri);
@@ -2767,8 +2767,8 @@ void G_DoRestartMap(void)
     DD_Executef(true, "texreset raw");
 
     p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
-    p.episode    = gameEpisode;
-    p.map        = gameMap;
+    //p.episode    = gameEpisode;
+    //p.map        = gameMap;
     p.revisit    = false; // Don't reload save state.
 
     // This is a restart, so we won't brief again.
@@ -3038,10 +3038,10 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
         dd_bool hasBrief;
         ddfinale_t fin;
 
-        p.mapUri        = G_ComposeMapUri(gameEpisode, gameMap);
-        p.episode       = gameEpisode;
-        p.map           = gameMap;
-        p.revisit       = false;
+        p.mapUri  = G_ComposeMapUri(gameEpisode, gameMap);
+        //p.episode = gameEpisode;
+        //p.map     = gameMap;
+        p.revisit = false;
 
         hasBrief = G_BriefingEnabled(p.mapUri, &fin);
         if(!hasBrief)

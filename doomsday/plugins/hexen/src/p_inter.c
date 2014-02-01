@@ -1445,7 +1445,8 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         if(target->type == MT_SORCBOSS)
         {
             dummy = 0;
-            Game_ACScriptInterpreter_StartScript(target->special, 0, (byte *) &dummy, target, NULL, 0);
+            Game_ACScriptInterpreter_StartScript(target->special, 0/*current-map*/,
+                                                 (byte *) &dummy, target, NULL, 0);
         }
         else
         {
