@@ -210,12 +210,17 @@ dd_bool EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
+static Uri *mapUriFromLogicalNumber(int number)
+{
+    if(!number) return 0; // current map.
+    return G_ComposeMapUri(gameEpisode, number - 1);
+}
+
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
 {
     byte newArgs[5];
     int i, lock;
     dd_bool success;
-    int mapNumber;
     Uri *mapUri;
 
     DENG_ASSERT(args != 0);
@@ -244,18 +249,11 @@ dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
     }
     newArgs[4] = 0;
 
-    mapNumber = newArgs[1]; // logical
-    mapUri = mapNumber? G_ComposeMapUri(gameEpisode, mapNumber - 1) : 0;
+    mapUri = mapUriFromLogicalNumber(newArgs[1]);
     success = Game_ACScriptInterpreter_StartScript(newArgs[0], mapUri, &newArgs[2], mo, line, side);
     Uri_Delete(mapUri);
 
     return success;
-}
-
-static Uri *mapUriFromLogicalNumber(int number)
-{
-    if(!number) return 0; // current map.
-    return G_ComposeMapUri(gameEpisode, number - 1);
 }
 
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)

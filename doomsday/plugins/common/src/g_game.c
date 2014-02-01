@@ -126,8 +126,6 @@ dd_bool G_StartDebriefing();
 
 typedef struct {
     Uri *mapUri;
-    //uint episode;
-    //uint map;
     dd_bool revisit;
 } loadmap_params_t;
 int     G_DoLoadMap(loadmap_params_t* params);
@@ -2684,8 +2682,6 @@ void G_DoLeaveMap(void)
 #endif
 
     p.mapUri  = G_ComposeMapUri(gameEpisode, nextMap);
-    //p.episode = gameEpisode;
-    //p.map     = nextMap;
     p.revisit = revisit;
 
     hasBrief = G_BriefingEnabled(p.mapUri, &fin);
@@ -2766,10 +2762,8 @@ void G_DoRestartMap(void)
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
 
-    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
-    //p.episode    = gameEpisode;
-    //p.map        = gameMap;
-    p.revisit    = false; // Don't reload save state.
+    p.mapUri  = G_ComposeMapUri(gameEpisode, gameMap);
+    p.revisit = false; // Don't reload save state.
 
     // This is a restart, so we won't brief again.
     G_QueMapMusic(p.mapUri);
@@ -3039,8 +3033,6 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
         ddfinale_t fin;
 
         p.mapUri  = G_ComposeMapUri(gameEpisode, gameMap);
-        //p.episode = gameEpisode;
-        //p.map     = gameMap;
         p.revisit = false;
 
         hasBrief = G_BriefingEnabled(p.mapUri, &fin);
