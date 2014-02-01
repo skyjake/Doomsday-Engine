@@ -193,7 +193,7 @@ DENG2_OBSERVES(App,              StartupComplete)
         gameSelMenu = new GameSelectionWidget;
         gameSelMenu->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
-                .setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
+                //.setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
@@ -224,9 +224,14 @@ DENG2_OBSERVES(App,              StartupComplete)
         container().add(taskBar);
 
         // The game selection's height depends on the taskbar.
-        gameSelMenu->rule().setInput(Rule::Height,
-                                     OperatorRule::minimum(root.viewHeight(),
-                                                           (taskBar->rule().top() - root.viewHeight() / 2) * 2,                                                     style.rules().rule("gameselection.max.height")));
+        gameSelMenu->rule()
+                .setInput(Rule::AnchorY, taskBar->rule().top() / 2)
+                .setInput(Rule::Height,
+                          OperatorRule::minimum(style.rules().rule("gameselection.max.height"),
+                                                taskBar->rule().top()));
+                                     /*OperatorRule::minimum(root.viewHeight(),
+                                                           (taskBar->rule().top() - root.viewHeight() / 2) * 2,
+                  style.rules().rule("gameselection.max.height")));*/
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
