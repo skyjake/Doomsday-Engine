@@ -57,7 +57,7 @@ static void stopCeiling(ceiling_t *ceiling)
 {
     P_ToXSector(ceiling->sector)->specialData = 0;
 #if __JHEXEN__
-    P_ACScriptTagFinished(P_ToXSector(ceiling->sector)->tag);
+    Game_ACScriptInterpreter().tagFinished(P_ToXSector(ceiling->sector)->tag);
 #endif
     Thinker_Remove(&ceiling->thinker);
 }
@@ -506,7 +506,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 }
 
 #if __JHEXEN__
-int EV_DoCeiling(Line *line, byte *args, ceilingtype_e type)
+int EV_DoCeiling(Line * /*line*/, byte *args, ceilingtype_e type)
 #else
 int EV_DoCeiling(Line *line, ceilingtype_e type)
 #endif

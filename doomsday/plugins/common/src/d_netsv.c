@@ -736,7 +736,7 @@ void NetSv_SendGameState(int flags, int to)
         return;
 
     DD_GameInfo(&gameInfo);
-    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapUri = G_CurrentMapUri();
 
     // Print a short message that describes the game state.
     str = Uri_Resolved(mapUri);

@@ -38,7 +38,7 @@ void T_BuildPillar(pillar_t *pillar)
     {
         P_ToXSector(pillar->sector)->specialData = 0;
         SN_StopSequenceInSec(pillar->sector);
-        P_ACScriptTagFinished(P_ToXSector(pillar->sector)->tag);
+        Game_ACScriptInterpreter().tagFinished(P_ToXSector(pillar->sector)->tag);
         Thinker_Remove(&pillar->thinker);
     }
 }
@@ -105,7 +105,7 @@ int pillar_t::read(Reader *reader, int mapVersion)
     return true; // Add this thinker.
 }
 
-int EV_BuildPillar(Line *line, byte *args, dd_bool crush)
+int EV_BuildPillar(Line * /*line*/, byte *args, dd_bool crush)
 {
     iterlist_t *list = P_GetSectorIterListForTag((int) args[0], false);
     if(!list) return 0;

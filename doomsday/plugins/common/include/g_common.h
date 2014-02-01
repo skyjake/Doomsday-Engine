@@ -85,38 +85,48 @@ void G_BeginMap(void);
  * (if __JHEXEN__ the intermission will only be displayed when exiting a
  * hub and in DeathMatch games)
  *
- * @param newMap        Logical map number we are entering (i.e., not a warp/translated number).
- * @param mapEntryPoint Logical map entry point on the new map.
- * @param secretExit    @c true if the exit taken was marked as 'secret'.
+ * @param newMap         Logical map number we are entering (i.e., not a warp/translated number).
+ * @param mapEntryPoint  Logical map entry point on the new map.
+ * @param secretExit     @c true if the exit taken was marked as 'secret'.
  */
 void G_LeaveMap(uint newMap, uint mapEntryPoint, dd_bool secretExit);
 
 /**
  * Compose a Uri for the identified @a episode and @a map combination.
  *
- * @param episode       Logical episode number.
- * @param map           Logical map number.
+ * @param episode  Logical episode number.
+ * @param map      Logical map number.
  *
  * @return  Resultant Uri. Must be destroyed with Uri_Delete() when no longer needed.
  */
-Uri* G_ComposeMapUri(uint episode, uint map);
+Uri *G_ComposeMapUri(uint episode, uint map);
+
+/**
+ * Compose the Uri for the @em current map.
+ *
+ * @note Some APIs are designed such that a NULL uri pointer means the "current map",
+ * so, calling this may be unnecessary.
+ *
+ * @return  Resultant Uri. Must be destroyed with Uri_Delete() when no longer needed.
+ */
+Uri *G_CurrentMapUri(void);
 
 /**
  * Determine if the specified @a episode and @a map value pair are valid and if not,
  * adjust their are values within the ranges defined by the current game type and mode.
  *
- * @param episode       Logical episode number to be validated.
- * @param map           Logical map number to be validated.
+ * @param episode  Logical episode number to be validated.
+ * @param map      Logical map number to be validated.
  *
  * @return  @c true= The original @a episode and @a map value pair were already valid.
  */
-dd_bool G_ValidateMap(uint* episode, uint* map);
+dd_bool G_ValidateMap(uint *episode, uint *map);
 
 /**
  * Return the next map according to the default map progression.
  *
- * @param episode       Current episode.
- * @param map           Current map.
+ * @param episode     Current episode.
+ * @param map         Current map.
  * @param secretExit
  *
  * @return  The next map.
@@ -124,9 +134,15 @@ dd_bool G_ValidateMap(uint* episode, uint* map);
 uint G_GetNextMap(uint episode, uint map, dd_bool secretExit);
 
 /// @return  Logical map number.
-uint G_GetMapNumber(uint episode, uint map);
+uint G_NextLogicalMapNumber(dd_bool secretExit);
 
-AutoStr* G_GenerateSaveGameName(void);
+/// @return  Logical map number.
+uint G_LogicalMapNumber(uint episode, uint map);
+
+/// @return  Logical map number.
+uint G_CurrentLogicalMapNumber(void);
+
+AutoStr *G_GenerateSaveGameName(void);
 
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );

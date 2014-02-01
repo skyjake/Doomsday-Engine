@@ -675,7 +675,7 @@ D_CMD(CheatWhere)
     if(G_GameState() != GS_MAP || !plr->plr->mo)
         return true;
 
-    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapUri = G_CurrentMapUri();
     mapPath = Uri_ToString(mapUri);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
@@ -719,6 +719,6 @@ D_CMD(CheatLeaveMap)
         return true;
     }
 
-    G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
+    G_LeaveMap(G_NextLogicalMapNumber(false), 0, false);
     return true;
 }

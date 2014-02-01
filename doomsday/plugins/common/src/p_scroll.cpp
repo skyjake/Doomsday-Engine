@@ -357,7 +357,9 @@ scroll_t *P_SpawnSectorMaterialOriginScroller(Sector *sector, uint planeId, shor
 
     elementBits = 1 << planeId;
     return spawnMaterialOriginScroller(sector, elementBits, offset);
-#endif // __JHERETIC__ || __JHEXEN__
+#else // !(__JHERETIC__ || __JHEXEN__)
+    DENG_UNUSED(special);
+#endif
 
     return 0;
 

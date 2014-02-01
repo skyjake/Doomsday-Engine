@@ -56,7 +56,8 @@ D_CMD(SpawnMobj);
 
 D_CMD(PrintPlayerCoords);
 
-D_CMD(ScriptInfo);
+D_CMD(InspectACScript);
+D_CMD(ListACScripts);
 D_CMD(Test);
 D_CMD(MovePlane);
 D_CMD(ScreenShot);
@@ -173,7 +174,8 @@ ccmdtemplate_t  gameCCmds[] = {
     // Hexen specific
     {"pig",         NULL,   CCmdCheatMorph},
     {"runscript",   "i*",   CCmdCheatRunScript},
-    {"scriptinfo",  NULL,   CCmdScriptInfo},
+    {"scriptinfo",  "i",    CCmdInspectACScript},
+    {"scriptinfo",  "",     CCmdListACScripts},
     {"class",       "i*",   CCmdCheatShadowcaster},
     {NULL}
 };

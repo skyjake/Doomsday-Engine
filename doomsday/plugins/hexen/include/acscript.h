@@ -34,6 +34,7 @@
 #define MAX_ACS_WORLD_VARS      64
 #define ACS_STACK_DEPTH         32
 
+struct BytecodeScriptInfo;
 #ifdef __cplusplus
 class ACScriptInterpreter;
 #endif
@@ -46,16 +47,26 @@ typedef struct acscript_s {
     mobj_t *activator;
     Line *line;
     int side;
-    int number;
-    int infoIndex;
+    struct BytecodeScriptInfo *_info;
     int delayCount;
-    int stack[ACS_STACK_DEPTH];
-    int stackPtr;
+    struct Stack { // Local value stack.
+        int values[ACS_STACK_DEPTH];
+        int height;
+
+#ifdef __cplusplus
+        void push(int value);
+        int pop();
+        int top() const;
+        void drop();
+#endif
+    } locals;
     int vars[MAX_ACS_SCRIPT_VARS];
     int const *pcodePtr;
 
 #ifdef __cplusplus
     ACScriptInterpreter &interpreter() const;
+
+    BytecodeScriptInfo &info() const;
 
     void runTick();
 
@@ -68,13 +79,6 @@ typedef struct acscript_s {
      * Deserialize the thinker from the currently open save file.
      */
     int read(Reader *reader, int mapVersion);
-
-public: /// @todo make private:
-    void push(int value);
-    int pop();
-    int top() const;
-    void drop();
-
 #endif // __cplusplus
 } ACScript;
 
@@ -89,8 +93,6 @@ void ACScript_Thinker(ACScript *script);
 #endif
 
 #ifdef __cplusplus
-struct BytecodeScriptInfo;
-
 /**
  * Action-Code Script (ACS) bytecode interpreter.
  */
@@ -100,6 +102,18 @@ public:
     int mapVars[MAX_ACS_MAP_VARS];
     int worldVars[MAX_ACS_WORLD_VARS];
 
+    /// Logical script states:
+    enum ScriptState {
+        Inactive,
+        Running,
+        Suspended,
+        WaitingForTag,
+        WaitingForPolyobj,
+        WaitingForScript,
+        Terminating
+    };
+
+public:
     ACScriptInterpreter();
 
     /**
@@ -125,12 +139,12 @@ public:
      *
      * @return  @c true iff a script was newly started (or deferred).
      */
-    bool startScript(int scriptNumber, uint map, byte const args[4],
+    bool startScript(int scriptNumber, Uri const *mapUri, byte const args[4],
                      mobj_t *activator = 0, Line *line = 0, int side = 0);
 
-    bool suspendScript(int scriptNumber, uint map);
+    bool suspendScript(int scriptNumber, Uri const *mapUri);
 
-    bool terminateScript(int scriptNumber, uint map);
+    bool terminateScript(int scriptNumber, Uri const *mapUri);
 
     void tagFinished(int tag);
     void polyobjFinished(int tag);
@@ -165,7 +179,7 @@ public:
      * To be called when the current map changes to activate any deferred scripts
      * which should now begin/resume.
      */
-    void runDeferredTasks(uint map/*Uri const *mapUri*/);
+    void runDeferredTasks(Uri const *mapUri);
 
     /**
      * To be called when the specified @a script is to be formally terminated.
@@ -177,23 +191,32 @@ public:
      */
     void scriptFinished(ACScript *script);
 
+    /**
+     * Composes the human-friendly, textual name of the identified @a scriptNumber.
+     */
+    AutoStr *scriptName(int scriptNumber);
+
+    /**
+     * Composes a human-friendly, styled, textual description of the current status
+     * of the identified @a scriptNumber.
+     */
+    AutoStr *scriptDescription(int scriptNumber);
+
     void writeWorldScriptData(Writer *writer);
-    void readWorldScriptData(Reader *reader, int saveVersion);
+    void readWorldScriptData(Reader *reader, int mapVersion);
 
     void writeMapScriptData(Writer *writer);
-    void readMapScriptData(Reader *reader);
+    void readMapScriptData(Reader *reader, int mapVersion);
 
 public: /// @todo make private:
     BytecodeScriptInfo &scriptInfoByIndex(int index);
 
-    BytecodeScriptInfo &scriptInfoFor(ACScript *script);
-
+private:
     /**
      * Returns the logical index of a @a scriptNumber; otherwise @c -1.
      */
     int scriptInfoIndex(int scriptNumber);
 
-private:
     ACScript *newACScript(BytecodeScriptInfo &info, byte const args[4], int delayCount = 0);
 
     /**
@@ -201,12 +224,15 @@ private:
      */
     struct DeferredTask
     {
-        uint map;         ///< Target map.
+        Uri *mapUri;      ///< Target map.
         int scriptNumber; ///< On the target map.
         byte args[4];
+
+        void write(Writer *write) const;
+        void read(Reader *reader, int segmentVersion);
     };
 
-    bool newDeferredTask(uint map, int scriptNumber, byte const args[4]);
+    bool newDeferredTask(Uri const *mapUri, int scriptNumber, byte const args[4]);
 
     byte const *_pcode; ///< Start of the loaded bytecode.
 
@@ -219,7 +245,13 @@ private:
     int _deferredTasksSize;
     DeferredTask *_deferredTasks;
 };
+
+/// @return  The game's global ACScript interpreter.
+ACScriptInterpreter &Game_ACScriptInterpreter();
+
 #endif
+
+// C wrapper API, for legacy modules -------------------------------------------
 
 #ifdef __cplusplus
 extern "C" {
@@ -228,27 +260,16 @@ extern "C" {
 /**
  * To be called when a new game session begins to initialize ACS scripting.
  */
-void P_InitACScript(void);
+void Game_InitACScriptsForNewGame(void);
 
-void P_LoadACScripts(lumpnum_t lump);
+dd_bool Game_ACScriptInterpreter_StartScript(int scriptNumber, Uri const *mapUri,
+    byte const args[4], mobj_t *activator, Line *line, int side);
 
-dd_bool P_StartACScript(int number, uint map, byte const args[4], mobj_t *activator, Line *line, int side);
+dd_bool Game_ACScriptInterpreter_TerminateScript(int scriptNumber, Uri const *mapUri);
 
-dd_bool P_TerminateACScript(int number, uint map);
+dd_bool Game_ACScriptInterpreter_SuspendScript(int scriptNumber, Uri const *mapUri);
 
-dd_bool P_SuspendACScript(int number, uint map);
-
-void P_ACScriptTagFinished(int tag);
-
-void P_ACScriptPolyobjFinished(int tag);
-
-void P_ACScriptRunDeferredTasks(uint map/*Uri const *map*/);
-
-void P_WriteGlobalACScriptData(Writer *writer);
-void P_ReadGlobalACScriptData(Reader *reader, int saveVersion);
-
-void P_WriteMapACScriptData(Writer *writer);
-void P_ReadMapACScriptData(Reader *reader);
+void Game_ACScriptInterpreter_RunDeferredTasks(Uri const *mapUri);
 
 #ifdef __cplusplus
 } // extern "C"

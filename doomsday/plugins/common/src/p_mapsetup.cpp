@@ -865,8 +865,19 @@ void P_FinalizeMapChange(Uri const *uri)
     PO_InitForMap();
 
 #if __JHEXEN__
-    /// @todo Should be interpreted by the map converter.
-    P_LoadACScripts(W_GetLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/); // ACS object code
+    /// @todo Should be translated by the map converter.
+    lumpnum_t acsLumpNum = W_CheckLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/;
+    if(acsLumpNum >= 0 && !IS_CLIENT)
+    {
+        ACScriptInterpreter &interp = Game_ACScriptInterpreter();
+
+        interp.loadBytecode(acsLumpNum);
+
+        memset(interp.mapVars, 0, sizeof(interp.mapVars));
+
+        // Start all scripts flagged to begin immediately.
+        interp.startOpenScripts();
+    }
 #endif
 
     HU_UpdatePsprites();
@@ -1116,7 +1127,7 @@ char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
 
 char const *P_CurrentMapTitle()
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     char const *title = P_MapTitle(mapUri);
     Uri_Delete(mapUri);
     return title;
@@ -1124,7 +1135,7 @@ char const *P_CurrentMapTitle()
 
 char const *P_CurrentMapAuthor(dd_bool supressGameAuthor)
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     char const *author = P_MapAuthor(mapUri, supressGameAuthor);
     Uri_Delete(mapUri);
     return author;

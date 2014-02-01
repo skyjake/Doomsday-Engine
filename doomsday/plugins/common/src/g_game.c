@@ -125,9 +125,7 @@ void    G_DoReborn(int playernum);
 dd_bool G_StartDebriefing();
 
 typedef struct {
-    Uri* mapUri;
-    uint episode;
-    uint map;
+    Uri *mapUri;
     dd_bool revisit;
 } loadmap_params_t;
 int     G_DoLoadMap(loadmap_params_t* params);
@@ -1149,7 +1147,7 @@ void G_StartHelp(void)
  */
 static void printMapBanner(void)
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     char const *title = P_CurrentMapTitle();
 
     App_Log(DE2_LOG_MAP, DE2_ESC(R));
@@ -1264,7 +1262,7 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
 
 #if __JHEXEN__
     {
-        Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *mapUri = G_CurrentMapUri();
         mapinfo_t const *mapInfo = P_MapInfo(mapUri);
         if(mapInfo)
         {
@@ -1771,7 +1769,7 @@ void G_PlayerLeaveMap(int player)
 
 #if __JHEXEN__
     {
-        Uri *mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *mapUri     = G_CurrentMapUri();
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
         newCluster = (P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster);
@@ -2183,7 +2181,7 @@ static void G_InitNewGame(void)
     SV_ClearSlot(AUTO_SLOT);
 
 #if __JHEXEN__
-    P_InitACScript();
+    Game_InitACScriptsForNewGame();
 #endif
 }
 
@@ -2416,7 +2414,7 @@ void G_DoMapCompleted(void)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
     ddmapinfo_t minfo;
-    Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri* mapUri = G_CurrentMapUri();
     AutoStr* mapPath = Uri_Compose(mapUri);
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
     {
@@ -2446,7 +2444,7 @@ void G_DoMapCompleted(void)
 # endif
 
     // Determine the next map.
-    nextMap = G_GetNextMap(gameEpisode, gameMap, secretExit);
+    nextMap = G_NextLogicalMapNumber(secretExit);
 #endif
 
     // Time for an intermission.
@@ -2480,7 +2478,7 @@ void G_DoMapCompleted(void)
 #if __JDOOM__ || __JDOOM64__
 void G_PrepareWIData(void)
 {
-    Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri* mapUri = G_CurrentMapUri();
     AutoStr* mapPath = Uri_Compose(mapUri);
     wbstartstruct_t* info = &wmInfo;
     ddmapinfo_t minfo;
@@ -2518,7 +2516,7 @@ void G_PrepareWIData(void)
  */
 dd_bool G_StartDebriefing()
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     ddfinale_t fin;
 
     if(G_DebriefingEnabled(mapUri, &fin) &&
@@ -2615,9 +2613,9 @@ void G_DoLeaveMap(void)
 
     // Same cluster?
     {
-        Uri *mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *mapUri     = G_CurrentMapUri();
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster)
+        if(P_MapInfo(mapUri)->cluster == P_MapInfo(nextMapUri)->cluster)
         {
             if(!deathmatch)
             {
@@ -2684,8 +2682,6 @@ void G_DoLeaveMap(void)
 #endif
 
     p.mapUri  = G_ComposeMapUri(gameEpisode, nextMap);
-    p.episode = gameEpisode;
-    p.map     = nextMap;
     p.revisit = revisit;
 
     hasBrief = G_BriefingEnabled(p.mapUri, &fin);
@@ -2694,7 +2690,7 @@ void G_DoLeaveMap(void)
         G_QueMapMusic(p.mapUri);
     }
 
-    gameMap = p.map;
+    gameMap = nextMap;
 
     // If we're the server, let clients know the map will change.
     NetSv_UpdateGameConfigDescription();
@@ -2726,7 +2722,7 @@ void G_DoLeaveMap(void)
     randomClassParm = oldRandomClassParm;
 
     // Launch waiting scripts.
-    P_ACScriptRunDeferredTasks(gameMap/*p.mapUri*/);
+    Game_ACScriptInterpreter_RunDeferredTasks(p.mapUri);
 #endif
 
     Uri_Delete(p.mapUri);
@@ -2766,10 +2762,8 @@ void G_DoRestartMap(void)
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
 
-    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
-    p.episode    = gameEpisode;
-    p.map        = gameMap;
-    p.revisit    = false; // Don't reload save state.
+    p.mapUri  = G_CurrentMapUri();
+    p.revisit = false; // Don't reload save state.
 
     // This is a restart, so we won't brief again.
     G_QueMapMusic(p.mapUri);
@@ -2892,7 +2886,7 @@ AutoStr *G_GenerateSaveGameName(void)
     minutes = time / 60;   time -= minutes * 60;
     seconds = time;
 
-    mapUri   = G_ComposeMapUri(gameEpisode, gameMap);
+    mapUri   = G_CurrentMapUri();
     mapPath  = Uri_Compose(mapUri);
     mapTitle = P_CurrentMapTitle();
 
@@ -3038,10 +3032,8 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
         dd_bool hasBrief;
         ddfinale_t fin;
 
-        p.mapUri        = G_ComposeMapUri(gameEpisode, gameMap);
-        p.episode       = gameEpisode;
-        p.map           = gameMap;
-        p.revisit       = false;
+        p.mapUri  = G_CurrentMapUri();
+        p.revisit = false;
 
         hasBrief = G_BriefingEnabled(p.mapUri, &fin);
         if(!hasBrief)
@@ -3102,11 +3094,11 @@ void G_QuitGame(void)
     Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
 }
 
-const char* P_GetGameModeName(void)
+char const *P_GetGameModeName(void)
 {
-    static const char* dm   = "deathmatch";
-    static const char* coop = "cooperative";
-    static const char* sp   = "singleplayer";
+    static char const *dm   = "deathmatch";
+    static char const *coop = "cooperative";
+    static char const *sp   = "singleplayer";
     if(IS_NETGAME)
     {
         if(deathmatch) return dm;
@@ -3115,7 +3107,7 @@ const char* P_GetGameModeName(void)
     return sp;
 }
 
-uint G_GetMapNumber(uint episode, uint map)
+uint G_LogicalMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__
     return P_TranslateMap(map);
@@ -3133,7 +3125,12 @@ uint G_GetMapNumber(uint episode, uint map)
 #endif
 }
 
-Uri* G_ComposeMapUri(uint episode, uint map)
+uint G_CurrentLogicalMapNumber(void)
+{
+    return G_LogicalMapNumber(gameEpisode, gameMap);
+}
+
+Uri *G_ComposeMapUri(uint episode, uint map)
 {
     lumpname_t mapId;
 #if __JDOOM64__
@@ -3149,6 +3146,11 @@ Uri* G_ComposeMapUri(uint episode, uint map)
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #endif
     return Uri_NewWithPath2(mapId, RC_NULL);
+}
+
+Uri *G_CurrentMapUri(void)
+{
+    return G_ComposeMapUri(gameEpisode, gameMap);
 }
 
 dd_bool G_ValidateMap(uint *episode, uint *map)
@@ -3241,7 +3243,7 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
 {
 #if __JHEXEN__
     Uri *mapUri = G_ComposeMapUri(episode, map);
-    int nextMap = G_GetMapNumber(episode, P_MapInfo(mapUri)->nextMap);
+    int nextMap = G_LogicalMapNumber(episode, P_MapInfo(mapUri)->nextMap);
     Uri_Delete(mapUri);
     return nextMap;
 
@@ -3347,6 +3349,11 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
         return map + 1; // Go to next map.
     }
 #endif
+}
+
+uint G_NextLogicalMapNumber(dd_bool secretExit)
+{
+    return G_GetNextMap(gameEpisode, gameMap, secretExit);
 }
 
 /**

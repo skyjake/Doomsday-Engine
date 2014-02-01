@@ -23,6 +23,7 @@
 #include "acscript.h"
 
 #include "dmu_lib.h"
+#include "g_common.h"
 #include "p_player.h"
 #include "p_map.h"
 #include "p_saveg.h"
@@ -30,31 +31,6 @@
 #include "p_sound.h"
 #include <cstring>
 #include <cstdio>
-
-enum ACScriptState
-{
-    Inactive,
-    Running,
-    Suspended,
-    WaitingForTag,
-    WaitingForPolyobj,
-    WaitingForScript,
-    Terminating
-};
-
-static char const *scriptStateAsText(ACScriptState state)
-{
-    char const *names[] = {
-        "Inactive",
-        "Running",
-        "Suspended",
-        "Waiting for tag",
-        "Waiting for polyobj",
-        "Waiting for script",
-        "Terminating"
-    };
-    return names[state];
-}
 
 /**
  * Bytecode header. Read directly from the map lump.
@@ -84,9 +60,36 @@ struct BytecodeScriptInfo
 
     // Current state:
     /// @todo Move to a separate array, in ACScriptInterpreter
-    ACScriptState state;
+    ACScriptInterpreter::ScriptState state;
     int waitValue;
 };
+
+void ACScriptInterpreter::DeferredTask::write(Writer *writer) const
+{
+    Uri_Write(mapUri, writer);
+    Writer_WriteInt32(writer, scriptNumber);
+    for(int i = 0; i < 4; ++i)
+    {
+        Writer_WriteByte(writer, args[i]);
+    }
+}
+
+void ACScriptInterpreter::DeferredTask::read(Reader *reader, int segmentVersion)
+{
+    if(segmentVersion >= 4)
+    {
+        mapUri = Uri_FromReader(reader);
+    }
+    else
+    {
+        mapUri = G_ComposeMapUri(gameEpisode, Reader_ReadInt32(reader));
+    }
+    scriptNumber = Reader_ReadInt32(reader);
+    for(int i = 0; i < 4; ++i)
+    {
+        args[i] = Reader_ReadByte(reader);
+    }
+}
 
 int ACScriptInterpreter::scriptInfoIndex(int scriptNumber)
 {
@@ -109,8 +112,7 @@ ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const 
     ACScript *script = (ACScript *) Z_Calloc(sizeof(*script), PU_MAP, 0);
     script->thinker.function = (thinkfunc_t) ACScript_Thinker;
 
-    script->number     = info.scriptNumber;
-    script->infoIndex  = scriptInfoIndex(info.scriptNumber);
+    script->_info      = &info;
     script->pcodePtr   = info.pcodePtr;
     script->delayCount = delayCount;
 
@@ -127,31 +129,23 @@ ACScript *ACScriptInterpreter::newACScript(BytecodeScriptInfo &info, byte const 
     return script;
 }
 
-bool ACScriptInterpreter::newDeferredTask(uint map, int scriptNumber, byte const args[])
+bool ACScriptInterpreter::newDeferredTask(Uri const *mapUri, int scriptNumber, byte const args[])
 {
-    if(_deferredTasksSize)
+    // Don't allow duplicates.
+    for(int i = 0; i < _deferredTasksSize; ++i)
     {
-        // Don't allow duplicates.
-        for(int i = 0; i < _deferredTasksSize; ++i)
+        DeferredTask &task = _deferredTasks[i];
+        if(task.scriptNumber == scriptNumber &&
+           Uri_Equality(task.mapUri, mapUri))
         {
-            DeferredTask &task = _deferredTasks[i];
-            if(task.scriptNumber == scriptNumber && task.map == map)
-            {
-                return false;
-            }
+            return false;
         }
-
-        _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, ++_deferredTasksSize * sizeof(DeferredTask), PU_GAMESTATIC);
-    }
-    else
-    {
-        _deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask), PU_GAMESTATIC, 0);
-        _deferredTasksSize = 1;
     }
 
+    _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * ++_deferredTasksSize, PU_GAMESTATIC);
     DeferredTask *task = &_deferredTasks[_deferredTasksSize - 1];
 
-    task->map          = map;
+    task->mapUri       = Uri_Dup(mapUri);
     task->scriptNumber = scriptNumber;
     task->args[0]      = args[0];
     task->args[1]      = args[1];
@@ -259,16 +253,23 @@ void ACScriptInterpreter::startOpenScripts()
     }
 }
 
-bool ACScriptInterpreter::startScript(int scriptNumber, uint map, byte const args[],
-    mobj_t *activator, Line *line, int side)
+bool ACScriptInterpreter::startScript(int scriptNumber, Uri const *mapUri,
+    byte const args[], mobj_t *activator, Line *line, int side)
 {
     DENG_ASSERT(!IS_CLIENT);
 
-    if(map && map - 1 != gameMap)
+    if(mapUri)
     {
-        // Script is not for the current map.
-        // Add it to the store to be started when that map is next entered.
-        return newDeferredTask(map - 1, scriptNumber, args);
+        Uri *currentMapUri = G_CurrentMapUri();
+        if(!Uri_Equality(mapUri, currentMapUri))
+        {
+            Uri_Delete(currentMapUri);
+
+            // Script is not for the current map.
+            // Add it to the store to be started when that map is next entered.
+            return newDeferredTask(mapUri, scriptNumber, args);
+        }
+        Uri_Delete(currentMapUri);
     }
 
     if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
@@ -296,7 +297,7 @@ bool ACScriptInterpreter::startScript(int scriptNumber, uint map, byte const arg
     return false; // Perhaps its already executing?
 }
 
-bool ACScriptInterpreter::suspendScript(int scriptNumber, uint /*map*/)
+bool ACScriptInterpreter::suspendScript(int scriptNumber, Uri const * /*mapUri*/)
 {
     if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
     {
@@ -311,7 +312,7 @@ bool ACScriptInterpreter::suspendScript(int scriptNumber, uint /*map*/)
     return false;
 }
 
-bool ACScriptInterpreter::terminateScript(int scriptNumber, uint /*map*/)
+bool ACScriptInterpreter::terminateScript(int scriptNumber, Uri const * /*mapUri*/)
 {
     if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
     {
@@ -384,11 +385,15 @@ byte const *ACScriptInterpreter::bytecode() const
 
 void ACScriptInterpreter::clearDeferredTasks()
 {
+    for(int i = 0; i < _deferredTasksSize; ++i)
+    {
+        Uri_Delete(_deferredTasks[i].mapUri);
+    }
     Z_Free(_deferredTasks); _deferredTasks = 0;
     _deferredTasksSize = 0;
 }
 
-void ACScriptInterpreter::runDeferredTasks(uint map/*Uri const *mapUri*/)
+void ACScriptInterpreter::runDeferredTasks(Uri const *mapUri)
 {
     //DENG_ASSERT(mapUri != 0);
 
@@ -407,7 +412,7 @@ void ACScriptInterpreter::runDeferredTasks(uint map/*Uri const *mapUri*/)
         DeferredTask *task = &_deferredTasks[i];
         int scriptNumber = task->scriptNumber;
 
-        if(task->map != map)
+        if(!Uri_Equality(task->mapUri, mapUri))
         {
             i++;
             continue;
@@ -430,6 +435,8 @@ void ACScriptInterpreter::runDeferredTasks(uint map/*Uri const *mapUri*/)
             App_Log(DE2_SCR_WARNING, "ACS: Unknown script #%i", scriptNumber);
         }
 
+        Uri_Delete(_deferredTasks[i].mapUri);
+
         _deferredTasksSize -= 1;
         if(i == _deferredTasksSize)
             break;
@@ -437,17 +444,18 @@ void ACScriptInterpreter::runDeferredTasks(uint map/*Uri const *mapUri*/)
         memmove(&_deferredTasks[i], &_deferredTasks[i + 1], sizeof(DeferredTask) * (_deferredTasksSize - i));
     }
 
-    if(_deferredTasksSize == origSize)
-        return;
-
-    if(_deferredTasksSize)
+    if(_deferredTasksSize < origSize)
     {
-        _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
-        return;
+        if(_deferredTasksSize)
+        {
+            _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
+        }
+        else
+        {
+            Z_Free(_deferredTasks);
+            _deferredTasks = 0;
+        }
     }
-
-    Z_Free(_deferredTasks);
-    _deferredTasks = 0;
 }
 
 void ACScriptInterpreter::scriptFinished(ACScript *script)
@@ -455,13 +463,13 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
     if(!script) return;
 
     // This script has now finished.
-    scriptInfoFor(script).state = Inactive;
+    script->info().state = Inactive;
 
     // Notify any scripts which are waiting for this script to finish.
     for(int i = 0; i < _scriptCount; ++i)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
-        if(info.state == WaitingForScript && info.waitValue == script->number)
+        if(info.state == WaitingForScript && info.waitValue == script->info().scriptNumber)
         {
             info.state = Running;
         }
@@ -474,7 +482,7 @@ void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
 {
     SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
 
-    Writer_WriteByte(writer, 3); // version byte
+    Writer_WriteByte(writer, 4); // version byte
 
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
     {
@@ -485,21 +493,15 @@ void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
     Writer_WriteInt32(writer, _deferredTasksSize);
     for(int i = 0; i < _deferredTasksSize; ++i)
     {
-        DeferredTask const *task = &_deferredTasks[i];
-        Writer_WriteInt32(writer, task->map);
-        Writer_WriteInt32(writer, task->scriptNumber);
-        for(int k = 0; k < 4; ++k)
-        {
-            Writer_WriteByte(writer, task->args[k]);
-        }
+        _deferredTasks[i].write(writer);
     }
 }
 
-void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
+void ACScriptInterpreter::readWorldScriptData(Reader *reader, int mapVersion)
 {
     int ver = 1;
 
-    if(saveVersion >= 7)
+    if(mapVersion >= 7)
     {
         SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
         ver = Reader_ReadByte(reader);
@@ -511,67 +513,44 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
     }
 
     // Deserialize the deferred task queue.
+    clearDeferredTasks();
     if(ver >= 3)
     {
         _deferredTasksSize = Reader_ReadInt32(reader);
         if(_deferredTasksSize)
         {
-            if(_deferredTasks)
-                _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
-            else
-                _deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC, 0);
-
+            _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(*_deferredTasks) * _deferredTasksSize, PU_GAMESTATIC);
             for(int i = 0; i < _deferredTasksSize; ++i)
             {
-                DeferredTask *task = &_deferredTasks[i];
-
-                task->map          = Reader_ReadInt32(reader);
-                task->scriptNumber = Reader_ReadInt32(reader);
-                for(int k = 0; k < 4; ++k)
-                {
-                    task->args[k] = Reader_ReadByte(reader);
-                }
+                _deferredTasks[i].read(reader, ver);
             }
         }
     }
     else
     {
         // Old format.
-        DeferredTask tempTasks[20];
-
-        _deferredTasksSize = 0;
         for(int i = 0; i < 20; ++i)
         {
-            int map            = Reader_ReadInt32(reader);
-            DeferredTask *task = &tempTasks[map < 0? 19 : _deferredTasksSize++];
-
-            task->map          = map < 0? 0 : map-1;
-            task->scriptNumber = Reader_ReadInt32(reader);
+            int map          = Reader_ReadInt32(reader);
+            int scriptNumber = Reader_ReadInt32(reader);
+            byte args[4];
             for(int k = 0; k < 4; ++k)
             {
-                task->args[k] = Reader_ReadByte(reader);
+                args[k] = Reader_ReadByte(reader);
+            }
+
+            if(map > 0)
+            {
+                Uri *mapUri = G_ComposeMapUri(gameEpisode, map - 1);
+                newDeferredTask(mapUri, scriptNumber, args);
+                Uri_Delete(mapUri);
             }
         }
 
-        if(saveVersion < 7)
+        if(mapVersion < 7)
         {
             SV_Seek(12); // Junk.
         }
-
-        if(_deferredTasksSize)
-        {
-            if(_deferredTasks)
-                _deferredTasks = (DeferredTask *) Z_Realloc(_deferredTasks, sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC);
-            else
-                _deferredTasks = (DeferredTask *) Z_Malloc(sizeof(DeferredTask) * _deferredTasksSize, PU_GAMESTATIC, 0);
-
-            memcpy(_deferredTasks, tempTasks, sizeof(DeferredTask) * _deferredTasksSize);
-        }
-    }
-
-    if(!_deferredTasksSize && _deferredTasks)
-    {
-        Z_Free(_deferredTasks); _deferredTasks = 0;
     }
 }
 
@@ -592,7 +571,7 @@ void ACScriptInterpreter::writeMapScriptData(Writer *writer)
     }
 }
 
-void ACScriptInterpreter::readMapScriptData(Reader *reader)
+void ACScriptInterpreter::readMapScriptData(Reader *reader, int /*mapVersion*/)
 {
     SV_AssertSegment(ASEG_SCRIPTS);
 
@@ -600,7 +579,7 @@ void ACScriptInterpreter::readMapScriptData(Reader *reader)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
 
-        info.state     = ACScriptState( Reader_ReadInt16(reader) );
+        info.state     = ScriptState( Reader_ReadInt16(reader) );
         info.waitValue = Reader_ReadInt16(reader);
     }
 
@@ -616,26 +595,46 @@ BytecodeScriptInfo &ACScriptInterpreter::scriptInfoByIndex(int index)
     return _scriptInfo[index];
 }
 
-BytecodeScriptInfo &ACScriptInterpreter::scriptInfoFor(ACScript *script)
+AutoStr *ACScriptInterpreter::scriptName(int scriptNumber)
 {
-    DENG_ASSERT(script != 0);
-    return scriptInfoByIndex(script->infoIndex);
+    BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber);
+    if(!info)
+    {
+        return AutoStr_FromTextStd("(invalid-scriptnumber)");
+    }
+    bool const open = (info->flags & BytecodeScriptInfo::Open) != 0;
+    return Str_Appendf(AutoStr_NewStd(), "#%i%s", scriptNumber, open? " (Open)" : "");
+}
+
+AutoStr *ACScriptInterpreter::scriptDescription(int scriptNumber)
+{
+    BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber);
+    if(!info)
+    {
+        return AutoStr_FromTextStd("(invalid-scriptnumber)");
+    }
+
+    static char const *stateLabels[] = {
+        "Inactive",
+        "Running",
+        "Suspended",
+        "Waiting for tag",
+        "Waiting for polyobj",
+        "Waiting for script",
+        "Terminating"
+    };
+
+    return Str_Appendf(AutoStr_NewStd(), "ACScript " DE2_ESC(b) "%s\n"
+                                         DE2_ESC(l) "State: " DE2_ESC(.) DE2_ESC(i) "%s" DE2_ESC(.)
+                                         DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) "%i",
+                                         Str_Text(scriptName(scriptNumber)),
+                                         stateLabels[info->state], info->waitValue);
 }
 
 static byte SpecArgs[5];
 
 #define PRINT_BUFFER_SIZE 256
 static char PrintBuffer[PRINT_BUFFER_SIZE];
-
-/// The One ACS interpreter instance.
-static ACScriptInterpreter interp;
-
-/// POD structure passed to bytecode commands.
-struct CommandArgs
-{
-    ACScript *script;
-    BytecodeScriptInfo *scriptInfo;
-};
 
 /// Bytecode command return value.
 enum CommandResult
@@ -645,510 +644,500 @@ enum CommandResult
     Terminate
 };
 
-typedef CommandResult (*CommandFunc) (CommandArgs const &args);
+typedef CommandResult (*CommandFunc) (ACScript &acs);
 
 /// Helper macro for declaring an ACS command function.
-#define ACS_COMMAND(Name) CommandResult cmd##Name(CommandArgs const &args)
-
-/// ACS command helper macros:
-#define S_INTERPRETER() args.script->interpreter()
-#define S_PCODEPTR      args.script->pcodePtr
-#define S_PUSH(value)   args.script->push(value)
-#define S_POP()         args.script->pop()
-#define S_TOP()         args.script->top()
-#define S_DROP()        args.script->drop()
+#define ACS_COMMAND(Name) CommandResult cmd##Name(ACScript &acs)
 
 ACS_COMMAND(NOP)
 {
+    DENG_UNUSED(acs);
     return Continue;
 }
 
 ACS_COMMAND(Terminate)
 {
+    DENG_UNUSED(acs);
     return Terminate;
 }
 
 ACS_COMMAND(Suspend)
 {
-    args.scriptInfo->state = Suspended;
+    acs.info().state = ACScriptInterpreter::Suspended;
     return Stop;
 }
 
 ACS_COMMAND(PushNumber)
 {
-    S_PUSH(LONG(*S_PCODEPTR++));
+    acs.locals.push(LONG(*acs.pcodePtr++));
     return Continue;
 }
 
 ACS_COMMAND(LSpec1)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[0] = S_POP();
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[0] = acs.locals.pop();
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side, acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(LSpec2)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[1] = S_POP();
-    SpecArgs[0] = S_POP();
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[1] = acs.locals.pop();
+    SpecArgs[0] = acs.locals.pop();
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side, acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(LSpec3)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[2] = S_POP();
-    SpecArgs[1] = S_POP();
-    SpecArgs[0] = S_POP();
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[2] = acs.locals.pop();
+    SpecArgs[1] = acs.locals.pop();
+    SpecArgs[0] = acs.locals.pop();
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side, acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(LSpec4)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[3] = S_POP();
-    SpecArgs[2] = S_POP();
-    SpecArgs[1] = S_POP();
-    SpecArgs[0] = S_POP();
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[3] = acs.locals.pop();
+    SpecArgs[2] = acs.locals.pop();
+    SpecArgs[1] = acs.locals.pop();
+    SpecArgs[0] = acs.locals.pop();
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side, acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(LSpec5)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[4] = S_POP();
-    SpecArgs[3] = S_POP();
-    SpecArgs[2] = S_POP();
-    SpecArgs[1] = S_POP();
-    SpecArgs[0] = S_POP();
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[4] = acs.locals.pop();
+    SpecArgs[3] = acs.locals.pop();
+    SpecArgs[2] = acs.locals.pop();
+    SpecArgs[1] = acs.locals.pop();
+    SpecArgs[0] = acs.locals.pop();
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side,
+                         acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(LSpec1Direct)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[0] = LONG(*S_PCODEPTR++);
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[0] = LONG(*acs.pcodePtr++);
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side,
+                         acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(LSpec2Direct)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[0] = LONG(*S_PCODEPTR++);
-    SpecArgs[1] = LONG(*S_PCODEPTR++);
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[0] = LONG(*acs.pcodePtr++);
+    SpecArgs[1] = LONG(*acs.pcodePtr++);
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side,
+                         acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(LSpec3Direct)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[0] = LONG(*S_PCODEPTR++);
-    SpecArgs[1] = LONG(*S_PCODEPTR++);
-    SpecArgs[2] = LONG(*S_PCODEPTR++);
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[0] = LONG(*acs.pcodePtr++);
+    SpecArgs[1] = LONG(*acs.pcodePtr++);
+    SpecArgs[2] = LONG(*acs.pcodePtr++);
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side,
+                         acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(LSpec4Direct)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[0] = LONG(*S_PCODEPTR++);
-    SpecArgs[1] = LONG(*S_PCODEPTR++);
-    SpecArgs[2] = LONG(*S_PCODEPTR++);
-    SpecArgs[3] = LONG(*S_PCODEPTR++);
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[0] = LONG(*acs.pcodePtr++);
+    SpecArgs[1] = LONG(*acs.pcodePtr++);
+    SpecArgs[2] = LONG(*acs.pcodePtr++);
+    SpecArgs[3] = LONG(*acs.pcodePtr++);
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side,
+                         acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(LSpec5Direct)
 {
-    int special = LONG(*S_PCODEPTR++);
-    SpecArgs[0] = LONG(*S_PCODEPTR++);
-    SpecArgs[1] = LONG(*S_PCODEPTR++);
-    SpecArgs[2] = LONG(*S_PCODEPTR++);
-    SpecArgs[3] = LONG(*S_PCODEPTR++);
-    SpecArgs[4] = LONG(*S_PCODEPTR++);
-    P_ExecuteLineSpecial(special, SpecArgs, args.script->line, args.script->side,
-                         args.script->activator);
+    int special = LONG(*acs.pcodePtr++);
+    SpecArgs[0] = LONG(*acs.pcodePtr++);
+    SpecArgs[1] = LONG(*acs.pcodePtr++);
+    SpecArgs[2] = LONG(*acs.pcodePtr++);
+    SpecArgs[3] = LONG(*acs.pcodePtr++);
+    SpecArgs[4] = LONG(*acs.pcodePtr++);
+    P_ExecuteLineSpecial(special, SpecArgs, acs.line, acs.side,
+                         acs.activator);
 
     return Continue;
 }
 
 ACS_COMMAND(Add)
 {
-    S_PUSH(S_POP() + S_POP());
+    acs.locals.push(acs.locals.pop() + acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(Subtract)
 {
-    int operand2 = S_POP();
-    S_PUSH(S_POP() - operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() - operand2);
     return Continue;
 }
 
 ACS_COMMAND(Multiply)
 {
-    S_PUSH(S_POP() * S_POP());
+    acs.locals.push(acs.locals.pop() * acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(Divide)
 {
-    int operand2 = S_POP();
-    S_PUSH(S_POP() / operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() / operand2);
     return Continue;
 }
 
 ACS_COMMAND(Modulus)
 {
-    int operand2 = S_POP();
-    S_PUSH(S_POP() % operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() % operand2);
     return Continue;
 }
 
 ACS_COMMAND(EQ)
 {
-    S_PUSH(S_POP() == S_POP());
+    acs.locals.push(acs.locals.pop() == acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(NE)
 {
-    S_PUSH(S_POP() != S_POP());
+    acs.locals.push(acs.locals.pop() != acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(LT)
 {
-    int operand2 = S_POP();
-    S_PUSH(S_POP() < operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() < operand2);
     return Continue;
 }
 
 ACS_COMMAND(GT)
 {
-    int operand2 = S_POP();
-    S_PUSH(S_POP() > operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() > operand2);
     return Continue;
 }
 
 ACS_COMMAND(LE)
 {
-    int operand2 = S_POP();
-    S_PUSH(S_POP() <= operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() <= operand2);
     return Continue;
 }
 
 ACS_COMMAND(GE)
 {
-    int operand2 = S_POP();
-    S_PUSH(S_POP() >= operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() >= operand2);
     return Continue;
 }
 
 ACS_COMMAND(AssignScriptVar)
 {
-    args.script->vars[LONG(*S_PCODEPTR++)] = S_POP();
+    acs.vars[LONG(*acs.pcodePtr++)] = acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(AssignMapVar)
 {
-    S_INTERPRETER().mapVars[LONG(*S_PCODEPTR++)] = S_POP();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] = acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(AssignWorldVar)
 {
-    S_INTERPRETER().worldVars[LONG(*S_PCODEPTR++)] = S_POP();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] = acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(PushScriptVar)
 {
-    S_PUSH(args.script->vars[LONG(*S_PCODEPTR++)]);
+    acs.locals.push(acs.vars[LONG(*acs.pcodePtr++)]);
     return Continue;
 }
 
 ACS_COMMAND(PushMapVar)
 {
-    S_PUSH(S_INTERPRETER().mapVars[LONG(*S_PCODEPTR++)]);
+    acs.locals.push(acs.interpreter().mapVars[LONG(*acs.pcodePtr++)]);
     return Continue;
 }
 
 ACS_COMMAND(PushWorldVar)
 {
-    S_PUSH(S_INTERPRETER().worldVars[LONG(*S_PCODEPTR++)]);
+    acs.locals.push(acs.interpreter().worldVars[LONG(*acs.pcodePtr++)]);
     return Continue;
 }
 
 ACS_COMMAND(AddScriptVar)
 {
-    args.script->vars[LONG(*S_PCODEPTR++)] += S_POP();
+    acs.vars[LONG(*acs.pcodePtr++)] += acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(AddMapVar)
 {
-    S_INTERPRETER().mapVars[LONG(*S_PCODEPTR++)] += S_POP();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] += acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(AddWorldVar)
 {
-    S_INTERPRETER().worldVars[LONG(*S_PCODEPTR++)] += S_POP();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] += acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(SubScriptVar)
 {
-    args.script->vars[LONG(*S_PCODEPTR++)] -= S_POP();
+    acs.vars[LONG(*acs.pcodePtr++)] -= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(SubMapVar)
 {
-    S_INTERPRETER().mapVars[LONG(*S_PCODEPTR++)] -= S_POP();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] -= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(SubWorldVar)
 {
-    S_INTERPRETER().worldVars[LONG(*S_PCODEPTR++)] -= S_POP();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] -= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(MulScriptVar)
 {
-    args.script->vars[LONG(*S_PCODEPTR++)] *= S_POP();
+    acs.vars[LONG(*acs.pcodePtr++)] *= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(MulMapVar)
 {
-    S_INTERPRETER().mapVars[LONG(*S_PCODEPTR++)] *= S_POP();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] *= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(MulWorldVar)
 {
-    S_INTERPRETER().worldVars[LONG(*S_PCODEPTR++)] *= S_POP();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] *= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(DivScriptVar)
 {
-    args.script->vars[LONG(*S_PCODEPTR++)] /= S_POP();
+    acs.vars[LONG(*acs.pcodePtr++)] /= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(DivMapVar)
 {
-    S_INTERPRETER().mapVars[LONG(*S_PCODEPTR++)] /= S_POP();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] /= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(DivWorldVar)
 {
-    S_INTERPRETER().worldVars[LONG(*S_PCODEPTR++)] /= S_POP();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] /= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(ModScriptVar)
 {
-    args.script->vars[LONG(*S_PCODEPTR++)] %= S_POP();
+    acs.vars[LONG(*acs.pcodePtr++)] %= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(ModMapVar)
 {
-    S_INTERPRETER().mapVars[LONG(*S_PCODEPTR++)] %= S_POP();
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)] %= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(ModWorldVar)
 {
-    S_INTERPRETER().worldVars[LONG(*S_PCODEPTR++)] %= S_POP();
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)] %= acs.locals.pop();
     return Continue;
 }
 
 ACS_COMMAND(IncScriptVar)
 {
-    args.script->vars[LONG(*S_PCODEPTR++)]++;
+    acs.vars[LONG(*acs.pcodePtr++)]++;
     return Continue;
 }
 
 ACS_COMMAND(IncMapVar)
 {
-    S_INTERPRETER().mapVars[LONG(*S_PCODEPTR++)]++;
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)]++;
     return Continue;
 }
 
 ACS_COMMAND(IncWorldVar)
 {
-    S_INTERPRETER().worldVars[LONG(*S_PCODEPTR++)]++;
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)]++;
     return Continue;
 }
 
 ACS_COMMAND(DecScriptVar)
 {
-    args.script->vars[LONG(*S_PCODEPTR++)]--;
+    acs.vars[LONG(*acs.pcodePtr++)]--;
     return Continue;
 }
 
 ACS_COMMAND(DecMapVar)
 {
-    S_INTERPRETER().mapVars[LONG(*S_PCODEPTR++)]--;
+    acs.interpreter().mapVars[LONG(*acs.pcodePtr++)]--;
     return Continue;
 }
 
 ACS_COMMAND(DecWorldVar)
 {
-    S_INTERPRETER().worldVars[LONG(*S_PCODEPTR++)]--;
+    acs.interpreter().worldVars[LONG(*acs.pcodePtr++)]--;
     return Continue;
 }
 
 ACS_COMMAND(Goto)
 {
-    S_PCODEPTR = (int *) (S_INTERPRETER().bytecode() + LONG(*S_PCODEPTR));
+    acs.pcodePtr = (int *) (acs.interpreter().bytecode() + LONG(*acs.pcodePtr));
     return Continue;
 }
 
 ACS_COMMAND(IfGoto)
 {
-    if(S_POP())
+    if(acs.locals.pop())
     {
-        S_PCODEPTR = (int *) (S_INTERPRETER().bytecode() + LONG(*S_PCODEPTR));
+        acs.pcodePtr = (int *) (acs.interpreter().bytecode() + LONG(*acs.pcodePtr));
     }
     else
     {
-        S_PCODEPTR++;
+        acs.pcodePtr++;
     }
     return Continue;
 }
 
 ACS_COMMAND(Drop)
 {
-    S_DROP();
+    acs.locals.drop();
     return Continue;
 }
 
 ACS_COMMAND(Delay)
 {
-    args.script->delayCount = S_POP();
+    acs.delayCount = acs.locals.pop();
     return Stop;
 }
 
 ACS_COMMAND(DelayDirect)
 {
-    args.script->delayCount = LONG(*S_PCODEPTR++);
+    acs.delayCount = LONG(*acs.pcodePtr++);
     return Stop;
 }
 
 ACS_COMMAND(Random)
 {
-    int high = S_POP();
-    int low  = S_POP();
-    S_PUSH(low + (P_Random() % (high - low + 1)));
+    int high = acs.locals.pop();
+    int low  = acs.locals.pop();
+    acs.locals.push(low + (P_Random() % (high - low + 1)));
     return Continue;
 }
 
 ACS_COMMAND(RandomDirect)
 {
-    int low  = LONG(*S_PCODEPTR++);
-    int high = LONG(*S_PCODEPTR++);
-    S_PUSH(low + (P_Random() % (high - low + 1)));
+    int low  = LONG(*acs.pcodePtr++);
+    int high = LONG(*acs.pcodePtr++);
+    acs.locals.push(low + (P_Random() % (high - low + 1)));
     return Continue;
 }
 
 ACS_COMMAND(ThingCount)
 {
-    int tid  = S_POP();
-    int type = S_POP();
+    int tid  = acs.locals.pop();
+    int type = acs.locals.pop();
     // Anything to count?
     if(type + tid)
     {
-        S_PUSH(P_MobjCount(type, tid));
+        acs.locals.push(P_MobjCount(type, tid));
     }
     return Continue;
 }
 
 ACS_COMMAND(ThingCountDirect)
 {
-    int type = LONG(*S_PCODEPTR++);
-    int tid  = LONG(*S_PCODEPTR++);
+    int type = LONG(*acs.pcodePtr++);
+    int tid  = LONG(*acs.pcodePtr++);
     // Anything to count?
     if(type + tid)
     {
-        S_PUSH(P_MobjCount(type, tid));
+        acs.locals.push(P_MobjCount(type, tid));
     }
     return Continue;
 }
 
 ACS_COMMAND(TagWait)
 {
-    args.scriptInfo->waitValue = S_POP();
-    args.scriptInfo->state = WaitingForTag;
+    acs.info().waitValue = acs.locals.pop();
+    acs.info().state = ACScriptInterpreter::WaitingForTag;
     return Stop;
 }
 
 ACS_COMMAND(TagWaitDirect)
 {
-    args.scriptInfo->waitValue = LONG(*S_PCODEPTR++);
-    args.scriptInfo->state = WaitingForTag;
+    acs.info().waitValue = LONG(*acs.pcodePtr++);
+    acs.info().state = ACScriptInterpreter::WaitingForTag;
     return Stop;
 }
 
 ACS_COMMAND(PolyWait)
 {
-    args.scriptInfo->waitValue = S_POP();
-    args.scriptInfo->state = WaitingForPolyobj;
+    acs.info().waitValue = acs.locals.pop();
+    acs.info().state = ACScriptInterpreter::WaitingForPolyobj;
     return Stop;
 }
 
 ACS_COMMAND(PolyWaitDirect)
 {
-    args.scriptInfo->waitValue = LONG(*S_PCODEPTR++);
-    args.scriptInfo->state = WaitingForPolyobj;
+    acs.info().waitValue = LONG(*acs.pcodePtr++);
+    acs.info().state = ACScriptInterpreter::WaitingForPolyobj;
     return Stop;
 }
 
 ACS_COMMAND(ChangeFloor)
 {
-    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(acs.locals.pop())));
     Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    int tag = S_POP();
+    int tag = acs.locals.pop();
 
     if(iterlist_t *list = P_GetSectorIterListForTag(tag, false))
     {
@@ -1167,9 +1156,9 @@ ACS_COMMAND(ChangeFloor)
 
 ACS_COMMAND(ChangeFloorDirect)
 {
-    int tag = LONG(*S_PCODEPTR++);
+    int tag = LONG(*acs.pcodePtr++);
 
-    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(LONG(*acs.pcodePtr++))));
     Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
@@ -1192,13 +1181,13 @@ ACS_COMMAND(ChangeFloorDirect)
 
 ACS_COMMAND(ChangeCeiling)
 {
-    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(acs.locals.pop())));
     Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    int tag = S_POP();
+    int tag = acs.locals.pop();
 
     if(iterlist_t *list = P_GetSectorIterListForTag(tag, false))
     {
@@ -1217,9 +1206,9 @@ ACS_COMMAND(ChangeCeiling)
 
 ACS_COMMAND(ChangeCeilingDirect)
 {
-    int tag = LONG(*S_PCODEPTR++);
+    int tag = LONG(*acs.pcodePtr++);
 
-    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(LONG(*S_PCODEPTR++))));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(LONG(*acs.pcodePtr++))));
     Uri *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
@@ -1242,133 +1231,134 @@ ACS_COMMAND(ChangeCeilingDirect)
 
 ACS_COMMAND(Restart)
 {
-    S_PCODEPTR = args.scriptInfo->pcodePtr;
+    acs.pcodePtr = acs.info().pcodePtr;
     return Continue;
 }
 
 ACS_COMMAND(AndLogical)
 {
-    S_PUSH(S_POP() && S_POP());
+    acs.locals.push(acs.locals.pop() && acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(OrLogical)
 {
-    S_PUSH(S_POP() || S_POP());
+    acs.locals.push(acs.locals.pop() || acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(AndBitwise)
 {
-    S_PUSH(S_POP() & S_POP());
+    acs.locals.push(acs.locals.pop() & acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(OrBitwise)
 {
-    S_PUSH(S_POP() | S_POP());
+    acs.locals.push(acs.locals.pop() | acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(EorBitwise)
 {
-    S_PUSH(S_POP() ^ S_POP());
+    acs.locals.push(acs.locals.pop() ^ acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(NegateLogical)
 {
-    S_PUSH(!S_POP());
+    acs.locals.push(!acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(LShift)
 {
-    int operand2 = S_POP();
-    S_PUSH(S_POP() << operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() << operand2);
     return Continue;
 }
 
 ACS_COMMAND(RShift)
 {
-    int operand2 = S_POP();
-    S_PUSH(S_POP() >> operand2);
+    int operand2 = acs.locals.pop();
+    acs.locals.push(acs.locals.pop() >> operand2);
     return Continue;
 }
 
 ACS_COMMAND(UnaryMinus)
 {
-    S_PUSH(-S_POP());
+    acs.locals.push(-acs.locals.pop());
     return Continue;
 }
 
 ACS_COMMAND(IfNotGoto)
 {
-    if(S_POP())
+    if(acs.locals.pop())
     {
-        S_PCODEPTR++;
+        acs.pcodePtr++;
     }
     else
     {
-        S_PCODEPTR = (int *) (S_INTERPRETER().bytecode() + LONG(*S_PCODEPTR));
+        acs.pcodePtr = (int *) (acs.interpreter().bytecode() + LONG(*acs.pcodePtr));
     }
     return Continue;
 }
 
 ACS_COMMAND(LineSide)
 {
-    S_PUSH(args.script->side);
+    acs.locals.push(acs.side);
     return Continue;
 }
 
 ACS_COMMAND(ScriptWait)
 {
-    args.scriptInfo->waitValue = S_POP();
-    args.scriptInfo->state = WaitingForScript;
+    acs.info().waitValue = acs.locals.pop();
+    acs.info().state = ACScriptInterpreter::WaitingForScript;
     return Stop;
 }
 
 ACS_COMMAND(ScriptWaitDirect)
 {
-    args.scriptInfo->waitValue = LONG(*S_PCODEPTR++);
-    args.scriptInfo->state = WaitingForScript;
+    acs.info().waitValue = LONG(*acs.pcodePtr++);
+    acs.info().state = ACScriptInterpreter::WaitingForScript;
     return Stop;
 }
 
 ACS_COMMAND(ClearLineSpecial)
 {
-    if(args.script->line)
+    if(acs.line)
     {
-        P_ToXLine(args.script->line)->special = 0;
+        P_ToXLine(acs.line)->special = 0;
     }
     return Continue;
 }
 
 ACS_COMMAND(CaseGoto)
 {
-    if(S_TOP() == LONG(*S_PCODEPTR++))
+    if(acs.locals.top() == LONG(*acs.pcodePtr++))
     {
-        S_PCODEPTR = (int *) (S_INTERPRETER().bytecode() + LONG(*S_PCODEPTR));
-        S_DROP();
+        acs.pcodePtr = (int *) (acs.interpreter().bytecode() + LONG(*acs.pcodePtr));
+        acs.locals.drop();
     }
     else
     {
-        S_PCODEPTR++;
+        acs.pcodePtr++;
     }
     return Continue;
 }
 
 ACS_COMMAND(BeginPrint)
 {
+    DENG_UNUSED(acs);
     *PrintBuffer = 0;
     return Continue;
 }
 
 ACS_COMMAND(EndPrint)
 {
-    if(args.script->activator && args.script->activator->player)
+    if(acs.activator && acs.activator->player)
     {
-        P_SetMessage(args.script->activator->player, 0, PrintBuffer);
+        P_SetMessage(acs.activator->player, 0, PrintBuffer);
     }
     else
     {
@@ -1387,6 +1377,7 @@ ACS_COMMAND(EndPrint)
 
 ACS_COMMAND(EndPrintBold)
 {
+    DENG_UNUSED(acs);
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->inGame)
@@ -1399,14 +1390,14 @@ ACS_COMMAND(EndPrintBold)
 
 ACS_COMMAND(PrintString)
 {
-    strcat(PrintBuffer, Str_Text(S_INTERPRETER().string(S_POP())));
+    strcat(PrintBuffer, Str_Text(acs.interpreter().string(acs.locals.pop())));
     return Continue;
 }
 
 ACS_COMMAND(PrintNumber)
 {
     char tempStr[16];
-    sprintf(tempStr, "%d", S_POP());
+    sprintf(tempStr, "%d", acs.locals.pop());
     strcat(PrintBuffer, tempStr);
     return Continue;
 }
@@ -1414,7 +1405,7 @@ ACS_COMMAND(PrintNumber)
 ACS_COMMAND(PrintCharacter)
 {
     char *bufferEnd = PrintBuffer + strlen(PrintBuffer);
-    *bufferEnd++ = S_POP();
+    *bufferEnd++ = acs.locals.pop();
     *bufferEnd = 0;
     return Continue;
 }
@@ -1426,7 +1417,7 @@ ACS_COMMAND(PlayerCount)
     {
         count += players[i].plr->inGame;
     }
-    S_PUSH(count);
+    acs.locals.push(count);
     return Continue;
 }
 
@@ -1446,42 +1437,42 @@ ACS_COMMAND(GameType)
     {
         gametype = 1; // cooperative
     }
-    S_PUSH(gametype);
+    acs.locals.push(gametype);
 
     return Continue;
 }
 
 ACS_COMMAND(GameSkill)
 {
-    S_PUSH((int)gameSkill);
+    acs.locals.push((int)gameSkill);
     return Continue;
 }
 
 ACS_COMMAND(Timer)
 {
-    S_PUSH(mapTime);
+    acs.locals.push(mapTime);
     return Continue;
 }
 
 ACS_COMMAND(SectorSound)
 {
     mobj_t *mobj = 0;
-    if(args.script->line)
+    if(acs.line)
     {
-        Sector *front = (Sector *) P_GetPtrp(args.script->line, DMU_FRONT_SECTOR);
+        Sector *front = (Sector *) P_GetPtrp(acs.line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
-    int volume = S_POP();
+    int volume = acs.locals.pop();
 
-    S_StartSoundAtVolume(S_GetSoundID(Str_Text(S_INTERPRETER().string(S_POP()))), mobj, volume / 127.0f);
+    S_StartSoundAtVolume(S_GetSoundID(Str_Text(acs.interpreter().string(acs.locals.pop()))), mobj, volume / 127.0f);
     return Continue;
 }
 
 ACS_COMMAND(ThingSound)
 {
-    int volume   = S_POP();
-    int sound    = S_GetSoundID(Str_Text(S_INTERPRETER().string(S_POP())));
-    int tid      = S_POP();
+    int volume   = acs.locals.pop();
+    int sound    = S_GetSoundID(Str_Text(acs.interpreter().string(acs.locals.pop())));
+    int tid      = acs.locals.pop();
     int searcher = -1;
 
     mobj_t *mobj;
@@ -1498,7 +1489,7 @@ ACS_COMMAND(AmbientSound)
     mobj_t *mobj = 0; // For 3D positioning.
     mobj_t *plrmo = players[DISPLAYPLAYER].plr->mo;
 
-    int volume = S_POP();
+    int volume = acs.locals.pop();
 
     // If we are playing 3D sounds, create a temporary source mobj for the sound.
     if(cfg.snd3D && plrmo)
@@ -1515,7 +1506,7 @@ ACS_COMMAND(AmbientSound)
         }
     }
 
-    int sound = S_GetSoundID(Str_Text(S_INTERPRETER().string(S_POP())));
+    int sound = S_GetSoundID(Str_Text(acs.interpreter().string(acs.locals.pop())));
     S_StartSoundAtVolume(sound, mobj, volume / 127.0f);
 
     return Continue;
@@ -1524,12 +1515,12 @@ ACS_COMMAND(AmbientSound)
 ACS_COMMAND(SoundSequence)
 {
     mobj_t *mobj = 0;
-    if(args.script->line)
+    if(acs.line)
     {
-        Sector *front = (Sector *) P_GetPtrp(args.script->line, DMU_FRONT_SECTOR);
+        Sector *front = (Sector *) P_GetPtrp(acs.line, DMU_FRONT_SECTOR);
         mobj = (mobj_t *) P_GetPtrp(front, DMU_EMITTER);
     }
-    SN_StartSequenceName(mobj, Str_Text(S_INTERPRETER().string(S_POP())));
+    SN_StartSequenceName(mobj, Str_Text(acs.interpreter().string(acs.locals.pop())));
 
     return Continue;
 }
@@ -1540,15 +1531,15 @@ ACS_COMMAND(SetLineTexture)
 #define TEXTURE_MIDDLE 1
 #define TEXTURE_BOTTOM 2
 
-    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), S_INTERPRETER().string(S_POP())));
+    AutoStr *path = Str_PercentEncode(Str_Copy(AutoStr_New(), acs.interpreter().string(acs.locals.pop())));
     Uri *uri = Uri_NewWithPath3("Textures", Str_Text(path));
 
     Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    int position = S_POP();
-    int side     = S_POP();
-    int lineTag  = S_POP();
+    int position = acs.locals.pop();
+    int side     = acs.locals.pop();
+    int lineTag  = acs.locals.pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1584,8 +1575,8 @@ ACS_COMMAND(SetLineTexture)
 
 ACS_COMMAND(SetLineBlocking)
 {
-    int lineFlags = S_POP()? DDLF_BLOCKING : 0;
-    int lineTag   = S_POP();
+    int lineFlags = acs.locals.pop()? DDLF_BLOCKING : 0;
+    int lineTag   = acs.locals.pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1604,13 +1595,13 @@ ACS_COMMAND(SetLineBlocking)
 
 ACS_COMMAND(SetLineSpecial)
 {
-    int arg5    = S_POP();
-    int arg4    = S_POP();
-    int arg3    = S_POP();
-    int arg2    = S_POP();
-    int arg1    = S_POP();
-    int special = S_POP();
-    int lineTag = S_POP();
+    int arg5    = acs.locals.pop();
+    int arg4    = acs.locals.pop();
+    int arg3    = acs.locals.pop();
+    int arg2    = acs.locals.pop();
+    int arg1    = acs.locals.pop();
+    int special = acs.locals.pop();
+    int lineTag = acs.locals.pop();
 
     if(iterlist_t *list = P_GetLineIterListForTag(lineTag, false))
     {
@@ -1663,91 +1654,27 @@ static CommandFunc pcodeCmds[] =
     cmdThingSound, cmdEndPrintBold
 };
 
-void P_InitACScript()
-{
-    memset(interp.worldVars, 0, sizeof(interp.worldVars));
-    interp.clearDeferredTasks();
-}
-
-void P_LoadACScripts(lumpnum_t lump)
-{
-    if(IS_CLIENT) return;
-
-    interp.loadBytecode(lump);
-
-    memset(interp.mapVars, 0, sizeof(interp.mapVars));
-
-    // Start all scripts flagged to begin immediately.
-    interp.startOpenScripts();
-}
-
-void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
-{
-    interp.runDeferredTasks(map);
-}
-
-dd_bool P_StartACScript(int scriptNumber, uint map, byte const args[], mobj_t *activator,
-    Line *line, int side)
-{
-    return interp.startScript(scriptNumber, map, args, activator, line, side);
-}
-
-dd_bool P_TerminateACScript(int scriptNumber, uint map)
-{
-    return interp.terminateScript(scriptNumber, map);
-}
-
-dd_bool P_SuspendACScript(int scriptNumber, uint map)
-{
-    return interp.suspendScript(scriptNumber, map);
-}
-
-void P_ACScriptTagFinished(int tag)
-{
-    interp.tagFinished(tag);
-}
-
-void P_ACScriptPolyobjFinished(int tag)
-{
-    interp.polyobjFinished(tag);
-}
-
-void P_WriteGlobalACScriptData(Writer *writer)
-{
-    interp.writeWorldScriptData(writer);
-}
-
-void P_ReadGlobalACScriptData(Reader *reader, int saveVersion)
-{
-    interp.readWorldScriptData(reader, saveVersion);
-}
-
-void P_WriteMapACScriptData(Writer *writer)
-{
-    interp.writeMapScriptData(writer);
-}
-
-void P_ReadMapACScriptData(Reader *reader)
-{
-    interp.readMapScriptData(reader);
-}
-
 ACScriptInterpreter &ACScript::interpreter() const
 {
-    return interp;
+    return Game_ACScriptInterpreter();
+}
+
+BytecodeScriptInfo &ACScript::info() const
+{
+    DENG_ASSERT(_info != 0);
+    return *_info;
 }
 
 void ACScript::runTick()
 {
     ACScriptInterpreter &interp = interpreter();
-    BytecodeScriptInfo &info = interp.scriptInfoFor(this);
-    if(info.state == Terminating)
+    if(info().state == ACScriptInterpreter::Terminating)
     {
         interp.scriptFinished(this);
         return;
     }
 
-    if(info.state != Running)
+    if(info().state != ACScriptInterpreter::Running)
     {
         return;
     }
@@ -1758,12 +1685,8 @@ void ACScript::runTick()
         return;
     }
 
-    CommandArgs args;
-    args.script     = this;
-    args.scriptInfo = &info;
-
     int action;
-    while((action = pcodeCmds[LONG(*pcodePtr++)](args)) == Continue)
+    while((action = pcodeCmds[LONG(*pcodePtr++)](*this)) == Continue)
     {}
 
     if(action == Terminate)
@@ -1772,47 +1695,48 @@ void ACScript::runTick()
     }
 }
 
-void ACScript::push(int value)
+void ACScript::Stack::push(int value)
 {
-    stack[stackPtr++] = value;
+    if(height == ACS_STACK_DEPTH)
+        App_Log(DE2_SCR_ERROR, "ACScript::Stack::push: Overflow");
+    values[height++] = value;
 }
 
-int ACScript::pop()
+int ACScript::Stack::pop()
 {
-    return stack[--stackPtr];
+    if(height == 0)
+        App_Log(DE2_SCR_ERROR, "ACScript::Stack::pop: Underflow");
+    return values[--height];
 }
 
-int ACScript::top() const
+int ACScript::Stack::top() const
 {
-    return stack[stackPtr - 1];
+    if(height == 0)
+        App_Log(DE2_SCR_ERROR, "ACScript::Stack::top: Underflow");
+    return values[height - 1];
 }
 
-void ACScript::drop()
+void ACScript::Stack::drop()
 {
-    stackPtr--;
-}
-
-void ACScript_Thinker(ACScript *script)
-{
-    DENG_ASSERT(script != 0);
-    script->runTick();
+    if(height == 0)
+        App_Log(DE2_SCR_ERROR, "ACScript::Stack::drop: Underflow");
+    height--;
 }
 
 void ACScript::write(Writer *writer) const
 {
-    Writer_WriteByte(writer, 1); // Write a version byte.
+    Writer_WriteByte(writer, 2); // Write a version byte.
 
     Writer_WriteInt32(writer, SV_ThingArchiveId(activator));
     Writer_WriteInt32(writer, P_ToIndex(line));
     Writer_WriteInt32(writer, side);
-    Writer_WriteInt32(writer, number);
-    Writer_WriteInt32(writer, infoIndex);
+    Writer_WriteInt32(writer, info().scriptNumber);
     Writer_WriteInt32(writer, delayCount);
     for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
     {
-        Writer_WriteInt32(writer, stack[i]);
+        Writer_WriteInt32(writer, locals.values[i]);
     }
-    Writer_WriteInt32(writer, stackPtr);
+    Writer_WriteInt32(writer, locals.height);
     for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
     {
         Writer_WriteInt32(writer, vars[i]);
@@ -1825,40 +1749,42 @@ int ACScript::read(Reader *reader, int mapVersion)
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
-        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+        int ver = Reader_ReadByte(reader); // version byte.
 
-        activator       = (mobj_t *) Reader_ReadInt32(reader);
-        activator       = SV_GetArchiveThing(PTR2INT(activator), &activator);
+        activator  = (mobj_t *) Reader_ReadInt32(reader);
+        activator  = SV_GetArchiveThing(PTR2INT(activator), &activator);
 
-        int temp = SV_ReadLong();
+        int temp = Reader_ReadInt32(reader);
         if(temp >= 0)
         {
-            line        = (Line *)P_ToPtr(DMU_LINE, temp);
+            line   = (Line *)P_ToPtr(DMU_LINE, temp);
             DENG_ASSERT(line != 0);
         }
         else
         {
-            line        = 0;
+            line   = 0;
         }
 
-        side            = Reader_ReadInt32(reader);
-        number          = Reader_ReadInt32(reader);
-        infoIndex       = Reader_ReadInt32(reader);
-        delayCount      = Reader_ReadInt32(reader);
+        side       = Reader_ReadInt32(reader);
+        _info      = interpreter().scriptInfoPtr(Reader_ReadInt32(reader));
+        if(ver < 2)
+        {
+            /*infoIndex =*/ Reader_ReadInt32(reader);
+        }
+        delayCount = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
         {
-            stack[i] = Reader_ReadInt32(reader);
+            locals.values[i] = Reader_ReadInt32(reader);
         }
-
-        stackPtr        = Reader_ReadInt32(reader);
+        locals.height = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
         {
             vars[i] = Reader_ReadInt32(reader);
         }
 
-        pcodePtr        = (int *) (interpreter().bytecode() + Reader_ReadInt32(reader));
+        pcodePtr   = (int *) (interpreter().bytecode() + Reader_ReadInt32(reader));
     }
     else
     {
@@ -1868,38 +1794,37 @@ int ACScript::read(Reader *reader, int mapVersion)
         Reader_Read(reader, junk, 16);
 
         // Start of used data members.
-        activator       = (mobj_t *) Reader_ReadInt32(reader);
-        activator       = SV_GetArchiveThing(PTR2INT(activator), &activator);
+        activator  = (mobj_t *) Reader_ReadInt32(reader);
+        activator  = SV_GetArchiveThing(PTR2INT(activator), &activator);
 
         int temp = Reader_ReadInt32(reader);
         if(temp >= 0)
         {
-            line        = (Line *)P_ToPtr(DMU_LINE, temp);
+            line   = (Line *)P_ToPtr(DMU_LINE, temp);
             DENG_ASSERT(line != 0);
         }
         else
         {
-            line        = 0;
+            line   = 0;
         }
 
-        side            = Reader_ReadInt32(reader);
-        number          = Reader_ReadInt32(reader);
-        infoIndex       = Reader_ReadInt32(reader);
-        delayCount      = Reader_ReadInt32(reader);
+        side       = Reader_ReadInt32(reader);
+        _info      = interpreter().scriptInfoPtr(Reader_ReadInt32(reader));
+        /*infoIndex  =*/ Reader_ReadInt32(reader);
+        delayCount = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
         {
-            stack[i] = Reader_ReadInt32(reader);
+            locals.values[i] = Reader_ReadInt32(reader);
         }
-
-        stackPtr        = Reader_ReadInt32(reader);
+        locals.height = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
         {
             vars[i] = Reader_ReadInt32(reader);
         }
 
-        pcodePtr        = (int *) (interpreter().bytecode() + Reader_ReadInt32(reader));
+        pcodePtr   = (int *) (interpreter().bytecode() + Reader_ReadInt32(reader));
     }
 
     thinker.function = (thinkfunc_t) ACScript_Thinker;
@@ -1907,19 +1832,84 @@ int ACScript::read(Reader *reader, int mapVersion)
     return true; // Add this thinker.
 }
 
-D_CMD(ScriptInfo)
-{
-    int whichOne = argc == 2? atoi(argv[1]) : -1;
+/// The One ACS interpreter instance.
+static ACScriptInterpreter interp;
 
+ACScriptInterpreter &Game_ACScriptInterpreter()
+{
+    return interp;
+}
+
+void Game_InitACScriptsForNewGame()
+{
+    memset(interp.worldVars, 0, sizeof(interp.worldVars));
+    interp.clearDeferredTasks();
+}
+
+void Game_ACScriptInterpreter_RunDeferredTasks(Uri const *mapUri)
+{
+    interp.runDeferredTasks(mapUri);
+}
+
+dd_bool Game_ACScriptInterpreter_StartScript(int scriptNumber, Uri const *mapUri,
+    byte const args[], mobj_t *activator, Line *line, int side)
+{
+    return interp.startScript(scriptNumber, mapUri, args, activator, line, side);
+}
+
+dd_bool Game_ACScriptInterpreter_TerminateScript(int scriptNumber, Uri const *mapUri)
+{
+    return interp.terminateScript(scriptNumber, mapUri);
+}
+
+dd_bool Game_ACScriptInterpreter_SuspendScript(int scriptNumber, Uri const *mapUri)
+{
+    return interp.suspendScript(scriptNumber, mapUri);
+}
+
+void ACScript_Thinker(ACScript *script)
+{
+    DENG_ASSERT(script != 0);
+    script->runTick();
+}
+
+D_CMD(InspectACScript)
+{
+    DENG_UNUSED(src);
+
+    if(!interp.scriptCount())
+    {
+        App_Log(DE2_SCR_MSG, "No ACScripts are currently loaded.");
+        return true;
+    }
+
+    int whichOne = atoi(argv[1]);
+    if(!interp.hasScriptEntrypoint(whichOne))
+    {
+        App_Log(DE2_SCR_WARNING, "Unknown ACScript #%i", whichOne);
+        return false;
+    }
+
+    App_Log(DE2_SCR_MSG, "%s", Str_Text(interp.scriptDescription(whichOne)));
+    return true;
+}
+
+D_CMD(ListACScripts)
+{
+    DENG_UNUSED(src);
+
+    if(!interp.scriptCount())
+    {
+        App_Log(DE2_SCR_MSG, "No ACScripts are currently loaded.");
+        return true;
+    }
+
+    App_Log(DE2_SCR_MSG, "Available ACScripts:");
     for(int i = 0; i < interp.scriptCount(); ++i)
     {
         BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
-
-        if(whichOne != -1 && whichOne != info.scriptNumber)
-            continue;
-
-        App_Log(DE2_SCR_MSG, "%d %s (a: %d, w: %d)", info.scriptNumber,
-                scriptStateAsText(info.state), info.argCount, info.waitValue);
+        App_Log(DE2_SCR_MSG, "%s - args: %i",
+                             Str_Text(interp.scriptName(info.scriptNumber)), info.argCount);
     }
 
     return true;

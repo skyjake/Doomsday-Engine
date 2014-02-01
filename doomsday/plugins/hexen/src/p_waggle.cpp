@@ -59,7 +59,7 @@ void T_FloorWaggle(waggle_t *waggle)
             P_SetDoublep(waggle->sector, DMU_FLOOR_HEIGHT, waggle->originalHeight);
             P_ChangeSector(waggle->sector, 1 /*crush damage*/);
             P_ToXSector(waggle->sector)->specialData = NULL;
-            P_ACScriptTagFinished(P_ToXSector(waggle->sector)->tag);
+            Game_ACScriptInterpreter().tagFinished(P_ToXSector(waggle->sector)->tag);
             Thinker_Remove(&waggle->thinker);
             return;
         }

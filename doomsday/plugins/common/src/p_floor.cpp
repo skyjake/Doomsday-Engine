@@ -389,7 +389,7 @@ void T_MoveFloor(void *floorThinkerPtr)
         }
 #endif
 #if __JHEXEN__
-        P_ACScriptTagFinished(P_ToXSector(floor->sector)->tag);
+        Game_ACScriptInterpreter().tagFinished(P_ToXSector(floor->sector)->tag);
 #endif
         Thinker_Remove(&floor->thinker);
     }
@@ -435,7 +435,7 @@ int floor_t::read(Reader *reader, int mapVersion)
     if(mapVersion >= 5)
 #endif
     {   // Note: the thinker class byte has already been read.
-        byte ver = SV_ReadByte(); // version byte.
+        byte ver = Reader_ReadByte(reader); // version byte.
 
         type                   = floortype_e(Reader_ReadByte(reader));
         sector                 = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
@@ -663,9 +663,9 @@ static Sector *findSectorSurroundingAtFloorHeight(Sector *sec, coord_t height)
 #endif
 
 #if __JHEXEN__
-int EV_DoFloor(Line* line, byte* args, floortype_e floortype)
+int EV_DoFloor(Line * /*line*/, byte* args, floortype_e floortype)
 #else
-int EV_DoFloor(Line* line, floortype_e floortype)
+int EV_DoFloor(Line *line, floortype_e floortype)
 #endif
 {
 #if !__JHEXEN__
@@ -1323,10 +1323,10 @@ static void processStairSector(Sector *sec, int type, coord_t height,
 #endif
 
 /**
- * @param direction     Positive = up. Negative = down.
+ * @param direction  Positive = up. Negative = down.
  */
 #if __JHEXEN__
-int EV_BuildStairs(Line *line, byte *args, int direction, stairs_e stairsType)
+int EV_BuildStairs(Line * /*line*/, byte *args, int direction, stairs_e stairsType)
 {
     // Set global stairs variables
     stairData.textureChange = 0;
@@ -1497,7 +1497,7 @@ static int stopFloorCrush(thinker_t *th, void *context)
         // Completely remove the crushing floor
         SN_StopSequence((mobj_t *)P_GetPtrp(floor->sector, DMU_EMITTER));
         P_ToXSector(floor->sector)->specialData = NULL;
-        P_ACScriptTagFinished(P_ToXSector(floor->sector)->tag);
+        Game_ACScriptInterpreter().tagFinished(P_ToXSector(floor->sector)->tag);
         Thinker_Remove(&floor->thinker);
         (*found) = true;
     }
@@ -1505,7 +1505,7 @@ static int stopFloorCrush(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-int EV_FloorCrushStop(Line *line, byte *args)
+int EV_FloorCrushStop(Line * /*line*/, byte * /*args*/)
 {
     dd_bool found = false;
 

@@ -4231,9 +4231,9 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
  * 255          For use in death script (spawn spots).
  */
 
-void C_DECL A_KoraxChase(mobj_t* actor)
+void C_DECL A_KoraxChase(mobj_t *actor)
 {
-    mobj_t* spot;
+    mobj_t *spot;
     byte args[3] = { 0, 0, 0 };
 
     if(!actor->special2 && actor->health <= actor->info->spawnHealth / 2)
@@ -4245,7 +4245,7 @@ void C_DECL A_KoraxChase(mobj_t* actor)
             P_Teleport(actor, spot->origin[VX], spot->origin[VY], spot->angle, true);
         }
 
-        P_StartACScript(249, 0, args, actor, NULL, 0);
+        Game_ACScriptInterpreter_StartScript(249, 0/*current-map*/, args, actor, NULL, 0);
         actor->special2 = 1; // Don't run again.
 
         return;
@@ -4264,7 +4264,7 @@ void C_DECL A_KoraxChase(mobj_t* actor)
     }
 
     // Teleport away.
-    if(actor->health < actor->info->spawnHealth >> 1)
+    if(actor->health < actor->info->spawnHealth / 2)
     {
         if(P_Random() < 10)
         {
@@ -4322,7 +4322,7 @@ void C_DECL A_KoraxBonePop(mobj_t* actor)
     if(mo)
         KSpiritInit(mo, actor);
 
-    P_StartACScript(255, 0, args, actor, NULL, 0); // Death script.
+    Game_ACScriptInterpreter_StartScript(255, 0/*current-map*/, args, actor, NULL, 0); // Death script.
 }
 
 void KSpiritInit(mobj_t* spirit, mobj_t* korax)
@@ -4510,7 +4510,7 @@ void C_DECL A_KoraxCommand(mobj_t* mo)
     }
 
     assert(scriptNumber >= 0);
-    P_StartACScript(scriptNumber, 0, args, mo, NULL, 0);
+    Game_ACScriptInterpreter_StartScript(scriptNumber, 0/*current-map*/, args, mo, NULL, 0);
 }
 
 void C_DECL A_KSpiritWeave(mobj_t* mo)

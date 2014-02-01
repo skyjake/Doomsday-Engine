@@ -2463,61 +2463,6 @@ void Secrets_UpdateGeometry(uiwidget_t* obj)
                                        .5f + textSize.height * cfg.hudCheatCounterScale);
 }
 
-#if 0
-void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
-{
-    const float scale = .75f;
-    const float textAlpha = uiRendState->pageAlpha;
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_CurrentMapTitle());
-    assert(obj->type == GUI_MAPNAME);
-
-    if(!text && 0 == patch) return;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    if(offset) DGL_Translatef(offset->x, offset->y, 0);
-    DGL_Scalef(scale, scale, 1);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(1, 1, 1, textAlpha);
-    FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
-    WI_DrawPatchXY3(patch, text, 0, 0, ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
-
-    DGL_Disable(DGL_TEXTURE_2D);
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
-void MapName_UpdateGeometry(uiwidget_t* obj)
-{
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_CurrentMapTitle());
-    const float scale = .75f;
-    patchinfo_t info;
-    assert(obj && obj->type == GUI_MAPNAME);
-
-    Rect_SetWidthHeight(obj->geometry, 0, 0);
-
-    if(!text && 0 == patch) return;
-
-    if(text)
-    {
-        Size2Raw textSize;
-        FR_SetFont(obj->font);
-        FR_TextSize(&textSize, text);
-        Rect_SetWidthHeight(obj->geometry, textSize.width * scale, textSize.height * scale);
-        return;
-    }
-
-    R_GetPatchInfo(patch, &info);
-    Rect_SetWidthHeight(obj->geometry, info.geometry.size.width  * scale,
-                                       info.geometry.size.height * scale);
-}
-#endif
-
 static void drawUIWidgetsForPlayer(player_t* plr)
 {
 #define DISPLAY_BORDER      (2) /// Units in fixed 320x200 screen space.
@@ -2983,7 +2928,6 @@ typedef struct {
         { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_SHELL] },
         { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CELL] },
         { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_MISSILE] },
-        //{ GUI_MAPNAME,  ALIGN_BOTTOMLEFT,   UWG_MAPNAME,        GF_FONTB,   MapName_UpdateGeometry, MapName_Drawer },
         { GUI_BOX,      ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    0,          HealthIcon_UpdateGeometry, HealthIcon_Drawer },
         { GUI_HEALTH,   ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_FONTB,   Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
         { GUI_READYAMMOICON, ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT2, 0,          ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },

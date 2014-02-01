@@ -57,7 +57,7 @@ static int findMirrorPolyobj(int tag)
 static void notifyPolyobjFinished(int tag)
 {
 #if __JHEXEN__
-    P_ACScriptPolyobjFinished(tag);
+    Game_ACScriptInterpreter().polyobjFinished(tag);
 #else
     DENG_UNUSED(tag);
 #endif

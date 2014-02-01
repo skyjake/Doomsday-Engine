@@ -185,7 +185,7 @@ void T_Door(void *doorThinkerPtr)
             case DT_CLOSE:
                 xsec->specialData = 0;
 #if __JHEXEN__
-                P_ACScriptTagFinished(P_ToXSector(door->sector)->tag);
+                Game_ACScriptInterpreter().tagFinished(P_ToXSector(door->sector)->tag);
 #endif
                 Thinker_Remove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
@@ -266,7 +266,7 @@ void T_Door(void *doorThinkerPtr)
             case DT_OPEN:
                 xsec->specialData = 0;
 #if __JHEXEN__
-                P_ACScriptTagFinished(P_ToXSector(door->sector)->tag);
+                Game_ACScriptInterpreter().tagFinished(P_ToXSector(door->sector)->tag);
 #endif
                 Thinker_Remove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
@@ -467,7 +467,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 }
 
 #if __JHEXEN__
-int EV_DoDoor(Line *line, byte *args, doortype_e type)
+int EV_DoDoor(Line * /*line*/, byte *args, doortype_e type)
 {
     return EV_DoDoor2((int) args[0], (float) args[1] * (1.0 / 8),
                       (int) args[2], type);
