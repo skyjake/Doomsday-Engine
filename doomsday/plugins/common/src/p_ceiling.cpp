@@ -57,7 +57,7 @@ static void stopCeiling(ceiling_t *ceiling)
 {
     P_ToXSector(ceiling->sector)->specialData = 0;
 #if __JHEXEN__
-    P_ACScriptTagFinished(P_ToXSector(ceiling->sector)->tag);
+    Game_ACScriptInterpreter().tagFinished(P_ToXSector(ceiling->sector)->tag);
 #endif
     Thinker_Remove(&ceiling->thinker);
 }

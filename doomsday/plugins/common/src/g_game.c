@@ -2183,7 +2183,7 @@ static void G_InitNewGame(void)
     SV_ClearSlot(AUTO_SLOT);
 
 #if __JHEXEN__
-    P_InitACScript();
+    Game_InitACScriptsForNewGame();
 #endif
 }
 
@@ -2726,7 +2726,7 @@ void G_DoLeaveMap(void)
     randomClassParm = oldRandomClassParm;
 
     // Launch waiting scripts.
-    P_ACScriptRunDeferredTasks(gameMap/*p.mapUri*/);
+    Game_ACScriptInterpreter_RunDeferredTasks(gameMap/*p.mapUri*/);
 #endif
 
     Uri_Delete(p.mapUri);

@@ -1425,11 +1425,11 @@ mobj_t* ActiveMinotaur(player_t* master)
     return NULL;
 }
 
-void P_KillMobj(mobj_t* source, mobj_t* target)
+void P_KillMobj(mobj_t *source, mobj_t *target)
 {
-    int                 dummy;
-    mobj_t*             master;
-    statenum_t          state;
+    int dummy;
+    mobj_t *master;
+    statenum_t state;
 
     if(!target)
         return; // Nothing to kill.
@@ -1440,25 +1440,27 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
     target->height /= 2*2;
     if((target->flags & MF_COUNTKILL || target->type == MT_ZBELL) &&
        target->special)
-    {   // Initiate monster death actions.
+    {
+        // Initiate monster death actions.
         if(target->type == MT_SORCBOSS)
         {
             dummy = 0;
-            P_StartACScript(target->special, 0, (byte *) &dummy, target, NULL, 0);
+            Game_ACScriptInterpreter_StartScript(target->special, 0, (byte *) &dummy, target, NULL, 0);
         }
         else
         {
-            P_ExecuteLineSpecial(target->special, target->args, NULL, 0,
-                                 target);
+            P_ExecuteLineSpecial(target->special, target->args, NULL, 0, target);
         }
     }
 
     if(source && source->player)
-    {   // Check for frag changes.
+    {
+        // Check for frag changes.
         if(target->player && deathmatch)
         {
             if(target == source)
-            {   // Self-frag.
+            {
+                // Self-frag.
                 target->player->frags[target->player - players]--;
                 NetSv_FragsForAll(target->player);
             }
@@ -1471,9 +1473,11 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
     }
 
     if(target->player)
-    {   // Player death.
+    {
+        // Player death.
         if(!source)
-        {   // Self-frag
+        {
+            // Self-frag
             target->player->frags[target->player - players]--;
             NetSv_FragsForAll(target->player);
         }
@@ -1490,8 +1494,9 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         target->player->plr->flags |= DDPF_DEAD;
         P_DropWeapon(target->player);
         if(target->flags2 & MF2_FIREDAMAGE)
-        {   // Player flame death.
-            //// \todo Should be pulled from the player class definition.
+        {
+            // Player flame death.
+            /// @todo Should be pulled from the player class definition.
             switch(target->player->class_)
             {
             case PCLASS_FIGHTER:
@@ -1519,7 +1524,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
             // Player ice death.
             target->flags &= ~MF_TRANSLATION; // no translation
             target->flags |= MF_ICECORPSE;
-            //// \todo Should be pulled from the player class definition.
+            /// @todo Should be pulled from the player class definition.
             switch(target->player->class_)
             {
             case PCLASS_FIGHTER:
@@ -1557,7 +1562,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
          * find MF_ targets->flags that indicated *only* enemies (not trees,
          * pots, etc), so built a list.
          *
-         * \todo This should be a Thing definition flag.
+         * @todo This should be a Thing definition flag.
          */
         if(IS_NETGAME && !deathmatch && source && source->player &&
            source->player->plr && (target->type == MT_CENTAUR ||
@@ -1694,11 +1699,13 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
 
     if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
        target->health < -(target->info->spawnHealth / 2))
-    {   // Extreme death.
+    {
+        // Extreme death.
         P_MobjChangeState(target, state);
     }
     else
-    {   // Normal death.
+    {
+        // Normal death.
         if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
            target->type == MT_FIREDEMON &&
            target->origin[VZ] <= target->floorZ + 2)

@@ -825,7 +825,7 @@ D_CMD(CheatRunScript)
             if(scriptNum < 1 || scriptNum > 99) return false;
 
             scriptArgs[0] = scriptArgs[1] = scriptArgs[2] = 0;
-            if(P_StartACScript(scriptNum, 0, scriptArgs, plr->plr->mo, NULL, 0))
+            if(Game_ACScriptInterpreter_StartScript(scriptNum, 0, scriptArgs, plr->plr->mo, NULL, 0))
             {
                 AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "Running script %i", scriptNum);
                 P_SetMessage(plr, LMF_NO_HIDE, Str_Text(cmd));

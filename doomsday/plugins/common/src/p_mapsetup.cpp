@@ -866,7 +866,18 @@ void P_FinalizeMapChange(Uri const *uri)
 
 #if __JHEXEN__
     /// @todo Should be interpreted by the map converter.
-    P_LoadACScripts(W_GetLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/); // ACS object code
+    lumpnum_t acsLumpNum = W_CheckLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/;
+    if(acsLumpNum >= 0 && !IS_CLIENT)
+    {
+        ACScriptInterpreter &interp = Game_ACScriptInterpreter();
+
+        interp.loadBytecode(acsLumpNum);
+
+        memset(interp.mapVars, 0, sizeof(interp.mapVars));
+
+        // Start all scripts flagged to begin immediately.
+        interp.startOpenScripts();
+    }
 #endif
 
     HU_UpdatePsprites();

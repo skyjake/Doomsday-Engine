@@ -602,9 +602,6 @@ static byte SpecArgs[5];
 #define PRINT_BUFFER_SIZE 256
 static char PrintBuffer[PRINT_BUFFER_SIZE];
 
-/// The One ACS interpreter instance.
-static ACScriptInterpreter interp;
-
 /// POD structure passed to bytecode commands.
 struct CommandArgs
 {
@@ -1642,78 +1639,9 @@ static CommandFunc pcodeCmds[] =
     cmdThingSound, cmdEndPrintBold
 };
 
-void P_InitACScript()
-{
-    memset(interp.worldVars, 0, sizeof(interp.worldVars));
-    interp.clearDeferredTasks();
-}
-
-void P_LoadACScripts(lumpnum_t lump)
-{
-    if(IS_CLIENT) return;
-
-    interp.loadBytecode(lump);
-
-    memset(interp.mapVars, 0, sizeof(interp.mapVars));
-
-    // Start all scripts flagged to begin immediately.
-    interp.startOpenScripts();
-}
-
-void P_ACScriptRunDeferredTasks(uint map/*Uri const *mapUri*/)
-{
-    interp.runDeferredTasks(map);
-}
-
-dd_bool P_StartACScript(int scriptNumber, uint map, byte const args[], mobj_t *activator,
-    Line *line, int side)
-{
-    return interp.startScript(scriptNumber, map, args, activator, line, side);
-}
-
-dd_bool P_TerminateACScript(int scriptNumber, uint map)
-{
-    return interp.terminateScript(scriptNumber, map);
-}
-
-dd_bool P_SuspendACScript(int scriptNumber, uint map)
-{
-    return interp.suspendScript(scriptNumber, map);
-}
-
-void P_ACScriptTagFinished(int tag)
-{
-    interp.tagFinished(tag);
-}
-
-void P_ACScriptPolyobjFinished(int tag)
-{
-    interp.polyobjFinished(tag);
-}
-
-void P_WriteGlobalACScriptData(Writer *writer)
-{
-    interp.writeWorldScriptData(writer);
-}
-
-void P_ReadGlobalACScriptData(Reader *reader, int mapVersion)
-{
-    interp.readWorldScriptData(reader, mapVersion);
-}
-
-void P_WriteMapACScriptData(Writer *writer)
-{
-    interp.writeMapScriptData(writer);
-}
-
-void P_ReadMapACScriptData(Reader *reader, int mapVersion)
-{
-    interp.readMapScriptData(reader, mapVersion);
-}
-
 ACScriptInterpreter &ACScript::interpreter() const
 {
-    return interp;
+    return Game_ACScriptInterpreter();
 }
 
 void ACScript::runTick()
@@ -1770,8 +1698,6 @@ void ACScript::drop()
 {
     stackPtr--;
 }
-
-
 
 void ACScript::write(Writer *writer) const
 {
@@ -1916,6 +1842,41 @@ AutoStr *ACScriptInterpreter::scriptDescription(int scriptNumber)
                                          DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) "%i",
                                          Str_Text(scriptName(scriptNumber)),
                                          stateLabels[info->state], info->waitValue);
+}
+
+/// The One ACS interpreter instance.
+static ACScriptInterpreter interp;
+
+ACScriptInterpreter &Game_ACScriptInterpreter()
+{
+    return interp;
+}
+
+void Game_InitACScriptsForNewGame()
+{
+    memset(interp.worldVars, 0, sizeof(interp.worldVars));
+    interp.clearDeferredTasks();
+}
+
+void Game_ACScriptInterpreter_RunDeferredTasks(uint map/*Uri const *mapUri*/)
+{
+    interp.runDeferredTasks(map);
+}
+
+dd_bool Game_ACScriptInterpreter_StartScript(int scriptNumber, uint map, byte const args[],
+    mobj_t *activator, Line *line, int side)
+{
+    return interp.startScript(scriptNumber, map, args, activator, line, side);
+}
+
+dd_bool Game_ACScriptInterpreter_TerminateScript(int scriptNumber, uint map)
+{
+    return interp.terminateScript(scriptNumber, map);
+}
+
+dd_bool Game_ACScriptInterpreter_SuspendScript(int scriptNumber, uint map)
+{
+    return interp.suspendScript(scriptNumber, map);
 }
 
 void ACScript_Thinker(ACScript *script)

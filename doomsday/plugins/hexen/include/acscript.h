@@ -242,7 +242,13 @@ private:
     int _deferredTasksSize;
     DeferredTask *_deferredTasks;
 };
+
+/// @return  The game's global ACScript interpreter.
+ACScriptInterpreter &Game_ACScriptInterpreter();
+
 #endif
+
+// C wrapper API, for legacy modules -------------------------------------------
 
 #ifdef __cplusplus
 extern "C" {
@@ -251,27 +257,15 @@ extern "C" {
 /**
  * To be called when a new game session begins to initialize ACS scripting.
  */
-void P_InitACScript(void);
+void Game_InitACScriptsForNewGame(void);
 
-void P_LoadACScripts(lumpnum_t lump);
+dd_bool Game_ACScriptInterpreter_StartScript(int number, uint map, byte const args[4], mobj_t *activator, Line *line, int side);
 
-dd_bool P_StartACScript(int number, uint map, byte const args[4], mobj_t *activator, Line *line, int side);
+dd_bool Game_ACScriptInterpreter_TerminateScript(int number, uint map);
 
-dd_bool P_TerminateACScript(int number, uint map);
+dd_bool Game_ACScriptInterpreter_SuspendScript(int number, uint map);
 
-dd_bool P_SuspendACScript(int number, uint map);
-
-void P_ACScriptTagFinished(int tag);
-
-void P_ACScriptPolyobjFinished(int tag);
-
-void P_ACScriptRunDeferredTasks(uint map/*Uri const *map*/);
-
-void P_WriteGlobalACScriptData(Writer *writer);
-void P_ReadGlobalACScriptData(Reader *reader, int mapVersion);
-
-void P_WriteMapACScriptData(Writer *writer);
-void P_ReadMapACScriptData(Reader *reader, int mapVersion);
+void Game_ACScriptInterpreter_RunDeferredTasks(uint map/*Uri const *map*/);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -185,7 +185,7 @@ void T_Door(void *doorThinkerPtr)
             case DT_CLOSE:
                 xsec->specialData = 0;
 #if __JHEXEN__
-                P_ACScriptTagFinished(P_ToXSector(door->sector)->tag);
+                Game_ACScriptInterpreter().tagFinished(P_ToXSector(door->sector)->tag);
 #endif
                 Thinker_Remove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
@@ -266,7 +266,7 @@ void T_Door(void *doorThinkerPtr)
             case DT_OPEN:
                 xsec->specialData = 0;
 #if __JHEXEN__
-                P_ACScriptTagFinished(P_ToXSector(door->sector)->tag);
+                Game_ACScriptInterpreter().tagFinished(P_ToXSector(door->sector)->tag);
 #endif
                 Thinker_Remove(&door->thinker); // Unlink and free.
 #if __JHERETIC__

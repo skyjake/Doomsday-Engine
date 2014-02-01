@@ -38,7 +38,7 @@ void T_BuildPillar(pillar_t *pillar)
     {
         P_ToXSector(pillar->sector)->specialData = 0;
         SN_StopSequenceInSec(pillar->sector);
-        P_ACScriptTagFinished(P_ToXSector(pillar->sector)->tag);
+        Game_ACScriptInterpreter().tagFinished(P_ToXSector(pillar->sector)->tag);
         Thinker_Remove(&pillar->thinker);
     }
 }

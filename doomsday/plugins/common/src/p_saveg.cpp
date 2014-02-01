@@ -3498,7 +3498,7 @@ static void writeMap(Writer *writer)
         writeMapElements(writer);
         writeThinkers(writer);
 #if __JHEXEN__
-        P_WriteMapACScriptData(writer);
+        Game_ACScriptInterpreter().writeMapScriptData(writer);
         SN_WriteSequences(writer);
 #endif
         writeMisc(writer);
@@ -3537,7 +3537,7 @@ static void readMap(Reader *reader)
         readMapElements(reader, mapVersion);
         readThinkers(reader, mapVersion);
 #if __JHEXEN__
-        P_ReadMapACScriptData(reader, mapVersion);
+        Game_ACScriptInterpreter().readMapScriptData(reader, mapVersion);
         SN_ReadSequences(reader, mapVersion);
 #endif
         readMisc(reader, mapVersion);
@@ -3667,7 +3667,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 #endif
 
 #if __JHEXEN__
-    P_ReadGlobalACScriptData(reader, hdr->version);
+    Game_ACScriptInterpreter().readWorldScriptData(reader, hdr->version);
 #endif
 
     /*
@@ -4093,7 +4093,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     SaveInfo_Write(saveInfo, writer);
 
 #if __JHEXEN__
-    P_WriteGlobalACScriptData(writer);
+    Game_ACScriptInterpreter().writeWorldScriptData(writer);
 #endif
 
     // Set the mobj archive numbers.

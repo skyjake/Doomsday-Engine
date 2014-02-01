@@ -241,7 +241,7 @@ dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
     }
     newArgs[4] = 0;
 
-    return P_StartACScript(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
+    return Game_ACScriptInterpreter_StartScript(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
 }
 
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
@@ -518,15 +518,15 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break;
 
     case 80: // ACS_Execute
-        success = P_StartACScript(args[0], args[1], &args[2], mo, line, side);
+        success = Game_ACScriptInterpreter_StartScript(args[0], args[1], &args[2], mo, line, side);
         break;
 
     case 81: // ACS_Suspend
-        success = P_SuspendACScript(args[0], args[1]);
+        success = Game_ACScriptInterpreter_SuspendScript(args[0], args[1]);
         break;
 
     case 82: // ACS_Terminate
-        success = P_TerminateACScript(args[0], args[1]);
+        success = Game_ACScriptInterpreter_TerminateScript(args[0], args[1]);
         break;
 
     case 83: // ACS_LockedExecute

@@ -60,7 +60,7 @@ static void stopPlat(plat_t *plat)
 {
     P_ToXSector(plat->sector)->specialData = 0;
 #if __JHEXEN__
-    P_ACScriptTagFinished(P_ToXSector(plat->sector)->tag);
+    Game_ACScriptInterpreter().tagFinished(P_ToXSector(plat->sector)->tag);
 #endif
     Thinker_Remove(&plat->thinker);
 }
