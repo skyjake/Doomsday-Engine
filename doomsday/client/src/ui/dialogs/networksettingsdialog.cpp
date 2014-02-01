@@ -22,6 +22,7 @@
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/widgets/cvarlineeditwidget.h"
 
+#include "clientapp.h"
 #include "de_audio.h"
 #include "con_main.h"
 
@@ -34,6 +35,7 @@ using namespace ui;
 DENG_GUI_PIMPL(NetworkSettingsDialog)
 {
     CVarLineEditWidget *masterUrl;
+    CVarLineEditWidget *masterPath;
     GridPopupWidget *devPopup;
     CVarToggleWidget *devInfo;
 
@@ -41,8 +43,8 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(masterUrl = new CVarLineEditWidget("net-master-address"));
-        masterUrl->rule().setInput(Rule::Width, style().rules().rule("editor.width"));
+        area.add(masterUrl  = new CVarLineEditWidget("net-master-address"));
+        area.add(masterPath = new CVarLineEditWidget("net-master-path"));
 
         // Developer options.
         self.add(devPopup = new GridPopupWidget);
@@ -53,7 +55,13 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
 
     void fetch()
     {
-        devInfo->updateFromCVar();
+        foreach(Widget *w, self.area().childWidgets() + devPopup->content().childWidgets())
+        {
+            if(ICVarWidget *cv = w->maybeAs<ICVarWidget>())
+            {
+                cv->updateFromCVar();
+            }
+        }
     }
 };
 
@@ -64,13 +72,15 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
 
     d->devInfo->setText(tr("Developer Info"));
 
-    LabelWidget *masterUrlLabel = LabelWidget::newWithText(tr("Master URL:"), &area());
+    LabelWidget *masterUrlLabel  = LabelWidget::newWithText(tr("Master URL:"), &area());
+    LabelWidget *masterPathLabel = LabelWidget::newWithText(tr("Path:"), &area());
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *masterUrlLabel << *d->masterUrl;
+    layout << *masterUrlLabel << *d->masterUrl
+           << *masterPathLabel << *d->masterPath;
 
     area().setContentSize(layout.width(), layout.height());
 
@@ -88,7 +98,7 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
 
 void NetworkSettingsDialog::resetToDefaults()
 {
-    Con_SetInteger("net-dev", 0);
+    ClientApp::networkSettings().resetToDefaults();
 
     d->fetch();
 }
