@@ -21,6 +21,7 @@ group document {
 }
 
 group editor {
+    rule width { constant $= UNIT * 55 }
     rule completion.height { constant $= UNIT * 100 }
 }
 

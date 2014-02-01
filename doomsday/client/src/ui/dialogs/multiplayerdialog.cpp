@@ -23,6 +23,7 @@
 #include "con_main.h"
 #include "CommandAction"
 #include "ui/widgets/taskbarwidget.h"
+#include "ui/dialogs/networksettingsdialog.h"
 
 #include <de/charsymbols.h>
 #include <de/SignalAction>
@@ -37,11 +38,14 @@ DENG_GUI_PIMPL(MultiplayerDialog)
 , DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
-    static String hostId(serverinfo_t const &sv)
-    {
+    static ServerLink &link() { return ClientApp::serverLink(); }
+    static String hostId(serverinfo_t const &sv)  {
         return String("%1:%2").arg(sv.address).arg(sv.port);
     }
 
+    /**
+     * Data item with information about a found server.
+     */
     class ServerListItem : public ui::Item
     {
     public:
@@ -254,11 +258,6 @@ DENG_GUI_PIMPL(MultiplayerDialog)
             }
         }
     }
-
-    static ServerLink &link()
-    {
-        return ClientApp::serverLink();
-    }
 };
 
 MultiplayerDialog::MultiplayerDialog(String const &name)
@@ -277,12 +276,16 @@ MultiplayerDialog::MultiplayerDialog(String const &name)
     area().setContentSize(layout.width(), layout.height());
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, style().images().image("gear"),
+            << new DialogButtonItem(Default | Accept, tr("Close"))
+            << new DialogButtonItem(Action | Id1,
+                                    style().images().image("gear"),
                                     new SignalAction(this, SLOT(showSettings())));
 }
 
 void MultiplayerDialog::showSettings()
 {
-
+    NetworkSettingsDialog *dlg = new NetworkSettingsDialog;
+    dlg->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
+    dlg->setDeleteAfterDismissed(true);
+    dlg->exec(root());
 }
