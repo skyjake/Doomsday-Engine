@@ -1434,7 +1434,7 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
     {
         pspdef_t *psp = &p->pSprites[i];
 
-        psp->state = (state_t *) Reader_ReadInt32(reader);
+        psp->state = INT2PTR(state_t, Reader_ReadInt32(reader));
         psp->tics = Reader_ReadInt32(reader);
         psp->pos[VX] = FIX2FLT(Reader_ReadInt32(reader));
         psp->pos[VY] = FIX2FLT(Reader_ReadInt32(reader));
@@ -1950,7 +1950,7 @@ static int SV_ReadMobj(thinker_t *th, Reader *reader, int /*mapVersion*/)
         mo->ddFlags |= DDMF_DONTDRAW;
 
     mo->tics   = Reader_ReadInt32(reader);   // state tic counter
-    mo->state  = (state_t *) Reader_ReadInt32(reader);
+    mo->state  = INT2PTR(state_t, Reader_ReadInt32(reader));
 
 #if __JHEXEN__
     mo->damage = Reader_ReadInt32(reader);
@@ -1998,7 +1998,7 @@ static int SV_ReadMobj(thinker_t *th, Reader *reader, int /*mapVersion*/)
     mo->moveCount = Reader_ReadInt32(reader);  // when 0, select a new dir
 
 #if __JHEXEN__
-    mo->target = (mobj_t *) Reader_ReadInt32(reader);
+    mo->target = INT2PTR(mobj_t, Reader_ReadInt32(reader));
 #endif
 
     // Reaction time: if non 0, don't attack yet.
@@ -2011,7 +2011,7 @@ static int SV_ReadMobj(thinker_t *th, Reader *reader, int /*mapVersion*/)
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
-    mo->player = (player_t *) Reader_ReadInt32(reader);
+    mo->player = INT2PTR(player_t, Reader_ReadInt32(reader));
 
     // Player number last looked for.
     mo->lastLook = Reader_ReadInt32(reader);
@@ -2098,10 +2098,10 @@ static int SV_ReadMobj(thinker_t *th, Reader *reader, int /*mapVersion*/)
 
 #if __JHEXEN__
     if(ver >= 4)
-        mo->tracer = (mobj_t *) Reader_ReadInt32(reader);
+        mo->tracer = INT2PTR(mobj_t, Reader_ReadInt32(reader));
 
     if(ver >= 4)
-        mo->lastEnemy = (mobj_t *) Reader_ReadInt32(reader);
+        mo->lastEnemy = INT2PTR(mobj_t, Reader_ReadInt32(reader));
 #else
     if(ver >= 5)
         mo->floorClip = FIX2FLT(Reader_ReadInt32(reader));

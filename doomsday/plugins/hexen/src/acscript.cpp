@@ -1751,7 +1751,7 @@ int ACScript::read(Reader *reader, int mapVersion)
         // Note: the thinker class byte has already been read.
         int ver = Reader_ReadByte(reader); // version byte.
 
-        activator  = (mobj_t *) Reader_ReadInt32(reader);
+        activator  = INT2PTR(mobj_t, Reader_ReadInt32(reader));
         activator  = SV_GetArchiveThing(PTR2INT(activator), &activator);
 
         int temp = Reader_ReadInt32(reader);
@@ -1794,7 +1794,7 @@ int ACScript::read(Reader *reader, int mapVersion)
         Reader_Read(reader, junk, 16);
 
         // Start of used data members.
-        activator  = (mobj_t *) Reader_ReadInt32(reader);
+        activator  = INT2PTR(mobj_t, Reader_ReadInt32(reader));
         activator  = SV_GetArchiveThing(PTR2INT(activator), &activator);
 
         int temp = Reader_ReadInt32(reader);
