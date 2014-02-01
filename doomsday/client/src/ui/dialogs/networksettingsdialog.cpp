@@ -36,6 +36,7 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
 {
     CVarLineEditWidget *masterUrl;
     CVarLineEditWidget *masterPath;
+    CVarSliderWidget *masterPort;
     GridPopupWidget *devPopup;
     CVarToggleWidget *devInfo;
 
@@ -45,6 +46,9 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
 
         area.add(masterUrl  = new CVarLineEditWidget("net-master-address"));
         area.add(masterPath = new CVarLineEditWidget("net-master-path"));
+        area.add(masterPort = new CVarSliderWidget("net-master-port"));
+
+        masterPort->setMinLabel(tr("80"));
 
         // Developer options.
         self.add(devPopup = new GridPopupWidget);
@@ -73,14 +77,16 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
     d->devInfo->setText(tr("Developer Info"));
 
     LabelWidget *masterUrlLabel  = LabelWidget::newWithText(tr("Master URL:"), &area());
-    LabelWidget *masterPathLabel = LabelWidget::newWithText(tr("Path:"), &area());
+    LabelWidget *masterPathLabel = LabelWidget::newWithText(tr("Master Path:"), &area());
+    LabelWidget *masterPortLabel = LabelWidget::newWithText(tr("Master Port:"), &area());
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *masterUrlLabel << *d->masterUrl
-           << *masterPathLabel << *d->masterPath;
+    layout << *masterUrlLabel  << *d->masterUrl
+           << *masterPathLabel << *d->masterPath
+           << *masterPortLabel << *d->masterPort;
 
     area().setContentSize(layout.width(), layout.height());
 

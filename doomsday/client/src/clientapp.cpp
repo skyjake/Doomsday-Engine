@@ -274,7 +274,7 @@ DENG2_PIMPL(ClientApp)
         networkSettings
                 .define(SReg::StringCVar, "net-master-address", "www.dengine.net")
                 .define(SReg::StringCVar, "net-master-path",    "/master.php")
-                .define(SReg::IntCVar,    "net-master-port",    80)
+                .define(SReg::IntCVar,    "net-master-port",    0)
                 .define(SReg::IntCVar,    "net-dev",            0);
 
         audioSettings
