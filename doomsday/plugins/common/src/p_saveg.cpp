@@ -3365,6 +3365,8 @@ static void writeBrain(Writer *writer)
     {
         Writer_WriteInt16(writer, SV_ThingArchiveId(brain.targets[i]));
     }
+#else
+    DENG_UNUSED(writer);
 #endif
 }
 
@@ -3398,6 +3400,9 @@ static void readBrain(Reader *reader, int mapVersion)
     {
         P_BrainAddTarget(SV_GetArchiveThing((int) Reader_ReadInt16(reader), 0));
     }
+#else
+    DENG_UNUSED(reader);
+    DENG_UNUSED(mapVersion);
 #endif
 }
 
@@ -3421,6 +3426,8 @@ static void writeSoundTargets(Writer *writer)
             Writer_WriteInt16(writer, SV_ThingArchiveId(xsec->soundTarget));
         }
     }
+#else
+    DENG_UNUSED(writer);
 #endif
 }
 
@@ -3451,6 +3458,9 @@ static void readSoundTargets(Reader *reader, int mapVersion)
         xsec->soundTarget =
             SV_GetArchiveThing(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
     }
+#else
+    DENG_UNUSED(reader);
+    DENG_UNUSED(mapVersion);
 #endif
 }
 
@@ -3463,6 +3473,8 @@ static void writeMisc(Writer *writer)
     {
         Writer_WriteInt32(writer, localQuakeHappening[i]);
     }
+#else
+    DENG_UNUSED(writer);
 #endif
 }
 
@@ -3475,6 +3487,8 @@ static void readMisc(Reader *reader, int /*mapVersion*/)
     {
         localQuakeHappening[i] = Reader_ReadInt32(reader);
     }
+#else
+    DENG_UNUSED(reader);
 #endif
 }
 

@@ -201,7 +201,7 @@ void xgplanemover_t::write(Writer *writer) const
     Writer_WriteInt32(writer, timer);
 }
 
-int xgplanemover_t::read(Reader *reader, int mapVersion)
+int xgplanemover_t::read(Reader *reader, int /*mapVersion*/)
 {
     byte ver = Reader_ReadByte(reader); // Version.
 

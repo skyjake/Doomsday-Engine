@@ -177,7 +177,7 @@ int EV_BuildPillar(Line * /*line*/, byte *args, dd_bool crush)
     return rtn;
 }
 
-int EV_OpenPillar(Line *line, byte *args)
+int EV_OpenPillar(Line * /*line*/, byte *args)
 {
     iterlist_t *list = P_GetSectorIterListForTag((int) args[0], false);
     if(!list) return 0;

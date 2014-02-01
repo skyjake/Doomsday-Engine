@@ -1876,6 +1876,7 @@ void ACScript_Thinker(ACScript *script)
 D_CMD(InspectACScript)
 {
     DENG_UNUSED(src);
+    DENG_UNUSED(argc);
 
     if(!interp.scriptCount())
     {
@@ -1897,6 +1898,8 @@ D_CMD(InspectACScript)
 D_CMD(ListACScripts)
 {
     DENG_UNUSED(src);
+    DENG_UNUSED(argc);
+    DENG_UNUSED(argv);
 
     if(!interp.scriptCount())
     {
