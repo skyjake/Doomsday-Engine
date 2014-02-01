@@ -191,7 +191,7 @@ void printDebugInfo(player_t *plr)
     if(G_GameState() != GS_MAP || !plr->plr->mo)
         return;
 
-    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapUri = G_CurrentMapUri();
     mapPath = Uri_ToString(mapUri);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],

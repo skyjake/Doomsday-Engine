@@ -103,7 +103,7 @@ static void initStateConditions(fi_state_t *s)
 #if __JHEXEN__
     // Leaving the current cluster?
     {
-        Uri *curMapUri  = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *curMapUri  = G_CurrentMapUri();
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
         mapinfo_t *curMapInfo = P_MapInfo(curMapUri);
@@ -453,7 +453,7 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
     else if(mode == FIMODE_BEFORE) // A briefing has ended.
     {
         // Its time to start the map; que music and begin!
-        Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *mapUri = G_CurrentMapUri();
 
         S_MapMusic(mapUri);
         HU_WakeWidgets(-1 /* all players */);

@@ -261,7 +261,7 @@ bool ACScriptInterpreter::startScript(int scriptNumber, Uri const *mapUri,
 
     if(mapUri)
     {
-        Uri *currentMapUri = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *currentMapUri = G_CurrentMapUri();
         if(!Uri_Equality(mapUri, currentMapUri))
         {
             Uri_Delete(currentMapUri);

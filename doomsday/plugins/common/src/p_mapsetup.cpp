@@ -1127,7 +1127,7 @@ char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
 
 char const *P_CurrentMapTitle()
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     char const *title = P_MapTitle(mapUri);
     Uri_Delete(mapUri);
     return title;
@@ -1135,7 +1135,7 @@ char const *P_CurrentMapTitle()
 
 char const *P_CurrentMapAuthor(dd_bool supressGameAuthor)
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     char const *author = P_MapAuthor(mapUri, supressGameAuthor);
     Uri_Delete(mapUri);
     return author;

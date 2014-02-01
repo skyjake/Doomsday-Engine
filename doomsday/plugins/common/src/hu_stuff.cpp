@@ -1530,7 +1530,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 
     if(mapIdInsteadOfAuthor)
     {
-        Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *mapUri = G_CurrentMapUri();
         FR_SetFont(FID(GF_FONTA));
 #if defined(__JHERETIC__) || defined(__JHEXEN__)
         FR_SetColorAndAlpha(.85f, .85f, .85f, alpha);

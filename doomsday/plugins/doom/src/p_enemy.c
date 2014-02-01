@@ -1696,7 +1696,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         }
     }
 
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_LogicalMapNumber(gameEpisode, gameMap), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -1833,7 +1833,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
 
 void C_DECL A_BrainDie(mobj_t* mo)
 {
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_LogicalMapNumber(gameEpisode, gameMap), 0, false);
 }
 
 void C_DECL A_BrainSpit(mobj_t* mo)
