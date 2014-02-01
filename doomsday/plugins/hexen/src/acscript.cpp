@@ -614,7 +614,7 @@ AutoStr *ACScriptInterpreter::scriptDescription(int scriptNumber)
         return AutoStr_FromTextStd("(invalid-scriptnumber)");
     }
 
-    char const *stateLabels[] = {
+    static char const *stateLabels[] = {
         "Inactive",
         "Running",
         "Suspended",

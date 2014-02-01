@@ -47,7 +47,7 @@ typedef struct acscript_s {
     mobj_t *activator;
     Line *line;
     int side;
-    BytecodeScriptInfo *_info;
+    struct BytecodeScriptInfo *_info;
     int delayCount;
     struct Stack { // Local value stack.
         int values[ACS_STACK_DEPTH];
