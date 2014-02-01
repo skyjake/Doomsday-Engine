@@ -64,6 +64,8 @@ public:
      */
     void shift(float delta);
 
+    void finish();
+
     String description() const;
 
 protected:
