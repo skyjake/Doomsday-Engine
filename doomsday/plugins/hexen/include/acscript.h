@@ -34,6 +34,7 @@
 #define MAX_ACS_WORLD_VARS      64
 #define ACS_STACK_DEPTH         32
 
+struct BytecodeScriptInfo;
 #ifdef __cplusplus
 class ACScriptInterpreter;
 #endif
@@ -46,8 +47,7 @@ typedef struct acscript_s {
     mobj_t *activator;
     Line *line;
     int side;
-    int number;
-    int infoIndex;
+    BytecodeScriptInfo *_info;
     int delayCount;
     int stack[ACS_STACK_DEPTH];
     int stackPtr;
@@ -56,6 +56,8 @@ typedef struct acscript_s {
 
 #ifdef __cplusplus
     ACScriptInterpreter &interpreter() const;
+
+    BytecodeScriptInfo &info() const;
 
     void runTick();
 
@@ -89,8 +91,6 @@ void ACScript_Thinker(ACScript *script);
 #endif
 
 #ifdef __cplusplus
-struct BytecodeScriptInfo;
-
 /**
  * Action-Code Script (ACS) bytecode interpreter.
  */
@@ -208,8 +208,6 @@ public:
 
 public: /// @todo make private:
     BytecodeScriptInfo &scriptInfoByIndex(int index);
-
-    BytecodeScriptInfo &scriptInfoFor(ACScript *script);
 
 private:
     /**
