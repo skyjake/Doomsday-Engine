@@ -44,6 +44,16 @@ class LIBAPPFW_PUBLIC FoldPanelWidget : public PanelWidget
 public:
     FoldPanelWidget(String const &name = "");
 
+    /**
+     * Creates a title button widget for toggling the fold open and closed.
+     * The method does not add the title as a child to anything.
+     *
+     * @param text  Text.
+     *
+     * @return Button widget instance. Caller gets ownership.
+     */
+    ButtonWidget *makeTitle(String const &text = "");
+
     ButtonWidget &title();
 
     void setContent(GuiWidget *content);

@@ -99,6 +99,7 @@ DENG2_OBSERVES(App, GameChange)
         {
             _group = new GuiWidget;
             setContent(_group);
+            makeTitle(titleText);
             title().setText(titleText);
             title().setTextColor("accent");
 
