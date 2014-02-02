@@ -129,6 +129,8 @@ public:
     Rule const &rowHeight(int row) const;
     Rule const &overrideWidth() const;
     Rule const &overrideHeight() const;
+    Rule const &columnPadding() const;
+    Rule const &rowPadding() const;
 
 private:
     DENG2_PRIVATE(d)
