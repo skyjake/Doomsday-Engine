@@ -17,246 +17,19 @@
  */
 
 #include "ui/dialogs/multiplayerdialog.h"
-#include "network/serverlink.h"
-#include "clientapp.h"
-#include "dd_main.h"
-#include "con_main.h"
 #include "CommandAction"
-#include "ui/widgets/taskbarwidget.h"
 #include "ui/dialogs/networksettingsdialog.h"
 
-#include <de/charsymbols.h>
 #include <de/SignalAction>
-#include <de/SequentialLayout>
-#include <de/ChildWidgetOrganizer>
-#include <de/DocumentPopupWidget>
-#include <de/ui/Item>
 
 using namespace de;
 
 DENG_GUI_PIMPL(MultiplayerDialog)
-, DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
-, public ChildWidgetOrganizer::IWidgetFactory
 {
-    static ServerLink &link() { return ClientApp::serverLink(); }
-    static String hostId(serverinfo_t const &sv)  {
-        return String("%1:%2").arg(sv.address).arg(sv.port);
-    }
-
-    /**
-     * Data item with information about a found server.
-     */
-    class ServerListItem : public ui::Item
-    {
-    public:
-        ServerListItem(serverinfo_t const &serverInfo)
-        {
-            setData(hostId(serverInfo));
-            std::memcpy(&_info, &serverInfo, sizeof(serverInfo));
-        }
-
-        serverinfo_t const &info() const
-        {
-            return _info;
-        }
-
-        void setInfo(serverinfo_t const &serverInfo)
-        {
-            std::memcpy(&_info, &serverInfo, sizeof(serverInfo));
-            notifyChange();
-        }
-
-    private:
-        serverinfo_t _info;
-    };
-
-    /**
-     * Widget representing a ServerListItem in the dialog's menu.
-     */
-    struct ServerWidget : public GuiWidget
-    {
-        LabelWidget *title;
-        ButtonWidget *extra;
-        ButtonWidget *join;
-        QScopedPointer<SequentialLayout> layout;
-        DocumentPopupWidget *info;
-
-        struct JoinAction : public Action
-        {
-        public:
-            JoinAction(serverinfo_t const &sv, ButtonWidget *owner)
-                : _owner(owner)
-            {
-                _gameId = sv.gameIdentityKey;
-                _cmd = String("connect %1 %2").arg(sv.address).arg(sv.port);
-            }
-
-            void trigger()
-            {
-                Action::trigger();
-
-                BusyMode_FreezeGameForBusyMode();
-
-                // Closing the taskbar will cause this action to be deleted. Let's take
-                // ownership of the action so we can delete after we're done.
-                _owner->takeAction();
-
-                ClientWindow::main().taskBar().close();
-
-                App_ChangeGame(App_Games().byIdentityKey(_gameId), false /*no reload*/);
-                Con_Execute(CMDS_DDAY, _cmd.toLatin1(), false, false);
-
-                delete this;
-            }
-
-            Action *duplicate() const
-            {
-                DENG2_ASSERT(!"JoinAction: cannot duplicate");
-                return 0;
-            }
-
-        private:
-            ButtonWidget *_owner;
-            String _gameId;
-            String _cmd;
-        };
-
-        ServerWidget()
-        {
-            setBehavior(ContentClipping);
-
-            add(title = new LabelWidget);
-            add(extra = new ButtonWidget);
-            add(join  = new ButtonWidget);
-
-            extra->setText(tr("..."));
-            join->setText(tr("Join"));
-
-            title->setSizePolicy(ui::Expand, ui::Expand);
-            title->setAppearanceAnimation(LabelWidget::AppearGrowVertically, 0.5);
-            title->setAlignment(ui::AlignTop);
-            title->setTextAlignment(ui::AlignRight);
-            title->setTextLineAlignment(ui::AlignLeft);
-            title->setImageAlignment(ui::AlignCenter);
-            title->setMaximumTextWidth(style().rules().rule("dialog.multiplayer.width").valuei());
-
-            extra->setSizePolicy(ui::Expand, ui::Expand);
-            join->setSizePolicy(ui::Expand, ui::Expand);
-
-            join->disable();
-
-            layout.reset(new SequentialLayout(rule().left(), rule().top(), ui::Right));
-            *layout << *title << *extra << *join;
-            rule().setSize(layout->width(), title->rule().height());
-
-            // Extra info popup.
-            info = new DocumentPopupWidget;
-            info->document().setMaximumLineWidth(style().rules().rule("dialog.multiplayer.width").valuei());
-            info->setAnchorAndOpeningDirection(extra->rule(), ui::Up);
-            add(info);
-
-            extra->setAction(new SignalAction(info, SLOT(open())));
-        }
-
-        void updateFromItem(ServerListItem const &item)
-        {
-            try
-            {
-                Game const &svGame = App_Games().byIdentityKey(item.info().gameIdentityKey);
-
-                if(style().images().has(svGame.logoImageId()))
-                {
-                    title->setImage(style().images().image(svGame.logoImageId()));
-                }
-
-                serverinfo_t const &sv = item.info();
-
-                join->enable(sv.canJoin);
-                if(sv.canJoin)
-                {
-                    join->setAction(new JoinAction(sv, join));
-                }
-
-                title->setText(String(_E(1) "%1 " _E(.)_E(2) "(%5/%6)" _E(.) "\n%2"
-                                      _E(D)_E(l) "\n%7 %4")
-                               .arg(sv.name)
-                               .arg(svGame.title())
-                               .arg(sv.gameConfig)
-                               .arg(sv.numPlayers)
-                               .arg(sv.maxPlayers)
-                               .arg(sv.map));
-
-                // Extra information.
-                info->document().setText(ServerInfo_AsStyledText(&sv));
-            }
-            catch(Error const &)
-            {
-                /// @todo
-            }
-        }
-    };
-
-    MenuWidget *list;
+    //MenuWidget *list;
 
     Instance(Public *i) : Base(i)
     {
-        self.area().add(list = new MenuWidget);
-
-        // Configure the server list widet.
-        list->setGridSize(1, ui::Expand, 0, ui::Expand);
-        list->organizer().setWidgetFactory(*this);
-
-        link().audienceForDiscoveryUpdate += this;
-    }
-
-    ~Instance()
-    {
-        link().audienceForDiscoveryUpdate -= this;
-    }
-
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
-    {
-        ServerWidget *w = new ServerWidget;
-        // Automatically close the info popup if the dialog is closed.
-        QObject::connect(thisPublic, SIGNAL(closed()), w->info, SLOT(close()));
-        return w;
-    }
-
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item)
-    {
-        widget.as<ServerWidget>().updateFromItem(item.as<ServerListItem>());
-    }
-
-    void linkDiscoveryUpdate(ServerLink const &link)
-    {
-        // Remove obsolete entries.
-        for(ui::Data::Pos idx = 0; idx < list->items().size(); ++idx)
-        {
-            String const id = list->items().at(idx).data().toString();
-            if(!link.isFound(Address::parse(id)))
-            {
-                list->items().remove(idx--);
-            }
-        }
-
-        // Add new entries and update existing ones.
-        foreach(de::Address const &host, link.foundServers())
-        {
-            serverinfo_t info;
-            if(!link.foundServerInfo(host, &info)) continue;
-
-            ui::Data::Pos found = list->items().findData(hostId(info));
-            if(found == ui::Data::InvalidPos)
-            {
-                // Needs to be added.
-                list->items().append(new ServerListItem(info));
-            }
-            else
-            {
-                // Update the info.
-                list->items().at(found).as<ServerListItem>().setInfo(info);
-            }
-        }
     }
 };
 
@@ -271,7 +44,7 @@ MultiplayerDialog::MultiplayerDialog(String const &name)
     layout.setGridSize(1, 0);
     //layout.setColumnAlignment(0, ui::AlignRight);
 
-    layout << *lab << *d->list;
+    layout << *lab;// << *d->list;
 
     area().setContentSize(layout.width(), layout.height());
 

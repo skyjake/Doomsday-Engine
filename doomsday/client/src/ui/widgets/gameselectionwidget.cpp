@@ -17,6 +17,8 @@
  */
 
 #include "ui/widgets/gameselectionwidget.h"
+#include "ui/widgets/gamesessionwidget.h"
+#include "ui/widgets/mpselectionwidget.h"
 #include "CommandAction"
 #include "clientapp.h"
 #include "games.h"
@@ -49,98 +51,55 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         Game const &game;
     };
 
-    /**
-     * Widget for representing an item in the game selection menu. Has two buttons:
-     * one for starting the game and one for configuring it.
-     */
-    struct GameWidget
-            : public GuiWidget
-            , DENG2_OBSERVES(ButtonWidget, Press)
-            , DENG2_OBSERVES(App, GameUnload)
+    struct GameWidget : public GameSessionWidget
     {
-        ButtonWidget *load;
-        ButtonWidget *info;
-        DocumentPopupWidget *popup;
         Game const *game;
 
-        GameWidget() : game(0)
-        {
-            rule().setInput(Rule::Height, style().fonts().font("default").height() * 4);
-
-            add(load = new ButtonWidget);
-            add(info = new ButtonWidget);
-
-            load->disable();
-            load->setBehavior(Widget::ContentClipping);
-            load->setAlignment(ui::AlignLeft);
-            load->setTextAlignment(ui::AlignRight);
-            load->setTextLineAlignment(ui::AlignLeft);
-
-            info->setWidthPolicy(ui::Expand);
-            info->setAlignment(ui::AlignBottom);
-            info->setText(_E(s)_E(B) + tr("..."));
-
-            add(popup = new DocumentPopupWidget);
-            popup->setAnchorAndOpeningDirection(info->rule(), ui::Up);
-            popup->document().setMaximumLineWidth(popup->style().rules().rule("document.popup.width").valuei());
-            info->audienceForPress += this;
-
-            // Button for extra information.
-            load->rule()
-                    .setInput(Rule::Left,   rule().left())
-                    .setInput(Rule::Top,    rule().top())
-                    .setInput(Rule::Bottom, rule().bottom())
-                    .setInput(Rule::Right,  info->rule().left());
-            info->rule()
-                    .setInput(Rule::Top,    rule().top())
-                    .setInput(Rule::Right,  rule().right())
-                    .setInput(Rule::Bottom, rule().bottom());
-
-            App::app().audienceForGameUnload += this;
-        }
-
-        ~GameWidget()
-        {
-            App::app().audienceForGameUnload -= this;
-        }
-
-        void aboutToUnloadGame(game::Game const &)
-        {
-            popup->close(0);
-        }
-
-        void buttonPressed(ButtonWidget &bt)
-        {
-            /*
-            // Show information about the game.
-            popup->setAnchorAndOpeningDirection(
-                        bt.rule(),
-                        bt.rule().top().valuei() + bt.rule().height().valuei() / 2 <
-                        bt.root().viewRule().height().valuei() / 2?
-                            ui::Down : ui::Up);*/
-            popup->document().setText(game->description());
-            popup->open();
+        GameWidget() : game(0) {}
+        void updateInfoContent() {
+            DENG2_ASSERT(game != 0);
+            document().setText(game->description());
         }
     };
 
+    /**
+     * Foldable group of games.
+     */
     struct Subset : public FoldPanelWidget
     {
+        enum Type {
+            NormalGames,
+            MultiplayerGames
+        };
+
+        Type type;
         MenuWidget *menu;
 
-        Subset(String const &headingText, GameSelectionWidget::Instance *owner)
-        {
+        Subset(Type selType, String const &headingText, GameSelectionWidget::Instance *owner)
+            : type(selType)
+        {           
             owner->self.add(makeTitle(headingText));
             title().setFont("title");
             title().setTextColor("inverted.text");
             title().setAlignment(ui::AlignLeft);
             title().margins().setLeft("");
 
-            setContent(menu = new MenuWidget);
+            switch(type)
+            {
+            case NormalGames:
+                menu = new MenuWidget;
+                menu->organizer().setWidgetFactory(*owner);
+                break;
+
+            case MultiplayerGames:
+                menu = new MPSelectionWidget;
+                break;
+            }
+
+            setContent(menu);
+            menu->enableScrolling(false);
             menu->margins().set("");
             menu->layout().setColumnPadding(owner->style().rules().rule("unit"));
-            menu->enableScrolling(false);
-            menu->organizer().setWidgetFactory(*owner);
-
             menu->rule().setInput(Rule::Width,
                                   owner->self.rule().width() -
                                   owner->self.margins().width());
@@ -172,16 +131,23 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
     Subset *available;
     Subset *incomplete;
+    Subset *multi;
 
     Instance(Public *i)
         : Base(i)
         , superLayout(i->contentRule().left(), i->contentRule().top(), ui::Down)
     {
         // Menu of available games.
-        self.add(available = new Subset(tr("Available Games"), this));
+        self.add(available = new Subset(Subset::NormalGames,
+                                        tr("Available Games"), this));
 
         // Menu of incomplete games.
-        self.add(incomplete = new Subset(tr("Incomplete Games"), this));
+        self.add(incomplete = new Subset(Subset::NormalGames,
+                                         tr("Games with Missing Resources"), this));
+
+        // Menu of multiplayer games.
+        self.add(multi = new Subset(Subset::MultiplayerGames,
+                                    tr("Multiplayer Games"), this));
 
         superLayout.setOverrideWidth(self.rule().width() - self.margins().width());
 
@@ -189,6 +155,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         superLayout << available->title()
                     << *available
+                    << multi->title()
+                    << *multi
                     << incomplete->title()
                     << *incomplete;
 
@@ -265,9 +233,9 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         w.game = &it.game;
 
-        w.load->setImage(it.image());
-        w.load->setText(it.label());
-        w.load->setAction(it.action()->duplicate());
+        w.loadButton().setImage(it.image());
+        w.loadButton().setText(it.label());
+        w.loadButton().setAction(it.action()->duplicate());
     }
 
     void appStartupCompleted()
@@ -283,12 +251,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             GameItem const &item = available->items().at(i).as<GameItem>();
             if(item.game.allStartupFilesFound())
             {
-                available->gameWidget(item).load->enable();
+                available->gameWidget(item).loadButton().enable();
             }
             else
             {
                 incomplete->items().append(available->items().take(i--));
-                incomplete->gameWidget(item).load->disable();
+                incomplete->gameWidget(item).loadButton().disable();
             }
         }
 
@@ -299,11 +267,11 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             if(item.game.allStartupFilesFound())
             {
                 available->items().append(incomplete->items().take(i--));
-                available->gameWidget(item).load->enable();
+                available->gameWidget(item).loadButton().enable();
             }
             else
             {
-                incomplete->gameWidget(item).load->disable();
+                incomplete->gameWidget(item).loadButton().disable();
             }
         }
 
@@ -316,6 +284,7 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
     : ScrollAreaWidget(name), d(new Instance(this))
 {
     d->available->open();
+    d->multi->open();
     d->incomplete->open();
 
     // We want the full menu to be visible even when it doesn't fit the
@@ -328,14 +297,15 @@ void GameSelectionWidget::viewResized()
     ScrollAreaWidget::viewResized();
 
     // If the view is too small, we'll want to reduce the number of items in the menu.
-    int const maxWidth  = style().rules().rule("gameselection.max.width").valuei();
-    int const maxHeight = style().rules().rule("gameselection.max.height").valuei();
+    int const maxWidth = style().rules().rule("gameselection.max.width").valuei();
+    //int const maxHeight = style().rules().rule("gameselection.max.height").valuei();
 
-    Vector2i suitable(clamp(1, 3 * rule().width().valuei() / maxWidth,   3),
-                      clamp(1, 8 * rule().height().valuei() / maxHeight, 6));
+    int suitable = clamp(1, 3 * rule().width().valuei() / maxWidth, 3);
+                      //clamp(1, 8 * rule().height().valuei() / maxHeight, 6));
 
-    d->available->setColumns(suitable.x);
-    d->incomplete->setColumns(suitable.x);
+    d->available->setColumns(suitable);
+    d->incomplete->setColumns(suitable);
+    d->multi->setColumns(suitable);
 }
 
 void GameSelectionWidget::update()

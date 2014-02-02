@@ -393,10 +393,12 @@ DENG_HEADERS += \
     include/ui/widgets/cvarsliderwidget.h \
     include/ui/widgets/cvartogglewidget.h \
     include/ui/widgets/gameselectionwidget.h \
+    include/ui/widgets/gamesessionwidget.h \
     include/ui/widgets/gameuiwidget.h \
     include/ui/widgets/gamewidget.h \
     include/ui/widgets/icvarwidget.h \
     include/ui/widgets/keygrabberwidget.h \
+    include/ui/widgets/mpselectionwidget.h \
     include/ui/widgets/multiplayermenuwidget.h \
     include/ui/widgets/profilepickerwidget.h \
     include/ui/widgets/taskbarwidget.h \
@@ -730,9 +732,11 @@ SOURCES += \
     src/ui/widgets/cvarsliderwidget.cpp \
     src/ui/widgets/cvartogglewidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
+    src/ui/widgets/gamesessionwidget.cpp \
     src/ui/widgets/gamewidget.cpp \
     src/ui/widgets/gameuiwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
+    src/ui/widgets/mpselectionwidget.cpp \
     src/ui/widgets/multiplayermenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
