@@ -385,13 +385,15 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
     if(d->colPolicy == ui::Filled)
     {
         DENG2_ASSERT(columns > 0);
-        d->layout.setOverrideWidth((rule().width() - margins().width()) / float(columns));
+        d->layout.setOverrideWidth((rule().width() - margins().width() -
+                                    (columns - 1) * d->layout.columnPadding()) / float(columns));
     }
 
     if(d->rowPolicy == ui::Filled)
     {
         DENG2_ASSERT(rows > 0);
-        d->layout.setOverrideHeight((rule().height() - margins().height()) / float(rows));
+        d->layout.setOverrideHeight((rule().height() - margins().height() -
+                                     (rows - 1) * d->layout.rowPadding()) / float(rows));
     }
 
     d->needLayout = true;
