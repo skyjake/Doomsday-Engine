@@ -226,12 +226,9 @@ DENG2_OBSERVES(App,              StartupComplete)
         // The game selection's height depends on the taskbar.
         gameSelMenu->rule()
                 .setInput(Rule::AnchorY, taskBar->rule().top() / 2)
-                .setInput(Rule::Height,
-                          OperatorRule::minimum(style.rules().rule("gameselection.max.height"),
-                                                taskBar->rule().top()));
-                                     /*OperatorRule::minimum(root.viewHeight(),
-                                                           (taskBar->rule().top() - root.viewHeight() / 2) * 2,
-                  style.rules().rule("gameselection.max.height")));*/
+                .setInput(Rule::Height,  OperatorRule::minimum(
+                              taskBar->rule().top(),
+                              gameSelMenu->contentRule().height() + gameSelMenu->margins().height()));
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;

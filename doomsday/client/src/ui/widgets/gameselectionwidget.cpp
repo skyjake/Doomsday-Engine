@@ -23,6 +23,9 @@
 #include "dd_main.h"
 
 #include <de/ui/ActionItem>
+#include <de/MenuWidget>
+#include <de/SequentialLayout>
+#include <de/FoldPanelWidget>
 #include <de/DocumentPopupWidget>
 #include <de/SignalAction>
 #include <de/FIFO>
@@ -37,78 +40,19 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 , DENG2_OBSERVES(App, StartupComplete)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
-    /// ActionItem with a Game member.
+    /// ActionItem with a Game member, for loading a particular game.
     struct GameItem : public ui::ActionItem {
         GameItem(Game const &gameRef, de::String const &label, de::Action *action)
-            : ui::ActionItem(label, action), game(gameRef) {}
+            : ui::ActionItem(label, action), game(gameRef) {
+            setData(&gameRef);
+        }
         Game const &game;
     };
 
-    FIFO<Game> pendingGames;
-
-    Instance(Public *i) : Base(i)
-    {
-        App_Games().audienceForAddition += this;
-        App::app().audienceForStartupComplete += this;
-
-        self.organizer().setWidgetFactory(*this);
-    }
-
-    ~Instance()
-    {
-        App_Games().audienceForAddition -= this;
-        App::app().audienceForStartupComplete -= this;
-    }
-
-    void gameAdded(Game &game)
-    {
-        // Called from a non-UI thread.
-        pendingGames.put(&game);
-    }
-
-    void addPendingGames()
-    {
-        while(Game *game = pendingGames.take())
-        {
-            self.items().append(makeItemForGame(*game));
-        }
-    }
-
-    ui::Item *makeItemForGame(Game &game)
-    {
-        String const idKey = game.identityKey();
-
-        CommandAction *loadAction = new CommandAction(String("load ") + idKey);
-        String label = String(_E(b) "%1" _E(.) /*_E(s)_E(C) " %2\n" _E(.)_E(.)*/ "\n"
-                              _E(l)_E(D) "%2")
-                .arg(game.title())
-                //.arg(game.author())
-                .arg(idKey);
-
-        GameItem *item = new GameItem(game, label, loadAction);
-
-        /// @todo The name of the plugin should be accessible via the plugin loader.
-        String plugName;
-        if(idKey.contains("heretic"))
-        {
-            plugName = "libheretic";
-        }
-        else if(idKey.contains("hexen"))
-        {
-            plugName = "libhexen";
-        }
-        else
-        {
-            plugName = "libdoom";
-        }
-        if(style().images().has(game.logoImageId()))
-        {
-            item->setImage(style().images().image(game.logoImageId()));
-        }
-
-        return item;
-    }
-
+    /**
+     * Widget for representing an item in the game selection menu. Has two buttons:
+     * one for starting the game and one for configuring it.
+     */
     struct GameWidget
             : public GuiWidget
             , DENG2_OBSERVES(ButtonWidget, Press)
@@ -121,6 +65,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         GameWidget() : game(0)
         {
+            rule().setInput(Rule::Height, style().fonts().font("default").height() * 4);
+
             add(load = new ButtonWidget);
             add(info = new ButtonWidget);
 
@@ -177,6 +123,136 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         }
     };
 
+    struct Subset : public FoldPanelWidget
+    {
+        MenuWidget *menu;
+
+        Subset(String const &headingText, GameSelectionWidget::Instance *owner)
+        {
+            owner->self.add(makeTitle(headingText));
+            title().setFont("title");
+            title().setTextColor("inverted.text");
+            title().setAlignment(ui::AlignLeft);
+            title().margins().setLeft("");
+
+            setContent(menu = new MenuWidget);
+            menu->margins().set("");
+            menu->layout().setColumnPadding(owner->style().rules().rule("unit"));
+            menu->enableScrolling(false);
+            menu->organizer().setWidgetFactory(*owner);
+
+            menu->rule().setInput(Rule::Width,
+                                  owner->self.rule().width() -
+                                  owner->self.margins().width());
+
+            setColumns(3);
+        }
+
+        void setColumns(int cols)
+        {
+            if(menu->layout().maxGridSize().x != cols)
+            {
+                menu->setGridSize(cols, ui::Filled, 0, ui::Expand);
+            }
+        }
+
+        ui::Data &items()
+        {
+            return menu->items();
+        }
+
+        GameWidget &gameWidget(ui::Item const &item)
+        {
+            return menu->itemWidget<GameWidget>(item);
+        }
+    };
+
+    FIFO<Game> pendingGames;
+    SequentialLayout superLayout;
+
+    Subset *available;
+    Subset *incomplete;
+
+    Instance(Public *i)
+        : Base(i)
+        , superLayout(i->contentRule().left(), i->contentRule().top(), ui::Down)
+    {
+        // Menu of available games.
+        self.add(available = new Subset(tr("Available Games"), this));
+
+        // Menu of incomplete games.
+        self.add(incomplete = new Subset(tr("Incomplete Games"), this));
+
+        superLayout.setOverrideWidth(self.rule().width() - self.margins().width());
+
+        available->title().margins().setTop("");
+
+        superLayout << available->title()
+                    << *available
+                    << incomplete->title()
+                    << *incomplete;
+
+        self.setContentSize(superLayout.width(), superLayout.height());
+
+        App_Games().audienceForAddition += this;
+        App::app().audienceForStartupComplete += this;
+    }
+
+    ~Instance()
+    {
+        App_Games().audienceForAddition -= this;
+        App::app().audienceForStartupComplete -= this;
+    }
+
+    void gameAdded(Game &game)
+    {
+        // Called from a non-UI thread.
+        pendingGames.put(&game);
+    }
+
+    void addPendingGames()
+    {
+        while(Game *game = pendingGames.take())
+        {
+            incomplete->items().append(makeItemForGame(*game));
+        }
+    }
+
+    ui::Item *makeItemForGame(Game &game)
+    {
+        String const idKey = game.identityKey();
+
+        CommandAction *loadAction = new CommandAction(String("load ") + idKey);
+        String label = String(_E(b) "%1" _E(.) /*_E(s)_E(C) " %2\n" _E(.)_E(.)*/ "\n"
+                              _E(l)_E(D) "%2")
+                .arg(game.title())
+                //.arg(game.author())
+                .arg(idKey);
+
+        GameItem *item = new GameItem(game, label, loadAction);
+
+        /// @todo The name of the plugin should be accessible via the plugin loader.
+        String plugName;
+        if(idKey.contains("heretic"))
+        {
+            plugName = "libheretic";
+        }
+        else if(idKey.contains("hexen"))
+        {
+            plugName = "libhexen";
+        }
+        else
+        {
+            plugName = "libdoom";
+        }
+        if(style().images().has(game.logoImageId()))
+        {
+            item->setImage(style().images().image(game.logoImageId()));
+        }
+
+        return item;
+    }
+
     GuiWidget *makeItemWidget(ui::Item const &, GuiWidget const *)
     {
         return new GameWidget;
@@ -201,23 +277,46 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
     void updateGameAvailability()
     {
-        for(uint i = 0; i < self.items().size(); ++i)
+        // Available games.
+        for(uint i = 0; i < available->items().size(); ++i)
         {
-            GameItem const &item = self.items().at(i).as<GameItem>();
-
-            GameWidget &w = self.organizer().itemWidget(item)->as<GameWidget>();
-            w.load->enable(item.game.allStartupFilesFound());
+            GameItem const &item = available->items().at(i).as<GameItem>();
+            if(item.game.allStartupFilesFound())
+            {
+                available->gameWidget(item).load->enable();
+            }
+            else
+            {
+                incomplete->items().append(available->items().take(i--));
+                incomplete->gameWidget(item).load->disable();
+            }
         }
 
-        self.items().sort();
+        // Incomplete games.
+        for(uint i = 0; i < incomplete->items().size(); ++i)
+        {
+            GameItem const &item = incomplete->items().at(i).as<GameItem>();
+            if(item.game.allStartupFilesFound())
+            {
+                available->items().append(incomplete->items().take(i--));
+                available->gameWidget(item).load->enable();
+            }
+            else
+            {
+                incomplete->gameWidget(item).load->disable();
+            }
+        }
+
+        available->items().sort();
+        incomplete->items().sort();
     }
 };
 
 GameSelectionWidget::GameSelectionWidget(String const &name)
-    : MenuWidget(name), d(new Instance(this))
+    : ScrollAreaWidget(name), d(new Instance(this))
 {
-    layout().setColumnPadding(style().rules().rule("unit"));
-    setGridSize(3, ui::Filled, 6, ui::Filled);
+    d->available->open();
+    d->incomplete->open();
 
     // We want the full menu to be visible even when it doesn't fit the
     // designated area.
@@ -226,7 +325,7 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
 
 void GameSelectionWidget::viewResized()
 {
-    MenuWidget::viewResized();
+    ScrollAreaWidget::viewResized();
 
     // If the view is too small, we'll want to reduce the number of items in the menu.
     int const maxWidth  = style().rules().rule("gameselection.max.width").valuei();
@@ -235,15 +334,13 @@ void GameSelectionWidget::viewResized()
     Vector2i suitable(clamp(1, 3 * rule().width().valuei() / maxWidth,   3),
                       clamp(1, 8 * rule().height().valuei() / maxHeight, 6));
 
-    if(layout().maxGridSize() != suitable)
-    {
-        setGridSize(suitable.x, ui::Filled, suitable.y, ui::Filled);
-    }
+    d->available->setColumns(suitable.x);
+    d->incomplete->setColumns(suitable.x);
 }
 
 void GameSelectionWidget::update()
 {
     d->addPendingGames();
 
-    MenuWidget::update();
+    ScrollAreaWidget::update();
 }

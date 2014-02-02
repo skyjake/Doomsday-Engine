@@ -19,12 +19,12 @@
 #ifndef DENG_CLIENT_GAMESELECTIONWIDGET_H
 #define DENG_CLIENT_GAMESELECTIONWIDGET_H
 
-#include <de/MenuWidget>
+#include <de/ScrollAreaWidget>
 
 /**
  * Menu for selecting
  */
-class GameSelectionWidget : public de::MenuWidget
+class GameSelectionWidget : public de::ScrollAreaWidget
 {
 public:
     GameSelectionWidget(de::String const &name = "gameselection");
