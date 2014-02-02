@@ -59,11 +59,11 @@ String IndirectRule::description() const
 {
     if(_source)
     {
-        return String("Indirect => ") + source().description();
+        return source().description();
     }
     else
     {
-        return String("Indirect => (null)");
+        return String("(null)");
     }
 }
 
