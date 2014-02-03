@@ -25,7 +25,10 @@ Action::~Action()
 
 void Action::trigger()
 {
-    DENG2_FOR_AUDIENCE(Triggered, i) i->actionTriggered(*this);
+    DENG2_FOR_AUDIENCE(Triggered, i)
+    {
+        i->actionTriggered(*this);
+    }
 }
 
 } // namespace de
