@@ -26,6 +26,8 @@
  */
 class GameSelectionWidget : public de::ScrollAreaWidget
 {
+    Q_OBJECT
+
 public:
     GameSelectionWidget(de::String const &name = "gameselection");
 
@@ -33,6 +35,9 @@ public:
 
     // Events.
     void update();
+
+signals:
+    void gameSessionSelected();
 
 private:
     DENG2_PRIVATE(d)

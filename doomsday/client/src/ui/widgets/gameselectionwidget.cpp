@@ -93,6 +93,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
             case MultiplayerGames:
                 menu = new MPSelectionWidget;
+                QObject::connect(menu, SIGNAL(gameSelected()), owner->thisPublic, SIGNAL(gameSessionSelected()));
                 break;
             }
 
@@ -188,6 +189,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
     void addPendingGames()
     {
+        if(pendingGames.isEmpty()) return;
+
         while(Game *game = pendingGames.take())
         {
             if(game->allStartupFilesFound())
@@ -201,13 +204,36 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                 incomplete->items().append(makeItemForGame(*game));
             }
         }
+
+        sortGames();
     }
+
+    struct LoadGameAction : public CommandAction
+    {
+        GameSelectionWidget &owner;
+
+        LoadGameAction(String const &cmd, GameSelectionWidget &gameSel)
+            : CommandAction(cmd)
+            , owner(gameSel)
+        {}
+
+        void trigger()
+        {
+            emit owner.gameSessionSelected();
+            CommandAction::trigger();
+        }
+
+        Action *duplicate() const
+        {
+            return new LoadGameAction(command(), owner);
+        }
+    };
 
     ui::Item *makeItemForGame(Game &game)
     {
         String const idKey = game.identityKey();
 
-        CommandAction *loadAction = new CommandAction(String("load ") + idKey);
+        LoadGameAction *loadAction = new LoadGameAction(String("load ") + idKey, self);
         String label = String(_E(b) "%1" _E(.) /*_E(s)_E(C) " %2\n" _E(.)_E(.)*/ "\n"
                               _E(l)_E(D) "%2")
                 .arg(game.title())
@@ -260,6 +286,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         updateGameAvailability();
     }
 
+    void sortGames()
+    {
+        available->items().sort();
+        incomplete->items().sort();
+    }
+
     void updateGameAvailability()
     {
         // Available games.
@@ -292,8 +324,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             }
         }
 
-        available->items().sort();
-        incomplete->items().sort();
+        sortGames();
     }
 
     void updateLayoutForWidth(int width)

@@ -33,8 +33,10 @@ class CommandAction : public de::Action
 public:
     CommandAction(de::String const &cmd, int commandSource = CMDS_DDAY);
 
+    de::String command() const { return _command; }
+
     void trigger();
-    CommandAction *duplicate() const;
+    Action *duplicate() const;
 
 private:
     de::String _command;

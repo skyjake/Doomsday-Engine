@@ -28,10 +28,15 @@
  */
 class MPSelectionWidget : public de::MenuWidget
 {
+    Q_OBJECT
+
 public:
     MPSelectionWidget();
 
     void setColumns(int numberOfColumns);
+
+signals:
+    void gameSelected();
 
 private:
     DENG2_PRIVATE(d)

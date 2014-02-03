@@ -35,6 +35,7 @@ using namespace de;
 
 DENG_GUI_PIMPL(MPSelectionWidget)
 , DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
+, DENG2_OBSERVES(ButtonWidget, Press)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
@@ -74,12 +75,6 @@ DENG_GUI_PIMPL(MPSelectionWidget)
      */
     struct ServerWidget : public GameSessionWidget
     {
-        //LabelWidget *title;
-        //ButtonWidget *extra;
-        //ButtonWidget *join;
-        //QScopedPointer<SequentialLayout> layout;
-        //DocumentPopupWidget *info;
-
         struct JoinAction : public Action
         {
         public:
@@ -122,43 +117,8 @@ DENG_GUI_PIMPL(MPSelectionWidget)
 
         ServerWidget()
         {
-            //setBehavior(ContentClipping);
-
-            //add(title = new LabelWidget);
-            //add(extra = new ButtonWidget);
-            //add(join  = new ButtonWidget);
-
-            //extra->setText(tr("..."));
-            //join->setText(tr("Join"));
-
-            //title->setSizePolicy(ui::Expand, ui::Expand);
-            //title->setAppearanceAnimation(LabelWidget::AppearGrowVertically, 0.5);
-            /*title->setAlignment(ui::AlignTop);
-            title->setTextAlignment(ui::AlignRight);
-            title->setTextLineAlignment(ui::AlignLeft);
-            title->setImageAlignment(ui::AlignCenter);
-            title->setMaximumTextWidth(style().rules().rule("dialog.multiplayer.width").valuei());*/
-
-            //extra->setSizePolicy(ui::Expand, ui::Expand);
-            //join->setSizePolicy(ui::Expand, ui::Expand);
-
-            //join->disable();
             loadButton().disable();
-
             loadButton().setHeightPolicy(ui::Expand);
-
-            /*
-            layout.reset(new SequentialLayout(rule().left(), rule().top(), ui::Right));
-            *layout << *title << *extra << *join;
-            rule().setSize(layout->width(), title->rule().height());
-
-            // Extra info popup.
-            info = new DocumentPopupWidget;
-            info->document().setMaximumLineWidth(style().rules().rule("dialog.multiplayer.width").valuei());
-            info->setAnchorAndOpeningDirection(extra->rule(), ui::Up);
-            add(info);
-
-            extra->setAction(new SignalAction(info, SLOT(open())));*/
         }
 
         void updateFromItem(ServerListItem const &item)
@@ -213,7 +173,7 @@ DENG_GUI_PIMPL(MPSelectionWidget)
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
     {
         ServerWidget *w = new ServerWidget;
-
+        w->loadButton().audienceForPress += this;
         w->rule().setInput(Rule::Height, w->loadButton().rule().height());
 
         // Automatically close the info popup if the dialog is closed.
@@ -225,6 +185,12 @@ DENG_GUI_PIMPL(MPSelectionWidget)
     void updateItemWidget(GuiWidget &widget, ui::Item const &item)
     {
         widget.as<ServerWidget>().updateFromItem(item.as<ServerListItem>());
+    }
+
+    void buttonPressed(ButtonWidget &)
+    {
+        // A load button has been pressed.
+        emit self.gameSelected();
     }
 
     void linkDiscoveryUpdate(ServerLink const &link)

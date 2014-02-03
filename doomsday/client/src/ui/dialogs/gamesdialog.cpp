@@ -43,6 +43,8 @@ DENG_GUI_PIMPL(GamesDialog)
 GamesDialog::GamesDialog(String const &name)
     : DialogWidget(name/*, WithHeading*/), d(new Instance(this))
 {
+    connect(d->gameSel, SIGNAL(gameSessionSelected()), this, SLOT(accept()));
+
     //heading().setText(tr("Games"));
 
     //LabelWidget *lab = LabelWidget::newWithText(tr("Games from Master Server and local network:"), &area());
