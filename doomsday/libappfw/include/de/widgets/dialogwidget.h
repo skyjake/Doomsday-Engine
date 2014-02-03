@@ -109,18 +109,18 @@ public:
          * @param flags  Role flags for the button.
          * @param label  Label for the button. If empty, the default label will be used.
          */
-        ButtonItem(RoleFlags flags, de::String const &label = "");
+        ButtonItem(RoleFlags flags, String const &label = "");
 
         /**
          * Button with custom action.
          * @param flags  Role flags for the button.
          * @param label  Label for the button. If empty, the default label will be used.
          */
-        ButtonItem(RoleFlags flags, de::String const &label, de::Action *action);
+        ButtonItem(RoleFlags flags, String const &label, RefArg<de::Action> action);
 
-        ButtonItem(RoleFlags flags, de::Image const &image, de::Action *action);
+        ButtonItem(RoleFlags flags, Image const &image, RefArg<de::Action> action);
 
-        ButtonItem(RoleFlags flags, de::Image const &image, de::String const &label, de::Action *action);
+        ButtonItem(RoleFlags flags, Image const &image, String const &label, RefArg<de::Action> action);
 
         RoleFlags role() const { return _role; }
 
@@ -129,7 +129,7 @@ public:
     };
 
 public:
-    DialogWidget(de::String const &name = "", Flags const &flags = DefaultFlags);
+    DialogWidget(String const &name = "", Flags const &flags = DefaultFlags);
 
     Modality modality() const;
 
@@ -155,7 +155,7 @@ public:
 
     ui::Data &buttons();
 
-    ButtonWidget &buttonWidget(de::String const &label) const;
+    ButtonWidget &buttonWidget(String const &label) const;
 
     ButtonWidget *buttonWidget(int roleId) const;
 
@@ -180,7 +180,7 @@ public:
 
     // Events.
     void update();
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(Event const &event);
 
 public slots:
     void accept(int result = 1);

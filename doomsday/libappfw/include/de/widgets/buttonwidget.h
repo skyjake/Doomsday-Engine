@@ -73,12 +73,11 @@ public:
      * Sets the action of the button. It gets triggered when the button is
      * pressed.
      *
-     * @param action  Action instance. Widget takes ownership.
+     * @param action  Action instance. Widget holds a reference.
      */
-    void setAction(Action *action);
+    void setAction(RefArg<Action> action);
 
-    Action *action() const;
-    Action *takeAction();
+    Action const *action() const;
 
     State state() const;
 

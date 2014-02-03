@@ -94,12 +94,6 @@ DENG2_PIMPL(MenuWidget)
             _widget->open();
         }
 
-        Action *duplicate() const
-        {
-            DENG2_ASSERT(false); // not needed
-            return 0;
-        }
-
     protected:
         Instance *d;
         ui::Item const &_parentItem;
@@ -284,7 +278,7 @@ DENG2_PIMPL(MenuWidget)
                 b.setText(act->label());
                 if(act->action())
                 {
-                    b.setAction(act->action()->duplicate());
+                    b.setAction(*act->action());
                 }
             }
             else if(item.semantics().testFlag(Item::ShownAsLabel))
@@ -297,7 +291,7 @@ DENG2_PIMPL(MenuWidget)
                 t.setText(act->label());
                 if(act->action())
                 {
-                    t.setAction(act->action()->duplicate());
+                    t.setAction(*act->action());
                 }
             }
         }
