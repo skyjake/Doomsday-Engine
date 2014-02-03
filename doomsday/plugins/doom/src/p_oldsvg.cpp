@@ -842,11 +842,11 @@ int SV_LoadState_Dm_v19(Str const *path, SaveInfo *info)
         delete tmp;
     }
 
-    saveheader_t const *hdr = info->header();
+    saveheader_t const &hdr = info->_header;
 
-    gameSkill         = hdr->skill;
-    gameEpisode       = hdr->episode;
-    gameMap           = hdr->map;
+    gameSkill         = hdr.skill;
+    gameEpisode       = hdr.episode;
+    gameMap           = hdr.map;
     gameMapEntryPoint = 0;
 
     // We don't want to see a briefing if we're loading a save game.
@@ -858,7 +858,8 @@ int SV_LoadState_Dm_v19(Str const *path, SaveInfo *info)
     G_SetGameAction(GA_NONE);
 
     // Recreate map state.
-    mapTime = hdr->mapTime;
+    mapTime           = hdr.mapTime;
+
     P_v19_UnArchivePlayers();
     P_v19_UnArchiveWorld();
     P_v19_UnArchiveThinkers();

@@ -1,4 +1,4 @@
-/** @file saveinfo.cpp  Save state info.
+/** @file saveinfo.cpp  Saved game session info.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -60,14 +60,9 @@ int SaveInfo::version() const
     return _header.version;
 }
 
-uint SaveInfo::gameId() const
+int SaveInfo::magic() const
 {
-    return _gameId;
-}
-
-void SaveInfo::setGameId(uint newGameId)
-{
-    _gameId = newGameId;
+    return _header.magic;
 }
 
 Str const *SaveInfo::description() const
@@ -78,6 +73,31 @@ Str const *SaveInfo::description() const
 void SaveInfo::setDescription(Str const *newName)
 {
     Str_CopyOrClear(&_description, newName);
+}
+
+uint SaveInfo::gameId() const
+{
+    return _gameId;
+}
+
+void SaveInfo::setGameId(uint newGameId)
+{
+    _gameId = newGameId;
+}
+
+uint SaveInfo::episode() const
+{
+    return _header.episode - 1;
+}
+
+uint SaveInfo::map() const
+{
+    return _header.map - 1;
+}
+
+gamerules_t const &SaveInfo::gameRules() const
+{
+    return _header.gameRules;
 }
 
 saveheader_t const *SaveInfo::header() const
@@ -99,20 +119,24 @@ void SaveInfo::configure()
 #else
     hdr->episode    = gameEpisode+1;
 #endif
-#if __JHEXEN__
-    hdr->skill      = gameSkill;
-    hdr->randomClasses = randomClassParm;
-#else
-    hdr->skill      = gameSkill;
-    hdr->fast       = fastParm;
-#endif
-    hdr->deathmatch = deathmatch;
-    hdr->noMonsters = noMonstersParm;
 
 #if __JHEXEN__
-    hdr->randomClasses = randomClassParm;
+    hdr->gameRules.skill         = gameSkill;
+    hdr->gameRules.randomClasses = randomClassParm;
 #else
-    hdr->respawnMonsters = respawnMonsters;
+    hdr->gameRules.skill         = gameSkill;
+    hdr->gameRules.fast          = fastParm;
+#endif
+    hdr->gameRules.deathmatch = deathmatch;
+    hdr->gameRules.noMonsters = noMonstersParm;
+
+#if __JHEXEN__
+    hdr->gameRules.randomClasses = randomClassParm;
+#else
+    hdr->gameRules.respawnMonsters = respawnMonsters;
+#endif
+
+#if !__JHEXEN__
     hdr->mapTime    = mapTime;
 
     for(int i = 0; i < MAXPLAYERS; i++)
@@ -140,18 +164,21 @@ void SaveInfo::write(Writer *writer) const
     Writer_WriteInt32(writer, hdr->gameMode);
     Str_Write(&_description, writer);
 
-    Writer_WriteByte(writer, hdr->skill & 0x7f);
+    Writer_WriteByte(writer, hdr->gameRules.skill & 0x7f);
     Writer_WriteByte(writer, hdr->episode);
     Writer_WriteByte(writer, hdr->map);
-    Writer_WriteByte(writer, hdr->deathmatch);
+    Writer_WriteByte(writer, hdr->gameRules.deathmatch);
 #if !__JHEXEN__
-    Writer_WriteByte(writer, hdr->fast);
+    Writer_WriteByte(writer, hdr->gameRules.fast);
 #endif
-    Writer_WriteByte(writer, hdr->noMonsters);
+    Writer_WriteByte(writer, hdr->gameRules.noMonsters);
 #if __JHEXEN__
-    Writer_WriteByte(writer, hdr->randomClasses);
+    Writer_WriteByte(writer, hdr->gameRules.randomClasses);
 #else
-    Writer_WriteByte(writer, hdr->respawnMonsters);
+    Writer_WriteByte(writer, hdr->gameRules.respawnMonsters);
+#endif
+
+#if !__JHEXEN__
     Writer_WriteInt32(writer, hdr->mapTime);
 
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -240,41 +267,44 @@ void SaveInfo::read(Reader *reader)
         // by default this means "spawn no things" and if so then the "fast" game
         // rule is meaningless so it is forced off.
         byte skillModePlusFastBit = Reader_ReadByte(reader);
-        hdr->skill = (skillmode_t) (skillModePlusFastBit & 0x7f);
-        if(hdr->skill < SM_BABY || hdr->skill >= NUM_SKILL_MODES)
+        hdr->gameRules.skill = (skillmode_t) (skillModePlusFastBit & 0x7f);
+        if(hdr->gameRules.skill < SM_BABY || hdr->gameRules.skill >= NUM_SKILL_MODES)
         {
-            hdr->skill = SM_NOTHINGS;
-            hdr->fast  = 0;
+            hdr->gameRules.skill = SM_NOTHINGS;
+            hdr->gameRules.fast  = 0;
         }
         else
         {
-            hdr->fast  = (skillModePlusFastBit & 0x80) != 0;
+            hdr->gameRules.fast  = (skillModePlusFastBit & 0x80) != 0;
         }
     }
     else
 #endif
     {
-        hdr->skill = skillmode_t( Reader_ReadByte(reader) & 0x7f );
+        hdr->gameRules.skill = skillmode_t( Reader_ReadByte(reader) & 0x7f );
 
         // Interpret skill levels outside the normal range as "spawn no things".
-        if(hdr->skill < SM_BABY || hdr->skill >= NUM_SKILL_MODES)
-            hdr->skill = SM_NOTHINGS;
+        if(hdr->gameRules.skill < SM_BABY || hdr->gameRules.skill >= NUM_SKILL_MODES)
+        {
+            hdr->gameRules.skill = SM_NOTHINGS;
+        }
     }
 
     hdr->episode        = Reader_ReadByte(reader);
     hdr->map            = Reader_ReadByte(reader);
-    hdr->deathmatch     = Reader_ReadByte(reader);
+
+    hdr->gameRules.deathmatch      = Reader_ReadByte(reader);
 #if !__JHEXEN__
     if(hdr->version >= 13)
-        hdr->fast       = Reader_ReadByte(reader);
+        hdr->gameRules.fast        = Reader_ReadByte(reader);
 #endif
-    hdr->noMonsters     = Reader_ReadByte(reader);
+    hdr->gameRules.noMonsters      = Reader_ReadByte(reader);
 #if __JHEXEN__
-    hdr->randomClasses  = Reader_ReadByte(reader);
+    hdr->gameRules.randomClasses   = Reader_ReadByte(reader);
 #endif
 
 #if !__JHEXEN__
-    hdr->respawnMonsters = Reader_ReadByte(reader);
+    hdr->gameRules.respawnMonsters = Reader_ReadByte(reader);
 
     // Older formats serialize the unpacked saveheader_t struct; skip the junk values (alignment).
     if(hdr->version < 10) SV_Seek(2);
@@ -311,26 +341,24 @@ void SaveInfo::read_Hx_v9(Reader *reader)
     Str_Set(&_description, nameBuffer);
 
     Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
-    hdr->version = atoi(&verText[8]);
+    hdr->version  = atoi(&verText[8]);
 
     /*Skip junk*/ SV_Seek(4);
 
-    hdr->episode        = 1;
-    hdr->map            = Reader_ReadByte(reader);
-    hdr->skill          = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
+    hdr->episode  = 1;
+    hdr->map      = Reader_ReadByte(reader);
+    hdr->magic    = MY_SAVE_MAGIC; // Lets pretend...
+    hdr->gameMode = gameMode; // Assume the current mode.
+
+    hdr->gameRules.skill         = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
 
     // Interpret skill modes outside the normal range as "spawn no things".
-    if(hdr->skill < SM_BABY || hdr->skill >= NUM_SKILL_MODES)
-        hdr->skill = SM_NOTHINGS;
+    if(hdr->gameRules.skill < SM_BABY || hdr->gameRules.skill >= NUM_SKILL_MODES)
+        hdr->gameRules.skill = SM_NOTHINGS;
 
-    hdr->deathmatch     = Reader_ReadByte(reader);
-    hdr->noMonsters     = Reader_ReadByte(reader);
-    hdr->randomClasses  = Reader_ReadByte(reader);
-
-    hdr->magic          = MY_SAVE_MAGIC; // Lets pretend...
-
-    /// @note Older formats do not contain all needed values:
-    hdr->gameMode       = gameMode; // Assume the current mode.
+    hdr->gameRules.deathmatch    = Reader_ReadByte(reader);
+    hdr->gameRules.noMonsters    = Reader_ReadByte(reader);
+    hdr->gameRules.randomClasses = Reader_ReadByte(reader);
 
     _gameId  = 0; // None.
 
@@ -391,12 +419,6 @@ void SaveInfo_SetDescription(SaveInfo *info, Str const *newName)
 {
     DENG_ASSERT(info != 0);
     info->setDescription(newName);
-}
-
-void SaveInfo_Configure(SaveInfo *info)
-{
-    DENG_ASSERT(info != 0);
-    info->configure();
 }
 
 dd_bool SaveInfo_IsLoadable(SaveInfo *info)

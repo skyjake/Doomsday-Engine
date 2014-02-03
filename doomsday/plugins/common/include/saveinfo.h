@@ -1,4 +1,4 @@
-/** @file saveinfo.h  Save state info.
+/** @file saveinfo.h  Saved game session info.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -24,22 +24,28 @@
 #include "doomsday.h"
 #include "common.h"
 
-typedef struct saveheader_s {
-    int magic;
-    int version;
-    gamemode_t gameMode;
+typedef struct gamerules_s {
     skillmode_t skill;
 #if !__JHEXEN__
     byte fast;
 #endif
-    byte episode;
-    byte map;
     byte deathmatch;
     byte noMonsters;
 #if __JHEXEN__
     byte randomClasses;
 #else
     byte respawnMonsters;
+#endif
+} gamerules_t;
+
+typedef struct saveheader_s {
+    int magic;
+    int version;
+    gamemode_t gameMode;
+    gamerules_t gameRules;
+    byte episode;
+    byte map;
+#if !__JHEXEN__
     int mapTime;
     byte players[MAXPLAYERS];
 #endif
@@ -72,9 +78,10 @@ public:
     bool isLoadable();
 
     /**
-     * Returns the logicl version of the serialized game session state.
+     * Returns the logical version of the serialized game session state.
      */
     int version() const;
+    int magic() const;
 
     /**
      * Returns the textual description of the game session (provided by the user).
@@ -87,6 +94,10 @@ public:
      */
     uint gameId() const;
     void setGameId(uint newGameId);
+
+    uint episode() const;
+    uint map() const;
+    gamerules_t const &gameRules() const;
 
     /**
      * Serializes the game session info using @a writer.
@@ -129,8 +140,6 @@ SaveInfo *SaveInfo_Dup(SaveInfo const *other);
 void SaveInfo_Delete(SaveInfo *info);
 
 SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
-
-void SaveInfo_Configure(SaveInfo *info);
 
 dd_bool SaveInfo_IsLoadable(SaveInfo *info);
 

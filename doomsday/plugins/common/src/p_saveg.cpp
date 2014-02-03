@@ -689,8 +689,7 @@ static bool recogniseNativeState(Str const *path, SaveInfo *info)
 #endif
 
     // Magic must match.
-    saveheader_t const *hdr = &info->_header;
-    if(hdr->magic != MY_SAVE_MAGIC && hdr->magic != MY_CLIENT_SAVE_MAGIC)
+    if(info->magic() != MY_SAVE_MAGIC && info->magic() != MY_CLIENT_SAVE_MAGIC)
     {
         return false;
     }
@@ -698,7 +697,7 @@ static bool recogniseNativeState(Str const *path, SaveInfo *info)
     /*
      * Check for unsupported versions.
      */
-    if(hdr->version > MY_SAVE_VERSION) // Future version?
+    if(info->version() > MY_SAVE_VERSION) // Future version?
     {
         return false;
     }
@@ -706,7 +705,7 @@ static bool recogniseNativeState(Str const *path, SaveInfo *info)
 #if __JHEXEN__
     // We are incompatible with v3 saves due to an invalid test used to determine
     // present sides (ver3 format's sides contain chunks of junk data).
-    if(hdr->version == 3)
+    if(info->version() == 3)
     {
         return false;
     }
@@ -3671,22 +3670,21 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
      */
     hdr = saveInfo->header();
 
-    gameEpisode     = hdr->episode - 1;
-    gameMap         = hdr->map - 1;
+    gameEpisode     = saveInfo->episode();
+    gameMap         = saveInfo->map();
 
     // Apply the game rules:
-#if __JHEXEN__
-    gameSkill       = hdr->skill;
-#else
-    gameSkill       = hdr->skill;
-    fastParm        = hdr->fast;
+    gamerules_t const &newRules = saveInfo->gameRules();
+    gameSkill       = newRules.skill;
+#if !__JHEXEN__
+    fastParm        = newRules.fast;
 #endif
-    deathmatch      = hdr->deathmatch;
-    noMonstersParm  = hdr->noMonsters;
+    deathmatch      = newRules.deathmatch;
+    noMonstersParm  = newRules.noMonsters;
 #if __JHEXEN__
-    randomClassParm = hdr->randomClasses;
+    randomClassParm = newRules.randomClasses;
 #else
-    respawnMonsters = hdr->respawnMonsters;
+    respawnMonsters = newRules.respawnMonsters;
 #endif
 
 #if __JHEXEN__
@@ -3850,11 +3848,9 @@ static int loadStateWorker(Str const *path, SaveInfo &saveInfo)
      */
 
     // Material origin scrollers must be re-spawned for older save state versions.
-    saveheader_t const *hdr = saveInfo.header();
-
     /// @todo Implement SaveInfo format type identifiers.
-    if((hdr->magic != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
-       hdr->version <= 10)
+    if((saveInfo.magic() != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
+       saveInfo.version() <= 10)
     {
         P_SpawnAllMaterialOriginScrollers();
     }
@@ -4013,10 +4009,12 @@ void SV_LoadGameClient(uint gameId)
         return;
     }
 
-    gameSkill = skillmode_t( hdr->skill );
-    deathmatch = hdr->deathmatch;
-    noMonstersParm = hdr->noMonsters;
-    respawnMonsters = hdr->respawnMonsters;
+    gamerules_t const &newRules = saveInfo->gameRules();
+    gameSkill       = skillmode_t( newRules.skill );
+    deathmatch      = newRules.deathmatch;
+    noMonstersParm  = newRules.noMonsters;
+    respawnMonsters = newRules.respawnMonsters;
+
     // Do we need to change the map?
     if(gameMap != (unsigned) (hdr->map - 1) || gameEpisode != (unsigned) (hdr->episode - 1))
     {
