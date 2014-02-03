@@ -35,6 +35,7 @@
 #endif
 
 #include "doomdef.h"
+#include "gamerules.h"
 #include "h_event.h"
 #include "h_player.h"
 
@@ -71,8 +72,14 @@ void            G_Register(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
 void            G_CommonShutdown(void);
-void            R_InitRefresh(void);
 
+/**
+ * Configure the given @a rules structure according to the @em current game rules.
+ * @todo Refactor away.
+ */
+void G_GetGameRules(gamerules_t *rules);
+
+void            R_InitRefresh(void);
 void            G_DeathMatchSpawnPlayer(int playernum);
 
 void            G_PrintMapList(void);

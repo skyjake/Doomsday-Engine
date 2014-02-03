@@ -17,6 +17,7 @@ HEADERS += \
     $$common_inc/d_netsv.h \
     $$common_inc/dmu_lib.h \
     $$common_inc/fi_lib.h \
+    $$common_inc/gamerules.h \
     $$common_inc/g_common.h \
     $$common_inc/g_controls.h \
     $$common_inc/g_defs.h \

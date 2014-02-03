@@ -40,6 +40,7 @@
 #  include "jhexen.h"
 #endif
 
+#include "gamerules.h"
 #include "pause.h"
 
 DENG_EXTERN_C dd_bool sc_FileScripts;

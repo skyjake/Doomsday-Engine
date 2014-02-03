@@ -32,6 +32,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "gamerules.h"
 #include "p_mobj.h"
 #include "x_player.h"
 
@@ -64,6 +65,12 @@ extern dd_bool briefDisabled;
 extern int gsvMapMusic;
 
 void            G_CommonShutdown(void);
+
+/**
+ * Configure the given @a rules structure according to the @em current game rules.
+ * @todo Refactor away.
+ */
+void G_GetGameRules(gamerules_t *rules);
 
 void            R_InitRefresh(void);
 void            R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap);

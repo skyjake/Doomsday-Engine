@@ -24,20 +24,6 @@
 #include "doomsday.h"
 #include "common.h"
 
-typedef struct gamerules_s {
-    skillmode_t skill;
-#if !__JHEXEN__
-    byte fast;
-#endif
-    byte deathmatch;
-    byte noMonsters;
-#if __JHEXEN__
-    byte randomClasses;
-#else
-    byte respawnMonsters;
-#endif
-} gamerules_t;
-
 #ifdef __cplusplus
 /**
  * Saved game session info.

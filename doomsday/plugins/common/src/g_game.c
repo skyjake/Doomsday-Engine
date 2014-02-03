@@ -2185,6 +2185,26 @@ static void G_InitNewGame(void)
 #endif
 }
 
+void G_GetGameRules(gamerules_t *rules)
+{
+    DENG_ASSERT(rules != 0);
+#if __JHEXEN__
+    rules->skill           = gameSkill;
+    rules->randomClasses   = randomClassParm;
+#else
+    rules->skill           = gameSkill;
+    rules->fast            = fastParm;
+#endif
+    rules->deathmatch      = deathmatch;
+    rules->noMonsters      = noMonstersParm;
+
+#if __JHEXEN__
+    rules->randomClasses   = randomClassParm;
+#else
+    rules->respawnMonsters = respawnMonsters;
+#endif
+}
+
 #if __JDOOM__ || __JDOOM64__
 static void G_ApplyGameRuleFastMonsters(dd_bool fast)
 {

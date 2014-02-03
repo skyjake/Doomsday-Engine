@@ -151,21 +151,8 @@ void SaveInfo::configure()
     _episode    = gameEpisode+1;
 #endif
 
-#if __JHEXEN__
-    _gameRules.skill         = gameSkill;
-    _gameRules.randomClasses = randomClassParm;
-#else
-    _gameRules.skill         = gameSkill;
-    _gameRules.fast          = fastParm;
-#endif
-    _gameRules.deathmatch = deathmatch;
-    _gameRules.noMonsters = noMonstersParm;
-
-#if __JHEXEN__
-    _gameRules.randomClasses = randomClassParm;
-#else
-    _gameRules.respawnMonsters = respawnMonsters;
-#endif
+    // Make a copy of the current game rules.
+    G_GetGameRules(&_gameRules);
 
 #if !__JHEXEN__
     _mapTime    = ::mapTime;
