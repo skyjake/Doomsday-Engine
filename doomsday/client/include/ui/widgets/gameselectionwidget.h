@@ -29,8 +29,9 @@ class GameSelectionWidget : public de::ScrollAreaWidget
 public:
     GameSelectionWidget(de::String const &name = "gameselection");
 
+    void setTitleColor(de::DotPath const &colorId);
+
     // Events.
-    void viewResized();
     void update();
 
 private:

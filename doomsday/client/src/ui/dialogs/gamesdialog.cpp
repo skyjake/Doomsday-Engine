@@ -1,4 +1,4 @@
-/** @file multiplayerdialog.cpp  Dialog for listing found servers and joining games.
+/** @file gamesdialog.cpp  Dialog for viewing and loading available games.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,35 +16,44 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/dialogs/multiplayerdialog.h"
-#include "CommandAction"
+#include "ui/dialogs/gamesdialog.h"
+#include "ui/widgets/gameselectionwidget.h"
 #include "ui/dialogs/networksettingsdialog.h"
+
+#include "CommandAction"
 
 #include <de/SignalAction>
 
 using namespace de;
 
-DENG_GUI_PIMPL(MultiplayerDialog)
+DENG_GUI_PIMPL(GamesDialog)
 {
-    //MenuWidget *list;
+    GameSelectionWidget *gameSel; //MenuWidget *list;
 
     Instance(Public *i) : Base(i)
     {
+        self.area().add(gameSel = new GameSelectionWidget("games"));
+
+        gameSel->enableScrolling(false);
+        gameSel->setTitleColor("text");
+        gameSel->rule().setInput(Rule::Height, gameSel->contentRule().height());
     }
 };
 
-MultiplayerDialog::MultiplayerDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Instance(this))
+GamesDialog::GamesDialog(String const &name)
+    : DialogWidget(name/*, WithHeading*/), d(new Instance(this))
 {
-    heading().setText(tr("Multiplayer Games"));
+    //heading().setText(tr("Games"));
 
-    LabelWidget *lab = LabelWidget::newWithText(tr("Games from Master Server and local network:"), &area());
+    //LabelWidget *lab = LabelWidget::newWithText(tr("Games from Master Server and local network:"), &area());
+
+    //d->gameSel->rule().setInput(Rule::Height, d->gameSel->contentRule().height()/*style().rules().rule("gameselection.max.height")*/);
 
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(1, 0);
     //layout.setColumnAlignment(0, ui::AlignRight);
 
-    layout << *lab;// << *d->list;
+    layout << *d->gameSel;
 
     area().setContentSize(layout.width(), layout.height());
 
@@ -55,10 +64,20 @@ MultiplayerDialog::MultiplayerDialog(String const &name)
                                     new SignalAction(this, SLOT(showSettings())));
 }
 
-void MultiplayerDialog::showSettings()
+void GamesDialog::showSettings()
 {
     NetworkSettingsDialog *dlg = new NetworkSettingsDialog;
     dlg->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
     dlg->setDeleteAfterDismissed(true);
     dlg->exec(root());
+}
+
+void GamesDialog::preparePanelForOpening()
+{
+    DialogWidget::preparePanelForOpening();
+
+    d->gameSel->rule()
+            .setInput(Rule::Width,  OperatorRule::minimum(
+                          style().rules().rule("gameselection.max.width"),
+                          root().viewWidth() - margins().width()));
 }

@@ -63,7 +63,7 @@ group console {
 
 group gameselection {
     rule max.width  { constant $= UNIT * 215 }
-    rule max.height { constant $= UNIT * 150 }
+    rule max.height { constant $= UNIT * 215 }
 }
 
 group coloradjustment {

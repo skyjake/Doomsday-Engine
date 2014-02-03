@@ -26,7 +26,7 @@
 #include "ui/dialogs/networksettingsdialog.h"
 #include "ui/dialogs/renderersettingsdialog.h"
 #include "ui/dialogs/vrsettingsdialog.h"
-#include "ui/dialogs/multiplayerdialog.h"
+#include "ui/dialogs/gamesdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/clientrootwidget.h"
@@ -403,7 +403,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::SubwidgetItem(style().images().image("updater"),  tr("Updater"),  ui::Left, makeUpdaterSettings);
 
     d->mainMenu->items()
-            << new ui::SubwidgetItem(tr("Multiplayer Games"), ui::Left, makePopup<MultiplayerDialog>)
+            << new ui::ActionItem(tr("Games..."), new SignalAction(this, SLOT(showGames())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
@@ -693,6 +693,13 @@ void TaskBarWidget::showUpdaterSettings()
     dlg->setDeleteAfterDismissed(true);
     root().addOnTop(dlg);
     dlg->open();
+}
+
+void TaskBarWidget::showGames()
+{
+    GamesDialog *games = new GamesDialog;
+    games->setDeleteAfterDismissed(true);
+    games->exec(root());
 }
 
 void TaskBarWidget::updateCommandLineLayout()

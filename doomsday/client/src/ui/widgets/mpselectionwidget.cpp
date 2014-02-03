@@ -258,8 +258,41 @@ DENG_GUI_PIMPL(MPSelectionWidget)
             }
         }
     }
+
+    /*
+    void updateLayoutForWidth(int width)
+    {
+        // If the view is too small, we'll want to reduce the number of items in the menu.
+        int const maxWidth = style().rules().rule("mpselection.max.width").valuei();
+
+        qDebug() << maxWidth << width;
+
+        int suitable = clamp(1, 3 * width / maxWidth, 3);
+    }*/
 };
 
 MPSelectionWidget::MPSelectionWidget()
     : MenuWidget("mp-selection"), d(new Instance(this))
-{}
+{
+    setGridSize(3, ui::Filled, 0, ui::Expand);
+}
+
+void MPSelectionWidget::setColumns(int numberOfColumns)
+{
+    if(layout().maxGridSize().x != numberOfColumns)
+    {
+        setGridSize(numberOfColumns, ui::Filled, 0, ui::Expand);
+    }
+}
+/*
+void MPSelectionWidget::update()
+{
+    MenuWidget::update();
+
+    Rectanglei rect;
+    if(hasChangedPlace(rect))
+    {
+        d->updateLayoutForWidth(rect.width());
+    }
+}
+*/

@@ -178,11 +178,28 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         pendingGames.put(&game);
     }
 
+    void addExistingGames()
+    {
+        for(int i = 0; i < App_Games().count(); ++i)
+        {
+            gameAdded(App_Games().byIndex(i));
+        }
+    }
+
     void addPendingGames()
     {
         while(Game *game = pendingGames.take())
         {
-            incomplete->items().append(makeItemForGame(*game));
+            if(game->allStartupFilesFound())
+            {
+                ui::Item *item = makeItemForGame(*game);
+                available->items().append(item);
+                available->gameWidget(*item).loadButton().enable();
+            }
+            else
+            {
+                incomplete->items().append(makeItemForGame(*game));
+            }
         }
     }
 
@@ -278,6 +295,18 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         available->items().sort();
         incomplete->items().sort();
     }
+
+    void updateLayoutForWidth(int width)
+    {
+        // If the view is too small, we'll want to reduce the number of items in the menu.
+        int const maxWidth = style().rules().rule("gameselection.max.width").valuei();
+
+        int suitable = clamp(1, 3 * width / maxWidth, 3);
+
+        available->setColumns(suitable);
+        incomplete->setColumns(suitable);
+        multi->setColumns(suitable);
+    }
 };
 
 GameSelectionWidget::GameSelectionWidget(String const &name)
@@ -290,22 +319,16 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
     // We want the full menu to be visible even when it doesn't fit the
     // designated area.
     unsetBehavior(ChildVisibilityClipping);
+
+    // Maybe there are games loaded already.
+    d->addExistingGames();
 }
 
-void GameSelectionWidget::viewResized()
+void GameSelectionWidget::setTitleColor(DotPath const &colorId)
 {
-    ScrollAreaWidget::viewResized();
-
-    // If the view is too small, we'll want to reduce the number of items in the menu.
-    int const maxWidth = style().rules().rule("gameselection.max.width").valuei();
-    //int const maxHeight = style().rules().rule("gameselection.max.height").valuei();
-
-    int suitable = clamp(1, 3 * rule().width().valuei() / maxWidth, 3);
-                      //clamp(1, 8 * rule().height().valuei() / maxHeight, 6));
-
-    d->available->setColumns(suitable);
-    d->incomplete->setColumns(suitable);
-    d->multi->setColumns(suitable);
+    d->available->title().setTextColor(colorId);
+    d->multi->title().setTextColor(colorId);
+    d->incomplete->title().setTextColor(colorId);
 }
 
 void GameSelectionWidget::update()
@@ -313,4 +336,11 @@ void GameSelectionWidget::update()
     d->addPendingGames();
 
     ScrollAreaWidget::update();
+
+    // Adapt grid layout for the widget width.
+    Rectanglei rect;
+    if(hasChangedPlace(rect))
+    {
+        d->updateLayoutForWidth(rect.width());
+    }
 }

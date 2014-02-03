@@ -31,6 +31,8 @@ class MPSelectionWidget : public de::MenuWidget
 public:
     MPSelectionWidget();
 
+    void setColumns(int numberOfColumns);
+
 private:
     DENG2_PRIVATE(d)
 };
