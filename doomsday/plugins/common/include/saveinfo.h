@@ -1,4 +1,4 @@
-/** @file common/saveinfo.h Save state info.
+/** @file saveinfo.h  Save state info.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -23,10 +23,6 @@
 
 #include "doomsday.h"
 #include "common.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef struct saveheader_s {
     int magic;
@@ -57,6 +53,10 @@ typedef struct saveinfo_s {
     uint gameId;
     saveheader_t header;
 } SaveInfo;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 SaveInfo *SaveInfo_New(void);
 SaveInfo *SaveInfo_NewCopy(SaveInfo const *other);

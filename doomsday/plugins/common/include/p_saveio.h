@@ -1,9 +1,7 @@
-/**
- * @file p_saveio.h
- * Game save file IO.
+/** @file p_saveio.h  Game save file IO.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,10 +26,6 @@
 #include "lzss.h"
 #include "p_savedef.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef enum savestatesegment_e {
     ASEG_MAP_HEADER = 102,  // Hexen only
     ASEG_MAP_ELEMENTS,
@@ -53,6 +47,10 @@ enum {
     SV_OK = 0,
     SV_INVALIDFILENAME
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void SV_InitIO(void);
 void SV_ShutdownIO(void);
@@ -107,31 +105,6 @@ void SV_ReadConsistencyBytes(void);
  */
 void SV_Seek(uint offset);
 
-#if 0
-/*
- * Writing and reading values
- */
-void SV_Write(void const *data, int len);
-void SV_WriteByte(byte val);
-#if __JHEXEN__
-void SV_WriteShort(unsigned short val);
-#else
-void SV_WriteShort(short val);
-#endif
-#if __JHEXEN__
-void SV_WriteLong(unsigned int val);
-#else
-void SV_WriteLong(long val);
-#endif
-void SV_WriteFloat(float val);
-
-void SV_Read(void *data, int len);
-byte SV_ReadByte(void);
-short SV_ReadShort(void);
-long SV_ReadLong(void);
-float SV_ReadFloat(void);
-#endif
-
 Writer *SV_NewWriter(void);
 Reader *SV_NewReader(void);
 
@@ -139,4 +112,4 @@ Reader *SV_NewReader(void);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H */
+#endif // LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H

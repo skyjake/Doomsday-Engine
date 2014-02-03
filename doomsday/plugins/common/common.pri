@@ -107,7 +107,7 @@ SOURCES += \
     $$common_src/p_plat.cpp \
     $$common_src/p_player.c \
     $$common_src/p_saveg.cpp \
-    $$common_src/p_saveio.c \
+    $$common_src/p_saveio.cpp \
     $$common_src/p_scroll.cpp \
     $$common_src/p_sound.cpp \
     $$common_src/p_start.cpp \
@@ -116,11 +116,11 @@ SOURCES += \
     $$common_src/p_tick.c \
     $$common_src/p_user.c \
     $$common_src/p_view.c \
-    $$common_src/p_xgfile.c \
+    $$common_src/p_xgfile.cpp \
     $$common_src/p_xgline.c \
     $$common_src/p_xgsave.cpp \
     $$common_src/p_xgsec.c \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
-    $$common_src/saveinfo.c \
+    $$common_src/saveinfo.cpp \
     $$common_src/x_hair.c

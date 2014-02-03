@@ -1,4 +1,4 @@
-/** @file common/saveinfo.c Save state info.
+/** @file saveinfo.cpp  Save state info.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -18,19 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "common.h"
-
-#include <de/memory.h>
+#include "saveinfo.h"
 
 #include "p_tick.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
-#include "saveinfo.h"
+#include <de/memory.h>
+#include <cstdlib>
+#include <cstring>
 
-SaveInfo *SaveInfo_New(void)
+SaveInfo *SaveInfo_New()
 {
     SaveInfo *info = (SaveInfo *)M_Malloc(sizeof *info);
 
@@ -96,10 +94,9 @@ void SaveInfo_SetName(SaveInfo *info, Str const *newName)
 
 void SaveInfo_Configure(SaveInfo *info)
 {
-    saveheader_t *hdr;
     DENG_ASSERT(info != 0);
 
-    hdr = &info->header;
+    saveheader_t *hdr = &info->header;
 
     hdr->magic      = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
     hdr->version    = MY_SAVE_VERSION;
@@ -127,11 +124,10 @@ void SaveInfo_Configure(SaveInfo *info)
     hdr->respawnMonsters = respawnMonsters;
     hdr->mapTime    = mapTime;
 
-    { int i;
-    for(i = 0; i < MAXPLAYERS; i++)
+    for(int i = 0; i < MAXPLAYERS; i++)
     {
         hdr->players[i] = players[i].plr->inGame;
-    }}
+    }
 #endif
 }
 
@@ -149,10 +145,9 @@ dd_bool SaveInfo_IsLoadable(SaveInfo *info)
 
 void SaveInfo_Write(SaveInfo *info, Writer *writer)
 {
-    saveheader_t *hdr;
     DENG_ASSERT(info != 0);
 
-    hdr = &info->header;
+    saveheader_t *hdr = &info->header;
     Writer_WriteInt32(writer, hdr->magic);
     Writer_WriteInt32(writer, hdr->version);
     Writer_WriteInt32(writer, hdr->gameMode);
@@ -172,11 +167,10 @@ void SaveInfo_Write(SaveInfo *info, Writer *writer)
     Writer_WriteByte(writer, hdr->respawnMonsters);
     Writer_WriteInt32(writer, hdr->mapTime);
 
-    { int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         Writer_WriteByte(writer, hdr->players[i]);
-    }}
+    }
 #endif
     Writer_WriteInt32(writer, info->gameId);
 }
@@ -184,6 +178,8 @@ void SaveInfo_Write(SaveInfo *info, Writer *writer)
 #if __JDOOM__ || __JHERETIC__
 static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
 {
+    DENG_ASSERT(mode != 0);
+
     static gamemode_t const oldGameModes[] = {
 # if __JDOOM__
         doom_shareware,
@@ -196,8 +192,6 @@ static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
         heretic_extended
 # endif
     };
-
-    DENG_ASSERT(mode != 0);
 
     // Is translation unnecessary?
 #if __JDOOM__
@@ -226,12 +220,12 @@ static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
 
 void SaveInfo_Read(SaveInfo *info, Reader *reader)
 {
-    saveheader_t *hdr;
     DENG_ASSERT(info != 0);
 
-    hdr = &info->header;
-    hdr->magic = Reader_ReadInt32(reader);
-    hdr->version = Reader_ReadInt32(reader);
+    saveheader_t *hdr = &info->header;
+
+    hdr->magic    = Reader_ReadInt32(reader);
+    hdr->version  = Reader_ReadInt32(reader);
     hdr->gameMode = (gamemode_t)Reader_ReadInt32(reader);
 
     if(hdr->version >= 10)
@@ -241,10 +235,12 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
     else
     {
         // Older formats use a fixed-length name (24 characters).
-#define OLD_NAME_LENGTH         24
+#define OLD_NAME_LENGTH 24
+
         char buf[OLD_NAME_LENGTH];
         Reader_Read(reader, buf, OLD_NAME_LENGTH);
         Str_Set(&info->name, buf);
+
 #undef OLD_NAME_LENGTH
     }
 
@@ -273,7 +269,7 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
     else
 #endif
     {
-        hdr->skill = Reader_ReadByte(reader) & 0x7f;
+        hdr->skill = skillmode_t( Reader_ReadByte(reader) & 0x7f );
 
         // Interpret skill levels outside the normal range as "spawn no things".
         if(hdr->skill < SM_BABY || hdr->skill >= NUM_SKILL_MODES)
@@ -300,11 +296,10 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
 
     hdr->mapTime        = Reader_ReadInt32(reader);
 
-    { int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         hdr->players[i] = Reader_ReadByte(reader);
-    }}
+    }
 #endif
 
     info->gameId        = Reader_ReadInt32(reader);
@@ -322,12 +317,12 @@ void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader)
 # define HXS_VERSION_TEXT_LENGTH    16
 # define HXS_NAME_LENGTH            24
 
-    char verText[HXS_VERSION_TEXT_LENGTH], nameBuffer[HXS_NAME_LENGTH];
-    saveheader_t *hdr;
-
     DENG_ASSERT(info != 0);
 
-    hdr = &info->header;
+    char verText[HXS_VERSION_TEXT_LENGTH];
+    char nameBuffer[HXS_NAME_LENGTH];
+
+    saveheader_t *hdr = &info->header;
 
     Reader_Read(reader, nameBuffer, HXS_NAME_LENGTH);
     Str_Set(&info->name, nameBuffer);

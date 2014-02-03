@@ -104,7 +104,10 @@ class ZipFileType : public de::NativeFileType
 {
 public:
     ZipFileType() : NativeFileType("FT_ZIP", RC_PACKAGE)
-    {}
+    {
+        addKnownExtension(".pk3");
+        addKnownExtension(".zip");
+    }
 
     de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
     {
@@ -122,7 +125,9 @@ class WadFileType : public de::NativeFileType
 {
 public:
     WadFileType() : NativeFileType("FT_WAD", RC_PACKAGE)
-    {}
+    {
+        addKnownExtension(".wad");
+    }
 
     de::File1 *interpret(de::FileHandle &hndl, String path, FileInfo const &info) const
     {
@@ -186,13 +191,10 @@ static void registerResourceFileTypes()
     ResourceClass& packageClass = App_ResourceClass("RC_PACKAGE");
 
     ftype = new ZipFileType();
-    ftype->addKnownExtension(".pk3");
-    ftype->addKnownExtension(".zip");
     packageClass.addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
     ftype = new WadFileType();
-    ftype->addKnownExtension(".wad");
     packageClass.addFileType(*ftype);
     fileTypeMap.insert(ftype->name().toLower(), ftype);
 
