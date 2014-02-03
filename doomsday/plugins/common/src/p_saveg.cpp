@@ -689,19 +689,27 @@ static bool recogniseNativeState(Str const *path, SaveInfo *info)
 #endif
 
     // Magic must match.
-    if(info->header.magic != MY_SAVE_MAGIC &&
-       info->header.magic != MY_CLIENT_SAVE_MAGIC) return false;
+    saveheader_t const *hdr = &info->_header;
+    if(hdr->magic != MY_SAVE_MAGIC && hdr->magic != MY_CLIENT_SAVE_MAGIC)
+    {
+        return false;
+    }
 
     /*
      * Check for unsupported versions.
      */
-    // A future version?
-    if(info->header.version > MY_SAVE_VERSION) return false;
+    if(hdr->version > MY_SAVE_VERSION) // Future version?
+    {
+        return false;
+    }
 
 #if __JHEXEN__
     // We are incompatible with v3 saves due to an invalid test used to determine
     // present sides (ver3 format's sides contain chunks of junk data).
-    if(info->header.version == 3) return false;
+    if(hdr->version == 3)
+    {
+        return false;
+    }
 #endif
 
     return true;
@@ -848,7 +856,7 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     SV_CopyFile(src, dst);
 
     // Copy saveinfo too.
-    replaceSaveInfo(destSlot, SaveInfo_NewCopy(findSaveInfoForSlot(sourceSlot)));
+    replaceSaveInfo(destSlot, SaveInfo_Dup(findSaveInfoForSlot(sourceSlot)));
 }
 
 #if __JHEXEN__

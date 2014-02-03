@@ -883,12 +883,12 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
 {
     DENG_ASSERT(info != 0);
 
-    saveheader_t *hdr = &info->header;
+    saveheader_t *hdr = &info->_header;
 
     char nameBuffer[V19_SAVESTRINGSIZE];
     Reader_Read(reader, nameBuffer, V19_SAVESTRINGSIZE);
     nameBuffer[V19_SAVESTRINGSIZE - 1] = 0;
-    Str_Set(&info->name, nameBuffer);
+    Str_Set(&info->_name, nameBuffer);
 
     char vcheck[VERSIONSIZE];
     Reader_Read(reader, vcheck, VERSIONSIZE);
@@ -926,7 +926,7 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     hdr->noMonsters      = 0;
     hdr->respawnMonsters = 0;
 
-    info->gameId  = 0; // None.
+    info->_gameId = 0; // None.
 }
 
 static dd_bool SV_OpenFile_Dm_v19(char const *filePath)

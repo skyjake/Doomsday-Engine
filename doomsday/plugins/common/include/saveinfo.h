@@ -45,21 +45,77 @@ typedef struct saveheader_s {
 #endif
 } saveheader_t;
 
+#ifdef __cplusplus
 /**
- * SaveInfo instance.
+ * Saved game session info.
  */
-typedef struct saveinfo_s {
-    Str name;
-    uint gameId;
-    saveheader_t header;
-} SaveInfo;
+class SaveInfo
+{
+public: /// @todo make private:
+    Str _name;
+    uint _gameId;
+    saveheader_t _header;
+
+public:
+    SaveInfo();
+    SaveInfo(SaveInfo const &other);
+    ~SaveInfo();
+
+    SaveInfo &operator = (SaveInfo const &other);
+
+    void configure();
+
+    /**
+     * Returns @a true if the game state is compatibile with the current game session
+     * and @em should be loadable.
+     */
+    dd_bool isLoadable();
+
+    int version() const;
+
+    uint gameId() const;
+    void setGameId(uint newGameId);
+
+    Str const *name() const;
+    void setName(Str const *newName);
+
+    /**
+     * Serializes the save info using @a writer.
+     *
+     * @param writer  Writer instance.
+     */
+    void write(Writer *writer) const;
+
+    /**
+     * Deserializes the save info using @a reader.
+     *
+     * @param reader  Reader instance.
+     */
+    void read(Reader *reader);
+
+#if __JHEXEN__
+    /**
+     * @brief libhexen specific version of @ref SaveInfo_Read() for deserializing
+     * legacy version 9 save state info.
+     */
+    void read_Hx_v9(Reader *reader);
+#endif
+
+    saveheader_t const *header() const;
+};
+
+#endif // __cplusplus
+
+// C wrapper API, for legacy modules -------------------------------------------
 
 #ifdef __cplusplus
 extern "C" {
+#else
+typedef void *SaveInfo;
 #endif
 
 SaveInfo *SaveInfo_New(void);
-SaveInfo *SaveInfo_NewCopy(SaveInfo const *other);
+SaveInfo *SaveInfo_Dup(SaveInfo const *other);
 
 void SaveInfo_Delete(SaveInfo *info);
 
@@ -77,33 +133,13 @@ void SaveInfo_SetName(SaveInfo *info, Str const *newName);
 
 void SaveInfo_Configure(SaveInfo *info);
 
-/**
- * Returns @a true if the game state is compatibile with the current game session
- * and @em should be loadable.
- */
 dd_bool SaveInfo_IsLoadable(SaveInfo *info);
 
-/**
- * Serializes the save info using @a writer.
- *
- * @param info  SaveInfo instance.
- * @param writer  Writer instance.
- */
 void SaveInfo_Write(SaveInfo *info, Writer *writer);
 
-/**
- * Deserializes the save info using @a reader.
- *
- * @param info  SaveInfo instance.
- * @param reader  Reader instance.
- */
 void SaveInfo_Read(SaveInfo *info, Reader *reader);
 
 #if __JHEXEN__
-/**
- * @brief libhexen specific version of @ref SaveInfo_Read() for deserializing
- * legacy version 9 save state info.
- */
 void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader);
 #endif
 

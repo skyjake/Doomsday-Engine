@@ -1,4 +1,4 @@
-/** @file p_xgfile.cpp  Extended Generalized Line Types.
+/** @file p_xgfile.cpp  Extended generalized line types.
  *
  * DD_XGDATA lump reader.
  *

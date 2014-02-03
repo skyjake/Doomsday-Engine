@@ -892,12 +892,12 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
 {
     DENG_ASSERT(info != 0);
 
-    saveheader_t *hdr = &info->header;
+    saveheader_t *hdr = &info->_header;
 
     char nameBuffer[V13_SAVESTRINGSIZE];
     Reader_Read(reader, nameBuffer, V13_SAVESTRINGSIZE);
     nameBuffer[V13_SAVESTRINGSIZE - 1] = 0;
-    Str_Set(&info->name, nameBuffer);
+    Str_Set(&info->_name, nameBuffer);
 
     char vcheck[VERSIONSIZE];
     Reader_Read(reader, vcheck, VERSIONSIZE);
@@ -932,7 +932,7 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
     hdr->noMonsters      = 0;
     hdr->respawnMonsters = 0;
 
-    info->gameId  = 0; // None.
+    info->_gameId = 0; // None.
 }
 
 static dd_bool SV_OpenFile_Hr_v13(char const *filePath)

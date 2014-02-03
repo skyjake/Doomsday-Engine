@@ -28,75 +28,66 @@
 #include <cstdlib>
 #include <cstring>
 
-SaveInfo *SaveInfo_New()
+SaveInfo::SaveInfo()
+    : _gameId(0)
 {
-    SaveInfo *info = (SaveInfo *)M_Malloc(sizeof *info);
-
-    Str_Init(&info->name);
-    info->gameId = 0;
-    memset(&info->header, 0, sizeof(info->header));
-
-    return info;
+    Str_InitStd(&_name);
+    memset(&_header, 0, sizeof(_header));
 }
 
-SaveInfo *SaveInfo_NewCopy(SaveInfo const *other)
+SaveInfo::SaveInfo(SaveInfo const &other)
+    : _gameId(other._gameId)
 {
-    return SaveInfo_Copy(SaveInfo_New(), other);
+    Str_Copy(Str_InitStd(&_name), &other._name);
+    std::memcpy(&_header, &other._header, sizeof(_header));
 }
 
-void SaveInfo_Delete(SaveInfo *info)
+SaveInfo::~SaveInfo()
 {
-    DENG_ASSERT(info != 0);
-    Str_Free(&info->name);
-    M_Free(info);
+    Str_Free(&_name);
 }
 
-SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other)
+SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
-    DENG_ASSERT(info != 0 && other != 0);
-
-    Str_Copy(&info->name, SaveInfo_Name(other));
-    info->gameId = SaveInfo_GameId(other);
-    memcpy(&info->header, SaveInfo_Header(other), sizeof(info->header));
-
-    return info;
+    Str_Copy(&_name, &other._name);
+    _gameId = other._gameId;
+    std::memcpy(&_header, &other._header, sizeof(_header));
+    return *this;
 }
 
-uint SaveInfo_GameId(SaveInfo const *info)
+int SaveInfo::version() const
 {
-    DENG_ASSERT(info != 0);
-    return info->gameId;
+    return _header.version;
 }
 
-saveheader_t const *SaveInfo_Header(SaveInfo const *info)
+uint SaveInfo::gameId() const
 {
-    DENG_ASSERT(info != 0);
-    return &info->header;
+    return _gameId;
 }
 
-Str const *SaveInfo_Name(SaveInfo const *info)
+void SaveInfo::setGameId(uint newGameId)
 {
-    DENG_ASSERT(info != 0);
-    return &info->name;
+    _gameId = newGameId;
 }
 
-void SaveInfo_SetGameId(SaveInfo *info, uint newGameId)
+Str const *SaveInfo::name() const
 {
-    DENG_ASSERT(info != 0);
-    info->gameId = newGameId;
+    return &_name;
 }
 
-void SaveInfo_SetName(SaveInfo *info, Str const *newName)
+void SaveInfo::setName(Str const *newName)
 {
-    DENG_ASSERT(info != 0);
-    Str_CopyOrClear(&info->name, newName);
+    Str_CopyOrClear(&_name, newName);
 }
 
-void SaveInfo_Configure(SaveInfo *info)
+saveheader_t const *SaveInfo::header() const
 {
-    DENG_ASSERT(info != 0);
+    return &_header;
+}
 
-    saveheader_t *hdr = &info->header;
+void SaveInfo::configure()
+{
+    saveheader_t *hdr = &_header;
 
     hdr->magic      = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
     hdr->version    = MY_SAVE_VERSION;
@@ -131,27 +122,23 @@ void SaveInfo_Configure(SaveInfo *info)
 #endif
 }
 
-dd_bool SaveInfo_IsLoadable(SaveInfo *info)
+dd_bool SaveInfo::isLoadable()
 {
-    DENG_ASSERT(info != 0);
-
     // Game Mode missmatch?
-    if(info->header.gameMode != gameMode) return false;
+    if(_header.gameMode != gameMode) return false;
 
     /// @todo Validate loaded add-ons and checksum the definition database.
 
     return true; // It's good!
 }
 
-void SaveInfo_Write(SaveInfo *info, Writer *writer)
+void SaveInfo::write(Writer *writer) const
 {
-    DENG_ASSERT(info != 0);
-
-    saveheader_t *hdr = &info->header;
+    saveheader_t const *hdr = &_header;
     Writer_WriteInt32(writer, hdr->magic);
     Writer_WriteInt32(writer, hdr->version);
     Writer_WriteInt32(writer, hdr->gameMode);
-    Str_Write(&info->name, writer);
+    Str_Write(&_name, writer);
 
     Writer_WriteByte(writer, hdr->skill & 0x7f);
     Writer_WriteByte(writer, hdr->episode);
@@ -172,7 +159,7 @@ void SaveInfo_Write(SaveInfo *info, Writer *writer)
         Writer_WriteByte(writer, hdr->players[i]);
     }
 #endif
-    Writer_WriteInt32(writer, info->gameId);
+    Writer_WriteInt32(writer, _gameId);
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -218,11 +205,9 @@ static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
 }
 #endif
 
-void SaveInfo_Read(SaveInfo *info, Reader *reader)
+void SaveInfo::read(Reader *reader)
 {
-    DENG_ASSERT(info != 0);
-
-    saveheader_t *hdr = &info->header;
+    saveheader_t *hdr = &_header;
 
     hdr->magic    = Reader_ReadInt32(reader);
     hdr->version  = Reader_ReadInt32(reader);
@@ -230,7 +215,7 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
 
     if(hdr->version >= 10)
     {
-        Str_Read(&info->name, reader);
+        Str_Read(&_name, reader);
     }
     else
     {
@@ -239,7 +224,7 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
 
         char buf[OLD_NAME_LENGTH];
         Reader_Read(reader, buf, OLD_NAME_LENGTH);
-        Str_Set(&info->name, buf);
+        Str_Set(&_name, buf);
 
 #undef OLD_NAME_LENGTH
     }
@@ -302,7 +287,7 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
     }
 #endif
 
-    info->gameId        = Reader_ReadInt32(reader);
+    _gameId = Reader_ReadInt32(reader);
 
 #if __JDOOM__ || __JHERETIC__
     // Translate gameMode identifiers from older save versions.
@@ -311,21 +296,19 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
 }
 
 #if __JHEXEN__
-void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader)
+void SaveInfo::read_Hx_v9(Reader *reader)
 {
 # define HXS_VERSION_TEXT           "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH    16
 # define HXS_NAME_LENGTH            24
 
-    DENG_ASSERT(info != 0);
-
     char verText[HXS_VERSION_TEXT_LENGTH];
     char nameBuffer[HXS_NAME_LENGTH];
 
-    saveheader_t *hdr = &info->header;
+    saveheader_t *hdr = &_header;
 
     Reader_Read(reader, nameBuffer, HXS_NAME_LENGTH);
-    Str_Set(&info->name, nameBuffer);
+    Str_Set(&_name, nameBuffer);
 
     Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
     hdr->version = atoi(&verText[8]);
@@ -349,10 +332,95 @@ void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader)
     /// @note Older formats do not contain all needed values:
     hdr->gameMode       = gameMode; // Assume the current mode.
 
-    info->gameId  = 0; // None.
+    _gameId  = 0; // None.
 
 # undef HXS_NAME_LENGTH
 # undef HXS_VERSION_TEXT_LENGTH
 # undef HXS_VERSION_TEXT
+}
+#endif
+
+SaveInfo *SaveInfo_New()
+{
+    return new SaveInfo;
+}
+
+SaveInfo *SaveInfo_Dup(SaveInfo const *other)
+{
+    DENG_ASSERT(other != 0);
+    return new SaveInfo(*other);
+}
+
+void SaveInfo_Delete(SaveInfo *info)
+{
+    if(info) delete info;
+}
+
+SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other)
+{
+    DENG_ASSERT(info != 0 && other != 0);
+    *info = *other;
+    return info;
+}
+
+uint SaveInfo_GameId(SaveInfo const *info)
+{
+    DENG_ASSERT(info != 0);
+    return info->gameId();
+}
+
+void SaveInfo_SetGameId(SaveInfo *info, uint newGameId)
+{
+    DENG_ASSERT(info != 0);
+    info->setGameId(newGameId);
+}
+
+saveheader_t const *SaveInfo_Header(SaveInfo const *info)
+{
+    DENG_ASSERT(info != 0);
+    return info->header();
+}
+
+Str const *SaveInfo_Name(SaveInfo const *info)
+{
+    DENG_ASSERT(info != 0);
+    return info->name();
+}
+
+void SaveInfo_SetName(SaveInfo *info, Str const *newName)
+{
+    DENG_ASSERT(info != 0);
+    info->setName(newName);
+}
+
+void SaveInfo_Configure(SaveInfo *info)
+{
+    DENG_ASSERT(info != 0);
+    info->configure();
+}
+
+dd_bool SaveInfo_IsLoadable(SaveInfo *info)
+{
+    DENG_ASSERT(info != 0);
+    return info->isLoadable();
+}
+
+void SaveInfo_Write(SaveInfo *info, Writer *writer)
+{
+    DENG_ASSERT(info != 0);
+    info->write(writer);
+}
+
+void SaveInfo_Read(SaveInfo *info, Reader *reader)
+{
+    DENG_ASSERT(info != 0);
+    info->read(reader);
+}
+
+#if __JHEXEN__
+void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader)
+{
+    DENG_ASSERT(info != 0);
+    info->read_Hx_v9(reader);
 }
 #endif
