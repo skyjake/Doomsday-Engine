@@ -59,6 +59,8 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 enum MenuItemPositions
 {
     // DE menu:
+    POS_GAMES             = 0,
+    POS_GAMES_SEPARATOR   = 1,
     POS_UNLOAD            = 5,
 
     // Config menu:
@@ -257,7 +259,9 @@ DENG_GUI_PIMPL(TaskBarWidget)
     {
         updateStatus();
 
-        itemWidget(mainMenu, POS_UNLOAD).show(!newGame.isNull());
+        itemWidget(mainMenu, POS_GAMES)          .show(!newGame.isNull());
+        itemWidget(mainMenu, POS_GAMES_SEPARATOR).show(!newGame.isNull());
+        itemWidget(mainMenu, POS_UNLOAD)         .show(!newGame.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
         itemWidget(configMenu, POS_VR_SETTINGS)      .show(!newGame.isNull());
@@ -411,8 +415,9 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << unloadMenu                           // hidden with null-game
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
+    d->itemWidget(d->mainMenu, POS_GAMES).hide();
+    d->itemWidget(d->mainMenu, POS_GAMES_SEPARATOR).hide();
     d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
-    //d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
 
     d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
     d->itemWidget(d->configMenu, POS_VR_SETTINGS).hide();
