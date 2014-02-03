@@ -29,17 +29,39 @@
 #include <cstring>
 
 SaveInfo::SaveInfo()
-    : _gameId(0)
+    : _gameId  (0)
+    , _magic   (0)
+    , _version (0)
+    , _gameMode(NUM_GAME_MODES)
+    , _episode (0)
+    , _map     (0)
+#if !__JHEXEN__
+    , _mapTime (0)
+#endif
 {
     Str_InitStd(&_description);
-    memset(&_header, 0, sizeof(_header));
+#if !__JHEXEN__
+    memset(&_players, 0, sizeof(_players));
+#endif
+    memset(&_gameRules, 0, sizeof(_gameRules));
 }
 
 SaveInfo::SaveInfo(SaveInfo const &other)
-    : _gameId(other._gameId)
+    : _gameId  (other._gameId)
+    , _magic   (other._magic)
+    , _version (other._version)
+    , _gameMode(other._gameMode)
+    , _episode (other._episode)
+    , _map     (other._map)
+#if !__JHEXEN__
+    , _mapTime (other._mapTime)
+#endif
 {
     Str_Copy(Str_InitStd(&_description), &other._description);
-    std::memcpy(&_header, &other._header, sizeof(_header));
+#if !__JHEXEN__
+    std::memcpy(&_players, &other._players, sizeof(_players));
+#endif
+    std::memcpy(&_gameRules, &other._gameRules, sizeof(_gameRules));
 }
 
 SaveInfo::~SaveInfo()
@@ -51,18 +73,27 @@ SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
     Str_Copy(&_description, &other._description);
     _gameId = other._gameId;
-    std::memcpy(&_header, &other._header, sizeof(_header));
+    _magic = other._magic;
+    _version = other._version;
+    _gameMode = other._gameMode;
+    _episode = other._episode;
+    _map = other._map;
+#if !__JHEXEN__
+    _mapTime = other._mapTime;
+    std::memcpy(&_players, &other._players, sizeof(_players));
+#endif
+    std::memcpy(&_gameRules, &other._gameRules, sizeof(_gameRules));
     return *this;
 }
 
 int SaveInfo::version() const
 {
-    return _header.version;
+    return _version;
 }
 
 int SaveInfo::magic() const
 {
-    return _header.magic;
+    return _magic;
 }
 
 Str const *SaveInfo::description() const
@@ -87,63 +118,61 @@ void SaveInfo::setGameId(uint newGameId)
 
 uint SaveInfo::episode() const
 {
-    return _header.episode - 1;
+    return _episode - 1;
 }
 
 uint SaveInfo::map() const
 {
-    return _header.map - 1;
+    return _map - 1;
 }
 
 #if !__JHEXEN__
 int SaveInfo::mapTime() const
 {
-    return _header.mapTime;
+    return _mapTime;
 }
 #endif
 
 gamerules_t const &SaveInfo::gameRules() const
 {
-    return _header.gameRules;
+    return _gameRules;
 }
 
 void SaveInfo::configure()
 {
-    saveheader_t *hdr = &_header;
+    _magic      = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
+    _version    = MY_SAVE_VERSION;
+    _gameMode   = gameMode;
 
-    hdr->magic      = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
-    hdr->version    = MY_SAVE_VERSION;
-    hdr->gameMode   = gameMode;
-
-    hdr->map        = gameMap+1;
+    _map        = gameMap+1;
 #if __JHEXEN__
-    hdr->episode    = 1;
+    _episode    = 1;
 #else
-    hdr->episode    = gameEpisode+1;
+    _episode    = gameEpisode+1;
 #endif
 
 #if __JHEXEN__
-    hdr->gameRules.skill         = gameSkill;
-    hdr->gameRules.randomClasses = randomClassParm;
+    _gameRules.skill         = gameSkill;
+    _gameRules.randomClasses = randomClassParm;
 #else
-    hdr->gameRules.skill         = gameSkill;
-    hdr->gameRules.fast          = fastParm;
+    _gameRules.skill         = gameSkill;
+    _gameRules.fast          = fastParm;
 #endif
-    hdr->gameRules.deathmatch = deathmatch;
-    hdr->gameRules.noMonsters = noMonstersParm;
+    _gameRules.deathmatch = deathmatch;
+    _gameRules.noMonsters = noMonstersParm;
 
 #if __JHEXEN__
-    hdr->gameRules.randomClasses = randomClassParm;
+    _gameRules.randomClasses = randomClassParm;
 #else
-    hdr->gameRules.respawnMonsters = respawnMonsters;
+    _gameRules.respawnMonsters = respawnMonsters;
 #endif
 
 #if !__JHEXEN__
-    hdr->mapTime    = ::mapTime;
+    _mapTime    = ::mapTime;
 
     for(int i = 0; i < MAXPLAYERS; i++)
     {
-        hdr->players[i] = players[i].plr->inGame;
+        _players[i] = players[i].plr->inGame;
     }
 #endif
 }
@@ -151,7 +180,7 @@ void SaveInfo::configure()
 bool SaveInfo::isLoadable()
 {
     // Game Mode missmatch?
-    if(_header.gameMode != gameMode) return false;
+    if(_gameMode != gameMode) return false;
 
     /// @todo Validate loaded add-ons and checksum the definition database.
 
@@ -160,32 +189,31 @@ bool SaveInfo::isLoadable()
 
 void SaveInfo::write(Writer *writer) const
 {
-    saveheader_t const *hdr = &_header;
-    Writer_WriteInt32(writer, hdr->magic);
-    Writer_WriteInt32(writer, hdr->version);
-    Writer_WriteInt32(writer, hdr->gameMode);
+    Writer_WriteInt32(writer, _magic);
+    Writer_WriteInt32(writer, _version);
+    Writer_WriteInt32(writer, _gameMode);
     Str_Write(&_description, writer);
 
-    Writer_WriteByte(writer, hdr->gameRules.skill & 0x7f);
-    Writer_WriteByte(writer, hdr->episode);
-    Writer_WriteByte(writer, hdr->map);
-    Writer_WriteByte(writer, hdr->gameRules.deathmatch);
+    Writer_WriteByte(writer, _gameRules.skill & 0x7f);
+    Writer_WriteByte(writer, _episode);
+    Writer_WriteByte(writer, _map);
+    Writer_WriteByte(writer, _gameRules.deathmatch);
 #if !__JHEXEN__
-    Writer_WriteByte(writer, hdr->gameRules.fast);
+    Writer_WriteByte(writer, _gameRules.fast);
 #endif
-    Writer_WriteByte(writer, hdr->gameRules.noMonsters);
+    Writer_WriteByte(writer, _gameRules.noMonsters);
 #if __JHEXEN__
-    Writer_WriteByte(writer, hdr->gameRules.randomClasses);
+    Writer_WriteByte(writer, _gameRules.randomClasses);
 #else
-    Writer_WriteByte(writer, hdr->gameRules.respawnMonsters);
+    Writer_WriteByte(writer, _gameRules.respawnMonsters);
 #endif
 
 #if !__JHEXEN__
-    Writer_WriteInt32(writer, hdr->mapTime);
+    Writer_WriteInt32(writer, _mapTime);
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        Writer_WriteByte(writer, hdr->players[i]);
+        Writer_WriteByte(writer, _players[i]);
     }
 #endif
     Writer_WriteInt32(writer, _gameId);
@@ -236,13 +264,11 @@ static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
 
 void SaveInfo::read(Reader *reader)
 {
-    saveheader_t *hdr = &_header;
+    _magic    = Reader_ReadInt32(reader);
+    _version  = Reader_ReadInt32(reader);
+    _gameMode = (gamemode_t)Reader_ReadInt32(reader);
 
-    hdr->magic    = Reader_ReadInt32(reader);
-    hdr->version  = Reader_ReadInt32(reader);
-    hdr->gameMode = (gamemode_t)Reader_ReadInt32(reader);
-
-    if(hdr->version >= 10)
+    if(_version >= 10)
     {
         Str_Read(&_description, reader);
     }
@@ -259,7 +285,7 @@ void SaveInfo::read(Reader *reader)
     }
 
 #if !__JHEXEN__
-    if(hdr->version < 13)
+    if(_version < 13)
     {
         // In DOOM the high bit of the skill mode byte is also used for the
         // "fast" game rule dd_bool. There is more confusion in that SM_NOTHINGS
@@ -269,53 +295,53 @@ void SaveInfo::read(Reader *reader)
         // by default this means "spawn no things" and if so then the "fast" game
         // rule is meaningless so it is forced off.
         byte skillModePlusFastBit = Reader_ReadByte(reader);
-        hdr->gameRules.skill = (skillmode_t) (skillModePlusFastBit & 0x7f);
-        if(hdr->gameRules.skill < SM_BABY || hdr->gameRules.skill >= NUM_SKILL_MODES)
+        _gameRules.skill = (skillmode_t) (skillModePlusFastBit & 0x7f);
+        if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
         {
-            hdr->gameRules.skill = SM_NOTHINGS;
-            hdr->gameRules.fast  = 0;
+            _gameRules.skill = SM_NOTHINGS;
+            _gameRules.fast  = 0;
         }
         else
         {
-            hdr->gameRules.fast  = (skillModePlusFastBit & 0x80) != 0;
+            _gameRules.fast  = (skillModePlusFastBit & 0x80) != 0;
         }
     }
     else
 #endif
     {
-        hdr->gameRules.skill = skillmode_t( Reader_ReadByte(reader) & 0x7f );
+        _gameRules.skill = skillmode_t( Reader_ReadByte(reader) & 0x7f );
 
         // Interpret skill levels outside the normal range as "spawn no things".
-        if(hdr->gameRules.skill < SM_BABY || hdr->gameRules.skill >= NUM_SKILL_MODES)
+        if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
         {
-            hdr->gameRules.skill = SM_NOTHINGS;
+            _gameRules.skill = SM_NOTHINGS;
         }
     }
 
-    hdr->episode        = Reader_ReadByte(reader);
-    hdr->map            = Reader_ReadByte(reader);
+    _episode        = Reader_ReadByte(reader);
+    _map            = Reader_ReadByte(reader);
 
-    hdr->gameRules.deathmatch      = Reader_ReadByte(reader);
+    _gameRules.deathmatch      = Reader_ReadByte(reader);
 #if !__JHEXEN__
-    if(hdr->version >= 13)
-        hdr->gameRules.fast        = Reader_ReadByte(reader);
+    if(_version >= 13)
+        _gameRules.fast        = Reader_ReadByte(reader);
 #endif
-    hdr->gameRules.noMonsters      = Reader_ReadByte(reader);
+    _gameRules.noMonsters      = Reader_ReadByte(reader);
 #if __JHEXEN__
-    hdr->gameRules.randomClasses   = Reader_ReadByte(reader);
+    _gameRules.randomClasses   = Reader_ReadByte(reader);
 #endif
 
 #if !__JHEXEN__
-    hdr->gameRules.respawnMonsters = Reader_ReadByte(reader);
+    _gameRules.respawnMonsters = Reader_ReadByte(reader);
 
     // Older formats serialize the unpacked saveheader_t struct; skip the junk values (alignment).
-    if(hdr->version < 10) SV_Seek(2);
+    if(_version < 10) SV_Seek(2);
 
-    hdr->mapTime        = Reader_ReadInt32(reader);
+    _mapTime        = Reader_ReadInt32(reader);
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        hdr->players[i] = Reader_ReadByte(reader);
+        _players[i] = Reader_ReadByte(reader);
     }
 #endif
 
@@ -323,7 +349,7 @@ void SaveInfo::read(Reader *reader)
 
 #if __JDOOM__ || __JHERETIC__
     // Translate gameMode identifiers from older save versions.
-    translateLegacyGameMode(&hdr->gameMode, hdr->version);
+    translateLegacyGameMode(&_gameMode, _version);
 #endif
 }
 
@@ -337,30 +363,28 @@ void SaveInfo::read_Hx_v9(Reader *reader)
     char verText[HXS_VERSION_TEXT_LENGTH];
     char nameBuffer[HXS_NAME_LENGTH];
 
-    saveheader_t *hdr = &_header;
-
     Reader_Read(reader, nameBuffer, HXS_NAME_LENGTH);
     Str_Set(&_description, nameBuffer);
 
     Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
-    hdr->version  = atoi(&verText[8]);
+    _version  = atoi(&verText[8]);
 
     /*Skip junk*/ SV_Seek(4);
 
-    hdr->episode  = 1;
-    hdr->map      = Reader_ReadByte(reader);
-    hdr->magic    = MY_SAVE_MAGIC; // Lets pretend...
-    hdr->gameMode = gameMode; // Assume the current mode.
+    _episode  = 1;
+    _map      = Reader_ReadByte(reader);
+    _magic    = MY_SAVE_MAGIC; // Lets pretend...
+    _gameMode = gameMode; // Assume the current mode.
 
-    hdr->gameRules.skill         = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
+    _gameRules.skill         = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
 
     // Interpret skill modes outside the normal range as "spawn no things".
-    if(hdr->gameRules.skill < SM_BABY || hdr->gameRules.skill >= NUM_SKILL_MODES)
-        hdr->gameRules.skill = SM_NOTHINGS;
+    if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
+        _gameRules.skill = SM_NOTHINGS;
 
-    hdr->gameRules.deathmatch    = Reader_ReadByte(reader);
-    hdr->gameRules.noMonsters    = Reader_ReadByte(reader);
-    hdr->gameRules.randomClasses = Reader_ReadByte(reader);
+    _gameRules.deathmatch    = Reader_ReadByte(reader);
+    _gameRules.noMonsters    = Reader_ReadByte(reader);
+    _gameRules.randomClasses = Reader_ReadByte(reader);
 
     _gameId  = 0; // None.
 

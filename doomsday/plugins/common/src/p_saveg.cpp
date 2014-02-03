@@ -144,7 +144,7 @@ static SaveInfo *nullSaveInfo;
 #if __JHEXEN__
 static int mapVersion;
 #endif
-static saveheader_t const *hdr;
+static SaveInfo const *curInfo;
 
 static playerheader_t playerHeader;
 static dd_bool playerHeaderOK;
@@ -1102,7 +1102,7 @@ static inline int materialArchiveVersion()
 #if __JHEXEN__
     if(mapVersion < 6)
 #else
-    if(hdr->version < 6)
+    if(curInfo->version() < 6)
 #endif
     {
         return 0;
@@ -2173,9 +2173,9 @@ static void writePlayerHeader(Writer *writer)
 static void readPlayerHeader(Reader *reader)
 {
 #if __JHEXEN__
-    if(hdr->version >= 4)
+    if(curInfo->version() >= 4)
 #else
-    if(hdr->version >= 5)
+    if(curInfo->version() >= 5)
 #endif
     {
         SV_AssertSegment(ASEG_PLAYER_HEADER);
@@ -2273,7 +2273,7 @@ static void readPlayers(dd_bool *infile, dd_bool *loaded, Reader *reader)
     {
         loaded[i] = 0;
 #if !__JHEXEN__
-        infile[i] = hdr->players[i];
+        infile[i] = curInfo->_players[i];
 #endif
     }
 
@@ -2436,7 +2436,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
         type = sc_ploff;
     else
 #else
-    if(hdr->version <= 1)
+    if(curInfo->version() <= 1)
         type = sc_normal;
     else
 #endif
@@ -2446,7 +2446,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
 #if __JHEXEN__
     if(mapVersion > 2)
 #else
-    if(hdr->version > 4)
+    if(curInfo->version() > 4)
 #endif
         ver = Reader_ReadByte(reader);
 
@@ -2465,7 +2465,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
 #endif
 
 #if !__JHEXEN__
-    if(hdr->version == 1)
+    if(curInfo->version() == 1)
     {
         // The flat numbers are absolute lump indices.
         Uri* uri = Uri_NewWithPath2("Flats:", RC_NULL);
@@ -2476,7 +2476,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
         ceilingMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
     }
-    else if(hdr->version >= 4)
+    else if(curInfo->version() >= 4)
 #endif
     {
         // The flat numbers are actually archive numbers.
@@ -2497,7 +2497,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
     lightlevel = (byte) Reader_ReadInt16(reader);
 #else
     // In Ver1 the light level is a short
-    if(hdr->version == 1)
+    if(curInfo->version() == 1)
         lightlevel = (byte) Reader_ReadInt16(reader);
     else
         lightlevel = Reader_ReadByte(reader);
@@ -2505,7 +2505,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
     P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) lightlevel / 255.f);
 
 #if !__JHEXEN__
-    if(hdr->version > 1)
+    if(curInfo->version() > 1)
 #endif
     {
         Reader_Read(reader, rgb, 3);
@@ -3540,7 +3540,7 @@ static void readMap(Reader *reader)
 #if __JHEXEN__
         mapVersion = (mapSegmentId == ASEG_MAP_HEADER2? Reader_ReadByte(reader) : 2);
 #else
-        int const mapVersion = hdr->version;
+        int const mapVersion = curInfo->version();
 #endif
 
 #if __JHEXEN__
@@ -3668,7 +3668,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     /*
      * Configure global game state:
      */
-    hdr = &saveInfo->_header;
+    curInfo = saveInfo;
 
     gameEpisode     = saveInfo->episode();
     gameMap         = saveInfo->map();
@@ -3701,7 +3701,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 
 #if !__JHEXEN__
     // Set the time.
-    mapTime = hdr->mapTime;
+    mapTime = saveInfo->mapTime();
 #endif
 
 #if !__JHEXEN__
@@ -3997,7 +3997,7 @@ void SV_LoadGameClient(uint gameId)
     Reader *reader = SV_NewReader();
     SV_SaveInfo_Read(saveInfo, reader);
 
-    hdr = &saveInfo->_header;
+    curInfo = saveInfo;
 
     if(saveInfo->magic() != MY_CLIENT_SAVE_MAGIC)
     {
@@ -4024,7 +4024,7 @@ void SV_LoadGameClient(uint gameId)
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
     }
-    mapTime = hdr->mapTime;
+    mapTime = saveInfo->mapTime();
 
     P_MobjUnlink(mo);
     mo->origin[VX] = FIX2FLT(Reader_ReadInt32(reader));

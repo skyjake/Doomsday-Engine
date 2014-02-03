@@ -893,8 +893,6 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
 {
     DENG_ASSERT(info != 0);
 
-    saveheader_t *hdr = &info->_header;
-
     char nameBuffer[V13_SAVESTRINGSIZE];
     Reader_Read(reader, nameBuffer, V13_SAVESTRINGSIZE);
     nameBuffer[V13_SAVESTRINGSIZE - 1] = 0;
@@ -903,36 +901,36 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
     char vcheck[VERSIONSIZE];
     Reader_Read(reader, vcheck, VERSIONSIZE);
     //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
-    hdr->version         = atoi(&vcheck[8]);
+    info->_version         = atoi(&vcheck[8]);
 
-    hdr->gameRules.skill = (skillmode_t) Reader_ReadByte(reader);
+    info->_gameRules.skill = (skillmode_t) Reader_ReadByte(reader);
 
     // Interpret skill levels outside the normal range as "spawn no things".
-    if(hdr->gameRules.skill < SM_BABY || hdr->gameRules.skill >= NUM_SKILL_MODES)
-        hdr->gameRules.skill = SM_NOTHINGS;
+    if(info->_gameRules.skill < SM_BABY || info->_gameRules.skill >= NUM_SKILL_MODES)
+        info->_gameRules.skill = SM_NOTHINGS;
 
-    hdr->episode         = Reader_ReadByte(reader);
-    hdr->map             = Reader_ReadByte(reader);
+    info->_episode         = Reader_ReadByte(reader);
+    info->_map             = Reader_ReadByte(reader);
     for(int i = 0; i < 4; ++i)
     {
-        hdr->players[i] = Reader_ReadByte(reader);
+        info->_players[i] = Reader_ReadByte(reader);
     }
-    memset(&hdr->players[4], 0, sizeof(*hdr->players) * (MAXPLAYERS-4));
+    memset(&info->_players[4], 0, sizeof(*info->_players) * (MAXPLAYERS-4));
 
     // Get the map time.
     int a = Reader_ReadByte(reader);
     int b = Reader_ReadByte(reader);
     int c = Reader_ReadByte(reader);
-    hdr->mapTime         = (a << 16) + (b << 8) + c;
+    info->_mapTime         = (a << 16) + (b << 8) + c;
 
-    hdr->magic           = 0; // Initialize with *something*.
+    info->_magic           = 0; // Initialize with *something*.
 
     /// @note Older formats do not contain all needed values:
-    hdr->gameMode        = gameMode; // Assume the current mode.
+    info->_gameMode        = gameMode; // Assume the current mode.
 
-    hdr->gameRules.deathmatch      = 0;
-    hdr->gameRules.noMonsters      = 0;
-    hdr->gameRules.respawnMonsters = 0;
+    info->_gameRules.deathmatch      = 0;
+    info->_gameRules.noMonsters      = 0;
+    info->_gameRules.respawnMonsters = 0;
 
     info->_gameId = 0; // None.
 }

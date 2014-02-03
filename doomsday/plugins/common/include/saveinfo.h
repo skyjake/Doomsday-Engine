@@ -38,19 +38,6 @@ typedef struct gamerules_s {
 #endif
 } gamerules_t;
 
-typedef struct saveheader_s {
-    int magic;
-    int version;
-    gamemode_t gameMode;
-    gamerules_t gameRules;
-    byte episode;
-    byte map;
-#if !__JHEXEN__
-    int mapTime;
-    byte players[MAXPLAYERS];
-#endif
-} saveheader_t;
-
 #ifdef __cplusplus
 /**
  * Saved game session info.
@@ -60,7 +47,16 @@ class SaveInfo
 public: /// @todo make private:
     Str _description;
     uint _gameId;
-    saveheader_t _header;
+    int _magic;
+    int _version;
+    gamemode_t _gameMode;
+    byte _episode;
+    byte _map;
+#if !__JHEXEN__
+    int _mapTime;
+    byte _players[MAXPLAYERS];
+#endif
+    gamerules_t _gameRules;
 
 public:
     SaveInfo();
