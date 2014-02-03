@@ -36,7 +36,6 @@ public:
     de::String command() const { return _command; }
 
     void trigger();
-    Action *duplicate() const;
 
 private:
     de::String _command;

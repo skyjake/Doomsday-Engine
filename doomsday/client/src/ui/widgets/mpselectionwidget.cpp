@@ -90,23 +90,10 @@ DENG_GUI_PIMPL(MPSelectionWidget)
                 Action::trigger();
 
                 BusyMode_FreezeGameForBusyMode();
-
-                // Closing the taskbar will cause this action to be deleted. Let's take
-                // ownership of the action so we can delete after we're done.
-                _owner->takeAction();
-
                 ClientWindow::main().taskBar().close();
 
                 App_ChangeGame(App_Games().byIdentityKey(_gameId), false /*no reload*/);
                 Con_Execute(CMDS_DDAY, _cmd.toLatin1(), false, false);
-
-                delete this;
-            }
-
-            Action *duplicate() const
-            {
-                DENG2_ASSERT(!"JoinAction: cannot duplicate");
-                return 0;
             }
 
         private:

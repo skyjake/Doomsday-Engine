@@ -44,7 +44,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 {
     /// ActionItem with a Game member, for loading a particular game.
     struct GameItem : public ui::ActionItem {
-        GameItem(Game const &gameRef, de::String const &label, de::Action *action)
+        GameItem(Game const &gameRef, de::String const &label, RefArg<de::Action> action)
             : ui::ActionItem(label, action), game(gameRef) {
             setData(&gameRef);
         }
@@ -222,25 +222,19 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             emit owner.gameSessionSelected();
             CommandAction::trigger();
         }
-
-        Action *duplicate() const
-        {
-            return new LoadGameAction(command(), owner);
-        }
     };
 
     ui::Item *makeItemForGame(Game &game)
     {
         String const idKey = game.identityKey();
 
-        LoadGameAction *loadAction = new LoadGameAction(String("load ") + idKey, self);
         String label = String(_E(b) "%1" _E(.) /*_E(s)_E(C) " %2\n" _E(.)_E(.)*/ "\n"
                               _E(l)_E(D) "%2")
                 .arg(game.title())
                 //.arg(game.author())
                 .arg(idKey);
 
-        GameItem *item = new GameItem(game, label, loadAction);
+        GameItem *item = new GameItem(game, label, new LoadGameAction(String("load ") + idKey, self));
 
         /// @todo The name of the plugin should be accessible via the plugin loader.
         String plugName;
@@ -278,7 +272,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         w.loadButton().setImage(it.image());
         w.loadButton().setText(it.label());
-        w.loadButton().setAction(it.action()->duplicate());
+        w.loadButton().setAction(*it.action());
     }
 
     void appStartupCompleted()

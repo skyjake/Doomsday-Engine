@@ -32,8 +32,3 @@ void CommandAction::trigger()
 
     Con_Execute(_source, _command.toUtf8(), false /*silent*/, false /*net*/);
 }
-
-Action *CommandAction::duplicate() const
-{
-    return new CommandAction(_command, _source);
-}

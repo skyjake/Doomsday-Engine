@@ -79,15 +79,10 @@ DENG2_OBSERVES(App, GameChange)
     class Group : public FoldPanelWidget
     {
         /// Action for reseting the group's settings to defaults.
-        struct ResetAction : public Action
-        {
+        struct ResetAction : public Action {
             Group *group;
-
             ResetAction(Group *groupToReset) : group(groupToReset) {}
-            Action *duplicate() const { return new ResetAction(group); }
-
-            void trigger()
-            {
+            void trigger() {
                 Action::trigger();
                 group->resetToDefaults();
             }
