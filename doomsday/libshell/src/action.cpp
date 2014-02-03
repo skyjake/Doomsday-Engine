@@ -80,10 +80,5 @@ void Action::trigger()
     emit triggered();
 }
 
-Action *Action::duplicate() const
-{
-    return new Action(_label, _event, _target, _slot);
-}
-
 } // namespace shell
 } // namespace de

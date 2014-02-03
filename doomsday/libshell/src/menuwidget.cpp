@@ -42,8 +42,23 @@ DENG2_PIMPL(MenuWidget)
         String shortcutLabel;
         bool separatorAfter;
 
-        Item() : action(0), separatorAfter(false)
-        {}
+        Item() : action(0), separatorAfter(false) {}
+
+        Item(Item const &other)
+            : action(holdRef(other.action))
+            , shortcutLabel(other.shortcutLabel)
+            , separatorAfter(other.separatorAfter) {}
+
+        ~Item() {
+            releaseRef(action);
+        }
+
+        Item &operator = (Item const &other) {
+            changeRef(action, other.action);
+            shortcutLabel = other.shortcutLabel;
+            separatorAfter = other.separatorAfter;
+            return *this;
+        }
     };
 
     QList<Item> items;
@@ -74,7 +89,6 @@ DENG2_PIMPL(MenuWidget)
         foreach(Item i, items)
         {
             self.removeAction(*i.action);
-            delete i.action;
         }
         items.clear();
         updateSize();
@@ -103,7 +117,6 @@ DENG2_PIMPL(MenuWidget)
     void removeItem(int pos)
     {
         self.removeAction(*items[pos].action);
-        delete items[pos].action;
         items.removeAt(pos);
         updateSize();
     }
@@ -135,10 +148,10 @@ int MenuWidget::itemCount() const
     return d->items.size();
 }
 
-void MenuWidget::appendItem(Action *action, String const &shortcutLabel)
+void MenuWidget::appendItem(RefArg<Action> action, String const &shortcutLabel)
 {
     Instance::Item item;
-    item.action = action;
+    item.action = action.holdRef();
     item.shortcutLabel = shortcutLabel;
     d->items.append(item);
     d->updateSize();
@@ -156,10 +169,10 @@ void MenuWidget::appendSeparator()
     redraw();
 }
 
-void MenuWidget::insertItem(int pos, Action *action, String const &shortcutLabel)
+void MenuWidget::insertItem(int pos, RefArg<Action> action, String const &shortcutLabel)
 {
     Instance::Item item;
-    item.action = action;
+    item.action = action.holdRef();
     item.shortcutLabel = shortcutLabel;
     d->items.insert(pos, item);
     d->updateSize();

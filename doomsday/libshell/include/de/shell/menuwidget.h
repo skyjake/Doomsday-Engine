@@ -64,7 +64,7 @@ public:
      * @param action  Action to add as a shortcut for triggering the item.
      * @param shortcutLabel  Label to show, representing the action shortcut to the user.
      */
-    void appendItem(Action *action, String const &shortcutLabel = "");
+    void appendItem(RefArg<Action> action, String const &shortcutLabel = "");
 
     /**
      * Inserts an item into the menu.
@@ -73,7 +73,7 @@ public:
      * @param action  Action to add as a shortcut for triggering the item.
      * @param shortcutLabel  Label to show, representing the action shortcut to the user.
      */
-    void insertItem(int pos, Action *action, String const &shortcutLabel = "");
+    void insertItem(int pos, RefArg<Action> action, String const &shortcutLabel = "");
 
     void appendSeparator();
 
