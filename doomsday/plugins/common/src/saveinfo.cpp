@@ -95,14 +95,16 @@ uint SaveInfo::map() const
     return _header.map - 1;
 }
 
+#if !__JHEXEN__
+int SaveInfo::mapTime() const
+{
+    return _header.mapTime;
+}
+#endif
+
 gamerules_t const &SaveInfo::gameRules() const
 {
     return _header.gameRules;
-}
-
-saveheader_t const *SaveInfo::header() const
-{
-    return &_header;
 }
 
 void SaveInfo::configure()
@@ -137,7 +139,7 @@ void SaveInfo::configure()
 #endif
 
 #if !__JHEXEN__
-    hdr->mapTime    = mapTime;
+    hdr->mapTime    = ::mapTime;
 
     for(int i = 0; i < MAXPLAYERS; i++)
     {
@@ -401,12 +403,6 @@ void SaveInfo_SetGameId(SaveInfo *info, uint newGameId)
 {
     DENG_ASSERT(info != 0);
     info->setGameId(newGameId);
-}
-
-saveheader_t const *SaveInfo_Header(SaveInfo const *info)
-{
-    DENG_ASSERT(info != 0);
-    return info->header();
 }
 
 Str const *SaveInfo_Description(SaveInfo const *info)

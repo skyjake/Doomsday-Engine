@@ -3668,7 +3668,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     /*
      * Configure global game state:
      */
-    hdr = saveInfo->header();
+    hdr = &saveInfo->_header;
 
     gameEpisode     = saveInfo->episode();
     gameMap         = saveInfo->map();
@@ -3688,7 +3688,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 #endif
 
 #if __JHEXEN__
-    Game_ACScriptInterpreter().readWorldScriptData(reader, hdr->version);
+    Game_ACScriptInterpreter().readWorldScriptData(reader, saveInfo->version());
 #endif
 
     /*
@@ -3705,7 +3705,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 #endif
 
 #if !__JHEXEN__
-    initThingArchiveForLoad(hdr->version >= 5? Reader_ReadInt32(reader) : 1024 /* num elements */);
+    initThingArchiveForLoad(saveInfo->version() >= 5? Reader_ReadInt32(reader) : 1024 /* num elements */);
 #endif
 
     readPlayerHeader(reader);
@@ -3980,27 +3980,26 @@ void SV_LoadGameClient(uint gameId)
 
     player_t *cpl = players + CONSOLEPLAYER;
     mobj_t *mo = cpl->plr->mo;
-    AutoStr *gameSavePath;
-    SaveInfo *saveInfo;
 
     if(!IS_CLIENT || !mo)
         return;
 
     playerHeaderOK = false; // Uninitialized.
 
-    gameSavePath = composeGameSavePathForClientGameId(gameId);
+    AutoStr *gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(gameSavePath, "rp"))
     {
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading", Str_Text(gameSavePath));
         return;
     }
 
-    saveInfo = new SaveInfo;
+    SaveInfo *saveInfo = new SaveInfo;
     Reader *reader = SV_NewReader();
     SV_SaveInfo_Read(saveInfo, reader);
 
-    hdr = saveInfo->header();
-    if(hdr->magic != MY_CLIENT_SAVE_MAGIC)
+    hdr = &saveInfo->_header;
+
+    if(saveInfo->magic() != MY_CLIENT_SAVE_MAGIC)
     {
         Reader_Delete(reader);
         delete saveInfo;
@@ -4010,16 +4009,16 @@ void SV_LoadGameClient(uint gameId)
     }
 
     gamerules_t const &newRules = saveInfo->gameRules();
-    gameSkill       = skillmode_t( newRules.skill );
+    gameSkill       = newRules.skill;
     deathmatch      = newRules.deathmatch;
     noMonstersParm  = newRules.noMonsters;
     respawnMonsters = newRules.respawnMonsters;
 
     // Do we need to change the map?
-    if(gameMap != (unsigned) (hdr->map - 1) || gameEpisode != (unsigned) (hdr->episode - 1))
+    if(gameMap != saveInfo->map() || gameEpisode != saveInfo->episode())
     {
-        gameEpisode = hdr->episode - 1;
-        gameMap = hdr->map - 1;
+        gameEpisode       = saveInfo->episode();
+        gameMap           = saveInfo->map();
         gameMapEntryPoint = 0;
         G_NewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
         /// @todo Necessary?
@@ -4032,10 +4031,11 @@ void SV_LoadGameClient(uint gameId)
     mo->origin[VY] = FIX2FLT(Reader_ReadInt32(reader));
     mo->origin[VZ] = FIX2FLT(Reader_ReadInt32(reader));
     P_MobjLink(mo);
-    mo->floorZ = FIX2FLT(Reader_ReadInt32(reader));
-    mo->ceilingZ = FIX2FLT(Reader_ReadInt32(reader));
-    mo->angle = Reader_ReadInt32(reader); /* $unifiedangles */
+    mo->floorZ        = FIX2FLT(Reader_ReadInt32(reader));
+    mo->ceilingZ      = FIX2FLT(Reader_ReadInt32(reader));
+    mo->angle         = Reader_ReadInt32(reader); /* $unifiedangles */
     cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
+
     readPlayerHeader(reader);
     SV_ReadPlayer(cpl, reader);
 

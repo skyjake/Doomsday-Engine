@@ -97,6 +97,9 @@ public:
 
     uint episode() const;
     uint map() const;
+#if !__JHEXEN__
+    int mapTime() const;
+#endif
     gamerules_t const &gameRules() const;
 
     /**
@@ -116,12 +119,6 @@ public:
      */
     void read_Hx_v9(Reader *reader);
 #endif
-
-    /**
-     * Provides readonly access to the game session header.
-     * @todo refactor away.
-     */
-    saveheader_t const *header() const;
 };
 
 #endif // __cplusplus
@@ -156,8 +153,6 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader);
 #if __JHEXEN__
 void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader);
 #endif
-
-saveheader_t const *SaveInfo_Header(SaveInfo const *info);
 
 #ifdef __cplusplus
 } // extern "C"

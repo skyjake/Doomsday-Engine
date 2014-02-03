@@ -842,12 +842,12 @@ int SV_LoadState_Dm_v19(Str const *path, SaveInfo *info)
         delete tmp;
     }
 
-    saveheader_t const &hdr = info->_header;
-
-    gameSkill         = hdr.skill;
-    gameEpisode       = hdr.episode;
-    gameMap           = hdr.map;
+    gameEpisode       = info->episode();
+    gameMap           = info->map();
     gameMapEntryPoint = 0;
+
+    gamerules_t const &newRules = info->gameRules();
+    gameSkill         = newRules.skill;
 
     // We don't want to see a briefing if we're loading a save game.
     briefDisabled     = true;
@@ -858,7 +858,7 @@ int SV_LoadState_Dm_v19(Str const *path, SaveInfo *info)
     G_SetGameAction(GA_NONE);
 
     // Recreate map state.
-    mapTime           = hdr.mapTime;
+    mapTime           = info->mapTime();
 
     P_v19_UnArchivePlayers();
     P_v19_UnArchiveWorld();
@@ -897,14 +897,14 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
 
     hdr->version         = atoi(&vcheck[8]);
 
-    hdr->skill           = (skillmode_t) Reader_ReadByte(reader);
+    hdr->gameRules.skill = (skillmode_t) Reader_ReadByte(reader);
 
     // Interpret skill levels outside the normal range as "spawn no things".
-    if(hdr->skill < SM_BABY || hdr->skill >= NUM_SKILL_MODES)
-        hdr->skill = SM_NOTHINGS;
+    if(hdr->gameRules.skill < SM_BABY || hdr->gameRules.skill >= NUM_SKILL_MODES)
+        hdr->gameRules.skill = SM_NOTHINGS;
 
-    hdr->episode         = Reader_ReadByte(reader)-1;
-    hdr->map             = Reader_ReadByte(reader)-1;
+    hdr->episode         = Reader_ReadByte(reader);
+    hdr->map             = Reader_ReadByte(reader);
 
     for(int i = 0; i < 4; ++i)
     {
@@ -923,9 +923,10 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
 
     /// @note Older formats do not contain all needed values:
     hdr->gameMode        = gameMode; // Assume the current mode.
-    hdr->deathmatch      = 0;
-    hdr->noMonsters      = 0;
-    hdr->respawnMonsters = 0;
+
+    hdr->gameRules.deathmatch      = 0;
+    hdr->gameRules.noMonsters      = 0;
+    hdr->gameRules.respawnMonsters = 0;
 
     info->_gameId = 0; // None.
 }
