@@ -31,25 +31,25 @@
 SaveInfo::SaveInfo()
     : _gameId(0)
 {
-    Str_InitStd(&_name);
+    Str_InitStd(&_description);
     memset(&_header, 0, sizeof(_header));
 }
 
 SaveInfo::SaveInfo(SaveInfo const &other)
     : _gameId(other._gameId)
 {
-    Str_Copy(Str_InitStd(&_name), &other._name);
+    Str_Copy(Str_InitStd(&_description), &other._description);
     std::memcpy(&_header, &other._header, sizeof(_header));
 }
 
 SaveInfo::~SaveInfo()
 {
-    Str_Free(&_name);
+    Str_Free(&_description);
 }
 
 SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
-    Str_Copy(&_name, &other._name);
+    Str_Copy(&_description, &other._description);
     _gameId = other._gameId;
     std::memcpy(&_header, &other._header, sizeof(_header));
     return *this;
@@ -70,14 +70,14 @@ void SaveInfo::setGameId(uint newGameId)
     _gameId = newGameId;
 }
 
-Str const *SaveInfo::name() const
+Str const *SaveInfo::description() const
 {
-    return &_name;
+    return &_description;
 }
 
-void SaveInfo::setName(Str const *newName)
+void SaveInfo::setDescription(Str const *newName)
 {
-    Str_CopyOrClear(&_name, newName);
+    Str_CopyOrClear(&_description, newName);
 }
 
 saveheader_t const *SaveInfo::header() const
@@ -122,7 +122,7 @@ void SaveInfo::configure()
 #endif
 }
 
-dd_bool SaveInfo::isLoadable()
+bool SaveInfo::isLoadable()
 {
     // Game Mode missmatch?
     if(_header.gameMode != gameMode) return false;
@@ -138,7 +138,7 @@ void SaveInfo::write(Writer *writer) const
     Writer_WriteInt32(writer, hdr->magic);
     Writer_WriteInt32(writer, hdr->version);
     Writer_WriteInt32(writer, hdr->gameMode);
-    Str_Write(&_name, writer);
+    Str_Write(&_description, writer);
 
     Writer_WriteByte(writer, hdr->skill & 0x7f);
     Writer_WriteByte(writer, hdr->episode);
@@ -215,7 +215,7 @@ void SaveInfo::read(Reader *reader)
 
     if(hdr->version >= 10)
     {
-        Str_Read(&_name, reader);
+        Str_Read(&_description, reader);
     }
     else
     {
@@ -224,7 +224,7 @@ void SaveInfo::read(Reader *reader)
 
         char buf[OLD_NAME_LENGTH];
         Reader_Read(reader, buf, OLD_NAME_LENGTH);
-        Str_Set(&_name, buf);
+        Str_Set(&_description, buf);
 
 #undef OLD_NAME_LENGTH
     }
@@ -308,7 +308,7 @@ void SaveInfo::read_Hx_v9(Reader *reader)
     saveheader_t *hdr = &_header;
 
     Reader_Read(reader, nameBuffer, HXS_NAME_LENGTH);
-    Str_Set(&_name, nameBuffer);
+    Str_Set(&_description, nameBuffer);
 
     Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
     hdr->version = atoi(&verText[8]);
@@ -381,16 +381,16 @@ saveheader_t const *SaveInfo_Header(SaveInfo const *info)
     return info->header();
 }
 
-Str const *SaveInfo_Name(SaveInfo const *info)
+Str const *SaveInfo_Description(SaveInfo const *info)
 {
     DENG_ASSERT(info != 0);
-    return info->name();
+    return info->description();
 }
 
-void SaveInfo_SetName(SaveInfo *info, Str const *newName)
+void SaveInfo_SetDescription(SaveInfo *info, Str const *newName)
 {
     DENG_ASSERT(info != 0);
-    info->setName(newName);
+    info->setDescription(newName);
 }
 
 void SaveInfo_Configure(SaveInfo *info)

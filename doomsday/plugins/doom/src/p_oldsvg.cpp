@@ -837,12 +837,12 @@ int SV_LoadState_Dm_v19(Str const *path, SaveInfo *info)
     // Read the header again.
     /// @todo Seek past the header straight to the game state.
     {
-        SaveInfo *tmp = SaveInfo_New();
+        SaveInfo *tmp = new SaveInfo;
         SaveInfo_Read_Dm_v19(tmp, svReader);
-        SaveInfo_Delete(tmp);
+        delete tmp;
     }
 
-    saveheader_t const *hdr = SaveInfo_Header(info);
+    saveheader_t const *hdr = info->header();
 
     gameSkill         = hdr->skill;
     gameEpisode       = hdr->episode;
@@ -888,7 +888,7 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     char nameBuffer[V19_SAVESTRINGSIZE];
     Reader_Read(reader, nameBuffer, V19_SAVESTRINGSIZE);
     nameBuffer[V19_SAVESTRINGSIZE - 1] = 0;
-    Str_Set(&info->_name, nameBuffer);
+    Str_Set(&info->_description, nameBuffer);
 
     char vcheck[VERSIONSIZE];
     Reader_Read(reader, vcheck, VERSIONSIZE);
@@ -974,7 +974,7 @@ dd_bool SV_RecogniseState_Dm_v19(Str const *path, SaveInfo *info)
         if(strncmp(vcheck, "version ", 8))*/
         {
             SaveInfo_Read_Dm_v19(info, svReader);
-            result = (SaveInfo_Header(info)->version <= V19_SAVE_VERSION);
+            result = (info->version() <= V19_SAVE_VERSION);
         }
 
         Reader_Delete(svReader); svReader = 0;

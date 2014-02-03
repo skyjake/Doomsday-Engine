@@ -2147,7 +2147,7 @@ void G_DoReborn(int plrNum)
             {
                 // Compose the confirmation message.
                 SaveInfo* info = SV_SaveInfoForSlot(chosenSlot);
-                AutoStr* msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Name(info)));
+                AutoStr* msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Description(info)));
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, chosenSlot, 0);
             }
@@ -2929,10 +2929,10 @@ void G_DoSaveGame(void)
     {
         // No name specified.
         SaveInfo* info = SV_SaveInfoForSlot(gaSaveGameSlot);
-        if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Name(info)))
+        if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Description(info)))
         {
             // Slot already in use; reuse the existing name.
-            name = Str_Text(SaveInfo_Name(info));
+            name = Str_Text(SaveInfo_Description(info));
         }
         else
         {
@@ -3663,7 +3663,7 @@ D_CMD(LoadGame)
 
         info = SV_SaveInfoForSlot(slot);
         // Compose the confirmation message.
-        msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, Str_Text(SaveInfo_Name(info)));
+        msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, Str_Text(SaveInfo_Description(info)));
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadGameConfirmResponse, slot, 0);
@@ -3762,7 +3762,7 @@ D_CMD(SaveGame)
         }
 
         // Compose the confirmation message.
-        msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, Str_Text(SaveInfo_Name(info)));
+        msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, Str_Text(SaveInfo_Description(info)));
 
         // Make a copy of the name.
         name = Str_Copy(Str_New(), &localName);
@@ -3856,7 +3856,7 @@ D_CMD(DeleteGameSave)
         {
             // Compose the confirmation message.
             SaveInfo* info = SV_SaveInfoForSlot(slot);
-            AutoStr* msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Name(info)));
+            AutoStr* msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Description(info)));
             S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slot, 0);
         }

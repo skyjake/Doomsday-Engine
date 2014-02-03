@@ -439,24 +439,24 @@ static void clearSaveInfo()
     {
         for(int i = 0; i < NUMSAVESLOTS; ++i)
         {
-            SaveInfo_Delete(saveInfo[i]);
+            delete saveInfo[i];
         }
         M_Free(saveInfo); saveInfo = 0;
     }
 
     if(autoSaveInfo)
     {
-        SaveInfo_Delete(autoSaveInfo); autoSaveInfo = 0;
+        delete autoSaveInfo; autoSaveInfo = 0;
     }
 #if __JHEXEN__
     if(baseSaveInfo)
     {
-        SaveInfo_Delete(baseSaveInfo); baseSaveInfo = 0;
+        delete baseSaveInfo; baseSaveInfo = 0;
     }
 #endif
     if(nullSaveInfo)
     {
-        SaveInfo_Delete(nullSaveInfo); nullSaveInfo = 0;
+        delete nullSaveInfo; nullSaveInfo = 0;
     }
 }
 
@@ -468,8 +468,8 @@ static void updateSaveInfo(Str const *path, SaveInfo *info)
     {
         // The save path cannot be accessed for some reason. Perhaps its a
         // network path? Clear the info for this slot.
-        SaveInfo_SetName(info, 0);
-        SaveInfo_SetGameId(info, 0);
+        info->setDescription(0);
+        info->setGameId(0);
         return;
     }
 
@@ -477,15 +477,15 @@ static void updateSaveInfo(Str const *path, SaveInfo *info)
     if(!recogniseGameState(path, info))
     {
         // Clear the info for this slot.
-        SaveInfo_SetName(info, 0);
-        SaveInfo_SetGameId(info, 0);
+        info->setDescription(0);
+        info->setGameId(0);
         return;
     }
 
     // Ensure we have a valid name.
-    if(Str_IsEmpty(SaveInfo_Name(info)))
+    if(Str_IsEmpty(info->description()))
     {
-        SaveInfo_SetName(info, AutoStr_FromText("UNNAMED"));
+        info->setDescription(AutoStr_FromText("UNNAMED"));
     }
 }
 
@@ -502,13 +502,13 @@ static void buildSaveInfo()
         // Initialize.
         for(int i = 0; i < NUMSAVESLOTS; ++i)
         {
-            saveInfo[i] = SaveInfo_New();
+            saveInfo[i] = new SaveInfo;
         }
-        autoSaveInfo = SaveInfo_New();
+        autoSaveInfo = new SaveInfo;
 #if __JHEXEN__
-        baseSaveInfo = SaveInfo_New();
+        baseSaveInfo = new SaveInfo;
 #endif
-        nullSaveInfo = SaveInfo_New();
+        nullSaveInfo = new SaveInfo;
     }
 
     /// Scan the save paths and populate the list.
@@ -566,7 +566,7 @@ static void replaceSaveInfo(int slot, SaveInfo *newInfo)
         destAdr = &saveInfo[slot];
     }
 
-    if(*destAdr) SaveInfo_Delete(*destAdr);
+    if(*destAdr) delete (*destAdr);
     *destAdr = newInfo;
 }
 
@@ -650,12 +650,12 @@ static void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
        ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
     {
         // Perhaps the old v9 format?
-        SaveInfo_Read_Hx_v9(info, reader);
+        info->read_Hx_v9(reader);
     }
     else
 #endif
     {
-        SaveInfo_Read(info, reader);
+        info->read(reader);
     }
 }
 
@@ -794,7 +794,7 @@ int SV_SlotForSaveName(char const *name)
         do
         {
             SaveInfo *info = saveInfo[i];
-            if(!Str_CompareIgnoreCase(SaveInfo_Name(info), name))
+            if(!Str_CompareIgnoreCase(info->description(), name))
             {
                 // This is the one!
                 saveSlot = i;
@@ -809,8 +809,7 @@ dd_bool SV_IsSlotUsed(int slot)
     DENG_ASSERT(inited);
     if(SV_ExistingFile(composeGameSavePathForSlot(slot)))
     {
-        SaveInfo *info = SV_SaveInfoForSlot(slot);
-        return SaveInfo_IsLoadable(info);
+        return SV_SaveInfoForSlot(slot)->isLoadable();
     }
     return false;
 }
@@ -856,7 +855,9 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     SV_CopyFile(src, dst);
 
     // Copy saveinfo too.
-    replaceSaveInfo(destSlot, SaveInfo_Dup(findSaveInfoForSlot(sourceSlot)));
+    SaveInfo *info = findSaveInfoForSlot(sourceSlot);
+    DENG_ASSERT(info != 0);
+    replaceSaveInfo(destSlot, new SaveInfo(*info));
 }
 
 #if __JHEXEN__
@@ -3660,15 +3661,15 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     // Read the header again.
     /// @todo Seek past the header straight to the game state.
     {
-        SaveInfo *tmp = SaveInfo_New();
+        SaveInfo *tmp = new SaveInfo;
         SV_SaveInfo_Read(tmp, reader);
-        SaveInfo_Delete(tmp);
+        delete tmp;
     }
 
     /*
      * Configure global game state:
      */
-    hdr = SaveInfo_Header(saveInfo);
+    hdr = saveInfo->header();
 
     gameEpisode     = hdr->episode - 1;
     gameMap         = hdr->map - 1;
@@ -3810,7 +3811,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(SaveInfo_GameId(saveInfo));
+    NetSv_LoadGame(saveInfo->gameId());
 #endif
 
     Reader_Delete(reader);
@@ -3849,7 +3850,7 @@ static int loadStateWorker(Str const *path, SaveInfo &saveInfo)
      */
 
     // Material origin scrollers must be re-spawned for older save state versions.
-    saveheader_t const *hdr = SaveInfo_Header(&saveInfo);
+    saveheader_t const *hdr = saveInfo.header();
 
     /// @todo Implement SaveInfo format type identifiers.
     if((hdr->magic != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
@@ -3941,12 +3942,12 @@ void SV_SaveGameClient(uint gameId)
     }
 
     // Prepare the header.
-    saveInfo = SaveInfo_New();
-    SaveInfo_SetGameId(saveInfo, gameId);
-    SaveInfo_Configure(saveInfo);
+    saveInfo = new SaveInfo;
+    saveInfo->setGameId(gameId);
+    saveInfo->configure();
 
     Writer *writer = SV_NewWriter();
-    SaveInfo_Write(saveInfo, writer);
+    saveInfo->write(writer);
 
     // Some important information.
     // Our position and look angles.
@@ -3970,7 +3971,7 @@ void SV_SaveGameClient(uint gameId)
 
     SV_CloseFile();
     Writer_Delete(writer);
-    SaveInfo_Delete(saveInfo);
+    delete saveInfo;
 #else
     DENG_UNUSED(gameId);
 #endif
@@ -3998,15 +3999,15 @@ void SV_LoadGameClient(uint gameId)
         return;
     }
 
-    saveInfo = SaveInfo_New();
+    saveInfo = new SaveInfo;
     Reader *reader = SV_NewReader();
     SV_SaveInfo_Read(saveInfo, reader);
 
-    hdr = SaveInfo_Header(saveInfo);
+    hdr = saveInfo->header();
     if(hdr->magic != MY_CLIENT_SAVE_MAGIC)
     {
         Reader_Delete(reader);
-        SaveInfo_Delete(saveInfo);
+        delete saveInfo;
         SV_CloseFile();
         App_Log(DE2_RES_ERROR, "Client save file format not recognized");
         return;
@@ -4055,7 +4056,7 @@ void SV_LoadGameClient(uint gameId)
 
     SV_CloseFile();
     Reader_Delete(reader);
-    SaveInfo_Delete(saveInfo);
+    delete saveInfo;
 #else
     DENG_UNUSED(gameId);
 #endif
@@ -4098,7 +4099,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(SaveInfo_GameId(saveInfo));
+    NetSv_SaveGame(saveInfo->gameId());
 #endif
 
     if(!openGameSaveFile(path, true))
@@ -4112,7 +4113,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
      * Write the game session header.
      */
     Writer *writer = SV_NewWriter();
-    SaveInfo_Write(saveInfo, writer);
+    saveInfo->write(writer);
 
 #if __JHEXEN__
     Game_ACScriptInterpreter().writeWorldScriptData(writer);
@@ -4169,10 +4170,10 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 static SaveInfo *createSaveInfo(char const *name)
 {
     ddstring_t nameStr;
-    SaveInfo *info = SaveInfo_New();
-    SaveInfo_SetName(info, Str_InitStatic(&nameStr, name));
-    SaveInfo_SetGameId(info, SV_GenerateGameId());
-    SaveInfo_Configure(info);
+    SaveInfo *info = new SaveInfo;
+    info->setDescription(Str_InitStatic(&nameStr, name));
+    info->setGameId(SV_GenerateGameId());
+    info->configure();
     return info;
 }
 
@@ -4224,7 +4225,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
     else
     {
         // We no longer need the info.
-        SaveInfo_Delete(info);
+        delete info;
 
         if(saveError == SV_INVALIDFILENAME)
         {

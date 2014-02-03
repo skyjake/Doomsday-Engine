@@ -52,7 +52,7 @@ typedef struct saveheader_s {
 class SaveInfo
 {
 public: /// @todo make private:
-    Str _name;
+    Str _description;
     uint _gameId;
     saveheader_t _header;
 
@@ -66,41 +66,50 @@ public:
     void configure();
 
     /**
-     * Returns @a true if the game state is compatibile with the current game session
-     * and @em should be loadable.
+     * Returns @a true if the game session is compatibile with the current game session
+     * and @em should therefore be loadable.
      */
-    dd_bool isLoadable();
+    bool isLoadable();
 
+    /**
+     * Returns the logicl version of the serialized game session state.
+     */
     int version() const;
 
+    /**
+     * Returns the textual description of the game session (provided by the user).
+     */
+    Str const *description() const;
+    void setDescription(Str const *newDesc);
+
+    /**
+     * @see SV_GenerateGameId()
+     */
     uint gameId() const;
     void setGameId(uint newGameId);
 
-    Str const *name() const;
-    void setName(Str const *newName);
-
     /**
-     * Serializes the save info using @a writer.
-     *
-     * @param writer  Writer instance.
+     * Serializes the game session info using @a writer.
      */
     void write(Writer *writer) const;
 
     /**
-     * Deserializes the save info using @a reader.
-     *
-     * @param reader  Reader instance.
+     * Deserializes the game session info using @a reader.
      */
     void read(Reader *reader);
 
 #if __JHEXEN__
     /**
      * @brief libhexen specific version of @ref SaveInfo_Read() for deserializing
-     * legacy version 9 save state info.
+     * legacy version 9 game session info.
      */
     void read_Hx_v9(Reader *reader);
 #endif
 
+    /**
+     * Provides readonly access to the game session header.
+     * @todo refactor away.
+     */
     saveheader_t const *header() const;
 };
 
@@ -121,19 +130,15 @@ void SaveInfo_Delete(SaveInfo *info);
 
 SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
 
-uint SaveInfo_GameId(SaveInfo const *info);
-
-saveheader_t const *SaveInfo_Header(SaveInfo const *info);
-
-Str const *SaveInfo_Name(SaveInfo const *info);
-
-void SaveInfo_SetGameId(SaveInfo *info, uint newGameId);
-
-void SaveInfo_SetName(SaveInfo *info, Str const *newName);
-
 void SaveInfo_Configure(SaveInfo *info);
 
 dd_bool SaveInfo_IsLoadable(SaveInfo *info);
+
+Str const *SaveInfo_Description(SaveInfo const *info);
+void SaveInfo_SetDescription(SaveInfo *info, Str const *newName);
+
+uint SaveInfo_GameId(SaveInfo const *info);
+void SaveInfo_SetGameId(SaveInfo *info, uint newGameId);
 
 void SaveInfo_Write(SaveInfo *info, Writer *writer);
 
@@ -142,6 +147,8 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader);
 #if __JHEXEN__
 void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader);
 #endif
+
+saveheader_t const *SaveInfo_Header(SaveInfo const *info);
 
 #ifdef __cplusplus
 } // extern "C"
