@@ -308,8 +308,21 @@ String Time::asText(Format format) const
         }
         else if(format == BuildNumberAndSecondsSinceStart)
         {
-            return QString("#%1 %2").arg(asBuildNumber(), -4)
-                    .arg(highPerfTimer.elapsed(), 7, 'f', 3, '0');
+            DENG2_ASSERT(d->flags & Instance::HighPerformance);
+
+            TimeDelta const elapsed = d->highPerfElapsed;
+            int hours = elapsed.asHours();
+            double sec = elapsed - hours * 3600.0;
+            if(hours > 0)
+            {
+                return QString("#%1 %2h%3")
+                        .arg(asBuildNumber(), -4)
+                        .arg(hours)
+                        .arg(sec, 7, 'f', 3, '0');
+            }
+            return QString("#%1 %2")
+                    .arg(asBuildNumber(), -4)
+                    .arg(sec, 7, 'f', 3, '0');
         }
         else
         {

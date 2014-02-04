@@ -520,7 +520,7 @@ bool DialogWidget::handleEvent(Event const &event)
                 ButtonWidget const &but = d->buttonWidget(*defaultAction);
                 if(but.action())
                 {
-                    but.action()->trigger();
+                    const_cast<de::Action *>(but.action())->trigger();
                 }
             }
             return true;
@@ -626,15 +626,15 @@ DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label)
     : ui::ActionItem(label, 0), _role(flags)
 {}
 
-DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label, de::Action *action)
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label, RefArg<de::Action> action)
     : ui::ActionItem(label, action), _role(flags)
 {}
 
-DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, de::Action *action)
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, RefArg<de::Action> action)
     : ui::ActionItem(image, "", action), _role(flags)
 {}
 
-DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, String const &label, de::Action *action)
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image, String const &label, RefArg<de::Action> action)
     : ui::ActionItem(image, label, action), _role(flags)
 {}
 

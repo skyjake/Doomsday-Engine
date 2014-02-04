@@ -111,6 +111,11 @@ inline dint64 ceil(ddouble const &value) {
     return dint64(std::ceil(value));
 }
 
+template <typename Type>
+inline Type fract(Type const &value) {
+    return value - std::floor(value);
+}
+
 /// Compare two single-precision floating-point values for equality,
 /// with the precision of FLOAT_EPSILON.
 inline bool fequal(dfloat a, dfloat b) {

@@ -29,7 +29,7 @@ DENG2_OBSERVES(Action, Triggered)
 {
     State state;
     DotPath hoverTextColor;
-    QScopedPointer<Action> action;
+    Action *action;
     Animation scale;
     Animation frameOpacity;
     bool animating;
@@ -37,11 +37,18 @@ DENG2_OBSERVES(Action, Triggered)
     Instance(Public *i)
         : Base(i)
         , state(Up)
+        , action(0)
         , scale(1.f)
         , frameOpacity(.08f, Animation::Linear)
         , animating(false)
     {
         setDefaultBackground();
+    }
+
+    ~Instance()
+    {
+        if(action) action->audienceForTriggered -= this;
+        releaseRef(action);
     }
 
     void setState(State st)
@@ -151,14 +158,14 @@ void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId)
     d->hoverTextColor = hoverTextId;
 }
 
-void ButtonWidget::setAction(Action *action)
+void ButtonWidget::setAction(RefArg<Action> action)
 {
-    if(!d->action.isNull())
+    if(d->action)
     {
         d->action->audienceForTriggered -= d;
     }
 
-    d->action.reset(action);
+    changeRef(d->action, action);
 
     if(action)
     {
@@ -166,14 +173,9 @@ void ButtonWidget::setAction(Action *action)
     }
 }
 
-Action *ButtonWidget::action() const
+Action const *ButtonWidget::action() const
 {
-    return d->action.data();
-}
-
-Action *ButtonWidget::takeAction()
-{
-    return d->action.take();
+    return d->action;
 }
 
 ButtonWidget::State ButtonWidget::state() const
@@ -206,12 +208,15 @@ bool ButtonWidget::handleEvent(Event const &event)
                 d->updateHover(mouse.pos());
                 if(hitTest(mouse.pos()))
                 {
+                    // Hold an extra ref so the action isn't deleted by triggering.
+                    AutoRef<Action> held = holdRef(d->action);
+
                     // Notify.
                     DENG2_FOR_AUDIENCE(Press, i) i->buttonPressed(*this);
 
-                    if(!d->action.isNull())
+                    if(held)
                     {
-                        d->action->trigger();
+                        held->trigger();
                     }
                 }
                 return true;

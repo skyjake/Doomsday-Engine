@@ -20,6 +20,7 @@
 #include "de/DialogWidget"
 #include "de/ToggleWidget"
 #include "de/LabelWidget"
+#include "de/LineEditWidget"
 
 namespace de {
 
@@ -74,6 +75,11 @@ void DialogContentStylist::applyStyle(GuiWidget &w)
     if(ToggleWidget *tog = w.maybeAs<ToggleWidget>())
     {
         tog->set(GuiWidget::Background());
+    }
+
+    if(LineEditWidget *ed = w.maybeAs<LineEditWidget>())
+    {
+        ed->rule().setInput(Rule::Width, _container->style().rules().rule("editor.width"));
     }
 }
 

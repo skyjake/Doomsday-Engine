@@ -181,6 +181,11 @@ public Font::RichFormat::IStyle
                 << uMvpMatrix << uColor << uAtlas();
 
         glText.init(atlas(), self.font(), this);
+
+        if(!image.isNull())
+        {
+            image->glInit();
+        }
     }
 
     void glDeinit()

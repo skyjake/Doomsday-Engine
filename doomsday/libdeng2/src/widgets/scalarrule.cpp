@@ -69,6 +69,11 @@ void ScalarRule::shift(float delta)
     invalidate();
 }
 
+void ScalarRule::finish()
+{
+    _animation.finish();
+}
+
 String ScalarRule::description() const
 {
     String desc = "Scalar(" + _animation.asText();

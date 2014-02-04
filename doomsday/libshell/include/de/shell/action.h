@@ -42,8 +42,6 @@ public:
 
     Action(KeyEvent const &event, QObject *target = 0, char const *slot = 0);
 
-    ~Action();
-
     void setLabel(String const &label);
 
     String label() const;
@@ -59,10 +57,11 @@ public:
 
     void trigger();
 
-    Action *duplicate() const;
-
 signals:
     void triggered();
+
+protected:
+    ~Action();
 
 private:
     KeyEvent _event;

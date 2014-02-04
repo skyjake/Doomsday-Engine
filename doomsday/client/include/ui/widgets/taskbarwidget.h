@@ -63,6 +63,7 @@ public slots:
     void unloadGame();
     void showAbout();
     void showUpdaterSettings();
+    void showGames();
 
 protected slots:
     void updateCommandLineLayout();

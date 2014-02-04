@@ -1,6 +1,6 @@
-/** @file gameselectionwidget.h
+/** @file gamesessionwidget.h
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -13,34 +13,33 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_GAMESELECTIONWIDGET_H
-#define DENG_CLIENT_GAMESELECTIONWIDGET_H
+#ifndef DENG_CLIENT_GAMESESSIONWIDGET_H
+#define DENG_CLIENT_GAMESESSIONWIDGET_H
 
-#include <de/ScrollAreaWidget>
+#include <de/ButtonWidget>
+#include <de/DocumentWidget>
 
 /**
- * Menu for selecting
+ * Widget for representing an item (game session) in the game selection menu.
+ *
+ * It has two buttons: one for starting the game and one for configuring it.
  */
-class GameSelectionWidget : public de::ScrollAreaWidget
+class GameSessionWidget : public de::GuiWidget
 {
-    Q_OBJECT
-
 public:
-    GameSelectionWidget(de::String const &name = "gameselection");
+    GameSessionWidget();
 
-    void setTitleColor(de::DotPath const &colorId);
+    de::ButtonWidget &loadButton();
+    de::ButtonWidget &infoButton();
+    de::DocumentWidget &document();
 
-    // Events.
-    void update();
-
-signals:
-    void gameSessionSelected();
+    virtual void updateInfoContent();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_GAMESELECTIONWIDGET_H
+#endif // DENG_CLIENT_GAMESESSIONWIDGET_H

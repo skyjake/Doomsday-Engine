@@ -26,7 +26,7 @@
 #include "ui/dialogs/networksettingsdialog.h"
 #include "ui/dialogs/renderersettingsdialog.h"
 #include "ui/dialogs/vrsettingsdialog.h"
-#include "ui/dialogs/multiplayerdialog.h"
+#include "ui/dialogs/gamesdialog.h"
 #include "updater/updatersettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/clientrootwidget.h"
@@ -59,6 +59,8 @@ static TimeDelta OPEN_CLOSE_SPAN = 0.2;
 enum MenuItemPositions
 {
     // DE menu:
+    POS_GAMES             = 0,
+    POS_GAMES_SEPARATOR   = 1,
     POS_UNLOAD            = 5,
 
     // Config menu:
@@ -257,7 +259,9 @@ DENG_GUI_PIMPL(TaskBarWidget)
     {
         updateStatus();
 
-        itemWidget(mainMenu, POS_UNLOAD).show(!newGame.isNull());
+        itemWidget(mainMenu, POS_GAMES)          .show(!newGame.isNull());
+        itemWidget(mainMenu, POS_GAMES_SEPARATOR).show(!newGame.isNull());
+        itemWidget(mainMenu, POS_UNLOAD)         .show(!newGame.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
         itemWidget(configMenu, POS_VR_SETTINGS)      .show(!newGame.isNull());
@@ -403,7 +407,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::SubwidgetItem(style().images().image("updater"),  tr("Updater"),  ui::Left, makeUpdaterSettings);
 
     d->mainMenu->items()
-            << new ui::SubwidgetItem(tr("Multiplayer Games..."), ui::Left, makePopup<MultiplayerDialog>)
+            << new ui::ActionItem(tr("Games..."), new SignalAction(this, SLOT(showGames())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
@@ -411,8 +415,9 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << unloadMenu                           // hidden with null-game
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
+    d->itemWidget(d->mainMenu, POS_GAMES).hide();
+    d->itemWidget(d->mainMenu, POS_GAMES_SEPARATOR).hide();
     d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
-    //d->itemWidget(d->mainMenu, POS_GAME_SEPARATOR).hide();
 
     d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
     d->itemWidget(d->configMenu, POS_VR_SETTINGS).hide();
@@ -693,6 +698,13 @@ void TaskBarWidget::showUpdaterSettings()
     dlg->setDeleteAfterDismissed(true);
     root().addOnTop(dlg);
     dlg->open();
+}
+
+void TaskBarWidget::showGames()
+{
+    GamesDialog *games = new GamesDialog;
+    games->setDeleteAfterDismissed(true);
+    games->exec(root());
 }
 
 void TaskBarWidget::updateCommandLineLayout()

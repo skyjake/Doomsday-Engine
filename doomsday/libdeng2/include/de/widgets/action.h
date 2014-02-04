@@ -20,24 +20,26 @@
 #define LIBDENG2_ACTION_H
 
 #include <de/Observers>
+#include <de/Counted>
 
 namespace de {
 
 /**
  * Abstract base class for user interface actions.
  *
+ * Actions are reference-counted so that they can be shared by widgets and data model
+ * items. Also, the same actions could be used by different sets of widgets representing
+ * a single data item.
+ *
  * @ingroup widgets
  */
-class DENG2_PUBLIC Action
+class DENG2_PUBLIC Action : public Counted
 {
 public:
     /**
      * Audience to be notified when the action is triggerd.
      */
     DENG2_DEFINE_AUDIENCE(Triggered, void actionTriggered(Action &))
-
-public:
-    virtual ~Action();
 
     /**
      * Perform the action this instance represents. Derived classes must call
@@ -46,12 +48,8 @@ public:
      */
     virtual void trigger();
 
-    /**
-     * Returns a duplicate copy of the action.
-     *
-     * @return Duplicated action. Caller gets ownership.
-     */
-    virtual Action *duplicate() const = 0;
+protected:
+    virtual ~Action(); // ref counted, hence not publicly deletable
 };
 
 } // namespace de

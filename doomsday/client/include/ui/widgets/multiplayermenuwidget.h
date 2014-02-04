@@ -28,8 +28,17 @@
  */
 class MultiplayerMenuWidget : public de::PopupMenuWidget
 {
+    Q_OBJECT
+    
 public:
     MultiplayerMenuWidget();
+    
+public slots:
+    void updateElapsedTime();
+
+protected:
+    void preparePanelForOpening();
+    void panelClosing();
 
 private:
     DENG2_PRIVATE(d)

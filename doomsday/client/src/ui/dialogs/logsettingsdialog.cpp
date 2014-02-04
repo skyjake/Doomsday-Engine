@@ -83,7 +83,6 @@ DENG2_PIMPL(LogSettingsDialog)
             // Folding panel for the per-domain settings.
             self.area().add(fold = new FoldPanelWidget);
             fold->setContent(new GuiWidget);
-            fold->title().hide();
 
             foldLayout.setLeftTop(fold->content().rule().left(),
                                   fold->content().rule().top());

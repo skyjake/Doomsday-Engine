@@ -94,6 +94,11 @@ public:
     ChildWidgetOrganizer &organizer();
     ChildWidgetOrganizer const &organizer() const;
 
+    template <typename WidgetType>
+    WidgetType &itemWidget(ui::Item const &item) const {
+        return organizer().itemWidget(item)->as<WidgetType>();
+    }
+
     /**
      * Returns the number of visible items in the menu. Hidden items are not
      * included in this count.

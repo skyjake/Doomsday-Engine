@@ -52,12 +52,6 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
             emit d->self.selectionChangedByUser(d->selected);
         }
-
-        Action *duplicate() const
-        {
-            DENG2_ASSERT(false); // not needed
-            return 0;
-        }
     };
 
     PopupMenuWidget *choices;

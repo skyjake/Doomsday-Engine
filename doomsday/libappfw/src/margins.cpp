@@ -89,7 +89,10 @@ DENG2_PIMPL(Margins)
 
     void updateOutput(int side)
     {
-        if(!outputs[side]) return;
+        if(side < 4 && outputs[side] && inputs[side])
+        {
+            outputs[side]->setSource(*inputs[side]);
+        }
 
         // Update the sums.
         if(side == LeftRight || side == SideLeft || side == SideRight)
@@ -105,11 +108,6 @@ DENG2_PIMPL(Margins)
             {
                 outputs[TopBottom]->setSource(*inputs[SideTop] + *inputs[SideBottom]);
             }
-        }
-
-        if(side < 4 && inputs[side])
-        {
-            outputs[side]->setSource(*inputs[side]);
         }
     }
 

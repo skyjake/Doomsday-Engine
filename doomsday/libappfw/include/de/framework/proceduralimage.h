@@ -50,6 +50,7 @@ public:
     void setColor(Color const &color);
 
     virtual void update();
+    virtual void glInit();
     virtual void glDeinit();
     virtual void glMakeGeometry(DefaultVertexBuf::Builder &verts, Rectanglef const &rect) = 0;
 
