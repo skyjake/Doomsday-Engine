@@ -54,8 +54,8 @@ public:
     void configure();
 
     /**
-     * Returns @a true if the game session is compatibile with the current game session
-     * and @em should therefore be loadable.
+     * Determines whether the saved game session is compatibile with the current
+     * game session (and @em should therefore be loadable).
      */
     bool isLoadable();
 
@@ -77,11 +77,26 @@ public:
     uint gameId() const;
     void setGameId(uint newGameId);
 
+    /**
+     * Returns the logical episode number for the game session.
+     */
     uint episode() const;
+
+    /**
+     * Returns the logical map number for the game session.
+     */
     uint map() const;
+
 #if !__JHEXEN__
+    /**
+     * Returns the expired time in tics since the map begun.
+     */
     int mapTime() const;
 #endif
+
+    /**
+     * Returns the game ruleset for the game session.
+     */
     GameRuleset const &gameRules() const;
 
     /**
@@ -94,11 +109,10 @@ public:
      */
     void read(Reader *reader);
 
-#if __JHEXEN__
     /**
-     * @brief libhexen specific version of @ref SaveInfo_Read() for deserializing
-     * legacy version 9 game session info.
+     * Hexen-specific version for deserializing legacy v.9 game session info.
      */
+#if __JHEXEN__
     void read_Hx_v9(Reader *reader);
 #endif
 };

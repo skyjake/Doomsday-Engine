@@ -893,7 +893,7 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     Reader_Read(reader, vcheck, VERSIONSIZE);
     //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
 
-    info->_version         = atoi(&vcheck[8]);
+    info->_version = atoi(&vcheck[8]);
 
     info->_gameRules.skill = (skillmode_t) Reader_ReadByte(reader);
 
@@ -901,8 +901,8 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     if(info->_gameRules.skill < SM_BABY || info->_gameRules.skill >= NUM_SKILL_MODES)
         info->_gameRules.skill = SM_NOTHINGS;
 
-    info->_episode         = Reader_ReadByte(reader);
-    info->_map             = Reader_ReadByte(reader);
+    info->_episode = Reader_ReadByte(reader) - 1;
+    info->_map     = Reader_ReadByte(reader) - 1;
 
     for(int i = 0; i < 4; ++i)
     {
@@ -915,12 +915,12 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     int a = Reader_ReadByte(reader);
     int b = Reader_ReadByte(reader);
     int c = Reader_ReadByte(reader);
-    info->_mapTime         = (a << 16) + (b << 8) + c;
+    info->_mapTime  = (a << 16) + (b << 8) + c;
 
-    info->_magic           = 0; // Initialize with *something*.
+    info->_magic    = 0; // Initialize with *something*.
 
     /// @note Older formats do not contain all needed values:
-    info->_gameMode        = gameMode; // Assume the current mode.
+    info->_gameMode = gameMode; // Assume the current mode.
 
     info->_gameRules.deathmatch      = 0;
     info->_gameRules.noMonsters      = 0;

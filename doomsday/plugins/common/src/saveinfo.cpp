@@ -161,12 +161,12 @@ void SaveInfo::setGameId(uint newGameId)
 
 uint SaveInfo::episode() const
 {
-    return _episode - 1;
+    return _episode;
 }
 
 uint SaveInfo::map() const
 {
-    return _map - 1;
+    return _map;
 }
 
 #if !__JHEXEN__
@@ -189,10 +189,10 @@ void SaveInfo::configure()
 #if __JHEXEN__
     _episode  = 1;
 #else
-    _episode  = gameEpisode + 1;
+    _episode  = gameEpisode;
     _mapTime  = ::mapTime;
 #endif
-    _map      = gameMap + 1;
+    _map      = gameMap;
 
     // Make a copy of the current game rules.
     G_GetGameRules(&_gameRules);
@@ -274,28 +274,39 @@ void SaveInfo::read(Reader *reader)
     else
     {
 #if !__JHEXEN__
-        // In DOOM the high bit of the skill mode byte is also used for the
-        // "fast" game rule dd_bool. There is more confusion in that SM_NOTHINGS
-        // will result in 0xff and thus always set the fast bit.
-        //
-        // Here we decipher this assuming that if the skill mode is invalid then
-        // by default this means "spawn no things" and if so then the "fast" game
-        // rule is meaningless so it is forced off.
-        byte skillModePlusFastBit = Reader_ReadByte(reader);
-        _gameRules.skill = (skillmode_t) (skillModePlusFastBit & 0x7f);
-        if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
+        if(_version < 13)
         {
-            _gameRules.skill = SM_NOTHINGS;
-            _gameRules.fast  = 0;
+            // In DOOM the high bit of the skill mode byte is also used for the
+            // "fast" game rule dd_bool. There is more confusion in that SM_NOTHINGS
+            // will result in 0xff and thus always set the fast bit.
+            //
+            // Here we decipher this assuming that if the skill mode is invalid then
+            // by default this means "spawn no things" and if so then the "fast" game
+            // rule is meaningless so it is forced off.
+            byte skillModePlusFastBit = Reader_ReadByte(reader);
+            _gameRules.skill = (skillmode_t) (skillModePlusFastBit & 0x7f);
+            if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
+            {
+                _gameRules.skill = SM_NOTHINGS;
+                _gameRules.fast  = 0;
+            }
+            else
+            {
+                _gameRules.fast  = (skillModePlusFastBit & 0x80) != 0;
+            }
         }
         else
-        {
-            _gameRules.fast  = (skillModePlusFastBit & 0x80) != 0;
-        }
 #endif
+        {
+            _gameRules.skill = skillmode_t( Reader_ReadByte(reader) & 0x7f );
 
-        _episode = Reader_ReadByte(reader);
-        _map     = Reader_ReadByte(reader);
+            // Interpret skill levels outside the normal range as "spawn no things".
+            if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
+                _gameRules.skill = SM_NOTHINGS;
+        }
+
+        _episode = Reader_ReadByte(reader) - 1;
+        _map     = Reader_ReadByte(reader) - 1;
 
         _gameRules.deathmatch      = Reader_ReadByte(reader);
 #if !__JHEXEN__
