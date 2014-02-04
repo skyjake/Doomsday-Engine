@@ -144,7 +144,10 @@ void FoldPanelWidget::preparePanelForOpening()
         d->container = 0;
     }
 
-    d->title->setOpacity(1);
+    if(d->title)
+    {
+        d->title->setOpacity(1);
+    }
 
     PanelWidget::preparePanelForOpening();
 }
@@ -153,7 +156,10 @@ void FoldPanelWidget::panelDismissed()
 {
     PanelWidget::panelDismissed();
 
-    d->title->setOpacity(.8f, .5f);
+    if(d->title)
+    {
+        d->title->setOpacity(.8f, .5f);
+    }
 
     content().notifySelfAndTree(&Widget::deinitialize);
 
