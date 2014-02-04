@@ -402,10 +402,10 @@ ccmdtemplate_t gameCmds[] = {
 };
 
 // Deferred new game arguments:
-static skillmode_t dSkill;
 static uint dEpisode;
 static uint dMap;
 static uint dMapEntrance;
+static GameRuleset dRules;
 
 static gameaction_t gameAction;
 static dd_bool quitInProgress;
@@ -1545,7 +1545,7 @@ static void runGameAction(void)
         {
         case GA_NEWGAME:
             G_InitNewGame();
-            G_NewGame(dSkill, dEpisode, dMap, dMapEntrance);
+            G_NewGame(dEpisode, dMap, dMapEntrance, &dRules);
             G_SetGameAction(GA_NONE);
             break;
 
@@ -2220,13 +2220,16 @@ static void G_ApplyGameRuleFastMissiles(dd_bool fast)
 }
 #endif
 
-static void G_ApplyGameRules(skillmode_t skill)
+/**
+ * To be called when a new game begins to effect the game rules. Note that some
+ * of the rules may be overridden here (e.g., in a networked game).
+ */
+static void G_ApplyNewGameRules()
 {
-    if(skill < SM_NOTHINGS)
-        skill = SM_NOTHINGS;
-    if(skill > NUM_SKILL_MODES - 1)
-        skill = NUM_SKILL_MODES - 1;
-    gameRules.skill = skill;
+    if(gameRules.skill < SM_NOTHINGS)
+        gameRules.skill = SM_NOTHINGS;
+    if(gameRules.skill > NUM_SKILL_MODES - 1)
+        gameRules.skill = NUM_SKILL_MODES - 1;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!IS_NETGAME)
@@ -2625,10 +2628,6 @@ void G_DoLeaveMap(void)
             {
                 SV_ClearSlot(BASE_SLOT);
             }
-
-            // Re-apply the game rules.
-            /// @todo Necessary?
-            G_ApplyGameRules(gameRules.skill);
         }
 
         Uri_Delete(nextMapUri);
@@ -2746,7 +2745,7 @@ void G_DoRestartMap(void)
 
     // Restart the game session entirely.
     G_InitNewGame();
-    G_NewGame(dSkill, dEpisode, dMap, dMapEntrance);
+    G_NewGame(dEpisode, dMap, dMapEntrance, &dRules);
 #else
     loadmap_params_t p;
 
@@ -2957,19 +2956,23 @@ void G_DoSaveGame(void)
     G_SetGameAction(GA_NONE);
 }
 
-void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntrance)
+void G_DeferredNewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rules)
 {
-    dSkill       = skill;
+    DENG_ASSERT(rules != 0);
+
     dEpisode     = episode;
     dMap         = map;
     dMapEntrance = mapEntrance;
+    dRules       = *rules; // make a copy.
 
     G_SetGameAction(GA_NEWGAME);
 }
 
-void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntrance)
+void G_NewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rules)
 {
     uint i;
+
+    DENG_ASSERT(rules != 0);
 
     G_StopDemo();
 
@@ -3017,8 +3020,10 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntrance)
     gameEpisode     = episode;
     gameMap         = map;
     gameMapEntrance = mapEntrance;
+    gameRules       = *rules;
 
-    G_ApplyGameRules(skill);
+    G_ApplyNewGameRules();
+
     M_ResetRandom();
 
     NetSv_UpdateGameConfigDescription();
@@ -4001,12 +4006,12 @@ D_CMD(WarpMap)
         nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_DeferredNewGame(gameRules.skill, epsd, map, 0/*default*/);
+        G_DeferredNewGame(epsd, map, 0/*default*/, &gameRules);
 #endif
     }
     else
     {
-        G_DeferredNewGame(IS_SERVER? cfg.netSkill : gameRules.skill, epsd, map, 0/*default*/);
+        G_DeferredNewGame(epsd, map, 0/*default*/, &gameRules);
     }
 
     // If the command source was "us" the game library then it was probably in

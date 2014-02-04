@@ -842,21 +842,17 @@ int SV_LoadState_Dm_v19(Str const *path, SaveInfo *info)
         delete tmp;
     }
 
-    gameEpisode     = info->episode();
-    gameMap         = info->map();
-    gameMapEntrance = 0; /// @todo Not saved??
-    gameRules       = info->gameRules();
-
     // We don't want to see a briefing if we're loading a save game.
-    briefDisabled     = true;
+    briefDisabled = true;
 
     // Load a base map.
-    G_NewGame(gameRules.skill, gameEpisode, gameMap, gameMapEntrance);
-    /// @todo Necessary?
-    G_SetGameAction(GA_NONE);
+    G_NewGame(info->episode(), info->map(), 0/*not saved??*/, &info->gameRules());
 
     // Recreate map state.
-    mapTime           = info->mapTime();
+    mapTime = info->mapTime();
+
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
 
     P_v19_UnArchivePlayers();
     P_v19_UnArchiveWorld();

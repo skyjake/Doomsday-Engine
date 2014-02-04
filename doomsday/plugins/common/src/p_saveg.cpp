@@ -3646,9 +3646,9 @@ static bool openGameSaveFile(Str const *fileName, bool write)
     return SV_File() != 0;
 }
 
-static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
+static int SV_LoadState(Str const *path, SaveInfo *info)
 {
-    DENG_ASSERT(path != 0 && saveInfo != 0);
+    DENG_ASSERT(path != 0 && info != 0);
 
     playerHeaderOK = false; // Uninitialized.
 
@@ -3665,35 +3665,26 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
         delete tmp;
     }
 
-    /*
-     * Configure global game state:
-     */
-    curInfo = saveInfo;
-
-    gameEpisode     = saveInfo->episode();
-    gameMap         = saveInfo->map();
-    gameMapEntrance = 0; /// @todo Not saved??
-    gameRules       = saveInfo->gameRules();
+    curInfo = info;
 
 #if __JHEXEN__
-    Game_ACScriptInterpreter().readWorldScriptData(reader, saveInfo->version());
+    Game_ACScriptInterpreter().readWorldScriptData(reader, info->version());
 #endif
 
     /*
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewGame(gameRules.skill, gameEpisode, gameMap, gameMapEntrance);
+    G_NewGame(info->episode(), info->map(), 0/*not saved??*/, &info->gameRules());
+
+#if !__JHEXEN__
+    mapTime = info->mapTime();
+#endif
 
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
 #if !__JHEXEN__
-    // Set the time.
-    mapTime = saveInfo->mapTime();
-#endif
-
-#if !__JHEXEN__
-    initThingArchiveForLoad(saveInfo->version() >= 5? Reader_ReadInt32(reader) : 1024 /* num elements */);
+    initThingArchiveForLoad(info->version() >= 5? Reader_ReadInt32(reader) : 1024 /* num elements */);
 #endif
 
     readPlayerHeader(reader);
@@ -3797,7 +3788,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(saveInfo->gameId());
+    NetSv_LoadGame(info->gameId());
 #endif
 
     Reader_Delete(reader);
@@ -3996,17 +3987,17 @@ void SV_LoadGameClient(uint gameId)
         return;
     }
 
-    gameRules = saveInfo->gameRules();
-
     // Do we need to change the map?
     if(gameMap != saveInfo->map() || gameEpisode != saveInfo->episode())
     {
-        gameEpisode     = saveInfo->episode();
-        gameMap         = saveInfo->map();
-        gameMapEntrance = 0;
-        G_NewGame(gameRules.skill, gameEpisode, gameMap, gameMapEntrance);
+        G_NewGame(saveInfo->episode(), saveInfo->map(), 0/*default*/, &saveInfo->gameRules());
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
+    }
+    else
+    {
+        /// @todo Necessary?
+        gameRules = saveInfo->gameRules();
     }
     mapTime = saveInfo->mapTime();
 

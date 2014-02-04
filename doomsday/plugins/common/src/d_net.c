@@ -127,6 +127,7 @@ void NetSv_ApplyGameRulesFromConfig(void)
 int D_NetServerStarted(int before)
 {
     uint netMap, netEpisode;
+    GameRuleset netRules = gameRules; // Make a copy of the current rules.
 
     if(before) return true;
 
@@ -156,7 +157,9 @@ int D_NetServerStarted(int before)
     netEpisode = cfg.netEpisode;
 #endif
 
-    G_NewGame(cfg.netSkill, netEpisode, netMap, 0/*default*/);
+    netRules.skill = cfg.netSkill;
+
+    G_NewGame(netEpisode, netMap, 0/*default*/, &netRules);
 
     /// @todo Necessary?
     G_SetGameAction(GA_NONE);

@@ -459,7 +459,7 @@ void X_PostInit(void)
 
     if(autoStart || IS_NETGAME)
     {
-        G_DeferredNewGame(startSkill, startEpisode, startMap, 0/* default */);
+        G_DeferredNewGame(startEpisode, startMap, 0/*default*/, &gameRules);
     }
     else
     {

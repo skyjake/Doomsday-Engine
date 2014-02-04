@@ -92,7 +92,7 @@ char* borderGraphics[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static skillmode_t startSkill;
+//static skillmode_t startSkill;
 static uint startEpisode;
 static uint startMap;
 static dd_bool autoStart;
@@ -354,8 +354,8 @@ void D_PreInit(void)
  */
 void D_PostInit(void)
 {
-    AutoStr* path;
-    Uri* uri;
+    AutoStr *path;
+    Uri *uri;
     int p;
 
     // Common post init routine.
@@ -371,7 +371,7 @@ void D_PostInit(void)
     monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gameRules.skill = startSkill = SM_MEDIUM;
+    gameRules.skill = /*startSkill =*/ SM_MEDIUM;
     startEpisode = 0;
     startMap = 0;
     autoStart = false;
@@ -436,7 +436,7 @@ void D_PostInit(void)
     p = CommandLine_Check("-skill");
     if(p && p < myargc - 1)
     {
-        startSkill = CommandLine_At(p + 1)[0] - '1';
+        gameRules.skill = CommandLine_At(p + 1)[0] - '1';
         autoStart = true;
     }
 
@@ -451,7 +451,7 @@ void D_PostInit(void)
     if(autoStart)
     {
         App_Log(DE2_LOG_NOTE, "Warp to Episode %d, Map %d, Skill %d", startEpisode+1,
-                startMap+1, startSkill);
+                startMap+1, gameRules.skill);
     }
 
     // Validate episode and map.
@@ -466,7 +466,7 @@ void D_PostInit(void)
 
     if(autoStart || IS_NETGAME)
     {
-        G_DeferredNewGame(startSkill, startEpisode, startMap, 0/*default*/);
+        G_DeferredNewGame(startEpisode, startMap, 0/*default*/, &gameRules);
     }
     else
     {

@@ -6441,6 +6441,8 @@ int Hu_MenuConfirmInitNewGame(msgresponse_t response, int userValue, void* userP
 
 void Hu_MenuInitNewGame(dd_bool confirmed)
 {
+    GameRuleset newRules = gameRules;
+
 #if __JDOOM__
     if(!confirmed && SM_NIGHTMARE == mnSkillmode)
     {
@@ -6455,10 +6457,11 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     cfg.playerClass[CONSOLEPLAYER] = mnPlrClass;
 #endif
 
+    newRules.skill = mnSkillmode;
 #if __JHEXEN__
-    G_DeferredNewGame(mnSkillmode, mnEpisode, P_TranslateMap(0), 0/*default*/);
+    G_DeferredNewGame(mnEpisode, P_TranslateMap(0), 0/*default*/, &newRules);
 #else
-    G_DeferredNewGame(mnSkillmode, mnEpisode, 0, 0/*default*/);
+    G_DeferredNewGame(mnEpisode, 0, 0/*default*/, &newRules);
 #endif
 }
 

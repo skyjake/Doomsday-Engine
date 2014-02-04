@@ -90,7 +90,7 @@ char* borderGraphics[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static skillmode_t startSkill;
+//static skillmode_t startSkill;
 static uint startEpisode;
 static uint startMap;
 static dd_bool autoStart;
@@ -462,7 +462,7 @@ void D_PostInit(void)
     monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gameRules.skill = startSkill = SM_MEDIUM;
+    gameRules.skill = /*startSkill =*/ SM_MEDIUM;
     startEpisode = 0;
     startMap = 0;
     autoStart = false;
@@ -513,7 +513,7 @@ void D_PostInit(void)
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        const int saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
+        int const saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
         if(SV_IsUserWritableSlot(saveSlot) && G_LoadGame(saveSlot))
         {
             // No further initialization is to be done.
@@ -524,7 +524,7 @@ void D_PostInit(void)
     p = CommandLine_Check("-skill");
     if(p && p < myargc - 1)
     {
-        startSkill = CommandLine_At(p + 1)[0] - '1';
+        gameRules.skill = CommandLine_At(p + 1)[0] - '1';
         autoStart = true;
     }
 
@@ -556,9 +556,9 @@ void D_PostInit(void)
     if(autoStart)
     {
         if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-            App_Log(DE2_LOG_NOTE, "Autostart in Map %d, Skill %d", startMap+1, startSkill);
+            App_Log(DE2_LOG_NOTE, "Autostart in Map %d, Skill %d", startMap+1, gameRules.skill);
         else
-            App_Log(DE2_LOG_NOTE, "Autostart in Episode %d, Map %d, Skill %d", startEpisode+1, startMap+1, startSkill);
+            App_Log(DE2_LOG_NOTE, "Autostart in Episode %d, Map %d, Skill %d", startEpisode+1, startMap+1, gameRules.skill);
     }
 
     // Validate episode and map.
@@ -573,7 +573,7 @@ void D_PostInit(void)
 
     if(autoStart || IS_NETGAME)
     {
-        G_DeferredNewGame(startSkill, startEpisode, startMap, 0/*default*/);
+        G_DeferredNewGame(startEpisode, startMap, 0/*default*/, &gameRules);
     }
     else
     {
