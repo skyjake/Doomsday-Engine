@@ -33,9 +33,9 @@ D_CMD(SetClass);
 #endif
 D_CMD(LocalMessage);
 
-static void D_NetMessageEx(int player, const char* msg, dd_bool playSound);
-
 extern int netSvAllowSendMsg;
+
+static void D_NetMessageEx(int player, char const *msg, dd_bool playSound);
 
 float netJumpPower = 9;
 
@@ -68,7 +68,7 @@ void D_NetConsoleRegistration(void)
     C_CMD        ("message",    "s",    LocalMessage);
 }
 
-Writer* D_NetWrite(void)
+Writer *D_NetWrite(void)
 {
     if(netWriter)
     {
@@ -78,7 +78,7 @@ Writer* D_NetWrite(void)
     return netWriter;
 }
 
-Reader* D_NetRead(const byte* buffer, size_t len)
+Reader *D_NetRead(byte const *buffer, size_t len)
 {
     // Get rid of the old reader.
     if(netReader)

@@ -161,17 +161,15 @@ static void G_InitNewGame(void);
 
 game_config_t cfg; // The global cfg.
 
-skillmode_t dSkill; // Default.
-
 dd_bool gameInProgress;
 uint gameEpisode;
 uint gameMap;
-uint gameMapEntryPoint; // Position indicator for reborn.
+uint gameMapEntrance; // Position indicator for reborn.
 GameRuleset gameRules;
 
 uint nextMap;
 #if __JHEXEN__
-uint nextMapEntryPoint;
+uint nextMapEntrance;
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -186,7 +184,6 @@ dd_bool monsterInfight;
 
 player_t players[MAXPLAYERS];
 
-int mapStartTic; // Game tic at map start.
 int totalKills, totalItems, totalSecret; // For intermission.
 
 dd_bool singledemo; // Quit after playing a demo from cmdline.
@@ -404,9 +401,11 @@ ccmdtemplate_t gameCmds[] = {
     { NULL }
 };
 
+// Deferred new game arguments:
+static skillmode_t dSkill;
 static uint dEpisode;
 static uint dMap;
-static uint dMapEntryPoint;
+static uint dMapEntrance;
 
 static gameaction_t gameAction;
 static dd_bool quitInProgress;
@@ -1190,7 +1189,6 @@ void G_BeginMap(void)
     G_UpdateGSVarsForMap();
 
     // Time can now progress in this map.
-    mapStartTic = (int) GAMETIC;
     mapTime = actualMapTime = 0;
 
     printMapBanner();
@@ -1547,7 +1545,7 @@ static void runGameAction(void)
         {
         case GA_NEWGAME:
             G_InitNewGame();
-            G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
+            G_NewGame(dSkill, dEpisode, dMap, dMapEntrance);
             G_SetGameAction(GA_NONE);
             break;
 
@@ -2294,7 +2292,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 
 #if __JHEXEN__
     nextMap = newMap;
-    nextMapEntryPoint = _entryPoint;
+    nextMapEntrance = _entryPoint;
 #else
     secretExit = _secretExit;
 # if __JDOOM__
@@ -2338,7 +2336,7 @@ dd_bool G_IfVictory(void)
     }
 
 #elif __JHEXEN__
-    if(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT)
+    if(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT)
     {
         return true;
     }
@@ -2467,7 +2465,7 @@ void G_DoMapCompleted(void)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     NetSv_Intermission(IMF_BEGIN, 0, 0);
 #else /* __JHEXEN__ */
-    NetSv_Intermission(IMF_BEGIN, (int) nextMap, (int) nextMapEntryPoint);
+    NetSv_Intermission(IMF_BEGIN, (int) nextMap, (int) nextMapEntrance);
 #endif
 
     S_PauseMusic(false);
@@ -2674,9 +2672,9 @@ void G_DoLeaveMap(void)
 #endif
 
 #if __JHEXEN__
-    gameMapEntryPoint = nextMapEntryPoint;
+    gameMapEntrance = nextMapEntrance;
 #else
-    gameMapEntryPoint = 0;
+    gameMapEntrance = 0;
 #endif
 
     p.mapUri  = G_ComposeMapUri(gameEpisode, nextMap);
@@ -2714,7 +2712,7 @@ void G_DoLeaveMap(void)
         P_RemoveAllPlayerMobjs();
     }
 
-    SV_HxRestorePlayersInCluster(playerBackup, nextMapEntryPoint);
+    SV_HxRestorePlayersInCluster(playerBackup, nextMapEntrance);
 
     // Restore the random class rule.
     gameRules.randomClasses = oldRandomClassesRule;
@@ -2748,7 +2746,7 @@ void G_DoRestartMap(void)
 
     // Restart the game session entirely.
     G_InitNewGame();
-    G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
+    G_NewGame(dSkill, dEpisode, dMap, dMapEntrance);
 #else
     loadmap_params_t p;
 
@@ -2959,17 +2957,17 @@ void G_DoSaveGame(void)
     G_SetGameAction(GA_NONE);
 }
 
-void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
+void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntrance)
 {
-    dSkill         = skill;
-    dEpisode       = episode;
-    dMap           = map;
-    dMapEntryPoint = mapEntryPoint;
+    dSkill       = skill;
+    dEpisode     = episode;
+    dMap         = map;
+    dMapEntrance = mapEntrance;
 
     G_SetGameAction(GA_NEWGAME);
 }
 
-void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
+void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntrance)
 {
     uint i;
 
@@ -3016,9 +3014,9 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
 
-    gameEpisode         = episode;
-    gameMap             = map;
-    gameMapEntryPoint   = mapEntryPoint;
+    gameEpisode     = episode;
+    gameMap         = map;
+    gameMapEntrance = mapEntrance;
 
     G_ApplyGameRules(skill);
     M_ResetRandom();
@@ -3027,14 +3025,14 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 
     {
         loadmap_params_t p;
-        dd_bool hasBrief;
+        dd_bool showBrief;
         ddfinale_t fin;
 
         p.mapUri  = G_CurrentMapUri();
         p.revisit = false;
 
-        hasBrief = G_BriefingEnabled(p.mapUri, &fin);
-        if(!hasBrief)
+        showBrief = G_BriefingEnabled(p.mapUri, &fin);
+        if(!showBrief)
         {
             G_QueMapMusic(p.mapUri);
         }
@@ -3044,7 +3042,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 
         G_DoLoadMap(&p);
 
-        if(hasBrief)
+        if(showBrief)
         {
             G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
         }
@@ -3468,7 +3466,7 @@ int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
 
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&
-       !(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT))
+       !(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT))
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
         if(P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster)
@@ -3999,8 +3997,8 @@ D_CMD(WarpMap)
     if(!forceNewGameSession && gameInProgress)
     {
 #if __JHEXEN__
-        nextMap = map;
-        nextMapEntryPoint = 0;
+        nextMap         = map;
+        nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
         G_DeferredNewGame(gameRules.skill, epsd, map, 0/*default*/);
@@ -4008,7 +4006,7 @@ D_CMD(WarpMap)
     }
     else
     {
-        G_DeferredNewGame(IS_SERVER? cfg.netSkill : dSkill, epsd, map, 0/*default*/);
+        G_DeferredNewGame(IS_SERVER? cfg.netSkill : gameRules.skill, epsd, map, 0/*default*/);
     }
 
     // If the command source was "us" the game library then it was probably in

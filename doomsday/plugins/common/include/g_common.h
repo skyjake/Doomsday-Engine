@@ -69,11 +69,11 @@ void G_EndGame(void);
 dd_bool G_QuitInProgress(void);
 
 /**
- * @param map           Logical map number (i.e., not a warp/translated number).
- * @param mapEntryPoint Logical map entry point number.
+ * @param map          Logical map number (i.e., not a warp/translated number).
+ * @param mapEntrance  Logical map entry point number.
  */
-void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
-void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint);
+void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntrance);
+void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntrance);
 
 /**
  * Signal that play on the current map may now begin.

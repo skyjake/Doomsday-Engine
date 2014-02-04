@@ -51,7 +51,7 @@ extern player_t players[MAXPLAYERS];
 extern dd_bool gameInProgress;
 extern uint gameEpisode;
 extern uint gameMap;
-extern uint gameMapEntryPoint;
+extern uint gameMapEntrance;
 extern GameRuleset gameRules;
 
 extern uint nextMap; // If non zero this will be the next map.
@@ -62,7 +62,6 @@ extern dd_bool precache;
 extern dd_bool customPal;
 extern wbstartstruct_t wmInfo;
 extern int bodyQueueSlot;
-extern int mapStartTic;
 extern dd_bool briefDisabled;
 
 extern int gsvMapMusic;

@@ -3670,10 +3670,10 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
      */
     curInfo = saveInfo;
 
-    gameEpisode       = saveInfo->episode();
-    gameMap           = saveInfo->map();
-    gameMapEntryPoint = 0; /// @todo Not saved??
-    gameRules         = saveInfo->gameRules();
+    gameEpisode     = saveInfo->episode();
+    gameMap         = saveInfo->map();
+    gameMapEntrance = 0; /// @todo Not saved??
+    gameRules       = saveInfo->gameRules();
 
 #if __JHEXEN__
     Game_ACScriptInterpreter().readWorldScriptData(reader, saveInfo->version());
@@ -3683,7 +3683,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewGame(gameRules.skill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
+    G_NewGame(gameRules.skill, gameEpisode, gameMap, gameMapEntrance);
 
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
@@ -4001,10 +4001,10 @@ void SV_LoadGameClient(uint gameId)
     // Do we need to change the map?
     if(gameMap != saveInfo->map() || gameEpisode != saveInfo->episode())
     {
-        gameEpisode       = saveInfo->episode();
-        gameMap           = saveInfo->map();
-        gameMapEntryPoint = 0;
-        G_NewGame(gameRules.skill, gameEpisode, gameMap, gameMapEntryPoint);
+        gameEpisode     = saveInfo->episode();
+        gameMap         = saveInfo->map();
+        gameMapEntrance = 0;
+        G_NewGame(gameRules.skill, gameEpisode, gameMap, gameMapEntrance);
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
     }

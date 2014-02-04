@@ -52,14 +52,13 @@ extern uint nextMap;
 extern dd_bool gameInProgress;
 extern uint gameEpisode;
 extern uint gameMap;
-extern uint gameMapEntryPoint;
+extern uint gameMapEntrance;
 extern GameRuleset gameRules;
 
 extern uint nextMap; // If non zero this will be the next map.
 extern dd_bool secretExit;
 extern int totalKills, totalItems, totalSecret;
 extern wbstartstruct_t wmInfo;
-extern int mapStartTic;
 extern int bodyQueueSlot;
 extern dd_bool paused;
 extern dd_bool precache;

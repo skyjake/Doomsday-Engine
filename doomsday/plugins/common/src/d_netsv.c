@@ -595,7 +595,7 @@ void NetSv_NewPlayerEnters(int plrNum)
         playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
         playerstart_t const *start;
 
-        if((start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false)))
+        if((start = P_GetPlayerStart(gameMapEntrance, plrNum, false)))
         {
             mapspot_t const *spot = &mapSpots[start->spot];
 

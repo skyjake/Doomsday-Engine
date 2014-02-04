@@ -851,16 +851,16 @@ int SV_LoadState_Hr_v13(Str const *path, SaveInfo *info)
         delete tmp;
     }
 
-    gameEpisode       = info->episode();
-    gameMap           = info->map();
-    gameMapEntryPoint = 0; /// @todo Not saved??
-    gameRules         = info->gameRules();
+    gameEpisode     = info->episode();
+    gameMap         = info->map();
+    gameMapEntrance = 0; /// @todo Not saved??
+    gameRules       = info->gameRules();
 
     // We don't want to see a briefing if we're loading a save game.
     briefDisabled     = true;
 
     // Load a base map.
-    G_NewGame(gameRules.skill, gameEpisode, gameMap, gameMapEntryPoint);
+    G_NewGame(gameRules.skill, gameEpisode, gameMap, gameMapEntrance);
     /// @todo Necessary?
     G_SetGameAction(GA_NONE);
 

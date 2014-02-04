@@ -51,12 +51,11 @@ extern player_t players[MAXPLAYERS];
 extern dd_bool gameInProgress;
 extern uint gameEpisode;
 extern uint gameMap;
-extern uint gameMapEntryPoint;
+extern uint gameMapEntrance;
 extern GameRuleset gameRules;
 
 extern uint nextMap;
 extern dd_bool secretExit;
-extern int mapStartTic;
 extern int totalKills, totalItems, totalSecret;
 extern dd_bool paused;
 extern dd_bool precache;

@@ -45,7 +45,7 @@ void NetCl_UpdateGameState(Reader* msg)
     Uri* mapUri;
     byte gsEpisode = 0;
     byte gsMap = 0;
-    byte gsMapEntryPoint = 0;
+    byte gsMapEntrance = 0;
     byte configFlags = 0;
     byte gsDeathmatch = 0;
     byte gsMonsters = 0;
@@ -141,7 +141,7 @@ void NetCl_UpdateGameState(Reader* msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_NewGame(gsSkill, gsEpisode, gsMap, gameMapEntryPoint /*gsMapEntryPoint*/);
+        G_NewGame(gsSkill, gsEpisode, gsMap, gameMapEntrance /*gsMapEntrance*/);
 
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
@@ -154,7 +154,7 @@ void NetCl_UpdateGameState(Reader* msg)
         gameRules.skill = gsSkill;
 
         /// @todo Not communicated to clients??
-        //gameMapEntryPoint = gsMapEntryPoint;
+        //gameMapEntrance = gsMapEntrance;
     }
 
     // Set gravity.
@@ -699,20 +699,20 @@ void NetCl_Intermission(Reader* msg)
 
         // @todo jHeretic does not transmit the intermission info!
 #if __JDOOM__ || __JDOOM64__
-        wmInfo.maxKills = Reader_ReadUInt16(msg);
-        wmInfo.maxItems = Reader_ReadUInt16(msg);
-        wmInfo.maxSecret = Reader_ReadUInt16(msg);
-        wmInfo.nextMap = Reader_ReadByte(msg);
+        wmInfo.maxKills   = Reader_ReadUInt16(msg);
+        wmInfo.maxItems   = Reader_ReadUInt16(msg);
+        wmInfo.maxSecret  = Reader_ReadUInt16(msg);
+        wmInfo.nextMap    = Reader_ReadByte(msg);
         wmInfo.currentMap = Reader_ReadByte(msg);
-        wmInfo.didSecret = Reader_ReadByte(msg);
+        wmInfo.didSecret  = Reader_ReadByte(msg);
         wmInfo.episode = gameEpisode;
 
         G_PrepareWIData();
 #elif __JHERETIC__
         wmInfo.episode = gameEpisode;
 #elif __JHEXEN__
-        nextMap = Reader_ReadByte(msg);
-        nextMapEntryPoint = Reader_ReadByte(msg);
+        nextMap         = Reader_ReadByte(msg);
+        nextMapEntrance = Reader_ReadByte(msg);
 #endif
 
 #if __JDOOM__ || __JDOOM64__
