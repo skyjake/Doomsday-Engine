@@ -285,7 +285,7 @@ void T_Door(void *doorThinkerPtr)
     }
 }
 
-void door_t::write(Writer *writer) const
+void door_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -304,7 +304,7 @@ void door_t::write(Writer *writer) const
     Writer_WriteInt32(writer, topCountDown);
 }
 
-int door_t::read(Reader *reader, int mapVersion)
+int door_s::read(Reader *reader, int mapVersion)
 {
 #if __JHEXEN__
     if(mapVersion >= 4)

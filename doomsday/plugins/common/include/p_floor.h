@@ -83,7 +83,7 @@ typedef enum {
     NUMFLOORTYPES
 } floortype_e;
 
-typedef struct {
+typedef struct floor_s {
     thinker_t thinker;
     floortype_e type;
     dd_bool crush;

@@ -299,9 +299,9 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_FLASH,
       (thinkfunc_t) T_LightFlash,
       0,
-      (WriteThinkerFunc)writeThinkerAs<lightflash_t>,
-      (ReadThinkerFunc)readThinkerAs<lightflash_t>,
-      sizeof(lightflash_t)
+      (WriteThinkerFunc)writeThinkerAs<lightflash_s>,
+      (ReadThinkerFunc)readThinkerAs<lightflash_s>,
+      sizeof(lightflash_s)
     },
     {
       TC_STROBE,
@@ -344,9 +344,9 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_MATERIALCHANGER,
       T_MaterialChanger,
       0,
-      (WriteThinkerFunc)writeThinkerAs<materialchanger_t>,
-      (ReadThinkerFunc)readThinkerAs<materialchanger_t>,
-      sizeof(materialchanger_t)
+      (WriteThinkerFunc)writeThinkerAs<materialchanger_s>,
+      (ReadThinkerFunc)readThinkerAs<materialchanger_s>,
+      sizeof(materialchanger_s)
     },
     {
       TC_SCROLL,

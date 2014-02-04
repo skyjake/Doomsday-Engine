@@ -83,7 +83,7 @@ static void srd(Reader *r, char *data, int len)
     if(!r) return;
     if(data)
     {
-        std::memcpy(data, savePtr, len);
+        memcpy(data, savePtr, len);
     }
     savePtr += len;
 }

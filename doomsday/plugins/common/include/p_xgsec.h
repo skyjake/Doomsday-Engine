@@ -118,7 +118,7 @@ typedef struct {
     int chainTimer[DDLT_MAX_CHAINS];
 } xgsector_t;
 
-typedef struct {
+typedef struct xgplanemover_s {
     thinker_t thinker;
 
     Sector *sector;

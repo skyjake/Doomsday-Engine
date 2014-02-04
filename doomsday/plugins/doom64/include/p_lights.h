@@ -34,7 +34,7 @@
 #define FASTDARK                (15)
 #define SLOWDARK                (35)
 
-typedef struct {
+typedef struct fireflicker_s {
     thinker_t thinker;
     Sector *sector;
     int count;
@@ -47,7 +47,7 @@ typedef struct {
 #endif
 } fireflicker_t;
 
-typedef struct {
+typedef struct lightflash_s {
     thinker_t thinker;
     Sector *sector;
     int count;
@@ -62,7 +62,7 @@ typedef struct {
 #endif
 } lightflash_t;
 
-typedef struct {
+typedef struct lightblink_s {
     thinker_t thinker;
     Sector *sector;
     int count;
@@ -77,7 +77,7 @@ typedef struct {
 #endif
 } lightblink_t;
 
-typedef struct {
+typedef struct strobe_s {
     thinker_t thinker;
     Sector *sector;
     int count;
@@ -92,7 +92,7 @@ typedef struct {
 #endif
 } strobe_t;
 
-typedef struct {
+typedef struct glow_s {
     thinker_t thinker;
     Sector *sector;
     float minLight;

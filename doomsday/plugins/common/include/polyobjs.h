@@ -30,7 +30,7 @@ typedef enum {
     PODOOR_SWING
 } podoortype_t;
 
-typedef struct {
+typedef struct polyevent_s {
     thinker_t thinker;
     int polyobj; // tag
     int intSpeed;
@@ -44,7 +44,7 @@ typedef struct {
 #endif
 } polyevent_t;
 
-typedef struct {
+typedef struct polydoor_s {
     thinker_t thinker;
     int polyobj; // tag
     int intSpeed;

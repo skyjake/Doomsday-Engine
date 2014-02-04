@@ -24,7 +24,7 @@
 
 #include "doomsday.h"
 
-typedef struct {
+typedef struct scroll_s {
   thinker_t thinker;
   void *dmuObject; ///< Affected DMU object (either a sector or a side).
   int elementBits; ///< Identifies which subelements of the dmuObject are affected.

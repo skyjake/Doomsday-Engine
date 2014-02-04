@@ -43,7 +43,7 @@ void T_BuildPillar(pillar_t *pillar)
     }
 }
 
-void pillar_t::write(Writer *writer) const
+void pillar_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -60,7 +60,7 @@ void pillar_t::write(Writer *writer) const
     Writer_WriteInt32(writer, crush);
 }
 
-int pillar_t::read(Reader *reader, int mapVersion)
+int pillar_s::read(Reader *reader, int mapVersion)
 {
     if(mapVersion >= 4)
     {

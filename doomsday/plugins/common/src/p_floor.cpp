@@ -395,7 +395,7 @@ void T_MoveFloor(void *floorThinkerPtr)
     }
 }
 
-void floor_t::write(Writer *writer) const
+void floor_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 3); // Write a version byte.
 
@@ -427,7 +427,7 @@ void floor_t::write(Writer *writer) const
 #endif
 }
 
-int floor_t::read(Reader *reader, int mapVersion)
+int floor_s::read(Reader *reader, int mapVersion)
 {
 #if __JHEXEN__
     if(mapVersion >= 4)

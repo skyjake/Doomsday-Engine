@@ -25,6 +25,10 @@
 #include <de/mathutil.h>
 #include <de/timer.h>
 
+#ifdef UNIX
+#  include <strings.h>
+#endif
+
 #define WEAPONBOTTOM            (128)   // from p_pspr.c
 
 #define IS_NETWORK_SERVER       (DD_GetInteger(DD_SERVER) && DD_GetInteger(DD_NETGAME))

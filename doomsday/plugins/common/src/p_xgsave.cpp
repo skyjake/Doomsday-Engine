@@ -172,7 +172,7 @@ void SV_ReadXGSector(Sector *sec, Reader *reader, int mapVersion)
     SV_ReadXGFunction(xg, &xg->light, reader, mapVersion);
 }
 
-void xgplanemover_t::write(Writer *writer) const
+void xgplanemover_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 3); // Version.
 
@@ -201,7 +201,7 @@ void xgplanemover_t::write(Writer *writer) const
     Writer_WriteInt32(writer, timer);
 }
 
-int xgplanemover_t::read(Reader *reader, int /*mapVersion*/)
+int xgplanemover_s::read(Reader *reader, int /*mapVersion*/)
 {
     byte ver = Reader_ReadByte(reader); // Version.
 

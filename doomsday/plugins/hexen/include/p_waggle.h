@@ -34,7 +34,7 @@ typedef enum {
     WS_REDUCE
 } wagglestate_e;
 
-typedef struct {
+typedef struct waggle_s {
     thinker_t thinker;
     Sector *sector;
     coord_t originalHeight;

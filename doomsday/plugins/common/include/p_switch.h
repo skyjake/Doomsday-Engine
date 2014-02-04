@@ -28,7 +28,7 @@
 
 #define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
-typedef struct {
+typedef struct materialchanger_s {
     thinker_t thinker;
     int timer;
     Side *side;

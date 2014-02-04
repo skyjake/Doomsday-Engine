@@ -55,7 +55,7 @@ typedef enum {
     NUMDOORTYPES
 } doortype_e;
 
-typedef struct {
+typedef struct door_s {
     thinker_t thinker;
     doortype_e type;
     Sector *sector;

@@ -276,7 +276,7 @@ void T_MovePoly(void *polyThinker)
     }
 }
 
-void polyevent_t::write(Writer *writer) const
+void polyevent_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -291,7 +291,7 @@ void polyevent_t::write(Writer *writer) const
     Writer_WriteInt32(writer, FLT2FIX(speed[VY]));
 }
 
-int polyevent_t::read(Reader *reader, int mapVersion)
+int polyevent_s::read(Reader *reader, int mapVersion)
 {
     if(mapVersion >= 4)
     {
@@ -525,7 +525,7 @@ void T_PolyDoor(void *polyDoorThinker)
     }
 }
 
-void polydoor_t::write(Writer *writer) const
+void polydoor_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -546,7 +546,7 @@ void polydoor_t::write(Writer *writer) const
     Writer_WriteByte(writer, close);
 }
 
-int polydoor_t::read(Reader *reader, int mapVersion)
+int polydoor_s::read(Reader *reader, int mapVersion)
 {
     if(mapVersion >= 4)
     {

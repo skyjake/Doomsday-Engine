@@ -31,7 +31,7 @@
 #define FASTDARK                (15)
 #define SLOWDARK                (35)
 
-typedef struct {
+typedef struct lightflash_s {
     thinker_t thinker;
     Sector *sector;
     int count;
@@ -46,7 +46,7 @@ typedef struct {
 #endif
 } lightflash_t;
 
-typedef struct {
+typedef struct strobe_s {
     thinker_t thinker;
     Sector *sector;
     int count;
@@ -61,7 +61,7 @@ typedef struct {
 #endif
 } strobe_t;
 
-typedef struct {
+typedef struct glow_s {
     thinker_t thinker;
     Sector *sector;
     float minLight;

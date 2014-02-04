@@ -28,7 +28,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-typedef struct {
+typedef struct pillar_s {
     thinker_t thinker;
     Sector *sector;
     float ceilingSpeed;

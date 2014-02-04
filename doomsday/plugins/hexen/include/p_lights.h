@@ -42,7 +42,7 @@ typedef enum {
     LITE_STROBE
 } lighttype_t;
 
-typedef struct {
+typedef struct light_s {
     thinker_t thinker;
     Sector *sector;
     lighttype_t type;
@@ -58,7 +58,7 @@ typedef struct {
 #endif
 } light_t;
 
-typedef struct {
+typedef struct phase_s {
     thinker_t thinker;
     Sector *sector;
     int index;

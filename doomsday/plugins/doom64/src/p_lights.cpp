@@ -45,7 +45,7 @@ void T_FireFlicker(fireflicker_t *flick)
     flick->count = 4;
 }
 
-void fireflicker_t::write(Writer *writer) const
+void fireflicker_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -62,7 +62,7 @@ void fireflicker_t::write(Writer *writer) const
  * T_FireFlicker was added to save games in ver5, therefore we don't have
  * an old format to support.
  */
-int fireflicker_t::read(Reader *reader, int /*mapVersion*/)
+int fireflicker_s::read(Reader *reader, int /*mapVersion*/)
 {
     /*int ver =*/ Reader_ReadByte(reader); // version byte.
 
@@ -126,7 +126,7 @@ void T_LightFlash(lightflash_t *flash)
     }
 }
 
-void lightflash_t::write(Writer *writer) const
+void lightflash_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -142,7 +142,7 @@ void lightflash_t::write(Writer *writer) const
     Writer_WriteInt32(writer, minTime);
 }
 
-int lightflash_t::read(Reader *reader, int mapVersion)
+int lightflash_s::read(Reader *reader, int mapVersion)
 {
     if(mapVersion >= 5)
     {
@@ -235,7 +235,7 @@ void T_LightBlink(lightblink_t *flash)
     }
 }
 
-void lightblink_t::write(Writer *writer) const
+void lightblink_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -255,7 +255,7 @@ void lightblink_t::write(Writer *writer) const
  * T_LightBlink was added to save games in ver5, therefore we don't have an
  * old format to support
  */
-int lightblink_t::read(Reader *reader, int /*mapVersion*/)
+int lightblink_s::read(Reader *reader, int /*mapVersion*/)
 {
     /*int ver =*/ Reader_ReadByte(reader); // version byte.
 
@@ -313,7 +313,7 @@ void T_StrobeFlash(strobe_t *flash)
     }
 }
 
-void strobe_t::write(Writer *writer) const
+void strobe_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -329,7 +329,7 @@ void strobe_t::write(Writer *writer) const
     Writer_WriteInt32(writer, brightTime);
 }
 
-int strobe_t::read(Reader *reader, int mapVersion)
+int strobe_s::read(Reader *reader, int mapVersion)
 {
     if(mapVersion >= 5)
     {
@@ -505,7 +505,7 @@ void T_Glow(glow_t *g)
     P_SetFloatp(g->sector, DMU_LIGHT_LEVEL, lightLevel);
 }
 
-void glow_t::write(Writer *writer) const
+void glow_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -519,7 +519,7 @@ void glow_t::write(Writer *writer) const
     Writer_WriteInt32(writer, direction);
 }
 
-int glow_t::read(Reader *reader, int mapVersion)
+int glow_s::read(Reader *reader, int mapVersion)
 {
     if(mapVersion >= 5)
     {

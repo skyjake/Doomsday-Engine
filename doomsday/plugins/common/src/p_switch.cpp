@@ -297,7 +297,7 @@ void T_MaterialChanger(void *materialChangerThinker)
     }
 }
 
-void materialchanger_t::write(Writer *writer) const
+void materialchanger_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -313,7 +313,7 @@ void materialchanger_t::write(Writer *writer) const
     Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(SV_MaterialArchive(), material));
 }
 
-int materialchanger_t::read(Reader *reader, int mapVersion)
+int materialchanger_s::read(Reader *reader, int mapVersion)
 {
     /*int ver =*/ Reader_ReadByte(reader);
     // Note: the thinker class byte has already been read.

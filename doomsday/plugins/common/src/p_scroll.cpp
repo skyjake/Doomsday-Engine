@@ -64,7 +64,7 @@ void T_Scroll(scroll_t *s)
     }
 }
 
-void scroll_t::write(Writer *writer) const
+void scroll_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -80,7 +80,7 @@ void scroll_t::write(Writer *writer) const
     Writer_WriteInt32(writer, FLT2FIX(offset[1]));
 }
 
-int scroll_t::read(Reader *reader, int mapVersion)
+int scroll_s::read(Reader *reader, int mapVersion)
 {
     /*int ver =*/ Reader_ReadByte(reader); // version byte.
     // Note: the thinker class byte has already been read.

@@ -114,7 +114,7 @@ void T_Light(light_t *light)
     }
 }
 
-void light_t::write(Writer *writer) const
+void light_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -132,7 +132,7 @@ void light_t::write(Writer *writer) const
     Writer_WriteInt32(writer, count);
 }
 
-int light_t::read(Reader *reader, int mapVersion)
+int light_s::read(Reader *reader, int mapVersion)
 {
     if(mapVersion >= 4)
     {
@@ -295,7 +295,7 @@ void T_Phase(phase_t *phase)
                      phase->baseValue + phaseTable[phase->index]);
 }
 
-void phase_t::write(Writer *writer) const
+void phase_s::write(Writer *writer) const
 {
     Writer_WriteByte(writer, 1); // Write a version byte.
 
@@ -308,7 +308,7 @@ void phase_t::write(Writer *writer) const
     Writer_WriteInt32(writer, (int) (255.0f * baseValue));
 }
 
-int phase_t::read(Reader *reader, int mapVersion)
+int phase_s::read(Reader *reader, int mapVersion)
 {
     if(mapVersion >= 4)
     {

@@ -55,7 +55,7 @@ typedef enum {
     NUMCEILINGTYPES
 } ceilingtype_e;
 
-typedef struct {
+typedef struct ceiling_s {
     thinker_t thinker;
     ceilingtype_e type;
     Sector* sector;
