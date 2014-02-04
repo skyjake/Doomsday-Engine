@@ -1,5 +1,8 @@
 include(../config.pri)
 
+ # Use the full API for all plugins.
+CONFIG += dengplugin_libdeng2_full
+
 deng_noclient {
     CONFIG += libgui_headers_only
 }
