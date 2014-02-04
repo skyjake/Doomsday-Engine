@@ -28,6 +28,49 @@
 #include <cstdlib>
 #include <cstring>
 
+#if __JDOOM__ || __JHERETIC__
+static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
+{
+    DENG_ASSERT(mode != 0);
+
+    static gamemode_t const oldGameModes[] = {
+# if __JDOOM__
+        doom_shareware,
+        doom,
+        doom2,
+        doom_ultimate
+# else // __JHERETIC__
+        heretic_shareware,
+        heretic,
+        heretic_extended
+# endif
+    };
+
+    // Is translation unnecessary?
+#if __JDOOM__
+    if(saveVersion >= 9) return;
+#elif __JHERETIC__
+    if(saveVersion >= 8) return;
+#endif
+
+    *mode = oldGameModes[(int)(*mode)];
+
+# if __JDOOM__
+    /**
+     * @note Kludge: Older versions did not differentiate between versions
+     * of Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
+     * that this save is from some version of Doom2, replace the marked
+     * gamemode with the current gamemode.
+     */
+    if((*mode) == doom2 && (gameModeBits & GM_ANY_DOOM2))
+    {
+        (*mode) = gameMode;
+    }
+    /// kludge end.
+# endif
+}
+#endif
+
 SaveInfo::SaveInfo()
     : _gameId  (0)
     , _magic   (0)
@@ -181,62 +224,20 @@ void SaveInfo::write(Writer *writer) const
 
     Writer_WriteByte(writer, _episode);
     Writer_WriteByte(writer, _map);
-
 #if !__JHEXEN__
     Writer_WriteInt32(writer, _mapTime);
+#endif
+    GameRuleset_Write(&_gameRules, writer);
 
+#if !__JHEXEN__
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         Writer_WriteByte(writer, _players[i]);
     }
 #endif
+
     Writer_WriteInt32(writer, _gameId);
-
-    GameRuleset_Write(&_gameRules, writer);
 }
-
-#if __JDOOM__ || __JHERETIC__
-static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
-{
-    DENG_ASSERT(mode != 0);
-
-    static gamemode_t const oldGameModes[] = {
-# if __JDOOM__
-        doom_shareware,
-        doom,
-        doom2,
-        doom_ultimate
-# else // __JHERETIC__
-        heretic_shareware,
-        heretic,
-        heretic_extended
-# endif
-    };
-
-    // Is translation unnecessary?
-#if __JDOOM__
-    if(saveVersion >= 9) return;
-#elif __JHERETIC__
-    if(saveVersion >= 8) return;
-#endif
-
-    *mode = oldGameModes[(int)(*mode)];
-
-# if __JDOOM__
-    /**
-     * @note Kludge: Older versions did not differentiate between versions
-     * of Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
-     * that this save is from some version of Doom2, replace the marked
-     * gamemode with the current gamemode.
-     */
-    if((*mode) == doom2 && (gameModeBits & GM_ANY_DOOM2))
-    {
-        (*mode) = gameMode;
-    }
-    /// kludge end.
-# endif
-}
-#endif
 
 void SaveInfo::read(Reader *reader)
 {
@@ -264,6 +265,9 @@ void SaveInfo::read(Reader *reader)
     {
         _episode = Reader_ReadByte(reader);
         _map     = Reader_ReadByte(reader);
+#if !__JHEXEN__
+        _mapTime = Reader_ReadInt32(reader);
+#endif
 
         GameRuleset_Read(&_gameRules, reader);
     }
@@ -305,15 +309,15 @@ void SaveInfo::read(Reader *reader)
 #if !__JHEXEN__
         _gameRules.respawnMonsters = Reader_ReadByte(reader);
 #endif
+#if !__JHEXEN__
+        // Older formats serialize the unpacked saveheader_t struct; skip the junk values (alignment).
+        if(_version < 10) SV_Seek(2);
+
+        _mapTime = Reader_ReadInt32(reader);
+#endif
     }
 
-
 #if !__JHEXEN__
-    // Older formats serialize the unpacked saveheader_t struct; skip the junk values (alignment).
-    if(_version < 10) SV_Seek(2);
-
-    _mapTime = Reader_ReadInt32(reader);
-
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         _players[i] = Reader_ReadByte(reader);
