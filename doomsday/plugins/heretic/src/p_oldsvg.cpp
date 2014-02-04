@@ -36,7 +36,6 @@
 #include "hu_inventory.h"
 #include <cstdio>
 #include <cstring>
-#include <de/libdeng2.h>
 
 // Do NOT change this:
 #define V13_SAVE_VERSION                130 ///< Version number associated with a recognised heretic.exe game save state.
@@ -519,7 +518,7 @@ typedef struct {
     if(!(temp + V13_THINKER_T_FUNC_OFFSET))
         Thinker_SetStasis(&ceiling->thinker, true);
 
-    P_ToXSector(ceiling->sector)->specialData = de::function_cast<void*>(T_MoveCeiling);
+    P_ToXSector(ceiling->sector)->specialData = ceiling;
     return true; // Add this thinker.
 }
 
@@ -557,7 +556,7 @@ typedef struct {
 
     door->thinker.function = T_Door;
 
-    P_ToXSector(door->sector)->specialData = de::function_cast<void*>(T_Door);
+    P_ToXSector(door->sector)->specialData = door;
     return true; // Add this thinker.
 }
 
@@ -601,7 +600,7 @@ typedef struct {
 
     floor->thinker.function = T_MoveFloor;
 
-    P_ToXSector(floor->sector)->specialData = de::function_cast<void*>(T_MoveFloor);
+    P_ToXSector(floor->sector)->specialData = floor;
     return true; // Add this thinker.
 }
 
@@ -648,7 +647,7 @@ typedef struct {
     if(!(temp + V13_THINKER_T_FUNC_OFFSET))
         Thinker_SetStasis(&plat->thinker, true);
 
-    P_ToXSector(plat->sector)->specialData = de::function_cast<void*>(T_PlatRaise);
+    P_ToXSector(plat->sector)->specialData = plat;
     return true; // Add this thinker.
 }
 
