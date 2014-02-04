@@ -164,10 +164,10 @@ game_config_t cfg; // The global cfg.
 skillmode_t dSkill; // Default.
 
 dd_bool gameInProgress;
-skillmode_t gameSkill;
 uint gameEpisode;
 uint gameMap;
 uint gameMapEntryPoint; // Position indicator for reborn.
+GameRuleset gameRules;
 
 uint nextMap;
 #if __JHEXEN__
@@ -182,12 +182,8 @@ dd_bool secretExit;
 uint mapHub = 0;
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-dd_bool respawnMonsters;
-#endif
 dd_bool monsterInfight;
 
-dd_bool deathmatch; // Only if started as net death.
 player_t players[MAXPLAYERS];
 
 int mapStartTic; // Game tic at map start.
@@ -249,7 +245,7 @@ static gamestate_t gameState = GS_STARTUP;
 cvartemplate_t gamestatusCVars[] =
 {
     {"game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0},
-    {"game-skill", READONLYCVAR, CVT_INT, &gameSkill, 0, 0},
+    {"game-skill", READONLYCVAR, CVT_INT, &gameRules.skill, 0, 0},
     {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0},
     {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0},
 #if !__JHEXEN__
@@ -1819,7 +1815,7 @@ void G_PlayerLeaveMap(int player)
     memset(p->powers, 0, sizeof(p->powers));
 
 #if __JHEXEN__
-    if(!newCluster && !deathmatch)
+    if(!newCluster && !gameRules.deathmatch)
         p->powers[PT_FLIGHT] = flightPower; // Restore flight.
 #endif
 
@@ -1828,7 +1824,7 @@ void G_PlayerLeaveMap(int player)
     p->update |= PSF_KEYS;
     memset(p->keys, 0, sizeof(p->keys));
 #else
-    if(!deathmatch && newCluster)
+    if(!gameRules.deathmatch && newCluster)
         p->keys = 0;
 #endif
 
@@ -2185,26 +2181,6 @@ static void G_InitNewGame(void)
 #endif
 }
 
-void G_GetGameRules(GameRuleset *rules)
-{
-    DENG_ASSERT(rules != 0);
-#if __JHEXEN__
-    rules->skill           = gameSkill;
-    rules->randomClasses   = randomClassParm;
-#else
-    rules->skill           = gameSkill;
-    rules->fast            = fastParm;
-#endif
-    rules->deathmatch      = deathmatch;
-    rules->noMonsters      = noMonstersParm;
-
-#if __JHEXEN__
-    rules->randomClasses   = randomClassParm;
-#else
-    rules->respawnMonsters = respawnMonsters;
-#endif
-}
-
 #if __JDOOM__ || __JDOOM64__
 static void G_ApplyGameRuleFastMonsters(dd_bool fast)
 {
@@ -2252,33 +2228,35 @@ static void G_ApplyGameRules(skillmode_t skill)
         skill = SM_NOTHINGS;
     if(skill > NUM_SKILL_MODES - 1)
         skill = NUM_SKILL_MODES - 1;
-    gameSkill = skill;
+    gameRules.skill = skill;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!IS_NETGAME)
     {
-        deathmatch = false;
-        respawnMonsters = false;
+        gameRules.deathmatch = false;
+        gameRules.respawnMonsters = false;
         noMonstersParm = CommandLine_Exists("-nomonsters")? true : false;
+
+        gameRules.noMonsters = noMonstersParm;
     }
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    respawnMonsters = respawnParm;
+    gameRules.respawnMonsters = respawnParm;
 #endif
 
 #if __JDOOM__ || __JHERETIC__
     // Is respawning enabled at all in nightmare skill?
-    if(gameSkill == SM_NIGHTMARE)
-        respawnMonsters = cfg.respawnMonstersNightmare;
+    if(gameRules.skill == SM_NIGHTMARE)
+        gameRules.respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
     // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
     {
-        dd_bool fastMonsters = fastParm;
+        dd_bool fastMonsters = gameRules.fast;
 # if __JDOOM__
-        if(gameSkill == SM_NIGHTMARE) fastMonsters = true;
+        if(gameRules.skill == SM_NIGHTMARE) fastMonsters = true;
 # endif
         G_ApplyGameRuleFastMonsters(fastMonsters);
     }
@@ -2287,9 +2265,9 @@ static void G_ApplyGameRules(skillmode_t skill)
     // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
-        dd_bool fastMissiles = fastParm;
+        dd_bool fastMissiles = gameRules.fast;
 # if !__JDOOM64__
-        if(gameSkill == SM_NIGHTMARE) fastMissiles = true;
+        if(gameRules.skill == SM_NIGHTMARE) fastMissiles = true;
 # endif
         G_ApplyGameRuleFastMissiles(fastMissiles);
     }
@@ -2446,7 +2424,7 @@ void G_DoMapCompleted(void)
     }
 
 #elif __JHEXEN__
-    if(!deathmatch)
+    if(!gameRules.deathmatch)
     {
         G_IntermissionDone();
         return;
@@ -2604,7 +2582,7 @@ void G_DoLeaveMap(void)
 {
 #if __JHEXEN__
     playerbackup_t playerBackup[MAXPLAYERS];
-    dd_bool oldRandomClassParm;
+    dd_bool oldRandomClassesRule;
 #endif
     loadmap_params_t p;
     ddfinale_t fin;
@@ -2629,7 +2607,7 @@ void G_DoLeaveMap(void)
      * whether we need to load the archived map state.
      */
     revisit = SV_HxHaveMapStateForSlot(BASE_SLOT, nextMap);
-    if(deathmatch) revisit = false;
+    if(gameRules.deathmatch) revisit = false;
 
     // Same cluster?
     {
@@ -2637,7 +2615,7 @@ void G_DoLeaveMap(void)
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
         if(P_MapInfo(mapUri)->cluster == P_MapInfo(nextMapUri)->cluster)
         {
-            if(!deathmatch)
+            if(!gameRules.deathmatch)
             {
                 // Save current map.
                 SV_HxSaveClusterMap();
@@ -2645,14 +2623,14 @@ void G_DoLeaveMap(void)
         }
         else // Entering new cluster.
         {
-            if(!deathmatch)
+            if(!gameRules.deathmatch)
             {
                 SV_ClearSlot(BASE_SLOT);
             }
 
             // Re-apply the game rules.
             /// @todo Necessary?
-            G_ApplyGameRules(gameSkill);
+            G_ApplyGameRules(gameRules.skill);
         }
 
         Uri_Delete(nextMapUri);
@@ -2664,8 +2642,8 @@ void G_DoLeaveMap(void)
     SV_HxBackupPlayersInCluster(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
-    oldRandomClassParm = randomClassParm;
-    randomClassParm = false;
+    oldRandomClassesRule = gameRules.randomClasses;
+    gameRules.randomClasses = false;
 
     // We don't want to see a briefing if we've already visited this map.
     if(revisit) briefDisabled = true;
@@ -2738,8 +2716,8 @@ void G_DoLeaveMap(void)
 
     SV_HxRestorePlayersInCluster(playerBackup, nextMapEntryPoint);
 
-    // Restore the random class option.
-    randomClassParm = oldRandomClassParm;
+    // Restore the random class rule.
+    gameRules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
     Game_ACScriptInterpreter_RunDeferredTasks(p.mapUri);
@@ -2748,7 +2726,7 @@ void G_DoLeaveMap(void)
     Uri_Delete(p.mapUri);
 
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
-    if(!IS_NETGAME && !deathmatch)
+    if(!IS_NETGAME && !gameRules.deathmatch)
     {
         AutoStr *name = G_GenerateSaveGameName();
         savestateworker_params_t p;
@@ -3121,7 +3099,7 @@ char const *P_GetGameModeName(void)
     static char const *sp   = "singleplayer";
     if(IS_NETGAME)
     {
-        if(deathmatch) return dm;
+        if(gameRules.deathmatch) return dm;
         return coop;
     }
     return sp;
@@ -3535,13 +3513,13 @@ int Hook_DemoStop(int hookType, int val, void* paramaters)
     if(IS_NETGAME && IS_CLIENT)
     {
         // Restore normal game state?
-        deathmatch = false;
-        noMonstersParm = false;
+        gameRules.deathmatch = false;
+        gameRules.noMonsters = false;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        respawnMonsters = false;
+        gameRules.respawnMonsters = false;
 #endif
 #if __JHEXEN__
-        randomClassParm = false;
+        gameRules.randomClasses = false;
 #endif
     }
 
@@ -4025,7 +4003,7 @@ D_CMD(WarpMap)
         nextMapEntryPoint = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
+        G_DeferredNewGame(gameRules.skill, epsd, map, 0/*default*/);
 #endif
     }
     else

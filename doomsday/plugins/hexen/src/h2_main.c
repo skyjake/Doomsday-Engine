@@ -343,12 +343,16 @@ void X_PostInit(void)
     /* None */
 
     // Command line options.
-    noMonstersParm = CommandLine_Exists("-nomonsters");
-    respawnParm = CommandLine_Exists("-respawn");
+    noMonstersParm  = CommandLine_Exists("-nomonsters");
+    //respawnParm     = CommandLine_Exists("-respawn");
     randomClassParm = CommandLine_Exists("-randclass");
-    devParm = CommandLine_Exists("-devparm");
+    devParm         = CommandLine_Exists("-devparm");
 
     cfg.netDeathmatch = CommandLine_Exists("-deathmatch");
+
+    // Apply these rules.
+    gameRules.noMonsters    = noMonstersParm;
+    gameRules.randomClasses = randomClassParm;
 
     // Turbo movement option.
     p = CommandLine_Check("-turbo");

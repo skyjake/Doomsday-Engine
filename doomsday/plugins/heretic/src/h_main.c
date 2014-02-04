@@ -405,13 +405,17 @@ void H_PostInit(void)
 
     // Command line options.
     noMonstersParm = CommandLine_Check("-nomonsters");
-    respawnParm = CommandLine_Check("-respawn");
-    devParm = CommandLine_Check("-devparm");
+    respawnParm    = CommandLine_Check("-respawn");
+    devParm        = CommandLine_Check("-devparm");
 
     if(CommandLine_Check("-deathmatch"))
     {
         cfg.netDeathmatch = true;
     }
+
+    // Apply these game rules.
+    gameRules.noMonsters      = noMonstersParm;
+    gameRules.respawnMonsters = respawnParm;
 
     // turbo option.
     p = CommandLine_Check("-turbo");

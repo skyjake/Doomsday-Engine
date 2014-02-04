@@ -614,7 +614,7 @@ void C_DECL A_Chase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameSkill == SM_NIGHTMARE || cfg.fastMonsters)
+    if(gameRules.skill == SM_NIGHTMARE || cfg.fastMonsters)
     {
         // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
@@ -653,7 +653,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE)
+        if(gameRules.skill != SM_NIGHTMARE)
         {
             newChaseDir(actor);
         }
@@ -674,7 +674,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill != SM_NIGHTMARE && actor->moveCount))
+        if(!(gameRules.skill != SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {

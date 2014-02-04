@@ -462,24 +462,29 @@ void D_PostInit(void)
     monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gameSkill = startSkill = SM_MEDIUM;
+    gameRules.skill = startSkill = SM_MEDIUM;
     startEpisode = 0;
     startMap = 0;
     autoStart = false;
 
     // Command line options.
     noMonstersParm = CommandLine_Check("-nomonsters")? true : false;
-    respawnParm = CommandLine_Check("-respawn")? true : false;
-    fastParm = CommandLine_Check("-fast")? true : false;
-    devParm = CommandLine_Check("-devparm")? true : false;
+    respawnParm    = CommandLine_Check("-respawn")? true : false;
+    fastParm       = CommandLine_Check("-fast")? true : false;
+    devParm        = CommandLine_Check("-devparm")? true : false;
 
     if(CommandLine_Check("-altdeath"))
         cfg.netDeathmatch = 2;
     else if(CommandLine_Check("-deathmatch"))
         cfg.netDeathmatch = 1;
 
+    // Apply these rules.
+    gameRules.noMonsters      = noMonstersParm;
+    gameRules.respawnMonsters = respawnParm;
+    gameRules.fast            = fastParm;
+
     p = CommandLine_Check("-timer");
-    if(p && p < myargc - 1 && deathmatch)
+    if(p && p < myargc - 1 && gameRules.deathmatch)
     {
         int time = atoi(CommandLine_At(p + 1));
         App_Log(DE2_LOG_NOTE, "Maps will end after %d %s", time, time == 1? "minute" : "minutes");

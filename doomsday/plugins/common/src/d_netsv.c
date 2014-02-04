@@ -99,19 +99,19 @@ void NetSv_UpdateGameConfigDescription(void)
 
     memset(gameConfigString, 0, sizeof(gameConfigString));
 
-    sprintf(gameConfigString, "skill%i", gameSkill + 1);
+    sprintf(gameConfigString, "skill%i", gameRules.skill + 1);
 
-    if(deathmatch > 1)
-        sprintf(gameConfigString, " dm%i", deathmatch);
-    else if(deathmatch)
+    if(gameRules.deathmatch > 1)
+        sprintf(gameConfigString, " dm%i", gameRules.deathmatch);
+    else if(gameRules.deathmatch)
         strcat(gameConfigString, " dm");
     else
         strcat(gameConfigString, " coop");
 
-    if(noMonstersParm)
+    if(gameRules.noMonsters)
         strcat(gameConfigString, " nomonst");
 #if !__JHEXEN__
-    if(respawnMonsters)
+    if(gameRules.respawnMonsters)
         strcat(gameConfigString, " respawn");
 #endif
 
@@ -586,18 +586,18 @@ void NetSv_NewPlayerEnters(int plrNum)
     NetSv_ResetPlayerFrags(plrNum);
 
     // Spawn the player into the world.
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         G_DeathMatchSpawnPlayer(plrNum);
     }
     else
     {
         playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
-        const playerstart_t* start;
+        playerstart_t const *start;
 
         if((start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false)))
         {
-            const mapspot_t* spot = &mapSpots[start->spot];
+            mapspot_t const *spot = &mapSpots[start->spot];
 
             App_Log(DE2_DEV_MAP_MSG, "NetSv_NewPlayerEnters: Spawning player with angle:%x", spot->angle);
 
@@ -764,17 +764,17 @@ void NetSv_SendGameState(int flags, int to)
         Writer_WriteByte(writer, gameEpisode);
         Writer_WriteByte(writer, gameMap);
 
-        Writer_WriteByte(writer, (deathmatch & 0x3)
-            | (!noMonstersParm? 0x4 : 0)
+        Writer_WriteByte(writer, (gameRules.deathmatch & 0x3)
+            | (!gameRules.noMonsters? 0x4 : 0)
 #if !__JHEXEN__
-            | (respawnMonsters? 0x8 : 0)
+            | (gameRules.respawnMonsters? 0x8 : 0)
 #else
             | 0
 #endif
             | (cfg.jumpEnabled? 0x10 : 0));
 
         // Note that SM_NOTHINGS will result in a value of '7'.
-        Writer_WriteByte(writer, gameSkill & 0x7);
+        Writer_WriteByte(writer, gameRules.skill & 0x7);
         Writer_WriteFloat(writer, (float)P_GetGravity());
 
         if(flags & GSF_CAMERA_INIT)
@@ -1201,7 +1201,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, dd_bool stomping)
 #if __JDOOM__ || __JDOOM64__
     char buf[500], *in, tmp[2];
 
-    if(!cfg.killMessages || !deathmatch)
+    if(!cfg.killMessages || !gameRules.deathmatch)
         return;
 
     buf[0] = 0;

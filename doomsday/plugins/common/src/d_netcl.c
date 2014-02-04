@@ -109,32 +109,32 @@ void NetCl_UpdateGameState(Reader* msg)
         }
     }
 
-    deathmatch = gsDeathmatch;
-    noMonstersParm = !gsMonsters;
+    gameRules.deathmatch = gsDeathmatch;
+    gameRules.noMonsters = !gsMonsters;
 #if !__JHEXEN__
-    respawnMonsters = gsRespawn;
+    gameRules.respawnMonsters = gsRespawn;
 #endif
 
     // Some statistics.
 #if __JHEXEN__
     App_Log(DE2_LOG_NOTE,
             "Game state: Map=%u Skill=%i %s", gsMap+1, gsSkill,
-            deathmatch == 1 ? "Deathmatch" :
-            deathmatch == 2 ? "Deathmatch2" : "Co-op");
+            gameRules.deathmatch == 1 ? "Deathmatch" :
+            gameRules.deathmatch == 2 ? "Deathmatch2" : "Co-op");
 #else
     App_Log(DE2_LOG_NOTE,
             "Game state: Map=%u Episode=%u Skill=%i %s", gsMap+1,
             gsEpisode+1, gsSkill,
-            deathmatch == 1 ? "Deathmatch" :
-            deathmatch == 2 ? "Deathmatch2" : "Co-op");
+            gameRules.deathmatch == 1 ? "Deathmatch" :
+            gameRules.deathmatch == 2 ? "Deathmatch2" : "Co-op");
 #endif
 #if !__JHEXEN__
     App_Log(DE2_LOG_NOTE, "  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f",
-            respawnMonsters ? "yes" : "no", !noMonstersParm ? "yes" : "no",
+            gameRules.respawnMonsters ? "yes" : "no", !gameRules.noMonsters ? "yes" : "no",
             gsJumping ? "yes" : "no", gsGravity);
 #else
     App_Log(DE2_NET_NOTE, "  Monsters=%s Jumping=%s Gravity=%.1f",
-                !noMonstersParm ? "yes" : "no",
+                !gameRules.noMonsters ? "yes" : "no",
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
 
@@ -148,9 +148,10 @@ void NetCl_UpdateGameState(Reader* msg)
     }
     else
     {
-        gameSkill = gsSkill;
         gameEpisode = gsEpisode;
-        gameMap = gsMap;
+        gameMap     = gsMap;
+
+        gameRules.skill = gsSkill;
 
         /// @todo Not communicated to clients??
         //gameMapEntryPoint = gsMapEntryPoint;

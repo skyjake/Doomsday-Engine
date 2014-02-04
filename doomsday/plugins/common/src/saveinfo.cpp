@@ -195,7 +195,7 @@ void SaveInfo::configure()
     _map      = gameMap;
 
     // Make a copy of the current game rules.
-    G_GetGameRules(&_gameRules);
+    _gameRules = ::gameRules;
 
 #if !__JHEXEN__
     for(int i = 0; i < MAXPLAYERS; i++)

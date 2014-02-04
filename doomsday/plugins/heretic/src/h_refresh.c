@@ -89,15 +89,17 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-    {   // Red.
+    {
+        // Red.
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
+        rgba[CA] = (gameRules.deathmatch? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
         return true;
     }
     else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-    {   // Light Yellow.
+    {
+        // Light Yellow.
         rgba[CR] = 1;
         rgba[CG] = 1;
         rgba[CB] = .5f;

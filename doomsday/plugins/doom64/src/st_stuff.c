@@ -262,7 +262,7 @@ static void drawWidgets(hudstate_t* hud)
 {
 #define MAXDIGITS           ST_FRAGSWIDTH
 
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         char buf[20];
         if(hud->currentFragsCount == 1994)
@@ -349,30 +349,28 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
 
 void ST_doFullscreenStuff(int player)
 {
-    static const int    ammo_sprite[NUM_AMMO_TYPES] = {
+    static int const ammo_sprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
         SPR_SBOX,
         SPR_CELL,
         SPR_RCKT
     };
 
-    hudstate_t*         hud = &hudStates[player];
-    player_t*           plr = &players[player];
-    char                buf[20];
-    int                 w, h, pos = 0, oldPos = 0, spr,i;
-    int                 h_width = 320 / cfg.hudScale;
-    int                 h_height = 200 / cfg.hudScale;
-    float               textalpha =
-        hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
-    float               iconalpha =
-        hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
+    hudstate_t *hud = &hudStates[player];
+    player_t *plr = &players[player];
+    char buf[20];
+    int w, h, pos = 0, oldPos = 0, spr,i;
+    int h_width = 320 / cfg.hudScale;
+    int h_height = 200 / cfg.hudScale;
+    float textalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
+    float iconalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
 
     textalpha = MINMAX_OF(0.f, textalpha, 1.f);
     iconalpha = MINMAX_OF(0.f, iconalpha, 1.f);
 
     FR_LoadDefaultAttrib();
 
-    if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
+    if(IS_NETGAME && gameRules.deathmatch && cfg.hudShown[HUD_FRAGS])
     {
         // Display the frag counter.
         i = 199 - HUDBORDERY;
@@ -627,7 +625,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
-    if(gameSkill == SM_BABY && cfg.automapBabyKeys)
+    if(gameRules.skill == SM_BABY && cfg.automapBabyKeys)
     {
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);

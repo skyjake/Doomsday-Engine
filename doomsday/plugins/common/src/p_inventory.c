@@ -217,14 +217,14 @@ static dd_bool useItem(playerinventory_t* inv, inventoryitemtype_t type,
     return didUseItem;
 }
 
-static dd_bool giveItem(playerinventory_t* inv, inventoryitemtype_t type)
+static dd_bool giveItem(playerinventory_t *inv, inventoryitemtype_t type)
 {
-    unsigned int        count = countItems(inv, type);
-    inventoryitem_t*    item;
+    unsigned int count = countItems(inv, type);
+    inventoryitem_t *item;
 
 #if __JHEXEN__
     // Can't carry more than 1 puzzle item in coop netplay.
-    if(count && type >= IIT_FIRSTPUZZITEM && IS_NETGAME && !deathmatch)
+    if(count && type >= IIT_FIRSTPUZZITEM && IS_NETGAME && !gameRules.deathmatch)
         return false;
 #endif
 

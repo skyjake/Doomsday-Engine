@@ -196,9 +196,9 @@ static mobj_t* getTeleportDestination(short tag)
     return NULL;
 }
 
-dd_bool EV_Teleport(Line* line, int side, mobj_t* mo, dd_bool spawnFog)
+dd_bool EV_Teleport(Line *line, int side, mobj_t *mo, dd_bool spawnFog)
 {
-    mobj_t* dest;
+    mobj_t *dest;
 
     // Clients cannot teleport on their own.
     if(IS_CLIENT) return 0;
@@ -218,14 +218,14 @@ dd_bool EV_Teleport(Line* line, int side, mobj_t* mo, dd_bool spawnFog)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void P_ArtiTele(player_t* player)
+void P_ArtiTele(player_t *player)
 {
-    const playerstart_t* start;
+    playerstart_t const *start;
 
     // Get a random deathmatch start.
-    if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
+    if((start = P_GetPlayerStart(0, gameRules.deathmatch? -1 : 0, gameRules.deathmatch)))
     {
-        const mapspot_t* spot = &mapSpots[start->spot];
+        mapspot_t const *spot = &mapSpots[start->spot];
         P_Teleport(player->plr->mo, spot->origin[VX], spot->origin[VY], spot->angle, true);
 
 #if __JHEXEN__

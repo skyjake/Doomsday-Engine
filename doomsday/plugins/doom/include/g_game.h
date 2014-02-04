@@ -49,16 +49,14 @@ extern int gaLoadGameSlot;
 extern player_t players[MAXPLAYERS];
 
 extern dd_bool gameInProgress;
-extern skillmode_t gameSkill;
 extern uint gameEpisode;
 extern uint gameMap;
 extern uint gameMapEntryPoint;
+extern GameRuleset gameRules;
 
 extern uint nextMap; // If non zero this will be the next map.
 extern dd_bool secretExit;
 extern int totalKills, totalItems, totalSecret;
-extern dd_bool deathmatch;
-extern dd_bool respawnMonsters;
 extern dd_bool paused;
 extern dd_bool precache;
 extern dd_bool customPal;
@@ -73,12 +71,6 @@ void            G_Register(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
 void            G_CommonShutdown(void);
-
-/**
- * Configure the given @a rules structure according to the @em current game rules.
- * @todo Refactor away.
- */
-void G_GetGameRules(GameRuleset *rules);
 
 void            R_InitRefresh(void);
 

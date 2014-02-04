@@ -904,7 +904,7 @@ void P_MobjThinker(void *thinkerPtr)
         if(!(mobj->flags & MF_COUNTKILL))
             return;
 
-        if(!respawnMonsters)
+        if(!gameRules.respawnMonsters)
             return;
 
         mobj->moveCount++;
@@ -950,7 +950,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
      */
 
     // Not for deathmatch?
-    if(deathmatch && (info->flags & MF_NOTDMATCH))
+    if(gameRules.deathmatch && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Check for specific disabled objects.
@@ -977,8 +977,8 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
         break;
     }
 
-    // Don't spawn any monsters if -noMonstersParm.
-    if(noMonstersParm && (info->flags & MF_COUNTKILL))
+    // Don't spawn any monsters?
+    if(gameRules.noMonsters && (info->flags & MF_COUNTKILL))
         return 0;
 
     if(info->flags & MF_SOLID)
@@ -999,7 +999,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->selector = 0;
     P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
-    if(gameSkill != SM_NIGHTMARE)
+    if(gameRules.skill != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;
 
     mo->lastLook = P_Random() % MAXPLAYERS;

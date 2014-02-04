@@ -25,7 +25,9 @@
 
 /**
  * @ingroup libcommon
- */
+ *
+ * @todo Separate behaviors so that each rule is singular.
+*/
 typedef struct gameruleset_s
 {
     skillmode_t skill;

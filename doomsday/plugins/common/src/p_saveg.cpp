@@ -3670,22 +3670,10 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
      */
     curInfo = saveInfo;
 
-    gameEpisode     = saveInfo->episode();
-    gameMap         = saveInfo->map();
-
-    // Apply the game rules:
-    GameRuleset const &newRules = saveInfo->gameRules();
-    gameSkill       = newRules.skill;
-#if !__JHEXEN__
-    fastParm        = newRules.fast;
-#endif
-    deathmatch      = newRules.deathmatch;
-    noMonstersParm  = newRules.noMonsters;
-#if __JHEXEN__
-    randomClassParm = newRules.randomClasses;
-#else
-    respawnMonsters = newRules.respawnMonsters;
-#endif
+    gameEpisode       = saveInfo->episode();
+    gameMap           = saveInfo->map();
+    gameMapEntryPoint = 0; /// @todo Not saved??
+    gameRules         = saveInfo->gameRules();
 
 #if __JHEXEN__
     Game_ACScriptInterpreter().readWorldScriptData(reader, saveInfo->version());
@@ -3695,7 +3683,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewGame(gameSkill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
+    G_NewGame(gameRules.skill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
 
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
@@ -4008,11 +3996,7 @@ void SV_LoadGameClient(uint gameId)
         return;
     }
 
-    GameRuleset const &newRules = saveInfo->gameRules();
-    gameSkill       = newRules.skill;
-    deathmatch      = newRules.deathmatch;
-    noMonstersParm  = newRules.noMonsters;
-    respawnMonsters = newRules.respawnMonsters;
+    gameRules = saveInfo->gameRules();
 
     // Do we need to change the map?
     if(gameMap != saveInfo->map() || gameEpisode != saveInfo->episode())
@@ -4020,7 +4004,7 @@ void SV_LoadGameClient(uint gameId)
         gameEpisode       = saveInfo->episode();
         gameMap           = saveInfo->map();
         gameMapEntryPoint = 0;
-        G_NewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+        G_NewGame(gameRules.skill, gameEpisode, gameMap, gameMapEntryPoint);
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
     }
@@ -4336,7 +4320,7 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
         plr->attacker = NULL;
         plr->poisoner = NULL;
 
-        if(IS_NETGAME || deathmatch)
+        if(IS_NETGAME || gameRules.deathmatch)
         {
             // In a network game, force all players to be alive
             if(plr->playerState == PST_DEAD)
@@ -4344,7 +4328,7 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
                 plr->playerState = PST_REBORN;
             }
 
-            if(!deathmatch)
+            if(!gameRules.deathmatch)
             {
                 // Cooperative net-play; retain keys and weapons.
                 oldKeys = plr->keys;
@@ -4358,7 +4342,7 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
 
         wasReborn = (plr->playerState == PST_REBORN);
 
-        if(deathmatch)
+        if(gameRules.deathmatch)
         {
             memset(plr->frags, 0, sizeof(plr->frags));
             ddplr->mo = NULL;
@@ -4382,7 +4366,7 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
             }
         }
 
-        if(wasReborn && IS_NETGAME && !deathmatch)
+        if(wasReborn && IS_NETGAME && !gameRules.deathmatch)
         {
             // Restore keys and weapons when reborn in co-op.
             plr->keys = oldKeys;

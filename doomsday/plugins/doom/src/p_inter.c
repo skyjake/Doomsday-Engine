@@ -80,7 +80,7 @@ static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numClips)
     }
 
     // Give double the number of rounds at easy/nightmare skill levels.
-    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
+    if(gameRules.skill == SM_BABY || gameRules.skill == SM_NIGHTMARE)
     {
         numRounds *= 2;
     }
@@ -123,7 +123,7 @@ dd_bool P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numClips)
 
 static dd_bool shouldForceWeaponChange(dd_bool dropped)
 {
-    return IS_NETGAME && deathmatch == 1 && !dropped;
+    return IS_NETGAME && gameRules.deathmatch == 1 && !dropped;
 }
 
 static int numAmmoClipsToGiveWithWeapon(dd_bool dropped)
@@ -132,7 +132,7 @@ static int numAmmoClipsToGiveWithWeapon(dd_bool dropped)
     if(dropped) return 1;
 
     // Give extra clips in deathmatch.
-    return (IS_NETGAME && deathmatch == 1)? 5 : 2;
+    return (IS_NETGAME && gameRules.deathmatch == 1)? 5 : 2;
 }
 
 static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType, dd_bool dropped)
@@ -172,7 +172,7 @@ static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType, dd_bool dro
         plr->update |= PSF_OWNED_WEAPONS;
 
         // Animate a pickup bonus flash?
-        if(IS_NETGAME && deathmatch != 2 && !dropped)
+        if(IS_NETGAME && gameRules.deathmatch != 2 && !dropped)
         {
             plr->bonusCount += BONUSADD;
         }
@@ -532,7 +532,7 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
     if(plr->weapons[weaponType].owned)
     {
         // Leave placed weapons forever on net games.
-        if(IS_NETGAME && deathmatch != 2 && !dropped)
+        if(IS_NETGAME && gameRules.deathmatch != 2 && !dropped)
             return false;
     }
 
@@ -1130,7 +1130,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
+            if(IS_NETGAME && !gameRules.deathmatch && cfg.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
@@ -1147,7 +1147,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     }
 
     player = target->player;
-    if(player && gameSkill == SM_BABY)
+    if(player && gameRules.skill == SM_BABY)
         damage /= 2; // Take half damage in trainer mode.
 
     // Use the cvar damage multiplier netMobDamageModifier only if the

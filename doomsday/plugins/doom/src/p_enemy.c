@@ -675,7 +675,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE && !fastParm)
+        if(gameRules.skill != SM_NIGHTMARE && !gameRules.fast)
         {
             newChaseDir(actor);
         }
@@ -698,7 +698,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill != SM_NIGHTMARE && !fastParm && actor->moveCount))
+        if(!(gameRules.skill != SM_NIGHTMARE && !gameRules.fast && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
@@ -1845,7 +1845,7 @@ void C_DECL A_BrainSpit(mobj_t* mo)
         return; // Ignore if no targets.
 
     brain.easy ^= 1;
-    if(gameSkill <= SM_EASY && (!brain.easy))
+    if(gameRules.skill <= SM_EASY && (!brain.easy))
         return;
 
     // Shoot a cube at current target.

@@ -450,7 +450,7 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
         {
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
-                if(IS_NETGAME && !deathmatch && thing->player)
+                if(IS_NETGAME && !gameRules.deathmatch && thing->player)
                 {
                     return false; // don't attack other co-op players
                 }
@@ -2034,7 +2034,7 @@ static int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
 #endif
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
-    if(th->player && IS_NETGAME && !deathmatch)
+    if(th->player && IS_NETGAME && !gameRules.deathmatch)
     {
         return false; // Don't aim at fellow co-op players.
     }

@@ -2383,17 +2383,17 @@ int XL_LineEvent(int evtype, int linetype, Line* line, int sidenum,
 
     // Check skill level.
     // SM_NOTHINGS will be interpreted as SM_BABY.
-    if(gameSkill < 1)
+    if(gameRules.skill < 1)
         i = 1;
-    else if(gameSkill > 3)
+    else if(gameRules.skill > 3)
         i = 4;
     else
-        i = 1 << (gameSkill - 1);
+        i = 1 << (gameRules.skill - 1);
 
     if(!(info->flags2 & (i << LTF2_SKILL_SHIFT)))
     {
         XG_Dev("  Line %i: ABORTING EVENT due to skill level (%i)",
-               P_ToIndex(line), gameSkill);
+               P_ToIndex(line), gameRules.skill);
         return false;
     }
 

@@ -49,9 +49,8 @@ extern dd_bool gameInProgress;
 extern uint gameEpisode;
 extern uint gameMap;
 extern uint gameMapEntryPoint;
-extern skillmode_t gameSkill;
+extern GameRuleset gameRules;
 
-extern dd_bool deathmatch;
 extern dd_bool paused;
 extern dd_bool precache;
 extern dd_bool customPal;
@@ -65,12 +64,6 @@ extern dd_bool briefDisabled;
 extern int gsvMapMusic;
 
 void            G_CommonShutdown(void);
-
-/**
- * Configure the given @a rules structure according to the @em current game rules.
- * @todo Refactor away.
- */
-void G_GetGameRules(GameRuleset *rules);
 
 void            R_InitRefresh(void);
 void            R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap);

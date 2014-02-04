@@ -103,16 +103,16 @@ void NetSv_ApplyGameRulesFromConfig(void)
     if(IS_CLIENT)
         return;
 
-    deathmatch      = cfg.netDeathmatch;
-    noMonstersParm  = cfg.netNoMonsters;
+    gameRules.deathmatch = cfg.netDeathmatch;
+    gameRules.noMonsters = cfg.netNoMonsters;
     cfg.jumpEnabled = cfg.netJumping;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    respawnMonsters = cfg.netRespawn;
+    gameRules.respawnMonsters = cfg.netRespawn;
 #endif
 
 #if __JHEXEN__
-    randomClassParm = cfg.netRandomClass;
+    gameRules.randomClasses = cfg.netRandomClass;
 #endif
 
     NetSv_UpdateGameConfigDescription();
@@ -180,10 +180,10 @@ int D_NetServerClose(int before)
         /// @todo fixme: "normal" is defined by the game rules config which may
         /// be changed from the command line (e.g., -fast, -nomonsters).
         /// In order to "restore normal" this logic is insufficient.
-        deathmatch = false;
-        noMonstersParm = false;
+        gameRules.deathmatch = false;
+        gameRules.noMonsters = false;
 #if __JHEXEN__
-        randomClassParm = false;
+        gameRules.randomClasses = false;
 #endif
         D_NetMessage(CONSOLEPLAYER, "NETGAME ENDS");
 
@@ -215,10 +215,10 @@ int D_NetDisconnect(int before)
         return true;
 
     // Restore normal game state.
-    deathmatch = false;
-    noMonstersParm = false;
+    gameRules.deathmatch = false;
+    gameRules.noMonsters = false;
 #if __JHEXEN__
-    randomClassParm = false;
+    gameRules.randomClasses = false;
 #endif
 
     D_NetClearBuffer();
@@ -378,14 +378,14 @@ int D_NetWorldEvent(int type, int parm, void* data)
             G_DemoEnds();
 
         // Restore normal game state.
-        deathmatch = false;
-        noMonstersParm = false;
+        gameRules.deathmatch = false;
+        gameRules.noMonsters = false;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        respawnMonsters = false;
+        gameRules.respawnMonsters = false;
 #endif
 
 #if __JHEXEN__
-        randomClassParm = false;
+        gameRules.randomClasses = false;
 #endif
         break;
 #endif
