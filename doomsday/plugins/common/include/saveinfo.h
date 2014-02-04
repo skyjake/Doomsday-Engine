@@ -42,7 +42,7 @@ public: /// @todo make private:
     int _mapTime;
     byte _players[MAXPLAYERS];
 #endif
-    gamerules_t _gameRules;
+    GameRuleset _gameRules;
 
 public:
     SaveInfo();
@@ -82,7 +82,7 @@ public:
 #if !__JHEXEN__
     int mapTime() const;
 #endif
-    gamerules_t const &gameRules() const;
+    GameRuleset const &gameRules() const;
 
     /**
      * Serializes the game session info using @a writer.

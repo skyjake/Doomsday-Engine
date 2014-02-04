@@ -855,7 +855,7 @@ int SV_LoadState_Hr_v13(Str const *path, SaveInfo *info)
     gameMap           = info->map();
     gameMapEntryPoint = 0;
 
-    gamerules_t const &newRules = info->gameRules();
+    GameRuleset const &newRules = info->gameRules();
     gameSkill         = newRules.skill;
 
     // We don't want to see a briefing if we're loading a save game.

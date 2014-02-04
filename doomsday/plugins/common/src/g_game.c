@@ -2185,7 +2185,7 @@ static void G_InitNewGame(void)
 #endif
 }
 
-void G_GetGameRules(gamerules_t *rules)
+void G_GetGameRules(GameRuleset *rules)
 {
     DENG_ASSERT(rules != 0);
 #if __JHEXEN__

@@ -133,30 +133,28 @@ int SaveInfo::mapTime() const
 }
 #endif
 
-gamerules_t const &SaveInfo::gameRules() const
+GameRuleset const &SaveInfo::gameRules() const
 {
     return _gameRules;
 }
 
 void SaveInfo::configure()
 {
-    _magic      = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
-    _version    = MY_SAVE_VERSION;
-    _gameMode   = gameMode;
-
-    _map        = gameMap+1;
+    _magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
+    _version  = MY_SAVE_VERSION;
+    _gameMode = gameMode;
 #if __JHEXEN__
-    _episode    = 1;
+    _episode  = 1;
 #else
-    _episode    = gameEpisode+1;
+    _episode  = gameEpisode + 1;
+    _mapTime  = ::mapTime;
 #endif
+    _map      = gameMap + 1;
 
     // Make a copy of the current game rules.
     G_GetGameRules(&_gameRules);
 
 #if !__JHEXEN__
-    _mapTime    = ::mapTime;
-
     for(int i = 0; i < MAXPLAYERS; i++)
     {
         _players[i] = players[i].plr->inGame;
@@ -181,19 +179,8 @@ void SaveInfo::write(Writer *writer) const
     Writer_WriteInt32(writer, _gameMode);
     Str_Write(&_description, writer);
 
-    Writer_WriteByte(writer, _gameRules.skill & 0x7f);
     Writer_WriteByte(writer, _episode);
     Writer_WriteByte(writer, _map);
-    Writer_WriteByte(writer, _gameRules.deathmatch);
-#if !__JHEXEN__
-    Writer_WriteByte(writer, _gameRules.fast);
-#endif
-    Writer_WriteByte(writer, _gameRules.noMonsters);
-#if __JHEXEN__
-    Writer_WriteByte(writer, _gameRules.randomClasses);
-#else
-    Writer_WriteByte(writer, _gameRules.respawnMonsters);
-#endif
 
 #if !__JHEXEN__
     Writer_WriteInt32(writer, _mapTime);
@@ -204,6 +191,8 @@ void SaveInfo::write(Writer *writer) const
     }
 #endif
     Writer_WriteInt32(writer, _gameId);
+
+    GameRuleset_Write(&_gameRules, writer);
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -271,9 +260,16 @@ void SaveInfo::read(Reader *reader)
 #undef OLD_NAME_LENGTH
     }
 
-#if !__JHEXEN__
-    if(_version < 13)
+    if(_version >= 14)
     {
+        _episode = Reader_ReadByte(reader);
+        _map     = Reader_ReadByte(reader);
+
+        GameRuleset_Read(&_gameRules, reader);
+    }
+    else
+    {
+#if !__JHEXEN__
         // In DOOM the high bit of the skill mode byte is also used for the
         // "fast" game rule dd_bool. There is more confusion in that SM_NOTHINGS
         // will result in 0xff and thus always set the fast bit.
@@ -292,39 +288,31 @@ void SaveInfo::read(Reader *reader)
         {
             _gameRules.fast  = (skillModePlusFastBit & 0x80) != 0;
         }
-    }
-    else
 #endif
-    {
-        _gameRules.skill = skillmode_t( Reader_ReadByte(reader) & 0x7f );
 
-        // Interpret skill levels outside the normal range as "spawn no things".
-        if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
-        {
-            _gameRules.skill = SM_NOTHINGS;
-        }
-    }
+        _episode = Reader_ReadByte(reader);
+        _map     = Reader_ReadByte(reader);
 
-    _episode        = Reader_ReadByte(reader);
-    _map            = Reader_ReadByte(reader);
-
-    _gameRules.deathmatch      = Reader_ReadByte(reader);
+        _gameRules.deathmatch      = Reader_ReadByte(reader);
 #if !__JHEXEN__
-    if(_version >= 13)
-        _gameRules.fast        = Reader_ReadByte(reader);
+        if(_version >= 13)
+            _gameRules.fast        = Reader_ReadByte(reader);
 #endif
-    _gameRules.noMonsters      = Reader_ReadByte(reader);
+        _gameRules.noMonsters      = Reader_ReadByte(reader);
 #if __JHEXEN__
-    _gameRules.randomClasses   = Reader_ReadByte(reader);
+        _gameRules.randomClasses   = Reader_ReadByte(reader);
 #endif
+#if !__JHEXEN__
+        _gameRules.respawnMonsters = Reader_ReadByte(reader);
+#endif
+    }
+
 
 #if !__JHEXEN__
-    _gameRules.respawnMonsters = Reader_ReadByte(reader);
-
     // Older formats serialize the unpacked saveheader_t struct; skip the junk values (alignment).
     if(_version < 10) SV_Seek(2);
 
-    _mapTime        = Reader_ReadInt32(reader);
+    _mapTime = Reader_ReadInt32(reader);
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {

@@ -26,7 +26,8 @@
 /**
  * @ingroup libcommon
  */
-typedef struct gamerules_s {
+typedef struct gameruleset_s
+{
     skillmode_t skill;
 #if !__JHEXEN__
     byte fast;
@@ -38,6 +39,17 @@ typedef struct gamerules_s {
 #else
     byte respawnMonsters;
 #endif
-} gamerules_t;
+} GameRuleset;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void GameRuleset_Write(GameRuleset const *rules, Writer *writer);
+void GameRuleset_Read(GameRuleset *rules, Reader *reader);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_GAMERULES_H

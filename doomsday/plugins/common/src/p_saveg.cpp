@@ -3674,7 +3674,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     gameMap         = saveInfo->map();
 
     // Apply the game rules:
-    gamerules_t const &newRules = saveInfo->gameRules();
+    GameRuleset const &newRules = saveInfo->gameRules();
     gameSkill       = newRules.skill;
 #if !__JHEXEN__
     fastParm        = newRules.fast;
@@ -4008,7 +4008,7 @@ void SV_LoadGameClient(uint gameId)
         return;
     }
 
-    gamerules_t const &newRules = saveInfo->gameRules();
+    GameRuleset const &newRules = saveInfo->gameRules();
     gameSkill       = newRules.skill;
     deathmatch      = newRules.deathmatch;
     noMonstersParm  = newRules.noMonsters;

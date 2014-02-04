@@ -78,7 +78,7 @@ void            G_CommonShutdown(void);
  * Configure the given @a rules structure according to the @em current game rules.
  * @todo Refactor away.
  */
-void G_GetGameRules(gamerules_t *rules);
+void G_GetGameRules(GameRuleset *rules);
 
 void            R_InitRefresh(void);
 
