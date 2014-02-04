@@ -244,7 +244,7 @@ typedef struct jheretic_config_s {
     byte            inventorySlotShowEmpty;
     byte            inventorySelectMode;
     int             tomeCounter, tomeSound;
-    byte            fastMonsters;
+    //byte            fastMonsters;
 } game_config_t;
 
 extern game_config_t cfg;      // in g_game.c

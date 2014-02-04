@@ -32,14 +32,13 @@
 #include <assert.h>
 #include <string.h>
 
-
 int verbose;
 
-dd_bool devParm; // checkparm of -devparm
-dd_bool noMonstersParm; // checkparm of -nomonsters
-dd_bool respawnParm; // checkparm of -respawn
-dd_bool fastParm; // checkparm of -fast
-dd_bool turboParm; // checkparm of -turbo
+//dd_bool devParm; // checkparm of -devparm
+//dd_bool noMonstersParm; // checkparm of -nomonsters
+//dd_bool respawnParm; // checkparm of -respawn
+//dd_bool fastParm; // checkparm of -fast
+//dd_bool turboParm; // checkparm of -turbo
 //dd_bool randomClassParm; // checkparm of -randclass
 
 float turboMul; // Multiplier for turbo.
@@ -199,7 +198,7 @@ void H_PreInit(void)
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // Never.
     cfg.slidingCorpses = false;
-    cfg.fastMonsters = false;
+    //cfg.fastMonsters = false;
     cfg.secretMsg = true;
     cfg.netJumping = true;
     cfg.netEpisode = 0;
@@ -374,19 +373,14 @@ void H_PostInit(void)
     // Game mode specific settings.
     /* None */
 
-    // Command line options.
-    noMonstersParm = CommandLine_Check("-nomonsters");
-    respawnParm    = CommandLine_Check("-respawn");
-    devParm        = CommandLine_Check("-devparm");
-
     if(CommandLine_Check("-deathmatch"))
     {
         cfg.netDeathmatch = true;
     }
 
     // Apply these game rules.
-    gameRules.noMonsters      = noMonstersParm;
-    gameRules.respawnMonsters = respawnParm;
+    gameRules.noMonsters      = CommandLine_Exists("-nomonsters")? true : false;
+    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
 
     // turbo option.
     p = CommandLine_Check("-turbo");
@@ -395,7 +389,6 @@ void H_PostInit(void)
     {
         int scale = 200;
 
-        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)

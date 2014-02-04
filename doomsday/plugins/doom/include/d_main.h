@@ -37,12 +37,12 @@ extern "C" {
 
 extern int verbose;
 
-extern dd_bool noMonstersParm; // checkparm of -nomonsters
-extern dd_bool respawnParm; // checkparm of -respawn
-extern dd_bool turboParm; // checkparm of -turbo
+//extern dd_bool noMonstersParm; // checkparm of -nomonsters
+//extern dd_bool respawnParm; // checkparm of -respawn
+//extern dd_bool turboParm; // checkparm of -turbo
 //extern dd_bool randomClassParm; // checkparm of -randclass
-extern dd_bool devParm; // checkparm of -devparm
-extern dd_bool fastParm; // checkparm of -fast
+//extern dd_bool devParm; // checkparm of -devparm
+//extern dd_bool fastParm; // checkparm of -fast
 
 extern float turboMul; // Multiplier for turbo.
 

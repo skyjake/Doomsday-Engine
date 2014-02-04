@@ -42,7 +42,7 @@ void GameRuleset_Read(GameRuleset *rules, Reader *reader)
     DENG_ASSERT(rules != 0 && reader != 0);
 
     rules->skill           = (skillmode_t) Reader_ReadByte(reader);
-    // Interpret skill levels outside the normal range as "spawn no things".
+    // Interpret skill modes outside the normal range as "spawn no things".
     if(rules->skill < SM_BABY || rules->skill >= NUM_SKILL_MODES)
     {
         rules->skill = SM_NOTHINGS;
@@ -55,8 +55,7 @@ void GameRuleset_Read(GameRuleset *rules, Reader *reader)
     rules->noMonsters      = Reader_ReadByte(reader);
 #if __JHEXEN__
     rules->randomClasses   = Reader_ReadByte(reader);
-#endif
-#if !__JHEXEN__
+#else
     rules->respawnMonsters = Reader_ReadByte(reader);
 #endif
 }

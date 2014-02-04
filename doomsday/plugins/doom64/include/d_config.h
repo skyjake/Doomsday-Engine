@@ -95,7 +95,7 @@ typedef struct jdoom64_config_s {
     int             screenBlocks;
     byte            deathLookUp; // Look up when killed.
     byte            slidingCorpses;
-    byte            fastMonsters;
+    //byte            fastMonsters;
     byte            echoMsg;
     int             hudFog;
 

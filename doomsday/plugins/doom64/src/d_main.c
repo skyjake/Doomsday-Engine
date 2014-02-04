@@ -36,11 +36,11 @@
 
 int verbose;
 
-dd_bool devParm; // checkparm of -devparm
-dd_bool noMonstersParm; // checkparm of -nomonsters
-dd_bool respawnParm; // checkparm of -respawn
-dd_bool fastParm; // checkparm of -fast
-dd_bool turboParm; // checkparm of -turbo
+//dd_bool devParm; // checkparm of -devparm
+//dd_bool noMonstersParm; // checkparm of -nomonsters
+//dd_bool respawnParm; // checkparm of -respawn
+//dd_bool fastParm; // checkparm of -fast
+//dd_bool turboParm; // checkparm of -turbo
 //dd_bool randomClassParm; // checkparm of -randclass
 
 float turboMul; // Multiplier for turbo.
@@ -197,7 +197,7 @@ void D_PreInit(void)
     cfg.ammoAutoSwitch = 0; // Never.
     cfg.secretMsg = true;
     cfg.slidingCorpses = false;
-    cfg.fastMonsters = false;
+    //cfg.fastMonsters = false;
     cfg.netJumping = true;
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
@@ -350,21 +350,15 @@ void D_PostInit(void)
     // Game mode specific settings
     // None.
 
-    // Command line options
-    noMonstersParm = CommandLine_Check("-nomonsters");
-    respawnParm    = CommandLine_Check("-respawn");
-    fastParm       = CommandLine_Check("-fast");
-    devParm        = CommandLine_Check("-devparm");
-
     if(CommandLine_Check("-altdeath"))
         cfg.netDeathmatch = 2;
     else if(CommandLine_Check("-deathmatch"))
         cfg.netDeathmatch = 1;
 
     // Apply these rules.
-    gameRules.noMonsters      = noMonstersParm;
-    gameRules.respawnMonsters = respawnParm;
-    gameRules.fast            = fastParm;
+    gameRules.noMonsters      = CommandLine_Check("-nomonsters")? true : false;
+    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
+    gameRules.fast            = CommandLine_Check("-fast")? true : false;
 
     p = CommandLine_Check("-timer");
     if(p && p < myargc - 1 && gameRules.deathmatch)
@@ -380,7 +374,6 @@ void D_PostInit(void)
     {
         int scale = 200;
 
-        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)

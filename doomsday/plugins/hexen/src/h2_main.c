@@ -38,12 +38,12 @@
 
 int verbose;
 
-dd_bool devParm; // checkparm of -devparm
-dd_bool noMonstersParm; // checkparm of -nomonsters
-dd_bool respawnParm; // checkparm of -respawn
+//dd_bool devParm; // checkparm of -devparm
+//dd_bool noMonstersParm; // checkparm of -nomonsters
+//dd_bool respawnParm; // checkparm of -respawn
 //dd_bool fastParm; // checkparm of -fast
-dd_bool turboParm; // checkparm of -turbo
-dd_bool randomClassParm; // checkparm of -randclass
+//dd_bool turboParm; // checkparm of -turbo
+//dd_bool randomClassParm; // checkparm of -randclass
 
 float turboMul; // Multiplier for turbo.
 
@@ -178,7 +178,7 @@ void X_PreInit(void)
     cfg.weaponAutoSwitch = 1; // IF BETTER
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
-    cfg.fastMonsters = false;
+    //cfg.fastMonsters = false;
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 8; // Use the default color by default.
@@ -344,17 +344,11 @@ void X_PostInit(void)
     // Game mode specific settings.
     /* None */
 
-    // Command line options.
-    noMonstersParm  = CommandLine_Exists("-nomonsters");
-    //respawnParm     = CommandLine_Exists("-respawn");
-    randomClassParm = CommandLine_Exists("-randclass");
-    devParm         = CommandLine_Exists("-devparm");
-
     cfg.netDeathmatch = CommandLine_Exists("-deathmatch");
 
     // Apply these rules.
-    gameRules.noMonsters    = noMonstersParm;
-    gameRules.randomClasses = randomClassParm;
+    gameRules.noMonsters    = CommandLine_Check("-nomonsters")? true : false;
+    gameRules.randomClasses = CommandLine_Exists("-randclass")? true : false;
 
     // Turbo movement option.
     p = CommandLine_Check("-turbo");
@@ -363,7 +357,6 @@ void X_PostInit(void)
     {
         int scale = 200;
 
-        turboParm = true;
         if(p < CommandLine_Count() - 1)
             scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)

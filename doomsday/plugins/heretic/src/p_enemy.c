@@ -614,7 +614,7 @@ void C_DECL A_Chase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(gameRules.skill == SM_NIGHTMARE || cfg.fastMonsters)
+    if(gameRules.skill == SM_NIGHTMARE || gameRules.fast)
     {
         // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;

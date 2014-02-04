@@ -1335,7 +1335,7 @@ int G_Responder(event_t* ev)
     return Hu_MenuResponder(ev);
 }
 
-int G_PrivilegedResponder(event_t* ev)
+int G_PrivilegedResponder(event_t *ev)
 {
     // Ignore all events once shutdown has begun.
     if(G_QuitInProgress()) return false;
@@ -1343,12 +1343,15 @@ int G_PrivilegedResponder(event_t* ev)
     if(Hu_MenuPrivilegedResponder(ev))
         return true;
 
-    // Process the screen shot key right away.
-    if(devParm && ev->type == EV_KEY && ev->data1 == DDKEY_F1)
+    // Process the screen shot key right away?
+    if(ev->type == EV_KEY && ev->data1 == DDKEY_F1)
     {
-        if(ev->state == EVS_DOWN)
-            G_ScreenShot();
-        return true; // All F1 events are eaten.
+        if(CommandLine_Check("-devparm"))
+        {
+            if(ev->state == EVS_DOWN)
+                G_ScreenShot();
+            return true; // All F1 events are eaten.
+        }
     }
 
     return false; // Not eaten.
@@ -2236,14 +2239,13 @@ static void G_ApplyNewGameRules()
     {
         gameRules.deathmatch = false;
         gameRules.respawnMonsters = false;
-        noMonstersParm = CommandLine_Exists("-nomonsters")? true : false;
 
-        gameRules.noMonsters = noMonstersParm;
+        gameRules.noMonsters = CommandLine_Exists("-nomonsters")? true : false;
     }
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    gameRules.respawnMonsters = respawnParm;
+    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
 #endif
 
 #if __JDOOM__ || __JHERETIC__

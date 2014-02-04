@@ -108,7 +108,7 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int maulatorSeconds = 25;
-dd_bool fastMonsters = false;
+//dd_bool fastMonsters = false;
 
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309f)
@@ -547,10 +547,10 @@ void C_DECL A_Look(mobj_t *actor)
 /**
  * Actor has a melee attack, so it tries to close as fast as possible.
  */
-void C_DECL A_Chase(mobj_t* actor)
+void C_DECL A_Chase(mobj_t *actor)
 {
-    int                 delta;
-    statenum_t          state;
+    int delta;
+    statenum_t state;
 
     if(actor->reactionTime)
         actor->reactionTime--;
@@ -561,8 +561,9 @@ void C_DECL A_Chase(mobj_t* actor)
         actor->threshold--;
     }
 
-    if(gameRules.skill == SM_NIGHTMARE || (fastMonsters /*&& INCOMPAT_OK */ ))
-    {   // Monsters move faster in nightmare mode
+    if(gameRules.skill == SM_NIGHTMARE /*|| gameRules.fast*/)
+    {
+        // Monsters move faster in nightmare mode
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
         {
@@ -1691,7 +1692,7 @@ void C_DECL A_SerpentHide(mobj_t* actor)
     actor->floorClip = 0;
 }
 
-void C_DECL A_SerpentChase(mobj_t* actor)
+void C_DECL A_SerpentChase(mobj_t *actor)
 {
     int delta;
     coord_t oldpos[3];
@@ -1709,8 +1710,9 @@ void C_DECL A_SerpentChase(mobj_t* actor)
         actor->threshold--;
     }
 
-    if(gameRules.skill == SM_NIGHTMARE || (fastMonsters))
-    {   // Monsters move faster in nightmare mode.
+    if(gameRules.skill == SM_NIGHTMARE /*|| gameRules.fast*/)
+    {
+        // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
         {
@@ -1864,10 +1866,10 @@ void C_DECL A_SerpentDiveSound(mobj_t *actor)
 /**
  * Similar to A_Chase, only has a hardcoded entering of meleestate.
  */
-void C_DECL A_SerpentWalk(mobj_t* actor)
+void C_DECL A_SerpentWalk(mobj_t *actor)
 {
-    int                 delta;
-    statenum_t          state;
+    int delta;
+    statenum_t state;
 
     if(actor->reactionTime)
     {
@@ -1880,8 +1882,9 @@ void C_DECL A_SerpentWalk(mobj_t* actor)
         actor->threshold--;
     }
 
-    if(gameRules.skill == SM_NIGHTMARE || (fastMonsters))
-    {   // Monsters move faster in nightmare mode.
+    if(gameRules.skill == SM_NIGHTMARE /*|| gameRules.fast*/)
+    {
+        // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
         {
@@ -3884,7 +3887,7 @@ void C_DECL A_BounceCheck(mobj_t* mo)
     }
 }
 
-void C_DECL A_FastChase(mobj_t* mo)
+void C_DECL A_FastChase(mobj_t *mo)
 {
 #define CLASS_BOSS_STRAFE_RANGE     (64*10)
 
@@ -3892,7 +3895,7 @@ void C_DECL A_FastChase(mobj_t* mo)
     coord_t dist;
     angle_t angle;
     uint an;
-    mobj_t* target;
+    mobj_t *target;
     statenum_t state;
 
     if(mo->reactionTime)
@@ -3906,8 +3909,9 @@ void C_DECL A_FastChase(mobj_t* mo)
         mo->threshold--;
     }
 
-    if(gameRules.skill == SM_NIGHTMARE || (fastMonsters))
-    {   // Monsters move faster in nightmare mode.
+    if(gameRules.skill == SM_NIGHTMARE /*|| gameRules.fast*/)
+    {
+        // Monsters move faster in nightmare mode.
         mo->tics -= mo->tics / 2;
         if(mo->tics < 3)
         {

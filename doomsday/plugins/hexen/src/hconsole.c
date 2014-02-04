@@ -136,7 +136,7 @@ cvartemplate_t gameCVars[] = {
     //{"game-monsters-floatoverblocking", 0, CVT_BYTE, &cfg.allowMonsterFloatOverBlocking, 0, 1},
 
 // Game state
-    {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
+    //{"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
 
 // Gameplay
     {"game-maulator-time", CVF_NO_MAX, CVT_INT, &maulatorSeconds, 1, 0},

@@ -69,7 +69,7 @@ typedef struct {
     float           lookSpeed;
     float           turnSpeed;
     int             quakeFly;
-    byte            fastMonsters;
+    //byte            fastMonsters;
     int             useJLook;
     int             screenBlocks;
     int             setBlocks;
