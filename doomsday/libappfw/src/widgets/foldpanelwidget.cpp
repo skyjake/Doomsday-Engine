@@ -75,11 +75,12 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
 {
     d->title = new ButtonWidget;
 
-    d->title->setText(text);
     d->title->setSizePolicy(Expand, Expand);
-    d->title->set(Background()); // no frame or background
-    d->title->setHoverTextColor("text");
+    d->title->setText(text);
+    d->title->setTextColor("accent");
+    d->title->setHoverTextColor("text", ButtonWidget::ReplaceColor);
     d->title->setFont("heading");
+    d->title->set(Background()); // no frame or background
     d->title->setAction(new SignalAction(this, SLOT(toggleFold())));
     d->title->setOpacity(.8f);
 
