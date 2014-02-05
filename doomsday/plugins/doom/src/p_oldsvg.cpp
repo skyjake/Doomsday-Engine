@@ -106,22 +106,22 @@ static void SV_v19_ReadPlayer(player_t *pl)
     pl->armorType       = Reader_ReadInt32(svReader);
 
     memset(pl->powers, 0, sizeof(pl->powers));
-    pl->powers[PT_INVULNERABILITY] = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_STRENGTH]        = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_INVISIBILITY]    = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_IRONFEET]        = (Reader_ReadInt32(svReader)? true : false);
-    pl->powers[PT_ALLMAP]          = (Reader_ReadInt32(svReader)? true : false);
+    pl->powers[PT_INVULNERABILITY] = Reader_ReadInt32(svReader);
+    pl->powers[PT_STRENGTH]        = Reader_ReadInt32(svReader);
+    pl->powers[PT_INVISIBILITY]    = Reader_ReadInt32(svReader);
+    pl->powers[PT_IRONFEET]        = Reader_ReadInt32(svReader);
+    pl->powers[PT_ALLMAP]          = Reader_ReadInt32(svReader);
     if(pl->powers[PT_ALLMAP])
         ST_RevealAutomap(pl - players, true);
-    pl->powers[PT_INFRARED]        = (Reader_ReadInt32(svReader)? true : false);
+    pl->powers[PT_INFRARED]        = Reader_ReadInt32(svReader);
 
     memset(pl->keys, 0, sizeof(pl->keys));
-    pl->keys[KT_BLUECARD]    = (Reader_ReadInt32(svReader)? true : false);
-    pl->keys[KT_YELLOWCARD]  = (Reader_ReadInt32(svReader)? true : false);
-    pl->keys[KT_REDCARD]     = (Reader_ReadInt32(svReader)? true : false);
-    pl->keys[KT_BLUESKULL]   = (Reader_ReadInt32(svReader)? true : false);
-    pl->keys[KT_YELLOWSKULL] = (Reader_ReadInt32(svReader)? true : false);
-    pl->keys[KT_REDSKULL]    = (Reader_ReadInt32(svReader)? true : false);
+    pl->keys[KT_BLUECARD]    = !!Reader_ReadInt32(svReader);
+    pl->keys[KT_YELLOWCARD]  = !!Reader_ReadInt32(svReader);
+    pl->keys[KT_REDCARD]     = !!Reader_ReadInt32(svReader);
+    pl->keys[KT_BLUESKULL]   = !!Reader_ReadInt32(svReader);
+    pl->keys[KT_YELLOWSKULL] = !!Reader_ReadInt32(svReader);
+    pl->keys[KT_REDSKULL]    = !!Reader_ReadInt32(svReader);
 
     pl->backpack = Reader_ReadInt32(svReader);
 
@@ -135,15 +135,15 @@ static void SV_v19_ReadPlayer(player_t *pl)
     pl->pendingWeapon = weapontype_t(Reader_ReadInt32(svReader));
 
     memset(pl->weapons, 0, sizeof(pl->weapons));
-    pl->weapons[WT_FIRST].owned   = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_SECOND].owned  = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_THIRD].owned   = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_FOURTH].owned  = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_FIFTH].owned   = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_SIXTH].owned   = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_SEVENTH].owned = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_EIGHTH].owned  = (Reader_ReadInt32(svReader)? true : false);
-    pl->weapons[WT_NINETH].owned  = (Reader_ReadInt32(svReader)? true : false);
+    pl->weapons[WT_FIRST].owned   = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_SECOND].owned  = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_THIRD].owned   = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_FOURTH].owned  = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_FIFTH].owned   = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_SIXTH].owned   = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_SEVENTH].owned = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_EIGHTH].owned  = !!Reader_ReadInt32(svReader);
+    pl->weapons[WT_NINETH].owned  = !!Reader_ReadInt32(svReader);
 
     memset(pl->ammo, 0, sizeof(pl->ammo));
     pl->ammo[AT_CLIP].owned    = Reader_ReadInt32(svReader);
@@ -183,12 +183,12 @@ static void SV_v19_ReadPlayer(player_t *pl)
         pspdef_t *psp = &pl->pSprites[i];
 
         psp->state   = INT2PTR(state_t, Reader_ReadInt32(svReader));
-        psp->pos[VX] = Reader_ReadInt32(svReader);
-        psp->pos[VY] = Reader_ReadInt32(svReader);
         psp->tics    = Reader_ReadInt32(svReader);
+        psp->pos[VX] = FIX2FLT(Reader_ReadInt32(svReader));
+        psp->pos[VY] = FIX2FLT(Reader_ReadInt32(svReader));
     }
 
-    pl->didSecret   = Reader_ReadInt32(svReader);
+    pl->didSecret  = !!Reader_ReadInt32(svReader);
 }
 
 static void SV_v19_ReadMobj()
