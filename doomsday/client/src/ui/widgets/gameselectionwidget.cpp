@@ -128,16 +128,27 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             return menu->itemWidget<GameWidget>(item);
         }
 
+        String textForTitle(bool whenOpen) const
+        {
+            if(whenOpen) return titleText;
+            return QString("%1 (%2)").arg(titleText).arg(menu->items().size());
+        }
+
         void preparePanelForOpening()
         {
             FoldPanelWidget::preparePanelForOpening();
-            title().setText(titleText);
+            title().setText(textForTitle(true));
         }
 
         void panelClosing()
         {
             FoldPanelWidget::panelClosing();
-            title().setText(QString("%1 (%2)").arg(titleText).arg(menu->items().size()));
+            title().setText(textForTitle(false));
+        }
+
+        void updateTitleText()
+        {
+            title().setText(textForTitle(isOpen()));
         }
     };
 
@@ -154,7 +165,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     {
         // Menu of available games.
         self.add(available = new Subset(Subset::NormalGames,
-                                        tr("Available Games"), this));
+                App_GameLoaded()? tr("Switch Game") : tr("Available Games"), this));
 
         // Menu of incomplete games.
         self.add(incomplete = new Subset(Subset::NormalGames,
@@ -165,8 +176,6 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                                     tr("Multiplayer Games"), this));
 
         superLayout.setOverrideWidth(self.rule().width() - self.margins().width());
-
-        available->title().margins().setTop("");
 
         updateSubsetLayout();
 
@@ -189,12 +198,23 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         superLayout.clear();
 
         QList<Subset *> order;
-        order << available << multi << incomplete;
+        if(!App_GameLoaded())
+        {
+            order << available << multi << incomplete;
+        }
+        else
+        {
+            order << multi << available << incomplete;
+        }
 
         foreach(Subset *s, order)
         {
+            // The first group should not have extra space above it.
+            s->title().margins().setTop(s == order.first()? "" : "gap");
+
             if(!s->items().isEmpty())
             {
+                s->updateTitleText();
                 s->title().show();
                 superLayout << s->title() << *s;
             }
