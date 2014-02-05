@@ -241,7 +241,7 @@ bool MasterWorker::parseResponse(const QByteArray& response)
         }
     }
 
-    LOG_NET_MSG("Received %i servers") << serverCount();
+    LOG_NET_MSG("Received %i servers from master") << serverCount();
 
     Str_Free(&line);
     Str_Free(&msg);

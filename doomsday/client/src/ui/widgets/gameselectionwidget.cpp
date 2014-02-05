@@ -83,7 +83,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             owner->self.add(makeTitle(headingText));
             title().setFont("title");
             title().setTextColor("inverted.text");
-            title().setHoverTextColor("inverted.accent", ButtonWidget::ReplaceColor);
+            title().setHoverTextColor("inverted.text", ButtonWidget::ReplaceColor);
             title().setAlignment(ui::AlignLeft);
             title().margins().setLeft("");
 

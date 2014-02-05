@@ -228,6 +228,8 @@ MPSelectionWidget::MPSelectionWidget()
     : MenuWidget("mp-selection"), d(new Instance(this))
 {
     setGridSize(3, ui::Filled, 0, ui::Expand);
+
+    d->link().discoverUsingMaster();
 }
 
 void MPSelectionWidget::setColumns(int numberOfColumns)

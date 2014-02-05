@@ -61,6 +61,11 @@ public:
      */
     void discover(de::String const &domain);
 
+    /**
+     * Asks the master server for information about currently running servers.
+     */
+    void discoverUsingMaster();
+
     bool isDiscovering() const;
 
     int foundServerCount() const;
