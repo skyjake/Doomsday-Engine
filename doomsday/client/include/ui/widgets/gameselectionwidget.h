@@ -36,8 +36,11 @@ public:
     // Events.
     void update();
 
-signals:
+signals:    
     void gameSessionSelected();
+
+protected slots:
+    void updateSubsetLayout();
 
 private:
     DENG2_PRIVATE(d)

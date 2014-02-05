@@ -182,6 +182,8 @@ DENG_GUI_PIMPL(MPSelectionWidget)
 
     void linkDiscoveryUpdate(ServerLink const &link)
     {
+        bool changed = false;
+
         // Remove obsolete entries.
         for(ui::Data::Pos idx = 0; idx < self.items().size(); ++idx)
         {
@@ -189,6 +191,7 @@ DENG_GUI_PIMPL(MPSelectionWidget)
             if(!link.isFound(Address::parse(id)))
             {
                 self.items().remove(idx--);
+                changed = true;
             }
         }
 
@@ -203,6 +206,7 @@ DENG_GUI_PIMPL(MPSelectionWidget)
             {
                 // Needs to be added.
                 self.items().append(new ServerListItem(info));
+                changed = true;
             }
             else
             {
@@ -210,18 +214,14 @@ DENG_GUI_PIMPL(MPSelectionWidget)
                 self.items().at(found).as<ServerListItem>().setInfo(info);
             }
         }
+
+        if(changed)
+        {
+            // Let others know that one or more games have appeared or disappeared
+            // from the menu.
+            emit self.availabilityChanged();
+        }
     }
-
-    /*
-    void updateLayoutForWidth(int width)
-    {
-        // If the view is too small, we'll want to reduce the number of items in the menu.
-        int const maxWidth = style().rules().rule("mpselection.max.width").valuei();
-
-        qDebug() << maxWidth << width;
-
-        int suitable = clamp(1, 3 * width / maxWidth, 3);
-    }*/
 };
 
 MPSelectionWidget::MPSelectionWidget()

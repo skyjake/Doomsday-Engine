@@ -36,6 +36,7 @@ public:
     void setColumns(int numberOfColumns);
 
 signals:
+    void availabilityChanged();
     void gameSelected();
 
 private:

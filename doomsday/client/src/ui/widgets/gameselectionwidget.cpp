@@ -72,11 +72,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             MultiplayerGames
         };
 
+        String titleText;
         Type type;
         MenuWidget *menu;
 
         Subset(Type selType, String const &headingText, GameSelectionWidget::Instance *owner)
-            : type(selType)
+            : titleText(headingText), type(selType)
         {           
             owner->self.add(makeTitle(headingText));
             title().setFont("title");
@@ -94,6 +95,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             case MultiplayerGames:
                 menu = new MPSelectionWidget;
                 QObject::connect(menu, SIGNAL(gameSelected()), owner->thisPublic, SIGNAL(gameSessionSelected()));
+                QObject::connect(menu, SIGNAL(availabilityChanged()), owner->thisPublic, SLOT(updateSubsetLayout()));
                 break;
             }
 
@@ -125,6 +127,18 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         {
             return menu->itemWidget<GameWidget>(item);
         }
+
+        void preparePanelForOpening()
+        {
+            FoldPanelWidget::preparePanelForOpening();
+            title().setText(titleText);
+        }
+
+        void panelClosing()
+        {
+            FoldPanelWidget::panelClosing();
+            title().setText(QString("%1 (%2)").arg(titleText).arg(menu->items().size()));
+        }
     };
 
     FIFO<Game> pendingGames;
@@ -154,14 +168,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         available->title().margins().setTop("");
 
-        superLayout << available->title()
-                    << *available
-                    << multi->title()
-                    << *multi
-                    << incomplete->title()
-                    << *incomplete;
-
-        self.setContentSize(superLayout.width(), superLayout.height());
+        updateSubsetLayout();
 
         App_Games().audienceForAddition += this;
         App::app().audienceForStartupComplete += this;
@@ -171,6 +178,33 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     {
         App_Games().audienceForAddition -= this;
         App::app().audienceForStartupComplete -= this;
+    }
+
+    /**
+     * Subsets are visible only when they have games in them. The title and content
+     * of a subset are hidden when empty.
+     */
+    void updateSubsetLayout()
+    {
+        superLayout.clear();
+
+        QList<Subset *> order;
+        order << available << multi << incomplete;
+
+        foreach(Subset *s, order)
+        {
+            if(!s->items().isEmpty())
+            {
+                s->title().show();
+                superLayout << s->title() << *s;
+            }
+            else
+            {
+                s->title().hide();
+            }
+        }
+
+        self.setContentSize(superLayout.width(), superLayout.height());
     }
 
     void gameAdded(Game &game)
@@ -206,6 +240,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         }
 
         sortGames();
+        updateSubsetLayout();
     }
 
     struct LoadGameAction : public CommandAction
@@ -319,6 +354,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         }
 
         sortGames();
+        updateSubsetLayout();
     }
 
     void updateLayoutForWidth(int width)
@@ -368,4 +404,9 @@ void GameSelectionWidget::update()
     {
         d->updateLayoutForWidth(rect.width());
     }
+}
+
+void GameSelectionWidget::updateSubsetLayout()
+{
+    d->updateSubsetLayout();
 }
