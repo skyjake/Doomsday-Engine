@@ -60,8 +60,8 @@ enum MenuItemPositions
 {
     // DE menu:
     POS_GAMES             = 0,
-    POS_GAMES_SEPARATOR   = 1,
-    POS_UNLOAD            = 5,
+    POS_UNLOAD            = 1,
+    POS_GAMES_SEPARATOR   = 2,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -260,8 +260,8 @@ DENG_GUI_PIMPL(TaskBarWidget)
         updateStatus();
 
         itemWidget(mainMenu, POS_GAMES)          .show(!newGame.isNull());
-        itemWidget(mainMenu, POS_GAMES_SEPARATOR).show(!newGame.isNull());
         itemWidget(mainMenu, POS_UNLOAD)         .show(!newGame.isNull());
+        itemWidget(mainMenu, POS_GAMES_SEPARATOR).show(!newGame.isNull());
 
         itemWidget(configMenu, POS_RENDERER_SETTINGS).show(!newGame.isNull());
         itemWidget(configMenu, POS_VR_SETTINGS)      .show(!newGame.isNull());
@@ -408,16 +408,16 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 
     d->mainMenu->items()
             << new ui::ActionItem(tr("Games..."), new SignalAction(this, SLOT(showGames())))
+            << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << new ui::Item(ui::Item::Separator)
-            << unloadMenu                           // hidden with null-game
             << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit"));
 
     d->itemWidget(d->mainMenu, POS_GAMES).hide();
-    d->itemWidget(d->mainMenu, POS_GAMES_SEPARATOR).hide();
     d->itemWidget(d->mainMenu, POS_UNLOAD).hide();
+    d->itemWidget(d->mainMenu, POS_GAMES_SEPARATOR).hide();
 
     d->itemWidget(d->configMenu, POS_RENDERER_SETTINGS).hide();
     d->itemWidget(d->configMenu, POS_VR_SETTINGS).hide();
