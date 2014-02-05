@@ -97,6 +97,7 @@ static void SV_v13_ReadPlayer(player_t *pl)
     Reader_ReadInt32(svReader); // mo
 
     pl->playerState = playerstate_t(Reader_ReadInt32(svReader));
+    DENG_ASSERT(pl->playerState >= PST_LIVE && pl->playerState <= PST_REBORN);
 
     byte junk[12];
     Reader_Read(svReader, junk, 10); // ticcmd_t
@@ -116,6 +117,7 @@ static void SV_v13_ReadPlayer(player_t *pl)
     for(int i = 0; i < 14; ++i)
     {
         inventoryitemtype_t type = inventoryitemtype_t(Reader_ReadInt32(svReader));
+        DENG_ASSERT(type >= IIT_NONE && type < NUM_INVENTORYITEM_TYPES);
         int count = Reader_ReadInt32(svReader);
 
         for(int k = 0; k < count; ++k)
@@ -126,22 +128,23 @@ static void SV_v13_ReadPlayer(player_t *pl)
 
     P_InventorySetReadyItem(plrnum, inventoryitemtype_t(Reader_ReadInt32(svReader)));
     Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
-    Reader_ReadInt32(svReader); // current inventory item count?
+    /*pl->artifactCount    =*/ Reader_ReadInt32(svReader);
     /*pl->inventorySlotNum =*/ Reader_ReadInt32(svReader);
 
     memset(pl->powers, 0, sizeof(pl->powers));
-    pl->powers[PT_INVULNERABILITY] = !!Reader_ReadInt32(svReader);
-    pl->powers[PT_INVISIBILITY]    = !!Reader_ReadInt32(svReader);
-    pl->powers[PT_ALLMAP]          = !!Reader_ReadInt32(svReader);
+    /*pl->powers[pw_NONE]            =*/ Reader_ReadInt32(svReader);
+    pl->powers[PT_INVULNERABILITY] = Reader_ReadInt32(svReader);
+    pl->powers[PT_INVISIBILITY]    = Reader_ReadInt32(svReader);
+    pl->powers[PT_ALLMAP]          = Reader_ReadInt32(svReader);
     if(pl->powers[PT_ALLMAP])
     {
         ST_RevealAutomap(pl - players, true);
     }
-    pl->powers[PT_INFRARED]     = !!Reader_ReadInt32(svReader);
-    pl->powers[PT_WEAPONLEVEL2] = !!Reader_ReadInt32(svReader);
-    pl->powers[PT_FLIGHT]       = !!Reader_ReadInt32(svReader);
-    pl->powers[PT_SHIELD]       = !!Reader_ReadInt32(svReader);
-    pl->powers[PT_HEALTH2]      = !!Reader_ReadInt32(svReader);
+    pl->powers[PT_INFRARED]     = Reader_ReadInt32(svReader);
+    pl->powers[PT_WEAPONLEVEL2] = Reader_ReadInt32(svReader);
+    pl->powers[PT_FLIGHT]       = Reader_ReadInt32(svReader);
+    pl->powers[PT_SHIELD]       = Reader_ReadInt32(svReader);
+    pl->powers[PT_HEALTH2]      = Reader_ReadInt32(svReader);
 
     memset(pl->keys, 0, sizeof(pl->keys));
     pl->keys[KT_YELLOW] = !!Reader_ReadInt32(svReader);
@@ -156,8 +159,11 @@ static void SV_v13_ReadPlayer(player_t *pl)
     pl->frags[2] = Reader_ReadInt32(svReader);
     pl->frags[3] = Reader_ReadInt32(svReader);
 
-    pl->readyWeapon   = weapontype_t(Reader_ReadInt32(svReader));
-    pl->pendingWeapon = weapontype_t(Reader_ReadInt32(svReader));
+    int readyWeapon = Reader_ReadInt32(svReader);
+    pl->readyWeapon = readyWeapon == 10? WT_NOCHANGE : weapontype_t(readyWeapon);
+
+    int pendingWeapon = Reader_ReadInt32(svReader);
+    pl->pendingWeapon = pendingWeapon == 10? WT_NOCHANGE : weapontype_t(pendingWeapon);
 
     // Owned weapons.
     memset(pl->weapons, 0, sizeof(pl->weapons));
@@ -169,6 +175,7 @@ static void SV_v13_ReadPlayer(player_t *pl)
     pl->weapons[WT_SIXTH  ].owned = !!Reader_ReadInt32(svReader);
     pl->weapons[WT_SEVENTH].owned = !!Reader_ReadInt32(svReader);
     pl->weapons[WT_EIGHTH ].owned = !!Reader_ReadInt32(svReader);
+    /*pl->weapons[wp_beak   ].owned = !!*/ Reader_ReadInt32(svReader);
 
     memset(pl->ammo, 0, sizeof(pl->ammo));
     pl->ammo[AT_CRYSTAL].owned = Reader_ReadInt32(svReader);
@@ -191,13 +198,16 @@ static void SV_v13_ReadPlayer(player_t *pl)
     pl->killCount   = Reader_ReadInt32(svReader);
     pl->itemCount   = Reader_ReadInt32(svReader);
     pl->secretCount = Reader_ReadInt32(svReader);
-    Reader_ReadInt32(svReader); // message, char*
+    /*pl->message     =*/ Reader_ReadInt32(svReader); // char*
+    /*pl->messageTics =*/ Reader_ReadInt32(svReader); // int32
     pl->damageCount = Reader_ReadInt32(svReader);
     pl->bonusCount  = Reader_ReadInt32(svReader);
     pl->flameCount  = Reader_ReadInt32(svReader);
-    Reader_ReadInt32(svReader); // attacker
+    /*pl->attacker    =*/ Reader_ReadInt32(svReader); // mobj_t*
+
     ddpl->extraLight    = Reader_ReadInt32(svReader);
     ddpl->fixedColorMap = Reader_ReadInt32(svReader);
+
     pl->colorMap    = Reader_ReadInt32(svReader);
 
     for(int i = 0; i < 2; ++i)
@@ -205,17 +215,16 @@ static void SV_v13_ReadPlayer(player_t *pl)
         pspdef_t *psp = &pl->pSprites[i];
 
         psp->state   = INT2PTR(state_t, Reader_ReadInt32(svReader));
-        psp->pos[VX] = Reader_ReadInt32(svReader);
-        psp->pos[VY] = Reader_ReadInt32(svReader);
         psp->tics    = Reader_ReadInt32(svReader);
+        psp->pos[VX] = FIX2FLT(Reader_ReadInt32(svReader));
+        psp->pos[VY] = FIX2FLT(Reader_ReadInt32(svReader));
     }
 
-    pl->didSecret   = Reader_ReadInt32(svReader);
+    pl->didSecret   = !!Reader_ReadInt32(svReader);
     pl->morphTics   = Reader_ReadInt32(svReader);
     pl->chickenPeck = Reader_ReadInt32(svReader);
-
-    Reader_ReadInt32(svReader); // rain1
-    Reader_ReadInt32(svReader); // rain2
+    /*pl->rain1       =*/ Reader_ReadInt32(svReader); // mobj_t*
+    /*pl->rain2       =*/ Reader_ReadInt32(svReader); // mobj_t*
 }
 
 static void SV_v13_ReadMobj()
@@ -236,6 +245,7 @@ static void SV_v13_ReadMobj()
 
     angle_t angle = (angle_t) (ANG45 * (Reader_ReadInt32(svReader) / 45));
     spritenum_t sprite = Reader_ReadInt32(svReader);
+
     int frame = Reader_ReadInt32(svReader);
     frame &= ~FF_FRAMEMASK; // not used anymore.
 
@@ -259,6 +269,7 @@ static void SV_v13_ReadMobj()
     int valid = Reader_ReadInt32(svReader);
     int type  = Reader_ReadInt32(svReader);
 
+    DENG_ASSERT(type >= 0 && type < Get(DD_NUMMOBJTYPES));
     mobjinfo_t *info = &MOBJINFO[type];
 
     int ddflags = 0;
@@ -322,13 +333,13 @@ static void SV_v13_ReadMobj()
     mo->player       = INT2PTR(player_t, Reader_ReadInt32(svReader));
     mo->lastLook     = Reader_ReadInt32(svReader);
 
-    mo->spawnSpot.origin[VX] = (coord_t) Reader_ReadInt32(svReader);
-    mo->spawnSpot.origin[VY] = (coord_t) Reader_ReadInt32(svReader);
+    mo->spawnSpot.origin[VX] = (coord_t) Reader_ReadInt16(svReader);
+    mo->spawnSpot.origin[VY] = (coord_t) Reader_ReadInt16(svReader);
     mo->spawnSpot.origin[VZ] = 0; // Initialize with "something".
-    mo->spawnSpot.angle = (angle_t) (ANG45 * (Reader_ReadInt32(svReader) / 45));
-    /*mo->spawnSpot.type = (int)*/ Reader_ReadInt32(svReader);
+    mo->spawnSpot.angle      = (angle_t) (ANG45 * (Reader_ReadInt16(svReader) / 45));
+    /*mo->spawnSpot.type       = (int)*/ Reader_ReadInt16(svReader);
 
-    int spawnFlags = ((int) Reader_ReadInt32(svReader)) & ~MASK_UNKNOWN_MSF_FLAGS;
+    int spawnFlags = ((int) Reader_ReadInt16(svReader)) & ~MASK_UNKNOWN_MSF_FLAGS;
     // Spawn on the floor by default unless the mobjtype flags override.
     spawnFlags |= MSF_Z_FLOOR;
     mo->spawnSpot.flags = spawnFlags;
@@ -489,13 +500,13 @@ typedef struct {
     fixed_t speed;
     dd_bool crush;
     int direction; /// 1= up, 0= waiting, -1= down
-    int tag'
+    int tag;
     int olddirection;
 } v13_ceiling_t;
 */
-    byte temp[SIZEOF_V13_THINKER_T];
 
     // Padding at the start (an old thinker_t struct)
+    byte temp[SIZEOF_V13_THINKER_T];
     Reader_Read(svReader, &temp, SIZEOF_V13_THINKER_T);
 
     // Start of used data members.
@@ -504,7 +515,7 @@ typedef struct {
     // A 32bit pointer to sector, serialized.
     ceiling->sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(svReader));
     if(!ceiling->sector)
-        Con_Error("tc_ceiling: bad sector number\n");
+        Con_Error("tc_ceiling: bad sector number");
 
     ceiling->bottomHeight = FIX2FLT(Reader_ReadInt32(svReader));
     ceiling->topHeight    = FIX2FLT(Reader_ReadInt32(svReader));
@@ -546,7 +557,7 @@ typedef struct {
     // A 32bit pointer to sector, serialized.
     door->sector       = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(svReader));
     if(!door->sector)
-        Con_Error("tc_door: bad sector number\n");
+        Con_Error("tc_door: bad sector number");
 
     door->topHeight    = FIX2FLT(Reader_ReadInt32(svReader));
     door->speed        = FIX2FLT(Reader_ReadInt32(svReader));
@@ -830,7 +841,7 @@ static void P_v13_UnArchiveSpecials()
             break; }
 
         default:
-            Con_Error("P_UnarchiveSpecials:Unknown tclass %i " "in savegame", tclass);
+            Con_Error("P_UnarchiveSpecials: Unknown tclass %i in savegame", tclass);
         }
     }
 }
