@@ -124,9 +124,9 @@ static int SV_ReadMovePoly(polyevent_t *movepoly, Reader *reader, int mapVersion
 #endif
 
 #if __JHEXEN__
-static void readMapState(Reader *reader, Str const *path);
+static void readMapState(Reader *reader, int saveVersion, Str const *path);
 #else
-static void readMapState(Reader *reader);
+static void readMapState(Reader *reader, int saveVersion);
 #endif
 
 static bool inited = false;
@@ -141,15 +141,13 @@ static SaveInfo *baseSaveInfo;
 #endif
 static SaveInfo *nullSaveInfo;
 
-#if __JHEXEN__
-static int mapVersion;
-#endif
 static SaveInfo const *curInfo;
 
 static playerheader_t playerHeader;
 static dd_bool playerHeaderOK;
 
 static mobj_t **thingArchive;
+static int thingArchiveVersion;
 static uint thingArchiveSize;
 static bool thingArchiveExcludePlayers;
 
@@ -362,16 +360,16 @@ static ThinkerClassInfo thinkerInfo[] = {
 void SV_Register()
 {
 #if !__JHEXEN__
-    C_VAR_BYTE("game-save-auto-loadonreborn",   &cfg.loadAutoSaveOnReborn,  0, 0, 1);
+    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
 #endif
-    C_VAR_BYTE("game-save-confirm",             &cfg.confirmQuickGameSave,  0, 0, 1);
-    C_VAR_BYTE("game-save-confirm-loadonreborn",&cfg.confirmRebornLoad,     0, 0, 1);
-    C_VAR_BYTE("game-save-last-loadonreborn",   &cfg.loadLastSaveOnReborn,  0, 0, 1);
-    C_VAR_INT ("game-save-last-slot",           &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
-    C_VAR_INT ("game-save-quick-slot",          &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
+    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
+    C_VAR_INT ("game-save-last-slot",            &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
+    C_VAR_INT ("game-save-quick-slot",           &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
 
     // Aliases for obsolete cvars:
-    C_VAR_BYTE("menu-quick-ask",                &cfg.confirmQuickGameSave, 0, 0, 1);
+    C_VAR_BYTE("menu-quick-ask",                 &cfg.confirmQuickGameSave, 0, 0, 1);
 }
 
 /**
@@ -382,7 +380,7 @@ void SV_Register()
  * @param map   If @c >= 0 include this logical map index in the composed path.
  * @return  The composed path if reachable (else a zero-length string).
  */
-static AutoStr *composeGameSavePathForSlot2(int slot, int map)
+static AutoStr *composeGameSavePathForSlot(int slot, int map = -1)
 {
     DENG_ASSERT(inited);
 
@@ -405,11 +403,6 @@ static AutoStr *composeGameSavePathForSlot2(int slot, int map)
     }
     F_TranslatePath(path, path);
     return path;
-}
-
-static AutoStr *composeGameSavePathForSlot(int slot)
-{
-    return composeGameSavePathForSlot2(slot, -1);
 }
 
 #if !__JHEXEN__
@@ -610,7 +603,7 @@ void SV_ClearSlot(int slot)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        AutoStr *path = composeGameSavePathForSlot2(slot, i);
+        AutoStr *path = composeGameSavePathForSlot(slot, i);
         SV_RemoveFile(path);
     }
 
@@ -816,7 +809,7 @@ dd_bool SV_IsSlotUsed(int slot)
 #if __JHEXEN__
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
-    AutoStr *path = composeGameSavePathForSlot2(slot, (int)map+1);
+    AutoStr *path = composeGameSavePathForSlot(slot, (int)map+1);
     if(!path || Str_IsEmpty(path)) return false;
     return SV_ExistingFile(path);
 }
@@ -844,8 +837,8 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     AutoStr *src, *dst;
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        src = composeGameSavePathForSlot2(sourceSlot, i);
-        dst = composeGameSavePathForSlot2(destSlot, i);
+        src = composeGameSavePathForSlot(sourceSlot, i);
+        dst = composeGameSavePathForSlot(destSlot, i);
         SV_CopyFile(src, dst);
     }
 
@@ -937,7 +930,7 @@ static void insertThingInArchive(mobj_t const *mo, ThingSerialId thingId)
     DENG_ASSERT(mo != 0);
 
 #if __JHEXEN__
-    if(mapVersion >= 4)
+    if(thingArchiveVersion >= 1)
 #endif
     {
         thingId -= 1;
@@ -1057,7 +1050,7 @@ mobj_t *SV_GetArchiveThing(ThingSerialId thingId, void *address)
     DENG_ASSERT(thingArchive != 0);
 
 #if __JHEXEN__
-    if(mapVersion < 4)
+    if(thingArchiveVersion < 1)
     {
         // Old format (base 0).
 
@@ -1091,23 +1084,6 @@ static playerheader_t *getPlayerHeader()
 {
     DENG_ASSERT(playerHeaderOK);
     return &playerHeader;
-}
-
-/**
- * Returns the material archive version for the save state which is
- * @em presently being read.
- */
-static inline int materialArchiveVersion()
-{
-#if __JHEXEN__
-    if(mapVersion < 6)
-#else
-    if(curInfo->version() < 6)
-#endif
-    {
-        return 0;
-    }
-    return -1;
 }
 
 /**
@@ -2170,12 +2146,12 @@ static void writePlayerHeader(Writer *writer)
 /**
  * Read player header info from the game state.
  */
-static void readPlayerHeader(Reader *reader)
+static void readPlayerHeader(Reader *reader, int saveVersion)
 {
 #if __JHEXEN__
-    if(curInfo->version() >= 4)
+    if(saveVersion >= 4)
 #else
-    if(curInfo->version() >= 5)
+    if(saveVersion >= 5)
 #endif
     {
         SV_AssertSegment(ASEG_PLAYER_HEADER);
@@ -2260,9 +2236,10 @@ static void writePlayers(Writer *writer)
     SV_EndSegment();
 }
 
-static void readPlayers(dd_bool *infile, dd_bool *loaded, Reader *reader)
+static void readPlayers(SaveInfo &info, dd_bool *infile, dd_bool *loaded,
+    Reader *reader)
 {
-    DENG_ASSERT(infile && loaded);
+    DENG_ASSERT(infile != 0 && loaded != 0);
 
     // Setup the dummy.
     ddplayer_t dummyDDPlayer;
@@ -2273,7 +2250,7 @@ static void readPlayers(dd_bool *infile, dd_bool *loaded, Reader *reader)
     {
         loaded[i] = 0;
 #if !__JHEXEN__
-        infile[i] = curInfo->_players[i];
+        infile[i] = info._players[i];
 #endif
     }
 
@@ -2323,6 +2300,10 @@ static void readPlayers(dd_bool *infile, dd_bool *loaded, Reader *reader)
         }
     }
     SV_AssertSegment(ASEG_END);
+
+#if __JHEXEN__
+    DENG_UNUSED(info);
+#endif
 }
 
 static void SV_WriteSector(Sector *sec, Writer *writer)
@@ -2436,7 +2417,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
         type = sc_ploff;
     else
 #else
-    if(curInfo->version() <= 1)
+    if(mapVersion <= 1)
         type = sc_normal;
     else
 #endif
@@ -2446,7 +2427,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
 #if __JHEXEN__
     if(mapVersion > 2)
 #else
-    if(curInfo->version() > 4)
+    if(mapVersion > 4)
 #endif
         ver = Reader_ReadByte(reader);
 
@@ -2465,7 +2446,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
 #endif
 
 #if !__JHEXEN__
-    if(curInfo->version() == 1)
+    if(mapVersion == 1)
     {
         // The flat numbers are absolute lump indices.
         Uri* uri = Uri_NewWithPath2("Flats:", RC_NULL);
@@ -2476,7 +2457,7 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
         ceilingMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
     }
-    else if(curInfo->version() >= 4)
+    else if(mapVersion >= 4)
 #endif
     {
         // The flat numbers are actually archive numbers.
@@ -2497,15 +2478,19 @@ static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
     lightlevel = (byte) Reader_ReadInt16(reader);
 #else
     // In Ver1 the light level is a short
-    if(curInfo->version() == 1)
+    if(mapVersion == 1)
+    {
         lightlevel = (byte) Reader_ReadInt16(reader);
+    }
     else
+    {
         lightlevel = Reader_ReadByte(reader);
+    }
 #endif
     P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) lightlevel / 255.f);
 
 #if !__JHEXEN__
-    if(curInfo->version() > 1)
+    if(mapVersion > 1)
 #endif
     {
         Reader_Read(reader, rgb, 3);
@@ -2881,59 +2866,6 @@ static int SV_ReadPolyObj(Reader *reader, int mapVersion)
 }
 #endif
 
-static void writeMapElements(Writer *writer)
-{
-    SV_BeginSegment(ASEG_MAP_ELEMENTS);
-
-    for(int i = 0; i < numsectors; ++i)
-    {
-        SV_WriteSector((Sector *)P_ToPtr(DMU_SECTOR, i), writer);
-    }
-
-    for(int i = 0; i < numlines; ++i)
-    {
-        SV_WriteLine((Line *)P_ToPtr(DMU_LINE, i), writer);
-    }
-
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_POLYOBJS);
-    Writer_WriteInt32(writer, numpolyobjs);
-    for(int i = 0; i < numpolyobjs; ++i)
-    {
-        SV_WritePolyObj(Polyobj_ById(i), writer);
-    }
-#endif
-}
-
-static void readMapElements(Reader *reader, int mapVersion)
-{
-    SV_AssertSegment(ASEG_MAP_ELEMENTS);
-
-    // Load sectors.
-    for(int i = 0; i < numsectors; ++i)
-    {
-        SV_ReadSector((Sector *)P_ToPtr(DMU_SECTOR, i), reader, mapVersion);
-    }
-
-    // Load lines.
-    for(int i = 0; i < numlines; ++i)
-    {
-        SV_ReadLine((Line *)P_ToPtr(DMU_LINE, i), reader, mapVersion);
-    }
-
-#if __JHEXEN__
-    // Load polyobjects.
-    SV_AssertSegment(ASEG_POLYOBJS);
-
-    long const writtenPolyobjCount = Reader_ReadInt32(reader);
-    DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
-    for(int i = 0; i < writtenPolyobjCount; ++i)
-    {
-        SV_ReadPolyObj(reader, mapVersion);
-    }
-#endif
-}
-
 #if __JHEXEN__
 static void SV_WriteMovePoly(polyevent_t const *th, Writer *writer)
 {
@@ -2991,585 +2923,667 @@ static int SV_ReadMovePoly(polyevent_t *th, Reader *reader, int mapVersion)
 }
 #endif // __JHEXEN__
 
-/**
- * Serializes the specified thinker and writes it to save state.
- *
- * @param th  The thinker to be serialized.
- */
-static int writeThinker(thinker_t *th, void *context)
+class MapStateWriter
 {
-    DENG_ASSERT(th != 0 && context != 0);
-    Writer *writer = (Writer *) context;
-
-    // We are only concerned with thinkers we have save info for.
-    ThinkerClassInfo *thInfo = infoForThinker(*th);
-    if(!thInfo) return false;
-
-    // Are we excluding players?
-    if(thingArchiveExcludePlayers)
+public:
+    MapStateWriter(Writer *writer)
+        : _writer(writer)
     {
-        if(th->function == (thinkfunc_t) P_MobjThinker && ((mobj_t *) th)->player)
-            return false; // Continue iteration.
+        DENG_ASSERT(_writer != 0);
     }
 
-    // Only the server saves this class of thinker?
-    if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
-        return false;
-
-    // Write the header block for this thinker.
-    Writer_WriteByte(writer, thInfo->thinkclass); // Thinker type byte.
-    Writer_WriteByte(writer, th->inStasis? 1 : 0); // In stasis?
-
-    // Write the thinker data.
-    thInfo->writeFunc(th, writer);
-
-    return false; // Continue iteration.
-}
-
-/**
- * Serializes thinkers for both client and server.
- *
- * @note Clients do not save data for all thinkers. In some cases the server
- * will send it anyway (so saving it would just bloat client save states).
- *
- * @note Some thinker classes are NEVER saved by clients.
- */
-static void writeThinkers(Writer *writer)
-{
-    SV_BeginSegment(ASEG_THINKERS);
+    void write()
     {
-#if __JHEXEN__
-        Writer_WriteInt32(writer, thingArchiveSize); // number of mobjs.
-#endif
-
-        // Serialize qualifying thinkers.
-        Thinker_Iterate(0/*all thinkers*/, writeThinker, writer);
+        beginMapSegment();
+        {
+            writeElements();
+            writePolyobjs();
+            writeThinkers();
+            writeACScriptData();
+            writeSoundSequences();
+            writeMisc();
+            writeBrain();
+            writeSoundTargets();
+        }
+        endMapSegment();
     }
-    Writer_WriteByte(writer, TC_END);
-}
 
-static int restoreMobjLinks(thinker_t *th, void *parameters)
-{
-    DENG_UNUSED(parameters);
-
-    if(th->function != (thinkfunc_t) P_MobjThinker)
-        return false; // Continue iteration.
-
-    mobj_t *mo = (mobj_t *) th;
-    mo->target = SV_GetArchiveThing(PTR2INT(mo->target), &mo->target);
-    mo->onMobj = SV_GetArchiveThing(PTR2INT(mo->onMobj), &mo->onMobj);
-
-#if __JHEXEN__
-    switch(mo->type)
+private:
+    void beginMapSegment()
     {
-    // Just tracer
-    case MT_BISH_FX:
-    case MT_HOLY_FX:
-    case MT_DRAGON:
-    case MT_THRUSTFLOOR_UP:
-    case MT_THRUSTFLOOR_DOWN:
-    case MT_MINOTAUR:
-    case MT_SORCFX1:
-        if(mapVersion >= 3)
-        {
-            mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
-        }
-        else
-        {
-            mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
-            mo->special1 = 0;
-        }
-        break;
-
-    // Just special2
-    case MT_LIGHTNING_FLOOR:
-    case MT_LIGHTNING_ZAP:
-        mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
-        break;
-
-    // Both tracer and special2
-    case MT_HOLY_TAIL:
-    case MT_LIGHTNING_CEILING:
-        if(mapVersion >= 3)
-        {
-            mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
-        }
-        else
-        {
-            mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
-            mo->special1 = 0;
-        }
-        mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
-        break;
-
-    default:
-        break;
-    }
-#else
-# if __JDOOM__ || __JDOOM64__
-    mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
-# endif
-# if __JHERETIC__
-    mo->generator = SV_GetArchiveThing(PTR2INT(mo->generator), &mo->generator);
-# endif
-#endif
-
-    return false; // Continue iteration.
-}
-
-static int removeThinkerWorker(thinker_t *th, void *context)
-{
-    DENG_UNUSED(context);
-
-    if(th->function == (thinkfunc_t) P_MobjThinker)
-        P_MobjRemove((mobj_t *) th, true);
-    else
-        Z_Free(th);
-
-    return false; // Continue iteration.
-}
-
-static void removeLoadSpawnedThinkers()
-{
 #if !__JHEXEN__
-    if(!IS_SERVER) return; // Not for us.
+        // Clear the sound target count (determined while saving sectors).
+        numSoundTargets = 0;
 #endif
 
-    Thinker_Iterate(0 /*all thinkers*/, removeThinkerWorker, 0/*no parameters*/);
-    Thinker_Init();
-}
+        SV_BeginSegment(ASEG_MAP_HEADER2);
 
 #if __JHEXEN__
-static bool mobjtypeHasCorpse(mobjtype_t type)
-{
-    // Only corpses that call A_QueueCorpse from death routine.
-    /// @todo fixme: What about mods? Look for this action in the death
-    /// state sequence?
-    switch(type)
-    {
-    case MT_CENTAUR:
-    case MT_CENTAURLEADER:
-    case MT_DEMON:
-    case MT_DEMON2:
-    case MT_WRAITH:
-    case MT_WRAITHB:
-    case MT_BISHOP:
-    case MT_ETTIN:
-    case MT_PIG:
-    case MT_CENTAUR_SHIELD:
-    case MT_CENTAUR_SWORD:
-    case MT_DEMONCHUNK1:
-    case MT_DEMONCHUNK2:
-    case MT_DEMONCHUNK3:
-    case MT_DEMONCHUNK4:
-    case MT_DEMONCHUNK5:
-    case MT_DEMON2CHUNK1:
-    case MT_DEMON2CHUNK2:
-    case MT_DEMON2CHUNK3:
-    case MT_DEMON2CHUNK4:
-    case MT_DEMON2CHUNK5:
-    case MT_FIREDEMON_SPLOTCH1:
-    case MT_FIREDEMON_SPLOTCH2:
-        return true;
+        Writer_WriteByte(_writer, MY_SAVE_VERSION); // Map version also.
 
-    default: return false;
-    }
-}
-
-static int rebuildCorpseQueueWorker(thinker_t *th, void *parameters)
-{
-    DENG_UNUSED(parameters);
-
-    mobj_t *mo = (mobj_t *) th;
-
-    // Must be a non-iced corpse.
-    if((mo->flags & MF_CORPSE) && !(mo->flags & MF_ICECORPSE) &&
-       mobjtypeHasCorpse(mobjtype_t(mo->type)))
-    {
-        P_AddCorpseToQueue(mo);
-    }
-
-    return false; // Continue iteration.
-}
-
-/**
- * @todo fixme: the corpse queue should be serialized (original order unknown).
- */
-static void rebuildCorpseQueue()
-{
-    P_InitCorpseQueue();
-    // Search the thinker list for corpses and place them in the queue.
-    Thinker_Iterate((thinkfunc_t) P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
-}
+        // Write the map timer
+        Writer_WriteInt32(_writer, mapTime);
 #endif
+        MaterialArchive_Write(materialArchive, _writer);
+    }
 
-/**
- * Update the references between thinkers. To be called during the load
- * process to finalize the loaded thinkers.
- */
-static void relinkThinkers()
-{
-#if __JHEXEN__
-    Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinks, 0/*no params*/);
-
-    P_CreateTIDList();
-    rebuildCorpseQueue();
-
-#else
-    if(IS_SERVER)
+    void endMapSegment()
     {
-        Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinks, 0/*no params*/);
+        SV_EndSegment();
+    }
+
+    void writeElements()
+    {
+        SV_BeginSegment(ASEG_MAP_ELEMENTS);
+
+        for(int i = 0; i < numsectors; ++i)
+        {
+            SV_WriteSector((Sector *)P_ToPtr(DMU_SECTOR, i), _writer);
+        }
 
         for(int i = 0; i < numlines; ++i)
         {
-            xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
-            if(!xline->xg) continue;
-
-            xline->xg->activator = SV_GetArchiveThing(PTR2INT(xline->xg->activator),
-                                                      &xline->xg->activator);
+            SV_WriteLine((Line *)P_ToPtr(DMU_LINE, i), _writer);
         }
     }
-#endif
-}
 
-/**
- * Deserializes and then spawns thinkers for both client and server.
- */
-static void readThinkers(Reader *reader, int mapVersion)
-{
-    bool const formatHasStasisInfo = (mapVersion >= 6);
-
-    removeLoadSpawnedThinkers();
-
-#if __JHEXEN__
-    if(mapVersion < 4)
-        SV_AssertSegment(ASEG_MOBJS);
-    else
-#endif
-        SV_AssertSegment(ASEG_THINKERS);
-
-#if __JHEXEN__
-    initTargetPlayers();
-    initThingArchiveForLoad(Reader_ReadInt32(reader) /* num elements */);
-#endif
-
-    // Read in saved thinkers.
-#if __JHEXEN__
-    int i = 0;
-    bool reachedSpecialsBlock = (mapVersion >= 4);
-#else
-    bool reachedSpecialsBlock = (mapVersion >= 5);
-#endif
-
-    byte tClass = 0;
-    for(;;)
+    void writePolyobjs()
     {
 #if __JHEXEN__
-        if(reachedSpecialsBlock)
-#endif
-            tClass = Reader_ReadByte(reader);
+        SV_BeginSegment(ASEG_POLYOBJS);
 
-#if __JHEXEN__
-        if(mapVersion < 4)
+        Writer_WriteInt32(_writer, numpolyobjs);
+        for(int i = 0; i < numpolyobjs; ++i)
         {
-            if(reachedSpecialsBlock) // Have we started on the specials yet?
-            {
-                // Versions prior to 4 used a different value to mark
-                // the end of the specials data and the thinker class ids
-                // are differrent, so we need to manipulate the thinker
-                // class identifier value.
-                if(tClass != TC_END)
-                    tClass += 2;
-            }
-            else
-            {
-                tClass = TC_MOBJ;
-            }
-
-            if(tClass == TC_MOBJ && (uint)i == thingArchiveSize)
-            {
-                SV_AssertSegment(ASEG_THINKERS);
-                // We have reached the begining of the "specials" block.
-                reachedSpecialsBlock = true;
-                continue;
-            }
+            SV_WritePolyObj(Polyobj_ById(i), _writer);
         }
-#else
-        if(mapVersion < 5)
-        {
-            if(reachedSpecialsBlock)
-            {
-                // Versions prior to 5 used a different value to mark
-                // the end of the specials data so we need to manipulate
-                // the thinker class identifier value.
-                if(tClass == PRE_VER5_END_SPECIALS)
-                    tClass = TC_END;
-                else
-                    tClass += 3;
-            }
-            else if(tClass == TC_END)
-            {
-                // We have reached the begining of the "specials" block.
-                reachedSpecialsBlock = true;
-                continue;
-            }
-        }
-#endif
-        if(tClass == TC_END)
-            break; // End of the list.
-
-        ThinkerClassInfo *thInfo = infoForThinkerClass(thinkerclass_t(tClass));
-        DENG_ASSERT(thInfo != 0);
-        // Not for us? (it shouldn't be here anyway!).
-        DENG_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
-
-        // Mobjs use a special engine-side allocator.
-        thinker_t *th = 0;
-        if(thInfo->thinkclass == TC_MOBJ)
-        {
-            th = reinterpret_cast<thinker_t *>(Mobj_CreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0));
-        }
-        else
-        {
-            th = reinterpret_cast<thinker_t *>(Z_Calloc(thInfo->size, PU_MAP, 0));
-        }
-
-        bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(Reader_ReadByte(reader)) : false);
-
-        if(thInfo->readFunc(th, reader, mapVersion))
-        {
-            Thinker_Add(th);
-        }
-
-        if(putThinkerInStasis)
-        {
-            Thinker_SetStasis(th, true);
-        }
-
-#if __JHEXEN__
-        if(tClass == TC_MOBJ)
-            i++;
 #endif
     }
 
-    // Update references between thinkers.
-    relinkThinkers();
-}
+    /**
+     * Serializes the specified thinker and writes it to save state.
+     *
+     * @param th  The thinker to be serialized.
+     */
+    static int writeThinkerWorker(thinker_t *th, void *context)
+    {
+        DENG_ASSERT(th != 0 && context != 0);
+        Writer *writer = (Writer *) context;
 
-static void writeBrain(Writer *writer)
-{
+        // We are only concerned with thinkers we have save info for.
+        ThinkerClassInfo *thInfo = infoForThinker(*th);
+        if(!thInfo) return false;
+
+        // Are we excluding players?
+        if(thingArchiveExcludePlayers)
+        {
+            if(th->function == (thinkfunc_t) P_MobjThinker && ((mobj_t *) th)->player)
+                return false; // Continue iteration.
+        }
+
+        // Only the server saves this class of thinker?
+        if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
+            return false;
+
+        // Write the header block for this thinker.
+        Writer_WriteByte(writer, thInfo->thinkclass); // Thinker type byte.
+        Writer_WriteByte(writer, th->inStasis? 1 : 0); // In stasis?
+
+        // Write the thinker data.
+        thInfo->writeFunc(th, writer);
+
+        return false; // Continue iteration.
+    }
+
+    /**
+     * Serializes thinkers for both client and server.
+     *
+     * @note Clients do not save data for all thinkers. In some cases the server
+     * will send it anyway (so saving it would just bloat client save states).
+     *
+     * @note Some thinker classes are NEVER saved by clients.
+     */
+    void writeThinkers()
+    {
+        SV_BeginSegment(ASEG_THINKERS);
+
+#if __JHEXEN__
+        Writer_WriteInt32(_writer, thingArchiveSize); // number of mobjs.
+#endif
+
+        // Serialize qualifying thinkers.
+        Thinker_Iterate(0/*all thinkers*/, writeThinkerWorker, _writer);
+
+        // Mark the end of the thinkers.
+        Writer_WriteByte(_writer, TC_END);
+    }
+
+    void writeACScriptData()
+    {
+#if __JHEXEN__
+        Game_ACScriptInterpreter().writeMapScriptData(_writer);
+#endif
+    }
+
+    void writeSoundSequences()
+    {
+#if __JHEXEN__
+        SN_WriteSequences(_writer);
+#endif
+    }
+
+    void writeBrain()
+    {
 #if __JDOOM__
-    // Not for us?
-    if(!IS_SERVER) return;
-
-    Writer_WriteByte(writer, 1); // Write a version byte.
-
-    Writer_WriteInt16(writer, brain.numTargets);
-    Writer_WriteInt16(writer, brain.targetOn);
-    Writer_WriteByte(writer, brain.easy!=0? 1:0);
-
-    // Write the mobj references using the mobj archive.
-    for(int i = 0; i < brain.numTargets; ++i)
-    {
-        Writer_WriteInt16(writer, SV_ThingArchiveId(brain.targets[i]));
-    }
-#else
-    DENG_UNUSED(writer);
+        P_BrainWrite(_writer);
 #endif
-}
-
-static void readBrain(Reader *reader, int mapVersion)
-{
-#if __JDOOM__
-    // Not for us?
-    if(!IS_SERVER) return;
-
-    // No brain data before version 3.
-    if(mapVersion < 3) return;
-
-    P_BrainClearTargets();
-
-    int ver = (mapVersion >= 8? Reader_ReadByte(reader) : 0);
-    int numTargets;
-    if(ver >= 1)
-    {
-        numTargets      = Reader_ReadInt16(reader);
-        brain.targetOn  = Reader_ReadInt16(reader);
-        brain.easy      = (dd_bool)Reader_ReadByte(reader);
-    }
-    else
-    {
-        numTargets      = Reader_ReadByte(reader);
-        brain.targetOn  = Reader_ReadByte(reader);
-        brain.easy      = false;
     }
 
-    for(int i = 0; i < numTargets; ++i)
+    void writeSoundTargets()
     {
-        P_BrainAddTarget(SV_GetArchiveThing((int) Reader_ReadInt16(reader), 0));
-    }
-#else
-    DENG_UNUSED(reader);
-    DENG_UNUSED(mapVersion);
-#endif
-}
-
-static void writeSoundTargets(Writer *writer)
-{
 #if !__JHEXEN__
-    // Not for us?
-    if(!IS_SERVER) return;
+        // Not for us?
+        if(!IS_SERVER) return;
 
-    // Write the total number.
-    Writer_WriteInt32(writer, numSoundTargets);
+        // Write the total number.
+        Writer_WriteInt32(_writer, numSoundTargets);
 
-    // Write the mobj references using the mobj archive.
-    for(int i = 0; i < numsectors; ++i)
-    {
-        xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i));
-
-        if(xsec->soundTarget)
+        // Write the mobj references using the mobj archive.
+        for(int i = 0; i < numsectors; ++i)
         {
-            Writer_WriteInt32(writer, i);
-            Writer_WriteInt16(writer, SV_ThingArchiveId(xsec->soundTarget));
+            xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i));
+
+            if(xsec->soundTarget)
+            {
+                Writer_WriteInt32(_writer, i);
+                Writer_WriteInt16(_writer, SV_ThingArchiveId(xsec->soundTarget));
+            }
         }
-    }
-#else
-    DENG_UNUSED(writer);
 #endif
-}
+    }
 
-static void readSoundTargets(Reader *reader, int mapVersion)
-{
-#if !__JHEXEN__
-    // Not for us?
-    if(!IS_SERVER) return;
-
-    // Sound Target data was introduced in ver 5
-    if(mapVersion < 5) return;
-
-    // Read the number of targets
-    int numsoundtargets = Reader_ReadInt32(reader);
-
-    // Read in the sound targets.
-    for(int i = 0; i < numsoundtargets; ++i)
+    void writeMisc()
     {
-        xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader)));
-        DENG_ASSERT(xsec != 0);
-        if(!xsec)
+#if __JHEXEN__
+        SV_BeginSegment(ASEG_MISC);
+
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            DENG_UNUSED(Reader_ReadInt16(reader));
-            continue;
+            Writer_WriteInt32(_writer, localQuakeHappening[i]);
         }
-
-        xsec->soundTarget = INT2PTR(mobj_t, Reader_ReadInt16(reader));
-        xsec->soundTarget =
-            SV_GetArchiveThing(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
+#endif
     }
-#else
-    DENG_UNUSED(reader);
-    DENG_UNUSED(mapVersion);
-#endif
-}
 
-static void writeMisc(Writer *writer)
+    Writer *_writer;
+};
+
+class MapStateReader
 {
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_MISC);
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
+public:
+    MapStateReader(Reader *reader, int saveVersion)
+        : _reader(reader)
+        , _saveVersion(saveVersion)
+        , _mapVersion(saveVersion) // Default: mapVersion == saveVersion
     {
-        Writer_WriteInt32(writer, localQuakeHappening[i]);
+        DENG_ASSERT(_reader != 0);
     }
-#else
-    DENG_UNUSED(writer);
-#endif
-}
 
-static void readMisc(Reader *reader, int /*mapVersion*/)
-{
-#if __JHEXEN__
-    SV_AssertSegment(ASEG_MISC);
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    void read()
     {
-        localQuakeHappening[i] = Reader_ReadInt32(reader);
+        beginMapSegment();
+        {
+            readElements();
+            readPolyobjs();
+            readThinkers();
+            readACScriptData();
+            readSoundSequences();
+            readMisc();
+            readBrain();
+            readSoundTargets();
+        }
+        endMapSegment();
     }
-#else
-    DENG_UNUSED(reader);
-#endif
-}
 
-static void writeMap(Writer *writer)
-{
-#if !__JHEXEN__
-    // Clear the sound target count (determined while saving sectors).
-    numSoundTargets = 0;
-#endif
-
-    SV_BeginSegment(ASEG_MAP_HEADER2);
+private:
+    void beginMapSegment()
     {
+        savestatesegment_t segId;
+        SV_AssertMapSegment(&segId);
+
 #if __JHEXEN__
-        Writer_WriteByte(writer, MY_SAVE_VERSION); // Map version also.
+        // Maps have their own version number, in Hexen.
+        _mapVersion = (segId == ASEG_MAP_HEADER2? Reader_ReadByte(_reader) : 2);
 
-        // Write the map timer
-        Writer_WriteInt32(writer, mapTime);
-#endif
-
-        MaterialArchive_Write(materialArchive, writer);
-        writeMapElements(writer);
-        writeThinkers(writer);
-#if __JHEXEN__
-        Game_ACScriptInterpreter().writeMapScriptData(writer);
-        SN_WriteSequences(writer);
-#endif
-        writeMisc(writer);
-        writeBrain(writer);
-        writeSoundTargets(writer);
-    }
-    SV_EndSegment();
-}
-
-static void readMap(Reader *reader)
-{
-    sideArchive = new SideArchive;
-
-    savestatesegment_t mapSegmentId;
-    SV_AssertMapSegment(&mapSegmentId);
-    {
-#if __JHEXEN__
-        mapVersion = (mapSegmentId == ASEG_MAP_HEADER2? Reader_ReadByte(reader) : 2);
-#else
-        int const mapVersion = curInfo->version();
+        thingArchiveVersion = _mapVersion >= 4? 1 : 0;
 #endif
 
 #if __JHEXEN__
         // Read the map timer.
-        mapTime = Reader_ReadInt32(reader);
+        mapTime = Reader_ReadInt32(_reader);
 #endif
 
         // Read the material archive for the map.
 #if !__JHEXEN__
-        if(mapVersion >= 4)
+        if(_mapVersion >= 4)
 #endif
         {
-            MaterialArchive_Read(materialArchive, reader, materialArchiveVersion());
+            MaterialArchive_Read(materialArchive, _reader, _mapVersion < 6? 0 : -1);
         }
 
-        readMapElements(reader, mapVersion);
-        readThinkers(reader, mapVersion);
-#if __JHEXEN__
-        Game_ACScriptInterpreter().readMapScriptData(reader, mapVersion);
-        SN_ReadSequences(reader, mapVersion);
-#endif
-        readMisc(reader, mapVersion);
-        readBrain(reader, mapVersion);
-        readSoundTargets(reader, mapVersion);
+        sideArchive = new SideArchive;
     }
-    SV_AssertSegment(ASEG_END);
 
-    delete sideArchive; sideArchive = 0;
-}
+    void endMapSegment()
+    {
+        SV_AssertSegment(ASEG_END);
+
+        delete sideArchive; sideArchive = 0;
+    }
+
+    void readElements()
+    {
+        SV_AssertSegment(ASEG_MAP_ELEMENTS);
+
+        // Sectors.
+        for(int i = 0; i < numsectors; ++i)
+        {
+            SV_ReadSector((Sector *)P_ToPtr(DMU_SECTOR, i), _reader, _mapVersion);
+        }
+
+        // Lines.
+        for(int i = 0; i < numlines; ++i)
+        {
+            SV_ReadLine((Line *)P_ToPtr(DMU_LINE, i), _reader, _mapVersion);
+        }
+    }
+
+    void readPolyobjs()
+    {
+#if __JHEXEN__
+        SV_AssertSegment(ASEG_POLYOBJS);
+
+        int const writtenPolyobjCount = Reader_ReadInt32(_reader);
+        DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
+        for(int i = 0; i < writtenPolyobjCount; ++i)
+        {
+            SV_ReadPolyObj(_reader, _mapVersion);
+        }
+#endif
+    }
+
+    static int removeThinkerWorker(thinker_t *th, void * /*context*/)
+    {
+        if(th->function == (thinkfunc_t) P_MobjThinker)
+            P_MobjRemove((mobj_t *) th, true);
+        else
+            Z_Free(th);
+
+        return false; // Continue iteration.
+    }
+
+    void removeLoadSpawnedThinkers()
+    {
+#if !__JHEXEN__
+        if(!IS_SERVER) return; // Not for us.
+#endif
+
+        Thinker_Iterate(0 /*all thinkers*/, removeThinkerWorker, 0/*no parameters*/);
+        Thinker_Init();
+    }
+
+#if __JHEXEN__
+    static bool mobjtypeHasCorpse(mobjtype_t type)
+    {
+        // Only corpses that call A_QueueCorpse from death routine.
+        /// @todo fixme: What about mods? Look for this action in the death
+        /// state sequence?
+        switch(type)
+        {
+        case MT_CENTAUR:
+        case MT_CENTAURLEADER:
+        case MT_DEMON:
+        case MT_DEMON2:
+        case MT_WRAITH:
+        case MT_WRAITHB:
+        case MT_BISHOP:
+        case MT_ETTIN:
+        case MT_PIG:
+        case MT_CENTAUR_SHIELD:
+        case MT_CENTAUR_SWORD:
+        case MT_DEMONCHUNK1:
+        case MT_DEMONCHUNK2:
+        case MT_DEMONCHUNK3:
+        case MT_DEMONCHUNK4:
+        case MT_DEMONCHUNK5:
+        case MT_DEMON2CHUNK1:
+        case MT_DEMON2CHUNK2:
+        case MT_DEMON2CHUNK3:
+        case MT_DEMON2CHUNK4:
+        case MT_DEMON2CHUNK5:
+        case MT_FIREDEMON_SPLOTCH1:
+        case MT_FIREDEMON_SPLOTCH2:
+            return true;
+
+        default: return false;
+        }
+    }
+
+    static int rebuildCorpseQueueWorker(thinker_t *th, void * /*context*/)
+    {
+        mobj_t *mo = (mobj_t *) th;
+
+        // Must be a non-iced corpse.
+        if((mo->flags & MF_CORPSE) && !(mo->flags & MF_ICECORPSE) &&
+           mobjtypeHasCorpse(mobjtype_t(mo->type)))
+        {
+            P_AddCorpseToQueue(mo);
+        }
+
+        return false; // Continue iteration.
+    }
+
+    /**
+     * @todo fixme: the corpse queue should be serialized (original order unknown).
+     */
+    void rebuildCorpseQueue()
+    {
+        P_InitCorpseQueue();
+        // Search the thinker list for corpses and place them in the queue.
+        Thinker_Iterate((thinkfunc_t) P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
+    }
+#endif
+
+    static int restoreMobjLinksWorker(thinker_t *th, void *context)
+    {
+        int const mapVersion = *static_cast<int const *>(context);
+
+        if(th->function != (thinkfunc_t) P_MobjThinker)
+            return false; // Continue iteration.
+
+        mobj_t *mo = (mobj_t *) th;
+        mo->target = SV_GetArchiveThing(PTR2INT(mo->target), &mo->target);
+        mo->onMobj = SV_GetArchiveThing(PTR2INT(mo->onMobj), &mo->onMobj);
+
+#if __JHEXEN__
+        switch(mo->type)
+        {
+        // Just tracer
+        case MT_BISH_FX:
+        case MT_HOLY_FX:
+        case MT_DRAGON:
+        case MT_THRUSTFLOOR_UP:
+        case MT_THRUSTFLOOR_DOWN:
+        case MT_MINOTAUR:
+        case MT_SORCFX1:
+            if(mapVersion >= 3)
+            {
+                mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+            }
+            else
+            {
+                mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                mo->special1 = 0;
+            }
+            break;
+
+        // Just special2
+        case MT_LIGHTNING_FLOOR:
+        case MT_LIGHTNING_ZAP:
+            mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
+            break;
+
+        // Both tracer and special2
+        case MT_HOLY_TAIL:
+        case MT_LIGHTNING_CEILING:
+            if(mapVersion >= 3)
+            {
+                mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+            }
+            else
+            {
+                mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                mo->special1 = 0;
+            }
+            mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
+            break;
+
+        default:
+            break;
+        }
+#else
+# if __JDOOM__ || __JDOOM64__
+        mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+# endif
+# if __JHERETIC__
+        mo->generator = SV_GetArchiveThing(PTR2INT(mo->generator), &mo->generator);
+# endif
+#endif
+
+        return false; // Continue iteration.
+
+#if !__JHEXEN__
+        DENG_UNUSED(mapVersion);
+#endif
+    }
+
+    /**
+     * Update the references between thinkers. To be called during the load
+     * process to finalize the loaded thinkers.
+     */
+    void relinkThinkers()
+    {
+#if __JHEXEN__
+        Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, &_mapVersion);
+
+        P_CreateTIDList();
+        rebuildCorpseQueue();
+
+#else
+        if(IS_SERVER)
+        {
+            Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, &_mapVersion);
+
+            for(int i = 0; i < numlines; ++i)
+            {
+                xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
+                if(!xline->xg) continue;
+
+                xline->xg->activator = SV_GetArchiveThing(PTR2INT(xline->xg->activator),
+                                                          &xline->xg->activator);
+            }
+        }
+#endif
+    }
+
+    /**
+     * Deserialize and then spawns thinkers for both client and server.
+     */
+    void readThinkers()
+    {
+        bool const formatHasStasisInfo = (_mapVersion >= 6);
+
+        removeLoadSpawnedThinkers();
+
+#if __JHEXEN__
+        if(_mapVersion < 4)
+            SV_AssertSegment(ASEG_MOBJS);
+        else
+#endif
+            SV_AssertSegment(ASEG_THINKERS);
+
+#if __JHEXEN__
+        initTargetPlayers();
+        initThingArchiveForLoad(Reader_ReadInt32(_reader) /* num elements */);
+#endif
+
+        // Read in saved thinkers.
+#if __JHEXEN__
+        int i = 0;
+        bool reachedSpecialsBlock = (_mapVersion >= 4);
+#else
+        bool reachedSpecialsBlock = (_mapVersion >= 5);
+#endif
+
+        byte tClass = 0;
+        for(;;)
+        {
+#if __JHEXEN__
+            if(reachedSpecialsBlock)
+#endif
+                tClass = Reader_ReadByte(_reader);
+
+#if __JHEXEN__
+            if(_mapVersion < 4)
+            {
+                if(reachedSpecialsBlock) // Have we started on the specials yet?
+                {
+                    // Versions prior to 4 used a different value to mark
+                    // the end of the specials data and the thinker class ids
+                    // are differrent, so we need to manipulate the thinker
+                    // class identifier value.
+                    if(tClass != TC_END)
+                        tClass += 2;
+                }
+                else
+                {
+                    tClass = TC_MOBJ;
+                }
+
+                if(tClass == TC_MOBJ && (uint)i == thingArchiveSize)
+                {
+                    SV_AssertSegment(ASEG_THINKERS);
+                    // We have reached the begining of the "specials" block.
+                    reachedSpecialsBlock = true;
+                    continue;
+                }
+            }
+#else
+            if(_mapVersion < 5)
+            {
+                if(reachedSpecialsBlock)
+                {
+                    // Versions prior to 5 used a different value to mark
+                    // the end of the specials data so we need to manipulate
+                    // the thinker class identifier value.
+                    if(tClass == PRE_VER5_END_SPECIALS)
+                        tClass = TC_END;
+                    else
+                        tClass += 3;
+                }
+                else if(tClass == TC_END)
+                {
+                    // We have reached the begining of the "specials" block.
+                    reachedSpecialsBlock = true;
+                    continue;
+                }
+            }
+#endif
+            if(tClass == TC_END)
+                break; // End of the list.
+
+            ThinkerClassInfo *thInfo = infoForThinkerClass(thinkerclass_t(tClass));
+            DENG_ASSERT(thInfo != 0);
+            // Not for us? (it shouldn't be here anyway!).
+            DENG_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
+
+            // Mobjs use a special engine-side allocator.
+            thinker_t *th = 0;
+            if(thInfo->thinkclass == TC_MOBJ)
+            {
+                th = reinterpret_cast<thinker_t *>(Mobj_CreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0));
+            }
+            else
+            {
+                th = reinterpret_cast<thinker_t *>(Z_Calloc(thInfo->size, PU_MAP, 0));
+            }
+
+            bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(Reader_ReadByte(_reader)) : false);
+
+            if(thInfo->readFunc(th, _reader, _mapVersion))
+            {
+                Thinker_Add(th);
+            }
+
+            if(putThinkerInStasis)
+            {
+                Thinker_SetStasis(th, true);
+            }
+
+#if __JHEXEN__
+            if(tClass == TC_MOBJ)
+                i++;
+#endif
+        }
+
+        // Update references between thinkers.
+        relinkThinkers();
+    }
+
+    void readACScriptData()
+    {
+#if __JHEXEN__
+        Game_ACScriptInterpreter().readMapScriptData(_reader, _mapVersion);
+#endif
+    }
+
+    void readSoundSequences()
+    {
+#if __JHEXEN__
+        SN_ReadSequences(_reader, _mapVersion);
+#endif
+    }
+
+    void readMisc()
+    {
+#if __JHEXEN__
+        SV_AssertSegment(ASEG_MISC);
+
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            localQuakeHappening[i] = Reader_ReadInt32(_reader);
+        }
+#endif
+    }
+
+    void readBrain()
+    {
+#if __JDOOM__
+        P_BrainRead(_reader, _mapVersion);
+#endif
+    }
+
+    void readSoundTargets()
+    {
+#if !__JHEXEN__
+        // Not for us?
+        if(!IS_SERVER) return;
+
+        // Sound target data was introduced in ver 5
+        if(_mapVersion < 5) return;
+
+        int numTargets = Reader_ReadInt32(_reader);
+        for(int i = 0; i < numTargets; ++i)
+        {
+            xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(_reader)));
+            DENG_ASSERT(xsec != 0);
+
+            if(!xsec)
+            {
+                DENG_UNUSED(Reader_ReadInt16(_reader));
+                continue;
+            }
+
+            xsec->soundTarget = INT2PTR(mobj_t, Reader_ReadInt16(_reader));
+            xsec->soundTarget =
+                SV_GetArchiveThing(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
+        }
+#endif
+    }
+
+    Reader *_reader;
+    int _saveVersion;
+    int _mapVersion;
+};
 
 void SV_Initialize()
 {
@@ -3687,7 +3701,7 @@ static int SV_LoadState(Str const *path, SaveInfo *info)
     initThingArchiveForLoad(info->version() >= 5? Reader_ReadInt32(reader) : 1024 /* num elements */);
 #endif
 
-    readPlayerHeader(reader);
+    readPlayerHeader(reader, info->version());
 
     // Read the player structures
     // We don't have the right to say which players are in the game. The
@@ -3696,7 +3710,7 @@ static int SV_LoadState(Str const *path, SaveInfo *info)
     // players who were saved but are not currently in the game will be
     // discarded.
     dd_bool loaded[MAXPLAYERS], infile[MAXPLAYERS];
-    readPlayers(infile, loaded, reader);
+    readPlayers(*info, infile, loaded, reader);
 
 #if __JHEXEN__
     Z_Free(saveBuffer);
@@ -3711,9 +3725,9 @@ static int SV_LoadState(Str const *path, SaveInfo *info)
 
     // Load the current map state.
 #if __JHEXEN__
-    readMapState(reader, composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
+    readMapState(reader, info->version(), composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
 #else
-    readMapState(reader);
+    readMapState(reader, info->version());
 #endif
 
 #if !__JHEXEN__
@@ -3901,15 +3915,13 @@ void SV_SaveGameClient(uint gameId)
 
     player_t *pl = &players[CONSOLEPLAYER];
     mobj_t *mo = pl->plr->mo;
-    AutoStr *gameSavePath;
-    SaveInfo *saveInfo;
 
     if(!IS_CLIENT || !mo)
         return;
 
     playerHeaderOK = false; // Uninitialized.
 
-    gameSavePath = composeGameSavePathForClientGameId(gameId);
+    AutoStr *gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(gameSavePath, "wp"))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing", Str_Text(gameSavePath));
@@ -3917,12 +3929,12 @@ void SV_SaveGameClient(uint gameId)
     }
 
     // Prepare the header.
-    saveInfo = new SaveInfo;
-    saveInfo->setGameId(gameId);
-    saveInfo->configure();
+    SaveInfo *info = new SaveInfo;
+    info->setGameId(gameId);
+    info->configure();
 
     Writer *writer = SV_NewWriter();
-    saveInfo->write(writer);
+    info->write(writer);
 
     // Some important information.
     // Our position and look angles.
@@ -3939,14 +3951,14 @@ void SV_SaveGameClient(uint gameId)
     // Create and populate the MaterialArchive.
     materialArchive = MaterialArchive_New(false);
 
-    writeMap(writer);
+    MapStateWriter(writer).write();
     /// @todo No consistency bytes in client saves?
 
     clearMaterialArchive();
 
     SV_CloseFile();
     Writer_Delete(writer);
-    delete saveInfo;
+    delete info;
 #else
     DENG_UNUSED(gameId);
 #endif
@@ -4011,7 +4023,7 @@ void SV_LoadGameClient(uint gameId)
     mo->angle         = Reader_ReadInt32(reader); /* $unifiedangles */
     cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
 
-    readPlayerHeader(reader);
+    readPlayerHeader(reader, saveInfo->version());
     SV_ReadPlayer(cpl, reader);
 
     /**
@@ -4023,7 +4035,7 @@ void SV_LoadGameClient(uint gameId)
      */
     materialArchive = MaterialArchive_New(false);
 
-    readMap(reader);
+    MapStateReader(reader, saveInfo->version()).read();
 
     clearMaterialArchive();
 
@@ -4036,9 +4048,9 @@ void SV_LoadGameClient(uint gameId)
 }
 
 #if __JHEXEN__
-static void readMapState(Reader *reader, Str const *path)
+static void readMapState(Reader *reader, int saveVersion, Str const *path)
 #else
-static void readMapState(Reader *reader)
+static void readMapState(Reader *reader, int saveVersion)
 #endif
 {
 #if __JHEXEN__
@@ -4047,7 +4059,7 @@ static void readMapState(Reader *reader)
     App_Log(DE2_DEV_MAP_MSG, "readMapState: Opening file \"%s\"\n", Str_Text(path));
 
     // Load the file
-    size_t bufferSize = M_ReadFile(Str_Text(path), (char**)&saveBuffer);
+    size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
     if(!bufferSize)
     {
         App_Log(DE2_RES_ERROR, "readMapState: Failed opening \"%s\" for reading", Str_Text(path));
@@ -4058,7 +4070,7 @@ static void readMapState(Reader *reader)
     SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
 #endif
 
-    readMap(reader);
+    MapStateReader(reader, saveVersion).read();
 
 #if __JHEXEN__
     clearThingArchive();
@@ -4119,10 +4131,10 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
      */
 #if __JHEXEN__
     // ...map state is actually written to a separate file.
-    SV_OpenFile(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
 #endif
 
-    writeMap(writer);
+    MapStateWriter(writer).write();
 
     SV_WriteConsistencyBytes(); // To be absolutely sure...
     SV_CloseFile();
@@ -4214,7 +4226,7 @@ void SV_HxSaveClusterMap()
 {
     playerHeaderOK = false; // Uninitialized.
 
-    SV_OpenFile(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
 
     // Set the mobj archive numbers
     initThingArchiveForSave(true /*exclude players*/);
@@ -4224,7 +4236,7 @@ void SV_HxSaveClusterMap()
     // Create and populate the MaterialArchive.
     materialArchive = MaterialArchive_New(true);
 
-    writeMap(writer);
+    MapStateWriter(writer).write();
 
     clearMaterialArchive();
 
@@ -4236,6 +4248,10 @@ void SV_HxSaveClusterMap()
 
 void SV_HxLoadClusterMap()
 {
+    /// @todo fixme: do not assume this pointer is still valid!
+    DENG_ASSERT(curInfo != 0);
+    SaveInfo const *info = curInfo;
+
     // Only readMap() uses targetPlayerAddrs, so it's NULLed here for the
     // following check (player mobj redirection).
     targetPlayerAddrs = 0;
@@ -4248,7 +4264,7 @@ void SV_HxLoadClusterMap()
     Reader *reader = SV_NewReader();
 
     // Been here before, load the previous map state.
-    readMapState(reader, composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
+    readMapState(reader, info->version(), composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
 
     clearMaterialArchive();
 
