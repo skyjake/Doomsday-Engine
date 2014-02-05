@@ -29,6 +29,8 @@ DENG2_OBSERVES(Action, Triggered)
 {
     State state;
     DotPath hoverTextColor;
+    DotPath originalTextColor;
+    HoverColorMode hoverColorMode;
     Action *action;
     Animation scale;
     Animation frameOpacity;
@@ -37,6 +39,7 @@ DENG2_OBSERVES(Action, Triggered)
     Instance(Public *i)
         : Base(i)
         , state(Up)
+        , hoverColorMode(Replace)
         , action(0)
         , scale(1.f)
         , frameOpacity(.08f, Animation::Linear)
@@ -55,6 +58,12 @@ DENG2_OBSERVES(Action, Triggered)
     {
         if(state == st) return;
 
+        if(st == Hover && state == Up)
+        {
+            // Remember the original text color.
+            originalTextColor = self.textColorId();
+        }
+
         State const prev = state;
         state = st;
         animating = true;
@@ -68,7 +77,15 @@ DENG2_OBSERVES(Action, Triggered)
             if(!hoverTextColor.isEmpty())
             {
                 // Restore old color.
-                self.setTextModulationColorf(Vector4f(1, 1, 1, 1));
+                switch(hoverColorMode)
+                {
+                case Modulate:
+                    self.setTextModulationColorf(Vector4f(1, 1, 1, 1));
+                    break;
+                case Replace:
+                    self.setTextColor(originalTextColor);
+                    break;
+                }
             }
             break;
 
@@ -76,7 +93,15 @@ DENG2_OBSERVES(Action, Triggered)
             frameOpacity.setValue(.4f, .15f);
             if(!hoverTextColor.isEmpty())
             {
-                self.setTextModulationColorf(style().colors().colorf(hoverTextColor));
+                switch(hoverColorMode)
+                {
+                case Modulate:
+                    self.setTextModulationColorf(style().colors().colorf(hoverTextColor));
+                    break;
+                case Replace:
+                    self.setTextColor(hoverTextColor);
+                    break;
+                }
             }
             break;
 
@@ -153,9 +178,10 @@ DENG2_OBSERVES(Action, Triggered)
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
 {}
 
-void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId)
+void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode)
 {
     d->hoverTextColor = hoverTextId;
+    d->hoverColorMode = mode;
 }
 
 void ButtonWidget::setAction(RefArg<Action> action)
