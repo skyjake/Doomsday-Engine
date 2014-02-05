@@ -40,6 +40,7 @@ using namespace de;
 DENG_GUI_PIMPL(GameSelectionWidget)
 , DENG2_OBSERVES(Games, Addition)
 , DENG2_OBSERVES(App, StartupComplete)
+, DENG2_OBSERVES(App, GameChange)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /// ActionItem with a Game member, for loading a particular game.
@@ -181,12 +182,14 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         App_Games().audienceForAddition += this;
         App::app().audienceForStartupComplete += this;
+        App::app().audienceForGameChange += this;
     }
 
     ~Instance()
     {
         App_Games().audienceForAddition -= this;
         App::app().audienceForStartupComplete -= this;
+        App::app().audienceForGameChange -= this;
     }
 
     /**
@@ -210,7 +213,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         foreach(Subset *s, order)
         {
             // The first group should not have extra space above it.
-            s->title().margins().setTop(s == order.first()? "" : "gap");
+            s->title().margins().setTop("");
+            if(s != order.first()) superLayout << style().rules().rule("gap");
 
             if(!s->items().isEmpty())
             {
@@ -225,6 +229,11 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         }
 
         self.setContentSize(superLayout.width(), superLayout.height());
+    }
+
+    void currentGameChanged(game::Game const &)
+    {
+        updateSubsetLayout();
     }
 
     void gameAdded(Game &game)
@@ -393,9 +402,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 GameSelectionWidget::GameSelectionWidget(String const &name)
     : ScrollAreaWidget(name), d(new Instance(this))
 {
-    d->available->open();
     d->multi->open();
-    d->incomplete->open();
+    if(!App_GameLoaded())
+    {
+        d->available->open();
+        d->incomplete->open();
+    }
 
     // We want the full menu to be visible even when it doesn't fit the
     // designated area.
@@ -405,11 +417,25 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
     d->addExistingGames();
 }
 
-void GameSelectionWidget::setTitleColor(DotPath const &colorId)
+void GameSelectionWidget::setTitleColor(DotPath const &colorId,
+                                        DotPath const &hoverColorId,
+                                        ButtonWidget::HoverColorMode mode)
 {
     d->available->title().setTextColor(colorId);
+    d->available->title().setHoverTextColor(hoverColorId, mode);
+
     d->multi->title().setTextColor(colorId);
+    d->multi->title().setHoverTextColor(hoverColorId, mode);
+
     d->incomplete->title().setTextColor(colorId);
+    d->incomplete->title().setHoverTextColor(hoverColorId, mode);
+}
+
+void GameSelectionWidget::setTitleFont(DotPath const &fontId)
+{
+    d->available->title().setFont(fontId);
+    d->multi->title().setFont(fontId);
+    d->incomplete->title().setFont(fontId);
 }
 
 void GameSelectionWidget::update()

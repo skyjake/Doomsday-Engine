@@ -97,6 +97,7 @@ DENG2_OBSERVES(App, GameChange)
             makeTitle(titleText);
             title().setText(titleText);
             title().setTextColor("accent");
+            title().setHoverTextColor("text", ButtonWidget::ReplaceColor);
 
             // Set up a context menu for right-clicking.
             title().addEventHandler(new RightClickHandler(d));

@@ -35,7 +35,8 @@ DENG_GUI_PIMPL(GamesDialog)
         self.area().add(gameSel = new GameSelectionWidget("games"));
 
         gameSel->enableScrolling(false);
-        gameSel->setTitleColor("text");
+        gameSel->setTitleFont("heading");
+        gameSel->setTitleColor("accent", "text", ButtonWidget::ReplaceColor);
         gameSel->rule().setInput(Rule::Height, gameSel->contentRule().height());
     }
 };

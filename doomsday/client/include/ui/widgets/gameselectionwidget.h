@@ -20,6 +20,7 @@
 #define DENG_CLIENT_GAMESELECTIONWIDGET_H
 
 #include <de/ScrollAreaWidget>
+#include <de/ButtonWidget>
 
 /**
  * Menu for selecting
@@ -31,7 +32,10 @@ class GameSelectionWidget : public de::ScrollAreaWidget
 public:
     GameSelectionWidget(de::String const &name = "gameselection");
 
-    void setTitleColor(de::DotPath const &colorId);
+    void setTitleColor(de::DotPath const &colorId,
+                       de::DotPath const &hoverColorId,
+                       de::ButtonWidget::HoverColorMode mode = de::ButtonWidget::ModulateColor);
+    void setTitleFont(de::DotPath const &fontId);
 
     // Events.
     void update();
