@@ -39,7 +39,7 @@ DENG2_OBSERVES(Action, Triggered)
     Instance(Public *i)
         : Base(i)
         , state(Up)
-        , hoverColorMode(Replace)
+        , hoverColorMode(ReplaceColor)
         , action(0)
         , scale(1.f)
         , frameOpacity(.08f, Animation::Linear)
@@ -79,10 +79,10 @@ DENG2_OBSERVES(Action, Triggered)
                 // Restore old color.
                 switch(hoverColorMode)
                 {
-                case Modulate:
+                case ModulateColor:
                     self.setTextModulationColorf(Vector4f(1, 1, 1, 1));
                     break;
-                case Replace:
+                case ReplaceColor:
                     self.setTextColor(originalTextColor);
                     break;
                 }
@@ -95,10 +95,10 @@ DENG2_OBSERVES(Action, Triggered)
             {
                 switch(hoverColorMode)
                 {
-                case Modulate:
+                case ModulateColor:
                     self.setTextModulationColorf(style().colors().colorf(hoverTextColor));
                     break;
-                case Replace:
+                case ReplaceColor:
                     self.setTextColor(hoverTextColor);
                     break;
                 }
