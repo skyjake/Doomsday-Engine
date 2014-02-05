@@ -3931,7 +3931,7 @@ void SV_SaveGameClient(uint gameId)
     // Prepare the header.
     SaveInfo *info = new SaveInfo;
     info->setGameId(gameId);
-    info->configure();
+    info->applyCurrentSessionMetadata();
 
     Writer *writer = SV_NewWriter();
     info->write(writer);
@@ -4158,7 +4158,7 @@ static SaveInfo *createSaveInfo(char const *name)
     SaveInfo *info = new SaveInfo;
     info->setDescription(Str_InitStatic(&nameStr, name));
     info->setGameId(SV_GenerateGameId());
-    info->configure();
+    info->applyCurrentSessionMetadata();
     return info;
 }
 

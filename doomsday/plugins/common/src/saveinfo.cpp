@@ -21,6 +21,7 @@
 #include "common.h"
 #include "saveinfo.h"
 
+#include "g_common.h"
 #include "p_tick.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
@@ -78,6 +79,7 @@ SaveInfo::SaveInfo()
     , _gameMode(NUM_GAME_MODES)
     , _episode (0)
     , _map     (0)
+    , _mapUri  (Uri_New())
 #if !__JHEXEN__
     , _mapTime (0)
 #endif
@@ -101,6 +103,7 @@ SaveInfo::SaveInfo(SaveInfo const &other)
 #endif
 {
     Str_Copy(Str_InitStd(&_description), &other._description);
+    Uri_Copy(_mapUri, other._mapUri);
 #if !__JHEXEN__
     std::memcpy(&_players, &other._players, sizeof(_players));
 #endif
@@ -110,6 +113,7 @@ SaveInfo::SaveInfo(SaveInfo const &other)
 SaveInfo::~SaveInfo()
 {
     Str_Free(&_description);
+    Uri_Delete(_mapUri);
 }
 
 SaveInfo &SaveInfo::operator = (SaveInfo const &other)
@@ -121,6 +125,7 @@ SaveInfo &SaveInfo::operator = (SaveInfo const &other)
     _gameMode = other._gameMode;
     _episode = other._episode;
     _map = other._map;
+    Uri_Copy(_mapUri, other._mapUri);
 #if !__JHEXEN__
     _mapTime = other._mapTime;
     std::memcpy(&_players, &other._players, sizeof(_players));
@@ -169,6 +174,11 @@ uint SaveInfo::map() const
     return _map;
 }
 
+Uri const *SaveInfo::mapUri() const
+{
+    return _mapUri;
+}
+
 #if !__JHEXEN__
 int SaveInfo::mapTime() const
 {
@@ -181,18 +191,17 @@ GameRuleset const &SaveInfo::gameRules() const
     return _gameRules;
 }
 
-void SaveInfo::configure()
+void SaveInfo::applyCurrentSessionMetadata()
 {
     _magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
     _version  = MY_SAVE_VERSION;
     _gameMode = gameMode;
-#if __JHEXEN__
-    _episode  = 1;
-#else
     _episode  = gameEpisode;
+    _map      = gameMap;
+    Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
+#if !__JHEXEN__
     _mapTime  = ::mapTime;
 #endif
-    _map      = gameMap;
 
     // Make a copy of the current game rules.
     _gameRules = ::gameRules;
@@ -265,6 +274,7 @@ void SaveInfo::read(Reader *reader)
     {
         _episode = Reader_ReadByte(reader);
         _map     = Reader_ReadByte(reader);
+        Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
 #if !__JHEXEN__
         _mapTime = Reader_ReadInt32(reader);
 #endif
@@ -307,6 +317,7 @@ void SaveInfo::read(Reader *reader)
 
         _episode = Reader_ReadByte(reader) - 1;
         _map     = Reader_ReadByte(reader) - 1;
+        Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
 
         _gameRules.deathmatch      = Reader_ReadByte(reader);
 #if !__JHEXEN__
@@ -361,10 +372,12 @@ void SaveInfo::read_Hx_v9(Reader *reader)
 
     /*Skip junk*/ SV_Seek(4);
 
-    _episode  = 1;
-    _map      = Reader_ReadByte(reader);
     _magic    = MY_SAVE_MAGIC; // Lets pretend...
     _gameMode = gameMode; // Assume the current mode.
+
+    _episode  = 0;
+    _map      = Reader_ReadByte(reader) - 1;
+    Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
 
     _gameRules.skill         = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
 

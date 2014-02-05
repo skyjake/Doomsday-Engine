@@ -916,6 +916,8 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
 
     info->_episode = Reader_ReadByte(reader) - 1;
     info->_map     = Reader_ReadByte(reader) - 1;
+    Uri_Copy(info->_mapUri, G_ComposeMapUri(info->_episode, info->_map));
+
     for(int i = 0; i < 4; ++i)
     {
         info->_players[i] = Reader_ReadByte(reader);

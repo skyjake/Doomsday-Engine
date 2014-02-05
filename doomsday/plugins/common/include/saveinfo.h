@@ -36,8 +36,9 @@ public: /// @todo make private:
     int _magic;
     int _version;
     gamemode_t _gameMode;
-    byte _episode;
-    byte _map;
+    uint _episode;
+    uint _map;
+    Uri *_mapUri; ///< Not currently saved.
 #if !__JHEXEN__
     int _mapTime;
     byte _players[MAXPLAYERS];
@@ -51,7 +52,12 @@ public:
 
     SaveInfo &operator = (SaveInfo const &other);
 
-    void configure();
+    /**
+     * Update the metadata associated with the save using values derived from the
+     * current game session. Note that this does @em not affect the copy of this save
+     * on disk.
+     */
+    void applyCurrentSessionMetadata();
 
     /**
      * Determines whether the saved game session is compatibile with the current
@@ -63,7 +69,6 @@ public:
      * Returns the logical version of the serialized game session state.
      */
     int version() const;
-    int magic() const;
 
     /**
      * Returns the textual description of the game session (provided by the user).
@@ -78,18 +83,13 @@ public:
     void setGameId(uint newGameId);
 
     /**
-     * Returns the logical episode number for the game session.
+     * Returns the URI of the @em current map of the game session.
      */
-    uint episode() const;
-
-    /**
-     * Returns the logical map number for the game session.
-     */
-    uint map() const;
+    Uri const *mapUri() const;
 
 #if !__JHEXEN__
     /**
-     * Returns the expired time in tics since the map begun.
+     * Returns the expired time in tics since the @em current map of the game session began.
      */
     int mapTime() const;
 #endif
@@ -115,6 +115,11 @@ public:
 #if __JHEXEN__
     void read_Hx_v9(Reader *reader);
 #endif
+
+public: /// @todo refactor away:
+    int magic() const;
+    uint episode() const;
+    uint map() const;
 };
 
 #endif // __cplusplus
