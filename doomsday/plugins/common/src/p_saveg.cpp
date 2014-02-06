@@ -190,8 +190,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_XGMOVER,
       (thinkfunc_t) XS_PlaneMover,
       0,
-      (WriteThinkerFunc)writeThinkerAs<xgplanemover_t>,
-      (ReadThinkerFunc)readThinkerAs<xgplanemover_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<xgplanemover_s>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<xgplanemover_s>),
       sizeof(xgplanemover_t)
     },
 #endif
@@ -199,32 +199,32 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_CEILING,
       T_MoveCeiling,
       0,
-      (WriteThinkerFunc)writeThinkerAs<ceiling_t>,
-      (ReadThinkerFunc)readThinkerAs<ceiling_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<ceiling_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<ceiling_t>),
       sizeof(ceiling_t)
     },
     {
       TC_DOOR,
       T_Door,
       0,
-      (WriteThinkerFunc)writeThinkerAs<door_t>,
-      (ReadThinkerFunc)readThinkerAs<door_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<door_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<door_t>),
       sizeof(door_t)
     },
     {
       TC_FLOOR,
       T_MoveFloor,
       0,
-      (WriteThinkerFunc)writeThinkerAs<floor_t>,
-      (ReadThinkerFunc)readThinkerAs<floor_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<floor_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<floor_t>),
       sizeof(floor_t)
     },
     {
       TC_PLAT,
       T_PlatRaise,
       0,
-      (WriteThinkerFunc)writeThinkerAs<plat_t>,
-      (ReadThinkerFunc)readThinkerAs<plat_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<plat_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<plat_t>),
       sizeof(plat_t)
     },
 #if __JHEXEN__
@@ -232,64 +232,64 @@ static ThinkerClassInfo thinkerInfo[] = {
      TC_INTERPRET_ACS,
      (thinkfunc_t) ACScript_Thinker,
      0,
-     (WriteThinkerFunc)writeThinkerAs<ACScript>,
-     (ReadThinkerFunc)readThinkerAs<ACScript>,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<ACScript>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<ACScript>),
      sizeof(ACScript)
     },
     {
      TC_FLOOR_WAGGLE,
      (thinkfunc_t) T_FloorWaggle,
      0,
-     (WriteThinkerFunc)writeThinkerAs<waggle_t>,
-     (ReadThinkerFunc)readThinkerAs<waggle_t>,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<waggle_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<waggle_t>),
      sizeof(waggle_t)
     },
     {
      TC_LIGHT,
      (thinkfunc_t) T_Light,
      0,
-     (WriteThinkerFunc)writeThinkerAs<light_t>,
-     (ReadThinkerFunc)readThinkerAs<light_t>,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<light_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<light_t>),
      sizeof(light_t)
     },
     {
      TC_PHASE,
      (thinkfunc_t) T_Phase,
      0,
-     (WriteThinkerFunc)writeThinkerAs<phase_t>,
-     (ReadThinkerFunc)readThinkerAs<phase_t>,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<phase_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<phase_t>),
      sizeof(phase_t)
     },
     {
      TC_BUILD_PILLAR,
      (thinkfunc_t) T_BuildPillar,
      0,
-     (WriteThinkerFunc)writeThinkerAs<pillar_t>,
-     (ReadThinkerFunc)readThinkerAs<pillar_t>,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<pillar_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<pillar_t>),
      sizeof(pillar_t)
     },
     {
      TC_ROTATE_POLY,
      T_RotatePoly,
      0,
-     (WriteThinkerFunc)writeThinkerAs<polyevent_t>,
-     (ReadThinkerFunc)readThinkerAs<polyevent_t>,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<polyevent_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<polyevent_t>),
      sizeof(polyevent_t)
     },
     {
      TC_MOVE_POLY,
      T_MovePoly,
      0,
-     (WriteThinkerFunc)SV_WriteMovePoly,
-     (ReadThinkerFunc)SV_ReadMovePoly,
+     de::function_cast<WriteThinkerFunc>(SV_WriteMovePoly),
+     de::function_cast<ReadThinkerFunc>(SV_ReadMovePoly),
      sizeof(polyevent_t)
     },
     {
      TC_POLY_DOOR,
      T_PolyDoor,
      0,
-     (WriteThinkerFunc)writeThinkerAs<polydoor_t>,
-     (ReadThinkerFunc)readThinkerAs<polydoor_t>,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<polydoor_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<polydoor_t>),
      sizeof(polydoor_t)
     },
 #else
@@ -297,24 +297,24 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_FLASH,
       (thinkfunc_t) T_LightFlash,
       0,
-      (WriteThinkerFunc)writeThinkerAs<lightflash_s>,
-      (ReadThinkerFunc)readThinkerAs<lightflash_s>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<lightflash_s>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<lightflash_s>),
       sizeof(lightflash_s)
     },
     {
       TC_STROBE,
       (thinkfunc_t) T_StrobeFlash,
       0,
-      (WriteThinkerFunc)writeThinkerAs<strobe_t>,
-      (ReadThinkerFunc)readThinkerAs<strobe_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<strobe_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<strobe_t>),
       sizeof(strobe_t)
     },
     {
       TC_GLOW,
       (thinkfunc_t) T_Glow,
       0,
-      (WriteThinkerFunc)writeThinkerAs<glow_t>,
-      (ReadThinkerFunc)readThinkerAs<glow_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<glow_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<glow_t>),
       sizeof(glow_t)
     },
 # if __JDOOM__ || __JDOOM64__
@@ -322,8 +322,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_FLICKER,
       (thinkfunc_t) T_FireFlicker,
       0,
-      (WriteThinkerFunc)writeThinkerAs<fireflicker_t>,
-      (ReadThinkerFunc)readThinkerAs<fireflicker_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<fireflicker_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<fireflicker_t>),
       sizeof(fireflicker_t)
     },
 # endif
@@ -332,8 +332,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_BLINK,
       (thinkfunc_t) T_LightBlink,
       0,
-      (WriteThinkerFunc)writeThinkerAs<lightblink_t>,
-      (ReadThinkerFunc)readThinkerAs<lightblink_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<lightblink_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<lightblink_t>),
       sizeof(lightblink_t)
     },
 # endif
@@ -342,16 +342,16 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_MATERIALCHANGER,
       T_MaterialChanger,
       0,
-      (WriteThinkerFunc)writeThinkerAs<materialchanger_s>,
-      (ReadThinkerFunc)readThinkerAs<materialchanger_s>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<materialchanger_s>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<materialchanger_s>),
       sizeof(materialchanger_s)
     },
     {
       TC_SCROLL,
       (thinkfunc_t) T_Scroll,
       0,
-      (WriteThinkerFunc)writeThinkerAs<scroll_t>,
-      (ReadThinkerFunc)readThinkerAs<scroll_t>,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<scroll_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<scroll_t>),
       sizeof(scroll_t)
     },
     { TC_NULL, NULL, 0, NULL, NULL, 0 }
