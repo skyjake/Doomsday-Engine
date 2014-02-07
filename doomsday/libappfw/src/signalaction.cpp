@@ -32,9 +32,4 @@ void SignalAction::trigger()
     emit triggered();
 }
 
-SignalAction *SignalAction::duplicate() const
-{
-    return new SignalAction(_target, _slot);
-}
-
 } // namespace de

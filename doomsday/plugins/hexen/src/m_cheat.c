@@ -95,7 +95,7 @@ CHEAT_FUNC(Init)
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
     if(IS_NETGAME) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
+    if(gameRules.skill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
@@ -114,7 +114,7 @@ CHEAT_FUNC(IDKFA)
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(gameSkill == SM_NIGHTMARE) return false;
+    if(gameRules.skill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
     if(plr->morphTics) return false;
@@ -160,7 +160,7 @@ CHEAT_FUNC(Quicken3)
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(gameSkill == SM_NIGHTMARE) return false;
+    if(gameRules.skill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
@@ -211,8 +211,8 @@ CHEAT_FUNC(Reveal)
     DENG_UNUSED(args);
     DENG_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    if(IS_NETGAME && deathmatch) return false;
-    if(gameSkill == SM_NIGHTMARE) return false;
+    if(IS_NETGAME && gameRules.deathmatch) return false;
+    if(gameRules.skill == SM_NIGHTMARE) return false;
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
@@ -252,7 +252,7 @@ D_CMD(CheatGod)
         {
             NetCl_CheatRequest("god");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -291,7 +291,7 @@ D_CMD(CheatNoClip)
         {
             NetCl_CheatRequest("noclip");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -464,7 +464,7 @@ D_CMD(CheatGive)
         return true;
     }
 
-    if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+    if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
         return false;
 
     plr = &players[player];
@@ -650,7 +650,7 @@ D_CMD(CheatMassacre)
         {
             NetCl_CheatRequest("kill");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -676,7 +676,7 @@ D_CMD(CheatWhere)
     if(G_GameState() != GS_MAP || !plr->plr->mo)
         return true;
 
-    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapUri = G_CurrentMapUri();
     mapPath = Uri_ToString(mapUri);
     sprintf(textBuffer, "Map [%s]  x:%g  y:%g  z:%g",
             Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
@@ -712,7 +712,7 @@ D_CMD(CheatMorph)
         {
             NetCl_CheatRequest("pig");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -760,7 +760,7 @@ D_CMD(CheatShadowcaster)
             AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "class %i", (int)newClass);
             NetCl_CheatRequest(Str_Text(cmd));
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -799,7 +799,7 @@ D_CMD(CheatRunScript)
             AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "runscript %i", scriptNum);
             NetCl_CheatRequest(Str_Text(cmd));
         }
-        else if((IS_NETGAME && !netSvAllowCheats) || gameSkill == SM_NIGHTMARE)
+        else if((IS_NETGAME && !netSvAllowCheats) || gameRules.skill == SM_NIGHTMARE)
         {
             return false;
         }
@@ -825,7 +825,8 @@ D_CMD(CheatRunScript)
             if(scriptNum < 1 || scriptNum > 99) return false;
 
             scriptArgs[0] = scriptArgs[1] = scriptArgs[2] = 0;
-            if(P_StartACScript(scriptNum, 0, scriptArgs, plr->plr->mo, NULL, 0))
+            if(Game_ACScriptInterpreter_StartScript(scriptNum, 0/*current-map*/,
+                                                    scriptArgs, plr->plr->mo, NULL, 0))
             {
                 AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "Running script %i", scriptNum);
                 P_SetMessage(plr, LMF_NO_HIDE, Str_Text(cmd));

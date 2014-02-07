@@ -94,12 +94,6 @@ DENG2_PIMPL(MenuWidget)
             _widget->open();
         }
 
-        Action *duplicate() const
-        {
-            DENG2_ASSERT(false); // not needed
-            return 0;
-        }
-
     protected:
         Instance *d;
         ui::Item const &_parentItem;
@@ -284,7 +278,7 @@ DENG2_PIMPL(MenuWidget)
                 b.setText(act->label());
                 if(act->action())
                 {
-                    b.setAction(act->action()->duplicate());
+                    b.setAction(*act->action());
                 }
             }
             else if(item.semantics().testFlag(Item::ShownAsLabel))
@@ -297,7 +291,7 @@ DENG2_PIMPL(MenuWidget)
                 t.setText(act->label());
                 if(act->action())
                 {
-                    t.setAction(act->action()->duplicate());
+                    t.setAction(*act->action());
                 }
             }
         }
@@ -385,13 +379,15 @@ void MenuWidget::setGridSize(int columns, ui::SizePolicy columnPolicy,
     if(d->colPolicy == ui::Filled)
     {
         DENG2_ASSERT(columns > 0);
-        d->layout.setOverrideWidth((rule().width() - margins().width()) / float(columns));
+        d->layout.setOverrideWidth((rule().width() - margins().width() -
+                                    (columns - 1) * d->layout.columnPadding()) / float(columns));
     }
 
     if(d->rowPolicy == ui::Filled)
     {
         DENG2_ASSERT(rows > 0);
-        d->layout.setOverrideHeight((rule().height() - margins().height()) / float(rows));
+        d->layout.setOverrideHeight((rule().height() - margins().height() -
+                                     (rows - 1) * d->layout.rowPadding()) / float(rows));
     }
 
     d->needLayout = true;

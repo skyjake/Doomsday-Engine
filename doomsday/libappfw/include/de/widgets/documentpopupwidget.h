@@ -27,7 +27,7 @@ namespace de {
 /**
  * Utility widget that has a document inside a popup.
  */
-class DocumentPopupWidget : public PopupWidget
+class LIBAPPFW_PUBLIC DocumentPopupWidget : public PopupWidget
 {
     Q_OBJECT
 

@@ -1102,7 +1102,7 @@ static void initShowStats(void)
 
 static void tickShowStats(void)
 {
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         updateDeathmatchStats();
         return;
@@ -1220,7 +1220,7 @@ static void tickShowStats(void)
 
 static void drawStats(void)
 {
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         drawDeathmatchStats();
     }
@@ -1455,7 +1455,7 @@ void WI_Init(wbstartstruct_t* wbstartstruct)
         }
     }
 
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         initDeathmatchStats();
         beginAnimations();

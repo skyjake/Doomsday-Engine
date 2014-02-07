@@ -29,7 +29,9 @@ DENG2_OBSERVES(Action, Triggered)
 {
     State state;
     DotPath hoverTextColor;
-    QScopedPointer<Action> action;
+    DotPath originalTextColor;
+    HoverColorMode hoverColorMode;
+    Action *action;
     Animation scale;
     Animation frameOpacity;
     bool animating;
@@ -37,6 +39,8 @@ DENG2_OBSERVES(Action, Triggered)
     Instance(Public *i)
         : Base(i)
         , state(Up)
+        , hoverColorMode(ReplaceColor)
+        , action(0)
         , scale(1.f)
         , frameOpacity(.08f, Animation::Linear)
         , animating(false)
@@ -44,9 +48,21 @@ DENG2_OBSERVES(Action, Triggered)
         setDefaultBackground();
     }
 
+    ~Instance()
+    {
+        if(action) action->audienceForTriggered -= this;
+        releaseRef(action);
+    }
+
     void setState(State st)
     {
         if(state == st) return;
+
+        if(st == Hover && state == Up)
+        {
+            // Remember the original text color.
+            originalTextColor = self.textColorId();
+        }
 
         State const prev = state;
         state = st;
@@ -61,7 +77,15 @@ DENG2_OBSERVES(Action, Triggered)
             if(!hoverTextColor.isEmpty())
             {
                 // Restore old color.
-                self.setTextModulationColorf(Vector4f(1, 1, 1, 1));
+                switch(hoverColorMode)
+                {
+                case ModulateColor:
+                    self.setTextModulationColorf(Vector4f(1, 1, 1, 1));
+                    break;
+                case ReplaceColor:
+                    self.setTextColor(originalTextColor);
+                    break;
+                }
             }
             break;
 
@@ -69,7 +93,15 @@ DENG2_OBSERVES(Action, Triggered)
             frameOpacity.setValue(.4f, .15f);
             if(!hoverTextColor.isEmpty())
             {
-                self.setTextModulationColorf(style().colors().colorf(hoverTextColor));
+                switch(hoverColorMode)
+                {
+                case ModulateColor:
+                    self.setTextModulationColorf(style().colors().colorf(hoverTextColor));
+                    break;
+                case ReplaceColor:
+                    self.setTextColor(hoverTextColor);
+                    break;
+                }
             }
             break;
 
@@ -146,19 +178,20 @@ DENG2_OBSERVES(Action, Triggered)
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
 {}
 
-void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId)
+void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode)
 {
     d->hoverTextColor = hoverTextId;
+    d->hoverColorMode = mode;
 }
 
-void ButtonWidget::setAction(Action *action)
+void ButtonWidget::setAction(RefArg<Action> action)
 {
-    if(!d->action.isNull())
+    if(d->action)
     {
         d->action->audienceForTriggered -= d;
     }
 
-    d->action.reset(action);
+    changeRef(d->action, action);
 
     if(action)
     {
@@ -166,14 +199,9 @@ void ButtonWidget::setAction(Action *action)
     }
 }
 
-Action *ButtonWidget::action() const
+Action const *ButtonWidget::action() const
 {
-    return d->action.data();
-}
-
-Action *ButtonWidget::takeAction()
-{
-    return d->action.take();
+    return d->action;
 }
 
 ButtonWidget::State ButtonWidget::state() const
@@ -206,12 +234,15 @@ bool ButtonWidget::handleEvent(Event const &event)
                 d->updateHover(mouse.pos());
                 if(hitTest(mouse.pos()))
                 {
+                    // Hold an extra ref so the action isn't deleted by triggering.
+                    AutoRef<Action> held = holdRef(d->action);
+
                     // Notify.
                     DENG2_FOR_AUDIENCE(Press, i) i->buttonPressed(*this);
 
-                    if(!d->action.isNull())
+                    if(held)
                     {
-                        d->action->trigger();
+                        held->trigger();
                     }
                 }
                 return true;

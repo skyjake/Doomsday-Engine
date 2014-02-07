@@ -18,14 +18,18 @@
 
 #include "de_platform.h"
 #include "network/serverlink.h"
-
+#include "network/masterserver.h"
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_demo.h"
+#include "network/net_event.h"
 #include "network/protocol.h"
 #include "client/cl_def.h"
 #include "dd_def.h"
+
+#include <QTimer>
 #include <de/memory.h>
+#include <de/GuiApp>
 #include <de/Socket>
 #include <de/Message>
 #include <de/ByteRefArray>
@@ -45,19 +49,25 @@ enum LinkState
 };
 
 DENG2_PIMPL(ServerLink)
+, DENG2_OBSERVES(Loop, Iteration)
 {
     shell::ServerFinder finder; ///< Finding local servers.
     LinkState state;
+    bool fetching;
     typedef QMap<Address, serverinfo_t> Servers;
     Servers discovered;
+    Servers fromMaster;
 
     Instance(Public *i)
-        : Base(i),
-          state(None)
+        : Base(i)
+        , state(None)
+        , fetching(false)
     {}
 
     ~Instance()
-    {}
+    {
+        Loop::appLoop().audienceForIteration -= this;
+    }
 
     void notifyDiscoveryUpdate()
     {
@@ -96,7 +106,7 @@ DENG2_PIMPL(ServerLink)
             do
             {
                 ch = Str_GetLine(line, ch);
-                Net_StringToServerInfo(Str_Text(line), &svInfo);
+                ServerInfo_FromString(&svInfo, Str_Text(line));
             }
             while(*ch);
 
@@ -116,8 +126,8 @@ DENG2_PIMPL(ServerLink)
                     << discovered.size()
                     << (discovered.size() != 1 ? "s have" : " has");
 
-            Net_PrintServerInfo(0, NULL);
-            Net_PrintServerInfo(0, &svInfo);
+            ServerInfo_Print(NULL, 0);
+            ServerInfo_Print(&svInfo, 0);
 
             notifyDiscoveryUpdate();
         }
@@ -157,6 +167,8 @@ DENG2_PIMPL(ServerLink)
         // Call game's NetConnect.
         gx.NetConnect(false);
 
+        DENG2_FOR_PUBLIC_AUDIENCE(Join, i) i->networkGameJoined();
+
         // G'day mate!  The client is responsible for beginning the
         // handshake.
         Cl_SendHello();
@@ -164,15 +176,53 @@ DENG2_PIMPL(ServerLink)
         return true;
     }
 
+    void fetchFromMaster()
+    {
+        if(fetching) return;
+
+        fetching = true;
+        N_MAPost(MAC_REQUEST);
+        N_MAPost(MAC_WAIT);
+        Loop::appLoop().audienceForIteration += this;
+    }
+
+    void loopIteration()
+    {
+        DENG2_ASSERT(fetching);
+
+        if(N_MADone())
+        {
+            fetching = false;
+            Loop::appLoop().audienceForIteration -= this;
+
+            fromMaster.clear();
+            int const count = N_MasterGet(0, 0);
+            for(int i = 0; i < count; i++)
+            {
+                serverinfo_t info;
+                N_MasterGet(i, &info);
+                fromMaster.insert(Address::parse(info.address, info.port), info);
+            }
+
+            notifyDiscoveryUpdate();
+        }
+    }
+
     Servers allFound() const
     {
         Servers all = discovered;
 
+        // Append from master (if available).
+        DENG2_FOR_EACH_CONST(Servers, i, fromMaster)
+        {
+            all.insert(i.key(), i.value());
+        }
+
         // Append the ones from the server finder.
-        foreach(Address sv, finder.foundServers())
+        foreach(Address const &sv, finder.foundServers())
         {
             serverinfo_t info;
-            Net_RecordToServerInfo(finder.messageFromServer(sv), &info);
+            ServerInfo_FromRecord(&info, finder.messageFromServer(sv));
 
             // Update the address in the info, which is missing because this
             // information didn't come from the master.
@@ -240,6 +290,8 @@ void ServerLink::disconnect()
         if(gx.NetDisconnect)
             gx.NetDisconnect(true);
 
+        DENG2_FOR_AUDIENCE(Leave, i) i->networkGameLeft();
+
         LOG_NET_NOTE("Link to server %s disconnected") << address();
 
         AbstractLink::disconnect();
@@ -267,9 +319,15 @@ void ServerLink::discover(String const &domain)
     d->state = Discovering;
 }
 
+void ServerLink::discoverUsingMaster()
+{
+    d->fetchFromMaster();
+}
+
 bool ServerLink::isDiscovering() const
 {
-    return (d->state == Discovering || d->state == WaitingForInfoResponse);
+    return (d->state == Discovering || d->state == WaitingForInfoResponse ||
+            d->fetching);
 }
 
 int ServerLink::foundServerCount() const

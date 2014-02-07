@@ -33,36 +33,50 @@ namespace ui {
 class LIBAPPFW_PUBLIC ActionItem : public Item
 {
 public:
-    ActionItem(de::String const &label = "", de::Action *action = 0)
-        : Item(ShownAsButton | ActivationClosesPopup, label), _action(action) {}
+    ActionItem(String const &label   = "",
+               RefArg<Action> action = RefArg<Action>())
+        : Item(ShownAsButton | ActivationClosesPopup, label)
+        , _action(action.holdRef()) {}
 
-    ActionItem(Semantics semantics, de::String const &label = "", de::Action *action = 0)
-        : Item(semantics, label), _action(action) {}
+    ActionItem(Semantics semantics,
+               String const &label   = "",
+               RefArg<Action> action = RefArg<Action>())
+        : Item(semantics, label)
+        , _action(action.holdRef()) {}
 
-    ActionItem(Semantics semantics, de::Image const &img, de::String const &label = "", de::Action *action = 0)
-        : Item(semantics, label), _action(action), _image(img) {}
+    ActionItem(Semantics semantics,
+               Image const &img,
+               String const &label   = "",
+               RefArg<Action> action = RefArg<Action>())
+        : Item(semantics, label)
+        , _action(action.holdRef())
+        , _image(img) {}
 
-    ActionItem(de::Image const &img, de::String const &label = "", de::Action *action = 0)
-        : Item(ShownAsButton | ActivationClosesPopup, label), _action(action), _image(img) {}
+    ActionItem(Image const &img,
+               String const &label   = "",
+               RefArg<Action> action = RefArg<Action>())
+        : Item(ShownAsButton | ActivationClosesPopup, label)
+        , _action(action.holdRef())
+        , _image(img) {}
 
-    de::Action *action() const { return _action.data(); } // ownership kept
-    de::Image const &image() const { return _image; }
+    Action const *action() const { return _action; }
+    Image const &image() const { return _image; }
 
-    void setAction(de::Action *action)
+    void setAction(RefArg<Action> action)
     {
         _action.reset(action);
         notifyChange();
     }
 
-    void setImage(de::Image const &image)
+    void setImage(Image const &image)
     {
         _image = image;
         notifyChange();
     }
 
 private:
-    QScopedPointer<de::Action> _action;
-    de::Image _image;
+    AutoRef<Action> _action;
+    Image _image;
 };
 
 } // namespace ui

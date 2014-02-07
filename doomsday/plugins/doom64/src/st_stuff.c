@@ -262,7 +262,7 @@ static void drawWidgets(hudstate_t* hud)
 {
 #define MAXDIGITS           ST_FRAGSWIDTH
 
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         char buf[20];
         if(hud->currentFragsCount == 1994)
@@ -349,30 +349,28 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
 
 void ST_doFullscreenStuff(int player)
 {
-    static const int    ammo_sprite[NUM_AMMO_TYPES] = {
+    static int const ammo_sprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
         SPR_SBOX,
         SPR_CELL,
         SPR_RCKT
     };
 
-    hudstate_t*         hud = &hudStates[player];
-    player_t*           plr = &players[player];
-    char                buf[20];
-    int                 w, h, pos = 0, oldPos = 0, spr,i;
-    int                 h_width = 320 / cfg.hudScale;
-    int                 h_height = 200 / cfg.hudScale;
-    float               textalpha =
-        hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
-    float               iconalpha =
-        hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
+    hudstate_t *hud = &hudStates[player];
+    player_t *plr = &players[player];
+    char buf[20];
+    int w, h, pos = 0, oldPos = 0, spr,i;
+    int h_width = 320 / cfg.hudScale;
+    int h_height = 200 / cfg.hudScale;
+    float textalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
+    float iconalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
 
     textalpha = MINMAX_OF(0.f, textalpha, 1.f);
     iconalpha = MINMAX_OF(0.f, iconalpha, 1.f);
 
     FR_LoadDefaultAttrib();
 
-    if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
+    if(IS_NETGAME && gameRules.deathmatch && cfg.hudShown[HUD_FRAGS])
     {
         // Display the frag counter.
         i = 199 - HUDBORDERY;
@@ -523,65 +521,6 @@ Draw_EndZoom();
     DGL_PopMatrix();
 }
 
-#if 0
-void MapName_Drawer(uiwidget_t* obj, int x, int y)
-{
-    assert(obj && obj->type == GUI_MAPNAME);
-    {
-    const float scale = .75f;
-    const float textAlpha = uiRendState->pageAlpha;
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_CurrentMapTitle());
-
-    if(!text && 0 == patch) return;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(x, y, 0);
-    DGL_Scalef(scale, scale, 1);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(1, 1, 1, textAlpha);
-    FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
-    WI_DrawPatchXY3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
-
-    DGL_Disable(DGL_TEXTURE_2D);
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-    }
-}
-
-void MapName_UpdateGeometry(uiwidget_t* obj)
-{
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_CurrentMapTitle());
-    const float scale = .75f;
-    patchinfo_t info;
-    assert(obj && obj->type == GUI_MAPNAME);
-
-    Rect_SetWidthHeight(obj->geometry, 0, 0);
-
-    if(!text && 0 == patch) return;
-
-    if(text)
-    {
-        Size2Raw textSize;
-        FR_SetFont(obj->font);
-        FR_TextSize(&textSize, text);
-        textSize.width  *= scale;
-        textSize.height *= scale;
-        Rect_SetWidthHeight(obj->geometry, textSize.width, textSize.height);
-        return;
-    }
-
-    R_GetPatchInfo(patch, &info);
-    Rect_SetWidthHeight(obj->geometry, info.geometry.size.width  * scale,
-                                       info.geometry.size.height * scale);
-}
-#endif
-
 typedef struct {
     guiwidgettype_t type;
     int group;
@@ -686,7 +625,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
-    if(gameSkill == SM_BABY && cfg.automapBabyKeys)
+    if(gameRules.skill == SM_BABY && cfg.automapBabyKeys)
     {
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);

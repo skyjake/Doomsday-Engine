@@ -17,12 +17,17 @@
  */
 
 #include "ui/widgets/gameselectionwidget.h"
+#include "ui/widgets/gamesessionwidget.h"
+#include "ui/widgets/mpselectionwidget.h"
 #include "CommandAction"
 #include "clientapp.h"
 #include "games.h"
 #include "dd_main.h"
 
 #include <de/ui/ActionItem>
+#include <de/MenuWidget>
+#include <de/SequentialLayout>
+#include <de/FoldPanelWidget>
 #include <de/DocumentPopupWidget>
 #include <de/SignalAction>
 #include <de/FIFO>
@@ -35,29 +40,201 @@ using namespace de;
 DENG_GUI_PIMPL(GameSelectionWidget)
 , DENG2_OBSERVES(Games, Addition)
 , DENG2_OBSERVES(App, StartupComplete)
+, DENG2_OBSERVES(App, GameChange)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
-    /// ActionItem with a Game member.
+    /// ActionItem with a Game member, for loading a particular game.
     struct GameItem : public ui::ActionItem {
-        GameItem(Game const &gameRef, de::String const &label, de::Action *action)
-            : ui::ActionItem(label, action), game(gameRef) {}
+        GameItem(Game const &gameRef, de::String const &label, RefArg<de::Action> action)
+            : ui::ActionItem(label, action), game(gameRef) {
+            setData(&gameRef);
+        }
         Game const &game;
     };
 
-    FIFO<Game> pendingGames;
-
-    Instance(Public *i) : Base(i)
+    struct GameWidget : public GameSessionWidget
     {
+        Game const *game;
+
+        GameWidget() : game(0) {}
+        void updateInfoContent() {
+            DENG2_ASSERT(game != 0);
+            document().setText(game->description());
+        }
+    };
+
+    /**
+     * Foldable group of games.
+     */
+    struct Subset : public FoldPanelWidget
+    {
+        enum Type {
+            NormalGames,
+            MultiplayerGames
+        };
+
+        String titleText;
+        Type type;
+        MenuWidget *menu;
+
+        Subset(Type selType, String const &headingText, GameSelectionWidget::Instance *owner)
+            : titleText(headingText), type(selType)
+        {           
+            owner->self.add(makeTitle(headingText));
+            title().setFont("title");
+            title().setTextColor("inverted.text");
+            title().setHoverTextColor("inverted.text", ButtonWidget::ReplaceColor);
+            title().setAlignment(ui::AlignLeft);
+            title().margins().setLeft("");
+
+            switch(type)
+            {
+            case NormalGames:
+                menu = new MenuWidget;
+                menu->organizer().setWidgetFactory(*owner);
+                break;
+
+            case MultiplayerGames:
+                menu = new MPSelectionWidget;
+                QObject::connect(menu, SIGNAL(gameSelected()), owner->thisPublic, SIGNAL(gameSessionSelected()));
+                QObject::connect(menu, SIGNAL(availabilityChanged()), owner->thisPublic, SLOT(updateSubsetLayout()));
+                break;
+            }
+
+            setContent(menu);
+            menu->enableScrolling(false);
+            menu->margins().set("");
+            menu->layout().setColumnPadding(owner->style().rules().rule("unit"));
+            menu->rule().setInput(Rule::Width,
+                                  owner->self.rule().width() -
+                                  owner->self.margins().width());
+
+            setColumns(3);
+        }
+
+        void setColumns(int cols)
+        {
+            if(menu->layout().maxGridSize().x != cols)
+            {
+                menu->setGridSize(cols, ui::Filled, 0, ui::Expand);
+            }
+        }
+
+        ui::Data &items()
+        {
+            return menu->items();
+        }
+
+        GameWidget &gameWidget(ui::Item const &item)
+        {
+            return menu->itemWidget<GameWidget>(item);
+        }
+
+        String textForTitle(bool whenOpen) const
+        {
+            if(whenOpen) return titleText;
+            return QString("%1 (%2)").arg(titleText).arg(menu->items().size());
+        }
+
+        void preparePanelForOpening()
+        {
+            FoldPanelWidget::preparePanelForOpening();
+            title().setText(textForTitle(true));
+        }
+
+        void panelClosing()
+        {
+            FoldPanelWidget::panelClosing();
+            title().setText(textForTitle(false));
+        }
+
+        void updateTitleText()
+        {
+            title().setText(textForTitle(isOpen()));
+        }
+    };
+
+    FIFO<Game> pendingGames;
+    SequentialLayout superLayout;
+
+    Subset *available;
+    Subset *incomplete;
+    Subset *multi;
+
+    Instance(Public *i)
+        : Base(i)
+        , superLayout(i->contentRule().left(), i->contentRule().top(), ui::Down)
+    {
+        // Menu of available games.
+        self.add(available = new Subset(Subset::NormalGames,
+                App_GameLoaded()? tr("Switch Game") : tr("Available Games"), this));
+
+        // Menu of incomplete games.
+        self.add(incomplete = new Subset(Subset::NormalGames,
+                                         tr("Games with Missing Resources"), this));
+
+        // Menu of multiplayer games.
+        self.add(multi = new Subset(Subset::MultiplayerGames,
+                                    tr("Multiplayer Games"), this));
+
+        superLayout.setOverrideWidth(self.rule().width() - self.margins().width());
+
+        updateSubsetLayout();
+
         App_Games().audienceForAddition += this;
         App::app().audienceForStartupComplete += this;
-
-        self.organizer().setWidgetFactory(*this);
+        App::app().audienceForGameChange += this;
     }
 
     ~Instance()
     {
         App_Games().audienceForAddition -= this;
         App::app().audienceForStartupComplete -= this;
+        App::app().audienceForGameChange -= this;
+    }
+
+    /**
+     * Subsets are visible only when they have games in them. The title and content
+     * of a subset are hidden when empty.
+     */
+    void updateSubsetLayout()
+    {
+        superLayout.clear();
+
+        QList<Subset *> order;
+        if(!App_GameLoaded())
+        {
+            order << available << multi << incomplete;
+        }
+        else
+        {
+            order << multi << available << incomplete;
+        }
+
+        foreach(Subset *s, order)
+        {
+            // The first group should not have extra space above it.
+            s->title().margins().setTop("");
+            if(s != order.first()) superLayout << style().rules().rule("gap");
+
+            if(!s->items().isEmpty())
+            {
+                s->updateTitleText();
+                s->title().show();
+                superLayout << s->title() << *s;
+            }
+            else
+            {
+                s->title().hide();
+            }
+        }
+
+        self.setContentSize(superLayout.width(), superLayout.height());
+    }
+
+    void currentGameChanged(game::Game const &)
+    {
+        updateSubsetLayout();
     }
 
     void gameAdded(Game &game)
@@ -66,26 +243,63 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         pendingGames.put(&game);
     }
 
-    void addPendingGames()
+    void addExistingGames()
     {
-        while(Game *game = pendingGames.take())
+        for(int i = 0; i < App_Games().count(); ++i)
         {
-            self.items().append(makeItemForGame(*game));
+            gameAdded(App_Games().byIndex(i));
         }
     }
+
+    void addPendingGames()
+    {
+        if(pendingGames.isEmpty()) return;
+
+        while(Game *game = pendingGames.take())
+        {
+            if(game->allStartupFilesFound())
+            {
+                ui::Item *item = makeItemForGame(*game);
+                available->items().append(item);
+                available->gameWidget(*item).loadButton().enable();
+            }
+            else
+            {
+                incomplete->items().append(makeItemForGame(*game));
+            }
+        }
+
+        sortGames();
+        updateSubsetLayout();
+    }
+
+    struct LoadGameAction : public CommandAction
+    {
+        GameSelectionWidget &owner;
+
+        LoadGameAction(String const &cmd, GameSelectionWidget &gameSel)
+            : CommandAction(cmd)
+            , owner(gameSel)
+        {}
+
+        void trigger()
+        {
+            emit owner.gameSessionSelected();
+            CommandAction::trigger();
+        }
+    };
 
     ui::Item *makeItemForGame(Game &game)
     {
         String const idKey = game.identityKey();
 
-        CommandAction *loadAction = new CommandAction(String("load ") + idKey);
         String label = String(_E(b) "%1" _E(.) /*_E(s)_E(C) " %2\n" _E(.)_E(.)*/ "\n"
                               _E(l)_E(D) "%2")
                 .arg(game.title())
                 //.arg(game.author())
                 .arg(idKey);
 
-        GameItem *item = new GameItem(game, label, loadAction);
+        GameItem *item = new GameItem(game, label, new LoadGameAction(String("load ") + idKey, self));
 
         /// @todo The name of the plugin should be accessible via the plugin loader.
         String plugName;
@@ -109,74 +323,6 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         return item;
     }
 
-    struct GameWidget
-            : public GuiWidget
-            , DENG2_OBSERVES(ButtonWidget, Press)
-            , DENG2_OBSERVES(App, GameUnload)
-    {
-        ButtonWidget *load;
-        ButtonWidget *info;
-        DocumentPopupWidget *popup;
-        Game const *game;
-
-        GameWidget() : game(0)
-        {
-            add(load = new ButtonWidget);
-            add(info = new ButtonWidget);
-
-            load->disable();
-            load->setBehavior(Widget::ContentClipping);
-            load->setAlignment(ui::AlignLeft);
-            load->setTextAlignment(ui::AlignRight);
-            load->setTextLineAlignment(ui::AlignLeft);
-
-            info->setWidthPolicy(ui::Expand);
-            info->setAlignment(ui::AlignBottom);
-            info->setText(_E(s)_E(B) + tr("..."));
-
-            add(popup = new DocumentPopupWidget);
-            popup->setAnchorAndOpeningDirection(info->rule(), ui::Up);
-            popup->document().setMaximumLineWidth(popup->style().rules().rule("document.popup.width").valuei());
-            info->audienceForPress += this;
-
-            // Button for extra information.
-            load->rule()
-                    .setInput(Rule::Left,   rule().left())
-                    .setInput(Rule::Top,    rule().top())
-                    .setInput(Rule::Bottom, rule().bottom())
-                    .setInput(Rule::Right,  info->rule().left());
-            info->rule()
-                    .setInput(Rule::Top,    rule().top())
-                    .setInput(Rule::Right,  rule().right())
-                    .setInput(Rule::Bottom, rule().bottom());
-
-            App::app().audienceForGameUnload += this;
-        }
-
-        ~GameWidget()
-        {
-            App::app().audienceForGameUnload -= this;
-        }
-
-        void aboutToUnloadGame(game::Game const &)
-        {
-            popup->close(0);
-        }
-
-        void buttonPressed(ButtonWidget &bt)
-        {
-            /*
-            // Show information about the game.
-            popup->setAnchorAndOpeningDirection(
-                        bt.rule(),
-                        bt.rule().top().valuei() + bt.rule().height().valuei() / 2 <
-                        bt.root().viewRule().height().valuei() / 2?
-                            ui::Down : ui::Up);*/
-            popup->document().setText(game->description());
-            popup->open();
-        }
-    };
-
     GuiWidget *makeItemWidget(ui::Item const &, GuiWidget const *)
     {
         return new GameWidget;
@@ -189,9 +335,9 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         w.game = &it.game;
 
-        w.load->setImage(it.image());
-        w.load->setText(it.label());
-        w.load->setAction(it.action()->duplicate());
+        w.loadButton().setImage(it.image());
+        w.loadButton().setText(it.label());
+        w.loadButton().setAction(*it.action());
     }
 
     void appStartupCompleted()
@@ -199,51 +345,115 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         updateGameAvailability();
     }
 
+    void sortGames()
+    {
+        available->items().sort();
+        incomplete->items().sort();
+    }
+
     void updateGameAvailability()
     {
-        for(uint i = 0; i < self.items().size(); ++i)
+        // Available games.
+        for(uint i = 0; i < available->items().size(); ++i)
         {
-            GameItem const &item = self.items().at(i).as<GameItem>();
-
-            GameWidget &w = self.organizer().itemWidget(item)->as<GameWidget>();
-            w.load->enable(item.game.allStartupFilesFound());
+            GameItem const &item = available->items().at(i).as<GameItem>();
+            if(item.game.allStartupFilesFound())
+            {
+                available->gameWidget(item).loadButton().enable();
+            }
+            else
+            {
+                incomplete->items().append(available->items().take(i--));
+                incomplete->gameWidget(item).loadButton().disable();
+            }
         }
 
-        self.items().sort();
+        // Incomplete games.
+        for(uint i = 0; i < incomplete->items().size(); ++i)
+        {
+            GameItem const &item = incomplete->items().at(i).as<GameItem>();
+            if(item.game.allStartupFilesFound())
+            {
+                available->items().append(incomplete->items().take(i--));
+                available->gameWidget(item).loadButton().enable();
+            }
+            else
+            {
+                incomplete->gameWidget(item).loadButton().disable();
+            }
+        }
+
+        sortGames();
+        updateSubsetLayout();
+    }
+
+    void updateLayoutForWidth(int width)
+    {
+        // If the view is too small, we'll want to reduce the number of items in the menu.
+        int const maxWidth = style().rules().rule("gameselection.max.width").valuei();
+
+        int suitable = clamp(1, 3 * width / maxWidth, 3);
+
+        available->setColumns(suitable);
+        incomplete->setColumns(suitable);
+        multi->setColumns(suitable);
     }
 };
 
 GameSelectionWidget::GameSelectionWidget(String const &name)
-    : MenuWidget(name), d(new Instance(this))
+    : ScrollAreaWidget(name), d(new Instance(this))
 {
-    layout().setColumnPadding(style().rules().rule("unit"));
-    setGridSize(3, ui::Filled, 6, ui::Filled);
+    d->multi->open();
+    if(!App_GameLoaded())
+    {
+        d->available->open();
+        d->incomplete->open();
+    }
 
     // We want the full menu to be visible even when it doesn't fit the
     // designated area.
     unsetBehavior(ChildVisibilityClipping);
+
+    // Maybe there are games loaded already.
+    d->addExistingGames();
 }
 
-void GameSelectionWidget::viewResized()
+void GameSelectionWidget::setTitleColor(DotPath const &colorId,
+                                        DotPath const &hoverColorId,
+                                        ButtonWidget::HoverColorMode mode)
 {
-    MenuWidget::viewResized();
+    d->available->title().setTextColor(colorId);
+    d->available->title().setHoverTextColor(hoverColorId, mode);
 
-    // If the view is too small, we'll want to reduce the number of items in the menu.
-    int const maxWidth  = style().rules().rule("gameselection.max.width").valuei();
-    int const maxHeight = style().rules().rule("gameselection.max.height").valuei();
+    d->multi->title().setTextColor(colorId);
+    d->multi->title().setHoverTextColor(hoverColorId, mode);
 
-    Vector2i suitable(clamp(1, 3 * rule().width().valuei() / maxWidth,   3),
-                      clamp(1, 8 * rule().height().valuei() / maxHeight, 6));
+    d->incomplete->title().setTextColor(colorId);
+    d->incomplete->title().setHoverTextColor(hoverColorId, mode);
+}
 
-    if(layout().maxGridSize() != suitable)
-    {
-        setGridSize(suitable.x, ui::Filled, suitable.y, ui::Filled);
-    }
+void GameSelectionWidget::setTitleFont(DotPath const &fontId)
+{
+    d->available->title().setFont(fontId);
+    d->multi->title().setFont(fontId);
+    d->incomplete->title().setFont(fontId);
 }
 
 void GameSelectionWidget::update()
 {
     d->addPendingGames();
 
-    MenuWidget::update();
+    ScrollAreaWidget::update();
+
+    // Adapt grid layout for the widget width.
+    Rectanglei rect;
+    if(hasChangedPlace(rect))
+    {
+        d->updateLayoutForWidth(rect.width());
+    }
+}
+
+void GameSelectionWidget::updateSubsetLayout()
+{
+    d->updateSubsetLayout();
 }

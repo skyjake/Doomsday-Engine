@@ -79,15 +79,10 @@ DENG2_OBSERVES(App, GameChange)
     class Group : public FoldPanelWidget
     {
         /// Action for reseting the group's settings to defaults.
-        struct ResetAction : public Action
-        {
+        struct ResetAction : public Action {
             Group *group;
-
             ResetAction(Group *groupToReset) : group(groupToReset) {}
-            Action *duplicate() const { return new ResetAction(group); }
-
-            void trigger()
-            {
+            void trigger() {
                 Action::trigger();
                 group->resetToDefaults();
             }
@@ -99,8 +94,7 @@ DENG2_OBSERVES(App, GameChange)
         {
             _group = new GuiWidget;
             setContent(_group);
-            title().setText(titleText);
-            title().setTextColor("accent");
+            makeTitle(titleText);
 
             // Set up a context menu for right-clicking.
             title().addEventHandler(new RightClickHandler(d));

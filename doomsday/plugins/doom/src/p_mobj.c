@@ -656,7 +656,7 @@ void P_MobjThinker(void *thinkerPtr)
         if(!(mo->flags & MF_COUNTKILL))
             return;
 
-        if(!respawnMonsters)
+        if(!gameRules.respawnMonsters)
             return;
 
         mo->moveCount++;
@@ -683,14 +683,14 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     info = &MOBJINFO[type];
 
     // Not for deathmatch?
-    if(deathmatch && (info->flags & MF_NOTDMATCH))
+    if(gameRules.deathmatch && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Check for specific disabled objects.
     if(IS_NETGAME)
     {
         // Cooperative weapons?
-        if(cfg.noCoopWeapons && !deathmatch && type >= MT_CLIP &&
+        if(cfg.noCoopWeapons && !gameRules.deathmatch && type >= MT_CLIP &&
            type <= MT_SUPERSHOTGUN)
             return NULL;
 
@@ -730,8 +730,8 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
         break;
     }
 
-    // Don't spawn any monsters if -noMonstersParm.
-    if(noMonstersParm && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
+    // Don't spawn any monsters?
+    if(gameRules.noMonsters && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
         return NULL;
 
     if(info->flags & MF_SOLID)
@@ -757,7 +757,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     // Let the engine know about solid objects.
     P_SetDoomsdayFlags(mo);
 
-    if(gameSkill != SM_NIGHTMARE)
+    if(gameRules.skill != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;
 
     mo->lastLook = P_Random() % MAXPLAYERS;
@@ -974,8 +974,9 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
     th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
 
     if(source->player)
-    {   // Allow free-aim with the BFG in deathmatch?
-        if(deathmatch && cfg.netBFGFreeLook == 0 && type == MT_BFG)
+    {
+        // Allow free-aim with the BFG in deathmatch?
+        if(gameRules.deathmatch && cfg.netBFGFreeLook == 0 && type == MT_BFG)
             th->mom[MZ] = 0;
         else
             th->mom[MZ] = th->info->speed * slope;

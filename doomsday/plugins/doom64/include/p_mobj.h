@@ -36,6 +36,7 @@
 #endif
 
 // Basics.
+#include "doomsday.h"
 #include "tables.h"
 
 #include "p_terraintype.h"
@@ -240,6 +241,11 @@ typedef struct mobj_s {
     int             turnTime;       // $visangle-facetarget
     int             corpseTics;     // $vanish: how long has this been dead?
     int             spawnFadeTics;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } mobj_t;
 
 #ifdef __cplusplus

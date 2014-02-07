@@ -76,8 +76,6 @@ void MapInfoParser(Str const *path)
         strcpy(defMapInfo.title, "DEVELOPMENT MAP"); // Unknown.
         strcpy(defMapInfo.songLump, "DEFSONG"); // Unknown.
 
-        uint logicalMapIndex = 0;
-
         HexLex lexer(script, path);
 
         while(lexer.readToken())
@@ -132,9 +130,9 @@ void MapInfoParser(Str const *path)
                     memcpy(info, &defMapInfo, sizeof(*info));
 
                     // Assign a logical map index.
-                    info->map = logicalMapIndex++;
+                    info->map = tmap - 1;
 
-                    // The warp translation defaults to the map number.
+                    // The warp translation defaults to the logical map index.
                     info->warpTrans = tmap - 1;
                 }
                 Uri_Delete(mapUri);
@@ -239,8 +237,8 @@ void MapInfoParser(Str const *path)
     for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
         mapinfo_t const &info = i->second;
-        App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" map: %i warp: %i }",
-                                 i->first.c_str(), info.title, info.map, info.warpTrans);
+        App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" cluster: %i map: %i warp: %i }",
+                                 i->first.c_str(), info.title, info.cluster, info.map, info.warpTrans);
     }
 #endif
 }

@@ -1763,7 +1763,7 @@ int C_DECL XLTrav_LeaveMap(Line* line, dd_bool dummy, void* context,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, true), 0, true);
+        G_LeaveMap(G_NextLogicalMapNumber(true), 0, true);
         return false;
     }
 
@@ -1796,11 +1796,11 @@ int C_DECL XLTrav_LeaveMap(Line* line, dd_bool dummy, void* context,
     if(mapSpecified)
     {
         XG_Dev("XLTrav_LeaveMap: Next map set to %u", map+1);
-        map = G_GetMapNumber(gameEpisode, map);
+        map = G_LogicalMapNumber(gameEpisode, map);
     }
     else
     {
-        map = G_GetNextMap(gameEpisode, gameMap, false);
+        map = G_NextLogicalMapNumber(false);
     }
 
     G_LeaveMap(map, 0, false);
@@ -2383,17 +2383,17 @@ int XL_LineEvent(int evtype, int linetype, Line* line, int sidenum,
 
     // Check skill level.
     // SM_NOTHINGS will be interpreted as SM_BABY.
-    if(gameSkill < 1)
+    if(gameRules.skill < 1)
         i = 1;
-    else if(gameSkill > 3)
+    else if(gameRules.skill > 3)
         i = 4;
     else
-        i = 1 << (gameSkill - 1);
+        i = 1 << (gameRules.skill - 1);
 
     if(!(info->flags2 & (i << LTF2_SKILL_SHIFT)))
     {
         XG_Dev("  Line %i: ABORTING EVENT due to skill level (%i)",
-               P_ToIndex(line), gameSkill);
+               P_ToIndex(line), gameRules.skill);
         return false;
     }
 

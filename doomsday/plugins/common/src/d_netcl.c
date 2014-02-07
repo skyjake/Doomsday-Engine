@@ -45,14 +45,17 @@ void NetCl_UpdateGameState(Reader* msg)
     Uri* mapUri;
     byte gsEpisode = 0;
     byte gsMap = 0;
-    byte gsMapEntryPoint = 0;
+    byte gsMapEntrance = 0;
     byte configFlags = 0;
-    byte gsDeathmatch = 0;
-    byte gsMonsters = 0;
-    byte gsRespawn = 0;
+    //byte gsDeathmatch = 0;
+    //byte gsMonsters = 0;
+    //byte gsRespawn = 0;
     byte gsJumping = 0;
-    byte gsSkill = 0;
+    //byte gsSkill = 0;
     coord_t gsGravity = 0;
+    GameRuleset gsRules = gameRules; // Make a copy of the current rules.
+
+    BusyMode_FreezeGameForBusyMode();
 
     gsFlags = Reader_ReadByte(msg);
 
@@ -71,15 +74,17 @@ void NetCl_UpdateGameState(Reader* msg)
     //gsMapEntryPoint = ??;
 
     configFlags = Reader_ReadByte(msg);
-    gsDeathmatch = configFlags & 0x3;
-    gsMonsters = (configFlags & 0x4? true : false);
-    gsRespawn = (configFlags & 0x8? true : false);
+    gsRules.deathmatch = configFlags & 0x3;
+    gsRules.noMonsters = !(configFlags & 0x4? true : false);
+#if !__JHEXEN__
+    gsRules.respawnMonsters = (configFlags & 0x8? true : false);
+#endif
     gsJumping = (configFlags & 0x10? true : false);
-    gsSkill = Reader_ReadByte(msg);
+    gsRules.skill = Reader_ReadByte(msg);
 
     // Interpret skill modes outside the normal range as "spawn no things".
-    if(gsSkill < SM_BABY || gsSkill >= NUM_SKILL_MODES)
-        gsSkill = SM_NOTHINGS;
+    if(gsRules.skill < SM_BABY || gsRules.skill >= NUM_SKILL_MODES)
+        gsRules.skill = SM_NOTHINGS;
 
     gsGravity = Reader_ReadFloat(msg);
 
@@ -107,51 +112,43 @@ void NetCl_UpdateGameState(Reader* msg)
         }
     }
 
-    deathmatch = gsDeathmatch;
-    noMonstersParm = !gsMonsters;
-#if !__JHEXEN__
-    respawnMonsters = gsRespawn;
-#endif
-
     // Some statistics.
 #if __JHEXEN__
     App_Log(DE2_LOG_NOTE,
-            "Game state: Map=%u Skill=%i %s", gsMap+1, gsSkill,
-            deathmatch == 1 ? "Deathmatch" :
-            deathmatch == 2 ? "Deathmatch2" : "Co-op");
+            "Game state: Map=%u Skill=%i %s", gsMap+1, gsRules.skill,
+            gsRules.deathmatch == 1 ? "Deathmatch" :
+            gsRules.deathmatch == 2 ? "Deathmatch2" : "Co-op");
 #else
     App_Log(DE2_LOG_NOTE,
             "Game state: Map=%u Episode=%u Skill=%i %s", gsMap+1,
-            gsEpisode+1, gsSkill,
-            deathmatch == 1 ? "Deathmatch" :
-            deathmatch == 2 ? "Deathmatch2" : "Co-op");
+            gsEpisode+1, gsRules.skill,
+            gsRules.deathmatch == 1 ? "Deathmatch" :
+            gsRules.deathmatch == 2 ? "Deathmatch2" : "Co-op");
 #endif
 #if !__JHEXEN__
     App_Log(DE2_LOG_NOTE, "  Respawn=%s Monsters=%s Jumping=%s Gravity=%.1f",
-            respawnMonsters ? "yes" : "no", !noMonstersParm ? "yes" : "no",
+            gsRules.respawnMonsters ? "yes" : "no", !gsRules.noMonsters ? "yes" : "no",
             gsJumping ? "yes" : "no", gsGravity);
 #else
     App_Log(DE2_NET_NOTE, "  Monsters=%s Jumping=%s Gravity=%.1f",
-                !noMonstersParm ? "yes" : "no",
+                !gsRules.noMonsters ? "yes" : "no",
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
 
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_NewGame(gsSkill, gsEpisode, gsMap, gameMapEntryPoint /*gsMapEntryPoint*/);
+        G_NewGame(gsEpisode, gsMap, gameMapEntrance /*gsMapEntrance*/, &gsRules);
 
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
     }
     else
     {
-        gameSkill = gsSkill;
         gameEpisode = gsEpisode;
-        gameMap = gsMap;
-
-        /// @todo Not communicated to clients??
-        //gameMapEntryPoint = gsMapEntryPoint;
+        gameMap     = gsMap;
+        //gameMapEntrance = gsMapEntrance; /// @todo Not communicated to clients??
+        gameRules   = gsRules;
     }
 
     // Set gravity.
@@ -161,8 +158,8 @@ void NetCl_UpdateGameState(Reader* msg)
     // Camera init included?
     if(gsFlags & GSF_CAMERA_INIT)
     {
-        player_t* pl = &players[CONSOLEPLAYER];
-        mobj_t* mo;
+        player_t *pl = &players[CONSOLEPLAYER];
+        mobj_t *mo;
 
         mo = pl->plr->mo;
         if(mo)
@@ -696,20 +693,20 @@ void NetCl_Intermission(Reader* msg)
 
         // @todo jHeretic does not transmit the intermission info!
 #if __JDOOM__ || __JDOOM64__
-        wmInfo.maxKills = Reader_ReadUInt16(msg);
-        wmInfo.maxItems = Reader_ReadUInt16(msg);
-        wmInfo.maxSecret = Reader_ReadUInt16(msg);
-        wmInfo.nextMap = Reader_ReadByte(msg);
+        wmInfo.maxKills   = Reader_ReadUInt16(msg);
+        wmInfo.maxItems   = Reader_ReadUInt16(msg);
+        wmInfo.maxSecret  = Reader_ReadUInt16(msg);
+        wmInfo.nextMap    = Reader_ReadByte(msg);
         wmInfo.currentMap = Reader_ReadByte(msg);
-        wmInfo.didSecret = Reader_ReadByte(msg);
+        wmInfo.didSecret  = Reader_ReadByte(msg);
         wmInfo.episode = gameEpisode;
 
         G_PrepareWIData();
 #elif __JHERETIC__
         wmInfo.episode = gameEpisode;
 #elif __JHEXEN__
-        nextMap = Reader_ReadByte(msg);
-        nextMapEntryPoint = Reader_ReadByte(msg);
+        nextMap         = Reader_ReadByte(msg);
+        nextMapEntrance = Reader_ReadByte(msg);
 #endif
 
 #if __JDOOM__ || __JDOOM64__

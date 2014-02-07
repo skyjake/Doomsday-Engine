@@ -88,6 +88,11 @@ public:
         }
     }
 
+    void glInit()
+    {
+        alloc();
+    }
+
     void glDeinit()
     {
         release();

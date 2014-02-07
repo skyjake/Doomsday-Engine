@@ -183,7 +183,7 @@ cvartemplate_t gameCVars[] = {
     {"game-zombiescanexit",                0, CVT_BYTE, &cfg.zombiesCanExit, 0, 1},
 
 // Game state
-    {"game-fastmonsters", 0, CVT_BYTE, &fastParm, 0, 1},
+    //{"game-fastmonsters", 0, CVT_BYTE, &fastParm, 0, 1},
 
 // Gameplay
     {"game-corpse-time", CVF_NO_MAX, CVT_INT, &cfg.corpseTime, 0, 0},

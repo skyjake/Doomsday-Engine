@@ -53,7 +53,7 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
     bcontext_t *bc = B_ContextByName(context.toLatin1());
     if(bc)
     {
-        std::auto_ptr<Action> act(BindContext_ActionForEvent(bc, &ddev, false));
+        AutoRef<Action> act(BindContext_ActionForEvent(bc, &ddev, false));
         if(act.get())
         {
             act->trigger();
@@ -66,8 +66,8 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
 
 bool WidgetActions::tryEvent(ddevent_t const *ev)
 {
-    QScopedPointer<Action> act(B_ActionForEvent(ev));
-    if(act.data())
+    AutoRef<Action> act(B_ActionForEvent(ev));
+    if(act.get())
     {
         act->trigger();
         return true;

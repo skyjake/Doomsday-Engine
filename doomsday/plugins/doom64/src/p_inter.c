@@ -94,7 +94,7 @@ dd_bool P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
     else
         num = clipAmmo[ammo] / 2;
 
-    if(gameSkill == SM_BABY)
+    if(gameRules.skill == SM_BABY)
     {
         // Give double ammo in trainer mode.
         num <<= 1;
@@ -121,12 +121,12 @@ dd_bool P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
  */
 dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
 {
-    ammotype_t          i;
-    dd_bool             gaveAmmo = false;
-    dd_bool             gaveWeapon;
-    int                 numClips;
+    ammotype_t i;
+    dd_bool gaveAmmo = false;
+    dd_bool gaveWeapon;
+    int numClips;
 
-    if(IS_NETGAME && (deathmatch != 2) && !dropped)
+    if(IS_NETGAME && (gameRules.deathmatch != 2) && !dropped)
     {
         // leave placed weapons forever on net games
         if(player->weapons[weapon].owned)
@@ -142,7 +142,7 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
             if(!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
                 continue; // Weapon does not take this type of ammo.
 
-            if(deathmatch)
+            if(gameRules.deathmatch)
                 numClips = 5;
             else
                 numClips = 2;
@@ -152,7 +152,7 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
         }
 
         // Should we change weapon automatically?
-        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, deathmatch == 1);
+        P_MaybeChangeWeapon(player, weapon, AT_NOAMMO, gameRules.deathmatch == 1);
 
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
@@ -1066,7 +1066,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         if(source && source->player && source->player != target->player)
         {
             // Co-op damage disabled?
-            if(IS_NETGAME && !deathmatch && cfg.noCoopDamage)
+            if(IS_NETGAME && !gameRules.deathmatch && cfg.noCoopDamage)
                 return 0;
 
             // Same color, no damage?
@@ -1083,7 +1083,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     }
 
     player = target->player;
-    if(player && gameSkill == SM_BABY)
+    if(player && gameRules.skill == SM_BABY)
         damage >>= 1; // take half damage in trainer mode
 
     // jd64 >

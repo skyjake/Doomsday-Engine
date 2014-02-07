@@ -22,6 +22,7 @@ HEADERS += \
     $$common_inc/g_defs.h \
     $$common_inc/g_eventsequence.h \
     $$common_inc/g_update.h \
+    $$common_inc/gamerules.h \
     $$common_inc/gl_drawpatch.h \
     $$common_inc/hexlex.h \
     $$common_inc/hu_automap.h \
@@ -81,6 +82,7 @@ SOURCES += \
     $$common_src/g_eventsequence.cpp \
     $$common_src/g_game.c \
     $$common_src/g_update.c \
+    $$common_src/gamerules.c \
     $$common_src/gl_drawpatch.c \
     $$common_src/hexlex.cpp \
     $$common_src/hu_automap.c \
@@ -96,31 +98,31 @@ SOURCES += \
     $$common_src/mobj.c \
     $$common_src/pause.c \
     $$common_src/p_actor.cpp \
-    $$common_src/p_ceiling.c \
-    $$common_src/p_door.c \
-    $$common_src/p_floor.c \
+    $$common_src/p_ceiling.cpp \
+    $$common_src/p_door.cpp \
+    $$common_src/p_floor.cpp \
     $$common_src/p_inventory.c \
     $$common_src/p_iterlist.c \
     $$common_src/p_map.cpp \
     $$common_src/p_mapsetup.cpp \
     $$common_src/p_mapspec.c \
-    $$common_src/p_plat.c \
+    $$common_src/p_plat.cpp \
     $$common_src/p_player.c \
     $$common_src/p_saveg.cpp \
-    $$common_src/p_saveio.c \
-    $$common_src/p_scroll.c \
+    $$common_src/p_saveio.cpp \
+    $$common_src/p_scroll.cpp \
     $$common_src/p_sound.cpp \
     $$common_src/p_start.cpp \
-    $$common_src/p_switch.c \
+    $$common_src/p_switch.cpp \
     $$common_src/p_terraintype.c \
     $$common_src/p_tick.c \
     $$common_src/p_user.c \
     $$common_src/p_view.c \
-    $$common_src/p_xgfile.c \
+    $$common_src/p_xgfile.cpp \
     $$common_src/p_xgline.c \
-    $$common_src/p_xgsave.c \
+    $$common_src/p_xgsave.cpp \
     $$common_src/p_xgsec.c \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
-    $$common_src/saveinfo.c \
+    $$common_src/saveinfo.cpp \
     $$common_src/x_hair.c

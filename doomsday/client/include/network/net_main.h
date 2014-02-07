@@ -255,21 +255,23 @@ void            Net_Ticker(timespan_t time);
  */
 void Net_Drawer(void);
 
-dd_bool         Net_IsLocalPlayer(int pNum);
+dd_bool Net_IsLocalPlayer(int pNum);
 
-void            Net_PrintServerInfo(int index, serverinfo_t *info);
+void ServerInfo_Print(serverinfo_t const *info, int index);
 
 /**
  * Converts textual data to a serverinfo struct. Returns true if the
  * label/value pair is recognized.
  */
-dd_bool Net_StringToServerInfo(char const *valuePair, serverinfo_t *info);
+dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair);
 
-void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info);
+void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+de::String ServerInfo_AsStyledText(serverinfo_t const *sv);
 
 de::String Net_UserAgent();
 

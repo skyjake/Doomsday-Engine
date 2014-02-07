@@ -20,29 +20,52 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
+#include "ui/widgets/cvarlineeditwidget.h"
 
+#include "clientapp.h"
 #include "de_audio.h"
 #include "con_main.h"
 
 #include <de/SignalAction>
+#include <de/GridPopupWidget>
 
 using namespace de;
 using namespace ui;
 
 DENG_GUI_PIMPL(NetworkSettingsDialog)
 {
+    CVarLineEditWidget *masterUrl;
+    CVarLineEditWidget *masterPath;
+    CVarSliderWidget *masterPort;
+    GridPopupWidget *devPopup;
     CVarToggleWidget *devInfo;
 
     Instance(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(devInfo = new CVarToggleWidget("net-dev"));
+        area.add(masterUrl  = new CVarLineEditWidget("net-master-address"));
+        area.add(masterPath = new CVarLineEditWidget("net-master-path"));
+        area.add(masterPort = new CVarSliderWidget("net-master-port"));
+
+        masterPort->setMinLabel(tr("80"));
+
+        // Developer options.
+        self.add(devPopup = new GridPopupWidget);
+        devPopup->layout().setGridSize(1, 0);
+        *devPopup << (devInfo = new CVarToggleWidget("net-dev"));
+        devPopup->commit();
     }
 
     void fetch()
     {
-        devInfo->updateFromCVar();
+        foreach(Widget *w, self.area().childWidgets() + devPopup->content().childWidgets())
+        {
+            if(ICVarWidget *cv = w->maybeAs<ICVarWidget>())
+            {
+                cv->updateFromCVar();
+            }
+        }
     }
 };
 
@@ -53,25 +76,40 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
 
     d->devInfo->setText(tr("Developer Info"));
 
+    LabelWidget *masterUrlLabel  = LabelWidget::newWithText(tr("Master URL:"), &area());
+    LabelWidget *masterPathLabel = LabelWidget::newWithText(tr("Master Path:"), &area());
+    LabelWidget *masterPortLabel = LabelWidget::newWithText(tr("Master Port:"), &area());
+
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
-    layout.setGridSize(1, 0);
-    //layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *d->devInfo;
+    layout.setGridSize(2, 0);
+    layout.setColumnAlignment(0, ui::AlignRight);
+    layout << *masterUrlLabel  << *d->masterUrl
+           << *masterPathLabel << *d->masterPath
+           << *masterPortLabel << *d->masterPort;
 
     area().setContentSize(layout.width(), layout.height());
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+            << new DialogButtonItem(Default | Accept, tr("Close"))
+            << new DialogButtonItem(Action, tr("Reset to Defaults"),
+                                    new SignalAction(this, SLOT(resetToDefaults())))
+            << new DialogButtonItem(Action | Id1, style().images().image("gauge"),
+                                    new SignalAction(this, SLOT(showDeveloperPopup())));
+
+    d->devPopup->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
 
     d->fetch();
 }
 
 void NetworkSettingsDialog::resetToDefaults()
 {
-    Con_SetInteger("net-dev", 0);
+    ClientApp::networkSettings().resetToDefaults();
 
     d->fetch();
+}
+
+void NetworkSettingsDialog::showDeveloperPopup()
+{
+    d->devPopup->open();
 }

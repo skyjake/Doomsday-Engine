@@ -36,7 +36,19 @@ DENG2_PIMPL_NOREF(TextWidget)
     ~Instance()
     {
         delete rule;
-        foreach(Action *act, actions) delete act;
+        foreach(Action *act, actions) releaseRef(act);
+    }
+
+    void removeAction(Action &action)
+    {
+        for(int i = actions.size() - 1; i >= 0; --i)
+        {
+            if(actions.at(i) == &action)
+            {
+                releaseRef(actions[i]);
+                actions.removeAt(i);
+            }
+        }
     }
 
     /**
@@ -123,14 +135,14 @@ Vector2i TextWidget::cursorPosition() const
                     rule().top().valuei());
 }
 
-void TextWidget::addAction(Action *action)
+void TextWidget::addAction(RefArg<Action> action)
 {
-    d->actions.append(action);
+    d->actions.append(action.holdRef());
 }
 
 void TextWidget::removeAction(Action &action)
 {
-    d->actions.removeAll(&action);
+    d->removeAction(action);
 }
 
 bool TextWidget::handleEvent(Event const &event)

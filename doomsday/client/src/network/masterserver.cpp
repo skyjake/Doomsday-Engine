@@ -237,11 +237,11 @@ bool MasterWorker::parseResponse(const QByteArray& response)
 
         if(info)
         {
-            Net_StringToServerInfo(Str_Text(&line), info);
+            ServerInfo_FromString(info, Str_Text(&line));
         }
     }
 
-    LOG_NET_MSG("Received %i servers") << serverCount();
+    LOG_NET_MSG("Received %i servers from master") << serverCount();
 
     Str_Free(&line);
     Str_Free(&msg);

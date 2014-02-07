@@ -1,39 +1,27 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_xgsec.h  Extended generalized sector types.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * p_xgsec.c: Extended Generalized Sector Types.
- */
-
-#ifndef __XG_SECTORTYPE_H__
-#define __XG_SECTORTYPE_H__
+#ifndef LIBCOMMON_XG_SECTORTYPE_H
+#define LIBCOMMON_XG_SECTORTYPE_H
 
 #include "g_common.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Sector chain event types.
 enum {
@@ -95,15 +83,15 @@ enum {
 #define PMF_ONE_SOUND_ONLY          0x100
 
 typedef struct function_s {
-    struct function_s* link; // Linked to another func?
-    char*           func;
-    int             flags;
-    int             pos;
-    int             repeat;
-    int             timer, maxTimer;
-    int             minInterval, maxInterval;
-    float           scale, offset;
-    float           value, oldValue;
+    struct function_s *link; // Linked to another func?
+    char *func;
+    int flags;
+    int pos;
+    int repeat;
+    int timer, maxTimer;
+    int minInterval, maxInterval;
+    float scale, offset;
+    float value, oldValue;
 } function_t;
 
 enum {
@@ -116,80 +104,92 @@ enum {
 };
 
 typedef struct {
-    thinker_t       thinker;
-    Sector*         sector;
+    thinker_t thinker;
+    Sector *sector;
 } xsthinker_t;
 
 typedef struct {
-    dd_bool         disabled;
-    function_t      rgb[3]; // Don't move the functions around in the struct.
-    function_t      plane[2];
-    function_t      light;
-    sectortype_t    info;
-    int             timer;
-    int             chainTimer[DDLT_MAX_CHAINS];
+    dd_bool disabled;
+    function_t rgb[3]; // Don't move the functions around in the struct.
+    function_t plane[2];
+    function_t light;
+    sectortype_t info;
+    int timer;
+    int chainTimer[DDLT_MAX_CHAINS];
 } xgsector_t;
 
-typedef struct {
-    thinker_t       thinker;
+typedef struct xgplanemover_s {
+    thinker_t thinker;
 
-    Sector* sector;
-    dd_bool         ceiling; // True if operates on the ceiling.
+    Sector *sector;
+    dd_bool ceiling; // True if operates on the ceiling.
 
-    int             flags;
-    Line*           origin;
+    int flags;
+    Line *origin;
 
-    coord_t         destination;
-    float           speed;
-    float           crushSpeed; // Speed to use when crushing.
+    coord_t destination;
+    float speed;
+    float crushSpeed; // Speed to use when crushing.
 
-    Material*       setMaterial; // Set material when move done.
-    int             setSectorType; // Sector type to set when move done
+    Material *setMaterial; // Set material when move done.
+    int setSectorType; // Sector type to set when move done
     // (-1 if no change).
-    int             startSound; // Played after waiting.
-    int             endSound; // Play when move done.
-    int             moveSound; // Sound to play while moving.
-    int             minInterval, maxInterval; // Sound playing intervals.
-    int             timer; // Counts down to zero.
+    int startSound; // Played after waiting.
+    int endSound; // Play when move done.
+    int moveSound; // Sound to play while moving.
+    int minInterval, maxInterval; // Sound playing intervals.
+    int timer; // Counts down to zero.
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } xgplanemover_t;
 
-void            XS_Init(void);
-void            XS_Update(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void            XS_Thinker(xsthinker_t* xs);
+void XS_Init(void);
+void XS_Update(void);
 
-coord_t         XS_Gravity(Sector *sector);
-coord_t         XS_Friction(Sector *sector);
-coord_t         XS_ThrustMul(Sector *sector);
+void XS_Thinker(xsthinker_t* xs);
 
-void            XS_InitMovePlane(Line *line);
-int C_DECL      XSTrav_MovePlane(Sector *sector, dd_bool ceiling,
-                                 void *context, void *context2, struct mobj_s *activator);
-int C_DECL      XSTrav_SectorType(Sector *sec, dd_bool ceiling,
-                                  void *context, void *context2, struct mobj_s *activator);
-int C_DECL      XSTrav_SectorLight(Sector *sector, dd_bool ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
-int C_DECL      XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling,
-                                     void *context, void *context2, struct mobj_s *activator);
-void            XS_InitStairBuilder(Line *line);
-int C_DECL      XSTrav_BuildStairs(Sector *sector, dd_bool ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
-int C_DECL      XSTrav_SectorSound(Sector *sec, dd_bool ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
-int C_DECL      XSTrav_MimicSector(Sector *sector, dd_bool ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
-int C_DECL      XSTrav_Teleport(Sector *sector, dd_bool ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
-void            XS_SetSectorType(Sector *sec, int special);
-void            XS_ChangePlaneMaterial(Sector *sector, dd_bool ceiling,
-                                       Material* mat, float *rgb);
+coord_t XS_Gravity(Sector *sector);
+coord_t XS_Friction(Sector *sector);
+coord_t XS_ThrustMul(Sector *sector);
+
+void XS_InitMovePlane(Line *line);
+
+int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context, void *context2, struct mobj_s *activator);
+
+int C_DECL XSTrav_SectorType(Sector *sec, dd_bool ceiling, void *context, void *context2, struct mobj_s *activator);
+
+int C_DECL XSTrav_SectorLight(Sector *sector, dd_bool ceiling, void *context, void *context2, struct mobj_s *activator);
+
+int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling, void *context, void *context2, struct mobj_s *activator);
+
+void XS_InitStairBuilder(Line *line);
+
+int C_DECL XSTrav_BuildStairs(Sector *sector, dd_bool ceiling, void *context, void *context2, struct mobj_s *activator);
+
+int C_DECL XSTrav_SectorSound(Sector *sec, dd_bool ceiling, void *context, void *context2, struct mobj_s *activator);
+
+int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool ceiling, void *context, void *context2, struct mobj_s *activator);
+
+int C_DECL XSTrav_Teleport(Sector *sector, dd_bool ceiling, void *context, void *context2, struct mobj_s *activator);
+
+void XS_SetSectorType(Sector *sec, int special);
+
+void XS_ChangePlaneMaterial(Sector *sector, dd_bool ceiling, Material* mat, float *rgb);
+
 xgplanemover_t *XS_GetPlaneMover(Sector *sector, dd_bool ceiling);
-void            XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
 
-void            SV_WriteXGSector(Sector *sec);
-void            SV_ReadXGSector(Sector *sec);
-void            SV_WriteXGPlaneMover(thinker_t *th);
-int             SV_ReadXGPlaneMover(xgplanemover_t* mov, int mapVersion);
+void XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
+
+void SV_WriteXGSector(Sector *sec, Writer *writer);
+
+void SV_ReadXGSector(Sector *sec, Reader *reader, int mapVersion);
 
 D_CMD(MovePlane);
 
@@ -197,4 +197,4 @@ D_CMD(MovePlane);
 } // extern "C"
 #endif
 
-#endif
+#endif // LIBCOMMON_XG_SECTORTYPE_H

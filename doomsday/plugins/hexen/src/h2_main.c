@@ -38,12 +38,12 @@
 
 int verbose;
 
-dd_bool devParm; // checkparm of -devparm
-dd_bool noMonstersParm; // checkparm of -nomonsters
-dd_bool respawnParm; // checkparm of -respawn
+//dd_bool devParm; // checkparm of -devparm
+//dd_bool noMonstersParm; // checkparm of -nomonsters
+//dd_bool respawnParm; // checkparm of -respawn
 //dd_bool fastParm; // checkparm of -fast
-dd_bool turboParm; // checkparm of -turbo
-dd_bool randomClassParm; // checkparm of -randclass
+//dd_bool turboParm; // checkparm of -turbo
+//dd_bool randomClassParm; // checkparm of -randclass
 
 float turboMul; // Multiplier for turbo.
 
@@ -51,9 +51,9 @@ gamemode_t gameMode;
 int gameModeBits;
 
 // Default font colours.
-const float defFontRGB[]   = {  .9f, .0f,  .0f };
-const float defFontRGB2[]  = { 1.f,  .65f, .275f };
-const float defFontRGB3[] = {  .9f, .9f,  .9f };
+float const defFontRGB[]   = {  .9f, .0f,  .0f };
+float const defFontRGB2[]  = { 1.f,  .65f, .275f };
+float const defFontRGB3[] = {  .9f, .9f,  .9f };
 
 // The patches used in drawing the view border.
 // Percent-encoded.
@@ -69,15 +69,10 @@ char* borderGraphics[] = {
     "BORDBL" // Bottom left.
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static dd_bool autoStart = false;
-static uint startEpisode = 0;
-static uint startMap = 0;
-static playerclass_t startPlayerClass = PCLASS_NONE;
-static skillmode_t startSkill = SM_MEDIUM;
-
-// CODE --------------------------------------------------------------------
+static dd_bool autoStart;
+static uint startEpisode;
+static uint startMap;
+static playerclass_t startPlayerClass;
 
 /**
  * Get a 32-bit integer value.
@@ -183,7 +178,7 @@ void X_PreInit(void)
     cfg.weaponAutoSwitch = 1; // IF BETTER
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
-    cfg.fastMonsters = false;
+    //cfg.fastMonsters = false;
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 8; // Use the default color by default.
@@ -339,16 +334,21 @@ void X_PostInit(void)
     // Game parameters.
     /* None */
 
+    // Defaults for skill, episode and map.
+    gameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    startEpisode = 0;
+    startMap = 0;
+    startPlayerClass = PCLASS_NONE;
+    autoStart = false;
+
     // Game mode specific settings.
     /* None */
 
-    // Command line options.
-    noMonstersParm = CommandLine_Exists("-nomonsters");
-    respawnParm = CommandLine_Exists("-respawn");
-    randomClassParm = CommandLine_Exists("-randclass");
-    devParm = CommandLine_Exists("-devparm");
-
     cfg.netDeathmatch = CommandLine_Exists("-deathmatch");
+
+    // Apply these rules.
+    gameRules.noMonsters    = CommandLine_Check("-nomonsters")? true : false;
+    gameRules.randomClasses = CommandLine_Exists("-randclass")? true : false;
 
     // Turbo movement option.
     p = CommandLine_Check("-turbo");
@@ -357,7 +357,6 @@ void X_PostInit(void)
     {
         int scale = 200;
 
-        turboParm = true;
         if(p < CommandLine_Count() - 1)
             scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)
@@ -396,7 +395,7 @@ void X_PostInit(void)
 
     if((p = CommandLine_CheckWith("-skill", 1)) != 0)
     {
-        startSkill = (skillmode_t)(CommandLine_At(p + 1)[0] - '1');
+        gameRules.skill = (skillmode_t)(CommandLine_At(p + 1)[0] - '1');
         autoStart = true;
     }
 
@@ -441,7 +440,7 @@ void X_PostInit(void)
     // Are we autostarting?
     if(autoStart)
     {
-        App_Log(DE2_LOG_NOTE, "Autostart in Map %d (%d), Skill %d", warpMap+1, startMap+1, startSkill + 1);
+        App_Log(DE2_LOG_NOTE, "Autostart in Map %d (%d), Skill %d", warpMap+1, startMap+1, gameRules.skill + 1);
     }
 
     // Validate episode and map.
@@ -455,7 +454,7 @@ void X_PostInit(void)
 
     if(autoStart || IS_NETGAME)
     {
-        G_DeferredNewGame(startSkill, startEpisode, startMap, 0/* default */);
+        G_DeferredNewGame(startEpisode, startMap, 0/*default*/, &gameRules);
     }
     else
     {

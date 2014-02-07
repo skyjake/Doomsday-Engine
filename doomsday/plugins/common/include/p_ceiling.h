@@ -1,38 +1,31 @@
-/**\file p_ceiling.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_ceiling.h  Moving ceilings (lowering, crushing, raising).
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Common playsim routines relating to ceilings.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBCOMMON_THINKER_CEILING_H
 #define LIBCOMMON_THINKER_CEILING_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "doomsday.h"
+
+#define CEILSPEED           (1)
+#define CEILWAIT            (150)
 
 typedef enum {
     CS_DOWN,
@@ -62,7 +55,7 @@ typedef enum {
     NUMCEILINGTYPES
 } ceilingtype_e;
 
-typedef struct {
+typedef struct ceiling_s {
     thinker_t thinker;
     ceilingtype_e type;
     Sector* sector;
@@ -73,22 +66,46 @@ typedef struct {
     ceilingstate_e state;
     ceilingstate_e oldState;
     int tag; // id.
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } ceiling_t;
 
-#define CEILSPEED           (1)
-#define CEILWAIT            (150)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void T_MoveCeiling(void *ceilingThinkerPtr);
 
+/**
+ * Move a ceiling up/down.
+ */
 #if __JHEXEN__
 int EV_DoCeiling(Line* line, byte* args, ceilingtype_e type);
 #else
 int EV_DoCeiling(Line* li, ceilingtype_e type);
 #endif
 
+/**
+ * Reactivates all stopped crushers with the right tag.
+ *
+ * @param tag  Tag of ceilings to activate.
+ *
+ * @return  @c true, if a ceiling is activated.
+ */
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 int P_CeilingActivate(short tag);
 #endif
+
+/**
+ * Stops all active ceilings with the right tag.
+ *
+ * @param tag  Tag of ceilings to stop.
+ *
+ * @return  @c true, if a ceiling put in stasis.
+ */
 int P_CeilingDeactivate(short tag);
 
 #ifdef __cplusplus

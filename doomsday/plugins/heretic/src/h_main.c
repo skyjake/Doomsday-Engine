@@ -1,37 +1,24 @@
-/**\file h_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file h_main.c  Heretic-specific game initialization.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Game initialization - Heretic specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <assert.h>
-#include <string.h>
 
 #include "jheretic.h"
 
@@ -42,28 +29,16 @@
 #include "am_map.h"
 #include "g_defs.h"
 #include "p_inventory.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+#include <assert.h>
+#include <string.h>
 
 int verbose;
 
-dd_bool devParm; // checkparm of -devparm
-dd_bool noMonstersParm; // checkparm of -nomonsters
-dd_bool respawnParm; // checkparm of -respawn
-dd_bool fastParm; // checkparm of -fast
-dd_bool turboParm; // checkparm of -turbo
+//dd_bool devParm; // checkparm of -devparm
+//dd_bool noMonstersParm; // checkparm of -nomonsters
+//dd_bool respawnParm; // checkparm of -respawn
+//dd_bool fastParm; // checkparm of -fast
+//dd_bool turboParm; // checkparm of -turbo
 //dd_bool randomClassParm; // checkparm of -randclass
 
 float turboMul; // Multiplier for turbo.
@@ -72,9 +47,9 @@ gamemode_t gameMode;
 int gameModeBits;
 
 // Default font colours.
-const float defFontRGB[]  = { .425f, .986f, .378f };
-const float defFontRGB2[] = { 1, .65f, .275f };
-const float defFontRGB3[] = { 1.0f, 1.0f, 1.0f };
+float const defFontRGB[]  = { .425f, .986f, .378f };
+float const defFontRGB2[] = { 1, .65f, .275f };
+float const defFontRGB3[] = { 1.0f, 1.0f, 1.0f };
 
 // The patches used in drawing the view border.
 // Percent-encoded.
@@ -90,14 +65,9 @@ char* borderGraphics[] = {
     "BORDBL" // Bottom left.
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static skillmode_t startSkill;
 static uint startEpisode;
 static uint startMap;
 static dd_bool autoStart;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Get a 32-bit integer value.
@@ -228,7 +198,7 @@ void H_PreInit(void)
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // Never.
     cfg.slidingCorpses = false;
-    cfg.fastMonsters = false;
+    //cfg.fastMonsters = false;
     cfg.secretMsg = true;
     cfg.netJumping = true;
     cfg.netEpisode = 0;
@@ -395,7 +365,7 @@ void H_PostInit(void)
     monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Defaults for skill, episode and map.
-    startSkill = SM_MEDIUM;
+    gameRules.skill = /*startSkill =*/ SM_MEDIUM;
     startEpisode = 0;
     startMap = 0;
     autoStart = false;
@@ -403,15 +373,14 @@ void H_PostInit(void)
     // Game mode specific settings.
     /* None */
 
-    // Command line options.
-    noMonstersParm = CommandLine_Check("-nomonsters");
-    respawnParm = CommandLine_Check("-respawn");
-    devParm = CommandLine_Check("-devparm");
-
     if(CommandLine_Check("-deathmatch"))
     {
         cfg.netDeathmatch = true;
     }
+
+    // Apply these game rules.
+    gameRules.noMonsters      = CommandLine_Exists("-nomonsters")? true : false;
+    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
 
     // turbo option.
     p = CommandLine_Check("-turbo");
@@ -420,7 +389,6 @@ void H_PostInit(void)
     {
         int scale = 200;
 
-        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)
@@ -447,7 +415,7 @@ void H_PostInit(void)
     p = CommandLine_Check("-skill");
     if(p && p < myargc - 1)
     {
-        startSkill = CommandLine_At(p + 1)[0] - '1';
+        gameRules.skill = CommandLine_At(p + 1)[0] - '1';
         autoStart = true;
     }
 
@@ -471,7 +439,7 @@ void H_PostInit(void)
     if(autoStart)
     {
         App_Log(DE2_LOG_NOTE, "Autostart in Episode %d, Map %d, Skill %d",
-                startEpisode + 1, startMap + 1, startSkill + 1);
+                startEpisode + 1, startMap + 1, gameRules.skill + 1);
     }
 
     // Validate episode and map.
@@ -486,7 +454,7 @@ void H_PostInit(void)
 
     if(autoStart || IS_NETGAME)
     {
-        G_DeferredNewGame(startSkill, startEpisode, startMap, 0/*default*/);
+        G_DeferredNewGame(startEpisode, startMap, 0/*default*/, &gameRules);
     }
     else
     {

@@ -247,7 +247,7 @@ DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
          */
         ListNode *newLink()
         {
-            if(linkStoreCursor < LINKSTORE_SIZE)
+            if(linkStoreCursor < (unsigned)LINKSTORE_SIZE)
             {
                 return &linkStore[linkStoreCursor++];
             }

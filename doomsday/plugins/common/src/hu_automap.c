@@ -958,7 +958,10 @@ static void rendPlayerMarkers(uiwidget_t* obj)
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         // Do not show markers for other players in deathmatch.
-        if(deathmatch && i != UIWidget_Player(obj)) continue;
+        if(gameRules.deathmatch && i != UIWidget_Player(obj))
+        {
+            continue;
+        }
 
         drawPlayerMarker(i, am->mcfg);
     }

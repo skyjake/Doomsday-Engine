@@ -1,38 +1,30 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_floor.h  Common playsim routines relating to moving floors.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * p_floor.h: Common playsim routines relating to moving floors.
- */
+#ifndef LIBCOMMON_THINKER_FLOOR_H
+#define LIBCOMMON_THINKER_FLOOR_H
 
-#ifndef __COMMON_THINKER_FLOOR_H__
-#define __COMMON_THINKER_FLOOR_H__
+#include "doomsday.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define FLOORSPEED          (1)
 
 typedef enum {
     FS_DOWN = -1, // Moving down.
@@ -91,44 +83,55 @@ typedef enum {
     NUMFLOORTYPES
 } floortype_e;
 
-typedef struct {
-    thinker_t       thinker;
-    floortype_e     type;
-    dd_bool         crush;
-    Sector*         sector;
-    floorstate_e    state;
-    int             newSpecial;
-    Material*     material;
-    coord_t         floorDestHeight;
-    float           speed;
+typedef struct floor_s {
+    thinker_t thinker;
+    floortype_e type;
+    dd_bool crush;
+    Sector *sector;
+    floorstate_e state;
+    int newSpecial;
+    Material *material;
+    coord_t floorDestHeight;
+    float speed;
 #if __JHEXEN__
-    int             delayCount;
-    int             delayTotal;
-    coord_t         stairsDelayHeight;
-    coord_t         stairsDelayHeightDelta;
-    coord_t         resetHeight;
-    short           resetDelay;
-    short           resetDelayCount;
+    int delayCount;
+    int delayTotal;
+    coord_t stairsDelayHeight;
+    coord_t stairsDelayHeightDelta;
+    coord_t resetHeight;
+    short resetDelay;
+    short resetDelayCount;
+#endif
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
 #endif
 } floor_t;
 
-#define FLOORSPEED          (1)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void        T_MoveFloor(void *floorThinker);
+void T_MoveFloor(void *floorThinker);
+
+/**
+ * Handle moving floors.
+ */
 #if __JHEXEN__
-int         EV_DoFloor(Line* li, byte* args, floortype_e type);
+int EV_DoFloor(Line *li, byte *args, floortype_e type);
 #else
-int         EV_DoFloor(Line* li, floortype_e type);
+int EV_DoFloor(Line *li, floortype_e type);
 #endif
 
 #if __JHEXEN__
-int         EV_DoFloorAndCeiling(Line* li, byte* args, int ftype, int ctype);
+int EV_DoFloorAndCeiling(Line *li, byte *args, int ftype, int ctype);
 #elif __JDOOM64__
-int         EV_DoFloorAndCeiling(Line* li, int ftype, int ctype);
+int EV_DoFloorAndCeiling(Line *li, int ftype, int ctype);
 #endif
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif
+#endif // LIBCOMMON_THINKER_FLOOR_H

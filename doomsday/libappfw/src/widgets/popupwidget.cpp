@@ -406,6 +406,7 @@ void PopupWidget::preparePanelForOpening()
 
     // Reparent the popup into the root widget, on top of everything else.
     d->realParent = Widget::parent();
+    DENG2_ASSERT(d->realParent != 0);
     d->realParent->audienceForDeletion += d;
     d->realParent->remove(*this);
     d->realParent->root().as<GuiRootWidget>().addOnTop(this);

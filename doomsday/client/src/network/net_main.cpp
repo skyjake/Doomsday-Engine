@@ -59,6 +59,7 @@
 
 #include <de/Value>
 #include <de/Version>
+#include <de/charsymbols.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -802,11 +803,38 @@ void Net_Ticker(timespan_t time)
     }
 }
 
+de::String ServerInfo_AsStyledText(serverinfo_t const *sv)
+{
+#define TABBED(A, B) _E(Ta)_E(l) "  " A _E(.) " " _E(\t) B "\n"
+    return de::String(_E(b) "%1" _E(.) "\n%2\n" _E(T`)
+                      TABBED("Joinable:", "%5")
+                      TABBED("Players:", "%3 / %4%13")
+                      TABBED("Game:", "%9\n%10\n%12 %11")
+                      TABBED("PWADs:", "%14")
+                      TABBED("Address:", "%6:%7")
+                      TABBED("Ping:", "%8 ms (approx)"))
+            .arg(sv->name)
+            .arg(sv->description)
+            .arg(sv->numPlayers)
+            .arg(sv->maxPlayers)
+            .arg(sv->canJoin? "Yes" : "No") // 5
+            .arg(sv->address)
+            .arg(sv->port)
+            .arg(sv->ping)
+            .arg(sv->plugin)
+            .arg(sv->gameIdentityKey) // 10
+            .arg(sv->gameConfig)
+            .arg(sv->map)
+            .arg(!de::String(sv->clientNames).isEmpty()? de::String(_E(2) " (%1)" _E(.)).arg(sv->clientNames) : "")
+            .arg(de::String(sv->pwads).isEmpty()? de::String(DENG2_CHAR_MDASH) : de::String(sv->pwads)); // 14
+#undef TABBED
+}
+
 /**
  * Prints server/host information into the console. The header line is
  * printed if 'info' is NULL.
  */
-void Net_PrintServerInfo(int index, serverinfo_t *info)
+void ServerInfo_Print(serverinfo_t const *info, int index)
 {
     /// @todo Update table for de::Log. -jk
     ///
@@ -1256,7 +1284,7 @@ D_CMD(Net)
             serverinfo_t info;
             if(Net_ServerLink().foundServerInfo(index, &info))
             {
-                Net_PrintServerInfo(index, &info);
+                ServerInfo_Print(&info, index);
                 Net_ServerLink().connectDomain(de::String("%1:%2").arg(info.address).arg(info.port), 5);
             }
         }
@@ -1321,9 +1349,9 @@ static dd_bool tokenize(char const *line, char *label, char *value, int max)
     return true;
 }
 
-void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info)
+void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec)
 {
-    memset(info, 0, sizeof(*info));
+    de::zapPtr(info);
 
     info->port           = (int)  rec["port"].value().asNumber();
     info->version        = (int)  rec["ver" ].value().asNumber();
@@ -1348,7 +1376,7 @@ void Net_RecordToServerInfo(de::Record const &rec, serverinfo_t *info)
 #undef COPY_STR
 }
 
-dd_bool Net_StringToServerInfo(const char *valuePair, serverinfo_t *info)
+dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
 {
     char label[SVINFO_TOKEN_LEN], value[SVINFO_TOKEN_LEN];
 

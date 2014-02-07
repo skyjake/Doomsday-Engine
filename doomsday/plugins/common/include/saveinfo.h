@@ -1,4 +1,4 @@
-/** @file common/saveinfo.h Save state info.
+/** @file saveinfo.h  Saved game session info.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -25,85 +25,133 @@
 #include "common.h"
 
 #ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct saveheader_s {
-    int magic;
-    int version;
-    gamemode_t gameMode;
-    skillmode_t skill;
-#if !__JHEXEN__
-    byte fast;
-#endif
-    byte episode;
-    byte map;
-    byte deathmatch;
-    byte noMonsters;
-#if __JHEXEN__
-    byte randomClasses;
-#else
-    byte respawnMonsters;
-    int mapTime;
-    byte players[MAXPLAYERS];
-#endif
-} saveheader_t;
-
 /**
- * SaveInfo instance.
+ * Saved game session info.
  */
-typedef struct saveinfo_s {
-    Str name;
-    uint gameId;
-    saveheader_t header;
-} SaveInfo;
+class SaveInfo
+{
+public: /// @todo make private:
+    Str _description;
+    uint _gameId;
+    int _magic;
+    int _version;
+    gamemode_t _gameMode;
+    uint _episode;
+    uint _map;
+    Uri *_mapUri; ///< Not currently saved.
+#if !__JHEXEN__
+    int _mapTime;
+    byte _players[MAXPLAYERS];
+#endif
+    GameRuleset _gameRules;
+
+public:
+    SaveInfo();
+    SaveInfo(SaveInfo const &other);
+    ~SaveInfo();
+
+    SaveInfo &operator = (SaveInfo const &other);
+
+    /**
+     * Update the metadata associated with the save using values derived from the
+     * current game session. Note that this does @em not affect the copy of this save
+     * on disk.
+     */
+    void applyCurrentSessionMetadata();
+
+    /**
+     * Determines whether the saved game session is compatibile with the current
+     * game session (and @em should therefore be loadable).
+     */
+    bool isLoadable();
+
+    /**
+     * Returns the logical version of the serialized game session state.
+     */
+    int version() const;
+
+    /**
+     * Returns the textual description of the game session (provided by the user).
+     */
+    Str const *description() const;
+    void setDescription(Str const *newDesc);
+
+    /**
+     * @see SV_GenerateGameId()
+     */
+    uint gameId() const;
+    void setGameId(uint newGameId);
+
+    /**
+     * Returns the URI of the @em current map of the game session.
+     */
+    Uri const *mapUri() const;
+
+#if !__JHEXEN__
+    /**
+     * Returns the expired time in tics since the @em current map of the game session began.
+     */
+    int mapTime() const;
+#endif
+
+    /**
+     * Returns the game ruleset for the game session.
+     */
+    GameRuleset const &gameRules() const;
+
+    /**
+     * Serializes the game session info using @a writer.
+     */
+    void write(Writer *writer) const;
+
+    /**
+     * Deserializes the game session info using @a reader.
+     */
+    void read(Reader *reader);
+
+    /**
+     * Hexen-specific version for deserializing legacy v.9 game session info.
+     */
+#if __JHEXEN__
+    void read_Hx_v9(Reader *reader);
+#endif
+
+public: /// @todo refactor away:
+    int magic() const;
+    uint episode() const;
+    uint map() const;
+};
+
+#endif // __cplusplus
+
+// C wrapper API, for legacy modules -------------------------------------------
+
+#ifdef __cplusplus
+extern "C" {
+#else
+typedef void *SaveInfo;
+#endif
 
 SaveInfo *SaveInfo_New(void);
-SaveInfo *SaveInfo_NewCopy(SaveInfo const *other);
+SaveInfo *SaveInfo_Dup(SaveInfo const *other);
 
 void SaveInfo_Delete(SaveInfo *info);
 
 SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
 
-uint SaveInfo_GameId(SaveInfo const *info);
-
-saveheader_t const *SaveInfo_Header(SaveInfo const *info);
-
-Str const *SaveInfo_Name(SaveInfo const *info);
-
-void SaveInfo_SetGameId(SaveInfo *info, uint newGameId);
-
-void SaveInfo_SetName(SaveInfo *info, Str const *newName);
-
-void SaveInfo_Configure(SaveInfo *info);
-
-/**
- * Returns @a true if the game state is compatibile with the current game session
- * and @em should be loadable.
- */
 dd_bool SaveInfo_IsLoadable(SaveInfo *info);
 
-/**
- * Serializes the save info using @a writer.
- *
- * @param info  SaveInfo instance.
- * @param writer  Writer instance.
- */
+Str const *SaveInfo_Description(SaveInfo const *info);
+void SaveInfo_SetDescription(SaveInfo *info, Str const *newName);
+
+uint SaveInfo_GameId(SaveInfo const *info);
+void SaveInfo_SetGameId(SaveInfo *info, uint newGameId);
+
 void SaveInfo_Write(SaveInfo *info, Writer *writer);
 
-/**
- * Deserializes the save info using @a reader.
- *
- * @param info  SaveInfo instance.
- * @param reader  Reader instance.
- */
 void SaveInfo_Read(SaveInfo *info, Reader *reader);
 
 #if __JHEXEN__
-/**
- * @brief libhexen specific version of @ref SaveInfo_Read() for deserializing
- * legacy version 9 save state info.
- */
 void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader);
 #endif
 

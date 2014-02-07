@@ -51,6 +51,11 @@ void ProceduralImage::update()
     // optional for derived classes
 }
 
+void ProceduralImage::glInit()
+{
+    // optional for derived classes
+}
+
 void ProceduralImage::glDeinit()
 {
     // optional for derived classes

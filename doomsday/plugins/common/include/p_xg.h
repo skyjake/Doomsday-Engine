@@ -1,4 +1,4 @@
-/** @file p_xg.h Extended Generalised Line / Sector Types.
+/** @file p_xg.h  Extended generalised line / sector types.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -46,6 +46,9 @@ void XG_Ticker(void);
 // Updates XG state during engine reset.
 void XG_Update(void);
 
+/**
+ * See if any line or sector types are saved in a DDXGDATA lump.
+ */
 void XG_ReadTypes(void);
 
 linetype_t *XG_GetLumpLine(int id);
@@ -55,4 +58,4 @@ sectortype_t *XG_GetLumpSector(int id);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_PLAYSIM_XG_H */
+#endif // LIBCOMMON_PLAYSIM_XG_H

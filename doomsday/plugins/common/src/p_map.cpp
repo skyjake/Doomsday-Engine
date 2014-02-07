@@ -450,7 +450,7 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
         {
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
-                if(IS_NETGAME && !deathmatch && thing->player)
+                if(IS_NETGAME && !gameRules.deathmatch && thing->player)
                 {
                     return false; // don't attack other co-op players
                 }
@@ -2034,7 +2034,7 @@ static int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
 #endif
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
-    if(th->player && IS_NETGAME && !deathmatch)
+    if(th->player && IS_NETGAME && !gameRules.deathmatch)
     {
         return false; // Don't aim at fellow co-op players.
     }
@@ -3195,7 +3195,8 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
             return true; // Item type doesn't match.
         }
 
-        P_StartACScript(xline->arg2, 0, &xline->arg3, parm.useMobj, icpt->line, 0);
+        Game_ACScriptInterpreter_StartScript(xline->arg2, 0/*current-map*/, &xline->arg3,
+                                             parm.useMobj, icpt->line, 0);
         xline->special = 0;
 
         parm.activated = true;
@@ -3214,7 +3215,8 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
             return false; // Item type doesn't match...
         }
 
-        P_StartACScript(icpt->mobj->args[1], 0, &icpt->mobj->args[2], parm.useMobj, NULL, 0);
+        Game_ACScriptInterpreter_StartScript(icpt->mobj->args[1], 0/*current-map*/,
+                                             &icpt->mobj->args[2], parm.useMobj, NULL, 0);
         icpt->mobj->special = 0;
 
         parm.activated = true;

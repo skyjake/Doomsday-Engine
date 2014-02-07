@@ -37,6 +37,9 @@ class ServerLink : public de::shell::AbstractLink
 public:
     DENG2_DEFINE_AUDIENCE(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
 
+    DENG2_DEFINE_AUDIENCE(Join,  void networkGameJoined())
+    DENG2_DEFINE_AUDIENCE(Leave, void networkGameLeft())
+
 public:
     ServerLink();
 
@@ -57,6 +60,11 @@ public:
      * @param domain
      */
     void discover(de::String const &domain);
+
+    /**
+     * Asks the master server for information about currently running servers.
+     */
+    void discoverUsingMaster();
 
     bool isDiscovering() const;
 

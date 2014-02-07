@@ -208,19 +208,19 @@ static dd_bool checkMapSpotSpawnFlags(mapspot_t const *spot)
         return false;
 
     // Don't spawn things flagged for Not Deathmatch if we're deathmatching.
-    if(deathmatch && (spot->flags & MSF_NOTDM))
+    if(gameRules.deathmatch && (spot->flags & MSF_NOTDM))
         return false;
 
     // Don't spawn things flagged for Not Coop if we're coop'in.
-    if(IS_NETGAME && !deathmatch && (spot->flags & MSF_NOTCOOP))
+    if(IS_NETGAME && !gameRules.deathmatch && (spot->flags & MSF_NOTCOOP))
         return false;
 
     // The special "spawn no things" skill mode means nothing is spawned.
-    if(gameSkill == SM_NOTHINGS)
+    if(gameRules.skill == SM_NOTHINGS)
         return false;
 
     // Check for appropriate skill level.
-    if(!(spot->skillModes & (1 << gameSkill)))
+    if(!(spot->skillModes & (1 << gameRules.skill)))
         return false;
 
 #if __JHEXEN__
@@ -234,7 +234,7 @@ static dd_bool checkMapSpotSpawnFlags(mapspot_t const *spot)
             return false;
         }
     }
-    else if(!deathmatch)
+    else if(!gameRules.deathmatch)
     {
         // Cooperative mode.
 
@@ -478,7 +478,7 @@ static void initMapSpots()
 
     P_DealPlayerStarts(0);
 
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         uint numDMStarts = P_GetNumPlayerStarts(true);
         uint playerCount = 0;
@@ -622,7 +622,7 @@ static void spawnMapObjects()
     if(!IS_CLIENT && maceSpotCount)
     {
         // Sometimes the Firemace doesn't show up if not in deathmatch.
-        if(!(!deathmatch && P_Random() < 64))
+        if(!(!gameRules.deathmatch && P_Random() < 64))
         {
             if(mapspot_t const *spot = P_ChooseRandomMaceSpot())
             {
@@ -865,8 +865,19 @@ void P_FinalizeMapChange(Uri const *uri)
     PO_InitForMap();
 
 #if __JHEXEN__
-    /// @todo Should be interpreted by the map converter.
-    P_LoadACScripts(W_GetLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/); // ACS object code
+    /// @todo Should be translated by the map converter.
+    lumpnum_t acsLumpNum = W_CheckLumpNumForName(Str_Text(Uri_Path(uri))) + 11 /*ML_BEHAVIOR*/;
+    if(acsLumpNum >= 0 && !IS_CLIENT)
+    {
+        ACScriptInterpreter &interp = Game_ACScriptInterpreter();
+
+        interp.loadBytecode(acsLumpNum);
+
+        memset(interp.mapVars, 0, sizeof(interp.mapVars));
+
+        // Start all scripts flagged to begin immediately.
+        interp.startOpenScripts();
+    }
 #endif
 
     HU_UpdatePsprites();
@@ -985,7 +996,7 @@ static void P_ResetWorldState()
     }
 
     timerGame = 0;
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         int parm = CommandLine_Check("-timer");
         if(parm && parm < CommandLine_Count() - 1)
@@ -1007,7 +1018,7 @@ static void P_ResetWorldState()
             plr->playerState = PST_REBORN;
 
 #if __JHEXEN__
-        if(!IS_NETGAME || (IS_NETGAME != 0 && deathmatch != 0) || firstFragReset == 1)
+        if(!IS_NETGAME || (IS_NETGAME != 0 && gameRules.deathmatch != 0) || firstFragReset == 1)
         {
             memset(plr->frags, 0, sizeof(plr->frags));
             firstFragReset = 0;
@@ -1116,7 +1127,7 @@ char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
 
 char const *P_CurrentMapTitle()
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     char const *title = P_MapTitle(mapUri);
     Uri_Delete(mapUri);
     return title;
@@ -1124,7 +1135,7 @@ char const *P_CurrentMapTitle()
 
 char const *P_CurrentMapAuthor(dd_bool supressGameAuthor)
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     char const *author = P_MapAuthor(mapUri, supressGameAuthor);
     Uri_Delete(mapUri);
     return author;

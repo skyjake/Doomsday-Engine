@@ -44,7 +44,8 @@ public:
         connect(_edit, SIGNAL(enterPressed(QString)), this, SLOT(close()));
         _edit->rule().setInput(Rule::Width, slider.style().rules().rule("slider.editor"));
 
-        _edit->setText(QString::number(slider.value() * slider.displayFactor(), 'g', 4));
+        _edit->setText(QString::number(slider.value() * slider.displayFactor(), 'f',
+                                       slider.precision()));
     }
 
     LineEditWidget &editor() const
@@ -462,7 +463,9 @@ SliderWidget::SliderWidget(String const &name)
 
     // Default size.
     rule().setInput(Rule::Width,  style().rules().rule("slider.width"))
-          .setInput(Rule::Height, font().height() + margins().height());
+          .setInput(Rule::Height, OperatorRule::maximum(
+                        style().fonts().font("default").height(),
+                        font().height()) + margins().height());
 }
 
 void SliderWidget::setRange(Rangei const &intRange, int step)
@@ -527,6 +530,11 @@ Ranged SliderWidget::range() const
 ddouble SliderWidget::value() const
 {
     return d->value;
+}
+
+int SliderWidget::precision() const
+{
+    return d->precision;
 }
 
 ddouble SliderWidget::displayFactor() const

@@ -470,7 +470,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
         if(!Hu_InventoryIsOpen(obj->player))
         {
-            if(deathmatch)
+            if(gameRules.deathmatch)
                 GL_DrawPatchXY(pStatBar, ORIGINX+34, ORIGINY+2);
             else
                 GL_DrawPatchXY(pLifeBar, ORIGINX+34, ORIGINY+2);
@@ -518,7 +518,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
         if(!Hu_InventoryIsOpen(obj->player))
         {
-            if(deathmatch)
+            if(gameRules.deathmatch)
                 GL_DrawPatchXY(pStatBar, ORIGINX+34, ORIGINY+2);
             else
                 GL_DrawPatchXY(pLifeBar, ORIGINX+34, ORIGINY+2);
@@ -714,7 +714,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
 
-    if(!deathmatch || Hu_InventoryIsOpen(obj->player)) return;
+    if(!gameRules.deathmatch || Hu_InventoryIsOpen(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -755,7 +755,7 @@ void SBarFrags_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(!deathmatch || Hu_InventoryIsOpen(obj->player)) return;
+    if(!gameRules.deathmatch || Hu_InventoryIsOpen(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -795,7 +795,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
-    if(deathmatch || Hu_InventoryIsOpen(obj->player)) return;
+    if(gameRules.deathmatch || Hu_InventoryIsOpen(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(hlth->value == 1994) return;
@@ -836,7 +836,7 @@ void SBarHealth_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(deathmatch || Hu_InventoryIsOpen(obj->player)) return;
+    if(gameRules.deathmatch || Hu_InventoryIsOpen(obj->player)) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(hlth->value == 1994) return;
@@ -1854,7 +1854,7 @@ void Frags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
-    if(!deathmatch) return;
+    if(!gameRules.deathmatch) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -1889,7 +1889,7 @@ void Frags_UpdateGeometry(uiwidget_t* obj)
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
 
-    if(!deathmatch) return;
+    if(!gameRules.deathmatch) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
     if(frags->value == 1994) return;
@@ -2289,48 +2289,6 @@ void Secrets_UpdateGeometry(uiwidget_t* obj)
                                        .5f + textSize.height * cfg.hudCheatCounterScale);
 }
 
-#if 0
-void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
-{
-    const float scale = .75f;
-    const float textAlpha = uiRendState->pageAlpha;
-    const char* text = P_CurrentMapTitle();
-    assert(obj->type == GUI_MAPNAME);
-
-    if(!text) return;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    if(offset) DGL_Translatef(offset->x, offset->y, 0);
-    DGL_Scalef(scale, scale, 1);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], textAlpha);
-    FR_DrawTextXY(text, 0, 0);
-    DGL_Disable(DGL_TEXTURE_2D);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
-void MapName_UpdateGeometry(uiwidget_t* obj)
-{
-    const char* text = P_CurrentMapTitle();
-    const float scale = .75f;
-    Size2Raw textSize;
-    assert(obj->type == GUI_MAPNAME);
-
-    Rect_SetWidthHeight(obj->geometry, 0, 0);
-
-    if(!text) return;
-
-    FR_SetFont(obj->font);
-    FR_TextSize(&textSize, text);
-    Rect_SetWidthHeight(obj->geometry, textSize.width * scale, textSize.height * scale);
-}
-#endif
-
 static void drawUIWidgetsForPlayer(player_t* plr)
 {
 /// Units in fixed 320x200 screen space.
@@ -2650,7 +2608,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
-    if(gameSkill == SM_BABY && cfg.automapBabyKeys)
+    if(gameRules.skill == SM_BABY && cfg.automapBabyKeys)
     {
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);
@@ -2794,7 +2752,6 @@ typedef struct {
         { GUI_READYAMMOICON, ALIGN_TOPLEFT,   UWG_STATUSBAR,    0,            SBarReadyAmmoIcon_UpdateGeometry, SBarReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->sbarReadyammoicon },
         { GUI_READYITEM,    ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_SMALLIN,   SBarReadyItem_UpdateGeometry, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
         { GUI_CHAIN,        ALIGN_TOPLEFT,    UWG_STATUSBAR,    0,            SBarChain_UpdateGeometry, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
-        //{ GUI_MAPNAME,      ALIGN_TOPLEFT,    UWG_MAPNAME,      GF_FONTA,     MapName_UpdateGeometry, MapName_Drawer },
         { GUI_READYAMMOICON, ALIGN_TOPLEFT,   UWG_TOPLEFT,      0,            ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
         { GUI_READYAMMO,    ALIGN_TOPLEFT,    UWG_TOPLEFT,      GF_STATUS,    ReadyAmmo_UpdateGeometry, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
         { GUI_FLIGHT,       ALIGN_TOPLEFT,    UWG_TOPLEFT,      0,            Flight_UpdateGeometry, Flight_Drawer, Flight_Ticker, &hud->flight },

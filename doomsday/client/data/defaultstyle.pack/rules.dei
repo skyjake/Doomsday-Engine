@@ -21,6 +21,7 @@ group document {
 }
 
 group editor {
+    rule width { constant $= UNIT * 55 }
     rule completion.height { constant $= UNIT * 100 }
 }
 
@@ -62,7 +63,7 @@ group console {
 
 group gameselection {
     rule max.width  { constant $= UNIT * 215 }
-    rule max.height { constant $= UNIT * 150 }
+    rule max.height { constant $= UNIT * 215 }
 }
 
 group coloradjustment {

@@ -108,7 +108,7 @@ void KSpiritInit(mobj_t *spirit, mobj_t *korax);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int maulatorSeconds = 25;
-dd_bool fastMonsters = false;
+//dd_bool fastMonsters = false;
 
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309f)
@@ -547,10 +547,10 @@ void C_DECL A_Look(mobj_t *actor)
 /**
  * Actor has a melee attack, so it tries to close as fast as possible.
  */
-void C_DECL A_Chase(mobj_t* actor)
+void C_DECL A_Chase(mobj_t *actor)
 {
-    int                 delta;
-    statenum_t          state;
+    int delta;
+    statenum_t state;
 
     if(actor->reactionTime)
         actor->reactionTime--;
@@ -561,8 +561,9 @@ void C_DECL A_Chase(mobj_t* actor)
         actor->threshold--;
     }
 
-    if(gameSkill == SM_NIGHTMARE || (fastMonsters /*&& INCOMPAT_OK */ ))
-    {   // Monsters move faster in nightmare mode
+    if(gameRules.skill == SM_NIGHTMARE /*|| gameRules.fast*/)
+    {
+        // Monsters move faster in nightmare mode
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
         {
@@ -600,7 +601,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE)
+        if(gameRules.skill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -620,7 +621,7 @@ void C_DECL A_Chase(mobj_t* actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill != SM_NIGHTMARE && actor->moveCount))
+        if(!(gameRules.skill != SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {
@@ -988,18 +989,19 @@ static int findMonster(thinker_t* th, void* context)
 /**
  * Look for enemy of player.
  */
-void C_DECL A_MinotaurLook(mobj_t* actor)
+void C_DECL A_MinotaurLook(mobj_t *actor)
 {
-    mobj_t* master = actor->tracer;
+    mobj_t *master = actor->tracer;
 
-    actor->target = NULL;
+    actor->target = 0;
 
-    if(deathmatch) // Quick search for players.
+    if(gameRules.deathmatch)
     {
+        // Quick search for players.
         int i;
         coord_t dist;
-        player_t* player;
-        mobj_t* mo;
+        player_t *player;
+        mobj_t *mo;
 
         for(i = 0; i < MAXPLAYERS; ++i)
         {
@@ -1690,7 +1692,7 @@ void C_DECL A_SerpentHide(mobj_t* actor)
     actor->floorClip = 0;
 }
 
-void C_DECL A_SerpentChase(mobj_t* actor)
+void C_DECL A_SerpentChase(mobj_t *actor)
 {
     int delta;
     coord_t oldpos[3];
@@ -1708,8 +1710,9 @@ void C_DECL A_SerpentChase(mobj_t* actor)
         actor->threshold--;
     }
 
-    if(gameSkill == SM_NIGHTMARE || (fastMonsters))
-    {   // Monsters move faster in nightmare mode.
+    if(gameRules.skill == SM_NIGHTMARE /*|| gameRules.fast*/)
+    {
+        // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
         {
@@ -1746,7 +1749,7 @@ void C_DECL A_SerpentChase(mobj_t* actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE)
+        if(gameRules.skill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -1863,10 +1866,10 @@ void C_DECL A_SerpentDiveSound(mobj_t *actor)
 /**
  * Similar to A_Chase, only has a hardcoded entering of meleestate.
  */
-void C_DECL A_SerpentWalk(mobj_t* actor)
+void C_DECL A_SerpentWalk(mobj_t *actor)
 {
-    int                 delta;
-    statenum_t          state;
+    int delta;
+    statenum_t state;
 
     if(actor->reactionTime)
     {
@@ -1879,8 +1882,9 @@ void C_DECL A_SerpentWalk(mobj_t* actor)
         actor->threshold--;
     }
 
-    if(gameSkill == SM_NIGHTMARE || (fastMonsters))
-    {   // Monsters move faster in nightmare mode.
+    if(gameRules.skill == SM_NIGHTMARE /*|| gameRules.fast*/)
+    {
+        // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
         if(actor->tics < 3)
         {
@@ -1917,7 +1921,7 @@ void C_DECL A_SerpentWalk(mobj_t* actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE)
+        if(gameRules.skill != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -3883,7 +3887,7 @@ void C_DECL A_BounceCheck(mobj_t* mo)
     }
 }
 
-void C_DECL A_FastChase(mobj_t* mo)
+void C_DECL A_FastChase(mobj_t *mo)
 {
 #define CLASS_BOSS_STRAFE_RANGE     (64*10)
 
@@ -3891,7 +3895,7 @@ void C_DECL A_FastChase(mobj_t* mo)
     coord_t dist;
     angle_t angle;
     uint an;
-    mobj_t* target;
+    mobj_t *target;
     statenum_t state;
 
     if(mo->reactionTime)
@@ -3905,8 +3909,9 @@ void C_DECL A_FastChase(mobj_t* mo)
         mo->threshold--;
     }
 
-    if(gameSkill == SM_NIGHTMARE || (fastMonsters))
-    {   // Monsters move faster in nightmare mode.
+    if(gameRules.skill == SM_NIGHTMARE /*|| gameRules.fast*/)
+    {
+        // Monsters move faster in nightmare mode.
         mo->tics -= mo->tics / 2;
         if(mo->tics < 3)
         {
@@ -3942,7 +3947,7 @@ void C_DECL A_FastChase(mobj_t* mo)
     if(mo->flags & MF_JUSTATTACKED)
     {
         mo->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE)
+        if(gameRules.skill != SM_NIGHTMARE)
             P_NewChaseDir(mo);
         return;
     }
@@ -3980,7 +3985,7 @@ void C_DECL A_FastChase(mobj_t* mo)
     // Check for missile attack.
     if((state = P_GetState(mo->type, SN_MISSILE)) != S_NULL)
     {
-        if(gameSkill != SM_NIGHTMARE && mo->moveCount)
+        if(gameRules.skill != SM_NIGHTMARE && mo->moveCount)
             goto nomissile;
         if(!P_CheckMissileRange(mo))
             goto nomissile;
@@ -4035,9 +4040,9 @@ void C_DECL A_MageAttack(mobj_t *mo)
     A_MStaffAttack2(mo);
 }
 
-void C_DECL A_ClassBossHealth(mobj_t* mo)
+void C_DECL A_ClassBossHealth(mobj_t *mo)
 {
-    if(IS_NETGAME && !deathmatch) // Co-op only.
+    if(IS_NETGAME && !gameRules.deathmatch) // Co-op only.
     {
         if(!mo->special1)
         {
@@ -4231,9 +4236,9 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
  * 255          For use in death script (spawn spots).
  */
 
-void C_DECL A_KoraxChase(mobj_t* actor)
+void C_DECL A_KoraxChase(mobj_t *actor)
 {
-    mobj_t* spot;
+    mobj_t *spot;
     byte args[3] = { 0, 0, 0 };
 
     if(!actor->special2 && actor->health <= actor->info->spawnHealth / 2)
@@ -4245,7 +4250,7 @@ void C_DECL A_KoraxChase(mobj_t* actor)
             P_Teleport(actor, spot->origin[VX], spot->origin[VY], spot->angle, true);
         }
 
-        P_StartACScript(249, 0, args, actor, NULL, 0);
+        Game_ACScriptInterpreter_StartScript(249, 0/*current-map*/, args, actor, NULL, 0);
         actor->special2 = 1; // Don't run again.
 
         return;
@@ -4264,7 +4269,7 @@ void C_DECL A_KoraxChase(mobj_t* actor)
     }
 
     // Teleport away.
-    if(actor->health < actor->info->spawnHealth >> 1)
+    if(actor->health < actor->info->spawnHealth / 2)
     {
         if(P_Random() < 10)
         {
@@ -4322,7 +4327,7 @@ void C_DECL A_KoraxBonePop(mobj_t* actor)
     if(mo)
         KSpiritInit(mo, actor);
 
-    P_StartACScript(255, 0, args, actor, NULL, 0); // Death script.
+    Game_ACScriptInterpreter_StartScript(255, 0/*current-map*/, args, actor, NULL, 0); // Death script.
 }
 
 void KSpiritInit(mobj_t* spirit, mobj_t* korax)
@@ -4510,7 +4515,7 @@ void C_DECL A_KoraxCommand(mobj_t* mo)
     }
 
     assert(scriptNumber >= 0);
-    P_StartACScript(scriptNumber, 0, args, mo, NULL, 0);
+    Game_ACScriptInterpreter_StartScript(scriptNumber, 0/*current-map*/, args, mo, NULL, 0);
 }
 
 void C_DECL A_KSpiritWeave(mobj_t* mo)

@@ -1,59 +1,40 @@
-/**\file p_floor.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_floor.cpp  Common playsim routines relating to moving floors.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * @authors Copyright © 1999-2000 Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * Moving floors.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
+#include "p_floor.h"
 
 #include "dmu_lib.h"
 #include "p_map.h"
 #include "p_mapspec.h"
 #include "p_tick.h"
-#include "p_floor.h"
 #if __JHEXEN__ || __JDOOM64__
 #include "p_ceiling.h"
 #endif
 #include "p_sound.h"
-
-// MACROS ------------------------------------------------------------------
+#include "p_saveg.h"
 
 #if __JHERETIC__
 # define SFX_FLOORMOVE          (SFX_DORMOV)
@@ -66,43 +47,29 @@
 #define STAIR_QUEUE_SIZE        32
 #endif
 
-// TYPES -------------------------------------------------------------------
-
 #if __JHEXEN__
 typedef struct stairqueue_s {
-    Sector*         sector;
-    int             type;
-    coord_t         height;
+    Sector *sector;
+    int type;
+    coord_t height;
 } stairqueue_t;
 
 // Global vars for stair building, in a struct for neatness.
 typedef struct stairdata_s {
-    coord_t         stepDelta;
-    int             direction;
-    float           speed;
-    Material*     material;
-    int             startDelay;
-    int             startDelayDelta;
-    int             textureChange;
-    coord_t         startHeight;
+    coord_t stepDelta;
+    int direction;
+    float speed;
+    Material *material;
+    int startDelay;
+    int startDelayDelta;
+    int textureChange;
+    coord_t startHeight;
 } stairdata_t;
 #endif
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 #if __JHEXEN__
-static void enqueueStairSector(Sector* sec, int type, coord_t height);
+static void enqueueStairSector(Sector *sec, int type, coord_t height);
 #endif
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 #if __JHEXEN__
 stairdata_t stairData;
@@ -111,13 +78,11 @@ static int stairQueueHead;
 static int stairQueueTail;
 #endif
 
-// CODE --------------------------------------------------------------------
-
 /**
  * Move a plane (floor or ceiling) and check for crushing.
  */
-result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
-                     int crush, int isCeiling, int direction)
+result_e T_MovePlane(Sector *sector, float speed, coord_t dest, int crush,
+    int isCeiling, int direction)
 {
     dd_bool flag;
     coord_t lastpos;
@@ -146,7 +111,7 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
                 lastpos = floorheight;
                 P_SetDoublep(sector, DMU_FLOOR_HEIGHT, dest);
                 flag = P_ChangeSector(sector, crush);
-                if(flag == true)
+                if(flag)
                 {
                     // Oh no, the move failed.
                     P_SetDoublep(sector, DMU_FLOOR_HEIGHT, lastpos);
@@ -163,7 +128,7 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
                 lastpos = floorheight;
                 P_SetDoublep(sector, DMU_FLOOR_HEIGHT, floorheight - speed);
                 flag = P_ChangeSector(sector, crush);
-                if(flag == true)
+                if(flag)
                 {
                     P_SetDoublep(sector, DMU_FLOOR_HEIGHT, lastpos);
                     P_SetDoublep(sector, ptarget, lastpos);
@@ -184,7 +149,7 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
                 lastpos = floorheight;
                 P_SetDoublep(sector, DMU_FLOOR_HEIGHT, dest);
                 flag = P_ChangeSector(sector, crush);
-                if(flag == true)
+                if(flag)
                 {
                     // Oh no, the move failed.
                     P_SetDoublep(sector, DMU_FLOOR_HEIGHT, lastpos);
@@ -202,7 +167,7 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
                 lastpos = floorheight;
                 P_SetDoublep(sector, DMU_FLOOR_HEIGHT, floorheight + speed);
                 flag = P_ChangeSector(sector, crush);
-                if(flag == true)
+                if(flag)
                 {
 #if !__JHEXEN__
                     if(crush)
@@ -236,7 +201,7 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
                 lastpos = ceilingheight;
                 P_SetDoublep(sector, DMU_CEILING_HEIGHT, dest);
                 flag = P_ChangeSector(sector, crush);
-                if(flag == true)
+                if(flag)
                 {
                     P_SetDoublep(sector, DMU_CEILING_HEIGHT, lastpos);
                     P_SetDoublep(sector, ptarget, lastpos);
@@ -253,7 +218,7 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
                 lastpos = ceilingheight;
                 P_SetDoublep(sector, DMU_CEILING_HEIGHT, ceilingheight - speed);
                 flag = P_ChangeSector(sector, crush);
-                if(flag == true)
+                if(flag)
                 {
 #if !__JHEXEN__
                     if(crush)
@@ -278,7 +243,7 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
                 lastpos = ceilingheight;
                 P_SetDoublep(sector, DMU_CEILING_HEIGHT, dest);
                 flag = P_ChangeSector(sector, crush);
-                if(flag == true)
+                if(flag)
                 {
                     P_SetDoublep(sector, DMU_CEILING_HEIGHT, lastpos);
                     P_SetDoublep(sector, ptarget, lastpos);
@@ -314,7 +279,7 @@ result_e T_MovePlane(Sector* sector, float speed, coord_t dest,
  */
 void T_MoveFloor(void *floorThinkerPtr)
 {
-    floor_t* floor = floorThinkerPtr;
+    floor_t *floor = (floor_t *)floorThinkerPtr;
     result_e res;
 
 #if __JHEXEN__
@@ -361,7 +326,7 @@ void T_MoveFloor(void *floorThinkerPtr)
 
 #if !__JHEXEN__
     if(!(mapTime & 7))
-        S_PlaneSound(P_GetPtrp(floor->sector, DMU_FLOOR_PLANE), SFX_FLOORMOVE);
+        S_PlaneSound((Plane *)P_GetPtrp(floor->sector, DMU_FLOOR_PLANE), SFX_FLOORMOVE);
 #endif
 
     if(res == pastdest)
@@ -370,12 +335,12 @@ void T_MoveFloor(void *floorThinkerPtr)
         P_SetFloatp(floor->sector, DMU_FLOOR_SPEED, 0);
 
 #if __JHEXEN__
-        SN_StopSequence(P_GetPtrp(floor->sector, DMU_EMITTER));
+        SN_StopSequence((mobj_t *)P_GetPtrp(floor->sector, DMU_EMITTER));
 #else
 #  if __JHERETIC__
         if(floor->type == FT_RAISEBUILDSTEP)
 #  endif
-            S_PlaneSound(P_GetPtrp(floor->sector, DMU_FLOOR_PLANE), SFX_PSTOP);
+            S_PlaneSound((Plane *)P_GetPtrp(floor->sector, DMU_FLOOR_PLANE), SFX_PSTOP);
 
 #endif
 #if __JHEXEN__
@@ -424,35 +389,165 @@ void T_MoveFloor(void *floorThinkerPtr)
         }
 #endif
 #if __JHEXEN__
-        P_ACScriptTagFinished(P_ToXSector(floor->sector)->tag);
+        Game_ACScriptInterpreter().tagFinished(P_ToXSector(floor->sector)->tag);
 #endif
         Thinker_Remove(&floor->thinker);
     }
 }
 
-typedef struct findlineinsectorsmallestbottommaterialparams_s {
-    Sector             *baseSec;
-    int                 minSize;
-    Line               *foundLine;
-} findlineinsectorsmallestbottommaterialparams_t;
+void floor_s::write(Writer *writer) const
+{
+    Writer_WriteByte(writer, 3); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteByte(writer, (byte) type);
+
+    Writer_WriteInt32(writer, P_ToIndex(sector));
+
+    Writer_WriteByte(writer, (byte) crush);
+
+    Writer_WriteInt32(writer, (int) state);
+    Writer_WriteInt32(writer, newSpecial);
+
+    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(SV_MaterialArchive(), material));
+
+    Writer_WriteInt16(writer, (int) floorDestHeight);
+    Writer_WriteInt32(writer, FLT2FIX(speed));
+
+#if __JHEXEN__
+    Writer_WriteInt32(writer, delayCount);
+    Writer_WriteInt32(writer, delayTotal);
+    Writer_WriteInt32(writer, FLT2FIX(stairsDelayHeight));
+    Writer_WriteInt32(writer, FLT2FIX(stairsDelayHeightDelta));
+    Writer_WriteInt32(writer, FLT2FIX(resetHeight));
+    Writer_WriteInt16(writer, resetDelay);
+    Writer_WriteInt16(writer, resetDelayCount);
+#endif
+}
+
+int floor_s::read(Reader *reader, int mapVersion)
+{
+#if __JHEXEN__
+    if(mapVersion >= 4)
+#else
+    if(mapVersion >= 5)
+#endif
+    {   // Note: the thinker class byte has already been read.
+        byte ver = Reader_ReadByte(reader); // version byte.
+
+        type                   = floortype_e(Reader_ReadByte(reader));
+        sector                 = (Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+        crush                  = dd_bool(Reader_ReadByte(reader));
+        state                  = floorstate_e(Reader_ReadInt32(reader));
+        newSpecial             = Reader_ReadInt32(reader);
+
+        if(ver >= 2)
+        {
+            material = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 0);
+        }
+        else
+        {
+            // Flat number is an absolute lump index.
+            Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
+            ddstring_t name; Str_Init(&name);
+            F_FileName(&name, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
+            Uri_SetPath(uri, Str_Text(&name));
+            material = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+            Uri_Delete(uri);
+            Str_Free(&name);
+        }
+
+        floorDestHeight        = (float) Reader_ReadInt16(reader);
+        speed                  = FIX2FLT(Reader_ReadInt32(reader));
+
+#if __JHEXEN__
+        delayCount             = Reader_ReadInt32(reader);
+        delayTotal             = Reader_ReadInt32(reader);
+        stairsDelayHeight      = FIX2FLT(Reader_ReadInt32(reader));
+        stairsDelayHeightDelta = FIX2FLT(Reader_ReadInt32(reader));
+        resetHeight            = FIX2FLT(Reader_ReadInt32(reader));
+        resetDelay             = Reader_ReadInt16(reader);
+        resetDelayCount        = Reader_ReadInt16(reader);
+#endif
+    }
+    else
+    {
+        // Its in the old format which serialized floor_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+#if __JHEXEN__
+        // A 32bit pointer to sector, serialized.
+        sector                 = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+
+        type                   = floortype_e(Reader_ReadInt32(reader));
+        crush                  = Reader_ReadInt32(reader);
+#else
+        type                   = floortype_e(Reader_ReadInt32(reader));
+        crush                  = Reader_ReadInt32(reader);
+
+        // A 32bit pointer to sector, serialized.
+        sector                 = (Sector *)P_ToPtr(DMU_SECTOR, (int) Reader_ReadInt32(reader));
+        DENG_ASSERT(sector != 0);
+#endif
+        state                  = floorstate_e(Reader_ReadInt32(reader));
+        newSpecial             = Reader_ReadInt32(reader);
+
+        // Flat number is an absolute lump index.
+        Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
+        ddstring_t name; Str_Init(&name);
+        F_FileName(&name, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
+        Uri_SetPath(uri, Str_Text(&name));
+        material               = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+        Uri_Delete(uri);
+        Str_Free(&name);
+
+        floorDestHeight        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        speed                  = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+
+#if __JHEXEN__
+        delayCount             = Reader_ReadInt32(reader);
+        delayTotal             = Reader_ReadInt32(reader);
+        stairsDelayHeight      = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        stairsDelayHeightDelta = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        resetHeight            = FIX2FLT((fixed_t) Reader_ReadInt32(reader));
+        resetDelay             = Reader_ReadInt16(reader);
+        resetDelayCount        = Reader_ReadInt16(reader);
+        /*textureChange        =*/ Reader_ReadByte(reader);
+#endif
+    }
+
+    P_ToXSector(sector)->specialData = this;
+    thinker.function = T_MoveFloor;
+
+    return true; // Add this thinker.
+}
+
+struct findlineinsectorsmallestbottommaterialparams_t
+{
+    Sector *baseSec;
+    int minSize;
+    Line *foundLine;
+};
 
 int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 {
-    Line* li = (Line*) ptr;
-    findlineinsectorsmallestbottommaterialparams_t* params =
-        (findlineinsectorsmallestbottommaterialparams_t*) context;
-    Sector* frontSec, *backSec;
+    Line *li = (Line *) ptr;
+    findlineinsectorsmallestbottommaterialparams_t *params = (findlineinsectorsmallestbottommaterialparams_t *) context;
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    Sector *frontSec = (Sector *)P_GetPtrp(li, DMU_FRONT_SECTOR);
+    Sector *backSec  = (Sector *)P_GetPtrp(li, DMU_BACK_SECTOR);
 
     if(frontSec && backSec)
     {
-        Side* side;
-        Material* mat;
-
-        side = P_GetPtrp(li, DMU_FRONT);
-        mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+        Side *side    = (Side *)P_GetPtrp(li, DMU_FRONT);
+        Material *mat = (Material *)P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
 
         /**
          * Emulate DOOM.exe behaviour. In the instance where no material is
@@ -476,8 +571,8 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
             }
         }
 
-        side = P_GetPtrp(li, DMU_BACK);
-        mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+        side = (Side *)P_GetPtrp(li, DMU_BACK);
+        mat  = (Material *)P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(!mat)
         {
             Uri *textureUrn = Uri_NewWithPath2("urn:Textures:0", RC_NULL);
@@ -567,23 +662,15 @@ static Sector *findSectorSurroundingAtFloorHeight(Sector *sec, coord_t height)
 }
 #endif
 
-/**
- * Handle moving floors.
- */
 #if __JHEXEN__
-int EV_DoFloor(Line* line, byte* args, floortype_e floortype)
+int EV_DoFloor(Line * /*line*/, byte* args, floortype_e floortype)
 #else
-int EV_DoFloor(Line* line, floortype_e floortype)
+int EV_DoFloor(Line *line, floortype_e floortype)
 #endif
 {
 #if !__JHEXEN__
-    Sector* frontsector;
+    Sector *frontsector;
 #endif
-    int rtn = 0;
-    xsector_t* xsec;
-    Sector* sec = NULL;
-    floor_t* floor = NULL;
-    iterlist_t* list;
 #if __JHEXEN__
     int tag = (int) args[0];
 #else
@@ -593,8 +680,8 @@ int EV_DoFloor(Line* line, floortype_e floortype)
 #if __JDOOM64__
     // jd64 > bitmip? wha?
     coord_t bitmipL = 0, bitmipR = 0;
-    Side *front = P_GetPtrp(line, DMU_FRONT);
-    Side *back  = P_GetPtrp(line, DMU_BACK);
+    Side *front = (Side *)P_GetPtrp(line, DMU_FRONT);
+    Side *back  = (Side *)P_GetPtrp(line, DMU_BACK);
 
     bitmipL = P_GetDoublep(front, DMU_MIDDLE_MATERIAL_OFFSET_X);
     if(back)
@@ -602,22 +689,26 @@ int EV_DoFloor(Line* line, floortype_e floortype)
     // < d64tc
 #endif
 
-    list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return rtn;
+    iterlist_t *list = P_GetSectorIterListForTag(tag, false);
+    if(!list) return 0;
+
+    int rtn = 0;
+    floor_t *floor = 0;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
-    while((sec = IterList_MoveIterator(list)) != NULL)
+
+    Sector *sec;
+    while((sec = (Sector *)IterList_MoveIterator(list)))
     {
-        xsec = P_ToXSector(sec);
+        xsector_t *xsec = P_ToXSector(sec);
         // If already moving, keep going...
         if(xsec->specialData)
             continue;
         rtn = 1;
 
         // New floor thinker.
-        floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
+        floor = (floor_t *)Z_Calloc(sizeof(*floor), PU_MAP, 0);
         floor->thinker.function = T_MoveFloor;
         Thinker_Add(&floor->thinker);
         xsec->specialData = floor;
@@ -868,7 +959,7 @@ int EV_DoFloor(Line* line, floortype_e floortype)
             floor->floorDestHeight =
                 P_GetDoublep(floor->sector, DMU_FLOOR_HEIGHT) + 24;
 
-            frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+            frontsector = (Sector *)P_GetPtrp(line, DMU_FRONT_SECTOR);
 
             P_SetPtrp(sec, DMU_FLOOR_MATERIAL,
                       P_GetPtrp(frontsector, DMU_FLOOR_MATERIAL));
@@ -915,7 +1006,7 @@ int EV_DoFloor(Line* line, floortype_e floortype)
             floor->speed = FLOORSPEED;
             P_FindSectorSurroundingLowestFloor(sec,
                 P_GetDoublep(sec, DMU_FLOOR_HEIGHT), &floor->floorDestHeight);
-            floor->material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+            floor->material = (Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
 
             {
             Sector* otherSec = findSectorSurroundingAtFloorHeight(sec,
@@ -923,7 +1014,7 @@ int EV_DoFloor(Line* line, floortype_e floortype)
 
             if(otherSec)
             {
-                floor->material = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
+                floor->material = (Material *)P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
                 floor->newSpecial = P_ToXSector(otherSec)->special;
             }
             }
@@ -940,36 +1031,34 @@ int EV_DoFloor(Line* line, floortype_e floortype)
 #if __JHEXEN__
     if(rtn && floor)
     {
-        SN_StartSequence(P_GetPtrp(floor->sector, DMU_EMITTER),
+        SN_StartSequence((mobj_t *)P_GetPtrp(floor->sector, DMU_EMITTER),
                          SEQ_PLATFORM + P_ToXSector(floor->sector)->seqType);
     }
 #endif
+
     return rtn;
 }
 
 #if __JHEXEN__
-typedef struct {
+struct findsectorneighborsforstairbuildparams_t
+{
     int type;
     coord_t height;
-} findsectorneighborsforstairbuildparams_t;
+};
 
-static int findSectorNeighborsForStairBuild(void* ptr, void* context)
+/// @return  @c 0= Continue iteration.
+static int findSectorNeighborsForStairBuild(void *ptr, void *context)
 {
-    Line* li = (Line*) ptr;
-    findsectorneighborsforstairbuildparams_t* params =
-        (findsectorneighborsforstairbuildparams_t*) context;
-    Sector* frontSec, *backSec;
-    xsector_t* xsec;
+    Line *li = (Line *) ptr;
+    findsectorneighborsforstairbuildparams_t *params = (findsectorneighborsforstairbuildparams_t *) context;
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    if(!frontSec)
-        return false; // Continue iteration.
+    Sector *frontSec = (Sector *)P_GetPtrp(li, DMU_FRONT_SECTOR);
+    if(!frontSec) return false;
 
-    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
-    if(!backSec)
-        return false; // Continue iteration.
+    Sector *backSec = (Sector *)P_GetPtrp(li, DMU_BACK_SECTOR);
+    if(!backSec) return false;
 
-    xsec = P_ToXSector(frontSec);
+    xsector_t *xsec = P_ToXSector(frontSec);
     if(xsec->special == params->type + STAIR_SECTOR_TYPE && !xsec->specialData &&
        P_GetPtrp(frontSec, DMU_FLOOR_MATERIAL) == stairData.material &&
        P_GetIntp(frontSec, DMU_VALID_COUNT) != VALIDCOUNT)
@@ -987,7 +1076,7 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
         P_SetIntp(backSec, DMU_VALID_COUNT, VALIDCOUNT);
     }
 
-    return false; // Continue iteration.
+    return false;
 }
 #endif
 
@@ -1000,31 +1089,30 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
  *
  * @warning DO NOT USE THIS ANYWHERE ELSE!
  */
-typedef struct spreadsectorparams_s {
+struct spreadsectorparams_t
+{
     Sector *baseSec;
     Material *material;
     Sector *foundSec;
     coord_t height, stairSize;
-} spreadsectorparams_t;
+};
 
 /// @return  0= continue iteration; otherwise stop.
 static int findAdjacentSectorForSpread(void *ptr, void *context)
 {
     Line *li = (Line *) ptr;
     spreadsectorparams_t *params = (spreadsectorparams_t *) context;
-    Sector *frontSec, *backSec;
-    xsector_t *xsec;
 
     if(!(P_ToXLine(li)->flags & ML_TWOSIDED))
         return false;
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    Sector *frontSec = (Sector *)P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec) return false;
 
     if(params->baseSec != frontSec)
         return false;
 
-    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    Sector *backSec = (Sector *)P_GetPtrp(li, DMU_BACK_SECTOR);
     if(!backSec) return false;
 
     if(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL) != params->material)
@@ -1037,7 +1125,7 @@ static int findAdjacentSectorForSpread(void *ptr, void *context)
      */
     params->height += params->stairSize;
 
-    xsec = P_ToXSector(backSec);
+    xsector_t *xsec = P_ToXSector(backSec);
     if(xsec->specialData)
         return false;
 
@@ -1048,24 +1136,23 @@ static int findAdjacentSectorForSpread(void *ptr, void *context)
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-int EV_BuildStairs(Line* line, stair_e type)
+int EV_BuildStairs(Line *line, stair_e type)
 {
-    int rtn = 0;
-    xsector_t* xsec;
-    Sector* sec = NULL;
-    floor_t* floor;
+    xsector_t *xsec;
     coord_t height = 0, stairsize = 0;
     float speed = 0;
-    iterlist_t* list;
-    spreadsectorparams_t params;
 
-    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
-    if(!list)
-        return rtn;
+    iterlist_t *list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
+    if(!list) return 0;
+
+    int rtn = 0;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
-    while((sec = IterList_MoveIterator(list)) != NULL)
+
+    spreadsectorparams_t params;
+    Sector *sec;
+    while((sec = (Sector *)IterList_MoveIterator(list)))
     {
         xsec = P_ToXSector(sec);
 
@@ -1075,7 +1162,7 @@ int EV_BuildStairs(Line* line, stair_e type)
 
         // New floor thinker.
         rtn = 1;
-        floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
+        floor_t *floor = (floor_t *)Z_Calloc(sizeof(*floor), PU_MAP, 0);
         floor->thinker.function = T_MoveFloor;
         Thinker_Add(&floor->thinker);
 
@@ -1117,16 +1204,16 @@ int EV_BuildStairs(Line* line, stair_e type)
         // Find next sector to raise.
         // 1. Find 2-sided line with a front side in the same sector.
         // 2. Other side is the next sector to raise.
-        params.baseSec = sec;
-        params.material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
-        params.foundSec = NULL;
-        params.height = height;
+        params.baseSec   = sec;
+        params.material  = (Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+        params.foundSec  = 0;
+        params.height    = height;
         params.stairSize = stairsize;
 
         while(P_Iteratep(params.baseSec, DMU_LINE, findAdjacentSectorForSpread, &params))
         {
             // We found another sector to spread to.
-            floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
+            floor = (floor_t *)Z_Calloc(sizeof(*floor), PU_MAP, 0);
             floor->thinker.function = T_MoveFloor;
             Thinker_Add(&floor->thinker);
 
@@ -1181,15 +1268,14 @@ static Sector* dequeueStairSector(int* type, coord_t* height)
     return sec;
 }
 
-static void processStairSector(Sector* sec, int type, coord_t height,
+static void processStairSector(Sector *sec, int type, coord_t height,
     stairs_e stairsType, int delay, int resetDelay)
 {
-    floor_t* floor;
     findsectorneighborsforstairbuildparams_t params;
 
     height += stairData.stepDelta;
 
-    floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
+    floor_t *floor = (floor_t *)Z_Calloc(sizeof(*floor), PU_MAP, 0);
     floor->thinker.function = T_MoveFloor;
     Thinker_Add(&floor->thinker);
     P_ToXSector(sec)->specialData = floor;
@@ -1224,10 +1310,10 @@ static void processStairSector(Sector* sec, int type, coord_t height,
         break;
     }
 
-    SN_StartSequence(P_GetPtrp(sec, DMU_EMITTER),
+    SN_StartSequence((mobj_t *)P_GetPtrp(sec, DMU_EMITTER),
                      SEQ_PLATFORM + P_ToXSector(sec)->seqType);
 
-    params.type = type;
+    params.type   = type;
     params.height = height;
 
     // Find all neigboring sectors with sector special equal to type and add
@@ -1237,30 +1323,22 @@ static void processStairSector(Sector* sec, int type, coord_t height,
 #endif
 
 /**
- * @param direction     Positive = up. Negative = down.
+ * @param direction  Positive = up. Negative = down.
  */
 #if __JHEXEN__
-int EV_BuildStairs(Line* line, byte* args, int direction,
-                   stairs_e stairsType)
+int EV_BuildStairs(Line * /*line*/, byte *args, int direction, stairs_e stairsType)
 {
-    coord_t height;
-    int delay;
-    int type;
-    int resetDelay;
-    Sector* sec = NULL, *qSec;
-    iterlist_t* list;
-
     // Set global stairs variables
     stairData.textureChange = 0;
     stairData.direction = direction;
     stairData.stepDelta = stairData.direction * (coord_t) args[2];
     stairData.speed = (float) args[1] * (1.0 / 8);
-    resetDelay = (int) args[4];
-    delay = (int) args[3];
+
+    int resetDelay = (int) args[4];
+    int delay      = (int) args[3];
     if(stairsType == STAIRS_PHASED)
     {
-        stairData.startDelay =
-            stairData.startDelayDelta = (int) args[3];
+        stairData.startDelay = stairData.startDelayDelta = (int) args[3];
         resetDelay = stairData.startDelayDelta;
         delay = 0;
         stairData.textureChange = (int) args[4];
@@ -1268,15 +1346,16 @@ int EV_BuildStairs(Line* line, byte* args, int direction,
 
     VALIDCOUNT++;
 
-    list = P_GetSectorIterListForTag((int) args[0], false);
-    if(!list)
-        return 0;
+    iterlist_t *list = P_GetSectorIterListForTag((int) args[0], false);
+    if(!list) return 0;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
-    while((sec = IterList_MoveIterator(list)) != NULL)
+
+    Sector *sec;
+    while((sec = (Sector *)IterList_MoveIterator(list)))
     {
-        stairData.material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+        stairData.material    = (Material *)P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
         stairData.startHeight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
 
         // ALREADY MOVING?  IF SO, KEEP GOING...
@@ -1287,9 +1366,11 @@ int EV_BuildStairs(Line* line, byte* args, int direction,
         P_ToXSector(sec)->special = 0;
     }
 
-    while((qSec = dequeueStairSector(&type, &height)) != NULL)
+    int type;
+    coord_t height;
+    while((sec = dequeueStairSector(&type, &height)))
     {
-        processStairSector(qSec, type, height, stairsType, delay, resetDelay);
+        processStairSector(sec, type, height, stairsType, delay, resetDelay);
     }
 
     return 1;
@@ -1297,16 +1378,18 @@ int EV_BuildStairs(Line* line, byte* args, int direction,
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-typedef struct {
+struct findfirsttwosidedparams_t
+{
     Sector *sector;
     Line *foundLine;
-} findfirsttwosidedparams_t;
+};
 
 static int findFirstTwosided(void *ptr, void *context)
 {
     Line *li = (Line *) ptr;
     findfirsttwosidedparams_t *params = (findfirsttwosidedparams_t *) context;
-    Sector *backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+
+    Sector *backSec = (Sector *)P_GetPtrp(li, DMU_BACK_SECTOR);
 
     if(!(P_ToXLine(li)->flags & ML_TWOSIDED))
         return false;
@@ -1324,16 +1407,16 @@ static int findFirstTwosided(void *ptr, void *context)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 int EV_DoDonut(Line *line)
 {
-    int rtn = 0;
-    Sector *sec, *outer, *ring;
-    iterlist_t *list;
+    iterlist_t *list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
+    if(!list) return 0;
 
-    list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
-    if(!list) return rtn;
+    int rtn = 0;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
-    while((sec = IterList_MoveIterator(list)) != NULL)
+
+    Sector *sec;
+    while((sec = (Sector *)IterList_MoveIterator(list)))
     {
         findfirsttwosidedparams_t params;
 
@@ -1342,56 +1425,59 @@ int EV_DoDonut(Line *line)
             continue;
 
         rtn = 1;
-        outer = ring = NULL;
+        Sector *outer = 0, *ring = 0;
 
-        params.sector = NULL;
-        params.foundLine = NULL;
+        params.sector    = 0;
+        params.foundLine = 0;
 
         if(P_Iteratep(sec, DMU_LINE, findFirstTwosided, &params))
         {
-            ring = P_GetPtrp(params.foundLine, DMU_BACK_SECTOR);
+            ring = (Sector *)P_GetPtrp(params.foundLine, DMU_BACK_SECTOR);
             if(ring == sec)
-                ring = P_GetPtrp(params.foundLine, DMU_FRONT_SECTOR);
+            {
+                ring = (Sector *)P_GetPtrp(params.foundLine, DMU_FRONT_SECTOR);
+            }
 
             params.sector = sec;
             params.foundLine = NULL;
             if(P_Iteratep(ring, DMU_LINE, findFirstTwosided, &params))
-                outer = P_GetPtrp(params.foundLine, DMU_BACK_SECTOR);
+            {
+                outer = (Sector *)P_GetPtrp(params.foundLine, DMU_BACK_SECTOR);
+            }
         }
 
         if(outer && ring)
         {
             // Found both parts of the donut.
-            floor_t* floor;
             coord_t destHeight = P_GetDoublep(outer, DMU_FLOOR_HEIGHT);
 
             // Spawn rising slime.
-            floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
+            floor_t *floor = (floor_t *)Z_Calloc(sizeof(*floor), PU_MAP, 0);
             floor->thinker.function = T_MoveFloor;
             Thinker_Add(&floor->thinker);
 
             P_ToXSector(ring)->specialData = floor;
 
-            floor->type = FT_RAISEDONUT;
-            floor->crush = false;
-            floor->state = FS_UP;
-            floor->sector = ring;
-            floor->speed = FLOORSPEED * .5;
-            floor->material = P_GetPtrp(outer, DMU_FLOOR_MATERIAL);
-            floor->newSpecial = 0;
+            floor->type            = FT_RAISEDONUT;
+            floor->crush           = false;
+            floor->state           = FS_UP;
+            floor->sector          = ring;
+            floor->speed           = FLOORSPEED * .5;
+            floor->material        = (Material *)P_GetPtrp(outer, DMU_FLOOR_MATERIAL);
+            floor->newSpecial      = 0;
             floor->floorDestHeight = destHeight;
 
             // Spawn lowering donut-hole.
-            floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
+            floor = (floor_t *)Z_Calloc(sizeof(*floor), PU_MAP, 0);
             floor->thinker.function = T_MoveFloor;
             Thinker_Add(&floor->thinker);
 
             P_ToXSector(sec)->specialData = floor;
-            floor->type = FT_LOWER;
-            floor->crush = false;
-            floor->state = FS_DOWN;
-            floor->sector = sec;
-            floor->speed = FLOORSPEED * .5;
+            floor->type            = FT_LOWER;
+            floor->crush           = false;
+            floor->state           = FS_DOWN;
+            floor->sector          = sec;
+            floor->speed           = FLOORSPEED * .5;
             floor->floorDestHeight = destHeight;
         }
     }
@@ -1401,17 +1487,17 @@ int EV_DoDonut(Line *line)
 #endif
 
 #if __JHEXEN__
-static int stopFloorCrush(thinker_t* th, void* context)
+static int stopFloorCrush(thinker_t *th, void *context)
 {
-    dd_bool*            found = (dd_bool*) context;
-    floor_t*        floor = (floor_t *) th;
+    dd_bool *found = (dd_bool *) context;
+    floor_t *floor = (floor_t *) th;
 
     if(floor->type == FT_RAISEFLOORCRUSH)
     {
         // Completely remove the crushing floor
-        SN_StopSequence(P_GetPtrp(floor->sector, DMU_EMITTER));
+        SN_StopSequence((mobj_t *)P_GetPtrp(floor->sector, DMU_EMITTER));
         P_ToXSector(floor->sector)->specialData = NULL;
-        P_ACScriptTagFinished(P_ToXSector(floor->sector)->tag);
+        Game_ACScriptInterpreter().tagFinished(P_ToXSector(floor->sector)->tag);
         Thinker_Remove(&floor->thinker);
         (*found) = true;
     }
@@ -1419,9 +1505,9 @@ static int stopFloorCrush(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-int EV_FloorCrushStop(Line* line, byte* args)
+int EV_FloorCrushStop(Line * /*line*/, byte * /*args*/)
 {
-    dd_bool             found = false;
+    dd_bool found = false;
 
     Thinker_Iterate(T_MoveFloor, stopFloorCrush, &found);
 
@@ -1437,17 +1523,13 @@ int EV_DoFloorAndCeiling(Line* line, int ftype, int ctype)
 # endif
 {
 # if __JHEXEN__
-    int                 tag = (int) args[0];
+    int tag = (int) args[0];
 # else
-    int                 tag = P_ToXLine(line)->tag;
+    int tag = P_ToXLine(line)->tag;
 # endif
-    dd_bool             floor, ceiling;
-    Sector*             sec = NULL;
-    iterlist_t*         list;
 
-    list = P_GetSectorIterListForTag(tag, false);
-    if(!list)
-        return 0;
+    iterlist_t *list = P_GetSectorIterListForTag(tag, false);
+    if(!list) return 0;
 
     /**
      * @attention Kludge:
@@ -1464,20 +1546,24 @@ int EV_DoFloorAndCeiling(Line* line, int ftype, int ctype)
      */
 
 # if __JHEXEN__
-    floor = EV_DoFloor(line, args, ftype);
+    dd_bool floor = EV_DoFloor(line, args, floortype_e(ftype));
 # else
-    floor = EV_DoFloor(line, ftype);
+    dd_bool floor = EV_DoFloor(line, floortype_e(ftype));
 # endif
+
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
     IterList_RewindIterator(list);
-    while((sec = IterList_MoveIterator(list)) != NULL)
+
+    Sector *sec;
+    while((sec = (Sector *)IterList_MoveIterator(list)))
     {
-        P_ToXSector(sec)->specialData = NULL;
+        P_ToXSector(sec)->specialData = 0;
     }
+
 # if __JHEXEN__
-    ceiling = EV_DoCeiling(line, args, ctype);
+    dd_bool ceiling = EV_DoCeiling(line, args, ceilingtype_e(ctype));
 # else
-    ceiling = EV_DoCeiling(line, ctype);
+    dd_bool ceiling = EV_DoCeiling(line, ceilingtype_e(ctype));
 # endif
     // < KLUDGE
 

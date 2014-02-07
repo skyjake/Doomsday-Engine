@@ -61,24 +61,28 @@ public:
 public:
     ButtonWidget(String const &name = "");
 
+    enum HoverColorMode {
+        ReplaceColor,
+        ModulateColor
+    };
+
     /**
      * Text color to use in the Hover state. The default is to use the normal text
      * color of the button (label).
      *
      * @param hoverTextId  Style color identifier.
      */
-    void setHoverTextColor(DotPath const &hoverTextId);
+    void setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode = ModulateColor);
 
     /**
      * Sets the action of the button. It gets triggered when the button is
      * pressed.
      *
-     * @param action  Action instance. Widget takes ownership.
+     * @param action  Action instance. Widget holds a reference.
      */
-    void setAction(Action *action);
+    void setAction(RefArg<Action> action);
 
-    Action *action() const;
-    Action *takeAction();
+    Action const *action() const;
 
     State state() const;
 

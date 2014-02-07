@@ -33,9 +33,9 @@ D_CMD(SetClass);
 #endif
 D_CMD(LocalMessage);
 
-static void D_NetMessageEx(int player, const char* msg, dd_bool playSound);
-
 extern int netSvAllowSendMsg;
+
+static void D_NetMessageEx(int player, char const *msg, dd_bool playSound);
 
 float netJumpPower = 9;
 
@@ -68,7 +68,7 @@ void D_NetConsoleRegistration(void)
     C_CMD        ("message",    "s",    LocalMessage);
 }
 
-Writer* D_NetWrite(void)
+Writer *D_NetWrite(void)
 {
     if(netWriter)
     {
@@ -78,7 +78,7 @@ Writer* D_NetWrite(void)
     return netWriter;
 }
 
-Reader* D_NetRead(const byte* buffer, size_t len)
+Reader *D_NetRead(byte const *buffer, size_t len)
 {
     // Get rid of the old reader.
     if(netReader)
@@ -103,16 +103,16 @@ void NetSv_ApplyGameRulesFromConfig(void)
     if(IS_CLIENT)
         return;
 
-    deathmatch      = cfg.netDeathmatch;
-    noMonstersParm  = cfg.netNoMonsters;
+    gameRules.deathmatch = cfg.netDeathmatch;
+    gameRules.noMonsters = cfg.netNoMonsters;
     cfg.jumpEnabled = cfg.netJumping;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    respawnMonsters = cfg.netRespawn;
+    gameRules.respawnMonsters = cfg.netRespawn;
 #endif
 
 #if __JHEXEN__
-    randomClassParm = cfg.netRandomClass;
+    gameRules.randomClasses = cfg.netRandomClass;
 #endif
 
     NetSv_UpdateGameConfigDescription();
@@ -127,6 +127,7 @@ void NetSv_ApplyGameRulesFromConfig(void)
 int D_NetServerStarted(int before)
 {
     uint netMap, netEpisode;
+    GameRuleset netRules = gameRules; // Make a copy of the current rules.
 
     if(before) return true;
 
@@ -156,7 +157,9 @@ int D_NetServerStarted(int before)
     netEpisode = cfg.netEpisode;
 #endif
 
-    G_NewGame(cfg.netSkill, netEpisode, netMap, 0/*default*/);
+    netRules.skill = cfg.netSkill;
+
+    G_NewGame(netEpisode, netMap, 0/*default*/, &netRules);
 
     /// @todo Necessary?
     G_SetGameAction(GA_NONE);
@@ -180,10 +183,10 @@ int D_NetServerClose(int before)
         /// @todo fixme: "normal" is defined by the game rules config which may
         /// be changed from the command line (e.g., -fast, -nomonsters).
         /// In order to "restore normal" this logic is insufficient.
-        deathmatch = false;
-        noMonstersParm = false;
+        gameRules.deathmatch = false;
+        gameRules.noMonsters = false;
 #if __JHEXEN__
-        randomClassParm = false;
+        gameRules.randomClasses = false;
 #endif
         D_NetMessage(CONSOLEPLAYER, "NETGAME ENDS");
 
@@ -215,10 +218,10 @@ int D_NetDisconnect(int before)
         return true;
 
     // Restore normal game state.
-    deathmatch = false;
-    noMonstersParm = false;
+    gameRules.deathmatch = false;
+    gameRules.noMonsters = false;
 #if __JHEXEN__
-    randomClassParm = false;
+    gameRules.randomClasses = false;
 #endif
 
     D_NetClearBuffer();
@@ -378,14 +381,14 @@ int D_NetWorldEvent(int type, int parm, void* data)
             G_DemoEnds();
 
         // Restore normal game state.
-        deathmatch = false;
-        noMonstersParm = false;
+        gameRules.deathmatch = false;
+        gameRules.noMonsters = false;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        respawnMonsters = false;
+        gameRules.respawnMonsters = false;
 #endif
 
 #if __JHEXEN__
-        randomClassParm = false;
+        gameRules.randomClasses = false;
 #endif
         break;
 #endif

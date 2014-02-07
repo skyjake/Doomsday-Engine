@@ -108,7 +108,7 @@ public:
      *
      * @param action  Action instance. Ownership taken.
      */
-    void addAction(Action *action);
+    void addAction(RefArg<Action> action);
 
     /**
      * Removes an action from the widget.

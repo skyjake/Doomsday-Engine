@@ -160,17 +160,31 @@ inline CountedType const *holdRef(CountedType const &counted) {
     return counted.template ref<CountedType>();
 }
 
-template <typename CountedType1, typename CountedType2>
-inline void changeRef(CountedType1 const *&counted, CountedType2 const *newRef) {
-    CountedType1 const *old = counted;
-    counted = holdRef(newRef);
+template <typename CountedType>
+inline void changeRef(CountedType const *&counted, Counted const *newRef) {
+    CountedType const *old = counted;
+    counted = (newRef? newRef->ref<CountedType>() : 0);
     releaseRef(old);
 }
 
-template <typename CountedType1, typename CountedType2>
-inline void changeRef(CountedType1 const *&counted, CountedType2 const &newRef) {
-    CountedType1 const *old = counted;
-    counted = holdRef(newRef);
+template <typename CountedType>
+inline void changeRef(CountedType const *&counted, Counted const &newRef) {
+    CountedType const *old = counted;
+    counted = newRef.ref<CountedType>();
+    releaseRef(old);
+}
+
+template <typename CountedType>
+inline void changeRef(CountedType *&counted, Counted *newRef) {
+    CountedType *old = counted;
+    counted = (newRef? newRef->ref<CountedType>() : 0);
+    releaseRef(old);
+}
+
+template <typename CountedType>
+inline void changeRef(CountedType *&counted, Counted &newRef) {
+    CountedType *old = counted;
+    counted = newRef.ref<CountedType>();
     releaseRef(old);
 }
 
@@ -197,6 +211,61 @@ inline void releaseRef(CountedType const *&ref) {
     if(ref) ref->release();
     ref = 0;
 }
+
+/**
+ * Utility for passing Counted objects as arguments.
+ *
+ * RefArg enforces the following conventions when used as an method argument type:
+ * - If a Counted non-const pointer is given as an argument, it is assumed the
+ *   caller has already held a reference and is giving that reference's ownership
+ *   away. For instance, when constructing new Counted objects.
+ * - If a Counted const reference is given as an argument, no changes occur in the
+ *   object's refcount.
+ *
+ * The method that uses RefArgs must hold a reference to each object.
+ */
+template <typename CountedType>
+class RefArg
+{
+public:
+    RefArg() : _ref(0) {}
+    RefArg(RefArg const &other) : _ref(other._ref) {}
+    RefArg(CountedType *preHeld) : _ref(refless(preHeld)) {}
+    RefArg(CountedType const &ref) : _ref(const_cast<CountedType *>(&ref)) {}
+    operator CountedType const * () const { return _ref; }
+    operator CountedType * () { return _ref; }
+    CountedType *get() { return _ref; }
+    CountedType const &operator *  () const { return *_ref; }
+    CountedType &      operator *  ()       { return *_ref; }
+    CountedType const *operator -> () const { return _ref;  }
+    CountedType *      operator -> ()       { return _ref;  }
+    CountedType *holdRef() { return de::holdRef(_ref); }
+private:
+    CountedType *_ref;
+};
+
+/**
+ * Utility for managing a newly created Counted object. Automatically releases the
+ * reference added by the constructor.
+ */
+template <typename CountedType>
+class AutoRef
+{
+public:
+    AutoRef(CountedType *preHeld) : _ref(preHeld) {}
+    AutoRef(CountedType &ref) : _ref(holdRef(ref)) {}
+    ~AutoRef() { releaseRef(_ref); }
+    void reset(RefArg<CountedType> ref) { changeRef(_ref, ref); }
+    CountedType *get() const { return _ref; }
+    CountedType &operator * () const { return *_ref; }
+    CountedType *operator -> () const { return _ref; }
+    operator CountedType const * () const { return _ref; }
+    operator CountedType * () { return _ref; }
+    operator CountedType const & () const { return *_ref; }
+    operator CountedType & () { *_ref; }
+private:
+    CountedType *_ref;
+};
 
 } // namespace de
 

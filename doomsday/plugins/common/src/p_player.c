@@ -354,19 +354,19 @@ dd_bool P_PlayerInWalkState(player_t* pl)
  * Subtract the appropriate amount of ammo from the player for firing
  * the current ready weapon.
  *
- * @param player        The player doing the firing.
+ * @param player  The player doing the firing.
  */
 void P_ShotAmmo(player_t *player)
 {
-    ammotype_t          i;
-    int                 fireMode;
-    weaponinfo_t*       wInfo =
+    ammotype_t i;
+    int fireMode;
+    weaponinfo_t *wInfo =
         &weaponInfo[player->readyWeapon][player->class_];
 
     if(IS_CLIENT) return; // Server keeps track of this.
 
 #if __JHERETIC__
-    if(deathmatch)
+    if(gameRules.deathmatch)
         fireMode = 0; // In deathmatch always use mode zero.
     else
         fireMode = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -469,7 +469,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                     continue; // Weapon does not take this type of ammo.
 #if __JHERETIC__
                 // Heretic always uses lvl 0 ammo requirements in deathmatch
-                if(deathmatch &&
+                if(gameRules.deathmatch &&
                    player->ammo[ammotype].owned < winf->mode[0].perShot[ammotype])
                 {   // Not enough ammo of this type. Candidate is NOT good.
                     good = false;
@@ -607,22 +607,22 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
  * Checks if the player has enough ammo to fire their readied weapon.
  * If not, a weapon change is instigated.
  *
- * @return              @c true, if there is enough ammo to fire.
+ * @return  @c true, if there is enough ammo to fire.
  */
-dd_bool P_CheckAmmo(player_t* plr)
+dd_bool P_CheckAmmo(player_t *plr)
 {
-    int                 fireMode;
-    dd_bool             good;
-    ammotype_t          i;
-    weaponinfo_t*       wInfo;
+    int fireMode;
+    dd_bool good;
+    ammotype_t i;
+    weaponinfo_t *wInfo =
+            &weaponInfo[plr->readyWeapon][plr->class_];
 
-    wInfo = &weaponInfo[plr->readyWeapon][plr->class_];
 #if __JDOOM__ || __JDOOM64__ || __JHEXEN__
     fireMode = 0;
 #endif
 #if __JHERETIC__
     // If deathmatch always use firemode two ammo requirements.
-    if(plr->powers[PT_WEAPONLEVEL2] && !deathmatch)
+    if(plr->powers[PT_WEAPONLEVEL2] && !gameRules.deathmatch)
         fireMode = 1;
     else
         fireMode = 0;

@@ -30,27 +30,37 @@ typedef enum {
     PODOOR_SWING
 } podoortype_t;
 
-typedef struct {
-    thinker_t       thinker;
-    int             polyobj; // tag
-    int             intSpeed;
-    unsigned int    dist;
-    int             fangle;
-    coord_t         speed[2]; // for sliding doors
+typedef struct polyevent_s {
+    thinker_t thinker;
+    int polyobj; // tag
+    int intSpeed;
+    unsigned int dist;
+    int fangle;
+    coord_t speed[2]; // for sliding doors
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } polyevent_t;
 
-typedef struct {
-    thinker_t       thinker;
-    int             polyobj; // tag
-    int             intSpeed;
-    int             dist;
-    int             totalDist;
-    int             direction;
-    float           speed[2];
-    int             tics;
-    int             waitTics;
-    podoortype_t    type;
-    dd_bool         close;
+typedef struct polydoor_s {
+    thinker_t thinker;
+    int polyobj; // tag
+    int intSpeed;
+    int dist;
+    int totalDist;
+    int direction;
+    float speed[2];
+    int tics;
+    int waitTics;
+    podoortype_t type;
+    dd_bool close;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } polydoor_t;
 
 typedef struct polyobj_s {

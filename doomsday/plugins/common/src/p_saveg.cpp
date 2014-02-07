@@ -18,13 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <lzss.h>
-#include <cstdio>
-#include <cstring>
-
 #include "common.h"
-
-#include <de/memory.h>
+#include "p_saveg.h"
 
 #include "g_common.h"
 #include "d_net.h"
@@ -53,8 +48,13 @@
 #include "p_savedef.h"
 #include "dmu_archiveindex.h"
 #include "polyobjs.h"
-
-#include "p_saveg.h"
+#if __JHEXEN__
+#  include "acscript.h"
+#endif
+#include <de/memory.h>
+#include <lzss.h>
+#include <cstdio>
+#include <cstring>
 
 using namespace dmu_lib;
 
@@ -113,62 +113,20 @@ typedef enum {
     NUM_LINECLASSES
 } lineclass_t;
 
-SideArchive &SV_SideArchive();
-
 static bool recogniseGameState(Str const *path, SaveInfo *info);
 
-static void SV_WriteMobj(mobj_t const *mobj);
-static int SV_ReadMobj(thinker_t *th, int mapVersion);
-static void SV_WriteCeiling(ceiling_t const *ceiling);
-static int SV_ReadCeiling(ceiling_t *ceiling, int mapVersion);
-static void SV_WriteDoor(door_t const *door);
-static int SV_ReadDoor(door_t *door, int mapVersion);
-static void SV_WriteFloor(floor_t const *floor);
-static int SV_ReadFloor(floor_t *floor, int mapVersion);
-static void SV_WritePlat(plat_t const *plat);
-static int SV_ReadPlat(plat_t *plat, int mapVersion);
-static void SV_WriteMaterialChanger(materialchanger_t const *mchanger);
-static int SV_ReadMaterialChanger(materialchanger_t *mchanger, int mapVersion);
+static void SV_WriteMobj(thinker_t *th, Writer *writer);
+static int SV_ReadMobj(thinker_t *th, Reader *reader, int mapVersion);
 
 #if __JHEXEN__
-static void SV_WriteLight(light_t const *light);
-static int SV_ReadLight(light_t *light, int mapVersion);
-static void SV_WritePhase(phase_t const *phase);
-static int SV_ReadPhase(phase_t *phase, int mapVersion);
-static void SV_WriteDoorPoly(polydoor_t const *polydoor);
-static int SV_ReadDoorPoly(polydoor_t *polydoor, int mapVersion);
-static void SV_WriteMovePoly(polyevent_t const *movepoly);
-static int SV_ReadMovePoly(polyevent_t *movepoly, int mapVersion);
-static void SV_WriteRotatePoly(polyevent_t const *rotatepoly);
-static int SV_ReadRotatePoly(polyevent_t *rotatepoly, int mapVersion);
-static void SV_WritePillar(pillar_t const *pillar);
-static int SV_ReadPillar(pillar_t *pillar, int mapVersion);
-static void SV_WriteFloorWaggle(waggle_t const *floorwaggle);
-static int SV_ReadFloorWaggle(waggle_t *floorwaggle, int mapVersion);
-#else
-static void SV_WriteFlash(lightflash_t const *flash);
-static int SV_ReadFlash(lightflash_t *flash, int mapVersion);
-static void SV_WriteStrobe(strobe_t const *strobe);
-static int SV_ReadStrobe(strobe_t *strobe, int mapVersion);
-static void SV_WriteGlow(glow_t const *glow);
-static int SV_ReadGlow(glow_t *glow, int mapVersion);
-# if __JDOOM__ || __JDOOM64__
-static void SV_WriteFlicker(fireflicker_t const *flicker);
-static int SV_ReadFlicker(fireflicker_t *flicker, int mapVersion);
-# endif
-
-# if __JDOOM64__
-static void SV_WriteBlink(lightblink_t const *flicker);
-static int SV_ReadBlink(lightblink_t *flicker, int mapVersion);
-# endif
+static void SV_WriteMovePoly(polyevent_t const *movepoly, Writer *writer);
+static int SV_ReadMovePoly(polyevent_t *movepoly, Reader *reader, int mapVersion);
 #endif
-static void SV_WriteScroll(scroll_t const *scroll);
-static int SV_ReadScroll(scroll_t *scroll, int mapVersion);
 
 #if __JHEXEN__
-static void readMapState(Str const *path);
+static void readMapState(Reader *reader, int saveVersion, Str const *path);
 #else
-static void readMapState();
+static void readMapState(Reader *reader, int saveVersion);
 #endif
 
 static bool inited = false;
@@ -183,15 +141,13 @@ static SaveInfo *baseSaveInfo;
 #endif
 static SaveInfo *nullSaveInfo;
 
-#if __JHEXEN__
-static int mapVersion;
-#endif
-static saveheader_t const *hdr;
+static SaveInfo const *curInfo;
 
 static playerheader_t playerHeader;
 static dd_bool playerHeaderOK;
 
 static mobj_t **thingArchive;
+static int thingArchiveVersion;
 static uint thingArchiveSize;
 static bool thingArchiveExcludePlayers;
 
@@ -205,6 +161,20 @@ static int numSoundTargets;
 
 static MaterialArchive *materialArchive;
 static SideArchive *sideArchive;
+
+template <typename Type>
+static void writeThinkerAs(thinker_t const *th, Writer *writer)
+{
+    Type *t = (Type*)th;
+    t->write(writer);
+}
+
+template <typename Type>
+static int readThinkerAs(thinker_t *th, Reader *reader, int mapVersion)
+{
+    Type *t = (Type *)th;
+    return t->read(reader, mapVersion);
+}
 
 static ThinkerClassInfo thinkerInfo[] = {
     {
@@ -220,8 +190,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_XGMOVER,
       (thinkfunc_t) XS_PlaneMover,
       0,
-      (WriteThinkerFunc) SV_WriteXGPlaneMover,
-      (ReadThinkerFunc) SV_ReadXGPlaneMover,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<xgplanemover_s>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<xgplanemover_s>),
       sizeof(xgplanemover_t)
     },
 #endif
@@ -229,32 +199,32 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_CEILING,
       T_MoveCeiling,
       0,
-      (WriteThinkerFunc) SV_WriteCeiling,
-      (ReadThinkerFunc) SV_ReadCeiling,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<ceiling_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<ceiling_t>),
       sizeof(ceiling_t)
     },
     {
       TC_DOOR,
       T_Door,
       0,
-      (WriteThinkerFunc) SV_WriteDoor,
-      (ReadThinkerFunc) SV_ReadDoor,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<door_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<door_t>),
       sizeof(door_t)
     },
     {
       TC_FLOOR,
       T_MoveFloor,
       0,
-      (WriteThinkerFunc) SV_WriteFloor,
-      (ReadThinkerFunc) SV_ReadFloor,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<floor_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<floor_t>),
       sizeof(floor_t)
     },
     {
       TC_PLAT,
       T_PlatRaise,
       0,
-      (WriteThinkerFunc) SV_WritePlat,
-      (ReadThinkerFunc) SV_ReadPlat,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<plat_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<plat_t>),
       sizeof(plat_t)
     },
 #if __JHEXEN__
@@ -262,64 +232,64 @@ static ThinkerClassInfo thinkerInfo[] = {
      TC_INTERPRET_ACS,
      (thinkfunc_t) ACScript_Thinker,
      0,
-     (WriteThinkerFunc)ACScript_Write,
-     (ReadThinkerFunc)ACScript_Read,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<ACScript>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<ACScript>),
      sizeof(ACScript)
     },
     {
      TC_FLOOR_WAGGLE,
      (thinkfunc_t) T_FloorWaggle,
      0,
-     (WriteThinkerFunc)SV_WriteFloorWaggle,
-     (ReadThinkerFunc)SV_ReadFloorWaggle,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<waggle_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<waggle_t>),
      sizeof(waggle_t)
     },
     {
      TC_LIGHT,
      (thinkfunc_t) T_Light,
      0,
-     (WriteThinkerFunc)SV_WriteLight,
-     (ReadThinkerFunc)SV_ReadLight,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<light_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<light_t>),
      sizeof(light_t)
     },
     {
      TC_PHASE,
      (thinkfunc_t) T_Phase,
      0,
-     (WriteThinkerFunc)SV_WritePhase,
-     (ReadThinkerFunc)SV_ReadPhase,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<phase_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<phase_t>),
      sizeof(phase_t)
     },
     {
      TC_BUILD_PILLAR,
      (thinkfunc_t) T_BuildPillar,
      0,
-     (WriteThinkerFunc)SV_WritePillar,
-     (ReadThinkerFunc)SV_ReadPillar,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<pillar_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<pillar_t>),
      sizeof(pillar_t)
     },
     {
      TC_ROTATE_POLY,
      T_RotatePoly,
      0,
-     (WriteThinkerFunc)SV_WriteRotatePoly,
-     (ReadThinkerFunc)SV_ReadRotatePoly,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<polyevent_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<polyevent_t>),
      sizeof(polyevent_t)
     },
     {
      TC_MOVE_POLY,
      T_MovePoly,
      0,
-     (WriteThinkerFunc)SV_WriteMovePoly,
-     (ReadThinkerFunc)SV_ReadMovePoly,
+     de::function_cast<WriteThinkerFunc>(SV_WriteMovePoly),
+     de::function_cast<ReadThinkerFunc>(SV_ReadMovePoly),
      sizeof(polyevent_t)
     },
     {
      TC_POLY_DOOR,
      T_PolyDoor,
      0,
-     (WriteThinkerFunc)SV_WriteDoorPoly,
-     (ReadThinkerFunc)SV_ReadDoorPoly,
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<polydoor_t>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<polydoor_t>),
      sizeof(polydoor_t)
     },
 #else
@@ -327,24 +297,24 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_FLASH,
       (thinkfunc_t) T_LightFlash,
       0,
-      (WriteThinkerFunc) SV_WriteFlash,
-      (ReadThinkerFunc) SV_ReadFlash,
-      sizeof(lightflash_t)
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<lightflash_s>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<lightflash_s>),
+      sizeof(lightflash_s)
     },
     {
       TC_STROBE,
       (thinkfunc_t) T_StrobeFlash,
       0,
-      (WriteThinkerFunc) SV_WriteStrobe,
-      (ReadThinkerFunc) SV_ReadStrobe,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<strobe_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<strobe_t>),
       sizeof(strobe_t)
     },
     {
       TC_GLOW,
       (thinkfunc_t) T_Glow,
       0,
-      (WriteThinkerFunc) SV_WriteGlow,
-      (ReadThinkerFunc) SV_ReadGlow,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<glow_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<glow_t>),
       sizeof(glow_t)
     },
 # if __JDOOM__ || __JDOOM64__
@@ -352,8 +322,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_FLICKER,
       (thinkfunc_t) T_FireFlicker,
       0,
-      (WriteThinkerFunc) SV_WriteFlicker,
-      (ReadThinkerFunc) SV_ReadFlicker,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<fireflicker_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<fireflicker_t>),
       sizeof(fireflicker_t)
     },
 # endif
@@ -362,8 +332,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_BLINK,
       (thinkfunc_t) T_LightBlink,
       0,
-      (WriteThinkerFunc) SV_WriteBlink,
-      (ReadThinkerFunc) SV_ReadBlink,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<lightblink_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<lightblink_t>),
       sizeof(lightblink_t)
     },
 # endif
@@ -372,17 +342,17 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_MATERIALCHANGER,
       T_MaterialChanger,
       0,
-      (WriteThinkerFunc) SV_WriteMaterialChanger,
-      (ReadThinkerFunc) SV_ReadMaterialChanger,
-      sizeof(materialchanger_t)
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<materialchanger_s>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<materialchanger_s>),
+      sizeof(materialchanger_s)
     },
     {
-        TC_SCROLL,
-        (thinkfunc_t) T_Scroll,
-        0,
-        (WriteThinkerFunc) SV_WriteScroll,
-        (ReadThinkerFunc) SV_ReadScroll,
-        sizeof(scroll_t)
+      TC_SCROLL,
+      (thinkfunc_t) T_Scroll,
+      0,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<scroll_t>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<scroll_t>),
+      sizeof(scroll_t)
     },
     { TC_NULL, NULL, 0, NULL, NULL, 0 }
 };
@@ -390,16 +360,16 @@ static ThinkerClassInfo thinkerInfo[] = {
 void SV_Register()
 {
 #if !__JHEXEN__
-    C_VAR_BYTE("game-save-auto-loadonreborn",   &cfg.loadAutoSaveOnReborn,  0, 0, 1);
+    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
 #endif
-    C_VAR_BYTE("game-save-confirm",             &cfg.confirmQuickGameSave,  0, 0, 1);
-    C_VAR_BYTE("game-save-confirm-loadonreborn",&cfg.confirmRebornLoad,     0, 0, 1);
-    C_VAR_BYTE("game-save-last-loadonreborn",   &cfg.loadLastSaveOnReborn,  0, 0, 1);
-    C_VAR_INT ("game-save-last-slot",           &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
-    C_VAR_INT ("game-save-quick-slot",          &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
+    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
+    C_VAR_INT ("game-save-last-slot",            &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
+    C_VAR_INT ("game-save-quick-slot",           &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
 
     // Aliases for obsolete cvars:
-    C_VAR_BYTE("menu-quick-ask",                &cfg.confirmQuickGameSave, 0, 0, 1);
+    C_VAR_BYTE("menu-quick-ask",                 &cfg.confirmQuickGameSave, 0, 0, 1);
 }
 
 /**
@@ -410,7 +380,7 @@ void SV_Register()
  * @param map   If @c >= 0 include this logical map index in the composed path.
  * @return  The composed path if reachable (else a zero-length string).
  */
-static AutoStr *composeGameSavePathForSlot2(int slot, int map)
+static AutoStr *composeGameSavePathForSlot(int slot, int map = -1)
 {
     DENG_ASSERT(inited);
 
@@ -433,11 +403,6 @@ static AutoStr *composeGameSavePathForSlot2(int slot, int map)
     }
     F_TranslatePath(path, path);
     return path;
-}
-
-static AutoStr *composeGameSavePathForSlot(int slot)
-{
-    return composeGameSavePathForSlot2(slot, -1);
 }
 
 #if !__JHEXEN__
@@ -467,24 +432,24 @@ static void clearSaveInfo()
     {
         for(int i = 0; i < NUMSAVESLOTS; ++i)
         {
-            SaveInfo_Delete(saveInfo[i]);
+            delete saveInfo[i];
         }
         M_Free(saveInfo); saveInfo = 0;
     }
 
     if(autoSaveInfo)
     {
-        SaveInfo_Delete(autoSaveInfo); autoSaveInfo = 0;
+        delete autoSaveInfo; autoSaveInfo = 0;
     }
 #if __JHEXEN__
     if(baseSaveInfo)
     {
-        SaveInfo_Delete(baseSaveInfo); baseSaveInfo = 0;
+        delete baseSaveInfo; baseSaveInfo = 0;
     }
 #endif
     if(nullSaveInfo)
     {
-        SaveInfo_Delete(nullSaveInfo); nullSaveInfo = 0;
+        delete nullSaveInfo; nullSaveInfo = 0;
     }
 }
 
@@ -496,8 +461,8 @@ static void updateSaveInfo(Str const *path, SaveInfo *info)
     {
         // The save path cannot be accessed for some reason. Perhaps its a
         // network path? Clear the info for this slot.
-        SaveInfo_SetName(info, 0);
-        SaveInfo_SetGameId(info, 0);
+        info->setDescription(0);
+        info->setGameId(0);
         return;
     }
 
@@ -505,15 +470,15 @@ static void updateSaveInfo(Str const *path, SaveInfo *info)
     if(!recogniseGameState(path, info))
     {
         // Clear the info for this slot.
-        SaveInfo_SetName(info, 0);
-        SaveInfo_SetGameId(info, 0);
+        info->setDescription(0);
+        info->setGameId(0);
         return;
     }
 
     // Ensure we have a valid name.
-    if(Str_IsEmpty(SaveInfo_Name(info)))
+    if(Str_IsEmpty(info->description()))
     {
-        SaveInfo_SetName(info, AutoStr_FromText("UNNAMED"));
+        info->setDescription(AutoStr_FromText("UNNAMED"));
     }
 }
 
@@ -530,13 +495,13 @@ static void buildSaveInfo()
         // Initialize.
         for(int i = 0; i < NUMSAVESLOTS; ++i)
         {
-            saveInfo[i] = SaveInfo_New();
+            saveInfo[i] = new SaveInfo;
         }
-        autoSaveInfo = SaveInfo_New();
+        autoSaveInfo = new SaveInfo;
 #if __JHEXEN__
-        baseSaveInfo = SaveInfo_New();
+        baseSaveInfo = new SaveInfo;
 #endif
-        nullSaveInfo = SaveInfo_New();
+        nullSaveInfo = new SaveInfo;
     }
 
     /// Scan the save paths and populate the list.
@@ -594,7 +559,7 @@ static void replaceSaveInfo(int slot, SaveInfo *newInfo)
         destAdr = &saveInfo[slot];
     }
 
-    if(*destAdr) SaveInfo_Delete(*destAdr);
+    if(*destAdr) delete (*destAdr);
     *destAdr = newInfo;
 }
 
@@ -638,7 +603,7 @@ void SV_ClearSlot(int slot)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        AutoStr *path = composeGameSavePathForSlot2(slot, i);
+        AutoStr *path = composeGameSavePathForSlot(slot, i);
         SV_RemoveFile(path);
     }
 
@@ -667,26 +632,24 @@ dd_bool SV_IsUserWritableSlot(int slot)
     return SV_IsValidSlot(slot);
 }
 
-static void SV_SaveInfo_Read(SaveInfo *info)
+static void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
 {
-    Reader *svReader = SV_NewReader();
 #if __JHEXEN__
     // Read the magic byte to determine the high-level format.
-    int magic = Reader_ReadInt32(svReader);
+    int magic = Reader_ReadInt32(reader);
     SV_HxSavePtr()->b -= 4; // Rewind the stream.
 
     if((!IS_NETWORK_CLIENT && magic != MY_SAVE_MAGIC) ||
        ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
     {
         // Perhaps the old v9 format?
-        SaveInfo_Read_Hx_v9(info, svReader);
+        info->read_Hx_v9(reader);
     }
     else
 #endif
     {
-        SaveInfo_Read(info, svReader);
+        info->read(reader);
     }
-    Reader_Delete(svReader);
 }
 
 static bool recogniseNativeState(Str const *path, SaveInfo *info)
@@ -708,7 +671,9 @@ static bool recogniseNativeState(Str const *path, SaveInfo *info)
         return false;
 #endif
 
-    SV_SaveInfo_Read(info);
+    Reader *reader = SV_NewReader();
+    SV_SaveInfo_Read(info, reader);
+    Reader_Delete(reader);
 
 #if __JHEXEN__
     Z_Free(saveBuffer);
@@ -717,19 +682,26 @@ static bool recogniseNativeState(Str const *path, SaveInfo *info)
 #endif
 
     // Magic must match.
-    if(info->header.magic != MY_SAVE_MAGIC &&
-       info->header.magic != MY_CLIENT_SAVE_MAGIC) return false;
+    if(info->magic() != MY_SAVE_MAGIC && info->magic() != MY_CLIENT_SAVE_MAGIC)
+    {
+        return false;
+    }
 
     /*
      * Check for unsupported versions.
      */
-    // A future version?
-    if(info->header.version > MY_SAVE_VERSION) return false;
+    if(info->version() > MY_SAVE_VERSION) // Future version?
+    {
+        return false;
+    }
 
 #if __JHEXEN__
     // We are incompatible with v3 saves due to an invalid test used to determine
     // present sides (ver3 format's sides contain chunks of junk data).
-    if(info->header.version == 3) return false;
+    if(info->version() == 3)
+    {
+        return false;
+    }
 #endif
 
     return true;
@@ -814,7 +786,7 @@ int SV_SlotForSaveName(char const *name)
         do
         {
             SaveInfo *info = saveInfo[i];
-            if(!Str_CompareIgnoreCase(SaveInfo_Name(info), name))
+            if(!Str_CompareIgnoreCase(info->description(), name))
             {
                 // This is the one!
                 saveSlot = i;
@@ -829,8 +801,7 @@ dd_bool SV_IsSlotUsed(int slot)
     DENG_ASSERT(inited);
     if(SV_ExistingFile(composeGameSavePathForSlot(slot)))
     {
-        SaveInfo *info = SV_SaveInfoForSlot(slot);
-        return SaveInfo_IsLoadable(info);
+        return SV_SaveInfoForSlot(slot)->isLoadable();
     }
     return false;
 }
@@ -838,7 +809,7 @@ dd_bool SV_IsSlotUsed(int slot)
 #if __JHEXEN__
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
-    AutoStr *path = composeGameSavePathForSlot2(slot, (int)map+1);
+    AutoStr *path = composeGameSavePathForSlot(slot, (int)map+1);
     if(!path || Str_IsEmpty(path)) return false;
     return SV_ExistingFile(path);
 }
@@ -866,8 +837,8 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     AutoStr *src, *dst;
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        src = composeGameSavePathForSlot2(sourceSlot, i);
-        dst = composeGameSavePathForSlot2(destSlot, i);
+        src = composeGameSavePathForSlot(sourceSlot, i);
+        dst = composeGameSavePathForSlot(destSlot, i);
         SV_CopyFile(src, dst);
     }
 
@@ -876,7 +847,9 @@ void SV_CopySlot(int sourceSlot, int destSlot)
     SV_CopyFile(src, dst);
 
     // Copy saveinfo too.
-    replaceSaveInfo(destSlot, SaveInfo_NewCopy(findSaveInfoForSlot(sourceSlot)));
+    SaveInfo *info = findSaveInfoForSlot(sourceSlot);
+    DENG_ASSERT(info != 0);
+    replaceSaveInfo(destSlot, new SaveInfo(*info));
 }
 
 #if __JHEXEN__
@@ -957,7 +930,7 @@ static void insertThingInArchive(mobj_t const *mo, ThingSerialId thingId)
     DENG_ASSERT(mo != 0);
 
 #if __JHEXEN__
-    if(mapVersion >= 4)
+    if(thingArchiveVersion >= 1)
 #endif
     {
         thingId -= 1;
@@ -1077,7 +1050,7 @@ mobj_t *SV_GetArchiveThing(ThingSerialId thingId, void *address)
     DENG_ASSERT(thingArchive != 0);
 
 #if __JHEXEN__
-    if(mapVersion < 4)
+    if(thingArchiveVersion < 1)
     {
         // Old format (base 0).
 
@@ -1114,26 +1087,9 @@ static playerheader_t *getPlayerHeader()
 }
 
 /**
- * Returns the material archive version for the save state which is
- * @em presently being read.
- */
-static inline int materialArchiveVersion()
-{
-#if __JHEXEN__
-    if(mapVersion < 6)
-#else
-    if(hdr->version < 6)
-#endif
-    {
-        return 0;
-    }
-    return -1;
-}
-
-/**
  * Writes the given player's data (not including the ID number).
  */
-static void SV_WritePlayer(int playernum)
+static void SV_WritePlayer(int playernum, Writer *writer)
 {
     int i, numPSprites = getPlayerHeader()->numPSprites;
     player_t temp, *p = &temp;
@@ -1157,39 +1113,39 @@ static void SV_WritePlayer(int playernum)
 
     // Version number. Increase when you make changes to the player data
     // segment format.
-    SV_WriteByte(6);
+    Writer_WriteByte(writer, 6);
 
 #if __JHEXEN__
     // Class.
-    SV_WriteByte(cfg.playerClass[playernum]);
+    Writer_WriteByte(writer, cfg.playerClass[playernum]);
 #endif
 
-    SV_WriteLong(p->playerState);
+    Writer_WriteInt32(writer, p->playerState);
 #if __JHEXEN__
-    SV_WriteLong(p->class_);    // 2nd class...?
+    Writer_WriteInt32(writer, p->class_);    // 2nd class...?
 #endif
-    SV_WriteLong(FLT2FIX(p->viewZ));
-    SV_WriteLong(FLT2FIX(p->viewHeight));
-    SV_WriteLong(FLT2FIX(p->viewHeightDelta));
+    Writer_WriteInt32(writer, FLT2FIX(p->viewZ));
+    Writer_WriteInt32(writer, FLT2FIX(p->viewHeight));
+    Writer_WriteInt32(writer, FLT2FIX(p->viewHeightDelta));
 #if !__JHEXEN__
-    SV_WriteFloat(dp->lookDir);
+    Writer_WriteFloat(writer, dp->lookDir);
 #endif
-    SV_WriteLong(FLT2FIX(p->bob));
+    Writer_WriteInt32(writer, FLT2FIX(p->bob));
 #if __JHEXEN__
-    SV_WriteLong(p->flyHeight);
-    SV_WriteFloat(dp->lookDir);
-    SV_WriteLong(p->centering);
+    Writer_WriteInt32(writer, p->flyHeight);
+    Writer_WriteFloat(writer, dp->lookDir);
+    Writer_WriteInt32(writer, p->centering);
 #endif
-    SV_WriteLong(p->health);
+    Writer_WriteInt32(writer, p->health);
 
 #if __JHEXEN__
     for(i = 0; i < getPlayerHeader()->numArmorTypes; ++i)
     {
-        SV_WriteLong(p->armorPoints[i]);
+        Writer_WriteInt32(writer, p->armorPoints[i]);
     }
 #else
-    SV_WriteLong(p->armorPoints);
-    SV_WriteLong(p->armorType);
+    Writer_WriteInt32(writer, p->armorPoints);
+    Writer_WriteInt32(writer, p->armorType);
 #endif
 
 #if __JDOOM64__ || __JHEXEN__
@@ -1197,89 +1153,89 @@ static void SV_WritePlayer(int playernum)
     {
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
 
-        SV_WriteLong(type);
-        SV_WriteLong(P_InventoryCount(playernum, type));
+        Writer_WriteInt32(writer, type);
+        Writer_WriteInt32(writer, P_InventoryCount(playernum, type));
     }
-    SV_WriteLong(P_InventoryReadyItem(playernum));
+    Writer_WriteInt32(writer, P_InventoryReadyItem(playernum));
 #endif
 
     for(i = 0; i < getPlayerHeader()->numPowers; ++i)
     {
-        SV_WriteLong(p->powers[i]);
+        Writer_WriteInt32(writer, p->powers[i]);
     }
 
 #if __JHEXEN__
-    SV_WriteLong(p->keys);
+    Writer_WriteInt32(writer, p->keys);
 #else
     for(i = 0; i < getPlayerHeader()->numKeys; ++i)
     {
-        SV_WriteLong(p->keys[i]);
+        Writer_WriteInt32(writer, p->keys[i]);
     }
 #endif
 
 #if __JHEXEN__
-    SV_WriteLong(p->pieces);
+    Writer_WriteInt32(writer, p->pieces);
 #else
-    SV_WriteLong(p->backpack);
+    Writer_WriteInt32(writer, p->backpack);
 #endif
 
     for(i = 0; i < getPlayerHeader()->numFrags; ++i)
     {
-        SV_WriteLong(p->frags[i]);
+        Writer_WriteInt32(writer, p->frags[i]);
     }
 
-    SV_WriteLong(p->readyWeapon);
-    SV_WriteLong(p->pendingWeapon);
+    Writer_WriteInt32(writer, p->readyWeapon);
+    Writer_WriteInt32(writer, p->pendingWeapon);
 
     for(i = 0; i < getPlayerHeader()->numWeapons; ++i)
     {
-        SV_WriteLong(p->weapons[i].owned);
+        Writer_WriteInt32(writer, p->weapons[i].owned);
     }
 
     for(i = 0; i < getPlayerHeader()->numAmmoTypes; ++i)
     {
-        SV_WriteLong(p->ammo[i].owned);
+        Writer_WriteInt32(writer, p->ammo[i].owned);
 #if !__JHEXEN__
-        SV_WriteLong(p->ammo[i].max);
+        Writer_WriteInt32(writer, p->ammo[i].max);
 #endif
     }
 
-    SV_WriteLong(p->attackDown);
-    SV_WriteLong(p->useDown);
+    Writer_WriteInt32(writer, p->attackDown);
+    Writer_WriteInt32(writer, p->useDown);
 
-    SV_WriteLong(p->cheats);
+    Writer_WriteInt32(writer, p->cheats);
 
-    SV_WriteLong(p->refire);
+    Writer_WriteInt32(writer, p->refire);
 
-    SV_WriteLong(p->killCount);
-    SV_WriteLong(p->itemCount);
-    SV_WriteLong(p->secretCount);
+    Writer_WriteInt32(writer, p->killCount);
+    Writer_WriteInt32(writer, p->itemCount);
+    Writer_WriteInt32(writer, p->secretCount);
 
-    SV_WriteLong(p->damageCount);
-    SV_WriteLong(p->bonusCount);
+    Writer_WriteInt32(writer, p->damageCount);
+    Writer_WriteInt32(writer, p->bonusCount);
 #if __JHEXEN__
-    SV_WriteLong(p->poisonCount);
+    Writer_WriteInt32(writer, p->poisonCount);
 #endif
 
-    SV_WriteLong(dp->extraLight);
-    SV_WriteLong(dp->fixedColorMap);
-    SV_WriteLong(p->colorMap);
+    Writer_WriteInt32(writer, dp->extraLight);
+    Writer_WriteInt32(writer, dp->fixedColorMap);
+    Writer_WriteInt32(writer, p->colorMap);
 
     for(i = 0; i < numPSprites; ++i)
     {
-        pspdef_t       *psp = &p->pSprites[i];
+        pspdef_t *psp = &p->pSprites[i];
 
-        SV_WriteLong(PTR2INT(psp->state));
-        SV_WriteLong(psp->tics);
-        SV_WriteLong(FLT2FIX(psp->pos[VX]));
-        SV_WriteLong(FLT2FIX(psp->pos[VY]));
+        Writer_WriteInt32(writer, PTR2INT(psp->state));
+        Writer_WriteInt32(writer, psp->tics);
+        Writer_WriteInt32(writer, FLT2FIX(psp->pos[VX]));
+        Writer_WriteInt32(writer, FLT2FIX(psp->pos[VY]));
     }
 
 #if !__JHEXEN__
-    SV_WriteLong(p->didSecret);
+    Writer_WriteInt32(writer, p->didSecret);
 
     // Added in ver 2 with __JDOOM__
-    SV_WriteLong(p->flyHeight);
+    Writer_WriteInt32(writer, p->flyHeight);
 #endif
 
 #if __JHERETIC__
@@ -1287,241 +1243,241 @@ static void SV_WritePlayer(int playernum)
     {
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
 
-        SV_WriteLong(type);
-        SV_WriteLong(P_InventoryCount(playernum, type));
+        Writer_WriteInt32(writer, type);
+        Writer_WriteInt32(writer, P_InventoryCount(playernum, type));
     }
-    SV_WriteLong(P_InventoryReadyItem(playernum));
-    SV_WriteLong(p->chickenPeck);
+    Writer_WriteInt32(writer, P_InventoryReadyItem(playernum));
+    Writer_WriteInt32(writer, p->chickenPeck);
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    SV_WriteLong(p->morphTics);
+    Writer_WriteInt32(writer, p->morphTics);
 #endif
 
-    SV_WriteLong(p->airCounter);
+    Writer_WriteInt32(writer, p->airCounter);
 
 #if __JHEXEN__
-    SV_WriteLong(p->jumpTics);
-    SV_WriteLong(p->worldTimer);
+    Writer_WriteInt32(writer, p->jumpTics);
+    Writer_WriteInt32(writer, p->worldTimer);
 #elif __JHERETIC__
-    SV_WriteLong(p->flameCount);
+    Writer_WriteInt32(writer, p->flameCount);
 
     // Added in ver 2
-    SV_WriteByte(p->class_);
+    Writer_WriteByte(writer, p->class_);
 #endif
 }
 
 /**
  * Reads a player's data (not including the ID number).
  */
-static void SV_ReadPlayer(player_t *p)
+static void SV_ReadPlayer(player_t *p, Reader *reader)
 {
     int plrnum = p - players;
     int numPSprites = getPlayerHeader()->numPSprites;
     ddplayer_t *dp = p->plr;
 
-    byte ver = SV_ReadByte();
+    byte ver = Reader_ReadByte(reader);
 
 #if __JHEXEN__
-    cfg.playerClass[plrnum] = playerclass_t(SV_ReadByte());
+    cfg.playerClass[plrnum] = playerclass_t(Reader_ReadByte(reader));
 
     memset(p, 0, sizeof(*p)); // Force everything NULL,
     p->plr = dp;              // but restore the ddplayer pointer.
 #endif
 
-    p->playerState     = playerstate_t(SV_ReadLong());
+    p->playerState     = playerstate_t(Reader_ReadInt32(reader));
 #if __JHEXEN__
-    p->class_          = playerclass_t(SV_ReadLong()); // 2nd class?? (ask Raven...)
+    p->class_          = playerclass_t(Reader_ReadInt32(reader)); // 2nd class?? (ask Raven...)
 #endif
 
-    p->viewZ           = FIX2FLT(SV_ReadLong());
-    p->viewHeight      = FIX2FLT(SV_ReadLong());
-    p->viewHeightDelta = FIX2FLT(SV_ReadLong());
+    p->viewZ           = FIX2FLT(Reader_ReadInt32(reader));
+    p->viewHeight      = FIX2FLT(Reader_ReadInt32(reader));
+    p->viewHeightDelta = FIX2FLT(Reader_ReadInt32(reader));
 #if !__JHEXEN__
-    dp->lookDir        = SV_ReadFloat();
+    dp->lookDir        = Reader_ReadFloat(reader);
 #endif
-    p->bob             = FIX2FLT(SV_ReadLong());
+    p->bob             = FIX2FLT(Reader_ReadInt32(reader));
 #if __JHEXEN__
-    p->flyHeight       = SV_ReadLong();
-    dp->lookDir        = SV_ReadFloat();
-    p->centering       = SV_ReadLong();
+    p->flyHeight       = Reader_ReadInt32(reader);
+    dp->lookDir        = Reader_ReadFloat(reader);
+    p->centering       = Reader_ReadInt32(reader);
 #endif
 
-    p->health          = SV_ReadLong();
+    p->health          = Reader_ReadInt32(reader);
 
 #if __JHEXEN__
     for(int i = 0; i < getPlayerHeader()->numArmorTypes; ++i)
     {
-        p->armorPoints[i] = SV_ReadLong();
+        p->armorPoints[i] = Reader_ReadInt32(reader);
     }
 #else
-    p->armorPoints = SV_ReadLong();
-    p->armorType = SV_ReadLong();
+    p->armorPoints = Reader_ReadInt32(reader);
+    p->armorType = Reader_ReadInt32(reader);
 #endif
 
 #if __JDOOM64__ || __JHEXEN__
     P_InventoryEmpty(plrnum);
     for(int i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
     {
-        inventoryitemtype_t type = inventoryitemtype_t(SV_ReadLong());
-        int count = SV_ReadLong();
+        inventoryitemtype_t type = inventoryitemtype_t(Reader_ReadInt32(reader));
+        int count = Reader_ReadInt32(reader);
 
         for(int j = 0; j < count; ++j)
             P_InventoryGive(plrnum, type, true);
     }
 
-    P_InventorySetReadyItem(plrnum, inventoryitemtype_t(SV_ReadLong()));
+    P_InventorySetReadyItem(plrnum, inventoryitemtype_t(Reader_ReadInt32(reader)));
 # if __JHEXEN__
     Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
     if(ver < 5)
     {
-        SV_ReadLong(); // Current inventory item count?
+        Reader_ReadInt32(reader); // Current inventory item count?
     }
     if(ver < 6)
-    /*p->inventorySlotNum =*/ SV_ReadLong();
+    /*p->inventorySlotNum =*/ Reader_ReadInt32(reader);
 # endif
 #endif
 
     for(int i = 0; i < getPlayerHeader()->numPowers; ++i)
     {
-        p->powers[i] = SV_ReadLong();
+        p->powers[i] = Reader_ReadInt32(reader);
     }
     if(p->powers[PT_ALLMAP])
         ST_RevealAutomap(plrnum, true);
 
 #if __JHEXEN__
-    p->keys = SV_ReadLong();
+    p->keys = Reader_ReadInt32(reader);
 #else
     for(int i = 0; i < getPlayerHeader()->numKeys; ++i)
     {
-        p->keys[i] = SV_ReadLong();
+        p->keys[i] = Reader_ReadInt32(reader);
     }
 #endif
 
 #if __JHEXEN__
-    p->pieces = SV_ReadLong();
+    p->pieces = Reader_ReadInt32(reader);
 #else
-    p->backpack = SV_ReadLong();
+    p->backpack = Reader_ReadInt32(reader);
 #endif
 
     for(int i = 0; i < getPlayerHeader()->numFrags; ++i)
     {
-        p->frags[i] = SV_ReadLong();
+        p->frags[i] = Reader_ReadInt32(reader);
     }
 
-    p->readyWeapon = weapontype_t(SV_ReadLong());
+    p->readyWeapon = weapontype_t(Reader_ReadInt32(reader));
 #if __JHEXEN__
     if(ver < 5)
         p->pendingWeapon = WT_NOCHANGE;
     else
 #endif
-        p->pendingWeapon = weapontype_t(SV_ReadLong());
+        p->pendingWeapon = weapontype_t(Reader_ReadInt32(reader));
 
     for(int i = 0; i < getPlayerHeader()->numWeapons; ++i)
     {
-        p->weapons[i].owned = (SV_ReadLong()? true : false);
+        p->weapons[i].owned = (Reader_ReadInt32(reader)? true : false);
     }
 
     for(int i = 0; i < getPlayerHeader()->numAmmoTypes; ++i)
     {
-        p->ammo[i].owned = SV_ReadLong();
+        p->ammo[i].owned = Reader_ReadInt32(reader);
 
 #if !__JHEXEN__
-        p->ammo[i].max = SV_ReadLong();
+        p->ammo[i].max = Reader_ReadInt32(reader);
 #endif
     }
 
-    p->attackDown  = SV_ReadLong();
-    p->useDown     = SV_ReadLong();
-    p->cheats      = SV_ReadLong();
-    p->refire      = SV_ReadLong();
-    p->killCount   = SV_ReadLong();
-    p->itemCount   = SV_ReadLong();
-    p->secretCount = SV_ReadLong();
+    p->attackDown  = Reader_ReadInt32(reader);
+    p->useDown     = Reader_ReadInt32(reader);
+    p->cheats      = Reader_ReadInt32(reader);
+    p->refire      = Reader_ReadInt32(reader);
+    p->killCount   = Reader_ReadInt32(reader);
+    p->itemCount   = Reader_ReadInt32(reader);
+    p->secretCount = Reader_ReadInt32(reader);
 
 #if __JHEXEN__
     if(ver <= 1)
     {
-        /*p->messageTics     =*/ SV_ReadLong();
-        /*p->ultimateMessage =*/ SV_ReadLong();
-        /*p->yellowMessage   =*/ SV_ReadLong();
+        /*p->messageTics     =*/ Reader_ReadInt32(reader);
+        /*p->ultimateMessage =*/ Reader_ReadInt32(reader);
+        /*p->yellowMessage   =*/ Reader_ReadInt32(reader);
     }
 #endif
 
-    p->damageCount = SV_ReadLong();
-    p->bonusCount  = SV_ReadLong();
+    p->damageCount = Reader_ReadInt32(reader);
+    p->bonusCount  = Reader_ReadInt32(reader);
 #if __JHEXEN__
-    p->poisonCount = SV_ReadLong();
+    p->poisonCount = Reader_ReadInt32(reader);
 #endif
 
-    dp->extraLight = SV_ReadLong();
-    dp->fixedColorMap = SV_ReadLong();
-    p->colorMap    = SV_ReadLong();
+    dp->extraLight = Reader_ReadInt32(reader);
+    dp->fixedColorMap = Reader_ReadInt32(reader);
+    p->colorMap    = Reader_ReadInt32(reader);
 
     for(int i = 0; i < numPSprites; ++i)
     {
         pspdef_t *psp = &p->pSprites[i];
 
-        psp->state = (state_t *) SV_ReadLong();
-        psp->tics = SV_ReadLong();
-        psp->pos[VX] = FIX2FLT(SV_ReadLong());
-        psp->pos[VY] = FIX2FLT(SV_ReadLong());
+        psp->state = INT2PTR(state_t, Reader_ReadInt32(reader));
+        psp->tics = Reader_ReadInt32(reader);
+        psp->pos[VX] = FIX2FLT(Reader_ReadInt32(reader));
+        psp->pos[VY] = FIX2FLT(Reader_ReadInt32(reader));
     }
 
 #if !__JHEXEN__
-    p->didSecret = SV_ReadLong();
+    p->didSecret = Reader_ReadInt32(reader);
 
 # if __JDOOM__ || __JDOOM64__
     if(ver == 2) // nolonger used in >= ver 3
-        /*p->messageTics =*/ SV_ReadLong();
+        /*p->messageTics =*/ Reader_ReadInt32(reader);
 
     if(ver >= 2)
-        p->flyHeight = SV_ReadLong();
+        p->flyHeight = Reader_ReadInt32(reader);
 
 # elif __JHERETIC__
     if(ver < 3) // nolonger used in >= ver 3
-        /*p->messageTics =*/ SV_ReadLong();
+        /*p->messageTics =*/ Reader_ReadInt32(reader);
 
-    p->flyHeight = SV_ReadLong();
+    p->flyHeight = Reader_ReadInt32(reader);
 
     P_InventoryEmpty(plrnum);
     for(int i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
     {
-        inventoryitemtype_t type = inventoryitemtype_t(SV_ReadLong());
-        int count = SV_ReadLong();
+        inventoryitemtype_t type = inventoryitemtype_t(Reader_ReadInt32(reader));
+        int count = Reader_ReadInt32(reader);
 
         for(int j = 0; j < count; ++j)
             P_InventoryGive(plrnum, type, true);
     }
 
-    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) SV_ReadLong());
+    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) Reader_ReadInt32(reader));
     Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
     if(ver < 5)
     {
-        SV_ReadLong(); // Current inventory item count?
+        Reader_ReadInt32(reader); // Current inventory item count?
     }
     if(ver < 6)
-    /*p->inventorySlotNum =*/ SV_ReadLong();
+    /*p->inventorySlotNum =*/ Reader_ReadInt32(reader);
 
-    p->chickenPeck = SV_ReadLong();
+    p->chickenPeck = Reader_ReadInt32(reader);
 # endif
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    p->morphTics = SV_ReadLong();
+    p->morphTics = Reader_ReadInt32(reader);
 #endif
 
     if(ver >= 2)
-        p->airCounter = SV_ReadLong();
+        p->airCounter = Reader_ReadInt32(reader);
 
 #if __JHEXEN__
-    p->jumpTics = SV_ReadLong();
-    p->worldTimer = SV_ReadLong();
+    p->jumpTics = Reader_ReadInt32(reader);
+    p->worldTimer = Reader_ReadInt32(reader);
 #elif __JHERETIC__
-    p->flameCount = SV_ReadLong();
+    p->flameCount = Reader_ReadInt32(reader);
 
     if(ver >= 2)
-        p->class_ = playerclass_t(SV_ReadByte());
+        p->class_ = playerclass_t(Reader_ReadByte(reader));
 #endif
 
 #if !__JHEXEN__
@@ -1550,8 +1506,9 @@ static void SV_ReadPlayer(player_t *p)
 # define MOBJ_SAVEVERSION 10
 #endif
 
-static void SV_WriteMobj(mobj_t const *original)
+static void SV_WriteMobj(thinker_t *th, Writer *writer)
 {
+    mobj_t const *original = (mobj_t*) th;
     mobj_t temp, *mo = &temp;
 
     std::memcpy(mo, original, sizeof(*mo));
@@ -1591,66 +1548,66 @@ static void SV_WriteMobj(mobj_t const *original)
     // JHEXEN
     // 7: Removed superfluous info ptr
     // 8: Added 'onMobj'
-    SV_WriteByte(MOBJ_SAVEVERSION);
+    Writer_WriteByte(writer, MOBJ_SAVEVERSION);
 
 #if !__JHEXEN__
     // A version 2 features: archive number and target.
-    SV_WriteShort(SV_ThingArchiveId((mobj_t*) original));
-    SV_WriteShort(SV_ThingArchiveId(mo->target));
+    Writer_WriteInt16(writer, SV_ThingArchiveId((mobj_t*) original));
+    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->target));
 
 # if __JDOOM__ || __JDOOM64__
     // Ver 5 features: Save tracer (fixes Archvile, Revenant bug)
-    SV_WriteShort(SV_ThingArchiveId(mo->tracer));
+    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->tracer));
 # endif
 #endif
 
-    SV_WriteShort(SV_ThingArchiveId(mo->onMobj));
+    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->onMobj));
 
     // Info for drawing: position.
-    SV_WriteLong(FLT2FIX(mo->origin[VX]));
-    SV_WriteLong(FLT2FIX(mo->origin[VY]));
-    SV_WriteLong(FLT2FIX(mo->origin[VZ]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VY]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VZ]));
 
     //More drawing info: to determine current sprite.
-    SV_WriteLong(mo->angle); // Orientation.
-    SV_WriteLong(mo->sprite); // Used to find patch_t and flip value.
-    SV_WriteLong(mo->frame);
+    Writer_WriteInt32(writer, mo->angle); // Orientation.
+    Writer_WriteInt32(writer, mo->sprite); // Used to find patch_t and flip value.
+    Writer_WriteInt32(writer, mo->frame);
 
 #if !__JHEXEN__
     // The closest interval over all contacted Sectors.
-    SV_WriteLong(FLT2FIX(mo->floorZ));
-    SV_WriteLong(FLT2FIX(mo->ceilingZ));
+    Writer_WriteInt32(writer, FLT2FIX(mo->floorZ));
+    Writer_WriteInt32(writer, FLT2FIX(mo->ceilingZ));
 #endif
 
     // For movement checking.
-    SV_WriteLong(FLT2FIX(mo->radius));
-    SV_WriteLong(FLT2FIX(mo->height));
+    Writer_WriteInt32(writer, FLT2FIX(mo->radius));
+    Writer_WriteInt32(writer, FLT2FIX(mo->height));
 
     // Momentums, used to update position.
-    SV_WriteLong(FLT2FIX(mo->mom[MX]));
-    SV_WriteLong(FLT2FIX(mo->mom[MY]));
-    SV_WriteLong(FLT2FIX(mo->mom[MZ]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->mom[MX]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->mom[MY]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->mom[MZ]));
 
     // If == VALIDCOUNT, already checked.
-    SV_WriteLong(mo->valid);
+    Writer_WriteInt32(writer, mo->valid);
 
-    SV_WriteLong(mo->type);
-    SV_WriteLong(mo->tics); // State tic counter.
-    SV_WriteLong(PTR2INT(mo->state));
+    Writer_WriteInt32(writer, mo->type);
+    Writer_WriteInt32(writer, mo->tics); // State tic counter.
+    Writer_WriteInt32(writer, PTR2INT(mo->state));
 
 #if __JHEXEN__
-    SV_WriteLong(mo->damage);
+    Writer_WriteInt32(writer, mo->damage);
 #endif
 
-    SV_WriteLong(mo->flags);
+    Writer_WriteInt32(writer, mo->flags);
 #if __JHEXEN__
-    SV_WriteLong(mo->flags2);
-    SV_WriteLong(mo->flags3);
+    Writer_WriteInt32(writer, mo->flags2);
+    Writer_WriteInt32(writer, mo->flags3);
 
     if(mo->type == MT_KORAX)
-        SV_WriteLong(0); // Searching index.
+        Writer_WriteInt32(writer, 0); // Searching index.
     else
-        SV_WriteLong(mo->special1);
+        Writer_WriteInt32(writer, mo->special1);
 
     switch(mo->type)
     {
@@ -1659,76 +1616,76 @@ static void SV_WriteMobj(mobj_t const *original)
     case MT_HOLY_TAIL:
     case MT_LIGHTNING_CEILING:
         if(mo->flags & MF_CORPSE)
-            SV_WriteLong(0);
+            Writer_WriteInt32(writer, 0);
         else
-            SV_WriteLong(SV_ThingArchiveId(INT2PTR(mobj_t, mo->special2)));
+            Writer_WriteInt32(writer, SV_ThingArchiveId(INT2PTR(mobj_t, mo->special2)));
         break;
 
     default:
-        SV_WriteLong(mo->special2);
+        Writer_WriteInt32(writer, mo->special2);
         break;
     }
 #endif
-    SV_WriteLong(mo->health);
+    Writer_WriteInt32(writer, mo->health);
 
     // Movement direction, movement generation (zig-zagging).
-    SV_WriteLong(mo->moveDir); // 0-7
-    SV_WriteLong(mo->moveCount); // When 0, select a new dir.
+    Writer_WriteInt32(writer, mo->moveDir); // 0-7
+    Writer_WriteInt32(writer, mo->moveCount); // When 0, select a new dir.
 
 #if __JHEXEN__
     if(mo->flags & MF_CORPSE)
-        SV_WriteLong(0);
+        Writer_WriteInt32(writer, 0);
     else
-        SV_WriteLong((int) SV_ThingArchiveId(mo->target));
+        Writer_WriteInt32(writer, (int) SV_ThingArchiveId(mo->target));
 #endif
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
-    SV_WriteLong(mo->reactionTime);
+    Writer_WriteInt32(writer, mo->reactionTime);
 
     // If >0, the target will be chased no matter what (even if shot).
-    SV_WriteLong(mo->threshold);
+    Writer_WriteInt32(writer, mo->threshold);
 
     // Additional info record for player avatars only (only valid if type
     // == MT_PLAYER).
-    SV_WriteLong(PTR2INT(mo->player));
+    Writer_WriteInt32(writer, PTR2INT(mo->player));
 
     // Player number last looked for.
-    SV_WriteLong(mo->lastLook);
+    Writer_WriteInt32(writer, mo->lastLook);
 
 #if !__JHEXEN__
     // For nightmare/multiplayer respawn.
-    SV_WriteLong(FLT2FIX(mo->spawnSpot.origin[VX]));
-    SV_WriteLong(FLT2FIX(mo->spawnSpot.origin[VY]));
-    SV_WriteLong(FLT2FIX(mo->spawnSpot.origin[VZ]));
-    SV_WriteLong(mo->spawnSpot.angle);
-    SV_WriteLong(mo->spawnSpot.flags);
+    Writer_WriteInt32(writer, FLT2FIX(mo->spawnSpot.origin[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->spawnSpot.origin[VY]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->spawnSpot.origin[VZ]));
+    Writer_WriteInt32(writer, mo->spawnSpot.angle);
+    Writer_WriteInt32(writer, mo->spawnSpot.flags);
 
-    SV_WriteLong(mo->intFlags); // $dropoff_fix: internal flags.
-    SV_WriteLong(FLT2FIX(mo->dropOffZ)); // $dropoff_fix
-    SV_WriteLong(mo->gear); // Used in torque simulation.
+    Writer_WriteInt32(writer, mo->intFlags); // $dropoff_fix: internal flags.
+    Writer_WriteInt32(writer, FLT2FIX(mo->dropOffZ)); // $dropoff_fix
+    Writer_WriteInt32(writer, mo->gear); // Used in torque simulation.
 
-    SV_WriteLong(mo->damage);
-    SV_WriteLong(mo->flags2);
-    SV_WriteLong(mo->flags3);
+    Writer_WriteInt32(writer, mo->damage);
+    Writer_WriteInt32(writer, mo->flags2);
+    Writer_WriteInt32(writer, mo->flags3);
 # ifdef __JHERETIC__
-    SV_WriteLong(mo->special1);
-    SV_WriteLong(mo->special2);
-    SV_WriteLong(mo->special3);
+    Writer_WriteInt32(writer, mo->special1);
+    Writer_WriteInt32(writer, mo->special2);
+    Writer_WriteInt32(writer, mo->special3);
 # endif
 
-    SV_WriteByte(mo->translucency);
-    SV_WriteByte((byte)(mo->visTarget +1));
+    Writer_WriteByte(writer, mo->translucency);
+    Writer_WriteByte(writer, (byte)(mo->visTarget +1));
 #endif
 
-    SV_WriteLong(FLT2FIX(mo->floorClip));
+    Writer_WriteInt32(writer, FLT2FIX(mo->floorClip));
 #if __JHEXEN__
-    SV_WriteLong(SV_ThingArchiveId((mobj_t*) original));
-    SV_WriteLong(mo->tid);
-    SV_WriteLong(mo->special);
-    SV_Write(mo->args, sizeof(mo->args));
-    SV_WriteByte(mo->translucency);
-    SV_WriteByte((byte)(mo->visTarget +1));
+    Writer_WriteInt32(writer, SV_ThingArchiveId((mobj_t*) original));
+    Writer_WriteInt32(writer, mo->tid);
+    Writer_WriteInt32(writer, mo->special);
+    Writer_Write(writer, mo->args, sizeof(mo->args));
+    Writer_WriteByte(writer, mo->translucency);
+    Writer_WriteByte(writer, (byte)(mo->visTarget +1));
 
     switch(mo->type)
     {
@@ -1743,21 +1700,21 @@ static void SV_WriteMobj(mobj_t const *original)
     case MT_HOLY_TAIL:
     case MT_LIGHTNING_CEILING:
         if(mo->flags & MF_CORPSE)
-            SV_WriteLong(0);
+            Writer_WriteInt32(writer, 0);
         else
-            SV_WriteLong(SV_ThingArchiveId(mo->tracer));
+            Writer_WriteInt32(writer, SV_ThingArchiveId(mo->tracer));
         break;
 
     default:
         DENG_ASSERT(mo->tracer == NULL); /// @todo Tracer won't be saved correctly?
-        SV_WriteLong(PTR2INT(mo->tracer));
+        Writer_WriteInt32(writer, PTR2INT(mo->tracer));
         break;
     }
 
-    SV_WriteLong(PTR2INT(mo->lastEnemy));
+    Writer_WriteInt32(writer, PTR2INT(mo->lastEnemy));
 #elif __JHERETIC__
     // Ver 7 features: generator
-    SV_WriteShort(SV_ThingArchiveId(mo->generator));
+    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->generator));
 #endif
 }
 
@@ -1888,82 +1845,83 @@ static void RestoreMobj(mobj_t *mo, int ver)
  * Always returns @c false as a thinker will have already been allocated in
  * the mobj creation process.
  */
-static int SV_ReadMobj(thinker_t* th, int /*mapVersion*/)
+static int SV_ReadMobj(thinker_t *th, Reader *reader, int /*mapVersion*/)
 {
-    int ver;
-    mobj_t* mo = (mobj_t*) th;
+    mobj_t *mo = (mobj_t *) th;
 
-    ver = SV_ReadByte();
-
+    int ver = Reader_ReadByte(reader);
 #if !__JHEXEN__
     if(ver >= 2) // Version 2 has mobj archive numbers.
-        insertThingInArchive(mo, SV_ReadShort());
+    {
+        insertThingInArchive(mo, Reader_ReadInt16(reader));
+    }
 #endif
 
 #if !__JHEXEN__
-    mo->target = NULL;
+    mo->target = 0;
     if(ver >= 2)
     {
-        mo->target = INT2PTR(mobj_t, SV_ReadShort());
+        mo->target = INT2PTR(mobj_t, Reader_ReadInt16(reader));
     }
 #endif
 
 #if __JDOOM__ || __JDOOM64__
     // Tracer for enemy attacks (updated after all mobjs are loaded).
-    mo->tracer = NULL;
+    mo->tracer = 0;
     if(ver >= 5)
     {
-        mo->tracer = INT2PTR(mobj_t, SV_ReadShort());
+        mo->tracer = INT2PTR(mobj_t, Reader_ReadInt16(reader));
     }
 #endif
 
     // mobj this one is on top of (updated after all mobjs are loaded).
-    mo->onMobj = NULL;
+    mo->onMobj = 0;
 #if __JHEXEN__
     if(ver >= 8)
 #else
     if(ver >= 5)
 #endif
     {
-        mo->onMobj = INT2PTR(mobj_t, SV_ReadShort());
+        mo->onMobj = INT2PTR(mobj_t, Reader_ReadInt16(reader));
     }
 
     // Info for drawing: position.
-    mo->origin[VX] = FIX2FLT(SV_ReadLong());
-    mo->origin[VY] = FIX2FLT(SV_ReadLong());
-    mo->origin[VZ] = FIX2FLT(SV_ReadLong());
+    mo->origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
+    mo->origin[VY] = FIX2FLT(Reader_ReadInt32(reader));
+    mo->origin[VZ] = FIX2FLT(Reader_ReadInt32(reader));
 
     //More drawing info: to determine current sprite.
-    mo->angle = SV_ReadLong();  // orientation
-    mo->sprite = SV_ReadLong(); // used to find patch_t and flip value
-    mo->frame = SV_ReadLong();  // might be ORed with FF_FULLBRIGHT
+    mo->angle  = Reader_ReadInt32(reader); // orientation
+    mo->sprite = Reader_ReadInt32(reader); // used to find patch_t and flip value
+
+    mo->frame  = Reader_ReadInt32(reader); // might be ORed with FF_FULLBRIGHT
     if(mo->frame & FF_FULLBRIGHT)
         mo->frame &= FF_FRAMEMASK; // not used anymore.
 
 #if __JHEXEN__
     if(ver < 6)
-        SV_ReadLong(); // Used to be floorflat.
+        Reader_ReadInt32(reader); // Used to be floorflat.
 #else
     // The closest interval over all contacted Sectors.
-    mo->floorZ = FIX2FLT(SV_ReadLong());
-    mo->ceilingZ = FIX2FLT(SV_ReadLong());
+    mo->floorZ   = FIX2FLT(Reader_ReadInt32(reader));
+    mo->ceilingZ = FIX2FLT(Reader_ReadInt32(reader));
 #endif
 
     // For movement checking.
-    mo->radius = FIX2FLT(SV_ReadLong());
-    mo->height = FIX2FLT(SV_ReadLong());
+    mo->radius  = FIX2FLT(Reader_ReadInt32(reader));
+    mo->height  = FIX2FLT(Reader_ReadInt32(reader));
 
     // Momentums, used to update position.
-    mo->mom[MX] = FIX2FLT(SV_ReadLong());
-    mo->mom[MY] = FIX2FLT(SV_ReadLong());
-    mo->mom[MZ] = FIX2FLT(SV_ReadLong());
+    mo->mom[MX] = FIX2FLT(Reader_ReadInt32(reader));
+    mo->mom[MY] = FIX2FLT(Reader_ReadInt32(reader));
+    mo->mom[MZ] = FIX2FLT(Reader_ReadInt32(reader));
 
     // If == VALIDCOUNT, already checked.
-    mo->valid = SV_ReadLong();
-    mo->type = SV_ReadLong();
+    mo->valid = Reader_ReadInt32(reader);
+    mo->type  = Reader_ReadInt32(reader);
 #if __JHEXEN__
     if(ver < 7)
-        /*mo->info = (mobjinfo_t *)*/ SV_ReadLong();
+        /*mo->info = (mobjinfo_t *)*/ Reader_ReadInt32(reader);
 #endif
     mo->info = &MOBJINFO[mo->type];
 
@@ -1975,24 +1933,24 @@ static int SV_ReadMobj(thinker_t* th, int /*mapVersion*/)
     if(mo->info->flags2 & MF2_DONTDRAW)
         mo->ddFlags |= DDMF_DONTDRAW;
 
-    mo->tics = SV_ReadLong();   // state tic counter
-    mo->state = (state_t *) SV_ReadLong();
+    mo->tics   = Reader_ReadInt32(reader);   // state tic counter
+    mo->state  = INT2PTR(state_t, Reader_ReadInt32(reader));
 
 #if __JHEXEN__
-    mo->damage = SV_ReadLong();
+    mo->damage = Reader_ReadInt32(reader);
 #endif
 
-    mo->flags = SV_ReadLong();
+    mo->flags  = Reader_ReadInt32(reader);
 
 #if __JHEXEN__
-    mo->flags2 = SV_ReadLong();
+    mo->flags2 = Reader_ReadInt32(reader);
     if(ver >= 5)
-        mo->flags3 = SV_ReadLong();
-    mo->special1 = SV_ReadLong();
-    mo->special2 = SV_ReadLong();
+        mo->flags3 = Reader_ReadInt32(reader);
+    mo->special1 = Reader_ReadInt32(reader);
+    mo->special2 = Reader_ReadInt32(reader);
 #endif
 
-    mo->health = SV_ReadLong();
+    mo->health = Reader_ReadInt32(reader);
 #if __JHERETIC__
     if(ver < 8)
     {
@@ -2020,52 +1978,52 @@ static int SV_ReadMobj(thinker_t* th, int /*mapVersion*/)
 #endif
 
     // Movement direction, movement generation (zig-zagging).
-    mo->moveDir = SV_ReadLong();    // 0-7
-    mo->moveCount = SV_ReadLong();  // when 0, select a new dir
+    mo->moveDir = Reader_ReadInt32(reader);    // 0-7
+    mo->moveCount = Reader_ReadInt32(reader);  // when 0, select a new dir
 
 #if __JHEXEN__
-    mo->target = (mobj_t *) SV_ReadLong();
+    mo->target = INT2PTR(mobj_t, Reader_ReadInt32(reader));
 #endif
 
     // Reaction time: if non 0, don't attack yet.
     // Used by player to freeze a bit after teleporting.
-    mo->reactionTime = SV_ReadLong();
+    mo->reactionTime = Reader_ReadInt32(reader);
 
     // If >0, the target will be chased
     // no matter what (even if shot)
-    mo->threshold = SV_ReadLong();
+    mo->threshold = Reader_ReadInt32(reader);
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
-    mo->player = (player_t *) SV_ReadLong();
+    mo->player = INT2PTR(player_t, Reader_ReadInt32(reader));
 
     // Player number last looked for.
-    mo->lastLook = SV_ReadLong();
+    mo->lastLook = Reader_ReadInt32(reader);
 
 #if __JHEXEN__
-    mo->floorClip = FIX2FLT(SV_ReadLong());
-    insertThingInArchive(mo, SV_ReadLong());
-    mo->tid = SV_ReadLong();
+    mo->floorClip = FIX2FLT(Reader_ReadInt32(reader));
+    insertThingInArchive(mo, Reader_ReadInt32(reader));
+    mo->tid = Reader_ReadInt32(reader);
 #else
     // For nightmare respawn.
     if(ver >= 6)
     {
-        mo->spawnSpot.origin[VX] = FIX2FLT(SV_ReadLong());
-        mo->spawnSpot.origin[VY] = FIX2FLT(SV_ReadLong());
-        mo->spawnSpot.origin[VZ] = FIX2FLT(SV_ReadLong());
-        mo->spawnSpot.angle = SV_ReadLong();
+        mo->spawnSpot.origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
+        mo->spawnSpot.origin[VY] = FIX2FLT(Reader_ReadInt32(reader));
+        mo->spawnSpot.origin[VZ] = FIX2FLT(Reader_ReadInt32(reader));
+        mo->spawnSpot.angle = Reader_ReadInt32(reader);
         if(ver < 10)
-        /* mo->spawnSpot.type = */ SV_ReadLong();
-        mo->spawnSpot.flags = SV_ReadLong();
+        /* mo->spawnSpot.type = */ Reader_ReadInt32(reader);
+        mo->spawnSpot.flags = Reader_ReadInt32(reader);
     }
     else
     {
-        mo->spawnSpot.origin[VX] = (float) SV_ReadShort();
-        mo->spawnSpot.origin[VY] = (float) SV_ReadShort();
+        mo->spawnSpot.origin[VX] = (float) Reader_ReadInt16(reader);
+        mo->spawnSpot.origin[VY] = (float) Reader_ReadInt16(reader);
         mo->spawnSpot.origin[VZ] = 0; // Initialize with "something".
-        mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_ReadShort() / 45));
-        /*mo->spawnSpot.type = (int)*/ SV_ReadShort();
-        mo->spawnSpot.flags = (int) SV_ReadShort();
+        mo->spawnSpot.angle = (angle_t) (ANG45 * (Reader_ReadInt16(reader) / 45));
+        /*mo->spawnSpot.type = (int)*/ Reader_ReadInt16(reader);
+        mo->spawnSpot.flags = (int) Reader_ReadInt16(reader);
     }
 
 # if __JDOOM__ || __JDOOM64__
@@ -2074,38 +2032,38 @@ static int SV_ReadMobj(thinker_t* th, int /*mapVersion*/)
     if(ver >= 5)
 # endif
     {
-        mo->intFlags = SV_ReadLong();   // killough $dropoff_fix: internal flags
-        mo->dropOffZ = FIX2FLT(SV_ReadLong());   // killough $dropoff_fix
-        mo->gear = SV_ReadLong();   // killough used in torque simulation
+        mo->intFlags = Reader_ReadInt32(reader);   // killough $dropoff_fix: internal flags
+        mo->dropOffZ = FIX2FLT(Reader_ReadInt32(reader));   // killough $dropoff_fix
+        mo->gear = Reader_ReadInt32(reader);   // killough used in torque simulation
     }
 
 # if __JDOOM__ || __JDOOM64__
     if(ver >= 6)
     {
-        mo->damage = SV_ReadLong();
-        mo->flags2 = SV_ReadLong();
+        mo->damage = Reader_ReadInt32(reader);
+        mo->flags2 = Reader_ReadInt32(reader);
     }// Else flags2 will be applied from the defs.
     else
         mo->damage = DDMAXINT; // Use the value set in mo->info->damage
 
 # elif __JHERETIC__
-    mo->damage = SV_ReadLong();
-    mo->flags2 = SV_ReadLong();
+    mo->damage = Reader_ReadInt32(reader);
+    mo->flags2 = Reader_ReadInt32(reader);
 # endif
 
     if(ver >= 7)
-        mo->flags3 = SV_ReadLong();
+        mo->flags3 = Reader_ReadInt32(reader);
     // Else flags3 will be applied from the defs.
 #endif
 
 #if __JHEXEN__
-    mo->special = SV_ReadLong();
-    SV_Read(mo->args, 1 * 5);
+    mo->special = Reader_ReadInt32(reader);
+    Reader_Read(reader, mo->args, 1 * 5);
 #elif __JHERETIC__
-    mo->special1 = SV_ReadLong();
-    mo->special2 = SV_ReadLong();
+    mo->special1 = Reader_ReadInt32(reader);
+    mo->special2 = Reader_ReadInt32(reader);
     if(ver >= 8)
-        mo->special3 = SV_ReadLong();
+        mo->special3 = Reader_ReadInt32(reader);
 #endif
 
 #if __JHEXEN__
@@ -2113,29 +2071,29 @@ static int SV_ReadMobj(thinker_t* th, int /*mapVersion*/)
 #else
     if(ver >= 4)
 #endif
-        mo->translucency = SV_ReadByte();
+        mo->translucency = Reader_ReadByte(reader);
 
 #if __JHEXEN__
     if(ver >= 3)
 #else
     if(ver >= 5)
 #endif
-        mo->visTarget = (short) (SV_ReadByte()) -1;
+        mo->visTarget = (short) (Reader_ReadByte(reader)) -1;
 
 #if __JHEXEN__
     if(ver >= 4)
-        mo->tracer = (mobj_t *) SV_ReadLong();
+        mo->tracer = INT2PTR(mobj_t, Reader_ReadInt32(reader));
 
     if(ver >= 4)
-        mo->lastEnemy = (mobj_t *) SV_ReadLong();
+        mo->lastEnemy = INT2PTR(mobj_t, Reader_ReadInt32(reader));
 #else
     if(ver >= 5)
-        mo->floorClip = FIX2FLT(SV_ReadLong());
+        mo->floorClip = FIX2FLT(Reader_ReadInt32(reader));
 #endif
 
 #if __JHERETIC__
     if(ver >= 7)
-        mo->generator = INT2PTR(mobj_t, SV_ReadShort());
+        mo->generator = INT2PTR(mobj_t, Reader_ReadInt16(reader));
     else
         mo->generator = NULL;
 #endif
@@ -2149,37 +2107,37 @@ static int SV_ReadMobj(thinker_t* th, int /*mapVersion*/)
 /**
  * Prepare and write the player header info.
  */
-static void writePlayerHeader()
+static void writePlayerHeader(Writer *writer)
 {
     playerheader_t *ph = &playerHeader;
 
     SV_BeginSegment(ASEG_PLAYER_HEADER);
-    SV_WriteByte(2); // version byte
+    Writer_WriteByte(writer, 2); // version byte
 
-    ph->numPowers = NUM_POWER_TYPES;
-    ph->numKeys = NUM_KEY_TYPES;
-    ph->numFrags = MAXPLAYERS;
-    ph->numWeapons = NUM_WEAPON_TYPES;
-    ph->numAmmoTypes = NUM_AMMO_TYPES;
-    ph->numPSprites = NUMPSPRITES;
+    ph->numPowers       = NUM_POWER_TYPES;
+    ph->numKeys         = NUM_KEY_TYPES;
+    ph->numFrags        = MAXPLAYERS;
+    ph->numWeapons      = NUM_WEAPON_TYPES;
+    ph->numAmmoTypes    = NUM_AMMO_TYPES;
+    ph->numPSprites     = NUMPSPRITES;
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     ph->numInvItemTypes = NUM_INVENTORYITEM_TYPES;
 #endif
 #if __JHEXEN__
-    ph->numArmorTypes = NUMARMOR;
+    ph->numArmorTypes   = NUMARMOR;
 #endif
 
-    SV_WriteLong(ph->numPowers);
-    SV_WriteLong(ph->numKeys);
-    SV_WriteLong(ph->numFrags);
-    SV_WriteLong(ph->numWeapons);
-    SV_WriteLong(ph->numAmmoTypes);
-    SV_WriteLong(ph->numPSprites);
+    Writer_WriteInt32(writer, ph->numPowers);
+    Writer_WriteInt32(writer, ph->numKeys);
+    Writer_WriteInt32(writer, ph->numFrags);
+    Writer_WriteInt32(writer, ph->numWeapons);
+    Writer_WriteInt32(writer, ph->numAmmoTypes);
+    Writer_WriteInt32(writer, ph->numPSprites);
 #if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
-    SV_WriteLong(ph->numInvItemTypes);
+    Writer_WriteInt32(writer, ph->numInvItemTypes);
 #endif
 #if __JHEXEN__
-    SV_WriteLong(ph->numArmorTypes);
+    Writer_WriteInt32(writer, ph->numArmorTypes);
 #endif
 
     playerHeaderOK = true;
@@ -2188,37 +2146,37 @@ static void writePlayerHeader()
 /**
  * Read player header info from the game state.
  */
-static void readPlayerHeader()
+static void readPlayerHeader(Reader *reader, int saveVersion)
 {
 #if __JHEXEN__
-    if(hdr->version >= 4)
+    if(saveVersion >= 4)
 #else
-    if(hdr->version >= 5)
+    if(saveVersion >= 5)
 #endif
     {
         SV_AssertSegment(ASEG_PLAYER_HEADER);
-        int ver = SV_ReadByte();
+        int ver = Reader_ReadByte(reader);
 #if !__JHERETIC__
         DENG_UNUSED(ver);
 #endif
 
-        playerHeader.numPowers      = SV_ReadLong();
-        playerHeader.numKeys        = SV_ReadLong();
-        playerHeader.numFrags       = SV_ReadLong();
-        playerHeader.numWeapons     = SV_ReadLong();
-        playerHeader.numAmmoTypes   = SV_ReadLong();
-        playerHeader.numPSprites    = SV_ReadLong();
+        playerHeader.numPowers      = Reader_ReadInt32(reader);
+        playerHeader.numKeys        = Reader_ReadInt32(reader);
+        playerHeader.numFrags       = Reader_ReadInt32(reader);
+        playerHeader.numWeapons     = Reader_ReadInt32(reader);
+        playerHeader.numAmmoTypes   = Reader_ReadInt32(reader);
+        playerHeader.numPSprites    = Reader_ReadInt32(reader);
 #if __JHERETIC__
         if(ver >= 2)
-            playerHeader.numInvItemTypes = SV_ReadLong();
+            playerHeader.numInvItemTypes = Reader_ReadInt32(reader);
         else
             playerHeader.numInvItemTypes = NUM_INVENTORYITEM_TYPES;
 #endif
 #if __JHEXEN__ || __JDOOM64__
-        playerHeader.numInvItemTypes = SV_ReadLong();
+        playerHeader.numInvItemTypes = Reader_ReadInt32(reader);
 #endif
 #if __JHEXEN__
-        playerHeader.numArmorTypes  = SV_ReadLong();
+        playerHeader.numArmorTypes  = Reader_ReadInt32(reader);
 #endif
     }
     else // The old format didn't save the counts.
@@ -2255,14 +2213,14 @@ static void readPlayerHeader()
     playerHeaderOK = true;
 }
 
-static void writePlayers()
+static void writePlayers(Writer *writer)
 {
     SV_BeginSegment(ASEG_PLAYERS);
     {
 #if __JHEXEN__
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            SV_WriteByte(players[i].plr->inGame);
+            Writer_WriteByte(writer, players[i].plr->inGame);
         }
 #endif
 
@@ -2271,16 +2229,17 @@ static void writePlayers()
             if(!players[i].plr->inGame)
                 continue;
 
-            SV_WriteLong(Net_GetPlayerID(i));
-            SV_WritePlayer(i);
+            Writer_WriteInt32(writer, Net_GetPlayerID(i));
+            SV_WritePlayer(i, writer);
         }
     }
     SV_EndSegment();
 }
 
-static void readPlayers(dd_bool *infile, dd_bool *loaded)
+static void readPlayers(SaveInfo &info, dd_bool *infile, dd_bool *loaded,
+    Reader *reader)
 {
-    DENG_ASSERT(infile && loaded);
+    DENG_ASSERT(infile != 0 && loaded != 0);
 
     // Setup the dummy.
     ddplayer_t dummyDDPlayer;
@@ -2291,7 +2250,7 @@ static void readPlayers(dd_bool *infile, dd_bool *loaded)
     {
         loaded[i] = 0;
 #if !__JHEXEN__
-        infile[i] = hdr->players[i];
+        infile[i] = info._players[i];
 #endif
     }
 
@@ -2300,7 +2259,7 @@ static void readPlayers(dd_bool *infile, dd_bool *loaded)
 #if __JHEXEN__
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            infile[i] = SV_ReadByte();
+            infile[i] = Reader_ReadByte(reader);
         }
 #endif
 
@@ -2313,7 +2272,7 @@ static void readPlayers(dd_bool *infile, dd_bool *loaded)
             if(!infile[i]) continue;
 
             // The ID number will determine which player this actually is.
-            int pid = SV_ReadLong();
+            int pid = Reader_ReadInt32(reader);
             player_t *player = 0;
             for(int k = 0; k < MAXPLAYERS; ++k)
             {
@@ -2337,13 +2296,17 @@ static void readPlayers(dd_bool *infile, dd_bool *loaded)
             }
 
             // Read the data.
-            SV_ReadPlayer(player);
+            SV_ReadPlayer(player, reader);
         }
     }
     SV_AssertSegment(ASEG_END);
+
+#if __JHEXEN__
+    DENG_UNUSED(info);
+#endif
 }
 
-static void SV_WriteSector(Sector *sec)
+static void SV_WriteSector(Sector *sec, Writer *writer)
 {
     int i, type;
     float flooroffx           = P_GetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_X);
@@ -2372,43 +2335,43 @@ static void SV_WriteSector(Sector *sec)
         type = sc_normal;
 
     // Type byte.
-    SV_WriteByte(type);
+    Writer_WriteByte(writer, type);
 
     // Version.
     // 2: Surface colors.
     // 3: Surface flags.
-    SV_WriteByte(3); // write a version byte.
+    Writer_WriteByte(writer, 3); // write a version byte.
 
-    SV_WriteShort(floorheight);
-    SV_WriteShort(ceilingheight);
-    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, floorMaterial));
-    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, ceilingMaterial));
-    SV_WriteShort(floorFlags);
-    SV_WriteShort(ceilingFlags);
+    Writer_WriteInt16(writer, floorheight);
+    Writer_WriteInt16(writer, ceilingheight);
+    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, floorMaterial));
+    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, ceilingMaterial));
+    Writer_WriteInt16(writer, floorFlags);
+    Writer_WriteInt16(writer, ceilingFlags);
 #if __JHEXEN__
-    SV_WriteShort((short) lightlevel);
+    Writer_WriteInt16(writer, (short) lightlevel);
 #else
-    SV_WriteByte(lightlevel);
+    Writer_WriteByte(writer, lightlevel);
 #endif
 
     float rgb[3];
     P_GetFloatpv(sec, DMU_COLOR, rgb);
     for(i = 0; i < 3; ++i)
-        SV_WriteByte((byte)(255.f * rgb[i]));
+        Writer_WriteByte(writer, (byte)(255.f * rgb[i]));
 
     P_GetFloatpv(sec, DMU_FLOOR_COLOR, rgb);
     for(i = 0; i < 3; ++i)
-        SV_WriteByte((byte)(255.f * rgb[i]));
+        Writer_WriteByte(writer, (byte)(255.f * rgb[i]));
 
     P_GetFloatpv(sec, DMU_CEILING_COLOR, rgb);
     for(i = 0; i < 3; ++i)
-        SV_WriteByte((byte)(255.f * rgb[i]));
+        Writer_WriteByte(writer, (byte)(255.f * rgb[i]));
 
-    SV_WriteShort(xsec->special);
-    SV_WriteShort(xsec->tag);
+    Writer_WriteInt16(writer, xsec->special);
+    Writer_WriteInt16(writer, xsec->tag);
 
 #if __JHEXEN__
-    SV_WriteShort(xsec->seqType);
+    Writer_WriteInt16(writer, xsec->seqType);
 #endif
 
     if(type == sc_ploff
@@ -2417,16 +2380,16 @@ static void SV_WriteSector(Sector *sec)
 #endif
        )
     {
-        SV_WriteFloat(flooroffx);
-        SV_WriteFloat(flooroffy);
-        SV_WriteFloat(ceiloffx);
-        SV_WriteFloat(ceiloffy);
+        Writer_WriteFloat(writer, flooroffx);
+        Writer_WriteFloat(writer, flooroffy);
+        Writer_WriteFloat(writer, ceiloffx);
+        Writer_WriteFloat(writer, ceiloffy);
     }
 
 #if !__JHEXEN__
-    if(xsec->xg)                 // Extended General?
+    if(xsec->xg) // Extended General?
     {
-        SV_WriteXGSector(sec);
+        SV_WriteXGSector(sec, writer);
     }
 
     // Count the number of sound targets
@@ -2439,13 +2402,13 @@ static void SV_WriteSector(Sector *sec)
  * Reads all versions of archived sectors.
  * Including the old Ver1.
  */
-static void SV_ReadSector(Sector* sec)
+static void SV_ReadSector(Sector *sec, Reader *reader, int mapVersion)
 {
     int i, ver = 1;
     int type = 0;
-    Material* floorMaterial = NULL, *ceilingMaterial = NULL;
+    Material *floorMaterial = 0, *ceilingMaterial = 0;
     byte rgb[3], lightlevel;
-    xsector_t* xsec = P_ToXSector(sec);
+    xsector_t *xsec = P_ToXSector(sec);
     int fh, ch;
 
     // A type byte?
@@ -2454,22 +2417,22 @@ static void SV_ReadSector(Sector* sec)
         type = sc_ploff;
     else
 #else
-    if(hdr->version <= 1)
+    if(mapVersion <= 1)
         type = sc_normal;
     else
 #endif
-        type = SV_ReadByte();
+        type = Reader_ReadByte(reader);
 
     // A version byte?
 #if __JHEXEN__
     if(mapVersion > 2)
 #else
-    if(hdr->version > 4)
+    if(mapVersion > 4)
 #endif
-        ver = SV_ReadByte();
+        ver = Reader_ReadByte(reader);
 
-    fh = SV_ReadShort();
-    ch = SV_ReadShort();
+    fh = Reader_ReadInt16(reader);
+    ch = Reader_ReadInt16(reader);
 
     P_SetIntp(sec, DMU_FLOOR_HEIGHT, fh);
     P_SetIntp(sec, DMU_CEILING_HEIGHT, ch);
@@ -2483,23 +2446,23 @@ static void SV_ReadSector(Sector* sec)
 #endif
 
 #if !__JHEXEN__
-    if(hdr->version == 1)
+    if(mapVersion == 1)
     {
         // The flat numbers are absolute lump indices.
         Uri* uri = Uri_NewWithPath2("Flats:", RC_NULL);
-        Uri_SetPath(uri, Str_Text(W_LumpName(SV_ReadShort())));
+        Uri_SetPath(uri, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
         floorMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
-        Uri_SetPath(uri, Str_Text(W_LumpName(SV_ReadShort())));
+        Uri_SetPath(uri, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
         ceilingMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
     }
-    else if(hdr->version >= 4)
+    else if(mapVersion >= 4)
 #endif
     {
         // The flat numbers are actually archive numbers.
-        floorMaterial   = SV_GetArchiveMaterial(SV_ReadShort(), 0);
-        ceilingMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 0);
+        floorMaterial   = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 0);
+        ceilingMaterial = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 0);
     }
 
     P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   floorMaterial);
@@ -2507,26 +2470,30 @@ static void SV_ReadSector(Sector* sec)
 
     if(ver >= 3)
     {
-        P_SetIntp(sec, DMU_FLOOR_FLAGS,   SV_ReadShort());
-        P_SetIntp(sec, DMU_CEILING_FLAGS, SV_ReadShort());
+        P_SetIntp(sec, DMU_FLOOR_FLAGS,   Reader_ReadInt16(reader));
+        P_SetIntp(sec, DMU_CEILING_FLAGS, Reader_ReadInt16(reader));
     }
 
 #if __JHEXEN__
-    lightlevel = (byte) SV_ReadShort();
+    lightlevel = (byte) Reader_ReadInt16(reader);
 #else
     // In Ver1 the light level is a short
-    if(hdr->version == 1)
-        lightlevel = (byte) SV_ReadShort();
+    if(mapVersion == 1)
+    {
+        lightlevel = (byte) Reader_ReadInt16(reader);
+    }
     else
-        lightlevel = SV_ReadByte();
+    {
+        lightlevel = Reader_ReadByte(reader);
+    }
 #endif
     P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) lightlevel / 255.f);
 
 #if !__JHEXEN__
-    if(hdr->version > 1)
+    if(mapVersion > 1)
 #endif
     {
-        SV_Read(rgb, 3);
+        Reader_Read(reader, rgb, 3);
         for(i = 0; i < 3; ++i)
             P_SetFloatp(sec, DMU_COLOR_RED + i, rgb[i] / 255.f);
     }
@@ -2534,20 +2501,20 @@ static void SV_ReadSector(Sector* sec)
     // Ver 2 includes surface colours
     if(ver >= 2)
     {
-        SV_Read(rgb, 3);
+        Reader_Read(reader, rgb, 3);
         for(i = 0; i < 3; ++i)
             P_SetFloatp(sec, DMU_FLOOR_COLOR_RED + i, rgb[i] / 255.f);
 
-        SV_Read(rgb, 3);
+        Reader_Read(reader, rgb, 3);
         for(i = 0; i < 3; ++i)
             P_SetFloatp(sec, DMU_CEILING_COLOR_RED + i, rgb[i] / 255.f);
     }
 
-    xsec->special = SV_ReadShort();
-    /*xsec->tag =*/ SV_ReadShort();
+    xsec->special = Reader_ReadInt16(reader);
+    /*xsec->tag =*/ Reader_ReadInt16(reader);
 
 #if __JHEXEN__
-    xsec->seqType = seqtype_t(SV_ReadShort());
+    xsec->seqType = seqtype_t(Reader_ReadInt16(reader));
 #endif
 
     if(type == sc_ploff
@@ -2556,19 +2523,19 @@ static void SV_ReadSector(Sector* sec)
 #endif
        )
     {
-        P_SetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_X, SV_ReadFloat());
-        P_SetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_Y, SV_ReadFloat());
-        P_SetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_X, SV_ReadFloat());
-        P_SetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_Y, SV_ReadFloat());
+        P_SetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_X, Reader_ReadFloat(reader));
+        P_SetFloatp(sec, DMU_FLOOR_MATERIAL_OFFSET_Y, Reader_ReadFloat(reader));
+        P_SetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_X, Reader_ReadFloat(reader));
+        P_SetFloatp(sec, DMU_CEILING_MATERIAL_OFFSET_Y, Reader_ReadFloat(reader));
     }
 
 #if !__JHEXEN__
     if(type == sc_xg1)
-        SV_ReadXGSector(sec);
+        SV_ReadXGSector(sec, reader, mapVersion);
 #endif
 
 #if !__JHEXEN__
-    if(hdr->version <= 1)
+    if(mapVersion <= 1)
 #endif
     {
         xsec->specialData = 0;
@@ -2578,7 +2545,7 @@ static void SV_ReadSector(Sector* sec)
     xsec->soundTarget = 0;
 }
 
-static void SV_WriteLine(Line *li)
+static void SV_WriteLine(Line *li, Writer *writer)
 {
     xline_t *xli = P_ToXLine(li);
 
@@ -2589,7 +2556,7 @@ static void SV_WriteLine(Line *li)
     else
 #endif
         type = lc_normal;
-    SV_WriteByte(type);
+    Writer_WriteByte(writer, type);
 
     // Version.
     // 2: Per surface texture offsets.
@@ -2597,24 +2564,24 @@ static void SV_WriteLine(Line *li)
     // 3: "Mapped by player" values.
     // 3: Surface flags.
     // 4: Engine-side line flags.
-    SV_WriteByte(4); // Write a version byte
+    Writer_WriteByte(writer, 4); // Write a version byte
 
-    SV_WriteShort(P_GetIntp(li, DMU_FLAGS));
-    SV_WriteShort(xli->flags);
+    Writer_WriteInt16(writer, P_GetIntp(li, DMU_FLAGS));
+    Writer_WriteInt16(writer, xli->flags);
 
     for(int i = 0; i < MAXPLAYERS; ++i)
-        SV_WriteByte(xli->mapped[i]);
+        Writer_WriteByte(writer, xli->mapped[i]);
 
 #if __JHEXEN__
-    SV_WriteByte(xli->special);
-    SV_WriteByte(xli->arg1);
-    SV_WriteByte(xli->arg2);
-    SV_WriteByte(xli->arg3);
-    SV_WriteByte(xli->arg4);
-    SV_WriteByte(xli->arg5);
+    Writer_WriteByte(writer, xli->special);
+    Writer_WriteByte(writer, xli->arg1);
+    Writer_WriteByte(writer, xli->arg2);
+    Writer_WriteByte(writer, xli->arg3);
+    Writer_WriteByte(writer, xli->arg4);
+    Writer_WriteByte(writer, xli->arg5);
 #else
-    SV_WriteShort(xli->special);
-    SV_WriteShort(xli->tag);
+    Writer_WriteInt16(writer, xli->special);
+    Writer_WriteInt16(writer, xli->tag);
 #endif
 
     // For each side
@@ -2624,42 +2591,42 @@ static void SV_WriteLine(Line *li)
         Side *si = (Side *)P_GetPtrp(li, (i? DMU_BACK:DMU_FRONT));
         if(!si) continue;
 
-        SV_WriteShort(P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_X));
-        SV_WriteShort(P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_Y));
-        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_X));
-        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_Y));
-        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_X));
-        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_Y));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_X));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_TOP_MATERIAL_OFFSET_Y));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_X));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_MIDDLE_MATERIAL_OFFSET_Y));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_X));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_BOTTOM_MATERIAL_OFFSET_Y));
 
-        SV_WriteShort(P_GetIntp(si, DMU_TOP_FLAGS));
-        SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_FLAGS));
-        SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_FLAGS));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_TOP_FLAGS));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_MIDDLE_FLAGS));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_BOTTOM_FLAGS));
 
-        SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
-        SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
-        SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
+        Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
+        Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
+        Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(materialArchive, (Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
         for(int k = 0; k < 3; ++k)
-            SV_WriteByte((byte)(255 * rgba[k]));
+            Writer_WriteByte(writer, (byte)(255 * rgba[k]));
 
         P_GetFloatpv(si, DMU_BOTTOM_COLOR, rgba);
         for(int k = 0; k < 3; ++k)
-            SV_WriteByte((byte)(255 * rgba[k]));
+            Writer_WriteByte(writer, (byte)(255 * rgba[k]));
 
         P_GetFloatpv(si, DMU_MIDDLE_COLOR, rgba);
         for(int k = 0; k < 4; ++k)
-            SV_WriteByte((byte)(255 * rgba[k]));
+            Writer_WriteByte(writer, (byte)(255 * rgba[k]));
 
-        SV_WriteLong(P_GetIntp(si, DMU_MIDDLE_BLENDMODE));
-        SV_WriteShort(P_GetIntp(si, DMU_FLAGS));
+        Writer_WriteInt32(writer, P_GetIntp(si, DMU_MIDDLE_BLENDMODE));
+        Writer_WriteInt16(writer, P_GetIntp(si, DMU_FLAGS));
     }
 
 #if !__JHEXEN__
     // Extended General?
     if(xli->xg)
     {
-        SV_WriteXGLine(li);
+        SV_WriteXGLine(li, writer);
     }
 #endif
 }
@@ -2668,7 +2635,7 @@ static void SV_WriteLine(Line *li)
  * Reads all versions of archived lines.
  * Including the old Ver1.
  */
-static void SV_ReadLine(Line *li)
+static void SV_ReadLine(Line *li, Reader *reader, int mapVersion)
 {
     Material *topMaterial = 0, *bottomMaterial = 0, *middleMaterial = 0;
     xline_t *xli = P_ToXLine(li);
@@ -2679,11 +2646,11 @@ static void SV_ReadLine(Line *li)
 #if __JHEXEN__
     if(mapVersion < 4)
 #else
-    if(hdr->version < 2)
+    if(mapVersion < 2)
 #endif
         type = lc_normal;
     else
-        type = lineclass_t(SV_ReadByte());
+        type = lineclass_t(Reader_ReadByte(reader));
 
 #ifdef __JHEXEN__
     DENG_UNUSED(type);
@@ -2694,16 +2661,16 @@ static void SV_ReadLine(Line *li)
 #if __JHEXEN__
     if(mapVersion < 3)
 #else
-    if(hdr->version < 5)
+    if(mapVersion < 5)
 #endif
         ver = 1;
     else
-        ver = (int) SV_ReadByte();
+        ver = (int) Reader_ReadByte(reader);
 
     if(ver >= 4)
-        P_SetIntp(li, DMU_FLAGS, SV_ReadShort());
+        P_SetIntp(li, DMU_FLAGS, Reader_ReadInt16(reader));
 
-    int flags = SV_ReadShort();
+    int flags = Reader_ReadInt16(reader);
 
     if(xli->flags & ML_TWOSIDED)
         flags |= ML_TWOSIDED;
@@ -2752,19 +2719,19 @@ static void SV_ReadLine(Line *li)
     if(ver >= 3)
     {
         for(int i = 0; i < MAXPLAYERS; ++i)
-            xli->mapped[i] = SV_ReadByte();
+            xli->mapped[i] = Reader_ReadByte(reader);
     }
 
 #if __JHEXEN__
-    xli->special = SV_ReadByte();
-    xli->arg1 = SV_ReadByte();
-    xli->arg2 = SV_ReadByte();
-    xli->arg3 = SV_ReadByte();
-    xli->arg4 = SV_ReadByte();
-    xli->arg5 = SV_ReadByte();
+    xli->special = Reader_ReadByte(reader);
+    xli->arg1 = Reader_ReadByte(reader);
+    xli->arg2 = Reader_ReadByte(reader);
+    xli->arg3 = Reader_ReadByte(reader);
+    xli->arg4 = Reader_ReadByte(reader);
+    xli->arg5 = Reader_ReadByte(reader);
 #else
-    xli->special = SV_ReadShort();
-    /*xli->tag =*/ SV_ReadShort();
+    xli->special = Reader_ReadInt16(reader);
+    /*xli->tag =*/ Reader_ReadInt16(reader);
 #endif
 
     // For each side
@@ -2778,24 +2745,24 @@ static void SV_ReadLine(Line *li)
         {
             float offset[2];
 
-            offset[VX] = (float) SV_ReadShort();
-            offset[VY] = (float) SV_ReadShort();
+            offset[VX] = (float) Reader_ReadInt16(reader);
+            offset[VY] = (float) Reader_ReadInt16(reader);
             P_SetFloatpv(si, DMU_TOP_MATERIAL_OFFSET_XY, offset);
 
-            offset[VX] = (float) SV_ReadShort();
-            offset[VY] = (float) SV_ReadShort();
+            offset[VX] = (float) Reader_ReadInt16(reader);
+            offset[VY] = (float) Reader_ReadInt16(reader);
             P_SetFloatpv(si, DMU_MIDDLE_MATERIAL_OFFSET_XY, offset);
 
-            offset[VX] = (float) SV_ReadShort();
-            offset[VY] = (float) SV_ReadShort();
+            offset[VX] = (float) Reader_ReadInt16(reader);
+            offset[VY] = (float) Reader_ReadInt16(reader);
             P_SetFloatpv(si, DMU_BOTTOM_MATERIAL_OFFSET_XY, offset);
         }
         else
         {
             float offset[2];
 
-            offset[VX] = (float) SV_ReadShort();
-            offset[VY] = (float) SV_ReadShort();
+            offset[VX] = (float) Reader_ReadInt16(reader);
+            offset[VY] = (float) Reader_ReadInt16(reader);
 
             P_SetFloatpv(si, DMU_TOP_MATERIAL_OFFSET_XY,    offset);
             P_SetFloatpv(si, DMU_MIDDLE_MATERIAL_OFFSET_XY, offset);
@@ -2804,18 +2771,18 @@ static void SV_ReadLine(Line *li)
 
         if(ver >= 3)
         {
-            P_SetIntp(si, DMU_TOP_FLAGS,    SV_ReadShort());
-            P_SetIntp(si, DMU_MIDDLE_FLAGS, SV_ReadShort());
-            P_SetIntp(si, DMU_BOTTOM_FLAGS, SV_ReadShort());
+            P_SetIntp(si, DMU_TOP_FLAGS,    Reader_ReadInt16(reader));
+            P_SetIntp(si, DMU_MIDDLE_FLAGS, Reader_ReadInt16(reader));
+            P_SetIntp(si, DMU_BOTTOM_FLAGS, Reader_ReadInt16(reader));
         }
 
 #if !__JHEXEN__
-        if(hdr->version >= 4)
+        if(mapVersion >= 4)
 #endif
         {
-            topMaterial    = SV_GetArchiveMaterial(SV_ReadShort(), 1);
-            bottomMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 1);
-            middleMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 1);
+            topMaterial    = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 1);
+            bottomMaterial = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 1);
+            middleMaterial = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 1);
         }
 
         P_SetPtrp(si, DMU_TOP_MATERIAL,    topMaterial);
@@ -2829,26 +2796,26 @@ static void SV_ReadLine(Line *li)
             int flags;
 
             for(int k = 0; k < 3; ++k)
-                rgba[k] = (float) SV_ReadByte() / 255.f;
+                rgba[k] = (float) Reader_ReadByte(reader) / 255.f;
             rgba[3] = 1;
             P_SetFloatpv(si, DMU_TOP_COLOR, rgba);
 
             for(int k = 0; k < 3; ++k)
-                rgba[k] = (float) SV_ReadByte() / 255.f;
+                rgba[k] = (float) Reader_ReadByte(reader) / 255.f;
             rgba[3] = 1;
             P_SetFloatpv(si, DMU_BOTTOM_COLOR, rgba);
 
             for(int k = 0; k < 4; ++k)
-                rgba[k] = (float) SV_ReadByte() / 255.f;
+                rgba[k] = (float) Reader_ReadByte(reader) / 255.f;
             P_SetFloatpv(si, DMU_MIDDLE_COLOR, rgba);
 
-            P_SetIntp(si, DMU_MIDDLE_BLENDMODE, SV_ReadLong());
+            P_SetIntp(si, DMU_MIDDLE_BLENDMODE, Reader_ReadInt32(reader));
 
-            flags = SV_ReadShort();
+            flags = Reader_ReadInt16(reader);
 #if __JHEXEN__
             if(mapVersion < 12)
 #else
-            if(hdr->version < 12)
+            if(mapVersion < 12)
 #endif
             {
                 if(P_GetIntp(si, DMU_FLAGS) & SDF_SUPPRESS_BACK_SECTOR)
@@ -2860,37 +2827,37 @@ static void SV_ReadLine(Line *li)
 
 #if !__JHEXEN__
     if(type == lc_xg1)
-        SV_ReadXGLine(li);
+        SV_ReadXGLine(li, reader, mapVersion);
 #endif
 }
 
 #if __JHEXEN__
-static void SV_WritePolyObj(Polyobj *po)
+static void SV_WritePolyObj(Polyobj *po, Writer *writer)
 {
     DENG_ASSERT(po != 0);
 
-    SV_WriteByte(1); // write a version byte.
+    Writer_WriteByte(writer, 1); // write a version byte.
 
-    SV_WriteLong(po->tag);
-    SV_WriteLong(po->angle);
-    SV_WriteLong(FLT2FIX(po->origin[VX]));
-    SV_WriteLong(FLT2FIX(po->origin[VY]));
+    Writer_WriteInt32(writer, po->tag);
+    Writer_WriteInt32(writer, po->angle);
+    Writer_WriteInt32(writer, FLT2FIX(po->origin[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(po->origin[VY]));
 }
 
-static int SV_ReadPolyObj()
+static int SV_ReadPolyObj(Reader *reader, int mapVersion)
 {
-    int ver = (mapVersion >= 3)? SV_ReadByte() : 0;
+    int ver = (mapVersion >= 3)? Reader_ReadByte(reader) : 0;
     DENG_UNUSED(ver);
 
-    Polyobj *po = Polyobj_ByTag(SV_ReadLong());
+    Polyobj *po = Polyobj_ByTag(Reader_ReadInt32(reader));
     DENG_ASSERT(po != 0);
 
-    angle_t angle = angle_t(SV_ReadLong());
+    angle_t angle = angle_t(Reader_ReadInt32(reader));
     Polyobj_Rotate(po, angle);
     po->destAngle = angle;
 
-    float const origX = FIX2FLT(SV_ReadLong());
-    float const origY = FIX2FLT(SV_ReadLong());
+    float const origX = FIX2FLT(Reader_ReadInt32(reader));
+    float const origY = FIX2FLT(Reader_ReadInt32(reader));
     Polyobj_MoveXY(po, origX - po->origin[VX], origY - po->origin[VY]);
 
     /// @todo What about speed? It isn't saved at all?
@@ -2899,1838 +2866,724 @@ static int SV_ReadPolyObj()
 }
 #endif
 
-static void writeMapElements()
-{
-    Writer *svWriter = SV_NewWriter();
-    MaterialArchive_Write(materialArchive, svWriter);
-    Writer_Delete(svWriter);
-
-    SV_BeginSegment(ASEG_MAP_ELEMENTS);
-
-    for(int i = 0; i < numsectors; ++i)
-        SV_WriteSector((Sector *)P_ToPtr(DMU_SECTOR, i));
-
-    for(int i = 0; i < numlines; ++i)
-        SV_WriteLine((Line *)P_ToPtr(DMU_LINE, i));
-
 #if __JHEXEN__
-    SV_BeginSegment(ASEG_POLYOBJS);
-    SV_WriteLong(numpolyobjs);
-    for(int i = 0; i < numpolyobjs; ++i)
-        SV_WritePolyObj(Polyobj_ById(i));
-#endif
-}
-
-static void readMapElements()
-{
-    SV_AssertSegment(ASEG_MAP_ELEMENTS);
-
-    // Load sectors.
-    for(int i = 0; i < numsectors; ++i)
-        SV_ReadSector((Sector *)P_ToPtr(DMU_SECTOR, i));
-
-    // Load lines.
-    for(int i = 0; i < numlines; ++i)
-        SV_ReadLine((Line *)P_ToPtr(DMU_LINE, i));
-
-#if __JHEXEN__
-    // Load polyobjects.
-    SV_AssertSegment(ASEG_POLYOBJS);
-
-    long const writtenPolyobjCount = SV_ReadLong();
-    DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
-    for(int i = 0; i < writtenPolyobjCount; ++i)
-        SV_ReadPolyObj();
-#endif
-}
-
-static void SV_WriteCeiling(ceiling_t const *ceiling)
-{
-    SV_WriteByte(2); // Write a version byte.
-
-    SV_WriteByte((byte) ceiling->type);
-    SV_WriteLong(P_ToIndex(ceiling->sector));
-
-    SV_WriteShort((int)ceiling->bottomHeight);
-    SV_WriteShort((int)ceiling->topHeight);
-    SV_WriteLong(FLT2FIX(ceiling->speed));
-
-    SV_WriteByte(ceiling->crush);
-
-    SV_WriteByte((byte) ceiling->state);
-    SV_WriteLong(ceiling->tag);
-    SV_WriteByte((byte) ceiling->oldState);
-}
-
-static int SV_ReadCeiling(ceiling_t *ceiling, int /*mapVersion*/)
-{
-#if __JHEXEN__
-    if(mapVersion >= 4)
-#else
-    if(hdr->version >= 5)
-#endif
-    {
-        // Note: the thinker class byte has already been read.
-        int ver = SV_ReadByte(); // version byte.
-
-        ceiling->thinker.function = T_MoveCeiling;
-
-#if !__JHEXEN__
-        // Should we put this into stasis?
-        if(hdr->version == 5)
-        {
-            if(!SV_ReadByte())
-                Thinker_SetStasis(&ceiling->thinker, true);
-        }
-#endif
-
-        ceiling->type         = (ceilingtype_e) SV_ReadByte();
-
-        ceiling->sector       = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(ceiling->sector != 0);
-
-        ceiling->bottomHeight = (float) SV_ReadShort();
-        ceiling->topHeight    = (float) SV_ReadShort();
-        ceiling->speed        = FIX2FLT((fixed_t) SV_ReadLong());
-
-        ceiling->crush        = SV_ReadByte();
-
-        if(ver == 2)
-            ceiling->state    = ceilingstate_e(SV_ReadByte());
-        else
-            ceiling->state    = ceilingstate_e(SV_ReadLong() == -1? CS_DOWN : CS_UP);
-
-        ceiling->tag          = SV_ReadLong();
-
-        if(ver == 2)
-            ceiling->oldState = ceilingstate_e(SV_ReadByte());
-        else
-            ceiling->state    = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
-    }
-    else
-    {
-        // Its in the old format which serialized ceiling_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-#if __JHEXEN__
-        // A 32bit pointer to sector, serialized.
-        ceiling->sector       = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(ceiling->sector != 0);
-
-        ceiling->type         = ceilingtype_e(SV_ReadLong());
-#else
-        ceiling->type         = ceilingtype_e(SV_ReadLong());
-
-        // A 32bit pointer to sector, serialized.
-        ceiling->sector       = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(ceiling->sector != 0);
-#endif
-
-        ceiling->bottomHeight = FIX2FLT((fixed_t) SV_ReadLong());
-        ceiling->topHeight    = FIX2FLT((fixed_t) SV_ReadLong());
-        ceiling->speed        = FIX2FLT((fixed_t) SV_ReadLong());
-
-        ceiling->crush        = SV_ReadLong();
-        ceiling->state        = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
-        ceiling->tag          = SV_ReadLong();
-        ceiling->oldState     = (SV_ReadLong() == -1? CS_DOWN : CS_UP);
-
-        ceiling->thinker.function = T_MoveCeiling;
-#if !__JHEXEN__
-        if(!junk.function)
-            Thinker_SetStasis(&ceiling->thinker, true);
-#endif
-    }
-
-    P_ToXSector(ceiling->sector)->specialData = ceiling;
-    return true; // Add this thinker.
-}
-
-static void SV_WriteDoor(door_t const *door)
-{
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteByte((byte) door->type);
-
-    SV_WriteLong(P_ToIndex(door->sector));
-
-    SV_WriteShort((int)door->topHeight);
-    SV_WriteLong(FLT2FIX(door->speed));
-
-    SV_WriteLong(door->state);
-    SV_WriteLong(door->topWait);
-    SV_WriteLong(door->topCountDown);
-}
-
-static int SV_ReadDoor(door_t *door, int /*mapVersion*/)
-{
-    DENG_ASSERT(door != 0);
-
-#if __JHEXEN__
-    if(mapVersion >= 4)
-#else
-    if(hdr->version >= 5)
-#endif
-    {   // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        door->type          = doortype_e(SV_ReadByte());
-        door->sector        = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(door->sector != 0);
-
-        door->topHeight     = (float) SV_ReadShort();
-        door->speed         = FIX2FLT((fixed_t) SV_ReadLong());
-
-        door->state         = doorstate_e(SV_ReadLong());
-        door->topWait       = SV_ReadLong();
-        door->topCountDown  = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old format which serialized door_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-#if __JHEXEN__
-        // A 32bit pointer to sector, serialized.
-        door->sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        door->type          = doortype_e(SV_ReadLong());
-#else
-        door->type          = doortype_e(SV_ReadLong());
-
-        // A 32bit pointer to sector, serialized.
-        door->sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-#endif
-        door->topHeight     = FIX2FLT((fixed_t) SV_ReadLong());
-        door->speed         = FIX2FLT((fixed_t) SV_ReadLong());
-
-        door->state         = doorstate_e(SV_ReadLong());
-        door->topWait       = SV_ReadLong();
-        door->topCountDown  = SV_ReadLong();
-    }
-
-    P_ToXSector(door->sector)->specialData = door;
-    door->thinker.function = T_Door;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WriteFloor(floor_t const *floor)
-{
-    DENG_ASSERT(floor != 0);
-
-    SV_WriteByte(3); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteByte((byte) floor->type);
-
-    SV_WriteLong(P_ToIndex(floor->sector));
-
-    SV_WriteByte((byte) floor->crush);
-
-    SV_WriteLong((int) floor->state);
-    SV_WriteLong(floor->newSpecial);
-
-    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, floor->material));
-
-    SV_WriteShort((int) floor->floorDestHeight);
-    SV_WriteLong(FLT2FIX(floor->speed));
-
-#if __JHEXEN__
-    SV_WriteLong(floor->delayCount);
-    SV_WriteLong(floor->delayTotal);
-    SV_WriteLong(FLT2FIX(floor->stairsDelayHeight));
-    SV_WriteLong(FLT2FIX(floor->stairsDelayHeightDelta));
-    SV_WriteLong(FLT2FIX(floor->resetHeight));
-    SV_WriteShort(floor->resetDelay);
-    SV_WriteShort(floor->resetDelayCount);
-#endif
-}
-
-static int SV_ReadFloor(floor_t *floor, int /*mapVersion*/)
-{
-    DENG_ASSERT(floor != 0);
-
-#if __JHEXEN__
-    if(mapVersion >= 4)
-#else
-    if(hdr->version >= 5)
-#endif
-    {   // Note: the thinker class byte has already been read.
-        byte ver = SV_ReadByte(); // version byte.
-
-        floor->type         = floortype_e(SV_ReadByte());
-
-        floor->sector       = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(floor->sector != 0);
-
-        floor->crush        = dd_bool(SV_ReadByte());
-        floor->state        = floorstate_e(SV_ReadLong());
-        floor->newSpecial   = SV_ReadLong();
-
-        if(ver >= 2)
-        {
-            floor->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
-        }
-        else
-        {
-            // Flat number is an absolute lump index.
-            Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-            ddstring_t name;
-            Str_Init(&name);
-            F_FileName(&name, Str_Text(W_LumpName(SV_ReadShort())));
-            Uri_SetPath(uri, Str_Text(&name));
-            floor->material = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
-            Uri_Delete(uri);
-            Str_Free(&name);
-        }
-
-        floor->floorDestHeight = (float) SV_ReadShort();
-        floor->speed        = FIX2FLT(SV_ReadLong());
-
-#if __JHEXEN__
-        floor->delayCount   = SV_ReadLong();
-        floor->delayTotal   = SV_ReadLong();
-        floor->stairsDelayHeight = FIX2FLT(SV_ReadLong());
-        floor->stairsDelayHeightDelta = FIX2FLT(SV_ReadLong());
-        floor->resetHeight  = FIX2FLT(SV_ReadLong());
-        floor->resetDelay   = SV_ReadShort();
-        floor->resetDelayCount = SV_ReadShort();
-#endif
-    }
-    else
-    {
-        // Its in the old format which serialized floor_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-#if __JHEXEN__
-        // A 32bit pointer to sector, serialized.
-        floor->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(floor->sector != 0);
-
-        floor->type         = floortype_e(SV_ReadLong());
-        floor->crush        = SV_ReadLong();
-#else
-        floor->type         = floortype_e(SV_ReadLong());
-        floor->crush        = SV_ReadLong();
-
-        // A 32bit pointer to sector, serialized.
-        floor->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(floor->sector != 0);
-#endif
-        floor->state        = floorstate_e(SV_ReadLong());
-        floor->newSpecial   = SV_ReadLong();
-
-        // Flat number is an absolute lump index.
-        Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
-        ddstring_t name;
-        Str_Init(&name);
-        F_FileName(&name, Str_Text(W_LumpName(SV_ReadShort())));
-        Uri_SetPath(uri, Str_Text(&name));
-        floor->material     = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
-        Uri_Delete(uri);
-        Str_Free(&name);
-
-        floor->floorDestHeight = FIX2FLT((fixed_t) SV_ReadLong());
-        floor->speed        = FIX2FLT((fixed_t) SV_ReadLong());
-
-#if __JHEXEN__
-        floor->delayCount   = SV_ReadLong();
-        floor->delayTotal   = SV_ReadLong();
-        floor->stairsDelayHeight = FIX2FLT((fixed_t) SV_ReadLong());
-        floor->stairsDelayHeightDelta = FIX2FLT((fixed_t) SV_ReadLong());
-        floor->resetHeight  = FIX2FLT((fixed_t) SV_ReadLong());
-        floor->resetDelay   = SV_ReadShort();
-        floor->resetDelayCount = SV_ReadShort();
-        /*floor->textureChange =*/ SV_ReadByte();
-#endif
-    }
-
-    P_ToXSector(floor->sector)->specialData = floor;
-    floor->thinker.function = T_MoveFloor;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WritePlat(plat_t const *plat)
-{
-    DENG_ASSERT(plat != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    SV_WriteByte((byte) plat->type);
-
-    SV_WriteLong(P_ToIndex(plat->sector));
-
-    SV_WriteLong(FLT2FIX(plat->speed));
-    SV_WriteShort((int)plat->low);
-    SV_WriteShort((int)plat->high);
-
-    SV_WriteLong(plat->wait);
-    SV_WriteLong(plat->count);
-
-    SV_WriteByte((byte) plat->state);
-    SV_WriteByte((byte) plat->oldState);
-    SV_WriteByte((byte) plat->crush);
-
-    SV_WriteLong(plat->tag);
-}
-
-static int SV_ReadPlat(plat_t *plat, int /*mapVersion*/)
-{
-    DENG_ASSERT(plat != 0);
-
-#if __JHEXEN__
-    if(mapVersion >= 4)
-#else
-    if(hdr->version >= 5)
-#endif
-    {   // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        plat->thinker.function = T_PlatRaise;
-
-#if !__JHEXEN__
-        // Should we put this into stasis?
-        if(hdr->version == 5)
-        {
-        if(!SV_ReadByte())
-            Thinker_SetStasis(&plat->thinker, true);
-        }
-#endif
-
-        plat->type      = plattype_e(SV_ReadByte());
-        plat->sector    = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(plat->sector != 0);
-
-        plat->speed     = FIX2FLT(SV_ReadLong());
-        plat->low       = (float) SV_ReadShort();
-        plat->high      = (float) SV_ReadShort();
-
-        plat->wait      = SV_ReadLong();
-        plat->count     = SV_ReadLong();
-
-        plat->state     = platstate_e(SV_ReadByte());
-        plat->oldState  = platstate_e(SV_ReadByte());
-        plat->crush     = (dd_bool) SV_ReadByte();
-
-        plat->tag = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old format which serialized plat_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        plat->sector    = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(plat->sector != 0);
-
-        plat->speed     = FIX2FLT((fixed_t) SV_ReadLong());
-        plat->low       = FIX2FLT((fixed_t) SV_ReadLong());
-        plat->high      = FIX2FLT((fixed_t) SV_ReadLong());
-
-        plat->wait      = SV_ReadLong();
-        plat->count     = SV_ReadLong();
-        plat->state     = platstate_e(SV_ReadLong());
-        plat->oldState  = platstate_e(SV_ReadLong());
-        plat->crush     = SV_ReadLong();
-        plat->tag       = SV_ReadLong();
-        plat->type      = plattype_e(SV_ReadLong());
-
-        plat->thinker.function = T_PlatRaise;
-#if !__JHEXEN__
-        if(!junk.function)
-            Thinker_SetStasis(&plat->thinker, true);
-#endif
-    }
-
-    P_ToXSector(plat->sector)->specialData = plat;
-    return true; // Add this thinker.
-}
-
-#if __JHEXEN__
-static void SV_WriteLight(light_t const *th)
+static void SV_WriteMovePoly(polyevent_t const *th, Writer *writer)
 {
     DENG_ASSERT(th != 0);
 
-    SV_WriteByte(1); // Write a version byte.
+    Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
     // is present as we ALWAYS add one when loading.
 
-    SV_WriteByte((byte) th->type);
-
-    SV_WriteLong(P_ToIndex(th->sector));
-
-    SV_WriteLong((int) (255.0f * th->value1));
-    SV_WriteLong((int) (255.0f * th->value2));
-    SV_WriteLong(th->tics1);
-    SV_WriteLong(th->tics2);
-    SV_WriteLong(th->count);
+    Writer_WriteInt32(writer, th->polyobj);
+    Writer_WriteInt32(writer, th->intSpeed);
+    Writer_WriteInt32(writer, th->dist);
+    Writer_WriteInt32(writer, th->fangle);
+    Writer_WriteInt32(writer, FLT2FIX(th->speed[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(th->speed[VY]));
 }
 
-static int SV_ReadLight(light_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        th->type        = (lighttype_t) SV_ReadByte();
-
-        th->sector      = (Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->value1      = (float) SV_ReadLong() / 255.0f;
-        th->value2      = (float) SV_ReadLong() / 255.0f;
-        th->tics1       = SV_ReadLong();
-        th->tics2       = SV_ReadLong();
-        th->count       = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized light_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        th->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->type        = lighttype_t(SV_ReadLong());
-        th->value1      = (float) SV_ReadLong() / 255.0f;
-        th->value2      = (float) SV_ReadLong() / 255.0f;
-        th->tics1       = SV_ReadLong();
-        th->tics2       = SV_ReadLong();
-        th->count       = SV_ReadLong();
-    }
-
-    th->thinker.function = (thinkfunc_t) T_Light;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WritePhase(phase_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(th->sector));
-
-    SV_WriteLong(th->index);
-    SV_WriteLong((int) (255.0f * th->baseValue));
-}
-
-static int SV_ReadPhase(phase_t *th, int /*mapVersion*/)
+static int SV_ReadMovePoly(polyevent_t *th, Reader *reader, int mapVersion)
 {
     DENG_ASSERT(th != 0);
 
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        th->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->index       = SV_ReadLong();
-        th->baseValue   = (float) SV_ReadLong() / 255.0f;
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized phase_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
 
         // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        th->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->index       = SV_ReadLong();
-        th->baseValue   = (float) SV_ReadLong() / 255.0f;
-    }
-
-    th->thinker.function = (thinkfunc_t) T_Phase;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WriteDoorPoly(polydoor_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    SV_WriteByte(th->type);
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(th->polyobj);
-    SV_WriteLong(th->intSpeed);
-    SV_WriteLong(th->dist);
-    SV_WriteLong(th->totalDist);
-    SV_WriteLong(th->direction);
-    SV_WriteLong(FLT2FIX(th->speed[VX]));
-    SV_WriteLong(FLT2FIX(th->speed[VY]));
-    SV_WriteLong(th->tics);
-    SV_WriteLong(th->waitTics);
-    SV_WriteByte(th->close);
-}
-
-static int SV_ReadDoorPoly(polydoor_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        th->type        = podoortype_t(SV_ReadByte());
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->totalDist   = SV_ReadLong();
-        th->direction   = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
-        th->tics        = SV_ReadLong();
-        th->waitTics    = SV_ReadLong();
-        th->close       = SV_ReadByte();
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized polydoor_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->totalDist   = SV_ReadLong();
-        th->direction   = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
-        th->tics        = SV_ReadLong();
-        th->waitTics    = SV_ReadLong();
-        th->type        = podoortype_t(SV_ReadByte());
-        th->close       = SV_ReadByte();
-    }
-
-    th->thinker.function = T_PolyDoor;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WriteMovePoly(polyevent_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(th->polyobj);
-    SV_WriteLong(th->intSpeed);
-    SV_WriteLong(th->dist);
-    SV_WriteLong(th->fangle);
-    SV_WriteLong(FLT2FIX(th->speed[VX]));
-    SV_WriteLong(FLT2FIX(th->speed[VY]));
-}
-
-static int SV_ReadMovePoly(polyevent_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->fangle      = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
+        th->polyobj     = Reader_ReadInt32(reader);
+        th->intSpeed    = Reader_ReadInt32(reader);
+        th->dist        = Reader_ReadInt32(reader);
+        th->fangle      = Reader_ReadInt32(reader);
+        th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
     }
     else
     {
         // Its in the old pre V4 format which serialized polyevent_t
         // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
 
         // Start of used data members.
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->fangle      = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
+        th->polyobj     = Reader_ReadInt32(reader);
+        th->intSpeed    = Reader_ReadInt32(reader);
+        th->dist        = Reader_ReadInt32(reader);
+        th->fangle      = Reader_ReadInt32(reader);
+        th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
     }
 
     th->thinker.function = T_MovePoly;
 
     return true; // Add this thinker.
 }
-
-static void SV_WriteRotatePoly(polyevent_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(th->polyobj);
-    SV_WriteLong(th->intSpeed);
-    SV_WriteLong(th->dist);
-    SV_WriteLong(th->fangle);
-    SV_WriteLong(FLT2FIX(th->speed[VX]));
-    SV_WriteLong(FLT2FIX(th->speed[VY]));
-}
-
-static int SV_ReadRotatePoly(polyevent_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->fangle      = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized polyevent_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        th->polyobj     = SV_ReadLong();
-        th->intSpeed    = SV_ReadLong();
-        th->dist        = SV_ReadLong();
-        th->fangle      = SV_ReadLong();
-        th->speed[VX]   = FIX2FLT(SV_ReadLong());
-        th->speed[VY]   = FIX2FLT(SV_ReadLong());
-    }
-
-    th->thinker.function = T_RotatePoly;
-    return true; // Add this thinker.
-}
-
-static void SV_WritePillar(pillar_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(th->sector));
-
-    SV_WriteLong(FLT2FIX(th->ceilingSpeed));
-    SV_WriteLong(FLT2FIX(th->floorSpeed));
-    SV_WriteLong(FLT2FIX(th->floorDest));
-    SV_WriteLong(FLT2FIX(th->ceilingDest));
-    SV_WriteLong(th->direction);
-    SV_WriteLong(th->crush);
-}
-
-static int SV_ReadPillar(pillar_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        th->sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->ceilingSpeed    = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floorSpeed      = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floorDest       = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ceilingDest     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->direction       = SV_ReadLong();
-        th->crush           = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized pillar_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        th->sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->ceilingSpeed    = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floorSpeed      = FIX2FLT((fixed_t) SV_ReadLong());
-        th->floorDest       = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ceilingDest     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->direction       = SV_ReadLong();
-        th->crush           = SV_ReadLong();
-    }
-
-    th->thinker.function = (thinkfunc_t) T_BuildPillar;
-
-    P_ToXSector(th->sector)->specialData = th;
-    return true; // Add this thinker.
-}
-
-static void SV_WriteFloorWaggle(waggle_t const *th)
-{
-    DENG_ASSERT(th != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(th->sector));
-
-    SV_WriteLong(FLT2FIX(th->originalHeight));
-    SV_WriteLong(FLT2FIX(th->accumulator));
-    SV_WriteLong(FLT2FIX(th->accDelta));
-    SV_WriteLong(FLT2FIX(th->targetScale));
-    SV_WriteLong(FLT2FIX(th->scale));
-    SV_WriteLong(FLT2FIX(th->scaleDelta));
-    SV_WriteLong(th->ticker);
-    SV_WriteLong(th->state);
-}
-
-static int SV_ReadFloorWaggle(waggle_t *th, int /*mapVersion*/)
-{
-    DENG_ASSERT(th != 0);
-
-    if(mapVersion >= 4)
-    {
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        th->sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->originalHeight  = FIX2FLT((fixed_t) SV_ReadLong());
-        th->accumulator     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->accDelta        = FIX2FLT((fixed_t) SV_ReadLong());
-        th->targetScale     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->scale           = FIX2FLT((fixed_t) SV_ReadLong());
-        th->scaleDelta      = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ticker          = SV_ReadLong();
-        th->state           = wagglestate_e(SV_ReadLong());
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized waggle_t
-        // Padding at the start (an old thinker_t struct)
-        thinker_t junk;
-        SV_Read(&junk, (size_t) 16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        th->sector          = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(th->sector != 0);
-
-        th->originalHeight  = FIX2FLT((fixed_t) SV_ReadLong());
-        th->accumulator     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->accDelta        = FIX2FLT((fixed_t) SV_ReadLong());
-        th->targetScale     = FIX2FLT((fixed_t) SV_ReadLong());
-        th->scale           = FIX2FLT((fixed_t) SV_ReadLong());
-        th->scaleDelta      = FIX2FLT((fixed_t) SV_ReadLong());
-        th->ticker          = SV_ReadLong();
-        th->state           = wagglestate_e(SV_ReadLong());
-    }
-
-    th->thinker.function = (thinkfunc_t) T_FloorWaggle;
-
-    P_ToXSector(th->sector)->specialData = th;
-    return true; // Add this thinker.
-}
 #endif // __JHEXEN__
 
+class MapStateWriter
+{
+public:
+    MapStateWriter(Writer *writer)
+        : _writer(writer)
+    {
+        DENG_ASSERT(_writer != 0);
+    }
+
+    void write()
+    {
+        beginMapSegment();
+        {
+            writeElements();
+            writePolyobjs();
+            writeThinkers();
+            writeACScriptData();
+            writeSoundSequences();
+            writeMisc();
+            writeBrain();
+            writeSoundTargets();
+        }
+        endMapSegment();
+    }
+
+private:
+    void beginMapSegment()
+    {
 #if !__JHEXEN__
-static void SV_WriteFlash(lightflash_t const *flash)
-{
-    DENG_ASSERT(flash != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(flash->sector));
-
-    SV_WriteLong(flash->count);
-    SV_WriteLong((int) (255.0f * flash->maxLight));
-    SV_WriteLong((int) (255.0f * flash->minLight));
-    SV_WriteLong(flash->maxTime);
-    SV_WriteLong(flash->minTime);
-}
-
-static int SV_ReadFlash(lightflash_t *flash, int /*mapVersion*/)
-{
-    DENG_ASSERT(flash != 0);
-
-    if(hdr->version >= 5)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        // Start of used data members.
-        flash->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(flash->sector != 0);
-
-        flash->count        = SV_ReadLong();
-        flash->maxLight     = (float) SV_ReadLong() / 255.0f;
-        flash->minLight     = (float) SV_ReadLong() / 255.0f;
-        flash->maxTime      = SV_ReadLong();
-        flash->minTime      = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V5 format which serialized lightflash_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        flash->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(flash->sector != 0);
-
-        flash->count        = SV_ReadLong();
-        flash->maxLight     = (float) SV_ReadLong() / 255.0f;
-        flash->minLight     = (float) SV_ReadLong() / 255.0f;
-        flash->maxTime      = SV_ReadLong();
-        flash->minTime      = SV_ReadLong();
-    }
-
-    flash->thinker.function = (thinkfunc_t) T_LightFlash;
-    return true; // Add this thinker.
-}
-
-static void SV_WriteStrobe(strobe_t const *strobe)
-{
-    DENG_ASSERT(strobe != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(strobe->sector));
-
-    SV_WriteLong(strobe->count);
-    SV_WriteLong((int) (255.0f * strobe->maxLight));
-    SV_WriteLong((int) (255.0f * strobe->minLight));
-    SV_WriteLong(strobe->darkTime);
-    SV_WriteLong(strobe->brightTime);
-}
-
-static int SV_ReadStrobe(strobe_t *strobe, int /*mapVersion*/)
-{
-    DENG_ASSERT(strobe != 0);
-
-    if(hdr->version >= 5)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        strobe->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(strobe->sector != 0);
-
-        strobe->count       = SV_ReadLong();
-        strobe->maxLight    = (float) SV_ReadLong() / 255.0f;
-        strobe->minLight    = (float) SV_ReadLong() / 255.0f;
-        strobe->darkTime    = SV_ReadLong();
-        strobe->brightTime  = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V5 format which serialized strobe_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        strobe->sector      = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(strobe->sector != 0);
-
-        strobe->count       = SV_ReadLong();
-        strobe->minLight    = (float) SV_ReadLong() / 255.0f;
-        strobe->maxLight    = (float) SV_ReadLong() / 255.0f;
-        strobe->darkTime    = SV_ReadLong();
-        strobe->brightTime  = SV_ReadLong();
-    }
-
-    strobe->thinker.function = (thinkfunc_t) T_StrobeFlash;
-    return true; // Add this thinker.
-}
-
-static void SV_WriteGlow(glow_t const *glow)
-{
-    DENG_ASSERT(glow != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(glow->sector));
-
-    SV_WriteLong((int) (255.0f * glow->maxLight));
-    SV_WriteLong((int) (255.0f * glow->minLight));
-    SV_WriteLong(glow->direction);
-}
-
-static int SV_ReadGlow(glow_t *glow, int /*mapVersion*/)
-{
-    DENG_ASSERT(glow != 0);
-
-    if(hdr->version >= 5)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ SV_ReadByte(); // version byte.
-
-        glow->sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(glow->sector != 0);
-
-        glow->maxLight      = (float) SV_ReadLong() / 255.0f;
-        glow->minLight      = (float) SV_ReadLong() / 255.0f;
-        glow->direction     = SV_ReadLong();
-    }
-    else
-    {
-        // Its in the old pre V5 format which serialized strobe_t
-        // Padding at the start (an old thinker_t struct)
-        SV_Seek(16);
-
-        // Start of used data members.
-        // A 32bit pointer to sector, serialized.
-        glow->sector        = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(glow->sector != 0);
-
-        glow->minLight      = (float) SV_ReadLong() / 255.0f;
-        glow->maxLight      = (float) SV_ReadLong() / 255.0f;
-        glow->direction     = SV_ReadLong();
-    }
-
-    glow->thinker.function = (thinkfunc_t) T_Glow;
-    return true; // Add this thinker.
-}
-
-# if __JDOOM__ || __JDOOM64__
-static void SV_WriteFlicker(fireflicker_t const *flicker)
-{
-    DENG_ASSERT(flicker != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(flicker->sector));
-
-    SV_WriteLong((int) (255.0f * flicker->maxLight));
-    SV_WriteLong((int) (255.0f * flicker->minLight));
-}
-
-/**
- * T_FireFlicker was added to save games in ver5, therefore we don't have
- * an old format to support.
- */
-static int SV_ReadFlicker(fireflicker_t *flicker, int /*mapVersion*/)
-{
-    DENG_ASSERT(flicker != 0);
-
-    /*int ver =*/ SV_ReadByte(); // version byte.
-
-    // Note: the thinker class byte has already been read.
-    flicker->sector         = (Sector*)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-    DENG_ASSERT(flicker->sector != 0);
-
-    flicker->maxLight       = (float) SV_ReadLong() / 255.0f;
-    flicker->minLight       = (float) SV_ReadLong() / 255.0f;
-
-    flicker->thinker.function = (thinkfunc_t) T_FireFlicker;
-    return true; // Add this thinker.
-}
-# endif
-
-# if __JDOOM64__
-static void SV_WriteBlink(lightblink_t const *blink)
-{
-    DENG_ASSERT(blink != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    SV_WriteLong(P_ToIndex(blink->sector));
-
-    SV_WriteLong(blink->count);
-    SV_WriteLong((int) (255.0f * blink->maxLight));
-    SV_WriteLong((int) (255.0f * blink->minLight));
-    SV_WriteLong(blink->maxTime);
-    SV_WriteLong(blink->minTime);
-}
-
-/**
- * T_LightBlink was added to save games in ver5, therefore we don't have an
- * old format to support
- */
-static int SV_ReadBlink(lightblink_t *blink, int /*mapVersion*/)
-{
-    DENG_ASSERT(blink != 0);
-
-    /*int ver =*/ SV_ReadByte(); // version byte.
-
-    // Note: the thinker class byte has already been read.
-    blink->sector       = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-    DENG_ASSERT(blink->sector != 0);
-
-    blink->count        = SV_ReadLong();
-    blink->maxLight     = (float) SV_ReadLong() / 255.0f;
-    blink->minLight     = (float) SV_ReadLong() / 255.0f;
-    blink->maxTime      = SV_ReadLong();
-    blink->minTime      = SV_ReadLong();
-
-    blink->thinker.function = (thinkfunc_t) T_LightBlink;
-    return true; // Add this thinker.
-}
-# endif
-#endif // !__JHEXEN__
-
-static void SV_WriteMaterialChanger(materialchanger_t const *mchanger)
-{
-    DENG_ASSERT(mchanger != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    // Write a type byte. For future use (e.g., changing plane surface
-    // materials as well as side surface materials).
-    SV_WriteByte(0);
-    SV_WriteLong(mchanger->timer);
-    SV_WriteLong(P_ToIndex(mchanger->side));
-    SV_WriteByte((byte) mchanger->section);
-    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, mchanger->material));
-}
-
-static int SV_ReadMaterialChanger(materialchanger_t *mchanger, int /*mapVersion*/)
-{
-    DENG_ASSERT(mchanger != 0);
-
-    /*int ver =*/ SV_ReadByte();
-    // Note: the thinker class byte has already been read.
-
-    /*byte type =*/ SV_ReadByte();
-
-    mchanger->timer = SV_ReadLong();
-
-    int sideIndex = (int) SV_ReadLong();
-#if __JHEXEN__
-    if(mapVersion >= 12)
-
-#else
-    if(hdr->version >= 12)
-#endif
-    {
-        mchanger->side = (Side *)P_ToPtr(DMU_SIDE, sideIndex);
-    }
-    else
-    {
-        // Side index is actually a DMU_ARCHIVE_INDEX.
-        mchanger->side = (Side *)SV_SideArchive().at(sideIndex);
-    }
-    DENG_ASSERT(mchanger->side != 0);
-
-    mchanger->section = (SideSection) SV_ReadByte();
-    mchanger->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
-
-    mchanger->thinker.function = T_MaterialChanger;
-
-    return true; // Add this thinker.
-}
-
-static void SV_WriteScroll(scroll_t const *scroll)
-{
-    DENG_ASSERT(scroll != 0);
-
-    SV_WriteByte(1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    // Write a type byte. For future use (e.g., scrolling plane surface
-    // materials as well as side surface materials).
-    SV_WriteByte(DMU_GetType(scroll->dmuObject));
-    SV_WriteLong(P_ToIndex(scroll->dmuObject));
-    SV_WriteLong(scroll->elementBits);
-    SV_WriteLong(FLT2FIX(scroll->offset[0]));
-    SV_WriteLong(FLT2FIX(scroll->offset[1]));
-}
-
-static int SV_ReadScroll(scroll_t *scroll, int /*mapVersion*/)
-{
-    DENG_ASSERT(scroll != 0);
-
-    /*int ver =*/ SV_ReadByte(); // version byte.
-    // Note: the thinker class byte has already been read.
-
-    if(SV_ReadByte() == DMU_SIDE) // Type byte.
-    {
-        int sideIndex = (int) SV_ReadLong();
-
-#if __JHEXEN__
-        if(mapVersion >= 12)
-
-#else
-        if(hdr->version >= 12)
-#endif
-        {
-            scroll->dmuObject = (Side *)P_ToPtr(DMU_SIDE, sideIndex);
-        }
-        else
-        {
-            // Side index is actually a DMU_ARCHIVE_INDEX.
-            scroll->dmuObject = (Side *)SV_SideArchive().at(sideIndex);
-        }
-
-        DENG_ASSERT(scroll->dmuObject != 0);
-    }
-    else // Sector plane-surface.
-    {
-        scroll->dmuObject = (Sector *)P_ToPtr(DMU_SECTOR, (int) SV_ReadLong());
-        DENG_ASSERT(scroll->dmuObject != 0);
-    }
-
-    scroll->elementBits = SV_ReadLong();
-    scroll->offset[0] = FIX2FLT((fixed_t) SV_ReadLong());
-    scroll->offset[1] = FIX2FLT((fixed_t) SV_ReadLong());
-
-    scroll->thinker.function = (thinkfunc_t) T_Scroll;
-
-    return true; // Add this thinker.
-}
-
-/**
- * Serializes the specified thinker and writes it to save state.
- *
- * @param th  The thinker to be serialized.
- */
-static int writeThinker(thinker_t *th, void *context)
-{
-    DENG_ASSERT(th != 0);
-    DENG_UNUSED(context);
-
-    // We are only concerned with thinkers we have save info for.
-    ThinkerClassInfo *thInfo = infoForThinker(*th);
-    if(!thInfo) return false;
-
-    // Are we excluding players?
-    if(thingArchiveExcludePlayers)
-    {
-        if(th->function == (thinkfunc_t) P_MobjThinker && ((mobj_t *) th)->player)
-            return false; // Continue iteration.
-    }
-
-    // Only the server saves this class of thinker?
-    if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
-        return false;
-
-    // Write the header block for this thinker.
-    SV_WriteByte(thInfo->thinkclass); // Thinker type byte.
-    SV_WriteByte(th->inStasis? 1 : 0); // In stasis?
-
-    // Write the thinker data.
-    thInfo->writeFunc(th);
-
-    return false; // Continue iteration.
-}
-
-/**
- * Serializes thinkers for both client and server.
- *
- * @note Clients do not save data for all thinkers. In some cases the server
- * will send it anyway (so saving it would just bloat client save states).
- *
- * @note Some thinker classes are NEVER saved by clients.
- */
-static void writeThinkers()
-{
-    SV_BeginSegment(ASEG_THINKERS);
-    {
-#if __JHEXEN__
-        SV_WriteLong(thingArchiveSize); // number of mobjs.
+        // Clear the sound target count (determined while saving sectors).
+        numSoundTargets = 0;
 #endif
 
-        // Serialize qualifying thinkers.
-        Thinker_Iterate(0/*all thinkers*/, writeThinker, 0/*no parameters*/);
-    }
-    SV_WriteByte(TC_END);
-}
-
-static int restoreMobjLinks(thinker_t *th, void *parameters)
-{
-    DENG_UNUSED(parameters);
-
-    if(th->function != (thinkfunc_t) P_MobjThinker)
-        return false; // Continue iteration.
-
-    mobj_t *mo = (mobj_t *) th;
-    mo->target = SV_GetArchiveThing(PTR2INT(mo->target), &mo->target);
-    mo->onMobj = SV_GetArchiveThing(PTR2INT(mo->onMobj), &mo->onMobj);
+        SV_BeginSegment(ASEG_MAP_HEADER2);
 
 #if __JHEXEN__
-    switch(mo->type)
-    {
-    // Just tracer
-    case MT_BISH_FX:
-    case MT_HOLY_FX:
-    case MT_DRAGON:
-    case MT_THRUSTFLOOR_UP:
-    case MT_THRUSTFLOOR_DOWN:
-    case MT_MINOTAUR:
-    case MT_SORCFX1:
-        if(mapVersion >= 3)
-        {
-            mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
-        }
-        else
-        {
-            mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
-            mo->special1 = 0;
-        }
-        break;
+        Writer_WriteByte(_writer, MY_SAVE_VERSION); // Map version also.
 
-    // Just special2
-    case MT_LIGHTNING_FLOOR:
-    case MT_LIGHTNING_ZAP:
-        mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
-        break;
-
-    // Both tracer and special2
-    case MT_HOLY_TAIL:
-    case MT_LIGHTNING_CEILING:
-        if(mapVersion >= 3)
-        {
-            mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
-        }
-        else
-        {
-            mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
-            mo->special1 = 0;
-        }
-        mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
-        break;
-
-    default:
-        break;
-    }
-#else
-# if __JDOOM__ || __JDOOM64__
-    mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
-# endif
-# if __JHERETIC__
-    mo->generator = SV_GetArchiveThing(PTR2INT(mo->generator), &mo->generator);
-# endif
+        // Write the map timer
+        Writer_WriteInt32(_writer, mapTime);
 #endif
-
-    return false; // Continue iteration.
-}
-
-static int removeThinkerWorker(thinker_t *th, void *context)
-{
-    DENG_UNUSED(context);
-
-    if(th->function == (thinkfunc_t) P_MobjThinker)
-        P_MobjRemove((mobj_t *) th, true);
-    else
-        Z_Free(th);
-
-    return false; // Continue iteration.
-}
-
-static void removeLoadSpawnedThinkers()
-{
-#if !__JHEXEN__
-    if(!IS_SERVER) return; // Not for us.
-#endif
-
-    Thinker_Iterate(0 /*all thinkers*/, removeThinkerWorker, 0/*no parameters*/);
-    Thinker_Init();
-}
-
-#if __JHEXEN__
-static bool mobjtypeHasCorpse(mobjtype_t type)
-{
-    // Only corpses that call A_QueueCorpse from death routine.
-    /// @todo fixme: What about mods? Look for this action in the death
-    /// state sequence?
-    switch(type)
-    {
-    case MT_CENTAUR:
-    case MT_CENTAURLEADER:
-    case MT_DEMON:
-    case MT_DEMON2:
-    case MT_WRAITH:
-    case MT_WRAITHB:
-    case MT_BISHOP:
-    case MT_ETTIN:
-    case MT_PIG:
-    case MT_CENTAUR_SHIELD:
-    case MT_CENTAUR_SWORD:
-    case MT_DEMONCHUNK1:
-    case MT_DEMONCHUNK2:
-    case MT_DEMONCHUNK3:
-    case MT_DEMONCHUNK4:
-    case MT_DEMONCHUNK5:
-    case MT_DEMON2CHUNK1:
-    case MT_DEMON2CHUNK2:
-    case MT_DEMON2CHUNK3:
-    case MT_DEMON2CHUNK4:
-    case MT_DEMON2CHUNK5:
-    case MT_FIREDEMON_SPLOTCH1:
-    case MT_FIREDEMON_SPLOTCH2:
-        return true;
-
-    default: return false;
-    }
-}
-
-static int rebuildCorpseQueueWorker(thinker_t *th, void *parameters)
-{
-    DENG_UNUSED(parameters);
-
-    mobj_t *mo = (mobj_t *) th;
-
-    // Must be a non-iced corpse.
-    if((mo->flags & MF_CORPSE) && !(mo->flags & MF_ICECORPSE) &&
-       mobjtypeHasCorpse(mobjtype_t(mo->type)))
-    {
-        P_AddCorpseToQueue(mo);
+        MaterialArchive_Write(materialArchive, _writer);
     }
 
-    return false; // Continue iteration.
-}
-
-/**
- * @todo fixme: the corpse queue should be serialized (original order unknown).
- */
-static void rebuildCorpseQueue()
-{
-    P_InitCorpseQueue();
-    // Search the thinker list for corpses and place them in the queue.
-    Thinker_Iterate((thinkfunc_t) P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
-}
-#endif
-
-/**
- * Update the references between thinkers. To be called during the load
- * process to finalize the loaded thinkers.
- */
-static void relinkThinkers()
-{
-#if __JHEXEN__
-    Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinks, 0/*no params*/);
-
-    P_CreateTIDList();
-    rebuildCorpseQueue();
-
-#else
-    if(IS_SERVER)
+    void endMapSegment()
     {
-        Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinks, 0/*no params*/);
+        SV_EndSegment();
+    }
+
+    void writeElements()
+    {
+        SV_BeginSegment(ASEG_MAP_ELEMENTS);
+
+        for(int i = 0; i < numsectors; ++i)
+        {
+            SV_WriteSector((Sector *)P_ToPtr(DMU_SECTOR, i), _writer);
+        }
 
         for(int i = 0; i < numlines; ++i)
         {
-            xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
-            if(!xline->xg) continue;
-
-            xline->xg->activator = SV_GetArchiveThing(PTR2INT(xline->xg->activator),
-                                                      &xline->xg->activator);
+            SV_WriteLine((Line *)P_ToPtr(DMU_LINE, i), _writer);
         }
     }
-#endif
-}
 
-/**
- * Deserializes and then spawns thinkers for both client and server.
- */
-static void readThinkers()
-{
-#if __JHEXEN__
-    int const arcMapVersion = mapVersion;
-#else
-    int const arcMapVersion = hdr->version;
-#endif
-
-#if __JHEXEN__
-    bool const formatHasStasisInfo = (mapVersion >= 6);
-#else
-    bool const formatHasStasisInfo = (hdr->version >= 6);
-#endif
-
-    removeLoadSpawnedThinkers();
-
-#if __JHEXEN__
-    if(mapVersion < 4)
-        SV_AssertSegment(ASEG_MOBJS);
-    else
-#endif
-        SV_AssertSegment(ASEG_THINKERS);
-
-#if __JHEXEN__
-    initTargetPlayers();
-    initThingArchiveForLoad(SV_ReadLong() /* num elements */);
-#endif
-
-    // Read in saved thinkers.
-#if __JHEXEN__
-    int i = 0;
-    bool reachedSpecialsBlock = (mapVersion >= 4);
-#else
-    bool reachedSpecialsBlock = (hdr->version >= 5);
-#endif
-    byte tClass = 0;
-    for(;;)
+    void writePolyobjs()
     {
 #if __JHEXEN__
-        if(reachedSpecialsBlock)
-#endif
-            tClass = SV_ReadByte();
+        SV_BeginSegment(ASEG_POLYOBJS);
 
-#if __JHEXEN__
-        if(mapVersion < 4)
+        Writer_WriteInt32(_writer, numpolyobjs);
+        for(int i = 0; i < numpolyobjs; ++i)
         {
-            if(reachedSpecialsBlock) // Have we started on the specials yet?
-            {
-                // Versions prior to 4 used a different value to mark
-                // the end of the specials data and the thinker class ids
-                // are differrent, so we need to manipulate the thinker
-                // class identifier value.
-                if(tClass != TC_END)
-                    tClass += 2;
-            }
-            else
-            {
-                tClass = TC_MOBJ;
-            }
-
-            if(tClass == TC_MOBJ && (uint)i == thingArchiveSize)
-            {
-                SV_AssertSegment(ASEG_THINKERS);
-                // We have reached the begining of the "specials" block.
-                reachedSpecialsBlock = true;
-                continue;
-            }
+            SV_WritePolyObj(Polyobj_ById(i), _writer);
         }
-#else
-        if(hdr->version < 5)
-        {
-            if(reachedSpecialsBlock)
-            {
-                // Versions prior to 5 used a different value to mark
-                // the end of the specials data so we need to manipulate
-                // the thinker class identifier value.
-                if(tClass == PRE_VER5_END_SPECIALS)
-                    tClass = TC_END;
-                else
-                    tClass += 3;
-            }
-            else if(tClass == TC_END)
-            {
-                // We have reached the begining of the "specials" block.
-                reachedSpecialsBlock = true;
-                continue;
-            }
-        }
-#endif
-        if(tClass == TC_END)
-            break; // End of the list.
-
-        ThinkerClassInfo *thInfo = infoForThinkerClass(thinkerclass_t(tClass));
-        DENG_ASSERT(thInfo != 0);
-        // Not for us? (it shouldn't be here anyway!).
-        DENG_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
-
-        // Mobjs use a special engine-side allocator.
-        thinker_t *th = 0;
-        if(thInfo->thinkclass == TC_MOBJ)
-        {
-            th = reinterpret_cast<thinker_t *>(Mobj_CreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0));
-        }
-        else
-        {
-            th = reinterpret_cast<thinker_t *>(Z_Calloc(thInfo->size, PU_MAP, 0));
-        }
-
-        bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(SV_ReadByte()) : false);
-
-        if(thInfo->readFunc(th, arcMapVersion))
-        {
-            Thinker_Add(th);
-        }
-
-        if(putThinkerInStasis)
-        {
-            Thinker_SetStasis(th, true);
-        }
-
-#if __JHEXEN__
-        if(tClass == TC_MOBJ)
-            i++;
 #endif
     }
 
-    // Update references between thinkers.
-    relinkThinkers();
-}
+    /**
+     * Serializes the specified thinker and writes it to save state.
+     *
+     * @param th  The thinker to be serialized.
+     */
+    static int writeThinkerWorker(thinker_t *th, void *context)
+    {
+        DENG_ASSERT(th != 0 && context != 0);
+        Writer *writer = (Writer *) context;
 
-static void writeBrain()
-{
+        // We are only concerned with thinkers we have save info for.
+        ThinkerClassInfo *thInfo = infoForThinker(*th);
+        if(!thInfo) return false;
+
+        // Are we excluding players?
+        if(thingArchiveExcludePlayers)
+        {
+            if(th->function == (thinkfunc_t) P_MobjThinker && ((mobj_t *) th)->player)
+                return false; // Continue iteration.
+        }
+
+        // Only the server saves this class of thinker?
+        if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
+            return false;
+
+        // Write the header block for this thinker.
+        Writer_WriteByte(writer, thInfo->thinkclass); // Thinker type byte.
+        Writer_WriteByte(writer, th->inStasis? 1 : 0); // In stasis?
+
+        // Write the thinker data.
+        thInfo->writeFunc(th, writer);
+
+        return false; // Continue iteration.
+    }
+
+    /**
+     * Serializes thinkers for both client and server.
+     *
+     * @note Clients do not save data for all thinkers. In some cases the server
+     * will send it anyway (so saving it would just bloat client save states).
+     *
+     * @note Some thinker classes are NEVER saved by clients.
+     */
+    void writeThinkers()
+    {
+        SV_BeginSegment(ASEG_THINKERS);
+
+#if __JHEXEN__
+        Writer_WriteInt32(_writer, thingArchiveSize); // number of mobjs.
+#endif
+
+        // Serialize qualifying thinkers.
+        Thinker_Iterate(0/*all thinkers*/, writeThinkerWorker, _writer);
+
+        // Mark the end of the thinkers.
+        Writer_WriteByte(_writer, TC_END);
+    }
+
+    void writeACScriptData()
+    {
+#if __JHEXEN__
+        Game_ACScriptInterpreter().writeMapScriptData(_writer);
+#endif
+    }
+
+    void writeSoundSequences()
+    {
+#if __JHEXEN__
+        SN_WriteSequences(_writer);
+#endif
+    }
+
+    void writeBrain()
+    {
 #if __JDOOM__
-    // Not for us?
-    if(!IS_SERVER) return;
-
-    SV_WriteByte(1); // Write a version byte.
-
-    SV_WriteShort(brain.numTargets);
-    SV_WriteShort(brain.targetOn);
-    SV_WriteByte(brain.easy!=0? 1:0);
-
-    // Write the mobj references using the mobj archive.
-    for(int i = 0; i < brain.numTargets; ++i)
-        SV_WriteShort(SV_ThingArchiveId(brain.targets[i]));
+        P_BrainWrite(_writer);
 #endif
-}
-
-static void readBrain()
-{
-#if __JDOOM__
-    // Not for us?
-    if(!IS_SERVER) return;
-
-    // No brain data before version 3.
-    if(hdr->version < 3) return;
-
-    P_BrainClearTargets();
-
-    int ver = (hdr->version >= 8? SV_ReadByte() : 0);
-    int numTargets;
-    if(ver >= 1)
-    {
-        numTargets      = SV_ReadShort();
-        brain.targetOn  = SV_ReadShort();
-        brain.easy      = (dd_bool)SV_ReadByte();
-    }
-    else
-    {
-        numTargets      = SV_ReadByte();
-        brain.targetOn  = SV_ReadByte();
-        brain.easy      = false;
     }
 
-    for(int i = 0; i < numTargets; ++i)
+    void writeSoundTargets()
     {
-        P_BrainAddTarget(SV_GetArchiveThing((int) SV_ReadShort(), 0));
-    }
-#endif
-}
-
-static void writeSoundTargets()
-{
 #if !__JHEXEN__
-    // Not for us?
-    if(!IS_SERVER) return;
+        // Not for us?
+        if(!IS_SERVER) return;
 
-    // Write the total number.
-    SV_WriteLong(numSoundTargets);
+        // Write the total number.
+        Writer_WriteInt32(_writer, numSoundTargets);
 
-    // Write the mobj references using the mobj archive.
-    for(int i = 0; i < numsectors; ++i)
-    {
-        xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i));
-
-        if(xsec->soundTarget)
+        // Write the mobj references using the mobj archive.
+        for(int i = 0; i < numsectors; ++i)
         {
-            SV_WriteLong(i);
-            SV_WriteShort(SV_ThingArchiveId(xsec->soundTarget));
+            xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i));
+
+            if(xsec->soundTarget)
+            {
+                Writer_WriteInt32(_writer, i);
+                Writer_WriteInt16(_writer, SV_ThingArchiveId(xsec->soundTarget));
+            }
         }
-    }
 #endif
-}
+    }
 
-static void readSoundTargets()
-{
-#if !__JHEXEN__
-    // Not for us?
-    if(!IS_SERVER) return;
-
-    // Sound Target data was introduced in ver 5
-    if(hdr->version < 5) return;
-
-    // Read the number of targets
-    int numsoundtargets = SV_ReadLong();
-
-    // Read in the sound targets.
-    for(int i = 0; i < numsoundtargets; ++i)
+    void writeMisc()
     {
-        xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, SV_ReadLong()));
-        DENG_ASSERT(xsec != 0);
-        if(!xsec)
+#if __JHEXEN__
+        SV_BeginSegment(ASEG_MISC);
+
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            DENG_UNUSED(SV_ReadShort());
-            continue;
+            Writer_WriteInt32(_writer, localQuakeHappening[i]);
         }
-
-        xsec->soundTarget = INT2PTR(mobj_t, SV_ReadShort());
-        xsec->soundTarget =
-            SV_GetArchiveThing(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
+#endif
     }
-#endif
-}
 
-static void writeMisc()
+    Writer *_writer;
+};
+
+class MapStateReader
 {
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_MISC);
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
+public:
+    MapStateReader(Reader *reader, int saveVersion)
+        : _reader(reader)
+        , _saveVersion(saveVersion)
+        , _mapVersion(saveVersion) // Default: mapVersion == saveVersion
     {
-        SV_WriteLong(localQuakeHappening[i]);
+        DENG_ASSERT(_reader != 0);
     }
-#endif
-}
 
-static void readMisc()
-{
-#if __JHEXEN__
-    SV_AssertSegment(ASEG_MISC);
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    void read()
     {
-        localQuakeHappening[i] = SV_ReadLong();
+        beginMapSegment();
+        {
+            readElements();
+            readPolyobjs();
+            readThinkers();
+            readACScriptData();
+            readSoundSequences();
+            readMisc();
+            readBrain();
+            readSoundTargets();
+        }
+        endMapSegment();
     }
-#endif
-}
 
-static void writeMap()
-{
-#if !__JHEXEN__
-    // Clear the sound target count (determined while saving sectors).
-    numSoundTargets = 0;
-#endif
-
-    SV_BeginSegment(ASEG_MAP_HEADER2);
+private:
+    void beginMapSegment()
     {
-#if __JHEXEN__
-        SV_WriteByte(MY_SAVE_VERSION); // Map version also.
+        savestatesegment_t segId;
+        SV_AssertMapSegment(&segId);
 
-        // Write the map timer
-        SV_WriteLong(mapTime);
+#if __JHEXEN__
+        // Maps have their own version number, in Hexen.
+        _mapVersion = (segId == ASEG_MAP_HEADER2? Reader_ReadByte(_reader) : 2);
+
+        thingArchiveVersion = _mapVersion >= 4? 1 : 0;
 #endif
 
-        writeMapElements();
-        writeThinkers();
 #if __JHEXEN__
-        P_WriteMapACScriptData();
-        SN_WriteSequences();
-#endif
-        writeMisc();
-        writeBrain();
-        writeSoundTargets();
-    }
-    SV_EndSegment();
-}
-
-static void readMap()
-{
-    sideArchive = new SideArchive;
-
-    savestatesegment_t mapSegmentId;
-    SV_AssertMapSegment(&mapSegmentId);
-    {
-#if __JHEXEN__
-        mapVersion = (mapSegmentId == ASEG_MAP_HEADER2? SV_ReadByte() : 2);
-
         // Read the map timer.
-        mapTime = SV_ReadLong();
+        mapTime = Reader_ReadInt32(_reader);
 #endif
 
         // Read the material archive for the map.
 #if !__JHEXEN__
-        if(hdr->version >= 4)
+        if(_mapVersion >= 4)
 #endif
         {
-            Reader *svReader = SV_NewReader();
-            MaterialArchive_Read(materialArchive, svReader, materialArchiveVersion());
-            Reader_Delete(svReader);
+            MaterialArchive_Read(materialArchive, _reader, _mapVersion < 6? 0 : -1);
         }
 
-        readMapElements();
-        readThinkers();
-#if __JHEXEN__
-        P_ReadMapACScriptData();
-        SN_ReadSequences(mapVersion);
-#endif
-        readMisc();
-        readBrain();
-        readSoundTargets();
+        sideArchive = new SideArchive;
     }
-    SV_AssertSegment(ASEG_END);
 
-    delete sideArchive; sideArchive = 0;
-}
+    void endMapSegment()
+    {
+        SV_AssertSegment(ASEG_END);
+
+        delete sideArchive; sideArchive = 0;
+    }
+
+    void readElements()
+    {
+        SV_AssertSegment(ASEG_MAP_ELEMENTS);
+
+        // Sectors.
+        for(int i = 0; i < numsectors; ++i)
+        {
+            SV_ReadSector((Sector *)P_ToPtr(DMU_SECTOR, i), _reader, _mapVersion);
+        }
+
+        // Lines.
+        for(int i = 0; i < numlines; ++i)
+        {
+            SV_ReadLine((Line *)P_ToPtr(DMU_LINE, i), _reader, _mapVersion);
+        }
+    }
+
+    void readPolyobjs()
+    {
+#if __JHEXEN__
+        SV_AssertSegment(ASEG_POLYOBJS);
+
+        int const writtenPolyobjCount = Reader_ReadInt32(_reader);
+        DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
+        for(int i = 0; i < writtenPolyobjCount; ++i)
+        {
+            SV_ReadPolyObj(_reader, _mapVersion);
+        }
+#endif
+    }
+
+    static int removeThinkerWorker(thinker_t *th, void * /*context*/)
+    {
+        if(th->function == (thinkfunc_t) P_MobjThinker)
+            P_MobjRemove((mobj_t *) th, true);
+        else
+            Z_Free(th);
+
+        return false; // Continue iteration.
+    }
+
+    void removeLoadSpawnedThinkers()
+    {
+#if !__JHEXEN__
+        if(!IS_SERVER) return; // Not for us.
+#endif
+
+        Thinker_Iterate(0 /*all thinkers*/, removeThinkerWorker, 0/*no parameters*/);
+        Thinker_Init();
+    }
+
+#if __JHEXEN__
+    static bool mobjtypeHasCorpse(mobjtype_t type)
+    {
+        // Only corpses that call A_QueueCorpse from death routine.
+        /// @todo fixme: What about mods? Look for this action in the death
+        /// state sequence?
+        switch(type)
+        {
+        case MT_CENTAUR:
+        case MT_CENTAURLEADER:
+        case MT_DEMON:
+        case MT_DEMON2:
+        case MT_WRAITH:
+        case MT_WRAITHB:
+        case MT_BISHOP:
+        case MT_ETTIN:
+        case MT_PIG:
+        case MT_CENTAUR_SHIELD:
+        case MT_CENTAUR_SWORD:
+        case MT_DEMONCHUNK1:
+        case MT_DEMONCHUNK2:
+        case MT_DEMONCHUNK3:
+        case MT_DEMONCHUNK4:
+        case MT_DEMONCHUNK5:
+        case MT_DEMON2CHUNK1:
+        case MT_DEMON2CHUNK2:
+        case MT_DEMON2CHUNK3:
+        case MT_DEMON2CHUNK4:
+        case MT_DEMON2CHUNK5:
+        case MT_FIREDEMON_SPLOTCH1:
+        case MT_FIREDEMON_SPLOTCH2:
+            return true;
+
+        default: return false;
+        }
+    }
+
+    static int rebuildCorpseQueueWorker(thinker_t *th, void * /*context*/)
+    {
+        mobj_t *mo = (mobj_t *) th;
+
+        // Must be a non-iced corpse.
+        if((mo->flags & MF_CORPSE) && !(mo->flags & MF_ICECORPSE) &&
+           mobjtypeHasCorpse(mobjtype_t(mo->type)))
+        {
+            P_AddCorpseToQueue(mo);
+        }
+
+        return false; // Continue iteration.
+    }
+
+    /**
+     * @todo fixme: the corpse queue should be serialized (original order unknown).
+     */
+    void rebuildCorpseQueue()
+    {
+        P_InitCorpseQueue();
+        // Search the thinker list for corpses and place them in the queue.
+        Thinker_Iterate((thinkfunc_t) P_MobjThinker, rebuildCorpseQueueWorker, NULL/*no params*/);
+    }
+#endif
+
+    static int restoreMobjLinksWorker(thinker_t *th, void *context)
+    {
+        int const mapVersion = *static_cast<int const *>(context);
+
+        if(th->function != (thinkfunc_t) P_MobjThinker)
+            return false; // Continue iteration.
+
+        mobj_t *mo = (mobj_t *) th;
+        mo->target = SV_GetArchiveThing(PTR2INT(mo->target), &mo->target);
+        mo->onMobj = SV_GetArchiveThing(PTR2INT(mo->onMobj), &mo->onMobj);
+
+#if __JHEXEN__
+        switch(mo->type)
+        {
+        // Just tracer
+        case MT_BISH_FX:
+        case MT_HOLY_FX:
+        case MT_DRAGON:
+        case MT_THRUSTFLOOR_UP:
+        case MT_THRUSTFLOOR_DOWN:
+        case MT_MINOTAUR:
+        case MT_SORCFX1:
+            if(mapVersion >= 3)
+            {
+                mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+            }
+            else
+            {
+                mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                mo->special1 = 0;
+            }
+            break;
+
+        // Just special2
+        case MT_LIGHTNING_FLOOR:
+        case MT_LIGHTNING_ZAP:
+            mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
+            break;
+
+        // Both tracer and special2
+        case MT_HOLY_TAIL:
+        case MT_LIGHTNING_CEILING:
+            if(mapVersion >= 3)
+            {
+                mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+            }
+            else
+            {
+                mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                mo->special1 = 0;
+            }
+            mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
+            break;
+
+        default:
+            break;
+        }
+#else
+# if __JDOOM__ || __JDOOM64__
+        mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+# endif
+# if __JHERETIC__
+        mo->generator = SV_GetArchiveThing(PTR2INT(mo->generator), &mo->generator);
+# endif
+#endif
+
+        return false; // Continue iteration.
+
+#if !__JHEXEN__
+        DENG_UNUSED(mapVersion);
+#endif
+    }
+
+    /**
+     * Update the references between thinkers. To be called during the load
+     * process to finalize the loaded thinkers.
+     */
+    void relinkThinkers()
+    {
+#if __JHEXEN__
+        Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, &_mapVersion);
+
+        P_CreateTIDList();
+        rebuildCorpseQueue();
+
+#else
+        if(IS_SERVER)
+        {
+            Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, &_mapVersion);
+
+            for(int i = 0; i < numlines; ++i)
+            {
+                xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
+                if(!xline->xg) continue;
+
+                xline->xg->activator = SV_GetArchiveThing(PTR2INT(xline->xg->activator),
+                                                          &xline->xg->activator);
+            }
+        }
+#endif
+    }
+
+    /**
+     * Deserialize and then spawns thinkers for both client and server.
+     */
+    void readThinkers()
+    {
+        bool const formatHasStasisInfo = (_mapVersion >= 6);
+
+        removeLoadSpawnedThinkers();
+
+#if __JHEXEN__
+        if(_mapVersion < 4)
+            SV_AssertSegment(ASEG_MOBJS);
+        else
+#endif
+            SV_AssertSegment(ASEG_THINKERS);
+
+#if __JHEXEN__
+        initTargetPlayers();
+        initThingArchiveForLoad(Reader_ReadInt32(_reader) /* num elements */);
+#endif
+
+        // Read in saved thinkers.
+#if __JHEXEN__
+        int i = 0;
+        bool reachedSpecialsBlock = (_mapVersion >= 4);
+#else
+        bool reachedSpecialsBlock = (_mapVersion >= 5);
+#endif
+
+        byte tClass = 0;
+        for(;;)
+        {
+#if __JHEXEN__
+            if(reachedSpecialsBlock)
+#endif
+                tClass = Reader_ReadByte(_reader);
+
+#if __JHEXEN__
+            if(_mapVersion < 4)
+            {
+                if(reachedSpecialsBlock) // Have we started on the specials yet?
+                {
+                    // Versions prior to 4 used a different value to mark
+                    // the end of the specials data and the thinker class ids
+                    // are differrent, so we need to manipulate the thinker
+                    // class identifier value.
+                    if(tClass != TC_END)
+                        tClass += 2;
+                }
+                else
+                {
+                    tClass = TC_MOBJ;
+                }
+
+                if(tClass == TC_MOBJ && (uint)i == thingArchiveSize)
+                {
+                    SV_AssertSegment(ASEG_THINKERS);
+                    // We have reached the begining of the "specials" block.
+                    reachedSpecialsBlock = true;
+                    continue;
+                }
+            }
+#else
+            if(_mapVersion < 5)
+            {
+                if(reachedSpecialsBlock)
+                {
+                    // Versions prior to 5 used a different value to mark
+                    // the end of the specials data so we need to manipulate
+                    // the thinker class identifier value.
+                    if(tClass == PRE_VER5_END_SPECIALS)
+                        tClass = TC_END;
+                    else
+                        tClass += 3;
+                }
+                else if(tClass == TC_END)
+                {
+                    // We have reached the begining of the "specials" block.
+                    reachedSpecialsBlock = true;
+                    continue;
+                }
+            }
+#endif
+            if(tClass == TC_END)
+                break; // End of the list.
+
+            ThinkerClassInfo *thInfo = infoForThinkerClass(thinkerclass_t(tClass));
+            DENG_ASSERT(thInfo != 0);
+            // Not for us? (it shouldn't be here anyway!).
+            DENG_ASSERT(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
+
+            // Mobjs use a special engine-side allocator.
+            thinker_t *th = 0;
+            if(thInfo->thinkclass == TC_MOBJ)
+            {
+                th = reinterpret_cast<thinker_t *>(Mobj_CreateXYZ((thinkfunc_t) P_MobjThinker, 0, 0, 0, 0, 64, 64, 0));
+            }
+            else
+            {
+                th = reinterpret_cast<thinker_t *>(Z_Calloc(thInfo->size, PU_MAP, 0));
+            }
+
+            bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(Reader_ReadByte(_reader)) : false);
+
+            if(thInfo->readFunc(th, _reader, _mapVersion))
+            {
+                Thinker_Add(th);
+            }
+
+            if(putThinkerInStasis)
+            {
+                Thinker_SetStasis(th, true);
+            }
+
+#if __JHEXEN__
+            if(tClass == TC_MOBJ)
+                i++;
+#endif
+        }
+
+        // Update references between thinkers.
+        relinkThinkers();
+    }
+
+    void readACScriptData()
+    {
+#if __JHEXEN__
+        Game_ACScriptInterpreter().readMapScriptData(_reader, _mapVersion);
+#endif
+    }
+
+    void readSoundSequences()
+    {
+#if __JHEXEN__
+        SN_ReadSequences(_reader, _mapVersion);
+#endif
+    }
+
+    void readMisc()
+    {
+#if __JHEXEN__
+        SV_AssertSegment(ASEG_MISC);
+
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            localQuakeHappening[i] = Reader_ReadInt32(_reader);
+        }
+#endif
+    }
+
+    void readBrain()
+    {
+#if __JDOOM__
+        P_BrainRead(_reader, _mapVersion);
+#endif
+    }
+
+    void readSoundTargets()
+    {
+#if !__JHEXEN__
+        // Not for us?
+        if(!IS_SERVER) return;
+
+        // Sound target data was introduced in ver 5
+        if(_mapVersion < 5) return;
+
+        int numTargets = Reader_ReadInt32(_reader);
+        for(int i = 0; i < numTargets; ++i)
+        {
+            xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, Reader_ReadInt32(_reader)));
+            DENG_ASSERT(xsec != 0);
+
+            if(!xsec)
+            {
+                DENG_UNUSED(Reader_ReadInt16(_reader));
+                continue;
+            }
+
+            xsec->soundTarget = INT2PTR(mobj_t, Reader_ReadInt16(_reader));
+            xsec->soundTarget =
+                SV_GetArchiveThing(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
+        }
+#endif
+    }
+
+    Reader *_reader;
+    int _saveVersion;
+    int _mapVersion;
+};
 
 void SV_Initialize()
 {
@@ -4807,68 +3660,48 @@ static bool openGameSaveFile(Str const *fileName, bool write)
     return SV_File() != 0;
 }
 
-static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
+static int SV_LoadState(Str const *path, SaveInfo *info)
 {
-    DENG_ASSERT(path != 0 && saveInfo != 0);
+    DENG_ASSERT(path != 0 && info != 0);
 
     playerHeaderOK = false; // Uninitialized.
 
     if(!openGameSaveFile(path, false))
         return 1; // Failed?
 
+    Reader *reader = SV_NewReader();
+
     // Read the header again.
     /// @todo Seek past the header straight to the game state.
     {
-        SaveInfo *tmp = SaveInfo_New();
-        SV_SaveInfo_Read(tmp);
-        SaveInfo_Delete(tmp);
+        SaveInfo *tmp = new SaveInfo;
+        SV_SaveInfo_Read(tmp, reader);
+        delete tmp;
     }
 
-    /*
-     * Configure global game state:
-     */
-    hdr = SaveInfo_Header(saveInfo);
-
-    gameEpisode     = hdr->episode - 1;
-    gameMap         = hdr->map - 1;
-
-    // Apply the game rules:
-#if __JHEXEN__
-    gameSkill       = hdr->skill;
-#else
-    gameSkill       = hdr->skill;
-    fastParm        = hdr->fast;
-#endif
-    deathmatch      = hdr->deathmatch;
-    noMonstersParm  = hdr->noMonsters;
-#if __JHEXEN__
-    randomClassParm = hdr->randomClasses;
-#else
-    respawnMonsters = hdr->respawnMonsters;
-#endif
+    curInfo = info;
 
 #if __JHEXEN__
-    P_ReadGlobalACScriptData(hdr->version);
+    Game_ACScriptInterpreter().readWorldScriptData(reader, info->version());
 #endif
 
     /*
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewGame(gameSkill, gameEpisode, gameMap, 0/*gameMapEntryPoint*/);
+    G_NewGame(info->episode(), info->map(), 0/*not saved??*/, &info->gameRules());
+
+#if !__JHEXEN__
+    mapTime = info->mapTime();
+#endif
 
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
 #if !__JHEXEN__
-    // Set the time.
-    mapTime = hdr->mapTime;
+    initThingArchiveForLoad(info->version() >= 5? Reader_ReadInt32(reader) : 1024 /* num elements */);
 #endif
 
-#if !__JHEXEN__
-    initThingArchiveForLoad(hdr->version >= 5? SV_ReadLong() : 1024 /* num elements */);
-#endif
-
-    readPlayerHeader();
+    readPlayerHeader(reader, info->version());
 
     // Read the player structures
     // We don't have the right to say which players are in the game. The
@@ -4877,7 +3710,7 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
     // players who were saved but are not currently in the game will be
     // discarded.
     dd_bool loaded[MAXPLAYERS], infile[MAXPLAYERS];
-    readPlayers(infile, loaded);
+    readPlayers(*info, infile, loaded, reader);
 
 #if __JHEXEN__
     Z_Free(saveBuffer);
@@ -4892,9 +3725,9 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 
     // Load the current map state.
 #if __JHEXEN__
-    readMapState(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
+    readMapState(reader, info->version(), composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
 #else
-    readMapState();
+    readMapState(reader, info->version());
 #endif
 
 #if !__JHEXEN__
@@ -4969,8 +3802,10 @@ static int SV_LoadState(Str const *path, SaveInfo *saveInfo)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(SaveInfo_GameId(saveInfo));
+    NetSv_LoadGame(info->gameId());
 #endif
+
+    Reader_Delete(reader);
 
     return 0;
 }
@@ -5006,11 +3841,9 @@ static int loadStateWorker(Str const *path, SaveInfo &saveInfo)
      */
 
     // Material origin scrollers must be re-spawned for older save state versions.
-    saveheader_t const *hdr = SaveInfo_Header(&saveInfo);
-
     /// @todo Implement SaveInfo format type identifiers.
-    if((hdr->magic != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
-       hdr->version <= 10)
+    if((saveInfo.magic() != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
+       saveInfo.version() <= 10)
     {
         P_SpawnAllMaterialOriginScrollers();
     }
@@ -5082,15 +3915,13 @@ void SV_SaveGameClient(uint gameId)
 
     player_t *pl = &players[CONSOLEPLAYER];
     mobj_t *mo = pl->plr->mo;
-    AutoStr *gameSavePath;
-    SaveInfo *saveInfo;
 
     if(!IS_CLIENT || !mo)
         return;
 
     playerHeaderOK = false; // Uninitialized.
 
-    gameSavePath = composeGameSavePathForClientGameId(gameId);
+    AutoStr *gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(gameSavePath, "wp"))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing", Str_Text(gameSavePath));
@@ -5098,38 +3929,36 @@ void SV_SaveGameClient(uint gameId)
     }
 
     // Prepare the header.
-    saveInfo = SaveInfo_New();
-    SaveInfo_SetGameId(saveInfo, gameId);
-    SaveInfo_Configure(saveInfo);
+    SaveInfo *info = new SaveInfo;
+    info->setGameId(gameId);
+    info->applyCurrentSessionMetadata();
 
-    {
-        Writer *svWriter = SV_NewWriter();
-        SaveInfo_Write(saveInfo, svWriter);
-        Writer_Delete(svWriter);
-    }
+    Writer *writer = SV_NewWriter();
+    info->write(writer);
 
     // Some important information.
     // Our position and look angles.
-    SV_WriteLong(FLT2FIX(mo->origin[VX]));
-    SV_WriteLong(FLT2FIX(mo->origin[VY]));
-    SV_WriteLong(FLT2FIX(mo->origin[VZ]));
-    SV_WriteLong(FLT2FIX(mo->floorZ));
-    SV_WriteLong(FLT2FIX(mo->ceilingZ));
-    SV_WriteLong(mo->angle); /* $unifiedangles */
-    SV_WriteFloat(pl->plr->lookDir); /* $unifiedangles */
-    writePlayerHeader();
-    SV_WritePlayer(CONSOLEPLAYER);
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VY]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VZ]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->floorZ));
+    Writer_WriteInt32(writer, FLT2FIX(mo->ceilingZ));
+    Writer_WriteInt32(writer, mo->angle); /* $unifiedangles */
+    Writer_WriteFloat(writer, pl->plr->lookDir); /* $unifiedangles */
+    writePlayerHeader(writer);
+    SV_WritePlayer(CONSOLEPLAYER, writer);
 
     // Create and populate the MaterialArchive.
     materialArchive = MaterialArchive_New(false);
 
-    writeMap();
+    MapStateWriter(writer).write();
     /// @todo No consistency bytes in client saves?
 
     clearMaterialArchive();
 
     SV_CloseFile();
-    SaveInfo_Delete(saveInfo);
+    Writer_Delete(writer);
+    delete info;
 #else
     DENG_UNUSED(gameId);
 #endif
@@ -5142,60 +3971,60 @@ void SV_LoadGameClient(uint gameId)
 
     player_t *cpl = players + CONSOLEPLAYER;
     mobj_t *mo = cpl->plr->mo;
-    AutoStr *gameSavePath;
-    SaveInfo *saveInfo;
 
     if(!IS_CLIENT || !mo)
         return;
 
     playerHeaderOK = false; // Uninitialized.
 
-    gameSavePath = composeGameSavePathForClientGameId(gameId);
+    AutoStr *gameSavePath = composeGameSavePathForClientGameId(gameId);
     if(!SV_OpenFile(gameSavePath, "rp"))
     {
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading", Str_Text(gameSavePath));
         return;
     }
 
-    saveInfo = SaveInfo_New();
-    SV_SaveInfo_Read(saveInfo);
+    SaveInfo *saveInfo = new SaveInfo;
+    Reader *reader = SV_NewReader();
+    SV_SaveInfo_Read(saveInfo, reader);
 
-    hdr = SaveInfo_Header(saveInfo);
-    if(hdr->magic != MY_CLIENT_SAVE_MAGIC)
+    curInfo = saveInfo;
+
+    if(saveInfo->magic() != MY_CLIENT_SAVE_MAGIC)
     {
-        SaveInfo_Delete(saveInfo);
+        Reader_Delete(reader);
+        delete saveInfo;
         SV_CloseFile();
         App_Log(DE2_RES_ERROR, "Client save file format not recognized");
         return;
     }
 
-    gameSkill = skillmode_t( hdr->skill );
-    deathmatch = hdr->deathmatch;
-    noMonstersParm = hdr->noMonsters;
-    respawnMonsters = hdr->respawnMonsters;
     // Do we need to change the map?
-    if(gameMap != (unsigned) (hdr->map - 1) || gameEpisode != (unsigned) (hdr->episode - 1))
+    if(gameMap != saveInfo->map() || gameEpisode != saveInfo->episode())
     {
-        gameEpisode = hdr->episode - 1;
-        gameMap = hdr->map - 1;
-        gameMapEntryPoint = 0;
-        G_NewGame(gameSkill, gameEpisode, gameMap, gameMapEntryPoint);
+        G_NewGame(saveInfo->episode(), saveInfo->map(), 0/*default*/, &saveInfo->gameRules());
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
     }
-    mapTime = hdr->mapTime;
+    else
+    {
+        /// @todo Necessary?
+        gameRules = saveInfo->gameRules();
+    }
+    mapTime = saveInfo->mapTime();
 
     P_MobjUnlink(mo);
-    mo->origin[VX] = FIX2FLT(SV_ReadLong());
-    mo->origin[VY] = FIX2FLT(SV_ReadLong());
-    mo->origin[VZ] = FIX2FLT(SV_ReadLong());
+    mo->origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
+    mo->origin[VY] = FIX2FLT(Reader_ReadInt32(reader));
+    mo->origin[VZ] = FIX2FLT(Reader_ReadInt32(reader));
     P_MobjLink(mo);
-    mo->floorZ = FIX2FLT(SV_ReadLong());
-    mo->ceilingZ = FIX2FLT(SV_ReadLong());
-    mo->angle = SV_ReadLong(); /* $unifiedangles */
-    cpl->plr->lookDir = SV_ReadFloat(); /* $unifiedangles */
-    readPlayerHeader();
-    SV_ReadPlayer(cpl);
+    mo->floorZ        = FIX2FLT(Reader_ReadInt32(reader));
+    mo->ceilingZ      = FIX2FLT(Reader_ReadInt32(reader));
+    mo->angle         = Reader_ReadInt32(reader); /* $unifiedangles */
+    cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
+
+    readPlayerHeader(reader, saveInfo->version());
+    SV_ReadPlayer(cpl, reader);
 
     /**
      * Create and populate the MaterialArchive.
@@ -5206,21 +4035,22 @@ void SV_LoadGameClient(uint gameId)
      */
     materialArchive = MaterialArchive_New(false);
 
-    readMap();
+    MapStateReader(reader, saveInfo->version()).read();
 
     clearMaterialArchive();
 
     SV_CloseFile();
-    SaveInfo_Delete(saveInfo);
+    Reader_Delete(reader);
+    delete saveInfo;
 #else
     DENG_UNUSED(gameId);
 #endif
 }
 
 #if __JHEXEN__
-static void readMapState(Str const *path)
+static void readMapState(Reader *reader, int saveVersion, Str const *path)
 #else
-static void readMapState()
+static void readMapState(Reader *reader, int saveVersion)
 #endif
 {
 #if __JHEXEN__
@@ -5229,7 +4059,7 @@ static void readMapState()
     App_Log(DE2_DEV_MAP_MSG, "readMapState: Opening file \"%s\"\n", Str_Text(path));
 
     // Load the file
-    size_t bufferSize = M_ReadFile(Str_Text(path), (char**)&saveBuffer);
+    size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
     if(!bufferSize)
     {
         App_Log(DE2_RES_ERROR, "readMapState: Failed opening \"%s\" for reading", Str_Text(path));
@@ -5240,7 +4070,7 @@ static void readMapState()
     SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
 #endif
 
-    readMap();
+    MapStateReader(reader, saveVersion).read();
 
 #if __JHEXEN__
     clearThingArchive();
@@ -5254,7 +4084,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(SaveInfo_GameId(saveInfo));
+    NetSv_SaveGame(saveInfo->gameId());
 #endif
 
     if(!openGameSaveFile(path, true))
@@ -5267,19 +4097,18 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     /*
      * Write the game session header.
      */
-    Writer *svWriter = SV_NewWriter();
-    SaveInfo_Write(saveInfo, svWriter);
-    Writer_Delete(svWriter); svWriter = 0;
+    Writer *writer = SV_NewWriter();
+    saveInfo->write(writer);
 
 #if __JHEXEN__
-    P_WriteGlobalACScriptData();
+    Game_ACScriptInterpreter().writeWorldScriptData(writer);
 #endif
 
     // Set the mobj archive numbers.
     initThingArchiveForSave();
 
 #if !__JHEXEN__
-    SV_WriteLong(thingArchiveSize);
+    Writer_WriteInt32(writer, thingArchiveSize);
 #endif
 
     // Create and populate the MaterialArchive.
@@ -5289,8 +4118,8 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     materialArchive = MaterialArchive_New(false);
 #endif
 
-    writePlayerHeader();
-    writePlayers();
+    writePlayerHeader(writer);
+    writePlayers(writer);
 
 #if __JHEXEN__
     // Close the game session file (maps are saved into a seperate file).
@@ -5302,10 +4131,10 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
      */
 #if __JHEXEN__
     // ...map state is actually written to a separate file.
-    SV_OpenFile(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
 #endif
 
-    writeMap();
+    MapStateWriter(writer).write();
 
     SV_WriteConsistencyBytes(); // To be absolutely sure...
     SV_CloseFile();
@@ -5314,6 +4143,8 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 #if !__JHEXEN___
     clearThingArchive();
 #endif
+
+    Writer_Delete(writer);
 
     return SV_OK;
 }
@@ -5324,10 +4155,10 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 static SaveInfo *createSaveInfo(char const *name)
 {
     ddstring_t nameStr;
-    SaveInfo *info = SaveInfo_New();
-    SaveInfo_SetName(info, Str_InitStatic(&nameStr, name));
-    SaveInfo_SetGameId(info, SV_GenerateGameId());
-    SaveInfo_Configure(info);
+    SaveInfo *info = new SaveInfo;
+    info->setDescription(Str_InitStatic(&nameStr, name));
+    info->setGameId(SV_GenerateGameId());
+    info->applyCurrentSessionMetadata();
     return info;
 }
 
@@ -5379,7 +4210,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
     else
     {
         // We no longer need the info.
-        SaveInfo_Delete(info);
+        delete info;
 
         if(saveError == SV_INVALIDFILENAME)
         {
@@ -5395,24 +4226,32 @@ void SV_HxSaveClusterMap()
 {
     playerHeaderOK = false; // Uninitialized.
 
-    SV_OpenFile(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
 
     // Set the mobj archive numbers
     initThingArchiveForSave(true /*exclude players*/);
 
+    Writer *writer = SV_NewWriter();
+
     // Create and populate the MaterialArchive.
     materialArchive = MaterialArchive_New(true);
 
-    writeMap();
+    MapStateWriter(writer).write();
 
     clearMaterialArchive();
 
     // Close the output file
     SV_CloseFile();
+
+    Writer_Delete(writer);
 }
 
 void SV_HxLoadClusterMap()
 {
+    /// @todo fixme: do not assume this pointer is still valid!
+    DENG_ASSERT(curInfo != 0);
+    SaveInfo const *info = curInfo;
+
     // Only readMap() uses targetPlayerAddrs, so it's NULLed here for the
     // following check (player mobj redirection).
     targetPlayerAddrs = 0;
@@ -5422,10 +4261,14 @@ void SV_HxLoadClusterMap()
     // Create the MaterialArchive.
     materialArchive = MaterialArchive_NewEmpty(true);
 
+    Reader *reader = SV_NewReader();
+
     // Been here before, load the previous map state.
-    readMapState(composeGameSavePathForSlot2(BASE_SLOT, gameMap+1));
+    readMapState(reader, info->version(), composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
 
     clearMaterialArchive();
+
+    Reader_Delete(reader);
 }
 
 void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS])
@@ -5484,7 +4327,7 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
         plr->attacker = NULL;
         plr->poisoner = NULL;
 
-        if(IS_NETGAME || deathmatch)
+        if(IS_NETGAME || gameRules.deathmatch)
         {
             // In a network game, force all players to be alive
             if(plr->playerState == PST_DEAD)
@@ -5492,7 +4335,7 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
                 plr->playerState = PST_REBORN;
             }
 
-            if(!deathmatch)
+            if(!gameRules.deathmatch)
             {
                 // Cooperative net-play; retain keys and weapons.
                 oldKeys = plr->keys;
@@ -5506,7 +4349,7 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
 
         wasReborn = (plr->playerState == PST_REBORN);
 
-        if(deathmatch)
+        if(gameRules.deathmatch)
         {
             memset(plr->frags, 0, sizeof(plr->frags));
             ddplr->mo = NULL;
@@ -5530,7 +4373,7 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
             }
         }
 
-        if(wasReborn && IS_NETGAME && !deathmatch)
+        if(wasReborn && IS_NETGAME && !gameRules.deathmatch)
         {
             // Restore keys and weapons when reborn in co-op.
             plr->keys = oldKeys;

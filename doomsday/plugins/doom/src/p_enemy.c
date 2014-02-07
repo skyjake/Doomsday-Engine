@@ -36,6 +36,7 @@
 #include "p_mapspec.h"
 #include "p_door.h"
 #include "p_floor.h"
+#include "p_saveg.h"
 
 #define FATSPREAD               (ANG90/8)
 #define SKULLSPEED              (20)
@@ -675,7 +676,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(gameSkill != SM_NIGHTMARE && !fastParm)
+        if(gameRules.skill != SM_NIGHTMARE && !gameRules.fast)
         {
             newChaseDir(actor);
         }
@@ -698,7 +699,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(gameSkill != SM_NIGHTMARE && !fastParm && actor->moveCount))
+        if(!(gameRules.skill != SM_NIGHTMARE && !gameRules.fast && actor->moveCount))
         {
             if(checkMissileRange(actor))
             {
@@ -1696,7 +1697,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
         }
     }
 
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_CurrentLogicalMapNumber(), 0, false);
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -1740,6 +1741,64 @@ void P_BrainClearTargets(void)
 {
     brain.numTargets = 0;
     brain.targetOn = 0;
+}
+
+void P_BrainWrite(Writer *writer)
+{
+    int i;
+
+    DENG_ASSERT(writer != 0);
+
+    // Not for us?
+    if(!IS_SERVER) return;
+
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    Writer_WriteInt16(writer, brain.numTargets);
+    Writer_WriteInt16(writer, brain.targetOn);
+    Writer_WriteByte(writer, brain.easy!=0? 1:0);
+
+    // Write the mobj references using the mobj archive.
+    for(i = 0; i < brain.numTargets; ++i)
+    {
+        Writer_WriteInt16(writer, SV_ThingArchiveId(brain.targets[i]));
+    }
+}
+
+void P_BrainRead(Reader *reader, int mapVersion)
+{
+    int ver, numTargets;
+    int i;
+
+    DENG_ASSERT(reader != 0);
+
+    // Not for us?
+    if(!IS_SERVER) return;
+
+    // No brain data before version 3.
+    if(mapVersion < 3) return;
+
+    P_BrainClearTargets();
+
+    ver = (mapVersion >= 8? Reader_ReadByte(reader) : 0);
+    numTargets;
+    if(ver >= 1)
+    {
+        numTargets      = Reader_ReadInt16(reader);
+        brain.targetOn  = Reader_ReadInt16(reader);
+        brain.easy      = (dd_bool)Reader_ReadByte(reader);
+    }
+    else
+    {
+        numTargets      = Reader_ReadByte(reader);
+        brain.targetOn  = Reader_ReadByte(reader);
+        brain.easy      = false;
+    }
+
+    for(i = 0; i < numTargets; ++i)
+    {
+        P_BrainAddTarget(SV_GetArchiveThing((int) Reader_ReadInt16(reader), 0));
+    }
 }
 
 void P_BrainShutdown(void)
@@ -1833,7 +1892,7 @@ void C_DECL A_BrainExplode(mobj_t *mo)
 
 void C_DECL A_BrainDie(mobj_t* mo)
 {
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_CurrentLogicalMapNumber(), 0, false);
 }
 
 void C_DECL A_BrainSpit(mobj_t* mo)
@@ -1845,7 +1904,7 @@ void C_DECL A_BrainSpit(mobj_t* mo)
         return; // Ignore if no targets.
 
     brain.easy ^= 1;
-    if(gameSkill <= SM_EASY && (!brain.easy))
+    if(gameRules.skill <= SM_EASY && (!brain.easy))
         return;
 
     // Shoot a cube at current target.

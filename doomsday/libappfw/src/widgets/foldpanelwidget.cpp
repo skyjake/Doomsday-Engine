@@ -61,7 +61,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
         }
     };*/
 
-    ButtonWidget *title;
+    ButtonWidget *title; // not owned
     GuiWidget *container; ///< Held here while not part of the widget tree.
     DialogContentStylist stylist;    
 
@@ -69,22 +69,31 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
 };
 
 FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new Instance)
+{}
+
+ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
 {
     d->title = new ButtonWidget;
+
     d->title->setSizePolicy(Expand, Expand);
-    d->title->set(Background()); // no frame or background
-    d->title->setHoverTextColor("text");
+    d->title->setText(text);
+    d->title->setTextColor("accent");
+    d->title->setHoverTextColor("text", ButtonWidget::ReplaceColor);
     d->title->setFont("heading");
+    d->title->set(Background()); // no frame or background
     d->title->setAction(new SignalAction(this, SLOT(toggleFold())));
     d->title->setOpacity(.8f);
 
     // Icon is disabled for now, doesn't look quite right.
     //d->title->setImage(new Instance::FoldImage(*this));
     //d->title->setTextAlignment(ui::AlignRight); // Text is on the right from the image.
+
+    return d->title;
 }
 
 ButtonWidget &FoldPanelWidget::title()
 {
+    DENG2_ASSERT(d->title != 0);
     return *d->title;
 }
 
@@ -136,7 +145,10 @@ void FoldPanelWidget::preparePanelForOpening()
         d->container = 0;
     }
 
-    d->title->setOpacity(1);
+    if(d->title)
+    {
+        d->title->setOpacity(1);
+    }
 
     PanelWidget::preparePanelForOpening();
 }
@@ -145,7 +157,10 @@ void FoldPanelWidget::panelDismissed()
 {
     PanelWidget::panelDismissed();
 
-    d->title->setOpacity(.8f, .5f);
+    if(d->title)
+    {
+        d->title->setOpacity(.8f, .5f);
+    }
 
     content().notifySelfAndTree(&Widget::deinitialize);
 

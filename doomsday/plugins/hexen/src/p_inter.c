@@ -305,7 +305,7 @@ static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
     }
 
     // Give extra rounds at easy/nightmare skill levels.
-    if(gameSkill == SM_BABY || gameSkill == SM_NIGHTMARE)
+    if(gameRules.skill == SM_BABY || gameRules.skill == SM_NIGHTMARE)
     {
         numRounds += numRounds / 2;
     }
@@ -369,7 +369,7 @@ static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType,
 
     // Always attempt to give mana unless this a cooperative game and the
     // player already has this weapon piece.
-    if(!(IS_NETGAME && !deathmatch && plr->weapons[weaponType].owned))
+    if(!(IS_NETGAME && !gameRules.deathmatch && plr->weapons[weaponType].owned))
     {
         if(P_GiveAmmo(plr, ammoType, 25))
         {
@@ -429,7 +429,7 @@ dd_bool P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchCla
     if(plr->class_ != matchClass)
     {
         // Can't pick up wrong-class weapons in coop netplay.
-        if(IS_NETGAME && !deathmatch)
+        if(IS_NETGAME && !gameRules.deathmatch)
             return false;
 
         return P_GiveAmmo(plr, AT_BLUEMANA, 20) | P_GiveAmmo(plr, AT_GREENMANA, 20);
@@ -437,7 +437,7 @@ dd_bool P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchCla
 
     // Always attempt to give mana unless this a cooperative game and the
     // player already has this weapon piece.
-    if(!((plr->pieces & pieceValue) && IS_NETGAME && !deathmatch))
+    if(!((plr->pieces & pieceValue) && IS_NETGAME && !gameRules.deathmatch))
     {
         gaveAmmo = P_GiveAmmo(plr, AT_BLUEMANA, 20) ||
                    P_GiveAmmo(plr, AT_GREENMANA, 20);
@@ -446,7 +446,7 @@ dd_bool P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchCla
     if(plr->pieces & pieceValue)
     {
         // Already has the piece.
-        if(IS_NETGAME && !deathmatch) // Cooperative net-game.
+        if(IS_NETGAME && !gameRules.deathmatch) // Cooperative net-game.
             return false;
 
         // Deathmatch or single player.
@@ -456,7 +456,7 @@ dd_bool P_GiveWeaponPiece2(player_t *plr, int pieceValue, playerclass_t matchCla
     }
 
     // Check if fourth weapon assembled.
-    if(IS_NETGAME && !deathmatch) // Cooperative net-game.
+    if(IS_NETGAME && !gameRules.deathmatch) // Cooperative net-game.
     {
         static int pieceValueTrans[] = {
             0,                            // 0: never
@@ -721,7 +721,7 @@ dd_bool P_GiveItem(player_t *plr, inventoryitemtype_t item)
 static void setDormantItem(mobj_t *mo)
 {
     mo->flags &= ~MF_SPECIAL;
-    if(deathmatch && !(mo->flags2 & MF2_DROPPED))
+    if(gameRules.deathmatch && !(mo->flags2 & MF2_DROPPED))
     {
         if(mo->type == MT_ARTIINVULNERABILITY)
         {
@@ -1122,7 +1122,7 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
     if(plr->class_ != matchClass)
     {
         // Leave placed weapons forever on net games.
-        if(IS_NETGAME && !deathmatch)
+        if(IS_NETGAME && !gameRules.deathmatch)
             return false;
     }
 
@@ -1276,7 +1276,7 @@ static dd_bool giveItem(player_t *plr, itemtype_t item)
 
 void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 {
-    player_t* player;
+    player_t *player;
     coord_t delta;
     itemtype_t item;
     dd_bool wasUsed = false, removeItem = false;
@@ -1285,7 +1285,8 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 
     delta = special->origin[VZ] - toucher->origin[VZ];
     if(delta > toucher->height || delta < -32)
-    {   // Out of reach.
+    {
+        // Out of reach.
         return;
     }
 
@@ -1297,13 +1298,13 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     // Identify by sprite.
     if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
-        const iteminfo_t*   info = &items[item];
+        iteminfo_t const *info = &items[item];
 
         if((wasUsed = giveItem(player, item)))
         {
             // Should we leave this item for others?
-            if(!((info->flags & IIF_LEAVE_COOP) && IS_NETGAME && !deathmatch) &&
-               !((info->flags & IIF_LEAVE_DEATHMATCH) && IS_NETGAME && deathmatch))
+            if(!((info->flags & IIF_LEAVE_COOP) && IS_NETGAME && !gameRules.deathmatch) &&
+               !((info->flags & IIF_LEAVE_DEATHMATCH) && IS_NETGAME && gameRules.deathmatch))
                 removeItem = true;
         }
     }
@@ -1371,7 +1372,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
             break;
 
         default:
-            if(deathmatch && !(special->flags2 & MF2_DROPPED))
+            if(gameRules.deathmatch && !(special->flags2 & MF2_DROPPED))
                 P_HideSpecialThing(special);
             else
                 P_MobjRemove(special, false);
@@ -1425,11 +1426,11 @@ mobj_t* ActiveMinotaur(player_t* master)
     return NULL;
 }
 
-void P_KillMobj(mobj_t* source, mobj_t* target)
+void P_KillMobj(mobj_t *source, mobj_t *target)
 {
-    int                 dummy;
-    mobj_t*             master;
-    statenum_t          state;
+    int dummy;
+    mobj_t *master;
+    statenum_t state;
 
     if(!target)
         return; // Nothing to kill.
@@ -1440,25 +1441,28 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
     target->height /= 2*2;
     if((target->flags & MF_COUNTKILL || target->type == MT_ZBELL) &&
        target->special)
-    {   // Initiate monster death actions.
+    {
+        // Initiate monster death actions.
         if(target->type == MT_SORCBOSS)
         {
             dummy = 0;
-            P_StartACScript(target->special, 0, (byte *) &dummy, target, NULL, 0);
+            Game_ACScriptInterpreter_StartScript(target->special, 0/*current-map*/,
+                                                 (byte *) &dummy, target, NULL, 0);
         }
         else
         {
-            P_ExecuteLineSpecial(target->special, target->args, NULL, 0,
-                                 target);
+            P_ExecuteLineSpecial(target->special, target->args, NULL, 0, target);
         }
     }
 
     if(source && source->player)
-    {   // Check for frag changes.
-        if(target->player && deathmatch)
+    {
+        // Check for frag changes.
+        if(target->player && gameRules.deathmatch)
         {
             if(target == source)
-            {   // Self-frag.
+            {
+                // Self-frag.
                 target->player->frags[target->player - players]--;
                 NetSv_FragsForAll(target->player);
             }
@@ -1471,9 +1475,11 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
     }
 
     if(target->player)
-    {   // Player death.
+    {
+        // Player death.
         if(!source)
-        {   // Self-frag
+        {
+            // Self-frag
             target->player->frags[target->player - players]--;
             NetSv_FragsForAll(target->player);
         }
@@ -1490,8 +1496,9 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         target->player->plr->flags |= DDPF_DEAD;
         P_DropWeapon(target->player);
         if(target->flags2 & MF2_FIREDAMAGE)
-        {   // Player flame death.
-            //// \todo Should be pulled from the player class definition.
+        {
+            // Player flame death.
+            /// @todo Should be pulled from the player class definition.
             switch(target->player->class_)
             {
             case PCLASS_FIGHTER:
@@ -1519,7 +1526,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
             // Player ice death.
             target->flags &= ~MF_TRANSLATION; // no translation
             target->flags |= MF_ICECORPSE;
-            //// \todo Should be pulled from the player class definition.
+            /// @todo Should be pulled from the player class definition.
             switch(target->player->class_)
             {
             case PCLASS_FIGHTER:
@@ -1557,9 +1564,9 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
          * find MF_ targets->flags that indicated *only* enemies (not trees,
          * pots, etc), so built a list.
          *
-         * \todo This should be a Thing definition flag.
+         * @todo This should be a Thing definition flag.
          */
-        if(IS_NETGAME && !deathmatch && source && source->player &&
+        if(IS_NETGAME && !gameRules.deathmatch && source && source->player &&
            source->player->plr && (target->type == MT_CENTAUR ||
                                    target->type == MT_CENTAURLEADER ||
                                    target->type == MT_DEMON ||
@@ -1694,11 +1701,13 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
 
     if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
        target->health < -(target->info->spawnHealth / 2))
-    {   // Extreme death.
+    {
+        // Extreme death.
         P_MobjChangeState(target, state);
     }
     else
-    {   // Normal death.
+    {
+        // Normal death.
         if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&
            target->type == MT_FIREDEMON &&
            target->origin[VZ] <= target->floorZ + 2)
@@ -1848,7 +1857,7 @@ void P_AutoUseHealth(player_t* player, int saveHealth)
     if(!player->plr->mo) return;
 
     /// @todo Do this in the inventory code?
-    if(gameSkill == SM_BABY && normalCount * 25 >= saveHealth)
+    if(gameRules.skill == SM_BABY && normalCount * 25 >= saveHealth)
     {
         // Use quartz flasks.
         count = (saveHealth + 24) / 25;
@@ -1868,7 +1877,7 @@ void P_AutoUseHealth(player_t* player, int saveHealth)
             P_InventoryTake(plrnum, IIT_SUPERHEALTH, false);
         }
     }
-    else if(gameSkill == SM_BABY &&
+    else if(gameRules.skill == SM_BABY &&
             superCount * 100 + normalCount * 25 >= saveHealth)
     {
         // Use mystic urns and quartz flasks.
@@ -2019,7 +2028,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
         return 0; // Invulnerable, and won't wake up.
 
     player = target->player;
-    if(player && gameSkill == SM_BABY)
+    if(player && gameRules.skill == SM_BABY)
         damage /= 2; // Take half damage in trainer mode.
 
     // Use the cvar damage multiplier netMobDamageModifier only if the
@@ -2059,7 +2068,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
             {
                 if(target->player)
                 {
-                    if(deathmatch)
+                    if(gameRules.deathmatch)
                         P_TeleportToDeathmatchStarts(target);
                     else
                         P_TeleportToPlayerStarts(target);
@@ -2258,8 +2267,10 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damageP
         }
 
         if(damage >= player->health &&
-           ((gameSkill == SM_BABY) || deathmatch) && !player->morphTics)
-        {   // Try to use some inventory health.
+           ((gameRules.skill == SM_BABY) || gameRules.deathmatch) &&
+           !player->morphTics)
+        {
+            // Try to use some inventory health.
             P_AutoUseHealth(player, damage - player->health + 1);
         }
 
@@ -2444,11 +2455,10 @@ int P_FallingDamage(player_t* player)
     return P_DamageMobj(player->plr->mo, NULL, NULL, damage, false);
 }
 
-int P_PoisonDamage(player_t* player, mobj_t* source, int damage,
-                   dd_bool playPainSound)
+int P_PoisonDamage(player_t *player, mobj_t *source, int damage, dd_bool playPainSound)
 {
-    int             originalHealth;
-    mobj_t*         target, *inflictor;
+    int originalHealth;
+    mobj_t *target, *inflictor;
 
     target = player->plr->mo;
     originalHealth = target->health;
@@ -2460,8 +2470,9 @@ int P_PoisonDamage(player_t* player, mobj_t* source, int damage,
     if((target->flags2 & MF2_INVULNERABLE) && damage < 10000)
         return 0; // mobj is invulnerable.
 
-    if(gameSkill == SM_BABY)
-    {   // Take half damage in trainer mode
+    if(gameRules.skill == SM_BABY)
+    {
+        // Take half damage in trainer mode
         damage /= 2;
     }
 
@@ -2471,9 +2482,11 @@ int P_PoisonDamage(player_t* player, mobj_t* source, int damage,
         return 0;
     }
 
-    if(damage >= player->health && ((gameSkill == SM_BABY) || deathmatch) &&
+    if(damage >= player->health &&
+       (gameRules.skill == SM_BABY || gameRules.deathmatch) &&
        !player->morphTics)
-    {   // Try to use some inventory health.
+    {
+        // Try to use some inventory health.
         P_AutoUseHealth(player, damage - player->health + 1);
     }
 

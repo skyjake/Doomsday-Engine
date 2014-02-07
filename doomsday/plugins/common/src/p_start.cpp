@@ -321,7 +321,7 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathma
     {
         playerstart_t const *start = &playerStarts[i];
 
-        if(start->entryPoint == nextMapEntryPoint && start->plrNum - 1 == pnum)
+        if(start->entryPoint == nextMapEntrance && start->plrNum - 1 == pnum)
             return start;
         if(!start->entryPoint && start->plrNum - 1 == pnum)
             def = start;
@@ -502,7 +502,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     p->viewOffset[VX] = p->viewOffset[VY] = p->viewOffset[VZ] = 0;
 
     // Give all cards in death match mode.
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
 #if __JHEXEN__
         p->keys = 2047;
@@ -657,7 +657,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     }
 
     // Spawn at random spot if in death match.
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         G_DeathMatchSpawnPlayer(plrNum);
         return;
@@ -691,7 +691,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     int spawnFlags = 0;
     dd_bool makeCamera = false;
 
-    uint entryPoint = gameMapEntryPoint;
+    uint entryPoint = gameMapEntrance;
     dd_bool foundSpot = false;
     playerstart_t const *assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
@@ -749,7 +749,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
         // Try to spawn at one of the other player start spots.
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            if(playerstart_t const *start = P_GetPlayerStart(gameMapEntryPoint, i, false))
+            if(playerstart_t const *start = P_GetPlayerStart(gameMapEntrance, i, false))
             {
                 mapspot_t const *spot = &mapSpots[start->spot];
 
@@ -778,7 +778,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     if(!foundSpot)
     {
         // Player's going to be inside something.
-        if(playerstart_t const *start = P_GetPlayerStart(gameMapEntryPoint, plrNum, false))
+        if(playerstart_t const *start = P_GetPlayerStart(gameMapEntrance, plrNum, false))
         {
             mapspot_t const *spot = &mapSpots[start->spot];
 
@@ -888,12 +888,11 @@ void P_SpawnPlayers()
             // Spawn the client anywhere.
             P_SpawnClient(i);
         }
-
         return;
     }
 
     // If deathmatch, randomly spawn the active players.
-    if(deathmatch)
+    if(gameRules.deathmatch)
     {
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
@@ -992,7 +991,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
     playerclass_t pClass;
 #if __JHEXEN__
-    if(randomClassParm)
+    if(gameRules.randomClasses)
     {
         pClass = playerclass_t(P_Random() % 3);
         if(pClass == cfg.playerClass[playerNum]) // Not the same class, please.

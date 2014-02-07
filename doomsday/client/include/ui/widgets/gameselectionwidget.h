@@ -19,19 +19,32 @@
 #ifndef DENG_CLIENT_GAMESELECTIONWIDGET_H
 #define DENG_CLIENT_GAMESELECTIONWIDGET_H
 
-#include <de/MenuWidget>
+#include <de/ScrollAreaWidget>
+#include <de/ButtonWidget>
 
 /**
  * Menu for selecting
  */
-class GameSelectionWidget : public de::MenuWidget
+class GameSelectionWidget : public de::ScrollAreaWidget
 {
+    Q_OBJECT
+
 public:
     GameSelectionWidget(de::String const &name = "gameselection");
 
+    void setTitleColor(de::DotPath const &colorId,
+                       de::DotPath const &hoverColorId,
+                       de::ButtonWidget::HoverColorMode mode = de::ButtonWidget::ModulateColor);
+    void setTitleFont(de::DotPath const &fontId);
+
     // Events.
-    void viewResized();
     void update();
+
+signals:    
+    void gameSessionSelected();
+
+protected slots:
+    void updateSubsetLayout();
 
 private:
     DENG2_PRIVATE(d)

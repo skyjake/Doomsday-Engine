@@ -115,16 +115,18 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-    {   // Red.
+    {
+        // Red.
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 9.f;
+        rgba[CA] = (gameRules.deathmatch? 1.0f : cfg.filterStrength) * filter / 9.f;
         return true;
     }
 
     if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-    {   // Gold.
+    {
+        // Gold.
         rgba[CR] = 1;
         rgba[CG] = .8f;
         rgba[CB] = .5f;
@@ -133,7 +135,8 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
     }
 
     if(filter == 13) // RADIATIONPAL
-    {   // Green.
+    {
+        // Green.
         rgba[CR] = 0;
         rgba[CG] = .7f;
         rgba[CB] = 0;

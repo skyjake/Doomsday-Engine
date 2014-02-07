@@ -210,10 +210,18 @@ dd_bool EV_LineSearchForPuzzleItem(Line* line, byte* args, mobj_t* mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
+static Uri *mapUriFromLogicalNumber(int number)
+{
+    if(!number) return 0; // current map.
+    return G_ComposeMapUri(gameEpisode, number - 1);
+}
+
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
 {
     byte newArgs[5];
     int i, lock;
+    dd_bool success;
+    Uri *mapUri;
 
     DENG_ASSERT(args != 0);
 
@@ -241,7 +249,11 @@ dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
     }
     newArgs[4] = 0;
 
-    return P_StartACScript(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
+    mapUri = mapUriFromLogicalNumber(newArgs[1]);
+    success = Game_ACScriptInterpreter_StartScript(newArgs[0], mapUri, &newArgs[2], mo, line, side);
+    Uri_Delete(mapUri);
+
+    return success;
 }
 
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
@@ -503,7 +515,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 success = true;
-                if(deathmatch)
+                if(gameRules.deathmatch)
                 {
                     // Winning in deathmatch just goes back to map 1
                     G_LeaveMap(0, 0, false);
@@ -517,17 +529,23 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         }
         break;
 
-    case 80: // ACS_Execute
-        success = P_StartACScript(args[0], args[1], &args[2], mo, line, side);
-        break;
+    case 80: /* ACS_Execute */ {
+        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter_StartScript(args[0], mapUri, &args[2], mo, line, side);
+        Uri_Delete(mapUri);
+        break; }
 
-    case 81: // ACS_Suspend
-        success = P_SuspendACScript(args[0], args[1]);
-        break;
+    case 81: /* ACS_Suspend */ {
+        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter_SuspendScript(args[0], mapUri);
+        Uri_Delete(mapUri);
+        break; }
 
-    case 82: // ACS_Terminate
-        success = P_TerminateACScript(args[0], args[1]);
-        break;
+    case 82: /* ACS_Terminate */ {
+        Uri *mapUri = mapUriFromLogicalNumber(args[1]);
+        success = Game_ACScriptInterpreter_TerminateScript(args[0], mapUri);
+        Uri_Delete(mapUri);
+        break; }
 
     case 83: // ACS_LockedExecute
         success = P_StartLockedACS(line, args, mo, side);
@@ -1054,7 +1072,7 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     mapinfo_t const *mapInfo = P_MapInfo(mapUri);
     Uri_Delete(mapUri);
 

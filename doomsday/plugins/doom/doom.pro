@@ -79,10 +79,10 @@ SOURCES += \
     src/m_random.c \
     src/p_enemy.c \
     src/p_inter.c \
-    src/p_lights.c \
+    src/p_lights.cpp \
     src/p_maputl.c \
     src/p_mobj.c \
-    src/p_oldsvg.c \
+    src/p_oldsvg.cpp \
     src/p_pspr.c \
     src/p_setup.c \
     src/p_spec.c \

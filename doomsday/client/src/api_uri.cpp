@@ -97,6 +97,14 @@ static void readUri(Uri* uri, Reader* reader, de::String defaultScheme = "")
     Uri_SetPath  (uri, Str_Text(&path  ));
 }
 
+#undef Uri_NewWithPath3
+Uri* Uri_NewWithPath3(char const *defaultScheme, char const *path)
+{
+    de::Uri *uri = new de::Uri(defaultScheme);
+    uri->setUri(path, RC_NULL);
+    return reinterpret_cast<Uri *>(uri);
+}
+
 #undef Uri_NewWithPath2
 Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass)
 {
@@ -286,6 +294,7 @@ DENG_DECLARE_API(Uri) =
 {
     { DE_API_URI },
     Uri_New,
+    Uri_NewWithPath3,
     Uri_NewWithPath2,
     Uri_NewWithPath,
     Uri_Dup,

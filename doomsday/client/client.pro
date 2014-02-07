@@ -375,9 +375,9 @@ DENG_HEADERS += \
     include/ui/dialogs/alertdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
     include/ui/dialogs/coloradjustmentdialog.h \
+    include/ui/dialogs/gamesdialog.h \
     include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/logsettingsdialog.h \
-    include/ui/dialogs/multiplayerdialog.h \
     include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
@@ -388,13 +388,17 @@ DENG_HEADERS += \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
     include/ui/widgets/cvarchoicewidget.h \
+    include/ui/widgets/cvarlineeditwidget.h \
     include/ui/widgets/cvarsliderwidget.h \
     include/ui/widgets/cvartogglewidget.h \
     include/ui/widgets/gameselectionwidget.h \
+    include/ui/widgets/gamesessionwidget.h \
     include/ui/widgets/gameuiwidget.h \
     include/ui/widgets/gamewidget.h \
     include/ui/widgets/icvarwidget.h \
     include/ui/widgets/keygrabberwidget.h \
+    include/ui/widgets/mpselectionwidget.h \
+    include/ui/widgets/multiplayermenuwidget.h \
     include/ui/widgets/profilepickerwidget.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/fi_main.h \
@@ -698,9 +702,9 @@ SOURCES += \
     src/ui/dialogs/alertdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
     src/ui/dialogs/coloradjustmentdialog.cpp \
+    src/ui/dialogs/gamesdialog.cpp \
     src/ui/dialogs/inputsettingsdialog.cpp \
     src/ui/dialogs/logsettingsdialog.cpp \
-    src/ui/dialogs/multiplayerdialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
     src/ui/dialogs/vrsettingsdialog.cpp \
@@ -723,12 +727,16 @@ SOURCES += \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
     src/ui/widgets/cvarchoicewidget.cpp \
+    src/ui/widgets/cvarlineeditwidget.cpp \
     src/ui/widgets/cvarsliderwidget.cpp \
     src/ui/widgets/cvartogglewidget.cpp \
     src/ui/widgets/gameselectionwidget.cpp \
+    src/ui/widgets/gamesessionwidget.cpp \
     src/ui/widgets/gamewidget.cpp \
     src/ui/widgets/gameuiwidget.cpp \
     src/ui/widgets/keygrabberwidget.cpp \
+    src/ui/widgets/mpselectionwidget.cpp \
+    src/ui/widgets/multiplayermenuwidget.cpp \
     src/ui/widgets/profilepickerwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/windowsystem.cpp \

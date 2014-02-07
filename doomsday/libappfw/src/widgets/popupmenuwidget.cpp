@@ -48,6 +48,11 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             return;
         }
 
+        if(LabelWidget *lab = widget.maybeAs<LabelWidget>())
+        {
+            lab->margins().set("unit");
+        }
+
         // Customize buttons for use in the popup. We will observe the button
         // state for highlighting and possibly close the popup when an action
         // gets triggered.
@@ -55,7 +60,6 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         {
             b->setHoverTextColor("inverted.text");
             b->setSizePolicy(ui::Expand, ui::Expand);
-            b->margins().set("unit");
 
             if(!b->is<ToggleWidget>())
             {

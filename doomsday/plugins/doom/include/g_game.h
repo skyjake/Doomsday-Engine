@@ -37,6 +37,7 @@
 #include "doomdef.h"
 #include "d_event.h"
 #include "d_player.h"
+#include "gamerules.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,22 +49,19 @@ extern int gaLoadGameSlot;
 extern player_t players[MAXPLAYERS];
 
 extern dd_bool gameInProgress;
-extern skillmode_t gameSkill;
 extern uint gameEpisode;
 extern uint gameMap;
-extern uint gameMapEntryPoint;
+extern uint gameMapEntrance;
+extern GameRuleset gameRules;
 
 extern uint nextMap; // If non zero this will be the next map.
 extern dd_bool secretExit;
 extern int totalKills, totalItems, totalSecret;
-extern dd_bool deathmatch;
-extern dd_bool respawnMonsters;
 extern dd_bool paused;
 extern dd_bool precache;
 extern dd_bool customPal;
 extern wbstartstruct_t wmInfo;
 extern int bodyQueueSlot;
-extern int mapStartTic;
 extern dd_bool briefDisabled;
 
 extern int gsvMapMusic;

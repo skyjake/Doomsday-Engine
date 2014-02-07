@@ -1,35 +1,25 @@
-/**\file d_main.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file d_main.c  Doom64-specific game initialization.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <yagisan@dengine.net>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * Initialization - Doom64 specifc.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <assert.h>
 #include <string.h>
@@ -44,27 +34,13 @@
 #include "p_saveg.h"
 #include "p_map.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 int verbose;
 
-dd_bool devParm; // checkparm of -devparm
-dd_bool noMonstersParm; // checkparm of -nomonsters
-dd_bool respawnParm; // checkparm of -respawn
-dd_bool fastParm; // checkparm of -fast
-dd_bool turboParm; // checkparm of -turbo
+//dd_bool devParm; // checkparm of -devparm
+//dd_bool noMonstersParm; // checkparm of -nomonsters
+//dd_bool respawnParm; // checkparm of -respawn
+//dd_bool fastParm; // checkparm of -fast
+//dd_bool turboParm; // checkparm of -turbo
 //dd_bool randomClassParm; // checkparm of -randclass
 
 float turboMul; // Multiplier for turbo.
@@ -73,8 +49,8 @@ gamemode_t gameMode;
 int gameModeBits;
 
 // Default font colors.
-const float defFontRGB[]  = { 1, 1, 1 };
-const float defFontRGB2[] = { .85f, 0, 0 };
+float const defFontRGB[]  = { 1, 1, 1 };
+float const defFontRGB2[] = { .85f, 0, 0 };
 
 // The patches used in drawing the view border.
 // Percent-encoded.
@@ -90,14 +66,9 @@ char* borderGraphics[] = {
     "BRDR_BL" // Bottom left.
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static skillmode_t startSkill;
 static uint startEpisode;
 static uint startMap;
 static dd_bool autoStart;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Get a 32-bit integer value.
@@ -226,7 +197,7 @@ void D_PreInit(void)
     cfg.ammoAutoSwitch = 0; // Never.
     cfg.secretMsg = true;
     cfg.slidingCorpses = false;
-    cfg.fastMonsters = false;
+    //cfg.fastMonsters = false;
     cfg.netJumping = true;
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
@@ -354,8 +325,8 @@ void D_PreInit(void)
  */
 void D_PostInit(void)
 {
-    AutoStr* path;
-    Uri* uri;
+    AutoStr *path;
+    Uri *uri;
     int p;
 
     // Common post init routine.
@@ -371,7 +342,7 @@ void D_PostInit(void)
     monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Get skill / episode / map from parms.
-    gameSkill = startSkill = SM_MEDIUM;
+    gameRules.skill = /*startSkill =*/ SM_MEDIUM;
     startEpisode = 0;
     startMap = 0;
     autoStart = false;
@@ -379,19 +350,18 @@ void D_PostInit(void)
     // Game mode specific settings
     // None.
 
-    // Command line options
-    noMonstersParm = CommandLine_Check("-nomonsters");
-    respawnParm = CommandLine_Check("-respawn");
-    fastParm = CommandLine_Check("-fast");
-    devParm = CommandLine_Check("-devparm");
-
     if(CommandLine_Check("-altdeath"))
         cfg.netDeathmatch = 2;
     else if(CommandLine_Check("-deathmatch"))
         cfg.netDeathmatch = 1;
 
+    // Apply these rules.
+    gameRules.noMonsters      = CommandLine_Check("-nomonsters")? true : false;
+    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
+    gameRules.fast            = CommandLine_Check("-fast")? true : false;
+
     p = CommandLine_Check("-timer");
-    if(p && p < myargc - 1 && deathmatch)
+    if(p && p < myargc - 1 && gameRules.deathmatch)
     {
         int time = atoi(CommandLine_At(p + 1));
         App_Log(DE2_LOG_NOTE, "Maps will end after %d %s", time, time == 1? "minute" : "minutes");
@@ -404,7 +374,6 @@ void D_PostInit(void)
     {
         int scale = 200;
 
-        turboParm = true;
         if(p < myargc - 1)
             scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)
@@ -420,7 +389,7 @@ void D_PostInit(void)
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        const int saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
+        int const saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
         if(SV_IsUserWritableSlot(saveSlot) && G_LoadGame(saveSlot))
         {
             // No further initialization is to be done.
@@ -431,7 +400,7 @@ void D_PostInit(void)
     p = CommandLine_Check("-skill");
     if(p && p < myargc - 1)
     {
-        startSkill = CommandLine_At(p + 1)[0] - '1';
+        gameRules.skill = CommandLine_At(p + 1)[0] - '1';
         autoStart = true;
     }
 
@@ -446,7 +415,7 @@ void D_PostInit(void)
     if(autoStart)
     {
         App_Log(DE2_LOG_NOTE, "Warp to Episode %d, Map %d, Skill %d", startEpisode+1,
-                startMap+1, startSkill);
+                startMap+1, gameRules.skill);
     }
 
     // Validate episode and map.
@@ -461,7 +430,7 @@ void D_PostInit(void)
 
     if(autoStart || IS_NETGAME)
     {
-        G_DeferredNewGame(startSkill, startEpisode, startMap, 0/*default*/);
+        G_DeferredNewGame(startEpisode, startMap, 0/*default*/, &gameRules);
     }
     else
     {

@@ -56,7 +56,8 @@ D_CMD(SpawnMobj);
 
 D_CMD(PrintPlayerCoords);
 
-D_CMD(ScriptInfo);
+D_CMD(InspectACScript);
+D_CMD(ListACScripts);
 D_CMD(Test);
 D_CMD(MovePlane);
 D_CMD(ScreenShot);
@@ -135,7 +136,7 @@ cvartemplate_t gameCVars[] = {
     //{"game-monsters-floatoverblocking", 0, CVT_BYTE, &cfg.allowMonsterFloatOverBlocking, 0, 1},
 
 // Game state
-    {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
+    //{"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
 
 // Gameplay
     {"game-maulator-time", CVF_NO_MAX, CVT_INT, &maulatorSeconds, 1, 0},
@@ -173,7 +174,8 @@ ccmdtemplate_t  gameCCmds[] = {
     // Hexen specific
     {"pig",         NULL,   CCmdCheatMorph},
     {"runscript",   "i*",   CCmdCheatRunScript},
-    {"scriptinfo",  NULL,   CCmdScriptInfo},
+    {"scriptinfo",  "i",    CCmdInspectACScript},
+    {"scriptinfo",  "",     CCmdListACScripts},
     {"class",       "i*",   CCmdCheatShadowcaster},
     {NULL}
 };

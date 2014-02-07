@@ -36,6 +36,7 @@
 
 #include "doomdef.h"
 #include "d_player.h"
+#include "gamerules.h"
 #include "wi_stuff.h"
 
 #ifdef __cplusplus
@@ -49,19 +50,16 @@ extern player_t players[MAXPLAYERS];
 extern uint nextMap;
 
 extern dd_bool gameInProgress;
-extern skillmode_t gameSkill;
 extern uint gameEpisode;
 extern uint gameMap;
-extern uint gameMapEntryPoint;
+extern uint gameMapEntrance;
+extern GameRuleset gameRules;
 
 extern uint nextMap; // If non zero this will be the next map.
 extern dd_bool secretExit;
 extern int totalKills, totalItems, totalSecret;
-extern dd_bool respawnMonsters;
 extern wbstartstruct_t wmInfo;
-extern int mapStartTic;
 extern int bodyQueueSlot;
-extern dd_bool deathmatch;
 extern dd_bool paused;
 extern dd_bool precache;
 extern dd_bool customPal;
@@ -72,8 +70,8 @@ void            G_Register(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
 void            G_CommonShutdown(void);
-void            R_InitRefresh(void);
 
+void            R_InitRefresh(void);
 void            G_DeathMatchSpawnPlayer(int playernum);
 
 void            G_PrintMapList(void);

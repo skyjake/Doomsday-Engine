@@ -32,6 +32,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "gamerules.h"
 #include "p_mobj.h"
 #include "x_player.h"
 
@@ -47,18 +48,15 @@ extern player_t players[MAXPLAYERS];
 extern dd_bool gameInProgress;
 extern uint gameEpisode;
 extern uint gameMap;
-extern uint gameMapEntryPoint;
-extern skillmode_t gameSkill;
+extern uint gameMapEntrance;
+extern GameRuleset gameRules;
 
-extern dd_bool deathmatch;
 extern dd_bool paused;
 extern dd_bool precache;
 extern dd_bool customPal;
 
-extern skillmode_t dSkill;
-
 extern uint nextMap;
-extern uint nextMapEntryPoint;
+extern uint nextMapEntrance;
 extern dd_bool briefDisabled;
 
 extern int gsvMapMusic;

@@ -33,7 +33,6 @@ public:
     SignalAction(QObject *target, char const *slot);
 
     void trigger();
-    SignalAction *duplicate() const;
 
 signals:
     void triggered();

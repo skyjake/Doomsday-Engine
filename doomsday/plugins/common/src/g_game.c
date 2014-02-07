@@ -125,9 +125,7 @@ void    G_DoReborn(int playernum);
 dd_bool G_StartDebriefing();
 
 typedef struct {
-    Uri* mapUri;
-    uint episode;
-    uint map;
+    Uri *mapUri;
     dd_bool revisit;
 } loadmap_params_t;
 int     G_DoLoadMap(loadmap_params_t* params);
@@ -163,17 +161,15 @@ static void G_InitNewGame(void);
 
 game_config_t cfg; // The global cfg.
 
-skillmode_t dSkill; // Default.
-
 dd_bool gameInProgress;
-skillmode_t gameSkill;
 uint gameEpisode;
 uint gameMap;
-uint gameMapEntryPoint; // Position indicator for reborn.
+uint gameMapEntrance; // Position indicator for reborn.
+GameRuleset gameRules;
 
 uint nextMap;
 #if __JHEXEN__
-uint nextMapEntryPoint;
+uint nextMapEntrance;
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -184,15 +180,10 @@ dd_bool secretExit;
 uint mapHub = 0;
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-dd_bool respawnMonsters;
-#endif
 dd_bool monsterInfight;
 
-dd_bool deathmatch; // Only if started as net death.
 player_t players[MAXPLAYERS];
 
-int mapStartTic; // Game tic at map start.
 int totalKills, totalItems, totalSecret; // For intermission.
 
 dd_bool singledemo; // Quit after playing a demo from cmdline.
@@ -251,7 +242,7 @@ static gamestate_t gameState = GS_STARTUP;
 cvartemplate_t gamestatusCVars[] =
 {
     {"game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0},
-    {"game-skill", READONLYCVAR, CVT_INT, &gameSkill, 0, 0},
+    {"game-skill", READONLYCVAR, CVT_INT, &gameRules.skill, 0, 0},
     {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0},
     {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0},
 #if !__JHEXEN__
@@ -410,9 +401,11 @@ ccmdtemplate_t gameCmds[] = {
     { NULL }
 };
 
+// Deferred new game arguments:
 static uint dEpisode;
 static uint dMap;
-static uint dMapEntryPoint;
+static uint dMapEntrance;
+static GameRuleset dRules;
 
 static gameaction_t gameAction;
 static dd_bool quitInProgress;
@@ -1149,7 +1142,7 @@ void G_StartHelp(void)
  */
 static void printMapBanner(void)
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     char const *title = P_CurrentMapTitle();
 
     App_Log(DE2_LOG_MAP, DE2_ESC(R));
@@ -1196,7 +1189,6 @@ void G_BeginMap(void)
     G_UpdateGSVarsForMap();
 
     // Time can now progress in this map.
-    mapStartTic = (int) GAMETIC;
     mapTime = actualMapTime = 0;
 
     printMapBanner();
@@ -1264,7 +1256,7 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
 
 #if __JHEXEN__
     {
-        Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *mapUri = G_CurrentMapUri();
         mapinfo_t const *mapInfo = P_MapInfo(mapUri);
         if(mapInfo)
         {
@@ -1343,7 +1335,7 @@ int G_Responder(event_t* ev)
     return Hu_MenuResponder(ev);
 }
 
-int G_PrivilegedResponder(event_t* ev)
+int G_PrivilegedResponder(event_t *ev)
 {
     // Ignore all events once shutdown has begun.
     if(G_QuitInProgress()) return false;
@@ -1351,12 +1343,15 @@ int G_PrivilegedResponder(event_t* ev)
     if(Hu_MenuPrivilegedResponder(ev))
         return true;
 
-    // Process the screen shot key right away.
-    if(devParm && ev->type == EV_KEY && ev->data1 == DDKEY_F1)
+    // Process the screen shot key right away?
+    if(ev->type == EV_KEY && ev->data1 == DDKEY_F1)
     {
-        if(ev->state == EVS_DOWN)
-            G_ScreenShot();
-        return true; // All F1 events are eaten.
+        if(CommandLine_Check("-devparm"))
+        {
+            if(ev->state == EVS_DOWN)
+                G_ScreenShot();
+            return true; // All F1 events are eaten.
+        }
     }
 
     return false; // Not eaten.
@@ -1553,7 +1548,7 @@ static void runGameAction(void)
         {
         case GA_NEWGAME:
             G_InitNewGame();
-            G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
+            G_NewGame(dEpisode, dMap, dMapEntrance, &dRules);
             G_SetGameAction(GA_NONE);
             break;
 
@@ -1771,7 +1766,7 @@ void G_PlayerLeaveMap(int player)
 
 #if __JHEXEN__
     {
-        Uri *mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *mapUri     = G_CurrentMapUri();
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
         newCluster = (P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster);
@@ -1821,7 +1816,7 @@ void G_PlayerLeaveMap(int player)
     memset(p->powers, 0, sizeof(p->powers));
 
 #if __JHEXEN__
-    if(!newCluster && !deathmatch)
+    if(!newCluster && !gameRules.deathmatch)
         p->powers[PT_FLIGHT] = flightPower; // Restore flight.
 #endif
 
@@ -1830,7 +1825,7 @@ void G_PlayerLeaveMap(int player)
     p->update |= PSF_KEYS;
     memset(p->keys, 0, sizeof(p->keys));
 #else
-    if(!deathmatch && newCluster)
+    if(!gameRules.deathmatch && newCluster)
         p->keys = 0;
 #endif
 
@@ -2149,7 +2144,7 @@ void G_DoReborn(int plrNum)
             {
                 // Compose the confirmation message.
                 SaveInfo* info = SV_SaveInfoForSlot(chosenSlot);
-                AutoStr* msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Name(info)));
+                AutoStr* msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Description(info)));
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, chosenSlot, 0);
             }
@@ -2183,7 +2178,7 @@ static void G_InitNewGame(void)
     SV_ClearSlot(AUTO_SLOT);
 
 #if __JHEXEN__
-    P_InitACScript();
+    Game_InitACScriptsForNewGame();
 #endif
 }
 
@@ -2228,39 +2223,43 @@ static void G_ApplyGameRuleFastMissiles(dd_bool fast)
 }
 #endif
 
-static void G_ApplyGameRules(skillmode_t skill)
+/**
+ * To be called when a new game begins to effect the game rules. Note that some
+ * of the rules may be overridden here (e.g., in a networked game).
+ */
+static void G_ApplyNewGameRules()
 {
-    if(skill < SM_NOTHINGS)
-        skill = SM_NOTHINGS;
-    if(skill > NUM_SKILL_MODES - 1)
-        skill = NUM_SKILL_MODES - 1;
-    gameSkill = skill;
+    if(gameRules.skill < SM_NOTHINGS)
+        gameRules.skill = SM_NOTHINGS;
+    if(gameRules.skill > NUM_SKILL_MODES - 1)
+        gameRules.skill = NUM_SKILL_MODES - 1;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!IS_NETGAME)
     {
-        deathmatch = false;
-        respawnMonsters = false;
-        noMonstersParm = CommandLine_Exists("-nomonsters")? true : false;
+        gameRules.deathmatch = false;
+        gameRules.respawnMonsters = false;
+
+        gameRules.noMonsters = CommandLine_Exists("-nomonsters")? true : false;
     }
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    respawnMonsters = respawnParm;
+    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
 #endif
 
 #if __JDOOM__ || __JHERETIC__
     // Is respawning enabled at all in nightmare skill?
-    if(gameSkill == SM_NIGHTMARE)
-        respawnMonsters = cfg.respawnMonstersNightmare;
+    if(gameRules.skill == SM_NIGHTMARE)
+        gameRules.respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
     // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
     {
-        dd_bool fastMonsters = fastParm;
+        dd_bool fastMonsters = gameRules.fast;
 # if __JDOOM__
-        if(gameSkill == SM_NIGHTMARE) fastMonsters = true;
+        if(gameRules.skill == SM_NIGHTMARE) fastMonsters = true;
 # endif
         G_ApplyGameRuleFastMonsters(fastMonsters);
     }
@@ -2269,9 +2268,9 @@ static void G_ApplyGameRules(skillmode_t skill)
     // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
-        dd_bool fastMissiles = fastParm;
+        dd_bool fastMissiles = gameRules.fast;
 # if !__JDOOM64__
-        if(gameSkill == SM_NIGHTMARE) fastMissiles = true;
+        if(gameRules.skill == SM_NIGHTMARE) fastMissiles = true;
 # endif
         G_ApplyGameRuleFastMissiles(fastMissiles);
     }
@@ -2298,7 +2297,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 
 #if __JHEXEN__
     nextMap = newMap;
-    nextMapEntryPoint = _entryPoint;
+    nextMapEntrance = _entryPoint;
 #else
     secretExit = _secretExit;
 # if __JDOOM__
@@ -2342,7 +2341,7 @@ dd_bool G_IfVictory(void)
     }
 
 #elif __JHEXEN__
-    if(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT)
+    if(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT)
     {
         return true;
     }
@@ -2416,7 +2415,7 @@ void G_DoMapCompleted(void)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
     ddmapinfo_t minfo;
-    Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri* mapUri = G_CurrentMapUri();
     AutoStr* mapPath = Uri_Compose(mapUri);
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
     {
@@ -2428,7 +2427,7 @@ void G_DoMapCompleted(void)
     }
 
 #elif __JHEXEN__
-    if(!deathmatch)
+    if(!gameRules.deathmatch)
     {
         G_IntermissionDone();
         return;
@@ -2446,7 +2445,7 @@ void G_DoMapCompleted(void)
 # endif
 
     // Determine the next map.
-    nextMap = G_GetNextMap(gameEpisode, gameMap, secretExit);
+    nextMap = G_NextLogicalMapNumber(secretExit);
 #endif
 
     // Time for an intermission.
@@ -2471,7 +2470,7 @@ void G_DoMapCompleted(void)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     NetSv_Intermission(IMF_BEGIN, 0, 0);
 #else /* __JHEXEN__ */
-    NetSv_Intermission(IMF_BEGIN, (int) nextMap, (int) nextMapEntryPoint);
+    NetSv_Intermission(IMF_BEGIN, (int) nextMap, (int) nextMapEntrance);
 #endif
 
     S_PauseMusic(false);
@@ -2480,7 +2479,7 @@ void G_DoMapCompleted(void)
 #if __JDOOM__ || __JDOOM64__
 void G_PrepareWIData(void)
 {
-    Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri* mapUri = G_CurrentMapUri();
     AutoStr* mapPath = Uri_Compose(mapUri);
     wbstartstruct_t* info = &wmInfo;
     ddmapinfo_t minfo;
@@ -2518,7 +2517,7 @@ void G_PrepareWIData(void)
  */
 dd_bool G_StartDebriefing()
 {
-    Uri *mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    Uri *mapUri = G_CurrentMapUri();
     ddfinale_t fin;
 
     if(G_DebriefingEnabled(mapUri, &fin) &&
@@ -2586,7 +2585,7 @@ void G_DoLeaveMap(void)
 {
 #if __JHEXEN__
     playerbackup_t playerBackup[MAXPLAYERS];
-    dd_bool oldRandomClassParm;
+    dd_bool oldRandomClassesRule;
 #endif
     loadmap_params_t p;
     ddfinale_t fin;
@@ -2611,15 +2610,15 @@ void G_DoLeaveMap(void)
      * whether we need to load the archived map state.
      */
     revisit = SV_HxHaveMapStateForSlot(BASE_SLOT, nextMap);
-    if(deathmatch) revisit = false;
+    if(gameRules.deathmatch) revisit = false;
 
     // Same cluster?
     {
-        Uri *mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri *mapUri     = G_CurrentMapUri();
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster)
+        if(P_MapInfo(mapUri)->cluster == P_MapInfo(nextMapUri)->cluster)
         {
-            if(!deathmatch)
+            if(!gameRules.deathmatch)
             {
                 // Save current map.
                 SV_HxSaveClusterMap();
@@ -2627,14 +2626,10 @@ void G_DoLeaveMap(void)
         }
         else // Entering new cluster.
         {
-            if(!deathmatch)
+            if(!gameRules.deathmatch)
             {
                 SV_ClearSlot(BASE_SLOT);
             }
-
-            // Re-apply the game rules.
-            /// @todo Necessary?
-            G_ApplyGameRules(gameSkill);
         }
 
         Uri_Delete(nextMapUri);
@@ -2646,8 +2641,8 @@ void G_DoLeaveMap(void)
     SV_HxBackupPlayersInCluster(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
-    oldRandomClassParm = randomClassParm;
-    randomClassParm = false;
+    oldRandomClassesRule = gameRules.randomClasses;
+    gameRules.randomClasses = false;
 
     // We don't want to see a briefing if we've already visited this map.
     if(revisit) briefDisabled = true;
@@ -2678,14 +2673,12 @@ void G_DoLeaveMap(void)
 #endif
 
 #if __JHEXEN__
-    gameMapEntryPoint = nextMapEntryPoint;
+    gameMapEntrance = nextMapEntrance;
 #else
-    gameMapEntryPoint = 0;
+    gameMapEntrance = 0;
 #endif
 
     p.mapUri  = G_ComposeMapUri(gameEpisode, nextMap);
-    p.episode = gameEpisode;
-    p.map     = nextMap;
     p.revisit = revisit;
 
     hasBrief = G_BriefingEnabled(p.mapUri, &fin);
@@ -2694,7 +2687,7 @@ void G_DoLeaveMap(void)
         G_QueMapMusic(p.mapUri);
     }
 
-    gameMap = p.map;
+    gameMap = nextMap;
 
     // If we're the server, let clients know the map will change.
     NetSv_UpdateGameConfigDescription();
@@ -2720,19 +2713,19 @@ void G_DoLeaveMap(void)
         P_RemoveAllPlayerMobjs();
     }
 
-    SV_HxRestorePlayersInCluster(playerBackup, nextMapEntryPoint);
+    SV_HxRestorePlayersInCluster(playerBackup, nextMapEntrance);
 
-    // Restore the random class option.
-    randomClassParm = oldRandomClassParm;
+    // Restore the random class rule.
+    gameRules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
-    P_ACScriptRunDeferredTasks(gameMap/*p.mapUri*/);
+    Game_ACScriptInterpreter_RunDeferredTasks(p.mapUri);
 #endif
 
     Uri_Delete(p.mapUri);
 
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
-    if(!IS_NETGAME && !deathmatch)
+    if(!IS_NETGAME && !gameRules.deathmatch)
     {
         AutoStr *name = G_GenerateSaveGameName();
         savestateworker_params_t p;
@@ -2754,7 +2747,7 @@ void G_DoRestartMap(void)
 
     // Restart the game session entirely.
     G_InitNewGame();
-    G_NewGame(dSkill, dEpisode, dMap, dMapEntryPoint);
+    G_NewGame(dEpisode, dMap, dMapEntrance, &dRules);
 #else
     loadmap_params_t p;
 
@@ -2766,10 +2759,8 @@ void G_DoRestartMap(void)
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
 
-    p.mapUri     = G_ComposeMapUri(gameEpisode, gameMap);
-    p.episode    = gameEpisode;
-    p.map        = gameMap;
-    p.revisit    = false; // Don't reload save state.
+    p.mapUri  = G_CurrentMapUri();
+    p.revisit = false; // Don't reload save state.
 
     // This is a restart, so we won't brief again.
     G_QueMapMusic(p.mapUri);
@@ -2892,7 +2883,7 @@ AutoStr *G_GenerateSaveGameName(void)
     minutes = time / 60;   time -= minutes * 60;
     seconds = time;
 
-    mapUri   = G_ComposeMapUri(gameEpisode, gameMap);
+    mapUri   = G_CurrentMapUri();
     mapPath  = Uri_Compose(mapUri);
     mapTitle = P_CurrentMapTitle();
 
@@ -2935,10 +2926,10 @@ void G_DoSaveGame(void)
     {
         // No name specified.
         SaveInfo* info = SV_SaveInfoForSlot(gaSaveGameSlot);
-        if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Name(info)))
+        if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Description(info)))
         {
             // Slot already in use; reuse the existing name.
-            name = Str_Text(SaveInfo_Name(info));
+            name = Str_Text(SaveInfo_Description(info));
         }
         else
         {
@@ -2967,19 +2958,23 @@ void G_DoSaveGame(void)
     G_SetGameAction(GA_NONE);
 }
 
-void G_DeferredNewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
+void G_DeferredNewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rules)
 {
-    dSkill         = skill;
-    dEpisode       = episode;
-    dMap           = map;
-    dMapEntryPoint = mapEntryPoint;
+    DENG_ASSERT(rules != 0);
+
+    dEpisode     = episode;
+    dMap         = map;
+    dMapEntrance = mapEntrance;
+    dRules       = *rules; // make a copy.
 
     G_SetGameAction(GA_NEWGAME);
 }
 
-void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
+void G_NewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rules)
 {
     uint i;
+
+    DENG_ASSERT(rules != 0);
 
     G_StopDemo();
 
@@ -3024,27 +3019,27 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);
 
-    gameEpisode         = episode;
-    gameMap             = map;
-    gameMapEntryPoint   = mapEntryPoint;
+    gameEpisode     = episode;
+    gameMap         = map;
+    gameMapEntrance = mapEntrance;
+    gameRules       = *rules;
 
-    G_ApplyGameRules(skill);
+    G_ApplyNewGameRules();
+
     M_ResetRandom();
 
     NetSv_UpdateGameConfigDescription();
 
     {
         loadmap_params_t p;
-        dd_bool hasBrief;
+        dd_bool showBrief;
         ddfinale_t fin;
 
-        p.mapUri        = G_ComposeMapUri(gameEpisode, gameMap);
-        p.episode       = gameEpisode;
-        p.map           = gameMap;
-        p.revisit       = false;
+        p.mapUri  = G_CurrentMapUri();
+        p.revisit = false;
 
-        hasBrief = G_BriefingEnabled(p.mapUri, &fin);
-        if(!hasBrief)
+        showBrief = G_BriefingEnabled(p.mapUri, &fin);
+        if(!showBrief)
         {
             G_QueMapMusic(p.mapUri);
         }
@@ -3054,7 +3049,7 @@ void G_NewGame(skillmode_t skill, uint episode, uint map, uint mapEntryPoint)
 
         G_DoLoadMap(&p);
 
-        if(hasBrief)
+        if(showBrief)
         {
             G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
         }
@@ -3102,20 +3097,20 @@ void G_QuitGame(void)
     Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
 }
 
-const char* P_GetGameModeName(void)
+char const *P_GetGameModeName(void)
 {
-    static const char* dm   = "deathmatch";
-    static const char* coop = "cooperative";
-    static const char* sp   = "singleplayer";
+    static char const *dm   = "deathmatch";
+    static char const *coop = "cooperative";
+    static char const *sp   = "singleplayer";
     if(IS_NETGAME)
     {
-        if(deathmatch) return dm;
+        if(gameRules.deathmatch) return dm;
         return coop;
     }
     return sp;
 }
 
-uint G_GetMapNumber(uint episode, uint map)
+uint G_LogicalMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__
     return P_TranslateMap(map);
@@ -3133,7 +3128,12 @@ uint G_GetMapNumber(uint episode, uint map)
 #endif
 }
 
-Uri* G_ComposeMapUri(uint episode, uint map)
+uint G_CurrentLogicalMapNumber(void)
+{
+    return G_LogicalMapNumber(gameEpisode, gameMap);
+}
+
+Uri *G_ComposeMapUri(uint episode, uint map)
 {
     lumpname_t mapId;
 #if __JDOOM64__
@@ -3149,6 +3149,11 @@ Uri* G_ComposeMapUri(uint episode, uint map)
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #endif
     return Uri_NewWithPath2(mapId, RC_NULL);
+}
+
+Uri *G_CurrentMapUri(void)
+{
+    return G_ComposeMapUri(gameEpisode, gameMap);
 }
 
 dd_bool G_ValidateMap(uint *episode, uint *map)
@@ -3241,7 +3246,7 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
 {
 #if __JHEXEN__
     Uri *mapUri = G_ComposeMapUri(episode, map);
-    int nextMap = G_GetMapNumber(episode, P_MapInfo(mapUri)->nextMap);
+    int nextMap = G_LogicalMapNumber(episode, P_MapInfo(mapUri)->nextMap);
     Uri_Delete(mapUri);
     return nextMap;
 
@@ -3347,6 +3352,11 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
         return map + 1; // Go to next map.
     }
 #endif
+}
+
+uint G_NextLogicalMapNumber(dd_bool secretExit)
+{
+    return G_GetNextMap(gameEpisode, gameMap, secretExit);
 }
 
 /**
@@ -3463,7 +3473,7 @@ int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
 
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&
-       !(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT))
+       !(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT))
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
         if(P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster)
@@ -3508,13 +3518,13 @@ int Hook_DemoStop(int hookType, int val, void* paramaters)
     if(IS_NETGAME && IS_CLIENT)
     {
         // Restore normal game state?
-        deathmatch = false;
-        noMonstersParm = false;
+        gameRules.deathmatch = false;
+        gameRules.noMonsters = false;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        respawnMonsters = false;
+        gameRules.respawnMonsters = false;
 #endif
 #if __JHEXEN__
-        randomClassParm = false;
+        gameRules.randomClasses = false;
 #endif
     }
 
@@ -3656,7 +3666,7 @@ D_CMD(LoadGame)
 
         info = SV_SaveInfoForSlot(slot);
         // Compose the confirmation message.
-        msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, Str_Text(SaveInfo_Name(info)));
+        msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, Str_Text(SaveInfo_Description(info)));
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadGameConfirmResponse, slot, 0);
@@ -3755,7 +3765,7 @@ D_CMD(SaveGame)
         }
 
         // Compose the confirmation message.
-        msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, Str_Text(SaveInfo_Name(info)));
+        msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, Str_Text(SaveInfo_Description(info)));
 
         // Make a copy of the name.
         name = Str_Copy(Str_New(), &localName);
@@ -3849,7 +3859,7 @@ D_CMD(DeleteGameSave)
         {
             // Compose the confirmation message.
             SaveInfo* info = SV_SaveInfoForSlot(slot);
-            AutoStr* msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Name(info)));
+            AutoStr* msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Description(info)));
             S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slot, 0);
         }
@@ -3994,16 +4004,16 @@ D_CMD(WarpMap)
     if(!forceNewGameSession && gameInProgress)
     {
 #if __JHEXEN__
-        nextMap = map;
-        nextMapEntryPoint = 0;
+        nextMap         = map;
+        nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_DeferredNewGame(gameSkill, epsd, map, 0/*default*/);
+        G_DeferredNewGame(epsd, map, 0/*default*/, &gameRules);
 #endif
     }
     else
     {
-        G_DeferredNewGame(IS_SERVER? cfg.netSkill : dSkill, epsd, map, 0/*default*/);
+        G_DeferredNewGame(epsd, map, 0/*default*/, &gameRules);
     }
 
     // If the command source was "us" the game library then it was probably in

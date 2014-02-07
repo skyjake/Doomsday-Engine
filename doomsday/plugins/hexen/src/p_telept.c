@@ -246,18 +246,19 @@ dd_bool EV_Teleport(int tid, mobj_t* thing, dd_bool fog)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void P_ArtiTele(player_t* player)
+void P_ArtiTele(player_t *player)
 {
-    const playerstart_t* start;
+    playerstart_t const *start;
 
-    if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
+    if((start = P_GetPlayerStart(0, gameRules.deathmatch? -1 : 0, gameRules.deathmatch)))
     {
-        const mapspot_t* spot = &mapSpots[start->spot];
+        mapspot_t const *spot = &mapSpots[start->spot];
         P_Teleport(player->plr->mo, spot->origin[VX], spot->origin[VY], spot->angle, true);
 
 #if __JHEXEN__
         if(player->morphTics)
-        {   // Teleporting away will undo any morph effects (pig)
+        {
+            // Teleporting away will undo any morph effects (pig)
             P_UndoPlayerMorph(player);
         }
 #else

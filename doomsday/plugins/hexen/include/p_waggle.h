@@ -1,30 +1,28 @@
-/**\file p_waggle.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_waggle.h
  *
- *\author Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBHEXEN_P_WAGGLE_H
 #define LIBHEXEN_P_WAGGLE_H
+
+#include "doomsday.h"
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -36,9 +34,9 @@ typedef enum {
     WS_REDUCE
 } wagglestate_e;
 
-typedef struct {
+typedef struct waggle_s {
     thinker_t thinker;
-    Sector* sector;
+    Sector *sector;
     coord_t originalHeight;
     coord_t accumulator;
     coord_t accDelta;
@@ -47,13 +45,18 @@ typedef struct {
     coord_t scaleDelta;
     int ticker;
     wagglestate_e state;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    int read(Reader *reader, int mapVersion);
+#endif
 } waggle_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void T_FloorWaggle(waggle_t* waggle);
+void T_FloorWaggle(waggle_t *waggle);
 dd_bool EV_StartFloorWaggle(int tag, int height, int speed, int offset, int timer);
 
 #ifdef __cplusplus

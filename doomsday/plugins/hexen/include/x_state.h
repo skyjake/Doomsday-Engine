@@ -54,7 +54,6 @@ extern dd_bool  paused;            // Game Pause?
 DENG_EXTERN_C int viewangleoffset;
 
 // Timer, for scores.
-DENG_EXTERN_C int mapStartTic; // Game tic at map start.
 DENG_EXTERN_C int mapTime; // Tics in game play for par.
 
 // Quit after playing a demo from cmdline.
