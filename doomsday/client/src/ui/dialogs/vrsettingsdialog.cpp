@@ -129,7 +129,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
 
         ovrLabel->margins().setTop("gap");
 
-        layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
+        layout.setCellAlignment(Vector2i(0, 6), ui::AlignLeft);
 
         layout.append(*ovrLabel, 2);
         layout << *latencyLabel << *d->riftPredictionLatency

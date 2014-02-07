@@ -23,9 +23,12 @@ namespace de {
 
 DENG2_PIMPL(VRConfig)
 {
+    StereoMode mode;
     de::OculusRift ovr;
+    float ipd;
     float eyeHeightInMapUnits;
     float eyeShift;
+    int riftFramebufferSamples; // Multisampling used in unwarped Rift framebuffer
 
     /**
      * Unlike most 3D modes, Oculus Rift typically uses no frustum shift. (or if we did,
@@ -35,8 +38,11 @@ DENG2_PIMPL(VRConfig)
 
     Instance(Public *i)
         : Base(i)
+        , mode(Mono)
+        , ipd(.064f) // average male IPD
         , eyeHeightInMapUnits(41)
         , eyeShift(0)
+        , riftFramebufferSamples(2)
         , frustumShift(true)
     {
         ovr.init();
@@ -45,29 +51,54 @@ DENG2_PIMPL(VRConfig)
 
 VRConfig::VRConfig()
     : d(new Instance(this))
-    , vrMode(Mono)
-    , ipd(.064f) // average male IPD
     , playerHeight(1.75f)
     , dominantEye(0.0f)
     , swapEyes(false)
     , hudDistance(20.0f)
     , weaponDistance(10)
-    , riftFramebufferSamples(2)
 {}
 
-OculusRift &VRConfig::oculusRift()
+void VRConfig::setMode(StereoMode newMode)
 {
-    return d->ovr;
+    d->mode = newMode;
 }
 
-OculusRift const &VRConfig::oculusRift() const
+void VRConfig::setEyeHeightInMapUnits(float eyeHeightInMapUnits)
 {
-    return d->ovr;
+    d->eyeHeightInMapUnits = eyeHeightInMapUnits;
+}
+
+void VRConfig::setInterpupillaryDistance(float ipd)
+{
+    d->ipd = ipd;
+}
+
+void VRConfig::setCurrentEye(Eye eye)
+{
+    float eyePos = (eye == NeitherEye? 0 : eye == LeftEye? -1 : 1);
+
+    // 0.95 because eyes are not at top of head
+    float mapUnitsPerMeter = d->eyeHeightInMapUnits / (0.95 * playerHeight);
+    d->eyeShift = mapUnitsPerMeter * (eyePos - dominantEye) * 0.5 * d->ipd;
+    if(swapEyes)
+    {
+        d->eyeShift *= -1;
+    }
+}
+
+void VRConfig::enableFrustumShift(bool enable)
+{
+    d->frustumShift = enable;
+}
+
+void VRConfig::setRiftFramebufferSampleCount(int samples)
+{
+    d->riftFramebufferSamples = samples;
 }
 
 VRConfig::StereoMode VRConfig::mode() const
 {
-    return (StereoMode) vrMode;
+    return d->mode;
 }
 
 bool VRConfig::needsStereoGLFormat() const
@@ -80,22 +111,9 @@ bool VRConfig::modeNeedsStereoGLFormat(StereoMode mode)
     return mode == QuadBuffered;
 }
 
-void VRConfig::setEyeHeightInMapUnits(float eyeHeightInMapUnits)
+float VRConfig::interpupillaryDistance() const
 {
-    d->eyeHeightInMapUnits = eyeHeightInMapUnits;
-}
-
-void VRConfig::setCurrentEye(Eye eye)
-{
-    float eyePos = (eye == NeitherEye? 0 : eye == LeftEye? -1 : 1);
-
-    // 0.95 because eyes are not at top of head
-    float mapUnitsPerMeter = d->eyeHeightInMapUnits / (0.95 * playerHeight);
-    d->eyeShift = mapUnitsPerMeter * (eyePos - dominantEye) * 0.5 * ipd;
-    if(swapEyes)
-    {
-        d->eyeShift *= -1;
-    }
+    return d->ipd;
 }
 
 float VRConfig::eyeShift() const
@@ -103,14 +121,24 @@ float VRConfig::eyeShift() const
     return d->eyeShift;
 }
 
-void VRConfig::enableFrustumShift(bool enable)
-{
-    d->frustumShift = enable;
-}
-
 bool VRConfig::frustumShift() const
 {
     return d->frustumShift;
+}
+
+int VRConfig::riftFramebufferSampleCount() const
+{
+    return d->riftFramebufferSamples;
+}
+
+OculusRift &VRConfig::oculusRift()
+{
+    return d->ovr;
+}
+
+OculusRift const &VRConfig::oculusRift() const
+{
+    return d->ovr;
 }
 
 } // namespace de

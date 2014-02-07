@@ -55,6 +55,9 @@ public:
 
     float predictionLatency() const;
 
+    /**
+     * Returns the IPD configured in the Oculus Rift preferences.
+     */
     float interpupillaryDistance() const;
 
     // Use screen size instead of resolution in case non-square pixels?

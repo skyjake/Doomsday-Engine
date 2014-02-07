@@ -20,12 +20,17 @@
 #include "de_console.h"
 #include "render/vr.h"
 
-de::VRConfig vrCfg; // global
+using namespace de;
 
-static float vrRiftFovX    = 114.8f;
-static float vrNonRiftFovX = 95.f;
-static float riftLatency   = .030f;
-static byte autoLoadRiftParams = 1;
+VRConfig vrCfg; // global
+
+static int   vrMode             = VRConfig::Mono;
+static float vrRiftFovX         = 114.8f;
+static float vrIpd;
+static int   vrRiftFBSamples;
+static float vrNonRiftFovX      = 95.f;
+static float riftLatency        = .030f;
+static byte  autoLoadRiftParams = 1;
 
 float VR_RiftFovX()
 {
@@ -37,10 +42,22 @@ static void vrLatencyChanged()
     vrCfg.oculusRift().setPredictionLatency(riftLatency);
 }
 
+static void vrIpdChanged()
+{
+    vrCfg.setInterpupillaryDistance(vrIpd);
+}
+
+static void vrFBSamplesChanged()
+{
+    vrCfg.setRiftFramebufferSampleCount(vrRiftFBSamples);
+}
+
 // Interplay among vrNonRiftFovX, vrRiftFovX, and cameraFov depends on vrMode
 // see also rend_main.cpp
 static void vrModeChanged()
 {
+    vrCfg.setMode(VRConfig::StereoMode(vrMode));
+
     if(ClientWindow::mainExists())
     {
         // The logical UI size may need to be changed.
@@ -48,7 +65,9 @@ static void vrModeChanged()
         win.updateRootSize();
         win.updateCanvasFormat(); // possibly changes pixel format
     }
-    if(vrCfg.mode() == de::VRConfig::OculusRift)
+
+    // Update FOV cvar accordingly.
+    if(vrMode == VRConfig::OculusRift)
     {
         if(Con_GetFloat("rend-camera-fov") != vrRiftFovX)
             Con_SetFloat("rend-camera-fov", vrRiftFovX);
@@ -65,7 +84,7 @@ static void vrModeChanged()
 
 static void vrRiftFovXChanged()
 {
-    if(vrCfg.mode() == de::VRConfig::OculusRift)
+    if(vrCfg.mode() == VRConfig::OculusRift)
     {
         if(Con_GetFloat("rend-camera-fov") != vrRiftFovX)
             Con_SetFloat("rend-camera-fov", vrRiftFovX);
@@ -74,7 +93,7 @@ static void vrRiftFovXChanged()
 
 static void vrNonRiftFovXChanged()
 {
-    if(vrCfg.mode() != de::VRConfig::OculusRift)
+    if(vrCfg.mode() != VRConfig::OculusRift)
     {
         if(Con_GetFloat("rend-camera-fov") != vrNonRiftFovX)
             Con_SetFloat("rend-camera-fov", vrNonRiftFovX);
@@ -88,6 +107,14 @@ D_CMD(LoadRiftParams)
 
 void VR_ConsoleRegister()
 {
+    vrIpd           = vrCfg.interpupillaryDistance();
+    vrRiftFBSamples = vrCfg.riftFramebufferSampleCount();
+
+    /**
+     * @todo When old-style console variables become obsolete, VRConfig should expose
+     * these settings as a Record that can be attached under Config.
+     */
+
     C_VAR_BYTE  ("rend-vr-autoload-rift-params", &autoLoadRiftParams, 0, 0, 1);
     C_VAR_FLOAT2("rend-vr-nonrift-fovx",         &vrNonRiftFovX,      0, 5.0f, 270.0f, vrNonRiftFovXChanged);
     C_VAR_FLOAT2("rend-vr-rift-fovx",            &vrRiftFovX,         0, 5.0f, 270.0f, vrRiftFovXChanged);
@@ -95,10 +122,10 @@ void VR_ConsoleRegister()
 
     C_VAR_FLOAT ("rend-vr-dominant-eye",  &vrCfg.dominantEye,       0, -1.0f, 1.0f);
     C_VAR_FLOAT ("rend-vr-hud-distance",  &vrCfg.hudDistance,       0, 0.01f, 40.0f);
-    C_VAR_FLOAT ("rend-vr-ipd",           &vrCfg.ipd,               0, 0.02f, 0.1f);
-    C_VAR_INT2  ("rend-vr-mode",          &vrCfg.vrMode,            0, 0, de::VRConfig::NUM_STEREO_MODES - 1, vrModeChanged);
+    C_VAR_FLOAT2("rend-vr-ipd",           &vrIpd,                   0, 0.02f, 0.1f, vrIpdChanged);
+    C_VAR_INT2  ("rend-vr-mode",          &vrMode,                  0, 0, VRConfig::NUM_STEREO_MODES - 1, vrModeChanged);
     C_VAR_FLOAT ("rend-vr-player-height", &vrCfg.playerHeight,      0, 1.0f, 2.4f);
-    C_VAR_INT   ("rend-vr-rift-samples",  &vrCfg.riftFramebufferSamples, 0, 1, 4);
+    C_VAR_INT2  ("rend-vr-rift-samples",  &vrRiftFBSamples,         0, 1, 4, vrFBSamplesChanged);
     C_VAR_BYTE  ("rend-vr-swap-eyes",     &vrCfg.swapEyes,          0, 0, 1);
 
     C_CMD("loadriftparams", NULL, LoadRiftParams);
@@ -114,7 +141,7 @@ bool VR_LoadRiftParameters()
 
     if(ovr.isReady())
     {
-        Con_SetFloat("rend-vr-ipd", ovr.interpupillaryDistance());
+        Con_SetFloat("rend-vr-ipd", ovr.interpupillaryDistance()); // from Oculus SDK
         Con_SetFloat("rend-vr-rift-fovx", ovr.fovX());
 
         // I think this field of view is unreliable... CMB
