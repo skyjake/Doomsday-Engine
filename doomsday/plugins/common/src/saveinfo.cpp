@@ -164,16 +164,6 @@ void SaveInfo::setGameId(uint newGameId)
     _gameId = newGameId;
 }
 
-uint SaveInfo::episode() const
-{
-    return _episode;
-}
-
-uint SaveInfo::map() const
-{
-    return _map;
-}
-
 Uri const *SaveInfo::mapUri() const
 {
     return _mapUri;
@@ -396,6 +386,8 @@ void SaveInfo::read_Hx_v9(Reader *reader)
 # undef HXS_VERSION_TEXT
 }
 #endif
+
+// C wrapper API ---------------------------------------------------------------
 
 SaveInfo *SaveInfo_New()
 {

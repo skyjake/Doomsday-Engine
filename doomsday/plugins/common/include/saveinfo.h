@@ -118,13 +118,11 @@ public:
 
 public: /// @todo refactor away:
     int magic() const;
-    uint episode() const;
-    uint map() const;
 };
 
 #endif // __cplusplus
 
-// C wrapper API, for legacy modules -------------------------------------------
+// C wrapper API ---------------------------------------------------------------
 
 #ifdef __cplusplus
 extern "C" {
