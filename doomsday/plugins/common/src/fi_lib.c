@@ -105,7 +105,7 @@ static void initStateConditions(fi_state_t *s)
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
-        mapinfo_t *curMapInfo = P_CurrentMapInfo();
+        mapinfo_t *curMapInfo = P_MapInfo(0/*current map*/);
         mapinfo_t *nextMapInfo = P_MapInfo(nextMapUri);
         if(curMapInfo && nextMapInfo)
         {

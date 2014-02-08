@@ -1072,7 +1072,7 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
-    mapinfo_t const *mapInfo = P_CurrentMapInfo();
+    mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
 
     if(!mapInfo || !mapInfo->lightning)
     {

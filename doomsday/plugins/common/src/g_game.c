@@ -1155,7 +1155,7 @@ static void printMapBanner(void)
     {
         char buf[64];
 #if __JHEXEN__
-        mapinfo_t const *mapInfo = P_CurrentMapInfo();
+        mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
         int warpNum = (mapInfo? mapInfo->warpTrans : -1);
         dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", warpNum + 1, gameMap + 1, title);
 #else
@@ -1256,7 +1256,7 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
 
 #if __JHEXEN__
     {
-        mapinfo_t const *mapInfo = P_CurrentMapInfo();
+        mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
         if(mapInfo)
         {
             int fadeTable = mapInfo->fadeTable;
@@ -1766,7 +1766,7 @@ void G_PlayerLeaveMap(int player)
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
-        newCluster = (P_CurrentMapInfo()->cluster != P_MapInfo(nextMapUri)->cluster);
+        newCluster = (P_MapInfo(0/*current map*/)->cluster != P_MapInfo(nextMapUri)->cluster);
 
         Uri_Delete(nextMapUri);
     }
@@ -2602,7 +2602,7 @@ void G_DoLeaveMap(void)
     // Same cluster?
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_CurrentMapInfo()->cluster == P_MapInfo(nextMapUri)->cluster)
+        if(P_MapInfo(0/*current map*/)->cluster == P_MapInfo(nextMapUri)->cluster)
         {
             if(!gameRules.deathmatch)
             {

@@ -245,7 +245,8 @@ void MapInfoParser(Str const *path)
 
 mapinfo_t *P_MapInfo(Uri const *mapUri)
 {
-    DENG_ASSERT(mapUri != 0);
+    if(!mapUri) mapUri = gameMapUri;
+
     std::string mapPath(Str_Text(Uri_Compose(mapUri)));
     MapInfos::iterator found = mapInfos.find(mapPath);
     if(found != mapInfos.end())
@@ -253,11 +254,6 @@ mapinfo_t *P_MapInfo(Uri const *mapUri)
         return &found->second;
     }
     return 0;
-}
-
-mapinfo_t *P_CurrentMapInfo()
-{
-    return P_MapInfo(gameMapUri);
 }
 
 uint P_TranslateMapIfExists(uint map)

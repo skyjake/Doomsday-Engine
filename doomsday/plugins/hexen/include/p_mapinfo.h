@@ -55,14 +55,12 @@ extern "C" {
 void MapInfoParser(Str const *path);
 
 /**
- * Returns MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
+ * @param mapUri  Identifier of the map to lookup info for. Can be @c 0 in which
+ *                case the info for the @em current map will be returned (if set).
+ *
+ * @return  MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
  */
 mapinfo_t *P_MapInfo(Uri const *mapUri);
-
-/**
- * Returns MAPINFO data for the @em current map.
- */
-mapinfo_t *P_CurrentMapInfo(void);
 
 #define P_INVALID_LOGICAL_MAP   0xffffffff
 
