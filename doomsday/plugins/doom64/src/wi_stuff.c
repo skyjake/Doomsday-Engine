@@ -122,7 +122,7 @@ static void drawFinishedTitle(void)
 {
     int x = SCREENWIDTH/2, y = WI_TITLEY;
     uint mapNum = wbs->currentMap;
-    char const *mapTitle = P_CurrentMapTitle();
+    char const *mapTitle = P_MapTitle(0/*current map*/);
     patchid_t patchId;
     patchinfo_t info;
 

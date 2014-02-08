@@ -257,19 +257,16 @@ bool ACScriptInterpreter::startScript(int scriptNumber, Uri const *mapUri,
     byte const args[], mobj_t *activator, Line *line, int side)
 {
     DENG_ASSERT(!IS_CLIENT);
+    DENG_ASSERT(mapUri != 0);
 
     if(mapUri)
     {
-        Uri *currentMapUri = G_CurrentMapUri();
-        if(!Uri_Equality(mapUri, currentMapUri))
+        if(!Uri_Equality(gameMapUri, mapUri))
         {
-            Uri_Delete(currentMapUri);
-
             // Script is not for the current map.
             // Add it to the store to be started when that map is next entered.
             return newDeferredTask(mapUri, scriptNumber, args);
         }
-        Uri_Delete(currentMapUri);
     }
 
     if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))

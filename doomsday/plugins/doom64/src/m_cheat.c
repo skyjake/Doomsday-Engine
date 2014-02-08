@@ -185,35 +185,39 @@ void printDebugInfo(player_t *plr)
 {
     char textBuffer[256];
     Sector *sector;
-    AutoStr *path, *mapPath;
-    Uri *uri, *mapUri;
+    mobj_t *plrMo;
+    Uri *matUri;
 
-    if(G_GameState() != GS_MAP || !plr->plr->mo)
+    DENG_ASSERT(plr != 0);
+
+    if(G_GameState() != GS_MAP)
         return;
 
-    mapUri = G_CurrentMapUri();
-    mapPath = Uri_ToString(mapUri);
+    plrMo = plr->plr->mo;
+    if(!plrMo) return;
+
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-            Str_Text(mapPath), plr->plr->mo->origin[VX], plr->plr->mo->origin[VY],
-            plr->plr->mo->origin[VZ]);
+                        Str_Text(Uri_ToString(gameMapUri)),
+                        plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
-    Uri_Delete(mapUri);
 
     // Also print some information to the console.
     App_Log(DE2_MAP_NOTE, "%s", textBuffer);
 
-    sector = Mobj_Sector(plr->plr->mo);
-    uri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
-    path = Uri_ToString(uri);
-    App_Log(DE2_MAP_MSG, "FloorZ:%g Material:%s", P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(path));
-    Uri_Delete(uri);
+    sector = Mobj_Sector(plrMo);
 
-    uri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
-    path = Uri_ToString(uri);
-    App_Log(DE2_MAP_MSG, "CeilingZ:%g Material:%s", P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(path));
-    Uri_Delete(uri);
+    matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
+    App_Log(DE2_MAP_MSG, "FloorZ:%g Material:%s",
+                         P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(Uri_ToString(matUri)));
+    Uri_Delete(matUri);
 
-    App_Log(DE2_MAP_MSG, "Player height:%g Player radius:%g", plr->plr->mo->height, plr->plr->mo->radius);
+    matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
+    App_Log(DE2_MAP_MSG, "CeilingZ:%g Material:%s",
+                          P_GetDoublep(sector, DMU_CEILING_HEIGHT), Str_Text(Uri_ToString(matUri)));
+    Uri_Delete(matUri);
+
+    App_Log(DE2_MAP_MSG, "Player height:%g Player radius:%g",
+                          plrMo->height, plrMo->radius);
 }
 
 /**

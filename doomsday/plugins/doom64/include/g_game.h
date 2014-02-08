@@ -52,6 +52,7 @@ extern uint nextMap;
 extern dd_bool gameInProgress;
 extern uint gameEpisode;
 extern uint gameMap;
+extern Uri *gameMapUri;
 extern uint gameMapEntrance;
 extern GameRuleset gameRules;
 

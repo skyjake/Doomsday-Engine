@@ -32,7 +32,7 @@
 
 void S_MapMusic(Uri const *mapUri)
 {
-    DENG_ASSERT(mapUri != 0);
+    if(!mapUri) mapUri = gameMapUri;
 
 #ifdef __JHEXEN__
     mapinfo_t const *mapInfo = P_MapInfo(mapUri);

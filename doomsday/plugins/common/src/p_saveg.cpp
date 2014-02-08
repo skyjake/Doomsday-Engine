@@ -3689,7 +3689,7 @@ static int SV_LoadState(Str const *path, SaveInfo *info)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewGame(info->episode(), info->map(), 0/*not saved??*/, &info->gameRules());
+    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
 
 #if !__JHEXEN__
     mapTime = info->mapTime();
@@ -4000,9 +4000,9 @@ void SV_LoadGameClient(uint gameId)
     }
 
     // Do we need to change the map?
-    if(gameMap != saveInfo->map() || gameEpisode != saveInfo->episode())
+    if(!Uri_Equality(gameMapUri, saveInfo->mapUri()))
     {
-        G_NewGame(saveInfo->episode(), saveInfo->map(), 0/*default*/, &saveInfo->gameRules());
+        G_NewGame(saveInfo->mapUri(), 0/*default*/, &saveInfo->gameRules());
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
     }

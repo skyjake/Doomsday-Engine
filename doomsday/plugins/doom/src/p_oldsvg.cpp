@@ -846,7 +846,7 @@ int SV_LoadState_Dm_v19(Str const *path, SaveInfo *info)
     briefDisabled = true;
 
     // Load a base map.
-    G_NewGame(info->episode(), info->map(), 0/*not saved??*/, &info->gameRules());
+    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
 
     // Recreate map state.
     mapTime = info->mapTime();

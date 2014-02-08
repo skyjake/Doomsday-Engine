@@ -1072,9 +1072,7 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
-    Uri *mapUri = G_CurrentMapUri();
-    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
-    Uri_Delete(mapUri);
+    mapinfo_t const *mapInfo = P_CurrentMapInfo();
 
     if(!mapInfo || !mapInfo->lightning)
     {

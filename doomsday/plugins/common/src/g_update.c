@@ -132,11 +132,7 @@ void G_UpdateState(int step)
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        {
-            Uri *mapUri = G_CurrentMapUri();
-            S_MapMusic(mapUri);
-            Uri_Delete(mapUri);
-        }
+        S_MapMusic(0/*current map*/);
 #endif
         break;
 

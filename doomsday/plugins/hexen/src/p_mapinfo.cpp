@@ -255,6 +255,11 @@ mapinfo_t *P_MapInfo(Uri const *mapUri)
     return 0;
 }
 
+mapinfo_t *P_CurrentMapInfo()
+{
+    return P_MapInfo(gameMapUri);
+}
+
 uint P_TranslateMapIfExists(uint map)
 {
     uint matchedWithoutCluster = P_INVALID_LOGICAL_MAP;

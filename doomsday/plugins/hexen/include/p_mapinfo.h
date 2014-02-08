@@ -59,6 +59,11 @@ void MapInfoParser(Str const *path);
  */
 mapinfo_t *P_MapInfo(Uri const *mapUri);
 
+/**
+ * Returns MAPINFO data for the @em current map.
+ */
+mapinfo_t *P_CurrentMapInfo(void);
+
 #define P_INVALID_LOGICAL_MAP   0xffffffff
 
 /**
