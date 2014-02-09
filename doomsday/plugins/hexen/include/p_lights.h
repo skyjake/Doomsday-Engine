@@ -22,10 +22,14 @@
 #ifndef LIBHEXEN_PLAY_LIGHTS_H
 #define LIBHEXEN_PLAY_LIGHTS_H
 
-#include "doomsday.h"
-
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
+#endif
+
+#include "doomsday.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
 #endif
 
 #define LIGHT_SEQUENCE_START        (2)
@@ -53,8 +57,8 @@ typedef struct light_s {
     int count;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } light_t;
 
@@ -65,8 +69,8 @@ typedef struct phase_s {
     float baseValue;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } phase_t;
 

@@ -1720,8 +1720,10 @@ void ACScript::Stack::drop()
     height--;
 }
 
-void ACScript::write(Writer *writer) const
+void ACScript::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 2); // Write a version byte.
 
     Writer_WriteInt32(writer, SV_ThingArchiveId(activator));
@@ -1741,8 +1743,11 @@ void ACScript::write(Writer *writer) const
     Writer_WriteInt32(writer, ((byte const *)pcodePtr) - interpreter().bytecode());
 }
 
-int ACScript::read(Reader *reader, int mapVersion)
+int ACScript::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.

@@ -35,6 +35,8 @@ HEADERS += \
     $$common_inc/hu_pspr.h \
     $$common_inc/hu_stuff.h \
     $$common_inc/m_argv.h \
+    $$common_inc/mapstatereader.h \
+    $$common_inc/mapstatewriter.h \
     $$common_inc/mobj.h \
     $$common_inc/pause.h \
     $$common_inc/p_actor.h \
@@ -95,6 +97,8 @@ SOURCES += \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.c \
+    $$common_src/mapstatereader.cpp \
+    $$common_src/mapstatewriter.cpp \
     $$common_src/mobj.c \
     $$common_src/pause.c \
     $$common_src/p_actor.cpp \

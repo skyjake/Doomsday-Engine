@@ -228,8 +228,10 @@ void T_MoveCeiling(void *ceilingThinkerPtr)
     }
 }
 
-void ceiling_s::write(Writer *writer) const
+void ceiling_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 2); // Write a version byte.
 
     Writer_WriteByte(writer, (byte) type);
@@ -246,8 +248,11 @@ void ceiling_s::write(Writer *writer) const
     Writer_WriteByte(writer, (byte) oldState);
 }
 
-int ceiling_s::read(Reader *reader, int mapVersion)
+int ceiling_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
 #if __JHEXEN__
     if(mapVersion >= 4)
 #else

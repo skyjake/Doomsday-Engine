@@ -67,11 +67,32 @@ typedef enum thinkclass_e {
 } thinkerclass_t;
 
 #ifdef __cplusplus
-extern "C" {
+class MapStateReader;
+class MapStateWriter;
+
+// Thinker Save flags
+#define TSF_SERVERONLY          0x01 ///< Only saved by servers.
+
+typedef void (*WriteThinkerFunc)(thinker_t *, MapStateWriter *writer);
+typedef int (*ReadThinkerFunc)(thinker_t *, MapStateReader *reader);
+
+struct ThinkerClassInfo
+{
+    thinkerclass_t thinkclass;
+    thinkfunc_t function;
+    int flags;
+    WriteThinkerFunc writeFunc;
+    ReadThinkerFunc readFunc;
+    size_t size;
+};
 #endif
 
-typedef void (*WriteThinkerFunc)(thinker_t *, Writer *writer);
-typedef int (*ReadThinkerFunc)(thinker_t *, Reader *reader, int mapVersion);
+DENG_EXTERN_C int thingArchiveVersion;
+DENG_EXTERN_C uint thingArchiveSize;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /// Register the console commands and variables of this module.
 void SV_Register(void);
@@ -196,6 +217,18 @@ void SV_LoadGameClient(uint gameId);
 
 uint SV_GenerateGameId(void);
 
+#ifdef __cplusplus
+/**
+ * Returns the info for the specified thinker @a tClass; otherwise @c 0 if not found.
+ */
+ThinkerClassInfo *SV_ThinkerInfoForClass(thinkerclass_t tClass);
+
+/**
+ * Returns the info for the specified thinker; otherwise @c 0 if not found.
+ */
+ThinkerClassInfo *SV_ThinkerInfo(thinker_t const &thinker);
+#endif
+
 /// Unique identifier associated with each archived thing.
 #if __JHEXEN__
 typedef int ThingSerialId;
@@ -223,22 +256,6 @@ ThingSerialId SV_ThingArchiveId(mobj_t const *mobj);
  * @return  Pointer to the associated mobj; otherwise @c 0 (not archived).
  */
 mobj_t *SV_GetArchiveThing(ThingSerialId thingid, void *address);
-
-/**
- * Returns a pointer to the (currently in-use) material archive.
- */
-MaterialArchive *SV_MaterialArchive(void);
-
-/**
- * Finds and returns a material with the identifier @a serialId.
- *
- * @param serialId  Unique identifier for the material in the material archive.
- * @param group     Used with previous versions of the material archive, which
- *                  separated materials into groups (0= Flats 1= Textures).
- *
- * @return  Pointer to the associated material; otherwise @c 0 (not archived).
- */
-Material *SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
 
 /**
  * Update mobj flag values from those used in legacy game-save formats
@@ -271,10 +288,29 @@ void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS]);
 void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS], uint entryPoint);
 #endif
 
+void SV_InitThingArchiveForLoad(uint size);
+#if __JHEXEN__
+void SV_InitTargetPlayers(void);
+#endif
+
 #ifdef __cplusplus
 } // extern "C"
-
-dmu_lib::SideArchive &SV_SideArchive();
 #endif
+
+#ifdef __cplusplus
+class MapStateReader;
+class MapStateWriter;
+
+void SV_WriteLine(Line *line, MapStateWriter *msw);
+void SV_ReadLine(Line *line, MapStateReader *msr);
+
+void SV_WriteSector(Sector *sec, MapStateWriter *msw);
+void SV_ReadSector(Sector *sec, MapStateReader *msr);
+
+#if __JHEXEN__
+void SV_WritePolyObj(polyobj_s *po, MapStateWriter *msw);
+int SV_ReadPolyObj(MapStateReader *msr);
+#endif
+#endif // __cplusplus
 
 #endif // LIBCOMMON_SAVESTATE_H

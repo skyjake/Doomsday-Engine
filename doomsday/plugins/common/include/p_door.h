@@ -22,6 +22,11 @@
 #ifndef LIBCOMMON_THINKER_DOOR_H
 #define LIBCOMMON_THINKER_DOOR_H
 
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
+
 #define DOORSPEED          (2)
 #define DOORWAIT           (150)
 
@@ -66,8 +71,8 @@ typedef struct door_s {
     int topCountDown;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } door_t;
 

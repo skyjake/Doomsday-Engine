@@ -22,10 +22,14 @@
 #ifndef LIBHEXEN_P_PILLAR_H
 #define LIBHEXEN_P_PILLAR_H
 
-#include "doomsday.h"
-
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
+#endif
+
+#include "doomsday.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
 #endif
 
 typedef struct pillar_s {
@@ -39,8 +43,8 @@ typedef struct pillar_s {
     int crush;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } pillar_t;
 

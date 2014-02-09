@@ -23,6 +23,10 @@
 #define LIBCOMMON_THINKER_PLAT_H
 
 #include "doomsday.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 #define PLATWAIT        (3)
 #define PLATSPEED       (1)
@@ -72,8 +76,8 @@ typedef struct plat_s {
     plattype_e type;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } plat_t;
 
