@@ -232,7 +232,7 @@ MapStateWriter::MapStateWriter(bool excludePlayers)
 void MapStateWriter::write(Writer *writer)
 {
     DENG_ASSERT(writer != 0);
-    writer = writer;
+    d->writer = writer;
 
     d->beginMapSegment();
     {
