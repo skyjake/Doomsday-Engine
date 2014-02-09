@@ -61,10 +61,10 @@ public:
      *
      * @return  Pointer to the associated material; otherwise @c 0 (not archived).
      */
-    Material *archiveMaterial(materialarchive_serialid_t serialId, int group);
+    Material *material(materialarchive_serialid_t serialId, int group);
 
     /**
-     * Provides access to the side archive to use when serializing the map state.
+     * Provides access to the side archive to use when deserializing the map state.
      */
     dmu_lib::SideArchive &sideArchive();
 

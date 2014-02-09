@@ -519,7 +519,7 @@ int MapStateReader::mapVersion()
     return d->mapVersion;
 }
 
-Material *MapStateReader::archiveMaterial(materialarchive_serialid_t serialId, int group)
+Material *MapStateReader::material(materialarchive_serialid_t serialId, int group)
 {
     DENG_ASSERT(d->materialArchive != 0);
     return MaterialArchive_Find(d->materialArchive, serialId, group);

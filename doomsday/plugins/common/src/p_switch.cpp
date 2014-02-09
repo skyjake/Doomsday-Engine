@@ -312,7 +312,7 @@ void materialchanger_s::write(MapStateWriter *msw) const
     Writer_WriteInt32(writer, timer);
     Writer_WriteInt32(writer, P_ToIndex(side));
     Writer_WriteByte(writer, (byte) section);
-    Writer_WriteInt16(writer, msw->archiveMaterialId(material));
+    Writer_WriteInt16(writer, msw->serialIdFor(material));
 }
 
 int materialchanger_s::read(MapStateReader *msr)
@@ -340,7 +340,7 @@ int materialchanger_s::read(MapStateReader *msr)
     DENG_ASSERT(side != 0);
 
     section = (SideSection) Reader_ReadByte(reader);
-    material = msr->archiveMaterial(Reader_ReadInt16(reader), 0);
+    material = msr->material(Reader_ReadInt16(reader), 0);
 
     thinker.function = T_MaterialChanger;
 

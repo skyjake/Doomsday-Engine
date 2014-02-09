@@ -193,7 +193,7 @@ void xgplanemover_s::write(MapStateWriter *msw) const
     Writer_WriteInt32(writer, FLT2FIX(destination));
     Writer_WriteInt32(writer, FLT2FIX(speed));
     Writer_WriteInt32(writer, FLT2FIX(crushSpeed));
-    Writer_WriteInt32(writer, msw->archiveMaterialId(setMaterial));
+    Writer_WriteInt32(writer, msw->serialIdFor(setMaterial));
     Writer_WriteInt32(writer, setSectorType);
     Writer_WriteInt32(writer, startSound);
     Writer_WriteInt32(writer, endSound);
@@ -223,7 +223,7 @@ int xgplanemover_s::read(MapStateReader *msr)
 
     if(ver >= 3)
     {
-        setMaterial = msr->archiveMaterial(Reader_ReadInt32(reader), 0);
+        setMaterial = msr->material(Reader_ReadInt32(reader), 0);
     }
     else
     {

@@ -413,7 +413,7 @@ void floor_s::write(MapStateWriter *msw) const
     Writer_WriteInt32(writer, (int) state);
     Writer_WriteInt32(writer, newSpecial);
 
-    Writer_WriteInt16(writer, msw->archiveMaterialId(material));
+    Writer_WriteInt16(writer, msw->serialIdFor(material));
 
     Writer_WriteInt16(writer, (int) floorDestHeight);
     Writer_WriteInt32(writer, FLT2FIX(speed));
@@ -451,7 +451,7 @@ int floor_s::read(MapStateReader *msr)
 
         if(ver >= 2)
         {
-            material = msr->archiveMaterial(Reader_ReadInt16(reader), 0);
+            material = msr->material(Reader_ReadInt16(reader), 0);
         }
         else
         {

@@ -44,7 +44,7 @@ public:
     /**
      * Returns a unique SerialId for the specified @a material.
      */
-    materialarchive_serialid_t archiveMaterialId(Material *material);
+    materialarchive_serialid_t serialIdFor(Material *material);
 
     /**
      * Returns the writer to use when serializing the map state.

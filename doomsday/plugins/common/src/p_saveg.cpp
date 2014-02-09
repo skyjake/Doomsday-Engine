@@ -2315,8 +2315,8 @@ void SV_WriteSector(Sector *sec, MapStateWriter *msw)
 
     Writer_WriteInt16(writer, floorheight);
     Writer_WriteInt16(writer, ceilingheight);
-    Writer_WriteInt16(writer, msw->archiveMaterialId(floorMaterial));
-    Writer_WriteInt16(writer, msw->archiveMaterialId(ceilingMaterial));
+    Writer_WriteInt16(writer, msw->serialIdFor(floorMaterial));
+    Writer_WriteInt16(writer, msw->serialIdFor(ceilingMaterial));
     Writer_WriteInt16(writer, floorFlags);
     Writer_WriteInt16(writer, ceilingFlags);
 #if __JHEXEN__
@@ -2431,8 +2431,8 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
 #endif
     {
         // The flat numbers are actually archive numbers.
-        floorMaterial   = msr->archiveMaterial(Reader_ReadInt16(reader), 0);
-        ceilingMaterial = msr->archiveMaterial(Reader_ReadInt16(reader), 0);
+        floorMaterial   = msr->material(Reader_ReadInt16(reader), 0);
+        ceilingMaterial = msr->material(Reader_ReadInt16(reader), 0);
     }
 
     P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   floorMaterial);
@@ -2574,9 +2574,9 @@ void SV_WriteLine(Line *li, MapStateWriter *msw)
         Writer_WriteInt16(writer, P_GetIntp(si, DMU_MIDDLE_FLAGS));
         Writer_WriteInt16(writer, P_GetIntp(si, DMU_BOTTOM_FLAGS));
 
-        Writer_WriteInt16(writer, msw->archiveMaterialId((Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
-        Writer_WriteInt16(writer, msw->archiveMaterialId((Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
-        Writer_WriteInt16(writer, msw->archiveMaterialId((Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
+        Writer_WriteInt16(writer, msw->serialIdFor((Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
+        Writer_WriteInt16(writer, msw->serialIdFor((Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
+        Writer_WriteInt16(writer, msw->serialIdFor((Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
         for(int k = 0; k < 3; ++k)
@@ -2755,9 +2755,9 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
         if(mapVersion >= 4)
 #endif
         {
-            topMaterial    = msr->archiveMaterial(Reader_ReadInt16(reader), 1);
-            bottomMaterial = msr->archiveMaterial(Reader_ReadInt16(reader), 1);
-            middleMaterial = msr->archiveMaterial(Reader_ReadInt16(reader), 1);
+            topMaterial    = msr->material(Reader_ReadInt16(reader), 1);
+            bottomMaterial = msr->material(Reader_ReadInt16(reader), 1);
+            middleMaterial = msr->material(Reader_ReadInt16(reader), 1);
         }
 
         P_SetPtrp(si, DMU_TOP_MATERIAL,    topMaterial);
