@@ -25,6 +25,7 @@
 #include "p_actor.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
+#include "thinkerinfo.h"
 #include <de/String>
 
 DENG2_PIMPL(MapStateReader)

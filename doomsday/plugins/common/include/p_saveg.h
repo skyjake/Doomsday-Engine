@@ -21,71 +21,11 @@
 #ifndef LIBCOMMON_SAVESTATE_H
 #define LIBCOMMON_SAVESTATE_H
 
+#include "common.h"
 #ifdef __cplusplus
-#include "dmu_archiveindex.h"
+#  include "dmu_archiveindex.h"
 #endif
 #include "p_saveio.h"
-
-/**
- * Original indices must remain unchanged!
- * Added new think classes to the end.
- */
-typedef enum thinkclass_e {
-    TC_NULL = -1,
-    TC_END,
-    TC_MOBJ,
-    TC_XGMOVER,
-    TC_CEILING,
-    TC_DOOR,
-    TC_FLOOR,
-    TC_PLAT,
-#if __JHEXEN__
-    TC_INTERPRET_ACS,
-    TC_FLOOR_WAGGLE,
-    TC_LIGHT,
-    TC_PHASE,
-    TC_BUILD_PILLAR,
-    TC_ROTATE_POLY,
-    TC_MOVE_POLY,
-    TC_POLY_DOOR,
-#else
-    TC_FLASH,
-    TC_STROBE,
-# if __JDOOM__ || __JDOOM64__
-    TC_GLOW,
-    TC_FLICKER,
-#  if __JDOOM64__
-    TC_BLINK,
-#  endif
-# else
-    TC_GLOW,
-# endif
-#endif
-    TC_MATERIALCHANGER,
-    TC_SCROLL,
-    NUMTHINKERCLASSES
-} thinkerclass_t;
-
-#ifdef __cplusplus
-class MapStateReader;
-class MapStateWriter;
-
-// Thinker Save flags
-#define TSF_SERVERONLY          0x01 ///< Only saved by servers.
-
-typedef void (*WriteThinkerFunc)(thinker_t *, MapStateWriter *writer);
-typedef int (*ReadThinkerFunc)(thinker_t *, MapStateReader *reader);
-
-struct ThinkerClassInfo
-{
-    thinkerclass_t thinkclass;
-    thinkfunc_t function;
-    int flags;
-    WriteThinkerFunc writeFunc;
-    ReadThinkerFunc readFunc;
-    size_t size;
-};
-#endif
 
 DENG_EXTERN_C int thingArchiveVersion;
 DENG_EXTERN_C uint thingArchiveSize;
@@ -217,18 +157,6 @@ void SV_LoadGameClient(uint gameId);
 
 uint SV_GenerateGameId(void);
 
-#ifdef __cplusplus
-/**
- * Returns the info for the specified thinker @a tClass; otherwise @c 0 if not found.
- */
-ThinkerClassInfo *SV_ThinkerInfoForClass(thinkerclass_t tClass);
-
-/**
- * Returns the info for the specified thinker; otherwise @c 0 if not found.
- */
-ThinkerClassInfo *SV_ThinkerInfo(thinker_t const &thinker);
-#endif
-
 /// Unique identifier associated with each archived thing.
 #if __JHEXEN__
 typedef int ThingSerialId;
@@ -300,6 +228,14 @@ void SV_InitTargetPlayers(void);
 #ifdef __cplusplus
 class MapStateReader;
 class MapStateWriter;
+
+void SV_WriteMobj(thinker_t *th, MapStateWriter *msw);
+int SV_ReadMobj(thinker_t *th, MapStateReader *msr);
+
+#if __JHEXEN__
+void SV_WriteMovePoly(struct polyevent_s const *movepoly, MapStateWriter *msw);
+int SV_ReadMovePoly(struct polyevent_s *movepoly, MapStateReader *msr);
+#endif
 
 void SV_WriteLine(Line *line, MapStateWriter *msw);
 void SV_ReadLine(Line *line, MapStateReader *msr);

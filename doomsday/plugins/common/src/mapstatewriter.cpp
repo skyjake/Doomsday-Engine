@@ -24,6 +24,7 @@
 #include "dmu_lib.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
+#include "thinkerinfo.h"
 
 DENG2_PIMPL(MapStateWriter)
 {
