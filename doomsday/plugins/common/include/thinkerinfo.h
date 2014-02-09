@@ -22,6 +22,10 @@
 #define LIBCOMMON_SAVESTATE_THINKERINFO_H
 
 #include "common.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 /**
  * Original indices must remain unchanged!
@@ -64,14 +68,11 @@ typedef enum thinkclass_e {
 } thinkerclass_t;
 
 #ifdef __cplusplus
-class MapStateReader;
-class MapStateWriter;
-
 // Thinker Save flags
 #define TSF_SERVERONLY          0x01 ///< Only saved by servers.
 
-typedef void (*WriteThinkerFunc)(thinker_t *, MapStateWriter *writer);
-typedef int (*ReadThinkerFunc)(thinker_t *, MapStateReader *reader);
+typedef void (*WriteThinkerFunc)(thinker_t *, MapStateWriter *msw);
+typedef int (*ReadThinkerFunc)(thinker_t *, MapStateReader *msr);
 
 struct ThinkerClassInfo
 {

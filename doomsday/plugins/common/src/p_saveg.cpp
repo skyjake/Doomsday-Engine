@@ -54,7 +54,8 @@ using namespace dmu_lib;
 static ThingSerialId const TargetPlayerId = -2;
 #endif
 
-typedef struct playerheader_s {
+struct playerheader_t
+{
     int numPowers;
     int numKeys;
     int numFrags;
@@ -67,32 +68,26 @@ typedef struct playerheader_s {
 #if __JHEXEN__
     int numArmorTypes;
 #endif
-} playerheader_t;
+};
 
-typedef enum {
+enum sectorclass_t
+{
     sc_normal,
     sc_ploff, ///< plane offset
 #if !__JHEXEN__
     sc_xg1,
 #endif
     NUM_SECTORCLASSES
-} sectorclass_t;
+};
 
-typedef enum {
+enum lineclass_t
+{
     lc_normal,
 #if !__JHEXEN__
     lc_xg1,
 #endif
     NUM_LINECLASSES
-} lineclass_t;
-
-static bool recogniseGameState(Str const *path, SaveInfo *info);
-
-#if __JHEXEN__
-static void readMapState(Reader *reader, int saveVersion, Str const *path);
-#else
-static void readMapState(Reader *reader, int saveVersion);
-#endif
+};
 
 static bool inited = false;
 
@@ -121,21 +116,6 @@ static int saveToRealPlayerNum[MAXPLAYERS];
 static targetplraddress_t *targetPlayerAddrs;
 static byte *saveBuffer;
 #endif
-
-void SV_Register()
-{
-#if !__JHEXEN__
-    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
-#endif
-    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
-    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
-    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
-    C_VAR_INT ("game-save-last-slot",            &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
-    C_VAR_INT ("game-save-quick-slot",           &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
-
-    // Aliases for obsolete cvars:
-    C_VAR_BYTE("menu-quick-ask",                 &cfg.confirmQuickGameSave, 0, 0, 1);
-}
 
 /**
  * Compose the (possibly relative) path to the game-save associated
@@ -216,6 +196,101 @@ static void clearSaveInfo()
     {
         delete nullSaveInfo; nullSaveInfo = 0;
     }
+}
+
+static void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
+{
+#if __JHEXEN__
+    // Read the magic byte to determine the high-level format.
+    int magic = Reader_ReadInt32(reader);
+    SV_HxSavePtr()->b -= 4; // Rewind the stream.
+
+    if((!IS_NETWORK_CLIENT && magic != MY_SAVE_MAGIC) ||
+       ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
+    {
+        // Perhaps the old v9 format?
+        info->read_Hx_v9(reader);
+    }
+    else
+#endif
+    {
+        info->read(reader);
+    }
+}
+
+static bool recogniseNativeState(Str const *path, SaveInfo *info)
+{
+    DENG_ASSERT(path != 0 && info != 0);
+
+    if(!SV_ExistingFile(path)) return false;
+
+#if __JHEXEN__
+    /// @todo Do not buffer the whole file.
+    byte *saveBuffer;
+    size_t fileSize = M_ReadFile(Str_Text(path), (char **) &saveBuffer);
+    if(!fileSize) return false;
+    // Set the save pointer.
+    SV_HxSavePtr()->b = saveBuffer;
+    SV_HxSetSaveEndPtr(saveBuffer + fileSize);
+#else
+    if(!SV_OpenFile(path, "rp"))
+        return false;
+#endif
+
+    Reader *reader = SV_NewReader();
+    SV_SaveInfo_Read(info, reader);
+    Reader_Delete(reader);
+
+#if __JHEXEN__
+    Z_Free(saveBuffer);
+#else
+    SV_CloseFile();
+#endif
+
+    // Magic must match.
+    if(info->magic() != MY_SAVE_MAGIC && info->magic() != MY_CLIENT_SAVE_MAGIC)
+    {
+        return false;
+    }
+
+    /*
+     * Check for unsupported versions.
+     */
+    if(info->version() > MY_SAVE_VERSION) // Future version?
+    {
+        return false;
+    }
+
+#if __JHEXEN__
+    // We are incompatible with v3 saves due to an invalid test used to determine
+    // present sides (ver3 format's sides contain chunks of junk data).
+    if(info->version() == 3)
+    {
+        return false;
+    }
+#endif
+
+    return true;
+}
+
+static bool recogniseGameState(Str const *path, SaveInfo *info)
+{
+    if(path && info)
+    {
+        if(recogniseNativeState(path, info))
+            return true;
+
+        // Perhaps an original game state?
+#if __JDOOM__
+        if(SV_RecogniseState_Dm_v19(path, info))
+            return true;
+#endif
+#if __JHERETIC__
+        if(SV_RecogniseState_Hr_v13(path, info))
+            return true;
+#endif
+    }
+    return false;
 }
 
 static void updateSaveInfo(Str const *path, SaveInfo *info)
@@ -395,101 +470,6 @@ dd_bool SV_IsUserWritableSlot(int slot)
     if(slot == BASE_SLOT) return false;
 #endif
     return SV_IsValidSlot(slot);
-}
-
-static void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
-{
-#if __JHEXEN__
-    // Read the magic byte to determine the high-level format.
-    int magic = Reader_ReadInt32(reader);
-    SV_HxSavePtr()->b -= 4; // Rewind the stream.
-
-    if((!IS_NETWORK_CLIENT && magic != MY_SAVE_MAGIC) ||
-       ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
-    {
-        // Perhaps the old v9 format?
-        info->read_Hx_v9(reader);
-    }
-    else
-#endif
-    {
-        info->read(reader);
-    }
-}
-
-static bool recogniseNativeState(Str const *path, SaveInfo *info)
-{
-    DENG_ASSERT(path != 0 && info != 0);
-
-    if(!SV_ExistingFile(path)) return false;
-
-#if __JHEXEN__
-    /// @todo Do not buffer the whole file.
-    byte *saveBuffer;
-    size_t fileSize = M_ReadFile(Str_Text(path), (char **) &saveBuffer);
-    if(!fileSize) return false;
-    // Set the save pointer.
-    SV_HxSavePtr()->b = saveBuffer;
-    SV_HxSetSaveEndPtr(saveBuffer + fileSize);
-#else
-    if(!SV_OpenFile(path, "rp"))
-        return false;
-#endif
-
-    Reader *reader = SV_NewReader();
-    SV_SaveInfo_Read(info, reader);
-    Reader_Delete(reader);
-
-#if __JHEXEN__
-    Z_Free(saveBuffer);
-#else
-    SV_CloseFile();
-#endif
-
-    // Magic must match.
-    if(info->magic() != MY_SAVE_MAGIC && info->magic() != MY_CLIENT_SAVE_MAGIC)
-    {
-        return false;
-    }
-
-    /*
-     * Check for unsupported versions.
-     */
-    if(info->version() > MY_SAVE_VERSION) // Future version?
-    {
-        return false;
-    }
-
-#if __JHEXEN__
-    // We are incompatible with v3 saves due to an invalid test used to determine
-    // present sides (ver3 format's sides contain chunks of junk data).
-    if(info->version() == 3)
-    {
-        return false;
-    }
-#endif
-
-    return true;
-}
-
-static bool recogniseGameState(Str const *path, SaveInfo *info)
-{
-    if(path && info)
-    {
-        if(recogniseNativeState(path, info))
-            return true;
-
-        // Perhaps an original game state?
-#if __JDOOM__
-        if(SV_RecogniseState_Dm_v19(path, info))
-            return true;
-#endif
-#if __JHERETIC__
-        if(SV_RecogniseState_Hr_v13(path, info))
-            return true;
-#endif
-    }
-    return false;
 }
 
 SaveInfo *SV_SaveInfoForSlot(int slot)
@@ -2722,6 +2702,37 @@ static bool openGameSaveFile(Str const *fileName, bool write)
     return SV_File() != 0;
 }
 
+#if __JHEXEN__
+static void readMapState(Reader *reader, int saveVersion, Str const *path)
+#else
+static void readMapState(Reader *reader, int saveVersion)
+#endif
+{
+#if __JHEXEN__
+    DENG_ASSERT(path != 0);
+
+    App_Log(DE2_DEV_MAP_MSG, "readMapState: Opening file \"%s\"\n", Str_Text(path));
+
+    // Load the file
+    size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
+    if(!bufferSize)
+    {
+        App_Log(DE2_RES_ERROR, "readMapState: Failed opening \"%s\" for reading", Str_Text(path));
+        return;
+    }
+
+    SV_HxSavePtr()->b = saveBuffer;
+    SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
+#endif
+
+    MapStateReader(saveVersion).read(reader);
+
+#if __JHEXEN__
+    clearThingArchive();
+    Z_Free(saveBuffer);
+#endif
+}
+
 static int SV_LoadState(Str const *path, SaveInfo *info)
 {
     DENG_ASSERT(path != 0 && info != 0);
@@ -3089,37 +3100,6 @@ void SV_LoadGameClient(uint gameId)
 #endif
 }
 
-#if __JHEXEN__
-static void readMapState(Reader *reader, int saveVersion, Str const *path)
-#else
-static void readMapState(Reader *reader, int saveVersion)
-#endif
-{
-#if __JHEXEN__
-    DENG_ASSERT(path != 0);
-
-    App_Log(DE2_DEV_MAP_MSG, "readMapState: Opening file \"%s\"\n", Str_Text(path));
-
-    // Load the file
-    size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
-    if(!bufferSize)
-    {
-        App_Log(DE2_RES_ERROR, "readMapState: Failed opening \"%s\" for reading", Str_Text(path));
-        return;
-    }
-
-    SV_HxSavePtr()->b = saveBuffer;
-    SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
-#endif
-
-    MapStateReader(saveVersion).read(reader);
-
-#if __JHEXEN__
-    clearThingArchive();
-    Z_Free(saveBuffer);
-#endif
-}
-
 static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 {
     App_Log(DE2_LOG_VERBOSE, "saveStateWorker: Attempting save game to \"%s\"", Str_Text(path));
@@ -3462,3 +3442,18 @@ void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
     P_TelefragMobjsTouchingPlayers();
 }
 #endif
+
+void SV_Register()
+{
+#if !__JHEXEN__
+    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
+#endif
+    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
+    C_VAR_INT ("game-save-last-slot",            &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
+    C_VAR_INT ("game-save-quick-slot",           &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
+
+    // Aliases for obsolete cvars:
+    C_VAR_BYTE("menu-quick-ask",                 &cfg.confirmQuickGameSave, 0, 0, 1);
+}
