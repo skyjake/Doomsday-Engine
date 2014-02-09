@@ -77,8 +77,6 @@ SaveInfo::SaveInfo()
     , _magic   (0)
     , _version (0)
     , _gameMode(NUM_GAME_MODES)
-    , _episode (0)
-    , _map     (0)
     , _mapUri  (Uri_New())
 #if !__JHEXEN__
     , _mapTime (0)
@@ -96,8 +94,6 @@ SaveInfo::SaveInfo(SaveInfo const &other)
     , _magic   (other._magic)
     , _version (other._version)
     , _gameMode(other._gameMode)
-    , _episode (other._episode)
-    , _map     (other._map)
 #if !__JHEXEN__
     , _mapTime (other._mapTime)
 #endif
@@ -123,8 +119,6 @@ SaveInfo &SaveInfo::operator = (SaveInfo const &other)
     _magic = other._magic;
     _version = other._version;
     _gameMode = other._gameMode;
-    _episode = other._episode;
-    _map = other._map;
     Uri_Copy(_mapUri, other._mapUri);
 #if !__JHEXEN__
     _mapTime = other._mapTime;
@@ -186,9 +180,7 @@ void SaveInfo::applyCurrentSessionMetadata()
     _magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
     _version  = MY_SAVE_VERSION;
     _gameMode = gameMode;
-    _episode  = gameEpisode;
-    _map      = gameMap;
-    Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
+    Uri_Copy(_mapUri, gameMapUri);
 #if !__JHEXEN__
     _mapTime  = ::mapTime;
 #endif
@@ -221,8 +213,7 @@ void SaveInfo::write(Writer *writer) const
     Writer_WriteInt32(writer, _gameMode);
     Str_Write(&_description, writer);
 
-    Writer_WriteByte(writer, _episode);
-    Writer_WriteByte(writer, _map);
+    Uri_Write(_mapUri, writer);
 #if !__JHEXEN__
     Writer_WriteInt32(writer, _mapTime);
 #endif
@@ -250,21 +241,15 @@ void SaveInfo::read(Reader *reader)
     }
     else
     {
-        // Older formats use a fixed-length name (24 characters).
-#define OLD_NAME_LENGTH 24
-
-        char buf[OLD_NAME_LENGTH];
-        Reader_Read(reader, buf, OLD_NAME_LENGTH);
+        // Description is a fixed 24 characters in length.
+        char buf[24 + 1];
+        Reader_Read(reader, buf, 24); buf[24] = 0;
         Str_Set(&_description, buf);
-
-#undef OLD_NAME_LENGTH
     }
 
     if(_version >= 14)
     {
-        _episode = Reader_ReadByte(reader);
-        _map     = Reader_ReadByte(reader);
-        Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
+        Uri_Read(_mapUri, reader);
 #if !__JHEXEN__
         _mapTime = Reader_ReadInt32(reader);
 #endif
@@ -305,9 +290,9 @@ void SaveInfo::read(Reader *reader)
                 _gameRules.skill = SM_NOTHINGS;
         }
 
-        _episode = Reader_ReadByte(reader) - 1;
-        _map     = Reader_ReadByte(reader) - 1;
-        Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
+        uint episode = Reader_ReadByte(reader) - 1;
+        uint map     = Reader_ReadByte(reader) - 1;
+        Uri_Copy(_mapUri, G_ComposeMapUri(episode, map));
 
         _gameRules.deathmatch      = Reader_ReadByte(reader);
 #if !__JHEXEN__
@@ -365,15 +350,16 @@ void SaveInfo::read_Hx_v9(Reader *reader)
     _magic    = MY_SAVE_MAGIC; // Lets pretend...
     _gameMode = gameMode; // Assume the current mode.
 
-    _episode  = 0;
-    _map      = Reader_ReadByte(reader) - 1;
-    Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
+    uint episode = 0;
+    uint map     = Reader_ReadByte(reader) - 1;
+    Uri_Copy(_mapUri, G_ComposeMapUri(episode, map));
 
     _gameRules.skill         = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
-
     // Interpret skill modes outside the normal range as "spawn no things".
     if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
+    {
         _gameRules.skill = SM_NOTHINGS;
+    }
 
     _gameRules.deathmatch    = Reader_ReadByte(reader);
     _gameRules.noMonsters    = Reader_ReadByte(reader);

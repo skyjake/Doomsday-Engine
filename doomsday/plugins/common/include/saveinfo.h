@@ -36,9 +36,7 @@ public: /// @todo make private:
     int _magic;
     int _version;
     gamemode_t _gameMode;
-    uint _episode;
-    uint _map;
-    Uri *_mapUri; ///< Not currently saved.
+    Uri *_mapUri;
 #if !__JHEXEN__
     int _mapTime;
     byte _players[MAXPLAYERS];

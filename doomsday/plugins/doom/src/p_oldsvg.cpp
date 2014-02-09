@@ -890,14 +890,15 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     info->_version = atoi(&vcheck[8]);
 
     info->_gameRules.skill = (skillmode_t) Reader_ReadByte(reader);
-
     // Interpret skill levels outside the normal range as "spawn no things".
     if(info->_gameRules.skill < SM_BABY || info->_gameRules.skill >= NUM_SKILL_MODES)
+    {
         info->_gameRules.skill = SM_NOTHINGS;
+    }
 
-    info->_episode = Reader_ReadByte(reader) - 1;
-    info->_map     = Reader_ReadByte(reader) - 1;
-    Uri_Copy(info->_mapUri, G_ComposeMapUri(info->_episode, info->_map));
+    uint episode = Reader_ReadByte(reader) - 1;
+    uint map     = Reader_ReadByte(reader) - 1;
+    Uri_Copy(info->_mapUri, G_ComposeMapUri(episode, map));
 
     for(int i = 0; i < 4; ++i)
     {
