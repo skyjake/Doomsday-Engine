@@ -23,15 +23,33 @@
 
 #include "common.h"
 
+/**
+ * Performs saved game map state serialization.
+ *
+ * @ingroup libcommon
+ */
 class MapStateWriter
 {
 public:
+    /**
+     * @param excludePlayers  Exclude player data. Used by Hexen when serializing hubs.
+     */
     MapStateWriter(bool excludePlayers = false);
 
+    /**
+     * Serialize the map state using the specified @a reader.
+     */
     void write(Writer *writer);
 
+    /**
+     * Returns a unique SerialId for the specified @a material.
+     */
+    materialarchive_serialid_t archiveMaterialId(Material *material);
+
+    /**
+     * Returns the writer to use when serializing the map state.
+     */
     Writer *writer();
-    MaterialArchive *materialArchive();
 
 private:
     DENG2_PRIVATE(d)

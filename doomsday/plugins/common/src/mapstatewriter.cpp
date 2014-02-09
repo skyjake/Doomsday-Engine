@@ -254,8 +254,8 @@ Writer *MapStateWriter::writer()
     return d->writer;
 }
 
-MaterialArchive *MapStateWriter::materialArchive()
+materialarchive_serialid_t MapStateWriter::archiveMaterialId(Material *material)
 {
     DENG_ASSERT(d->materialArchive != 0);
-    return d->materialArchive;
+    return MaterialArchive_FindUniqueSerialId(d->materialArchive, material);
 }

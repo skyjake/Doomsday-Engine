@@ -2315,8 +2315,8 @@ void SV_WriteSector(Sector *sec, MapStateWriter *msw)
 
     Writer_WriteInt16(writer, floorheight);
     Writer_WriteInt16(writer, ceilingheight);
-    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(msw->materialArchive(), floorMaterial));
-    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(msw->materialArchive(), ceilingMaterial));
+    Writer_WriteInt16(writer, msw->archiveMaterialId(floorMaterial));
+    Writer_WriteInt16(writer, msw->archiveMaterialId(ceilingMaterial));
     Writer_WriteInt16(writer, floorFlags);
     Writer_WriteInt16(writer, ceilingFlags);
 #if __JHEXEN__
@@ -2574,9 +2574,9 @@ void SV_WriteLine(Line *li, MapStateWriter *msw)
         Writer_WriteInt16(writer, P_GetIntp(si, DMU_MIDDLE_FLAGS));
         Writer_WriteInt16(writer, P_GetIntp(si, DMU_BOTTOM_FLAGS));
 
-        Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(msw->materialArchive(), (Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
-        Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(msw->materialArchive(), (Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
-        Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(msw->materialArchive(), (Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
+        Writer_WriteInt16(writer, msw->archiveMaterialId((Material *)P_GetPtrp(si, DMU_TOP_MATERIAL)));
+        Writer_WriteInt16(writer, msw->archiveMaterialId((Material *)P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
+        Writer_WriteInt16(writer, msw->archiveMaterialId((Material *)P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
         for(int k = 0; k < 3; ++k)

@@ -24,12 +24,33 @@
 #include "common.h"
 #include "dmu_archiveindex.h"
 
+/**
+ * Performs saved game map state deserialization.
+ *
+ * @ingroup libcommon
+ */
 class MapStateReader
 {
 public:
+    /**
+     * @param saveVersion  Logical saved state version number.
+     */
     MapStateReader(int saveVersion);
 
+    /**
+     * Deserialize the saved map state using the specified @a reader.
+     */
     void read(Reader *reader);
+
+    /**
+     * Returns the logical map version of the saved map state.
+     */
+    int mapVersion();
+
+    /**
+     * Returns the reader to use when deserializing the saved map state.
+     */
+    Reader *reader();
 
     /**
      * Finds and returns a material with the identifier @a serialId.
@@ -42,9 +63,9 @@ public:
      */
     Material *archiveMaterial(materialarchive_serialid_t serialId, int group);
 
-    Reader *reader();
-    int mapVersion();
-    MaterialArchive *materialArchive();
+    /**
+     * Provides access to the side archive to use when serializing the map state.
+     */
     dmu_lib::SideArchive &sideArchive();
 
 private:

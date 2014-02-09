@@ -274,10 +274,6 @@ DENG2_PIMPL(MapStateReader)
 #endif
     }
 
-    /**
-     * Update the references between thinkers. To be called during the load
-     * process to finalize the loaded thinkers.
-     */
     void relinkThinkers()
     {
 #if __JHEXEN__
@@ -303,9 +299,6 @@ DENG2_PIMPL(MapStateReader)
 #endif
     }
 
-    /**
-     * Deserialize and then spawns thinkers for both client and server.
-     */
     void readThinkers()
     {
         bool const formatHasStasisInfo = (mapVersion >= 6);
@@ -530,12 +523,6 @@ Material *MapStateReader::archiveMaterial(materialarchive_serialid_t serialId, i
 {
     DENG_ASSERT(d->materialArchive != 0);
     return MaterialArchive_Find(d->materialArchive, serialId, group);
-}
-
-MaterialArchive *MapStateReader::materialArchive()
-{
-    DENG_ASSERT(d->materialArchive != 0);
-    return d->materialArchive;
 }
 
 dmu_lib::SideArchive &MapStateReader::sideArchive()

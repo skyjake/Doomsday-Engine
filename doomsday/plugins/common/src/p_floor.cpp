@@ -413,7 +413,7 @@ void floor_s::write(MapStateWriter *msw) const
     Writer_WriteInt32(writer, (int) state);
     Writer_WriteInt32(writer, newSpecial);
 
-    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(msw->materialArchive(), material));
+    Writer_WriteInt16(writer, msw->archiveMaterialId(material));
 
     Writer_WriteInt16(writer, (int) floorDestHeight);
     Writer_WriteInt32(writer, FLT2FIX(speed));
