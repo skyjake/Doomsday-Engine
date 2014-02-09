@@ -38,9 +38,9 @@ DENG2_PIMPL(MapStateWriter)
         , materialArchive(0)
     {}
 
-    void beginSegment(int segId)
+    void beginSegment(int segmentId)
     {
-        SV_BeginSegment(segId);
+        SV_BeginSegment(segmentId);
     }
 
     void endSegment()
@@ -169,6 +169,7 @@ DENG2_PIMPL(MapStateWriter)
     void writeACScriptData()
     {
 #if __JHEXEN__
+        beginSegment(ASEG_SCRIPTS);
         Game_ACScriptInterpreter().writeMapScriptData(writer);
 #endif
     }
@@ -176,6 +177,7 @@ DENG2_PIMPL(MapStateWriter)
     void writeSoundSequences()
     {
 #if __JHEXEN__
+        beginSegment(ASEG_SOUNDS);
         SN_WriteSequences(writer);
 #endif
     }

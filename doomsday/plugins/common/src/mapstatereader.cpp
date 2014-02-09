@@ -55,20 +55,34 @@ DENG2_PIMPL(MapStateReader)
         if(Reader_ReadInt32(reader) != segId)
         {
             /// @throw ReadError Failed alignment check.
-            throw ReadError("MapStateReader::assertSegment", "Corrupt save game, segment " + de::String::number(segId) + " failed alignment check");
+            throw ReadError("MapStateReader::checkSegment", "Corrupt save game, segment " + de::String::number(segId) + " failed alignment check");
         }
+#endif
+    }
+
+    /// Special case check for the top-level map state segment.
+    void checkMapSegment()
+    {
+#if __JHEXEN__
+        int segId = Reader_ReadInt32(reader);
+        if(segId != ASEG_MAP_HEADER2 && segId != ASEG_MAP_HEADER)
+        {
+            /// @throw ReadError Failed alignment check.
+            throw ReadError("MapStateReader::checkSegment", "Corrupt save game, segment " + de::String::number(segId) + " failed alignment check");
+        }
+
+        // Maps have their own version number, in Hexen.
+        mapVersion = (segId == ASEG_MAP_HEADER2? Reader_ReadByte(reader) : 2);
+#else
+        checkSegment(ASEG_MAP_HEADER2);
 #endif
     }
 
     void beginMapSegment()
     {
-        savestatesegment_t segId;
-        SV_AssertMapSegment(&segId);
+        checkMapSegment();
 
 #if __JHEXEN__
-        // Maps have their own version number, in Hexen.
-        mapVersion = (segId == ASEG_MAP_HEADER2? Reader_ReadByte(reader) : 2);
-
         thingArchiveVersion = mapVersion >= 4? 1 : 0;
 #endif
 
@@ -440,6 +454,7 @@ DENG2_PIMPL(MapStateReader)
     void readACScriptData()
     {
 #if __JHEXEN__
+        checkSegment(ASEG_SCRIPTS);
         Game_ACScriptInterpreter().readMapScriptData(reader, mapVersion);
 #endif
     }
@@ -447,6 +462,7 @@ DENG2_PIMPL(MapStateReader)
     void readSoundSequences()
     {
 #if __JHEXEN__
+        checkSegment(ASEG_SOUNDS);
         SN_ReadSequences(reader, mapVersion);
 #endif
     }

@@ -477,8 +477,6 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
 
 void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
 {
-    SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
-
     Writer_WriteByte(writer, 4); // version byte
 
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
@@ -500,7 +498,6 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int mapVersion)
 
     if(mapVersion >= 7)
     {
-        SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
         ver = Reader_ReadByte(reader);
     }
 
@@ -553,8 +550,6 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int mapVersion)
 
 void ACScriptInterpreter::writeMapScriptData(Writer *writer)
 {
-    SV_BeginSegment(ASEG_SCRIPTS);
-
     for(int i = 0; i < _scriptCount; ++i)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
@@ -570,8 +565,6 @@ void ACScriptInterpreter::writeMapScriptData(Writer *writer)
 
 void ACScriptInterpreter::readMapScriptData(Reader *reader, int /*mapVersion*/)
 {
-    SV_AssertSegment(ASEG_SCRIPTS);
-
     for(int i = 0; i < _scriptCount; ++i)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];

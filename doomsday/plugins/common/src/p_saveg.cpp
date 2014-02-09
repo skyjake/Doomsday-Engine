@@ -2983,6 +2983,10 @@ static int SV_LoadState(Str const *path, SaveInfo *info)
     curInfo = info;
 
 #if __JHEXEN__
+    if(info->version() >= 7)
+    {
+        SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
+    }
     Game_ACScriptInterpreter().readWorldScriptData(reader, info->version());
 #endif
 
@@ -3378,6 +3382,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     saveInfo->write(writer);
 
 #if __JHEXEN__
+    SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
     Game_ACScriptInterpreter().writeWorldScriptData(writer);
 #endif
 
