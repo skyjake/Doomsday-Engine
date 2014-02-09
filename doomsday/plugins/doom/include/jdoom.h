@@ -32,7 +32,6 @@
 #define __JDOOM_CONVENIENCE_H__
 
 #include "../../doom/include/acfnlink.h"
-#include "../../doom/include/bossbrain.h"
 #include "../../doom/include/d_api.h"
 #include "../../doom/include/d_config.h"
 #include "../../doom/include/d_console.h"
@@ -47,6 +46,7 @@
 #include "../../doom/include/m_cheat.h"
 #include "../../doom/include/m_random.h"
 #include "../../doom/include/p_enemy.h"
+#include "../../doom/include/bossbrain.h"
 #include "../../doom/include/p_inter.h"
 #include "../../doom/include/p_lights.h"
 #include "../../doom/include/p_local.h"

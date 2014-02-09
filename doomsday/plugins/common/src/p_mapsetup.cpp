@@ -972,7 +972,8 @@ static void P_ResetWorldState()
 #endif
 
 #if __JDOOM__
-    P_BrainInitForMap();
+    delete bossBrain;
+    bossBrain = new BossBrain;
 #endif
 
 #if __JHEXEN__

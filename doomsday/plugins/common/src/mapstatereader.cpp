@@ -483,7 +483,8 @@ DENG2_PIMPL(MapStateReader)
     void readBrain()
     {
 #if __JDOOM__
-        P_BrainRead(reader, mapVersion);
+        DENG_ASSERT(bossBrain != 0);
+        bossBrain->read(thisPublic);
 #endif
     }
 

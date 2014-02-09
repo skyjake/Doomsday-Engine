@@ -28,35 +28,58 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "doomsday.h"
-#include "p_mobj.h"
+#include "jdoom.h"
+#ifdef __cplusplus
+#include "mapstatereader.h"
+#include "mapstatewriter.h"
 
 /**
  * Global state of boss brain.
+ *
+ * @ingroup libdoom
  */
-typedef struct bossbrain_s {
-    int easy;
-    int targetOn;
-    int numTargets;
-    int maxTargets;
-    mobj_t **targets;
-} bossbrain_t;
+class BossBrain
+{
+public:
+    BossBrain();
 
-DENG_EXTERN_C bossbrain_t bossBrain;
+    void clearTargets();
+
+    int targetCount() const;
+
+    void addTarget(struct mobj_s *mo);
+
+    struct mobj_s *nextTarget();
+
+    void write(MapStateWriter *msw) const;
+    void read(MapStateReader *msr);
+
+private:
+    DENG2_PRIVATE(d)
+};
+#endif // __cplusplus
+
+// C wrapper API ---------------------------------------------------------------
 
 #ifdef __cplusplus
 extern "C" {
+#else
+typedef void *BossBrain;
 #endif
 
-void P_BrainInitForMap(void);
-void P_BrainShutdown(void);
-void P_BrainClearTargets(void);
-void P_BrainWrite(Writer *writer);
-void P_BrainRead(Reader *reader, int mapVersion);
-void P_BrainAddTarget(mobj_t *mo);
+void BossBrain_ClearTargets(BossBrain *brain);
+
+int BossBrain_TargetCount(BossBrain const *brain);
+
+void BossBrain_AddTarget(BossBrain *brain, struct mobj_s *mo);
+
+struct mobj_s *BossBrain_NextTarget(BossBrain *brain);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+/// The One BossBrain instance.
+DENG_EXTERN_C BossBrain *bossBrain;
 
 #endif // LIBDOOM_PLAY_BOSSBRAIN_H

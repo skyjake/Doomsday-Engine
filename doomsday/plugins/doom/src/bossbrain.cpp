@@ -26,42 +26,68 @@
 
 #include "p_saveg.h"
 
-void P_BrainInitForMap()
+BossBrain *bossBrain; // The One boss brain.
+
+DENG2_PIMPL_NOREF(BossBrain)
 {
-    bossBrain.easy = 0; // Always init easy to 0.
-    // Calling shutdown rather than clear allows us to free up memory.
-    P_BrainShutdown();
+    int easy;
+    int targetOn;
+    int numTargets;
+    int maxTargets;
+    mobj_t **targets;
+
+    Instance()
+        : easy(0) // Always init easy to 0.
+        , targetOn(0)
+        , numTargets(0)
+        , maxTargets(-1)
+        , targets(0)
+    {}
+
+    ~Instance()
+    {
+        Z_Free(targets);
+    }
+};
+
+BossBrain::BossBrain() : d(new Instance)
+{}
+
+void BossBrain::clearTargets()
+{
+    d->numTargets = 0;
+    d->targetOn = 0;
 }
 
-void P_BrainClearTargets()
+int BossBrain::targetCount() const
 {
-    bossBrain.numTargets = 0;
-    bossBrain.targetOn = 0;
+    return d->numTargets;
 }
 
-void P_BrainWrite(Writer *writer)
+void BossBrain::write(MapStateWriter *msw) const
 {
-    DENG_ASSERT(writer != 0);
+    Writer *writer = msw->writer();
 
     // Not for us?
     if(!IS_SERVER) return;
 
     Writer_WriteByte(writer, 1); // Write a version byte.
 
-    Writer_WriteInt16(writer, bossBrain.numTargets);
-    Writer_WriteInt16(writer, bossBrain.targetOn);
-    Writer_WriteByte(writer, bossBrain.easy!=0? 1:0);
+    Writer_WriteInt16(writer, d->numTargets);
+    Writer_WriteInt16(writer, d->targetOn);
+    Writer_WriteByte(writer, d->easy != 0? 1:0);
 
     // Write the mobj references using the mobj archive.
-    for(int i = 0; i < bossBrain.numTargets; ++i)
+    for(int i = 0; i < d->numTargets; ++i)
     {
-        Writer_WriteInt16(writer, SV_ThingArchiveId(bossBrain.targets[i]));
+        Writer_WriteInt16(writer, SV_ThingArchiveId(d->targets[i]));
     }
 }
 
-void P_BrainRead(Reader *reader, int mapVersion)
+void BossBrain::read(MapStateReader *msr)
 {
-    DENG_ASSERT(reader != 0);
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
 
     // Not for us?
     if(!IS_SERVER) return;
@@ -69,55 +95,90 @@ void P_BrainRead(Reader *reader, int mapVersion)
     // No brain data before version 3.
     if(mapVersion < 3) return;
 
-    P_BrainClearTargets();
+    clearTargets();
 
     int ver = (mapVersion >= 8? Reader_ReadByte(reader) : 0);
-    int numTargets;
+    int newTargetCount;
     if(ver >= 1)
     {
-        numTargets         = Reader_ReadInt16(reader);
-        bossBrain.targetOn = Reader_ReadInt16(reader);
-        bossBrain.easy     = (dd_bool)Reader_ReadByte(reader);
+        newTargetCount = Reader_ReadInt16(reader);
+
+        d->targetOn = Reader_ReadInt16(reader);
+        d->easy     = (dd_bool)Reader_ReadByte(reader);
     }
     else
     {
-        numTargets         = Reader_ReadByte(reader);
-        bossBrain.targetOn = Reader_ReadByte(reader);
-        bossBrain.easy     = false;
+        newTargetCount = Reader_ReadByte(reader);
+
+        d->targetOn = Reader_ReadByte(reader);
+        d->easy     = false;
     }
 
-    for(int i = 0; i < numTargets; ++i)
+    for(int i = 0; i < newTargetCount; ++i)
     {
-        P_BrainAddTarget(SV_GetArchiveThing((int) Reader_ReadInt16(reader), 0));
+        addTarget(SV_GetArchiveThing((int) Reader_ReadInt16(reader), 0));
     }
 }
 
-void P_BrainShutdown()
-{
-    Z_Free(bossBrain.targets); bossBrain.targets = 0;
-    bossBrain.numTargets = 0;
-    bossBrain.maxTargets = -1;
-    bossBrain.targetOn = 0;
-}
-
-void P_BrainAddTarget(mobj_t *mo)
+void BossBrain::addTarget(mobj_t *mo)
 {
     DENG_ASSERT(mo != 0);
 
-    if(bossBrain.numTargets >= bossBrain.maxTargets)
+    if(d->numTargets >= d->maxTargets)
     {
         // Do we need to alloc more targets?
-        if(bossBrain.numTargets == bossBrain.maxTargets)
+        if(d->numTargets == d->maxTargets)
         {
-            bossBrain.maxTargets *= 2;
-            bossBrain.targets = (mobj_t **)Z_Realloc(bossBrain.targets, bossBrain.maxTargets * sizeof(*bossBrain.targets), PU_APPSTATIC);
+            d->maxTargets *= 2;
+            d->targets = (mobj_t **)Z_Realloc(d->targets, d->maxTargets * sizeof(*d->targets), PU_APPSTATIC);
         }
         else
         {
-            bossBrain.maxTargets = 32;
-            bossBrain.targets = (mobj_t **)Z_Malloc(bossBrain.maxTargets * sizeof(*bossBrain.targets), PU_APPSTATIC, NULL);
+            d->maxTargets = 32;
+            d->targets = (mobj_t **)Z_Malloc(d->maxTargets * sizeof(*d->targets), PU_APPSTATIC, NULL);
         }
     }
 
-    bossBrain.targets[bossBrain.numTargets++] = mo;
+    d->targets[d->numTargets++] = mo;
+}
+
+mobj_t *BossBrain::nextTarget()
+{
+    if(!d->numTargets)
+        return 0;
+
+    d->easy ^= 1;
+    if(gameRules.skill <= SM_EASY && (!d->easy))
+        return 0;
+
+    mobj_t *targ = d->targets[d->targetOn++];
+    d->targetOn %= d->numTargets;
+
+    return targ;
+}
+
+// C wrapper API ---------------------------------------------------------------
+
+void BossBrain_ClearTargets(BossBrain *bb)
+{
+    DENG_ASSERT(bb != 0);
+    return bb->clearTargets();
+}
+
+int BossBrain_TargetCount(BossBrain const *bb)
+{
+    DENG_ASSERT(bb != 0);
+    return bb->targetCount();
+}
+
+void BossBrain_AddTarget(BossBrain *bb, mobj_t *mo)
+{
+    DENG_ASSERT(bb != 0);
+    return bb->addTarget(mo);
+}
+
+mobj_t *BossBrain_NextTarget(BossBrain *bb)
+{
+    DENG_ASSERT(bb != 0);
+    return bb->nextTarget();
 }

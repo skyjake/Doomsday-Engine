@@ -42,8 +42,6 @@
 #define SKULLSPEED              (20)
 #define TRACEANGLE              (0xc000000)
 
-bossbrain_t bossBrain; // Global state of boss brain.
-
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309)
 
@@ -1796,21 +1794,12 @@ void C_DECL A_BrainDie(mobj_t* mo)
 
 void C_DECL A_BrainSpit(mobj_t* mo)
 {
-    mobj_t* targ;
-    mobj_t* newmobj;
+    mobj_t *targ = BossBrain_NextTarget(bossBrain);
+    mobj_t *newmobj;
 
-    if(!bossBrain.numTargets)
-        return; // Ignore if no targets.
+    if(!targ) return;
 
-    bossBrain.easy ^= 1;
-    if(gameRules.skill <= SM_EASY && (!bossBrain.easy))
-        return;
-
-    // Shoot a cube at current target.
-    targ = bossBrain.targets[bossBrain.targetOn++];
-    bossBrain.targetOn %= bossBrain.numTargets;
-
-    // Spawn brain missile.
+    // Shoot a cube at this target.
     newmobj = P_SpawnMissile(MT_SPAWNSHOT, mo, targ);
     if(newmobj)
     {

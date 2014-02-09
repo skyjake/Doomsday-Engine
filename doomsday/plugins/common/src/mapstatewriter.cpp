@@ -186,7 +186,8 @@ DENG2_PIMPL(MapStateWriter)
     void writeBrain()
     {
 #if __JDOOM__
-        P_BrainWrite(writer);
+        DENG_ASSERT(bossBrain != 0);
+        bossBrain->write(thisPublic);
 #endif
     }
 

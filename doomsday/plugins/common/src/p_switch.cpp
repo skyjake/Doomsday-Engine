@@ -26,6 +26,7 @@
 
 #include "d_net.h"
 #include "dmu_lib.h"
+#include "dmu_archiveindex.h"
 #include "p_plat.h"
 #include "p_sound.h"
 #include "p_saveg.h"

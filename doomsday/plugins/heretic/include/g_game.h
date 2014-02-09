@@ -39,46 +39,46 @@
 #include "h_event.h"
 #include "h_player.h"
 
+DENG_EXTERN_C int gaSaveGameSaveSlot;
+DENG_EXTERN_C int gaLoadGameSaveSlot;
+
+DENG_EXTERN_C player_t players[MAXPLAYERS];
+
+DENG_EXTERN_C dd_bool gameInProgress;
+DENG_EXTERN_C uint gameEpisode;
+DENG_EXTERN_C uint gameMap;
+DENG_EXTERN_C Uri *gameMapUri;
+DENG_EXTERN_C uint gameMapEntrance;
+DENG_EXTERN_C GameRuleset gameRules;
+
+DENG_EXTERN_C uint nextMap;
+DENG_EXTERN_C dd_bool secretExit;
+DENG_EXTERN_C int totalKills, totalItems, totalSecret;
+DENG_EXTERN_C dd_bool paused;
+DENG_EXTERN_C dd_bool precache;
+DENG_EXTERN_C wbstartstruct_t wmInfo;
+DENG_EXTERN_C dd_bool customPal;
+DENG_EXTERN_C dd_bool briefDisabled;
+
+DENG_EXTERN_C int gsvMapMusic;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int gaSaveGameSaveSlot;
-extern int gaLoadGameSaveSlot;
+void G_Register(void);
+void G_CommonPreInit(void);
+void G_CommonPostInit(void);
+void G_CommonShutdown(void);
 
-extern player_t players[MAXPLAYERS];
+void R_InitRefresh(void);
+void G_DeathMatchSpawnPlayer(int playernum);
 
-extern dd_bool gameInProgress;
-extern uint gameEpisode;
-extern uint gameMap;
-extern Uri *gameMapUri;
-extern uint gameMapEntrance;
-extern GameRuleset gameRules;
+void G_PrintMapList(void);
 
-extern uint nextMap;
-extern dd_bool secretExit;
-extern int totalKills, totalItems, totalSecret;
-extern dd_bool paused;
-extern dd_bool precache;
-extern wbstartstruct_t wmInfo;
-extern dd_bool customPal;
-extern dd_bool briefDisabled;
+void G_DeferredPlayDemo(char *demo);
 
-extern int gsvMapMusic;
-
-void            G_Register(void);
-void            G_CommonPreInit(void);
-void            G_CommonPostInit(void);
-void            G_CommonShutdown(void);
-
-void            R_InitRefresh(void);
-void            G_DeathMatchSpawnPlayer(int playernum);
-
-void            G_PrintMapList(void);
-
-void            G_DeferredPlayDemo(char* demo);
-
-void            G_QuitGame(void);
+void G_QuitGame(void);
 
 /// @return  @c true = loading is presently possible.
 dd_bool G_IsLoadGamePossible(void);
@@ -101,28 +101,28 @@ dd_bool G_IsSaveGamePossible(void);
  *      If an empty string a new name will be generated automatically.
  * @return  @c true iff @a saveSlot is valid and saving is presently possible.
  */
-dd_bool G_SaveGame2(int slot, const char* name);
+dd_bool G_SaveGame2(int slot, char const *name);
 dd_bool G_SaveGame(int slot);
 
-void            G_StopDemo(void);
+void G_StopDemo(void);
 
 int G_BriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
 int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
 
-void            G_DoReborn(int playernum);
-void            G_PlayerReborn(int player);
+void G_DoReborn(int playernum);
+void G_PlayerReborn(int player);
 
-void            G_IntermissionDone(void);
+void G_IntermissionDone(void);
 
-void            G_Ticker(timespan_t ticLength);
-
-/// @return  @c true if the input event @a ev was eaten.
-int G_PrivilegedResponder(event_t* ev);
+void G_Ticker(timespan_t ticLength);
 
 /// @return  @c true if the input event @a ev was eaten.
-int G_Responder(event_t* ev);
+int G_PrivilegedResponder(event_t *ev);
 
-void            G_ScreenShot(void);
+/// @return  @c true if the input event @a ev was eaten.
+int G_Responder(event_t *ev);
+
+void G_ScreenShot(void);
 
 #ifdef __cplusplus
 } // extern "C"
