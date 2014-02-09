@@ -25,6 +25,7 @@
 #include "p_actor.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
+#include <de/String>
 
 DENG2_PIMPL(MapStateReader)
 {
@@ -42,6 +43,22 @@ DENG2_PIMPL(MapStateReader)
         , materialArchive(0)
         , sideArchive(0)
     {}
+
+    void checkSegment(int segId)
+    {
+#if __JHEXEN__
+        if(segId == ASEG_END && SV_HxBytesLeft() < 4)
+        {
+            App_Log(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)");
+            return;
+        }
+        if(Reader_ReadInt32(reader) != segId)
+        {
+            /// @throw ReadError Failed alignment check.
+            throw ReadError("MapStateReader::assertSegment", "Corrupt save game, segment " + de::String::number(segId) + " failed alignment check");
+        }
+#endif
+    }
 
     void beginMapSegment()
     {
@@ -78,7 +95,7 @@ DENG2_PIMPL(MapStateReader)
 
     void endMapSegment()
     {
-        SV_AssertSegment(ASEG_END);
+        checkSegment(ASEG_END);
 
         delete sideArchive; sideArchive = 0;
         MaterialArchive_Delete(materialArchive); materialArchive = 0;
@@ -86,7 +103,7 @@ DENG2_PIMPL(MapStateReader)
 
     void readElements()
     {
-        SV_AssertSegment(ASEG_MAP_ELEMENTS);
+        checkSegment(ASEG_MAP_ELEMENTS);
 
         // Sectors.
         for(int i = 0; i < numsectors; ++i)
@@ -104,7 +121,7 @@ DENG2_PIMPL(MapStateReader)
     void readPolyobjs()
     {
 #if __JHEXEN__
-        SV_AssertSegment(ASEG_POLYOBJS);
+        checkSegment(ASEG_POLYOBJS);
 
         int const writtenPolyobjCount = Reader_ReadInt32(reader);
         DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
@@ -307,10 +324,10 @@ DENG2_PIMPL(MapStateReader)
 
 #if __JHEXEN__
         if(mapVersion < 4)
-            SV_AssertSegment(ASEG_MOBJS);
+            checkSegment(ASEG_MOBJS);
         else
 #endif
-            SV_AssertSegment(ASEG_THINKERS);
+            checkSegment(ASEG_THINKERS);
 
 #if __JHEXEN__
         SV_InitTargetPlayers();
@@ -352,7 +369,7 @@ DENG2_PIMPL(MapStateReader)
 
                 if(tClass == TC_MOBJ && (uint)i == thingArchiveSize)
                 {
-                    SV_AssertSegment(ASEG_THINKERS);
+                    checkSegment(ASEG_THINKERS);
                     // We have reached the begining of the "specials" block.
                     reachedSpecialsBlock = true;
                     continue;
@@ -437,7 +454,7 @@ DENG2_PIMPL(MapStateReader)
     void readMisc()
     {
 #if __JHEXEN__
-        SV_AssertSegment(ASEG_MISC);
+        checkSegment(ASEG_MISC);
 
         for(int i = 0; i < MAXPLAYERS; ++i)
         {

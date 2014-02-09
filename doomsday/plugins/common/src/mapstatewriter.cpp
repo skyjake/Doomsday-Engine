@@ -38,9 +38,19 @@ DENG2_PIMPL(MapStateWriter)
         , materialArchive(0)
     {}
 
+    void beginSegment(int segId)
+    {
+        SV_BeginSegment(segId);
+    }
+
+    void endSegment()
+    {
+        SV_EndSegment();
+    }
+
     void beginMapSegment()
     {
-        SV_BeginSegment(ASEG_MAP_HEADER2);
+        beginSegment(ASEG_MAP_HEADER2);
 
 #if __JHEXEN__
         Writer_WriteByte(writer, MY_SAVE_VERSION); // Map version also.
@@ -60,14 +70,13 @@ DENG2_PIMPL(MapStateWriter)
 
     void endMapSegment()
     {
-        SV_EndSegment();
-
+        endSegment();
         MaterialArchive_Delete(materialArchive); materialArchive = 0;
     }
 
     void writeElements()
     {
-        SV_BeginSegment(ASEG_MAP_ELEMENTS);
+        beginSegment(ASEG_MAP_ELEMENTS);
 
         for(int i = 0; i < numsectors; ++i)
         {
@@ -83,7 +92,7 @@ DENG2_PIMPL(MapStateWriter)
     void writePolyobjs()
     {
 #if __JHEXEN__
-        SV_BeginSegment(ASEG_POLYOBJS);
+        beginSegment(ASEG_POLYOBJS);
 
         Writer_WriteInt32(writer, numpolyobjs);
         for(int i = 0; i < numpolyobjs; ++i)
@@ -141,7 +150,7 @@ DENG2_PIMPL(MapStateWriter)
      */
     void writeThinkers()
     {
-        SV_BeginSegment(ASEG_THINKERS);
+        beginSegment(ASEG_THINKERS);
 
 #if __JHEXEN__
         Writer_WriteInt32(writer, thingArchiveSize); // number of mobjs.
@@ -213,7 +222,7 @@ DENG2_PIMPL(MapStateWriter)
     void writeMisc()
     {
 #if __JHEXEN__
-        SV_BeginSegment(ASEG_MISC);
+        beginSegment(ASEG_MISC);
 
         for(int i = 0; i < MAXPLAYERS; ++i)
         {

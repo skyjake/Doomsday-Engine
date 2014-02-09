@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "dmu_archiveindex.h"
+#include <de/Error>
 
 /**
  * Performs saved game map state deserialization.
@@ -31,6 +32,10 @@
  */
 class MapStateReader
 {
+public:
+    /// Base class for read-related errors. @ingroup errors
+    DENG2_ERROR(ReadError);
+
 public:
     /**
      * @param saveVersion  Logical saved state version number.
