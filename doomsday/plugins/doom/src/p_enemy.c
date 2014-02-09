@@ -42,7 +42,7 @@
 #define SKULLSPEED              (20)
 #define TRACEANGLE              (0xc000000)
 
-braindata_t brain; // Global state of boss brain.
+bossbrain_t bossBrain; // Global state of boss brain.
 
 // Eight directional movement speeds.
 #define MOVESPEED_DIAGONAL      (0.71716309)
@@ -1730,107 +1730,6 @@ void C_DECL A_BabyMetal(mobj_t *mo)
     A_Chase(mo);
 }
 
-void P_BrainInitForMap(void)
-{
-    brain.easy = 0; // Always init easy to 0.
-    // Calling shutdown rather than clear allows us to free up memory.
-    P_BrainShutdown();
-}
-
-void P_BrainClearTargets(void)
-{
-    brain.numTargets = 0;
-    brain.targetOn = 0;
-}
-
-void P_BrainWrite(Writer *writer)
-{
-    int i;
-
-    DENG_ASSERT(writer != 0);
-
-    // Not for us?
-    if(!IS_SERVER) return;
-
-    Writer_WriteByte(writer, 1); // Write a version byte.
-
-    Writer_WriteInt16(writer, brain.numTargets);
-    Writer_WriteInt16(writer, brain.targetOn);
-    Writer_WriteByte(writer, brain.easy!=0? 1:0);
-
-    // Write the mobj references using the mobj archive.
-    for(i = 0; i < brain.numTargets; ++i)
-    {
-        Writer_WriteInt16(writer, SV_ThingArchiveId(brain.targets[i]));
-    }
-}
-
-void P_BrainRead(Reader *reader, int mapVersion)
-{
-    int ver, numTargets;
-    int i;
-
-    DENG_ASSERT(reader != 0);
-
-    // Not for us?
-    if(!IS_SERVER) return;
-
-    // No brain data before version 3.
-    if(mapVersion < 3) return;
-
-    P_BrainClearTargets();
-
-    ver = (mapVersion >= 8? Reader_ReadByte(reader) : 0);
-    numTargets;
-    if(ver >= 1)
-    {
-        numTargets      = Reader_ReadInt16(reader);
-        brain.targetOn  = Reader_ReadInt16(reader);
-        brain.easy      = (dd_bool)Reader_ReadByte(reader);
-    }
-    else
-    {
-        numTargets      = Reader_ReadByte(reader);
-        brain.targetOn  = Reader_ReadByte(reader);
-        brain.easy      = false;
-    }
-
-    for(i = 0; i < numTargets; ++i)
-    {
-        P_BrainAddTarget(SV_GetArchiveThing((int) Reader_ReadInt16(reader), 0));
-    }
-}
-
-void P_BrainShutdown(void)
-{
-    if(brain.targets)
-        Z_Free(brain.targets);
-    brain.targets = 0;
-    brain.numTargets = 0;
-    brain.maxTargets = -1;
-    brain.targetOn = 0;
-}
-
-void P_BrainAddTarget(mobj_t* mo)
-{
-    if(brain.numTargets >= brain.maxTargets)
-    {
-        // Do we need to alloc more targets?
-        if(brain.numTargets == brain.maxTargets)
-        {
-            brain.maxTargets *= 2;
-            brain.targets = Z_Realloc(brain.targets, brain.maxTargets * sizeof(*brain.targets), PU_APPSTATIC);
-        }
-        else
-        {
-            brain.maxTargets = 32;
-            brain.targets = Z_Malloc(brain.maxTargets * sizeof(*brain.targets), PU_APPSTATIC, NULL);
-        }
-    }
-
-    brain.targets[brain.numTargets++] = mo;
-}
-
 void C_DECL A_BrainAwake(mobj_t *mo)
 {
     S_StartSound(SFX_BOSSIT, NULL);
@@ -1900,16 +1799,16 @@ void C_DECL A_BrainSpit(mobj_t* mo)
     mobj_t* targ;
     mobj_t* newmobj;
 
-    if(!brain.numTargets)
+    if(!bossBrain.numTargets)
         return; // Ignore if no targets.
 
-    brain.easy ^= 1;
-    if(gameRules.skill <= SM_EASY && (!brain.easy))
+    bossBrain.easy ^= 1;
+    if(gameRules.skill <= SM_EASY && (!bossBrain.easy))
         return;
 
     // Shoot a cube at current target.
-    targ = brain.targets[brain.targetOn++];
-    brain.targetOn %= brain.numTargets;
+    targ = bossBrain.targets[bossBrain.targetOn++];
+    bossBrain.targetOn %= bossBrain.numTargets;
 
     // Spawn brain missile.
     newmobj = P_SpawnMissile(MT_SPAWNSHOT, mo, targ);

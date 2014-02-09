@@ -32,6 +32,7 @@
 #define __JDOOM_CONVENIENCE_H__
 
 #include "../../doom/include/acfnlink.h"
+#include "../../doom/include/bossbrain.h"
 #include "../../doom/include/d_api.h"
 #include "../../doom/include/d_config.h"
 #include "../../doom/include/d_console.h"
