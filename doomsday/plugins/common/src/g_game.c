@@ -496,19 +496,19 @@ void G_CommonPreInit(void)
     P_InitPicAnims();
 
     // Add our cvars and ccmds to the console databases.
-    G_ConsoleRegistration();    // Main command list.
-    D_NetConsoleRegistration(); // For network.
-    G_Register();               // Read-only game status cvars (for playsim).
+    G_ConsoleRegistration();     // Main command list.
+    D_NetConsoleRegistration();  // For network.
+    G_Register();                // Read-only game status cvars (for playsim).
     Pause_Register();
-    G_ControlRegister();        // For controls/input.
-    SV_Register();              // Game-save system.
-    Hu_MenuRegister();          // For the menu.
-    GUI_Register();             // For the UI library.
-    Hu_MsgRegister();           // For the game messages.
-    ST_Register();              // For the hud/statusbar.
-    WI_Register();              // For the interlude/intermission.
-    X_Register();               // For the crosshair.
-    FI_StackRegister();         // For the InFine lib.
+    G_ControlRegister();         // For controls/input.
+    SaveSlots_ConsoleRegister(); // Game-save system.
+    Hu_MenuRegister();           // For the menu.
+    GUI_Register();              // For the UI library.
+    Hu_MsgRegister();            // For the game messages.
+    ST_Register();               // For the hud/statusbar.
+    WI_Register();               // For the interlude/intermission.
+    X_Register();                // For the crosshair.
+    FI_StackRegister();          // For the InFine lib.
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_Register();
 #endif
@@ -2825,14 +2825,18 @@ dd_bool G_IsSaveGamePossible(void)
     return true;
 }
 
-dd_bool G_SaveGame2(int slot, const char* name)
+dd_bool G_SaveGame2(int slot, char const *name)
 {
-    if(0 > slot || slot >= NUMSAVESLOTS) return false;
+    if(0 > slot || slot >= SaveSlots_SlotCount(saveSlots)) return false;
+
     if(!G_IsSaveGamePossible()) return false;
 
     gaSaveGameSlot = slot;
     if(!gaSaveGameName)
+    {
         gaSaveGameName = Str_New();
+    }
+
     if(name && name[0])
     {
         // A new name.
@@ -2845,6 +2849,7 @@ dd_bool G_SaveGame2(int slot, const char* name)
         gaSaveGameGenerateName = (name && !name[0]);
         Str_Clear(gaSaveGameName);
     }
+
     G_SetGameAction(GA_SAVEGAME);
     return true;
 }

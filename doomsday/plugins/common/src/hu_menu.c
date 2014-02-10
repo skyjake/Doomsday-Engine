@@ -1938,14 +1938,14 @@ int Hu_MenuSaveSlotCommandResponder(mn_object_t* ob, menucommand_e cmd)
 void Hu_MenuInitLoadGameAndSaveGamePages(void)
 {
 #if __JDOOM__ || __JDOOM64__
-    const Point2Raw origin = { 80, 54 };
+    Point2Raw const origin = { 80, 54 };
 #else
-    const Point2Raw origin = { 70, 30 };
+    Point2Raw const origin = { 70, 30 };
 #endif
-    mn_object_t* loadMenuObjects, *saveMenuObjects;
-    mndata_edit_t* saveSlots;
-    mn_page_t* page;
-    const int saveSlotObjectIds[NUMSAVESLOTS] = {
+    mn_object_t *loadMenuObjects, *saveMenuObjects;
+    mndata_edit_t *saveSlots;
+    mn_page_t *page;
+    int const saveSlotObjectIds[NUMSAVESLOTS] = {
         MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
 #if !__JHEXEN__
         MNF_ID6, MNF_ID7

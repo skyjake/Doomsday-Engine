@@ -38,7 +38,6 @@
 #include "polyobjs.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
-#include "saveslots.h"
 #include <de/memory.h>
 #include <lzss.h>
 #include <cstdio>
@@ -64,7 +63,7 @@ struct playerheader_t
 
 static bool inited = false;
 
-SaveSlots saveSlots;
+SaveSlots saveSlots(NUMSAVESLOTS);
 
 static SaveInfo const *curInfo;
 
@@ -2312,6 +2311,10 @@ void SV_Initialize()
 #endif
     }
 
+    // Reset last-used and quick-save slot tracking.
+    Con_SetInteger("game-save-last-slot", -1);
+    Con_SetInteger("game-save-quick-slot", -1);
+
     // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
     SV_ConfigureSavePaths();
 }
@@ -3085,8 +3088,3 @@ void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
     P_TelefragMobjsTouchingPlayers();
 }
 #endif
-
-void SV_Register()
-{
-    SaveSlots::consoleRegister();
-}

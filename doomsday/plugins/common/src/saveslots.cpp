@@ -22,7 +22,8 @@
 #include "saveslots.h"
 
 #include "p_saveio.h"
-#include "p_saveg.h" /// @todo remove me
+#include "p_saveg.h" /// SV_RecogniseGameState, @todo remove me
+#include <de/math.h>
 #include <de/memory.h>
 
 #define MAX_HUB_MAPS 99
@@ -32,6 +33,7 @@ static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 
 DENG2_PIMPL(SaveSlots)
 {
+    int slotCount;
     SaveInfo **saveInfo;
     SaveInfo *autoSaveInfo;
 #if __JHEXEN__
@@ -39,8 +41,9 @@ DENG2_PIMPL(SaveSlots)
 #endif
     SaveInfo *nullSaveInfo;
 
-    Instance(Public *i)
+    Instance(Public *i, int slotCount)
         : Base(i)
+        , slotCount(de::max(1, slotCount))
         , saveInfo(0)
         , autoSaveInfo(0)
 #if __JHEXEN__
@@ -61,6 +64,39 @@ DENG2_PIMPL(SaveSlots)
         return (slot != AUTO_SLOT && slot != BASE_SLOT);
 #else
         return (slot != AUTO_SLOT);
+#endif
+    }
+
+    /// Re-build save info by re-scanning the save paths and populating the list.
+    void buildSaveInfo()
+    {
+        if(!saveInfo)
+        {
+            // Not yet been here. We need to allocate and initialize the game-save info list.
+            saveInfo = (SaveInfo **)M_Malloc(slotCount * sizeof(*saveInfo));
+
+            for(int i = 0; i < slotCount; ++i)
+            {
+                saveInfo[i] = new SaveInfo;
+            }
+            autoSaveInfo = new SaveInfo;
+#if __JHEXEN__
+            baseSaveInfo = new SaveInfo;
+#endif
+            nullSaveInfo = new SaveInfo;
+        }
+
+        /// Scan the save paths and populate the list.
+        /// @todo We should look at all files on the save path and not just those
+        /// which match the default game-save file naming convention.
+        for(int i = 0; i < slotCount; ++i)
+        {
+            SaveInfo *info = saveInfo[i];
+            updateSaveInfo(self.composeSavePathForSlot(i), info);
+        }
+        updateSaveInfo(self.composeSavePathForSlot(AUTO_SLOT), autoSaveInfo);
+#if __JHEXEN__
+        updateSaveInfo(self.composeSavePathForSlot(BASE_SLOT), baseSaveInfo);
 #endif
     }
 
@@ -94,14 +130,14 @@ DENG2_PIMPL(SaveSlots)
     }
 };
 
-SaveSlots::SaveSlots() : d(new Instance(this))
+SaveSlots::SaveSlots(int slotCount) : d(new Instance(this, slotCount))
 {}
 
 void SaveSlots::clearSaveInfo()
 {
     if(d->saveInfo)
     {
-        for(int i = 0; i < NUMSAVESLOTS; ++i)
+        for(int i = 0; i < d->slotCount; ++i)
         {
             delete d->saveInfo[i];
         }
@@ -127,45 +163,12 @@ void SaveSlots::clearSaveInfo()
     cvarQuickSlot = -1;
 }
 
-void SaveSlots::buildSaveInfo()
-{
-    if(!d->saveInfo)
-    {
-        // Not yet been here. We need to allocate and initialize the game-save info list.
-        d->saveInfo = (SaveInfo **)M_Malloc(NUMSAVESLOTS * sizeof(*d->saveInfo));
-
-        // Initialize.
-        for(int i = 0; i < NUMSAVESLOTS; ++i)
-        {
-            d->saveInfo[i] = new SaveInfo;
-        }
-        d->autoSaveInfo = new SaveInfo;
-#if __JHEXEN__
-        d->baseSaveInfo = new SaveInfo;
-#endif
-        d->nullSaveInfo = new SaveInfo;
-    }
-
-    /// Scan the save paths and populate the list.
-    /// @todo We should look at all files on the save path and not just those
-    /// which match the default game-save file naming convention.
-    for(int i = 0; i < NUMSAVESLOTS; ++i)
-    {
-        SaveInfo *info = d->saveInfo[i];
-        d->updateSaveInfo(composeSavePathForSlot(i), info);
-    }
-    d->updateSaveInfo(composeSavePathForSlot(AUTO_SLOT), d->autoSaveInfo);
-#if __JHEXEN__
-    d->updateSaveInfo(composeSavePathForSlot(BASE_SLOT), d->baseSaveInfo);
-#endif
-}
-
 void SaveSlots::updateAllSaveInfo()
 {
-    buildSaveInfo();
+    d->buildSaveInfo();
 }
 
-AutoStr *SaveSlots::composeSlotIdentifier(int slot)
+AutoStr *SaveSlots::composeSlotIdentifier(int slot) const
 {
     AutoStr *str = AutoStr_NewStd();
     if(slot < 0) return Str_Set(str, "(invalid slot)");
@@ -176,7 +179,7 @@ AutoStr *SaveSlots::composeSlotIdentifier(int slot)
     return Str_Appendf(str, "%i", slot);
 }
 
-int SaveSlots::parseSlotIdentifier(char const *str)
+int SaveSlots::parseSlotIdentifier(char const *str) const
 {
     // Try game-save name match.
     int slot = findSlotWithSaveDescription(str);
@@ -206,17 +209,15 @@ int SaveSlots::parseSlotIdentifier(char const *str)
     return -1;
 }
 
-int SaveSlots::findSlotWithSaveDescription(char const *description)
+int SaveSlots::findSlotWithSaveDescription(char const *description) const
 {
-    DENG_ASSERT(description != 0);
-
     int slot = -1;
     if(description && description[0])
     {
         // On first call - automatically build and populate game-save info.
         if(!d->saveInfo)
         {
-            buildSaveInfo();
+            d->buildSaveInfo();
         }
 
         int i = 0;
@@ -228,13 +229,13 @@ int SaveSlots::findSlotWithSaveDescription(char const *description)
                 // This is the one!
                 slot = i;
             }
-        } while(-1 == slot && ++i < NUMSAVESLOTS);
+        } while(-1 == slot && ++i < d->slotCount);
     }
 
     return slot;
 }
 
-bool SaveSlots::slotInUse(int slot)
+bool SaveSlots::slotInUse(int slot) const
 {
     if(SV_ExistingFile(composeSavePathForSlot(slot)))
     {
@@ -243,16 +244,21 @@ bool SaveSlots::slotInUse(int slot)
     return false;
 }
 
-bool SaveSlots::isValidSlot(int slot)
+int SaveSlots::slotCount() const
+{
+    return d->slotCount;
+}
+
+bool SaveSlots::isValidSlot(int slot) const
 {
     if(slot == AUTO_SLOT) return true;
 #if __JHEXEN__
     if(slot == BASE_SLOT) return true;
 #endif
-    return (slot >= 0  && slot < NUMSAVESLOTS);
+    return (slot >= 0  && slot < d->slotCount);
 }
 
-bool SaveSlots::slotIsUserWritable(int slot)
+bool SaveSlots::slotIsUserWritable(int slot) const
 {
     if(slot == AUTO_SLOT) return false;
 #if __JHEXEN__
@@ -261,14 +267,14 @@ bool SaveSlots::slotIsUserWritable(int slot)
     return isValidSlot(slot);
 }
 
-SaveInfo *SaveSlots::saveInfo(int slot)
+SaveInfo *SaveSlots::saveInfo(int slot) const
 {
     if(!isValidSlot(slot)) return d->nullSaveInfo;
 
     // On first call - automatically build and populate game-save info.
     if(!d->saveInfo)
     {
-        buildSaveInfo();
+        d->buildSaveInfo();
     }
 
     // Retrieve the info for this slot.
@@ -305,7 +311,11 @@ void SaveSlots::replaceSaveInfo(int slot, SaveInfo *newInfo)
 
 void SaveSlots::clearSlot(int slot)
 {
-    if(!isValidSlot(slot)) return;
+    if(!isValidSlot(slot))
+    {
+        DENG_ASSERT(!"SaveSlots::clearSlot: Slot invalid");
+        return;
+    }
 
     if(d->announceOnClearingSlot(slot))
     {
@@ -360,7 +370,7 @@ void SaveSlots::copySlot(int sourceSlot, int destSlot)
     replaceSaveInfo(destSlot, new SaveInfo(*info));
 }
 
-AutoStr *SaveSlots::composeSavePathForSlot(int slot, int map)
+AutoStr *SaveSlots::composeSavePathForSlot(int slot, int map) const
 {
     AutoStr *path = AutoStr_NewStd();
 
@@ -401,9 +411,9 @@ void SaveSlots::consoleRegister() // static
 
 // C wrapper API ---------------------------------------------------------------
 
-SaveSlots *SaveSlots_New()
+SaveSlots *SaveSlots_New(int slotCount)
 {
-    return new SaveSlots;
+    return new SaveSlots(slotCount);
 }
 
 void SaveSlots_Delete(SaveSlots *sslots)
@@ -417,49 +427,49 @@ void SaveSlots_ClearSaveInfo(SaveSlots *sslots)
     sslots->clearSaveInfo();
 }
 
-void SaveSlots_BuildSaveInfo(SaveSlots *sslots)
-{
-    DENG_ASSERT(sslots != 0);
-    sslots->buildSaveInfo();
-}
-
 void SaveSlots_UpdateAllSaveInfo(SaveSlots *sslots)
 {
     DENG_ASSERT(sslots != 0);
     sslots->updateAllSaveInfo();
 }
 
-dd_bool SaveSlots_IsValidSlot(SaveSlots *sslots, int slot)
+int SaveSlots_SlotCount(SaveSlots const *sslots)
+{
+    DENG_ASSERT(sslots != 0);
+    return sslots->slotCount();
+}
+
+dd_bool SaveSlots_IsValidSlot(SaveSlots const *sslots, int slot)
 {
     DENG_ASSERT(sslots != 0);
     return sslots->isValidSlot(slot);
 }
 
-AutoStr *SaveSlots_ComposeSlotIdentifier(SaveSlots *sslots, int slot)
+AutoStr *SaveSlots_ComposeSlotIdentifier(SaveSlots const *sslots, int slot)
 {
     DENG_ASSERT(sslots != 0);
     return sslots->composeSlotIdentifier(slot);
 }
 
-int SaveSlots_ParseSlotIdentifier(SaveSlots *sslots, char const *str)
+int SaveSlots_ParseSlotIdentifier(SaveSlots const *sslots, char const *str)
 {
     DENG_ASSERT(sslots != 0);
     return sslots->parseSlotIdentifier(str);
 }
 
-int SaveSlots_FindSlotWithSaveDescription(SaveSlots *sslots, char const *description)
+int SaveSlots_FindSlotWithSaveDescription(SaveSlots const *sslots, char const *description)
 {
     DENG_ASSERT(sslots != 0);
     return sslots->findSlotWithSaveDescription(description);
 }
 
-dd_bool SaveSlots_SlotInUse(SaveSlots *sslots, int slot)
+dd_bool SaveSlots_SlotInUse(SaveSlots const *sslots, int slot)
 {
     DENG_ASSERT(sslots != 0);
     return sslots->slotInUse(slot);
 }
 
-dd_bool SaveSlots_SlotIsUserWritable(SaveSlots *sslots, int slot)
+dd_bool SaveSlots_SlotIsUserWritable(SaveSlots const *sslots, int slot)
 {
     DENG_ASSERT(sslots != 0);
     return sslots->slotIsUserWritable(slot);
@@ -489,7 +499,7 @@ void SaveSlots_CopySlot(SaveSlots *sslots, int sourceSlot, int destSlot)
     sslots->copySlot(sourceSlot, destSlot);
 }
 
-AutoStr *SaveSlots_ComposeSavePathForSlot(SaveSlots *sslots, int slot, int map)
+AutoStr *SaveSlots_ComposeSavePathForSlot(SaveSlots const *sslots, int slot, int map)
 {
     DENG_ASSERT(sslots != 0);
     return sslots->composeSavePathForSlot(slot, map);

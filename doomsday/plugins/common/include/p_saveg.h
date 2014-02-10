@@ -22,9 +22,9 @@
 #define LIBCOMMON_SAVESTATE_H
 
 #include "common.h"
+#include "p_savedef.h" /// @todo remove me
 #include "saveinfo.h"
 #include "saveslots.h"
-//#include "p_saveio.h"
 
 DENG_EXTERN_C int thingArchiveVersion;
 DENG_EXTERN_C uint thingArchiveSize;
@@ -33,9 +33,6 @@ DENG_EXTERN_C SaveSlots saveSlots;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/// Register the console commands and variables of this module.
-void SV_Register(void);
 
 /// Initialize this module.
 void SV_Initialize(void);

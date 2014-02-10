@@ -23,7 +23,6 @@
 
 #include "common.h"
 #include "saveinfo.h"
-#include "p_savedef.h" /// @todo remove me
 
 #ifdef __cplusplus
 
@@ -39,12 +38,12 @@
 class SaveSlots
 {
 public:
-    SaveSlots();
+    /**
+     * @param numSlots  Number of logical slots.
+     */
+    SaveSlots(int numSlots);
 
     void clearSaveInfo();
-
-    /// Re-build game-save info by re-scanning the save paths and populating the list.
-    void buildSaveInfo();
 
     /**
      * Force an update of the cached game-save info. To be called (sparingly) at strategic
@@ -56,14 +55,19 @@ public:
     void updateAllSaveInfo();
 
     /**
+     * Returns the total number of logical save slots.
+     */
+    int slotCount() const;
+
+    /**
      * Returns @c true iff @a slot is a valid logical slot number (in range).
      */
-    bool isValidSlot(int slot);
+    bool isValidSlot(int slot) const;
 
     /**
      * Composes the textual identifier/name for save @a slot.
      */
-    AutoStr *composeSlotIdentifier(int slot);
+    AutoStr *composeSlotIdentifier(int slot) const;
 
     /**
      * Parse @a str and determine whether it references a logical game-save slot.
@@ -80,7 +84,7 @@ public:
      *
      * @return  Save slot identifier of the slot else @c -1
      */
-    int parseSlotIdentifier(char const *str);
+    int parseSlotIdentifier(char const *str) const;
 
     /**
      * Lookup a save slot by searching for a match on game-save description. The search is in
@@ -90,24 +94,24 @@ public:
      *
      * @return  Logical slot number of the found game-save else @c -1
      */
-    int findSlotWithSaveDescription(char const *description);
+    int findSlotWithSaveDescription(char const *description) const;
 
     /**
      * Returns @c true iff a game-save is present for logical save @a slot.
      */
-    bool slotInUse(int slot);
+    bool slotInUse(int slot) const;
 
     /**
      * Returns @c true iff @a slot is user-writable save slot (i.e., its not one of the special
      * slots such as @em auto).
      */
-    bool slotIsUserWritable(int slot);
+    bool slotIsUserWritable(int slot) const;
 
     /**
      * Returns the save info for save @a slot. Always returns SaveInfo even if supplied with an
      * invalid or unused slot identifer (a null object).
      */
-    SaveInfo *saveInfo(int slot);
+    SaveInfo *saveInfo(int slot) const;
 
     /**
      * Deletes all save game files associated with a slot number.
@@ -129,9 +133,14 @@ public:
      *
      * @return  The composed path if reachable (else a zero-length string).
      */
-    AutoStr *composeSavePathForSlot(int slot, int map = -1);
+    AutoStr *composeSavePathForSlot(int slot, int map = -1) const;
 
-    /// Register the console commands and variables of this module.
+    /**
+     * Register the console commands and variables of this module.
+     *
+     * - game-save-last-slot   Last-used slot. Can be @c -1 (not set).
+     * - game-save-quick-slot  Nominated quick-save slot. Can be @c -1 (not set).
+     */
     static void consoleRegister();
 
 private:
@@ -147,23 +156,24 @@ extern "C" {
 typedef void *SaveSlots;
 #endif
 
-SaveSlots *SaveSlots_New(void);
+SaveSlots *SaveSlots_New(int slotCount);
 void SaveSlots_Delete(SaveSlots *sslots);
 
 void SaveSlots_ClearSaveInfo(SaveSlots *sslots);
 void SaveSlots_BuildSaveInfo(SaveSlots *sslots);
 void SaveSlots_UpdateAllSaveInfo(SaveSlots *sslots);
-dd_bool SaveSlots_IsValidSlot(SaveSlots *sslots, int slot);
-AutoStr *SaveSlots_ComposeSlotIdentifier(SaveSlots *sslots, int slot);
-int SaveSlots_ParseSlotIdentifier(SaveSlots *sslots, char const *str);
-int SaveSlots_FindSlotWithSaveDescription(SaveSlots *sslots, char const *description);
-dd_bool SaveSlots_SlotInUse(SaveSlots *sslots, int slot);
-dd_bool SaveSlots_SlotIsUserWritable(SaveSlots *sslots, int slot);
+int SaveSlots_SlotCount(SaveSlots const *sslots);
+dd_bool SaveSlots_IsValidSlot(SaveSlots const *sslots, int slot);
+AutoStr *SaveSlots_ComposeSlotIdentifier(SaveSlots const *sslots, int slot);
+int SaveSlots_ParseSlotIdentifier(SaveSlots const *sslots, char const *str);
+int SaveSlots_FindSlotWithSaveDescription(SaveSlots const *sslots, char const *description);
+dd_bool SaveSlots_SlotInUse(SaveSlots const *sslots, int slot);
+dd_bool SaveSlots_SlotIsUserWritable(SaveSlots const *sslots, int slot);
 SaveInfo *SaveSlots_SaveInfo(SaveSlots *sslots, int slot);
 void SaveSlots_ReplaceSaveInfo(SaveSlots *sslots, int slot, SaveInfo *newInfo);
 void SaveSlots_ClearSlot(SaveSlots *sslots, int slot);
 void SaveSlots_CopySlot(SaveSlots *sslots, int sourceSlot, int destSlot);
-AutoStr *SaveSlots_ComposeSavePathForSlot(SaveSlots *sslots, int slot, int map);
+AutoStr *SaveSlots_ComposeSavePathForSlot(SaveSlots const *sslots, int slot, int map);
 
 void SaveSlots_ConsoleRegister();
 
