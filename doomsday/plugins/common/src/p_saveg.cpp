@@ -37,22 +37,13 @@
 #include "polyobjs.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
+#include "saveslots.h"
 #include <de/memory.h>
 #include <lzss.h>
 #include <cstdio>
 #include <cstring>
 
 using namespace dmu_lib;
-
-#define MAX_HUB_MAPS        99
-
-#define FF_FULLBRIGHT       0x8000 ///< Used to be a flag in thing->frame.
-#define FF_FRAMEMASK        0x7fff
-
-#if __JHEXEN__
-/// Symbolic identifier used to mark references to players in map states.
-static ThingSerialId const TargetPlayerId = -2;
-#endif
 
 struct playerheader_t
 {
@@ -70,41 +61,21 @@ struct playerheader_t
 #endif
 };
 
-enum sectorclass_t
-{
-    sc_normal,
-    sc_ploff, ///< plane offset
-#if !__JHEXEN__
-    sc_xg1,
-#endif
-    NUM_SECTORCLASSES
-};
-
-enum lineclass_t
-{
-    lc_normal,
-#if !__JHEXEN__
-    lc_xg1,
-#endif
-    NUM_LINECLASSES
-};
-
 static bool inited = false;
 
-static int cvarLastSlot; // -1 = Not yet loaded/saved in this game session.
-static int cvarQuickSlot; // -1 = Not yet chosen/determined.
+static int cvarLastSlot;  ///< @c -1= Not yet loaded/saved in this game session.
+static int cvarQuickSlot; ///< @c -1= Not yet chosen/determined.
 
-static SaveInfo **saveInfo;
-static SaveInfo *autoSaveInfo;
-#if __JHEXEN__
-static SaveInfo *baseSaveInfo;
-#endif
-static SaveInfo *nullSaveInfo;
-
-static SaveInfo const *curInfo;
+static SaveSlots saveSlots;
+SaveInfo const *curInfo;
 
 static playerheader_t playerHeader;
 static dd_bool playerHeaderOK;
+
+#if __JHEXEN__
+/// Symbolic identifier used to mark references to players in map states.
+static ThingSerialId const TargetPlayerId = -2;
+#endif
 
 static mobj_t **thingArchive;
 int thingArchiveVersion;
@@ -114,41 +85,11 @@ static bool thingArchiveExcludePlayers;
 static int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
 static targetplraddress_t *targetPlayerAddrs;
-static byte *saveBuffer;
 #endif
 
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with the logical save @a slot.
- *
- * @param slot  Logical save slot identifier.
- * @param map   If @c >= 0 include this logical map index in the composed path.
- * @return  The composed path if reachable (else a zero-length string).
- */
-static AutoStr *composeGameSavePathForSlot(int slot, int map = -1)
-{
-    DENG_ASSERT(inited);
-
-    AutoStr *path = AutoStr_NewStd();
-
-    // A valid slot?
-    if(!SV_IsValidSlot(slot)) return path;
-
-    // Do we have a valid path?
-    if(!F_MakePath(SV_SavePath())) return path;
-
-    // Compose the full game-save path and filename.
-    if(map >= 0)
-    {
-        Str_Appendf(path, "%s" SAVEGAMENAME "%i%02i." SAVEGAMEEXTENSION, SV_SavePath(), slot, map);
-    }
-    else
-    {
-        Str_Appendf(path, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, SV_SavePath(), slot);
-    }
-    F_TranslatePath(path, path);
-    return path;
-}
+#if __JHEXEN__
+static byte *saveBuffer;
+#endif
 
 #if !__JHEXEN__
 /**
@@ -170,33 +111,6 @@ static AutoStr *composeGameSavePathForClientGameId(uint gameId)
     return path;
 }
 #endif
-
-static void clearSaveInfo()
-{
-    if(saveInfo)
-    {
-        for(int i = 0; i < NUMSAVESLOTS; ++i)
-        {
-            delete saveInfo[i];
-        }
-        M_Free(saveInfo); saveInfo = 0;
-    }
-
-    if(autoSaveInfo)
-    {
-        delete autoSaveInfo; autoSaveInfo = 0;
-    }
-#if __JHEXEN__
-    if(baseSaveInfo)
-    {
-        delete baseSaveInfo; baseSaveInfo = 0;
-    }
-#endif
-    if(nullSaveInfo)
-    {
-        delete nullSaveInfo; nullSaveInfo = 0;
-    }
-}
 
 static void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
 {
@@ -273,7 +187,7 @@ static bool recogniseNativeState(Str const *path, SaveInfo *info)
     return true;
 }
 
-static bool recogniseGameState(Str const *path, SaveInfo *info)
+dd_bool SV_RecogniseGameState(Str const *path, SaveInfo *info)
 {
     if(path && info)
     {
@@ -293,268 +207,64 @@ static bool recogniseGameState(Str const *path, SaveInfo *info)
     return false;
 }
 
-static void updateSaveInfo(Str const *path, SaveInfo *info)
-{
-    if(!info) return;
-
-    if(!path || Str_IsEmpty(path))
-    {
-        // The save path cannot be accessed for some reason. Perhaps its a
-        // network path? Clear the info for this slot.
-        info->setDescription(0);
-        info->setGameId(0);
-        return;
-    }
-
-    // Is this a recognisable save state?
-    if(!recogniseGameState(path, info))
-    {
-        // Clear the info for this slot.
-        info->setDescription(0);
-        info->setGameId(0);
-        return;
-    }
-
-    // Ensure we have a valid name.
-    if(Str_IsEmpty(info->description()))
-    {
-        info->setDescription(AutoStr_FromText("UNNAMED"));
-    }
-}
-
-/// Re-build game-save info by re-scanning the save paths and populating the list.
-static void buildSaveInfo()
-{
-    DENG_ASSERT(inited);
-
-    if(!saveInfo)
-    {
-        // Not yet been here. We need to allocate and initialize the game-save info list.
-        saveInfo = reinterpret_cast<SaveInfo **>(M_Malloc(NUMSAVESLOTS * sizeof(*saveInfo)));
-
-        // Initialize.
-        for(int i = 0; i < NUMSAVESLOTS; ++i)
-        {
-            saveInfo[i] = new SaveInfo;
-        }
-        autoSaveInfo = new SaveInfo;
-#if __JHEXEN__
-        baseSaveInfo = new SaveInfo;
-#endif
-        nullSaveInfo = new SaveInfo;
-    }
-
-    /// Scan the save paths and populate the list.
-    /// @todo We should look at all files on the save path and not just those
-    /// which match the default game-save file naming convention.
-    for(int i = 0; i < NUMSAVESLOTS; ++i)
-    {
-        SaveInfo *info = saveInfo[i];
-        updateSaveInfo(composeGameSavePathForSlot(i), info);
-    }
-    updateSaveInfo(composeGameSavePathForSlot(AUTO_SLOT), autoSaveInfo);
-#if __JHEXEN__
-    updateSaveInfo(composeGameSavePathForSlot(BASE_SLOT), baseSaveInfo);
-#endif
-}
-
-/// Given a logical save slot identifier retrieve the assciated game-save info.
-static SaveInfo *findSaveInfoForSlot(int slot)
-{
-    DENG_ASSERT(inited);
-
-    if(!SV_IsValidSlot(slot)) return nullSaveInfo;
-
-    // On first call - automatically build and populate game-save info.
-    if(!saveInfo)
-    {
-        buildSaveInfo();
-    }
-
-    // Retrieve the info for this slot.
-    if(slot == AUTO_SLOT) return autoSaveInfo;
-#if __JHEXEN__
-    if(slot == BASE_SLOT) return baseSaveInfo;
-#endif
-    return saveInfo[slot];
-}
-
-static void replaceSaveInfo(int slot, SaveInfo *newInfo)
-{
-    DENG_ASSERT(SV_IsValidSlot(slot));
-
-    SaveInfo **destAdr;
-    if(slot == AUTO_SLOT)
-    {
-        destAdr = &autoSaveInfo;
-    }
-#if __JHEXEN__
-    else if(slot == BASE_SLOT)
-    {
-        destAdr = &baseSaveInfo;
-    }
-#endif
-    else
-    {
-        destAdr = &saveInfo[slot];
-    }
-
-    if(*destAdr) delete (*destAdr);
-    *destAdr = newInfo;
-}
-
 AutoStr *SV_ComposeSlotIdentifier(int slot)
 {
-    AutoStr *str = AutoStr_NewStd();
-    if(slot < 0) return Str_Set(str, "(invalid slot)");
-    if(slot == AUTO_SLOT) return Str_Set(str, "<auto>");
-#if __JHEXEN__
-    if(slot == BASE_SLOT) return Str_Set(str, "<base>");
-#endif
-    return Str_Appendf(str, "%i", slot);
-}
-
-/**
- * Determines whether to announce when the specified @a slot is cleared.
- */
-static bool announceOnClearingSlot(int slot)
-{
-#if _DEBUG
-    return true; // Always.
-#endif
-#if __JHEXEN__
-    return (slot != AUTO_SLOT && slot != BASE_SLOT);
-#else
-    return (slot != AUTO_SLOT);
-#endif
+    return saveSlots.composeSlotIdentifier(slot);
 }
 
 void SV_ClearSlot(int slot)
 {
     DENG_ASSERT(inited);
-
-    if(!SV_IsValidSlot(slot)) return;
-
-    if(announceOnClearingSlot(slot))
-    {
-        AutoStr *ident = SV_ComposeSlotIdentifier(slot);
-        App_Log(DE2_RES_MSG, "Clearing save slot %s", Str_Text(ident));
-    }
-
-    for(int i = 0; i < MAX_HUB_MAPS; ++i)
-    {
-        AutoStr *path = composeGameSavePathForSlot(slot, i);
-        SV_RemoveFile(path);
-    }
-
-    AutoStr *path = composeGameSavePathForSlot(slot);
-    SV_RemoveFile(path);
-
-    // Update save info for this slot.
-    updateSaveInfo(path, findSaveInfoForSlot(slot));
+    saveSlots.clearSlot(slot);
 }
 
 dd_bool SV_IsValidSlot(int slot)
 {
-    if(slot == AUTO_SLOT) return true;
-#if __JHEXEN__
-    if(slot == BASE_SLOT) return true;
-#endif
-    return (slot >= 0  && slot < NUMSAVESLOTS);
+    DENG_ASSERT(inited);
+    return saveSlots.isValidSlot(slot);
 }
 
 dd_bool SV_IsUserWritableSlot(int slot)
 {
-    if(slot == AUTO_SLOT) return false;
-#if __JHEXEN__
-    if(slot == BASE_SLOT) return false;
-#endif
-    return SV_IsValidSlot(slot);
+    DENG_ASSERT(inited);
+    return saveSlots.isUserWritableSlot(slot);
 }
 
 SaveInfo *SV_SaveInfoForSlot(int slot)
 {
     DENG_ASSERT(inited);
-    return findSaveInfoForSlot(slot);
+    return saveSlots.findSaveInfoForSlot(slot);
 }
 
 void SV_UpdateAllSaveInfo()
 {
     DENG_ASSERT(inited);
-    buildSaveInfo();
+    saveSlots.buildSaveInfo();
 }
 
 int SV_ParseSlotIdentifier(char const *str)
 {
-    // Try game-save name match.
-    int slot = SV_SlotForSaveName(str);
-    if(slot >= 0) return slot;
-
-    // Try keyword identifiers.
-    if(!stricmp(str, "last") || !stricmp(str, "<last>"))
-    {
-        return Con_GetInteger("game-save-last-slot");
-    }
-    if(!stricmp(str, "quick") || !stricmp(str, "<quick>"))
-    {
-        return Con_GetInteger("game-save-quick-slot");
-    }
-    if(!stricmp(str, "auto") || !stricmp(str, "<auto>"))
-    {
-        return AUTO_SLOT;
-    }
-
-    // Try logical slot identifier.
-    if(M_IsStringValidInt(str))
-    {
-        return atoi(str);
-    }
-
-    // Unknown/not found.
-    return -1;
+    DENG_ASSERT(inited);
+    return saveSlots.parseSlotIdentifier(str);
 }
 
 int SV_SlotForSaveName(char const *name)
 {
     DENG_ASSERT(inited);
-
-    int saveSlot = -1;
-    if(name && name[0])
-    {
-        // On first call - automatically build and populate game-save info.
-        if(!saveInfo)
-        {
-            buildSaveInfo();
-        }
-
-        int i = 0;
-        do
-        {
-            SaveInfo *info = saveInfo[i];
-            if(!Str_CompareIgnoreCase(info->description(), name))
-            {
-                // This is the one!
-                saveSlot = i;
-            }
-        } while(-1 == saveSlot && ++i < NUMSAVESLOTS);
-    }
-    return saveSlot;
+    return saveSlots.slotForSaveName(name);
 }
 
 dd_bool SV_IsSlotUsed(int slot)
 {
     DENG_ASSERT(inited);
-    if(SV_ExistingFile(composeGameSavePathForSlot(slot)))
-    {
-        return SV_SaveInfoForSlot(slot)->isLoadable();
-    }
-    return false;
+    return saveSlots.slotInUse(slot);
 }
 
 #if __JHEXEN__
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
-    AutoStr *path = composeGameSavePathForSlot(slot, (int)map+1);
+    DENG_ASSERT(inited);
+    AutoStr *path = saveSlots.composeGameSavePathForSlot(slot, (int)map+1);
     if(!path || Str_IsEmpty(path)) return false;
     return SV_ExistingFile(path);
 }
@@ -563,44 +273,13 @@ dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 void SV_CopySlot(int sourceSlot, int destSlot)
 {
     DENG_ASSERT(inited);
-
-    if(!SV_IsValidSlot(sourceSlot))
-    {
-        DENG_ASSERT(!"SV_CopySlot: Source slot invalid");
-        return;
-    }
-
-    if(!SV_IsValidSlot(destSlot))
-    {
-        DENG_ASSERT(!"SV_CopySlot: Dest slot invalid");
-        return;
-    }
-
-    // Clear all save files at destination slot.
-    SV_ClearSlot(destSlot);
-
-    AutoStr *src, *dst;
-    for(int i = 0; i < MAX_HUB_MAPS; ++i)
-    {
-        src = composeGameSavePathForSlot(sourceSlot, i);
-        dst = composeGameSavePathForSlot(destSlot, i);
-        SV_CopyFile(src, dst);
-    }
-
-    src = composeGameSavePathForSlot(sourceSlot);
-    dst = composeGameSavePathForSlot(destSlot);
-    SV_CopyFile(src, dst);
-
-    // Copy saveinfo too.
-    SaveInfo *info = findSaveInfoForSlot(sourceSlot);
-    DENG_ASSERT(info != 0);
-    replaceSaveInfo(destSlot, new SaveInfo(*info));
+    saveSlots.copySlot(sourceSlot, destSlot);
 }
 
 #if __JHEXEN__
 void SV_HxInitBaseSlot()
 {
-    SV_ClearSlot(BASE_SLOT);
+    saveSlots.clearSlot(BASE_SLOT);
 }
 #endif
 
@@ -1556,6 +1235,9 @@ static void RestoreMobj(mobj_t *mo, int ver)
  */
 int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
 {
+#define FF_FULLBRIGHT 0x8000 ///< Used to be a flag in thing->frame.
+#define FF_FRAMEMASK  0x7fff
+
     Reader *reader = msr->reader();
     mobj_t *mo = (mobj_t *) th;
 
@@ -1812,6 +1494,9 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
     RestoreMobj(mo, ver);
 
     return false;
+
+#undef FF_FRAMEMASK
+#undef FF_FULLBRIGHT
 }
 
 /**
@@ -2015,6 +1700,16 @@ static void readPlayers(SaveInfo &info, dd_bool *infile, dd_bool *loaded,
     DENG_UNUSED(info);
 #endif
 }
+
+enum sectorclass_t
+{
+    sc_normal,
+    sc_ploff, ///< plane offset
+#if !__JHEXEN__
+    sc_xg1,
+#endif
+    NUM_SECTORCLASSES
+};
 
 void SV_WriteSector(Sector *sec, MapStateWriter *msw)
 {
@@ -2255,6 +1950,15 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
     // We'll restore the sound targets latter on
     xsec->soundTarget = 0;
 }
+
+enum lineclass_t
+{
+    lc_normal,
+#if !__JHEXEN__
+    lc_xg1,
+#endif
+    NUM_LINECLASSES
+};
 
 void SV_WriteLine(Line *li, MapStateWriter *msw)
 {
@@ -2648,7 +2352,6 @@ void SV_Initialize()
     static bool firstInit = true;
 
     SV_InitIO();
-    saveInfo = 0;
 
     inited = true;
     if(firstInit)
@@ -2675,7 +2378,7 @@ void SV_Shutdown()
     if(!inited) return;
 
     SV_ShutdownIO();
-    clearSaveInfo();
+    saveSlots.clearSaveInfo();
 
     cvarLastSlot  = -1;
     cvarQuickSlot = -1;
@@ -2795,7 +2498,7 @@ static int SV_LoadState(Str const *path, SaveInfo *info)
 
     // Load the current map state.
 #if __JHEXEN__
-    readMapState(reader, info->version(), composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
+    readMapState(reader, info->version(), saveSlots.composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
 #else
     readMapState(reader, info->version());
 #endif
@@ -2942,7 +2645,7 @@ dd_bool SV_LoadGame(int slot)
     if(!SV_IsValidSlot(slot))
         return false;
 
-    AutoStr *path = composeGameSavePathForSlot(slot);
+    AutoStr *path = saveSlots.composeGameSavePathForSlot(slot);
     if(Str_IsEmpty(path))
     {
         App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable", SV_SavePath());
@@ -3147,7 +2850,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
      */
 #if __JHEXEN__
     // ...map state is actually written to a separate file.
-    SV_OpenFile(composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(saveSlots.composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
 #endif
 
     MapStateWriter(thingArchiveExcludePlayers).write(writer);
@@ -3199,7 +2902,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
         return false;
     }
 
-    AutoStr *path = composeGameSavePathForSlot(logicalSlot);
+    AutoStr *path = saveSlots.composeGameSavePathForSlot(logicalSlot);
     if(Str_IsEmpty(path))
     {
         App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable", SV_SavePath());
@@ -3212,7 +2915,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
     if(!saveError)
     {
         // Swap the save info.
-        replaceSaveInfo(logicalSlot, info);
+        saveSlots.replaceSaveInfo(logicalSlot, info);
 
 #if __JHEXEN__
         // Copy base slot to destination slot.
@@ -3241,7 +2944,7 @@ void SV_HxSaveHubMap()
 {
     playerHeaderOK = false; // Uninitialized.
 
-    SV_OpenFile(composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(saveSlots.composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
 
     // Set the mobj archive numbers
     initThingArchiveForSave(true /*exclude players*/);
@@ -3271,7 +2974,7 @@ void SV_HxLoadHubMap()
     Reader *reader = SV_NewReader();
 
     // Been here before, load the previous map state.
-    readMapState(reader, info->version(), composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
+    readMapState(reader, info->version(), saveSlots.composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
 
     Reader_Delete(reader);
 }

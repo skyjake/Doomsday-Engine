@@ -68,6 +68,7 @@ HEADERS += \
     $$common_inc/polyobjs.h \
     $$common_inc/r_common.h \
     $$common_inc/saveinfo.h \
+    $$common_inc/saveslots.h \
     $$common_inc/thinkerinfo.h \
     $$common_inc/x_hair.h \
     $$common_inc/xgclass.h
@@ -131,5 +132,6 @@ SOURCES += \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
     $$common_src/saveinfo.cpp \
+    $$common_src/saveslots.cpp \
     $$common_src/thinkerinfo.cpp \
     $$common_src/x_hair.c

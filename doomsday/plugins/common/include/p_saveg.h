@@ -43,58 +43,13 @@ void SV_Initialize(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-/**
- * Force an update of the cached game-save info. To be called (sparingly) at
- * strategic points when an update is necessary (e.g., the game-save paths
- * have changed).
- *
- * @note It is not necessary to call this after a game-save is made, this
- * module will do so automatically.
- */
+dd_bool SV_RecogniseGameState(Str const *path, SaveInfo *info);
+
 void SV_UpdateAllSaveInfo(void);
-
-/**
- * Lookup a save slot by searching for a match on game-save name. Search is in
- * ascending logical slot order 0...N (where N is the number of available save
- * slots in the current game).
- *
- * @param name  Name of the game-save to look for. Case insensitive.
- *
- * @return  Logical slot number of the found game-save else @c -1
- */
 int SV_SlotForSaveName(char const *name);
-
-/**
- * Parse @a str and determine whether it references a logical game-save slot.
- *
- * @param str  String to be parsed. Parse is divided into three passes.
- *             Pass 1: Check for a known game-save name which matches this.
- *                 Search is in ascending logical slot order 0..N (where N
- *                 is the number of available save slots).
- *             Pass 2: Check for keyword identifiers.
- *                 <auto>  = The "auto save" slot.
- *                 <last>  = The last used slot.
- *                 <quick> = The currently nominated "quick save" slot.
- *             Pass 3: Check for a logical save slot number.
- *
- * @return  Save slot identifier of the slot else @c -1
- */
 int SV_ParseSlotIdentifier(char const *str);
-
-/**
- * Returns @c true iff @a slot is a valid logical save slot.
- */
 dd_bool SV_IsValidSlot(int slot);
-
-/**
- * Returns @c true iff @a slot is user-writable save slot (i.e., its not one
- * of the special slots such as @em auto).
- */
 dd_bool SV_IsUserWritableSlot(int slot);
-
-/**
- * Returns @c true iff a game-save is present for logical save @a slot.
- */
 dd_bool SV_IsSlotUsed(int slot);
 
 #if __JHEXEN__
@@ -105,27 +60,9 @@ dd_bool SV_IsSlotUsed(int slot);
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map);
 #endif
 
-/**
- * Returns the save info for save @a slot. Always returns SaveInfo even if
- * supplied with an invalid or unused slot identifer (a null object).
- */
 SaveInfo *SV_SaveInfoForSlot(int slot);
-
-/**
- * Compose the textual identifier/name for save @a slot.
- *
- * @return  Name/identifier associated with slot @a slot.
- */
 AutoStr *SV_ComposeSlotIdentifier(int slot);
-
-/**
- * Deletes all save game files associated with a slot number.
- */
 void SV_ClearSlot(int slot);
-
-/**
- * Copies all the save game files from one slot to another.
- */
 void SV_CopySlot(int sourceSlot, int destSlot);
 
 /**
