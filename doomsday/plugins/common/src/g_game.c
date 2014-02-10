@@ -1300,7 +1300,7 @@ int G_DoLoadMap(loadmap_params_t *p)
     if(p->revisit)
     {
         // We've been here before; deserialize this map's save state.
-        SV_HxLoadClusterMap();
+        SV_HxLoadHubMap();
     }
 #endif
 
@@ -1760,13 +1760,13 @@ void G_PlayerLeaveMap(int player)
     int flightPower;
 #endif
     player_t *p = &players[player];
-    dd_bool newCluster = true;
+    dd_bool newHub = true;
 
 #if __JHEXEN__
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
-        newCluster = (P_MapInfo(0/*current map*/)->cluster != P_MapInfo(nextMapUri)->cluster);
+        newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);
 
         Uri_Delete(nextMapUri);
     }
@@ -1798,7 +1798,7 @@ void G_PlayerLeaveMap(int player)
 #endif
 
 #if __JHEXEN__
-    if(newCluster)
+    if(newHub)
     {
         uint count = P_InventoryCount(player, IIT_FLY);
 
@@ -1812,7 +1812,7 @@ void G_PlayerLeaveMap(int player)
     memset(p->powers, 0, sizeof(p->powers));
 
 #if __JHEXEN__
-    if(!newCluster && !gameRules.deathmatch)
+    if(!newHub && !gameRules.deathmatch)
         p->powers[PT_FLIGHT] = flightPower; // Restore flight.
 #endif
 
@@ -1821,7 +1821,7 @@ void G_PlayerLeaveMap(int player)
     p->update |= PSF_KEYS;
     memset(p->keys, 0, sizeof(p->keys));
 #else
-    if(!gameRules.deathmatch && newCluster)
+    if(!gameRules.deathmatch && newHub)
         p->keys = 0;
 #endif
 
@@ -2599,18 +2599,18 @@ void G_DoLeaveMap(void)
     revisit = SV_HxHaveMapStateForSlot(BASE_SLOT, nextMap);
     if(gameRules.deathmatch) revisit = false;
 
-    // Same cluster?
+    // Same hub?
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_MapInfo(0/*current map*/)->cluster == P_MapInfo(nextMapUri)->cluster)
+        if(P_MapInfo(0/*current map*/)->hub == P_MapInfo(nextMapUri)->hub)
         {
             if(!gameRules.deathmatch)
             {
                 // Save current map.
-                SV_HxSaveClusterMap();
+                SV_HxSaveHubMap();
             }
         }
-        else // Entering new cluster.
+        else // Entering new hub.
         {
             if(!gameRules.deathmatch)
             {
@@ -2623,7 +2623,7 @@ void G_DoLeaveMap(void)
 
     // Take a copy of the player objects (they will be cleared in the process
     // of calling P_SetupMap() and we need to restore them after).
-    SV_HxBackupPlayersInCluster(playerBackup);
+    SV_HxBackupPlayersInHub(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
     oldRandomClassesRule = gameRules.randomClasses;
@@ -2698,7 +2698,7 @@ void G_DoLeaveMap(void)
         P_RemoveAllPlayerMobjs();
     }
 
-    SV_HxRestorePlayersInCluster(playerBackup, nextMapEntrance);
+    SV_HxRestorePlayersInHub(playerBackup, nextMapEntrance);
 
     // Restore the random class rule.
     gameRules.randomClasses = oldRandomClassesRule;
@@ -3510,7 +3510,7 @@ int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
        !(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT))
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster)
+        if(P_MapInfo(mapUri)->hub != P_MapInfo(nextMapUri)->hub)
         {
             Uri_Delete(nextMapUri);
             return false;

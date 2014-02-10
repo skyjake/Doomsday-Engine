@@ -492,11 +492,11 @@ void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
     }
 }
 
-void ACScriptInterpreter::readWorldScriptData(Reader *reader, int mapVersion)
+void ACScriptInterpreter::readWorldScriptData(Reader *reader, int saveVersion)
 {
     int ver = 1;
 
-    if(mapVersion >= 7)
+    if(saveVersion >= 7)
     {
         ver = Reader_ReadByte(reader);
     }
@@ -541,15 +541,17 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int mapVersion)
             }
         }
 
-        if(mapVersion < 7)
+        if(saveVersion < 7)
         {
             SV_Seek(12); // Junk.
         }
     }
 }
 
-void ACScriptInterpreter::writeMapScriptData(Writer *writer)
+void ACScriptInterpreter::writeMapScriptData(MapStateWriter *msw)
 {
+    Writer *writer = msw->writer();
+
     for(int i = 0; i < _scriptCount; ++i)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
@@ -563,8 +565,10 @@ void ACScriptInterpreter::writeMapScriptData(Writer *writer)
     }
 }
 
-void ACScriptInterpreter::readMapScriptData(Reader *reader, int /*mapVersion*/)
+void ACScriptInterpreter::readMapScriptData(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+
     for(int i = 0; i < _scriptCount; ++i)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];

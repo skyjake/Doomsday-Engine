@@ -1,4 +1,4 @@
-/** @file p_saveg.cpp Common game-save state management. 
+/** @file p_saveg.cpp  Common game-save state management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -3237,7 +3237,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
 }
 
 #if __JHEXEN__
-void SV_HxSaveClusterMap()
+void SV_HxSaveHubMap()
 {
     playerHeaderOK = false; // Uninitialized.
 
@@ -3256,7 +3256,7 @@ void SV_HxSaveClusterMap()
     Writer_Delete(writer);
 }
 
-void SV_HxLoadClusterMap()
+void SV_HxLoadHubMap()
 {
     /// @todo fixme: do not assume this pointer is still valid!
     DENG_ASSERT(curInfo != 0);
@@ -3276,7 +3276,7 @@ void SV_HxLoadClusterMap()
     Reader_Delete(reader);
 }
 
-void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS])
+void SV_HxBackupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
 {
     DENG_ASSERT(playerBackup);
 
@@ -3296,7 +3296,7 @@ void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS])
     }
 }
 
-void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS],
+void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
     uint entryPoint)
 {
     mobj_t *targetPlayerMobj;
