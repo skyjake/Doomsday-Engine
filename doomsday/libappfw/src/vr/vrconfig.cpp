@@ -25,9 +25,12 @@ DENG2_PIMPL(VRConfig)
 {
     StereoMode mode;
     de::OculusRift ovr;
+    float screenDistance;
     float ipd;
     float eyeHeightInMapUnits;
     float eyeShift;
+    float playerPhysicalHeight;
+    bool swapEyes;
     int riftFramebufferSamples; // Multisampling used in unwarped Rift framebuffer
 
     /**
@@ -36,31 +39,36 @@ DENG2_PIMPL(VRConfig)
      */
     bool frustumShift;
 
+    float dominantEye; ///< Kludge for aim-down-weapon-sight modes
+
     Instance(Public *i)
         : Base(i)
         , mode(Mono)
+        , screenDistance(20.f)
         , ipd(.064f) // average male IPD
         , eyeHeightInMapUnits(41)
         , eyeShift(0)
+        , playerPhysicalHeight(1.75f)
+        , swapEyes(false)
         , riftFramebufferSamples(2)
         , frustumShift(true)
+        , dominantEye(0.0f)
     {
         ovr.init();
     }
 };
 
-VRConfig::VRConfig()
-    : d(new Instance(this))
-    , playerHeight(1.75f)
-    , dominantEye(0.0f)
-    , swapEyes(false)
-    , hudDistance(20.0f)
-    , weaponDistance(10)
+VRConfig::VRConfig() : d(new Instance(this))
 {}
 
 void VRConfig::setMode(StereoMode newMode)
 {
     d->mode = newMode;
+}
+
+void VRConfig::setScreenDistance(float distance)
+{
+    d->screenDistance = distance;
 }
 
 void VRConfig::setEyeHeightInMapUnits(float eyeHeightInMapUnits)
@@ -73,14 +81,19 @@ void VRConfig::setInterpupillaryDistance(float ipd)
     d->ipd = ipd;
 }
 
+void VRConfig::setPhysicalPlayerHeight(float heightInMeters)
+{
+    d->playerPhysicalHeight = heightInMeters;
+}
+
 void VRConfig::setCurrentEye(Eye eye)
 {
     float eyePos = (eye == NeitherEye? 0 : eye == LeftEye? -1 : 1);
 
     // 0.95 because eyes are not at top of head
-    float mapUnitsPerMeter = d->eyeHeightInMapUnits / (0.95 * playerHeight);
-    d->eyeShift = mapUnitsPerMeter * (eyePos - dominantEye) * 0.5 * d->ipd;
-    if(swapEyes)
+    float mapUnitsPerMeter = d->eyeHeightInMapUnits / (0.95 * d->playerPhysicalHeight);
+    d->eyeShift = mapUnitsPerMeter * (eyePos - d->dominantEye) * 0.5 * d->ipd;
+    if(d->swapEyes)
     {
         d->eyeShift *= -1;
     }
@@ -96,9 +109,24 @@ void VRConfig::setRiftFramebufferSampleCount(int samples)
     d->riftFramebufferSamples = samples;
 }
 
+void VRConfig::setSwapEyes(bool swapped)
+{
+    d->swapEyes = swapped;
+}
+
+void VRConfig::setDominantEye(float value)
+{
+    d->dominantEye = value;
+}
+
 VRConfig::StereoMode VRConfig::mode() const
 {
     return d->mode;
+}
+
+float VRConfig::screenDistance() const
+{
+    return d->screenDistance;
 }
 
 bool VRConfig::needsStereoGLFormat() const
@@ -116,6 +144,11 @@ float VRConfig::interpupillaryDistance() const
     return d->ipd;
 }
 
+float VRConfig::physicalPlayerHeight() const
+{
+    return d->playerPhysicalHeight;
+}
+
 float VRConfig::eyeShift() const
 {
     return d->eyeShift;
@@ -124,6 +157,16 @@ float VRConfig::eyeShift() const
 bool VRConfig::frustumShift() const
 {
     return d->frustumShift;
+}
+
+bool VRConfig::swapEyes() const
+{
+    return d->swapEyes;
+}
+
+float VRConfig::dominantEye() const
+{
+    return d->dominantEye;
 }
 
 int VRConfig::riftFramebufferSampleCount() const

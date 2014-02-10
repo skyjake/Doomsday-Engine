@@ -588,7 +588,7 @@ Matrix4f GL_GetProjectionMatrix()
     float frustumShift = 0;
     if (vrCfg.frustumShift())
     {
-        frustumShift = vrCfg.eyeShift() * glNearClip / vrCfg.hudDistance;
+        frustumShift = vrCfg.eyeShift() * glNearClip / vrCfg.screenDistance();
     }
 
     return Matrix4f::frustum(-fW - frustumShift, fW - frustumShift,

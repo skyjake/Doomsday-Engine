@@ -58,9 +58,18 @@ public:
 
     void setMode(StereoMode newMode);
 
+    void setScreenDistance(float distance);
+
     void setEyeHeightInMapUnits(float eyeHeightInMapUnits);
 
+    /**
+     * Sets the currently used IPD.
+     *
+     * @param ipd  IPD in mm.
+     */
     void setInterpupillaryDistance(float ipd);
+
+    void setPhysicalPlayerHeight(float heightInMeters);
 
     enum Eye {
         NeitherEye,
@@ -75,13 +84,26 @@ public:
     void setRiftFramebufferSampleCount(int samples);
 
     /**
+     * Sets the eyes-swapped mode.
+     *
+     * @param swapped  @c true to swap left and right (default: false).
+     */
+    void setSwapEyes(bool swapped);
+
+    void setDominantEye(float value);
+
+    /**
      * Currently active stereo rendering mode.
      */
     StereoMode mode() const;
 
+    float screenDistance() const;
+
     bool needsStereoGLFormat() const;
 
     float interpupillaryDistance() const;
+
+    float physicalPlayerHeight() const;
 
     /// Local viewpoint relative eye position in map units.
     float eyeShift() const;
@@ -90,6 +112,10 @@ public:
      * Determines if frustum shift is enabled.
      */
     bool frustumShift() const;
+
+    bool swapEyes() const;
+
+    float dominantEye() const;
 
     /// Multisampling used in unwarped Rift framebuffer.
     int riftFramebufferSampleCount() const;
@@ -102,14 +128,6 @@ public:
 
 private:
     DENG2_PRIVATE(d)
-
-public:
-    float playerHeight; ///< Human player's real world height in meters
-    float dominantEye; ///< Kludge for aim-down-weapon-sight modes
-    bool swapEyes; ///< When true, inverts stereoscopic effect
-
-    float hudDistance; // Distance from player character to screen, in map units (not used in Rift mode, because it's used by frustum shift)
-    float weaponDistance; // (UNUSED) Distance from player character to weapon sprite, in map units
 };
 
 } // namespace de

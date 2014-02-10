@@ -25,12 +25,25 @@
 
 extern de::VRConfig vrCfg;
 
-// Register console variables
+namespace VR
+{
+    /// (UNUSED) Distance from player character to weapon sprite, in map units
+    extern float weaponDistance;
+}
+
+/**
+ * Register VR console variables.
+ */
 void VR_ConsoleRegister();
 
-float VR_RiftFovX(); ///< Horizontal field of view in Oculus Rift in degrees
+/**
+ * Returns the horizontal field of view in Oculus Rift in degrees.
+ */
+float VR_RiftFovX();
 
-// Load Oculus Rift parameters via Rift SDK
+/**
+ * Load Oculus Rift parameters via Rift SDK.
+ */
 bool VR_LoadRiftParameters();
 
 #endif // CLIENT_RENDER_VR_H
