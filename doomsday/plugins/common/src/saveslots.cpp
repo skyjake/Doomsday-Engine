@@ -52,6 +52,11 @@ DENG2_PIMPL(SaveSlots)
         , nullSaveInfo(0)
     {}
 
+    ~Instance()
+    {
+        self.clearSaveInfo();
+    }
+
     /**
      * Determines whether to announce when the specified @a slot is cleared.
      */
@@ -159,8 +164,9 @@ void SaveSlots::clearSaveInfo()
         delete d->nullSaveInfo; d->nullSaveInfo = 0;
     }
 
-    cvarLastSlot  = -1;
-    cvarQuickSlot = -1;
+    // Reset last-used and quick-save slot tracking.
+    Con_SetInteger("game-save-last-slot",  -1);
+    Con_SetInteger("game-save-quick-slot", -1);
 }
 
 void SaveSlots::updateAllSaveInfo()
