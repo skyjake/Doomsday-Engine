@@ -23,10 +23,14 @@
 #ifndef LIBDOOM64_PLAY_LIGHTS_H
 #define LIBDOOM64_PLAY_LIGHTS_H
 
-#include "doomsday.h"
-
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
+#endif
+
+#include "doomsday.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
 #endif
 
 #define GLOWSPEED               (8)
@@ -42,8 +46,8 @@ typedef struct fireflicker_s {
     float minLight;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } fireflicker_t;
 
@@ -57,8 +61,8 @@ typedef struct lightflash_s {
     int minTime;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } lightflash_t;
 
@@ -72,8 +76,8 @@ typedef struct lightblink_s {
     int minTime;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } lightblink_t;
 
@@ -87,8 +91,8 @@ typedef struct strobe_s {
     int brightTime;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } strobe_t;
 
@@ -100,8 +104,8 @@ typedef struct glow_s {
     int direction;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } glow_t;
 

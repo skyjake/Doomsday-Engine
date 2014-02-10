@@ -257,19 +257,16 @@ bool ACScriptInterpreter::startScript(int scriptNumber, Uri const *mapUri,
     byte const args[], mobj_t *activator, Line *line, int side)
 {
     DENG_ASSERT(!IS_CLIENT);
+    DENG_ASSERT(mapUri != 0);
 
     if(mapUri)
     {
-        Uri *currentMapUri = G_CurrentMapUri();
-        if(!Uri_Equality(mapUri, currentMapUri))
+        if(!Uri_Equality(gameMapUri, mapUri))
         {
-            Uri_Delete(currentMapUri);
-
             // Script is not for the current map.
             // Add it to the store to be started when that map is next entered.
             return newDeferredTask(mapUri, scriptNumber, args);
         }
-        Uri_Delete(currentMapUri);
     }
 
     if(BytecodeScriptInfo *info = scriptInfoPtr(scriptNumber))
@@ -480,8 +477,6 @@ void ACScriptInterpreter::scriptFinished(ACScript *script)
 
 void ACScriptInterpreter::writeWorldScriptData(Writer *writer)
 {
-    SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
-
     Writer_WriteByte(writer, 4); // version byte
 
     for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
@@ -503,7 +498,6 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int mapVersion)
 
     if(mapVersion >= 7)
     {
-        SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
         ver = Reader_ReadByte(reader);
     }
 
@@ -556,8 +550,6 @@ void ACScriptInterpreter::readWorldScriptData(Reader *reader, int mapVersion)
 
 void ACScriptInterpreter::writeMapScriptData(Writer *writer)
 {
-    SV_BeginSegment(ASEG_SCRIPTS);
-
     for(int i = 0; i < _scriptCount; ++i)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
@@ -573,8 +565,6 @@ void ACScriptInterpreter::writeMapScriptData(Writer *writer)
 
 void ACScriptInterpreter::readMapScriptData(Reader *reader, int /*mapVersion*/)
 {
-    SV_AssertSegment(ASEG_SCRIPTS);
-
     for(int i = 0; i < _scriptCount; ++i)
     {
         BytecodeScriptInfo &info = _scriptInfo[i];
@@ -1723,8 +1713,10 @@ void ACScript::Stack::drop()
     height--;
 }
 
-void ACScript::write(Writer *writer) const
+void ACScript::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 2); // Write a version byte.
 
     Writer_WriteInt32(writer, SV_ThingArchiveId(activator));
@@ -1744,8 +1736,11 @@ void ACScript::write(Writer *writer) const
     Writer_WriteInt32(writer, ((byte const *)pcodePtr) - interpreter().bytecode());
 }
 
-int ACScript::read(Reader *reader, int mapVersion)
+int ACScript::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.

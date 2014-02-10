@@ -23,6 +23,10 @@
 #define LIBCOMMON_THINKER_CEILING_H
 
 #include "doomsday.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 #define CEILSPEED           (1)
 #define CEILWAIT            (150)
@@ -68,8 +72,8 @@ typedef struct ceiling_s {
     int tag; // id.
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } ceiling_t;
 

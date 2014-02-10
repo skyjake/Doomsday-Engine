@@ -25,6 +25,10 @@
 #include "doomsday.h"
 #include "p_mobj.h"
 #include "dmu_lib.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 #define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
@@ -36,8 +40,8 @@ typedef struct materialchanger_s {
     Material *material;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } materialchanger_t;
 

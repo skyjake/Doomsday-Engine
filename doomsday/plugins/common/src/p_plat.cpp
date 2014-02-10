@@ -199,8 +199,10 @@ void T_PlatRaise(void *platThinkerPtr)
     }
 }
 
-void plat_t::write(Writer *writer) const
+void plat_t::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     Writer_WriteByte(writer, (byte) type);
@@ -221,8 +223,11 @@ void plat_t::write(Writer *writer) const
     Writer_WriteInt32(writer, tag);
 }
 
-int plat_t::read(Reader *reader, int mapVersion)
+int plat_t::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
 #if __JHEXEN__
     if(mapVersion >= 4)
 #else

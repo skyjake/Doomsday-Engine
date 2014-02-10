@@ -36,9 +36,7 @@ public: /// @todo make private:
     int _magic;
     int _version;
     gamemode_t _gameMode;
-    uint _episode;
-    uint _map;
-    Uri *_mapUri; ///< Not currently saved.
+    Uri *_mapUri;
 #if !__JHEXEN__
     int _mapTime;
     byte _players[MAXPLAYERS];
@@ -118,13 +116,11 @@ public:
 
 public: /// @todo refactor away:
     int magic() const;
-    uint episode() const;
-    uint map() const;
 };
 
 #endif // __cplusplus
 
-// C wrapper API, for legacy modules -------------------------------------------
+// C wrapper API ---------------------------------------------------------------
 
 #ifdef __cplusplus
 extern "C" {

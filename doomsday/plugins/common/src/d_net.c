@@ -126,7 +126,7 @@ void NetSv_ApplyGameRulesFromConfig(void)
  */
 int D_NetServerStarted(int before)
 {
-    uint netMap, netEpisode;
+    Uri *netMapUri = 0;
     GameRuleset netRules = gameRules; // Make a copy of the current rules.
 
     if(before) return true;
@@ -144,25 +144,29 @@ int D_NetServerStarted(int before)
     // Set the game parameters.
     NetSv_ApplyGameRulesFromConfig();
 
-    // Hexen has translated map numbers.
-#if __JHEXEN__
-    netMap = P_TranslateMap(cfg.netMap);
+    {
+#if __JDOOM64__
+        uint netEpisode = 0;
 #else
-    netMap = cfg.netMap;
+        uint netEpisode = cfg.netEpisode;
+#endif
+#if __JHEXEN__ // Map numbers need to be translated.
+        uint netMap = P_TranslateMap(cfg.netMap);
+#else
+        uint netMap = cfg.netMap;
 #endif
 
-#if __JDOOM64__
-    netEpisode = 0;
-#else
-    netEpisode = cfg.netEpisode;
-#endif
+        netMapUri = G_ComposeMapUri(netEpisode, netMap);
+    }
 
     netRules.skill = cfg.netSkill;
 
-    G_NewGame(netEpisode, netMap, 0/*default*/, &netRules);
+    G_NewGame(netMapUri, 0/*default*/, &netRules);
 
     /// @todo Necessary?
     G_SetGameAction(GA_NONE);
+
+    Uri_Delete(netMapUri);
 
     return true;
 }

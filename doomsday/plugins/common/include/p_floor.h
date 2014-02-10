@@ -23,6 +23,10 @@
 #define LIBCOMMON_THINKER_FLOOR_H
 
 #include "doomsday.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 #define FLOORSPEED          (1)
 
@@ -104,8 +108,8 @@ typedef struct floor_s {
 #endif
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } floor_t;
 

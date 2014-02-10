@@ -75,8 +75,10 @@ void T_FloorWaggle(waggle_t *waggle)
     P_ChangeSector(waggle->sector, 1 /*crush damage*/);
 }
 
-void waggle_s::write(Writer *writer) const
+void waggle_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -94,8 +96,11 @@ void waggle_s::write(Writer *writer) const
     Writer_WriteInt32(writer, state);
 }
 
-int waggle_s::read(Reader *reader, int mapVersion)
+int waggle_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     if(mapVersion >= 4)
     {
         /*int ver =*/ Reader_ReadByte(reader); // version byte.

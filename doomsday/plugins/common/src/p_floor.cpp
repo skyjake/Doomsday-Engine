@@ -395,8 +395,10 @@ void T_MoveFloor(void *floorThinkerPtr)
     }
 }
 
-void floor_s::write(Writer *writer) const
+void floor_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 3); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -411,7 +413,7 @@ void floor_s::write(Writer *writer) const
     Writer_WriteInt32(writer, (int) state);
     Writer_WriteInt32(writer, newSpecial);
 
-    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(SV_MaterialArchive(), material));
+    Writer_WriteInt16(writer, msw->serialIdFor(material));
 
     Writer_WriteInt16(writer, (int) floorDestHeight);
     Writer_WriteInt32(writer, FLT2FIX(speed));
@@ -427,8 +429,11 @@ void floor_s::write(Writer *writer) const
 #endif
 }
 
-int floor_s::read(Reader *reader, int mapVersion)
+int floor_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
 #if __JHEXEN__
     if(mapVersion >= 4)
 #else
@@ -446,7 +451,7 @@ int floor_s::read(Reader *reader, int mapVersion)
 
         if(ver >= 2)
         {
-            material = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 0);
+            material = msr->material(Reader_ReadInt16(reader), 0);
         }
         else
         {

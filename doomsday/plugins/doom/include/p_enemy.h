@@ -26,29 +26,10 @@
 
 #include "jdoom.h"
 
-/**
- * Global state of boss brain.
- */
-typedef struct braindata_s {
-    int easy;
-    int targetOn;
-    int numTargets;
-    int maxTargets;
-    mobj_t **targets;
-} braindata_t;
-
-DENG_EXTERN_C braindata_t brain;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void P_BrainInitForMap(void);
-void P_BrainShutdown(void);
-void P_BrainClearTargets(void);
-void P_BrainWrite(Writer *writer);
-void P_BrainRead(Reader *reader, int mapVersion);
-void P_BrainAddTarget(mobj_t *mo);
 void P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
 int P_Massacre(void);
 

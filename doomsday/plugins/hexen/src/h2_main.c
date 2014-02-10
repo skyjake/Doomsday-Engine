@@ -38,13 +38,6 @@
 
 int verbose;
 
-//dd_bool devParm; // checkparm of -devparm
-//dd_bool noMonstersParm; // checkparm of -nomonsters
-//dd_bool respawnParm; // checkparm of -respawn
-//dd_bool fastParm; // checkparm of -fast
-//dd_bool turboParm; // checkparm of -turbo
-//dd_bool randomClassParm; // checkparm of -randclass
-
 float turboMul; // Multiplier for turbo.
 
 gamemode_t gameMode;
@@ -57,7 +50,7 @@ float const defFontRGB3[] = {  .9f, .9f,  .9f };
 
 // The patches used in drawing the view border.
 // Percent-encoded.
-char* borderGraphics[] = {
+char *borderGraphics[] = {
     "Flats:F_022", // Background.
     "BORDT", // Top.
     "BORDR", // Right.
@@ -68,11 +61,6 @@ char* borderGraphics[] = {
     "BORDBR", // Bottom right.
     "BORDBL" // Bottom left.
 };
-
-static dd_bool autoStart;
-static uint startEpisode;
-static uint startMap;
-static playerclass_t startPlayerClass;
 
 /**
  * Get a 32-bit integer value.
@@ -318,9 +306,11 @@ void X_PreInit(void)
  */
 void X_PostInit(void)
 {
+    dd_bool autoStart = false;
+    Uri *startMapUri = 0;
+    playerclass_t startPlayerClass = PCLASS_NONE;
     AutoStr *path;
-    int p, warpMap;
-    Uri *uri;
+    int p;
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();
@@ -336,10 +326,6 @@ void X_PostInit(void)
 
     // Defaults for skill, episode and map.
     gameRules.skill = /*startSkill =*/ SM_MEDIUM;
-    startEpisode = 0;
-    startMap = 0;
-    startPlayerClass = PCLASS_NONE;
-    autoStart = false;
 
     // Game mode specific settings.
     /* None */
@@ -395,7 +381,8 @@ void X_PostInit(void)
 
     if((p = CommandLine_CheckWith("-skill", 1)) != 0)
     {
-        gameRules.skill = (skillmode_t)(CommandLine_At(p + 1)[0] - '1');
+        int skillNumber = atoi(CommandLine_At(p + 1));
+        gameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
         autoStart = true;
     }
 
@@ -427,40 +414,38 @@ void X_PostInit(void)
     p = CommandLine_Check("-warp");
     if(p && p < CommandLine_Count() - 1)
     {
-        warpMap = atoi(CommandLine_At(p + 1)) - 1;
-        startMap = P_TranslateMap(warpMap);
+        int warpMap = atoi(CommandLine_At(p + 1));
+
+        startMapUri = G_ComposeMapUri(0, P_TranslateMap(warpMap - 1));
         autoStart = true;
     }
-    else
+
+    if(!startMapUri)
     {
-        warpMap = 0;
-        startMap = P_TranslateMap(warpMap);
+        startMapUri = G_ComposeMapUri(0, P_TranslateMap(0));
     }
 
     // Are we autostarting?
     if(autoStart)
     {
-        App_Log(DE2_LOG_NOTE, "Autostart in Map %d (%d), Skill %d", warpMap+1, startMap+1, gameRules.skill + 1);
+        App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
+                              F_PrettyPath(Str_Text(Uri_ToString(startMapUri))),
+                              gameRules.skill);
     }
 
     // Validate episode and map.
-    uri = G_ComposeMapUri(0, startMap);
-    path = Uri_Compose(uri);
-    if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
+    path = Uri_Compose(startMapUri);
+    if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
-        startMap = 0;
-    }
-    Uri_Delete(uri);
-
-    if(autoStart || IS_NETGAME)
-    {
-        G_DeferredNewGame(startEpisode, startMap, 0/*default*/, &gameRules);
+        G_DeferredNewGame(startMapUri, 0/*default*/, &gameRules);
     }
     else
     {
         // Start up intro loop.
         G_StartTitle();
     }
+
+    Uri_Delete(startMapUri);
 }
 
 void X_Shutdown(void)

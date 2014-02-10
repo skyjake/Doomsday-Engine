@@ -15,6 +15,7 @@ HEADERS += \
     $$common_inc/d_net.h \
     $$common_inc/d_netcl.h \
     $$common_inc/d_netsv.h \
+    $$common_inc/dmu_archiveindex.h \
     $$common_inc/dmu_lib.h \
     $$common_inc/fi_lib.h \
     $$common_inc/g_common.h \
@@ -35,6 +36,8 @@ HEADERS += \
     $$common_inc/hu_pspr.h \
     $$common_inc/hu_stuff.h \
     $$common_inc/m_argv.h \
+    $$common_inc/mapstatereader.h \
+    $$common_inc/mapstatewriter.h \
     $$common_inc/mobj.h \
     $$common_inc/pause.h \
     $$common_inc/p_actor.h \
@@ -65,6 +68,7 @@ HEADERS += \
     $$common_inc/polyobjs.h \
     $$common_inc/r_common.h \
     $$common_inc/saveinfo.h \
+    $$common_inc/thinkerinfo.h \
     $$common_inc/x_hair.h \
     $$common_inc/xgclass.h
 
@@ -95,6 +99,8 @@ SOURCES += \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.c \
+    $$common_src/mapstatereader.cpp \
+    $$common_src/mapstatewriter.cpp \
     $$common_src/mobj.c \
     $$common_src/pause.c \
     $$common_src/p_actor.cpp \
@@ -125,4 +131,5 @@ SOURCES += \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
     $$common_src/saveinfo.cpp \
+    $$common_src/thinkerinfo.cpp \
     $$common_src/x_hair.c

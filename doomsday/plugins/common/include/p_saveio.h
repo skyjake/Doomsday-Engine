@@ -85,15 +85,6 @@ dd_bool SV_HxBytesLeft(void);
  */
 void SV_AssertSegment(int segmentId);
 
-/**
- * Special case segment check for the map state.
- *
- * @param retSegmentId  If not @c 0 return the determined segment id.
- *
- * @todo Refactor away.
- */
-void SV_AssertMapSegment(savestatesegment_t *retSegmentId);
-
 void SV_BeginSegment(int segmentId);
 void SV_EndSegment();
 

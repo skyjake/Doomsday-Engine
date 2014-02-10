@@ -63,10 +63,6 @@ char* borderGraphics[] = {
     "BRDR_BL" // Bottom left.
 };
 
-static uint startEpisode;
-static uint startMap;
-static dd_bool autoStart;
-
 /**
  * Get a 32-bit integer value.
  */
@@ -408,8 +404,9 @@ void D_PreInit(void)
  */
 void D_PostInit(void)
 {
-    AutoStr* path;
-    Uri* uri;
+    dd_bool autoStart = false;
+    Uri *startMapUri = 0;
+    AutoStr *path;
     int p;
 
     /// @todo Kludge: Border background is different in DOOM2.
@@ -433,9 +430,6 @@ void D_PostInit(void)
 
     // Get skill / episode / map from parms.
     gameRules.skill = /*startSkill =*/ SM_MEDIUM;
-    startEpisode = 0;
-    startMap = 0;
-    autoStart = false;
 
     if(CommandLine_Check("-altdeath"))
         cfg.netDeathmatch = 2;
@@ -487,15 +481,17 @@ void D_PostInit(void)
     p = CommandLine_Check("-skill");
     if(p && p < myargc - 1)
     {
-        gameRules.skill = CommandLine_At(p + 1)[0] - '1';
+        int skillNumber = atoi(CommandLine_At(p + 1));
+        gameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
         autoStart = true;
     }
 
     p = CommandLine_Check("-episode");
     if(p && p < myargc - 1)
     {
-        startEpisode = CommandLine_At(p + 1)[0] - '1';
-        startMap = 0;
+        int episodeNumber = atoi(CommandLine_At(p + 1));
+
+        startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber, 0);
         autoStart = true;
     }
 
@@ -504,44 +500,47 @@ void D_PostInit(void)
     {
         if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         {
-            startMap = atoi(CommandLine_At(p + 1)) - 1;
+            int mapNumber = atoi(CommandLine_At(p + 1));
+
+            startMapUri = G_ComposeMapUri(0, mapNumber > 0? mapNumber - 1 : mapNumber);
             autoStart = true;
         }
         else if(p < myargc - 2)
         {
-            startEpisode = CommandLine_At(p + 1)[0] - '1';
-            startMap = CommandLine_At(p + 2)[0] - '1';
+            int episodeNumber = atoi(CommandLine_At(p + 1));
+            int mapNumber     = atoi(CommandLine_At(p + 2));
+
+            startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber,
+                                          mapNumber > 0? mapNumber - 1 : mapNumber);
             autoStart = true;
         }
+    }
+
+    if(!startMapUri)
+    {
+        startMapUri = G_ComposeMapUri(0, 0);
     }
 
     // Are we autostarting?
     if(autoStart)
     {
-        if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-            App_Log(DE2_LOG_NOTE, "Autostart in Map %d, Skill %d", startMap+1, gameRules.skill);
-        else
-            App_Log(DE2_LOG_NOTE, "Autostart in Episode %d, Map %d, Skill %d", startEpisode+1, startMap+1, gameRules.skill);
+        App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
+                              F_PrettyPath(Str_Text(Uri_ToString(startMapUri))),
+                              gameRules.skill);
     }
 
     // Validate episode and map.
-    uri = G_ComposeMapUri((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE))? startEpisode : 0, startMap);
-    path = Uri_Compose(uri);
-    if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
+    path = Uri_Compose(startMapUri);
+    if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
-        startEpisode = 0;
-        startMap = 0;
-    }
-    Uri_Delete(uri);
-
-    if(autoStart || IS_NETGAME)
-    {
-        G_DeferredNewGame(startEpisode, startMap, 0/*default*/, &gameRules);
+        G_DeferredNewGame(startMapUri, 0/*default*/, &gameRules);
     }
     else
     {
         G_StartTitle(); // Start up intro loop.
     }
+
+    Uri_Delete(startMapUri);
 }
 
 void D_Shutdown(void)

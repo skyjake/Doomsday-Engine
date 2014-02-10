@@ -64,8 +64,10 @@ void T_Scroll(scroll_t *s)
     }
 }
 
-void scroll_s::write(Writer *writer) const
+void scroll_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -80,8 +82,11 @@ void scroll_s::write(Writer *writer) const
     Writer_WriteInt32(writer, FLT2FIX(offset[1]));
 }
 
-int scroll_s::read(Reader *reader, int mapVersion)
+int scroll_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     /*int ver =*/ Reader_ReadByte(reader); // version byte.
     // Note: the thinker class byte has already been read.
 
@@ -96,7 +101,7 @@ int scroll_s::read(Reader *reader, int mapVersion)
         else
         {
             // Side index is actually a DMU_ARCHIVE_INDEX.
-            dmuObject = (Side *)SV_SideArchive().at(sideIndex);
+            dmuObject = (Side *)msr->sideArchive().at(sideIndex);
         }
 
         DENG_ASSERT(dmuObject != 0);

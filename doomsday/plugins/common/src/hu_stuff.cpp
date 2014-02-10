@@ -751,7 +751,7 @@ static void drawMapMetaData(float x, float y, float alpha)
 {
 #define BORDER              2
 
-    char const *title = P_CurrentMapTitle();
+    char const *title = P_MapTitle(0/*current map*/);
     if(!title) title = "Unnamed";
 
     char buf[256];
@@ -1482,7 +1482,7 @@ int Hu_MapTitleFirstLineHeight(void)
 
 dd_bool Hu_IsMapTitleAuthorVisible(void)
 {
-    char const *author = P_CurrentMapAuthor(cfg.hideIWADAuthor);
+    char const *author = P_MapAuthor(0/*current map*/, cfg.hideIWADAuthor);
     return author != 0 && (actualMapTime <= 6 * TICSPERSEC);
 }
 
@@ -1501,8 +1501,8 @@ int Hu_MapTitleHeight(void)
 
 void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
-    char const *title  = P_CurrentMapTitle();
-    char const *author = P_CurrentMapAuthor(cfg.hideIWADAuthor);
+    char const *title  = P_MapTitle(0/*current map*/);
+    char const *author = P_MapAuthor(0/*current map*/, cfg.hideIWADAuthor);
 
     float y = 0;
 
@@ -1530,15 +1530,13 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 
     if(mapIdInsteadOfAuthor)
     {
-        Uri *mapUri = G_CurrentMapUri();
         FR_SetFont(FID(GF_FONTA));
 #if defined(__JHERETIC__) || defined(__JHEXEN__)
         FR_SetColorAndAlpha(.85f, .85f, .85f, alpha);
 #else
         FR_SetColorAndAlpha(.6f, .6f, .6f, alpha);
 #endif
-        FR_DrawTextXY3(Str_Text(Uri_ToString(mapUri)), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
-        Uri_Delete(mapUri);
+        FR_DrawTextXY3(Str_Text(Uri_ToString(gameMapUri)), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
     else if(author)
     {

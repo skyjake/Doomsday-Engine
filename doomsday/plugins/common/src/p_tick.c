@@ -70,9 +70,6 @@ int timerGame;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * This is called at all times, no matter gamestate.
- */
 void P_RunPlayers(timespan_t ticLength)
 {
     uint i;
@@ -85,10 +82,6 @@ void P_RunPlayers(timespan_t ticLength)
         }
 }
 
-/**
- * Called 35 times per second.
- * The heart of play sim.
- */
 void P_DoTick(void)
 {
     int i;

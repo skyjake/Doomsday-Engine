@@ -6442,6 +6442,7 @@ int Hu_MenuConfirmInitNewGame(msgresponse_t response, int userValue, void* userP
 void Hu_MenuInitNewGame(dd_bool confirmed)
 {
     GameRuleset newRules = gameRules;
+    Uri *newMapUri = 0;
 
 #if __JDOOM__
     if(!confirmed && SM_NIGHTMARE == mnSkillmode)
@@ -6459,10 +6460,13 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
 
     newRules.skill = mnSkillmode;
 #if __JHEXEN__
-    G_DeferredNewGame(mnEpisode, P_TranslateMap(0), 0/*default*/, &newRules);
+    newMapUri = G_ComposeMapUri(mnEpisode, P_TranslateMap(0));
 #else
-    G_DeferredNewGame(mnEpisode, 0, 0/*default*/, &newRules);
+    newMapUri = G_ComposeMapUri(mnEpisode, 0);
 #endif
+
+    G_DeferredNewGame(newMapUri, 0/*default*/, &newRules);
+    Uri_Delete(newMapUri);
 }
 
 int Hu_MenuActionInitNewGame(mn_object_t* ob, mn_actionid_t action, void* parameters)

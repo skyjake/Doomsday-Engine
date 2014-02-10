@@ -21,57 +21,18 @@
 #ifndef LIBCOMMON_SAVESTATE_H
 #define LIBCOMMON_SAVESTATE_H
 
+#include "common.h"
 #ifdef __cplusplus
-#include "dmu_archiveindex.h"
+#  include "dmu_archiveindex.h"
 #endif
 #include "p_saveio.h"
 
-/**
- * Original indices must remain unchanged!
- * Added new think classes to the end.
- */
-typedef enum thinkclass_e {
-    TC_NULL = -1,
-    TC_END,
-    TC_MOBJ,
-    TC_XGMOVER,
-    TC_CEILING,
-    TC_DOOR,
-    TC_FLOOR,
-    TC_PLAT,
-#if __JHEXEN__
-    TC_INTERPRET_ACS,
-    TC_FLOOR_WAGGLE,
-    TC_LIGHT,
-    TC_PHASE,
-    TC_BUILD_PILLAR,
-    TC_ROTATE_POLY,
-    TC_MOVE_POLY,
-    TC_POLY_DOOR,
-#else
-    TC_FLASH,
-    TC_STROBE,
-# if __JDOOM__ || __JDOOM64__
-    TC_GLOW,
-    TC_FLICKER,
-#  if __JDOOM64__
-    TC_BLINK,
-#  endif
-# else
-    TC_GLOW,
-# endif
-#endif
-    TC_MATERIALCHANGER,
-    TC_SCROLL,
-    NUMTHINKERCLASSES
-} thinkerclass_t;
+DENG_EXTERN_C int thingArchiveVersion;
+DENG_EXTERN_C uint thingArchiveSize;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef void (*WriteThinkerFunc)(thinker_t *, Writer *writer);
-typedef int (*ReadThinkerFunc)(thinker_t *, Reader *reader, int mapVersion);
 
 /// Register the console commands and variables of this module.
 void SV_Register(void);
@@ -225,22 +186,6 @@ ThingSerialId SV_ThingArchiveId(mobj_t const *mobj);
 mobj_t *SV_GetArchiveThing(ThingSerialId thingid, void *address);
 
 /**
- * Returns a pointer to the (currently in-use) material archive.
- */
-MaterialArchive *SV_MaterialArchive(void);
-
-/**
- * Finds and returns a material with the identifier @a serialId.
- *
- * @param serialId  Unique identifier for the material in the material archive.
- * @param group     Used with previous versions of the material archive, which
- *                  separated materials into groups (0= Flats 1= Textures).
- *
- * @return  Pointer to the associated material; otherwise @c 0 (not archived).
- */
-Material *SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
-
-/**
  * Update mobj flag values from those used in legacy game-save formats
  * to their current values.
  *
@@ -271,10 +216,37 @@ void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS]);
 void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS], uint entryPoint);
 #endif
 
+void SV_InitThingArchiveForLoad(uint size);
+#if __JHEXEN__
+void SV_InitTargetPlayers(void);
+#endif
+
 #ifdef __cplusplus
 } // extern "C"
-
-dmu_lib::SideArchive &SV_SideArchive();
 #endif
+
+#ifdef __cplusplus
+class MapStateReader;
+class MapStateWriter;
+
+void SV_WriteMobj(thinker_t *th, MapStateWriter *msw);
+int SV_ReadMobj(thinker_t *th, MapStateReader *msr);
+
+#if __JHEXEN__
+void SV_WriteMovePoly(struct polyevent_s const *movepoly, MapStateWriter *msw);
+int SV_ReadMovePoly(struct polyevent_s *movepoly, MapStateReader *msr);
+#endif
+
+void SV_WriteLine(Line *line, MapStateWriter *msw);
+void SV_ReadLine(Line *line, MapStateReader *msr);
+
+void SV_WriteSector(Sector *sec, MapStateWriter *msw);
+void SV_ReadSector(Sector *sec, MapStateReader *msr);
+
+#if __JHEXEN__
+void SV_WritePolyObj(polyobj_s *po, MapStateWriter *msw);
+int SV_ReadPolyObj(MapStateReader *msr);
+#endif
+#endif // __cplusplus
 
 #endif // LIBCOMMON_SAVESTATE_H
