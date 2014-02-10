@@ -22,13 +22,13 @@
 #define LIBCOMMON_SAVESTATE_H
 
 #include "common.h"
-#ifdef __cplusplus
-#  include "dmu_archiveindex.h"
-#endif
-#include "p_saveio.h"
+#include "saveinfo.h"
+#include "saveslots.h"
+//#include "p_saveio.h"
 
 DENG_EXTERN_C int thingArchiveVersion;
 DENG_EXTERN_C uint thingArchiveSize;
+DENG_EXTERN_C SaveSlots saveSlots;
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,13 +45,6 @@ void SV_Shutdown(void);
 
 dd_bool SV_RecogniseGameState(Str const *path, SaveInfo *info);
 
-void SV_UpdateAllSaveInfo(void);
-int SV_SlotForSaveName(char const *name);
-int SV_ParseSlotIdentifier(char const *str);
-dd_bool SV_IsValidSlot(int slot);
-dd_bool SV_IsUserWritableSlot(int slot);
-dd_bool SV_IsSlotUsed(int slot);
-
 #if __JHEXEN__
 /**
  * Returns @c true iff a game-save is present and serialized @a map state is
@@ -59,11 +52,6 @@ dd_bool SV_IsSlotUsed(int slot);
  */
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map);
 #endif
-
-SaveInfo *SV_SaveInfoForSlot(int slot);
-AutoStr *SV_ComposeSlotIdentifier(int slot);
-void SV_ClearSlot(int slot);
-void SV_CopySlot(int sourceSlot, int destSlot);
 
 /**
  * Save the current game state to the specified @a slot number.

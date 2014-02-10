@@ -21,10 +21,14 @@
 #include "common.h"
 #include "saveslots.h"
 
+#include "p_saveio.h"
 #include "p_saveg.h" /// @todo remove me
 #include <de/memory.h>
 
 #define MAX_HUB_MAPS 99
+
+static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game session.
+static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 
 DENG2_PIMPL(SaveSlots)
 {
@@ -118,6 +122,9 @@ void SaveSlots::clearSaveInfo()
     {
         delete d->nullSaveInfo; d->nullSaveInfo = 0;
     }
+
+    cvarLastSlot  = -1;
+    cvarQuickSlot = -1;
 }
 
 void SaveSlots::buildSaveInfo()
@@ -145,11 +152,11 @@ void SaveSlots::buildSaveInfo()
     for(int i = 0; i < NUMSAVESLOTS; ++i)
     {
         SaveInfo *info = d->saveInfo[i];
-        d->updateSaveInfo(composeGameSavePathForSlot(i), info);
+        d->updateSaveInfo(composeSavePathForSlot(i), info);
     }
-    d->updateSaveInfo(composeGameSavePathForSlot(AUTO_SLOT), d->autoSaveInfo);
+    d->updateSaveInfo(composeSavePathForSlot(AUTO_SLOT), d->autoSaveInfo);
 #if __JHEXEN__
-    d->updateSaveInfo(composeGameSavePathForSlot(BASE_SLOT), d->baseSaveInfo);
+    d->updateSaveInfo(composeSavePathForSlot(BASE_SLOT), d->baseSaveInfo);
 #endif
 }
 
@@ -172,7 +179,7 @@ AutoStr *SaveSlots::composeSlotIdentifier(int slot)
 int SaveSlots::parseSlotIdentifier(char const *str)
 {
     // Try game-save name match.
-    int slot = SV_SlotForSaveName(str);
+    int slot = findSlotWithSaveDescription(str);
     if(slot >= 0) return slot;
 
     // Try keyword identifiers.
@@ -199,7 +206,7 @@ int SaveSlots::parseSlotIdentifier(char const *str)
     return -1;
 }
 
-int SaveSlots::slotForSaveName(char const *description)
+int SaveSlots::findSlotWithSaveDescription(char const *description)
 {
     DENG_ASSERT(description != 0);
 
@@ -229,9 +236,9 @@ int SaveSlots::slotForSaveName(char const *description)
 
 bool SaveSlots::slotInUse(int slot)
 {
-    if(SV_ExistingFile(composeGameSavePathForSlot(slot)))
+    if(SV_ExistingFile(composeSavePathForSlot(slot)))
     {
-        return findSaveInfoForSlot(slot)->isLoadable();
+        return saveInfo(slot)->isLoadable();
     }
     return false;
 }
@@ -245,7 +252,7 @@ bool SaveSlots::isValidSlot(int slot)
     return (slot >= 0  && slot < NUMSAVESLOTS);
 }
 
-bool SaveSlots::isUserWritableSlot(int slot)
+bool SaveSlots::slotIsUserWritable(int slot)
 {
     if(slot == AUTO_SLOT) return false;
 #if __JHEXEN__
@@ -254,7 +261,7 @@ bool SaveSlots::isUserWritableSlot(int slot)
     return isValidSlot(slot);
 }
 
-SaveInfo *SaveSlots::findSaveInfoForSlot(int slot)
+SaveInfo *SaveSlots::saveInfo(int slot)
 {
     if(!isValidSlot(slot)) return d->nullSaveInfo;
 
@@ -302,20 +309,20 @@ void SaveSlots::clearSlot(int slot)
 
     if(d->announceOnClearingSlot(slot))
     {
-        AutoStr *ident = SV_ComposeSlotIdentifier(slot);
+        AutoStr *ident = composeSlotIdentifier(slot);
         App_Log(DE2_RES_MSG, "Clearing save slot %s", Str_Text(ident));
     }
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        AutoStr *path = composeGameSavePathForSlot(slot, i);
+        AutoStr *path = composeSavePathForSlot(slot, i);
         SV_RemoveFile(path);
     }
 
-    AutoStr *path = composeGameSavePathForSlot(slot);
+    AutoStr *path = composeSavePathForSlot(slot);
     SV_RemoveFile(path);
 
-    d->updateSaveInfo(path, findSaveInfoForSlot(slot));
+    d->updateSaveInfo(path, saveInfo(slot));
 }
 
 void SaveSlots::copySlot(int sourceSlot, int destSlot)
@@ -338,22 +345,22 @@ void SaveSlots::copySlot(int sourceSlot, int destSlot)
     AutoStr *src, *dst;
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        src = composeGameSavePathForSlot(sourceSlot, i);
-        dst = composeGameSavePathForSlot(destSlot, i);
+        src = composeSavePathForSlot(sourceSlot, i);
+        dst = composeSavePathForSlot(destSlot, i);
         SV_CopyFile(src, dst);
     }
 
-    src = composeGameSavePathForSlot(sourceSlot);
-    dst = composeGameSavePathForSlot(destSlot);
+    src = composeSavePathForSlot(sourceSlot);
+    dst = composeSavePathForSlot(destSlot);
     SV_CopyFile(src, dst);
 
     // Copy saveinfo too.
-    SaveInfo *info = findSaveInfoForSlot(sourceSlot);
+    SaveInfo *info = saveInfo(sourceSlot);
     DENG_ASSERT(info != 0);
     replaceSaveInfo(destSlot, new SaveInfo(*info));
 }
 
-AutoStr *SaveSlots::composeGameSavePathForSlot(int slot, int map)
+AutoStr *SaveSlots::composeSavePathForSlot(int slot, int map)
 {
     AutoStr *path = AutoStr_NewStd();
 
@@ -375,4 +382,120 @@ AutoStr *SaveSlots::composeGameSavePathForSlot(int slot, int map)
     }
     F_TranslatePath(path, path);
     return path;
+}
+
+void SaveSlots::consoleRegister() // static
+{
+#if !__JHEXEN__
+    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
+#endif
+    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
+    C_VAR_INT ("game-save-last-slot",            &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
+    C_VAR_INT ("game-save-quick-slot",           &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
+
+    // Aliases for obsolete cvars:
+    C_VAR_BYTE("menu-quick-ask",                 &cfg.confirmQuickGameSave, 0, 0, 1);
+}
+
+// C wrapper API ---------------------------------------------------------------
+
+SaveSlots *SaveSlots_New()
+{
+    return new SaveSlots;
+}
+
+void SaveSlots_Delete(SaveSlots *sslots)
+{
+    delete sslots;
+}
+
+void SaveSlots_ClearSaveInfo(SaveSlots *sslots)
+{
+    DENG_ASSERT(sslots != 0);
+    sslots->clearSaveInfo();
+}
+
+void SaveSlots_BuildSaveInfo(SaveSlots *sslots)
+{
+    DENG_ASSERT(sslots != 0);
+    sslots->buildSaveInfo();
+}
+
+void SaveSlots_UpdateAllSaveInfo(SaveSlots *sslots)
+{
+    DENG_ASSERT(sslots != 0);
+    sslots->updateAllSaveInfo();
+}
+
+dd_bool SaveSlots_IsValidSlot(SaveSlots *sslots, int slot)
+{
+    DENG_ASSERT(sslots != 0);
+    return sslots->isValidSlot(slot);
+}
+
+AutoStr *SaveSlots_ComposeSlotIdentifier(SaveSlots *sslots, int slot)
+{
+    DENG_ASSERT(sslots != 0);
+    return sslots->composeSlotIdentifier(slot);
+}
+
+int SaveSlots_ParseSlotIdentifier(SaveSlots *sslots, char const *str)
+{
+    DENG_ASSERT(sslots != 0);
+    return sslots->parseSlotIdentifier(str);
+}
+
+int SaveSlots_SlotForSaveName(SaveSlots *sslots, char const *description)
+{
+    DENG_ASSERT(sslots != 0);
+    return sslots->findSlotWithSaveDescription(description);
+}
+
+dd_bool SaveSlots_SlotInUse(SaveSlots *sslots, int slot)
+{
+    DENG_ASSERT(sslots != 0);
+    return sslots->slotInUse(slot);
+}
+
+dd_bool SaveSlots_SlotIsUserWritable(SaveSlots *sslots, int slot)
+{
+    DENG_ASSERT(sslots != 0);
+    return sslots->slotIsUserWritable(slot);
+}
+
+SaveInfo *SaveSlots_FindSaveInfoForSlot(SaveSlots *sslots, int slot)
+{
+    DENG_ASSERT(sslots != 0);
+    return sslots->saveInfo(slot);
+}
+
+void SaveSlots_ReplaceSaveInfo(SaveSlots *sslots, int slot, SaveInfo *newInfo)
+{
+    DENG_ASSERT(sslots != 0);
+    sslots->replaceSaveInfo(slot, newInfo);
+}
+
+void SaveSlots_ClearSlot(SaveSlots *sslots, int slot)
+{
+    DENG_ASSERT(sslots != 0);
+    sslots->clearSlot(slot);
+}
+
+void SaveSlots_CopySlot(SaveSlots *sslots, int sourceSlot, int destSlot)
+{
+    DENG_ASSERT(sslots != 0);
+    sslots->copySlot(sourceSlot, destSlot);
+}
+
+AutoStr *SaveSlots_ComposeSavePathForSlot(SaveSlots *sslots, int slot, int map)
+{
+    DENG_ASSERT(sslots != 0);
+    return sslots->composeSavePathForSlot(slot, map);
+}
+
+void SaveSlots_ConsoleRegister()
+{
+    SaveSlots::consoleRegister();
 }

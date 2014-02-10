@@ -25,6 +25,8 @@
 #include "saveinfo.h"
 #include "p_savedef.h" /// @todo remove me
 
+#ifdef __cplusplus
+
 /**
  * Maps saved games into a finite set of "save slots".
  *
@@ -54,6 +56,11 @@ public:
     void updateAllSaveInfo();
 
     /**
+     * Returns @c true iff @a slot is a valid logical slot number (in range).
+     */
+    bool isValidSlot(int slot);
+
+    /**
      * Composes the textual identifier/name for save @a slot.
      */
     AutoStr *composeSlotIdentifier(int slot);
@@ -76,14 +83,14 @@ public:
     int parseSlotIdentifier(char const *str);
 
     /**
-     * Lookup a save slot by searching for a match on game-save name. Search is in ascending
-     * logical slot order 0...N (where N is the number of available save slots).
+     * Lookup a save slot by searching for a match on game-save description. The search is in
+     * ascending logical slot order 0...N (where N is the number of available save slots).
      *
-     * @param name  Name of the game-save to look for. Case insensitive.
+     * @param description  Description of the game-save to look for. Case insensitive.
      *
      * @return  Logical slot number of the found game-save else @c -1
      */
-    int slotForSaveName(char const *description);
+    int findSlotWithSaveDescription(char const *description);
 
     /**
      * Returns @c true iff a game-save is present for logical save @a slot.
@@ -91,28 +98,23 @@ public:
     bool slotInUse(int slot);
 
     /**
-     * Returns @c true iff @a slot is a valid logical save slot.
-     */
-    bool isValidSlot(int slot);
-
-    /**
      * Returns @c true iff @a slot is user-writable save slot (i.e., its not one of the special
      * slots such as @em auto).
      */
-    bool isUserWritableSlot(int slot);
+    bool slotIsUserWritable(int slot);
 
     /**
      * Returns the save info for save @a slot. Always returns SaveInfo even if supplied with an
      * invalid or unused slot identifer (a null object).
      */
-    SaveInfo *findSaveInfoForSlot(int slot);
-
-    void replaceSaveInfo(int slot, SaveInfo *newInfo);
+    SaveInfo *saveInfo(int slot);
 
     /**
      * Deletes all save game files associated with a slot number.
      */
     void clearSlot(int slot);
+
+    void replaceSaveInfo(int slot, SaveInfo *newInfo);
 
     /**
      * Copies all the save game files from one slot to another.
@@ -127,10 +129,46 @@ public:
      *
      * @return  The composed path if reachable (else a zero-length string).
      */
-    AutoStr *composeGameSavePathForSlot(int slot, int map = -1);
+    AutoStr *composeSavePathForSlot(int slot, int map = -1);
+
+    /// Register the console commands and variables of this module.
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)
 };
+#endif // __cplusplus
 
-#endif // LIBCOMMON_MAPSTATEREADER_H
+// C wrapper API ---------------------------------------------------------------
+
+#ifdef __cplusplus
+extern "C" {
+#else
+typedef void *SaveSlots;
+#endif
+
+SaveSlots *SaveSlots_New(void);
+void SaveSlots_Delete(SaveSlots *sslots);
+
+void SaveSlots_ClearSaveInfo(SaveSlots *sslots);
+void SaveSlots_BuildSaveInfo(SaveSlots *sslots);
+void SaveSlots_UpdateAllSaveInfo(SaveSlots *sslots);
+dd_bool SaveSlots_IsValidSlot(SaveSlots *sslots, int slot);
+AutoStr *SaveSlots_ComposeSlotIdentifier(SaveSlots *sslots, int slot);
+int SaveSlots_ParseSlotIdentifier(SaveSlots *sslots, char const *str);
+int SaveSlots_SlotForSaveName(SaveSlots *sslots, char const *description);
+dd_bool SaveSlots_SlotInUse(SaveSlots *sslots, int slot);
+dd_bool SaveSlots_SlotIsUserWritable(SaveSlots *sslots, int slot);
+SaveInfo *SaveSlots_FindSaveInfoForSlot(SaveSlots *sslots, int slot);
+void SaveSlots_ReplaceSaveInfo(SaveSlots *sslots, int slot, SaveInfo *newInfo);
+void SaveSlots_ClearSlot(SaveSlots *sslots, int slot);
+void SaveSlots_CopySlot(SaveSlots *sslots, int sourceSlot, int destSlot);
+AutoStr *SaveSlots_ComposeSavePathForSlot(SaveSlots *sslots, int slot, int map);
+
+void SaveSlots_ConsoleRegister();
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBCOMMON_SAVESLOTS_H

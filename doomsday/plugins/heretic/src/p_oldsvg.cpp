@@ -23,6 +23,7 @@
 #include "p_oldsvg.h"
 
 #include "dmu_lib.h"
+#include "p_saveio.h"
 #include "p_saveg.h"
 #include "p_map.h"
 #include "p_mapsetup.h"

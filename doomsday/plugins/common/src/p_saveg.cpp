@@ -34,6 +34,7 @@
 #include "p_tick.h"
 #include "r_common.h"
 #include "p_savedef.h"
+#include "p_saveio.h"
 #include "polyobjs.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
@@ -63,11 +64,9 @@ struct playerheader_t
 
 static bool inited = false;
 
-static int cvarLastSlot;  ///< @c -1= Not yet loaded/saved in this game session.
-static int cvarQuickSlot; ///< @c -1= Not yet chosen/determined.
+SaveSlots saveSlots;
 
-static SaveSlots saveSlots;
-SaveInfo const *curInfo;
+static SaveInfo const *curInfo;
 
 static playerheader_t playerHeader;
 static dd_bool playerHeaderOK;
@@ -207,64 +206,11 @@ dd_bool SV_RecogniseGameState(Str const *path, SaveInfo *info)
     return false;
 }
 
-AutoStr *SV_ComposeSlotIdentifier(int slot)
-{
-    return saveSlots.composeSlotIdentifier(slot);
-}
-
-void SV_ClearSlot(int slot)
-{
-    DENG_ASSERT(inited);
-    saveSlots.clearSlot(slot);
-}
-
-dd_bool SV_IsValidSlot(int slot)
-{
-    DENG_ASSERT(inited);
-    return saveSlots.isValidSlot(slot);
-}
-
-dd_bool SV_IsUserWritableSlot(int slot)
-{
-    DENG_ASSERT(inited);
-    return saveSlots.isUserWritableSlot(slot);
-}
-
-SaveInfo *SV_SaveInfoForSlot(int slot)
-{
-    DENG_ASSERT(inited);
-    return saveSlots.findSaveInfoForSlot(slot);
-}
-
-void SV_UpdateAllSaveInfo()
-{
-    DENG_ASSERT(inited);
-    saveSlots.buildSaveInfo();
-}
-
-int SV_ParseSlotIdentifier(char const *str)
-{
-    DENG_ASSERT(inited);
-    return saveSlots.parseSlotIdentifier(str);
-}
-
-int SV_SlotForSaveName(char const *name)
-{
-    DENG_ASSERT(inited);
-    return saveSlots.slotForSaveName(name);
-}
-
-dd_bool SV_IsSlotUsed(int slot)
-{
-    DENG_ASSERT(inited);
-    return saveSlots.slotInUse(slot);
-}
-
 #if __JHEXEN__
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
     DENG_ASSERT(inited);
-    AutoStr *path = saveSlots.composeGameSavePathForSlot(slot, (int)map+1);
+    AutoStr *path = saveSlots.composeSavePathForSlot(slot, (int)map+1);
     if(!path || Str_IsEmpty(path)) return false;
     return SV_ExistingFile(path);
 }
@@ -2364,9 +2310,6 @@ void SV_Initialize()
         targetPlayerAddrs = 0;
         saveBuffer        = 0;
 #endif
-        // -1 = Not yet chosen/determined.
-        cvarLastSlot      = -1;
-        cvarQuickSlot     = -1;
     }
 
     // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
@@ -2379,9 +2322,6 @@ void SV_Shutdown()
 
     SV_ShutdownIO();
     saveSlots.clearSaveInfo();
-
-    cvarLastSlot  = -1;
-    cvarQuickSlot = -1;
 
     inited = false;
 }
@@ -2498,7 +2438,7 @@ static int SV_LoadState(Str const *path, SaveInfo *info)
 
     // Load the current map state.
 #if __JHEXEN__
-    readMapState(reader, info->version(), saveSlots.composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
+    readMapState(reader, info->version(), saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap+1));
 #else
     readMapState(reader, info->version());
 #endif
@@ -2642,10 +2582,10 @@ dd_bool SV_LoadGame(int slot)
     int const logicalSlot = slot;
 #endif
 
-    if(!SV_IsValidSlot(slot))
+    if(!saveSlots.isValidSlot(slot))
         return false;
 
-    AutoStr *path = saveSlots.composeGameSavePathForSlot(slot);
+    AutoStr *path = saveSlots.composeSavePathForSlot(slot);
     if(Str_IsEmpty(path))
     {
         App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable", SV_SavePath());
@@ -2664,7 +2604,7 @@ dd_bool SV_LoadGame(int slot)
     }
 #endif
 
-    SaveInfo *saveInfo = SV_SaveInfoForSlot(logicalSlot);
+    SaveInfo *saveInfo = saveSlots.saveInfo(logicalSlot);
     DENG_ASSERT(saveInfo != 0);
 
     int loadError = loadStateWorker(path, *saveInfo);
@@ -2850,7 +2790,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
      */
 #if __JHEXEN__
     // ...map state is actually written to a separate file.
-    SV_OpenFile(saveSlots.composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
 #endif
 
     MapStateWriter(thingArchiveExcludePlayers).write(writer);
@@ -2891,7 +2831,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
     int const logicalSlot = slot;
 #endif
 
-    if(!SV_IsValidSlot(slot))
+    if(!saveSlots.isValidSlot(slot))
     {
         DENG_ASSERT(!"Invalid slot '%i' specified");
         return false;
@@ -2902,7 +2842,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
         return false;
     }
 
-    AutoStr *path = saveSlots.composeGameSavePathForSlot(logicalSlot);
+    AutoStr *path = saveSlots.composeSavePathForSlot(logicalSlot);
     if(Str_IsEmpty(path))
     {
         App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable", SV_SavePath());
@@ -2944,7 +2884,7 @@ void SV_HxSaveHubMap()
 {
     playerHeaderOK = false; // Uninitialized.
 
-    SV_OpenFile(saveSlots.composeGameSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
 
     // Set the mobj archive numbers
     initThingArchiveForSave(true /*exclude players*/);
@@ -2974,7 +2914,7 @@ void SV_HxLoadHubMap()
     Reader *reader = SV_NewReader();
 
     // Been here before, load the previous map state.
-    readMapState(reader, info->version(), saveSlots.composeGameSavePathForSlot(BASE_SLOT, gameMap+1));
+    readMapState(reader, info->version(), saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap+1));
 
     Reader_Delete(reader);
 }
@@ -3148,15 +3088,5 @@ void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
 
 void SV_Register()
 {
-#if !__JHEXEN__
-    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
-#endif
-    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
-    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
-    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
-    C_VAR_INT ("game-save-last-slot",            &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
-    C_VAR_INT ("game-save-quick-slot",           &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
-
-    // Aliases for obsolete cvars:
-    C_VAR_BYTE("menu-quick-ask",                 &cfg.confirmQuickGameSave, 0, 0, 1);
+    SaveSlots::consoleRegister();
 }

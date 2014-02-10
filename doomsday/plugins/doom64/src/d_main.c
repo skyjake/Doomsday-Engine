@@ -375,8 +375,8 @@ void D_PostInit(void)
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        int const saveSlot = SV_ParseSlotIdentifier(CommandLine_At(p + 1));
-        if(SV_IsUserWritableSlot(saveSlot) && G_LoadGame(saveSlot))
+        int const slotNumber = SaveSlots_ParseSlotIdentifier(saveSlots, CommandLine_At(p + 1));
+        if(SaveSlots_SlotIsUserWritable(saveSlots, slotNumber) && G_LoadGame(slotNumber))
         {
             // No further initialization is to be done.
             return;

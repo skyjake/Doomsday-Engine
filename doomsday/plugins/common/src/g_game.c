@@ -2063,7 +2063,7 @@ int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void* userP
     {
 #if __JHEXEN__
         // Load the last autosave? (Not optional in Hexen).
-        if(SV_IsSlotUsed(AUTO_SLOT))
+        if(SaveSlots_SlotInUse(saveSlots, AUTO_SLOT))
         {
             gaLoadGameSlot = AUTO_SLOT;
             G_SetGameAction(GA_LOADGAME);
@@ -2100,13 +2100,13 @@ void G_DoReborn(int plrNum)
         int lastSlot = -1;
 
         // First ensure we have up-to-date info.
-        SV_UpdateAllSaveInfo();
+        SaveSlots_UpdateAllSaveInfo(saveSlots);
 
         // Use the latest save?
         if(cfg.loadLastSaveOnReborn)
         {
             lastSlot = Con_GetInteger("game-save-last-slot");
-            if(!SV_IsSlotUsed(lastSlot)) lastSlot = -1;
+            if(!SaveSlots_SlotInUse(saveSlots, lastSlot)) lastSlot = -1;
         }
 
         // Use the latest autosave? (Not optional in Hexen).
@@ -2114,7 +2114,7 @@ void G_DoReborn(int plrNum)
         if(cfg.loadAutoSaveOnReborn)
         {
             autoSlot = AUTO_SLOT;
-            if(!SV_IsSlotUsed(autoSlot)) autoSlot = -1;
+            if(!SaveSlots_SlotInUse(saveSlots, autoSlot)) autoSlot = -1;
         }
 #endif
 
@@ -2139,8 +2139,8 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                SaveInfo* info = SV_SaveInfoForSlot(chosenSlot);
-                AutoStr* msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Description(info)));
+                SaveInfo *info = SaveSlots_FindSaveInfoForSlot(saveSlots, chosenSlot);
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Description(info)));
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, chosenSlot, 0);
             }
@@ -2149,7 +2149,7 @@ void G_DoReborn(int plrNum)
 
         // Autosave loading cannot be disabled in Hexen.
 #if __JHEXEN__
-        if(SV_IsSlotUsed(AUTO_SLOT))
+        if(SaveSlots_SlotInUse(saveSlots, AUTO_SLOT))
         {
             gaLoadGameSlot = AUTO_SLOT;
             G_SetGameAction(GA_LOADGAME);
@@ -2171,7 +2171,7 @@ static void G_InitNewGame(void)
     /// @todo Do not clear this save slot. Instead we should set a game state
     ///       flag to signal when a new game should be started instead of loading
     ///       the autosave slot.
-    SV_ClearSlot(AUTO_SLOT);
+    SaveSlots_ClearSlot(saveSlots, AUTO_SLOT);
 
 #if __JHEXEN__
     Game_InitACScriptsForNewGame();
@@ -2614,7 +2614,7 @@ void G_DoLeaveMap(void)
         {
             if(!gameRules.deathmatch)
             {
-                SV_ClearSlot(BASE_SLOT);
+                SaveSlots_ClearSlot(saveSlots, BASE_SLOT);
             }
         }
 
@@ -2777,9 +2777,9 @@ dd_bool G_LoadGame(int slot)
     // no guarantee that the game-save will be accessible come load time.
 
     // First ensure we have up-to-date info.
-    SV_UpdateAllSaveInfo();
+    SaveSlots_UpdateAllSaveInfo(saveSlots);
 
-    if(!SV_IsSlotUsed(slot))
+    if(!SaveSlots_SlotInUse(saveSlots, slot))
     {
         App_Log(DE2_RES_ERROR, "Cannot load from save slot #%i: not in use", slot);
         return false;
@@ -2808,7 +2808,7 @@ void G_DoLoadGame(void)
     if(IS_NETGAME) return;
 
     // Copy the base slot to the autosave slot.
-    SV_CopySlot(BASE_SLOT, AUTO_SLOT);
+    SaveSlots_CopySlot(saveSlots, BASE_SLOT, AUTO_SLOT);
 #endif
 }
 
@@ -2896,7 +2896,7 @@ AutoStr *G_GenerateSaveGameName(void)
 void G_DoSaveGame(void)
 {
     savestateworker_params_t p;
-    const char* name;
+    char const *name;
     dd_bool didSave;
 
     if(gaSaveGameName && !Str_IsEmpty(gaSaveGameName))
@@ -2906,7 +2906,7 @@ void G_DoSaveGame(void)
     else
     {
         // No name specified.
-        SaveInfo* info = SV_SaveInfoForSlot(gaSaveGameSlot);
+        SaveInfo *info = SaveSlots_FindSaveInfoForSlot(saveSlots, gaSaveGameSlot);
         if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Description(info)))
         {
             // Slot already in use; reuse the existing name.
@@ -3668,7 +3668,7 @@ int loadGameConfirmResponse(msgresponse_t response, int userValue, void* userPoi
 
 D_CMD(LoadGame)
 {
-    const dd_bool confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
+    dd_bool const confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
     int slot;
 
     if(G_QuitInProgress()) return false;
@@ -3682,14 +3682,14 @@ D_CMD(LoadGame)
     }
 
     // Ensure we have up-to-date info.
-    SV_UpdateAllSaveInfo();
+    SaveSlots_UpdateAllSaveInfo(saveSlots);
 
-    slot = SV_ParseSlotIdentifier(argv[1]);
-    if(SV_IsSlotUsed(slot))
+    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
+    if(SaveSlots_SlotInUse(saveSlots, slot))
     {
         // A known used slot identifier.
-        SaveInfo* info;
-        AutoStr* msg;
+        SaveInfo *info;
+        AutoStr *msg;
 
         if(confirm || !cfg.confirmQuickGameSave)
         {
@@ -3698,7 +3698,7 @@ D_CMD(LoadGame)
             return G_LoadGame(slot);
         }
 
-        info = SV_SaveInfoForSlot(slot);
+        info = SaveSlots_FindSaveInfoForSlot(saveSlots, slot);
         // Compose the confirmation message.
         msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, Str_Text(SaveInfo_Description(info)));
 
@@ -3779,16 +3779,16 @@ D_CMD(SaveGame)
     }
 
     // Ensure we have up-to-date info.
-    SV_UpdateAllSaveInfo();
+    SaveSlots_UpdateAllSaveInfo(saveSlots);
 
-    slot = SV_ParseSlotIdentifier(argv[1]);
-    if(SV_IsUserWritableSlot(slot))
+    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
+    if(SaveSlots_SlotIsUserWritable(saveSlots, slot))
     {
         // A known slot identifier.
-        const dd_bool slotIsUsed = SV_IsSlotUsed(slot);
-        SaveInfo* info = SV_SaveInfoForSlot(slot);
+        dd_bool const slotIsUsed = SaveSlots_SlotInUse(saveSlots, slot);
+        SaveInfo *info = SaveSlots_FindSaveInfoForSlot(saveSlots, slot);
         ddstring_t localName, *name;
-        AutoStr* msg;
+        AutoStr *msg;
 
         Str_InitStatic(&localName, (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : "");
         if(!slotIsUsed || confirm || !cfg.confirmQuickGameSave)
@@ -3819,7 +3819,7 @@ D_CMD(SaveGame)
     }
 
     // Clearly the caller needs some assistance...
-    if(!SV_IsValidSlot(slot))
+    if(!SaveSlots_IsValidSlot(saveSlots, slot))
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     else
         App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
@@ -3836,14 +3836,15 @@ D_CMD(QuickSaveGame)
 
 dd_bool G_DeleteSaveGame(int slot)
 {
-    SaveInfo* info;
+    SaveInfo *info;
 
-    if(!SV_IsUserWritableSlot(slot) || !SV_IsSlotUsed(slot)) return false;
+    if(!SaveSlots_SlotIsUserWritable(saveSlots, slot)) return false;
+    if(!SaveSlots_SlotInUse(saveSlots, slot)) return false;
 
     // A known slot identifier.
-    info = SV_SaveInfoForSlot(slot);
-    DENG_ASSERT(info);
-    SV_ClearSlot(slot);
+    info = SaveSlots_FindSaveInfoForSlot(saveSlots, slot);
+    DENG_ASSERT(info != 0);
+    SaveSlots_ClearSlot(saveSlots, slot);
 
     if(Hu_MenuIsActive())
     {
@@ -3872,17 +3873,18 @@ int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void* u
 
 D_CMD(DeleteGameSave)
 {
-    const dd_bool confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
-    player_t* player = &players[CONSOLEPLAYER];
+    dd_bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    player_t *player = &players[CONSOLEPLAYER];
     int slot;
 
     if(G_QuitInProgress()) return false;
 
     // Ensure we have up-to-date info.
-    SV_UpdateAllSaveInfo();
+    SaveSlots_UpdateAllSaveInfo(saveSlots);
 
-    slot = SV_ParseSlotIdentifier(argv[1]);
-    if(SV_IsUserWritableSlot(slot) && SV_IsSlotUsed(slot))
+    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
+    if(SaveSlots_SlotIsUserWritable(saveSlots, slot) &&
+       SaveSlots_SlotInUse(saveSlots, slot))
     {
         // A known slot identifier.
         if(confirm)
@@ -3892,8 +3894,8 @@ D_CMD(DeleteGameSave)
         else
         {
             // Compose the confirmation message.
-            SaveInfo* info = SV_SaveInfoForSlot(slot);
-            AutoStr* msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Description(info)));
+            SaveInfo *info = SaveSlots_FindSaveInfoForSlot(saveSlots, slot);
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Description(info)));
             S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slot, 0);
         }
@@ -3901,7 +3903,7 @@ D_CMD(DeleteGameSave)
     }
 
     // Clearly the caller needs some assistance...
-    if(!SV_IsValidSlot(slot))
+    if(!SaveSlots_IsValidSlot(saveSlots, slot))
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     else
         App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
