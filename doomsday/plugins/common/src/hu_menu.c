@@ -5661,7 +5661,7 @@ void Hu_MenuUpdateGameSaveWidgets(void)
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);
         if(SaveSlots_SlotInUse(saveSlots, edit->data2))
         {
-            SaveInfo *info = SaveSlots_FindSaveInfoForSlot(saveSlots, edit->data2);
+            SaveInfo *info = SaveSlots_SaveInfo(saveSlots, edit->data2);
             text = Str_Text(SaveInfo_Description(info));
             MNObject_SetFlags(obj, FO_CLEAR, MNF_DISABLED);
         }

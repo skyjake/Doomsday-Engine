@@ -447,7 +447,7 @@ int SaveSlots_ParseSlotIdentifier(SaveSlots *sslots, char const *str)
     return sslots->parseSlotIdentifier(str);
 }
 
-int SaveSlots_SlotForSaveName(SaveSlots *sslots, char const *description)
+int SaveSlots_FindSlotWithSaveDescription(SaveSlots *sslots, char const *description)
 {
     DENG_ASSERT(sslots != 0);
     return sslots->findSlotWithSaveDescription(description);
@@ -465,7 +465,7 @@ dd_bool SaveSlots_SlotIsUserWritable(SaveSlots *sslots, int slot)
     return sslots->slotIsUserWritable(slot);
 }
 
-SaveInfo *SaveSlots_FindSaveInfoForSlot(SaveSlots *sslots, int slot)
+SaveInfo *SaveSlots_SaveInfo(SaveSlots *sslots, int slot)
 {
     DENG_ASSERT(sslots != 0);
     return sslots->saveInfo(slot);
