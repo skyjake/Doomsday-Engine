@@ -15,6 +15,7 @@ HEADERS += \
     $$common_inc/d_net.h \
     $$common_inc/d_netcl.h \
     $$common_inc/d_netsv.h \
+    $$common_inc/dmu_archiveindex.h \
     $$common_inc/dmu_lib.h \
     $$common_inc/fi_lib.h \
     $$common_inc/g_common.h \
