@@ -27,7 +27,7 @@
 #ifdef __cplusplus
 
 /**
- * Saved game session info.
+ * Represents a saved game session state.
  *
  * @ingroup libcommon
  */
@@ -54,13 +54,6 @@ public:
     static SaveInfo *newWithCurrentSessionMetadata(Str const *description);
 
     SaveInfo &operator = (SaveInfo const &other);
-
-    /**
-     * Update the metadata associated with the save using values derived from the
-     * current game session. Note that this does @em not affect the copy of this save
-     * on disk.
-     */
-    void applyCurrentSessionMetadata();
 
     /**
      * Determines whether the saved game session is compatibile with the current
@@ -118,6 +111,13 @@ public:
 #if __JHEXEN__
     void read_Hx_v9(Reader *reader);
 #endif
+
+    /**
+     * Update the metadata associated with the save using values derived from the
+     * current game session. Note that this does @em not affect the copy of this save
+     * on disk.
+     */
+    void applyCurrentSessionMetadata();
 
 public: /// @todo refactor away:
     int magic() const;

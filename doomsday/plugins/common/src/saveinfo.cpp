@@ -73,29 +73,29 @@ static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
 #endif
 
 SaveInfo::SaveInfo()
-    : _sessionId  (0)
-    , _magic   (0)
-    , _version (0)
-    , _gameMode(NUM_GAME_MODES)
-    , _mapUri  (Uri_New())
+    : _sessionId(0)
+    , _magic    (0)
+    , _version  (0)
+    , _gameMode (NUM_GAME_MODES)
+    , _mapUri   (Uri_New())
 #if !__JHEXEN__
-    , _mapTime (0)
+    , _mapTime  (0)
 #endif
 {
     Str_InitStd(&_description);
 #if !__JHEXEN__
-    memset(&_players, 0, sizeof(_players));
+    de::zap(_players);
 #endif
-    memset(&_gameRules, 0, sizeof(_gameRules));
+    de::zap(_gameRules);
 }
 
 SaveInfo::SaveInfo(SaveInfo const &other)
-    : _sessionId  (other._sessionId)
-    , _magic   (other._magic)
-    , _version (other._version)
-    , _gameMode(other._gameMode)
+    : _sessionId(other._sessionId)
+    , _magic    (other._magic)
+    , _version  (other._version)
+    , _gameMode (other._gameMode)
 #if !__JHEXEN__
-    , _mapTime (other._mapTime)
+    , _mapTime  (other._mapTime)
 #endif
 {
     Str_Copy(Str_InitStd(&_description), &other._description);
