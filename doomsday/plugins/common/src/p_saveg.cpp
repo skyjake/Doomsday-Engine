@@ -103,8 +103,13 @@ static byte *saveBuffer;
 static AutoStr *composeGameSavePathForClientSessionId(uint sessionId)
 {
     AutoStr *path = AutoStr_NewStd();
+
     // Do we have a valid path?
-    if(!F_MakePath(SV_ClientSavePath())) return path; // return zero-length string.
+    if(!F_MakePath(SV_ClientSavePath()))
+    {
+        return path; // return zero-length string.
+    }
+
     // Compose the full game-save path and filename.
     Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), sessionId);
     F_TranslatePath(path, path);
@@ -143,12 +148,12 @@ static bool recognizeNativeState(Str const *path, SaveInfo *info)
     byte *saveBuffer;
     size_t fileSize = M_ReadFile(Str_Text(path), (char **) &saveBuffer);
     if(!fileSize) return false;
+
     // Set the save pointer.
     SV_HxSavePtr()->b = saveBuffer;
     SV_HxSetSaveEndPtr(saveBuffer + fileSize);
 #else
-    if(!SV_OpenFile(path, "rp"))
-        return false;
+    if(!SV_OpenFile(path, "rp")) return false;
 #endif
 
     Reader *reader = SV_NewReader();
@@ -211,23 +216,19 @@ dd_bool SV_RecognizeGameState(Str const *path, SaveInfo *info)
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
     DENG_ASSERT(inited);
-    AutoStr *path = saveSlots.composeSavePathForSlot(slot, (int)map+1);
-    if(!path || Str_IsEmpty(path)) return false;
-    return SV_ExistingFile(path);
-}
-#endif
-
-#if __JHEXEN__
-void SV_HxInitBaseSlot()
-{
-    saveSlots.clearSlot(BASE_SLOT);
+    AutoStr *path = saveSlots.composeSavePathForSlot(slot, (int)map + 1);
+    if(path && !Str_IsEmpty(path))
+    {
+        return SV_ExistingFile(path);
+    }
+    return false;
 }
 #endif
 
 void SV_InitThingArchiveForLoad(uint size)
 {
     thingArchiveSize = size;
-    thingArchive = reinterpret_cast<mobj_t **>(M_Calloc(thingArchiveSize * sizeof(*thingArchive)));
+    thingArchive     = reinterpret_cast<mobj_t **>(M_Calloc(thingArchiveSize * sizeof(*thingArchive)));
 }
 
 struct countmobjthinkerstoarchive_params_t
@@ -249,13 +250,13 @@ static int countMobjThinkersToArchive(thinker_t *th, void *context)
 static void initThingArchiveForSave(bool excludePlayers = false)
 {
     // Count the number of things we'll be writing.
-    countmobjthinkerstoarchive_params_t parms;
-    parms.count = 0;
-    parms.excludePlayers = excludePlayers;
-    Thinker_Iterate((thinkfunc_t) P_MobjThinker, countMobjThinkersToArchive, &parms);
+    countmobjthinkerstoarchive_params_t parm; de::zap(parm);
+    parm.count          = 0;
+    parm.excludePlayers = excludePlayers;
+    Thinker_Iterate((thinkfunc_t) P_MobjThinker, countMobjThinkersToArchive, &parm);
 
-    thingArchiveSize = parms.count;
-    thingArchive = reinterpret_cast<mobj_t **>(M_Calloc(thingArchiveSize * sizeof(*thingArchive)));
+    thingArchiveSize           = parm.count;
+    thingArchive               = reinterpret_cast<mobj_t **>(M_Calloc(thingArchiveSize * sizeof(*thingArchive)));
     thingArchiveExcludePlayers = excludePlayers;
 }
 
@@ -283,11 +284,8 @@ static void insertThingInArchive(mobj_t const *mo, ThingSerialId thingId)
 
 static void clearThingArchive()
 {
-    if(thingArchive)
-    {
-        M_Free(thingArchive); thingArchive = 0;
-        thingArchiveSize = 0;
-    }
+    M_Free(thingArchive); thingArchive = 0;
+    thingArchiveSize = 0;
 }
 
 ThingSerialId SV_ThingArchiveId(mobj_t const *mo)
@@ -299,11 +297,15 @@ ThingSerialId SV_ThingArchiveId(mobj_t const *mo)
 
     // We only archive mobj thinkers.
     if(((thinker_t *) mo)->function != (thinkfunc_t) P_MobjThinker)
+    {
         return 0;
+    }
 
 #if __JHEXEN__
     if(mo->player && thingArchiveExcludePlayers)
+    {
         return TargetPlayerId;
+    }
 #endif
 
     uint firstUnused = 0;
@@ -316,8 +318,11 @@ ThingSerialId SV_ThingArchiveId(mobj_t const *mo)
             found = true;
             continue;
         }
+
         if(thingArchive[i] == mo)
+        {
             return i + 1;
+        }
     }
 
     if(!found)
@@ -603,8 +608,8 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
 #if __JHEXEN__
     cfg.playerClass[plrnum] = playerclass_t(Reader_ReadByte(reader));
 
-    memset(p, 0, sizeof(*p)); // Force everything NULL,
-    p->plr = dp;              // but restore the ddplayer pointer.
+    de::zapPtr(p); // Force everything NULL,
+    p->plr = dp;   // but restore the ddplayer pointer.
 #endif
 
     p->playerState     = playerstate_t(Reader_ReadInt32(reader));
@@ -644,8 +649,10 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
         inventoryitemtype_t type = inventoryitemtype_t(Reader_ReadInt32(reader));
         int count = Reader_ReadInt32(reader);
 
-        for(int j = 0; j < count; ++j)
+        for(int k = 0; k < count; ++k)
+        {
             P_InventoryGive(plrnum, type, true);
+        }
     }
 
     P_InventorySetReadyItem(plrnum, inventoryitemtype_t(Reader_ReadInt32(reader)));
@@ -653,10 +660,12 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
     Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
     if(ver < 5)
     {
-        Reader_ReadInt32(reader); // Current inventory item count?
+        /*pl->artifactCount   =*/ Reader_ReadInt32(reader);
     }
     if(ver < 6)
-    /*p->inventorySlotNum =*/ Reader_ReadInt32(reader);
+    {
+        /*p->inventorySlotNum =*/ Reader_ReadInt32(reader);
+    }
 # endif
 #endif
 
@@ -665,7 +674,9 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
         p->powers[i] = Reader_ReadInt32(reader);
     }
     if(p->powers[PT_ALLMAP])
+    {
         ST_RevealAutomap(plrnum, true);
+    }
 
 #if __JHEXEN__
     p->keys = Reader_ReadInt32(reader);
@@ -677,7 +688,7 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
 #endif
 
 #if __JHEXEN__
-    p->pieces = Reader_ReadInt32(reader);
+    p->pieces   = Reader_ReadInt32(reader);
 #else
     p->backpack = Reader_ReadInt32(reader);
 #endif
@@ -732,16 +743,17 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
     p->poisonCount = Reader_ReadInt32(reader);
 #endif
 
-    dp->extraLight = Reader_ReadInt32(reader);
+    dp->extraLight    = Reader_ReadInt32(reader);
     dp->fixedColorMap = Reader_ReadInt32(reader);
+
     p->colorMap    = Reader_ReadInt32(reader);
 
     for(int i = 0; i < numPSprites; ++i)
     {
         pspdef_t *psp = &p->pSprites[i];
 
-        psp->state = INT2PTR(state_t, Reader_ReadInt32(reader));
-        psp->tics = Reader_ReadInt32(reader);
+        psp->state   = INT2PTR(state_t, Reader_ReadInt32(reader));
+        psp->tics    = Reader_ReadInt32(reader);
         psp->pos[VX] = FIX2FLT(Reader_ReadInt32(reader));
         psp->pos[VY] = FIX2FLT(Reader_ReadInt32(reader));
     }
@@ -750,15 +762,21 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
     p->didSecret = Reader_ReadInt32(reader);
 
 # if __JDOOM__ || __JDOOM64__
-    if(ver == 2) // nolonger used in >= ver 3
+    if(ver == 2)
+    {
         /*p->messageTics =*/ Reader_ReadInt32(reader);
+    }
 
     if(ver >= 2)
+    {
         p->flyHeight = Reader_ReadInt32(reader);
+    }
 
 # elif __JHERETIC__
-    if(ver < 3) // nolonger used in >= ver 3
+    if(ver < 3)
+    {
         /*p->messageTics =*/ Reader_ReadInt32(reader);
+    }
 
     p->flyHeight = Reader_ReadInt32(reader);
 
@@ -768,8 +786,10 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
         inventoryitemtype_t type = inventoryitemtype_t(Reader_ReadInt32(reader));
         int count = Reader_ReadInt32(reader);
 
-        for(int j = 0; j < count; ++j)
+        for(int k = 0; k < count; ++k)
+        {
             P_InventoryGive(plrnum, type, true);
+        }
     }
 
     P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) Reader_ReadInt32(reader));
@@ -779,7 +799,9 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
         Reader_ReadInt32(reader); // Current inventory item count?
     }
     if(ver < 6)
-    /*p->inventorySlotNum =*/ Reader_ReadInt32(reader);
+    {
+        /*p->inventorySlotNum =*/ Reader_ReadInt32(reader);
+    }
 
     p->chickenPeck = Reader_ReadInt32(reader);
 # endif
@@ -790,30 +812,36 @@ static void SV_ReadPlayer(player_t *p, Reader *reader)
 #endif
 
     if(ver >= 2)
+    {
         p->airCounter = Reader_ReadInt32(reader);
+    }
 
 #if __JHEXEN__
-    p->jumpTics = Reader_ReadInt32(reader);
+    p->jumpTics   = Reader_ReadInt32(reader);
     p->worldTimer = Reader_ReadInt32(reader);
 #elif __JHERETIC__
     p->flameCount = Reader_ReadInt32(reader);
 
     if(ver >= 2)
+    {
         p->class_ = playerclass_t(Reader_ReadByte(reader));
+    }
 #endif
 
 #if !__JHEXEN__
     // Will be set when unarc thinker.
-    p->plr->mo = NULL;
-    p->attacker = NULL;
+    p->plr->mo = 0;
+    p->attacker = 0;
 #endif
 
     // Demangle it.
     for(int i = 0; i < numPSprites; ++i)
+    {
         if(p->pSprites[i].state)
         {
             p->pSprites[i].state = &STATES[PTR2INT(p->pSprites[i].state)];
         }
+    }
 
     // Mark the player for fixpos and fixangles.
     dp->flags |= DDPF_FIXORIGIN | DDPF_FIXANGLES | DDPF_FIXMOM;
@@ -832,7 +860,7 @@ void SV_WriteMobj(thinker_t *th, MapStateWriter *msw)
 {
     Writer *writer = msw->writer();
 
-    mobj_t const *original = (mobj_t*) th;
+    mobj_t const *original = (mobj_t *) th;
     mobj_t temp, *mo = &temp;
 
     std::memcpy(mo, original, sizeof(*mo));
@@ -970,8 +998,7 @@ void SV_WriteMobj(thinker_t *th, MapStateWriter *msw)
     // If >0, the target will be chased no matter what (even if shot).
     Writer_WriteInt32(writer, mo->threshold);
 
-    // Additional info record for player avatars only (only valid if type
-    // == MT_PLAYER).
+    // Additional info record for player avatars only (only valid if type is MT_PLAYER).
     Writer_WriteInt32(writer, PTR2INT(mo->player));
 
     // Player number last looked for.
@@ -998,18 +1025,18 @@ void SV_WriteMobj(thinker_t *th, MapStateWriter *msw)
     Writer_WriteInt32(writer, mo->special3);
 # endif
 
-    Writer_WriteByte(writer, mo->translucency);
-    Writer_WriteByte(writer, (byte)(mo->visTarget +1));
+    Writer_WriteByte(writer,  mo->translucency);
+    Writer_WriteByte(writer,  (byte)(mo->visTarget +1));
 #endif
 
     Writer_WriteInt32(writer, FLT2FIX(mo->floorClip));
 #if __JHEXEN__
-    Writer_WriteInt32(writer, SV_ThingArchiveId((mobj_t*) original));
+    Writer_WriteInt32(writer, SV_ThingArchiveId((mobj_t *) original));
     Writer_WriteInt32(writer, mo->tid);
     Writer_WriteInt32(writer, mo->special);
-    Writer_Write(writer, mo->args, sizeof(mo->args));
-    Writer_WriteByte(writer, mo->translucency);
-    Writer_WriteByte(writer, (byte)(mo->visTarget +1));
+    Writer_Write(writer,      mo->args, sizeof(mo->args));
+    Writer_WriteByte(writer,  mo->translucency);
+    Writer_WriteByte(writer,  (byte)(mo->visTarget +1));
 
     switch(mo->type)
     {
@@ -1037,13 +1064,12 @@ void SV_WriteMobj(thinker_t *th, MapStateWriter *msw)
 
     Writer_WriteInt32(writer, PTR2INT(mo->lastEnemy));
 #elif __JHERETIC__
-    // Ver 7 features: generator
     Writer_WriteInt16(writer, SV_ThingArchiveId(mo->generator));
 #endif
 }
 
 #if !__JDOOM64__
-void SV_TranslateLegacyMobjFlags(mobj_t* mo, int ver)
+void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver)
 {
 #if __JDOOM__ || __JHERETIC__
     if(ver < 6)
@@ -1132,9 +1158,10 @@ static void RestoreMobj(mobj_t *mo, int ver)
         }
 #endif
 
-        mo->player = &players[pNum];
+        mo->player  = &players[pNum];
         mo->dPlayer = mo->player->plr;
-        mo->dPlayer->mo = mo;
+
+        mo->dPlayer->mo      = mo;
         //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
         mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
@@ -1144,8 +1171,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
 #if !__JHEXEN__
     if(mo->dPlayer && !mo->dPlayer->inGame)
     {
-        if(mo->dPlayer)
-            mo->dPlayer->mo = NULL;
+        mo->dPlayer->mo = 0;
         Mobj_Destroy(mo);
 
         return;
@@ -1155,7 +1181,9 @@ static void RestoreMobj(mobj_t *mo, int ver)
 #if !__JDOOM64__
     // Do we need to update this mobj's flag values?
     if(ver < MOBJ_SAVEVERSION)
+    {
         SV_TranslateLegacyMobjFlags(mo, ver);
+    }
 #endif
 
     P_MobjLink(mo);
@@ -1174,10 +1202,11 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
 #define FF_FULLBRIGHT 0x8000 ///< Used to be a flag in thing->frame.
 #define FF_FRAMEMASK  0x7fff
 
+    mobj_t *mo     = (mobj_t *) th;
     Reader *reader = msr->reader();
-    mobj_t *mo = (mobj_t *) th;
 
     int ver = Reader_ReadByte(reader);
+
 #if !__JHEXEN__
     if(ver >= 2) // Version 2 has mobj archive numbers.
     {
@@ -1189,20 +1218,18 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
     mo->target = 0;
     if(ver >= 2)
     {
-        mo->target = INT2PTR(mobj_t, Reader_ReadInt16(reader));
+        mo->target   = INT2PTR(mobj_t, Reader_ReadInt16(reader));
     }
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    // Tracer for enemy attacks (updated after all mobjs are loaded).
     mo->tracer = 0;
     if(ver >= 5)
     {
-        mo->tracer = INT2PTR(mobj_t, Reader_ReadInt16(reader));
+        mo->tracer   = INT2PTR(mobj_t, Reader_ReadInt16(reader));
     }
 #endif
 
-    // mobj this one is on top of (updated after all mobjs are loaded).
     mo->onMobj = 0;
 #if __JHEXEN__
     if(ver >= 8)
@@ -1210,46 +1237,42 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
     if(ver >= 5)
 #endif
     {
-        mo->onMobj = INT2PTR(mobj_t, Reader_ReadInt16(reader));
+        mo->onMobj   = INT2PTR(mobj_t, Reader_ReadInt16(reader));
     }
 
-    // Info for drawing: position.
-    mo->origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
-    mo->origin[VY] = FIX2FLT(Reader_ReadInt32(reader));
-    mo->origin[VZ] = FIX2FLT(Reader_ReadInt32(reader));
+    mo->origin[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+    mo->origin[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    mo->origin[VZ]   = FIX2FLT(Reader_ReadInt32(reader));
+    mo->angle        = Reader_ReadInt32(reader);
+    mo->sprite       = Reader_ReadInt32(reader);
 
-    //More drawing info: to determine current sprite.
-    mo->angle  = Reader_ReadInt32(reader); // orientation
-    mo->sprite = Reader_ReadInt32(reader); // used to find patch_t and flip value
-
-    mo->frame  = Reader_ReadInt32(reader); // might be ORed with FF_FULLBRIGHT
+    mo->frame        = Reader_ReadInt32(reader); // might be ORed with FF_FULLBRIGHT
     if(mo->frame & FF_FULLBRIGHT)
         mo->frame &= FF_FRAMEMASK; // not used anymore.
 
 #if __JHEXEN__
     if(ver < 6)
-        Reader_ReadInt32(reader); // Used to be floorflat.
+    {
+        /*mo->floorflat =*/ Reader_ReadInt32(reader);
+    }
 #else
-    // The closest interval over all contacted Sectors.
-    mo->floorZ   = FIX2FLT(Reader_ReadInt32(reader));
-    mo->ceilingZ = FIX2FLT(Reader_ReadInt32(reader));
+    mo->floorZ       = FIX2FLT(Reader_ReadInt32(reader));
+    mo->ceilingZ     = FIX2FLT(Reader_ReadInt32(reader));
 #endif
 
-    // For movement checking.
-    mo->radius  = FIX2FLT(Reader_ReadInt32(reader));
-    mo->height  = FIX2FLT(Reader_ReadInt32(reader));
+    mo->radius       = FIX2FLT(Reader_ReadInt32(reader));
+    mo->height       = FIX2FLT(Reader_ReadInt32(reader));
+    mo->mom[MX]      = FIX2FLT(Reader_ReadInt32(reader));
+    mo->mom[MY]      = FIX2FLT(Reader_ReadInt32(reader));
+    mo->mom[MZ]      = FIX2FLT(Reader_ReadInt32(reader));
+    mo->valid        = Reader_ReadInt32(reader);
+    mo->type         = Reader_ReadInt32(reader);
 
-    // Momentums, used to update position.
-    mo->mom[MX] = FIX2FLT(Reader_ReadInt32(reader));
-    mo->mom[MY] = FIX2FLT(Reader_ReadInt32(reader));
-    mo->mom[MZ] = FIX2FLT(Reader_ReadInt32(reader));
-
-    // If == VALIDCOUNT, already checked.
-    mo->valid = Reader_ReadInt32(reader);
-    mo->type  = Reader_ReadInt32(reader);
 #if __JHEXEN__
     if(ver < 7)
-        /*mo->info = (mobjinfo_t *)*/ Reader_ReadInt32(reader);
+    {
+        /*mo->info   = (mobjinfo_t *)*/ Reader_ReadInt32(reader);
+    }
 #endif
     mo->info = &MOBJINFO[mo->type];
 
@@ -1261,24 +1284,23 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
     if(mo->info->flags2 & MF2_DONTDRAW)
         mo->ddFlags |= DDMF_DONTDRAW;
 
-    mo->tics   = Reader_ReadInt32(reader);   // state tic counter
-    mo->state  = INT2PTR(state_t, Reader_ReadInt32(reader));
-
+    mo->tics         = Reader_ReadInt32(reader);
+    mo->state        = INT2PTR(state_t, Reader_ReadInt32(reader));
 #if __JHEXEN__
-    mo->damage = Reader_ReadInt32(reader);
+    mo->damage       = Reader_ReadInt32(reader);
 #endif
-
-    mo->flags  = Reader_ReadInt32(reader);
-
+    mo->flags        = Reader_ReadInt32(reader);
 #if __JHEXEN__
-    mo->flags2 = Reader_ReadInt32(reader);
+    mo->flags2       = Reader_ReadInt32(reader);
     if(ver >= 5)
-        mo->flags3 = Reader_ReadInt32(reader);
-    mo->special1 = Reader_ReadInt32(reader);
-    mo->special2 = Reader_ReadInt32(reader);
+    {
+        mo->flags3   = Reader_ReadInt32(reader);
+    }
+    mo->special1     = Reader_ReadInt32(reader);
+    mo->special2     = Reader_ReadInt32(reader);
 #endif
+    mo->health       = Reader_ReadInt32(reader);
 
-    mo->health = Reader_ReadInt32(reader);
 #if __JHERETIC__
     if(ver < 8)
     {
@@ -1305,33 +1327,20 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
     }
 #endif
 
-    // Movement direction, movement generation (zig-zagging).
-    mo->moveDir = Reader_ReadInt32(reader);    // 0-7
-    mo->moveCount = Reader_ReadInt32(reader);  // when 0, select a new dir
-
+    mo->moveDir      = Reader_ReadInt32(reader);
+    mo->moveCount    = Reader_ReadInt32(reader);
 #if __JHEXEN__
-    mo->target = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+    mo->target       = INT2PTR(mobj_t, Reader_ReadInt32(reader));
 #endif
-
-    // Reaction time: if non 0, don't attack yet.
-    // Used by player to freeze a bit after teleporting.
     mo->reactionTime = Reader_ReadInt32(reader);
-
-    // If >0, the target will be chased
-    // no matter what (even if shot)
-    mo->threshold = Reader_ReadInt32(reader);
-
-    // Additional info record for player avatars only.
-    // Only valid if type == MT_PLAYER
-    mo->player = INT2PTR(player_t, Reader_ReadInt32(reader));
-
-    // Player number last looked for.
-    mo->lastLook = Reader_ReadInt32(reader);
+    mo->threshold    = Reader_ReadInt32(reader);
+    mo->player       = INT2PTR(player_t, Reader_ReadInt32(reader));
+    mo->lastLook     = Reader_ReadInt32(reader);
 
 #if __JHEXEN__
-    mo->floorClip = FIX2FLT(Reader_ReadInt32(reader));
+    mo->floorClip    = FIX2FLT(Reader_ReadInt32(reader));
     insertThingInArchive(mo, Reader_ReadInt32(reader));
-    mo->tid = Reader_ReadInt32(reader);
+    mo->tid          = Reader_ReadInt32(reader);
 #else
     // For nightmare respawn.
     if(ver >= 6)
@@ -1339,19 +1348,21 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
         mo->spawnSpot.origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
         mo->spawnSpot.origin[VY] = FIX2FLT(Reader_ReadInt32(reader));
         mo->spawnSpot.origin[VZ] = FIX2FLT(Reader_ReadInt32(reader));
-        mo->spawnSpot.angle = Reader_ReadInt32(reader);
+        mo->spawnSpot.angle      = Reader_ReadInt32(reader);
         if(ver < 10)
-        /* mo->spawnSpot.type = */ Reader_ReadInt32(reader);
-        mo->spawnSpot.flags = Reader_ReadInt32(reader);
+        {
+            /*mo->spawnSpot.type =*/ Reader_ReadInt32(reader);
+        }
+        mo->spawnSpot.flags      = Reader_ReadInt32(reader);
     }
     else
     {
         mo->spawnSpot.origin[VX] = (float) Reader_ReadInt16(reader);
         mo->spawnSpot.origin[VY] = (float) Reader_ReadInt16(reader);
         mo->spawnSpot.origin[VZ] = 0; // Initialize with "something".
-        mo->spawnSpot.angle = (angle_t) (ANG45 * (Reader_ReadInt16(reader) / 45));
-        /*mo->spawnSpot.type = (int)*/ Reader_ReadInt16(reader);
-        mo->spawnSpot.flags = (int) Reader_ReadInt16(reader);
+        mo->spawnSpot.angle      = (angle_t) (ANG45 * (Reader_ReadInt16(reader) / 45));
+        /*mo->spawnSpot.type       = (int)*/ Reader_ReadInt16(reader);
+        mo->spawnSpot.flags      = (int) Reader_ReadInt16(reader);
     }
 
 # if __JDOOM__ || __JDOOM64__
@@ -1360,9 +1371,9 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
     if(ver >= 5)
 # endif
     {
-        mo->intFlags = Reader_ReadInt32(reader);   // killough $dropoff_fix: internal flags
-        mo->dropOffZ = FIX2FLT(Reader_ReadInt32(reader));   // killough $dropoff_fix
-        mo->gear = Reader_ReadInt32(reader);   // killough used in torque simulation
+        mo->intFlags = Reader_ReadInt32(reader);
+        mo->dropOffZ = FIX2FLT(Reader_ReadInt32(reader));
+        mo->gear     = Reader_ReadInt32(reader);
     }
 
 # if __JDOOM__ || __JDOOM64__
@@ -1370,9 +1381,11 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
     {
         mo->damage = Reader_ReadInt32(reader);
         mo->flags2 = Reader_ReadInt32(reader);
-    }// Else flags2 will be applied from the defs.
-    else
+    }
+    else // flags2 will be applied from the defs.
+    {
         mo->damage = DDMAXINT; // Use the value set in mo->info->damage
+    }
 
 # elif __JHERETIC__
     mo->damage = Reader_ReadInt32(reader);
@@ -1380,8 +1393,9 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
 # endif
 
     if(ver >= 7)
+    {
         mo->flags3 = Reader_ReadInt32(reader);
-    // Else flags3 will be applied from the defs.
+    } // Else flags3 will be applied from the defs.
 #endif
 
 #if __JHEXEN__
@@ -1391,7 +1405,9 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
     mo->special1 = Reader_ReadInt32(reader);
     mo->special2 = Reader_ReadInt32(reader);
     if(ver >= 8)
+    {
         mo->special3 = Reader_ReadInt32(reader);
+    }
 #endif
 
 #if __JHEXEN__
@@ -1399,31 +1415,45 @@ int SV_ReadMobj(thinker_t *th, MapStateReader *msr)
 #else
     if(ver >= 4)
 #endif
+    {
         mo->translucency = Reader_ReadByte(reader);
+    }
 
 #if __JHEXEN__
     if(ver >= 3)
 #else
     if(ver >= 5)
 #endif
+    {
         mo->visTarget = (short) (Reader_ReadByte(reader)) -1;
+    }
 
 #if __JHEXEN__
     if(ver >= 4)
-        mo->tracer = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+    {
+        mo->tracer    = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+    }
 
     if(ver >= 4)
+    {
         mo->lastEnemy = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+    }
 #else
     if(ver >= 5)
+    {
         mo->floorClip = FIX2FLT(Reader_ReadInt32(reader));
+    }
 #endif
 
 #if __JHERETIC__
     if(ver >= 7)
+    {
         mo->generator = INT2PTR(mobj_t, Reader_ReadInt16(reader));
+    }
     else
-        mo->generator = NULL;
+    {
+        mo->generator = 0;
+    }
 #endif
 
     // Restore! (unmangle)
@@ -1513,32 +1543,32 @@ static void readPlayerHeader(Reader *reader, int saveVersion)
     else // The old format didn't save the counts.
     {
 #if __JHEXEN__
-        playerHeader.numPowers      = 9;
-        playerHeader.numKeys        = 11;
-        playerHeader.numFrags       = 8;
-        playerHeader.numWeapons     = 4;
-        playerHeader.numAmmoTypes   = 2;
-        playerHeader.numPSprites    = 2;
+        playerHeader.numPowers       = 9;
+        playerHeader.numKeys         = 11;
+        playerHeader.numFrags        = 8;
+        playerHeader.numWeapons      = 4;
+        playerHeader.numAmmoTypes    = 2;
+        playerHeader.numPSprites     = 2;
         playerHeader.numInvItemTypes = 33;
-        playerHeader.numArmorTypes  = 4;
+        playerHeader.numArmorTypes   = 4;
 #elif __JDOOM__ || __JDOOM64__
-        playerHeader.numPowers      = 6;
-        playerHeader.numKeys        = 6;
-        playerHeader.numFrags       = 4; // Why was this only 4?
-        playerHeader.numWeapons     = 9;
-        playerHeader.numAmmoTypes   = 4;
-        playerHeader.numPSprites    = 2;
+        playerHeader.numPowers       = 6;
+        playerHeader.numKeys         = 6;
+        playerHeader.numFrags        = 4; // Why was this only 4?
+        playerHeader.numWeapons      = 9;
+        playerHeader.numAmmoTypes    = 4;
+        playerHeader.numPSprites     = 2;
 # if __JDOOM64__
         playerHeader.numInvItemTypes = 3;
 # endif
 #elif __JHERETIC__
-        playerHeader.numPowers      = 9;
-        playerHeader.numKeys        = 3;
-        playerHeader.numFrags       = 4; // ?
-        playerHeader.numWeapons     = 8;
+        playerHeader.numPowers       = 9;
+        playerHeader.numKeys         = 3;
+        playerHeader.numFrags        = 4; // ?
+        playerHeader.numWeapons      = 8;
         playerHeader.numInvItemTypes = 14;
-        playerHeader.numAmmoTypes   = 6;
-        playerHeader.numPSprites    = 2;
+        playerHeader.numAmmoTypes    = 6;
+        playerHeader.numPSprites     = 2;
 #endif
     }
     playerHeaderOK = true;
@@ -1567,8 +1597,7 @@ static void writePlayers(Writer *writer)
     SV_EndSegment();
 }
 
-static void readPlayers(SaveInfo &info, dd_bool *infile, dd_bool *loaded,
-    Reader *reader)
+static void readPlayers(SaveInfo &info, dd_bool *infile, dd_bool *loaded, Reader *reader)
 {
     DENG_ASSERT(infile != 0 && loaded != 0);
 
@@ -1737,23 +1766,14 @@ void SV_WriteSector(Sector *sec, MapStateWriter *msw)
 #endif
 }
 
-/**
- * Reads all versions of archived sectors.
- * Including the old Ver1.
- */
 void SV_ReadSector(Sector *sec, MapStateReader *msr)
 {
-    Reader *reader = msr->reader();
-    int mapVersion = msr->mapVersion();
-
-    int i, ver = 1;
-    int type = 0;
-    Material *floorMaterial = 0, *ceilingMaterial = 0;
-    byte rgb[3], lightlevel;
     xsector_t *xsec = P_ToXSector(sec);
-    int fh, ch;
+    Reader *reader  = msr->reader();
+    int mapVersion  = msr->mapVersion();
 
     // A type byte?
+    int type = 0;
 #if __JHEXEN__
     if(mapVersion < 4)
         type = sc_ploff;
@@ -1766,15 +1786,18 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
         type = Reader_ReadByte(reader);
 
     // A version byte?
+    int ver = 1;
 #if __JHEXEN__
     if(mapVersion > 2)
 #else
     if(mapVersion > 4)
 #endif
+    {
         ver = Reader_ReadByte(reader);
+    }
 
-    fh = Reader_ReadInt16(reader);
-    ch = Reader_ReadInt16(reader);
+    int fh = Reader_ReadInt16(reader);
+    int ch = Reader_ReadInt16(reader);
 
     P_SetIntp(sec, DMU_FLOOR_HEIGHT, fh);
     P_SetIntp(sec, DMU_CEILING_HEIGHT, ch);
@@ -1787,11 +1810,12 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
     P_SetIntp(sec, DMU_CEILING_SPEED, 0);
 #endif
 
+    Material *floorMaterial = 0, *ceilingMaterial = 0;
 #if !__JHEXEN__
     if(mapVersion == 1)
     {
         // The flat numbers are absolute lump indices.
-        Uri* uri = Uri_NewWithPath2("Flats:", RC_NULL);
+        Uri *uri = Uri_NewWithPath2("Flats:", RC_NULL);
         Uri_SetPath(uri, Str_Text(W_LumpName(Reader_ReadInt16(reader))));
         floorMaterial = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
@@ -1816,6 +1840,7 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
         P_SetIntp(sec, DMU_CEILING_FLAGS, Reader_ReadInt16(reader));
     }
 
+    byte lightlevel;
 #if __JHEXEN__
     lightlevel = (byte) Reader_ReadInt16(reader);
 #else
@@ -1835,20 +1860,22 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
     if(mapVersion > 1)
 #endif
     {
+        byte rgb[3];
         Reader_Read(reader, rgb, 3);
-        for(i = 0; i < 3; ++i)
+        for(int i = 0; i < 3; ++i)
             P_SetFloatp(sec, DMU_COLOR_RED + i, rgb[i] / 255.f);
     }
 
     // Ver 2 includes surface colours
     if(ver >= 2)
     {
+        byte rgb[3];
         Reader_Read(reader, rgb, 3);
-        for(i = 0; i < 3; ++i)
+        for(int i = 0; i < 3; ++i)
             P_SetFloatp(sec, DMU_FLOOR_COLOR_RED + i, rgb[i] / 255.f);
 
         Reader_Read(reader, rgb, 3);
-        for(i = 0; i < 3; ++i)
+        for(int i = 0; i < 3; ++i)
             P_SetFloatp(sec, DMU_CEILING_COLOR_RED + i, rgb[i] / 255.f);
     }
 
@@ -1873,7 +1900,9 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
 
 #if !__JHEXEN__
     if(type == sc_xg1)
+    {
         SV_ReadXGSector(sec, reader, mapVersion);
+    }
 #endif
 
 #if !__JHEXEN__
@@ -1887,29 +1916,16 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
     xsec->soundTarget = 0;
 }
 
-enum lineclass_t
-{
-    lc_normal,
-#if !__JHEXEN__
-    lc_xg1,
-#endif
-    NUM_LINECLASSES
-};
-
 void SV_WriteLine(Line *li, MapStateWriter *msw)
 {
+    xline_t *xli   = P_ToXLine(li);
     Writer *writer = msw->writer();
 
-    xline_t *xli = P_ToXLine(li);
-
-    lineclass_t type;
 #if !__JHEXEN__
-    if(xli->xg)
-        type =  lc_xg1;
-    else
+    Writer_WriteByte(writer, xli->xg? 1 : 0); /// @c 1= XG data will follow.
+#else
+    Writer_WriteByte(writer, 0);
 #endif
-        type = lc_normal;
-    Writer_WriteByte(writer, type);
 
     // Version.
     // 2: Per surface texture offsets.
@@ -1990,44 +2006,40 @@ void SV_WriteLine(Line *li, MapStateWriter *msw)
  */
 void SV_ReadLine(Line *li, MapStateReader *msr)
 {
+    xline_t *xli   = P_ToXLine(li);
     Reader *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
-    Material *topMaterial = 0, *bottomMaterial = 0, *middleMaterial = 0;
-    xline_t *xli = P_ToXLine(li);
-
-    // A type byte?
-    lineclass_t type;
-
+    dd_bool xgDataFollows = false;
 #if __JHEXEN__
-    if(mapVersion < 4)
+    if(mapVersion >= 4)
 #else
-    if(mapVersion < 2)
+    if(mapVersion >= 2)
 #endif
-        type = lc_normal;
-    else
-        type = lineclass_t(Reader_ReadByte(reader));
-
+    {
+        xgDataFollows = Reader_ReadByte(reader) == 1;
+    }
 #ifdef __JHEXEN__
-    DENG_UNUSED(type);
+    DENG_UNUSED(xgDataFollows);
 #endif
 
     // A version byte?
-    int ver;
+    int ver = 1;
 #if __JHEXEN__
-    if(mapVersion < 3)
+    if(mapVersion >= 3)
 #else
-    if(mapVersion < 5)
+    if(mapVersion >= 5)
 #endif
-        ver = 1;
-    else
+    {
         ver = (int) Reader_ReadByte(reader);
+    }
 
     if(ver >= 4)
+    {
         P_SetIntp(li, DMU_FLAGS, Reader_ReadInt16(reader));
+    }
 
     int flags = Reader_ReadInt16(reader);
-
     if(xli->flags & ML_TWOSIDED)
         flags |= ML_TWOSIDED;
 
@@ -2064,9 +2076,11 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
             int lineIDX = P_ToIndex(li);
 
             // Set line as having been seen by all players..
-            memset(xli->mapped, 0, sizeof(xli->mapped));
+            de::zap(xli->mapped);
             for(int i = 0; i < MAXPLAYERS; ++i)
+            {
                 P_SetLineAutomapVisibility(i, lineIDX, true);
+            }
         }
     }
 
@@ -2075,7 +2089,9 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
     if(ver >= 3)
     {
         for(int i = 0; i < MAXPLAYERS; ++i)
+        {
             xli->mapped[i] = Reader_ReadByte(reader);
+        }
     }
 
 #if __JHEXEN__
@@ -2132,6 +2148,7 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
             P_SetIntp(si, DMU_BOTTOM_FLAGS, Reader_ReadInt16(reader));
         }
 
+        Material *topMaterial = 0, *bottomMaterial = 0, *middleMaterial = 0;
 #if !__JHEXEN__
         if(mapVersion >= 4)
 #endif
@@ -2168,11 +2185,8 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
             P_SetIntp(si, DMU_MIDDLE_BLENDMODE, Reader_ReadInt32(reader));
 
             flags = Reader_ReadInt16(reader);
-#if __JHEXEN__
+
             if(mapVersion < 12)
-#else
-            if(mapVersion < 12)
-#endif
             {
                 if(P_GetIntp(si, DMU_FLAGS) & SDF_SUPPRESS_BACK_SECTOR)
                     flags |= SDF_SUPPRESS_BACK_SECTOR;
@@ -2182,8 +2196,10 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
     }
 
 #if !__JHEXEN__
-    if(type == lc_xg1)
+    if(xgDataFollows)
+    {
         SV_ReadXGLine(li, reader, mapVersion);
+    }
 #endif
 }
 
@@ -2315,7 +2331,7 @@ void SV_Shutdown()
     if(!inited) return;
 
     SV_ShutdownIO();
-    saveSlots.clearSaveInfo();
+    saveSlots.clearAllSaveInfo();
 
     inited = false;
 }
@@ -2340,35 +2356,23 @@ static bool openGameSaveFile(Str const *fileName, bool write)
 }
 
 #if __JHEXEN__
-static void readMapState(Reader *reader, int saveVersion, Str const *path)
-#else
-static void readMapState(Reader *reader, int saveVersion)
-#endif
+static void openMapSaveFile(Str const *path)
 {
-#if __JHEXEN__
     DENG_ASSERT(path != 0);
 
-    App_Log(DE2_DEV_MAP_MSG, "readMapState: Opening file \"%s\"\n", Str_Text(path));
+    App_Log(DE2_DEV_RES_MSG, "openMapSaveFile: Opening \"%s\"", Str_Text(path));
 
     // Load the file
     size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
     if(!bufferSize)
     {
-        App_Log(DE2_RES_ERROR, "readMapState: Failed opening \"%s\" for reading", Str_Text(path));
-        return;
+        throw de::Error("openMapSaveFile", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
     }
 
     SV_HxSavePtr()->b = saveBuffer;
     SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
-#endif
-
-    MapStateReader(saveVersion).read(reader);
-
-#if __JHEXEN__
-    clearThingArchive();
-    Z_Free(saveBuffer);
-#endif
 }
+#endif
 
 static void loadNativeState(Str const *path, SaveInfo *info)
 {
@@ -2378,7 +2382,7 @@ static void loadNativeState(Str const *path, SaveInfo *info)
 
     if(!openGameSaveFile(path, false))
     {
-        throw de::Error("SV_LoadState", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
+        throw de::Error("loadNativeState", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
     }
 
     Reader *reader = SV_NewReader();
@@ -2434,9 +2438,13 @@ static void loadNativeState(Str const *path, SaveInfo *info)
 
     // Load the current map state.
 #if __JHEXEN__
-    readMapState(reader, info->version(), saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap+1));
-#else
-    readMapState(reader, info->version());
+    openMapSaveFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap + 1));
+#endif
+
+    MapStateReader(info->version()).read(reader);
+
+#if __JHEXEN__
+    Z_Free(saveBuffer);
 #endif
 
 #if !__JHEXEN__
@@ -2447,9 +2455,7 @@ static void loadNativeState(Str const *path, SaveInfo *info)
     /*
      * Cleanup:
      */
-#if !__JHEXEN__
     clearThingArchive();
-#endif
 #if __JHEXEN__
     clearTargetPlayers();
 #endif
@@ -2563,7 +2569,9 @@ dd_bool SV_LoadGame(int slot)
 #endif
 
     if(!saveSlots.isValidSlot(slot))
+    {
         return false;
+    }
 
     App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slot);
 
@@ -2655,6 +2663,7 @@ void SV_SaveGameClient(uint sessionId)
     Writer_WriteInt32(writer, FLT2FIX(mo->floorZ));
     Writer_WriteInt32(writer, FLT2FIX(mo->ceilingZ));
     Writer_WriteInt32(writer, mo->angle); /* $unifiedangles */
+
     Writer_WriteFloat(writer, pl->plr->lookDir); /* $unifiedangles */
 
     writePlayerHeader(writer);
@@ -2691,59 +2700,70 @@ void SV_LoadGameClient(uint sessionId)
         return;
     }
 
-    SaveInfo *saveInfo = new SaveInfo;
+    SaveInfo *info = new SaveInfo;
     Reader *reader = SV_NewReader();
-    SV_SaveInfo_Read(saveInfo, reader);
+    SV_SaveInfo_Read(info, reader);
 
-    curInfo = saveInfo;
+    curInfo = info;
 
-    if(saveInfo->magic() != MY_CLIENT_SAVE_MAGIC)
+    if(info->magic() != MY_CLIENT_SAVE_MAGIC)
     {
         Reader_Delete(reader);
-        delete saveInfo;
+        delete info;
         SV_CloseFile();
         App_Log(DE2_RES_ERROR, "Client save file format not recognized");
         return;
     }
 
     // Do we need to change the map?
-    if(!Uri_Equality(gameMapUri, saveInfo->mapUri()))
+    if(!Uri_Equality(gameMapUri, info->mapUri()))
     {
-        G_NewGame(saveInfo->mapUri(), 0/*default*/, &saveInfo->gameRules());
+        G_NewGame(info->mapUri(), 0/*default*/, &info->gameRules());
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
     }
     else
     {
         /// @todo Necessary?
-        gameRules = saveInfo->gameRules();
+        gameRules = info->gameRules();
     }
-    mapTime = saveInfo->mapTime();
+    mapTime = info->mapTime();
 
     P_MobjUnlink(mo);
     mo->origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
     mo->origin[VY] = FIX2FLT(Reader_ReadInt32(reader));
     mo->origin[VZ] = FIX2FLT(Reader_ReadInt32(reader));
     P_MobjLink(mo);
-    mo->floorZ        = FIX2FLT(Reader_ReadInt32(reader));
-    mo->ceilingZ      = FIX2FLT(Reader_ReadInt32(reader));
-    mo->angle         = Reader_ReadInt32(reader); /* $unifiedangles */
+    mo->floorZ     = FIX2FLT(Reader_ReadInt32(reader));
+    mo->ceilingZ   = FIX2FLT(Reader_ReadInt32(reader));
+    mo->angle      = Reader_ReadInt32(reader); /* $unifiedangles */
+
     cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
 
-    readPlayerHeader(reader, saveInfo->version());
+    readPlayerHeader(reader, info->version());
     SV_ReadPlayer(cpl, reader);
 
-    MapStateReader(saveInfo->version()).read(reader);
+    MapStateReader(info->version()).read(reader);
 
     SV_CloseFile();
     Reader_Delete(reader);
-    delete saveInfo;
+    delete info;
 #else
     DENG_UNUSED(sessionId);
 #endif
 }
 
-static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
+static void writeWorldACScriptData(Writer *writer)
+{
+#if __JHEXEN__
+    SV_BeginSegment(ASEG_WORLDSCRIPTDATA);
+    Game_ACScriptInterpreter().writeWorldScriptData(writer);
+#else
+    DENG_UNUSED(writer);
+#endif
+}
+
+static void saveGameState(Str const *path, SaveInfo *saveInfo)
 {
     App_Log(DE2_LOG_VERBOSE, "saveStateWorker: Attempting save game to \"%s\"", Str_Text(path));
 
@@ -2754,7 +2774,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 
     if(!openGameSaveFile(path, true))
     {
-        return SV_INVALIDFILENAME; // No success.
+        throw de::Error("saveStateWorker", "Failed opening \"" + de::String(Str_Text(path)) + "\" for write");
     }
 
     playerHeaderOK = false; // Uninitialized.
@@ -2765,10 +2785,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     Writer *writer = SV_NewWriter();
     saveInfo->write(writer);
 
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_WORLDSCRIPTDATA);
-    Game_ACScriptInterpreter().writeWorldScriptData(writer);
-#endif
+    writeWorldACScriptData(writer);
 
     // Set the mobj archive numbers.
     initThingArchiveForSave();
@@ -2803,8 +2820,6 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 #endif
 
     Writer_Delete(writer);
-
-    return SV_OK;
 }
 
 dd_bool SV_SaveGame(int slot, char const *description)
@@ -2837,9 +2852,10 @@ dd_bool SV_SaveGame(int slot, char const *description)
 
     SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_FromTextStd(description));
 
-    int saveError = saveStateWorker(path, info);
-    if(!saveError)
+    try
     {
+        saveGameState(path, info);
+
         // Swap the save info.
         saveSlots.replaceSaveInfo(logicalSlot, info);
 
@@ -2848,21 +2864,20 @@ dd_bool SV_SaveGame(int slot, char const *description)
         saveSlots.copySlot(logicalSlot, slot);
 #endif
 
-        // The "last" save slot is now this.
+        // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
+
+        return true;
     }
-    else
+    catch(de::Error const &er)
     {
-        // We no longer need the info.
-        delete info;
-
-        if(saveError == SV_INVALIDFILENAME)
-        {
-            App_Log(DE2_RES_ERROR, "Failed opening \"%s\" for writing", Str_Text(path));
-        }
+        App_Log(DE2_RES_WARNING, "Error writing to save slot #%i:\n%s", slot, er.asText());
     }
 
-    return !saveError;
+    // Discard the useless save info.
+    delete info;
+
+    return false;
 }
 
 #if __JHEXEN__
@@ -2870,7 +2885,7 @@ void SV_HxSaveHubMap()
 {
     playerHeaderOK = false; // Uninitialized.
 
-    SV_OpenFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 
     // Set the mobj archive numbers
     initThingArchiveForSave(true /*exclude players*/);
@@ -2900,7 +2915,21 @@ void SV_HxLoadHubMap()
     Reader *reader = SV_NewReader();
 
     // Been here before, load the previous map state.
-    readMapState(reader, info->version(), saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap+1));
+    try
+    {
+        openMapSaveFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap + 1));
+
+        MapStateReader(info->version()).read(reader);
+
+#if __JHEXEN__
+        clearThingArchive();
+        Z_Free(saveBuffer);
+#endif
+    }
+    catch(de::Error const &er)
+    {
+        App_Log(DE2_RES_WARNING, "Error loading hub map save state:\n%s", er.asText());
+    }
 
     Reader_Delete(reader);
 }
@@ -2925,8 +2954,7 @@ void SV_HxBackupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
     }
 }
 
-void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
-    uint entryPoint)
+void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance)
 {
     DENG_ASSERT(playerBackup != 0);
 
@@ -2989,7 +3017,7 @@ void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
         }
         else
         {
-            if(playerstart_t const *start = P_GetPlayerStart(entryPoint, i, false))
+            if(playerstart_t const *start = P_GetPlayerStart(mapEntrance, i, false))
             {
                 mapspot_t const *spot = &mapSpots[start->spot];
                 P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],

@@ -29,6 +29,7 @@
  * Performs saved game map state deserialization.
  *
  * @ingroup libcommon
+ * @see MapStateWriter
  */
 class MapStateReader
 {

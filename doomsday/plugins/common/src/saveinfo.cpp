@@ -162,9 +162,9 @@ uint SaveInfo::sessionId() const
     return _sessionId;
 }
 
-void SaveInfo::setSessionId(uint newGameId)
+void SaveInfo::setSessionId(uint newSessionId)
 {
-    _sessionId = newGameId;
+    _sessionId = newSessionId;
 }
 
 Uri const *SaveInfo::mapUri() const
@@ -341,23 +341,19 @@ void SaveInfo::read(Reader *reader)
 #if __JHEXEN__
 void SaveInfo::read_Hx_v9(Reader *reader)
 {
-# define HXS_VERSION_TEXT           "HXS Ver " // Do not change me!
-# define HXS_VERSION_TEXT_LENGTH    16
-# define HXS_NAME_LENGTH            24
+    char descBuf[24 + 1];
+    Reader_Read(reader, descBuf, 24); descBuf[24] = 0;
+    Str_Set(&_description, descBuf);
 
-    char verText[HXS_VERSION_TEXT_LENGTH];
-    char nameBuffer[HXS_NAME_LENGTH];
+    _magic     = MY_SAVE_MAGIC; // Lets pretend...
 
-    Reader_Read(reader, nameBuffer, HXS_NAME_LENGTH);
-    Str_Set(&_description, nameBuffer);
+    char verText[16 + 1]; // "HXS Ver "
+    Reader_Read(reader, &verText, 16); descBuf[16] = 0;
+    _version   = atoi(&verText[8]);
 
-    Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
-    _version  = atoi(&verText[8]);
+    _gameMode  = gameMode; // Assume the current mode.
 
     /*Skip junk*/ SV_Seek(4);
-
-    _magic    = MY_SAVE_MAGIC; // Lets pretend...
-    _gameMode = gameMode; // Assume the current mode.
 
     uint episode = 0;
     uint map     = Reader_ReadByte(reader) - 1;
@@ -374,11 +370,7 @@ void SaveInfo::read_Hx_v9(Reader *reader)
     _gameRules.noMonsters    = Reader_ReadByte(reader);
     _gameRules.randomClasses = Reader_ReadByte(reader);
 
-    _sessionId  = 0; // None.
-
-# undef HXS_NAME_LENGTH
-# undef HXS_VERSION_TEXT_LENGTH
-# undef HXS_VERSION_TEXT
+    _sessionId = 0; // None.
 }
 #endif
 
@@ -407,16 +399,16 @@ SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other)
     return info;
 }
 
-uint SaveInfo_GameId(SaveInfo const *info)
+uint SaveInfo_SessionId(SaveInfo const *info)
 {
     DENG_ASSERT(info != 0);
     return info->sessionId();
 }
 
-void SaveInfo_SetGameId(SaveInfo *info, uint newGameId)
+void SaveInfo_SetSessionId(SaveInfo *info, uint newSessionId)
 {
     DENG_ASSERT(info != 0);
-    info->setSessionId(newGameId);
+    info->setSessionId(newSessionId);
 }
 
 Str const *SaveInfo_Description(SaveInfo const *info)

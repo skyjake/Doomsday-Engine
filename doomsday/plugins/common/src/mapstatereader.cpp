@@ -58,6 +58,8 @@ DENG2_PIMPL(MapStateReader)
             /// @throw ReadError Failed alignment check.
             throw ReadError("MapStateReader::checkSegment", "Corrupt save game, segment " + de::String::number(segId) + " failed alignment check");
         }
+#else
+        DENG_UNUSED(segId);
 #endif
     }
 

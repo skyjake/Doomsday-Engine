@@ -53,12 +53,12 @@ dd_bool SV_HxHaveMapStateForSlot(int slot, uint map);
 /**
  * Save the current game state to the specified @a slot number.
  *
- * @param name  Textual description to include in the save info. Can be @c 0
- *              in which case a description will be auto-generated.
+ * @param description  Textual description to include in the save info. Can be @c 0
+ *                     in which case a description will be auto-generated.
  *
  * @return  @c true iff the game state was saved successfully.
  */
-dd_bool SV_SaveGame(int slot, char const *name);
+dd_bool SV_SaveGame(int slot, char const *description);
 
 /**
  * Load the game state associated with the specified @a slot number.
@@ -117,7 +117,6 @@ mobj_t *SV_GetArchiveThing(ThingSerialId thingid, void *address);
 void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver);
 
 #if __JHEXEN__
-void SV_HxInitBaseSlot(void);
 void SV_HxSaveHubMap(void);
 void SV_HxLoadHubMap(void);
 
@@ -131,9 +130,9 @@ void SV_HxBackupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS]);
 
 /**
  * @param playerBackup  Player state backup.
- * @param entryPoint  Logical identifier for the entry point used to enter the map.
+ * @param mapEntrance   Logical entry point number used to enter the map.
  */
-void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint entryPoint);
+void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance);
 #endif
 
 void SV_InitThingArchiveForLoad(uint size);

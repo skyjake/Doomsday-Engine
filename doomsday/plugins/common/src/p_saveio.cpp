@@ -345,6 +345,8 @@ void SV_AssertSegment(int segmentId)
     {
         Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
     }
+#else
+    DENG_UNUSED(segmentId);
 #endif
 }
 
@@ -353,6 +355,8 @@ void SV_BeginSegment(int segType)
     errorIfNotInited("SV_BeginSegment");
 #if __JHEXEN__
     SV_WriteLong(segType);
+#else
+    DENG_UNUSED(segType);
 #endif
 }
 

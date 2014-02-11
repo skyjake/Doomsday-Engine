@@ -52,7 +52,7 @@ DENG2_PIMPL(SaveSlots)
 
     ~Instance()
     {
-        self.clearSaveInfo();
+        self.clearAllSaveInfo();
     }
 
     /// Determines whether to announce when the specified @a slot is cleared.
@@ -147,7 +147,7 @@ DENG2_PIMPL(SaveSlots)
 SaveSlots::SaveSlots(int slotCount) : d(new Instance(this, slotCount))
 {}
 
-void SaveSlots::clearSaveInfo()
+void SaveSlots::clearAllSaveInfo()
 {
     DENG2_FOR_EACH(Instance::Infos, i, d->infos)
     {
@@ -155,15 +155,9 @@ void SaveSlots::clearSaveInfo()
     }
     d->infos.clear();
 
-    if(d->autoInfo)
-    {
-        delete d->autoInfo; d->autoInfo = 0;
-    }
+    delete d->autoInfo; d->autoInfo = 0;
 #if __JHEXEN__
-    if(d->baseInfo)
-    {
-        delete d->baseInfo; d->baseInfo = 0;
-    }
+    delete d->baseInfo; d->baseInfo = 0;
 #endif
 
     // Reset last-used and quick-save slot tracking.
@@ -402,10 +396,10 @@ void SaveSlots_Delete(SaveSlots *sslots)
     delete sslots;
 }
 
-void SaveSlots_ClearSaveInfo(SaveSlots *sslots)
+void SaveSlots_ClearAllSaveInfo(SaveSlots *sslots)
 {
     DENG_ASSERT(sslots != 0);
-    sslots->clearSaveInfo();
+    sslots->clearAllSaveInfo();
 }
 
 void SaveSlots_UpdateAllSaveInfo(SaveSlots *sslots)

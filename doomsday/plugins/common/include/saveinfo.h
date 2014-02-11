@@ -76,7 +76,7 @@ public:
      * @see G_GenerateSessionId()
      */
     uint sessionId() const;
-    void setSessionId(uint newGameId);
+    void setSessionId(uint newSessionId);
 
     /**
      * Returns the URI of the @em current map of the game session.
@@ -142,8 +142,8 @@ SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
 dd_bool SaveInfo_IsLoadable(SaveInfo *info);
 Str const *SaveInfo_Description(SaveInfo const *info);
 void SaveInfo_SetDescription(SaveInfo *info, Str const *newName);
-uint SaveInfo_GameId(SaveInfo const *info);
-void SaveInfo_SetGameId(SaveInfo *info, uint newGameId);
+uint SaveInfo_SessionId(SaveInfo const *info);
+void SaveInfo_SetSessionId(SaveInfo *info, uint newSessionId);
 void SaveInfo_Write(SaveInfo *info, Writer *writer);
 void SaveInfo_Read(SaveInfo *info, Reader *reader);
 #if __JHEXEN__

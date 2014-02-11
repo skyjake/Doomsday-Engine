@@ -2165,7 +2165,7 @@ void G_DoReborn(int plrNum)
 static void G_InitNewGame(void)
 {
 #if __JHEXEN__
-    SV_HxInitBaseSlot();
+    SaveSlots_ClearSlot(saveSlots, BASE_SLOT);
 #endif
 
     /// @todo Do not clear this save slot. Instead we should set a game state

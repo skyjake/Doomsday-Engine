@@ -48,7 +48,7 @@ public:
      */
     SaveSlots(int numSlots);
 
-    void clearSaveInfo();
+    void clearAllSaveInfo();
 
     /**
      * Force an update of the cached game-save info. To be called (sparingly) at strategic
@@ -66,11 +66,15 @@ public:
 
     /**
      * Returns @c true iff @a slot is a valid logical slot number (in range).
+     *
+     * @see slotCount()
      */
     bool isValidSlot(int slot) const;
 
     /**
      * Composes the textual identifier/name for save @a slot.
+     *
+     * @see parseSlotIdentifier()
      */
     AutoStr *composeSlotIdentifier(int slot) const;
 
@@ -87,7 +91,9 @@ public:
      *                 <quick> = The currently nominated "quick save" slot.
      *             Pass 3: Check for a logical save slot number.
      *
-     * @return  Save slot identifier of the slot else @c -1
+     * @return  The parsed slot number if valid; otherwise @c -1
+     *
+     * @see composeSlotIdentifier()
      */
     int parseSlotIdentifier(char const *str) const;
 
@@ -95,25 +101,27 @@ public:
      * Lookup a save slot by searching for a match on game-save description. The search is in
      * ascending logical slot order 0...N (where N is the number of available save slots).
      *
-     * @param description  Description of the game-save to look for. Case insensitive.
+     * @param description  Description of the game-save to look for (not case sensitive).
      *
      * @return  Logical slot number of the found game-save else @c -1
      */
     int findSlotWithSaveDescription(char const *description) const;
 
     /**
-     * Returns @c true iff a game-save is present for logical save @a slot.
+     * Returns @c true iff a saved game state exists for save @a slot.
      */
     bool slotInUse(int slot) const;
 
     /**
-     * Returns @c true iff @a slot is user-writable save slot (i.e., its not one of the special
-     * slots such as @em auto).
+     * Returns @c true iff save @a slot is user-writable (i.e., not a special slot, such as
+     * the @em auto and @em base slots).
      */
     bool slotIsUserWritable(int slot) const;
 
     /**
      * Returns the SaveInfo associated with the logical save @a slot.
+     *
+     * @see isValidSlot()
      */
     SaveInfo &saveInfo(int slot) const;
 
@@ -122,7 +130,9 @@ public:
     }
 
     /**
-     * Deletes all save game files associated with a slot number.
+     * Deletes all save game files associated with the specified save @a slot.
+     *
+     * @see isValidSlot()
      */
     void clearSlot(int slot);
 
@@ -138,9 +148,9 @@ public:
     void copySlot(int sourceSlot, int destSlot);
 
     /**
-     * Compose the (possibly relative) path to save state associated with the logical save @a slot.
+     * Compose the (possibly relative) file path to the game state associated with save @a slot.
      *
-     * @param slot  Logical save slot identifier.
+     * @param slot  Slot to compose the identifier of.
      * @param map   If @c >= 0 include this logical map index in the composed path.
      *
      * @return  The composed path if reachable (else a zero-length string).
@@ -171,8 +181,7 @@ typedef void *SaveSlots;
 SaveSlots *SaveSlots_New(int slotCount);
 void SaveSlots_Delete(SaveSlots *sslots);
 
-void SaveSlots_ClearSaveInfo(SaveSlots *sslots);
-void SaveSlots_BuildSaveInfo(SaveSlots *sslots);
+void SaveSlots_ClearAllSaveInfo(SaveSlots *sslots);
 void SaveSlots_UpdateAllSaveInfo(SaveSlots *sslots);
 int SaveSlots_SlotCount(SaveSlots const *sslots);
 dd_bool SaveSlots_IsValidSlot(SaveSlots const *sslots, int slot);

@@ -356,6 +356,7 @@ static void P_v19_UnArchivePlayers()
 static Uri *readTextureUrn(Reader *reader, char const *schemeName)
 {
     DENG_ASSERT(reader != 0 && schemeName != 0);
+    DENG_UNUSED(reader);
     return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", schemeName, Reader_ReadInt16(svReader))), RC_NULL);
 }
 
@@ -422,7 +423,7 @@ static void P_v19_UnArchiveWorld()
     }
 }
 
-static int removeThinker(thinker_t *th, void *context)
+static int removeThinker(thinker_t *th, void * /*context*/)
 {
     if(th->function == (thinkfunc_t) P_MobjThinker)
     {

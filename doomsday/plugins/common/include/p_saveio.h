@@ -43,11 +43,6 @@ typedef enum savestatesegment_e {
     ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
 
-enum {
-    SV_OK = 0,
-    SV_INVALIDFILENAME
-};
-
 #ifdef __cplusplus
 extern "C" {
 #endif
