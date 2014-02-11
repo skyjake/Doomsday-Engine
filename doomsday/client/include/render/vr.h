@@ -23,7 +23,7 @@
 #include "dd_types.h"
 #include <de/VRConfig>
 
-extern de::VRConfig vrCfg;
+de::VRConfig &vrCfg();
 
 namespace VR
 {

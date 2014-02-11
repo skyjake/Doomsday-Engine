@@ -20,9 +20,9 @@
 #include "de_console.h"
 #include "render/vr.h"
 
-using namespace de;
+#include <de/BaseGuiApp>
 
-VRConfig vrCfg; // global
+using namespace de;
 
 namespace VR {
     float weaponDistance = 10.f; // global
@@ -40,6 +40,12 @@ static byte  vrSwapEyes;
 static float vrDominantEye;
 static byte  autoLoadRiftParams = 1;
 
+VRConfig &vrCfg()
+{
+    DENG2_ASSERT(DENG2_BASE_GUI_APP != 0);
+    return DENG2_BASE_GUI_APP->vr();
+}
+
 float VR_RiftFovX()
 {
     return vrRiftFovX;
@@ -47,20 +53,20 @@ float VR_RiftFovX()
 
 static void vrConfigVariableChanged()
 {
-    vrCfg.setDominantEye(vrDominantEye);
-    vrCfg.setScreenDistance(vrHudDistance);
-    vrCfg.setInterpupillaryDistance(vrIpd);
-    vrCfg.setPhysicalPlayerHeight(vrPlayerHeight);
-    vrCfg.oculusRift().setPredictionLatency(vrRiftLatency);
-    vrCfg.setRiftFramebufferSampleCount(vrRiftFBSamples);
-    vrCfg.setSwapEyes(vrSwapEyes);
+    vrCfg().setDominantEye(vrDominantEye);
+    vrCfg().setScreenDistance(vrHudDistance);
+    vrCfg().setInterpupillaryDistance(vrIpd);
+    vrCfg().setPhysicalPlayerHeight(vrPlayerHeight);
+    vrCfg().oculusRift().setPredictionLatency(vrRiftLatency);
+    vrCfg().setRiftFramebufferSampleCount(vrRiftFBSamples);
+    vrCfg().setSwapEyes(vrSwapEyes);
 }
 
 // Interplay among vrNonRiftFovX, vrRiftFovX, and cameraFov depends on vrMode
 // see also rend_main.cpp
 static void vrModeChanged()
 {
-    vrCfg.setMode(VRConfig::StereoMode(vrMode));
+    vrCfg().setMode(VRConfig::StereoMode(vrMode));
 
     if(ClientWindow::mainExists())
     {
@@ -77,7 +83,7 @@ static void vrModeChanged()
             Con_SetFloat("rend-camera-fov", vrRiftFovX);
 
         // Update prediction latency.
-        vrCfg.oculusRift().setPredictionLatency(vrRiftLatency);
+        vrCfg().oculusRift().setPredictionLatency(vrRiftLatency);
     }
     else
     {
@@ -88,7 +94,7 @@ static void vrModeChanged()
 
 static void vrRiftFovXChanged()
 {
-    if(vrCfg.mode() == VRConfig::OculusRift)
+    if(vrCfg().mode() == VRConfig::OculusRift)
     {
         if(Con_GetFloat("rend-camera-fov") != vrRiftFovX)
             Con_SetFloat("rend-camera-fov", vrRiftFovX);
@@ -97,7 +103,7 @@ static void vrRiftFovXChanged()
 
 static void vrNonRiftFovXChanged()
 {
-    if(vrCfg.mode() != VRConfig::OculusRift)
+    if(vrCfg().mode() != VRConfig::OculusRift)
     {
         if(Con_GetFloat("rend-camera-fov") != vrNonRiftFovX)
             Con_SetFloat("rend-camera-fov", vrNonRiftFovX);
@@ -112,13 +118,13 @@ D_CMD(LoadRiftParams)
 void VR_ConsoleRegister()
 {
     // Get the built-in defaults.
-    vrDominantEye   = vrCfg.dominantEye();
-    vrHudDistance   = vrCfg.screenDistance();
-    vrIpd           = vrCfg.interpupillaryDistance();
-    vrPlayerHeight  = vrCfg.physicalPlayerHeight();
-    vrRiftLatency   = vrCfg.oculusRift().predictionLatency();
-    vrRiftFBSamples = vrCfg.riftFramebufferSampleCount();
-    vrSwapEyes      = vrCfg.swapEyes();
+    vrDominantEye   = vrCfg().dominantEye();
+    vrHudDistance   = vrCfg().screenDistance();
+    vrIpd           = vrCfg().interpupillaryDistance();
+    vrPlayerHeight  = vrCfg().physicalPlayerHeight();
+    vrRiftLatency   = vrCfg().oculusRift().predictionLatency();
+    vrRiftFBSamples = vrCfg().riftFramebufferSampleCount();
+    vrSwapEyes      = vrCfg().swapEyes();
 
     /**
      * @todo When old-style console variables become obsolete, VRConfig should expose
@@ -147,7 +153,7 @@ void VR_ConsoleRegister()
 
 bool VR_LoadRiftParameters()
 {
-    de::OculusRift &ovr = vrCfg.oculusRift();
+    de::OculusRift &ovr = vrCfg().oculusRift();
 
     if(ovr.isReady())
     {

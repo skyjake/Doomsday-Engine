@@ -293,7 +293,7 @@ static void unlinkMobjLumobjs()
 
 static void fieldOfViewChanged()
 {
-    if(vrCfg.mode() == VRConfig::OculusRift)
+    if(vrCfg().mode() == VRConfig::OculusRift)
     {
         if(Con_GetFloat("rend-vr-rift-fovx") != fieldOfView)
             Con_SetFloat("rend-vr-rift-fovx", fieldOfView);
@@ -486,7 +486,7 @@ bool Rend_IsMTexDetails()
 
 float Rend_FieldOfView()
 {
-    if(vrCfg.mode() == VRConfig::OculusRift)
+    if(vrCfg().mode() == VRConfig::OculusRift)
     {
         // fieldOfView = VR::riftFovX(); // Update for culling
         // return VR::riftFovX();
@@ -540,9 +540,9 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
              * these values and is syncing with them independently (however, game has more
              * latency).
              */
-            if((vrCfg.mode() == VRConfig::OculusRift) && vrCfg.oculusRift().isReady())
+            if((vrCfg().mode() == VRConfig::OculusRift) && vrCfg().oculusRift().isReady())
             {
-                Vector3f const pry = vrCfg.oculusRift().headOrientation();
+                Vector3f const pry = vrCfg().oculusRift().headOrientation();
 
                 // Use angles directly from the Rift for best response.
                 roll  = -radianToDegree(pry[1]);

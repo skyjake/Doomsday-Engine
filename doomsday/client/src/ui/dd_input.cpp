@@ -1556,8 +1556,8 @@ void DD_ReadHeadTracker(void)
     I_GetDevice(IDEV_HEAD_TRACKER)->flags |= ID_ACTIVE;
 
     // Get the latest values.
-    vrCfg.oculusRift().allowUpdate();
-    vrCfg.oculusRift().update();
+    vrCfg().oculusRift().allowUpdate();
+    vrCfg().oculusRift().update();
 
     ddevent_t ev;
 
@@ -1565,7 +1565,7 @@ void DD_ReadHeadTracker(void)
     ev.type = E_AXIS;
     ev.axis.type = EAXIS_ABSOLUTE;
 
-    Vector3f const pry = vrCfg.oculusRift().headOrientation();
+    Vector3f const pry = vrCfg().oculusRift().headOrientation();
 
     // Yaw (1.0 means 180 degrees).
     ev.axis.id = 0; // Yaw.

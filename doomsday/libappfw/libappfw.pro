@@ -70,6 +70,8 @@ HEADERS += \
     include/de/SliderWidget \
     include/de/TextDrawable \
     include/de/ToggleWidget \
+    include/de/VRWindowTransform \
+    include/de/WindowTransform \
     include/de/ui/ActionItem \
     include/de/ui/Data \
     include/de/ui/Item \
@@ -109,6 +111,8 @@ HEADERS += \
     include/de/framework/subwidgetitem.h \
     include/de/framework/textdrawable.h \
     include/de/framework/variabletoggleitem.h \
+    include/de/framework/vrwindowtransform.h \
+    include/de/framework/windowtransform.h \
     include/de/libappfw.h \
     include/de/ui/defs.h \
     include/de/vr/oculusrift.h \
@@ -138,11 +142,13 @@ HEADERS += \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
     include/de/widgets/variabletogglewidget.h \
-    include/de/vr/vrconfig.h
+    include/de/vr/vrconfig.h \
+    include/de/framework/basewindow.h
 
 # Sources and private headers.
 SOURCES += \
     src/baseguiapp.cpp \
+    src/basewindow.cpp \
     src/childwidgetorganizer.cpp \
     src/data.cpp \
     src/dialogcontentstylist.cpp \
@@ -161,6 +167,7 @@ SOURCES += \
     src/signalaction.cpp \
     src/style.cpp \
     src/textdrawable.cpp \
+    src/vrwindowtransform.cpp \
     src/vr/oculusrift.cpp \
     src/vr/vrconfig.cpp \
     src/widgets/blurwidget.cpp \
@@ -187,7 +194,8 @@ SOURCES += \
     src/widgets/sliderwidget.cpp \
     src/widgets/togglewidget.cpp \
     src/widgets/variablechoicewidget.cpp \
-    src/widgets/variabletogglewidget.cpp
+    src/widgets/variabletogglewidget.cpp \
+    src/windowtransform.cpp
 
 # Installation ---------------------------------------------------------------
 

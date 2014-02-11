@@ -1,5 +1,6 @@
-/** @file windowtransform.cpp Base class for window content transformation.
+/** @file vrwindowtransform.h  Window content transformation for virtual reality.
  *
+ * @authors Copyright (c) 2013 Christopher Bruns <cmbruns@rotatingpenguin.com>
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -16,48 +17,33 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/windowtransform.h"
-#include "ui/clientwindow.h"
+#ifndef LIBAPPFW_VRWINDOWTRANSFORM_H
+#define LIBAPPFW_VRWINDOWTRANSFORM_H
 
-using namespace de;
+#include "../WindowTransform"
 
-DENG2_PIMPL_NOREF(WindowTransform)
+namespace de {
+
+/**
+ * Window content transformation for virtual reality.
+ */
+class VRWindowTransform : public WindowTransform
 {
-    ClientWindow *win;
+public:
+    VRWindowTransform(BaseWindow &window);
+
+    void glInit();
+    void glDeinit();
+
+    Vector2ui logicalRootSize(Vector2ui const &physicalCanvasSize) const;
+    Vector2f windowToLogicalCoords(Vector2i const &pos) const;
+
+    void drawTransformed();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-WindowTransform::WindowTransform(ClientWindow &window)
-    : d(new Instance)
-{
-    d->win = &window;
-}
+} // namespace de
 
-ClientWindow &WindowTransform::window() const
-{
-    return *d->win;
-}
-
-void WindowTransform::glInit()
-{
-    // nothing to do
-}
-
-void WindowTransform::glDeinit()
-{
-    // nothing to do
-}
-
-Vector2ui WindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize) const
-{
-    return physicalCanvasSize;
-}
-
-Vector2f WindowTransform::windowToLogicalCoords(de::Vector2i const &pos) const
-{
-    return pos;
-}
-
-void WindowTransform::drawTransformed()
-{
-    return d->win->root().draw();
-}
+#endif // LIBAPPFW_VRWINDOWTRANSFORM_H

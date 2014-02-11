@@ -70,7 +70,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
         area.add(ipd = new CVarSliderWidget("rend-vr-ipd"));
         ipd->setDisplayFactor(1000);
 
-        if(vrCfg.oculusRift().isReady())
+        if(vrCfg().oculusRift().isReady())
         {
             area.add(riftPredictionLatency = new CVarSliderWidget("rend-vr-rift-latency"));
             riftPredictionLatency->setDisplayFactor(1000);
@@ -121,7 +121,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << Const(0)       << *d->swapEyes
            << *sampleLabel   << *d->riftSamples;
 
-    if(vrCfg.oculusRift().isReady())
+    if(vrCfg().oculusRift().isReady())
     {
         LabelWidget *ovrLabel     = LabelWidget::newWithText(_E(1)_E(D) + tr("Oculus Rift"), &area());
         LabelWidget *latencyLabel = LabelWidget::newWithText(tr("Prediction Latency:"), &area());

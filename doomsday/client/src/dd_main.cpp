@@ -2374,7 +2374,7 @@ int DD_GetInteger(int ddvalue)
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
 
     case DD_USING_HEAD_TRACKING:
-        return vrCfg.mode() == VRConfig::OculusRift && vrCfg.oculusRift().isReady();
+        return vrCfg().mode() == VRConfig::OculusRift && vrCfg().oculusRift().isReady();
 #endif
 
     case DD_NUMLUMPS:
