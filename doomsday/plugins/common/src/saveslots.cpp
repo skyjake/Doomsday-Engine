@@ -22,9 +22,9 @@
 #include "saveslots.h"
 
 #include "p_saveio.h"
-#include "p_saveg.h" /// SV_RecogniseGameState, @todo remove me
+#include "p_saveg.h" /// SV_RecognizeGameState, @todo remove me
 #include <de/String>
-#include <de/memory.h>
+#include <vector>
 
 #define MAX_HUB_MAPS 99
 
@@ -34,19 +34,19 @@ static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 DENG2_PIMPL(SaveSlots)
 {
     int slotCount;
-    SaveInfo **saveInfo;
-    SaveInfo *autoSaveInfo;
+    typedef std::vector<SaveInfo *> Infos;
+    Infos infos;
+    SaveInfo *autoInfo;
 #if __JHEXEN__
-    SaveInfo *baseSaveInfo;
+    SaveInfo *baseInfo;
 #endif
 
     Instance(Public *i, int slotCount)
         : Base(i)
         , slotCount(de::max(1, slotCount))
-        , saveInfo(0)
-        , autoSaveInfo(0)
+        , autoInfo(0)
 #if __JHEXEN__
-        , baseSaveInfo(0)
+        , baseInfo(0)
 #endif
     {}
 
@@ -55,12 +55,10 @@ DENG2_PIMPL(SaveSlots)
         self.clearSaveInfo();
     }
 
-    /**
-     * Determines whether to announce when the specified @a slot is cleared.
-     */
-    bool announceOnClearingSlot(int slot)
+    /// Determines whether to announce when the specified @a slot is cleared.
+    bool shouldAnnounceWhenClearing(int slot)
     {
-#if _DEBUG
+#ifdef DENG_DEBUG
         return true; // Always.
 #endif
 #if __JHEXEN__
@@ -70,19 +68,30 @@ DENG2_PIMPL(SaveSlots)
 #endif
     }
 
-    void updateSaveInfo(Str const *path, SaveInfo &info)
+    SaveInfo **infoAdrForSlot(int slot)
+    {
+        buildInfosIfNeeded();
+
+        if(slot == AUTO_SLOT) return &autoInfo;
+#if __JHEXEN__
+        if(slot == BASE_SLOT) return &baseInfo;
+#endif
+        return &infos[slot];
+    }
+
+    void updateInfo(Str const *path, SaveInfo &info)
     {
         if(!path || Str_IsEmpty(path))
         {
-            // The save path cannot be accessed for some reason. Perhaps its a
-            // network path? Clear the info for this slot.
+            // The save path cannot be accessed for some reason. Perhaps its a network path?
+            // Clear the info for this slot.
             info.setDescription(0);
             info.setSessionId(0);
             return;
         }
 
-        // Is this a recognisable save state?
-        if(!SV_RecogniseGameState(path, &info))
+        // Is this a recognized game state?
+        if(!SV_RecognizeGameState(path, &info))
         {
             // Clear the info for this slot.
             info.setDescription(0);
@@ -98,34 +107,40 @@ DENG2_PIMPL(SaveSlots)
     }
 
     /// Re-build save info by re-scanning the save paths and populating the list.
-    void buildSaveInfo()
+    void buildInfos()
     {
-        if(!saveInfo)
+        if(infos.empty())
         {
             // Not yet been here. We need to allocate and initialize the game-save info list.
-            saveInfo = (SaveInfo **)M_Malloc(slotCount * sizeof(*saveInfo));
-
             for(int i = 0; i < slotCount; ++i)
             {
-                saveInfo[i] = new SaveInfo;
+                infos.push_back(new SaveInfo);
             }
-            autoSaveInfo = new SaveInfo;
+            autoInfo = new SaveInfo;
 #if __JHEXEN__
-            baseSaveInfo = new SaveInfo;
+            baseInfo = new SaveInfo;
 #endif
         }
 
-        /// Scan the save paths and populate the list.
-        /// @todo We should look at all files on the save path and not just those
-        /// which match the default game-save file naming convention.
-        for(int i = 0; i < slotCount; ++i)
+        // Scan the save paths and populate the list.
+        /// @todo We should look at all files on the save path and not just those which match
+        /// the default game-save file naming convention.
+        for(int i = 0; i < (signed)infos.size(); ++i)
         {
-            updateSaveInfo(self.composeSavePathForSlot(i), *saveInfo[i]);
+            updateInfo(self.composeSavePathForSlot(i), *infos[i]);
         }
-        updateSaveInfo(self.composeSavePathForSlot(AUTO_SLOT), *autoSaveInfo);
+        updateInfo(self.composeSavePathForSlot(AUTO_SLOT), *autoInfo);
 #if __JHEXEN__
-        updateSaveInfo(self.composeSavePathForSlot(BASE_SLOT), *baseSaveInfo);
+        updateInfo(self.composeSavePathForSlot(BASE_SLOT), *baseInfo);
 #endif
+    }
+
+    void buildInfosIfNeeded()
+    {
+        if(infos.empty())
+        {
+            buildInfos();
+        }
     }
 };
 
@@ -134,23 +149,20 @@ SaveSlots::SaveSlots(int slotCount) : d(new Instance(this, slotCount))
 
 void SaveSlots::clearSaveInfo()
 {
-    if(d->saveInfo)
+    DENG2_FOR_EACH(Instance::Infos, i, d->infos)
     {
-        for(int i = 0; i < d->slotCount; ++i)
-        {
-            delete d->saveInfo[i];
-        }
-        M_Free(d->saveInfo); d->saveInfo = 0;
+        delete *i;
     }
+    d->infos.clear();
 
-    if(d->autoSaveInfo)
+    if(d->autoInfo)
     {
-        delete d->autoSaveInfo; d->autoSaveInfo = 0;
+        delete d->autoInfo; d->autoInfo = 0;
     }
 #if __JHEXEN__
-    if(d->baseSaveInfo)
+    if(d->baseInfo)
     {
-        delete d->baseSaveInfo; d->baseSaveInfo = 0;
+        delete d->baseInfo; d->baseInfo = 0;
     }
 #endif
 
@@ -161,7 +173,7 @@ void SaveSlots::clearSaveInfo()
 
 void SaveSlots::updateAllSaveInfo()
 {
-    d->buildSaveInfo();
+    d->buildInfos();
 }
 
 AutoStr *SaveSlots::composeSlotIdentifier(int slot) const
@@ -207,28 +219,21 @@ int SaveSlots::parseSlotIdentifier(char const *str) const
 
 int SaveSlots::findSlotWithSaveDescription(char const *description) const
 {
-    int slot = -1;
     if(description && description[0])
     {
         // On first call - automatically build and populate game-save info.
-        if(!d->saveInfo)
-        {
-            d->buildSaveInfo();
-        }
+        d->buildInfosIfNeeded();
 
-        int i = 0;
-        do
+        for(int i = 0; i < (signed)d->infos.size(); ++i)
         {
-            SaveInfo *info = d->saveInfo[i];
+            SaveInfo *info = d->infos[i];
             if(!Str_CompareIgnoreCase(info->description(), description))
             {
-                // This is the one!
-                slot = i;
+                return i;
             }
-        } while(-1 == slot && ++i < d->slotCount);
+        }
     }
-
-    return slot;
+    return -1; // Not found.
 }
 
 bool SaveSlots::slotInUse(int slot) const
@@ -270,19 +275,9 @@ SaveInfo &SaveSlots::saveInfo(int slot) const
         /// @throw InvalidSlotError An invalid slot was specified.
         throw InvalidSlotError("SaveSlots::saveInfo", "Invalid slot " + de::String::number(slot));
     }
-
-    // On first call - automatically build and populate game-save info.
-    if(!d->saveInfo)
-    {
-        d->buildSaveInfo();
-    }
-
-    // Retrieve the info for this slot.
-    if(slot == AUTO_SLOT) return *d->autoSaveInfo;
-#if __JHEXEN__
-    if(slot == BASE_SLOT) return *d->baseSaveInfo;
-#endif
-    return *d->saveInfo[slot];
+    SaveInfo **info = d->infoAdrForSlot(slot);
+    DENG_ASSERT(*info != 0);
+    return **info;
 }
 
 void SaveSlots::replaceSaveInfo(int slot, SaveInfo *newInfo)
@@ -292,25 +287,9 @@ void SaveSlots::replaceSaveInfo(int slot, SaveInfo *newInfo)
         /// @throw InvalidSlotError An invalid slot was specified.
         throw InvalidSlotError("SaveSlots::replaceSaveInfo", "Invalid slot " + de::String::number(slot));
     }
-
-    SaveInfo **destAdr;
-    if(slot == AUTO_SLOT)
-    {
-        destAdr = &d->autoSaveInfo;
-    }
-#if __JHEXEN__
-    else if(slot == BASE_SLOT)
-    {
-        destAdr = &d->baseSaveInfo;
-    }
-#endif
-    else
-    {
-        destAdr = &d->saveInfo[slot];
-    }
-
-    if(*destAdr) delete (*destAdr);
-    *destAdr = newInfo;
+    SaveInfo **infoAdr = d->infoAdrForSlot(slot);
+    if(*infoAdr) delete (*infoAdr);
+    *infoAdr = newInfo;
 }
 
 void SaveSlots::clearSlot(int slot)
@@ -321,7 +300,7 @@ void SaveSlots::clearSlot(int slot)
         throw InvalidSlotError("SaveSlots::clearSlot", "Invalid slot " + de::String::number(slot));
     }
 
-    if(d->announceOnClearingSlot(slot))
+    if(d->shouldAnnounceWhenClearing(slot))
     {
         AutoStr *ident = composeSlotIdentifier(slot);
         App_Log(DE2_RES_MSG, "Clearing save slot %s", Str_Text(ident));
@@ -336,7 +315,7 @@ void SaveSlots::clearSlot(int slot)
     AutoStr *path = composeSavePathForSlot(slot);
     SV_RemoveFile(path);
 
-    d->updateSaveInfo(path, saveInfo(slot));
+    d->updateInfo(path, saveInfo(slot));
 }
 
 void SaveSlots::copySlot(int sourceSlot, int destSlot)

@@ -40,7 +40,7 @@ void SV_Initialize(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-dd_bool SV_RecogniseGameState(Str const *path, SaveInfo *info);
+dd_bool SV_RecognizeGameState(Str const *path, SaveInfo *info);
 
 #if __JHEXEN__
 /**

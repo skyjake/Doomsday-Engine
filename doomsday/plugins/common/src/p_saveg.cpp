@@ -187,7 +187,7 @@ static bool recognizeNativeState(Str const *path, SaveInfo *info)
     return true;
 }
 
-dd_bool SV_RecogniseGameState(Str const *path, SaveInfo *info)
+dd_bool SV_RecognizeGameState(Str const *path, SaveInfo *info)
 {
     if(path && info)
     {
@@ -2565,14 +2565,14 @@ dd_bool SV_LoadGame(int slot)
     if(!saveSlots.isValidSlot(slot))
         return false;
 
+    App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slot);
+
     AutoStr *path = saveSlots.composeSavePathForSlot(slot);
     if(Str_IsEmpty(path))
     {
         App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable", SV_SavePath());
         return false;
     }
-
-    App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slot);
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot.
@@ -2586,14 +2586,14 @@ dd_bool SV_LoadGame(int slot)
 
     try
     {
-        SaveInfo &saveInfo = saveSlots.saveInfo(logicalSlot);
+        SaveInfo &info = saveSlots.saveInfo(logicalSlot);
 
-        loadGameState(path, saveInfo);
+        loadGameState(path, info);
 
         // Material scrollers must be re-spawned for older savegame versions.
         /// @todo Implement SaveInfo format type identifiers.
-        if((saveInfo.magic() != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
-           saveInfo.version() <= 10)
+        if((info.magic() != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
+           info.version() <= 10)
         {
             P_SpawnAllMaterialOriginScrollers();
         }
@@ -2604,7 +2604,7 @@ dd_bool SV_LoadGame(int slot)
             R_UpdateConsoleView(i);
         }
 
-        // Inform the engine to perform map setup once more.
+        // Inform the engine that map setup must be performed once more.
         R_SetupMap(0, 0);
 
         // Make note of the last used save slot.

@@ -113,7 +113,7 @@ public:
     bool slotIsUserWritable(int slot) const;
 
     /**
-     * Returns the SaveInfo associated the logical save @a slot.
+     * Returns the SaveInfo associated with the logical save @a slot.
      */
     SaveInfo &saveInfo(int slot) const;
 
