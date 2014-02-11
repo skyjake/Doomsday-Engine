@@ -56,19 +56,45 @@ public:
 public:
     VRConfig();
 
+    /**
+     * Sets the current stereoscopic rendering mode.
+     *
+     * @param newMode  Rendering mode.
+     */
     void setMode(StereoMode newMode);
 
+    /**
+     * Sets the distance from the eye to the screen onto which projection is being
+     * done. This used when calculating a frustum-shifted projection matrix.
+     * This is not used with Oculus Rift.
+     *
+     * @param distance  Distance.
+     */
     void setScreenDistance(float distance);
 
+    /**
+     * Sets the height of the eye in map units. This is used to determine how big an
+     * eye shift is needed.
+     *
+     * @param eyeHeightInMapUnits  Height of the eye in map units, measured from the
+     *                             "ground".
+     */
     void setEyeHeightInMapUnits(float eyeHeightInMapUnits);
 
     /**
-     * Sets the currently used IPD.
+     * Sets the currently used physical IPD. This is used to determine how big an
+     * eye shift is needed.
      *
      * @param ipd  IPD in mm.
      */
     void setInterpupillaryDistance(float ipd);
 
+    /**
+     * Sets the height of the player in the real world. This is used as a scaling
+     * factor to convert physical units to map units.
+     *
+     * @param heightInMeters  Height of the player in meters.
+     */
     void setPhysicalPlayerHeight(float heightInMeters);
 
     enum Eye {
@@ -77,10 +103,29 @@ public:
         RightEye
     };
 
+    /**
+     * Sets the eye currently used for rendering a frame. In stereoscopic modes,
+     * the frame is drawn twice; once for each eye.
+     *
+     * @param eye  Eye to render. In non-stereoscopic modes, NeitherEye is used.
+     */
     void setCurrentEye(Eye eye);
 
+    /**
+     * Enables or disables projection frustum shifting.
+     *
+     * @param enable @c true to enable.
+     */
     void enableFrustumShift(bool enable = true);
 
+    /**
+     * Sets the number of multisampling samples used in the offscreen framebuffer
+     * where Oculus Rift frames are first drawn. This framebuffer is typically some
+     * multiple of the Oculus Rift display resolution.
+     *
+     * @param samples  Number of samples to use for multisampling the Oculus Rift
+     *                 framebuffer.
+     */
     void setRiftFramebufferSampleCount(int samples);
 
     /**
@@ -99,13 +144,20 @@ public:
 
     float screenDistance() const;
 
+    /**
+     * Determines if the current stereoscopic rendering mode needs support from
+     * the graphics hardware for quad-buffering (left/right back and front
+     * buffers stored and drawn separately).
+     */
     bool needsStereoGLFormat() const;
 
     float interpupillaryDistance() const;
 
     float physicalPlayerHeight() const;
 
-    /// Local viewpoint relative eye position in map units.
+    /**
+     * Local viewpoint relative eye position in map units.
+     */
     float eyeShift() const;
 
     /**
