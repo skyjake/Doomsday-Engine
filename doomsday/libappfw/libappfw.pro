@@ -32,6 +32,7 @@ win32 {
 HEADERS += \
     include/de/AtlasProceduralImage \
     include/de/BaseGuiApp \
+    include/de/BaseWindow \
     include/de/BlurWidget \
     include/de/ButtonWidget \
     include/de/ChildWidgetOrganizer \
@@ -90,6 +91,7 @@ HEADERS += \
     include/de/framework/actionitem.h \
     include/de/framework/atlasproceduralimage.h \
     include/de/framework/baseguiapp.h \
+    include/de/framework/basewindow.h \
     include/de/framework/childwidgetorganizer.h \
     include/de/framework/data.h \
     include/de/framework/dialogcontentstylist.h \
@@ -142,8 +144,7 @@ HEADERS += \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
     include/de/widgets/variabletogglewidget.h \
-    include/de/vr/vrconfig.h \
-    include/de/framework/basewindow.h
+    include/de/vr/vrconfig.h
 
 # Sources and private headers.
 SOURCES += \
