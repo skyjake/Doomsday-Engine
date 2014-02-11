@@ -77,8 +77,6 @@ void SV_SaveGameClient(uint gameId);
 void SV_LoadGameClient(uint gameId);
 #endif
 
-uint SV_GenerateGameId(void);
-
 /// Unique identifier associated with each archived thing.
 #if __JHEXEN__
 typedef int ThingSerialId;

@@ -25,14 +25,17 @@
 #include "common.h"
 
 #ifdef __cplusplus
+
 /**
  * Saved game session info.
+ *
+ * @ingroup libcommon
  */
 class SaveInfo
 {
 public: /// @todo make private:
     Str _description;
-    uint _gameId;
+    uint _sessionId;
     int _magic;
     int _version;
     gamemode_t _gameMode;
@@ -47,6 +50,8 @@ public:
     SaveInfo();
     SaveInfo(SaveInfo const &other);
     ~SaveInfo();
+
+    static SaveInfo *newWithCurrentSessionMetadata(Str const *description);
 
     SaveInfo &operator = (SaveInfo const &other);
 
@@ -75,10 +80,10 @@ public:
     void setDescription(Str const *newDesc);
 
     /**
-     * @see SV_GenerateGameId()
+     * @see G_GenerateSessionId()
      */
-    uint gameId() const;
-    void setGameId(uint newGameId);
+    uint sessionId() const;
+    void setSessionId(uint newGameId);
 
     /**
      * Returns the URI of the @em current map of the game session.
@@ -134,19 +139,13 @@ SaveInfo *SaveInfo_Dup(SaveInfo const *other);
 void SaveInfo_Delete(SaveInfo *info);
 
 SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
-
 dd_bool SaveInfo_IsLoadable(SaveInfo *info);
-
 Str const *SaveInfo_Description(SaveInfo const *info);
 void SaveInfo_SetDescription(SaveInfo *info, Str const *newName);
-
 uint SaveInfo_GameId(SaveInfo const *info);
 void SaveInfo_SetGameId(SaveInfo *info, uint newGameId);
-
 void SaveInfo_Write(SaveInfo *info, Writer *writer);
-
 void SaveInfo_Read(SaveInfo *info, Reader *reader);
-
 #if __JHEXEN__
 void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader);
 #endif

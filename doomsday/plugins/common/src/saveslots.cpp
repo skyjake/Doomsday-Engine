@@ -114,7 +114,7 @@ DENG2_PIMPL(SaveSlots)
             // The save path cannot be accessed for some reason. Perhaps its a
             // network path? Clear the info for this slot.
             info->setDescription(0);
-            info->setGameId(0);
+            info->setSessionId(0);
             return;
         }
 
@@ -123,7 +123,7 @@ DENG2_PIMPL(SaveSlots)
         {
             // Clear the info for this slot.
             info->setDescription(0);
-            info->setGameId(0);
+            info->setSessionId(0);
             return;
         }
 
@@ -165,7 +165,7 @@ void SaveSlots::clearSaveInfo()
     }
 
     // Reset last-used and quick-save slot tracking.
-    Con_SetInteger("game-save-last-slot",  -1);
+    Con_SetInteger2("game-save-last-slot", -1, SVF_WRITE_OVERRIDE);
     Con_SetInteger("game-save-quick-slot", -1);
 }
 

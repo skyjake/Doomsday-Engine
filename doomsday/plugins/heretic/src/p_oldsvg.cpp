@@ -941,7 +941,7 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
     info->_gameRules.noMonsters      = 0;
     info->_gameRules.respawnMonsters = 0;
 
-    info->_gameId = 0; // None.
+    info->_sessionId = 0; // None.
 }
 
 static dd_bool SV_OpenFile_Hr_v13(char const *filePath)
@@ -970,7 +970,7 @@ static Reader *SV_NewReader_Hr_v13()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-dd_bool SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info)
+dd_bool SV_RecognizeState_Hr_v13(Str const *path, SaveInfo *info)
 {
     DENG_ASSERT(path != 0 && info != 0);
 

@@ -3154,6 +3154,11 @@ char const *P_GetGameModeName(void)
     return sp;
 }
 
+uint G_GenerateSessionId(void)
+{
+    return Timer_RealMilliseconds() + (mapTime << 24);
+}
+
 uint G_LogicalMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__

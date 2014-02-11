@@ -118,6 +118,10 @@ public:
      */
     void clearSlot(int slot);
 
+    /**
+     * @param slot     Slot to replace the info of.
+     * @param newInfo  New SaveInfo to replace with. Ownership is given.
+     */
     void replaceSaveInfo(int slot, SaveInfo *newInfo);
 
     /**

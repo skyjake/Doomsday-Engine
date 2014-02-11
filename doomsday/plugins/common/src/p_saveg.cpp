@@ -38,6 +38,7 @@
 #include "polyobjs.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
+#include <de/String>
 #include <de/memory.h>
 #include <lzss.h>
 #include <cstdio>
@@ -92,19 +93,20 @@ static byte *saveBuffer;
 #if !__JHEXEN__
 /**
  * Compose the (possibly relative) path to the game-save associated
- * with @a gameId.
+ * with @a sessionId.
  *
- * @param gameId  Unique game identifier.
+ * @param sessionId  Unique game-session identifier.
+ *
  * @return  File path to the reachable save directory. If the game-save path
  *          is unreachable then a zero-length string is returned instead.
  */
-static AutoStr *composeGameSavePathForClientGameId(uint gameId)
+static AutoStr *composeGameSavePathForClientSessionId(uint sessionId)
 {
     AutoStr *path = AutoStr_NewStd();
     // Do we have a valid path?
     if(!F_MakePath(SV_ClientSavePath())) return path; // return zero-length string.
     // Compose the full game-save path and filename.
-    Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), gameId);
+    Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), sessionId);
     F_TranslatePath(path, path);
     return path;
 }
@@ -130,7 +132,7 @@ static void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
     }
 }
 
-static bool recogniseNativeState(Str const *path, SaveInfo *info)
+static bool recognizeNativeState(Str const *path, SaveInfo *info)
 {
     DENG_ASSERT(path != 0 && info != 0);
 
@@ -189,16 +191,16 @@ dd_bool SV_RecogniseGameState(Str const *path, SaveInfo *info)
 {
     if(path && info)
     {
-        if(recogniseNativeState(path, info))
+        if(recognizeNativeState(path, info))
             return true;
 
         // Perhaps an original game state?
 #if __JDOOM__
-        if(SV_RecogniseState_Dm_v19(path, info))
+        if(SV_RecognizeState_Dm_v19(path, info))
             return true;
 #endif
 #if __JHERETIC__
-        if(SV_RecogniseState_Hr_v13(path, info))
+        if(SV_RecognizeState_Hr_v13(path, info))
             return true;
 #endif
     }
@@ -215,12 +217,6 @@ dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 }
 #endif
 
-void SV_CopySlot(int sourceSlot, int destSlot)
-{
-    DENG_ASSERT(inited);
-    saveSlots.copySlot(sourceSlot, destSlot);
-}
-
 #if __JHEXEN__
 void SV_HxInitBaseSlot()
 {
@@ -228,18 +224,13 @@ void SV_HxInitBaseSlot()
 }
 #endif
 
-uint SV_GenerateGameId()
-{
-    return Timer_RealMilliseconds() + (mapTime << 24);
-}
-
 void SV_InitThingArchiveForLoad(uint size)
 {
     thingArchiveSize = size;
     thingArchive = reinterpret_cast<mobj_t **>(M_Calloc(thingArchiveSize * sizeof(*thingArchive)));
 }
 
-struct countMobjThinkersToArchiveParms
+struct countmobjthinkerstoarchive_params_t
 {
     uint count;
     bool excludePlayers;
@@ -247,7 +238,7 @@ struct countMobjThinkersToArchiveParms
 
 static int countMobjThinkersToArchive(thinker_t *th, void *context)
 {
-    countMobjThinkersToArchiveParms *parms = (countMobjThinkersToArchiveParms *) context;
+    countmobjthinkerstoarchive_params_t *parms = (countmobjthinkerstoarchive_params_t *) context;
     if(!(Mobj_IsPlayer((mobj_t *) th) && parms->excludePlayers))
     {
         parms->count++;
@@ -258,7 +249,7 @@ static int countMobjThinkersToArchive(thinker_t *th, void *context)
 static void initThingArchiveForSave(bool excludePlayers = false)
 {
     // Count the number of things we'll be writing.
-    countMobjThinkersToArchiveParms parms;
+    countmobjthinkerstoarchive_params_t parms;
     parms.count = 0;
     parms.excludePlayers = excludePlayers;
     Thinker_Iterate((thinkfunc_t) P_MobjThinker, countMobjThinkersToArchive, &parms);
@@ -2312,7 +2303,7 @@ void SV_Initialize()
     }
 
     // Reset last-used and quick-save slot tracking.
-    Con_SetInteger("game-save-last-slot", -1);
+    Con_SetInteger2("game-save-last-slot", -1, SVF_WRITE_OVERRIDE);
     Con_SetInteger("game-save-quick-slot", -1);
 
     // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
@@ -2379,14 +2370,16 @@ static void readMapState(Reader *reader, int saveVersion)
 #endif
 }
 
-static int SV_LoadState(Str const *path, SaveInfo *info)
+static void loadNativeState(Str const *path, SaveInfo *info)
 {
     DENG_ASSERT(path != 0 && info != 0);
 
     playerHeaderOK = false; // Uninitialized.
 
     if(!openGameSaveFile(path, false))
-        return 1; // Failed?
+    {
+        throw de::Error("SV_LoadState", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
+    }
 
     Reader *reader = SV_NewReader();
 
@@ -2403,7 +2396,7 @@ static int SV_LoadState(Str const *path, SaveInfo *info)
 #if __JHEXEN__
     if(info->version() >= 7)
     {
-        SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
+        SV_AssertSegment(ASEG_WORLDSCRIPTDATA);
     }
     Game_ACScriptInterpreter().readWorldScriptData(reader, info->version());
 #endif
@@ -2517,62 +2510,46 @@ static int SV_LoadState(Str const *path, SaveInfo *info)
 
 #if !__JHEXEN__
     // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(info->gameId());
+    NetSv_LoadGame(info->sessionId());
 #endif
 
     Reader_Delete(reader);
-
-    return 0;
 }
 
-static int loadStateWorker(Str const *path, SaveInfo &saveInfo)
+static void loadGameState(Str const *path, SaveInfo &saveInfo)
 {
-    DENG_ASSERT(path != 0);
-
-    int loadError = true; // Failed.
-
-    if(recogniseNativeState(path, &saveInfo))
+    if(recognizeNativeState(path, &saveInfo))
     {
-        loadError = SV_LoadState(path, &saveInfo);
+        loadNativeState(path, &saveInfo);
+        return;
     }
+
     // Perhaps an original game state?
 #if __JDOOM__
-    else if(SV_RecogniseState_Dm_v19(path, &saveInfo))
+    if(SV_RecognizeState_Dm_v19(path, &saveInfo))
     {
-        loadError = SV_LoadState_Dm_v19(path, &saveInfo);
+        int errorCode = SV_LoadState_Dm_v19(path, &saveInfo);
+        if(errorCode != 0)
+        {
+            throw de::Error("SV_LoadState_Dm_v19", "Error " + de::String::number(errorCode));
+        }
+        return;
     }
 #endif
 #if __JHERETIC__
-    else if(SV_RecogniseState_Hr_v13(path, &saveInfo))
+    if(SV_RecognizeState_Hr_v13(path, &saveInfo))
     {
-        loadError = SV_LoadState_Hr_v13(path, &saveInfo);
+        int errorCode = SV_LoadState_Hr_v13(path, &saveInfo);
+        if(errorCode != 0)
+        {
+            throw de::Error("SV_LoadState_Hr_v13", "Error " + de::String::number(errorCode));
+        }
+        return;
     }
 #endif
 
-    if(loadError) return loadError;
-
-    /*
-     * Game state was loaded successfully.
-     */
-
-    // Material origin scrollers must be re-spawned for older save state versions.
-    /// @todo Implement SaveInfo format type identifiers.
-    if((saveInfo.magic() != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
-       saveInfo.version() <= 10)
-    {
-        P_SpawnAllMaterialOriginScrollers();
-    }
-
-    // Let the engine know where the local players are now.
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        R_UpdateConsoleView(i);
-    }
-
-    // Inform the engine to perform map setup once more.
-    R_SetupMap(0, 0);
-
-    return 0; // Success.
+    /// @throw Error The savegame was not recognized.
+    throw de::Error("loadGameState", "Unrecognized savegame format");
 }
 
 dd_bool SV_LoadGame(int slot)
@@ -2603,50 +2580,70 @@ dd_bool SV_LoadGame(int slot)
     /// @todo Does any caller ever attempt to load the base slot?? (Doesn't seem logical)
     if(slot != BASE_SLOT)
     {
-        SV_CopySlot(slot, BASE_SLOT);
+        saveSlots.copySlot(slot, BASE_SLOT);
     }
 #endif
 
     SaveInfo *saveInfo = saveSlots.saveInfo(logicalSlot);
     DENG_ASSERT(saveInfo != 0);
 
-    int loadError = loadStateWorker(path, *saveInfo);
-    if(!loadError)
+    try
     {
+        loadGameState(path, *saveInfo);
+
+        // Material origin scrollers must be re-spawned for older save state versions.
+        /// @todo Implement SaveInfo format type identifiers.
+        if((saveInfo->magic() != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
+           saveInfo->version() <= 10)
+        {
+            P_SpawnAllMaterialOriginScrollers();
+        }
+
+        // Let the engine know where the local players are now.
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            R_UpdateConsoleView(i);
+        }
+
+        // Inform the engine to perform map setup once more.
+        R_SetupMap(0, 0);
+
+        // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
+
+        return true;
     }
-    else
+    catch(de::Error const &er)
     {
-        App_Log(DE2_RES_WARNING, "Failed loading save slot #%i", slot);
+        App_Log(DE2_RES_WARNING, "Error loading save slot #%i:\n%s", slot, er.asText());
     }
 
-    return !loadError;
+    return false;
 }
 
-void SV_SaveGameClient(uint gameId)
+void SV_SaveGameClient(uint sessionId)
 {
 #if !__JHEXEN__ // unsupported in libhexen
     DENG_ASSERT(inited);
 
     player_t *pl = &players[CONSOLEPLAYER];
-    mobj_t *mo = pl->plr->mo;
+    mobj_t *mo   = pl->plr->mo;
 
     if(!IS_CLIENT || !mo)
         return;
 
     playerHeaderOK = false; // Uninitialized.
 
-    AutoStr *gameSavePath = composeGameSavePathForClientGameId(gameId);
+    AutoStr *gameSavePath = composeGameSavePathForClientSessionId(sessionId);
     if(!SV_OpenFile(gameSavePath, "wp"))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing", Str_Text(gameSavePath));
         return;
     }
 
-    // Prepare the header.
-    SaveInfo *info = new SaveInfo;
-    info->setGameId(gameId);
-    info->applyCurrentSessionMetadata();
+    // Prepare new save info.
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_New());
+    info->setSessionId(sessionId);
 
     Writer *writer = SV_NewWriter();
     info->write(writer);
@@ -2660,6 +2657,7 @@ void SV_SaveGameClient(uint gameId)
     Writer_WriteInt32(writer, FLT2FIX(mo->ceilingZ));
     Writer_WriteInt32(writer, mo->angle); /* $unifiedangles */
     Writer_WriteFloat(writer, pl->plr->lookDir); /* $unifiedangles */
+
     writePlayerHeader(writer);
     SV_WritePlayer(CONSOLEPLAYER, writer);
 
@@ -2670,24 +2668,24 @@ void SV_SaveGameClient(uint gameId)
     Writer_Delete(writer);
     delete info;
 #else
-    DENG_UNUSED(gameId);
+    DENG_UNUSED(sessionId);
 #endif
 }
 
-void SV_LoadGameClient(uint gameId)
+void SV_LoadGameClient(uint sessionId)
 {
 #if !__JHEXEN__ // unsupported in libhexen
     DENG_ASSERT(inited);
 
     player_t *cpl = players + CONSOLEPLAYER;
-    mobj_t *mo = cpl->plr->mo;
+    mobj_t *mo    = cpl->plr->mo;
 
     if(!IS_CLIENT || !mo)
         return;
 
     playerHeaderOK = false; // Uninitialized.
 
-    AutoStr *gameSavePath = composeGameSavePathForClientGameId(gameId);
+    AutoStr *gameSavePath = composeGameSavePathForClientSessionId(sessionId);
     if(!SV_OpenFile(gameSavePath, "rp"))
     {
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading", Str_Text(gameSavePath));
@@ -2742,7 +2740,7 @@ void SV_LoadGameClient(uint gameId)
     Reader_Delete(reader);
     delete saveInfo;
 #else
-    DENG_UNUSED(gameId);
+    DENG_UNUSED(sessionId);
 #endif
 }
 
@@ -2752,7 +2750,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__
-    NetSv_SaveGame(saveInfo->gameId());
+    NetSv_SaveGame(saveInfo->sessionId());
 #endif
 
     if(!openGameSaveFile(path, true))
@@ -2769,7 +2767,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     saveInfo->write(writer);
 
 #if __JHEXEN__
-    SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
+    SV_BeginSegment(ASEG_WORLDSCRIPTDATA);
     Game_ACScriptInterpreter().writeWorldScriptData(writer);
 #endif
 
@@ -2793,7 +2791,7 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
      */
 #if __JHEXEN__
     // ...map state is actually written to a separate file.
-    SV_OpenFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap+1), "wp");
+    SV_OpenFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 #endif
 
     MapStateWriter(thingArchiveExcludePlayers).write(writer);
@@ -2810,23 +2808,9 @@ static int saveStateWorker(Str const *path, SaveInfo *saveInfo)
     return SV_OK;
 }
 
-/**
- * Create a new SaveInfo for the current game session.
- */
-static SaveInfo *createSaveInfo(char const *name)
-{
-    ddstring_t nameStr;
-    SaveInfo *info = new SaveInfo;
-    info->setDescription(Str_InitStatic(&nameStr, name));
-    info->setGameId(SV_GenerateGameId());
-    info->applyCurrentSessionMetadata();
-    return info;
-}
-
-dd_bool SV_SaveGame(int slot, char const *name)
+dd_bool SV_SaveGame(int slot, char const *description)
 {
     DENG_ASSERT(inited);
-    DENG_ASSERT(name != 0);
 
 #if __JHEXEN__
     int const logicalSlot = BASE_SLOT;
@@ -2836,12 +2820,12 @@ dd_bool SV_SaveGame(int slot, char const *name)
 
     if(!saveSlots.isValidSlot(slot))
     {
-        DENG_ASSERT(!"Invalid slot '%i' specified");
+        DENG_ASSERT(!"Invalid slot specified");
         return false;
     }
-    if(!name[0])
+    if(!description || !description[0])
     {
-        DENG_ASSERT(!"Empty name specified for slot");
+        DENG_ASSERT(!"Empty description specified for slot");
         return false;
     }
 
@@ -2852,7 +2836,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
         return false;
     }
 
-    SaveInfo *info = createSaveInfo(name);
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_FromTextStd(description));
 
     int saveError = saveStateWorker(path, info);
     if(!saveError)
@@ -2862,7 +2846,7 @@ dd_bool SV_SaveGame(int slot, char const *name)
 
 #if __JHEXEN__
         // Copy base slot to destination slot.
-        SV_CopySlot(logicalSlot, slot);
+        saveSlots.copySlot(logicalSlot, slot);
 #endif
 
         // The "last" save slot is now this.
@@ -2929,7 +2913,7 @@ void SV_HxBackupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         playerbackup_t *pb = playerBackup + i;
-        player_t *plr = players + i;
+        player_t *plr      = players + i;
 
         std::memcpy(&pb->player, plr, sizeof(player_t));
 
@@ -2945,18 +2929,13 @@ void SV_HxBackupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
 void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
     uint entryPoint)
 {
-    mobj_t *targetPlayerMobj;
-
-    DENG_ASSERT(playerBackup);
+    DENG_ASSERT(playerBackup != 0);
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         playerbackup_t *pb = playerBackup + i;
-        player_t *plr = players + i;
-        ddplayer_t *ddplr = plr->plr;
-        int oldKeys = 0, oldPieces = 0;
-        dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
-        dd_bool wasReborn;
+        player_t *plr      = players + i;
+        ddplayer_t *ddplr  = plr->plr;
 
         if(!ddplr->inGame) continue;
 
@@ -2975,9 +2954,11 @@ void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
         P_InventorySetReadyItem(i, pb->readyItem);
 
         ST_LogEmpty(i);
-        plr->attacker = NULL;
-        plr->poisoner = NULL;
+        plr->attacker = 0;
+        plr->poisoner = 0;
 
+        int oldKeys = 0, oldPieces = 0;
+        dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
         if(IS_NETGAME || gameRules.deathmatch)
         {
             // In a network game, force all players to be alive
@@ -2989,28 +2970,27 @@ void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
             if(!gameRules.deathmatch)
             {
                 // Cooperative net-play; retain keys and weapons.
-                oldKeys = plr->keys;
+                oldKeys   = plr->keys;
                 oldPieces = plr->pieces;
-                for(int j = 0; j < NUM_WEAPON_TYPES; ++j)
+
+                for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
                 {
-                    oldWeaponOwned[j] = plr->weapons[j].owned;
+                    oldWeaponOwned[k] = plr->weapons[k].owned;
                 }
             }
         }
 
-        wasReborn = (plr->playerState == PST_REBORN);
+        dd_bool wasReborn = (plr->playerState == PST_REBORN);
 
         if(gameRules.deathmatch)
         {
-            memset(plr->frags, 0, sizeof(plr->frags));
-            ddplr->mo = NULL;
+            de::zap(plr->frags);
+            ddplr->mo = 0;
             G_DeathMatchSpawnPlayer(i);
         }
         else
         {
-            playerstart_t const *start;
-
-            if((start = P_GetPlayerStart(entryPoint, i, false)))
+            if(playerstart_t const *start = P_GetPlayerStart(entryPoint, i, false))
             {
                 mapspot_t const *spot = &mapSpots[start->spot];
                 P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
@@ -3027,7 +3007,7 @@ void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
         if(wasReborn && IS_NETGAME && !gameRules.deathmatch)
         {
             // Restore keys and weapons when reborn in co-op.
-            plr->keys = oldKeys;
+            plr->keys   = oldKeys;
             plr->pieces = oldPieces;
 
             int bestWeapon = 0;
@@ -3051,10 +3031,10 @@ void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS],
         }
     }
 
-    targetPlayerMobj = 0;
+    mobj_t *targetPlayerMobj = 0;
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr = players + i;
+        player_t *plr     = players + i;
         ddplayer_t *ddplr = plr->plr;
 
         if(!ddplr->inGame) continue;

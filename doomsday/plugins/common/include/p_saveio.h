@@ -40,7 +40,7 @@ typedef enum savestatesegment_e {
     ASEG_MATERIAL_ARCHIVE,
     ASEG_MAP_HEADER2,
     ASEG_PLAYER_HEADER,
-    ASEG_GLOBALSCRIPTDATA   // Hexen only
+    ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
 
 enum {
