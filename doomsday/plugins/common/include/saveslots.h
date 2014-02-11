@@ -25,6 +25,7 @@
 #include "saveinfo.h"
 
 #ifdef __cplusplus
+#include <de/Error>
 
 /**
  * Maps saved games into a finite set of "save slots".
@@ -37,6 +38,10 @@
  */
 class SaveSlots
 {
+public:
+    /// An invalid slot was specified. @ingroup errors
+    DENG2_ERROR(InvalidSlotError);
+
 public:
     /**
      * @param numSlots  Number of logical slots.
@@ -108,10 +113,13 @@ public:
     bool slotIsUserWritable(int slot) const;
 
     /**
-     * Returns the save info for save @a slot. Always returns SaveInfo even if supplied with an
-     * invalid or unused slot identifer (a null object).
+     * Returns the SaveInfo associated the logical save @a slot.
      */
-    SaveInfo *saveInfo(int slot) const;
+    SaveInfo &saveInfo(int slot) const;
+
+    inline SaveInfo *saveInfoPtr(int slot) const {
+        return isValidSlot(slot)? &saveInfo(slot) : 0;
+    }
 
     /**
      * Deletes all save game files associated with a slot number.

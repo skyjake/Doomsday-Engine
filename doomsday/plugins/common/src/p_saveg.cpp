@@ -2584,17 +2584,16 @@ dd_bool SV_LoadGame(int slot)
     }
 #endif
 
-    SaveInfo *saveInfo = saveSlots.saveInfo(logicalSlot);
-    DENG_ASSERT(saveInfo != 0);
-
     try
     {
-        loadGameState(path, *saveInfo);
+        SaveInfo &saveInfo = saveSlots.saveInfo(logicalSlot);
 
-        // Material origin scrollers must be re-spawned for older save state versions.
+        loadGameState(path, saveInfo);
+
+        // Material scrollers must be re-spawned for older savegame versions.
         /// @todo Implement SaveInfo format type identifiers.
-        if((saveInfo->magic() != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
-           saveInfo->version() <= 10)
+        if((saveInfo.magic() != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
+           saveInfo.version() <= 10)
         {
             P_SpawnAllMaterialOriginScrollers();
         }

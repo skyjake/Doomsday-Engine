@@ -23,7 +23,7 @@
 
 #include "p_saveio.h"
 #include "p_saveg.h" /// SV_RecogniseGameState, @todo remove me
-#include <de/math.h>
+#include <de/String>
 #include <de/memory.h>
 
 #define MAX_HUB_MAPS 99
@@ -39,7 +39,6 @@ DENG2_PIMPL(SaveSlots)
 #if __JHEXEN__
     SaveInfo *baseSaveInfo;
 #endif
-    SaveInfo *nullSaveInfo;
 
     Instance(Public *i, int slotCount)
         : Base(i)
@@ -49,7 +48,6 @@ DENG2_PIMPL(SaveSlots)
 #if __JHEXEN__
         , baseSaveInfo(0)
 #endif
-        , nullSaveInfo(0)
     {}
 
     ~Instance()
@@ -72,6 +70,33 @@ DENG2_PIMPL(SaveSlots)
 #endif
     }
 
+    void updateSaveInfo(Str const *path, SaveInfo &info)
+    {
+        if(!path || Str_IsEmpty(path))
+        {
+            // The save path cannot be accessed for some reason. Perhaps its a
+            // network path? Clear the info for this slot.
+            info.setDescription(0);
+            info.setSessionId(0);
+            return;
+        }
+
+        // Is this a recognisable save state?
+        if(!SV_RecogniseGameState(path, &info))
+        {
+            // Clear the info for this slot.
+            info.setDescription(0);
+            info.setSessionId(0);
+            return;
+        }
+
+        // Ensure we have a valid description.
+        if(Str_IsEmpty(info.description()))
+        {
+            info.setDescription(AutoStr_FromText("UNNAMED"));
+        }
+    }
+
     /// Re-build save info by re-scanning the save paths and populating the list.
     void buildSaveInfo()
     {
@@ -88,7 +113,6 @@ DENG2_PIMPL(SaveSlots)
 #if __JHEXEN__
             baseSaveInfo = new SaveInfo;
 #endif
-            nullSaveInfo = new SaveInfo;
         }
 
         /// Scan the save paths and populate the list.
@@ -96,42 +120,12 @@ DENG2_PIMPL(SaveSlots)
         /// which match the default game-save file naming convention.
         for(int i = 0; i < slotCount; ++i)
         {
-            SaveInfo *info = saveInfo[i];
-            updateSaveInfo(self.composeSavePathForSlot(i), info);
+            updateSaveInfo(self.composeSavePathForSlot(i), *saveInfo[i]);
         }
-        updateSaveInfo(self.composeSavePathForSlot(AUTO_SLOT), autoSaveInfo);
+        updateSaveInfo(self.composeSavePathForSlot(AUTO_SLOT), *autoSaveInfo);
 #if __JHEXEN__
-        updateSaveInfo(self.composeSavePathForSlot(BASE_SLOT), baseSaveInfo);
+        updateSaveInfo(self.composeSavePathForSlot(BASE_SLOT), *baseSaveInfo);
 #endif
-    }
-
-    void updateSaveInfo(Str const *path, SaveInfo *info)
-    {
-        if(!info) return;
-
-        if(!path || Str_IsEmpty(path))
-        {
-            // The save path cannot be accessed for some reason. Perhaps its a
-            // network path? Clear the info for this slot.
-            info->setDescription(0);
-            info->setSessionId(0);
-            return;
-        }
-
-        // Is this a recognisable save state?
-        if(!SV_RecogniseGameState(path, info))
-        {
-            // Clear the info for this slot.
-            info->setDescription(0);
-            info->setSessionId(0);
-            return;
-        }
-
-        // Ensure we have a valid name.
-        if(Str_IsEmpty(info->description()))
-        {
-            info->setDescription(AutoStr_FromText("UNNAMED"));
-        }
     }
 };
 
@@ -159,10 +153,6 @@ void SaveSlots::clearSaveInfo()
         delete d->baseSaveInfo; d->baseSaveInfo = 0;
     }
 #endif
-    if(d->nullSaveInfo)
-    {
-        delete d->nullSaveInfo; d->nullSaveInfo = 0;
-    }
 
     // Reset last-used and quick-save slot tracking.
     Con_SetInteger2("game-save-last-slot", -1, SVF_WRITE_OVERRIDE);
@@ -245,7 +235,7 @@ bool SaveSlots::slotInUse(int slot) const
 {
     if(SV_ExistingFile(composeSavePathForSlot(slot)))
     {
-        return saveInfo(slot)->isLoadable();
+        return saveInfo(slot).isLoadable();
     }
     return false;
 }
@@ -273,9 +263,13 @@ bool SaveSlots::slotIsUserWritable(int slot) const
     return isValidSlot(slot);
 }
 
-SaveInfo *SaveSlots::saveInfo(int slot) const
+SaveInfo &SaveSlots::saveInfo(int slot) const
 {
-    if(!isValidSlot(slot)) return d->nullSaveInfo;
+    if(!isValidSlot(slot))
+    {
+        /// @throw InvalidSlotError An invalid slot was specified.
+        throw InvalidSlotError("SaveSlots::saveInfo", "Invalid slot " + de::String::number(slot));
+    }
 
     // On first call - automatically build and populate game-save info.
     if(!d->saveInfo)
@@ -284,16 +278,20 @@ SaveInfo *SaveSlots::saveInfo(int slot) const
     }
 
     // Retrieve the info for this slot.
-    if(slot == AUTO_SLOT) return d->autoSaveInfo;
+    if(slot == AUTO_SLOT) return *d->autoSaveInfo;
 #if __JHEXEN__
-    if(slot == BASE_SLOT) return d->baseSaveInfo;
+    if(slot == BASE_SLOT) return *d->baseSaveInfo;
 #endif
-    return d->saveInfo[slot];
+    return *d->saveInfo[slot];
 }
 
 void SaveSlots::replaceSaveInfo(int slot, SaveInfo *newInfo)
 {
-    DENG_ASSERT(isValidSlot(slot));
+    if(!isValidSlot(slot))
+    {
+        /// @throw InvalidSlotError An invalid slot was specified.
+        throw InvalidSlotError("SaveSlots::replaceSaveInfo", "Invalid slot " + de::String::number(slot));
+    }
 
     SaveInfo **destAdr;
     if(slot == AUTO_SLOT)
@@ -319,8 +317,8 @@ void SaveSlots::clearSlot(int slot)
 {
     if(!isValidSlot(slot))
     {
-        DENG_ASSERT(!"SaveSlots::clearSlot: Slot invalid");
-        return;
+        /// @throw InvalidSlotError An invalid slot was specified.
+        throw InvalidSlotError("SaveSlots::clearSlot", "Invalid slot " + de::String::number(slot));
     }
 
     if(d->announceOnClearingSlot(slot))
@@ -345,14 +343,14 @@ void SaveSlots::copySlot(int sourceSlot, int destSlot)
 {
     if(!isValidSlot(sourceSlot))
     {
-        DENG_ASSERT(!"SaveSlots::copySlot: Source slot invalid");
-        return;
+        /// @throw InvalidSlotError An invalid slot was specified.
+        throw InvalidSlotError("SaveSlots::copySlot", "Invalid source slot " + de::String::number(sourceSlot));
     }
 
     if(!isValidSlot(destSlot))
     {
-        DENG_ASSERT(!"SaveSlots::copySlot: Dest slot invalid");
-        return;
+        /// @throw InvalidSlotError An invalid slot was specified.
+        throw InvalidSlotError("SaveSlots::saveInfo", "Invalid dest slot " + de::String::number(destSlot));
     }
 
     // Clear all save files at destination slot.
@@ -370,10 +368,8 @@ void SaveSlots::copySlot(int sourceSlot, int destSlot)
     dst = composeSavePathForSlot(destSlot);
     SV_CopyFile(src, dst);
 
-    // Copy saveinfo too.
-    SaveInfo *info = saveInfo(sourceSlot);
-    DENG_ASSERT(info != 0);
-    replaceSaveInfo(destSlot, new SaveInfo(*info));
+    // Copy save info too.
+    replaceSaveInfo(destSlot, new SaveInfo(saveInfo(sourceSlot)));
 }
 
 AutoStr *SaveSlots::composeSavePathForSlot(int slot, int map) const
@@ -484,7 +480,7 @@ dd_bool SaveSlots_SlotIsUserWritable(SaveSlots const *sslots, int slot)
 SaveInfo *SaveSlots_SaveInfo(SaveSlots *sslots, int slot)
 {
     DENG_ASSERT(sslots != 0);
-    return sslots->saveInfo(slot);
+    return sslots->saveInfoPtr(slot);
 }
 
 void SaveSlots_ReplaceSaveInfo(SaveSlots *sslots, int slot, SaveInfo *newInfo)
