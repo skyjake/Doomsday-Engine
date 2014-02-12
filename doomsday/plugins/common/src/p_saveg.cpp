@@ -2928,7 +2928,7 @@ void SV_HxLoadHubMap()
     }
     catch(de::Error const &er)
     {
-        App_Log(DE2_RES_WARNING, "Error loading hub map save state:\n%s", er.asText());
+        App_Log(DE2_RES_WARNING, "Error loading hub map save state:\n%s", er.asText().toLatin1().constData());
     }
 
     Reader_Delete(reader);
