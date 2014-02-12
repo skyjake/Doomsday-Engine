@@ -17,6 +17,7 @@
  */
 
 #include "de/GLShader"
+#include "de/GuiApp"
 #include "de/gui/opengl.h"
 #include <de/Block>
 #include <de/String>
@@ -24,15 +25,20 @@
 namespace de {
 
 DENG2_PIMPL(GLShader)
+, DENG2_OBSERVES(GuiApp, GLContextChange)
 {
     GLuint name;
     Type type;
+    Block compiledSource;
 
     Instance(Public *i) : Base(i), name(0), type(Vertex)
-    {}
+    {
+        //DENG2_GUI_APP->audienceForGLContextChange += this;
+    }
 
     ~Instance()
     {
+        //DENG2_GUI_APP->audienceForGLContextChange -= this;
         release();
     }
 
@@ -57,6 +63,15 @@ DENG2_PIMPL(GLShader)
             name = 0;
         }
         self.setState(Asset::NotReady);
+    }
+
+    void appGLContextChanged()
+    {
+        /*
+        qDebug() << "Recompiling shader" << name;
+
+        self.recompile();
+        */
     }
 };
 
@@ -103,6 +118,9 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
 
     setState(NotReady);
 
+    // Keep a copy of the source for possible recompilation.
+    d->compiledSource = source;
+
     d->type = shaderType;
     d->alloc();
 
@@ -145,6 +163,13 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
     }
 
     setState(Ready);
+}
+
+void GLShader::recompile()
+{
+    d->release();
+    compile(d->type, d->compiledSource);
+    DENG2_ASSERT(isReady());
 }
 
 } // namespace de

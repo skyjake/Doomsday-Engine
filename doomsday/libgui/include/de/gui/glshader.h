@@ -62,6 +62,8 @@ public:
 
     void compile(Type shaderType, IByteArray const &source);
 
+    void recompile();
+
 private:
     DENG2_PRIVATE(d)
 };

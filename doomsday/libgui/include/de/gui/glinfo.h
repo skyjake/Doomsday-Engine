@@ -31,6 +31,7 @@ public:
     /// Extension availability bits.
     struct Extensions
     {
+        duint32 ARB_debug_output : 1;
         duint32 ARB_framebuffer_object : 1;
         duint32 ARB_texture_env_combine : 1;
         duint32 ARB_texture_non_power_of_two : 1;
@@ -51,6 +52,10 @@ public:
 #ifdef WIN32
         duint32 Windows_ARB_multisample : 1;
         duint32 Windows_EXT_swap_control : 1;
+#endif
+
+#ifdef Q_WS_X11
+        duint32 X11_EXT_swap_control : 1;
 #endif
     };
 

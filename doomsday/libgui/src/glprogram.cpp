@@ -21,6 +21,7 @@
 #include "de/GLBuffer"
 #include "de/GLShader"
 #include "de/GLTexture"
+#include "de/GuiApp"
 #include "de/gui/opengl.h"
 #include <de/Block>
 #include <de/Log>
@@ -32,9 +33,10 @@ namespace de {
 
 using namespace internal;
 
-DENG2_PIMPL(GLProgram),
-DENG2_OBSERVES(GLUniform, ValueChange),
-DENG2_OBSERVES(GLUniform, Deletion)
+DENG2_PIMPL(GLProgram)
+, DENG2_OBSERVES(GLUniform, ValueChange)
+, DENG2_OBSERVES(GLUniform, Deletion)
+, DENG2_OBSERVES(GuiApp, GLContextChange)
 {
     typedef QSet<GLUniform const *> Uniforms;
     typedef QList<GLUniform const *> UniformList;
@@ -48,17 +50,33 @@ DENG2_OBSERVES(GLUniform, Deletion)
     GLuint name;
     Shaders shaders;
     bool inUse;
+    bool needRebuild;
 
     Instance(Public *i)
-        : Base(i),
-          texturesChanged(false),
-          name(0),
-          inUse(false)
-    {}
+        : Base(i)
+        , texturesChanged(false)
+        , name(0)
+        , inUse(false)
+        , needRebuild(false)
+    {
+        //DENG2_GUI_APP->audienceForGLContextChange += this;
+    }
 
     ~Instance()
     {
+        //DENG2_GUI_APP->audienceForGLContextChange -= this;
         release();
+    }
+
+    void appGLContextChanged()
+    {
+        /*
+        if(name && !needRebuild)
+        {
+            qDebug() << "rebuild program" << name << "before use";
+            self.rebuildBeforeNextUse();
+        }
+        */
     }
 
     void alloc()
@@ -95,6 +113,7 @@ DENG2_OBSERVES(GLUniform, Deletion)
         DENG2_ASSERT(shader->isReady());
         alloc();
         glAttachShader(name, shader->glName());
+        LIBGUI_ASSERT_GL_OK();
         shaders.insert(holdRef(shader));
     }
 
@@ -242,6 +261,28 @@ DENG2_OBSERVES(GLUniform, Deletion)
         }
     }
 
+    void rebuild()
+    {
+        qDebug() << "Rebuilding GL program" << name;
+
+        if(name)
+        {
+            glDeleteProgram(name);
+            name = 0;
+        }
+
+        alloc();
+
+        foreach(GLShader const *shader, shaders)
+        {
+            glAttachShader(name, shader->glName());
+            LIBGUI_ASSERT_GL_OK();
+        }
+
+        bindVertexAttribs();
+        markAllBoundUniformsChanged();
+    }
+
     void uniformValueChanged(GLUniform &uniform)
     {
         changed.insert(&uniform);
@@ -286,6 +327,16 @@ GLProgram &GLProgram::build(IByteArray const &vertexShaderSource,
 {
     return build(refless(new GLShader(GLShader::Vertex,   vertexShaderSource)),
                  refless(new GLShader(GLShader::Fragment, fragmentShaderSource)));
+}
+
+void GLProgram::rebuildBeforeNextUse()
+{
+    d->needRebuild = true;
+}
+
+void GLProgram::rebuild()
+{
+    d->rebuild();
 }
 
 GLProgram &GLProgram::operator << (GLUniform const &uniform)
@@ -333,8 +384,19 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
 
 void GLProgram::beginUse() const
 {
+    LIBGUI_ASSERT_GL_OK();
+    DENG2_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT(QGLContext::currentContext() != 0);
     DENG2_ASSERT(isReady());
     DENG2_ASSERT(!d->inUse);
+
+    if(d->needRebuild)
+    {
+        d->needRebuild = false;
+        const_cast<GLProgram *>(this)->rebuild();
+    }
+
+    DENG2_ASSERT(glIsProgram(d->name));
 
     d->inUse = true;
 

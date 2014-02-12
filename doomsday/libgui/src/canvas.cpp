@@ -87,6 +87,11 @@ DENG2_PIMPL(Canvas)
 #endif
     }
 
+    ~Instance()
+    {
+        glDeinit();
+    }
+
     void grabMouse()
     {
         if(!self.isVisible()/* || mouseDisabled*/) return;
@@ -343,6 +348,7 @@ void Canvas::resizeGL(int w, int h)
     if(d->currentSize != d->pendingSize)
     {
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+        qDebug() << "Canvas" << this << "triggered size to" << w << h << "from" << d->currentSize.asText();
         d->resizeTimer.start(100);
 #else
         updateSize();
@@ -352,7 +358,18 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::updateSize()
 {
-    d->currentSize = d->pendingSize;
+    /*
+    if(d->parent && d->parent->isRecreationInProgress())
+    {
+        d->resizeTimer.start(100);
+        return;
+    }
+    */
+
+    qDebug() << this << "resizing now";
+
+    makeCurrent();
+    d->currentSize = d->pendingSize; 
     d->reconfigureFramebuffer();
 
     DENG2_FOR_AUDIENCE(GLResize, i) i->canvasGLResized(*this);
@@ -386,7 +403,7 @@ void Canvas::notifyReady()
 
     d->readyNotified = true;
 
-    d->framebuf.glInit();
+    d->glInit();
     d->reconfigureFramebuffer();
 
     // Print some information.
@@ -414,10 +431,22 @@ void Canvas::notifyReady()
 
 void Canvas::paintGL()
 {
+    if(!d->parent || d->parent->isRecreationInProgress()) return;
+
+    if(d->resizeTimer.isActive())
+    {
+        d->resizeTimer.stop();
+        updateSize();
+    }
+
+    LIBGUI_ASSERT_GL_OK();
+
     // Make sure any changes to the state stack become effective.
     GLState::current().apply();
 
     DENG2_FOR_AUDIENCE(GLDraw, i) i->canvasGLDraw(*this);
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void Canvas::focusInEvent(QFocusEvent*)

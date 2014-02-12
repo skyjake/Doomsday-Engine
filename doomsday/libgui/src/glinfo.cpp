@@ -30,6 +30,12 @@ namespace de {
 
 static GLInfo info;
 
+static void glDebugOut(GLenum source, GLenum type, GLuint id, GLenum severity,
+                       GLsizei length, GLchar const *message, void const *userParam)
+{
+    qWarning() << "[GL]" << String(message, length);
+}
+
 DENG2_PIMPL_NOREF(GLInfo)
 {
     bool inited;
@@ -94,6 +100,12 @@ DENG2_PIMPL_NOREF(GLInfo)
             return true;
 #endif
 
+#ifdef Q_WS_X11
+        // Check GLX specific extensions.
+        if(checkExtensionString(ext, (GLubyte const *) getGLXExtensionsString()))
+            return true;
+#endif
+
         return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
     }
 
@@ -102,6 +114,7 @@ DENG2_PIMPL_NOREF(GLInfo)
         if(inited) return;
 
         // Extensions.
+        ext.ARB_debug_output               = query("GL_ARB_debug_output");
         ext.ARB_framebuffer_object         = query("GL_ARB_framebuffer_object");
         ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
         ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
@@ -124,6 +137,10 @@ DENG2_PIMPL_NOREF(GLInfo)
         ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
 #endif
 
+#ifdef Q_WS_X11
+        ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
+#endif
+
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,  (GLint *) &lim.maxTexSize);
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint *) &lim.maxTexUnits);
@@ -140,6 +157,12 @@ DENG2_PIMPL_NOREF(GLInfo)
                                  lim.maxTexSize);
 
             LOG_GL_NOTE("Using requested maximum texture size of %i x %i") << lim.maxTexSize << lim.maxTexSize;
+        }
+
+        if(CommandLine_Exists("-gldebug"))
+        {
+            /// @todo The GL context is not created with the debug output bit. -jk
+            glDebugMessageCallbackARB(glDebugOut, NULL);
         }
 
         inited = true;

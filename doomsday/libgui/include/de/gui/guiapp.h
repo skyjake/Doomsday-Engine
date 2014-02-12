@@ -45,6 +45,12 @@ class LIBGUI_PUBLIC GuiApp : public QApplication, public App,
     Q_OBJECT
 
 public:
+    /**
+     * Notified when a Canvas is recreated.
+     */
+    DENG2_DEFINE_AUDIENCE(GLContextChange, void appGLContextChanged())
+
+public:
     GuiApp(int &argc, char **argv);
 
     bool notify(QObject *receiver, QEvent *event);
@@ -57,6 +63,8 @@ public:
      * not via this public interface where anybody can call it.
      */
     void notifyDisplayModeChanged();
+
+    void notifyGLContextChanged();
 
     int execLoop();
     void stopLoop(int code);

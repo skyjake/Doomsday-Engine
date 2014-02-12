@@ -19,6 +19,8 @@
 #ifndef LIBGUI_MAIN_H
 #define LIBGUI_MAIN_H
 
+#include <de/c_wrapper.h>
+
 /*
  * The LIBGUI_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for
@@ -41,8 +43,10 @@
 #endif
 
 #ifndef NDEBUG
-#  define LIBGUI_ASSERT_GL_OK() {GLuint _er = glGetError(); if(_er != GL_NO_ERROR) { \
-    qWarning("OpenGL error: 0x%x", _er); DENG2_ASSERT(!"OpenGL operation failed"); }}
+#  define LIBGUI_ASSERT_GL_OK() {GLuint _er = GL_NO_ERROR; do { \
+    _er = glGetError(); if(_er != GL_NO_ERROR) { \
+    LogBuffer_Flush(); qWarning("OpenGL error: 0x%x", _er); \
+    DENG2_ASSERT(!"OpenGL operation failed"); }} while(_er != GL_NO_ERROR);}
 #else
 #  define LIBGUI_ASSERT_GL_OK()
 #endif
