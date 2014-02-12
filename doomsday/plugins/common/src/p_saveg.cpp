@@ -24,9 +24,6 @@
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "g_common.h"
-#if __JHERETIC__ || __JHEXEN__
-#  include "hu_inventory.h"
-#endif
 #include "p_actor.h"
 #include "p_map.h"          // P_TelefragMobjsTouchingPlayers
 #include "p_mapsetup.h"     // P_SpawnAllMaterialOriginScrollers
@@ -71,6 +68,9 @@ static targetplraddress_t *targetPlayerAddrs;
 #if __JHEXEN__
 static byte *saveBuffer;
 #endif
+
+static bool openGameSaveFile(Str const *fileName, bool write);
+static void openMapSaveFile(Str const *path);
 
 #if !__JHEXEN__
 /**
@@ -563,96 +563,350 @@ static void readPlayerHeader(Reader *reader, int saveVersion)
     playerHeaderOK = true;
 }
 
-static void writePlayers(Writer *writer)
+class GameStateWriter
 {
-    SV_BeginSegment(ASEG_PLAYERS);
+public:
+    GameStateWriter();
+
+    void write(SaveInfo *saveInfo, Writer *writer);
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+DENG2_PIMPL_NOREF(GameStateWriter)
+{
+    SaveInfo *saveInfo; ///< Info for the save state to be written.
+    Writer *writer;
+
+    Instance(/*Public *i*/)
+        : /*Base(i)
+        ,*/ saveInfo(0)
+        , writer(0)
+    {}
+
+    void writeSessionHeader()
+    {
+        saveInfo->write(writer);
+    }
+
+    void writeWorldACScriptData()
     {
 #if __JHEXEN__
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            Writer_WriteByte(writer, players[i].plr->inGame);
-        }
+        SV_BeginSegment(ASEG_WORLDSCRIPTDATA);
+        Game_ACScriptInterpreter().writeWorldScriptData(writer);
+#endif
+    }
+
+    void writeMap()
+    {
+#if __JHEXEN__ // The map state is actually written to a separate file.
+        // Close the game state file.
+        SV_CloseFile();
+
+        // Open the map state file.
+        SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 #endif
 
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            player_t *plr = players + i;
-            if(!plr->plr->inGame)
-                continue;
+        MapStateWriter(thingArchiveExcludePlayers).write(writer);
 
-            Writer_WriteInt32(writer, Net_GetPlayerID(i));
-            plr->write(writer);
-        }
+        SV_WriteConsistencyBytes(); // To be absolutely sure...
+        SV_CloseFile();
+
+#if !__JHEXEN___
+        clearThingArchive();
+#endif
     }
-    SV_EndSegment();
+
+    void writePlayers()
+    {
+        SV_BeginSegment(ASEG_PLAYERS);
+        {
+#if __JHEXEN__
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                Writer_WriteByte(writer, players[i].plr->inGame);
+            }
+#endif
+
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                player_t *plr = players + i;
+                if(!plr->plr->inGame)
+                    continue;
+
+                Writer_WriteInt32(writer, Net_GetPlayerID(i));
+                plr->write(writer);
+            }
+        }
+        SV_EndSegment();
+    }
+};
+
+GameStateWriter::GameStateWriter() : d(new Instance/*(this)*/)
+{}
+
+void GameStateWriter::write(SaveInfo *saveInfo, Writer *writer)
+{
+    DENG_ASSERT(saveInfo != 0 && writer != 0);
+    d->saveInfo = saveInfo;
+    d->writer   = writer;
+
+    d->writeSessionHeader();
+    d->writeWorldACScriptData();
+
+    // Set the mobj archive numbers.
+    initThingArchiveForSave();
+#if !__JHEXEN__
+    Writer_WriteInt32(d->writer, thingArchiveSize);
+#endif
+
+    writePlayerHeader(d->writer);
+
+    d->writePlayers();
+    d->writeMap();
 }
 
-static void readPlayers(SaveInfo &info, dd_bool *infile, dd_bool *loaded, Reader *reader)
+class GameStateReader
 {
-    DENG_ASSERT(infile != 0 && loaded != 0);
+public:
+    GameStateReader();
 
-    // Setup the dummy.
-    ddplayer_t dummyDDPlayer;
-    player_t dummyPlayer;
-    dummyPlayer.plr = &dummyDDPlayer;
+    void read(SaveInfo *saveInfo, Reader *reader);
 
-    for(int i = 0; i < MAXPLAYERS; ++i)
+private:
+    DENG2_PRIVATE(d)
+};
+
+DENG2_PIMPL_NOREF(GameStateReader)
+{
+    SaveInfo *saveInfo; ///< Info for the save state to be read.
+    Reader *reader;
+    dd_bool loaded[MAXPLAYERS];
+    dd_bool infile[MAXPLAYERS];
+
+    Instance(/*Public *i*/)
+        : /*Base(i)
+        ,*/saveInfo(0)
+        , reader(0)
     {
-        loaded[i] = 0;
-#if !__JHEXEN__
-        infile[i] = info._players[i];
+        de::zap(loaded);
+        de::zap(infile);
+    }
+
+    /// Assumes the reader is currently positiond at the start of the stream.
+    void seekToGameState()
+    {
+        // Read the header again.
+        SaveInfo *tmp = new SaveInfo;
+        SV_SaveInfo_Read(tmp, reader);
+        delete tmp;
+    }
+
+    void readWorldACScriptData()
+    {
+#if __JHEXEN__
+        if(saveInfo->version() >= 7)
+        {
+            SV_AssertSegment(ASEG_WORLDSCRIPTDATA);
+        }
+        Game_ACScriptInterpreter().readWorldScriptData(reader, saveInfo->version());
 #endif
     }
 
-    SV_AssertSegment(ASEG_PLAYERS);
+    void readMap()
     {
-#if __JHEXEN__
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            infile[i] = Reader_ReadByte(reader);
-        }
+#if __JHEXEN__ // The map state is actually read from to a separate file.
+        // Close the game state file.
+        Z_Free(saveBuffer);
+        SV_CloseFile();
+
+        // Open the map state file.
+        openMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
 #endif
 
-        // Load the players.
+        MapStateReader(saveInfo->version()).read(reader);
+
+#if __JHEXEN__
+        Z_Free(saveBuffer);
+#endif
+
+#if !__JHEXEN__
+        SV_ReadConsistencyBytes();
+        SV_CloseFile();
+#endif
+
+        clearThingArchive();
+#if __JHEXEN__
+        clearTargetPlayers();
+#endif
+    }
+
+    // We don't have the right to say which players are in the game. The players that already are
+    // will continue to be. If the data for a given player is not in the savegame file, he will
+    // be notified. The data for players who were saved but are not currently in the game will be
+    // discarded.
+    void readPlayers()
+    {
+        // Setup the dummy.
+        ddplayer_t dummyDDPlayer;
+        player_t dummyPlayer;
+        dummyPlayer.plr = &dummyDDPlayer;
+
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            // By default a saved player translates to nothing.
-            saveToRealPlayerNum[i] = -1;
+            loaded[i] = 0;
+#if !__JHEXEN__
+            infile[i] = saveInfo->_players[i];
+#endif
+        }
 
-            if(!infile[i]) continue;
-
-            // The ID number will determine which player this actually is.
-            int pid = Reader_ReadInt32(reader);
-            player_t *player = 0;
-            for(int k = 0; k < MAXPLAYERS; ++k)
+        SV_AssertSegment(ASEG_PLAYERS);
+        {
+#if __JHEXEN__
+            for(int i = 0; i < MAXPLAYERS; ++i)
             {
-                if((IS_NETGAME && int(Net_GetPlayerID(k)) == pid) ||
-                   (!IS_NETGAME && k == 0))
+                infile[i] = Reader_ReadByte(reader);
+            }
+#endif
+
+            // Load the players.
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                // By default a saved player translates to nothing.
+                saveToRealPlayerNum[i] = -1;
+
+                if(!infile[i]) continue;
+
+                // The ID number will determine which player this actually is.
+                int pid = Reader_ReadInt32(reader);
+                player_t *player = 0;
+                for(int k = 0; k < MAXPLAYERS; ++k)
                 {
-                    // This is our guy.
-                    player = players + k;
-                    loaded[k] = true;
-                    // Later references to the player number 'i' must be translated!
-                    saveToRealPlayerNum[i] = k;
-                    App_Log(DE2_DEV_MAP_MSG, "readPlayers: saved %i is now %i\n", i, k);
-                    break;
+                    if((IS_NETGAME && int(Net_GetPlayerID(k)) == pid) ||
+                       (!IS_NETGAME && k == 0))
+                    {
+                        // This is our guy.
+                        player = players + k;
+                        loaded[k] = true;
+                        // Later references to the player number 'i' must be translated!
+                        saveToRealPlayerNum[i] = k;
+                        App_Log(DE2_DEV_MAP_MSG, "readPlayers: saved %i is now %i\n", i, k);
+                        break;
+                    }
+                }
+
+                if(!player)
+                {
+                    // We have a missing player. Use a dummy to load the data.
+                    player = &dummyPlayer;
+                }
+
+                // Read the data.
+                player->read(reader);
+            }
+        }
+        SV_AssertSegment(ASEG_END);
+    }
+
+    void kickMissingPlayers()
+    {
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
+            dd_bool notLoaded = false;
+
+#if __JHEXEN__
+            if(players[i].plr->inGame)
+            {
+                // Try to find a saved player that corresponds this one.
+                uint k;
+                for(k = 0; k < MAXPLAYERS; ++k)
+                {
+                    if(saveToRealPlayerNum[k] == i)
+                        break;
+                }
+                if(k < MAXPLAYERS)
+                    continue; // Found; don't bother this player.
+
+                players[i].playerState = PST_REBORN;
+
+                if(!i)
+                {
+                    // If the CONSOLEPLAYER isn't in the save, it must be some
+                    // other player's file?
+                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
+                }
+                else
+                {
+                    NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
+                    notLoaded = true;
                 }
             }
-
-            if(!player)
+#else
+            if(!loaded[i] && players[i].plr->inGame)
             {
-                // We have a missing player. Use a dummy to load the data.
-                player = &dummyPlayer;
+                if(!i)
+                {
+                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
+                }
+                else
+                {
+                    NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
+                }
+                notLoaded = true;
             }
+#endif
 
-            // Read the data.
-            player->read(reader);
+            if(notLoaded)
+            {
+                // Kick this player out, he doesn't belong here.
+                DD_Executef(false, "kick %i", i);
+            }
         }
     }
-    SV_AssertSegment(ASEG_END);
+};
 
-#if __JHEXEN__
-    DENG_UNUSED(info);
+GameStateReader::GameStateReader() : d(new Instance/*(this)*/)
+{}
+
+void GameStateReader::read(SaveInfo *saveInfo, Reader *reader)
+{
+    DENG_ASSERT(saveInfo != 0 && reader != 0);
+    d->saveInfo = saveInfo;
+    d->reader   = reader;
+
+    d->seekToGameState();
+
+    curInfo = d->saveInfo;
+
+    d->readWorldACScriptData();
+
+    /*
+     * Load the map and configure some game settings.
+     */
+    briefDisabled = true;
+    G_NewGame(d->saveInfo->mapUri(), 0/*not saved??*/, &d->saveInfo->gameRules());
+    G_SetGameAction(GA_NONE); /// @todo Necessary?
+
+#if !__JHEXEN__
+    mapTime = d->saveInfo->mapTime();
+#endif
+
+#if !__JHEXEN__
+    SV_InitThingArchiveForLoad(d->saveInfo->version() >= 5? Reader_ReadInt32(d->reader) : 1024 /* num elements */);
+#endif
+
+    readPlayerHeader(d->reader, d->saveInfo->version());
+
+    d->readPlayers();
+    d->readMap();
+
+    // Notify the players that weren't in the savegame.
+    d->kickMissingPlayers();
+
+#if !__JHEXEN__
+    // In netgames, the server tells the clients about this.
+    NetSv_LoadGame(d->saveInfo->sessionId());
 #endif
 }
 
@@ -1339,137 +1593,7 @@ static void loadNativeState(Str const *path, SaveInfo *info)
 
     Reader *reader = SV_NewReader();
 
-    // Read the header again.
-    /// @todo Seek past the header straight to the game state.
-    {
-        SaveInfo *tmp = new SaveInfo;
-        SV_SaveInfo_Read(tmp, reader);
-        delete tmp;
-    }
-
-    curInfo = info;
-
-#if __JHEXEN__
-    if(info->version() >= 7)
-    {
-        SV_AssertSegment(ASEG_WORLDSCRIPTDATA);
-    }
-    Game_ACScriptInterpreter().readWorldScriptData(reader, info->version());
-#endif
-
-    /*
-     * Load the map and configure some game settings.
-     */
-    briefDisabled = true;
-    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
-
-#if !__JHEXEN__
-    mapTime = info->mapTime();
-#endif
-
-    G_SetGameAction(GA_NONE); /// @todo Necessary?
-
-#if !__JHEXEN__
-    SV_InitThingArchiveForLoad(info->version() >= 5? Reader_ReadInt32(reader) : 1024 /* num elements */);
-#endif
-
-    readPlayerHeader(reader, info->version());
-
-    // Read the player structures
-    // We don't have the right to say which players are in the game. The
-    // players that already are will continue to be. If the data for a given
-    // player is not in the savegame file, he will be notified. The data for
-    // players who were saved but are not currently in the game will be
-    // discarded.
-    dd_bool loaded[MAXPLAYERS], infile[MAXPLAYERS];
-    readPlayers(*info, infile, loaded, reader);
-
-#if __JHEXEN__
-    Z_Free(saveBuffer);
-#endif
-
-    // Load the current map state.
-#if __JHEXEN__
-    openMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
-#endif
-
-    MapStateReader(info->version()).read(reader);
-
-#if __JHEXEN__
-    Z_Free(saveBuffer);
-#endif
-
-#if !__JHEXEN__
-    SV_ReadConsistencyBytes();
-    SV_CloseFile();
-#endif
-
-    /*
-     * Cleanup:
-     */
-    clearThingArchive();
-#if __JHEXEN__
-    clearTargetPlayers();
-#endif
-
-    // Notify the players that weren't in the savegame.
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        dd_bool notLoaded = false;
-
-#if __JHEXEN__
-        if(players[i].plr->inGame)
-        {
-            // Try to find a saved player that corresponds this one.
-            uint k;
-            for(k = 0; k < MAXPLAYERS; ++k)
-            {
-                if(saveToRealPlayerNum[k] == i)
-                    break;
-            }
-            if(k < MAXPLAYERS)
-                continue; // Found; don't bother this player.
-
-            players[i].playerState = PST_REBORN;
-
-            if(!i)
-            {
-                // If the CONSOLEPLAYER isn't in the save, it must be some
-                // other player's file?
-                P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
-            }
-            else
-            {
-                NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
-                notLoaded = true;
-            }
-        }
-#else
-        if(!loaded[i] && players[i].plr->inGame)
-        {
-            if(!i)
-            {
-                P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
-            }
-            else
-            {
-                NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
-            }
-            notLoaded = true;
-        }
-#endif
-
-        if(notLoaded)
-        {
-            // Kick this player out, he doesn't belong here.
-            DD_Executef(false, "kick %i", i);
-        }
-    }
-
-#if !__JHEXEN__
-    // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(info->sessionId());
-#endif
+    GameStateReader().read(info, reader);
 
     Reader_Delete(reader);
 }
@@ -1705,16 +1829,6 @@ void SV_LoadGameClient(uint sessionId)
 #endif
 }
 
-static void writeWorldACScriptData(Writer *writer)
-{
-#if __JHEXEN__
-    SV_BeginSegment(ASEG_WORLDSCRIPTDATA);
-    Game_ACScriptInterpreter().writeWorldScriptData(writer);
-#else
-    DENG_UNUSED(writer);
-#endif
-}
-
 static void saveGameState(Str const *path, SaveInfo *saveInfo)
 {
     App_Log(DE2_LOG_VERBOSE, "saveStateWorker: Attempting save game to \"%s\"", Str_Text(path));
@@ -1731,45 +1845,9 @@ static void saveGameState(Str const *path, SaveInfo *saveInfo)
 
     playerHeaderOK = false; // Uninitialized.
 
-    /*
-     * Write the game session header.
-     */
     Writer *writer = SV_NewWriter();
-    saveInfo->write(writer);
 
-    writeWorldACScriptData(writer);
-
-    // Set the mobj archive numbers.
-    initThingArchiveForSave();
-
-#if !__JHEXEN__
-    Writer_WriteInt32(writer, thingArchiveSize);
-#endif
-
-    writePlayerHeader(writer);
-    writePlayers(writer);
-
-#if __JHEXEN__
-    // Close the game session file (maps are saved into a seperate file).
-    SV_CloseFile();
-#endif
-
-    /*
-     * Save the map.
-     */
-#if __JHEXEN__
-    // ...map state is actually written to a separate file.
-    SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
-#endif
-
-    MapStateWriter(thingArchiveExcludePlayers).write(writer);
-
-    SV_WriteConsistencyBytes(); // To be absolutely sure...
-    SV_CloseFile();
-
-#if !__JHEXEN___
-    clearThingArchive();
-#endif
+    GameStateWriter().write(saveInfo, writer);
 
     Writer_Delete(writer);
 }
