@@ -32,7 +32,7 @@
 #include "g_common.h"
 #include "animdefsparser.h"
 #include "p_inventory.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"

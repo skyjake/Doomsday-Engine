@@ -1,48 +1,25 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file player.cpp  Common playsim routines relating to players.
  *
- *\author Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/**
- * p_player.c: Common playsim routines relating to players.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-
-#include "dd_share.h"
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
+#include "player.h"
 
 #include "dmu_lib.h"
 #include "d_netsv.h"
@@ -52,44 +29,29 @@
 #include "g_common.h"
 #include "p_actor.h"
 #include "p_start.h"
-#include "p_player.h"
-
-// MACROS ------------------------------------------------------------------
+#include <de/memory.h>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
 
 #define MESSAGETICS             (4 * TICSPERSEC)
 #define CAMERA_FRICTION_THRESHOLD (.4f)
 
-// TYPES -------------------------------------------------------------------
-
-typedef struct weaponslotinfo_s {
-    uint                num;
-    weapontype_t*       types;
-} weaponslotinfo_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
+struct weaponslotinfo_t
+{
+    uint num;
+    weapontype_t *types;
+};
 static weaponslotinfo_t weaponSlots[NUM_WEAPON_SLOTS];
 
-// CODE --------------------------------------------------------------------
-
-static byte slotForWeaponType(weapontype_t type, uint* position)
+static byte slotForWeaponType(weapontype_t type, uint *position = 0)
 {
-    byte                i = 0, found = 0;
+    byte i = 0, found = 0;
 
     do
     {
-        weaponslotinfo_t*   slot = &weaponSlots[i];
-        uint                j = 0;
+        weaponslotinfo_t *slot = &weaponSlots[i];
+        uint j = 0;
 
         while(!found && j < slot->num)
         {
@@ -97,10 +59,14 @@ static byte slotForWeaponType(weapontype_t type, uint* position)
             {
                 found = i + 1;
                 if(position)
+                {
                     *position = j;
+                }
             }
             else
+            {
                 j++;
+            }
         }
 
     } while(!found && ++i < NUM_WEAPON_SLOTS);
@@ -110,68 +76,67 @@ static byte slotForWeaponType(weapontype_t type, uint* position)
 
 static void unlinkWeaponInSlot(byte slotidx, weapontype_t type)
 {
-    uint                i;
-    weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
+    weaponslotinfo_t *slot = &weaponSlots[slotidx - 1];
 
+    uint i;
     for(i = 0; i < slot->num; ++i)
+    {
         if(slot->types[i] == type)
             break;
-
+    }
     if(i == slot->num)
         return; // Not linked to this slot.
 
-    memmove(&slot->types[i], &slot->types[i+1], sizeof(weapontype_t) *
-            (slot->num - 1 - i));
-    slot->types = realloc(slot->types, sizeof(weapontype_t) * --slot->num);
+    memmove(&slot->types[i], &slot->types[i+1], sizeof(weapontype_t) * (slot->num - 1 - i));
+    slot->types = (weapontype_t *)M_Realloc(slot->types, sizeof(weapontype_t) * --slot->num);
 }
 
 static void linkWeaponInSlot(byte slotidx, weapontype_t type)
 {
-    weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
+    weaponslotinfo_t *slot = &weaponSlots[slotidx-1];
 
-    slot->types = realloc(slot->types, sizeof(weapontype_t) * ++slot->num);
+    slot->types = (weapontype_t *)M_Realloc(slot->types, sizeof(weapontype_t) * ++slot->num);
     if(slot->num > 1)
+    {
         memmove(&slot->types[1], &slot->types[0],
                 sizeof(weapontype_t) * (slot->num - 1));
+    }
 
     slot->types[0] = type;
 }
 
-void P_InitWeaponSlots(void)
+void P_InitWeaponSlots()
 {
-    memset(weaponSlots, 0, sizeof(weaponSlots));
+    de::zap(weaponSlots);
 }
 
-void P_FreeWeaponSlots(void)
+void P_FreeWeaponSlots()
 {
-    byte                i;
-
-    for(i = 0; i < NUM_WEAPON_SLOTS; ++i)
+    for(int i = 0; i < NUM_WEAPON_SLOTS; ++i)
     {
-        weaponslotinfo_t*   slot = &weaponSlots[i];
+        weaponslotinfo_t *slot = &weaponSlots[i];
 
-        if(slot->types)
-            free(slot->types);
-        slot->types = NULL;
-        slot->num = 0;
+        M_Free(slot->types);
+        slot->types = 0;
+        slot->num   = 0;
     }
 }
 
 dd_bool P_SetWeaponSlot(weapontype_t type, byte slot)
 {
-    byte                currentSlot;
-
     if(slot > NUM_WEAPON_SLOTS)
         return false;
 
-    currentSlot = slotForWeaponType(type, NULL);
-
     // First, remove the weapon (if found).
+    byte currentSlot = slotForWeaponType(type);
     if(currentSlot)
+    {
         unlinkWeaponInSlot(currentSlot, type);
+    }
 
     if(slot != 0)
-    {   // Add this weapon to the specified slot (head).
+    {
+        // Add this weapon to the specified slot (head).
         linkWeaponInSlot(slot, type);
     }
 
@@ -181,8 +146,9 @@ dd_bool P_SetWeaponSlot(weapontype_t type, byte slot)
 byte P_GetWeaponSlot(weapontype_t type)
 {
     if(type >= WT_FIRST && type < NUM_WEAPON_TYPES)
-        return slotForWeaponType(type, NULL);
-
+    {
+        return slotForWeaponType(type);
+    }
     return 0;
 }
 
@@ -190,12 +156,10 @@ weapontype_t P_WeaponSlotCycle(weapontype_t type, dd_bool prev)
 {
     if(type >= WT_FIRST && type < NUM_WEAPON_TYPES)
     {
-        byte                slotidx;
-        uint                position;
-
-        if((slotidx = slotForWeaponType(type, &position)))
+        uint position;
+        if(byte slotidx = slotForWeaponType(type, &position))
         {
-            weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
+            weaponslotinfo_t *slot = &weaponSlots[slotidx - 1];
 
             if(slot->num > 1)
             {
@@ -222,43 +186,29 @@ weapontype_t P_WeaponSlotCycle(weapontype_t type, dd_bool prev)
     return type;
 }
 
-/**
- * Iterate the weapons of a given weapon slot.
- *
- * @param slot          Weapon slot number.
- * @param reverse       Iff @c = true, the traversal is done in reverse.
- * @param callback      Ptr to the callback to make for each element.
- *                      If the callback returns @c 0, iteration ends.
- * @param context       Passed as an argument to @a callback.
- *
- * @return              Non-zero if no weapon is bound to the slot @a slot,
- *                      or callback @a callback signals an end to iteration.
- */
-int P_IterateWeaponsBySlot(byte slot, dd_bool reverse,
-                           int (*callback) (weapontype_t, void* context),
-                           void* context)
+int P_IterateWeaponsBySlot(byte slot, dd_bool reverse, int (*callback) (weapontype_t, void *context),
+    void *context)
 {
-    int                 result = 1;
+    int result = 1;
 
     if(slot <= NUM_WEAPON_SLOTS)
     {
-        uint                i = 0;
-        const weaponslotinfo_t* sl = &weaponSlots[slot];
+        uint i = 0;
+        weaponslotinfo_t const *sl = &weaponSlots[slot];
 
         while(i < sl->num &&
              (result = callback(sl->types[reverse ? sl->num - 1 - i : i],
                                 context)) != 0)
+        {
             i++;
+        }
     }
 
     return result;
 }
 
-/**
- * Initialize player class info.
- */
 #if __JHEXEN__
-void P_InitPlayerClassInfo(void)
+void P_InitPlayerClassInfo()
 {
     PCLASS_INFO(PCLASS_FIGHTER)->niceName = GET_TXT(TXT_PLAYERCLASS1);
     PCLASS_INFO(PCLASS_CLERIC)->niceName = GET_TXT(TXT_PLAYERCLASS2);
@@ -267,16 +217,9 @@ void P_InitPlayerClassInfo(void)
 }
 #endif
 
-/**
- * @param player        The player to work with.
- *
- * @return              Number of the given player.
- */
 int P_GetPlayerNum(player_t *player)
 {
-    int                 i;
-
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         if(player == &players[i])
         {
@@ -286,48 +229,33 @@ int P_GetPlayerNum(player_t *player)
     return 0;
 }
 
-/**
- * Return a bit field for the current player's cheats.
- *
- * @param               The player to work with.
- *
- * @return              Cheats active for the given player in a bitfield.
- */
-int P_GetPlayerCheats(const player_t* player)
+int P_GetPlayerCheats(player_t const *player)
 {
-    if(!player)
+    if(!player) return 0;
+
+    if(player->plr->flags & DDPF_CAMERA)
     {
-        return 0;
+        return (player->cheats |
+                (CF_GODMODE | cfg.cameraNoClip? CF_NOCLIP : 0));
     }
-    else
-    {
-        if(player->plr->flags & DDPF_CAMERA)
-            return (player->cheats |
-                    (CF_GODMODE | cfg.cameraNoClip? CF_NOCLIP : 0));
-        else
-            return player->cheats;
-    }
+    return player->cheats;
 }
 
-int P_CountPlayersInGame(void)
+int P_CountPlayersInGame()
 {
-    int c, count = 0;
-    for(c = 0; c < MAXPLAYERS; ++c)
+    int count = 0;
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* player = players + c;
-        if(player->plr->inGame) count += 1;
+        player_t *player = players + i;
+        if(player->plr->inGame)
+        {
+            count += 1;
+        }
     }
     return count;
 }
 
-/**
- * Determines whether the player's state is one of the walking states.
- *
- * @param pl  Player whose state to check.
- *
- * @return  @c true, if the player is walking.
- */
-dd_bool P_PlayerInWalkState(player_t* pl)
+dd_bool P_PlayerInWalkState(player_t *pl)
 {
     if(!pl->plr->mo) return false;
 
@@ -350,31 +278,23 @@ dd_bool P_PlayerInWalkState(player_t* pl)
 #endif
 }
 
-/**
- * Subtract the appropriate amount of ammo from the player for firing
- * the current ready weapon.
- *
- * @param player  The player doing the firing.
- */
 void P_ShotAmmo(player_t *player)
 {
-    ammotype_t i;
-    int fireMode;
-    weaponinfo_t *wInfo =
-        &weaponInfo[player->readyWeapon][player->class_];
+    DENG_ASSERT(player != 0);
+
+    weaponinfo_t *wInfo = &weaponInfo[player->readyWeapon][player->class_];
 
     if(IS_CLIENT) return; // Server keeps track of this.
 
+    int fireMode = 0;
 #if __JHERETIC__
     if(gameRules.deathmatch)
         fireMode = 0; // In deathmatch always use mode zero.
     else
         fireMode = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
-#else
-    fireMode = 0;
 #endif
 
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
     {
         if(!wInfo->mode[fireMode].ammoType[i])
             continue; // Weapon does not take this ammo.
@@ -386,39 +306,8 @@ void P_ShotAmmo(player_t *player)
     player->update |= PSF_AMMO;
 }
 
-/**
- * Decides if an automatic weapon change should occur and does it.
- *
- * Called when:
- * A) the player has ran out of ammo for the readied weapon.
- * B) the player has been given a NEW weapon.
- * C) the player is ABOUT TO be given some ammo.
- *
- * If "weapon" is non-zero then we'll always try to change weapon.
- * If "ammo" is non-zero then we'll consider the ammo level of weapons that
- * use this ammo type.
- * If both non-zero - no more ammo for the current weapon.
- *
- * \todo Should be called AFTER ammo is given but we need to
- * remember the old count before the change.
- *
- * @param player        The player given the weapon.
- * @param weapon        The weapon given to the player (if any).
- * @param ammo          The ammo given to the player (if any).
- * @param force         @c true = Force a weapon change.
- *
- * @return              The weapon we changed to OR WT_NOCHANGE.
- */
-weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
-                                 ammotype_t ammo, dd_bool force)
+weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype_t ammo, dd_bool force)
 {
-    int                 i, lvl, pclass;
-    ammotype_t          ammotype;
-    weapontype_t        candidate;
-    weapontype_t        returnval = WT_NOCHANGE;
-    weaponinfo_t       *winf;
-    dd_bool             found;
-
     if(IS_NETWORK_SERVER)
     {
         // This is done on clientside.
@@ -430,27 +319,28 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             "P_MaybeChangeWeapon: plr %i, weapon %i, ammo %i, force %i",
             (int)(player - players), weapon, ammo, force);
 
+    int pclass = player->class_;
+
     // Assume weapon power level zero.
-    lvl = 0;
-
-    pclass = player->class_;
-
+    int lvl = 0;
 #if __JHERETIC__
     if(player->powers[PT_WEAPONLEVEL2])
         lvl = 1;
 #endif
 
+    bool found = false;
+    weapontype_t retVal = WT_NOCHANGE;
+
     if(weapon == WT_NOCHANGE && ammo == AT_NOAMMO) // Out of ammo.
     {
-        dd_bool good;
+        bool good;
 
         // Note we have no auto-logical choice for a forced change.
         // Preferences are set by the user.
-        found = false;
-        for(i = 0; i < NUM_WEAPON_TYPES && !found; ++i)
+        for(int i = 0; i < NUM_WEAPON_TYPES && !found; ++i)
         {
-            candidate = cfg.weaponOrder[i];
-            winf = &weaponInfo[candidate][pclass];
+            weapontype_t candidate = weapontype_t(cfg.weaponOrder[i]);
+            weaponinfo_t *winf     = &weaponInfo[candidate][pclass];
 
             // Is candidate available in this game mode?
             if(!(winf->mode[lvl].gameModeBits & gameModeBits))
@@ -463,28 +353,32 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             // Is there sufficent ammo for the candidate weapon?
             // Check amount for each used ammo type.
             good = true;
-            for(ammotype = 0; ammotype < NUM_AMMO_TYPES && good; ++ammotype)
+            for(int ammotype = 0; ammotype < NUM_AMMO_TYPES && good; ++ammotype)
             {
                 if(!winf->mode[lvl].ammoType[ammotype])
                     continue; // Weapon does not take this type of ammo.
+
 #if __JHERETIC__
                 // Heretic always uses lvl 0 ammo requirements in deathmatch
                 if(gameRules.deathmatch &&
                    player->ammo[ammotype].owned < winf->mode[0].perShot[ammotype])
-                {   // Not enough ammo of this type. Candidate is NOT good.
+                {
+                    // Not enough ammo of this type. Candidate is NOT good.
                     good = false;
                 }
                 else
 #endif
                 if(player->ammo[ammotype].owned < winf->mode[lvl].perShot[ammotype])
-                {   // Not enough ammo of this type. Candidate is NOT good.
+                {
+                    // Not enough ammo of this type. Candidate is NOT good.
                     good = false;
                 }
             }
 
             if(good)
-            {   // Candidate weapon meets the criteria.
-                returnval = candidate;
+            {
+                // Candidate weapon meets the criteria.
+                retVal = candidate;
                 found = true;
             }
         }
@@ -494,37 +388,38 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         // A forced weapon change?
         if(force)
         {
-            returnval = weapon;
+            retVal = weapon;
         }
         // Is the player currently firing?
-        else if(!((player->brain.attack) &&
-                  cfg.noWeaponAutoSwitchIfFiring))
+        else if(!((player->brain.attack) && cfg.noWeaponAutoSwitchIfFiring))
         {
             // Should we change weapon automatically?
-            if(cfg.weaponAutoSwitch == 2)
-            {   // Always change weapon mode
-                returnval = weapon;
-            }
-            else if(cfg.weaponAutoSwitch == 1)
-            {   // Change if better mode
 
+            if(cfg.weaponAutoSwitch == 2) // Behavior: Always change
+            {
+                retVal = weapon;
+            }
+            else if(cfg.weaponAutoSwitch == 1) // Behavior: Change if better
+            {
                 // Iterate the weapon order array and see if a weapon change
                 // should be made. Preferences are user selectable.
-                for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+                for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
                 {
-                    candidate = cfg.weaponOrder[i];
-                    winf = &weaponInfo[candidate][pclass];
+                    weapontype_t candidate = weapontype_t(cfg.weaponOrder[i]);
+                    weaponinfo_t *winf     = &weaponInfo[candidate][pclass];
 
                     // Is candidate available in this game mode?
                     if(!(winf->mode[lvl].gameModeBits & gameModeBits))
                         continue;
 
                     if(weapon == candidate)
-                    {   // weapon has a higher priority than the readyweapon.
-                        returnval = weapon;
+                    {
+                        // weapon has a higher priority than the readyweapon.
+                        retVal = weapon;
                     }
                     else if(player->readyWeapon == candidate)
-                    {   // readyweapon has a higher priority so don't change.
+                    {
+                        // readyweapon has a higher priority so don't change.
                         break;
                     }
                 }
@@ -533,17 +428,17 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     }
     else if(ammo != AT_NOAMMO) // Player is about to be given some ammo.
     {
-        if((!(player->ammo[ammo].owned > 0) && cfg.ammoAutoSwitch != 0) ||
-           force)
-        {   // We were down to zero, so select a new weapon.
+        if(force || (!(player->ammo[ammo].owned > 0) && cfg.ammoAutoSwitch != 0))
+        {
+            // We were down to zero, so select a new weapon.
 
-            // Iterate the weapon order array and see if the player owns a
-            // weapon that can be used now they have this ammo.
+            // Iterate the weapon order array and see if the player owns a weapon that can be used
+            // now they have this ammo.
             // Preferences are user selectable.
-            for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+            for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
-                candidate = cfg.weaponOrder[i];
-                winf = &weaponInfo[candidate][pclass];
+                weapontype_t candidate = weapontype_t(cfg.weaponOrder[i]);
+                weaponinfo_t *winf     = &weaponInfo[candidate][pclass];
 
                 // Is candidate available in this game mode?
                 if(!(winf->mode[lvl].gameModeBits & gameModeBits))
@@ -559,22 +454,22 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
 
                 /**
                  * @todo Have we got enough of ALL used ammo types?
-                 * Problem, since the ammo has not been given yet (could
-                 * be an object that gives several ammo types eg backpack)
-                 * we can't test for this with what we know!
                  *
-                 * This routine should be called AFTER the new ammo has
-                 * been given. Somewhat complex logic to decipher first...
+                 * Problem, since the ammo has not been given yet (could be an object that gives
+                 * several ammo types eg backpack) we can't test for this with what we know!
+                 *
+                 * This routine should be called AFTER the new ammo has been given. Somewhat complex
+                 * logic to decipher first...
                  */
 
-                if(cfg.ammoAutoSwitch == 2)
-                {   // Always change weapon mode.
-                    returnval = candidate;
+                if(cfg.ammoAutoSwitch == 2) // Behavior: Always change
+                {
+                    retVal = candidate;
                     break;
                 }
-                else if(cfg.ammoAutoSwitch == 1 &&
-                        player->readyWeapon == candidate)
-                {   // readyweapon has a higher priority so don't change.
+                else if(cfg.ammoAutoSwitch == 1 && player->readyWeapon == candidate)
+                {
+                    // readyweapon has a higher priority so don't change.
                     break;
                 }
             }
@@ -582,16 +477,16 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     }
 
     // Don't change to the existing weapon.
-    if(returnval == player->readyWeapon)
-        returnval = WT_NOCHANGE;
+    if(retVal == player->readyWeapon)
+        retVal = WT_NOCHANGE;
 
     // Choosen a weapon to change to?
-    if(returnval != WT_NOCHANGE)
+    if(retVal != WT_NOCHANGE)
     {
         App_Log(DE2_DEV_MAP_XVERBOSE, "P_MaybeChangeWeapon: Player %i decided to change to weapon %i",
-                (int)(player - players), returnval);
+                (int)(player - players), retVal);
 
-        player->pendingWeapon = returnval;
+        player->pendingWeapon = retVal;
 
         if(IS_CLIENT)
         {
@@ -600,32 +495,22 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         }
     }
 
-    return returnval;
+    return retVal;
 }
 
-/**
- * Checks if the player has enough ammo to fire their readied weapon.
- * If not, a weapon change is instigated.
- *
- * @return  @c true, if there is enough ammo to fire.
- */
 dd_bool P_CheckAmmo(player_t *plr)
 {
-    int fireMode;
-    dd_bool good;
-    ammotype_t i;
-    weaponinfo_t *wInfo =
-            &weaponInfo[plr->readyWeapon][plr->class_];
+    DENG_ASSERT(plr != 0);
 
-#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
-    fireMode = 0;
-#endif
+    weaponinfo_t *wInfo = &weaponInfo[plr->readyWeapon][plr->class_];
+
+    int fireMode = 0;
 #if __JHERETIC__
     // If deathmatch always use firemode two ammo requirements.
     if(plr->powers[PT_WEAPONLEVEL2] && !gameRules.deathmatch)
+    {
         fireMode = 1;
-    else
-        fireMode = 0;
+    }
 #endif
 
 #if __JHEXEN__
@@ -633,48 +518,45 @@ dd_bool P_CheckAmmo(player_t *plr)
     //// We need to split the weapon firing routines and implement them as
     //// new fire modes.
     if(plr->class_ == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
+    {
         return true;
+    }
     // < KLUDGE
 #endif
 
     // Check we have enough of ALL ammo types used by this weapon.
-    good = true;
-    for(i = 0; i < NUM_AMMO_TYPES && good; ++i)
+    bool good = true;
+    for(int i = 0; i < NUM_AMMO_TYPES && good; ++i)
     {
         if(!wInfo->mode[fireMode].ammoType[i])
             continue; // Weapon does not take this type of ammo.
 
         // Minimal amount for one shot varies.
         if(plr->ammo[i].owned < wInfo->mode[fireMode].perShot[i])
-        {   // Insufficent ammo to fire this weapon.
+        {
+            // Insufficent ammo to fire this weapon.
             good = false;
         }
     }
 
-    if(good)
-        return true;
+    if(good) return true;
 
     // Out of ammo, pick a weapon to change to.
     P_MaybeChangeWeapon(plr, WT_NOCHANGE, AT_NOAMMO, false);
 
     // Now set appropriate weapon overlay.
     if(plr->pendingWeapon != WT_NOCHANGE)
-        P_SetPsprite(plr, ps_weapon, wInfo->mode[fireMode].states[WSN_DOWN]);
+    {
+        P_SetPsprite(plr, ps_weapon, statenum_t(wInfo->mode[fireMode].states[WSN_DOWN]));
+    }
 
     return false;
 }
 
-/**
- * Return the next weapon for the given player. Can return the existing
- * weapon if no other valid choices. Preferences are NOT user selectable.
- *
- * @param player        The player to work with.
- * @param prev          Search direction @c true = previous, @c false = next.
- */
-weapontype_t P_PlayerFindWeapon(player_t* player, dd_bool prev)
+weapontype_t P_PlayerFindWeapon(player_t *player, dd_bool prev)
 {
-    weapontype_t*       list, w = 0, initial;
-    int                 lvl, i;
+    DENG_ASSERT(player != 0);
+
 #if __JDOOM__
     static weapontype_t wp_list[] = {
         WT_FIRST, WT_SECOND, WT_THIRD, WT_NINETH, WT_FOURTH,
@@ -698,23 +580,28 @@ weapontype_t P_PlayerFindWeapon(player_t* player, dd_bool prev)
     };
 #endif
 
+    int lvl = 0;
 #if __JHERETIC__
     lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
-#else
-    lvl = 0;
 #endif
 
     // Are we using weapon order preferences for next/previous?
+    weapontype_t *list;
     if(cfg.weaponNextMode)
     {
-        list = (weapontype_t*) cfg.weaponOrder;
+        list = (weapontype_t *) cfg.weaponOrder;
         prev = !prev; // Invert order.
     }
     else
+    {
         list = wp_list;
+    }
+
 
     // Find the current position in the weapon list.
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    int i = 0;
+    weapontype_t w = WT_FIRST;
+    for(; i < NUM_WEAPON_TYPES; ++i)
     {
         w = list[i];
         if(!cfg.weaponCycleSequential || player->pendingWeapon == WT_NOCHANGE)
@@ -723,11 +610,13 @@ weapontype_t P_PlayerFindWeapon(player_t* player, dd_bool prev)
                 break;
         }
         else if(w == player->pendingWeapon)
+        {
             break;
+        }
     }
 
     // Locate the next or previous weapon owned by the player.
-    initial = w;
+    weapontype_t initial = w;
     for(;;)
     {
         // Move the iterator.
@@ -757,14 +646,8 @@ weapontype_t P_PlayerFindWeapon(player_t* player, dd_bool prev)
 }
 
 #if __JHEXEN__
-/**
- * Changes the class of the given player. Will not work if the player
- * is currently morphed.
- */
 void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 {
-    int i;
-
     DENG_ASSERT(player != 0);
 
     if(newClass < PCLASS_FIRST || newClass >= NUM_PLAYER_CLASSES)
@@ -779,7 +662,7 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
     P_ClassForPlayerWhenRespawning(player - players, true /*clear change request*/);
 
     // Take away armor.
-    for(i = 0; i < NUMARMOR; ++i)
+    for(int i = 0; i < NUMARMOR; ++i)
     {
         player->armorPoints[i] = 0;
     }
@@ -790,7 +673,7 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
     if(player->plr->mo)
     {
         // Respawn the player and destroy the old mobj.
-        mobj_t* oldMo = player->plr->mo;
+        mobj_t *oldMo = player->plr->mo;
 
         P_SpawnPlayer(player - players, newClass, oldMo->origin[VX],
                       oldMo->origin[VY], oldMo->origin[VZ], oldMo->angle, 0,
@@ -800,8 +683,10 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 }
 #endif
 
-void P_SetMessage(player_t* pl, int flags, const char* msg)
+void P_SetMessage(player_t *pl, int flags, char const *msg)
 {
+    DENG_ASSERT(pl != 0);
+
     if(!msg || !msg[0]) return;
 
     ST_LogPost(pl - players, flags, msg);
@@ -816,18 +701,16 @@ void P_SetMessage(player_t* pl, int flags, const char* msg)
 }
 
 #if __JHEXEN__
-void P_SetYellowMessage(player_t* pl, int flags, const char* msg)
+void P_SetYellowMessage(player_t *pl, int flags, char const *msg)
 {
 #define YELLOW_FMT      "{r=1;g=0.7;b=0.3;}"
 #define YELLOW_FMT_LEN  18
 
-    size_t len;
-    AutoStr* buf;
-
     if(!msg || !msg[0]) return;
-    len = strlen(msg);
 
-    buf = AutoStr_NewStd();
+    size_t len = strlen(msg);
+
+    AutoStr *buf = AutoStr_NewStd();
     Str_Reserve(buf, YELLOW_FMT_LEN + len+1);
     Str_Set(buf, YELLOW_FMT);
     Str_Appendf(buf, "%s", msg);
@@ -845,16 +728,16 @@ void P_SetYellowMessage(player_t* pl, int flags, const char* msg)
     /// reconstruct on the other end.
     NetSv_SendMessage(pl - players, Str_Text(buf));
 
+#undef YELLOW_FMT_LEN
 #undef YELLOW_FMT
 }
 #endif
 
-void P_Thrust3D(player_t* player, angle_t angle, float lookdir,
-                coord_t forwardMove, coord_t sideMove)
+void P_Thrust3D(player_t *player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove)
 {
     angle_t pitch = LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX;
     angle_t sideangle = angle - ANG90;
-    mobj_t* mo = player->plr->mo;
+    mobj_t *mo = player->plr->mo;
     coord_t zmul, mom[3];
 
     angle >>= ANGLETOFINESHIFT;
@@ -880,6 +763,7 @@ int P_CameraXYMovement(mobj_t *mo)
 {
     if(!P_MobjIsCamera(mo))
         return false;
+
 #if __JDOOM__ || __JDOOM64__
     if(mo->flags & MF_NOCLIP ||
        // This is a very rough check! Sometimes you get stuck in things.
@@ -929,24 +813,24 @@ int P_CameraZMovement(mobj_t *mo)
     if(!INRANGE_OF(mo->player->brain.forwardMove, 0, CAMERA_FRICTION_THRESHOLD) ||
        !INRANGE_OF(mo->player->brain.sideMove, 0, CAMERA_FRICTION_THRESHOLD) ||
        !INRANGE_OF(mo->player->brain.upMove, 0, CAMERA_FRICTION_THRESHOLD))
-    {   // While moving; normal friction applies.
+    {
+        // While moving; normal friction applies.
         mo->mom[MZ] *= FRICTION_NORMAL;
     }
     else
-    {   // Else, lose momentum quickly!.
+    {
+        // Lose momentum quickly!.
         mo->mom[MZ] *= FRICTION_HIGH;
     }
 
     return true;
 }
 
-/**
- * Set appropriate parameters for a camera.
- */
-void P_PlayerThinkCamera(player_t* player)
+void P_PlayerThinkCamera(player_t *player)
 {
-    mobj_t* mo = player->plr->mo;
+    DENG_ASSERT(player != 0);
 
+    mobj_t *mo = player->plr->mo;
     if(!mo) return;
 
     // If this player is not a camera, get out of here.
@@ -964,33 +848,29 @@ void P_PlayerThinkCamera(player_t* player)
     // How about viewlock?
     if(player->viewLock)
     {
-        angle_t angle;
-        int full;
-        coord_t dist;
-        mobj_t* target = players->viewLock;
+        mobj_t *target = players->viewLock;
 
         if(!target->player || !target->player->plr->inGame)
         {
-            player->viewLock = NULL;
+            player->viewLock = 0;
             return;
         }
 
-        full = player->lockFull;
+        int full = player->lockFull;
 
-        angle = M_PointToAngle2(mo->origin, target->origin);
         //player->plr->flags |= DDPF_FIXANGLES;
         /* $unifiedangles */
-        mo->angle = angle;
-        //player->plr->clAngle = angle;
+        mo->angle = M_PointToAngle2(mo->origin, target->origin);
+        //player->plr->clAngle = mo->angle;
         player->plr->flags |= DDPF_INTERYAW;
 
         if(full)
         {
-            dist = M_ApproxDistance(mo->origin[VX] - target->origin[VX],
-                                    mo->origin[VY] - target->origin[VY]);
-            angle = M_PointXYToAngle2(0, 0,
-                                      target->origin[VZ] + (target->height / 2) - mo->origin[VZ],
-                                      dist);
+            coord_t dist = M_ApproxDistance(mo->origin[VX] - target->origin[VX],
+                                            mo->origin[VY] - target->origin[VY]);
+            angle_t angle = M_PointXYToAngle2(0, 0,
+                                              target->origin[VZ] + (target->height / 2) - mo->origin[VZ],
+                                              dist);
 
             player->plr->lookDir = -(angle / (float) ANGLE_MAX * 360.0f - 90);
             if(player->plr->lookDir > 180)
@@ -1010,62 +890,55 @@ void P_PlayerThinkCamera(player_t* player)
 
 D_CMD(SetCamera)
 {
-    int                 p;
-    player_t           *player;
-
-    p = atoi(argv[1]);
+    int p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
         App_Log(DE2_LOG_SCR| DE2_LOG_ERROR, "Invalid console number %i\n", p);
         return false;
     }
 
-    player = &players[p];
+    player_t *player = &players[p];
 
     player->plr->flags ^= DDPF_CAMERA;
     if(player->plr->inGame)
     {
         if(player->plr->flags & DDPF_CAMERA)
-        {   // Is now a camera.
+        {
+            // Is now a camera.
             if(player->plr->mo)
+            {
                 player->plr->mo->origin[VZ] += player->viewHeight;
+            }
         }
         else
-        {   // Is now a "real" player.
+        {
+            // Is now a "real" player.
             if(player->plr->mo)
+            {
                 player->plr->mo->origin[VZ] -= player->viewHeight;
+            }
         }
     }
+
     return true;
 }
 
-/**
- * Give the player an armor bonus (points delta).
- *
- * @param plr           This.
- * @param points        Points delta.
- *
- * @return              Number of points applied.
- */
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-int P_PlayerGiveArmorBonus(player_t* plr, int points)
+int P_PlayerGiveArmorBonus(player_t *plr, int points)
 #else // __JHEXEN__
-int P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points)
+int P_PlayerGiveArmorBonus(player_t *plr, armortype_t type, int points)
 #endif
 {
-    int                 delta, oldPoints;
-    int*                current;
-
-    if(!points)
-        return 0;
+    if(!points) return 0;
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    current = &plr->armorPoints;
+    int *current = &plr->armorPoints;
 #else // __JHEXEN__
-    current = &plr->armorPoints[type];
+    int *current = &plr->armorPoints[type];
 #endif
 
-    oldPoints = *current;
+    int oldPoints = *current;
+    int delta;
     if(points > 0)
     {
         delta = points; /// @todo No upper limit?
@@ -1080,46 +953,53 @@ int P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points)
 
     *current += delta;
     if(*current != oldPoints)
+    {
         plr->update |= PSF_ARMOR_POINTS;
+    }
 
     return delta;
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-void P_PlayerSetArmorType(player_t* plr, int type)
+void P_PlayerSetArmorType(player_t *plr, int type)
 {
-    int                 oldType = plr->armorType;
+    int oldType = plr->armorType;
 
     plr->armorType = type;
-
     if(plr->armorType != oldType)
+    {
         plr->update |= PSF_ARMOR_TYPE;
+    }
 }
 #endif
 
 D_CMD(SetViewMode)
 {
-    int                 pl = CONSOLEPLAYER;
+    if(argc > 2) return false;
 
-    if(argc > 2)
-        return false;
-
+    int pl = CONSOLEPLAYER;
     if(argc == 2)
+    {
         pl = atoi(argv[1]);
-
+    }
     if(pl < 0 || pl >= MAXPLAYERS)
         return false;
 
     if(!(players[pl].plr->flags & DDPF_CHASECAM))
+    {
         players[pl].plr->flags |= DDPF_CHASECAM;
+    }
     else
+    {
         players[pl].plr->flags &= ~DDPF_CHASECAM;
+    }
+
     return true;
 }
 
 D_CMD(SetViewLock)
 {
-    int                 pl = CONSOLEPLAYER, lock;
+    int pl = CONSOLEPLAYER, lock;
 
     if(!stricmp(argv[0], "lockmode"))
     {
@@ -1128,6 +1008,7 @@ D_CMD(SetViewLock)
             players[pl].lockFull = true;
         else
             players[pl].lockFull = false;
+
         return true;
     }
     if(argc < 2)
@@ -1135,6 +1016,7 @@ D_CMD(SetViewLock)
 
     if(argc >= 3)
         pl = atoi(argv[2]); // Console number.
+
     lock = atoi(argv[1]);
 
     if(!(lock == pl || lock < 0 || lock >= MAXPLAYERS))
@@ -1146,30 +1028,27 @@ D_CMD(SetViewLock)
         }
     }
 
-    players[pl].viewLock = NULL;
+    players[pl].viewLock = 0;
+
     return false;
 }
 
 D_CMD(MakeLocal)
 {
-    int                 p;
-    char                buf[20];
-    player_t           *plr;
-
     if(G_GameState() != GS_MAP)
     {
         App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "You must be in a game to create a local player.\n");
         return false;
     }
 
-    p = atoi(argv[1]);
+    int p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
         App_Log(DE2_SCR_ERROR, "Invalid console number %i.\n", p);
         return false;
     }
-    plr = &players[p];
 
+    player_t *plr = &players[p];
     if(plr->plr->inGame)
     {
         App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Player %i is already in the game.\n", p);
@@ -1178,18 +1057,19 @@ D_CMD(MakeLocal)
 
     plr->playerState = PST_REBORN;
     plr->plr->inGame = true;
+
+    char buf[20];
     sprintf(buf, "conlocp %i", p);
     DD_Execute(false, buf);
+
     P_DealPlayerStarts(0);
+
     return true;
 }
 
-/**
- * Print the console player's coordinates.
- */
 D_CMD(PrintPlayerCoords)
 {
-    mobj_t* mo;
+    mobj_t *mo;
 
     if(G_GameState() != GS_MAP)
         return false;
@@ -1198,7 +1078,7 @@ D_CMD(PrintPlayerCoords)
         return false;
 
     App_Log(DE2_LOG_MAP, "Console %i: X=%g Y=%g Z=%g\n", CONSOLEPLAYER,
-                     mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
+                         mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 
     return true;
 }
@@ -1209,7 +1089,8 @@ D_CMD(CycleSpy)
     App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Spying not allowed.\n");
 #if 0
     if(G_GameState() == GS_MAP && !deathmatch)
-    {   // Cycle the display player.
+    {
+        // Cycle the display player.
         do
         {
             Set(DD_DISPLAYPLAYER, DISPLAYPLAYER + 1);
@@ -1226,12 +1107,6 @@ D_CMD(CycleSpy)
 
 D_CMD(SpawnMobj)
 {
-    mobjtype_t type;
-    coord_t pos[3];
-    mobj_t* mo;
-    angle_t angle;
-    int spawnFlags = 0;
-
     if(argc != 5 && argc != 6)
     {
         App_Log(DE2_SCR_NOTE, "Usage: %s (type) (x) (y) (z) (angle)\n", argv[0]);
@@ -1248,10 +1123,11 @@ D_CMD(SpawnMobj)
     }
 
     // First try to find the thing by ID.
-    if((type = Def_Get(DD_DEF_MOBJ, argv[1], 0)) < 0)
+    mobjtype_t type;
+    if((type = mobjtype_t(Def_Get(DD_DEF_MOBJ, argv[1], 0))) < 0)
     {
         // Try to find it by name instead.
-        if((type = Def_Get(DD_DEF_MOBJ_BY_NAME, argv[1], 0)) < 0)
+        if((type = mobjtype_t(Def_Get(DD_DEF_MOBJ_BY_NAME, argv[1], 0))) < 0)
         {
             App_Log(DE2_LOG_RES | DE2_LOG_ERROR, "Undefined thing type %s\n", argv[1]);
             return false;
@@ -1259,27 +1135,36 @@ D_CMD(SpawnMobj)
     }
 
     // The coordinates.
+    coord_t pos[3];
     pos[VX] = strtod(argv[2], 0);
     pos[VY] = strtod(argv[3], 0);
     pos[VZ] = 0;
 
+    int spawnFlags = 0;
     if(!stricmp(argv[4], "ceil"))
+    {
         spawnFlags |= MSF_Z_CEIL;
+    }
     else if(!stricmp(argv[4], "random"))
+    {
         spawnFlags |= MSF_Z_RANDOM;
+    }
     else
     {
         spawnFlags |= MSF_Z_FLOOR;
         if(stricmp(argv[4], "floor"))
+        {
             pos[VZ] = strtod(argv[4], 0);
+        }
     }
 
+    angle_t angle = 0;
     if(argc == 6)
+    {
         angle = ((int) (strtod(argv[5], 0) / 360 * FRACUNIT)) << 16;
-    else
-        angle = 0;
+    }
 
-    if((mo = P_SpawnMobj(type, pos, angle, spawnFlags)))
+    if(mobj_t *mo = P_SpawnMobj(type, pos, angle, spawnFlags))
     {
 #if __JDOOM64__
         // jd64 > kaiser - another cheesy hack!!!
@@ -1303,13 +1188,13 @@ D_CMD(SpawnMobj)
 
 angle_t Player_ViewYawAngle(int playerNum)
 {
-    angle_t ang = 0;
-    ddplayer_t *plr = 0;
+    if(playerNum < 0 || playerNum >= MAXPLAYERS)
+    {
+        return 0;
+    }
 
-    if(playerNum < 0 || playerNum >= MAXPLAYERS) return 0;
-
-    plr = players[playerNum].plr;
-    ang = plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(playerNum));
+    ddplayer_t *plr = players[playerNum].plr;
+    angle_t ang = plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(playerNum));
 
     if(Get(DD_USING_HEAD_TRACKING))
     {

@@ -27,7 +27,7 @@
 
 #include "common.h"
 #include "d_net.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_user.h"
 #include "p_map.h"
 #include "mobj.h"

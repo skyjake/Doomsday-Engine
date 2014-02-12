@@ -29,7 +29,7 @@
 #include "p_door.h"
 
 #include "dmu_lib.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_mapspec.h"
 #if __JDOOM64__
 #  include "p_ceiling.h"

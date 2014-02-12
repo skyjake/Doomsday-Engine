@@ -29,7 +29,7 @@
 #include "p_tick.h"
 #include "p_mapsetup.h"
 #include "p_user.h"
-#include "p_player.h"
+#include "player.h"
 #include "d_net.h"
 #include "p_map.h"
 #include "am_map.h"

@@ -30,7 +30,7 @@
 
 #include "dmu_lib.h"
 #include "p_actor.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_saveg.h"
 

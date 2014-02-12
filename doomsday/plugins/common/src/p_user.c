@@ -37,11 +37,11 @@
 #include "fi_lib.h"
 #include "doomsday.h"
 #include "g_common.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_tick.h" // for Pause_IsPaused()
 #include "p_view.h"
 #include "d_net.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_user.h"
 #include "g_common.h"

@@ -42,7 +42,7 @@
 
 #include "d_net.h"
 #include "g_common.h"
-#include "p_player.h"
+#include "player.h"
 #include "am_map.h"
 #include "hu_menu.h"
 #include "hu_msg.h"

@@ -28,7 +28,7 @@
 #include "p_saveg.h"
 #include "d_net.h"
 #include "d_netsv.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_start.h"
 #include "g_common.h"

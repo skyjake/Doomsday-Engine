@@ -40,7 +40,7 @@
 #include "d_net.h"
 #include "hu_stuff.h"
 #include "p_tick.h" // for Pause_IsPaused
-#include "p_player.h"
+#include "player.h"
 #include "p_mapsetup.h"
 #include "hu_automap.h"
 #include "hu_lib.h"

@@ -32,7 +32,7 @@
 #include "p_terraintype.h"
 #include "p_tick.h"
 #include "p_actor.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_mapsetup.h"
 
 #include "p_map.h"

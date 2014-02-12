@@ -38,7 +38,7 @@
 #include "hu_stuff.h"
 #include "am_map.h"
 #include "x_hair.h"
-#include "p_player.h"
+#include "player.h"
 #include "g_controls.h"
 #include "p_saveg.h"
 #include "g_common.h"

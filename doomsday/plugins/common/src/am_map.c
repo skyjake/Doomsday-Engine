@@ -32,7 +32,7 @@
 #include "p_mapsetup.h"
 #include "hu_stuff.h"
 #include "am_map.h"
-#include "p_player.h"
+#include "player.h"
 #include "hu_automap.h"
 
 static void registerSpecialLine(automapcfg_t* mcfg, int reqAutomapFlags, int reqSpecial,

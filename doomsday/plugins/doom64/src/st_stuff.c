@@ -41,7 +41,7 @@
 #include "p_mapsetup.h"
 #include "p_tick.h" // for Pause_IsPaused
 #include "p_inventory.h"
-#include "p_player.h"
+#include "player.h"
 #include "am_map.h"
 #include "r_common.h"
 

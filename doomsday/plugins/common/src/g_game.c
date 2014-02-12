@@ -53,7 +53,7 @@
 #include "g_eventsequence.h"
 #include "d_net.h"
 #include "x_hair.h"
-#include "p_player.h"
+#include "player.h"
 #include "r_common.h"
 #include "p_map.h"
 #include "p_mapspec.h"

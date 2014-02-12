@@ -28,7 +28,7 @@
 #include "dd_share.h"
 #include "g_controls.h"
 #include "mobj.h"
-#include "p_player.h"
+#include "player.h"
 
 enum {
     JOYAXIS_NONE,

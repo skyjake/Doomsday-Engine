@@ -21,7 +21,7 @@
 #include "common.h"
 #include "g_common.h"
 #include "d_net.h"
-#include "p_player.h"
+#include "player.h"
 #include "hu_menu.h"
 #include "p_start.h"
 #include "fi_lib.h"

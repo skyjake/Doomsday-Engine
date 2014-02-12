@@ -43,7 +43,7 @@
 #include "g_common.h"
 #include "p_inventory.h"
 #include "p_mapsetup.h"
-#include "p_player.h"
+#include "player.h"
 #include "hu_automap.h"
 #include "hu_chat.h"
 #include "hu_lib.h"

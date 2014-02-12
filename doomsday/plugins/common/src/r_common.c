@@ -43,7 +43,7 @@
 
 #include "am_map.h"
 #include "p_actor.h"
-#include "p_player.h"
+#include "player.h"
 #include "g_common.h"
 #include "g_controls.h"
 #include "x_hair.h"

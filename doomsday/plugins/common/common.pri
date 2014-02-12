@@ -50,7 +50,6 @@ HEADERS += \
     $$common_inc/p_mapsetup.h \
     $$common_inc/p_mapspec.h \
     $$common_inc/p_plat.h \
-    $$common_inc/p_player.h \
     $$common_inc/p_savedef.h \
     $$common_inc/p_saveg.h \
     $$common_inc/p_saveio.h \
@@ -65,6 +64,7 @@ HEADERS += \
     $$common_inc/p_xg.h \
     $$common_inc/p_xgline.h \
     $$common_inc/p_xgsec.h \
+    $$common_inc/player.h \
     $$common_inc/polyobjs.h \
     $$common_inc/r_common.h \
     $$common_inc/saveinfo.h \
@@ -114,7 +114,6 @@ SOURCES += \
     $$common_src/p_mapsetup.cpp \
     $$common_src/p_mapspec.c \
     $$common_src/p_plat.cpp \
-    $$common_src/p_player.c \
     $$common_src/p_saveg.cpp \
     $$common_src/p_saveio.cpp \
     $$common_src/p_scroll.cpp \
@@ -129,6 +128,7 @@ SOURCES += \
     $$common_src/p_xgline.c \
     $$common_src/p_xgsave.cpp \
     $$common_src/p_xgsec.c \
+    $$common_src/player.cpp \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
     $$common_src/saveinfo.cpp \

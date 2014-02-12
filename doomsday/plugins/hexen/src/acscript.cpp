@@ -24,7 +24,7 @@
 
 #include "dmu_lib.h"
 #include "g_common.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
