@@ -2614,7 +2614,7 @@ dd_bool SV_LoadGame(int slot)
     }
     catch(de::Error const &er)
     {
-        App_Log(DE2_RES_WARNING, "Error loading save slot #%i:\n%s", slot, er.asText());
+        App_Log(DE2_RES_WARNING, "Error loading save slot #%i:\n%s", slot, er.asText().toLatin1().constData());
     }
 
     return false;
