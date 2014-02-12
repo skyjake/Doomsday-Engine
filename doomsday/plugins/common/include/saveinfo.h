@@ -25,14 +25,17 @@
 #include "common.h"
 
 #ifdef __cplusplus
+
 /**
- * Saved game session info.
+ * Represents a saved game session state.
+ *
+ * @ingroup libcommon
  */
 class SaveInfo
 {
 public: /// @todo make private:
     Str _description;
-    uint _gameId;
+    uint _sessionId;
     int _magic;
     int _version;
     gamemode_t _gameMode;
@@ -48,14 +51,9 @@ public:
     SaveInfo(SaveInfo const &other);
     ~SaveInfo();
 
-    SaveInfo &operator = (SaveInfo const &other);
+    static SaveInfo *newWithCurrentSessionMetadata(Str const *description);
 
-    /**
-     * Update the metadata associated with the save using values derived from the
-     * current game session. Note that this does @em not affect the copy of this save
-     * on disk.
-     */
-    void applyCurrentSessionMetadata();
+    SaveInfo &operator = (SaveInfo const &other);
 
     /**
      * Determines whether the saved game session is compatibile with the current
@@ -75,10 +73,10 @@ public:
     void setDescription(Str const *newDesc);
 
     /**
-     * @see SV_GenerateGameId()
+     * @see G_GenerateSessionId()
      */
-    uint gameId() const;
-    void setGameId(uint newGameId);
+    uint sessionId() const;
+    void setSessionId(uint newGameId);
 
     /**
      * Returns the URI of the @em current map of the game session.
@@ -114,6 +112,13 @@ public:
     void read_Hx_v9(Reader *reader);
 #endif
 
+    /**
+     * Update the metadata associated with the save using values derived from the
+     * current game session. Note that this does @em not affect the copy of this save
+     * on disk.
+     */
+    void applyCurrentSessionMetadata();
+
 public: /// @todo refactor away:
     int magic() const;
 };
@@ -134,19 +139,13 @@ SaveInfo *SaveInfo_Dup(SaveInfo const *other);
 void SaveInfo_Delete(SaveInfo *info);
 
 SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
-
 dd_bool SaveInfo_IsLoadable(SaveInfo *info);
-
 Str const *SaveInfo_Description(SaveInfo const *info);
 void SaveInfo_SetDescription(SaveInfo *info, Str const *newName);
-
 uint SaveInfo_GameId(SaveInfo const *info);
 void SaveInfo_SetGameId(SaveInfo *info, uint newGameId);
-
 void SaveInfo_Write(SaveInfo *info, Writer *writer);
-
 void SaveInfo_Read(SaveInfo *info, Reader *reader);
-
 #if __JHEXEN__
 void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader);
 #endif

@@ -101,7 +101,7 @@ static void initStateConditions(fi_state_t *s)
 #endif
 
 #if __JHEXEN__
-    // Leaving the current cluster?
+    // Leaving the current hub?
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
@@ -109,7 +109,7 @@ static void initStateConditions(fi_state_t *s)
         mapinfo_t *nextMapInfo = P_MapInfo(nextMapUri);
         if(curMapInfo && nextMapInfo)
         {
-            s->conditions.leave_hub = (curMapInfo->cluster != nextMapInfo->cluster);
+            s->conditions.leave_hub = (curMapInfo->hub != nextMapInfo->hub);
         }
 
         Uri_Delete(nextMapUri);

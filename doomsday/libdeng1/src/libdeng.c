@@ -21,25 +21,23 @@
 
 #include "de/libdeng1.h"
 #include "de/binangle.h"
-#include "de/garbage.h"
 #include "de/concurrency.h"
 #include "de/timer.h"
 #include "memoryzone_private.h"
 
 #include <stdlib.h>
+#include <de/Garbage>
 
 void Libdeng_Init(void)
 {
     bamsInit();
     Timer_Init();
     Z_Init();
-    Garbage_Init();
     Sys_MarkAsMainThread();
 }
 
 void Libdeng_Shutdown(void)
 {
-    Garbage_Shutdown();
     Z_Shutdown();
     Timer_Shutdown();
 }

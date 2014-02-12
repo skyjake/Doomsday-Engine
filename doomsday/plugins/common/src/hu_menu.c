@@ -1938,14 +1938,14 @@ int Hu_MenuSaveSlotCommandResponder(mn_object_t* ob, menucommand_e cmd)
 void Hu_MenuInitLoadGameAndSaveGamePages(void)
 {
 #if __JDOOM__ || __JDOOM64__
-    const Point2Raw origin = { 80, 54 };
+    Point2Raw const origin = { 80, 54 };
 #else
-    const Point2Raw origin = { 70, 30 };
+    Point2Raw const origin = { 70, 30 };
 #endif
-    mn_object_t* loadMenuObjects, *saveMenuObjects;
-    mndata_edit_t* saveSlots;
-    mn_page_t* page;
-    const int saveSlotObjectIds[NUMSAVESLOTS] = {
+    mn_object_t *loadMenuObjects, *saveMenuObjects;
+    mndata_edit_t *saveSlots;
+    mn_page_t *page;
+    int const saveSlotObjectIds[NUMSAVESLOTS] = {
         MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
 #if !__JHEXEN__
         MNF_ID6, MNF_ID7
@@ -5634,13 +5634,13 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, const Point2Raw* origin)
 
 void Hu_MenuUpdateGameSaveWidgets(void)
 {
-    const int saveSlotObjectIds[NUMSAVESLOTS] = {
+    int const saveSlotObjectIds[NUMSAVESLOTS] = {
         MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
 #if !__JHEXEN__
         MNF_ID6, MNF_ID7
 #endif
     };
-    mn_page_t* page;
+    mn_page_t *page;
     int i;
 
     if(!menuActive) return;
@@ -5648,20 +5648,20 @@ void Hu_MenuUpdateGameSaveWidgets(void)
     // Prompt a refresh of the game-save info. We don't yet actively monitor
     // the contents of the game-save paths, so instead we settle for manual
     // updates whenever the save/load menu is opened.
-    SV_UpdateAllSaveInfo();
+    SaveSlots_UpdateAllSaveInfo(saveSlots);
 
     // Update widgets.
     page = Hu_MenuFindPageByName("LoadGame");
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        mn_object_t* obj = MN_MustFindObjectOnPage(page, 0, saveSlotObjectIds[i]);
-        mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-        const char* text = "";
+        mn_object_t *obj    = MN_MustFindObjectOnPage(page, 0, saveSlotObjectIds[i]);
+        mndata_edit_t *edit = (mndata_edit_t *) obj->_typedata;
+        char const *text = "";
 
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);
-        if(SV_IsSlotUsed(edit->data2))
+        if(SaveSlots_SlotInUse(saveSlots, edit->data2))
         {
-            SaveInfo* info = SV_SaveInfoForSlot(edit->data2);
+            SaveInfo *info = SaveSlots_SaveInfo(saveSlots, edit->data2);
             text = Str_Text(SaveInfo_Description(info));
             MNObject_SetFlags(obj, FO_CLEAR, MNF_DISABLED);
         }

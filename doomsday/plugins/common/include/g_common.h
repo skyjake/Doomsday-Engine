@@ -30,10 +30,6 @@
 #include "mobj.h"
 #include "p_player.h"
 
-#if __cplusplus
-extern "C" {
-#endif
-
 enum {
     JOYAXIS_NONE,
     JOYAXIS_MOVE,
@@ -42,7 +38,11 @@ enum {
     JOYAXIS_LOOK
 };
 
-extern dd_bool singledemo;
+DENG_EXTERN_C dd_bool singledemo;
+
+#if __cplusplus
+extern "C" {
+#endif
 
 void G_Register(void);
 
@@ -52,7 +52,9 @@ void G_ChangeGameState(gamestate_t state);
 gameaction_t G_GameAction(void);
 void G_SetGameAction(gameaction_t action);
 
-const char* P_GetGameModeName(void);
+char const *P_GetGameModeName(void);
+
+uint G_GenerateSessionId(void);
 
 /**
  * Begin the titlescreen animation sequence.

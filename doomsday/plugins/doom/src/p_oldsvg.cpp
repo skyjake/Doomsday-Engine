@@ -23,6 +23,7 @@
 #include "p_oldsvg.h"
 
 #include "dmu_lib.h"
+#include "p_saveio.h"
 #include "p_saveg.h"
 #include "p_map.h"
 #include "p_mapsetup.h"
@@ -922,7 +923,7 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     info->_gameRules.noMonsters      = 0;
     info->_gameRules.respawnMonsters = 0;
 
-    info->_gameId = 0; // None.
+    info->_sessionId = 0; // None.
 }
 
 static dd_bool SV_OpenFile_Dm_v19(char const *filePath)
@@ -951,7 +952,7 @@ static Reader *SV_NewReader_Dm_v19()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-dd_bool SV_RecogniseState_Dm_v19(Str const *path, SaveInfo *info)
+dd_bool SV_RecognizeState_Dm_v19(Str const *path, SaveInfo *info)
 {
     DENG_ASSERT(path != 0 && info != 0);
 

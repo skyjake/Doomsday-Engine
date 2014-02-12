@@ -30,7 +30,7 @@
 
 typedef struct mapinfo_s {
     uint         map; ///< Logical map number.
-    int          cluster;
+    int          hub;
     uint         warpTrans;
     uint         nextMap;
     int          cdTrack;

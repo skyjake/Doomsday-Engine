@@ -456,7 +456,7 @@ DENG2_PIMPL(MapStateReader)
     {
 #if __JHEXEN__
         checkSegment(ASEG_SCRIPTS);
-        Game_ACScriptInterpreter().readMapScriptData(reader, mapVersion);
+        Game_ACScriptInterpreter().readMapScriptData(thisPublic);
 #endif
     }
 

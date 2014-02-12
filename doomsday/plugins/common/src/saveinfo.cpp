@@ -73,29 +73,29 @@ static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
 #endif
 
 SaveInfo::SaveInfo()
-    : _gameId  (0)
-    , _magic   (0)
-    , _version (0)
-    , _gameMode(NUM_GAME_MODES)
-    , _mapUri  (Uri_New())
+    : _sessionId(0)
+    , _magic    (0)
+    , _version  (0)
+    , _gameMode (NUM_GAME_MODES)
+    , _mapUri   (Uri_New())
 #if !__JHEXEN__
-    , _mapTime (0)
+    , _mapTime  (0)
 #endif
 {
     Str_InitStd(&_description);
 #if !__JHEXEN__
-    memset(&_players, 0, sizeof(_players));
+    de::zap(_players);
 #endif
-    memset(&_gameRules, 0, sizeof(_gameRules));
+    de::zap(_gameRules);
 }
 
 SaveInfo::SaveInfo(SaveInfo const &other)
-    : _gameId  (other._gameId)
-    , _magic   (other._magic)
-    , _version (other._version)
-    , _gameMode(other._gameMode)
+    : _sessionId(other._sessionId)
+    , _magic    (other._magic)
+    , _version  (other._version)
+    , _gameMode (other._gameMode)
 #if !__JHEXEN__
-    , _mapTime (other._mapTime)
+    , _mapTime  (other._mapTime)
 #endif
 {
     Str_Copy(Str_InitStd(&_description), &other._description);
@@ -112,10 +112,19 @@ SaveInfo::~SaveInfo()
     Uri_Delete(_mapUri);
 }
 
+SaveInfo *SaveInfo::newWithCurrentSessionMetadata(Str const *description) // static
+{
+    SaveInfo *info = new SaveInfo;
+    info->setDescription(description);
+    info->applyCurrentSessionMetadata();
+    info->setSessionId(G_GenerateSessionId());
+    return info;
+}
+
 SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
     Str_Copy(&_description, &other._description);
-    _gameId = other._gameId;
+    _sessionId = other._sessionId;
     _magic = other._magic;
     _version = other._version;
     _gameMode = other._gameMode;
@@ -148,14 +157,14 @@ void SaveInfo::setDescription(Str const *newName)
     Str_CopyOrClear(&_description, newName);
 }
 
-uint SaveInfo::gameId() const
+uint SaveInfo::sessionId() const
 {
-    return _gameId;
+    return _sessionId;
 }
 
-void SaveInfo::setGameId(uint newGameId)
+void SaveInfo::setSessionId(uint newGameId)
 {
-    _gameId = newGameId;
+    _sessionId = newGameId;
 }
 
 Uri const *SaveInfo::mapUri() const
@@ -226,7 +235,7 @@ void SaveInfo::write(Writer *writer) const
     }
 #endif
 
-    Writer_WriteInt32(writer, _gameId);
+    Writer_WriteInt32(writer, _sessionId);
 }
 
 void SaveInfo::read(Reader *reader)
@@ -321,7 +330,7 @@ void SaveInfo::read(Reader *reader)
     }
 #endif
 
-    _gameId = Reader_ReadInt32(reader);
+    _sessionId = Reader_ReadInt32(reader);
 
 #if __JDOOM__ || __JHERETIC__
     // Translate gameMode identifiers from older save versions.
@@ -365,7 +374,7 @@ void SaveInfo::read_Hx_v9(Reader *reader)
     _gameRules.noMonsters    = Reader_ReadByte(reader);
     _gameRules.randomClasses = Reader_ReadByte(reader);
 
-    _gameId  = 0; // None.
+    _sessionId  = 0; // None.
 
 # undef HXS_NAME_LENGTH
 # undef HXS_VERSION_TEXT_LENGTH
@@ -401,13 +410,13 @@ SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other)
 uint SaveInfo_GameId(SaveInfo const *info)
 {
     DENG_ASSERT(info != 0);
-    return info->gameId();
+    return info->sessionId();
 }
 
 void SaveInfo_SetGameId(SaveInfo *info, uint newGameId)
 {
     DENG_ASSERT(info != 0);
-    info->setGameId(newGameId);
+    info->setSessionId(newGameId);
 }
 
 Str const *SaveInfo_Description(SaveInfo const *info)

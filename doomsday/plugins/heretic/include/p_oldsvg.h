@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-dd_bool SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info);
+dd_bool SV_RecognizeState_Hr_v13(Str const *path, SaveInfo *info);
 
 /**
  * @return  @c 0 on success else error code.

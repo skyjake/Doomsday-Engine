@@ -37,7 +37,7 @@
 #include <de/ByteRefArray>
 #include <de/ListenSocket>
 #include <de/TextApp>
-#include <de/garbage.h>
+#include <de/Garbage>
 #include <de/c_wrapper.h>
 
 using namespace de;

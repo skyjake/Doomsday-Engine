@@ -207,10 +207,10 @@ public:
     AutoStr *scriptDescription(int scriptNumber);
 
     void writeWorldScriptData(Writer *writer);
-    void readWorldScriptData(Reader *reader, int mapVersion);
+    void readWorldScriptData(Reader *reader, int saveVersion);
 
-    void writeMapScriptData(Writer *writer);
-    void readMapScriptData(Reader *reader, int mapVersion);
+    void writeMapScriptData(MapStateWriter *msw);
+    void readMapScriptData(MapStateReader *msr);
 
 public: /// @todo make private:
     BytecodeScriptInfo &scriptInfoByIndex(int index);
