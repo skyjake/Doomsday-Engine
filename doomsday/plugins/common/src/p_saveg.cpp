@@ -64,7 +64,8 @@ struct playerheader_t
 
 static bool inited = false;
 
-SaveSlots saveSlots(NUMSAVESLOTS);
+SaveSlots ss(NUMSAVESLOTS);
+SaveSlots *saveSlots = &ss;
 
 static SaveInfo const *curInfo;
 
@@ -216,7 +217,7 @@ dd_bool SV_RecognizeGameState(Str const *path, SaveInfo *info)
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
     DENG_ASSERT(inited);
-    AutoStr *path = saveSlots.composeSavePathForSlot(slot, (int)map + 1);
+    AutoStr *path = saveSlots->composeSavePathForSlot(slot, (int)map + 1);
     if(path && !Str_IsEmpty(path))
     {
         return SV_ExistingFile(path);
@@ -1735,7 +1736,7 @@ void SV_Shutdown()
     if(!inited) return;
 
     SV_ShutdownIO();
-    saveSlots.clearAllSaveInfo();
+    saveSlots->clearAllSaveInfo();
 
     inited = false;
 }
@@ -1842,7 +1843,7 @@ static void loadNativeState(Str const *path, SaveInfo *info)
 
     // Load the current map state.
 #if __JHEXEN__
-    openMapSaveFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap + 1));
+    openMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
 #endif
 
     MapStateReader(info->version()).read(reader);
@@ -1972,14 +1973,14 @@ dd_bool SV_LoadGame(int slot)
     int const logicalSlot = slot;
 #endif
 
-    if(!saveSlots.isValidSlot(slot))
+    if(!saveSlots->isValidSlot(slot))
     {
         return false;
     }
 
     App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slot);
 
-    AutoStr *path = saveSlots.composeSavePathForSlot(slot);
+    AutoStr *path = saveSlots->composeSavePathForSlot(slot);
     if(Str_IsEmpty(path))
     {
         App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable", SV_SavePath());
@@ -1992,13 +1993,13 @@ dd_bool SV_LoadGame(int slot)
     /// @todo Does any caller ever attempt to load the base slot?? (Doesn't seem logical)
     if(slot != BASE_SLOT)
     {
-        saveSlots.copySlot(slot, BASE_SLOT);
+        saveSlots->copySlot(slot, BASE_SLOT);
     }
 #endif
 
     try
     {
-        SaveInfo &info = saveSlots.saveInfo(logicalSlot);
+        SaveInfo &info = saveSlots->saveInfo(logicalSlot);
 
         loadGameState(path, info);
 
@@ -2211,7 +2212,7 @@ static void saveGameState(Str const *path, SaveInfo *saveInfo)
      */
 #if __JHEXEN__
     // ...map state is actually written to a separate file.
-    SV_OpenFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
+    SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 #endif
 
     MapStateWriter(thingArchiveExcludePlayers).write(writer);
@@ -2236,7 +2237,7 @@ dd_bool SV_SaveGame(int slot, char const *description)
     int const logicalSlot = slot;
 #endif
 
-    if(!saveSlots.isValidSlot(slot))
+    if(!saveSlots->isValidSlot(slot))
     {
         DENG_ASSERT(!"Invalid slot specified");
         return false;
@@ -2247,7 +2248,7 @@ dd_bool SV_SaveGame(int slot, char const *description)
         return false;
     }
 
-    AutoStr *path = saveSlots.composeSavePathForSlot(logicalSlot);
+    AutoStr *path = saveSlots->composeSavePathForSlot(logicalSlot);
     if(Str_IsEmpty(path))
     {
         App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable", SV_SavePath());
@@ -2261,11 +2262,11 @@ dd_bool SV_SaveGame(int slot, char const *description)
         saveGameState(path, info);
 
         // Swap the save info.
-        saveSlots.replaceSaveInfo(logicalSlot, info);
+        saveSlots->replaceSaveInfo(logicalSlot, info);
 
 #if __JHEXEN__
         // Copy base slot to destination slot.
-        saveSlots.copySlot(logicalSlot, slot);
+        saveSlots->copySlot(logicalSlot, slot);
 #endif
 
         // Make note of the last used save slot.
@@ -2289,7 +2290,7 @@ void SV_HxSaveHubMap()
 {
     playerHeaderOK = false; // Uninitialized.
 
-    SV_OpenFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
+    SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 
     // Set the mobj archive numbers
     initThingArchiveForSave(true /*exclude players*/);
@@ -2321,7 +2322,7 @@ void SV_HxLoadHubMap()
     // Been here before, load the previous map state.
     try
     {
-        openMapSaveFile(saveSlots.composeSavePathForSlot(BASE_SLOT, gameMap + 1));
+        openMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
 
         MapStateReader(info->version()).read(reader);
 

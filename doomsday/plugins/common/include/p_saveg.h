@@ -29,7 +29,7 @@
 DENG_EXTERN_C int thingArchiveVersion;
 DENG_EXTERN_C uint thingArchiveSize;
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
-DENG_EXTERN_C SaveSlots saveSlots;
+DENG_EXTERN_C SaveSlots *saveSlots;
 
 #ifdef __cplusplus
 extern "C" {
