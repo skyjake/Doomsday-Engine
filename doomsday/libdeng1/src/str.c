@@ -35,9 +35,9 @@
 #include "de/str.h"
 #include "de/memory.h"
 #include "de/memoryzone.h"
-#include "de/garbage.h"
 #include "de/strutil.h"
 #include <de/c_wrapper.h>
+#include <de/Garbage>
 
 static void *zoneAlloc(size_t n) {
     return Z_Malloc(n, PU_APPSTATIC, 0);

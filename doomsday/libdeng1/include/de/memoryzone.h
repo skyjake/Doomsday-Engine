@@ -178,6 +178,14 @@ DENG_PUBLIC void *ZBlockSet_Allocate(zblockset_t *set);
 
 DENG_PUBLIC void Z_PrintStatus(void);
 
+/**
+ * Puts a region of memory allocated with Z_Malloc() or malloc() up for garbage
+ * collection.
+ *
+ * @param ptr  Allocated memory (not previously trashed).
+ */
+DENG_PUBLIC void Garbage_Trash(void *ptr);
+
 ///@}
 
 #ifdef DENG_DEBUG
