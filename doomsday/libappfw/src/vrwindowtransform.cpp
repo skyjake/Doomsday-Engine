@@ -113,7 +113,9 @@ DENG2_PIMPL(VRWindowTransform)
 
     void drawContent() const
     {
+        LIBGUI_ASSERT_GL_OK();
         self.window().drawWindowContent();
+        LIBGUI_ASSERT_GL_OK();
     }
 
     /**
@@ -337,6 +339,8 @@ DENG2_PIMPL(VRWindowTransform)
         // Restore default VR dynamic parameters
         target().unsetActiveRect(true);
         vrCfg.setCurrentEye(VRConfig::NeitherEye);
+
+        LIBGUI_ASSERT_GL_OK();
     }
 };
 

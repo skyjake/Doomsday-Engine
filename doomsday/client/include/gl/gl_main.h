@@ -314,6 +314,8 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
     colorpaletteid_t paletteId, float *brightX, float *brightY,
     struct ColorRawf_s *color, float *lumSize);
 
+void DGL_AssertNotInPrimitive(void);
+
 // Console commands.
 D_CMD(UpdateGammaRamp);
 

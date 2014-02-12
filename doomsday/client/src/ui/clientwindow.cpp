@@ -691,7 +691,11 @@ Canvas &ClientWindow::windowCanvas()
 
 void ClientWindow::drawWindowContent()
 {
+    LIBGUI_ASSERT_GL_OK();
+
     root().draw();
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 ClientRootWidget &ClientWindow::root()
@@ -851,6 +855,7 @@ bool ClientWindow::setDefaultGLFormat() // static
         fmt.setStereo(true);
     }
 
+    /*
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
         fmt.setSwapInterval(0); // vsync off
@@ -861,6 +866,7 @@ bool ClientWindow::setDefaultGLFormat() // static
         fmt.setSwapInterval(1);
         LOG_GL_VERBOSE("Vertical sync on");
     }
+    */
 
     // The value of the "vid-fsaa" variable is written to this settings
     // key when the value of the variable changes.
