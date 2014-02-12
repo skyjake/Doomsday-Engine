@@ -1,8 +1,8 @@
-/** @file mobj.h Common Map Object (Mobj) functionality.
+/** @file mobj.h  Common playsim map object (mobj) functionality.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html

@@ -1,43 +1,41 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file mobj.cpp  Common playsim map object (mobj) functionality.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
- *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ * @authors Copyright © 1999-2000 Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifdef MSVC
 #  pragma optimize("g", off)
 #endif
 
-#include <math.h>
-#include <assert.h>
-#include <de/mathutil.h>
-
+#include "common.h"
 #include "mobj.h"
+
 #include "p_actor.h"
 #include "p_player.h"
 #include "p_map.h"
 #include "dmu_lib.h"
+
+#include <de/mathutil.h>
+#include <cmath>
+#include <cassert>
 
 #define DROPOFFMOMENTUM_THRESHOLD (1.0 / 4)
 
@@ -72,15 +70,11 @@ dd_bool Mobj_IsVoodooDoll(mobj_t const *mo)
     return (mo->player && mo->player->plr->mo != mo);
 }
 
-void Mobj_XYMoveStopping(mobj_t* mo)
+void Mobj_XYMoveStopping(mobj_t *mo)
 {
-    player_t* player = mo->player;
-    dd_bool isVoodooDoll = false;
-    dd_bool belowWalkStop = false;
-    dd_bool belowStandSpeed = false;
-    dd_bool isMovingPlayer = false;
+    DENG_ASSERT(mo != 0);
 
-    assert(mo != 0);
+    player_t *player = mo->player;
 
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
     {
@@ -118,9 +112,12 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     }
 #endif
 
-    isVoodooDoll = Mobj_IsVoodooDoll(mo);
-    belowWalkStop = (INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
-                     INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD));
+    bool isVoodooDoll = Mobj_IsVoodooDoll(mo);
+    bool belowWalkStop = (INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
+                          INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD));
+
+    bool belowStandSpeed = false;
+    bool isMovingPlayer  = false;
     if(player)
     {
         belowStandSpeed = (INRANGE_OF(mo->mom[MX], 0, STANDSPEED) &&
@@ -136,7 +133,7 @@ void Mobj_XYMoveStopping(mobj_t* mo)
         // If in a walking frame, stop moving.
         if(P_PlayerInWalkState(player))
         {
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
+            P_MobjChangeState(player->plr->mo, statenum_t(PCLASS_INFO(player->class_)->normalState));
         }
     }
 
@@ -161,16 +158,16 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     }
 }
 
-dd_bool Mobj_IsPlayerClMobj(mobj_t* mo)
+dd_bool Mobj_IsPlayerClMobj(mobj_t *mo)
 {
     if(IS_CLIENT)
     {
-        int i;
-
-        for(i = 0; i < MAXPLAYERS; i++)
+        for(int i = 0; i < MAXPLAYERS; i++)
         {
             if(ClPlayer_ClMobj(i) == mo)
+            {
                 return true;
+            }
         }
     }
     return false;
@@ -182,26 +179,28 @@ dd_bool Mobj_IsPlayer(mobj_t const *mo)
     return (mo->player != 0);
 }
 
-dd_bool Mobj_LookForPlayers(mobj_t* mo, dd_bool allAround)
+dd_bool Mobj_LookForPlayers(mobj_t *mo, dd_bool allAround)
 {
-    const int playerCount = P_CountPlayersInGame();
-    dd_bool foundTarget = false;
-    int from, to, cand, tries = 0;
+    int const playerCount = P_CountPlayersInGame();
 
     // Nobody to target?
     if(!playerCount) return false;
 
-    from = mo->lastLook % MAXPLAYERS;
-    to   = (from+MAXPLAYERS-1) % MAXPLAYERS;
+    int const from = mo->lastLook % MAXPLAYERS;
+    int const to   = (from + MAXPLAYERS - 1) % MAXPLAYERS;
 
-    for(cand = from; cand != to; cand = (cand < (MAXPLAYERS-1)? cand + 1 : 0))
+    int cand         = from;
+    int tries        = 0;
+    bool foundTarget = false;
+    for(; cand != to; cand = (cand < (MAXPLAYERS - 1)? cand + 1 : 0))
     {
-        player_t* player = players + cand;
-        mobj_t* plrmo;
+        player_t *player = players + cand;
 
         // Is player in the game?
-        if(!player->plr->inGame || !player->plr->mo) continue;
-        plrmo = player->plr->mo;
+        if(!player->plr->inGame) continue;
+
+        mobj_t *plrmo = player->plr->mo;
+        if(!plrmo) continue;
 
         // Do not target camera players.
         if(P_MobjIsCamera(plrmo)) continue;
@@ -267,7 +266,7 @@ dd_bool Mobj_LookForPlayers(mobj_t* mo, dd_bool allAround)
  * Determines if it is allowed to execute the action function of @a mo.
  * @return @c true, if allowed.
  */
-static dd_bool shouldCallAction(mobj_t *mobj)
+static bool shouldCallAction(mobj_t *mobj)
 {
     if(IS_CLIENT)
     {
@@ -282,10 +281,8 @@ static dd_bool shouldCallAction(mobj_t *mobj)
     return false;
 }
 
-static dd_bool changeMobjState(mobj_t *mobj, statenum_t stateNum, dd_bool doCallAction)
+static bool changeMobjState(mobj_t *mobj, statenum_t stateNum, bool doCallAction)
 {
-    state_t *st;
-
     DENG_ASSERT(mobj != 0);
 
     // Skip zero-tic states -- call their action but then advance to the next.
@@ -301,16 +298,20 @@ static dd_bool changeMobjState(mobj_t *mobj, statenum_t stateNum, dd_bool doCall
         Mobj_SetState(mobj, stateNum);
         mobj->turnTime = false; // $visangle-facetarget
 
-        st = &STATES[stateNum];
+        state_t *st = &STATES[stateNum];
 
         // Call the action function?
         if(doCallAction && st->action)
         {
             if(shouldCallAction(mobj))
-                st->action(mobj);
+            {
+                void (*actioner)(mobj_t *);
+                actioner = de::function_cast<void (*)(mobj_t *)>(st->action);
+                actioner(mobj);
+            }
         }
 
-        stateNum = st->nextState;
+        stateNum = statenum_t(st->nextState);
     } while(!mobj->tics);
 
     // Return false if an action function removed the mobj.

@@ -102,7 +102,7 @@ SOURCES += \
     $$common_src/m_ctrl.c \
     $$common_src/mapstatereader.cpp \
     $$common_src/mapstatewriter.cpp \
-    $$common_src/mobj.c \
+    $$common_src/mobj.cpp \
     $$common_src/pause.c \
     $$common_src/p_actor.cpp \
     $$common_src/p_ceiling.cpp \
