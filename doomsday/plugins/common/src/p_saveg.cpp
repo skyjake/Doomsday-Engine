@@ -23,49 +23,30 @@
 
 #include "d_net.h"
 #include "dmu_lib.h"
+#include "g_common.h"
 #if __JHERETIC__ || __JHEXEN__
 #  include "hu_inventory.h"
 #endif
-#include "mobj.h"
 #include "p_actor.h"
-#include "p_map.h"
-#include "p_mapsetup.h"
+#include "p_map.h"          // P_TelefragMobjsTouchingPlayers
+#include "p_mapsetup.h"     // P_SpawnAllMaterialOriginScrollers
 #include "p_inventory.h"
-#include "p_tick.h"
-#include "r_common.h"
-#include "p_savedef.h"
+#include "p_tick.h"         // mapTime
 #include "p_saveio.h"
 #include "polyobjs.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
+#include "r_common.h"       // R_UpdateConsoleView
 #include <de/String>
 #include <de/memory.h>
 #include <lzss.h>
 #include <cstdio>
 #include <cstring>
 
-using namespace dmu_lib;
-
-struct playerheader_t
-{
-    int numPowers;
-    int numKeys;
-    int numFrags;
-    int numWeapons;
-    int numAmmoTypes;
-    int numPSprites;
-#if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
-    int numInvItemTypes;
-#endif
-#if __JHEXEN__
-    int numArmorTypes;
-#endif
-};
-
 static bool inited = false;
 
-SaveSlots ss(NUMSAVESLOTS);
-SaveSlots *saveSlots = &ss;
+static SaveSlots sslots(NUMSAVESLOTS);
+SaveSlots *saveSlots = &sslots;
 
 static SaveInfo const *curInfo;
 
@@ -408,445 +389,10 @@ mobj_t *SV_GetArchiveThing(ThingSerialId thingId, void *address)
     return thingArchive[thingId];
 }
 
-static playerheader_t *getPlayerHeader()
+playerheader_t *SV_GetPlayerHeader()
 {
     DENG_ASSERT(playerHeaderOK);
     return &playerHeader;
-}
-
-/**
- * Writes the given player's data (not including the ID number).
- */
-static void SV_WritePlayer(int playernum, Writer *writer)
-{
-    int i, numPSprites = getPlayerHeader()->numPSprites;
-    player_t temp, *p = &temp;
-    ddplayer_t ddtemp, *dp = &ddtemp;
-
-    // Make a copy of the player.
-    std::memcpy(p, &players[playernum], sizeof(temp));
-    std::memcpy(dp, players[playernum].plr, sizeof(ddtemp));
-    temp.plr = &ddtemp;
-
-    // Convert the psprite states.
-    for(i = 0; i < numPSprites; ++i)
-    {
-        pspdef_t *pspDef = &temp.pSprites[i];
-
-        if(pspDef->state)
-        {
-            pspDef->state = (state_t *) (pspDef->state - STATES);
-        }
-    }
-
-    // Version number. Increase when you make changes to the player data
-    // segment format.
-    Writer_WriteByte(writer, 6);
-
-#if __JHEXEN__
-    // Class.
-    Writer_WriteByte(writer, cfg.playerClass[playernum]);
-#endif
-
-    Writer_WriteInt32(writer, p->playerState);
-#if __JHEXEN__
-    Writer_WriteInt32(writer, p->class_);    // 2nd class...?
-#endif
-    Writer_WriteInt32(writer, FLT2FIX(p->viewZ));
-    Writer_WriteInt32(writer, FLT2FIX(p->viewHeight));
-    Writer_WriteInt32(writer, FLT2FIX(p->viewHeightDelta));
-#if !__JHEXEN__
-    Writer_WriteFloat(writer, dp->lookDir);
-#endif
-    Writer_WriteInt32(writer, FLT2FIX(p->bob));
-#if __JHEXEN__
-    Writer_WriteInt32(writer, p->flyHeight);
-    Writer_WriteFloat(writer, dp->lookDir);
-    Writer_WriteInt32(writer, p->centering);
-#endif
-    Writer_WriteInt32(writer, p->health);
-
-#if __JHEXEN__
-    for(i = 0; i < getPlayerHeader()->numArmorTypes; ++i)
-    {
-        Writer_WriteInt32(writer, p->armorPoints[i]);
-    }
-#else
-    Writer_WriteInt32(writer, p->armorPoints);
-    Writer_WriteInt32(writer, p->armorType);
-#endif
-
-#if __JDOOM64__ || __JHEXEN__
-    for(i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
-    {
-        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
-
-        Writer_WriteInt32(writer, type);
-        Writer_WriteInt32(writer, P_InventoryCount(playernum, type));
-    }
-    Writer_WriteInt32(writer, P_InventoryReadyItem(playernum));
-#endif
-
-    for(i = 0; i < getPlayerHeader()->numPowers; ++i)
-    {
-        Writer_WriteInt32(writer, p->powers[i]);
-    }
-
-#if __JHEXEN__
-    Writer_WriteInt32(writer, p->keys);
-#else
-    for(i = 0; i < getPlayerHeader()->numKeys; ++i)
-    {
-        Writer_WriteInt32(writer, p->keys[i]);
-    }
-#endif
-
-#if __JHEXEN__
-    Writer_WriteInt32(writer, p->pieces);
-#else
-    Writer_WriteInt32(writer, p->backpack);
-#endif
-
-    for(i = 0; i < getPlayerHeader()->numFrags; ++i)
-    {
-        Writer_WriteInt32(writer, p->frags[i]);
-    }
-
-    Writer_WriteInt32(writer, p->readyWeapon);
-    Writer_WriteInt32(writer, p->pendingWeapon);
-
-    for(i = 0; i < getPlayerHeader()->numWeapons; ++i)
-    {
-        Writer_WriteInt32(writer, p->weapons[i].owned);
-    }
-
-    for(i = 0; i < getPlayerHeader()->numAmmoTypes; ++i)
-    {
-        Writer_WriteInt32(writer, p->ammo[i].owned);
-#if !__JHEXEN__
-        Writer_WriteInt32(writer, p->ammo[i].max);
-#endif
-    }
-
-    Writer_WriteInt32(writer, p->attackDown);
-    Writer_WriteInt32(writer, p->useDown);
-
-    Writer_WriteInt32(writer, p->cheats);
-
-    Writer_WriteInt32(writer, p->refire);
-
-    Writer_WriteInt32(writer, p->killCount);
-    Writer_WriteInt32(writer, p->itemCount);
-    Writer_WriteInt32(writer, p->secretCount);
-
-    Writer_WriteInt32(writer, p->damageCount);
-    Writer_WriteInt32(writer, p->bonusCount);
-#if __JHEXEN__
-    Writer_WriteInt32(writer, p->poisonCount);
-#endif
-
-    Writer_WriteInt32(writer, dp->extraLight);
-    Writer_WriteInt32(writer, dp->fixedColorMap);
-    Writer_WriteInt32(writer, p->colorMap);
-
-    for(i = 0; i < numPSprites; ++i)
-    {
-        pspdef_t *psp = &p->pSprites[i];
-
-        Writer_WriteInt32(writer, PTR2INT(psp->state));
-        Writer_WriteInt32(writer, psp->tics);
-        Writer_WriteInt32(writer, FLT2FIX(psp->pos[VX]));
-        Writer_WriteInt32(writer, FLT2FIX(psp->pos[VY]));
-    }
-
-#if !__JHEXEN__
-    Writer_WriteInt32(writer, p->didSecret);
-
-    // Added in ver 2 with __JDOOM__
-    Writer_WriteInt32(writer, p->flyHeight);
-#endif
-
-#if __JHERETIC__
-    for(i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
-    {
-        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
-
-        Writer_WriteInt32(writer, type);
-        Writer_WriteInt32(writer, P_InventoryCount(playernum, type));
-    }
-    Writer_WriteInt32(writer, P_InventoryReadyItem(playernum));
-    Writer_WriteInt32(writer, p->chickenPeck);
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-    Writer_WriteInt32(writer, p->morphTics);
-#endif
-
-    Writer_WriteInt32(writer, p->airCounter);
-
-#if __JHEXEN__
-    Writer_WriteInt32(writer, p->jumpTics);
-    Writer_WriteInt32(writer, p->worldTimer);
-#elif __JHERETIC__
-    Writer_WriteInt32(writer, p->flameCount);
-
-    // Added in ver 2
-    Writer_WriteByte(writer, p->class_);
-#endif
-}
-
-/**
- * Reads a player's data (not including the ID number).
- */
-static void SV_ReadPlayer(player_t *p, Reader *reader)
-{
-    int plrnum = p - players;
-    int numPSprites = getPlayerHeader()->numPSprites;
-    ddplayer_t *dp = p->plr;
-
-    byte ver = Reader_ReadByte(reader);
-
-#if __JHEXEN__
-    cfg.playerClass[plrnum] = playerclass_t(Reader_ReadByte(reader));
-
-    de::zapPtr(p); // Force everything NULL,
-    p->plr = dp;   // but restore the ddplayer pointer.
-#endif
-
-    p->playerState     = playerstate_t(Reader_ReadInt32(reader));
-#if __JHEXEN__
-    p->class_          = playerclass_t(Reader_ReadInt32(reader)); // 2nd class?? (ask Raven...)
-#endif
-
-    p->viewZ           = FIX2FLT(Reader_ReadInt32(reader));
-    p->viewHeight      = FIX2FLT(Reader_ReadInt32(reader));
-    p->viewHeightDelta = FIX2FLT(Reader_ReadInt32(reader));
-#if !__JHEXEN__
-    dp->lookDir        = Reader_ReadFloat(reader);
-#endif
-    p->bob             = FIX2FLT(Reader_ReadInt32(reader));
-#if __JHEXEN__
-    p->flyHeight       = Reader_ReadInt32(reader);
-    dp->lookDir        = Reader_ReadFloat(reader);
-    p->centering       = Reader_ReadInt32(reader);
-#endif
-
-    p->health          = Reader_ReadInt32(reader);
-
-#if __JHEXEN__
-    for(int i = 0; i < getPlayerHeader()->numArmorTypes; ++i)
-    {
-        p->armorPoints[i] = Reader_ReadInt32(reader);
-    }
-#else
-    p->armorPoints = Reader_ReadInt32(reader);
-    p->armorType = Reader_ReadInt32(reader);
-#endif
-
-#if __JDOOM64__ || __JHEXEN__
-    P_InventoryEmpty(plrnum);
-    for(int i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
-    {
-        inventoryitemtype_t type = inventoryitemtype_t(Reader_ReadInt32(reader));
-        int count = Reader_ReadInt32(reader);
-
-        for(int k = 0; k < count; ++k)
-        {
-            P_InventoryGive(plrnum, type, true);
-        }
-    }
-
-    P_InventorySetReadyItem(plrnum, inventoryitemtype_t(Reader_ReadInt32(reader)));
-# if __JHEXEN__
-    Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
-    if(ver < 5)
-    {
-        /*pl->artifactCount   =*/ Reader_ReadInt32(reader);
-    }
-    if(ver < 6)
-    {
-        /*p->inventorySlotNum =*/ Reader_ReadInt32(reader);
-    }
-# endif
-#endif
-
-    for(int i = 0; i < getPlayerHeader()->numPowers; ++i)
-    {
-        p->powers[i] = Reader_ReadInt32(reader);
-    }
-    if(p->powers[PT_ALLMAP])
-    {
-        ST_RevealAutomap(plrnum, true);
-    }
-
-#if __JHEXEN__
-    p->keys = Reader_ReadInt32(reader);
-#else
-    for(int i = 0; i < getPlayerHeader()->numKeys; ++i)
-    {
-        p->keys[i] = Reader_ReadInt32(reader);
-    }
-#endif
-
-#if __JHEXEN__
-    p->pieces   = Reader_ReadInt32(reader);
-#else
-    p->backpack = Reader_ReadInt32(reader);
-#endif
-
-    for(int i = 0; i < getPlayerHeader()->numFrags; ++i)
-    {
-        p->frags[i] = Reader_ReadInt32(reader);
-    }
-
-    p->readyWeapon = weapontype_t(Reader_ReadInt32(reader));
-#if __JHEXEN__
-    if(ver < 5)
-        p->pendingWeapon = WT_NOCHANGE;
-    else
-#endif
-        p->pendingWeapon = weapontype_t(Reader_ReadInt32(reader));
-
-    for(int i = 0; i < getPlayerHeader()->numWeapons; ++i)
-    {
-        p->weapons[i].owned = (Reader_ReadInt32(reader)? true : false);
-    }
-
-    for(int i = 0; i < getPlayerHeader()->numAmmoTypes; ++i)
-    {
-        p->ammo[i].owned = Reader_ReadInt32(reader);
-
-#if !__JHEXEN__
-        p->ammo[i].max = Reader_ReadInt32(reader);
-#endif
-    }
-
-    p->attackDown  = Reader_ReadInt32(reader);
-    p->useDown     = Reader_ReadInt32(reader);
-    p->cheats      = Reader_ReadInt32(reader);
-    p->refire      = Reader_ReadInt32(reader);
-    p->killCount   = Reader_ReadInt32(reader);
-    p->itemCount   = Reader_ReadInt32(reader);
-    p->secretCount = Reader_ReadInt32(reader);
-
-#if __JHEXEN__
-    if(ver <= 1)
-    {
-        /*p->messageTics     =*/ Reader_ReadInt32(reader);
-        /*p->ultimateMessage =*/ Reader_ReadInt32(reader);
-        /*p->yellowMessage   =*/ Reader_ReadInt32(reader);
-    }
-#endif
-
-    p->damageCount = Reader_ReadInt32(reader);
-    p->bonusCount  = Reader_ReadInt32(reader);
-#if __JHEXEN__
-    p->poisonCount = Reader_ReadInt32(reader);
-#endif
-
-    dp->extraLight    = Reader_ReadInt32(reader);
-    dp->fixedColorMap = Reader_ReadInt32(reader);
-
-    p->colorMap    = Reader_ReadInt32(reader);
-
-    for(int i = 0; i < numPSprites; ++i)
-    {
-        pspdef_t *psp = &p->pSprites[i];
-
-        psp->state   = INT2PTR(state_t, Reader_ReadInt32(reader));
-        psp->tics    = Reader_ReadInt32(reader);
-        psp->pos[VX] = FIX2FLT(Reader_ReadInt32(reader));
-        psp->pos[VY] = FIX2FLT(Reader_ReadInt32(reader));
-    }
-
-#if !__JHEXEN__
-    p->didSecret = Reader_ReadInt32(reader);
-
-# if __JDOOM__ || __JDOOM64__
-    if(ver == 2)
-    {
-        /*p->messageTics =*/ Reader_ReadInt32(reader);
-    }
-
-    if(ver >= 2)
-    {
-        p->flyHeight = Reader_ReadInt32(reader);
-    }
-
-# elif __JHERETIC__
-    if(ver < 3)
-    {
-        /*p->messageTics =*/ Reader_ReadInt32(reader);
-    }
-
-    p->flyHeight = Reader_ReadInt32(reader);
-
-    P_InventoryEmpty(plrnum);
-    for(int i = 0; i < getPlayerHeader()->numInvItemTypes; ++i)
-    {
-        inventoryitemtype_t type = inventoryitemtype_t(Reader_ReadInt32(reader));
-        int count = Reader_ReadInt32(reader);
-
-        for(int k = 0; k < count; ++k)
-        {
-            P_InventoryGive(plrnum, type, true);
-        }
-    }
-
-    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) Reader_ReadInt32(reader));
-    Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
-    if(ver < 5)
-    {
-        Reader_ReadInt32(reader); // Current inventory item count?
-    }
-    if(ver < 6)
-    {
-        /*p->inventorySlotNum =*/ Reader_ReadInt32(reader);
-    }
-
-    p->chickenPeck = Reader_ReadInt32(reader);
-# endif
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-    p->morphTics = Reader_ReadInt32(reader);
-#endif
-
-    if(ver >= 2)
-    {
-        p->airCounter = Reader_ReadInt32(reader);
-    }
-
-#if __JHEXEN__
-    p->jumpTics   = Reader_ReadInt32(reader);
-    p->worldTimer = Reader_ReadInt32(reader);
-#elif __JHERETIC__
-    p->flameCount = Reader_ReadInt32(reader);
-
-    if(ver >= 2)
-    {
-        p->class_ = playerclass_t(Reader_ReadByte(reader));
-    }
-#endif
-
-#if !__JHEXEN__
-    // Will be set when unarc thinker.
-    p->plr->mo = 0;
-    p->attacker = 0;
-#endif
-
-    // Demangle it.
-    for(int i = 0; i < numPSprites; ++i)
-    {
-        if(p->pSprites[i].state)
-        {
-            p->pSprites[i].state = &STATES[PTR2INT(p->pSprites[i].state)];
-        }
-    }
-
-    // Mark the player for fixpos and fixangles.
-    dp->flags |= DDPF_FIXORIGIN | DDPF_FIXANGLES | DDPF_FIXMOM;
-    p->update |= PSF_REBORN;
 }
 
 #if !__JDOOM64__
@@ -1030,11 +576,12 @@ static void writePlayers(Writer *writer)
 
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            if(!players[i].plr->inGame)
+            player_t *plr = players + i;
+            if(!plr->plr->inGame)
                 continue;
 
             Writer_WriteInt32(writer, Net_GetPlayerID(i));
-            SV_WritePlayer(i, writer);
+            plr->write(writer);
         }
     }
     SV_EndSegment();
@@ -1099,7 +646,7 @@ static void readPlayers(SaveInfo &info, dd_bool *infile, dd_bool *loaded, Reader
             }
 
             // Read the data.
-            SV_ReadPlayer(player, reader);
+            player->read(reader);
         }
     }
     SV_AssertSegment(ASEG_END);
@@ -2072,7 +1619,7 @@ void SV_SaveGameClient(uint sessionId)
     Writer_WriteFloat(writer, pl->plr->lookDir); /* $unifiedangles */
 
     writePlayerHeader(writer);
-    SV_WritePlayer(CONSOLEPLAYER, writer);
+    players[CONSOLEPLAYER].write(writer);
 
     MapStateWriter(thingArchiveExcludePlayers).write(writer);
     /// @todo No consistency bytes in client saves?
@@ -2146,7 +1693,7 @@ void SV_LoadGameClient(uint sessionId)
     cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
 
     readPlayerHeader(reader, info->version());
-    SV_ReadPlayer(cpl, reader);
+    cpl->read(reader);
 
     MapStateReader(info->version()).read(reader);
 

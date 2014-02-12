@@ -71,7 +71,7 @@ weapontype_t P_WeaponSlotCycle(weapontype_t type, dd_bool prev);
  *
  * @return  Number of the given player.
  */
-int P_GetPlayerNum(player_t *plr);
+int P_GetPlayerNum(player_t const *plr);
 
 /**
  * Return a bit field for the current player's cheats.

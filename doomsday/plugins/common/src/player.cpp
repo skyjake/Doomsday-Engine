@@ -21,13 +21,18 @@
 #include "common.h"
 #include "player.h"
 
-#include "dmu_lib.h"
 #include "d_netsv.h"
 #include "d_net.h"
-#include "hu_log.h"
-#include "p_map.h"
+#include "dmu_lib.h"
 #include "g_common.h"
+#include "hu_log.h"
+#if __JHERETIC__ || __JHEXEN__
+#  include "hu_inventory.h"
+#endif
 #include "p_actor.h"
+#include "p_inventory.h"
+#include "p_map.h"
+#include "p_saveg.h"
 #include "p_start.h"
 #include <de/memory.h>
 #include <cstdlib>
@@ -217,7 +222,7 @@ void P_InitPlayerClassInfo()
 }
 #endif
 
-int P_GetPlayerNum(player_t *player)
+int P_GetPlayerNum(player_t const *player)
 {
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
@@ -1203,4 +1208,443 @@ angle_t Player_ViewYawAngle(int playerNum)
     }
 
     return ang;
+}
+
+void player_s::write(Writer *writer) const
+{
+#if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
+    int const plrnum             = P_GetPlayerNum(this);
+#endif
+    playerheader_t const &plrHdr = *SV_GetPlayerHeader();
+
+    int i, numPSprites = plrHdr.numPSprites;
+
+    player_t temp, *p = &temp;
+    ddplayer_t ddtemp, *dp = &ddtemp;
+
+    // Make a copy of the player.
+    std::memcpy(p, this, sizeof(temp));
+    std::memcpy(dp, plr, sizeof(ddtemp));
+    temp.plr = &ddtemp;
+
+    // Convert the psprite states.
+    for(i = 0; i < numPSprites; ++i)
+    {
+        pspdef_t *pspDef = &temp.pSprites[i];
+
+        if(pspDef->state)
+        {
+            pspDef->state = (state_t *) (pspDef->state - STATES);
+        }
+    }
+
+    // Version number. Increase when you make changes to the player data
+    // segment format.
+    Writer_WriteByte(writer, 6);
+
+#if __JHEXEN__
+    // Class.
+    Writer_WriteByte(writer, cfg.playerClass[plrnum]);
+#endif
+
+    Writer_WriteInt32(writer, p->playerState);
+#if __JHEXEN__
+    Writer_WriteInt32(writer, p->class_);    // 2nd class...?
+#endif
+    Writer_WriteInt32(writer, FLT2FIX(p->viewZ));
+    Writer_WriteInt32(writer, FLT2FIX(p->viewHeight));
+    Writer_WriteInt32(writer, FLT2FIX(p->viewHeightDelta));
+#if !__JHEXEN__
+    Writer_WriteFloat(writer, dp->lookDir);
+#endif
+    Writer_WriteInt32(writer, FLT2FIX(p->bob));
+#if __JHEXEN__
+    Writer_WriteInt32(writer, p->flyHeight);
+    Writer_WriteFloat(writer, dp->lookDir);
+    Writer_WriteInt32(writer, p->centering);
+#endif
+    Writer_WriteInt32(writer, p->health);
+
+#if __JHEXEN__
+    for(i = 0; i < plrHdr.numArmorTypes; ++i)
+    {
+        Writer_WriteInt32(writer, p->armorPoints[i]);
+    }
+#else
+    Writer_WriteInt32(writer, p->armorPoints);
+    Writer_WriteInt32(writer, p->armorType);
+#endif
+
+#if __JDOOM64__ || __JHEXEN__
+    for(i = 0; i < plrHdr.numInvItemTypes; ++i)
+    {
+        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
+
+        Writer_WriteInt32(writer, type);
+        Writer_WriteInt32(writer, P_InventoryCount(plrnum, type));
+    }
+    Writer_WriteInt32(writer, P_InventoryReadyItem(plrnum));
+#endif
+
+    for(i = 0; i < plrHdr.numPowers; ++i)
+    {
+        Writer_WriteInt32(writer, p->powers[i]);
+    }
+
+#if __JHEXEN__
+    Writer_WriteInt32(writer, p->keys);
+#else
+    for(i = 0; i < plrHdr.numKeys; ++i)
+    {
+        Writer_WriteInt32(writer, p->keys[i]);
+    }
+#endif
+
+#if __JHEXEN__
+    Writer_WriteInt32(writer, p->pieces);
+#else
+    Writer_WriteInt32(writer, p->backpack);
+#endif
+
+    for(i = 0; i < plrHdr.numFrags; ++i)
+    {
+        Writer_WriteInt32(writer, p->frags[i]);
+    }
+
+    Writer_WriteInt32(writer, p->readyWeapon);
+    Writer_WriteInt32(writer, p->pendingWeapon);
+
+    for(i = 0; i < plrHdr.numWeapons; ++i)
+    {
+        Writer_WriteInt32(writer, p->weapons[i].owned);
+    }
+
+    for(i = 0; i < plrHdr.numAmmoTypes; ++i)
+    {
+        Writer_WriteInt32(writer, p->ammo[i].owned);
+#if !__JHEXEN__
+        Writer_WriteInt32(writer, p->ammo[i].max);
+#endif
+    }
+
+    Writer_WriteInt32(writer, p->attackDown);
+    Writer_WriteInt32(writer, p->useDown);
+
+    Writer_WriteInt32(writer, p->cheats);
+
+    Writer_WriteInt32(writer, p->refire);
+
+    Writer_WriteInt32(writer, p->killCount);
+    Writer_WriteInt32(writer, p->itemCount);
+    Writer_WriteInt32(writer, p->secretCount);
+
+    Writer_WriteInt32(writer, p->damageCount);
+    Writer_WriteInt32(writer, p->bonusCount);
+#if __JHEXEN__
+    Writer_WriteInt32(writer, p->poisonCount);
+#endif
+
+    Writer_WriteInt32(writer, dp->extraLight);
+    Writer_WriteInt32(writer, dp->fixedColorMap);
+    Writer_WriteInt32(writer, p->colorMap);
+
+    for(i = 0; i < numPSprites; ++i)
+    {
+        pspdef_t *psp = &p->pSprites[i];
+
+        Writer_WriteInt32(writer, PTR2INT(psp->state));
+        Writer_WriteInt32(writer, psp->tics);
+        Writer_WriteInt32(writer, FLT2FIX(psp->pos[VX]));
+        Writer_WriteInt32(writer, FLT2FIX(psp->pos[VY]));
+    }
+
+#if !__JHEXEN__
+    Writer_WriteInt32(writer, p->didSecret);
+
+    // Added in ver 2 with __JDOOM__
+    Writer_WriteInt32(writer, p->flyHeight);
+#endif
+
+#if __JHERETIC__
+    for(i = 0; i < plrHdr.numInvItemTypes; ++i)
+    {
+        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
+
+        Writer_WriteInt32(writer, type);
+        Writer_WriteInt32(writer, P_InventoryCount(plrnum, type));
+    }
+    Writer_WriteInt32(writer, P_InventoryReadyItem(plrnum));
+    Writer_WriteInt32(writer, p->chickenPeck);
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+    Writer_WriteInt32(writer, p->morphTics);
+#endif
+
+    Writer_WriteInt32(writer, p->airCounter);
+
+#if __JHEXEN__
+    Writer_WriteInt32(writer, p->jumpTics);
+    Writer_WriteInt32(writer, p->worldTimer);
+#elif __JHERETIC__
+    Writer_WriteInt32(writer, p->flameCount);
+
+    // Added in ver 2
+    Writer_WriteByte(writer, p->class_);
+#endif
+}
+
+void player_s::read(Reader *reader)
+{
+    int const plrnum = P_GetPlayerNum(this);
+
+    byte ver = Reader_ReadByte(reader);
+
+#if __JHEXEN__
+    cfg.playerClass[plrnum] = playerclass_t(Reader_ReadByte(reader));
+#endif
+
+    playerheader_t const &plrHdr = *SV_GetPlayerHeader();
+    ddplayer_t *dp = plr;
+
+#if __JHEXEN__
+    de::zapPtr(this); // Force everything NULL,
+    plr = dp;   // but restore the ddplayer pointer.
+#endif
+
+    playerState     = playerstate_t(Reader_ReadInt32(reader));
+#if __JHEXEN__
+    class_          = playerclass_t(Reader_ReadInt32(reader)); // 2nd class?? (ask Raven...)
+#endif
+
+    viewZ           = FIX2FLT(Reader_ReadInt32(reader));
+    viewHeight      = FIX2FLT(Reader_ReadInt32(reader));
+    viewHeightDelta = FIX2FLT(Reader_ReadInt32(reader));
+#if !__JHEXEN__
+    dp->lookDir       = Reader_ReadFloat(reader);
+#endif
+    bob             = FIX2FLT(Reader_ReadInt32(reader));
+#if __JHEXEN__
+    flyHeight       = Reader_ReadInt32(reader);
+
+    dp->lookDir        = Reader_ReadFloat(reader);
+
+    centering       = Reader_ReadInt32(reader);
+#endif
+    health          = Reader_ReadInt32(reader);
+
+#if __JHEXEN__
+    for(int i = 0; i < plrHdr.numArmorTypes; ++i)
+    {
+        armorPoints[i] = Reader_ReadInt32(reader);
+    }
+#else
+    armorPoints     = Reader_ReadInt32(reader);
+    armorType       = Reader_ReadInt32(reader);
+#endif
+
+#if __JDOOM64__ || __JHEXEN__
+    P_InventoryEmpty(plrnum);
+    for(int i = 0; i < plrHdr.numInvItemTypes; ++i)
+    {
+        inventoryitemtype_t type = inventoryitemtype_t(Reader_ReadInt32(reader));
+        int count = Reader_ReadInt32(reader);
+
+        for(int k = 0; k < count; ++k)
+        {
+            P_InventoryGive(plrnum, type, true);
+        }
+    }
+
+    P_InventorySetReadyItem(plrnum, inventoryitemtype_t(Reader_ReadInt32(reader)));
+# if __JHEXEN__
+    Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
+    if(ver < 5)
+    {
+        /*artifactCount   =*/ Reader_ReadInt32(reader);
+    }
+    if(ver < 6)
+    {
+        /*inventorySlotNum =*/ Reader_ReadInt32(reader);
+    }
+# endif
+#endif
+
+    for(int i = 0; i < plrHdr.numPowers; ++i)
+    {
+        powers[i] = Reader_ReadInt32(reader);
+    }
+    if(powers[PT_ALLMAP])
+    {
+        ST_RevealAutomap(plrnum, true);
+    }
+
+#if __JHEXEN__
+    keys = Reader_ReadInt32(reader);
+#else
+    for(int i = 0; i < plrHdr.numKeys; ++i)
+    {
+        keys[i] = Reader_ReadInt32(reader);
+    }
+#endif
+
+#if __JHEXEN__
+    pieces   = Reader_ReadInt32(reader);
+#else
+    backpack = Reader_ReadInt32(reader);
+#endif
+
+    for(int i = 0; i < plrHdr.numFrags; ++i)
+    {
+        frags[i] = Reader_ReadInt32(reader);
+    }
+
+    readyWeapon = weapontype_t(Reader_ReadInt32(reader));
+#if __JHEXEN__
+    if(ver < 5)
+        pendingWeapon = WT_NOCHANGE;
+    else
+#endif
+        pendingWeapon = weapontype_t(Reader_ReadInt32(reader));
+
+    for(int i = 0; i < plrHdr.numWeapons; ++i)
+    {
+        weapons[i].owned = (Reader_ReadInt32(reader)? true : false);
+    }
+
+    for(int i = 0; i < plrHdr.numAmmoTypes; ++i)
+    {
+        ammo[i].owned = Reader_ReadInt32(reader);
+
+#if !__JHEXEN__
+        ammo[i].max = Reader_ReadInt32(reader);
+#endif
+    }
+
+    attackDown  = Reader_ReadInt32(reader);
+    useDown     = Reader_ReadInt32(reader);
+    cheats      = Reader_ReadInt32(reader);
+    refire      = Reader_ReadInt32(reader);
+    killCount   = Reader_ReadInt32(reader);
+    itemCount   = Reader_ReadInt32(reader);
+    secretCount = Reader_ReadInt32(reader);
+
+#if __JHEXEN__
+    if(ver <= 1)
+    {
+        /*messageTics     =*/ Reader_ReadInt32(reader);
+        /*ultimateMessage =*/ Reader_ReadInt32(reader);
+        /*yellowMessage   =*/ Reader_ReadInt32(reader);
+    }
+#endif
+
+    damageCount = Reader_ReadInt32(reader);
+    bonusCount  = Reader_ReadInt32(reader);
+#if __JHEXEN__
+    poisonCount = Reader_ReadInt32(reader);
+#endif
+
+    dp->extraLight    = Reader_ReadInt32(reader);
+    dp->fixedColorMap = Reader_ReadInt32(reader);
+
+    colorMap    = Reader_ReadInt32(reader);
+
+    for(int i = 0; i < plrHdr.numPSprites; ++i)
+    {
+        pspdef_t *psp = &pSprites[i];
+
+        psp->state   = INT2PTR(state_t, Reader_ReadInt32(reader));
+        psp->tics    = Reader_ReadInt32(reader);
+        psp->pos[VX] = FIX2FLT(Reader_ReadInt32(reader));
+        psp->pos[VY] = FIX2FLT(Reader_ReadInt32(reader));
+    }
+
+#if !__JHEXEN__
+    didSecret = Reader_ReadInt32(reader);
+
+# if __JDOOM__ || __JDOOM64__
+    if(ver == 2)
+    {
+        /*messageTics =*/ Reader_ReadInt32(reader);
+    }
+
+    if(ver >= 2)
+    {
+        flyHeight = Reader_ReadInt32(reader);
+    }
+
+# elif __JHERETIC__
+    if(ver < 3)
+    {
+        /*messageTics =*/ Reader_ReadInt32(reader);
+    }
+
+    flyHeight = Reader_ReadInt32(reader);
+
+    P_InventoryEmpty(plrnum);
+    for(int i = 0; i < plrHdr.numInvItemTypes; ++i)
+    {
+        inventoryitemtype_t type = inventoryitemtype_t(Reader_ReadInt32(reader));
+        int count = Reader_ReadInt32(reader);
+
+        for(int k = 0; k < count; ++k)
+        {
+            P_InventoryGive(plrnum, type, true);
+        }
+    }
+
+    P_InventorySetReadyItem(plrnum, (inventoryitemtype_t) Reader_ReadInt32(reader));
+    Hu_InventorySelect(plrnum, P_InventoryReadyItem(plrnum));
+    if(ver < 5)
+    {
+        Reader_ReadInt32(reader); // Current inventory item count?
+    }
+    if(ver < 6)
+    {
+        /*inventorySlotNum =*/ Reader_ReadInt32(reader);
+    }
+
+    chickenPeck = Reader_ReadInt32(reader);
+# endif
+#endif
+
+#if __JHERETIC__ || __JHEXEN__
+    morphTics = Reader_ReadInt32(reader);
+#endif
+
+    if(ver >= 2)
+    {
+        airCounter = Reader_ReadInt32(reader);
+    }
+
+#if __JHEXEN__
+    jumpTics   = Reader_ReadInt32(reader);
+    worldTimer = Reader_ReadInt32(reader);
+#elif __JHERETIC__
+    flameCount = Reader_ReadInt32(reader);
+
+    if(ver >= 2)
+    {
+        class_ = playerclass_t(Reader_ReadByte(reader));
+    }
+#endif
+
+#if !__JHEXEN__
+    // Will be set when unarc thinker.
+    plr->mo = 0;
+    attacker = 0;
+#endif
+
+    // Demangle it.
+    for(int i = 0; i < plrHdr.numPSprites; ++i)
+    {
+        if(pSprites[i].state)
+        {
+            pSprites[i].state = &STATES[PTR2INT(pSprites[i].state)];
+        }
+    }
+
+    // Mark the player for fixpos and fixangles.
+    dp->flags |= DDPF_FIXORIGIN | DDPF_FIXANGLES | DDPF_FIXMOM;
+    update |= PSF_REBORN;
 }

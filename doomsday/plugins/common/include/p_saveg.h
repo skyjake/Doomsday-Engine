@@ -119,6 +119,23 @@ mobj_t *SV_GetArchiveThing(ThingSerialId thingid, void *address);
  */
 void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver);
 
+typedef struct playerheader_s {
+    int numPowers;
+    int numKeys;
+    int numFrags;
+    int numWeapons;
+    int numAmmoTypes;
+    int numPSprites;
+#if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
+    int numInvItemTypes;
+#endif
+#if __JHEXEN__
+    int numArmorTypes;
+#endif
+} playerheader_t;
+
+playerheader_t *SV_GetPlayerHeader(void);
+
 #if __JHEXEN__
 void SV_HxSaveHubMap(void);
 void SV_HxLoadHubMap(void);
