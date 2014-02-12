@@ -104,11 +104,11 @@ static void videoVsyncChanged()
 {
     if(novideo || !WindowSystem::hasMain()) return;
 
-#if defined(WIN32) || defined(MACOSX)
+//#if defined(WIN32) || defined(MACOSX)
     GL_SetVSync(Con_GetByte("vid-vsync") != 0);
-#else
-    WindowSystem::main().updateCanvasFormat();
-#endif
+//#else
+//    WindowSystem::main().updateCanvasFormat();
+//#endif
 }
 
 void GL_Register()
@@ -339,6 +339,8 @@ dd_bool GL_EarlyInit()
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
+
+    GL_SetVSync(true); // will be overridden from vid-vsync
 
     initGLOk = true;
     return true;
