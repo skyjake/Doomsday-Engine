@@ -21,6 +21,7 @@
 #include "common.h"
 #include "thinkerinfo.h"
 
+#include "mobj.h"
 #include "p_saveg.h"
 #include "p_ceiling.h"
 #include "p_door.h"
@@ -54,8 +55,8 @@ static ThinkerClassInfo thinkerInfo[] = {
       TC_MOBJ,
       (thinkfunc_t) P_MobjThinker,
       TSF_SERVERONLY,
-      (WriteThinkerFunc) SV_WriteMobj,
-      (ReadThinkerFunc) SV_ReadMobj,
+      de::function_cast<WriteThinkerFunc>(writeThinkerAs<mobj_s>),
+      de::function_cast<ReadThinkerFunc>(readThinkerAs<mobj_s>),
       sizeof(mobj_t)
     },
 #if !__JHEXEN__

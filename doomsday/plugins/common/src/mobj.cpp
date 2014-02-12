@@ -28,10 +28,11 @@
 #include "common.h"
 #include "mobj.h"
 
+#include "dmu_lib.h"
 #include "p_actor.h"
 #include "p_player.h"
 #include "p_map.h"
-#include "dmu_lib.h"
+#include "p_saveg.h"
 
 #include <de/mathutil.h>
 #include <cmath>
@@ -326,4 +327,557 @@ dd_bool P_MobjChangeState(mobj_t *mobj, statenum_t stateNum)
 dd_bool P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum)
 {
     return changeMobjState(mobj, stateNum, false /*don't call action functions*/);
+}
+
+#if __JHEXEN__
+# define MOBJ_SAVEVERSION 8
+#elif __JHERETIC__
+# define MOBJ_SAVEVERSION 10
+#else
+# define MOBJ_SAVEVERSION 10
+#endif
+
+void mobj_s::write(MapStateWriter *msw) const
+{
+    Writer *writer = msw->writer();
+
+    mobj_t const *original = (mobj_t *) this;
+    mobj_t temp, *mo = &temp;
+
+    std::memcpy(mo, original, sizeof(*mo));
+    // Mangle it!
+    mo->state = (state_t *) (mo->state - STATES);
+    if(mo->player)
+        mo->player = (player_t *) ((mo->player - players) + 1);
+
+    // Version.
+    // JHEXEN
+    // 2: Added the 'translucency' byte.
+    // 3: Added byte 'vistarget'
+    // 4: Added long 'tracer'
+    // 4: Added long 'lastenemy'
+    // 5: Added flags3
+    // 6: Floor material removed.
+    //
+    // JDOOM || JHERETIC || JDOOM64
+    // 4: Added byte 'translucency'
+    // 5: Added byte 'vistarget'
+    // 5: Added tracer in jDoom
+    // 5: Added dropoff fix in jHeretic
+    // 5: Added long 'floorclip'
+    // 6: Added proper respawn data
+    // 6: Added flags 2 in jDoom
+    // 6: Added damage
+    // 7: Added generator in jHeretic
+    // 7: Added flags3
+    //
+    // JDOOM
+    // 9: Revised mapspot flag interpretation
+    //
+    // JHERETIC
+    // 8: Added special3
+    // 9: Revised mapspot flag interpretation
+    //
+    // JHEXEN
+    // 7: Removed superfluous info ptr
+    // 8: Added 'onMobj'
+    Writer_WriteByte(writer, MOBJ_SAVEVERSION);
+
+#if !__JHEXEN__
+    // A version 2 features: archive number and target.
+    Writer_WriteInt16(writer, SV_ThingArchiveId((mobj_t*) original));
+    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->target));
+
+# if __JDOOM__ || __JDOOM64__
+    // Ver 5 features: Save tracer (fixes Archvile, Revenant bug)
+    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->tracer));
+# endif
+#endif
+
+    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->onMobj));
+
+    // Info for drawing: position.
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VY]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->origin[VZ]));
+
+    //More drawing info: to determine current sprite.
+    Writer_WriteInt32(writer, mo->angle); // Orientation.
+    Writer_WriteInt32(writer, mo->sprite); // Used to find patch_t and flip value.
+    Writer_WriteInt32(writer, mo->frame);
+
+#if !__JHEXEN__
+    // The closest interval over all contacted Sectors.
+    Writer_WriteInt32(writer, FLT2FIX(mo->floorZ));
+    Writer_WriteInt32(writer, FLT2FIX(mo->ceilingZ));
+#endif
+
+    // For movement checking.
+    Writer_WriteInt32(writer, FLT2FIX(mo->radius));
+    Writer_WriteInt32(writer, FLT2FIX(mo->height));
+
+    // Momentums, used to update position.
+    Writer_WriteInt32(writer, FLT2FIX(mo->mom[MX]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->mom[MY]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->mom[MZ]));
+
+    // If == VALIDCOUNT, already checked.
+    Writer_WriteInt32(writer, mo->valid);
+
+    Writer_WriteInt32(writer, mo->type);
+    Writer_WriteInt32(writer, mo->tics); // State tic counter.
+    Writer_WriteInt32(writer, PTR2INT(mo->state));
+
+#if __JHEXEN__
+    Writer_WriteInt32(writer, mo->damage);
+#endif
+
+    Writer_WriteInt32(writer, mo->flags);
+#if __JHEXEN__
+    Writer_WriteInt32(writer, mo->flags2);
+    Writer_WriteInt32(writer, mo->flags3);
+
+    if(mo->type == MT_KORAX)
+        Writer_WriteInt32(writer, 0); // Searching index.
+    else
+        Writer_WriteInt32(writer, mo->special1);
+
+    switch(mo->type)
+    {
+    case MT_LIGHTNING_FLOOR:
+    case MT_LIGHTNING_ZAP:
+    case MT_HOLY_TAIL:
+    case MT_LIGHTNING_CEILING:
+        if(mo->flags & MF_CORPSE)
+            Writer_WriteInt32(writer, 0);
+        else
+            Writer_WriteInt32(writer, SV_ThingArchiveId(INT2PTR(mobj_t, mo->special2)));
+        break;
+
+    default:
+        Writer_WriteInt32(writer, mo->special2);
+        break;
+    }
+#endif
+    Writer_WriteInt32(writer, mo->health);
+
+    // Movement direction, movement generation (zig-zagging).
+    Writer_WriteInt32(writer, mo->moveDir); // 0-7
+    Writer_WriteInt32(writer, mo->moveCount); // When 0, select a new dir.
+
+#if __JHEXEN__
+    if(mo->flags & MF_CORPSE)
+        Writer_WriteInt32(writer, 0);
+    else
+        Writer_WriteInt32(writer, (int) SV_ThingArchiveId(mo->target));
+#endif
+
+    // Reaction time: if non 0, don't attack yet.
+    // Used by player to freeze a bit after teleporting.
+    Writer_WriteInt32(writer, mo->reactionTime);
+
+    // If >0, the target will be chased no matter what (even if shot).
+    Writer_WriteInt32(writer, mo->threshold);
+
+    // Additional info record for player avatars only (only valid if type is MT_PLAYER).
+    Writer_WriteInt32(writer, PTR2INT(mo->player));
+
+    // Player number last looked for.
+    Writer_WriteInt32(writer, mo->lastLook);
+
+#if !__JHEXEN__
+    // For nightmare/multiplayer respawn.
+    Writer_WriteInt32(writer, FLT2FIX(mo->spawnSpot.origin[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->spawnSpot.origin[VY]));
+    Writer_WriteInt32(writer, FLT2FIX(mo->spawnSpot.origin[VZ]));
+    Writer_WriteInt32(writer, mo->spawnSpot.angle);
+    Writer_WriteInt32(writer, mo->spawnSpot.flags);
+
+    Writer_WriteInt32(writer, mo->intFlags); // $dropoff_fix: internal flags.
+    Writer_WriteInt32(writer, FLT2FIX(mo->dropOffZ)); // $dropoff_fix
+    Writer_WriteInt32(writer, mo->gear); // Used in torque simulation.
+
+    Writer_WriteInt32(writer, mo->damage);
+    Writer_WriteInt32(writer, mo->flags2);
+    Writer_WriteInt32(writer, mo->flags3);
+# ifdef __JHERETIC__
+    Writer_WriteInt32(writer, mo->special1);
+    Writer_WriteInt32(writer, mo->special2);
+    Writer_WriteInt32(writer, mo->special3);
+# endif
+
+    Writer_WriteByte(writer,  mo->translucency);
+    Writer_WriteByte(writer,  (byte)(mo->visTarget +1));
+#endif
+
+    Writer_WriteInt32(writer, FLT2FIX(mo->floorClip));
+#if __JHEXEN__
+    Writer_WriteInt32(writer, SV_ThingArchiveId((mobj_t *) original));
+    Writer_WriteInt32(writer, mo->tid);
+    Writer_WriteInt32(writer, mo->special);
+    Writer_Write(writer,      mo->args, sizeof(mo->args));
+    Writer_WriteByte(writer,  mo->translucency);
+    Writer_WriteByte(writer,  (byte)(mo->visTarget +1));
+
+    switch(mo->type)
+    {
+    case MT_BISH_FX:
+    case MT_HOLY_FX:
+    case MT_DRAGON:
+    case MT_THRUSTFLOOR_UP:
+    case MT_THRUSTFLOOR_DOWN:
+    case MT_MINOTAUR:
+    case MT_SORCFX1:
+    case MT_MSTAFF_FX2:
+    case MT_HOLY_TAIL:
+    case MT_LIGHTNING_CEILING:
+        if(mo->flags & MF_CORPSE)
+            Writer_WriteInt32(writer, 0);
+        else
+            Writer_WriteInt32(writer, SV_ThingArchiveId(mo->tracer));
+        break;
+
+    default:
+        DENG_ASSERT(mo->tracer == NULL); /// @todo Tracer won't be saved correctly?
+        Writer_WriteInt32(writer, PTR2INT(mo->tracer));
+        break;
+    }
+
+    Writer_WriteInt32(writer, PTR2INT(mo->lastEnemy));
+#elif __JHERETIC__
+    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->generator));
+#endif
+}
+
+static void RestoreMobj(mobj_t *mo, int ver)
+{
+#if __JDOOM64__
+    DENG_UNUSED(ver);
+#endif
+
+    mo->info = &MOBJINFO[mo->type];
+
+    Mobj_SetState(mo, PTR2INT(mo->state));
+#if __JHEXEN__
+    if(mo->flags2 & MF2_DORMANT)
+        mo->tics = -1;
+#endif
+
+    if(mo->player)
+    {
+        // The player number translation table is used to find out the
+        // *current* (actual) player number of the referenced player.
+        int pNum = saveToRealPlayerNum[PTR2INT(mo->player) - 1];
+
+#if __JHEXEN__
+        if(pNum < 0)
+        {
+            // This saved player does not exist in the current game!
+            // Destroy this mobj.
+            Z_Free(mo);
+
+            return;  // Don't add this thinker.
+        }
+#endif
+
+        mo->player  = &players[pNum];
+        mo->dPlayer = mo->player->plr;
+
+        mo->dPlayer->mo      = mo;
+        //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
+        mo->dPlayer->lookDir = 0; /* $unifiedangles */
+    }
+
+    mo->visAngle = mo->angle >> 16;
+
+#if !__JHEXEN__
+    if(mo->dPlayer && !mo->dPlayer->inGame)
+    {
+        mo->dPlayer->mo = 0;
+        Mobj_Destroy(mo);
+
+        return;
+    }
+#endif
+
+#if !__JDOOM64__
+    // Do we need to update this mobj's flag values?
+    if(ver < MOBJ_SAVEVERSION)
+    {
+        SV_TranslateLegacyMobjFlags(mo, ver);
+    }
+#endif
+
+    P_MobjLink(mo);
+    mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
+
+    return;
+}
+
+int mobj_s::read(MapStateReader *msr)
+{
+#define FF_FULLBRIGHT 0x8000 ///< Used to be a flag in thing->frame.
+#define FF_FRAMEMASK  0x7fff
+
+    Reader *reader = msr->reader();
+
+    int ver = Reader_ReadByte(reader);
+
+#if !__JHEXEN__
+    if(ver >= 2) // Version 2 has mobj archive numbers.
+    {
+        SV_InsertThingInArchive(this, Reader_ReadInt16(reader));
+    }
+#endif
+
+#if !__JHEXEN__
+    target = 0;
+    if(ver >= 2)
+    {
+        target   = INT2PTR(mobj_t, Reader_ReadInt16(reader));
+    }
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+    tracer = 0;
+    if(ver >= 5)
+    {
+        tracer   = INT2PTR(mobj_t, Reader_ReadInt16(reader));
+    }
+#endif
+
+    onMobj = 0;
+#if __JHEXEN__
+    if(ver >= 8)
+#else
+    if(ver >= 5)
+#endif
+    {
+        onMobj   = INT2PTR(mobj_t, Reader_ReadInt16(reader));
+    }
+
+    origin[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+    origin[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    origin[VZ]   = FIX2FLT(Reader_ReadInt32(reader));
+    angle        = Reader_ReadInt32(reader);
+    sprite       = Reader_ReadInt32(reader);
+
+    frame        = Reader_ReadInt32(reader); // might be ORed with FF_FULLBRIGHT
+    if(frame & FF_FULLBRIGHT)
+        frame &= FF_FRAMEMASK; // not used anymore.
+
+#if __JHEXEN__
+    if(ver < 6)
+    {
+        /*floorflat =*/ Reader_ReadInt32(reader);
+    }
+#else
+    floorZ       = FIX2FLT(Reader_ReadInt32(reader));
+    ceilingZ     = FIX2FLT(Reader_ReadInt32(reader));
+#endif
+
+    radius       = FIX2FLT(Reader_ReadInt32(reader));
+    height       = FIX2FLT(Reader_ReadInt32(reader));
+    mom[MX]      = FIX2FLT(Reader_ReadInt32(reader));
+    mom[MY]      = FIX2FLT(Reader_ReadInt32(reader));
+    mom[MZ]      = FIX2FLT(Reader_ReadInt32(reader));
+    valid        = Reader_ReadInt32(reader);
+    type         = Reader_ReadInt32(reader);
+
+#if __JHEXEN__
+    if(ver < 7)
+    {
+        /*info   = (mobjinfo_t *)*/ Reader_ReadInt32(reader);
+    }
+#endif
+    info = &MOBJINFO[type];
+
+    if(info->flags2 & MF2_FLOATBOB)
+        mom[MZ] = 0;
+
+    if(info->flags & MF_SOLID)
+        ddFlags |= DDMF_SOLID;
+    if(info->flags2 & MF2_DONTDRAW)
+        ddFlags |= DDMF_DONTDRAW;
+
+    tics         = Reader_ReadInt32(reader);
+    state        = INT2PTR(state_t, Reader_ReadInt32(reader));
+#if __JHEXEN__
+    damage       = Reader_ReadInt32(reader);
+#endif
+    flags        = Reader_ReadInt32(reader);
+#if __JHEXEN__
+    flags2       = Reader_ReadInt32(reader);
+    if(ver >= 5)
+    {
+        flags3   = Reader_ReadInt32(reader);
+    }
+    special1     = Reader_ReadInt32(reader);
+    special2     = Reader_ReadInt32(reader);
+#endif
+    health       = Reader_ReadInt32(reader);
+
+#if __JHERETIC__
+    if(ver < 8)
+    {
+        // Fix a bunch of kludges in the original Heretic.
+        switch(type)
+        {
+        case MT_MACEFX1:
+        case MT_MACEFX2:
+        case MT_MACEFX3:
+        case MT_HORNRODFX2:
+        case MT_HEADFX3:
+        case MT_WHIRLWIND:
+        case MT_TELEGLITTER:
+        case MT_TELEGLITTER2:
+            special3 = health;
+            if(type == MT_HORNRODFX2 && special3 > 16)
+                special3 = 16;
+            health = MOBJINFO[type].spawnHealth;
+            break;
+
+        default:
+            break;
+        }
+    }
+#endif
+
+    moveDir      = Reader_ReadInt32(reader);
+    moveCount    = Reader_ReadInt32(reader);
+#if __JHEXEN__
+    target       = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+#endif
+    reactionTime = Reader_ReadInt32(reader);
+    threshold    = Reader_ReadInt32(reader);
+    player       = INT2PTR(player_t, Reader_ReadInt32(reader));
+    lastLook     = Reader_ReadInt32(reader);
+
+#if __JHEXEN__
+    floorClip    = FIX2FLT(Reader_ReadInt32(reader));
+    SV_InsertThingInArchive(this, Reader_ReadInt32(reader));
+    tid          = Reader_ReadInt32(reader);
+#else
+    // For nightmare respawn.
+    if(ver >= 6)
+    {
+        spawnSpot.origin[VX] = FIX2FLT(Reader_ReadInt32(reader));
+        spawnSpot.origin[VY] = FIX2FLT(Reader_ReadInt32(reader));
+        spawnSpot.origin[VZ] = FIX2FLT(Reader_ReadInt32(reader));
+        spawnSpot.angle      = Reader_ReadInt32(reader);
+        if(ver < 10)
+        {
+            /*spawnSpot.type =*/ Reader_ReadInt32(reader);
+        }
+        spawnSpot.flags      = Reader_ReadInt32(reader);
+    }
+    else
+    {
+        spawnSpot.origin[VX] = (float) Reader_ReadInt16(reader);
+        spawnSpot.origin[VY] = (float) Reader_ReadInt16(reader);
+        spawnSpot.origin[VZ] = 0; // Initialize with "something".
+        spawnSpot.angle      = (angle_t) (ANG45 * (Reader_ReadInt16(reader) / 45));
+        /*spawnSpot.type       = (int)*/ Reader_ReadInt16(reader);
+        spawnSpot.flags      = (int) Reader_ReadInt16(reader);
+    }
+
+# if __JDOOM__ || __JDOOM64__
+    if(ver >= 3)
+# elif __JHERETIC__
+    if(ver >= 5)
+# endif
+    {
+        intFlags = Reader_ReadInt32(reader);
+        dropOffZ = FIX2FLT(Reader_ReadInt32(reader));
+        gear     = Reader_ReadInt32(reader);
+    }
+
+# if __JDOOM__ || __JDOOM64__
+    if(ver >= 6)
+    {
+        damage = Reader_ReadInt32(reader);
+        flags2 = Reader_ReadInt32(reader);
+    }
+    else // flags2 will be applied from the defs.
+    {
+        damage = DDMAXINT; // Use the value set in mo->info->damage
+    }
+
+# elif __JHERETIC__
+    damage = Reader_ReadInt32(reader);
+    flags2 = Reader_ReadInt32(reader);
+# endif
+
+    if(ver >= 7)
+    {
+        flags3 = Reader_ReadInt32(reader);
+    } // Else flags3 will be applied from the defs.
+#endif
+
+#if __JHEXEN__
+    special = Reader_ReadInt32(reader);
+    Reader_Read(reader, args, 1 * 5);
+#elif __JHERETIC__
+    special1 = Reader_ReadInt32(reader);
+    special2 = Reader_ReadInt32(reader);
+    if(ver >= 8)
+    {
+        special3 = Reader_ReadInt32(reader);
+    }
+#endif
+
+#if __JHEXEN__
+    if(ver >= 2)
+#else
+    if(ver >= 4)
+#endif
+    {
+        translucency = Reader_ReadByte(reader);
+    }
+
+#if __JHEXEN__
+    if(ver >= 3)
+#else
+    if(ver >= 5)
+#endif
+    {
+        visTarget = (short) (Reader_ReadByte(reader)) -1;
+    }
+
+#if __JHEXEN__
+    if(ver >= 4)
+    {
+        tracer    = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+    }
+
+    if(ver >= 4)
+    {
+        lastEnemy = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+    }
+#else
+    if(ver >= 5)
+    {
+        floorClip = FIX2FLT(Reader_ReadInt32(reader));
+    }
+#endif
+
+#if __JHERETIC__
+    if(ver >= 7)
+    {
+        generator = INT2PTR(mobj_t, Reader_ReadInt16(reader));
+    }
+    else
+    {
+        generator = 0;
+    }
+#endif
+
+    // Restore! (unmangle)
+    RestoreMobj(this, ver);
+
+    return false;
+
+#undef FF_FRAMEMASK
+#undef FF_FULLBRIGHT
 }

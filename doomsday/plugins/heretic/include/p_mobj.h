@@ -38,6 +38,10 @@
 #include "p_terraintype.h"
 #include "h_think.h"
 #include "info.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 #define NOMOM_THRESHOLD     (0.0001) // (integer) 0
 #define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
@@ -220,8 +224,13 @@ typedef struct mobj_s {
     int             corpseTics;     // $vanish: how long has this been dead?
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+
+    /**
+     * Always returns @c false as a thinker will have already been allocated in
+     * the mobj creation process.
+     */
+    int read(MapStateReader *msr);
 #endif
 } mobj_t;
 

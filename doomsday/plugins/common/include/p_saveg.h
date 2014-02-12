@@ -28,6 +28,7 @@
 
 DENG_EXTERN_C int thingArchiveVersion;
 DENG_EXTERN_C uint thingArchiveSize;
+DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 DENG_EXTERN_C SaveSlots saveSlots;
 
 #ifdef __cplusplus
@@ -95,6 +96,8 @@ typedef ushort ThingSerialId;
  */
 ThingSerialId SV_ThingArchiveId(mobj_t const *mobj);
 
+void SV_InsertThingInArchive(mobj_t const *mobj, ThingSerialId thingId);
+
 /**
  * To be called after reading a game state has been read to lookup a pointer
  * to the mobj which is associated with the specified @a thingId.
@@ -147,9 +150,6 @@ void SV_InitTargetPlayers(void);
 #ifdef __cplusplus
 class MapStateReader;
 class MapStateWriter;
-
-void SV_WriteMobj(thinker_t *th, MapStateWriter *msw);
-int SV_ReadMobj(thinker_t *th, MapStateReader *msr);
 
 #if __JHEXEN__
 void SV_WriteMovePoly(struct polyevent_s const *movepoly, MapStateWriter *msw);
