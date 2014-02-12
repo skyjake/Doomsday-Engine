@@ -1646,44 +1646,6 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
 }
 
 #if __JHEXEN__
-void SV_WritePolyObj(Polyobj *po, MapStateWriter *msw)
-{
-    Writer *writer = msw->writer();
-
-    Writer_WriteByte(writer, 1); // write a version byte.
-
-    Writer_WriteInt32(writer, po->tag);
-    Writer_WriteInt32(writer, po->angle);
-    Writer_WriteInt32(writer, FLT2FIX(po->origin[VX]));
-    Writer_WriteInt32(writer, FLT2FIX(po->origin[VY]));
-}
-
-int SV_ReadPolyObj(MapStateReader *msr)
-{
-    Reader *reader = msr->reader();
-    int mapVersion = msr->mapVersion();
-
-    int ver = (mapVersion >= 3)? Reader_ReadByte(reader) : 0;
-    DENG_UNUSED(ver);
-
-    Polyobj *po = Polyobj_ByTag(Reader_ReadInt32(reader));
-    DENG_ASSERT(po != 0);
-
-    angle_t angle = angle_t(Reader_ReadInt32(reader));
-    Polyobj_Rotate(po, angle);
-    po->destAngle = angle;
-
-    float const origX = FIX2FLT(Reader_ReadInt32(reader));
-    float const origY = FIX2FLT(Reader_ReadInt32(reader));
-    Polyobj_MoveXY(po, origX - po->origin[VX], origY - po->origin[VY]);
-
-    /// @todo What about speed? It isn't saved at all?
-
-    return true;
-}
-#endif
-
-#if __JHEXEN__
 void SV_WriteMovePoly(polyevent_t const *th, MapStateWriter *msw)
 {
     Writer *writer = msw->writer();

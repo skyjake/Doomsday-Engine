@@ -25,6 +25,7 @@
 #include "p_actor.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
+#include "polyobjs.h"
 #include "thinkerinfo.h"
 #include <de/String>
 
@@ -144,7 +145,11 @@ DENG2_PIMPL(MapStateReader)
         DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
         for(int i = 0; i < writtenPolyobjCount; ++i)
         {
-            SV_ReadPolyObj(thisPublic);
+            /*Skip unused version byte*/ if(mapVersion >= 3) Reader_ReadByte(reader);
+
+            Polyobj *po = Polyobj_ByTag(Reader_ReadInt32(reader));
+            DENG_ASSERT(po != 0);
+            po->read(thisPublic);
         }
 #endif
     }

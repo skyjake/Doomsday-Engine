@@ -162,10 +162,6 @@ void SV_ReadLine(Line *line, MapStateReader *msr);
 void SV_WriteSector(Sector *sec, MapStateWriter *msw);
 void SV_ReadSector(Sector *sec, MapStateReader *msr);
 
-#if __JHEXEN__
-void SV_WritePolyObj(polyobj_s *po, MapStateWriter *msw);
-int SV_ReadPolyObj(MapStateReader *msr);
-#endif
 #endif // __cplusplus
 
 #endif // LIBCOMMON_SAVESTATE_H

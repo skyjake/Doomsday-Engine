@@ -73,6 +73,11 @@ typedef struct polyobj_s {
 
 // Game-specific data:
     void *specialData; ///< A thinker (if moving).
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
+#endif
 } Polyobj;
 
 enum

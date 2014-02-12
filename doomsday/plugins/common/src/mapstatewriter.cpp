@@ -24,6 +24,7 @@
 #include "dmu_lib.h"
 #include "p_saveg.h"
 #include "p_saveio.h"
+#include "polyobjs.h"
 #include "thinkerinfo.h"
 
 DENG2_PIMPL(MapStateWriter)
@@ -98,7 +99,9 @@ DENG2_PIMPL(MapStateWriter)
         Writer_WriteInt32(writer, numpolyobjs);
         for(int i = 0; i < numpolyobjs; ++i)
         {
-            SV_WritePolyObj(Polyobj_ById(i), thisPublic);
+            Polyobj *po = Polyobj_ById(i);
+            DENG_ASSERT(po != 0);
+            po->write(thisPublic);
         }
 #endif
     }
