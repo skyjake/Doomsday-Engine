@@ -53,6 +53,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <de/Garbage>
 #include "de/memory.h"
 #include "de/concurrency.h"
 #include "de/c_wrapper.h"
@@ -189,6 +190,9 @@ void Z_Shutdown(void)
 {
     int             numVolumes = 0;
     size_t          totalMemory = 0;
+
+    // Get rid of possible zone-allocated memory in the garbage.
+    Garbage_RecycleAllWithDestructor(Z_Free);
 
     // Destroy all the memory volumes.
     while(volumeRoot)
@@ -1041,6 +1045,11 @@ void Z_PrintStatus(void)
     App_Log(DE2_LOG_DEBUG,
             "Memory zone status: %u volumes, %u bytes allocated, %u bytes free (%f%% in use)\n",
             Z_VolumeCount(), (uint)allocated, (uint)wasted, (float)allocated/(float)(allocated+wasted)*100.f);
+}
+
+void Garbage_Trash(void *ptr)
+{
+    Garbage_TrashInstance(ptr, Z_Contains(ptr)? Z_Free : free);
 }
 
 /**

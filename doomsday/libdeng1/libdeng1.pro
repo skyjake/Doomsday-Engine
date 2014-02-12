@@ -67,7 +67,6 @@ HEADERS += \
     include/de/ddstring.h \
     include/de/findfile.h \
     include/de/fixedpoint.h \
-    include/de/garbage.h \
     include/de/libdeng1.h \
     include/de/kdtree.h \
     include/de/mathutil.h \
@@ -96,7 +95,6 @@ SOURCES += \
     src/binangle.c \
     src/concurrency.cpp \
     src/fixedpoint.c \
-    src/garbage.cpp \
     src/libdeng.c \
     src/kdtree.c \
     src/mathutil.c \

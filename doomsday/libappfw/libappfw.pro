@@ -14,7 +14,6 @@ VERSION  = $$DENG_VERSION
 CONFIG += deng_qtgui deng_qtopengl
 
 include(../dep_deng2.pri)
-include(../dep_deng1.pri) # Garbage
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_opengl.pri)

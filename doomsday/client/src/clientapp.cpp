@@ -35,7 +35,7 @@
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
 #include <de/c_wrapper.h>
-#include <de/garbage.h>
+#include <de/Garbage>
 
 #include "clientapp.h"
 #include "alertmask.h"

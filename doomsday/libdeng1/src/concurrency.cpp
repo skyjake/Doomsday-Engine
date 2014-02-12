@@ -22,12 +22,12 @@
  */
 
 #include "de/concurrency.h"
-#include "de/garbage.h"
 #include <QMutex>
 #include <QCoreApplication>
 #include <QDebug>
 #include <de/Time>
 #include <de/Log>
+#include <de/Garbage>
 #include <assert.h>
 
 static uint mainThreadId = 0; ///< ID of the main thread.

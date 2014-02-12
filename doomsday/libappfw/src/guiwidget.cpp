@@ -21,7 +21,7 @@
 #include "de/BlurWidget"
 #include "de/Style"
 
-#include <de/garbage.h>
+#include <de/Garbage>
 #include <de/MouseEvent>
 #include <de/Drawable>
 #include <de/GLTexture>
