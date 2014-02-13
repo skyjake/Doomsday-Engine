@@ -26,13 +26,15 @@
 #include <GL/glx.h>
 #include <GL/glxext.h>
 
-#define GET_PROC_EXT(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name)
-
 PFNGLXSWAPINTERVALEXTPROC   glXSwapIntervalEXT;
 
 void getGLXEntryPoints()
 {
+#define GET_PROC_EXT(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name)
+
     GET_PROC_EXT(glXSwapIntervalEXT);
+
+#undef GET_PROC_EXT
 }
 
 char const *getGLXExtensionsString()

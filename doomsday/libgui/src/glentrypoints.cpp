@@ -25,8 +25,6 @@
 #  include <GL/glx.h>
 #endif
 
-using namespace de;
-
 #ifdef LIBGUI_FETCH_GL_1_3
 PFNGLACTIVETEXTUREPROC            glActiveTexture;
 PFNGLBLENDEQUATIONPROC            glBlendEquation;
@@ -105,10 +103,12 @@ PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 PFNGLDEBUGMESSAGECONTROLARBPROC   glDebugMessageControlARB;
 PFNGLDEBUGMESSAGECALLBACKARBPROC  glDebugMessageCallbackARB;
 #endif
-PFNGLBLITFRAMEBUFFEREXTPROC                 glBlitFramebufferEXT;
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC  glRenderbufferStorageMultisampleEXT;
+
+PFNGLBLITFRAMEBUFFEREXTPROC                         glBlitFramebufferEXT;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC          glRenderbufferStorageMultisampleEXT;
+
 #ifdef GL_NV_framebuffer_multisample_coverage
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC glRenderbufferStorageMultisampleCoverageNV;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC   glRenderbufferStorageMultisampleCoverageNV;
 #endif
 
 void getAllOpenGLEntryPoints()
@@ -124,9 +124,6 @@ void getAllOpenGLEntryPoints()
 
 #define GET_PROC(name) GET_PROC_EXT(name); DENG2_ASSERT(name != 0) // must have
 
-    //LOG_AS("getAllOpenGLEntryPoints");
-    //LOG_VERBOSE("GL_VERSION: ") << (char const *) glGetString(GL_VERSION);
-
 #ifdef LIBGUI_FETCH_GL_1_3
     GET_PROC(glActiveTexture);
     GET_PROC(glBlendEquation);
@@ -140,16 +137,19 @@ void getAllOpenGLEntryPoints()
 #endif
 
     GET_PROC(glAttachShader);
+
     GET_PROC(glBindAttribLocation);
     GET_PROC(glBindBuffer);
     GET_PROC(glBindFramebuffer);
     GET_PROC(glBindRenderbuffer);
     GET_PROC(glBlendFuncSeparate);
     GET_PROC(glBufferData);
+
     GET_PROC(glCheckFramebufferStatus);
     GET_PROC(glCompileShader);
     GET_PROC(glCreateProgram);
     GET_PROC(glCreateShader);
+
     GET_PROC(glDeleteBuffers);
     GET_PROC(glDeleteFramebuffers);
     GET_PROC(glDeleteProgram);
@@ -157,9 +157,12 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glDeleteShader);
     GET_PROC(glDetachShader);
     GET_PROC(glDisableVertexAttribArray);
+
     GET_PROC(glEnableVertexAttribArray);
+
     GET_PROC(glFramebufferRenderbuffer);
     GET_PROC(glFramebufferTexture2D);
+
     GET_PROC(glGenBuffers);
     GET_PROC(glGenFramebuffers);
     GET_PROC(glGenerateMipmap);
@@ -171,12 +174,17 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glGetShaderiv);
     GET_PROC(glGetShaderSource);
     GET_PROC(glGetUniformLocation);
+
     GET_PROC(glIsBuffer);
     GET_PROC(glIsFramebuffer);
     GET_PROC(glIsProgram);
+
     GET_PROC(glLinkProgram);
+
     GET_PROC(glRenderbufferStorage);
+
     GET_PROC(glShaderSource);
+
     GET_PROC(glUniform1f);
     GET_PROC(glUniform1i);
     GET_PROC(glUniform2f);
@@ -185,17 +193,23 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glUniformMatrix3fv);
     GET_PROC(glUniformMatrix4fv);
     GET_PROC(glUseProgram);
+
     GET_PROC(glVertexAttribPointer);
+
+    // Extensions:
 
 #ifdef GL_ARB_debug_output
     GET_PROC(glDebugMessageControlARB);
     GET_PROC(glDebugMessageCallbackARB);
 #endif
+
     GET_PROC_EXT(glBlitFramebufferEXT);
     GET_PROC_EXT(glRenderbufferStorageMultisampleEXT);
+
 #ifdef GL_NV_framebuffer_multisample_coverage
     GET_PROC_EXT(glRenderbufferStorageMultisampleCoverageNV);
 #endif
+
 #ifdef Q_WS_X11
     getGLXEntryPoints();
 #endif
