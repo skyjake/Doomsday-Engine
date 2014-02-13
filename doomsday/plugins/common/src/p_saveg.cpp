@@ -21,9 +21,7 @@
 #include "common.h"
 #include "p_saveg.h"
 
-#include "d_net.h"          // NetSv_SaveGame
 #include "dmu_lib.h"
-#include "g_common.h"
 #include "p_actor.h"
 #include "p_map.h"          // P_TelefragMobjsTouchingPlayers
 #include "p_inventory.h"
@@ -56,19 +54,9 @@ SaveInfo const *curInfo;
 static playerheader_t playerHeader;
 dd_bool playerHeaderOK;
 
-#if __JHEXEN__
-/// Symbolic identifier used to mark references to players in map states.
-static ThingSerialId const TargetPlayerId = -2;
-#endif
-
-static mobj_t **thingArchive;
-int thingArchiveVersion;
-uint thingArchiveSize;
-dd_bool thingArchiveExcludePlayers;
-
 int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
-static targetplraddress_t *targetPlayerAddrs;
+targetplraddress_t *targetPlayerAddrs;
 #endif
 
 #if __JHEXEN__
@@ -173,117 +161,6 @@ dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 }
 #endif
 
-void SV_InitThingArchiveForLoad(uint size)
-{
-    thingArchiveSize = size;
-    thingArchive     = reinterpret_cast<mobj_t **>(M_Calloc(thingArchiveSize * sizeof(*thingArchive)));
-}
-
-struct countmobjthinkerstoarchive_params_t
-{
-    uint count;
-    bool excludePlayers;
-};
-
-static int countMobjThinkersToArchive(thinker_t *th, void *context)
-{
-    countmobjthinkerstoarchive_params_t *parms = (countmobjthinkerstoarchive_params_t *) context;
-    if(!(Mobj_IsPlayer((mobj_t *) th) && parms->excludePlayers))
-    {
-        parms->count++;
-    }
-    return false; // Continue iteration.
-}
-
-void SV_InitThingArchiveForSave(dd_bool excludePlayers)
-{
-    // Count the number of things we'll be writing.
-    countmobjthinkerstoarchive_params_t parm; de::zap(parm);
-    parm.count          = 0;
-    parm.excludePlayers = excludePlayers;
-    Thinker_Iterate((thinkfunc_t) P_MobjThinker, countMobjThinkersToArchive, &parm);
-
-    thingArchiveSize           = parm.count;
-    thingArchive               = reinterpret_cast<mobj_t **>(M_Calloc(thingArchiveSize * sizeof(*thingArchive)));
-    thingArchiveExcludePlayers = excludePlayers;
-}
-
-void SV_InsertThingInArchive(mobj_t const *mo, ThingSerialId thingId)
-{
-    DENG_ASSERT(mo != 0);
-
-#if __JHEXEN__
-    if(thingArchiveVersion >= 1)
-#endif
-    {
-        thingId -= 1;
-    }
-
-#if __JHEXEN__
-    // Only signed in Hexen.
-    DENG2_ASSERT(thingId >= 0);
-    if(thingId < 0) return; // Does this ever occur?
-#endif
-
-    DENG_ASSERT(thingArchive != 0);    
-    DENG_ASSERT((unsigned)thingId < thingArchiveSize);
-    thingArchive[thingId] = const_cast<mobj_t *>(mo);
-}
-
-void SV_ClearThingArchive()
-{
-    M_Free(thingArchive); thingArchive = 0;
-    thingArchiveSize = 0;
-}
-
-ThingSerialId SV_ThingArchiveId(mobj_t const *mo)
-{
-    DENG_ASSERT(inited);
-    DENG_ASSERT(thingArchive != 0);
-
-    if(!mo) return 0;
-
-    // We only archive mobj thinkers.
-    if(((thinker_t *) mo)->function != (thinkfunc_t) P_MobjThinker)
-    {
-        return 0;
-    }
-
-#if __JHEXEN__
-    if(mo->player && thingArchiveExcludePlayers)
-    {
-        return TargetPlayerId;
-    }
-#endif
-
-    uint firstUnused = 0;
-    bool found = false;
-    for(uint i = 0; i < thingArchiveSize; ++i)
-    {
-        if(!thingArchive[i] && !found)
-        {
-            firstUnused = i;
-            found = true;
-            continue;
-        }
-
-        if(thingArchive[i] == mo)
-        {
-            return i + 1;
-        }
-    }
-
-    if(!found)
-    {
-        Con_Error("SV_ThingArchiveId: Thing archive exhausted!");
-        return 0; // No number available!
-    }
-
-    // Insert it in the archive.
-    thingArchive[firstUnused] = const_cast<mobj_t *>(mo);
-    return firstUnused + 1;
-}
-
 #if __JHEXEN__
 void SV_InitTargetPlayers()
 {
@@ -301,69 +178,15 @@ void SV_ClearTargetPlayers()
 }
 #endif // __JHEXEN__
 
-mobj_t *SV_GetArchiveThing(ThingSerialId thingId, void *address)
-{
-    DENG_ASSERT(inited);
-#if !__JHEXEN__
-    DENG_UNUSED(address);
-#endif
-
-#if __JHEXEN__
-    if(thingId == TargetPlayerId)
-    {
-        targetplraddress_t *tpa = reinterpret_cast<targetplraddress_t *>(M_Malloc(sizeof(targetplraddress_t)));
-
-        tpa->address = (void **)address;
-
-        tpa->next = targetPlayerAddrs;
-        targetPlayerAddrs = tpa;
-
-        return 0;
-    }
-#endif
-
-    DENG_ASSERT(thingArchive != 0);
-
-#if __JHEXEN__
-    if(thingArchiveVersion < 1)
-    {
-        // Old format (base 0).
-
-        // A NULL reference?
-        if(thingId == -1) return 0;
-
-        if(thingId < 0 || (unsigned) thingId > thingArchiveSize - 1)
-            return 0;
-    }
-    else
-#endif
-    {
-        // New format (base 1).
-
-        // A NULL reference?
-        if(thingId == 0) return 0;
-
-        if(thingId < 1 || (unsigned) thingId > thingArchiveSize)
-        {
-            App_Log(DE2_RES_WARNING, "SV_GetArchiveThing: Invalid thing Id %i", thingId);
-            return 0;
-        }
-
-        thingId -= 1;
-    }
-
-    return thingArchive[thingId];
-}
-
-playerheader_t *SV_GetPlayerHeader()
-{
-    DENG_ASSERT(playerHeaderOK);
-    return &playerHeader;
-}
-
-#if !__JDOOM64__
 void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver)
 {
+#if __JDOOM64__
+    // Nothing to do.
+    DENG_UNUSED(mo);
+    DENG_UNUSED(ver);
+    return;
+#endif
+
 #if __JDOOM__ || __JHERETIC__
     if(ver < 6)
     {
@@ -418,51 +241,47 @@ void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver)
         mo->flags3 = mo->info->flags3;
     }
 }
-#endif
 
-/**
- * Prepare and write the player header info.
- */
-void SV_WritePlayerHeader(Writer *writer)
+playerheader_t *SV_GetPlayerHeader()
 {
-    playerheader_t *ph = &playerHeader;
+    DENG_ASSERT(playerHeaderOK);
+    return &playerHeader;
+}
 
-    SV_BeginSegment(ASEG_PLAYER_HEADER);
+void playerheader_s::write(Writer *writer)
+{
     Writer_WriteByte(writer, 2); // version byte
 
-    ph->numPowers       = NUM_POWER_TYPES;
-    ph->numKeys         = NUM_KEY_TYPES;
-    ph->numFrags        = MAXPLAYERS;
-    ph->numWeapons      = NUM_WEAPON_TYPES;
-    ph->numAmmoTypes    = NUM_AMMO_TYPES;
-    ph->numPSprites     = NUMPSPRITES;
+    numPowers       = NUM_POWER_TYPES;
+    numKeys         = NUM_KEY_TYPES;
+    numFrags        = MAXPLAYERS;
+    numWeapons      = NUM_WEAPON_TYPES;
+    numAmmoTypes    = NUM_AMMO_TYPES;
+    numPSprites     = NUMPSPRITES;
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
-    ph->numInvItemTypes = NUM_INVENTORYITEM_TYPES;
+    numInvItemTypes = NUM_INVENTORYITEM_TYPES;
 #endif
 #if __JHEXEN__
-    ph->numArmorTypes   = NUMARMOR;
+    numArmorTypes   = NUMARMOR;
 #endif
 
-    Writer_WriteInt32(writer, ph->numPowers);
-    Writer_WriteInt32(writer, ph->numKeys);
-    Writer_WriteInt32(writer, ph->numFrags);
-    Writer_WriteInt32(writer, ph->numWeapons);
-    Writer_WriteInt32(writer, ph->numAmmoTypes);
-    Writer_WriteInt32(writer, ph->numPSprites);
+    Writer_WriteInt32(writer, numPowers);
+    Writer_WriteInt32(writer, numKeys);
+    Writer_WriteInt32(writer, numFrags);
+    Writer_WriteInt32(writer, numWeapons);
+    Writer_WriteInt32(writer, numAmmoTypes);
+    Writer_WriteInt32(writer, numPSprites);
 #if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
-    Writer_WriteInt32(writer, ph->numInvItemTypes);
+    Writer_WriteInt32(writer, numInvItemTypes);
 #endif
 #if __JHEXEN__
-    Writer_WriteInt32(writer, ph->numArmorTypes);
+    Writer_WriteInt32(writer, numArmorTypes);
 #endif
 
     playerHeaderOK = true;
 }
 
-/**
- * Read player header info from the game state.
- */
-void SV_ReadPlayerHeader(Reader *reader, int saveVersion)
+void playerheader_s::read(Reader *reader, int saveVersion)
 {
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -470,62 +289,62 @@ void SV_ReadPlayerHeader(Reader *reader, int saveVersion)
     if(saveVersion >= 5)
 #endif
     {
-        SV_AssertSegment(ASEG_PLAYER_HEADER);
         int ver = Reader_ReadByte(reader);
 #if !__JHERETIC__
         DENG_UNUSED(ver);
 #endif
 
-        playerHeader.numPowers      = Reader_ReadInt32(reader);
-        playerHeader.numKeys        = Reader_ReadInt32(reader);
-        playerHeader.numFrags       = Reader_ReadInt32(reader);
-        playerHeader.numWeapons     = Reader_ReadInt32(reader);
-        playerHeader.numAmmoTypes   = Reader_ReadInt32(reader);
-        playerHeader.numPSprites    = Reader_ReadInt32(reader);
+        numPowers      = Reader_ReadInt32(reader);
+        numKeys        = Reader_ReadInt32(reader);
+        numFrags       = Reader_ReadInt32(reader);
+        numWeapons     = Reader_ReadInt32(reader);
+        numAmmoTypes   = Reader_ReadInt32(reader);
+        numPSprites    = Reader_ReadInt32(reader);
 #if __JHERETIC__
         if(ver >= 2)
-            playerHeader.numInvItemTypes = Reader_ReadInt32(reader);
+            numInvItemTypes = Reader_ReadInt32(reader);
         else
-            playerHeader.numInvItemTypes = NUM_INVENTORYITEM_TYPES;
+            numInvItemTypes = NUM_INVENTORYITEM_TYPES;
 #endif
 #if __JHEXEN__ || __JDOOM64__
-        playerHeader.numInvItemTypes = Reader_ReadInt32(reader);
+        numInvItemTypes = Reader_ReadInt32(reader);
 #endif
 #if __JHEXEN__
-        playerHeader.numArmorTypes  = Reader_ReadInt32(reader);
+        numArmorTypes  = Reader_ReadInt32(reader);
 #endif
     }
     else // The old format didn't save the counts.
     {
 #if __JHEXEN__
-        playerHeader.numPowers       = 9;
-        playerHeader.numKeys         = 11;
-        playerHeader.numFrags        = 8;
-        playerHeader.numWeapons      = 4;
-        playerHeader.numAmmoTypes    = 2;
-        playerHeader.numPSprites     = 2;
-        playerHeader.numInvItemTypes = 33;
-        playerHeader.numArmorTypes   = 4;
+        numPowers       = 9;
+        numKeys         = 11;
+        numFrags        = 8;
+        numWeapons      = 4;
+        numAmmoTypes    = 2;
+        numPSprites     = 2;
+        numInvItemTypes = 33;
+        numArmorTypes   = 4;
 #elif __JDOOM__ || __JDOOM64__
-        playerHeader.numPowers       = 6;
-        playerHeader.numKeys         = 6;
-        playerHeader.numFrags        = 4; // Why was this only 4?
-        playerHeader.numWeapons      = 9;
-        playerHeader.numAmmoTypes    = 4;
-        playerHeader.numPSprites     = 2;
+        numPowers       = 6;
+        numKeys         = 6;
+        numFrags        = 4; // Why was this only 4?
+        numWeapons      = 9;
+        numAmmoTypes    = 4;
+        numPSprites     = 2;
 # if __JDOOM64__
-        playerHeader.numInvItemTypes = 3;
+        numInvItemTypes = 3;
 # endif
 #elif __JHERETIC__
-        playerHeader.numPowers       = 9;
-        playerHeader.numKeys         = 3;
-        playerHeader.numFrags        = 4; // ?
-        playerHeader.numWeapons      = 8;
-        playerHeader.numInvItemTypes = 14;
-        playerHeader.numAmmoTypes    = 6;
-        playerHeader.numPSprites     = 2;
+        numPowers       = 9;
+        numKeys         = 3;
+        numFrags        = 4; // ?
+        numWeapons      = 8;
+        numInvItemTypes = 14;
+        numAmmoTypes    = 6;
+        numPSprites     = 2;
 #endif
     }
+
     playerHeaderOK = true;
 }
 
@@ -858,7 +677,7 @@ void SV_WriteLine(Line *li, MapStateWriter *msw)
     // Extended General?
     if(xli->xg)
     {
-        SV_WriteXGLine(li, writer);
+        SV_WriteXGLine(li, msw);
     }
 #endif
 }
@@ -1061,68 +880,10 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
 #if !__JHEXEN__
     if(xgDataFollows)
     {
-        SV_ReadXGLine(li, reader, mapVersion);
+        SV_ReadXGLine(li, msr);
     }
 #endif
 }
-
-#if __JHEXEN__
-void SV_WriteMovePoly(polyevent_t const *th, MapStateWriter *msw)
-{
-    Writer *writer = msw->writer();
-
-    Writer_WriteByte(writer, 1); // Write a version byte.
-
-    // Note we don't bother to save a byte to tell if the function
-    // is present as we ALWAYS add one when loading.
-
-    Writer_WriteInt32(writer, th->polyobj);
-    Writer_WriteInt32(writer, th->intSpeed);
-    Writer_WriteInt32(writer, th->dist);
-    Writer_WriteInt32(writer, th->fangle);
-    Writer_WriteInt32(writer, FLT2FIX(th->speed[VX]));
-    Writer_WriteInt32(writer, FLT2FIX(th->speed[VY]));
-}
-
-int SV_ReadMovePoly(polyevent_t *th, MapStateReader *msr)
-{
-    Reader *reader = msr->reader();
-    int mapVersion = msr->mapVersion();
-
-    if(mapVersion >= 4)
-    {
-        // Note: the thinker class byte has already been read.
-        /*int ver =*/ Reader_ReadByte(reader); // version byte.
-
-        // Start of used data members.
-        th->polyobj     = Reader_ReadInt32(reader);
-        th->intSpeed    = Reader_ReadInt32(reader);
-        th->dist        = Reader_ReadInt32(reader);
-        th->fangle      = Reader_ReadInt32(reader);
-        th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
-        th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
-    }
-    else
-    {
-        // Its in the old pre V4 format which serialized polyevent_t
-        // Padding at the start (an old thinker_t struct)
-        byte junk[16]; // sizeof thinker_t
-        Reader_Read(reader, junk, 16);
-
-        // Start of used data members.
-        th->polyobj     = Reader_ReadInt32(reader);
-        th->intSpeed    = Reader_ReadInt32(reader);
-        th->dist        = Reader_ReadInt32(reader);
-        th->fangle      = Reader_ReadInt32(reader);
-        th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
-        th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
-    }
-
-    th->thinker.function = T_MovePoly;
-
-    return true; // Add this thinker.
-}
-#endif // __JHEXEN__
 
 void SV_Initialize()
 {
@@ -1135,8 +896,6 @@ void SV_Initialize()
     {
         firstInit         = false;
         playerHeaderOK    = false;
-        thingArchive      = 0;
-        thingArchiveSize  = 0;
 #if __JHEXEN__
         targetPlayerAddrs = 0;
         saveBuffer        = 0;
@@ -1199,21 +958,21 @@ dd_bool SV_LoadGame(int slot)
     {
         SaveInfo &info = saveSlots->saveInfo(logicalSlot);
 
-        if(GameStateReader::recognize(&info, path))
+        if(GameStateReader::recognize(info, path))
         {
-            GameStateReader().read(&info, path);
+            GameStateReader().read(info, path);
         }
         // Perhaps an original game state?
 #if __JDOOM__
-        else if(DoomV9GameStateReader::recognize(&info, path))
+        else if(DoomV9GameStateReader::recognize(info, path))
         {
-            DoomV9GameStateReader().read(&info, path);
+            DoomV9GameStateReader().read(info, path);
         }
 #endif
 #if __JHERETIC__
-        else if(HereticV13GameStateReader::recognize(&info, path))
+        else if(HereticV13GameStateReader::recognize(info, path))
         {
-            HereticV13GameStateReader().read(&info, path);
+            HereticV13GameStateReader().read(info, path);
         }
 #endif
         else
@@ -1231,6 +990,65 @@ dd_bool SV_LoadGame(int slot)
     {
         App_Log(DE2_RES_WARNING, "Error loading save slot #%i:\n%s", slot, er.asText().toLatin1().constData());
     }
+
+    return false;
+}
+
+dd_bool SV_SaveGame(int slot, char const *description)
+{
+    DENG_ASSERT(inited);
+
+#if __JHEXEN__
+    int const logicalSlot = BASE_SLOT;
+#else
+    int const logicalSlot = slot;
+#endif
+
+    if(!saveSlots->isValidSlot(slot))
+    {
+        DENG_ASSERT(!"Invalid slot specified");
+        return false;
+    }
+    if(!description || !description[0])
+    {
+        DENG_ASSERT(!"Empty description specified for slot");
+        return false;
+    }
+
+    AutoStr *path = saveSlots->composeSavePathForSlot(logicalSlot);
+    if(Str_IsEmpty(path))
+    {
+        App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable", SV_SavePath());
+        return false;
+    }
+
+    App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"", Str_Text(path));
+
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_FromTextStd(description));
+    try
+    {
+        GameStateWriter().write(info, path);
+
+        // Swap the save info.
+        saveSlots->replaceSaveInfo(logicalSlot, info);
+
+#if __JHEXEN__
+        // Copy base slot to destination slot.
+        saveSlots->copySlot(logicalSlot, slot);
+#endif
+
+        // Make note of the last used save slot.
+        Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
+
+        return true;
+    }
+    catch(de::Error const &er)
+    {
+        App_Log(DE2_RES_WARNING, "Error writing to save slot #%i:\n%s", slot, er.asText().toLatin1().constData());
+    }
+
+    // Discard the useless save info.
+    delete info;
 
     return false;
 }
@@ -1273,10 +1091,12 @@ void SV_SaveGameClient(uint sessionId)
 
     Writer_WriteFloat(writer, pl->plr->lookDir); /* $unifiedangles */
 
-    SV_WritePlayerHeader(writer);
+    SV_BeginSegment(ASEG_PLAYER_HEADER);
+    SV_GetPlayerHeader()->write(writer);
+
     players[CONSOLEPLAYER].write(writer);
 
-    MapStateWriter(thingArchiveExcludePlayers).write(writer);
+    MapStateWriter(theThingArchive).write(writer);
     /// @todo No consistency bytes in client saves?
 
     SV_CloseFile();
@@ -1347,10 +1167,19 @@ void SV_LoadGameClient(uint sessionId)
 
     cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
 
-    SV_ReadPlayerHeader(reader, info->version());
+#if __JHEXEN__
+    if(info->version() >= 4)
+#else
+    if(info->version() >= 5)
+#endif
+    {
+        SV_AssertSegment(ASEG_PLAYER_HEADER);
+    }
+    SV_GetPlayerHeader()->read(reader, info->version());
+
     cpl->read(reader);
 
-    MapStateReader(info->version()).read(reader);
+    MapStateReader(theThingArchive, info->version()).read(reader);
 
     SV_CloseFile();
     Reader_Delete(reader);
@@ -1358,70 +1187,6 @@ void SV_LoadGameClient(uint sessionId)
 #else
     DENG_UNUSED(sessionId);
 #endif
-}
-
-dd_bool SV_SaveGame(int slot, char const *description)
-{
-    DENG_ASSERT(inited);
-
-#if __JHEXEN__
-    int const logicalSlot = BASE_SLOT;
-#else
-    int const logicalSlot = slot;
-#endif
-
-    if(!saveSlots->isValidSlot(slot))
-    {
-        DENG_ASSERT(!"Invalid slot specified");
-        return false;
-    }
-    if(!description || !description[0])
-    {
-        DENG_ASSERT(!"Empty description specified for slot");
-        return false;
-    }
-
-    AutoStr *path = saveSlots->composeSavePathForSlot(logicalSlot);
-    if(Str_IsEmpty(path))
-    {
-        App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable", SV_SavePath());
-        return false;
-    }
-
-    App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"", Str_Text(path));
-
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_FromTextStd(description));
-    try
-    {
-        // In networked games the server tells the clients to save their games.
-#if !__JHEXEN__
-        NetSv_SaveGame(info->sessionId());
-#endif
-
-        GameStateWriter().write(info, path);
-
-        // Swap the save info.
-        saveSlots->replaceSaveInfo(logicalSlot, info);
-
-#if __JHEXEN__
-        // Copy base slot to destination slot.
-        saveSlots->copySlot(logicalSlot, slot);
-#endif
-
-        // Make note of the last used save slot.
-        Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
-
-        return true;
-    }
-    catch(de::Error const &er)
-    {
-        App_Log(DE2_RES_WARNING, "Error writing to save slot #%i:\n%s", slot, er.asText().toLatin1().constData());
-    }
-
-    // Discard the useless save info.
-    delete info;
-
-    return false;
 }
 
 #if __JHEXEN__
@@ -1432,11 +1197,11 @@ void SV_HxSaveHubMap()
     SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 
     // Set the mobj archive numbers
-    SV_InitThingArchiveForSave(true /*exclude players*/);
+    theThingArchive.initForSave(true /*exclude players*/);
 
     Writer *writer = SV_NewWriter();
 
-    MapStateWriter(thingArchiveExcludePlayers).write(writer);
+    MapStateWriter(theThingArchive).write(writer);
 
     // Close the output file
     SV_CloseFile();
@@ -1463,10 +1228,9 @@ void SV_HxLoadHubMap()
     {
         SV_OpenMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
 
-        MapStateReader(info->version()).read(reader);
+        MapStateReader(theThingArchive, info->version()).read(reader);
 
 #if __JHEXEN__
-        SV_ClearThingArchive();
         Z_Free(saveBuffer);
 #endif
     }
@@ -1476,166 +1240,9 @@ void SV_HxLoadHubMap()
     }
 
     Reader_Delete(reader);
-}
 
-void SV_HxBackupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
-{
-    DENG_ASSERT(playerBackup != 0);
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        playerbackup_t *pb = playerBackup + i;
-        player_t *plr      = players + i;
-
-        std::memcpy(&pb->player, plr, sizeof(player_t));
-
-        // Make a copy of the inventory states also.
-        for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
-        {
-            pb->numInventoryItems[k] = P_InventoryCount(i, inventoryitemtype_t(k));
-        }
-        pb->readyItem = P_InventoryReadyItem(i);
-    }
-}
-
-void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance)
-{
-    DENG_ASSERT(playerBackup != 0);
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        playerbackup_t *pb = playerBackup + i;
-        player_t *plr      = players + i;
-        ddplayer_t *ddplr  = plr->plr;
-
-        if(!ddplr->inGame) continue;
-
-        std::memcpy(plr, &pb->player, sizeof(player_t));
-        for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
-        {
-            // Don't give back the wings of wrath if reborn.
-            if(k == IIT_FLY && plr->playerState == PST_REBORN)
-                continue;
-
-            for(uint l = 0; l < pb->numInventoryItems[k]; ++l)
-            {
-                P_InventoryGive(i, inventoryitemtype_t(k), true);
-            }
-        }
-        P_InventorySetReadyItem(i, pb->readyItem);
-
-        ST_LogEmpty(i);
-        plr->attacker = 0;
-        plr->poisoner = 0;
-
-        int oldKeys = 0, oldPieces = 0;
-        dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
-        if(IS_NETGAME || gameRules.deathmatch)
-        {
-            // In a network game, force all players to be alive
-            if(plr->playerState == PST_DEAD)
-            {
-                plr->playerState = PST_REBORN;
-            }
-
-            if(!gameRules.deathmatch)
-            {
-                // Cooperative net-play; retain keys and weapons.
-                oldKeys   = plr->keys;
-                oldPieces = plr->pieces;
-
-                for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
-                {
-                    oldWeaponOwned[k] = plr->weapons[k].owned;
-                }
-            }
-        }
-
-        dd_bool wasReborn = (plr->playerState == PST_REBORN);
-
-        if(gameRules.deathmatch)
-        {
-            de::zap(plr->frags);
-            ddplr->mo = 0;
-            G_DeathMatchSpawnPlayer(i);
-        }
-        else
-        {
-            if(playerstart_t const *start = P_GetPlayerStart(mapEntrance, i, false))
-            {
-                mapspot_t const *spot = &mapSpots[start->spot];
-                P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
-                              spot->origin[VY], spot->origin[VZ], spot->angle,
-                              spot->flags, false, true);
-            }
-            else
-            {
-                P_SpawnPlayer(i, cfg.playerClass[i], 0, 0, 0, 0,
-                              MSF_Z_FLOOR, true, true);
-            }
-        }
-
-        if(wasReborn && IS_NETGAME && !gameRules.deathmatch)
-        {
-            // Restore keys and weapons when reborn in co-op.
-            plr->keys   = oldKeys;
-            plr->pieces = oldPieces;
-
-            int bestWeapon = 0;
-            for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
-            {
-                if(oldWeaponOwned[k])
-                {
-                    bestWeapon = k;
-                    plr->weapons[k].owned = true;
-                }
-            }
-
-            plr->ammo[AT_BLUEMANA].owned = 25; /// @todo values.ded
-            plr->ammo[AT_GREENMANA].owned = 25; /// @todo values.ded
-
-            // Bring up the best weapon.
-            if(bestWeapon)
-            {
-                plr->pendingWeapon = weapontype_t(bestWeapon);
-            }
-        }
-    }
-
-    mobj_t *targetPlayerMobj = 0;
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t *plr     = players + i;
-        ddplayer_t *ddplr = plr->plr;
-
-        if(!ddplr->inGame) continue;
-
-        if(!targetPlayerMobj)
-        {
-            targetPlayerMobj = ddplr->mo;
-        }
-    }
-
-    /// @todo Redirect anything targeting a player mobj
-    /// FIXME! This only supports single player games!!
-    if(targetPlayerAddrs)
-    {
-        for(targetplraddress_t *p = targetPlayerAddrs; p; p = p->next)
-        {
-            *(p->address) = targetPlayerMobj;
-        }
-
-        SV_ClearTargetPlayers();
-
-        /*
-         * When XG is available in Hexen, call this after updating target player
-         * references (after a load) - ds
-        // The activator mobjs must be set.
-        XL_UpdateActivators();
-        */
-    }
-
-    // Destroy all things touching players.
-    P_TelefragMobjsTouchingPlayers();
+#if __JHEXEN__
+    theThingArchive.clear();
+#endif
 }
 #endif

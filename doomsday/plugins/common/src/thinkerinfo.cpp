@@ -22,7 +22,6 @@
 #include "thinkerinfo.h"
 
 #include "mobj.h"
-#include "p_saveg.h"
 #include "p_ceiling.h"
 #include "p_door.h"
 #include "p_floor.h"

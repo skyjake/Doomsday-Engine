@@ -925,15 +925,15 @@ static Reader *SV_NewReader_Hr_v13()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-bool HereticV13GameStateReader::recognize(SaveInfo *info, Str const *path) // static
+bool HereticV13GameStateReader::recognize(SaveInfo &info, Str const *path) // static
 {
-    DENG_ASSERT(info != 0 && path != 0);
+    DENG_ASSERT(path != 0);
 
     if(!SV_ExistingFile(path)) return false;
 
     if(SV_OpenFile_Hr_v13(Str_Text(path)))
     {
-        Reader *svReader = SV_NewReader_Hr_v13();
+        Reader *reader = SV_NewReader_Hr_v13();
         bool result = false;
 
         /// @todo Use the 'version' string as the "magic" identifier.
@@ -943,25 +943,26 @@ bool HereticV13GameStateReader::recognize(SaveInfo *info, Str const *path) // st
 
         if(strncmp(vcheck, "version ", 8))*/
         {
-            SaveInfo_Read_Hr_v13(info, svReader);
-            result = (info->version() == V13_SAVE_VERSION);
+            SaveInfo_Read_Hr_v13(&info, reader);
+            result = (info.version() == V13_SAVE_VERSION);
         }
 
-        Reader_Delete(svReader); svReader = 0;
+        Reader_Delete(reader); reader = 0;
         SV_CloseFile_Hr_v13();
 
         return result;
     }
+
     return false;
 }
 
-void HereticV13GameStateReader::read(SaveInfo *info, Str const *path)
+void HereticV13GameStateReader::read(SaveInfo &info, Str const *path)
 {
-    DENG_ASSERT(info != 0 && path != 0);
+    DENG_ASSERT(path != 0);
 
     if(!SV_OpenFile_Hr_v13(Str_Text(path)))
     {
-        throw FileAccessError("HereticV13GameStateReader", "Failed opending " + de::String(Str_Text(path)));
+        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
     }
 
     svReader = SV_NewReader_Hr_v13();
@@ -978,13 +979,11 @@ void HereticV13GameStateReader::read(SaveInfo *info, Str const *path)
     briefDisabled = true;
 
     // Load a base map.
-    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
+    G_NewGame(info.mapUri(), 0/*not saved??*/, &info.gameRules());
+    G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     // Recreate map state.
-    mapTime = info->mapTime();
-
-    /// @todo Necessary?
-    G_SetGameAction(GA_NONE);
+    mapTime = info.mapTime();
 
     P_v13_UnArchivePlayers();
     P_v13_UnArchiveWorld();

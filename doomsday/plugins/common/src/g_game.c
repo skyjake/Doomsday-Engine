@@ -2555,6 +2555,192 @@ void G_DoEndDebriefing(void)
     G_IntermissionDone();
 }
 
+#if __JHEXEN__
+
+typedef struct {
+    player_t player;
+    uint numInventoryItems[NUM_INVENTORYITEM_TYPES];
+    inventoryitemtype_t readyItem;
+} playerbackup_t;
+
+static void backupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
+{
+    int i;
+
+    DENG_ASSERT(playerBackup != 0);
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        playerbackup_t *pb = playerBackup + i;
+        player_t *plr      = players + i;
+        int k = 0;
+
+        memcpy(&pb->player, plr, sizeof(player_t));
+
+        // Make a copy of the inventory states also.
+        for(k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
+        {
+            pb->numInventoryItems[k] = P_InventoryCount(i, k);
+        }
+        pb->readyItem = P_InventoryReadyItem(i);
+    }
+}
+
+/**
+ * @param playerBackup  Player state backup.
+ * @param mapEntrance   Logical entry point number used to enter the map.
+ */
+static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance)
+{
+    mobj_t *targetPlayerMobj = 0;
+    int i;
+
+    DENG_ASSERT(playerBackup != 0);
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        playerbackup_t *pb = playerBackup + i;
+        player_t *plr      = players + i;
+        ddplayer_t *ddplr  = plr->plr;
+        int oldKeys = 0, oldPieces = 0;
+        dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
+        dd_bool wasReborn = false;
+        int k;
+
+        if(!ddplr->inGame) continue;
+
+        memcpy(plr, &pb->player, sizeof(player_t));
+        for(k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
+        {
+            uint m;
+
+            // Don't give back the wings of wrath if reborn.
+            if(k == IIT_FLY && plr->playerState == PST_REBORN)
+                continue;
+
+            for(m = 0; m < pb->numInventoryItems[k]; ++m)
+            {
+                P_InventoryGive(i, k, true);
+            }
+        }
+        P_InventorySetReadyItem(i, pb->readyItem);
+
+        ST_LogEmpty(i);
+        plr->attacker = 0;
+        plr->poisoner = 0;
+
+        if(IS_NETGAME || gameRules.deathmatch)
+        {
+            // In a network game, force all players to be alive
+            if(plr->playerState == PST_DEAD)
+            {
+                plr->playerState = PST_REBORN;
+            }
+
+            if(!gameRules.deathmatch)
+            {
+                // Cooperative net-play; retain keys and weapons.
+                oldKeys   = plr->keys;
+                oldPieces = plr->pieces;
+
+                for(k = 0; k < NUM_WEAPON_TYPES; ++k)
+                {
+                    oldWeaponOwned[k] = plr->weapons[k].owned;
+                }
+            }
+        }
+
+        wasReborn = (plr->playerState == PST_REBORN);
+
+        if(gameRules.deathmatch)
+        {
+            memset(plr->frags, 0, sizeof(plr->frags));
+            ddplr->mo = 0;
+            G_DeathMatchSpawnPlayer(i);
+        }
+        else
+        {
+            playerstart_t const *start;
+            if((start = P_GetPlayerStart(mapEntrance, i, false)))
+            {
+                mapspot_t const *spot = &mapSpots[start->spot];
+                P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
+                              spot->origin[VY], spot->origin[VZ], spot->angle,
+                              spot->flags, false, true);
+            }
+            else
+            {
+                P_SpawnPlayer(i, cfg.playerClass[i], 0, 0, 0, 0,
+                              MSF_Z_FLOOR, true, true);
+            }
+        }
+
+        if(wasReborn && IS_NETGAME && !gameRules.deathmatch)
+        {
+            int bestWeapon = 0;
+
+            // Restore keys and weapons when reborn in co-op.
+            plr->keys   = oldKeys;
+            plr->pieces = oldPieces;
+
+            for(k = 0; k < NUM_WEAPON_TYPES; ++k)
+            {
+                if(oldWeaponOwned[k])
+                {
+                    bestWeapon = k;
+                    plr->weapons[k].owned = true;
+                }
+            }
+
+            plr->ammo[AT_BLUEMANA].owned = 25; /// @todo values.ded
+            plr->ammo[AT_GREENMANA].owned = 25; /// @todo values.ded
+
+            // Bring up the best weapon.
+            if(bestWeapon)
+            {
+                plr->pendingWeapon = bestWeapon;
+            }
+        }
+    }
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t *plr     = players + i;
+        ddplayer_t *ddplr = plr->plr;
+
+        if(!ddplr->inGame) continue;
+
+        if(!targetPlayerMobj)
+        {
+            targetPlayerMobj = ddplr->mo;
+        }
+    }
+
+    /// @todo Redirect anything targeting a player mobj
+    /// FIXME! This only supports single player games!!
+    if(targetPlayerAddrs)
+    {
+        targetplraddress_t *p;
+        for(p = targetPlayerAddrs; p; p = p->next)
+        {
+            *(p->address) = targetPlayerMobj;
+        }
+
+        SV_ClearTargetPlayers();
+
+        /*
+         * When XG is available in Hexen, call this after updating target player
+         * references (after a load) - ds
+        // The activator mobjs must be set.
+        XL_UpdateActivators();
+        */
+    }
+
+    // Destroy all things touching players.
+    P_TelefragMobjsTouchingPlayers();
+}
+#endif // __JHEXEN__
+
 typedef struct {
     const char* name;
     int slot;
@@ -2597,7 +2783,10 @@ void G_DoLeaveMap(void)
      * whether we need to load the archived map state.
      */
     revisit = SV_HxHaveMapStateForSlot(BASE_SLOT, nextMap);
-    if(gameRules.deathmatch) revisit = false;
+    if(gameRules.deathmatch)
+    {
+        revisit = false;
+    }
 
     // Same hub?
     {
@@ -2623,7 +2812,7 @@ void G_DoLeaveMap(void)
 
     // Take a copy of the player objects (they will be cleared in the process
     // of calling P_SetupMap() and we need to restore them after).
-    SV_HxBackupPlayersInHub(playerBackup);
+    backupPlayersInHub(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
     oldRandomClassesRule = gameRules.randomClasses;
@@ -2698,7 +2887,7 @@ void G_DoLeaveMap(void)
         P_RemoveAllPlayerMobjs();
     }
 
-    SV_HxRestorePlayersInHub(playerBackup, nextMapEntrance);
+    restorePlayersInHub(playerBackup, nextMapEntrance);
 
     // Restore the random class rule.
     gameRules.randomClasses = oldRandomClassesRule;

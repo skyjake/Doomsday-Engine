@@ -21,6 +21,7 @@
 #include "common.h"
 #include "gamestatewriter.h"
 
+#include "d_net.h"          // NetSv_SaveGame
 #include "mapstatewriter.h"
 #include "p_saveio.h"
 #include "p_saveg.h" /// @todo remove me
@@ -37,6 +38,16 @@ DENG2_PIMPL(GameStateWriter)
         , writer(0)
     {}
 
+    void beginSegment(int segmentId)
+    {
+        SV_BeginSegment(segmentId);
+    }
+
+    void endSegment()
+    {
+        SV_EndSegment();
+    }
+
     void writeSessionHeader()
     {
         saveInfo->write(writer);
@@ -45,7 +56,7 @@ DENG2_PIMPL(GameStateWriter)
     void writeWorldACScriptData()
     {
 #if __JHEXEN__
-        SV_BeginSegment(ASEG_WORLDSCRIPTDATA);
+        beginSegment(ASEG_WORLDSCRIPTDATA);
         Game_ACScriptInterpreter().writeWorldScriptData(writer);
 #endif
     }
@@ -60,19 +71,22 @@ DENG2_PIMPL(GameStateWriter)
         SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 #endif
 
-        MapStateWriter(thingArchiveExcludePlayers).write(writer);
+        MapStateWriter(theThingArchive).write(writer);
 
         SV_WriteConsistencyBytes(); // To be absolutely sure...
         SV_CloseFile();
 
 #if !__JHEXEN___
-        SV_ClearThingArchive();
+        theThingArchive.clear();
 #endif
     }
 
     void writePlayers()
     {
-        SV_BeginSegment(ASEG_PLAYERS);
+        beginSegment(ASEG_PLAYER_HEADER);
+        SV_GetPlayerHeader()->write(writer);
+
+        beginSegment(ASEG_PLAYERS);
         {
 #if __JHEXEN__
             for(int i = 0; i < MAXPLAYERS; ++i)
@@ -91,7 +105,7 @@ DENG2_PIMPL(GameStateWriter)
                 plr->write(writer);
             }
         }
-        SV_EndSegment();
+        endSegment();
     }
 };
 
@@ -103,9 +117,14 @@ void GameStateWriter::write(SaveInfo *saveInfo, Str const *path)
     DENG_ASSERT(saveInfo != 0 && path != 0);
     d->saveInfo = saveInfo;
 
+    // In networked games the server tells the clients to save their games.
+#if !__JHEXEN__
+    NetSv_SaveGame(d->saveInfo->sessionId());
+#endif
+
     playerHeaderOK = false; // Uninitialized.
 
-    if(!SV_OpenGameSaveFile(path, true))
+    if(!SV_OpenGameSaveFile(path, true/*for writing*/))
     {
         throw FileAccessError("GameStateWriter", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
     }
@@ -116,12 +135,10 @@ void GameStateWriter::write(SaveInfo *saveInfo, Str const *path)
     d->writeWorldACScriptData();
 
     // Set the mobj archive numbers.
-    SV_InitThingArchiveForSave(false/*do not exclude players*/);
+    theThingArchive.initForSave(false/*do not exclude players*/);
 #if !__JHEXEN__
-    Writer_WriteInt32(d->writer, thingArchiveSize);
+    Writer_WriteInt32(d->writer, theThingArchive.size());
 #endif
-
-    SV_WritePlayerHeader(d->writer);
 
     d->writePlayers();
     d->writeMap();

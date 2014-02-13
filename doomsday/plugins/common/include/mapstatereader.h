@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "dmu_archiveindex.h"
+#include "thingarchive.h"
 #include <de/Error>
 
 /**
@@ -41,7 +42,7 @@ public:
     /**
      * @param saveVersion  Logical saved state version number.
      */
-    MapStateReader(int saveVersion);
+    MapStateReader(ThingArchive &thingArchive, int saveVersion);
 
     /**
      * Deserialize the saved map state using the specified @a reader.
@@ -53,10 +54,7 @@ public:
      */
     int mapVersion();
 
-    /**
-     * Returns the reader to use when deserializing the saved map state.
-     */
-    Reader *reader();
+    struct mobj_s *mobj(ThingArchive::SerialId serialId, void *address);
 
     /**
      * Finds and returns a material with the identifier @a serialId.
@@ -70,9 +68,17 @@ public:
     Material *material(materialarchive_serialid_t serialId, int group);
 
     /**
+     * Returns the reader to use when deserializing the saved map state.
+     */
+    Reader *reader();
+
+    /**
      * Provides access to the side archive to use when deserializing the map state.
      */
     dmu_lib::SideArchive &sideArchive();
+
+public: /// @todo refactor away:
+    void addMobjToThingArchive(struct mobj_s *mobj, ThingArchive::SerialId);
 
 private:
     DENG2_PRIVATE(d)

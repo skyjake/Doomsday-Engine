@@ -50,9 +50,9 @@ public:
      * @param info  SaveInfo to attempt to read game session header into.
      * @param path  Path to the resource file to be recognized.
      */
-    static bool recognize(SaveInfo *info, Str const *path);
+    static bool recognize(SaveInfo &info, Str const *path);
 
-    void read(SaveInfo *info, Str const *path);
+    void read(SaveInfo &info, Str const *path);
 };
 
 #endif // LIBDOOM_DOOMV9_GAMESTATEREADER

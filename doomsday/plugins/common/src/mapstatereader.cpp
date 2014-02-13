@@ -34,6 +34,7 @@ DENG2_PIMPL(MapStateReader)
     Reader *reader;
     int saveVersion;
     int mapVersion;
+    ThingArchive *thingArchive;
     MaterialArchive *materialArchive;
     dmu_lib::SideArchive *sideArchive;
 
@@ -42,6 +43,7 @@ DENG2_PIMPL(MapStateReader)
         , reader(0)
         , saveVersion(0)
         , mapVersion(0)
+        , thingArchive(0)
         , materialArchive(0)
         , sideArchive(0)
     {}
@@ -87,7 +89,7 @@ DENG2_PIMPL(MapStateReader)
         checkMapSegment();
 
 #if __JHEXEN__
-        thingArchiveVersion = mapVersion >= 4? 1 : 0;
+        thingArchive->setVersion(mapVersion >= 4? 1 : 0);
 #endif
 
 #if __JHEXEN__
@@ -242,14 +244,14 @@ DENG2_PIMPL(MapStateReader)
 
     static int restoreMobjLinksWorker(thinker_t *th, void *context)
     {
-        int const mapVersion = *static_cast<int const *>(context);
+        MapStateReader *inst = static_cast<MapStateReader *>(context);
 
         if(th->function != (thinkfunc_t) P_MobjThinker)
             return false; // Continue iteration.
 
         mobj_t *mo = (mobj_t *) th;
-        mo->target = SV_GetArchiveThing(PTR2INT(mo->target), &mo->target);
-        mo->onMobj = SV_GetArchiveThing(PTR2INT(mo->onMobj), &mo->onMobj);
+        mo->target = inst->mobj(PTR2INT(mo->target), &mo->target);
+        mo->onMobj = inst->mobj(PTR2INT(mo->onMobj), &mo->onMobj);
 
 #if __JHEXEN__
         switch(mo->type)
@@ -262,13 +264,13 @@ DENG2_PIMPL(MapStateReader)
         case MT_THRUSTFLOOR_DOWN:
         case MT_MINOTAUR:
         case MT_SORCFX1:
-            if(mapVersion >= 3)
+            if(inst->mapVersion() >= 3)
             {
-                mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+                mo->tracer = inst->mobj(PTR2INT(mo->tracer), &mo->tracer);
             }
             else
             {
-                mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                mo->tracer = inst->mobj(mo->special1, &mo->tracer);
                 mo->special1 = 0;
             }
             break;
@@ -276,22 +278,22 @@ DENG2_PIMPL(MapStateReader)
         // Just special2
         case MT_LIGHTNING_FLOOR:
         case MT_LIGHTNING_ZAP:
-            mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
+            mo->special2 = PTR2INT(inst->mobj(mo->special2, &mo->special2));
             break;
 
         // Both tracer and special2
         case MT_HOLY_TAIL:
         case MT_LIGHTNING_CEILING:
-            if(mapVersion >= 3)
+            if(inst->mapVersion() >= 3)
             {
-                mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+                mo->tracer = inst->mobj(PTR2INT(mo->tracer), &mo->tracer);
             }
             else
             {
-                mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                mo->tracer = inst->mobj(mo->special1, &mo->tracer);
                 mo->special1 = 0;
             }
-            mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
+            mo->special2 = PTR2INT(inst->mobj(mo->special2, &mo->special2));
             break;
 
         default:
@@ -299,10 +301,10 @@ DENG2_PIMPL(MapStateReader)
         }
 #else
 # if __JDOOM__ || __JDOOM64__
-        mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+        mo->tracer = inst->mobj(PTR2INT(mo->tracer), &mo->tracer);
 # endif
 # if __JHERETIC__
-        mo->generator = SV_GetArchiveThing(PTR2INT(mo->generator), &mo->generator);
+        mo->generator = inst->mobj(PTR2INT(mo->generator), &mo->generator);
 # endif
 #endif
 
@@ -316,7 +318,7 @@ DENG2_PIMPL(MapStateReader)
     void relinkThinkers()
     {
 #if __JHEXEN__
-        Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, &mapVersion);
+        Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, thisPublic);
 
         P_CreateTIDList();
         rebuildCorpseQueue();
@@ -324,14 +326,14 @@ DENG2_PIMPL(MapStateReader)
 #else
         if(IS_SERVER)
         {
-            Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, &mapVersion);
+            Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, thisPublic);
 
             for(int i = 0; i < numlines; ++i)
             {
                 xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
                 if(!xline->xg) continue;
 
-                xline->xg->activator = SV_GetArchiveThing(PTR2INT(xline->xg->activator),
+                xline->xg->activator = thingArchive->mobj(PTR2INT(xline->xg->activator),
                                                           &xline->xg->activator);
             }
         }
@@ -353,7 +355,7 @@ DENG2_PIMPL(MapStateReader)
 
 #if __JHEXEN__
         SV_InitTargetPlayers();
-        SV_InitThingArchiveForLoad(Reader_ReadInt32(reader) /* num elements */);
+        thingArchive->initForLoad(Reader_ReadInt32(reader) /* num elements */);
 #endif
 
         // Read in saved thinkers.
@@ -389,7 +391,7 @@ DENG2_PIMPL(MapStateReader)
                     tClass = TC_MOBJ;
                 }
 
-                if(tClass == TC_MOBJ && (uint)i == thingArchiveSize)
+                if(tClass == TC_MOBJ && (uint)i == thingArchive->size())
                 {
                     checkSegment(ASEG_THINKERS);
                     // We have reached the begining of the "specials" block.
@@ -517,18 +519,18 @@ DENG2_PIMPL(MapStateReader)
             }
 
             xsec->soundTarget = INT2PTR(mobj_t, Reader_ReadInt16(reader));
-            xsec->soundTarget =
-                SV_GetArchiveThing(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
+            xsec->soundTarget = thingArchive->mobj(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
         }
 #endif
     }
 };
 
-MapStateReader::MapStateReader(int saveVersion)
+MapStateReader::MapStateReader(ThingArchive &thingArchive, int saveVersion)
     : d(new Instance(this))
 {
-    d->saveVersion = saveVersion;
-    d->mapVersion  = saveVersion; // Default: mapVersion == saveVersion
+    d->thingArchive = &thingArchive;
+    d->saveVersion  = saveVersion;
+    d->mapVersion   = saveVersion; // Default: mapVersion == saveVersion
 }
 
 void MapStateReader::read(Reader *reader)
@@ -561,6 +563,12 @@ int MapStateReader::mapVersion()
     return d->mapVersion;
 }
 
+mobj_t *MapStateReader::mobj(ThingArchive::SerialId serialId, void *address)
+{
+    DENG_ASSERT(d->thingArchive != 0);
+    return d->thingArchive->mobj(serialId, address);
+}
+
 Material *MapStateReader::material(materialarchive_serialid_t serialId, int group)
 {
     DENG_ASSERT(d->materialArchive != 0);
@@ -571,4 +579,10 @@ dmu_lib::SideArchive &MapStateReader::sideArchive()
 {
     DENG_ASSERT(d->sideArchive != 0);
     return *d->sideArchive;
+}
+
+void MapStateReader::addMobjToThingArchive(mobj_t *mobj, ThingArchive::SerialId serialId)
+{
+    DENG_ASSERT(d->thingArchive != 0);
+    d->thingArchive->insert(mobj, serialId);
 }

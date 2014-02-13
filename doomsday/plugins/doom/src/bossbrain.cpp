@@ -80,7 +80,7 @@ void BossBrain::write(MapStateWriter *msw) const
     // Write the mobj references using the mobj archive.
     for(int i = 0; i < d->numTargets; ++i)
     {
-        Writer_WriteInt16(writer, SV_ThingArchiveId(d->targets[i]));
+        Writer_WriteInt16(writer, msw->serialIdFor(d->targets[i]));
     }
 }
 
@@ -116,7 +116,7 @@ void BossBrain::read(MapStateReader *msr)
 
     for(int i = 0; i < newTargetCount; ++i)
     {
-        addTarget(SV_GetArchiveThing((int) Reader_ReadInt16(reader), 0));
+        addTarget(msr->mobj((int) Reader_ReadInt16(reader), 0));
     }
 }
 

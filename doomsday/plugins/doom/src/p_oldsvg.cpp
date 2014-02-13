@@ -907,15 +907,15 @@ static Reader *SV_NewReader_Dm_v19()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-bool DoomV9GameStateReader::recognize(SaveInfo *info, Str const *path) // static
+bool DoomV9GameStateReader::recognize(SaveInfo &info, Str const *path) // static
 {
-    DENG_ASSERT(info != 0 && path != 0);
+    DENG_ASSERT(path != 0);
 
     if(!SV_ExistingFile(path)) return false;
 
     if(SV_OpenFile_Dm_v19(Str_Text(path)))
     {
-        Reader *svReader = SV_NewReader_Dm_v19();
+        Reader *reader = SV_NewReader_Dm_v19();
         bool result = false;
 
         /// @todo Use the 'version' string as the "magic" identifier.
@@ -925,11 +925,11 @@ bool DoomV9GameStateReader::recognize(SaveInfo *info, Str const *path) // static
 
         if(strncmp(vcheck, "version ", 8))*/
         {
-            SaveInfo_Read_Dm_v19(info, svReader);
-            result = (info->version() <= V19_SAVE_VERSION);
+            SaveInfo_Read_Dm_v19(&info, reader);
+            result = (info.version() <= V19_SAVE_VERSION);
         }
 
-        Reader_Delete(svReader); svReader = 0;
+        Reader_Delete(reader); reader = 0;
         SV_CloseFile_Dm_v19();
 
         return result;
@@ -938,13 +938,13 @@ bool DoomV9GameStateReader::recognize(SaveInfo *info, Str const *path) // static
     return false;
 }
 
-void DoomV9GameStateReader::read(SaveInfo *info, Str const *path)
+void DoomV9GameStateReader::read(SaveInfo &info, Str const *path)
 {
-    DENG_ASSERT(info != 0 && path != 0);
+    DENG_ASSERT(path != 0);
 
     if(!SV_OpenFile_Dm_v19(Str_Text(path)))
     {
-        throw FileAccessError("DoomV9GameStateReader", "Failed opending " + de::String(Str_Text(path)));
+        throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
     }
 
     svReader = SV_NewReader_Dm_v19();
@@ -961,13 +961,11 @@ void DoomV9GameStateReader::read(SaveInfo *info, Str const *path)
     briefDisabled = true;
 
     // Load a base map.
-    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
+    G_NewGame(info.mapUri(), 0/*not saved??*/, &info.gameRules());
+    G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     // Recreate map state.
-    mapTime = info->mapTime();
-
-    /// @todo Necessary?
-    G_SetGameAction(GA_NONE);
+    mapTime = info.mapTime();
 
     P_v19_UnArchivePlayers();
     P_v19_UnArchiveWorld();

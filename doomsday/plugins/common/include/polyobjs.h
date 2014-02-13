@@ -1,4 +1,4 @@
-/** @file polyobjs.h Polyobject thinkers and management.
+/** @file polyobjs.h  Polyobject thinkers and management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -34,6 +34,9 @@ typedef enum {
     PODOOR_SWING
 } podoortype_t;
 
+/**
+ * @note Used with both @ref T_RotatePoly() and @ref T_MovePoly()
+ */
 typedef struct polyevent_s {
     thinker_t thinker;
     int polyobj; // tag
@@ -47,6 +50,11 @@ typedef struct polyevent_s {
     int read(MapStateReader *msr);
 #endif
 } polyevent_t;
+
+#ifdef __cplusplus
+void SV_WriteMovePoly(polyevent_t const *movepoly, MapStateWriter *msw);
+int SV_ReadMovePoly(polyevent_t *movepoly, MapStateReader *msr);
+#endif
 
 typedef struct polydoor_s {
     thinker_t thinker;

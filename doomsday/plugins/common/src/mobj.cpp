@@ -385,16 +385,16 @@ void mobj_s::write(MapStateWriter *msw) const
 
 #if !__JHEXEN__
     // A version 2 features: archive number and target.
-    Writer_WriteInt16(writer, SV_ThingArchiveId((mobj_t*) original));
-    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->target));
+    Writer_WriteInt16(writer, msw->serialIdFor((mobj_t*) original));
+    Writer_WriteInt16(writer, msw->serialIdFor(mo->target));
 
 # if __JDOOM__ || __JDOOM64__
     // Ver 5 features: Save tracer (fixes Archvile, Revenant bug)
-    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->tracer));
+    Writer_WriteInt16(writer, msw->serialIdFor(mo->tracer));
 # endif
 #endif
 
-    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->onMobj));
+    Writer_WriteInt16(writer, msw->serialIdFor(mo->onMobj));
 
     // Info for drawing: position.
     Writer_WriteInt32(writer, FLT2FIX(mo->origin[VX]));
@@ -451,7 +451,7 @@ void mobj_s::write(MapStateWriter *msw) const
         if(mo->flags & MF_CORPSE)
             Writer_WriteInt32(writer, 0);
         else
-            Writer_WriteInt32(writer, SV_ThingArchiveId(INT2PTR(mobj_t, mo->special2)));
+            Writer_WriteInt32(writer, msw->serialIdFor(INT2PTR(mobj_t, mo->special2)));
         break;
 
     default:
@@ -469,7 +469,7 @@ void mobj_s::write(MapStateWriter *msw) const
     if(mo->flags & MF_CORPSE)
         Writer_WriteInt32(writer, 0);
     else
-        Writer_WriteInt32(writer, (int) SV_ThingArchiveId(mo->target));
+        Writer_WriteInt32(writer, (int) msw->serialIdFor(mo->target));
 #endif
 
     // Reaction time: if non 0, don't attack yet.
@@ -512,7 +512,7 @@ void mobj_s::write(MapStateWriter *msw) const
 
     Writer_WriteInt32(writer, FLT2FIX(mo->floorClip));
 #if __JHEXEN__
-    Writer_WriteInt32(writer, SV_ThingArchiveId((mobj_t *) original));
+    Writer_WriteInt32(writer, msw->serialIdFor((mobj_t *) original));
     Writer_WriteInt32(writer, mo->tid);
     Writer_WriteInt32(writer, mo->special);
     Writer_Write(writer,      mo->args, sizeof(mo->args));
@@ -534,7 +534,7 @@ void mobj_s::write(MapStateWriter *msw) const
         if(mo->flags & MF_CORPSE)
             Writer_WriteInt32(writer, 0);
         else
-            Writer_WriteInt32(writer, SV_ThingArchiveId(mo->tracer));
+            Writer_WriteInt32(writer, msw->serialIdFor(mo->tracer));
         break;
 
     default:
@@ -545,7 +545,7 @@ void mobj_s::write(MapStateWriter *msw) const
 
     Writer_WriteInt32(writer, PTR2INT(mo->lastEnemy));
 #elif __JHERETIC__
-    Writer_WriteInt16(writer, SV_ThingArchiveId(mo->generator));
+    Writer_WriteInt16(writer, msw->serialIdFor(mo->generator));
 #endif
 }
 
@@ -627,7 +627,7 @@ int mobj_s::read(MapStateReader *msr)
 #if !__JHEXEN__
     if(ver >= 2) // Version 2 has mobj archive numbers.
     {
-        SV_InsertThingInArchive(this, Reader_ReadInt16(reader));
+        msr->addMobjToThingArchive(this, Reader_ReadInt16(reader));
     }
 #endif
 
@@ -756,7 +756,7 @@ int mobj_s::read(MapStateReader *msr)
 
 #if __JHEXEN__
     floorClip    = FIX2FLT(Reader_ReadInt32(reader));
-    SV_InsertThingInArchive(this, Reader_ReadInt32(reader));
+    msr->addMobjToThingArchive(this, Reader_ReadInt32(reader));
     tid          = Reader_ReadInt32(reader);
 #else
     // For nightmare respawn.

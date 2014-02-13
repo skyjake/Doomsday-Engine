@@ -96,19 +96,24 @@ DENG2_PIMPL(SaveSlots)
         return &infos[slot];
     }
 
-    bool recognizeGameState(SaveInfo *info, Str const *path)
+    bool recognizeGameState(SaveInfo &info, Str const *path)
     {
         if(GameStateReader::recognize(info, path))
+        {
             return true;
-
+        }
         // Perhaps an original game state?
 #if __JDOOM__
         if(DoomV9GameStateReader::recognize(info, path))
+        {
             return true;
+        }
 #endif
 #if __JHERETIC__
         if(HereticV13GameStateReader::recognize(info, path))
+        {
             return true;
+        }
 #endif
         return false;
     }
@@ -125,7 +130,7 @@ DENG2_PIMPL(SaveSlots)
         }
 
         // Is this a recognized game state?
-        if(!recognizeGameState(&info, path))
+        if(!recognizeGameState(info, path))
         {
             // Clear the info for this slot.
             info.setDescription(0);

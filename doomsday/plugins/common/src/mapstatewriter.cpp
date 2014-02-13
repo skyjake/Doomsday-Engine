@@ -29,15 +29,15 @@
 
 DENG2_PIMPL(MapStateWriter)
 {
-    bool excludePlayers;
-    Writer *writer;
+    ThingArchive *thingArchive;
     MaterialArchive *materialArchive;
+    Writer *writer;
 
     Instance(Public *i)
         : Base(i)
-        , excludePlayers(false)
-        , writer(0)
+        , thingArchive(0)
         , materialArchive(0)
+        , writer(0)
     {}
 
     void beginSegment(int segmentId)
@@ -157,13 +157,13 @@ DENG2_PIMPL(MapStateWriter)
         beginSegment(ASEG_THINKERS);
 
 #if __JHEXEN__
-        Writer_WriteInt32(writer, thingArchiveSize); // number of mobjs.
+        Writer_WriteInt32(writer, thingArchive->size()); // number of mobjs.
 #endif
 
         // Serialize qualifying thinkers.
         writethinkerworker_params_t parm; de::zap(parm);
-        parm.msw = thisPublic;
-        parm.excludePlayers = excludePlayers;
+        parm.msw            = thisPublic;
+        parm.excludePlayers = thingArchive->excludePlayers();
         Thinker_Iterate(0/*all thinkers*/, writeThinkerWorker, &parm);
 
         // Mark the end of the thinkers.
@@ -220,7 +220,7 @@ DENG2_PIMPL(MapStateWriter)
             if(xsec->soundTarget)
             {
                 Writer_WriteInt32(writer, i);
-                Writer_WriteInt16(writer, SV_ThingArchiveId(xsec->soundTarget));
+                Writer_WriteInt16(writer, thingArchive->serialIdFor(xsec->soundTarget));
             }
         }
 #endif
@@ -239,10 +239,10 @@ DENG2_PIMPL(MapStateWriter)
     }
 };
 
-MapStateWriter::MapStateWriter(bool excludePlayers)
+MapStateWriter::MapStateWriter(ThingArchive &thingArchive)
     : d(new Instance(this))
 {
-    d->excludePlayers = excludePlayers;
+    d->thingArchive = &thingArchive;
 }
 
 void MapStateWriter::write(Writer *writer)
@@ -268,6 +268,12 @@ Writer *MapStateWriter::writer()
 {
     DENG_ASSERT(d->writer != 0);
     return d->writer;
+}
+
+ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t *mobj)
+{
+    DENG_ASSERT(d->thingArchive != 0);
+    return d->thingArchive->serialIdFor(mobj);
 }
 
 materialarchive_serialid_t MapStateWriter::serialIdFor(Material *material)

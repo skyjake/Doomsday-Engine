@@ -79,7 +79,7 @@ DENG2_PIMPL(GameStateReader)
         SV_OpenMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
 #endif
 
-        MapStateReader(saveInfo->version()).read(reader);
+        MapStateReader(theThingArchive, saveInfo->version()).read(reader);
 
 #if __JHEXEN__
         Z_Free(saveBuffer);
@@ -90,7 +90,7 @@ DENG2_PIMPL(GameStateReader)
         SV_CloseFile();
 #endif
 
-        SV_ClearThingArchive();
+        theThingArchive.clear();
 #if __JHEXEN__
         SV_ClearTargetPlayers();
 #endif
@@ -102,6 +102,16 @@ DENG2_PIMPL(GameStateReader)
     // discarded.
     void readPlayers()
     {
+#if __JHEXEN__
+        if(saveInfo->version() >= 4)
+#else
+        if(saveInfo->version() >= 5)
+#endif
+        {
+            SV_AssertSegment(ASEG_PLAYER_HEADER);
+        }
+        SV_GetPlayerHeader()->read(reader, saveInfo->version());
+
         // Setup the dummy.
         ddplayer_t dummyDDPlayer;
         player_t dummyPlayer;
@@ -223,9 +233,9 @@ DENG2_PIMPL(GameStateReader)
 GameStateReader::GameStateReader() : d(new Instance(this))
 {}
 
-bool GameStateReader::recognize(SaveInfo *info, Str const *path) // static
+bool GameStateReader::recognize(SaveInfo &info, Str const *path) // static
 {
-    DENG_ASSERT(info != 0 && path != 0);
+    DENG_ASSERT(path != 0);
 
     if(!SV_ExistingFile(path)) return false;
 
@@ -243,7 +253,7 @@ bool GameStateReader::recognize(SaveInfo *info, Str const *path) // static
 #endif
 
     Reader *reader = SV_NewReader();
-    SV_SaveInfo_Read(info, reader);
+    SV_SaveInfo_Read(&info, reader);
     Reader_Delete(reader);
 
 #if __JHEXEN__
@@ -253,7 +263,7 @@ bool GameStateReader::recognize(SaveInfo *info, Str const *path) // static
 #endif
 
     // Magic must match.
-    if(info->magic() != MY_SAVE_MAGIC && info->magic() != MY_CLIENT_SAVE_MAGIC)
+    if(info.magic() != MY_SAVE_MAGIC && info.magic() != MY_CLIENT_SAVE_MAGIC)
     {
         return false;
     }
@@ -261,7 +271,7 @@ bool GameStateReader::recognize(SaveInfo *info, Str const *path) // static
     /*
      * Check for unsupported versions.
      */
-    if(info->version() > MY_SAVE_VERSION) // Future version?
+    if(info.version() > MY_SAVE_VERSION) // Future version?
     {
         return false;
     }
@@ -269,7 +279,7 @@ bool GameStateReader::recognize(SaveInfo *info, Str const *path) // static
 #if __JHEXEN__
     // We are incompatible with v3 saves due to an invalid test used to determine
     // present sides (ver3 format's sides contain chunks of junk data).
-    if(info->version() == 3)
+    if(info.version() == 3)
     {
         return false;
     }
@@ -278,14 +288,14 @@ bool GameStateReader::recognize(SaveInfo *info, Str const *path) // static
     return true;
 }
 
-void GameStateReader::read(SaveInfo *saveInfo, Str const *path)
+void GameStateReader::read(SaveInfo &info, Str const *path)
 {
-    DENG_ASSERT(saveInfo != 0 && path != 0);
-    d->saveInfo = saveInfo;
+    DENG_ASSERT(path != 0);
+    d->saveInfo = &info;
 
     playerHeaderOK = false; // Uninitialized.
 
-    if(!SV_OpenGameSaveFile(path, false))
+    if(!SV_OpenGameSaveFile(path, false/*for reading*/))
     {
         throw FileAccessError("GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
     }
@@ -310,10 +320,8 @@ void GameStateReader::read(SaveInfo *saveInfo, Str const *path)
 #endif
 
 #if !__JHEXEN__
-    SV_InitThingArchiveForLoad(d->saveInfo->version() >= 5? Reader_ReadInt32(d->reader) : 1024 /* num elements */);
+    theThingArchive.initForLoad(d->saveInfo->version() >= 5? Reader_ReadInt32(d->reader) : 1024 /* num elements */);
 #endif
-
-    SV_ReadPlayerHeader(d->reader, d->saveInfo->version());
 
     d->readPlayers();
     d->readMap();

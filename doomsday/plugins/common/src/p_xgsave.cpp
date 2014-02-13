@@ -26,8 +26,9 @@
 #include "p_saveg.h"
 #include "p_xg.h"
 
-void SV_WriteXGLine(Line *li, Writer *writer)
+void SV_WriteXGLine(Line *li, MapStateWriter *msw)
 {
+    Writer *writer = msw->writer();
     xline_t *xline = P_ToXLine(li);
 
     // Version byte.
@@ -50,15 +51,16 @@ void SV_WriteXGLine(Line *li, Writer *writer)
     Writer_WriteByte(writer, xg->disabled);
     Writer_WriteInt32(writer, xg->timer);
     Writer_WriteInt32(writer, xg->tickerTimer);
-    Writer_WriteInt16(writer, SV_ThingArchiveId((mobj_t *)xg->activator));
+    Writer_WriteInt16(writer, msw->serialIdFor((mobj_t *)xg->activator));
     Writer_WriteInt32(writer, xg->idata);
     Writer_WriteFloat(writer, xg->fdata);
     Writer_WriteInt32(writer, xg->chIdx);
     Writer_WriteFloat(writer, xg->chTimer);
 }
 
-void SV_ReadXGLine(Line *li, Reader *reader, int /*mapVersion*/)
+void SV_ReadXGLine(Line *li, MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
     xline_t *xline = P_ToXLine(li);
 
     // Read version.

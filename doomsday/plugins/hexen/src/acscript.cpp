@@ -1723,7 +1723,7 @@ void ACScript::write(MapStateWriter *msw) const
 
     Writer_WriteByte(writer, 2); // Write a version byte.
 
-    Writer_WriteInt32(writer, SV_ThingArchiveId(activator));
+    Writer_WriteInt32(writer, msw->serialIdFor(activator));
     Writer_WriteInt32(writer, P_ToIndex(line));
     Writer_WriteInt32(writer, side);
     Writer_WriteInt32(writer, info().scriptNumber);
@@ -1751,7 +1751,7 @@ int ACScript::read(MapStateReader *msr)
         int ver = Reader_ReadByte(reader); // version byte.
 
         activator  = INT2PTR(mobj_t, Reader_ReadInt32(reader));
-        activator  = SV_GetArchiveThing(PTR2INT(activator), &activator);
+        activator  = msr->mobj(PTR2INT(activator), &activator);
 
         int temp = Reader_ReadInt32(reader);
         if(temp >= 0)
@@ -1794,7 +1794,7 @@ int ACScript::read(MapStateReader *msr)
 
         // Start of used data members.
         activator  = INT2PTR(mobj_t, Reader_ReadInt32(reader));
-        activator  = SV_GetArchiveThing(PTR2INT(activator), &activator);
+        activator  = msr->mobj(PTR2INT(activator), &activator);
 
         int temp = Reader_ReadInt32(reader);
         if(temp >= 0)

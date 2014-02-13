@@ -1217,8 +1217,6 @@ void player_s::write(Writer *writer) const
 #endif
     playerheader_t const &plrHdr = *SV_GetPlayerHeader();
 
-    int i, numPSprites = plrHdr.numPSprites;
-
     player_t temp, *p = &temp;
     ddplayer_t ddtemp, *dp = &ddtemp;
 
@@ -1228,7 +1226,7 @@ void player_s::write(Writer *writer) const
     temp.plr = &ddtemp;
 
     // Convert the psprite states.
-    for(i = 0; i < numPSprites; ++i)
+    for(int i = 0; i < plrHdr.numPSprites; ++i)
     {
         pspdef_t *pspDef = &temp.pSprites[i];
 
@@ -1266,7 +1264,7 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, p->health);
 
 #if __JHEXEN__
-    for(i = 0; i < plrHdr.numArmorTypes; ++i)
+    for(int i = 0; i < plrHdr.numArmorTypes; ++i)
     {
         Writer_WriteInt32(writer, p->armorPoints[i]);
     }
@@ -1276,7 +1274,7 @@ void player_s::write(Writer *writer) const
 #endif
 
 #if __JDOOM64__ || __JHEXEN__
-    for(i = 0; i < plrHdr.numInvItemTypes; ++i)
+    for(int i = 0; i < plrHdr.numInvItemTypes; ++i)
     {
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
 
@@ -1286,7 +1284,7 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, P_InventoryReadyItem(plrnum));
 #endif
 
-    for(i = 0; i < plrHdr.numPowers; ++i)
+    for(int i = 0; i < plrHdr.numPowers; ++i)
     {
         Writer_WriteInt32(writer, p->powers[i]);
     }
@@ -1294,7 +1292,7 @@ void player_s::write(Writer *writer) const
 #if __JHEXEN__
     Writer_WriteInt32(writer, p->keys);
 #else
-    for(i = 0; i < plrHdr.numKeys; ++i)
+    for(int i = 0; i < plrHdr.numKeys; ++i)
     {
         Writer_WriteInt32(writer, p->keys[i]);
     }
@@ -1306,7 +1304,7 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, p->backpack);
 #endif
 
-    for(i = 0; i < plrHdr.numFrags; ++i)
+    for(int i = 0; i < plrHdr.numFrags; ++i)
     {
         Writer_WriteInt32(writer, p->frags[i]);
     }
@@ -1314,12 +1312,12 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, p->readyWeapon);
     Writer_WriteInt32(writer, p->pendingWeapon);
 
-    for(i = 0; i < plrHdr.numWeapons; ++i)
+    for(int i = 0; i < plrHdr.numWeapons; ++i)
     {
         Writer_WriteInt32(writer, p->weapons[i].owned);
     }
 
-    for(i = 0; i < plrHdr.numAmmoTypes; ++i)
+    for(int i = 0; i < plrHdr.numAmmoTypes; ++i)
     {
         Writer_WriteInt32(writer, p->ammo[i].owned);
 #if !__JHEXEN__
@@ -1348,7 +1346,7 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, dp->fixedColorMap);
     Writer_WriteInt32(writer, p->colorMap);
 
-    for(i = 0; i < numPSprites; ++i)
+    for(int i = 0; i < plrHdr.numPSprites; ++i)
     {
         pspdef_t *psp = &p->pSprites[i];
 
@@ -1366,7 +1364,7 @@ void player_s::write(Writer *writer) const
 #endif
 
 #if __JHERETIC__
-    for(i = 0; i < plrHdr.numInvItemTypes; ++i)
+    for(int i = 0; i < plrHdr.numInvItemTypes; ++i)
     {
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
 
