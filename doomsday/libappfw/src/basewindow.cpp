@@ -36,6 +36,9 @@ DENG2_PIMPL(BaseWindow)
 BaseWindow::BaseWindow() : d(new Instance(this))
 {}
 
+BaseWindow::~BaseWindow()
+{}
+
 void BaseWindow::setTransform(WindowTransform &xf)
 {
     d->xf = &xf;

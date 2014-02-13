@@ -33,7 +33,8 @@ namespace de {
 class LIBAPPFW_PUBLIC Style
 {
 public:
-    Style();
+    Style();    
+    virtual ~Style();
 
     /**
      * Loads a style from a resource pack.

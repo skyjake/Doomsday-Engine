@@ -41,6 +41,8 @@ class BaseWindow
 public:
     BaseWindow();
 
+    virtual ~BaseWindow();
+
     /**
      * Sets a new content transformation being applied in the window. The provided
      * object must remain in existence as long as the BaseWindow instance uses it.

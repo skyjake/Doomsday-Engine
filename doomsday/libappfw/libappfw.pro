@@ -71,6 +71,7 @@ HEADERS += \
     include/de/TextDrawable \
     include/de/ToggleWidget \
     include/de/VRWindowTransform \
+    include/de/WindowSystem \
     include/de/WindowTransform \
     include/de/ui/ActionItem \
     include/de/ui/Data \
@@ -113,6 +114,7 @@ HEADERS += \
     include/de/framework/textdrawable.h \
     include/de/framework/variabletoggleitem.h \
     include/de/framework/vrwindowtransform.h \
+    include/de/framework/windowsystem.h \
     include/de/framework/windowtransform.h \
     include/de/libappfw.h \
     include/de/ui/defs.h \
@@ -195,6 +197,7 @@ SOURCES += \
     src/widgets/togglewidget.cpp \
     src/widgets/variablechoicewidget.cpp \
     src/widgets/variabletogglewidget.cpp \
+    src/windowsystem.cpp \
     src/windowtransform.cpp
 
 # Installation ---------------------------------------------------------------

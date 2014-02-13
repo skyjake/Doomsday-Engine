@@ -49,7 +49,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "ui/inputsystem.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/styledlogsinkformatter.h"
@@ -74,7 +74,7 @@ static void continueInitWithEventLoopRunning()
 {
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
-    WindowSystem::main().show();
+    ClientWindowSystem::main().show();
 
     ClientApp::updater().setupUI();
 }
@@ -164,7 +164,7 @@ DENG2_PIMPL(ClientApp)
     QScopedPointer<WidgetActions> widgetActions;
     RenderSystem *renderSys;
     ResourceSystem *resourceSys;
-    WindowSystem *winSys;
+    ClientWindowSystem *winSys;
     ServerLink *svLink;
     Games games;
     WorldSystem *worldSys;
@@ -395,7 +395,8 @@ void ClientApp::initialize()
     addSystem(*d->renderSys);
 
     // Create the window system.
-    d->winSys = new WindowSystem;
+    d->winSys = new ClientWindowSystem;
+    WindowSystem::setAppWindowSystem(*d->winSys);
     addSystem(*d->winSys);
 
     // Check for updates automatically.
@@ -523,7 +524,7 @@ ResourceSystem &ClientApp::resourceSystem()
     return *a.d->resourceSys;
 }
 
-WindowSystem &ClientApp::windowSystem()
+ClientWindowSystem &ClientApp::windowSystem()
 {
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->winSys != 0);

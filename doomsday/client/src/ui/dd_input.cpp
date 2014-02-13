@@ -35,7 +35,7 @@
 
 #include "render/vr.h"
 
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include <de/KeyEvent>
 
 // For the debug visuals:
@@ -2309,9 +2309,9 @@ D_CMD(ReleaseMouse)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(WindowSystem::hasMain())
+    if(WindowSystem::mainExists())
     {
-        WindowSystem::main().canvas().trapMouse(false);
+        ClientWindowSystem::main().canvas().trapMouse(false);
         return true;
     }
     return false;

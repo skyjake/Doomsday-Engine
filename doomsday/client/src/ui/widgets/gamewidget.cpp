@@ -25,7 +25,7 @@
 #include "ui/ui2_main.h"
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "dd_def.h"
 #include "dd_main.h"

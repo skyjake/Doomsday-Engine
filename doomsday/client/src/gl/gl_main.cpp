@@ -39,7 +39,7 @@
 #include "world/p_object.h"
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "resource/hq2x.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
@@ -96,19 +96,15 @@ static viewport_t currentView;
 
 static void videoFSAAChanged()
 {
-    if(novideo || !WindowSystem::hasMain()) return;
-    WindowSystem::main().updateCanvasFormat();
+    if(novideo || !WindowSystem::mainExists()) return;
+    ClientWindowSystem::main().updateCanvasFormat();
 }
 
 static void videoVsyncChanged()
 {
-    if(novideo || !WindowSystem::hasMain()) return;
+    if(novideo || !WindowSystem::mainExists()) return;
 
-//#if defined(WIN32) || defined(MACOSX)
     GL_SetVSync(Con_GetByte("vid-vsync") != 0);
-//#else
-//    WindowSystem::main().updateCanvasFormat();
-//#endif
 }
 
 void GL_Register()
@@ -1394,7 +1390,7 @@ D_CMD(SetRes)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1417,7 +1413,7 @@ D_CMD(SetFullRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1435,7 +1431,7 @@ D_CMD(SetWinRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1454,7 +1450,7 @@ D_CMD(ToggleFullscreen)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1470,7 +1466,7 @@ D_CMD(ToggleMaximized)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1486,7 +1482,7 @@ D_CMD(ToggleCentered)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1502,7 +1498,7 @@ D_CMD(CenterWindow)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1518,7 +1514,7 @@ D_CMD(SetBPP)
 {
     DENG2_UNUSED2(src, argc);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1534,7 +1530,7 @@ D_CMD(DisplayModeInfo)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;

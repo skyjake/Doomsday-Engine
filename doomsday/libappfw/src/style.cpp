@@ -75,6 +75,9 @@ DENG2_PIMPL(Style)
 Style::Style() : d(new Instance(this))
 {}
 
+Style::~Style()
+{}
+
 void Style::load(String const &pack)
 {
     d->clear();
