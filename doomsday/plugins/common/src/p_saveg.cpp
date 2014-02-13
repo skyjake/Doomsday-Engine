@@ -21,7 +21,7 @@
 #include "common.h"
 #include "p_saveg.h"
 
-#include "d_net.h"
+#include "d_net.h"          // NetSv_SaveGame
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "p_actor.h"
@@ -31,6 +31,8 @@
 #include "p_tick.h"         // mapTime
 #include "p_saveio.h"
 #include "polyobjs.h"
+#include "gamestatewriter.h"
+#include "gamestatereader.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
 #include "r_common.h"       // R_UpdateConsoleView
@@ -45,10 +47,10 @@ static bool inited = false;
 static SaveSlots sslots(NUMSAVESLOTS);
 SaveSlots *saveSlots = &sslots;
 
-static SaveInfo const *curInfo;
+SaveInfo const *curInfo;
 
 static playerheader_t playerHeader;
-static dd_bool playerHeaderOK;
+dd_bool playerHeaderOK;
 
 #if __JHEXEN__
 /// Symbolic identifier used to mark references to players in map states.
@@ -58,7 +60,7 @@ static ThingSerialId const TargetPlayerId = -2;
 static mobj_t **thingArchive;
 int thingArchiveVersion;
 uint thingArchiveSize;
-static bool thingArchiveExcludePlayers;
+dd_bool thingArchiveExcludePlayers;
 
 int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
@@ -66,7 +68,7 @@ static targetplraddress_t *targetPlayerAddrs;
 #endif
 
 #if __JHEXEN__
-static byte *saveBuffer;
+byte *saveBuffer;
 #endif
 
 #if !__JHEXEN__
@@ -96,7 +98,7 @@ static AutoStr *composeGameSavePathForClientSessionId(uint sessionId)
 }
 #endif
 
-static bool openGameSaveFile(Str const *fileName, bool write)
+dd_bool SV_OpenGameSaveFile(Str const *fileName, dd_bool write)
 {
 #if __JHEXEN__
     if(!write)
@@ -116,7 +118,7 @@ static bool openGameSaveFile(Str const *fileName, bool write)
 }
 
 #if __JHEXEN__
-static void openMapSaveFile(Str const *path)
+void SV_OpenMapSaveFile(Str const *path)
 {
     DENG_ASSERT(path != 0);
 
@@ -134,7 +136,7 @@ static void openMapSaveFile(Str const *path)
 }
 #endif
 
-static void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
+void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
 {
 #if __JHEXEN__
     // Read the magic byte to determine the high-level format.
@@ -152,81 +154,6 @@ static void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
     {
         info->read(reader);
     }
-}
-
-static bool recognizeNativeState(Str const *path, SaveInfo *info)
-{
-    DENG_ASSERT(path != 0 && info != 0);
-
-    if(!SV_ExistingFile(path)) return false;
-
-#if __JHEXEN__
-    /// @todo Do not buffer the whole file.
-    byte *saveBuffer;
-    size_t fileSize = M_ReadFile(Str_Text(path), (char **) &saveBuffer);
-    if(!fileSize) return false;
-
-    // Set the save pointer.
-    SV_HxSavePtr()->b = saveBuffer;
-    SV_HxSetSaveEndPtr(saveBuffer + fileSize);
-#else
-    if(!SV_OpenFile(path, "rp")) return false;
-#endif
-
-    Reader *reader = SV_NewReader();
-    SV_SaveInfo_Read(info, reader);
-    Reader_Delete(reader);
-
-#if __JHEXEN__
-    Z_Free(saveBuffer);
-#else
-    SV_CloseFile();
-#endif
-
-    // Magic must match.
-    if(info->magic() != MY_SAVE_MAGIC && info->magic() != MY_CLIENT_SAVE_MAGIC)
-    {
-        return false;
-    }
-
-    /*
-     * Check for unsupported versions.
-     */
-    if(info->version() > MY_SAVE_VERSION) // Future version?
-    {
-        return false;
-    }
-
-#if __JHEXEN__
-    // We are incompatible with v3 saves due to an invalid test used to determine
-    // present sides (ver3 format's sides contain chunks of junk data).
-    if(info->version() == 3)
-    {
-        return false;
-    }
-#endif
-
-    return true;
-}
-
-dd_bool SV_RecognizeGameState(Str const *path, SaveInfo *info)
-{
-    if(path && info)
-    {
-        if(recognizeNativeState(path, info))
-            return true;
-
-        // Perhaps an original game state?
-#if __JDOOM__
-        if(SV_RecognizeState_Dm_v19(path, info))
-            return true;
-#endif
-#if __JHERETIC__
-        if(SV_RecognizeState_Hr_v13(path, info))
-            return true;
-#endif
-    }
-    return false;
 }
 
 #if __JHEXEN__
@@ -264,7 +191,7 @@ static int countMobjThinkersToArchive(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-static void initThingArchiveForSave(bool excludePlayers = false)
+void SV_InitThingArchiveForSave(dd_bool excludePlayers)
 {
     // Count the number of things we'll be writing.
     countmobjthinkerstoarchive_params_t parm; de::zap(parm);
@@ -299,7 +226,7 @@ void SV_InsertThingInArchive(mobj_t const *mo, ThingSerialId thingId)
     thingArchive[thingId] = const_cast<mobj_t *>(mo);
 }
 
-static void clearThingArchive()
+void SV_ClearThingArchive()
 {
     M_Free(thingArchive); thingArchive = 0;
     thingArchiveSize = 0;
@@ -359,7 +286,7 @@ void SV_InitTargetPlayers()
     targetPlayerAddrs = 0;
 }
 
-static void clearTargetPlayers()
+void SV_ClearTargetPlayers()
 {
     while(targetPlayerAddrs)
     {
@@ -492,7 +419,7 @@ void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver)
 /**
  * Prepare and write the player header info.
  */
-static void writePlayerHeader(Writer *writer)
+void SV_WritePlayerHeader(Writer *writer)
 {
     playerheader_t *ph = &playerHeader;
 
@@ -531,7 +458,7 @@ static void writePlayerHeader(Writer *writer)
 /**
  * Read player header info from the game state.
  */
-static void readPlayerHeader(Reader *reader, int saveVersion)
+void SV_ReadPlayerHeader(Reader *reader, int saveVersion)
 {
 #if __JHEXEN__
     if(saveVersion >= 4)
@@ -596,381 +523,6 @@ static void readPlayerHeader(Reader *reader, int saveVersion)
 #endif
     }
     playerHeaderOK = true;
-}
-
-class GameStateWriter
-{
-public:
-    /// An error occurred attempting to open the output file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
-
-public:
-    GameStateWriter();
-
-    void write(SaveInfo *saveInfo, Str const *path);
-
-private:
-    DENG2_PRIVATE(d)
-};
-
-DENG2_PIMPL_NOREF(GameStateWriter)
-{
-    SaveInfo *saveInfo; ///< Info for the save state to be written.
-    Writer *writer;
-
-    Instance(/*Public *i*/)
-        : /*Base(i)
-        ,*/ saveInfo(0)
-        , writer(0)
-    {}
-
-    void writeSessionHeader()
-    {
-        saveInfo->write(writer);
-    }
-
-    void writeWorldACScriptData()
-    {
-#if __JHEXEN__
-        SV_BeginSegment(ASEG_WORLDSCRIPTDATA);
-        Game_ACScriptInterpreter().writeWorldScriptData(writer);
-#endif
-    }
-
-    void writeMap()
-    {
-#if __JHEXEN__ // The map state is actually written to a separate file.
-        // Close the game state file.
-        SV_CloseFile();
-
-        // Open the map state file.
-        SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
-#endif
-
-        MapStateWriter(thingArchiveExcludePlayers).write(writer);
-
-        SV_WriteConsistencyBytes(); // To be absolutely sure...
-        SV_CloseFile();
-
-#if !__JHEXEN___
-        clearThingArchive();
-#endif
-    }
-
-    void writePlayers()
-    {
-        SV_BeginSegment(ASEG_PLAYERS);
-        {
-#if __JHEXEN__
-            for(int i = 0; i < MAXPLAYERS; ++i)
-            {
-                Writer_WriteByte(writer, players[i].plr->inGame);
-            }
-#endif
-
-            for(int i = 0; i < MAXPLAYERS; ++i)
-            {
-                player_t *plr = players + i;
-                if(!plr->plr->inGame)
-                    continue;
-
-                Writer_WriteInt32(writer, Net_GetPlayerID(i));
-                plr->write(writer);
-            }
-        }
-        SV_EndSegment();
-    }
-};
-
-GameStateWriter::GameStateWriter() : d(new Instance/*(this)*/)
-{}
-
-void GameStateWriter::write(SaveInfo *saveInfo, Str const *path)
-{
-    DENG_ASSERT(saveInfo != 0 && path != 0);
-    d->saveInfo = saveInfo;
-
-    playerHeaderOK = false; // Uninitialized.
-
-    if(!openGameSaveFile(path, true))
-    {
-        throw FileAccessError("GameStateWriter", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
-    }
-
-    d->writer = SV_NewWriter();
-
-    d->writeSessionHeader();
-    d->writeWorldACScriptData();
-
-    // Set the mobj archive numbers.
-    initThingArchiveForSave();
-#if !__JHEXEN__
-    Writer_WriteInt32(d->writer, thingArchiveSize);
-#endif
-
-    writePlayerHeader(d->writer);
-
-    d->writePlayers();
-    d->writeMap();
-
-    Writer_Delete(d->writer); d->writer = 0;
-}
-
-class GameStateReader
-{
-public:
-    /// An error occurred attempting to open the input file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
-
-public:
-    GameStateReader();
-
-    void read(SaveInfo *saveInfo, Str const *path);
-
-private:
-    DENG2_PRIVATE(d)
-};
-
-DENG2_PIMPL_NOREF(GameStateReader)
-{
-    SaveInfo *saveInfo; ///< Info for the save state to be read.
-    Reader *reader;
-    dd_bool loaded[MAXPLAYERS];
-    dd_bool infile[MAXPLAYERS];
-
-    Instance(/*Public *i*/)
-        : /*Base(i)
-        ,*/saveInfo(0)
-        , reader(0)
-    {
-        de::zap(loaded);
-        de::zap(infile);
-    }
-
-    /// Assumes the reader is currently positioned at the start of the stream.
-    void seekToGameState()
-    {
-        // Read the header again.
-        SaveInfo *tmp = new SaveInfo;
-        SV_SaveInfo_Read(tmp, reader);
-        delete tmp;
-    }
-
-    void readWorldACScriptData()
-    {
-#if __JHEXEN__
-        if(saveInfo->version() >= 7)
-        {
-            SV_AssertSegment(ASEG_WORLDSCRIPTDATA);
-        }
-        Game_ACScriptInterpreter().readWorldScriptData(reader, saveInfo->version());
-#endif
-    }
-
-    void readMap()
-    {
-#if __JHEXEN__ // The map state is actually read from a separate file.
-        // Close the game state file.
-        Z_Free(saveBuffer);
-        SV_CloseFile();
-
-        // Open the map state file.
-        openMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
-#endif
-
-        MapStateReader(saveInfo->version()).read(reader);
-
-#if __JHEXEN__
-        Z_Free(saveBuffer);
-#endif
-
-#if !__JHEXEN__
-        SV_ReadConsistencyBytes();
-        SV_CloseFile();
-#endif
-
-        clearThingArchive();
-#if __JHEXEN__
-        clearTargetPlayers();
-#endif
-    }
-
-    // We don't have the right to say which players are in the game. The players that already are
-    // will continue to be. If the data for a given player is not in the savegame file, he will
-    // be notified. The data for players who were saved but are not currently in the game will be
-    // discarded.
-    void readPlayers()
-    {
-        // Setup the dummy.
-        ddplayer_t dummyDDPlayer;
-        player_t dummyPlayer;
-        dummyPlayer.plr = &dummyDDPlayer;
-
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            loaded[i] = 0;
-#if !__JHEXEN__
-            infile[i] = saveInfo->_players[i];
-#endif
-        }
-
-        SV_AssertSegment(ASEG_PLAYERS);
-        {
-#if __JHEXEN__
-            for(int i = 0; i < MAXPLAYERS; ++i)
-            {
-                infile[i] = Reader_ReadByte(reader);
-            }
-#endif
-
-            // Load the players.
-            for(int i = 0; i < MAXPLAYERS; ++i)
-            {
-                // By default a saved player translates to nothing.
-                saveToRealPlayerNum[i] = -1;
-
-                if(!infile[i]) continue;
-
-                // The ID number will determine which player this actually is.
-                int pid = Reader_ReadInt32(reader);
-                player_t *player = 0;
-                for(int k = 0; k < MAXPLAYERS; ++k)
-                {
-                    if((IS_NETGAME && int(Net_GetPlayerID(k)) == pid) ||
-                       (!IS_NETGAME && k == 0))
-                    {
-                        // This is our guy.
-                        player = players + k;
-                        loaded[k] = true;
-                        // Later references to the player number 'i' must be translated!
-                        saveToRealPlayerNum[i] = k;
-                        App_Log(DE2_DEV_MAP_MSG, "readPlayers: saved %i is now %i\n", i, k);
-                        break;
-                    }
-                }
-
-                if(!player)
-                {
-                    // We have a missing player. Use a dummy to load the data.
-                    player = &dummyPlayer;
-                }
-
-                // Read the data.
-                player->read(reader);
-            }
-        }
-        SV_AssertSegment(ASEG_END);
-    }
-
-    void kickMissingPlayers()
-    {
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            dd_bool notLoaded = false;
-
-#if __JHEXEN__
-            if(players[i].plr->inGame)
-            {
-                // Try to find a saved player that corresponds this one.
-                uint k;
-                for(k = 0; k < MAXPLAYERS; ++k)
-                {
-                    if(saveToRealPlayerNum[k] == i)
-                        break;
-                }
-                if(k < MAXPLAYERS)
-                    continue; // Found; don't bother this player.
-
-                players[i].playerState = PST_REBORN;
-
-                if(!i)
-                {
-                    // If the CONSOLEPLAYER isn't in the save, it must be some
-                    // other player's file?
-                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
-                }
-                else
-                {
-                    NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
-                    notLoaded = true;
-                }
-            }
-#else
-            if(!loaded[i] && players[i].plr->inGame)
-            {
-                if(!i)
-                {
-                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
-                }
-                else
-                {
-                    NetSv_SendMessage(i, GET_TXT(TXT_LOADMISSING));
-                }
-                notLoaded = true;
-            }
-#endif
-
-            if(notLoaded)
-            {
-                // Kick this player out, he doesn't belong here.
-                DD_Executef(false, "kick %i", i);
-            }
-        }
-    }
-};
-
-GameStateReader::GameStateReader() : d(new Instance/*(this)*/)
-{}
-
-void GameStateReader::read(SaveInfo *saveInfo, Str const *path)
-{
-    DENG_ASSERT(saveInfo != 0 && path != 0);
-    d->saveInfo = saveInfo;
-
-    playerHeaderOK = false; // Uninitialized.
-
-    if(!openGameSaveFile(path, false))
-    {
-        throw FileAccessError("GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
-    }
-
-    d->reader = SV_NewReader();
-
-    d->seekToGameState();
-
-    curInfo = d->saveInfo;
-
-    d->readWorldACScriptData();
-
-    /*
-     * Load the map and configure some game settings.
-     */
-    briefDisabled = true;
-    G_NewGame(d->saveInfo->mapUri(), 0/*not saved??*/, &d->saveInfo->gameRules());
-    G_SetGameAction(GA_NONE); /// @todo Necessary?
-
-#if !__JHEXEN__
-    mapTime = d->saveInfo->mapTime();
-#endif
-
-#if !__JHEXEN__
-    SV_InitThingArchiveForLoad(d->saveInfo->version() >= 5? Reader_ReadInt32(d->reader) : 1024 /* num elements */);
-#endif
-
-    readPlayerHeader(d->reader, d->saveInfo->version());
-
-    d->readPlayers();
-    d->readMap();
-
-    // Notify the players that weren't in the savegame.
-    d->kickMissingPlayers();
-
-#if !__JHEXEN__
-    // In netgames, the server tells the clients about this.
-    NetSv_LoadGame(d->saveInfo->sessionId());
-#endif
-
-    Reader_Delete(d->reader); d->reader = 0;
 }
 
 enum sectorclass_t
@@ -1605,42 +1157,6 @@ void SV_Shutdown()
     inited = false;
 }
 
-static void loadGameState(Str const *path, SaveInfo &saveInfo)
-{
-    if(recognizeNativeState(path, &saveInfo))
-    {
-        GameStateReader().read(&saveInfo, path);
-        return;
-    }
-
-    // Perhaps an original game state?
-#if __JDOOM__
-    if(SV_RecognizeState_Dm_v19(path, &saveInfo))
-    {
-        int errorCode = SV_LoadState_Dm_v19(path, &saveInfo);
-        if(errorCode != 0)
-        {
-            throw de::Error("SV_LoadState_Dm_v19", "Error " + de::String::number(errorCode));
-        }
-        return;
-    }
-#endif
-#if __JHERETIC__
-    if(SV_RecognizeState_Hr_v13(path, &saveInfo))
-    {
-        int errorCode = SV_LoadState_Hr_v13(path, &saveInfo);
-        if(errorCode != 0)
-        {
-            throw de::Error("SV_LoadState_Hr_v13", "Error " + de::String::number(errorCode));
-        }
-        return;
-    }
-#endif
-
-    /// @throw Error The savegame was not recognized.
-    throw de::Error("loadGameState", "Unrecognized savegame format");
-}
-
 dd_bool SV_LoadGame(int slot)
 {
     DENG_ASSERT(inited);
@@ -1679,7 +1195,28 @@ dd_bool SV_LoadGame(int slot)
     {
         SaveInfo &info = saveSlots->saveInfo(logicalSlot);
 
-        loadGameState(path, info);
+        if(GameStateReader::recognize(&info, path))
+        {
+            GameStateReader().read(&info, path);
+        }
+        // Perhaps an original game state?
+#if __JDOOM__
+        else if(DoomV9GameStateReader::recognize(&info, path))
+        {
+            DoomV9GameStateReader().read(&info, path);
+        }
+#endif
+#if __JHERETIC__
+        else if(HereticV13GameStateReader::recognize(&info, path))
+        {
+            HereticV13GameStateReader().read(&info, path);
+        }
+#endif
+        else
+        {
+            /// @throw Error The savegame was not recognized.
+            throw de::Error("loadGameState", "Unrecognized savegame format");
+        }
 
         // Material scrollers must be re-spawned for older savegame versions.
         /// @todo Implement SaveInfo format type identifiers.
@@ -1749,7 +1286,7 @@ void SV_SaveGameClient(uint sessionId)
 
     Writer_WriteFloat(writer, pl->plr->lookDir); /* $unifiedangles */
 
-    writePlayerHeader(writer);
+    SV_WritePlayerHeader(writer);
     players[CONSOLEPLAYER].write(writer);
 
     MapStateWriter(thingArchiveExcludePlayers).write(writer);
@@ -1823,7 +1360,7 @@ void SV_LoadGameClient(uint sessionId)
 
     cpl->plr->lookDir = Reader_ReadFloat(reader); /* $unifiedangles */
 
-    readPlayerHeader(reader, info->version());
+    SV_ReadPlayerHeader(reader, info->version());
     cpl->read(reader);
 
     MapStateReader(info->version()).read(reader);
@@ -1908,7 +1445,7 @@ void SV_HxSaveHubMap()
     SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 
     // Set the mobj archive numbers
-    initThingArchiveForSave(true /*exclude players*/);
+    SV_InitThingArchiveForSave(true /*exclude players*/);
 
     Writer *writer = SV_NewWriter();
 
@@ -1937,12 +1474,12 @@ void SV_HxLoadHubMap()
     // Been here before, load the previous map state.
     try
     {
-        openMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
+        SV_OpenMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
 
         MapStateReader(info->version()).read(reader);
 
 #if __JHEXEN__
-        clearThingArchive();
+        SV_ClearThingArchive();
         Z_Free(saveBuffer);
 #endif
     }
@@ -2101,7 +1638,7 @@ void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapE
             *(p->address) = targetPlayerMobj;
         }
 
-        clearTargetPlayers();
+        SV_ClearTargetPlayers();
 
         /*
          * When XG is available in Hexen, call this after updating target player

@@ -35,8 +35,23 @@
 #include "am_map.h"
 #include "p_inventory.h"
 #include "hu_inventory.h"
+#include <de/String>
 #include <cstdio>
 #include <cstring>
+
+bool HereticV13GameStateReader::recognize(SaveInfo *saveInfo, Str const *path) // static
+{
+    return SV_RecognizeState_Hr_v13(path, saveInfo);
+}
+
+void HereticV13GameStateReader::read(SaveInfo *saveInfo, Str const *path)
+{
+    int errorCode = SV_LoadState_Hr_v13(path, saveInfo);
+    if(errorCode != 0)
+    {
+        throw de::Error("HereticV13GameStateReader", "Error " + de::String::number(errorCode));
+    }
+}
 
 // Do NOT change this:
 #define V13_SAVE_VERSION                130 ///< Version number associated with a recognised heretic.exe game save state.

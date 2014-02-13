@@ -33,6 +33,21 @@
 #include "p_floor.h"
 #include "p_plat.h"
 #include "am_map.h"
+#include <de/String>
+
+bool DoomV9GameStateReader::recognize(SaveInfo *saveInfo, Str const *path) // static
+{
+    return SV_RecognizeState_Dm_v19(path, saveInfo);
+}
+
+void DoomV9GameStateReader::read(SaveInfo *saveInfo, Str const *path)
+{
+    int errorCode = SV_LoadState_Dm_v19(path, saveInfo);
+    if(errorCode != 0)
+    {
+        throw de::Error("DoomV9GameStateReader", "Error " + de::String::number(errorCode));
+    }
+}
 
 #define PADSAVEP()                      savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
 

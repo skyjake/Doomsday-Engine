@@ -1,8 +1,7 @@
-/** @file p_oldsvg.h  Heretic ver 1.3 save game reader.
+/** @file gamestatereader.h  Saved game state reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 1999 Activision
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,36 +18,32 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_OLD_SAVESTATE
-#define LIBHERETIC_OLD_SAVESTATE
+#ifndef LIBCOMMON_GAMESTATEREADER_H
+#define LIBCOMMON_GAMESTATEREADER_H
 
-#ifndef __JHERETIC__
-#  error "Using jHeretic headers without __JHERETIC__"
-#endif
-
+#include "common.h"
 #include "saveinfo.h"
-
-#ifdef __cplusplus
-class HereticV13GameStateReader
-{
-public:
-    static bool recognize(SaveInfo *saveInfo, Str const *path);
-
-    void read(SaveInfo *saveInfo, Str const *path);
-};
-
-extern "C" {
-#endif
-
-dd_bool SV_RecognizeState_Hr_v13(Str const *path, SaveInfo *info);
+#include <de/Error>
 
 /**
- * @return  @c 0 on success else error code.
+ * @ingroup libcommon
+ * @see GameStateWriter
  */
-int SV_LoadState_Hr_v13(Str const *path, SaveInfo *info);
+class GameStateReader
+{
+public:
+    /// An error occurred attempting to open the input file. @ingroup errors
+    DENG2_ERROR(FileAccessError);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+public:
+    GameStateReader();
 
-#endif // LIBHERETIC_OLD_SAVESTATE
+    static bool recognize(SaveInfo *info, Str const *path);
+
+    void read(SaveInfo *saveInfo, Str const *path);
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+#endif // LIBCOMMON_GAMESTATEREADER_H

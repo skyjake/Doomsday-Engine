@@ -29,6 +29,13 @@
 #include "saveinfo.h"
 
 #ifdef __cplusplus
+class DoomV9GameStateReader
+{
+public:
+    static bool recognize(SaveInfo *saveInfo, Str const *path);
+
+    void read(SaveInfo *saveInfo, Str const *path);
+};
 extern "C" {
 #endif
 

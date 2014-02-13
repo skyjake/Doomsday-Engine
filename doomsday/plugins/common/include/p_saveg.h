@@ -28,7 +28,16 @@
 
 DENG_EXTERN_C int thingArchiveVersion;
 DENG_EXTERN_C uint thingArchiveSize;
+DENG_EXTERN_C dd_bool thingArchiveExcludePlayers;
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
+
+DENG_EXTERN_C SaveInfo const *curInfo;
+DENG_EXTERN_C dd_bool playerHeaderOK;
+
+#if __JHEXEN__
+DENG_EXTERN_C byte *saveBuffer;
+#endif
+
 DENG_EXTERN_C SaveSlots *saveSlots;
 
 #ifdef __cplusplus
@@ -41,7 +50,7 @@ void SV_Initialize(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-dd_bool SV_RecognizeGameState(Str const *path, SaveInfo *info);
+void SV_SaveInfo_Read(SaveInfo *info, Reader *reader);
 
 #if __JHEXEN__
 /**
@@ -85,6 +94,8 @@ typedef int ThingSerialId;
 typedef ushort ThingSerialId;
 #endif
 
+void SV_ClearThingArchive(void);
+
 /**
  * To be called when writing a game state to acquire a unique identifier for
  * the specified @a mobj from the thing archive. If the given mobj is already
@@ -96,6 +107,7 @@ typedef ushort ThingSerialId;
  */
 ThingSerialId SV_ThingArchiveId(mobj_t const *mobj);
 
+void SV_InitThingArchiveForSave(dd_bool excludePlayers);
 void SV_InsertThingInArchive(mobj_t const *mobj, ThingSerialId thingId);
 
 /**
@@ -134,6 +146,9 @@ typedef struct playerheader_s {
 #endif
 } playerheader_t;
 
+void SV_WritePlayerHeader(Writer *writer);
+void SV_ReadPlayerHeader(Reader *reader, int saveVersion);
+
 playerheader_t *SV_GetPlayerHeader(void);
 
 #if __JHEXEN__
@@ -158,6 +173,7 @@ void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapE
 void SV_InitThingArchiveForLoad(uint size);
 #if __JHEXEN__
 void SV_InitTargetPlayers(void);
+void SV_ClearTargetPlayers(void);
 #endif
 
 #ifdef __cplusplus
@@ -180,5 +196,10 @@ void SV_WriteSector(Sector *sec, MapStateWriter *msw);
 void SV_ReadSector(Sector *sec, MapStateReader *msr);
 
 #endif // __cplusplus
+
+dd_bool SV_OpenGameSaveFile(Str const *fileName, dd_bool write);
+#if __JHEXEN__
+void SV_OpenMapSaveFile(Str const *path);
+#endif
 
 #endif // LIBCOMMON_SAVESTATE_H

@@ -21,8 +21,14 @@
 #include "common.h"
 #include "saveslots.h"
 
+#include "gamestatereader.h"
+#if __JDOOM__
+#  include "p_oldsvg.h"
+#endif
+#if __JHERETIC__
+#  include "p_oldsvg.h"
+#endif
 #include "p_saveio.h"
-#include "p_saveg.h" /// SV_RecognizeGameState, @todo remove me
 #include <de/String>
 #include <vector>
 
@@ -90,6 +96,23 @@ DENG2_PIMPL(SaveSlots)
         return &infos[slot];
     }
 
+    bool recognizeGameState(SaveInfo *info, Str const *path)
+    {
+        if(GameStateReader::recognize(info, path))
+            return true;
+
+        // Perhaps an original game state?
+#if __JDOOM__
+        if(DoomV9GameStateReader::recognize(info, path))
+            return true;
+#endif
+#if __JHERETIC__
+        if(HereticV13GameStateReader::recognize(info, path))
+            return true;
+#endif
+        return false;
+    }
+
     void updateInfo(Str const *path, SaveInfo &info)
     {
         if(!path || Str_IsEmpty(path))
@@ -102,7 +125,7 @@ DENG2_PIMPL(SaveSlots)
         }
 
         // Is this a recognized game state?
-        if(!SV_RecognizeGameState(path, &info))
+        if(!recognizeGameState(&info, path))
         {
             // Clear the info for this slot.
             info.setDescription(0);
