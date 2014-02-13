@@ -31,11 +31,11 @@
 #ifndef __JHERETIC_CONVENIENCE_H__
 #define __JHERETIC_CONVENIENCE_H__
 
+#include "../../heretic/include/h_api.h"
 #include "../../heretic/include/acfnlink.h"
 #include "../../heretic/include/doomdef.h"
 #include "../../heretic/include/dstrings.h"
 #include "../../heretic/include/g_game.h"
-#include "../../heretic/include/h_api.h"
 #include "../../heretic/include/h_config.h"
 #include "../../heretic/include/h_console.h"
 #include "../../heretic/include/h_event.h"
