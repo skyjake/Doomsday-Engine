@@ -30,11 +30,18 @@ namespace de {
 
 static GLInfo info;
 
+#ifdef GL_ARB_debug_output
 static void glDebugOut(GLenum source, GLenum type, GLuint id, GLenum severity,
                        GLsizei length, GLchar const *message, void const *userParam)
 {
+    DENG2_UNUSED(source);
+    DENG2_UNUSED(type);
+    DENG2_UNUSED(id);
+    DENG2_UNUSED(severity);
+    DENG2_UNUSED(userParam);
     qWarning() << "[GL]" << String(message, length);
 }
+#endif
 
 DENG2_PIMPL_NOREF(GLInfo)
 {
@@ -161,8 +168,10 @@ DENG2_PIMPL_NOREF(GLInfo)
 
         if(CommandLine_Exists("-gldebug"))
         {
+#ifdef GL_ARB_debug_output
             /// @todo The GL context is not created with the debug output bit. -jk
             glDebugMessageCallbackARB(glDebugOut, NULL);
+#endif
         }
 
         inited = true;
