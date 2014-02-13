@@ -24,6 +24,10 @@
 #include "common.h"
 #include "saveinfo.h"
 
+/**
+ * @ingroup libcommon
+ * @see GameStateReader
+ */
 class GameStateWriter
 {
 public:

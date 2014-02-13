@@ -22,36 +22,23 @@
 #include "jheretic.h"
 #include "p_oldsvg.h"
 
+#include "am_map.h"
 #include "dmu_lib.h"
-#include "p_saveio.h"
-#include "p_saveg.h"
-#include "p_map.h"
-#include "p_mapsetup.h"
-#include "p_tick.h"
+#include "hu_inventory.h"
 #include "p_ceiling.h"
 #include "p_door.h"
-#include "p_plat.h"
 #include "p_floor.h"
-#include "am_map.h"
 #include "p_inventory.h"
-#include "hu_inventory.h"
+#include "p_map.h"
+#include "p_mapsetup.h"
+#include "p_plat.h"
+#include "p_saveio.h"
+#include "p_saveg.h"
+#include "p_tick.h"
+#include "r_common.h"       // R_UpdateConsoleView
 #include <de/String>
 #include <cstdio>
 #include <cstring>
-
-bool HereticV13GameStateReader::recognize(SaveInfo *saveInfo, Str const *path) // static
-{
-    return SV_RecognizeState_Hr_v13(path, saveInfo);
-}
-
-void HereticV13GameStateReader::read(SaveInfo *saveInfo, Str const *path)
-{
-    int errorCode = SV_LoadState_Hr_v13(path, saveInfo);
-    if(errorCode != 0)
-    {
-        throw de::Error("HereticV13GameStateReader", "Error " + de::String::number(errorCode));
-    }
-}
 
 // Do NOT change this:
 #define V13_SAVE_VERSION                130 ///< Version number associated with a recognised heretic.exe game save state.
@@ -863,54 +850,6 @@ static void P_v13_UnArchiveSpecials()
     }
 }
 
-int SV_LoadState_Hr_v13(Str const *path, SaveInfo *info)
-{
-    DENG_ASSERT(path != 0 && info != 0);
-
-    if(!SV_OpenFile_Hr_v13(Str_Text(path))) return 1;
-
-    svReader = SV_NewReader_Hr_v13();
-
-    // Read the header again.
-    /// @todo Seek past the header straight to the game state.
-    {
-        SaveInfo *tmp = new SaveInfo;
-        SaveInfo_Read_Hr_v13(tmp, svReader);
-        delete tmp;
-    }
-
-    // We don't want to see a briefing if we're loading a save game.
-    briefDisabled = true;
-
-    // Load a base map.
-    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
-
-    // Recreate map state.
-    mapTime = info->mapTime();
-
-    /// @todo Necessary?
-    G_SetGameAction(GA_NONE);
-
-    P_v13_UnArchivePlayers();
-    P_v13_UnArchiveWorld();
-    P_v13_UnArchiveThinkers();
-    P_v13_UnArchiveSpecials();
-
-    if(Reader_ReadByte(svReader) != SAVE_GAME_TERMINATOR)
-    {
-        Reader_Delete(svReader); svReader = 0;
-        SV_CloseFile_Hr_v13();
-
-        Con_Error("Bad savegame"); // Missing savegame termination marker.
-        exit(1); // Unreachable.
-    }
-
-    Reader_Delete(svReader); svReader = 0;
-    SV_CloseFile_Hr_v13();
-
-    return 0; // Success!
-}
-
 static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
 {
     DENG_ASSERT(info != 0);
@@ -986,16 +925,16 @@ static Reader *SV_NewReader_Hr_v13()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-dd_bool SV_RecognizeState_Hr_v13(Str const *path, SaveInfo *info)
+bool HereticV13GameStateReader::recognize(SaveInfo *info, Str const *path) // static
 {
-    DENG_ASSERT(path != 0 && info != 0);
+    DENG_ASSERT(info != 0 && path != 0);
 
     if(!SV_ExistingFile(path)) return false;
 
     if(SV_OpenFile_Hr_v13(Str_Text(path)))
     {
         Reader *svReader = SV_NewReader_Hr_v13();
-        dd_bool result = false;
+        bool result = false;
 
         /// @todo Use the 'version' string as the "magic" identifier.
         /*char vcheck[VERSIONSIZE];
@@ -1014,4 +953,64 @@ dd_bool SV_RecognizeState_Hr_v13(Str const *path, SaveInfo *info)
         return result;
     }
     return false;
+}
+
+void HereticV13GameStateReader::read(SaveInfo *info, Str const *path)
+{
+    DENG_ASSERT(info != 0 && path != 0);
+
+    if(!SV_OpenFile_Hr_v13(Str_Text(path)))
+    {
+        throw FileAccessError("HereticV13GameStateReader", "Failed opending " + de::String(Str_Text(path)));
+    }
+
+    svReader = SV_NewReader_Hr_v13();
+
+    // Read the header again.
+    /// @todo Seek past the header straight to the game state.
+    {
+        SaveInfo *tmp = new SaveInfo;
+        SaveInfo_Read_Hr_v13(tmp, svReader);
+        delete tmp;
+    }
+
+    // We don't want to see a briefing if we're loading a save game.
+    briefDisabled = true;
+
+    // Load a base map.
+    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
+
+    // Recreate map state.
+    mapTime = info->mapTime();
+
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
+
+    P_v13_UnArchivePlayers();
+    P_v13_UnArchiveWorld();
+    P_v13_UnArchiveThinkers();
+    P_v13_UnArchiveSpecials();
+
+    if(Reader_ReadByte(svReader) != SAVE_GAME_TERMINATOR)
+    {
+        Reader_Delete(svReader); svReader = 0;
+        SV_CloseFile_Hr_v13();
+
+        throw ReadError("HereticV13GameStateReader", "Bad savegame (consistency test failed!)");
+    }
+
+    Reader_Delete(svReader); svReader = 0;
+    SV_CloseFile_Hr_v13();
+
+    // Material scrollers must be spawned.
+    P_SpawnAllMaterialOriginScrollers();
+
+    // Let the engine know where the local players are now.
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
+
+    // Inform the engine that map setup must be performed once more.
+    R_SetupMap(0, 0);
 }

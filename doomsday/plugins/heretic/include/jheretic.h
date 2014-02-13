@@ -51,7 +51,6 @@
 #include "../../heretic/include/p_lights.h"
 #include "../../heretic/include/p_local.h"
 #include "../../heretic/include/p_maputl.h"
-#include "../../heretic/include/p_oldsvg.h"
 #include "../../heretic/include/p_pspr.h"
 #include "../../heretic/include/p_setup.h"
 #include "../../heretic/include/p_spec.h"

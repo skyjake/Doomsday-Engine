@@ -52,7 +52,6 @@
 #include "../../doom/include/p_local.h"
 #include "../../doom/include/p_maputl.h"
 #include "../../doom/include/p_mobj.h"
-#include "../../doom/include/p_oldsvg.h"
 #include "../../doom/include/p_pspr.h"
 #include "../../doom/include/p_setup.h"
 #include "../../doom/include/p_spec.h"

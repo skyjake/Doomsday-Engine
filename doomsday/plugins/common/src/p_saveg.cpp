@@ -26,7 +26,6 @@
 #include "g_common.h"
 #include "p_actor.h"
 #include "p_map.h"          // P_TelefragMobjsTouchingPlayers
-#include "p_mapsetup.h"     // P_SpawnAllMaterialOriginScrollers
 #include "p_inventory.h"
 #include "p_tick.h"         // mapTime
 #include "p_saveio.h"
@@ -35,7 +34,12 @@
 #include "gamestatereader.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
-#include "r_common.h"       // R_UpdateConsoleView
+#if __JDOOM__
+#  include "p_oldsvg.h"
+#endif
+#if __JHERETIC__
+#  include "p_oldsvg.h"
+#endif
 #include <de/String>
 #include <de/memory.h>
 #include <lzss.h>
@@ -1217,23 +1221,6 @@ dd_bool SV_LoadGame(int slot)
             /// @throw Error The savegame was not recognized.
             throw de::Error("loadGameState", "Unrecognized savegame format");
         }
-
-        // Material scrollers must be re-spawned for older savegame versions.
-        /// @todo Implement SaveInfo format type identifiers.
-        if((info.magic() != (IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC)) ||
-           info.version() <= 10)
-        {
-            P_SpawnAllMaterialOriginScrollers();
-        }
-
-        // Let the engine know where the local players are now.
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            R_UpdateConsoleView(i);
-        }
-
-        // Inform the engine that map setup must be performed once more.
-        R_SetupMap(0, 0);
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);

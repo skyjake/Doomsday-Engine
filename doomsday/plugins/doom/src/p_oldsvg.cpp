@@ -22,32 +22,19 @@
 #include "jdoom.h"
 #include "p_oldsvg.h"
 
+#include "am_map.h"
 #include "dmu_lib.h"
-#include "p_saveio.h"
-#include "p_saveg.h"
-#include "p_map.h"
-#include "p_mapsetup.h"
-#include "p_tick.h"
 #include "p_ceiling.h"
 #include "p_door.h"
 #include "p_floor.h"
+#include "p_map.h"
+#include "p_mapsetup.h"
 #include "p_plat.h"
-#include "am_map.h"
+#include "p_saveio.h"
+#include "p_saveg.h"
+#include "p_tick.h"
+#include "r_common.h"       // R_UpdateConsoleView
 #include <de/String>
-
-bool DoomV9GameStateReader::recognize(SaveInfo *saveInfo, Str const *path) // static
-{
-    return SV_RecognizeState_Dm_v19(path, saveInfo);
-}
-
-void DoomV9GameStateReader::read(SaveInfo *saveInfo, Str const *path)
-{
-    int errorCode = SV_LoadState_Dm_v19(path, saveInfo);
-    if(errorCode != 0)
-    {
-        throw de::Error("DoomV9GameStateReader", "Error " + de::String::number(errorCode));
-    }
-}
 
 #define PADSAVEP()                      savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
 
@@ -843,54 +830,6 @@ static void P_v19_UnArchiveSpecials()
     }
 }
 
-int SV_LoadState_Dm_v19(Str const *path, SaveInfo *info)
-{
-    DENG_ASSERT(path != 0 && info != 0);
-
-    if(!SV_OpenFile_Dm_v19(Str_Text(path))) return 1;
-
-    svReader = SV_NewReader_Dm_v19();
-
-    // Read the header again.
-    /// @todo Seek past the header straight to the game state.
-    {
-        SaveInfo *tmp = new SaveInfo;
-        SaveInfo_Read_Dm_v19(tmp, svReader);
-        delete tmp;
-    }
-
-    // We don't want to see a briefing if we're loading a save game.
-    briefDisabled = true;
-
-    // Load a base map.
-    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
-
-    // Recreate map state.
-    mapTime = info->mapTime();
-
-    /// @todo Necessary?
-    G_SetGameAction(GA_NONE);
-
-    P_v19_UnArchivePlayers();
-    P_v19_UnArchiveWorld();
-    P_v19_UnArchiveThinkers();
-    P_v19_UnArchiveSpecials();
-
-    if(Reader_ReadByte(svReader) != 0x1d)
-    {
-        Reader_Delete(svReader); svReader = 0;
-        SV_CloseFile_Dm_v19();
-
-        Con_Error("SV_LoadState_Dm_v19: Bad savegame (consistency test failed!)");
-        exit(1); // Unreachable.
-    }
-
-    Reader_Delete(svReader); svReader = 0;
-    SV_CloseFile_Dm_v19();
-
-    return 0; // Success!
-}
-
 static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
 {
     DENG_ASSERT(info != 0);
@@ -968,16 +907,16 @@ static Reader *SV_NewReader_Dm_v19()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-dd_bool SV_RecognizeState_Dm_v19(Str const *path, SaveInfo *info)
+bool DoomV9GameStateReader::recognize(SaveInfo *info, Str const *path) // static
 {
-    DENG_ASSERT(path != 0 && info != 0);
+    DENG_ASSERT(info != 0 && path != 0);
 
     if(!SV_ExistingFile(path)) return false;
 
     if(SV_OpenFile_Dm_v19(Str_Text(path)))
     {
         Reader *svReader = SV_NewReader_Dm_v19();
-        dd_bool result = false;
+        bool result = false;
 
         /// @todo Use the 'version' string as the "magic" identifier.
         /*char vcheck[VERSIONSIZE];
@@ -997,4 +936,64 @@ dd_bool SV_RecognizeState_Dm_v19(Str const *path, SaveInfo *info)
     }
 
     return false;
+}
+
+void DoomV9GameStateReader::read(SaveInfo *info, Str const *path)
+{
+    DENG_ASSERT(info != 0 && path != 0);
+
+    if(!SV_OpenFile_Dm_v19(Str_Text(path)))
+    {
+        throw FileAccessError("DoomV9GameStateReader", "Failed opending " + de::String(Str_Text(path)));
+    }
+
+    svReader = SV_NewReader_Dm_v19();
+
+    // Read the header again.
+    /// @todo Seek past the header straight to the game state.
+    {
+        SaveInfo *tmp = new SaveInfo;
+        SaveInfo_Read_Dm_v19(tmp, svReader);
+        delete tmp;
+    }
+
+    // We don't want to see a briefing if we're loading a save game.
+    briefDisabled = true;
+
+    // Load a base map.
+    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
+
+    // Recreate map state.
+    mapTime = info->mapTime();
+
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
+
+    P_v19_UnArchivePlayers();
+    P_v19_UnArchiveWorld();
+    P_v19_UnArchiveThinkers();
+    P_v19_UnArchiveSpecials();
+
+    if(Reader_ReadByte(svReader) != 0x1d)
+    {
+        Reader_Delete(svReader); svReader = 0;
+        SV_CloseFile_Dm_v19();
+
+        throw ReadError("DoomV9GameStateReader", "Bad savegame (consistency test failed!)");
+    }
+
+    Reader_Delete(svReader); svReader = 0;
+    SV_CloseFile_Dm_v19();
+
+    // Material scrollers must be spawned.
+    P_SpawnAllMaterialOriginScrollers();
+
+    // Let the engine know where the local players are now.
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
+
+    // Inform the engine that map setup must be performed once more.
+    R_SetupMap(0, 0);
 }

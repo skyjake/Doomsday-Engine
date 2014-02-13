@@ -25,9 +25,11 @@
 #include "g_common.h"
 #include "hu_log.h"
 #include "mapstatereader.h"
-#include "p_tick.h"         // mapTime
+#include "p_mapsetup.h"     // P_SpawnAllMaterialOriginScrollers
 #include "p_saveio.h"
-#include "p_saveg.h" /// @todo remove me
+#include "p_saveg.h"        /// @todo remove me
+#include "p_tick.h"         // mapTime
+#include "r_common.h"       // R_UpdateConsoleView
 #include <de/String>
 
 DENG2_PIMPL(GameStateReader)
@@ -325,4 +327,19 @@ void GameStateReader::read(SaveInfo *saveInfo, Str const *path)
 #endif
 
     Reader_Delete(d->reader); d->reader = 0;
+
+    // Material scrollers must be spawned for older savegame versions.
+    if(d->saveInfo->version() <= 10)
+    {
+        P_SpawnAllMaterialOriginScrollers();
+    }
+
+    // Let the engine know where the local players are now.
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
+
+    // Inform the engine that map setup must be performed once more.
+    R_SetupMap(0, 0);
 }
