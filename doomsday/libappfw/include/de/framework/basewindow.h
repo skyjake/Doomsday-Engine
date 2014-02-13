@@ -23,6 +23,7 @@
 
 #include <de/Canvas>
 #include <de/Vector>
+#include <de/PersistentCanvasWindow>
 
 namespace de {
 
@@ -31,17 +32,15 @@ class WindowTransform;
 /**
  * Abstract base class for application windows.
  *
- * All windows must have a Canvas where the contents of the window are drawn. Windows may
+ * All windows have a Canvas where the contents of the window are drawn. Windows may
  * additionally specify a content transformation using a WindowTransform object, which
  * will override the built-in transformation. The built-in transformation specifies an
  * "identity" transformation that doesn't differ from the logical layout.
  */
-class BaseWindow
+class BaseWindow : public PersistentCanvasWindow
 {
 public:
-    BaseWindow();
-
-    virtual ~BaseWindow();
+    BaseWindow(String const &id);
 
     /**
      * Sets a new content transformation being applied in the window. The provided
@@ -69,18 +68,30 @@ public:
     virtual Vector2f windowContentSize() = 0;
 
     /**
-     * Returns the Canvas that represents the visible contents of the window.
-     */
-    virtual Canvas& windowCanvas() = 0;
-
-    /**
      * Causes the contents of the window to be drawn. The contents are drawn immediately
      * and the method does not return until everything has been drawn. The method should
      * draw an entire frame using the non-transformed logical size of the view.
      */
     virtual void drawWindowContent() = 0;
 
+    virtual bool shouldRepaintManually() const;
+
+    /**
+     * Request drawing the contents of the window as soon as possible.
+     */
+    virtual void draw();
+
     DENG2_AS_IS_METHODS()
+
+protected:
+    /**
+     * Called when a draw request has been received. This method should carry out any
+     * preparations necessary before the frame can be drawn. It can also cancel the
+     * frame is needed.
+     *
+     * @return @c true to continue drawing the frame, @c false to abort the frame.
+     */
+    virtual bool prepareForDraw();
 
 private:
     DENG2_PRIVATE(d)

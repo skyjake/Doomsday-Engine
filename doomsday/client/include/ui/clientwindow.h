@@ -54,8 +54,7 @@ class AlertDialog;
 /**
  * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
  */
-class ClientWindow : public de::PersistentCanvasWindow,
-                     public de::BaseWindow,
+class ClientWindow : public de::BaseWindow,
                      DENG2_OBSERVES(de::Canvas, GLInit),
                      DENG2_OBSERVES(de::Canvas, GLResize)
 {
@@ -125,11 +124,6 @@ public:
     static bool setDefaultGLFormat();
 
     /**
-     * Request drawing the contents of the window as soon as possible.
-     */
-    void draw();
-
-    /**
      * Determines whether the contents of a window should be drawn during the
      * execution of the main loop callback, or should we wait for an update event
      * from the windowing system.
@@ -168,10 +162,12 @@ public:
 
     // Implements BaseWindow:
     de::Vector2f windowContentSize();
-    de::Canvas &windowCanvas();
     void drawWindowContent();
 
     static ClientWindow &main();
+
+protected:
+    bool prepareForDraw();
 
 public slots:
     void toggleFPSCounter();

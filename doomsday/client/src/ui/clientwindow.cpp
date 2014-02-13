@@ -664,7 +664,8 @@ DENG2_PIMPL(ClientWindow)
 };
 
 ClientWindow::ClientWindow(String const &id)
-    : PersistentCanvasWindow(id), d(new Instance(this))
+    : BaseWindow(id)
+    , d(new Instance(this))
 {
     canvas().audienceForGLResize += this;
     canvas().audienceForGLInit += this;
@@ -682,11 +683,6 @@ ClientWindow::ClientWindow(String const &id)
 Vector2f ClientWindow::windowContentSize()
 {
     return Vector2f(root().viewWidth().value(), root().viewHeight().value());
-}
-
-Canvas &ClientWindow::windowCanvas()
-{
-    return canvas();
 }
 
 void ClientWindow::drawWindowContent()
@@ -763,7 +759,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     GL_state.features.multisample = canvas.format().sampleBuffers();
     LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
-    PersistentCanvasWindow::canvasGLReady(canvas);
+    BaseWindow::canvasGLReady(canvas);
 
     if(vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
     {
@@ -818,7 +814,7 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
 
     ClientApp::app().postFrame(); /// @todo what about multiwindow?
 
-    PersistentCanvasWindow::canvasGLDraw(canvas);
+    BaseWindow::canvasGLDraw(canvas);
     d->updateFpsNotification(frameRate());
 }
 
@@ -896,10 +892,12 @@ bool ClientWindow::setDefaultGLFormat() // static
     }
 }
 
-void ClientWindow::draw()
+bool ClientWindow::prepareForDraw()
 {
-    // Don't run the main loop until after the paint event has been dealt with.
-    ClientApp::app().loop().pause();
+    if(!BaseWindow::prepareForDraw())
+    {
+        return false;
+    }
 
     // Offscreen composition is only needed in Oculus Rift mode.
     d->enableCompositor(vrCfg().mode() == VRConfig::OculusRift);
@@ -907,21 +905,10 @@ void ClientWindow::draw()
     if(d->performDeferredTasks() == Instance::AbortFrame)
     {
         // Shouldn't draw right now.
-        return;
+        return false;
     }
 
-    if(shouldRepaintManually())
-    {
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-        // Perform the drawing manually right away.
-        canvas().updateGL();
-    }
-    else
-    {
-        // Request update at the earliest convenience.
-        canvas().update();
-    }
+    return true; // Go ahead.
 }
 
 bool ClientWindow::shouldRepaintManually() const
@@ -979,7 +966,7 @@ void ClientWindow::updateRootSize()
 
 ClientWindow &ClientWindow::main()
 {
-    return static_cast<ClientWindow &>(PersistentCanvasWindow::main());
+    return static_cast<ClientWindow &>(BaseWindow::main());
 }
 
 #if defined(UNIX) && !defined(MACOSX)

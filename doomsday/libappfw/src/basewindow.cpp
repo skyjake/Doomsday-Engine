@@ -19,6 +19,8 @@
 #include "de/BaseWindow"
 #include "de/WindowTransform"
 
+#include <de/GuiApp>
+
 namespace de {
 
 DENG2_PIMPL(BaseWindow)
@@ -33,10 +35,9 @@ DENG2_PIMPL(BaseWindow)
     {}
 };
 
-BaseWindow::BaseWindow() : d(new Instance(this))
-{}
-
-BaseWindow::~BaseWindow()
+BaseWindow::BaseWindow(String const &id)
+    : PersistentCanvasWindow(id)
+    , d(new Instance(this))
 {}
 
 void BaseWindow::setTransform(WindowTransform &xf)
@@ -44,7 +45,7 @@ void BaseWindow::setTransform(WindowTransform &xf)
     d->xf = &xf;
 }
 
-void de::BaseWindow::useDefaultTransform()
+void BaseWindow::useDefaultTransform()
 {
     d->xf = &d->defaultXf;
 }
@@ -53,6 +54,42 @@ WindowTransform &BaseWindow::transform()
 {
     DENG2_ASSERT(d->xf != 0);
     return *d->xf;
+}
+
+bool BaseWindow::shouldRepaintManually() const
+{
+    // By default always prefer updates that are "nice" to the rest of the system.
+    return false;
+}
+
+bool BaseWindow::prepareForDraw()
+{
+    // Don't run the main loop until after the paint event has been dealt with.
+    DENG2_GUI_APP->loop().pause();
+    return true; // Go ahead.
+}
+
+void BaseWindow::draw()
+{
+    if(!prepareForDraw())
+    {
+        // Not right now, please.
+        return;
+    }
+
+    if(shouldRepaintManually())
+    {
+        DENG2_ASSERT_IN_MAIN_THREAD();
+
+        // Perform the drawing manually right away.
+        canvas().makeCurrent();
+        canvas().updateGL();
+    }
+    else
+    {
+        // Request update at the earliest convenience.
+        canvas().update();
+    }
 }
 
 } // namespace de
