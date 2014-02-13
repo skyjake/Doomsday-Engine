@@ -37,10 +37,9 @@ public:
 #endif
 
 public:
-    ThingArchive();
+    ThingArchive(int version = 0);
 
     int version() const;
-    void setVersion(int newVersion);
 
     bool excludePlayers() const;
 
@@ -78,7 +77,5 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-extern ThingArchive theThingArchive;
 
 #endif // LIBCOMMON_P_ACTOR_H

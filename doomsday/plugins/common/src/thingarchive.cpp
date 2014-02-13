@@ -67,17 +67,14 @@ DENG2_PIMPL(ThingArchive)
     }
 };
 
-ThingArchive::ThingArchive() : d(new Instance(this))
-{}
+ThingArchive::ThingArchive(int version) : d(new Instance(this))
+{
+    d->version = version;
+}
 
 int ThingArchive::version() const
 {
     return d->version;
-}
-
-void ThingArchive::setVersion(int newVersion)
-{
-    d->version = newVersion;
 }
 
 bool ThingArchive::excludePlayers() const
@@ -236,5 +233,3 @@ mobj_t *ThingArchive::mobj(SerialId serialId, void *address)
 
     return d->things[serialId];
 }
-
-ThingArchive theThingArchive; /// @todo remove me

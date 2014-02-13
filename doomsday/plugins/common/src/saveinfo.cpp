@@ -94,12 +94,12 @@ SaveInfo::SaveInfo(SaveInfo const &other)
     , _magic    (other._magic)
     , _version  (other._version)
     , _gameMode (other._gameMode)
+    , _mapUri   (Uri_Dup(other._mapUri))
 #if !__JHEXEN__
     , _mapTime  (other._mapTime)
 #endif
 {
     Str_Copy(Str_InitStd(&_description), &other._description);
-    Uri_Copy(_mapUri, other._mapUri);
 #if !__JHEXEN__
     std::memcpy(&_players, &other._players, sizeof(_players));
 #endif

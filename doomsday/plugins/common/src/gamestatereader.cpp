@@ -68,7 +68,7 @@ DENG2_PIMPL(GameStateReader)
 #endif
     }
 
-    void readMap()
+    void readMap(int thingArchiveSize)
     {
 #if __JHEXEN__ // The map state is actually read from a separate file.
         // Close the game state file.
@@ -79,20 +79,16 @@ DENG2_PIMPL(GameStateReader)
         SV_OpenMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
 #endif
 
-        MapStateReader(theThingArchive, saveInfo->version()).read(reader);
+        MapStateReader(saveInfo->version(), thingArchiveSize).read(reader);
+#if !__JHEXEN__
+        SV_ReadConsistencyBytes();
+#endif
 
 #if __JHEXEN__
         Z_Free(saveBuffer);
-#endif
-
-#if !__JHEXEN__
-        SV_ReadConsistencyBytes();
-        SV_CloseFile();
-#endif
-
-        theThingArchive.clear();
-#if __JHEXEN__
         SV_ClearTargetPlayers();
+#else
+        SV_CloseFile();
 #endif
     }
 
@@ -241,13 +237,13 @@ bool GameStateReader::recognize(SaveInfo &info, Str const *path) // static
 
 #if __JHEXEN__
     /// @todo Do not buffer the whole file.
-    byte *saveBuffer;
-    size_t fileSize = M_ReadFile(Str_Text(path), (char **) &saveBuffer);
+    byte *readBuffer;
+    size_t fileSize = M_ReadFile(Str_Text(path), (char **) &readBuffer);
     if(!fileSize) return false;
 
     // Set the save pointer.
-    SV_HxSavePtr()->b = saveBuffer;
-    SV_HxSetSaveEndPtr(saveBuffer + fileSize);
+    SV_HxSavePtr()->b = readBuffer;
+    SV_HxSetSaveEndPtr(readBuffer + fileSize);
 #else
     if(!SV_OpenFile(path, "rp")) return false;
 #endif
@@ -257,7 +253,7 @@ bool GameStateReader::recognize(SaveInfo &info, Str const *path) // static
     Reader_Delete(reader);
 
 #if __JHEXEN__
-    Z_Free(saveBuffer);
+    Z_Free(readBuffer);
 #else
     SV_CloseFile();
 #endif
@@ -319,12 +315,13 @@ void GameStateReader::read(SaveInfo &info, Str const *path)
     mapTime = d->saveInfo->mapTime();
 #endif
 
+    int thingArchiveSize = 0;
 #if !__JHEXEN__
-    theThingArchive.initForLoad(d->saveInfo->version() >= 5? Reader_ReadInt32(d->reader) : 1024 /* num elements */);
+    thingArchiveSize = (d->saveInfo->version() >= 5? Reader_ReadInt32(d->reader) : 1024);
 #endif
 
     d->readPlayers();
-    d->readMap();
+    d->readMap(thingArchiveSize);
 
     // Notify the players that weren't in the savegame.
     d->kickMissingPlayers();

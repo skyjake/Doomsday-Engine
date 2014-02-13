@@ -244,7 +244,7 @@ void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver)
 
 playerheader_t *SV_GetPlayerHeader()
 {
-    DENG_ASSERT(playerHeaderOK);
+    //DENG_ASSERT(playerHeaderOK);
     return &playerHeader;
 }
 
@@ -1096,7 +1096,8 @@ void SV_SaveGameClient(uint sessionId)
 
     players[CONSOLEPLAYER].write(writer);
 
-    MapStateWriter(theThingArchive).write(writer);
+    ThingArchive thingArchive;
+    MapStateWriter(thingArchive).write(writer);
     /// @todo No consistency bytes in client saves?
 
     SV_CloseFile();
@@ -1179,7 +1180,7 @@ void SV_LoadGameClient(uint sessionId)
 
     cpl->read(reader);
 
-    MapStateReader(theThingArchive, info->version()).read(reader);
+    MapStateReader(info->version()).read(reader);
 
     SV_CloseFile();
     Reader_Delete(reader);
@@ -1197,11 +1198,12 @@ void SV_HxSaveHubMap()
     SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 
     // Set the mobj archive numbers
-    theThingArchive.initForSave(true /*exclude players*/);
+    ThingArchive thingArchive;
+    thingArchive.initForSave(true/*exclude players*/);
 
     Writer *writer = SV_NewWriter();
 
-    MapStateWriter(theThingArchive).write(writer);
+    MapStateWriter(thingArchive).write(writer);
 
     // Close the output file
     SV_CloseFile();
@@ -1228,11 +1230,9 @@ void SV_HxLoadHubMap()
     {
         SV_OpenMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
 
-        MapStateReader(theThingArchive, info->version()).read(reader);
+        MapStateReader(info->version()).read(reader);
 
-#if __JHEXEN__
         Z_Free(saveBuffer);
-#endif
     }
     catch(de::Error const &er)
     {
@@ -1240,9 +1240,5 @@ void SV_HxLoadHubMap()
     }
 
     Reader_Delete(reader);
-
-#if __JHEXEN__
-    theThingArchive.clear();
-#endif
 }
 #endif

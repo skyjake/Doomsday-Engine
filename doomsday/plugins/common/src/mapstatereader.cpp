@@ -34,6 +34,8 @@ DENG2_PIMPL(MapStateReader)
     Reader *reader;
     int saveVersion;
     int mapVersion;
+    int thingArchiveSize;
+
     ThingArchive *thingArchive;
     MaterialArchive *materialArchive;
     dmu_lib::SideArchive *sideArchive;
@@ -43,6 +45,7 @@ DENG2_PIMPL(MapStateReader)
         , reader(0)
         , saveVersion(0)
         , mapVersion(0)
+        , thingArchiveSize(thingArchiveSize)
         , thingArchive(0)
         , materialArchive(0)
         , sideArchive(0)
@@ -84,12 +87,22 @@ DENG2_PIMPL(MapStateReader)
 #endif
     }
 
+    int thingArchiveVersion()
+    {
+#if !__JHEXEN__
+        return 0;
+#else
+        return mapVersion >= 4? 1 : 0;
+#endif
+    }
+
     void beginMapSegment()
     {
         checkMapSegment();
 
-#if __JHEXEN__
-        thingArchive->setVersion(mapVersion >= 4? 1 : 0);
+        thingArchive = new ThingArchive(thingArchiveVersion());
+#if !__JHEXEN__
+        thingArchive->initForLoad(thingArchiveSize);
 #endif
 
 #if __JHEXEN__
@@ -119,6 +132,8 @@ DENG2_PIMPL(MapStateReader)
 
         delete sideArchive; sideArchive = 0;
         MaterialArchive_Delete(materialArchive); materialArchive = 0;
+
+        delete thingArchive; thingArchive = 0;
     }
 
     void readElements()
@@ -525,12 +540,13 @@ DENG2_PIMPL(MapStateReader)
     }
 };
 
-MapStateReader::MapStateReader(ThingArchive &thingArchive, int saveVersion)
+MapStateReader::MapStateReader(int saveVersion, int thingArchiveSize)
     : d(new Instance(this))
 {
-    d->thingArchive = &thingArchive;
-    d->saveVersion  = saveVersion;
-    d->mapVersion   = saveVersion; // Default: mapVersion == saveVersion
+    d->saveVersion      = saveVersion;
+    d->mapVersion       = saveVersion; // Default: mapVersion == saveVersion
+
+    d->thingArchiveSize = thingArchiveSize;
 }
 
 void MapStateReader::read(Reader *reader)

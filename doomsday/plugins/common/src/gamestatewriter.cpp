@@ -25,16 +25,19 @@
 #include "mapstatewriter.h"
 #include "p_saveio.h"
 #include "p_saveg.h" /// @todo remove me
+#include "thingarchive.h"
 #include <de/String>
 
 DENG2_PIMPL(GameStateWriter)
 {
     SaveInfo *saveInfo; ///< Info for the save state to be written.
+    ThingArchive *thingArchive;
     Writer *writer;
 
     Instance(Public *i)
         : Base(i)
         , saveInfo(0)
+        , thingArchive(0)
         , writer(0)
     {}
 
@@ -71,14 +74,10 @@ DENG2_PIMPL(GameStateWriter)
         SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 #endif
 
-        MapStateWriter(theThingArchive).write(writer);
+        MapStateWriter(*thingArchive).write(writer);
 
         SV_WriteConsistencyBytes(); // To be absolutely sure...
         SV_CloseFile();
-
-#if !__JHEXEN___
-        theThingArchive.clear();
-#endif
     }
 
     void writePlayers()
@@ -135,13 +134,15 @@ void GameStateWriter::write(SaveInfo *saveInfo, Str const *path)
     d->writeWorldACScriptData();
 
     // Set the mobj archive numbers.
-    theThingArchive.initForSave(false/*do not exclude players*/);
+    d->thingArchive = new ThingArchive;
+    d->thingArchive->initForSave(false/*do not exclude players*/);
 #if !__JHEXEN__
-    Writer_WriteInt32(d->writer, theThingArchive.size());
+    Writer_WriteInt32(d->writer, d->thingArchive->size());
 #endif
 
     d->writePlayers();
     d->writeMap();
 
+    delete d->thingArchive; d->thingArchive = 0;
     Writer_Delete(d->writer); d->writer = 0;
 }

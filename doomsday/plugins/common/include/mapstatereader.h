@@ -42,7 +42,7 @@ public:
     /**
      * @param saveVersion  Logical saved state version number.
      */
-    MapStateReader(ThingArchive &thingArchive, int saveVersion);
+    MapStateReader(int saveVersion, int thingArchiveSize = 0);
 
     /**
      * Deserialize the saved map state using the specified @a reader.

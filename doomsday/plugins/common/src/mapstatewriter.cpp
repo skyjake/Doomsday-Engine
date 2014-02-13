@@ -73,6 +73,7 @@ DENG2_PIMPL(MapStateWriter)
     void endMapSegment()
     {
         endSegment();
+
         MaterialArchive_Delete(materialArchive); materialArchive = 0;
     }
 
