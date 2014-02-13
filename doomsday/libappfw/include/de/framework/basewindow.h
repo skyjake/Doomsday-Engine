@@ -98,6 +98,8 @@ protected:
     virtual void preDraw();
     virtual void postDraw();
 
+    virtual bool handleFallbackEvent(Event const &event) = 0;
+
 private:
     DENG2_PRIVATE(d)
 };

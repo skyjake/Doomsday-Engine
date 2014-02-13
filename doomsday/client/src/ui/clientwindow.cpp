@@ -60,9 +60,7 @@
 using namespace de;
 
 DENG2_PIMPL(ClientWindow)
-, DENG2_OBSERVES(KeyEventSource,   KeyEvent)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
-, DENG2_OBSERVES(MouseEventSource, MouseEvent)
 , DENG2_OBSERVES(Canvas,           FocusChange)
 , DENG2_OBSERVES(App,              GameChange)
 , DENG2_OBSERVES(App,              StartupComplete)
@@ -132,9 +130,7 @@ DENG2_PIMPL(ClientWindow)
         App::app().audienceForStartupComplete += this;
 
         // Listen to input.
-        self.canvas().audienceForKeyEvent += this;
         self.canvas().audienceForMouseStateChange += this;
-        self.canvas().audienceForMouseEvent += this;
     }
 
     ~Instance()
@@ -144,7 +140,6 @@ DENG2_PIMPL(ClientWindow)
 
         self.canvas().audienceForFocusChange -= this;
         self.canvas().audienceForMouseStateChange -= this;
-        self.canvas().audienceForKeyEvent -= this;
 
         releaseRef(cursorX);
         releaseRef(cursorY);
@@ -360,61 +355,46 @@ DENG2_PIMPL(ClientWindow)
         contentXf.glInit();
     }
 
-    void keyEvent(KeyEvent const &ev)
-    {
-        /// @todo Input drivers should observe the notification instead, input
-        /// subsystem passes it to window system. -jk
-
-        // Pass the event onto the window system.
-        ClientApp::windowSystem().processEvent(ev);
-    }
-
     void mouseStateChanged(MouseEventSource::State state)
     {
         Mouse_Trap(state == MouseEventSource::Trapped);
     }
 
-    void mouseEvent(MouseEvent const &event)
+    /**
+     * Handles an event that BaseWindow (and thus WindowSystem) didn't have use for.
+     *
+     * @param event  Event to handle.
+     */
+    bool handleFallbackEvent(Event const &ev)
     {
-        MouseEvent ev = event;
-
-        // Translate mouse coordinates for direct interaction.
-        if(ev.type() == Event::MousePosition || ev.type() == Event::MouseButton ||
-           ev.type() == Event::MouseWheel)
+        if(MouseEvent const *mouse = ev.maybeAs<MouseEvent>())
         {
-            ev.setPos(contentXf.windowToLogicalCoords(event.pos()).toVector2i());
+            // Fall back to legacy handling.
+            switch(ev.type())
+            {
+            case Event::MouseButton:
+                Mouse_Qt_SubmitButton(
+                            mouse->button() == MouseEvent::Left?     IMB_LEFT :
+                            mouse->button() == MouseEvent::Middle?   IMB_MIDDLE :
+                            mouse->button() == MouseEvent::Right?    IMB_RIGHT :
+                            mouse->button() == MouseEvent::XButton1? IMB_EXTRA1 :
+                            mouse->button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+                            mouse->state() == MouseEvent::Pressed);
+                return true;
+
+            case Event::MouseMotion:
+                Mouse_Qt_SubmitMotion(IMA_POINTER, mouse->pos().x, mouse->pos().y);
+                return true;
+
+            case Event::MouseWheel:
+                Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->pos().x, mouse->pos().y);
+                return true;
+
+            default:
+                break;
+            }
         }
-
-        if(ClientApp::windowSystem().processEvent(ev))
-        {
-            // Eaten by the window system.
-            return;
-        }
-
-        // Fall back to legacy handling.
-        switch(ev.type())
-        {
-        case Event::MouseButton:
-            Mouse_Qt_SubmitButton(
-                        ev.button() == MouseEvent::Left?     IMB_LEFT :
-                        ev.button() == MouseEvent::Middle?   IMB_MIDDLE :
-                        ev.button() == MouseEvent::Right?    IMB_RIGHT :
-                        ev.button() == MouseEvent::XButton1? IMB_EXTRA1 :
-                        ev.button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                        ev.state() == MouseEvent::Pressed);
-            break;
-
-        case Event::MouseMotion:
-            Mouse_Qt_SubmitMotion(IMA_POINTER, ev.pos().x, ev.pos().y);
-            break;
-
-        case Event::MouseWheel:
-            Mouse_Qt_SubmitMotion(IMA_WHEEL, ev.pos().x, ev.pos().y);
-            break;
-
-        default:
-            break;
-        }
+        return false;
     }
 
     void canvasFocusChanged(Canvas &canvas, bool hasFocus)
@@ -750,12 +730,12 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
     GL_state.features.multisample = canvas.format().sampleBuffers();
     LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
-    BaseWindow::canvasGLReady(canvas);
-
     if(vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
     {
         LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
     }
+
+    BaseWindow::canvasGLReady(canvas);
 
     // Now that the Canvas is ready for drawing we can enable the GameWidget.
     d->game->enable();
@@ -971,13 +951,6 @@ ClientWindow &ClientWindow::main()
     return static_cast<ClientWindow &>(BaseWindow::main());
 }
 
-#if defined(UNIX) && !defined(MACOSX)
-void GL_AssertContextActive()
-{
-    DENG_ASSERT(QGLContext::currentContext() != 0);
-}
-#endif
-
 void ClientWindow::toggleFPSCounter()
 {
     App::config().set(configName("showFps"), !isFPSCounterVisible());
@@ -1009,3 +982,15 @@ bool ClientWindow::hasSidebar(SidebarLocation location) const
 
     return d->sidebar != 0;
 }
+
+bool ClientWindow::handleFallbackEvent(Event const &event)
+{
+    return d->handleFallbackEvent(event);
+}
+
+#if defined(UNIX) && !defined(MACOSX)
+void GL_AssertContextActive()
+{
+    DENG_ASSERT(QGLContext::currentContext() != 0);
+}
+#endif
