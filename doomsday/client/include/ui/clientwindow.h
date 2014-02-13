@@ -22,6 +22,7 @@
 #define CLIENT_CLIENTWINDOW_H
 
 #include <de/PersistentCanvasWindow>
+#include <de/BaseWindow>
 #include <de/NotificationWidget>
 
 #include "ui/clientrootwidget.h"
@@ -54,6 +55,7 @@ class AlertDialog;
  * Top-level window that contains a libdeng2 UI widgets. @ingroup gui
  */
 class ClientWindow : public de::PersistentCanvasWindow,
+                     public de::BaseWindow,
                      DENG2_OBSERVES(de::Canvas, GLInit),
                      DENG2_OBSERVES(de::Canvas, GLResize)
 {
@@ -163,6 +165,11 @@ public:
     void canvasGLInit(de::Canvas &);
     void canvasGLDraw(de::Canvas &);
     void canvasGLResized(de::Canvas &);
+
+    // Implements BaseWindow:
+    de::Vector2f windowContentSize();
+    de::Canvas &windowCanvas();
+    void drawWindowContent();
 
     static ClientWindow &main();
 

@@ -303,6 +303,8 @@ DENG2_PIMPL(GLState)
         default:
             break;
         }
+
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void removeRedundancies(BitField::Ids &changed)
@@ -569,6 +571,8 @@ Rectangleui GLState::scissorRect() const
 
 void GLState::apply() const
 {
+    LIBGUI_ASSERT_GL_OK();
+
     bool forceViewportAndScissor = false;
 
     // Update the render target.
@@ -593,6 +597,8 @@ void GLState::apply() const
             forceViewportAndScissor = true;
         }
     }
+
+    LIBGUI_ASSERT_GL_OK();
 
     // Determine which properties have changed.
     BitField::Ids changed;

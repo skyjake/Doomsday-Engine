@@ -17,6 +17,7 @@ include(../dep_deng2.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_opengl.pri)
+include(../dep_rift.pri)
 
 DEFINES += __LIBAPPFW__
 INCLUDEPATH += include
@@ -25,17 +26,12 @@ win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
 }
-else:macx {
-    #useFramework(Cocoa)
-}
-else:unix {
-    #LIBS += -lX11
-}
 
 # Public headers.
 HEADERS += \
     include/de/AtlasProceduralImage \
     include/de/BaseGuiApp \
+    include/de/BaseWindow \
     include/de/BlurWidget \
     include/de/ButtonWidget \
     include/de/ChildWidgetOrganizer \
@@ -61,6 +57,7 @@ HEADERS += \
     include/de/MenuWidget \
     include/de/MessageDialog \
     include/de/NotificationWidget \
+    include/de/OculusRift \
     include/de/PanelWidget \
     include/de/PopupMenuWidget \
     include/de/PopupWidget \
@@ -73,6 +70,8 @@ HEADERS += \
     include/de/SliderWidget \
     include/de/TextDrawable \
     include/de/ToggleWidget \
+    include/de/VRWindowTransform \
+    include/de/WindowTransform \
     include/de/ui/ActionItem \
     include/de/ui/Data \
     include/de/ui/Item \
@@ -84,12 +83,14 @@ HEADERS += \
     include/de/ui/VariableToggleItem \
     include/de/VariableChoiceWidget \
     include/de/VariableToggleWidget \
+    include/de/VRConfig \
     \
     include/de/dialogs/inputdialog.h \
     include/de/dialogs/messagedialog.h \
     include/de/framework/actionitem.h \
     include/de/framework/atlasproceduralimage.h \
     include/de/framework/baseguiapp.h \
+    include/de/framework/basewindow.h \
     include/de/framework/childwidgetorganizer.h \
     include/de/framework/data.h \
     include/de/framework/dialogcontentstylist.h \
@@ -100,7 +101,6 @@ HEADERS += \
     include/de/framework/guiwidget.h \
     include/de/framework/guiwidgetprivate.h \
     include/de/framework/item.h \
-    include/de/framework/libappfw.h \
     include/de/framework/listdata.h \
     include/de/framework/margins.h \
     include/de/framework/proceduralimage.h \
@@ -112,7 +112,12 @@ HEADERS += \
     include/de/framework/subwidgetitem.h \
     include/de/framework/textdrawable.h \
     include/de/framework/variabletoggleitem.h \
+    include/de/framework/vrwindowtransform.h \
+    include/de/framework/windowtransform.h \
+    include/de/libappfw.h \
     include/de/ui/defs.h \
+    include/de/vr/oculusrift.h \
+    include/de/vr/vrconfig.h \
     include/de/widgets/blurwidget.h \
     include/de/widgets/buttonwidget.h \
     include/de/widgets/choicewidget.h \
@@ -137,11 +142,13 @@ HEADERS += \
     include/de/widgets/sliderwidget.h \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
-    include/de/widgets/variabletogglewidget.h
+    include/de/widgets/variabletogglewidget.h \
+    include/de/vr/vrconfig.h
 
 # Sources and private headers.
 SOURCES += \
     src/baseguiapp.cpp \
+    src/basewindow.cpp \
     src/childwidgetorganizer.cpp \
     src/data.cpp \
     src/dialogcontentstylist.cpp \
@@ -160,6 +167,9 @@ SOURCES += \
     src/signalaction.cpp \
     src/style.cpp \
     src/textdrawable.cpp \
+    src/vrwindowtransform.cpp \
+    src/vr/oculusrift.cpp \
+    src/vr/vrconfig.cpp \
     src/widgets/blurwidget.cpp \
     src/widgets/buttonwidget.cpp \
     src/widgets/choicewidget.cpp \
@@ -184,7 +194,8 @@ SOURCES += \
     src/widgets/sliderwidget.cpp \
     src/widgets/togglewidget.cpp \
     src/widgets/variablechoicewidget.cpp \
-    src/widgets/variabletogglewidget.cpp
+    src/widgets/variabletogglewidget.cpp \
+    src/windowtransform.cpp
 
 # Installation ---------------------------------------------------------------
 

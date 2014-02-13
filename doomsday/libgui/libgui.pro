@@ -131,6 +131,7 @@ SOURCES +=  \
     src/fontbank.cpp \
     src/glbuffer.cpp \
     src/glentrypoints.cpp \
+    src/glentrypoints_x11.cpp \
     src/glframebuffer.cpp \
     src/glinfo.cpp \
     src/glprogram.cpp \

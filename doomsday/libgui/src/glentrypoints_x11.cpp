@@ -1,4 +1,4 @@
-/** @file baseguiapp.cpp  Base class for GUI applications.
+/** @file glentrypoints_x11.cpp
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,34 +16,37 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BaseGuiApp"
-#include "de/VRConfig"
+#include "de/gui/glentrypoints.h"
 
-namespace de {
+#ifdef Q_WS_X11
 
-DENG2_PIMPL_NOREF(BaseGuiApp)
+#include "de/CanvasWindow"
+
+#include <QX11Info>
+#include <GL/glx.h>
+#include <GL/glxext.h>
+
+#define GET_PROC_EXT(name) *((void (**)())&name) = glXGetProcAddress((GLubyte const *)#name)
+
+PFNGLXSWAPINTERVALEXTPROC   glXSwapIntervalEXT;
+
+void getGLXEntryPoints()
 {
-    GLShaderBank shaders;
-    VRConfig vr;
-};
-
-BaseGuiApp::BaseGuiApp(int &argc, char **argv)
-    : GuiApp(argc, argv), d(new Instance)
-{}
-
-BaseGuiApp &BaseGuiApp::app()
-{
-    return static_cast<BaseGuiApp &>(App::app());
+    GET_PROC_EXT(glXSwapIntervalEXT);
 }
 
-GLShaderBank &BaseGuiApp::shaders()
+char const *getGLXExtensionsString()
 {
-    return app().d->shaders;
+    return glXQueryExtensionsString(QX11Info::display(), QX11Info::appScreen());
 }
 
-VRConfig &BaseGuiApp::vr()
+void setXSwapInterval(int interval)
 {
-    return app().d->vr;
+    if(glXSwapIntervalEXT)
+    {
+        DENG2_ASSERT(de::CanvasWindow::mainExists());
+        glXSwapIntervalEXT(QX11Info::display(), de::CanvasWindow::main().canvas().winId(), interval);
+    }
 }
 
-} // namespace de
+#endif // Q_WS_X11

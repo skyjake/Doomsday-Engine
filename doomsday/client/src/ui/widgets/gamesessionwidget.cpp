@@ -80,7 +80,8 @@ DENG2_PIMPL(GameSessionWidget)
 
 GameSessionWidget::GameSessionWidget() : d(new Instance(this))
 {
-    rule().setInput(Rule::Height, style().fonts().font("default").height() * 4);
+    Font const &font = style().fonts().font("default");
+    rule().setInput(Rule::Height, font.lineSpacing() * 3 + font.height() + margins().height());
 
     // Button for extra information.
     d->load->rule()

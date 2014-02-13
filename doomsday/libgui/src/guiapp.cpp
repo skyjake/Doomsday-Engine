@@ -66,6 +66,12 @@ void GuiApp::notifyDisplayModeChanged()
     emit displayModeChanged();
 }
 
+void GuiApp::notifyGLContextChanged()
+{
+    qDebug() << "notifying GL context change" << audienceForGLContextChange.size();
+    DENG2_FOR_AUDIENCE(GLContextChange, i) i->appGLContextChanged();
+}
+
 int GuiApp::execLoop()
 {
     LOGDEV_NOTE("Starting GuiApp event loop...");

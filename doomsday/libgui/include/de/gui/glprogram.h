@@ -79,6 +79,10 @@ public:
     GLProgram &build(IByteArray const &vertexShaderSource,
                      IByteArray const &fragmentShaderSource);
 
+    void rebuildBeforeNextUse();
+
+    void rebuild();
+
     GLProgram &operator << (GLUniform const &uniform);
 
     GLProgram &bind(GLUniform const &uniform);

@@ -17,6 +17,7 @@
  */
 
 #include "de/GLFramebuffer"
+#include "de/GuiApp"
 
 #include <de/Log>
 #include <de/Canvas>
@@ -30,6 +31,7 @@ DENG2_STATIC_PROPERTY(DefaultSampleCount, int)
 
 DENG2_PIMPL(GLFramebuffer)
 , DENG2_OBSERVES(DefaultSampleCount, Change)
+, DENG2_OBSERVES(GuiApp, GLContextChange)
 {
     Image::Format colorFormat;
     Size size;
@@ -53,11 +55,22 @@ DENG2_PIMPL(GLFramebuffer)
         , uBufTex   ("uTex",       GLUniform::Sampler2D)
     {
         pDefaultSampleCount.audienceForChange += this;
+        //DENG2_GUI_APP->audienceForGLContextChange += this;
     }
 
     ~Instance()
     {
         pDefaultSampleCount.audienceForChange -= this;
+        //DENG2_GUI_APP->audienceForGLContextChange -= this;
+    }
+
+    void appGLContextChanged()
+    {
+        /*
+        qDebug() << "rebooting FB" << thisPublic << self.isReady() << target.glName() << target.isReady() << size.asText();
+        self.glDeinit();
+        self.glInit();
+        */
     }
 
     int sampleCount() const

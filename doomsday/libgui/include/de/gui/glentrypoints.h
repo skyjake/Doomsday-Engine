@@ -100,6 +100,8 @@ LIBGUI_EXTERN_C PFNGLGETSHADERSOURCEPROC          glGetShaderSource;
 LIBGUI_EXTERN_C PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation;
 
 LIBGUI_EXTERN_C PFNGLISBUFFERPROC                 glIsBuffer;
+LIBGUI_EXTERN_C PFNGLISFRAMEBUFFERPROC            glIsFramebuffer;
+LIBGUI_EXTERN_C PFNGLISPROGRAMPROC                glIsProgram;
 
 LIBGUI_EXTERN_C PFNGLLINKPROGRAMPROC              glLinkProgram;
 
@@ -120,6 +122,10 @@ LIBGUI_EXTERN_C PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 // Extensions:
 
+#ifdef GL_ARB_debug_output
+LIBGUI_EXTERN_C PFNGLDEBUGMESSAGECONTROLARBPROC   glDebugMessageControlARB;
+LIBGUI_EXTERN_C PFNGLDEBUGMESSAGECALLBACKARBPROC  glDebugMessageCallbackARB;
+#endif
 LIBGUI_EXTERN_C PFNGLBLITFRAMEBUFFEREXTPROC                         glBlitFramebufferEXT;
 LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC          glRenderbufferStorageMultisampleEXT;
 #ifdef GL_NV_framebuffer_multisample_coverage
@@ -127,6 +133,12 @@ LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC   glRenderbuff
 #endif
 
 void getAllOpenGLEntryPoints();
+
+#ifdef Q_WS_X11
+LIBGUI_PUBLIC char const *getGLXExtensionsString();
+LIBGUI_PUBLIC void setXSwapInterval(int interval);
+void getGLXEntryPoints();
+#endif
 
 #endif // LIBGUI_USE_GLENTRYPOINTS
 

@@ -171,6 +171,11 @@ public:
      */
     void *nativeHandle() const;
 
+    bool isRecreationInProgress() const;
+
+protected slots:
+    void finishCanvasRecreation();
+
 public:
     static bool mainExists();
     static CanvasWindow &main();

@@ -18,16 +18,16 @@ deployTest($$TARGET)
 
 gfx.files = testpic.png
 
-win32 {
-    gfx.path = $$DENG_DATA_DIR/graphics
-    INSTALLS += gfx
-}
-else:macx {
+macx {
     linkBinaryToBundledLibdeng2($${TARGET}.app/Contents/MacOS/$${TARGET})
     linkBinaryToBundledLibdengGui($${TARGET}.app/Contents/MacOS/$${TARGET})
 
     gfx.path = Contents/Resources/graphics
     QMAKE_BUNDLE_DATA += gfx
+}
+else {
+    gfx.path = $$DENG_DATA_DIR/graphics
+    INSTALLS += gfx
 }
 
 HEADERS += \

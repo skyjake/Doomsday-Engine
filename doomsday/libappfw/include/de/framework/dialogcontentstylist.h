@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_DIALOGCONTENTSTYLIST_H
 #define LIBAPPFW_DIALOGCONTENTSTYLIST_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 #include "../ui/Stylist"
 
 #include <de/Widget>

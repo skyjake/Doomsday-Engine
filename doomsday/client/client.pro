@@ -37,7 +37,6 @@ include(../dep_deng1.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_appfw.pri)
-include(../dep_rift.pri)
 
 # Definitions ----------------------------------------------------------------
 
@@ -414,9 +413,7 @@ DENG_HEADERS += \
     include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/ui_panel.h \
-    include/ui/vrwindowtransform.h \
     include/ui/windowsystem.h \
-    include/ui/windowtransform.h \
     include/ui/zonedebug.h \
     include/updater.h \
     include/updater/downloaddialog.h \
@@ -722,7 +719,6 @@ SOURCES += \
     src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/ui_panel.cpp \
-    src/ui/vrwindowtransform.cpp \
     src/ui/widgetactions.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
@@ -741,7 +737,6 @@ SOURCES += \
     src/ui/widgets/profilepickerwidget.cpp \
     src/ui/widgets/taskbarwidget.cpp \
     src/ui/windowsystem.cpp \
-    src/ui/windowtransform.cpp \
     src/ui/zonedebug.cpp \
     src/updater/downloaddialog.cpp \
     src/updater/processcheckdialog.cpp \

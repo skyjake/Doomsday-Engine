@@ -333,9 +333,8 @@ void GL_SetVSync(dd_bool on)
 
 #ifdef WIN32
     wglSwapIntervalEXT(on? 1 : 0);
-#endif
 
-#ifdef MACOSX
+#elif defined(MACOSX)
     {
         // Tell CGL to wait for vertical refresh.
         CGLContextObj context = CGLGetCurrentContext();
@@ -346,6 +345,9 @@ void GL_SetVSync(dd_bool on)
             CGLSetParameter(context, kCGLCPSwapInterval, params);
         }
     }
+
+#elif defined(Q_WS_X11)
+    setXSwapInterval(on? 1 : 0);
 #endif
 }
 

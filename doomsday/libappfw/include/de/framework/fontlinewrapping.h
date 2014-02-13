@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_FONTLINEWRAPPING_H
 #define LIBAPPFW_FONTLINEWRAPPING_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 
 #include <de/String>
 #include <de/Font>

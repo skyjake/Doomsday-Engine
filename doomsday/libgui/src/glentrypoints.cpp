@@ -21,11 +21,11 @@
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
 
-using namespace de;
-
-#ifdef UNIX
+#ifdef Q_WS_X11
 #  include <GL/glx.h>
 #endif
+
+using namespace de;
 
 #ifdef LIBGUI_FETCH_GL_1_3
 PFNGLACTIVETEXTUREPROC            glActiveTexture;
@@ -79,6 +79,8 @@ PFNGLGETSHADERSOURCEPROC          glGetShaderSource;
 PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation;
 
 PFNGLISBUFFERPROC                 glIsBuffer;
+PFNGLISFRAMEBUFFERPROC            glIsFramebuffer;
+PFNGLISPROGRAMPROC                glIsProgram;
 
 PFNGLLINKPROGRAMPROC              glLinkProgram;
 
@@ -99,10 +101,14 @@ PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 // Extensions:
 
-PFNGLBLITFRAMEBUFFEREXTPROC                         glBlitFramebufferEXT;
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC          glRenderbufferStorageMultisampleEXT;
+#ifdef GL_ARB_debug_output
+PFNGLDEBUGMESSAGECONTROLARBPROC   glDebugMessageControlARB;
+PFNGLDEBUGMESSAGECALLBACKARBPROC  glDebugMessageCallbackARB;
+#endif
+PFNGLBLITFRAMEBUFFEREXTPROC                 glBlitFramebufferEXT;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC  glRenderbufferStorageMultisampleEXT;
 #ifdef GL_NV_framebuffer_multisample_coverage
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC   glRenderbufferStorageMultisampleCoverageNV;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC glRenderbufferStorageMultisampleCoverageNV;
 #endif
 
 void getAllOpenGLEntryPoints()
@@ -166,6 +172,8 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glGetShaderSource);
     GET_PROC(glGetUniformLocation);
     GET_PROC(glIsBuffer);
+    GET_PROC(glIsFramebuffer);
+    GET_PROC(glIsProgram);
     GET_PROC(glLinkProgram);
     GET_PROC(glRenderbufferStorage);
     GET_PROC(glShaderSource);
@@ -179,10 +187,17 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glUseProgram);
     GET_PROC(glVertexAttribPointer);
 
+#ifdef GL_ARB_debug_output
+    GET_PROC(glDebugMessageControlARB);
+    GET_PROC(glDebugMessageCallbackARB);
+#endif
     GET_PROC_EXT(glBlitFramebufferEXT);
     GET_PROC_EXT(glRenderbufferStorageMultisampleEXT);
 #ifdef GL_NV_framebuffer_multisample_coverage
     GET_PROC_EXT(glRenderbufferStorageMultisampleCoverageNV);
+#endif
+#ifdef Q_WS_X11
+    getGLXEntryPoints();
 #endif
 
     haveProcs = true;

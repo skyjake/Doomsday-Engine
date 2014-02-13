@@ -27,16 +27,17 @@
 #include "ui/clientwindow.h"
 #include "ui/clientrootwidget.h"
 #include "clientapp.h"
+#include <QGLFormat>
 #include <de/DisplayMode>
 #include <de/NumberValue>
 #include <de/ConstantRule>
-#include <QGLFormat>
 #include <de/GLState>
 #include <de/GLFramebuffer>
 #include <de/Drawable>
 #include <de/CompositorWidget>
 #include <de/NotificationWidget>
 #include <de/ProgressWidget>
+#include <de/VRWindowTransform>
 #include <QCloseEvent>
 
 #include "gl/sys_opengl.h"
@@ -54,18 +55,17 @@
 
 #include "dd_main.h"
 #include "con_main.h"
-#include "ui/vrwindowtransform.h"
 #include "render/vr.h"
 
 using namespace de;
 
-DENG2_PIMPL(ClientWindow),
-DENG2_OBSERVES(KeyEventSource,   KeyEvent),
-DENG2_OBSERVES(MouseEventSource, MouseStateChange),
-DENG2_OBSERVES(MouseEventSource, MouseEvent),
-DENG2_OBSERVES(Canvas,           FocusChange),
-DENG2_OBSERVES(App,              GameChange),
-DENG2_OBSERVES(App,              StartupComplete)
+DENG2_PIMPL(ClientWindow)
+, DENG2_OBSERVES(KeyEventSource,   KeyEvent)
+, DENG2_OBSERVES(MouseEventSource, MouseStateChange)
+, DENG2_OBSERVES(MouseEventSource, MouseEvent)
+, DENG2_OBSERVES(Canvas,           FocusChange)
+, DENG2_OBSERVES(App,              GameChange)
+, DENG2_OBSERVES(App,              StartupComplete)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -123,6 +123,8 @@ DENG2_OBSERVES(App,              StartupComplete)
         , oldFps(0)
         , contentXf(*i)
     {
+        self.setTransform(contentXf);
+
         /// @todo The decision whether to receive input notifications from the
         /// canvas is really a concern for the input drivers.
 
@@ -622,7 +624,7 @@ DENG2_OBSERVES(App,              StartupComplete)
 
         if(!compositor) return;
 
-        if(VR::mode() == VR::MODE_OCULUS_RIFT)
+        if(vrCfg().mode() == VRConfig::OculusRift)
         {
             compositor->setCompositeProjection(Matrix4f::ortho(-1.1f, 2.2f, -1.1f, 2.2f));
         }
@@ -636,7 +638,7 @@ DENG2_OBSERVES(App,              StartupComplete)
     void updateMouseCursor()
     {
         // The cursor is only needed if the content is warped.
-        cursor->show(!self.canvas().isMouseTrapped() && VR::mode() == VR::MODE_OCULUS_RIFT);
+        cursor->show(!self.canvas().isMouseTrapped() && vrCfg().mode() == VRConfig::OculusRift);
 
         if(cursor->isVisible())
         {
@@ -675,6 +677,25 @@ ClientWindow::ClientWindow(String const &id)
 #endif
 
     d->setupUI();
+}
+
+Vector2f ClientWindow::windowContentSize()
+{
+    return Vector2f(root().viewWidth().value(), root().viewHeight().value());
+}
+
+Canvas &ClientWindow::windowCanvas()
+{
+    return canvas();
+}
+
+void ClientWindow::drawWindowContent()
+{
+    LIBGUI_ASSERT_GL_OK();
+
+    root().draw();
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 ClientRootWidget &ClientWindow::root()
@@ -744,7 +765,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
     PersistentCanvasWindow::canvasGLReady(canvas);
 
-    if(VR::modeNeedsStereoGLFormat(VR::mode()) && !canvas.format().stereo())
+    if(vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
     {
         LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
     }
@@ -827,13 +848,14 @@ bool ClientWindow::setDefaultGLFormat() // static
     //fmt.setStencilBufferSize(8);
     fmt.setDoubleBuffer(true);
 
-    if(VR::modeNeedsStereoGLFormat(VR::mode()))
+    if(vrCfg().needsStereoGLFormat())
     {
         // Only use a stereo format for modes that require it.
         LOG_GL_MSG("Using a stereoscopic frame buffer format");
         fmt.setStereo(true);
     }
 
+    /*
     if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
     {
         fmt.setSwapInterval(0); // vsync off
@@ -844,6 +866,7 @@ bool ClientWindow::setDefaultGLFormat() // static
         fmt.setSwapInterval(1);
         LOG_GL_VERBOSE("Vertical sync on");
     }
+    */
 
     // The value of the "vid-fsaa" variable is written to this settings
     // key when the value of the variable changes.
@@ -879,7 +902,7 @@ void ClientWindow::draw()
     ClientApp::app().loop().pause();
 
     // Offscreen composition is only needed in Oculus Rift mode.
-    d->enableCompositor(VR::mode() == VR::MODE_OCULUS_RIFT);
+    d->enableCompositor(vrCfg().mode() == VRConfig::OculusRift);
 
     if(d->performDeferredTasks() == Instance::AbortFrame)
     {

@@ -504,6 +504,7 @@ void GLTarget::configure(Flags const &attachment, GLTexture &texture, Flags cons
 
 void GLTarget::glBind() const
 {
+    LIBGUI_ASSERT_GL_OK();
     DENG2_ASSERT(isReady());
     if(!isReady()) return;
 
@@ -514,9 +515,12 @@ void GLTarget::glBind() const
     }
     else
     {
+        DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
+
         //qDebug() << "GLTarget: binding FBO" << d->fbo;
         glBindFramebuffer(GLInfo::extensions().EXT_framebuffer_blit?
                               GL_DRAW_FRAMEBUFFER_EXT : GL_FRAMEBUFFER, d->fbo);
+        LIBGUI_ASSERT_GL_OK();
     }
 }
 

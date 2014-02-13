@@ -19,12 +19,19 @@
 #ifndef LIBAPPFW_BASEGUIAPP_H
 #define LIBAPPFW_BASEGUIAPP_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 
 #include <de/GuiApp>
 #include <de/GLShaderBank>
 
+/**
+ * Macro for conveniently accessing the de::BaseGuiApp singleton instance.
+ */
+#define DENG2_BASE_GUI_APP   (static_cast<de::BaseGuiApp *>(qApp))
+
 namespace de {
+
+class VRConfig;
 
 /**
  * Base class for GUI applications.
@@ -39,6 +46,7 @@ public:
 public:
     static BaseGuiApp &app();
     static GLShaderBank &shaders();
+    static VRConfig &vr();
 
 private:
     DENG2_PRIVATE(d)

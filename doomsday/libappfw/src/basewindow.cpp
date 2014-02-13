@@ -1,4 +1,4 @@
-/** @file baseguiapp.cpp  Base class for GUI applications.
+/** @file basewindow.cpp  Abstract base class for application windows.
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,34 +16,40 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BaseGuiApp"
-#include "de/VRConfig"
+#include "de/BaseWindow"
+#include "de/WindowTransform"
 
 namespace de {
 
-DENG2_PIMPL_NOREF(BaseGuiApp)
+DENG2_PIMPL(BaseWindow)
 {
-    GLShaderBank shaders;
-    VRConfig vr;
+    WindowTransform defaultXf; ///< Used by default (doesn't apply any transformation).
+    WindowTransform *xf;
+
+    Instance(Public *i)
+        : Base(i)
+        , defaultXf(self)
+        , xf(&defaultXf)
+    {}
 };
 
-BaseGuiApp::BaseGuiApp(int &argc, char **argv)
-    : GuiApp(argc, argv), d(new Instance)
+BaseWindow::BaseWindow() : d(new Instance(this))
 {}
 
-BaseGuiApp &BaseGuiApp::app()
+void BaseWindow::setTransform(WindowTransform &xf)
 {
-    return static_cast<BaseGuiApp &>(App::app());
+    d->xf = &xf;
 }
 
-GLShaderBank &BaseGuiApp::shaders()
+void de::BaseWindow::useDefaultTransform()
 {
-    return app().d->shaders;
+    d->xf = &d->defaultXf;
 }
 
-VRConfig &BaseGuiApp::vr()
+WindowTransform &BaseWindow::transform()
 {
-    return app().d->vr;
+    DENG2_ASSERT(d->xf != 0);
+    return *d->xf;
 }
 
 } // namespace de

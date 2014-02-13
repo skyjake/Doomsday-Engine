@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_CHILDWIDGETORGANIZER_H
 #define LIBAPPFW_CHILDWIDGETORGANIZER_H
 
-#include "libappfw.h"
+#include "../libappfw.h"
 #include "../ui/Data"
 #include "../GuiWidget"
 

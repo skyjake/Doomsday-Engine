@@ -22,7 +22,7 @@
 #include <de/Vector>
 #include <de/GLBuffer>
 
-#include "libappfw.h"
+#include "../libappfw.h"
 
 namespace de {
 
