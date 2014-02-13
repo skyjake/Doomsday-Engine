@@ -23,11 +23,9 @@
 
 #include "dmu_lib.h"
 #include "p_actor.h"
-#include "p_map.h"          // P_TelefragMobjsTouchingPlayers
 #include "p_inventory.h"
-#include "p_tick.h"         // mapTime
+#include "p_tick.h"          // mapTime
 #include "p_saveio.h"
-#include "polyobjs.h"
 #include "gamestatewriter.h"
 #include "gamestatereader.h"
 #include "mapstatereader.h"
@@ -40,7 +38,6 @@
 #endif
 #include <de/String>
 #include <de/memory.h>
-#include <lzss.h>
 #include <cstdio>
 #include <cstring>
 

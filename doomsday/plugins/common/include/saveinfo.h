@@ -70,7 +70,7 @@ public:
      * Returns the textual description of the game session (provided by the user).
      */
     Str const *description() const;
-    void setDescription(Str const *newDesc);
+    void setDescription(Str const *newDescription);
 
     /**
      * @see G_GenerateSessionId()
@@ -141,7 +141,7 @@ void SaveInfo_Delete(SaveInfo *info);
 SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
 dd_bool SaveInfo_IsLoadable(SaveInfo *info);
 Str const *SaveInfo_Description(SaveInfo const *info);
-void SaveInfo_SetDescription(SaveInfo *info, Str const *newName);
+void SaveInfo_SetDescription(SaveInfo *info, Str const *newDescription);
 uint SaveInfo_SessionId(SaveInfo const *info);
 void SaveInfo_SetSessionId(SaveInfo *info, uint newSessionId);
 void SaveInfo_Write(SaveInfo *info, Writer *writer);

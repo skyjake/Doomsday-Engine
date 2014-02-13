@@ -23,9 +23,7 @@
 
 #include "g_common.h"
 #include "p_tick.h"
-#include "p_saveg.h"
 #include "p_saveio.h"
-#include <de/memory.h>
 #include <cstdlib>
 #include <cstring>
 
@@ -125,12 +123,12 @@ SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
     Str_Copy(&_description, &other._description);
     _sessionId = other._sessionId;
-    _magic = other._magic;
-    _version = other._version;
-    _gameMode = other._gameMode;
+    _magic     = other._magic;
+    _version   = other._version;
+    _gameMode  = other._gameMode;
     Uri_Copy(_mapUri, other._mapUri);
 #if !__JHEXEN__
-    _mapTime = other._mapTime;
+    _mapTime   = other._mapTime;
     std::memcpy(&_players, &other._players, sizeof(_players));
 #endif
     std::memcpy(&_gameRules, &other._gameRules, sizeof(_gameRules));
@@ -152,9 +150,9 @@ Str const *SaveInfo::description() const
     return &_description;
 }
 
-void SaveInfo::setDescription(Str const *newName)
+void SaveInfo::setDescription(Str const *newDescription)
 {
-    Str_CopyOrClear(&_description, newName);
+    Str_CopyOrClear(&_description, newDescription);
 }
 
 uint SaveInfo::sessionId() const
