@@ -27,7 +27,7 @@
 #endif
 
 #include "doomdef.h"
-#include "p_player.h"
+#include "player.h"
 
 /**
  * @param player     Player to receive the power.

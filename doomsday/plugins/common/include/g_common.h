@@ -28,11 +28,7 @@
 #include "dd_share.h"
 #include "g_controls.h"
 #include "mobj.h"
-#include "p_player.h"
-
-#if __cplusplus
-extern "C" {
-#endif
+#include "player.h"
 
 enum {
     JOYAXIS_NONE,
@@ -42,7 +38,11 @@ enum {
     JOYAXIS_LOOK
 };
 
-extern dd_bool singledemo;
+DENG_EXTERN_C dd_bool singledemo;
+
+#if __cplusplus
+extern "C" {
+#endif
 
 void G_Register(void);
 
@@ -52,7 +52,9 @@ void G_ChangeGameState(gamestate_t state);
 gameaction_t G_GameAction(void);
 void G_SetGameAction(gameaction_t action);
 
-const char* P_GetGameModeName(void);
+char const *P_GetGameModeName(void);
+
+uint G_GenerateSessionId(void);
 
 /**
  * Begin the titlescreen animation sequence.
@@ -69,13 +71,12 @@ void G_EndGame(void);
 dd_bool G_QuitInProgress(void);
 
 /**
- * @param episode      Logical episode number.
- * @param map          Logical map number (i.e., not a warp/translated number).
+ * @param mapUri       Map identifier.
  * @param mapEntrance  Logical map entry point number.
  * @param rules        Game rules to apply.
  */
-void G_NewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rules);
-void G_DeferredNewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rules);
+void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
+void G_DeferredNewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
 
 /**
  * Signal that play on the current map may now begin.
@@ -102,16 +103,6 @@ void G_LeaveMap(uint newMap, uint mapEntryPoint, dd_bool secretExit);
  * @return  Resultant Uri. Must be destroyed with Uri_Delete() when no longer needed.
  */
 Uri *G_ComposeMapUri(uint episode, uint map);
-
-/**
- * Compose the Uri for the @em current map.
- *
- * @note Some APIs are designed such that a NULL uri pointer means the "current map",
- * so, calling this may be unnecessary.
- *
- * @return  Resultant Uri. Must be destroyed with Uri_Delete() when no longer needed.
- */
-Uri *G_CurrentMapUri(void);
 
 /**
  * Determine if the specified @a episode and @a map value pair are valid and if not,

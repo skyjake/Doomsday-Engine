@@ -30,7 +30,7 @@
 #include "jhexen.h"
 #include "dmu_lib.h"
 #include "p_map.h"
-#include "p_player.h"
+#include "player.h"
 #include "g_common.h"
 
 #define MAX_BOB_OFFSET          8

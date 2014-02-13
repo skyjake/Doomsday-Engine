@@ -28,7 +28,7 @@
 #include "p_saveg.h"
 #include "d_net.h"
 #include "d_netsv.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_start.h"
 #include "g_common.h"
@@ -42,10 +42,10 @@ void NetCl_UpdateGameState(Reader* msg)
     byte len;
     byte gsFlags = 0;
     char gsGameIdentity[256];
-    Uri* mapUri;
-    byte gsEpisode = 0;
-    byte gsMap = 0;
-    byte gsMapEntrance = 0;
+    Uri *mapUri;
+    uint gsEpisode = 0;
+    uint gsMap = 0;
+    uint gsMapEntrance = 0;
     byte configFlags = 0;
     //byte gsDeathmatch = 0;
     //byte gsMonsters = 0;
@@ -65,13 +65,12 @@ void NetCl_UpdateGameState(Reader* msg)
     gsGameIdentity[len] = 0;
 
     // Current map.
-    mapUri = Uri_FromReader(msg);
-
+    mapUri    = Uri_FromReader(msg);
     gsEpisode = Reader_ReadByte(msg);
-    gsMap = Reader_ReadByte(msg);
+    gsMap     = Reader_ReadByte(msg);
 
     /// @todo Not communicated to clients??
-    //gsMapEntryPoint = ??;
+    //gsMapEntrance = ??;
 
     configFlags = Reader_ReadByte(msg);
     gsRules.deathmatch = configFlags & 0x3;
@@ -80,11 +79,13 @@ void NetCl_UpdateGameState(Reader* msg)
     gsRules.respawnMonsters = (configFlags & 0x8? true : false);
 #endif
     gsJumping = (configFlags & 0x10? true : false);
-    gsRules.skill = Reader_ReadByte(msg);
 
+    gsRules.skill = Reader_ReadByte(msg);
     // Interpret skill modes outside the normal range as "spawn no things".
     if(gsRules.skill < SM_BABY || gsRules.skill >= NUM_SKILL_MODES)
+    {
         gsRules.skill = SM_NOTHINGS;
+    }
 
     gsGravity = Reader_ReadFloat(msg);
 
@@ -138,7 +139,7 @@ void NetCl_UpdateGameState(Reader* msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_NewGame(gsEpisode, gsMap, gameMapEntrance /*gsMapEntrance*/, &gsRules);
+        G_NewGame(mapUri, gameMapEntrance /*gsMapEntrance*/, &gsRules);
 
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
@@ -147,6 +148,7 @@ void NetCl_UpdateGameState(Reader* msg)
     {
         gameEpisode = gsEpisode;
         gameMap     = gsMap;
+        Uri_Copy(gameMapUri, mapUri);
         //gameMapEntrance = gsMapEntrance; /// @todo Not communicated to clients??
         gameRules   = gsRules;
     }

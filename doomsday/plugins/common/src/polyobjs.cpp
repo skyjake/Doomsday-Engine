@@ -1,7 +1,7 @@
-/** @file polyobjs.h Polyobject thinkers and management.
+/** @file polyobjs.h  Polyobject thinkers and management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -20,6 +20,7 @@
  */
 
 #include "common.h"
+#include "polyobjs.h"
 
 #include "dmu_lib.h"
 #include "p_actor.h"
@@ -31,8 +32,6 @@
 #ifdef __JHEXEN__
 #  include "acscript.h"
 #endif
-
-#include "polyobjs.h"
 
 #define POBJ_PERPETUAL  0xffffffffu  // -1
 
@@ -276,8 +275,10 @@ void T_MovePoly(void *polyThinker)
     }
 }
 
-void polyevent_s::write(Writer *writer) const
+void polyevent_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -291,8 +292,11 @@ void polyevent_s::write(Writer *writer) const
     Writer_WriteInt32(writer, FLT2FIX(speed[VY]));
 }
 
-int polyevent_s::read(Reader *reader, int mapVersion)
+int polyevent_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
@@ -525,8 +529,10 @@ void T_PolyDoor(void *polyDoorThinker)
     }
 }
 
-void polydoor_s::write(Writer *writer) const
+void polydoor_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     Writer_WriteByte(writer, type);
@@ -546,8 +552,11 @@ void polydoor_s::write(Writer *writer) const
     Writer_WriteByte(writer, close);
 }
 
-int polydoor_s::read(Reader *reader, int mapVersion)
+int polydoor_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.
@@ -793,4 +802,34 @@ dd_bool PO_Busy(int tag)
 {
     Polyobj *po = Polyobj_ByTag(tag);
     return (po && po->specialData);
+}
+
+void polyobj_s::write(MapStateWriter *msw) const
+{
+    Writer *writer = msw->writer();
+
+    Writer_WriteByte(writer, 1); // write a version byte (unused).
+
+    Writer_WriteInt32(writer, tag);
+    Writer_WriteInt32(writer, angle);
+    Writer_WriteInt32(writer, FLT2FIX(origin[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(origin[VY]));
+}
+
+int polyobj_s::read(MapStateReader *msr)
+{
+    Reader *reader = msr->reader();
+
+    angle_t newAngle = angle_t(Reader_ReadInt32(reader));
+    Polyobj_Rotate(this, newAngle);
+    destAngle = newAngle;
+
+    coord_t newOrigin[2];
+    newOrigin[0] = FIX2FLT(Reader_ReadInt32(reader));
+    newOrigin[1] = FIX2FLT(Reader_ReadInt32(reader));
+    Polyobj_MoveXY(this, newOrigin[0] - origin[0], newOrigin[1] - origin[1]);
+
+    /// @todo What about speed? It isn't saved at all?
+
+    return true;
 }

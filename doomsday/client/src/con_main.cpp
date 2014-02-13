@@ -46,7 +46,7 @@
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
 #  include "clientapp.h"
-#  include "ui/windowsystem.h"
+#  include "ui/clientwindowsystem.h"
 #  include "ui/clientwindow.h"
 #  include "ui/widgets/consolewidget.h"
 #  include "ui/widgets/taskbarwidget.h"

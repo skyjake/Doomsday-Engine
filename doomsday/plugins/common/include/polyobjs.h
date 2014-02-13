@@ -23,6 +23,10 @@
 #define LIBCOMMON_PLAYSIM_POLYOBJS_H
 
 #include "common.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 typedef enum {
     PODOOR_NONE,
@@ -39,8 +43,8 @@ typedef struct polyevent_s {
     coord_t speed[2]; // for sliding doors
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } polyevent_t;
 
@@ -58,8 +62,8 @@ typedef struct polydoor_s {
     dd_bool close;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } polydoor_t;
 
@@ -69,6 +73,11 @@ typedef struct polyobj_s {
 
 // Game-specific data:
     void *specialData; ///< A thinker (if moving).
+
+#ifdef __cplusplus
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
+#endif
 } Polyobj;
 
 enum

@@ -972,7 +972,8 @@ static void P_ResetWorldState()
 #endif
 
 #if __JDOOM__
-    P_BrainInitForMap();
+    delete bossBrain;
+    bossBrain = new BossBrain;
 #endif
 
 #if __JHEXEN__
@@ -1044,7 +1045,8 @@ static void P_ResetWorldState()
 
 char const *P_MapTitle(Uri const *mapUri)
 {
-    DENG_ASSERT(mapUri != 0);
+    if(!mapUri) mapUri = gameMapUri;
+
     char const *title = 0;
 
     // Perhaps a MapInfo definition exists for the map?
@@ -1095,16 +1097,16 @@ char const *P_MapTitle(Uri const *mapUri)
 
 char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
 {
-    char const *author = 0;
+    if(!mapUri) mapUri = gameMapUri;
 
-    AutoStr *path = mapUri? Uri_Resolved(mapUri) : 0;
-
+    AutoStr *path = Uri_Resolved(mapUri);
     if(!path || Str_IsEmpty(path))
         return 0;
 
     // Perhaps a MapInfo definition exists for the map?
     ddmapinfo_t mapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(mapUri)), &mapInfo))
+    char const *author = 0;
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(path), &mapInfo))
     {
         author = mapInfo.author;
     }
@@ -1122,22 +1124,6 @@ char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor)
             return 0;
     }
 
-    return author;
-}
-
-char const *P_CurrentMapTitle()
-{
-    Uri *mapUri = G_CurrentMapUri();
-    char const *title = P_MapTitle(mapUri);
-    Uri_Delete(mapUri);
-    return title;
-}
-
-char const *P_CurrentMapAuthor(dd_bool supressGameAuthor)
-{
-    Uri *mapUri = G_CurrentMapUri();
-    char const *author = P_MapAuthor(mapUri, supressGameAuthor);
-    Uri_Delete(mapUri);
     return author;
 }
 

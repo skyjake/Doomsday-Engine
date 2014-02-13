@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_OLD_SAVESTATE
-#define LIBHERETIC_OLD_SAVESTATE
+#ifndef LIBHERETIC_HERETICV13_GAMESTATEREADER
+#define LIBHERETIC_HERETICV13_GAMESTATEREADER
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -28,19 +28,31 @@
 
 #include "saveinfo.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-dd_bool SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info);
-
 /**
- * @return  @c 0 on success else error code.
+ * Heretic ver 1.3 saved game state reader.
+ *
+ * @ingroup libheretic
  */
-int SV_LoadState_Hr_v13(Str const *path, SaveInfo *info);
+class HereticV13GameStateReader
+{
+public:
+    /// An error occurred attempting to open the input file. @ingroup errors
+    DENG2_ERROR(FileAccessError);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+    /// Base class for read errors. @ingroup errors
+    DENG2_ERROR(ReadError);
 
-#endif // LIBHERETIC_OLD_SAVESTATE
+public:
+    /**
+     * Determines whether the resource file on @a path is interpretable as a game state which can
+     * be loaded with a HereticV13GameStateReader.
+     *
+     * @param info  SaveInfo to attempt to read game session header into.
+     * @param path  Path to the resource file to be recognized.
+     */
+    static bool recognize(SaveInfo *info, Str const *path);
+
+    void read(SaveInfo *info, Str const *path);
+};
+
+#endif // LIBHERETIC_HERETICV13_GAMESTATEREADER

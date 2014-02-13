@@ -22,10 +22,14 @@
 #ifndef LIBHEXEN_P_WAGGLE_H
 #define LIBHEXEN_P_WAGGLE_H
 
-#include "doomsday.h"
-
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
+#endif
+
+#include "doomsday.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
 #endif
 
 typedef enum {
@@ -47,8 +51,8 @@ typedef struct waggle_s {
     wagglestate_e state;
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } waggle_t;
 

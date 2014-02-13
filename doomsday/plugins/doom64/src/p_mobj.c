@@ -37,7 +37,7 @@
 #include "g_common.h"
 #include "p_map.h"
 #include "p_terraintype.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_tick.h"
 #include "p_actor.h"
 #include "p_start.h"

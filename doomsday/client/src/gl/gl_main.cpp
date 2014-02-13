@@ -39,7 +39,7 @@
 #include "world/p_object.h"
 #include "gl/gl_texmanager.h"
 #include "gl/texturecontent.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "resource/hq2x.h"
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
@@ -96,19 +96,15 @@ static viewport_t currentView;
 
 static void videoFSAAChanged()
 {
-    if(novideo || !WindowSystem::hasMain()) return;
-    WindowSystem::main().updateCanvasFormat();
+    if(novideo || !WindowSystem::mainExists()) return;
+    ClientWindowSystem::main().updateCanvasFormat();
 }
 
 static void videoVsyncChanged()
 {
-    if(novideo || !WindowSystem::hasMain()) return;
+    if(novideo || !WindowSystem::mainExists()) return;
 
-#if defined(WIN32) || defined(MACOSX)
     GL_SetVSync(Con_GetByte("vid-vsync") != 0);
-#else
-    WindowSystem::main().updateCanvasFormat();
-#endif
 }
 
 void GL_Register()
@@ -192,7 +188,7 @@ void GL_DoUpdate()
 
     // Blit screen to video.
     ClientWindow::main().swapBuffers(
-                VR::modeNeedsStereoGLFormat(VR::mode())? gl::SwapStereoBuffers : gl::SwapMonoBuffer);
+                vrCfg().needsStereoGLFormat()? gl::SwapStereoBuffers : gl::SwapMonoBuffer);
 
     // We will arrive here always at the same time in relation to the displayed
     // frame: it is a good time to update the mouse state.
@@ -339,6 +335,8 @@ dd_bool GL_EarlyInit()
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
+
+    GL_SetVSync(true); // will be overridden from vid-vsync
 
     initGLOk = true;
     return true;
@@ -562,9 +560,9 @@ Matrix4f GL_GetProjectionMatrix()
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
-    if (VR::mode() == VR::MODE_OCULUS_RIFT)
+    if (vrCfg().mode() == VRConfig::OculusRift)
     {
-        aspect = VR::riftState.aspect();
+        aspect = vrCfg().oculusRift().aspect();
         // A little trigonometry to apply aspect ratio to angles
         float x = tan(0.5 * de::degreeToRadian(Rend_FieldOfView()));
         yfov = de::radianToDegree(2.0 * atan2(x/aspect, 1.0f));
@@ -586,15 +584,15 @@ Matrix4f GL_GetProjectionMatrix()
      * applies the viewpoint shift.
      */
     float frustumShift = 0;
-    if (VR::applyFrustumShift)
+    if (vrCfg().frustumShift())
     {
-        frustumShift = VR::eyeShift * glNearClip / VR::hudDistance;
+        frustumShift = vrCfg().eyeShift() * glNearClip / vrCfg().screenDistance();
     }
 
     return Matrix4f::frustum(-fW - frustumShift, fW - frustumShift,
                              -fH, fH,
                              glNearClip, glFarClip) *
-           Matrix4f::translate(Vector3f(-VR::eyeShift, 0, 0)) *
+           Matrix4f::translate(Vector3f(-vrCfg().eyeShift(), 0, 0)) *
            Matrix4f::scale(Vector3f(1, 1, -1));
 }
 
@@ -1392,7 +1390,7 @@ D_CMD(SetRes)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1415,7 +1413,7 @@ D_CMD(SetFullRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1433,7 +1431,7 @@ D_CMD(SetWinRes)
 {
     DENG2_UNUSED2(src, argc);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1452,7 +1450,7 @@ D_CMD(ToggleFullscreen)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1468,7 +1466,7 @@ D_CMD(ToggleMaximized)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1484,7 +1482,7 @@ D_CMD(ToggleCentered)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1500,7 +1498,7 @@ D_CMD(CenterWindow)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1516,7 +1514,7 @@ D_CMD(SetBPP)
 {
     DENG2_UNUSED2(src, argc);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;
@@ -1532,7 +1530,7 @@ D_CMD(DisplayModeInfo)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientWindow *win = WindowSystem::mainPtr();
+    ClientWindow *win = ClientWindowSystem::mainPtr();
 
     if(!win)
         return false;

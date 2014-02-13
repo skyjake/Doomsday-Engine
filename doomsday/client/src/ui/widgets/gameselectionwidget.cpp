@@ -49,6 +49,10 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             : ui::ActionItem(label, action), game(gameRef) {
             setData(&gameRef);
         }
+        String sortKey() const {
+            // Sort by identity key.
+            return game.identityKey();
+        }
         Game const &game;
     };
 

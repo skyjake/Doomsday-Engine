@@ -275,7 +275,7 @@ static void drawFinishedTitle(void)
     else
         mapNum = (wbs->episode * 9) + wbs->currentMap;
 
-    mapTitle = P_CurrentMapTitle();
+    mapTitle = P_MapTitle(0/*current map*/);
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);

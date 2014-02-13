@@ -32,7 +32,7 @@
 
 #include "d_net.h"
 #include "g_defs.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_tick.h"
 #include "p_terraintype.h"

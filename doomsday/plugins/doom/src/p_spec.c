@@ -42,7 +42,7 @@
 #include "m_argv.h"
 #include "dmu_lib.h"
 #include "p_mapsetup.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_mapspec.h"
 #include "p_tick.h"
 #include "p_ceiling.h"

@@ -35,7 +35,7 @@
 
 #include "render/vr.h"
 
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include <de/KeyEvent>
 
 // For the debug visuals:
@@ -1556,8 +1556,8 @@ void DD_ReadHeadTracker(void)
     I_GetDevice(IDEV_HEAD_TRACKER)->flags |= ID_ACTIVE;
 
     // Get the latest values.
-    VR::allowHeadOrientationUpdate();
-    VR::updateHeadOrientation();
+    vrCfg().oculusRift().allowUpdate();
+    vrCfg().oculusRift().update();
 
     ddevent_t ev;
 
@@ -1565,7 +1565,7 @@ void DD_ReadHeadTracker(void)
     ev.type = E_AXIS;
     ev.axis.type = EAXIS_ABSOLUTE;
 
-    Vector3f const pry = VR::getHeadOrientation();
+    Vector3f const pry = vrCfg().oculusRift().headOrientation();
 
     // Yaw (1.0 means 180 degrees).
     ev.axis.id = 0; // Yaw.
@@ -2309,9 +2309,9 @@ D_CMD(ReleaseMouse)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(WindowSystem::hasMain())
+    if(WindowSystem::mainExists())
     {
-        WindowSystem::main().canvas().trapMouse(false);
+        ClientWindowSystem::main().canvas().trapMouse(false);
         return true;
     }
     return false;

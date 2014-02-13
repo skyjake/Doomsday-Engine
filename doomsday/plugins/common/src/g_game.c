@@ -53,7 +53,7 @@
 #include "g_eventsequence.h"
 #include "d_net.h"
 #include "x_hair.h"
-#include "p_player.h"
+#include "player.h"
 #include "r_common.h"
 #include "p_map.h"
 #include "p_mapspec.h"
@@ -165,6 +165,7 @@ dd_bool gameInProgress;
 uint gameEpisode;
 uint gameMap;
 uint gameMapEntrance; // Position indicator for reborn.
+Uri *gameMapUri;
 GameRuleset gameRules;
 
 uint nextMap;
@@ -208,9 +209,14 @@ int bodyQueueSlot;
 #endif
 
 // vars used with game status cvars
+int gsvEpisode = 0;
+int gsvMap = 0;
+char *gsvMapAuthor = "Unknown";
+int gsvMapMusic = -1;
+char *gsvMapTitle = "Unknown";
+
 int gsvInMap = 0;
 int gsvCurrentMusic = 0;
-int gsvMapMusic = -1;
 
 int gsvArmor = 0;
 int gsvHealth = 0;
@@ -225,9 +231,6 @@ int gsvCurrentWeapon;
 int gsvWeapons[NUM_WEAPON_TYPES];
 int gsvKeys[NUM_KEY_TYPES];
 int gsvAmmo[NUM_AMMO_TYPES];
-
-char *gsvMapName = "Unknown";
-char *gsvMapAuthor = "Unknown";
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
 int gsvInvItems[NUM_INVENTORYITEM_TYPES];
@@ -252,13 +255,13 @@ cvartemplate_t gamestatusCVars[] =
 #endif
 
     {"map-author", READONLYCVAR, CVT_CHARPTR, &gsvMapAuthor, 0, 0},
-    {"map-episode", READONLYCVAR, CVT_INT, &gameEpisode, 0, 0},
+    {"map-episode", READONLYCVAR, CVT_INT, &gsvEpisode, 0, 0},
 #if __JHEXEN__
     {"map-hub", READONLYCVAR, CVT_INT, &mapHub, 0, 0},
 #endif
-    {"map-id", READONLYCVAR, CVT_INT, &gameMap, 0, 0},
+    {"map-id", READONLYCVAR, CVT_INT, &gsvMap, 0, 0},
     {"map-music", READONLYCVAR, CVT_INT, &gsvMapMusic, 0, 0},
-    {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapName, 0, 0},
+    {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapTitle, 0, 0},
 
     {"player-health", READONLYCVAR, CVT_INT, &gsvHealth, 0, 0},
     {"player-armor", READONLYCVAR, CVT_INT, &gsvArmor, 0, 0},
@@ -402,9 +405,8 @@ ccmdtemplate_t gameCmds[] = {
 };
 
 // Deferred new game arguments:
-static uint dEpisode;
-static uint dMap;
 static uint dMapEntrance;
+static Uri *dMapUri; ///< @todo fixme: Never free'd
 static GameRuleset dRules;
 
 static gameaction_t gameAction;
@@ -459,6 +461,8 @@ void G_CommonPreInit(void)
 {
     int i, j;
 
+    DENG_ASSERT(gameMapUri == 0);
+    gameMapUri = Uri_New();
     quitInProgress = false;
     verbose = CommandLine_Exists("-verbose");
 
@@ -492,19 +496,19 @@ void G_CommonPreInit(void)
     P_InitPicAnims();
 
     // Add our cvars and ccmds to the console databases.
-    G_ConsoleRegistration();    // Main command list.
-    D_NetConsoleRegistration(); // For network.
-    G_Register();               // Read-only game status cvars (for playsim).
+    G_ConsoleRegistration();     // Main command list.
+    D_NetConsoleRegistration();  // For network.
+    G_Register();                // Read-only game status cvars (for playsim).
     Pause_Register();
-    G_ControlRegister();        // For controls/input.
-    SV_Register();              // Game-save system.
-    Hu_MenuRegister();          // For the menu.
-    GUI_Register();             // For the UI library.
-    Hu_MsgRegister();           // For the game messages.
-    ST_Register();              // For the hud/statusbar.
-    WI_Register();              // For the interlude/intermission.
-    X_Register();               // For the crosshair.
-    FI_StackRegister();         // For the InFine lib.
+    G_ControlRegister();         // For controls/input.
+    SaveSlots_ConsoleRegister(); // Game-save system.
+    Hu_MenuRegister();           // For the menu.
+    GUI_Register();              // For the UI library.
+    Hu_MsgRegister();            // For the game messages.
+    ST_Register();               // For the hud/statusbar.
+    WI_Register();               // For the interlude/intermission.
+    X_Register();                // For the crosshair.
+    FI_StackRegister();          // For the InFine lib.
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_Register();
 #endif
@@ -948,7 +952,7 @@ void G_CommonPostInit(void)
 
 /**
  * Common game shutdown routine.
- * \note Game-specific actions should be placed in G_Shutdown rather than here.
+ * @note Game-specific actions should be placed in G_Shutdown rather than here.
  */
 void G_CommonShutdown(void)
 {
@@ -966,6 +970,8 @@ void G_CommonShutdown(void)
     Hu_MenuShutdown();
     ST_Shutdown();
     GUI_Shutdown();
+
+    Uri_Delete(gameMapUri); gameMapUri = 0;
 }
 
 /**
@@ -1142,37 +1148,31 @@ void G_StartHelp(void)
  */
 static void printMapBanner(void)
 {
-    Uri *mapUri = G_CurrentMapUri();
-    char const *title = P_CurrentMapTitle();
+    char const *title = P_MapTitle(0/*current map*/);
 
     App_Log(DE2_LOG_MAP, DE2_ESC(R));
     if(title)
     {
         char buf[64];
 #if __JHEXEN__
-        mapinfo_t const *mapInfo = P_MapInfo(mapUri);
+        mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
         int warpNum = (mapInfo? mapInfo->warpTrans : -1);
         dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", warpNum + 1, gameMap + 1, title);
 #else
-        dd_snprintf(buf, 64, "Map %u: " DE2_ESC(b) "%s", gameMap+1, title);
+        dd_snprintf(buf, 64, "Map %u: " DE2_ESC(b) "%s", gameMap + 1, title);
 #endif
         App_Log(DE2_MAP_NOTE, "%s", buf);
     }
 
 #if !__JHEXEN__
     {
-    AutoStr *path = Uri_Compose(mapUri);
-    char const *author;
-
-    author = P_CurrentMapAuthor(P_MapIsCustom(Str_Text(path)));
+    char const *author = P_MapAuthor(0/*current map*/, P_MapIsCustom(Str_Text(Uri_Compose(gameMapUri))));
     if(!author) author = "Unknown";
 
     App_Log(DE2_MAP_VERBOSE, "Author: %s", author);
     }
 #endif
     App_Log(DE2_LOG_MAP, "");
-
-    Uri_Delete(mapUri);
 }
 
 void G_BeginMap(void)
@@ -1256,8 +1256,7 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
 
 #if __JHEXEN__
     {
-        Uri *mapUri = G_CurrentMapUri();
-        mapinfo_t const *mapInfo = P_MapInfo(mapUri);
+        mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
         if(mapInfo)
         {
             int fadeTable = mapInfo->fadeTable;
@@ -1276,7 +1275,6 @@ static void initFogForMap(ddmapinfo_t *mapInfo)
                 }
             }
         }
-        Uri_Delete(mapUri);
     }
 #endif
 }
@@ -1302,7 +1300,7 @@ int G_DoLoadMap(loadmap_params_t *p)
     if(p->revisit)
     {
         // We've been here before; deserialize this map's save state.
-        SV_HxLoadClusterMap();
+        SV_HxLoadHubMap();
     }
 #endif
 
@@ -1423,8 +1421,8 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
 
 void G_UpdateGSVarsForMap(void)
 {
-    char const *mapAuthor = P_CurrentMapAuthor(false/*don't supress*/);
-    char const *mapTitle  = P_CurrentMapTitle();
+    char const *mapAuthor = P_MapAuthor(0/*current map*/, false/*don't supress*/);
+    char const *mapTitle  = P_MapTitle(0/*current map*/);
 
     if(!mapAuthor) mapAuthor = "Unknown";
     Con_SetString2("map-author", mapAuthor, SVF_WRITE_OVERRIDE);
@@ -1511,7 +1509,7 @@ void G_DoQuitGame(void)
 
 void G_QueMapMusic(Uri const *mapUri)
 {
-    DENG_ASSERT(mapUri != 0);
+    if(!mapUri) mapUri = gameMapUri;
 
 #if __JHEXEN__
     /**
@@ -1548,7 +1546,7 @@ static void runGameAction(void)
         {
         case GA_NEWGAME:
             G_InitNewGame();
-            G_NewGame(dEpisode, dMap, dMapEntrance, &dRules);
+            G_NewGame(dMapUri, dMapEntrance, &dRules);
             G_SetGameAction(GA_NONE);
             break;
 
@@ -1762,17 +1760,15 @@ void G_PlayerLeaveMap(int player)
     int flightPower;
 #endif
     player_t *p = &players[player];
-    dd_bool newCluster = true;
+    dd_bool newHub = true;
 
 #if __JHEXEN__
     {
-        Uri *mapUri     = G_CurrentMapUri();
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
-        newCluster = (P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster);
+        newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);
 
         Uri_Delete(nextMapUri);
-        Uri_Delete(mapUri);
     }
 #endif
 
@@ -1802,7 +1798,7 @@ void G_PlayerLeaveMap(int player)
 #endif
 
 #if __JHEXEN__
-    if(newCluster)
+    if(newHub)
     {
         uint count = P_InventoryCount(player, IIT_FLY);
 
@@ -1816,7 +1812,7 @@ void G_PlayerLeaveMap(int player)
     memset(p->powers, 0, sizeof(p->powers));
 
 #if __JHEXEN__
-    if(!newCluster && !gameRules.deathmatch)
+    if(!newHub && !gameRules.deathmatch)
         p->powers[PT_FLIGHT] = flightPower; // Restore flight.
 #endif
 
@@ -1825,7 +1821,7 @@ void G_PlayerLeaveMap(int player)
     p->update |= PSF_KEYS;
     memset(p->keys, 0, sizeof(p->keys));
 #else
-    if(!gameRules.deathmatch && newCluster)
+    if(!gameRules.deathmatch && newHub)
         p->keys = 0;
 #endif
 
@@ -2067,7 +2063,7 @@ int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void* userP
     {
 #if __JHEXEN__
         // Load the last autosave? (Not optional in Hexen).
-        if(SV_IsSlotUsed(AUTO_SLOT))
+        if(SaveSlots_SlotInUse(saveSlots, AUTO_SLOT))
         {
             gaLoadGameSlot = AUTO_SLOT;
             G_SetGameAction(GA_LOADGAME);
@@ -2104,13 +2100,13 @@ void G_DoReborn(int plrNum)
         int lastSlot = -1;
 
         // First ensure we have up-to-date info.
-        SV_UpdateAllSaveInfo();
+        SaveSlots_UpdateAllSaveInfo(saveSlots);
 
         // Use the latest save?
         if(cfg.loadLastSaveOnReborn)
         {
             lastSlot = Con_GetInteger("game-save-last-slot");
-            if(!SV_IsSlotUsed(lastSlot)) lastSlot = -1;
+            if(!SaveSlots_SlotInUse(saveSlots, lastSlot)) lastSlot = -1;
         }
 
         // Use the latest autosave? (Not optional in Hexen).
@@ -2118,7 +2114,7 @@ void G_DoReborn(int plrNum)
         if(cfg.loadAutoSaveOnReborn)
         {
             autoSlot = AUTO_SLOT;
-            if(!SV_IsSlotUsed(autoSlot)) autoSlot = -1;
+            if(!SaveSlots_SlotInUse(saveSlots, autoSlot)) autoSlot = -1;
         }
 #endif
 
@@ -2143,8 +2139,8 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                SaveInfo* info = SV_SaveInfoForSlot(chosenSlot);
-                AutoStr* msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Description(info)));
+                SaveInfo *info = SaveSlots_SaveInfo(saveSlots, chosenSlot);
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Description(info)));
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, chosenSlot, 0);
             }
@@ -2153,7 +2149,7 @@ void G_DoReborn(int plrNum)
 
         // Autosave loading cannot be disabled in Hexen.
 #if __JHEXEN__
-        if(SV_IsSlotUsed(AUTO_SLOT))
+        if(SaveSlots_SlotInUse(saveSlots, AUTO_SLOT))
         {
             gaLoadGameSlot = AUTO_SLOT;
             G_SetGameAction(GA_LOADGAME);
@@ -2169,13 +2165,13 @@ void G_DoReborn(int plrNum)
 static void G_InitNewGame(void)
 {
 #if __JHEXEN__
-    SV_HxInitBaseSlot();
+    SaveSlots_ClearSlot(saveSlots, BASE_SLOT);
 #endif
 
     /// @todo Do not clear this save slot. Instead we should set a game state
     ///       flag to signal when a new game should be started instead of loading
     ///       the autosave slot.
-    SV_ClearSlot(AUTO_SLOT);
+    SaveSlots_ClearSlot(saveSlots, AUTO_SLOT);
 
 #if __JHEXEN__
     Game_InitACScriptsForNewGame();
@@ -2414,16 +2410,13 @@ void G_DoMapCompleted(void)
     // Go to an intermission?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
-    ddmapinfo_t minfo;
-    Uri* mapUri = G_CurrentMapUri();
-    AutoStr* mapPath = Uri_Compose(mapUri);
-    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
-    {
-        Uri_Delete(mapUri);
-        G_IntermissionDone();
-        return;
-    }
-    Uri_Delete(mapUri);
+        ddmapinfo_t minfo;
+        if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(gameMapUri)), &minfo) &&
+           (minfo.flags & MIF_NO_INTERMISSION))
+        {
+            G_IntermissionDone();
+            return;
+        }
     }
 
 #elif __JHEXEN__
@@ -2479,9 +2472,8 @@ void G_DoMapCompleted(void)
 #if __JDOOM__ || __JDOOM64__
 void G_PrepareWIData(void)
 {
-    Uri* mapUri = G_CurrentMapUri();
-    AutoStr* mapPath = Uri_Compose(mapUri);
-    wbstartstruct_t* info = &wmInfo;
+    AutoStr *mapPath = Uri_Compose(gameMapUri);
+    wbstartstruct_t *info = &wmInfo;
     ddmapinfo_t minfo;
     int i;
 
@@ -2489,9 +2481,13 @@ void G_PrepareWIData(void)
 
     // See if there is a par time definition.
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && minfo.parTime > 0)
+    {
         info->parTime = TICRATE * (int) minfo.parTime;
+    }
     else
+    {
         info->parTime = -1; // Unknown.
+    }
 
     info->pNum = CONSOLEPLAYER;
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -2506,8 +2502,6 @@ void G_PrepareWIData(void)
         pStats->time = mapTime;
         memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
     }
-
-    Uri_Delete(mapUri);
 }
 #endif
 
@@ -2517,17 +2511,10 @@ void G_PrepareWIData(void)
  */
 dd_bool G_StartDebriefing()
 {
-    Uri *mapUri = G_CurrentMapUri();
     ddfinale_t fin;
-
-    if(G_DebriefingEnabled(mapUri, &fin) &&
-       G_StartFinale(fin.script, 0, FIMODE_AFTER, 0))
-    {
-        Uri_Delete(mapUri);
-        return true;
-    }
-    Uri_Delete(mapUri);
-    return false;
+    if(!G_DebriefingEnabled(gameMapUri, &fin)) return false;
+    
+    return G_StartFinale(fin.script, 0, FIMODE_AFTER, 0);
 }
 
 void G_IntermissionDone(void)
@@ -2612,33 +2599,31 @@ void G_DoLeaveMap(void)
     revisit = SV_HxHaveMapStateForSlot(BASE_SLOT, nextMap);
     if(gameRules.deathmatch) revisit = false;
 
-    // Same cluster?
+    // Same hub?
     {
-        Uri *mapUri     = G_CurrentMapUri();
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_MapInfo(mapUri)->cluster == P_MapInfo(nextMapUri)->cluster)
+        if(P_MapInfo(0/*current map*/)->hub == P_MapInfo(nextMapUri)->hub)
         {
             if(!gameRules.deathmatch)
             {
                 // Save current map.
-                SV_HxSaveClusterMap();
+                SV_HxSaveHubMap();
             }
         }
-        else // Entering new cluster.
+        else // Entering new hub.
         {
             if(!gameRules.deathmatch)
             {
-                SV_ClearSlot(BASE_SLOT);
+                SaveSlots_ClearSlot(saveSlots, BASE_SLOT);
             }
         }
 
         Uri_Delete(nextMapUri);
-        Uri_Delete(mapUri);
     }
 
     // Take a copy of the player objects (they will be cleared in the process
     // of calling P_SetupMap() and we need to restore them after).
-    SV_HxBackupPlayersInCluster(playerBackup);
+    SV_HxBackupPlayersInHub(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
     oldRandomClassesRule = gameRules.randomClasses;
@@ -2713,7 +2698,7 @@ void G_DoLeaveMap(void)
         P_RemoveAllPlayerMobjs();
     }
 
-    SV_HxRestorePlayersInCluster(playerBackup, nextMapEntrance);
+    SV_HxRestorePlayersInHub(playerBackup, nextMapEntrance);
 
     // Restore the random class rule.
     gameRules.randomClasses = oldRandomClassesRule;
@@ -2747,7 +2732,7 @@ void G_DoRestartMap(void)
 
     // Restart the game session entirely.
     G_InitNewGame();
-    G_NewGame(dEpisode, dMap, dMapEntrance, &dRules);
+    G_NewGame(dMapUri, dMapEntrance, &dRules);
 #else
     loadmap_params_t p;
 
@@ -2759,7 +2744,7 @@ void G_DoRestartMap(void)
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
 
-    p.mapUri  = G_CurrentMapUri();
+    p.mapUri  = gameMapUri;
     p.revisit = false; // Don't reload save state.
 
     // This is a restart, so we won't brief again.
@@ -2775,7 +2760,6 @@ void G_DoRestartMap(void)
     G_BeginMap();
 
     Z_CheckHeap();
-    Uri_Delete(p.mapUri);
 #endif
 }
 
@@ -2793,9 +2777,9 @@ dd_bool G_LoadGame(int slot)
     // no guarantee that the game-save will be accessible come load time.
 
     // First ensure we have up-to-date info.
-    SV_UpdateAllSaveInfo();
+    SaveSlots_UpdateAllSaveInfo(saveSlots);
 
-    if(!SV_IsSlotUsed(slot))
+    if(!SaveSlots_SlotInUse(saveSlots, slot))
     {
         App_Log(DE2_RES_ERROR, "Cannot load from save slot #%i: not in use", slot);
         return false;
@@ -2824,7 +2808,7 @@ void G_DoLoadGame(void)
     if(IS_NETGAME) return;
 
     // Copy the base slot to the autosave slot.
-    SV_CopySlot(BASE_SLOT, AUTO_SLOT);
+    SaveSlots_CopySlot(saveSlots, BASE_SLOT, AUTO_SLOT);
 #endif
 }
 
@@ -2841,14 +2825,18 @@ dd_bool G_IsSaveGamePossible(void)
     return true;
 }
 
-dd_bool G_SaveGame2(int slot, const char* name)
+dd_bool G_SaveGame2(int slot, char const *name)
 {
-    if(0 > slot || slot >= NUMSAVESLOTS) return false;
+    if(0 > slot || slot >= SaveSlots_SlotCount(saveSlots)) return false;
+
     if(!G_IsSaveGamePossible()) return false;
 
     gaSaveGameSlot = slot;
     if(!gaSaveGameName)
+    {
         gaSaveGameName = Str_New();
+    }
+
     if(name && name[0])
     {
         // A new name.
@@ -2861,6 +2849,7 @@ dd_bool G_SaveGame2(int slot, const char* name)
         gaSaveGameGenerateName = (name && !name[0]);
         Str_Clear(gaSaveGameName);
     }
+
     G_SetGameAction(GA_SAVEGAME);
     return true;
 }
@@ -2877,15 +2866,13 @@ AutoStr *G_GenerateSaveGameName(void)
     char const *baseName, *mapTitle;
     char baseNameBuf[256];
     AutoStr *mapPath;
-    Uri *mapUri;
 
     hours   = time / 3600; time -= hours * 3600;
     minutes = time / 60;   time -= minutes * 60;
     seconds = time;
 
-    mapUri   = G_CurrentMapUri();
-    mapPath  = Uri_Compose(mapUri);
-    mapTitle = P_CurrentMapTitle();
+    mapPath  = Uri_Compose(gameMapUri);
+    mapTitle = P_MapTitle(0/*current map*/);
 
     // Still no map title? Use the identifier.
     // Some tricksy modders provide us with an empty title...
@@ -2905,7 +2892,6 @@ AutoStr *G_GenerateSaveGameName(void)
     Str_Appendf(str, "%s%s%s %02i:%02i:%02i", (baseName? baseName : ""),
         (baseName? ":" : ""), mapTitle, hours, minutes, seconds);
 
-    Uri_Delete(mapUri);
     return str;
 }
 
@@ -2915,7 +2901,7 @@ AutoStr *G_GenerateSaveGameName(void)
 void G_DoSaveGame(void)
 {
     savestateworker_params_t p;
-    const char* name;
+    char const *name;
     dd_bool didSave;
 
     if(gaSaveGameName && !Str_IsEmpty(gaSaveGameName))
@@ -2925,7 +2911,7 @@ void G_DoSaveGame(void)
     else
     {
         // No name specified.
-        SaveInfo* info = SV_SaveInfoForSlot(gaSaveGameSlot);
+        SaveInfo *info = SaveSlots_SaveInfo(saveSlots, gaSaveGameSlot);
         if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Description(info)))
         {
             // Slot already in use; reuse the existing name.
@@ -2958,23 +2944,72 @@ void G_DoSaveGame(void)
     G_SetGameAction(GA_NONE);
 }
 
-void G_DeferredNewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rules)
+void G_DeferredNewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
 {
-    DENG_ASSERT(rules != 0);
-
-    dEpisode     = episode;
-    dMap         = map;
+    if(!dMapUri)
+    {
+        dMapUri = Uri_New();
+    }
+    Uri_Copy(dMapUri, mapUri? mapUri : gameMapUri);
     dMapEntrance = mapEntrance;
-    dRules       = *rules; // make a copy.
+    dRules       = rules? *rules : gameRules; // make a copy.
 
     G_SetGameAction(GA_NEWGAME);
 }
 
-void G_NewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rules)
+/// @todo Get this from MAPINFO
+static uint episodeNumberFor(Uri const *mapUri)
+{
+#if __JDOOM__ || __JHERETIC__
+    AutoStr *path = Uri_Resolved(mapUri);
+    if(!Str_IsEmpty(path))
+    {
+# if __JDOOM__
+        if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
+# endif
+        {
+            if(Str_At(path, 0) == 'E' && Str_At(path, 2) == 'M')
+            {
+                return atoi(Str_Text(path) + 1) - 1;
+            }
+        }
+    }
+#else
+    DENG_UNUSED(mapUri);
+#endif
+    return 0;
+}
+
+/// @todo Get this from MAPINFO
+static uint mapNumberFor(Uri const *mapUri)
+{
+    AutoStr *path = Uri_Resolved(mapUri);
+    if(!Str_IsEmpty(path))
+    {
+#if __JDOOM__ || __JHERETIC__
+# if __JDOOM__
+        if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
+# endif
+        {
+            if(Str_At(path, 0) == 'E' && Str_At(path, 2) == 'M')
+            {
+                return atoi(Str_Text(path) + 3) - 1;
+            }
+        }
+#endif
+        if(Str_StartsWith(path, "MAP"))
+        {
+            return atoi(Str_Text(path) + 3) - 1;
+        }
+    }
+    return 0;
+}
+
+void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
 {
     uint i;
 
-    DENG_ASSERT(rules != 0);
+    DENG_ASSERT(mapUri != 0 && rules != 0);
 
     G_StopDemo();
 
@@ -3016,13 +3051,23 @@ void G_NewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rule
     // Delete raw images to conserve texture memory.
     DD_Executef(true, "texreset raw");
 
-    // Make sure that the episode and map numbers are good.
-    G_ValidateMap(&episode, &map);
-
-    gameEpisode     = episode;
-    gameMap         = map;
+    gameEpisode     = episodeNumberFor(mapUri);
+    gameMap         = mapNumberFor(mapUri);
+    Uri_Copy(gameMapUri, mapUri);
     gameMapEntrance = mapEntrance;
     gameRules       = *rules;
+
+    // Make sure that the episode and map numbers are good.
+    if(!G_ValidateMap(&gameEpisode, &gameMap))
+    {
+        Uri *validMapUri = G_ComposeMapUri(gameEpisode, gameMap);
+        Uri_Copy(gameMapUri, validMapUri);
+        Uri_Delete(validMapUri);
+    }
+
+    // Update game status cvars:
+    gsvMap     = (unsigned)gameMap;
+    gsvEpisode = (unsigned)gameEpisode;
 
     G_ApplyNewGameRules();
 
@@ -3035,7 +3080,7 @@ void G_NewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rule
         dd_bool showBrief;
         ddfinale_t fin;
 
-        p.mapUri  = G_CurrentMapUri();
+        p.mapUri  = gameMapUri;
         p.revisit = false;
 
         showBrief = G_BriefingEnabled(p.mapUri, &fin);
@@ -3059,10 +3104,9 @@ void G_NewGame(uint episode, uint map, uint mapEntrance, GameRuleset const *rule
             HU_WakeWidgets(-1 /* all players */);
             G_BeginMap();
         }
-
-        Z_CheckHeap();
-        Uri_Delete(p.mapUri);
     }
+
+    Z_CheckHeap();
 }
 
 int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)
@@ -3110,6 +3154,11 @@ char const *P_GetGameModeName(void)
     return sp;
 }
 
+uint G_GenerateSessionId(void)
+{
+    return Timer_RealMilliseconds() + (mapTime << 24);
+}
+
 uint G_LogicalMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__
@@ -3149,11 +3198,6 @@ Uri *G_ComposeMapUri(uint episode, uint map)
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #endif
     return Uri_NewWithPath2(mapId, RC_NULL);
-}
-
-Uri *G_CurrentMapUri(void)
-{
-    return G_ComposeMapUri(gameEpisode, gameMap);
 }
 
 dd_bool G_ValidateMap(uint *episode, uint *map)
@@ -3476,7 +3520,7 @@ int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
        !(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT))
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_MapInfo(mapUri)->cluster != P_MapInfo(nextMapUri)->cluster)
+        if(P_MapInfo(mapUri)->hub != P_MapInfo(nextMapUri)->hub)
         {
             Uri_Delete(nextMapUri);
             return false;
@@ -3634,7 +3678,7 @@ int loadGameConfirmResponse(msgresponse_t response, int userValue, void* userPoi
 
 D_CMD(LoadGame)
 {
-    const dd_bool confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
+    dd_bool const confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
     int slot;
 
     if(G_QuitInProgress()) return false;
@@ -3648,14 +3692,14 @@ D_CMD(LoadGame)
     }
 
     // Ensure we have up-to-date info.
-    SV_UpdateAllSaveInfo();
+    SaveSlots_UpdateAllSaveInfo(saveSlots);
 
-    slot = SV_ParseSlotIdentifier(argv[1]);
-    if(SV_IsSlotUsed(slot))
+    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
+    if(SaveSlots_SlotInUse(saveSlots, slot))
     {
         // A known used slot identifier.
-        SaveInfo* info;
-        AutoStr* msg;
+        SaveInfo *info;
+        AutoStr *msg;
 
         if(confirm || !cfg.confirmQuickGameSave)
         {
@@ -3664,7 +3708,7 @@ D_CMD(LoadGame)
             return G_LoadGame(slot);
         }
 
-        info = SV_SaveInfoForSlot(slot);
+        info = SaveSlots_SaveInfo(saveSlots, slot);
         // Compose the confirmation message.
         msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, Str_Text(SaveInfo_Description(info)));
 
@@ -3745,16 +3789,16 @@ D_CMD(SaveGame)
     }
 
     // Ensure we have up-to-date info.
-    SV_UpdateAllSaveInfo();
+    SaveSlots_UpdateAllSaveInfo(saveSlots);
 
-    slot = SV_ParseSlotIdentifier(argv[1]);
-    if(SV_IsUserWritableSlot(slot))
+    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
+    if(SaveSlots_SlotIsUserWritable(saveSlots, slot))
     {
         // A known slot identifier.
-        const dd_bool slotIsUsed = SV_IsSlotUsed(slot);
-        SaveInfo* info = SV_SaveInfoForSlot(slot);
+        dd_bool const slotIsUsed = SaveSlots_SlotInUse(saveSlots, slot);
+        SaveInfo *info = SaveSlots_SaveInfo(saveSlots, slot);
         ddstring_t localName, *name;
-        AutoStr* msg;
+        AutoStr *msg;
 
         Str_InitStatic(&localName, (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : "");
         if(!slotIsUsed || confirm || !cfg.confirmQuickGameSave)
@@ -3785,7 +3829,7 @@ D_CMD(SaveGame)
     }
 
     // Clearly the caller needs some assistance...
-    if(!SV_IsValidSlot(slot))
+    if(!SaveSlots_IsValidSlot(saveSlots, slot))
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     else
         App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
@@ -3802,14 +3846,15 @@ D_CMD(QuickSaveGame)
 
 dd_bool G_DeleteSaveGame(int slot)
 {
-    SaveInfo* info;
+    SaveInfo *info;
 
-    if(!SV_IsUserWritableSlot(slot) || !SV_IsSlotUsed(slot)) return false;
+    if(!SaveSlots_SlotIsUserWritable(saveSlots, slot)) return false;
+    if(!SaveSlots_SlotInUse(saveSlots, slot)) return false;
 
     // A known slot identifier.
-    info = SV_SaveInfoForSlot(slot);
-    DENG_ASSERT(info);
-    SV_ClearSlot(slot);
+    info = SaveSlots_SaveInfo(saveSlots, slot);
+    DENG_ASSERT(info != 0);
+    SaveSlots_ClearSlot(saveSlots, slot);
 
     if(Hu_MenuIsActive())
     {
@@ -3838,17 +3883,18 @@ int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void* u
 
 D_CMD(DeleteGameSave)
 {
-    const dd_bool confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
-    player_t* player = &players[CONSOLEPLAYER];
+    dd_bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    player_t *player = &players[CONSOLEPLAYER];
     int slot;
 
     if(G_QuitInProgress()) return false;
 
     // Ensure we have up-to-date info.
-    SV_UpdateAllSaveInfo();
+    SaveSlots_UpdateAllSaveInfo(saveSlots);
 
-    slot = SV_ParseSlotIdentifier(argv[1]);
-    if(SV_IsUserWritableSlot(slot) && SV_IsSlotUsed(slot))
+    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
+    if(SaveSlots_SlotIsUserWritable(saveSlots, slot) &&
+       SaveSlots_SlotInUse(saveSlots, slot))
     {
         // A known slot identifier.
         if(confirm)
@@ -3858,8 +3904,8 @@ D_CMD(DeleteGameSave)
         else
         {
             // Compose the confirmation message.
-            SaveInfo* info = SV_SaveInfoForSlot(slot);
-            AutoStr* msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Description(info)));
+            SaveInfo *info = SaveSlots_SaveInfo(saveSlots, slot);
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Description(info)));
             S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slot, 0);
         }
@@ -3867,7 +3913,7 @@ D_CMD(DeleteGameSave)
     }
 
     // Clearly the caller needs some assistance...
-    if(!SV_IsValidSlot(slot))
+    if(!SaveSlots_IsValidSlot(saveSlots, slot))
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     else
         App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
@@ -3967,6 +4013,7 @@ D_CMD(WarpMap)
     // Hexen map numbers require translation.
     map = P_TranslateMapIfExists(map);
 #endif
+
     if(!G_ValidateMap(&epsd, &map))
     {
         char const *fmtString = argc == 3? "Unknown map \"%s, %s\"." : "Unknown map \"%s%s\".";
@@ -4001,19 +4048,24 @@ D_CMD(WarpMap)
 
     // So be it.
     briefDisabled = true;
-    if(!forceNewGameSession && gameInProgress)
+
     {
+        Uri *newMapUri = G_ComposeMapUri(epsd, map);
+        if(!forceNewGameSession && gameInProgress)
+        {
 #if __JHEXEN__
-        nextMap         = map;
-        nextMapEntrance = 0;
-        G_SetGameAction(GA_LEAVEMAP);
+            nextMap         = map;
+            nextMapEntrance = 0;
+            G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_DeferredNewGame(epsd, map, 0/*default*/, &gameRules);
+            G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
 #endif
-    }
-    else
-    {
-        G_DeferredNewGame(epsd, map, 0/*default*/, &gameRules);
+        }
+        else
+        {
+            G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
+        }
+        Uri_Delete(newMapUri);
     }
 
     // If the command source was "us" the game library then it was probably in

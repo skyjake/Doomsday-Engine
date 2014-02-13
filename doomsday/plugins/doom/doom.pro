@@ -31,6 +31,7 @@ INCLUDEPATH += include
 
 HEADERS += \
     include/acfnlink.h \
+    include/bossbrain.h \
     include/d_api.h \
     include/d_config.h \
     include/d_console.h \
@@ -70,6 +71,7 @@ HEADERS += \
 
 SOURCES += \
     src/acfnlink.c \
+    src/bossbrain.cpp \
     src/d_api.c \
     src/d_console.c \
     src/d_items.c \

@@ -62,7 +62,7 @@ void MapInfoParser(Str const *path)
         // Prepare a default-configured definition, for one-shot initialization.
         mapinfo_t defMapInfo;
         defMapInfo.map             = -1; // Unknown.
-        defMapInfo.cluster         = 0;
+        defMapInfo.hub             = 0;
         defMapInfo.warpTrans       = 0;
         defMapInfo.nextMap         = 0; // Always go to map 0 if not specified.
         defMapInfo.cdTrack         = 1;
@@ -180,10 +180,10 @@ void MapInfoParser(Str const *path)
                     }
                     if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))
                     {
-                        info->cluster = lexer.readNumber();
-                        if(info->cluster < 1)
+                        info->hub = lexer.readNumber();
+                        if(info->hub < 1)
                         {
-                            Con_Error("MapInfoParser: Invalid cluster number '%s' in \"%s\" on line #%i",
+                            Con_Error("MapInfoParser: Invalid 'cluster' (i.e., hub) number '%s' in \"%s\" on line #%i",
                                       lexer.token(), F_PrettyPath(Str_Text(path)), lexer.lineNumber());
                         }
                         continue;
@@ -237,15 +237,16 @@ void MapInfoParser(Str const *path)
     for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
         mapinfo_t const &info = i->second;
-        App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" cluster: %i map: %i warp: %i }",
-                                 i->first.c_str(), info.title, info.cluster, info.map, info.warpTrans);
+        App_Log(DE2_DEV_RES_MSG, "MAPINFO %s { title: \"%s\" hub: %i map: %i warp: %i }",
+                                 i->first.c_str(), info.title, info.hub, info.map, info.warpTrans);
     }
 #endif
 }
 
 mapinfo_t *P_MapInfo(Uri const *mapUri)
 {
-    DENG_ASSERT(mapUri != 0);
+    if(!mapUri) mapUri = gameMapUri;
+
     std::string mapPath(Str_Text(Uri_Compose(mapUri)));
     MapInfos::iterator found = mapInfos.find(mapPath);
     if(found != mapInfos.end())
@@ -257,7 +258,7 @@ mapinfo_t *P_MapInfo(Uri const *mapUri)
 
 uint P_TranslateMapIfExists(uint map)
 {
-    uint matchedWithoutCluster = P_INVALID_LOGICAL_MAP;
+    uint matchedWithoutHub = P_INVALID_LOGICAL_MAP;
 
     for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
@@ -265,21 +266,21 @@ uint P_TranslateMapIfExists(uint map)
 
         if(info.warpTrans == map)
         {
-            if(info.cluster)
+            if(info.hub)
             {
-                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to logical map %i, cluster %i", map, info.map, info.cluster);
+                App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i translated to logical map %i, hub %i", map, info.map, info.hub);
                 return info.map;
             }
 
-            App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches logical map %i, but it has no cluster", map, info.map);
-            matchedWithoutCluster = info.map;
+            App_Log(DE2_DEV_MAP_VERBOSE, "Warp %i matches logical map %i, but it has no hub", map, info.map);
+            matchedWithoutHub = info.map;
         }
     }
 
-    App_Log(DE2_DEV_MAP_NOTE, "Could not find warp %i, translating to logical map %i (without cluster)",
-            map, matchedWithoutCluster);
+    App_Log(DE2_DEV_MAP_NOTE, "Could not find warp %i, translating to logical map %i (without hub)",
+            map, matchedWithoutHub);
 
-    return matchedWithoutCluster;
+    return matchedWithoutHub;
 }
 
 uint P_TranslateMap(uint map)

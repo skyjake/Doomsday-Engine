@@ -40,13 +40,8 @@ typedef enum savestatesegment_e {
     ASEG_MATERIAL_ARCHIVE,
     ASEG_MAP_HEADER2,
     ASEG_PLAYER_HEADER,
-    ASEG_GLOBALSCRIPTDATA   // Hexen only
+    ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
-
-enum {
-    SV_OK = 0,
-    SV_INVALIDFILENAME
-};
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,15 +79,6 @@ dd_bool SV_HxBytesLeft(void);
  * @param segmentId  Identifier of the segment to check alignment of.
  */
 void SV_AssertSegment(int segmentId);
-
-/**
- * Special case segment check for the map state.
- *
- * @param retSegmentId  If not @c 0 return the determined segment id.
- *
- * @todo Refactor away.
- */
-void SV_AssertMapSegment(savestatesegment_t *retSegmentId);
 
 void SV_BeginSegment(int segmentId);
 void SV_EndSegment();

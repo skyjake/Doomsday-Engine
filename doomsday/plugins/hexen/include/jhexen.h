@@ -32,6 +32,7 @@
 #define __JHEXEN_CONVENIENCE_H__
 
 #include "../../hexen/include/h2def.h"
+#include "../../hexen/include/x_api.h"
 #include "../../hexen/include/a_action.h"
 #include "../../hexen/include/acfnlink.h"
 #include "../../hexen/include/acscript.h"
@@ -59,7 +60,6 @@
 #include "../../hexen/include/st_stuff.h"
 #include "../../hexen/include/textdefs.h"
 #include "../../hexen/include/version.h"
-#include "../../hexen/include/x_api.h"
 #include "../../hexen/include/x_console.h"
 #include "../../hexen/include/x_config.h"
 #include "../../hexen/include/x_event.h"

@@ -28,6 +28,10 @@
 
 #include "jhexen.h"
 #include "p_mobj.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 #define MAX_ACS_SCRIPT_VARS     10
 #define MAX_ACS_MAP_VARS        32
@@ -73,12 +77,12 @@ typedef struct acscript_s {
     /**
      * Serialize the thinker to the currently open save file.
      */
-    void write(Writer *writer) const;
+    void write(MapStateWriter *msw) const;
 
     /**
      * Deserialize the thinker from the currently open save file.
      */
-    int read(Reader *reader, int mapVersion);
+    int read(MapStateReader *msr);
 #endif // __cplusplus
 } ACScript;
 
@@ -203,10 +207,10 @@ public:
     AutoStr *scriptDescription(int scriptNumber);
 
     void writeWorldScriptData(Writer *writer);
-    void readWorldScriptData(Reader *reader, int mapVersion);
+    void readWorldScriptData(Reader *reader, int saveVersion);
 
-    void writeMapScriptData(Writer *writer);
-    void readMapScriptData(Reader *reader, int mapVersion);
+    void writeMapScriptData(MapStateWriter *msw);
+    void readMapScriptData(MapStateReader *msr);
 
 public: /// @todo make private:
     BytecodeScriptInfo &scriptInfoByIndex(int index);

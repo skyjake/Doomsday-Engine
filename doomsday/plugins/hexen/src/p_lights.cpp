@@ -114,8 +114,10 @@ void T_Light(light_t *light)
     }
 }
 
-void light_s::write(Writer *writer) const
+void light_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -132,8 +134,11 @@ void light_s::write(Writer *writer) const
     Writer_WriteInt32(writer, count);
 }
 
-int light_s::read(Reader *reader, int mapVersion)
+int light_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     if(mapVersion >= 4)
     {
         /*int ver =*/ Reader_ReadByte(reader); // version byte.
@@ -295,8 +300,10 @@ void T_Phase(phase_t *phase)
                      phase->baseValue + phaseTable[phase->index]);
 }
 
-void phase_s::write(Writer *writer) const
+void phase_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -308,8 +315,11 @@ void phase_s::write(Writer *writer) const
     Writer_WriteInt32(writer, (int) (255.0f * baseValue));
 }
 
-int phase_s::read(Reader *reader, int mapVersion)
+int phase_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.

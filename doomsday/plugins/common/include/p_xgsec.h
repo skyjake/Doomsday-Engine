@@ -22,6 +22,10 @@
 #define LIBCOMMON_XG_SECTORTYPE_H
 
 #include "g_common.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 // Sector chain event types.
 enum {
@@ -141,8 +145,8 @@ typedef struct xgplanemover_s {
     int timer; // Counts down to zero.
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } xgplanemover_t;
 

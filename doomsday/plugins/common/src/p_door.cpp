@@ -29,7 +29,7 @@
 #include "p_door.h"
 
 #include "dmu_lib.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_mapspec.h"
 #if __JDOOM64__
 #  include "p_ceiling.h"
@@ -285,8 +285,10 @@ void T_Door(void *doorThinkerPtr)
     }
 }
 
-void door_s::write(Writer *writer) const
+void door_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -304,8 +306,11 @@ void door_s::write(Writer *writer) const
     Writer_WriteInt32(writer, topCountDown);
 }
 
-int door_s::read(Reader *reader, int mapVersion)
+int door_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
 #if __JHEXEN__
     if(mapVersion >= 4)
 #else

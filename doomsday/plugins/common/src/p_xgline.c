@@ -35,7 +35,7 @@
 #include "p_xgline.h"
 #include "p_xgsec.h"
 #include "p_actor.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_mapspec.h"
 #include "p_terraintype.h"

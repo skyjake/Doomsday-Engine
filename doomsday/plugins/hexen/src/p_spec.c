@@ -32,7 +32,7 @@
 #include "g_common.h"
 #include "animdefsparser.h"
 #include "p_inventory.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
@@ -1072,9 +1072,7 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
-    Uri *mapUri = G_CurrentMapUri();
-    mapinfo_t const *mapInfo = P_MapInfo(mapUri);
-    Uri_Delete(mapUri);
+    mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
 
     if(!mapInfo || !mapInfo->lightning)
     {

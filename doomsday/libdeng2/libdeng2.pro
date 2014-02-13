@@ -1,6 +1,7 @@
-# The Doomsday Engine Project
-# Copyright (c) 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011-2013 Daniel Swanson <danij@dengine.net>
+# The Doomsday Engine Project -- Doomsday 2 Core Library
+# License: LGPL 3
+# Copyright (c) 2011-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2014 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = lib
 TARGET = deng2
@@ -78,6 +79,7 @@ HEADERS += \
     include/de/Error \
     include/de/Event \
     include/de/FileLogSink \
+    include/de/Garbage \
     include/de/HighPerformanceTimer \
     include/de/Id \
     include/de/Library \
@@ -112,6 +114,7 @@ HEADERS += \
     include/de/core/debuglogsink.h \
     include/de/core/event.h \
     include/de/core/filelogsink.h \
+    include/de/core/garbage.h \
     include/de/core/highperformancetimer.h \
     include/de/core/id.h \
     include/de/core/library.h \
@@ -150,6 +153,7 @@ SOURCES += \
     src/core/config.cpp \
     src/core/debuglogsink.cpp \
     src/core/filelogsink.cpp \
+    src/core/garbage.cpp \
     src/core/highperformancetimer.cpp \
     src/core/id.cpp \
     src/core/library.cpp \

@@ -123,6 +123,11 @@ typedef struct player_s {
     // Target view to a mobj (NULL=disabled).
     mobj_t*         viewLock; // $democam
     int             lockFull;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    void read(Reader *reader);
+#endif
 } player_t;
 
 #endif

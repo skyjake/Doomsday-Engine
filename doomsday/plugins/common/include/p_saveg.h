@@ -21,60 +21,28 @@
 #ifndef LIBCOMMON_SAVESTATE_H
 #define LIBCOMMON_SAVESTATE_H
 
-#ifdef __cplusplus
-#include "dmu_archiveindex.h"
-#endif
-#include "p_saveio.h"
+#include "common.h"
+#include "p_savedef.h" /// @todo remove me
+#include "saveinfo.h"
+#include "saveslots.h"
 
-/**
- * Original indices must remain unchanged!
- * Added new think classes to the end.
- */
-typedef enum thinkclass_e {
-    TC_NULL = -1,
-    TC_END,
-    TC_MOBJ,
-    TC_XGMOVER,
-    TC_CEILING,
-    TC_DOOR,
-    TC_FLOOR,
-    TC_PLAT,
+DENG_EXTERN_C int thingArchiveVersion;
+DENG_EXTERN_C uint thingArchiveSize;
+DENG_EXTERN_C dd_bool thingArchiveExcludePlayers;
+DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
+
+DENG_EXTERN_C SaveInfo const *curInfo;
+DENG_EXTERN_C dd_bool playerHeaderOK;
+
 #if __JHEXEN__
-    TC_INTERPRET_ACS,
-    TC_FLOOR_WAGGLE,
-    TC_LIGHT,
-    TC_PHASE,
-    TC_BUILD_PILLAR,
-    TC_ROTATE_POLY,
-    TC_MOVE_POLY,
-    TC_POLY_DOOR,
-#else
-    TC_FLASH,
-    TC_STROBE,
-# if __JDOOM__ || __JDOOM64__
-    TC_GLOW,
-    TC_FLICKER,
-#  if __JDOOM64__
-    TC_BLINK,
-#  endif
-# else
-    TC_GLOW,
-# endif
+DENG_EXTERN_C byte *saveBuffer;
 #endif
-    TC_MATERIALCHANGER,
-    TC_SCROLL,
-    NUMTHINKERCLASSES
-} thinkerclass_t;
+
+DENG_EXTERN_C SaveSlots *saveSlots;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef void (*WriteThinkerFunc)(thinker_t *, Writer *writer);
-typedef int (*ReadThinkerFunc)(thinker_t *, Reader *reader, int mapVersion);
-
-/// Register the console commands and variables of this module.
-void SV_Register(void);
 
 /// Initialize this module.
 void SV_Initialize(void);
@@ -82,59 +50,7 @@ void SV_Initialize(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-/**
- * Force an update of the cached game-save info. To be called (sparingly) at
- * strategic points when an update is necessary (e.g., the game-save paths
- * have changed).
- *
- * @note It is not necessary to call this after a game-save is made, this
- * module will do so automatically.
- */
-void SV_UpdateAllSaveInfo(void);
-
-/**
- * Lookup a save slot by searching for a match on game-save name. Search is in
- * ascending logical slot order 0...N (where N is the number of available save
- * slots in the current game).
- *
- * @param name  Name of the game-save to look for. Case insensitive.
- *
- * @return  Logical slot number of the found game-save else @c -1
- */
-int SV_SlotForSaveName(char const *name);
-
-/**
- * Parse @a str and determine whether it references a logical game-save slot.
- *
- * @param str  String to be parsed. Parse is divided into three passes.
- *             Pass 1: Check for a known game-save name which matches this.
- *                 Search is in ascending logical slot order 0..N (where N
- *                 is the number of available save slots).
- *             Pass 2: Check for keyword identifiers.
- *                 <auto>  = The "auto save" slot.
- *                 <last>  = The last used slot.
- *                 <quick> = The currently nominated "quick save" slot.
- *             Pass 3: Check for a logical save slot number.
- *
- * @return  Save slot identifier of the slot else @c -1
- */
-int SV_ParseSlotIdentifier(char const *str);
-
-/**
- * Returns @c true iff @a slot is a valid logical save slot.
- */
-dd_bool SV_IsValidSlot(int slot);
-
-/**
- * Returns @c true iff @a slot is user-writable save slot (i.e., its not one
- * of the special slots such as @em auto).
- */
-dd_bool SV_IsUserWritableSlot(int slot);
-
-/**
- * Returns @c true iff a game-save is present for logical save @a slot.
- */
-dd_bool SV_IsSlotUsed(int slot);
+void SV_SaveInfo_Read(SaveInfo *info, Reader *reader);
 
 #if __JHEXEN__
 /**
@@ -145,37 +61,14 @@ dd_bool SV_HxHaveMapStateForSlot(int slot, uint map);
 #endif
 
 /**
- * Returns the save info for save @a slot. Always returns SaveInfo even if
- * supplied with an invalid or unused slot identifer (a null object).
- */
-SaveInfo *SV_SaveInfoForSlot(int slot);
-
-/**
- * Compose the textual identifier/name for save @a slot.
- *
- * @return  Name/identifier associated with slot @a slot.
- */
-AutoStr *SV_ComposeSlotIdentifier(int slot);
-
-/**
- * Deletes all save game files associated with a slot number.
- */
-void SV_ClearSlot(int slot);
-
-/**
- * Copies all the save game files from one slot to another.
- */
-void SV_CopySlot(int sourceSlot, int destSlot);
-
-/**
  * Save the current game state to the specified @a slot number.
  *
- * @param name  Textual description to include in the save info. Can be @c 0
- *              in which case a description will be auto-generated.
+ * @param description  Textual description to include in the save info. Can be @c 0
+ *                     in which case a description will be auto-generated.
  *
  * @return  @c true iff the game state was saved successfully.
  */
-dd_bool SV_SaveGame(int slot, char const *name);
+dd_bool SV_SaveGame(int slot, char const *description);
 
 /**
  * Load the game state associated with the specified @a slot number.
@@ -194,14 +87,14 @@ void SV_SaveGameClient(uint gameId);
 void SV_LoadGameClient(uint gameId);
 #endif
 
-uint SV_GenerateGameId(void);
-
 /// Unique identifier associated with each archived thing.
 #if __JHEXEN__
 typedef int ThingSerialId;
 #else
 typedef ushort ThingSerialId;
 #endif
+
+void SV_ClearThingArchive(void);
 
 /**
  * To be called when writing a game state to acquire a unique identifier for
@@ -214,6 +107,9 @@ typedef ushort ThingSerialId;
  */
 ThingSerialId SV_ThingArchiveId(mobj_t const *mobj);
 
+void SV_InitThingArchiveForSave(dd_bool excludePlayers);
+void SV_InsertThingInArchive(mobj_t const *mobj, ThingSerialId thingId);
+
 /**
  * To be called after reading a game state has been read to lookup a pointer
  * to the mobj which is associated with the specified @a thingId.
@@ -223,22 +119,6 @@ ThingSerialId SV_ThingArchiveId(mobj_t const *mobj);
  * @return  Pointer to the associated mobj; otherwise @c 0 (not archived).
  */
 mobj_t *SV_GetArchiveThing(ThingSerialId thingid, void *address);
-
-/**
- * Returns a pointer to the (currently in-use) material archive.
- */
-MaterialArchive *SV_MaterialArchive(void);
-
-/**
- * Finds and returns a material with the identifier @a serialId.
- *
- * @param serialId  Unique identifier for the material in the material archive.
- * @param group     Used with previous versions of the material archive, which
- *                  separated materials into groups (0= Flats 1= Textures).
- *
- * @return  Pointer to the associated material; otherwise @c 0 (not archived).
- */
-Material *SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
 
 /**
  * Update mobj flag values from those used in legacy game-save formats
@@ -251,10 +131,29 @@ Material *SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
  */
 void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver);
 
+typedef struct playerheader_s {
+    int numPowers;
+    int numKeys;
+    int numFrags;
+    int numWeapons;
+    int numAmmoTypes;
+    int numPSprites;
+#if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
+    int numInvItemTypes;
+#endif
 #if __JHEXEN__
-void SV_HxInitBaseSlot(void);
-void SV_HxSaveClusterMap(void);
-void SV_HxLoadClusterMap(void);
+    int numArmorTypes;
+#endif
+} playerheader_t;
+
+void SV_WritePlayerHeader(Writer *writer);
+void SV_ReadPlayerHeader(Reader *reader, int saveVersion);
+
+playerheader_t *SV_GetPlayerHeader(void);
+
+#if __JHEXEN__
+void SV_HxSaveHubMap(void);
+void SV_HxLoadHubMap(void);
 
 typedef struct {
     player_t player;
@@ -262,19 +161,45 @@ typedef struct {
     inventoryitemtype_t readyItem;
 } playerbackup_t;
 
-void SV_HxBackupPlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS]);
+void SV_HxBackupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS]);
 
 /**
  * @param playerBackup  Player state backup.
- * @param entryPoint  Logical identifier for the entry point used to enter the map.
+ * @param mapEntrance   Logical entry point number used to enter the map.
  */
-void SV_HxRestorePlayersInCluster(playerbackup_t playerBackup[MAXPLAYERS], uint entryPoint);
+void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance);
+#endif
+
+void SV_InitThingArchiveForLoad(uint size);
+#if __JHEXEN__
+void SV_InitTargetPlayers(void);
+void SV_ClearTargetPlayers(void);
 #endif
 
 #ifdef __cplusplus
 } // extern "C"
+#endif
 
-dmu_lib::SideArchive &SV_SideArchive();
+#ifdef __cplusplus
+class MapStateReader;
+class MapStateWriter;
+
+#if __JHEXEN__
+void SV_WriteMovePoly(struct polyevent_s const *movepoly, MapStateWriter *msw);
+int SV_ReadMovePoly(struct polyevent_s *movepoly, MapStateReader *msr);
+#endif
+
+void SV_WriteLine(Line *line, MapStateWriter *msw);
+void SV_ReadLine(Line *line, MapStateReader *msr);
+
+void SV_WriteSector(Sector *sec, MapStateWriter *msw);
+void SV_ReadSector(Sector *sec, MapStateReader *msr);
+
+#endif // __cplusplus
+
+dd_bool SV_OpenGameSaveFile(Str const *fileName, dd_bool write);
+#if __JHEXEN__
+void SV_OpenMapSaveFile(Str const *path);
 #endif
 
 #endif // LIBCOMMON_SAVESTATE_H

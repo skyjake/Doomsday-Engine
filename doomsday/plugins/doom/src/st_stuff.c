@@ -46,7 +46,7 @@
 #include "hu_automap.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_user.h"
 #include "r_common.h"
 #include "am_map.h"

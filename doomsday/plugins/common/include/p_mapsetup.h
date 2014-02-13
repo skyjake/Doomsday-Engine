@@ -46,12 +46,19 @@ void P_FinalizeMapChange(Uri const *uri);
  */
 void P_SetupMap(Uri *uri);
 
+/**
+ * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
+ *                case the author for the @em current map will be returned (if set).
+ */
 char const *P_MapAuthor(Uri const *mapUri, dd_bool supressGameAuthor);
-char const *P_MapTitle(Uri const *mapUri);
-patchid_t P_MapTitlePatch(uint episode, uint map);
 
-char const *P_CurrentMapAuthor(dd_bool supressGameAuthor);
-char const *P_CurrentMapTitle(void);
+/**
+ * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
+ *                case the title for the @em current map will be returned (if set).
+ */
+char const *P_MapTitle(Uri const *mapUri);
+
+patchid_t P_MapTitlePatch(uint episode, uint map);
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void P_FindSecrets(void);

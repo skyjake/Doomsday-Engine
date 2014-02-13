@@ -38,7 +38,6 @@ enum xgsegenum_t
 
 dd_bool xgDataLumps;
 
-static FILE *file;
 static byte const *readptr;
 
 static linetype_t *linetypes;

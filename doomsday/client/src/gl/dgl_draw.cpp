@@ -297,6 +297,11 @@ DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
             DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);
 }
 
+void DGL_AssertNotInPrimitive(void)
+{
+    DENG_ASSERT(!inPrim);
+}
+
 #undef DGL_End
 DENG_EXTERN_C void DGL_End(void)
 {

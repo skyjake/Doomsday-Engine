@@ -159,6 +159,11 @@ typedef struct player_s {
     int             chickenPeck; // chicken peck countdown.
     mobj_t*         rain1; // Active rain maker 1.
     mobj_t*         rain2; // Active rain maker 2.
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    void read(Reader *reader);
+#endif
 } player_t;
 
 //

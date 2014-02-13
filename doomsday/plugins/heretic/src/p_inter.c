@@ -30,7 +30,7 @@
 #include "am_map.h"
 #include "d_net.h"
 #include "dmu_lib.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_inventory.h"
 #include "hu_inventory.h"
 #include "p_tick.h"

@@ -26,7 +26,7 @@
 #include "common.h"
 #include "r_common.h"
 
-#include "p_player.h"
+#include "player.h"
 #include "p_map.h"
 #include "mobj.h"
 #include "p_inventory.h"

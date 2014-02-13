@@ -63,7 +63,16 @@ typedef struct {
     weaponmodeinfo_t mode[NUMWEAPLEVELS];
 } weaponinfo_t;
 
-extern weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
+DENG_EXTERN_C weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES];
 
-void            P_InitWeaponInfo(void);
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+void P_InitWeaponInfo(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // __X_ITEMS_H__

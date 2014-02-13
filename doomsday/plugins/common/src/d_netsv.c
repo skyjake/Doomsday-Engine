@@ -27,7 +27,7 @@
 
 #include "common.h"
 #include "d_net.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_user.h"
 #include "p_map.h"
 #include "mobj.h"
@@ -727,19 +727,17 @@ void NetSv_SendTotalCounts(int to)
 void NetSv_SendGameState(int flags, int to)
 {
     int i;
-    Writer* writer;
+    Writer *writer;
     GameInfo gameInfo;
-    Uri* mapUri;
-    AutoStr* str;
+    AutoStr *str;
 
     if(!IS_NETWORK_SERVER)
         return;
 
     DD_GameInfo(&gameInfo);
-    mapUri = G_CurrentMapUri();
 
     // Print a short message that describes the game state.
-    str = Uri_Resolved(mapUri);
+    str = Uri_Resolved(gameMapUri);
 
     App_Log(DE2_NET_NOTE, "Sending game setup: %s %s %s",
             Str_Text(gameInfo.identityKey), Str_Text(str), gameConfigString);
@@ -758,7 +756,7 @@ void NetSv_SendGameState(int flags, int to)
         Writer_Write(writer, Str_Text(gameInfo.identityKey), Str_Length(gameInfo.identityKey));
 
         // The current map.
-        Uri_Write(mapUri, writer);
+        Uri_Write(gameMapUri, writer);
 
         // Also include the episode and map numbers.
         Writer_WriteByte(writer, gameEpisode);
@@ -789,8 +787,6 @@ void NetSv_SendGameState(int flags, int to)
         // Send the packet.
         Net_SendPacket(i, GPT_GAME_STATE, Writer_Data(writer), Writer_Size(writer));
     }
-
-    Uri_Delete(mapUri);
 }
 
 /**

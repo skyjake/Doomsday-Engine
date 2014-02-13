@@ -33,7 +33,7 @@
 #include "g_common.h"
 #include "p_map.h"
 #include "p_terraintype.h"
-#include "p_player.h"
+#include "player.h"
 #include "p_tick.h"
 #include "p_local.h"
 #include "dmu_lib.h"
@@ -810,7 +810,9 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     }
 
     if(type == MT_BOSSTARGET)
-        P_BrainAddTarget(mo);
+    {
+        BossBrain_AddTarget(bossBrain, mo);
+    }
 
     // Copy spawn attributes to the new mobj.
     mo->spawnSpot.origin[VX] = x;

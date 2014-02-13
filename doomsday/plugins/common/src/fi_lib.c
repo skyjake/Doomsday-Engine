@@ -101,20 +101,18 @@ static void initStateConditions(fi_state_t *s)
 #endif
 
 #if __JHEXEN__
-    // Leaving the current cluster?
+    // Leaving the current hub?
     {
-        Uri *curMapUri  = G_CurrentMapUri();
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
 
-        mapinfo_t *curMapInfo = P_MapInfo(curMapUri);
+        mapinfo_t *curMapInfo = P_MapInfo(0/*current map*/);
         mapinfo_t *nextMapInfo = P_MapInfo(nextMapUri);
         if(curMapInfo && nextMapInfo)
         {
-            s->conditions.leave_hub = (curMapInfo->cluster != nextMapInfo->cluster);
+            s->conditions.leave_hub = (curMapInfo->hub != nextMapInfo->hub);
         }
 
         Uri_Delete(nextMapUri);
-        Uri_Delete(curMapUri);
     }
     App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);
 #endif
@@ -453,14 +451,10 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* parameters)
     else if(mode == FIMODE_BEFORE) // A briefing has ended.
     {
         // Its time to start the map; que music and begin!
-        Uri *mapUri = G_CurrentMapUri();
-
-        S_MapMusic(mapUri);
+        S_MapMusic(0/*current map*/);
         HU_WakeWidgets(-1 /* all players */);
         G_BeginMap();
         Pause_End(); // skip forced period
-
-        Uri_Delete(mapUri);
     }
     return true;
 }

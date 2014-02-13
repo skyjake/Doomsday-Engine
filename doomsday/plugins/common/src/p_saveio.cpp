@@ -345,20 +345,8 @@ void SV_AssertSegment(int segmentId)
     {
         Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
     }
-#endif
-}
-
-void SV_AssertMapSegment(savestatesegment_t *retSegmentId)
-{
-#if __JHEXEN__
-    int segmentId = SV_ReadLong();
-    if(segmentId != ASEG_MAP_HEADER2 && segmentId != ASEG_MAP_HEADER)
-        Con_Error("Corrupt save game: Segment [%d] failed alignment check", segmentId);
-
-    if(retSegmentId) *retSegmentId = savestatesegment_t(segmentId);
 #else
-    SV_AssertSegment(ASEG_MAP_HEADER2);
-    if(retSegmentId) *retSegmentId = ASEG_MAP_HEADER2;
+    DENG_UNUSED(segmentId);
 #endif
 }
 
@@ -367,6 +355,8 @@ void SV_BeginSegment(int segType)
     errorIfNotInited("SV_BeginSegment");
 #if __JHEXEN__
     SV_WriteLong(segType);
+#else
+    DENG_UNUSED(segType);
 #endif
 }
 

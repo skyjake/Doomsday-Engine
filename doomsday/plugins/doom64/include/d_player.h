@@ -140,6 +140,11 @@ typedef struct player_s {
     int             lockFull;
 
     int             flyHeight;
+
+#ifdef __cplusplus
+    void write(Writer *writer) const;
+    void read(Reader *reader);
+#endif
 } player_t;
 
 //

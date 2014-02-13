@@ -23,6 +23,10 @@
 #define LIBCOMMON_THINKER_SCROLL_H
 
 #include "doomsday.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 typedef struct scroll_s {
   thinker_t thinker;
@@ -31,8 +35,8 @@ typedef struct scroll_s {
   float offset[2]; ///< [x, y] scroll vector delta.
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    int read(Reader *reader, int mapVersion);
+    void write(MapStateWriter *msw) const;
+    int read(MapStateReader *msr);
 #endif
 } scroll_t;
 

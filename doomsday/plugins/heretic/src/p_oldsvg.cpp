@@ -22,18 +22,21 @@
 #include "jheretic.h"
 #include "p_oldsvg.h"
 
+#include "am_map.h"
 #include "dmu_lib.h"
-#include "p_saveg.h"
-#include "p_map.h"
-#include "p_mapsetup.h"
-#include "p_tick.h"
+#include "hu_inventory.h"
 #include "p_ceiling.h"
 #include "p_door.h"
-#include "p_plat.h"
 #include "p_floor.h"
-#include "am_map.h"
 #include "p_inventory.h"
-#include "hu_inventory.h"
+#include "p_map.h"
+#include "p_mapsetup.h"
+#include "p_plat.h"
+#include "p_saveio.h"
+#include "p_saveg.h"
+#include "p_tick.h"
+#include "r_common.h"       // R_UpdateConsoleView
+#include <de/String>
 #include <cstdio>
 #include <cstring>
 
@@ -383,7 +386,8 @@ static void P_v13_UnArchivePlayers()
 
 static Uri *readTextureUrn(Reader *reader, char const *schemeName)
 {
-    DENG_ASSERT(reader && schemeName);
+    DENG_ASSERT(reader != 0 && schemeName != 0);
+    DENG_UNUSED(reader);
     return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", schemeName, Reader_ReadInt16(svReader))), RC_NULL);
 }
 
@@ -453,7 +457,7 @@ static void P_v13_UnArchiveWorld()
     }
 }
 
-static int removeThinker(thinker_t *th, void *context)
+static int removeThinker(thinker_t *th, void * /*context*/)
 {
     if(th->function == (thinkfunc_t) P_MobjThinker)
     {
@@ -846,54 +850,6 @@ static void P_v13_UnArchiveSpecials()
     }
 }
 
-int SV_LoadState_Hr_v13(Str const *path, SaveInfo *info)
-{
-    DENG_ASSERT(path != 0 && info != 0);
-
-    if(!SV_OpenFile_Hr_v13(Str_Text(path))) return 1;
-
-    svReader = SV_NewReader_Hr_v13();
-
-    // Read the header again.
-    /// @todo Seek past the header straight to the game state.
-    {
-        SaveInfo *tmp = new SaveInfo;
-        SaveInfo_Read_Hr_v13(tmp, svReader);
-        delete tmp;
-    }
-
-    // We don't want to see a briefing if we're loading a save game.
-    briefDisabled = true;
-
-    // Load a base map.
-    G_NewGame(info->episode(), info->map(), 0/*not saved??*/, &info->gameRules());
-
-    // Recreate map state.
-    mapTime = info->mapTime();
-
-    /// @todo Necessary?
-    G_SetGameAction(GA_NONE);
-
-    P_v13_UnArchivePlayers();
-    P_v13_UnArchiveWorld();
-    P_v13_UnArchiveThinkers();
-    P_v13_UnArchiveSpecials();
-
-    if(Reader_ReadByte(svReader) != SAVE_GAME_TERMINATOR)
-    {
-        Reader_Delete(svReader); svReader = 0;
-        SV_CloseFile_Hr_v13();
-
-        Con_Error("Bad savegame"); // Missing savegame termination marker.
-        exit(1); // Unreachable.
-    }
-
-    Reader_Delete(svReader); svReader = 0;
-    SV_CloseFile_Hr_v13();
-
-    return 0; // Success!
-}
-
 static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
 {
     DENG_ASSERT(info != 0);
@@ -909,14 +865,15 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
     info->_version = atoi(&vcheck[8]);
 
     info->_gameRules.skill = (skillmode_t) Reader_ReadByte(reader);
-
     // Interpret skill levels outside the normal range as "spawn no things".
     if(info->_gameRules.skill < SM_BABY || info->_gameRules.skill >= NUM_SKILL_MODES)
+    {
         info->_gameRules.skill = SM_NOTHINGS;
+    }
 
-    info->_episode = Reader_ReadByte(reader) - 1;
-    info->_map     = Reader_ReadByte(reader) - 1;
-    Uri_Copy(info->_mapUri, G_ComposeMapUri(info->_episode, info->_map));
+    uint episode = Reader_ReadByte(reader) - 1;
+    uint map     = Reader_ReadByte(reader) - 1;
+    Uri_Copy(info->_mapUri, G_ComposeMapUri(episode, map));
 
     for(int i = 0; i < 4; ++i)
     {
@@ -939,7 +896,7 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
     info->_gameRules.noMonsters      = 0;
     info->_gameRules.respawnMonsters = 0;
 
-    info->_gameId = 0; // None.
+    info->_sessionId = 0; // None.
 }
 
 static dd_bool SV_OpenFile_Hr_v13(char const *filePath)
@@ -968,16 +925,16 @@ static Reader *SV_NewReader_Hr_v13()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-dd_bool SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info)
+bool HereticV13GameStateReader::recognize(SaveInfo *info, Str const *path) // static
 {
-    DENG_ASSERT(path != 0 && info != 0);
+    DENG_ASSERT(info != 0 && path != 0);
 
     if(!SV_ExistingFile(path)) return false;
 
     if(SV_OpenFile_Hr_v13(Str_Text(path)))
     {
         Reader *svReader = SV_NewReader_Hr_v13();
-        dd_bool result = false;
+        bool result = false;
 
         /// @todo Use the 'version' string as the "magic" identifier.
         /*char vcheck[VERSIONSIZE];
@@ -996,4 +953,64 @@ dd_bool SV_RecogniseState_Hr_v13(Str const *path, SaveInfo *info)
         return result;
     }
     return false;
+}
+
+void HereticV13GameStateReader::read(SaveInfo *info, Str const *path)
+{
+    DENG_ASSERT(info != 0 && path != 0);
+
+    if(!SV_OpenFile_Hr_v13(Str_Text(path)))
+    {
+        throw FileAccessError("HereticV13GameStateReader", "Failed opending " + de::String(Str_Text(path)));
+    }
+
+    svReader = SV_NewReader_Hr_v13();
+
+    // Read the header again.
+    /// @todo Seek past the header straight to the game state.
+    {
+        SaveInfo *tmp = new SaveInfo;
+        SaveInfo_Read_Hr_v13(tmp, svReader);
+        delete tmp;
+    }
+
+    // We don't want to see a briefing if we're loading a save game.
+    briefDisabled = true;
+
+    // Load a base map.
+    G_NewGame(info->mapUri(), 0/*not saved??*/, &info->gameRules());
+
+    // Recreate map state.
+    mapTime = info->mapTime();
+
+    /// @todo Necessary?
+    G_SetGameAction(GA_NONE);
+
+    P_v13_UnArchivePlayers();
+    P_v13_UnArchiveWorld();
+    P_v13_UnArchiveThinkers();
+    P_v13_UnArchiveSpecials();
+
+    if(Reader_ReadByte(svReader) != SAVE_GAME_TERMINATOR)
+    {
+        Reader_Delete(svReader); svReader = 0;
+        SV_CloseFile_Hr_v13();
+
+        throw ReadError("HereticV13GameStateReader", "Bad savegame (consistency test failed!)");
+    }
+
+    Reader_Delete(svReader); svReader = 0;
+    SV_CloseFile_Hr_v13();
+
+    // Material scrollers must be spawned.
+    P_SpawnAllMaterialOriginScrollers();
+
+    // Let the engine know where the local players are now.
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
+
+    // Inform the engine that map setup must be performed once more.
+    R_SetupMap(0, 0);
 }

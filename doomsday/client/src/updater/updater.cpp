@@ -49,7 +49,7 @@
 #include "con_main.h"
 #include "clientapp.h"
 #include "ui/nativeui.h"
-#include "ui/windowsystem.h"
+#include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "updater.h"

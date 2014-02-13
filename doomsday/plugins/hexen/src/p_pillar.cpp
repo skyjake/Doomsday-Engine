@@ -43,8 +43,10 @@ void T_BuildPillar(pillar_t *pillar)
     }
 }
 
-void pillar_s::write(Writer *writer) const
+void pillar_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -60,8 +62,11 @@ void pillar_s::write(Writer *writer) const
     Writer_WriteInt32(writer, crush);
 }
 
-int pillar_s::read(Reader *reader, int mapVersion)
+int pillar_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     if(mapVersion >= 4)
     {
         // Note: the thinker class byte has already been read.

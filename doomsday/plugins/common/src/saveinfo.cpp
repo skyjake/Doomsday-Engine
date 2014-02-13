@@ -73,33 +73,29 @@ static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
 #endif
 
 SaveInfo::SaveInfo()
-    : _gameId  (0)
-    , _magic   (0)
-    , _version (0)
-    , _gameMode(NUM_GAME_MODES)
-    , _episode (0)
-    , _map     (0)
-    , _mapUri  (Uri_New())
+    : _sessionId(0)
+    , _magic    (0)
+    , _version  (0)
+    , _gameMode (NUM_GAME_MODES)
+    , _mapUri   (Uri_New())
 #if !__JHEXEN__
-    , _mapTime (0)
+    , _mapTime  (0)
 #endif
 {
     Str_InitStd(&_description);
 #if !__JHEXEN__
-    memset(&_players, 0, sizeof(_players));
+    de::zap(_players);
 #endif
-    memset(&_gameRules, 0, sizeof(_gameRules));
+    de::zap(_gameRules);
 }
 
 SaveInfo::SaveInfo(SaveInfo const &other)
-    : _gameId  (other._gameId)
-    , _magic   (other._magic)
-    , _version (other._version)
-    , _gameMode(other._gameMode)
-    , _episode (other._episode)
-    , _map     (other._map)
+    : _sessionId(other._sessionId)
+    , _magic    (other._magic)
+    , _version  (other._version)
+    , _gameMode (other._gameMode)
 #if !__JHEXEN__
-    , _mapTime (other._mapTime)
+    , _mapTime  (other._mapTime)
 #endif
 {
     Str_Copy(Str_InitStd(&_description), &other._description);
@@ -116,15 +112,22 @@ SaveInfo::~SaveInfo()
     Uri_Delete(_mapUri);
 }
 
+SaveInfo *SaveInfo::newWithCurrentSessionMetadata(Str const *description) // static
+{
+    SaveInfo *info = new SaveInfo;
+    info->setDescription(description);
+    info->applyCurrentSessionMetadata();
+    info->setSessionId(G_GenerateSessionId());
+    return info;
+}
+
 SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
     Str_Copy(&_description, &other._description);
-    _gameId = other._gameId;
+    _sessionId = other._sessionId;
     _magic = other._magic;
     _version = other._version;
     _gameMode = other._gameMode;
-    _episode = other._episode;
-    _map = other._map;
     Uri_Copy(_mapUri, other._mapUri);
 #if !__JHEXEN__
     _mapTime = other._mapTime;
@@ -154,24 +157,14 @@ void SaveInfo::setDescription(Str const *newName)
     Str_CopyOrClear(&_description, newName);
 }
 
-uint SaveInfo::gameId() const
+uint SaveInfo::sessionId() const
 {
-    return _gameId;
+    return _sessionId;
 }
 
-void SaveInfo::setGameId(uint newGameId)
+void SaveInfo::setSessionId(uint newSessionId)
 {
-    _gameId = newGameId;
-}
-
-uint SaveInfo::episode() const
-{
-    return _episode;
-}
-
-uint SaveInfo::map() const
-{
-    return _map;
+    _sessionId = newSessionId;
 }
 
 Uri const *SaveInfo::mapUri() const
@@ -196,9 +189,7 @@ void SaveInfo::applyCurrentSessionMetadata()
     _magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
     _version  = MY_SAVE_VERSION;
     _gameMode = gameMode;
-    _episode  = gameEpisode;
-    _map      = gameMap;
-    Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
+    Uri_Copy(_mapUri, gameMapUri);
 #if !__JHEXEN__
     _mapTime  = ::mapTime;
 #endif
@@ -231,8 +222,7 @@ void SaveInfo::write(Writer *writer) const
     Writer_WriteInt32(writer, _gameMode);
     Str_Write(&_description, writer);
 
-    Writer_WriteByte(writer, _episode);
-    Writer_WriteByte(writer, _map);
+    Uri_Write(_mapUri, writer);
 #if !__JHEXEN__
     Writer_WriteInt32(writer, _mapTime);
 #endif
@@ -245,7 +235,7 @@ void SaveInfo::write(Writer *writer) const
     }
 #endif
 
-    Writer_WriteInt32(writer, _gameId);
+    Writer_WriteInt32(writer, _sessionId);
 }
 
 void SaveInfo::read(Reader *reader)
@@ -260,21 +250,15 @@ void SaveInfo::read(Reader *reader)
     }
     else
     {
-        // Older formats use a fixed-length name (24 characters).
-#define OLD_NAME_LENGTH 24
-
-        char buf[OLD_NAME_LENGTH];
-        Reader_Read(reader, buf, OLD_NAME_LENGTH);
+        // Description is a fixed 24 characters in length.
+        char buf[24 + 1];
+        Reader_Read(reader, buf, 24); buf[24] = 0;
         Str_Set(&_description, buf);
-
-#undef OLD_NAME_LENGTH
     }
 
     if(_version >= 14)
     {
-        _episode = Reader_ReadByte(reader);
-        _map     = Reader_ReadByte(reader);
-        Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
+        Uri_Read(_mapUri, reader);
 #if !__JHEXEN__
         _mapTime = Reader_ReadInt32(reader);
 #endif
@@ -315,9 +299,9 @@ void SaveInfo::read(Reader *reader)
                 _gameRules.skill = SM_NOTHINGS;
         }
 
-        _episode = Reader_ReadByte(reader) - 1;
-        _map     = Reader_ReadByte(reader) - 1;
-        Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
+        uint episode = Reader_ReadByte(reader) - 1;
+        uint map     = Reader_ReadByte(reader) - 1;
+        Uri_Copy(_mapUri, G_ComposeMapUri(episode, map));
 
         _gameRules.deathmatch      = Reader_ReadByte(reader);
 #if !__JHEXEN__
@@ -346,7 +330,7 @@ void SaveInfo::read(Reader *reader)
     }
 #endif
 
-    _gameId = Reader_ReadInt32(reader);
+    _sessionId = Reader_ReadInt32(reader);
 
 #if __JDOOM__ || __JHERETIC__
     // Translate gameMode identifiers from older save versions.
@@ -357,45 +341,40 @@ void SaveInfo::read(Reader *reader)
 #if __JHEXEN__
 void SaveInfo::read_Hx_v9(Reader *reader)
 {
-# define HXS_VERSION_TEXT           "HXS Ver " // Do not change me!
-# define HXS_VERSION_TEXT_LENGTH    16
-# define HXS_NAME_LENGTH            24
+    char descBuf[24 + 1];
+    Reader_Read(reader, descBuf, 24); descBuf[24] = 0;
+    Str_Set(&_description, descBuf);
 
-    char verText[HXS_VERSION_TEXT_LENGTH];
-    char nameBuffer[HXS_NAME_LENGTH];
+    _magic     = MY_SAVE_MAGIC; // Lets pretend...
 
-    Reader_Read(reader, nameBuffer, HXS_NAME_LENGTH);
-    Str_Set(&_description, nameBuffer);
+    char verText[16 + 1]; // "HXS Ver "
+    Reader_Read(reader, &verText, 16); descBuf[16] = 0;
+    _version   = atoi(&verText[8]);
 
-    Reader_Read(reader, &verText, HXS_VERSION_TEXT_LENGTH);
-    _version  = atoi(&verText[8]);
+    _gameMode  = gameMode; // Assume the current mode.
 
     /*Skip junk*/ SV_Seek(4);
 
-    _magic    = MY_SAVE_MAGIC; // Lets pretend...
-    _gameMode = gameMode; // Assume the current mode.
-
-    _episode  = 0;
-    _map      = Reader_ReadByte(reader) - 1;
-    Uri_Copy(_mapUri, G_ComposeMapUri(_episode, _map));
+    uint episode = 0;
+    uint map     = Reader_ReadByte(reader) - 1;
+    Uri_Copy(_mapUri, G_ComposeMapUri(episode, map));
 
     _gameRules.skill         = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
-
     // Interpret skill modes outside the normal range as "spawn no things".
     if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
+    {
         _gameRules.skill = SM_NOTHINGS;
+    }
 
     _gameRules.deathmatch    = Reader_ReadByte(reader);
     _gameRules.noMonsters    = Reader_ReadByte(reader);
     _gameRules.randomClasses = Reader_ReadByte(reader);
 
-    _gameId  = 0; // None.
-
-# undef HXS_NAME_LENGTH
-# undef HXS_VERSION_TEXT_LENGTH
-# undef HXS_VERSION_TEXT
+    _sessionId = 0; // None.
 }
 #endif
+
+// C wrapper API ---------------------------------------------------------------
 
 SaveInfo *SaveInfo_New()
 {
@@ -420,16 +399,16 @@ SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other)
     return info;
 }
 
-uint SaveInfo_GameId(SaveInfo const *info)
+uint SaveInfo_SessionId(SaveInfo const *info)
 {
     DENG_ASSERT(info != 0);
-    return info->gameId();
+    return info->sessionId();
 }
 
-void SaveInfo_SetGameId(SaveInfo *info, uint newGameId)
+void SaveInfo_SetSessionId(SaveInfo *info, uint newSessionId)
 {
     DENG_ASSERT(info != 0);
-    info->setGameId(newGameId);
+    info->setSessionId(newSessionId);
 }
 
 Str const *SaveInfo_Description(SaveInfo const *info)

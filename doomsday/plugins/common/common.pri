@@ -15,6 +15,7 @@ HEADERS += \
     $$common_inc/d_net.h \
     $$common_inc/d_netcl.h \
     $$common_inc/d_netsv.h \
+    $$common_inc/dmu_archiveindex.h \
     $$common_inc/dmu_lib.h \
     $$common_inc/fi_lib.h \
     $$common_inc/g_common.h \
@@ -23,6 +24,8 @@ HEADERS += \
     $$common_inc/g_eventsequence.h \
     $$common_inc/g_update.h \
     $$common_inc/gamerules.h \
+    $$common_inc/gamestatereader.h \
+    $$common_inc/gamestatewriter.h \
     $$common_inc/gl_drawpatch.h \
     $$common_inc/hexlex.h \
     $$common_inc/hu_automap.h \
@@ -35,6 +38,8 @@ HEADERS += \
     $$common_inc/hu_pspr.h \
     $$common_inc/hu_stuff.h \
     $$common_inc/m_argv.h \
+    $$common_inc/mapstatereader.h \
+    $$common_inc/mapstatewriter.h \
     $$common_inc/mobj.h \
     $$common_inc/pause.h \
     $$common_inc/p_actor.h \
@@ -47,7 +52,6 @@ HEADERS += \
     $$common_inc/p_mapsetup.h \
     $$common_inc/p_mapspec.h \
     $$common_inc/p_plat.h \
-    $$common_inc/p_player.h \
     $$common_inc/p_savedef.h \
     $$common_inc/p_saveg.h \
     $$common_inc/p_saveio.h \
@@ -62,9 +66,12 @@ HEADERS += \
     $$common_inc/p_xg.h \
     $$common_inc/p_xgline.h \
     $$common_inc/p_xgsec.h \
+    $$common_inc/player.h \
     $$common_inc/polyobjs.h \
     $$common_inc/r_common.h \
     $$common_inc/saveinfo.h \
+    $$common_inc/saveslots.h \
+    $$common_inc/thinkerinfo.h \
     $$common_inc/x_hair.h \
     $$common_inc/xgclass.h
 
@@ -83,6 +90,8 @@ SOURCES += \
     $$common_src/g_game.c \
     $$common_src/g_update.c \
     $$common_src/gamerules.c \
+    $$common_src/gamestatereader.cpp \
+    $$common_src/gamestatewriter.cpp \
     $$common_src/gl_drawpatch.c \
     $$common_src/hexlex.cpp \
     $$common_src/hu_automap.c \
@@ -95,7 +104,9 @@ SOURCES += \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.c \
-    $$common_src/mobj.c \
+    $$common_src/mapstatereader.cpp \
+    $$common_src/mapstatewriter.cpp \
+    $$common_src/mobj.cpp \
     $$common_src/pause.c \
     $$common_src/p_actor.cpp \
     $$common_src/p_ceiling.cpp \
@@ -107,7 +118,6 @@ SOURCES += \
     $$common_src/p_mapsetup.cpp \
     $$common_src/p_mapspec.c \
     $$common_src/p_plat.cpp \
-    $$common_src/p_player.c \
     $$common_src/p_saveg.cpp \
     $$common_src/p_saveio.cpp \
     $$common_src/p_scroll.cpp \
@@ -122,7 +132,10 @@ SOURCES += \
     $$common_src/p_xgline.c \
     $$common_src/p_xgsave.cpp \
     $$common_src/p_xgsec.c \
+    $$common_src/player.cpp \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
     $$common_src/saveinfo.cpp \
+    $$common_src/saveslots.cpp \
+    $$common_src/thinkerinfo.cpp \
     $$common_src/x_hair.c

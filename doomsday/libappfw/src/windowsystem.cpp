@@ -3,57 +3,42 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
-#include "de_platform.h"
-#include "ui/windowsystem.h"
-#include "ui/clientwindow.h"
-#include "gl/gl_main.h"
-#include "clientapp.h"
-#include "dd_main.h"
-
+#include "de/WindowSystem"
 #include <de/Style>
 #include <QMap>
 
-using namespace de;
+namespace de {
 
 DENG2_PIMPL(WindowSystem)
 {
-    SettingsRegister settings;
-
-    struct ClientStyle : public Style {
-        bool isBlurringAllowed() const {
-            return !App_GameLoaded();
-        }
-    };
-
-    typedef QMap<String, ClientWindow *> Windows;
+    typedef QMap<String, BaseWindow *> Windows;
     Windows windows;
-    ClientStyle style;
+
+    QScopedPointer<Style> style;
 
     // Mouse motion.
     bool mouseMoved;
     Vector2i latestMousePos;
 
-    Instance(Public *i) : Base(i), mouseMoved(false)
+    Instance(Public *i)
+        : Base(i)
+        , mouseMoved(false)
     {
-        settings.define(SettingsRegister::ConfigVariable, "window.main.showFps")
-                .define(SettingsRegister::IntCVar,        "vid-fsaa", 1)
-                .define(SettingsRegister::IntCVar,        "vid-vsync", 1);
-
-        style.load(App::fileSystem().find("defaultstyle.pack").path());
-        Style::setAppStyle(style); // use as global style
+        // Create a blank style by default.
+        setStyle(new Style);
     }
 
     ~Instance()
@@ -61,9 +46,15 @@ DENG2_PIMPL(WindowSystem)
         self.closeAll();
     }
 
+    void setStyle(Style *s)
+    {
+        style.reset(s);
+        Style::setAppStyle(*s); // use as global style
+    }
+
     void processLatestMousePosition()
     {
-        self.main().root().processEvent(MouseEvent(MouseEvent::Absolute, latestMousePos));
+        self.rootProcessEvent(MouseEvent(MouseEvent::Absolute, latestMousePos));
     }
 
     void processLatestMousePositionIfMoved()
@@ -77,36 +68,32 @@ DENG2_PIMPL(WindowSystem)
 };
 
 WindowSystem::WindowSystem()
-    : System(ObservesTime | ReceivesInputEvents), d(new Instance(this))
+    : System(ObservesTime | ReceivesInputEvents)
+    , d(new Instance(this))
+{}
+
+void WindowSystem::setStyle(Style *style)
 {
-    ClientWindow::setDefaultGLFormat();
+    d->setStyle(style);
 }
 
-SettingsRegister &WindowSystem::settings()
+void WindowSystem::addWindow(String const &id, BaseWindow *window)
 {
-    return d->settings;
+    d->windows.insert(id, window);
 }
 
-ClientWindow *WindowSystem::createWindow(String const &id)
+bool WindowSystem::mainExists() // static
 {
-    DENG2_ASSERT(!d->windows.contains(id));
-
-    ClientWindow *win = new ClientWindow(id);
-    d->windows.insert(id, win);
-    return win;
+    return appWindowSystem().d->windows.contains("main");
 }
 
-bool WindowSystem::hasMain() // static
+BaseWindow &WindowSystem::main() // static
 {
-    return ClientApp::windowSystem().d->windows.contains("main");
+    DENG2_ASSERT(mainExists());
+    return **appWindowSystem().d->windows.find("main");
 }
 
-ClientWindow &WindowSystem::main() // static
-{
-    return static_cast<ClientWindow &>(PersistentCanvasWindow::main());
-}
-
-ClientWindow *WindowSystem::find(String const &id) const
+BaseWindow *WindowSystem::find(String const &id) const
 {
     Instance::Windows::const_iterator found = d->windows.constFind(id);
     if(found != d->windows.constEnd())
@@ -118,8 +105,7 @@ ClientWindow *WindowSystem::find(String const &id) const
 
 void WindowSystem::closeAll()
 {   
-    // We can't get rid of the windows without tearing down GL stuff first.
-    GL_Shutdown();
+    closingAllWindows();
 
     qDeleteAll(d->windows.values());
     d->windows.clear();
@@ -127,7 +113,7 @@ void WindowSystem::closeAll()
 
 Style &WindowSystem::style()
 {
-    return d->style;
+    return *d->style;
 }
 
 void WindowSystem::dispatchLatestMousePosition()
@@ -163,7 +149,7 @@ bool WindowSystem::processEvent(Event const &event)
     }
 
     // Dispatch the event to the main window's widget tree.
-    return main().root().processEvent(event);
+    return rootProcessEvent(event);
 }
 
 void WindowSystem::timeChanged(Clock const &/*clock*/)
@@ -171,5 +157,23 @@ void WindowSystem::timeChanged(Clock const &/*clock*/)
     d->processLatestMousePositionIfMoved();
 
     // Update periodically.
-    main().root().update();
+    rootUpdate();
 }
+
+void WindowSystem::closingAllWindows()
+{}
+
+static WindowSystem *theAppWindowSystem = 0;
+
+void WindowSystem::setAppWindowSystem(WindowSystem &winSys)
+{
+    theAppWindowSystem = &winSys;
+}
+
+WindowSystem &WindowSystem::appWindowSystem() // static
+{
+    DENG2_ASSERT(theAppWindowSystem != 0);
+    return *theAppWindowSystem;
+}
+
+} // namespace de

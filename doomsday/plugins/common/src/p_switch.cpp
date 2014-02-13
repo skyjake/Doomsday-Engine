@@ -26,6 +26,7 @@
 
 #include "d_net.h"
 #include "dmu_lib.h"
+#include "dmu_archiveindex.h"
 #include "p_plat.h"
 #include "p_sound.h"
 #include "p_saveg.h"
@@ -297,8 +298,10 @@ void T_MaterialChanger(void *materialChangerThinker)
     }
 }
 
-void materialchanger_s::write(Writer *writer) const
+void materialchanger_s::write(MapStateWriter *msw) const
 {
+    Writer *writer = msw->writer();
+
     Writer_WriteByte(writer, 1); // Write a version byte.
 
     // Note we don't bother to save a byte to tell if the function
@@ -310,11 +313,14 @@ void materialchanger_s::write(Writer *writer) const
     Writer_WriteInt32(writer, timer);
     Writer_WriteInt32(writer, P_ToIndex(side));
     Writer_WriteByte(writer, (byte) section);
-    Writer_WriteInt16(writer, MaterialArchive_FindUniqueSerialId(SV_MaterialArchive(), material));
+    Writer_WriteInt16(writer, msw->serialIdFor(material));
 }
 
-int materialchanger_s::read(Reader *reader, int mapVersion)
+int materialchanger_s::read(MapStateReader *msr)
 {
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
     /*int ver =*/ Reader_ReadByte(reader);
     // Note: the thinker class byte has already been read.
 
@@ -330,12 +336,12 @@ int materialchanger_s::read(Reader *reader, int mapVersion)
     else
     {
         // Side index is actually a DMU_ARCHIVE_INDEX.
-        side = (Side *)SV_SideArchive().at(sideIndex);
+        side = (Side *)msr->sideArchive().at(sideIndex);
     }
     DENG_ASSERT(side != 0);
 
     section = (SideSection) Reader_ReadByte(reader);
-    material = SV_GetArchiveMaterial(Reader_ReadInt16(reader), 0);
+    material = msr->material(Reader_ReadInt16(reader), 0);
 
     thinker.function = T_MaterialChanger;
 

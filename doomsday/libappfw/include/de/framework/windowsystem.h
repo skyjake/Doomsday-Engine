@@ -7,30 +7,31 @@
  * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
- * GPL: http://www.gnu.org/licenses/gpl.html
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
  *
  * <small>This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version. This program is distributed in the hope that it
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_WINDOWSYSTEM_H
-#define CLIENT_WINDOWSYSTEM_H
+#ifndef LIBAPPFW_WINDOWSYSTEM_H
+#define LIBAPPFW_WINDOWSYSTEM_H
 
 #include <de/System>
 #include <de/String>
 #include <de/Vector>
-#include <de/Style>
+#include <de/Event>
 
-#include "SettingsRegister"
+#include "../Style"
+#include "../BaseWindow"
 
-class ClientWindow;
+namespace de {
 
 /**
  * Window management subsystem.
@@ -40,7 +41,7 @@ class ClientWindow;
  *
  * @ingroup gui
  */
-class WindowSystem : public de::System
+class WindowSystem : public System
 {
 public:
     /// Required/referenced Window instance is missing. @ingroup errors
@@ -49,38 +50,39 @@ public:
 public:
     WindowSystem();
 
-    SettingsRegister &settings();
-
     /**
-     * Constructs a new window using the default configuration. Note that the
-     * default configuration is saved persistently when the engine shuts down
-     * and is restored when the engine is restarted.
+     * Sets a new style for the application.
      *
-     * Command line options (e.g., -xpos) can be used to modify the window
-     * configuration.
-     *
-     * @param id     Identifier of the window ("main" for the main window).
-     *
-     * @return ClientWindow instance. Ownership is retained by the window system.
+     * @param style  Style instance. Ownership taken.
      */
-    ClientWindow *createWindow(de::String const &id = "main");
+    void setStyle(Style *style);
+
+    template <typename WindowType>
+    WindowType *newWindow(String const &id) {
+        DENG2_ASSERT(!find(id));
+        WindowType *win = new WindowType(id);
+        addWindow(id, win);
+        return win;
+    }
+
+    void addWindow(String const &id, BaseWindow *window);
 
     /**
      * Returns @c true iff a main window is available.
      */
-    static bool hasMain();
+    static bool mainExists();
 
     /**
      * Returns the main window.
      */
-    static ClientWindow &main();
+    static BaseWindow &main();
 
     /**
      * Returns a pointer to the @em main window.
      *
      * @see hasMain()
      */
-    inline static ClientWindow *mainPtr() { return hasMain()? &main() : 0; }
+    inline static BaseWindow *mainPtr() { return mainExists()? &main() : 0; }
 
     /**
      * Find a window.
@@ -89,7 +91,7 @@ public:
      *
      * @return Window instance or @c NULL if not found.
      */
-    ClientWindow *find(de::String const &id) const;
+    BaseWindow *find(String const &id) const;
 
     /**
      * Closes all windows, including the main window.
@@ -99,7 +101,7 @@ public:
     /**
      * Returns the window system's UI style.
      */
-    de::Style &style();
+    Style &style();
 
     /**
      * Dispatches a mouse position event with the latest mouse position. This
@@ -107,14 +109,26 @@ public:
      */
     void dispatchLatestMousePosition();
 
-    de::Vector2i latestMousePosition() const;
+    Vector2i latestMousePosition() const;
 
     // System.
-    bool processEvent(de::Event const &);
-    void timeChanged(de::Clock const &);
+    bool processEvent(Event const &);
+    void timeChanged(Clock const &);
+
+public:
+    static void setAppWindowSystem(WindowSystem &winSys);
+    static WindowSystem &appWindowSystem();
+
+protected:
+    virtual void closingAllWindows();
+
+    virtual bool rootProcessEvent(Event const &event) = 0;
+    virtual void rootUpdate() = 0;
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // CLIENT_WINDOWSYSTEM_H
+} // namespace de
+
+#endif // LIBAPPFW_WINDOWSYSTEM_H
