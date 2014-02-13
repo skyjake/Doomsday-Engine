@@ -81,6 +81,8 @@ public:
      */
     virtual void draw();
 
+    void canvasGLDraw(Canvas &);
+
     DENG2_AS_IS_METHODS()
 
 protected:
@@ -92,6 +94,9 @@ protected:
      * @return @c true to continue drawing the frame, @c false to abort the frame.
      */
     virtual bool prepareForDraw();
+
+    virtual void preDraw();
+    virtual void postDraw();
 
 private:
     DENG2_PRIVATE(d)

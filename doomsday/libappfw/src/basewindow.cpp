@@ -92,4 +92,19 @@ void BaseWindow::draw()
     }
 }
 
+void BaseWindow::canvasGLDraw(Canvas &cv)
+{
+    preDraw();
+    d->xf->drawTransformed();
+    postDraw();
+
+    PersistentCanvasWindow::canvasGLDraw(cv);
+}
+
+void BaseWindow::preDraw()
+{}
+
+void BaseWindow::postDraw()
+{}
+
 } // namespace de

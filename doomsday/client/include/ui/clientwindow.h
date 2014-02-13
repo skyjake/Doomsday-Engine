@@ -157,12 +157,13 @@ public:
     void closeEvent(QCloseEvent *);
     void canvasGLReady(de::Canvas &);
     void canvasGLInit(de::Canvas &);
-    void canvasGLDraw(de::Canvas &);
     void canvasGLResized(de::Canvas &);
 
     // Implements BaseWindow:
     de::Vector2f windowContentSize();
     void drawWindowContent();
+    void preDraw();
+    void postDraw();
 
     static ClientWindow &main();
 

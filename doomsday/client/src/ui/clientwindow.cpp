@@ -685,15 +685,6 @@ Vector2f ClientWindow::windowContentSize()
     return Vector2f(root().viewWidth().value(), root().viewHeight().value());
 }
 
-void ClientWindow::drawWindowContent()
-{
-    LIBGUI_ASSERT_GL_OK();
-
-    root().draw();
-
-    LIBGUI_ASSERT_GL_OK();
-}
-
 ClientRootWidget &ClientWindow::root()
 {
     return d->root;
@@ -788,9 +779,10 @@ void ClientWindow::canvasGLInit(Canvas &)
     GL_Init2DState();
 }
 
-void ClientWindow::canvasGLDraw(Canvas &canvas)
+void ClientWindow::preDraw()
 {
-    // All of this occurs during the Canvas paintGL event.
+    // NOTE: This occurs during the Canvas paintGL event.
+    BaseWindow::preDraw();
 
     ClientApp::app().preFrame(); /// @todo what about multiwindow?
 
@@ -805,8 +797,17 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
         d->updateRootSize();
     }
     d->updateCompositor();
+}
 
-    d->contentXf.drawTransformed();
+void ClientWindow::drawWindowContent()
+{
+    root().draw();
+    LIBGUI_ASSERT_GL_OK();
+}
+
+void ClientWindow::postDraw()
+{
+    // NOTE: This occurs during the Canvas paintGL event.
 
     // Finish GL drawing and swap it on to the screen. Blocks until buffers
     // swapped.
@@ -814,8 +815,9 @@ void ClientWindow::canvasGLDraw(Canvas &canvas)
 
     ClientApp::app().postFrame(); /// @todo what about multiwindow?
 
-    BaseWindow::canvasGLDraw(canvas);
     d->updateFpsNotification(frameRate());
+
+    BaseWindow::postDraw();
 }
 
 void ClientWindow::canvasGLResized(Canvas &canvas)
