@@ -69,9 +69,6 @@ static targetplraddress_t *targetPlayerAddrs;
 static byte *saveBuffer;
 #endif
 
-static bool openGameSaveFile(Str const *fileName, bool write);
-static void openMapSaveFile(Str const *path);
-
 #if !__JHEXEN__
 /**
  * Compose the (possibly relative) path to the game-save associated
@@ -96,6 +93,44 @@ static AutoStr *composeGameSavePathForClientSessionId(uint sessionId)
     Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), sessionId);
     F_TranslatePath(path, path);
     return path;
+}
+#endif
+
+static bool openGameSaveFile(Str const *fileName, bool write)
+{
+#if __JHEXEN__
+    if(!write)
+    {
+        bool result = M_ReadFile(Str_Text(fileName), (char **)&saveBuffer) > 0;
+        // Set the save pointer.
+        SV_HxSavePtr()->b = saveBuffer;
+        return result;
+    }
+    else
+#endif
+    {
+        SV_OpenFile(fileName, write? "wp" : "rp");
+    }
+
+    return SV_File() != 0;
+}
+
+#if __JHEXEN__
+static void openMapSaveFile(Str const *path)
+{
+    DENG_ASSERT(path != 0);
+
+    App_Log(DE2_DEV_RES_MSG, "openMapSaveFile: Opening \"%s\"", Str_Text(path));
+
+    // Load the file
+    size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
+    if(!bufferSize)
+    {
+        throw de::Error("openMapSaveFile", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
+    }
+
+    SV_HxSavePtr()->b = saveBuffer;
+    SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
 }
 #endif
 
@@ -566,9 +601,13 @@ static void readPlayerHeader(Reader *reader, int saveVersion)
 class GameStateWriter
 {
 public:
+    /// An error occurred attempting to open the output file. @ingroup errors
+    DENG2_ERROR(FileAccessError);
+
+public:
     GameStateWriter();
 
-    void write(SaveInfo *saveInfo, Writer *writer);
+    void write(SaveInfo *saveInfo, Str const *path);
 
 private:
     DENG2_PRIVATE(d)
@@ -646,11 +685,19 @@ DENG2_PIMPL_NOREF(GameStateWriter)
 GameStateWriter::GameStateWriter() : d(new Instance/*(this)*/)
 {}
 
-void GameStateWriter::write(SaveInfo *saveInfo, Writer *writer)
+void GameStateWriter::write(SaveInfo *saveInfo, Str const *path)
 {
-    DENG_ASSERT(saveInfo != 0 && writer != 0);
+    DENG_ASSERT(saveInfo != 0 && path != 0);
     d->saveInfo = saveInfo;
-    d->writer   = writer;
+
+    playerHeaderOK = false; // Uninitialized.
+
+    if(!openGameSaveFile(path, true))
+    {
+        throw FileAccessError("GameStateWriter", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
+    }
+
+    d->writer = SV_NewWriter();
 
     d->writeSessionHeader();
     d->writeWorldACScriptData();
@@ -665,14 +712,20 @@ void GameStateWriter::write(SaveInfo *saveInfo, Writer *writer)
 
     d->writePlayers();
     d->writeMap();
+
+    Writer_Delete(d->writer); d->writer = 0;
 }
 
 class GameStateReader
 {
 public:
+    /// An error occurred attempting to open the input file. @ingroup errors
+    DENG2_ERROR(FileAccessError);
+
+public:
     GameStateReader();
 
-    void read(SaveInfo *saveInfo, Reader *reader);
+    void read(SaveInfo *saveInfo, Str const *path);
 
 private:
     DENG2_PRIVATE(d)
@@ -694,7 +747,7 @@ DENG2_PIMPL_NOREF(GameStateReader)
         de::zap(infile);
     }
 
-    /// Assumes the reader is currently positiond at the start of the stream.
+    /// Assumes the reader is currently positioned at the start of the stream.
     void seekToGameState()
     {
         // Read the header again.
@@ -716,7 +769,7 @@ DENG2_PIMPL_NOREF(GameStateReader)
 
     void readMap()
     {
-#if __JHEXEN__ // The map state is actually read from to a separate file.
+#if __JHEXEN__ // The map state is actually read from a separate file.
         // Close the game state file.
         Z_Free(saveBuffer);
         SV_CloseFile();
@@ -869,11 +922,19 @@ DENG2_PIMPL_NOREF(GameStateReader)
 GameStateReader::GameStateReader() : d(new Instance/*(this)*/)
 {}
 
-void GameStateReader::read(SaveInfo *saveInfo, Reader *reader)
+void GameStateReader::read(SaveInfo *saveInfo, Str const *path)
 {
-    DENG_ASSERT(saveInfo != 0 && reader != 0);
+    DENG_ASSERT(saveInfo != 0 && path != 0);
     d->saveInfo = saveInfo;
-    d->reader   = reader;
+
+    playerHeaderOK = false; // Uninitialized.
+
+    if(!openGameSaveFile(path, false))
+    {
+        throw FileAccessError("GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
+    }
+
+    d->reader = SV_NewReader();
 
     d->seekToGameState();
 
@@ -908,6 +969,8 @@ void GameStateReader::read(SaveInfo *saveInfo, Reader *reader)
     // In netgames, the server tells the clients about this.
     NetSv_LoadGame(d->saveInfo->sessionId());
 #endif
+
+    Reader_Delete(d->reader); d->reader = 0;
 }
 
 enum sectorclass_t
@@ -1542,67 +1605,11 @@ void SV_Shutdown()
     inited = false;
 }
 
-static bool openGameSaveFile(Str const *fileName, bool write)
-{
-#if __JHEXEN__
-    if(!write)
-    {
-        bool result = M_ReadFile(Str_Text(fileName), (char **)&saveBuffer) > 0;
-        // Set the save pointer.
-        SV_HxSavePtr()->b = saveBuffer;
-        return result;
-    }
-    else
-#endif
-    {
-        SV_OpenFile(fileName, write? "wp" : "rp");
-    }
-
-    return SV_File() != 0;
-}
-
-#if __JHEXEN__
-static void openMapSaveFile(Str const *path)
-{
-    DENG_ASSERT(path != 0);
-
-    App_Log(DE2_DEV_RES_MSG, "openMapSaveFile: Opening \"%s\"", Str_Text(path));
-
-    // Load the file
-    size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
-    if(!bufferSize)
-    {
-        throw de::Error("openMapSaveFile", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
-    }
-
-    SV_HxSavePtr()->b = saveBuffer;
-    SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
-}
-#endif
-
-static void loadNativeState(Str const *path, SaveInfo *info)
-{
-    DENG_ASSERT(path != 0 && info != 0);
-
-    playerHeaderOK = false; // Uninitialized.
-
-    if(!openGameSaveFile(path, false))
-    {
-        throw de::Error("loadNativeState", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
-    }
-
-    Reader *reader = SV_NewReader();
-
-    GameStateReader().read(info, reader);
-
-    Reader_Delete(reader);
-}
-
 static void loadGameState(Str const *path, SaveInfo &saveInfo)
 {
     if(recognizeNativeState(path, &saveInfo))
     {
-        loadNativeState(path, &saveInfo);
+        GameStateReader().read(&saveInfo, path);
         return;
     }
 
@@ -1829,29 +1836,6 @@ void SV_LoadGameClient(uint sessionId)
 #endif
 }
 
-static void saveGameState(Str const *path, SaveInfo *saveInfo)
-{
-    App_Log(DE2_LOG_VERBOSE, "saveStateWorker: Attempting save game to \"%s\"", Str_Text(path));
-
-    // In networked games the server tells the clients to save their games.
-#if !__JHEXEN__
-    NetSv_SaveGame(saveInfo->sessionId());
-#endif
-
-    if(!openGameSaveFile(path, true))
-    {
-        throw de::Error("saveStateWorker", "Failed opening \"" + de::String(Str_Text(path)) + "\" for write");
-    }
-
-    playerHeaderOK = false; // Uninitialized.
-
-    Writer *writer = SV_NewWriter();
-
-    GameStateWriter().write(saveInfo, writer);
-
-    Writer_Delete(writer);
-}
-
 dd_bool SV_SaveGame(int slot, char const *description)
 {
     DENG_ASSERT(inited);
@@ -1880,11 +1864,17 @@ dd_bool SV_SaveGame(int slot, char const *description)
         return false;
     }
 
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_FromTextStd(description));
+    App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"", Str_Text(path));
 
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_FromTextStd(description));
     try
     {
-        saveGameState(path, info);
+        // In networked games the server tells the clients to save their games.
+#if !__JHEXEN__
+        NetSv_SaveGame(info->sessionId());
+#endif
+
+        GameStateWriter().write(info, path);
 
         // Swap the save info.
         saveSlots->replaceSaveInfo(logicalSlot, info);
