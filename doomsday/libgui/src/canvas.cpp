@@ -357,6 +357,7 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::updateSize()
 {
+#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
     /*
     if(d->parent && d->parent->isRecreationInProgress())
     {
@@ -364,6 +365,7 @@ void Canvas::updateSize()
         return;
     }
     */
+#endif
 
     qDebug() << this << "resizing now";
 
@@ -432,11 +434,13 @@ void Canvas::paintGL()
 {
     if(!d->parent || d->parent->isRecreationInProgress()) return;
 
+#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
     if(d->resizeTimer.isActive())
     {
         d->resizeTimer.stop();
         updateSize();
     }
+#endif
 
     LIBGUI_ASSERT_GL_OK();
 
