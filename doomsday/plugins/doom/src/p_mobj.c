@@ -811,7 +811,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
 
     if(type == MT_BOSSTARGET)
     {
-        BossBrain_AddTarget(bossBrain, mo);
+        BossBrain_AddTarget(theBossBrain, mo);
     }
 
     // Copy spawn attributes to the new mobj.

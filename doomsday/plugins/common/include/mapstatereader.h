@@ -22,7 +22,6 @@
 #define LIBCOMMON_MAPSTATEREADER_H
 
 #include "common.h"
-#include "dmu_archiveindex.h"
 #include "thingarchive.h"
 #include <de/Error>
 
@@ -54,10 +53,18 @@ public:
      */
     int mapVersion();
 
+    /**
+     * Returns the reader to use when deserializing the saved map state.
+     */
+    Reader *reader();
+
+    /**
+     * Lookup a pointer to a Mobj with the given @a serialId.
+     */
     struct mobj_s *mobj(ThingArchive::SerialId serialId, void *address);
 
     /**
-     * Finds and returns a material with the identifier @a serialId.
+     * Lookup a pointer to a Material with the given @a serialId.
      *
      * @param serialId  Unique identifier for the material in the material archive.
      * @param group     Used with previous versions of the material archive, which
@@ -68,14 +75,9 @@ public:
     Material *material(materialarchive_serialid_t serialId, int group);
 
     /**
-     * Returns the reader to use when deserializing the saved map state.
+     * Lookup a pointer to a Side with the given @a sideIndex.
      */
-    Reader *reader();
-
-    /**
-     * Provides access to the side archive to use when deserializing the map state.
-     */
-    dmu_lib::SideArchive &sideArchive();
+    Side *side(int sideIndex);
 
 public: /// @todo refactor away:
     void addMobjToThingArchive(struct mobj_s *mobj, ThingArchive::SerialId);

@@ -48,9 +48,6 @@ SaveSlots *saveSlots = &sslots;
 
 SaveInfo const *curInfo;
 
-static playerheader_t playerHeader;
-dd_bool playerHeaderOK;
-
 int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
 targetplraddress_t *targetPlayerAddrs;
@@ -87,12 +84,16 @@ static AutoStr *composeGameSavePathForClientSessionId(uint sessionId)
 }
 #endif
 
-dd_bool SV_OpenGameSaveFile(Str const *fileName, dd_bool write)
+dd_bool SV_OpenGameSaveFile(Str const *path, dd_bool write)
 {
+    DENG_ASSERT(path != 0);
+
+    App_Log(DE2_DEV_RES_MSG, "SV_OpenGameSaveFile: Opening \"%s\"", Str_Text(path));
+
 #if __JHEXEN__
     if(!write)
     {
-        bool result = M_ReadFile(Str_Text(fileName), (char **)&saveBuffer) > 0;
+        bool result = M_ReadFile(Str_Text(path), (char **)&saveBuffer) > 0;
         // Set the save pointer.
         SV_HxSavePtr()->b = saveBuffer;
         return result;
@@ -100,28 +101,27 @@ dd_bool SV_OpenGameSaveFile(Str const *fileName, dd_bool write)
     else
 #endif
     {
-        SV_OpenFile(fileName, write? "wp" : "rp");
+        SV_OpenFile(path, write? "wp" : "rp");
     }
 
     return SV_File() != 0;
 }
 
 #if __JHEXEN__
-void SV_OpenMapSaveFile(Str const *path)
+dd_bool SV_OpenMapSaveFile(Str const *path)
 {
     DENG_ASSERT(path != 0);
 
-    App_Log(DE2_DEV_RES_MSG, "openMapSaveFile: Opening \"%s\"", Str_Text(path));
+    App_Log(DE2_DEV_RES_MSG, "SV_OpenMapSaveFile: Opening \"%s\"", Str_Text(path));
 
     // Load the file
     size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
-    if(!bufferSize)
-    {
-        throw de::Error("openMapSaveFile", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
-    }
+    if(!bufferSize) return false;
 
     SV_HxSavePtr()->b = saveBuffer;
     SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
+
+    return true;
 }
 #endif
 
@@ -239,12 +239,6 @@ void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver)
     }
 }
 
-playerheader_t *SV_GetPlayerHeader()
-{
-    //DENG_ASSERT(playerHeaderOK);
-    return &playerHeader;
-}
-
 void playerheader_s::write(Writer *writer)
 {
     Writer_WriteByte(writer, 2); // version byte
@@ -274,8 +268,6 @@ void playerheader_s::write(Writer *writer)
 #if __JHEXEN__
     Writer_WriteInt32(writer, numArmorTypes);
 #endif
-
-    playerHeaderOK = true;
 }
 
 void playerheader_s::read(Reader *reader, int saveVersion)
@@ -341,8 +333,6 @@ void playerheader_s::read(Reader *reader, int saveVersion)
         numPSprites     = 2;
 #endif
     }
-
-    playerHeaderOK = true;
 }
 
 enum sectorclass_t
@@ -884,27 +874,11 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
 
 void SV_Initialize()
 {
-    static bool firstInit = true;
-
     SV_InitIO();
-
-    inited = true;
-    if(firstInit)
-    {
-        firstInit         = false;
-        playerHeaderOK    = false;
-#if __JHEXEN__
-        targetPlayerAddrs = 0;
-        saveBuffer        = 0;
-#endif
-    }
-
-    // Reset last-used and quick-save slot tracking.
-    Con_SetInteger2("game-save-last-slot", -1, SVF_WRITE_OVERRIDE);
-    Con_SetInteger("game-save-quick-slot", -1);
-
     // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
     SV_ConfigureSavePaths();
+
+    inited = true;
 }
 
 void SV_Shutdown()
@@ -1061,8 +1035,6 @@ void SV_SaveGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    playerHeaderOK = false; // Uninitialized.
-
     AutoStr *gameSavePath = composeGameSavePathForClientSessionId(sessionId);
     if(!SV_OpenFile(gameSavePath, "wp"))
     {
@@ -1089,9 +1061,10 @@ void SV_SaveGameClient(uint sessionId)
     Writer_WriteFloat(writer, pl->plr->lookDir); /* $unifiedangles */
 
     SV_BeginSegment(ASEG_PLAYER_HEADER);
-    SV_GetPlayerHeader()->write(writer);
+    playerheader_t plrHdr;
+    plrHdr.write(writer);
 
-    players[CONSOLEPLAYER].write(writer);
+    players[CONSOLEPLAYER].write(writer, plrHdr);
 
     ThingArchive thingArchive;
     MapStateWriter(thingArchive).write(writer);
@@ -1115,8 +1088,6 @@ void SV_LoadGameClient(uint sessionId)
 
     if(!IS_CLIENT || !mo)
         return;
-
-    playerHeaderOK = false; // Uninitialized.
 
     AutoStr *gameSavePath = composeGameSavePathForClientSessionId(sessionId);
     if(!SV_OpenFile(gameSavePath, "rp"))
@@ -1173,9 +1144,10 @@ void SV_LoadGameClient(uint sessionId)
     {
         SV_AssertSegment(ASEG_PLAYER_HEADER);
     }
-    SV_GetPlayerHeader()->read(reader, info->version());
+    playerheader_t plrHdr;
+    plrHdr.read(reader, info->version());
 
-    cpl->read(reader);
+    cpl->read(reader, plrHdr);
 
     MapStateReader(info->version()).read(reader);
 
@@ -1190,8 +1162,6 @@ void SV_LoadGameClient(uint sessionId)
 #if __JHEXEN__
 void SV_HxSaveHubMap()
 {
-    playerHeaderOK = false; // Uninitialized.
-
     SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
 
     // Set the mobj archive numbers
@@ -1218,14 +1188,16 @@ void SV_HxLoadHubMap()
     // following check (player mobj redirection).
     targetPlayerAddrs = 0;
 
-    playerHeaderOK = false; // Uninitialized.
-
     Reader *reader = SV_NewReader();
 
     // Been here before, load the previous map state.
     try
     {
-        SV_OpenMapSaveFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1));
+        AutoStr *path = saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1);
+        if(!SV_OpenMapSaveFile(path))
+        {
+            throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
+        }
 
         MapStateReader(info->version()).read(reader);
 

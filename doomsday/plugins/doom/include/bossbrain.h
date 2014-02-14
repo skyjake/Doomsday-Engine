@@ -80,6 +80,6 @@ struct mobj_s *BossBrain_NextTarget(BossBrain *brain);
 #endif
 
 /// The One BossBrain instance.
-DENG_EXTERN_C BossBrain *bossBrain;
+DENG_EXTERN_C BossBrain *theBossBrain;
 
 #endif // LIBDOOM_PLAY_BOSSBRAIN_H

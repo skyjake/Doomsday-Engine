@@ -26,7 +26,7 @@
 
 #include "p_saveg.h"
 
-BossBrain *bossBrain; // The One boss brain.
+BossBrain *theBossBrain; // The One boss brain.
 
 DENG2_PIMPL_NOREF(BossBrain)
 {

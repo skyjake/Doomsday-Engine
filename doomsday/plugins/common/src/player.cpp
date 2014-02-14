@@ -1210,12 +1210,11 @@ angle_t Player_ViewYawAngle(int playerNum)
     return ang;
 }
 
-void player_s::write(Writer *writer) const
+void player_s::write(Writer *writer, playerheader_t &plrHdr) const
 {
 #if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
-    int const plrnum             = P_GetPlayerNum(this);
+    int const plrnum = P_GetPlayerNum(this);
 #endif
-    playerheader_t const &plrHdr = *SV_GetPlayerHeader();
 
     player_t temp, *p = &temp;
     ddplayer_t ddtemp, *dp = &ddtemp;
@@ -1392,7 +1391,7 @@ void player_s::write(Writer *writer) const
 #endif
 }
 
-void player_s::read(Reader *reader)
+void player_s::read(Reader *reader, playerheader_t &plrHdr)
 {
     int const plrnum = P_GetPlayerNum(this);
 
@@ -1402,7 +1401,6 @@ void player_s::read(Reader *reader)
     cfg.playerClass[plrnum] = playerclass_t(Reader_ReadByte(reader));
 #endif
 
-    playerheader_t const &plrHdr = *SV_GetPlayerHeader();
     ddplayer_t *dp = plr;
 
 #if __JHEXEN__

@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "saveinfo.h"
+#include <de/Error>
 
 /**
  * @ingroup libcommon

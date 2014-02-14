@@ -24,7 +24,7 @@
 #include "d_net.h"          // NetSv_SaveGame
 #include "mapstatewriter.h"
 #include "p_saveio.h"
-#include "p_saveg.h" /// @todo remove me
+#include "p_saveg.h"        /// @todo remove me
 #include "thingarchive.h"
 #include <de/String>
 
@@ -41,14 +41,25 @@ DENG2_PIMPL(GameStateWriter)
         , writer(0)
     {}
 
-    void beginSegment(int segmentId)
+    void beginSegment(int segId)
     {
-        SV_BeginSegment(segmentId);
+#if __JHEXEN__
+        Writer_WriteInt32(writer, segId);
+#else
+        DENG_UNUSED(segId);
+#endif
     }
 
     void endSegment()
     {
-        SV_EndSegment();
+        beginSegment(ASEG_END);
+    }
+
+    void writeConsistencyBytes()
+    {
+#if !__JHEXEN__
+        Writer_WriteByte(writer, CONSISTENCY);
+#endif
     }
 
     void writeSessionHeader()
@@ -76,14 +87,15 @@ DENG2_PIMPL(GameStateWriter)
 
         MapStateWriter(*thingArchive).write(writer);
 
-        SV_WriteConsistencyBytes(); // To be absolutely sure...
+        writeConsistencyBytes(); // To be absolutely sure...
         SV_CloseFile();
     }
 
     void writePlayers()
     {
         beginSegment(ASEG_PLAYER_HEADER);
-        SV_GetPlayerHeader()->write(writer);
+        playerheader_t plrHdr;
+        plrHdr.write(writer);
 
         beginSegment(ASEG_PLAYERS);
         {
@@ -101,7 +113,7 @@ DENG2_PIMPL(GameStateWriter)
                     continue;
 
                 Writer_WriteInt32(writer, Net_GetPlayerID(i));
-                plr->write(writer);
+                plr->write(writer, plrHdr);
             }
         }
         endSegment();
@@ -120,8 +132,6 @@ void GameStateWriter::write(SaveInfo *saveInfo, Str const *path)
 #if !__JHEXEN__
     NetSv_SaveGame(d->saveInfo->sessionId());
 #endif
-
-    playerHeaderOK = false; // Uninitialized.
 
     if(!SV_OpenGameSaveFile(path, true/*for writing*/))
     {

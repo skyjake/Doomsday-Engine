@@ -35,6 +35,9 @@ public:
     /// An error occurred attempting to open the input file. @ingroup errors
     DENG2_ERROR(FileAccessError);
 
+    /// Base class for read-related errors. @ingroup errors
+    DENG2_ERROR(ReadError);
+
 public:
     GameStateReader();
 

@@ -101,7 +101,7 @@ int scroll_s::read(MapStateReader *msr)
         else
         {
             // Side index is actually a DMU_ARCHIVE_INDEX.
-            dmuObject = (Side *)msr->sideArchive().at(sideIndex);
+            dmuObject = msr->side(sideIndex);
         }
 
         DENG_ASSERT(dmuObject != 0);

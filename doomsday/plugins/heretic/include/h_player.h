@@ -161,8 +161,8 @@ typedef struct player_s {
     mobj_t*         rain2; // Active rain maker 2.
 
 #ifdef __cplusplus
-    void write(Writer *writer) const;
-    void read(Reader *reader);
+    void write(Writer *writer, struct playerheader_s &plrHdr) const;
+    void read(Reader *reader, struct playerheader_s &plrHdr);
 #endif
 } player_t;
 

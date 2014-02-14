@@ -247,7 +247,7 @@ void P_Shutdown()
     P_ShutdownTerrainTypes();
     P_FreeWeaponSlots();
 #if __JDOOM__
-    delete bossBrain; bossBrain = 0;
+    delete theBossBrain; theBossBrain = 0;
 #endif
 }
 

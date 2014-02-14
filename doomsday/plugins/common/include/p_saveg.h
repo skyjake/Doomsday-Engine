@@ -33,7 +33,6 @@ DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
 #endif
 
 DENG_EXTERN_C SaveInfo const *curInfo;
-DENG_EXTERN_C dd_bool playerHeaderOK;
 
 #if __JHEXEN__
 DENG_EXTERN_C byte *saveBuffer;
@@ -121,8 +120,6 @@ typedef struct playerheader_s {
 #endif
 } playerheader_t;
 
-playerheader_t *SV_GetPlayerHeader(void);
-
 #if __JHEXEN__
 void SV_InitTargetPlayers(void);
 void SV_ClearTargetPlayers(void);
@@ -143,11 +140,11 @@ void SV_ReadLine(Line *line, MapStateReader *msr);
 
 void SV_WriteSector(Sector *sec, MapStateWriter *msw);
 void SV_ReadSector(Sector *sec, MapStateReader *msr);
+#endif // __cplusplus
 
 dd_bool SV_OpenGameSaveFile(Str const *fileName, dd_bool write);
 #if __JHEXEN__
-void SV_OpenMapSaveFile(Str const *path);
+dd_bool SV_OpenMapSaveFile(Str const *path);
 #endif
-#endif // __cplusplus
 
 #endif // LIBCOMMON_SAVESTATE_H
