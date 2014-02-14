@@ -450,8 +450,10 @@ void ClientApp::postFrame()
 
     S_EndFrame();
 
+    // This is a good time to recycle unneeded memory allocations, as we're just
+    // finished and shown a frame and there might be free time before we have to
+    // begin drawing the next frame.
     Garbage_Recycle();
-    loop().resume();
 }
 
 void ClientApp::alert(String const &msg, LogEntry::Level level)

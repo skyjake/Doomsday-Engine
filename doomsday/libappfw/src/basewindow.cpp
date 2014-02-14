@@ -150,6 +150,9 @@ void BaseWindow::preDraw()
 {}
 
 void BaseWindow::postDraw()
-{}
+{
+    // The timer loop was paused when the frame was requested to be drawn.
+    DENG2_GUI_APP->loop().resume();
+}
 
 } // namespace de
