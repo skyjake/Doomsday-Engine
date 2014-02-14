@@ -187,8 +187,7 @@ void GL_DoUpdate()
     DD_WaitForOptimalUpdateTime();
 
     // Blit screen to video.
-    ClientWindow::main().swapBuffers(
-                vrCfg().needsStereoGLFormat()? gl::SwapStereoBuffers : gl::SwapMonoBuffer);
+    ClientWindow::main().swapBuffers();
 
     // We will arrive here always at the same time in relation to the displayed
     // frame: it is a good time to update the mouse state.
