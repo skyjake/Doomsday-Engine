@@ -329,10 +329,6 @@ DENG2_PIMPL(MapStateReader)
 #endif
 
         return false; // Continue iteration.
-
-#if !__JHEXEN__
-        DENG_UNUSED(mapVersion);
-#endif
     }
 
     void readThinkers()
