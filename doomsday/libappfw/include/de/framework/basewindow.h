@@ -83,6 +83,8 @@ public:
 
     void canvasGLDraw(Canvas &);
 
+    void swapBuffers();
+
     DENG2_AS_IS_METHODS()
 
 protected:

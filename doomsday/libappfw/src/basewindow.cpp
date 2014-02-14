@@ -19,8 +19,8 @@
 #include "de/BaseWindow"
 #include "de/WindowTransform"
 #include "de/WindowSystem"
-
-#include <de/GuiApp>
+#include "de/BaseGuiApp"
+#include "de/VRConfig"
 
 namespace de {
 
@@ -144,6 +144,12 @@ void BaseWindow::canvasGLDraw(Canvas &cv)
     postDraw();
 
     PersistentCanvasWindow::canvasGLDraw(cv);
+}
+
+void BaseWindow::swapBuffers()
+{
+    PersistentCanvasWindow::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
+                                            gl::SwapStereoBuffers : gl::SwapMonoBuffer);
 }
 
 void BaseWindow::preDraw()
