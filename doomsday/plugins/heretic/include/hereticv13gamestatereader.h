@@ -1,4 +1,4 @@
-/** @file p_oldsvg.h  Heretic ver 1.3 save game reader.
+/** @file hereticv13gamestatereader.h  Heretic ver 1.3 save game reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -43,6 +43,8 @@ public:
     DENG2_ERROR(ReadError);
 
 public:
+    HereticV13GameStateReader();
+
     /**
      * Determines whether the resource file on @a path is interpretable as a game state which can
      * be loaded with a HereticV13GameStateReader.
@@ -53,6 +55,9 @@ public:
     static bool recognize(SaveInfo &info, Str const *path);
 
     void read(SaveInfo &info, Str const *path);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBHERETIC_HERETICV13_GAMESTATEREADER

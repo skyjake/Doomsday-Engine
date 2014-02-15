@@ -139,7 +139,7 @@ DENG2_PIMPL(MapStateWriter)
         if(p.excludePlayers)
         {
             if(th->function == (thinkfunc_t) P_MobjThinker && ((mobj_t *) th)->player)
-                return false; // Continue iteration.
+                return false;
         }
 
         // Only the server saves this class of thinker?
@@ -153,7 +153,7 @@ DENG2_PIMPL(MapStateWriter)
         // Write the thinker data.
         thInfo->writeFunc(th, p.msw);
 
-        return false; // Continue iteration.
+        return false;
     }
 
     /**
@@ -219,8 +219,7 @@ DENG2_PIMPL(MapStateWriter)
     void writeSoundTargets()
     {
 #if !__JHEXEN__
-        // Not for us?
-        if(!IS_SERVER) return;
+        if(!IS_SERVER) return; // Not for us.
 
         // Write the total number.
         int count = 0;

@@ -31,10 +31,10 @@
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
 #if __JDOOM__
-#  include "p_oldsvg.h"
+#  include "doomv9gamestatereader.h"
 #endif
 #if __JHERETIC__
-#  include "p_oldsvg.h"
+#  include "hereticv13gamestatereader.h"
 #endif
 #include <de/String>
 #include <de/memory.h>
@@ -679,7 +679,7 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
     Reader *reader = msr->reader();
     int mapVersion = msr->mapVersion();
 
-    dd_bool xgDataFollows = false;
+    bool xgDataFollows = false;
 #if __JHEXEN__
     if(mapVersion >= 4)
 #else
@@ -710,7 +710,9 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
 
     int flags = Reader_ReadInt16(reader);
     if(xli->flags & ML_TWOSIDED)
+    {
         flags |= ML_TWOSIDED;
+    }
 
     if(ver < 4)
     {
@@ -765,14 +767,14 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
 
 #if __JHEXEN__
     xli->special = Reader_ReadByte(reader);
-    xli->arg1 = Reader_ReadByte(reader);
-    xli->arg2 = Reader_ReadByte(reader);
-    xli->arg3 = Reader_ReadByte(reader);
-    xli->arg4 = Reader_ReadByte(reader);
-    xli->arg5 = Reader_ReadByte(reader);
+    xli->arg1    = Reader_ReadByte(reader);
+    xli->arg2    = Reader_ReadByte(reader);
+    xli->arg3    = Reader_ReadByte(reader);
+    xli->arg4    = Reader_ReadByte(reader);
+    xli->arg5    = Reader_ReadByte(reader);
 #else
     xli->special = Reader_ReadInt16(reader);
-    /*xli->tag =*/ Reader_ReadInt16(reader);
+    /*xli->tag     =*/ Reader_ReadInt16(reader);
 #endif
 
     // For each side
