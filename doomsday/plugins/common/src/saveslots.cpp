@@ -23,10 +23,10 @@
 
 #include "gamestatereader.h"
 #if __JDOOM__
-#  include "p_oldsvg.h"
+#  include "doomv9gamestatereader.h"
 #endif
 #if __JHERETIC__
-#  include "p_oldsvg.h"
+#  include "hereticv13gamestatereader.h"
 #endif
 #include "p_saveio.h"
 #include <de/String>
