@@ -1,4 +1,4 @@
-/** @file d_main.c  Doom-specific game initialization.
+/** @file d_main.cpp  Doom-specific game initialization.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -26,6 +26,7 @@
 #include "m_argv.h"
 #include "p_map.h"
 #include "p_saveg.h"
+#include "doomv9gamestatereader.h"
 #include "am_map.h"
 #include "g_defs.h"
 #include <assert.h>
@@ -396,6 +397,9 @@ void D_PreInit(void)
     // Do the common pre init routine;
     G_CommonPreInit();
     G_InitSpecialFilter();
+
+    // Declare the Doom V9 game state reader/interpreter.
+    SV_DeclareGameStateReader(&DoomV9GameStateReader::recognize, &DoomV9GameStateReader::make);
 }
 
 /**

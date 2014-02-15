@@ -40,13 +40,7 @@ public:
     DoomV9GameStateReader();
     ~DoomV9GameStateReader();
 
-    /**
-     * Determines whether the resource file on @a path is interpretable as a game state which can
-     * be loaded with a DoomV9GameStateReader.
-     *
-     * @param info  SaveInfo to attempt to read game session header into.
-     * @param path  Path to the resource file to be recognized.
-     */
+    static IGameStateReader *make();
     static bool recognize(SaveInfo &info, Str const *path);
 
     void read(SaveInfo &info, Str const *path);

@@ -132,6 +132,16 @@ void SV_SaveInfo_Read(SaveInfo *info, Reader *reader);
 #endif
 
 #ifdef __cplusplus
+#include "gamestatereader.h"
+
+/**
+ * Declare a new saved game state reader/interpreter.
+ *
+ * @param recognizer  Format recognizer function.
+ * @param maker       Reader instantiator function.
+ */
+void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker);
+
 class MapStateReader;
 class MapStateWriter;
 

@@ -26,6 +26,8 @@
 #include <de/Error>
 
 /**
+ * Native saved game state writer.
+ *
  * @ingroup libcommon
  * @see GameStateReader
  */
@@ -38,7 +40,7 @@ public:
 public:
     GameStateWriter();
 
-    void write(SaveInfo *saveInfo, Str const *path);
+    void write(SaveInfo &info, Str const *path);
 
 private:
     DENG2_PRIVATE(d)

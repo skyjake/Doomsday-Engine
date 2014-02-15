@@ -123,10 +123,10 @@ DENG2_PIMPL(GameStateWriter)
 GameStateWriter::GameStateWriter() : d(new Instance(this))
 {}
 
-void GameStateWriter::write(SaveInfo *saveInfo, Str const *path)
+void GameStateWriter::write(SaveInfo &info, Str const *path)
 {
-    DENG_ASSERT(saveInfo != 0 && path != 0);
-    d->saveInfo = saveInfo;
+    DENG_ASSERT(path != 0);
+    d->saveInfo = &info;
 
     // In networked games the server tells the clients to save their games.
 #if !__JHEXEN__

@@ -74,7 +74,7 @@ SOURCES += \
     src/acfnlink.c \
     src/h_api.c \
     src/h_console.c \
-    src/h_main.c \
+    src/h_main.cpp \
     src/h_refresh.c \
     src/hereticv13gamestatereader.cpp \
     src/in_lude.c \

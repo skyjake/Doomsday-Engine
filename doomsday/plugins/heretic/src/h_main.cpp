@@ -1,4 +1,4 @@
-/** @file h_main.c  Heretic-specific game initialization.
+/** @file h_main.cpp  Heretic-specific game initialization.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -26,6 +26,7 @@
 #include "m_argv.h"
 #include "p_map.h"
 #include "p_saveg.h"
+#include "hereticv13gamestatereader.h"
 #include "am_map.h"
 #include "g_defs.h"
 #include "p_inventory.h"
@@ -332,6 +333,9 @@ void H_PreInit(void)
 
     // Do the common pre init routine;
     G_CommonPreInit();
+
+    // Declare the Heretic V13 game state reader/interpreter.
+    SV_DeclareGameStateReader(&HereticV13GameStateReader::recognize, &HereticV13GameStateReader::make);
 }
 
 /**

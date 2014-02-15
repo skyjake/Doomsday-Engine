@@ -323,6 +323,11 @@ bool GameStateReader::recognize(SaveInfo &info, Str const *path) // static
     return true;
 }
 
+IGameStateReader *GameStateReader::make() // static
+{
+    return new GameStateReader;
+}
+
 void GameStateReader::read(SaveInfo &info, Str const *path)
 {
     DENG_ASSERT(path != 0);

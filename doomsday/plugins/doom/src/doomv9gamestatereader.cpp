@@ -954,6 +954,11 @@ bool DoomV9GameStateReader::recognize(SaveInfo &info, Str const *path) // static
     return result;
 }
 
+IGameStateReader *DoomV9GameStateReader::make()
+{
+    return new DoomV9GameStateReader;
+}
+
 void DoomV9GameStateReader::read(SaveInfo &info, Str const *path)
 {
     DENG_ASSERT(path != 0);

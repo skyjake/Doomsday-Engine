@@ -966,6 +966,11 @@ bool HereticV13GameStateReader::recognize(SaveInfo &info, Str const *path) // st
     return result;
 }
 
+IGameStateReader *HereticV13GameStateReader::make()
+{
+    return new HereticV13GameStateReader;
+}
+
 void HereticV13GameStateReader::read(SaveInfo &info, Str const *path)
 {
     DENG_ASSERT(path != 0);

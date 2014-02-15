@@ -41,12 +41,20 @@ typedef enum {
 } psprnum_t;
 
 typedef struct {
-    state_t*        state; // @c NULL means not active.
-    int             tics;
-    float           pos[2];
+    state_t *state; // @c NULL means not active.
+    int tics;
+    float pos[2];
 } pspdef_t;
 
-void            P_BringUpWeapon(struct player_s *player);
-void            R_GetWeaponBob(int player, float* x, float* y);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void R_GetWeaponBob(int player, float *x, float *y);
+void P_BringUpWeapon(struct player_s *player);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

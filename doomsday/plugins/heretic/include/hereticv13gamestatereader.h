@@ -40,13 +40,7 @@ public:
     HereticV13GameStateReader();
     ~HereticV13GameStateReader();
 
-    /**
-     * Determines whether the resource file on @a path is interpretable as a game state which can
-     * be loaded with a HereticV13GameStateReader.
-     *
-     * @param info  SaveInfo to attempt to read game session header into.
-     * @param path  Path to the resource file to be recognized.
-     */
+    static IGameStateReader *make();
     static bool recognize(SaveInfo &info, Str const *path);
 
     void read(SaveInfo &info, Str const *path);

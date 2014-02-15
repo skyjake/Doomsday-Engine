@@ -30,12 +30,6 @@
 #include "gamestatereader.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
-#if __JDOOM__
-#  include "doomv9gamestatereader.h"
-#endif
-#if __JHERETIC__
-#  include "hereticv13gamestatereader.h"
-#endif
 #include <de/String>
 #include <de/memory.h>
 #include <cstdio>
@@ -43,6 +37,7 @@
 
 static bool inited = false;
 
+static GameStateReaderFactory gameStateReaderFactory;
 static SaveSlots sslots(NUMSAVESLOTS);
 SaveSlots *saveSlots = &sslots;
 
@@ -880,6 +875,12 @@ void SV_Initialize()
     // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
     SV_ConfigureSavePaths();
 
+    if(!inited)
+    {
+        // Declare the native game state reader.
+        gameStateReaderFactory.declareReader(&GameStateReader::recognize, &GameStateReader::make);
+    }
+
     inited = true;
 }
 
@@ -891,6 +892,23 @@ void SV_Shutdown()
     saveSlots->clearAllSaveInfo();
 
     inited = false;
+}
+
+void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker)
+{
+    DENG_ASSERT(inited);
+    gameStateReaderFactory.declareReader(recognizer, maker);
+}
+
+static std::auto_ptr<IGameStateReader> gameStateReaderFor(SaveInfo &info, Str const *path)
+{
+    std::auto_ptr<IGameStateReader> p(gameStateReaderFactory.newReaderFor(info, path));
+    if(!p.get())
+    {
+        /// @throw Error The saved game state format was not recognized.
+        throw de::Error("gameStateReaderFor", "Unrecognized savegame format");
+    }
+    return p;
 }
 
 dd_bool SV_LoadGame(int slot)
@@ -931,28 +949,8 @@ dd_bool SV_LoadGame(int slot)
     {
         SaveInfo &info = saveSlots->saveInfo(logicalSlot);
 
-        if(GameStateReader::recognize(info, path))
-        {
-            GameStateReader().read(info, path);
-        }
-        // Perhaps an original game state?
-#if __JDOOM__
-        else if(DoomV9GameStateReader::recognize(info, path))
-        {
-            DoomV9GameStateReader().read(info, path);
-        }
-#endif
-#if __JHERETIC__
-        else if(HereticV13GameStateReader::recognize(info, path))
-        {
-            HereticV13GameStateReader().read(info, path);
-        }
-#endif
-        else
-        {
-            /// @throw Error The savegame was not recognized.
-            throw de::Error("loadGameState", "Unrecognized savegame format");
-        }
+        // Attempt to recognize and load the saved game state.
+        gameStateReaderFor(info, path)->read(info, path);
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
@@ -1000,7 +998,7 @@ dd_bool SV_SaveGame(int slot, char const *description)
     SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_FromTextStd(description));
     try
     {
-        GameStateWriter().write(info, path);
+        GameStateWriter().write(*info, path);
 
         // Swap the save info.
         saveSlots->replaceSaveInfo(logicalSlot, info);
