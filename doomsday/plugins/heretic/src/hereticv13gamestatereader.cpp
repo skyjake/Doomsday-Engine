@@ -835,7 +835,7 @@ DENG2_PIMPL(HereticV13GameStateReader)
                 break;
 
             default:
-                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + de::String::number(tclass) + "in savegame");
+                throw ReadError("HereticV13GameStateReader", "Unknown tclass #" + de::String::number(tclass) + "in savegame");
             }
         }
     }
@@ -927,7 +927,7 @@ DENG2_PIMPL(HereticV13GameStateReader)
                 break; }
 
             default:
-                throw ReadError("DoomV9GameStateReader", "Unknown tclass #" + de::String::number(tclass) + "in savegame");
+                throw ReadError("HereticV13GameStateReader", "Unknown tclass #" + de::String::number(tclass) + "in savegame");
             }
         }
     }
