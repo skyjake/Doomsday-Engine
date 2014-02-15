@@ -936,6 +936,9 @@ DENG2_PIMPL(HereticV13GameStateReader)
 HereticV13GameStateReader::HereticV13GameStateReader() : d(new Instance(this))
 {}
 
+HereticV13GameStateReader::~HereticV13GameStateReader()
+{}
+
 bool HereticV13GameStateReader::recognize(SaveInfo &info, Str const *path) // static
 {
     DENG_ASSERT(path != 0);

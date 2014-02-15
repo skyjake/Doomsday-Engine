@@ -27,23 +27,18 @@
 #endif
 
 #include "saveinfo.h"
+#include "gamestatereader.h"
 
 /**
  * Heretic ver 1.3 saved game state reader.
  *
  * @ingroup libheretic
  */
-class HereticV13GameStateReader
+class HereticV13GameStateReader : public IGameStateReader
 {
 public:
-    /// An error occurred attempting to open the input file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
-
-    /// Base class for read errors. @ingroup errors
-    DENG2_ERROR(ReadError);
-
-public:
     HereticV13GameStateReader();
+    ~HereticV13GameStateReader();
 
     /**
      * Determines whether the resource file on @a path is interpretable as a game state which can

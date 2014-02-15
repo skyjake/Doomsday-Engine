@@ -924,6 +924,9 @@ DENG2_PIMPL(DoomV9GameStateReader)
 DoomV9GameStateReader::DoomV9GameStateReader() : d(new Instance(this))
 {}
 
+DoomV9GameStateReader::~DoomV9GameStateReader()
+{}
+
 bool DoomV9GameStateReader::recognize(SaveInfo &info, Str const *path) // static
 {
     DENG_ASSERT(path != 0);

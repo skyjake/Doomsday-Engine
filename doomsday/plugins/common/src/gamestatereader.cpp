@@ -265,6 +265,9 @@ DENG2_PIMPL(GameStateReader)
 GameStateReader::GameStateReader() : d(new Instance(this))
 {}
 
+GameStateReader::~GameStateReader()
+{}
+
 bool GameStateReader::recognize(SaveInfo &info, Str const *path) // static
 {
     DENG_ASSERT(path != 0);

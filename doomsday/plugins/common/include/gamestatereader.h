@@ -26,20 +26,38 @@
 #include <de/Error>
 
 /**
- * @ingroup libcommon
- * @see GameStateWriter
+ * Interface for game state (savegame) readers.
  */
-class GameStateReader
+class IGameStateReader
 {
 public:
     /// An error occurred attempting to open the input file. @ingroup errors
     DENG2_ERROR(FileAccessError);
 
-    /// Base class for read-related errors. @ingroup errors
+    /// Base class for read errors. @ingroup errors
     DENG2_ERROR(ReadError);
 
 public:
+    virtual ~IGameStateReader() {}
+
+    /**
+     * Attempt to load (read/interpret) the saved game state.
+     *
+     * @param info  SaveInfo for the saved game state to be read/interpreted.
+     * @param path  Path to the resource file to be recognized.
+     */
+    virtual void read(SaveInfo &info, Str const *path) = 0;
+};
+
+/**
+ * @ingroup libcommon
+ * @see GameStateWriter
+ */
+class GameStateReader : public IGameStateReader
+{
+public:
     GameStateReader();
+    ~GameStateReader();
 
     /**
      * Determines whether the resource file on @a path is interpretable as a game state which can

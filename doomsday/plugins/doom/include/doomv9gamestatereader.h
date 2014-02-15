@@ -27,23 +27,18 @@
 #endif
 
 #include "saveinfo.h"
+#include "gamestatereader.h"
 
 /**
  * Doom ver 1.9 saved game state reader.
  *
  * @ingroup libdoom
  */
-class DoomV9GameStateReader
+class DoomV9GameStateReader : public IGameStateReader
 {
 public:
-    /// An error occurred attempting to open the input file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
-
-    /// Base class for read errors. @ingroup errors
-    DENG2_ERROR(ReadError);
-
-public:
     DoomV9GameStateReader();
+    ~DoomV9GameStateReader();
 
     /**
      * Determines whether the resource file on @a path is interpretable as a game state which can
