@@ -33,38 +33,39 @@
  */
 class SaveInfo
 {
-public: /// @todo make private:
-    Str _description;
-    uint _sessionId;
-    int _magic;
-    int _version;
-    gamemode_t _gameMode;
-    Uri *_mapUri;
+public:
 #if !__JHEXEN__
-    int _mapTime;
-    byte _players[MAXPLAYERS];
+    // Info data about players present (or not) in the game session.
+    typedef byte Players[MAXPLAYERS];
 #endif
-    GameRuleset _gameRules;
 
 public:
     SaveInfo();
     SaveInfo(SaveInfo const &other);
-    ~SaveInfo();
 
     static SaveInfo *newWithCurrentSessionMetadata(Str const *description);
+
+    static SaveInfo *fromReader(Reader *reader);
 
     SaveInfo &operator = (SaveInfo const &other);
 
     /**
-     * Determines whether the saved game session is compatibile with the current
-     * game session (and @em should therefore be loadable).
+     * Determines whether the saved game session is compatibile with the current game session
+     * (and @em should therefore be loadable).
      */
     bool isLoadable();
+
+    /**
+     * Returns the unique "identity key" of the game session.
+     */
+    Str const *gameIdentityKey() const;
+    void setGameIdentityKey(Str const *newGameIdentityKey);
 
     /**
      * Returns the logical version of the serialized game session state.
      */
     int version() const;
+    void setVersion(int newVersion);
 
     /**
      * Returns the textual description of the game session (provided by the user).
@@ -82,18 +83,29 @@ public:
      * Returns the URI of the @em current map of the game session.
      */
     Uri const *mapUri() const;
+    void setMapUri(Uri const *newMapUri);
 
 #if !__JHEXEN__
+
     /**
      * Returns the expired time in tics since the @em current map of the game session began.
      */
     int mapTime() const;
-#endif
+    void setMapTime(int newMapTime);
+
+    /**
+     * Returns the player info data for the game session.
+     */
+    Players const &players() const;
+    void setPlayers(Players const &newPlayers);
+
+#endif // !__JHEXEN__
 
     /**
      * Returns the game ruleset for the game session.
      */
     GameRuleset const &gameRules() const;
+    void setGameRules(GameRuleset const &newRules);
 
     /**
      * Serializes the game session info using @a writer.
@@ -106,21 +118,17 @@ public:
     void read(Reader *reader);
 
     /**
-     * Hexen-specific version for deserializing legacy v.9 game session info.
-     */
-#if __JHEXEN__
-    void read_Hx_v9(Reader *reader);
-#endif
-
-    /**
-     * Update the metadata associated with the save using values derived from the
-     * current game session. Note that this does @em not affect the copy of this save
-     * on disk.
+     * Update the metadata associated with the save using values derived from the current game
+     * session. Note that this does @em not affect the copy of this save on disk.
      */
     void applyCurrentSessionMetadata();
 
 public: /// @todo refactor away:
     int magic() const;
+    void setMagic(int newMagic);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // __cplusplus
@@ -135,20 +143,30 @@ typedef void *SaveInfo;
 
 SaveInfo *SaveInfo_New(void);
 SaveInfo *SaveInfo_Dup(SaveInfo const *other);
+SaveInfo *SaveInfo_FromReader(Reader *reader);
 
 void SaveInfo_Delete(SaveInfo *info);
 
 SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
 dd_bool SaveInfo_IsLoadable(SaveInfo *info);
+Str const *SaveInfo_GameIdentityKey(SaveInfo const *info);
+void SaveInfo_SetGameIdentityKey(SaveInfo *info, Str const *newGameIdentityKey);
 Str const *SaveInfo_Description(SaveInfo const *info);
 void SaveInfo_SetDescription(SaveInfo *info, Str const *newDescription);
+int SaveInfo_Version(SaveInfo const *info);
+void SaveInfo_SetVersion(SaveInfo *info, int newVersion);
 uint SaveInfo_SessionId(SaveInfo const *info);
 void SaveInfo_SetSessionId(SaveInfo *info, uint newSessionId);
+Uri const *SaveInfo_MapUri(SaveInfo const *info);
+void SaveInfo_SetMapUri(SaveInfo *info, Uri const *newMapUri);
+#if !__JHEXEN__
+int SaveInfo_MapTime(SaveInfo const *info);
+void SaveInfo_SetMapTime(SaveInfo *info, int newMapTime);
+#endif
+GameRuleset const *SaveInfo_GameRules(SaveInfo const *info);
+void SaveInfo_SetGameRules(SaveInfo *info, GameRuleset const *newRules);
 void SaveInfo_Write(SaveInfo *info, Writer *writer);
 void SaveInfo_Read(SaveInfo *info, Reader *reader);
-#if __JHEXEN__
-void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader);
-#endif
 
 #ifdef __cplusplus
 } // extern "C"

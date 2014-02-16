@@ -3330,6 +3330,79 @@ void G_QuitGame(void)
     Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
 }
 
+AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
+{
+    static char const *identityKeys[] = {
+#if __JDOOM__
+        /*doom_shareware*/    "doom1-share",
+        /*doom*/              "doom1",
+        /*doom_ultimate*/     "doom1-ultimate",
+        /*doom_chex*/         "chex",
+        /*doom2*/             "doom2",
+        /*doom2_plut*/        "doom2-plut",
+        /*doom2_tnt*/         "doom2-tnt",
+        /*doom2_hacx*/        "hacx",
+#elif __JHERETIC__
+        /*heretic_shareware*/ "heretic-share",
+        /*heretic*/           "heretic",
+        /*heretic_extended*/  "heretic-ext",
+#elif __JHEXEN__
+        /*hexen_demo*/        "hexen-demo",
+        /*hexen*/             "hexen",
+        /*hexen_deathkings*/  "hexen-dk",
+        /*hexen_betademo*/    "hexen-betademo",
+        /*hexen_v10*/         "hexen-v10",
+#endif
+        ""
+    };
+#if __JDOOM__ || __JHERETIC__
+    static gamemode_t const oldGamemodes[] = {
+# if __JDOOM__
+        doom_shareware,
+        doom,
+        doom2,
+        doom_ultimate
+# else // __JHERETIC__
+        heretic_shareware,
+        heretic,
+        heretic_extended
+# endif
+    };
+#endif
+
+    // The gamemode may first need to be translated (if *really* old).
+#if __JDOOM__ || __JHERETIC__
+# if __JDOOM__
+    if(saveVersion < 9)
+# elif __JHERETIC__
+    if(saveVersion < 8)
+# endif
+    {
+        DENG_ASSERT(gamemode >= 0 && gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
+        gamemode = oldGamemodes[(int)(gamemode)];
+
+# if __JDOOM__
+        /**
+         * @note Kludge: Older versions did not differentiate between versions
+         * of Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
+         * that this save is from some version of Doom2, replace the marked
+         * gamemode with the current gamemode.
+         */
+        if(gamemode == doom2 && (gameModeBits & GM_ANY_DOOM2))
+        {
+            GameInfo gameInfo;
+            DD_GameInfo(&gameInfo);
+            return gameInfo.identityKey;
+        }
+        /// kludge end.
+# endif
+    }
+#endif
+
+    DENG_ASSERT(gamemode >= 0 && gamemode < sizeof(identityKeys) / sizeof(identityKeys[0]));
+    return AutoStr_FromTextStd(identityKeys[gamemode]);
+}
+
 char const *P_GetGameModeName(void)
 {
     static char const *dm   = "deathmatch";

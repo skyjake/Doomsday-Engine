@@ -118,29 +118,7 @@ dd_bool SV_OpenMapSaveFile(Str const *path)
 
     return true;
 }
-#endif
 
-void SV_SaveInfo_Read(SaveInfo *info, Reader *reader)
-{
-#if __JHEXEN__
-    // Read the magic byte to determine the high-level format.
-    int magic = Reader_ReadInt32(reader);
-    SV_HxSavePtr()->b -= 4; // Rewind the stream.
-
-    if((!IS_NETWORK_CLIENT && magic != MY_SAVE_MAGIC) ||
-       ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
-    {
-        // Perhaps the old v9 format?
-        info->read_Hx_v9(reader);
-    }
-    else
-#endif
-    {
-        info->read(reader);
-    }
-}
-
-#if __JHEXEN__
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
     DENG_ASSERT(inited);
@@ -1098,7 +1076,7 @@ void SV_LoadGameClient(uint sessionId)
 
     SaveInfo *info = new SaveInfo;
     Reader *reader = SV_NewReader();
-    SV_SaveInfo_Read(info, reader);
+    info->read(reader);
 
     curInfo = info;
 

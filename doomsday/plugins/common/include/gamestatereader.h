@@ -54,8 +54,8 @@ public:
 /**
  * Game state recognizer function ptr.
  *
- * The job of a recognizer function is to determine whether the resource file on @a path is interpretable
- * as a potentially loadable game state.
+ * The job of a recognizer function is to determine whether the resource file on @a path is
+ * interpretable as a potentially loadable savegame state.
  *
  * @param info  SaveInfo to attempt to read game session header into.
  * @param path  Path to the resource file to be recognized.
@@ -79,6 +79,7 @@ public:
      */
     void declareReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker)
     {
+        DENG_ASSERT(recognizer != 0 && maker != 0);
         ReaderInfo info;
         info.recognize    = recognizer;
         info.makeInstance = maker;

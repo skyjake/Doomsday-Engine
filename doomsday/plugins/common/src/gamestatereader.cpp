@@ -51,9 +51,8 @@ DENG2_PIMPL(GameStateReader)
     void seekToGameState()
     {
         // Read the header again.
-        SaveInfo *tmp = new SaveInfo;
-        SV_SaveInfo_Read(tmp, reader);
-        delete tmp;
+        /// @todo seek straight to the game state.
+        delete SaveInfo::fromReader(reader);
     }
 
     void beginSegment(int segId)
@@ -153,7 +152,7 @@ DENG2_PIMPL(GameStateReader)
         {
             loaded[i] = 0;
 #if !__JHEXEN__
-            infile[i] = saveInfo->_players[i];
+            infile[i] = saveInfo->players()[i];
 #endif
         }
 
@@ -288,7 +287,7 @@ bool GameStateReader::recognize(SaveInfo &info, Str const *path) // static
 #endif
 
     Reader *reader = SV_NewReader();
-    SV_SaveInfo_Read(&info, reader);
+    info.read(reader);
     Reader_Delete(reader);
 
 #if __JHEXEN__

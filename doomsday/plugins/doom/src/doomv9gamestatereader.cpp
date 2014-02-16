@@ -614,48 +614,49 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
 
     char descBuf[24 + 1];
     Reader_Read(reader, descBuf, 24); descBuf[24] = 0;
-    Str_Set(&info->_description, descBuf);
+    Str descStr; Str_InitStatic(&descStr, descBuf);
+    info->setDescription(&descStr);
 
     char vcheck[16 + 1];
     Reader_Read(reader, vcheck, 16); vcheck[16] = 0;
     //DENG_ASSERT(!strncmp(vcheck, "version ", 8)); // Ensure save state format has been recognised by now.
+    info->setVersion(atoi(&vcheck[8]));
 
-    info->_version = atoi(&vcheck[8]);
-
-    info->_gameRules.skill = (skillmode_t) Reader_ReadByte(reader);
+    GameRuleset rules; de::zap(rules);
+    rules.skill = (skillmode_t) Reader_ReadByte(reader);
     // Interpret skill levels outside the normal range as "spawn no things".
-    if(info->_gameRules.skill < SM_BABY || info->_gameRules.skill >= NUM_SKILL_MODES)
+    if(rules.skill < SM_BABY || rules.skill >= NUM_SKILL_MODES)
     {
-        info->_gameRules.skill = SM_NOTHINGS;
+        rules.skill = SM_NOTHINGS;
     }
+    info->setGameRules(rules);
 
     uint episode = Reader_ReadByte(reader) - 1;
     uint map     = Reader_ReadByte(reader) - 1;
-    Uri_Copy(info->_mapUri, G_ComposeMapUri(episode, map));
+    info->setMapUri(G_ComposeMapUri(episode, map));
 
+    SaveInfo::Players players; de::zap(players);
     for(int i = 0; i < 4; ++i)
     {
-        info->_players[i] = Reader_ReadByte(reader);
+        players[i] = Reader_ReadByte(reader);
     }
-
-    std::memset(&info->_players[4], 0, sizeof(*info->_players) * (MAXPLAYERS-4));
+    info->setPlayers(players);
 
     // Get the map time.
     int a = Reader_ReadByte(reader);
     int b = Reader_ReadByte(reader);
     int c = Reader_ReadByte(reader);
-    info->_mapTime  = (a << 16) + (b << 8) + c;
+    info->setMapTime((a << 16) + (b << 8) + c);
 
-    info->_magic    = 0; // Initialize with *something*.
+    info->setMagic(0); // Initialize with *something*.
 
-    /// @note Older formats do not contain all needed values:
-    info->_gameMode = gameMode; // Assume the current mode.
+    /// @note Kludge: Assume the current game mode.
+    GameInfo gameInfo;
+    DD_GameInfo(&gameInfo);
+    info->setGameIdentityKey(gameInfo.identityKey);
+    /// Kludge end.
 
-    info->_gameRules.deathmatch      = 0;
-    info->_gameRules.noMonsters      = 0;
-    info->_gameRules.respawnMonsters = 0;
-
-    info->_sessionId = 0; // None.
+    info->setSessionId(0); // None.
 }
 
 static bool SV_OpenFile_Dm_v19(char const *filePath)
@@ -695,6 +696,7 @@ DENG2_PIMPL(DoomV9GameStateReader)
     void seekToGameState()
     {
         // Read the header again.
+        /// @todo seek straight to the game state.
         SaveInfo *tmp = new SaveInfo;
         SaveInfo_Read_Dm_v19(tmp, reader);
         delete tmp;

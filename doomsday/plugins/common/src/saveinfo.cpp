@@ -27,88 +27,111 @@
 #include <cstdlib>
 #include <cstring>
 
-#if __JDOOM__ || __JHERETIC__
-static void translateLegacyGameMode(gamemode_t *mode, int saveVersion)
+DENG2_PIMPL_NOREF(SaveInfo)
 {
-    DENG_ASSERT(mode != 0);
-
-    static gamemode_t const oldGameModes[] = {
-# if __JDOOM__
-        doom_shareware,
-        doom,
-        doom2,
-        doom_ultimate
-# else // __JHERETIC__
-        heretic_shareware,
-        heretic,
-        heretic_extended
-# endif
-    };
-
-    // Is translation unnecessary?
-#if __JDOOM__
-    if(saveVersion >= 9) return;
-#elif __JHERETIC__
-    if(saveVersion >= 8) return;
+    Str description;
+    uint sessionId;
+    int magic;
+    int version;
+    Str gameIdentityKey;
+    Uri *mapUri;
+#if !__JHEXEN__
+    int mapTime;
+    Players players;
 #endif
+    GameRuleset gameRules;
 
-    *mode = oldGameModes[(int)(*mode)];
-
-# if __JDOOM__
-    /**
-     * @note Kludge: Older versions did not differentiate between versions
-     * of Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
-     * that this save is from some version of Doom2, replace the marked
-     * gamemode with the current gamemode.
-     */
-    if((*mode) == doom2 && (gameModeBits & GM_ANY_DOOM2))
+    Instance()
+        : sessionId(0)
+        , magic    (0)
+        , version  (0)
+        , mapUri   (Uri_New())
+#if !__JHEXEN__
+        , mapTime  (0)
+#endif
     {
-        (*mode) = gameMode;
+        Str_InitStd(&description);
+        Str_InitStd(&gameIdentityKey);
+#if !__JHEXEN__
+        de::zap(players);
+#endif
+        de::zap(gameRules);
     }
-    /// kludge end.
-# endif
-}
-#endif
 
-SaveInfo::SaveInfo()
-    : _sessionId(0)
-    , _magic    (0)
-    , _version  (0)
-    , _gameMode (NUM_GAME_MODES)
-    , _mapUri   (Uri_New())
+    Instance(Instance const &other)
+        : IPrivate()
+        , sessionId(other.sessionId)
+        , magic    (other.magic)
+        , version  (other.version)
+        , mapUri   (Uri_Dup(other.mapUri))
 #if !__JHEXEN__
-    , _mapTime  (0)
+        , mapTime  (other.mapTime)
 #endif
-{
-    Str_InitStd(&_description);
+    {
+        Str_Copy(Str_InitStd(&description), &other.description);
+        Str_Copy(Str_InitStd(&gameIdentityKey), &other.gameIdentityKey);
 #if !__JHEXEN__
-    de::zap(_players);
+        std::memcpy(&players, &other.players, sizeof(players));
 #endif
-    de::zap(_gameRules);
-}
+        std::memcpy(&gameRules, &other.gameRules, sizeof(gameRules));
+    }
 
-SaveInfo::SaveInfo(SaveInfo const &other)
-    : _sessionId(other._sessionId)
-    , _magic    (other._magic)
-    , _version  (other._version)
-    , _gameMode (other._gameMode)
-    , _mapUri   (Uri_Dup(other._mapUri))
-#if !__JHEXEN__
-    , _mapTime  (other._mapTime)
-#endif
-{
-    Str_Copy(Str_InitStd(&_description), &other._description);
-#if !__JHEXEN__
-    std::memcpy(&_players, &other._players, sizeof(_players));
-#endif
-    std::memcpy(&_gameRules, &other._gameRules, sizeof(_gameRules));
-}
+    ~Instance()
+    {
+        Str_Free(&description);
+        Str_Free(&gameIdentityKey);
+        Uri_Delete(mapUri);
+    }
 
-SaveInfo::~SaveInfo()
-{
-    Str_Free(&_description);
-    Uri_Delete(_mapUri);
-}
+#if __JHEXEN__
+    /**
+     * Deserialize the legacy Hexen-specific v.9 info.
+     */
+    void read_Hx_v9(Reader *reader)
+    {
+        char descBuf[24 + 1];
+        Reader_Read(reader, descBuf, 24); descBuf[24] = 0;
+        Str_Set(&description, descBuf);
+
+        magic     = MY_SAVE_MAGIC; // Lets pretend...
+
+        char verText[16 + 1]; // "HXS Ver "
+        Reader_Read(reader, &verText, 16); descBuf[16] = 0;
+        version   = atoi(&verText[8]);
+
+        /// @note Kludge: Assume the current game mode.
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+        Str_Copy(&gameIdentityKey, gameInfo.identityKey);
+        /// Kludge end.
+
+        /*Skip junk*/ SV_Seek(4);
+
+        uint episode = 0;
+        uint map     = Reader_ReadByte(reader) - 1;
+        Uri_Copy(mapUri, G_ComposeMapUri(episode, map));
+
+        gameRules.skill         = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
+        // Interpret skill modes outside the normal range as "spawn no things".
+        if(gameRules.skill < SM_BABY || gameRules.skill >= NUM_SKILL_MODES)
+        {
+            gameRules.skill     = SM_NOTHINGS;
+        }
+
+        gameRules.deathmatch    = Reader_ReadByte(reader);
+        gameRules.noMonsters    = Reader_ReadByte(reader);
+        gameRules.randomClasses = Reader_ReadByte(reader);
+
+        sessionId = 0; // None.
+    }
+#endif
+};
+
+SaveInfo::SaveInfo() : d(new Instance)
+{}
+
+SaveInfo::SaveInfo(SaveInfo const &other) : d(new Instance(*other.d))
+{}
 
 SaveInfo *SaveInfo::newWithCurrentSessionMetadata(Str const *description) // static
 {
@@ -119,94 +142,135 @@ SaveInfo *SaveInfo::newWithCurrentSessionMetadata(Str const *description) // sta
     return info;
 }
 
+SaveInfo *SaveInfo::fromReader(Reader *reader) // static
+{
+    SaveInfo *info = new SaveInfo;
+    info->read(reader);
+    return info;
+}
+
 SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
-    Str_Copy(&_description, &other._description);
-    _sessionId = other._sessionId;
-    _magic     = other._magic;
-    _version   = other._version;
-    _gameMode  = other._gameMode;
-    Uri_Copy(_mapUri, other._mapUri);
-#if !__JHEXEN__
-    _mapTime   = other._mapTime;
-    std::memcpy(&_players, &other._players, sizeof(_players));
-#endif
-    std::memcpy(&_gameRules, &other._gameRules, sizeof(_gameRules));
+    d.reset(new Instance(*other.d));
     return *this;
+}
+
+Str const *SaveInfo::gameIdentityKey() const
+{
+    return &d->gameIdentityKey;
+}
+
+void SaveInfo::setGameIdentityKey(Str const *newGameIdentityKey)
+{
+    Str_CopyOrClear(&d->gameIdentityKey, newGameIdentityKey);
 }
 
 int SaveInfo::version() const
 {
-    return _version;
+    return d->version;
 }
 
-int SaveInfo::magic() const
+void SaveInfo::setVersion(int newVersion)
 {
-    return _magic;
+    d->version = newVersion;
 }
 
 Str const *SaveInfo::description() const
 {
-    return &_description;
+    return &d->description;
 }
 
 void SaveInfo::setDescription(Str const *newDescription)
 {
-    Str_CopyOrClear(&_description, newDescription);
+    Str_CopyOrClear(&d->description, newDescription);
 }
 
 uint SaveInfo::sessionId() const
 {
-    return _sessionId;
+    return d->sessionId;
 }
 
 void SaveInfo::setSessionId(uint newSessionId)
 {
-    _sessionId = newSessionId;
+    d->sessionId = newSessionId;
 }
 
 Uri const *SaveInfo::mapUri() const
 {
-    return _mapUri;
+    return d->mapUri;
+}
+
+void SaveInfo::setMapUri(Uri const *newMapUri)
+{
+    DENG_ASSERT(newMapUri != 0);
+    Uri_Copy(d->mapUri, newMapUri);
 }
 
 #if !__JHEXEN__
 int SaveInfo::mapTime() const
 {
-    return _mapTime;
+    return d->mapTime;
 }
-#endif
+
+void SaveInfo::setMapTime(int newMapTime)
+{
+    d->mapTime = newMapTime;
+}
+
+SaveInfo::Players const &SaveInfo::players() const
+{
+    return d->players;
+}
+
+void SaveInfo::setPlayers(Players const &newPlayers)
+{
+    std::memcpy(d->players, newPlayers, sizeof(d->players));
+}
+
+#endif // !__JHEXEN__
 
 GameRuleset const &SaveInfo::gameRules() const
 {
-    return _gameRules;
+    return d->gameRules;
+}
+
+void SaveInfo::setGameRules(GameRuleset const &newRules)
+{
+    d->gameRules = newRules; // make a copy
 }
 
 void SaveInfo::applyCurrentSessionMetadata()
 {
-    _magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
-    _version  = MY_SAVE_VERSION;
-    _gameMode = gameMode;
-    Uri_Copy(_mapUri, gameMapUri);
+    d->magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
+    d->version  = MY_SAVE_VERSION;
+    GameInfo gameInfo;
+    DD_GameInfo(&gameInfo);
+    Str_Copy(&d->gameIdentityKey, gameInfo.identityKey);
+    Uri_Copy(d->mapUri, gameMapUri);
 #if !__JHEXEN__
-    _mapTime  = ::mapTime;
+    d->mapTime  = ::mapTime;
 #endif
 
     // Make a copy of the current game rules.
-    _gameRules = ::gameRules;
+    d->gameRules = ::gameRules;
 
 #if !__JHEXEN__
     for(int i = 0; i < MAXPLAYERS; i++)
     {
-        _players[i] = players[i].plr->inGame;
+        d->players[i] = (::players[i]).plr->inGame;
     }
 #endif
 }
 
 bool SaveInfo::isLoadable()
 {
-    // Game Mode missmatch?
-    if(_gameMode != gameMode) return false;
+    // Game identity key missmatch?
+    GameInfo gameInfo;
+    DD_GameInfo(&gameInfo);
+    if(Str_Compare(gameInfo.identityKey, Str_Text(&d->gameIdentityKey)))
+    {
+        return false;
+    }
 
     /// @todo Validate loaded add-ons and checksum the definition database.
 
@@ -215,58 +279,81 @@ bool SaveInfo::isLoadable()
 
 void SaveInfo::write(Writer *writer) const
 {
-    Writer_WriteInt32(writer, _magic);
-    Writer_WriteInt32(writer, _version);
-    Writer_WriteInt32(writer, _gameMode);
-    Str_Write(&_description, writer);
+    Writer_WriteInt32(writer, d->magic);
+    Writer_WriteInt32(writer, d->version);
+    Str_Write(&d->gameIdentityKey, writer);
+    Str_Write(&d->description, writer);
 
-    Uri_Write(_mapUri, writer);
+    Uri_Write(d->mapUri, writer);
 #if !__JHEXEN__
-    Writer_WriteInt32(writer, _mapTime);
+    Writer_WriteInt32(writer, d->mapTime);
 #endif
-    GameRuleset_Write(&_gameRules, writer);
+    GameRuleset_Write(&d->gameRules, writer);
 
 #if !__JHEXEN__
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        Writer_WriteByte(writer, _players[i]);
+        Writer_WriteByte(writer, d->players[i]);
     }
 #endif
 
-    Writer_WriteInt32(writer, _sessionId);
+    Writer_WriteInt32(writer, d->sessionId);
 }
 
 void SaveInfo::read(Reader *reader)
 {
-    _magic    = Reader_ReadInt32(reader);
-    _version  = Reader_ReadInt32(reader);
-    _gameMode = (gamemode_t)Reader_ReadInt32(reader);
+#if __JHEXEN__
+    // Read the magic byte to determine the high-level format.
+    int magic = Reader_ReadInt32(reader);
+    SV_HxSavePtr()->b -= 4; // Rewind the stream.
 
-    if(_version >= 10)
+    if((!IS_NETWORK_CLIENT && magic != MY_SAVE_MAGIC) ||
+       ( IS_NETWORK_CLIENT && magic != MY_CLIENT_SAVE_MAGIC))
     {
-        Str_Read(&_description, reader);
+        // Perhaps the old v9 format?
+        d->read_Hx_v9(reader);
+        return;
+    }
+#endif
+
+    d->magic    = Reader_ReadInt32(reader);
+    d->version  = Reader_ReadInt32(reader);
+    if(d->version >= 14)
+    {
+        Str_Read(&d->gameIdentityKey, reader);
+    }
+    else
+    {
+        // Translate gamemode identifiers from older save versions.
+        int oldGamemode = Reader_ReadInt32(reader);
+        Str_Copy(&d->gameIdentityKey, G_IdentityKeyForLegacyGamemode(oldGamemode, d->version));
+    }
+
+    if(d->version >= 10)
+    {
+        Str_Read(&d->description, reader);
     }
     else
     {
         // Description is a fixed 24 characters in length.
         char buf[24 + 1];
         Reader_Read(reader, buf, 24); buf[24] = 0;
-        Str_Set(&_description, buf);
+        Str_Set(&d->description, buf);
     }
 
-    if(_version >= 14)
+    if(d->version >= 14)
     {
-        Uri_Read(_mapUri, reader);
+        Uri_Read(d->mapUri, reader);
 #if !__JHEXEN__
-        _mapTime = Reader_ReadInt32(reader);
+        d->mapTime = Reader_ReadInt32(reader);
 #endif
 
-        GameRuleset_Read(&_gameRules, reader);
+        GameRuleset_Read(&d->gameRules, reader);
     }
     else
     {
 #if !__JHEXEN__
-        if(_version < 13)
+        if(d->version < 13)
         {
             // In DOOM the high bit of the skill mode byte is also used for the
             // "fast" game rule dd_bool. There is more confusion in that SM_NOTHINGS
@@ -276,101 +363,72 @@ void SaveInfo::read(Reader *reader)
             // by default this means "spawn no things" and if so then the "fast" game
             // rule is meaningless so it is forced off.
             byte skillModePlusFastBit = Reader_ReadByte(reader);
-            _gameRules.skill = (skillmode_t) (skillModePlusFastBit & 0x7f);
-            if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
+            d->gameRules.skill = (skillmode_t) (skillModePlusFastBit & 0x7f);
+            if(d->gameRules.skill < SM_BABY || d->gameRules.skill >= NUM_SKILL_MODES)
             {
-                _gameRules.skill = SM_NOTHINGS;
-                _gameRules.fast  = 0;
+                d->gameRules.skill = SM_NOTHINGS;
+                d->gameRules.fast  = 0;
             }
             else
             {
-                _gameRules.fast  = (skillModePlusFastBit & 0x80) != 0;
+                d->gameRules.fast  = (skillModePlusFastBit & 0x80) != 0;
             }
         }
         else
 #endif
         {
-            _gameRules.skill = skillmode_t( Reader_ReadByte(reader) & 0x7f );
-
+            d->gameRules.skill = skillmode_t( Reader_ReadByte(reader) & 0x7f );
             // Interpret skill levels outside the normal range as "spawn no things".
-            if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
-                _gameRules.skill = SM_NOTHINGS;
+            if(d->gameRules.skill < SM_BABY || d->gameRules.skill >= NUM_SKILL_MODES)
+            {
+                d->gameRules.skill = SM_NOTHINGS;
+            }
         }
 
         uint episode = Reader_ReadByte(reader) - 1;
         uint map     = Reader_ReadByte(reader) - 1;
-        Uri_Copy(_mapUri, G_ComposeMapUri(episode, map));
+        Uri_Copy(d->mapUri, G_ComposeMapUri(episode, map));
 
-        _gameRules.deathmatch      = Reader_ReadByte(reader);
+        d->gameRules.deathmatch      = Reader_ReadByte(reader);
 #if !__JHEXEN__
-        if(_version >= 13)
-            _gameRules.fast        = Reader_ReadByte(reader);
+        if(d->version >= 13)
+        {
+            d->gameRules.fast        = Reader_ReadByte(reader);
+        }
 #endif
-        _gameRules.noMonsters      = Reader_ReadByte(reader);
+        d->gameRules.noMonsters      = Reader_ReadByte(reader);
 #if __JHEXEN__
-        _gameRules.randomClasses   = Reader_ReadByte(reader);
+        d->gameRules.randomClasses   = Reader_ReadByte(reader);
 #endif
 #if !__JHEXEN__
-        _gameRules.respawnMonsters = Reader_ReadByte(reader);
+        d->gameRules.respawnMonsters = Reader_ReadByte(reader);
 #endif
 #if !__JHEXEN__
-        // Older formats serialize the unpacked saveheader_t struct; skip the junk values (alignment).
-        if(_version < 10) SV_Seek(2);
+        /*skip old junk*/ if(d->version < 10) SV_Seek(2);
 
-        _mapTime = Reader_ReadInt32(reader);
+        d->mapTime = Reader_ReadInt32(reader);
 #endif
     }
 
 #if !__JHEXEN__
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        _players[i] = Reader_ReadByte(reader);
+        d->players[i] = Reader_ReadByte(reader);
     }
 #endif
 
-    _sessionId = Reader_ReadInt32(reader);
-
-#if __JDOOM__ || __JHERETIC__
-    // Translate gameMode identifiers from older save versions.
-    translateLegacyGameMode(&_gameMode, _version);
-#endif
+    d->sessionId = Reader_ReadInt32(reader);
 }
 
-#if __JHEXEN__
-void SaveInfo::read_Hx_v9(Reader *reader)
+int SaveInfo::magic() const
 {
-    char descBuf[24 + 1];
-    Reader_Read(reader, descBuf, 24); descBuf[24] = 0;
-    Str_Set(&_description, descBuf);
-
-    _magic     = MY_SAVE_MAGIC; // Lets pretend...
-
-    char verText[16 + 1]; // "HXS Ver "
-    Reader_Read(reader, &verText, 16); descBuf[16] = 0;
-    _version   = atoi(&verText[8]);
-
-    _gameMode  = gameMode; // Assume the current mode.
-
-    /*Skip junk*/ SV_Seek(4);
-
-    uint episode = 0;
-    uint map     = Reader_ReadByte(reader) - 1;
-    Uri_Copy(_mapUri, G_ComposeMapUri(episode, map));
-
-    _gameRules.skill         = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
-    // Interpret skill modes outside the normal range as "spawn no things".
-    if(_gameRules.skill < SM_BABY || _gameRules.skill >= NUM_SKILL_MODES)
-    {
-        _gameRules.skill = SM_NOTHINGS;
-    }
-
-    _gameRules.deathmatch    = Reader_ReadByte(reader);
-    _gameRules.noMonsters    = Reader_ReadByte(reader);
-    _gameRules.randomClasses = Reader_ReadByte(reader);
-
-    _sessionId = 0; // None.
+    return d->magic;
 }
-#endif
+
+void SaveInfo::setMagic(int newMagic)
+{
+    d->magic = newMagic;
+}
 
 // C wrapper API ---------------------------------------------------------------
 
@@ -383,6 +441,11 @@ SaveInfo *SaveInfo_Dup(SaveInfo const *other)
 {
     DENG_ASSERT(other != 0);
     return new SaveInfo(*other);
+}
+
+SaveInfo *SaveInfo_FromReader(Reader *reader)
+{
+    return SaveInfo::fromReader(reader);
 }
 
 void SaveInfo_Delete(SaveInfo *info)
@@ -409,6 +472,18 @@ void SaveInfo_SetSessionId(SaveInfo *info, uint newSessionId)
     info->setSessionId(newSessionId);
 }
 
+Str const *SaveInfo_GameIdentityKey(SaveInfo const *info)
+{
+    DENG_ASSERT(info != 0);
+    return info->gameIdentityKey();
+}
+
+void SaveInfo_SetGameIdentityKey(SaveInfo *info, Str const *newGameIdentityKey)
+{
+    DENG_ASSERT(info != 0);
+    info->setGameIdentityKey(newGameIdentityKey);
+}
+
 Str const *SaveInfo_Description(SaveInfo const *info)
 {
     DENG_ASSERT(info != 0);
@@ -419,6 +494,56 @@ void SaveInfo_SetDescription(SaveInfo *info, Str const *newName)
 {
     DENG_ASSERT(info != 0);
     info->setDescription(newName);
+}
+
+int SaveInfo_Version(SaveInfo const *info)
+{
+    DENG_ASSERT(info != 0);
+    return info->version();
+}
+
+void SaveInfo_SetVersion(SaveInfo *info, int newVersion)
+{
+    DENG_ASSERT(info != 0);
+    info->setVersion(newVersion);
+}
+
+Uri const *SaveInfo_MapUri(SaveInfo const *info)
+{
+    DENG_ASSERT(info != 0);
+    return info->mapUri();
+}
+
+void SaveInfo_SetMapUri(SaveInfo *info, Uri const *newMapUri)
+{
+    DENG_ASSERT(info != 0);
+    info->setMapUri(newMapUri);
+}
+
+#if !__JHEXEN__
+int SaveInfo_MapTime(SaveInfo const *info)
+{
+    DENG_ASSERT(info != 0);
+    return info->mapTime();
+}
+
+void SaveInfo_SetMapTime(SaveInfo *info, int newMapTime)
+{
+    DENG_ASSERT(info != 0);
+    info->setMapTime(newMapTime);
+}
+#endif
+
+GameRuleset const *SaveInfo_GameRules(SaveInfo const *info)
+{
+    DENG_ASSERT(info != 0);
+    return &info->gameRules();
+}
+
+void SaveInfo_SetGameRules(SaveInfo *info, GameRuleset const *newRules)
+{
+    DENG_ASSERT(info != 0 && newRules != 0);
+    info->setGameRules(*newRules);
 }
 
 dd_bool SaveInfo_IsLoadable(SaveInfo *info)
@@ -438,11 +563,3 @@ void SaveInfo_Read(SaveInfo *info, Reader *reader)
     DENG_ASSERT(info != 0);
     info->read(reader);
 }
-
-#if __JHEXEN__
-void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader)
-{
-    DENG_ASSERT(info != 0);
-    info->read_Hx_v9(reader);
-}
-#endif

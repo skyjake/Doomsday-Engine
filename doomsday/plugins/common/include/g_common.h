@@ -52,6 +52,8 @@ void G_ChangeGameState(gamestate_t state);
 gameaction_t G_GameAction(void);
 void G_SetGameAction(gameaction_t action);
 
+AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion);
+
 char const *P_GetGameModeName(void);
 
 uint G_GenerateSessionId(void);

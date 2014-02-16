@@ -125,8 +125,6 @@ void SV_InitTargetPlayers(void);
 void SV_ClearTargetPlayers(void);
 #endif
 
-void SV_SaveInfo_Read(SaveInfo *info, Reader *reader);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
