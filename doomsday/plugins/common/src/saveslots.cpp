@@ -21,13 +21,6 @@
 #include "common.h"
 #include "saveslots.h"
 
-#include "gamestatereader.h"
-#if __JDOOM__
-#  include "doomv9gamestatereader.h"
-#endif
-#if __JHERETIC__
-#  include "hereticv13gamestatereader.h"
-#endif
 #include "p_saveio.h"
 #include <de/String>
 #include <vector>
@@ -96,55 +89,6 @@ DENG2_PIMPL(SaveSlots)
         return &infos[slot];
     }
 
-    bool recognizeGameState(SaveInfo &info, Str const *path)
-    {
-        if(GameStateReader::recognize(info, path))
-        {
-            return true;
-        }
-        // Perhaps an original game state?
-#if __JDOOM__
-        if(DoomV9GameStateReader::recognize(info, path))
-        {
-            return true;
-        }
-#endif
-#if __JHERETIC__
-        if(HereticV13GameStateReader::recognize(info, path))
-        {
-            return true;
-        }
-#endif
-        return false;
-    }
-
-    void updateInfo(Str const *path, SaveInfo &info)
-    {
-        if(!path || Str_IsEmpty(path))
-        {
-            // The save path cannot be accessed for some reason. Perhaps its a network path?
-            // Clear the info for this slot.
-            info.setDescription(0);
-            info.setSessionId(0);
-            return;
-        }
-
-        // Is this a recognized game state?
-        if(!recognizeGameState(info, path))
-        {
-            // Clear the info for this slot.
-            info.setDescription(0);
-            info.setSessionId(0);
-            return;
-        }
-
-        // Ensure we have a valid description.
-        if(Str_IsEmpty(info.description()))
-        {
-            info.setDescription(AutoStr_FromText("UNNAMED"));
-        }
-    }
-
     /// Re-build save info by re-scanning the save paths and populating the list.
     void buildInfos()
     {
@@ -166,11 +110,11 @@ DENG2_PIMPL(SaveSlots)
         /// the default game-save file naming convention.
         for(int i = 0; i < (signed)infos.size(); ++i)
         {
-            updateInfo(self.composeSavePathForSlot(i), *infos[i]);
+            infos[i]->updateFromFile(self.composeSavePathForSlot(i));
         }
-        updateInfo(self.composeSavePathForSlot(AUTO_SLOT), *autoInfo);
+        autoInfo->updateFromFile(self.composeSavePathForSlot(AUTO_SLOT));
 #if __JHEXEN__
-        updateInfo(self.composeSavePathForSlot(BASE_SLOT), *baseInfo);
+        baseInfo->updateFromFile(self.composeSavePathForSlot(BASE_SLOT));
 #endif
     }
 
@@ -324,6 +268,8 @@ void SaveSlots::clearSlot(int slot)
         throw InvalidSlotError("SaveSlots::clearSlot", "Invalid slot " + de::String::number(slot));
     }
 
+    SaveInfo &info = saveInfo(slot);
+
     if(d->shouldAnnounceWhenClearing(slot))
     {
         AutoStr *ident = composeSlotIdentifier(slot);
@@ -339,7 +285,8 @@ void SaveSlots::clearSlot(int slot)
     AutoStr *path = composeSavePathForSlot(slot);
     SV_RemoveFile(path);
 
-    d->updateInfo(path, saveInfo(slot));
+    info.setDescription(0);
+    info.setSessionId(0);
 }
 
 void SaveSlots::copySlot(int sourceSlot, int destSlot)

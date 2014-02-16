@@ -878,9 +878,15 @@ void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReade
     gameStateReaderFactory.declareReader(recognizer, maker);
 }
 
+bool SV_RecognizeGameState(SaveInfo &info, Str const *path)
+{
+    DENG_ASSERT(inited);
+    return gameStateReaderFactory.recognize(info, path);
+}
+
 static std::auto_ptr<IGameStateReader> gameStateReaderFor(SaveInfo &info, Str const *path)
 {
-    std::auto_ptr<IGameStateReader> p(gameStateReaderFactory.newReaderFor(info, path));
+    std::auto_ptr<IGameStateReader> p(gameStateReaderFactory.recognizeAndMakeReader(info, path));
     if(!p.get())
     {
         /// @throw Error The saved game state format was not recognized.
@@ -1074,9 +1080,8 @@ void SV_LoadGameClient(uint sessionId)
         return;
     }
 
-    SaveInfo *info = new SaveInfo;
     Reader *reader = SV_NewReader();
-    info->read(reader);
+    SaveInfo *info = SaveInfo::fromReader(reader);
 
     curInfo = info;
 
@@ -1093,8 +1098,7 @@ void SV_LoadGameClient(uint sessionId)
     if(!Uri_Equality(gameMapUri, info->mapUri()))
     {
         G_NewGame(info->mapUri(), 0/*default*/, &info->gameRules());
-        /// @todo Necessary?
-        G_SetGameAction(GA_NONE);
+        G_SetGameAction(GA_NONE); /// @todo Necessary?
     }
     else
     {

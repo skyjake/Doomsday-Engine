@@ -23,6 +23,7 @@
 
 #include "g_common.h"
 #include "p_tick.h"
+#include "p_saveg.h"
 #include "p_saveio.h"
 #include <cstdlib>
 #include <cstring>
@@ -277,6 +278,32 @@ bool SaveInfo::isLoadable()
     return true; // It's good!
 }
 
+void SaveInfo::updateFromFile(Str const *path)
+{
+    if(!path || Str_IsEmpty(path))
+    {
+        // The save path cannot be accessed for some reason. Perhaps its a network path?
+        setDescription(0);
+        setSessionId(0);
+        return;
+    }
+
+    // Is this a recognized game state?
+    if(!SV_RecognizeGameState(*this, path))
+    {
+        // Clear the info for this slot.
+        setDescription(0);
+        setSessionId(0);
+        return;
+    }
+
+    // Ensure we have a valid description.
+    if(Str_IsEmpty(description()))
+    {
+        setDescription(AutoStr_FromText("UNNAMED"));
+    }
+}
+
 void SaveInfo::write(Writer *writer) const
 {
     Writer_WriteInt32(writer, d->magic);
@@ -441,11 +468,6 @@ SaveInfo *SaveInfo_Dup(SaveInfo const *other)
 {
     DENG_ASSERT(other != 0);
     return new SaveInfo(*other);
-}
-
-SaveInfo *SaveInfo_FromReader(Reader *reader)
-{
-    return SaveInfo::fromReader(reader);
 }
 
 void SaveInfo_Delete(SaveInfo *info)

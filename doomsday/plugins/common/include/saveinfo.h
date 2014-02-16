@@ -45,8 +45,6 @@ public:
 
     static SaveInfo *newWithCurrentSessionMetadata(Str const *description);
 
-    static SaveInfo *fromReader(Reader *reader);
-
     SaveInfo &operator = (SaveInfo const &other);
 
     /**
@@ -54,6 +52,23 @@ public:
      * (and @em should therefore be loadable).
      */
     bool isLoadable();
+
+    /**
+     * Attempt to update the save info from a saved game session. If the given file @a path
+     * is invalid or the saved game state could not be recognized the save info is returned
+     * to a valid but non-loadable state.
+     *
+     * @param path  Path to the resource file containing the game session header.
+     *
+     * @see isLoadable()
+     */
+    void updateFromFile(Str const *path);
+
+    /**
+     * Update the metadata associated with the save using values derived from the current game
+     * session. Note that this does @em not affect the copy of this save on disk.
+     */
+    void applyCurrentSessionMetadata();
 
     /**
      * Returns the unique "identity key" of the game session.
@@ -108,24 +123,19 @@ public:
     void setGameRules(GameRuleset const &newRules);
 
     /**
-     * Serializes the game session info using @a writer.
+     * Serializes the game session header using @a writer.
      */
     void write(Writer *writer) const;
 
     /**
-     * Deserializes the game session info using @a reader.
+     * Deserializes the game session header using @a reader.
      */
     void read(Reader *reader);
-
-    /**
-     * Update the metadata associated with the save using values derived from the current game
-     * session. Note that this does @em not affect the copy of this save on disk.
-     */
-    void applyCurrentSessionMetadata();
 
 public: /// @todo refactor away:
     int magic() const;
     void setMagic(int newMagic);
+    static SaveInfo *fromReader(Reader *reader);
 
 private:
     DENG2_PRIVATE(d)
@@ -143,7 +153,6 @@ typedef void *SaveInfo;
 
 SaveInfo *SaveInfo_New(void);
 SaveInfo *SaveInfo_Dup(SaveInfo const *other);
-SaveInfo *SaveInfo_FromReader(Reader *reader);
 
 void SaveInfo_Delete(SaveInfo *info);
 

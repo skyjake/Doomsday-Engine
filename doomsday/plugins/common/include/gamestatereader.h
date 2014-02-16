@@ -81,27 +81,44 @@ public:
     {
         DENG_ASSERT(recognizer != 0 && maker != 0);
         ReaderInfo info;
-        info.recognize    = recognizer;
-        info.makeInstance = maker;
+        info.recognize = recognizer;
+        info.newReader = maker;
         readers.push_back(info);
     }
 
     /**
-     * Returns a new IGameStateReader instance appropriate for the specified save game @a info.
+     * Determines whether a IGameStateReader appropriate for the specified save game @a info
+     * is available and if so, reads the game session header.
      *
-     * @param info  SaveInfo to attempt to read game session header into.
-     * @param path  Path to the resource file to be recognized.
+     * @param saveInfo  The game session header will be written here if recognized.
+     * @param path      Path to the resource file to be recognized.
+     *
+     * @return  @c true= the game session header was read successfully.
+     *
+     * @see recognizeAndMakeReader()
+     */
+    bool recognize(SaveInfo &saveInfo, Str const *path) const
+    {
+        return readGameSessionHeader(saveInfo, path) != 0;
+    }
+
+    /**
+     * Determines whether a IGameStateReader appropriate for the specified save game @a info
+     * is available and if so, reads the game session header and returns a new reader instance
+     * for deserializing the game state.
+     *
+     * @param saveInfo  The game session header will be written here if recognized.
+     * @param path      Path to the resource file to be recognized.
      *
      * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
+     *
+     * @see recognize()
      */
-    IGameStateReader *newReaderFor(SaveInfo &info, Str const *path)
+    IGameStateReader *recognizeAndMakeReader(SaveInfo &saveInfo, Str const *path) const
     {
-        DENG2_FOR_EACH_CONST(ReaderInfos, i, readers)
+        if(ReaderInfo const *rdrInfo = readGameSessionHeader(saveInfo, path))
         {
-            if(i->recognize(info, path))
-            {
-                return i->makeInstance();
-            }
+            return rdrInfo->newReader();
         }
         return 0; // Unrecognized
     }
@@ -109,10 +126,22 @@ public:
 private:
     struct ReaderInfo {
         GameStateRecognizeFunc recognize;
-        GameStateReaderMakeFunc makeInstance;
+        GameStateReaderMakeFunc newReader;
     };
     typedef std::list<ReaderInfo> ReaderInfos;
     ReaderInfos readers;
+
+    ReaderInfo const *readGameSessionHeader(SaveInfo &info, Str const *path) const
+    {
+        DENG2_FOR_EACH_CONST(ReaderInfos, i, readers)
+        {
+            if(i->recognize(info, path))
+            {
+                return &*i;
+            }
+        }
+        return 0; // Unrecognized
+    }
 };
 
 /**
