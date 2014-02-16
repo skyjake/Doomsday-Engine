@@ -333,9 +333,6 @@ void H_PreInit(void)
 
     // Do the common pre init routine;
     G_CommonPreInit();
-
-    // Declare the Heretic V13 game state reader/interpreter.
-    SV_DeclareGameStateReader(&HereticV13GameStateReader::recognize, &HereticV13GameStateReader::make);
 }
 
 /**
@@ -358,6 +355,9 @@ void H_PostInit(void)
 
     // Common post init routine.
     G_CommonPostInit();
+
+    // Declare the Heretic V13 game state reader/interpreter.
+    SV_DeclareGameStateReader(&HereticV13GameStateReader::recognize, &HereticV13GameStateReader::make);
 
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();

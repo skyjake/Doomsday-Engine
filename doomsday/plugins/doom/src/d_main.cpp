@@ -397,9 +397,6 @@ void D_PreInit(void)
     // Do the common pre init routine;
     G_CommonPreInit();
     G_InitSpecialFilter();
-
-    // Declare the Doom V9 game state reader/interpreter.
-    SV_DeclareGameStateReader(&DoomV9GameStateReader::recognize, &DoomV9GameStateReader::make);
 }
 
 /**
@@ -422,6 +419,9 @@ void D_PostInit(void)
 
     // Common post init routine
     G_CommonPostInit();
+
+    // Declare the Doom V9 game state reader/interpreter.
+    SV_DeclareGameStateReader(&DoomV9GameStateReader::recognize, &DoomV9GameStateReader::make);
 
     // Initialize ammo info.
     P_InitAmmoInfo();
