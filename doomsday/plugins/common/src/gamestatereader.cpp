@@ -33,7 +33,7 @@
 
 DENG2_PIMPL(GameStateReader)
 {
-    SaveInfo *saveInfo; ///< Info for the save state to be read.
+    SaveInfo *saveInfo; ///< Info for the save state to be read. Not owned.
     Reader *reader;
     dd_bool loaded[MAXPLAYERS];
     dd_bool infile[MAXPLAYERS];
@@ -45,6 +45,11 @@ DENG2_PIMPL(GameStateReader)
     {
         de::zap(loaded);
         de::zap(infile);
+    }
+
+    ~Instance()
+    {
+        Reader_Delete(reader);
     }
 
     /// Assumes the reader is currently positioned at the start of the stream.
@@ -105,10 +110,9 @@ DENG2_PIMPL(GameStateReader)
 #if __JHEXEN__ // The map state is actually read from a separate file.
         // Close the game state file.
         Z_Free(saveBuffer);
-        SV_CloseFile();
 
         // Open the map state file.
-        AutoStr *path = saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1);
+        AutoStr *path = saveSlots->composeMapSavePathForSlot(BASE_SLOT, gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
             throw FileAccessError("GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
@@ -120,9 +124,11 @@ DENG2_PIMPL(GameStateReader)
         readConsistencyBytes();
 #if __JHEXEN__
         Z_Free(saveBuffer);
-        SV_ClearTargetPlayers();
 #else
         SV_CloseFile();
+#endif
+#if __JHEXEN__
+        SV_ClearTargetPlayers();
 #endif
     }
 
@@ -208,17 +214,19 @@ DENG2_PIMPL(GameStateReader)
     {
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            dd_bool notLoaded = false;
+            bool notLoaded = false;
 
 #if __JHEXEN__
             if(players[i].plr->inGame)
             {
                 // Try to find a saved player that corresponds this one.
-                uint k;
+                int k;
                 for(k = 0; k < MAXPLAYERS; ++k)
                 {
                     if(saveToRealPlayerNum[k] == i)
+                    {
                         break;
+                    }
                 }
                 if(k < MAXPLAYERS)
                     continue; // Found; don't bother this player.
@@ -269,29 +277,15 @@ GameStateReader::~GameStateReader()
 
 bool GameStateReader::recognize(SaveInfo &info, Str const *path) // static
 {
-    DENG_ASSERT(path != 0);
-
     if(!SV_ExistingFile(path)) return false;
-
-#if __JHEXEN__
-    /// @todo Do not buffer the whole file.
-    byte *readBuffer;
-    size_t fileSize = M_ReadFile(Str_Text(path), (char **) &readBuffer);
-    if(!fileSize) return false;
-
-    // Set the save pointer.
-    SV_HxSavePtr()->b = readBuffer;
-    SV_HxSetSaveEndPtr(readBuffer + fileSize);
-#else
-    if(!SV_OpenFile(path, "rp")) return false;
-#endif
+    if(!SV_OpenGameSaveFile(path, false/*for reading*/)) return false;
 
     Reader *reader = SV_NewReader();
     info.read(reader);
     Reader_Delete(reader);
 
 #if __JHEXEN__
-    Z_Free(readBuffer);
+    Z_Free(saveBuffer);
 #else
     SV_CloseFile();
 #endif

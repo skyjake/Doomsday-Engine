@@ -30,7 +30,7 @@
 
 DENG2_PIMPL(GameStateWriter)
 {
-    SaveInfo *saveInfo; ///< Info for the save state to be written.
+    SaveInfo *saveInfo; ///< Info for the save state to be written. Not owned.
     ThingArchive *thingArchive;
     Writer *writer;
 
@@ -40,6 +40,12 @@ DENG2_PIMPL(GameStateWriter)
         , thingArchive(0)
         , writer(0)
     {}
+
+    ~Instance()
+    {
+        Writer_Delete(writer);
+        delete thingArchive;
+    }
 
     void beginSegment(int segId)
     {
@@ -82,7 +88,7 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
+        SV_OpenFile(saveSlots->composeMapSavePathForSlot(BASE_SLOT, gameMap), "wp");
 #endif
 
         MapStateWriter(*thingArchive).write(writer);

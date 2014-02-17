@@ -54,7 +54,7 @@ using namespace internal;
 
 DENG2_PIMPL(MapStateReader)
 {
-    Reader *reader;
+    Reader *reader; // Not owned.
     int saveVersion;
     int mapVersion;
     bool formatHasMapVersionNumber;
@@ -76,6 +76,13 @@ DENG2_PIMPL(MapStateReader)
         , materialArchive(0)
         , sideArchive(0)
     {}
+
+    ~Instance()
+    {
+        delete thingArchive;
+        delete sideArchive;
+        MaterialArchive_Delete(materialArchive);
+    }
 
     void beginSegment(int segId)
     {
@@ -364,7 +371,9 @@ DENG2_PIMPL(MapStateReader)
 #if __JHEXEN__
             if(reachedSpecialsBlock)
 #endif
+            {
                 tClass = Reader_ReadByte(reader);
+            }
 
 #if __JHEXEN__
             if(mapVersion < 4)
@@ -376,7 +385,9 @@ DENG2_PIMPL(MapStateReader)
                     // are differrent, so we need to manipulate the thinker
                     // class identifier value.
                     if(tClass != TC_END)
+                    {
                         tClass += 2;
+                    }
                 }
                 else
                 {
@@ -400,9 +411,13 @@ DENG2_PIMPL(MapStateReader)
                     // the end of the specials data so we need to manipulate
                     // the thinker class identifier value.
                     if(tClass == PRE_VER5_END_SPECIALS)
+                    {
                         tClass = TC_END;
+                    }
                     else
+                    {
                         tClass += 3;
+                    }
                 }
                 else if(tClass == TC_END)
                 {
@@ -412,6 +427,7 @@ DENG2_PIMPL(MapStateReader)
                 }
             }
 #endif
+
             if(tClass == TC_END)
                 break; // End of the list.
 
@@ -445,7 +461,9 @@ DENG2_PIMPL(MapStateReader)
 
 #if __JHEXEN__
             if(tClass == TC_MOBJ)
+            {
                 i++;
+            }
 #endif
         }
 

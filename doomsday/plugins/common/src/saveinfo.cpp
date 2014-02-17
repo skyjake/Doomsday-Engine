@@ -291,7 +291,7 @@ void SaveInfo::updateFromFile(Str const *path)
     // Is this a recognized game state?
     if(!SV_RecognizeGameState(*this, path))
     {
-        // Clear the info for this slot.
+        // Clear the info.
         setDescription(0);
         setSessionId(0);
         return;

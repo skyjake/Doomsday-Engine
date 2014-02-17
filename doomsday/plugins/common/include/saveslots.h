@@ -148,14 +148,16 @@ public:
     void copySlot(int sourceSlot, int destSlot);
 
     /**
-     * Compose the (possibly relative) file path to the game state associated with save @a slot.
+     * Compose the (possibly relative) file path to the map state associated with save @a slot.
      *
      * @param slot  Slot to compose the identifier of.
-     * @param map   If @c >= 0 include this logical map index in the composed path.
+     * @param map   Logical map index.
      *
      * @return  The composed path if reachable (else a zero-length string).
      */
-    AutoStr *composeSavePathForSlot(int slot, int map = -1) const;
+    AutoStr *composeMapSavePathForSlot(int slot, uint map) const;
+
+    AutoStr *composeSavePathForSlot(int slot) const;
 
     /**
      * Register the console commands and variables of this module.
@@ -194,7 +196,6 @@ SaveInfo *SaveSlots_SaveInfo(SaveSlots *sslots, int slot);
 void SaveSlots_ReplaceSaveInfo(SaveSlots *sslots, int slot, SaveInfo *newInfo);
 void SaveSlots_ClearSlot(SaveSlots *sslots, int slot);
 void SaveSlots_CopySlot(SaveSlots *sslots, int sourceSlot, int destSlot);
-AutoStr *SaveSlots_ComposeSavePathForSlot(SaveSlots const *sslots, int slot, int map);
 
 void SaveSlots_ConsoleRegister();
 

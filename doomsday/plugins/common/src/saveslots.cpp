@@ -278,7 +278,7 @@ void SaveSlots::clearSlot(int slot)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        AutoStr *path = composeSavePathForSlot(slot, i);
+        AutoStr *path = composeMapSavePathForSlot(slot, i);
         SV_RemoveFile(path);
     }
 
@@ -309,8 +309,8 @@ void SaveSlots::copySlot(int sourceSlot, int destSlot)
     AutoStr *src, *dst;
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        src = composeSavePathForSlot(sourceSlot, i);
-        dst = composeSavePathForSlot(destSlot, i);
+        src = composeMapSavePathForSlot(sourceSlot, i);
+        dst = composeMapSavePathForSlot(destSlot, i);
         SV_CopyFile(src, dst);
     }
 
@@ -322,7 +322,7 @@ void SaveSlots::copySlot(int sourceSlot, int destSlot)
     replaceSaveInfo(destSlot, new SaveInfo(saveInfo(sourceSlot)));
 }
 
-AutoStr *SaveSlots::composeSavePathForSlot(int slot, int map) const
+AutoStr *SaveSlots::composeMapSavePathForSlot(int slot, uint map) const
 {
     AutoStr *path = AutoStr_NewStd();
 
@@ -334,14 +334,24 @@ AutoStr *SaveSlots::composeSavePathForSlot(int slot, int map) const
     if(!F_MakePath(SV_SavePath())) return path;
 
     // Compose the full game-save path and filename.
-    if(map >= 0)
-    {
-        Str_Appendf(path, "%s" SAVEGAMENAME "%i%02i." SAVEGAMEEXTENSION, SV_SavePath(), slot, map);
-    }
-    else
-    {
-        Str_Appendf(path, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, SV_SavePath(), slot);
-    }
+    Str_Appendf(path, "%s" SAVEGAMENAME "%i%02i." SAVEGAMEEXTENSION, SV_SavePath(), slot, map + 1);
+    F_TranslatePath(path, path);
+    return path;
+}
+
+AutoStr *SaveSlots::composeSavePathForSlot(int slot) const
+{
+    AutoStr *path = AutoStr_NewStd();
+
+    // A valid slot?
+    if(!isValidSlot(slot)) return path;
+
+    // Do we have a valid path?
+    /// @todo Do not do alter the file system until necessary.
+    if(!F_MakePath(SV_SavePath())) return path;
+
+    // Compose the full game-save path and filename.
+    Str_Appendf(path, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, SV_SavePath(), slot);
     F_TranslatePath(path, path);
     return path;
 }
@@ -449,12 +459,6 @@ void SaveSlots_CopySlot(SaveSlots *sslots, int sourceSlot, int destSlot)
 {
     DENG_ASSERT(sslots != 0);
     sslots->copySlot(sourceSlot, destSlot);
-}
-
-AutoStr *SaveSlots_ComposeSavePathForSlot(SaveSlots const *sslots, int slot, int map)
-{
-    DENG_ASSERT(sslots != 0);
-    return sslots->composeSavePathForSlot(slot, map);
 }
 
 void SaveSlots_ConsoleRegister()

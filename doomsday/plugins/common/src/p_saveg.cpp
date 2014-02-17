@@ -88,10 +88,13 @@ dd_bool SV_OpenGameSaveFile(Str const *path, dd_bool write)
 #if __JHEXEN__
     if(!write)
     {
-        bool result = M_ReadFile(Str_Text(path), (char **)&saveBuffer) > 0;
-        // Set the save pointer.
+        size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
+        if(!bufferSize) return false;
+
         SV_HxSavePtr()->b = saveBuffer;
-        return result;
+        SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
+
+        return true;
     }
     else
 #endif
@@ -122,7 +125,7 @@ dd_bool SV_OpenMapSaveFile(Str const *path)
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
     DENG_ASSERT(inited);
-    AutoStr *path = saveSlots->composeSavePathForSlot(slot, (int)map + 1);
+    AutoStr *path = saveSlots->composeMapSavePathForSlot(slot, map);
     if(path && !Str_IsEmpty(path))
     {
         return SV_ExistingFile(path);
@@ -1144,7 +1147,7 @@ void SV_LoadGameClient(uint sessionId)
 #if __JHEXEN__
 void SV_HxSaveHubMap()
 {
-    SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
+    SV_OpenFile(saveSlots->composeMapSavePathForSlot(BASE_SLOT, gameMap), "wp");
 
     // Set the mobj archive numbers
     ThingArchive thingArchive;
@@ -1175,7 +1178,7 @@ void SV_HxLoadHubMap()
     // Been here before, load the previous map state.
     try
     {
-        AutoStr *path = saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1);
+        AutoStr *path = saveSlots->composeMapSavePathForSlot(BASE_SLOT, gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
             throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");

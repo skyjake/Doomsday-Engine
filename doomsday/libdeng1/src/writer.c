@@ -142,6 +142,7 @@ Writer *Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
 
 void Writer_Delete(Writer *writer)
 {
+    if(!writer) return;
     if(writer->isDynamic)
     {
         // The buffer was allocated by us.

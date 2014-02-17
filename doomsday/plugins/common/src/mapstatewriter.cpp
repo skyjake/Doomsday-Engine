@@ -43,9 +43,9 @@ using namespace internal;
 
 DENG2_PIMPL(MapStateWriter)
 {
-    ThingArchive *thingArchive;
+    ThingArchive *thingArchive; // Not owned.
     MaterialArchive *materialArchive;
-    Writer *writer;
+    Writer *writer; // Not owned.
 
     Instance(Public *i)
         : Base(i)
@@ -53,6 +53,11 @@ DENG2_PIMPL(MapStateWriter)
         , materialArchive(0)
         , writer(0)
     {}
+
+    ~Instance()
+    {
+        MaterialArchive_Delete(materialArchive);
+    }
 
     void beginSegment(int segId)
     {
@@ -139,12 +144,16 @@ DENG2_PIMPL(MapStateWriter)
         if(p.excludePlayers)
         {
             if(th->function == (thinkfunc_t) P_MobjThinker && ((mobj_t *) th)->player)
+            {
                 return false;
+            }
         }
 
         // Only the server saves this class of thinker?
         if((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT)
+        {
             return false;
+        }
 
         // Write the header block for this thinker.
         Writer_WriteByte(p.msw->writer(), thInfo->thinkclass); // Thinker type byte.
