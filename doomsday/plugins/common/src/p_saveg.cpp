@@ -57,7 +57,7 @@ targetplraddress_t *targetPlayerAddrs;
  * @return  File path to the reachable save directory. If the game-save path
  *          is unreachable then a zero-length string is returned instead.
  */
-static de::Path composeGameSavePathForClientSessionId(uint sessionId)
+static de::Path savePathForClientSessionId(uint sessionId)
 {
     // Do we have a valid path?
     if(!F_MakePath(de::NativePath(SV_ClientSavePath()).expand().toUtf8().constData()))
@@ -976,7 +976,7 @@ void SV_SaveGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    de::Path path = composeGameSavePathForClientSessionId(sessionId);
+    de::Path path = savePathForClientSessionId(sessionId);
     if(!SV_OpenFile(path, "wp"))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
@@ -1031,7 +1031,7 @@ void SV_LoadGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    de::Path path = composeGameSavePathForClientSessionId(sessionId);
+    de::Path path = savePathForClientSessionId(sessionId);
     if(!SV_OpenFile(path, "rp"))
     {
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading",

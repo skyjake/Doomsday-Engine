@@ -1,4 +1,4 @@
-/** @file d_main.c  Doom64-specific game initialization.
+/** @file d_main.cpp  Doom64-specific game initialization.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -30,8 +30,8 @@
 #include "p_inventory.h"
 #include "p_saveg.h"
 #include "p_map.h"
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 
 int verbose;
 float turboMul; // Multiplier for turbo.
@@ -69,22 +69,22 @@ void *D_GetVariable(int id)
     switch(id)
     {
     case DD_PLUGIN_NAME:
-        return PLUGIN_NAMETEXT;
+        return (void*)PLUGIN_NAMETEXT;
 
     case DD_PLUGIN_NICENAME:
-        return PLUGIN_NICENAME;
+        return (void*)PLUGIN_NICENAME;
 
     case DD_PLUGIN_VERSION_SHORT:
-        return PLUGIN_VERSION_TEXT;
+        return (void*)PLUGIN_VERSION_TEXT;
 
     case DD_PLUGIN_VERSION_LONG:
-        return PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS;
+        return (void*)(PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS);
 
     case DD_PLUGIN_HOMEURL:
-        return PLUGIN_HOMEURL;
+        return (void*)PLUGIN_HOMEURL;
 
     case DD_PLUGIN_DOCSURL:
-        return PLUGIN_DOCSURL;
+        return (void*)PLUGIN_DOCSURL;
 
     case DD_GAME_CONFIG:
         return gameConfigString;
@@ -148,11 +148,10 @@ void D_PreInit()
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_INVENTORY] = false; // They will be visible when the automap is.
     cfg.hudShown[HUD_LOG] = true;
-    { int i;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
+    for(int i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
     {
         cfg.hudUnHide[i] = 1;
-    }}
+    }
     cfg.hudScale = .6f;
     cfg.hudColor[0] = 1;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
@@ -301,8 +300,6 @@ void D_PostInit()
 {
     dd_bool autoStart = false;
     Uri *startMapUri = 0;
-    AutoStr *path;
-    int p;
 
     // Common post init routine.
     G_CommonPostInit();
@@ -332,7 +329,7 @@ void D_PostInit()
     gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
     gameRules.fast            = CommandLine_Check("-fast")? true : false;
 
-    p = CommandLine_Check("-timer");
+    int p = CommandLine_Check("-timer");
     if(p && p < myargc - 1 && gameRules.deathmatch)
     {
         int time = atoi(CommandLine_At(p + 1));
@@ -400,7 +397,7 @@ void D_PostInit()
     }
 
     // Validate episode and map.
-    path = Uri_Compose(startMapUri);
+    AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
         G_DeferredNewGame(startMapUri, 0/*default*/, &gameRules);
