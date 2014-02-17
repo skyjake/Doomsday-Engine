@@ -1,4 +1,4 @@
-/** @file h2_main.c  Hexen specifc game initialization.
+/** @file h2_main.cpp  Hexen specifc game initialization.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -33,8 +33,8 @@
 #include "p_saveg.h"
 #include "p_sound.h"
 
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 
 int verbose;
 
@@ -74,22 +74,22 @@ void *X_GetVariable(int id)
     switch(id)
     {
     case DD_PLUGIN_NAME:
-        return PLUGIN_NAMETEXT;
+        return (void*)PLUGIN_NAMETEXT;
 
     case DD_PLUGIN_NICENAME:
-        return PLUGIN_NICENAME;
+        return (void*)PLUGIN_NICENAME;
 
     case DD_PLUGIN_VERSION_SHORT:
-        return PLUGIN_VERSION_TEXT;
+        return (void*)PLUGIN_VERSION_TEXT;
 
     case DD_PLUGIN_VERSION_LONG:
-        return PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS;
+        return (void*)(PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS);
 
     case DD_PLUGIN_HOMEURL:
-        return PLUGIN_HOMEURL;
+        return (void*)PLUGIN_HOMEURL;
 
     case DD_PLUGIN_DOCSURL:
-        return PLUGIN_DOCSURL;
+        return (void*)PLUGIN_DOCSURL;
 
     case DD_GAME_CONFIG:
         return gameConfigString;
@@ -120,16 +120,15 @@ void *X_GetVariable(int id)
     return 0;
 }
 
-void X_PreInit(void)
+void X_PreInit()
 {
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
-    { int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         cfg.playerClass[i] = PCLASS_FIGHTER;
-    }}
+    }
     cfg.playerMoveSpeed = 1;
     cfg.statusbarScale = 1;
     cfg.screenBlocks = cfg.setBlocks = 10;
@@ -137,11 +136,10 @@ void X_PreInit(void)
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_READYITEM] = true;
     cfg.hudShown[HUD_LOG] = true;
-    { int i;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
+    for(int i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
     {
         cfg.hudUnHide[i] = 1;
-    }}
+    }
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
     cfg.xhairAngle = 0;
@@ -297,8 +295,6 @@ void X_PostInit()
     dd_bool autoStart = false;
     Uri *startMapUri = 0;
     playerclass_t startPlayerClass = PCLASS_NONE;
-    AutoStr *path;
-    int p;
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();
@@ -325,7 +321,7 @@ void X_PostInit()
     gameRules.randomClasses = CommandLine_Exists("-randclass")? true : false;
 
     // Turbo movement option.
-    p = CommandLine_Check("-turbo");
+    int p = CommandLine_Check("-turbo");
     turboMul = 1.0f;
     if(p)
     {
@@ -422,7 +418,7 @@ void X_PostInit()
     }
 
     // Validate episode and map.
-    path = Uri_Compose(startMapUri);
+    AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
         G_DeferredNewGame(startMapUri, 0/*default*/, &gameRules);
