@@ -292,7 +292,7 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
 }
 #endif
 
-void D_DrawWindow(const Size2Raw* windowSize)
+void D_DrawWindow(Size2Raw const *windowSize)
 {
     if(G_GameState() == GS_INTERMISSION)
     {
@@ -308,7 +308,7 @@ void D_DrawWindow(const Size2Raw* windowSize)
     }
 }
 
-void D_EndFrame(void)
+void D_EndFrame()
 {
     int i;
 
@@ -316,9 +316,10 @@ void D_EndFrame(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
+        player_t *plr = players + i;
 
-        if(!plr->plr->inGame || !plr->plr->mo) continue;
+        if(!plr->plr->inGame) continue;
+        if(!plr->plr->mo) continue;
 
         // View angles are updated with fractional ticks, so we can just use the current values.
         R_SetViewAngle(i, Player_ViewYawAngle(i));
@@ -330,7 +331,7 @@ void D_EndFrame(void)
  * Updates the mobj flags used by Doomsday with the state of our local flags
  * for the given mobj.
  */
-void P_SetDoomsdayFlags(mobj_t* mo)
+void P_SetDoomsdayFlags(mobj_t *mo)
 {
     // Client mobjs can't be set here.
     if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)

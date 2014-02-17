@@ -50,7 +50,7 @@ float const defFontRGB3[] = {  .9f, .9f,  .9f };
 
 // The patches used in drawing the view border.
 // Percent-encoded.
-char *borderGraphics[] = {
+char const *borderGraphics[] = {
     "Flats:F_022", // Background.
     "BORDT", // Top.
     "BORDR", // Right.
@@ -62,18 +62,12 @@ char *borderGraphics[] = {
     "BORDBL" // Bottom left.
 };
 
-/**
- * Get a 32-bit integer value.
- */
 int X_GetInteger(int id)
 {
     return Common_GetInteger(id);
 }
 
-/**
- * Get a pointer to the value of a named variable/constant.
- */
-void* X_GetVariable(int id)
+void *X_GetVariable(int id)
 {
     static float bob[2];
 
@@ -126,10 +120,6 @@ void* X_GetVariable(int id)
     return 0;
 }
 
-/**
- * Pre Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
 void X_PreInit(void)
 {
     // Config defaults. The real settings are read from the .cfg files
@@ -137,8 +127,9 @@ void X_PreInit(void)
     memset(&cfg, 0, sizeof(cfg));
     { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
+    {
         cfg.playerClass[i] = PCLASS_FIGHTER;
-    }
+    }}
     cfg.playerMoveSpeed = 1;
     cfg.statusbarScale = 1;
     cfg.screenBlocks = cfg.setBlocks = 10;
@@ -148,8 +139,9 @@ void X_PreInit(void)
     cfg.hudShown[HUD_LOG] = true;
     { int i;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
+    {
         cfg.hudUnHide[i] = 1;
-    }
+    }}
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
     cfg.xhairAngle = 0;
@@ -300,11 +292,7 @@ void X_PreInit(void)
     G_CommonPreInit();
 }
 
-/**
- * Post Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void X_PostInit(void)
+void X_PostInit()
 {
     dd_bool autoStart = false;
     Uri *startMapUri = 0;
@@ -448,10 +436,9 @@ void X_PostInit(void)
     Uri_Delete(startMapUri);
 }
 
-void X_Shutdown(void)
+void X_Shutdown()
 {
     P_ShutdownInventory();
     X_DestroyLUTs();
     G_CommonShutdown();
 }
-

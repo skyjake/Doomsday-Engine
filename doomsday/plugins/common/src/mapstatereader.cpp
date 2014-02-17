@@ -41,10 +41,11 @@ namespace internal
     }
 
     static int thingArchiveVersionFor(int mapVersion) {
-#if !__JHEXEN__
-        return 0;
-#else
+#if __JHEXEN__
         return mapVersion >= 4? 1 : 0;
+#else
+        return 0;
+        DENG_UNUSED(mapVersion);
 #endif
     }
 }

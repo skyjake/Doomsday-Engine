@@ -30,17 +30,10 @@
 #include "am_map.h"
 #include "g_defs.h"
 #include "p_inventory.h"
-#include <assert.h>
-#include <string.h>
+#include <cassert>
+#include <cstring>
 
 int verbose;
-
-//dd_bool devParm; // checkparm of -devparm
-//dd_bool noMonstersParm; // checkparm of -nomonsters
-//dd_bool respawnParm; // checkparm of -respawn
-//dd_bool fastParm; // checkparm of -fast
-//dd_bool turboParm; // checkparm of -turbo
-//dd_bool randomClassParm; // checkparm of -randclass
 
 float turboMul; // Multiplier for turbo.
 
@@ -54,7 +47,7 @@ float const defFontRGB3[] = { 1.0f, 1.0f, 1.0f };
 
 // The patches used in drawing the view border.
 // Percent-encoded.
-char* borderGraphics[] = {
+char const *borderGraphics[] = {
     "Flats:FLAT513", // Background.
     "BORDT", // Top.
     "BORDR", // Right.
@@ -66,40 +59,34 @@ char* borderGraphics[] = {
     "BORDBL" // Bottom left.
 };
 
-/**
- * Get a 32-bit integer value.
- */
 int H_GetInteger(int id)
 {
     return Common_GetInteger(id);
 }
 
-/**
- * Get a pointer to the value of a variable. Added for 64-bit support.
- */
-void* H_GetVariable(int id)
+void *H_GetVariable(int id)
 {
     static float bob[2];
 
     switch(id)
     {
     case DD_PLUGIN_NAME:
-        return PLUGIN_NAMETEXT;
+        return (void*)PLUGIN_NAMETEXT;
 
     case DD_PLUGIN_NICENAME:
-        return PLUGIN_NICENAME;
+        return (void*)PLUGIN_NICENAME;
 
     case DD_PLUGIN_VERSION_SHORT:
-        return PLUGIN_VERSION_TEXT;
+        return (void*)PLUGIN_VERSION_TEXT;
 
     case DD_PLUGIN_VERSION_LONG:
-        return PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS;
+        return (void*)(PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS);
 
     case DD_PLUGIN_HOMEURL:
-        return PLUGIN_HOMEURL;
+        return (void*)PLUGIN_HOMEURL;
 
     case DD_PLUGIN_DOCSURL:
-        return PLUGIN_DOCSURL;
+        return (void*)PLUGIN_DOCSURL;
 
     case DD_GAME_CONFIG:
         return gameConfigString;
@@ -132,11 +119,7 @@ void* H_GetVariable(int id)
     return 0;
 }
 
-/**
- * Pre Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void H_PreInit(void)
+void H_PreInit()
 {
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
@@ -168,8 +151,8 @@ void H_PreInit(void)
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_READYITEM] = true;
     cfg.hudShown[HUD_LOG] = true;
-    { int i;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+    for(int i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+    {
         cfg.hudUnHide[i] = 1;
     }
     cfg.hudScale = .7f;
@@ -335,16 +318,10 @@ void H_PreInit(void)
     G_CommonPreInit();
 }
 
-/**
- * Post Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void H_PostInit(void)
+void H_PostInit()
 {
     dd_bool autoStart = false;
     Uri *startMapUri = 0;
-    AutoStr *path;
-    int p;
 
     /// @todo Kludge: Shareware WAD has different border background.
     /// @todo Do this properly!
@@ -381,7 +358,7 @@ void H_PostInit(void)
     gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
 
     // turbo option.
-    p = CommandLine_Check("-turbo");
+    int p = CommandLine_Check("-turbo");
     turboMul = 1.0f;
     if(p)
     {
@@ -452,7 +429,7 @@ void H_PostInit(void)
     }
 
     // Validate episode and map.
-    path = Uri_Compose(startMapUri);
+    AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
         G_DeferredNewGame(startMapUri, 0/*default*/, &gameRules);
@@ -465,7 +442,7 @@ void H_PostInit(void)
     Uri_Delete(startMapUri);
 }
 
-void H_Shutdown(void)
+void H_Shutdown()
 {
     P_ShutdownInventory();
     G_CommonShutdown();

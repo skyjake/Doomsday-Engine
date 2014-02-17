@@ -21,9 +21,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <assert.h>
-#include <string.h>
-
 #include "jdoom64.h"
 
 #include "am_map.h"
@@ -33,6 +30,8 @@
 #include "p_inventory.h"
 #include "p_saveg.h"
 #include "p_map.h"
+#include <assert.h>
+#include <string.h>
 
 int verbose;
 float turboMul; // Multiplier for turbo.
@@ -46,7 +45,7 @@ float const defFontRGB2[] = { .85f, 0, 0 };
 
 // The patches used in drawing the view border.
 // Percent-encoded.
-char *borderGraphics[] = {
+char const *borderGraphics[] = {
     "Flats:FTILEABC", // Background.
     "BRDR_T", // Top.
     "BRDR_R", // Right.
@@ -58,18 +57,12 @@ char *borderGraphics[] = {
     "BRDR_BL" // Bottom left.
 };
 
-/**
- * Get a 32-bit integer value.
- */
 int D_GetInteger(int id)
 {
     return Common_GetInteger(id);
 }
 
-/**
- * Get a pointer to the value of a named variable/constant.
- */
-void* D_GetVariable(int id)
+void *D_GetVariable(int id)
 {
     static float bob[2];
 
@@ -122,11 +115,7 @@ void* D_GetVariable(int id)
     return 0;
 }
 
-/**
- * Pre Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void D_PreInit(void)
+void D_PreInit()
 {
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
@@ -161,8 +150,9 @@ void D_PreInit(void)
     cfg.hudShown[HUD_LOG] = true;
     { int i;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
+    {
         cfg.hudUnHide[i] = 1;
-    }
+    }}
     cfg.hudScale = .6f;
     cfg.hudColor[0] = 1;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
@@ -307,11 +297,7 @@ void D_PreInit(void)
     G_CommonPreInit();
 }
 
-/**
- * Post Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void D_PostInit(void)
+void D_PostInit()
 {
     dd_bool autoStart = false;
     Uri *startMapUri = 0;
@@ -427,7 +413,7 @@ void D_PostInit(void)
     Uri_Delete(startMapUri);
 }
 
-void D_Shutdown(void)
+void D_Shutdown()
 {
     P_ShutdownInventory();
     G_CommonShutdown();

@@ -895,6 +895,8 @@ void P_PlayerThinkCamera(player_t *player)
 
 D_CMD(SetCamera)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
     int p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
@@ -980,6 +982,8 @@ void P_PlayerSetArmorType(player_t *plr, int type)
 
 D_CMD(SetViewMode)
 {
+    DENG_UNUSED(src);
+
     if(argc > 2) return false;
 
     int pl = CONSOLEPLAYER;
@@ -1004,6 +1008,8 @@ D_CMD(SetViewMode)
 
 D_CMD(SetViewLock)
 {
+    DENG_UNUSED(src);
+
     int pl = CONSOLEPLAYER, lock;
 
     if(!stricmp(argv[0], "lockmode"))
@@ -1040,6 +1046,8 @@ D_CMD(SetViewLock)
 
 D_CMD(MakeLocal)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
     if(G_GameState() != GS_MAP)
     {
         App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "You must be in a game to create a local player.\n");
@@ -1074,6 +1082,8 @@ D_CMD(MakeLocal)
 
 D_CMD(PrintPlayerCoords)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     mobj_t *mo;
 
     if(G_GameState() != GS_MAP)
@@ -1090,6 +1100,8 @@ D_CMD(PrintPlayerCoords)
 
 D_CMD(CycleSpy)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     //// @todo The engine should do this.
     App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Spying not allowed.\n");
 #if 0
@@ -1112,6 +1124,8 @@ D_CMD(CycleSpy)
 
 D_CMD(SpawnMobj)
 {
+    DENG_UNUSED(src);
+
     if(argc != 5 && argc != 6)
     {
         App_Log(DE2_SCR_NOTE, "Usage: %s (type) (x) (y) (z) (angle)\n", argv[0]);
@@ -1185,6 +1199,8 @@ D_CMD(SpawnMobj)
             mo->intFlags |= MIF_FADE;
         }
     // << d64tc
+#else
+        DENG_UNUSED(mo);
 #endif
     }
 

@@ -34,7 +34,7 @@ DENG_EXTERN_C float turboMul; // Multiplier for turbo.
 DENG_EXTERN_C gamemode_t gameMode;
 DENG_EXTERN_C int gameModeBits;
 
-DENG_EXTERN_C char *borderGraphics[];
+DENG_EXTERN_C char const *borderGraphics[];
 
 DENG_EXTERN_C float const defFontRGB[];
 DENG_EXTERN_C float const defFontRGB2[];
@@ -46,14 +46,28 @@ DENG_EXTERN_C dd_bool monsterInfight;
 extern "C" {
 #endif
 
+/**
+ * Pre Game Initialization routine.
+ * All game-specific actions that should take place at this time go here.
+ */
 void H_PreInit(void);
 
+/**
+ * Post Game Initialization routine.
+ * All game-specific actions that should take place at this time go here.
+ */
 void H_PostInit(void);
 
 void H_Shutdown(void);
 
+/**
+ * Get a 32-bit integer value.
+ */
 int H_GetInteger(int id);
 
+/**
+ * Get a pointer to the value of a variable. Added for 64-bit support.
+ */
 void *H_GetVariable(int id);
 
 #ifdef __cplusplus

@@ -33,13 +33,6 @@
 
 int verbose;
 
-//dd_bool devParm; // checkparm of -devparm
-//dd_bool noMonstersParm; // checkparm of -nomonsters
-//dd_bool respawnParm; // checkparm of -respawn
-//dd_bool fastParm; // checkparm of -fast
-//dd_bool turboParm; // checkparm of -turbo
-//dd_bool randomClassParm; // checkparm of -randclass
-
 float turboMul; // Multiplier for turbo.
 
 gamemode_t gameMode;
@@ -52,7 +45,7 @@ float defFontRGB3[3];
 
 // The patches used in drawing the view border.
 // Percent-encoded.
-char* borderGraphics[] = {
+char const *borderGraphics[] = {
     "Flats:FLOOR7_2", // Background.
     "BRDR_T", // Top.
     "BRDR_R", // Right.
@@ -64,40 +57,34 @@ char* borderGraphics[] = {
     "BRDR_BL" // Bottom left.
 };
 
-/**
- * Get a 32-bit integer value.
- */
 int D_GetInteger(int id)
 {
     return Common_GetInteger(id);
 }
 
-/**
- * Get a pointer to the value of a named variable/constant.
- */
-void* D_GetVariable(int id)
+void *D_GetVariable(int id)
 {
     static float bob[2];
 
     switch(id)
     {
     case DD_PLUGIN_NAME:
-        return PLUGIN_NAMETEXT;
+        return (void*)PLUGIN_NAMETEXT;
 
     case DD_PLUGIN_NICENAME:
-        return PLUGIN_NICENAME;
+        return (void*)PLUGIN_NICENAME;
 
     case DD_PLUGIN_VERSION_SHORT:
-        return PLUGIN_VERSION_TEXT;
+        return (void*)PLUGIN_VERSION_TEXT;
 
     case DD_PLUGIN_VERSION_LONG:
-        return PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS;
+        return (void*)(PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS);
 
     case DD_PLUGIN_HOMEURL:
-        return PLUGIN_HOMEURL;
+        return (void*)PLUGIN_HOMEURL;
 
     case DD_PLUGIN_DOCSURL:
-        return PLUGIN_DOCSURL;
+        return (void*)PLUGIN_DOCSURL;
 
     case DD_GAME_CONFIG:
         return gameConfigString;
@@ -128,14 +115,8 @@ void* D_GetVariable(int id)
     return 0;
 }
 
-/**
- * Pre Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void D_PreInit(void)
+void D_PreInit()
 {
-    int i;
-
     // Configure default colors:
     switch(gameMode)
     {
@@ -206,7 +187,9 @@ void D_PreInit(void)
     cfg.menuTextFlashColor[2] = 1;
     cfg.menuTextFlashSpeed = 4;
     if(gameMode != doom_chex)
+    {
         cfg.menuCursorRotate = true;
+    }
     if(gameMode == doom2_hacx)
     {
         cfg.menuTextColors[0][CR] = cfg.menuTextColors[0][CG] = cfg.menuTextColors[0][CB] = 1;
@@ -245,7 +228,7 @@ void D_PreInit(void)
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_FACE] = false;
     cfg.hudShown[HUD_LOG] = true;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+    for(int i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
     {
         cfg.hudUnHide[i] = 1;
     }
@@ -399,16 +382,10 @@ void D_PreInit(void)
     G_InitSpecialFilter();
 }
 
-/**
- * Post Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void D_PostInit(void)
+void D_PostInit()
 {
     dd_bool autoStart = false;
     Uri *startMapUri = 0;
-    AutoStr *path;
-    int p;
 
     /// @todo Kludge: Border background is different in DOOM2.
     /// @todo Do this properly!
@@ -445,7 +422,7 @@ void D_PostInit(void)
     gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
     gameRules.fast            = CommandLine_Check("-fast")? true : false;
 
-    p = CommandLine_Check("-timer");
+    int p = CommandLine_Check("-timer");
     if(p && p < myargc - 1 && gameRules.deathmatch)
     {
         int time = atoi(CommandLine_At(p + 1));
@@ -534,7 +511,7 @@ void D_PostInit(void)
     }
 
     // Validate episode and map.
-    path = Uri_Compose(startMapUri);
+    AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
         G_DeferredNewGame(startMapUri, 0/*default*/, &gameRules);
@@ -547,7 +524,7 @@ void D_PostInit(void)
     Uri_Delete(startMapUri);
 }
 
-void D_Shutdown(void)
+void D_Shutdown()
 {
     WI_Shutdown();
     G_CommonShutdown();
