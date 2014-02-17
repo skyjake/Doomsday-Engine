@@ -1251,7 +1251,7 @@ void DS_SFX_Listenerv(int prop, float* values)
     case SFXLP_ORIENTATION:
         if(!dsListener)
             return;
-        listenerOrientation(values[VX] / 180 * PI, values[VY] / 180 * PI);
+        listenerOrientation(values[VX] / 180 * DD_PI, values[VY] / 180 * DD_PI);
         break;
 
     case SFXLP_REVERB:

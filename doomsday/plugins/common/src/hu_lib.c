@@ -1791,7 +1791,7 @@ void MNText_Drawer(mn_object_t* ob, const Point2Raw* origin)
     if((ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
     {
         const float speed = cfg.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * PI)) / 2;
+        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
     lerpColor(color, rs.textColors[ob->_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
@@ -1965,7 +1965,7 @@ void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* _origin)
         if(!(ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
         {
             const float speed = cfg.menuTextFlashSpeed / 2.f;
-            t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * PI)) / 2;
+            t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
         }
 
         lerpColor(color, cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX], cfg.menuTextFlashColor, t, false/*rgb mode*/);
@@ -2199,7 +2199,7 @@ void MNList_Drawer(mn_object_t* ob, const Point2Raw* _origin)
     if(flashSelection && cfg.menuTextFlashSpeed > 0)
     {
         const float speed = cfg.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * PI)) / 2;
+        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
     lerpColor(flashColor, rs.textColors[ob->_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
@@ -2564,7 +2564,7 @@ void MNButton_Drawer(mn_object_t* ob, const Point2Raw* origin)
     if((ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
     {
         const float speed = cfg.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * PI)) / 2;
+        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
     lerpColor(color, rs.textColors[ob->_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);

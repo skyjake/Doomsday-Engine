@@ -138,8 +138,8 @@ void UIAutomap_Register(void)
 
 static void rotate2D(coord_t* x, coord_t* y, float angle)
 {
-    coord_t tmpx = (coord_t) ((*x * cos(angle/180 * PI)) - (*y * sin(angle/180 * PI)));
-    *y = (coord_t) ((*x * sin(angle/180 * PI)) + (*y * cos(angle/180 * PI)));
+    coord_t tmpx = (coord_t) ((*x * cos(angle/180 * DD_PI)) - (*y * sin(angle/180 * DD_PI)));
+    *y = (coord_t) ((*x * sin(angle/180 * DD_PI)) + (*y * cos(angle/180 * DD_PI)));
     *x = tmpx;
 }
 
@@ -1679,7 +1679,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
         xy[VX] = panX[0] * panUnitsPerSecond * ticLength + panX[1];
         xy[VY] = panY[0] * panUnitsPerSecond * ticLength + panY[1];
-        V2d_Rotate(xy, am->angle / 360 * 2 * PI);
+        V2d_Rotate(xy, am->angle / 360 * 2 * DD_PI);
 
         if(xy[VX] || xy[VY])
         {
@@ -1783,7 +1783,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     am->bottomRight[1] = am->bottomLeft[1] = -viewHeight/2;
 
     // Apply rotation.
-    rads = (float)(am->angle / 360 * 2 * PI);
+    rads = (float)(am->angle / 360 * 2 * DD_PI);
     V2d_Rotate(am->topLeft,     rads);
     V2d_Rotate(am->bottomRight, rads);
     V2d_Rotate(am->bottomLeft,  rads);

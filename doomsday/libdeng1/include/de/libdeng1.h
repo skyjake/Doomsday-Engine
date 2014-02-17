@@ -81,10 +81,10 @@
  * Utility macros.
  */
 
-#define PI              3.14159265359f
-#define PI_D            3.14159265358979323846
-#define DEG2RAD(a)      (((a) * PI_D) / 180.0)
-#define RAD2DEG(a)      (((a) / PI_D) * 180.0)
+#define DD_PI           3.14159265359f
+#define DD_PI_D         3.14159265358979323846
+#define DEG2RAD(a)      (((a) * DD_PI_D) / 180.0)
+#define RAD2DEG(a)      (((a) / DD_PI_D) * 180.0)
 #define FLOATEPSILON    .000001f
 
 /**

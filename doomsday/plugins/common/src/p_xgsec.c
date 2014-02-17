@@ -2757,7 +2757,7 @@ void P_ApplyWind(mobj_t *mo, Sector *sec)
         return; // Wind does not affect cameras.
 
     info = &(P_ToXSector(sec)->xg->info);
-    ang = PI * info->windAngle / 180;
+    ang = DD_PI * info->windAngle / 180;
 
     if(IS_CLIENT)
     {
@@ -2925,7 +2925,7 @@ void XS_Thinker(xsthinker_t* xs)
     if(xg->info.materialMoveSpeed[0] != 0)
     {
         coord_t floorOffset[2];
-        double ang = PI * xg->info.materialMoveAngle[0] / 180;
+        double ang = DD_PI * xg->info.materialMoveAngle[0] / 180;
 
         P_GetDoublepv(sector, DMU_FLOOR_MATERIAL_OFFSET_XY, floorOffset);
         floorOffset[VX] -= cos(ang) * xg->info.materialMoveSpeed[0];
@@ -2939,7 +2939,7 @@ void XS_Thinker(xsthinker_t* xs)
     if(xg->info.materialMoveSpeed[1] != 0)
     {
         coord_t ceilOffset[2];
-        double ang = PI * xg->info.materialMoveAngle[1] / 180;
+        double ang = DD_PI * xg->info.materialMoveAngle[1] / 180;
 
         P_GetDoublepv(sector, DMU_CEILING_MATERIAL_OFFSET_XY, ceilOffset);
         ceilOffset[VX] -= cos(ang) * xg->info.materialMoveSpeed[1];
