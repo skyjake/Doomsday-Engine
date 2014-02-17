@@ -70,7 +70,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     /**
      * Foldable group of games.
      */
-    struct Subset : public FoldPanelWidget
+    struct SubsetWidget : public FoldPanelWidget
     {
         enum Type {
             NormalGames,
@@ -81,7 +81,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         Type type;
         MenuWidget *menu;
 
-        Subset(Type selType, String const &headingText, GameSelectionWidget::Instance *owner)
+        SubsetWidget(Type selType, String const &headingText, GameSelectionWidget::Instance *owner)
             : titleText(headingText), type(selType)
         {           
             owner->self.add(makeTitle(headingText));
@@ -161,25 +161,23 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     FIFO<Game> pendingGames;
     SequentialLayout superLayout;
 
-    Subset *available;
-    Subset *incomplete;
-    Subset *multi;
+    SubsetWidget *available;
+    SubsetWidget *incomplete;
+    SubsetWidget *multi;
 
     Instance(Public *i)
         : Base(i)
         , superLayout(i->contentRule().left(), i->contentRule().top(), ui::Down)
     {
         // Menu of available games.
-        self.add(available = new Subset(Subset::NormalGames,
+        self.add(available = new SubsetWidget(SubsetWidget::NormalGames,
                 App_GameLoaded()? tr("Switch Game") : tr("Available Games"), this));
 
         // Menu of incomplete games.
-        self.add(incomplete = new Subset(Subset::NormalGames,
-                                         tr("Games with Missing Resources"), this));
+        self.add(incomplete = new SubsetWidget(SubsetWidget::NormalGames, tr("Games with Missing Resources"), this));
 
         // Menu of multiplayer games.
-        self.add(multi = new Subset(Subset::MultiplayerGames,
-                                    tr("Multiplayer Games"), this));
+        self.add(multi = new SubsetWidget(SubsetWidget::MultiplayerGames, tr("Multiplayer Games"), this));
 
         superLayout.setOverrideWidth(self.rule().width() - self.margins().width());
 
@@ -205,7 +203,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     {
         superLayout.clear();
 
-        QList<Subset *> order;
+        QList<SubsetWidget *> order;
         if(!App_GameLoaded())
         {
             order << available << multi << incomplete;
@@ -215,7 +213,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             order << multi << available << incomplete;
         }
 
-        foreach(Subset *s, order)
+        foreach(SubsetWidget *s, order)
         {
             // The first group should not have extra space above it.
             s->title().margins().setTop("");
