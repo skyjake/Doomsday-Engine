@@ -549,72 +549,6 @@ void mobj_s::write(MapStateWriter *msw) const
 #endif
 }
 
-static void RestoreMobj(mobj_t *mo, int ver)
-{
-#if __JDOOM64__
-    DENG_UNUSED(ver);
-#endif
-
-    mo->info = &MOBJINFO[mo->type];
-
-    Mobj_SetState(mo, PTR2INT(mo->state));
-#if __JHEXEN__
-    if(mo->flags2 & MF2_DORMANT)
-        mo->tics = -1;
-#endif
-
-    if(mo->player)
-    {
-        // The player number translation table is used to find out the
-        // *current* (actual) player number of the referenced player.
-        int pNum = saveToRealPlayerNum[PTR2INT(mo->player) - 1];
-
-#if __JHEXEN__
-        if(pNum < 0)
-        {
-            // This saved player does not exist in the current game!
-            // Destroy this mobj.
-            Z_Free(mo);
-
-            return;  // Don't add this thinker.
-        }
-#endif
-
-        mo->player  = &players[pNum];
-        mo->dPlayer = mo->player->plr;
-
-        mo->dPlayer->mo      = mo;
-        //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
-        mo->dPlayer->lookDir = 0; /* $unifiedangles */
-    }
-
-    mo->visAngle = mo->angle >> 16;
-
-#if !__JHEXEN__
-    if(mo->dPlayer && !mo->dPlayer->inGame)
-    {
-        mo->dPlayer->mo = 0;
-        Mobj_Destroy(mo);
-
-        return;
-    }
-#endif
-
-#if !__JDOOM64__
-    // Do we need to update this mobj's flag values?
-    if(ver < MOBJ_SAVEVERSION)
-    {
-        SV_TranslateLegacyMobjFlags(mo, ver);
-    }
-#endif
-
-    P_MobjLink(mo);
-    mo->floorZ   = P_GetDoublep(Mobj_Sector(mo), DMU_FLOOR_HEIGHT);
-    mo->ceilingZ = P_GetDoublep(Mobj_Sector(mo), DMU_CEILING_HEIGHT);
-
-    return;
-}
-
 int mobj_s::read(MapStateReader *msr)
 {
 #define FF_FULLBRIGHT 0x8000 ///< Used to be a flag in thing->frame.
@@ -873,8 +807,62 @@ int mobj_s::read(MapStateReader *msr)
     }
 #endif
 
-    // Restore! (unmangle)
-    RestoreMobj(this, ver);
+    /*
+     * Restore! (unmangle)
+     */
+    info = &MOBJINFO[type];
+
+    Mobj_SetState(this, PTR2INT(state));
+#if __JHEXEN__
+    if(flags2 & MF2_DORMANT)
+    {
+        tics = -1;
+    }
+#endif
+
+    if(player)
+    {
+        // The player number translation table is used to find out the
+        // *current* (actual) player number of the referenced player.
+        player = msr->player(PTR2INT(player));
+#if __JHEXEN__
+        if(!player)
+        {
+            // This saved player does not exist in the current game!
+            // Destroy this mobj.
+            Mobj_Destroy(this);
+            return false;
+        }
+#endif
+        dPlayer = player->plr;
+
+        dPlayer->mo      = this;
+        //dPlayer->clAngle = angle; /* $unifiedangles */
+        dPlayer->lookDir = 0; /* $unifiedangles */
+    }
+
+    visAngle = angle >> 16;
+
+#if !__JHEXEN__
+    if(dPlayer && !dPlayer->inGame)
+    {
+        dPlayer->mo = 0;
+        Mobj_Destroy(this);
+        return false;
+    }
+#endif
+
+#if !__JDOOM64__
+    // Do we need to update this mobj's flag values?
+    if(ver < MOBJ_SAVEVERSION)
+    {
+        SV_TranslateLegacyMobjFlags(this, ver);
+    }
+#endif
+
+    P_MobjLink(this);
+    floorZ   = P_GetDoublep(Mobj_Sector(this), DMU_FLOOR_HEIGHT);
+    ceilingZ = P_GetDoublep(Mobj_Sector(this), DMU_CEILING_HEIGHT);
 
     return false;
 

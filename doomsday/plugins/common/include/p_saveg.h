@@ -32,12 +32,6 @@ DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
 #endif
 
-DENG_EXTERN_C SaveInfo const *curInfo;
-
-#if __JHEXEN__
-DENG_EXTERN_C byte *saveBuffer;
-#endif
-
 DENG_EXTERN_C SaveSlots *saveSlots;
 
 #ifdef __cplusplus
@@ -158,10 +152,5 @@ void SV_ReadLine(Line *line, MapStateReader *msr);
 void SV_WriteSector(Sector *sec, MapStateWriter *msw);
 void SV_ReadSector(Sector *sec, MapStateReader *msr);
 #endif // __cplusplus
-
-dd_bool SV_OpenGameSaveFile(Str const *fileName, dd_bool write);
-#if __JHEXEN__
-dd_bool SV_OpenMapSaveFile(Str const *path);
-#endif
 
 #endif // LIBCOMMON_SAVESTATE_H

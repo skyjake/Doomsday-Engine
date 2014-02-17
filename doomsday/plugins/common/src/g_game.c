@@ -1157,9 +1157,9 @@ static void printMapBanner(void)
 #if __JHEXEN__
         mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
         int warpNum = (mapInfo? mapInfo->warpTrans : -1);
-        dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", warpNum + 1, gameMap + 1, title);
+        dd_snprintf(buf, 64, "Map %s (%u): " DE2_ESC(b) "%s", Str_Text(Uri_ToString(gameMapUri)), warpNum + 1, title);
 #else
-        dd_snprintf(buf, 64, "Map %u: " DE2_ESC(b) "%s", gameMap + 1, title);
+        dd_snprintf(buf, 64, "Map %s: " DE2_ESC(b) "%s", Str_Text(Uri_ToString(gameMapUri)), title);
 #endif
         App_Log(DE2_MAP_NOTE, "%s", buf);
     }
@@ -2825,8 +2825,8 @@ void G_DoLeaveMap(void)
     { uint i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
+        player_t *plr = players + i;
+        ddplayer_t *ddplr = plr->plr;
 
         if(!ddplr->inGame) continue;
 
@@ -2862,6 +2862,7 @@ void G_DoLeaveMap(void)
     }
 
     gameMap = nextMap;
+    Uri_Copy(gameMapUri, p.mapUri);
 
     // If we're the server, let clients know the map will change.
     NetSv_UpdateGameConfigDescription();
@@ -4231,6 +4232,7 @@ D_CMD(WarpMap)
 {
     dd_bool const forceNewGameSession = IS_NETGAME != 0;
     uint epsd, map, i;
+    Uri *newMapUri;
 
     // Only server operators can warp maps in network games.
     /// @todo Implement vote or similar mechanics.
@@ -4283,12 +4285,15 @@ D_CMD(WarpMap)
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return false;
     }
+    newMapUri = G_ComposeMapUri(epsd, map);
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(!forceNewGameSession && gameInProgress && map == gameMap)
+    if(!forceNewGameSession && gameInProgress &&
+       Uri_Equality(gameMapUri, newMapUri))
     {
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
+        Uri_Delete(newMapUri);
         return false;
     }
 #endif
@@ -4311,23 +4316,19 @@ D_CMD(WarpMap)
     // So be it.
     briefDisabled = true;
 
+    if(!forceNewGameSession && gameInProgress)
     {
-        Uri *newMapUri = G_ComposeMapUri(epsd, map);
-        if(!forceNewGameSession && gameInProgress)
-        {
 #if __JHEXEN__
-            nextMap         = map;
-            nextMapEntrance = 0;
-            G_SetGameAction(GA_LEAVEMAP);
+        nextMap         = map;
+        nextMapEntrance = 0;
+        G_SetGameAction(GA_LEAVEMAP);
 #else
-            G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
+        G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
 #endif
-        }
-        else
-        {
-            G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
-        }
-        Uri_Delete(newMapUri);
+    }
+    else
+    {
+        G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
     }
 
     // If the command source was "us" the game library then it was probably in
@@ -4350,5 +4351,6 @@ D_CMD(WarpMap)
         S_LocalSound(soundId, NULL);
     }
 
+    Uri_Delete(newMapUri);
     return true;
 }

@@ -43,6 +43,10 @@ static saveptr_t saveptr;
 static void *saveEndPtr;
 #endif
 
+#if __JHEXEN__
+byte *saveBuffer;
+#endif
+
 static void errorIfNotInited(char const *callerName)
 {
     if(inited) return;
@@ -200,6 +204,50 @@ void SV_CopyFile(Str const *srcPath, Str const *destPath)
 
     Z_Free(buffer);
 }
+
+dd_bool SV_OpenGameSaveFile(Str const *path, dd_bool write)
+{
+    DENG_ASSERT(path != 0);
+
+    App_Log(DE2_DEV_RES_MSG, "SV_OpenGameSaveFile: Opening \"%s\"", Str_Text(path));
+
+#if __JHEXEN__
+    if(!write)
+    {
+        size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
+        if(!bufferSize) return false;
+
+        SV_HxSavePtr()->b = saveBuffer;
+        SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
+
+        return true;
+    }
+    else
+#endif
+    {
+        SV_OpenFile(path, write? "wp" : "rp");
+    }
+
+    return SV_File() != 0;
+}
+
+#if __JHEXEN__
+dd_bool SV_OpenMapSaveFile(Str const *path)
+{
+    DENG_ASSERT(path != 0);
+
+    App_Log(DE2_DEV_RES_MSG, "SV_OpenMapSaveFile: Opening \"%s\"", Str_Text(path));
+
+    // Load the file
+    size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
+    if(!bufferSize) return false;
+
+    SV_HxSavePtr()->b = saveBuffer;
+    SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
+
+    return true;
+}
+#endif
 
 #ifdef __JHEXEN__
 saveptr_t *SV_HxSavePtr()

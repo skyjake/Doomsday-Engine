@@ -61,7 +61,7 @@ public:
     /**
      * Lookup a pointer to a Mobj with the given @a serialId.
      */
-    struct mobj_s *mobj(ThingArchive::SerialId serialId, void *address);
+    struct mobj_s *mobj(ThingArchive::SerialId serialId, void *address) const;
 
     /**
      * Lookup a pointer to a Material with the given @a serialId.
@@ -72,12 +72,17 @@ public:
      *
      * @return  Pointer to the associated material; otherwise @c 0 (not archived).
      */
-    Material *material(materialarchive_serialid_t serialId, int group);
+    Material *material(materialarchive_serialid_t serialId, int group) const;
 
     /**
      * Lookup a pointer to a Side with the given @a sideIndex.
      */
-    Side *side(int sideIndex);
+    Side *side(int sideIndex) const;
+
+    /**
+     * Lookup a pointer to a player with the given @a serialId.
+     */
+    struct player_s *player(int serialId) const;
 
 public: /// @todo refactor away:
     void addMobjToThingArchive(struct mobj_s *mobj, ThingArchive::SerialId);

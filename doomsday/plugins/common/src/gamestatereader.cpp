@@ -326,8 +326,6 @@ void GameStateReader::read(SaveInfo &info, Str const *path)
     DENG_ASSERT(path != 0);
     d->saveInfo = &info;
 
-    curInfo = d->saveInfo;
-
     if(!SV_OpenGameSaveFile(path, false/*for reading*/))
     {
         throw FileAccessError("GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");

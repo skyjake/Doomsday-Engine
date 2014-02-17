@@ -43,6 +43,10 @@ typedef enum savestatesegment_e {
     ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
 
+#if __JHEXEN__
+DENG_EXTERN_C byte *saveBuffer;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -65,6 +69,11 @@ LZFILE *SV_File(void);
 dd_bool SV_ExistingFile(Str const *filePath);
 int SV_RemoveFile(Str const *filePath);
 void SV_CopyFile(Str const *srcPath, Str const *destPath);
+
+dd_bool SV_OpenGameSaveFile(Str const *fileName, dd_bool write);
+#if __JHEXEN__
+dd_bool SV_OpenMapSaveFile(Str const *path);
+#endif
 
 #if __JHEXEN__
 saveptr_t *SV_HxSavePtr(void);

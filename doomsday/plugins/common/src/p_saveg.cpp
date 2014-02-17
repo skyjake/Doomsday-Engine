@@ -41,15 +41,9 @@ static GameStateReaderFactory gameStateReaderFactory;
 static SaveSlots sslots(NUMSAVESLOTS);
 SaveSlots *saveSlots = &sslots;
 
-SaveInfo const *curInfo;
-
 int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
 targetplraddress_t *targetPlayerAddrs;
-#endif
-
-#if __JHEXEN__
-byte *saveBuffer;
 #endif
 
 #if !__JHEXEN__
@@ -79,49 +73,7 @@ static AutoStr *composeGameSavePathForClientSessionId(uint sessionId)
 }
 #endif
 
-dd_bool SV_OpenGameSaveFile(Str const *path, dd_bool write)
-{
-    DENG_ASSERT(path != 0);
-
-    App_Log(DE2_DEV_RES_MSG, "SV_OpenGameSaveFile: Opening \"%s\"", Str_Text(path));
-
 #if __JHEXEN__
-    if(!write)
-    {
-        size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
-        if(!bufferSize) return false;
-
-        SV_HxSavePtr()->b = saveBuffer;
-        SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
-
-        return true;
-    }
-    else
-#endif
-    {
-        SV_OpenFile(path, write? "wp" : "rp");
-    }
-
-    return SV_File() != 0;
-}
-
-#if __JHEXEN__
-dd_bool SV_OpenMapSaveFile(Str const *path)
-{
-    DENG_ASSERT(path != 0);
-
-    App_Log(DE2_DEV_RES_MSG, "SV_OpenMapSaveFile: Opening \"%s\"", Str_Text(path));
-
-    // Load the file
-    size_t bufferSize = M_ReadFile(Str_Text(path), (char **)&saveBuffer);
-    if(!bufferSize) return false;
-
-    SV_HxSavePtr()->b = saveBuffer;
-    SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
-
-    return true;
-}
-
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
     DENG_ASSERT(inited);
@@ -132,9 +84,7 @@ dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
     }
     return false;
 }
-#endif
 
-#if __JHEXEN__
 void SV_InitTargetPlayers()
 {
     targetPlayerAddrs = 0;
@@ -1086,8 +1036,6 @@ void SV_LoadGameClient(uint sessionId)
     Reader *reader = SV_NewReader();
     SaveInfo *info = SaveInfo::fromReader(reader);
 
-    curInfo = info;
-
     if(info->magic() != MY_CLIENT_SAVE_MAGIC)
     {
         Reader_Delete(reader);
@@ -1165,10 +1113,6 @@ void SV_HxSaveHubMap()
 
 void SV_HxLoadHubMap()
 {
-    /// @todo fixme: do not assume this pointer is still valid!
-    DENG_ASSERT(curInfo != 0);
-    SaveInfo const *info = curInfo;
-
     // Only readMap() uses targetPlayerAddrs, so it's NULLed here for the
     // following check (player mobj redirection).
     targetPlayerAddrs = 0;
@@ -1178,13 +1122,15 @@ void SV_HxLoadHubMap()
     // Been here before, load the previous map state.
     try
     {
+        SaveInfo &info = saveSlots->saveInfo(BASE_SLOT);
+
         AutoStr *path = saveSlots->composeMapSavePathForSlot(BASE_SLOT, gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
             throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
         }
 
-        MapStateReader(info->version()).read(reader);
+        MapStateReader(info.version()).read(reader);
 
         Z_Free(saveBuffer);
     }

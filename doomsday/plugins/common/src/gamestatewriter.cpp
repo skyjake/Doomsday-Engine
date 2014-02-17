@@ -24,7 +24,7 @@
 #include "d_net.h"          // NetSv_SaveGame
 #include "mapstatewriter.h"
 #include "p_saveio.h"
-#include "p_saveg.h"        /// @todo remove me
+#include "p_saveg.h"        /// playerheader_t @todo remove me
 #include "thingarchive.h"
 #include <de/String>
 

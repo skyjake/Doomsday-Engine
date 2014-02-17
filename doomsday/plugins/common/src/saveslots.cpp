@@ -334,7 +334,7 @@ AutoStr *SaveSlots::composeMapSavePathForSlot(int slot, uint map) const
     if(!F_MakePath(SV_SavePath())) return path;
 
     // Compose the full game-save path and filename.
-    Str_Appendf(path, "%s" SAVEGAMENAME "%i%02i." SAVEGAMEEXTENSION, SV_SavePath(), slot, map + 1);
+    Str_Appendf(path, "%s" SAVEGAMENAME "%i%02i." SAVEGAMEEXTENSION, SV_SavePath(), slot, int(map + 1));
     F_TranslatePath(path, path);
     return path;
 }

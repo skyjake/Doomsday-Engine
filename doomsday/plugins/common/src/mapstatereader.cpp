@@ -24,7 +24,7 @@
 #include "dmu_lib.h"
 #include "dmu_archiveindex.h"
 #include "p_actor.h"
-#include "p_saveg.h"
+#include "p_saveg.h"         // SV_ReadLine, SV_ReadSector
 #include "p_saveio.h"
 #include "polyobjs.h"
 #include "thinkerinfo.h"
@@ -596,22 +596,28 @@ void MapStateReader::read(Reader *reader)
     MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
 }
 
-mobj_t *MapStateReader::mobj(ThingArchive::SerialId serialId, void *address)
+mobj_t *MapStateReader::mobj(ThingArchive::SerialId serialId, void *address) const
 {
     DENG_ASSERT(d->thingArchive != 0);
     return d->thingArchive->mobj(serialId, address);
 }
 
-Material *MapStateReader::material(materialarchive_serialid_t serialId, int group)
+Material *MapStateReader::material(materialarchive_serialid_t serialId, int group) const
 {
     DENG_ASSERT(d->materialArchive != 0);
     return MaterialArchive_Find(d->materialArchive, serialId, group);
 }
 
-Side *MapStateReader::side(int sideIndex)
+Side *MapStateReader::side(int sideIndex) const
 {
     DENG_ASSERT(d->sideArchive != 0);
     return (Side *)d->sideArchive->at(sideIndex);
+}
+
+player_t *MapStateReader::player(int serialId) const
+{
+    DENG_ASSERT(serialId > 0 && serialId <= MAXPLAYERS);
+    return players + saveToRealPlayerNum[serialId - 1];
 }
 
 int MapStateReader::mapVersion()
