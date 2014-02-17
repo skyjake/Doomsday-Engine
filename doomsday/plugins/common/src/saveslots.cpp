@@ -22,6 +22,7 @@
 #include "saveslots.h"
 
 #include "p_saveio.h"
+#include <de/NativePath>
 #include <de/String>
 #include <vector>
 
@@ -110,11 +111,11 @@ DENG2_PIMPL(SaveSlots)
         /// the default game-save file naming convention.
         for(int i = 0; i < (signed)infos.size(); ++i)
         {
-            infos[i]->updateFromFile(self.composeSavePathForSlot(i));
+            infos[i]->updateFromFile(self.savePathForSlot(i));
         }
-        autoInfo->updateFromFile(self.composeSavePathForSlot(AUTO_SLOT));
+        autoInfo->updateFromFile(self.savePathForSlot(AUTO_SLOT));
 #if __JHEXEN__
-        baseInfo->updateFromFile(self.composeSavePathForSlot(BASE_SLOT));
+        baseInfo->updateFromFile(self.savePathForSlot(BASE_SLOT));
 #endif
     }
 
@@ -206,7 +207,7 @@ int SaveSlots::findSlotWithSaveDescription(char const *description) const
 
 bool SaveSlots::slotInUse(int slot) const
 {
-    if(SV_ExistingFile(composeSavePathForSlot(slot)))
+    if(SV_ExistingFile(savePathForSlot(slot)))
     {
         return saveInfo(slot).isLoadable();
     }
@@ -278,12 +279,10 @@ void SaveSlots::clearSlot(int slot)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        AutoStr *path = composeMapSavePathForSlot(slot, i);
-        SV_RemoveFile(path);
+        SV_RemoveFile(mapSavePathForSlot(slot, i));
     }
 
-    AutoStr *path = composeSavePathForSlot(slot);
-    SV_RemoveFile(path);
+    SV_RemoveFile(savePathForSlot(slot));
 
     info.setDescription(0);
     info.setSessionId(0);
@@ -306,54 +305,54 @@ void SaveSlots::copySlot(int sourceSlot, int destSlot)
     // Clear all save files at destination slot.
     clearSlot(destSlot);
 
-    AutoStr *src, *dst;
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        src = composeMapSavePathForSlot(sourceSlot, i);
-        dst = composeMapSavePathForSlot(destSlot, i);
-        SV_CopyFile(src, dst);
+        SV_CopyFile(mapSavePathForSlot(sourceSlot, i),
+                    mapSavePathForSlot(destSlot,   i));
     }
 
-    src = composeSavePathForSlot(sourceSlot);
-    dst = composeSavePathForSlot(destSlot);
-    SV_CopyFile(src, dst);
+    SV_CopyFile(savePathForSlot(sourceSlot),
+                savePathForSlot(destSlot));
 
     // Copy save info too.
     replaceSaveInfo(destSlot, new SaveInfo(saveInfo(sourceSlot)));
 }
 
-AutoStr *SaveSlots::composeMapSavePathForSlot(int slot, uint map) const
+de::Path SaveSlots::mapSavePathForSlot(int slot, uint map) const
 {
-    AutoStr *path = AutoStr_NewStd();
-
     // A valid slot?
-    if(!isValidSlot(slot)) return path;
+    if(!isValidSlot(slot)) return "";
 
     // Do we have a valid path?
     /// @todo Do not do alter the file system until necessary.
-    if(!F_MakePath(SV_SavePath())) return path;
+    if(!F_MakePath(de::NativePath(SV_SavePath()).expand().toUtf8().constData()))
+    {
+        return "";
+    }
 
     // Compose the full game-save path and filename.
-    Str_Appendf(path, "%s" SAVEGAMENAME "%i%02i." SAVEGAMEEXTENSION, SV_SavePath(), slot, int(map + 1));
-    F_TranslatePath(path, path);
-    return path;
+    return SV_SavePath()
+                / de::String(SAVEGAMENAME "%1%2." SAVEGAMEEXTENSION)
+                        .arg(slot)
+                        .arg(int(map + 1), 2, 10, QChar('0'));
 }
 
-AutoStr *SaveSlots::composeSavePathForSlot(int slot) const
+de::Path SaveSlots::savePathForSlot(int slot) const
 {
-    AutoStr *path = AutoStr_NewStd();
-
     // A valid slot?
-    if(!isValidSlot(slot)) return path;
+    if(!isValidSlot(slot)) return "";
 
     // Do we have a valid path?
     /// @todo Do not do alter the file system until necessary.
-    if(!F_MakePath(SV_SavePath())) return path;
+    if(!F_MakePath(de::NativePath(SV_SavePath()).expand().toUtf8().constData()))
+    {
+        return "";
+    }
 
     // Compose the full game-save path and filename.
-    Str_Appendf(path, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, SV_SavePath(), slot);
-    F_TranslatePath(path, path);
-    return path;
+    return SV_SavePath()
+                / de::String(SAVEGAMENAME "%1." SAVEGAMEEXTENSION)
+                        .arg(slot);
 }
 
 void SaveSlots::consoleRegister() // static

@@ -41,9 +41,9 @@ public:
     ~DoomV9GameStateReader();
 
     static IGameStateReader *make();
-    static bool recognize(SaveInfo &info, Str const *path);
+    static bool recognize(SaveInfo &info, de::Path path);
 
-    void read(SaveInfo &info, Str const *path);
+    void read(SaveInfo &info, de::Path path);
 
 private:
     DENG2_PRIVATE(d)

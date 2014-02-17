@@ -36,7 +36,7 @@
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "r_common.h"       // R_UpdateConsoleView
-#include <de/String>
+#include <de/NativePath>
 #include <cstdio>
 #include <cstring>
 
@@ -681,10 +681,10 @@ static void SaveInfo_Read_Hr_v13(SaveInfo *info, Reader *reader)
     info->setSessionId(0); // None.
 }
 
-static bool SV_OpenFile_Hr_v13(char const *filePath)
+static bool SV_OpenFile_Hr_v13(de::Path filePath)
 {
     DENG_ASSERT(saveBuffer == 0);
-    if(!M_ReadFile(filePath, (char **)&saveBuffer))
+    if(!M_ReadFile(de::NativePath(filePath).expand().toUtf8().constData(), (char **)&saveBuffer))
     {
         return false;
     }
@@ -943,12 +943,10 @@ HereticV13GameStateReader::HereticV13GameStateReader() : d(new Instance(this))
 HereticV13GameStateReader::~HereticV13GameStateReader()
 {}
 
-bool HereticV13GameStateReader::recognize(SaveInfo &info, Str const *path) // static
+bool HereticV13GameStateReader::recognize(SaveInfo &info, de::Path path) // static
 {
-    DENG_ASSERT(path != 0);
-
     if(!SV_ExistingFile(path)) return false;
-    if(!SV_OpenFile_Hr_v13(Str_Text(path))) return false;
+    if(!SV_OpenFile_Hr_v13(path)) return false;
 
     Reader *reader = SV_NewReader_Hr_v13();
     bool result = false;
@@ -975,13 +973,11 @@ IGameStateReader *HereticV13GameStateReader::make()
     return new HereticV13GameStateReader;
 }
 
-void HereticV13GameStateReader::read(SaveInfo &info, Str const *path)
+void HereticV13GameStateReader::read(SaveInfo &info, de::Path path)
 {
-    DENG_ASSERT(path != 0);
-
-    if(!SV_OpenFile_Hr_v13(Str_Text(path)))
+    if(!SV_OpenFile_Hr_v13(path))
     {
-        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
+        throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
     }
 
     d->reader = SV_NewReader_Hr_v13();

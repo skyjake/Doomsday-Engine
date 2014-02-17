@@ -278,9 +278,9 @@ bool SaveInfo::isLoadable()
     return true; // It's good!
 }
 
-void SaveInfo::updateFromFile(Str const *path)
+void SaveInfo::updateFromFile(de::Path path)
 {
-    if(!path || Str_IsEmpty(path))
+    if(path.isEmpty())
     {
         // The save path cannot be accessed for some reason. Perhaps its a network path?
         setDescription(0);

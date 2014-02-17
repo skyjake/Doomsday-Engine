@@ -25,6 +25,7 @@
 #include "common.h"
 
 #ifdef __cplusplus
+#include <de/Path>
 
 /**
  * Represents a saved game session state.
@@ -62,7 +63,7 @@ public:
      *
      * @see isLoadable()
      */
-    void updateFromFile(Str const *path);
+    void updateFromFile(de::Path path);
 
     /**
      * Update the metadata associated with the save using values derived from the current game

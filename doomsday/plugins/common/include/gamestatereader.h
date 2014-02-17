@@ -24,6 +24,7 @@
 #include "common.h"
 #include "saveinfo.h"
 #include <de/Error>
+#include <de/Path>
 
 /**
  * Interface for game state (savegame) readers.
@@ -48,7 +49,7 @@ public:
      *
      * @todo @a path should be provided by SaveInfo.
      */
-    virtual void read(SaveInfo &info, Str const *path) = 0;
+    virtual void read(SaveInfo &info, de::Path path) = 0;
 };
 
 /**
@@ -60,7 +61,7 @@ public:
  * @param info  SaveInfo to attempt to read game session header into.
  * @param path  Path to the resource file to be recognized.
  */
-typedef bool (*GameStateRecognizeFunc)(SaveInfo &info, Str const *path);
+typedef bool (*GameStateRecognizeFunc)(SaveInfo &info, de::Path path);
 
 /// Game state reader instantiator function ptr.
 typedef IGameStateReader *(*GameStateReaderMakeFunc)();
@@ -97,7 +98,7 @@ public:
      *
      * @see recognizeAndMakeReader()
      */
-    bool recognize(SaveInfo &saveInfo, Str const *path) const
+    bool recognize(SaveInfo &saveInfo, de::Path path) const
     {
         return readGameSessionHeader(saveInfo, path) != 0;
     }
@@ -114,7 +115,7 @@ public:
      *
      * @see recognize()
      */
-    IGameStateReader *recognizeAndMakeReader(SaveInfo &saveInfo, Str const *path) const
+    IGameStateReader *recognizeAndMakeReader(SaveInfo &saveInfo, de::Path path) const
     {
         if(ReaderInfo const *rdrInfo = readGameSessionHeader(saveInfo, path))
         {
@@ -131,7 +132,7 @@ private:
     typedef std::list<ReaderInfo> ReaderInfos;
     ReaderInfos readers;
 
-    ReaderInfo const *readGameSessionHeader(SaveInfo &info, Str const *path) const
+    ReaderInfo const *readGameSessionHeader(SaveInfo &info, de::Path path) const
     {
         DENG2_FOR_EACH_CONST(ReaderInfos, i, readers)
         {
@@ -157,9 +158,9 @@ public:
     ~GameStateReader();
 
     static IGameStateReader *make();
-    static bool recognize(SaveInfo &info, Str const *path);
+    static bool recognize(SaveInfo &info, de::Path path);
 
-    void read(SaveInfo &info, Str const *path);
+    void read(SaveInfo &info, de::Path path);
 
 private:
     DENG2_PRIVATE(d)

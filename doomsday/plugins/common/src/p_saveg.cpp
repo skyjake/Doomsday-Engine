@@ -30,6 +30,7 @@
 #include "gamestatereader.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
+#include <de/NativePath>
 #include <de/String>
 #include <de/memory.h>
 #include <cstdio>
@@ -56,20 +57,18 @@ targetplraddress_t *targetPlayerAddrs;
  * @return  File path to the reachable save directory. If the game-save path
  *          is unreachable then a zero-length string is returned instead.
  */
-static AutoStr *composeGameSavePathForClientSessionId(uint sessionId)
+static de::Path composeGameSavePathForClientSessionId(uint sessionId)
 {
-    AutoStr *path = AutoStr_NewStd();
-
     // Do we have a valid path?
-    if(!F_MakePath(SV_ClientSavePath()))
+    if(!F_MakePath(de::NativePath(SV_ClientSavePath()).expand().toUtf8().constData()))
     {
-        return path; // return zero-length string.
+        return "";
     }
 
     // Compose the full game-save path and filename.
-    Str_Appendf(path, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, SV_ClientSavePath(), sessionId);
-    F_TranslatePath(path, path);
-    return path;
+    return SV_ClientSavePath()
+                / de::String(CLIENTSAVEGAMENAME "%1." SAVEGAMEEXTENSION)
+                          .arg(sessionId, 8, 16, QChar('0')).toUpper();
 }
 #endif
 
@@ -77,8 +76,8 @@ static AutoStr *composeGameSavePathForClientSessionId(uint sessionId)
 dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
 {
     DENG_ASSERT(inited);
-    AutoStr *path = saveSlots->composeMapSavePathForSlot(slot, map);
-    if(path && !Str_IsEmpty(path))
+    de::Path path = saveSlots->mapSavePathForSlot(slot, map);
+    if(!path.isEmpty())
     {
         return SV_ExistingFile(path);
     }
@@ -831,13 +830,13 @@ void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReade
     gameStateReaderFactory.declareReader(recognizer, maker);
 }
 
-bool SV_RecognizeGameState(SaveInfo &info, Str const *path)
+bool SV_RecognizeGameState(SaveInfo &info, de::Path path)
 {
     DENG_ASSERT(inited);
     return gameStateReaderFactory.recognize(info, path);
 }
 
-static std::auto_ptr<IGameStateReader> gameStateReaderFor(SaveInfo &info, Str const *path)
+static std::auto_ptr<IGameStateReader> gameStateReaderFor(SaveInfo &info, de::Path path)
 {
     std::auto_ptr<IGameStateReader> p(gameStateReaderFactory.recognizeAndMakeReader(info, path));
     if(!p.get())
@@ -865,10 +864,11 @@ dd_bool SV_LoadGame(int slot)
 
     App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slot);
 
-    AutoStr *path = saveSlots->composeSavePathForSlot(slot);
-    if(Str_IsEmpty(path))
+    de::Path path = saveSlots->savePathForSlot(slot);
+    if(path.isEmpty())
     {
-        App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable", SV_SavePath());
+        App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable",
+                               de::NativePath(SV_SavePath()).pretty().toLatin1().constData());
         return false;
     }
 
@@ -896,7 +896,8 @@ dd_bool SV_LoadGame(int slot)
     }
     catch(de::Error const &er)
     {
-        App_Log(DE2_RES_WARNING, "Error loading save slot #%i:\n%s", slot, er.asText().toLatin1().constData());
+        App_Log(DE2_RES_WARNING, "Error loading save slot #%i:\n%s",
+                                 slot, er.asText().toLatin1().constData());
     }
 
     return false;
@@ -923,14 +924,16 @@ dd_bool SV_SaveGame(int slot, char const *description)
         return false;
     }
 
-    AutoStr *path = saveSlots->composeSavePathForSlot(logicalSlot);
-    if(Str_IsEmpty(path))
+    de::Path path = saveSlots->savePathForSlot(logicalSlot);
+    if(path.isEmpty())
     {
-        App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable", SV_SavePath());
+        App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable",
+                                 de::NativePath(SV_SavePath()).pretty().toLatin1().constData());
         return false;
     }
 
-    App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"", Str_Text(path));
+    App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
+                             de::NativePath(path).pretty().toLatin1().constData());
 
     SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_FromTextStd(description));
     try
@@ -952,7 +955,8 @@ dd_bool SV_SaveGame(int slot, char const *description)
     }
     catch(de::Error const &er)
     {
-        App_Log(DE2_RES_WARNING, "Error writing to save slot #%i:\n%s", slot, er.asText().toLatin1().constData());
+        App_Log(DE2_RES_WARNING, "Error writing to save slot #%i:\n%s",
+                                 slot, er.asText().toLatin1().constData());
     }
 
     // Discard the useless save info.
@@ -972,10 +976,11 @@ void SV_SaveGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    AutoStr *gameSavePath = composeGameSavePathForClientSessionId(sessionId);
-    if(!SV_OpenFile(gameSavePath, "wp"))
+    de::Path path = composeGameSavePathForClientSessionId(sessionId);
+    if(!SV_OpenFile(path, "wp"))
     {
-        App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing", Str_Text(gameSavePath));
+        App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
+                                 de::NativePath(path).pretty().toLatin1().constData());
         return;
     }
 
@@ -1026,10 +1031,11 @@ void SV_LoadGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    AutoStr *gameSavePath = composeGameSavePathForClientSessionId(sessionId);
-    if(!SV_OpenFile(gameSavePath, "rp"))
+    de::Path path = composeGameSavePathForClientSessionId(sessionId);
+    if(!SV_OpenFile(path, "rp"))
     {
-        App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading", Str_Text(gameSavePath));
+        App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading",
+                                 de::NativePath(path).pretty().toLatin1().constData());
         return;
     }
 
@@ -1095,7 +1101,7 @@ void SV_LoadGameClient(uint sessionId)
 #if __JHEXEN__
 void SV_HxSaveHubMap()
 {
-    SV_OpenFile(saveSlots->composeMapSavePathForSlot(BASE_SLOT, gameMap), "wp");
+    SV_OpenFile(saveSlots->mapSavePathForSlot(BASE_SLOT, gameMap), "wp");
 
     // Set the mobj archive numbers
     ThingArchive thingArchive;
@@ -1124,10 +1130,10 @@ void SV_HxLoadHubMap()
     {
         SaveInfo &info = saveSlots->saveInfo(BASE_SLOT);
 
-        AutoStr *path = saveSlots->composeMapSavePathForSlot(BASE_SLOT, gameMap);
+        de::Path path = saveSlots->mapSavePathForSlot(BASE_SLOT, gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
-            throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::String(Str_Text(path)) + "\" for read");
+            throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for read");
         }
 
         MapStateReader(info.version()).read(reader);
@@ -1136,7 +1142,8 @@ void SV_HxLoadHubMap()
     }
     catch(de::Error const &er)
     {
-        App_Log(DE2_RES_WARNING, "Error loading hub map save state:\n%s", er.asText().toLatin1().constData());
+        App_Log(DE2_RES_WARNING, "Error loading hub map save state:\n%s",
+                                 er.asText().toLatin1().constData());
     }
 
     Reader_Delete(reader);

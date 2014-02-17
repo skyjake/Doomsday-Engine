@@ -29,6 +29,7 @@
 #include "p_saveg.h"        /// @todo remove me
 #include "p_tick.h"         // mapTime
 #include "r_common.h"       // R_UpdateConsoleView
+#include <de/NativePath>
 #include <de/String>
 
 DENG2_PIMPL(GameStateReader)
@@ -112,10 +113,10 @@ DENG2_PIMPL(GameStateReader)
         Z_Free(saveBuffer);
 
         // Open the map state file.
-        AutoStr *path = saveSlots->composeMapSavePathForSlot(BASE_SLOT, gameMap);
+        de::Path path = saveSlots->mapSavePathForSlot(BASE_SLOT, gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
-            throw FileAccessError("GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
+            throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
         }
 #endif
 
@@ -275,7 +276,7 @@ GameStateReader::GameStateReader() : d(new Instance(this))
 GameStateReader::~GameStateReader()
 {}
 
-bool GameStateReader::recognize(SaveInfo &info, Str const *path) // static
+bool GameStateReader::recognize(SaveInfo &info, de::Path path) // static
 {
     if(!SV_ExistingFile(path)) return false;
     if(!SV_OpenGameSaveFile(path, false/*for reading*/)) return false;
@@ -321,14 +322,13 @@ IGameStateReader *GameStateReader::make() // static
     return new GameStateReader;
 }
 
-void GameStateReader::read(SaveInfo &info, Str const *path)
+void GameStateReader::read(SaveInfo &info, de::Path path)
 {
-    DENG_ASSERT(path != 0);
     d->saveInfo = &info;
 
     if(!SV_OpenGameSaveFile(path, false/*for reading*/))
     {
-        throw FileAccessError("GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
+        throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
     }
 
     d->reader = SV_NewReader();

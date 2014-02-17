@@ -24,6 +24,7 @@
 #include "common.h"
 #include "saveinfo.h"
 #include <de/Error>
+#include <de/Path>
 
 /**
  * Native saved game state writer.
@@ -40,7 +41,7 @@ public:
 public:
     GameStateWriter();
 
-    void write(SaveInfo &info, Str const *path);
+    void write(SaveInfo &info, de::Path path);
 
 private:
     DENG2_PRIVATE(d)

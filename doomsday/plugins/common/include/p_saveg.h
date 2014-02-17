@@ -125,6 +125,7 @@ void SV_ClearTargetPlayers(void);
 
 #ifdef __cplusplus
 #include "gamestatereader.h"
+#include <de/Path>
 
 /**
  * Declare a new saved game state reader/interpreter.
@@ -141,7 +142,7 @@ void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReade
  * @param info  SaveInfo to attempt to read game session header into.
  * @param path  Path to the resource file to be recognized.
  */
-bool SV_RecognizeGameState(SaveInfo &info, Str const *path);
+bool SV_RecognizeGameState(SaveInfo &info, de::Path path);
 
 class MapStateReader;
 class MapStateWriter;

@@ -34,7 +34,7 @@
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "r_common.h"       // R_UpdateConsoleView
-#include <de/String>
+#include <de/NativePath>
 
 #define PADSAVEP()                      savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
 
@@ -659,10 +659,10 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     info->setSessionId(0); // None.
 }
 
-static bool SV_OpenFile_Dm_v19(char const *filePath)
+static bool SV_OpenFile_Dm_v19(de::Path path)
 {
     DENG_ASSERT(saveBuffer == 0);
-    if(!M_ReadFile(filePath, (char **)&saveBuffer))
+    if(!M_ReadFile(de::NativePath(path).expand().toUtf8().constData(), (char **)&saveBuffer))
     {
         return false;
     }
@@ -929,12 +929,10 @@ DoomV9GameStateReader::DoomV9GameStateReader() : d(new Instance(this))
 DoomV9GameStateReader::~DoomV9GameStateReader()
 {}
 
-bool DoomV9GameStateReader::recognize(SaveInfo &info, Str const *path) // static
+bool DoomV9GameStateReader::recognize(SaveInfo &info, de::Path path) // static
 {
-    DENG_ASSERT(path != 0);
-
     if(!SV_ExistingFile(path)) return false;
-    if(!SV_OpenFile_Dm_v19(Str_Text(path))) return false;
+    if(!SV_OpenFile_Dm_v19(path)) return false;
 
     Reader *reader = SV_NewReader_Dm_v19();
     bool result = false;
@@ -961,13 +959,11 @@ IGameStateReader *DoomV9GameStateReader::make()
     return new DoomV9GameStateReader;
 }
 
-void DoomV9GameStateReader::read(SaveInfo &info, Str const *path)
+void DoomV9GameStateReader::read(SaveInfo &info, de::Path path)
 {
-    DENG_ASSERT(path != 0);
-
-    if(!SV_OpenFile_Dm_v19(Str_Text(path)))
+    if(!SV_OpenFile_Dm_v19(path))
     {
-        throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
+        throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
     }
 
     d->reader = SV_NewReader_Dm_v19();

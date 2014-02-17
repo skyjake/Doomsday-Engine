@@ -26,6 +26,7 @@
 
 #ifdef __cplusplus
 #include <de/Error>
+#include <de/Path>
 
 /**
  * Maps saved games into a finite set of "save slots".
@@ -155,9 +156,9 @@ public:
      *
      * @return  The composed path if reachable (else a zero-length string).
      */
-    AutoStr *composeMapSavePathForSlot(int slot, uint map) const;
+    de::Path mapSavePathForSlot(int slot, uint map) const;
 
-    AutoStr *composeSavePathForSlot(int slot) const;
+    de::Path savePathForSlot(int slot) const;
 
     /**
      * Register the console commands and variables of this module.

@@ -26,7 +26,7 @@
 #include "p_saveio.h"
 #include "p_saveg.h"        /// playerheader_t @todo remove me
 #include "thingarchive.h"
-#include <de/String>
+#include <de/NativePath>
 
 DENG2_PIMPL(GameStateWriter)
 {
@@ -88,7 +88,7 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(saveSlots->composeMapSavePathForSlot(BASE_SLOT, gameMap), "wp");
+        SV_OpenFile(saveSlots->mapSavePathForSlot(BASE_SLOT, gameMap), "wp");
 #endif
 
         MapStateWriter(*thingArchive).write(writer);
@@ -129,9 +129,8 @@ DENG2_PIMPL(GameStateWriter)
 GameStateWriter::GameStateWriter() : d(new Instance(this))
 {}
 
-void GameStateWriter::write(SaveInfo &info, Str const *path)
+void GameStateWriter::write(SaveInfo &info, de::Path path)
 {
-    DENG_ASSERT(path != 0);
     d->saveInfo = &info;
 
     // In networked games the server tells the clients to save their games.
@@ -141,7 +140,7 @@ void GameStateWriter::write(SaveInfo &info, Str const *path)
 
     if(!SV_OpenGameSaveFile(path, true/*for writing*/))
     {
-        throw FileAccessError("GameStateWriter", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
+        throw FileAccessError("GameStateWriter", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
     }
 
     d->writer = SV_NewWriter();
