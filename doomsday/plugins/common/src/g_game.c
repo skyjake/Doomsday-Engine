@@ -1157,9 +1157,9 @@ static void printMapBanner(void)
 #if __JHEXEN__
         mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
         int warpNum = (mapInfo? mapInfo->warpTrans : -1);
-        dd_snprintf(buf, 64, "Map %s (%u): " DE2_ESC(b) "%s", Str_Text(Uri_ToString(gameMapUri)), warpNum + 1, title);
+        dd_snprintf(buf, 64, "Map: %s (%u) - " DE2_ESC(b) "%s", Str_Text(Uri_ToString(gameMapUri)), warpNum + 1, title);
 #else
-        dd_snprintf(buf, 64, "Map %s: " DE2_ESC(b) "%s", Str_Text(Uri_ToString(gameMapUri)), title);
+        dd_snprintf(buf, 64, "Map: %s - " DE2_ESC(b) "%s", Str_Text(Uri_ToString(gameMapUri)), title);
 #endif
         App_Log(DE2_MAP_NOTE, "%s", buf);
     }
@@ -1197,7 +1197,7 @@ void G_BeginMap(void)
     S_PauseMusic(false);
 }
 
-int G_EndGameResponse(msgresponse_t response, int userValue, void* userPointer)
+int G_EndGameResponse(msgresponse_t response, int userValue, void *userPointer)
 {
     if(response == MSG_YES)
     {
