@@ -57,6 +57,7 @@ DENG2_PIMPL(App)
 
     /// Path of the application executable.
     NativePath appPath;
+    String unixHomeFolder;
 
     NativePath cachedBasePath;
     NativePath cachedPluginBinaryPath;
@@ -103,8 +104,13 @@ DENG2_PIMPL(App)
     GameChangeScriptAudience scriptAudienceForGameChange;
 
     Instance(Public *a, QStringList args)
-        : Base(a), cmdLine(args), persistentData(0), config(0),
-          currentGame(0), terminateFunc(0)
+        : Base(a)
+        , cmdLine(args)
+        , unixHomeFolder(".doomsday")
+        , persistentData(0)
+        , config(0)
+        , currentGame(0)
+        , terminateFunc(0)
     {
         singletonApp = a;
         mainThread = QThread::currentThread();
@@ -263,6 +269,25 @@ App::~App()
     singletonApp = 0;
 }
 
+void App::setUnixHomeFolderName(String const &name)
+{
+    d->unixHomeFolder = name;
+}
+
+String App::unixHomeFolderName() const
+{
+    return d->unixHomeFolder;
+}
+
+String App::unixEtcFolderName() const
+{
+    if(d->unixHomeFolder.startsWith("."))
+    {
+        return d->unixHomeFolder.mid(1);
+    }
+    return d->unixHomeFolder;
+}
+
 void App::setTerminateFunc(void (*func)(char const *))
 {
     d->terminateFunc = func;
@@ -358,7 +383,7 @@ NativePath App::nativeHomePath()
     nativeHome = nativeHome / "runtime";
 #else // UNIX
     NativePath nativeHome = QDir::homePath();
-    nativeHome = nativeHome / ".doomsday/runtime";
+    nativeHome = nativeHome / d->unixHomeFolder / "runtime";
 #endif
     return (d->cachedHomePath = nativeHome);
 }

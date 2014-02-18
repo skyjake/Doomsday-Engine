@@ -21,6 +21,7 @@
 
 #include "de/UnixInfo"
 #include "de/Info"
+#include "de/App"
 #include <QDir>
 
 namespace de {
@@ -34,14 +35,14 @@ class Infos
 public:
     Infos(String fileName) : etcInfo(0), userInfo(0)
     {
-        String fn = "/etc/doomsday/" + fileName;
+        String fn = String("/etc") / App::app().unixEtcFolderName() / fileName;
         if(QFile::exists(fn))
         {
             etcInfo = new Info;
             etcInfo->parseNativeFile(fn);
         }
 
-        fn = QDir::homePath() + "/.doomsday/" + fileName;
+        fn = String(QDir::homePath()) / App::app().unixHomeFolderName() / fileName;
         if(QFile::exists(fn))
         {
             userInfo = new Info;

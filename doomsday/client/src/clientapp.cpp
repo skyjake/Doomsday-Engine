@@ -326,10 +326,8 @@ ClientApp::ClientApp(int &argc, char **argv)
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Metadata.
-    setOrganizationDomain ("dengine.net");
-    setOrganizationName   ("Deng Team");
-    setApplicationName    ("Doomsday Engine");
-    setApplicationVersion (DOOMSDAY_VERSION_BASE);
+    setMetadata("Deng Team", "dengine.net", "Doomsday Engine", DOOMSDAY_VERSION_BASE);
+    setUnixHomeFolderName(".doomsday");
 
     setTerminateFunc(handleLegacyCoreTerminate);
 

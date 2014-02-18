@@ -42,6 +42,15 @@ TextApp::TextApp(int &argc, char **argv)
       d(new Instance(this))
 {}
 
+void TextApp::setMetadata(String const &orgName, String const &orgDomain,
+                          String const &appName, String const &appVersion)
+{
+    setOrganizationName  (orgName);
+    setOrganizationDomain(orgDomain);
+    setApplicationName   (appName);
+    setApplicationVersion(appVersion);
+}
+
 bool TextApp::notify(QObject *receiver, QEvent *event)
 {
     try
@@ -83,7 +92,7 @@ Loop &TextApp::loop()
 
 NativePath TextApp::appDataPath() const
 {
-    return NativePath(QDir::homePath()) / ".doomsday";
+    return NativePath(QDir::homePath()) / unixHomeFolderName();
 }
 
 void TextApp::loopIteration()

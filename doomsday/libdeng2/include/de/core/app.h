@@ -96,6 +96,31 @@ public:
     virtual ~App();
 
     /**
+     * Defines metadata about the application.
+     *
+     * @param appName     Name of the application, as presented to humans.
+     * @param appVersion  Version of the application.
+     * @param orgName     Name of the author/organization.
+     * @param orgDomain   Network domain of the author/organization.
+     */
+    virtual void setMetadata(String const &orgName, String const &orgDomain,
+                             String const &appName, String const &appVersion) = 0;
+
+    /**
+     * Sets the Unix-style home folder name. For instance, ".doomsday" could be used.
+     *
+     * @param name  Name of the (usually hidden) user-specific home data folder.
+     */
+    void setUnixHomeFolderName(String const &name);
+
+    String unixHomeFolderName() const;
+
+    /**
+     * Returns the home folder name without the possible dot in the beginning.
+     */
+    String unixEtcFolderName() const;
+
+    /**
      * Sets a callback to be called when an uncaught exception occurs.
      */
     void setTerminateFunc(void (*func)(char const *msg));

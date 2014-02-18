@@ -25,6 +25,7 @@
 #include <locale.h>
 
 #include <de/c_wrapper.h>
+#include <de/App>
 
 #ifdef UNIX
 #  include "library.h"
@@ -63,7 +64,8 @@ static void determineGlobalPaths(application_t* app)
     {
         filename_t homePath;
         directory_t* temp;
-        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.doomsday/runtime/", getenv("HOME"));
+        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/%s/runtime/", getenv("HOME"),
+                    DENG2_APP->unixHomeFolderName().toLatin1().constData());
         temp = Dir_New(homePath);
         Dir_mkpath(Dir_Path(temp));
         app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));

@@ -53,6 +53,9 @@ public:
 public:
     GuiApp(int &argc, char **argv);
 
+    void setMetadata(String const &orgName, String const &orgDomain,
+                     String const &appName, String const &appVersion);
+
     bool notify(QObject *receiver, QEvent *event);
 
     /**
