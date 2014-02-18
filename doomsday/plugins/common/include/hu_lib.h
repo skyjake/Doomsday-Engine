@@ -583,7 +583,7 @@ typedef struct mndata_button_s {
     /// @ref mnButtonFlags
     int flags;
 
-#ifdef __cpluplus
+#ifdef __cplusplus
     mndata_button_s(dd_bool staydownMode = false, void *data = 0, char const *text = 0,
                     patchid_t *patch = 0, char const *yes = 0, char const *no = 0, int flags = 0)
         : staydownMode(staydownMode)
@@ -591,7 +591,7 @@ typedef struct mndata_button_s {
         , text(text)
         , patch(patch)
         , yes(yes)
-        , no(node)
+        , no(no)
         , flags(flags)
     {}
 #endif

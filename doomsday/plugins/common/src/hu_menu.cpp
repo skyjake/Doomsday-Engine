@@ -496,41 +496,41 @@ mndata_text_t txt_hud_full_show_readyitem("Show Ready-Item");
 mndata_text_t txt_hud_cntr_mapopen("Automap Only");
 #endif
 
-mndata_button_t btn_hud_single_key_display = { true, (void *)"hud-keys-combine" };
-mndata_button_t btn_hud_unhide_receive_damage = { true, (void *)"hud-unhide-damage" };
-mndata_button_t btn_hud_unhide_pickup_health = { true, (void *)"hud-unhide-pickup-health" };
-mndata_button_t btn_hud_unhide_pickup_armor = { true, (void *)"hud-unhide-pickup-armor" };
-mndata_button_t btn_hud_unhide_pickup_powerup = { true, (void *)"hud-unhide-pickup-powerup" };
-mndata_button_t btn_hud_unhide_pickup_weapon = { true, (void *)"hud-unhide-pickup-weapon" };
-mndata_button_t btn_hud_unhide_pickup_ammo = { true, (void *)"hud-unhide-pickup-ammo" };
-mndata_button_t btn_hud_unhide_pickup_key = { true, (void *)"hud-unhide-pickup-key" };
+mndata_button_t btn_hud_single_key_display(true, (void *)"hud-keys-combine");
+mndata_button_t btn_hud_unhide_receive_damage(true, (void *)"hud-unhide-damage");
+mndata_button_t btn_hud_unhide_pickup_health(true, (void *)"hud-unhide-pickup-health");
+mndata_button_t btn_hud_unhide_pickup_armor(true, (void *)"hud-unhide-pickup-armor");
+mndata_button_t btn_hud_unhide_pickup_powerup(true, (void *)"hud-unhide-pickup-powerup");
+mndata_button_t btn_hud_unhide_pickup_weapon(true, (void *)"hud-unhide-pickup-weapon");
+mndata_button_t btn_hud_unhide_pickup_ammo(true, (void *)"hud-unhide-pickup-ammo");
+mndata_button_t btn_hud_unhide_pickup_key(true, (void *)"hud-unhide-pickup-key");
 #if __JHERETIC__ || __JHEXEN__
-mndata_button_t btn_hud_unhide_pickup_item = { true, (void *)"hud-unhide-pickup-invitem" };
+mndata_button_t btn_hud_unhide_pickup_item(true, (void *)"hud-unhide-pickup-invitem");
 #endif
-mndata_button_t btn_hud_msg_shown = { true, (void *)"msg-show" };
-mndata_button_t btn_hud_xhair_vitality_color = { true, (void *)"view-cross-vitality" };
+mndata_button_t btn_hud_msg_shown(true, (void *)"msg-show");
+mndata_button_t btn_hud_xhair_vitality_color(true, (void *)"view-cross-vitality");
 #if __JHEXEN__
-mndata_button_t btn_hud_full_show_mana = { true, (void *)"hud-mana" };
+mndata_button_t btn_hud_full_show_mana(true, (void *)"hud-mana");
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_full_show_ammo = { true, (void *)"hud-ammo" };
-mndata_button_t btn_hud_full_show_armor = { true, (void *)"hud-armor" };
+mndata_button_t btn_hud_full_show_ammo(true, (void *)"hud-ammo");
+mndata_button_t btn_hud_full_show_armor(true, (void *)"hud-armor");
 #endif
 #if __JDOOM64__
-mndata_button_t btn_hud_full_show_powerkeys = { true, (void *)"hud-power" };
+mndata_button_t btn_hud_full_show_powerkeys(true, (void *)"hud-power");
 #endif
 #if __JDOOM__
-mndata_button_t btn_hud_full_show_face = { true, (void *)"hud-face" };
+mndata_button_t btn_hud_full_show_face(true, (void *)"hud-face");
 #endif
-mndata_button_t btn_hud_full_show_health = { true, (void *)"hud-health" };
+mndata_button_t btn_hud_full_show_health(true, (void *)"hud-health");
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_full_show_keys = { true, (void *)"hud-keys" };
+mndata_button_t btn_hud_full_show_keys(true, (void *)"hud-keys");
 #endif
 #if __JHERETIC__ || __JHEXEN__
-mndata_button_t btn_hud_full_show_readyitem = { true, (void *)"hud-currentitem" };
+mndata_button_t btn_hud_full_show_readyitem(true, (void *)"hud-currentitem");
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_cntr_mapopen = { true, (void *)"hud-cheat-counter-show-mapopen" };
+mndata_button_t btn_hud_cntr_mapopen(true, (void *)"hud-cheat-counter-show-mapopen");
 #endif
 
 static mn_object_t HudMenuObjects[] = {
@@ -712,10 +712,10 @@ ccmdtemplate_t menuCCmds[] = {
 void Hu_MenuRegister()
 {
     int i;
-    for(i = 0; menuCVars[i].path; ++i)
+    for(i = 0; menuCVars[i].path[0]; ++i)
         Con_AddVariable(menuCVars + i);
 
-    for(i = 0; menuCCmds[i].name; ++i)
+    for(i = 0; menuCCmds[i].name[0]; ++i)
         Con_AddCommand(menuCCmds + i);
 }
 

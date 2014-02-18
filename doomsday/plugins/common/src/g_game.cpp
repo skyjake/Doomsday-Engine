@@ -213,9 +213,9 @@ int bodyQueueSlot;
 // vars used with game status cvars
 int gsvEpisode;
 int gsvMap;
-char *gsvMapAuthor = "Unknown";
+char *gsvMapAuthor;// = "Unknown";
 int gsvMapMusic = -1;
-char *gsvMapTitle = "Unknown";
+char *gsvMapTitle;// = "Unknown";
 
 int gsvInMap;
 int gsvCurrentMusic;
@@ -384,7 +384,7 @@ cvartemplate_t gamestatusCVars[] =
     {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR3], 0, 0},
     {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR4], 0, 0},
 #endif
-    {NULL}
+    {"", 0, CVT_NULL, 0, 0, 0}
 };
 
 ccmdtemplate_t gameCmds[] = {
@@ -404,7 +404,7 @@ ccmdtemplate_t gameCmds[] = {
     { "savegame",        "s",    CCmdSaveGame },
     { "savegame",        "",     CCmdOpenSaveMenu },
     { "togglegamma",     "",     CCmdCycleTextureGamma },
-    { NULL }
+    { "", "", 0 }
 };
 
 // Deferred new game arguments:
@@ -419,10 +419,10 @@ void G_Register()
 {
     int i;
 
-    for(i = 0; gamestatusCVars[i].path; ++i)
+    for(i = 0; gamestatusCVars[i].path[0]; ++i)
         Con_AddVariable(gamestatusCVars + i);
 
-    for(i = 0; gameCmds[i].name; ++i)
+    for(i = 0; gameCmds[i].name[0]; ++i)
         Con_AddCommand(gameCmds + i);
 
     C_CMD("warp", "i", WarpMap);
@@ -1201,7 +1201,7 @@ void G_BeginMap()
     S_PauseMusic(false);
 }
 
-int G_EndGameResponse(msgresponse_t response, int userValue, void *userPointer)
+int G_EndGameResponse(msgresponse_t response, int /*userValue*/, void * /*context*/)
 {
     if(response == MSG_YES)
     {
@@ -2277,7 +2277,9 @@ static void G_ApplyNewGameRules()
 void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 {
 #if __JHEXEN__
-    DENG_UNUSED(_secretExit);
+    DENG2_UNUSED(_secretExit);
+#else
+    DENG2_UNUSED2(newMap, _entryPoint);
 #endif
 
     if(IS_CLIENT) return;
@@ -4110,7 +4112,7 @@ dd_bool G_DeleteSaveGame(int slot)
     return true;
 }
 
-int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void * /*userPointer*/)
+static int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void * /*context*/)
 {
     if(response == MSG_YES)
     {
@@ -4122,7 +4124,7 @@ int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void * 
 
 D_CMD(DeleteGameSave)
 {
-    DENG_UNUSED(src);
+    DENG2_UNUSED(src);
 
     bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
 
