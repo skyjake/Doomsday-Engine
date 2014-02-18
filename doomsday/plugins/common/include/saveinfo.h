@@ -49,10 +49,20 @@ public:
     SaveInfo &operator = (SaveInfo const &other);
 
     /**
+     * Returns a textual representation of the current status of the saved game session.
+     */
+    de::String statusAsText() const;
+
+    /**
+     * Composes a human-friendly, styled, textual description of the saved game session.
+     */
+    de::String description() const;
+
+    /**
      * Determines whether the saved game session is compatibile with the current game session
      * (and @em should therefore be loadable).
      */
-    bool isLoadable();
+    bool isLoadable() const;
 
     /**
      * Attempt to update the save info from a saved game session. If the given file @a path

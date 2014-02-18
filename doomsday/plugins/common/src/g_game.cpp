@@ -109,6 +109,7 @@ MonsterMissileInfo[] =
 
 D_CMD(CycleTextureGamma);
 D_CMD(DeleteGameSave);
+D_CMD(InspectGameSave);
 D_CMD(EndGame);
 D_CMD(HelpScreen);
 D_CMD(ListMaps);
@@ -387,21 +388,22 @@ cvartemplate_t gamestatusCVars[] =
 };
 
 ccmdtemplate_t gameCmds[] = {
-    { "deletegamesave", "ss",   CCmdDeleteGameSave },
-    { "deletegamesave", "s",    CCmdDeleteGameSave },
-    { "endgame",        "",     CCmdEndGame },
-    { "helpscreen",     "",     CCmdHelpScreen },
-    { "listmaps",       "",     CCmdListMaps },
-    { "loadgame",       "ss",   CCmdLoadGame },
-    { "loadgame",       "s",    CCmdLoadGame },
-    { "loadgame",       "",     CCmdOpenLoadMenu },
-    { "quickload",      "",     CCmdQuickLoadGame },
-    { "quicksave",      "",     CCmdQuickSaveGame },
-    { "savegame",       "sss",  CCmdSaveGame },
-    { "savegame",       "ss",   CCmdSaveGame },
-    { "savegame",       "s",    CCmdSaveGame },
-    { "savegame",       "",     CCmdOpenSaveMenu },
-    { "togglegamma",    "",     CCmdCycleTextureGamma },
+    { "deletegamesave",  "ss",   CCmdDeleteGameSave },
+    { "deletegamesave",  "s",    CCmdDeleteGameSave },
+    { "endgame",         "",     CCmdEndGame },
+    { "helpscreen",      "",     CCmdHelpScreen },
+    { "inspectgamesave", "s",    CCmdInspectGameSave },
+    { "listmaps",        "",     CCmdListMaps },
+    { "loadgame",        "ss",   CCmdLoadGame },
+    { "loadgame",        "s",    CCmdLoadGame },
+    { "loadgame",        "",     CCmdOpenLoadMenu },
+    { "quickload",       "",     CCmdQuickLoadGame },
+    { "quicksave",       "",     CCmdQuickSaveGame },
+    { "savegame",        "sss",  CCmdSaveGame },
+    { "savegame",        "ss",   CCmdSaveGame },
+    { "savegame",        "s",    CCmdSaveGame },
+    { "savegame",        "",     CCmdOpenSaveMenu },
+    { "togglegamma",     "",     CCmdCycleTextureGamma },
     { NULL }
 };
 
@@ -4157,6 +4159,34 @@ D_CMD(DeleteGameSave)
     else
     {
         App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
+    }
+
+    // No action means the command failed.
+    return false;
+}
+
+D_CMD(InspectGameSave)
+{
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
+    // Ensure we have up-to-date info.
+    saveSlots->updateAllSaveInfo();
+
+    int slot = saveSlots->parseSlotIdentifier(argv[1]);
+    if(saveSlots->slotInUse(slot))
+    {
+        SaveInfo &saveInfo = saveSlots->saveInfo(slot);
+        App_Log(DE2_LOG_MESSAGE, "%s", saveInfo.description().toLatin1().constData());
+        return true;
+    }
+
+    if(!saveSlots->isValidSlot(slot))
+    {
+        App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
+    }
+    else
+    {
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is not in use", slot);
     }
 
     // No action means the command failed.

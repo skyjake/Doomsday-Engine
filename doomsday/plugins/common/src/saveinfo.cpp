@@ -259,7 +259,7 @@ void SaveInfo::applyCurrentSessionMetadata()
 #endif
 }
 
-bool SaveInfo::isLoadable()
+bool SaveInfo::isLoadable() const
 {
     // Game identity key missmatch?
     GameInfo gameInfo;
@@ -449,6 +449,31 @@ void SaveInfo::read(Reader *reader)
 #endif
 
     d->sessionId = Reader_ReadInt32(reader);
+}
+
+de::String SaveInfo::statusAsText() const
+{
+    if(isLoadable()) return "Loadable";
+    /// @todo Delineate all possible statuses (logic in @ref SaveSlots).
+    return "Incompatible/Unused";
+}
+
+de::String SaveInfo::description() const
+{
+    char const *currentMapUriAsText = Str_Text(Uri_ToString(mapUri()));
+
+    return de::String(_E(b) "%1\n" _E(.)
+                      _E(l) "IdentityKey: " _E(.)_E(i) "%2 " _E(.)
+                      _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
+                      _E(l) "Version: "     _E(.)_E(i) "%4 " _E(.)
+                      _E(l) "SessionId: "   _E(.)_E(i) "%5\n" _E(.)
+                      _E(D) "Status: " _E(.) "%6")
+                .arg(userDescription())
+                .arg(gameIdentityKey())
+                .arg(currentMapUriAsText)
+                .arg(version())
+                .arg(sessionId())
+                .arg(statusAsText());
 }
 
 int SaveInfo::magic() const
