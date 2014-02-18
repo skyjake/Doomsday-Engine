@@ -1,4 +1,4 @@
-/** @file gamesessionwidget.h
+/** @file gamefilterwidget.h
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,33 +16,36 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_GAMESESSIONWIDGET_H
-#define DENG_CLIENT_GAMESESSIONWIDGET_H
+#ifndef DENG_CLIENT_GAMEFILTERWIDGET_H
+#define DENG_CLIENT_GAMEFILTERWIDGET_H
 
-#include <de/ButtonWidget>
-#include <de/DocumentWidget>
+#include <de/GuiWidget>
 
 /**
- * Widget for representing an item (game session) in the game selection menu.
+ * Filtering and sorting parameters for a game selection widget. Allows picking the type
+ * of games to show (singleplayer or multiplayer) and how the games are sorted.
  *
- * It has two buttons: one for starting the game and one for configuring it.
+ * The widget defines its own height, but width must be set manually.
  */
-class GameSessionWidget : public de::GuiWidget
+class GameFilterWidget : public de::GuiWidget
 {
+    Q_OBJECT
+
 public:
-    GameSessionWidget();
+    enum SortOrder
+    {
+        SortByTitle,
+        SortByIdentityKey
+    };
 
-    de::ButtonWidget &loadButton();
-    de::ButtonWidget &infoButton();
-    de::DocumentWidget &document();
+public:
+    GameFilterWidget(de::String const &name = "gamefilter");
 
-    /**
-     * Called immediately before the Info button is pressed.
-     */
-    virtual void updateInfoContent();
+signals:
+    void filterChanged();
 
 private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_GAMESESSIONWIDGET_H
+#endif // DENG_CLIENT_GAMEFILTERWIDGET_H

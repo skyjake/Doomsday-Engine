@@ -19,6 +19,7 @@
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/widgets/gamesessionwidget.h"
 #include "ui/widgets/mpselectionwidget.h"
+#include "ui/widgets/gamefilterwidget.h"
 #include "CommandAction"
 #include "clientapp.h"
 #include "games.h"
@@ -161,6 +162,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     FIFO<Game> pendingGames;
     SequentialLayout superLayout;
 
+    GameFilterWidget *filter;
     SubsetWidget *available;
     SubsetWidget *incomplete;
     SubsetWidget *multi;
@@ -169,6 +171,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         : Base(i)
         , superLayout(i->contentRule().left(), i->contentRule().top(), ui::Down)
     {
+        self.add(filter = new GameFilterWidget);
+
         // Menu of available games.
         self.add(available = new SubsetWidget(SubsetWidget::NormalGames,
                 App_GameLoaded()? tr("Switch Game") : tr("Available Games"), this));
@@ -202,6 +206,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     void updateSubsetLayout()
     {
         superLayout.clear();
+
+        superLayout << *filter;
 
         QList<SubsetWidget *> order;
         if(!App_GameLoaded())
@@ -295,10 +301,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     {
         String const idKey = game.identityKey();
 
-        String label = String(_E(b) "%1" _E(.) /*_E(s)_E(C) " %2\n" _E(.)_E(.)*/ "\n"
-                              _E(l)_E(D) "%2")
+        String label = String(_E(b) "%1" _E(.) "\n" _E(l)_E(D) "%2")
                 .arg(game.title())
-                //.arg(game.author())
                 .arg(idKey);
 
         GameItem *item = new GameItem(game, label, new LoadGameAction(String("load ") + idKey, self));
