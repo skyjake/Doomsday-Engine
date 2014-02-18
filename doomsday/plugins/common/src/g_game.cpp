@@ -2140,8 +2140,8 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                SaveInfo *info = saveSlots->saveInfoPtr(chosenSlot);
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(info->description()));
+                SaveInfo &saveInfo = saveSlots->saveInfo(chosenSlot);
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, saveInfo.userDescription().toUtf8().constData());
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, chosenSlot, 0);
             }
@@ -3102,11 +3102,11 @@ void G_DoSaveGame()
     else
     {
         // No name specified.
-        SaveInfo *info = saveSlots->saveInfoPtr(gaSaveGameSlot);
-        if(!gaSaveGameGenerateName && !Str_IsEmpty(info->description()))
+        SaveInfo &saveInfo = saveSlots->saveInfo(gaSaveGameSlot);
+        if(!gaSaveGameGenerateName && !saveInfo.userDescription().isEmpty())
         {
             // Slot already in use; reuse the existing name.
-            name = Str_Text(info->description());
+            name = Str_Text(AutoStr_FromTextStd(saveInfo.userDescription().toUtf8().constData()));
         }
         else
         {
@@ -3975,9 +3975,9 @@ D_CMD(LoadGame)
             return G_LoadGame(slot);
         }
 
-        SaveInfo *info = saveSlots->saveInfoPtr(slot);
+        SaveInfo &saveInfo = saveSlots->saveInfo(slot);
         // Compose the confirmation message.
-        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, Str_Text(info->description()));
+        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, saveInfo.userDescription().toUtf8().constData());
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadGameConfirmResponse, slot, 0);
@@ -4065,8 +4065,7 @@ D_CMD(SaveGame)
     if(saveSlots->slotIsUserWritable(slot))
     {
         // A known slot identifier.
-        dd_bool const slotIsUsed = saveSlots->slotInUse(slot);
-        SaveInfo *info = saveSlots->saveInfoPtr(slot);
+        bool const slotIsUsed = saveSlots->slotInUse(slot);
 
         ddstring_t localName;
         Str_InitStatic(&localName, (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : "");
@@ -4078,7 +4077,8 @@ D_CMD(SaveGame)
         }
 
         // Compose the confirmation message.
-        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, Str_Text(info->description()));
+        SaveInfo &saveInfo = saveSlots->saveInfo(slot);
+        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, saveInfo.userDescription().toUtf8().constData());
 
         // Make a copy of the name.
         ddstring_t *name = Str_Copy(Str_New(), &localName);
@@ -4177,8 +4177,8 @@ D_CMD(DeleteGameSave)
         else
         {
             // Compose the confirmation message.
-            SaveInfo *info = saveSlots->saveInfoPtr(slot);
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(info->description()));
+            SaveInfo &saveInfo = saveSlots->saveInfo(slot);
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, saveInfo.userDescription().toUtf8().constData());
             S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slot, 0);
         }

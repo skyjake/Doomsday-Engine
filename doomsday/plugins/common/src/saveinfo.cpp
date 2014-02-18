@@ -30,11 +30,11 @@
 
 DENG2_PIMPL_NOREF(SaveInfo)
 {
-    Str description;
+    de::String description;
     uint sessionId;
     int magic;
     int version;
-    Str gameIdentityKey;
+    de::String gameIdentityKey;
     Uri *mapUri;
 #if !__JHEXEN__
     int mapTime;
@@ -51,8 +51,6 @@ DENG2_PIMPL_NOREF(SaveInfo)
         , mapTime  (0)
 #endif
     {
-        Str_InitStd(&description);
-        Str_InitStd(&gameIdentityKey);
 #if !__JHEXEN__
         de::zap(players);
 #endif
@@ -61,16 +59,16 @@ DENG2_PIMPL_NOREF(SaveInfo)
 
     Instance(Instance const &other)
         : IPrivate()
-        , sessionId(other.sessionId)
-        , magic    (other.magic)
-        , version  (other.version)
-        , mapUri   (Uri_Dup(other.mapUri))
+        , description    (other.description)
+        , sessionId      (other.sessionId)
+        , magic          (other.magic)
+        , version        (other.version)
+        , gameIdentityKey(other.gameIdentityKey)
+        , mapUri         (Uri_Dup(other.mapUri))
 #if !__JHEXEN__
-        , mapTime  (other.mapTime)
+        , mapTime        (other.mapTime)
 #endif
     {
-        Str_Copy(Str_InitStd(&description), &other.description);
-        Str_Copy(Str_InitStd(&gameIdentityKey), &other.gameIdentityKey);
 #if !__JHEXEN__
         std::memcpy(&players, &other.players, sizeof(players));
 #endif
@@ -79,8 +77,6 @@ DENG2_PIMPL_NOREF(SaveInfo)
 
     ~Instance()
     {
-        Str_Free(&description);
-        Str_Free(&gameIdentityKey);
         Uri_Delete(mapUri);
     }
 
@@ -90,9 +86,9 @@ DENG2_PIMPL_NOREF(SaveInfo)
      */
     void read_Hx_v9(Reader *reader)
     {
-        char descBuf[24 + 1];
-        Reader_Read(reader, descBuf, 24); descBuf[24] = 0;
-        Str_Set(&description, descBuf);
+        char descBuf[24];
+        Reader_Read(reader, descBuf, 24);
+        description = de::String(descBuf, 24);
 
         magic     = MY_SAVE_MAGIC; // Lets pretend...
 
@@ -103,7 +99,7 @@ DENG2_PIMPL_NOREF(SaveInfo)
         /// @note Kludge: Assume the current game mode.
         GameInfo gameInfo;
         DD_GameInfo(&gameInfo);
-        Str_Copy(&gameIdentityKey, gameInfo.identityKey);
+        gameIdentityKey = Str_Text(gameInfo.identityKey);
         /// Kludge end.
 
         /*Skip junk*/ SV_Seek(4);
@@ -134,10 +130,10 @@ SaveInfo::SaveInfo() : d(new Instance)
 SaveInfo::SaveInfo(SaveInfo const &other) : d(new Instance(*other.d))
 {}
 
-SaveInfo *SaveInfo::newWithCurrentSessionMetadata(Str const *description) // static
+SaveInfo *SaveInfo::newWithCurrentSessionMetadata(de::String description) // static
 {
     SaveInfo *info = new SaveInfo;
-    info->setDescription(description);
+    info->setUserDescription(description);
     info->applyCurrentSessionMetadata();
     info->setSessionId(G_GenerateSessionId());
     return info;
@@ -156,14 +152,14 @@ SaveInfo &SaveInfo::operator = (SaveInfo const &other)
     return *this;
 }
 
-Str const *SaveInfo::gameIdentityKey() const
+de::String const &SaveInfo::gameIdentityKey() const
 {
-    return &d->gameIdentityKey;
+    return d->gameIdentityKey;
 }
 
-void SaveInfo::setGameIdentityKey(Str const *newGameIdentityKey)
+void SaveInfo::setGameIdentityKey(de::String newGameIdentityKey)
 {
-    Str_CopyOrClear(&d->gameIdentityKey, newGameIdentityKey);
+    d->gameIdentityKey = newGameIdentityKey;
 }
 
 int SaveInfo::version() const
@@ -176,14 +172,14 @@ void SaveInfo::setVersion(int newVersion)
     d->version = newVersion;
 }
 
-Str const *SaveInfo::description() const
+de::String const &SaveInfo::userDescription() const
 {
-    return &d->description;
+    return d->description;
 }
 
-void SaveInfo::setDescription(Str const *newDescription)
+void SaveInfo::setUserDescription(de::String newDescription)
 {
-    Str_CopyOrClear(&d->description, newDescription);
+    d->description = newDescription;
 }
 
 uint SaveInfo::sessionId() const
@@ -246,7 +242,7 @@ void SaveInfo::applyCurrentSessionMetadata()
     d->version  = MY_SAVE_VERSION;
     GameInfo gameInfo;
     DD_GameInfo(&gameInfo);
-    Str_Copy(&d->gameIdentityKey, gameInfo.identityKey);
+    d->gameIdentityKey = Str_Text(gameInfo.identityKey);
     Uri_Copy(d->mapUri, gameMapUri);
 #if !__JHEXEN__
     d->mapTime  = ::mapTime;
@@ -268,7 +264,7 @@ bool SaveInfo::isLoadable()
     // Game identity key missmatch?
     GameInfo gameInfo;
     DD_GameInfo(&gameInfo);
-    if(Str_Compare(gameInfo.identityKey, Str_Text(&d->gameIdentityKey)))
+    if(d->gameIdentityKey.compareWithoutCase(Str_Text(gameInfo.identityKey)))
     {
         return false;
     }
@@ -283,7 +279,7 @@ void SaveInfo::updateFromFile(de::Path path)
     if(path.isEmpty())
     {
         // The save path cannot be accessed for some reason. Perhaps its a network path?
-        setDescription(0);
+        setUserDescription("");
         setSessionId(0);
         return;
     }
@@ -292,15 +288,15 @@ void SaveInfo::updateFromFile(de::Path path)
     if(!SV_RecognizeGameState(*this, path))
     {
         // Clear the info.
-        setDescription(0);
+        setUserDescription("");
         setSessionId(0);
         return;
     }
 
     // Ensure we have a valid description.
-    if(Str_IsEmpty(description()))
+    if(d->description.isEmpty())
     {
-        setDescription(AutoStr_FromText("UNNAMED"));
+        setUserDescription("UNNAMED");
     }
 }
 
@@ -308,8 +304,12 @@ void SaveInfo::write(Writer *writer) const
 {
     Writer_WriteInt32(writer, d->magic);
     Writer_WriteInt32(writer, d->version);
-    Str_Write(&d->gameIdentityKey, writer);
-    Str_Write(&d->description, writer);
+
+    AutoStr *gameIdentityKeyStr = AutoStr_FromTextStd(d->gameIdentityKey.toUtf8().constData());
+    Str_Write(gameIdentityKeyStr, writer);
+
+    AutoStr *descriptionStr = AutoStr_FromTextStd(d->description.toUtf8().constData());
+    Str_Write(descriptionStr, writer);
 
     Uri_Write(d->mapUri, writer);
 #if !__JHEXEN__
@@ -347,25 +347,29 @@ void SaveInfo::read(Reader *reader)
     d->version  = Reader_ReadInt32(reader);
     if(d->version >= 14)
     {
-        Str_Read(&d->gameIdentityKey, reader);
+        AutoStr *tmp = AutoStr_NewStd();
+        Str_Read(tmp, reader);
+        d->gameIdentityKey = Str_Text(tmp);
     }
     else
     {
         // Translate gamemode identifiers from older save versions.
         int oldGamemode = Reader_ReadInt32(reader);
-        Str_Copy(&d->gameIdentityKey, G_IdentityKeyForLegacyGamemode(oldGamemode, d->version));
+        d->gameIdentityKey = Str_Text(G_IdentityKeyForLegacyGamemode(oldGamemode, d->version));
     }
 
     if(d->version >= 10)
     {
-        Str_Read(&d->description, reader);
+        AutoStr *tmp = AutoStr_NewStd();
+        Str_Read(tmp, reader);
+        d->description = Str_Text(tmp);
     }
     else
     {
         // Description is a fixed 24 characters in length.
-        char buf[24 + 1];
-        Reader_Read(reader, buf, 24); buf[24] = 0;
-        Str_Set(&d->description, buf);
+        char descBuf[24];
+        Reader_Read(reader, descBuf, 24);
+        d->description = de::String(descBuf, 24);
     }
 
     if(d->version >= 14)

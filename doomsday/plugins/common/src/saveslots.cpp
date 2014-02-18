@@ -145,50 +145,48 @@ void SaveSlots::updateAllSaveInfo()
     d->buildInfos();
 }
 
-AutoStr *SaveSlots::composeSlotIdentifier(int slot) const
+de::String SaveSlots::slotIdentifier(int slot) const
 {
-    AutoStr *str = AutoStr_NewStd();
-    if(slot < 0) return Str_Set(str, "(invalid slot)");
-    if(slot == AUTO_SLOT) return Str_Set(str, "<auto>");
+    if(slot < 0) return "(invalid slot)";
+    if(slot == AUTO_SLOT) return "<auto>";
 #if __JHEXEN__
-    if(slot == BASE_SLOT) return Str_Set(str, "<base>");
+    if(slot == BASE_SLOT) return "<base>";
 #endif
-    return Str_Appendf(str, "%i", slot);
+    return de::String::number(slot);
 }
 
-int SaveSlots::parseSlotIdentifier(char const *str) const
+int SaveSlots::parseSlotIdentifier(de::String str) const
 {
     // Try game-save name match.
-    int slot = findSlotWithSaveDescription(str);
+    int slot = findSlotWithUserSaveDescription(str);
     if(slot >= 0) return slot;
 
     // Try keyword identifiers.
-    if(!stricmp(str, "last") || !stricmp(str, "<last>"))
+    if(!str.compareWithoutCase("last") || !str.compareWithoutCase("<last>"))
     {
         return Con_GetInteger("game-save-last-slot");
     }
-    if(!stricmp(str, "quick") || !stricmp(str, "<quick>"))
+    if(!str.compareWithoutCase("quick") || !str.compareWithoutCase("<quick>"))
     {
         return Con_GetInteger("game-save-quick-slot");
     }
-    if(!stricmp(str, "auto") || !stricmp(str, "<auto>"))
+    if(!str.compareWithoutCase("auto") || !str.compareWithoutCase("<auto>"))
     {
         return AUTO_SLOT;
     }
 
     // Try logical slot identifier.
-    if(M_IsStringValidInt(str))
-    {
-        return atoi(str);
-    }
+    bool ok;
+    slot = str.toInt(&ok);
+    if(ok) return slot;
 
     // Unknown/not found.
     return -1;
 }
 
-int SaveSlots::findSlotWithSaveDescription(char const *description) const
+int SaveSlots::findSlotWithUserSaveDescription(de::String description) const
 {
-    if(description && description[0])
+    if(!description.isEmpty())
     {
         // On first call - automatically build and populate game-save info.
         d->buildInfosIfNeeded();
@@ -196,7 +194,7 @@ int SaveSlots::findSlotWithSaveDescription(char const *description) const
         for(int i = 0; i < (signed)d->infos.size(); ++i)
         {
             SaveInfo *info = d->infos[i];
-            if(!Str_CompareIgnoreCase(info->description(), description))
+            if(!info->userDescription().compareWithoutCase(description))
             {
                 return i;
             }
@@ -273,8 +271,7 @@ void SaveSlots::clearSlot(int slot)
 
     if(d->shouldAnnounceWhenClearing(slot))
     {
-        AutoStr *ident = composeSlotIdentifier(slot);
-        App_Log(DE2_RES_MSG, "Clearing save slot %s", Str_Text(ident));
+        App_Log(DE2_RES_MSG, "Clearing save slot %s", slotIdentifier(slot).toLatin1().constData());
     }
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
@@ -284,7 +281,7 @@ void SaveSlots::clearSlot(int slot)
 
     SV_RemoveFile(savePathForSlot(slot));
 
-    info.setDescription(0);
+    info.setUserDescription("");
     info.setSessionId(0);
 }
 

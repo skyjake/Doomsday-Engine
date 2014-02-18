@@ -5748,15 +5748,18 @@ void Hu_MenuUpdateGameSaveWidgets()
     {
         mn_object_t *obj    = MN_MustFindObjectOnPage(page, 0, saveSlotObjectIds[i]);
         mndata_edit_t *edit = (mndata_edit_t *) obj->_typedata;
-        char const *text = "";
 
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);
         if(saveSlots->slotInUse(edit->data2))
         {
-            text = Str_Text(saveSlots->saveInfo(edit->data2).description());
+            SaveInfo &saveInfo = saveSlots->saveInfo(edit->data2);
+            MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, saveInfo.userDescription().toUtf8().constData());
             MNObject_SetFlags(obj, FO_CLEAR, MNF_DISABLED);
         }
-        MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, text);
+        else
+        {
+            MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, "");
+        }
     }
 }
 

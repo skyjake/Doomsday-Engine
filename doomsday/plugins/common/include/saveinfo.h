@@ -25,6 +25,7 @@
 #include "doomsday.h"
 #include "common.h"
 #include <de/Path>
+#include <de/String>
 
 /**
  * Represents a saved game session state.
@@ -43,7 +44,7 @@ public:
     SaveInfo();
     SaveInfo(SaveInfo const &other);
 
-    static SaveInfo *newWithCurrentSessionMetadata(Str const *description);
+    static SaveInfo *newWithCurrentSessionMetadata(de::String userDescription);
 
     SaveInfo &operator = (SaveInfo const &other);
 
@@ -73,8 +74,8 @@ public:
     /**
      * Returns the unique "identity key" of the game session.
      */
-    Str const *gameIdentityKey() const;
-    void setGameIdentityKey(Str const *newGameIdentityKey);
+    de::String const &gameIdentityKey() const;
+    void setGameIdentityKey(de::String newGameIdentityKey);
 
     /**
      * Returns the logical version of the serialized game session state.
@@ -83,10 +84,10 @@ public:
     void setVersion(int newVersion);
 
     /**
-     * Returns the textual description of the game session (provided by the user).
+     * Returns the textual description of the game session provided by the user.
      */
-    Str const *description() const;
-    void setDescription(Str const *newDescription);
+    de::String const &userDescription() const;
+    void setUserDescription(de::String newDescription);
 
     /**
      * @see G_GenerateSessionId()

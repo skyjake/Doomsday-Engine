@@ -612,10 +612,9 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
 {
     DENG_ASSERT(info != 0);
 
-    char descBuf[24 + 1];
-    Reader_Read(reader, descBuf, 24); descBuf[24] = 0;
-    Str descStr; Str_InitStatic(&descStr, descBuf);
-    info->setDescription(&descStr);
+    char descBuf[24];
+    Reader_Read(reader, descBuf, 24);
+    info->setUserDescription(de::String(descBuf, 24));
 
     char vcheck[16 + 1];
     Reader_Read(reader, vcheck, 16); vcheck[16] = 0;
@@ -653,7 +652,7 @@ static void SaveInfo_Read_Dm_v19(SaveInfo *info, Reader *reader)
     /// @note Kludge: Assume the current game mode.
     GameInfo gameInfo;
     DD_GameInfo(&gameInfo);
-    info->setGameIdentityKey(gameInfo.identityKey);
+    info->setGameIdentityKey(Str_Text(gameInfo.identityKey));
     /// Kludge end.
 
     info->setSessionId(0); // None.

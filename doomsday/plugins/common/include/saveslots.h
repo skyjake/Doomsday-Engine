@@ -76,7 +76,7 @@ public:
      *
      * @see parseSlotIdentifier()
      */
-    AutoStr *composeSlotIdentifier(int slot) const;
+    de::String slotIdentifier(int slot) const;
 
     /**
      * Parse @a str and determine whether it references a logical game-save slot.
@@ -93,9 +93,9 @@ public:
      *
      * @return  The parsed slot number if valid; otherwise @c -1
      *
-     * @see composeSlotIdentifier()
+     * @see slotIdentifier()
      */
-    int parseSlotIdentifier(char const *str) const;
+    int parseSlotIdentifier(de::String str) const;
 
     /**
      * Lookup a save slot by searching for a match on game-save description. The search is in
@@ -105,7 +105,7 @@ public:
      *
      * @return  Logical slot number of the found game-save else @c -1
      */
-    int findSlotWithSaveDescription(char const *description) const;
+    int findSlotWithUserSaveDescription(de::String description) const;
 
     /**
      * Returns @c true iff a saved game state exists for save @a slot.

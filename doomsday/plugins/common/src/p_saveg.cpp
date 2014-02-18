@@ -935,7 +935,7 @@ dd_bool SV_SaveGame(int slot, char const *description)
     App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
                              de::NativePath(path).pretty().toLatin1().constData());
 
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_FromTextStd(description));
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(description);
     try
     {
         GameStateWriter().write(*info, path);
@@ -985,7 +985,7 @@ void SV_SaveGameClient(uint sessionId)
     }
 
     // Prepare new save info.
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(AutoStr_New());
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata("");
     info->setSessionId(sessionId);
 
     Writer *writer = SV_NewWriter();
