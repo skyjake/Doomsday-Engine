@@ -206,7 +206,7 @@ void H_PreInit()
     cfg.menuTextColors[3][2] = defFontRGB3[2];
     cfg.menuSlam = true;
     cfg.menuShortcutsEnabled = true;
-    cfg.menuGameSaveSuggestName = true;
+    cfg.menuGameSaveSuggestDescription = true;
 
     cfg.confirmQuickGameSave = true;
     cfg.confirmRebornLoad = true;

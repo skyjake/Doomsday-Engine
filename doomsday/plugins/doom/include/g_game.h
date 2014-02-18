@@ -74,9 +74,13 @@ void G_CommonShutdown(void);
 
 void R_InitRefresh(void);
 
+/**
+ * Print a list of all currently available maps and the location of the
+ * source file/directory which contains them.
+ */
 void G_PrintMapList(void);
 
-void G_DeferredPlayDemo(char* demo);
+void G_DeferredPlayDemo(char *demo);
 
 void G_QuitGame(void);
 
@@ -101,7 +105,7 @@ dd_bool G_IsSaveGamePossible(void);
  *      If an empty string a new name will be generated automatically.
  * @return  @c true iff @a slot is valid and saving is presently possible.
  */
-dd_bool G_SaveGame2(int slot, const char* name);
+dd_bool G_SaveGame2(int slot, char const *name);
 dd_bool G_SaveGame(int slot);
 
 void G_StopDemo(void);
@@ -129,19 +133,19 @@ void G_IntermissionDone(void);
 void G_Ticker(timespan_t ticLength);
 
 /// @return  @c true if the input event @a ev was eaten.
-int G_PrivilegedResponder(event_t* ev);
+int G_PrivilegedResponder(event_t *ev);
 
 /// @return  @c true if the input event @a ev was eaten.
-int G_Responder(event_t* ev);
+int G_Responder(event_t *ev);
 
 void G_ScreenShot(void);
 
 void G_PrepareWIData(void);
 
-void G_QueueBody(mobj_t* body);
+void G_QueueBody(mobj_t *body);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBJDOOM_G_GAME_H */
+#endif // LIBJDOOM_G_GAME_H

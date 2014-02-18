@@ -137,7 +137,7 @@ uint G_LogicalMapNumber(uint episode, uint map);
 /// @return  Logical map number.
 uint G_CurrentLogicalMapNumber(void);
 
-AutoStr *G_GenerateSaveGameName(void);
+AutoStr *G_GenerateUserSaveDescription(void);
 
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );

@@ -1910,41 +1910,27 @@ void ClearPlayer(player_t *p)
  */
 void G_PlayerReborn(int player)
 {
-    player_t       *p;
-    int             frags[MAXPLAYERS];
-    int             killcount, itemcount, secretcount;
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    int             i;
-#endif
-#if __JHERETIC__
-    dd_bool         secret = false;
-    int             spot;
-#elif __JHEXEN__
-    uint            worldTimer;
-#endif
-
     if(player < 0 || player >= MAXPLAYERS)
         return; // Wha?
 
     App_Log(DE2_DEV_MAP_NOTE, "G_PlayerReborn: reseting player %i", player);
 
-    p = &players[player];
+    player_t *p = &players[player];
 
+    int frags[MAXPLAYERS];
     DENG_ASSERT(sizeof(p->frags) == sizeof(frags));
 
     memcpy(frags, p->frags, sizeof(frags));
-    killcount = p->killCount;
-    itemcount = p->itemCount;
-    secretcount = p->secretCount;
+    int killcount    = p->killCount;
+    int itemcount    = p->itemCount;
+    int secretcount  = p->secretCount;
 #if __JHEXEN__
-    worldTimer = p->worldTimer;
+    uint worldTimer  = p->worldTimer;
 #endif
 
 #if __JHERETIC__
-    if(p->didSecret)
-        secret = true;
-    spot = p->startSpot;
+    dd_bool secret = p->didSecret;
+    int spot       = p->startSpot;
 #endif
 
     // Clears (almost) everything.
@@ -1955,14 +1941,14 @@ void G_PlayerReborn(int player)
 #endif
 
     memcpy(p->frags, frags, sizeof(p->frags));
-    p->killCount = killcount;
-    p->itemCount = itemcount;
+    p->killCount   = killcount;
+    p->itemCount   = itemcount;
     p->secretCount = secretcount;
 #if __JHEXEN__
-    p->worldTimer = worldTimer;
+    p->worldTimer  = worldTimer;
 #endif
-    p->colorMap = cfg.playerColor[player];
-    p->class_ = P_ClassForPlayerWhenRespawning(player, false);
+    p->colorMap    = cfg.playerColor[player];
+    p->class_      = P_ClassForPlayerWhenRespawning(player, false);
 #if __JHEXEN__
     if(p->class_ == PCLASS_FIGHTER && !IS_NETGAME)
     {
@@ -1970,18 +1956,18 @@ void G_PlayerReborn(int player)
         p->colorMap = 2;
     }
 #endif
-    p->useDown = p->attackDown = true; // Don't do anything immediately.
-    p->playerState = PST_LIVE;
-    p->health = maxHealth;
+    p->useDown      = p->attackDown = true; // Don't do anything immediately.
+    p->playerState  = PST_LIVE;
+    p->health       = maxHealth;
     p->brain.changeWeapon = WT_NOCHANGE;
 
 #if __JDOOM__ || __JDOOM64__
-    p->readyWeapon = p->pendingWeapon = WT_SECOND;
-    p->weapons[WT_FIRST].owned = true;
+    p->readyWeapon  = p->pendingWeapon = WT_SECOND;
+    p->weapons[WT_FIRST ].owned = true;
     p->weapons[WT_SECOND].owned = true;
 
     // Initalize the player's ammo counts.
-    memset(p->ammo, 0, sizeof(p->ammo));
+    de::zap(p->ammo);
     p->ammo[AT_CLIP].owned = 50;
 
     // See if the Values specify anything.
@@ -1999,12 +1985,9 @@ void G_PlayerReborn(int player)
     }
 
 #ifdef _DEBUG
+    for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
     {
-        int k;
-        for(k = 0; k < NUM_WEAPON_TYPES; ++k)
-        {
-            App_Log(DE2_DEV_MAP_MSG, "Player %i owns wpn %i: %i", player, k, p->weapons[k].owned);
-        }
+        App_Log(DE2_DEV_MAP_MSG, "Player %i owns wpn %i: %i", player, k, p->weapons[k].owned);
     }
 #endif
 
@@ -2016,12 +1999,14 @@ void G_PlayerReborn(int player)
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Reset maxammo.
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
         p->ammo[i].max = maxAmmo[i];
+    }
 #endif
 
     // Reset viewheight.
-    p->viewHeight = cfg.plrViewHeight;
+    p->viewHeight      = cfg.plrViewHeight;
     p->viewHeightDelta = 0;
 
     // We'll need to update almost everything.
@@ -2038,23 +2023,23 @@ void G_PlayerReborn(int player)
 }
 
 #if __JDOOM__ || __JDOOM64__
-void G_QueueBody(mobj_t* mo)
+void G_QueueBody(mobj_t *mo)
 {
-    if(!mo)
-        return;
+    if(!mo) return;
 
     // Flush an old corpse if needed.
     if(bodyQueueSlot >= BODYQUEUESIZE)
+    {
         P_MobjRemove(bodyQueue[bodyQueueSlot % BODYQUEUESIZE], false);
+    }
 
     bodyQueue[bodyQueueSlot % BODYQUEUESIZE] = mo;
     bodyQueueSlot++;
 }
 #endif
 
-int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+static int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void * /*context*/)
 {
-    DENG_UNUSED(userPointer);
     if(response == MSG_YES)
     {
         gaLoadGameSlot = userValue;
@@ -2183,19 +2168,24 @@ static void G_InitNewGame()
 static void G_ApplyGameRuleFastMonsters(dd_bool fast)
 {
     static dd_bool oldFast = false;
-    int i;
 
     // Only modify when the rule changes state.
     if(fast == oldFast) return;
     oldFast = fast;
 
     /// @fixme Kludge: Assumes the original values speed values haven't been modified!
-    for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+    for(int i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+    {
         STATES[i].tics = fast? 1 : 2;
-    for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+    }
+    for(int i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+    {
         STATES[i].tics = fast? 4 : 8;
-    for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+    }
+    for(int i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+    {
         STATES[i].tics = fast? 1 : 2;
+    }
     // Kludge end.
 }
 #endif
@@ -2204,14 +2194,13 @@ static void G_ApplyGameRuleFastMonsters(dd_bool fast)
 static void G_ApplyGameRuleFastMissiles(dd_bool fast)
 {
     static dd_bool oldFast = false;
-    int i;
 
     // Only modify when the rule changes state.
     if(fast == oldFast) return;
     oldFast = fast;
 
     /// @fixme Kludge: Assumes the original values speed values haven't been modified!
-    for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
+    for(int i = 0; MonsterMissileInfo[i].type != -1; ++i)
     {
         MOBJINFO[MonsterMissileInfo[i].type].speed =
             MonsterMissileInfo[i].speed[fast? 1 : 0];
@@ -2234,7 +2223,7 @@ static void G_ApplyNewGameRules()
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!IS_NETGAME)
     {
-        gameRules.deathmatch = false;
+        gameRules.deathmatch      = false;
         gameRules.respawnMonsters = false;
 
         gameRules.noMonsters = CommandLine_Exists("-nomonsters")? true : false;
@@ -2248,29 +2237,33 @@ static void G_ApplyNewGameRules()
 #if __JDOOM__ || __JHERETIC__
     // Is respawning enabled at all in nightmare skill?
     if(gameRules.skill == SM_NIGHTMARE)
+    {
         gameRules.respawnMonsters = cfg.respawnMonstersNightmare;
+    }
 #endif
 
     // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
-    {
-        dd_bool fastMonsters = gameRules.fast;
+    dd_bool fastMonsters = gameRules.fast;
 # if __JDOOM__
-        if(gameRules.skill == SM_NIGHTMARE) fastMonsters = true;
-# endif
-        G_ApplyGameRuleFastMonsters(fastMonsters);
+    if(gameRules.skill == SM_NIGHTMARE)
+    {
+        fastMonsters = true;
     }
+# endif
+    G_ApplyGameRuleFastMonsters(fastMonsters);
 #endif
 
     // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {
-        dd_bool fastMissiles = gameRules.fast;
+    dd_bool fastMissiles = gameRules.fast;
 # if !__JDOOM64__
-        if(gameRules.skill == SM_NIGHTMARE) fastMissiles = true;
-# endif
-        G_ApplyGameRuleFastMissiles(fastMissiles);
+    if(gameRules.skill == SM_NIGHTMARE)
+    {
+        fastMissiles = true;
     }
+# endif
+    G_ApplyGameRuleFastMissiles(fastMissiles);
 #endif
 
     if(IS_DEDICATED)
@@ -2281,7 +2274,12 @@ static void G_ApplyNewGameRules()
 
 void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 {
-    if(IS_CLIENT || (cyclingMaps && mapCycleNoExit)) return;
+#if __JHEXEN__
+    DENG_UNUSED(_secretExit);
+#endif
+
+    if(IS_CLIENT) return;
+    if(cyclingMaps && mapCycleNoExit) return;
 
 #if __JHEXEN__
     if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
@@ -2293,18 +2291,21 @@ void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 #endif
 
 #if __JHEXEN__
-    nextMap = newMap;
+    nextMap         = newMap;
     nextMapEntrance = _entryPoint;
 #else
-    secretExit = _secretExit;
+    secretExit      = _secretExit;
+
 # if __JDOOM__
     // If no Wolf3D maps, no secret exit!
     if(secretExit && (gameModeBits & GM_ANY_DOOM2))
     {
-        Uri* mapUri = G_ComposeMapUri(0, 30);
-        AutoStr* mapPath = Uri_Compose(mapUri);
+        Uri *mapUri      = G_ComposeMapUri(0, 30);
+        AutoStr *mapPath = Uri_Compose(mapUri);
         if(!P_MapExists(Str_Text(mapPath)))
+        {
             secretExit = false;
+        }
         Uri_Delete(mapUri);
     }
 # endif
@@ -2314,7 +2315,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 }
 
 /**
- * @return              @c true, if the game has been completed.
+ * @return  @c true iff the game has been completed.
  */
 dd_bool G_IfVictory()
 {
@@ -2327,16 +2328,19 @@ dd_bool G_IfVictory()
     if(gameMode == doom_chex)
     {
         if(gameMap == 4)
+        {
             return true;
+        }
     }
     else if((gameModeBits & GM_ANY_DOOM) && gameMap == 7)
+    {
         return true;
+    }
 #elif __JHERETIC__
     if(gameMap == 7)
     {
         return true;
     }
-
 #elif __JHEXEN__
     if(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT)
     {
@@ -2346,18 +2350,18 @@ dd_bool G_IfVictory()
     return false;
 }
 
-static int prepareIntermission(void* paramaters)
+static int prepareIntermission(void * /*context*/)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    wmInfo.episode = gameEpisode;
+    wmInfo.episode    = gameEpisode;
     wmInfo.currentMap = gameMap;
-    wmInfo.nextMap = nextMap;
-    wmInfo.didSecret = players[CONSOLEPLAYER].didSecret;
+    wmInfo.nextMap    = nextMap;
+    wmInfo.didSecret  = players[CONSOLEPLAYER].didSecret;
 
 # if __JDOOM__ || __JDOOM64__
-    wmInfo.maxKills = totalKills;
-    wmInfo.maxItems = totalItems;
-    wmInfo.maxSecret = totalSecret;
+    wmInfo.maxKills   = totalKills;
+    wmInfo.maxItems   = totalItems;
+    wmInfo.maxSecret  = totalSecret;
 
     G_PrepareWIData();
 # endif
@@ -2378,11 +2382,9 @@ static int prepareIntermission(void* paramaters)
 
 void G_DoMapCompleted()
 {
-    int i;
-
     G_SetGameAction(GA_NONE);
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->inGame)
         {
@@ -2410,14 +2412,12 @@ void G_DoMapCompleted()
 
     // Go to an intermission?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    ddmapinfo_t minfo;
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(gameMapUri)), &minfo) &&
+       (minfo.flags & MIF_NO_INTERMISSION))
     {
-        ddmapinfo_t minfo;
-        if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(gameMapUri)), &minfo) &&
-           (minfo.flags & MIF_NO_INTERMISSION))
-        {
-            G_IntermissionDone();
-            return;
-        }
+        G_IntermissionDone();
+        return;
     }
 
 #elif __JHEXEN__
@@ -2432,9 +2432,10 @@ void G_DoMapCompleted()
 # if __JDOOM__
     if((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)) && gameMap == 8)
     {
-        int i;
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
             players[i].didSecret = true;
+        }
     }
 # endif
 
@@ -2473,14 +2474,12 @@ void G_DoMapCompleted()
 #if __JDOOM__ || __JDOOM64__
 void G_PrepareWIData()
 {
-    AutoStr *mapPath = Uri_Compose(gameMapUri);
     wbstartstruct_t *info = &wmInfo;
-    ddmapinfo_t minfo;
-    int i;
-
     info->maxFrags = 0;
 
     // See if there is a par time definition.
+    AutoStr *mapPath = Uri_Compose(gameMapUri);
+    ddmapinfo_t minfo;
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && minfo.parTime > 0)
     {
         info->parTime = TICRATE * (int) minfo.parTime;
@@ -2491,16 +2490,16 @@ void G_PrepareWIData()
     }
 
     info->pNum = CONSOLEPLAYER;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* p = &players[i];
-        wbplayerstruct_t* pStats = &info->plyr[i];
+        player_t *p              = &players[i];
+        wbplayerstruct_t *pStats = &info->plyr[i];
 
         pStats->inGame = p->plr->inGame;
-        pStats->kills = p->killCount;
-        pStats->items = p->itemCount;
+        pStats->kills  = p->killCount;
+        pStats->items  = p->itemCount;
         pStats->secret = p->secretCount;
-        pStats->time = mapTime;
+        pStats->time   = mapTime;
         memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
     }
 }
@@ -2533,7 +2532,9 @@ void G_IntermissionDone()
 
 #if __JDOOM__ || __JDOOM64__
     if(secretExit)
+    {
         players[CONSOLEPLAYER].didSecret = true;
+    }
 #endif
 
     // Clear the currently playing script, if any.
@@ -2558,28 +2559,26 @@ void G_DoEndDebriefing()
 
 #if __JHEXEN__
 
-typedef struct {
+struct playerbackup_t
+{
     player_t player;
     uint numInventoryItems[NUM_INVENTORYITEM_TYPES];
     inventoryitemtype_t readyItem;
-} playerbackup_t;
+};
 
 static void backupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
 {
-    int i;
-
     DENG_ASSERT(playerBackup != 0);
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         playerbackup_t *pb = playerBackup + i;
         player_t *plr      = players + i;
-        int k = 0;
 
         memcpy(&pb->player, plr, sizeof(player_t));
 
         // Make a copy of the inventory states also.
-        for(k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
+        for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
         {
             pb->numInventoryItems[k] = P_InventoryCount(i, inventoryitemtype_t(k));
         }
@@ -2593,33 +2592,29 @@ static void backupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
  */
 static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance)
 {
-    mobj_t *targetPlayerMobj = 0;
-    int i;
-
     DENG_ASSERT(playerBackup != 0);
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    mobj_t *targetPlayerMobj = 0;
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         playerbackup_t *pb = playerBackup + i;
         player_t *plr      = players + i;
         ddplayer_t *ddplr  = plr->plr;
         int oldKeys = 0, oldPieces = 0;
         dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
-        dd_bool wasReborn = false;
-        int k;
 
         if(!ddplr->inGame) continue;
 
         memcpy(plr, &pb->player, sizeof(player_t));
-        for(k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
-        {
-            uint m;
 
+        for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
+        {
             // Don't give back the wings of wrath if reborn.
             if(k == IIT_FLY && plr->playerState == PST_REBORN)
                 continue;
 
-            for(m = 0; m < pb->numInventoryItems[k]; ++m)
+            for(uint m = 0; m < pb->numInventoryItems[k]; ++m)
             {
                 P_InventoryGive(i, inventoryitemtype_t(k), true);
             }
@@ -2644,25 +2639,24 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
                 oldKeys   = plr->keys;
                 oldPieces = plr->pieces;
 
-                for(k = 0; k < NUM_WEAPON_TYPES; ++k)
+                for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
                 {
                     oldWeaponOwned[k] = plr->weapons[k].owned;
                 }
             }
         }
 
-        wasReborn = (plr->playerState == PST_REBORN);
+        bool wasReborn = (plr->playerState == PST_REBORN);
 
         if(gameRules.deathmatch)
         {
-            memset(plr->frags, 0, sizeof(plr->frags));
+            de::zap(plr->frags);
             ddplr->mo = 0;
             G_DeathMatchSpawnPlayer(i);
         }
         else
         {
-            playerstart_t const *start;
-            if((start = P_GetPlayerStart(mapEntrance, i, false)))
+            if(playerstart_t const *start = P_GetPlayerStart(mapEntrance, i, false))
             {
                 mapspot_t const *spot = &mapSpots[start->spot];
                 P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
@@ -2684,7 +2678,7 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
             plr->keys   = oldKeys;
             plr->pieces = oldPieces;
 
-            for(k = 0; k < NUM_WEAPON_TYPES; ++k)
+            for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
             {
                 if(oldWeaponOwned[k])
                 {
@@ -2704,7 +2698,7 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
         }
     }
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t *plr     = players + i;
         ddplayer_t *ddplr = plr->plr;
@@ -2721,8 +2715,7 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
     /// FIXME! This only supports single player games!!
     if(targetPlayerAddrs)
     {
-        targetplraddress_t *p;
-        for(p = targetPlayerAddrs; p; p = p->next)
+        for(targetplraddress_t *p = targetPlayerAddrs; p; p = p->next)
         {
             *(p->address) = targetPlayerMobj;
         }
@@ -2742,14 +2735,15 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
 }
 #endif // __JHEXEN__
 
-typedef struct {
-    const char* name;
-    int slot;
-} savestateworker_params_t;
-
-static int G_SaveStateWorker(void* parameters)
+struct savestateworker_params_t
 {
-    savestateworker_params_t* p = (savestateworker_params_t*)parameters;
+    char const *name;
+    int slot;
+};
+
+static int G_SaveStateWorker(void *context)
+{
+    savestateworker_params_t *p = (savestateworker_params_t *)context;
     int result = SV_SaveGame(p->slot, p->name);
     BusyMode_WorkerEnd();
     return result;
@@ -2757,15 +2751,6 @@ static int G_SaveStateWorker(void* parameters)
 
 void G_DoLeaveMap()
 {
-#if __JHEXEN__
-    playerbackup_t playerBackup[MAXPLAYERS];
-    dd_bool oldRandomClassesRule;
-#endif
-    loadmap_params_t p;
-    ddfinale_t fin;
-    dd_bool revisit = false;
-    dd_bool hasBrief;
-
     // Unpause the current game.
     Pause_End();
 
@@ -2778,6 +2763,7 @@ void G_DoLeaveMap()
     // Ensure that the episode and map indices are good.
     G_ValidateMap(&gameEpisode, &nextMap);
 
+    bool revisit = false;
 #if __JHEXEN__
     /*
      * First, determine whether we've been to this map previously and if so,
@@ -2790,43 +2776,40 @@ void G_DoLeaveMap()
     }
 
     // Same hub?
+    Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+    if(P_MapInfo(0/*current map*/)->hub == P_MapInfo(nextMapUri)->hub)
     {
-        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_MapInfo(0/*current map*/)->hub == P_MapInfo(nextMapUri)->hub)
+        if(!gameRules.deathmatch)
         {
-            if(!gameRules.deathmatch)
-            {
-                // Save current map.
-                SV_HxSaveHubMap();
-            }
+            // Save current map.
+            SV_HxSaveHubMap();
         }
-        else // Entering new hub.
-        {
-            if(!gameRules.deathmatch)
-            {
-                saveSlots->clearSlot(BASE_SLOT);
-            }
-        }
-
-        Uri_Delete(nextMapUri);
     }
+    else // Entering new hub.
+    {
+        if(!gameRules.deathmatch)
+        {
+            saveSlots->clearSlot(BASE_SLOT);
+        }
+    }
+    Uri_Delete(nextMapUri); nextMapUri = 0;
 
     // Take a copy of the player objects (they will be cleared in the process
     // of calling P_SetupMap() and we need to restore them after).
+    playerbackup_t playerBackup[MAXPLAYERS];
     backupPlayersInHub(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
-    oldRandomClassesRule = gameRules.randomClasses;
+    byte oldRandomClassesRule = gameRules.randomClasses;
     gameRules.randomClasses = false;
 
     // We don't want to see a briefing if we've already visited this map.
     if(revisit) briefDisabled = true;
 
     /// @todo Necessary?
-    { uint i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(uint i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr = players + i;
+        player_t *plr     = players + i;
         ddplayer_t *ddplr = plr->plr;
 
         if(!ddplr->inGame) continue;
@@ -2840,7 +2823,7 @@ void G_DoLeaveMap()
 
         ST_AutomapOpen(i, false, true);
         Hu_InventoryOpen(i, false);
-    }}
+    }
     //<- todo end.
 
     // In Hexen the RNG is re-seeded each time the map changes.
@@ -2853,10 +2836,12 @@ void G_DoLeaveMap()
     gameMapEntrance = 0;
 #endif
 
+    loadmap_params_t p; de::zap(p);
     p.mapUri  = G_ComposeMapUri(gameEpisode, nextMap);
     p.revisit = revisit;
 
-    hasBrief = G_BriefingEnabled(p.mapUri, &fin);
+    ddfinale_t fin;
+    bool hasBrief = G_BriefingEnabled(p.mapUri, &fin);
     if(!hasBrief)
     {
         G_QueMapMusic(p.mapUri);
@@ -2903,10 +2888,8 @@ void G_DoLeaveMap()
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
     if(!IS_NETGAME && !gameRules.deathmatch)
     {
-        AutoStr *name = G_GenerateSaveGameName();
-        savestateworker_params_t p;
-
-        p.name = Str_Text(name);
+        savestateworker_params_t p; de::zap(p);
+        p.name = Str_Text(G_GenerateUserSaveDescription());
         p.slot = AUTO_SLOT;
 
         /// @todo Use progress bar mode and update progress during the setup.
@@ -2988,7 +2971,7 @@ dd_bool G_LoadGame(int slot)
 void G_DoLoadGame()
 {
 #if __JHEXEN__
-    dd_bool mustCopyBaseToAutoSlot = (gaLoadGameSlot != AUTO_SLOT);
+    bool mustCopyBaseToAutoSlot = (gaLoadGameSlot != AUTO_SLOT);
 #endif
 
     G_SetGameAction(GA_NONE);
@@ -3005,12 +2988,10 @@ void G_DoLoadGame()
 
 dd_bool G_IsSaveGamePossible()
 {
-    player_t* player;
-
     if(IS_CLIENT || Get(DD_PLAYBACK)) return false;
     if(GS_MAP != G_GameState()) return false;
 
-    player = &players[CONSOLEPLAYER];
+    player_t *player = &players[CONSOLEPLAYER];
     if(PST_DEAD == player->playerState) return false;
 
     return true;
@@ -3050,20 +3031,16 @@ dd_bool G_SaveGame(int slot)
     return G_SaveGame2(slot, NULL);
 }
 
-AutoStr *G_GenerateSaveGameName()
+AutoStr *G_GenerateUserSaveDescription()
 {
-    AutoStr *str = AutoStr_New();
-    int time = mapTime / TICRATE, hours, seconds, minutes;
-    char const *baseName, *mapTitle;
-    char baseNameBuf[256];
-    AutoStr *mapPath;
+    int time = mapTime / TICRATE;
 
-    hours   = time / 3600; time -= hours * 3600;
-    minutes = time / 60;   time -= minutes * 60;
-    seconds = time;
+    int const hours   = time / 3600; time -= hours * 3600;
+    int const minutes = time / 60;   time -= minutes * 60;
+    int const seconds = time;
 
-    mapPath  = Uri_Compose(gameMapUri);
-    mapTitle = P_MapTitle(0/*current map*/);
+    AutoStr *mapPath     = Uri_Compose(gameMapUri);
+    char const *mapTitle = P_MapTitle(0/*current map*/);
 
     // Still no map title? Use the identifier.
     // Some tricksy modders provide us with an empty title...
@@ -3073,15 +3050,17 @@ AutoStr *G_GenerateSaveGameName()
         mapTitle = Str_Text(mapPath);
     }
 
-    baseName = 0;
+    char baseNameBuf[256];
+    char const *baseName = 0;
     if(P_MapIsCustom(Str_Text(mapPath)))
     {
         F_ExtractFileBase(baseNameBuf, Str_Text(P_MapSourceFile(Str_Text(mapPath))), 256);
         baseName = baseNameBuf;
     }
 
+    AutoStr *str = AutoStr_New();
     Str_Appendf(str, "%s%s%s %02i:%02i:%02i", (baseName? baseName : ""),
-        (baseName? ":" : ""), mapTitle, hours, minutes, seconds);
+                (baseName? ":" : ""), mapTitle, hours, minutes, seconds);
 
     return str;
 }
@@ -3091,10 +3070,7 @@ AutoStr *G_GenerateSaveGameName()
  */
 void G_DoSaveGame()
 {
-    savestateworker_params_t p;
     char const *name;
-    dd_bool didSave;
-
     if(gaSaveGameName && !Str_IsEmpty(gaSaveGameName))
     {
         name = Str_Text(gaSaveGameName);
@@ -3110,18 +3086,20 @@ void G_DoSaveGame()
         }
         else
         {
-            name = Str_Text(G_GenerateSaveGameName());
+            name = Str_Text(G_GenerateUserSaveDescription());
         }
     }
 
-    /**
+    /*
      * Try to make a new game-save.
      */
+    savestateworker_params_t p; de::zap(p);
     p.name = name;
     p.slot = gaSaveGameSlot;
+
     /// @todo Use progress bar mode and update progress during the setup.
-    didSave = (BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                           G_SaveStateWorker, &p, "Saving game...") != 0);
+    bool didSave = (BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                                G_SaveStateWorker, &p, "Saving game...") != 0);
     if(didSave)
     {
         //Hu_MenuUpdateGameSaveWidgets();
@@ -3198,8 +3176,6 @@ static uint mapNumberFor(Uri const *mapUri)
 
 void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
 {
-    uint i;
-
     DENG_ASSERT(mapUri != 0 && rules != 0);
 
     G_StopDemo();
@@ -3210,9 +3186,9 @@ void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(uint i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr = players + i;
+        player_t *plr     = players + i;
         ddplayer_t *ddplr = plr->plr;
 
         if(!ddplr->inGame) continue;
@@ -3266,41 +3242,37 @@ void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
 
     NetSv_UpdateGameConfigDescription();
 
+    loadmap_params_t p; de::zap(p);
+    p.mapUri  = gameMapUri;
+    p.revisit = false;
+
+    ddfinale_t fin;
+    bool showBrief = G_BriefingEnabled(p.mapUri, &fin);
+    if(!showBrief)
     {
-        loadmap_params_t p;
-        dd_bool showBrief;
-        ddfinale_t fin;
+        G_QueMapMusic(p.mapUri);
+    }
 
-        p.mapUri  = gameMapUri;
-        p.revisit = false;
+    // If we're the server, let clients know the map will change.
+    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
-        showBrief = G_BriefingEnabled(p.mapUri, &fin);
-        if(!showBrief)
-        {
-            G_QueMapMusic(p.mapUri);
-        }
+    G_DoLoadMap(&p);
 
-        // If we're the server, let clients know the map will change.
-        NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
-
-        G_DoLoadMap(&p);
-
-        if(showBrief)
-        {
-            G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
-        }
-        else
-        {
-            // No briefing; begin the map.
-            HU_WakeWidgets(-1 /* all players */);
-            G_BeginMap();
-        }
+    if(showBrief)
+    {
+        G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
+    }
+    else
+    {
+        // No briefing; begin the map.
+        HU_WakeWidgets(-1 /* all players */);
+        G_BeginMap();
     }
 
     Z_CheckHeap();
 }
 
-int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)
+int G_QuitGameResponse(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
 {
     if(response == MSG_YES)
     {
@@ -3311,7 +3283,6 @@ int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)
 
 void G_QuitGame()
 {
-    char const *endString;
     if(G_QuitInProgress()) return;
 
     if(Hu_IsMessageActiveWithCallback(G_QuitGameResponse))
@@ -3322,6 +3293,7 @@ void G_QuitGame()
         return;
     }
 
+    char const *endString;
 #if __JDOOM__ || __JDOOM64__
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
 #else
@@ -3427,8 +3399,10 @@ uint G_LogicalMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__
     return P_TranslateMap(map);
+    DENG_UNUSED(episode);
 #elif __JDOOM64__
     return map;
+    DENG_UNUSED(episode);
 #else
 # if __JDOOM__
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
@@ -3451,6 +3425,7 @@ Uri *G_ComposeMapUri(uint episode, uint map)
     lumpname_t mapId;
 #if __JDOOM64__
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
+    DENG_UNUSED(episode);
 #elif __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
         dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
@@ -3460,15 +3435,14 @@ Uri *G_ComposeMapUri(uint episode, uint map)
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "E%uM%u", episode+1, map+1);
 #else
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
+    DENG_UNUSED(episode);
 #endif
     return Uri_NewWithPath2(mapId, RC_NULL);
 }
 
 dd_bool G_ValidateMap(uint *episode, uint *map)
 {
-    dd_bool ok = true;
-    AutoStr *path;
-    Uri *uri;
+    bool ok = true;
 
 #if __JDOOM__
     if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM_CHEX))
@@ -3536,8 +3510,8 @@ dd_bool G_ValidateMap(uint *episode, uint *map)
 #endif
 
     // Check that the map truly exists.
-    uri = G_ComposeMapUri(*episode, *map);
-    path = Uri_Compose(uri);
+    Uri *uri = G_ComposeMapUri(*episode, *map);
+    AutoStr *path = Uri_Compose(uri);
     if(!P_MapExists(Str_Text(path)))
     {
         // (0,0) should exist always?
@@ -3670,12 +3644,12 @@ uint G_NextLogicalMapNumber(dd_bool secretExit)
 /**
  * Print a list of maps and the WAD files where they are from.
  */
-void G_PrintFormattedMapList(uint episode, char const** files, uint count)
+void G_PrintFormattedMapList(uint episode, char const **files, uint count)
 {
-    char const* current = NULL;
-    uint i, k, rangeStart = 0, len;
+    char const *current = 0;
+    uint rangeStart = 0;
 
-    for(i = 0; i < count; ++i)
+    for(uint i = 0; i < count; ++i)
     {
         if(!current && files[i])
         {
@@ -3685,22 +3659,22 @@ void G_PrintFormattedMapList(uint episode, char const** files, uint count)
         else if(current && (!files[i] || stricmp(current, files[i])))
         {
             // Print a range.
-            len = i - rangeStart;
+            uint len = i - rangeStart;
             LogBuffer_Printf(DE2_LOG_MAP, "  "); // Indentation.
             if(len <= 2)
             {
-                for(k = rangeStart; k < i; ++k)
+                for(uint k = rangeStart; k < i; ++k)
                 {
-                    Uri* mapUri = G_ComposeMapUri(episode, k);
-                    AutoStr* path = Uri_ToString(mapUri);
+                    Uri *mapUri = G_ComposeMapUri(episode, k);
+                    AutoStr *path = Uri_ToString(mapUri);
                     LogBuffer_Printf(DE2_LOG_MAP, "%s%s", Str_Text(path), (k != i - 1) ? "," : "");
                     Uri_Delete(mapUri);
                 }
             }
             else
             {
-                Uri* mapUri = G_ComposeMapUri(episode, rangeStart);
-                AutoStr* path = Uri_ToString(mapUri);
+                Uri *mapUri = G_ComposeMapUri(episode, rangeStart);
+                AutoStr *path = Uri_ToString(mapUri);
 
                 LogBuffer_Printf(DE2_LOG_MAP, "%s-", Str_Text(path));
                 Uri_Delete(mapUri);
@@ -3719,10 +3693,6 @@ void G_PrintFormattedMapList(uint episode, char const** files, uint count)
     }
 }
 
-/**
- * Print a list of all currently available maps and the location of the
- * source file/directory which contains them.
- */
 void G_PrintMapList()
 {
 #if __JDOOM__
@@ -3736,17 +3706,16 @@ void G_PrintMapList()
     uint maxMapsPerEpisode = 99;
 #endif
 
-    uint episode, map;
     char const *sourceList[100];
 
-    for(episode = 0; episode < maxEpisodes; ++episode)
+    for(uint episode = 0; episode < maxEpisodes; ++episode)
     {
-        memset((void *) sourceList, 0, sizeof(sourceList));
+        de::zap(sourceList);
 
         // Find the name of each map (not all may exist).
-        for(map = 0; map < maxMapsPerEpisode; ++map)
+        for(uint map = 0; map < maxMapsPerEpisode; ++map)
         {
-            Uri *uri = G_ComposeMapUri(episode, map);
+            Uri *uri      = G_ComposeMapUri(episode, map);
             AutoStr *path = P_MapSourceFile(Str_Text(Uri_Compose(uri)));
             if(!Str_IsEmpty(path))
             {
@@ -3794,7 +3763,9 @@ int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
 #endif
 
     if(G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+    {
         return false;
+    }
 
     // Is there such a finale definition?
     return Def_Get(DD_DEF_FINALE_AFTER, Str_Text(Uri_Compose(mapUri)), fin);
@@ -3809,14 +3780,15 @@ void G_StopDemo()
     DD_Execute(true, "stopdemo");
 }
 
-int Hook_DemoStop(int hookType, int val, void* paramaters)
+int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
 {
-    dd_bool aborted = val != 0;
+    bool aborted = val != 0;
 
     G_ChangeGameState(GS_WAITING);
 
     if(!aborted && singledemo)
-    {   // Playback ended normally.
+    {
+        // Playback ended normally.
         G_SetGameAction(GA_QUIT);
         return true;
     }
@@ -3836,14 +3808,13 @@ int Hook_DemoStop(int hookType, int val, void* paramaters)
 #endif
     }
 
-    {int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         ST_AutomapOpen(i, false, true);
 #if __JHERETIC__ || __JHEXEN__
         Hu_InventoryOpen(i, false);
 #endif
-    }}
+    }
     return true;
 }
 
@@ -3857,33 +3828,29 @@ void G_ScreenShot()
  * file name base.
  * @return  Composed file name.
  */
-static AutoStr* composeScreenshotFileName()
+static AutoStr *composeScreenshotFileName()
 {
     GameInfo gameInfo;
-    AutoStr* name;
-    int numPos;
-
     if(!DD_GameInfo(&gameInfo))
     {
         Con_Error("composeScreenshotFileName: Failed retrieving GameInfo.");
         return 0; // Unreachable.
     }
 
-    name = Str_Appendf(AutoStr_NewStd(), "%s-", Str_Text(gameInfo.identityKey));
-    numPos = Str_Length(name);
-    { int i;
-    for(i = 0; i < 1e6; ++i) // Stop eventually...
+    AutoStr *name = Str_Appendf(AutoStr_NewStd(), "%s-", Str_Text(gameInfo.identityKey));
+    int numPos = Str_Length(name);
+    for(int i = 0; i < 1e6; ++i) // Stop eventually...
     {
         Str_Appendf(name, "%03i.png", i);
         if(!F_FileExists(Str_Text(name))) break;
         Str_Truncate(name, numPos);
-    }}
+    }
     return name;
 }
 
 void G_DoScreenShot()
 {
-    AutoStr* fileName = composeScreenshotFileName();
+    AutoStr *fileName = composeScreenshotFileName();
     if(fileName && M_ScreenShot(Str_Text(fileName), 24))
     {
         /// @todo Do not use the console player's message log for this notification.
@@ -3934,11 +3901,11 @@ D_CMD(OpenSaveMenu)
     return true;
 }
 
-int loadGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+static int loadGameConfirmResponse(msgresponse_t response, int userValue, void * /*userPointer*/)
 {
     if(response == MSG_YES)
     {
-        const int slot = userValue;
+        int const slot = userValue;
         G_LoadGame(slot);
     }
     return true;
@@ -3948,8 +3915,7 @@ D_CMD(LoadGame)
 {
     DENG_UNUSED(src);
 
-    dd_bool const confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
-    int slot;
+    bool const confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
 
     if(G_QuitInProgress()) return false;
     if(!G_IsLoadGamePossible()) return false;
@@ -3964,7 +3930,7 @@ D_CMD(LoadGame)
     // Ensure we have up-to-date info.
     saveSlots->updateAllSaveInfo();
 
-    slot = saveSlots->parseSlotIdentifier(argv[1]);
+    int slot = saveSlots->parseSlotIdentifier(argv[1]);
     if(saveSlots->slotInUse(slot))
     {
         // A known used slot identifier.
@@ -4016,12 +3982,12 @@ D_CMD(QuickLoadGame)
     return DD_Execute(true, "loadgame quick");
 }
 
-int saveGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+static int saveGameConfirmResponse(msgresponse_t response, int userValue, void *userPointer)
 {
     if(response == MSG_YES)
     {
-        const int slot = userValue;
-        ddstring_t* name = (ddstring_t*)userPointer;
+        int const slot = userValue;
+        ddstring_t *name = (ddstring_t *)userPointer;
         G_SaveGame2(slot, Str_Text(name));
         // We're done with the name.
         Str_Delete(name);
@@ -4033,7 +3999,7 @@ D_CMD(SaveGame)
 {
     DENG_UNUSED(src);
 
-    dd_bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
     player_t *player = &players[CONSOLEPLAYER];
 
     if(G_QuitInProgress()) return false;
@@ -4125,8 +4091,6 @@ dd_bool G_DeleteSaveGame(int slot)
     if(!saveSlots->slotInUse(slot)) return false;
 
     // A known slot identifier.
-    SaveInfo *info = saveSlots->saveInfoPtr(slot);
-    DENG_ASSERT(info != 0);
     saveSlots->clearSlot(slot);
 
     if(Hu_MenuIsActive())
@@ -4140,15 +4104,15 @@ dd_bool G_DeleteSaveGame(int slot)
             Hu_MenuSetActivePage2(activePage, true);
         }
     }
+
     return true;
 }
 
-int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void * /*userPointer*/)
 {
-    DENG_UNUSED(userPointer);
     if(response == MSG_YES)
     {
-        const int slot = userValue;
+        int const slot = userValue;
         G_DeleteSaveGame(slot);
     }
     return true;
@@ -4252,15 +4216,16 @@ D_CMD(ListMaps)
  */
 D_CMD(WarpMap)
 {
-    dd_bool const forceNewGameSession = IS_NETGAME != 0;
-    uint epsd, map, i;
-    Uri *newMapUri;
+    bool const forceNewGameSession = IS_NETGAME != 0;
 
     // Only server operators can warp maps in network games.
     /// @todo Implement vote or similar mechanics.
     if(IS_NETGAME && !IS_NETWORK_SERVER)
+    {
         return false;
+    }
 
+    uint epsd, map;
 #if __JDOOM__ || __JDOOM64__ || __JHEXEN__
 # if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
@@ -4307,7 +4272,7 @@ D_CMD(WarpMap)
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return false;
     }
-    newMapUri = G_ComposeMapUri(epsd, map);
+    Uri *newMapUri = G_ComposeMapUri(epsd, map);
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
@@ -4322,9 +4287,9 @@ D_CMD(WarpMap)
 
     // Close any left open UIs.
     /// @todo Still necessary here?
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr = players + i;
+        player_t *plr     = players + i;
         ddplayer_t *ddplr = plr->plr;
         if(!ddplr->inGame) continue;
 

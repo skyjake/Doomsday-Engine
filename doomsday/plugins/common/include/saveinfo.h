@@ -44,7 +44,7 @@ public:
     SaveInfo();
     SaveInfo(SaveInfo const &other);
 
-    static SaveInfo *newWithCurrentSessionMetadata(de::String userDescription);
+    static SaveInfo *newWithCurrentSessionMetadata(de::String const &userDescription = "");
 
     SaveInfo &operator = (SaveInfo const &other);
 
@@ -87,7 +87,7 @@ public:
      * Returns the textual description of the game session provided by the user.
      */
     de::String const &userDescription() const;
-    void setUserDescription(de::String newDescription);
+    void setUserDescription(de::String newUserDescription);
 
     /**
      * @see G_GenerateSessionId()

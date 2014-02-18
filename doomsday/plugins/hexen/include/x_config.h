@@ -174,7 +174,7 @@ typedef struct {
     byte            menuShortcutsEnabled;
     byte            menuScaleMode;
     int             menuPatchReplaceMode;
-    byte            menuGameSaveSuggestName;
+    byte            menuGameSaveSuggestDescription;
     byte            menuCursorRotate;
     float           menuTextColors[MENU_COLOR_COUNT][3];
     float           menuTextFlashColor[3];

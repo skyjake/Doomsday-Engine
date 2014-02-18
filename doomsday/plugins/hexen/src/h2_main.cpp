@@ -192,7 +192,7 @@ void X_PreInit()
 
     cfg.hudFog = 5;
     cfg.menuSlam = true;
-    cfg.menuGameSaveSuggestName = true;
+    cfg.menuGameSaveSuggestDescription = true;
     cfg.menuTextFlashColor[0] = 1.0f;
     cfg.menuTextFlashColor[1] = .5f;
     cfg.menuTextFlashColor[2] = .5f;

@@ -985,7 +985,7 @@ void SV_SaveGameClient(uint sessionId)
     }
 
     // Prepare new save info.
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata("");
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata();
     info->setSessionId(sessionId);
 
     Writer *writer = SV_NewWriter();

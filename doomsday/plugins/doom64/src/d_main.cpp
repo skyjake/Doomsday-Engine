@@ -201,7 +201,7 @@ void D_PreInit()
     cfg.menuTextColors[3][CB] = 0;
     cfg.menuSlam = false;
     cfg.menuShortcutsEnabled = true;
-    cfg.menuGameSaveSuggestName = true;
+    cfg.menuGameSaveSuggestDescription = true;
 
     cfg.statusbarScale = 1;
 

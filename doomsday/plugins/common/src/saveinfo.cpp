@@ -30,7 +30,7 @@
 
 DENG2_PIMPL_NOREF(SaveInfo)
 {
-    de::String description;
+    de::String userDescription;
     uint sessionId;
     int magic;
     int version;
@@ -59,7 +59,7 @@ DENG2_PIMPL_NOREF(SaveInfo)
 
     Instance(Instance const &other)
         : IPrivate()
-        , description    (other.description)
+        , userDescription(other.userDescription)
         , sessionId      (other.sessionId)
         , magic          (other.magic)
         , version        (other.version)
@@ -88,7 +88,7 @@ DENG2_PIMPL_NOREF(SaveInfo)
     {
         char descBuf[24];
         Reader_Read(reader, descBuf, 24);
-        description = de::String(descBuf, 24);
+        userDescription = de::String(descBuf, 24);
 
         magic     = MY_SAVE_MAGIC; // Lets pretend...
 
@@ -130,10 +130,10 @@ SaveInfo::SaveInfo() : d(new Instance)
 SaveInfo::SaveInfo(SaveInfo const &other) : d(new Instance(*other.d))
 {}
 
-SaveInfo *SaveInfo::newWithCurrentSessionMetadata(de::String description) // static
+SaveInfo *SaveInfo::newWithCurrentSessionMetadata(de::String const &userDescription) // static
 {
     SaveInfo *info = new SaveInfo;
-    info->setUserDescription(description);
+    info->setUserDescription(userDescription);
     info->applyCurrentSessionMetadata();
     info->setSessionId(G_GenerateSessionId());
     return info;
@@ -174,12 +174,12 @@ void SaveInfo::setVersion(int newVersion)
 
 de::String const &SaveInfo::userDescription() const
 {
-    return d->description;
+    return d->userDescription;
 }
 
-void SaveInfo::setUserDescription(de::String newDescription)
+void SaveInfo::setUserDescription(de::String newUserDescription)
 {
-    d->description = newDescription;
+    d->userDescription = newUserDescription;
 }
 
 uint SaveInfo::sessionId() const
@@ -294,7 +294,7 @@ void SaveInfo::updateFromFile(de::Path path)
     }
 
     // Ensure we have a valid description.
-    if(d->description.isEmpty())
+    if(d->userDescription.isEmpty())
     {
         setUserDescription("UNNAMED");
     }
@@ -308,7 +308,7 @@ void SaveInfo::write(Writer *writer) const
     AutoStr *gameIdentityKeyStr = AutoStr_FromTextStd(d->gameIdentityKey.toUtf8().constData());
     Str_Write(gameIdentityKeyStr, writer);
 
-    AutoStr *descriptionStr = AutoStr_FromTextStd(d->description.toUtf8().constData());
+    AutoStr *descriptionStr = AutoStr_FromTextStd(d->userDescription.toUtf8().constData());
     Str_Write(descriptionStr, writer);
 
     Uri_Write(d->mapUri, writer);
@@ -362,14 +362,14 @@ void SaveInfo::read(Reader *reader)
     {
         AutoStr *tmp = AutoStr_NewStd();
         Str_Read(tmp, reader);
-        d->description = Str_Text(tmp);
+        d->userDescription = Str_Text(tmp);
     }
     else
     {
         // Description is a fixed 24 characters in length.
         char descBuf[24];
         Reader_Read(reader, descBuf, 24);
-        d->description = de::String(descBuf, 24);
+        d->userDescription = de::String(descBuf, 24);
     }
 
     if(d->version >= 14)

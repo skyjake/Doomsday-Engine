@@ -676,7 +676,7 @@ cvartemplate_t menuCVars[] = {
 #if __JDOOM__ || __JDOOM64__
     { "menu-quitsound", 0,  CVT_INT,    &cfg.menuQuitSound, 0, 1 },
 #endif
-    { "menu-save-suggestname", 0, CVT_BYTE, &cfg.menuGameSaveSuggestName, 0, 1 },
+    { "menu-save-suggestname", 0, CVT_BYTE, &cfg.menuGameSaveSuggestDescription, 0, 1 },
 
     // Aliases for obsolete cvars:
     { "menu-turningskull", 0, CVT_BYTE, &cfg.menuCursorRotate, 0, 1 },
@@ -5871,27 +5871,23 @@ int Hu_MenuCvarList(mn_object_t *obj, mn_actionid_t action, void *parameters)
     return 0;
 }
 
-int Hu_MenuSaveSlotEdit(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuSaveSlotEdit(mn_object_t *obj, mn_actionid_t action, void * /*context*/)
 {
-    DENG_UNUSED(parameters);
-
     if(MNA_ACTIVE != action) return 1;
 
     // Are we suggesting a new name?
-    if(cfg.menuGameSaveSuggestName)
+    if(cfg.menuGameSaveSuggestDescription)
     {
-        AutoStr* suggestName = G_GenerateSaveGameName();
-        MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, Str_Text(suggestName));
+        AutoStr *suggestion = G_GenerateUserSaveDescription();
+        MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, Str_Text(suggestion));
     }
     return 0;
 }
 
-int Hu_MenuCvarEdit(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuCvarEdit(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
     mndata_edit_t const *edit = (mndata_edit_t *)ob->_typedata;
     cvartype_t varType = Con_GetVariableType((char const *)edit->data1);
-
-    DENG_UNUSED(parameters);
 
     if(MNA_MODIFIED != action) return 1;
 

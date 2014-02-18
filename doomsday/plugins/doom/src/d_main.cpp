@@ -180,7 +180,7 @@ void D_PreInit()
     cfg.menuQuitSound = true;
     cfg.menuSlam = false;
     cfg.menuShortcutsEnabled = true;
-    cfg.menuGameSaveSuggestName = true;
+    cfg.menuGameSaveSuggestDescription = true;
     cfg.menuEffectFlags = MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER;
     cfg.menuTextFlashColor[0] = .7f;
     cfg.menuTextFlashColor[1] = .9f;
