@@ -20,11 +20,10 @@
 
 #ifndef LIBCOMMON_SAVESLOTS_H
 #define LIBCOMMON_SAVESLOTS_H
+#ifdef __cplusplus
 
 #include "common.h"
 #include "saveinfo.h"
-
-#ifdef __cplusplus
 #include <de/Error>
 #include <de/Path>
 
@@ -171,37 +170,6 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
 #endif // __cplusplus
-
-// C wrapper API ---------------------------------------------------------------
-
-#ifdef __cplusplus
-extern "C" {
-#else
-typedef void *SaveSlots;
-#endif
-
-SaveSlots *SaveSlots_New(int slotCount);
-void SaveSlots_Delete(SaveSlots *sslots);
-
-void SaveSlots_ClearAllSaveInfo(SaveSlots *sslots);
-void SaveSlots_UpdateAllSaveInfo(SaveSlots *sslots);
-int SaveSlots_SlotCount(SaveSlots const *sslots);
-dd_bool SaveSlots_IsValidSlot(SaveSlots const *sslots, int slot);
-AutoStr *SaveSlots_ComposeSlotIdentifier(SaveSlots const *sslots, int slot);
-int SaveSlots_ParseSlotIdentifier(SaveSlots const *sslots, char const *str);
-int SaveSlots_FindSlotWithSaveDescription(SaveSlots const *sslots, char const *description);
-dd_bool SaveSlots_SlotInUse(SaveSlots const *sslots, int slot);
-dd_bool SaveSlots_SlotIsUserWritable(SaveSlots const *sslots, int slot);
-SaveInfo *SaveSlots_SaveInfo(SaveSlots *sslots, int slot);
-void SaveSlots_ReplaceSaveInfo(SaveSlots *sslots, int slot, SaveInfo *newInfo);
-void SaveSlots_ClearSlot(SaveSlots *sslots, int slot);
-void SaveSlots_CopySlot(SaveSlots *sslots, int sourceSlot, int destSlot);
-
-void SaveSlots_ConsoleRegister();
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
 #endif // LIBCOMMON_SAVESLOTS_H

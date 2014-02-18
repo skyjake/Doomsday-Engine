@@ -355,8 +355,8 @@ void X_PostInit()
     p = CommandLine_CheckWith("-loadgame", 1);
     if(p != 0)
     {
-        int const slotNumber = SaveSlots_ParseSlotIdentifier(saveSlots, CommandLine_At(p + 1));
-        if(SaveSlots_SlotIsUserWritable(saveSlots, slotNumber) && G_LoadGame(slotNumber))
+        int const slotNumber = saveSlots->parseSlotIdentifier(CommandLine_At(p + 1));
+        if(saveSlots->slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
         {
             // No further initialization is to be done.
             return;

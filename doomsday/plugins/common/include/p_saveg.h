@@ -32,9 +32,9 @@ DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
 #endif
 
+#ifdef __cplusplus
 DENG_EXTERN_C SaveSlots *saveSlots;
 
-#ifdef __cplusplus
 extern "C" {
 #endif
 

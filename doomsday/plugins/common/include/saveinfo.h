@@ -20,11 +20,10 @@
 
 #ifndef LIBCOMMON_SAVEINFO
 #define LIBCOMMON_SAVEINFO
+#ifdef __cplusplus
 
 #include "doomsday.h"
 #include "common.h"
-
-#ifdef __cplusplus
 #include <de/Path>
 
 /**
@@ -143,43 +142,4 @@ private:
 };
 
 #endif // __cplusplus
-
-// C wrapper API ---------------------------------------------------------------
-
-#ifdef __cplusplus
-extern "C" {
-#else
-typedef void *SaveInfo;
-#endif
-
-SaveInfo *SaveInfo_New(void);
-SaveInfo *SaveInfo_Dup(SaveInfo const *other);
-
-void SaveInfo_Delete(SaveInfo *info);
-
-SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
-dd_bool SaveInfo_IsLoadable(SaveInfo *info);
-Str const *SaveInfo_GameIdentityKey(SaveInfo const *info);
-void SaveInfo_SetGameIdentityKey(SaveInfo *info, Str const *newGameIdentityKey);
-Str const *SaveInfo_Description(SaveInfo const *info);
-void SaveInfo_SetDescription(SaveInfo *info, Str const *newDescription);
-int SaveInfo_Version(SaveInfo const *info);
-void SaveInfo_SetVersion(SaveInfo *info, int newVersion);
-uint SaveInfo_SessionId(SaveInfo const *info);
-void SaveInfo_SetSessionId(SaveInfo *info, uint newSessionId);
-Uri const *SaveInfo_MapUri(SaveInfo const *info);
-void SaveInfo_SetMapUri(SaveInfo *info, Uri const *newMapUri);
-#if !__JHEXEN__
-int SaveInfo_MapTime(SaveInfo const *info);
-void SaveInfo_SetMapTime(SaveInfo *info, int newMapTime);
-#endif
-GameRuleset const *SaveInfo_GameRules(SaveInfo const *info);
-void SaveInfo_SetGameRules(SaveInfo *info, GameRuleset const *newRules);
-void SaveInfo_Write(SaveInfo *info, Writer *writer);
-void SaveInfo_Read(SaveInfo *info, Reader *reader);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
 #endif // LIBCOMMON_SAVEINFO

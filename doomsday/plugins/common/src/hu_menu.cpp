@@ -5734,29 +5734,26 @@ void Hu_MenuUpdateGameSaveWidgets()
         MNF_ID6, MNF_ID7
 #endif
     };
-    mn_page_t *page;
-    int i;
 
     if(!menuActive) return;
 
     // Prompt a refresh of the game-save info. We don't yet actively monitor
     // the contents of the game-save paths, so instead we settle for manual
     // updates whenever the save/load menu is opened.
-    SaveSlots_UpdateAllSaveInfo(saveSlots);
+    saveSlots->updateAllSaveInfo();
 
     // Update widgets.
-    page = Hu_MenuFindPageByName("LoadGame");
-    for(i = 0; i < NUMSAVESLOTS; ++i)
+    mn_page_t *page = Hu_MenuFindPageByName("LoadGame");
+    for(int i = 0; i < NUMSAVESLOTS; ++i)
     {
         mn_object_t *obj    = MN_MustFindObjectOnPage(page, 0, saveSlotObjectIds[i]);
         mndata_edit_t *edit = (mndata_edit_t *) obj->_typedata;
         char const *text = "";
 
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);
-        if(SaveSlots_SlotInUse(saveSlots, edit->data2))
+        if(saveSlots->slotInUse(edit->data2))
         {
-            SaveInfo *info = SaveSlots_SaveInfo(saveSlots, edit->data2);
-            text = Str_Text(SaveInfo_Description(info));
+            text = Str_Text(saveSlots->saveInfo(edit->data2).description());
             MNObject_SetFlags(obj, FO_CLEAR, MNF_DISABLED);
         }
         MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, text);
