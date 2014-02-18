@@ -30,6 +30,7 @@ DENG2_OBSERVES(Action, Triggered)
     State state;
     DotPath hoverTextColor;
     DotPath originalTextColor;
+    DotPath bgColorId;
     HoverColorMode hoverColorMode;
     Action *action;
     Animation scale;
@@ -39,6 +40,7 @@ DENG2_OBSERVES(Action, Triggered)
     Instance(Public *i)
         : Base(i)
         , state(Up)
+        , bgColorId("background")
         , hoverColorMode(ReplaceColor)
         , action(0)
         , scale(1.f)
@@ -138,7 +140,7 @@ DENG2_OBSERVES(Action, Triggered)
 
     void setDefaultBackground()
     {
-        self.set(Background(style().colors().colorf("background"),
+        self.set(Background(style().colors().colorf(bgColorId),
                             Background::GradientFrame, Vector4f(1, 1, 1, frameOpacity), 6));
     }
 
@@ -147,7 +149,7 @@ DENG2_OBSERVES(Action, Triggered)
         Background bg = self.background();
         if(bg.type == Background::GradientFrame)
         {
-            bg.solidFill = style().colors().colorf("background");
+            bg.solidFill = style().colors().colorf(bgColorId);
             bg.color = Vector4f(1, 1, 1, frameOpacity);
             self.set(bg);
         }
@@ -182,6 +184,12 @@ void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId, HoverColorMode 
 {
     d->hoverTextColor = hoverTextId;
     d->hoverColorMode = mode;
+}
+
+void ButtonWidget::setBackgroundColor(DotPath const &bgColorId)
+{
+    d->bgColorId = bgColorId;
+    d->updateBackground();
 }
 
 void ButtonWidget::setAction(RefArg<Action> action)

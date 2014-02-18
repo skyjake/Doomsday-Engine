@@ -74,6 +74,8 @@ public:
      */
     void setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode = ModulateColor);
 
+    void setBackgroundColor(DotPath const &bgColorId);
+
     /**
      * Sets the action of the button. It gets triggered when the button is
      * pressed.
