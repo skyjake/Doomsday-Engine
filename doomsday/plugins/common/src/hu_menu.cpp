@@ -49,13 +49,23 @@
 #  define FIXED_LINE_HEIGHT (19+1)
 #endif
 
-typedef struct cvarbutton_s {
+struct cvarbutton_t
+{
     char active;
     char const *cvarname;
     char const *yes;
     char const *no;
     int mask;
-} cvarbutton_t;
+
+    cvarbutton_t(char active = 0, char const *cvarname = 0, char const *yes = 0, char const *no = 0,
+                 int mask = 0)
+        : active(active)
+        , cvarname(cvarname)
+        , yes(yes)
+        , no(no)
+        , mask(mask)
+    {}
+};
 
 int Hu_MenuActionSetActivePage(mn_object_t *ob, mn_actionid_t action, void *parameters);
 int Hu_MenuActionInitNewGame(mn_object_t *ob, mn_actionid_t action, void *parameters);
@@ -134,141 +144,141 @@ static void Hu_MenuUpdateCursorState();
 static dd_bool Hu_MenuHasCursorRotation(mn_object_t *obj);
 
 cvarbutton_t mnCVarButtons[] = {
-    { 0, "ctl-aim-noauto" },
+    cvarbutton_t(0, "ctl-aim-noauto"),
 #if __JHERETIC__ || __JHEXEN__
-    { 0, "ctl-inventory-mode", "Scroll", "Cursor" },
-    { 0, "ctl-inventory-use-immediate" },
-    { 0, "ctl-inventory-use-next" },
-    { 0, "ctl-inventory-wrap" },
+    cvarbutton_t(0, "ctl-inventory-mode", "Scroll", "Cursor"),
+    cvarbutton_t(0, "ctl-inventory-use-immediate"),
+    cvarbutton_t(0, "ctl-inventory-use-next"),
+    cvarbutton_t(0, "ctl-inventory-wrap"),
 #endif
-    { 0, "ctl-look-spring" },
-    { 0, "ctl-run" },
+    cvarbutton_t(0, "ctl-look-spring"),
+    cvarbutton_t(0, "ctl-run"),
 #if __JDOOM__ || __JDOOM64__
-    { 0, "game-anybossdeath666" },
+    cvarbutton_t(0, "game-anybossdeath666"),
 #endif
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { 0, "game-corpse-sliding" },
+    cvarbutton_t(0, "game-corpse-sliding"),
 #endif
 #if __JDOOM__ || __JDOOM64__
-    { 0, "game-maxskulls" },
+    cvarbutton_t(0, "game-maxskulls"),
 #endif
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { 0, "game-monsters-stuckindoors" },
-    { 0, "game-monsters-floatoverblocking" },
-    { 0, "game-objects-clipping" },
-    { 0, "game-objects-falloff" },
+    cvarbutton_t(0, "game-monsters-stuckindoors"),
+    cvarbutton_t(0, "game-monsters-floatoverblocking"),
+    cvarbutton_t(0, "game-objects-clipping"),
+    cvarbutton_t(0, "game-objects-falloff"),
 #endif
 #if __JDOOM__ || __JDOOM64__
-    { 0, "game-objects-gibcrushednonbleeders" },
+    cvarbutton_t(0, "game-objects-gibcrushednonbleeders"),
 #endif
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { 0, "game-objects-neverhangoverledges" },
-    { 0, "game-player-wallrun-northonly" },
+    cvarbutton_t(0, "game-objects-neverhangoverledges"),
+    cvarbutton_t(0, "game-player-wallrun-northonly"),
 #endif
 #if __JDOOM__
-    { 0, "game-raiseghosts" },
+    cvarbutton_t(0, "game-raiseghosts"),
 #endif
-    { 0, "game-save-confirm" },
-    { 0, "game-save-confirm-loadonreborn" },
+    cvarbutton_t(0, "game-save-confirm"),
+    cvarbutton_t(0, "game-save-confirm-loadonreborn"),
 #if !__JHEXEN__
-    { 0, "game-save-auto-loadonreborn" },
+    cvarbutton_t(0, "game-save-auto-loadonreborn"),
 #endif
-    { 0, "game-save-last-loadonreborn" },
+    cvarbutton_t(0, "game-save-last-loadonreborn"),
 #if __JDOOM__ || __JDOOM64__
-    { 0, "game-skullsinwalls" },
+    cvarbutton_t(0, "game-skullsinwalls"),
 #if __JDOOM__
-    { 0, "game-vilechase-usevileradius" },
+    cvarbutton_t(0, "game-vilechase-usevileradius"),
 #endif
-    { 0, "game-zombiescanexit" },
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { 0, "hud-ammo" },
-    { 0, "hud-armor" },
+    cvarbutton_t(0, "game-zombiescanexit"),
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { 0, "hud-cheat-counter-show-mapopen" },
+    cvarbutton_t(0, "hud-ammo"),
+    cvarbutton_t(0, "hud-armor"),
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    cvarbutton_t(0, "hud-cheat-counter-show-mapopen"),
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    { 0, "hud-currentitem" },
+    cvarbutton_t(0, "hud-currentitem"),
 #endif
 #if __JDOOM__
-    { 0, "hud-face" },
-    { 0, "hud-face-ouchfix" },
+    cvarbutton_t(0, "hud-face"),
+    cvarbutton_t(0, "hud-face-ouchfix"),
 #endif
-    { 0, "hud-health" },
+    cvarbutton_t(0, "hud-health"),
 #if __JHERETIC__ || __JHEXEN__
-    { 0, "hud-inventory-slot-showempty" },
+    cvarbutton_t(0, "hud-inventory-slot-showempty"),
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { 0, "hud-keys" },
+    cvarbutton_t(0, "hud-keys"),
 #endif
 #if __JDOOM__
-    { 0, "hud-keys-combine" },
+    cvarbutton_t(0, "hud-keys-combine"),
 #endif
 #if __JHEXEN__
-    { 0, "hud-mana" },
+    cvarbutton_t(0, "hud-mana"),
 #endif
 #if __JDOOM64__
-    { 0, "hud-power" },
+    cvarbutton_t(0, "hud-power"),
 #endif
 #if __JDOOM__ || __JDOOM64__
-    { 0, "hud-status-weaponslots-ownedfix" },
+    cvarbutton_t(0, "hud-status-weaponslots-ownedfix"),
 #endif
-    { 0, "hud-unhide-damage" },
-    { 0, "hud-unhide-pickup-ammo" },
-    { 0, "hud-unhide-pickup-armor" },
-    { 0, "hud-unhide-pickup-health" },
+    cvarbutton_t(0, "hud-unhide-damage"),
+    cvarbutton_t(0, "hud-unhide-pickup-ammo"),
+    cvarbutton_t(0, "hud-unhide-pickup-armor"),
+    cvarbutton_t(0, "hud-unhide-pickup-health"),
 #if __JHERETIC__ || __JHEXEN__
-    { 0, "hud-unhide-pickup-invitem" },
+    cvarbutton_t(0, "hud-unhide-pickup-invitem"),
 #endif
-    { 0, "hud-unhide-pickup-powerup" },
-    { 0, "hud-unhide-pickup-key" },
-    { 0, "hud-unhide-pickup-weapon" },
-    { 0, "map-door-colors" },
-    { 0, "msg-show" },
+    cvarbutton_t(0, "hud-unhide-pickup-powerup"),
+    cvarbutton_t(0, "hud-unhide-pickup-key"),
+    cvarbutton_t(0, "hud-unhide-pickup-weapon"),
+    cvarbutton_t(0, "map-door-colors"),
+    cvarbutton_t(0, "msg-show"),
 #if __JDOOM__ || __JDOOM64__
-    { 0, "player-autoswitch-berserk" },
+    cvarbutton_t(0, "player-autoswitch-berserk"),
 #endif
-    { 0, "player-autoswitch-notfiring" },
+    cvarbutton_t(0, "player-autoswitch-notfiring"),
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { 0, "player-jump" },
+    cvarbutton_t(0, "player-jump"),
 #endif
-    { 0, "player-weapon-cycle-sequential" },
-    { 0, "player-weapon-nextmode" },
+    cvarbutton_t(0, "player-weapon-cycle-sequential"),
+    cvarbutton_t(0, "player-weapon-nextmode"),
 #if __JDOOM64__
-    { 0, "player-weapon-recoil" },
+    cvarbutton_t(0, "player-weapon-recoil"),
 #endif
 #if __JDOOM__ || __JDOOM64__
-    { 0, "server-game-bfg-freeaim" },
+    cvarbutton_t(0, "server-game-bfg-freeaim"),
 #endif
-    { 0, "server-game-coop-nodamage" },
+    cvarbutton_t(0, "server-game-coop-nodamage"),
 #if __JDOOM__ || __JDOOM64__
-    { 0, "server-game-coop-nothing" },
-    { 0, "server-game-coop-noweapons" },
-    { 0, "server-game-coop-respawn-items" },
+    cvarbutton_t(0, "server-game-coop-nothing"),
+    cvarbutton_t(0, "server-game-coop-noweapons"),
+    cvarbutton_t(0, "server-game-coop-respawn-items"),
 #endif
 #if __JHEXEN__
-    { 0, "server-game-deathmatch" },
+    cvarbutton_t(0, "server-game-deathmatch"),
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { 0, "server-game-jump" },
+    cvarbutton_t(0, "server-game-jump"),
 #endif
 #if __JDOOM__ || __JDOOM64__
-    { 0, "server-game-nobfg" },
+    cvarbutton_t(0, "server-game-nobfg"),
 #endif
-    { 0, "server-game-nomonsters" },
+    cvarbutton_t(0, "server-game-nomonsters"),
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { 0, "server-game-noteamdamage" },
+    cvarbutton_t(0, "server-game-noteamdamage"),
 #endif
-    { 0, "server-game-radiusattack-nomaxz" },
+    cvarbutton_t(0, "server-game-radiusattack-nomaxz"),
 #if __JHEXEN__
-    { 0, "server-game-randclass" },
+    cvarbutton_t(0, "server-game-randclass"),
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { 0, "server-game-respawn" },
+    cvarbutton_t(0, "server-game-respawn"),
 #endif
-    { 0, "view-cross-vitality" },
-    { 0, 0 }
+    cvarbutton_t(0, "view-cross-vitality"),
+    cvarbutton_t()
 };
 
 int menuTime;
@@ -331,30 +341,30 @@ static patchid_t pRotatingSkull[18];
 static patchid_t pCursors[MENU_CURSOR_FRAMECOUNT];
 
 #if __JDOOM64__
-mndata_slider_t sld_hud_viewsize = { 3, 11, 0, 1, false, "view-size" };
+mndata_slider_t sld_hud_viewsize(3, 11, 0, 1, false, (void *)"view-size");
 #else
-mndata_slider_t sld_hud_viewsize = { 3, 13, 0, 1, false, "view-size" };
+mndata_slider_t sld_hud_viewsize(3, 13, 0, 1, false, (void *)"view-size");
 #endif
-mndata_slider_t sld_hud_uptime = { 0, 60, 0, 1.f, true, "hud-timer", "Disabled", NULL, " second", " seconds" };
-mndata_slider_t sld_hud_xhair_size = { 0, 1, 0, .1f, true, "view-cross-size" };
-mndata_slider_t sld_hud_xhair_angle = { 0, 1, 0, .0625f, true, "view-cross-angle" };
-mndata_slider_t sld_hud_xhair_opacity = { 0, 1, 0, .1f, true, "view-cross-a" };
-mndata_slider_t sld_hud_size = { 0, 1, 0, .1f, true, "hud-scale" };
-mndata_slider_t sld_hud_cntr_size = { 0, 1, 0, .1f, true, "hud-cheat-counter-scale" };
-mndata_slider_t sld_hud_sbar_size = { 0, 1, 0, .1f, true, "hud-status-size" };
-mndata_slider_t sld_hud_sbar_opacity = { 0, 1, 0, .1f, true, "hud-status-alpha" };
-mndata_slider_t sld_hud_msg_size = { 0, 1, 0, .1f, true, "msg-scale" };
-mndata_slider_t sld_hud_msg_uptime = { 0, 60, 0, 1.f, true, "msg-uptime", "Disabled", NULL, " second", " seconds" };
+mndata_slider_t sld_hud_uptime(0, 60, 0, 1.f, true, (void *)"hud-timer", (void *)"Disabled", NULL, (void *)" second", (void *)" seconds");
+mndata_slider_t sld_hud_xhair_size(0, 1, 0, .1f, true, (void *)"view-cross-size");
+mndata_slider_t sld_hud_xhair_angle(0, 1, 0, .0625f, true, (void *)"view-cross-angle");
+mndata_slider_t sld_hud_xhair_opacity(0, 1, 0, .1f, true, (void *)"view-cross-a");
+mndata_slider_t sld_hud_size(0, 1, 0, .1f, true, (void *)"hud-scale");
+mndata_slider_t sld_hud_cntr_size(0, 1, 0, .1f, true, (void *)"hud-cheat-counter-scale");
+mndata_slider_t sld_hud_sbar_size(0, 1, 0, .1f, true, (void *)"hud-status-size");
+mndata_slider_t sld_hud_sbar_opacity(0, 1, 0, .1f, true, (void *)"hud-status-alpha");
+mndata_slider_t sld_hud_msg_size(0, 1, 0, .1f, true, (void *)"msg-scale");
+mndata_slider_t sld_hud_msg_uptime(0, 60, 0, 1.f, true, (void *)"msg-uptime", (void *)"Disabled", NULL, (void *)" second", " seconds" );
 
-mndata_colorbox_t cbox_hud_color = {
+mndata_colorbox_t cbox_hud_color(
     0, 0, 0, 0, 0, 0, true,
-    "hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a"
-};
+    (void *)"hud-color-r", (void *)"hud-color-g", (void *)"hud-color-b", (void *)"hud-color-a"
+);
 
-mndata_colorbox_t cbox_hud_msg_color = {
+mndata_colorbox_t cbox_hud_msg_color(
     0, 0, 0, 0, 0, 0, false,
-    "msg-color-r", "msg-color-g", "msg-color-b"
-};
+    (void *)"msg-color-r", (void *)"msg-color-g", (void *)"msg-color-b"
+);
 
 mndata_listitem_t listit_hud_xhair_symbols[] = {
     { "None", 0 },
@@ -364,14 +374,14 @@ mndata_listitem_t listit_hud_xhair_symbols[] = {
     { "Open Square", 4 },
     { "Angle", 5 }
 };
-mndata_list_t list_hud_xhair_symbol = {
-    listit_hud_xhair_symbols, NUMLISTITEMS(listit_hud_xhair_symbols), "view-cross-type"
-};
+mndata_list_t list_hud_xhair_symbol(
+    listit_hud_xhair_symbols, NUMLISTITEMS(listit_hud_xhair_symbols), (void *)"view-cross-type"
+);
 
-mndata_colorbox_t cbox_hud_xhair_color = {
+mndata_colorbox_t cbox_hud_xhair_color(
     0, 0, 0, 0, 0, 0, false,
-    "view-cross-r", "view-cross-g", "view-cross-b",
-};
+    (void *)"view-cross-r", (void *)"view-cross-g", (void *)"view-cross-b"
+);
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 mndata_listitem_t listit_hud_killscounter_displaymethods[] = {
@@ -380,11 +390,11 @@ mndata_listitem_t listit_hud_killscounter_displaymethods[] = {
     { "Percent",        CCH_KILLS_PRCNT },
     { "Count+Percent",  CCH_KILLS | CCH_KILLS_PRCNT },
 };
-mndata_list_t list_hud_cntr_kills = {
+mndata_list_t list_hud_cntr_kills(
     listit_hud_killscounter_displaymethods,
     NUMLISTITEMS(listit_hud_killscounter_displaymethods),
-    "hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT
-};
+    (void *)"hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT
+);
 
 mndata_listitem_t listit_hud_itemscounter_displaymethods[] = {
     { "Hidden",         0 },
@@ -392,11 +402,11 @@ mndata_listitem_t listit_hud_itemscounter_displaymethods[] = {
     { "Percent",        CCH_ITEMS_PRCNT },
     { "Count+Percent",  CCH_ITEMS | CCH_ITEMS_PRCNT },
 };
-mndata_list_t list_hud_cntr_items = {
+mndata_list_t list_hud_cntr_items(
     listit_hud_itemscounter_displaymethods,
     NUMLISTITEMS(listit_hud_itemscounter_displaymethods),
-    "hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT
-};
+    (void *)"hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT
+);
 
 mndata_listitem_t listit_hud_secretscounter_displaymethods[] = {
     { "Hidden",         0 },
@@ -404,123 +414,123 @@ mndata_listitem_t listit_hud_secretscounter_displaymethods[] = {
     { "Percent",        CCH_SECRETS_PRCNT },
     { "Count+Percent",  CCH_SECRETS | CCH_SECRETS_PRCNT },
 };
-mndata_list_t list_hud_cntr_secrets = {
+mndata_list_t list_hud_cntr_secrets(
     listit_hud_secretscounter_displaymethods,
     NUMLISTITEMS(listit_hud_secretscounter_displaymethods),
-    "hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT
-};
+    (void *)"hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT
+);
 #endif
 
-mndata_text_t txt_hud_view_size = { "View Size" };
+mndata_text_t txt_hud_view_size("View Size");
 #if __JDOOM__
-mndata_text_t txt_hud_single_key_display = { "Single Key Display" };
+mndata_text_t txt_hud_single_key_display("Single Key Display");
 #endif
-mndata_text_t txt_hud_autohide = { "AutoHide" };
-mndata_text_t txt_hud_unhide_events = { "UnHide Events" };
-mndata_text_t txt_hud_unhide_receive_damage = { "Receive Damage" };
-mndata_text_t txt_hud_unhide_pickup_health = { "Pickup Health" };
-mndata_text_t txt_hud_unhide_pickup_armor = { "Pickup Armor" };
-mndata_text_t txt_hud_unhide_pickup_powerup = { "Pickup Powerup" };
-mndata_text_t txt_hud_unhide_pickup_weapon = { "Pickup Weapon" };
+mndata_text_t txt_hud_autohide("AutoHide");
+mndata_text_t txt_hud_unhide_events("UnHide Events");
+mndata_text_t txt_hud_unhide_receive_damage("Receive Damage");
+mndata_text_t txt_hud_unhide_pickup_health("Pickup Health");
+mndata_text_t txt_hud_unhide_pickup_armor("Pickup Armor");
+mndata_text_t txt_hud_unhide_pickup_powerup("Pickup Powerup");
+mndata_text_t txt_hud_unhide_pickup_weapon("Pickup Weapon");
 #if __JHEXEN__
-mndata_text_t txt_hud_unhide_pickup_ammo = { "Pickup Mana" };
+mndata_text_t txt_hud_unhide_pickup_ammo("Pickup Mana");
 #else
-mndata_text_t txt_hud_unhide_pickup_ammo = { "Pickup Ammo" };
+mndata_text_t txt_hud_unhide_pickup_ammo("Pickup Ammo");
 #endif
-mndata_text_t txt_hud_unhide_pickup_key = { "Pickup Key" };
+mndata_text_t txt_hud_unhide_pickup_key("Pickup Key");
 #if __JHERETIC__ || __JHEXEN__
-mndata_text_t txt_hud_unhide_pickup_item = { "Pickup Item" };
+mndata_text_t txt_hud_unhide_pickup_item("Pickup Item");
 #endif
 
-mndata_text_t txt_hud_messages = { "Messages" };
-mndata_text_t txt_hud_msg_shown = { "Shown" };
-mndata_text_t txt_hud_msg_size = { "Size" };
-mndata_text_t txt_hud_msg_color = { "Color" };
-mndata_text_t txt_hud_msg_uptime = { "Uptime" };
+mndata_text_t txt_hud_messages("Messages");
+mndata_text_t txt_hud_msg_shown("Shown");
+mndata_text_t txt_hud_msg_size("Size");
+mndata_text_t txt_hud_msg_color("Color");
+mndata_text_t txt_hud_msg_uptime("Uptime");
 
-mndata_text_t txt_hud_crosshair = { "Crosshair" };
-mndata_text_t txt_hud_xhair_symbol = { "Symbol" };
-mndata_text_t txt_hud_xhair_size = { "Size" };
-mndata_text_t txt_hud_xhair_angle = { "Angle" };
-mndata_text_t txt_hud_xhair_opacity = { "Opacity" };
-mndata_text_t txt_hud_xhair_vitality_color = { "Vitality Color" };
-mndata_text_t txt_hud_xhair_color = { "Color" };
+mndata_text_t txt_hud_crosshair("Crosshair");
+mndata_text_t txt_hud_xhair_symbol("Symbol");
+mndata_text_t txt_hud_xhair_size("Size");
+mndata_text_t txt_hud_xhair_angle("Angle");
+mndata_text_t txt_hud_xhair_opacity("Opacity");
+mndata_text_t txt_hud_xhair_vitality_color("Vitality Color");
+mndata_text_t txt_hud_xhair_color("Color");
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-mndata_text_t txt_hud_statusbar = { "Statusbar" };
-mndata_text_t txt_hud_sbar_size = { "Size" };
-mndata_text_t txt_hud_sbar_opacity = { "Opacity" };
+mndata_text_t txt_hud_statusbar("Statusbar");
+mndata_text_t txt_hud_sbar_size("Size");
+mndata_text_t txt_hud_sbar_opacity("Opacity");
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_counters = { "Counters" };
-mndata_text_t txt_hud_cntr_kills = { "Kills" };
-mndata_text_t txt_hud_cntr_items = { "Items" };
-mndata_text_t txt_hud_cntr_secrets = { "Secrets" };
-mndata_text_t txt_hud_cntr_size = { "Size" };
+mndata_text_t txt_hud_counters("Counters");
+mndata_text_t txt_hud_cntr_kills("Kills");
+mndata_text_t txt_hud_cntr_items("Items");
+mndata_text_t txt_hud_cntr_secrets("Secrets");
+mndata_text_t txt_hud_cntr_size("Size");
 #endif
 
-mndata_text_t txt_hud_fullscreen = { "Fullscreen" };
-mndata_text_t txt_hud_full_size = { "Size" };
-mndata_text_t txt_hud_full_text_color = { "Text Color" };
+mndata_text_t txt_hud_fullscreen("Fullscreen");
+mndata_text_t txt_hud_full_size("Size");
+mndata_text_t txt_hud_full_text_color("Text Color");
 #if __JHEXEN__
-mndata_text_t txt_hud_full_show_mana = { "Show Mana" };
+mndata_text_t txt_hud_full_show_mana("Show Mana");
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_full_show_ammo = { "Show Ammo" };
-mndata_text_t txt_hud_full_show_armor = { "Show Armor" };
+mndata_text_t txt_hud_full_show_ammo("Show Ammo");
+mndata_text_t txt_hud_full_show_armor("Show Armor" );
 #endif
 #if __JDOOM64__
-mndata_text_t txt_hud_full_show_powerkeys = { "Show PowerKeys" };
+mndata_text_t txt_hud_full_show_powerkeys("Show PowerKeys");
 #endif
 #if __JDOOM__
-mndata_text_t txt_hud_full_show_status = { "Show Status" };
+mndata_text_t txt_hud_full_show_status("Show Status");
 #endif
-mndata_text_t txt_hud_full_show_health = { "Show Health" };
+mndata_text_t txt_hud_full_show_health("Show Health");
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_full_show_keys = { "Show Keys" };
+mndata_text_t txt_hud_full_show_keys("Show Keys");
 #endif
 #if __JHERETIC__ || __JHEXEN__
-mndata_text_t txt_hud_full_show_readyitem = { "Show Ready-Item" };
+mndata_text_t txt_hud_full_show_readyitem("Show Ready-Item");
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_cntr_mapopen = { "Automap Only" };
+mndata_text_t txt_hud_cntr_mapopen("Automap Only");
 #endif
 
-mndata_button_t btn_hud_single_key_display = { true, "hud-keys-combine" };
-mndata_button_t btn_hud_unhide_receive_damage = { true, "hud-unhide-damage" };
-mndata_button_t btn_hud_unhide_pickup_health = { true, "hud-unhide-pickup-health" };
-mndata_button_t btn_hud_unhide_pickup_armor = { true, "hud-unhide-pickup-armor" };
-mndata_button_t btn_hud_unhide_pickup_powerup = { true, "hud-unhide-pickup-powerup" };
-mndata_button_t btn_hud_unhide_pickup_weapon = { true, "hud-unhide-pickup-weapon" };
-mndata_button_t btn_hud_unhide_pickup_ammo = { true, "hud-unhide-pickup-ammo" };
-mndata_button_t btn_hud_unhide_pickup_key = { true, "hud-unhide-pickup-key" };
+mndata_button_t btn_hud_single_key_display = { true, (void *)"hud-keys-combine" };
+mndata_button_t btn_hud_unhide_receive_damage = { true, (void *)"hud-unhide-damage" };
+mndata_button_t btn_hud_unhide_pickup_health = { true, (void *)"hud-unhide-pickup-health" };
+mndata_button_t btn_hud_unhide_pickup_armor = { true, (void *)"hud-unhide-pickup-armor" };
+mndata_button_t btn_hud_unhide_pickup_powerup = { true, (void *)"hud-unhide-pickup-powerup" };
+mndata_button_t btn_hud_unhide_pickup_weapon = { true, (void *)"hud-unhide-pickup-weapon" };
+mndata_button_t btn_hud_unhide_pickup_ammo = { true, (void *)"hud-unhide-pickup-ammo" };
+mndata_button_t btn_hud_unhide_pickup_key = { true, (void *)"hud-unhide-pickup-key" };
 #if __JHERETIC__ || __JHEXEN__
-mndata_button_t btn_hud_unhide_pickup_item = { true, "hud-unhide-pickup-invitem" };
+mndata_button_t btn_hud_unhide_pickup_item = { true, (void *)"hud-unhide-pickup-invitem" };
 #endif
-mndata_button_t btn_hud_msg_shown = { true, "msg-show" };
-mndata_button_t btn_hud_xhair_vitality_color = { true, "view-cross-vitality" };
+mndata_button_t btn_hud_msg_shown = { true, (void *)"msg-show" };
+mndata_button_t btn_hud_xhair_vitality_color = { true, (void *)"view-cross-vitality" };
 #if __JHEXEN__
-mndata_button_t btn_hud_full_show_mana = { true, "hud-mana" };
+mndata_button_t btn_hud_full_show_mana = { true, (void *)"hud-mana" };
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_full_show_ammo = { true, "hud-ammo" };
-mndata_button_t btn_hud_full_show_armor = { true, "hud-armor" };
+mndata_button_t btn_hud_full_show_ammo = { true, (void *)"hud-ammo" };
+mndata_button_t btn_hud_full_show_armor = { true, (void *)"hud-armor" };
 #endif
 #if __JDOOM64__
-mndata_button_t btn_hud_full_show_powerkeys = { true, "hud-power" };
+mndata_button_t btn_hud_full_show_powerkeys = { true, (void *)"hud-power" };
 #endif
 #if __JDOOM__
-mndata_button_t btn_hud_full_show_face = { true, "hud-face" };
+mndata_button_t btn_hud_full_show_face = { true, (void *)"hud-face" };
 #endif
-mndata_button_t btn_hud_full_show_health = { true, "hud-health" };
+mndata_button_t btn_hud_full_show_health = { true, (void *)"hud-health" };
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_full_show_keys = { true, "hud-keys" };
+mndata_button_t btn_hud_full_show_keys = { true, (void *)"hud-keys" };
 #endif
 #if __JHERETIC__ || __JHEXEN__
-mndata_button_t btn_hud_full_show_readyitem = { true, "hud-currentitem" };
+mndata_button_t btn_hud_full_show_readyitem = { true, (void *)"hud-currentitem" };
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_cntr_mapopen = { true, "hud-cheat-counter-show-mapopen" };
+mndata_button_t btn_hud_cntr_mapopen = { true, (void *)"hud-cheat-counter-show-mapopen" };
 #endif
 
 static mn_object_t HudMenuObjects[] = {
@@ -631,7 +641,7 @@ static mn_object_t HudMenuObjects[] = {
     { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_full_show_readyitem },
     { MN_BUTTON,    6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_readyitem },
 #endif
-    { MN_NONE }
+    { MN_NONE,      0,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, 0,               0,                     0,             { NULL }, NULL, NULL, NULL, 0 }
 };
 
 static dd_bool inited;
@@ -680,7 +690,7 @@ cvartemplate_t menuCVars[] = {
 
     // Aliases for obsolete cvars:
     { "menu-turningskull", 0, CVT_BYTE, &cfg.menuCursorRotate, 0, 1 },
-    { NULL }
+    { "",               0,  CVT_NULL,   0, 0, 0 }
 };
 
 // Console commands for the menu:
@@ -696,7 +706,7 @@ ccmdtemplate_t menuCCmds[] = {
     { "menuselect",     "",     CCmdMenuCommand },
     { "menudelete",     "",     CCmdMenuCommand },
     { "menuback",       "",     CCmdMenuCommand },
-    { NULL }
+    { "",               "",     0 }
 };
 
 void Hu_MenuRegister()
@@ -704,6 +714,7 @@ void Hu_MenuRegister()
     int i;
     for(i = 0; menuCVars[i].path; ++i)
         Con_AddVariable(menuCVars + i);
+
     for(i = 0; menuCCmds[i].name; ++i)
         Con_AddCommand(menuCCmds + i);
 }
@@ -1084,7 +1095,7 @@ void Hu_MenuInitMainPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "GameType";
+    ob->data1          = (void *)"GameType";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -1107,7 +1118,7 @@ void Hu_MenuInitMainPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "Options";
+    ob->data1          = (void *)"Options";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -1176,7 +1187,7 @@ void Hu_MenuInitMainPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "Files";
+    ob->data1          = (void *)"Files";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -1505,7 +1516,7 @@ void Hu_MenuInitPlayerSetupPage()
         mndata_edit_t *edit = (mndata_edit_t *)ob->_typedata;
         Str_Init(&edit->text);
         Str_Init(&edit->oldtext);
-        edit->data1     = "net-name";
+        edit->data1     = (void *)"net-name";
         edit->maxLength = 24;
     }
     ob++;
@@ -1731,7 +1742,7 @@ void Hu_MenuInitSaveOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-save-confirm";
+        btn->data         = (void *)"game-save-confirm";
     }
     ob++;
 
@@ -1762,7 +1773,7 @@ void Hu_MenuInitSaveOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-save-confirm-loadonreborn";
+        btn->data         = (void *)"game-save-confirm-loadonreborn";
     }
     ob++;
 
@@ -1810,7 +1821,7 @@ void Hu_MenuInitSaveOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-save-auto-loadonreborn";
+        btn->data         = (void *)"game-save-auto-loadonreborn";
     }
     ob++;
 #endif
@@ -1844,7 +1855,7 @@ void Hu_MenuInitSaveOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-save-last-loadonreborn";
+        btn->data         = (void *)"game-save-last-loadonreborn";
     }
     ob++;
 
@@ -2098,7 +2109,7 @@ void Hu_MenuInitOptionsPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "ControlOptions";
+    ob->data1          = (void *)"ControlOptions";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -2116,7 +2127,7 @@ void Hu_MenuInitOptionsPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "GameplayOptions";
+    ob->data1          = (void *)"GameplayOptions";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -2134,7 +2145,7 @@ void Hu_MenuInitOptionsPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "SaveOptions";
+    ob->data1          = (void *)"SaveOptions";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -2152,7 +2163,7 @@ void Hu_MenuInitOptionsPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "HUDOptions";
+    ob->data1          = (void *)"HUDOptions";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -2170,7 +2181,7 @@ void Hu_MenuInitOptionsPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "AutomapOptions";
+    ob->data1          = (void *)"AutomapOptions";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -2188,7 +2199,7 @@ void Hu_MenuInitOptionsPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "WeaponOptions";
+    ob->data1          = (void *)"WeaponOptions";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -2207,7 +2218,7 @@ void Hu_MenuInitOptionsPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "InventoryOptions";
+    ob->data1          = (void *)"InventoryOptions";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -2226,7 +2237,7 @@ void Hu_MenuInitOptionsPage()
     ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
     ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
     ob->cmdResponder   = MNButton_CommandResponder;
-    ob->data1          = "SoundOptions";
+    ob->data1          = (void *)"SoundOptions";
     ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
@@ -2330,7 +2341,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t*)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "ctl-run";
+        btn->data         = (void *)"ctl-run";
     }
     ob++;
 
@@ -2361,7 +2372,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t*)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "ctl-look-spring";
+        btn->data         = (void *)"ctl-look-spring";
     }
     ob++;
 
@@ -2392,7 +2403,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "ctl-aim-noauto";
+        btn->data         = (void *)"ctl-aim-noauto";
     }
     ob++;
 
@@ -2424,7 +2435,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "player-jump";
+        btn->data         = (void *)"player-jump";
     }
     ob++;
 #endif
@@ -2674,7 +2685,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-monsters-floatoverblocking";
+        btn->data         = (void *)"game-monsters-floatoverblocking";
     }
     ob++;
 
@@ -2707,7 +2718,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-monsters-stuckindoors";
+        btn->data         = (void *)"game-monsters-stuckindoors";
     }
     ob++;
 
@@ -2740,7 +2751,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-objects-neverhangoverledges";
+        btn->data         = (void *)"game-objects-neverhangoverledges";
     }
     ob++;
 
@@ -2773,7 +2784,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-objects-falloff";
+        btn->data         = (void *)"game-objects-falloff";
     }
     ob++;
 
@@ -2841,7 +2852,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-corpse-sliding";
+        btn->data         = (void *)"game-corpse-sliding";
     }
     ob++;
 
@@ -2874,7 +2885,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-objects-clipping";
+        btn->data         = (void *)"game-objects-clipping";
     }
     ob++;
 
@@ -2907,7 +2918,7 @@ void Hu_MenuInitGameplayOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "game-player-wallrun-northonly";
+        btn->data         = (void *)"game-player-wallrun-northonly";
     }
     ob++;
 
@@ -3083,7 +3094,7 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
-        sld->data1     = "map-opacity";
+        sld->data1     = (void *)"map-opacity";
     }
     ob++;
 
@@ -3118,7 +3129,7 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
-        sld->data1     = "map-line-opacity";
+        sld->data1     = (void *)"map-line-opacity";
     }
     ob++;
 
@@ -3152,7 +3163,7 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
-        sld->data1     = "map-line-width";
+        sld->data1     = (void *)"map-line-width";
     }
     ob++;
 
@@ -3184,7 +3195,7 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         mndata_list_t *list = (mndata_list_t *)ob->_typedata;
 
-        list->data  = "map-huddisplay";
+        list->data  = (void *)"map-huddisplay";
         list->count = 3;
         list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
 
@@ -3230,7 +3241,7 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "map-door-colors";
+        btn->data         = (void *)"map-door-colors";
     }
     ob++;
 
@@ -3265,7 +3276,7 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->value     = 0;
         sld->step      = 5;
         sld->floatMode = true;
-        sld->data1     = "map-door-glow";
+        sld->data1     = (void *)"map-door-glow";
     }
     ob++;
 
@@ -3297,7 +3308,7 @@ void Hu_MenuInitAutomapOptionsPage()
 
         list->count = 3;
         list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
-        list->data  = "map-customcolors";
+        list->data  = (void *)"map-customcolors";
 
         mndata_listitem_t *item = (mndata_listitem_t *)list->items;
         item->text = "Never";
@@ -3340,9 +3351,9 @@ void Hu_MenuInitAutomapOptionsPage()
     ob->_typedata      = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
     {
         mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
-        cbox->data1 = "map-wall-r";
-        cbox->data2 = "map-wall-g";
-        cbox->data3 = "map-wall-b";
+        cbox->data1 = (void *)"map-wall-r";
+        cbox->data2 = (void *)"map-wall-g";
+        cbox->data3 = (void *)"map-wall-b";
     }
     ob++;
 
@@ -3373,9 +3384,9 @@ void Hu_MenuInitAutomapOptionsPage()
     ob->_typedata      = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
     {
         mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
-        cbox->data1 = "map-wall-floorchange-r";
-        cbox->data2 = "map-wall-floorchange-g";
-        cbox->data3 = "map-wall-floorchange-b";
+        cbox->data1 = (void *)"map-wall-floorchange-r";
+        cbox->data2 = (void *)"map-wall-floorchange-g";
+        cbox->data3 = (void *)"map-wall-floorchange-b";
     }
     ob++;
 
@@ -3405,9 +3416,9 @@ void Hu_MenuInitAutomapOptionsPage()
     ob->_typedata      = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
     {
         mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
-        cbox->data1 = "map-wall-ceilingchange-r";
-        cbox->data2 = "map-wall-ceilingchange-g";
-        cbox->data3 = "map-wall-ceilingchange-b";
+        cbox->data1 = (void *)"map-wall-ceilingchange-r";
+        cbox->data2 = (void *)"map-wall-ceilingchange-g";
+        cbox->data3 = (void *)"map-wall-ceilingchange-b";
     }
     ob++;
 
@@ -3438,9 +3449,9 @@ void Hu_MenuInitAutomapOptionsPage()
     ob->_typedata      = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
     {
         mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
-        cbox->data1 = "map-wall-unseen-r";
-        cbox->data2 = "map-wall-unseen-g";
-        cbox->data3 = "map-wall-unseen-b";
+        cbox->data1 = (void *)"map-wall-unseen-r";
+        cbox->data2 = (void *)"map-wall-unseen-g";
+        cbox->data3 = (void *)"map-wall-unseen-b";
     }
     ob++;
 
@@ -3471,9 +3482,9 @@ void Hu_MenuInitAutomapOptionsPage()
     ob->_typedata      = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
     {
         mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
-        cbox->data1 = "map-mobj-r";
-        cbox->data2 = "map-mobj-g";
-        cbox->data3 = "map-mobj-b";
+        cbox->data1 = (void *)"map-mobj-r";
+        cbox->data2 = (void *)"map-mobj-g";
+        cbox->data3 = (void *)"map-mobj-b";
     }
     ob++;
 
@@ -3504,9 +3515,9 @@ void Hu_MenuInitAutomapOptionsPage()
     ob->_typedata      = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
     {
         mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
-        cbox->data1 = "map-background-r";
-        cbox->data2 = "map-background-g";
-        cbox->data3 = "map-background-b";
+        cbox->data1 = (void *)"map-background-r";
+        cbox->data2 = (void *)"map-background-g";
+        cbox->data3 = (void *)"map-background-b";
     }
     ob++;
 
@@ -3579,15 +3590,13 @@ void Hu_MenuInitWeaponsPage()
         { (char const *)TXT_TXT_WPNMACE,         WT_SEVENTH },
         { (char const *)TXT_TXT_WPNGAUNTLETS,    WT_EIGHTH },
 #elif __JHEXEN__
-        /**
-         * @todo We should allow different weapon preferences per player-class.
-         */
+        /// @todo We should allow different weapon preferences per player-class.
         { "First",  WT_FIRST },
         { "Second", WT_SECOND },
         { "Third",  WT_THIRD },
         { "Fourth", WT_FOURTH },
 #endif
-        { 0 }
+        { "", WT_NOCHANGE}
     };
 
     mn_page_t *page = Hu_MenuNewPage("WeaponOptions", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawWeaponsPage, NULL, NULL);
@@ -3682,7 +3691,7 @@ void Hu_MenuInitWeaponsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "player-weapon-nextmode";
+        btn->data         = (void *)"player-weapon-nextmode";
     }
     ob++;
 
@@ -3715,7 +3724,7 @@ void Hu_MenuInitWeaponsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "player-weapon-cycle-sequential";
+        btn->data         = (void *)"player-weapon-cycle-sequential";
     }
     ob++;
 
@@ -3764,7 +3773,7 @@ void Hu_MenuInitWeaponsPage()
 
         list->count = 3;
         list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
-        list->data  = "player-autoswitch";
+        list->data  = (void *)"player-autoswitch";
 
         mndata_listitem_t *item = (mndata_listitem_t *)list->items;
         item->text = "Never";
@@ -3809,7 +3818,7 @@ void Hu_MenuInitWeaponsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "player-autoswitch-notfiring";
+        btn->data         = (void *)"player-autoswitch-notfiring";
     }
     ob++;
 
@@ -3844,7 +3853,7 @@ void Hu_MenuInitWeaponsPage()
 
         list->count = 3;
         list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
-        list->data  = "player-autoswitch-ammo";
+        list->data  = (void *)"player-autoswitch-ammo";
 
         mndata_listitem_t *item = (mndata_listitem_t *)list->items;
         item->text = "Never";
@@ -3941,7 +3950,7 @@ void Hu_MenuInitInventoryOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "ctl-inventory-mode";
+        btn->data         = (void *)"ctl-inventory-mode";
     }
     ob++;
 
@@ -3972,7 +3981,7 @@ void Hu_MenuInitInventoryOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "ctl-inventory-wrap";
+        btn->data         = (void *)"ctl-inventory-wrap";
     }
     ob++;
 
@@ -4003,7 +4012,7 @@ void Hu_MenuInitInventoryOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "ctl-inventory-use-immediate";
+        btn->data         = (void *)"ctl-inventory-use-immediate";
     }
     ob++;
 
@@ -4034,7 +4043,7 @@ void Hu_MenuInitInventoryOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data = "ctl-inventory-use-next";
+        btn->data         = (void *)"ctl-inventory-use-next";
     }
     ob++;
 
@@ -4069,10 +4078,10 @@ void Hu_MenuInitInventoryOptionsPage()
         sld->value     = 0;
         sld->step      = 1.f;
         sld->floatMode = true;
-        sld->data1     = "hud-inventory-timer";
-        sld->data2     = "Disabled";
-        sld->data4     = " second";
-        sld->data5     = " seconds";
+        sld->data1     = (void *)"hud-inventory-timer";
+        sld->data2     = (void *)"Disabled";
+        sld->data4     = (void *)" second";
+        sld->data5     = (void *)" seconds";
     }
     ob++;
 
@@ -4123,8 +4132,8 @@ void Hu_MenuInitInventoryOptionsPage()
         sld->value     = 0;
         sld->step      = 1;
         sld->floatMode = false;
-        sld->data1     = "hud-inventory-slot-max";
-        sld->data2     = "Automatic";
+        sld->data1     = (void *)"hud-inventory-slot-max";
+        sld->data2     = (void *)"Automatic";
     }
     ob++;
 
@@ -4157,7 +4166,7 @@ void Hu_MenuInitInventoryOptionsPage()
     {
         mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
         btn->staydownMode = true;
-        btn->data         = "hud-inventory-slot-showempty";
+        btn->data         = (void *)"hud-inventory-slot-showempty";
     }
     ob++;
 
@@ -4217,7 +4226,7 @@ void Hu_MenuInitSoundOptionsPage()
         sld->value     = 0;
         sld->step      = 5;
         sld->floatMode = false;
-        sld->data1     = "sound-volume";
+        sld->data1     = (void *)"sound-volume";
     }
     ob++;
 
@@ -4252,7 +4261,7 @@ void Hu_MenuInitSoundOptionsPage()
         sld->value     = 0;
         sld->step      = 5;
         sld->floatMode = false;
-        sld->data1     = "music-volume";
+        sld->data1     = (void *)"music-volume";
     }
     ob++;
 
@@ -4351,7 +4360,7 @@ void Hu_MenuInitEpisodePage()
         else
         {
             ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-            ob->data1 = "Skill";
+            ob->data1 = (void *)"Skill";
 #if __JHERETIC__
             if(gameMode == heretic_extended && i == 5)
             {
@@ -4730,9 +4739,8 @@ dd_bool Hu_MenuIsVisible()
     return (menuActive || mnAlpha > .0001f);
 }
 
-int Hu_MenuDefaultFocusAction(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuDefaultFocusAction(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    DENG_UNUSED(parameters);
     if(MNA_FOCUS != action) return 1;
     Hu_MenuUpdateCursorState();
     return 0;
@@ -4912,13 +4920,14 @@ void Hu_MenuPageTicker(mn_page_t *page)
     /// @todo Move game-menu specific page tick functionality here.
 }
 
-void Hu_MenuNavigatePage(mn_page_t *page, int pageDelta)
+void Hu_MenuNavigatePage(mn_page_t * /*page*/, int /*pageDelta*/)
 {
 #if 0
-    int index;
-    assert(page);
+    DENG2_ASSERT(page != 0);
 
-    oldIndex = index = MAX_OF(0, page->focus);
+    int index = MAX_OF(0, page->focus);
+
+    oldIndex = index;
 
     if(pageDelta < 0)
     {
@@ -5507,13 +5516,11 @@ int Hu_MenuFallbackResponder(event_t* ev)
 /**
  * User wants to load this game
  */
-int Hu_MenuSelectLoadSlot(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectLoadSlot(mn_object_t *obj, mn_actionid_t action, void * /*context*/)
 {
-    mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
-    const int saveSlot = edit->data2;
-    mn_page_t* saveGamePage;
-
-    DENG_UNUSED(parameters);
+    mndata_edit_t *edit = (mndata_edit_t *)obj->_typedata;
+    int const saveSlot = edit->data2;
+    mn_page_t *saveGamePage;
 
     if(MNA_ACTIVEOUT != action) return 1;
 
@@ -5526,7 +5533,7 @@ int Hu_MenuSelectLoadSlot(mn_object_t *obj, mn_actionid_t action, void *paramete
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void Hu_MenuDrawMainPage(mn_page_t *page, Point2Raw const *origin)
+void Hu_MenuDrawMainPage(mn_page_t * /*page*/, Point2Raw const *origin)
 {
 #define TITLEOFFSET_X         (-22)
 #define TITLEOFFSET_Y         (-56)
@@ -5557,21 +5564,22 @@ void Hu_MenuDrawMainPage(mn_page_t *page, Point2Raw const *origin)
 }
 #endif
 
-void Hu_MenuDrawGameTypePage(mn_page_t *page, Point2Raw const *origin)
+void Hu_MenuDrawGameTypePage(mn_page_t * /*page*/, Point2Raw const *origin)
 {
     Hu_MenuDrawPageTitle(GET_TXT(TXT_PICKGAMETYPE), SCREENWIDTH/2, origin->y - 28);
 }
 
 #if __JHERETIC__
-static void composeNotDesignedForMessage(const char* str)
+static void composeNotDesignedForMessage(char const *str)
 {
-    char* buf = notDesignedForMessage, *in, tmp[2];
+    char *buf = notDesignedForMessage;
+    char tmp[2];
 
     buf[0] = 0;
     tmp[1] = 0;
 
     // Get the message template.
-    in = GET_TXT(TXT_NOTDESIGNEDFOR);
+    char const *in = GET_TXT(TXT_NOTDESIGNEDFOR);
 
     for(; *in; in++)
     {
@@ -5676,7 +5684,7 @@ void Hu_MenuDrawPlayerClassPage(mn_page_t *page, Point2Raw const *origin)
 void Hu_MenuDrawEpisodePage(mn_page_t *page, Point2Raw const *origin)
 {
 #if __JHERETIC__
-    DENG_UNUSED(origin);
+    DENG2_UNUSED(origin);
 
     // Inform the user episode 6 is designed for deathmatch only.
     mn_object_t *obj = MNPage_FindObject(page, 0, MNF_ID0);
@@ -5692,6 +5700,8 @@ void Hu_MenuDrawEpisodePage(mn_page_t *page, Point2Raw const *origin)
         Hu_MenuDrawPageHelp(notDesignedForMessage, origin.x, origin.y);
     }
 #else // __JDOOM__
+    DENG2_UNUSED(page);
+
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
 
@@ -5707,7 +5717,7 @@ void Hu_MenuDrawEpisodePage(mn_page_t *page, Point2Raw const *origin)
 }
 #endif
 
-void Hu_MenuDrawSkillPage(mn_page_t *page, Point2Raw const *origin)
+void Hu_MenuDrawSkillPage(mn_page_t * /*page*/, Point2Raw const *origin)
 {
 #if __JDOOM__ || __JDOOM64__
     DGL_Enable(DGL_TEXTURE_2D);
@@ -5909,13 +5919,12 @@ int Hu_MenuCvarEdit(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
     return 0;
 }
 
-int Hu_MenuCvarSlider(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuCvarSlider(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    mndata_slider_t const *sldr = (mndata_slider_t *)obj->_typedata;
+    mndata_slider_t const *sldr = (mndata_slider_t *)ob->_typedata;
     cvartype_t varType = Con_GetVariableType((char const *)sldr->data1);
-    float value = MNSlider_Value(obj);
+    float value = MNSlider_Value(ob);
 
-    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
     if(CVT_NULL == varType) return 0;
@@ -5944,12 +5953,11 @@ int Hu_MenuCvarSlider(mn_object_t *obj, mn_actionid_t action, void *parameters)
     return 0;
 }
 
-int Hu_MenuActivateColorWidget(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuActivateColorWidget(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    mn_object_t* cboxMix, *sldrRed, *sldrGreen, *sldrBlue, *textAlpha, *sldrAlpha;
-    mn_page_t* colorWidgetPage = Hu_MenuFindPageByName("ColorWidget");
+    mn_object_t *cboxMix, *sldrRed, *sldrGreen, *sldrBlue, *textAlpha, *sldrAlpha;
+    mn_page_t *colorWidgetPage = Hu_MenuFindPageByName("ColorWidget");
 
-    DENG_UNUSED(parameters);
     if(action != MNA_ACTIVE) return 1;
 
     cboxMix   = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID0);
@@ -5962,42 +5970,42 @@ int Hu_MenuActivateColorWidget(mn_object_t *obj, mn_actionid_t action, void *par
     colorWidgetActive = true;
 
     MNPage_Initialize(colorWidgetPage);
-    colorWidgetPage->userData = obj;
+    colorWidgetPage->userData = ob;
 
-    MNColorBox_CopyColor(cboxMix, 0, obj);
-    MNSlider_SetValue(sldrRed,   MNSLIDER_SVF_NO_ACTION, MNColorBox_Redf(obj));
-    MNSlider_SetValue(sldrGreen, MNSLIDER_SVF_NO_ACTION, MNColorBox_Greenf(obj));
-    MNSlider_SetValue(sldrBlue,  MNSLIDER_SVF_NO_ACTION, MNColorBox_Bluef(obj));
-    MNSlider_SetValue(sldrAlpha, MNSLIDER_SVF_NO_ACTION, MNColorBox_Alphaf(obj));
+    MNColorBox_CopyColor(cboxMix, 0, ob);
+    MNSlider_SetValue(sldrRed,   MNSLIDER_SVF_NO_ACTION, MNColorBox_Redf(ob));
+    MNSlider_SetValue(sldrGreen, MNSLIDER_SVF_NO_ACTION, MNColorBox_Greenf(ob));
+    MNSlider_SetValue(sldrBlue,  MNSLIDER_SVF_NO_ACTION, MNColorBox_Bluef(ob));
+    MNSlider_SetValue(sldrAlpha, MNSLIDER_SVF_NO_ACTION, MNColorBox_Alphaf(ob));
 
-    MNObject_SetFlags(textAlpha, (MNColorBox_RGBAMode(obj)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
-    MNObject_SetFlags(sldrAlpha, (MNColorBox_RGBAMode(obj)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
+    MNObject_SetFlags(textAlpha, (MNColorBox_RGBAMode(ob)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
+    MNObject_SetFlags(sldrAlpha, (MNColorBox_RGBAMode(ob)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
 
     return 0;
 }
 
-int Hu_MenuCvarColorBox(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuCvarColorBox(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
-    DENG_UNUSED(parameters);
+    mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
+
     if(action != MNA_MODIFIED) return 1;
+
     // MNColorBox's current color has already been updated and we know
     // that at least one of the color components have changed.
     // So our job is to simply update the associated cvars.
-    Con_SetFloat2((char const *)cbox->data1, MNColorBox_Redf(obj),   SVF_WRITE_OVERRIDE);
-    Con_SetFloat2((char const *)cbox->data2, MNColorBox_Greenf(obj), SVF_WRITE_OVERRIDE);
-    Con_SetFloat2((char const *)cbox->data3, MNColorBox_Bluef(obj),  SVF_WRITE_OVERRIDE);
-    if(MNColorBox_RGBAMode(obj))
+    Con_SetFloat2((char const *)cbox->data1, MNColorBox_Redf(ob),   SVF_WRITE_OVERRIDE);
+    Con_SetFloat2((char const *)cbox->data2, MNColorBox_Greenf(ob), SVF_WRITE_OVERRIDE);
+    Con_SetFloat2((char const *)cbox->data3, MNColorBox_Bluef(ob),  SVF_WRITE_OVERRIDE);
+    if(MNColorBox_RGBAMode(ob))
     {
-        Con_SetFloat2((char const *)cbox->data4, MNColorBox_Alphaf(obj), SVF_WRITE_OVERRIDE);
+        Con_SetFloat2((char const *)cbox->data4, MNColorBox_Alphaf(ob), SVF_WRITE_OVERRIDE);
     }
+
     return 0;
 }
 
-void Hu_MenuDrawLoadGamePage(mn_page_t *page, Point2Raw const *origin)
+void Hu_MenuDrawLoadGamePage(mn_page_t * /*page*/, Point2Raw const *origin)
 {
-    DENG_UNUSED(page);
-
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
@@ -6011,17 +6019,14 @@ void Hu_MenuDrawLoadGamePage(mn_page_t *page, Point2Raw const *origin)
 #endif
     DGL_Disable(DGL_TEXTURE_2D);
 
-    { Point2Raw helpOrigin;
+    Point2Raw helpOrigin;
     helpOrigin.x = SCREENWIDTH/2;
     helpOrigin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
     Hu_MenuDrawPageHelp("Select to load, [Del] to clear", helpOrigin.x, helpOrigin.y);
-    }
 }
 
-void Hu_MenuDrawSaveGamePage(mn_page_t *page, Point2Raw const *origin)
+void Hu_MenuDrawSaveGamePage(mn_page_t * /*page*/, Point2Raw const *origin)
 {
-    DENG_UNUSED(page);
-
 #if __JHERETIC__ || __JHEXEN__
     Hu_MenuDrawPageTitle("Save Game", SCREENWIDTH/2, origin->y - 20);
 #else
@@ -6036,24 +6041,22 @@ void Hu_MenuDrawSaveGamePage(mn_page_t *page, Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 
-    { Point2Raw helpOrigin;
+    Point2Raw helpOrigin;
     helpOrigin.x = SCREENWIDTH/2;
     helpOrigin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
     Hu_MenuDrawPageHelp("Select to save, [Del] to clear", helpOrigin.x, helpOrigin.y);
-    }
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-int Hu_MenuSelectHelp(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectHelp(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     G_StartHelp();
     return 0;
 }
 #endif
 
-void Hu_MenuDrawOptionsPage(mn_page_t *page, Point2Raw const *origin)
+void Hu_MenuDrawOptionsPage(mn_page_t * /*page*/, Point2Raw const *origin)
 {
 #if __JHERETIC__ || __JHEXEN__
     Hu_MenuDrawPageTitle("Options", origin->x + 42, origin->y - 38);
@@ -6070,12 +6073,12 @@ void Hu_MenuDrawOptionsPage(mn_page_t *page, Point2Raw const *origin)
 #endif
 }
 
-void Hu_MenuDrawWeaponsPage(mn_page_t *page, Point2Raw const *offset)
+void Hu_MenuDrawWeaponsPage(mn_page_t *page, Point2Raw const * /*offset*/)
 {
     // Inform the user how to change the order.
     if(MNPage_FocusObject(page) == MN_MustFindObjectOnPage(page, 0, MNF_ID0))
     {
-        const char* helpText = "Use left/right to move weapon up/down";
+        char const *helpText = "Use left/right to move weapon up/down";
         Point2Raw origin;
         origin.x = SCREENWIDTH/2;
         origin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
@@ -6093,47 +6096,45 @@ void Hu_MenuDrawPlayerSetupPage(mn_page_t *page, Point2Raw const *origin)
     Hu_MenuDrawPageTitle(GET_TXT(TXT_PLAYERSETUP), SCREENWIDTH/2, origin->y - 28);
 }
 
-int Hu_MenuActionSetActivePage(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuActionSetActivePage(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    assert(obj);
-    DENG_UNUSED(parameters);
+    DENG2_ASSERT(ob != 0);
     if(MNA_ACTIVEOUT != action) return 1;
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName((char*)obj->data1));
+    Hu_MenuSetActivePage(Hu_MenuFindPageByName((char *)ob->data1));
     return 0;
 }
 
-int Hu_MenuUpdateColorWidgetColor(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuUpdateColorWidgetColor(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    float value = MNSlider_Value(obj);
-    mn_object_t* cboxMix = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("ColorWidget"), 0, MNF_ID0);
+    float value = MNSlider_Value(ob);
+    mn_object_t *cboxMix = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("ColorWidget"), 0, MNF_ID0);
 
-    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
-    switch(obj->data2)
+    switch(ob->data2)
     {
     case CR: MNColorBox_SetRedf(  cboxMix, MNCOLORBOX_SCF_NO_ACTION, value); break;
     case CG: MNColorBox_SetGreenf(cboxMix, MNCOLORBOX_SCF_NO_ACTION, value); break;
     case CB: MNColorBox_SetBluef( cboxMix, MNCOLORBOX_SCF_NO_ACTION, value); break;
     case CA: MNColorBox_SetAlphaf(cboxMix, MNCOLORBOX_SCF_NO_ACTION, value); break;
     default:
-        Con_Error("Hu_MenuUpdateColorWidgetColor: Invalid value (%i) for data2.", obj->data2);
+        Con_Error("Hu_MenuUpdateColorWidgetColor: Invalid value (%i) for data2.", ob->data2);
     }
+
     return 0;
 }
 
-int Hu_MenuChangeWeaponPriority(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuChangeWeaponPriority(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
-    /*int         choice = option >> NUM_WEAPON_TYPES;
-    int         temp;
+
+    /*int choice = option >> NUM_WEAPON_TYPES;
 
     if(option & RIGHT_DIR)
     {
         if(choice < NUM_WEAPON_TYPES-1)
         {
-            temp = cfg.weaponOrder[choice+1];
+            int temp = cfg.weaponOrder[choice+1];
             cfg.weaponOrder[choice+1] = cfg.weaponOrder[choice];
             cfg.weaponOrder[choice] = temp;
         }
@@ -6142,7 +6143,7 @@ int Hu_MenuChangeWeaponPriority(mn_object_t *obj, mn_actionid_t action, void *pa
     {
         if(choice > 0)
         {
-            temp = cfg.weaponOrder[choice];
+            int temp = cfg.weaponOrder[choice];
             cfg.weaponOrder[choice] = cfg.weaponOrder[choice-1];
             cfg.weaponOrder[choice-1] = temp;
         }
@@ -6150,10 +6151,8 @@ int Hu_MenuChangeWeaponPriority(mn_object_t *obj, mn_actionid_t action, void *pa
     return 0;
 }
 
-int Hu_MenuSelectSingleplayer(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectSingleplayer(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    DENG_UNUSED(parameters);
-
     if(MNA_ACTIVEOUT != action) return 1;
 
     if(IS_NETGAME)
@@ -6174,16 +6173,16 @@ int Hu_MenuSelectSingleplayer(mn_object_t *ob, mn_actionid_t action, void *param
     else
         Hu_MenuSetActivePage(Hu_MenuFindPageByName("Episode"));
 #endif
+
     return 0;
 }
 
-int Hu_MenuSelectMultiplayer(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectMultiplayer(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    mn_page_t* multiplayerPage = Hu_MenuFindPageByName("Multiplayer");
-    mn_object_t* labelObj = MN_MustFindObjectOnPage(multiplayerPage, 0, MNF_ID0);
-    mndata_button_t* btn = (mndata_button_t*)labelObj->_typedata;
+    mn_page_t *multiplayerPage = Hu_MenuFindPageByName("Multiplayer");
+    mn_object_t *labelObj = MN_MustFindObjectOnPage(multiplayerPage, 0, MNF_ID0);
+    mndata_button_t *btn  = (mndata_button_t *)labelObj->_typedata;
 
-    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
 
     // Set the appropriate label.
@@ -6199,12 +6198,10 @@ int Hu_MenuSelectMultiplayer(mn_object_t *obj, mn_actionid_t action, void *param
     return 0;
 }
 
-int Hu_MenuSelectJoinGame(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectJoinGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*parameters*/)
 {
-    DENG_UNUSED(ob);
-    DENG_UNUSED(parameters);
-
     if(MNA_ACTIVEOUT != action) return 1;
+
     if(IS_NETGAME)
     {
         DD_Execute(false, "net disconnect");
@@ -6216,18 +6213,16 @@ int Hu_MenuSelectJoinGame(mn_object_t *ob, mn_actionid_t action, void *parameter
     return 0;
 }
 
-int Hu_MenuSelectPlayerSetup(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectPlayerSetup(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    mn_page_t* playerSetupPage = Hu_MenuFindPageByName("PlayerSetup");
-    mn_object_t* mop    = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID0);
-    mn_object_t* name   = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID1);
-    mn_object_t* color  = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID3);
+    mn_page_t *playerSetupPage = Hu_MenuFindPageByName("PlayerSetup");
+    mn_object_t *mop    = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID0);
+    mn_object_t *name   = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID1);
+    mn_object_t *color  = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID3);
 #if __JHEXEN__
-    mn_object_t* class_;
+    mn_object_t *class_;
 #endif
 
-    DENG_UNUSED(ob);
-    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
 
 #if __JHEXEN__
@@ -6253,17 +6248,14 @@ int Hu_MenuSelectPlayerSetup(mn_object_t *ob, mn_actionid_t action, void *parame
 }
 
 #if __JHEXEN__
-int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    int selection;
-
-    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
-    selection = MNList_Selection(ob);
+    int selection = MNList_Selection(ob);
     if(selection >= 0)
     {
-        mn_object_t* mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
+        mn_object_t *mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
         MNMobjPreview_SetPlayerClass(mop, selection);
         MNMobjPreview_SetMobjType(mop, PCLASS_INFO(selection)->mobjType);
     }
@@ -6271,33 +6263,27 @@ int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *ob, mn_actionid_t action, v
 }
 #endif
 
-int Hu_MenuSelectPlayerColor(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectPlayerColor(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    int selection;
-
-    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
     // The color translation map is stored in the list item data member.
-    selection = MNList_ItemData(ob, MNList_Selection(ob));
+    int selection = MNList_ItemData(ob, MNList_Selection(ob));
     if(selection >= 0)
     {
-        mn_object_t* mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
+        mn_object_t *mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
         MNMobjPreview_SetTranslationMap(mop, selection);
     }
     return 0;
 }
 
-int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    mn_object_t* plrNameEdit = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID1);
+    mn_object_t *plrNameEdit = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID1);
 #if __JHEXEN__
-    mn_object_t* plrClassList = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID2);
+    mn_object_t *plrClassList = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID2);
 #endif
-    mn_object_t* plrColorList = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID3);
-    char buf[300];
-
-    DENG_UNUSED(parameters);
+    mn_object_t *plrColorList = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID3);
 
 #if __JHEXEN__
     cfg.netClass = MNList_Selection(plrClassList);
@@ -6307,6 +6293,7 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *ob, mn_actionid_t action, void *
 
     if(MNA_ACTIVEOUT != action) return 1;
 
+    char buf[300];
     strcpy(buf, "net-name ");
     M_StrCatQuoted(buf, Str_Text(MNEdit_Text(plrNameEdit)), 300);
     DD_Execute(false, buf);
@@ -6330,29 +6317,22 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *ob, mn_actionid_t action, void *
     return 0;
 }
 
-int Hu_MenuSelectQuitGame(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectQuitGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*parameters*/)
 {
-    DENG_UNUSED(ob);
-    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     G_QuitGame();
     return 0;
 }
 
-int Hu_MenuSelectEndGame(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectEndGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    DENG_UNUSED(ob);
-    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     G_EndGame();
     return 0;
 }
 
-int Hu_MenuSelectLoadGame(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectLoadGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    DENG_UNUSED(ob);
-    DENG_UNUSED(parameters);
-
     if(MNA_ACTIVEOUT != action) return 1;
 
     if(!Get(DD_DEDICATED))
@@ -6369,14 +6349,12 @@ int Hu_MenuSelectLoadGame(mn_object_t *ob, mn_actionid_t action, void *parameter
     return 0;
 }
 
-int Hu_MenuSelectSaveGame(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectSaveGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    player_t* player = &players[CONSOLEPLAYER];
-
-    DENG_UNUSED(ob);
-    DENG_UNUSED(parameters);
+    player_t *player = &players[CONSOLEPLAYER];
 
     if(MNA_ACTIVEOUT != action) return 1;
+
     if(!Get(DD_DEDICATED))
     {
         if(IS_CLIENT)
@@ -6407,16 +6385,15 @@ int Hu_MenuSelectSaveGame(mn_object_t *ob, mn_actionid_t action, void *parameter
 }
 
 #if __JHEXEN__
-int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    mn_page_t* skillPage = Hu_MenuFindPageByName("Skill");
+    mn_page_t *skillPage = Hu_MenuFindPageByName("Skill");
     int option = ob->data2;
-    mn_object_t* skillObj;
-    const char* text;
-
-    DENG_UNUSED(parameters);
+    mn_object_t *skillObj;
+    char const *text;
 
     if(MNA_ACTIVEOUT != action) return 1;
+
     if(IS_NETGAME)
     {
         P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, "You can't start a new game from within a netgame!");
@@ -6434,28 +6411,28 @@ int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void *parame
     }
 
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID0);
-    text = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_BABY]);
-    ((mndata_button_t*)skillObj->_typedata)->text = text;
+    text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_BABY]);
+    ((mndata_button_t *)skillObj->_typedata)->text = text;
     MNObject_SetShortcut(skillObj, text[0]);
 
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID1);
-    text = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]);
-    ((mndata_button_t*)skillObj->_typedata)->text = text;
+    text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]);
+    ((mndata_button_t *)skillObj->_typedata)->text = text;
     MNObject_SetShortcut(skillObj, text[0]);
 
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID2);
-    text = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]);
-    ((mndata_button_t*)skillObj->_typedata)->text = text;
+    text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]);
+    ((mndata_button_t *)skillObj->_typedata)->text = text;
     MNObject_SetShortcut(skillObj, text[0]);
 
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID3);
-    text = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]);
-    ((mndata_button_t*)skillObj->_typedata)->text = text;
+    text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]);
+    ((mndata_button_t *)skillObj->_typedata)->text = text;
     MNObject_SetShortcut(skillObj, text[0]);
 
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID4);
-    text = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]);
-    ((mndata_button_t*)skillObj->_typedata)->text = text;
+    text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]);
+    ((mndata_button_t *)skillObj->_typedata)->text = text;
     MNObject_SetShortcut(skillObj, text[0]);
 
     switch(mnPlrClass)
@@ -6468,61 +6445,56 @@ int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void *parame
     return 0;
 }
 
-int Hu_MenuFocusOnPlayerClass(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuFocusOnPlayerClass(mn_object_t *ob, mn_actionid_t action, void *context)
 {
     playerclass_t plrClass = (playerclass_t)ob->data2;
-    mn_object_t* mop;
 
-    DENG_UNUSED(parameters);
     if(MNA_FOCUS != action) return 1;
 
-    mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
+    mn_object_t *mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
     MNMobjPreview_SetPlayerClass(mop, plrClass);
     MNMobjPreview_SetMobjType(mop, (PCLASS_NONE == plrClass? MT_NONE : PCLASS_INFO(plrClass)->mobjType));
 
-    Hu_MenuDefaultFocusAction(ob, action, parameters);
+    Hu_MenuDefaultFocusAction(ob, action, context);
     return 0;
 }
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-int Hu_MenuFocusEpisode(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuFocusEpisode(mn_object_t *ob, mn_actionid_t action, void *context)
 {
-    DENG_UNUSED(parameters);
     if(MNA_FOCUS != action) return 1;
     mnEpisode = ob->data2;
-    Hu_MenuDefaultFocusAction(ob, action, parameters);
+    Hu_MenuDefaultFocusAction(ob, action, context);
     return 0;
 }
 
-int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t response, int userValue, void* userPointer)
+int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t /*response*/, int /*userValue*/, void * /*context*/)
 {
     G_StartHelp();
     return true;
 }
 
-int Hu_MenuActivateNotSharewareEpisode(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuActivateNotSharewareEpisode(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    DENG_UNUSED(ob);
-    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, 0, NULL);
     return 0;
 }
 #endif
 
-int Hu_MenuFocusSkillMode(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuFocusSkillMode(mn_object_t *ob, mn_actionid_t action, void *context)
 {
-    assert(ob);
-    DENG_UNUSED(parameters);
+    DENG2_ASSERT(ob != 0);
+
     if(MNA_FOCUS != action) return 1;
     mnSkillmode = (skillmode_t)ob->data2;
-    Hu_MenuDefaultFocusAction(ob, action, parameters);
+    Hu_MenuDefaultFocusAction(ob, action, context);
     return 0;
 }
 
 #if __JDOOM__
-int Hu_MenuConfirmInitNewGame(msgresponse_t response, int userValue, void* userPointer)
+int Hu_MenuConfirmInitNewGame(msgresponse_t response, int /*userValue*/, void * /*context*/)
 {
     if(response == MSG_YES)
     {
@@ -6534,15 +6506,14 @@ int Hu_MenuConfirmInitNewGame(msgresponse_t response, int userValue, void* userP
 
 void Hu_MenuInitNewGame(dd_bool confirmed)
 {
-    GameRuleset newRules = gameRules;
-    Uri *newMapUri = 0;
-
 #if __JDOOM__
     if(!confirmed && SM_NIGHTMARE == mnSkillmode)
     {
         Hu_MsgStart(MSG_YESNO, NIGHTMARE, Hu_MenuConfirmInitNewGame, 0, NULL);
         return;
     }
+#else
+    DENG2_UNUSED(confirmed);
 #endif
 
     Hu_MenuCommand(chooseCloseMethod());
@@ -6551,42 +6522,43 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     cfg.playerClass[CONSOLEPLAYER] = playerclass_t(mnPlrClass);
 #endif
 
+    GameRuleset newRules = gameRules;
     newRules.skill = mnSkillmode;
+
 #if __JHEXEN__
-    newMapUri = G_ComposeMapUri(mnEpisode, P_TranslateMap(0));
+    Uri *newMapUri = G_ComposeMapUri(mnEpisode, P_TranslateMap(0));
 #else
-    newMapUri = G_ComposeMapUri(mnEpisode, 0);
+    Uri *newMapUri = G_ComposeMapUri(mnEpisode, 0);
 #endif
 
     G_DeferredNewGame(newMapUri, 0/*default*/, &newRules);
     Uri_Delete(newMapUri);
 }
 
-int Hu_MenuActionInitNewGame(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuActionInitNewGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    DENG_UNUSED(ob);
-    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
     Hu_MenuInitNewGame(false);
     return 0;
 }
 
-int Hu_MenuSelectControlPanelLink(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectControlPanelLink(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
 #define NUM_PANEL_NAMES         1
 
-    static const char* panelNames[NUM_PANEL_NAMES] = {
+    static char const *panelNames[NUM_PANEL_NAMES] = {
         "taskbar" //,
         //"panel audio",
         //"panel input"
     };
-    int idx = ob->data2;
 
-    DENG_UNUSED(parameters);
     if(MNA_ACTIVEOUT != action) return 1;
 
+    int idx = ob->data2;
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
+    {
         idx = 0;
+    }
 
     DD_Execute(true, panelNames[idx]);
     return 0;
@@ -6596,6 +6568,8 @@ int Hu_MenuSelectControlPanelLink(mn_object_t *ob, mn_actionid_t action, void *p
 
 D_CMD(MenuOpen)
 {
+    DENG2_UNUSED(src);
+
     if(argc > 1)
     {
         if(!stricmp(argv[1], "open"))
@@ -6609,14 +6583,11 @@ D_CMD(MenuOpen)
             return true;
         }
 
+        if(mn_page_t *page = Hu_MenuFindPageByName(argv[1]))
         {
-            mn_page_t *page = Hu_MenuFindPageByName(argv[1]);
-            if(page)
-            {
-                Hu_MenuCommand(MCMD_OPEN);
-                Hu_MenuSetActivePage(page);
-                return true;
-            }
+            Hu_MenuCommand(MCMD_OPEN);
+            Hu_MenuSetActivePage(page);
+            return true;
         }
         return false;
     }
@@ -6630,9 +6601,11 @@ D_CMD(MenuOpen)
  */
 D_CMD(MenuCommand)
 {
+    DENG2_UNUSED2(src, argc);
+
     if(menuActive)
     {
-        const char* cmd = argv[0] + 4;
+        char const *cmd = argv[0] + 4;
         if(!stricmp(cmd, "up"))
         {
             Hu_MenuCommand(MCMD_NAV_UP);
