@@ -262,7 +262,7 @@ public:
     operator CountedType const * () const { return _ref; }
     operator CountedType * () { return _ref; }
     operator CountedType const & () const { return *_ref; }
-    operator CountedType & () { *_ref; }
+    operator CountedType & () { return *_ref; }
 private:
     CountedType *_ref;
 };
