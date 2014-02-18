@@ -27,9 +27,17 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Register event sequence callbacks for all cheats.
  */
 void G_RegisterCheats(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBHERETIC_M_CHEAT_H

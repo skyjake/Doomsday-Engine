@@ -33,6 +33,14 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void G_ConsoleRegistration(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDOOM_DCONSOLE_H */

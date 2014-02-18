@@ -34,9 +34,13 @@
 
 #include "h_player.h"
 
-extern dd_bool intermission;
-extern int interState;
-extern int interTime;
+DENG_EXTERN_C dd_bool intermission;
+DENG_EXTERN_C int interState;
+DENG_EXTERN_C int interTime;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /// To be called to register the console commands and variables of this module.
 void WI_Register(void);
@@ -55,5 +59,9 @@ void            IN_CheckForSkip(void);
 void            IN_InitStats(void);
 void            IN_InitDeathmatchStats(void);
 void            IN_InitNetgameStats(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

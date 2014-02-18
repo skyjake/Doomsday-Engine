@@ -80,30 +80,30 @@ struct missileinfo_s {
 MonsterMissileInfo[] =
 {
 #if __JDOOM__ || __JDOOM64__
-    {MT_BRUISERSHOT, {15, 20}},
-    {MT_HEADSHOT, {10, 20}},
-    {MT_TROOPSHOT, {10, 20}},
+    { MT_BRUISERSHOT, {15, 20} },
+    { MT_HEADSHOT, {10, 20} },
+    { MT_TROOPSHOT, {10, 20} },
 # if __JDOOM64__
-    {MT_BRUISERSHOTRED, {15, 20}},
-    {MT_NTROSHOT, {20, 40}},
+    { MT_BRUISERSHOTRED, {15, 20} },
+    { MT_NTROSHOT, {20, 40} },
 # endif
 #elif __JHERETIC__
-    {MT_IMPBALL, {10, 20}},
-    {MT_MUMMYFX1, {9, 18}},
-    {MT_KNIGHTAXE, {9, 18}},
-    {MT_REDAXE, {9, 18}},
-    {MT_BEASTBALL, {12, 20}},
-    {MT_WIZFX1, {18, 24}},
-    {MT_SNAKEPRO_A, {14, 20}},
-    {MT_SNAKEPRO_B, {14, 20}},
-    {MT_HEADFX1, {13, 20}},
-    {MT_HEADFX3, {10, 18}},
-    {MT_MNTRFX1, {20, 26}},
-    {MT_MNTRFX2, {14, 20}},
-    {MT_SRCRFX1, {20, 28}},
-    {MT_SOR2FX1, {20, 28}},
+    { MT_IMPBALL, {10, 20} },
+    { MT_MUMMYFX1, {9, 18} },
+    { MT_KNIGHTAXE, {9, 18} },
+    { MT_REDAXE, {9, 18} },
+    { MT_BEASTBALL, {12, 20} },
+    { MT_WIZFX1, {18, 24} },
+    { MT_SNAKEPRO_A, {14, 20} },
+    { MT_SNAKEPRO_B, {14, 20} },
+    { MT_HEADFX1, {13, 20} },
+    { MT_HEADFX3, {10, 18} },
+    { MT_MNTRFX1, {20, 26} },
+    { MT_MNTRFX2, {14, 20} },
+    { MT_SRCRFX1, {20, 28} },
+    { MT_SOR2FX1, {20, 28} },
 #endif
-    {-1, {-1, -1}}                  // Terminator
+    { mobjtype_t(-1), {-1, -1} }
 };
 #endif
 
@@ -120,44 +120,45 @@ D_CMD(SaveGame);
 D_CMD(OpenSaveMenu);
 D_CMD(WarpMap);
 
-void    G_PlayerReborn(int player);
-void    G_DoReborn(int playernum);
+void G_PlayerReborn(int player);
+void G_DoReborn(int playernum);
 dd_bool G_StartDebriefing();
 
-typedef struct {
+struct loadmap_params_t
+{
     Uri *mapUri;
     dd_bool revisit;
-} loadmap_params_t;
-int     G_DoLoadMap(loadmap_params_t* params);
+};
+int G_DoLoadMap(loadmap_params_t *parm);
 
-void    G_DoLoadGame(void);
-void    G_DoPlayDemo(void);
-void    G_DoMapCompleted(void);
-void    G_DoEndDebriefing(void);
-void    G_DoVictory(void);
-void    G_DoLeaveMap(void);
-void    G_DoRestartMap(void);
-void    G_DoSaveGame(void);
-void    G_DoScreenShot(void);
-void    G_DoQuitGame(void);
+void G_DoLoadGame();
+void G_DoPlayDemo();
+void G_DoMapCompleted();
+void G_DoEndDebriefing();
+void G_DoVictory();
+void G_DoLeaveMap();
+void G_DoRestartMap();
+void G_DoSaveGame();
+void G_DoScreenShot();
+void G_DoQuitGame();
 
-void    G_StopDemo(void);
+void G_StopDemo();
 
 /**
  * Updates game status cvars for the specified player.
  */
-void G_UpdateGSVarsForPlayer(player_t* pl);
+void G_UpdateGSVarsForPlayer(player_t *pl);
 
 /**
  * Updates game status cvars for the current map.
  */
-void G_UpdateGSVarsForMap(void);
+void G_UpdateGSVarsForMap();
 
-void R_LoadVectorGraphics(void);
+void R_LoadVectorGraphics();
 
-int Hook_DemoStop(int hookType, int val, void* parameters);
+int Hook_DemoStop(int hookType, int val, void *parm);
 
-static void G_InitNewGame(void);
+static void G_InitNewGame();
 
 game_config_t cfg; // The global cfg.
 
@@ -178,7 +179,7 @@ dd_bool secretExit;
 #endif
 
 #if __JHEXEN__
-uint mapHub = 0;
+uint mapHub;
 #endif
 
 dd_bool monsterInfight;
@@ -188,20 +189,20 @@ player_t players[MAXPLAYERS];
 int totalKills, totalItems, totalSecret; // For intermission.
 
 dd_bool singledemo; // Quit after playing a demo from cmdline.
-dd_bool briefDisabled = false;
+dd_bool briefDisabled;
 
 dd_bool precache = true; // If @c true, load all graphics at start.
-dd_bool customPal = false; // If @c true, a non-IWAD palette is in use.
+dd_bool customPal; // If @c true, a non-IWAD palette is in use.
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 // Game Action Variables:
-int gaSaveGameSlot = 0;
+int gaSaveGameSlot;
 dd_bool gaSaveGameGenerateName = true;
-ddstring_t* gaSaveGameName;
-int gaLoadGameSlot = 0;
+ddstring_t *gaSaveGameName;
+int gaLoadGameSlot;
 
 #if __JDOOM__ || __JDOOM64__
 mobj_t *bodyQueue[BODYQUEUESIZE];
@@ -209,22 +210,22 @@ int bodyQueueSlot;
 #endif
 
 // vars used with game status cvars
-int gsvEpisode = 0;
-int gsvMap = 0;
+int gsvEpisode;
+int gsvMap;
 char *gsvMapAuthor = "Unknown";
 int gsvMapMusic = -1;
 char *gsvMapTitle = "Unknown";
 
-int gsvInMap = 0;
-int gsvCurrentMusic = 0;
+int gsvInMap;
+int gsvCurrentMusic;
 
-int gsvArmor = 0;
-int gsvHealth = 0;
+int gsvArmor;
+int gsvHealth;
 
 #if !__JHEXEN__
-int gsvKills = 0;
-int gsvItems = 0;
-int gsvSecrets = 0;
+int gsvKills;
+int gsvItems;
+int gsvSecrets;
 #endif
 
 int gsvCurrentWeapon;
@@ -412,7 +413,7 @@ static GameRuleset dRules;
 static gameaction_t gameAction;
 static dd_bool quitInProgress;
 
-void G_Register(void)
+void G_Register()
 {
     int i;
 
@@ -435,7 +436,7 @@ void G_Register(void)
 #endif
 }
 
-dd_bool G_QuitInProgress(void)
+dd_bool G_QuitInProgress()
 {
     return quitInProgress;
 }
@@ -448,7 +449,7 @@ void G_SetGameAction(gameaction_t action)
         gameAction = action;
 }
 
-gameaction_t G_GameAction(void)
+gameaction_t G_GameAction()
 {
     return gameAction;
 }
@@ -457,7 +458,7 @@ gameaction_t G_GameAction(void)
  * Common Pre Game Initialization routine.
  * Game-specfic pre init actions should be placed in eg D_PreInit() (for jDoom)
  */
-void G_CommonPreInit(void)
+void G_CommonPreInit()
 {
     int i, j;
 
@@ -576,7 +577,7 @@ void Mobj_UpdateTranslationClassAndMap(mobj_t* mo)
 }
 #endif // __JHEXEN__
 
-void R_LoadColorPalettes(void)
+void R_LoadColorPalettes()
 {
 #define PALLUMPNAME         "PLAYPAL"
 #define PALENTRIES          (256)
@@ -691,59 +692,60 @@ void R_LoadColorPalettes(void)
  * @todo Read this information from a definition (ideally with more user
  *       friendly mnemonics...).
  */
-void R_LoadVectorGraphics(void)
+void R_LoadVectorGraphics()
 {
-#define R                          (1.0f)
-#define NUMITEMS(x)                (sizeof(x)/sizeof((x)[0]))
+#define R           (1.0f)
+#define NUMITEMS(x) (sizeof(x)/sizeof((x)[0]))
+#define Pt           Point2Rawf
 
-    const Point2Rawf keyPoints[] = {
-        {-3 * R / 4, 0}, {-3 * R / 4, -R / 4}, // Mid tooth.
-        {    0,      0}, {   -R,      0}, {   -R, -R / 2}, // Shaft and end tooth.
+    Point2Rawf const keyPoints[] = {
+        Pt(-3 * R / 4, 0), Pt(-3 * R / 4, -R / 4), // Mid tooth.
+        Pt(    0,      0), Pt(   -R,      0), Pt(   -R, -R / 2), // Shaft and end tooth.
 
-        {    0,      0}, {R / 4, -R / 2}, // Bow.
-        {R / 2, -R / 2}, {R / 2,  R / 2},
-        {R / 4,  R / 2}, {    0,      0},
+        Pt(    0,      0), Pt(R / 4, -R / 2), // Bow.
+        Pt(R / 2, -R / 2), Pt(R / 2,  R / 2),
+        Pt(R / 4,  R / 2), Pt(    0,      0),
     };
-    const def_svgline_t key[] = {
+    def_svgline_t const key[] = {
         { 2, &keyPoints[ 0] },
         { 3, &keyPoints[ 2] },
         { 6, &keyPoints[ 5] }
     };
-    const Point2Rawf thintrianglePoints[] = {
-        {-R / 2,  R - R / 2},
-        {     R,          0}, // `
-        {-R / 2, -R + R / 2}, // /
-        {-R / 2,  R - R / 2} // |>
+    Point2Rawf const thintrianglePoints[] = {
+        Pt(-R / 2,  R - R / 2),
+        Pt(     R,          0), // `
+        Pt(-R / 2, -R + R / 2), // /
+        Pt(-R / 2,  R - R / 2) // |>
     };
-    const def_svgline_t thintriangle[] = {
+    def_svgline_t const thintriangle[] = {
         { 4, thintrianglePoints },
     };
 #if __JDOOM__ || __JDOOM64__
-    const Point2Rawf arrowPoints[] = {
-        {    -R + R / 8, 0},  {             R, 0}, // -----
-        { R - R / 2, -R / 4}, {             R, 0}, { R - R / 2,  R / 4}, // ----->
-        {-R - R / 8, -R / 4}, {    -R + R / 8, 0}, {-R - R / 8,  R / 4}, // >---->
-        {-R + R / 8, -R / 4}, {-R + 3 * R / 8, 0}, {-R + R / 8,  R / 4}, // >>--->
+    Point2Rawf const arrowPoints[] = {
+        Pt(    -R + R / 8, 0 ), Pt(             R, 0), // -----
+        Pt( R - R / 2, -R / 4), Pt(             R, 0), Pt( R - R / 2,  R / 4), // ----->
+        Pt(-R - R / 8, -R / 4), Pt(    -R + R / 8, 0), Pt(-R - R / 8,  R / 4), // >---->
+        Pt(-R + R / 8, -R / 4), Pt(-R + 3 * R / 8, 0), Pt(-R + R / 8,  R / 4), // >>--->
     };
-    const def_svgline_t arrow[] = {
+    def_svgline_t const arrow[] = {
         { 2, &arrowPoints[ 0] },
         { 3, &arrowPoints[ 2] },
         { 3, &arrowPoints[ 5] },
         { 3, &arrowPoints[ 8] }
     };
 #elif __JHERETIC__ || __JHEXEN__
-    const Point2Rawf arrowPoints[] = {
-        {-R + R / 4,      0}, {         0,      0}, // center line.
-        {-R + R / 4,  R / 8}, {         R,      0}, {-R + R / 4, -R / 8}, // blade
+    Point2Rawf const arrowPoints[] = {
+        Pt(-R + R / 4,      0), Pt(         0,      0), // center line.
+        Pt(-R + R / 4,  R / 8), Pt(         R,      0), Pt(-R + R / 4, -R / 8), // blade
 
-        {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4}, // guard
-        {-R + R / 4,  R / 4}, {-R + R / 8,  R / 4},
-        {-R + R / 8, -R / 4},
+        Pt(-R + R / 8, -R / 4), Pt(-R + R / 4, -R / 4), // guard
+        Pt(-R + R / 4,  R / 4), Pt(-R + R / 8,  R / 4),
+        Pt(-R + R / 8, -R / 4),
 
-        {-R + R / 8, -R / 8}, {-R - R / 4, -R / 8}, // hilt
-        {-R - R / 4,  R / 8}, {-R + R / 8,  R / 8},
+        Pt(-R + R / 8, -R / 8), Pt(-R - R / 4, -R / 8), // hilt
+        Pt(-R - R / 4,  R / 8), Pt(-R + R / 8,  R / 8),
     };
-    const def_svgline_t arrow[] = {
+    def_svgline_t const arrow[] = {
         { 2, &arrowPoints[ 0] },
         { 3, &arrowPoints[ 2] },
         { 5, &arrowPoints[ 5] },
@@ -751,22 +753,22 @@ void R_LoadVectorGraphics(void)
     };
 #endif
 #if __JDOOM__
-    const Point2Rawf cheatarrowPoints[] = {
-        {    -R + R / 8, 0},  {             R, 0}, // -----
-        { R - R / 2, -R / 4}, {             R, 0}, { R - R / 2,  R / 4}, // ----->
-        {-R - R / 8, -R / 4}, {    -R + R / 8, 0}, {-R - R / 8,  R / 4}, // >---->
-        {-R + R / 8, -R / 4}, {-R + 3 * R / 8, 0}, {-R + R / 8,  R / 4}, // >>--->
+    Point2Rawf const cheatarrowPoints[] = {
+        Pt(    -R + R / 8, 0 ), Pt(             R, 0), // -----
+        Pt( R - R / 2, -R / 4), Pt(             R, 0), Pt( R - R / 2,  R / 4), // ----->
+        Pt(-R - R / 8, -R / 4), Pt(    -R + R / 8, 0), Pt(-R - R / 8,  R / 4), // >---->
+        Pt(-R + R / 8, -R / 4), Pt(-R + 3 * R / 8, 0), Pt(-R + R / 8,  R / 4), // >>--->
 
-        {        -R / 2,      0}, {        -R / 2, -R / 6}, // >>-d--->
-        {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6,  R / 4},
+        Pt(        -R / 2,      0), Pt(        -R / 2, -R / 6), // >>-d--->
+        Pt(-R / 2 + R / 6, -R / 6), Pt(-R / 2 + R / 6,  R / 4),
 
-        {        -R / 6,      0}, {        -R / 6, -R / 6}, // >>-dd-->
-        {             0, -R / 6}, {             0,  R / 4},
+        Pt(        -R / 6,      0), Pt(        -R / 6, -R / 6), // >>-dd-->
+        Pt(             0, -R / 6), Pt(             0,  R / 4),
 
-        {         R / 6,  R / 4}, {         R / 6, -R / 7}, // >>-ddt->
-        {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}
+        Pt(         R / 6,  R / 4), Pt(         R / 6, -R / 7), // >>-ddt->
+        Pt(R / 6 + R / 32, -R / 7 - R / 32), Pt(R / 6 + R / 10, -R / 7)
     };
-    const def_svgline_t cheatarrow[] = {
+    def_svgline_t const cheatarrow[] = {
         { 2, &cheatarrowPoints[ 0] },
         { 3, &cheatarrowPoints[ 2] },
         { 3, &cheatarrowPoints[ 5] },
@@ -777,50 +779,50 @@ void R_LoadVectorGraphics(void)
     };
 #endif
 
-    const Point2Rawf crossPoints[] = { // + (open center)
-        {-R,  0}, {-R / 5 * 2,          0},
-        { 0, -R}, {         0, -R / 5 * 2},
-        { R,  0}, { R / 5 * 2,          0},
-        { 0,  R}, {         0,  R / 5 * 2}
+    Point2Rawf const crossPoints[] = { // + (open center)
+        Pt(-R,  0), Pt(-R / 5 * 2,          0),
+        Pt( 0, -R), Pt(         0, -R / 5 * 2),
+        Pt( R,  0), Pt( R / 5 * 2,          0),
+        Pt( 0,  R), Pt(         0,  R / 5 * 2)
     };
-    const def_svgline_t cross[] = {
+    def_svgline_t const cross[] = {
         { 2, &crossPoints[0] },
         { 2, &crossPoints[2] },
         { 2, &crossPoints[4] },
         { 2, &crossPoints[6] }
     };
-    const Point2Rawf twinanglesPoints[] = { // > <
-        {-R, -R * 10 / 14}, {-(R - (R * 10 / 14)), 0}, {-R,  R * 10 / 14}, // >
-        { R, -R * 10 / 14}, {  R - (R * 10 / 14) , 0}, { R,  R * 10 / 14}, // <
+    Point2Rawf const twinanglesPoints[] = { // > <
+        Pt(-R, -R * 10 / 14), Pt(-(R - (R * 10 / 14)), 0), Pt(-R,  R * 10 / 14), // >
+        Pt( R, -R * 10 / 14), Pt(  R - (R * 10 / 14) , 0), Pt( R,  R * 10 / 14), // <
     };
-    const def_svgline_t twinangles[] = {
+    def_svgline_t const twinangles[] = {
         { 3, &twinanglesPoints[0] },
         { 3, &twinanglesPoints[3] }
     };
-    const Point2Rawf squarePoints[] = { // square
-        {-R, -R}, {-R,  R},
-        { R,  R}, { R, -R},
-        {-R, -R}
+    Point2Rawf const squarePoints[] = { // square
+        Pt(-R, -R), Pt(-R,  R),
+        Pt( R,  R), Pt( R, -R),
+        Pt(-R, -R)
     };
-    const def_svgline_t square[] = {
+    def_svgline_t const square[] = {
         { 5, squarePoints },
     };
-    const Point2Rawf squarecornersPoints[] = { // square (open center)
-        {   -R, -R / 2}, {-R, -R}, {-R / 2,      -R}, // topleft
-        {R / 2,     -R}, { R, -R}, {     R,  -R / 2}, // topright
-        {   -R,  R / 2}, {-R,  R}, {-R / 2,       R}, // bottomleft
-        {R / 2,      R}, { R,  R}, {     R,   R / 2}, // bottomright
+    Point2Rawf const squarecornersPoints[] = { // square (open center)
+        Pt(   -R, -R / 2), Pt(-R, -R), Pt(-R / 2,      -R), // topleft
+        Pt(R / 2,     -R), Pt( R, -R), Pt(     R,  -R / 2), // topright
+        Pt(   -R,  R / 2), Pt(-R,  R), Pt(-R / 2,       R), // bottomleft
+        Pt(R / 2,      R), Pt( R,  R), Pt(     R,   R / 2), // bottomright
     };
-    const def_svgline_t squarecorners[] = {
+    def_svgline_t const squarecorners[] = {
         { 3, &squarecornersPoints[ 0] },
         { 3, &squarecornersPoints[ 3] },
         { 3, &squarecornersPoints[ 6] },
         { 3, &squarecornersPoints[ 9] }
     };
-    const Point2Rawf anglePoints[] = { // v
-        {-R, -R}, { 0,  0}, { R, -R}
+    Point2Rawf const anglePoints[] = { // v
+        Pt(-R, -R), Pt(0,  0), Pt(R, -R)
     };
-    const def_svgline_t angle[] = {
+    def_svgline_t const angle[] = {
         { 3, anglePoints }
     };
 
@@ -838,8 +840,9 @@ void R_LoadVectorGraphics(void)
     R_NewSvg(VG_XHAIR4, squarecorners, NUMITEMS(squarecorners));
     R_NewSvg(VG_XHAIR5, angle, NUMITEMS(angle));
 
-#undef NUMITEMS
+#undef P
 #undef R
+#undef NUMITEMS
 }
 
 /**
@@ -856,7 +859,7 @@ fontid_t R_MustFindFontForName(const char* name)
     exit(1); // Unreachable.
 }
 
-void R_InitRefresh(void)
+void R_InitRefresh()
 {
     if(IS_DEDICATED) return;
 
@@ -895,7 +898,7 @@ void R_InitRefresh(void)
     }
 }
 
-void R_InitHud(void)
+void R_InitHud()
 {
     Hu_LoadData();
 
@@ -919,7 +922,7 @@ void R_InitHud(void)
  * Game-specific post init actions should be placed in eg D_PostInit()
  * (for jDoom) and NOT here.
  */
-void G_CommonPostInit(void)
+void G_CommonPostInit()
 {
     R_InitRefresh();
     FI_StackInit();
@@ -954,7 +957,7 @@ void G_CommonPostInit(void)
  * Common game shutdown routine.
  * @note Game-specific actions should be placed in G_Shutdown rather than here.
  */
-void G_CommonShutdown(void)
+void G_CommonShutdown()
 {
     Plug_RemoveHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
@@ -979,7 +982,7 @@ void G_CommonShutdown(void)
  *
  * @return              The current game state.
  */
-gamestate_t G_GameState(void)
+gamestate_t G_GameState()
 {
     return gameState;
 }
@@ -987,8 +990,8 @@ gamestate_t G_GameState(void)
 static char const *getGameStateStr(gamestate_t state)
 {
     struct statename_s {
-        gamestate_t     state;
-        const char*     name;
+        gamestate_t state;
+        char const *name;
     } stateNames[] =
     {
         { GS_MAP,          "GS_MAP" },
@@ -997,21 +1000,20 @@ static char const *getGameStateStr(gamestate_t state)
         { GS_STARTUP,      "GS_STARTUP" },
         { GS_WAITING,      "GS_WAITING" },
         { GS_INFINE,       "GS_INFINE" },
-        { -1,              NULL }
+        { gamestate_t(-1), 0 }
     };
-    uint                i;
-
-    for(i = 0; stateNames[i].name; ++i)
+    for(uint i = 0; stateNames[i].name; ++i)
+    {
         if(stateNames[i].state == state)
             return stateNames[i].name;
-
-    return NULL;
+    }
+    return 0;
 }
 
 /**
  * Called when the gameui binding context is active. Triggers the menu.
  */
-int G_UIResponder(event_t* ev)
+int G_UIResponder(event_t *ev)
 {
     // Handle "Press any key to continue" messages.
     if(Hu_MsgResponder(ev))
@@ -1108,7 +1110,7 @@ dd_bool G_StartFinale(const char* script, int flags, finale_mode_t mode, const c
     return true;
 }
 
-void G_StartTitle(void)
+void G_StartTitle()
 {
     ddfinale_t fin;
 
@@ -1122,7 +1124,7 @@ void G_StartTitle(void)
     G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "title");
 }
 
-void G_StartHelp(void)
+void G_StartHelp()
 {
     ddfinale_t fin;
 
@@ -1146,7 +1148,7 @@ void G_StartHelp(void)
  * Prints a banner to the console containing information pertinent to the
  * current map (e.g., map title, author...).
  */
-static void printMapBanner(void)
+static void printMapBanner()
 {
     char const *title = P_MapTitle(0/*current map*/);
 
@@ -1175,7 +1177,7 @@ static void printMapBanner(void)
     App_Log(DE2_LOG_MAP, "");
 }
 
-void G_BeginMap(void)
+void G_BeginMap()
 {
     G_ChangeGameState(GS_MAP);
 
@@ -1213,7 +1215,7 @@ int G_EndGameResponse(msgresponse_t response, int userValue, void *userPointer)
     return true;
 }
 
-void G_EndGame(void)
+void G_EndGame()
 {
     if(G_QuitInProgress()) return;
 
@@ -1412,14 +1414,14 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
     for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
         if(pl->plr->inGame && gameState == GS_MAP)
-            gsvInvItems[i] = P_InventoryCount(plrnum, IIT_FIRST + i);
+            gsvInvItems[i] = P_InventoryCount(plrnum, inventoryitemtype_t(IIT_FIRST + i));
         else
             gsvInvItems[i] = 0;
     }
 #endif
 }
 
-void G_UpdateGSVarsForMap(void)
+void G_UpdateGSVarsForMap()
 {
     char const *mapAuthor = P_MapAuthor(0/*current map*/, false/*don't supress*/);
     char const *mapTitle  = P_MapTitle(0/*current map*/);
@@ -1431,7 +1433,7 @@ void G_UpdateGSVarsForMap(void)
     Con_SetString2("map-name", mapTitle, SVF_WRITE_OVERRIDE);
 }
 
-void G_DoQuitGame(void)
+void G_DoQuitGame()
 {
 #define QUITWAIT_MILLISECONDS 1500
 
@@ -1533,7 +1535,7 @@ void G_QueMapMusic(Uri const *mapUri)
     S_PauseMusic(true);
 }
 
-static void runGameAction(void)
+static void runGameAction()
 {
     gameaction_t currentAction;
 
@@ -1598,7 +1600,7 @@ static void runGameAction(void)
 /**
  * Do needed reborns for any fallen players.
  */
-static void rebornPlayers(void)
+static void rebornPlayers()
 {
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -1640,7 +1642,7 @@ static void rebornPlayers(void)
  */
 void G_Ticker(timespan_t ticLength)
 {
-    static gamestate_t oldGameState = -1;
+    static gamestate_t oldGameState = gamestate_t(-1);
 
     // Always tic:
     Hu_FogEffectTicker(ticLength);
@@ -1760,14 +1762,13 @@ void G_PlayerLeaveMap(int player)
     int flightPower;
 #endif
     player_t *p = &players[player];
-    dd_bool newHub = true;
 
 #if __JHEXEN__
+    dd_bool newHub = true;
+
     {
         Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-
         newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);
-
         Uri_Delete(nextMapUri);
     }
 #endif
@@ -1781,7 +1782,7 @@ void G_PlayerLeaveMap(int player)
     // Empty the inventory of excess items
     for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        inventoryitemtype_t type = IIT_FIRST + i;
+        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
         uint count = P_InventoryCount(player, type);
 
         if(count)
@@ -1836,7 +1837,7 @@ void G_PlayerLeaveMap(int player)
     p->update |= PSF_MORPH_TIME;
     if(p->morphTics)
     {
-        p->readyWeapon = p->plr->mo->special1; // Restore weapon.
+        p->readyWeapon = weapontype_t(p->plr->mo->special1); // Restore weapon.
         p->morphTics = 0;
     }
 #endif
@@ -2162,7 +2163,7 @@ void G_DoReborn(int plrNum)
     G_SetGameAction(GA_RESTARTMAP);
 }
 
-static void G_InitNewGame(void)
+static void G_InitNewGame()
 {
 #if __JHEXEN__
     SaveSlots_ClearSlot(saveSlots, BASE_SLOT);
@@ -2228,7 +2229,7 @@ static void G_ApplyNewGameRules()
     if(gameRules.skill < SM_NOTHINGS)
         gameRules.skill = SM_NOTHINGS;
     if(gameRules.skill > NUM_SKILL_MODES - 1)
-        gameRules.skill = NUM_SKILL_MODES - 1;
+        gameRules.skill = skillmode_t(NUM_SKILL_MODES - 1);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!IS_NETGAME)
@@ -2315,7 +2316,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 /**
  * @return              @c true, if the game has been completed.
  */
-dd_bool G_IfVictory(void)
+dd_bool G_IfVictory()
 {
 #if __JDOOM64__
     if(gameMap == 27)
@@ -2375,7 +2376,7 @@ static int prepareIntermission(void* paramaters)
     return 0;
 }
 
-void G_DoMapCompleted(void)
+void G_DoMapCompleted()
 {
     int i;
 
@@ -2470,7 +2471,7 @@ void G_DoMapCompleted(void)
 }
 
 #if __JDOOM__ || __JDOOM64__
-void G_PrepareWIData(void)
+void G_PrepareWIData()
 {
     AutoStr *mapPath = Uri_Compose(gameMapUri);
     wbstartstruct_t *info = &wmInfo;
@@ -2517,7 +2518,7 @@ dd_bool G_StartDebriefing()
     return G_StartFinale(fin.script, 0, FIMODE_AFTER, 0);
 }
 
-void G_IntermissionDone(void)
+void G_IntermissionDone()
 {
     // We have left Intermission, however if there is an InFine for debriefing
     // we should run it now.
@@ -2549,7 +2550,7 @@ void G_IntermissionDone(void)
     G_SetGameAction(GA_LEAVEMAP);
 }
 
-void G_DoEndDebriefing(void)
+void G_DoEndDebriefing()
 {
     briefDisabled = true;
     G_IntermissionDone();
@@ -2580,7 +2581,7 @@ static void backupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
         // Make a copy of the inventory states also.
         for(k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
         {
-            pb->numInventoryItems[k] = P_InventoryCount(i, k);
+            pb->numInventoryItems[k] = P_InventoryCount(i, inventoryitemtype_t(k));
         }
         pb->readyItem = P_InventoryReadyItem(i);
     }
@@ -2620,7 +2621,7 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
 
             for(m = 0; m < pb->numInventoryItems[k]; ++m)
             {
-                P_InventoryGive(i, k, true);
+                P_InventoryGive(i, inventoryitemtype_t(k), true);
             }
         }
         P_InventorySetReadyItem(i, pb->readyItem);
@@ -2698,7 +2699,7 @@ static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint ma
             // Bring up the best weapon.
             if(bestWeapon)
             {
-                plr->pendingWeapon = bestWeapon;
+                plr->pendingWeapon = weapontype_t(bestWeapon);
             }
         }
     }
@@ -2754,7 +2755,7 @@ static int G_SaveStateWorker(void* parameters)
     return result;
 }
 
-void G_DoLeaveMap(void)
+void G_DoLeaveMap()
 {
 #if __JHEXEN__
     playerbackup_t playerBackup[MAXPLAYERS];
@@ -2914,7 +2915,7 @@ void G_DoLeaveMap(void)
     }
 }
 
-void G_DoRestartMap(void)
+void G_DoRestartMap()
 {
 #if __JHEXEN__
     // This is a restart, so we won't brief again.
@@ -2953,7 +2954,7 @@ void G_DoRestartMap(void)
 #endif
 }
 
-dd_bool G_IsLoadGamePossible(void)
+dd_bool G_IsLoadGamePossible()
 {
     return !(IS_CLIENT && !Get(DD_PLAYBACK));
 }
@@ -2984,7 +2985,7 @@ dd_bool G_LoadGame(int slot)
 /**
  * Called by G_Ticker based on gameaction.
  */
-void G_DoLoadGame(void)
+void G_DoLoadGame()
 {
 #if __JHEXEN__
     dd_bool mustCopyBaseToAutoSlot = (gaLoadGameSlot != AUTO_SLOT);
@@ -3002,7 +3003,7 @@ void G_DoLoadGame(void)
 #endif
 }
 
-dd_bool G_IsSaveGamePossible(void)
+dd_bool G_IsSaveGamePossible()
 {
     player_t* player;
 
@@ -3049,7 +3050,7 @@ dd_bool G_SaveGame(int slot)
     return G_SaveGame2(slot, NULL);
 }
 
-AutoStr *G_GenerateSaveGameName(void)
+AutoStr *G_GenerateSaveGameName()
 {
     AutoStr *str = AutoStr_New();
     int time = mapTime / TICRATE, hours, seconds, minutes;
@@ -3088,7 +3089,7 @@ AutoStr *G_GenerateSaveGameName(void)
 /**
  * Called by G_Ticker based on gameaction.
  */
-void G_DoSaveGame(void)
+void G_DoSaveGame()
 {
     savestateworker_params_t p;
     char const *name;
@@ -3308,7 +3309,7 @@ int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)
     return true;
 }
 
-void G_QuitGame(void)
+void G_QuitGame()
 {
     char const *endString;
     if(G_QuitInProgress()) return;
@@ -3404,7 +3405,7 @@ AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
     return AutoStr_FromTextStd(identityKeys[gamemode]);
 }
 
-char const *P_GetGameModeName(void)
+char const *P_GetGameModeName()
 {
     static char const *dm   = "deathmatch";
     static char const *coop = "cooperative";
@@ -3417,7 +3418,7 @@ char const *P_GetGameModeName(void)
     return sp;
 }
 
-uint G_GenerateSessionId(void)
+uint G_GenerateSessionId()
 {
     return Timer_RealMilliseconds() + (mapTime << 24);
 }
@@ -3440,7 +3441,7 @@ uint G_LogicalMapNumber(uint episode, uint map)
 #endif
 }
 
-uint G_CurrentLogicalMapNumber(void)
+uint G_CurrentLogicalMapNumber()
 {
     return G_LogicalMapNumber(gameEpisode, gameMap);
 }
@@ -3722,7 +3723,7 @@ void G_PrintFormattedMapList(uint episode, char const** files, uint count)
  * Print a list of all currently available maps and the location of the
  * source file/directory which contains them.
  */
-void G_PrintMapList(void)
+void G_PrintMapList()
 {
 #if __JDOOM__
     uint maxEpisodes       = (gameModeBits & GM_ANY_DOOM)? 9 : 1;
@@ -3803,7 +3804,7 @@ int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
  * Stops both playback and a recording. Called at critical points like
  * starting a new game, or ending the game in the menu.
  */
-void G_StopDemo(void)
+void G_StopDemo()
 {
     DD_Execute(true, "stopdemo");
 }
@@ -3846,7 +3847,7 @@ int Hook_DemoStop(int hookType, int val, void* paramaters)
     return true;
 }
 
-void G_ScreenShot(void)
+void G_ScreenShot()
 {
     G_SetGameAction(GA_SCREENSHOT);
 }
@@ -3856,7 +3857,7 @@ void G_ScreenShot(void)
  * file name base.
  * @return  Composed file name.
  */
-static AutoStr* composeScreenshotFileName(void)
+static AutoStr* composeScreenshotFileName()
 {
     GameInfo gameInfo;
     AutoStr* name;
@@ -3880,7 +3881,7 @@ static AutoStr* composeScreenshotFileName(void)
     return name;
 }
 
-void G_DoScreenShot(void)
+void G_DoScreenShot()
 {
     AutoStr* fileName = composeScreenshotFileName();
     if(fileName && M_ScreenShot(Str_Text(fileName), 24))
@@ -3897,7 +3898,7 @@ void G_DoScreenShot(void)
             fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
 }
 
-static void openLoadMenu(void)
+static void openLoadMenu()
 {
     Hu_MenuCommand(MCMD_OPEN);
     /// @todo This should be called automatically when opening the page
@@ -3906,7 +3907,7 @@ static void openLoadMenu(void)
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
 }
 
-static void openSaveMenu(void)
+static void openSaveMenu()
 {
     Hu_MenuCommand(MCMD_OPEN);
     /// @todo This should be called automatically when opening the page
@@ -3917,6 +3918,8 @@ static void openSaveMenu(void)
 
 D_CMD(OpenLoadMenu)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     if(!G_IsLoadGamePossible()) return false;
     openLoadMenu();
     return true;
@@ -3924,6 +3927,8 @@ D_CMD(OpenLoadMenu)
 
 D_CMD(OpenSaveMenu)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     if(!G_IsSaveGamePossible()) return false;
     openSaveMenu();
     return true;
@@ -3941,6 +3946,8 @@ int loadGameConfirmResponse(msgresponse_t response, int userValue, void* userPoi
 
 D_CMD(LoadGame)
 {
+    DENG_UNUSED(src);
+
     dd_bool const confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
     int slot;
 
@@ -4006,6 +4013,8 @@ D_CMD(LoadGame)
 
 D_CMD(QuickLoadGame)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     /// @todo Implement console command scripts?
     return DD_Execute(true, "loadgame quick");
 }
@@ -4025,6 +4034,8 @@ int saveGameConfirmResponse(msgresponse_t response, int userValue, void* userPoi
 
 D_CMD(SaveGame)
 {
+    DENG_UNUSED(src);
+
     const dd_bool confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
     player_t* player = &players[CONSOLEPLAYER];
     int slot;
@@ -4103,6 +4114,8 @@ D_CMD(SaveGame)
 
 D_CMD(QuickSaveGame)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     /// @todo Implement console command scripts?
     return DD_Execute(true, "savegame quick");
 }
@@ -4146,16 +4159,16 @@ int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void* u
 
 D_CMD(DeleteGameSave)
 {
-    dd_bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
-    player_t *player = &players[CONSOLEPLAYER];
-    int slot;
+    DENG_UNUSED(src);
+
+    bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
 
     if(G_QuitInProgress()) return false;
 
     // Ensure we have up-to-date info.
     SaveSlots_UpdateAllSaveInfo(saveSlots);
 
-    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
+    int slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
     if(SaveSlots_SlotIsUserWritable(saveSlots, slot) &&
        SaveSlots_SlotInUse(saveSlots, slot))
     {
@@ -4187,24 +4200,32 @@ D_CMD(DeleteGameSave)
 
 D_CMD(HelpScreen)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     G_StartHelp();
     return true;
 }
 
 D_CMD(EndGame)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     G_EndGame();
     return true;
 }
 
 D_CMD(CycleTextureGamma)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     R_CycleGammaLevel();
     return true;
 }
 
 D_CMD(ListMaps)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     App_Log(DE2_RES_MSG, "Available maps:");
     G_PrintMapList();
     return true;

@@ -27,9 +27,17 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Register event sequence callbacks for all cheats.
  */
 void G_RegisterCheats(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDOOM_M_CHEAT_H

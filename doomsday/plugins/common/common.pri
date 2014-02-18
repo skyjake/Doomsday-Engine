@@ -88,7 +88,7 @@ SOURCES += \
     $$common_src/g_controls.c \
     $$common_src/g_defs.c \
     $$common_src/g_eventsequence.cpp \
-    $$common_src/g_game.c \
+    $$common_src/g_game.cpp \
     $$common_src/g_update.c \
     $$common_src/gamerules.c \
     $$common_src/gamestatereader.cpp \
@@ -100,7 +100,7 @@ SOURCES += \
     $$common_src/hu_inventory.c \
     $$common_src/hu_lib.c \
     $$common_src/hu_log.c \
-    $$common_src/hu_menu.c \
+    $$common_src/hu_menu.cpp \
     $$common_src/hu_msg.c \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
