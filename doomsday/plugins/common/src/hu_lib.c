@@ -1748,18 +1748,16 @@ void MNRect_SetBackgroundPatch(mn_object_t* ob, patchid_t patch)
     rect->patch = patch;
 }
 
-mn_object_t* MNText_New(void)
+mn_object_t *MNText_New(void)
 {
-    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
-    if(!ob) Con_Error("MNText::New: Failed on allocation of %lu bytes for new MNText.", (unsigned long) sizeof(*ob));
-    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
-    if(!ob->_typedata) Con_Error("MNText::New: Failed on allocation of %lu bytes for mndata_text_t.", (unsigned long) sizeof(mndata_text_t));
+    mn_object_t *ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
 
-    ob->_type = MN_TEXT;
-    ob->_pageFontIdx = MENU_FONT1;
-    ob->_pageColorIdx = MENU_COLOR1;
-    ob->ticker = MNText_Ticker;
-    ob->drawer = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    ob->_type          = MN_TEXT;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->drawer         = MNText_Drawer;
     ob->updateGeometry = MNText_UpdateGeometry;
 
     return ob;

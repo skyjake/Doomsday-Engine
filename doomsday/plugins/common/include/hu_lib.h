@@ -530,14 +530,6 @@ typedef struct mndata_text_s {
 
     /// @ref mnTextFlags
     int flags;
-
-#ifdef __cplusplus
-    mndata_text_s(char const *text, patchid_t *patch = 0, int flags = 0)
-        : text(text)
-        , patch(patch)
-        , flags(flags)
-    {}
-#endif
 } mndata_text_t;
 
 #ifdef __cplusplus
@@ -582,19 +574,6 @@ typedef struct mndata_button_s {
 
     /// @ref mnButtonFlags
     int flags;
-
-#ifdef __cplusplus
-    mndata_button_s(dd_bool staydownMode = false, void *data = 0, char const *text = 0,
-                    patchid_t *patch = 0, char const *yes = 0, char const *no = 0, int flags = 0)
-        : staydownMode(staydownMode)
-        , data(data)
-        , text(text)
-        , patch(patch)
-        , yes(yes)
-        , no(no)
-        , flags(flags)
-    {}
-#endif
 } mndata_button_t;
 
 #ifdef __cplusplus
@@ -708,19 +687,6 @@ typedef struct mndata_list_s {
     int selection; // Selected item (-1 if none).
     int first; // First visible item.
     int numvis;
-
-#ifdef __cplusplus
-    mndata_list_s(void *items = 0, int count = 0, void *data = 0, int mask = 0, int selection = 0,
-                  int first = 0, int numvis = 0)
-        : items(items)
-        , count(count)
-        , data(data)
-        , mask(mask)
-        , selection(selection)
-        , first(first)
-        , numvis(numvis)
-    {}
-#endif
 } mndata_list_t;
 
 #ifdef __cplusplus
@@ -799,24 +765,6 @@ typedef struct mndata_colorbox_s {
     void *data2;
     void *data3;
     void *data4;
-
-#ifdef __cplusplus
-    mndata_colorbox_s(int width = 0, int height = 0, float r = 0, float g = 0, float b = 0,
-                      float a = 0, dd_bool rgbaMode = false, void *data1 = 0, void *data2 = 0,
-                      void *data3 = 0, void *data4 = 0)
-        : width(width)
-        , height(height)
-        , r(r)
-        , g(g)
-        , b(b)
-        , a(a)
-        , rgbaMode(rgbaMode)
-        , data1(data1)
-        , data2(data2)
-        , data3(data3)
-        , data4(data4)
-    {}
-#endif
 } mndata_colorbox_t;
 
 #ifdef __cplusplus
@@ -925,22 +873,6 @@ typedef struct mndata_slider_s {
     void *data3;
     void *data4;
     void *data5;
-
-#ifdef __cplusplus
-    mndata_slider_s(float min = 0, float max = 0, float value = 0, float step = 0, dd_bool floatMode = false,
-                    void *data1 = 0, void *data2 = 0, void *data3 = 0, void *data4 = 0, void *data5 = 0)
-        : min(min)
-        , max(max)
-        , value(value)
-        , step(step)
-        , floatMode(floatMode)
-        , data1(data1)
-        , data2(data2)
-        , data3(data3)
-        , data4(data4)
-        , data5(data5)
-    {}
-#endif
 } mndata_slider_t;
 
 #ifdef __cplusplus

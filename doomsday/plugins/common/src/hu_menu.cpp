@@ -341,30 +341,30 @@ static patchid_t pRotatingSkull[18];
 static patchid_t pCursors[MENU_CURSOR_FRAMECOUNT];
 
 #if __JDOOM64__
-mndata_slider_t sld_hud_viewsize(3, 11, 0, 1, false, (void *)"view-size");
+mndata_slider_t sld_hud_viewsize = { 3, 11, 0, 1, false, (void *)"view-size", 0, 0, 0, 0 };
 #else
-mndata_slider_t sld_hud_viewsize(3, 13, 0, 1, false, (void *)"view-size");
+mndata_slider_t sld_hud_viewsize = { 3, 13, 0, 1, false, (void *)"view-size", 0, 0, 0, 0 };
 #endif
-mndata_slider_t sld_hud_uptime(0, 60, 0, 1.f, true, (void *)"hud-timer", (void *)"Disabled", NULL, (void *)" second", (void *)" seconds");
-mndata_slider_t sld_hud_xhair_size(0, 1, 0, .1f, true, (void *)"view-cross-size");
-mndata_slider_t sld_hud_xhair_angle(0, 1, 0, .0625f, true, (void *)"view-cross-angle");
-mndata_slider_t sld_hud_xhair_opacity(0, 1, 0, .1f, true, (void *)"view-cross-a");
-mndata_slider_t sld_hud_size(0, 1, 0, .1f, true, (void *)"hud-scale");
-mndata_slider_t sld_hud_cntr_size(0, 1, 0, .1f, true, (void *)"hud-cheat-counter-scale");
-mndata_slider_t sld_hud_sbar_size(0, 1, 0, .1f, true, (void *)"hud-status-size");
-mndata_slider_t sld_hud_sbar_opacity(0, 1, 0, .1f, true, (void *)"hud-status-alpha");
-mndata_slider_t sld_hud_msg_size(0, 1, 0, .1f, true, (void *)"msg-scale");
-mndata_slider_t sld_hud_msg_uptime(0, 60, 0, 1.f, true, (void *)"msg-uptime", (void *)"Disabled", NULL, (void *)" second", " seconds" );
+mndata_slider_t sld_hud_uptime = { 0, 60, 0, 1.f, true, (void *)"hud-timer", (void *)"Disabled", NULL, (void *)" second", (void *)" seconds" };
+mndata_slider_t sld_hud_xhair_size = { 0, 1, 0, .1f, true, (void *)"view-cross-size", 0, 0, 0, 0 };
+mndata_slider_t sld_hud_xhair_angle = { 0, 1, 0, .0625f, true, (void *)"view-cross-angle", 0, 0, 0, 0 };
+mndata_slider_t sld_hud_xhair_opacity = { 0, 1, 0, .1f, true, (void *)"view-cross-a", 0, 0, 0, 0 };
+mndata_slider_t sld_hud_size = { 0, 1, 0, .1f, true, (void *)"hud-scale", 0, 0, 0, 0 };
+mndata_slider_t sld_hud_cntr_size = { 0, 1, 0, .1f, true, (void *)"hud-cheat-counter-scale", 0, 0, 0, 0 };
+mndata_slider_t sld_hud_sbar_size = { 0, 1, 0, .1f, true, (void *)"hud-status-size", 0, 0, 0, 0 };
+mndata_slider_t sld_hud_sbar_opacity = { 0, 1, 0, .1f, true, (void *)"hud-status-alpha", 0, 0, 0, 0 };
+mndata_slider_t sld_hud_msg_size = { 0, 1, 0, .1f, true, (void *)"msg-scale", 0, 0, 0, 0 };
+mndata_slider_t sld_hud_msg_uptime = { 0, 60, 0, 1.f, true, (void *)"msg-uptime", (void *)"Disabled", NULL, (void *)" second", " seconds" };
 
-mndata_colorbox_t cbox_hud_color(
+mndata_colorbox_t cbox_hud_color = {
     0, 0, 0, 0, 0, 0, true,
     (void *)"hud-color-r", (void *)"hud-color-g", (void *)"hud-color-b", (void *)"hud-color-a"
-);
+};
 
-mndata_colorbox_t cbox_hud_msg_color(
+mndata_colorbox_t cbox_hud_msg_color = {
     0, 0, 0, 0, 0, 0, false,
-    (void *)"msg-color-r", (void *)"msg-color-g", (void *)"msg-color-b"
-);
+    (void *)"msg-color-r", (void *)"msg-color-g", (void *)"msg-color-b", 0
+};
 
 mndata_listitem_t listit_hud_xhair_symbols[] = {
     { "None", 0 },
@@ -374,14 +374,14 @@ mndata_listitem_t listit_hud_xhair_symbols[] = {
     { "Open Square", 4 },
     { "Angle", 5 }
 };
-mndata_list_t list_hud_xhair_symbol(
-    listit_hud_xhair_symbols, NUMLISTITEMS(listit_hud_xhair_symbols), (void *)"view-cross-type"
-);
+mndata_list_t list_hud_xhair_symbol = {
+    listit_hud_xhair_symbols, NUMLISTITEMS(listit_hud_xhair_symbols), (void *)"view-cross-type", 0, 0, 0, 0
+};
 
-mndata_colorbox_t cbox_hud_xhair_color(
+mndata_colorbox_t cbox_hud_xhair_color = {
     0, 0, 0, 0, 0, 0, false,
     (void *)"view-cross-r", (void *)"view-cross-g", (void *)"view-cross-b"
-);
+};
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 mndata_listitem_t listit_hud_killscounter_displaymethods[] = {
@@ -390,11 +390,11 @@ mndata_listitem_t listit_hud_killscounter_displaymethods[] = {
     { "Percent",        CCH_KILLS_PRCNT },
     { "Count+Percent",  CCH_KILLS | CCH_KILLS_PRCNT },
 };
-mndata_list_t list_hud_cntr_kills(
+mndata_list_t list_hud_cntr_kills = {
     listit_hud_killscounter_displaymethods,
     NUMLISTITEMS(listit_hud_killscounter_displaymethods),
-    (void *)"hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT
-);
+    (void *)"hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT, 0, 0, 0
+};
 
 mndata_listitem_t listit_hud_itemscounter_displaymethods[] = {
     { "Hidden",         0 },
@@ -402,11 +402,11 @@ mndata_listitem_t listit_hud_itemscounter_displaymethods[] = {
     { "Percent",        CCH_ITEMS_PRCNT },
     { "Count+Percent",  CCH_ITEMS | CCH_ITEMS_PRCNT },
 };
-mndata_list_t list_hud_cntr_items(
+mndata_list_t list_hud_cntr_items = {
     listit_hud_itemscounter_displaymethods,
     NUMLISTITEMS(listit_hud_itemscounter_displaymethods),
-    (void *)"hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT
-);
+    (void *)"hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT, 0, 0, 0
+};
 
 mndata_listitem_t listit_hud_secretscounter_displaymethods[] = {
     { "Hidden",         0 },
@@ -414,123 +414,123 @@ mndata_listitem_t listit_hud_secretscounter_displaymethods[] = {
     { "Percent",        CCH_SECRETS_PRCNT },
     { "Count+Percent",  CCH_SECRETS | CCH_SECRETS_PRCNT },
 };
-mndata_list_t list_hud_cntr_secrets(
+mndata_list_t list_hud_cntr_secrets = {
     listit_hud_secretscounter_displaymethods,
     NUMLISTITEMS(listit_hud_secretscounter_displaymethods),
-    (void *)"hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT
-);
+    (void *)"hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT, 0, 0, 0
+};
 #endif
 
-mndata_text_t txt_hud_view_size("View Size");
+mndata_text_t txt_hud_view_size = { "View Size", 0, 0 };
 #if __JDOOM__
-mndata_text_t txt_hud_single_key_display("Single Key Display");
+mndata_text_t txt_hud_single_key_display = { "Single Key Display", 0, 0 };
 #endif
-mndata_text_t txt_hud_autohide("AutoHide");
-mndata_text_t txt_hud_unhide_events("UnHide Events");
-mndata_text_t txt_hud_unhide_receive_damage("Receive Damage");
-mndata_text_t txt_hud_unhide_pickup_health("Pickup Health");
-mndata_text_t txt_hud_unhide_pickup_armor("Pickup Armor");
-mndata_text_t txt_hud_unhide_pickup_powerup("Pickup Powerup");
-mndata_text_t txt_hud_unhide_pickup_weapon("Pickup Weapon");
+mndata_text_t txt_hud_autohide = { "AutoHide", 0, 0 };
+mndata_text_t txt_hud_unhide_events = { "UnHide Events", 0, 0 };
+mndata_text_t txt_hud_unhide_receive_damage = { "Receive Damage", 0, 0 };
+mndata_text_t txt_hud_unhide_pickup_health = { "Pickup Health", 0, 0 };
+mndata_text_t txt_hud_unhide_pickup_armor = { "Pickup Armor", 0, 0 };
+mndata_text_t txt_hud_unhide_pickup_powerup = { "Pickup Powerup", 0, 0 };
+mndata_text_t txt_hud_unhide_pickup_weapon = { "Pickup Weapon", 0, 0 };
 #if __JHEXEN__
-mndata_text_t txt_hud_unhide_pickup_ammo("Pickup Mana");
+mndata_text_t txt_hud_unhide_pickup_ammo = { "Pickup Mana", 0, 0 };
 #else
-mndata_text_t txt_hud_unhide_pickup_ammo("Pickup Ammo");
+mndata_text_t txt_hud_unhide_pickup_ammo = { "Pickup Ammo", 0, 0 };
 #endif
-mndata_text_t txt_hud_unhide_pickup_key("Pickup Key");
+mndata_text_t txt_hud_unhide_pickup_key = { "Pickup Key", 0, 0 };
 #if __JHERETIC__ || __JHEXEN__
-mndata_text_t txt_hud_unhide_pickup_item("Pickup Item");
+mndata_text_t txt_hud_unhide_pickup_item = { "Pickup Item", 0, 0 };
 #endif
 
-mndata_text_t txt_hud_messages("Messages");
-mndata_text_t txt_hud_msg_shown("Shown");
-mndata_text_t txt_hud_msg_size("Size");
-mndata_text_t txt_hud_msg_color("Color");
-mndata_text_t txt_hud_msg_uptime("Uptime");
+mndata_text_t txt_hud_messages = { "Messages", 0, 0 };
+mndata_text_t txt_hud_msg_shown = { "Shown", 0, 0 };
+mndata_text_t txt_hud_msg_size = { "Size", 0, 0 };
+mndata_text_t txt_hud_msg_color = { "Color", 0, 0 };
+mndata_text_t txt_hud_msg_uptime = { "Uptime", 0, 0 };
 
-mndata_text_t txt_hud_crosshair("Crosshair");
-mndata_text_t txt_hud_xhair_symbol("Symbol");
-mndata_text_t txt_hud_xhair_size("Size");
-mndata_text_t txt_hud_xhair_angle("Angle");
-mndata_text_t txt_hud_xhair_opacity("Opacity");
-mndata_text_t txt_hud_xhair_vitality_color("Vitality Color");
-mndata_text_t txt_hud_xhair_color("Color");
+mndata_text_t txt_hud_crosshair = { "Crosshair", 0, 0 };
+mndata_text_t txt_hud_xhair_symbol = { "Symbol", 0, 0 };
+mndata_text_t txt_hud_xhair_size = { "Size", 0, 0 };
+mndata_text_t txt_hud_xhair_angle = { "Angle", 0, 0 };
+mndata_text_t txt_hud_xhair_opacity = { "Opacity", 0, 0 };
+mndata_text_t txt_hud_xhair_vitality_color = { "Vitality Color", 0, 0 };
+mndata_text_t txt_hud_xhair_color = { "Color", 0, 0 };
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-mndata_text_t txt_hud_statusbar("Statusbar");
-mndata_text_t txt_hud_sbar_size("Size");
-mndata_text_t txt_hud_sbar_opacity("Opacity");
+mndata_text_t txt_hud_statusbar = { "Statusbar", 0, 0 };
+mndata_text_t txt_hud_sbar_size = { "Size", 0, 0 };
+mndata_text_t txt_hud_sbar_opacity = { "Opacity", 0, 0 };
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_counters("Counters");
-mndata_text_t txt_hud_cntr_kills("Kills");
-mndata_text_t txt_hud_cntr_items("Items");
-mndata_text_t txt_hud_cntr_secrets("Secrets");
-mndata_text_t txt_hud_cntr_size("Size");
+mndata_text_t txt_hud_counters = { "Counters", 0, 0 };
+mndata_text_t txt_hud_cntr_kills = { "Kills", 0, 0 };
+mndata_text_t txt_hud_cntr_items = { "Items", 0, 0 };
+mndata_text_t txt_hud_cntr_secrets = { "Secrets", 0, 0 };
+mndata_text_t txt_hud_cntr_size = { "Size", 0, 0 };
 #endif
 
-mndata_text_t txt_hud_fullscreen("Fullscreen");
-mndata_text_t txt_hud_full_size("Size");
-mndata_text_t txt_hud_full_text_color("Text Color");
+mndata_text_t txt_hud_fullscreen = { "Fullscreen", 0, 0 };
+mndata_text_t txt_hud_full_size = { "Size", 0, 0 };
+mndata_text_t txt_hud_full_text_color = { "Text Color", 0, 0 };
 #if __JHEXEN__
-mndata_text_t txt_hud_full_show_mana("Show Mana");
+mndata_text_t txt_hud_full_show_mana = { "Show Mana", 0, 0 };
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_full_show_ammo("Show Ammo");
-mndata_text_t txt_hud_full_show_armor("Show Armor" );
+mndata_text_t txt_hud_full_show_ammo = { "Show Ammo", 0, 0 };
+mndata_text_t txt_hud_full_show_armor = { "Show Armor", 0, 0 };
 #endif
 #if __JDOOM64__
-mndata_text_t txt_hud_full_show_powerkeys("Show PowerKeys");
+mndata_text_t txt_hud_full_show_powerkeys = { "Show PowerKeys", 0, 0 };
 #endif
 #if __JDOOM__
-mndata_text_t txt_hud_full_show_status("Show Status");
+mndata_text_t txt_hud_full_show_status = { "Show Status", 0, 0 };
 #endif
-mndata_text_t txt_hud_full_show_health("Show Health");
+mndata_text_t txt_hud_full_show_health = { "Show Health", 0, 0 };
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_full_show_keys("Show Keys");
+mndata_text_t txt_hud_full_show_keys = { "Show Keys", 0, 0 };
 #endif
 #if __JHERETIC__ || __JHEXEN__
-mndata_text_t txt_hud_full_show_readyitem("Show Ready-Item");
+mndata_text_t txt_hud_full_show_readyitem = { "Show Ready-Item", 0, 0 };
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_cntr_mapopen("Automap Only");
+mndata_text_t txt_hud_cntr_mapopen = { "Automap Only", 0, 0 };
 #endif
 
-mndata_button_t btn_hud_single_key_display(true, (void *)"hud-keys-combine");
-mndata_button_t btn_hud_unhide_receive_damage(true, (void *)"hud-unhide-damage");
-mndata_button_t btn_hud_unhide_pickup_health(true, (void *)"hud-unhide-pickup-health");
-mndata_button_t btn_hud_unhide_pickup_armor(true, (void *)"hud-unhide-pickup-armor");
-mndata_button_t btn_hud_unhide_pickup_powerup(true, (void *)"hud-unhide-pickup-powerup");
-mndata_button_t btn_hud_unhide_pickup_weapon(true, (void *)"hud-unhide-pickup-weapon");
-mndata_button_t btn_hud_unhide_pickup_ammo(true, (void *)"hud-unhide-pickup-ammo");
-mndata_button_t btn_hud_unhide_pickup_key(true, (void *)"hud-unhide-pickup-key");
+mndata_button_t btn_hud_single_key_display = { true, (void *)"hud-keys-combine", 0, 0, 0, 0, 0 };
+mndata_button_t btn_hud_unhide_receive_damage = { true, (void *)"hud-unhide-damage", 0, 0, 0, 0, 0 };
+mndata_button_t btn_hud_unhide_pickup_health = { true, (void *)"hud-unhide-pickup-health", 0, 0, 0, 0, 0 };
+mndata_button_t btn_hud_unhide_pickup_armor = { true, (void *)"hud-unhide-pickup-armor", 0, 0, 0, 0, 0 };
+mndata_button_t btn_hud_unhide_pickup_powerup = { true, (void *)"hud-unhide-pickup-powerup", 0, 0, 0, 0, 0 };
+mndata_button_t btn_hud_unhide_pickup_weapon = { true, (void *)"hud-unhide-pickup-weapon", 0, 0, 0, 0, 0 };
+mndata_button_t btn_hud_unhide_pickup_ammo = { true, (void *)"hud-unhide-pickup-ammo", 0, 0, 0, 0, 0 };
+mndata_button_t btn_hud_unhide_pickup_key = { true, (void *)"hud-unhide-pickup-key", 0, 0, 0, 0, 0 };
 #if __JHERETIC__ || __JHEXEN__
-mndata_button_t btn_hud_unhide_pickup_item(true, (void *)"hud-unhide-pickup-invitem");
+mndata_button_t btn_hud_unhide_pickup_item = { true, (void *)"hud-unhide-pickup-invitem", 0, 0, 0, 0, 0 };
 #endif
-mndata_button_t btn_hud_msg_shown(true, (void *)"msg-show");
-mndata_button_t btn_hud_xhair_vitality_color(true, (void *)"view-cross-vitality");
+mndata_button_t btn_hud_msg_shown = { true, (void *)"msg-show", 0, 0, 0, 0, 0 };
+mndata_button_t btn_hud_xhair_vitality_color = { true, (void *)"view-cross-vitality", 0, 0, 0, 0, 0 };
 #if __JHEXEN__
-mndata_button_t btn_hud_full_show_mana(true, (void *)"hud-mana");
+mndata_button_t btn_hud_full_show_mana = { true, (void *)"hud-mana", 0, 0, 0, 0, 0 };
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_full_show_ammo(true, (void *)"hud-ammo");
-mndata_button_t btn_hud_full_show_armor(true, (void *)"hud-armor");
+mndata_button_t btn_hud_full_show_ammo = { true, (void *)"hud-ammo", 0, 0, 0, 0, 0 };
+mndata_button_t btn_hud_full_show_armor = { true, (void *)"hud-armor", 0, 0, 0, 0, 0 };
 #endif
 #if __JDOOM64__
-mndata_button_t btn_hud_full_show_powerkeys(true, (void *)"hud-power");
+mndata_button_t btn_hud_full_show_powerkeys = { true, (void *)"hud-power", 0, 0, 0, 0, 0 };
 #endif
 #if __JDOOM__
-mndata_button_t btn_hud_full_show_face(true, (void *)"hud-face");
+mndata_button_t btn_hud_full_show_face = { true, (void *)"hud-face", 0, 0, 0, 0, 0 };
 #endif
-mndata_button_t btn_hud_full_show_health(true, (void *)"hud-health");
+mndata_button_t btn_hud_full_show_health = { true, (void *)"hud-health", 0, 0, 0, 0, 0 };
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_full_show_keys(true, (void *)"hud-keys");
+mndata_button_t btn_hud_full_show_keys = { true, (void *)"hud-keys", 0, 0, 0, 0, 0 };
 #endif
 #if __JHERETIC__ || __JHEXEN__
-mndata_button_t btn_hud_full_show_readyitem(true, (void *)"hud-currentitem");
+mndata_button_t btn_hud_full_show_readyitem = { true, (void *)"hud-currentitem", 0, 0, 0, 0, 0 };
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_cntr_mapopen(true, (void *)"hud-cheat-counter-show-mapopen");
+mndata_button_t btn_hud_cntr_mapopen = { true, (void *)"hud-cheat-counter-show-mapopen", 0, 0, 0, 0, 0 };
 #endif
 
 static mn_object_t HudMenuObjects[] = {
@@ -3639,7 +3639,7 @@ void Hu_MenuInitWeaponsPage()
         list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
 
         mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-        for(int i = 0; weaponOrder[i].text; ++i, item++)
+        for(int i = 0; weaponOrder[i].text[0]; ++i, item++)
         {
             item->text = weaponOrder[i].text;
             item->data = weaponOrder[i].data;
