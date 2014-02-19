@@ -215,14 +215,14 @@ inline void releaseRef(CountedType const *&ref) {
 /**
  * Utility for passing Counted objects as arguments.
  *
- * RefArg enforces the following conventions when used as an method argument type:
+ * RefArg enforces the following conventions when used as a method argument type:
  * - If a Counted non-const pointer is given as an argument, it is assumed the
  *   caller has already held a reference and is giving that reference's ownership
  *   away. For instance, when constructing new Counted objects.
  * - If a Counted const reference is given as an argument, no changes occur in the
  *   object's refcount.
  *
- * The method that uses RefArgs must hold a reference to each object.
+ * The method that uses RefArgs must hold a reference to each object that is passed in.
  */
 template <typename CountedType>
 class RefArg

@@ -365,9 +365,8 @@ void Canvas::updateSize()
         return;
     }
     */
-#endif
-
     qDebug() << this << "resizing now";
+#endif
 
     makeCurrent();
     d->currentSize = d->pendingSize; 
