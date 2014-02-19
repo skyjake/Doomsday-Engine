@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_UI_ACTIONITEM_H
 #define LIBAPPFW_UI_ACTIONITEM_H
 
-#include "item.h"
+#include "imageitem.h"
 
 #include <de/Action>
 #include <de/Image>
@@ -30,37 +30,34 @@ namespace ui {
 /**
  * UI context item that represents a user action.
  */
-class LIBAPPFW_PUBLIC ActionItem : public Item
+class LIBAPPFW_PUBLIC ActionItem : public ImageItem
 {
 public:
     ActionItem(String const &label   = "",
                RefArg<Action> action = RefArg<Action>())
-        : Item(ShownAsButton | ActivationClosesPopup, label)
+        : ImageItem(ShownAsButton | ActivationClosesPopup, label)
         , _action(action.holdRef()) {}
 
     ActionItem(Semantics semantics,
                String const &label   = "",
                RefArg<Action> action = RefArg<Action>())
-        : Item(semantics, label)
+        : ImageItem(semantics, label)
         , _action(action.holdRef()) {}
 
     ActionItem(Semantics semantics,
                Image const &img,
                String const &label   = "",
                RefArg<Action> action = RefArg<Action>())
-        : Item(semantics, label)
-        , _action(action.holdRef())
-        , _image(img) {}
+        : ImageItem(semantics, img, label)
+        , _action(action.holdRef()) {}
 
     ActionItem(Image const &img,
                String const &label   = "",
                RefArg<Action> action = RefArg<Action>())
-        : Item(ShownAsButton | ActivationClosesPopup, label)
-        , _action(action.holdRef())
-        , _image(img) {}
+        : ImageItem(ShownAsButton | ActivationClosesPopup, img, label)
+        , _action(action.holdRef()) {}
 
     Action const *action() const { return _action; }
-    Image const &image() const { return _image; }
 
     void setAction(RefArg<Action> action)
     {
@@ -68,15 +65,8 @@ public:
         notifyChange();
     }
 
-    void setImage(Image const &image)
-    {
-        _image = image;
-        notifyChange();
-    }
-
 private:
     AutoRef<Action> _action;
-    Image _image;
 };
 
 } // namespace ui
