@@ -148,8 +148,7 @@ HEADERS += \
     include/de/widgets/tabwidget.h \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
-    include/de/widgets/variabletogglewidget.h \
-    include/de/vr/vrconfig.h
+    include/de/widgets/variabletogglewidget.h
 
 # Sources and private headers.
 SOURCES += \
