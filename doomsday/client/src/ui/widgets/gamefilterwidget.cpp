@@ -22,14 +22,16 @@
 #include <de/ChoiceWidget>
 #include <de/SequentialLayout>
 #include <de/DialogContentStylist>
+#include <de/TabWidget>
 
 using namespace de;
 
 DENG2_PIMPL(GameFilterWidget)
 {
-    ButtonWidget *sp;
-    ButtonWidget *mp;
-    ButtonWidget *all;
+    TabWidget *tabs;
+    //ButtonWidget *sp;
+    //ButtonWidget *mp;
+    //ButtonWidget *all;
     LabelWidget *sortLabel;
     ChoiceWidget *sortBy;
     DialogContentStylist stylist;
@@ -39,16 +41,22 @@ DENG2_PIMPL(GameFilterWidget)
         stylist.setContainer(self);
 
         // Create widgets.
-        self.add(sp = new ButtonWidget);
-        self.add(mp = new ButtonWidget);
-        self.add(all = new ButtonWidget);
+        //self.add(sp = new ButtonWidget);
+        //self.add(mp = new ButtonWidget);
+        //self.add(all = new ButtonWidget);
+        self.add(tabs = new TabWidget);
         sortLabel = LabelWidget::newWithText(tr("Sort By:"), &self);
         self.add(sortBy = new ChoiceWidget);
 
-        sp->setText(tr("Singleplayer"));
-        mp->setText(tr("Multiplayer"));
-        all->setText(tr("All"));
+        tabs->items()
+                << new TabItem(tr("Singleplayer"))
+                << new TabItem(tr("Multiplayer"))
+                << new TabItem(tr("All Games"));
+
         sortLabel->setTextColor("inverted.text");
+        sortLabel->setFont("tab.label");
+        sortBy->setFont("tab.label");
+        sortBy->setOpeningDirection(ui::Down);
         sortBy->items()
                 << new ChoiceItem(tr("Title"),        SortByTitle)
                 << new ChoiceItem(tr("Identity key"), SortByIdentityKey);
@@ -56,16 +64,21 @@ DENG2_PIMPL(GameFilterWidget)
         SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);
         layout << *sortBy << *sortLabel;
 
-        AutoRef<Rule> sum(sp->rule().width() + mp->rule().width() + all->rule().width());
-        SequentialLayout blay(self.rule().left() + self.rule().width() / 2 - sum / 2,
-                              self.rule().top(), ui::Right);
-        blay << *sp << *mp << *all;
+        //AutoRef<Rule> sum(sp->rule().width() + mp->rule().width() + all->rule().width());
+        //SequentialLayout blay(self.rule().left() + self.rule().width() / 2 - sum / 2,
+//                              self.rule().top(), ui::Right);
+  //      blay << *sp << *mp << *all;
+
+        tabs->rule()
+                .setInput(Rule::Width, self.rule().width())
+                .setInput(Rule::Left,  self.rule().left())
+                .setInput(Rule::Top,   self.rule().top());
     }
 };
 
 GameFilterWidget::GameFilterWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
-    rule().setInput(Rule::Height, d->sp->rule().height());
+    rule().setInput(Rule::Height, d->tabs->rule().height());
 }
 
