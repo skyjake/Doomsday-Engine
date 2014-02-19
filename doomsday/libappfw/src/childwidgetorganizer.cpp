@@ -172,12 +172,12 @@ DENG2_OBSERVES(ui::Item, Change     )
         }
     }
 
-    void contextItemAdded(ui::Data::Pos pos, ui::Item const &)
+    void dataItemAdded(ui::Data::Pos pos, ui::Item const &)
     {
         addItemWidget(pos);
     }
 
-    void contextItemRemoved(ui::Data::Pos, ui::Item &item)
+    void dataItemRemoved(ui::Data::Pos, ui::Item &item)
     {
         Mapping::const_iterator found = mapping.constFind(&item);
         if(found != mapping.constEnd())
@@ -188,7 +188,7 @@ DENG2_OBSERVES(ui::Item, Change     )
         }
     }
 
-    void contextItemOrderChanged()
+    void dataItemOrderChanged()
     {
         // Remove all widgets and put them back in the correct order.
         DENG2_FOR_EACH_CONST(Mapping, i, mapping)
@@ -236,6 +236,18 @@ DENG2_OBSERVES(ui::Item, Change     )
             if(i.key()->label() == label)
             {
                 return i.value();
+            }
+        }
+        return 0;
+    }
+
+    ui::Item const *findByWidget(GuiWidget const &widget) const
+    {
+        DENG2_FOR_EACH_CONST(Mapping, i, mapping)
+        {
+            if(i.value() == &widget)
+            {
+                return i.key();
             }
         }
         return 0;
@@ -291,6 +303,11 @@ GuiWidget *ChildWidgetOrganizer::itemWidget(ui::Item const &item) const
 GuiWidget *ChildWidgetOrganizer::itemWidget(String const &label) const
 {
     return d->findByLabel(label);
+}
+
+ui::Item const *ChildWidgetOrganizer::findItemForWidget(GuiWidget const &widget) const
+{
+    return d->findByWidget(widget);
 }
 
 GuiWidget *DefaultWidgetFactory::makeItemWidget(ui::Item const &, GuiWidget const *)

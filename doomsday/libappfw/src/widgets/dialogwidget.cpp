@@ -243,12 +243,12 @@ public ChildWidgetOrganizer::IFilter
         return false;
     }
 
-    void contextItemAdded(ui::Data::Pos, ui::Item const &)
+    void dataItemAdded(ui::Data::Pos, ui::Item const &)
     {
         needButtonUpdate = true;
     }
 
-    void contextItemRemoved(ui::Data::Pos, ui::Item &)
+    void dataItemRemoved(ui::Data::Pos, ui::Item &)
     {
         needButtonUpdate = true;
     }

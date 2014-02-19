@@ -68,6 +68,7 @@ HEADERS += \
     include/de/SequentialLayout \
     include/de/SignalAction \
     include/de/SliderWidget \
+    include/de/TabWidget \
     include/de/TextDrawable \
     include/de/ToggleWidget \
     include/de/VRWindowTransform \
@@ -75,6 +76,7 @@ HEADERS += \
     include/de/WindowTransform \
     include/de/ui/ActionItem \
     include/de/ui/Data \
+    include/de/ui/ImageItem \
     include/de/ui/Item \
     include/de/ui/ListData \
     include/de/ui/Margins \
@@ -101,6 +103,7 @@ HEADERS += \
     include/de/framework/guirootwidget.h \
     include/de/framework/guiwidget.h \
     include/de/framework/guiwidgetprivate.h \
+    include/de/framework/imageitem.h \
     include/de/framework/item.h \
     include/de/framework/listdata.h \
     include/de/framework/margins.h \
@@ -142,6 +145,7 @@ HEADERS += \
     include/de/widgets/scriptcommandwidget.h \
     include/de/widgets/scrollareawidget.h \
     include/de/widgets/sliderwidget.h \
+    include/de/widgets/tabwidget.h \
     include/de/widgets/togglewidget.h \
     include/de/widgets/variablechoicewidget.h \
     include/de/widgets/variabletogglewidget.h \
@@ -194,6 +198,7 @@ SOURCES += \
     src/widgets/scriptcommandwidget.cpp \
     src/widgets/scrollareawidget.cpp \
     src/widgets/sliderwidget.cpp \
+    src/widgets/tabwidget.cpp \
     src/widgets/togglewidget.cpp \
     src/widgets/variablechoicewidget.cpp \
     src/widgets/variabletogglewidget.cpp \
