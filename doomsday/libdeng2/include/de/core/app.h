@@ -108,7 +108,7 @@ public:
      *
      * @param flags  How to/which subsystems to initialize.
      */
-    void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
+    virtual void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
     /**
      * Adds a system to the application. The order of systems is preserved; the

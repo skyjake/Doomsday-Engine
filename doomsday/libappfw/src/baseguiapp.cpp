@@ -23,6 +23,7 @@ namespace de {
 
 DENG2_PIMPL_NOREF(BaseGuiApp)
 {
+    QScopedPointer<PersistentState> uiState;
     GLShaderBank shaders;
     VRConfig vr;
 };
@@ -31,9 +32,21 @@ BaseGuiApp::BaseGuiApp(int &argc, char **argv)
     : GuiApp(argc, argv), d(new Instance)
 {}
 
+void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
+{
+    GuiApp::initSubsystems(flags);
+
+    d->uiState.reset(new PersistentState("UIState"));
+}
+
 BaseGuiApp &BaseGuiApp::app()
 {
     return static_cast<BaseGuiApp &>(App::app());
+}
+
+PersistentState &BaseGuiApp::persistentUIState()
+{
+    return *app().d->uiState;
 }
 
 GLShaderBank &BaseGuiApp::shaders()

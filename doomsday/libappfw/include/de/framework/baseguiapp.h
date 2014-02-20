@@ -20,6 +20,7 @@
 #define LIBAPPFW_BASEGUIAPP_H
 
 #include "../libappfw.h"
+#include "../PersistentState"
 
 #include <de/GuiApp>
 #include <de/GLShaderBank>
@@ -43,8 +44,11 @@ class LIBAPPFW_PUBLIC BaseGuiApp : public GuiApp
 public:
     BaseGuiApp(int &argc, char **argv);
 
+    void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
+
 public:
     static BaseGuiApp &app();
+    static PersistentState &persistentUIState();
     static GLShaderBank &shaders();
     static VRConfig &vr();
 
