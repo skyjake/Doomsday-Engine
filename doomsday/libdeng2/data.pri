@@ -38,6 +38,7 @@ HEADERS += \
     include/de/Reader \
     include/de/Record \
     include/de/RecordValue \
+    include/de/Refuge \
     include/de/RefValue \
     include/de/Shared \
     include/de/String \
@@ -91,6 +92,7 @@ HEADERS += \
     include/de/data/reader.h \
     include/de/data/record.h \
     include/de/data/recordvalue.h \
+    include/de/data/refuge.h \
     include/de/data/refvalue.h \
     include/de/data/shared.h \
     include/de/data/string.h \
@@ -134,6 +136,7 @@ SOURCES += \
     src/data/reader.cpp \
     src/data/record.cpp \
     src/data/recordvalue.cpp \
+    src/data/refuge.cpp \
     src/data/refvalue.cpp \
     src/data/string.cpp \
     src/data/stringpool.cpp \
