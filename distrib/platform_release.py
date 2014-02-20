@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/env python2.7
 # This script builds the distribution packages platform-independently.
 # No parameters needed; config is auto-detected.
 

@@ -198,8 +198,10 @@ def system_command(cmd):
 def python2_executable():
     if sys.platform[:3] == 'win':
         return 'python'
+    elif mac_os_version() == '10.5':
+        return '/usr/bin/env python2.5'  # required by Snowberry
     else:
-        return 'python2.7'
+        return '/usr/bin/env python2.7'
 
 
 def run_python2(script):
