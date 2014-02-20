@@ -193,3 +193,14 @@ def system_command(cmd):
     result = subprocess.call(cmd, shell=True)
     if result != 0:
         raise Exception("Error from " + cmd)
+
+
+def python2_executable():
+    if sys.platform[:3] == 'win':
+        return 'python'
+    else:
+        return 'python2.7'
+
+
+def run_python2(script):
+    system_command(python2_executable() + " " + script)

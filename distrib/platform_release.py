@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 # This script builds the distribution packages platform-independently.
 # No parameters needed; config is auto-detected.
 
@@ -160,7 +160,7 @@ def mac_package_snowberry():
     f = file('VERSION', 'wt')
     f.write(DOOMSDAY_VERSION_FULL)
     f.close()
-    os.system('python buildapp.py py2app')
+    builder.utils.run_python2('buildapp.py py2app')
     
     # Share it.
     duptree('dist/Doomsday Engine.app', 'shared/')

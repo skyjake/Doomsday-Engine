@@ -9,8 +9,10 @@ TEMPLATE = subdirs
 # Let's print the build configuration during this qmake invocation.
 CONFIG += deng_verbosebuildconfig
 
+include(../macros.pri)
+
 # Always update versions.pri.
-system(cd "$$PWD/.." && python configure.py)
+runPython2InDir($$PWD/.., configure.py)
 
 include(../config.pri)
 
@@ -19,7 +21,7 @@ QMAKE_STRIP = true
 
 # Update the PK3 files.
 !deng_nopackres {
-    system(cd $$PWD/scripts/ && python packres.py --quiet \"$$OUT_PWD/..\")
+    runPython2InDir($$PWD/scripts/, packres.py --quiet \"$$OUT_PWD/..\")
 }
 
 # Install the launcher.
