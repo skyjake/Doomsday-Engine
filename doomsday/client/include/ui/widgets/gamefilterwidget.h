@@ -32,6 +32,14 @@ class GameFilterWidget : public de::GuiWidget
     Q_OBJECT
 
 public:
+    enum FilterFlag
+    {
+        Singleplayer = 0x1,
+        Multiplayer  = 0x2,
+        AllGames     = Singleplayer | Multiplayer
+    };
+    Q_DECLARE_FLAGS(Filter, FilterFlag)
+
     enum SortOrder
     {
         SortByTitle,
@@ -41,11 +49,20 @@ public:
 public:
     GameFilterWidget(de::String const &name = "gamefilter");
 
+    void useInvertedStyle();
+
+    Filter filter() const;
+
+    SortOrder sortOrder() const;
+
 signals:
     void filterChanged();
+    void sortOrderChanged();
 
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(GameFilterWidget::Filter)
 
 #endif // DENG_CLIENT_GAMEFILTERWIDGET_H

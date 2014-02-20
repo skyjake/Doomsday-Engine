@@ -22,6 +22,8 @@
 #include <de/ScrollAreaWidget>
 #include <de/ButtonWidget>
 
+#include "gamefilterwidget.h"
+
 /**
  * Menu for selecting
  */
@@ -37,6 +39,12 @@ public:
                        de::ButtonWidget::HoverColorMode mode = de::ButtonWidget::ModulateColor);
     void setTitleFont(de::DotPath const &fontId);
 
+    /**
+     * Returns the filter header widget. It can be placed manually by the user
+     * of the widget.
+     */
+    GameFilterWidget &filter();
+
     // Events.
     void update();
 
@@ -45,6 +53,7 @@ signals:
 
 protected slots:
     void updateSubsetLayout();
+    void updateSort();
 
 private:
     DENG2_PRIVATE(d)

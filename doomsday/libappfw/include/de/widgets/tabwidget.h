@@ -40,8 +40,11 @@ public:
     class TabItem : public ui::ImageItem
     {
     public:
-        TabItem(String const &label)
-            : ImageItem(ShownAsButton, label) {}
+        TabItem(String const &label, QVariant const &userData = QVariant())
+            : ImageItem(ShownAsButton, label)
+        {
+            setData(userData);
+        }
         TabItem(Image const &img, String const &label)
             : ImageItem(ShownAsButton, img, label) {}
     };

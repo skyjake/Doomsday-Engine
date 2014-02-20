@@ -29,9 +29,6 @@ using namespace de;
 DENG2_PIMPL(GameFilterWidget)
 {
     TabWidget *tabs;
-    //ButtonWidget *sp;
-    //ButtonWidget *mp;
-    //ButtonWidget *all;
     LabelWidget *sortLabel;
     ChoiceWidget *sortBy;
     DialogContentStylist stylist;
@@ -41,21 +38,17 @@ DENG2_PIMPL(GameFilterWidget)
         stylist.setContainer(self);
 
         // Create widgets.
-        //self.add(sp = new ButtonWidget);
-        //self.add(mp = new ButtonWidget);
-        //self.add(all = new ButtonWidget);
         self.add(tabs = new TabWidget);
         sortLabel = LabelWidget::newWithText(tr("Sort By:"), &self);
         self.add(sortBy = new ChoiceWidget);
 
         tabs->items()
-                << new TabItem(tr("Singleplayer"))
-                << new TabItem(tr("Multiplayer"))
-                << new TabItem(tr("All Games"));
+                << new TabItem(tr("Singleplayer"), Singleplayer)
+                << new TabItem(tr("Multiplayer"),  Multiplayer)
+                << new TabItem(tr("All Games"),    AllGames);
 
-        sortLabel->setTextColor("inverted.text");
         sortLabel->setFont("small");
-        sortBy->setFont("small");
+        sortBy->setFont("tab.label");
         sortBy->setOpeningDirection(ui::Down);
         sortBy->items()
                 << new ChoiceItem(tr("Title"),        SortByTitle)
@@ -63,11 +56,6 @@ DENG2_PIMPL(GameFilterWidget)
 
         SequentialLayout layout(self.rule().right(), self.rule().top(), ui::Left);
         layout << *sortBy << *sortLabel;
-
-        //AutoRef<Rule> sum(sp->rule().width() + mp->rule().width() + all->rule().width());
-        //SequentialLayout blay(self.rule().left() + self.rule().width() / 2 - sum / 2,
-//                              self.rule().top(), ui::Right);
-  //      blay << *sp << *mp << *all;
 
         tabs->rule()
                 .setInput(Rule::Width, self.rule().width())
@@ -79,6 +67,24 @@ DENG2_PIMPL(GameFilterWidget)
 GameFilterWidget::GameFilterWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
+    connect(d->tabs, SIGNAL(currentTabChanged()), this, SIGNAL(filterChanged()));
+    connect(d->sortBy, SIGNAL(selectionChangedByUser(uint)), this, SIGNAL(sortOrderChanged()));
+
     rule().setInput(Rule::Height, d->tabs->rule().height());
+}
+
+void GameFilterWidget::useInvertedStyle()
+{
+    d->sortLabel->setTextColor("inverted.text");
+}
+
+GameFilterWidget::Filter GameFilterWidget::filter() const
+{
+    return Filter(d->tabs->currentItem().data().toUInt());
+}
+
+GameFilterWidget::SortOrder GameFilterWidget::sortOrder() const
+{
+    return SortOrder(d->sortBy->selectedItem().data().toInt());
 }
 

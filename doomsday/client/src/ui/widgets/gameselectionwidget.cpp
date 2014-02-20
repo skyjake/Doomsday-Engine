@@ -43,11 +43,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 , DENG2_OBSERVES(App, StartupComplete)
 , DENG2_OBSERVES(App, GameChange)
 , public ChildWidgetOrganizer::IWidgetFactory
-{
+{    
     /// ActionItem with a Game member, for loading a particular game.
     struct GameItem : public ui::ActionItem {
-        GameItem(Game const &gameRef, de::String const &label, RefArg<de::Action> action)
-            : ui::ActionItem(label, action), game(gameRef) {
+        GameItem(Game const &gameRef, de::String const &label, RefArg<de::Action> action,
+                 GameSelectionWidget &owner)
+            : ui::ActionItem(label, action), game(gameRef), widget(owner) {
             setData(&gameRef);
         }
         String sortKey() const {
@@ -55,6 +56,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             return game.identityKey();
         }
         Game const &game;
+        GameSelectionWidget &widget;
     };
 
     struct GameWidget : public GameSessionWidget
@@ -171,8 +173,6 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         : Base(i)
         , superLayout(i->contentRule().left(), i->contentRule().top(), ui::Down)
     {
-        self.add(filter = new GameFilterWidget);
-
         // Menu of available games.
         self.add(available = new SubsetWidget(SubsetWidget::NormalGames,
                 App_GameLoaded()? tr("Switch Game") : tr("Available Games"), this));
@@ -182,6 +182,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 
         // Menu of multiplayer games.
         self.add(multi = new SubsetWidget(SubsetWidget::MultiplayerGames, tr("Multiplayer Games"), this));
+
+        self.add(filter = new GameFilterWidget);
 
         superLayout.setOverrideWidth(self.rule().width() - self.margins().width());
 
@@ -199,6 +201,23 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         App::app().audienceForGameChange -= this;
     }
 
+    void updateSubsetVisibility()
+    {
+        GameFilterWidget::Filter flt = filter->filter();
+
+        bool const sp = flt.testFlag(GameFilterWidget::Singleplayer);
+        bool const mp = flt.testFlag(GameFilterWidget::Multiplayer);
+
+        available->show(sp);
+        available->title().show(sp);
+
+        incomplete->show(sp);
+        incomplete->title().show(sp);
+
+        multi->show(mp);
+        multi->title().show(mp);
+    }
+
     /**
      * Subsets are visible only when they have games in them. The title and content
      * of a subset are hidden when empty.
@@ -207,7 +226,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     {
         superLayout.clear();
 
-        superLayout << *filter;
+        //superLayout << *filter;
 
         QList<SubsetWidget *> order;
         if(!App_GameLoaded())
@@ -219,22 +238,24 @@ DENG_GUI_PIMPL(GameSelectionWidget)
             order << multi << available << incomplete;
         }
 
+        updateSubsetVisibility();
+
+        // Filter out the requested subsets.
+        GameFilterWidget::Filter flt = filter->filter();
+        if(!flt.testFlag(GameFilterWidget::Singleplayer))
+        {
+            order.removeOne(available);
+            order.removeOne(incomplete);
+        }
+        if(!flt.testFlag(GameFilterWidget::Multiplayer))
+        {
+            order.removeOne(multi);
+        }
+
         foreach(SubsetWidget *s, order)
         {
-            // The first group should not have extra space above it.
-            s->title().margins().setTop("");
-            if(s != order.first()) superLayout << style().rules().rule("gap");
-
-            if(!s->items().isEmpty())
-            {
-                s->updateTitleText();
-                s->title().show();
-                superLayout << s->title() << *s;
-            }
-            else
-            {
-                s->title().hide();
-            }
+            s->updateTitleText();
+            superLayout << s->title() << *s;
         }
 
         self.setContentSize(superLayout.width(), superLayout.height());
@@ -305,7 +326,7 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                 .arg(game.title())
                 .arg(idKey);
 
-        GameItem *item = new GameItem(game, label, new LoadGameAction(String("load ") + idKey, self));
+        GameItem *item = new GameItem(game, label, new LoadGameAction(String("load ") + idKey, self), self);
 
         /// @todo The name of the plugin should be accessible via the plugin loader.
         String plugName;
@@ -351,10 +372,27 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         updateGameAvailability();
     }
 
+    static bool gameSorter(ui::Item const &a, ui::Item const &b)
+    {
+        GameItem const &x = a.as<GameItem>();
+        GameItem const &y = b.as<GameItem>();
+
+        switch(x.widget.d->filter->sortOrder())
+        {
+        case GameFilterWidget::SortByTitle:
+            return x.label().compareWithoutCase(y.label()) < 0;
+
+        case GameFilterWidget::SortByIdentityKey:
+            return x.sortKey().compareWithoutCase(y.sortKey()) < 0;
+        }
+
+        return false;
+    }
+
     void sortGames()
     {
-        available->items().sort();
-        incomplete->items().sort();
+        available->items().sort(gameSorter);
+        incomplete->items().sort(gameSorter);
     }
 
     void updateGameAvailability()
@@ -409,6 +447,12 @@ DENG_GUI_PIMPL(GameSelectionWidget)
 GameSelectionWidget::GameSelectionWidget(String const &name)
     : ScrollAreaWidget(name), d(new Instance(this))
 {
+    // By default attach the filter above the widget.
+    d->filter->rule()
+            .setInput(Rule::Width,  rule().width())
+            .setInput(Rule::Bottom, rule().top())
+            .setInput(Rule::Left,   rule().left());
+
     d->multi->open();
     if(!App_GameLoaded())
     {
@@ -419,9 +463,13 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
     // We want the full menu to be visible even when it doesn't fit the
     // designated area.
     unsetBehavior(ChildVisibilityClipping);
+    unsetBehavior(ChildHitClipping);
 
     // Maybe there are games loaded already.
     d->addExistingGames();
+
+    connect(d->filter, SIGNAL(sortOrderChanged()), this, SLOT(updateSort()));
+    connect(d->filter, SIGNAL(filterChanged()), this, SLOT(updateSubsetLayout()));
 }
 
 void GameSelectionWidget::setTitleColor(DotPath const &colorId,
@@ -445,6 +493,11 @@ void GameSelectionWidget::setTitleFont(DotPath const &fontId)
     d->incomplete->title().setFont(fontId);
 }
 
+GameFilterWidget &GameSelectionWidget::filter()
+{
+    return *d->filter;
+}
+
 void GameSelectionWidget::update()
 {
     d->addPendingGames();
@@ -462,4 +515,9 @@ void GameSelectionWidget::update()
 void GameSelectionWidget::updateSubsetLayout()
 {
     d->updateSubsetLayout();
+}
+
+void GameSelectionWidget::updateSort()
+{
+    d->sortGames();
 }

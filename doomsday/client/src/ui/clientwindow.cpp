@@ -190,16 +190,20 @@ DENG2_PIMPL(ClientWindow)
         gameSelMenu = new GameSelectionWidget;
         gameSelMenu->rule()
                 .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
-                //.setInput(Rule::AnchorY, root.viewTop() + root.viewHeight() / 2)
                 .setInput(Rule::Width,   OperatorRule::minimum(root.viewWidth(),
                                                                style.rules().rule("gameselection.max.width")))
                 .setAnchorPoint(Vector2f(.5f, .5f));
+        gameSelMenu->filter().useInvertedStyle();
+        gameSelMenu->filter().rule()
+                .setInput(Rule::Left,  gameSelMenu->rule().left() + gameSelMenu->margins().left())
+                .setInput(Rule::Width, gameSelMenu->rule().width() - gameSelMenu->margins().width())
+                .setInput(Rule::Top,   root.viewTop() + style.rules().rule("gap"));
         container().add(gameSelMenu);
 
         // Common notification area.
         notifications = new NotificationWidget;
         notifications->rule()
-                .setInput(Rule::Top,   root.viewTop()   + style.rules().rule("gap") - notifications->shift())
+                .setInput(Rule::Top,   root.viewTop() + style.rules().rule("gap") - notifications->shift())
                 .setInput(Rule::Right, game->rule().right() - style.rules().rule("gap"));
         container().add(notifications);
 
