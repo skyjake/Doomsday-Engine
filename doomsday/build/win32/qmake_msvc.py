@@ -1,6 +1,6 @@
-# qmake_msvc.py is a script that generates a full Visual Studio solution with 
-# a .vcxproj for each subproject. You must set up envconfig.bat before running 
-# the script. The solution is always placed in a folder called 
+# qmake_msvc.py is a Python 2 script that generates a full Visual Studio 
+# solution with a .vcxproj for each subproject. You must set up envconfig.bat 
+# before running the script. The solution is always placed in a folder called 
 # "doomsday-msvc-build" at the repository root.
 #
 # qmake_msvc.py must be called whenever the .pro/.pri files change. The .sln

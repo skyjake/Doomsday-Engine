@@ -36,10 +36,20 @@ deng_qt5 {
 
 # Unix System Tools ----------------------------------------------------------
 
-# Python to be used in generated scripts.
+# Python 2 to be used in generated scripts.
 isEmpty(SCRIPT_PYTHON) {
-    exists(/usr/bin/python): SCRIPT_PYTHON = /usr/bin/python
+    exists(/usr/bin/python2.7):    SCRIPT_PYTHON = /usr/bin/python2.7
+    exists(/usr/bin/python2):      SCRIPT_PYTHON = /usr/bin/python2
+    exists(/usr/bin/python):       SCRIPT_PYTHON = /usr/bin/python
     exists(/usr/local/bin/python): SCRIPT_PYTHON = /usr/local/bin/python
+}
+isEmpty(SCRIPT_PYTHON) {
+    # Check the system path.
+    SCRIPT_PYTHON = $$system(which python2.7)
+}
+isEmpty(SCRIPT_PYTHON) {
+    # Check the system path.
+    SCRIPT_PYTHON = $$system(which python2)
 }
 isEmpty(SCRIPT_PYTHON) {
     # Check the system path.

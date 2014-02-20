@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 # coding=utf-8
 #
 # Script for performing automated build events.
@@ -65,7 +65,7 @@ def todays_platform_release():
     oldFiles = DirState('releases', subdirs=False)
     
     print 'platform_release.py...'
-    os.system("python platform_release.py > %s 2> %s" % \
+    run_python2("platform_release.py > %s 2> %s" % \
         ('buildlog.txt', 'builderrors.txt'))
             
     for n in DirState('releases', subdirs=False).list_new_files(oldFiles):
