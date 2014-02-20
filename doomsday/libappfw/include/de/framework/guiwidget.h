@@ -49,6 +49,10 @@ class BlurWidget;
  *
  * The common features GuiWidget offers to all widgets are:
  *
+ * - Automatically saving and restoring persistent state. Classes that implement
+ *   IPersistent will automatically be saved and restored when the widget is
+ *   (de)initialized.
+ *
  * - Background geometry builder. All widgets may use this to build geometry for
  *   the background of the widget. However, widgets are also allowed to fully
  *   generate all of their geometry from scratch.
@@ -69,7 +73,8 @@ class BlurWidget;
  *   hit testing to their particular visual shape.
  *
  * - Logic for handling more complicated interactions such as a mouse pointer
- *   click (press then release inside or outside).
+ *   click (press then release inside or outside), and passing received events
+ *   to separately registered event handler objects.
  *
  * QObject is a base class for the signals and slots capabilities.
  *

@@ -20,6 +20,8 @@
 #include "de/GuiRootWidget"
 #include "de/BlurWidget"
 #include "de/Style"
+#include "de/BaseGuiApp"
+#include "de/IPersistent"
 
 #include <de/Garbage>
 #include <de/MouseEvent>
@@ -314,6 +316,39 @@ DENG2_PIMPL(GuiWidget)
             opacityWhenDisabled.finish();
         }
     }
+
+    void restoreState()
+    {
+        try
+        {
+            if(IPersistent *po = self.maybeAs<IPersistent>())
+            {
+                DENG2_BASE_GUI_APP->persistentUIState() >> *po;
+            }
+        }
+        catch(Error const &er)
+        {
+            // Benign: widget will use default state.
+            LOG_VERBOSE("Failed to restore state of widget '%s': %s")
+                    << self.path() << er.asText();
+        }
+    }
+
+    void saveState()
+    {
+        try
+        {
+            if(IPersistent *po = self.maybeAs<IPersistent>())
+            {
+                DENG2_BASE_GUI_APP->persistentUIState() << *po;
+            }
+        }
+        catch(Error const &er)
+        {
+            LOG_WARNING("Failed to save state of widget '%s': %s")
+                    << self.path() << er.asText();
+        }
+    }
 };
 
 GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
@@ -508,10 +543,12 @@ void GuiWidget::initialize()
     {
         d->inited = true;
         glInit();
+
+        d->restoreState();
     }
     catch(Error const &er)
     {
-        LOG_WARNING("Error when initializing widget '%s':\n")
+        LOG_WARNING("Error when initializing widget '%s': %s")
                 << name() << er.asText();
     }
 }
@@ -522,13 +559,15 @@ void GuiWidget::deinitialize()
 
     try
     {
+        d->saveState();
+
         d->inited = false;
         d->deinitBlur();
         glDeinit();
     }
     catch(Error const &er)
     {
-        LOG_WARNING("Error when deinitializing widget '%s':\n")
+        LOG_WARNING("Error when deinitializing widget '%s': %s")
                 << name() << er.asText();
     }
 }
