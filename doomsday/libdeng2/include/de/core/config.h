@@ -30,18 +30,20 @@ namespace de {
 class ArrayValue;
 
 /**
- * Stores the configuration of everything. The application owns a Config.
- * The default configuration is produced by executing the .de scripts
- * in the config directories. The resulting namespace is serialized for
- * storage, and is restored from the serialized version directly before the
- * config scripts are run.
+ * Stores the configuration of everything.
  *
- * The version of the engine is stored in the serialized config namespace.
- * This is for actions needed when upgrading: the config script can check
- * the previous version and apply changes accordingly.
+ * The application owns a Config. The default configuration is produced by executing the
+ * .de scripts in the config directories. The resulting namespace is serialized for
+ * storage, and is restored from the serialized version directly before the config
+ * scripts are run.
  *
- * In practice, Config is a specialized script namespace stored in a Record. It
- * gets written to the application's persistent data store (persist.pack).
+ * The version of the engine is stored in the serialized config namespace. This is for
+ * actions needed when upgrading: the config script can check the previous version and
+ * apply changes accordingly.
+ *
+ * In practice, Config is a specialized script namespace stored in a Record. It gets
+ * written to the application's persistent data store (persist.pack) using a Refuge. The
+ * Config is automatically written persistently before being destroyed.
  */
 class DENG2_PUBLIC Config
 {
@@ -56,11 +58,6 @@ public:
      * @param path  Name of the configuration file to read.
      */
     Config(Path const &path);
-
-    /**
-     * Destructor. The configuration is automatically saved.
-     */
-    virtual ~Config();
 
     /// Read configuration from files.
     void read();

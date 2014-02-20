@@ -27,6 +27,8 @@ namespace de {
 /**
  * Interface for a resizable block of memory that provides direct access
  * to the bytes.
+ *
+ * @ingroup data
  */
 class IBlock
 {
