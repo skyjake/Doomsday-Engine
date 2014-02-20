@@ -4,12 +4,12 @@
 
 defineTest(runPython2) {
     win32: system(python $$1)       # 2.7 still expected
-     else: system(python2.7 $$1)
+     else: system(/usr/bin/env python2.7 $$1)
 }
 
 defineTest(runPython2InDir) {
     win32: system(cd "$$1" && python $$2)
-     else: system(cd "$$1" && python2.7 $$2)
+     else: system(cd "$$1" && /usr/bin/env python2.7 $$2)
 }
 
 defineTest(echo) {
