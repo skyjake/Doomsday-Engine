@@ -23,6 +23,7 @@
 #include <de/SequentialLayout>
 #include <de/DialogContentStylist>
 #include <de/TabWidget>
+#include <de/PersistentState>
 
 using namespace de;
 
@@ -62,13 +63,18 @@ DENG2_PIMPL(GameFilterWidget)
                 .setInput(Rule::Left,  self.rule().left())
                 .setInput(Rule::Top,   self.rule().top());
     }
+
+    String persistId(String const &name) const
+    {
+        return self.name() + "." + name;
+    }
 };
 
 GameFilterWidget::GameFilterWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
     connect(d->tabs, SIGNAL(currentTabChanged()), this, SIGNAL(filterChanged()));
-    connect(d->sortBy, SIGNAL(selectionChangedByUser(uint)), this, SIGNAL(sortOrderChanged()));
+    connect(d->sortBy, SIGNAL(selectionChanged(uint)), this, SIGNAL(sortOrderChanged()));
 
     rule().setInput(Rule::Height, d->tabs->rule().height());
 }
@@ -88,3 +94,18 @@ GameFilterWidget::SortOrder GameFilterWidget::sortOrder() const
     return SortOrder(d->sortBy->selectedItem().data().toInt());
 }
 
+void GameFilterWidget::operator >> (PersistentState &toState) const
+{
+    Record &st = toState.names();
+
+    st.set(d->persistId("filter"), dint(filter()));
+    st.set(d->persistId("order"),  dint(sortOrder()));
+}
+
+void GameFilterWidget::operator << (PersistentState const &fromState)
+{
+    Record const &st = fromState.names();
+
+    d->tabs->setCurrent   (d->tabs->items()  .findData(int(st[d->persistId("filter")])));
+    d->sortBy->setSelected(d->sortBy->items().findData(int(st[d->persistId("order" )])));
+}

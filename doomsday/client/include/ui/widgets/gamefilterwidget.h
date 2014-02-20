@@ -20,14 +20,17 @@
 #define DENG_CLIENT_GAMEFILTERWIDGET_H
 
 #include <de/GuiWidget>
+#include <de/IPersistent>
 
 /**
  * Filtering and sorting parameters for a game selection widget. Allows picking the type
  * of games to show (singleplayer or multiplayer) and how the games are sorted.
  *
  * The widget defines its own height, but width must be set manually.
+ *
+ * The filter and sort setting is saved persistently.
  */
-class GameFilterWidget : public de::GuiWidget
+class GameFilterWidget : public de::GuiWidget, public de::IPersistent
 {
     Q_OBJECT
 
@@ -54,6 +57,10 @@ public:
     Filter filter() const;
 
     SortOrder sortOrder() const;
+
+    // Implements IPersistent.
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (de::PersistentState const &fromState);
 
 signals:
     void filterChanged();
