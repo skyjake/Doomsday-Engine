@@ -54,8 +54,8 @@ DENG2_PIMPL(GameFilterWidget)
                 << new TabItem(tr("All Games"));
 
         sortLabel->setTextColor("inverted.text");
-        sortLabel->setFont("tab.label");
-        sortBy->setFont("tab.label");
+        sortLabel->setFont("small");
+        sortBy->setFont("small");
         sortBy->setOpeningDirection(ui::Down);
         sortBy->items()
                 << new ChoiceItem(tr("Title"),        SortByTitle)

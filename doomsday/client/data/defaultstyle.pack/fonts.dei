@@ -125,10 +125,10 @@ group choice {
 }
 
 group tab {
-    font label inherits small {}
-    font selected inherits small {
+    font label inherits small {
         weight: bold
     }
+    font selected inherits tab.label {}
 }
 
 group slider {
