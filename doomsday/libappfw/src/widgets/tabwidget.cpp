@@ -83,10 +83,9 @@ DENG2_PIMPL(TabWidget)
 
     void setCurrent(ui::Data::Pos pos)
     {
-        if(current != pos)
+        if(current != pos && pos < buttons->items().size())
         {
             current = pos;
-            DENG2_ASSERT(current < buttons->items().size());
             updateSelected();
             emit self.currentTabChanged();
         }
