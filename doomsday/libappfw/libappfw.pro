@@ -51,6 +51,7 @@ HEADERS += \
     include/de/GuiRootWidget \
     include/de/GuiWidget \
     include/de/InputDialog \
+    include/de/IPersistent \
     include/de/LabelWidget \
     include/de/LineEditWidget \
     include/de/LogWidget \
@@ -59,6 +60,7 @@ HEADERS += \
     include/de/NotificationWidget \
     include/de/OculusRift \
     include/de/PanelWidget \
+    include/de/PersistentState \
     include/de/PopupMenuWidget \
     include/de/PopupWidget \
     include/de/ProceduralImage \
@@ -105,8 +107,10 @@ HEADERS += \
     include/de/framework/guiwidgetprivate.h \
     include/de/framework/imageitem.h \
     include/de/framework/item.h \
+    include/de/framework/ipersistent.h \
     include/de/framework/listdata.h \
     include/de/framework/margins.h \
+    include/de/framework/persistentstate.h \
     include/de/framework/proceduralimage.h \
     include/de/framework/sequentiallayout.h \
     include/de/framework/signalaction.h \
@@ -167,6 +171,7 @@ SOURCES += \
     src/item.cpp \
     src/listdata.cpp \
     src/margins.cpp \
+    src/persistentstate.cpp \
     src/proceduralimage.cpp \
     src/sequentiallayout.cpp \
     src/signalaction.cpp \
