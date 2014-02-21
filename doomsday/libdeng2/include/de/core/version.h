@@ -2,8 +2,8 @@
  * @file version.h
  * Version numbering and labeling for libdeng2.
  *
- * @authors Copyright &copy; 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -38,6 +38,8 @@ namespace de {
  * switches to major version 2, libdeng2 version will be synced with the rest
  * of the project. Also note that unlike libdeng1, there is only ever three
  * components in the version (or four, counting the build number).
+ *
+ * @ingroup core
  */
 class DENG2_PUBLIC Version
 {

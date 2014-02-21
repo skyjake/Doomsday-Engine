@@ -1,5 +1,4 @@
 /** @file textstreamlogsink.cpp  Log sink that uses a QTextStream for output.
- * @ingroup core
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

@@ -1,5 +1,4 @@
 /** @file packagefolder.cpp Folder that hosts a data package archive.
- * @ingroup fs
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

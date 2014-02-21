@@ -1,6 +1,6 @@
 /** @file escapeparser.h  Text escape sequence parser.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -26,7 +26,7 @@
 namespace de {
 
 /**
- * Escape sequence parser for text strings.
+ * Escape sequence parser for text strings. @ingroup data
  *
  * @see DENG2_ESC() macro
  */

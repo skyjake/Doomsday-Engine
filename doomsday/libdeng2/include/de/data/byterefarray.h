@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2010-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -27,7 +27,7 @@ namespace de {
 /**
  * Byte array that operates on a pointer-based array. Instances of
  * ByteRefArray are fixed size: one cannot write past the end of
- * the array.
+ * the array. @ingroup data
  */
 class DENG2_PUBLIC ByteRefArray : public IByteArray
 {

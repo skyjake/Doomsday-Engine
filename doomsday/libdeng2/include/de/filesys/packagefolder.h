@@ -1,5 +1,4 @@
 /** @file packagefolder.h Folder that hosts a data package archive.
- * @ingroup fs
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,6 +26,7 @@ namespace de {
 
 /**
  * Specialized Folder that hosts a data package.
+ * @ingroup fs
  *
  * A @em package is a collection of files packaged into a single unit (possibly
  * using an Archive). Examples of packages are add-on packages (in various

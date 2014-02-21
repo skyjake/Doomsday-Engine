@@ -1,4 +1,4 @@
-/** @file garbage.cpp  Garbage collector. @ingroup core
+/** @file garbage.cpp  Garbage collector.
  *
  * @authors Copyright © 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

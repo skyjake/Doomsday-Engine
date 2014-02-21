@@ -1,5 +1,4 @@
 /** @file json.cpp JSON parser.
- * @ingroup data
  *
  * Parses JSON and outputs a QVariant with the data.
  *

@@ -1,5 +1,4 @@
 /** @file monospacelogsinkformatter.cpp  Fixed-width log entry formatter.
- * @ingroup core
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

@@ -1,6 +1,6 @@
 /** @file bitfield.h  Array of integers packed together.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -29,6 +29,8 @@ namespace de {
 
 /**
  * Array of integer values packed tightly together.
+ *
+ * @ingroup data
  */
 class DENG2_PUBLIC BitField
 {

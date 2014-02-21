@@ -1,6 +1,4 @@
-/**
- * @file nativepath.h
- * File paths for the native file system.
+/** @file nativepath.h File paths for the native file system.
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
@@ -35,6 +33,8 @@ namespace de {
  * The public interface of NativePath closely mirrors that of String, e.g.,
  * String::fileNamePath(), so that equivalent operations are provided except
  * with native separator characters.
+ *
+ * @ingroup fs
  */
 class DENG2_PUBLIC NativePath : public Path
 {

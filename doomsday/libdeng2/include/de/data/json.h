@@ -1,9 +1,7 @@
-/** @file json.cpp JSON parser.
+/** @file json.h  JSON parser.
  * @ingroup data
  *
  * Parses JSON and outputs a QVariant with the data.
- *
- * @todo Move this to libdeng2.
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

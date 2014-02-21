@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -44,6 +44,8 @@ class ArrayValue;
  * In practice, Config is a specialized script namespace stored in a Record. It gets
  * written to the application's persistent data store (persist.pack) using a Refuge. The
  * Config is automatically written persistently before being destroyed.
+ *
+ * @ingroup core
  */
 class DENG2_PUBLIC Config
 {

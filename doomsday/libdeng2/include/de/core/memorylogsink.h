@@ -1,6 +1,6 @@
 /** @file memorylogsink.h  Log sink that stores log entries in memory.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -28,6 +28,7 @@ namespace de {
 
 /**
  * Log sink that stores log entries in memory.
+ * @ingroup core
  */
 class DENG2_PUBLIC MemoryLogSink : public LogSink, public Lockable
 {

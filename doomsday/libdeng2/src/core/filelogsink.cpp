@@ -1,5 +1,4 @@
 /** @file filelogsink.cpp  Log sink that uses a File for output.
- * @ingroup core
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

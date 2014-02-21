@@ -1,6 +1,6 @@
 /** @file rulebank.h  Bank of length Rules.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -29,6 +29,7 @@ class Record;
 
 /**
  * Bank of Rules where each is identified by a Path.
+ * @ingroup widgets
  */
 class DENG2_PUBLIC RuleBank : public InfoBank
 {

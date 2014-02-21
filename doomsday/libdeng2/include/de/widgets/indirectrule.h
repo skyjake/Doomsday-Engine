@@ -1,6 +1,6 @@
 /** @file indirectrule.h  Indirect rule.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -31,6 +31,8 @@ namespace de {
  * change dynamically. Anyone relying on the indirect rule will be duly
  * notified of changes in the source of the indirect rule, without having to
  * change anything in the existing rule relationships.
+ *
+ * @ingroup widgets
  */
 class DENG2_PUBLIC IndirectRule : public Rule
 {

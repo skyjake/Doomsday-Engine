@@ -1,8 +1,7 @@
 /** @file directoryfeed.cpp Directory Feed.
- * @ingroup fs
  *
- * @author Copyright &copy; 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html

@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -29,6 +29,7 @@ namespace de {
 
 /**
  * Key/value tree. The tree is parsed from the "Snowberry" Info file format.
+ * @ingroup data
  *
  * See the Doomsday Wiki for an example of the syntax:
  * http://dengine.net/dew/index.php?title=Info
