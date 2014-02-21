@@ -86,6 +86,8 @@ public:
 
     bool isOpen() const;
 
+    bool isOpeningOrClosing() const;
+
     void close(TimeDelta delayBeforeClosing);
 
     // Events.
