@@ -92,14 +92,16 @@ public:
         void addMissingSaveInfo();
 
         /**
-         * Returns the save name (with file extension) of the game state associated with the save slot.
+         * Returns the save name (with file extension) for the specified @a map, for the logical
+         * save slot.
          *
          * @param map   Logical map index.
-         *
-         * @return  The composed name if reachable (else a zero-length string).
          */
         de::String saveNameForMap(uint map) const;
 
+        /**
+         * Returns the save name (with file extension), for the logical save slot.
+         */
         de::String saveName() const;
 
     private:
@@ -187,22 +189,22 @@ public:
     int findSlotWithUserSaveDescription(de::String description) const;
 
     /**
-     * Returns @c true iff save @a slot is user-writable (i.e., not a special slot, such as
-     * the @em auto and @em base slots).
+     * Returns @c true iff save @a slotNumber is user-writable (i.e., not a special slot, such
+     * as the @em auto and @em base slots).
      */
-    bool slotIsUserWritable(int slot) const;
+    bool slotIsUserWritable(int slotNumber) const;
 
     /**
-     * Deletes all save game files associated with the specified save @a slot.
+     * Deletes all save game files associated with the specified save @a slotNumber.
      *
      * @see isKnownSlot()
      */
-    void clearSlot(int slot);
+    void clearSlot(int slotNumber);
 
     /**
      * Copies all the save game files from one slot to another.
      */
-    void copySlot(int sourceSlot, int destSlot);
+    void copySlot(int sourceSlotNumber, int destSlotNumber);
 
     /**
      * Register the console commands and variables of this module.

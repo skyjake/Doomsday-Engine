@@ -58,6 +58,7 @@ void SaveSlots::Slot::bindSaveName(de::String newSaveName)
 bool SaveSlots::Slot::isUsed() const
 {
     if(SV_SavePath().isEmpty()) return false;
+    if(!hasSaveInfo()) return false;
     return SV_ExistingFile(SV_SavePath() / saveName()) && saveInfo().isLoadable();
 }
 
