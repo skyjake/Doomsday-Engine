@@ -76,12 +76,11 @@ static de::Path savePathForClientSessionId(uint sessionId)
 dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map)
 {
     DENG2_ASSERT(inited);
-    de::Path path = SV_SavePath() / SV_SaveSlots()[slotNumber].saveNameForMap(map);
-    if(!path.isEmpty())
+    if(SV_SavePath().isEmpty() || !SV_SaveSlots().isKnownSlot(slotNumber))
     {
-        return SV_ExistingFile(path);
+        return false;
     }
-    return false;
+    return SV_ExistingFile(SV_SavePath() / SV_SaveSlots()[slotNumber].saveNameForMap(map));
 }
 
 void SV_InitTargetPlayers()
@@ -104,8 +103,8 @@ void SV_TranslateLegacyMobjFlags(mobj_t *mo, int ver)
 {
 #if __JDOOM64__
     // Nothing to do.
-    DENG_UNUSED(mo);
-    DENG_UNUSED(ver);
+    DENG2_UNUSED(mo);
+    DENG2_UNUSED(ver);
     return;
 #endif
 
@@ -205,7 +204,7 @@ void playerheader_s::read(Reader *reader, int saveVersion)
     {
         int ver = Reader_ReadByte(reader);
 #if !__JHERETIC__
-        DENG_UNUSED(ver);
+        DENG2_UNUSED(ver);
 #endif
 
         numPowers      = Reader_ReadInt32(reader);
@@ -614,7 +613,7 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
         xgDataFollows = Reader_ReadByte(reader) == 1;
     }
 #ifdef __JHEXEN__
-    DENG_UNUSED(xgDataFollows);
+    DENG2_UNUSED(xgDataFollows);
 #endif
 
     // A version byte?
@@ -866,15 +865,16 @@ dd_bool SV_LoadGame(int slotNumber)
         return false;
     }
 
-    App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slotNumber);
-
-    de::Path path = SV_SavePath() / SV_SaveSlots()[slotNumber].saveName();
-    if(path.isEmpty())
+    if(SV_SavePath().isEmpty())
     {
         App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable",
                                de::NativePath(SV_SavePath()).pretty().toLatin1().constData());
         return false;
     }
+
+    de::Path path = SV_SavePath() / SV_SaveSlots()[slotNumber].saveName();
+    App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
+                             de::NativePath(path).pretty().toLatin1().constData());
 
 #if __JHEXEN__
     // Copy all needed save files to the base slot.
@@ -928,14 +928,14 @@ dd_bool SV_SaveGame(int slotNumber, char const *description)
         return false;
     }
 
-    de::Path path = SV_SavePath() / SV_SaveSlots()[logicalSlot].saveName();
-    if(path.isEmpty())
+    if(SV_SavePath().isEmpty())
     {
         App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable",
                                  de::NativePath(SV_SavePath()).pretty().toLatin1().constData());
         return false;
     }
 
+    de::Path path = SV_SavePath() / SV_SaveSlots()[logicalSlot].saveName();
     App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
                              de::NativePath(path).pretty().toLatin1().constData());
 
@@ -1020,7 +1020,7 @@ void SV_SaveGameClient(uint sessionId)
     Writer_Delete(writer);
     delete info;
 #else
-    DENG_UNUSED(sessionId);
+    DENG2_UNUSED(sessionId);
 #endif
 }
 
@@ -1098,7 +1098,7 @@ void SV_LoadGameClient(uint sessionId)
     Reader_Delete(reader);
     delete info;
 #else
-    DENG_UNUSED(sessionId);
+    DENG2_UNUSED(sessionId);
 #endif
 }
 

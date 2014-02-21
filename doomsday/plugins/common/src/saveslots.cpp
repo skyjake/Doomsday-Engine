@@ -57,11 +57,8 @@ void SaveSlots::Slot::bindSaveName(de::String newSaveName)
 
 bool SaveSlots::Slot::isUsed() const
 {
-    if(SV_ExistingFile(SV_SavePath() / saveName()))
-    {
-        return saveInfo().isLoadable();
-    }
-    return false;
+    if(SV_SavePath().isEmpty()) return false;
+    return SV_ExistingFile(SV_SavePath() / saveName()) && saveInfo().isLoadable();
 }
 
 bool SaveSlots::Slot::hasSaveInfo() const
@@ -84,7 +81,10 @@ void SaveSlots::Slot::addMissingSaveInfo()
 {
     if(d->info) return;
     d->info = new SaveInfo;
-    d->info->updateFromFile(SV_SavePath() / saveName());
+    if(!SV_SavePath().isEmpty())
+    {
+        d->info->updateFromFile(SV_SavePath() / saveName());
+    }
 }
 
 SaveInfo &SaveSlots::Slot::saveInfo(bool canCreate) const
@@ -103,13 +103,6 @@ SaveInfo &SaveSlots::Slot::saveInfo(bool canCreate) const
 
 de::String SaveSlots::Slot::saveNameForMap(uint map) const
 {
-    // Do we have a valid path?
-    /// @todo Do not do alter the file system until necessary.
-    if(!F_MakePath(de::NativePath(SV_SavePath()).expand().toUtf8().constData()))
-    {
-        return "";
-    }
-
     // Compose the full game-save filename.
     return d->saveName + de::String("%1." SAVEGAMEEXTENSION)
                                  .arg(int(map + 1), 2, 10, QChar('0'));
@@ -117,13 +110,6 @@ de::String SaveSlots::Slot::saveNameForMap(uint map) const
 
 de::String SaveSlots::Slot::saveName() const
 {
-    // Do we have a valid path?
-    /// @todo Do not do alter the file system until necessary.
-    if(!F_MakePath(de::NativePath(SV_SavePath()).expand().toUtf8().constData()))
-    {
-        return "";
-    }
-
     // Compose the full game-save filename.
     return d->saveName + de::String("." SAVEGAMEEXTENSION);
 }
@@ -310,6 +296,11 @@ SaveSlots::Slot &SaveSlots::slot(int slotNumber) const
 
 void SaveSlots::clearSlot(int slotNumber)
 {
+    if(SV_SavePath().isEmpty())
+    {
+        return;
+    }
+
     Slot &sslot = slot(slotNumber);
 
     sslot.addMissingSaveInfo();
@@ -333,6 +324,11 @@ void SaveSlots::clearSlot(int slotNumber)
 void SaveSlots::copySlot(int sourceSlotNumber, int destSlotNumber)
 {
     LOG_AS("SaveSlots::copySlot");
+
+    if(SV_SavePath().isEmpty())
+    {
+        return;
+    }
 
     Slot &sourceSlot = slot(sourceSlotNumber);
     Slot &destSlot   = slot(destSlotNumber);
