@@ -413,13 +413,25 @@ static dd_bool quitInProgress;
 
 void G_Register()
 {
-    int i;
-
-    for(i = 0; gamestatusCVars[i].path[0]; ++i)
+    for(int i = 0; gamestatusCVars[i].path[0]; ++i)
+    {
         Con_AddVariable(gamestatusCVars + i);
+    }
 
-    for(i = 0; gameCmds[i].name[0]; ++i)
+#if !__JHEXEN__
+    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
+#endif
+    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
+
+    // Aliases for obsolete cvars:
+    C_VAR_BYTE("menu-quick-ask",                 &cfg.confirmQuickGameSave, 0, 0, 1);
+
+    for(int i = 0; gameCmds[i].name[0]; ++i)
+    {
         Con_AddCommand(gameCmds + i);
+    }
 
     C_CMD("warp", "i", WarpMap);
     C_CMD("setmap", "i", WarpMap); // alias
@@ -497,7 +509,7 @@ void G_CommonPreInit()
     // Add our cvars and ccmds to the console databases.
     G_ConsoleRegistration();     // Main command list.
     D_NetConsoleRegistration();  // For network.
-    G_Register();                // Read-only game status cvars (for playsim).
+    G_Register();                // Top level game cvars and commands.
     Pause_Register();
     G_ControlRegister();         // For controls/input.
     SaveSlots::consoleRegister(); // Game-save system.
