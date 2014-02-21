@@ -76,7 +76,7 @@ static de::Path savePathForClientSessionId(uint sessionId)
 dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map)
 {
     DENG2_ASSERT(inited);
-    de::Path path = SV_SavePath() / SV_SaveSlots()[slotNumber].mapSaveName(map);
+    de::Path path = SV_SavePath() / SV_SaveSlots()[slotNumber].saveNameForMap(map);
     if(!path.isEmpty())
     {
         return SV_ExistingFile(path);
@@ -1105,7 +1105,7 @@ void SV_LoadGameClient(uint sessionId)
 #if __JHEXEN__
 void SV_HxSaveHubMap()
 {
-    SV_OpenFile(SV_SavePath() / SV_SaveSlots()[BASE_SLOT].mapSaveName(gameMap), "wp");
+    SV_OpenFile(SV_SavePath() / SV_SaveSlots()[BASE_SLOT].saveNameForMap(gameMap), "wp");
 
     // Set the mobj archive numbers
     ThingArchive thingArchive;
@@ -1133,7 +1133,7 @@ void SV_HxLoadHubMap()
     try
     {
         SaveSlot &sslot = SV_SaveSlots()[BASE_SLOT];
-        de::Path path = SV_SavePath() / sslot.mapSaveName(gameMap);
+        de::Path path = SV_SavePath() / sslot.saveNameForMap(gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
             throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for read");

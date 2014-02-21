@@ -21,6 +21,7 @@
 #include "common.h"
 #include "saveslots.h"
 
+#include "p_savedef.h"
 #include "p_saveio.h"
 #include <de/NativePath>
 #include <de/String>
@@ -100,7 +101,7 @@ SaveInfo &SaveSlots::Slot::saveInfo(bool canCreate) const
     throw MissingInfoError("SaveSlots::Slot::saveInfo", "No SaveInfo exists");
 }
 
-de::String SaveSlots::Slot::mapSaveName(uint map) const
+de::String SaveSlots::Slot::saveNameForMap(uint map) const
 {
     // Do we have a valid path?
     /// @todo Do not do alter the file system until necessary.
@@ -320,7 +321,7 @@ void SaveSlots::clearSlot(int slotNumber)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_RemoveFile(SV_SavePath() / sslot.mapSaveName(i));
+        SV_RemoveFile(SV_SavePath() / sslot.saveNameForMap(i));
     }
 
     SV_RemoveFile(SV_SavePath() / sslot.saveName());
@@ -341,8 +342,8 @@ void SaveSlots::copySlot(int sourceSlotNumber, int destSlotNumber)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_CopyFile(SV_SavePath() / sourceSlot.mapSaveName(i),
-                    SV_SavePath() / destSlot.mapSaveName(i));
+        SV_CopyFile(SV_SavePath() / sourceSlot.saveNameForMap(i),
+                    SV_SavePath() / destSlot.saveNameForMap(i));
     }
 
     SV_CopyFile(SV_SavePath() / sourceSlot.saveName(), SV_SavePath() / destSlot.saveName());

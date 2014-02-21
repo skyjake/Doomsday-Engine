@@ -98,7 +98,7 @@ public:
          *
          * @return  The composed name if reachable (else a zero-length string).
          */
-        de::String mapSaveName(uint map) const;
+        de::String saveNameForMap(uint map) const;
 
         de::String saveName() const;
 
