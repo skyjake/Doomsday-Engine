@@ -274,9 +274,9 @@ bool SaveInfo::isLoadable() const
     return true; // It's good!
 }
 
-void SaveInfo::updateFromFile(de::Path path)
+void SaveInfo::updateFromFile(de::String fileName)
 {
-    if(path.isEmpty())
+    if(SV_SavePath().isEmpty())
     {
         // The save path cannot be accessed for some reason. Perhaps its a network path?
         setUserDescription("");
@@ -285,7 +285,7 @@ void SaveInfo::updateFromFile(de::Path path)
     }
 
     // Is this a recognized game state?
-    if(!SV_RecognizeGameState(*this, path))
+    if(!SV_RecognizeGameState(*this, SV_SavePath() / fileName))
     {
         // Clear the info.
         setUserDescription("");

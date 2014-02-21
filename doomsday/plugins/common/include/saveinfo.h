@@ -65,15 +65,15 @@ public:
     bool isLoadable() const;
 
     /**
-     * Attempt to update the save info from a saved game session. If the given file @a path
-     * is invalid or the saved game state could not be recognized the save info is returned
+     * Attempt to update the save info from the named saved game session file. If the save path
+     * is invalid, unreachable, or the game state is not recognized -- the save info is returned
      * to a valid but non-loadable state.
      *
-     * @param path  Path to the resource file containing the game session header.
+     * @param fileName  Name of the resource file containing the game session header.
      *
      * @see isLoadable()
      */
-    void updateFromFile(de::Path path);
+    void updateFromFile(de::String fileName);
 
     /**
      * Update the metadata associated with the save using values derived from the current game

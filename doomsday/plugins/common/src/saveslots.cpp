@@ -82,10 +82,7 @@ void SaveSlots::Slot::addMissingSaveInfo()
 {
     if(d->info) return;
     d->info = new SaveInfo;
-    if(!SV_SavePath().isEmpty())
-    {
-        d->info->updateFromFile(SV_SavePath() / saveName());
-    }
+    d->info->updateFromFile(saveName());
 }
 
 SaveInfo &SaveSlots::Slot::saveInfo(bool canCreate) const
@@ -115,6 +112,8 @@ de::String SaveSlots::Slot::saveName() const
     return d->saveName + de::String("." SAVEGAMEEXTENSION);
 }
 
+/// @todo We should look at all files on the save path and not just those which match
+/// the default game-save file naming convention.
 DENG2_PIMPL(SaveSlots)
 {
     int slotCount;
@@ -158,18 +157,27 @@ DENG2_PIMPL(SaveSlots)
     }
 
     /// Re-build save info by re-scanning the save paths and populating the list.
-    void buildInfosIfNeeded()
+    void buildInfosIfNeeded(bool update = false)
     {
-        // Scan the save paths and populate the list.
-        /// @todo We should look at all files on the save path and not just those which match
-        /// the default game-save file naming convention.
-        for(int i = 0; i < (signed)sslots.size(); ++i)
+        DENG2_FOR_EACH(Slots, i, sslots)
         {
-            sslots[i]->addMissingSaveInfo();
+            (*i)->addMissingSaveInfo();
+            if(update)
+            {
+                (*i)->saveInfo().updateFromFile((*i)->saveName());
+            }
         }
         autoSlot.addMissingSaveInfo();
+        if(update)
+        {
+            autoSlot.saveInfo().updateFromFile(autoSlot.saveName());
+        }
 #if __JHEXEN__
         baseSlot.addMissingSaveInfo();
+        if(update)
+        {
+            baseSlot.saveInfo().updateFromFile(baseSlot.saveName());
+        }
 #endif
     }
 };
@@ -195,7 +203,7 @@ void SaveSlots::clearAll()
 
 void SaveSlots::updateAll()
 {
-    d->buildInfosIfNeeded();
+    d->buildInfosIfNeeded(true/*update session headers from source files*/);
 }
 
 de::String SaveSlots::slotIdentifier(int slot) const
@@ -351,6 +359,6 @@ void SaveSlots::copySlot(int sourceSlotNumber, int destSlotNumber)
 
 void SaveSlots::consoleRegister() // static
 {
-    C_VAR_INT ("game-save-last-slot",            &cvarLastSlot, CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
-    C_VAR_INT ("game-save-quick-slot",           &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
+    C_VAR_INT("game-save-last-slot",    &cvarLastSlot,  CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
+    C_VAR_INT("game-save-quick-slot",   &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
 }
