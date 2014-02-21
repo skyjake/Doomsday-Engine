@@ -52,57 +52,50 @@ public:
         DENG2_ERROR(MissingInfoError);
 
     public:
-        Slot(de::String const &saveName = "");
+        Slot(de::String const &fileName = "");
 
         /**
-         * Change the save game name bound to the logical save slot.
-         *
-         * @param newSaveName New save game name to apply.
+         * Returns the save game file name bound to the logical save slot.
          */
-        void bindSaveName(de::String newSaveName);
+        de::String fileName() const;
+
+        /**
+         * Change the save game file name bound to the logical save slot.
+         *
+         * @param newName  New save game file name to be bound.
+         */
+        void bindFileName(de::String newName);
 
         /**
          * Returns @c true iff a saved game state exists for the logical save slot.
          */
         bool isUsed() const;
 
+        /**
+         * Returns @c true iff save info exists for the logical save slot.
+         */
         bool hasSaveInfo() const;
 
         /**
          * Clear the save info for the logical save slot.
+         *
+         * @see hasSaveInfo()
          */
         void clearSaveInfo();
 
         /**
+         * Returns the SaveInfo associated with the logical save slot.
+         *
+         * @see hasSaveInfo()
+         */
+        SaveInfo &saveInfo() const;
+
+        /**
+         * Replace the existing save info with @a newInfo.
+         *
          * @param newInfo  New SaveInfo to replace with. Ownership is given.
          */
         void replaceSaveInfo(SaveInfo *newInfo);
-
-        /**
-         * Returns the SaveInfo associated with the logical save slot.
-         *
-         * @param canCreate  @c true= create new save info and attempt to populate it from the saved
-         *                   game session header if it does not exist.
-         */
-        SaveInfo &saveInfo(bool canCreate = false) const;
-
-        /**
-         * If no save info exists, create and attempt to populate it from the saved game session header.
-         */
-        void addMissingSaveInfo();
-
-        /**
-         * Returns the save name (with file extension) for the specified @a map, for the logical
-         * save slot.
-         *
-         * @param map   Logical map index.
-         */
-        de::String saveNameForMap(uint map) const;
-
-        /**
-         * Returns the save name (with file extension), for the logical save slot.
-         */
-        de::String saveName() const;
 
     private:
         DENG2_PRIVATE(d)
@@ -118,6 +111,9 @@ public:
      * Returns the total number of logical save slots.
      */
     int slotCount() const;
+
+    /// @see slotCount()
+    inline int size() const { return slotCount(); }
 
     /**
      * Returns @c true iff @a value is interpretable as logical slot number (in range).

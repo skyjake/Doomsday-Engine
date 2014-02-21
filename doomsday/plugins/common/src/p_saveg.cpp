@@ -49,15 +49,14 @@ targetplraddress_t *targetPlayerAddrs;
 
 #if !__JHEXEN__
 /**
- * Compose the (possibly relative) path to the game-save associated
- * with @a sessionId.
+ * Compose the save game file name for the specified @a sessionId.
  *
  * @param sessionId  Unique game-session identifier.
  *
  * @return  File path to the reachable save directory. If the game-save path
  *          is unreachable then a zero-length string is returned instead.
  */
-static de::Path savePathForClientSessionId(uint sessionId)
+static de::String saveNameForClientSessionId(uint sessionId)
 {
     // Do we have a valid path?
     if(!F_MakePath(de::NativePath(SV_ClientSavePath()).expand().toUtf8().constData()))
@@ -66,9 +65,8 @@ static de::Path savePathForClientSessionId(uint sessionId)
     }
 
     // Compose the full game-save path and filename.
-    return SV_ClientSavePath()
-                / de::String(CLIENTSAVEGAMENAME "%1." SAVEGAMEEXTENSION)
-                          .arg(sessionId, 8, 16, QChar('0')).toUpper();
+    return de::String(CLIENTSAVEGAMENAME "%1")
+                   .arg(sessionId, 8, 16, QChar('0')).toUpper();
 }
 #endif
 
@@ -80,7 +78,7 @@ dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map)
     {
         return false;
     }
-    return SV_ExistingFile(SV_SavePath() / SV_SaveSlots()[slotNumber].saveNameForMap(map));
+    return SV_ExistingFile(SV_SavePath() / SV_SaveSlots()[slotNumber].saveInfo().fileNameForMap(map));
 }
 
 void SV_InitTargetPlayers()
@@ -833,15 +831,15 @@ void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReade
     gameStateReaderFactory.declareReader(recognizer, maker);
 }
 
-bool SV_RecognizeGameState(SaveInfo &info, de::Path path)
+bool SV_RecognizeGameState(SaveInfo &info)
 {
     DENG2_ASSERT(inited);
-    return gameStateReaderFactory.recognize(info, path);
+    return gameStateReaderFactory.recognize(info);
 }
 
-static std::auto_ptr<IGameStateReader> gameStateReaderFor(SaveInfo &info, de::Path path)
+static std::auto_ptr<IGameStateReader> gameStateReaderFor(SaveInfo &info)
 {
-    std::auto_ptr<IGameStateReader> p(gameStateReaderFactory.recognizeAndMakeReader(info, path));
+    std::auto_ptr<IGameStateReader> p(gameStateReaderFactory.recognizeAndMakeReader(info));
     if(!p.get())
     {
         /// @throw Error The saved game state format was not recognized.
@@ -872,10 +870,6 @@ dd_bool SV_LoadGame(int slotNumber)
         return false;
     }
 
-    de::Path path = SV_SavePath() / SV_SaveSlots()[slotNumber].saveName();
-    App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
-                             de::NativePath(path).pretty().toLatin1().constData());
-
 #if __JHEXEN__
     // Copy all needed save files to the base slot.
     /// @todo Why do this BEFORE loading?? (G_NewGame() does not load the serialized map state)
@@ -886,12 +880,16 @@ dd_bool SV_LoadGame(int slotNumber)
     }
 #endif
 
+    de::Path path = SV_SavePath() / SV_SaveSlots()[logicalSlot].saveInfo().fileName();
+    App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
+                             de::NativePath(path).pretty().toLatin1().constData());
+
     try
     {
         SaveInfo &info = SV_SaveSlots()[logicalSlot].saveInfo();
 
         // Attempt to recognize and load the saved game state.
-        gameStateReaderFor(info, path)->read(info, path);
+        gameStateReaderFor(info)->read(info);
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slotNumber, SVF_WRITE_OVERRIDE);
@@ -935,11 +933,12 @@ dd_bool SV_SaveGame(int slotNumber, char const *description)
         return false;
     }
 
-    de::Path path = SV_SavePath() / SV_SaveSlots()[logicalSlot].saveName();
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(SV_SaveSlots()[logicalSlot].fileName(), description);
+
+    de::Path path = SV_SavePath() / info->fileName();
     App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
                              de::NativePath(path).pretty().toLatin1().constData());
 
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(description);
     try
     {
         GameStateWriter().write(*info, path);
@@ -980,17 +979,25 @@ void SV_SaveGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    de::Path path = savePathForClientSessionId(sessionId);
-    if(!SV_OpenFile(path, "wp"))
+    if(SV_ClientSavePath().isEmpty())
     {
-        App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
-                                 de::NativePath(path).pretty().toLatin1().constData());
         return;
     }
 
     // Prepare new save info.
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata();
+    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(saveNameForClientSessionId(sessionId));
     info->setSessionId(sessionId);
+
+    de::Path path = SV_ClientSavePath() / info->fileName();
+    if(!SV_OpenFile(path, "wp"))
+    {
+        App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
+                                 de::NativePath(path).pretty().toLatin1().constData());
+
+        // Discard the useless save info.
+        delete info;
+        return;
+    }
 
     Writer *writer = SV_NewWriter();
     info->write(writer);
@@ -1035,22 +1042,25 @@ void SV_LoadGameClient(uint sessionId)
     if(!IS_CLIENT || !mo)
         return;
 
-    de::Path path = savePathForClientSessionId(sessionId);
+    Reader *reader = SV_NewReader();
+    SaveInfo *info = SaveInfo::fromReader(reader);
+    info->setFileName(saveNameForClientSessionId(sessionId));
+
+    de::Path path = SV_ClientSavePath() / info->fileName();
     if(!SV_OpenFile(path, "rp"))
     {
+        Reader_Delete(reader);
+        delete info;
         App_Log(DE2_RES_WARNING, "SV_LoadGameClient: Failed opening \"%s\" for reading",
                                  de::NativePath(path).pretty().toLatin1().constData());
         return;
     }
 
-    Reader *reader = SV_NewReader();
-    SaveInfo *info = SaveInfo::fromReader(reader);
-
     if(info->magic() != MY_CLIENT_SAVE_MAGIC)
     {
+        SV_CloseFile();
         Reader_Delete(reader);
         delete info;
-        SV_CloseFile();
         App_Log(DE2_RES_ERROR, "Client save file format not recognized");
         return;
     }
@@ -1105,7 +1115,7 @@ void SV_LoadGameClient(uint sessionId)
 #if __JHEXEN__
 void SV_HxSaveHubMap()
 {
-    SV_OpenFile(SV_SavePath() / SV_SaveSlots()[BASE_SLOT].saveNameForMap(gameMap), "wp");
+    SV_OpenFile(SV_SavePath() / SV_SaveSlots()[BASE_SLOT].saveInfo().fileNameForMap(gameMap), "wp");
 
     // Set the mobj archive numbers
     ThingArchive thingArchive;
@@ -1133,7 +1143,7 @@ void SV_HxLoadHubMap()
     try
     {
         SaveSlot &sslot = SV_SaveSlots()[BASE_SLOT];
-        de::Path path = SV_SavePath() / sslot.saveNameForMap(gameMap);
+        de::Path path = SV_SavePath() / sslot.saveInfo().fileNameForMap(gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
             throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for read");

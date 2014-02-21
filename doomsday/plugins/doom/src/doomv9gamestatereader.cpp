@@ -928,8 +928,10 @@ DoomV9GameStateReader::DoomV9GameStateReader() : d(new Instance(this))
 DoomV9GameStateReader::~DoomV9GameStateReader()
 {}
 
-bool DoomV9GameStateReader::recognize(SaveInfo &info, de::Path path) // static
+bool DoomV9GameStateReader::recognize(SaveInfo &info) // static
 {
+    de::Path path = SV_SavePath() / info.fileName();
+
     if(!SV_ExistingFile(path)) return false;
     if(!SV_OpenFile_Dm_v19(path)) return false;
 
@@ -958,8 +960,10 @@ IGameStateReader *DoomV9GameStateReader::make()
     return new DoomV9GameStateReader;
 }
 
-void DoomV9GameStateReader::read(SaveInfo &info, de::Path path)
+void DoomV9GameStateReader::read(SaveInfo &info)
 {
+    de::Path path = SV_SavePath() / info.fileName();
+
     if(!SV_OpenFile_Dm_v19(path))
     {
         throw FileAccessError("DoomV9GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");

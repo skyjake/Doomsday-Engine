@@ -41,10 +41,11 @@ public:
 #endif
 
 public:
-    SaveInfo();
+    SaveInfo(de::String const &fileName = "");
     SaveInfo(SaveInfo const &other);
 
-    static SaveInfo *newWithCurrentSessionMetadata(de::String const &userDescription = "");
+    static SaveInfo *newWithCurrentSessionMetadata(de::String const &fileName = "",
+                                                   de::String const &userDescription = "");
 
     SaveInfo &operator = (SaveInfo const &other);
 
@@ -69,11 +70,24 @@ public:
      * is invalid, unreachable, or the game state is not recognized -- the save info is returned
      * to a valid but non-loadable state.
      *
-     * @param fileName  Name of the resource file containing the game session header.
-     *
      * @see isLoadable()
      */
-    void updateFromFile(de::String fileName);
+    void updateFromFile();
+
+    /**
+     * Returns the name of the resource file (with extension) containing the game session header.
+     */
+    de::String fileName() const;
+    void setFileName(de::String newName);
+
+    /**
+     * Returns the name of the resource file (with extension) containing the map session state.
+     *
+     * @param map   Logical map index.
+     *
+     * @see fileName()
+     */
+    de::String fileNameForMap(uint map) const;
 
     /**
      * Update the metadata associated with the save using values derived from the current game

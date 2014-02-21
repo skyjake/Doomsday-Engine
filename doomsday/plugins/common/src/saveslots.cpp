@@ -46,7 +46,12 @@ SaveSlots::Slot::Slot(de::String const &saveName) : d(new Instance)
     d->saveName = saveName;
 }
 
-void SaveSlots::Slot::bindSaveName(de::String newSaveName)
+de::String SaveSlots::Slot::fileName() const
+{
+    return d->saveName;
+}
+
+void SaveSlots::Slot::bindFileName(de::String newSaveName)
 {
     if(d->saveName.compareWithoutCase(newSaveName))
     {
@@ -59,7 +64,7 @@ bool SaveSlots::Slot::isUsed() const
 {
     if(SV_SavePath().isEmpty()) return false;
     if(!hasSaveInfo()) return false;
-    return SV_ExistingFile(SV_SavePath() / saveName()) && saveInfo().isLoadable();
+    return SV_ExistingFile(SV_SavePath() / saveInfo().fileName()) && saveInfo().isLoadable();
 }
 
 bool SaveSlots::Slot::hasSaveInfo() const
@@ -78,38 +83,14 @@ void SaveSlots::Slot::replaceSaveInfo(SaveInfo *newInfo)
     d->info = newInfo;
 }
 
-void SaveSlots::Slot::addMissingSaveInfo()
+SaveInfo &SaveSlots::Slot::saveInfo() const
 {
-    if(d->info) return;
-    d->info = new SaveInfo;
-    d->info->updateFromFile(saveName());
-}
-
-SaveInfo &SaveSlots::Slot::saveInfo(bool canCreate) const
-{
-    if(!d->info && canCreate)
-    {
-        const_cast<SaveSlot *>(this)->addMissingSaveInfo();
-    }
     if(d->info)
     {
         return *d->info;
     }
     /// @throw MissingInfoError Attempted with no SaveInfo present.
     throw MissingInfoError("SaveSlots::Slot::saveInfo", "No SaveInfo exists");
-}
-
-de::String SaveSlots::Slot::saveNameForMap(uint map) const
-{
-    // Compose the full game-save filename.
-    return d->saveName + de::String("%1." SAVEGAMEEXTENSION)
-                                 .arg(int(map + 1), 2, 10, QChar('0'));
-}
-
-de::String SaveSlots::Slot::saveName() const
-{
-    // Compose the full game-save filename.
-    return d->saveName + de::String("." SAVEGAMEEXTENSION);
 }
 
 /// @todo We should look at all files on the save path and not just those which match
@@ -161,23 +142,24 @@ DENG2_PIMPL(SaveSlots)
     {
         DENG2_FOR_EACH(Slots, i, sslots)
         {
-            (*i)->addMissingSaveInfo();
-            if(update)
+            SaveSlot &sslot = **i;
+            if(!sslot.hasSaveInfo())
             {
-                (*i)->saveInfo().updateFromFile((*i)->saveName());
+                sslot.replaceSaveInfo(new SaveInfo(sslot.fileName()));
             }
+            if(update) sslot.saveInfo().updateFromFile();
         }
-        autoSlot.addMissingSaveInfo();
-        if(update)
+        if(!autoSlot.hasSaveInfo())
         {
-            autoSlot.saveInfo().updateFromFile(autoSlot.saveName());
+            autoSlot.replaceSaveInfo(new SaveInfo(autoSlot.fileName()));
         }
+        if(update) autoSlot.saveInfo().updateFromFile();
 #if __JHEXEN__
-        baseSlot.addMissingSaveInfo();
-        if(update)
+        if(!baseSlot.hasSaveInfo())
         {
-            baseSlot.saveInfo().updateFromFile(baseSlot.saveName());
+            baseSlot.replaceSaveInfo(new SaveInfo(baseSlot.fileName()));
         }
+        if(update) baseSlot.saveInfo().updateFromFile();
 #endif
     }
 };
@@ -311,8 +293,12 @@ void SaveSlots::clearSlot(int slotNumber)
     }
 
     Slot &sslot = slot(slotNumber);
+    if(!sslot.hasSaveInfo())
+    {
+        sslot.replaceSaveInfo(new SaveInfo(sslot.fileName()));
+    }
 
-    sslot.addMissingSaveInfo();
+    SaveInfo &saveInfo = sslot.saveInfo();
 
     if(d->shouldAnnounceWhenClearing(slotNumber))
     {
@@ -321,13 +307,13 @@ void SaveSlots::clearSlot(int slotNumber)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_RemoveFile(SV_SavePath() / sslot.saveNameForMap(i));
+        SV_RemoveFile(SV_SavePath() / saveInfo.fileNameForMap(i));
     }
 
-    SV_RemoveFile(SV_SavePath() / sslot.saveName());
+    SV_RemoveFile(SV_SavePath() / saveInfo.fileName());
 
-    sslot.saveInfo().setUserDescription("");
-    sslot.saveInfo().setSessionId(0);
+    saveInfo.setUserDescription("");
+    saveInfo.setSessionId(0);
 }
 
 void SaveSlots::copySlot(int sourceSlotNumber, int destSlotNumber)
@@ -347,14 +333,17 @@ void SaveSlots::copySlot(int sourceSlotNumber, int destSlotNumber)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_CopyFile(SV_SavePath() / sourceSlot.saveNameForMap(i),
-                    SV_SavePath() / destSlot.saveNameForMap(i));
+        SV_CopyFile(SV_SavePath() / sourceSlot.saveInfo().fileNameForMap(i),
+                    SV_SavePath() / destSlot.saveInfo().fileNameForMap(i));
     }
 
-    SV_CopyFile(SV_SavePath() / sourceSlot.saveName(), SV_SavePath() / destSlot.saveName());
+    SV_CopyFile(SV_SavePath() / sourceSlot.saveInfo().fileName(),
+                SV_SavePath() / destSlot.saveInfo().fileName());
 
     // Copy save info too.
     destSlot.replaceSaveInfo(new SaveInfo(sourceSlot.saveInfo()));
+    // Update the file path associated with the copied save info.
+    destSlot.saveInfo().setFileName(destSlot.fileName());
 }
 
 void SaveSlots::consoleRegister() // static

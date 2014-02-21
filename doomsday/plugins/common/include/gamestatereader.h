@@ -45,23 +45,19 @@ public:
      * Attempt to load (read/interpret) the saved game state.
      *
      * @param info  SaveInfo for the saved game state to be read/interpreted.
-     * @param path  Path to the saved game state to be read.
-     *
-     * @todo @a path should be provided by SaveInfo.
      */
-    virtual void read(SaveInfo &info, de::Path path) = 0;
+    virtual void read(SaveInfo &info) = 0;
 };
 
 /**
  * Game state recognizer function ptr.
  *
- * The job of a recognizer function is to determine whether the resource file on @a path is
- * interpretable as a potentially loadable savegame state.
+ * The job of a recognizer function is to determine whether the game session associated
+ * with the given save @a info is interpretable as a potentially loadable savegame state.
  *
  * @param info  SaveInfo to attempt to read game session header into.
- * @param path  Path to the resource file to be recognized.
  */
-typedef bool (*GameStateRecognizeFunc)(SaveInfo &info, de::Path path);
+typedef bool (*GameStateRecognizeFunc)(SaveInfo &info);
 
 /// Game state reader instantiator function ptr.
 typedef IGameStateReader *(*GameStateReaderMakeFunc)();
@@ -92,15 +88,14 @@ public:
      * is available and if so, reads the game session header.
      *
      * @param saveInfo  The game session header will be written here if recognized.
-     * @param path      Path to the resource file to be recognized.
      *
      * @return  @c true= the game session header was read successfully.
      *
      * @see recognizeAndMakeReader()
      */
-    bool recognize(SaveInfo &saveInfo, de::Path path) const
+    bool recognize(SaveInfo &saveInfo) const
     {
-        return readGameSessionHeader(saveInfo, path) != 0;
+        return readGameSessionHeader(saveInfo) != 0;
     }
 
     /**
@@ -109,15 +104,14 @@ public:
      * for deserializing the game state.
      *
      * @param saveInfo  The game session header will be written here if recognized.
-     * @param path      Path to the resource file to be recognized.
      *
      * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
      *
      * @see recognize()
      */
-    IGameStateReader *recognizeAndMakeReader(SaveInfo &saveInfo, de::Path path) const
+    IGameStateReader *recognizeAndMakeReader(SaveInfo &saveInfo) const
     {
-        if(ReaderInfo const *rdrInfo = readGameSessionHeader(saveInfo, path))
+        if(ReaderInfo const *rdrInfo = readGameSessionHeader(saveInfo))
         {
             return rdrInfo->newReader();
         }
@@ -132,11 +126,11 @@ private:
     typedef std::list<ReaderInfo> ReaderInfos;
     ReaderInfos readers;
 
-    ReaderInfo const *readGameSessionHeader(SaveInfo &info, de::Path path) const
+    ReaderInfo const *readGameSessionHeader(SaveInfo &info) const
     {
         DENG2_FOR_EACH_CONST(ReaderInfos, i, readers)
         {
-            if(i->recognize(info, path))
+            if(i->recognize(info))
             {
                 return &*i;
             }
@@ -158,9 +152,9 @@ public:
     ~GameStateReader();
 
     static IGameStateReader *make();
-    static bool recognize(SaveInfo &info, de::Path path);
+    static bool recognize(SaveInfo &info);
 
-    void read(SaveInfo &info, de::Path path);
+    void read(SaveInfo &info);
 
 private:
     DENG2_PRIVATE(d)

@@ -30,6 +30,9 @@
 
 DENG2_PIMPL_NOREF(SaveInfo)
 {
+    de::String fileName; ///< Name of the game state file.
+
+    // Metadata (the session header):
     de::String userDescription;
     uint sessionId;
     int magic;
@@ -59,6 +62,7 @@ DENG2_PIMPL_NOREF(SaveInfo)
 
     Instance(Instance const &other)
         : IPrivate()
+        , fileName       (other.fileName)
         , userDescription(other.userDescription)
         , sessionId      (other.sessionId)
         , magic          (other.magic)
@@ -124,15 +128,18 @@ DENG2_PIMPL_NOREF(SaveInfo)
 #endif
 };
 
-SaveInfo::SaveInfo() : d(new Instance)
-{}
+SaveInfo::SaveInfo(de::String const &fileName) : d(new Instance)
+{
+    d->fileName = fileName;
+}
 
 SaveInfo::SaveInfo(SaveInfo const &other) : d(new Instance(*other.d))
 {}
 
-SaveInfo *SaveInfo::newWithCurrentSessionMetadata(de::String const &userDescription) // static
+SaveInfo *SaveInfo::newWithCurrentSessionMetadata(de::String const &fileName,
+    de::String const &userDescription) // static
 {
-    SaveInfo *info = new SaveInfo;
+    SaveInfo *info = new SaveInfo(fileName);
     info->setUserDescription(userDescription);
     info->applyCurrentSessionMetadata();
     info->setSessionId(G_GenerateSessionId());
@@ -150,6 +157,23 @@ SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
     d.reset(new Instance(*other.d));
     return *this;
+}
+
+de::String SaveInfo::fileName() const
+{
+    return d->fileName + de::String("." SAVEGAMEEXTENSION);
+}
+
+void SaveInfo::setFileName(de::String newName)
+{
+    d->fileName = newName;
+}
+
+de::String SaveInfo::fileNameForMap(uint map) const
+{
+    // Compose the full game-save filename.
+    return d->fileName + de::String("%1." SAVEGAMEEXTENSION)
+                                 .arg(int(map + 1), 2, 10, QChar('0'));
 }
 
 de::String const &SaveInfo::gameIdentityKey() const
@@ -274,7 +298,7 @@ bool SaveInfo::isLoadable() const
     return true; // It's good!
 }
 
-void SaveInfo::updateFromFile(de::String fileName)
+void SaveInfo::updateFromFile()
 {
     if(SV_SavePath().isEmpty())
     {
@@ -285,7 +309,7 @@ void SaveInfo::updateFromFile(de::String fileName)
     }
 
     // Is this a recognized game state?
-    if(!SV_RecognizeGameState(*this, SV_SavePath() / fileName))
+    if(!SV_RecognizeGameState(*this/*, SV_SavePath() / fileName()*/))
     {
         // Clear the info.
         setUserDescription("");

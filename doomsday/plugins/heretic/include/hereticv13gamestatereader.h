@@ -41,9 +41,9 @@ public:
     ~HereticV13GameStateReader();
 
     static IGameStateReader *make();
-    static bool recognize(SaveInfo &info, de::Path path);
+    static bool recognize(SaveInfo &info);
 
-    void read(SaveInfo &info, de::Path path);
+    void read(SaveInfo &info);
 
 private:
     DENG2_PRIVATE(d)

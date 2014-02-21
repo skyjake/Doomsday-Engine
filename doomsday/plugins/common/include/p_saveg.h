@@ -140,13 +140,12 @@ SaveSlots &SV_SaveSlots();
 void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker);
 
 /**
- * Determines whether the resource file on @a path is interpretable as a potentially loadable
- * savegame state.
+ * Determines whether the game session associated with save @a info is interpretable as a
+ * potentially loadable savegame state.
  *
  * @param info  SaveInfo to attempt to read game session header into.
- * @param path  Path to the resource file to be recognized.
  */
-bool SV_RecognizeGameState(SaveInfo &info, de::Path path);
+bool SV_RecognizeGameState(SaveInfo &info);
 
 class MapStateReader;
 class MapStateWriter;

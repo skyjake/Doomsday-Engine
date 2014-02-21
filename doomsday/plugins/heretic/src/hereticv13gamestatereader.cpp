@@ -942,8 +942,10 @@ HereticV13GameStateReader::HereticV13GameStateReader() : d(new Instance(this))
 HereticV13GameStateReader::~HereticV13GameStateReader()
 {}
 
-bool HereticV13GameStateReader::recognize(SaveInfo &info, de::Path path) // static
+bool HereticV13GameStateReader::recognize(SaveInfo &info) // static
 {
+    de::Path path = SV_SavePath() / info.fileName();
+
     if(!SV_ExistingFile(path)) return false;
     if(!SV_OpenFile_Hr_v13(path)) return false;
 
@@ -972,8 +974,10 @@ IGameStateReader *HereticV13GameStateReader::make()
     return new HereticV13GameStateReader;
 }
 
-void HereticV13GameStateReader::read(SaveInfo &info, de::Path path)
+void HereticV13GameStateReader::read(SaveInfo &info)
 {
+    de::Path path = SV_SavePath() / info.fileName();
+
     if(!SV_OpenFile_Hr_v13(path))
     {
         throw FileAccessError("HereticV13GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
