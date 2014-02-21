@@ -89,7 +89,7 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(SV_SavePath() / SV_SaveSlots()[BASE_SLOT].saveInfo().fileNameForMap(gameMap), "wp");
+        SV_OpenFile(SV_SavePath() / saveInfo->fileNameForMap(gameMap), "wp");
 #endif
 
         MapStateWriter(*thingArchive).write(writer);
@@ -130,8 +130,10 @@ DENG2_PIMPL(GameStateWriter)
 GameStateWriter::GameStateWriter() : d(new Instance(this))
 {}
 
-void GameStateWriter::write(SaveInfo &info, de::Path path)
+void GameStateWriter::write(SaveInfo &info)
 {
+    de::Path const path = SV_SavePath() / info.fileName();
+
     d->saveInfo = &info;
 
     // In networked games the server tells the clients to save their games.

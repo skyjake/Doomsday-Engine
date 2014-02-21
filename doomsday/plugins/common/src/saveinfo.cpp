@@ -491,7 +491,7 @@ de::String SaveInfo::description() const
                       _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
                       _E(l) "Source file: " _E(.)_E(i) "%4\n" _E(.)
                       _E(l) "Version: "     _E(.)_E(i) "%5 " _E(.)
-                      _E(l) "Session id: "   _E(.)_E(i) "%6\n" _E(.)
+                      _E(l) "Session id: "  _E(.)_E(i) "%6\n" _E(.)
                       _E(D) "Status: " _E(.) "%7")
                 .arg(userDescription())
                 .arg(gameIdentityKey())

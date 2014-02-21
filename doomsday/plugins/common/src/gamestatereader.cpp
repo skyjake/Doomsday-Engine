@@ -114,7 +114,7 @@ DENG2_PIMPL(GameStateReader)
         SV_HxReleaseSaveBuffer();
 
         // Open the map state file.
-        de::Path path = SV_SavePath() / SV_SaveSlots()[BASE_SLOT].saveInfo().fileNameForMap(gameMap);
+        de::Path path = SV_SavePath() / saveInfo->fileNameForMap(gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
             throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
@@ -279,7 +279,7 @@ GameStateReader::~GameStateReader()
 
 bool GameStateReader::recognize(SaveInfo &info) // static
 {
-    de::Path path = SV_SavePath() / info.fileName();
+    de::Path const path = SV_SavePath() / info.fileName();
 
     if(!SV_ExistingFile(path)) return false;
     if(!SV_OpenGameSaveFile(path, false/*for reading*/)) return false;
@@ -327,7 +327,7 @@ IGameStateReader *GameStateReader::make() // static
 
 void GameStateReader::read(SaveInfo &info)
 {
-    de::Path path = SV_SavePath() / info.fileName();
+    de::Path const path = SV_SavePath() / info.fileName();
 
     d->saveInfo = &info;
 

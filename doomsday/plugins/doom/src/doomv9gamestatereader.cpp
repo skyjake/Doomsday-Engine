@@ -930,7 +930,7 @@ DoomV9GameStateReader::~DoomV9GameStateReader()
 
 bool DoomV9GameStateReader::recognize(SaveInfo &info) // static
 {
-    de::Path path = SV_SavePath() / info.fileName();
+    de::Path const path = SV_SavePath() / info.fileName();
 
     if(!SV_ExistingFile(path)) return false;
     if(!SV_OpenFile_Dm_v19(path)) return false;
@@ -962,7 +962,7 @@ IGameStateReader *DoomV9GameStateReader::make()
 
 void DoomV9GameStateReader::read(SaveInfo &info)
 {
-    de::Path path = SV_SavePath() / info.fileName();
+    de::Path const path = SV_SavePath() / info.fileName();
 
     if(!SV_OpenFile_Dm_v19(path))
     {

@@ -944,7 +944,7 @@ HereticV13GameStateReader::~HereticV13GameStateReader()
 
 bool HereticV13GameStateReader::recognize(SaveInfo &info) // static
 {
-    de::Path path = SV_SavePath() / info.fileName();
+    de::Path const path = SV_SavePath() / info.fileName();
 
     if(!SV_ExistingFile(path)) return false;
     if(!SV_OpenFile_Hr_v13(path)) return false;
@@ -976,7 +976,7 @@ IGameStateReader *HereticV13GameStateReader::make()
 
 void HereticV13GameStateReader::read(SaveInfo &info)
 {
-    de::Path path = SV_SavePath() / info.fileName();
+    de::Path const path = SV_SavePath() / info.fileName();
 
     if(!SV_OpenFile_Hr_v13(path))
     {

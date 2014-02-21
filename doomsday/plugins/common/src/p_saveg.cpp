@@ -858,38 +858,30 @@ dd_bool SV_LoadGame(int slotNumber)
     int const logicalSlot = slotNumber;
 #endif
 
-    if(!SV_SaveSlots().isKnownSlot(slotNumber))
-    {
-        return false;
-    }
-
     if(SV_SavePath().isEmpty())
     {
         App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable",
-                               de::NativePath(SV_SavePath()).pretty().toLatin1().constData());
+                de::NativePath(SV_SavePath()).pretty().toLatin1().constData());
         return false;
     }
 
-#if __JHEXEN__
-    // Copy all needed save files to the base slot.
-    /// @todo Why do this BEFORE loading?? (G_NewGame() does not load the serialized map state)
-    /// @todo Does any caller ever attempt to load the base slot?? (Doesn't seem logical)
-    if(slotNumber != BASE_SLOT)
-    {
-        SV_SaveSlots().copySlot(slotNumber, BASE_SLOT);
-    }
-#endif
-
-    de::Path path = SV_SavePath() / SV_SaveSlots()[logicalSlot].saveInfo().fileName();
-    App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
-                             de::NativePath(path).pretty().toLatin1().constData());
-
     try
     {
-        SaveInfo &info = SV_SaveSlots()[logicalSlot].saveInfo();
+#if __JHEXEN__
+        // Copy all needed save files to the base slot.
+        if(slotNumber != BASE_SLOT)
+        {
+            SV_SaveSlots().copySlot(slotNumber, BASE_SLOT);
+        }
+#endif
+
+        SaveInfo &saveInfo = SV_SaveSlots()[logicalSlot].saveInfo();
 
         // Attempt to recognize and load the saved game state.
-        gameStateReaderFor(info)->read(info);
+        App_Log(DE2_LOG_VERBOSE, "Attempting load save game from \"%s\"",
+                de::NativePath(SV_SavePath() / saveInfo.fileName()).pretty().toLatin1().constData());
+
+        gameStateReaderFor(saveInfo)->read(saveInfo);
 
         // Make note of the last used save slot.
         Con_SetInteger2("game-save-last-slot", slotNumber, SVF_WRITE_OVERRIDE);
@@ -899,7 +891,7 @@ dd_bool SV_LoadGame(int slotNumber)
     catch(de::Error const &er)
     {
         App_Log(DE2_RES_WARNING, "Error loading save slot #%i:\n%s",
-                                 slotNumber, er.asText().toLatin1().constData());
+                slotNumber, er.asText().toLatin1().constData());
     }
 
     return false;
@@ -920,6 +912,7 @@ dd_bool SV_SaveGame(int slotNumber, char const *description)
         DENG2_ASSERT(!"Invalid slot specified");
         return false;
     }
+
     if(!description || !description[0])
     {
         DENG2_ASSERT(!"Empty description specified for slot");
@@ -929,22 +922,22 @@ dd_bool SV_SaveGame(int slotNumber, char const *description)
     if(SV_SavePath().isEmpty())
     {
         App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable",
-                                 de::NativePath(SV_SavePath()).pretty().toLatin1().constData());
+                de::NativePath(SV_SavePath()).pretty().toLatin1().constData());
         return false;
     }
 
-    SaveInfo *info = SaveInfo::newWithCurrentSessionMetadata(SV_SaveSlots()[logicalSlot].fileName(), description);
-
-    de::Path path = SV_SavePath() / info->fileName();
-    App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
-                             de::NativePath(path).pretty().toLatin1().constData());
-
+    SaveInfo *saveInfo = SaveInfo::newWithCurrentSessionMetadata(
+                                SV_SaveSlots()[logicalSlot].fileName(),
+                                description);
     try
     {
-        GameStateWriter().write(*info, path);
+        App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
+                de::NativePath(SV_SavePath() / saveInfo->fileName()).pretty().toLatin1().constData());
+
+        GameStateWriter().write(*saveInfo);
 
         // Swap the save info.
-        SV_SaveSlots()[logicalSlot].replaceSaveInfo(info);
+        SV_SaveSlots()[logicalSlot].replaceSaveInfo(saveInfo);
 
 #if __JHEXEN__
         // Copy base slot to destination slot.
@@ -959,11 +952,11 @@ dd_bool SV_SaveGame(int slotNumber, char const *description)
     catch(de::Error const &er)
     {
         App_Log(DE2_RES_WARNING, "Error writing to save slot #%i:\n%s",
-                                 slotNumber, er.asText().toLatin1().constData());
+                slotNumber, er.asText().toLatin1().constData());
     }
 
     // Discard the useless save info.
-    delete info;
+    delete saveInfo;
 
     return false;
 }
@@ -1115,7 +1108,8 @@ void SV_LoadGameClient(uint sessionId)
 #if __JHEXEN__
 void SV_HxSaveHubMap()
 {
-    SV_OpenFile(SV_SavePath() / SV_SaveSlots()[BASE_SLOT].saveInfo().fileNameForMap(gameMap), "wp");
+    de::Path const path = SV_SavePath() / SV_SaveSlots()[BASE_SLOT].saveInfo().fileNameForMap(gameMap);
+    SV_OpenFile(path, "wp");
 
     // Set the mobj archive numbers
     ThingArchive thingArchive;
@@ -1142,21 +1136,22 @@ void SV_HxLoadHubMap()
     // Been here before, load the previous map state.
     try
     {
-        SaveSlot &sslot = SV_SaveSlots()[BASE_SLOT];
-        de::Path path = SV_SavePath() / sslot.saveInfo().fileNameForMap(gameMap);
+        SaveInfo &saveInfo  = SV_SaveSlots()[BASE_SLOT].saveInfo();
+        de::Path const path = SV_SavePath() / saveInfo.fileNameForMap(gameMap);
+
         if(!SV_OpenMapSaveFile(path))
         {
             throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for read");
         }
 
-        MapStateReader(sslot.saveInfo().version()).read(reader);
+        MapStateReader(saveInfo.version()).read(reader);
 
         SV_HxReleaseSaveBuffer();
     }
     catch(de::Error const &er)
     {
         App_Log(DE2_RES_WARNING, "Error loading hub map save state:\n%s",
-                                 er.asText().toLatin1().constData());
+                er.asText().toLatin1().constData());
     }
 
     Reader_Delete(reader);
