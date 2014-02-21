@@ -45,14 +45,15 @@ DENG2_PIMPL(GuiRootWidget)
     Id borderGlow;
     Id toggleOnOff;
     Id tinyDot;
+    Id fold;
     bool noFramesDrawnYet;
 
     Instance(Public *i, CanvasWindow *win)
-        : Base(i),
-          window(win),
-          atlas(0),
-          uTexAtlas("uTex", GLUniform::Sampler2D),
-          noFramesDrawnYet(true)
+        : Base(i)
+        , window(win)
+        , atlas(0)
+        , uTexAtlas("uTex", GLUniform::Sampler2D)
+        , noFramesDrawnYet(true)
     {
         self.audienceForChildAddition += this;
     }
@@ -162,6 +163,9 @@ DENG2_PIMPL(GuiRootWidget)
             // On/Off toggle.
             toggleOnOff = atlas->alloc(st.images().image("toggle.onoff"));
 
+            // Fold indicator.
+            fold = atlas->alloc(st.images().image("fold"));
+
             // Tiny dot.
             {
                 QImage dot(QSize(5, 5), QImage::Format_ARGB32);
@@ -249,6 +253,12 @@ Id GuiRootWidget::tinyDot() const
 {
     d->initAtlas();
     return d->tinyDot;
+}
+
+Id de::GuiRootWidget::fold() const
+{
+    d->initAtlas();
+    return d->fold;
 }
 
 GLShaderBank &GuiRootWidget::shaders()
