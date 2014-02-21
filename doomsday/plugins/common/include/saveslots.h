@@ -64,6 +64,8 @@ public:
          */
         int index() const;
 
+        bool hasSaveInfo() const;
+
         /**
          * Clear the save info for the logical save slot.
          */
@@ -76,8 +78,16 @@ public:
 
         /**
          * Returns the SaveInfo associated with the logical save slot.
+         *
+         * @param canCreate  @c true= create new save info and attempt to populate it from the saved
+         *                   game session header if it does not exist.
          */
-        SaveInfo &saveInfo() const;
+        SaveInfo &saveInfo(bool canCreate = false) const;
+
+        /**
+         * If no save info exists, create and attempt to populate it from the saved game session header.
+         */
+        void addMissingSaveInfo();
 
         /**
          * Compose the (possibly relative) file path to the map state associated with the save slot.
