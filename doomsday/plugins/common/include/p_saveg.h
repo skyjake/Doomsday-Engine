@@ -1,4 +1,4 @@
-/** @file p_saveg.h Common game-save state management.
+/** @file p_saveg.h  Common game-save state management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -22,12 +22,15 @@
 #define LIBCOMMON_SAVESTATE_H
 
 #include "common.h"
-#include "p_savedef.h" /// @todo remove me
-#include "saveinfo.h"
 
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 
 #if __JHEXEN__
+typedef struct targetplraddress_s {
+    void **address;
+    struct targetplraddress_s *next;
+} targetplraddress_t;
+
 DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
 #endif
 
@@ -74,10 +77,6 @@ void SV_LoadGameClient(uint gameId);
  * present for logical save @a slotNumber.
  */
 dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map);
-
-void SV_HxSaveHubMap(void);
-
-void SV_HxLoadHubMap(void);
 #endif
 
 /**
@@ -120,10 +119,12 @@ void SV_ClearTargetPlayers(void);
 } // extern "C"
 #endif
 
-#ifdef __cplusplus
+# ifdef __cplusplus
 #include "gamestatereader.h"
-#include <de/Path>
 
+class MapStateReader;
+class MapStateWriter;
+class SaveInfo;
 class SaveSlots;
 
 /**
@@ -147,14 +148,17 @@ void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReade
  */
 bool SV_RecognizeGameState(SaveInfo &info);
 
-class MapStateReader;
-class MapStateWriter;
-
 void SV_WriteLine(Line *line, MapStateWriter *msw);
 void SV_ReadLine(Line *line, MapStateReader *msr);
 
 void SV_WriteSector(Sector *sec, MapStateWriter *msw);
 void SV_ReadSector(Sector *sec, MapStateReader *msr);
-#endif // __cplusplus
+
+#  if __JHEXEN__
+void SV_HxSaveHubMap(void);
+
+void SV_HxLoadHubMap(void);
+#  endif // __JHEXEN__
+# endif // __cplusplus
 
 #endif // LIBCOMMON_SAVESTATE_H

@@ -23,6 +23,7 @@
 
 #include "g_common.h"
 #include "p_tick.h"
+#include "p_savedef.h"
 #include "p_saveg.h"     /// SV_RecognizeGameState, @todo remove me
 #include "p_saveio.h"
 #include <de/NativePath>
@@ -146,17 +147,17 @@ SaveInfo *SaveInfo::newWithCurrentSessionMetadata(de::String const &fileName,
     return info;
 }
 
-SaveInfo *SaveInfo::fromReader(Reader *reader) // static
-{
-    SaveInfo *info = new SaveInfo;
-    info->read(reader);
-    return info;
-}
-
 SaveInfo &SaveInfo::operator = (SaveInfo const &other)
 {
     d.reset(new Instance(*other.d));
     return *this;
+}
+
+SaveInfo::SessionStatus SaveInfo::status() const
+{
+    if(!haveGameSession())       return Unused;
+    if(!gameSessionIsLoadable()) return Incompatible;
+    return Loadable;
 }
 
 de::String SaveInfo::fileName() const
@@ -283,8 +284,15 @@ void SaveInfo::applyCurrentSessionMetadata()
 #endif
 }
 
-bool SaveInfo::isLoadable() const
+bool SaveInfo::haveGameSession() const
 {
+    return SV_ExistingFile(SV_SavePath() / fileName());
+}
+
+bool SaveInfo::gameSessionIsLoadable() const
+{
+    if(!haveGameSession()) return false;
+
     // Game identity key missmatch?
     GameInfo gameInfo;
     DD_GameInfo(&gameInfo);
@@ -477,9 +485,12 @@ void SaveInfo::read(Reader *reader)
 
 de::String SaveInfo::statusAsText() const
 {
-    if(isLoadable()) return "Loadable";
-    /// @todo Delineate all possible statuses (logic in @ref SaveSlots).
-    return "Incompatible/Unused";
+    static de::String const statusTexts[] = {
+        "Loadable",
+        "Incompatible",
+        "Unused",
+    };
+    return statusTexts[int(status())];
 }
 
 de::String SaveInfo::description() const
@@ -487,10 +498,10 @@ de::String SaveInfo::description() const
     AutoStr *currentMapUriAsText = Uri_ToString(mapUri());
 
     return de::String(_E(b) "%1\n" _E(.)
-                      _E(l) "IdentityKey: " _E(.)_E(i) "%2 " _E(.)
+                      _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
                       _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
                       _E(l) "Source file: " _E(.)_E(i) "%4\n" _E(.)
-                      _E(l) "Version: "     _E(.)_E(i) "%5 " _E(.)
+                      _E(l) "Version: "     _E(.)_E(i) "%5 "  _E(.)
                       _E(l) "Session id: "  _E(.)_E(i) "%6\n" _E(.)
                       _E(D) "Status: " _E(.) "%7")
                 .arg(userDescription())
@@ -510,4 +521,11 @@ int SaveInfo::magic() const
 void SaveInfo::setMagic(int newMagic)
 {
     d->magic = newMagic;
+}
+
+SaveInfo *SaveInfo::fromReader(Reader *reader) // static
+{
+    SaveInfo *info = new SaveInfo;
+    info->read(reader);
+    return info;
 }

@@ -21,11 +21,10 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
-#include "saveinfo.h"
 #include "api_materialarchive.h"
-#include "lzss.h"
 #include "p_savedef.h"
 #include <de/Path>
+#include "lzss.h"
 
 typedef enum savestatesegment_e {
     ASEG_MAP_HEADER = 102,  // Hexen only
@@ -43,6 +42,15 @@ typedef enum savestatesegment_e {
     ASEG_PLAYER_HEADER,
     ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
+
+#if __JHEXEN__
+typedef union saveptr_u {
+    byte *b;
+    short *w;
+    int *l;
+    float *f;
+} saveptr_t;
+#endif
 
 void SV_InitIO();
 void SV_ShutdownIO();

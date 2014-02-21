@@ -20,9 +20,7 @@
 
 #ifndef LIBCOMMON_SAVEINFO
 #define LIBCOMMON_SAVEINFO
-#ifdef __cplusplus
 
-#include "doomsday.h"
 #include "common.h"
 #include <de/Path>
 #include <de/String>
@@ -35,6 +33,13 @@
 class SaveInfo
 {
 public:
+    /// Logical game session status:
+    enum SessionStatus {
+        Loadable,
+        Incompatible,
+        Unused
+    };
+
 #if !__JHEXEN__
     // Info data about players present (or not) in the game session.
     typedef byte Players[MAXPLAYERS];
@@ -50,7 +55,16 @@ public:
     SaveInfo &operator = (SaveInfo const &other);
 
     /**
+     * Determines the logical status of the saved game session.
+     *
+     * @see statusAsText()
+     */
+    SessionStatus status() const;
+
+    /**
      * Returns a textual representation of the current status of the saved game session.
+     *
+     * @see status()
      */
     de::String statusAsText() const;
 
@@ -60,17 +74,25 @@ public:
     de::String description() const;
 
     /**
-     * Determines whether the saved game session is compatibile with the current game session
-     * (and @em should therefore be loadable).
+     * Determines whether a saved game session exists. However, it may not be compatible with
+     * the current game session.
+     *
+     * @see gameSessionIsLoadable()
      */
-    bool isLoadable() const;
+    bool haveGameSession() const;
+
+    /**
+     * Determines whether a saved game session exists and is compatibile with the current game
+     * session (and @em should therefore be loadable).
+     */
+    bool gameSessionIsLoadable() const;
 
     /**
      * Attempt to update the save info from the named saved game session file. If the save path
      * is invalid, unreachable, or the game state is not recognized -- the save info is returned
      * to a valid but non-loadable state.
      *
-     * @see isLoadable()
+     * @see gameSessionIsLoadable()
      */
     void updateFromFile();
 
@@ -166,5 +188,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // __cplusplus
 #endif // LIBCOMMON_SAVEINFO

@@ -23,6 +23,7 @@
 
 #include "p_savedef.h"
 #include "p_saveio.h"
+#include "saveinfo.h"
 #include <de/NativePath>
 #include <de/String>
 #include <vector>
@@ -64,7 +65,7 @@ bool SaveSlots::Slot::isUsed() const
 {
     if(SV_SavePath().isEmpty()) return false;
     if(!hasSaveInfo()) return false;
-    return SV_ExistingFile(SV_SavePath() / saveInfo().fileName()) && saveInfo().isLoadable();
+    return saveInfo().gameSessionIsLoadable();
 }
 
 bool SaveSlots::Slot::hasSaveInfo() const

@@ -1108,14 +1108,19 @@ void SV_LoadGameClient(uint sessionId)
 #if __JHEXEN__
 void SV_HxSaveHubMap()
 {
-    de::Path const path = SV_SavePath() / SV_SaveSlots()[BASE_SLOT].saveInfo().fileNameForMap(gameMap);
-    SV_OpenFile(path, "wp");
+    SaveInfo &saveInfo  = SV_SaveSlots()[BASE_SLOT].saveInfo();
+    de::Path const path = SV_SavePath() / saveInfo.fileNameForMap(gameMap);
+
+    if(!SV_OpenFile(path, "wp"))
+    {
+        throw de::Error("SV_HxSaveHubMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for write");
+    }
+
+    Writer *writer = SV_NewWriter();
 
     // Set the mobj archive numbers
     ThingArchive thingArchive;
     thingArchive.initForSave(true/*exclude players*/);
-
-    Writer *writer = SV_NewWriter();
 
     MapStateWriter(thingArchive).write(writer);
 
@@ -1133,7 +1138,6 @@ void SV_HxLoadHubMap()
 
     Reader *reader = SV_NewReader();
 
-    // Been here before, load the previous map state.
     try
     {
         SaveInfo &saveInfo  = SV_SaveSlots()[BASE_SLOT].saveInfo();
@@ -1141,6 +1145,7 @@ void SV_HxLoadHubMap()
 
         if(!SV_OpenMapSaveFile(path))
         {
+            Reader_Delete(reader);
             throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for read");
         }
 

@@ -23,9 +23,10 @@
 #ifdef __cplusplus
 
 #include "common.h"
-#include "saveinfo.h"
 #include <de/Error>
 #include <de/Path>
+
+class SaveInfo;
 
 /**
  * Maps saved games into a finite set of "save slots".

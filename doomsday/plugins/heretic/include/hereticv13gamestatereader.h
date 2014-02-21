@@ -26,7 +26,6 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "saveinfo.h"
 #include "gamestatereader.h"
 
 /**

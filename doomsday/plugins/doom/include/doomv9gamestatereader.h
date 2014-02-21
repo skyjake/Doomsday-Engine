@@ -26,7 +26,6 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "saveinfo.h"
 #include "gamestatereader.h"
 
 /**
