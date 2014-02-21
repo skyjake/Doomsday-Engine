@@ -31,7 +31,7 @@
 
 static bool inited;
 static LZFILE *savefile;
-static de::Path savePath; // e.g., "savegame"
+static de::Path saveName; // e.g., "savegame"
 #if !__JHEXEN__
 static de::Path clientSavePath; // e.g., "savegame/client"
 #endif
@@ -44,7 +44,7 @@ static void *saveEndPtr;
 
 void SV_InitIO()
 {
-    savePath.clear();
+    saveName.clear();
 #if !__JHEXEN__
     clientSavePath.clear();
 #endif
@@ -67,13 +67,13 @@ void SV_SetupSaveDirectory(de::Path newRootSaveDir)
 
     if(!newRootSaveDir.isEmpty())
     {
-        savePath       = newRootSaveDir;
+        saveName       = newRootSaveDir;
 #if !__JHEXEN__
         clientSavePath = newRootSaveDir / "client";
 #endif
 
         // Ensure that these paths exist.
-        bool savePathExists = F_MakePath(de::NativePath(savePath).expand().toUtf8().constData());
+        bool savePathExists = F_MakePath(de::NativePath(saveName).expand().toUtf8().constData());
 #if !__JHEXEN__
         if(!F_MakePath(de::NativePath(clientSavePath).expand().toUtf8().constData()))
         {
@@ -87,19 +87,19 @@ void SV_SetupSaveDirectory(de::Path newRootSaveDir)
         }
     }
 
-    savePath.clear();
+    saveName.clear();
 #if !__JHEXEN__
     clientSavePath.clear();
 #endif
 
     App_Log(DE2_RES_ERROR, "SV_SetupSaveDirectory: \"%s\" could not be accessed. Perhaps it could "
                            "not be created (insufficient permissions?). Saving will not be possible.",
-                           de::NativePath(savePath).pretty().toLatin1().constData());
+                           de::NativePath(saveName).pretty().toLatin1().constData());
 }
 
 de::Path SV_SavePath()
 {
-    return savePath;
+    return saveName;
 }
 
 #if !__JHEXEN__

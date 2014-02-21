@@ -76,7 +76,7 @@ static de::Path savePathForClientSessionId(uint sessionId)
 dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map)
 {
     DENG2_ASSERT(inited);
-    de::Path path = SV_SaveSlots()[slotNumber].mapSavePath(map);
+    de::Path path = SV_SavePath() / SV_SaveSlots()[slotNumber].mapSaveName(map);
     if(!path.isEmpty())
     {
         return SV_ExistingFile(path);
@@ -868,7 +868,7 @@ dd_bool SV_LoadGame(int slotNumber)
 
     App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slotNumber);
 
-    de::Path path = SV_SaveSlots()[slotNumber].savePath();
+    de::Path path = SV_SavePath() / SV_SaveSlots()[slotNumber].saveName();
     if(path.isEmpty())
     {
         App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable",
@@ -928,7 +928,7 @@ dd_bool SV_SaveGame(int slotNumber, char const *description)
         return false;
     }
 
-    de::Path path = SV_SaveSlots()[logicalSlot].savePath();
+    de::Path path = SV_SavePath() / SV_SaveSlots()[logicalSlot].saveName();
     if(path.isEmpty())
     {
         App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable",
@@ -1105,7 +1105,7 @@ void SV_LoadGameClient(uint sessionId)
 #if __JHEXEN__
 void SV_HxSaveHubMap()
 {
-    SV_OpenFile(SV_SaveSlots()[BASE_SLOT].mapSavePath(gameMap), "wp");
+    SV_OpenFile(SV_SavePath() / SV_SaveSlots()[BASE_SLOT].mapSaveName(gameMap), "wp");
 
     // Set the mobj archive numbers
     ThingArchive thingArchive;
@@ -1133,7 +1133,7 @@ void SV_HxLoadHubMap()
     try
     {
         SaveSlot &sslot = SV_SaveSlots()[BASE_SLOT];
-        de::Path path = sslot.mapSavePath(gameMap);
+        de::Path path = SV_SavePath() / sslot.mapSaveName(gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
             throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for read");

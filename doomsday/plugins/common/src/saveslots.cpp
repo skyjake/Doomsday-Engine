@@ -33,24 +33,30 @@ static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 
 DENG2_PIMPL_NOREF(SaveSlots::Slot)
 {
-    int index;
+    de::String saveName;
     SaveInfo *info;
 
-    Instance(int index) : index(index), info(0) {}
+    Instance() : info(0) {}
     ~Instance() { delete info; }
 };
 
-SaveSlots::Slot::Slot(int index) : d(new Instance(index))
-{}
-
-int SaveSlots::Slot::index() const
+SaveSlots::Slot::Slot(de::String const &saveName) : d(new Instance)
 {
-    return d->index;
+    d->saveName = saveName;
+}
+
+void SaveSlots::Slot::bindSaveName(de::String newSaveName)
+{
+    if(d->saveName.compareWithoutCase(newSaveName))
+    {
+        clearSaveInfo();
+    }
+    d->saveName = newSaveName;
 }
 
 bool SaveSlots::Slot::isUsed() const
 {
-    if(SV_ExistingFile(savePath()))
+    if(SV_ExistingFile(SV_SavePath() / saveName()))
     {
         return saveInfo().isLoadable();
     }
@@ -77,7 +83,7 @@ void SaveSlots::Slot::addMissingSaveInfo()
 {
     if(d->info) return;
     d->info = new SaveInfo;
-    d->info->updateFromFile(savePath());
+    d->info->updateFromFile(SV_SavePath() / saveName());
 }
 
 SaveInfo &SaveSlots::Slot::saveInfo(bool canCreate) const
@@ -94,7 +100,7 @@ SaveInfo &SaveSlots::Slot::saveInfo(bool canCreate) const
     throw MissingInfoError("SaveSlots::Slot::saveInfo", "No SaveInfo exists");
 }
 
-de::Path SaveSlots::Slot::mapSavePath(uint map) const
+de::String SaveSlots::Slot::mapSaveName(uint map) const
 {
     // Do we have a valid path?
     /// @todo Do not do alter the file system until necessary.
@@ -103,14 +109,12 @@ de::Path SaveSlots::Slot::mapSavePath(uint map) const
         return "";
     }
 
-    // Compose the full game-save path and filename.
-    return SV_SavePath()
-                / de::String(SAVEGAMENAME "%1%2." SAVEGAMEEXTENSION)
-                        .arg(d->index)
-                        .arg(int(map + 1), 2, 10, QChar('0'));
+    // Compose the full game-save filename.
+    return d->saveName + de::String("%1." SAVEGAMEEXTENSION)
+                                 .arg(int(map + 1), 2, 10, QChar('0'));
 }
 
-de::Path SaveSlots::Slot::savePath() const
+de::String SaveSlots::Slot::saveName() const
 {
     // Do we have a valid path?
     /// @todo Do not do alter the file system until necessary.
@@ -119,10 +123,8 @@ de::Path SaveSlots::Slot::savePath() const
         return "";
     }
 
-    // Compose the full game-save path and filename.
-    return SV_SavePath()
-                / de::String(SAVEGAMENAME "%1." SAVEGAMEEXTENSION)
-                        .arg(d->index);
+    // Compose the full game-save filename.
+    return d->saveName + de::String("." SAVEGAMEEXTENSION);
 }
 
 DENG2_PIMPL(SaveSlots)
@@ -138,14 +140,14 @@ DENG2_PIMPL(SaveSlots)
     Instance(Public *i, int slotCount)
         : Base(i)
         , slotCount(de::max(1, slotCount))
-        , autoSlot(AUTO_SLOT)
+        , autoSlot(de::String(SAVEGAMENAME "%1").arg(AUTO_SLOT))
 #if __JHEXEN__
-        , baseSlot(BASE_SLOT)
+        , baseSlot(de::String(SAVEGAMENAME "%1").arg(BASE_SLOT))
 #endif
     {
         for(int i = 0; i < slotCount; ++i)
         {
-            sslots.push_back(new Slot(i));
+            sslots.push_back(new Slot(de::String(SAVEGAMENAME "%1").arg(i)));
         }
     }
 
@@ -251,13 +253,13 @@ int SaveSlots::findSlotWithUserSaveDescription(de::String description) const
 {
     if(!description.isEmpty())
     {
-        DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
+        for(int i = 0; i < (signed)d->sslots.size(); ++i)
         {
-            SaveSlot &sslot = **i;
+            SaveSlot &sslot = *d->sslots[i];
             if(sslot.hasSaveInfo() &&
                !sslot.saveInfo().userDescription().compareWithoutCase(description))
             {
-                return sslot.index();
+                return i;
             }
         }
     }
@@ -318,10 +320,10 @@ void SaveSlots::clearSlot(int slotNumber)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_RemoveFile(sslot.mapSavePath(i));
+        SV_RemoveFile(SV_SavePath() / sslot.mapSaveName(i));
     }
 
-    SV_RemoveFile(sslot.savePath());
+    SV_RemoveFile(SV_SavePath() / sslot.saveName());
 
     sslot.saveInfo().setUserDescription("");
     sslot.saveInfo().setSessionId(0);
@@ -339,10 +341,11 @@ void SaveSlots::copySlot(int sourceSlotNumber, int destSlotNumber)
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_CopyFile(sourceSlot.mapSavePath(i), destSlot.mapSavePath(i));
+        SV_CopyFile(SV_SavePath() / sourceSlot.mapSaveName(i),
+                    SV_SavePath() / destSlot.mapSaveName(i));
     }
 
-    SV_CopyFile(sourceSlot.savePath(), destSlot.savePath());
+    SV_CopyFile(SV_SavePath() / sourceSlot.saveName(), SV_SavePath() / destSlot.saveName());
 
     // Copy save info too.
     destSlot.replaceSaveInfo(new SaveInfo(sourceSlot.saveInfo()));

@@ -89,7 +89,7 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(SV_SaveSlots()[BASE_SLOT].mapSavePath(gameMap), "wp");
+        SV_OpenFile(SV_SavePath() / SV_SaveSlots()[BASE_SLOT].mapSaveName(gameMap), "wp");
 #endif
 
         MapStateWriter(*thingArchive).write(writer);

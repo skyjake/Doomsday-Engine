@@ -52,17 +52,19 @@ public:
         DENG2_ERROR(MissingInfoError);
 
     public:
-        Slot(int index);
+        Slot(de::String const &saveName = "");
+
+        /**
+         * Change the save game name bound to the logical save slot.
+         *
+         * @param newSaveName New save game name to apply.
+         */
+        void bindSaveName(de::String newSaveName);
 
         /**
          * Returns @c true iff a saved game state exists for the logical save slot.
          */
         bool isUsed() const;
-
-        /**
-         * Returns the unique index of the logical save slot.
-         */
-        int index() const;
 
         bool hasSaveInfo() const;
 
@@ -90,15 +92,15 @@ public:
         void addMissingSaveInfo();
 
         /**
-         * Compose the (possibly relative) file path to the map state associated with the save slot.
+         * Returns the save name (with file extension) of the game state associated with the save slot.
          *
          * @param map   Logical map index.
          *
-         * @return  The composed path if reachable (else a zero-length string).
+         * @return  The composed name if reachable (else a zero-length string).
          */
-        de::Path mapSavePath(uint map) const;
+        de::String mapSaveName(uint map) const;
 
-        de::Path savePath() const;
+        de::String saveName() const;
 
     private:
         DENG2_PRIVATE(d)
