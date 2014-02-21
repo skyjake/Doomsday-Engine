@@ -23,7 +23,7 @@
 
 #include "g_common.h"
 #include "p_tick.h"
-#include "p_saveg.h"
+#include "p_saveg.h"  /// SV_RecognizeGameState, @todo remove me
 #include "p_saveio.h"
 #include <cstdlib>
 #include <cstring>
@@ -309,7 +309,7 @@ void SaveInfo::updateFromFile()
     }
 
     // Is this a recognized game state?
-    if(!SV_RecognizeGameState(*this/*, SV_SavePath() / fileName()*/))
+    if(!SV_RecognizeGameState(*this))
     {
         // Clear the info.
         setUserDescription("");
