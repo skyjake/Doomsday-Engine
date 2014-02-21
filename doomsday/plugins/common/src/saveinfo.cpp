@@ -23,9 +23,9 @@
 
 #include "g_common.h"
 #include "p_tick.h"
-#include "p_saveg.h"  /// SV_RecognizeGameState, @todo remove me
+#include "p_saveg.h"     /// SV_RecognizeGameState, @todo remove me
 #include "p_saveio.h"
-#include <cstdlib>
+#include <de/NativePath>
 #include <cstring>
 
 DENG2_PIMPL_NOREF(SaveInfo)
@@ -484,17 +484,19 @@ de::String SaveInfo::statusAsText() const
 
 de::String SaveInfo::description() const
 {
-    char const *currentMapUriAsText = Str_Text(Uri_ToString(mapUri()));
+    AutoStr *currentMapUriAsText = Uri_ToString(mapUri());
 
     return de::String(_E(b) "%1\n" _E(.)
                       _E(l) "IdentityKey: " _E(.)_E(i) "%2 " _E(.)
                       _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
-                      _E(l) "Version: "     _E(.)_E(i) "%4 " _E(.)
-                      _E(l) "SessionId: "   _E(.)_E(i) "%5\n" _E(.)
-                      _E(D) "Status: " _E(.) "%6")
+                      _E(l) "Source file: " _E(.)_E(i) "%4\n" _E(.)
+                      _E(l) "Version: "     _E(.)_E(i) "%5 " _E(.)
+                      _E(l) "Session id: "   _E(.)_E(i) "%6\n" _E(.)
+                      _E(D) "Status: " _E(.) "%7")
                 .arg(userDescription())
                 .arg(gameIdentityKey())
-                .arg(currentMapUriAsText)
+                .arg(Str_Text(currentMapUriAsText))
+                .arg(de::NativePath(SV_SavePath() / fileName()).pretty())
                 .arg(version())
                 .arg(sessionId())
                 .arg(statusAsText());
