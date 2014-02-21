@@ -29,7 +29,7 @@
 #include "doomv9gamestatereader.h"
 #include "am_map.h"
 #include "g_defs.h"
-#include <assert.h>
+#include "saveslots.h"
 
 int verbose;
 
@@ -451,8 +451,8 @@ void D_PostInit()
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        int const slotNumber = saveSlots->parseSlotIdentifier(CommandLine_At(p + 1));
-        if(saveSlots->slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
+        int const slotNumber = SV_SaveSlots().parseSlotIdentifier(CommandLine_At(p + 1));
+        if(SV_SaveSlots().slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
         {
             // No further initialization is to be done.
             return;

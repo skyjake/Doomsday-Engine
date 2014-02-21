@@ -42,22 +42,63 @@ public:
     /// An invalid slot was specified. @ingroup errors
     DENG2_ERROR(InvalidSlotError);
 
+    /**
+     * Logical save slot.
+     */
+    class Slot
+    {
+    public:
+        /// Required SaveInfo is missing. @ingroup errors
+        DENG2_ERROR(MissingInfoError);
+
+    public:
+        Slot(int index);
+
+        /**
+         * Returns @c true iff a saved game state exists for the logical save slot.
+         */
+        bool isUsed() const;
+
+        /**
+         * Returns the unique index of the logical save slot.
+         */
+        int index() const;
+
+        /**
+         * Clear the save info for the logical save slot.
+         */
+        void clearSaveInfo();
+
+        /**
+         * @param newInfo  New SaveInfo to replace with. Ownership is given.
+         */
+        void replaceSaveInfo(SaveInfo *newInfo);
+
+        /**
+         * Returns the SaveInfo associated with the logical save slot.
+         */
+        SaveInfo &saveInfo() const;
+
+        /**
+         * Compose the (possibly relative) file path to the map state associated with the save slot.
+         *
+         * @param map   Logical map index.
+         *
+         * @return  The composed path if reachable (else a zero-length string).
+         */
+        de::Path mapSavePath(uint map) const;
+
+        de::Path savePath() const;
+
+    private:
+        DENG2_PRIVATE(d)
+    };
+
 public:
     /**
      * @param numSlots  Number of logical slots.
      */
     SaveSlots(int numSlots);
-
-    void clearAllSaveInfo();
-
-    /**
-     * Force an update of the cached game-save info. To be called (sparingly) at strategic
-     * points when an update is necessary (e.g., the game-save paths have changed).
-     *
-     * @note It is not necessary to call this after a game-save is made, this module will do
-     * so automatically.
-     */
-    void updateAllSaveInfo();
 
     /**
      * Returns the total number of logical save slots.
@@ -65,18 +106,18 @@ public:
     int slotCount() const;
 
     /**
-     * Returns @c true iff @a slot is a valid logical slot number (in range).
+     * Returns @c true iff @a value is interpretable as logical slot number (in range).
      *
      * @see slotCount()
      */
-    bool isValidSlot(int slot) const;
+    bool isKnownSlot(int value) const;
 
     /**
-     * Composes the textual identifier/name for save @a slot.
+     * Composes the textual, symbolic identifier/name for save @a slotNumber.
      *
      * @see parseSlotIdentifier()
      */
-    de::String slotIdentifier(int slot) const;
+    de::String slotIdentifier(int slotNumber) const;
 
     /**
      * Parse @a str and determine whether it references a logical game-save slot.
@@ -97,6 +138,32 @@ public:
      */
     int parseSlotIdentifier(de::String str) const;
 
+    /// @see slot()
+    inline Slot &operator [] (int slotNumber) {
+        return slot(slotNumber);
+    }
+
+    /**
+     * Returns the logical save slot associated with @a slotNumber.
+     *
+     * @see isKnownSlot()
+     */
+    Slot &slot(int slotNumber) const;
+
+    /**
+     * Clears save info for all logical save slots.
+     */
+    void clearAll();
+
+    /**
+     * Force an update of the cached game-save info. To be called (sparingly) at strategic
+     * points when an update is necessary (e.g., the game-save paths have changed).
+     *
+     * @note It is not necessary to call this after a game-save is made, this module will do
+     * so automatically.
+     */
+    void updateAll();
+
     /**
      * Lookup a save slot by searching for a match on game-save description. The search is in
      * ascending logical slot order 0...N (where N is the number of available save slots).
@@ -108,56 +175,22 @@ public:
     int findSlotWithUserSaveDescription(de::String description) const;
 
     /**
-     * Returns @c true iff a saved game state exists for save @a slot.
-     */
-    bool slotInUse(int slot) const;
-
-    /**
      * Returns @c true iff save @a slot is user-writable (i.e., not a special slot, such as
      * the @em auto and @em base slots).
      */
     bool slotIsUserWritable(int slot) const;
 
     /**
-     * Returns the SaveInfo associated with the logical save @a slot.
-     *
-     * @see isValidSlot()
-     */
-    SaveInfo &saveInfo(int slot) const;
-
-    inline SaveInfo *saveInfoPtr(int slot) const {
-        return isValidSlot(slot)? &saveInfo(slot) : 0;
-    }
-
-    /**
      * Deletes all save game files associated with the specified save @a slot.
      *
-     * @see isValidSlot()
+     * @see isKnownSlot()
      */
     void clearSlot(int slot);
-
-    /**
-     * @param slot     Slot to replace the info of.
-     * @param newInfo  New SaveInfo to replace with. Ownership is given.
-     */
-    void replaceSaveInfo(int slot, SaveInfo *newInfo);
 
     /**
      * Copies all the save game files from one slot to another.
      */
     void copySlot(int sourceSlot, int destSlot);
-
-    /**
-     * Compose the (possibly relative) file path to the map state associated with save @a slot.
-     *
-     * @param slot  Slot to compose the identifier of.
-     * @param map   Logical map index.
-     *
-     * @return  The composed path if reachable (else a zero-length string).
-     */
-    de::Path mapSavePathForSlot(int slot, uint map) const;
-
-    de::Path savePathForSlot(int slot) const;
 
     /**
      * Register the console commands and variables of this module.
@@ -170,6 +203,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+typedef SaveSlots::Slot SaveSlot;
 
 #endif // __cplusplus
 #endif // LIBCOMMON_SAVESLOTS_H

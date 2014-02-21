@@ -20,53 +20,49 @@
  * 02110-1301 USA</small>
  */
 
-#include <ctype.h>
-#include <assert.h>
-#include <string.h>
-#include <math.h>
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "common.h"
+#include "g_common.h"
 
+#include "am_map.h"
+#include "d_net.h"
 #include "dmu_lib.h"
 #include "fi_lib.h"
-#include "hu_lib.h"
-#include "p_saveg.h"
-#include "p_sound.h"
 #include "g_controls.h"
 #include "g_eventsequence.h"
-#include "p_mapsetup.h"
-#include "p_user.h"
-#include "p_actor.h"
-#include "p_tick.h"
-#include "am_map.h"
-#include "hu_stuff.h"
-#include "hu_menu.h"
-#include "hu_log.h"
+#include "g_update.h"
+#include "hu_lib.h"
 #include "hu_chat.h"
+#include "hu_inventory.h"
+#include "hu_log.h"
+#include "hu_menu.h"
 #include "hu_msg.h"
 #include "hu_pspr.h"
-#include "g_common.h"
-#include "g_update.h"
-#include "g_eventsequence.h"
-#include "d_net.h"
-#include "x_hair.h"
-#include "player.h"
-#include "r_common.h"
-#include "p_map.h"
-#include "p_mapspec.h"
-#include "p_start.h"
+#include "hu_stuff.h"
+#include "p_actor.h"
 #include "p_inventory.h"
-#if __JHERETIC__ || __JHEXEN__
-#  include "hu_inventory.h"
-#  include "p_inventory.h"
-#endif
+#include "p_map.h"
 #if __JHEXEN__
 #  include "p_mapinfo.h"
 #endif
-#include "d_net.h"
+#include "p_mapsetup.h"
+#include "p_mapspec.h"
+#include "p_saveg.h"
+#include "p_saveio.h"
+#include "p_sound.h"
+#include "p_start.h"
+#include "p_tick.h"
+#include "p_user.h"
+#include "player.h"
+#include "r_common.h"
+#include "x_hair.h"
+
+#include "saveslots.h"
+#include <de/NativePath>
+#include <cctype>
+#include <cstring>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #define BODYQUEUESIZE       (32)
 
@@ -201,8 +197,8 @@ wbstartstruct_t wmInfo; // Params for world map / intermission.
 
 // Game Action Variables:
 int gaSaveGameSlot;
-dd_bool gaSaveGameGenerateName = true;
-ddstring_t *gaSaveGameName;
+dd_bool gaSaveGameGenerateDescription = true;
+ddstring_t *gaSaveGameUserDescription;
 int gaLoadGameSlot;
 
 #if __JDOOM__ || __JDOOM64__
@@ -919,19 +915,36 @@ void R_InitHud()
     Hu_MsgInit();
 }
 
-/**
- * Common Post Game Initialization routine.
- * Game-specific post init actions should be placed in eg D_PostInit()
- * (for jDoom) and NOT here.
- */
+de::Path G_ChooseRootSaveDirectory()
+{
+    // Use a custom root save directory?
+    if(CommandLine_CheckWith("-savedir", 1))
+    {
+        return de::NativePath(CommandLine_NextAsPath()).withSeparators('/');
+    }
+
+    // Use the default.
+    GameInfo gameInfo;
+    if(DD_GameInfo(&gameInfo))
+    {
+        return de::Path(SAVEGAME_DEFAULT_DIR) / Str_Text(gameInfo.identityKey);
+    }
+
+    /// @throw Error GameInfo is unavailable.
+    throw de::Error("G_ChooseRootSaveDirectory", "Failed retrieving GameInfo");
+}
+
 void G_CommonPostInit()
 {
     R_InitRefresh();
     FI_StackInit();
     GUI_Init();
 
-    // Init the save system and create the game save directory.
+    // Init the save system.
     SV_Initialize();
+
+    // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
+    SV_SetupSaveDirectory(G_ChooseRootSaveDirectory());
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_ReadTypes();
@@ -2051,7 +2064,7 @@ static int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void
     {
 #if __JHEXEN__
         // Load the last autosave? (Not optional in Hexen).
-        if(saveSlots->slotInUse(AUTO_SLOT))
+        if(SV_SaveSlots()[AUTO_SLOT].isUsed())
         {
             gaLoadGameSlot = AUTO_SLOT;
             G_SetGameAction(GA_LOADGAME);
@@ -2088,13 +2101,13 @@ void G_DoReborn(int plrNum)
         int lastSlot = -1;
 
         // First ensure we have up-to-date info.
-        saveSlots->updateAllSaveInfo();
+        SV_SaveSlots().updateAll();
 
         // Use the latest save?
         if(cfg.loadLastSaveOnReborn)
         {
             lastSlot = Con_GetInteger("game-save-last-slot");
-            if(!saveSlots->slotInUse(lastSlot)) lastSlot = -1;
+            if(!SV_SaveSlots()[lastSlot].isUsed()) lastSlot = -1;
         }
 
         // Use the latest autosave? (Not optional in Hexen).
@@ -2102,7 +2115,7 @@ void G_DoReborn(int plrNum)
         if(cfg.loadAutoSaveOnReborn)
         {
             autoSlot = AUTO_SLOT;
-            if(!saveSlots->slotInUse(autoSlot)) autoSlot = -1;
+            if(!SV_SaveSlots()[autoSlot].isUsed()) autoSlot = -1;
         }
 #endif
 
@@ -2127,7 +2140,7 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                SaveInfo &saveInfo = saveSlots->saveInfo(chosenSlot);
+                SaveInfo &saveInfo = SV_SaveSlots()[chosenSlot].saveInfo();
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, saveInfo.userDescription().toUtf8().constData());
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, chosenSlot, 0);
@@ -2137,7 +2150,7 @@ void G_DoReborn(int plrNum)
 
         // Autosave loading cannot be disabled in Hexen.
 #if __JHEXEN__
-        if(saveSlots->slotInUse(AUTO_SLOT))
+        if(SV_SaveSlots()[AUTO_SLOT].isUsed())
         {
             gaLoadGameSlot = AUTO_SLOT;
             G_SetGameAction(GA_LOADGAME);
@@ -2153,13 +2166,13 @@ void G_DoReborn(int plrNum)
 static void G_InitNewGame()
 {
 #if __JHEXEN__
-    saveSlots->clearSlot(BASE_SLOT);
+    SV_SaveSlots().clearSlot(BASE_SLOT);
 #endif
 
     /// @todo Do not clear this save slot. Instead we should set a game state
     ///       flag to signal when a new game should be started instead of loading
     ///       the autosave slot.
-    saveSlots->clearSlot(AUTO_SLOT);
+    SV_SaveSlots().clearSlot(AUTO_SLOT);
 
 #if __JHEXEN__
     Game_InitACScriptsForNewGame();
@@ -2793,7 +2806,7 @@ void G_DoLeaveMap()
     {
         if(!gameRules.deathmatch)
         {
-            saveSlots->clearSlot(BASE_SLOT);
+            SV_SaveSlots().clearSlot(BASE_SLOT);
         }
     }
     Uri_Delete(nextMapUri); nextMapUri = 0;
@@ -2946,7 +2959,7 @@ dd_bool G_IsLoadGamePossible()
     return !(IS_CLIENT && !Get(DD_PLAYBACK));
 }
 
-dd_bool G_LoadGame(int slot)
+dd_bool G_LoadGame(int slotNumber)
 {
     if(!G_IsLoadGamePossible()) return false;
 
@@ -2955,18 +2968,18 @@ dd_bool G_LoadGame(int slot)
     // no guarantee that the game-save will be accessible come load time.
 
     // First ensure we have up-to-date info.
-    saveSlots->updateAllSaveInfo();
+    SV_SaveSlots().updateAll();
 
-    if(!saveSlots->slotInUse(slot))
+    if(SV_SaveSlots()[slotNumber].isUsed())
     {
-        App_Log(DE2_RES_ERROR, "Cannot load from save slot #%i: not in use", slot);
-        return false;
+        // Everything appears to be in order - schedule the game-save load!
+        gaLoadGameSlot = slotNumber;
+        G_SetGameAction(GA_LOADGAME);
+        return true;
     }
 
-    // Everything appears to be in order - schedule the game-save load!
-    gaLoadGameSlot = slot;
-    G_SetGameAction(GA_LOADGAME);
-    return true;
+    App_Log(DE2_RES_ERROR, "Cannot load from save slot #%i: not in use", slotNumber);
+    return false;
 }
 
 /**
@@ -2986,7 +2999,7 @@ void G_DoLoadGame()
     if(IS_NETGAME) return;
 
     // Copy the base slot to the autosave slot.
-    saveSlots->copySlot(BASE_SLOT, AUTO_SLOT);
+    SV_SaveSlots().copySlot(BASE_SLOT, AUTO_SLOT);
 #endif
 }
 
@@ -3003,27 +3016,27 @@ dd_bool G_IsSaveGamePossible()
 
 dd_bool G_SaveGame2(int slot, char const *name)
 {
-    if(0 > slot || slot >= saveSlots->slotCount()) return false;
+    if(0 > slot || slot >= SV_SaveSlots().slotCount()) return false;
 
     if(!G_IsSaveGamePossible()) return false;
 
     gaSaveGameSlot = slot;
-    if(!gaSaveGameName)
+    if(!gaSaveGameUserDescription)
     {
-        gaSaveGameName = Str_New();
+        gaSaveGameUserDescription = Str_New();
     }
 
     if(name && name[0])
     {
         // A new name.
-        gaSaveGameGenerateName = false;
-        Str_Set(gaSaveGameName, name);
+        gaSaveGameGenerateDescription = false;
+        Str_Set(gaSaveGameUserDescription, name);
     }
     else
     {
         // Reusing the current name or generating a new one.
-        gaSaveGameGenerateName = (name && !name[0]);
-        Str_Clear(gaSaveGameName);
+        gaSaveGameGenerateDescription = (name && !name[0]);
+        Str_Clear(gaSaveGameUserDescription);
     }
 
     G_SetGameAction(GA_SAVEGAME);
@@ -3074,23 +3087,23 @@ AutoStr *G_GenerateUserSaveDescription()
  */
 void G_DoSaveGame()
 {
-    char const *name;
-    if(gaSaveGameName && !Str_IsEmpty(gaSaveGameName))
+    char const *description;
+    if(gaSaveGameUserDescription && !Str_IsEmpty(gaSaveGameUserDescription))
     {
-        name = Str_Text(gaSaveGameName);
+        description = Str_Text(gaSaveGameUserDescription);
     }
     else
     {
         // No name specified.
-        SaveInfo &saveInfo = saveSlots->saveInfo(gaSaveGameSlot);
-        if(!gaSaveGameGenerateName && !saveInfo.userDescription().isEmpty())
+        SaveInfo &saveInfo = SV_SaveSlots()[gaSaveGameSlot].saveInfo();
+        if(!gaSaveGameGenerateDescription && !saveInfo.userDescription().isEmpty())
         {
             // Slot already in use; reuse the existing name.
-            name = Str_Text(AutoStr_FromTextStd(saveInfo.userDescription().toUtf8().constData()));
+            description = Str_Text(AutoStr_FromTextStd(saveInfo.userDescription().toUtf8().constData()));
         }
         else
         {
-            name = Str_Text(G_GenerateUserSaveDescription());
+            description = Str_Text(G_GenerateUserSaveDescription());
         }
     }
 
@@ -3098,7 +3111,7 @@ void G_DoSaveGame()
      * Try to make a new game-save.
      */
     savestateworker_params_t p; de::zap(p);
-    p.name = name;
+    p.name = description;
     p.slot = gaSaveGameSlot;
 
     /// @todo Use progress bar mode and update progress during the setup.
@@ -3932,25 +3945,25 @@ D_CMD(LoadGame)
     }
 
     // Ensure we have up-to-date info.
-    saveSlots->updateAllSaveInfo();
+    SV_SaveSlots().updateAll();
 
-    int slot = saveSlots->parseSlotIdentifier(argv[1]);
-    if(saveSlots->slotInUse(slot))
+    int const slotNumber = SV_SaveSlots().parseSlotIdentifier(argv[1]);
+    if(SV_SaveSlots()[slotNumber].isUsed())
     {
         // A known used slot identifier.
         if(confirm || !cfg.confirmQuickGameSave)
         {
             // Try to schedule a GA_LOADGAME action.
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            return G_LoadGame(slot);
+            return G_LoadGame(slotNumber);
         }
 
-        SaveInfo &saveInfo = saveSlots->saveInfo(slot);
+        SaveInfo &saveInfo = SV_SaveSlots()[slotNumber].saveInfo();
         // Compose the confirmation message.
         AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, saveInfo.userDescription().toUtf8().constData());
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadGameConfirmResponse, slot, 0);
+        Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadGameConfirmResponse, slotNumber, 0);
         return true;
     }
     else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
@@ -4029,13 +4042,13 @@ D_CMD(SaveGame)
     }
 
     // Ensure we have up-to-date info.
-    saveSlots->updateAllSaveInfo();
+    SV_SaveSlots().updateAll();
 
-    int slot = saveSlots->parseSlotIdentifier(argv[1]);
-    if(saveSlots->slotIsUserWritable(slot))
+    int const slotNumber = SV_SaveSlots().parseSlotIdentifier(argv[1]);
+    if(SV_SaveSlots().slotIsUserWritable(slotNumber))
     {
         // A known slot identifier.
-        bool const slotIsUsed = saveSlots->slotInUse(slot);
+        bool const slotIsUsed = SV_SaveSlots()[slotNumber].isUsed();
 
         ddstring_t localName;
         Str_InitStatic(&localName, (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : "");
@@ -4043,18 +4056,18 @@ D_CMD(SaveGame)
         {
             // Try to schedule a GA_LOADGAME action.
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            return G_SaveGame2(slot, Str_Text(&localName));
+            return G_SaveGame2(slotNumber, Str_Text(&localName));
         }
 
         // Compose the confirmation message.
-        SaveInfo &saveInfo = saveSlots->saveInfo(slot);
+        SaveInfo &saveInfo = SV_SaveSlots()[slotNumber].saveInfo();
         AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, saveInfo.userDescription().toUtf8().constData());
 
         // Make a copy of the name.
         ddstring_t *name = Str_Copy(Str_New(), &localName);
 
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveGameConfirmResponse, slot, (void*)name);
+        Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveGameConfirmResponse, slotNumber, (void *)name);
         return true;
     }
     else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
@@ -4068,13 +4081,13 @@ D_CMD(SaveGame)
     }
 
     // Clearly the caller needs some assistance...
-    if(!saveSlots->isValidSlot(slot))
+    if(!SV_SaveSlots().isKnownSlot(slotNumber))
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }
     else
     {
-        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slotNumber);
     }
 
     // No action means the command failed.
@@ -4089,13 +4102,13 @@ D_CMD(QuickSaveGame)
     return DD_Execute(true, "savegame quick");
 }
 
-dd_bool G_DeleteSaveGame(int slot)
+dd_bool G_DeleteSaveGame(int slotNumber)
 {
-    if(!saveSlots->slotIsUserWritable(slot)) return false;
-    if(!saveSlots->slotInUse(slot)) return false;
+    if(!SV_SaveSlots().slotIsUserWritable(slotNumber)) return false;
+    if(!SV_SaveSlots()[slotNumber].isUsed()) return false;
 
     // A known slot identifier.
-    saveSlots->clearSlot(slot);
+    SV_SaveSlots().clearSlot(slotNumber);
 
     if(Hu_MenuIsActive())
     {
@@ -4131,36 +4144,36 @@ D_CMD(DeleteGameSave)
     if(G_QuitInProgress()) return false;
 
     // Ensure we have up-to-date info.
-    saveSlots->updateAllSaveInfo();
+    SV_SaveSlots().updateAll();
 
-    int slot = saveSlots->parseSlotIdentifier(argv[1]);
-    if(saveSlots->slotIsUserWritable(slot) &&
-       saveSlots->slotInUse(slot))
+    int const slotNumber = SV_SaveSlots().parseSlotIdentifier(argv[1]);
+    if(SV_SaveSlots().slotIsUserWritable(slotNumber) &&
+       SV_SaveSlots()[slotNumber].isUsed())
     {
         // A known slot identifier.
         if(confirm)
         {
-            return G_DeleteSaveGame(slot);
+            return G_DeleteSaveGame(slotNumber);
         }
         else
         {
             // Compose the confirmation message.
-            SaveInfo &saveInfo = saveSlots->saveInfo(slot);
+            SaveInfo &saveInfo = SV_SaveSlots()[slotNumber].saveInfo();
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, saveInfo.userDescription().toUtf8().constData());
             S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
-            Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slot, 0);
+            Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slotNumber, 0);
         }
         return true;
     }
 
     // Clearly the caller needs some assistance...
-    if(!saveSlots->isValidSlot(slot))
+    if(!SV_SaveSlots().isKnownSlot(slotNumber))
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }
     else
     {
-        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slotNumber);
     }
 
     // No action means the command failed.
@@ -4172,23 +4185,23 @@ D_CMD(InspectGameSave)
     DENG_UNUSED(src); DENG_UNUSED(argc);
 
     // Ensure we have up-to-date info.
-    saveSlots->updateAllSaveInfo();
+    SV_SaveSlots().updateAll();
 
-    int slot = saveSlots->parseSlotIdentifier(argv[1]);
-    if(saveSlots->slotInUse(slot))
+    int const slotNumber = SV_SaveSlots().parseSlotIdentifier(argv[1]);
+    if(SV_SaveSlots()[slotNumber].isUsed())
     {
-        SaveInfo &saveInfo = saveSlots->saveInfo(slot);
+        SaveInfo &saveInfo = SV_SaveSlots()[slotNumber].saveInfo();
         App_Log(DE2_LOG_MESSAGE, "%s", saveInfo.description().toLatin1().constData());
         return true;
     }
 
-    if(!saveSlots->isValidSlot(slot))
+    if(!SV_SaveSlots().isKnownSlot(slotNumber))
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
     }
     else
     {
-        App_Log(DE2_LOG_ERROR, "Save slot #%i is not in use", slot);
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is not in use", slotNumber);
     }
 
     // No action means the command failed.

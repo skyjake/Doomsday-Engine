@@ -29,6 +29,7 @@
 #include "p_saveg.h"        /// @todo remove me
 #include "p_tick.h"         // mapTime
 #include "r_common.h"       // R_UpdateConsoleView
+#include "saveslots.h"
 #include <de/NativePath>
 #include <de/String>
 
@@ -110,10 +111,10 @@ DENG2_PIMPL(GameStateReader)
     {
 #if __JHEXEN__ // The map state is actually read from a separate file.
         // Close the game state file.
-        Z_Free(saveBuffer);
+        SV_HxReleaseSaveBuffer();
 
         // Open the map state file.
-        de::Path path = saveSlots->mapSavePathForSlot(BASE_SLOT, gameMap);
+        de::Path path = SV_SaveSlots()[BASE_SLOT].mapSavePath(gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
             throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
@@ -124,7 +125,7 @@ DENG2_PIMPL(GameStateReader)
 
         readConsistencyBytes();
 #if __JHEXEN__
-        Z_Free(saveBuffer);
+        SV_HxReleaseSaveBuffer();
 #else
         SV_CloseFile();
 #endif
@@ -286,7 +287,7 @@ bool GameStateReader::recognize(SaveInfo &info, de::Path path) // static
     Reader_Delete(reader);
 
 #if __JHEXEN__
-    Z_Free(saveBuffer);
+    SV_HxReleaseSaveBuffer();
 #else
     SV_CloseFile();
 #endif

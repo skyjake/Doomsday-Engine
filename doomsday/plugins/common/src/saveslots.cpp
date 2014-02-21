@@ -31,97 +31,189 @@
 static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game session.
 static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 
+DENG2_PIMPL_NOREF(SaveSlots::Slot)
+{
+    int index;
+    SaveInfo *info;
+
+    Instance(int index)
+        : index(index)
+        , info(0)
+    {}
+
+    ~Instance()
+    {
+        delete info;
+    }
+};
+
+SaveSlots::Slot::Slot(int index) : d(new Instance(index))
+{}
+
+int SaveSlots::Slot::index() const
+{
+    return d->index;
+}
+
+bool SaveSlots::Slot::isUsed() const
+{
+    if(SV_ExistingFile(savePath()))
+    {
+        return saveInfo().isLoadable();
+    }
+    return false;
+}
+
+void SaveSlots::Slot::clearSaveInfo()
+{
+    delete d->info; d->info = 0;
+}
+
+void SaveSlots::Slot::replaceSaveInfo(SaveInfo *newInfo)
+{
+    clearSaveInfo();
+    d->info = newInfo;
+}
+
+SaveInfo &SaveSlots::Slot::saveInfo() const
+{
+    if(d->info)
+    {
+        return *d->info;
+    }
+    /// @throw MissingInfoError Attempted with no SaveInfo present.
+    throw MissingInfoError("SaveSlots::saveInfo", "No SaveInfo exists");
+}
+
+de::Path SaveSlots::Slot::mapSavePath(uint map) const
+{
+    // Do we have a valid path?
+    /// @todo Do not do alter the file system until necessary.
+    if(!F_MakePath(de::NativePath(SV_SavePath()).expand().toUtf8().constData()))
+    {
+        return "";
+    }
+
+    // Compose the full game-save path and filename.
+    return SV_SavePath()
+                / de::String(SAVEGAMENAME "%1%2." SAVEGAMEEXTENSION)
+                        .arg(d->index)
+                        .arg(int(map + 1), 2, 10, QChar('0'));
+}
+
+de::Path SaveSlots::Slot::savePath() const
+{
+    // Do we have a valid path?
+    /// @todo Do not do alter the file system until necessary.
+    if(!F_MakePath(de::NativePath(SV_SavePath()).expand().toUtf8().constData()))
+    {
+        return "";
+    }
+
+    // Compose the full game-save path and filename.
+    return SV_SavePath()
+                / de::String(SAVEGAMENAME "%1." SAVEGAMEEXTENSION)
+                        .arg(d->index);
+}
+
 DENG2_PIMPL(SaveSlots)
 {
     int slotCount;
-    typedef std::vector<SaveInfo *> Infos;
-    Infos infos;
-    SaveInfo *autoInfo;
+    typedef std::vector<Slot *> Slots;
+    Slots sslots;
+    Slot autoSlot;
 #if __JHEXEN__
-    SaveInfo *baseInfo;
+    Slot baseSlot;
 #endif
 
     Instance(Public *i, int slotCount)
         : Base(i)
         , slotCount(de::max(1, slotCount))
-        , autoInfo(0)
+        , autoSlot(AUTO_SLOT)
 #if __JHEXEN__
-        , baseInfo(0)
+        , baseSlot(BASE_SLOT)
 #endif
-    {}
+    {
+        for(int i = 0; i < slotCount; ++i)
+        {
+            sslots.push_back(new Slot(i));
+        }
+    }
 
     ~Instance()
     {
         clearInfos();
     }
 
-    /// Determines whether to announce when the specified @a slot is cleared.
-    bool shouldAnnounceWhenClearing(int slot)
+    /// Determines whether to announce when the specified @a slotNumber is cleared.
+    bool shouldAnnounceWhenClearing(int slotNumber)
     {
 #ifdef DENG_DEBUG
         return true; // Always.
 #endif
 #if __JHEXEN__
-        return (slot != AUTO_SLOT && slot != BASE_SLOT);
+        return (slotNumber != AUTO_SLOT && slotNumber != BASE_SLOT);
 #else
-        return (slot != AUTO_SLOT);
+        return (slotNumber != AUTO_SLOT);
 #endif
     }
 
     void clearInfos()
     {
-        DENG2_FOR_EACH(Infos, i, infos) { delete *i; }
-        infos.clear();
-
-        delete autoInfo; autoInfo = 0;
+        DENG2_FOR_EACH(Slots, i, sslots)
+        {
+            (*i)->clearSaveInfo();
+        }
+        autoSlot.clearSaveInfo();
 #if __JHEXEN__
-        delete baseInfo; baseInfo = 0;
+        baseSlot.clearSaveInfo();
 #endif
     }
 
-    SaveInfo **infoAdrForSlot(int slot)
+    Slot &slotFor(int slotNumber)
     {
         buildInfosIfNeeded();
 
-        if(slot == AUTO_SLOT) return &autoInfo;
+        if(slotNumber == AUTO_SLOT) return autoSlot;
 #if __JHEXEN__
-        if(slot == BASE_SLOT) return &baseInfo;
+        if(slotNumber == BASE_SLOT) return baseSlot;
 #endif
-        return &infos[slot];
+        DENG2_ASSERT(slotNumber >= 0 && slotNumber < int( sslots.size() ));
+        return *sslots[slotNumber];
     }
 
     /// Re-build save info by re-scanning the save paths and populating the list.
     void buildInfos()
     {
-        if(infos.empty())
+        if(sslots.empty())
         {
             // Not yet been here. We need to allocate and initialize the game-save info list.
-            for(int i = 0; i < slotCount; ++i)
+            DENG2_FOR_EACH(Slots, i, sslots)
             {
-                infos.push_back(new SaveInfo);
+                (*i)->replaceSaveInfo(new SaveInfo);
             }
-            autoInfo = new SaveInfo;
+            autoSlot.replaceSaveInfo(new SaveInfo);
 #if __JHEXEN__
-            baseInfo = new SaveInfo;
+            baseSlot.replaceSaveInfo(new SaveInfo);
 #endif
         }
 
         // Scan the save paths and populate the list.
         /// @todo We should look at all files on the save path and not just those which match
         /// the default game-save file naming convention.
-        for(int i = 0; i < (signed)infos.size(); ++i)
+        for(int i = 0; i < (signed)sslots.size(); ++i)
         {
-            infos[i]->updateFromFile(self.savePathForSlot(i));
+            sslots[i]->saveInfo().updateFromFile(sslots[i]->savePath());
         }
-        autoInfo->updateFromFile(self.savePathForSlot(AUTO_SLOT));
+        autoSlot.saveInfo().updateFromFile(autoSlot.savePath());
 #if __JHEXEN__
-        baseInfo->updateFromFile(self.savePathForSlot(BASE_SLOT));
+        baseSlot.saveInfo().updateFromFile(baseSlot.savePath());
 #endif
     }
 
     void buildInfosIfNeeded()
     {
-        if(infos.empty())
+        if(sslots.empty())
         {
             buildInfos();
         }
@@ -131,7 +223,7 @@ DENG2_PIMPL(SaveSlots)
 SaveSlots::SaveSlots(int slotCount) : d(new Instance(this, slotCount))
 {}
 
-void SaveSlots::clearAllSaveInfo()
+void SaveSlots::clearAll()
 {
     d->clearInfos();
 
@@ -140,7 +232,7 @@ void SaveSlots::clearAllSaveInfo()
     Con_SetInteger("game-save-quick-slot", -1);
 }
 
-void SaveSlots::updateAllSaveInfo()
+void SaveSlots::updateAll()
 {
     d->buildInfos();
 }
@@ -191,25 +283,15 @@ int SaveSlots::findSlotWithUserSaveDescription(de::String description) const
         // On first call - automatically build and populate game-save info.
         d->buildInfosIfNeeded();
 
-        for(int i = 0; i < (signed)d->infos.size(); ++i)
+        DENG2_FOR_EACH_CONST(Instance::Slots, i, d->sslots)
         {
-            SaveInfo *info = d->infos[i];
-            if(!info->userDescription().compareWithoutCase(description))
+            if(!(*i)->saveInfo().userDescription().compareWithoutCase(description))
             {
-                return i;
+                return (*i)->index();
             }
         }
     }
     return -1; // Not found.
-}
-
-bool SaveSlots::slotInUse(int slot) const
-{
-    if(SV_ExistingFile(savePathForSlot(slot)))
-    {
-        return saveInfo(slot).isLoadable();
-    }
-    return false;
 }
 
 int SaveSlots::slotCount() const
@@ -217,7 +299,7 @@ int SaveSlots::slotCount() const
     return d->slotCount;
 }
 
-bool SaveSlots::isValidSlot(int slot) const
+bool SaveSlots::isKnownSlot(int slot) const
 {
     if(slot == AUTO_SLOT) return true;
 #if __JHEXEN__
@@ -232,124 +314,64 @@ bool SaveSlots::slotIsUserWritable(int slot) const
 #if __JHEXEN__
     if(slot == BASE_SLOT) return false;
 #endif
-    return isValidSlot(slot);
+    return isKnownSlot(slot);
 }
 
-SaveInfo &SaveSlots::saveInfo(int slot) const
+SaveSlots::Slot &SaveSlots::slot(int slotNumber) const
 {
-    if(!isValidSlot(slot))
+    if(!isKnownSlot(slotNumber))
     {
         /// @throw InvalidSlotError An invalid slot was specified.
-        throw InvalidSlotError("SaveSlots::saveInfo", "Invalid slot " + de::String::number(slot));
+        throw InvalidSlotError("SaveSlots::slot", "Invalid slot #" + de::String::number(slotNumber));
     }
-    SaveInfo **info = d->infoAdrForSlot(slot);
-    DENG_ASSERT(*info != 0);
-    return **info;
+    return d->slotFor(slotNumber);
 }
 
-void SaveSlots::replaceSaveInfo(int slot, SaveInfo *newInfo)
+void SaveSlots::clearSlot(int slotNumber)
 {
-    if(!isValidSlot(slot))
+    if(!isKnownSlot(slotNumber))
     {
         /// @throw InvalidSlotError An invalid slot was specified.
-        throw InvalidSlotError("SaveSlots::replaceSaveInfo", "Invalid slot " + de::String::number(slot));
-    }
-    SaveInfo **infoAdr = d->infoAdrForSlot(slot);
-    if(*infoAdr) delete (*infoAdr);
-    *infoAdr = newInfo;
-}
-
-void SaveSlots::clearSlot(int slot)
-{
-    if(!isValidSlot(slot))
-    {
-        /// @throw InvalidSlotError An invalid slot was specified.
-        throw InvalidSlotError("SaveSlots::clearSlot", "Invalid slot " + de::String::number(slot));
+        throw InvalidSlotError("SaveSlots::clearSlot", "Invalid slot #" + de::String::number(slotNumber));
     }
 
-    SaveInfo &info = saveInfo(slot);
+    Slot &slot = d->slotFor(slotNumber);
 
-    if(d->shouldAnnounceWhenClearing(slot))
+    if(d->shouldAnnounceWhenClearing(slotNumber))
     {
-        App_Log(DE2_RES_MSG, "Clearing save slot %s", slotIdentifier(slot).toLatin1().constData());
+        App_Log(DE2_RES_MSG, "Clearing save slot %s", slotIdentifier(slotNumber).toLatin1().constData());
     }
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_RemoveFile(mapSavePathForSlot(slot, i));
+        SV_RemoveFile(slot.mapSavePath(i));
     }
 
-    SV_RemoveFile(savePathForSlot(slot));
+    SV_RemoveFile(slot.savePath());
 
-    info.setUserDescription("");
-    info.setSessionId(0);
+    slot.saveInfo().setUserDescription("");
+    slot.saveInfo().setSessionId(0);
 }
 
-void SaveSlots::copySlot(int sourceSlot, int destSlot)
+void SaveSlots::copySlot(int sourceSlotNumber, int destSlotNumber)
 {
-    if(!isValidSlot(sourceSlot))
-    {
-        /// @throw InvalidSlotError An invalid slot was specified.
-        throw InvalidSlotError("SaveSlots::copySlot", "Invalid source slot " + de::String::number(sourceSlot));
-    }
+    LOG_AS("SaveSlots::copySlot");
 
-    if(!isValidSlot(destSlot))
-    {
-        /// @throw InvalidSlotError An invalid slot was specified.
-        throw InvalidSlotError("SaveSlots::saveInfo", "Invalid dest slot " + de::String::number(destSlot));
-    }
+    Slot &sourceSlot = slot(sourceSlotNumber);
+    Slot &destSlot   = slot(destSlotNumber);
 
     // Clear all save files at destination slot.
-    clearSlot(destSlot);
+    clearSlot(destSlotNumber);
 
     for(int i = 0; i < MAX_HUB_MAPS; ++i)
     {
-        SV_CopyFile(mapSavePathForSlot(sourceSlot, i),
-                    mapSavePathForSlot(destSlot,   i));
+        SV_CopyFile(sourceSlot.mapSavePath(i), destSlot.mapSavePath(i));
     }
 
-    SV_CopyFile(savePathForSlot(sourceSlot),
-                savePathForSlot(destSlot));
+    SV_CopyFile(sourceSlot.savePath(), destSlot.savePath());
 
     // Copy save info too.
-    replaceSaveInfo(destSlot, new SaveInfo(saveInfo(sourceSlot)));
-}
-
-de::Path SaveSlots::mapSavePathForSlot(int slot, uint map) const
-{
-    // A valid slot?
-    if(!isValidSlot(slot)) return "";
-
-    // Do we have a valid path?
-    /// @todo Do not do alter the file system until necessary.
-    if(!F_MakePath(de::NativePath(SV_SavePath()).expand().toUtf8().constData()))
-    {
-        return "";
-    }
-
-    // Compose the full game-save path and filename.
-    return SV_SavePath()
-                / de::String(SAVEGAMENAME "%1%2." SAVEGAMEEXTENSION)
-                        .arg(slot)
-                        .arg(int(map + 1), 2, 10, QChar('0'));
-}
-
-de::Path SaveSlots::savePathForSlot(int slot) const
-{
-    // A valid slot?
-    if(!isValidSlot(slot)) return "";
-
-    // Do we have a valid path?
-    /// @todo Do not do alter the file system until necessary.
-    if(!F_MakePath(de::NativePath(SV_SavePath()).expand().toUtf8().constData()))
-    {
-        return "";
-    }
-
-    // Compose the full game-save path and filename.
-    return SV_SavePath()
-                / de::String(SAVEGAMENAME "%1." SAVEGAMEEXTENSION)
-                        .arg(slot);
+    destSlot.replaceSaveInfo(new SaveInfo(sourceSlot.saveInfo()));
 }
 
 void SaveSlots::consoleRegister() // static

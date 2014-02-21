@@ -34,8 +34,8 @@
 #include "g_common.h"
 #include "r_common.h"
 #include "m_ctrl.h"
+#include "saveslots.h"
 #include <de/memory.h>
-#include <cassert>
 #include <cstdlib>
 #include <cctype>
 #include <cmath>
@@ -5750,7 +5750,7 @@ void Hu_MenuUpdateGameSaveWidgets()
     // Prompt a refresh of the game-save info. We don't yet actively monitor
     // the contents of the game-save paths, so instead we settle for manual
     // updates whenever the save/load menu is opened.
-    saveSlots->updateAllSaveInfo();
+    SV_SaveSlots().updateAll();
 
     // Update widgets.
     mn_page_t *page = Hu_MenuFindPageByName("LoadGame");
@@ -5760,10 +5760,10 @@ void Hu_MenuUpdateGameSaveWidgets()
         mndata_edit_t *edit = (mndata_edit_t *) obj->_typedata;
 
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);
-        if(saveSlots->slotInUse(edit->data2))
+        SaveSlot &sslot = SV_SaveSlots()[edit->data2];
+        if(sslot.isUsed())
         {
-            SaveInfo &saveInfo = saveSlots->saveInfo(edit->data2);
-            MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, saveInfo.userDescription().toUtf8().constData());
+            MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, sslot.saveInfo().userDescription().toUtf8().constData());
             MNObject_SetFlags(obj, FO_CLEAR, MNF_DISABLED);
         }
         else

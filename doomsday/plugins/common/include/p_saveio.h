@@ -44,14 +44,13 @@ typedef enum savestatesegment_e {
     ASEG_WORLDSCRIPTDATA   // Hexen only
 } savestatesegment_t;
 
-#if __JHEXEN__
-DENG_EXTERN_C byte *saveBuffer;
-#endif
-
 void SV_InitIO();
 void SV_ShutdownIO();
 
-void SV_ConfigureSavePaths();
+/**
+ * Create the saved game directories.
+ */
+void SV_SetupSaveDirectory(de::Path);
 
 de::Path SV_SavePath();
 
@@ -86,6 +85,8 @@ saveptr_t *SV_HxSavePtr();
 void SV_HxSetSaveEndPtr(void *endPtr);
 
 size_t SV_HxBytesLeft();
+
+void SV_HxReleaseSaveBuffer();
 #endif // __JHEXEN__
 
 /**

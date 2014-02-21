@@ -26,6 +26,7 @@
 #include "p_saveio.h"
 #include "p_saveg.h"        /// playerheader_t @todo remove me
 #include "thingarchive.h"
+#include "saveslots.h"
 #include <de/NativePath>
 
 DENG2_PIMPL(GameStateWriter)
@@ -88,7 +89,7 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(saveSlots->mapSavePathForSlot(BASE_SLOT, gameMap), "wp");
+        SV_OpenFile(SV_SaveSlots()[BASE_SLOT].mapSavePath(gameMap), "wp");
 #endif
 
         MapStateWriter(*thingArchive).write(writer);

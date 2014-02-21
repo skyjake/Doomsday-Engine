@@ -29,10 +29,7 @@
 #include "api_materialarchive.h"
 #include <de/NativePath>
 
-#include <cstdio>
-#include <cstring>
-
-static dd_bool inited;
+static bool inited;
 static LZFILE *savefile;
 static de::Path savePath; // e.g., "savegame"
 #if !__JHEXEN__
@@ -40,40 +37,10 @@ static de::Path clientSavePath; // e.g., "savegame/client"
 #endif
 
 #if __JHEXEN__
+static byte *saveBuffer;
 static saveptr_t saveptr;
 static void *saveEndPtr;
 #endif
-
-#if __JHEXEN__
-byte *saveBuffer;
-#endif
-
-static void errorIfNotInited(char const *callerName)
-{
-    if(inited) return;
-    Con_Error("%s: Savegame I/O is not presently initialized.", callerName);
-    // Unreachable. Prevents static analysers from getting rather confused, poor things.
-    exit(1);
-}
-
-/// @return  Possibly relative saved game directory.
-static de::Path composeRootSaveDir()
-{
-    if(CommandLine_CheckWith("-savedir", 1))
-    {
-        return de::NativePath(CommandLine_NextAsPath()).withSeparators('/');
-    }
-
-    // Use the default path.
-    GameInfo gameInfo;
-    if(DD_GameInfo(&gameInfo))
-    {
-        return de::Path(SAVEGAME_DEFAULT_DIR) / Str_Text(gameInfo.identityKey);
-    }
-
-    Con_Error("composeSaveDir: Error, failed retrieving GameInfo.");
-    exit(1); // Unreachable.
-}
 
 void SV_InitIO()
 {
@@ -94,6 +61,42 @@ void SV_ShutdownIO()
     inited = false;
 }
 
+void SV_SetupSaveDirectory(de::Path newRootSaveDir)
+{
+    DENG2_ASSERT(inited);
+
+    if(!newRootSaveDir.isEmpty())
+    {
+        savePath       = newRootSaveDir;
+#if !__JHEXEN__
+        clientSavePath = newRootSaveDir / "client";
+#endif
+
+        // Ensure that these paths exist.
+        bool savePathExists = F_MakePath(de::NativePath(savePath).expand().toUtf8().constData());
+#if !__JHEXEN__
+        if(!F_MakePath(de::NativePath(clientSavePath).expand().toUtf8().constData()))
+        {
+            savePathExists = false;
+        }
+#endif
+
+        if(savePathExists)
+        {
+            return;
+        }
+    }
+
+    savePath.clear();
+#if !__JHEXEN__
+    clientSavePath.clear();
+#endif
+
+    App_Log(DE2_RES_ERROR, "SV_SetupSaveDirectory: \"%s\" could not be accessed. Perhaps it could "
+                           "not be created (insufficient permissions?). Saving will not be possible.",
+                           de::NativePath(savePath).pretty().toLatin1().constData());
+}
+
 de::Path SV_SavePath()
 {
     return savePath;
@@ -105,56 +108,6 @@ de::Path SV_ClientSavePath()
     return clientSavePath;
 }
 #endif
-
-// Compose and create the saved game directories.
-void SV_ConfigureSavePaths()
-{
-    DENG_ASSERT(inited);
-
-    de::Path rootSaveDir = composeRootSaveDir();
-
-    savePath = rootSaveDir;
-#if !__JHEXEN__
-    clientSavePath = rootSaveDir / "client";
-#endif
-
-    // Ensure that these paths exist.
-    bool savePathExists = F_MakePath(de::NativePath(savePath).expand().toUtf8().constData());
-#if !__JHEXEN__
-    if(!F_MakePath(de::NativePath(clientSavePath).expand().toUtf8().constData()))
-    {
-        savePathExists = false;
-    }
-#endif
-
-    if(!savePathExists)
-    {
-        App_Log(DE2_RES_ERROR, "SV_ConfigureSavePaths: Failed to locate \"%s\". Perhaps it could "
-                               "not be created (insufficient permissions?). Saving will not be possible.",
-                               de::NativePath(savePath).pretty().toLatin1().constData());
-    }
-}
-
-LZFILE *SV_File()
-{
-    return savefile;
-}
-
-LZFILE *SV_OpenFile(de::Path filePath, de::String mode)
-{
-    DENG_ASSERT(savefile == 0);
-    savefile = lzOpen(de::NativePath(filePath).expand().toUtf8().constData(), mode.toUtf8().constData());
-    return savefile;
-}
-
-void SV_CloseFile()
-{
-    if(savefile)
-    {
-        lzClose(savefile);
-        savefile = 0;
-    }
-}
 
 bool SV_ExistingFile(de::Path filePath)
 {
@@ -191,6 +144,22 @@ void SV_CopyFile(de::Path srcPath, de::Path destPath)
     }
 
     Z_Free(buffer);
+}
+
+LZFILE *SV_OpenFile(de::Path filePath, de::String mode)
+{
+    DENG2_ASSERT(savefile == 0);
+    savefile = lzOpen(de::NativePath(filePath).expand().toUtf8().constData(), mode.toUtf8().constData());
+    return savefile;
+}
+
+void SV_CloseFile()
+{
+    if(savefile)
+    {
+        lzClose(savefile);
+        savefile = 0;
+    }
 }
 
 bool SV_OpenGameSaveFile(de::Path path, bool write)
@@ -235,7 +204,12 @@ bool SV_OpenMapSaveFile(de::Path path)
 }
 #endif
 
-#ifdef __JHEXEN__
+LZFILE *SV_File()
+{
+    return savefile;
+}
+
+#if __JHEXEN__
 saveptr_t *SV_HxSavePtr()
 {
     return &saveptr;
@@ -250,11 +224,16 @@ size_t SV_HxBytesLeft()
 {
     return (byte *) saveEndPtr - saveptr.b;
 }
+
+void SV_HxReleaseSaveBuffer()
+{
+    Z_Free(saveBuffer);
+}
 #endif
 
 void SV_Seek(uint offset)
 {
-    errorIfNotInited("SV_SetPos");
+    DENG2_ASSERT(inited);
 #if __JHEXEN__
     saveptr.b += offset;
 #else
@@ -264,13 +243,13 @@ void SV_Seek(uint offset)
 
 void SV_Write(void const *data, int len)
 {
-    errorIfNotInited("SV_Write");
+    DENG2_ASSERT(inited);
     lzWrite((void *)data, len, savefile);
 }
 
 void SV_WriteByte(byte val)
 {
-    errorIfNotInited("SV_WriteByte");
+    DENG2_ASSERT(inited);
     lzPutC(val, savefile);
 }
 
@@ -280,7 +259,7 @@ void SV_WriteShort(unsigned short val)
 void SV_WriteShort(short val)
 #endif
 {
-    errorIfNotInited("SV_WriteShort");
+    DENG2_ASSERT(inited);
     lzPutW(val, savefile);
 }
 
@@ -290,23 +269,23 @@ void SV_WriteLong(unsigned int val)
 void SV_WriteLong(long val)
 #endif
 {
-    errorIfNotInited("SV_WriteLong");
+    DENG2_ASSERT(inited);
     lzPutL(val, savefile);
 }
 
 void SV_WriteFloat(float val)
 {
-    DENG_ASSERT(sizeof(val) == 4);
+    DENG2_ASSERT(sizeof(val) == 4);
+    DENG2_ASSERT(inited);
 
     int32_t temp = 0;
-    errorIfNotInited("SV_WriteFloat");
     std::memcpy(&temp, &val, 4);
     lzPutL(temp, savefile);
 }
 
 void SV_Read(void *data, int len)
 {
-    errorIfNotInited("SV_Read");
+    DENG2_ASSERT(inited);
 #if __JHEXEN__
     std::memcpy(data, saveptr.b, len);
     saveptr.b += len;
@@ -317,9 +296,9 @@ void SV_Read(void *data, int len)
 
 byte SV_ReadByte()
 {
-    errorIfNotInited("SV_ReadByte");
+    DENG2_ASSERT(inited);
 #if __JHEXEN__
-    DENG_ASSERT((saveptr.b + 1) <= (byte *) saveEndPtr);
+    DENG2_ASSERT((saveptr.b + 1) <= (byte *) saveEndPtr);
     return (*saveptr.b++);
 #else
     return lzGetC(savefile);
@@ -328,9 +307,9 @@ byte SV_ReadByte()
 
 short SV_ReadShort()
 {
-    errorIfNotInited("SV_ReadShort");
+    DENG2_ASSERT(inited);
 #if __JHEXEN__
-    DENG_ASSERT((saveptr.w + 1) <= (short *) saveEndPtr);
+    DENG2_ASSERT((saveptr.w + 1) <= (short *) saveEndPtr);
     return (SHORT(*saveptr.w++));
 #else
     return lzGetW(savefile);
@@ -339,9 +318,9 @@ short SV_ReadShort()
 
 long SV_ReadLong()
 {
-    errorIfNotInited("SV_ReadLong");
+    DENG2_ASSERT(inited);
 #if __JHEXEN__
-    DENG_ASSERT((saveptr.l + 1) <= (int *) saveEndPtr);
+    DENG2_ASSERT((saveptr.l + 1) <= (int *) saveEndPtr);
     return (LONG(*saveptr.l++));
 #else
     return lzGetL(savefile);
@@ -350,17 +329,13 @@ long SV_ReadLong()
 
 float SV_ReadFloat()
 {
-#if !__JHEXEN__
-    float returnValue = 0;
-    int32_t val;
-#endif
-    errorIfNotInited("SV_ReadFloat");
+    DENG2_ASSERT(inited);
+    DENG2_ASSERT(sizeof(float) == 4);
 #if __JHEXEN__
     return (FLOAT(*saveptr.f++));
 #else
-    val = lzGetL(savefile);
-    returnValue = 0;
-    DENG_ASSERT(sizeof(float) == 4);
+    int32_t val = lzGetL(savefile);
+    float returnValue = 0;
     std::memcpy(&returnValue, &val, 4);
     return returnValue;
 #endif
@@ -368,7 +343,7 @@ float SV_ReadFloat()
 
 void SV_AssertSegment(int segmentId)
 {
-    errorIfNotInited("SV_AssertSegment");
+    DENG2_ASSERT(inited);
 #if __JHEXEN__
     if(segmentId == ASEG_END && SV_HxBytesLeft() < 4)
     {
@@ -386,7 +361,7 @@ void SV_AssertSegment(int segmentId)
 
 void SV_BeginSegment(int segType)
 {
-    errorIfNotInited("SV_BeginSegment");
+    DENG2_ASSERT(inited);
 #if __JHEXEN__
     SV_WriteLong(segType);
 #else

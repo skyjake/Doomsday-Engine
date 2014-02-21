@@ -24,7 +24,6 @@
 #include "common.h"
 #include "p_savedef.h" /// @todo remove me
 #include "saveinfo.h"
-#include "saveslots.h"
 
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 
@@ -33,8 +32,6 @@ DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
 #endif
 
 #ifdef __cplusplus
-DENG_EXTERN_C SaveSlots *saveSlots;
-
 extern "C" {
 #endif
 
@@ -45,21 +42,21 @@ void SV_Initialize(void);
 void SV_Shutdown(void);
 
 /**
- * Save the current game state to the specified @a slot number.
+ * Save the current game state to the specified @a slotNumber.
  *
  * @param description  Textual description to include in the save info. Can be @c 0
  *                     in which case a description will be auto-generated.
  *
  * @return  @c true iff the game state was saved successfully.
  */
-dd_bool SV_SaveGame(int slot, char const *description);
+dd_bool SV_SaveGame(int slotNumber, char const *description);
 
 /**
- * Load the game state associated with the specified @a slot number.
+ * Load the game state associated with the specified @a slotNumber.
  *
  * @return  @c true iff the game state was loaded successfully.
  */
-dd_bool SV_LoadGame(int slot);
+dd_bool SV_LoadGame(int slotNumber);
 
 #if !__JHEXEN__
 /**
@@ -74,9 +71,9 @@ void SV_LoadGameClient(uint gameId);
 #if __JHEXEN__
 /**
  * Returns @c true iff a game-save is present and serialized @a map state is
- * present for logical save @a slot.
+ * present for logical save @a slotNumber.
  */
-dd_bool SV_HxHaveMapStateForSlot(int slot, uint map);
+dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map);
 
 void SV_HxSaveHubMap(void);
 
@@ -126,6 +123,13 @@ void SV_ClearTargetPlayers(void);
 #ifdef __cplusplus
 #include "gamestatereader.h"
 #include <de/Path>
+
+class SaveSlots;
+
+/**
+ * Returns the game's SaveSlots.
+ */
+SaveSlots &SV_SaveSlots();
 
 /**
  * Declare a new saved game state reader/interpreter.

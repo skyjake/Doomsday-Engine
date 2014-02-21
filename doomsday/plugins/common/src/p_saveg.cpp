@@ -30,6 +30,7 @@
 #include "gamestatereader.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
+#include "saveslots.h"
 #include <de/NativePath>
 #include <de/String>
 #include <de/memory.h>
@@ -40,7 +41,6 @@ static bool inited = false;
 
 static GameStateReaderFactory gameStateReaderFactory;
 static SaveSlots sslots(NUMSAVESLOTS);
-SaveSlots *saveSlots = &sslots;
 
 int saveToRealPlayerNum[MAXPLAYERS];
 #if __JHEXEN__
@@ -73,10 +73,10 @@ static de::Path savePathForClientSessionId(uint sessionId)
 #endif
 
 #if __JHEXEN__
-dd_bool SV_HxHaveMapStateForSlot(int slot, uint map)
+dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map)
 {
-    DENG_ASSERT(inited);
-    de::Path path = saveSlots->mapSavePathForSlot(slot, map);
+    DENG2_ASSERT(inited);
+    de::Path path = SV_SaveSlots()[slotNumber].mapSavePath(map);
     if(!path.isEmpty())
     {
         return SV_ExistingFile(path);
@@ -802,8 +802,6 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
 void SV_Initialize()
 {
     SV_InitIO();
-    // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
-    SV_ConfigureSavePaths();
 
     if(!inited)
     {
@@ -819,20 +817,26 @@ void SV_Shutdown()
     if(!inited) return;
 
     SV_ShutdownIO();
-    saveSlots->clearAllSaveInfo();
+    sslots.clearAll();
 
     inited = false;
 }
 
+SaveSlots &SV_SaveSlots()
+{
+    DENG2_ASSERT(inited);
+    return sslots;
+}
+
 void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker)
 {
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
     gameStateReaderFactory.declareReader(recognizer, maker);
 }
 
 bool SV_RecognizeGameState(SaveInfo &info, de::Path path)
 {
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
     return gameStateReaderFactory.recognize(info, path);
 }
 
@@ -847,24 +851,24 @@ static std::auto_ptr<IGameStateReader> gameStateReaderFor(SaveInfo &info, de::Pa
     return p;
 }
 
-dd_bool SV_LoadGame(int slot)
+dd_bool SV_LoadGame(int slotNumber)
 {
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
 
 #if __JHEXEN__
     int const logicalSlot = BASE_SLOT;
 #else
-    int const logicalSlot = slot;
+    int const logicalSlot = slotNumber;
 #endif
 
-    if(!saveSlots->isValidSlot(slot))
+    if(!SV_SaveSlots().isKnownSlot(slotNumber))
     {
         return false;
     }
 
-    App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slot);
+    App_Log(DE2_RES_VERBOSE, "Attempting load of save slot #%i...", slotNumber);
 
-    de::Path path = saveSlots->savePathForSlot(slot);
+    de::Path path = SV_SaveSlots()[slotNumber].savePath();
     if(path.isEmpty())
     {
         App_Log(DE2_RES_ERROR, "Game not loaded: path \"%s\" is unreachable",
@@ -876,55 +880,55 @@ dd_bool SV_LoadGame(int slot)
     // Copy all needed save files to the base slot.
     /// @todo Why do this BEFORE loading?? (G_NewGame() does not load the serialized map state)
     /// @todo Does any caller ever attempt to load the base slot?? (Doesn't seem logical)
-    if(slot != BASE_SLOT)
+    if(slotNumber != BASE_SLOT)
     {
-        saveSlots->copySlot(slot, BASE_SLOT);
+        SV_SaveSlots().copySlot(slotNumber, BASE_SLOT);
     }
 #endif
 
     try
     {
-        SaveInfo &info = saveSlots->saveInfo(logicalSlot);
+        SaveInfo &info = SV_SaveSlots()[logicalSlot].saveInfo();
 
         // Attempt to recognize and load the saved game state.
         gameStateReaderFor(info, path)->read(info, path);
 
         // Make note of the last used save slot.
-        Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("game-save-last-slot", slotNumber, SVF_WRITE_OVERRIDE);
 
         return true;
     }
     catch(de::Error const &er)
     {
         App_Log(DE2_RES_WARNING, "Error loading save slot #%i:\n%s",
-                                 slot, er.asText().toLatin1().constData());
+                                 slotNumber, er.asText().toLatin1().constData());
     }
 
     return false;
 }
 
-dd_bool SV_SaveGame(int slot, char const *description)
+dd_bool SV_SaveGame(int slotNumber, char const *description)
 {
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
 
 #if __JHEXEN__
     int const logicalSlot = BASE_SLOT;
 #else
-    int const logicalSlot = slot;
+    int const logicalSlot = slotNumber;
 #endif
 
-    if(!saveSlots->isValidSlot(slot))
+    if(!SV_SaveSlots().isKnownSlot(slotNumber))
     {
-        DENG_ASSERT(!"Invalid slot specified");
+        DENG2_ASSERT(!"Invalid slot specified");
         return false;
     }
     if(!description || !description[0])
     {
-        DENG_ASSERT(!"Empty description specified for slot");
+        DENG2_ASSERT(!"Empty description specified for slot");
         return false;
     }
 
-    de::Path path = saveSlots->savePathForSlot(logicalSlot);
+    de::Path path = SV_SaveSlots()[logicalSlot].savePath();
     if(path.isEmpty())
     {
         App_Log(DE2_RES_WARNING, "Cannot save game: path \"%s\" is unreachable",
@@ -941,22 +945,22 @@ dd_bool SV_SaveGame(int slot, char const *description)
         GameStateWriter().write(*info, path);
 
         // Swap the save info.
-        saveSlots->replaceSaveInfo(logicalSlot, info);
+        SV_SaveSlots()[logicalSlot].replaceSaveInfo(info);
 
 #if __JHEXEN__
         // Copy base slot to destination slot.
-        saveSlots->copySlot(logicalSlot, slot);
+        SV_SaveSlots().copySlot(logicalSlot, slotNumber);
 #endif
 
         // Make note of the last used save slot.
-        Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("game-save-last-slot", slotNumber, SVF_WRITE_OVERRIDE);
 
         return true;
     }
     catch(de::Error const &er)
     {
         App_Log(DE2_RES_WARNING, "Error writing to save slot #%i:\n%s",
-                                 slot, er.asText().toLatin1().constData());
+                                 slotNumber, er.asText().toLatin1().constData());
     }
 
     // Discard the useless save info.
@@ -968,7 +972,7 @@ dd_bool SV_SaveGame(int slot, char const *description)
 void SV_SaveGameClient(uint sessionId)
 {
 #if !__JHEXEN__ // unsupported in libhexen
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
 
     player_t *pl = &players[CONSOLEPLAYER];
     mobj_t *mo   = pl->plr->mo;
@@ -1023,7 +1027,7 @@ void SV_SaveGameClient(uint sessionId)
 void SV_LoadGameClient(uint sessionId)
 {
 #if !__JHEXEN__ // unsupported in libhexen
-    DENG_ASSERT(inited);
+    DENG2_ASSERT(inited);
 
     player_t *cpl = players + CONSOLEPLAYER;
     mobj_t *mo    = cpl->plr->mo;
@@ -1101,7 +1105,7 @@ void SV_LoadGameClient(uint sessionId)
 #if __JHEXEN__
 void SV_HxSaveHubMap()
 {
-    SV_OpenFile(saveSlots->mapSavePathForSlot(BASE_SLOT, gameMap), "wp");
+    SV_OpenFile(SV_SaveSlots()[BASE_SLOT].mapSavePath(gameMap), "wp");
 
     // Set the mobj archive numbers
     ThingArchive thingArchive;
@@ -1128,17 +1132,16 @@ void SV_HxLoadHubMap()
     // Been here before, load the previous map state.
     try
     {
-        SaveInfo &info = saveSlots->saveInfo(BASE_SLOT);
-
-        de::Path path = saveSlots->mapSavePathForSlot(BASE_SLOT, gameMap);
+        SaveSlot &sslot = SV_SaveSlots()[BASE_SLOT];
+        de::Path path = sslot.mapSavePath(gameMap);
         if(!SV_OpenMapSaveFile(path))
         {
             throw de::Error("SV_HxLoadHubMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for read");
         }
 
-        MapStateReader(info.version()).read(reader);
+        MapStateReader(sslot.saveInfo().version()).read(reader);
 
-        Z_Free(saveBuffer);
+        SV_HxReleaseSaveBuffer();
     }
     catch(de::Error const &er)
     {

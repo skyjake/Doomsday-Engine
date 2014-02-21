@@ -68,8 +68,16 @@ extern "C" {
 #endif
 
 void G_Register(void);
+
 void G_CommonPreInit(void);
+
+/**
+ * Common Post Game Initialization routine.
+ * Game-specific post init actions should be placed in eg D_PostInit()
+ * (for jDoom) and NOT here.
+ */
 void G_CommonPostInit(void);
+
 void G_CommonShutdown(void);
 
 void R_InitRefresh(void);
