@@ -3599,7 +3599,7 @@ void Hu_MenuInitWeaponsPage()
         { "Third",  WT_THIRD },
         { "Fourth", WT_FOURTH },
 #endif
-        { NULL, WT_NOCHANGE}
+        { "", WT_NOCHANGE}
     };
 
     mn_page_t *page = Hu_MenuNewPage("WeaponOptions", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawWeaponsPage, NULL, NULL);
@@ -3642,7 +3642,7 @@ void Hu_MenuInitWeaponsPage()
         list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
 
         mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-        for(int i = 0; weaponOrder[i].text; ++i, item++)
+        for(int i = 0; weaponOrder[i].text[0]; ++i, item++)
         {
             item->text = weaponOrder[i].text;
             item->data = weaponOrder[i].data;
