@@ -1,9 +1,8 @@
-/** @file d_main.c  Doom64-specific game initialization.
+/** @file d_main.cpp  Doom-specific game initialization.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
@@ -21,33 +20,33 @@
  * 02110-1301 USA</small>
  */
 
-#include <assert.h>
-#include <string.h>
+#include "jdoom.h"
 
-#include "jdoom64.h"
-
-#include "am_map.h"
 #include "d_netsv.h"
-#include "g_defs.h"
 #include "m_argv.h"
-#include "p_inventory.h"
-#include "p_saveg.h"
 #include "p_map.h"
+#include "p_saveg.h"
+#include "doomv9gamestatereader.h"
+#include "am_map.h"
+#include "g_defs.h"
+#include "saveslots.h"
 
 int verbose;
+
 float turboMul; // Multiplier for turbo.
 
 gamemode_t gameMode;
 int gameModeBits;
 
 // Default font colors.
-float const defFontRGB[]  = { 1, 1, 1 };
-float const defFontRGB2[] = { .85f, 0, 0 };
+float defFontRGB[3];
+float defFontRGB2[3];
+float defFontRGB3[3];
 
 // The patches used in drawing the view border.
 // Percent-encoded.
-char *borderGraphics[] = {
-    "Flats:FTILEABC", // Background.
+char const *borderGraphics[] = {
+    "Flats:FLOOR7_2", // Background.
     "BRDR_T", // Top.
     "BRDR_R", // Right.
     "BRDR_B", // Bottom.
@@ -58,40 +57,34 @@ char *borderGraphics[] = {
     "BRDR_BL" // Bottom left.
 };
 
-/**
- * Get a 32-bit integer value.
- */
 int D_GetInteger(int id)
 {
     return Common_GetInteger(id);
 }
 
-/**
- * Get a pointer to the value of a named variable/constant.
- */
-void* D_GetVariable(int id)
+void *D_GetVariable(int id)
 {
     static float bob[2];
 
     switch(id)
     {
     case DD_PLUGIN_NAME:
-        return PLUGIN_NAMETEXT;
+        return (void*)PLUGIN_NAMETEXT;
 
     case DD_PLUGIN_NICENAME:
-        return PLUGIN_NICENAME;
+        return (void*)PLUGIN_NICENAME;
 
     case DD_PLUGIN_VERSION_SHORT:
-        return PLUGIN_VERSION_TEXT;
+        return (void*)PLUGIN_VERSION_TEXT;
 
     case DD_PLUGIN_VERSION_LONG:
-        return PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS;
+        return (void*)(PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS);
 
     case DD_PLUGIN_HOMEURL:
-        return PLUGIN_HOMEURL;
+        return (void*)PLUGIN_HOMEURL;
 
     case DD_PLUGIN_DOCSURL:
-        return PLUGIN_DOCSURL;
+        return (void*)PLUGIN_DOCSURL;
 
     case DD_GAME_CONFIG:
         return gameConfigString;
@@ -122,12 +115,54 @@ void* D_GetVariable(int id)
     return 0;
 }
 
-/**
- * Pre Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void D_PreInit(void)
+void D_PreInit()
 {
+    // Configure default colors:
+    switch(gameMode)
+    {
+    case doom2_hacx:
+        defFontRGB[CR] = .85f;
+        defFontRGB[CG] = 0;
+        defFontRGB[CB] = 0;
+
+        defFontRGB2[CR] = .2f;
+        defFontRGB2[CG] = .9f;
+        defFontRGB2[CB] = .2f;
+
+        defFontRGB3[CR] = .2f;
+        defFontRGB3[CG] = .9f;
+        defFontRGB3[CB] = .2f;
+        break;
+
+    case doom_chex:
+        defFontRGB[CR] = .46f;
+        defFontRGB[CG] = 1;
+        defFontRGB[CB] = .4f;
+
+        defFontRGB2[CR] = .46f;
+        defFontRGB2[CG] = 1;
+        defFontRGB2[CB] = .4f;
+
+        defFontRGB3[CR] = 1;
+        defFontRGB3[CG] = 1;
+        defFontRGB3[CB] = .45f;
+        break;
+
+    default:
+        defFontRGB[CR] = 1;
+        defFontRGB[CG] = 1;
+        defFontRGB[CB] = 1;
+
+        defFontRGB2[CR] = .85f;
+        defFontRGB2[CG] = 0;
+        defFontRGB2[CB] = 0;
+
+        defFontRGB3[CR] = 1;
+        defFontRGB3[CG] = .9f;
+        defFontRGB3[CB] = .4f;
+        break;
+    }
+
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
@@ -137,38 +172,73 @@ void D_PreInit(void)
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
+
     cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.menuScale = .9f;
     cfg.menuTextGlitter = .5f;
     cfg.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
+    cfg.menuSlam = false;
+    cfg.menuShortcutsEnabled = true;
+    cfg.menuGameSaveSuggestDescription = true;
     cfg.menuEffectFlags = MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER;
     cfg.menuTextFlashColor[0] = .7f;
     cfg.menuTextFlashColor[1] = .9f;
     cfg.menuTextFlashColor[2] = 1;
     cfg.menuTextFlashSpeed = 4;
-    cfg.menuCursorRotate = false;
+    if(gameMode != doom_chex)
+    {
+        cfg.menuCursorRotate = true;
+    }
+    if(gameMode == doom2_hacx)
+    {
+        cfg.menuTextColors[0][CR] = cfg.menuTextColors[0][CG] = cfg.menuTextColors[0][CB] = 1;
+        memcpy(cfg.menuTextColors[1], defFontRGB, sizeof(cfg.menuTextColors[1]));
+        cfg.menuTextColors[2][CR] = cfg.menuTextColors[3][CR] = .2f;
+        cfg.menuTextColors[2][CG] = cfg.menuTextColors[3][CG] = .2f;
+        cfg.menuTextColors[2][CB] = cfg.menuTextColors[3][CB] = .9f;
+    }
+    else
+    {
+        memcpy(cfg.menuTextColors[0], defFontRGB2, sizeof(cfg.menuTextColors[0]));
+        if(gameMode == doom_chex)
+        {
+            cfg.menuTextColors[1][CR] = .85f;
+            cfg.menuTextColors[1][CG] = .3f;
+            cfg.menuTextColors[1][CB] = .3f;
+        }
+        else
+        {
+            cfg.menuTextColors[1][CR] = 1.f;
+            cfg.menuTextColors[1][CG] = .7f;
+            cfg.menuTextColors[1][CB] = .3f;
+        }
+        memcpy(cfg.menuTextColors[2], defFontRGB,  sizeof(cfg.menuTextColors[2]));
+        memcpy(cfg.menuTextColors[3], defFontRGB2, sizeof(cfg.menuTextColors[3]));
+    }
 
     cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
     cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.hudKeysCombine = false;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
     cfg.hudShown[HUD_AMMO] = true;
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_FRAGS] = true;
-    cfg.hudShown[HUD_INVENTORY] = false; // They will be visible when the automap is.
+    cfg.hudShown[HUD_FACE] = false;
     cfg.hudShown[HUD_LOG] = true;
-    { int i;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
+    for(int i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+    {
         cfg.hudUnHide[i] = 1;
     }
     cfg.hudScale = .6f;
-    cfg.hudColor[0] = 1;
-    cfg.hudColor[1] = cfg.hudColor[2] = 0;
-    cfg.hudColor[3] = 0.75f;
+
+    memcpy(cfg.hudColor, defFontRGB2, sizeof(cfg.hudColor));
+    cfg.hudColor[CA] = 1;
+
     cfg.hudFog = 1;
-    cfg.hudIconAlpha = 0.5f;
+    cfg.hudIconAlpha = 1;
     cfg.xhairAngle = 0;
     cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
@@ -176,45 +246,30 @@ void D_PreInit(void)
     cfg.xhairColor[1] = 1;
     cfg.xhairColor[2] = 1;
     cfg.xhairColor[3] = 1;
+
     cfg.filterStrength = .8f;
     cfg.moveCheckZ = true;
     cfg.jumpPower = 9;
     cfg.airborneMovement = 1;
-    cfg.weaponAutoSwitch = 1; // "If better" mode.
+    cfg.weaponAutoSwitch = 1; // if better
     cfg.noWeaponAutoSwitchIfFiring = false;
-    cfg.ammoAutoSwitch = 0; // Never.
+    cfg.ammoAutoSwitch = 0; // never
     cfg.secretMsg = true;
     cfg.slidingCorpses = false;
     //cfg.fastMonsters = false;
     cfg.netJumping = true;
+    cfg.netEpisode = 0;
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 4;
-    cfg.netBFGFreeLook = 0; // Allow free-aim 0=none 1=not BFG 2=All.
+    cfg.netBFGFreeLook = 0;    // allow free-aim 0=none 1=not BFG 2=All
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
-    cfg.netGravity = -1; // Use map default.
+    cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
     cfg.automapTitleAtBottom = true;
     cfg.hideIWADAuthor = true;
-    cfg.menuTextColors[0][CR] = 1;
-    cfg.menuTextColors[0][CG] = 0;
-    cfg.menuTextColors[0][CB] = 0;
-    cfg.menuTextColors[1][CR] = 1;
-    cfg.menuTextColors[1][CG] = 0;
-    cfg.menuTextColors[1][CB] = 0;
-    cfg.menuTextColors[2][CR] = 1;
-    cfg.menuTextColors[2][CG] = 0;
-    cfg.menuTextColors[2][CB] = 0;
-    cfg.menuTextColors[3][CR] = 1;
-    cfg.menuTextColors[3][CG] = 0;
-    cfg.menuTextColors[3][CB] = 0;
-    cfg.menuSlam = false;
-    cfg.menuShortcutsEnabled = true;
-    cfg.menuGameSaveSuggestName = true;
-
-    cfg.statusbarScale = 1;
 
     cfg.confirmQuickGameSave = true;
     cfg.confirmRebornLoad = true;
@@ -228,21 +283,27 @@ void D_PreInit(void)
     cfg.avoidDropoffs = true;
     cfg.moveBlock = false;
     cfg.fallOff = true;
+    cfg.fixOuchFace = true;
+    cfg.fixStatusbarOwnedWeapons = true;
+
+    cfg.statusbarScale = 1;
+    cfg.statusbarOpacity = 1;
+    cfg.statusbarCounterAlpha = 1;
 
     cfg.automapCustomColors = 0; // Never.
-    cfg.automapL0[0] = .4f; // Unseen areas.
+    cfg.automapL0[0] = .4f; // Unseen areas
     cfg.automapL0[1] = .4f;
     cfg.automapL0[2] = .4f;
 
-    cfg.automapL1[0] = 1.f; // Onesided lines.
+    cfg.automapL1[0] = 1.f; // onesided lines
     cfg.automapL1[1] = 0.f;
     cfg.automapL1[2] = 0.f;
 
-    cfg.automapL2[0] = .77f; // Floor height change lines.
+    cfg.automapL2[0] = .77f; // floor height change lines
     cfg.automapL2[1] = .6f;
     cfg.automapL2[2] = .325f;
 
-    cfg.automapL3[0] = 1.f; // Ceiling change lines.
+    cfg.automapL3[0] = 1.f; // ceiling change lines
     cfg.automapL3[1] = .95f;
     cfg.automapL3[2] = 0.f;
 
@@ -269,13 +330,27 @@ void D_PreInit(void)
     cfg.hudCheatCounterScale = .7f;
     cfg.hudCheatCounterShowWithAutomap = true;
 
-    cfg.msgCount = 1;
+    if(gameMode == doom_chex)
+    {
+        cfg.hudKeysCombine = true;
+    }
+
+    cfg.msgCount = 4;
     cfg.msgScale = .8f;
     cfg.msgUptime = 5;
     cfg.msgAlign = 0; // Left.
     cfg.msgBlink = 5;
 
-    cfg.msgColor[0] = cfg.msgColor[1] = cfg.msgColor[2] = 1;
+    if(gameMode == doom2_hacx)
+    {
+        cfg.msgColor[CR] = .2f;
+        cfg.msgColor[CG] = .2f;
+        cfg.msgColor[CB] = .9f;
+    }
+    else
+    {
+        memcpy(cfg.msgColor, defFontRGB2, sizeof(cfg.msgColor));
+    }
 
     cfg.chatBeep = true;
 
@@ -284,42 +359,46 @@ void D_PreInit(void)
     cfg.bobView = 1;
     cfg.bobWeaponLower = true;
     cfg.cameraNoClip = true;
+    cfg.respawnMonstersNightmare = true;
 
-    cfg.weaponOrder[0] = WT_TENTH;
-    cfg.weaponOrder[1] = WT_SIXTH;
-    cfg.weaponOrder[2] = WT_NINETH;
-    cfg.weaponOrder[3] = WT_FOURTH;
-    cfg.weaponOrder[4] = WT_THIRD;
-    cfg.weaponOrder[5] = WT_SECOND;
-    cfg.weaponOrder[6] = WT_EIGHTH;
-    cfg.weaponOrder[7] = WT_FIFTH;
-    cfg.weaponOrder[8] = WT_SEVENTH;
-    cfg.weaponOrder[9] = WT_FIRST;
-    cfg.weaponRecoil = true;
+    cfg.weaponOrder[0] = WT_SIXTH;
+    cfg.weaponOrder[1] = WT_NINETH;
+    cfg.weaponOrder[2] = WT_FOURTH;
+    cfg.weaponOrder[3] = WT_THIRD;
+    cfg.weaponOrder[4] = WT_SECOND;
+    cfg.weaponOrder[5] = WT_EIGHTH;
+    cfg.weaponOrder[6] = WT_FIFTH;
+    cfg.weaponOrder[7] = WT_SEVENTH;
+    cfg.weaponOrder[8] = WT_FIRST;
 
     cfg.weaponCycleSequential = true;
     cfg.berserkAutoSwitch = true;
 
-    // Use the crossfade transition by default.
-    Con_SetInteger("con-transition", 0);
+    // Use the DOOM transition by default.
+    Con_SetInteger("con-transition", 1);
 
-    // Do the common pre init routine.
+    // Do the common pre init routine;
     G_CommonPreInit();
+    G_InitSpecialFilter();
 }
 
-/**
- * Post Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void D_PostInit(void)
+void D_PostInit()
 {
     dd_bool autoStart = false;
     Uri *startMapUri = 0;
-    AutoStr *path;
-    int p;
 
-    // Common post init routine.
+    /// @todo Kludge: Border background is different in DOOM2.
+    /// @todo Do this properly!
+    if(gameModeBits & GM_ANY_DOOM2)
+        borderGraphics[0] = "Flats:GRNROCK";
+    else
+        borderGraphics[0] = "Flats:FLOOR7_2";
+
+    // Common post init routine
     G_CommonPostInit();
+
+    // Declare the Doom V9 game state reader/interpreter.
+    SV_DeclareGameStateReader(&DoomV9GameStateReader::recognize, &DoomV9GameStateReader::make);
 
     // Initialize ammo info.
     P_InitAmmoInfo();
@@ -333,9 +412,6 @@ void D_PostInit(void)
     // Get skill / episode / map from parms.
     gameRules.skill = /*startSkill =*/ SM_MEDIUM;
 
-    // Game mode specific settings
-    // None.
-
     if(CommandLine_Check("-altdeath"))
         cfg.netDeathmatch = 2;
     else if(CommandLine_Check("-deathmatch"))
@@ -346,7 +422,7 @@ void D_PostInit(void)
     gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
     gameRules.fast            = CommandLine_Check("-fast")? true : false;
 
-    p = CommandLine_Check("-timer");
+    int p = CommandLine_Check("-timer");
     if(p && p < myargc - 1 && gameRules.deathmatch)
     {
         int time = atoi(CommandLine_At(p + 1));
@@ -375,8 +451,8 @@ void D_PostInit(void)
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        int const slotNumber = SaveSlots_ParseSlotIdentifier(saveSlots, CommandLine_At(p + 1));
-        if(SaveSlots_SlotIsUserWritable(saveSlots, slotNumber) && G_LoadGame(slotNumber))
+        int const slotNumber = SV_SaveSlots().parseSlotIdentifier(CommandLine_At(p + 1));
+        if(SV_SaveSlots().slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
         {
             // No further initialization is to be done.
             return;
@@ -391,13 +467,34 @@ void D_PostInit(void)
         autoStart = true;
     }
 
+    p = CommandLine_Check("-episode");
+    if(p && p < myargc - 1)
+    {
+        int episodeNumber = atoi(CommandLine_At(p + 1));
+
+        startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber, 0);
+        autoStart = true;
+    }
+
     p = CommandLine_Check("-warp");
     if(p && p < myargc - 1)
     {
-        int mapNumber = atoi(CommandLine_At(p + 1));
+        if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
+        {
+            int mapNumber = atoi(CommandLine_At(p + 1));
 
-        startMapUri = G_ComposeMapUri(0, mapNumber > 0? mapNumber - 1 : mapNumber);
-        autoStart = true;
+            startMapUri = G_ComposeMapUri(0, mapNumber > 0? mapNumber - 1 : mapNumber);
+            autoStart = true;
+        }
+        else if(p < myargc - 2)
+        {
+            int episodeNumber = atoi(CommandLine_At(p + 1));
+            int mapNumber     = atoi(CommandLine_At(p + 2));
+
+            startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber,
+                                          mapNumber > 0? mapNumber - 1 : mapNumber);
+            autoStart = true;
+        }
     }
 
     if(!startMapUri)
@@ -414,7 +511,7 @@ void D_PostInit(void)
     }
 
     // Validate episode and map.
-    path = Uri_Compose(startMapUri);
+    AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
         G_DeferredNewGame(startMapUri, 0/*default*/, &gameRules);
@@ -427,8 +524,8 @@ void D_PostInit(void)
     Uri_Delete(startMapUri);
 }
 
-void D_Shutdown(void)
+void D_Shutdown()
 {
-    P_ShutdownInventory();
+    WI_Shutdown();
     G_CommonShutdown();
 }

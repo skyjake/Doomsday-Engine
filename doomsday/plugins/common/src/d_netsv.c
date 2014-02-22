@@ -1365,12 +1365,12 @@ static void NetSv_HitFloorCallback(mobj_t* mo, void* param)
     P_HitFloor(mo);
 }
 
-void NetSv_DoFloorHit(int player, Reader* msg)
+void NetSv_DoFloorHit(int player, Reader *msg)
 {
-    player_t* plr = &players[player];
-    mobj_t* mo;
+    player_t *plr = &players[player];
+    mobj_t *mo;
     coord_t pos[3];
-    coord_t mom[3];
+    //coord_t mom[3];
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1383,9 +1383,9 @@ void NetSv_DoFloorHit(int player, Reader* msg)
     pos[VZ] = Reader_ReadFloat(msg);
 
     // The momentum is included, although we don't really need it.
-    mom[MX] = Reader_ReadFloat(msg);
-    mom[MY] = Reader_ReadFloat(msg);
-    mom[MZ] = Reader_ReadFloat(msg);
+    /*mom[MX] =*/ Reader_ReadFloat(msg);
+    /*mom[MY] =*/ Reader_ReadFloat(msg);
+    /*mom[MZ] =*/ Reader_ReadFloat(msg);
 
     NetSv_TemporaryPlacedCallback(mo, 0, pos, mo->angle, NetSv_HitFloorCallback);
 }
@@ -1606,7 +1606,7 @@ D_CMD(MapCycle)
         map = NetSv_ScanCycle(cycleIndex = 0, 0);
         if(map < 0)
         {
-            App_Log(DE2_SCR_ERROR, "MapCycle \"%s\" is invalid.\n", mapCycle);
+            App_Log(DE2_SCR_ERROR, "MapCycle \"%s\" is invalid.", mapCycle);
             return false;
         }
         for(i = 0; i < MAXPLAYERS; ++i)

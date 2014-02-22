@@ -33,6 +33,14 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void G_ConsoleRegistration(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDOOM64_CONSOLE_H */

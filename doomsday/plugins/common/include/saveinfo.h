@@ -21,10 +21,9 @@
 #ifndef LIBCOMMON_SAVEINFO
 #define LIBCOMMON_SAVEINFO
 
-#include "doomsday.h"
 #include "common.h"
-
-#ifdef __cplusplus
+#include <de/Path>
+#include <de/String>
 
 /**
  * Represents a saved game session state.
@@ -33,44 +32,108 @@
  */
 class SaveInfo
 {
-public: /// @todo make private:
-    Str _description;
-    uint _sessionId;
-    int _magic;
-    int _version;
-    gamemode_t _gameMode;
-    Uri *_mapUri;
+public:
+    /// Logical game session status:
+    enum SessionStatus {
+        Loadable,
+        Incompatible,
+        Unused
+    };
+
 #if !__JHEXEN__
-    int _mapTime;
-    byte _players[MAXPLAYERS];
+    // Info data about players present (or not) in the game session.
+    typedef byte Players[MAXPLAYERS];
 #endif
-    GameRuleset _gameRules;
 
 public:
-    SaveInfo();
+    SaveInfo(de::String const &fileName = "");
     SaveInfo(SaveInfo const &other);
-    ~SaveInfo();
 
-    static SaveInfo *newWithCurrentSessionMetadata(Str const *description);
+    static SaveInfo *newWithCurrentSessionMetadata(de::String const &fileName = "",
+                                                   de::String const &userDescription = "");
 
     SaveInfo &operator = (SaveInfo const &other);
 
     /**
-     * Determines whether the saved game session is compatibile with the current
-     * game session (and @em should therefore be loadable).
+     * Determines the logical status of the saved game session.
+     *
+     * @see statusAsText()
      */
-    bool isLoadable();
+    SessionStatus status() const;
+
+    /**
+     * Returns a textual representation of the current status of the saved game session.
+     *
+     * @see status()
+     */
+    de::String statusAsText() const;
+
+    /**
+     * Composes a human-friendly, styled, textual description of the saved game session.
+     */
+    de::String description() const;
+
+    /**
+     * Determines whether a saved game session exists. However, it may not be compatible with
+     * the current game session.
+     *
+     * @see gameSessionIsLoadable()
+     */
+    bool haveGameSession() const;
+
+    /**
+     * Determines whether a saved game session exists and is compatibile with the current game
+     * session (and @em should therefore be loadable).
+     */
+    bool gameSessionIsLoadable() const;
+
+    /**
+     * Attempt to update the save info from the named saved game session file. If the save path
+     * is invalid, unreachable, or the game state is not recognized -- the save info is returned
+     * to a valid but non-loadable state.
+     *
+     * @see gameSessionIsLoadable()
+     */
+    void updateFromFile();
+
+    /**
+     * Returns the name of the resource file (with extension) containing the game session header.
+     */
+    de::String fileName() const;
+    void setFileName(de::String newName);
+
+    /**
+     * Returns the name of the resource file (with extension) containing the map session state.
+     *
+     * @param map   Logical map index.
+     *
+     * @see fileName()
+     */
+    de::String fileNameForMap(uint map) const;
+
+    /**
+     * Update the metadata associated with the save using values derived from the current game
+     * session. Note that this does @em not affect the copy of this save on disk.
+     */
+    void applyCurrentSessionMetadata();
+
+    /**
+     * Returns the unique "identity key" of the game session.
+     */
+    de::String const &gameIdentityKey() const;
+    void setGameIdentityKey(de::String newGameIdentityKey);
 
     /**
      * Returns the logical version of the serialized game session state.
      */
     int version() const;
+    void setVersion(int newVersion);
 
     /**
-     * Returns the textual description of the game session (provided by the user).
+     * Returns the textual description of the game session provided by the user.
      */
-    Str const *description() const;
-    void setDescription(Str const *newDesc);
+    de::String const &userDescription() const;
+    void setUserDescription(de::String newUserDescription);
 
     /**
      * @see G_GenerateSessionId()
@@ -82,76 +145,47 @@ public:
      * Returns the URI of the @em current map of the game session.
      */
     Uri const *mapUri() const;
+    void setMapUri(Uri const *newMapUri);
 
 #if !__JHEXEN__
+
     /**
      * Returns the expired time in tics since the @em current map of the game session began.
      */
     int mapTime() const;
-#endif
+    void setMapTime(int newMapTime);
+
+    /**
+     * Returns the player info data for the game session.
+     */
+    Players const &players() const;
+    void setPlayers(Players const &newPlayers);
+
+#endif // !__JHEXEN__
 
     /**
      * Returns the game ruleset for the game session.
      */
     GameRuleset const &gameRules() const;
+    void setGameRules(GameRuleset const &newRules);
 
     /**
-     * Serializes the game session info using @a writer.
+     * Serializes the game session header using @a writer.
      */
     void write(Writer *writer) const;
 
     /**
-     * Deserializes the game session info using @a reader.
+     * Deserializes the game session header using @a reader.
      */
     void read(Reader *reader);
 
-    /**
-     * Hexen-specific version for deserializing legacy v.9 game session info.
-     */
-#if __JHEXEN__
-    void read_Hx_v9(Reader *reader);
-#endif
-
-    /**
-     * Update the metadata associated with the save using values derived from the
-     * current game session. Note that this does @em not affect the copy of this save
-     * on disk.
-     */
-    void applyCurrentSessionMetadata();
-
 public: /// @todo refactor away:
     int magic() const;
+    void setMagic(int newMagic);
+    static SaveInfo *fromReader(Reader *reader);
+
+private:
+    DENG2_PRIVATE(d)
 };
-
-#endif // __cplusplus
-
-// C wrapper API ---------------------------------------------------------------
-
-#ifdef __cplusplus
-extern "C" {
-#else
-typedef void *SaveInfo;
-#endif
-
-SaveInfo *SaveInfo_New(void);
-SaveInfo *SaveInfo_Dup(SaveInfo const *other);
-
-void SaveInfo_Delete(SaveInfo *info);
-
-SaveInfo *SaveInfo_Copy(SaveInfo *info, SaveInfo const *other);
-dd_bool SaveInfo_IsLoadable(SaveInfo *info);
-Str const *SaveInfo_Description(SaveInfo const *info);
-void SaveInfo_SetDescription(SaveInfo *info, Str const *newName);
-uint SaveInfo_SessionId(SaveInfo const *info);
-void SaveInfo_SetSessionId(SaveInfo *info, uint newSessionId);
-void SaveInfo_Write(SaveInfo *info, Writer *writer);
-void SaveInfo_Read(SaveInfo *info, Reader *reader);
-#if __JHEXEN__
-void SaveInfo_Read_Hx_v9(SaveInfo *info, Reader *reader);
-#endif
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // LIBCOMMON_SAVEINFO

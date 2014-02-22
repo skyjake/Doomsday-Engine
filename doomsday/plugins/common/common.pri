@@ -71,6 +71,7 @@ HEADERS += \
     $$common_inc/r_common.h \
     $$common_inc/saveinfo.h \
     $$common_inc/saveslots.h \
+    $$common_inc/thingarchive.h \
     $$common_inc/thinkerinfo.h \
     $$common_inc/x_hair.h \
     $$common_inc/xgclass.h
@@ -87,7 +88,7 @@ SOURCES += \
     $$common_src/g_controls.c \
     $$common_src/g_defs.c \
     $$common_src/g_eventsequence.cpp \
-    $$common_src/g_game.c \
+    $$common_src/g_game.cpp \
     $$common_src/g_update.c \
     $$common_src/gamerules.c \
     $$common_src/gamestatereader.cpp \
@@ -99,7 +100,7 @@ SOURCES += \
     $$common_src/hu_inventory.c \
     $$common_src/hu_lib.c \
     $$common_src/hu_log.c \
-    $$common_src/hu_menu.c \
+    $$common_src/hu_menu.cpp \
     $$common_src/hu_msg.c \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
@@ -137,5 +138,6 @@ SOURCES += \
     $$common_src/r_common.c \
     $$common_src/saveinfo.cpp \
     $$common_src/saveslots.cpp \
+    $$common_src/thingarchive.cpp \
     $$common_src/thinkerinfo.cpp \
     $$common_src/x_hair.c

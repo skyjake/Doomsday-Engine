@@ -66,10 +66,19 @@ enum {
     MO_XX2
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void            P_RegisterMapObjs(void);
 
 int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
                                              valuetype_t type, void* data);
 int             P_HandleMapObjectStatusReport(int code, uint id, int dtype,
                                               void* data);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif /* LIBDOOM64_SETUP_H */

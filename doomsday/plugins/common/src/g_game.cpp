@@ -20,53 +20,49 @@
  * 02110-1301 USA</small>
  */
 
-#include <ctype.h>
-#include <assert.h>
-#include <string.h>
-#include <math.h>
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "common.h"
+#include "g_common.h"
 
+#include "am_map.h"
+#include "d_net.h"
 #include "dmu_lib.h"
 #include "fi_lib.h"
-#include "hu_lib.h"
-#include "p_saveg.h"
-#include "p_sound.h"
 #include "g_controls.h"
 #include "g_eventsequence.h"
-#include "p_mapsetup.h"
-#include "p_user.h"
-#include "p_actor.h"
-#include "p_tick.h"
-#include "am_map.h"
-#include "hu_stuff.h"
-#include "hu_menu.h"
-#include "hu_log.h"
+#include "g_update.h"
+#include "hu_lib.h"
 #include "hu_chat.h"
+#include "hu_inventory.h"
+#include "hu_log.h"
+#include "hu_menu.h"
 #include "hu_msg.h"
 #include "hu_pspr.h"
-#include "g_common.h"
-#include "g_update.h"
-#include "g_eventsequence.h"
-#include "d_net.h"
-#include "x_hair.h"
-#include "player.h"
-#include "r_common.h"
-#include "p_map.h"
-#include "p_mapspec.h"
-#include "p_start.h"
+#include "hu_stuff.h"
+#include "p_actor.h"
 #include "p_inventory.h"
-#if __JHERETIC__ || __JHEXEN__
-#  include "hu_inventory.h"
-#  include "p_inventory.h"
-#endif
+#include "p_map.h"
 #if __JHEXEN__
 #  include "p_mapinfo.h"
 #endif
-#include "d_net.h"
+#include "p_mapsetup.h"
+#include "p_mapspec.h"
+#include "p_saveg.h"
+#include "p_saveio.h"
+#include "p_sound.h"
+#include "p_start.h"
+#include "p_tick.h"
+#include "p_user.h"
+#include "player.h"
+#include "r_common.h"
+#include "x_hair.h"
+
+#include "saveslots.h"
+#include <de/NativePath>
+#include <cctype>
+#include <cstring>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #define BODYQUEUESIZE       (32)
 
@@ -80,35 +76,36 @@ struct missileinfo_s {
 MonsterMissileInfo[] =
 {
 #if __JDOOM__ || __JDOOM64__
-    {MT_BRUISERSHOT, {15, 20}},
-    {MT_HEADSHOT, {10, 20}},
-    {MT_TROOPSHOT, {10, 20}},
+    { MT_BRUISERSHOT, {15, 20} },
+    { MT_HEADSHOT, {10, 20} },
+    { MT_TROOPSHOT, {10, 20} },
 # if __JDOOM64__
-    {MT_BRUISERSHOTRED, {15, 20}},
-    {MT_NTROSHOT, {20, 40}},
+    { MT_BRUISERSHOTRED, {15, 20} },
+    { MT_NTROSHOT, {20, 40} },
 # endif
 #elif __JHERETIC__
-    {MT_IMPBALL, {10, 20}},
-    {MT_MUMMYFX1, {9, 18}},
-    {MT_KNIGHTAXE, {9, 18}},
-    {MT_REDAXE, {9, 18}},
-    {MT_BEASTBALL, {12, 20}},
-    {MT_WIZFX1, {18, 24}},
-    {MT_SNAKEPRO_A, {14, 20}},
-    {MT_SNAKEPRO_B, {14, 20}},
-    {MT_HEADFX1, {13, 20}},
-    {MT_HEADFX3, {10, 18}},
-    {MT_MNTRFX1, {20, 26}},
-    {MT_MNTRFX2, {14, 20}},
-    {MT_SRCRFX1, {20, 28}},
-    {MT_SOR2FX1, {20, 28}},
+    { MT_IMPBALL, {10, 20} },
+    { MT_MUMMYFX1, {9, 18} },
+    { MT_KNIGHTAXE, {9, 18} },
+    { MT_REDAXE, {9, 18} },
+    { MT_BEASTBALL, {12, 20} },
+    { MT_WIZFX1, {18, 24} },
+    { MT_SNAKEPRO_A, {14, 20} },
+    { MT_SNAKEPRO_B, {14, 20} },
+    { MT_HEADFX1, {13, 20} },
+    { MT_HEADFX3, {10, 18} },
+    { MT_MNTRFX1, {20, 26} },
+    { MT_MNTRFX2, {14, 20} },
+    { MT_SRCRFX1, {20, 28} },
+    { MT_SOR2FX1, {20, 28} },
 #endif
-    {-1, {-1, -1}}                  // Terminator
+    { mobjtype_t(-1), {-1, -1} }
 };
 #endif
 
 D_CMD(CycleTextureGamma);
 D_CMD(DeleteGameSave);
+D_CMD(InspectGameSave);
 D_CMD(EndGame);
 D_CMD(HelpScreen);
 D_CMD(ListMaps);
@@ -120,44 +117,45 @@ D_CMD(SaveGame);
 D_CMD(OpenSaveMenu);
 D_CMD(WarpMap);
 
-void    G_PlayerReborn(int player);
-void    G_DoReborn(int playernum);
+void G_PlayerReborn(int player);
+void G_DoReborn(int playernum);
 dd_bool G_StartDebriefing();
 
-typedef struct {
+struct loadmap_params_t
+{
     Uri *mapUri;
     dd_bool revisit;
-} loadmap_params_t;
-int     G_DoLoadMap(loadmap_params_t* params);
+};
+int G_DoLoadMap(loadmap_params_t *parm);
 
-void    G_DoLoadGame(void);
-void    G_DoPlayDemo(void);
-void    G_DoMapCompleted(void);
-void    G_DoEndDebriefing(void);
-void    G_DoVictory(void);
-void    G_DoLeaveMap(void);
-void    G_DoRestartMap(void);
-void    G_DoSaveGame(void);
-void    G_DoScreenShot(void);
-void    G_DoQuitGame(void);
+void G_DoLoadGame();
+void G_DoPlayDemo();
+void G_DoMapCompleted();
+void G_DoEndDebriefing();
+void G_DoVictory();
+void G_DoLeaveMap();
+void G_DoRestartMap();
+void G_DoSaveGame();
+void G_DoScreenShot();
+void G_DoQuitGame();
 
-void    G_StopDemo(void);
+void G_StopDemo();
 
 /**
  * Updates game status cvars for the specified player.
  */
-void G_UpdateGSVarsForPlayer(player_t* pl);
+void G_UpdateGSVarsForPlayer(player_t *pl);
 
 /**
  * Updates game status cvars for the current map.
  */
-void G_UpdateGSVarsForMap(void);
+void G_UpdateGSVarsForMap();
 
-void R_LoadVectorGraphics(void);
+void R_LoadVectorGraphics();
 
-int Hook_DemoStop(int hookType, int val, void* parameters);
+int Hook_DemoStop(int hookType, int val, void *parm);
 
-static void G_InitNewGame(void);
+static void G_InitNewGame();
 
 game_config_t cfg; // The global cfg.
 
@@ -178,7 +176,7 @@ dd_bool secretExit;
 #endif
 
 #if __JHEXEN__
-uint mapHub = 0;
+uint mapHub;
 #endif
 
 dd_bool monsterInfight;
@@ -188,20 +186,20 @@ player_t players[MAXPLAYERS];
 int totalKills, totalItems, totalSecret; // For intermission.
 
 dd_bool singledemo; // Quit after playing a demo from cmdline.
-dd_bool briefDisabled = false;
+dd_bool briefDisabled;
 
 dd_bool precache = true; // If @c true, load all graphics at start.
-dd_bool customPal = false; // If @c true, a non-IWAD palette is in use.
+dd_bool customPal; // If @c true, a non-IWAD palette is in use.
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 // Game Action Variables:
-int gaSaveGameSlot = 0;
-dd_bool gaSaveGameGenerateName = true;
-ddstring_t* gaSaveGameName;
-int gaLoadGameSlot = 0;
+int gaSaveGameSlot;
+dd_bool gaSaveGameGenerateDescription = true;
+ddstring_t *gaSaveGameUserDescription;
+int gaLoadGameSlot;
 
 #if __JDOOM__ || __JDOOM64__
 mobj_t *bodyQueue[BODYQUEUESIZE];
@@ -209,22 +207,22 @@ int bodyQueueSlot;
 #endif
 
 // vars used with game status cvars
-int gsvEpisode = 0;
-int gsvMap = 0;
-char *gsvMapAuthor = "Unknown";
+int gsvEpisode;
+int gsvMap;
+char *gsvMapAuthor;// = "Unknown";
 int gsvMapMusic = -1;
-char *gsvMapTitle = "Unknown";
+char *gsvMapTitle;// = "Unknown";
 
-int gsvInMap = 0;
-int gsvCurrentMusic = 0;
+int gsvInMap;
+int gsvCurrentMusic;
 
-int gsvArmor = 0;
-int gsvHealth = 0;
+int gsvArmor;
+int gsvHealth;
 
 #if !__JHEXEN__
-int gsvKills = 0;
-int gsvItems = 0;
-int gsvSecrets = 0;
+int gsvKills;
+int gsvItems;
+int gsvSecrets;
 #endif
 
 int gsvCurrentWeapon;
@@ -244,164 +242,165 @@ static gamestate_t gameState = GS_STARTUP;
 
 cvartemplate_t gamestatusCVars[] =
 {
-    {"game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0},
-    {"game-skill", READONLYCVAR, CVT_INT, &gameRules.skill, 0, 0},
-    {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0},
-    {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0},
+    {"game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0, 0},
+    {"game-skill", READONLYCVAR, CVT_INT, &gameRules.skill, 0, 0, 0},
+    {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0, 0},
+    {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0, 0},
 #if !__JHEXEN__
-    {"game-stats-kills", READONLYCVAR, CVT_INT, &gsvKills, 0, 0},
-    {"game-stats-items", READONLYCVAR, CVT_INT, &gsvItems, 0, 0},
-    {"game-stats-secrets", READONLYCVAR, CVT_INT, &gsvSecrets, 0, 0},
+    {"game-stats-kills", READONLYCVAR, CVT_INT, &gsvKills, 0, 0, 0},
+    {"game-stats-items", READONLYCVAR, CVT_INT, &gsvItems, 0, 0, 0},
+    {"game-stats-secrets", READONLYCVAR, CVT_INT, &gsvSecrets, 0, 0, 0},
 #endif
 
-    {"map-author", READONLYCVAR, CVT_CHARPTR, &gsvMapAuthor, 0, 0},
-    {"map-episode", READONLYCVAR, CVT_INT, &gsvEpisode, 0, 0},
+    {"map-author", READONLYCVAR, CVT_CHARPTR, &gsvMapAuthor, 0, 0, 0},
+    {"map-episode", READONLYCVAR, CVT_INT, &gsvEpisode, 0, 0, 0},
 #if __JHEXEN__
-    {"map-hub", READONLYCVAR, CVT_INT, &mapHub, 0, 0},
+    {"map-hub", READONLYCVAR, CVT_INT, &mapHub, 0, 0, 0},
 #endif
-    {"map-id", READONLYCVAR, CVT_INT, &gsvMap, 0, 0},
-    {"map-music", READONLYCVAR, CVT_INT, &gsvMapMusic, 0, 0},
-    {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapTitle, 0, 0},
+    {"map-id", READONLYCVAR, CVT_INT, &gsvMap, 0, 0, 0},
+    {"map-music", READONLYCVAR, CVT_INT, &gsvMapMusic, 0, 0, 0},
+    {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapTitle, 0, 0, 0},
 
-    {"player-health", READONLYCVAR, CVT_INT, &gsvHealth, 0, 0},
-    {"player-armor", READONLYCVAR, CVT_INT, &gsvArmor, 0, 0},
-    {"player-weapon-current", READONLYCVAR, CVT_INT, &gsvCurrentWeapon, 0, 0},
+    {"player-health", READONLYCVAR, CVT_INT, &gsvHealth, 0, 0, 0},
+    {"player-armor", READONLYCVAR, CVT_INT, &gsvArmor, 0, 0, 0},
+    {"player-weapon-current", READONLYCVAR, CVT_INT, &gsvCurrentWeapon, 0, 0, 0},
 
 #if __JDOOM__ || __JDOOM64__
     // Ammo
-    {"player-ammo-bullets", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CLIP], 0, 0},
-    {"player-ammo-shells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_SHELL], 0, 0},
-    {"player-ammo-cells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CELL], 0, 0},
-    {"player-ammo-missiles", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MISSILE], 0, 0},
+    {"player-ammo-bullets", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CLIP], 0, 0, 0},
+    {"player-ammo-shells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_SHELL], 0, 0, 0},
+    {"player-ammo-cells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CELL], 0, 0, 0},
+    {"player-ammo-missiles", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MISSILE], 0, 0, 0},
     // Weapons
-    {"player-weapon-fist", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0},
-    {"player-weapon-pistol", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0},
-    {"player-weapon-shotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0},
-    {"player-weapon-chaingun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0},
-    {"player-weapon-mlauncher", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0},
-    {"player-weapon-plasmarifle", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0},
-    {"player-weapon-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0},
-    {"player-weapon-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0},
-    {"player-weapon-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_NINETH], 0, 0},
+    {"player-weapon-fist", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0, 0},
+    {"player-weapon-pistol", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
+    {"player-weapon-shotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
+    {"player-weapon-chaingun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
+    {"player-weapon-mlauncher", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0, 0},
+    {"player-weapon-plasmarifle", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0, 0},
+    {"player-weapon-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0, 0},
+    {"player-weapon-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0, 0},
+    {"player-weapon-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_NINETH], 0, 0, 0},
     // Keys
-    {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUECARD], 0, 0},
-    {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWCARD], 0, 0},
-    {"player-key-red", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDCARD], 0, 0},
-    {"player-key-blueskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUESKULL], 0, 0},
-    {"player-key-yellowskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWSKULL], 0, 0},
-    {"player-key-redskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDSKULL], 0, 0},
+    {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUECARD], 0, 0, 0},
+    {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWCARD], 0, 0, 0},
+    {"player-key-red", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDCARD], 0, 0, 0},
+    {"player-key-blueskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUESKULL], 0, 0, 0},
+    {"player-key-yellowskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWSKULL], 0, 0, 0},
+    {"player-key-redskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDSKULL], 0, 0, 0},
 #elif __JHERETIC__
     // Ammo
-    {"player-ammo-goldwand", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CRYSTAL], 0, 0},
-    {"player-ammo-crossbow", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ARROW], 0, 0},
-    {"player-ammo-dragonclaw", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ORB], 0, 0},
-    {"player-ammo-hellstaff", READONLYCVAR, CVT_INT, &gsvAmmo[AT_RUNE], 0, 0},
-    {"player-ammo-phoenixrod", READONLYCVAR, CVT_INT, &gsvAmmo[AT_FIREORB], 0, 0},
-    {"player-ammo-mace", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MSPHERE], 0, 0},
+    {"player-ammo-goldwand", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CRYSTAL], 0, 0, 0},
+    {"player-ammo-crossbow", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ARROW], 0, 0, 0},
+    {"player-ammo-dragonclaw", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ORB], 0, 0, 0},
+    {"player-ammo-hellstaff", READONLYCVAR, CVT_INT, &gsvAmmo[AT_RUNE], 0, 0, 0},
+    {"player-ammo-phoenixrod", READONLYCVAR, CVT_INT, &gsvAmmo[AT_FIREORB], 0, 0, 0},
+    {"player-ammo-mace", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MSPHERE], 0, 0, 0},
      // Weapons
-    {"player-weapon-staff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0},
-    {"player-weapon-goldwand", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0},
-    {"player-weapon-crossbow", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0},
-    {"player-weapon-dragonclaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0},
-    {"player-weapon-hellstaff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0},
-    {"player-weapon-phoenixrod", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0},
-    {"player-weapon-mace", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0},
-    {"player-weapon-gauntlets", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0},
+    {"player-weapon-staff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0, 0},
+    {"player-weapon-goldwand", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
+    {"player-weapon-crossbow", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
+    {"player-weapon-dragonclaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
+    {"player-weapon-hellstaff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0, 0},
+    {"player-weapon-phoenixrod", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0, 0},
+    {"player-weapon-mace", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0, 0},
+    {"player-weapon-gauntlets", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0, 0},
     // Keys
-    {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOW], 0, 0},
-    {"player-key-green", READONLYCVAR, CVT_INT, &gsvKeys[KT_GREEN], 0, 0},
-    {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUE], 0, 0},
+    {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOW], 0, 0, 0},
+    {"player-key-green", READONLYCVAR, CVT_INT, &gsvKeys[KT_GREEN], 0, 0, 0},
+    {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUE], 0, 0, 0},
     // Inventory items
-    {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0},
-    {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVISIBILITY], 0, 0},
-    {"player-artifact-crystalvial", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0},
-    {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0},
-    {"player-artifact-tomeofpower", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TOMBOFPOWER], 0, 0},
-    {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0},
-    {"player-artifact-firebomb", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FIREBOMB], 0, 0},
-    {"player-artifact-egg", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0},
-    {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0},
-    {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0},
+    {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0, 0},
+    {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVISIBILITY], 0, 0, 0},
+    {"player-artifact-crystalvial", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0, 0},
+    {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0, 0},
+    {"player-artifact-tomeofpower", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TOMBOFPOWER], 0, 0, 0},
+    {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0, 0},
+    {"player-artifact-firebomb", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FIREBOMB], 0, 0, 0},
+    {"player-artifact-egg", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0, 0},
+    {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0, 0},
+    {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0, 0},
 #elif __JHEXEN__
     // Mana
-    {"player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[AT_BLUEMANA], 0, 0},
-    {"player-mana-green", READONLYCVAR, CVT_INT, &gsvAmmo[AT_GREENMANA], 0, 0},
+    {"player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[AT_BLUEMANA], 0, 0, 0},
+    {"player-mana-green", READONLYCVAR, CVT_INT, &gsvAmmo[AT_GREENMANA], 0, 0, 0},
     // Keys
-    {"player-key-steel", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY1], 0, 0},
-    {"player-key-cave", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY2], 0, 0},
-    {"player-key-axe", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY3], 0, 0},
-    {"player-key-fire", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY4], 0, 0},
-    {"player-key-emerald", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY5], 0, 0},
-    {"player-key-dungeon", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY6], 0, 0},
-    {"player-key-silver", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY7], 0, 0},
-    {"player-key-rusted", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY8], 0, 0},
-    {"player-key-horn", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY9], 0, 0},
-    {"player-key-swamp", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYA], 0, 0},
-    {"player-key-castle", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYB], 0, 0},
+    {"player-key-steel", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY1], 0, 0, 0},
+    {"player-key-cave", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY2], 0, 0, 0},
+    {"player-key-axe", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY3], 0, 0, 0},
+    {"player-key-fire", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY4], 0, 0, 0},
+    {"player-key-emerald", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY5], 0, 0, 0},
+    {"player-key-dungeon", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY6], 0, 0, 0},
+    {"player-key-silver", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY7], 0, 0, 0},
+    {"player-key-rusted", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY8], 0, 0, 0},
+    {"player-key-horn", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY9], 0, 0, 0},
+    {"player-key-swamp", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYA], 0, 0, 0},
+    {"player-key-castle", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYB], 0, 0, 0},
     // Weapons
-    {"player-weapon-first", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0},
-    {"player-weapon-second", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0},
-    {"player-weapon-third", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0},
-    {"player-weapon-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0},
+    {"player-weapon-first", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0, 0},
+    {"player-weapon-second", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
+    {"player-weapon-third", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
+    {"player-weapon-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
     // Weapon Pieces
-    {"player-weapon-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0},
-    {"player-weapon-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0},
-    {"player-weapon-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0},
-    {"player-weapon-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0},
+    {"player-weapon-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0, 0},
+    {"player-weapon-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0, 0},
+    {"player-weapon-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0, 0},
+    {"player-weapon-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0, 0},
     // Inventory items
-    {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0},
-    {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0},
-    {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0},
-    {"player-artifact-mysticambit", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALINGRADIUS], 0, 0},
-    {"player-artifact-darkservant", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUMMON], 0, 0},
-    {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0},
-    {"player-artifact-porkalator", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0},
-    {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0},
-    {"player-artifact-repulsion", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BLASTRADIUS], 0, 0},
-    {"player-artifact-flechette", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_POISONBAG], 0, 0},
-    {"player-artifact-banishment", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORTOTHER], 0, 0},
-    {"player-artifact-speed", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SPEED], 0, 0},
-    {"player-artifact-might", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTMANA], 0, 0},
-    {"player-artifact-bracers", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTARMOR], 0, 0},
-    {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0},
-    {"player-artifact-skull", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL], 0, 0},
-    {"player-artifact-heart", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBIG], 0, 0},
-    {"player-artifact-ruby", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMRED], 0, 0},
-    {"player-artifact-emerald1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN1], 0, 0},
-    {"player-artifact-emerald2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN2], 0, 0},
-    {"player-artifact-sapphire1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE1], 0, 0},
-    {"player-artifact-sapphire2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE2], 0, 0},
-    {"player-artifact-daemoncodex", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK1], 0, 0},
-    {"player-artifact-liberoscura", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK2], 0, 0},
-    {"player-artifact-flamemask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL2], 0, 0},
-    {"player-artifact-glaiveseal", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZFWEAPON], 0, 0},
-    {"player-artifact-holyrelic", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZCWEAPON], 0, 0},
-    {"player-artifact-sigilmagus", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZMWEAPON], 0, 0},
-    {"player-artifact-gear1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR1], 0, 0},
-    {"player-artifact-gear2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR2], 0, 0},
-    {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR3], 0, 0},
-    {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR4], 0, 0},
+    {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0, 0},
+    {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0, 0},
+    {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0, 0},
+    {"player-artifact-mysticambit", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALINGRADIUS], 0, 0, 0},
+    {"player-artifact-darkservant", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUMMON], 0, 0, 0},
+    {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0, 0},
+    {"player-artifact-porkalator", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0, 0},
+    {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0, 0},
+    {"player-artifact-repulsion", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BLASTRADIUS], 0, 0, 0},
+    {"player-artifact-flechette", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_POISONBAG], 0, 0, 0},
+    {"player-artifact-banishment", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORTOTHER], 0, 0, 0},
+    {"player-artifact-speed", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SPEED], 0, 0, 0},
+    {"player-artifact-might", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTMANA], 0, 0, 0},
+    {"player-artifact-bracers", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTARMOR], 0, 0, 0},
+    {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0, 0},
+    {"player-artifact-skull", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL], 0, 0, 0},
+    {"player-artifact-heart", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBIG], 0, 0, 0},
+    {"player-artifact-ruby", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMRED], 0, 0, 0},
+    {"player-artifact-emerald1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN1], 0, 0, 0},
+    {"player-artifact-emerald2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN2], 0, 0, 0},
+    {"player-artifact-sapphire1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE1], 0, 0, 0},
+    {"player-artifact-sapphire2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE2], 0, 0, 0},
+    {"player-artifact-daemoncodex", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK1], 0, 0, 0},
+    {"player-artifact-liberoscura", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK2], 0, 0, 0},
+    {"player-artifact-flamemask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL2], 0, 0, 0},
+    {"player-artifact-glaiveseal", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZFWEAPON], 0, 0, 0},
+    {"player-artifact-holyrelic", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZCWEAPON], 0, 0, 0},
+    {"player-artifact-sigilmagus", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZMWEAPON], 0, 0, 0},
+    {"player-artifact-gear1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR1], 0, 0, 0},
+    {"player-artifact-gear2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR2], 0, 0, 0},
+    {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR3], 0, 0, 0},
+    {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR4], 0, 0, 0},
 #endif
-    {NULL}
+    {"", 0, CVT_NULL, 0, 0, 0, 0}
 };
 
 ccmdtemplate_t gameCmds[] = {
-    { "deletegamesave", "ss",   CCmdDeleteGameSave },
-    { "deletegamesave", "s",    CCmdDeleteGameSave },
-    { "endgame",        "",     CCmdEndGame },
-    { "helpscreen",     "",     CCmdHelpScreen },
-    { "listmaps",       "",     CCmdListMaps },
-    { "loadgame",       "ss",   CCmdLoadGame },
-    { "loadgame",       "s",    CCmdLoadGame },
-    { "loadgame",       "",     CCmdOpenLoadMenu },
-    { "quickload",      "",     CCmdQuickLoadGame },
-    { "quicksave",      "",     CCmdQuickSaveGame },
-    { "savegame",       "sss",  CCmdSaveGame },
-    { "savegame",       "ss",   CCmdSaveGame },
-    { "savegame",       "s",    CCmdSaveGame },
-    { "savegame",       "",     CCmdOpenSaveMenu },
-    { "togglegamma",    "",     CCmdCycleTextureGamma },
-    { NULL }
+    { "deletegamesave",  "ss",   CCmdDeleteGameSave, 0 },
+    { "deletegamesave",  "s",    CCmdDeleteGameSave, 0 },
+    { "endgame",         "",     CCmdEndGame, 0 },
+    { "helpscreen",      "",     CCmdHelpScreen, 0 },
+    { "inspectgamesave", "s",    CCmdInspectGameSave, 0 },
+    { "listmaps",        "",     CCmdListMaps, 0 },
+    { "loadgame",        "ss",   CCmdLoadGame, 0 },
+    { "loadgame",        "s",    CCmdLoadGame, 0 },
+    { "loadgame",        "",     CCmdOpenLoadMenu, 0 },
+    { "quickload",       "",     CCmdQuickLoadGame, 0 },
+    { "quicksave",       "",     CCmdQuickSaveGame, 0 },
+    { "savegame",        "sss",  CCmdSaveGame, 0 },
+    { "savegame",        "ss",   CCmdSaveGame, 0 },
+    { "savegame",        "s",    CCmdSaveGame, 0 },
+    { "savegame",        "",     CCmdOpenSaveMenu, 0 },
+    { "togglegamma",     "",     CCmdCycleTextureGamma, 0 },
+    { "", "", 0, 0 }
 };
 
 // Deferred new game arguments:
@@ -412,15 +411,27 @@ static GameRuleset dRules;
 static gameaction_t gameAction;
 static dd_bool quitInProgress;
 
-void G_Register(void)
+void G_Register()
 {
-    int i;
-
-    for(i = 0; gamestatusCVars[i].path; ++i)
+    for(int i = 0; gamestatusCVars[i].path[0]; ++i)
+    {
         Con_AddVariable(gamestatusCVars + i);
+    }
 
-    for(i = 0; gameCmds[i].name; ++i)
+#if !__JHEXEN__
+    C_VAR_BYTE("game-save-auto-loadonreborn",    &cfg.loadAutoSaveOnReborn,  0, 0, 1);
+#endif
+    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
+
+    // Aliases for obsolete cvars:
+    C_VAR_BYTE("menu-quick-ask",                 &cfg.confirmQuickGameSave, 0, 0, 1);
+
+    for(int i = 0; gameCmds[i].name[0]; ++i)
+    {
         Con_AddCommand(gameCmds + i);
+    }
 
     C_CMD("warp", "i", WarpMap);
     C_CMD("setmap", "i", WarpMap); // alias
@@ -435,7 +446,7 @@ void G_Register(void)
 #endif
 }
 
-dd_bool G_QuitInProgress(void)
+dd_bool G_QuitInProgress()
 {
     return quitInProgress;
 }
@@ -448,7 +459,7 @@ void G_SetGameAction(gameaction_t action)
         gameAction = action;
 }
 
-gameaction_t G_GameAction(void)
+gameaction_t G_GameAction()
 {
     return gameAction;
 }
@@ -457,7 +468,7 @@ gameaction_t G_GameAction(void)
  * Common Pre Game Initialization routine.
  * Game-specfic pre init actions should be placed in eg D_PreInit() (for jDoom)
  */
-void G_CommonPreInit(void)
+void G_CommonPreInit()
 {
     int i, j;
 
@@ -498,10 +509,10 @@ void G_CommonPreInit(void)
     // Add our cvars and ccmds to the console databases.
     G_ConsoleRegistration();     // Main command list.
     D_NetConsoleRegistration();  // For network.
-    G_Register();                // Read-only game status cvars (for playsim).
+    G_Register();                // Top level game cvars and commands.
     Pause_Register();
     G_ControlRegister();         // For controls/input.
-    SaveSlots_ConsoleRegister(); // Game-save system.
+    SaveSlots::consoleRegister(); // Game-save system.
     Hu_MenuRegister();           // For the menu.
     GUI_Register();              // For the UI library.
     Hu_MsgRegister();            // For the game messages.
@@ -576,7 +587,7 @@ void Mobj_UpdateTranslationClassAndMap(mobj_t* mo)
 }
 #endif // __JHEXEN__
 
-void R_LoadColorPalettes(void)
+void R_LoadColorPalettes()
 {
 #define PALLUMPNAME         "PLAYPAL"
 #define PALENTRIES          (256)
@@ -691,59 +702,60 @@ void R_LoadColorPalettes(void)
  * @todo Read this information from a definition (ideally with more user
  *       friendly mnemonics...).
  */
-void R_LoadVectorGraphics(void)
+void R_LoadVectorGraphics()
 {
-#define R                          (1.0f)
-#define NUMITEMS(x)                (sizeof(x)/sizeof((x)[0]))
+#define R           (1.0f)
+#define NUMITEMS(x) (sizeof(x)/sizeof((x)[0]))
+#define Pt           Point2Rawf
 
-    const Point2Rawf keyPoints[] = {
-        {-3 * R / 4, 0}, {-3 * R / 4, -R / 4}, // Mid tooth.
-        {    0,      0}, {   -R,      0}, {   -R, -R / 2}, // Shaft and end tooth.
+    Point2Rawf const keyPoints[] = {
+        Pt(-3 * R / 4, 0), Pt(-3 * R / 4, -R / 4), // Mid tooth.
+        Pt(    0,      0), Pt(   -R,      0), Pt(   -R, -R / 2), // Shaft and end tooth.
 
-        {    0,      0}, {R / 4, -R / 2}, // Bow.
-        {R / 2, -R / 2}, {R / 2,  R / 2},
-        {R / 4,  R / 2}, {    0,      0},
+        Pt(    0,      0), Pt(R / 4, -R / 2), // Bow.
+        Pt(R / 2, -R / 2), Pt(R / 2,  R / 2),
+        Pt(R / 4,  R / 2), Pt(    0,      0),
     };
-    const def_svgline_t key[] = {
+    def_svgline_t const key[] = {
         { 2, &keyPoints[ 0] },
         { 3, &keyPoints[ 2] },
         { 6, &keyPoints[ 5] }
     };
-    const Point2Rawf thintrianglePoints[] = {
-        {-R / 2,  R - R / 2},
-        {     R,          0}, // `
-        {-R / 2, -R + R / 2}, // /
-        {-R / 2,  R - R / 2} // |>
+    Point2Rawf const thintrianglePoints[] = {
+        Pt(-R / 2,  R - R / 2),
+        Pt(     R,          0), // `
+        Pt(-R / 2, -R + R / 2), // /
+        Pt(-R / 2,  R - R / 2) // |>
     };
-    const def_svgline_t thintriangle[] = {
+    def_svgline_t const thintriangle[] = {
         { 4, thintrianglePoints },
     };
 #if __JDOOM__ || __JDOOM64__
-    const Point2Rawf arrowPoints[] = {
-        {    -R + R / 8, 0},  {             R, 0}, // -----
-        { R - R / 2, -R / 4}, {             R, 0}, { R - R / 2,  R / 4}, // ----->
-        {-R - R / 8, -R / 4}, {    -R + R / 8, 0}, {-R - R / 8,  R / 4}, // >---->
-        {-R + R / 8, -R / 4}, {-R + 3 * R / 8, 0}, {-R + R / 8,  R / 4}, // >>--->
+    Point2Rawf const arrowPoints[] = {
+        Pt(    -R + R / 8, 0 ), Pt(             R, 0), // -----
+        Pt( R - R / 2, -R / 4), Pt(             R, 0), Pt( R - R / 2,  R / 4), // ----->
+        Pt(-R - R / 8, -R / 4), Pt(    -R + R / 8, 0), Pt(-R - R / 8,  R / 4), // >---->
+        Pt(-R + R / 8, -R / 4), Pt(-R + 3 * R / 8, 0), Pt(-R + R / 8,  R / 4), // >>--->
     };
-    const def_svgline_t arrow[] = {
+    def_svgline_t const arrow[] = {
         { 2, &arrowPoints[ 0] },
         { 3, &arrowPoints[ 2] },
         { 3, &arrowPoints[ 5] },
         { 3, &arrowPoints[ 8] }
     };
 #elif __JHERETIC__ || __JHEXEN__
-    const Point2Rawf arrowPoints[] = {
-        {-R + R / 4,      0}, {         0,      0}, // center line.
-        {-R + R / 4,  R / 8}, {         R,      0}, {-R + R / 4, -R / 8}, // blade
+    Point2Rawf const arrowPoints[] = {
+        Pt(-R + R / 4,      0), Pt(         0,      0), // center line.
+        Pt(-R + R / 4,  R / 8), Pt(         R,      0), Pt(-R + R / 4, -R / 8), // blade
 
-        {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4}, // guard
-        {-R + R / 4,  R / 4}, {-R + R / 8,  R / 4},
-        {-R + R / 8, -R / 4},
+        Pt(-R + R / 8, -R / 4), Pt(-R + R / 4, -R / 4), // guard
+        Pt(-R + R / 4,  R / 4), Pt(-R + R / 8,  R / 4),
+        Pt(-R + R / 8, -R / 4),
 
-        {-R + R / 8, -R / 8}, {-R - R / 4, -R / 8}, // hilt
-        {-R - R / 4,  R / 8}, {-R + R / 8,  R / 8},
+        Pt(-R + R / 8, -R / 8), Pt(-R - R / 4, -R / 8), // hilt
+        Pt(-R - R / 4,  R / 8), Pt(-R + R / 8,  R / 8),
     };
-    const def_svgline_t arrow[] = {
+    def_svgline_t const arrow[] = {
         { 2, &arrowPoints[ 0] },
         { 3, &arrowPoints[ 2] },
         { 5, &arrowPoints[ 5] },
@@ -751,22 +763,22 @@ void R_LoadVectorGraphics(void)
     };
 #endif
 #if __JDOOM__
-    const Point2Rawf cheatarrowPoints[] = {
-        {    -R + R / 8, 0},  {             R, 0}, // -----
-        { R - R / 2, -R / 4}, {             R, 0}, { R - R / 2,  R / 4}, // ----->
-        {-R - R / 8, -R / 4}, {    -R + R / 8, 0}, {-R - R / 8,  R / 4}, // >---->
-        {-R + R / 8, -R / 4}, {-R + 3 * R / 8, 0}, {-R + R / 8,  R / 4}, // >>--->
+    Point2Rawf const cheatarrowPoints[] = {
+        Pt(    -R + R / 8, 0 ), Pt(             R, 0), // -----
+        Pt( R - R / 2, -R / 4), Pt(             R, 0), Pt( R - R / 2,  R / 4), // ----->
+        Pt(-R - R / 8, -R / 4), Pt(    -R + R / 8, 0), Pt(-R - R / 8,  R / 4), // >---->
+        Pt(-R + R / 8, -R / 4), Pt(-R + 3 * R / 8, 0), Pt(-R + R / 8,  R / 4), // >>--->
 
-        {        -R / 2,      0}, {        -R / 2, -R / 6}, // >>-d--->
-        {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6,  R / 4},
+        Pt(        -R / 2,      0), Pt(        -R / 2, -R / 6), // >>-d--->
+        Pt(-R / 2 + R / 6, -R / 6), Pt(-R / 2 + R / 6,  R / 4),
 
-        {        -R / 6,      0}, {        -R / 6, -R / 6}, // >>-dd-->
-        {             0, -R / 6}, {             0,  R / 4},
+        Pt(        -R / 6,      0), Pt(        -R / 6, -R / 6), // >>-dd-->
+        Pt(             0, -R / 6), Pt(             0,  R / 4),
 
-        {         R / 6,  R / 4}, {         R / 6, -R / 7}, // >>-ddt->
-        {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}
+        Pt(         R / 6,  R / 4), Pt(         R / 6, -R / 7), // >>-ddt->
+        Pt(R / 6 + R / 32, -R / 7 - R / 32), Pt(R / 6 + R / 10, -R / 7)
     };
-    const def_svgline_t cheatarrow[] = {
+    def_svgline_t const cheatarrow[] = {
         { 2, &cheatarrowPoints[ 0] },
         { 3, &cheatarrowPoints[ 2] },
         { 3, &cheatarrowPoints[ 5] },
@@ -777,50 +789,50 @@ void R_LoadVectorGraphics(void)
     };
 #endif
 
-    const Point2Rawf crossPoints[] = { // + (open center)
-        {-R,  0}, {-R / 5 * 2,          0},
-        { 0, -R}, {         0, -R / 5 * 2},
-        { R,  0}, { R / 5 * 2,          0},
-        { 0,  R}, {         0,  R / 5 * 2}
+    Point2Rawf const crossPoints[] = { // + (open center)
+        Pt(-R,  0), Pt(-R / 5 * 2,          0),
+        Pt( 0, -R), Pt(         0, -R / 5 * 2),
+        Pt( R,  0), Pt( R / 5 * 2,          0),
+        Pt( 0,  R), Pt(         0,  R / 5 * 2)
     };
-    const def_svgline_t cross[] = {
+    def_svgline_t const cross[] = {
         { 2, &crossPoints[0] },
         { 2, &crossPoints[2] },
         { 2, &crossPoints[4] },
         { 2, &crossPoints[6] }
     };
-    const Point2Rawf twinanglesPoints[] = { // > <
-        {-R, -R * 10 / 14}, {-(R - (R * 10 / 14)), 0}, {-R,  R * 10 / 14}, // >
-        { R, -R * 10 / 14}, {  R - (R * 10 / 14) , 0}, { R,  R * 10 / 14}, // <
+    Point2Rawf const twinanglesPoints[] = { // > <
+        Pt(-R, -R * 10 / 14), Pt(-(R - (R * 10 / 14)), 0), Pt(-R,  R * 10 / 14), // >
+        Pt( R, -R * 10 / 14), Pt(  R - (R * 10 / 14) , 0), Pt( R,  R * 10 / 14), // <
     };
-    const def_svgline_t twinangles[] = {
+    def_svgline_t const twinangles[] = {
         { 3, &twinanglesPoints[0] },
         { 3, &twinanglesPoints[3] }
     };
-    const Point2Rawf squarePoints[] = { // square
-        {-R, -R}, {-R,  R},
-        { R,  R}, { R, -R},
-        {-R, -R}
+    Point2Rawf const squarePoints[] = { // square
+        Pt(-R, -R), Pt(-R,  R),
+        Pt( R,  R), Pt( R, -R),
+        Pt(-R, -R)
     };
-    const def_svgline_t square[] = {
+    def_svgline_t const square[] = {
         { 5, squarePoints },
     };
-    const Point2Rawf squarecornersPoints[] = { // square (open center)
-        {   -R, -R / 2}, {-R, -R}, {-R / 2,      -R}, // topleft
-        {R / 2,     -R}, { R, -R}, {     R,  -R / 2}, // topright
-        {   -R,  R / 2}, {-R,  R}, {-R / 2,       R}, // bottomleft
-        {R / 2,      R}, { R,  R}, {     R,   R / 2}, // bottomright
+    Point2Rawf const squarecornersPoints[] = { // square (open center)
+        Pt(   -R, -R / 2), Pt(-R, -R), Pt(-R / 2,      -R), // topleft
+        Pt(R / 2,     -R), Pt( R, -R), Pt(     R,  -R / 2), // topright
+        Pt(   -R,  R / 2), Pt(-R,  R), Pt(-R / 2,       R), // bottomleft
+        Pt(R / 2,      R), Pt( R,  R), Pt(     R,   R / 2), // bottomright
     };
-    const def_svgline_t squarecorners[] = {
+    def_svgline_t const squarecorners[] = {
         { 3, &squarecornersPoints[ 0] },
         { 3, &squarecornersPoints[ 3] },
         { 3, &squarecornersPoints[ 6] },
         { 3, &squarecornersPoints[ 9] }
     };
-    const Point2Rawf anglePoints[] = { // v
-        {-R, -R}, { 0,  0}, { R, -R}
+    Point2Rawf const anglePoints[] = { // v
+        Pt(-R, -R), Pt(0,  0), Pt(R, -R)
     };
-    const def_svgline_t angle[] = {
+    def_svgline_t const angle[] = {
         { 3, anglePoints }
     };
 
@@ -838,8 +850,9 @@ void R_LoadVectorGraphics(void)
     R_NewSvg(VG_XHAIR4, squarecorners, NUMITEMS(squarecorners));
     R_NewSvg(VG_XHAIR5, angle, NUMITEMS(angle));
 
-#undef NUMITEMS
+#undef P
 #undef R
+#undef NUMITEMS
 }
 
 /**
@@ -856,7 +869,7 @@ fontid_t R_MustFindFontForName(const char* name)
     exit(1); // Unreachable.
 }
 
-void R_InitRefresh(void)
+void R_InitRefresh()
 {
     if(IS_DEDICATED) return;
 
@@ -895,7 +908,7 @@ void R_InitRefresh(void)
     }
 }
 
-void R_InitHud(void)
+void R_InitHud()
 {
     Hu_LoadData();
 
@@ -914,19 +927,36 @@ void R_InitHud(void)
     Hu_MsgInit();
 }
 
-/**
- * Common Post Game Initialization routine.
- * Game-specific post init actions should be placed in eg D_PostInit()
- * (for jDoom) and NOT here.
- */
-void G_CommonPostInit(void)
+de::Path G_ChooseRootSaveDirectory()
+{
+    // Use a custom root save directory?
+    if(CommandLine_CheckWith("-savedir", 1))
+    {
+        return de::NativePath(CommandLine_NextAsPath()).withSeparators('/');
+    }
+
+    // Use the default.
+    GameInfo gameInfo;
+    if(DD_GameInfo(&gameInfo))
+    {
+        return de::Path(SAVEGAME_DEFAULT_DIR) / Str_Text(gameInfo.identityKey);
+    }
+
+    /// @throw Error GameInfo is unavailable.
+    throw de::Error("G_ChooseRootSaveDirectory", "Failed retrieving GameInfo");
+}
+
+void G_CommonPostInit()
 {
     R_InitRefresh();
     FI_StackInit();
     GUI_Init();
 
-    // Init the save system and create the game save directory.
+    // Init the save system.
     SV_Initialize();
+
+    // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
+    SV_SetupSaveDirectory(G_ChooseRootSaveDirectory());
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_ReadTypes();
@@ -954,7 +984,7 @@ void G_CommonPostInit(void)
  * Common game shutdown routine.
  * @note Game-specific actions should be placed in G_Shutdown rather than here.
  */
-void G_CommonShutdown(void)
+void G_CommonShutdown()
 {
     Plug_RemoveHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
@@ -979,7 +1009,7 @@ void G_CommonShutdown(void)
  *
  * @return              The current game state.
  */
-gamestate_t G_GameState(void)
+gamestate_t G_GameState()
 {
     return gameState;
 }
@@ -987,8 +1017,8 @@ gamestate_t G_GameState(void)
 static char const *getGameStateStr(gamestate_t state)
 {
     struct statename_s {
-        gamestate_t     state;
-        const char*     name;
+        gamestate_t state;
+        char const *name;
     } stateNames[] =
     {
         { GS_MAP,          "GS_MAP" },
@@ -997,21 +1027,20 @@ static char const *getGameStateStr(gamestate_t state)
         { GS_STARTUP,      "GS_STARTUP" },
         { GS_WAITING,      "GS_WAITING" },
         { GS_INFINE,       "GS_INFINE" },
-        { -1,              NULL }
+        { gamestate_t(-1), 0 }
     };
-    uint                i;
-
-    for(i = 0; stateNames[i].name; ++i)
+    for(uint i = 0; stateNames[i].name; ++i)
+    {
         if(stateNames[i].state == state)
             return stateNames[i].name;
-
-    return NULL;
+    }
+    return 0;
 }
 
 /**
  * Called when the gameui binding context is active. Triggers the menu.
  */
-int G_UIResponder(event_t* ev)
+int G_UIResponder(event_t *ev)
 {
     // Handle "Press any key to continue" messages.
     if(Hu_MsgResponder(ev))
@@ -1108,7 +1137,7 @@ dd_bool G_StartFinale(const char* script, int flags, finale_mode_t mode, const c
     return true;
 }
 
-void G_StartTitle(void)
+void G_StartTitle()
 {
     ddfinale_t fin;
 
@@ -1122,7 +1151,7 @@ void G_StartTitle(void)
     G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "title");
 }
 
-void G_StartHelp(void)
+void G_StartHelp()
 {
     ddfinale_t fin;
 
@@ -1146,7 +1175,7 @@ void G_StartHelp(void)
  * Prints a banner to the console containing information pertinent to the
  * current map (e.g., map title, author...).
  */
-static void printMapBanner(void)
+static void printMapBanner()
 {
     char const *title = P_MapTitle(0/*current map*/);
 
@@ -1157,9 +1186,9 @@ static void printMapBanner(void)
 #if __JHEXEN__
         mapinfo_t const *mapInfo = P_MapInfo(0/*current map*/);
         int warpNum = (mapInfo? mapInfo->warpTrans : -1);
-        dd_snprintf(buf, 64, "Map %u (%u): " DE2_ESC(b) "%s", warpNum + 1, gameMap + 1, title);
+        dd_snprintf(buf, 64, "Map: %s (%u) - " DE2_ESC(b) "%s", Str_Text(Uri_ToString(gameMapUri)), warpNum + 1, title);
 #else
-        dd_snprintf(buf, 64, "Map %u: " DE2_ESC(b) "%s", gameMap + 1, title);
+        dd_snprintf(buf, 64, "Map: %s - " DE2_ESC(b) "%s", Str_Text(Uri_ToString(gameMapUri)), title);
 #endif
         App_Log(DE2_MAP_NOTE, "%s", buf);
     }
@@ -1175,7 +1204,7 @@ static void printMapBanner(void)
     App_Log(DE2_LOG_MAP, "");
 }
 
-void G_BeginMap(void)
+void G_BeginMap()
 {
     G_ChangeGameState(GS_MAP);
 
@@ -1197,7 +1226,7 @@ void G_BeginMap(void)
     S_PauseMusic(false);
 }
 
-int G_EndGameResponse(msgresponse_t response, int userValue, void* userPointer)
+int G_EndGameResponse(msgresponse_t response, int /*userValue*/, void * /*context*/)
 {
     if(response == MSG_YES)
     {
@@ -1213,7 +1242,7 @@ int G_EndGameResponse(msgresponse_t response, int userValue, void* userPointer)
     return true;
 }
 
-void G_EndGame(void)
+void G_EndGame()
 {
     if(G_QuitInProgress()) return;
 
@@ -1355,46 +1384,44 @@ int G_PrivilegedResponder(event_t *ev)
     return false; // Not eaten.
 }
 
-void G_UpdateGSVarsForPlayer(player_t* pl)
+void G_UpdateGSVarsForPlayer(player_t *pl)
 {
-    int i, plrnum;
-    gamestate_t gameState;
-
     if(!pl) return;
 
-    plrnum = pl - players;
-    gameState = G_GameState();
-
-    gsvHealth = pl->health;
+    gsvHealth  = pl->health;
 #if !__JHEXEN__
     // Map stats
-    gsvKills = pl->killCount;
-    gsvItems = pl->itemCount;
+    gsvKills   = pl->killCount;
+    gsvItems   = pl->itemCount;
     gsvSecrets = pl->secretCount;
 #endif
         // armor
 #if __JHEXEN__
-    gsvArmor = FixedDiv(PCLASS_INFO(pl->class_)->autoArmorSave +
-                        pl->armorPoints[ARMOR_ARMOR] +
-                        pl->armorPoints[ARMOR_SHIELD] +
-                        pl->armorPoints[ARMOR_HELMET] +
-                        pl->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+    gsvArmor   = FixedDiv(PCLASS_INFO(pl->class_)->autoArmorSave +
+                          pl->armorPoints[ARMOR_ARMOR] +
+                          pl->armorPoints[ARMOR_SHIELD] +
+                          pl->armorPoints[ARMOR_HELMET] +
+                          pl->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
 #else
-    gsvArmor = pl->armorPoints;
+    gsvArmor   = pl->armorPoints;
 #endif
     // Owned keys
-    for(i = 0; i < NUM_KEY_TYPES; ++i)
+    for(int i = 0; i < NUM_KEY_TYPES; ++i)
+    {
 #if __JHEXEN__
         gsvKeys[i] = (pl->keys & (1 << i))? 1 : 0;
 #else
         gsvKeys[i] = pl->keys[i];
 #endif
+    }
     // current weapon
     gsvCurrentWeapon = pl->readyWeapon;
 
     // owned weapons
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
+    {
         gsvWeapons[i] = pl->weapons[i].owned;
+    }
 
 #if __JHEXEN__
     // weapon pieces
@@ -1404,22 +1431,24 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
     gsvWPieces[3] = (pl->pieces == 7)? 1 : 0;
 #endif
     // Current ammo amounts.
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
         gsvAmmo[i] = pl->ammo[i].owned;
+    }
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     // Inventory items.
-    for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+    for(int i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        if(pl->plr->inGame && gameState == GS_MAP)
-            gsvInvItems[i] = P_InventoryCount(plrnum, IIT_FIRST + i);
+        if(pl->plr->inGame && G_GameState() == GS_MAP)
+            gsvInvItems[i] = P_InventoryCount(pl - players, inventoryitemtype_t(IIT_FIRST + i));
         else
             gsvInvItems[i] = 0;
     }
 #endif
 }
 
-void G_UpdateGSVarsForMap(void)
+void G_UpdateGSVarsForMap()
 {
     char const *mapAuthor = P_MapAuthor(0/*current map*/, false/*don't supress*/);
     char const *mapTitle  = P_MapTitle(0/*current map*/);
@@ -1431,7 +1460,7 @@ void G_UpdateGSVarsForMap(void)
     Con_SetString2("map-name", mapTitle, SVF_WRITE_OVERRIDE);
 }
 
-void G_DoQuitGame(void)
+void G_DoQuitGame()
 {
 #define QUITWAIT_MILLISECONDS 1500
 
@@ -1533,7 +1562,7 @@ void G_QueMapMusic(Uri const *mapUri)
     S_PauseMusic(true);
 }
 
-static void runGameAction(void)
+static void runGameAction()
 {
     gameaction_t currentAction;
 
@@ -1598,7 +1627,7 @@ static void runGameAction(void)
 /**
  * Do needed reborns for any fallen players.
  */
-static void rebornPlayers(void)
+static void rebornPlayers()
 {
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -1640,7 +1669,7 @@ static void rebornPlayers(void)
  */
 void G_Ticker(timespan_t ticLength)
 {
-    static gamestate_t oldGameState = -1;
+    static gamestate_t oldGameState = gamestate_t(-1);
 
     // Always tic:
     Hu_FogEffectTicker(ticLength);
@@ -1755,44 +1784,39 @@ void G_Ticker(timespan_t ticLength)
  */
 void G_PlayerLeaveMap(int player)
 {
-#if __JHERETIC__ || __JHEXEN__
-    uint i;
-    int flightPower;
-#endif
     player_t *p = &players[player];
-    dd_bool newHub = true;
 
 #if __JHEXEN__
-    {
-        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+    dd_bool newHub = true;
 
-        newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);
-
-        Uri_Delete(nextMapUri);
-    }
+    Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+    newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);
+    Uri_Delete(nextMapUri); nextMapUri = 0;
 #endif
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHEXEN__
     // Remember if flying.
-    flightPower = p->powers[PT_FLIGHT];
+    int flightPower = p->powers[PT_FLIGHT];
 #endif
 
 #if __JHERETIC__
     // Empty the inventory of excess items
-    for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+    for(int i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        inventoryitemtype_t type = IIT_FIRST + i;
+        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
         uint count = P_InventoryCount(player, type);
 
         if(count)
         {
-            uint j;
-
             if(type != IIT_FLY)
+            {
                 count--;
+            }
 
-            for(j = 0; j < count; ++j)
+            for(uint j = 0; j < count; ++j)
+            {
                 P_InventoryTake(player, type, true);
+            }
         }
     }
 #endif
@@ -1801,28 +1825,33 @@ void G_PlayerLeaveMap(int player)
     if(newHub)
     {
         uint count = P_InventoryCount(player, IIT_FLY);
-
-        for(i = 0; i < count; ++i)
+        for(uint i = 0; i < count; ++i)
+        {
             P_InventoryTake(player, IIT_FLY, true);
+        }
     }
 #endif
 
     // Remove their powers.
     p->update |= PSF_POWERS;
-    memset(p->powers, 0, sizeof(p->powers));
+    de::zap(p->powers);
 
 #if __JHEXEN__
     if(!newHub && !gameRules.deathmatch)
+    {
         p->powers[PT_FLIGHT] = flightPower; // Restore flight.
+    }
 #endif
 
     // Remove their keys.
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     p->update |= PSF_KEYS;
-    memset(p->keys, 0, sizeof(p->keys));
+    de::zap(p->keys);
 #else
     if(!gameRules.deathmatch && newHub)
+    {
         p->keys = 0;
+    }
 #endif
 
     // Misc
@@ -1836,7 +1865,7 @@ void G_PlayerLeaveMap(int player)
     p->update |= PSF_MORPH_TIME;
     if(p->morphTics)
     {
-        p->readyWeapon = p->plr->mo->special1; // Restore weapon.
+        p->readyWeapon = weapontype_t(p->plr->mo->special1); // Restore weapon.
         p->morphTics = 0;
     }
 #endif
@@ -1909,41 +1938,27 @@ void ClearPlayer(player_t *p)
  */
 void G_PlayerReborn(int player)
 {
-    player_t       *p;
-    int             frags[MAXPLAYERS];
-    int             killcount, itemcount, secretcount;
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    int             i;
-#endif
-#if __JHERETIC__
-    dd_bool         secret = false;
-    int             spot;
-#elif __JHEXEN__
-    uint            worldTimer;
-#endif
-
     if(player < 0 || player >= MAXPLAYERS)
         return; // Wha?
 
     App_Log(DE2_DEV_MAP_NOTE, "G_PlayerReborn: reseting player %i", player);
 
-    p = &players[player];
+    player_t *p = &players[player];
 
+    int frags[MAXPLAYERS];
     DENG_ASSERT(sizeof(p->frags) == sizeof(frags));
 
     memcpy(frags, p->frags, sizeof(frags));
-    killcount = p->killCount;
-    itemcount = p->itemCount;
-    secretcount = p->secretCount;
+    int killcount    = p->killCount;
+    int itemcount    = p->itemCount;
+    int secretcount  = p->secretCount;
 #if __JHEXEN__
-    worldTimer = p->worldTimer;
+    uint worldTimer  = p->worldTimer;
 #endif
 
 #if __JHERETIC__
-    if(p->didSecret)
-        secret = true;
-    spot = p->startSpot;
+    dd_bool secret = p->didSecret;
+    int spot       = p->startSpot;
 #endif
 
     // Clears (almost) everything.
@@ -1954,14 +1969,14 @@ void G_PlayerReborn(int player)
 #endif
 
     memcpy(p->frags, frags, sizeof(p->frags));
-    p->killCount = killcount;
-    p->itemCount = itemcount;
+    p->killCount   = killcount;
+    p->itemCount   = itemcount;
     p->secretCount = secretcount;
 #if __JHEXEN__
-    p->worldTimer = worldTimer;
+    p->worldTimer  = worldTimer;
 #endif
-    p->colorMap = cfg.playerColor[player];
-    p->class_ = P_ClassForPlayerWhenRespawning(player, false);
+    p->colorMap    = cfg.playerColor[player];
+    p->class_      = P_ClassForPlayerWhenRespawning(player, false);
 #if __JHEXEN__
     if(p->class_ == PCLASS_FIGHTER && !IS_NETGAME)
     {
@@ -1969,18 +1984,18 @@ void G_PlayerReborn(int player)
         p->colorMap = 2;
     }
 #endif
-    p->useDown = p->attackDown = true; // Don't do anything immediately.
-    p->playerState = PST_LIVE;
-    p->health = maxHealth;
+    p->useDown      = p->attackDown = true; // Don't do anything immediately.
+    p->playerState  = PST_LIVE;
+    p->health       = maxHealth;
     p->brain.changeWeapon = WT_NOCHANGE;
 
 #if __JDOOM__ || __JDOOM64__
-    p->readyWeapon = p->pendingWeapon = WT_SECOND;
-    p->weapons[WT_FIRST].owned = true;
+    p->readyWeapon  = p->pendingWeapon = WT_SECOND;
+    p->weapons[WT_FIRST ].owned = true;
     p->weapons[WT_SECOND].owned = true;
 
     // Initalize the player's ammo counts.
-    memset(p->ammo, 0, sizeof(p->ammo));
+    de::zap(p->ammo);
     p->ammo[AT_CLIP].owned = 50;
 
     // See if the Values specify anything.
@@ -1998,12 +2013,9 @@ void G_PlayerReborn(int player)
     }
 
 #ifdef _DEBUG
+    for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
     {
-        int k;
-        for(k = 0; k < NUM_WEAPON_TYPES; ++k)
-        {
-            App_Log(DE2_DEV_MAP_MSG, "Player %i owns wpn %i: %i", player, k, p->weapons[k].owned);
-        }
+        App_Log(DE2_DEV_MAP_MSG, "Player %i owns wpn %i: %i", player, k, p->weapons[k].owned);
     }
 #endif
 
@@ -2015,12 +2027,14 @@ void G_PlayerReborn(int player)
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Reset maxammo.
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
         p->ammo[i].max = maxAmmo[i];
+    }
 #endif
 
     // Reset viewheight.
-    p->viewHeight = cfg.plrViewHeight;
+    p->viewHeight      = cfg.plrViewHeight;
     p->viewHeightDelta = 0;
 
     // We'll need to update almost everything.
@@ -2037,23 +2051,23 @@ void G_PlayerReborn(int player)
 }
 
 #if __JDOOM__ || __JDOOM64__
-void G_QueueBody(mobj_t* mo)
+void G_QueueBody(mobj_t *mo)
 {
-    if(!mo)
-        return;
+    if(!mo) return;
 
     // Flush an old corpse if needed.
     if(bodyQueueSlot >= BODYQUEUESIZE)
+    {
         P_MobjRemove(bodyQueue[bodyQueueSlot % BODYQUEUESIZE], false);
+    }
 
     bodyQueue[bodyQueueSlot % BODYQUEUESIZE] = mo;
     bodyQueueSlot++;
 }
 #endif
 
-int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+static int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void * /*context*/)
 {
-    DENG_UNUSED(userPointer);
     if(response == MSG_YES)
     {
         gaLoadGameSlot = userValue;
@@ -2063,7 +2077,7 @@ int rebornLoadConfirmResponse(msgresponse_t response, int userValue, void* userP
     {
 #if __JHEXEN__
         // Load the last autosave? (Not optional in Hexen).
-        if(SaveSlots_SlotInUse(saveSlots, AUTO_SLOT))
+        if(SV_SaveSlots()[AUTO_SLOT].isUsed())
         {
             gaLoadGameSlot = AUTO_SLOT;
             G_SetGameAction(GA_LOADGAME);
@@ -2100,13 +2114,13 @@ void G_DoReborn(int plrNum)
         int lastSlot = -1;
 
         // First ensure we have up-to-date info.
-        SaveSlots_UpdateAllSaveInfo(saveSlots);
+        SV_SaveSlots().updateAll();
 
         // Use the latest save?
         if(cfg.loadLastSaveOnReborn)
         {
             lastSlot = Con_GetInteger("game-save-last-slot");
-            if(!SaveSlots_SlotInUse(saveSlots, lastSlot)) lastSlot = -1;
+            if(!SV_SaveSlots()[lastSlot].isUsed()) lastSlot = -1;
         }
 
         // Use the latest autosave? (Not optional in Hexen).
@@ -2114,7 +2128,7 @@ void G_DoReborn(int plrNum)
         if(cfg.loadAutoSaveOnReborn)
         {
             autoSlot = AUTO_SLOT;
-            if(!SaveSlots_SlotInUse(saveSlots, autoSlot)) autoSlot = -1;
+            if(!SV_SaveSlots()[autoSlot].isUsed()) autoSlot = -1;
         }
 #endif
 
@@ -2127,9 +2141,9 @@ void G_DoReborn(int plrNum)
         {
             // Everything appears to be in order - schedule the game-save load!
 #if !__JHEXEN__
-            const int chosenSlot = (lastSlot >= 0? lastSlot : autoSlot);
+            int const chosenSlot = (lastSlot >= 0? lastSlot : autoSlot);
 #else
-            const int chosenSlot = lastSlot;
+            int const chosenSlot = lastSlot;
 #endif
             if(!cfg.confirmRebornLoad)
             {
@@ -2139,8 +2153,8 @@ void G_DoReborn(int plrNum)
             else
             {
                 // Compose the confirmation message.
-                SaveInfo *info = SaveSlots_SaveInfo(saveSlots, chosenSlot);
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, Str_Text(SaveInfo_Description(info)));
+                SaveInfo &saveInfo = SV_SaveSlots()[chosenSlot].saveInfo();
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, saveInfo.userDescription().toUtf8().constData());
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmResponse, chosenSlot, 0);
             }
@@ -2149,7 +2163,7 @@ void G_DoReborn(int plrNum)
 
         // Autosave loading cannot be disabled in Hexen.
 #if __JHEXEN__
-        if(SaveSlots_SlotInUse(saveSlots, AUTO_SLOT))
+        if(SV_SaveSlots()[AUTO_SLOT].isUsed())
         {
             gaLoadGameSlot = AUTO_SLOT;
             G_SetGameAction(GA_LOADGAME);
@@ -2162,16 +2176,16 @@ void G_DoReborn(int plrNum)
     G_SetGameAction(GA_RESTARTMAP);
 }
 
-static void G_InitNewGame(void)
+static void G_InitNewGame()
 {
 #if __JHEXEN__
-    SaveSlots_ClearSlot(saveSlots, BASE_SLOT);
+    SV_SaveSlots().clearSlot(BASE_SLOT);
 #endif
 
     /// @todo Do not clear this save slot. Instead we should set a game state
     ///       flag to signal when a new game should be started instead of loading
     ///       the autosave slot.
-    SaveSlots_ClearSlot(saveSlots, AUTO_SLOT);
+    SV_SaveSlots().clearSlot(AUTO_SLOT);
 
 #if __JHEXEN__
     Game_InitACScriptsForNewGame();
@@ -2182,19 +2196,24 @@ static void G_InitNewGame(void)
 static void G_ApplyGameRuleFastMonsters(dd_bool fast)
 {
     static dd_bool oldFast = false;
-    int i;
 
     // Only modify when the rule changes state.
     if(fast == oldFast) return;
     oldFast = fast;
 
     /// @fixme Kludge: Assumes the original values speed values haven't been modified!
-    for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+    for(int i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+    {
         STATES[i].tics = fast? 1 : 2;
-    for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+    }
+    for(int i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+    {
         STATES[i].tics = fast? 4 : 8;
-    for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+    }
+    for(int i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+    {
         STATES[i].tics = fast? 1 : 2;
+    }
     // Kludge end.
 }
 #endif
@@ -2203,14 +2222,13 @@ static void G_ApplyGameRuleFastMonsters(dd_bool fast)
 static void G_ApplyGameRuleFastMissiles(dd_bool fast)
 {
     static dd_bool oldFast = false;
-    int i;
 
     // Only modify when the rule changes state.
     if(fast == oldFast) return;
     oldFast = fast;
 
     /// @fixme Kludge: Assumes the original values speed values haven't been modified!
-    for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
+    for(int i = 0; MonsterMissileInfo[i].type != -1; ++i)
     {
         MOBJINFO[MonsterMissileInfo[i].type].speed =
             MonsterMissileInfo[i].speed[fast? 1 : 0];
@@ -2228,12 +2246,12 @@ static void G_ApplyNewGameRules()
     if(gameRules.skill < SM_NOTHINGS)
         gameRules.skill = SM_NOTHINGS;
     if(gameRules.skill > NUM_SKILL_MODES - 1)
-        gameRules.skill = NUM_SKILL_MODES - 1;
+        gameRules.skill = skillmode_t(NUM_SKILL_MODES - 1);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!IS_NETGAME)
     {
-        gameRules.deathmatch = false;
+        gameRules.deathmatch      = false;
         gameRules.respawnMonsters = false;
 
         gameRules.noMonsters = CommandLine_Exists("-nomonsters")? true : false;
@@ -2247,29 +2265,33 @@ static void G_ApplyNewGameRules()
 #if __JDOOM__ || __JHERETIC__
     // Is respawning enabled at all in nightmare skill?
     if(gameRules.skill == SM_NIGHTMARE)
+    {
         gameRules.respawnMonsters = cfg.respawnMonstersNightmare;
+    }
 #endif
 
     // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
-    {
-        dd_bool fastMonsters = gameRules.fast;
+    dd_bool fastMonsters = gameRules.fast;
 # if __JDOOM__
-        if(gameRules.skill == SM_NIGHTMARE) fastMonsters = true;
-# endif
-        G_ApplyGameRuleFastMonsters(fastMonsters);
+    if(gameRules.skill == SM_NIGHTMARE)
+    {
+        fastMonsters = true;
     }
+# endif
+    G_ApplyGameRuleFastMonsters(fastMonsters);
 #endif
 
     // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {
-        dd_bool fastMissiles = gameRules.fast;
+    dd_bool fastMissiles = gameRules.fast;
 # if !__JDOOM64__
-        if(gameRules.skill == SM_NIGHTMARE) fastMissiles = true;
-# endif
-        G_ApplyGameRuleFastMissiles(fastMissiles);
+    if(gameRules.skill == SM_NIGHTMARE)
+    {
+        fastMissiles = true;
     }
+# endif
+    G_ApplyGameRuleFastMissiles(fastMissiles);
 #endif
 
     if(IS_DEDICATED)
@@ -2280,7 +2302,14 @@ static void G_ApplyNewGameRules()
 
 void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 {
-    if(IS_CLIENT || (cyclingMaps && mapCycleNoExit)) return;
+#if __JHEXEN__
+    DENG2_UNUSED(_secretExit);
+#else
+    DENG2_UNUSED2(newMap, _entryPoint);
+#endif
+
+    if(IS_CLIENT) return;
+    if(cyclingMaps && mapCycleNoExit) return;
 
 #if __JHEXEN__
     if((gameMode == hexen_betademo || gameMode == hexen_demo) && newMap != DDMAXINT && newMap > 3)
@@ -2292,18 +2321,21 @@ void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 #endif
 
 #if __JHEXEN__
-    nextMap = newMap;
+    nextMap         = newMap;
     nextMapEntrance = _entryPoint;
 #else
-    secretExit = _secretExit;
+    secretExit      = _secretExit;
+
 # if __JDOOM__
     // If no Wolf3D maps, no secret exit!
     if(secretExit && (gameModeBits & GM_ANY_DOOM2))
     {
-        Uri* mapUri = G_ComposeMapUri(0, 30);
-        AutoStr* mapPath = Uri_Compose(mapUri);
+        Uri *mapUri      = G_ComposeMapUri(0, 30);
+        AutoStr *mapPath = Uri_Compose(mapUri);
         if(!P_MapExists(Str_Text(mapPath)))
+        {
             secretExit = false;
+        }
         Uri_Delete(mapUri);
     }
 # endif
@@ -2313,9 +2345,9 @@ void G_LeaveMap(uint newMap, uint _entryPoint, dd_bool _secretExit)
 }
 
 /**
- * @return              @c true, if the game has been completed.
+ * @return  @c true iff the game has been completed.
  */
-dd_bool G_IfVictory(void)
+dd_bool G_IfVictory()
 {
 #if __JDOOM64__
     if(gameMap == 27)
@@ -2326,16 +2358,19 @@ dd_bool G_IfVictory(void)
     if(gameMode == doom_chex)
     {
         if(gameMap == 4)
+        {
             return true;
+        }
     }
     else if((gameModeBits & GM_ANY_DOOM) && gameMap == 7)
+    {
         return true;
+    }
 #elif __JHERETIC__
     if(gameMap == 7)
     {
         return true;
     }
-
 #elif __JHEXEN__
     if(nextMap == DDMAXINT && nextMapEntrance == DDMAXINT)
     {
@@ -2345,18 +2380,18 @@ dd_bool G_IfVictory(void)
     return false;
 }
 
-static int prepareIntermission(void* paramaters)
+static int prepareIntermission(void * /*context*/)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    wmInfo.episode = gameEpisode;
+    wmInfo.episode    = gameEpisode;
     wmInfo.currentMap = gameMap;
-    wmInfo.nextMap = nextMap;
-    wmInfo.didSecret = players[CONSOLEPLAYER].didSecret;
+    wmInfo.nextMap    = nextMap;
+    wmInfo.didSecret  = players[CONSOLEPLAYER].didSecret;
 
 # if __JDOOM__ || __JDOOM64__
-    wmInfo.maxKills = totalKills;
-    wmInfo.maxItems = totalItems;
-    wmInfo.maxSecret = totalSecret;
+    wmInfo.maxKills   = totalKills;
+    wmInfo.maxItems   = totalItems;
+    wmInfo.maxSecret  = totalSecret;
 
     G_PrepareWIData();
 # endif
@@ -2375,13 +2410,11 @@ static int prepareIntermission(void* paramaters)
     return 0;
 }
 
-void G_DoMapCompleted(void)
+void G_DoMapCompleted()
 {
-    int i;
-
     G_SetGameAction(GA_NONE);
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->inGame)
         {
@@ -2409,14 +2442,12 @@ void G_DoMapCompleted(void)
 
     // Go to an intermission?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    ddmapinfo_t minfo;
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(gameMapUri)), &minfo) &&
+       (minfo.flags & MIF_NO_INTERMISSION))
     {
-        ddmapinfo_t minfo;
-        if(Def_Get(DD_DEF_MAP_INFO, Str_Text(Uri_Compose(gameMapUri)), &minfo) &&
-           (minfo.flags & MIF_NO_INTERMISSION))
-        {
-            G_IntermissionDone();
-            return;
-        }
+        G_IntermissionDone();
+        return;
     }
 
 #elif __JHEXEN__
@@ -2431,9 +2462,10 @@ void G_DoMapCompleted(void)
 # if __JDOOM__
     if((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)) && gameMap == 8)
     {
-        int i;
-        for(i = 0; i < MAXPLAYERS; ++i)
+        for(int i = 0; i < MAXPLAYERS; ++i)
+        {
             players[i].didSecret = true;
+        }
     }
 # endif
 
@@ -2470,16 +2502,14 @@ void G_DoMapCompleted(void)
 }
 
 #if __JDOOM__ || __JDOOM64__
-void G_PrepareWIData(void)
+void G_PrepareWIData()
 {
-    AutoStr *mapPath = Uri_Compose(gameMapUri);
     wbstartstruct_t *info = &wmInfo;
-    ddmapinfo_t minfo;
-    int i;
-
     info->maxFrags = 0;
 
     // See if there is a par time definition.
+    AutoStr *mapPath = Uri_Compose(gameMapUri);
+    ddmapinfo_t minfo;
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && minfo.parTime > 0)
     {
         info->parTime = TICRATE * (int) minfo.parTime;
@@ -2490,16 +2520,16 @@ void G_PrepareWIData(void)
     }
 
     info->pNum = CONSOLEPLAYER;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* p = &players[i];
-        wbplayerstruct_t* pStats = &info->plyr[i];
+        player_t *p              = &players[i];
+        wbplayerstruct_t *pStats = &info->plyr[i];
 
         pStats->inGame = p->plr->inGame;
-        pStats->kills = p->killCount;
-        pStats->items = p->itemCount;
+        pStats->kills  = p->killCount;
+        pStats->items  = p->itemCount;
         pStats->secret = p->secretCount;
-        pStats->time = mapTime;
+        pStats->time   = mapTime;
         memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
     }
 }
@@ -2517,7 +2547,7 @@ dd_bool G_StartDebriefing()
     return G_StartFinale(fin.script, 0, FIMODE_AFTER, 0);
 }
 
-void G_IntermissionDone(void)
+void G_IntermissionDone()
 {
     // We have left Intermission, however if there is an InFine for debriefing
     // we should run it now.
@@ -2532,7 +2562,9 @@ void G_IntermissionDone(void)
 
 #if __JDOOM__ || __JDOOM64__
     if(secretExit)
+    {
         players[CONSOLEPLAYER].didSecret = true;
+    }
 #endif
 
     // Clear the currently playing script, if any.
@@ -2549,36 +2581,206 @@ void G_IntermissionDone(void)
     G_SetGameAction(GA_LEAVEMAP);
 }
 
-void G_DoEndDebriefing(void)
+void G_DoEndDebriefing()
 {
     briefDisabled = true;
     G_IntermissionDone();
 }
 
-typedef struct {
-    const char* name;
-    int slot;
-} savestateworker_params_t;
+#if __JHEXEN__
 
-static int G_SaveStateWorker(void* parameters)
+struct playerbackup_t
 {
-    savestateworker_params_t* p = (savestateworker_params_t*)parameters;
+    player_t player;
+    uint numInventoryItems[NUM_INVENTORYITEM_TYPES];
+    inventoryitemtype_t readyItem;
+};
+
+static void backupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
+{
+    DENG_ASSERT(playerBackup != 0);
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        playerbackup_t *pb = playerBackup + i;
+        player_t *plr      = players + i;
+
+        memcpy(&pb->player, plr, sizeof(player_t));
+
+        // Make a copy of the inventory states also.
+        for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
+        {
+            pb->numInventoryItems[k] = P_InventoryCount(i, inventoryitemtype_t(k));
+        }
+        pb->readyItem = P_InventoryReadyItem(i);
+    }
+}
+
+/**
+ * @param playerBackup  Player state backup.
+ * @param mapEntrance   Logical entry point number used to enter the map.
+ */
+static void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance)
+{
+    DENG_ASSERT(playerBackup != 0);
+
+    mobj_t *targetPlayerMobj = 0;
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        playerbackup_t *pb = playerBackup + i;
+        player_t *plr      = players + i;
+        ddplayer_t *ddplr  = plr->plr;
+        int oldKeys = 0, oldPieces = 0;
+        dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
+
+        if(!ddplr->inGame) continue;
+
+        memcpy(plr, &pb->player, sizeof(player_t));
+
+        for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
+        {
+            // Don't give back the wings of wrath if reborn.
+            if(k == IIT_FLY && plr->playerState == PST_REBORN)
+                continue;
+
+            for(uint m = 0; m < pb->numInventoryItems[k]; ++m)
+            {
+                P_InventoryGive(i, inventoryitemtype_t(k), true);
+            }
+        }
+        P_InventorySetReadyItem(i, pb->readyItem);
+
+        ST_LogEmpty(i);
+        plr->attacker = 0;
+        plr->poisoner = 0;
+
+        if(IS_NETGAME || gameRules.deathmatch)
+        {
+            // In a network game, force all players to be alive
+            if(plr->playerState == PST_DEAD)
+            {
+                plr->playerState = PST_REBORN;
+            }
+
+            if(!gameRules.deathmatch)
+            {
+                // Cooperative net-play; retain keys and weapons.
+                oldKeys   = plr->keys;
+                oldPieces = plr->pieces;
+
+                for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
+                {
+                    oldWeaponOwned[k] = plr->weapons[k].owned;
+                }
+            }
+        }
+
+        bool wasReborn = (plr->playerState == PST_REBORN);
+
+        if(gameRules.deathmatch)
+        {
+            de::zap(plr->frags);
+            ddplr->mo = 0;
+            G_DeathMatchSpawnPlayer(i);
+        }
+        else
+        {
+            if(playerstart_t const *start = P_GetPlayerStart(mapEntrance, i, false))
+            {
+                mapspot_t const *spot = &mapSpots[start->spot];
+                P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
+                              spot->origin[VY], spot->origin[VZ], spot->angle,
+                              spot->flags, false, true);
+            }
+            else
+            {
+                P_SpawnPlayer(i, cfg.playerClass[i], 0, 0, 0, 0,
+                              MSF_Z_FLOOR, true, true);
+            }
+        }
+
+        if(wasReborn && IS_NETGAME && !gameRules.deathmatch)
+        {
+            int bestWeapon = 0;
+
+            // Restore keys and weapons when reborn in co-op.
+            plr->keys   = oldKeys;
+            plr->pieces = oldPieces;
+
+            for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
+            {
+                if(oldWeaponOwned[k])
+                {
+                    bestWeapon = k;
+                    plr->weapons[k].owned = true;
+                }
+            }
+
+            plr->ammo[AT_BLUEMANA].owned = 25; /// @todo values.ded
+            plr->ammo[AT_GREENMANA].owned = 25; /// @todo values.ded
+
+            // Bring up the best weapon.
+            if(bestWeapon)
+            {
+                plr->pendingWeapon = weapontype_t(bestWeapon);
+            }
+        }
+    }
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t *plr     = players + i;
+        ddplayer_t *ddplr = plr->plr;
+
+        if(!ddplr->inGame) continue;
+
+        if(!targetPlayerMobj)
+        {
+            targetPlayerMobj = ddplr->mo;
+        }
+    }
+
+    /// @todo Redirect anything targeting a player mobj
+    /// FIXME! This only supports single player games!!
+    if(targetPlayerAddrs)
+    {
+        for(targetplraddress_t *p = targetPlayerAddrs; p; p = p->next)
+        {
+            *(p->address) = targetPlayerMobj;
+        }
+
+        SV_ClearTargetPlayers();
+
+        /*
+         * When XG is available in Hexen, call this after updating target player
+         * references (after a load) - ds
+        // The activator mobjs must be set.
+        XL_UpdateActivators();
+        */
+    }
+
+    // Destroy all things touching players.
+    P_TelefragMobjsTouchingPlayers();
+}
+#endif // __JHEXEN__
+
+struct savestateworker_params_t
+{
+    char const *name;
+    int slot;
+};
+
+static int G_SaveStateWorker(void *context)
+{
+    savestateworker_params_t *p = (savestateworker_params_t *)context;
     int result = SV_SaveGame(p->slot, p->name);
     BusyMode_WorkerEnd();
     return result;
 }
 
-void G_DoLeaveMap(void)
+void G_DoLeaveMap()
 {
-#if __JHEXEN__
-    playerbackup_t playerBackup[MAXPLAYERS];
-    dd_bool oldRandomClassesRule;
-#endif
-    loadmap_params_t p;
-    ddfinale_t fin;
-    dd_bool revisit = false;
-    dd_bool hasBrief;
-
     // Unpause the current game.
     Pause_End();
 
@@ -2591,53 +2793,54 @@ void G_DoLeaveMap(void)
     // Ensure that the episode and map indices are good.
     G_ValidateMap(&gameEpisode, &nextMap);
 
+    bool revisit = false;
 #if __JHEXEN__
     /*
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
     revisit = SV_HxHaveMapStateForSlot(BASE_SLOT, nextMap);
-    if(gameRules.deathmatch) revisit = false;
+    if(gameRules.deathmatch)
+    {
+        revisit = false;
+    }
 
     // Same hub?
+    Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+    if(P_MapInfo(0/*current map*/)->hub == P_MapInfo(nextMapUri)->hub)
     {
-        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        if(P_MapInfo(0/*current map*/)->hub == P_MapInfo(nextMapUri)->hub)
+        if(!gameRules.deathmatch)
         {
-            if(!gameRules.deathmatch)
-            {
-                // Save current map.
-                SV_HxSaveHubMap();
-            }
+            // Save current map.
+            SV_HxSaveHubMap();
         }
-        else // Entering new hub.
-        {
-            if(!gameRules.deathmatch)
-            {
-                SaveSlots_ClearSlot(saveSlots, BASE_SLOT);
-            }
-        }
-
-        Uri_Delete(nextMapUri);
     }
+    else // Entering new hub.
+    {
+        if(!gameRules.deathmatch)
+        {
+            SV_SaveSlots().clearSlot(BASE_SLOT);
+        }
+    }
+    Uri_Delete(nextMapUri); nextMapUri = 0;
 
     // Take a copy of the player objects (they will be cleared in the process
     // of calling P_SetupMap() and we need to restore them after).
-    SV_HxBackupPlayersInHub(playerBackup);
+    playerbackup_t playerBackup[MAXPLAYERS];
+    backupPlayersInHub(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
-    oldRandomClassesRule = gameRules.randomClasses;
+    byte oldRandomClassesRule = gameRules.randomClasses;
     gameRules.randomClasses = false;
 
     // We don't want to see a briefing if we've already visited this map.
     if(revisit) briefDisabled = true;
 
     /// @todo Necessary?
-    { uint i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(uint i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = players + i;
-        ddplayer_t* ddplr = plr->plr;
+        player_t *plr     = players + i;
+        ddplayer_t *ddplr = plr->plr;
 
         if(!ddplr->inGame) continue;
 
@@ -2650,7 +2853,7 @@ void G_DoLeaveMap(void)
 
         ST_AutomapOpen(i, false, true);
         Hu_InventoryOpen(i, false);
-    }}
+    }
     //<- todo end.
 
     // In Hexen the RNG is re-seeded each time the map changes.
@@ -2663,16 +2866,19 @@ void G_DoLeaveMap(void)
     gameMapEntrance = 0;
 #endif
 
+    loadmap_params_t p; de::zap(p);
     p.mapUri  = G_ComposeMapUri(gameEpisode, nextMap);
     p.revisit = revisit;
 
-    hasBrief = G_BriefingEnabled(p.mapUri, &fin);
+    ddfinale_t fin;
+    bool hasBrief = G_BriefingEnabled(p.mapUri, &fin);
     if(!hasBrief)
     {
         G_QueMapMusic(p.mapUri);
     }
 
     gameMap = nextMap;
+    Uri_Copy(gameMapUri, p.mapUri);
 
     // If we're the server, let clients know the map will change.
     NetSv_UpdateGameConfigDescription();
@@ -2698,7 +2904,7 @@ void G_DoLeaveMap(void)
         P_RemoveAllPlayerMobjs();
     }
 
-    SV_HxRestorePlayersInHub(playerBackup, nextMapEntrance);
+    restorePlayersInHub(playerBackup, nextMapEntrance);
 
     // Restore the random class rule.
     gameRules.randomClasses = oldRandomClassesRule;
@@ -2712,10 +2918,8 @@ void G_DoLeaveMap(void)
     // In a non-network, non-deathmatch game, save immediately into the autosave slot.
     if(!IS_NETGAME && !gameRules.deathmatch)
     {
-        AutoStr *name = G_GenerateSaveGameName();
-        savestateworker_params_t p;
-
-        p.name = Str_Text(name);
+        savestateworker_params_t p; de::zap(p);
+        p.name = Str_Text(G_GenerateUserSaveDescription());
         p.slot = AUTO_SLOT;
 
         /// @todo Use progress bar mode and update progress during the setup.
@@ -2724,7 +2928,7 @@ void G_DoLeaveMap(void)
     }
 }
 
-void G_DoRestartMap(void)
+void G_DoRestartMap()
 {
 #if __JHEXEN__
     // This is a restart, so we won't brief again.
@@ -2763,12 +2967,12 @@ void G_DoRestartMap(void)
 #endif
 }
 
-dd_bool G_IsLoadGamePossible(void)
+dd_bool G_IsLoadGamePossible()
 {
     return !(IS_CLIENT && !Get(DD_PLAYBACK));
 }
 
-dd_bool G_LoadGame(int slot)
+dd_bool G_LoadGame(int slotNumber)
 {
     if(!G_IsLoadGamePossible()) return false;
 
@@ -2777,27 +2981,27 @@ dd_bool G_LoadGame(int slot)
     // no guarantee that the game-save will be accessible come load time.
 
     // First ensure we have up-to-date info.
-    SaveSlots_UpdateAllSaveInfo(saveSlots);
+    SV_SaveSlots().updateAll();
 
-    if(!SaveSlots_SlotInUse(saveSlots, slot))
+    if(SV_SaveSlots()[slotNumber].isUsed())
     {
-        App_Log(DE2_RES_ERROR, "Cannot load from save slot #%i: not in use", slot);
-        return false;
+        // Everything appears to be in order - schedule the game-save load!
+        gaLoadGameSlot = slotNumber;
+        G_SetGameAction(GA_LOADGAME);
+        return true;
     }
 
-    // Everything appears to be in order - schedule the game-save load!
-    gaLoadGameSlot = slot;
-    G_SetGameAction(GA_LOADGAME);
-    return true;
+    App_Log(DE2_RES_ERROR, "Cannot load from save slot #%i: not in use", slotNumber);
+    return false;
 }
 
 /**
  * Called by G_Ticker based on gameaction.
  */
-void G_DoLoadGame(void)
+void G_DoLoadGame()
 {
 #if __JHEXEN__
-    dd_bool mustCopyBaseToAutoSlot = (gaLoadGameSlot != AUTO_SLOT);
+    bool mustCopyBaseToAutoSlot = (gaLoadGameSlot != AUTO_SLOT);
 #endif
 
     G_SetGameAction(GA_NONE);
@@ -2808,18 +3012,16 @@ void G_DoLoadGame(void)
     if(IS_NETGAME) return;
 
     // Copy the base slot to the autosave slot.
-    SaveSlots_CopySlot(saveSlots, BASE_SLOT, AUTO_SLOT);
+    SV_SaveSlots().copySlot(BASE_SLOT, AUTO_SLOT);
 #endif
 }
 
-dd_bool G_IsSaveGamePossible(void)
+dd_bool G_IsSaveGamePossible()
 {
-    player_t* player;
-
     if(IS_CLIENT || Get(DD_PLAYBACK)) return false;
     if(GS_MAP != G_GameState()) return false;
 
-    player = &players[CONSOLEPLAYER];
+    player_t *player = &players[CONSOLEPLAYER];
     if(PST_DEAD == player->playerState) return false;
 
     return true;
@@ -2827,27 +3029,27 @@ dd_bool G_IsSaveGamePossible(void)
 
 dd_bool G_SaveGame2(int slot, char const *name)
 {
-    if(0 > slot || slot >= SaveSlots_SlotCount(saveSlots)) return false;
+    if(0 > slot || slot >= SV_SaveSlots().slotCount()) return false;
 
     if(!G_IsSaveGamePossible()) return false;
 
     gaSaveGameSlot = slot;
-    if(!gaSaveGameName)
+    if(!gaSaveGameUserDescription)
     {
-        gaSaveGameName = Str_New();
+        gaSaveGameUserDescription = Str_New();
     }
 
     if(name && name[0])
     {
         // A new name.
-        gaSaveGameGenerateName = false;
-        Str_Set(gaSaveGameName, name);
+        gaSaveGameGenerateDescription = false;
+        Str_Set(gaSaveGameUserDescription, name);
     }
     else
     {
         // Reusing the current name or generating a new one.
-        gaSaveGameGenerateName = (name && !name[0]);
-        Str_Clear(gaSaveGameName);
+        gaSaveGameGenerateDescription = (name && !name[0]);
+        Str_Clear(gaSaveGameUserDescription);
     }
 
     G_SetGameAction(GA_SAVEGAME);
@@ -2859,20 +3061,16 @@ dd_bool G_SaveGame(int slot)
     return G_SaveGame2(slot, NULL);
 }
 
-AutoStr *G_GenerateSaveGameName(void)
+AutoStr *G_GenerateUserSaveDescription()
 {
-    AutoStr *str = AutoStr_New();
-    int time = mapTime / TICRATE, hours, seconds, minutes;
-    char const *baseName, *mapTitle;
-    char baseNameBuf[256];
-    AutoStr *mapPath;
+    int time = mapTime / TICRATE;
 
-    hours   = time / 3600; time -= hours * 3600;
-    minutes = time / 60;   time -= minutes * 60;
-    seconds = time;
+    int const hours   = time / 3600; time -= hours * 3600;
+    int const minutes = time / 60;   time -= minutes * 60;
+    int const seconds = time;
 
-    mapPath  = Uri_Compose(gameMapUri);
-    mapTitle = P_MapTitle(0/*current map*/);
+    AutoStr *mapPath     = Uri_Compose(gameMapUri);
+    char const *mapTitle = P_MapTitle(0/*current map*/);
 
     // Still no map title? Use the identifier.
     // Some tricksy modders provide us with an empty title...
@@ -2882,15 +3080,17 @@ AutoStr *G_GenerateSaveGameName(void)
         mapTitle = Str_Text(mapPath);
     }
 
-    baseName = 0;
+    char baseNameBuf[256];
+    char const *baseName = 0;
     if(P_MapIsCustom(Str_Text(mapPath)))
     {
         F_ExtractFileBase(baseNameBuf, Str_Text(P_MapSourceFile(Str_Text(mapPath))), 256);
         baseName = baseNameBuf;
     }
 
+    AutoStr *str = AutoStr_New();
     Str_Appendf(str, "%s%s%s %02i:%02i:%02i", (baseName? baseName : ""),
-        (baseName? ":" : ""), mapTitle, hours, minutes, seconds);
+                (baseName? ":" : ""), mapTitle, hours, minutes, seconds);
 
     return str;
 }
@@ -2898,39 +3098,38 @@ AutoStr *G_GenerateSaveGameName(void)
 /**
  * Called by G_Ticker based on gameaction.
  */
-void G_DoSaveGame(void)
+void G_DoSaveGame()
 {
-    savestateworker_params_t p;
-    char const *name;
-    dd_bool didSave;
-
-    if(gaSaveGameName && !Str_IsEmpty(gaSaveGameName))
+    char const *description;
+    if(gaSaveGameUserDescription && !Str_IsEmpty(gaSaveGameUserDescription))
     {
-        name = Str_Text(gaSaveGameName);
+        description = Str_Text(gaSaveGameUserDescription);
     }
     else
     {
         // No name specified.
-        SaveInfo *info = SaveSlots_SaveInfo(saveSlots, gaSaveGameSlot);
-        if(!gaSaveGameGenerateName && !Str_IsEmpty(SaveInfo_Description(info)))
+        SaveInfo &saveInfo = SV_SaveSlots()[gaSaveGameSlot].saveInfo();
+        if(!gaSaveGameGenerateDescription && !saveInfo.userDescription().isEmpty())
         {
             // Slot already in use; reuse the existing name.
-            name = Str_Text(SaveInfo_Description(info));
+            description = Str_Text(AutoStr_FromTextStd(saveInfo.userDescription().toUtf8().constData()));
         }
         else
         {
-            name = Str_Text(G_GenerateSaveGameName());
+            description = Str_Text(G_GenerateUserSaveDescription());
         }
     }
 
-    /**
+    /*
      * Try to make a new game-save.
      */
-    p.name = name;
+    savestateworker_params_t p; de::zap(p);
+    p.name = description;
     p.slot = gaSaveGameSlot;
+
     /// @todo Use progress bar mode and update progress during the setup.
-    didSave = (BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                           G_SaveStateWorker, &p, "Saving game...") != 0);
+    bool didSave = (BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                                                G_SaveStateWorker, &p, "Saving game...") != 0);
     if(didSave)
     {
         //Hu_MenuUpdateGameSaveWidgets();
@@ -3007,8 +3206,6 @@ static uint mapNumberFor(Uri const *mapUri)
 
 void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
 {
-    uint i;
-
     DENG_ASSERT(mapUri != 0 && rules != 0);
 
     G_StopDemo();
@@ -3019,9 +3216,9 @@ void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(uint i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr = players + i;
+        player_t *plr     = players + i;
         ddplayer_t *ddplr = plr->plr;
 
         if(!ddplr->inGame) continue;
@@ -3075,41 +3272,37 @@ void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
 
     NetSv_UpdateGameConfigDescription();
 
+    loadmap_params_t p; de::zap(p);
+    p.mapUri  = gameMapUri;
+    p.revisit = false;
+
+    ddfinale_t fin;
+    bool showBrief = G_BriefingEnabled(p.mapUri, &fin);
+    if(!showBrief)
     {
-        loadmap_params_t p;
-        dd_bool showBrief;
-        ddfinale_t fin;
+        G_QueMapMusic(p.mapUri);
+    }
 
-        p.mapUri  = gameMapUri;
-        p.revisit = false;
+    // If we're the server, let clients know the map will change.
+    NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
 
-        showBrief = G_BriefingEnabled(p.mapUri, &fin);
-        if(!showBrief)
-        {
-            G_QueMapMusic(p.mapUri);
-        }
+    G_DoLoadMap(&p);
 
-        // If we're the server, let clients know the map will change.
-        NetSv_SendGameState(GSF_CHANGE_MAP, DDSP_ALL_PLAYERS);
-
-        G_DoLoadMap(&p);
-
-        if(showBrief)
-        {
-            G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
-        }
-        else
-        {
-            // No briefing; begin the map.
-            HU_WakeWidgets(-1 /* all players */);
-            G_BeginMap();
-        }
+    if(showBrief)
+    {
+        G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
+    }
+    else
+    {
+        // No briefing; begin the map.
+        HU_WakeWidgets(-1 /* all players */);
+        G_BeginMap();
     }
 
     Z_CheckHeap();
 }
 
-int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)
+int G_QuitGameResponse(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
 {
     if(response == MSG_YES)
     {
@@ -3118,9 +3311,8 @@ int G_QuitGameResponse(msgresponse_t response, int userValue, void* userPointer)
     return true;
 }
 
-void G_QuitGame(void)
+void G_QuitGame()
 {
-    char const *endString;
     if(G_QuitInProgress()) return;
 
     if(Hu_IsMessageActiveWithCallback(G_QuitGameResponse))
@@ -3131,6 +3323,7 @@ void G_QuitGame(void)
         return;
     }
 
+    char const *endString;
 #if __JDOOM__ || __JDOOM64__
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
 #else
@@ -3141,7 +3334,82 @@ void G_QuitGame(void)
     Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, 0, NULL);
 }
 
-char const *P_GetGameModeName(void)
+AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
+{
+    static char const *identityKeys[] = {
+#if __JDOOM__
+        /*doom_shareware*/    "doom1-share",
+        /*doom*/              "doom1",
+        /*doom_ultimate*/     "doom1-ultimate",
+        /*doom_chex*/         "chex",
+        /*doom2*/             "doom2",
+        /*doom2_plut*/        "doom2-plut",
+        /*doom2_tnt*/         "doom2-tnt",
+        /*doom2_hacx*/        "hacx",
+#elif __JHERETIC__
+        /*heretic_shareware*/ "heretic-share",
+        /*heretic*/           "heretic",
+        /*heretic_extended*/  "heretic-ext",
+#elif __JHEXEN__
+        /*hexen_demo*/        "hexen-demo",
+        /*hexen*/             "hexen",
+        /*hexen_deathkings*/  "hexen-dk",
+        /*hexen_betademo*/    "hexen-betademo",
+        /*hexen_v10*/         "hexen-v10",
+#endif
+        ""
+    };
+#if __JDOOM__ || __JHERETIC__
+    static gamemode_t const oldGamemodes[] = {
+# if __JDOOM__
+        doom_shareware,
+        doom,
+        doom2,
+        doom_ultimate
+# else // __JHERETIC__
+        heretic_shareware,
+        heretic,
+        heretic_extended
+# endif
+    };
+#endif
+
+    // The gamemode may first need to be translated (if *really* old).
+#if __JDOOM__ || __JHERETIC__
+# if __JDOOM__
+    if(saveVersion < 9)
+# elif __JHERETIC__
+    if(saveVersion < 8)
+# endif
+    {
+        DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
+        gamemode = oldGamemodes[(int)(gamemode)];
+
+# if __JDOOM__
+        /**
+         * @note Kludge: Older versions did not differentiate between versions
+         * of Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
+         * that this save is from some version of Doom2, replace the marked
+         * gamemode with the current gamemode.
+         */
+        if(gamemode == doom2 && (gameModeBits & GM_ANY_DOOM2))
+        {
+            GameInfo gameInfo;
+            DD_GameInfo(&gameInfo);
+            return gameInfo.identityKey;
+        }
+        /// kludge end.
+# endif
+    }
+#else
+    DENG2_UNUSED(saveVersion);
+#endif
+
+    DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(identityKeys) / sizeof(identityKeys[0]));
+    return AutoStr_FromTextStd(identityKeys[gamemode]);
+}
+
+char const *P_GetGameModeName()
 {
     static char const *dm   = "deathmatch";
     static char const *coop = "cooperative";
@@ -3154,7 +3422,7 @@ char const *P_GetGameModeName(void)
     return sp;
 }
 
-uint G_GenerateSessionId(void)
+uint G_GenerateSessionId()
 {
     return Timer_RealMilliseconds() + (mapTime << 24);
 }
@@ -3163,8 +3431,10 @@ uint G_LogicalMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__
     return P_TranslateMap(map);
+    DENG_UNUSED(episode);
 #elif __JDOOM64__
     return map;
+    DENG_UNUSED(episode);
 #else
 # if __JDOOM__
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
@@ -3177,7 +3447,7 @@ uint G_LogicalMapNumber(uint episode, uint map)
 #endif
 }
 
-uint G_CurrentLogicalMapNumber(void)
+uint G_CurrentLogicalMapNumber()
 {
     return G_LogicalMapNumber(gameEpisode, gameMap);
 }
@@ -3187,6 +3457,7 @@ Uri *G_ComposeMapUri(uint episode, uint map)
     lumpname_t mapId;
 #if __JDOOM64__
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
+    DENG_UNUSED(episode);
 #elif __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
         dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
@@ -3196,15 +3467,14 @@ Uri *G_ComposeMapUri(uint episode, uint map)
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "E%uM%u", episode+1, map+1);
 #else
     dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
+    DENG_UNUSED(episode);
 #endif
     return Uri_NewWithPath2(mapId, RC_NULL);
 }
 
 dd_bool G_ValidateMap(uint *episode, uint *map)
 {
-    dd_bool ok = true;
-    AutoStr *path;
-    Uri *uri;
+    bool ok = true;
 
 #if __JDOOM__
     if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM_CHEX))
@@ -3272,8 +3542,8 @@ dd_bool G_ValidateMap(uint *episode, uint *map)
 #endif
 
     // Check that the map truly exists.
-    uri = G_ComposeMapUri(*episode, *map);
-    path = Uri_Compose(uri);
+    Uri *uri = G_ComposeMapUri(*episode, *map);
+    AutoStr *path = Uri_Compose(uri);
     if(!P_MapExists(Str_Text(path)))
     {
         // (0,0) should exist always?
@@ -3294,9 +3564,11 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
     Uri_Delete(mapUri);
     return nextMap;
 
-    DENG_UNUSED(secretExit);
+    DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
+    DENG2_UNUSED(episode);
+
     if(secretExit)
     {
         switch(map)
@@ -3406,12 +3678,12 @@ uint G_NextLogicalMapNumber(dd_bool secretExit)
 /**
  * Print a list of maps and the WAD files where they are from.
  */
-void G_PrintFormattedMapList(uint episode, char const** files, uint count)
+void G_PrintFormattedMapList(uint episode, char const **files, uint count)
 {
-    char const* current = NULL;
-    uint i, k, rangeStart = 0, len;
+    char const *current = 0;
+    uint rangeStart = 0;
 
-    for(i = 0; i < count; ++i)
+    for(uint i = 0; i < count; ++i)
     {
         if(!current && files[i])
         {
@@ -3421,22 +3693,22 @@ void G_PrintFormattedMapList(uint episode, char const** files, uint count)
         else if(current && (!files[i] || stricmp(current, files[i])))
         {
             // Print a range.
-            len = i - rangeStart;
+            uint len = i - rangeStart;
             LogBuffer_Printf(DE2_LOG_MAP, "  "); // Indentation.
             if(len <= 2)
             {
-                for(k = rangeStart; k < i; ++k)
+                for(uint k = rangeStart; k < i; ++k)
                 {
-                    Uri* mapUri = G_ComposeMapUri(episode, k);
-                    AutoStr* path = Uri_ToString(mapUri);
+                    Uri *mapUri = G_ComposeMapUri(episode, k);
+                    AutoStr *path = Uri_ToString(mapUri);
                     LogBuffer_Printf(DE2_LOG_MAP, "%s%s", Str_Text(path), (k != i - 1) ? "," : "");
                     Uri_Delete(mapUri);
                 }
             }
             else
             {
-                Uri* mapUri = G_ComposeMapUri(episode, rangeStart);
-                AutoStr* path = Uri_ToString(mapUri);
+                Uri *mapUri = G_ComposeMapUri(episode, rangeStart);
+                AutoStr *path = Uri_ToString(mapUri);
 
                 LogBuffer_Printf(DE2_LOG_MAP, "%s-", Str_Text(path));
                 Uri_Delete(mapUri);
@@ -3455,11 +3727,7 @@ void G_PrintFormattedMapList(uint episode, char const** files, uint count)
     }
 }
 
-/**
- * Print a list of all currently available maps and the location of the
- * source file/directory which contains them.
- */
-void G_PrintMapList(void)
+void G_PrintMapList()
 {
 #if __JDOOM__
     uint maxEpisodes       = (gameModeBits & GM_ANY_DOOM)? 9 : 1;
@@ -3472,17 +3740,16 @@ void G_PrintMapList(void)
     uint maxMapsPerEpisode = 99;
 #endif
 
-    uint episode, map;
     char const *sourceList[100];
 
-    for(episode = 0; episode < maxEpisodes; ++episode)
+    for(uint episode = 0; episode < maxEpisodes; ++episode)
     {
-        memset((void *) sourceList, 0, sizeof(sourceList));
+        de::zap(sourceList);
 
         // Find the name of each map (not all may exist).
-        for(map = 0; map < maxMapsPerEpisode; ++map)
+        for(uint map = 0; map < maxMapsPerEpisode; ++map)
         {
-            Uri *uri = G_ComposeMapUri(episode, map);
+            Uri *uri      = G_ComposeMapUri(episode, map);
             AutoStr *path = P_MapSourceFile(Str_Text(Uri_Compose(uri)));
             if(!Str_IsEmpty(path))
             {
@@ -3530,7 +3797,9 @@ int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
 #endif
 
     if(G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+    {
         return false;
+    }
 
     // Is there such a finale definition?
     return Def_Get(DD_DEF_FINALE_AFTER, Str_Text(Uri_Compose(mapUri)), fin);
@@ -3540,19 +3809,20 @@ int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin)
  * Stops both playback and a recording. Called at critical points like
  * starting a new game, or ending the game in the menu.
  */
-void G_StopDemo(void)
+void G_StopDemo()
 {
     DD_Execute(true, "stopdemo");
 }
 
-int Hook_DemoStop(int hookType, int val, void* paramaters)
+int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
 {
-    dd_bool aborted = val != 0;
+    bool aborted = val != 0;
 
     G_ChangeGameState(GS_WAITING);
 
     if(!aborted && singledemo)
-    {   // Playback ended normally.
+    {
+        // Playback ended normally.
         G_SetGameAction(GA_QUIT);
         return true;
     }
@@ -3572,18 +3842,17 @@ int Hook_DemoStop(int hookType, int val, void* paramaters)
 #endif
     }
 
-    {int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         ST_AutomapOpen(i, false, true);
 #if __JHERETIC__ || __JHEXEN__
         Hu_InventoryOpen(i, false);
 #endif
-    }}
+    }
     return true;
 }
 
-void G_ScreenShot(void)
+void G_ScreenShot()
 {
     G_SetGameAction(GA_SCREENSHOT);
 }
@@ -3593,33 +3862,29 @@ void G_ScreenShot(void)
  * file name base.
  * @return  Composed file name.
  */
-static AutoStr* composeScreenshotFileName(void)
+static AutoStr *composeScreenshotFileName()
 {
     GameInfo gameInfo;
-    AutoStr* name;
-    int numPos;
-
     if(!DD_GameInfo(&gameInfo))
     {
         Con_Error("composeScreenshotFileName: Failed retrieving GameInfo.");
         return 0; // Unreachable.
     }
 
-    name = Str_Appendf(AutoStr_NewStd(), "%s-", Str_Text(gameInfo.identityKey));
-    numPos = Str_Length(name);
-    { int i;
-    for(i = 0; i < 1e6; ++i) // Stop eventually...
+    AutoStr *name = Str_Appendf(AutoStr_NewStd(), "%s-", Str_Text(gameInfo.identityKey));
+    int numPos = Str_Length(name);
+    for(int i = 0; i < 1e6; ++i) // Stop eventually...
     {
         Str_Appendf(name, "%03i.png", i);
         if(!F_FileExists(Str_Text(name))) break;
         Str_Truncate(name, numPos);
-    }}
+    }
     return name;
 }
 
-void G_DoScreenShot(void)
+void G_DoScreenShot()
 {
-    AutoStr* fileName = composeScreenshotFileName();
+    AutoStr *fileName = composeScreenshotFileName();
     if(fileName && M_ScreenShot(Str_Text(fileName), 24))
     {
         /// @todo Do not use the console player's message log for this notification.
@@ -3634,7 +3899,7 @@ void G_DoScreenShot(void)
             fileName? F_PrettyPath(Str_Text(fileName)) : "(null)");
 }
 
-static void openLoadMenu(void)
+static void openLoadMenu()
 {
     Hu_MenuCommand(MCMD_OPEN);
     /// @todo This should be called automatically when opening the page
@@ -3643,7 +3908,7 @@ static void openLoadMenu(void)
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
 }
 
-static void openSaveMenu(void)
+static void openSaveMenu()
 {
     Hu_MenuCommand(MCMD_OPEN);
     /// @todo This should be called automatically when opening the page
@@ -3654,6 +3919,8 @@ static void openSaveMenu(void)
 
 D_CMD(OpenLoadMenu)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     if(!G_IsLoadGamePossible()) return false;
     openLoadMenu();
     return true;
@@ -3661,16 +3928,18 @@ D_CMD(OpenLoadMenu)
 
 D_CMD(OpenSaveMenu)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     if(!G_IsSaveGamePossible()) return false;
     openSaveMenu();
     return true;
 }
 
-int loadGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+static int loadGameConfirmResponse(msgresponse_t response, int userValue, void * /*userPointer*/)
 {
     if(response == MSG_YES)
     {
-        const int slot = userValue;
+        int const slot = userValue;
         G_LoadGame(slot);
     }
     return true;
@@ -3678,8 +3947,9 @@ int loadGameConfirmResponse(msgresponse_t response, int userValue, void* userPoi
 
 D_CMD(LoadGame)
 {
-    dd_bool const confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
-    int slot;
+    DENG_UNUSED(src);
+
+    bool const confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
 
     if(G_QuitInProgress()) return false;
     if(!G_IsLoadGamePossible()) return false;
@@ -3692,28 +3962,25 @@ D_CMD(LoadGame)
     }
 
     // Ensure we have up-to-date info.
-    SaveSlots_UpdateAllSaveInfo(saveSlots);
+    SV_SaveSlots().updateAll();
 
-    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
-    if(SaveSlots_SlotInUse(saveSlots, slot))
+    int const slotNumber = SV_SaveSlots().parseSlotIdentifier(argv[1]);
+    if(SV_SaveSlots()[slotNumber].isUsed())
     {
         // A known used slot identifier.
-        SaveInfo *info;
-        AutoStr *msg;
-
         if(confirm || !cfg.confirmQuickGameSave)
         {
             // Try to schedule a GA_LOADGAME action.
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            return G_LoadGame(slot);
+            return G_LoadGame(slotNumber);
         }
 
-        info = SaveSlots_SaveInfo(saveSlots, slot);
+        SaveInfo &saveInfo = SV_SaveSlots()[slotNumber].saveInfo();
         // Compose the confirmation message.
-        msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, Str_Text(SaveInfo_Description(info)));
+        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, saveInfo.userDescription().toUtf8().constData());
 
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadGameConfirmResponse, slot, 0);
+        Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadGameConfirmResponse, slotNumber, 0);
         return true;
     }
     else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
@@ -3743,16 +4010,18 @@ D_CMD(LoadGame)
 
 D_CMD(QuickLoadGame)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     /// @todo Implement console command scripts?
     return DD_Execute(true, "loadgame quick");
 }
 
-int saveGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+static int saveGameConfirmResponse(msgresponse_t response, int userValue, void *userPointer)
 {
     if(response == MSG_YES)
     {
-        const int slot = userValue;
-        ddstring_t* name = (ddstring_t*)userPointer;
+        int const slot = userValue;
+        ddstring_t *name = (ddstring_t *)userPointer;
         G_SaveGame2(slot, Str_Text(name));
         // We're done with the name.
         Str_Delete(name);
@@ -3762,9 +4031,10 @@ int saveGameConfirmResponse(msgresponse_t response, int userValue, void* userPoi
 
 D_CMD(SaveGame)
 {
-    const dd_bool confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
-    player_t* player = &players[CONSOLEPLAYER];
-    int slot;
+    DENG_UNUSED(src);
+
+    bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    player_t *player = &players[CONSOLEPLAYER];
 
     if(G_QuitInProgress()) return false;
 
@@ -3789,33 +4059,32 @@ D_CMD(SaveGame)
     }
 
     // Ensure we have up-to-date info.
-    SaveSlots_UpdateAllSaveInfo(saveSlots);
+    SV_SaveSlots().updateAll();
 
-    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
-    if(SaveSlots_SlotIsUserWritable(saveSlots, slot))
+    int const slotNumber = SV_SaveSlots().parseSlotIdentifier(argv[1]);
+    if(SV_SaveSlots().slotIsUserWritable(slotNumber))
     {
         // A known slot identifier.
-        dd_bool const slotIsUsed = SaveSlots_SlotInUse(saveSlots, slot);
-        SaveInfo *info = SaveSlots_SaveInfo(saveSlots, slot);
-        ddstring_t localName, *name;
-        AutoStr *msg;
+        bool const slotIsUsed = SV_SaveSlots()[slotNumber].isUsed();
 
+        ddstring_t localName;
         Str_InitStatic(&localName, (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : "");
         if(!slotIsUsed || confirm || !cfg.confirmQuickGameSave)
         {
             // Try to schedule a GA_LOADGAME action.
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            return G_SaveGame2(slot, Str_Text(&localName));
+            return G_SaveGame2(slotNumber, Str_Text(&localName));
         }
 
         // Compose the confirmation message.
-        msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, Str_Text(SaveInfo_Description(info)));
+        SaveInfo &saveInfo = SV_SaveSlots()[slotNumber].saveInfo();
+        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, saveInfo.userDescription().toUtf8().constData());
 
         // Make a copy of the name.
-        name = Str_Copy(Str_New(), &localName);
+        ddstring_t *name = Str_Copy(Str_New(), &localName);
 
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveGameConfirmResponse, slot, (void*)name);
+        Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveGameConfirmResponse, slotNumber, (void *)name);
         return true;
     }
     else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
@@ -3829,10 +4098,14 @@ D_CMD(SaveGame)
     }
 
     // Clearly the caller needs some assistance...
-    if(!SaveSlots_IsValidSlot(saveSlots, slot))
+    if(!SV_SaveSlots().isKnownSlot(slotNumber))
+    {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
+    }
     else
-        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
+    {
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slotNumber);
+    }
 
     // No action means the command failed.
     return false;
@@ -3840,25 +4113,23 @@ D_CMD(SaveGame)
 
 D_CMD(QuickSaveGame)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     /// @todo Implement console command scripts?
     return DD_Execute(true, "savegame quick");
 }
 
-dd_bool G_DeleteSaveGame(int slot)
+dd_bool G_DeleteSaveGame(int slotNumber)
 {
-    SaveInfo *info;
-
-    if(!SaveSlots_SlotIsUserWritable(saveSlots, slot)) return false;
-    if(!SaveSlots_SlotInUse(saveSlots, slot)) return false;
+    if(!SV_SaveSlots().slotIsUserWritable(slotNumber)) return false;
+    if(!SV_SaveSlots()[slotNumber].isUsed()) return false;
 
     // A known slot identifier.
-    info = SaveSlots_SaveInfo(saveSlots, slot);
-    DENG_ASSERT(info != 0);
-    SaveSlots_ClearSlot(saveSlots, slot);
+    SV_SaveSlots().clearSlot(slotNumber);
 
     if(Hu_MenuIsActive())
     {
-        mn_page_t* activePage = Hu_MenuActivePage();
+        mn_page_t *activePage = Hu_MenuActivePage();
         if(activePage == Hu_MenuFindPageByName("LoadGame") ||
            activePage == Hu_MenuFindPageByName("SaveGame"))
         {
@@ -3867,15 +4138,15 @@ dd_bool G_DeleteSaveGame(int slot)
             Hu_MenuSetActivePage2(activePage, true);
         }
     }
+
     return true;
 }
 
-int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void* userPointer)
+static int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void * /*context*/)
 {
-    DENG_UNUSED(userPointer);
     if(response == MSG_YES)
     {
-        const int slot = userValue;
+        int const slot = userValue;
         G_DeleteSaveGame(slot);
     }
     return true;
@@ -3883,40 +4154,72 @@ int deleteSaveGameConfirmResponse(msgresponse_t response, int userValue, void* u
 
 D_CMD(DeleteGameSave)
 {
-    dd_bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
-    player_t *player = &players[CONSOLEPLAYER];
-    int slot;
+    DENG2_UNUSED(src);
+
+    bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
 
     if(G_QuitInProgress()) return false;
 
     // Ensure we have up-to-date info.
-    SaveSlots_UpdateAllSaveInfo(saveSlots);
+    SV_SaveSlots().updateAll();
 
-    slot = SaveSlots_ParseSlotIdentifier(saveSlots, argv[1]);
-    if(SaveSlots_SlotIsUserWritable(saveSlots, slot) &&
-       SaveSlots_SlotInUse(saveSlots, slot))
+    int const slotNumber = SV_SaveSlots().parseSlotIdentifier(argv[1]);
+    if(SV_SaveSlots().slotIsUserWritable(slotNumber) &&
+       SV_SaveSlots()[slotNumber].isUsed())
     {
         // A known slot identifier.
         if(confirm)
         {
-            return G_DeleteSaveGame(slot);
+            return G_DeleteSaveGame(slotNumber);
         }
         else
         {
             // Compose the confirmation message.
-            SaveInfo *info = SaveSlots_SaveInfo(saveSlots, slot);
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, Str_Text(SaveInfo_Description(info)));
+            SaveInfo &saveInfo = SV_SaveSlots()[slotNumber].saveInfo();
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, saveInfo.userDescription().toUtf8().constData());
             S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
-            Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slot, 0);
+            Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, slotNumber, 0);
         }
         return true;
     }
 
     // Clearly the caller needs some assistance...
-    if(!SaveSlots_IsValidSlot(saveSlots, slot))
+    if(!SV_SaveSlots().isKnownSlot(slotNumber))
+    {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
+    }
     else
-        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slot);
+    {
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is non-user-writable", slotNumber);
+    }
+
+    // No action means the command failed.
+    return false;
+}
+
+D_CMD(InspectGameSave)
+{
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
+    // Ensure we have up-to-date info.
+    SV_SaveSlots().updateAll();
+
+    int const slotNumber = SV_SaveSlots().parseSlotIdentifier(argv[1]);
+    if(SV_SaveSlots()[slotNumber].isUsed())
+    {
+        SaveInfo &saveInfo = SV_SaveSlots()[slotNumber].saveInfo();
+        App_Log(DE2_LOG_MESSAGE, "%s", saveInfo.description().toLatin1().constData());
+        return true;
+    }
+
+    if(!SV_SaveSlots().isKnownSlot(slotNumber))
+    {
+        App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
+    }
+    else
+    {
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is not in use", slotNumber);
+    }
 
     // No action means the command failed.
     return false;
@@ -3924,24 +4227,32 @@ D_CMD(DeleteGameSave)
 
 D_CMD(HelpScreen)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     G_StartHelp();
     return true;
 }
 
 D_CMD(EndGame)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     G_EndGame();
     return true;
 }
 
 D_CMD(CycleTextureGamma)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     R_CycleGammaLevel();
     return true;
 }
 
 D_CMD(ListMaps)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     App_Log(DE2_RES_MSG, "Available maps:");
     G_PrintMapList();
     return true;
@@ -3967,14 +4278,16 @@ D_CMD(ListMaps)
  */
 D_CMD(WarpMap)
 {
-    dd_bool const forceNewGameSession = IS_NETGAME != 0;
-    uint epsd, map, i;
+    bool const forceNewGameSession = IS_NETGAME != 0;
 
     // Only server operators can warp maps in network games.
     /// @todo Implement vote or similar mechanics.
     if(IS_NETGAME && !IS_NETWORK_SERVER)
+    {
         return false;
+    }
 
+    uint epsd, map;
 #if __JDOOM__ || __JDOOM64__ || __JHEXEN__
 # if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
@@ -4021,21 +4334,24 @@ D_CMD(WarpMap)
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, Str_Text(msg));
         return false;
     }
+    Uri *newMapUri = G_ComposeMapUri(epsd, map);
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(!forceNewGameSession && gameInProgress && map == gameMap)
+    if(!forceNewGameSession && gameInProgress &&
+       Uri_Equality(gameMapUri, newMapUri))
     {
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
+        Uri_Delete(newMapUri);
         return false;
     }
 #endif
 
     // Close any left open UIs.
     /// @todo Still necessary here?
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr = players + i;
+        player_t *plr     = players + i;
         ddplayer_t *ddplr = plr->plr;
         if(!ddplr->inGame) continue;
 
@@ -4049,23 +4365,19 @@ D_CMD(WarpMap)
     // So be it.
     briefDisabled = true;
 
+    if(!forceNewGameSession && gameInProgress)
     {
-        Uri *newMapUri = G_ComposeMapUri(epsd, map);
-        if(!forceNewGameSession && gameInProgress)
-        {
 #if __JHEXEN__
-            nextMap         = map;
-            nextMapEntrance = 0;
-            G_SetGameAction(GA_LEAVEMAP);
+        nextMap         = map;
+        nextMapEntrance = 0;
+        G_SetGameAction(GA_LEAVEMAP);
 #else
-            G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
+        G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
 #endif
-        }
-        else
-        {
-            G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
-        }
-        Uri_Delete(newMapUri);
+    }
+    else
+    {
+        G_DeferredNewGame(newMapUri, 0/*default*/, &gameRules);
     }
 
     // If the command source was "us" the game library then it was probably in
@@ -4088,5 +4400,6 @@ D_CMD(WarpMap)
         S_LocalSound(soundId, NULL);
     }
 
+    Uri_Delete(newMapUri);
     return true;
 }

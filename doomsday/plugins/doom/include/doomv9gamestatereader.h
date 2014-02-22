@@ -1,4 +1,4 @@
-/** @file p_oldsvg.h  Doom ver 1.9 saved game state reader.
+/** @file doomv9gamestatereader.h  Doom ver 1.9 saved game state reader.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -26,33 +26,26 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "saveinfo.h"
+#include "gamestatereader.h"
 
 /**
  * Doom ver 1.9 saved game state reader.
  *
  * @ingroup libdoom
  */
-class DoomV9GameStateReader
+class DoomV9GameStateReader : public IGameStateReader
 {
 public:
-    /// An error occurred attempting to open the input file. @ingroup errors
-    DENG2_ERROR(FileAccessError);
+    DoomV9GameStateReader();
+    ~DoomV9GameStateReader();
 
-    /// Base class for read errors. @ingroup errors
-    DENG2_ERROR(ReadError);
+    static IGameStateReader *make();
+    static bool recognize(SaveInfo &info);
 
-public:
-    /**
-     * Determines whether the resource file on @a path is interpretable as a game state which can
-     * be loaded with a DoomV9GameStateReader.
-     *
-     * @param info  SaveInfo to attempt to read game session header into.
-     * @param path  Path to the resource file to be recognized.
-     */
-    static bool recognize(SaveInfo *info, Str const *path);
+    void read(SaveInfo &info);
 
-    void read(SaveInfo *info, Str const *path);
+private:
+    DENG2_PRIVATE(d)
 };
 
 #endif // LIBDOOM_DOOMV9_GAMESTATEREADER

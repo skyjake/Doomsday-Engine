@@ -1,4 +1,4 @@
-/** @file p_saveg.h Common game-save state management.
+/** @file p_saveg.h  Common game-save state management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -22,23 +22,17 @@
 #define LIBCOMMON_SAVESTATE_H
 
 #include "common.h"
-#include "p_savedef.h" /// @todo remove me
-#include "saveinfo.h"
-#include "saveslots.h"
 
-DENG_EXTERN_C int thingArchiveVersion;
-DENG_EXTERN_C uint thingArchiveSize;
-DENG_EXTERN_C dd_bool thingArchiveExcludePlayers;
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 
-DENG_EXTERN_C SaveInfo const *curInfo;
-DENG_EXTERN_C dd_bool playerHeaderOK;
-
 #if __JHEXEN__
-DENG_EXTERN_C byte *saveBuffer;
-#endif
+typedef struct targetplraddress_s {
+    void **address;
+    struct targetplraddress_s *next;
+} targetplraddress_t;
 
-DENG_EXTERN_C SaveSlots *saveSlots;
+DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,32 +44,22 @@ void SV_Initialize(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-void SV_SaveInfo_Read(SaveInfo *info, Reader *reader);
-
-#if __JHEXEN__
 /**
- * Returns @c true iff a game-save is present and serialized @a map state is
- * present for logical save @a slot.
- */
-dd_bool SV_HxHaveMapStateForSlot(int slot, uint map);
-#endif
-
-/**
- * Save the current game state to the specified @a slot number.
+ * Save the current game state to the specified @a slotNumber.
  *
  * @param description  Textual description to include in the save info. Can be @c 0
  *                     in which case a description will be auto-generated.
  *
  * @return  @c true iff the game state was saved successfully.
  */
-dd_bool SV_SaveGame(int slot, char const *description);
+dd_bool SV_SaveGame(int slotNumber, char const *description);
 
 /**
- * Load the game state associated with the specified @a slot number.
+ * Load the game state associated with the specified @a slotNumber.
  *
  * @return  @c true iff the game state was loaded successfully.
  */
-dd_bool SV_LoadGame(int slot);
+dd_bool SV_LoadGame(int slotNumber);
 
 #if !__JHEXEN__
 /**
@@ -87,38 +71,13 @@ void SV_SaveGameClient(uint gameId);
 void SV_LoadGameClient(uint gameId);
 #endif
 
-/// Unique identifier associated with each archived thing.
 #if __JHEXEN__
-typedef int ThingSerialId;
-#else
-typedef ushort ThingSerialId;
+/**
+ * Returns @c true iff a game-save is present and serialized @a map state is
+ * present for logical save @a slotNumber.
+ */
+dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map);
 #endif
-
-void SV_ClearThingArchive(void);
-
-/**
- * To be called when writing a game state to acquire a unique identifier for
- * the specified @a mobj from the thing archive. If the given mobj is already
- * present in the archived, the existing archive Id is returned.
- *
- * @param mobj  Mobj to lookup the archive Id for.
- *
- * @return  Identifier for the specified mobj (may be zero).
- */
-ThingSerialId SV_ThingArchiveId(mobj_t const *mobj);
-
-void SV_InitThingArchiveForSave(dd_bool excludePlayers);
-void SV_InsertThingInArchive(mobj_t const *mobj, ThingSerialId thingId);
-
-/**
- * To be called after reading a game state has been read to lookup a pointer
- * to the mobj which is associated with the specified @a thingId.
- *
- * @param thingId  Unique identifier for the mobj in the thing archive.
- *
- * @return  Pointer to the associated mobj; otherwise @c 0 (not archived).
- */
-mobj_t *SV_GetArchiveThing(ThingSerialId thingid, void *address);
 
 /**
  * Update mobj flag values from those used in legacy game-save formats
@@ -144,33 +103,13 @@ typedef struct playerheader_s {
 #if __JHEXEN__
     int numArmorTypes;
 #endif
+
+#ifdef __cplusplus
+    void write(Writer *writer);
+    void read(Reader *reader, int saveVersion);
+#endif
 } playerheader_t;
 
-void SV_WritePlayerHeader(Writer *writer);
-void SV_ReadPlayerHeader(Reader *reader, int saveVersion);
-
-playerheader_t *SV_GetPlayerHeader(void);
-
-#if __JHEXEN__
-void SV_HxSaveHubMap(void);
-void SV_HxLoadHubMap(void);
-
-typedef struct {
-    player_t player;
-    uint numInventoryItems[NUM_INVENTORYITEM_TYPES];
-    inventoryitemtype_t readyItem;
-} playerbackup_t;
-
-void SV_HxBackupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS]);
-
-/**
- * @param playerBackup  Player state backup.
- * @param mapEntrance   Logical entry point number used to enter the map.
- */
-void SV_HxRestorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance);
-#endif
-
-void SV_InitThingArchiveForLoad(uint size);
 #if __JHEXEN__
 void SV_InitTargetPlayers(void);
 void SV_ClearTargetPlayers(void);
@@ -180,14 +119,34 @@ void SV_ClearTargetPlayers(void);
 } // extern "C"
 #endif
 
-#ifdef __cplusplus
+# ifdef __cplusplus
+#include "gamestatereader.h"
+
 class MapStateReader;
 class MapStateWriter;
+class SaveInfo;
+class SaveSlots;
 
-#if __JHEXEN__
-void SV_WriteMovePoly(struct polyevent_s const *movepoly, MapStateWriter *msw);
-int SV_ReadMovePoly(struct polyevent_s *movepoly, MapStateReader *msr);
-#endif
+/**
+ * Returns the game's SaveSlots.
+ */
+SaveSlots &SV_SaveSlots();
+
+/**
+ * Declare a new saved game state reader/interpreter.
+ *
+ * @param recognizer  Format recognizer function.
+ * @param maker       Reader instantiator function.
+ */
+void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker);
+
+/**
+ * Determines whether the game session associated with save @a info is interpretable as a
+ * potentially loadable savegame state.
+ *
+ * @param info  SaveInfo to attempt to read game session header into.
+ */
+bool SV_RecognizeGameState(SaveInfo &info);
 
 void SV_WriteLine(Line *line, MapStateWriter *msw);
 void SV_ReadLine(Line *line, MapStateReader *msr);
@@ -195,11 +154,11 @@ void SV_ReadLine(Line *line, MapStateReader *msr);
 void SV_WriteSector(Sector *sec, MapStateWriter *msw);
 void SV_ReadSector(Sector *sec, MapStateReader *msr);
 
-#endif // __cplusplus
+#  if __JHEXEN__
+void SV_HxSaveHubMap(void);
 
-dd_bool SV_OpenGameSaveFile(Str const *fileName, dd_bool write);
-#if __JHEXEN__
-void SV_OpenMapSaveFile(Str const *path);
-#endif
+void SV_HxLoadHubMap(void);
+#  endif // __JHEXEN__
+# endif // __cplusplus
 
 #endif // LIBCOMMON_SAVESTATE_H

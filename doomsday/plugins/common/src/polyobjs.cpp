@@ -331,6 +331,62 @@ int polyevent_s::read(MapStateReader *msr)
     return true; // Add this thinker.
 }
 
+void SV_WriteMovePoly(polyevent_t const *th, MapStateWriter *msw)
+{
+    Writer *writer = msw->writer();
+
+    Writer_WriteByte(writer, 1); // Write a version byte.
+
+    // Note we don't bother to save a byte to tell if the function
+    // is present as we ALWAYS add one when loading.
+
+    Writer_WriteInt32(writer, th->polyobj);
+    Writer_WriteInt32(writer, th->intSpeed);
+    Writer_WriteInt32(writer, th->dist);
+    Writer_WriteInt32(writer, th->fangle);
+    Writer_WriteInt32(writer, FLT2FIX(th->speed[VX]));
+    Writer_WriteInt32(writer, FLT2FIX(th->speed[VY]));
+}
+
+int SV_ReadMovePoly(polyevent_t *th, MapStateReader *msr)
+{
+    Reader *reader = msr->reader();
+    int mapVersion = msr->mapVersion();
+
+    if(mapVersion >= 4)
+    {
+        // Note: the thinker class byte has already been read.
+        /*int ver =*/ Reader_ReadByte(reader); // version byte.
+
+        // Start of used data members.
+        th->polyobj     = Reader_ReadInt32(reader);
+        th->intSpeed    = Reader_ReadInt32(reader);
+        th->dist        = Reader_ReadInt32(reader);
+        th->fangle      = Reader_ReadInt32(reader);
+        th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    }
+    else
+    {
+        // Its in the old pre V4 format which serialized polyevent_t
+        // Padding at the start (an old thinker_t struct)
+        byte junk[16]; // sizeof thinker_t
+        Reader_Read(reader, junk, 16);
+
+        // Start of used data members.
+        th->polyobj     = Reader_ReadInt32(reader);
+        th->intSpeed    = Reader_ReadInt32(reader);
+        th->dist        = Reader_ReadInt32(reader);
+        th->fangle      = Reader_ReadInt32(reader);
+        th->speed[VX]   = FIX2FLT(Reader_ReadInt32(reader));
+        th->speed[VY]   = FIX2FLT(Reader_ReadInt32(reader));
+    }
+
+    th->thinker.function = T_MovePoly;
+
+    return true; // Add this thinker.
+}
+
 dd_bool EV_MovePoly(Line *line, byte *args, dd_bool timesEight, dd_bool override)
 {
     DENG_UNUSED(line);

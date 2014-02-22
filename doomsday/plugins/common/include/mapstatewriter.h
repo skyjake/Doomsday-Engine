@@ -22,6 +22,7 @@
 #define LIBCOMMON_MAPSTATEWRITER_H
 
 #include "common.h"
+#include "thingarchive.h"
 
 /**
  * Performs saved game map state serialization.
@@ -32,10 +33,7 @@
 class MapStateWriter
 {
 public:
-    /**
-     * @param excludePlayers  Exclude player data. Used by Hexen when serializing hubs.
-     */
-    MapStateWriter(bool excludePlayers = false);
+    MapStateWriter(ThingArchive &thingArchive);
 
     /**
      * Serialize the map state using the specified @a reader.
@@ -43,14 +41,12 @@ public:
     void write(Writer *writer);
 
     /**
-     * Returns a unique SerialId for the specified @a material.
-     */
-    materialarchive_serialid_t serialIdFor(Material *material);
-
-    /**
      * Returns the writer to use when serializing the map state.
      */
     Writer *writer();
+
+    ThingArchive::SerialId serialIdFor(struct mobj_s *mobj);
+    materialarchive_serialid_t serialIdFor(Material *material);
 
 private:
     DENG2_PRIVATE(d)

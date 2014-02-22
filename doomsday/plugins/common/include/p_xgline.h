@@ -32,6 +32,10 @@
 
 #include "doomsday.h"
 #include "xgclass.h"
+#ifdef __cplusplus
+#  include "mapstatereader.h"
+#  include "mapstatewriter.h"
+#endif
 
 // Line events.
 #define XLE_CHAIN           0x001
@@ -326,10 +330,10 @@ typedef struct {
 } xgline_t;
 
 // The XG line Classes
-extern struct xgclass_s xgClasses[];
+DENG_EXTERN_C struct xgclass_s xgClasses[];
 
 // Used as the activator if there is no real activator.
-extern struct mobj_s dummyThing;
+DENG_EXTERN_C struct mobj_s dummyThing;
 
 #ifdef __cplusplus
 extern "C" {
@@ -368,10 +372,10 @@ int XL_HitLine(Line *line, int sideNum, struct mobj_s *thing);
 
 int XG_RandomInt(int min, int max);
 
-void SV_WriteXGLine(Line *li, Writer *writer);
-void SV_ReadXGLine(Line *li, Reader *reader, int mapVersion);
-
 #ifdef __cplusplus
+void SV_WriteXGLine(Line *li, MapStateWriter *msw);
+void SV_ReadXGLine(Line *li, MapStateReader *msr);
+
 } // extern "C"
 #endif
 

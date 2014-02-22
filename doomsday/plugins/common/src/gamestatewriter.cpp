@@ -21,21 +21,53 @@
 #include "common.h"
 #include "gamestatewriter.h"
 
+#include "d_net.h"          // NetSv_SaveGame
 #include "mapstatewriter.h"
 #include "p_saveio.h"
-#include "p_saveg.h" /// @todo remove me
-#include <de/String>
+#include "p_saveg.h"        /// playerheader_t @todo remove me
+#include "thingarchive.h"
+#include "saveslots.h"
+#include <de/NativePath>
 
 DENG2_PIMPL(GameStateWriter)
 {
-    SaveInfo *saveInfo; ///< Info for the save state to be written.
+    SaveInfo *saveInfo; ///< Info for the save state to be written. Not owned.
+    ThingArchive *thingArchive;
     Writer *writer;
 
     Instance(Public *i)
         : Base(i)
         , saveInfo(0)
+        , thingArchive(0)
         , writer(0)
     {}
+
+    ~Instance()
+    {
+        Writer_Delete(writer);
+        delete thingArchive;
+    }
+
+    void beginSegment(int segId)
+    {
+#if __JHEXEN__
+        Writer_WriteInt32(writer, segId);
+#else
+        DENG_UNUSED(segId);
+#endif
+    }
+
+    void endSegment()
+    {
+        beginSegment(ASEG_END);
+    }
+
+    void writeConsistencyBytes()
+    {
+#if !__JHEXEN__
+        Writer_WriteByte(writer, CONSISTENCY);
+#endif
+    }
 
     void writeSessionHeader()
     {
@@ -45,7 +77,7 @@ DENG2_PIMPL(GameStateWriter)
     void writeWorldACScriptData()
     {
 #if __JHEXEN__
-        SV_BeginSegment(ASEG_WORLDSCRIPTDATA);
+        beginSegment(ASEG_WORLDSCRIPTDATA);
         Game_ACScriptInterpreter().writeWorldScriptData(writer);
 #endif
     }
@@ -57,22 +89,22 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(saveSlots->composeSavePathForSlot(BASE_SLOT, gameMap + 1), "wp");
+        SV_OpenFile(SV_SavePath() / saveInfo->fileNameForMap(gameMap), "wp");
 #endif
 
-        MapStateWriter(thingArchiveExcludePlayers).write(writer);
+        MapStateWriter(*thingArchive).write(writer);
 
-        SV_WriteConsistencyBytes(); // To be absolutely sure...
+        writeConsistencyBytes(); // To be absolutely sure...
         SV_CloseFile();
-
-#if !__JHEXEN___
-        SV_ClearThingArchive();
-#endif
     }
 
     void writePlayers()
     {
-        SV_BeginSegment(ASEG_PLAYERS);
+        beginSegment(ASEG_PLAYER_HEADER);
+        playerheader_t plrHdr;
+        plrHdr.write(writer);
+
+        beginSegment(ASEG_PLAYERS);
         {
 #if __JHEXEN__
             for(int i = 0; i < MAXPLAYERS; ++i)
@@ -88,26 +120,30 @@ DENG2_PIMPL(GameStateWriter)
                     continue;
 
                 Writer_WriteInt32(writer, Net_GetPlayerID(i));
-                plr->write(writer);
+                plr->write(writer, plrHdr);
             }
         }
-        SV_EndSegment();
+        endSegment();
     }
 };
 
 GameStateWriter::GameStateWriter() : d(new Instance(this))
 {}
 
-void GameStateWriter::write(SaveInfo *saveInfo, Str const *path)
+void GameStateWriter::write(SaveInfo &info)
 {
-    DENG_ASSERT(saveInfo != 0 && path != 0);
-    d->saveInfo = saveInfo;
+    de::Path const path = SV_SavePath() / info.fileName();
 
-    playerHeaderOK = false; // Uninitialized.
+    d->saveInfo = &info;
 
-    if(!SV_OpenGameSaveFile(path, true))
+    // In networked games the server tells the clients to save their games.
+#if !__JHEXEN__
+    NetSv_SaveGame(d->saveInfo->sessionId());
+#endif
+
+    if(!SV_OpenGameSaveFile(path, true/*for writing*/))
     {
-        throw FileAccessError("GameStateWriter", "Failed opening \"" + de::String(Str_Text(path)) + "\"");
+        throw FileAccessError("GameStateWriter", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
     }
 
     d->writer = SV_NewWriter();
@@ -116,15 +152,15 @@ void GameStateWriter::write(SaveInfo *saveInfo, Str const *path)
     d->writeWorldACScriptData();
 
     // Set the mobj archive numbers.
-    SV_InitThingArchiveForSave(false/*do not exclude players*/);
+    d->thingArchive = new ThingArchive;
+    d->thingArchive->initForSave(false/*do not exclude players*/);
 #if !__JHEXEN__
-    Writer_WriteInt32(d->writer, thingArchiveSize);
+    Writer_WriteInt32(d->writer, d->thingArchive->size());
 #endif
-
-    SV_WritePlayerHeader(d->writer);
 
     d->writePlayers();
     d->writeMap();
 
+    delete d->thingArchive; d->thingArchive = 0;
     Writer_Delete(d->writer); d->writer = 0;
 }

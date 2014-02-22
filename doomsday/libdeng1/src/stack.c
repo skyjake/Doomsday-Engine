@@ -75,7 +75,7 @@ void *Stack_Pop(ddstack_t *s)
 
     if(!s->height)
     {
-        App_Log(DE2_LOG_DEBUG, "Stack::Pop: Underflow.\n");
+        App_Log(DE2_LOG_DEBUG, "Stack::Pop: Underflow.");
         return NULL;
     }
 

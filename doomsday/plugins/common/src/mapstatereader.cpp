@@ -22,18 +22,46 @@
 #include "mapstatereader.h"
 
 #include "dmu_lib.h"
+#include "dmu_archiveindex.h"
 #include "p_actor.h"
-#include "p_saveg.h"
+#include "p_saveg.h"         // SV_ReadLine, SV_ReadSector
 #include "p_saveio.h"
 #include "polyobjs.h"
 #include "thinkerinfo.h"
 #include <de/String>
 
+namespace internal
+{
+    static bool useMaterialArchiveSegments() {
+#if __JHEXEN__
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    static int thingArchiveVersionFor(int mapVersion) {
+#if __JHEXEN__
+        return mapVersion >= 4? 1 : 0;
+#else
+        return 0;
+        DENG_UNUSED(mapVersion);
+#endif
+    }
+}
+
+using namespace internal;
+
 DENG2_PIMPL(MapStateReader)
 {
-    Reader *reader;
+    Reader *reader; // Not owned.
     int saveVersion;
     int mapVersion;
+    bool formatHasMapVersionNumber;
+
+    int thingArchiveSize;
+
+    ThingArchive *thingArchive;
     MaterialArchive *materialArchive;
     dmu_lib::SideArchive *sideArchive;
 
@@ -42,11 +70,21 @@ DENG2_PIMPL(MapStateReader)
         , reader(0)
         , saveVersion(0)
         , mapVersion(0)
+        , formatHasMapVersionNumber(false)
+        , thingArchiveSize(0)
+        , thingArchive(0)
         , materialArchive(0)
         , sideArchive(0)
     {}
 
-    void checkSegment(int segId)
+    ~Instance()
+    {
+        delete thingArchive;
+        delete sideArchive;
+        MaterialArchive_Delete(materialArchive);
+    }
+
+    void beginSegment(int segId)
     {
 #if __JHEXEN__
         if(segId == ASEG_END && SV_HxBytesLeft() < 4)
@@ -57,7 +95,7 @@ DENG2_PIMPL(MapStateReader)
         if(Reader_ReadInt32(reader) != segId)
         {
             /// @throw ReadError Failed alignment check.
-            throw ReadError("MapStateReader::checkSegment", "Corrupt save game, segment " + de::String::number(segId) + " failed alignment check");
+            throw ReadError("MapStateReader", "Corrupt save game, segment #" + de::String::number(segId) + " failed alignment check");
         }
 #else
         DENG_UNUSED(segId);
@@ -65,63 +103,51 @@ DENG2_PIMPL(MapStateReader)
     }
 
     /// Special case check for the top-level map state segment.
-    void checkMapSegment()
+    void beginMapSegment()
     {
 #if __JHEXEN__
         int segId = Reader_ReadInt32(reader);
         if(segId != ASEG_MAP_HEADER2 && segId != ASEG_MAP_HEADER)
         {
             /// @throw ReadError Failed alignment check.
-            throw ReadError("MapStateReader::checkSegment", "Corrupt save game, segment " + de::String::number(segId) + " failed alignment check");
+            throw ReadError("MapStateReader", "Corrupt save game, segment #" + de::String::number(segId) + " failed alignment check");
         }
-
-        // Maps have their own version number, in Hexen.
-        mapVersion = (segId == ASEG_MAP_HEADER2? Reader_ReadByte(reader) : 2);
+        formatHasMapVersionNumber = (segId == ASEG_MAP_HEADER2);
 #else
-        checkSegment(ASEG_MAP_HEADER2);
+        beginSegment(ASEG_MAP_HEADER2);
 #endif
     }
 
-    void beginMapSegment()
+    void endSegment()
     {
-        checkMapSegment();
+        beginSegment(ASEG_END);
+    }
 
+    void readMapHeader()
+    {
 #if __JHEXEN__
-        thingArchiveVersion = mapVersion >= 4? 1 : 0;
-#endif
+        // Maps have their own version number, in Hexen.
+        mapVersion = (formatHasMapVersionNumber? Reader_ReadByte(reader) : 2);
 
-#if __JHEXEN__
         // Read the map timer.
         mapTime = Reader_ReadInt32(reader);
 #endif
+    }
 
-        // Read the material archive for the map.
-#ifdef __JHEXEN__
-        materialArchive = MaterialArchive_NewEmpty(true /* segment checks */);
-#else
-        materialArchive = MaterialArchive_NewEmpty(false);
-#endif
+    void readMaterialArchive()
+    {
+        materialArchive = MaterialArchive_NewEmpty(useMaterialArchiveSegments());
 #if !__JHEXEN__
         if(mapVersion >= 4)
 #endif
         {
             MaterialArchive_Read(materialArchive, reader, mapVersion < 6? 0 : -1);
         }
-
-        sideArchive = new dmu_lib::SideArchive;
-    }
-
-    void endMapSegment()
-    {
-        checkSegment(ASEG_END);
-
-        delete sideArchive; sideArchive = 0;
-        MaterialArchive_Delete(materialArchive); materialArchive = 0;
     }
 
     void readElements()
     {
-        checkSegment(ASEG_MAP_ELEMENTS);
+        beginSegment(ASEG_MAP_ELEMENTS);
 
         // Sectors.
         for(int i = 0; i < numsectors; ++i)
@@ -134,12 +160,14 @@ DENG2_PIMPL(MapStateReader)
         {
             SV_ReadLine((Line *)P_ToPtr(DMU_LINE, i), thisPublic);
         }
+
+        // endSegment();
     }
 
     void readPolyobjs()
     {
 #if __JHEXEN__
-        checkSegment(ASEG_POLYOBJS);
+        beginSegment(ASEG_POLYOBJS);
 
         int const writtenPolyobjCount = Reader_ReadInt32(reader);
         DENG_ASSERT(writtenPolyobjCount == numpolyobjs);
@@ -151,10 +179,12 @@ DENG2_PIMPL(MapStateReader)
             DENG_ASSERT(po != 0);
             po->read(thisPublic);
         }
+
+        // endSegment();
 #endif
     }
 
-    static int removeThinkerWorker(thinker_t *th, void * /*context*/)
+    static int removeLoadSpawnedThinkerWorker(thinker_t *th, void * /*context*/)
     {
         if(th->function == (thinkfunc_t) P_MobjThinker)
         {
@@ -174,7 +204,7 @@ DENG2_PIMPL(MapStateReader)
         if(!IS_SERVER) return; // Not for us.
 #endif
 
-        Thinker_Iterate(0 /*all thinkers*/, removeThinkerWorker, 0/*no parameters*/);
+        Thinker_Iterate(0 /*all thinkers*/, removeLoadSpawnedThinkerWorker, 0/*no params*/);
         Thinker_Init();
     }
 
@@ -242,14 +272,14 @@ DENG2_PIMPL(MapStateReader)
 
     static int restoreMobjLinksWorker(thinker_t *th, void *context)
     {
-        int const mapVersion = *static_cast<int const *>(context);
+        MapStateReader *inst = static_cast<MapStateReader *>(context);
 
         if(th->function != (thinkfunc_t) P_MobjThinker)
             return false; // Continue iteration.
 
         mobj_t *mo = (mobj_t *) th;
-        mo->target = SV_GetArchiveThing(PTR2INT(mo->target), &mo->target);
-        mo->onMobj = SV_GetArchiveThing(PTR2INT(mo->onMobj), &mo->onMobj);
+        mo->target = inst->mobj(PTR2INT(mo->target), &mo->target);
+        mo->onMobj = inst->mobj(PTR2INT(mo->onMobj), &mo->onMobj);
 
 #if __JHEXEN__
         switch(mo->type)
@@ -262,13 +292,13 @@ DENG2_PIMPL(MapStateReader)
         case MT_THRUSTFLOOR_DOWN:
         case MT_MINOTAUR:
         case MT_SORCFX1:
-            if(mapVersion >= 3)
+            if(inst->mapVersion() >= 3)
             {
-                mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+                mo->tracer = inst->mobj(PTR2INT(mo->tracer), &mo->tracer);
             }
             else
             {
-                mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                mo->tracer = inst->mobj(mo->special1, &mo->tracer);
                 mo->special1 = 0;
             }
             break;
@@ -276,22 +306,22 @@ DENG2_PIMPL(MapStateReader)
         // Just special2
         case MT_LIGHTNING_FLOOR:
         case MT_LIGHTNING_ZAP:
-            mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
+            mo->special2 = PTR2INT(inst->mobj(mo->special2, &mo->special2));
             break;
 
         // Both tracer and special2
         case MT_HOLY_TAIL:
         case MT_LIGHTNING_CEILING:
-            if(mapVersion >= 3)
+            if(inst->mapVersion() >= 3)
             {
-                mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+                mo->tracer = inst->mobj(PTR2INT(mo->tracer), &mo->tracer);
             }
             else
             {
-                mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
+                mo->tracer = inst->mobj(mo->special1, &mo->tracer);
                 mo->special1 = 0;
             }
-            mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
+            mo->special2 = PTR2INT(inst->mobj(mo->special2, &mo->special2));
             break;
 
         default:
@@ -299,43 +329,14 @@ DENG2_PIMPL(MapStateReader)
         }
 #else
 # if __JDOOM__ || __JDOOM64__
-        mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
+        mo->tracer = inst->mobj(PTR2INT(mo->tracer), &mo->tracer);
 # endif
 # if __JHERETIC__
-        mo->generator = SV_GetArchiveThing(PTR2INT(mo->generator), &mo->generator);
+        mo->generator = inst->mobj(PTR2INT(mo->generator), &mo->generator);
 # endif
 #endif
 
         return false; // Continue iteration.
-
-#if !__JHEXEN__
-        DENG_UNUSED(mapVersion);
-#endif
-    }
-
-    void relinkThinkers()
-    {
-#if __JHEXEN__
-        Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, &mapVersion);
-
-        P_CreateTIDList();
-        rebuildCorpseQueue();
-
-#else
-        if(IS_SERVER)
-        {
-            Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, &mapVersion);
-
-            for(int i = 0; i < numlines; ++i)
-            {
-                xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
-                if(!xline->xg) continue;
-
-                xline->xg->activator = SV_GetArchiveThing(PTR2INT(xline->xg->activator),
-                                                          &xline->xg->activator);
-            }
-        }
-#endif
     }
 
     void readThinkers()
@@ -346,14 +347,14 @@ DENG2_PIMPL(MapStateReader)
 
 #if __JHEXEN__
         if(mapVersion < 4)
-            checkSegment(ASEG_MOBJS);
+            beginSegment(ASEG_MOBJS);
         else
 #endif
-            checkSegment(ASEG_THINKERS);
+            beginSegment(ASEG_THINKERS);
 
 #if __JHEXEN__
         SV_InitTargetPlayers();
-        SV_InitThingArchiveForLoad(Reader_ReadInt32(reader) /* num elements */);
+        thingArchive->initForLoad(Reader_ReadInt32(reader) /* num elements */);
 #endif
 
         // Read in saved thinkers.
@@ -365,12 +366,14 @@ DENG2_PIMPL(MapStateReader)
 #endif
 
         byte tClass = 0;
-        forever
+        for(;;)
         {
 #if __JHEXEN__
             if(reachedSpecialsBlock)
 #endif
+            {
                 tClass = Reader_ReadByte(reader);
+            }
 
 #if __JHEXEN__
             if(mapVersion < 4)
@@ -382,16 +385,18 @@ DENG2_PIMPL(MapStateReader)
                     // are differrent, so we need to manipulate the thinker
                     // class identifier value.
                     if(tClass != TC_END)
+                    {
                         tClass += 2;
+                    }
                 }
                 else
                 {
                     tClass = TC_MOBJ;
                 }
 
-                if(tClass == TC_MOBJ && (uint)i == thingArchiveSize)
+                if(tClass == TC_MOBJ && (uint)i == thingArchive->size())
                 {
-                    checkSegment(ASEG_THINKERS);
+                    beginSegment(ASEG_THINKERS);
                     // We have reached the begining of the "specials" block.
                     reachedSpecialsBlock = true;
                     continue;
@@ -406,9 +411,13 @@ DENG2_PIMPL(MapStateReader)
                     // the end of the specials data so we need to manipulate
                     // the thinker class identifier value.
                     if(tClass == PRE_VER5_END_SPECIALS)
+                    {
                         tClass = TC_END;
+                    }
                     else
+                    {
                         tClass += 3;
+                    }
                 }
                 else if(tClass == TC_END)
                 {
@@ -418,6 +427,7 @@ DENG2_PIMPL(MapStateReader)
                 }
             }
 #endif
+
             if(tClass == TC_END)
                 break; // End of the list.
 
@@ -451,55 +461,74 @@ DENG2_PIMPL(MapStateReader)
 
 #if __JHEXEN__
             if(tClass == TC_MOBJ)
+            {
                 i++;
+            }
 #endif
         }
 
         // Update references between thinkers.
-        relinkThinkers();
+#if __JHEXEN__
+        Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, thisPublic);
+
+        P_CreateTIDList();
+        rebuildCorpseQueue();
+
+#else
+        if(IS_SERVER)
+        {
+            Thinker_Iterate((thinkfunc_t) P_MobjThinker, restoreMobjLinksWorker, thisPublic);
+
+            for(int i = 0; i < numlines; ++i)
+            {
+                xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
+                if(!xline->xg) continue;
+
+                xline->xg->activator = thingArchive->mobj(PTR2INT(xline->xg->activator),
+                                                          &xline->xg->activator);
+            }
+        }
+#endif
     }
 
     void readACScriptData()
     {
 #if __JHEXEN__
-        checkSegment(ASEG_SCRIPTS);
+        beginSegment(ASEG_SCRIPTS);
         Game_ACScriptInterpreter().readMapScriptData(thisPublic);
+        // endSegment();
 #endif
     }
 
     void readSoundSequences()
     {
 #if __JHEXEN__
-        checkSegment(ASEG_SOUNDS);
+        beginSegment(ASEG_SOUNDS);
         SN_ReadSequences(reader, mapVersion);
+        // endSegment();
 #endif
     }
 
     void readMisc()
     {
 #if __JHEXEN__
-        checkSegment(ASEG_MISC);
+        beginSegment(ASEG_MISC);
 
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
             localQuakeHappening[i] = Reader_ReadInt32(reader);
         }
 #endif
-    }
-
-    void readBrain()
-    {
 #if __JDOOM__
-        DENG_ASSERT(bossBrain != 0);
-        bossBrain->read(thisPublic);
+        DENG_ASSERT(theBossBrain != 0);
+        theBossBrain->read(thisPublic);
 #endif
     }
 
     void readSoundTargets()
     {
 #if !__JHEXEN__
-        // Not for us?
-        if(!IS_SERVER) return;
+        if(!IS_SERVER) return; // Not for us.
 
         // Sound target data was introduced in ver 5
         if(mapVersion < 5) return;
@@ -517,18 +546,19 @@ DENG2_PIMPL(MapStateReader)
             }
 
             xsec->soundTarget = INT2PTR(mobj_t, Reader_ReadInt16(reader));
-            xsec->soundTarget =
-                SV_GetArchiveThing(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
+            xsec->soundTarget = thingArchive->mobj(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
         }
 #endif
     }
 };
 
-MapStateReader::MapStateReader(int saveVersion)
+MapStateReader::MapStateReader(int saveVersion, int thingArchiveSize)
     : d(new Instance(this))
 {
-    d->saveVersion = saveVersion;
-    d->mapVersion  = saveVersion; // Default: mapVersion == saveVersion
+    d->saveVersion      = saveVersion;
+    d->mapVersion       = saveVersion; // Default: mapVersion == saveVersion
+
+    d->thingArchiveSize = thingArchiveSize;
 }
 
 void MapStateReader::read(Reader *reader)
@@ -536,18 +566,63 @@ void MapStateReader::read(Reader *reader)
     DENG_ASSERT(reader != 0);
     d->reader = reader;
 
+    // Prepare and populate the side archive.
+    d->sideArchive = new dmu_lib::SideArchive;
+
+    // Deserialize the map.
     d->beginMapSegment();
     {
+        d->readMapHeader();
+        d->readMaterialArchive();
+
+        d->thingArchive = new ThingArchive(thingArchiveVersionFor(d->mapVersion));
+#if !__JHEXEN__
+        d->thingArchive->initForLoad(d->thingArchiveSize);
+#endif
+
         d->readElements();
         d->readPolyobjs();
         d->readThinkers();
         d->readACScriptData();
         d->readSoundSequences();
         d->readMisc();
-        d->readBrain();
         d->readSoundTargets();
     }
-    d->endMapSegment();
+    d->endSegment();
+
+    // Cleanup.
+    delete d->thingArchive; d->thingArchive = 0;
+    delete d->sideArchive; d->sideArchive = 0;
+    MaterialArchive_Delete(d->materialArchive); d->materialArchive = 0;
+}
+
+mobj_t *MapStateReader::mobj(ThingArchive::SerialId serialId, void *address) const
+{
+    DENG_ASSERT(d->thingArchive != 0);
+    return d->thingArchive->mobj(serialId, address);
+}
+
+Material *MapStateReader::material(materialarchive_serialid_t serialId, int group) const
+{
+    DENG_ASSERT(d->materialArchive != 0);
+    return MaterialArchive_Find(d->materialArchive, serialId, group);
+}
+
+Side *MapStateReader::side(int sideIndex) const
+{
+    DENG_ASSERT(d->sideArchive != 0);
+    return (Side *)d->sideArchive->at(sideIndex);
+}
+
+player_t *MapStateReader::player(int serialId) const
+{
+    DENG_ASSERT(serialId > 0 && serialId <= MAXPLAYERS);
+    return players + saveToRealPlayerNum[serialId - 1];
+}
+
+int MapStateReader::mapVersion()
+{
+    return d->mapVersion;
 }
 
 Reader *MapStateReader::reader()
@@ -556,19 +631,8 @@ Reader *MapStateReader::reader()
     return d->reader;
 }
 
-int MapStateReader::mapVersion()
+void MapStateReader::addMobjToThingArchive(mobj_t *mobj, ThingArchive::SerialId serialId)
 {
-    return d->mapVersion;
-}
-
-Material *MapStateReader::material(materialarchive_serialid_t serialId, int group)
-{
-    DENG_ASSERT(d->materialArchive != 0);
-    return MaterialArchive_Find(d->materialArchive, serialId, group);
-}
-
-dmu_lib::SideArchive &MapStateReader::sideArchive()
-{
-    DENG_ASSERT(d->sideArchive != 0);
-    return *d->sideArchive;
+    DENG_ASSERT(d->thingArchive != 0);
+    d->thingArchive->insert(mobj, serialId);
 }

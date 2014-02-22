@@ -411,25 +411,24 @@ D_CMD(CheatGive)
 
     if(argc != 2 && argc != 3)
     {
-        App_Log(DE2_SCR_NOTE, "Usage:\n  give (stuff)\n");
-        App_Log(DE2_LOG_SCR, "  give (stuff) (plr)\n");
+        App_Log(DE2_SCR_NOTE, "Usage:\n  give (stuff)\n  give (stuff) (plr)\n");
         App_Log(DE2_LOG_SCR, "Stuff consists of one or more of (type:id). "
-                "If no id; give all of type:\n");
-        App_Log(DE2_LOG_SCR, " a - ammo\n");
-        App_Log(DE2_LOG_SCR, " b - berserk\n");
-        App_Log(DE2_LOG_SCR, " f - the power of flight\n");
-        App_Log(DE2_LOG_SCR, " g - light amplification visor\n");
-        App_Log(DE2_LOG_SCR, " h - health\n");
-        App_Log(DE2_LOG_SCR, " i - invulnerability\n");
-        App_Log(DE2_LOG_SCR, " k - key cards/skulls\n");
-        App_Log(DE2_LOG_SCR, " m - computer area map\n");
-        App_Log(DE2_LOG_SCR, " p - backpack full of ammo\n");
-        App_Log(DE2_LOG_SCR, " r - armor\n");
-        App_Log(DE2_LOG_SCR, " s - radiation shielding suit\n");
-        App_Log(DE2_LOG_SCR, " v - invisibility\n");
-        App_Log(DE2_LOG_SCR, " w - weapons\n");
-        App_Log(DE2_LOG_SCR, "Example: 'give arw' corresponds the cheat IDFA.\n");
-        App_Log(DE2_LOG_SCR, "Example: 'give w2k1' gives weapon two and key one.\n");
+                             "If no id; give all of type:");
+        App_Log(DE2_LOG_SCR, " a - ammo");
+        App_Log(DE2_LOG_SCR, " b - berserk");
+        App_Log(DE2_LOG_SCR, " f - the power of flight");
+        App_Log(DE2_LOG_SCR, " g - light amplification visor");
+        App_Log(DE2_LOG_SCR, " h - health");
+        App_Log(DE2_LOG_SCR, " i - invulnerability");
+        App_Log(DE2_LOG_SCR, " k - key cards/skulls");
+        App_Log(DE2_LOG_SCR, " m - computer area map");
+        App_Log(DE2_LOG_SCR, " p - backpack full of ammo");
+        App_Log(DE2_LOG_SCR, " r - armor");
+        App_Log(DE2_LOG_SCR, " s - radiation shielding suit");
+        App_Log(DE2_LOG_SCR, " v - invisibility");
+        App_Log(DE2_LOG_SCR, " w - weapons");
+        App_Log(DE2_LOG_SCR, "Example: 'give arw' corresponds the cheat IDFA.");
+        App_Log(DE2_LOG_SCR, "Example: 'give w2k1' gives weapon two and key one.");
         return true;
     }
 
@@ -442,7 +441,7 @@ D_CMD(CheatGive)
 
     if(G_GameState() != GS_MAP)
     {
-        App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!\n");
+        App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!");
         return true;
     }
 
@@ -469,7 +468,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
                     {
-                        App_Log(DE2_SCR_ERROR, "Unknown ammo #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown ammo #%d (valid range %d-%d)",
                                 (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
                         break;
                     }
@@ -525,7 +524,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
                     {
-                        App_Log(DE2_SCR_ERROR, "Unknown key #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown key #%d (valid range %d-%d)",
                                 (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
                         break;
                     }
@@ -579,7 +578,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
                     {
-                        App_Log(DE2_SCR_ERROR, "Unknown weapon #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown weapon #%d (valid range %d-%d)",
                                 (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
                         break;
                     }
@@ -595,7 +594,7 @@ D_CMD(CheatGive)
             break;
 
         default: // Unrecognized.
-            App_Log(DE2_SCR_ERROR, "Cannot give '%c': unknown letter\n", buf[i]);
+            App_Log(DE2_SCR_ERROR, "Cannot give '%c': unknown letter", buf[i]);
             break;
         }
     }
@@ -605,7 +604,7 @@ D_CMD(CheatGive)
 
 D_CMD(CheatMassacre)
 {
-    App_Log(DE2_LOG_MAP, "%i monsters killed\n", P_Massacre());
+    App_Log(DE2_LOG_MAP, "%i monsters killed", P_Massacre());
     return true;
 }
 
@@ -626,7 +625,7 @@ D_CMD(CheatLeaveMap)
     if(G_GameState() != GS_MAP)
     {
         S_LocalSound(SFX_OOF, NULL);
-        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Can only exit a map when in a game!\n");
+        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Can only exit a map when in a game!");
         return true;
     }
 

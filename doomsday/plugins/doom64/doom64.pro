@@ -68,7 +68,7 @@ SOURCES += \
     src/d_api.c \
     src/d_console.c \
     src/d_items.c \
-    src/d_main.c \
+    src/d_main.cpp \
     src/d_refresh.c \
     src/m_cheat.c \
     src/m_random.c \

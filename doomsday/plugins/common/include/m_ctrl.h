@@ -31,6 +31,10 @@
 
 #include "hu_lib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void Hu_MenuInitControlsPage(void);
 void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* origin);
 void Hu_MenuControlGrabDrawer(const char* niceName, float alpha);
@@ -56,5 +60,9 @@ int MNBindings_PrivilegedResponder(mn_object_t* ob, event_t* ev);
 void MNBindings_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 const char* MNBindings_ControlName(mn_object_t* ob);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /// LIBCOMMON_MENU_CONTROLS

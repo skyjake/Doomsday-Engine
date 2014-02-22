@@ -1,9 +1,9 @@
-/** @file h2_main.c  Hexen specifc game initialization.
+/** @file h_main.cpp  Heretic-specific game initialization.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <yagisan@dengine.net>
- * @authors Copyright © 1999 Activision
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,21 +20,18 @@
  * 02110-1301 USA</small>
  */
 
-#include "jhexen.h"
+#include "jheretic.h"
 
-#include "am_map.h"
 #include "d_netsv.h"
-#include "g_common.h"
-#include "g_defs.h"
 #include "m_argv.h"
-#include "p_inventory.h"
 #include "p_map.h"
-#include "player.h"
 #include "p_saveg.h"
-#include "p_sound.h"
-
-#include <assert.h>
-#include <string.h>
+#include "hereticv13gamestatereader.h"
+#include "am_map.h"
+#include "g_defs.h"
+#include "p_inventory.h"
+#include "saveslots.h"
+#include <cstring>
 
 int verbose;
 
@@ -44,14 +41,14 @@ gamemode_t gameMode;
 int gameModeBits;
 
 // Default font colours.
-float const defFontRGB[]   = {  .9f, .0f,  .0f };
-float const defFontRGB2[]  = { 1.f,  .65f, .275f };
-float const defFontRGB3[] = {  .9f, .9f,  .9f };
+float const defFontRGB[]  = { .425f, .986f, .378f };
+float const defFontRGB2[] = { 1, .65f, .275f };
+float const defFontRGB3[] = { 1.0f, 1.0f, 1.0f };
 
 // The patches used in drawing the view border.
 // Percent-encoded.
-char *borderGraphics[] = {
-    "Flats:F_022", // Background.
+char const *borderGraphics[] = {
+    "Flats:FLAT513", // Background.
     "BORDT", // Top.
     "BORDR", // Right.
     "BORDB", // Bottom.
@@ -62,40 +59,34 @@ char *borderGraphics[] = {
     "BORDBL" // Bottom left.
 };
 
-/**
- * Get a 32-bit integer value.
- */
-int X_GetInteger(int id)
+int H_GetInteger(int id)
 {
     return Common_GetInteger(id);
 }
 
-/**
- * Get a pointer to the value of a named variable/constant.
- */
-void* X_GetVariable(int id)
+void *H_GetVariable(int id)
 {
     static float bob[2];
 
     switch(id)
     {
     case DD_PLUGIN_NAME:
-        return PLUGIN_NAMETEXT;
+        return (void*)PLUGIN_NAMETEXT;
 
     case DD_PLUGIN_NICENAME:
-        return PLUGIN_NICENAME;
+        return (void*)PLUGIN_NICENAME;
 
     case DD_PLUGIN_VERSION_SHORT:
-        return PLUGIN_VERSION_TEXT;
+        return (void*)PLUGIN_VERSION_TEXT;
 
     case DD_PLUGIN_VERSION_LONG:
-        return PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS;
+        return (void*)(PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS);
 
     case DD_PLUGIN_HOMEURL:
-        return PLUGIN_HOMEURL;
+        return (void*)PLUGIN_HOMEURL;
 
     case DD_PLUGIN_DOCSURL:
-        return PLUGIN_DOCSURL;
+        return (void*)PLUGIN_DOCSURL;
 
     case DD_GAME_CONFIG:
         return gameConfigString;
@@ -104,14 +95,14 @@ void* X_GetVariable(int id)
         return actionlinks;
 
     case DD_XGFUNC_LINK:
-        return 0;
+        return xgClasses;
 
     case DD_PSPRITE_BOB_X:
-        R_GetWeaponBob(DISPLAYPLAYER, &bob[0], 0);
+        R_GetWeaponBob(DISPLAYPLAYER, &bob[0], NULL);
         return &bob[0];
 
     case DD_PSPRITE_BOB_Y:
-        R_GetWeaponBob(DISPLAYPLAYER, 0, &bob[1]);
+        R_GetWeaponBob(DISPLAYPLAYER, NULL, &bob[1]);
         return &bob[1];
 
     case DD_TM_FLOOR_Z:
@@ -123,35 +114,53 @@ void* X_GetVariable(int id)
     default:
         break;
     }
+
+    // ID not recognized, return NULL.
     return 0;
 }
 
-/**
- * Pre Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void X_PreInit(void)
+void H_PreInit()
 {
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
-    { int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
-        cfg.playerClass[i] = PCLASS_FIGHTER;
-    }
     cfg.playerMoveSpeed = 1;
+    cfg.povLookAround = true;
     cfg.statusbarScale = 1;
     cfg.screenBlocks = cfg.setBlocks = 10;
-    cfg.hudShown[HUD_MANA] = true;
+    cfg.echoMsg = true;
+    cfg.lookSpeed = 3;
+    cfg.turnSpeed = 1;
+    cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.menuScale = .9f;
+    cfg.menuTextGlitter = 0;
+    cfg.menuShadow = 0;
+  //cfg.menuQuitSound = true;
+    cfg.menuTextFlashColor[0] = .7f;
+    cfg.menuTextFlashColor[1] = .9f;
+    cfg.menuTextFlashColor[2] = 1;
+    cfg.menuTextFlashSpeed = 4;
+    cfg.menuCursorRotate = false;
+
+    cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
+
+    cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.hudShown[HUD_AMMO] = true;
+    cfg.hudShown[HUD_ARMOR] = true;
+    cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_READYITEM] = true;
     cfg.hudShown[HUD_LOG] = true;
-    { int i;
-    for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
+    for(int i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+    {
         cfg.hudUnHide[i] = 1;
     }
-    cfg.lookSpeed = 3;
-    cfg.turnSpeed = 1;
+    cfg.hudScale = .7f;
+    cfg.hudColor[0] = .325f;
+    cfg.hudColor[1] = .686f;
+    cfg.hudColor[2] = .278f;
+    cfg.hudColor[3] = 1;
+    cfg.hudIconAlpha = 1;
     cfg.xhairAngle = 0;
     cfg.xhairSize = .5f;
     cfg.xhairVitality = false;
@@ -160,25 +169,29 @@ void X_PreInit(void)
     cfg.xhairColor[2] = 1;
     cfg.xhairColor[3] = 1;
     cfg.filterStrength = .8f;
-    cfg.jumpEnabled = cfg.netJumping = true; // true by default in Hexen
+  //cfg.snd_3D = false;
+  //cfg.snd_ReverbFactor = 100;
+    cfg.moveCheckZ = true;
     cfg.jumpPower = 9;
     cfg.airborneMovement = 1;
     cfg.weaponAutoSwitch = 1; // IF BETTER
     cfg.noWeaponAutoSwitchIfFiring = false;
-    cfg.ammoAutoSwitch = 0; // never
+    cfg.ammoAutoSwitch = 0; // Never.
+    cfg.slidingCorpses = false;
     //cfg.fastMonsters = false;
+    cfg.secretMsg = true;
+    cfg.netJumping = true;
+    cfg.netEpisode = 0;
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
-    cfg.netColor = 8; // Use the default color by default.
+    cfg.netColor = 4; // Use the default color by default.
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
-    cfg.netGravity = -1;        // use map default
+    cfg.netGravity = -1; // Use map default.
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
     cfg.automapTitleAtBottom = true;
     cfg.hideIWADAuthor = true;
-    cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
-    cfg.menuScale = .75f;
     cfg.menuTextColors[0][0] = defFontRGB[0];
     cfg.menuTextColors[0][1] = defFontRGB[1];
     cfg.menuTextColors[0][2] = defFontRGB[2];
@@ -191,58 +204,45 @@ void X_PreInit(void)
     cfg.menuTextColors[3][0] = defFontRGB3[0];
     cfg.menuTextColors[3][1] = defFontRGB3[1];
     cfg.menuTextColors[3][2] = defFontRGB3[2];
-    cfg.menuEffectFlags = MEF_TEXT_SHADOW;
+    cfg.menuSlam = true;
     cfg.menuShortcutsEnabled = true;
-
-    cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.menuGameSaveSuggestDescription = true;
 
     cfg.confirmQuickGameSave = true;
     cfg.confirmRebornLoad = true;
+    cfg.loadAutoSaveOnReborn = false;
     cfg.loadLastSaveOnReborn = false;
 
-    cfg.hudFog = 5;
-    cfg.menuSlam = true;
-    cfg.menuGameSaveSuggestName = true;
-    cfg.menuTextFlashColor[0] = 1.0f;
-    cfg.menuTextFlashColor[1] = .5f;
-    cfg.menuTextFlashColor[2] = .5f;
-    cfg.menuTextFlashSpeed = 4;
-    cfg.menuCursorRotate = false;
-
-    cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
-    cfg.hudScale = .7f;
-    cfg.hudColor[0] = defFontRGB[0];
-    cfg.hudColor[1] = defFontRGB[1];
-    cfg.hudColor[2] = defFontRGB[2];
-    cfg.hudColor[3] = 1;
-    cfg.hudIconAlpha = 1;
-    cfg.cameraNoClip = true;
-    cfg.bobView = cfg.bobWeapon = 1;
+    cfg.monstersStuckInDoors = false;
+    cfg.avoidDropoffs = true;
+    cfg.moveBlock = false;
+    cfg.fallOff = true;
+    cfg.fixFloorFire = false;
+    cfg.fixPlaneScrollMaterialsEastOnly = true;
 
     cfg.statusbarOpacity = 1;
     cfg.statusbarCounterAlpha = 1;
-    cfg.inventoryTimer = 5;
 
     cfg.automapCustomColors = 0; // Never.
-    cfg.automapL0[0] = .42f; // Unseen areas
-    cfg.automapL0[1] = .42f;
-    cfg.automapL0[2] = .42f;
+    cfg.automapL0[0] = .455f; // Unseen areas.
+    cfg.automapL0[1] = .482f;
+    cfg.automapL0[2] = .439f;
 
-    cfg.automapL1[0] = .41f; // onesided lines
-    cfg.automapL1[1] = .30f;
-    cfg.automapL1[2] = .15f;
+    cfg.automapL1[0] = .292f; // onesided lines
+    cfg.automapL1[1] = .195f;
+    cfg.automapL1[2] = .062f;
 
-    cfg.automapL2[0] = .82f; // floor height change lines
-    cfg.automapL2[1] = .70f;
-    cfg.automapL2[2] = .52f;
+    cfg.automapL2[0] = .812f; // floor height change lines
+    cfg.automapL2[1] = .687f;
+    cfg.automapL2[2] = .519f;
 
-    cfg.automapL3[0] = .47f; // ceiling change lines
-    cfg.automapL3[1] = .30f;
-    cfg.automapL3[2] = .16f;
+    cfg.automapL3[0] = .402f; // ceiling change lines
+    cfg.automapL3[1] = .230f;
+    cfg.automapL3[2] = .121f;
 
-    cfg.automapMobj[0] = 1.f;
-    cfg.automapMobj[1] = 1.f;
-    cfg.automapMobj[2] = 1.f;
+    cfg.automapMobj[0] = .093f;
+    cfg.automapMobj[1] = .093f;
+    cfg.automapMobj[2] = .093f;
 
     cfg.automapBack[0] = 1.0f;
     cfg.automapBack[1] = 1.0f;
@@ -254,7 +254,7 @@ void X_PreInit(void)
     cfg.automapDoorGlow = 8;
     cfg.automapHudDisplay = 2;
     cfg.automapRotate = true;
-    cfg.automapBabyKeys = false;
+    cfg.automapBabyKeys = true;
     cfg.automapZoomSpeed = .1f;
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
@@ -268,10 +268,10 @@ void X_PreInit(void)
     cfg.msgUptime = 5;
     cfg.msgAlign = 1; // Center.
     cfg.msgBlink = 5;
+
     cfg.msgColor[0] = defFontRGB3[0];
     cfg.msgColor[1] = defFontRGB3[1];
     cfg.msgColor[2] = defFontRGB3[2];
-    cfg.echoMsg = true;
 
     cfg.inventoryTimer = 5;
     cfg.inventoryWrap = false;
@@ -283,46 +283,64 @@ void X_PreInit(void)
 
     cfg.chatBeep = true;
 
-    cfg.weaponOrder[0] = WT_FOURTH;
-    cfg.weaponOrder[1] = WT_THIRD;
-    cfg.weaponOrder[2] = WT_SECOND;
-    cfg.weaponOrder[3] = WT_FIRST;
+  //cfg.killMessages = true;
+    cfg.bobView = 1;
+    cfg.bobWeapon = 1;
+    cfg.bobWeaponLower = true;
+    cfg.cameraNoClip = true;
+    cfg.respawnMonstersNightmare = false;
+
+    cfg.weaponOrder[0] = WT_SEVENTH;    // mace \ beak
+    cfg.weaponOrder[1] = WT_SIXTH;      // phoenixrod \ beak
+    cfg.weaponOrder[2] = WT_FIFTH;      // skullrod \ beak
+    cfg.weaponOrder[3] = WT_FOURTH;     // blaster \ beak
+    cfg.weaponOrder[4] = WT_THIRD;      // crossbow \ beak
+    cfg.weaponOrder[5] = WT_SECOND;     // goldwand \ beak
+    cfg.weaponOrder[6] = WT_EIGHTH;     // gauntlets \ beak
+    cfg.weaponOrder[7] = WT_FIRST;      // staff \ beak
 
     cfg.weaponCycleSequential = true;
+
+    cfg.menuEffectFlags = MEF_TEXT_SHADOW;
+    cfg.hudFog = 5;
+
+    cfg.ringFilter = 1;
+    cfg.tomeCounter = 10;
+    cfg.tomeSound = 3;
 
     // Use the crossfade transition by default.
     Con_SetInteger("con-transition", 0);
 
-    // Hexen's torch light attenuates with distance.
-    DD_SetInteger(DD_FIXEDCOLORMAP_ATTENUATE, 1);
+    // Heretic's torch light does not attenuate with distance.
+    DD_SetInteger(DD_FIXEDCOLORMAP_ATTENUATE, 0);
 
-    // Do the common pre init routine.
+    // Do the common pre init routine;
     G_CommonPreInit();
 }
 
-/**
- * Post Game Initialization routine.
- * All game-specific actions that should take place at this time go here.
- */
-void X_PostInit(void)
+void H_PostInit()
 {
     dd_bool autoStart = false;
     Uri *startMapUri = 0;
-    playerclass_t startPlayerClass = PCLASS_NONE;
-    AutoStr *path;
-    int p;
 
-    // Do this early as other systems need to know.
-    P_InitPlayerClassInfo();
+    /// @todo Kludge: Shareware WAD has different border background.
+    /// @todo Do this properly!
+    if(gameMode == heretic_shareware)
+        borderGraphics[0] = "Flats:FLOOR04";
+    else
+        borderGraphics[0] = "Flats:FLAT513";
 
     // Common post init routine.
     G_CommonPostInit();
+
+    // Declare the Heretic V13 game state reader/interpreter.
+    SV_DeclareGameStateReader(&HereticV13GameStateReader::recognize, &HereticV13GameStateReader::make);
 
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();
 
     // Game parameters.
-    /* None */
+    monsterInfight = GetDefInt("AI|Infight", 0);
 
     // Defaults for skill, episode and map.
     gameRules.skill = /*startSkill =*/ SM_MEDIUM;
@@ -330,20 +348,23 @@ void X_PostInit(void)
     // Game mode specific settings.
     /* None */
 
-    cfg.netDeathmatch = CommandLine_Exists("-deathmatch");
+    if(CommandLine_Check("-deathmatch"))
+    {
+        cfg.netDeathmatch = true;
+    }
 
-    // Apply these rules.
-    gameRules.noMonsters    = CommandLine_Check("-nomonsters")? true : false;
-    gameRules.randomClasses = CommandLine_Exists("-randclass")? true : false;
+    // Apply these game rules.
+    gameRules.noMonsters      = CommandLine_Exists("-nomonsters")? true : false;
+    gameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
 
-    // Turbo movement option.
-    p = CommandLine_Check("-turbo");
+    // turbo option.
+    int p = CommandLine_Check("-turbo");
     turboMul = 1.0f;
     if(p)
     {
         int scale = 200;
 
-        if(p < CommandLine_Count() - 1)
+        if(p < myargc - 1)
             scale = atoi(CommandLine_At(p + 1));
         if(scale < 10)
             scale = 10;
@@ -354,75 +375,49 @@ void X_PostInit(void)
         turboMul = scale / 100.f;
     }
 
-    if((p = CommandLine_CheckWith("-scripts", 1)) != 0)
-    {
-        sc_FileScripts = true;
-        sc_ScriptsDir = CommandLine_At(p + 1);
-    }
-
-    // Process sound definitions.
-    SndInfoParser(AutoStr_FromText("Lumps:SNDINFO"));
-
-    // Process sound sequence scripts.
-    SndSeqParser(sc_FileScripts? Str_Appendf(AutoStr_New(), "%sSNDSEQ.txt", sc_ScriptsDir)
-                               : AutoStr_FromText("Lumps:SNDSEQ"));
-
     // Load a saved game?
-    p = CommandLine_CheckWith("-loadgame", 1);
-    if(p != 0)
+    p = CommandLine_Check("-loadgame");
+    if(p && p < myargc - 1)
     {
-        int const slotNumber = SaveSlots_ParseSlotIdentifier(saveSlots, CommandLine_At(p + 1));
-        if(SaveSlots_SlotIsUserWritable(saveSlots, slotNumber) && G_LoadGame(slotNumber))
+        int const slotNumber = SV_SaveSlots().parseSlotIdentifier(CommandLine_At(p + 1));
+        if(SV_SaveSlots().slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
         {
             // No further initialization is to be done.
             return;
         }
     }
 
-    if((p = CommandLine_CheckWith("-skill", 1)) != 0)
+    p = CommandLine_Check("-skill");
+    if(p && p < myargc - 1)
     {
         int skillNumber = atoi(CommandLine_At(p + 1));
         gameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
         autoStart = true;
     }
 
-    if((p = CommandLine_Check("-class")) != 0)
+    p = CommandLine_Check("-episode");
+    if(p && p < myargc - 1)
     {
-        playerclass_t pClass = (playerclass_t)atoi(CommandLine_At(p + 1));
-        if(!VALID_PLAYER_CLASS(pClass))
-        {
-            App_Log(DE2_LOG_WARNING, "Invalid player class id=%d specified with -class", (int)pClass);
-        }
-        else if(!PCLASS_INFO(pClass)->userSelectable)
-        {
-            App_Log(DE2_LOG_WARNING, "Non-user-selectable player class id=%d specified with -class", (int)pClass);
-        }
-        else
-        {
-            startPlayerClass = pClass;
-        }
-    }
+        int episodeNumber = atoi(CommandLine_At(p + 1));
 
-    if(startPlayerClass != PCLASS_NONE)
-    {
-        App_Log(DE2_LOG_NOTE, "Player Class: '%s'", PCLASS_INFO(startPlayerClass)->niceName);
-        cfg.playerClass[CONSOLEPLAYER] = startPlayerClass;
+        startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber, 0);
         autoStart = true;
     }
 
-    // Check for command line warping.
     p = CommandLine_Check("-warp");
-    if(p && p < CommandLine_Count() - 1)
+    if(p && p < myargc - 2)
     {
-        int warpMap = atoi(CommandLine_At(p + 1));
+        int episodeNumber = atoi(CommandLine_At(p + 1));
+        int mapNumber     = atoi(CommandLine_At(p + 2));
 
-        startMapUri = G_ComposeMapUri(0, P_TranslateMap(warpMap - 1));
+        startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber,
+                                      mapNumber > 0? mapNumber - 1 : mapNumber);
         autoStart = true;
     }
 
     if(!startMapUri)
     {
-        startMapUri = G_ComposeMapUri(0, P_TranslateMap(0));
+        startMapUri = G_ComposeMapUri(0, 0);
     }
 
     // Are we autostarting?
@@ -434,24 +429,21 @@ void X_PostInit(void)
     }
 
     // Validate episode and map.
-    path = Uri_Compose(startMapUri);
+    AutoStr *path = Uri_Compose(startMapUri);
     if((autoStart || IS_NETGAME) && P_MapExists(Str_Text(path)))
     {
         G_DeferredNewGame(startMapUri, 0/*default*/, &gameRules);
     }
     else
     {
-        // Start up intro loop.
-        G_StartTitle();
+        G_StartTitle(); // Start up intro loop.
     }
 
     Uri_Delete(startMapUri);
 }
 
-void X_Shutdown(void)
+void H_Shutdown()
 {
     P_ShutdownInventory();
-    X_DestroyLUTs();
     G_CommonShutdown();
 }
-

@@ -50,6 +50,14 @@
 DENG_EXTERN_C dd_bool sc_FileScripts;
 DENG_EXTERN_C char const *sc_ScriptsDir;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int Common_GetInteger(int id);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_GAME_INCLUDES

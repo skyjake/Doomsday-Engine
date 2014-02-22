@@ -32,6 +32,14 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void G_ConsoleRegistration(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBHEXEN_CONSOLE_H */

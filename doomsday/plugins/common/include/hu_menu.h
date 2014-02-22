@@ -33,6 +33,9 @@
 #include "dd_types.h"
 #include "hu_lib.h"
 
+DENG_EXTERN_C int menuTime;
+DENG_EXTERN_C dd_bool menuNominatingQuickSaveSlot;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -85,9 +88,6 @@ extern "C" {
 #define MENU_CURSOR_REWIND_SPEED    20
 #define MENU_CURSOR_FRAMECOUNT      2
 #define MENU_CURSOR_TICSPERFRAME    8
-
-extern int menuTime;
-extern dd_bool menuNominatingQuickSaveSlot;
 
 /// Register the console commands, variables, etc..., of this module.
 void Hu_MenuRegister(void);

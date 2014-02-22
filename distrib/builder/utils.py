@@ -192,7 +192,7 @@ def version_cmp(a, b):
 def system_command(cmd):
     result = subprocess.call(cmd, shell=True)
     if result != 0:
-        raise Exception("Error from " + cmd)
+        raise Exception("System command \"%s\" returned error code %i" % (cmd, result))
 
 
 def python2_executable():

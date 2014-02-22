@@ -698,7 +698,7 @@ void P_SetMessage(player_t *pl, int flags, char const *msg)
 
     if(pl == &players[CONSOLEPLAYER])
     {
-        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s\n", msg);
+        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
     }
 
     // Servers are responsible for sending these messages to the clients.
@@ -724,7 +724,7 @@ void P_SetYellowMessage(player_t *pl, int flags, char const *msg)
 
     if(pl == &players[CONSOLEPLAYER])
     {
-        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s\n", msg);
+        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
     }
 
     // Servers are responsible for sending these messages to the clients.
@@ -895,10 +895,12 @@ void P_PlayerThinkCamera(player_t *player)
 
 D_CMD(SetCamera)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
     int p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
-        App_Log(DE2_LOG_SCR| DE2_LOG_ERROR, "Invalid console number %i\n", p);
+        App_Log(DE2_LOG_SCR| DE2_LOG_ERROR, "Invalid console number %i", p);
         return false;
     }
 
@@ -980,6 +982,8 @@ void P_PlayerSetArmorType(player_t *plr, int type)
 
 D_CMD(SetViewMode)
 {
+    DENG_UNUSED(src);
+
     if(argc > 2) return false;
 
     int pl = CONSOLEPLAYER;
@@ -1004,6 +1008,8 @@ D_CMD(SetViewMode)
 
 D_CMD(SetViewLock)
 {
+    DENG_UNUSED(src);
+
     int pl = CONSOLEPLAYER, lock;
 
     if(!stricmp(argv[0], "lockmode"))
@@ -1040,23 +1046,25 @@ D_CMD(SetViewLock)
 
 D_CMD(MakeLocal)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc);
+
     if(G_GameState() != GS_MAP)
     {
-        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "You must be in a game to create a local player.\n");
+        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "You must be in a game to create a local player.");
         return false;
     }
 
     int p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
-        App_Log(DE2_SCR_ERROR, "Invalid console number %i.\n", p);
+        App_Log(DE2_SCR_ERROR, "Invalid console number %i.", p);
         return false;
     }
 
     player_t *plr = &players[p];
     if(plr->plr->inGame)
     {
-        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Player %i is already in the game.\n", p);
+        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Player %i is already in the game.", p);
         return false;
     }
 
@@ -1074,6 +1082,8 @@ D_CMD(MakeLocal)
 
 D_CMD(PrintPlayerCoords)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     mobj_t *mo;
 
     if(G_GameState() != GS_MAP)
@@ -1082,7 +1092,7 @@ D_CMD(PrintPlayerCoords)
     if(!(mo = players[CONSOLEPLAYER].plr->mo))
         return false;
 
-    App_Log(DE2_LOG_MAP, "Console %i: X=%g Y=%g Z=%g\n", CONSOLEPLAYER,
+    App_Log(DE2_LOG_MAP, "Console %i: X=%g Y=%g Z=%g", CONSOLEPLAYER,
                          mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 
     return true;
@@ -1090,8 +1100,10 @@ D_CMD(PrintPlayerCoords)
 
 D_CMD(CycleSpy)
 {
+    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+
     //// @todo The engine should do this.
-    App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Spying not allowed.\n");
+    App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Spying not allowed.");
 #if 0
     if(G_GameState() == GS_MAP && !deathmatch)
     {
@@ -1112,18 +1124,20 @@ D_CMD(CycleSpy)
 
 D_CMD(SpawnMobj)
 {
+    DENG_UNUSED(src);
+
     if(argc != 5 && argc != 6)
     {
-        App_Log(DE2_SCR_NOTE, "Usage: %s (type) (x) (y) (z) (angle)\n", argv[0]);
-        App_Log(DE2_LOG_SCR, "Type must be a defined Thing ID or Name.\n");
-        App_Log(DE2_LOG_SCR, "Z is an offset from the floor, 'floor', 'ceil' or 'random'.\n");
-        App_Log(DE2_LOG_SCR, "Angle (0..360) is optional.\n");
+        App_Log(DE2_SCR_NOTE, "Usage: %s (type) (x) (y) (z) (angle)", argv[0]);
+        App_Log(DE2_LOG_SCR, "Type must be a defined Thing ID or Name.");
+        App_Log(DE2_LOG_SCR, "Z is an offset from the floor, 'floor', 'ceil' or 'random'.");
+        App_Log(DE2_LOG_SCR, "Angle (0..360) is optional.");
         return true;
     }
 
     if(IS_CLIENT)
     {
-        App_Log(DE2_SCR_ERROR, "%s can't be used by clients\n", argv[0]);
+        App_Log(DE2_SCR_ERROR, "%s can't be used by clients", argv[0]);
         return false;
     }
 
@@ -1134,7 +1148,7 @@ D_CMD(SpawnMobj)
         // Try to find it by name instead.
         if((type = mobjtype_t(Def_Get(DD_DEF_MOBJ_BY_NAME, argv[1], 0))) < 0)
         {
-            App_Log(DE2_LOG_RES | DE2_LOG_ERROR, "Undefined thing type %s\n", argv[1]);
+            App_Log(DE2_LOG_RES | DE2_LOG_ERROR, "Undefined thing type %s", argv[1]);
             return false;
         }
     }
@@ -1185,6 +1199,8 @@ D_CMD(SpawnMobj)
             mo->intFlags |= MIF_FADE;
         }
     // << d64tc
+#else
+        DENG_UNUSED(mo);
 #endif
     }
 
@@ -1210,14 +1226,11 @@ angle_t Player_ViewYawAngle(int playerNum)
     return ang;
 }
 
-void player_s::write(Writer *writer) const
+void player_s::write(Writer *writer, playerheader_t &plrHdr) const
 {
 #if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
-    int const plrnum             = P_GetPlayerNum(this);
+    int const plrnum = P_GetPlayerNum(this);
 #endif
-    playerheader_t const &plrHdr = *SV_GetPlayerHeader();
-
-    int i, numPSprites = plrHdr.numPSprites;
 
     player_t temp, *p = &temp;
     ddplayer_t ddtemp, *dp = &ddtemp;
@@ -1228,7 +1241,7 @@ void player_s::write(Writer *writer) const
     temp.plr = &ddtemp;
 
     // Convert the psprite states.
-    for(i = 0; i < numPSprites; ++i)
+    for(int i = 0; i < plrHdr.numPSprites; ++i)
     {
         pspdef_t *pspDef = &temp.pSprites[i];
 
@@ -1266,7 +1279,7 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, p->health);
 
 #if __JHEXEN__
-    for(i = 0; i < plrHdr.numArmorTypes; ++i)
+    for(int i = 0; i < plrHdr.numArmorTypes; ++i)
     {
         Writer_WriteInt32(writer, p->armorPoints[i]);
     }
@@ -1276,7 +1289,7 @@ void player_s::write(Writer *writer) const
 #endif
 
 #if __JDOOM64__ || __JHEXEN__
-    for(i = 0; i < plrHdr.numInvItemTypes; ++i)
+    for(int i = 0; i < plrHdr.numInvItemTypes; ++i)
     {
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
 
@@ -1286,7 +1299,7 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, P_InventoryReadyItem(plrnum));
 #endif
 
-    for(i = 0; i < plrHdr.numPowers; ++i)
+    for(int i = 0; i < plrHdr.numPowers; ++i)
     {
         Writer_WriteInt32(writer, p->powers[i]);
     }
@@ -1294,7 +1307,7 @@ void player_s::write(Writer *writer) const
 #if __JHEXEN__
     Writer_WriteInt32(writer, p->keys);
 #else
-    for(i = 0; i < plrHdr.numKeys; ++i)
+    for(int i = 0; i < plrHdr.numKeys; ++i)
     {
         Writer_WriteInt32(writer, p->keys[i]);
     }
@@ -1306,7 +1319,7 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, p->backpack);
 #endif
 
-    for(i = 0; i < plrHdr.numFrags; ++i)
+    for(int i = 0; i < plrHdr.numFrags; ++i)
     {
         Writer_WriteInt32(writer, p->frags[i]);
     }
@@ -1314,12 +1327,12 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, p->readyWeapon);
     Writer_WriteInt32(writer, p->pendingWeapon);
 
-    for(i = 0; i < plrHdr.numWeapons; ++i)
+    for(int i = 0; i < plrHdr.numWeapons; ++i)
     {
         Writer_WriteInt32(writer, p->weapons[i].owned);
     }
 
-    for(i = 0; i < plrHdr.numAmmoTypes; ++i)
+    for(int i = 0; i < plrHdr.numAmmoTypes; ++i)
     {
         Writer_WriteInt32(writer, p->ammo[i].owned);
 #if !__JHEXEN__
@@ -1348,7 +1361,7 @@ void player_s::write(Writer *writer) const
     Writer_WriteInt32(writer, dp->fixedColorMap);
     Writer_WriteInt32(writer, p->colorMap);
 
-    for(i = 0; i < numPSprites; ++i)
+    for(int i = 0; i < plrHdr.numPSprites; ++i)
     {
         pspdef_t *psp = &p->pSprites[i];
 
@@ -1366,7 +1379,7 @@ void player_s::write(Writer *writer) const
 #endif
 
 #if __JHERETIC__
-    for(i = 0; i < plrHdr.numInvItemTypes; ++i)
+    for(int i = 0; i < plrHdr.numInvItemTypes; ++i)
     {
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
 
@@ -1394,7 +1407,7 @@ void player_s::write(Writer *writer) const
 #endif
 }
 
-void player_s::read(Reader *reader)
+void player_s::read(Reader *reader, playerheader_t &plrHdr)
 {
     int const plrnum = P_GetPlayerNum(this);
 
@@ -1404,7 +1417,6 @@ void player_s::read(Reader *reader)
     cfg.playerClass[plrnum] = playerclass_t(Reader_ReadByte(reader));
 #endif
 
-    playerheader_t const &plrHdr = *SV_GetPlayerHeader();
     ddplayer_t *dp = plr;
 
 #if __JHEXEN__

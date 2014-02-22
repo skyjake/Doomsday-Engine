@@ -81,6 +81,10 @@ typedef enum {
     ILS_SHOW_NEXTMAP
 } interludestate_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// To be called to register the console commands and variables of this module.
 void WI_Register(void);
 
@@ -116,4 +120,8 @@ void WI_End(void);
  */
 void IN_SkipToNext(void);
 
-#endif /* LIBDOOM_WI_STUFF_H */
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif // LIBDOOM_WI_STUFF_H

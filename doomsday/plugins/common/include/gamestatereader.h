@@ -24,30 +24,137 @@
 #include "common.h"
 #include "saveinfo.h"
 #include <de/Error>
+#include <de/Path>
 
 /**
- * @ingroup libcommon
- * @see GameStateWriter
+ * Interface for game state (savegame) readers.
  */
-class GameStateReader
+class IGameStateReader
 {
 public:
     /// An error occurred attempting to open the input file. @ingroup errors
     DENG2_ERROR(FileAccessError);
 
+    /// Base class for read errors. @ingroup errors
+    DENG2_ERROR(ReadError);
+
 public:
-    GameStateReader();
+    virtual ~IGameStateReader() {}
 
     /**
-     * Determines whether the resource file on @a path is interpretable as a game state which can
-     * be loaded with a GameStateReader.
+     * Attempt to load (read/interpret) the saved game state.
      *
-     * @param info  SaveInfo to attempt to read game session header into.
-     * @param path  Path to the resource file to be recognized.
+     * @param info  SaveInfo for the saved game state to be read/interpreted.
      */
-    static bool recognize(SaveInfo *info, Str const *path);
+    virtual void read(SaveInfo &info) = 0;
+};
 
-    void read(SaveInfo *info, Str const *path);
+/**
+ * Game state recognizer function ptr.
+ *
+ * The job of a recognizer function is to determine whether the game session associated
+ * with the given save @a info is interpretable as a potentially loadable savegame state.
+ *
+ * @param info  SaveInfo to attempt to read game session header into.
+ */
+typedef bool (*GameStateRecognizeFunc)(SaveInfo &info);
+
+/// Game state reader instantiator function ptr.
+typedef IGameStateReader *(*GameStateReaderMakeFunc)();
+
+/**
+ * Factory for the construction of new IGameStateReader-derived instances.
+ */
+class GameStateReaderFactory
+{
+public:
+    /**
+     * Register a game state reader.
+     *
+     * @param recognizer  Game state recognizer function.
+     * @param maker       Game state reader instantiator function.
+     */
+    void declareReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker)
+    {
+        DENG_ASSERT(recognizer != 0 && maker != 0);
+        ReaderInfo info;
+        info.recognize = recognizer;
+        info.newReader = maker;
+        readers.push_back(info);
+    }
+
+    /**
+     * Determines whether a IGameStateReader appropriate for the specified save game @a info
+     * is available and if so, reads the game session header.
+     *
+     * @param saveInfo  The game session header will be written here if recognized.
+     *
+     * @return  @c true= the game session header was read successfully.
+     *
+     * @see recognizeAndMakeReader()
+     */
+    bool recognize(SaveInfo &saveInfo) const
+    {
+        return readGameSessionHeader(saveInfo) != 0;
+    }
+
+    /**
+     * Determines whether a IGameStateReader appropriate for the specified save game @a info
+     * is available and if so, reads the game session header and returns a new reader instance
+     * for deserializing the game state.
+     *
+     * @param saveInfo  The game session header will be written here if recognized.
+     *
+     * @return  New reader instance if recognized; otherwise @c 0. Ownership given to the caller.
+     *
+     * @see recognize()
+     */
+    IGameStateReader *recognizeAndMakeReader(SaveInfo &saveInfo) const
+    {
+        if(ReaderInfo const *rdrInfo = readGameSessionHeader(saveInfo))
+        {
+            return rdrInfo->newReader();
+        }
+        return 0; // Unrecognized
+    }
+
+private:
+    struct ReaderInfo {
+        GameStateRecognizeFunc recognize;
+        GameStateReaderMakeFunc newReader;
+    };
+    typedef std::list<ReaderInfo> ReaderInfos;
+    ReaderInfos readers;
+
+    ReaderInfo const *readGameSessionHeader(SaveInfo &info) const
+    {
+        DENG2_FOR_EACH_CONST(ReaderInfos, i, readers)
+        {
+            if(i->recognize(info))
+            {
+                return &*i;
+            }
+        }
+        return 0; // Unrecognized
+    }
+};
+
+/**
+ * Native saved game state reader.
+ *
+ * @ingroup libcommon
+ * @see GameStateWriter
+ */
+class GameStateReader : public IGameStateReader
+{
+public:
+    GameStateReader();
+    ~GameStateReader();
+
+    static IGameStateReader *make();
+    static bool recognize(SaveInfo &info);
+
+    void read(SaveInfo &info);
 
 private:
     DENG2_PRIVATE(d)

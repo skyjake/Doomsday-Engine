@@ -42,7 +42,7 @@ typedef struct {
     void   (C_DECL *func)(); // Pointer to the function.
 } actionlink_t;
 
-extern actionlink_t actionlinks[];
+DENG_EXTERN_C actionlink_t actionlinks[];
 
 void C_DECL A_BabyMetal();
 void C_DECL A_BFGsound();
