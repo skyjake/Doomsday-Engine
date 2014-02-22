@@ -2827,7 +2827,7 @@ struct savegamestateworker_params_t
 };
 
 /**
- * Save the current game state to the specified saved slot.
+ * Save the current game state to the specified save slot.
  *
  * @return  Non-zero iff the game state was saved successfully.
  */
@@ -2859,13 +2859,12 @@ static int saveGameStateWorker(void *context)
     }
 
     char const *userDescription = p.userDescription;
-
     if(!userDescription || !userDescription[0])
     {
         SaveInfo &saveInfo = G_SaveSlots()[p.slotNumber].saveInfo();
         if(!saveInfo.userDescription().isEmpty())
         {
-            // Slot already in use; reuse the existing name.
+            // Slot already in use; reuse the existing description.
             userDescription = Str_Text(AutoStr_FromTextStd(saveInfo.userDescription().toUtf8().constData()));
         }
         else if(gaSaveGameGenerateDescription)
@@ -2876,7 +2875,7 @@ static int saveGameStateWorker(void *context)
 
     SaveInfo *saveInfo = SaveInfo::newWithCurrentSessionMetadata(
                                 G_SaveSlots()[logicalSlot].fileName(),
-                                p.userDescription);
+                                userDescription);
     try
     {
         App_Log(DE2_LOG_VERBOSE, "Attempting save game to \"%s\"",
