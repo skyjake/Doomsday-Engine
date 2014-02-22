@@ -317,7 +317,7 @@ void SaveInfo::updateFromFile()
     }
 
     // Is this a recognized game state?
-    if(!SV_RecognizeGameState(*this))
+    if(!G_RecognizeGameState(*this))
     {
         // Clear the info.
         setUserDescription("");

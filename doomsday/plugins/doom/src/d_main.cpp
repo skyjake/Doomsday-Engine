@@ -398,7 +398,7 @@ void D_PostInit()
     G_CommonPostInit();
 
     // Declare the Doom V9 game state reader/interpreter.
-    SV_DeclareGameStateReader(&DoomV9GameStateReader::recognize, &DoomV9GameStateReader::make);
+    G_DeclareGameStateReader(&DoomV9GameStateReader::recognize, &DoomV9GameStateReader::make);
 
     // Initialize ammo info.
     P_InitAmmoInfo();
@@ -451,8 +451,8 @@ void D_PostInit()
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        int const slotNumber = SV_SaveSlots().parseSlotIdentifier(CommandLine_At(p + 1));
-        if(SV_SaveSlots().slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
+        int const slotNumber = G_SaveSlots().parseSlotIdentifier(CommandLine_At(p + 1));
+        if(G_SaveSlots().slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
         {
             // No further initialization is to be done.
             return;

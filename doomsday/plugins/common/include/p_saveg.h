@@ -21,7 +21,12 @@
 #ifndef LIBCOMMON_SAVESTATE_H
 #define LIBCOMMON_SAVESTATE_H
 
+#ifdef __cplusplus
+
 #include "common.h"
+
+class MapStateReader;
+class MapStateWriter;
 
 DENG_EXTERN_C int saveToRealPlayerNum[MAXPLAYERS];
 
@@ -32,43 +37,6 @@ typedef struct targetplraddress_s {
 } targetplraddress_t;
 
 DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/// Initialize this module.
-void SV_Initialize(void);
-
-/// Shutdown this module.
-void SV_Shutdown(void);
-
-/**
- * Save the current game state to the specified @a slotNumber.
- *
- * @param description  Textual description to include in the save info. Can be @c 0
- *                     in which case a description will be auto-generated.
- *
- * @return  @c true iff the game state was saved successfully.
- */
-dd_bool SV_SaveGame(int slotNumber, char const *description);
-
-/**
- * Load the game state associated with the specified @a slotNumber.
- *
- * @return  @c true iff the game state was loaded successfully.
- */
-dd_bool SV_LoadGame(int slotNumber);
-
-#if !__JHEXEN__
-/**
- * Saves a snapshot of the world, a still image.
- * No data of movement is included (server sends it).
- */
-void SV_SaveGameClient(uint gameId);
-
-void SV_LoadGameClient(uint gameId);
 #endif
 
 #if __JHEXEN__
@@ -111,42 +79,9 @@ typedef struct playerheader_s {
 } playerheader_t;
 
 #if __JHEXEN__
-void SV_InitTargetPlayers(void);
-void SV_ClearTargetPlayers(void);
+void SV_InitTargetPlayers();
+void SV_ClearTargetPlayers();
 #endif
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-# ifdef __cplusplus
-#include "gamestatereader.h"
-
-class MapStateReader;
-class MapStateWriter;
-class SaveInfo;
-class SaveSlots;
-
-/**
- * Returns the game's SaveSlots.
- */
-SaveSlots &SV_SaveSlots();
-
-/**
- * Declare a new saved game state reader/interpreter.
- *
- * @param recognizer  Format recognizer function.
- * @param maker       Reader instantiator function.
- */
-void SV_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker);
-
-/**
- * Determines whether the game session associated with save @a info is interpretable as a
- * potentially loadable savegame state.
- *
- * @param info  SaveInfo to attempt to read game session header into.
- */
-bool SV_RecognizeGameState(SaveInfo &info);
 
 void SV_WriteLine(Line *line, MapStateWriter *msw);
 void SV_ReadLine(Line *line, MapStateReader *msr);
@@ -154,11 +89,24 @@ void SV_ReadLine(Line *line, MapStateReader *msr);
 void SV_WriteSector(Sector *sec, MapStateWriter *msw);
 void SV_ReadSector(Sector *sec, MapStateReader *msr);
 
-#  if __JHEXEN__
-void SV_HxSaveHubMap(void);
+#endif // __cplusplus
 
-void SV_HxLoadHubMap(void);
-#  endif // __JHEXEN__
-# endif // __cplusplus
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if !__JHEXEN__
+/**
+ * Saves a snapshot of the world, a still image.
+ * No data of movement is included (server sends it).
+ */
+void SV_SaveGameClient(uint gameId);
+
+void SV_LoadGameClient(uint gameId);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBCOMMON_SAVESTATE_H
