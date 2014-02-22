@@ -380,7 +380,7 @@ cvartemplate_t gamestatusCVars[] =
     {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR3], 0, 0, 0},
     {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR4], 0, 0, 0},
 #endif
-    {"", 0, CVT_NULL, 0, 0, 0}
+    {"", 0, CVT_NULL, 0, 0, 0, 0}
 };
 
 ccmdtemplate_t gameCmds[] = {
