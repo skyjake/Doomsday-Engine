@@ -334,7 +334,8 @@ void H_PostInit()
     G_CommonPostInit();
 
     // Declare the Heretic V13 game state reader/interpreter.
-    G_DeclareGameStateReader(&HereticV13GameStateReader::recognize, &HereticV13GameStateReader::make);
+    G_GameStateReaderFactory().declareReader(&HereticV13GameStateReader::recognize,
+                                             &HereticV13GameStateReader::make);
 
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();

@@ -156,7 +156,6 @@ D_CMD( CCmdExitLevel );
 #if __cplusplus
 #include "gamestatereader.h"
 
-class SaveInfo;
 class SaveSlots;
 
 /**
@@ -165,20 +164,10 @@ class SaveSlots;
 SaveSlots &G_SaveSlots();
 
 /**
- * Declare a new saved game state reader/interpreter.
- *
- * @param recognizer  Format recognizer function.
- * @param maker       Reader instantiator function.
+ * Returns the game's GameStateReaderFactory.
  */
-void G_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker);
+GameStateReaderFactory &G_GameStateReaderFactory();
 
-/**
- * Determines whether the game session associated with save @a info is interpretable as a
- * potentially loadable savegame state.
- *
- * @param info  SaveInfo to attempt to read game session header into.
- */
-bool G_RecognizeGameState(SaveInfo &info);
 #endif // __cplusplus
 
 #endif // LIBCOMMON_GAME_H

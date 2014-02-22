@@ -398,7 +398,8 @@ void D_PostInit()
     G_CommonPostInit();
 
     // Declare the Doom V9 game state reader/interpreter.
-    G_DeclareGameStateReader(&DoomV9GameStateReader::recognize, &DoomV9GameStateReader::make);
+    G_GameStateReaderFactory().declareReader(&DoomV9GameStateReader::recognize,
+                                             &DoomV9GameStateReader::make);
 
     // Initialize ammo info.
     P_InitAmmoInfo();

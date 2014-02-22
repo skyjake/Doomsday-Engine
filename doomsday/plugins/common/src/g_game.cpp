@@ -937,14 +937,9 @@ SaveSlots &G_SaveSlots()
     return sslots;
 }
 
-void G_DeclareGameStateReader(GameStateRecognizeFunc recognizer, GameStateReaderMakeFunc maker)
+GameStateReaderFactory &G_GameStateReaderFactory()
 {
-    gameStateReaderFactory.declareReader(recognizer, maker);
-}
-
-bool G_RecognizeGameState(SaveInfo &info)
-{
-    return gameStateReaderFactory.recognize(info);
+    return gameStateReaderFactory;
 }
 
 de::Path G_ChooseRootSaveDirectory()

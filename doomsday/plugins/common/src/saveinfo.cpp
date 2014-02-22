@@ -29,6 +29,20 @@
 #include <de/NativePath>
 #include <cstring>
 
+namespace internal
+{
+    static bool usingSeparateMapSessionFiles()
+    {
+#ifdef __JHEXEN__
+        return true;
+#else
+        return false;
+#endif
+    }
+}
+
+using namespace internal;
+
 DENG2_PIMPL_NOREF(SaveInfo)
 {
     de::String fileName; ///< Name of the game state file.
@@ -306,12 +320,14 @@ bool SaveInfo::gameSessionIsLoadable() const
     return true; // It's good!
 }
 
-#if __JHEXEN__
 bool SaveInfo::haveMapSession(uint map) const
 {
-    return SV_ExistingFile(SV_SavePath() / fileNameForMap(map));
+    if(usingSeparateMapSessionFiles())
+    {
+        return SV_ExistingFile(SV_SavePath() / fileNameForMap(map));
+    }
+    return haveGameSession();
 }
-#endif
 
 void SaveInfo::updateFromFile()
 {
@@ -324,7 +340,7 @@ void SaveInfo::updateFromFile()
     }
 
     // Is this a recognized game state?
-    if(!G_RecognizeGameState(*this))
+    if(!G_GameStateReaderFactory().recognize(*this))
     {
         // Clear the info.
         setUserDescription("");
