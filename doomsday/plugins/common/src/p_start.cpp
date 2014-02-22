@@ -717,7 +717,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     if(!foundSpot)
     {
-        App_Log(DE2_DEV_MAP_MSG, "- force spawning at %i\n", p->startSpot);
+        App_Log(DE2_DEV_MAP_MSG, "- force spawning at %i", p->startSpot);
 
         if(assigned)
         {

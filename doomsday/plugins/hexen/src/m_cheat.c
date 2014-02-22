@@ -427,25 +427,24 @@ D_CMD(CheatGive)
 
     if(G_GameState() != GS_MAP)
     {
-        App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!\n");
+        App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!");
         return true;
     }
 
     if(argc != 2 && argc != 3)
     {
-        App_Log(DE2_SCR_NOTE, "Usage:\n  give (stuff)\n");
-        App_Log(DE2_LOG_SCR, "  give (stuff) (plr)\n");
+        App_Log(DE2_SCR_NOTE, "Usage:\n  give (stuff)\n  give (stuff) (plr)");
         App_Log(DE2_LOG_SCR, "Stuff consists of one or more of (type:id). "
-                "If no id; give all of type:\n");
-        App_Log(DE2_LOG_SCR, " a - ammo\n");
-        App_Log(DE2_LOG_SCR, " h - health\n");
-        App_Log(DE2_LOG_SCR, " i - items\n");
-        App_Log(DE2_LOG_SCR, " k - keys\n");
-        App_Log(DE2_LOG_SCR, " p - puzzle\n");
-        App_Log(DE2_LOG_SCR, " r - armor\n");
-        App_Log(DE2_LOG_SCR, " w - weapons\n");
-        App_Log(DE2_LOG_SCR, "Example: 'give ikw' gives items, keys and weapons.\n");
-        App_Log(DE2_LOG_SCR, "Example: 'give w2k1' gives weapon two and key one.\n");
+                             "If no id; give all of type:");
+        App_Log(DE2_LOG_SCR, " a - ammo");
+        App_Log(DE2_LOG_SCR, " h - health");
+        App_Log(DE2_LOG_SCR, " i - items");
+        App_Log(DE2_LOG_SCR, " k - keys");
+        App_Log(DE2_LOG_SCR, " p - puzzle");
+        App_Log(DE2_LOG_SCR, " r - armor");
+        App_Log(DE2_LOG_SCR, " w - weapons");
+        App_Log(DE2_LOG_SCR, "Example: 'give ikw' gives items, keys and weapons.");
+        App_Log(DE2_LOG_SCR, "Example: 'give w2k1' gives weapon two and key one.");
         return true;
     }
 
@@ -494,7 +493,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
                     {
-                        App_Log(DE2_SCR_ERROR, "Unknown ammo #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown ammo #%d (valid range %d-%d)",
                                 (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
                         break;
                     }
@@ -540,7 +539,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
                     {
-                        App_Log(DE2_SCR_ERROR, "Unknown key #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown key #%d (valid range %d-%d)",
                                 (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
                         break;
                     }
@@ -581,7 +580,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < ARMOR_FIRST || idx >= NUMARMOR)
                     {
-                        App_Log(DE2_SCR_ERROR, "Unknown armor #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown armor #%d (valid range %d-%d)",
                                 (int)idx, ARMOR_FIRST, NUMARMOR-1);
                         break;
                     }
@@ -609,7 +608,7 @@ D_CMD(CheatGive)
                     i += end - &buf[i+1];
                     if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
                     {
-                        App_Log(DE2_SCR_ERROR, "Unknown weapon #%d (valid range %d-%d)\n",
+                        App_Log(DE2_SCR_ERROR, "Unknown weapon #%d (valid range %d-%d)",
                                 (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
                         break;
                     }
@@ -625,7 +624,7 @@ D_CMD(CheatGive)
             break;
 
         default: // Unrecognized.
-            App_Log(DE2_SCR_ERROR, "Cannot give '%c': unknown letter\n", buf[i]);
+            App_Log(DE2_SCR_ERROR, "Cannot give '%c': unknown letter", buf[i]);
             break;
         }
     }

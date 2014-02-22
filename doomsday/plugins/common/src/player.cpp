@@ -698,7 +698,7 @@ void P_SetMessage(player_t *pl, int flags, char const *msg)
 
     if(pl == &players[CONSOLEPLAYER])
     {
-        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s\n", msg);
+        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
     }
 
     // Servers are responsible for sending these messages to the clients.
@@ -724,7 +724,7 @@ void P_SetYellowMessage(player_t *pl, int flags, char const *msg)
 
     if(pl == &players[CONSOLEPLAYER])
     {
-        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s\n", msg);
+        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
     }
 
     // Servers are responsible for sending these messages to the clients.
@@ -900,7 +900,7 @@ D_CMD(SetCamera)
     int p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
-        App_Log(DE2_LOG_SCR| DE2_LOG_ERROR, "Invalid console number %i\n", p);
+        App_Log(DE2_LOG_SCR| DE2_LOG_ERROR, "Invalid console number %i", p);
         return false;
     }
 
@@ -1050,21 +1050,21 @@ D_CMD(MakeLocal)
 
     if(G_GameState() != GS_MAP)
     {
-        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "You must be in a game to create a local player.\n");
+        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "You must be in a game to create a local player.");
         return false;
     }
 
     int p = atoi(argv[1]);
     if(p < 0 || p >= MAXPLAYERS)
     {
-        App_Log(DE2_SCR_ERROR, "Invalid console number %i.\n", p);
+        App_Log(DE2_SCR_ERROR, "Invalid console number %i.", p);
         return false;
     }
 
     player_t *plr = &players[p];
     if(plr->plr->inGame)
     {
-        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Player %i is already in the game.\n", p);
+        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Player %i is already in the game.", p);
         return false;
     }
 
@@ -1092,7 +1092,7 @@ D_CMD(PrintPlayerCoords)
     if(!(mo = players[CONSOLEPLAYER].plr->mo))
         return false;
 
-    App_Log(DE2_LOG_MAP, "Console %i: X=%g Y=%g Z=%g\n", CONSOLEPLAYER,
+    App_Log(DE2_LOG_MAP, "Console %i: X=%g Y=%g Z=%g", CONSOLEPLAYER,
                          mo->origin[VX], mo->origin[VY], mo->origin[VZ]);
 
     return true;
@@ -1103,7 +1103,7 @@ D_CMD(CycleSpy)
     DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
 
     //// @todo The engine should do this.
-    App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Spying not allowed.\n");
+    App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Spying not allowed.");
 #if 0
     if(G_GameState() == GS_MAP && !deathmatch)
     {
@@ -1128,16 +1128,16 @@ D_CMD(SpawnMobj)
 
     if(argc != 5 && argc != 6)
     {
-        App_Log(DE2_SCR_NOTE, "Usage: %s (type) (x) (y) (z) (angle)\n", argv[0]);
-        App_Log(DE2_LOG_SCR, "Type must be a defined Thing ID or Name.\n");
-        App_Log(DE2_LOG_SCR, "Z is an offset from the floor, 'floor', 'ceil' or 'random'.\n");
-        App_Log(DE2_LOG_SCR, "Angle (0..360) is optional.\n");
+        App_Log(DE2_SCR_NOTE, "Usage: %s (type) (x) (y) (z) (angle)", argv[0]);
+        App_Log(DE2_LOG_SCR, "Type must be a defined Thing ID or Name.");
+        App_Log(DE2_LOG_SCR, "Z is an offset from the floor, 'floor', 'ceil' or 'random'.");
+        App_Log(DE2_LOG_SCR, "Angle (0..360) is optional.");
         return true;
     }
 
     if(IS_CLIENT)
     {
-        App_Log(DE2_SCR_ERROR, "%s can't be used by clients\n", argv[0]);
+        App_Log(DE2_SCR_ERROR, "%s can't be used by clients", argv[0]);
         return false;
     }
 
@@ -1148,7 +1148,7 @@ D_CMD(SpawnMobj)
         // Try to find it by name instead.
         if((type = mobjtype_t(Def_Get(DD_DEF_MOBJ_BY_NAME, argv[1], 0))) < 0)
         {
-            App_Log(DE2_LOG_RES | DE2_LOG_ERROR, "Undefined thing type %s\n", argv[1]);
+            App_Log(DE2_LOG_RES | DE2_LOG_ERROR, "Undefined thing type %s", argv[1]);
             return false;
         }
     }

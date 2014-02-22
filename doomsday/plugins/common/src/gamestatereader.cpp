@@ -194,7 +194,7 @@ DENG2_PIMPL(GameStateReader)
                         loaded[k] = true;
                         // Later references to the player number 'i' must be translated!
                         saveToRealPlayerNum[i] = k;
-                        App_Log(DE2_DEV_MAP_MSG, "readPlayers: saved %i is now %i\n", i, k);
+                        App_Log(DE2_DEV_MAP_MSG, "readPlayers: saved %i is now %i", i, k);
                         break;
                     }
                 }

@@ -79,7 +79,7 @@ static dd_bool Reader_Check(Reader const *reader, size_t len)
     if(reader->pos > reader->size - len)
     {
         App_Log(DE2_LOG_ERROR,
-            "Reader_Check: Position %lu[+%lu] out of bounds, size=%lu.\n",
+            "Reader_Check: Position %lu[+%lu] out of bounds, size=%lu.",
                 (unsigned long) reader->pos,
                 (unsigned long) len,
                 (unsigned long) reader->size);

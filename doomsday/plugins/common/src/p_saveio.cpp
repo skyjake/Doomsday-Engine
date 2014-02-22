@@ -347,7 +347,7 @@ void SV_AssertSegment(int segmentId)
 #if __JHEXEN__
     if(segmentId == ASEG_END && SV_HxBytesLeft() < 4)
     {
-        App_Log(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)\n");
+        App_Log(DE2_LOG_WARNING, "Savegame lacks ASEG_END marker (unexpected end-of-file)");
         return;
     }
     if(SV_ReadLong() != segmentId)

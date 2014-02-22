@@ -1606,7 +1606,7 @@ D_CMD(MapCycle)
         map = NetSv_ScanCycle(cycleIndex = 0, 0);
         if(map < 0)
         {
-            App_Log(DE2_SCR_ERROR, "MapCycle \"%s\" is invalid.\n", mapCycle);
+            App_Log(DE2_SCR_ERROR, "MapCycle \"%s\" is invalid.", mapCycle);
             return false;
         }
         for(i = 0; i < MAXPLAYERS; ++i)
