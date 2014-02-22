@@ -3568,7 +3568,7 @@ void Hu_MenuInitWeaponsPage()
 #endif
     const struct {
         char const *text;
-        int data;
+        weapontype_t data;
     } weaponOrder[NUM_WEAPON_TYPES+1] = {
 #if __JDOOM__ || __JDOOM64__
         { (char const *)TXT_WEAPON1,             WT_FIRST },
@@ -3642,7 +3642,7 @@ void Hu_MenuInitWeaponsPage()
         list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
 
         mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-        for(int i = 0; weaponOrder[i].text[0]; ++i, item++)
+        for(int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i, item++)
         {
             item->text = weaponOrder[i].text;
             item->data = weaponOrder[i].data;
