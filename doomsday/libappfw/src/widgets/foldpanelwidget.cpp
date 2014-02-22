@@ -86,7 +86,7 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
 
     // Fold indicator.
     d->title->setImage(new Instance::FoldImage(*this));
-    d->title->setTextAlignment(ui::AlignLeft);
+    d->title->setTextAlignment(ui::AlignRight);
     d->title->setTextGap("gap");
 
     return d->title;
