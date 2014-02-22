@@ -5670,7 +5670,7 @@ void Hu_MenuPlayerClassPreviewTicker(mn_object_t *ob)
     MNMobjPreview_Ticker(ob);
 }
 
-void Hu_MenuDrawPlayerClassPage(mn_page_t *page, Point2Raw const *origin)
+void Hu_MenuDrawPlayerClassPage(mn_page_t * /*page*/, Point2Raw const *origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
@@ -5736,6 +5736,8 @@ void Hu_MenuDrawSkillPage(mn_page_t * /*page*/, Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 #elif __JHEXEN__
     Hu_MenuDrawPageTitle("Choose Skill Level:", origin->x + 36, origin->y - 28);
+#else
+    DENG2_UNUSED(origin);
 #endif
 }
 

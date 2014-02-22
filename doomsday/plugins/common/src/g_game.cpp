@@ -1784,43 +1784,39 @@ void G_Ticker(timespan_t ticLength)
  */
 void G_PlayerLeaveMap(int player)
 {
-#if __JHERETIC__ || __JHEXEN__
-    uint i;
-    int flightPower;
-#endif
     player_t *p = &players[player];
 
 #if __JHEXEN__
     dd_bool newHub = true;
 
-    {
-        Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
-        newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);
-        Uri_Delete(nextMapUri);
-    }
+    Uri *nextMapUri = G_ComposeMapUri(gameEpisode, nextMap);
+    newHub = (P_MapInfo(0/*current map*/)->hub != P_MapInfo(nextMapUri)->hub);
+    Uri_Delete(nextMapUri); nextMapUri = 0;
 #endif
 
-#if __JHERETIC__ || __JHEXEN__
+#if __JHEXEN__
     // Remember if flying.
-    flightPower = p->powers[PT_FLIGHT];
+    int flightPower = p->powers[PT_FLIGHT];
 #endif
 
 #if __JHERETIC__
     // Empty the inventory of excess items
-    for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+    for(int i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
         uint count = P_InventoryCount(player, type);
 
         if(count)
         {
-            uint j;
-
             if(type != IIT_FLY)
+            {
                 count--;
+            }
 
-            for(j = 0; j < count; ++j)
+            for(uint j = 0; j < count; ++j)
+            {
                 P_InventoryTake(player, type, true);
+            }
         }
     }
 #endif
@@ -1829,28 +1825,33 @@ void G_PlayerLeaveMap(int player)
     if(newHub)
     {
         uint count = P_InventoryCount(player, IIT_FLY);
-
-        for(i = 0; i < count; ++i)
+        for(uint i = 0; i < count; ++i)
+        {
             P_InventoryTake(player, IIT_FLY, true);
+        }
     }
 #endif
 
     // Remove their powers.
     p->update |= PSF_POWERS;
-    memset(p->powers, 0, sizeof(p->powers));
+    de::zap(p->powers);
 
 #if __JHEXEN__
     if(!newHub && !gameRules.deathmatch)
+    {
         p->powers[PT_FLIGHT] = flightPower; // Restore flight.
+    }
 #endif
 
     // Remove their keys.
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     p->update |= PSF_KEYS;
-    memset(p->keys, 0, sizeof(p->keys));
+    de::zap(p->keys);
 #else
     if(!gameRules.deathmatch && newHub)
+    {
         p->keys = 0;
+    }
 #endif
 
     // Misc
@@ -3381,7 +3382,7 @@ AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
     if(saveVersion < 8)
 # endif
     {
-        DENG_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
+        DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
         gamemode = oldGamemodes[(int)(gamemode)];
 
 # if __JDOOM__
@@ -3400,9 +3401,11 @@ AutoStr *G_IdentityKeyForLegacyGamemode(int gamemode, int saveVersion)
         /// kludge end.
 # endif
     }
+#else
+    DENG2_UNUSED(saveVersion);
 #endif
 
-    DENG_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(identityKeys) / sizeof(identityKeys[0]));
+    DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(identityKeys) / sizeof(identityKeys[0]));
     return AutoStr_FromTextStd(identityKeys[gamemode]);
 }
 
@@ -3561,9 +3564,11 @@ uint G_GetNextMap(uint episode, uint map, dd_bool secretExit)
     Uri_Delete(mapUri);
     return nextMap;
 
-    DENG_UNUSED(secretExit);
+    DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
+    DENG2_UNUSED(episode);
+
     if(secretExit)
     {
         switch(map)
