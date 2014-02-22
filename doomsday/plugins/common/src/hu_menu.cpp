@@ -354,7 +354,7 @@ mndata_slider_t sld_hud_cntr_size = { 0, 1, 0, .1f, true, (void *)"hud-cheat-cou
 mndata_slider_t sld_hud_sbar_size = { 0, 1, 0, .1f, true, (void *)"hud-status-size", 0, 0, 0, 0 };
 mndata_slider_t sld_hud_sbar_opacity = { 0, 1, 0, .1f, true, (void *)"hud-status-alpha", 0, 0, 0, 0 };
 mndata_slider_t sld_hud_msg_size = { 0, 1, 0, .1f, true, (void *)"msg-scale", 0, 0, 0, 0 };
-mndata_slider_t sld_hud_msg_uptime = { 0, 60, 0, 1.f, true, (void *)"msg-uptime", (void *)"Disabled", NULL, (void *)" second", " seconds" };
+mndata_slider_t sld_hud_msg_uptime = { 0, 60, 0, 1.f, true, (void *)"msg-uptime", (void *)"Disabled", NULL, (void *)" second", (void *)" seconds" };
 
 mndata_colorbox_t cbox_hud_color = {
     0, 0, 0, 0, 0, 0, true,
