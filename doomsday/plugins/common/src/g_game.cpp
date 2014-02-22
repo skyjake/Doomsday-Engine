@@ -1629,12 +1629,11 @@ static void runGameAction()
  */
 static void rebornPlayers()
 {
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = &players[i];
-        ddplayer_t* ddplr = plr->plr;
-        mobj_t* mo = ddplr->mo;
+        player_t *plr     = &players[i];
+        ddplayer_t *ddplr = plr->plr;
+        mobj_t *mo        = ddplr->mo;
 
         if(ddplr->inGame && plr->playerState == PST_REBORN && !P_MobjIsCamera(mo))
         {
@@ -1642,7 +1641,7 @@ static void rebornPlayers()
         }
 
         // Player has left?
-        if(plr->playerState == PST_GONE)
+        if((int)plr->playerState == PST_GONE)
         {
             plr->playerState = PST_REBORN;
             if(mo)
@@ -1656,7 +1655,7 @@ static void rebornPlayers()
                 App_Log(DE2_DEV_MAP_MSG, "rebornPlayers: Removing player %i's mobj", i);
 
                 P_MobjRemove(mo, true);
-                ddplr->mo = NULL;
+                ddplr->mo = 0;
             }
         }
     }

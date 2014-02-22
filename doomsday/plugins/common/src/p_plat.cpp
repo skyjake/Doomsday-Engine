@@ -264,8 +264,8 @@ int plat_t::read(MapStateReader *msr)
     {
         // Its in the old format which serialized plat_t
         // Padding at the start (an old thinker_t struct)
-        byte junk[16]; // sizeof thinker_t
-        Reader_Read(reader, junk, 16);
+        int32_t junk[4]; // sizeof thinker_t
+        Reader_Read(reader, (byte *)junk, 16);
 
         // Start of used data members.
         // A 32bit pointer to sector, serialized.
@@ -286,8 +286,10 @@ int plat_t::read(MapStateReader *msr)
 
         thinker.function = T_PlatRaise;
 #if !__JHEXEN__
-        if(!((thinker_t *)junk)->function)
+        if(junk[2] == 0)
+        {
             Thinker_SetStasis(&thinker, true);
+        }
 #endif
     }
 
