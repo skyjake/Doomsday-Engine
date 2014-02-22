@@ -1384,46 +1384,44 @@ int G_PrivilegedResponder(event_t *ev)
     return false; // Not eaten.
 }
 
-void G_UpdateGSVarsForPlayer(player_t* pl)
+void G_UpdateGSVarsForPlayer(player_t *pl)
 {
-    int i, plrnum;
-    gamestate_t gameState;
-
     if(!pl) return;
 
-    plrnum = pl - players;
-    gameState = G_GameState();
-
-    gsvHealth = pl->health;
+    gsvHealth  = pl->health;
 #if !__JHEXEN__
     // Map stats
-    gsvKills = pl->killCount;
-    gsvItems = pl->itemCount;
+    gsvKills   = pl->killCount;
+    gsvItems   = pl->itemCount;
     gsvSecrets = pl->secretCount;
 #endif
         // armor
 #if __JHEXEN__
-    gsvArmor = FixedDiv(PCLASS_INFO(pl->class_)->autoArmorSave +
-                        pl->armorPoints[ARMOR_ARMOR] +
-                        pl->armorPoints[ARMOR_SHIELD] +
-                        pl->armorPoints[ARMOR_HELMET] +
-                        pl->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+    gsvArmor   = FixedDiv(PCLASS_INFO(pl->class_)->autoArmorSave +
+                          pl->armorPoints[ARMOR_ARMOR] +
+                          pl->armorPoints[ARMOR_SHIELD] +
+                          pl->armorPoints[ARMOR_HELMET] +
+                          pl->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
 #else
-    gsvArmor = pl->armorPoints;
+    gsvArmor   = pl->armorPoints;
 #endif
     // Owned keys
-    for(i = 0; i < NUM_KEY_TYPES; ++i)
+    for(int i = 0; i < NUM_KEY_TYPES; ++i)
+    {
 #if __JHEXEN__
         gsvKeys[i] = (pl->keys & (1 << i))? 1 : 0;
 #else
         gsvKeys[i] = pl->keys[i];
 #endif
+    }
     // current weapon
     gsvCurrentWeapon = pl->readyWeapon;
 
     // owned weapons
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
+    {
         gsvWeapons[i] = pl->weapons[i].owned;
+    }
 
 #if __JHEXEN__
     // weapon pieces
@@ -1433,15 +1431,17 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
     gsvWPieces[3] = (pl->pieces == 7)? 1 : 0;
 #endif
     // Current ammo amounts.
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
+    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
+    {
         gsvAmmo[i] = pl->ammo[i].owned;
+    }
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     // Inventory items.
-    for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+    for(int i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        if(pl->plr->inGame && gameState == GS_MAP)
-            gsvInvItems[i] = P_InventoryCount(plrnum, inventoryitemtype_t(IIT_FIRST + i));
+        if(pl->plr->inGame && G_GameState() == GS_MAP)
+            gsvInvItems[i] = P_InventoryCount(pl - players, inventoryitemtype_t(IIT_FIRST + i));
         else
             gsvInvItems[i] = 0;
     }

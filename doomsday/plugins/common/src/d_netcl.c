@@ -45,7 +45,7 @@ void NetCl_UpdateGameState(Reader* msg)
     Uri *mapUri;
     uint gsEpisode = 0;
     uint gsMap = 0;
-    uint gsMapEntrance = 0;
+    //uint gsMapEntrance = 0;
     byte configFlags = 0;
     //byte gsDeathmatch = 0;
     //byte gsMonsters = 0;

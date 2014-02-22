@@ -1160,14 +1160,17 @@ static void drawMarkedPoints(uiwidget_t* obj, float scale)
 /**
  * Sets up the state for automap drawing.
  */
-static void setupGLStateForMap(uiwidget_t* obj)
+static void setupGLStateForMap(uiwidget_t *obj)
 {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    const float alpha = uiRendState->pageAlpha;
+    //guidata_automap_t *am = (guidata_automap_t *)obj->typedata;
+    float const alpha = uiRendState->pageAlpha;
+#if __JDOOM64__
     int player = UIWidget_Player(obj);
+#endif
     float angle, bgColor[3];
     coord_t plx, ply;
     RectRaw geometry;
+
     assert(obj->type == GUI_AUTOMAP);
 
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
