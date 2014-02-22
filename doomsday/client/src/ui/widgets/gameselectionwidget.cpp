@@ -507,7 +507,7 @@ GameSelectionWidget::GameSelectionWidget(String const &name)
     if(!App_GameLoaded())
     {
         d->available->open();
-        d->incomplete->open();
+        //d->incomplete->open();
     }
 
     // We want the full menu to be visible even when it doesn't fit the
