@@ -73,7 +73,9 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     /**
      * Foldable group of games.
      */
-    struct SubsetWidget : public FoldPanelWidget
+    struct SubsetWidget
+            : public FoldPanelWidget
+            , DENG2_OBSERVES(ui::Data, Addition)
     {
         enum Type {
             NormalGames,
@@ -83,9 +85,11 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         String titleText;
         Type type;
         MenuWidget *menu;
+        LabelWidget *noGames;
+        int numCols;
 
         SubsetWidget(Type selType, String const &headingText, GameSelectionWidget::Instance *owner)
-            : titleText(headingText), type(selType)
+            : titleText(headingText), type(selType), numCols(3)
         {           
             owner->self.add(makeTitle(headingText));
             title().setFont("title");
@@ -108,6 +112,8 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                 break;
             }
 
+            menu->items().audienceForAddition += this;
+
             setContent(menu);
             menu->enableScrolling(false);
             menu->margins().set("");
@@ -117,10 +123,33 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                                   owner->self.margins().width());
 
             setColumns(3);
+
+            // This will be shown if there are no games in the subset.
+            noGames = LabelWidget::newWithText(_E(b) + tr("No games"), menu);
+            noGames->margins().setTop(style().rules().rule("gap") * 2);
+            noGames->margins().setBottom(noGames->margins().top());
+            noGames->setFont("heading");
+            noGames->setTextColor("inverted.text");
+            noGames->setOpacity(.4f);
+            noGames->hide();
+        }
+
+        void dataItemAdded(ui::Data::Pos, ui::Item const &)
+        {
+            // Time to get rid of the notice.
+            noGames->hide();
         }
 
         void setColumns(int cols)
         {
+            numCols = cols;
+
+            // However, if the subset is empty, just use a single column for noGames.
+            if(items().isEmpty())
+            {
+                cols = 1;
+            }
+
             if(menu->layout().maxGridSize().x != cols)
             {
                 menu->setGridSize(cols, ui::Filled, 0, ui::Expand);
@@ -158,6 +187,15 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         void updateTitleText()
         {
             title().setText(textForTitle(isOpen()));
+        }
+
+        void setTitleColor(DotPath const &colorId,
+                           DotPath const &hoverColorId,
+                           ButtonWidget::HoverColorMode mode)
+        {
+            title().setTextColor(colorId);
+            title().setHoverTextColor(hoverColorId, mode);
+            noGames->setTextColor(colorId);
         }
     };
 
@@ -226,8 +264,6 @@ DENG_GUI_PIMPL(GameSelectionWidget)
     {
         superLayout.clear();
 
-        //superLayout << *filter;
-
         QList<SubsetWidget *> order;
         if(!App_GameLoaded())
         {
@@ -256,6 +292,20 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         {
             s->updateTitleText();
             superLayout << s->title() << *s;
+
+            // Show a notice when there are no games in the group.
+            if(s->items().isEmpty())
+            {
+                // Go to one-column layout for the "no games" indicator.
+                s->menu->setGridSize(1, ui::Filled, 1, ui::Expand);
+                s->noGames->show();
+            }
+            else
+            {
+                // Restore the correct number of columns.
+                s->setColumns(s->numCols);
+                s->noGames->hide();
+            }
         }
 
         self.setContentSize(superLayout.width(), superLayout.height());
@@ -476,20 +526,15 @@ void GameSelectionWidget::setTitleColor(DotPath const &colorId,
                                         DotPath const &hoverColorId,
                                         ButtonWidget::HoverColorMode mode)
 {
-    d->available->title().setTextColor(colorId);
-    d->available->title().setHoverTextColor(hoverColorId, mode);
-
-    d->multi->title().setTextColor(colorId);
-    d->multi->title().setHoverTextColor(hoverColorId, mode);
-
-    d->incomplete->title().setTextColor(colorId);
-    d->incomplete->title().setHoverTextColor(hoverColorId, mode);
+    d->available ->setTitleColor(colorId, hoverColorId, mode);
+    d->multi     ->setTitleColor(colorId, hoverColorId, mode);
+    d->incomplete->setTitleColor(colorId, hoverColorId, mode);
 }
 
 void GameSelectionWidget::setTitleFont(DotPath const &fontId)
 {
-    d->available->title().setFont(fontId);
-    d->multi->title().setFont(fontId);
+    d->available ->title().setFont(fontId);
+    d->multi     ->title().setFont(fontId);
     d->incomplete->title().setFont(fontId);
 }
 
