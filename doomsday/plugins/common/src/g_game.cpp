@@ -2930,7 +2930,7 @@ void G_DoLeaveMap()
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    revisit = SV_HxHaveMapStateForSlot(BASE_SLOT, nextMap);
+    revisit = G_SaveSlots()[BASE_SLOT].saveInfo().haveMapSession(nextMap);
     if(gameRules.deathmatch)
     {
         revisit = false;

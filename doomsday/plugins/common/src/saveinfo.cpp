@@ -306,6 +306,13 @@ bool SaveInfo::gameSessionIsLoadable() const
     return true; // It's good!
 }
 
+#if __JHEXEN__
+bool SaveInfo::haveMapSession(uint map) const
+{
+    return SV_ExistingFile(SV_SavePath() / fileNameForMap(map));
+}
+#endif
+
 void SaveInfo::updateFromFile()
 {
     if(SV_SavePath().isEmpty())

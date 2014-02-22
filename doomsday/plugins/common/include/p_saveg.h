@@ -39,14 +39,6 @@ typedef struct targetplraddress_s {
 DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
 #endif
 
-#if __JHEXEN__
-/**
- * Returns @c true iff a game-save is present and serialized @a map state is
- * present for logical save @a slotNumber.
- */
-dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map);
-#endif
-
 /**
  * Update mobj flag values from those used in legacy game-save formats
  * to their current values.

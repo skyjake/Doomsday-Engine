@@ -40,39 +40,7 @@ int saveToRealPlayerNum[MAXPLAYERS];
 targetplraddress_t *targetPlayerAddrs;
 #endif
 
-#if !__JHEXEN__
-/**
- * Compose the save game file name for the specified @a sessionId.
- *
- * @param sessionId  Unique game-session identifier.
- *
- * @return  File path to the reachable save directory. If the game-save path
- *          is unreachable then a zero-length string is returned instead.
- */
-static de::String saveNameForClientSessionId(uint sessionId)
-{
-    // Do we have a valid path?
-    if(!F_MakePath(de::NativePath(SV_ClientSavePath()).expand().toUtf8().constData()))
-    {
-        return "";
-    }
-
-    // Compose the full game-save path and filename.
-    return de::String(CLIENTSAVEGAMENAME "%1")
-                   .arg(sessionId, 8, 16, QChar('0')).toUpper();
-}
-#endif
-
 #if __JHEXEN__
-dd_bool SV_HxHaveMapStateForSlot(int slotNumber, uint map)
-{
-    if(SV_SavePath().isEmpty() || !G_SaveSlots().isKnownSlot(slotNumber))
-    {
-        return false;
-    }
-    return SV_ExistingFile(SV_SavePath() / G_SaveSlots()[slotNumber].saveInfo().fileNameForMap(map));
-}
-
 void SV_InitTargetPlayers()
 {
     targetPlayerAddrs = 0;
@@ -787,6 +755,29 @@ void SV_ReadLine(Line *li, MapStateReader *msr)
     }
 #endif
 }
+
+#if !__JHEXEN__
+/**
+ * Compose the save game file name for the specified @a sessionId.
+ *
+ * @param sessionId  Unique game-session identifier.
+ *
+ * @return  File path to the reachable save directory. If the game-save path
+ *          is unreachable then a zero-length string is returned instead.
+ */
+static de::String saveNameForClientSessionId(uint sessionId)
+{
+    // Do we have a valid path?
+    if(!F_MakePath(de::NativePath(SV_ClientSavePath()).expand().toUtf8().constData()))
+    {
+        return "";
+    }
+
+    // Compose the full game-save path and filename.
+    return de::String(CLIENTSAVEGAMENAME "%1")
+                   .arg(sessionId, 8, 16, QChar('0')).toUpper();
+}
+#endif
 
 void SV_SaveGameClient(uint sessionId)
 {

@@ -87,6 +87,13 @@ public:
      */
     bool gameSessionIsLoadable() const;
 
+#if __JHEXEN__
+    /**
+     * Determines whether a saved map session exists.
+     */
+    bool haveMapSession(uint map) const;
+#endif
+
     /**
      * Attempt to update the save info from the named saved game session file. If the save path
      * is invalid, unreachable, or the game state is not recognized -- the save info is returned
