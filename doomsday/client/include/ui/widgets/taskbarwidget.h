@@ -64,6 +64,7 @@ public slots:
     void showAbout();
     void showUpdaterSettings();
     void showGames();
+    void connectToServerManually();
 
 protected slots:
     void updateCommandLineLayout();

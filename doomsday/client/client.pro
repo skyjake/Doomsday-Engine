@@ -379,6 +379,7 @@ DENG_HEADERS += \
     include/ui/dialogs/gamesdialog.h \
     include/ui/dialogs/inputsettingsdialog.h \
     include/ui/dialogs/logsettingsdialog.h \
+    include/ui/dialogs/manualconnectiondialog.h \
     include/ui/dialogs/networksettingsdialog.h \
     include/ui/dialogs/renderersettingsdialog.h \
     include/ui/dialogs/videosettingsdialog.h \
@@ -705,6 +706,7 @@ SOURCES += \
     src/ui/dialogs/gamesdialog.cpp \
     src/ui/dialogs/inputsettingsdialog.cpp \
     src/ui/dialogs/logsettingsdialog.cpp \
+    src/ui/dialogs/manualconnectiondialog.cpp \
     src/ui/dialogs/networksettingsdialog.cpp \
     src/ui/dialogs/videosettingsdialog.cpp \
     src/ui/dialogs/vrsettingsdialog.cpp \
