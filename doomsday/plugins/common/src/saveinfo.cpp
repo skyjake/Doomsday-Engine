@@ -22,10 +22,9 @@
 #include "saveinfo.h"
 
 #include "g_common.h"
-#include "p_tick.h"
-#include "p_savedef.h"
-#include "p_saveg.h"     /// SV_RecognizeGameState, @todo remove me
+#include "gamestatereader.h"
 #include "p_saveio.h"
+#include "p_tick.h"          // mapTime
 #include <de/NativePath>
 #include <cstring>
 

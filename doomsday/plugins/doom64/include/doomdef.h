@@ -87,8 +87,6 @@ typedef enum {
 // State updates, number of tics / second.
 #define TICRATE             35
 
-#define NUMSAVESLOTS        8
-
 /**
  * The current (high-level) state of the game: whether we are playing,
  * gazing at the intermission screen, the game final animation, or a demo.

@@ -1355,7 +1355,7 @@ int G_DoLoadMap(loadmap_params_t *p)
             SaveInfo &saveInfo  = G_SaveSlots()[BASE_SLOT].saveInfo();
             de::Path const path = SV_SavePath() / saveInfo.fileNameForMap(gameMap);
 
-            if(!SV_OpenMapSaveFile(path))
+            if(!SV_OpenFile(path, false/*for read*/))
             {
                 Reader_Delete(reader);
                 throw de::Error("G_DoLoadMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for read");
@@ -2941,7 +2941,7 @@ void G_DoLeaveMap()
             SaveInfo &saveInfo  = G_SaveSlots()[BASE_SLOT].saveInfo();
             de::Path const path = SV_SavePath() / saveInfo.fileNameForMap(gameMap);
 
-            if(!SV_OpenFile(path, "wp"))
+            if(!SV_OpenFile(path, true/*for write*/))
             {
                 throw de::Error("G_DoLeaveMap", "Failed opening \"" + de::NativePath(path).pretty() + "\" for write");
             }
@@ -4086,7 +4086,7 @@ static void openSaveMenu()
 
 D_CMD(OpenLoadMenu)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     if(!G_IsLoadGamePossible()) return false;
     openLoadMenu();
@@ -4095,14 +4095,14 @@ D_CMD(OpenLoadMenu)
 
 D_CMD(OpenSaveMenu)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     if(!G_IsSaveGamePossible()) return false;
     openSaveMenu();
     return true;
 }
 
-static int loadGameConfirmResponse(msgresponse_t response, int userValue, void * /*userPointer*/)
+static int loadGameConfirmResponse(msgresponse_t response, int userValue, void * /*context*/)
 {
     if(response == MSG_YES)
     {
@@ -4177,21 +4177,21 @@ D_CMD(LoadGame)
 
 D_CMD(QuickLoadGame)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
-
-    /// @todo Implement console command scripts?
+    DENG2_UNUSED3(src, argc, argv);
     return DD_Execute(true, "loadgame quick");
 }
 
-static int saveGameConfirmResponse(msgresponse_t response, int userValue, void *userPointer)
+static int saveGameConfirmResponse(msgresponse_t response, int userValue, void *context)
 {
     if(response == MSG_YES)
     {
-        int const slot = userValue;
-        ddstring_t *name = (ddstring_t *)userPointer;
-        G_SaveGame2(slot, Str_Text(name));
-        // We're done with the name.
-        Str_Delete(name);
+        int const slot              = userValue;
+        ddstring_t *userDescription = (ddstring_t *)context;
+
+        G_SaveGame2(slot, Str_Text(userDescription));
+
+        // We're done with the description.
+        Str_Delete(userDescription);
     }
     return true;
 }
@@ -4201,7 +4201,6 @@ D_CMD(SaveGame)
     DENG_UNUSED(src);
 
     bool const confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
-    player_t *player = &players[CONSOLEPLAYER];
 
     if(G_QuitInProgress()) return false;
 
@@ -4211,6 +4210,7 @@ D_CMD(SaveGame)
         return false;
     }
 
+    player_t *player = &players[CONSOLEPLAYER];
     if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
@@ -4280,7 +4280,7 @@ D_CMD(SaveGame)
 
 D_CMD(QuickSaveGame)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     /// @todo Implement console command scripts?
     return DD_Execute(true, "savegame quick");
@@ -4366,26 +4366,26 @@ D_CMD(DeleteGameSave)
 
 D_CMD(InspectGameSave)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc);
+    DENG2_UNUSED2(src, argc);
 
     // Ensure we have up-to-date info.
     G_SaveSlots().updateAll();
 
-    int const slotNumber = G_SaveSlots().parseSlotIdentifier(argv[1]);
-    if(G_SaveSlots()[slotNumber].isUsed())
+    try
     {
-        SaveInfo &saveInfo = G_SaveSlots()[slotNumber].saveInfo();
-        App_Log(DE2_LOG_MESSAGE, "%s", saveInfo.description().toLatin1().constData());
-        return true;
-    }
+        int const slotNumber = G_SaveSlots().parseSlotIdentifier(argv[1]);
+        if(G_SaveSlots()[slotNumber].isUsed())
+        {
+            SaveInfo &saveInfo = G_SaveSlots()[slotNumber].saveInfo();
+            App_Log(DE2_LOG_MESSAGE, "%s", saveInfo.description().toLatin1().constData());
+            return true;
+        }
 
-    if(!G_SaveSlots().isKnownSlot(slotNumber))
+        App_Log(DE2_LOG_ERROR, "Save slot #%i is not in use", slotNumber);
+    }
+    catch(SaveSlots::InvalidSlotError const &)
     {
         App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
-    }
-    else
-    {
-        App_Log(DE2_LOG_ERROR, "Save slot #%i is not in use", slotNumber);
     }
 
     // No action means the command failed.
@@ -4394,7 +4394,7 @@ D_CMD(InspectGameSave)
 
 D_CMD(HelpScreen)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     G_StartHelp();
     return true;
@@ -4402,7 +4402,7 @@ D_CMD(HelpScreen)
 
 D_CMD(EndGame)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     G_EndGame();
     return true;
@@ -4410,7 +4410,7 @@ D_CMD(EndGame)
 
 D_CMD(CycleTextureGamma)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     R_CycleGammaLevel();
     return true;
@@ -4418,7 +4418,7 @@ D_CMD(CycleTextureGamma)
 
 D_CMD(ListMaps)
 {
-    DENG_UNUSED(src); DENG_UNUSED(argc); DENG_UNUSED(argv);
+    DENG2_UNUSED3(src, argc, argv);
 
     App_Log(DE2_RES_MSG, "Available maps:");
     G_PrintMapList();

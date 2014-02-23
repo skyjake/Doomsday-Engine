@@ -21,12 +21,6 @@
 #include "common.h"
 #include "p_saveio.h"
 
-#include "dmu_lib.h"
-#include "p_mapsetup.h"
-#include "p_saveg.h"
-#include "p_savedef.h"
-#include "saveinfo.h"
-#include "api_materialarchive.h"
 #include <de/NativePath>
 
 static bool inited;
@@ -49,6 +43,8 @@ void SV_InitIO()
     clientSavePath.clear();
 #endif
     inited = true;
+
+    DENG2_ASSERT(!savefile);
     savefile = 0;
 }
 
@@ -56,6 +52,7 @@ void SV_ShutdownIO()
 {
     if(!inited) return;
 
+    DENG2_ASSERT(!savefile);
     SV_CloseFile();
 
     inited = false;
@@ -146,26 +143,10 @@ void SV_CopyFile(de::Path srcPath, de::Path destPath)
     Z_Free(buffer);
 }
 
-LZFILE *SV_OpenFile(de::Path filePath, de::String mode)
+bool SV_OpenFile(de::Path path, bool write)
 {
-    DENG2_ASSERT(savefile == 0);
-    savefile = lzOpen(de::NativePath(filePath).expand().toUtf8().constData(), mode.toUtf8().constData());
-    return savefile;
-}
-
-void SV_CloseFile()
-{
-    if(savefile)
-    {
-        lzClose(savefile);
-        savefile = 0;
-    }
-}
-
-bool SV_OpenGameSaveFile(de::Path path, bool write)
-{
-    App_Log(DE2_DEV_RES_MSG, "SV_OpenGameSaveFile: Opening \"%s\"",
-                             de::NativePath(path).pretty().toLatin1().constData());
+    App_Log(DE2_DEV_RES_MSG, "SV_OpenFile: Opening \"%s\"",
+            de::NativePath(path).pretty().toLatin1().constData());
 
 #if __JHEXEN__
     if(!write)
@@ -181,32 +162,19 @@ bool SV_OpenGameSaveFile(de::Path path, bool write)
     else
 #endif
     {
-        SV_OpenFile(path, write? "wp" : "rp");
+        DENG2_ASSERT(savefile == 0);
+        savefile = lzOpen(de::NativePath(path).expand().toUtf8().constData(), write? "wp" : "rp");
+        return savefile != 0;
     }
-
-    return SV_File() != 0;
 }
 
-#if __JHEXEN__
-bool SV_OpenMapSaveFile(de::Path path)
+void SV_CloseFile()
 {
-    App_Log(DE2_DEV_RES_MSG, "SV_OpenMapSaveFile: Opening \"%s\"",
-                             de::NativePath(path).pretty().toLatin1().constData());
-
-    // Load the file
-    size_t bufferSize = M_ReadFile(de::NativePath(path).expand().toUtf8().constData(), (char **)&saveBuffer);
-    if(!bufferSize) return false;
-
-    SV_HxSavePtr()->b = saveBuffer;
-    SV_HxSetSaveEndPtr(saveBuffer + bufferSize);
-
-    return true;
-}
-#endif
-
-LZFILE *SV_File()
-{
-    return savefile;
+    if(savefile)
+    {
+        lzClose(savefile);
+        savefile = 0;
+    }
 }
 
 #if __JHEXEN__

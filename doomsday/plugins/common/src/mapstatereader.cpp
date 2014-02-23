@@ -30,6 +30,10 @@
 #include "thinkerinfo.h"
 #include <de/String>
 
+#if !__JHEXEN__
+#define PRE_VER5_END_SPECIALS  7
+#endif
+
 namespace internal
 {
     static bool useMaterialArchiveSegments() {

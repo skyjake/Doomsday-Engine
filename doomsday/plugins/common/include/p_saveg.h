@@ -37,6 +37,9 @@ typedef struct targetplraddress_s {
 } targetplraddress_t;
 
 DENG_EXTERN_C targetplraddress_t *targetPlayerAddrs;
+
+void SV_InitTargetPlayers();
+void SV_ClearTargetPlayers();
 #endif
 
 /**
@@ -69,11 +72,6 @@ typedef struct playerheader_s {
     void read(Reader *reader, int saveVersion);
 #endif
 } playerheader_t;
-
-#if __JHEXEN__
-void SV_InitTargetPlayers();
-void SV_ClearTargetPlayers();
-#endif
 
 void SV_WriteLine(Line *line, MapStateWriter *msw);
 void SV_ReadLine(Line *line, MapStateReader *msr);

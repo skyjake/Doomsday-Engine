@@ -30,10 +30,11 @@
 #include "x_hair.h"
 #include "player.h"
 #include "g_controls.h"
-#include "p_saveg.h"
+#include "p_savedef.h"
 #include "g_common.h"
 #include "r_common.h"
 #include "m_ctrl.h"
+#include "saveinfo.h"
 #include "saveslots.h"
 #include <de/memory.h>
 #include <cstdlib>

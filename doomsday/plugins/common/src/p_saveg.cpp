@@ -28,6 +28,7 @@
 #include "p_saveio.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
+#include "saveinfo.h"
 #include "saveslots.h"
 #include <de/NativePath>
 #include <de/String>
@@ -798,7 +799,7 @@ void SV_SaveGameClient(uint sessionId)
     info->setSessionId(sessionId);
 
     de::Path path = SV_ClientSavePath() / info->fileName();
-    if(!SV_OpenFile(path, "wp"))
+    if(!SV_OpenFile(path, true/*for write*/))
     {
         App_Log(DE2_RES_WARNING, "SV_SaveGameClient: Failed opening \"%s\" for writing",
                                  de::NativePath(path).pretty().toLatin1().constData());
@@ -854,7 +855,7 @@ void SV_LoadGameClient(uint sessionId)
     info->setFileName(saveNameForClientSessionId(sessionId));
 
     de::Path path = SV_ClientSavePath() / info->fileName();
-    if(!SV_OpenFile(path, "rp"))
+    if(!SV_OpenFile(path, false/*for read*/))
     {
         Reader_Delete(reader);
         delete info;

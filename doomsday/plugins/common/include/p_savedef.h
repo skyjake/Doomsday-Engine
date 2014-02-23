@@ -32,6 +32,8 @@
 #  define SAVEGAMEEXTENSION     "dsg"
 #  define SAVEGAME_DEFAULT_DIR  "savegame"
 
+#  define NUMSAVESLOTS          8
+//#  define BASE_SLOT             8
 #  define AUTO_SLOT             9
 
 #elif __JDOOM64__
@@ -43,6 +45,8 @@
 #  define SAVEGAMEEXTENSION     "6sg"
 #  define SAVEGAME_DEFAULT_DIR  "savegame"
 
+#  define NUMSAVESLOTS          8
+//#  define BASE_SLOT             8
 #  define AUTO_SLOT             9
 
 #elif __JHERETIC__
@@ -54,6 +58,8 @@
 #  define SAVEGAMEEXTENSION     "hsg"
 #  define SAVEGAME_DEFAULT_DIR  "savegame"
 
+#  define NUMSAVESLOTS          8
+//#  define BASE_SLOT             8
 #  define AUTO_SLOT             9
 
 #elif __JHEXEN__
@@ -64,13 +70,10 @@
 #  define SAVEGAMEEXTENSION     "hxs"
 #  define SAVEGAME_DEFAULT_DIR  "hexndata"
 
+#  define NUMSAVESLOTS          6
 #  define BASE_SLOT             6
 #  define AUTO_SLOT             7
 
-#endif
-
-#if !__JHEXEN__
-#define PRE_VER5_END_SPECIALS   7
 #endif
 
 #endif // LIBCOMMON_SAVEGAME_DEFS_H

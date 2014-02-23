@@ -94,8 +94,6 @@ typedef enum {
 #define TICRATE             35
 #define TICSPERSEC          35
 
-#define NUMSAVESLOTS        8
-
 /**
  * Player Classes
  */

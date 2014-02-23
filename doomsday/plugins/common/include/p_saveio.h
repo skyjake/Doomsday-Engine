@@ -69,23 +69,16 @@ de::Path SV_ClientSavePath();
 /*
  * File management
  */
-LZFILE *SV_OpenFile(de::Path filePath, de::String mode);
-
-void SV_CloseFile();
-
-LZFILE *SV_File();
 
 bool SV_ExistingFile(de::Path filePath);
 
 int SV_RemoveFile(de::Path filePath);
 
-void SV_CopyFile(de::Path srcPath, de::Path destPath);
+void SV_CopyFile(de::Path srcFilePath, de::Path destFilePath);
 
-bool SV_OpenGameSaveFile(de::Path fileName, bool write);
+bool SV_OpenFile(de::Path filePath, bool write);
 
-#if __JHEXEN__
-bool SV_OpenMapSaveFile(de::Path path);
-#endif
+void SV_CloseFile();
 
 #if __JHEXEN__
 saveptr_t *SV_HxSavePtr();

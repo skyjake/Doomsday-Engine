@@ -89,7 +89,7 @@ DENG2_PIMPL(GameStateWriter)
         SV_CloseFile();
 
         // Open the map state file.
-        SV_OpenFile(SV_SavePath() / saveInfo->fileNameForMap(gameMap), "wp");
+        SV_OpenFile(SV_SavePath() / saveInfo->fileNameForMap(gameMap), true/*for write*/);
 #endif
 
         MapStateWriter(*thingArchive).write(writer);
@@ -141,7 +141,7 @@ void GameStateWriter::write(SaveInfo &info)
     NetSv_SaveGame(d->saveInfo->sessionId());
 #endif
 
-    if(!SV_OpenGameSaveFile(path, true/*for writing*/))
+    if(!SV_OpenFile(path, true/*for writing*/))
     {
         throw FileAccessError("GameStateWriter", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
     }

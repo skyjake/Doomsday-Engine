@@ -154,8 +154,7 @@ D_CMD( CCmdExitLevel );
 #endif
 
 #if __cplusplus
-#include "gamestatereader.h"
-
+class GameStateReaderFactory;
 class SaveSlots;
 
 /**
