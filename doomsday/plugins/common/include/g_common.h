@@ -154,6 +154,8 @@ D_CMD( CCmdExitLevel );
 #endif
 
 #if __cplusplus
+#include <de/String>
+
 class GameStateReaderFactory;
 class SaveSlots;
 
@@ -161,6 +163,43 @@ class SaveSlots;
  * Returns the game's SaveSlots.
  */
 SaveSlots &G_SaveSlots();
+
+/**
+ * Parse @a str and determine whether it references a logical game-save slot.
+ *
+ * @param str  String to be parsed. Parse is divided into three passes.
+ *             Pass 1: Check for a known game-save description which matches this.
+ *                 Search is in logical save slot creation order.
+ *             Pass 2: Check for keyword identifiers.
+ *                 <auto>  = The "auto save" slot.
+ *                 <last>  = The last used slot.
+ *                 <quick> = The currently nominated "quick save" slot.
+ *             Pass 3: Check for a unique save slot identifier.
+ *
+ * @return  The parsed slot id if found; otherwise a zero-length string.
+ */
+de::String G_SaveSlotIdFromUserInput(de::String str);
+
+/**
+ * To be called to schedule a save game-save action.
+ *
+ * @param slotId           Unique identifier of the save slot to use.
+ * @param userDescription  New user description for the game-save. Can be @c NULL in which
+ *                         case the name will not change if the slot has already been used.
+ *                         If an empty string a new name will be generated automatically.
+ *
+ * @return  @c true iff @a slotId is valid and saving is presently possible.
+ */
+bool G_SaveGame(de::String slotId, de::String *userDescription = 0);
+
+/**
+ * To be called to schedule a load game-save action.
+ *
+ * @param slotId  Unique identifier of the save slot to use.
+ *
+ * @return  @c true iff @a slotId is in use and loading is presently possible.
+ */
+bool G_LoadGame(de::String slotId);
 
 /**
  * Returns the game's GameStateReaderFactory.

@@ -452,12 +452,17 @@ void D_PostInit()
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        int const slotNumber = G_SaveSlots().parseSlotIdentifier(CommandLine_At(p + 1));
-        if(G_SaveSlots().slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
+        try
         {
-            // No further initialization is to be done.
-            return;
+            de::String const slotId = G_SaveSlotIdFromUserInput(CommandLine_At(p + 1));
+            if(G_SaveSlots()[slotId].isUserWritable() && G_LoadGame(slotId))
+            {
+                // No further initialization is to be done.
+                return;
+            }
         }
+        catch(SaveSlots::InvalidSlotError const &)
+        {}
     }
 
     p = CommandLine_Check("-skill");

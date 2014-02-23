@@ -53,12 +53,23 @@ public:
         DENG2_ERROR(MissingInfoError);
 
     public:
-        Slot(de::String const &fileName = "");
+        Slot(de::String id, bool userWritable, de::String const &fileName = "");
+
+        /**
+         * Returns the unique identifier/name for the save slot.
+         */
+        de::String const &id() const;
+
+        /**
+         * Returns @c true iff the save slot is user-writable (i.e., not a special slot,
+         * such as the @em auto and @em base slots).
+         */
+        bool isUserWritable() const;
 
         /**
          * Returns the save game file name bound to the logical save slot.
          */
-        de::String fileName() const;
+        de::String const &fileName() const;
 
         /**
          * Change the save game file name bound to the logical save slot.
@@ -103,10 +114,16 @@ public:
     };
 
 public:
+    SaveSlots();
+
     /**
-     * @param numSlots  Number of logical slots.
+     * Add a new logical save slot.
+     *
+     * @param id            Unique identifier for this slot.
+     * @param userWritable  @c true= allow the user to write to this slot.
+     * @param fileName      File name to bind to this slot.
      */
-    SaveSlots(int numSlots);
+    void addSlot(de::String id, bool userWritable, de::String fileName);
 
     /**
      * Returns the total number of logical save slots.
@@ -117,49 +134,21 @@ public:
     inline int size() const { return slotCount(); }
 
     /**
-     * Returns @c true iff @a value is interpretable as logical slot number (in range).
-     *
-     * @see slotCount()
+     * Returns @c true iff @a value is interpretable as logical slot identifier.
      */
-    bool isKnownSlot(int value) const;
-
-    /**
-     * Composes the textual, symbolic identifier/name for save @a slotNumber.
-     *
-     * @see parseSlotIdentifier()
-     */
-    de::String slotIdentifier(int slotNumber) const;
-
-    /**
-     * Parse @a str and determine whether it references a logical game-save slot.
-     *
-     * @param str  String to be parsed. Parse is divided into three passes.
-     *             Pass 1: Check for a known game-save name which matches this.
-     *                 Search is in ascending logical slot order 0..N (where N is the number
-     *                 of available save slots).
-     *             Pass 2: Check for keyword identifiers.
-     *                 <auto>  = The "auto save" slot.
-     *                 <last>  = The last used slot.
-     *                 <quick> = The currently nominated "quick save" slot.
-     *             Pass 3: Check for a logical save slot number.
-     *
-     * @return  The parsed slot number if valid; otherwise @c -1
-     *
-     * @see slotIdentifier()
-     */
-    int parseSlotIdentifier(de::String str) const;
+    bool isKnownSlot(de::String value) const;
 
     /// @see slot()
-    inline Slot &operator [] (int slotNumber) {
-        return slot(slotNumber);
+    inline Slot &operator [] (de::String slotId) {
+        return slot(slotId);
     }
 
     /**
-     * Returns the logical save slot associated with @a slotNumber.
+     * Returns the logical save slot associated with @a slotId.
      *
      * @see isKnownSlot()
      */
-    Slot &slot(int slotNumber) const;
+    Slot &slot(de::String slotId) const;
 
     /**
      * Clears save info for all logical save slots.
@@ -176,32 +165,26 @@ public:
     void updateAll();
 
     /**
+     * Deletes all save game files associated with the specified save @a slotId.
+     *
+     * @see isKnownSlot()
+     */
+    void clearSlot(de::String slotId);
+
+    /**
+     * Copies all the save game files from one slot to another.
+     */
+    void copySlot(de::String sourceSlotId, de::String destSlotId);
+
+    /**
      * Lookup a save slot by searching for a match on game-save description. The search is in
      * ascending logical slot order 0...N (where N is the number of available save slots).
      *
      * @param description  Description of the game-save to look for (not case sensitive).
      *
-     * @return  Logical slot number of the found game-save else @c -1
+     * @return  Unique identifier of the found slot; otherwise a zero-length string.
      */
-    int findSlotWithUserSaveDescription(de::String description) const;
-
-    /**
-     * Returns @c true iff save @a slotNumber is user-writable (i.e., not a special slot, such
-     * as the @em auto and @em base slots).
-     */
-    bool slotIsUserWritable(int slotNumber) const;
-
-    /**
-     * Deletes all save game files associated with the specified save @a slotNumber.
-     *
-     * @see isKnownSlot()
-     */
-    void clearSlot(int slotNumber);
-
-    /**
-     * Copies all the save game files from one slot to another.
-     */
-    void copySlot(int sourceSlotNumber, int destSlotNumber);
+    de::String findSlotWithUserSaveDescription(de::String description) const;
 
     /**
      * Register the console commands and variables of this module.

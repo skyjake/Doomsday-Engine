@@ -84,26 +84,8 @@ void G_QuitGame(void);
 /// @return  @c true = loading is presently possible.
 dd_bool G_IsLoadGamePossible(void);
 
-/**
- * To be called to schedule a load game-save action.
- * @param slot  Logical identifier of the save slot to use.
- * @return  @c true iff @a saveSlot is in use and loading is presently possible.
- */
-dd_bool G_LoadGame(int slot);
-
 /// @return  @c true = saving is presently possible.
 dd_bool G_IsSaveGamePossible(void);
-
-/**
- * To be called to schedule a save game-save action.
- * @param slot  Logical identifier of the save slot to use.
- * @param name  New name for the game-save. Can be @c NULL in which case
- *      the name will not change if the slot has already been used.
- *      If an empty string a new name will be generated automatically.
- * @return  @c true iff @a saveSlot is valid and saving is presently possible.
- */
-dd_bool G_SaveGame2(int slot, const char* name);
-dd_bool G_SaveGame(int slot);
 
 void G_StopDemo(void);
 

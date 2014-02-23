@@ -1925,19 +1925,19 @@ void Hu_MenuInitFilesPage()
 }
 #endif
 
-static void deleteGameSave(int slot)
+static void deleteGameSave(de::String slotId)
 {
-    DD_Executef(true, "deletegamesave %i", slot);
+    DD_Executef(true, "deletegamesave %s", slotId.toLatin1().constData());
 }
 
 int Hu_MenuLoadSlotCommandResponder(mn_object_t *ob, menucommand_e cmd)
 {
-    DENG_ASSERT(ob && ob->_type == MN_EDIT);
+    DENG_ASSERT(ob != 0 && ob->_type == MN_EDIT);
     if(MCMD_DELETE == cmd &&
        (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_ACTIVE) && !(ob->_flags & MNF_DISABLED))
     {
-        mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
-        deleteGameSave(edit->data2);
+        mndata_edit_t *edit = (mndata_edit_t*)ob->_typedata;
+        deleteGameSave((char *)edit->data1);
         return true;
     }
     return MNObject_DefaultCommandResponder(ob, cmd);
@@ -1945,12 +1945,12 @@ int Hu_MenuLoadSlotCommandResponder(mn_object_t *ob, menucommand_e cmd)
 
 int Hu_MenuSaveSlotCommandResponder(mn_object_t *ob, menucommand_e cmd)
 {
-    assert(ob);
+    DENG_ASSERT(ob != 0);
     if(MCMD_DELETE == cmd &&
        (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_ACTIVE) && !(ob->_flags & MNF_DISABLED))
     {
-        mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
-        deleteGameSave(edit->data2);
+        mndata_edit_t *edit = (mndata_edit_t *)ob->_typedata;
+        deleteGameSave((char *)edit->data1);
         return true;
     }
     return MNEdit_CommandResponder(ob, cmd);
@@ -1975,8 +1975,8 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
     for(int i = 0; i < NUMSAVESLOTS; ++i)
     {
         mndata_edit_t *slot = saveSlots + i;
-        slot->emptyString = (const char*) TXT_EMPTYSTRING;
-        slot->data2       = i;
+        slot->emptyString = (char const *) TXT_EMPTYSTRING;
+        slot->data1       = Str_Text(Str_Appendf(Str_New(), "%i", i));
         slot->maxLength   = 24;
     }
 
@@ -5523,15 +5523,13 @@ int Hu_MenuFallbackResponder(event_t* ev)
 int Hu_MenuSelectLoadSlot(mn_object_t *obj, mn_actionid_t action, void * /*context*/)
 {
     mndata_edit_t *edit = (mndata_edit_t *)obj->_typedata;
-    int const saveSlot = edit->data2;
-    mn_page_t *saveGamePage;
 
     if(MNA_ACTIVEOUT != action) return 1;
 
-    saveGamePage = Hu_MenuFindPageByName("SaveGame");
+    mn_page_t *saveGamePage = Hu_MenuFindPageByName("SaveGame");
     MNPage_SetFocus(saveGamePage, MNPage_FindObject(saveGamePage, 0, obj->data2));
 
-    G_LoadGame(saveSlot);
+    G_LoadGame((char *)edit->data1);
     Hu_MenuCommand(chooseCloseMethod());
     return 0;
 }
@@ -5766,7 +5764,7 @@ void Hu_MenuUpdateGameSaveWidgets()
         mndata_edit_t *edit = (mndata_edit_t *) obj->_typedata;
 
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED);
-        SaveSlot &sslot = G_SaveSlots()[edit->data2];
+        SaveSlot &sslot = G_SaveSlots()[(char *)edit->data1];
         if(sslot.isUsed())
         {
             MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, sslot.saveInfo().userDescription().toUtf8().constData());
@@ -5782,25 +5780,26 @@ void Hu_MenuUpdateGameSaveWidgets()
 /**
  * Called after the save name has been modified and to action the game-save.
  */
-int Hu_MenuSelectSaveSlot(mn_object_t *ob, mn_actionid_t action, void *parameters)
+int Hu_MenuSelectSaveSlot(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    mndata_edit_t* edit = (mndata_edit_t*)ob->_typedata;
-    const int saveSlot = edit->data2;
-    mn_page_t *page;
-
-    DENG_UNUSED(parameters);
+    mndata_edit_t *edit = (mndata_edit_t *)ob->_typedata;
+    char const *saveSlotId = (char *)edit->data1;
 
     if(MNA_ACTIVEOUT != action) return 1;
 
     if(menuNominatingQuickSaveSlot)
     {
-        Con_SetInteger("game-save-quick-slot", saveSlot);
+        Con_SetInteger("game-save-quick-slot", de::String(saveSlotId).toInt());
         menuNominatingQuickSaveSlot = false;
     }
 
-    if(!G_SaveGame2(saveSlot, Str_Text(MNEdit_Text(ob)))) return 0;
+    de::String userDescription = Str_Text(MNEdit_Text(ob));
+    if(!G_SaveGame(saveSlotId, &userDescription))
+    {
+        return 0;
+    }
 
-    page = Hu_MenuFindPageByName("SaveGame");
+    mn_page_t *page = Hu_MenuFindPageByName("SaveGame");
     MNPage_SetFocus(page, MN_MustFindObjectOnPage(page, 0, ob->data2));
 
     page = Hu_MenuFindPageByName("LoadGame");
@@ -5810,14 +5809,13 @@ int Hu_MenuSelectSaveSlot(mn_object_t *ob, mn_actionid_t action, void *parameter
     return 0;
 }
 
-int Hu_MenuCvarButton(mn_object_t *obj, mn_actionid_t action, void *parameters)
+int Hu_MenuCvarButton(mn_object_t *obj, mn_actionid_t action, void * /*context*/)
 {
     mndata_button_t *btn = (mndata_button_t *)obj->_typedata;
     cvarbutton_t const *cb = (cvarbutton_t *)obj->data1;
     cvartype_t varType = Con_GetVariableType(cb->cvarname);
     int value;
 
-    DENG_UNUSED(parameters);
     if(MNA_MODIFIED != action) return 1;
 
     //strcpy(btn->text, cb->active? cb->yes : cb->no);
