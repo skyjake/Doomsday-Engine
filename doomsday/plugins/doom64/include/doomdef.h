@@ -105,9 +105,9 @@ typedef enum gamestate_e {
 typedef enum {
     GA_NONE,
     GA_RESTARTMAP,
-    GA_NEWGAME,
-    GA_LOADGAME,
-    GA_SAVEGAME,
+    GA_NEWSESSION,
+    GA_LOADSESSION,
+    GA_SAVESESSION,
     GA_MAPCOMPLETED,
     GA_ENDDEBRIEFING,
     GA_VICTORY,

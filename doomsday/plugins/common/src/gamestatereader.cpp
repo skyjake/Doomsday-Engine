@@ -346,7 +346,7 @@ void GameStateReader::read(SaveInfo &info)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewGame(d->saveInfo->mapUri(), 0/*not saved??*/, &d->saveInfo->gameRules());
+    G_NewSession(d->saveInfo->mapUri(), 0/*not saved??*/, &d->saveInfo->gameRules());
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
 #if !__JHEXEN__

@@ -139,7 +139,7 @@ void NetCl_UpdateGameState(Reader* msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_NewGame(mapUri, gameMapEntrance /*gsMapEntrance*/, &gsRules);
+        G_NewSession(mapUri, gameMapEntrance /*gsMapEntrance*/, &gsRules);
 
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);

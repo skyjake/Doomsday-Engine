@@ -81,7 +81,7 @@ dd_bool G_QuitInProgress(void);
  * @param mapEntrance  Logical map entry point number.
  * @param rules        Game rules to apply.
  */
-void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
+void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
 void G_DeferredNewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
 
 /**

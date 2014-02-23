@@ -133,8 +133,8 @@ struct loadmap_params_t
 };
 int G_DoLoadMap(loadmap_params_t *parm);
 
-void G_DoLoadGame(de::String slotId);
-void G_DoSaveGame(de::String slotId, de::String userDescription);
+void G_DoLoadSession(de::String slotId);
+void G_DoSaveSession(de::String slotId, de::String userDescription);
 void G_DoPlayDemo();
 void G_DoMapCompleted();
 void G_DoEndDebriefing();
@@ -160,7 +160,7 @@ void R_LoadVectorGraphics();
 
 int Hook_DemoStop(int hookType, int val, void *parm);
 
-static void G_InitNewGame();
+static void G_InitNewSession();
 
 game_config_t cfg; // The global cfg.
 
@@ -201,10 +201,10 @@ wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 // Game Action Variables:
-static de::String gaSaveGameSlot;
-static bool gaSaveGameGenerateDescription = true;
-static de::String gaSaveGameUserDescription;
-static de::String gaLoadGameSlot;
+static de::String gaSaveSessionSlot;
+static bool gaSaveSessionGenerateDescription = true;
+static de::String gaSaveSessionUserDescription;
+static de::String gaLoadSessionSlot;
 
 #if __JDOOM__ || __JDOOM64__
 mobj_t *bodyQueue[BODYQUEUESIZE];
@@ -1665,19 +1665,19 @@ static void runGameAction()
 
         switch(currentAction)
         {
-        case GA_NEWGAME:
-            G_InitNewGame();
-            G_NewGame(dMapUri, dMapEntrance, &dRules);
+        case GA_NEWSESSION:
+            G_InitNewSession();
+            G_NewSession(dMapUri, dMapEntrance, &dRules);
             G_SetGameAction(GA_NONE);
             break;
 
-        case GA_LOADGAME:
-            G_DoLoadGame(gaLoadGameSlot);
+        case GA_LOADSESSION:
+            G_DoLoadSession(gaLoadSessionSlot);
             G_SetGameAction(GA_NONE);
             break;
 
-        case GA_SAVEGAME:
-            G_DoSaveGame(gaSaveGameSlot, gaSaveGameUserDescription);
+        case GA_SAVESESSION:
+            G_DoSaveSession(gaSaveSessionSlot, gaSaveSessionUserDescription);
             G_SetGameAction(GA_NONE);
             break;
 
@@ -2165,8 +2165,8 @@ static int rebornLoadConfirmResponse(msgresponse_t response, int /*userValue*/, 
     DENG2_ASSERT(slotId != 0);
     if(response == MSG_YES)
     {
-        gaLoadGameSlot = *slotId;
-        G_SetGameAction(GA_LOADGAME);
+        gaLoadSessionSlot = *slotId;
+        G_SetGameAction(GA_LOADSESSION);
     }
     else
     {
@@ -2174,8 +2174,8 @@ static int rebornLoadConfirmResponse(msgresponse_t response, int /*userValue*/, 
         // Load the last autosave? (Not optional in Hexen).
         if(G_SaveSlots()["auto"].isUsed())
         {
-            gaLoadGameSlot = "auto";
-            G_SetGameAction(GA_LOADGAME);
+            gaLoadSessionSlot = "auto";
+            G_SetGameAction(GA_LOADSESSION);
         }
         else
 #endif
@@ -2246,8 +2246,8 @@ void G_DoReborn(int plrNum)
 #endif
             if(!cfg.confirmRebornLoad)
             {
-                gaLoadGameSlot = chosenSlot;
-                G_SetGameAction(GA_LOADGAME);
+                gaLoadSessionSlot = chosenSlot;
+                G_SetGameAction(GA_LOADSESSION);
             }
             else
             {
@@ -2264,8 +2264,8 @@ void G_DoReborn(int plrNum)
 #if __JHEXEN__
         if(G_SaveSlots()["auto"].isUsed())
         {
-            gaLoadGameSlot = "auto";
-            G_SetGameAction(GA_LOADGAME);
+            gaLoadSessionSlot = "auto";
+            G_SetGameAction(GA_LOADSESSION);
             return;
         }
 #endif
@@ -2275,7 +2275,7 @@ void G_DoReborn(int plrNum)
     G_SetGameAction(GA_RESTARTMAP);
 }
 
-static void G_InitNewGame()
+static void G_InitNewSession()
 {
 #if __JHEXEN__
     G_SaveSlots().clearSlot("base");
@@ -2911,7 +2911,7 @@ static int saveGameStateWorker(void *context)
             // Slot already in use; reuse the existing description.
             userDescription = saveInfo.userDescription();
         }
-        else if(gaSaveGameGenerateDescription)
+        else if(gaSaveSessionGenerateDescription)
         {
             userDescription = Str_Text(G_GenerateUserSaveDescription());
         }
@@ -3128,8 +3128,8 @@ void G_DoRestartMap()
     briefDisabled = true;
 
     // Restart the game session entirely.
-    G_InitNewGame();
-    G_NewGame(dMapUri, dMapEntrance, &dRules);
+    G_InitNewSession();
+    G_NewSession(dMapUri, dMapEntrance, &dRules);
 #else
     loadmap_params_t p;
 
@@ -3169,9 +3169,9 @@ bool G_LoadSession(de::String slotId)
 {
     if(!G_SessionLoadingPossible()) return false;
 
-    // Check whether this slot is in use. We do this here also because we
-    // need to provide our caller with instant feedback. Naturally this is
-    // no guarantee that the game-save will be accessible come load time.
+    // Check whether this slot is in use. We do this here also because we need to provide our
+    // caller with instant feedback. Naturally this is no guarantee that the game-save will
+    // be accessible come load time.
 
     // First ensure we have up-to-date info.
     G_SaveSlots().updateAll();
@@ -3181,12 +3181,13 @@ bool G_LoadSession(de::String slotId)
         if(G_SaveSlots()[slotId].isUsed())
         {
             // Everything appears to be in order - schedule the game-save load!
-            gaLoadGameSlot = slotId;
-            G_SetGameAction(GA_LOADGAME);
+            gaLoadSessionSlot = slotId;
+            G_SetGameAction(GA_LOADSESSION);
             return true;
         }
 
-        App_Log(DE2_RES_ERROR, "Cannot load from save slot '%s': not in use", slotId.toLatin1().constData());
+        App_Log(DE2_RES_ERROR, "Cannot load from save slot '%s': not in use",
+                slotId.toLatin1().constData());
     }
     catch(SaveSlots::InvalidSlotError const &)
     {}
@@ -3208,7 +3209,7 @@ static std::auto_ptr<IGameStateReader> gameStateReaderFor(SaveInfo &info)
 /**
  * Called by G_Ticker based on gameaction.
  */
-void G_DoLoadGame(de::String slotId)
+void G_DoLoadSession(de::String slotId)
 {
 #if __JHEXEN__
     bool mustCopyBaseToAutoSlot = (slotId.compareWithoutCase("auto") && !IS_NETGAME);
@@ -3279,22 +3280,22 @@ bool G_SaveSession(de::String slotId, de::String *userDescription)
     if(!G_SessionSavingPossible()) return false;
     if(!G_SaveSlots().isKnownSlot(slotId)) return false;
 
-    gaSaveGameSlot = slotId;
+    gaSaveSessionSlot = slotId;
 
     if(userDescription && !userDescription->isEmpty())
     {
         // A new description.
-        gaSaveGameGenerateDescription = false;
-        gaSaveGameUserDescription = *userDescription;
+        gaSaveSessionGenerateDescription = false;
+        gaSaveSessionUserDescription = *userDescription;
     }
     else
     {
         // Reusing the current name or generating a new one.
-        gaSaveGameGenerateDescription = (userDescription && userDescription->isEmpty());
-        gaSaveGameUserDescription.clear();
+        gaSaveSessionGenerateDescription = (userDescription && userDescription->isEmpty());
+        gaSaveSessionUserDescription.clear();
     }
 
-    G_SetGameAction(GA_SAVEGAME);
+    G_SetGameAction(GA_SAVESESSION);
     return true;
 }
 
@@ -3335,7 +3336,7 @@ AutoStr *G_GenerateUserSaveDescription()
 /**
  * Called by G_Ticker based on gameaction.
  */
-void G_DoSaveGame(de::String slotId, de::String userDescription)
+void G_DoSaveSession(de::String slotId, de::String userDescription)
 {
     savegamestateworker_params_t p;
     p.userDescription = userDescription;
@@ -3365,7 +3366,7 @@ void G_DeferredNewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *r
     dMapEntrance = mapEntrance;
     dRules       = rules? *rules : gameRules; // make a copy.
 
-    G_SetGameAction(GA_NEWGAME);
+    G_SetGameAction(GA_NEWSESSION);
 }
 
 /// @todo Get this from MAPINFO
@@ -3416,7 +3417,7 @@ static uint mapNumberFor(Uri const *mapUri)
     return 0;
 }
 
-void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
+void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules)
 {
     DENG_ASSERT(mapUri != 0 && rules != 0);
 
@@ -4187,7 +4188,7 @@ D_CMD(LoadSession)
             // A known used slot identifier.
             if(confirmed || !cfg.confirmQuickGameSave)
             {
-                // Try to schedule a GA_LOADGAME action.
+                // Try to schedule a GA_LOADSESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
                 return G_LoadSession(slotId);
             }
@@ -4304,7 +4305,7 @@ D_CMD(SaveSession)
 
             if(!slotIsUsed || confirmed || !cfg.confirmQuickGameSave)
             {
-                // Try to schedule a GA_SAVEGAME action.
+                // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
                 return G_SaveSession(slotId, &userDescription);
             }
