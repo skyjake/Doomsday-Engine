@@ -20,16 +20,15 @@
 
 #ifndef LIBCOMMON_SAVESLOTS_H
 #define LIBCOMMON_SAVESLOTS_H
-#ifdef __cplusplus
 
 #include "common.h"
 #include <de/Error>
-#include <de/Path>
+#include <de/String>
 
 class SaveInfo;
 
 /**
- * Maps saved games into a finite set of "save slots".
+ * Maps save-game session file names into a finite set of "save slots".
  *
  * @todo At present the associated SaveInfos are actually owned by this class. In the future
  * these should be referenced from another container which has none of the restrictions of
@@ -56,29 +55,29 @@ public:
         Slot(de::String id, bool userWritable, de::String const &fileName = "");
 
         /**
-         * Returns the unique identifier/name for the save slot.
+         * Returns the unique identifier/name for the logical save slot.
          */
         de::String const &id() const;
 
         /**
-         * Returns @c true iff the save slot is user-writable.
+         * Returns @c true iff the logical save slot is user-writable.
          */
         bool isUserWritable() const;
 
         /**
-         * Returns the save game file name bound to the logical save slot.
+         * Returns the session file name bound to the logical save slot.
          */
         de::String const &fileName() const;
 
         /**
-         * Change the save game file name bound to the logical save slot.
+         * Change the session file name bound to the logical save slot.
          *
-         * @param newName  New save game file name to be bound.
+         * @param newName  New session file name to be bound.
          */
         void bindFileName(de::String newName);
 
         /**
-         * Returns @c true iff a saved game state exists for the logical save slot.
+         * Returns @c true iff a saved game session exists for the logical save slot.
          */
         bool isUsed() const;
 
@@ -133,7 +132,7 @@ public:
     inline int size() const { return slotCount(); }
 
     /**
-     * Returns @c true iff @a value is interpretable as logical slot identifier.
+     * Returns @c true iff @a value is interpretable as a logical slot identifier.
      */
     bool isKnownSlot(de::String value) const;
 
@@ -164,20 +163,21 @@ public:
     void updateAll();
 
     /**
-     * Deletes all save game files associated with the specified save @a slotId.
+     * Deletes all saved game session files associated with the specified save @a slotId.
      *
      * @see isKnownSlot()
      */
     void clearSlot(de::String slotId);
 
     /**
-     * Copies all the save game files from one slot to another.
+     * Copies all the saved game session files from one slot to another.
      */
     void copySlot(de::String sourceSlotId, de::String destSlotId);
 
     /**
-     * Lookup a save slot by searching for a match on game-save description. The search is in
-     * ascending logical slot order 0...N (where N is the number of available save slots).
+     * Lookup a slot by searching for a saved game session with a matching user description.
+     * The search is in ascending logical slot order 0...N (where N is the number of available
+     * save slots).
      *
      * @param description  Description of the game-save to look for (not case sensitive).
      *
@@ -199,5 +199,4 @@ private:
 
 typedef SaveSlots::Slot SaveSlot;
 
-#endif // __cplusplus
 #endif // LIBCOMMON_SAVESLOTS_H

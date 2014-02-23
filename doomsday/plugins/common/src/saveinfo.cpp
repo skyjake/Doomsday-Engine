@@ -38,26 +38,34 @@ namespace internal
         return false;
 #endif
     }
+
+    static de::String currentGameIdentityKey()
+    {
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+        return Str_Text(gameInfo.identityKey);
+    }
 }
 
+using namespace de;
 using namespace internal;
 
 DENG2_PIMPL_NOREF(SaveInfo)
 {
-    de::String fileName; ///< Name of the game state file.
+    String fileName; ///< Name of the game session file.
 
     // Metadata (the session header):
-    de::String userDescription;
+    String userDescription;
     uint sessionId;
     int magic;
     int version;
-    de::String gameIdentityKey;
+    String gameIdentityKey;
     Uri *mapUri;
+    GameRuleset gameRules;
 #if !__JHEXEN__
     int mapTime;
     Players players;
 #endif
-    GameRuleset gameRules;
 
     Instance()
         : sessionId(0)
@@ -68,10 +76,10 @@ DENG2_PIMPL_NOREF(SaveInfo)
         , mapTime  (0)
 #endif
     {
+        de::zap(gameRules);
 #if !__JHEXEN__
         de::zap(players);
 #endif
-        de::zap(gameRules);
     }
 
     Instance(Instance const &other)
@@ -87,10 +95,10 @@ DENG2_PIMPL_NOREF(SaveInfo)
         , mapTime        (other.mapTime)
 #endif
     {
+        std::memcpy(&gameRules, &other.gameRules, sizeof(gameRules));
 #if !__JHEXEN__
         std::memcpy(&players, &other.players, sizeof(players));
 #endif
-        std::memcpy(&gameRules, &other.gameRules, sizeof(gameRules));
     }
 
     ~Instance()
@@ -102,29 +110,26 @@ DENG2_PIMPL_NOREF(SaveInfo)
     /**
      * Deserialize the legacy Hexen-specific v.9 info.
      */
-    void read_Hx_v9(Reader *reader)
+    void read_Hx_v9(reader_s *reader)
     {
         char descBuf[24];
         Reader_Read(reader, descBuf, 24);
-        userDescription = de::String(descBuf, 24);
+        userDescription = String(descBuf, 24);
 
-        magic     = MY_SAVE_MAGIC; // Lets pretend...
+        magic           = MY_SAVE_MAGIC; // Lets pretend...
 
         char verText[16 + 1]; // "HXS Ver "
         Reader_Read(reader, &verText, 16); descBuf[16] = 0;
-        version   = atoi(&verText[8]);
+        version         = String(&verText[8]).toInt();
 
-        /// @note Kludge: Assume the current game mode.
-        GameInfo gameInfo;
-        DD_GameInfo(&gameInfo);
-        gameIdentityKey = Str_Text(gameInfo.identityKey);
+        /// @note Kludge: Assume the current game.
+        gameIdentityKey = currentGameIdentityKey();
         /// Kludge end.
 
         /*Skip junk*/ SV_Seek(4);
 
-        uint episode = 0;
-        uint map     = Reader_ReadByte(reader) - 1;
-        Uri_Copy(mapUri, G_ComposeMapUri(episode, map));
+        uint map = Reader_ReadByte(reader) - 1;
+        Uri_Copy(mapUri, G_ComposeMapUri(0, map));
 
         gameRules.skill         = (skillmode_t) (Reader_ReadByte(reader) & 0x7f);
         // Interpret skill modes outside the normal range as "spawn no things".
@@ -142,7 +147,7 @@ DENG2_PIMPL_NOREF(SaveInfo)
 #endif
 };
 
-SaveInfo::SaveInfo(de::String const &fileName) : d(new Instance)
+SaveInfo::SaveInfo(String const &fileName) : d(new Instance)
 {
     d->fileName = fileName;
 }
@@ -150,8 +155,8 @@ SaveInfo::SaveInfo(de::String const &fileName) : d(new Instance)
 SaveInfo::SaveInfo(SaveInfo const &other) : d(new Instance(*other.d))
 {}
 
-SaveInfo *SaveInfo::newWithCurrentSessionMetadata(de::String const &fileName,
-    de::String const &userDescription) // static
+SaveInfo *SaveInfo::newWithCurrentSessionMetadata(String const &fileName,
+    String const &userDescription) // static
 {
     SaveInfo *info = new SaveInfo(fileName);
     info->setUserDescription(userDescription);
@@ -173,29 +178,28 @@ SaveInfo::SessionStatus SaveInfo::status() const
     return Loadable;
 }
 
-de::String SaveInfo::fileName() const
+String SaveInfo::fileName() const
 {
-    return d->fileName + de::String("." SAVEGAMEEXTENSION);
+    return d->fileName + String("." SAVEGAMEEXTENSION);
 }
 
-void SaveInfo::setFileName(de::String newName)
+void SaveInfo::setFileName(String newName)
 {
     d->fileName = newName;
 }
 
-de::String SaveInfo::fileNameForMap(uint map) const
+String SaveInfo::fileNameForMap(uint map) const
 {
-    // Compose the full game-save filename.
-    return d->fileName + de::String("%1." SAVEGAMEEXTENSION)
-                                 .arg(int(map + 1), 2, 10, QChar('0'));
+    return d->fileName + String("%1." SAVEGAMEEXTENSION)
+                             .arg(int(map + 1), 2, 10, QChar('0'));
 }
 
-de::String const &SaveInfo::gameIdentityKey() const
+String const &SaveInfo::gameIdentityKey() const
 {
     return d->gameIdentityKey;
 }
 
-void SaveInfo::setGameIdentityKey(de::String newGameIdentityKey)
+void SaveInfo::setGameIdentityKey(String newGameIdentityKey)
 {
     d->gameIdentityKey = newGameIdentityKey;
 }
@@ -210,12 +214,12 @@ void SaveInfo::setVersion(int newVersion)
     d->version = newVersion;
 }
 
-de::String const &SaveInfo::userDescription() const
+String const &SaveInfo::userDescription() const
 {
     return d->userDescription;
 }
 
-void SaveInfo::setUserDescription(de::String newUserDescription)
+void SaveInfo::setUserDescription(String newUserDescription)
 {
     d->userDescription = newUserDescription;
 }
@@ -237,7 +241,7 @@ Uri const *SaveInfo::mapUri() const
 
 void SaveInfo::setMapUri(Uri const *newMapUri)
 {
-    DENG_ASSERT(newMapUri != 0);
+    DENG2_ASSERT(newMapUri != 0);
     Uri_Copy(d->mapUri, newMapUri);
 }
 
@@ -271,28 +275,24 @@ GameRuleset const &SaveInfo::gameRules() const
 
 void SaveInfo::setGameRules(GameRuleset const &newRules)
 {
-    d->gameRules = newRules; // make a copy
+    d->gameRules = newRules; // Make a copy
 }
 
 void SaveInfo::applyCurrentSessionMetadata()
 {
-    d->magic    = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
-    d->version  = MY_SAVE_VERSION;
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
-    d->gameIdentityKey = Str_Text(gameInfo.identityKey);
+    d->magic           = IS_NETWORK_CLIENT? MY_CLIENT_SAVE_MAGIC : MY_SAVE_MAGIC;
+    d->version         = MY_SAVE_VERSION;
+    d->gameIdentityKey = currentGameIdentityKey();
     Uri_Copy(d->mapUri, gameMapUri);
 #if !__JHEXEN__
-    d->mapTime  = ::mapTime;
+    d->mapTime         = ::mapTime;
 #endif
-
-    // Make a copy of the current game rules.
-    d->gameRules = ::gameRules;
+    d->gameRules       = ::gameRules; // Make a copy.
 
 #if !__JHEXEN__
     for(int i = 0; i < MAXPLAYERS; i++)
     {
-        d->players[i] = (::players[i]).plr->inGame;
+        d->players[i]  = (::players[i]).plr->inGame;
     }
 #endif
 }
@@ -307,9 +307,7 @@ bool SaveInfo::gameSessionIsLoadable() const
     if(!haveGameSession()) return false;
 
     // Game identity key missmatch?
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
-    if(d->gameIdentityKey.compareWithoutCase(Str_Text(gameInfo.identityKey)))
+    if(d->gameIdentityKey.compareWithoutCase(currentGameIdentityKey()))
     {
         return false;
     }
@@ -354,7 +352,7 @@ void SaveInfo::updateFromFile()
     }
 }
 
-void SaveInfo::write(Writer *writer) const
+void SaveInfo::write(writer_s *writer) const
 {
     Writer_WriteInt32(writer, d->magic);
     Writer_WriteInt32(writer, d->version);
@@ -381,7 +379,7 @@ void SaveInfo::write(Writer *writer) const
     Writer_WriteInt32(writer, d->sessionId);
 }
 
-void SaveInfo::read(Reader *reader)
+void SaveInfo::read(reader_s *reader)
 {
 #if __JHEXEN__
     // Read the magic byte to determine the high-level format.
@@ -423,7 +421,7 @@ void SaveInfo::read(Reader *reader)
         // Description is a fixed 24 characters in length.
         char descBuf[24];
         Reader_Read(reader, descBuf, 24);
-        d->userDescription = de::String(descBuf, 24);
+        d->userDescription = String(descBuf, 24);
     }
 
     if(d->version >= 14)
@@ -505,9 +503,9 @@ void SaveInfo::read(Reader *reader)
     d->sessionId = Reader_ReadInt32(reader);
 }
 
-de::String SaveInfo::statusAsText() const
+String SaveInfo::statusAsText() const
 {
-    static de::String const statusTexts[] = {
+    static String const statusTexts[] = {
         "Loadable",
         "Incompatible",
         "Unused",
@@ -515,24 +513,24 @@ de::String SaveInfo::statusAsText() const
     return statusTexts[int(status())];
 }
 
-de::String SaveInfo::description() const
+String SaveInfo::description() const
 {
     AutoStr *currentMapUriAsText = Uri_ToString(mapUri());
 
-    return de::String(_E(b) "%1\n" _E(.)
-                      _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
-                      _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
-                      _E(l) "Source file: " _E(.)_E(i) "%4\n" _E(.)
-                      _E(l) "Version: "     _E(.)_E(i) "%5 "  _E(.)
-                      _E(l) "Session id: "  _E(.)_E(i) "%6\n" _E(.)
-                      _E(D) "Status: " _E(.) "%7")
-                .arg(userDescription())
-                .arg(gameIdentityKey())
-                .arg(Str_Text(currentMapUriAsText))
-                .arg(de::NativePath(SV_SavePath() / fileName()).pretty())
-                .arg(version())
-                .arg(sessionId())
-                .arg(statusAsText());
+    return String(_E(b) "%1\n" _E(.)
+                  _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
+                  _E(l) "Current map: " _E(.)_E(i) "%3\n" _E(.)
+                  _E(l) "Source file: " _E(.)_E(i) "%4\n" _E(.)
+                  _E(l) "Version: "     _E(.)_E(i) "%5 "  _E(.)
+                  _E(l) "Session id: "  _E(.)_E(i) "%6\n" _E(.)
+                  _E(D) "Status: " _E(.) "%7")
+             .arg(userDescription())
+             .arg(gameIdentityKey())
+             .arg(Str_Text(currentMapUriAsText))
+             .arg(NativePath(SV_SavePath() / fileName()).pretty())
+             .arg(version())
+             .arg(sessionId())
+             .arg(statusAsText());
 }
 
 int SaveInfo::magic() const
@@ -545,7 +543,7 @@ void SaveInfo::setMagic(int newMagic)
     d->magic = newMagic;
 }
 
-SaveInfo *SaveInfo::fromReader(Reader *reader) // static
+SaveInfo *SaveInfo::fromReader(reader_s *reader) // static
 {
     SaveInfo *info = new SaveInfo;
     info->read(reader);

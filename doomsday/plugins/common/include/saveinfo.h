@@ -22,7 +22,6 @@
 #define LIBCOMMON_SAVEINFO
 
 #include "common.h"
-#include <de/Path>
 #include <de/String>
 
 /**
