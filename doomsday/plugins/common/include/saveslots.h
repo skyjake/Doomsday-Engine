@@ -61,8 +61,7 @@ public:
         de::String const &id() const;
 
         /**
-         * Returns @c true iff the save slot is user-writable (i.e., not a special slot,
-         * such as the @em auto and @em base slots).
+         * Returns @c true iff the save slot is user-writable.
          */
         bool isUserWritable() const;
 
