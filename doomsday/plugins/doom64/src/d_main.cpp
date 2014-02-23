@@ -361,7 +361,7 @@ void D_PostInit()
         try
         {
             de::String const slotId = G_SaveSlotIdFromUserInput(CommandLine_At(p + 1));
-            if(G_SaveSlots()[slotId].isUserWritable() && G_LoadGame(slotId))
+            if(G_SaveSlots()[slotId].isUserWritable() && G_LoadSession(slotId))
             {
                 // No further initialization is to be done.
                 return;

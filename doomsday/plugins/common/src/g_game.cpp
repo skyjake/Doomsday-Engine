@@ -106,18 +106,21 @@ MonsterMissileInfo[] =
 #endif
 
 D_CMD(CycleTextureGamma);
-D_CMD(DeleteGameSave);
-D_CMD(InspectGameSave);
 D_CMD(EndGame);
 D_CMD(HelpScreen);
+
 D_CMD(ListMaps);
-D_CMD(LoadGame);
-D_CMD(OpenLoadMenu);
-D_CMD(QuickLoadGame);
-D_CMD(QuickSaveGame);
-D_CMD(SaveGame);
-D_CMD(OpenSaveMenu);
 D_CMD(WarpMap);
+
+D_CMD(LoadSession);
+D_CMD(SaveSession);
+D_CMD(QuickLoadSession);
+D_CMD(QuickSaveSession);
+D_CMD(DeleteSavedSession);
+D_CMD(InspectSavedSession);
+
+D_CMD(OpenLoadMenu);
+D_CMD(OpenSaveMenu);
 
 void G_PlayerReborn(int player);
 void G_DoReborn(int playernum);
@@ -389,20 +392,20 @@ cvartemplate_t gamestatusCVars[] =
 };
 
 ccmdtemplate_t gameCmds[] = {
-    { "deletegamesave",  "ss",   CCmdDeleteGameSave, 0 },
-    { "deletegamesave",  "s",    CCmdDeleteGameSave, 0 },
+    { "deletegamesave",  "ss",   CCmdDeleteSavedSession, 0 },
+    { "deletegamesave",  "s",    CCmdDeleteSavedSession, 0 },
     { "endgame",         "",     CCmdEndGame, 0 },
     { "helpscreen",      "",     CCmdHelpScreen, 0 },
-    { "inspectgamesave", "s",    CCmdInspectGameSave, 0 },
+    { "inspectgamesave", "s",    CCmdInspectSavedSession, 0 },
     { "listmaps",        "",     CCmdListMaps, 0 },
-    { "loadgame",        "ss",   CCmdLoadGame, 0 },
-    { "loadgame",        "s",    CCmdLoadGame, 0 },
+    { "loadgame",        "ss",   CCmdLoadSession, 0 },
+    { "loadgame",        "s",    CCmdLoadSession, 0 },
     { "loadgame",        "",     CCmdOpenLoadMenu, 0 },
-    { "quickload",       "",     CCmdQuickLoadGame, 0 },
-    { "quicksave",       "",     CCmdQuickSaveGame, 0 },
-    { "savegame",        "sss",  CCmdSaveGame, 0 },
-    { "savegame",        "ss",   CCmdSaveGame, 0 },
-    { "savegame",        "s",    CCmdSaveGame, 0 },
+    { "quickload",       "",     CCmdQuickLoadSession, 0 },
+    { "quicksave",       "",     CCmdQuickSaveSession, 0 },
+    { "savegame",        "sss",  CCmdSaveSession, 0 },
+    { "savegame",        "ss",   CCmdSaveSession, 0 },
+    { "savegame",        "s",    CCmdSaveSession, 0 },
     { "savegame",        "",     CCmdOpenSaveMenu, 0 },
     { "togglegamma",     "",     CCmdCycleTextureGamma, 0 },
     { "", "", 0, 0 }
@@ -2199,7 +2202,7 @@ void G_DoReborn(int plrNum)
         return;
     }
 
-    if(G_IsLoadGamePossible())
+    if(G_SessionLoadingPossible())
     {
         // First ensure we have up-to-date info.
         G_SaveSlots().updateAll();
@@ -3157,14 +3160,14 @@ void G_DoRestartMap()
 #endif
 }
 
-dd_bool G_IsLoadGamePossible()
+bool G_SessionLoadingPossible()
 {
     return !(IS_CLIENT && !Get(DD_PLAYBACK));
 }
 
-bool G_LoadGame(de::String slotId)
+bool G_LoadSession(de::String slotId)
 {
-    if(!G_IsLoadGamePossible()) return false;
+    if(!G_SessionLoadingPossible()) return false;
 
     // Check whether this slot is in use. We do this here also because we
     // need to provide our caller with instant feedback. Naturally this is
@@ -3260,7 +3263,7 @@ void G_DoLoadGame(de::String slotId)
     }
 }
 
-dd_bool G_IsSaveGamePossible()
+bool G_SessionSavingPossible()
 {
     if(IS_CLIENT || Get(DD_PLAYBACK)) return false;
     if(GS_MAP != G_GameState()) return false;
@@ -3271,9 +3274,9 @@ dd_bool G_IsSaveGamePossible()
     return true;
 }
 
-bool G_SaveGame(de::String slotId, de::String *userDescription)
+bool G_SaveSession(de::String slotId, de::String *userDescription)
 {
-    if(!G_IsSaveGamePossible()) return false;
+    if(!G_SessionSavingPossible()) return false;
     if(!G_SaveSlots().isKnownSlot(slotId)) return false;
 
     gaSaveGameSlot = slotId;
@@ -4130,7 +4133,7 @@ D_CMD(OpenLoadMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!G_IsLoadGamePossible()) return false;
+    if(!G_SessionLoadingPossible()) return false;
     openLoadMenu();
     return true;
 }
@@ -4139,31 +4142,31 @@ D_CMD(OpenSaveMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!G_IsSaveGamePossible()) return false;
+    if(!G_SessionSavingPossible()) return false;
     openSaveMenu();
     return true;
 }
 
-static int loadGameConfirmResponse(msgresponse_t response, int /*userValue*/, void *context)
+static int loadSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
     de::String *slotId = static_cast<de::String *>(context);
     DENG2_ASSERT(slotId != 0);
     if(response == MSG_YES)
     {
-        G_LoadGame(*slotId);
-        delete slotId;
+        G_LoadSession(*slotId);
     }
+    delete slotId;
     return true;
 }
 
-D_CMD(LoadGame)
+D_CMD(LoadSession)
 {
     DENG_UNUSED(src);
 
     bool const confirmed = (argc == 3 && !stricmp(argv[2], "confirm"));
 
     if(G_QuitInProgress()) return false;
-    if(!G_IsLoadGamePossible()) return false;
+    if(!G_SessionLoadingPossible()) return false;
 
     if(IS_NETGAME)
     {
@@ -4186,14 +4189,14 @@ D_CMD(LoadGame)
             {
                 // Try to schedule a GA_LOADGAME action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
-                return G_LoadGame(slotId);
+                return G_LoadSession(slotId);
             }
 
             // Compose the confirmation message.
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, sslot.saveInfo().userDescription().toUtf8().constData());
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-            Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadGameConfirmResponse, 0, new de::String(slotId));
+            Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(slotId));
             return true;
         }
     }
@@ -4228,31 +4231,31 @@ D_CMD(LoadGame)
     return false;
 }
 
-D_CMD(QuickLoadGame)
+D_CMD(QuickLoadSession)
 {
     DENG2_UNUSED3(src, argc, argv);
     return DD_Execute(true, "loadgame quick");
 }
 
-struct savegameconfirmresponse_params_t
+struct savesessionconfirmed_params_t
 {
     de::String slotId;
     de::String userDescription;
 };
 
-static int saveGameConfirmResponse(msgresponse_t response, int /*userValue*/, void *context)
+static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
-    savegameconfirmresponse_params_t *p = static_cast<savegameconfirmresponse_params_t *>(context);
+    savesessionconfirmed_params_t *p = static_cast<savesessionconfirmed_params_t *>(context);
     DENG2_ASSERT(p != 0);
     if(response == MSG_YES)
     {
-        G_SaveGame(p->slotId, &p->userDescription);
-        delete p;
+        G_SaveSession(p->slotId, &p->userDescription);
     }
+    delete p;
     return true;
 }
 
-D_CMD(SaveGame)
+D_CMD(SaveSession)
 {
     DENG_UNUSED(src);
 
@@ -4303,18 +4306,18 @@ D_CMD(SaveGame)
             {
                 // Try to schedule a GA_SAVEGAME action.
                 S_LocalSound(SFX_MENU_ACCEPT, NULL);
-                return G_SaveGame(slotId, &userDescription);
+                return G_SaveSession(slotId, &userDescription);
             }
 
             // Compose the confirmation message.
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, sslot.saveInfo().userDescription().toUtf8().constData());
 
-            savegameconfirmresponse_params_t *parm = new savegameconfirmresponse_params_t;
+            savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = slotId;
             parm->userDescription = userDescription;
 
             S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-            Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveGameConfirmResponse, 0, parm);
+            Hu_MsgStart(MSG_YESNO, Str_Text(msg), saveSessionConfirmed, 0, parm);
             return true;
         }
 
@@ -4343,13 +4346,13 @@ D_CMD(SaveGame)
     return false;
 }
 
-D_CMD(QuickSaveGame)
+D_CMD(QuickSaveSession)
 {
     DENG2_UNUSED3(src, argc, argv);
     return DD_Execute(true, "savegame quick");
 }
 
-bool G_DeleteSaveGame(de::String slotId)
+bool G_DeleteSavedSession(de::String slotId)
 {
     try
     {
@@ -4378,19 +4381,19 @@ bool G_DeleteSaveGame(de::String slotId)
     return false;
 }
 
-static int deleteSaveGameConfirmResponse(msgresponse_t response, int /*userValue*/, void *context)
+static int deleteSavedSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
     de::String *slotId = static_cast<de::String *>(context);
     DENG2_ASSERT(slotId != 0);
     if(response == MSG_YES)
     {
-        G_DeleteSaveGame(*slotId);
-        delete slotId;
+        G_DeleteSavedSession(*slotId);
     }
+    delete slotId;
     return true;
 }
 
-D_CMD(DeleteGameSave)
+D_CMD(DeleteSavedSession)
 {
     DENG2_UNUSED(src);
 
@@ -4410,14 +4413,14 @@ D_CMD(DeleteGameSave)
             // A known slot identifier.
             if(confirmed)
             {
-                return G_DeleteSaveGame(slotId);
+                return G_DeleteSavedSession(slotId);
             }
             else
             {
                 // Compose the confirmation message.
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, sslot.saveInfo().userDescription().toUtf8().constData());
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
-                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSaveGameConfirmResponse, 0, new de::String(slotId));
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(slotId));
             }
             return true;
         }
@@ -4433,7 +4436,7 @@ D_CMD(DeleteGameSave)
     return false;
 }
 
-D_CMD(InspectGameSave)
+D_CMD(InspectSavedSession)
 {
     DENG2_UNUSED2(src, argc);
 

@@ -181,25 +181,35 @@ SaveSlots &G_SaveSlots();
 de::String G_SaveSlotIdFromUserInput(de::String str);
 
 /**
- * To be called to schedule a save game-save action.
+ * Determines whether game session loading is presently possible.
+ */
+bool G_SessionLoadingPossible();
+
+/**
+ * Determines whether game session saving is presently possible.
+ */
+bool G_SessionSavingPossible();
+
+/**
+ * Schedule a game session save (deferred).
  *
  * @param slotId           Unique identifier of the save slot to use.
  * @param userDescription  New user description for the game-save. Can be @c NULL in which
- *                         case the name will not change if the slot has already been used.
- *                         If an empty string a new name will be generated automatically.
+ *                         case it will not change if the slot has already been used.
+ *                         If an empty string a new description will be generated automatically.
  *
  * @return  @c true iff @a slotId is valid and saving is presently possible.
  */
-bool G_SaveGame(de::String slotId, de::String *userDescription = 0);
+bool G_SaveSession(de::String slotId, de::String *userDescription = 0);
 
 /**
- * To be called to schedule a load game-save action.
+ * Schedule a game session load (deferred).
  *
  * @param slotId  Unique identifier of the save slot to use.
  *
  * @return  @c true iff @a slotId is in use and loading is presently possible.
  */
-bool G_LoadGame(de::String slotId);
+bool G_LoadSession(de::String slotId);
 
 /**
  * Returns the game's GameStateReaderFactory.

@@ -75,12 +75,6 @@ int G_DebriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
 
 void G_QuitGame(void);
 
-/// @return  @c true = loading is presently possible.
-dd_bool G_IsLoadGamePossible(void);
-
-/// @return  @c true = saving is presently possible.
-dd_bool G_IsSaveGamePossible(void);
-
 void G_CommonPreInit(void);
 void G_CommonPostInit(void);
 

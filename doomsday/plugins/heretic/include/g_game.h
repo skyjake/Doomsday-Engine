@@ -80,12 +80,6 @@ void G_DeferredPlayDemo(char *demo);
 
 void G_QuitGame(void);
 
-/// @return  @c true = loading is presently possible.
-dd_bool G_IsLoadGamePossible(void);
-
-/// @return  @c true = saving is presently possible.
-dd_bool G_IsSaveGamePossible(void);
-
 void G_StopDemo(void);
 
 int G_BriefingEnabled(Uri const *mapUri, ddfinale_t *fin);
