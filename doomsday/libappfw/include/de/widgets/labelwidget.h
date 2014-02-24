@@ -97,7 +97,8 @@ public:
     enum AlignmentMode {
         AlignByCombination,
         AlignOnlyByImage,
-        AlignOnlyByText
+        AlignOnlyByText,
+        AlignSeparately ///< Aligned separately within the entire content rectangle.
     };
 
     /**

@@ -322,63 +322,79 @@ public Font::RichFormat::IStyle
         // By default the image and the text are centered over each other.
         layout.image.move((Vector2f(layout.text.size()) - layout.image.size()) / 2);
 
-        if(hasImage() && hasText())
+        if(alignMode == AlignSeparately)
         {
-            // Determine the position of the image in relation to the text
-            // (keeping the image at its current position).
-            if(textAlign & AlignLeft)
+            // When aligning separately, simply align both the image and the text
+            // within the main content rectangle as specified.
+            if(hasImage())
             {
-                layout.text.moveLeft(layout.image.left() - layout.text.width() - gap);
+                applyAlignment(imageAlign, layout.image, contentRect);
             }
-            if(textAlign & AlignRight)
+            if(hasText())
             {
-                layout.text.moveLeft(layout.image.right() + gap);
-            }
-            if(textAlign & AlignTop)
-            {
-                layout.text.moveTop(layout.image.top() - layout.text.height() - gap);
-            }
-            if(textAlign & AlignBottom)
-            {
-                layout.text.moveTop(layout.image.bottom() + gap);
-            }
-
-            // Align the image in relation to the text on the other axis.
-            if(textAlign & (AlignLeft | AlignRight))
-            {
-                if(imageAlign & AlignTop)
-                {
-                    layout.image.moveTop(layout.text.top());
-                }
-                if(imageAlign & AlignBottom)
-                {
-                    layout.image.moveTop(layout.text.bottom() - layout.image.height());
-                }
-            }
-            if(textAlign & (AlignTop | AlignBottom))
-            {
-                if(imageAlign & AlignLeft)
-                {
-                    layout.image.moveLeft(layout.text.left());
-                }
-                if(imageAlign & AlignRight)
-                {
-                    layout.image.moveLeft(layout.text.right() - layout.image.width());
-                }
+                applyAlignment(textAlign, layout.text, contentRect);
             }
         }
+        else
+        {
+            if(hasImage() && hasText())
+            {
+                // Determine the position of the image in relation to the text
+                // (keeping the image at its current position).
+                if(textAlign & AlignLeft)
+                {
+                    layout.text.moveLeft(layout.image.left() - layout.text.width() - gap);
+                }
+                if(textAlign & AlignRight)
+                {
+                    layout.text.moveLeft(layout.image.right() + gap);
+                }
+                if(textAlign & AlignTop)
+                {
+                    layout.text.moveTop(layout.image.top() - layout.text.height() - gap);
+                }
+                if(textAlign & AlignBottom)
+                {
+                    layout.text.moveTop(layout.image.bottom() + gap);
+                }
 
-        // Align the final combination within the content.
-        Rectanglef combined =
-                (alignMode == AlignByCombination? (layout.image | layout.text) :
-                 alignMode == AlignOnlyByImage?    layout.image :
-                                                   layout.text);
+                // Align the image in relation to the text on the other axis.
+                if(textAlign & (AlignLeft | AlignRight))
+                {
+                    if(imageAlign & AlignTop)
+                    {
+                        layout.image.moveTop(layout.text.top());
+                    }
+                    if(imageAlign & AlignBottom)
+                    {
+                        layout.image.moveTop(layout.text.bottom() - layout.image.height());
+                    }
+                }
+                if(textAlign & (AlignTop | AlignBottom))
+                {
+                    if(imageAlign & AlignLeft)
+                    {
+                        layout.image.moveLeft(layout.text.left());
+                    }
+                    if(imageAlign & AlignRight)
+                    {
+                        layout.image.moveLeft(layout.text.right() - layout.image.width());
+                    }
+                }
+            }
 
-        Vector2f delta = applyAlignment(align, combined.size(), contentRect);
-        delta -= combined.topLeft;
+            // Align the final combination within the content.
+            Rectanglef combined =
+                    (alignMode == AlignByCombination? (layout.image | layout.text) :
+                     alignMode == AlignOnlyByImage?    layout.image :
+                                                       layout.text);
 
-        layout.image.move(delta);
-        layout.text.move(delta.toVector2i());
+            Vector2f delta = applyAlignment(align, combined.size(), contentRect);
+            delta -= combined.topLeft;
+
+            layout.image.move(delta);
+            layout.text.move(delta.toVector2i());
+        }
     }
 
     /**
