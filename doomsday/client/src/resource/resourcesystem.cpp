@@ -1240,6 +1240,8 @@ DENG2_PIMPL(ResourceSystem)
      */
     ModelDef *getModelDefWithId(String id)
     {
+        if(id.isEmpty()) return 0;
+
         // First try to find an existing modef.
         if(self.hasModelDef(id))
         {
@@ -1465,12 +1467,8 @@ DENG2_PIMPL(ResourceSystem)
         int const statenum = Def_GetStateNum(def.state);
 
         // Is this an ID'd model?
-        ModelDef *modef;
-        if(self.hasModelDef(def.id))
-        {
-            modef = &self.modelDef(def.id);
-        }
-        else
+        ModelDef *modef = getModelDefWithId(def.id);
+        if(!modef)
         {
             // No, normal State-model.
             if(statenum < 0) return;
@@ -3116,10 +3114,9 @@ bool ResourceSystem::hasModelDef(de::String id) const
 {
     if(!id.isEmpty())
     {
-        char const *idCStr = id.toUtf8().constData();
         foreach(ModelDef const &modef, d->modefs)
         {
-            if(!strcmp(modef.id, idCStr))
+            if(!id.compareWithoutCase(modef.id))
             {
                 return true;
             }
@@ -3135,24 +3132,23 @@ ModelDef &ResourceSystem::modelDef(int index)
         return d->modefs[index];
     }
     /// @throw MissingModelDefError An unknown model definition was referenced.
-    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid index " + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
+    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid index #" + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
 }
 
 ModelDef &ResourceSystem::modelDef(String id)
 {
     if(!id.isEmpty())
     {
-        char const *idCStr = id.toUtf8().constData();
         foreach(ModelDef const &modef, d->modefs)
         {
-            if(!strcmp(modef.id, idCStr))
+            if(!id.compareWithoutCase(modef.id))
             {
                 return const_cast<ModelDef &>(modef);
             }
         }
     }
     /// @throw MissingModelDefError An unknown model definition was referenced.
-    throw MissingModelDefError("ResourceSystem::modelDef", QString("Invalid id %1").arg(id));
+    throw MissingModelDefError("ResourceSystem::modelDef", "Invalid id '" + id + "'");
 }
 
 ModelDef *ResourceSystem::modelDefForState(int stateIndex, int select)
