@@ -991,7 +991,7 @@ void HereticV13GameStateReader::read(SaveInfo &info)
     briefDisabled = true;
 
     // Load a base map.
-    G_NewGame(info.mapUri(), 0/*not saved??*/, &info.gameRules());
+    G_NewSession(info.mapUri(), 0/*not saved??*/, &info.gameRules());
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     // Recreate map state.

@@ -355,12 +355,17 @@ void X_PostInit()
     p = CommandLine_CheckWith("-loadgame", 1);
     if(p != 0)
     {
-        int const slotNumber = SV_SaveSlots().parseSlotIdentifier(CommandLine_At(p + 1));
-        if(SV_SaveSlots().slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
+        try
         {
-            // No further initialization is to be done.
-            return;
+            de::String const slotId = G_SaveSlotIdFromUserInput(CommandLine_At(p + 1));
+            if(G_SaveSlots()[slotId].isUserWritable() && G_LoadSession(slotId))
+            {
+                // No further initialization is to be done.
+                return;
+            }
         }
+        catch(SaveSlots::InvalidSlotError const &)
+        {}
     }
 
     if((p = CommandLine_CheckWith("-skill", 1)) != 0)

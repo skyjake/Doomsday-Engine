@@ -977,7 +977,7 @@ void DoomV9GameStateReader::read(SaveInfo &info)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewGame(info.mapUri(), 0/*not saved??*/, &info.gameRules());
+    G_NewSession(info.mapUri(), 0/*not saved??*/, &info.gameRules());
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     // Recreate map state.

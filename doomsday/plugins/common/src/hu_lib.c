@@ -1855,24 +1855,23 @@ int MNText_SetFlags(mn_object_t* ob, flagop_t op, int flags)
     return ob->_flags;
 }
 
-mn_object_t* MNEdit_New(void)
+mn_object_t *MNEdit_New(void)
 {
-    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
-    if(!ob) Con_Error("MNEdit::New: Failed on allocation of %lu bytes for new MNEdit.", (unsigned long) sizeof(*ob));
-    ob->_typedata = Z_Calloc(sizeof(mndata_edit_t), PU_GAMESTATIC, 0);
-    if(!ob->_typedata) Con_Error("MNEdit::New: Failed on allocation of %lu bytes for mndata_edit_t.", (unsigned long) sizeof(mndata_edit_t));
+    mn_object_t *ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
 
-    ob->_type = MN_EDIT;
-    ob->_pageFontIdx = MENU_FONT1;
-    ob->_pageColorIdx = MENU_COLOR1;
-    ob->drawer = MNEdit_Drawer;
-    ob->ticker = MNEdit_Ticker;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_edit_t), PU_GAMESTATIC, 0);
+    ob->_type          = MN_EDIT;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->drawer         = MNEdit_Drawer;
+    ob->ticker         = MNEdit_Ticker;
     ob->updateGeometry = MNEdit_UpdateGeometry;
-    ob->cmdResponder = MNEdit_CommandResponder;
-    ob->responder = MNEdit_Responder;
-    { mndata_edit_t *edit = (mndata_edit_t *) ob->_typedata;
-    Str_Init(&edit->text);
-    Str_Init(&edit->oldtext);
+    ob->cmdResponder   = MNEdit_CommandResponder;
+    ob->responder      = MNEdit_Responder;
+    {
+        mndata_edit_t *edit = (mndata_edit_t *) ob->_typedata;
+        Str_Init(&edit->text);
+        Str_Init(&edit->oldtext);
     }
 
     return ob;
@@ -1880,8 +1879,11 @@ mn_object_t* MNEdit_New(void)
 
 void MNEdit_Delete(mn_object_t *ob)
 {
-    mndata_edit_t *edit = (mndata_edit_t *) ob->_typedata;
-    DENG_ASSERT(ob != 0 && ob->_type == MN_EDIT);
+    mndata_edit_t *edit;
+    if(!ob) return;
+
+    edit = (mndata_edit_t *) ob->_typedata;
+    DENG_ASSERT(ob->_type == MN_EDIT);
     Str_Free(&edit->text);
     Str_Free(&edit->oldtext);
     Z_Free(ob->_typedata);

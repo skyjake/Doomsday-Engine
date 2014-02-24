@@ -334,7 +334,8 @@ void H_PostInit()
     G_CommonPostInit();
 
     // Declare the Heretic V13 game state reader/interpreter.
-    SV_DeclareGameStateReader(&HereticV13GameStateReader::recognize, &HereticV13GameStateReader::make);
+    G_GameStateReaderFactory().declareReader(&HereticV13GameStateReader::recognize,
+                                             &HereticV13GameStateReader::make);
 
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();
@@ -379,12 +380,17 @@ void H_PostInit()
     p = CommandLine_Check("-loadgame");
     if(p && p < myargc - 1)
     {
-        int const slotNumber = SV_SaveSlots().parseSlotIdentifier(CommandLine_At(p + 1));
-        if(SV_SaveSlots().slotIsUserWritable(slotNumber) && G_LoadGame(slotNumber))
+        try
         {
-            // No further initialization is to be done.
-            return;
+            de::String const slotId = G_SaveSlotIdFromUserInput(CommandLine_At(p + 1));
+            if(G_SaveSlots()[slotId].isUserWritable() && G_LoadSession(slotId))
+            {
+                // No further initialization is to be done.
+                return;
+            }
         }
+        catch(SaveSlots::InvalidSlotError const &)
+        {}
     }
 
     p = CommandLine_Check("-skill");
