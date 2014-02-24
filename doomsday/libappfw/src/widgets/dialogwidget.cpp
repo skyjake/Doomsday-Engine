@@ -142,11 +142,10 @@ public ChildWidgetOrganizer::IFilter
         {
             heading = new LabelWidget;
             heading->setFont("heading");
-            heading->margins().setBottom("");
-            heading->margins().setTop(style().rules().rule("gap") +
-                                      style().rules().rule("dialog.gap"));
-            heading->margins().setLeft(style().rules().rule("gap") +
-                                       style().rules().rule("dialog.gap"));
+            heading->margins()
+                    .setBottom("")
+                    .setTop (style().rules().rule("gap") + style().rules().rule("dialog.gap"))
+                    .setLeft(style().rules().rule("gap") + style().rules().rule("dialog.gap"));
             heading->setSizePolicy(ui::Expand, ui::Expand);
             heading->setTextColor("accent");
             heading->setAlignment(ui::AlignLeft);

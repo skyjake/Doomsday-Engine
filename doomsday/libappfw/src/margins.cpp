@@ -125,84 +125,89 @@ DENG2_PIMPL(Margins)
 Margins::Margins(String const &defaultMargin) : d(new Instance(this, defaultMargin))
 {}
 
-void Margins::set(Direction dir, DotPath const &marginId)
+Margins &Margins::set(Direction dir, DotPath const &marginId)
 {
     d->setInput(dir == Left?  SideLeft  :
                 dir == Right? SideRight :
                 dir == Up?    SideTop   : SideBottom, marginId);
+    return *this;
 }
 
-void Margins::set(DotPath const &marginId)
+Margins &Margins::set(DotPath const &marginId)
 {
     set(Left,  marginId);
     set(Right, marginId);
     set(Up,    marginId);
     set(Down,  marginId);
+    return *this;
 }
 
-void Margins::setLeft(DotPath const &leftMarginId)
+Margins &Margins::setLeft(DotPath const &leftMarginId)
 {
-    set(ui::Left, leftMarginId);
+    return set(ui::Left, leftMarginId);
 }
 
-void Margins::setRight(DotPath const &rightMarginId)
+Margins &Margins::setRight(DotPath const &rightMarginId)
 {
-    set(ui::Right, rightMarginId);
+    return set(ui::Right, rightMarginId);
 }
 
-void Margins::setTop(DotPath const &topMarginId)
+Margins &Margins::setTop(DotPath const &topMarginId)
 {
-    set(ui::Up, topMarginId);
+    return set(ui::Up, topMarginId);
 }
 
-void Margins::setBottom(DotPath const &bottomMarginId)
+Margins &Margins::setBottom(DotPath const &bottomMarginId)
 {
-    set(ui::Down, bottomMarginId);
+    return set(ui::Down, bottomMarginId);
 }
 
-void Margins::set(Direction dir, Rule const &rule)
+Margins &Margins::set(Direction dir, Rule const &rule)
 {
     d->setInput(dir == Left?  SideLeft  :
                 dir == Right? SideRight :
                 dir == Up?    SideTop   : SideBottom, rule);
+    return *this;
 }
 
-void Margins::set(Rule const &rule)
+Margins &Margins::set(Rule const &rule)
 {
     set(Left,  rule);
     set(Right, rule);
     set(Up,    rule);
     set(Down,  rule);
+    return *this;
 }
 
-void Margins::setAll(Margins const &margins)
+Margins &Margins::setAll(Margins const &margins)
 {
-    if(this == &margins) return;
+    if(this == &margins) return *this;
 
     set(Left,  margins.left());
     set(Right, margins.right());
     set(Up,    margins.top());
     set(Down,  margins.bottom());
+    return *this;
 }
 
-void Margins::setLeft(Rule const &rule)
+Margins &Margins::setLeft(Rule const &rule)
 {
-    set(ui::Left, rule);
+    return set(ui::Left, rule);
 }
 
-void Margins::setRight(Rule const &rule)
+Margins &Margins::setRight(Rule const &rule)
 {
-    set(ui::Right, rule);
+    return set(ui::Right, rule);
 }
 
-void Margins::setTop(Rule const &rule)
+Margins &Margins::setTop(Rule const &rule)
 {
-    set(ui::Up, rule);
+    return set(ui::Up, rule);
 }
 
-void Margins::setBottom(Rule const &rule)
+Margins &Margins::setBottom(Rule const &rule)
 {
-    set(ui::Down, rule);
+    return set(ui::Down, rule);
 }
 
 Rule const &Margins::left() const
