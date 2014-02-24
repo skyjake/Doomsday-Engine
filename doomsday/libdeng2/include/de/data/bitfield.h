@@ -30,6 +30,9 @@ namespace de {
 /**
  * Array of integer values packed tightly together.
  *
+ * Before a BitField can be used, its elements must be defined with
+ * BitField::setElements().
+ *
  * @ingroup data
  */
 class DENG2_PUBLIC BitField
@@ -42,51 +45,110 @@ public:
     };
     typedef QSet<Id> Ids;
 
+    /**
+     * Metadata about the elements of a bit field.
+     */
+    class Elements
+    {
+    public:
+        Elements();
+
+        Elements(Spec const *elements, dsize count);
+
+        /**
+         * Adds a new element into the field.
+         *
+         * @param id       Identifier of the element.
+         * @param numBits  Number of bits for the element.
+         *
+         * @return Reference to this pack.
+         */
+        Elements &add(Id id, dsize numBits);
+
+        void add(Spec const *elements, dsize count);
+
+        void add(QList<Spec> const &elements);
+
+        void clear();
+
+        /**
+         * Returns the number of elements.
+         */
+        int size() const;
+
+        Spec at(int index) const;
+
+        void elementLayout(Id const &id, int &firstBit, int &numBits) const;
+
+        /**
+         * Total number of bits in the packed elements.
+         */
+        int bitCount() const;
+
+        /**
+         * Returns the identifiers of all elements.
+         */
+        Ids ids() const;
+
+        /**
+         * Returns the ids of all elements that are entirely or partially laid out on
+         * byte # @a index.
+         *
+         * @param index  Index of the byte.
+         *
+         * @return Element ids.
+         */
+        Ids idsLaidOutOnByte(int index) const;
+
+    private:
+        DENG2_PRIVATE(d)
+    };
+
     /// Failure to compare two fields with each other. @ingroup errors
     DENG2_ERROR(ComparisonError);
 
 public:
     BitField();
+    BitField(Elements const &elements);
     BitField(BitField const &other);
     BitField(Block const &data);
 
     BitField &operator = (BitField const &other);
 
     /**
-     * Removes all the elements and the data contained in the bit field.
+     * Sets the elements of the bit field.
+     *
+     * @param elements  Elements metadata. BitField does not take ownership, so this must
+     *                  exist as long as the bit field is in use.
+     */
+    void setElements(Elements const &elements);
+
+    Elements const &elements() const;
+
+    /**
+     * Removes all the elements and the data contained in the bit field. Elements must be
+     * redefined with setElements() after calling this.
      */
     void clear();
 
-    /**
-     * Adds a new element into the field.
-     *
-     * @param id       Identifier of the element.
-     * @param numBits  Number of bits for the element.
-     *
-     * @return Reference to this pack.
-     */
-    BitField &addElement(Id id, dsize numBits);
-
-    void addElements(Spec const *elements, dsize count);
-
-    void addElements(QList<Spec> const &elements);
+    bool isEmpty() const;
 
     /**
      * Returns the number of elements in the bit field.
      */
-    int size() const;
+    //int size() const;
 
-    Spec element(int index) const;
+    //Spec element(int index) const;
 
     /**
      * Total number of bits in the packed elements.
      */
-    int bitCount() const;
+    //int bitCount() const;
 
     /**
      * Returns the identifiers of all elements.
      */
-    Ids elementIds() const;
+    //Ids elementIds() const;
 
     /**
      * Returns the packed data as an array of bytes. Only bitCount() bits are

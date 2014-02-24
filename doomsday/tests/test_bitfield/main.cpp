@@ -27,27 +27,30 @@ int main(int, char **)
 {
     try
     {
-        BitField pack;       
-        pack.addElement(1, 1);
+        BitField::Elements elems;
+        elems.add(1, 1);
+
+        BitField pack(elems);
         pack.set(1, duint(1));
         qDebug() << pack.asText().toLatin1().constData();
 
-        pack.clear();
+        elems.clear();
+        elems.add(1, 1);
+        elems.add(2, 1);
 
-        pack.addElement(1, 1);
-        pack.addElement(2, 1);
+        pack.setElements(elems);
         pack.set(2, true);
         qDebug() << pack.asText().toLatin1().constData();
         pack.set(1, true);
         qDebug() << pack.asText().toLatin1().constData();
 
-        pack.addElement(3, 3);
+        elems.add(3, 3);
         pack.set(1, false);
         qDebug() << pack.asText().toLatin1().constData();
         pack.set(3, 6u);
         qDebug() << pack.asText().toLatin1().constData();
 
-        pack.addElement(10, 8);
+        elems.add(10, 8);
         pack.set(10, 149u);
         qDebug() << pack.asText().toLatin1().constData();
 
