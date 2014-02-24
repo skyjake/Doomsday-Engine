@@ -51,6 +51,28 @@ namespace internal
         MAX_PROPERTIES
     };
 
+    static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
+        { CullMode,       2  },
+        { DepthTest,      1  },
+        { DepthFunc,      3  },
+        { DepthWrite,     1  },
+        { Blend,          1  },
+        { BlendFuncSrc,   4  },
+        { BlendFuncDest,  4  },
+        { BlendOp,        2  },
+        { ColorMask,      4  },
+        { Scissor,        1  },
+        { ScissorX,       12 }, // 12 bits == 4096 max
+        { ScissorY,       12 },
+        { ScissorWidth,   12 },
+        { ScissorHeight,  12 },
+        { ViewportX,      12 },
+        { ViewportY,      12 },
+        { ViewportWidth,  12 },
+        { ViewportHeight, 12 }
+    };
+    static BitField::Elements const glStateProperties(propSpecs, MAX_PROPERTIES);
+
     /// The GL state stack.
     struct GLStateStack : public QList<GLState *> {
         GLStateStack() {
@@ -113,35 +135,16 @@ DENG2_PIMPL(GLState)
     BitField props;
     GLTarget *target;
 
-    Instance(Public *i) : Base(i), target(0)
-    {
-        static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
-            { CullMode,       2  },
-            { DepthTest,      1  },
-            { DepthFunc,      3  },
-            { DepthWrite,     1  },
-            { Blend,          1  },
-            { BlendFuncSrc,   4  },
-            { BlendFuncDest,  4  },
-            { BlendOp,        2  },
-            { ColorMask,      4  },
-            { Scissor,        1  },
-            { ScissorX,       12 }, // 12 bits == 4096 max
-            { ScissorY,       12 },
-            { ScissorWidth,   12 },
-            { ScissorHeight,  12 },
-            { ViewportX,      12 },
-            { ViewportY,      12 },
-            { ViewportWidth,  12 },
-            { ViewportHeight, 12 }
-        };
-        props.addElements(propSpecs, MAX_PROPERTIES);
-    }
+    Instance(Public *i)
+        : Base(i)
+        , props(glStateProperties)
+        , target(0)
+    {}
 
     Instance(Public *i, Instance const &other)
-        : Base(i),
-          props(other.props),
-          target(other.target)
+        : Base(i)
+        , props(other.props)
+        , target(other.target)
     {}
 
     static GLenum glComp(gl::Comparison comp)
@@ -602,10 +605,10 @@ void GLState::apply() const
 
     // Determine which properties have changed.
     BitField::Ids changed;
-    if(!currentProps.size())
+    if(currentProps.isEmpty())
     {
         // Apply everything.
-        changed = d->props.elementIds();
+        changed = d->props.elements().ids();
     }
     else
     {

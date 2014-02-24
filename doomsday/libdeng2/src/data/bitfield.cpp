@@ -18,68 +18,49 @@
 
 #include "de/BitField"
 
-#include <QMap>
 #include <QTextStream>
 
 namespace de {
 
 DENG2_PIMPL(BitField)
 {
-    struct Element
-    {
-        int numBits;
-        int firstBit;
-
-        dbyte mask(int skipBits) const {
-            dbyte mask = 0xff;
-            if(numBits - skipBits < 8) {
-                mask >>= 8 - (numBits - skipBits);
-            }
-            return mask;
-        }
-
-    };
-    typedef QMap<Id, Element> Elements;
-
-    Elements elements;
-    dsize totalBits;
-
-    /**
-     * Lookup table for quickly finding out which elements are on which bytes of
-     * the packed data. Indexed using the packed data byte index; size ==
-     * packed size.
-     */
-    QList<Ids> lookup;
-
+    Elements const *elements;
     Block packed;
 
-    Instance(Public *i) : Base(i), totalBits(0)
+    Instance(Public *i) : Base(i), elements(0)
     {}
 
     Instance(Public *i, Instance const &other)
-        : Base     (i),
-          elements (other.elements),
-          totalBits(other.totalBits),
-          lookup   (other.lookup),
-          packed   (other.packed)
+        : Base     (i)
+        , elements (other.elements)
+        , packed   (other.packed)
     {}
 
-    Element &element(Id id)
+    static dbyte elementMask(int numBits, int skipBits)
     {
-        DENG2_ASSERT(elements.contains(id));
-        return elements[id];
+        dbyte mask = 0xff;
+        if(numBits - skipBits < 8)
+        {
+            mask >>= 8 - (numBits - skipBits);
+        }
+        return mask;
     }
 
     void set(Id id, duint value)
     {
-        Element &f      = element(id);
-        int packedIdx = f.firstBit >> 3;
-        int shift     = f.firstBit & 7;
+        DENG2_ASSERT(elements != 0);
+
+        int eFirstBit = 0;
+        int eNumBits = 0;
+        elements->elementLayout(id, eFirstBit, eNumBits);
+
+        int packedIdx = eFirstBit >> 3;
+        int shift     = eFirstBit & 7;
         int written   = 0;
 
-        while(written < f.numBits)
+        while(written < eNumBits)
         {
-            dbyte const mask = f.mask(written) << shift;
+            dbyte const mask = elementMask(eNumBits, written) << shift;
 
             dbyte pv = packed[packedIdx] & ~mask;
             pv |= mask & ((value >> written) << shift);
@@ -93,18 +74,24 @@ DENG2_PIMPL(BitField)
 
     duint get(Id id) const
     {
+        DENG2_ASSERT(elements != 0);
+
         duint value = 0;
 
-        DENG2_ASSERT(elements.contains(id));
-        Element const &f = elements.constFind(id).value();
+        //DENG2_ASSERT(elements.contains(id));
+        //Element const &f = elements.constFind(id).value();
 
-        int packedIdx = f.firstBit >> 3;
-        int shift     = f.firstBit & 7;
+        int eFirstBit = 0;
+        int eNumBits = 0;
+        elements->elementLayout(id, eFirstBit, eNumBits);
+
+        int packedIdx = eFirstBit >> 3;
+        int shift     = eFirstBit & 7;
         int read      = 0;
 
-        while(read < f.numBits)
+        while(read < eNumBits)
         {
-            dbyte const mask = f.mask(read) << shift;
+            dbyte const mask = elementMask(eNumBits, read) << shift;
 
             value |= ((packed[packedIdx] & mask) >> shift) << read;
 
@@ -118,7 +105,10 @@ DENG2_PIMPL(BitField)
 
     Ids delta(Instance const &other) const
     {
-        if(elements.size() != other.elements.size())
+        DENG2_ASSERT(elements != 0);
+        DENG2_ASSERT(other.elements != 0);
+
+        if(elements->size() != other.elements->size())
         {
             throw ComparisonError("BitField::delta",
                                   "The compared fields have a different number of elements");
@@ -136,7 +126,8 @@ DENG2_PIMPL(BitField)
                 continue;
 
             // The elements on this byte are different; which are they?
-            DENG2_FOR_EACH_CONST(Ids, i, lookup[pos])
+            Ids const lookup = elements->idsLaidOutOnByte(pos);
+            DENG2_FOR_EACH_CONST(Ids, i, lookup)
             {
                 Id const &id = *i;
 
@@ -156,6 +147,11 @@ DENG2_PIMPL(BitField)
 BitField::BitField() : d(new Instance(this))
 {}
 
+BitField::BitField(Elements const &elements) : d(new Instance(this))
+{
+    setElements(elements);
+}
+
 BitField::BitField(BitField const &other) : d(new Instance(this, *other.d))
 {}
 
@@ -166,96 +162,38 @@ BitField::BitField(Block const &data) : d(new Instance(this))
 
 BitField &BitField::operator = (BitField const &other)
 {
-    d->elements  = other.d->elements;
-    d->totalBits = other.d->totalBits;
-    d->lookup    = other.d->lookup;
-    d->packed    = other.d->packed;
+    d->elements = other.d->elements;
+    d->packed   = other.d->packed;
     return *this;
+}
+
+void BitField::setElements(Elements const &elements)
+{
+    clear();
+
+    d->elements = &elements;
+
+    // Initialize all new elements to zero.
+    for(int i = 0; i < elements.size(); ++i)
+    {
+        set(elements.at(i).id, 0u);
+    }
 }
 
 void BitField::clear()
 {
     d->packed.clear();
-    d->elements.clear();
-    d->lookup.clear();
-    d->totalBits = 0;
+    d->elements = 0;
 }
 
-BitField &BitField::addElement(Id id, dsize numBits)
+bool BitField::isEmpty() const
 {
-    DENG2_ASSERT(numBits >= 1);
-
-    Instance::Element elem;
-    elem.numBits  = numBits;
-    elem.firstBit = d->totalBits;
-    d->elements.insert(id, elem);
-    d->totalBits += numBits;
-
-    // Update the lookup table.
-    int pos = elem.firstBit / 8;
-    int endPos = (elem.firstBit + (numBits - 1)) / 8;
-    while(d->lookup.size() <= endPos)
-    {
-        d->lookup.append(Ids());
-    }
-    for(int i = pos; i <= endPos; ++i)
-    {
-        d->lookup[i].insert(id);
-    }
-
-    // Initialize all new elements to zero.
-    set(id, 0u);
-
-    return *this;
+    return !d->elements || !d->elements->size();
 }
 
-void BitField::addElements(Spec const *elements, dsize count)
+BitField::Elements const &BitField::elements() const
 {
-    while(count-- > 0)
-    {
-        addElement(elements->id, elements->numBits);
-        elements++;
-    }
-}
-
-void BitField::addElements(QList<Spec> const &elements)
-{
-    foreach(Spec spec, elements)
-    {
-        addElement(spec.id, spec.numBits);
-    }
-}
-
-int BitField::size() const
-{
-    return d->elements.size();
-}
-
-BitField::Spec BitField::element(int index) const
-{
-    DENG2_ASSERT(index >= 0);
-    DENG2_ASSERT(index < size());
-
-    Instance::Element elem = d->elements.values()[index];
-    Spec spec;
-    spec.id = d->elements.keys()[index];
-    spec.numBits = elem.numBits;
-    return spec;
-}
-
-int BitField::bitCount() const
-{
-    return d->totalBits;
-}
-
-BitField::Ids BitField::elementIds() const
-{
-    Ids ids;
-    foreach(Id id, d->elements.keys())
-    {
-        ids.insert(id);
-    }
-    return ids;
+    return *d->elements;
 }
 
 Block BitField::data() const
@@ -302,7 +240,7 @@ String BitField::asText() const
 {
     QString str;
     QTextStream os(&str);
-    os << "BitField (" << d->totalBits << " bits, " << d->elements.size() << " elements):";
+    os << "BitField (" << d->elements->bitCount() << " bits, " << d->elements->size() << " elements):";
     os.setIntegerBase(2);
     for(int i = d->packed.size() - 1; i >= 0; --i)
     {

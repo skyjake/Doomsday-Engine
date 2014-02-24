@@ -114,6 +114,7 @@ SOURCES += \
     src/data/bank.cpp \
     src/data/binarytree_wrapper.cpp \
     src/data/bitfield.cpp \
+    src/data/bitfield_elements.cpp \
     src/data/block.cpp \
     src/data/blockvalue.cpp \
     src/data/byteorder.cpp \
