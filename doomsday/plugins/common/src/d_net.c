@@ -161,7 +161,7 @@ int D_NetServerStarted(int before)
 
     netRules.skill = cfg.netSkill;
 
-    G_NewGame(netMapUri, 0/*default*/, &netRules);
+    G_NewSession(netMapUri, 0/*default*/, &netRules);
 
     /// @todo Necessary?
     G_SetGameAction(GA_NONE);

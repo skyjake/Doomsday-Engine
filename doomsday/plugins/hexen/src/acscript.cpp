@@ -257,7 +257,6 @@ bool ACScriptInterpreter::startScript(int scriptNumber, Uri const *mapUri,
     byte const args[], mobj_t *activator, Line *line, int side)
 {
     DENG_ASSERT(!IS_CLIENT);
-    DENG_ASSERT(mapUri != 0);
 
     if(mapUri)
     {

@@ -22,7 +22,6 @@
 #define LIBCOMMON_SAVEINFO
 
 #include "common.h"
-#include <de/Path>
 #include <de/String>
 
 /**
@@ -86,6 +85,11 @@ public:
      * session (and @em should therefore be loadable).
      */
     bool gameSessionIsLoadable() const;
+
+    /**
+     * Determines whether a saved map session exists.
+     */
+    bool haveMapSession(uint map) const;
 
     /**
      * Attempt to update the save info from the named saved game session file. If the save path

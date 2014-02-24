@@ -46,7 +46,11 @@ extern "C" {
 
 void G_Register(void);
 
+/**
+ * Returns the current logical game state.
+ */
 gamestate_t G_GameState(void);
+
 void G_ChangeGameState(gamestate_t state);
 
 gameaction_t G_GameAction(void);
@@ -77,7 +81,7 @@ dd_bool G_QuitInProgress(void);
  * @param mapEntrance  Logical map entry point number.
  * @param rules        Game rules to apply.
  */
-void G_NewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
+void G_NewSession(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
 void G_DeferredNewGame(Uri const *mapUri, uint mapEntrance, GameRuleset const *rules);
 
 /**
@@ -149,4 +153,69 @@ D_CMD( CCmdExitLevel );
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_GAME_H */
+#if __cplusplus
+#include <de/String>
+
+class GameStateReaderFactory;
+class SaveSlots;
+
+/**
+ * Returns the game's SaveSlots.
+ */
+SaveSlots &G_SaveSlots();
+
+/**
+ * Parse @a str and determine whether it references a logical game-save slot.
+ *
+ * @param str  String to be parsed. Parse is divided into three passes.
+ *             Pass 1: Check for a known game-save description which matches this.
+ *                 Search is in logical save slot creation order.
+ *             Pass 2: Check for keyword identifiers.
+ *                 <auto>  = The "auto save" slot.
+ *                 <last>  = The last used slot.
+ *                 <quick> = The currently nominated "quick save" slot.
+ *             Pass 3: Check for a unique save slot identifier.
+ *
+ * @return  The parsed slot id if found; otherwise a zero-length string.
+ */
+de::String G_SaveSlotIdFromUserInput(de::String str);
+
+/**
+ * Determines whether game session loading is presently possible.
+ */
+bool G_SessionLoadingPossible();
+
+/**
+ * Determines whether game session saving is presently possible.
+ */
+bool G_SessionSavingPossible();
+
+/**
+ * Schedule a game session save (deferred).
+ *
+ * @param slotId           Unique identifier of the save slot to use.
+ * @param userDescription  New user description for the game-save. Can be @c NULL in which
+ *                         case it will not change if the slot has already been used.
+ *                         If an empty string a new description will be generated automatically.
+ *
+ * @return  @c true iff @a slotId is valid and saving is presently possible.
+ */
+bool G_SaveSession(de::String slotId, de::String *userDescription = 0);
+
+/**
+ * Schedule a game session load (deferred).
+ *
+ * @param slotId  Unique identifier of the save slot to use.
+ *
+ * @return  @c true iff @a slotId is in use and loading is presently possible.
+ */
+bool G_LoadSession(de::String slotId);
+
+/**
+ * Returns the game's GameStateReaderFactory.
+ */
+GameStateReaderFactory &G_GameStateReaderFactory();
+
+#endif // __cplusplus
+
+#endif // LIBCOMMON_GAME_H

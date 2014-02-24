@@ -622,9 +622,8 @@ typedef struct mndata_edit_s {
     ddstring_t oldtext; // If the current edit is canceled...
     uint maxLength;
     uint maxVisibleChars;
-    const char* emptyString; // Drawn when editfield is empty/null.
-    void* data1;
-    int data2;
+    char const *emptyString; // Drawn when editfield is empty/null.
+    void *data1;
 } mndata_edit_t;
 
 #ifdef __cplusplus

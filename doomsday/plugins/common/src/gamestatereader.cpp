@@ -115,7 +115,7 @@ DENG2_PIMPL(GameStateReader)
 
         // Open the map state file.
         de::Path path = SV_SavePath() / saveInfo->fileNameForMap(gameMap);
-        if(!SV_OpenMapSaveFile(path))
+        if(!SV_OpenFile(path, false/*for read*/))
         {
             throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
         }
@@ -282,7 +282,7 @@ bool GameStateReader::recognize(SaveInfo &info) // static
     de::Path const path = SV_SavePath() / info.fileName();
 
     if(!SV_ExistingFile(path)) return false;
-    if(!SV_OpenGameSaveFile(path, false/*for reading*/)) return false;
+    if(!SV_OpenFile(path, false/*for reading*/)) return false;
 
     Reader *reader = SV_NewReader();
     info.read(reader);
@@ -331,7 +331,7 @@ void GameStateReader::read(SaveInfo &info)
 
     d->saveInfo = &info;
 
-    if(!SV_OpenGameSaveFile(path, false/*for reading*/))
+    if(!SV_OpenFile(path, false/*for reading*/))
     {
         throw FileAccessError("GameStateReader", "Failed opening \"" + de::NativePath(path).pretty() + "\"");
     }
@@ -346,7 +346,7 @@ void GameStateReader::read(SaveInfo &info)
      * Load the map and configure some game settings.
      */
     briefDisabled = true;
-    G_NewGame(d->saveInfo->mapUri(), 0/*not saved??*/, &d->saveInfo->gameRules());
+    G_NewSession(d->saveInfo->mapUri(), 0/*not saved??*/, &d->saveInfo->gameRules());
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
 #if !__JHEXEN__

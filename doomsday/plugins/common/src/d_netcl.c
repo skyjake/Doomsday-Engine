@@ -139,7 +139,7 @@ void NetCl_UpdateGameState(Reader* msg)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_NewGame(mapUri, gameMapEntrance /*gsMapEntrance*/, &gsRules);
+        G_NewSession(mapUri, gameMapEntrance /*gsMapEntrance*/, &gsRules);
 
         /// @todo Necessary?
         G_SetGameAction(GA_NONE);
@@ -848,7 +848,7 @@ void NetCl_SendPlayerInfo()
     Net_SendPacket(0, GPT_PLAYER_INFO, Writer_Data(msg), Writer_Size(msg));
 }
 
-void NetCl_SaveGame(Reader* msg)
+void NetCl_SaveGame(Reader *msg)
 {
 #if __JHEXEN__
     DENG_UNUSED(msg);
@@ -864,7 +864,7 @@ void NetCl_SaveGame(Reader* msg)
 #endif
 }
 
-void NetCl_LoadGame(Reader* msg)
+void NetCl_LoadGame(Reader *msg)
 {
 #if __JHEXEN__
     DENG_UNUSED(msg);
