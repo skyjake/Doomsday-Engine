@@ -556,6 +556,13 @@ void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewD
 
 Matrix4f GL_GetProjectionMatrix()
 {
+    float const fov = Rend_FieldOfView();
+    Vector2f const size(viewpw, viewph);
+    yfov = vrCfg().verticalFieldOfView(fov, size);
+    return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip);
+}
+
+#if 0
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
 
@@ -594,6 +601,7 @@ Matrix4f GL_GetProjectionMatrix()
            Matrix4f::translate(Vector3f(-vrCfg().eyeShift(), 0, 0)) *
            Matrix4f::scale(Vector3f(1, 1, -1));
 }
+#endif
 
 void GL_ProjectionMatrix()
 {
