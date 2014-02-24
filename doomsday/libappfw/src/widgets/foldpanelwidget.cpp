@@ -86,8 +86,13 @@ ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
 
     // Fold indicator.
     d->title->setImage(new Instance::FoldImage(*this));
-    d->title->setTextAlignment(ui::AlignRight);
+    d->title->setAlignment(ui::AlignCenter, LabelWidget::AlignSeparately);
+    d->title->setTextAlignment(ui::AlignLeft);
+    d->title->setImageAlignment(ui::AlignRight);
     d->title->setTextGap("gap");
+
+    // By default, make the button as wide as the fold panel.
+    d->title->rule().setInput(Rule::Width, rule().width());
 
     return d->title;
 }
